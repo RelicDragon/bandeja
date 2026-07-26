@@ -11,8 +11,6 @@ import type {
   TrophyDefinitionView,
   TrophyInstanceView,
 } from '@/types/trophies';
-import { getSportConfig } from '@/sport/sportRegistry';
-import type { Sport } from '@/types';
 
 type TrophyCabinetCardProps = {
   entry: TrophyCabinetEntryView;
@@ -35,19 +33,20 @@ export function TrophyCabinetCard({
   const primary = instances[0] ?? null;
   const locked = !unlocked;
   const hasPinned = instances.some((i) => pinnedInstanceIds?.has(i.id));
+  const showProgress = locked && isOwn && Boolean(progress);
 
   return (
     <>
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className={`group relative flex flex-col items-center gap-2 rounded-2xl border p-2.5 text-center transition duration-200 hover:-translate-y-0.5 active:scale-[0.98] ${
+        className={`group relative flex h-full w-full flex-col items-center gap-2 rounded-2xl border p-2.5 text-center transition duration-200 hover:-translate-y-0.5 active:scale-[0.98] ${
           locked
             ? 'border-gray-200/80 bg-gray-50/90 dark:border-gray-700/60 dark:bg-gray-900/40'
             : 'border-gray-200/70 bg-white shadow-sm hover:shadow-md dark:border-gray-700/50 dark:bg-gray-900/70'
         }`}
       >
-        <div className="relative w-full">
+        <div className="relative w-full shrink-0">
           <TrophyRarityFrame rarity={definition.rarity} locked={locked} className="mx-auto h-[4.75rem] w-full max-w-[5.5rem]">
             <motion.div
               key={locked ? 'locked' : `open-${instances[0]?.id ?? 'none'}`}
@@ -74,24 +73,25 @@ export function TrophyCabinetCard({
         </div>
         <TrophyRarityBadge rarity={definition.rarity} locked={locked} />
         <span
-          className={`line-clamp-2 min-h-[2.2em] text-[11px] font-semibold leading-tight ${rarityTextClass(definition.rarity, locked)}`}
+          className={`line-clamp-2 min-h-[2.2em] flex-1 text-[11px] font-semibold leading-tight ${rarityTextClass(definition.rarity, locked)}`}
         >
           {t(definition.titleKey)}
         </span>
-        {locked && isOwn && progress && (
-          <div className="w-full px-0.5">
-            <div className="h-1 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
-              <div
-                className="h-full rounded-full bg-primary-500 transition-all"
-                style={{ width: `${Math.min(100, (progress.current / progress.target) * 100)}%` }}
-              />
-            </div>
-            <div className="mt-0.5 text-[10px] tabular-nums text-gray-500 dark:text-gray-400">
-              {progress.current}/{progress.target}
-            </div>
-          </div>
-        )}
-        {!locked && primary?.sport && <SportSubtitle sport={primary.sport} />}
+        <div className="mt-auto w-full min-h-[1.375rem] px-0.5">
+          {showProgress && progress && (
+            <>
+              <div className="h-1 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+                <div
+                  className="h-full rounded-full bg-primary-500 transition-all"
+                  style={{ width: `${Math.min(100, (progress.current / progress.target) * 100)}%` }}
+                />
+              </div>
+              <div className="mt-0.5 text-[10px] tabular-nums text-gray-500 dark:text-gray-400">
+                {progress.current}/{progress.target}
+              </div>
+            </>
+          )}
+        </div>
       </button>
       <TrophyDetailSheet
         open={open}
@@ -108,18 +108,6 @@ export function TrophyCabinetCard({
       />
     </>
   );
-}
-
-function SportSubtitle({ sport }: { sport: string }) {
-  const { t } = useTranslation();
-  try {
-    const config = getSportConfig(sport as Sport);
-    return (
-      <span className="text-[10px] text-gray-500 dark:text-gray-400">{t(config.labelKey)}</span>
-    );
-  } catch {
-    return null;
-  }
 }
 
 export type { TrophyDefinitionView, TrophyInstanceView };

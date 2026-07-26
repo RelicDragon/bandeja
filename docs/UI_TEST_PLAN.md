@@ -1245,7 +1245,7 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PR-streak-4 | New week while alive | Rated finish after open week, before deadline | Count +1; celebration banner once |
 | PR-streak-5 | Past deadline | Open player card (`?player=`) after missing deadline | Streak chip hidden (alive-only); fullscreen/profile sport panel may still show best |
 | PR-trophy-1 | Own empty trophy showcase | Own player card / `/user-profile/:id` with no unlocks | Three empty showcase slots under avatar + short hint; no crash |
-| PR-trophy-2 | Own empty trophy cabinet | Profile → Statistics (or own card Statistics) with no unlocks | Cabinet shows full locked catalog with progress affordances; inviting empty copy |
+| PR-trophy-2 | Own empty trophy cabinet | Profile → Statistics (or own card Statistics) with no unlocks | Cabinet shows title + count area and full locked catalog with progress affordances; no body copy under the section title |
 | PR-trophy-3 | Visitor empty trophies | Open another user’s card with zero trophies | Showcase hidden; cabinet calm empty (“No trophies yet”) — no locked graveyard |
 | PR-trophy-4 | Trophy detail sheet | Tap locked or unlocked trophy tile | Sheet with title, rarity, description; locked shows progress/hint |
 | PR-trophy-5 | Dark/light trophy UI | Toggle theme on Statistics with cabinet visible | Trophy frames/labels readable in both themes |

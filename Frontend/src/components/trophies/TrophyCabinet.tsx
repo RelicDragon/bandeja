@@ -50,20 +50,8 @@ export function TrophyCabinet({ trophies, isOwn, ownerUserId }: TrophyCabinetPro
         )}
       </div>
 
-      {isOwn && unlockedCount === 0 && (
-        <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-300">
-          {t('trophies.cabinet.ownEmpty')}
-        </p>
-      )}
-
-      {isOwn && pinsEditable && unlockedCount > 0 && (
-        <p className="text-xs leading-snug text-gray-500 dark:text-gray-400">
-          {t('trophies.cabinet.pinHint')}
-        </p>
-      )}
-
       <motion.div
-        className="grid grid-cols-3 gap-2.5 sm:grid-cols-4"
+        className="grid auto-rows-fr grid-cols-3 gap-2.5 sm:grid-cols-4"
         initial="hidden"
         animate="visible"
         variants={{
@@ -74,6 +62,7 @@ export function TrophyCabinet({ trophies, isOwn, ownerUserId }: TrophyCabinetPro
         {cabinet.map((entry) => (
           <motion.div
             key={entry.definition.id}
+            className="h-full min-h-0"
             variants={{
               hidden: { opacity: 0, y: 10 },
               visible: { opacity: 1, y: 0 },
