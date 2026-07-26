@@ -76,7 +76,7 @@ const DrawerContent = React.forwardRef<
     <DrawerOverlay />
     <VaulDrawer.Content
       ref={ref}
-      className={`cap-keyboard-aware-sheet fixed bottom-0 left-0 right-0 z-50 mt-24 flex max-h-[75vh] min-h-0 flex-col rounded-t-3xl border border-gray-200 bg-white text-gray-900 dark:border-gray-800 dark:bg-gray-800 dark:text-white max-w-[428px] mx-auto ${className ?? ''}`}
+      className={`cap-keyboard-aware-sheet fixed bottom-0 left-0 right-0 z-50 mt-24 flex max-h-[75vh] min-h-0 flex-col rounded-t-3xl border border-gray-200 bg-white text-gray-900 dark:border-gray-800 dark:bg-gray-800 dark:text-white max-w-[428px] mx-auto focus:outline-none ${className ?? ''}`}
       aria-labelledby={ariaLabelledBy ?? undefined}
       aria-describedby={ariaDescribedBy ?? undefined}
       {...props}
