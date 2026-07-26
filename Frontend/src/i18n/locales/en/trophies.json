@@ -67,6 +67,26 @@
         "title": "First win",
         "description": "Win your first qualifying game."
       },
+      "wins10": {
+        "title": "Ten wins",
+        "description": "Win 10 qualifying games."
+      },
+      "wins25": {
+        "title": "Twenty-five wins",
+        "description": "Win 25 qualifying games."
+      },
+      "wins50": {
+        "title": "Fifty wins",
+        "description": "Win 50 qualifying games."
+      },
+      "wins100": {
+        "title": "Hundred wins",
+        "description": "Win 100 qualifying games."
+      },
+      "wins500": {
+        "title": "Five hundred wins",
+        "description": "Win 500 qualifying games."
+      },
       "games10": {
         "title": "Getting started",
         "description": "Finish 10 qualifying games."
@@ -79,6 +99,14 @@
         "title": "Centurion",
         "description": "Finish 100 qualifying games."
       },
+      "games500": {
+        "title": "Five hundred",
+        "description": "Finish 500 qualifying games."
+      },
+      "games1000": {
+        "title": "Thousand club",
+        "description": "Finish 1000 qualifying games."
+      },
       "streak4": {
         "title": "Month in motion",
         "description": "Keep a 4-week play streak."
@@ -90,6 +118,18 @@
       "streak12": {
         "title": "Season of fire",
         "description": "Keep a 12-week play streak."
+      },
+      "streak16": {
+        "title": "Four months burning",
+        "description": "Keep a 16-week play streak."
+      },
+      "streak32": {
+        "title": "Half-year blaze",
+        "description": "Keep a 32-week play streak."
+      },
+      "streak64": {
+        "title": "Year of fire",
+        "description": "Keep a 64-week play streak."
       }
     }
   }

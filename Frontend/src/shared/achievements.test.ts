@@ -27,14 +27,51 @@ describe('achievement catalog', () => {
     expect(bronze?.rarity).toBe('RARE');
     expect(gold?.place).toBe(1);
 
-    const streak = ['habit_streak_4', 'habit_streak_8', 'habit_streak_12'] as const;
-    expect(streak.map((id) => getAchievementDefinition(id)?.threshold)).toEqual([4, 8, 12]);
+    const streak = [
+      'habit_streak_4',
+      'habit_streak_8',
+      'habit_streak_12',
+      'habit_streak_16',
+      'habit_streak_32',
+      'habit_streak_64',
+    ] as const;
+    expect(streak.map((id) => getAchievementDefinition(id)?.threshold)).toEqual([
+      4, 8, 12, 16, 32, 64,
+    ]);
     expect(getAchievementDefinition('habit_streak_4')?.rarity).toBe('COMMON');
     expect(getAchievementDefinition('habit_streak_8')?.rarity).toBe('RARE');
+    expect(getAchievementDefinition('habit_streak_64')?.rarity).toBe('LEGENDARY');
 
-    const volume = ['habit_games_10', 'habit_games_50', 'habit_games_100'] as const;
-    expect(volume.map((id) => getAchievementDefinition(id)?.threshold)).toEqual([10, 50, 100]);
+    const volume = [
+      'habit_games_10',
+      'habit_games_50',
+      'habit_games_100',
+      'habit_games_500',
+      'habit_games_1000',
+    ] as const;
+    expect(volume.map((id) => getAchievementDefinition(id)?.threshold)).toEqual([
+      10, 50, 100, 500, 1000,
+    ]);
+    expect(getAchievementDefinition('habit_games_500')?.rarity).toBe('RARE');
+    expect(getAchievementDefinition('habit_games_1000')?.rarity).toBe('LEGENDARY');
     expect(getAchievementDefinition('habit_first_win')?.ruleKind).toBe('HABIT_FIRST_WIN');
+
+    const wins = [
+      'habit_wins_10',
+      'habit_wins_25',
+      'habit_wins_50',
+      'habit_wins_100',
+      'habit_wins_500',
+    ] as const;
+    expect(wins.map((id) => getAchievementDefinition(id)?.threshold)).toEqual([
+      10, 25, 50, 100, 500,
+    ]);
+    expect(getAchievementDefinition('habit_wins_10')?.rarity).toBe('COMMON');
+    expect(getAchievementDefinition('habit_wins_25')?.rarity).toBe('COMMON');
+    expect(getAchievementDefinition('habit_wins_50')?.rarity).toBe('RARE');
+    expect(getAchievementDefinition('habit_wins_100')?.rarity).toBe('RARE');
+    expect(getAchievementDefinition('habit_wins_500')?.rarity).toBe('LEGENDARY');
+    expect(getAchievementDefinition('habit_wins_10')?.ruleKind).toBe('HABIT_WINS');
 
     for (const def of ACHIEVEMENT_CATALOG) {
       expect(def.titleKey.startsWith('trophies.')).toBe(true);
@@ -240,7 +277,36 @@ describe('habitUnlocksDue', () => {
     ).toHaveLength(0);
   });
 
-  it('grants streak milestones at 4 / 8 / 12', () => {
+  it('grants win milestones at 10 / 25 / 50 / 100 / 500', () => {
+    expect(
+      habitUnlocksDue({
+        counters: { streakBest: 0, gamesFinished: 0, gamesWon: 9 },
+        ownedDefinitionIds: new Set(['habit_first_win']),
+      }),
+    ).toHaveLength(0);
+
+    expect(
+      habitUnlocksDue({
+        counters: { streakBest: 0, gamesFinished: 0, gamesWon: 10 },
+        ownedDefinitionIds: new Set(['habit_first_win']),
+      }).map((d) => d.id),
+    ).toEqual(['habit_wins_10']);
+
+    expect(
+      habitUnlocksDue({
+        counters: { streakBest: 0, gamesFinished: 0, gamesWon: 500 },
+        ownedDefinitionIds: new Set([
+          'habit_first_win',
+          'habit_wins_10',
+          'habit_wins_25',
+          'habit_wins_50',
+          'habit_wins_100',
+        ]),
+      }).map((d) => d.id),
+    ).toEqual(['habit_wins_500']);
+  });
+
+  it('grants streak milestones at 4 / 8 / 12 / 16 / 32 / 64', () => {
     expect(
       habitUnlocksDue({
         counters: { streakBest: 4, gamesFinished: 0, gamesWon: 0 },
@@ -254,6 +320,19 @@ describe('habitUnlocksDue', () => {
         ownedDefinitionIds: new Set(['habit_streak_4']),
       }).map((d) => d.id),
     ).toEqual(['habit_streak_8', 'habit_streak_12']);
+
+    expect(
+      habitUnlocksDue({
+        counters: { streakBest: 64, gamesFinished: 0, gamesWon: 0 },
+        ownedDefinitionIds: new Set([
+          'habit_streak_4',
+          'habit_streak_8',
+          'habit_streak_12',
+          'habit_streak_16',
+          'habit_streak_32',
+        ]),
+      }).map((d) => d.id),
+    ).toEqual(['habit_streak_64']);
   });
 });
 

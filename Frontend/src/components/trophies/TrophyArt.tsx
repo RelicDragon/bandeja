@@ -14,9 +14,19 @@ const ART_SRC: Record<TrophyArtKey, string> = {
   habit_games_10: '/trophies/habit_games_10.png',
   habit_games_50: '/trophies/habit_games_50.png',
   habit_games_100: '/trophies/habit_games_100.png',
+  habit_games_500: '/trophies/habit_games_500.png',
+  habit_games_1000: '/trophies/habit_games_1000.png',
+  habit_wins_10: '/trophies/habit_wins_10.png',
+  habit_wins_25: '/trophies/habit_wins_25.png',
+  habit_wins_50: '/trophies/habit_wins_50.png',
+  habit_wins_100: '/trophies/habit_wins_100.png',
+  habit_wins_500: '/trophies/habit_wins_500.png',
   habit_streak_4: '/trophies/habit_streak_4.png',
   habit_streak_8: '/trophies/habit_streak_8.png',
   habit_streak_12: '/trophies/habit_streak_12.png',
+  habit_streak_16: '/trophies/habit_streak_16.png',
+  habit_streak_32: '/trophies/habit_streak_32.png',
+  habit_streak_64: '/trophies/habit_streak_64.png',
 };
 
 function resolveSrc(artKey: string): { key: string; src: string } {

@@ -14,7 +14,7 @@ export type HabitProgressCounters = {
   streakBest: number;
   /** Qualifying finished games count (volume). */
   gamesFinished: number;
-  /** Wins count for first-win habit. */
+  /** Wins count for first-win + win-milestone habits. */
   gamesWon: number;
 };
 
@@ -37,7 +37,7 @@ export function habitProgressForDefinition(
   if (definition.ruleKind === 'HABIT_VOLUME') {
     return { current: Math.min(counters.gamesFinished, target), target };
   }
-  if (definition.ruleKind === 'HABIT_FIRST_WIN') {
+  if (definition.ruleKind === 'HABIT_FIRST_WIN' || definition.ruleKind === 'HABIT_WINS') {
     return { current: Math.min(counters.gamesWon, target), target };
   }
   return null;

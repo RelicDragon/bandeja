@@ -67,6 +67,26 @@
         "title": "Prva pobeda",
         "description": "Pobedi u prvoj važećoj utakmici."
       },
+      "wins10": {
+        "title": "Deset pobeda",
+        "description": "Pobedi u 10 važećih utakmica."
+      },
+      "wins25": {
+        "title": "Dvadeset pet pobeda",
+        "description": "Pobedi u 25 važećih utakmica."
+      },
+      "wins50": {
+        "title": "Pedeset pobeda",
+        "description": "Pobedi u 50 važećih utakmica."
+      },
+      "wins100": {
+        "title": "Sto pobeda",
+        "description": "Pobedi u 100 važećih utakmica."
+      },
+      "wins500": {
+        "title": "Pet stotina pobeda",
+        "description": "Pobedi u 500 važećih utakmica."
+      },
       "games10": {
         "title": "Početak",
         "description": "Završi 10 važećih utakmica."
@@ -79,6 +99,14 @@
         "title": "Stotina",
         "description": "Završi 100 važećih utakmica."
       },
+      "games500": {
+        "title": "Pet stotina",
+        "description": "Završi 500 važećih utakmica."
+      },
+      "games1000": {
+        "title": "Hiljada",
+        "description": "Završi 1000 važećih utakmica."
+      },
       "streak4": {
         "title": "Mesec u pokretu",
         "description": "Održavaj seriju od 4 nedelje."
@@ -90,6 +118,18 @@
       "streak12": {
         "title": "Sezona vatre",
         "description": "Održavaj seriju od 12 nedelja."
+      },
+      "streak16": {
+        "title": "Četiri meseca vatre",
+        "description": "Održavaj seriju od 16 nedelja."
+      },
+      "streak32": {
+        "title": "Pola godine plamena",
+        "description": "Održavaj seriju od 32 nedelje."
+      },
+      "streak64": {
+        "title": "Godina vatre",
+        "description": "Održavaj seriju od 64 nedelje."
       }
     }
   }

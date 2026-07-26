@@ -18,10 +18,23 @@ import {
   assert.ok(getAchievementDefinition('habit_streak_4')?.threshold === 4);
   assert.ok(getAchievementDefinition('habit_streak_8')?.threshold === 8);
   assert.ok(getAchievementDefinition('habit_streak_12')?.threshold === 12);
+  assert.ok(getAchievementDefinition('habit_streak_16')?.threshold === 16);
+  assert.ok(getAchievementDefinition('habit_streak_32')?.threshold === 32);
+  assert.ok(getAchievementDefinition('habit_streak_64')?.threshold === 64);
+  assert.ok(getAchievementDefinition('habit_streak_64')?.rarity === 'LEGENDARY');
   assert.ok(getAchievementDefinition('habit_games_10')?.threshold === 10);
   assert.ok(getAchievementDefinition('habit_games_50')?.threshold === 50);
   assert.ok(getAchievementDefinition('habit_games_100')?.threshold === 100);
+  assert.ok(getAchievementDefinition('habit_games_500')?.threshold === 500);
+  assert.ok(getAchievementDefinition('habit_games_500')?.rarity === 'RARE');
+  assert.ok(getAchievementDefinition('habit_games_1000')?.threshold === 1000);
+  assert.ok(getAchievementDefinition('habit_games_1000')?.rarity === 'LEGENDARY');
   assert.ok(getAchievementDefinition('habit_first_win')?.ruleKind === 'HABIT_FIRST_WIN');
+  assert.ok(getAchievementDefinition('habit_wins_10')?.threshold === 10);
+  assert.ok(getAchievementDefinition('habit_wins_25')?.threshold === 25);
+  assert.ok(getAchievementDefinition('habit_wins_50')?.rarity === 'RARE');
+  assert.ok(getAchievementDefinition('habit_wins_100')?.threshold === 100);
+  assert.ok(getAchievementDefinition('habit_wins_500')?.rarity === 'LEGENDARY');
 }
 
 {

@@ -46,6 +46,26 @@ const SPECS: Spec[] = [
     prompt: `${STYLE} Round victory medal hanging from a short folded ribbon (deep emerald green), polished gold face with a subtle embossed padel racket and ball motif, beveled rim. First-win celebration medal.`,
   },
   {
+    key: 'habit_wins_10',
+    prompt: `${STYLE} Circular victory medallion in brushed bronze with teal ribbon loop, bold high-contrast white numerals "10" centered on dark face, clean sans-serif, clearly readable. Win milestone medal.`,
+  },
+  {
+    key: 'habit_wins_25',
+    prompt: `${STYLE} Circular victory medallion in brushed copper-bronze with teal ribbon loop, bold high-contrast white numerals "25" centered on dark face, clean sans-serif, clearly readable. Win milestone medal.`,
+  },
+  {
+    key: 'habit_wins_50',
+    prompt: `${STYLE} Circular victory medallion in polished silver with emerald ribbon, bold high-contrast white numerals "50" centered on dark face, clean sans-serif, clearly readable. Rare win milestone medal.`,
+  },
+  {
+    key: 'habit_wins_100',
+    prompt: `${STYLE} Circular victory medallion in bright platinum-silver with deep emerald ribbon, bold high-contrast white numerals "100" centered on dark face, clean sans-serif, clearly readable. Rare win milestone medal.`,
+  },
+  {
+    key: 'habit_wins_500',
+    prompt: `${STYLE} Ornate legendary victory medallion in rich polished gold with emerald ribbon and subtle laurel motif, bold high-contrast white numerals "500" centered on dark face, clean sans-serif, clearly readable. Legendary win milestone medal.`,
+  },
+  {
     key: 'habit_games_10',
     prompt: `${STYLE} Hexagonal metal achievement badge in brushed bronze, beveled edges, soft teal enamel inset, embossed bold numerals "10" centered in clean sans-serif. Volume milestone badge.`,
   },
@@ -58,6 +78,14 @@ const SPECS: Spec[] = [
     prompt: `${STYLE} Hexagonal metal achievement badge in polished gold, beveled edges, deep teal enamel inset, embossed bold numerals "100" centered in clean sans-serif. Prestige volume milestone badge.`,
   },
   {
+    key: 'habit_games_500',
+    prompt: `${STYLE} Ornate hexagonal metal achievement badge in bright polished platinum-silver with violet enamel inset, embossed bold high-contrast numerals "500" in white or gold, clean sans-serif, clearly readable. Rare volume milestone.`,
+  },
+  {
+    key: 'habit_games_1000',
+    prompt: `${STYLE} Legendary hexagonal crest badge in rich polished gold with deep emerald enamel, ornate beveled rim, embossed bold high-contrast numerals "1000" in bright gold on dark enamel, clean sans-serif, clearly readable. Ultimate volume milestone.`,
+  },
+  {
     key: 'habit_streak_4',
     prompt: `${STYLE} Compact stylized flame icon in warm orange and amber glass-like material with soft inner glow. At the base, a small dark circular badge with a LARGE bright white glowing numeral "4" — high contrast, bold rounded sans-serif, clearly readable, not embossed into dark metal. Weekly streak emblem.`,
   },
@@ -68,6 +96,18 @@ const SPECS: Spec[] = [
   {
     key: 'habit_streak_12',
     prompt: `${STYLE} Intense triple-flame icon in hot magenta-orange and gold glass-like material with bright inner glow and subtle sparks. At the base, a small dark circular badge with LARGE bright white glowing numerals "12" — high contrast, bold rounded sans-serif, clearly readable, not embossed into dark metal. Elite streak emblem.`,
+  },
+  {
+    key: 'habit_streak_16',
+    prompt: `${STYLE} Powerful multi-peak flame icon in deep crimson and gold glass-like material with strong inner glow. At the base, a dark circular badge with LARGE bright white glowing numerals "16" — high contrast, bold rounded sans-serif, clearly readable. Rare long streak emblem.`,
+  },
+  {
+    key: 'habit_streak_32',
+    prompt: `${STYLE} Towering multi-layer flame icon in electric orange, gold, and violet glass-like material with intense glow and embers. At the base, a dark circular badge with LARGE bright white glowing numerals "32" — high contrast, bold rounded sans-serif, clearly readable. Rare half-year streak emblem.`,
+  },
+  {
+    key: 'habit_streak_64',
+    prompt: `${STYLE} Legendary inferno flame icon in white-hot gold core with magenta and deep red outer flames, sparks and energy. At the base, a dark circular badge with LARGE bright white glowing numerals "64" — high contrast, bold rounded sans-serif, clearly readable. Legendary year-long streak emblem.`,
   },
 ];
 

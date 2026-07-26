@@ -24,11 +24,11 @@ export function TrophyCabinet({ trophies, isOwn, ownerUserId }: TrophyCabinetPro
 
   if (visitorEmpty) {
     return (
-      <section className="rounded-2xl border border-gray-100/80 bg-gradient-to-b from-gray-50 via-white to-white px-4 py-6 dark:border-gray-700/50 dark:from-gray-800/40 dark:via-gray-900/30 dark:to-gray-900/20">
+      <section className="flex items-baseline gap-2 rounded-2xl border border-gray-100/80 bg-gradient-to-b from-gray-50 via-white to-white px-4 py-4 dark:border-gray-700/50 dark:from-gray-800/40 dark:via-gray-900/30 dark:to-gray-900/20">
         <h3 className="text-sm font-semibold tracking-tight text-gray-900 dark:text-white">
           {t('trophies.cabinet.title')}
         </h3>
-        <p className="mt-2 text-sm leading-relaxed text-gray-500 dark:text-gray-400">
+        <p className="text-sm leading-relaxed text-gray-500 dark:text-gray-400">
           {t('trophies.cabinet.visitorEmpty')}
         </p>
       </section>

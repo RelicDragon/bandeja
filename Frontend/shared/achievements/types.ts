@@ -4,7 +4,8 @@ export type TrophyRuleKind =
   | 'PODIUM'
   | 'HABIT_STREAK'
   | 'HABIT_VOLUME'
-  | 'HABIT_FIRST_WIN';
+  | 'HABIT_FIRST_WIN'
+  | 'HABIT_WINS';
 
 export type TrophyArtKey =
   | 'podium_gold'
@@ -14,9 +15,19 @@ export type TrophyArtKey =
   | 'habit_games_10'
   | 'habit_games_50'
   | 'habit_games_100'
+  | 'habit_games_500'
+  | 'habit_games_1000'
+  | 'habit_wins_10'
+  | 'habit_wins_25'
+  | 'habit_wins_50'
+  | 'habit_wins_100'
+  | 'habit_wins_500'
   | 'habit_streak_4'
   | 'habit_streak_8'
-  | 'habit_streak_12';
+  | 'habit_streak_12'
+  | 'habit_streak_16'
+  | 'habit_streak_32'
+  | 'habit_streak_64';
 
 export type AchievementDefinitionId =
   | 'podium_gold'
@@ -26,9 +37,19 @@ export type AchievementDefinitionId =
   | 'habit_games_10'
   | 'habit_games_50'
   | 'habit_games_100'
+  | 'habit_games_500'
+  | 'habit_games_1000'
+  | 'habit_wins_10'
+  | 'habit_wins_25'
+  | 'habit_wins_50'
+  | 'habit_wins_100'
+  | 'habit_wins_500'
   | 'habit_streak_4'
   | 'habit_streak_8'
-  | 'habit_streak_12';
+  | 'habit_streak_12'
+  | 'habit_streak_16'
+  | 'habit_streak_32'
+  | 'habit_streak_64';
 
 export type AchievementDefinition = {
   id: AchievementDefinitionId;

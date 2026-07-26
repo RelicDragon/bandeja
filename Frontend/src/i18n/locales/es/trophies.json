@@ -67,6 +67,26 @@
         "title": "Primera victoria",
         "description": "Gana tu primer partido válido."
       },
+      "wins10": {
+        "title": "Diez victorias",
+        "description": "Gana 10 partidos válidos."
+      },
+      "wins25": {
+        "title": "Veinticinco victorias",
+        "description": "Gana 25 partidos válidos."
+      },
+      "wins50": {
+        "title": "Cincuenta victorias",
+        "description": "Gana 50 partidos válidos."
+      },
+      "wins100": {
+        "title": "Cien victorias",
+        "description": "Gana 100 partidos válidos."
+      },
+      "wins500": {
+        "title": "Quinientas victorias",
+        "description": "Gana 500 partidos válidos."
+      },
       "games10": {
         "title": "Primeros pasos",
         "description": "Termina 10 partidos válidos."
@@ -79,6 +99,14 @@
         "title": "Centurión",
         "description": "Termina 100 partidos válidos."
       },
+      "games500": {
+        "title": "Quinientos",
+        "description": "Termina 500 partidos válidos."
+      },
+      "games1000": {
+        "title": "Club del mil",
+        "description": "Termina 1000 partidos válidos."
+      },
       "streak4": {
         "title": "Mes en marcha",
         "description": "Mantén una racha de 4 semanas."
@@ -90,6 +118,18 @@
       "streak12": {
         "title": "Temporada de fuego",
         "description": "Mantén una racha de 12 semanas."
+      },
+      "streak16": {
+        "title": "Cuatro meses ardientes",
+        "description": "Mantén una racha de 16 semanas."
+      },
+      "streak32": {
+        "title": "Medio año en llamas",
+        "description": "Mantén una racha de 32 semanas."
+      },
+      "streak64": {
+        "title": "Año de fuego",
+        "description": "Mantén una racha de 64 semanas."
       }
     }
   }

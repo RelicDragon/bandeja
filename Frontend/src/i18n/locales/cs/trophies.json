@@ -67,6 +67,26 @@
         "title": "První výhra",
         "description": "Vyhraj svůj první započítávaný zápas."
       },
+      "wins10": {
+        "title": "Deset výher",
+        "description": "Vyhraj 10 započítávaných zápasů."
+      },
+      "wins25": {
+        "title": "Pětadvacet výher",
+        "description": "Vyhraj 25 započítávaných zápasů."
+      },
+      "wins50": {
+        "title": "Padesát výher",
+        "description": "Vyhraj 50 započítávaných zápasů."
+      },
+      "wins100": {
+        "title": "Sto výher",
+        "description": "Vyhraj 100 započítávaných zápasů."
+      },
+      "wins500": {
+        "title": "Pětiset výher",
+        "description": "Vyhraj 500 započítávaných zápasů."
+      },
       "games10": {
         "title": "Začínáme",
         "description": "Dokonči 10 započítávaných zápasů."
@@ -79,6 +99,14 @@
         "title": "Stovka",
         "description": "Dokonči 100 započítávaných zápasů."
       },
+      "games500": {
+        "title": "Pětiset",
+        "description": "Dokonči 500 započítávaných zápasů."
+      },
+      "games1000": {
+        "title": "Tisícovka",
+        "description": "Dokonči 1000 započítávaných zápasů."
+      },
       "streak4": {
         "title": "Měsíc v pohybu",
         "description": "Udrž 4týdenní sérii."
@@ -90,6 +118,18 @@
       "streak12": {
         "title": "Sezóna ohně",
         "description": "Udrž 12týdenní sérii."
+      },
+      "streak16": {
+        "title": "Čtyři měsíce ohně",
+        "description": "Udrž 16týdenní sérii."
+      },
+      "streak32": {
+        "title": "Půlrok plamenů",
+        "description": "Udrž 32týdenní sérii."
+      },
+      "streak64": {
+        "title": "Rok ohně",
+        "description": "Udrž 64týdenní sérii."
       }
     }
   }

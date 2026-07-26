@@ -135,12 +135,22 @@
         'podium_silver',
         'podium_bronze',
         'habit_first_win',
+        'habit_wins_10',
+        'habit_wins_25',
+        'habit_wins_50',
+        'habit_wins_100',
+        'habit_wins_500',
         'habit_games_10',
         'habit_games_50',
         'habit_games_100',
+        'habit_games_500',
+        'habit_games_1000',
         'habit_streak_4',
         'habit_streak_8',
         'habit_streak_12',
+        'habit_streak_16',
+        'habit_streak_32',
+        'habit_streak_64',
       ];
       const grid = document.getElementById('grid');
       const sizes = [
@@ -155,7 +165,7 @@
         const stage = document.createElement('div');
         stage.className = 'stage';
         const img = document.createElement('img');
-        img.src = `/trophies/${key}.png?v=2`;
+        img.src = `/trophies/${key}.png?v=4`;
         img.alt = key;
         stage.appendChild(img);
         const label = document.createElement('div');
@@ -165,7 +175,7 @@
         row.className = 'sizes';
         for (const s of sizes) {
           const thumb = document.createElement('img');
-          thumb.src = `/trophies/${key}.png?v=2`;
+          thumb.src = `/trophies/${key}.png?v=4`;
           thumb.alt = `${key} ${s.label}`;
           thumb.style.setProperty('--sz', `${s.px}px`);
           thumb.title = `${s.px}px`;

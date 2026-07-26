@@ -1250,11 +1250,13 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PR-trophy-4 | Trophy detail sheet | Tap locked or unlocked trophy tile | Sheet with title, rarity, description; locked shows progress/hint |
 | PR-trophy-5 | Dark/light trophy UI | Toggle theme on Statistics with cabinet visible | Trophy frames/labels readable in both themes |
 | PR-trophy-6 | Habit unlock first win | Finish a qualifying rated win when user has 0 prior wins | `habit_first_win` appears on own cabinet/showcase; Common banner on Results once |
-| PR-trophy-7 | Habit unlock volume | Cross 10 / 50 / 100 qualifying finished games | Matching volume trophy grants once; cabinet shows unlocked; Common banner (no celebration sheet) |
+| PR-trophy-6b | Habit unlock wins milestones | Cross 10 / 25 / 50 / 100 / 500 qualifying wins | Matching win trophies grant once; 10–25 Common banner; 50–100 Rare + 500 Legendary celebration |
+| PR-trophy-7 | Habit unlock volume | Cross 10 / 50 / 100 / 500 / 1000 qualifying finished games | Matching volume trophy grants once; 10–100 Common banner; 500 Rare + 1000 Legendary celebration sheet |
 | PR-trophy-8 | Habit unlock streak 4 | Advance play streak to 4 weeks | `habit_streak_4` unlocks; Common banner on Results; count does not re-banner on same-week finish |
 | PR-trophy-9 | Habit unlock idempotent | Re-finalize / edit results after habit already earned | No duplicate instance; banner does not reappear for same unlock |
-| PR-trophy-10 | Rare streak celebration | Reach 8-week streak (Rare habit) | Trophy grants; Results opens celebration sheet (not Common banner) with Rare art + rarity badge; light/dark readable |
-| PR-trophy-11 | No historical soft backfill | User already above volume thresholds pre-ship → finish next qualifying game; streak uses current count only | No volume trophies for already-passed thresholds; streak unlocks only when current weeks cross 4/8/12 (not lifetime best dump) |
+| PR-trophy-10 | Rare streak celebration | Reach 8 / 12 / 16 / 32-week streak (Rare habit) | Trophy grants; Results opens celebration sheet (not Common banner) with Rare art + rarity badge; light/dark readable |
+| PR-trophy-10b | Legendary streak / volume | Reach 64-week streak or 1000 finished games | Legendary celebration sheet; art + badge match Legendary |
+| PR-trophy-11 | No historical soft backfill | User already above volume thresholds pre-ship → finish next qualifying game; streak uses current count only | No volume trophies for already-passed thresholds; streak unlocks only when current weeks cross 4/8/12/16/32/64 (not lifetime best dump) |
 | PR-trophy-12 | Rarity visual hierarchy | Own cabinet with Common + Rare + Legendary (or locked Legendary silhouette) | Frames, glow, and rarity badges clearly differ; showcase slots use matching rarity treatment |
 | PR-trophy-13 | Distinct trophy art | Browse full own cabinet catalog | Each definition shows unique art (podium cups / first-win medal / volume badges / streak flames) — not generic placeholders |
 | PR-trophy-14 | Celebration motion + cabinet CTA | Rare/Legendary unlock on Results | Sheet springs in with brief spark accents; View cabinet navigates to own profile; dismissible; works light/dark |
