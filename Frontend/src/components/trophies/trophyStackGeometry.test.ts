@@ -32,7 +32,8 @@ describe('trophyStackGeometry', () => {
   });
 
   it('computes expanded rail width and rem box size', () => {
-    expect(stackExpandedWidthRem(3)).toBeCloseTo(6.75 * 3 + 0.625 * 2);
+    // 3 cards + gaps + collapse chip
+    expect(stackExpandedWidthRem(3)).toBeCloseTo(6.75 * 3 + 0.625 * 2 + 0.625 + 1.75);
     expect(stackExpandedWidthRem(0)).toBe(0);
     const box = pileBoxSizeRem(3);
     expect(box.widthRem).toBeGreaterThan(4.5);

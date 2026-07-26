@@ -1258,7 +1258,7 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PR-trophy-2 | Own empty trophy cabinet | Profile → Statistics (or own card Statistics) with no unlocks | Cabinet title + count; horizontal snap carousel of locked tiles with progress bars; edge fades when scrollable; no body copy under the section title |
 | PR-trophy-2b | Trophy cabinet carousel | Player card / Profile Statistics with several trophies | Single-row horizontal carousel (unlocked first); partial next tile peeks; single cards open detail; family stacks expand first |
 | PR-trophy-2c | Habit family stack | Own Statistics with ≥2 unlocked `habit_games_*` (or wins/streak) | Same-family unlocks show as one piled stack (rarest on top); locked same-family is a separate pile; single unlock stays a normal card |
-| PR-trophy-2d | Stack expand → detail | Tap a trophy stack in the cabinet | Stack animates apart into cards (family label + Collapse); tap a card opens detail sheet; Collapse re-stacks; expanding another stack collapses the previous |
+| PR-trophy-2d | Stack expand → detail | Tap a trophy stack in the cabinet | Stack fans open in the same carousel row (no second row); inline collapse chip re-stacks; tap a card opens detail; expanding another stack collapses the previous |
 | PR-trophy-3 | Visitor empty trophies | Open another user’s card with zero trophies | Showcase hidden; cabinet calm empty (“No trophies yet”) — no locked graveyard |
 | PR-trophy-4 | Trophy detail sheet | Tap locked or unlocked trophy tile | Sheet with title, rarity, description; locked shows progress/hint |
 | PR-trophy-5 | Dark/light trophy UI | Toggle theme on Statistics with cabinet visible | Trophy frames/labels readable in both themes |

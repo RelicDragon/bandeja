@@ -1,6 +1,8 @@
 /** Shared pile geometry for collapsed trophy stacks (rem-based; no root-font px assumptions). */
 export const STACK_CARD_WIDTH_REM = 6.75;
 export const STACK_CARD_GAP_REM = 0.625;
+/** Inline collapse chip after expanded cards (w-7 ≈ 1.75rem). */
+export const STACK_COLLAPSE_CHIP_REM = 1.75;
 /** Horizontal layer offset in rem. */
 export const PILE_SHIFT_X_REM = 0.44;
 /** Vertical layer offset in rem (backs sit lower). */
@@ -11,7 +13,9 @@ export const MAX_PILE_LAYERS = 4;
 
 export function stackExpandedWidthRem(count: number): number {
   const n = Math.max(0, count);
-  return n * STACK_CARD_WIDTH_REM + Math.max(0, n - 1) * STACK_CARD_GAP_REM;
+  const cards = n * STACK_CARD_WIDTH_REM + Math.max(0, n - 1) * STACK_CARD_GAP_REM;
+  if (n === 0) return 0;
+  return cards + STACK_CARD_GAP_REM + STACK_COLLAPSE_CHIP_REM;
 }
 
 /**
