@@ -18,7 +18,6 @@ import { TrophyPendingCelebrationHost } from '@/components/trophies/TrophyPendin
 import { useAuthStore } from '@/store/authStore';
 import { MarketItem } from '@/types';
 import type { Sport } from '@/types';
-import { PlayerCardRatingStatus } from '@/components/player/PlayerCardRatingStatus';
 import {
   listEnabledSports,
   resolveProfileCardSport,
@@ -93,7 +92,6 @@ const PlayerCardProfileBodyComponent = ({
   const { user } = stats;
   const authUser = useAuthStore((s) => s.user);
   const authUserId = authUser?.id;
-  const isAdmin = Boolean(authUser?.isAdmin);
   const isOwnProfile = authUserId === user.id;
   const isFavorite = useFavoritesStore((state) => state.isFavorite(user.id));
   const isOnline = usePresenceStore((state) => state.isOnline(user.id));
@@ -199,11 +197,6 @@ const PlayerCardProfileBodyComponent = ({
     selection.kind === 'competitive'
       ? selection.sport
       : (lastCompetitiveSport ?? preferredSport);
-  const sportScopedStatsReady =
-    !showProfileTabs
-    || selection.kind === 'social'
-    || !stats.sport
-    || (pickerSport != null && stats.sport === pickerSport);
 
   useEffect(() => {
     if (!showSportLevelTabs) return;
@@ -295,11 +288,6 @@ const PlayerCardProfileBodyComponent = ({
               trophies={user.trophies}
               isOwn={isOwnProfile}
               nested={celebrationNested}
-            />
-            <PlayerCardRatingStatus
-              settling={sportScopedStatsReady ? Boolean(user.ratingSettling) : false}
-              uncertainty={sportScopedStatsReady && isAdmin ? user.ratingUncertainty : null}
-              t={t}
             />
           </div>
         </div>
