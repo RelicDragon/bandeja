@@ -466,9 +466,7 @@ export const GameResultsEntryEmbedded = ({
                   />
                 </div>
                 {showWorkoutSummaryCard ? (
-                  <div className="[&>div]:px-0 [&>div]:py-4">
-                    <GameWorkoutSummaryCard gameId={currentGame.id} />
-                  </div>
+                  <GameWorkoutSummaryCard gameId={currentGame.id} />
                 ) : null}
               </div>
             ) : currentGame && currentGame.resultsStatus !== 'NONE' && activeTab === 'stats' ? (

@@ -40,11 +40,13 @@ export const GameWorkoutSummaryCard = ({ gameId }: GameWorkoutSummaryCardProps) 
 
   if (phase === 'loading') {
     return (
-      <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50/80 p-4 dark:border-gray-600 dark:bg-gray-800/40">
-        <div className="h-3 w-28 animate-pulse rounded bg-gray-200 dark:bg-gray-600" />
-        <div className="mt-3 flex gap-3">
-          <div className="h-4 w-16 animate-pulse rounded bg-gray-200 dark:bg-gray-600" />
-          <div className="h-4 w-16 animate-pulse rounded bg-gray-200 dark:bg-gray-600" />
+      <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50/80 dark:border-gray-600 dark:bg-gray-800/40">
+        <div className="px-4 py-4">
+          <div className="h-3 w-28 animate-pulse rounded bg-gray-200 dark:bg-gray-600" />
+          <div className="mt-3 flex gap-3">
+            <div className="h-4 w-16 animate-pulse rounded bg-gray-200 dark:bg-gray-600" />
+            <div className="h-4 w-16 animate-pulse rounded bg-gray-200 dark:bg-gray-600" />
+          </div>
         </div>
       </div>
     );
@@ -66,35 +68,37 @@ export const GameWorkoutSummaryCard = ({ gameId }: GameWorkoutSummaryCardProps) 
   }
 
   return (
-    <div className="mt-4 rounded-xl border border-gray-200 bg-gradient-to-br from-orange-50/80 to-rose-50/60 p-4 dark:border-gray-600 dark:from-orange-950/30 dark:to-rose-950/20">
-      <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-        {t('healthWorkout.yourSession')}
-      </div>
-      <div className="flex flex-wrap gap-4 text-sm">
-        {row.totalEnergyKcal != null && (
-          <div className="flex items-center gap-1.5 text-orange-700 dark:text-orange-300">
-            <Flame className="h-4 w-4 shrink-0" />
-            <span className="font-semibold tabular-nums">{Math.round(row.totalEnergyKcal)}</span>
-            <span className="text-gray-600 dark:text-gray-400">{t('healthWorkout.kcal')}</span>
+    <div className="mt-4 rounded-xl border border-gray-200 bg-gradient-to-br from-orange-50/80 to-rose-50/60 dark:border-gray-600 dark:from-orange-950/30 dark:to-rose-950/20">
+      <div className="px-4 py-4">
+        <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+          {t('healthWorkout.yourSession')}
+        </div>
+        <div className="flex flex-wrap gap-4 text-sm">
+          {row.totalEnergyKcal != null && (
+            <div className="flex items-center gap-1.5 text-orange-700 dark:text-orange-300">
+              <Flame className="h-4 w-4 shrink-0" />
+              <span className="font-semibold tabular-nums">{Math.round(row.totalEnergyKcal)}</span>
+              <span className="text-gray-600 dark:text-gray-400">{t('healthWorkout.kcal')}</span>
+            </div>
+          )}
+          {row.avgHeartRate != null && (
+            <div className="flex items-center gap-1.5 text-rose-700 dark:text-rose-300">
+              <Heart className="h-4 w-4 shrink-0" />
+              <span className="font-semibold tabular-nums">{Math.round(row.avgHeartRate)}</span>
+              <span className="text-gray-600 dark:text-gray-400">{t('healthWorkout.avgBpm')}</span>
+            </div>
+          )}
+          {row.maxHeartRate != null && (
+            <div className="flex items-center gap-1.5 text-rose-600/90 dark:text-rose-400/90">
+              <Heart className="h-4 w-4 shrink-0" />
+              <span className="font-semibold tabular-nums">{Math.round(row.maxHeartRate)}</span>
+              <span className="text-gray-600 dark:text-gray-400">{t('healthWorkout.maxBpm')}</span>
+            </div>
+          )}
+          <div className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-300">
+            <Timer className="h-4 w-4 shrink-0" />
+            <span className="font-semibold tabular-nums">{formatWorkoutDuration(row.durationSeconds)}</span>
           </div>
-        )}
-        {row.avgHeartRate != null && (
-          <div className="flex items-center gap-1.5 text-rose-700 dark:text-rose-300">
-            <Heart className="h-4 w-4 shrink-0" />
-            <span className="font-semibold tabular-nums">{Math.round(row.avgHeartRate)}</span>
-            <span className="text-gray-600 dark:text-gray-400">{t('healthWorkout.avgBpm')}</span>
-          </div>
-        )}
-        {row.maxHeartRate != null && (
-          <div className="flex items-center gap-1.5 text-rose-600/90 dark:text-rose-400/90">
-            <Heart className="h-4 w-4 shrink-0" />
-            <span className="font-semibold tabular-nums">{Math.round(row.maxHeartRate)}</span>
-            <span className="text-gray-600 dark:text-gray-400">{t('healthWorkout.maxBpm')}</span>
-          </div>
-        )}
-        <div className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-300">
-          <Timer className="h-4 w-4 shrink-0" />
-          <span className="font-semibold tabular-nums">{formatWorkoutDuration(row.durationSeconds)}</span>
         </div>
       </div>
     </div>
