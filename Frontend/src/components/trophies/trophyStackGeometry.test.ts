@@ -20,8 +20,9 @@ describe('trophyStackGeometry', () => {
     expect(Number.isFinite(layer.xRem)).toBe(true);
   });
 
-  it('caps painted pile layers but keeps cheapest + rarest', () => {
-    const ids = ['a', 'b', 'c', 'd', 'e', 'f'];
+  it('caps painted pile layers but keeps cheapest + rarest (paint worst→best)', () => {
+    // Input best → worst
+    const ids = ['f', 'e', 'd', 'c', 'b', 'a'];
     expect(selectPileLayers(ids)).toEqual(['a', 'd', 'e', 'f']);
   });
 

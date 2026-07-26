@@ -36,8 +36,9 @@ export function TrophyCabinetPile({
   const { t } = useTranslation();
   if (entries.length < 2) return null;
 
-  const top = entries[entries.length - 1]!;
-  const nextChase = locked ? entries[0] : null;
+  const top = entries[0]!;
+  // Locked chase = easiest remaining (last in best→worst order).
+  const nextChase = locked ? entries[entries.length - 1]! : null;
   const progress = nextChase?.progress;
   const showProgress =
     locked &&

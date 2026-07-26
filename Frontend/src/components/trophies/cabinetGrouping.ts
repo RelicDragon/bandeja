@@ -7,25 +7,26 @@ export type TrophyCabinetRailItem =
       key: string;
       ruleKind: string;
       unlocked: boolean;
-      /** Cheapest → hardest; last entry is top of the pile. */
+      /** Best → worst (leftmost / pile top first). */
       entries: TrophyCabinetEntryView[];
     };
 
-function stackSortKey(entry: TrophyCabinetEntryView): number {
+/** Higher = better (harder threshold, better podium place). */
+export function stackBetterScore(entry: TrophyCabinetEntryView): number {
   const { definition } = entry;
   if (typeof definition.threshold === 'number' && Number.isFinite(definition.threshold)) {
     return definition.threshold;
   }
   if (typeof definition.place === 'number' && Number.isFinite(definition.place)) {
-    // Higher place number = cheaper (bronze behind, gold on top).
+    // place 1 (gold) > place 2 > place 3
     return 4 - definition.place;
   }
   return 0;
 }
 
-/** Sort cheapest/easiest first so the rarest sits on top of the pile. */
+/** Sort best → worst so carousel / expanded row leftmost is the best. */
 export function sortStackEntries(entries: TrophyCabinetEntryView[]): TrophyCabinetEntryView[] {
-  return [...entries].sort((a, b) => stackSortKey(a) - stackSortKey(b));
+  return [...entries].sort((a, b) => stackBetterScore(b) - stackBetterScore(a));
 }
 
 function entryRecency(entry: TrophyCabinetEntryView): number {
@@ -61,9 +62,30 @@ function groupProgressRatio(entries: TrophyCabinetEntryView[]): number {
   return max;
 }
 
+function itemBetterScore(item: TrophyCabinetRailItem): number {
+  if (item.kind === 'card') return stackBetterScore(item.entry);
+  let max = 0;
+  for (const entry of item.entries) {
+    const score = stackBetterScore(entry);
+    if (score > max) max = score;
+  }
+  return max;
+}
+
+function itemRecency(item: TrophyCabinetRailItem): number {
+  return item.kind === 'card' ? entryRecency(item.entry) : groupRecency(item.entries);
+}
+
+function itemProgressRatio(item: TrophyCabinetRailItem): number {
+  return item.kind === 'card'
+    ? entryProgressRatio(item.entry)
+    : groupProgressRatio(item.entries);
+}
+
 /**
  * Group cabinet entries by (ruleKind, unlocked).
  * Singles stay cards; 2+ become stacks. Unlocked stacks stay separate from locked.
+ * Rail order: unlocked first (best leftmost), then locked (closest progress leftmost).
  */
 export function groupCabinetRailItems(
   entries: TrophyCabinetEntryView[],
@@ -112,15 +134,13 @@ export function groupCabinetRailItems(
     if (aUnlocked !== bUnlocked) return aUnlocked ? -1 : 1;
 
     if (aUnlocked && bUnlocked) {
-      const aTime = a.kind === 'card' ? entryRecency(a.entry) : groupRecency(a.entries);
-      const bTime = b.kind === 'card' ? entryRecency(b.entry) : groupRecency(b.entries);
-      return bTime - aTime;
+      const better = itemBetterScore(b) - itemBetterScore(a);
+      if (better !== 0) return better;
+      return itemRecency(b) - itemRecency(a);
     }
 
-    const aProg =
-      a.kind === 'card' ? entryProgressRatio(a.entry) : groupProgressRatio(a.entries);
-    const bProg =
-      b.kind === 'card' ? entryProgressRatio(b.entry) : groupProgressRatio(b.entries);
-    return bProg - aProg;
+    const prog = itemProgressRatio(b) - itemProgressRatio(a);
+    if (prog !== 0) return prog;
+    return itemBetterScore(a) - itemBetterScore(b);
   });
 }

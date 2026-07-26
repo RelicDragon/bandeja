@@ -19,13 +19,16 @@ export function stackExpandedWidthRem(count: number): number {
 }
 
 /**
- * Layers to paint for a pile. Keeps cheapest peek + rarest tops when over cap.
- * Input must already be cheap→hard (rarest last).
+ * Layers to paint for a pile (worst → best so rarest ends on top).
+ * Input must already be best → worst.
  */
 export function selectPileLayers<T>(entries: readonly T[]): readonly T[] {
-  if (entries.length <= MAX_PILE_LAYERS) return entries;
-  const tail = MAX_PILE_LAYERS - 1;
-  return [entries[0]!, ...entries.slice(entries.length - tail)];
+  if (entries.length <= MAX_PILE_LAYERS) {
+    return [...entries].reverse();
+  }
+  const head = MAX_PILE_LAYERS - 1;
+  const kept = [...entries.slice(0, head), entries[entries.length - 1]!];
+  return kept.reverse();
 }
 
 export function pileLayerStyle(index: number, count: number): {

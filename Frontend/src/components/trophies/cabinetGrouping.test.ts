@@ -43,29 +43,29 @@ function entry(
 }
 
 describe('sortStackEntries', () => {
-  it('orders volume habits cheapest → legendary (top)', () => {
+  it('orders volume habits best → worst (leftmost / pile top first)', () => {
     const sorted = sortStackEntries([
       entry(def({ id: 'habit_games_1000', ruleKind: 'HABIT_VOLUME', threshold: 1000, rarity: 'LEGENDARY' }), true),
       entry(def({ id: 'habit_games_10', ruleKind: 'HABIT_VOLUME', threshold: 10 }), true),
       entry(def({ id: 'habit_games_500', ruleKind: 'HABIT_VOLUME', threshold: 500, rarity: 'RARE' }), true),
     ]);
     expect(sorted.map((e) => e.definition.id)).toEqual([
-      'habit_games_10',
-      'habit_games_500',
       'habit_games_1000',
+      'habit_games_500',
+      'habit_games_10',
     ]);
   });
 
-  it('orders podium bronze → gold (gold on top)', () => {
+  it('orders podium gold → bronze (gold first)', () => {
     const sorted = sortStackEntries([
       entry(def({ id: 'podium_gold', ruleKind: 'PODIUM', place: 1, rarity: 'LEGENDARY' }), true),
       entry(def({ id: 'podium_bronze', ruleKind: 'PODIUM', place: 3, rarity: 'RARE' }), true),
       entry(def({ id: 'podium_silver', ruleKind: 'PODIUM', place: 2, rarity: 'RARE' }), true),
     ]);
     expect(sorted.map((e) => e.definition.id)).toEqual([
-      'podium_bronze',
-      'podium_silver',
       'podium_gold',
+      'podium_silver',
+      'podium_bronze',
     ]);
   });
 });
@@ -112,9 +112,31 @@ describe('groupCabinetRailItems', () => {
     expect(items[1]).toMatchObject({ kind: 'stack', unlocked: false, ruleKind: 'HABIT_VOLUME' });
     if (items[0]?.kind === 'stack') {
       expect(items[0].entries.map((e) => e.definition.id)).toEqual([
-        'habit_games_10',
         'habit_games_50',
+        'habit_games_10',
       ]);
+    }
+  });
+
+  it('puts better unlocked items leftmost in the carousel', () => {
+    const items = groupCabinetRailItems([
+      entry(def({ id: 'habit_first_win', ruleKind: 'HABIT_FIRST_WIN', threshold: 1 }), true, {
+        earnedAt: '2026-06-01T00:00:00.000Z',
+      }),
+      entry(def({ id: 'habit_games_100', ruleKind: 'HABIT_VOLUME', threshold: 100 }), true, {
+        earnedAt: '2026-01-01T00:00:00.000Z',
+      }),
+      entry(def({ id: 'habit_games_10', ruleKind: 'HABIT_VOLUME', threshold: 10 }), true, {
+        earnedAt: '2026-02-01T00:00:00.000Z',
+      }),
+    ]);
+    expect(items[0]?.kind).toBe('stack');
+    if (items[0]?.kind === 'stack') {
+      expect(items[0].entries[0]?.definition.id).toBe('habit_games_100');
+    }
+    expect(items[1]?.kind).toBe('card');
+    if (items[1]?.kind === 'card') {
+      expect(items[1].entry.definition.id).toBe('habit_first_win');
     }
   });
 
@@ -125,6 +147,11 @@ describe('groupCabinetRailItems', () => {
     ]);
     expect(items.every((i) => i.kind === 'card')).toBe(true);
     expect(items).toHaveLength(2);
+    // Higher threshold (games 10) before streak 4
+    if (items[0]?.kind === 'card' && items[1]?.kind === 'card') {
+      expect(items[0].entry.definition.id).toBe('habit_games_10');
+      expect(items[1].entry.definition.id).toBe('habit_streak_4');
+    }
   });
 
   it('puts unlocked items before locked', () => {
