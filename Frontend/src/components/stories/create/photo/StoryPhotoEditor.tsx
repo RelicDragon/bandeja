@@ -119,25 +119,36 @@ export function StoryPhotoEditor({ open, files, onClose, onPublished }: StoryPho
   }, [commitTransaction]);
 
   const flushOpenTextEdit = useCallback(() => {
-    if (!editingTextId) return;
-    const node = activeDoc?.nodes.find((n) => n.id === editingTextId && isTextNode(n));
-    const draft = textDraft.trim();
-    const fallback = node && isTextNode(node) ? node.text.trim() : '';
-    const text = draft || fallback;
-    if (!text) {
-      deleteNode(editingTextId);
+    if (editingTextId) {
+      const node = activeDoc?.nodes.find((n) => n.id === editingTextId && isTextNode(n));
+      const draft = textDraft.trim();
+      const fallback = node && isTextNode(node) ? node.text.trim() : '';
+      const text = draft || fallback;
+      if (!text) {
+        deleteNode(editingTextId);
+        setSelectedNodeId(null);
+        if (activeTool === 'text') setActiveTool(null);
+      } else if (draft) {
+        setTextNode(editingTextId, { text: draft });
+      }
+      exitTextEdit();
+      return;
+    }
+
+    if (!selectedNodeId) return;
+    const selected = activeDoc?.nodes.find((n) => n.id === selectedNodeId);
+    if (selected && isTextNode(selected) && !selected.text.trim()) {
+      deleteNode(selectedNodeId);
       setSelectedNodeId(null);
       if (activeTool === 'text') setActiveTool(null);
-    } else if (draft) {
-      setTextNode(editingTextId, { text: draft });
     }
-    exitTextEdit();
   }, [
     activeDoc?.nodes,
     activeTool,
     deleteNode,
     editingTextId,
     exitTextEdit,
+    selectedNodeId,
     setSelectedNodeId,
     setTextNode,
     textDraft,

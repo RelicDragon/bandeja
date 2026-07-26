@@ -151,7 +151,7 @@ export const useStoriesStore = create<StoriesState>((set, get) => ({
 
   fetchFeed: async (force = false) => {
     const { lastFetchedAt, isLoading } = get();
-    if (isLoading) return get().feed;
+    if (isLoading && !force) return get().feed;
     if (!force && lastFetchedAt && Date.now() - lastFetchedAt < STORY_FEED_TTL_MS) {
       return get().feed;
     }
@@ -166,8 +166,9 @@ export const useStoriesStore = create<StoriesState>((set, get) => ({
         viewedKeys: mergeViewedKeys(feed, s.viewedKeys),
       }));
       return feed;
-    } catch {
+    } catch (err) {
       set({ isLoading: false });
+      if (force) throw err;
       return get().feed;
     }
   },

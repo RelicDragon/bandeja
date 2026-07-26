@@ -108,8 +108,13 @@ export function useStoryVideoPublish() {
           caption,
           onTranscodeProgress: (p) => setProgress(p),
         });
-        await fetchFeed(true);
-        toast.success(t('stories.published'));
+        try {
+          await fetchFeed(true);
+          toast.success(t('stories.published'));
+        } catch {
+          toast.success(t('stories.published'));
+          toast.error(t('stories.editor.publishFeedRefreshFailed'));
+        }
         return key;
       } catch (err) {
         const key =

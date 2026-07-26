@@ -232,7 +232,11 @@ export function StoriesViewer({
       const status = (err as { response?: { status?: number } })?.response?.status;
       if (status === 404) return true;
       toast.error(t('stories.viewer.deleteStoryFailed'));
-      await fetchFeed(true);
+      try {
+        await fetchFeed(true);
+      } catch {
+        // Feed refresh is best-effort after delete failure.
+      }
       return false;
     } finally {
       deleteInFlightRef.current.delete(segmentKey);

@@ -25,8 +25,7 @@ export function storyDocumentContentHash(doc: StoryDocument, caption?: string): 
   return JSON.stringify({
     caption: caption?.trim() ?? '',
     previewUrl: media?.source.previewUrl ?? '',
-    naturalWidth: media?.source.naturalWidth ?? null,
-    naturalHeight: media?.source.naturalHeight ?? null,
+    // Omit naturalWidth/Height — filled async after load; must not invalidate hash.
     transform: media?.transform ?? null,
     adjust: media?.adjust ?? null,
     overlays,

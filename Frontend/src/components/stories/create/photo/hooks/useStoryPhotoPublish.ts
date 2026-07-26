@@ -181,7 +181,8 @@ export function useStoryPhotoPublish() {
               try {
                 await deletePublishedSegmentKey(slot.segmentKey);
               } catch {
-                // Continue — re-publish with a fresh clientUploadId.
+                toast.error(t('stories.editor.publishOrphanCleanupFailed'));
+                throw new StoryPhotoPublishError('create');
               }
             }
             slot = {

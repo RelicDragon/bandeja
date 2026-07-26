@@ -31,16 +31,17 @@ export function PhotoStoryCropScreen({ imageUrl, onConfirm, onCancel }: PhotoSto
   const handleConfirm = useCallback(async () => {
     if (!area || busy) return;
     setBusy(true);
+    let blobUrl: string | null = null;
     try {
-      const blobUrl = await getCroppedImg(imageUrl, area, 0);
+      blobUrl = await getCroppedImg(imageUrl, area, 0);
       const res = await fetch(blobUrl);
       const blob = await res.blob();
-      URL.revokeObjectURL(blobUrl);
       lightHaptic();
       onConfirm(new File([blob], `story-crop-${Date.now()}.jpg`, { type: 'image/jpeg' }));
     } catch {
       toast.error(t('stories.editor.cropFailed'));
     } finally {
+      if (blobUrl) URL.revokeObjectURL(blobUrl);
       setBusy(false);
     }
   }, [area, busy, imageUrl, onConfirm, t]);
