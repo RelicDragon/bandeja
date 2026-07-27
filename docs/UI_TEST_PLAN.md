@@ -1264,6 +1264,10 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PR-trophy-5 | Dark/light trophy UI | Toggle theme on Statistics with cabinet visible | Trophy frames/labels readable in both themes |
 | PR-trophy-6 | Habit unlock first win | Finish a qualifying rated win when user has 0 prior wins | `habit_first_win` appears on own cabinet/showcase; Common banner on Results once |
 | PR-trophy-6a | Habit unlock first padel game | Finish first qualifying PADEL game (0 prior padel finishes) | `habit_first_padel_game` unlocks; Common banner; tennis-only play does not unlock |
+| PR-trophy-6c | Rally Starter organize games | Owner of rated PADEL GAME reaches FINAL (1 / 10 / 25 / 50 / 100 / 500) | Matching org-game trophies grant once; non-rating / non-padel / non-OWNER do not |
+| PR-trophy-6d | Tournament host organize | Owner of rated PADEL TOURNAMENT reaches FINAL (1 / 5 / 10 / 25 / 50 / 100) | Matching org-tournament trophies grant once |
+| PR-trophy-6e | Soul of the party (Bar) | OWNER of BAR reaches FINAL (1 / 5 / 10 / 25 / 50 / 100) | Matching org-bar trophies grant (any sport); no affectsRating required |
+
 | PR-trophy-6b | Habit unlock wins milestones | Cross 10 / 25 / 50 / 100 / 500 qualifying wins | Matching win trophies grant once; 10–25 Common banner; 50–100 Rare + 500 Legendary celebration |
 | PR-trophy-7 | Habit unlock volume | Cross 10 / 50 / 100 / 500 / 1000 qualifying finished games | Matching volume trophy grants once; 10–100 Common banner; 500 Rare + 1000 Legendary celebration sheet |
 | PR-trophy-8 | Habit unlock streak 4 | Advance play streak to 4 weeks | `habit_streak_4` unlocks; Common banner on Results; count does not re-banner on same-week finish |

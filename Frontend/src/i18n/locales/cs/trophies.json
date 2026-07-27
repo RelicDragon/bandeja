@@ -40,7 +40,10 @@
         "wins": "Výhry",
         "podium": "Pódium",
         "debut": "Debut",
-        "generic": "Trofeje"
+        "generic": "Trofeje",
+        "rallyStarter": "Rally Starter",
+        "tournamentHost": "Pořadatel turnaje",
+        "soulOfTheParty": "Duše party"
       }
     },
     "detail": {
@@ -144,6 +147,78 @@
       "streak64": {
         "title": "Rok ohně",
         "description": "Udrž 64týdenní sérii."
+      },
+      "orgGame1": {
+        "title": "Rally Starter",
+        "description": "Zorganizuj svůj první ratingový padelový zápas až do finalizace výsledků."
+      },
+      "orgGame10": {
+        "title": "Rally Starter ×10",
+        "description": "Zorganizuj 10 ratingových padelových zápasů až do finalizace výsledků."
+      },
+      "orgGame25": {
+        "title": "Rally Starter ×25",
+        "description": "Zorganizuj 25 ratingových padelových zápasů až do finalizace výsledků."
+      },
+      "orgGame50": {
+        "title": "Rally Starter ×50",
+        "description": "Zorganizuj 50 ratingových padelových zápasů až do finalizace výsledků."
+      },
+      "orgGame100": {
+        "title": "Rally Starter ×100",
+        "description": "Zorganizuj 100 ratingových padelových zápasů až do finalizace výsledků."
+      },
+      "orgGame500": {
+        "title": "Rally Starter ×500",
+        "description": "Zorganizuj 500 ratingových padelových zápasů až do finalizace výsledků."
+      },
+      "orgTournament1": {
+        "title": "Otevření pavouka",
+        "description": "Zorganizuj svůj první ratingový padelový turnaj až do finalizace výsledků."
+      },
+      "orgTournament5": {
+        "title": "Otevření pavouka ×5",
+        "description": "Zorganizuj 5 ratingových padelových turnajů až do finalizace výsledků."
+      },
+      "orgTournament10": {
+        "title": "Otevření pavouka ×10",
+        "description": "Zorganizuj 10 ratingových padelových turnajů až do finalizace výsledků."
+      },
+      "orgTournament25": {
+        "title": "Otevření pavouka ×25",
+        "description": "Zorganizuj 25 ratingových padelových turnajů až do finalizace výsledků."
+      },
+      "orgTournament50": {
+        "title": "Otevření pavouka ×50",
+        "description": "Zorganizuj 50 ratingových padelových turnajů až do finalizace výsledků."
+      },
+      "orgTournament100": {
+        "title": "Otevření pavouka ×100",
+        "description": "Zorganizuj 100 ratingových padelových turnajů až do finalizace výsledků."
+      },
+      "orgBar1": {
+        "title": "Duše party",
+        "description": "Uspořádej svůj první Bar event až do finalizace výsledků."
+      },
+      "orgBar5": {
+        "title": "Duše party ×5",
+        "description": "Uspořádej 5 Bar eventů až do finalizace výsledků."
+      },
+      "orgBar10": {
+        "title": "Duše party ×10",
+        "description": "Uspořádej 10 Bar eventů až do finalizace výsledků."
+      },
+      "orgBar25": {
+        "title": "Duše party ×25",
+        "description": "Uspořádej 25 Bar eventů až do finalizace výsledků."
+      },
+      "orgBar50": {
+        "title": "Duše party ×50",
+        "description": "Uspořádej 50 Bar eventů až do finalizace výsledků."
+      },
+      "orgBar100": {
+        "title": "Duše party ×100",
+        "description": "Uspořádej 100 Bar eventů až do finalizace výsledků."
       }
     }
   }

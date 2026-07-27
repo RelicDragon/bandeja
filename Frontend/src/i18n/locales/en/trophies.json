@@ -40,6 +40,9 @@
         "wins": "Wins",
         "podium": "Podium",
         "debut": "Debut",
+        "rallyStarter": "Rally Starter",
+        "tournamentHost": "Tournament host",
+        "soulOfTheParty": "Soul of the party",
         "generic": "Trophies"
       }
     },
@@ -144,6 +147,78 @@
       "streak64": {
         "title": "Year of fire",
         "description": "Keep a 64-week play streak."
+      },
+      "orgGame1": {
+        "title": "Rally Starter",
+        "description": "Organize your first rated padel game through final results."
+      },
+      "orgGame10": {
+        "title": "Rally Starter ×10",
+        "description": "Organize 10 rated padel games through final results."
+      },
+      "orgGame25": {
+        "title": "Rally Starter ×25",
+        "description": "Organize 25 rated padel games through final results."
+      },
+      "orgGame50": {
+        "title": "Rally Starter ×50",
+        "description": "Organize 50 rated padel games through final results."
+      },
+      "orgGame100": {
+        "title": "Rally Starter ×100",
+        "description": "Organize 100 rated padel games through final results."
+      },
+      "orgGame500": {
+        "title": "Rally Starter ×500",
+        "description": "Organize 500 rated padel games through final results."
+      },
+      "orgTournament1": {
+        "title": "Bracket opener",
+        "description": "Organize your first rated padel tournament through final results."
+      },
+      "orgTournament5": {
+        "title": "Bracket opener ×5",
+        "description": "Organize 5 rated padel tournaments through final results."
+      },
+      "orgTournament10": {
+        "title": "Bracket opener ×10",
+        "description": "Organize 10 rated padel tournaments through final results."
+      },
+      "orgTournament25": {
+        "title": "Bracket opener ×25",
+        "description": "Organize 25 rated padel tournaments through final results."
+      },
+      "orgTournament50": {
+        "title": "Bracket opener ×50",
+        "description": "Organize 50 rated padel tournaments through final results."
+      },
+      "orgTournament100": {
+        "title": "Bracket opener ×100",
+        "description": "Organize 100 rated padel tournaments through final results."
+      },
+      "orgBar1": {
+        "title": "Soul of the party",
+        "description": "Host your first Bar event through final results."
+      },
+      "orgBar5": {
+        "title": "Soul of the party ×5",
+        "description": "Host 5 Bar events through final results."
+      },
+      "orgBar10": {
+        "title": "Soul of the party ×10",
+        "description": "Host 10 Bar events through final results."
+      },
+      "orgBar25": {
+        "title": "Soul of the party ×25",
+        "description": "Host 25 Bar events through final results."
+      },
+      "orgBar50": {
+        "title": "Soul of the party ×50",
+        "description": "Host 50 Bar events through final results."
+      },
+      "orgBar100": {
+        "title": "Soul of the party ×100",
+        "description": "Host 100 Bar events through final results."
       }
     }
   }

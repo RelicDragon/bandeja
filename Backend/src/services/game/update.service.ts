@@ -43,6 +43,7 @@ import {
   syncPodiumAfterLeavingFinal,
   writePodiumUnlocksToGameOutcomes,
 } from '../achievements/podiumGrant.service';
+import { grantOrganizeAchievementsForFinalizedGame } from '../achievements/organizeGrant.service';
 
 /** Only scalar fields — nested writes / API echo keys force Prisma onto GameUpdateInput where courtId/clubId are invalid. */
 const GAME_UNCHECKED_SCALAR_KEYS = new Set<string>([
@@ -719,6 +720,13 @@ export class GameUpdateService {
             gameId: id,
             batch: podiumBatch,
           });
+        }
+        if (
+          currentGame?.entityType === EntityType.TOURNAMENT ||
+          currentGame?.entityType === EntityType.GAME ||
+          currentGame?.entityType === EntityType.BAR
+        ) {
+          await grantOrganizeAchievementsForFinalizedGame({ gameId: id, tx });
         }
         if (currentGame?.entityType === EntityType.LEAGUE && currentGame.parentId) {
           await syncParentSeasonPodiumIfFinal({ gameId: id, tx });

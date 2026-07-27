@@ -113,6 +113,78 @@ const SPECS: Spec[] = [
     key: 'habit_streak_64',
     prompt: `${STYLE} Legendary inferno flame icon in white-hot gold core with magenta and deep red outer flames, sparks and energy. At the base, a dark circular badge with LARGE bright white glowing numerals "64" — high contrast, bold rounded sans-serif, clearly readable. Legendary year-long streak emblem.`,
   },
+  {
+    key: 'habit_org_game_1',
+    prompt: `${STYLE} Rally Starter emblem: stylized padel racket leaning on a clipboard with a whistle, teal accents, dark badge with bright white numeral "1". Game organizer debut icon.`,
+  },
+  {
+    key: 'habit_org_game_10',
+    prompt: `${STYLE} Rally Starter emblem: padel racket and clipboard organizer icon, bronze metal, dark badge with bright white numerals "10".`,
+  },
+  {
+    key: 'habit_org_game_25',
+    prompt: `${STYLE} Rally Starter emblem: padel racket and clipboard organizer icon, copper metal, dark badge with bright white numerals "25".`,
+  },
+  {
+    key: 'habit_org_game_50',
+    prompt: `${STYLE} Rally Starter emblem: padel racket and clipboard organizer icon, polished silver, dark badge with bright white numerals "50". Rare.`,
+  },
+  {
+    key: 'habit_org_game_100',
+    prompt: `${STYLE} Rally Starter emblem: padel racket and clipboard organizer icon, platinum-silver with teal enamel, dark badge with bright white numerals "100". Rare.`,
+  },
+  {
+    key: 'habit_org_game_500',
+    prompt: `${STYLE} Legendary Rally Starter crest: ornate gold padel racket and clipboard, emerald accents, dark badge with bright white numerals "500".`,
+  },
+  {
+    key: 'habit_org_tournament_1',
+    prompt: `${STYLE} Tournament organizer medallion: miniature bracket trophy with padel ball, bronze, dark badge bright white "1".`,
+  },
+  {
+    key: 'habit_org_tournament_5',
+    prompt: `${STYLE} Tournament organizer medallion: miniature bracket trophy with padel ball, copper, dark badge bright white "5".`,
+  },
+  {
+    key: 'habit_org_tournament_10',
+    prompt: `${STYLE} Tournament organizer medallion: miniature bracket trophy with padel ball, silver, dark badge bright white "10".`,
+  },
+  {
+    key: 'habit_org_tournament_25',
+    prompt: `${STYLE} Rare tournament organizer medallion: silver-gold bracket trophy, dark badge bright white "25".`,
+  },
+  {
+    key: 'habit_org_tournament_50',
+    prompt: `${STYLE} Rare tournament organizer medallion: platinum bracket trophy, dark badge bright white "50".`,
+  },
+  {
+    key: 'habit_org_tournament_100',
+    prompt: `${STYLE} Legendary tournament organizer crest: ornate gold bracket trophy with padel motif, dark badge bright white "100".`,
+  },
+  {
+    key: 'habit_org_bar_1',
+    prompt: `${STYLE} Soul of the Party emblem: festive cocktail glass with soft neon glow and confetti spark, warm social vibe, dark badge bright white "1". No sport logos.`,
+  },
+  {
+    key: 'habit_org_bar_5',
+    prompt: `${STYLE} Soul of the Party emblem: festive cocktail glass with neon glow, dark badge bright white "5".`,
+  },
+  {
+    key: 'habit_org_bar_10',
+    prompt: `${STYLE} Soul of the Party emblem: festive cocktail glass with neon glow, dark badge bright white "10".`,
+  },
+  {
+    key: 'habit_org_bar_25',
+    prompt: `${STYLE} Rare Soul of the Party emblem: stylish cocktail and disco sparkles, silver neon, dark badge bright white "25".`,
+  },
+  {
+    key: 'habit_org_bar_50',
+    prompt: `${STYLE} Rare Soul of the Party emblem: premium cocktail icon with violet neon, dark badge bright white "50".`,
+  },
+  {
+    key: 'habit_org_bar_100',
+    prompt: `${STYLE} Legendary Soul of the Party crest: ornate gold cocktail glass with radiant neon party energy, dark badge bright white "100".`,
+  },
 ];
 
 async function downloadUrl(url: string): Promise<Buffer> {

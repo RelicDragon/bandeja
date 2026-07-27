@@ -78,6 +78,12 @@ export function stackFamilyLabelKey(ruleKind: string): string {
       return 'trophies.cabinet.family.streak';
     case 'HABIT_WINS':
       return 'trophies.cabinet.family.wins';
+    case 'HABIT_ORGANIZE_GAME':
+      return 'trophies.cabinet.family.rallyStarter';
+    case 'HABIT_ORGANIZE_TOURNAMENT':
+      return 'trophies.cabinet.family.tournamentHost';
+    case 'HABIT_ORGANIZE_BAR':
+      return 'trophies.cabinet.family.soulOfTheParty';
     case 'PODIUM':
       return 'trophies.cabinet.family.podium';
     default:

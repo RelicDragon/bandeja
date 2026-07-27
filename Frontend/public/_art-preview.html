@@ -152,6 +152,24 @@
         'habit_streak_16',
         'habit_streak_32',
         'habit_streak_64',
+        'habit_org_game_1',
+        'habit_org_game_10',
+        'habit_org_game_25',
+        'habit_org_game_50',
+        'habit_org_game_100',
+        'habit_org_game_500',
+        'habit_org_tournament_1',
+        'habit_org_tournament_5',
+        'habit_org_tournament_10',
+        'habit_org_tournament_25',
+        'habit_org_tournament_50',
+        'habit_org_tournament_100',
+        'habit_org_bar_1',
+        'habit_org_bar_5',
+        'habit_org_bar_10',
+        'habit_org_bar_25',
+        'habit_org_bar_50',
+        'habit_org_bar_100',
       ];
       const grid = document.getElementById('grid');
       const sizes = [
@@ -166,7 +184,7 @@
         const stage = document.createElement('div');
         stage.className = 'stage';
         const img = document.createElement('img');
-        img.src = `/trophies/${key}.png?v=5`;
+        img.src = `/trophies/${key}.png?v=6`;
         img.alt = key;
         stage.appendChild(img);
         const label = document.createElement('div');

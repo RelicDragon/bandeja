@@ -38,11 +38,12 @@ export {
 export { habitThresholdMet, habitUnlocksDue, habitUnlocksNewlyCrossed } from './habitEligibility';
 
 export {
-  groupUserIdsByPodiumPlace,
-  isPodiumEligibleEntityType,
-  isPodiumPlace,
-  meetsPodiumParticipantFloor,
-  podiumDefinitionForPodiumPlace,
-  usesBracketPlacesForEventPodium,
-  type PodiumPlace,
-} from './podiumEligibility';
+  filterOrganizeDefinitionsDue,
+  gameQualifiesForOrganizeHabit,
+  organizeCounterKey,
+  organizeRuleKindFor,
+  ORGANIZE_BAR_THRESHOLDS,
+  ORGANIZE_GAME_THRESHOLDS,
+  ORGANIZE_TOURNAMENT_THRESHOLDS,
+  type OrganizeHabitKind,
+} from './organizeEligibility';

@@ -5,6 +5,7 @@ import {
   ROLE_MULTIPLIERS,
 } from './socialLevelConstants';
 import { createBarEvent } from './levelChange';
+import { grantOrganizeAchievementsForFinalizedGame } from './achievements/organizeGrant.service';
 
 export class BarResultsService {
   static async setBarResults(gameId: string, tx?: Prisma.TransactionClient): Promise<void> {
@@ -159,6 +160,8 @@ export class BarResultsService {
           resultsStatus: 'FINAL',
         },
       });
+
+      await grantOrganizeAchievementsForFinalizedGame({ gameId, tx: client });
     };
 
     if (tx) {

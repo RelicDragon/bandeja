@@ -18,6 +18,12 @@ export type HabitProgressCounters = {
   gamesWon: number;
   /** Per-sport finished games for HABIT_SPORT_VOLUME (keys like PADEL). */
   gamesFinishedBySport?: Readonly<Record<string, number>>;
+  /** FINAL rated padel GAME events owned. */
+  organizedGames?: number;
+  /** FINAL rated padel TOURNAMENT events owned. */
+  organizedTournaments?: number;
+  /** FINAL BAR events owned (any sport). */
+  organizedBars?: number;
 };
 
 export type CabinetEntry = {
@@ -45,6 +51,15 @@ export function habitProgressForDefinition(
   if (definition.ruleKind === 'HABIT_SPORT_VOLUME' && definition.sport) {
     const current = counters.gamesFinishedBySport?.[definition.sport] ?? 0;
     return { current: Math.min(current, target), target };
+  }
+  if (definition.ruleKind === 'HABIT_ORGANIZE_GAME') {
+    return { current: Math.min(counters.organizedGames ?? 0, target), target };
+  }
+  if (definition.ruleKind === 'HABIT_ORGANIZE_TOURNAMENT') {
+    return { current: Math.min(counters.organizedTournaments ?? 0, target), target };
+  }
+  if (definition.ruleKind === 'HABIT_ORGANIZE_BAR') {
+    return { current: Math.min(counters.organizedBars ?? 0, target), target };
   }
   return null;
 }

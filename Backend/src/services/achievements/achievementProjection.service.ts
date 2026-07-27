@@ -11,6 +11,7 @@ import {
 } from '@bandeja/shared/achievements';
 import prisma from '../../config/database';
 import { purgeOrphanPinsForUser } from './achievementPin.service';
+import { loadOrganizeHabitCounters } from './organizeGrant.service';
 
 export type TrophyDefinitionView = {
   id: string;
@@ -190,6 +191,8 @@ export async function buildTrophiesPayload(params: {
   counters: HabitProgressCounters;
 }): Promise<TrophiesPayload> {
   const isOwner = Boolean(params.viewerUserId && params.viewerUserId === params.userId);
+  const organize = await loadOrganizeHabitCounters(params.userId);
+  const counters: HabitProgressCounters = { ...params.counters, ...organize };
 
   await purgeOrphanPinsForUser({ userId: params.userId });
 
@@ -277,7 +280,7 @@ export async function buildTrophiesPayload(params: {
   const cabinet = projectTrophyCabinet({
     isOwner,
     instances: instanceInputs,
-    counters: params.counters,
+    counters,
   }).map((row) => ({
     definition: toDefinitionView(row.definition),
     unlocked: row.unlocked,

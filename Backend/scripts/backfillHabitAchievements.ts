@@ -27,6 +27,7 @@ import {
   backfillHabitAchievementsForUser,
   type HabitGrantTiming,
 } from '../src/services/achievements/habitGrant.service';
+import { loadOrganizeHabitCounters } from '../src/services/achievements/organizeGrant.service';
 import { resolveSportStatsDeltasForReconcile } from '../src/services/results/outcomeStatsSnapshot';
 import { countsForPlayStreak } from '../src/services/results/ratingActivity';
 import { getUserTimezone } from '../src/services/user-timezone.service';
@@ -137,7 +138,8 @@ async function run(apply: boolean, userIdFilter: string | null): Promise<void> {
   let untimedGrants = 0;
 
   for (const [userId, userProfiles] of byUser) {
-    const counters = countersFromSportProfiles(userProfiles);
+    const organize = await loadOrganizeHabitCounters(userId);
+    const counters = { ...countersFromSportProfiles(userProfiles), ...organize };
     const due = habitUnlocksDue({
       counters,
       ownedDefinitionIds: ownedByUser.get(userId) ?? new Set(),
@@ -191,7 +193,8 @@ async function run(apply: boolean, userIdFilter: string | null): Promise<void> {
   let usersTouched = 0;
   for (const plan of plans) {
     const userProfiles = byUser.get(plan.userId) ?? [];
-    const counters = countersFromSportProfiles(userProfiles);
+    const organize = await loadOrganizeHabitCounters(plan.userId);
+    const counters = { ...countersFromSportProfiles(userProfiles), ...organize };
     const result = await backfillHabitAchievementsForUser({
       userId: plan.userId,
       counters,

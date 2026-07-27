@@ -6,7 +6,10 @@ export type TrophyRuleKind =
   | 'HABIT_VOLUME'
   | 'HABIT_FIRST_WIN'
   | 'HABIT_WINS'
-  | 'HABIT_SPORT_VOLUME';
+  | 'HABIT_SPORT_VOLUME'
+  | 'HABIT_ORGANIZE_GAME'
+  | 'HABIT_ORGANIZE_TOURNAMENT'
+  | 'HABIT_ORGANIZE_BAR';
 
 export type TrophyArtKey =
   | 'podium_gold'
@@ -29,7 +32,25 @@ export type TrophyArtKey =
   | 'habit_streak_12'
   | 'habit_streak_16'
   | 'habit_streak_32'
-  | 'habit_streak_64';
+  | 'habit_streak_64'
+  | 'habit_org_game_1'
+  | 'habit_org_game_10'
+  | 'habit_org_game_25'
+  | 'habit_org_game_50'
+  | 'habit_org_game_100'
+  | 'habit_org_game_500'
+  | 'habit_org_tournament_1'
+  | 'habit_org_tournament_5'
+  | 'habit_org_tournament_10'
+  | 'habit_org_tournament_25'
+  | 'habit_org_tournament_50'
+  | 'habit_org_tournament_100'
+  | 'habit_org_bar_1'
+  | 'habit_org_bar_5'
+  | 'habit_org_bar_10'
+  | 'habit_org_bar_25'
+  | 'habit_org_bar_50'
+  | 'habit_org_bar_100';
 
 export type AchievementDefinitionId =
   | 'podium_gold'
@@ -52,7 +73,25 @@ export type AchievementDefinitionId =
   | 'habit_streak_12'
   | 'habit_streak_16'
   | 'habit_streak_32'
-  | 'habit_streak_64';
+  | 'habit_streak_64'
+  | 'habit_org_game_1'
+  | 'habit_org_game_10'
+  | 'habit_org_game_25'
+  | 'habit_org_game_50'
+  | 'habit_org_game_100'
+  | 'habit_org_game_500'
+  | 'habit_org_tournament_1'
+  | 'habit_org_tournament_5'
+  | 'habit_org_tournament_10'
+  | 'habit_org_tournament_25'
+  | 'habit_org_tournament_50'
+  | 'habit_org_tournament_100'
+  | 'habit_org_bar_1'
+  | 'habit_org_bar_5'
+  | 'habit_org_bar_10'
+  | 'habit_org_bar_25'
+  | 'habit_org_bar_50'
+  | 'habit_org_bar_100';
 
 export type AchievementDefinition = {
   id: AchievementDefinitionId;

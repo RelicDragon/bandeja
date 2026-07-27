@@ -40,7 +40,10 @@
         "wins": "Victorias",
         "podium": "Podio",
         "debut": "Debut",
-        "generic": "Trofeos"
+        "generic": "Trofeos",
+        "rallyStarter": "Rally Starter",
+        "tournamentHost": "Anfitrión de torneo",
+        "soulOfTheParty": "Alma de la fiesta"
       }
     },
     "detail": {
@@ -144,6 +147,78 @@
       "streak64": {
         "title": "Año de fuego",
         "description": "Mantén una racha de 64 semanas."
+      },
+      "orgGame1": {
+        "title": "Rally Starter",
+        "description": "Organiza tu primer partido de pádel con rating hasta resultados finales."
+      },
+      "orgGame10": {
+        "title": "Rally Starter ×10",
+        "description": "Organiza 10 partidos de pádel con rating hasta resultados finales."
+      },
+      "orgGame25": {
+        "title": "Rally Starter ×25",
+        "description": "Organiza 25 partidos de pádel con rating hasta resultados finales."
+      },
+      "orgGame50": {
+        "title": "Rally Starter ×50",
+        "description": "Organiza 50 partidos de pádel con rating hasta resultados finales."
+      },
+      "orgGame100": {
+        "title": "Rally Starter ×100",
+        "description": "Organiza 100 partidos de pádel con rating hasta resultados finales."
+      },
+      "orgGame500": {
+        "title": "Rally Starter ×500",
+        "description": "Organiza 500 partidos de pádel con rating hasta resultados finales."
+      },
+      "orgTournament1": {
+        "title": "Apertura de cuadro",
+        "description": "Organiza tu primer torneo de pádel con rating hasta resultados finales."
+      },
+      "orgTournament5": {
+        "title": "Apertura de cuadro ×5",
+        "description": "Organiza 5 torneos de pádel con rating hasta resultados finales."
+      },
+      "orgTournament10": {
+        "title": "Apertura de cuadro ×10",
+        "description": "Organiza 10 torneos de pádel con rating hasta resultados finales."
+      },
+      "orgTournament25": {
+        "title": "Apertura de cuadro ×25",
+        "description": "Organiza 25 torneos de pádel con rating hasta resultados finales."
+      },
+      "orgTournament50": {
+        "title": "Apertura de cuadro ×50",
+        "description": "Organiza 50 torneos de pádel con rating hasta resultados finales."
+      },
+      "orgTournament100": {
+        "title": "Apertura de cuadro ×100",
+        "description": "Organiza 100 torneos de pádel con rating hasta resultados finales."
+      },
+      "orgBar1": {
+        "title": "Alma de la fiesta",
+        "description": "Organiza tu primer evento Bar hasta resultados finales."
+      },
+      "orgBar5": {
+        "title": "Alma de la fiesta ×5",
+        "description": "Organiza 5 eventos Bar hasta resultados finales."
+      },
+      "orgBar10": {
+        "title": "Alma de la fiesta ×10",
+        "description": "Organiza 10 eventos Bar hasta resultados finales."
+      },
+      "orgBar25": {
+        "title": "Alma de la fiesta ×25",
+        "description": "Organiza 25 eventos Bar hasta resultados finales."
+      },
+      "orgBar50": {
+        "title": "Alma de la fiesta ×50",
+        "description": "Organiza 50 eventos Bar hasta resultados finales."
+      },
+      "orgBar100": {
+        "title": "Alma de la fiesta ×100",
+        "description": "Organiza 100 eventos Bar hasta resultados finales."
       }
     }
   }

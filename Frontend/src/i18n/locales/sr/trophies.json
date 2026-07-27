@@ -40,7 +40,10 @@
         "wins": "Pobede",
         "podium": "Podijum",
         "debut": "Debi",
-        "generic": "Pehari"
+        "generic": "Pehari",
+        "rallyStarter": "Rally Starter",
+        "tournamentHost": "Domaćin turnira",
+        "soulOfTheParty": "Duša žurke"
       }
     },
     "detail": {
@@ -144,6 +147,78 @@
       "streak64": {
         "title": "Godina vatre",
         "description": "Održavaj seriju od 64 nedelje."
+      },
+      "orgGame1": {
+        "title": "Rally Starter",
+        "description": "Organizuj prvu rejting padel utakmicu do finalizacije rezultata."
+      },
+      "orgGame10": {
+        "title": "Rally Starter ×10",
+        "description": "Organizuj 10 rejting padel utakmica do finalizacije rezultata."
+      },
+      "orgGame25": {
+        "title": "Rally Starter ×25",
+        "description": "Organizuj 25 rejting padel utakmica do finalizacije rezultata."
+      },
+      "orgGame50": {
+        "title": "Rally Starter ×50",
+        "description": "Organizuj 50 rejting padel utakmica do finalizacije rezultata."
+      },
+      "orgGame100": {
+        "title": "Rally Starter ×100",
+        "description": "Organizuj 100 rejting padel utakmica do finalizacije rezultata."
+      },
+      "orgGame500": {
+        "title": "Rally Starter ×500",
+        "description": "Organizuj 500 rejting padel utakmica do finalizacije rezultata."
+      },
+      "orgTournament1": {
+        "title": "Otvaranje žreba",
+        "description": "Organizuj prvi rejting padel turnir do finalizacije rezultata."
+      },
+      "orgTournament5": {
+        "title": "Otvaranje žreba ×5",
+        "description": "Organizuj 5 rejting padel turnira do finalizacije rezultata."
+      },
+      "orgTournament10": {
+        "title": "Otvaranje žreba ×10",
+        "description": "Organizuj 10 rejting padel turnira do finalizacije rezultata."
+      },
+      "orgTournament25": {
+        "title": "Otvaranje žreba ×25",
+        "description": "Organizuj 25 rejting padel turnira do finalizacije rezultata."
+      },
+      "orgTournament50": {
+        "title": "Otvaranje žreba ×50",
+        "description": "Organizuj 50 rejting padel turnira do finalizacije rezultata."
+      },
+      "orgTournament100": {
+        "title": "Otvaranje žreba ×100",
+        "description": "Organizuj 100 rejting padel turnira do finalizacije rezultata."
+      },
+      "orgBar1": {
+        "title": "Duša žurke",
+        "description": "Organizuj prvi Bar događaj do finalizacije rezultata."
+      },
+      "orgBar5": {
+        "title": "Duša žurke ×5",
+        "description": "Organizuj 5 Bar događaja do finalizacije rezultata."
+      },
+      "orgBar10": {
+        "title": "Duša žurke ×10",
+        "description": "Organizuj 10 Bar događaja do finalizacije rezultata."
+      },
+      "orgBar25": {
+        "title": "Duša žurke ×25",
+        "description": "Organizuj 25 Bar događaja do finalizacije rezultata."
+      },
+      "orgBar50": {
+        "title": "Duša žurke ×50",
+        "description": "Organizuj 50 Bar događaja do finalizacije rezultata."
+      },
+      "orgBar100": {
+        "title": "Duša žurke ×100",
+        "description": "Organizuj 100 Bar događaja do finalizacije rezultata."
       }
     }
   }
