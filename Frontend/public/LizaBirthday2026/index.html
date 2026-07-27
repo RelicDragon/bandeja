@@ -1493,6 +1493,44 @@
         transform: translateY(-2px);
       }
 
+      .success-celebration__return-hint {
+        display: flex;
+        max-width: 440px;
+        margin: 14px 0 0;
+        padding: 11px 14px;
+        align-items: center;
+        gap: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.11);
+        border-radius: 13px;
+        color: rgba(247, 248, 241, 0.66);
+        background: rgba(255, 255, 255, 0.065);
+        font-size: 0.72rem;
+        font-weight: 680;
+        line-height: 1.45;
+        text-align: left;
+        -webkit-backdrop-filter: blur(12px);
+        backdrop-filter: blur(12px);
+      }
+
+      .success-celebration__return-hint[hidden] {
+        display: none;
+      }
+
+      .success-celebration__return-hint::before {
+        display: grid;
+        width: 24px;
+        height: 24px;
+        flex: 0 0 auto;
+        place-items: center;
+        border-radius: 50%;
+        color: var(--acid);
+        background: rgba(217, 255, 87, 0.1);
+        content: "×";
+        font-size: 1rem;
+        font-weight: 500;
+        line-height: 1;
+      }
+
       .success-confetti {
         position: absolute;
         z-index: 2;
@@ -1811,6 +1849,12 @@
           min-height: 50px;
           margin-top: 19px;
         }
+
+        .success-celebration__return-hint {
+          margin-top: 9px;
+          padding: 8px 11px;
+          font-size: 0.65rem;
+        }
       }
 
       @media (prefers-reduced-motion: no-preference) {
@@ -1849,6 +1893,10 @@
         .success-celebration.is-visible .success-confetti__piece {
           animation: confetti-fall var(--duration) var(--delay) cubic-bezier(0.15, 0.72, 0.31, 1)
             both;
+        }
+
+        .success-celebration__return-hint.is-visible {
+          animation: return-hint-in 480ms cubic-bezier(0.16, 1, 0.3, 1) both;
         }
 
         @keyframes rise-in {
@@ -1942,6 +1990,17 @@
           100% {
             opacity: 0.95;
             transform: translate3d(var(--drift), 112vh, 0) rotate(var(--spin));
+          }
+        }
+
+        @keyframes return-hint-in {
+          from {
+            opacity: 0;
+            transform: translateY(-8px) scale(0.98);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
           }
         }
       }
@@ -2328,6 +2387,16 @@
         >
           Back to Bandeja
         </button>
+        <p
+          class="success-celebration__return-hint"
+          id="success-return-hint"
+          role="status"
+          aria-live="polite"
+          data-i18n="successReturnHint"
+          hidden
+        >
+          If Bandeja does not return, close this page manually to go back to the app.
+        </p>
       </div>
     </div>
 
@@ -2400,6 +2469,8 @@
               "Your birthday wish is safely in the team card. We cannot wait to celebrate Liza together.",
             successSignature: "Bandeja community · 02.08.2026",
             successButton: "Back to Bandeja",
+            successReturnHint:
+              "If Bandeja does not return, close this page manually to go back to the app.",
             successClose: "Close celebration",
             footerMade: "Made with",
             footerLove: "love",
@@ -2472,6 +2543,8 @@
               "Ваше поздравление уже в общей открытке. Скоро мы все вместе будем праздновать день рождения Лизы.",
             successSignature: "Сообщество Bandeja · 02.08.2026",
             successButton: "Вернуться в Bandeja",
+            successReturnHint:
+              "Если возврат в Bandeja не произошёл, закройте эту страницу вручную, чтобы вернуться в приложение.",
             successClose: "Закрыть поздравление",
             footerMade: "Сделано с",
             footerLove: "любовью",
@@ -2544,6 +2617,8 @@
               "Vaša rođendanska poruka je bezbedno sačuvana u zajedničkoj čestitki. Jedva čekamo da zajedno proslavimo Lizin rođendan.",
             successSignature: "Bandeja zajednica · 02.08.2026.",
             successButton: "Nazad u aplikaciju Bandeja",
+            successReturnHint:
+              "Ako se ne vratite u aplikaciju Bandeja, zatvorite ovu stranicu ručno.",
             successClose: "Zatvori proslavu",
             footerMade: "Napravljeno s",
             footerLove: "ljubavlju",
@@ -2604,7 +2679,10 @@
         const successTitle = document.getElementById("success-title");
         const successClose = document.getElementById("success-close");
         const successDone = document.getElementById("success-done");
+        const successReturnHint = document.getElementById("success-return-hint");
         let celebrationReturnFocus = null;
+        let returnAttemptCount = 0;
+        let returnHintTimer = null;
 
         function applyFormTitle() {
           const copy = translations[activeLocale];
@@ -2751,6 +2829,7 @@
               : submitButton;
           applySuccessTitle();
           buildConfetti();
+          resetReturnHint();
           successCelebration.hidden = false;
           document.body.classList.add("success-open");
 
@@ -2764,6 +2843,7 @@
 
         function hideSuccessCelebration() {
           if (successCelebration.hidden) return;
+          resetReturnHint();
           successCelebration.classList.remove("is-visible");
           document.body.classList.remove("success-open");
 
@@ -2779,8 +2859,33 @@
           }, 420);
         }
 
+        function resetReturnHint() {
+          if (returnHintTimer) window.clearTimeout(returnHintTimer);
+          returnHintTimer = null;
+          returnAttemptCount = 0;
+          successReturnHint.classList.remove("is-visible");
+          successReturnHint.hidden = true;
+        }
+
+        function showReturnHint() {
+          if (returnHintTimer) window.clearTimeout(returnHintTimer);
+          returnHintTimer = null;
+          if (!successReturnHint.hidden) return;
+
+          successReturnHint.hidden = false;
+          window.requestAnimationFrame(function () {
+            successReturnHint.classList.add("is-visible");
+          });
+        }
+
         function returnToCallingApp() {
-          successDone.disabled = true;
+          returnAttemptCount += 1;
+          if (returnAttemptCount > 1) {
+            showReturnHint();
+            return;
+          }
+
+          returnHintTimer = window.setTimeout(showReturnHint, 1100);
 
           if (window.history.length > 1) {
             window.history.back();
@@ -2788,9 +2893,6 @@
           }
 
           window.close();
-          window.setTimeout(function () {
-            if (!window.closed) window.location.replace("/");
-          }, 120);
         }
 
         function applyDonationChoice(currency) {
@@ -2904,6 +3006,7 @@
 
         successClose.addEventListener("click", hideSuccessCelebration);
         successDone.addEventListener("click", returnToCallingApp);
+        window.addEventListener("pagehide", resetReturnHint);
 
         successCelebration.addEventListener("keydown", function (event) {
           if (event.key === "Escape") {
