@@ -907,10 +907,6 @@
         gap: 7px;
       }
 
-      .donation-option--full {
-        grid-column: 1 / -1;
-      }
-
       .donation-option {
         position: relative;
         min-width: 0;
@@ -1192,7 +1188,18 @@
         transition:
           transform 150ms ease,
           box-shadow 150ms ease,
-          filter 150ms ease;
+          filter 150ms ease,
+          color 150ms ease,
+          background 150ms ease,
+          border-color 150ms ease;
+      }
+
+      .submit-button--quiet {
+        border: 1px solid var(--line);
+        color: var(--soft);
+        background: color-mix(in srgb, var(--panel-soft) 70%, transparent);
+        box-shadow: none;
+        font-weight: 720;
       }
 
       .submit-button::after {
@@ -1208,12 +1215,27 @@
         content: "↗";
         font-size: 1.15rem;
         transform: translateY(-50%);
+        transition: background 150ms ease, color 150ms ease;
+      }
+
+      .submit-button--quiet::after {
+        color: var(--soft);
+        background: color-mix(in srgb, var(--ink) 6%, transparent);
       }
 
       .submit-button:hover {
         filter: brightness(1.04);
         box-shadow: 0 16px 38px color-mix(in srgb, var(--acid) 18%, transparent);
         transform: translateY(-1px);
+      }
+
+      .submit-button--quiet:hover {
+        filter: none;
+        border-color: var(--line-strong);
+        color: var(--muted);
+        background: var(--panel-soft);
+        box-shadow: none;
+        transform: none;
       }
 
       .submit-button:active {
@@ -1237,8 +1259,182 @@
         display: block;
       }
 
-      body.success-open {
+      body.success-open,
+      body.nudge-open {
         overflow: hidden;
+      }
+
+      .donation-nudge {
+        position: fixed;
+        z-index: 180;
+        inset: 0;
+        display: grid;
+        min-width: 320px;
+        padding:
+          calc(20px + var(--safe-top))
+          calc(16px + var(--safe-right))
+          calc(20px + var(--safe-bottom))
+          calc(16px + var(--safe-left));
+        place-items: center;
+        background: color-mix(in srgb, var(--page-deep) 72%, transparent);
+        -webkit-backdrop-filter: blur(10px) saturate(120%);
+        backdrop-filter: blur(10px) saturate(120%);
+        opacity: 0;
+        visibility: hidden;
+        transition:
+          opacity 280ms ease,
+          visibility 280ms ease;
+      }
+
+      .donation-nudge[hidden] {
+        display: none;
+      }
+
+      .donation-nudge.is-visible {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .donation-nudge__card {
+        position: relative;
+        width: min(440px, 100%);
+        max-height: min(860px, calc(100vh - 48px));
+        padding: 28px 24px 22px;
+        overflow: auto;
+        border: 1px solid var(--line-strong);
+        border-radius: 24px;
+        background: var(--panel-strong);
+        box-shadow: var(--shadow);
+        transform: translateY(18px) scale(0.96);
+        opacity: 0;
+        transition:
+          transform 340ms cubic-bezier(0.2, 0.85, 0.2, 1),
+          opacity 280ms ease;
+      }
+
+      .donation-nudge.is-visible .donation-nudge__card {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+      }
+
+      .donation-nudge__eyebrow {
+        display: block;
+        margin-bottom: 10px;
+        color: var(--soft);
+        font-size: 0.64rem;
+        font-weight: 900;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      .donation-nudge__title {
+        margin: 0;
+        color: var(--ink);
+        font-family: var(--display);
+        font-size: clamp(1.7rem, 5vw, 2.35rem);
+        font-weight: 900;
+        letter-spacing: -0.05em;
+        line-height: 0.98;
+        text-wrap: balance;
+      }
+
+      .donation-nudge__text {
+        margin: 14px 0 0;
+        color: var(--muted);
+        font-size: 0.88rem;
+        line-height: 1.55;
+      }
+
+      .donation-nudge__options {
+        display: grid;
+        margin-top: 20px;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+
+      .donation-nudge__transfer {
+        display: none;
+        margin-top: 14px;
+        gap: 8px;
+      }
+
+      .donation-nudge__transfer.is-visible {
+        display: grid;
+      }
+
+      .donation-nudge__transfer .copy-row {
+        background: var(--panel-soft);
+      }
+
+      .donation-nudge__actions {
+        display: grid;
+        margin-top: 18px;
+        gap: 12px;
+      }
+
+      .donation-nudge__submit {
+        width: 100%;
+        min-height: 54px;
+        border: 0;
+        border-radius: 14px;
+        color: var(--acid-ink);
+        background: var(--acid);
+        box-shadow: 0 10px 28px color-mix(in srgb, var(--acid) 14%, transparent);
+        cursor: pointer;
+        font-size: 0.78rem;
+        font-weight: 880;
+      }
+
+      .donation-nudge__submit:hover {
+        filter: brightness(1.04);
+      }
+
+      .donation-nudge__skip {
+        display: inline-flex;
+        margin: 0 auto;
+        align-items: center;
+        justify-content: center;
+        border: 0;
+        color: var(--muted);
+        background: transparent;
+        cursor: pointer;
+        font-size: 0.78rem;
+        font-weight: 720;
+        text-decoration: underline;
+        text-underline-offset: 0.18em;
+      }
+
+      .donation-nudge__skip:hover {
+        color: var(--ink);
+      }
+
+      .donation-nudge__close {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        display: grid;
+        width: 38px;
+        height: 38px;
+        place-items: center;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        color: var(--muted);
+        background: var(--panel-soft);
+        cursor: pointer;
+        font-size: 1.25rem;
+        line-height: 1;
+      }
+
+      .donation-nudge__close:hover {
+        color: var(--ink);
+        border-color: var(--line-strong);
+      }
+
+      .donation-nudge__submit:focus-visible,
+      .donation-nudge__skip:focus-visible,
+      .donation-nudge__close:focus-visible {
+        outline: 3px solid color-mix(in srgb, var(--acid) 66%, transparent);
+        outline-offset: 2px;
       }
 
       .success-celebration {
@@ -2234,16 +2430,12 @@
                     her afford a KSC membership.
                   </p>
                   <div class="donation-options">
-                    <label class="donation-option donation-option--full">
-                      <input type="radio" name="donation" value="none" checked />
-                      <span data-i18n="giftNone">Just my message</span>
-                    </label>
                     <label class="donation-option">
-                      <input type="radio" name="donation" value="RSD" />
+                      <input type="checkbox" name="donation" value="RSD" />
                       <span data-i18n="giftRsd">Donate RSD</span>
                     </label>
                     <label class="donation-option">
-                      <input type="radio" name="donation" value="RUB" />
+                      <input type="checkbox" name="donation" value="RUB" />
                       <span data-i18n="giftRub">Donate RUB</span>
                     </label>
                   </div>
@@ -2344,7 +2536,7 @@
                   </div>
                 </fieldset>
 
-                <button class="submit-button" type="submit" id="submit-button">
+                <button class="submit-button submit-button--quiet" type="submit" id="submit-button">
                   Send just my message
                 </button>
                 <p class="form-status" id="form-status" role="status" aria-live="polite"></p>
@@ -2363,6 +2555,124 @@
           </span>
           <span data-i18n="footerDate">See you at the finals · 02.08.2026</span>
         </footer>
+      </div>
+    </div>
+
+    <div
+      class="donation-nudge"
+      id="donation-nudge"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="donation-nudge-title"
+      hidden
+    >
+      <div class="donation-nudge__card">
+        <button
+          class="donation-nudge__close"
+          type="button"
+          id="donation-nudge-close"
+          data-i18n-aria-label="nudgeClose"
+          aria-label="Close"
+        >
+          ×
+        </button>
+        <span class="donation-nudge__eyebrow" data-i18n="nudgeEyebrow">Donation</span>
+        <h2 class="donation-nudge__title" id="donation-nudge-title" data-i18n="nudgeTitle">
+          Do you want to donate?
+        </h2>
+        <p class="donation-nudge__text" data-i18n="nudgeText">
+          She plays padel all the time — a donation helps her pay for a KSC membership.
+        </p>
+
+        <div class="donation-nudge__options">
+          <label class="donation-option">
+            <input type="checkbox" name="nudge-donation" value="RSD" checked />
+            <span data-i18n="giftRsd">Donate RSD</span>
+          </label>
+          <label class="donation-option">
+            <input type="checkbox" name="nudge-donation" value="RUB" />
+            <span data-i18n="giftRub">Donate RUB</span>
+          </label>
+        </div>
+
+        <div class="donation-nudge__transfer is-visible" data-nudge-currency="RSD">
+          <button class="copy-row" type="button" data-copy="067 7498267">
+            <span class="copy-row__text">
+              <span class="copy-row__label" data-i18n="rsdPhoneLabel">Transfer to</span>
+              <strong class="copy-row__value">067 7498267</strong>
+            </span>
+            <span class="copy-row__feedback" aria-live="polite">
+              <svg class="copy-row__copy" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <rect x="8" y="8" width="11" height="11" rx="2" stroke="currentColor" stroke-width="1.8" />
+                <path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+              </svg>
+              <svg class="copy-row__check" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="m5 12.5 4.2 4.2L19 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              <span data-i18n="copyAction">Copy</span>
+            </span>
+          </button>
+          <button class="copy-row" type="button" data-copy="265000000699740644">
+            <span class="copy-row__text">
+              <span class="copy-row__label" data-i18n="rsdAccountLabel">Or to account number</span>
+              <strong class="copy-row__value copy-row__value--compact">265000000699740644</strong>
+            </span>
+            <span class="copy-row__feedback" aria-live="polite">
+              <svg class="copy-row__copy" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <rect x="8" y="8" width="11" height="11" rx="2" stroke="currentColor" stroke-width="1.8" />
+                <path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+              </svg>
+              <svg class="copy-row__check" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="m5 12.5 4.2 4.2L19 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              <span data-i18n="copyAction">Copy</span>
+            </span>
+          </button>
+        </div>
+
+        <div class="donation-nudge__transfer" data-nudge-currency="RUB">
+          <button class="copy-row" type="button" data-copy="+7(967)282-55-52">
+            <span class="copy-row__text">
+              <span class="copy-row__label" data-i18n="rubPhoneLabel">Transfer to</span>
+              <strong class="copy-row__value">+7(967)282-55-52</strong>
+            </span>
+            <span class="copy-row__feedback" aria-live="polite">
+              <svg class="copy-row__copy" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <rect x="8" y="8" width="11" height="11" rx="2" stroke="currentColor" stroke-width="1.8" />
+                <path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+              </svg>
+              <svg class="copy-row__check" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="m5 12.5 4.2 4.2L19 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              <span data-i18n="copyAction">Copy</span>
+            </span>
+          </button>
+          <button class="copy-row" type="button" data-copy="5280 4137 5180 5412">
+            <span class="copy-row__text">
+              <span class="copy-row__label" data-i18n="rubCardLabel">Or to the card</span>
+              <strong class="copy-row__value">5280 4137 5180 5412</strong>
+            </span>
+            <span class="copy-row__feedback" aria-live="polite">
+              <svg class="copy-row__copy" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <rect x="8" y="8" width="11" height="11" rx="2" stroke="currentColor" stroke-width="1.8" />
+                <path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+              </svg>
+              <svg class="copy-row__check" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="m5 12.5 4.2 4.2L19 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              <span data-i18n="copyAction">Copy</span>
+            </span>
+          </button>
+        </div>
+
+        <div class="donation-nudge__actions">
+          <button class="donation-nudge__submit" type="button" id="donation-nudge-submit" data-i18n="submitButtonGift">
+            Send donation + message
+          </button>
+          <button class="donation-nudge__skip" type="button" id="donation-nudge-skip" data-i18n="nudgeSkip">
+            No, just send my wishes
+          </button>
+        </div>
       </div>
     </div>
 
@@ -2481,7 +2791,6 @@
             giftLegend: "Want to leave a birthday donation?",
             giftHint:
               "Not sure what to gift her? Donate — she wants to play padel nonstop, so it helps her afford a KSC membership.",
-            giftNone: "Just my message",
             giftRsd: "Donate RSD",
             giftRub: "Donate RUB",
             giftTransferTitle: "You can donate via transfer",
@@ -2496,10 +2805,15 @@
             copied: "Copied",
             copyFailed: "Try again",
             submitButton: "Send just my message",
-            submitButtonGift: "Send my wishes · donation via transfer",
+            submitButtonGift: "Send donation + message",
             submitting: "Sending…",
             submitSuccess: "Thank you — your wish is saved. You can send another anytime.",
             submitError: "Could not send right now. Please try again.",
+            nudgeEyebrow: "Donation",
+            nudgeTitle: "Do you want to donate?",
+            nudgeText: "She plays padel all the time — a donation helps her pay for a KSC membership.",
+            nudgeSkip: "No, just send my wishes",
+            nudgeClose: "Close",
             successEyebrow: "Wish received",
             successTitle: "Thank you for joining us.",
             successTitleNamed: "{name}, thank you for joining us.",
@@ -2559,7 +2873,6 @@
             giftLegend: "Хотите сделать донат на день рождения?",
             giftHint:
               "Не знаете, что подарить? Задонатьте — она хочет играть в падел без остановки, и это поможет ей оплатить членство в KSC.",
-            giftNone: "Только поздравление",
             giftRsd: "Донат RSD",
             giftRub: "Донат RUB",
             giftTransferTitle: "Можно перевести донат",
@@ -2574,10 +2887,15 @@
             copied: "Скопировано",
             copyFailed: "Ещё раз",
             submitButton: "Отправить только поздравление",
-            submitButtonGift: "Отправить пожелания · донат переводом",
+            submitButtonGift: "Отправить донат и поздравление",
             submitting: "Отправляем…",
             submitSuccess: "Спасибо — пожелание сохранено. Можно отправить ещё.",
             submitError: "Сейчас не отправилось. Попробуйте ещё раз.",
+            nudgeEyebrow: "Донат",
+            nudgeTitle: "Хотите сделать донат?",
+            nudgeText: "Она постоянно играет в падел — донат поможет оплатить членство в KSC.",
+            nudgeSkip: "Нет, только отправить поздравление",
+            nudgeClose: "Закрыть",
             successEyebrow: "Поздравление получено",
             successTitle: "Спасибо, что вы с нами.",
             successTitleNamed: "{name}, спасибо, что вы с нами.",
@@ -2637,7 +2955,6 @@
             giftLegend: "Želite li da ostavite rođendansku donaciju?",
             giftHint:
               "Ne znate šta da joj poklonite? Donirajte — hoće da igra padel non-stop, pa će joj to pomoći da priušti članarinu u KSC.",
-            giftNone: "Samo moja poruka",
             giftRsd: "Donacija RSD",
             giftRub: "Donacija RUB",
             giftTransferTitle: "Možete uplatiti donaciju",
@@ -2652,10 +2969,15 @@
             copied: "Kopirano",
             copyFailed: "Pokušaj opet",
             submitButton: "Pošalji samo moju poruku",
-            submitButtonGift: "Pošalji čestitku · donacija uplatom",
+            submitButtonGift: "Pošalji donaciju + poruku",
             submitting: "Šaljemo…",
             submitSuccess: "Hvala — želja je sačuvana. Možeš poslati još jednu.",
             submitError: "Nije poslato. Pokušaj ponovo.",
+            nudgeEyebrow: "Donacija",
+            nudgeTitle: "Želite li da donirate?",
+            nudgeText: "Stalno igra padel — donacija joj pomaže da plati članarinu u KSC.",
+            nudgeSkip: "Ne, samo pošalji čestitku",
+            nudgeClose: "Zatvori",
             successEyebrow: "Čestitka je primljena",
             successTitle: "Hvala što ste sa nama.",
             successTitleNamed: "{name}, hvala što ste sa nama.",
@@ -2720,6 +3042,11 @@
         const copyTimers = new WeakMap();
         const themeToggle = document.getElementById("theme-toggle");
         const submitButton = document.getElementById("submit-button");
+        const donationNudge = document.getElementById("donation-nudge");
+        const donationNudgeClose = document.getElementById("donation-nudge-close");
+        const donationNudgeSubmit = document.getElementById("donation-nudge-submit");
+        const donationNudgeSkip = document.getElementById("donation-nudge-skip");
+        const nudgeTransfers = document.querySelectorAll(".donation-nudge__transfer");
         const successCelebration = document.getElementById("success-celebration");
         const successConfetti = document.getElementById("success-confetti");
         const successTitle = document.getElementById("success-title");
@@ -2727,6 +3054,7 @@
         const successDone = document.getElementById("success-done");
         const successReturnHint = document.getElementById("success-return-hint");
         let celebrationReturnFocus = null;
+        let nudgeReturnFocus = null;
         let returnAttemptCount = 0;
         let returnHintTimer = null;
 
@@ -2825,11 +3153,136 @@
           if (syncUrl) updateUrl("locale", activeLocale);
         }
 
-        function updateSubmitLabel() {
+        function getDonationValue() {
           const selected = document.querySelector('input[name="donation"]:checked');
-          const withGift = selected && selected.value !== "none";
+          return selected ? selected.value : "none";
+        }
+
+        function getNudgeDonationValue() {
+          const selected = document.querySelector('input[name="nudge-donation"]:checked');
+          return selected && (selected.value === "RSD" || selected.value === "RUB")
+            ? selected.value
+            : "RSD";
+        }
+
+        function updateSubmitLabel() {
+          const withGift = getDonationValue() !== "none";
           const copy = translations[activeLocale];
           submitButton.textContent = withGift ? copy.submitButtonGift : copy.submitButton;
+          submitButton.classList.toggle("submit-button--quiet", !withGift);
+        }
+
+        function applyNudgeDonationChoice(currency) {
+          const next = currency === "RUB" ? "RUB" : "RSD";
+          document.querySelectorAll('input[name="nudge-donation"]').forEach(function (input) {
+            input.checked = input.value === next;
+          });
+          nudgeTransfers.forEach(function (panel) {
+            panel.classList.toggle("is-visible", panel.dataset.nudgeCurrency === next);
+          });
+        }
+
+        function syncMainDonation(currency) {
+          document.querySelectorAll('input[name="donation"]').forEach(function (input) {
+            input.checked = input.value === currency;
+          });
+          applyDonationChoice(currency);
+        }
+
+        function openDonationNudge() {
+          nudgeReturnFocus =
+            document.activeElement && document.activeElement !== document.body
+              ? document.activeElement
+              : submitButton;
+          applyNudgeDonationChoice("RSD");
+          donationNudge.hidden = false;
+          document.body.classList.add("nudge-open");
+          window.requestAnimationFrame(function () {
+            donationNudge.classList.add("is-visible");
+            window.requestAnimationFrame(function () {
+              donationNudgeSubmit.focus();
+            });
+          });
+        }
+
+        function closeDonationNudge(options) {
+          if (donationNudge.hidden) return;
+          const restoreFocus = !(options && options.skipFocus);
+          donationNudge.classList.remove("is-visible");
+          document.body.classList.remove("nudge-open");
+          window.setTimeout(function () {
+            donationNudge.hidden = true;
+            if (
+              restoreFocus &&
+              nudgeReturnFocus &&
+              typeof nudgeReturnFocus.focus === "function"
+            ) {
+              nudgeReturnFocus.focus();
+            }
+          }, 280);
+        }
+
+        function submitWish(donationIntent) {
+          if (formBusy) return;
+          const copy = translations[activeLocale];
+          const intent =
+            donationIntent === "RSD" || donationIntent === "RUB" ? donationIntent : "NONE";
+
+          formBusy = true;
+          submitButton.disabled = true;
+          donationNudgeSubmit.disabled = true;
+          donationNudgeSkip.disabled = true;
+          submitButton.textContent = copy.submitting;
+          status.textContent = copy.submitting;
+          status.classList.add("is-visible");
+
+          const payload = {
+            name: nameInput.value.trim(),
+            message: messageInput.value.trim(),
+            donationIntent: intent,
+            locale: activeLocale === "rs" ? "sr" : activeLocale,
+          };
+          if (adToken) payload.adToken = adToken;
+
+          fetch(resolveWishSubmitUrl(), {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Accept: "application/json" },
+            body: JSON.stringify(payload),
+            credentials: "omit",
+          })
+            .then(function (response) {
+              return response.text().then(function (text) {
+                var body = null;
+                if (text) {
+                  try {
+                    body = JSON.parse(text);
+                  } catch {
+                    body = null;
+                  }
+                }
+                return { ok: response.ok, body: body };
+              });
+            })
+            .then(function (result) {
+              if (!result.ok || !result.body || !result.body.success) {
+                throw new Error("submit failed");
+              }
+              status.textContent = translations[activeLocale].submitSuccess;
+              messageInput.value = "";
+              count.textContent = "0 / 1200";
+              closeDonationNudge({ skipFocus: true });
+              showSuccessCelebration();
+            })
+            .catch(function () {
+              status.textContent = translations[activeLocale].submitError;
+            })
+            .finally(function () {
+              formBusy = false;
+              submitButton.disabled = false;
+              donationNudgeSubmit.disabled = false;
+              donationNudgeSkip.disabled = false;
+              updateSubmitLabel();
+            });
         }
 
         function applySuccessTitle() {
@@ -3038,7 +3491,7 @@
         nameInput.value = suppliedName;
         applyTheme(activeTheme, false);
         applyLocale(activeLocale, false);
-        applyDonationChoice(document.querySelector('input[name="donation"]:checked').value);
+        applyDonationChoice(getDonationValue());
 
         document.querySelectorAll(".locale-button").forEach(function (button) {
           button.addEventListener("click", function () {
@@ -3088,9 +3541,45 @@
 
         document.querySelectorAll('input[name="donation"]').forEach(function (input) {
           input.addEventListener("change", function () {
-            applyDonationChoice(input.value);
+            if (input.checked) {
+              document.querySelectorAll('input[name="donation"]').forEach(function (other) {
+                if (other !== input) other.checked = false;
+              });
+              applyDonationChoice(input.value);
+            } else {
+              applyDonationChoice("none");
+            }
             status.classList.remove("is-visible");
           });
+        });
+
+        document.querySelectorAll('input[name="nudge-donation"]').forEach(function (input) {
+          input.addEventListener("change", function () {
+            if (input.checked) {
+              applyNudgeDonationChoice(input.value);
+            } else {
+              applyNudgeDonationChoice(input.value === "RSD" ? "RUB" : "RSD");
+            }
+          });
+        });
+
+        donationNudgeClose.addEventListener("click", closeDonationNudge);
+        donationNudge.addEventListener("click", function (event) {
+          if (event.target === donationNudge) closeDonationNudge();
+        });
+        donationNudgeSkip.addEventListener("click", function () {
+          submitWish("NONE");
+        });
+        donationNudgeSubmit.addEventListener("click", function () {
+          const currency = getNudgeDonationValue();
+          syncMainDonation(currency);
+          submitWish(currency);
+        });
+        document.addEventListener("keydown", function (event) {
+          if (event.key === "Escape" && !donationNudge.hidden) {
+            event.preventDefault();
+            closeDonationNudge();
+          }
         });
 
         copyRows.forEach(function (button) {
@@ -3107,62 +3596,13 @@
           event.preventDefault();
           if (formBusy || !form.reportValidity()) return;
 
-          const copy = translations[activeLocale];
-          const donationRaw = document.querySelector('input[name="donation"]:checked');
-          const donationValue = donationRaw ? donationRaw.value : "none";
-          const donationIntent =
-            donationValue === "RSD" || donationValue === "RUB" ? donationValue : "NONE";
+          const donationValue = getDonationValue();
+          if (donationValue === "none") {
+            openDonationNudge();
+            return;
+          }
 
-          formBusy = true;
-          submitButton.disabled = true;
-          submitButton.textContent = copy.submitting;
-          status.textContent = copy.submitting;
-          status.classList.add("is-visible");
-
-          const payload = {
-            name: nameInput.value.trim(),
-            message: messageInput.value.trim(),
-            donationIntent: donationIntent,
-            locale: activeLocale === "rs" ? "sr" : activeLocale,
-          };
-          if (adToken) payload.adToken = adToken;
-
-          fetch(resolveWishSubmitUrl(), {
-            method: "POST",
-            headers: { "Content-Type": "application/json", Accept: "application/json" },
-            body: JSON.stringify(payload),
-            credentials: "omit",
-          })
-            .then(function (response) {
-              return response.text().then(function (text) {
-                var body = null;
-                if (text) {
-                  try {
-                    body = JSON.parse(text);
-                  } catch {
-                    body = null;
-                  }
-                }
-                return { ok: response.ok, body: body };
-              });
-            })
-            .then(function (result) {
-              if (!result.ok || !result.body || !result.body.success) {
-                throw new Error("submit failed");
-              }
-              status.textContent = translations[activeLocale].submitSuccess;
-              messageInput.value = "";
-              count.textContent = "0 / 1200";
-              showSuccessCelebration();
-            })
-            .catch(function () {
-              status.textContent = translations[activeLocale].submitError;
-            })
-            .finally(function () {
-              formBusy = false;
-              submitButton.disabled = false;
-              updateSubmitLabel();
-            });
+          submitWish(donationValue);
         });
       })();
     </script>
