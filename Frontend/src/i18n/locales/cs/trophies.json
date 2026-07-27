@@ -39,6 +39,7 @@
         "streak": "Série",
         "wins": "Výhry",
         "podium": "Pódium",
+        "debut": "Debut",
         "generic": "Trofeje"
       }
     },
@@ -75,6 +76,10 @@
       "firstWin": {
         "title": "První výhra",
         "description": "Vyhraj svůj první započítávaný zápas."
+      },
+      "firstPadelGame": {
+        "title": "První padelový zápas",
+        "description": "Dokonči svůj první započítávaný padelový zápas."
       },
       "wins10": {
         "title": "Deset výher",

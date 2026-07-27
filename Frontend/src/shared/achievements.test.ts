@@ -55,6 +55,9 @@ describe('achievement catalog', () => {
     expect(getAchievementDefinition('habit_games_500')?.rarity).toBe('RARE');
     expect(getAchievementDefinition('habit_games_1000')?.rarity).toBe('LEGENDARY');
     expect(getAchievementDefinition('habit_first_win')?.ruleKind).toBe('HABIT_FIRST_WIN');
+    expect(getAchievementDefinition('habit_first_padel_game')?.ruleKind).toBe('HABIT_SPORT_VOLUME');
+    expect(getAchievementDefinition('habit_first_padel_game')?.sport).toBe('PADEL');
+    expect(getAchievementDefinition('habit_first_padel_game')?.threshold).toBe(1);
 
     const wins = [
       'habit_wins_10',
@@ -304,6 +307,32 @@ describe('habitUnlocksDue', () => {
         ]),
       }).map((d) => d.id),
     ).toEqual(['habit_wins_500']);
+  });
+
+  it('grants first padel game from PADEL sport volume only', () => {
+    expect(
+      habitUnlocksDue({
+        counters: {
+          streakBest: 0,
+          gamesFinished: 5,
+          gamesWon: 0,
+          gamesFinishedBySport: { TENNIS: 5 },
+        },
+        ownedDefinitionIds: new Set(),
+      }).map((d) => d.id),
+    ).not.toContain('habit_first_padel_game');
+
+    expect(
+      habitUnlocksDue({
+        counters: {
+          streakBest: 0,
+          gamesFinished: 1,
+          gamesWon: 0,
+          gamesFinishedBySport: { PADEL: 1 },
+        },
+        ownedDefinitionIds: new Set(),
+      }).map((d) => d.id),
+    ).toContain('habit_first_padel_game');
   });
 
   it('grants streak milestones at 4 / 8 / 12 / 16 / 32 / 64', () => {

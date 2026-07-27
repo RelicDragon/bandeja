@@ -71,6 +71,26 @@ describe('sortStackEntries', () => {
 });
 
 describe('groupCabinetRailItems', () => {
+  it('stacks first padel game with volume games ladder', () => {
+    const items = groupCabinetRailItems([
+      entry(
+        def({ id: 'habit_first_padel_game', ruleKind: 'HABIT_SPORT_VOLUME', threshold: 1 }),
+        true,
+      ),
+      entry(def({ id: 'habit_games_10', ruleKind: 'HABIT_VOLUME', threshold: 10 }), true),
+      entry(def({ id: 'habit_games_50', ruleKind: 'HABIT_VOLUME', threshold: 50 }), true),
+    ]);
+    expect(items).toHaveLength(1);
+    expect(items[0]).toMatchObject({ kind: 'stack', unlocked: true, ruleKind: 'HABIT_VOLUME' });
+    if (items[0]?.kind === 'stack') {
+      expect(items[0].entries.map((e) => e.definition.id)).toEqual([
+        'habit_games_50',
+        'habit_games_10',
+        'habit_first_padel_game',
+      ]);
+    }
+  });
+
   it('keeps a single entry as a card', () => {
     const items = groupCabinetRailItems([
       entry(def({ id: 'habit_first_win', ruleKind: 'HABIT_FIRST_WIN' }), true),

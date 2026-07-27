@@ -46,6 +46,10 @@ const SPECS: Spec[] = [
     prompt: `${STYLE} Round victory medal hanging from a short folded ribbon (deep emerald green), polished gold face with a subtle embossed padel racket and ball motif, beveled rim. First-win celebration medal.`,
   },
   {
+    key: 'habit_first_padel_game',
+    prompt: `${STYLE} Premium stylized padel racket (perforated face, teal and white accents) with a bright yellow-green padel ball floating beside it, soft studio rim light, clean silhouette, no text. Debut / first-game played emblem.`,
+  },
+  {
     key: 'habit_wins_10',
     prompt: `${STYLE} Circular victory medallion in brushed bronze with teal ribbon loop, bold high-contrast white numerals "10" centered on dark face, clean sans-serif, clearly readable. Win milestone medal.`,
   },

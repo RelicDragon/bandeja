@@ -1,4 +1,6 @@
 /** Shared pile geometry for collapsed trophy stacks (rem-based; no root-font px assumptions). */
+import { stackFamilyKey } from '@/components/trophies/cabinetGrouping';
+
 export const STACK_CARD_WIDTH_REM = 6.75;
 export const STACK_CARD_GAP_REM = 0.5;
 /** Borderless expanded icon cell (frame + title width). */
@@ -67,13 +69,12 @@ export function pileBoxSizeRem(count: number): { widthRem: number; heightRem: nu
 }
 
 export function stackFamilyLabelKey(ruleKind: string): string {
-  switch (ruleKind) {
+  switch (stackFamilyKey(ruleKind)) {
     case 'HABIT_VOLUME':
       return 'trophies.cabinet.family.games';
     case 'HABIT_STREAK':
       return 'trophies.cabinet.family.streak';
     case 'HABIT_WINS':
-    case 'HABIT_FIRST_WIN':
       return 'trophies.cabinet.family.wins';
     case 'PODIUM':
       return 'trophies.cabinet.family.podium';

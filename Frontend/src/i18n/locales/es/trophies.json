@@ -39,6 +39,7 @@
         "streak": "Racha",
         "wins": "Victorias",
         "podium": "Podio",
+        "debut": "Debut",
         "generic": "Trofeos"
       }
     },
@@ -75,6 +76,10 @@
       "firstWin": {
         "title": "Primera victoria",
         "description": "Gana tu primer partido válido."
+      },
+      "firstPadelGame": {
+        "title": "Primer partido de pádel",
+        "description": "Termina tu primer partido de pádel válido."
       },
       "wins10": {
         "title": "Diez victorias",

@@ -30,6 +30,7 @@ import {
   assert.ok(getAchievementDefinition('habit_games_1000')?.threshold === 1000);
   assert.ok(getAchievementDefinition('habit_games_1000')?.rarity === 'LEGENDARY');
   assert.ok(getAchievementDefinition('habit_first_win')?.ruleKind === 'HABIT_FIRST_WIN');
+  assert.ok(getAchievementDefinition('habit_first_padel_game')?.sport === 'PADEL');
   assert.ok(getAchievementDefinition('habit_wins_10')?.threshold === 10);
   assert.ok(getAchievementDefinition('habit_wins_25')?.threshold === 25);
   assert.ok(getAchievementDefinition('habit_wins_50')?.rarity === 'RARE');
@@ -54,13 +55,15 @@ import {
 
 {
   const counters = countersFromSportProfiles([
-    { gamesPlayed: 4, gamesWon: 1, playStreakBest: 3, playStreakCount: 2 },
-    { gamesPlayed: 6, gamesWon: 2, playStreakBest: 5, playStreakCount: 0 },
+    { sport: 'PADEL', gamesPlayed: 4, gamesWon: 1, playStreakBest: 3, playStreakCount: 2 },
+    { sport: 'TENNIS', gamesPlayed: 6, gamesWon: 2, playStreakBest: 5, playStreakCount: 0 },
   ]);
   assert.equal(counters.gamesFinished, 10);
   assert.equal(counters.gamesWon, 3);
   // Current count only (max 2, 0) — lifetime best 5 must not inflate streak habits.
   assert.equal(counters.streakBest, 2);
+  assert.equal(counters.gamesFinishedBySport?.PADEL, 4);
+  assert.equal(counters.gamesFinishedBySport?.TENNIS, 6);
 
   const ownProgress = projectTrophyCabinet({
     isOwner: true,
@@ -71,6 +74,8 @@ import {
   assert.deepEqual(streak4?.progress, { current: 2, target: 4 });
   const games10 = ownProgress.find((r) => r.definition.id === 'habit_games_10');
   assert.deepEqual(games10?.progress, { current: 10, target: 10 });
+  const firstPadel = ownProgress.find((r) => r.definition.id === 'habit_first_padel_game');
+  assert.deepEqual(firstPadel?.progress, { current: 1, target: 1 });
 }
 
 {

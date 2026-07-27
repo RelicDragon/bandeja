@@ -14,6 +14,7 @@ import {
   rarityBadgeClass,
   rarityLabelKey,
   rarityTextClass,
+  showsRarityTag,
 } from '@/components/trophies/trophyRarityStyles';
 import type { TrophyCabinetEntryView } from '@/types/trophies';
 
@@ -130,12 +131,14 @@ export function TrophyStackIcon({
               {t(definition.titleKey)}
             </span>
           </div>
-          <span
-            data-testid="trophy-rarity-tag"
-            className={`mt-1 ${TROPHY_RARITY_TAG_CLASS} ${rarityBadgeClass(definition.rarity, locked)}`}
-          >
-            {t(rarityLabelKey(definition.rarity))}
-          </span>
+          {showsRarityTag(definition.rarity) && (
+            <span
+              data-testid="trophy-rarity-tag"
+              className={`mt-1 ${TROPHY_RARITY_TAG_CLASS} ${rarityBadgeClass(definition.rarity, locked)}`}
+            >
+              {t(rarityLabelKey(definition.rarity))}
+            </span>
+          )}
         </motion.div>
       </div>
       {openDetailOnClick && (

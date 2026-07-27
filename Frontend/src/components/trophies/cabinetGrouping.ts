@@ -11,9 +11,10 @@ export type TrophyCabinetRailItem =
       entries: TrophyCabinetEntryView[];
     };
 
-/** First win belongs in the wins ladder stack. */
+/** First win → wins ladder; sport debut games → volume games ladder. */
 export function stackFamilyKey(ruleKind: string): string {
   if (ruleKind === 'HABIT_FIRST_WIN') return 'HABIT_WINS';
+  if (ruleKind === 'HABIT_SPORT_VOLUME') return 'HABIT_VOLUME';
   return ruleKind;
 }
 

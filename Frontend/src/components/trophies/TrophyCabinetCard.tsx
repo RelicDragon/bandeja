@@ -17,6 +17,7 @@ import {
   rarityBadgeClass,
   rarityLabelKey,
   rarityTextClass,
+  showsRarityTag,
 } from '@/components/trophies/trophyRarityStyles';
 import type {
   TrophyCabinetEntryView,
@@ -103,12 +104,14 @@ export function TrophyCabinetCard({
           data-testid="trophy-card-footer"
           className={TROPHY_TILE_FOOTER_SLOT_CLASS}
         >
-          <span
-            data-testid="trophy-rarity-tag"
-            className={`${TROPHY_RARITY_TAG_CLASS} ${rarityBadgeClass(definition.rarity, locked)}`}
-          >
-            {t(rarityLabelKey(definition.rarity))}
-          </span>
+          {showsRarityTag(definition.rarity) && (
+            <span
+              data-testid="trophy-rarity-tag"
+              className={`${TROPHY_RARITY_TAG_CLASS} ${rarityBadgeClass(definition.rarity, locked)}`}
+            >
+              {t(rarityLabelKey(definition.rarity))}
+            </span>
+          )}
           <div className={TROPHY_TILE_PROGRESS_SLOT_CLASS}>
             {showProgress && progress && (
               <div

@@ -39,6 +39,7 @@
         "streak": "Streak",
         "wins": "Wins",
         "podium": "Podium",
+        "debut": "Debut",
         "generic": "Trophies"
       }
     },
@@ -75,6 +76,10 @@
       "firstWin": {
         "title": "First win",
         "description": "Win your first qualifying game."
+      },
+      "firstPadelGame": {
+        "title": "First padel game",
+        "description": "Finish your first qualifying padel game."
       },
       "wins10": {
         "title": "Ten wins",

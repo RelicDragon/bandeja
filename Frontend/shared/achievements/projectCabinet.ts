@@ -16,6 +16,8 @@ export type HabitProgressCounters = {
   gamesFinished: number;
   /** Wins count for first-win + win-milestone habits. */
   gamesWon: number;
+  /** Per-sport finished games for HABIT_SPORT_VOLUME (keys like PADEL). */
+  gamesFinishedBySport?: Readonly<Record<string, number>>;
 };
 
 export type CabinetEntry = {
@@ -39,6 +41,10 @@ export function habitProgressForDefinition(
   }
   if (definition.ruleKind === 'HABIT_FIRST_WIN' || definition.ruleKind === 'HABIT_WINS') {
     return { current: Math.min(counters.gamesWon, target), target };
+  }
+  if (definition.ruleKind === 'HABIT_SPORT_VOLUME' && definition.sport) {
+    const current = counters.gamesFinishedBySport?.[definition.sport] ?? 0;
+    return { current: Math.min(current, target), target };
   }
   return null;
 }

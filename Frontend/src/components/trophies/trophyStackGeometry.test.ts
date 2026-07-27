@@ -30,6 +30,7 @@ describe('trophyStackGeometry', () => {
     expect(stackFamilyLabelKey('HABIT_VOLUME')).toBe('trophies.cabinet.family.games');
     expect(stackFamilyLabelKey('HABIT_WINS')).toBe('trophies.cabinet.family.wins');
     expect(stackFamilyLabelKey('HABIT_FIRST_WIN')).toBe('trophies.cabinet.family.wins');
+    expect(stackFamilyLabelKey('HABIT_SPORT_VOLUME')).toBe('trophies.cabinet.family.games');
     expect(stackFamilyLabelKey('PODIUM')).toBe('trophies.cabinet.family.podium');
     expect(stackFamilyLabelKey('UNKNOWN')).toBe('trophies.cabinet.family.generic');
   });

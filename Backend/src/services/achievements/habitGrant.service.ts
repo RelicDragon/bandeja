@@ -104,6 +104,7 @@ export async function habitCounterPairForSportUpdate(params: {
   const others = await db.userSportProfile.findMany({
     where: { userId: params.userId, sport: { not: params.sport } },
     select: {
+      sport: true,
       gamesPlayed: true,
       gamesWon: true,
       playStreakBest: true,
@@ -111,8 +112,14 @@ export async function habitCounterPairForSportUpdate(params: {
     },
   });
   return {
-    before: countersFromSportProfiles([...others, params.before]),
-    after: countersFromSportProfiles([...others, params.after]),
+    before: countersFromSportProfiles([
+      ...others,
+      { ...params.before, sport: params.sport },
+    ]),
+    after: countersFromSportProfiles([
+      ...others,
+      { ...params.after, sport: params.sport },
+    ]),
   };
 }
 

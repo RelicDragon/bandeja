@@ -11,6 +11,7 @@ const ART_SRC: Record<TrophyArtKey, string> = {
   podium_silver: '/trophies/podium_silver.png',
   podium_bronze: '/trophies/podium_bronze.png',
   habit_first_win: '/trophies/habit_first_win.png',
+  habit_first_padel_game: '/trophies/habit_first_padel_game.png',
   habit_games_10: '/trophies/habit_games_10.png',
   habit_games_50: '/trophies/habit_games_50.png',
   habit_games_100: '/trophies/habit_games_100.png',

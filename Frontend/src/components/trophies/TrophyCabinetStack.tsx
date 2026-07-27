@@ -11,6 +11,7 @@ import {
   rarityBadgeClass,
   rarityLabelKey,
   rarityTextClass,
+  showsRarityTag,
 } from '@/components/trophies/trophyRarityStyles';
 import {
   STACK_CARD_GAP_REM,
@@ -141,11 +142,13 @@ export function TrophyCabinetStack({
                     {t(entry.definition.titleKey)}
                   </span>
                 </div>
-                <span
-                  className={`mt-1 ${TROPHY_RARITY_TAG_CLASS} ${rarityBadgeClass(entry.definition.rarity, locked)}`}
-                >
-                  {t(rarityLabelKey(entry.definition.rarity))}
-                </span>
+                {showsRarityTag(entry.definition.rarity) && (
+                  <span
+                    className={`mt-1 ${TROPHY_RARITY_TAG_CLASS} ${rarityBadgeClass(entry.definition.rarity, locked)}`}
+                  >
+                    {t(rarityLabelKey(entry.definition.rarity))}
+                  </span>
+                )}
               </div>
             ))}
           </div>

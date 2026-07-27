@@ -68,7 +68,7 @@ function commonEntry(): TrophyCabinetEntryView {
   return {
     definition: {
       id: 'habit_first_win',
-      rarity: 'COMMON',
+      rarity: 'RARE',
       artKey: 'habit_first_win',
       ruleKind: 'HABIT_FIRST_WIN',
       titleKey: 'trophies.defs.firstWin.title',
@@ -115,7 +115,7 @@ describe('TrophyStackIcon', () => {
     expect(titleSlot).not.toBeNull();
     expect(iconButton?.contains(titleSlot)).toBe(false);
     expect(iconButton?.contains(tag)).toBe(false);
-    expect(tag?.textContent).toBe('trophies.rarity.common');
+    expect(tag?.textContent).toBe('trophies.rarity.rare');
     expect(tag?.className).toContain('rounded-full');
     expect(tag?.className).toContain('text-[8px]');
     expect(titleSlot?.className).toContain('h-7');

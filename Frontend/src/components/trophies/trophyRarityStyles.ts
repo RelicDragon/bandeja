@@ -6,6 +6,11 @@ export const rarityLabelKey = (rarity: TrophyRarity): string => {
   return 'trophies.rarity.common';
 };
 
+/** Only rare/legendary show a rarity tag; common is unlabeled. */
+export function showsRarityTag(rarity: TrophyRarity): boolean {
+  return rarity === 'RARE' || rarity === 'LEGENDARY';
+}
+
 /** Outer gradient stops used by TrophyRarityFrame (`bg-gradient-to-br`). */
 export function rarityFrameClass(rarity: TrophyRarity, locked: boolean): string {
   if (locked) {

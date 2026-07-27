@@ -5,13 +5,15 @@ export type TrophyRuleKind =
   | 'HABIT_STREAK'
   | 'HABIT_VOLUME'
   | 'HABIT_FIRST_WIN'
-  | 'HABIT_WINS';
+  | 'HABIT_WINS'
+  | 'HABIT_SPORT_VOLUME';
 
 export type TrophyArtKey =
   | 'podium_gold'
   | 'podium_silver'
   | 'podium_bronze'
   | 'habit_first_win'
+  | 'habit_first_padel_game'
   | 'habit_games_10'
   | 'habit_games_50'
   | 'habit_games_100'
@@ -34,6 +36,7 @@ export type AchievementDefinitionId =
   | 'podium_silver'
   | 'podium_bronze'
   | 'habit_first_win'
+  | 'habit_first_padel_game'
   | 'habit_games_10'
   | 'habit_games_50'
   | 'habit_games_100'
@@ -64,6 +67,8 @@ export type AchievementDefinition = {
   place?: 1 | 2 | 3;
   /** Habit unlock threshold (weeks or games). */
   threshold?: number;
+  /** Sport scope for HABIT_SPORT_VOLUME (e.g. PADEL). */
+  sport?: string;
   /** Habit milestones are one-shot; podium stacks per event. */
   multiplicity: 'one_shot' | 'per_event';
 };

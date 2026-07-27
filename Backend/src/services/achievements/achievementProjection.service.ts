@@ -76,6 +76,7 @@ export type TrophiesPayload = {
 };
 
 type SportProfileCounterFields = {
+  sport?: string | null;
   gamesPlayed?: number | null;
   gamesWon?: number | null;
   playStreakBest?: number | null;
@@ -131,7 +132,7 @@ export function emptyTrophiesPayload(isOwner: boolean): TrophiesPayload {
   const cabinet = projectTrophyCabinet({
     isOwner,
     instances: [],
-    counters: { streakBest: 0, gamesFinished: 0, gamesWon: 0 },
+    counters: { streakBest: 0, gamesFinished: 0, gamesWon: 0, gamesFinishedBySport: {} },
   }).map((row) => ({
     definition: toDefinitionView(row.definition),
     unlocked: row.unlocked,
@@ -159,13 +160,18 @@ export function countersFromSportProfiles(
   let gamesFinished = 0;
   let gamesWon = 0;
   let streakBest = 0;
+  const gamesFinishedBySport: Record<string, number> = {};
   for (const p of profiles) {
-    gamesFinished += p.gamesPlayed ?? 0;
+    const played = p.gamesPlayed ?? 0;
+    gamesFinished += played;
     gamesWon += p.gamesWon ?? 0;
     // Current streak count only — not lifetime best (forward-only + chase progress).
     streakBest = Math.max(streakBest, p.playStreakCount ?? 0);
+    if (p.sport && played > 0) {
+      gamesFinishedBySport[p.sport] = (gamesFinishedBySport[p.sport] ?? 0) + played;
+    }
   }
-  return { streakBest, gamesFinished, gamesWon };
+  return { streakBest, gamesFinished, gamesWon, gamesFinishedBySport };
 }
 
 function distinctUnlockedDefinitionCount(

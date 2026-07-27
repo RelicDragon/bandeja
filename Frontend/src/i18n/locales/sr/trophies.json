@@ -39,6 +39,7 @@
         "streak": "Serija",
         "wins": "Pobede",
         "podium": "Podijum",
+        "debut": "Debi",
         "generic": "Pehari"
       }
     },
@@ -75,6 +76,10 @@
       "firstWin": {
         "title": "Prva pobeda",
         "description": "Pobedi u prvoj važećoj utakmici."
+      },
+      "firstPadelGame": {
+        "title": "Prva padel utakmica",
+        "description": "Završi prvu važeću padel utakmicu."
       },
       "wins10": {
         "title": "Deset pobeda",

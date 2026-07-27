@@ -135,6 +135,7 @@
         'podium_silver',
         'podium_bronze',
         'habit_first_win',
+        'habit_first_padel_game',
         'habit_wins_10',
         'habit_wins_25',
         'habit_wins_50',
@@ -165,7 +166,7 @@
         const stage = document.createElement('div');
         stage.className = 'stage';
         const img = document.createElement('img');
-        img.src = `/trophies/${key}.png?v=4`;
+        img.src = `/trophies/${key}.png?v=5`;
         img.alt = key;
         stage.appendChild(img);
         const label = document.createElement('div');
@@ -175,7 +176,7 @@
         row.className = 'sizes';
         for (const s of sizes) {
           const thumb = document.createElement('img');
-          thumb.src = `/trophies/${key}.png?v=4`;
+          thumb.src = `/trophies/${key}.png?v=5`;
           thumb.alt = `${key} ${s.label}`;
           thumb.style.setProperty('--sz', `${s.px}px`);
           thumb.title = `${s.px}px`;

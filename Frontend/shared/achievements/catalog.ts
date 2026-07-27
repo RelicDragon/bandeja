@@ -44,6 +44,17 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
     multiplicity: 'one_shot',
   },
   {
+    id: 'habit_first_padel_game',
+    rarity: 'COMMON',
+    artKey: 'habit_first_padel_game',
+    ruleKind: 'HABIT_SPORT_VOLUME',
+    titleKey: 'trophies.defs.firstPadelGame.title',
+    descriptionKey: 'trophies.defs.firstPadelGame.description',
+    threshold: 1,
+    sport: 'PADEL',
+    multiplicity: 'one_shot',
+  },
+  {
     id: 'habit_wins_10',
     rarity: 'COMMON',
     artKey: 'habit_wins_10',
