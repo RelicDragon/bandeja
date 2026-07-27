@@ -24,6 +24,7 @@ import {
 } from './ad.userState.service';
 import { personalizeClickUrl, resolveAdClickUserName } from './ad.clickUrl.util';
 import type { AdClickUrlPersonalizationValues } from './ad.clickUrl.util';
+import { mintAdClickToken } from './ad.token.util';
 
 export type ResolvedAdCard = {
   placement: AdPlacementKey;
@@ -124,12 +125,27 @@ export class AdDeliveryService {
     );
   }
 
-  static buildResolvedCard(
+  static async buildResolvedCard(
     campaign: CachedAdCampaign,
     creative: ReturnType<typeof resolveCreative> extends infer T ? NonNullable<T> : never,
     placement: AdPlacementKey,
-    personalization?: AdClickUrlPersonalizationValues
-  ): ResolvedAdCard {
+    personalization: AdClickUrlPersonalizationValues | undefined,
+    userId: string
+  ): Promise<ResolvedAdCard> {
+    const appendAdTokenToClickUrl = Boolean(campaign.appendAdTokenToClickUrl);
+    let adToken: string | null = null;
+    if (appendAdTokenToClickUrl) {
+      try {
+        adToken = await mintAdClickToken({ userId, campaignId: campaign.id });
+      } catch (err) {
+        console.error('[ads] ad_token mint failed', {
+          campaignId: campaign.id,
+          userId,
+          err,
+        });
+      }
+    }
+
     return {
       placement,
       campaignId: campaign.id,
@@ -147,8 +163,9 @@ export class AdDeliveryService {
           appendUserNameToClickUrl: Boolean(campaign.appendUserNameToClickUrl),
           appendLocaleToClickUrl: Boolean(campaign.appendLocaleToClickUrl),
           appendThemeToClickUrl: Boolean(campaign.appendThemeToClickUrl),
+          appendAdTokenToClickUrl: Boolean(adToken),
         },
-        personalization ?? {}
+        { ...(personalization ?? {}), adToken }
       ),
       clickAction: creative.clickAction,
       dismissible: campaign.dismissible,
@@ -232,7 +249,7 @@ export class AdDeliveryService {
             userStates,
           });
           if (creative && stillEligible.length > 0) {
-            result[placement] = this.buildResolvedCard(campaign, creative, placement, personalization);
+            result[placement] = await this.buildResolvedCard(campaign, creative, placement, personalization, userId);
             continue;
           }
         }
@@ -291,7 +308,7 @@ export class AdDeliveryService {
         // Concurrent resolve can race on unique(adSessionId,userId,placement,contextKey).
       }
 
-      result[placement] = this.buildResolvedCard(campaign, creative, placement, personalization);
+      result[placement] = await this.buildResolvedCard(campaign, creative, placement, personalization, userId);
     }
 
     return result;
@@ -363,6 +380,6 @@ export class AdDeliveryService {
       userName,
       locale,
       theme: context.theme ?? null,
-    });
+    }, userId);
   }
 }

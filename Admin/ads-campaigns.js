@@ -129,6 +129,7 @@ async function openAdsCampaignEditor(campaignId) {
         document.getElementById('adCampaignAppendUserNameToClickUrl').checked = false;
         document.getElementById('adCampaignAppendLocaleToClickUrl').checked = false;
         document.getElementById('adCampaignAppendThemeToClickUrl').checked = false;
+        document.getElementById('adCampaignAppendAdTokenToClickUrl').checked = false;
         document.getElementById('adCampaignHideDisclosure').checked = false;
         document.getElementById('adCampaignFreqCapEnabled').checked = true;
         document.getElementById('adCampaignFreqMax').value = String(AD_DEFAULT_FREQUENCY_CAP.maxImpressions);
@@ -343,6 +344,7 @@ function populateAdsCampaignForm(campaign) {
     document.getElementById('adCampaignAppendUserNameToClickUrl').checked = !!campaign.appendUserNameToClickUrl;
     document.getElementById('adCampaignAppendLocaleToClickUrl').checked = !!campaign.appendLocaleToClickUrl;
     document.getElementById('adCampaignAppendThemeToClickUrl').checked = !!campaign.appendThemeToClickUrl;
+    document.getElementById('adCampaignAppendAdTokenToClickUrl').checked = !!campaign.appendAdTokenToClickUrl;
     document.getElementById('adCampaignDisclosureLabel').value = campaign.disclosureLabel || '';
     document.getElementById('adCampaignHideDisclosure').checked = !!campaign.hideDisclosure;
     document.getElementById('adCampaignTestUserIds').value = formatTestUserIds(campaign.testUserIds);
@@ -385,6 +387,7 @@ function collectAdsCampaignPayload() {
         appendUserNameToClickUrl: document.getElementById('adCampaignAppendUserNameToClickUrl').checked,
         appendLocaleToClickUrl: document.getElementById('adCampaignAppendLocaleToClickUrl').checked,
         appendThemeToClickUrl: document.getElementById('adCampaignAppendThemeToClickUrl').checked,
+        appendAdTokenToClickUrl: document.getElementById('adCampaignAppendAdTokenToClickUrl').checked,
         disclosureLabel: optionalTrimToNull(document.getElementById('adCampaignDisclosureLabel').value),
         hideDisclosure: document.getElementById('adCampaignHideDisclosure').checked,
         targeting: collectAdsExtendedTargeting(),

@@ -36,6 +36,7 @@ function makeCampaign(overrides: Partial<CachedAdCampaign> & { id: string }): Ca
     appendUserNameToClickUrl: false,
     appendLocaleToClickUrl: false,
     appendThemeToClickUrl: false,
+    appendAdTokenToClickUrl: false,
     disclosureLabel: null,
     hideDisclosure: false,
     targeting: { cityIds: ['city1'], sports: ['PADEL'] },

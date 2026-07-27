@@ -74,6 +74,7 @@
  * @property {boolean} [appendUserNameToClickUrl]
  * @property {boolean} [appendLocaleToClickUrl]
  * @property {boolean} [appendThemeToClickUrl]
+ * @property {boolean} [appendAdTokenToClickUrl]
  * @property {string|null} disclosureLabel
  * @property {boolean} hideDisclosure
  * @property {AdTargeting} targeting

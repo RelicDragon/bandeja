@@ -74,13 +74,15 @@ function assert(cond: boolean, msg: string) {
       appendUserNameToClickUrl: true,
       appendLocaleToClickUrl: true,
       appendThemeToClickUrl: true,
+      appendAdTokenToClickUrl: true,
     },
-    { userName: 'Alex', locale: 'rs', theme: 'system' },
+    { userName: 'Alex', locale: 'rs', theme: 'system', adToken: 'tok.sig' },
     { systemIsDark: true },
   );
   assert(all.includes(`${AD_CLICK_URL_USER_NAME_PARAM}=Alex`), `name in ${all}`);
   assert(all.includes(`${AD_CLICK_URL_LOCALE_PARAM}=sr`), `locale rs→sr in ${all}`);
   assert(all.includes(`${AD_CLICK_URL_THEME_PARAM}=dark`), `theme system→dark in ${all}`);
+  assert(all.includes('ad_token=tok.sig'), `ad_token in ${all}`);
 
   const fromAuto = personalizeClickUrl(
     'https://x.test/',
@@ -88,6 +90,7 @@ function assert(cond: boolean, msg: string) {
       appendUserNameToClickUrl: false,
       appendLocaleToClickUrl: true,
       appendThemeToClickUrl: true,
+      appendAdTokenToClickUrl: false,
     },
     { locale: 'auto', theme: 'auto' },
     { systemIsDark: false },

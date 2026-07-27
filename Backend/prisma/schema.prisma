@@ -97,6 +97,8 @@ model User {
   favoriteTrainer                 User?                       @relation("UserFavoriteTrainer", fields: [favoriteTrainerId], references: [id], onDelete: SetNull)
   usersWithFavoriteTrainer        User[]                      @relation("UserFavoriteTrainer")
   favoriteClubs                   UserFavoriteClub[]
+  adClickTokens                   AdClickToken[]
+  adLandingWishes                 AdLandingWish[]
   favoriteUsers                   UserFavoriteUser[]          @relation("UserFavorites")
   favoritedBy                     UserFavoriteUser[]          @relation("UserFavoritedBy")
   interactionsFrom                UserInteraction[]           @relation("InteractionFromUser")
@@ -3141,6 +3143,7 @@ model AdCampaign {
   appendUserNameToClickUrl Boolean                @default(false)
   appendLocaleToClickUrl   Boolean                @default(false)
   appendThemeToClickUrl    Boolean                @default(false)
+  appendAdTokenToClickUrl  Boolean                @default(false)
   disclosureLabel          String?
   hideDisclosure           Boolean                @default(false)
   targeting         Json
@@ -3154,11 +3157,56 @@ model AdCampaign {
   userStates        AdUserState[]
   sessionPicks      AdSessionPick[]
   dailyStats        AdCampaignDailyStats[]
+  clickTokens       AdClickToken[]
+  landingWishes     AdLandingWish[]
 
   @@index([sponsorId])
   @@index([status])
   @@index([startsAt])
   @@index([endsAt])
+}
+
+model AdClickToken {
+  id          String     @id @default(cuid())
+  /// SHA-256 of the opaque bearer token (lookup / verify).
+  tokenHash   String     @unique
+  /// AES-GCM ciphertext of the raw token — only so delivery can re-issue the same URL value.
+  tokenCipher String
+  userId      String
+  campaignId  String
+  createdAt   DateTime   @default(now())
+  expiresAt   DateTime
+  revokedAt   DateTime?
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  campaign    AdCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, campaignId])
+  @@index([campaignId])
+  @@index([expiresAt])
+}
+
+enum AdLandingDonationIntent {
+  NONE
+  RSD
+  RUB
+}
+
+model AdLandingWish {
+  id             String                   @id @default(cuid())
+  landingKey     String
+  userId         String?
+  campaignId     String?
+  displayName    String
+  message        String
+  donationIntent AdLandingDonationIntent  @default(NONE)
+  locale         String?
+  createdAt      DateTime                 @default(now())
+  user           User?                    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  campaign       AdCampaign?              @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+
+  @@index([landingKey, createdAt])
+  @@index([userId])
+  @@index([campaignId])
 }
 
 model AdCreative {

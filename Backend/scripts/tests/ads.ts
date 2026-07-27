@@ -17,6 +17,7 @@ import {
 import { AdEventService } from '../../src/services/ads/ad.event.service';
 import { AdDeliveryService } from '../../src/services/ads/ad.delivery.service';
 import { AdCampaignCache } from '../../src/services/ads/ad.cache';
+import { verifyAdClickToken } from '../../src/services/ads/ad.token.util';
 
 function assert(cond: boolean, msg: string) {
   if (!cond) {
@@ -115,6 +116,7 @@ async function main() {
       appendUserNameToClickUrl: true,
       appendLocaleToClickUrl: true,
       appendThemeToClickUrl: true,
+      appendAdTokenToClickUrl: true,
     },
   });
   AdCampaignCache.clearCache();
@@ -144,12 +146,21 @@ async function main() {
     personalized.home_hero!.clickUrl.includes('theme=dark'),
     `personalized theme: ${personalized.home_hero!.clickUrl}`
   );
+  {
+    const url = new URL(personalized.home_hero!.clickUrl, 'https://example.test');
+    const adToken = url.searchParams.get('ad_token');
+    assert(!!adToken, `personalized ad_token: ${personalized.home_hero!.clickUrl}`);
+    const claims = await verifyAdClickToken(adToken);
+    assert(claims?.userId === user.id, 'ad_token userId');
+    assert(claims?.campaignId === campaign.id, 'ad_token campaignId');
+  }
   await prisma.adCampaign.update({
     where: { id: campaign.id },
     data: {
       appendUserNameToClickUrl: false,
       appendLocaleToClickUrl: false,
       appendThemeToClickUrl: false,
+      appendAdTokenToClickUrl: false,
     },
   });
   AdCampaignCache.clearCache();

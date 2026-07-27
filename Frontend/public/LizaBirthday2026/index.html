@@ -3,43 +3,39 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#080d18" />
+    <meta name="theme-color" content="#0a100e" />
     <meta name="robots" content="noindex, nofollow" />
     <meta
       name="description"
-      content="Leave a birthday wish for Liza — we'll print every message and give them to her on 2 August 2026."
+      content="Leave a birthday wish for Liza from the Bandeja padel community."
     />
     <title>Liza's birthday · 2 August 2026</title>
     <link rel="icon" href="/favicon/favicon.svg" type="image/svg+xml" />
     <style>
       :root {
         color-scheme: light;
-        --page: #f7f3ea;
-        --page-glow: #ffe3dc;
-        --surface: rgba(255, 255, 255, 0.84);
-        --surface-solid: #fffdf9;
-        --surface-soft: rgba(255, 255, 255, 0.55);
-        --ink: #1b2230;
-        --ink-muted: #68707e;
-        --ink-soft: #8e938f;
-        --line: rgba(29, 34, 45, 0.11);
-        --line-strong: rgba(29, 34, 45, 0.18);
-        --primary: #f0524f;
-        --primary-dark: #c93b3f;
-        --primary-soft: #ffe1dc;
-        --lime: #cce35b;
-        --lime-ink: #2d3816;
-        --blue: #78a7ff;
-        --navy: #1d2d50;
-        --focus: #4169e1;
-        --shadow: 0 34px 90px rgba(64, 44, 42, 0.16);
-        --shadow-soft: 0 18px 48px rgba(64, 44, 42, 0.1);
-        --radius-xl: 32px;
-        --radius-lg: 24px;
-        --radius-md: 16px;
-        --display-font: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, Georgia,
-          serif;
-        --body-font: "Avenir Next", Avenir, "Segoe UI", Helvetica, Arial, sans-serif;
+        --page: #f2f0e8;
+        --page-deep: #e6e4d9;
+        --panel: #fbfaf5;
+        --panel-soft: rgba(255, 255, 255, 0.62);
+        --panel-strong: #ffffff;
+        --ink: #121816;
+        --muted: #636b67;
+        --soft: #8a918d;
+        --line: rgba(18, 24, 22, 0.13);
+        --line-strong: rgba(18, 24, 22, 0.24);
+        --acid: #d9ff57;
+        --acid-ink: #192400;
+        --accent: #5f7d00;
+        --coral: #ff8066;
+        --blue: #81a7ff;
+        --court: rgba(18, 24, 22, 0.09);
+        --error: #c8493f;
+        --shadow: 0 28px 80px rgba(36, 43, 39, 0.13);
+        --shadow-soft: 0 14px 40px rgba(36, 43, 39, 0.08);
+        --display: "Arial Narrow", "Avenir Next Condensed", "Roboto Condensed", "Helvetica Neue",
+          Arial, sans-serif;
+        --body: "Avenir Next", Avenir, Inter, "Segoe UI", Helvetica, Arial, sans-serif;
         --safe-top: env(safe-area-inset-top, 0px);
         --safe-right: env(safe-area-inset-right, 0px);
         --safe-bottom: env(safe-area-inset-bottom, 0px);
@@ -48,26 +44,25 @@
 
       html[data-theme="dark"] {
         color-scheme: dark;
-        --page: #080d18;
-        --page-glow: #421a31;
-        --surface: rgba(18, 27, 44, 0.82);
-        --surface-solid: #121d2e;
-        --surface-soft: rgba(255, 255, 255, 0.065);
-        --ink: #fbf8f2;
-        --ink-muted: #bdc5d2;
-        --ink-soft: #909aaa;
+        --page: #0a100e;
+        --page-deep: #050907;
+        --panel: #121a17;
+        --panel-soft: rgba(255, 255, 255, 0.055);
+        --panel-strong: #18221e;
+        --ink: #f4f5ed;
+        --muted: #aeb7b1;
+        --soft: #78827c;
         --line: rgba(255, 255, 255, 0.11);
-        --line-strong: rgba(255, 255, 255, 0.2);
-        --primary: #ff7079;
-        --primary-dark: #f05162;
-        --primary-soft: rgba(255, 112, 121, 0.17);
-        --lime: #daf276;
-        --lime-ink: #25300f;
-        --blue: #80aaff;
-        --navy: #dce7ff;
-        --focus: #9bb7ff;
-        --shadow: 0 42px 110px rgba(0, 0, 0, 0.46);
-        --shadow-soft: 0 22px 56px rgba(0, 0, 0, 0.26);
+        --line-strong: rgba(255, 255, 255, 0.22);
+        --acid: #d9ff57;
+        --acid-ink: #172100;
+        --accent: #d9ff57;
+        --coral: #ff8066;
+        --blue: #81a7ff;
+        --court: rgba(217, 255, 87, 0.07);
+        --error: #ff8a7d;
+        --shadow: 0 32px 100px rgba(0, 0, 0, 0.42);
+        --shadow-soft: 0 16px 50px rgba(0, 0, 0, 0.24);
       }
 
       * {
@@ -85,16 +80,14 @@
         min-height: 100vh;
         margin: 0;
         overflow-x: hidden;
-        font-family: var(--body-font);
         color: var(--ink);
         background:
-          radial-gradient(ellipse at 4% -5%, var(--page-glow) 0, transparent 34rem),
-          radial-gradient(ellipse at 96% 5%, rgba(204, 227, 91, 0.18) 0, transparent 30rem),
-          radial-gradient(ellipse at 76% 102%, rgba(120, 167, 255, 0.15) 0, transparent 34rem),
+          linear-gradient(180deg, transparent 0 72%, var(--page-deep)),
           var(--page);
+        font-family: var(--body);
         transition:
-          background-color 180ms ease,
-          color 180ms ease;
+          color 180ms ease,
+          background-color 180ms ease;
       }
 
       button,
@@ -111,13 +104,15 @@
       .skip-link {
         position: fixed;
         z-index: 100;
-        top: 10px;
-        left: 10px;
+        top: calc(8px + var(--safe-top));
+        left: calc(8px + var(--safe-left));
         padding: 10px 14px;
         border-radius: 10px;
-        color: white;
-        background: var(--primary-dark);
-        transform: translateY(-160%);
+        color: var(--acid-ink);
+        background: var(--acid);
+        font-size: 0.82rem;
+        font-weight: 800;
+        transform: translateY(-180%);
         transition: transform 150ms ease;
       }
 
@@ -141,226 +136,138 @@
         min-height: 100vh;
         overflow: hidden;
         overflow: clip;
-        padding: calc(20px + var(--safe-top)) calc(22px + var(--safe-right))
-          calc(28px + var(--safe-bottom)) calc(22px + var(--safe-left));
+        padding:
+          calc(18px + var(--safe-top))
+          calc(24px + var(--safe-right))
+          calc(30px + var(--safe-bottom))
+          calc(24px + var(--safe-left));
       }
 
-      .page::before {
-        position: fixed;
+      .court-plan {
+        position: absolute;
         z-index: -2;
-        inset: 0;
-        background-image: radial-gradient(var(--line-strong) 0.8px, transparent 0.8px);
-        background-size: 19px 19px;
-        content: "";
-        opacity: 0.22;
-        pointer-events: none;
-        mask-image: linear-gradient(to bottom, black, transparent 72%);
-      }
-
-      .court-backdrop {
-        position: fixed;
-        z-index: -2;
-        top: 105px;
-        right: -210px;
-        width: 640px;
-        height: 760px;
-        border: 1px solid var(--line-strong);
-        border-radius: 42px;
+        top: 120px;
+        left: 50%;
+        width: min(1460px, 118vw);
+        height: 720px;
+        border: 1px solid var(--court);
         background:
           linear-gradient(
-            to right,
+            90deg,
             transparent calc(50% - 0.5px),
-            var(--line-strong) calc(50% - 0.5px),
-            var(--line-strong) calc(50% + 0.5px),
+            var(--court) calc(50% - 0.5px),
+            var(--court) calc(50% + 0.5px),
             transparent calc(50% + 0.5px)
           ),
           linear-gradient(
-            to bottom,
+            180deg,
             transparent calc(50% - 0.5px),
-            var(--line-strong) calc(50% - 0.5px),
-            var(--line-strong) calc(50% + 0.5px),
+            var(--court) calc(50% - 0.5px),
+            var(--court) calc(50% + 0.5px),
             transparent calc(50% + 0.5px)
-          ),
-          color-mix(in srgb, var(--surface-soft) 46%, transparent);
-        box-shadow:
-          inset 0 0 0 20px color-mix(in srgb, var(--line) 55%, transparent),
-          0 30px 90px rgba(40, 49, 73, 0.06);
-        opacity: 0.58;
+          );
+        opacity: 0.78;
         pointer-events: none;
-        transform: rotate(8deg);
+        transform: translateX(-50%) perspective(800px) rotateX(62deg) translateY(-260px);
+        transform-origin: center top;
       }
 
-      .court-backdrop::before,
-      .court-backdrop::after {
+      .court-plan::before,
+      .court-plan::after {
         position: absolute;
-        right: 20px;
-        left: 20px;
-        height: 1px;
-        background: var(--line-strong);
+        top: 0;
+        bottom: 0;
+        width: 1px;
+        background: var(--court);
         content: "";
       }
 
-      .court-backdrop::before {
-        top: 27%;
+      .court-plan::before {
+        left: 25%;
       }
 
-      .court-backdrop::after {
-        bottom: 27%;
+      .court-plan::after {
+        right: 25%;
       }
 
-      .confetti {
-        position: fixed;
-        z-index: -1;
-        width: 13px;
-        height: 34px;
-        border-radius: 999px;
-        opacity: 0.74;
-        pointer-events: none;
-        transform: rotate(var(--rotation));
-      }
-
-      .confetti--one {
-        --rotation: 26deg;
-        top: 17%;
-        left: 3%;
-        background: var(--primary);
-      }
-
-      .confetti--two {
-        --rotation: -42deg;
-        top: 31%;
-        right: 2.5%;
-        width: 10px;
-        height: 26px;
-        background: var(--lime);
-      }
-
-      .confetti--three {
-        --rotation: 67deg;
-        bottom: 14%;
-        left: 5.5%;
-        width: 9px;
-        height: 24px;
-        background: #78a7ff;
-      }
-
-      .confetti--four {
-        --rotation: 18deg;
-        right: 5%;
-        bottom: 8%;
-        width: 12px;
-        height: 28px;
-        background: var(--primary);
-      }
-
-      .confetti--five {
-        --rotation: 0deg;
-        top: 9%;
-        right: 26%;
-        width: 17px;
-        height: 17px;
-        border: 4px solid var(--blue);
-        border-radius: 50%;
-        background: transparent;
-      }
-
-      .confetti--seven {
-        --rotation: -22deg;
-        right: 12%;
-        bottom: 4%;
-        width: 12px;
-        height: 12px;
-        border-radius: 3px;
-        background: var(--blue);
+      .shell {
+        width: min(1220px, 100%);
+        margin: 0 auto;
       }
 
       .topbar {
         position: relative;
-        z-index: 10;
+        z-index: 20;
         display: flex;
-        width: min(1180px, 100%);
-        min-height: 74px;
-        margin: 0 auto 48px;
-        padding: 8px 10px 8px 14px;
+        min-height: 62px;
+        padding: 6px 7px 6px 13px;
         align-items: center;
         justify-content: space-between;
-        gap: 18px;
+        gap: 16px;
         border: 1px solid var(--line);
-        border-radius: 26px;
-        background: color-mix(in srgb, var(--surface) 74%, transparent);
-        box-shadow:
-          0 18px 50px rgba(21, 29, 46, 0.1),
-          inset 0 1px 0 rgba(255, 255, 255, 0.12);
-        -webkit-backdrop-filter: blur(22px) saturate(130%);
-        backdrop-filter: blur(22px) saturate(130%);
+        border-radius: 19px;
+        background: color-mix(in srgb, var(--page) 76%, transparent);
+        box-shadow: 0 12px 36px rgba(0, 0, 0, 0.08);
+        -webkit-backdrop-filter: blur(18px) saturate(140%);
+        backdrop-filter: blur(18px) saturate(140%);
       }
 
       .brand {
         display: inline-flex;
         align-items: center;
-        min-width: 0;
-        padding: 0;
-        border: 1px solid transparent;
-        border-radius: 22px;
+        border-radius: 11px;
         text-decoration: none;
-        transition:
-          border-color 160ms ease,
-          background 160ms ease,
-          transform 160ms ease;
       }
 
-      .brand:hover {
-        border-color: transparent;
-        background: transparent;
-        transform: translateY(-1px);
-      }
-
-      .brand:focus-visible {
-        outline: 3px solid color-mix(in srgb, var(--focus) 72%, transparent);
+      .brand:focus-visible,
+      .locale-button:focus-visible,
+      .theme-button:focus-visible,
+      .copy-row:focus-visible,
+      .submit-button:focus-visible {
+        outline: 3px solid color-mix(in srgb, var(--acid) 66%, transparent);
         outline-offset: 3px;
       }
 
       .brand__logo {
         display: block;
-        width: 122px;
+        width: 112px;
         height: auto;
-        filter: drop-shadow(0 8px 12px rgba(28, 35, 50, 0.2));
+        filter: invert(1) drop-shadow(0 6px 12px rgba(0, 0, 0, 0.14));
+      }
+
+      html[data-theme="dark"] .brand__logo {
+        filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.22));
       }
 
       .controls {
         display: flex;
         align-items: center;
-        gap: 9px;
+        gap: 8px;
       }
 
       .locale-control {
         display: flex;
-        padding: 4px;
+        padding: 3px;
         border: 1px solid var(--line);
-        border-radius: 999px;
-        background: color-mix(in srgb, var(--surface) 78%, transparent);
-        box-shadow:
-          0 8px 28px rgba(40, 49, 73, 0.08),
-          inset 0 1px 0 rgba(255, 255, 255, 0.08);
-        -webkit-backdrop-filter: blur(18px);
-        backdrop-filter: blur(18px);
+        border-radius: 12px;
+        background: var(--panel-soft);
       }
 
       .locale-button,
       .theme-button {
         border: 0;
-        color: var(--ink-muted);
+        color: var(--muted);
         background: transparent;
         cursor: pointer;
       }
 
       .locale-button {
-        min-width: 39px;
+        min-width: 38px;
         height: 34px;
-        padding: 0 10px;
-        border-radius: 999px;
-        font-size: 0.72rem;
-        font-weight: 800;
+        padding: 0 8px;
+        border-radius: 9px;
+        font-size: 0.69rem;
+        font-weight: 850;
         letter-spacing: 0.06em;
       }
 
@@ -369,44 +276,33 @@
       }
 
       .locale-button.is-active {
-        color: var(--surface-solid);
-        background: var(--ink);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-      }
-
-      html[data-theme="dark"] .locale-button.is-active {
-        color: #172033;
-        background: #f7f3ea;
+        color: var(--acid-ink);
+        background: var(--acid);
       }
 
       .theme-button {
         display: grid;
-        width: 44px;
-        height: 44px;
+        width: 42px;
+        height: 42px;
         place-items: center;
         border: 1px solid var(--line);
-        border-radius: 50%;
-        background: color-mix(in srgb, var(--surface) 78%, transparent);
-        box-shadow:
-          0 8px 28px rgba(40, 49, 73, 0.08),
-          inset 0 1px 0 rgba(255, 255, 255, 0.08);
-        -webkit-backdrop-filter: blur(18px);
-        backdrop-filter: blur(18px);
+        border-radius: 12px;
+        background: var(--panel-soft);
         transition:
           color 150ms ease,
-          transform 150ms ease,
-          background 150ms ease;
+          background 150ms ease,
+          transform 150ms ease;
       }
 
       .theme-button:hover {
         color: var(--ink);
-        background: var(--surface);
-        transform: rotate(7deg);
+        background: var(--panel);
+        transform: translateY(-1px);
       }
 
       .theme-button svg {
-        width: 19px;
-        height: 19px;
+        width: 18px;
+        height: 18px;
       }
 
       .theme-button .moon-icon,
@@ -418,415 +314,483 @@
         display: block;
       }
 
-      .main {
+      .hero {
         display: grid;
-        width: min(1180px, 100%);
-        margin: 0 auto;
-        grid-template-columns: minmax(0, 1.06fr) minmax(390px, 0.94fr);
-        gap: clamp(42px, 7vw, 92px);
+        min-height: 760px;
+        padding: clamp(62px, 8vw, 104px) 0 68px;
+        grid-template-columns: minmax(0, 1.08fr) minmax(390px, 0.92fr);
         align-items: center;
+        gap: clamp(44px, 7vw, 96px);
       }
 
-      .story {
+      .hero__copy {
         position: relative;
+        z-index: 2;
         min-width: 0;
-        padding: 10px 0 28px;
       }
 
-      .story::before {
-        position: absolute;
-        z-index: -1;
-        top: 90px;
-        left: -90px;
-        width: 380px;
-        height: 380px;
+      .match-kicker {
+        display: inline-flex;
+        margin-bottom: 24px;
+        align-items: center;
+        gap: 10px;
+        color: var(--muted);
+        font-size: 0.73rem;
+        font-weight: 850;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+      }
+
+      .match-kicker::before {
+        flex: 0 0 auto;
+        width: 9px;
+        height: 9px;
         border-radius: 50%;
-        background: radial-gradient(circle, color-mix(in srgb, var(--primary) 9%, transparent), transparent 68%);
+        background: var(--acid);
+        box-shadow: 0 0 0 5px color-mix(in srgb, var(--acid) 15%, transparent);
+        content: "";
+      }
+
+      .match-kicker__text {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        line-height: 1.25;
+      }
+
+      .hero h1 {
+        max-width: 720px;
+        margin: 0;
+        font-family: var(--display);
+        font-size: clamp(4rem, 7vw, 7rem);
+        font-stretch: condensed;
+        font-weight: 900;
+        letter-spacing: -0.072em;
+        line-height: 0.84;
+        text-transform: uppercase;
+        text-wrap: balance;
+      }
+
+      .hero h1 .accent {
+        color: var(--accent);
+      }
+
+      .hero__hello {
+        margin: 0 0 14px;
+        color: var(--accent);
+        font-family: var(--display);
+        font-size: clamp(1.15rem, 2.2vw, 1.55rem);
+        font-weight: 850;
+        letter-spacing: -0.03em;
+        line-height: 1.15;
+      }
+
+      .hero__lead {
+        max-width: 630px;
+        margin: 34px 0 0;
+        color: var(--ink);
+        font-size: clamp(1.14rem, 1.8vw, 1.42rem);
+        font-weight: 650;
+        letter-spacing: -0.025em;
+        line-height: 1.48;
+      }
+
+      .hero__story {
+        max-width: 630px;
+        margin: 16px 0 0;
+        color: var(--muted);
+        font-size: 1rem;
+        line-height: 1.72;
+      }
+
+      .portrait-stage {
+        position: relative;
+        width: min(470px, 100%);
+        margin-left: auto;
+      }
+
+      .portrait-caption {
+        margin: 16px 0 0;
+        color: var(--muted);
+        font-size: 0.72rem;
+        font-weight: 850;
+        letter-spacing: 0.14em;
+        line-height: 1.35;
+        text-align: center;
+        text-transform: uppercase;
+      }
+
+      .portrait-frame {
+        position: relative;
+        overflow: hidden;
+        aspect-ratio: 4 / 5.15;
+        border: 1px solid var(--line-strong);
+        border-radius: 44px 44px 13px 44px;
+        background: var(--panel);
+        box-shadow: var(--shadow);
+      }
+
+      .portrait-frame::after {
+        position: absolute;
+        inset: 0;
+        background:
+          linear-gradient(180deg, transparent 52%, rgba(4, 9, 7, 0.7) 100%),
+          linear-gradient(110deg, rgba(217, 255, 87, 0.12), transparent 35%);
         content: "";
         pointer-events: none;
       }
 
-      .date-pill {
+      .portrait-frame img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: 50% 38%;
+        transform: scale(1.015);
+      }
+
+      .portrait-label {
+        position: absolute;
+        z-index: 2;
+        right: 24px;
+        bottom: 24px;
+        left: 24px;
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 20px;
+        color: #fff;
+      }
+
+      .portrait-label__name {
         display: inline-flex;
-        margin-bottom: 25px;
-        padding: 9px 13px 9px 10px;
-        align-items: center;
-        gap: 10px;
-        border: 1px solid color-mix(in srgb, var(--primary) 25%, transparent);
-        border-radius: 999px;
-        color: var(--primary-dark);
-        background: color-mix(in srgb, var(--primary-soft) 74%, transparent);
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.36);
-        font-size: 0.75rem;
+        align-items: baseline;
+        gap: 0.28em;
+        font-family: var(--display);
+        font-size: clamp(2.2rem, 4vw, 3.3rem);
+        font-weight: 900;
+        letter-spacing: -0.06em;
+        line-height: 0.9;
+        text-transform: uppercase;
+      }
+
+      .portrait-label__handle {
+        color: rgba(255, 255, 255, 0.55);
+        font-size: 0.5em;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: none;
+      }
+
+      .portrait-label__handle a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      .portrait-label__handle a:hover,
+      .portrait-label__handle a:focus-visible {
+        color: rgba(255, 255, 255, 0.92);
+        text-decoration: underline;
+        text-underline-offset: 0.18em;
+      }
+
+      .portrait-label__role {
+        display: block;
+        margin-top: 7px;
+        color: rgba(255, 255, 255, 0.72);
+        font-size: 0.69rem;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .portrait-label__court {
+        flex: 0 0 auto;
+        color: var(--acid);
+        font-size: 0.66rem;
+        font-weight: 850;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .date-score {
+        position: absolute;
+        z-index: 3;
+        top: -25px;
+        left: -30px;
+        display: grid;
+        width: 116px;
+        min-height: 136px;
+        padding: 15px 13px;
+        grid-template-rows: auto 1fr auto;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 20px;
+        color: var(--acid-ink);
+        background: var(--acid);
+        box-shadow: 0 18px 48px color-mix(in srgb, var(--acid) 18%, transparent);
+        transform: rotate(-4deg);
+      }
+
+      .date-score__label,
+      .date-score__year {
+        font-size: 0.58rem;
+        font-weight: 900;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .date-score__date {
+        align-self: center;
+        font-family: var(--display);
+        font-size: 2.72rem;
+        font-weight: 950;
+        letter-spacing: -0.08em;
+        line-height: 0.85;
+      }
+
+      .padel-ball {
+        position: absolute;
+        z-index: 4;
+        right: -20px;
+        bottom: 24%;
+        width: 54px;
+        height: 54px;
+        overflow: hidden;
+        border: 3px solid color-mix(in srgb, var(--acid-ink) 16%, transparent);
+        border-radius: 50%;
+        background: var(--acid);
+        box-shadow: 0 14px 36px rgba(0, 0, 0, 0.2);
+      }
+
+      .padel-ball::before,
+      .padel-ball::after {
+        position: absolute;
+        top: -10%;
+        width: 30px;
+        height: 115%;
+        border: 2px solid color-mix(in srgb, var(--acid-ink) 27%, transparent);
+        border-top-color: transparent;
+        border-bottom-color: transparent;
+        border-radius: 50%;
+        content: "";
+      }
+
+      .padel-ball::before {
+        left: -19px;
+      }
+
+      .padel-ball::after {
+        right: -19px;
+      }
+
+      .club-strip {
+        display: grid;
+        margin-bottom: 86px;
+        grid-template-columns: 0.85fr 1.2fr 0.85fr 1fr;
+        border: 1px solid var(--line);
+        border-radius: 24px;
+        background: var(--panel-soft);
+        box-shadow: var(--shadow-soft);
+        overflow: hidden;
+      }
+
+      .club-strip__item {
+        min-width: 0;
+        padding: 23px 25px;
+        border-left: 1px solid var(--line);
+      }
+
+      .club-strip__item:first-child {
+        border-left: 0;
+      }
+
+      .club-strip__label {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--soft);
+        font-size: 0.63rem;
         font-weight: 850;
         letter-spacing: 0.14em;
         text-transform: uppercase;
       }
 
-      html[data-theme="dark"] .date-pill {
-        color: var(--primary);
-      }
-
-      .date-pill::before {
-        width: 8px;
-        height: 8px;
-        border: 3px solid color-mix(in srgb, currentColor 25%, transparent);
-        border-radius: 50%;
-        background: currentColor;
-        content: "";
-        box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 10%, transparent);
-      }
-
-      .story h1 {
-        max-width: 740px;
-        margin: 0 0 25px;
-        font-family: var(--display-font);
-        font-size: clamp(3.45rem, 5.85vw, 5.65rem);
-        font-weight: 500;
-        letter-spacing: -0.06em;
-        line-height: 0.94;
-        text-wrap: balance;
-        text-shadow: 0 16px 40px color-mix(in srgb, var(--page) 35%, transparent);
-      }
-
-      .story h1 em {
-        position: relative;
-        color: transparent;
-        background: linear-gradient(100deg, var(--primary) 12%, #ff9a78 88%);
-        -webkit-background-clip: text;
-        background-clip: text;
-        font-style: italic;
-        white-space: nowrap;
-      }
-
-      .story h1 em::after {
-        position: absolute;
-        right: 0.02em;
-        bottom: -0.08em;
-        left: 0.07em;
-        height: 0.16em;
-        border: solid var(--lime);
-        border-width: 0 0 5px;
-        border-radius: 50%;
-        content: "";
-        transform: rotate(-2deg);
-      }
-
-      .story__lead {
-        max-width: 610px;
-        margin: 0 0 17px;
+      .club-strip__value {
+        display: block;
         color: var(--ink);
-        font-size: clamp(1.16rem, 1.65vw, 1.36rem);
-        font-weight: 650;
-        letter-spacing: -0.018em;
-        line-height: 1.52;
+        font-size: 0.91rem;
+        font-weight: 720;
+        line-height: 1.42;
       }
 
-      .story__body {
-        max-width: 610px;
-        margin: 0;
-        color: var(--ink-muted);
-        font-size: 1rem;
-        line-height: 1.75;
+      .club-strip__item--acid {
+        color: var(--acid-ink);
+        background: var(--acid);
       }
 
-      .court-note {
+      .club-strip__item--acid .club-strip__label {
+        color: color-mix(in srgb, var(--acid-ink) 60%, transparent);
+      }
+
+      .club-strip__item--acid .club-strip__value {
+        color: var(--acid-ink);
+      }
+
+      .wish-section {
         position: relative;
         display: grid;
-        max-width: 610px;
-        margin-top: 30px;
-        padding: 21px 24px 21px 70px;
-        border: 1px solid rgba(204, 227, 91, 0.48);
-        border-radius: 22px;
-        color: var(--ink);
+        padding: clamp(28px, 5vw, 64px);
+        grid-template-columns: minmax(260px, 0.74fr) minmax(420px, 1.26fr);
+        gap: clamp(38px, 7vw, 94px);
+        border: 1px solid var(--line);
+        border-radius: 36px;
         background:
-          linear-gradient(115deg, color-mix(in srgb, var(--lime) 23%, transparent), transparent 76%),
-          var(--surface-soft);
-        box-shadow: var(--shadow-soft);
-        -webkit-backdrop-filter: blur(16px);
+          linear-gradient(140deg, color-mix(in srgb, var(--panel-strong) 78%, transparent), transparent 65%),
+          var(--panel);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+
+      .wish-section::before {
+        position: absolute;
+        right: -70px;
+        bottom: -230px;
+        width: 520px;
+        height: 520px;
+        border: 1px solid var(--court);
+        background:
+          linear-gradient(
+            90deg,
+            transparent calc(50% - 0.5px),
+            var(--court) calc(50% - 0.5px),
+            var(--court) calc(50% + 0.5px),
+            transparent calc(50% + 0.5px)
+          ),
+          linear-gradient(
+            180deg,
+            transparent calc(50% - 0.5px),
+            var(--court) calc(50% - 0.5px),
+            var(--court) calc(50% + 0.5px),
+            transparent calc(50% + 0.5px)
+          );
+        content: "";
+        opacity: 0.7;
+        pointer-events: none;
+        transform: rotate(14deg);
+      }
+
+      .wish-intro,
+      .wish-form-wrap {
+        position: relative;
+        z-index: 1;
+      }
+
+      .section-number {
+        display: inline-flex;
+        margin-bottom: 26px;
+        align-items: center;
+        gap: 10px;
+        color: var(--soft);
+        font-size: 0.67rem;
+        font-weight: 900;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+      }
+
+      .section-ball {
+        position: relative;
+        flex: 0 0 auto;
+        width: 34px;
+        height: 34px;
+        overflow: hidden;
+        border: 2px solid color-mix(in srgb, var(--acid-ink) 16%, transparent);
+        border-radius: 50%;
+        background: var(--acid);
+      }
+
+      .section-ball::before,
+      .section-ball::after {
+        position: absolute;
+        top: -12%;
+        width: 18px;
+        height: 120%;
+        border: 2px solid color-mix(in srgb, var(--acid-ink) 30%, transparent);
+        border-top-color: transparent;
+        border-bottom-color: transparent;
+        border-radius: 50%;
+        content: "";
+      }
+
+      .section-ball::before {
+        left: -12px;
+      }
+
+      .section-ball::after {
+        right: -12px;
+      }
+
+      .wish-intro h2 {
+        margin: 0;
+        font-family: var(--display);
+        font-size: clamp(2.8rem, 5vw, 4.7rem);
+        font-weight: 900;
+        letter-spacing: -0.065em;
+        line-height: 0.91;
+        text-transform: uppercase;
+        text-wrap: balance;
+      }
+
+      .wish-intro__text {
+        max-width: 390px;
+        margin: 24px 0 0;
+        color: var(--muted);
+        font-size: 0.98rem;
+        line-height: 1.68;
+      }
+
+      .finals-note {
+        display: flex;
+        margin: 25px 0 0;
+        padding-top: 20px;
+        flex-direction: column;
+        gap: 4px;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 0.77rem;
+        font-weight: 680;
+        line-height: 1.5;
+      }
+
+      .finals-note strong {
+        color: var(--ink);
+      }
+
+      .wish-form-wrap {
+        padding: clamp(22px, 4vw, 38px);
+        border: 1px solid var(--line);
+        border-radius: 25px;
+        background: color-mix(in srgb, var(--page) 58%, transparent);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+        -webkit-backdrop-filter: blur(14px);
         backdrop-filter: blur(14px);
       }
 
-      .court-note__icon {
-        position: absolute;
-        top: 50%;
-        left: 22px;
-        display: grid;
-        width: 34px;
-        height: 34px;
-        place-items: center;
-        border-radius: 10px;
-        color: var(--lime-ink);
-        background: var(--lime);
-        transform: translateY(-50%) rotate(-4deg);
-      }
-
-      .court-note__icon svg {
-        width: 20px;
-        height: 20px;
-      }
-
-      .court-note strong {
-        margin-bottom: 4px;
+      .form-heading {
+        display: flex;
+        margin-bottom: 6px;
+        align-items: center;
+        gap: 10px;
+        color: var(--ink);
         font-size: 0.72rem;
         font-weight: 850;
         letter-spacing: 0.12em;
         text-transform: uppercase;
       }
 
-      .court-note span {
-        font-size: 0.93rem;
-        font-weight: 600;
-        line-height: 1.5;
-      }
-
-      .signature {
-        display: inline-flex;
-        margin-top: 25px;
-        padding: 7px 12px 7px 8px;
-        align-items: center;
-        gap: 11px;
-        border: 1px solid var(--line);
-        border-radius: 999px;
-        color: var(--ink-muted);
-        background: color-mix(in srgb, var(--surface-soft) 72%, transparent);
-        font-size: 0.79rem;
-        font-weight: 700;
-        -webkit-backdrop-filter: blur(12px);
-        backdrop-filter: blur(12px);
-      }
-
-      .signature__faces {
-        display: flex;
-      }
-
-      .signature__face {
-        display: grid;
+      .form-heading::before {
         width: 28px;
-        height: 28px;
-        margin-left: -6px;
-        place-items: center;
-        border: 2px solid var(--page);
-        border-radius: 50%;
-        color: #fff;
-        font-size: 0.66rem;
-        font-weight: 850;
-      }
-
-      .signature__face:first-child {
-        margin-left: 0;
-        background: #335c93;
-      }
-
-      .signature__face:nth-child(2) {
-        background: var(--primary);
-      }
-
-      .signature__face:nth-child(3) {
-        color: var(--lime-ink);
-        background: var(--lime);
-      }
-
-      .wish-card-wrap {
-        position: relative;
-      }
-
-      .wish-card-wrap::before {
-        position: absolute;
-        z-index: -1;
-        top: 7%;
-        right: -12%;
-        width: 72%;
-        height: 80%;
-        border-radius: 50%;
-        background: color-mix(in srgb, var(--primary) 14%, transparent);
-        filter: blur(42px);
+        height: 2px;
+        background: var(--acid);
         content: "";
-        pointer-events: none;
-      }
-
-      .padel-ball {
-        position: absolute;
-        z-index: 3;
-        top: 96px;
-        right: -15px;
-        width: 27px;
-        height: 27px;
-        border: 2px solid rgba(255, 255, 255, 0.65);
-        border-radius: 50%;
-        background: var(--lime);
-        box-shadow: 0 9px 22px rgba(100, 122, 32, 0.2);
-        transform: rotate(18deg);
-      }
-
-      .padel-ball::after {
-        position: absolute;
-        inset: 4px 6px;
-        border: solid color-mix(in srgb, var(--lime-ink) 32%, transparent);
-        border-width: 0 0 0 1px;
-        border-radius: 50%;
-        content: "";
-        transform: rotate(38deg);
-      }
-
-      .date-sticker {
-        position: absolute;
-        z-index: 2;
-        top: -26px;
-        right: -23px;
-        display: grid;
-        width: 96px;
-        height: 96px;
-        place-items: center;
-        border: 1px solid rgba(255, 255, 255, 0.48);
-        border-radius: 50%;
-        color: #fff;
-        background: var(--primary);
-        box-shadow: 0 16px 32px rgba(240, 82, 79, 0.28);
-        transform: rotate(8deg);
-      }
-
-      .date-sticker::before,
-      .date-sticker::after {
-        position: absolute;
-        border-radius: 50%;
-        content: "";
-      }
-
-      .date-sticker::before {
-        inset: 7px;
-        border: 1px dashed rgba(255, 255, 255, 0.55);
-      }
-
-      .date-sticker::after {
-        top: 17px;
-        right: 18px;
-        width: 5px;
-        height: 5px;
-        background: var(--lime);
-        box-shadow: -41px 40px 0 var(--lime);
-      }
-
-      .date-sticker__inner {
-        display: grid;
-        place-items: center;
-        line-height: 1;
-      }
-
-      .date-sticker__day {
-        font-family: var(--display-font);
-        font-size: 2.35rem;
-        font-weight: 600;
-        letter-spacing: -0.08em;
-      }
-
-      .date-sticker__month {
-        margin-top: 3px;
-        font-size: 0.59rem;
-        font-weight: 850;
-        letter-spacing: 0.15em;
-        text-transform: uppercase;
-      }
-
-      .wish-card {
-        position: relative;
-        overflow: hidden;
-        padding: clamp(28px, 4.4vw, 44px);
-        border: 1px solid transparent;
-        border-radius: var(--radius-xl);
-        background:
-          linear-gradient(
-              145deg,
-              color-mix(in srgb, var(--surface-solid) 91%, transparent),
-              color-mix(in srgb, var(--surface) 92%, transparent)
-            )
-            padding-box,
-          linear-gradient(
-              145deg,
-              color-mix(in srgb, var(--primary) 70%, transparent),
-              color-mix(in srgb, var(--line-strong) 80%, transparent) 38%,
-              color-mix(in srgb, var(--lime) 58%, transparent)
-            )
-            border-box;
-        box-shadow:
-          var(--shadow),
-          inset 0 1px 0 rgba(255, 255, 255, 0.1);
-        -webkit-backdrop-filter: blur(28px) saturate(125%);
-        backdrop-filter: blur(28px) saturate(125%);
-        transition:
-          transform 220ms ease,
-          box-shadow 220ms ease;
-      }
-
-      .wish-card::before {
-        position: absolute;
-        top: 0;
-        right: 0;
-        left: 0;
-        height: 4px;
-        background: linear-gradient(90deg, var(--primary) 0 47%, var(--lime) 47% 72%, var(--blue) 72%);
-        content: "";
-      }
-
-      .wish-card::after {
-        position: absolute;
-        top: -155px;
-        left: -115px;
-        width: 255px;
-        height: 255px;
-        border: 1px solid var(--line);
-        border-radius: 50%;
-        content: "";
-        opacity: 0.55;
-        pointer-events: none;
-      }
-
-      .wish-card > * {
-        position: relative;
-        z-index: 1;
-      }
-
-      .wish-card__eyebrow {
-        display: inline-flex;
-        margin: 0 0 10px;
-        padding: 7px 10px;
-        align-items: center;
-        gap: 8px;
-        border: 1px solid color-mix(in srgb, var(--primary) 22%, transparent);
-        border-radius: 999px;
-        color: var(--primary-dark);
-        background: color-mix(in srgb, var(--primary-soft) 58%, transparent);
-        font-size: 0.72rem;
-        font-weight: 850;
-        letter-spacing: 0.13em;
-        text-transform: uppercase;
-      }
-
-      html[data-theme="dark"] .wish-card__eyebrow {
-        color: var(--primary);
-      }
-
-      .wish-card__eyebrow svg {
-        width: 15px;
-        height: 15px;
-      }
-
-      .wish-card h2 {
-        max-width: 390px;
-        margin: 0 0 10px;
-        font-family: var(--display-font);
-        font-size: clamp(2rem, 4vw, 2.7rem);
-        font-weight: 500;
-        letter-spacing: -0.045em;
-        line-height: 1.03;
-        text-wrap: balance;
-      }
-
-      .wish-card__intro {
-        margin: 0 0 27px;
-        color: var(--ink-muted);
-        font-size: 0.91rem;
-        line-height: 1.55;
       }
 
       .field {
@@ -847,13 +811,12 @@
         color: var(--ink);
         font-size: 0.76rem;
         font-weight: 800;
-        letter-spacing: 0.025em;
       }
 
       .field__hint,
       .character-count {
-        color: var(--ink-soft);
-        font-size: 0.69rem;
+        color: var(--soft);
+        font-size: 0.68rem;
         font-weight: 650;
       }
 
@@ -861,15 +824,12 @@
       .textarea {
         width: 100%;
         border: 1px solid var(--line);
-        border-radius: 17px;
+        border-radius: 15px;
         outline: none;
         color: var(--ink);
-        background:
-          linear-gradient(180deg, color-mix(in srgb, var(--surface-solid) 42%, transparent), transparent),
-          var(--surface-soft);
-        box-shadow:
-          inset 0 1px 0 rgba(255, 255, 255, 0.12),
-          0 8px 24px rgba(16, 24, 40, 0.025);
+        background: var(--panel-soft);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+        font-size: 16px;
         transition:
           border 150ms ease,
           box-shadow 150ms ease,
@@ -877,20 +837,20 @@
       }
 
       .input {
-        height: 55px;
-        padding: 0 17px;
+        height: 54px;
+        padding: 0 16px;
       }
 
       .textarea {
-        min-height: 138px;
-        padding: 16px 17px;
+        min-height: 142px;
+        padding: 15px 16px;
         line-height: 1.55;
         resize: vertical;
       }
 
       .input::placeholder,
       .textarea::placeholder {
-        color: var(--ink-soft);
+        color: var(--soft);
         opacity: 0.8;
       }
 
@@ -901,15 +861,15 @@
 
       .input:focus,
       .textarea:focus {
-        border-color: var(--focus);
-        background: var(--surface-solid);
-        box-shadow: 0 0 0 4px color-mix(in srgb, var(--focus) 16%, transparent);
+        border-color: color-mix(in srgb, var(--acid) 70%, var(--line));
+        background: var(--panel-strong);
+        box-shadow: 0 0 0 4px color-mix(in srgb, var(--acid) 12%, transparent);
       }
 
       .donation-group {
         min-width: 0;
-        margin: 26px 0 0;
-        padding: 23px 0 0;
+        margin: 25px 0 0;
+        padding: 22px 0 0;
         border: 0;
         border-top: 1px solid var(--line);
       }
@@ -922,8 +882,12 @@
 
       .donation-options {
         display: grid;
-        grid-template-columns: 1.45fr 0.8fr 0.8fr;
-        gap: 8px;
+        grid-template-columns: 1fr 1fr;
+        gap: 7px;
+      }
+
+      .donation-option--full {
+        grid-column: 1 / -1;
       }
 
       .donation-option {
@@ -942,16 +906,14 @@
 
       .donation-option span {
         display: grid;
-        min-height: 57px;
-        padding: 8px 10px;
+        min-height: 52px;
+        padding: 7px 9px;
         place-items: center;
         border: 1px solid var(--line);
-        border-radius: 16px;
-        color: var(--ink-muted);
-        background:
-          linear-gradient(180deg, color-mix(in srgb, var(--surface-solid) 34%, transparent), transparent),
-          var(--surface-soft);
-        font-size: 0.72rem;
+        border-radius: 13px;
+        color: var(--muted);
+        background: var(--panel-soft);
+        font-size: 0.7rem;
         font-weight: 780;
         line-height: 1.2;
         text-align: center;
@@ -969,18 +931,14 @@
       }
 
       .donation-option input:focus-visible + span {
-        box-shadow: 0 0 0 4px color-mix(in srgb, var(--focus) 16%, transparent);
+        box-shadow: 0 0 0 4px color-mix(in srgb, var(--acid) 14%, transparent);
       }
 
       .donation-option input:checked + span {
-        border-color: color-mix(in srgb, var(--primary) 66%, transparent);
-        color: var(--ink);
-        background:
-          linear-gradient(145deg, color-mix(in srgb, var(--primary) 24%, transparent), transparent),
-          var(--surface-soft);
-        box-shadow:
-          inset 0 0 0 1px color-mix(in srgb, var(--primary) 10%, transparent),
-          0 9px 24px color-mix(in srgb, var(--primary) 9%, transparent);
+        border-color: var(--acid);
+        color: var(--acid-ink);
+        background: var(--acid);
+        box-shadow: 0 8px 24px color-mix(in srgb, var(--acid) 12%, transparent);
       }
 
       .transfer-panel {
@@ -992,15 +950,15 @@
         opacity: 0;
         transform: translateY(-5px);
         transition:
-          max-height 220ms ease,
-          margin 220ms ease,
+          max-height 230ms ease,
+          margin 230ms ease,
           opacity 170ms ease,
-          transform 220ms ease;
+          transform 230ms ease;
       }
 
       .transfer-panel.is-visible {
-        max-height: 190px;
-        margin-top: 12px;
+        max-height: 380px;
+        margin-top: 13px;
         opacity: 1;
         transform: translateY(0);
       }
@@ -1008,99 +966,158 @@
       .transfer-panel__title {
         margin: 0 0 2px;
         color: var(--ink);
-        font-size: 0.78rem;
+        font-size: 0.77rem;
         font-weight: 800;
         line-height: 1.45;
+      }
+
+      .transfer-panel__in-person {
+        display: grid;
+        margin-top: 6px;
+        gap: 8px;
+      }
+
+      .transfer-panel__in-person-label {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.74rem;
+        font-weight: 680;
+        line-height: 1.45;
+      }
+
+      .contact-links {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 7px;
+      }
+
+      .contact-link {
+        display: grid;
+        min-height: 46px;
+        padding: 0 12px;
+        place-items: center;
+        border: 1px solid var(--line);
+        border-radius: 13px;
+        color: var(--ink);
+        background: var(--panel-soft);
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.02em;
+        text-decoration: none;
+        transition:
+          border 150ms ease,
+          background 150ms ease,
+          transform 150ms ease;
+      }
+
+      .contact-link:hover {
+        border-color: var(--line-strong);
+        background: var(--panel-strong);
+        transform: translateY(-1px);
+      }
+
+      .contact-link:focus-visible {
+        outline: 3px solid color-mix(in srgb, var(--acid) 66%, transparent);
+        outline-offset: 2px;
+      }
+
+      .contact-link--telegram {
+        border-color: color-mix(in srgb, #2aabee 40%, var(--line));
+        color: #0f6fa3;
+        background: color-mix(in srgb, #2aabee 12%, var(--panel-soft));
+      }
+
+      html[data-theme="dark"] .contact-link--telegram {
+        color: #7dd3fc;
+        background: color-mix(in srgb, #2aabee 16%, var(--panel-soft));
+      }
+
+      .contact-link--bandeja {
+        border-color: color-mix(in srgb, var(--acid) 48%, var(--line));
+        color: var(--acid-ink);
+        background: color-mix(in srgb, var(--acid) 55%, var(--panel-soft));
+      }
+
+      html[data-theme="dark"] .contact-link--bandeja {
+        color: var(--acid-ink);
+        background: var(--acid);
       }
 
       .copy-row {
         display: grid;
         width: 100%;
         min-height: 54px;
-        padding: 10px 11px 10px 14px;
+        padding: 9px 10px 9px 13px;
         grid-template-columns: minmax(0, 1fr) auto;
         align-items: center;
-        gap: 10px;
+        gap: 9px;
         border: 1px solid var(--line);
-        border-radius: 15px;
+        border-radius: 14px;
         outline: none;
         color: var(--ink);
-        background:
-          linear-gradient(145deg, color-mix(in srgb, var(--surface-solid) 32%, transparent), transparent),
-          var(--surface-soft);
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.09);
+        background: var(--panel-soft);
         cursor: pointer;
         text-align: left;
         transition:
-          border-color 160ms ease,
-          background 160ms ease,
-          box-shadow 160ms ease,
-          transform 160ms ease;
+          border-color 150ms ease,
+          background 150ms ease,
+          transform 150ms ease;
       }
 
       .copy-row:hover {
-        border-color: color-mix(in srgb, var(--blue) 42%, var(--line));
-        background:
-          linear-gradient(145deg, color-mix(in srgb, var(--blue) 10%, transparent), transparent),
-          var(--surface-soft);
+        border-color: var(--line-strong);
+        background: var(--panel-strong);
         transform: translateY(-1px);
       }
 
-      .copy-row:active {
-        transform: scale(0.99);
-      }
-
-      .copy-row:focus-visible {
-        border-color: var(--focus);
-        box-shadow: 0 0 0 4px color-mix(in srgb, var(--focus) 16%, transparent);
-      }
-
       .copy-row__text {
-        display: flex;
+        display: grid;
         min-width: 0;
-        flex-wrap: wrap;
-        align-items: baseline;
-        gap: 3px 7px;
-        line-height: 1.35;
+        gap: 2px;
       }
 
       .copy-row__label {
-        color: var(--ink-muted);
-        font-size: 0.7rem;
-        font-weight: 650;
+        color: var(--soft);
+        font-size: 0.62rem;
+        font-weight: 750;
       }
 
       .copy-row__value {
-        color: var(--ink);
-        font-size: 0.86rem;
-        font-variant-numeric: tabular-nums;
-        font-weight: 800;
-        letter-spacing: 0.025em;
-        overflow-wrap: anywhere;
+        min-width: 0;
+        overflow: hidden;
+        font-size: 0.82rem;
+        font-weight: 820;
+        letter-spacing: 0.01em;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .copy-row__value--compact {
+        font-size: clamp(0.67rem, 2.6vw, 0.79rem);
+        letter-spacing: -0.02em;
       }
 
       .copy-row__feedback {
         display: inline-flex;
-        min-width: 70px;
-        min-height: 30px;
-        padding: 5px 8px;
+        min-width: 78px;
+        min-height: 34px;
+        padding: 0 9px;
         align-items: center;
         justify-content: center;
-        gap: 5px;
-        border-radius: 9px;
-        color: var(--ink-muted);
-        background: var(--line);
+        gap: 6px;
+        border-radius: 10px;
+        color: var(--muted);
+        background: color-mix(in srgb, var(--ink) 6%, transparent);
         font-size: 0.62rem;
         font-weight: 800;
-        white-space: nowrap;
         transition:
-          color 160ms ease,
-          background 160ms ease;
+          color 150ms ease,
+          background 150ms ease;
       }
 
       .copy-row__feedback svg {
-        width: 13px;
-        height: 13px;
+        width: 14px;
+        height: 14px;
         flex: 0 0 auto;
       }
 
@@ -1109,16 +1126,12 @@
       }
 
       .copy-row.is-copied {
-        border-color: color-mix(in srgb, var(--lime) 70%, transparent);
-        background:
-          linear-gradient(145deg, color-mix(in srgb, var(--lime) 16%, transparent), transparent),
-          var(--surface-soft);
-        animation: copy-success 440ms ease;
+        border-color: color-mix(in srgb, var(--acid) 72%, transparent);
       }
 
       .copy-row.is-copied .copy-row__feedback {
-        color: var(--lime-ink);
-        background: var(--lime);
+        color: var(--acid-ink);
+        background: var(--acid);
       }
 
       .copy-row.is-copied .copy-row__copy {
@@ -1127,49 +1140,38 @@
 
       .copy-row.is-copied .copy-row__check {
         display: block;
+        animation: check-in 180ms ease both;
       }
 
       .copy-row.is-copy-error {
-        border-color: color-mix(in srgb, var(--primary) 65%, transparent);
+        border-color: var(--error);
       }
 
-      @keyframes copy-success {
-        0% {
-          transform: scale(1);
-        }
-        45% {
-          transform: scale(1.018);
-        }
-        100% {
-          transform: scale(1);
-        }
+      .copy-row.is-copy-error .copy-row__feedback {
+        color: var(--error);
+        background: color-mix(in srgb, var(--error) 10%, transparent);
       }
 
       .submit-button {
         position: relative;
-        display: flex;
         width: 100%;
-        min-height: 60px;
-        margin-top: 27px;
-        padding: 13px 62px 13px 19px;
-        align-items: center;
-        justify-content: center;
+        min-height: 58px;
+        margin-top: 24px;
+        padding: 0 62px 0 20px;
         overflow: hidden;
         border: 0;
-        border-radius: 18px;
-        color: #fff;
-        background: linear-gradient(115deg, var(--primary), #f27b61 58%, #ef8a58);
-        box-shadow:
-          0 16px 34px color-mix(in srgb, var(--primary) 28%, transparent),
-          inset 0 1px 0 rgba(255, 255, 255, 0.28);
+        border-radius: 15px;
+        color: var(--acid-ink);
+        background: var(--acid);
+        box-shadow: 0 12px 30px color-mix(in srgb, var(--acid) 13%, transparent);
         cursor: pointer;
-        font-size: 0.88rem;
-        font-weight: 850;
+        font-size: 0.79rem;
+        font-weight: 880;
         letter-spacing: 0.01em;
         transition:
-          background 150ms ease,
+          transform 150ms ease,
           box-shadow 150ms ease,
-          transform 150ms ease;
+          filter 150ms ease;
       }
 
       .submit-button::after {
@@ -1177,59 +1179,35 @@
         top: 50%;
         right: 8px;
         display: grid;
-        width: 44px;
-        height: 44px;
+        width: 42px;
+        height: 42px;
         place-items: center;
-        border-radius: 14px;
-        background: rgba(255, 255, 255, 0.17);
-        content: "→";
-        font-size: 1.35rem;
+        border-radius: 11px;
+        background: rgba(25, 36, 0, 0.12);
+        content: "↗";
+        font-size: 1.15rem;
         transform: translateY(-50%);
       }
 
-      .submit-button::before {
-        position: absolute;
-        top: -70%;
-        left: -32%;
-        width: 42%;
-        height: 240%;
-        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-        content: "";
-        pointer-events: none;
-        transform: rotate(18deg);
-        transition: left 420ms ease;
-      }
-
       .submit-button:hover {
-        background: linear-gradient(135deg, var(--primary-dark), #e45f45);
-        box-shadow: 0 16px 32px rgba(240, 82, 79, 0.29);
+        filter: brightness(1.04);
+        box-shadow: 0 16px 38px color-mix(in srgb, var(--acid) 18%, transparent);
         transform: translateY(-1px);
-      }
-
-      .submit-button:hover::before {
-        left: 112%;
       }
 
       .submit-button:active {
         transform: translateY(1px);
       }
 
-      .submit-button:focus-visible,
-      .locale-button:focus-visible,
-      .theme-button:focus-visible {
-        outline: 3px solid color-mix(in srgb, var(--focus) 72%, transparent);
-        outline-offset: 3px;
-      }
-
       .form-status {
         display: none;
         margin: 12px 0 0;
         padding: 11px 13px;
-        border: 1px solid color-mix(in srgb, var(--primary) 28%, transparent);
+        border: 1px solid var(--line);
         border-radius: 12px;
-        color: var(--ink-muted);
-        background: var(--primary-soft);
-        font-size: 0.72rem;
+        color: var(--muted);
+        background: var(--panel-soft);
+        font-size: 0.71rem;
         font-weight: 700;
         line-height: 1.45;
       }
@@ -1240,96 +1218,71 @@
 
       .footer {
         display: flex;
-        width: min(1180px, 100%);
-        margin: 44px auto 0;
-        padding-top: 18px;
+        margin-top: 28px;
+        padding: 18px 2px 0;
         align-items: center;
         justify-content: space-between;
-        gap: 18px;
+        gap: 20px;
         border-top: 1px solid var(--line);
-        color: var(--ink-soft);
-        font-size: 0.7rem;
+        color: var(--soft);
+        font-size: 0.68rem;
         font-weight: 650;
       }
 
       .footer__heart {
-        color: var(--primary);
+        color: var(--coral);
       }
 
-      @media (hover: hover) {
-        .wish-card-wrap:hover .wish-card {
-          box-shadow:
-            0 48px 120px color-mix(in srgb, var(--page) 68%, transparent),
-            inset 0 1px 0 rgba(255, 255, 255, 0.13);
-          transform: translateY(-2px);
-        }
-      }
-
-      @media (max-width: 930px) {
-        .court-backdrop {
-          top: 620px;
-          right: -320px;
-          opacity: 0.42;
+      @media (max-width: 980px) {
+        .hero {
+          min-height: auto;
+          padding-top: 72px;
+          grid-template-columns: minmax(0, 1fr) minmax(330px, 0.72fr);
+          gap: 42px;
         }
 
-        .topbar {
-          margin-bottom: 54px;
+        .hero h1 {
+          font-size: clamp(3.8rem, 8.2vw, 5.8rem);
         }
 
-        .main {
-          width: min(680px, 100%);
+        .date-score {
+          left: -18px;
+        }
+
+        .club-strip {
+          margin-top: 20px;
+        }
+
+        .wish-section {
           grid-template-columns: 1fr;
-          gap: 52px;
+          gap: 38px;
         }
 
-        .story {
-          padding-right: 5vw;
-        }
-
-        .story h1 {
-          max-width: 660px;
-        }
-
-        .wish-card-wrap {
-          width: min(570px, 100%);
-          margin-left: auto;
-        }
-
-        .footer {
-          width: min(680px, 100%);
+        .wish-intro__text {
+          max-width: 650px;
         }
       }
 
-      @media (max-width: 620px) {
+      @media (max-width: 760px) {
         .page {
-          padding-right: calc(15px + var(--safe-right));
-          padding-left: calc(15px + var(--safe-left));
+          padding-right: calc(14px + var(--safe-right));
+          padding-left: calc(14px + var(--safe-left));
         }
 
         .topbar {
-          min-height: 66px;
-          margin-bottom: 42px;
-          padding: 6px 7px 6px 9px;
-          gap: 10px;
-          border-radius: 22px;
-        }
-
-        .brand {
-          padding: 0;
+          min-height: 58px;
+          padding-left: 10px;
+          border-radius: 17px;
         }
 
         .brand__logo {
-          width: 104px;
-        }
-
-        .locale-control {
-          padding: 3px;
+          width: 98px;
         }
 
         .locale-button {
-          min-width: 34px;
+          min-width: 33px;
           height: 32px;
-          padding: 0 7px;
+          padding: 0 6px;
         }
 
         .theme-button {
@@ -1337,83 +1290,81 @@
           height: 40px;
         }
 
-        .story {
-          padding: 0 3px;
+        .hero {
+          padding: 56px 2px 54px;
+          grid-template-columns: 1fr;
+          gap: 46px;
         }
 
-        .date-pill {
-          margin-bottom: 20px;
-          padding: 8px 11px 8px 9px;
-          font-size: 0.69rem;
+        .hero h1 {
+          max-width: 610px;
+          font-size: clamp(3.55rem, 15vw, 5.2rem);
         }
 
-        .story h1 {
-          font-size: clamp(3.18rem, 16vw, 4.7rem);
+        .hero__lead {
+          margin-top: 27px;
+          font-size: 1.08rem;
         }
 
-        .story__lead {
-          font-size: 1.1rem;
+        .hero__story {
+          font-size: 0.93rem;
+          line-height: 1.65;
         }
 
-        .story__body {
-          font-size: 0.94rem;
-          line-height: 1.68;
+        .portrait-stage {
+          width: min(480px, calc(100% - 14px));
+          margin: 0 0 0 auto;
         }
 
-        .court-note {
-          padding: 18px 18px 18px 61px;
+        .date-score {
+          top: -24px;
+          left: -12px;
+          width: 101px;
+          min-height: 119px;
         }
 
-        .court-note__icon {
-          left: 17px;
-        }
-
-        .signature {
-          align-items: flex-start;
-          line-height: 1.45;
-        }
-
-        .date-sticker {
-          top: -32px;
-          right: 14px;
-          width: 82px;
-          height: 82px;
+        .date-score__date {
+          font-size: 2.35rem;
         }
 
         .padel-ball {
-          top: 73px;
-          right: 5px;
-          width: 23px;
-          height: 23px;
+          right: -9px;
+          width: 48px;
+          height: 48px;
         }
 
-        .date-sticker__day {
-          font-size: 2rem;
+        .club-strip {
+          margin-bottom: 58px;
+          grid-template-columns: 1fr;
+          border-radius: 20px;
         }
 
-        .date-sticker__month {
-          font-size: 0.52rem;
+        .club-strip__item {
+          padding: 19px 20px;
+          border-top: 1px solid var(--line);
+          border-left: 0;
         }
 
-        .wish-card {
-          padding: 29px 20px 25px;
+        .club-strip__item:first-child {
+          border-top: 0;
+        }
+
+        .wish-section {
+          padding: 24px 18px 18px;
           border-radius: 25px;
         }
 
-        .wish-card h2 {
-          max-width: calc(100% - 62px);
-          font-size: 2.12rem;
+        .wish-intro h2 {
+          font-size: clamp(2.7rem, 13vw, 4rem);
         }
 
-        .donation-options {
-          grid-template-columns: 1fr 0.7fr 0.7fr;
-          gap: 6px;
+        .wish-form-wrap {
+          padding: 22px 15px 18px;
+          border-radius: 20px;
         }
 
-        .donation-option span {
-          min-height: 52px;
-          padding: 7px 5px;
-          font-size: 0.67rem;
+        .field__hint {
+          display: none;
         }
 
         .footer {
@@ -1423,54 +1374,92 @@
         }
       }
 
-      @media (max-width: 380px) {
+      @media (max-width: 390px) {
+        .page {
+          padding-right: calc(10px + var(--safe-right));
+          padding-left: calc(10px + var(--safe-left));
+        }
+
         .brand__logo {
-          width: 86px;
+          width: 83px;
         }
 
-        .story h1 {
-          font-size: 3rem;
+        .controls {
+          gap: 5px;
         }
 
-        .wish-card h2 {
-          font-size: 1.95rem;
+        .locale-control {
+          padding: 2px;
+        }
+
+        .locale-button {
+          min-width: 30px;
+          padding: 0 4px;
+          font-size: 0.64rem;
+        }
+
+        .theme-button {
+          width: 38px;
+          height: 38px;
+        }
+
+        .hero {
+          padding-top: 48px;
+        }
+
+        .hero h1 {
+          font-size: clamp(3.15rem, 16vw, 3.8rem);
+        }
+
+        .portrait-frame {
+          border-radius: 33px 33px 10px 33px;
+        }
+
+        .portrait-label {
+          right: 18px;
+          bottom: 18px;
+          left: 18px;
+        }
+
+        .donation-options {
+          gap: 5px;
+        }
+
+        .donation-option span {
+          min-height: 50px;
+          padding: 6px 4px;
+          font-size: 0.64rem;
+        }
+
+        .copy-row {
+          padding-left: 11px;
+        }
+
+        .copy-row__feedback {
+          min-width: 67px;
+          padding: 0 7px;
         }
       }
 
       @media (prefers-reduced-motion: no-preference) {
-        .topbar {
-          animation: rise-in 520ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+        .hero__copy {
+          animation: rise-in 560ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
         }
 
-        .story {
-          animation: rise-in 650ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+        .portrait-stage {
+          animation: rise-in 620ms 80ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
         }
 
-        .wish-card-wrap {
-          animation: rise-in 650ms 100ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+        .club-strip {
+          animation: rise-in 600ms 150ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
         }
 
-        .date-sticker {
-          animation: sticker-in 720ms 280ms cubic-bezier(0.2, 0.9, 0.2, 1.2) both;
+        .date-score {
+          animation: score-in 680ms 260ms cubic-bezier(0.18, 0.9, 0.2, 1.2) both;
         }
 
         .padel-ball {
-          animation: ball-float 3.2s ease-in-out infinite;
-        }
-
-        .confetti {
-          animation: confetti-float 5.8s ease-in-out infinite alternate;
-        }
-
-        .confetti--two,
-        .confetti--five {
-          animation-duration: 7.2s;
-          animation-delay: -2.4s;
-        }
-
-        .confetti--three {
-          animation-duration: 6.6s;
-          animation-delay: -4.1s;
+          animation: ball-float 3s ease-in-out infinite;
         }
 
         @keyframes rise-in {
@@ -1484,33 +1473,35 @@
           }
         }
 
-        @keyframes sticker-in {
+        @keyframes score-in {
           from {
             opacity: 0;
-            transform: rotate(-4deg) scale(0.72);
+            transform: rotate(-10deg) scale(0.78);
           }
           to {
             opacity: 1;
-            transform: rotate(8deg) scale(1);
+            transform: rotate(-4deg) scale(1);
           }
         }
 
         @keyframes ball-float {
           0%,
           100% {
-            transform: translateY(0) rotate(18deg);
+            transform: translateY(0) rotate(0deg);
           }
           50% {
-            transform: translateY(-7px) rotate(30deg);
+            transform: translateY(-8px) rotate(12deg);
           }
         }
 
-        @keyframes confetti-float {
+        @keyframes check-in {
           from {
-            transform: translateY(0) rotate(var(--rotation));
+            opacity: 0;
+            transform: scale(0.65);
           }
           to {
-            transform: translateY(-12px) rotate(calc(var(--rotation) + 12deg));
+            opacity: 1;
+            transform: scale(1);
           }
         }
       }
@@ -1520,316 +1511,318 @@
     <a class="skip-link" href="#wish-form" data-i18n="skipLink">Skip to the birthday form</a>
 
     <div class="page">
-      <div class="court-backdrop" aria-hidden="true"></div>
-      <i class="confetti confetti--one" aria-hidden="true"></i>
-      <i class="confetti confetti--two" aria-hidden="true"></i>
-      <i class="confetti confetti--three" aria-hidden="true"></i>
-      <i class="confetti confetti--four" aria-hidden="true"></i>
-      <i class="confetti confetti--five" aria-hidden="true"></i>
-      <i class="confetti confetti--seven" aria-hidden="true"></i>
+      <div class="court-plan" aria-hidden="true"></div>
 
-      <header class="topbar">
-        <a class="brand" href="/" aria-label="Bandeja">
-          <img
-            class="brand__logo"
-            src="/bandeja2-white-tr.png"
-            width="1080"
-            height="675"
-            alt="Bandeja"
-          />
-        </a>
+      <div class="shell">
+        <header class="topbar">
+          <a class="brand" href="/" aria-label="Bandeja">
+            <img
+              class="brand__logo"
+              src="/bandeja2-white-tr.png"
+              width="1080"
+              height="675"
+              alt="Bandeja"
+            />
+          </a>
 
-        <div class="controls">
-          <div class="locale-control" role="group" aria-label="Language">
-            <button class="locale-button" type="button" data-locale="en" aria-pressed="true">EN</button>
-            <button class="locale-button" type="button" data-locale="ru" aria-pressed="false">RU</button>
-            <button class="locale-button" type="button" data-locale="rs" aria-pressed="false">SR</button>
-          </div>
-          <button class="theme-button" type="button" id="theme-toggle" aria-label="Use dark theme">
-            <svg class="sun-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.8" />
-              <path
-                d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.65 17.65l1.42 1.42M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.65 6.35l1.42-1.42"
-                stroke="currentColor"
-                stroke-width="1.8"
-                stroke-linecap="round"
-              />
-            </svg>
-            <svg class="moon-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path
-                d="M20.2 15.2A8.6 8.6 0 0 1 8.8 3.8 8.6 8.6 0 1 0 20.2 15.2Z"
-                stroke="currentColor"
-                stroke-width="1.8"
-                stroke-linejoin="round"
-              />
-            </svg>
-          </button>
-        </div>
-      </header>
-
-      <main class="main">
-        <section class="story" aria-labelledby="page-title">
-          <div class="date-pill" data-i18n="dateLong">2 August 2026</div>
-          <h1 id="page-title" data-i18n-html="heroTitle">
-            Liza's birthday,<br />right at <em>centre court.</em>
-          </h1>
-          <p class="story__lead" data-i18n="storyLead">
-            On 2 August 2026, Liza is celebrating her birthday.
-          </p>
-          <p class="story__body" data-i18n="storyBody">
-            Many of you know her. Many call her a friend. She introduced so many people to padel,
-            taught them the game, and made the court feel like home.
-          </p>
-
-          <div class="court-note">
-            <span class="court-note__icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none">
+          <div class="controls">
+            <div class="locale-control" role="group" aria-label="Language">
+              <button class="locale-button" type="button" data-locale="en" aria-pressed="true">EN</button>
+              <button class="locale-button" type="button" data-locale="ru" aria-pressed="false">RU</button>
+              <button class="locale-button" type="button" data-locale="rs" aria-pressed="false">SR</button>
+            </div>
+            <button class="theme-button" type="button" id="theme-toggle" aria-label="Use light theme">
+              <svg class="sun-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.8" />
                 <path
-                  d="M14.8 4.1c3.2 3.2 2.5 8.8-1.6 12.9l-1.1 1.1c-1.6 1.6-4.4 1.5-6.2-.3-1.8-1.8-1.9-4.6-.3-6.2l1.1-1.1c4.1-4.1 9.7-4.8 12.9-1.6"
+                  d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.65 17.65l1.42 1.42M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.65 6.35l1.42-1.42"
                   stroke="currentColor"
-                  stroke-width="1.7"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  transform="rotate(-28 12 12)"
-                />
-                <path
-                  d="m7.2 17.1-3.4 3.4"
-                  stroke="currentColor"
-                  stroke-width="2"
+                  stroke-width="1.8"
                   stroke-linecap="round"
                 />
-                <circle cx="17.9" cy="5.4" r="2.1" fill="currentColor" />
               </svg>
-            </span>
-            <strong data-i18n="courtNoteLabel">Of course she is</strong>
-            <span data-i18n="courtNote">
-              Even on her birthday, Liza chose to be courtside — running our padel league finals.
-            </span>
-          </div>
-
-          <div class="signature">
-            <span class="signature__faces" aria-hidden="true">
-              <span class="signature__face">M</span>
-              <span class="signature__face">A</span>
-              <span class="signature__face">+</span>
-            </span>
-            <span data-i18n="signature">One big birthday card from the whole community.</span>
-          </div>
-        </section>
-
-        <section class="wish-card-wrap" aria-labelledby="form-title">
-          <span class="padel-ball" aria-hidden="true"></span>
-          <div class="date-sticker" aria-hidden="true">
-            <span class="date-sticker__inner">
-              <span class="date-sticker__day">02</span>
-              <span class="date-sticker__month" data-i18n="monthShort">Aug</span>
-            </span>
-          </div>
-
-          <div class="wish-card">
-            <p class="wish-card__eyebrow">
-              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <svg class="moon-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                 <path
-                  d="M20.8 4.6c-2.1-2.1-5.6-2.1-7.7 0L12 5.7l-1.1-1.1a5.45 5.45 0 0 0-7.7 7.7L12 21l8.8-8.7c2.1-2.1 2.1-5.6 0-7.7Z"
+                  d="M20.2 15.2A8.6 8.6 0 0 1 8.8 3.8 8.6 8.6 0 1 0 20.2 15.2Z"
                   stroke="currentColor"
                   stroke-width="1.8"
                   stroke-linejoin="round"
                 />
               </svg>
-              <span data-i18n="formEyebrow">A note for Liza</span>
-            </p>
-            <h2 id="form-title" data-i18n="formTitle">Write something she can keep.</h2>
-            <p class="wish-card__intro" data-i18n="formIntro">
-              We'll print every message and give them all to Liza on her birthday.
-            </p>
-
-            <form id="wish-form">
-              <div class="field">
-                <div class="field__topline">
-                  <label for="name" data-i18n="nameLabel">Your name</label>
-                  <span class="field__hint" data-i18n="nameHint">So Liza knows who it's from</span>
-                </div>
-                <input
-                  class="input"
-                  id="name"
-                  name="name"
-                  type="text"
-                  maxlength="80"
-                  autocomplete="name"
-                  required
-                  data-i18n-placeholder="namePlaceholder"
-                  placeholder="Your name"
-                />
-              </div>
-
-              <div class="field">
-                <div class="field__topline">
-                  <label for="message" data-i18n="messageLabel">Your birthday wish</label>
-                  <span class="character-count" id="character-count">0 / 1200</span>
-                </div>
-                <textarea
-                  class="textarea"
-                  id="message"
-                  name="message"
-                  maxlength="1200"
-                  required
-                  data-i18n-placeholder="messagePlaceholder"
-                  placeholder="A memory, a wish, an inside joke…"
-                ></textarea>
-              </div>
-
-              <fieldset class="donation-group">
-                <legend data-i18n="giftLegend">Would you like to join the group gift?</legend>
-                <div class="donation-options">
-                  <label class="donation-option">
-                    <input type="radio" name="donation" value="none" checked />
-                    <span data-i18n="giftNone">Just my message</span>
-                  </label>
-                  <label class="donation-option">
-                    <input type="radio" name="donation" value="RSD" />
-                    <span data-i18n="giftRsd">Give RSD</span>
-                  </label>
-                  <label class="donation-option">
-                    <input type="radio" name="donation" value="RUB" />
-                    <span data-i18n="giftRub">Give RUB</span>
-                  </label>
-                </div>
-
-                <label class="amount-wrap" id="amount-wrap" for="amount">
-                  <input
-                    class="amount-input"
-                    id="amount"
-                    name="amount"
-                    type="number"
-                    min="1"
-                    step="1"
-                    inputmode="numeric"
-                    disabled
-                    data-i18n-placeholder="amountPlaceholder"
-                    placeholder="Enter an amount"
-                  />
-                  <span class="amount-currency" id="amount-currency">RSD</span>
-                </label>
-
-                <div class="rub-transfer" id="rub-transfer" aria-hidden="true">
-                  <p class="rub-transfer__title" data-i18n="rubGiftTitle">
-                    You can contribute to the gift
-                  </p>
-                  <button
-                    class="copy-row"
-                    type="button"
-                    data-copy="+7(967)282-55-52"
-                    disabled
-                  >
-                    <span class="copy-row__text">
-                      <span class="copy-row__label" data-i18n="rubPhoneLabel">Transfer to</span>
-                      <strong class="copy-row__value">+7(967)282-55-52</strong>
-                    </span>
-                    <span class="copy-row__feedback" aria-live="polite">
-                      <svg class="copy-row__copy" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                        <rect
-                          x="8"
-                          y="8"
-                          width="11"
-                          height="11"
-                          rx="2"
-                          stroke="currentColor"
-                          stroke-width="1.8"
-                        />
-                        <path
-                          d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"
-                          stroke="currentColor"
-                          stroke-width="1.8"
-                          stroke-linecap="round"
-                        />
-                      </svg>
-                      <svg class="copy-row__check" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                        <path
-                          d="m5 12.5 4.2 4.2L19 7"
-                          stroke="currentColor"
-                          stroke-width="2.2"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                        />
-                      </svg>
-                      <span data-i18n="copyAction">Copy</span>
-                    </span>
-                  </button>
-                  <button
-                    class="copy-row"
-                    type="button"
-                    data-copy="5280 4137 5180 5412"
-                    disabled
-                  >
-                    <span class="copy-row__text">
-                      <span class="copy-row__label" data-i18n="rubCardLabel">Or to the card</span>
-                      <strong class="copy-row__value">5280 4137 5180 5412</strong>
-                    </span>
-                    <span class="copy-row__feedback" aria-live="polite">
-                      <svg class="copy-row__copy" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                        <rect
-                          x="8"
-                          y="8"
-                          width="11"
-                          height="11"
-                          rx="2"
-                          stroke="currentColor"
-                          stroke-width="1.8"
-                        />
-                        <path
-                          d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"
-                          stroke="currentColor"
-                          stroke-width="1.8"
-                          stroke-linecap="round"
-                        />
-                      </svg>
-                      <svg class="copy-row__check" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                        <path
-                          d="m5 12.5 4.2 4.2L19 7"
-                          stroke="currentColor"
-                          stroke-width="2.2"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                        />
-                      </svg>
-                      <span data-i18n="copyAction">Copy</span>
-                    </span>
-                  </button>
-                </div>
-
-                <p class="donation-note" id="donation-note">
-                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7" />
-                    <path
-                      d="M12 10.8v5.1M12 7.5v.1"
-                      stroke="currentColor"
-                      stroke-width="1.9"
-                      stroke-linecap="round"
-                    />
-                  </svg>
-                  <span data-i18n="giftNote">No payment is collected on this page.</span>
-                </p>
-              </fieldset>
-
-              <button class="submit-button" type="submit" data-i18n="submitButton">
-                Send my birthday wish
-              </button>
-              <p class="form-status" id="form-status" role="status" aria-live="polite"></p>
-            </form>
+            </button>
           </div>
-        </section>
-      </main>
+        </header>
 
-      <footer class="footer">
-        <span>
-          © 2026 Bandeja ·
-          <span data-i18n="footerMade">Made with</span>
-          <span class="footer__heart" aria-hidden="true">♥</span>
-          <span class="sr-only" data-i18n="footerLove">love</span>
-          <span data-i18n="footerFor">for Liza</span>
-        </span>
-        <span data-i18n="footerDate">See you at the finals · 02.08.2026</span>
-      </footer>
+        <main>
+          <section class="hero" aria-labelledby="page-title">
+            <div class="hero__copy">
+              <div class="match-kicker">
+                <div class="match-kicker__text">
+                  <span data-i18n="dateLongDate">2 August 2026</span>
+                  <span data-i18n="dateLongEvent">Birthday match day</span>
+                </div>
+              </div>
+              <p class="hero__hello" id="hero-hello" hidden></p>
+              <h1 id="page-title" data-i18n-html="heroTitle">
+                She made the court feel like <span class="accent">home.</span>
+              </h1>
+              <p class="hero__lead" data-i18n="storyLead">
+                On 2 August, our administrator, teammate and friend Liza celebrates her birthday.
+              </p>
+              <p class="hero__story" data-i18n="storyBody">
+                Many of us met through her. She brought people into padel, taught the first shots,
+                connected future partners and turned games into friendships.
+              </p>
+            </div>
+
+            <div class="portrait-stage">
+              <div class="portrait-frame">
+                <img
+                  src="/LizaBirthday2026/avatar.jpeg"
+                  width="800"
+                  height="1200"
+                  alt="Liza"
+                  data-i18n-alt="avatarAlt"
+                />
+                <div class="portrait-label">
+                  <span>
+                    <strong class="portrait-label__name">
+                      Liza
+                      <span class="portrait-label__handle">
+                        <a
+                          href="https://www.instagram.com/lizi_biz"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >@LIZI_BIZ</a>
+                      </span>
+                    </strong>
+                    <small class="portrait-label__role" data-i18n="portraitRole">Community captain</small>
+                  </span>
+                  <span class="portrait-label__court">Bandeja<br />community</span>
+                </div>
+              </div>
+
+              <div class="date-score" aria-hidden="true">
+                <span class="date-score__label" data-i18n="scoreLabel">Match day</span>
+                <strong class="date-score__date">02/08</strong>
+                <span class="date-score__year">2026</span>
+              </div>
+              <span class="padel-ball" aria-hidden="true"></span>
+              <p class="portrait-caption" data-i18n="portraitCaption">Padel Chaos Coordinator</p>
+            </div>
+          </section>
+
+          <section class="club-strip" aria-label="Birthday day details">
+            <div class="club-strip__item club-strip__item--acid">
+              <span class="club-strip__label" data-i18n="stripDateLabel">The date</span>
+              <strong class="club-strip__value" data-i18n="stripDateValue">Sunday · 02.08.2026</strong>
+            </div>
+            <div class="club-strip__item">
+              <span class="club-strip__label" data-i18n="stripPlanLabel">Her birthday plan</span>
+              <strong class="club-strip__value" data-i18n="stripPlanValue">
+                Running the padel league finals. Naturally.
+              </strong>
+            </div>
+            <div class="club-strip__item">
+              <span class="club-strip__label" data-i18n="stripWhereLabel">Where</span>
+              <strong class="club-strip__value" data-i18n="stripWhereValue">KSC club courts</strong>
+            </div>
+            <div class="club-strip__item">
+              <span class="club-strip__label" data-i18n="stripFromLabel">From whom</span>
+              <strong class="club-strip__value" data-i18n="stripFromValue">
+                One big message from our whole padel family.
+              </strong>
+            </div>
+          </section>
+
+          <section class="wish-section" aria-labelledby="form-title">
+            <div class="wish-intro">
+              <div class="section-number">
+                <span class="section-ball" aria-hidden="true"></span>
+                <span data-i18n="formEyebrow">Community card</span>
+              </div>
+              <h2 id="form-title" data-i18n="formTitle">Add your voice to the team card.</h2>
+              <p class="wish-intro__text" data-i18n="formIntro">
+                Leave your name and a birthday message. We will print every wish and give them to
+                Liza on her birthday.
+              </p>
+
+              <p class="finals-note">
+                <strong data-i18n="finalsLabel">The birthday rule:</strong>
+                <span data-i18n="finalsValue">warm words count more than winners.</span>
+              </p>
+            </div>
+
+            <div class="wish-form-wrap">
+              <div class="form-heading" data-i18n="formHeading">Your message for Liza</div>
+              <form id="wish-form">
+                <div class="field">
+                  <div class="field__topline">
+                    <label for="name" data-i18n="nameLabel">Your name</label>
+                    <span class="field__hint" data-i18n="nameHint">So Liza knows who it is from</span>
+                  </div>
+                  <input
+                    class="input"
+                    id="name"
+                    name="name"
+                    type="text"
+                    maxlength="80"
+                    autocomplete="name"
+                    required
+                    data-i18n-placeholder="namePlaceholder"
+                    placeholder="Your name"
+                  />
+                </div>
+
+                <div class="field">
+                  <div class="field__topline">
+                    <label for="message" data-i18n="messageLabel">Your birthday wish</label>
+                    <span class="character-count" id="character-count">0 / 1200</span>
+                  </div>
+                  <textarea
+                    class="textarea"
+                    id="message"
+                    name="message"
+                    maxlength="1200"
+                    required
+                    data-i18n-placeholder="messagePlaceholder"
+                    placeholder="A memory, a wish, an inside joke…"
+                  ></textarea>
+                </div>
+
+                <fieldset class="donation-group">
+                  <legend data-i18n="giftLegend">Want to leave a birthday donation?</legend>
+                  <div class="donation-options">
+                    <label class="donation-option donation-option--full">
+                      <input type="radio" name="donation" value="none" checked />
+                      <span data-i18n="giftNone">Just my message</span>
+                    </label>
+                    <label class="donation-option">
+                      <input type="radio" name="donation" value="RSD" />
+                      <span data-i18n="giftRsd">Donate RSD</span>
+                    </label>
+                    <label class="donation-option">
+                      <input type="radio" name="donation" value="RUB" />
+                      <span data-i18n="giftRub">Donate RUB</span>
+                    </label>
+                  </div>
+
+                  <div class="transfer-panel" data-currency="RSD" aria-hidden="true">
+                    <p class="transfer-panel__title" data-i18n="giftTransferTitle">
+                      You can donate via transfer
+                    </p>
+                    <button class="copy-row" type="button" data-copy="067 7498267" disabled>
+                      <span class="copy-row__text">
+                        <span class="copy-row__label" data-i18n="rsdPhoneLabel">Transfer to</span>
+                        <strong class="copy-row__value">067 7498267</strong>
+                      </span>
+                      <span class="copy-row__feedback" aria-live="polite">
+                        <svg class="copy-row__copy" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <rect x="8" y="8" width="11" height="11" rx="2" stroke="currentColor" stroke-width="1.8" />
+                          <path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+                        </svg>
+                        <svg class="copy-row__check" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <path d="m5 12.5 4.2 4.2L19 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        <span data-i18n="copyAction">Copy</span>
+                      </span>
+                    </button>
+                    <button class="copy-row" type="button" data-copy="265000000699740644" disabled>
+                      <span class="copy-row__text">
+                        <span class="copy-row__label" data-i18n="rsdAccountLabel">Or to account number</span>
+                        <strong class="copy-row__value copy-row__value--compact">265000000699740644</strong>
+                      </span>
+                      <span class="copy-row__feedback" aria-live="polite">
+                        <svg class="copy-row__copy" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <rect x="8" y="8" width="11" height="11" rx="2" stroke="currentColor" stroke-width="1.8" />
+                          <path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+                        </svg>
+                        <svg class="copy-row__check" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <path d="m5 12.5 4.2 4.2L19 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        <span data-i18n="copyAction">Copy</span>
+                      </span>
+                    </button>
+                    <div class="transfer-panel__in-person">
+                      <p class="transfer-panel__in-person-label" data-i18n="rsdInPersonLabel">
+                        Or in person — just text me
+                      </p>
+                      <div class="contact-links">
+                        <a
+                          class="contact-link contact-link--telegram"
+                          href="https://t.me/relicdragon"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          data-i18n="rsdTelegramLink"
+                        >Telegram</a>
+                        <a
+                          class="contact-link contact-link--bandeja"
+                          href="/user-chat/cmharv9no000165fffjxlu6vt"
+                          data-i18n="rsdBandejaLink"
+                        >Bandeja</a>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="transfer-panel" data-currency="RUB" aria-hidden="true">
+                    <p class="transfer-panel__title" data-i18n="giftTransferTitle">
+                      You can donate via transfer
+                    </p>
+                    <button class="copy-row" type="button" data-copy="+7(967)282-55-52" disabled>
+                      <span class="copy-row__text">
+                        <span class="copy-row__label" data-i18n="rubPhoneLabel">Transfer to</span>
+                        <strong class="copy-row__value">+7(967)282-55-52</strong>
+                      </span>
+                      <span class="copy-row__feedback" aria-live="polite">
+                        <svg class="copy-row__copy" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <rect x="8" y="8" width="11" height="11" rx="2" stroke="currentColor" stroke-width="1.8" />
+                          <path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+                        </svg>
+                        <svg class="copy-row__check" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <path d="m5 12.5 4.2 4.2L19 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        <span data-i18n="copyAction">Copy</span>
+                      </span>
+                    </button>
+                    <button class="copy-row" type="button" data-copy="5280 4137 5180 5412" disabled>
+                      <span class="copy-row__text">
+                        <span class="copy-row__label" data-i18n="rubCardLabel">Or to the card</span>
+                        <strong class="copy-row__value">5280 4137 5180 5412</strong>
+                      </span>
+                      <span class="copy-row__feedback" aria-live="polite">
+                        <svg class="copy-row__copy" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <rect x="8" y="8" width="11" height="11" rx="2" stroke="currentColor" stroke-width="1.8" />
+                          <path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+                        </svg>
+                        <svg class="copy-row__check" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <path d="m5 12.5 4.2 4.2L19 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        <span data-i18n="copyAction">Copy</span>
+                      </span>
+                    </button>
+                  </div>
+                </fieldset>
+
+                <button class="submit-button" type="submit" id="submit-button">
+                  Send just my message
+                </button>
+                <p class="form-status" id="form-status" role="status" aria-live="polite"></p>
+              </form>
+            </div>
+          </section>
+        </main>
+
+        <footer class="footer">
+          <span>
+            © 2026 Bandeja ·
+            <span data-i18n="footerMade">Made with</span>
+            <span class="footer__heart" aria-hidden="true">♥</span>
+            <span class="sr-only" data-i18n="footerLove">love</span>
+            <span data-i18n="footerFor">for Liza</span>
+          </span>
+          <span data-i18n="footerDate">See you at the finals · 02.08.2026</span>
+        </footer>
+      </div>
     </div>
 
     <script>
@@ -1837,45 +1830,63 @@
         const translations = {
           en: {
             pageTitle: "Liza's birthday · 2 August 2026",
-            pageDescription:
-              "Leave a birthday wish for Liza — we'll print every message and give them to her on 2 August 2026.",
+            pageDescription: "Leave a birthday wish for Liza from the Bandeja padel community.",
             skipLink: "Skip to the birthday form",
             themeDark: "Use dark theme",
             themeLight: "Use light theme",
-            dateLong: "2 August 2026",
-            heroTitle: "Liza's birthday,<br>right at <em>centre court.</em>",
-            storyLead: "On 2 August 2026, Liza is celebrating her birthday.",
+            dateLongDate: "2 August 2026",
+            dateLongEvent: "Birthday match day",
+            heroTitle: 'She made the court feel like <span class="accent">home.</span>',
+            storyLead:
+              "On 2 August, our administrator, teammate and friend Liza celebrates her birthday.",
             storyBody:
-              "Many of you know her. Many call her a friend. She introduced so many people to padel, taught them the game, and made the court feel like home.",
-            courtNoteLabel: "Of course she is",
-            courtNote:
-              "Even on her birthday, Liza chose to be courtside — running our padel league finals.",
-            signature: "One big birthday card from the whole community.",
-            monthShort: "Aug",
-            formEyebrow: "A note for Liza",
-            formTitle: "Write something she can keep.",
-            formTitleNamed: "{name}, write something she can keep.",
-            formIntro: "We'll print every message and give them all to Liza on her birthday.",
+              "Many of us met through her. She brought people into padel, taught the first shots, connected future partners and turned games into friendships.",
+            helloNamed: "Hey, {name}",
+            avatarAlt: "Liza smiling",
+            portraitRole: "Community captain",
+            portraitCaption: "Padel Chaos Coordinator",
+            scoreLabel: "Match day",
+            stripDateLabel: "The date",
+            stripDateValue: "Sunday · 02.08.2026",
+            stripPlanLabel: "Her birthday plan",
+            stripPlanValue: "Running the padel league finals. Naturally.",
+            stripWhereLabel: "Where",
+            stripWhereValue: "KSC club courts",
+            stripFromLabel: "From whom",
+            stripFromValue: "One big message from our whole padel family.",
+            formEyebrow: "Community card",
+            formTitle: "Add your voice to the team card.",
+            formTitleNamed: "{name}, add your voice to the team card.",
+            formIntro:
+              "Leave your name and a birthday message. We will print every wish and give them to Liza on her birthday.",
+            finalsLabel: "The birthday rule:",
+            finalsValue: "warm words count more than winners.",
+            formHeading: "Your message for Liza",
             nameLabel: "Your name",
-            nameHint: "So Liza knows who it's from",
+            nameHint: "So Liza knows who it is from",
             namePlaceholder: "Your name",
             messageLabel: "Your birthday wish",
             messagePlaceholder: "A memory, a wish, an inside joke…",
-            giftLegend: "Would you like to join the group gift?",
+            giftLegend: "Want to leave a birthday donation?",
             giftNone: "Just my message",
-            giftRsd: "Give RSD",
-            giftRub: "Give RUB",
-            amountPlaceholder: "Enter an amount",
-            giftNote: "No payment is collected on this page.",
-            rubGiftTitle: "You can contribute to the gift",
+            giftRsd: "Donate RSD",
+            giftRub: "Donate RUB",
+            giftTransferTitle: "You can donate via transfer",
+            rsdPhoneLabel: "Transfer to",
+            rsdAccountLabel: "Or to account number",
+            rsdInPersonLabel: "Or in person — just text me",
+            rsdTelegramLink: "Telegram",
+            rsdBandejaLink: "Bandeja",
             rubPhoneLabel: "Transfer to",
             rubCardLabel: "Or to the card",
             copyAction: "Copy",
             copied: "Copied",
             copyFailed: "Try again",
-            submitButton: "Send my birthday wish",
-            previewOnly:
-              "This is a design preview, so your message has not been sent or stored yet.",
+            submitButton: "Send just my message",
+            submitButtonGift: "Send my wishes · donation via transfer",
+            submitting: "Sending…",
+            submitSuccess: "Thank you — your wish is saved. You can send another anytime.",
+            submitError: "Could not send right now. Please try again.",
             footerMade: "Made with",
             footerLove: "love",
             footerFor: "for Liza",
@@ -1883,46 +1894,63 @@
           },
           ru: {
             pageTitle: "День рождения Лизы · 2 августа 2026",
-            pageDescription:
-              "Оставьте поздравление для Лизы — мы распечатаем все сообщения и подарим их ей 2 августа 2026 года.",
+            pageDescription: "Оставьте поздравление для Лизы от падел-сообщества Bandeja.",
             skipLink: "Перейти к форме поздравления",
             themeDark: "Включить тёмную тему",
             themeLight: "Включить светлую тему",
-            dateLong: "2 августа 2026",
-            heroTitle: "День рождения Лизы —<br>в самом <em>центре корта.</em>",
-            storyLead: "2 августа 2026 года у Лизы день рождения.",
+            dateLongDate: "2 августа 2026",
+            dateLongEvent: "День рождения на корте",
+            heroTitle: 'Она сделала корт нашим <span class="accent">домом.</span>',
+            storyLead:
+              "2 августа день рождения у нашего администратора, партнёра по игре и друга — Лизы.",
             storyBody:
-              "Многие из вас её знают, многие дружат с ней. Кого-то Лиза привела в падел, кого-то научила играть, а для многих сделала корт местом, куда хочется возвращаться.",
-            courtNoteLabel: "В своём стиле",
-            courtNote:
-              "Даже свой день рождения Лиза решила провести рядом с нами — организуя финалы падел-лиги.",
-            signature: "Одна большая открытка от всего нашего сообщества.",
-            monthShort: "авг",
-            formEyebrow: "Несколько слов для Лизы",
-            formTitle: "Напишите то, что ей захочется сохранить.",
-            formTitleNamed: "{name}, напишите то, что ей захочется сохранить.",
+              "Многие из нас познакомились благодаря ей. Лиза привела людей в падел, научила первым ударам, помогла найти партнёров и превратила игры в дружбу.",
+            helloNamed: "Привет, {name}",
+            avatarAlt: "Улыбающаяся Лиза",
+            portraitRole: "Капитан сообщества",
+            portraitCaption: "Координатор падел-хаоса",
+            scoreLabel: "День игры",
+            stripDateLabel: "Дата",
+            stripDateValue: "Воскресенье · 02.08.2026",
+            stripPlanLabel: "План именинницы",
+            stripPlanValue: "Проводить финалы падел-лиги. Ну конечно.",
+            stripWhereLabel: "Где",
+            stripWhereValue: "Корты клуба KSC",
+            stripFromLabel: "От кого",
+            stripFromValue: "Одно большое поздравление от нашей падел-семьи.",
+            formEyebrow: "Общая открытка",
+            formTitle: "Добавьте свои слова в открытку команды.",
+            formTitleNamed: "{name}, добавьте свои слова в открытку команды.",
             formIntro:
-              "Мы распечатаем все поздравления и передадим их Лизе в день рождения.",
+              "Оставьте имя и поздравление. Мы распечатаем все пожелания и передадим их Лизе в день рождения.",
+            finalsLabel: "Правило дня рождения:",
+            finalsValue: "тёплые слова важнее побед.",
+            formHeading: "Ваше сообщение для Лизы",
             nameLabel: "Ваше имя",
             nameHint: "Чтобы Лиза знала, от кого",
             namePlaceholder: "Как вас зовут?",
             messageLabel: "Ваше поздравление",
             messagePlaceholder: "Пожелание, воспоминание или ваша общая шутка…",
-            giftLegend: "Хотите присоединиться к общему подарку?",
+            giftLegend: "Хотите сделать донат на день рождения?",
             giftNone: "Только поздравление",
-            giftRsd: "Внести RSD",
-            giftRub: "Внести RUB",
-            amountPlaceholder: "Введите сумму",
-            giftNote: "На этой странице оплата не производится.",
-            rubGiftTitle: "Можно скинуться на подарок",
+            giftRsd: "Донат RSD",
+            giftRub: "Донат RUB",
+            giftTransferTitle: "Можно перевести донат",
+            rsdPhoneLabel: "Переводом на",
+            rsdAccountLabel: "Или по номеру счета",
+            rsdInPersonLabel: "Или лично — просто напишите мне",
+            rsdTelegramLink: "Telegram",
+            rsdBandejaLink: "Bandeja",
             rubPhoneLabel: "Переводом на",
             rubCardLabel: "Или на карту",
             copyAction: "Копировать",
             copied: "Скопировано",
             copyFailed: "Ещё раз",
-            submitButton: "Отправить поздравление",
-            previewOnly:
-              "Сейчас это только дизайн-макет: поздравление ещё не отправляется и не сохраняется.",
+            submitButton: "Отправить только поздравление",
+            submitButtonGift: "Отправить пожелания · донат переводом",
+            submitting: "Отправляем…",
+            submitSuccess: "Спасибо — пожелание сохранено. Можно отправить ещё.",
+            submitError: "Сейчас не отправилось. Попробуйте ещё раз.",
             footerMade: "Сделано с",
             footerLove: "любовью",
             footerFor: "для Лизы",
@@ -1930,46 +1958,63 @@
           },
           rs: {
             pageTitle: "Lizin rođendan · 2. avgust 2026.",
-            pageDescription:
-              "Ostavite rođendansku poruku za Lizu — odštampaćemo sve poruke i pokloniti joj ih 2. avgusta 2026.",
+            pageDescription: "Ostavite rođendansku poruku za Lizu od Bandeja padel zajednice.",
             skipLink: "Pređi na rođendansku poruku",
             themeDark: "Uključi tamnu temu",
             themeLight: "Uključi svetlu temu",
-            dateLong: "2. avgust 2026.",
-            heroTitle: "Lizin rođendan —<br>u samom <em>centru terena.</em>",
-            storyLead: "Liza 2. avgusta 2026. slavi rođendan.",
+            dateLongDate: "2. avgust 2026.",
+            dateLongEvent: "Rođendan na terenu",
+            heroTitle: 'Učinila je da teren postane naš <span class="accent">dom.</span>',
+            storyLead:
+              "Drugog avgusta rođendan slavi naša administratorka, saigračica i prijateljica Liza.",
             storyBody:
-              "Mnogi od vas je poznaju, mnogi se s njom druže. Neke je uvela u padel, neke naučila da igraju, a mnogima je pomogla da se na terenu osećaju kao kod kuće.",
-            courtNoteLabel: "Baš u njenom stilu",
-            courtNote:
-              "Čak je i svoj rođendan odlučila da provede uz nas — vodeći finala padel lige.",
-            signature: "Jedna velika rođendanska čestitka cele naše zajednice.",
-            monthShort: "avg",
-            formEyebrow: "Poruka za Lizu",
-            formTitle: "Napišite nešto što će želeti da sačuva.",
-            formTitleNamed: "{name}, napišite nešto što će želeti da sačuva.",
+              "Mnogi od nas upoznali su se zahvaljujući njoj. Uvela je ljude u padel, naučila ih prvim udarcima, povezala buduće partnere i pretvorila mečeve u prijateljstva.",
+            helloNamed: "Zdravo, {name}",
+            avatarAlt: "Liza se osmehuje",
+            portraitRole: "Kapiten zajednice",
+            portraitCaption: "Koordinator padel haosa",
+            scoreLabel: "Dan meča",
+            stripDateLabel: "Datum",
+            stripDateValue: "Nedelja · 02.08.2026.",
+            stripPlanLabel: "Njen rođendanski plan",
+            stripPlanValue: "Vodi finala padel lige. Naravno.",
+            stripWhereLabel: "Gde",
+            stripWhereValue: "Tereni KSC kluba",
+            stripFromLabel: "Od koga",
+            stripFromValue: "Jedna velika poruka cele naše padel porodice.",
+            formEyebrow: "Zajednička čestitka",
+            formTitle: "Dodajte svoj glas timskoj čestitki.",
+            formTitleNamed: "{name}, dodajte svoj glas timskoj čestitki.",
             formIntro:
-              "Odštampaćemo sve poruke i predaćemo ih Lizi na njen rođendan.",
+              "Ostavite ime i rođendansku poruku. Odštampaćemo sve čestitke i predati ih Lizi na rođendan.",
+            finalsLabel: "Rođendansko pravilo:",
+            finalsValue: "tople reči vrede više od pobede.",
+            formHeading: "Vaša poruka za Lizu",
             nameLabel: "Vaše ime",
             nameHint: "Da Liza zna od koga je",
             namePlaceholder: "Kako se zovete?",
             messageLabel: "Vaša rođendanska poruka",
             messagePlaceholder: "Uspomena, želja ili vaša interna šala…",
-            giftLegend: "Želite li da učestvujete u zajedničkom poklonu?",
+            giftLegend: "Želite li da ostavite rođendansku donaciju?",
             giftNone: "Samo moja poruka",
-            giftRsd: "Izdvoji RSD",
-            giftRub: "Izdvoji RUB",
-            amountPlaceholder: "Unesite iznos",
-            giftNote: "Na ovoj stranici se ne vrši naplata.",
-            rubGiftTitle: "Možete učestvovati u poklonu",
+            giftRsd: "Donacija RSD",
+            giftRub: "Donacija RUB",
+            giftTransferTitle: "Možete uplatiti donaciju",
+            rsdPhoneLabel: "Prenos na",
+            rsdAccountLabel: "Ili na broj računa",
+            rsdInPersonLabel: "Ili uživo — samo mi pišite",
+            rsdTelegramLink: "Telegram",
+            rsdBandejaLink: "Bandeja",
             rubPhoneLabel: "Prenos na broj",
             rubCardLabel: "Ili na karticu",
             copyAction: "Kopiraj",
             copied: "Kopirano",
             copyFailed: "Pokušaj opet",
-            submitButton: "Pošalji rođendansku poruku",
-            previewOnly:
-              "Ovo je trenutno samo dizajn stranice, pa poruka još nije poslata niti sačuvana.",
+            submitButton: "Pošalji samo moju poruku",
+            submitButtonGift: "Pošalji čestitku · donacija uplatom",
+            submitting: "Šaljemo…",
+            submitSuccess: "Hvala — želja je sačuvana. Možeš poslati još jednu.",
+            submitError: "Nije poslato. Pokušaj ponovo.",
             footerMade: "Napravljeno s",
             footerLove: "ljubavlju",
             footerFor: "za Lizu",
@@ -1979,11 +2024,36 @@
 
         const params = new URLSearchParams(window.location.search);
         const requestedLocale = (params.get("locale") || "").toLowerCase();
-        const locale = requestedLocale === "sr" ? "rs" : translations[requestedLocale] ? requestedLocale : "en";
+        const locale =
+          requestedLocale === "sr"
+            ? "rs"
+            : translations[requestedLocale]
+              ? requestedLocale
+              : "en";
         const theme = params.get("theme") === "light" ? "light" : "dark";
         const suppliedName = (params.get("user_name") || "").trim().slice(0, 80);
+        const adToken = (params.get("ad_token") || "").trim();
         let activeLocale = locale;
         let activeTheme = theme;
+        let formBusy = false;
+
+        function resolveWishSubmitUrl() {
+          var path = "/api/public/landings/liza_birthday_2026/wishes";
+          var host = window.location.hostname;
+          if (host === "bandeja.me" || host === "www.bandeja.me") return path;
+          var cap = window.Capacitor;
+          if (cap && typeof cap.isNativePlatform === "function" && cap.isNativePlatform()) {
+            return "https://bandeja.me" + path;
+          }
+          // Capacitor WebView origin is https://localhost (no Vite /api proxy).
+          if (
+            (host === "localhost" || host === "127.0.0.1") &&
+            window.location.protocol === "https:"
+          ) {
+            return "https://bandeja.me" + path;
+          }
+          return path;
+        }
 
         const root = document.documentElement;
         const themeMeta = document.querySelector('meta[name="theme-color"]');
@@ -1992,15 +2062,33 @@
         const count = document.getElementById("character-count");
         const form = document.getElementById("wish-form");
         const formTitle = document.getElementById("form-title");
+        const heroHello = document.getElementById("hero-hello");
         const status = document.getElementById("form-status");
-        const amountWrap = document.getElementById("amount-wrap");
-        const amountInput = document.getElementById("amount");
-        const amountCurrency = document.getElementById("amount-currency");
-        const rubTransfer = document.getElementById("rub-transfer");
+        const transferPanels = document.querySelectorAll(".transfer-panel");
         const copyRows = document.querySelectorAll(".copy-row");
         const copyTimers = new WeakMap();
-        const donationNote = document.getElementById("donation-note");
         const themeToggle = document.getElementById("theme-toggle");
+        const submitButton = document.getElementById("submit-button");
+
+        function applyFormTitle() {
+          const copy = translations[activeLocale];
+          const name = nameInput.value.trim();
+          formTitle.textContent = name
+            ? copy.formTitleNamed.replace(/\{name\}/g, name)
+            : copy.formTitle;
+        }
+
+        function applyHello() {
+          const copy = translations[activeLocale];
+          const name = (nameInput.value.trim() || suppliedName).trim();
+          if (name) {
+            heroHello.hidden = false;
+            heroHello.textContent = copy.helloNamed.replace(/\{name\}/g, name);
+          } else {
+            heroHello.hidden = true;
+            heroHello.textContent = "";
+          }
+        }
 
         function updateUrl(key, value) {
           const next = new URL(window.location.href);
@@ -2009,9 +2097,9 @@
         }
 
         function applyTheme(nextTheme, syncUrl) {
-          activeTheme = nextTheme === "dark" ? "dark" : "light";
+          activeTheme = nextTheme === "light" ? "light" : "dark";
           root.dataset.theme = activeTheme;
-          themeMeta.setAttribute("content", activeTheme === "dark" ? "#080d18" : "#f7f3ea");
+          themeMeta.setAttribute("content", activeTheme === "dark" ? "#0a100e" : "#f2f0e8");
           themeToggle.setAttribute(
             "aria-label",
             translations[activeLocale][activeTheme === "dark" ? "themeLight" : "themeDark"],
@@ -2020,12 +2108,15 @@
         }
 
         function applyLocale(nextLocale, syncUrl) {
-          activeLocale = nextLocale === "sr" ? "rs" : translations[nextLocale] ? nextLocale : "en";
+          activeLocale =
+            nextLocale === "sr" ? "rs" : translations[nextLocale] ? nextLocale : "en";
           const copy = translations[activeLocale];
 
           root.lang = activeLocale === "rs" ? "sr" : activeLocale;
           document.title = copy.pageTitle;
-          document.querySelector('meta[name="description"]').setAttribute("content", copy.pageDescription);
+          document
+            .querySelector('meta[name="description"]')
+            .setAttribute("content", copy.pageDescription);
 
           document.querySelectorAll("[data-i18n]").forEach(function (element) {
             const value = copy[element.dataset.i18n];
@@ -2042,50 +2133,50 @@
             if (value !== undefined) element.setAttribute("placeholder", value);
           });
 
+          document.querySelectorAll("[data-i18n-alt]").forEach(function (element) {
+            const value = copy[element.dataset.i18nAlt];
+            if (value !== undefined) element.setAttribute("alt", value);
+          });
+
           document.querySelectorAll(".locale-button").forEach(function (button) {
             const isActive = button.dataset.locale === activeLocale;
             button.classList.toggle("is-active", isActive);
             button.setAttribute("aria-pressed", String(isActive));
           });
 
-          const personName = nameInput.value.trim();
-          formTitle.textContent = personName
-            ? copy.formTitleNamed.replace("{name}", personName)
-            : copy.formTitle;
-          status.textContent = copy.previewOnly;
+          if (!formBusy) {
+            status.classList.remove("is-visible");
+            status.textContent = "";
+          }
           themeToggle.setAttribute(
             "aria-label",
             copy[activeTheme === "dark" ? "themeLight" : "themeDark"],
           );
+          applyFormTitle();
+          applyHello();
+          if (!formBusy) updateSubmitLabel();
 
           if (syncUrl) updateUrl("locale", activeLocale);
         }
 
-        function applyDonationChoice(currency) {
-          const showAmount = currency === "RSD";
-          const showRubTransfer = currency === "RUB";
-
-          amountWrap.classList.toggle("is-visible", showAmount);
-          amountInput.disabled = !showAmount;
-          amountInput.required = showAmount;
-          amountCurrency.textContent = "RSD";
-          if (!showAmount) amountInput.value = "";
-
-          rubTransfer.classList.toggle("is-visible", showRubTransfer);
-          rubTransfer.setAttribute("aria-hidden", String(!showRubTransfer));
-          copyRows.forEach(function (button) {
-            button.disabled = !showRubTransfer;
-            if (!showRubTransfer) resetCopyFeedback(button);
-          });
-
-          updateDonationNote();
+        function updateSubmitLabel() {
+          const selected = document.querySelector('input[name="donation"]:checked');
+          const withGift = selected && selected.value !== "none";
+          const copy = translations[activeLocale];
+          submitButton.textContent = withGift ? copy.submitButtonGift : copy.submitButton;
         }
 
-        function updateDonationNote() {
-          const selectedDonation = document.querySelector('input[name="donation"]:checked');
-          const hasCurrency = selectedDonation && selectedDonation.value === "RSD";
-          const hasPositiveAmount = Number(amountInput.value) > 0;
-          donationNote.classList.toggle("is-visible", Boolean(hasCurrency && hasPositiveAmount));
+        function applyDonationChoice(currency) {
+          transferPanels.forEach(function (panel) {
+            const isVisible = panel.dataset.currency === currency;
+            panel.classList.toggle("is-visible", isVisible);
+            panel.setAttribute("aria-hidden", String(!isVisible));
+            panel.querySelectorAll(".copy-row").forEach(function (button) {
+              button.disabled = !isVisible;
+              if (!isVisible) resetCopyFeedback(button);
+            });
+          });
+          updateSubmitLabel();
         }
 
         function copyWithSelection(value) {
@@ -2185,11 +2276,8 @@
         });
 
         nameInput.addEventListener("input", function () {
-          const copy = translations[activeLocale];
-          const personName = nameInput.value.trim();
-          formTitle.textContent = personName
-            ? copy.formTitleNamed.replace("{name}", personName)
-            : copy.formTitle;
+          applyFormTitle();
+          applyHello();
           status.classList.remove("is-visible");
         });
 
@@ -2205,11 +2293,6 @@
           });
         });
 
-        amountInput.addEventListener("input", function () {
-          updateDonationNote();
-          status.classList.remove("is-visible");
-        });
-
         copyRows.forEach(function (button) {
           button.addEventListener("click", function () {
             const copyResult = copyToClipboard(button.dataset.copy);
@@ -2222,9 +2305,63 @@
 
         form.addEventListener("submit", function (event) {
           event.preventDefault();
-          if (!form.reportValidity()) return;
-          status.textContent = translations[activeLocale].previewOnly;
+          if (formBusy || !form.reportValidity()) return;
+
+          const copy = translations[activeLocale];
+          const donationRaw = document.querySelector('input[name="donation"]:checked');
+          const donationValue = donationRaw ? donationRaw.value : "none";
+          const donationIntent =
+            donationValue === "RSD" || donationValue === "RUB" ? donationValue : "NONE";
+
+          formBusy = true;
+          submitButton.disabled = true;
+          submitButton.textContent = copy.submitting;
+          status.textContent = copy.submitting;
           status.classList.add("is-visible");
+
+          const payload = {
+            name: nameInput.value.trim(),
+            message: messageInput.value.trim(),
+            donationIntent: donationIntent,
+            locale: activeLocale === "rs" ? "sr" : activeLocale,
+          };
+          if (adToken) payload.adToken = adToken;
+
+          fetch(resolveWishSubmitUrl(), {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Accept: "application/json" },
+            body: JSON.stringify(payload),
+            credentials: "omit",
+          })
+            .then(function (response) {
+              return response.text().then(function (text) {
+                var body = null;
+                if (text) {
+                  try {
+                    body = JSON.parse(text);
+                  } catch {
+                    body = null;
+                  }
+                }
+                return { ok: response.ok, body: body };
+              });
+            })
+            .then(function (result) {
+              if (!result.ok || !result.body || !result.body.success) {
+                throw new Error("submit failed");
+              }
+              status.textContent = translations[activeLocale].submitSuccess;
+              messageInput.value = "";
+              count.textContent = "0 / 1200";
+            })
+            .catch(function () {
+              status.textContent = translations[activeLocale].submitError;
+            })
+            .finally(function () {
+              formBusy = false;
+              submitButton.disabled = false;
+              updateSubmitLabel();
+            });
         });
       })();
     </script>

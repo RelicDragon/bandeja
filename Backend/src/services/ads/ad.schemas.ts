@@ -78,6 +78,7 @@ export const adCampaignWriteSchema = z.object({
   appendUserNameToClickUrl: z.boolean().optional(),
   appendLocaleToClickUrl: z.boolean().optional(),
   appendThemeToClickUrl: z.boolean().optional(),
+  appendAdTokenToClickUrl: z.boolean().optional(),
   disclosureLabel: z.string().max(100).nullable().optional(),
   hideDisclosure: z.boolean().optional(),
   targeting: adTargetingSchema,

@@ -1,3 +1,7 @@
+import { AD_CLICK_URL_AD_TOKEN_PARAM } from './ad.token.util';
+
+export { AD_CLICK_URL_AD_TOKEN_PARAM } from './ad.token.util';
+
 export const AD_CLICK_URL_USER_NAME_PARAM = 'user_name';
 export const AD_CLICK_URL_LOCALE_PARAM = 'locale';
 export const AD_CLICK_URL_THEME_PARAM = 'theme';
@@ -22,12 +26,14 @@ export type AdClickUrlPersonalizationFlags = {
   appendUserNameToClickUrl: boolean;
   appendLocaleToClickUrl: boolean;
   appendThemeToClickUrl: boolean;
+  appendAdTokenToClickUrl: boolean;
 };
 
 export type AdClickUrlPersonalizationValues = {
   userName?: string | null;
   locale?: string | null;
   theme?: string | null;
+  adToken?: string | null;
 };
 
 export function resolveAdClickUserName(
@@ -156,6 +162,7 @@ export function personalizeClickUrl(
     ? resolveAdClickLocale(values.locale)
     : null;
   const theme = normalizeAdClickTheme(values.theme, opts);
+  const adToken = values.adToken?.trim() || null;
 
   if (flags.appendUserNameToClickUrl && userName) {
     entries.push([AD_CLICK_URL_USER_NAME_PARAM, userName]);
@@ -165,6 +172,9 @@ export function personalizeClickUrl(
   }
   if (flags.appendThemeToClickUrl && theme) {
     entries.push([AD_CLICK_URL_THEME_PARAM, theme]);
+  }
+  if (flags.appendAdTokenToClickUrl && adToken) {
+    entries.push([AD_CLICK_URL_AD_TOKEN_PARAM, adToken]);
   }
 
   return applyClickUrlParams(clickUrl, entries);
