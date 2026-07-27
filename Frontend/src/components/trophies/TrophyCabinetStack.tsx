@@ -19,6 +19,7 @@ import {
   STACK_COLLAPSE_CHIP_REM,
   STACK_FRAME_PADDING_REM,
   STACK_ICON_CELL_REM,
+  STACK_LABEL_WIDTH_REM,
   pileLayerStyle,
   scrollChildIntoHorizontalView,
   selectPileLayers,
@@ -127,7 +128,8 @@ export function TrophyCabinetStack({
       >
         <div
           data-testid="trophy-stack-height-probe"
-          className="pointer-events-none invisible flex w-[4.75rem] flex-col items-center pb-6 pt-2.5"
+          className="pointer-events-none invisible flex flex-col items-center pb-6 pt-2.5"
+          style={{ width: `${STACK_LABEL_WIDTH_REM}rem` }}
           aria-hidden
         >
           <div className="h-[4.5rem] w-full shrink-0" />
@@ -138,7 +140,7 @@ export function TrophyCabinetStack({
                 className="col-start-1 row-start-1 flex w-full flex-col items-center"
               >
                 <div className={TROPHY_TILE_LABEL_SLOT_CLASS}>
-                  <span className="line-clamp-2 w-full text-[11px] font-semibold leading-tight">
+                  <span className="line-clamp-2 w-full break-words text-[11px] font-semibold leading-tight">
                     {t(entry.definition.titleKey)}
                   </span>
                 </div>

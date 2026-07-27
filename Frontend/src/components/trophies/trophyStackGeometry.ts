@@ -5,6 +5,8 @@ export const STACK_CARD_WIDTH_REM = 6.75;
 export const STACK_CARD_GAP_REM = 0.5;
 /** Borderless expanded icon cell (frame + title width). */
 export const STACK_ICON_CELL_REM = 4.75;
+/** Let labels use the full column pitch, including the visual gap beside the icon. */
+export const STACK_LABEL_WIDTH_REM = STACK_ICON_CELL_REM + STACK_CARD_GAP_REM;
 /** Inline collapse chip after expanded icons (w-7 ≈ 1.75rem). */
 export const STACK_COLLAPSE_CHIP_REM = 1.75;
 /** Space between the persistent group frame and its icon row. */

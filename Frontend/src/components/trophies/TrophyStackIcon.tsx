@@ -16,6 +16,7 @@ import {
   rarityTextClass,
   showsRarityTag,
 } from '@/components/trophies/trophyRarityStyles';
+import { STACK_LABEL_WIDTH_REM } from '@/components/trophies/trophyStackGeometry';
 import type { TrophyCabinetEntryView } from '@/types/trophies';
 
 type TrophyStackIconProps = {
@@ -110,7 +111,8 @@ export function TrophyStackIcon({
         <motion.div
           data-stack-label={labelVisible ? 'visible' : 'hidden'}
           aria-hidden={!labelVisible}
-          className="flex w-[4.75rem] flex-col items-center px-0.5"
+          className="flex flex-col items-center px-0.5"
+          style={{ width: `${STACK_LABEL_WIDTH_REM}rem` }}
           initial={false}
           animate={{
             opacity: labelVisible ? 1 : 0,
@@ -126,7 +128,7 @@ export function TrophyStackIcon({
             className={TROPHY_TILE_LABEL_SLOT_CLASS}
           >
             <span
-              className={`line-clamp-2 w-full text-[11px] font-semibold leading-tight ${rarityTextClass(definition.rarity, locked)}`}
+              className={`line-clamp-2 w-full break-words text-[11px] font-semibold leading-tight ${rarityTextClass(definition.rarity, locked)}`}
             >
               {t(definition.titleKey)}
             </span>
