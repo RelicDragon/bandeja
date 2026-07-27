@@ -1,7 +1,8 @@
 /** Shared pile geometry for collapsed trophy stacks (rem-based; no root-font px assumptions). */
 import {
+  bestUnlockedEntry,
   nextChaseEntry,
-  stackBetterScore,
+  sortFamilyStackEntries,
   stackFamilyKey,
 } from '@/components/trophies/cabinetGrouping';
 import type { TrophyCabinetEntryView } from '@/types/trophies';
@@ -49,53 +50,42 @@ export function selectPileLayers<T>(entries: readonly T[]): readonly T[] {
 }
 
 /**
- * Collapsed pile for family stacks (including mixed locked+unlocked order).
- * Keeps face (`entries[0]`), next chase, and max tier visible when capped.
- * Paint order ends with face on top.
+ * Collapsed pile paint (bottom → top):
+ * locked under → lower unlocked → unlocked max on top.
+ * No unlocks yet: harder locked under → lowest chase on top.
  */
 export function selectFamilyPileLayers(
   entries: readonly TrophyCabinetEntryView[],
 ): TrophyCabinetEntryView[] {
   if (entries.length === 0) return [];
-  if (entries.length <= MAX_PILE_LAYERS) {
-    return [...entries].reverse();
+
+  const face = stackPileFace(entries);
+  if (!face) return [];
+
+  const ascending = sortFamilyStackEntries([...entries]);
+  const unlockedAsc = ascending.filter((e) => e.unlocked);
+  const lockedAsc = ascending.filter((e) => !e.unlocked);
+
+  if (unlockedAsc.length === 0) {
+    const under = lockedAsc.filter((e) => e.definition.id !== face.definition.id);
+    const ordered = [...under.reverse(), face];
+    if (ordered.length <= MAX_PILE_LAYERS) return ordered;
+    return ordered.slice(-MAX_PILE_LAYERS);
   }
 
-  const mixed =
-    entries.some((e) => e.unlocked) && entries.some((e) => !e.unlocked);
-  if (!mixed) {
-    return [...selectPileLayers(entries)];
-  }
+  const lockedPeek = lockedAsc.length > 0 ? [lockedAsc[0]!] : [];
+  const unlockedRest = unlockedAsc.filter((e) => e.definition.id !== face.definition.id);
+  const unlockedSlots = Math.max(0, MAX_PILE_LAYERS - 1 - lockedPeek.length);
+  const unlockedUnder = unlockedRest.slice(-unlockedSlots);
+  return [...lockedPeek, ...unlockedUnder, face];
+}
 
-  const face = entries[0]!;
-  const chase = nextChaseEntry(entries);
-  let maxEntry = face;
-  for (const entry of entries) {
-    if (stackBetterScore(entry) > stackBetterScore(maxEntry)) {
-      maxEntry = entry;
-    }
-  }
-
-  const kept: TrophyCabinetEntryView[] = [];
-  const seen = new Set<string>();
-  const push = (entry: TrophyCabinetEntryView | null) => {
-    if (!entry || seen.has(entry.definition.id) || kept.length >= MAX_PILE_LAYERS) {
-      return;
-    }
-    seen.add(entry.definition.id);
-    kept.push(entry);
-  };
-
-  push(face);
-  push(chase);
-  push(maxEntry);
-  for (const entry of entries) {
-    push(entry);
-    if (kept.length >= MAX_PILE_LAYERS) break;
-  }
-
-  const under = kept.filter((e) => e.definition.id !== face.definition.id);
-  return [...under.reverse(), face];
+/** Collapsed pile face: best unlocked, else next chase. */
+export function stackPileFace(
+  entries: readonly TrophyCabinetEntryView[],
+): TrophyCabinetEntryView | null {
+  if (entries.length === 0) return null;
+  return bestUnlockedEntry(entries) ?? nextChaseEntry(entries) ?? entries[0]!;
 }
 
 export function pileLayerStyle(index: number, count: number): {

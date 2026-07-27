@@ -52,8 +52,8 @@ export function TrophyCabinetCard({
   const primary = instances[0] ?? null;
   const locked = !unlocked;
   const isMaxLevel = isCatalogFamilyMaxLevel(definition);
-  const displayRarity = trophyMaxLevelDisplayRarity(isMaxLevel, definition.rarity);
-  const frameLocked = trophyFrameLocked(locked, isMaxLevel);
+  const displayRarity = trophyMaxLevelDisplayRarity(isMaxLevel, unlocked, definition.rarity);
+  const frameLocked = trophyFrameLocked(locked);
   const hasPinned = instances.some((i) => pinnedInstanceIds?.has(i.id));
   const progressSafe =
     progress != null &&
@@ -74,7 +74,7 @@ export function TrophyCabinetCard({
         className={trophyTileButtonClass(locked)}
       >
         <div className={TROPHY_TILE_ART_SLOT_CLASS}>
-          {(!locked || isMaxLevel) && (
+          {!locked && (
             <div
               className={`pointer-events-none absolute inset-0 -m-1 rounded-full bg-gradient-to-b opacity-70 blur-md ${rarityAuraClass(displayRarity)}`}
               aria-hidden

@@ -7,6 +7,7 @@ import {
   selectPileLayers,
   stackExpandedWidthRem,
   stackFamilyLabelKey,
+  stackPileFace,
 } from '@/components/trophies/trophyStackGeometry';
 import type { TrophyCabinetEntryView, TrophyDefinitionView } from '@/types/trophies';
 
@@ -65,7 +66,7 @@ describe('trophyStackGeometry', () => {
     expect(selectPileLayers(ids)).toEqual(['a', 'd', 'e', 'f']);
   });
 
-  it('keeps face, next chase, and max on mixed family piles over the layer cap', () => {
+  it('puts unlocked max on top of mixed piles with locked under', () => {
     const family = sortFamilyStackEntries([
       entry(def({ id: 'habit_wins_25', ruleKind: 'HABIT_WINS', threshold: 25 }), true),
       entry(def({ id: 'habit_wins_10', ruleKind: 'HABIT_WINS', threshold: 10 }), true),
@@ -83,9 +84,9 @@ describe('trophyStackGeometry', () => {
       ),
     ]);
     expect(family.map((e) => e.definition.id)).toEqual([
-      'habit_wins_25',
-      'habit_wins_10',
       'habit_first_win',
+      'habit_wins_10',
+      'habit_wins_25',
       'habit_wins_50',
       'habit_wins_100',
       'habit_wins_500',
@@ -95,8 +96,20 @@ describe('trophyStackGeometry', () => {
     const ids = pile.map((e) => e.definition.id);
     expect(ids).toHaveLength(4);
     expect(ids[ids.length - 1]).toBe('habit_wins_25');
-    expect(ids).toContain('habit_wins_50');
-    expect(ids).toContain('habit_wins_500');
+    expect(ids.indexOf('habit_wins_25')).toBeGreaterThan(ids.indexOf('habit_wins_10'));
+    expect(ids[0]).toBe('habit_wins_50');
+    expect(stackPileFace(family)?.definition.id).toBe('habit_wins_25');
+  });
+
+  it('puts lowest locked level on top when the whole family is locked', () => {
+    const family = sortFamilyStackEntries([
+      entry(def({ id: 'habit_wins_500', ruleKind: 'HABIT_WINS', threshold: 500 }), false),
+      entry(def({ id: 'habit_wins_100', ruleKind: 'HABIT_WINS', threshold: 100 }), false),
+      entry(def({ id: 'habit_wins_50', ruleKind: 'HABIT_WINS', threshold: 50 }), false),
+    ]);
+    const pile = selectFamilyPileLayers(family);
+    expect(pile[pile.length - 1]?.definition.id).toBe('habit_wins_50');
+    expect(stackPileFace(family)?.definition.id).toBe('habit_wins_50');
   });
 
   it('maps ruleKind to family label keys', () => {

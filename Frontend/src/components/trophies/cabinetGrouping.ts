@@ -9,7 +9,7 @@ export type TrophyCabinetRailItem =
       ruleKind: string;
       /** True when the stack has at least one unlocked entry. */
       unlocked: boolean;
-      /** Best → worst among unlocked, then next-chase → hardest among locked. */
+      /** Low → max (left → right when expanded). */
       entries: TrophyCabinetEntryView[];
     };
 
@@ -39,27 +39,30 @@ export function stackBetterScore(entry: TrophyCabinetEntryView): number {
   return definitionBetterScore(entry.definition);
 }
 
-/** Sort best → worst so carousel / expanded row leftmost is the best. */
+/** Sort best → worst (higher threshold / better podium first). */
 export function sortStackEntries(entries: TrophyCabinetEntryView[]): TrophyCabinetEntryView[] {
   return [...entries].sort((a, b) => stackBetterScore(b) - stackBetterScore(a));
 }
 
-/**
- * Own-profile family order: unlocked best → worst, then locked next-chase → hardest.
- * All-unlocked / all-locked stay best → worst.
- */
+/** Family expand order: low → max level left → right. */
 export function sortFamilyStackEntries(
   entries: TrophyCabinetEntryView[],
 ): TrophyCabinetEntryView[] {
-  const unlocked = entries.filter((e) => e.unlocked);
-  const locked = entries.filter((e) => !e.unlocked);
-  if (unlocked.length === 0 || locked.length === 0) {
-    return sortStackEntries(entries);
+  return [...entries].sort((a, b) => stackBetterScore(a) - stackBetterScore(b));
+}
+
+/** Highest unlocked tier in the family, if any. */
+export function bestUnlockedEntry(
+  entries: readonly TrophyCabinetEntryView[],
+): TrophyCabinetEntryView | null {
+  let best: TrophyCabinetEntryView | null = null;
+  for (const entry of entries) {
+    if (!entry.unlocked) continue;
+    if (best == null || stackBetterScore(entry) > stackBetterScore(best)) {
+      best = entry;
+    }
   }
-  return [
-    ...sortStackEntries(unlocked),
-    ...sortStackEntries(locked).reverse(),
-  ];
+  return best;
 }
 
 /** Next locked level to chase (lowest better-score among locked). */
@@ -225,9 +228,7 @@ export function groupCabinetRailItems(
       items.push({ kind: 'card', key: entry.definition.id, entry });
       continue;
     }
-    const sorted = mergeLockState
-      ? sortFamilyStackEntries(group)
-      : sortStackEntries(group);
+    const sorted = sortFamilyStackEntries(group);
     items.push({
       kind: 'stack',
       key: mergeLockState

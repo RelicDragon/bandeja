@@ -25,7 +25,7 @@ function getClient() {
 }
 
 function getDefaultModel() {
-  if (IS_DEEPSEEK) return process.env.DEEPSEEK_MODEL || "deepseek-v4-pro";
+  if (IS_DEEPSEEK) return process.env.DEEPSEEK_MODEL || "deepseek-v4-flash";
   return process.env.OPENAI_MODEL || "gpt-5.2";
 }
 

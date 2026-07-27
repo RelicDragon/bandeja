@@ -31,6 +31,7 @@ import {
   selectFamilyPileLayers,
   stackExpandedWidthRem,
   stackFamilyLabelKey,
+  stackPileFace,
 } from '@/components/trophies/trophyStackGeometry';
 import type { TrophyCabinetEntryView } from '@/types/trophies';
 
@@ -88,12 +89,12 @@ export function TrophyCabinetStack({
 
   if (entries.length < 2) return null;
 
-  const top = entries[0]!;
+  const nextChase = nextChaseEntry(entries);
+  const top = stackPileFace(entries) ?? entries[0]!;
   const hasPinned = entries.some((e) =>
     e.instances.some((i) => pinnedInstanceIds.has(i.id)),
   );
   const familyKey = stackFamilyLabelKey(top.definition.ruleKind);
-  const nextChase = nextChaseEntry(entries);
   const progress = nextChase?.progress ?? null;
   const chaseIsMaxLevel =
     nextChase != null && isMaxLevelEntry(nextChase, entries);
@@ -106,6 +107,12 @@ export function TrophyCabinetStack({
   const progressPct = showProgress
     ? Math.min(100, Math.max(0, (progress!.current / progress!.target) * 100))
     : 0;
+  const faceDisplayRarity = trophyMaxLevelDisplayRarity(
+    chaseIsMaxLevel,
+    top.unlocked,
+    top.definition.rarity,
+  );
+  const faceFrameLocked = trophyFrameLocked(!top.unlocked);
 
   const targetWidthRem = expanded
     ? stackExpandedWidthRem(entries.length)
@@ -145,9 +152,10 @@ export function TrophyCabinetStack({
               const entryMax = isMaxLevelEntry(entry, entries);
               const displayRarity = trophyMaxLevelDisplayRarity(
                 entryMax,
+                entry.unlocked,
                 entry.definition.rarity,
               );
-              const frameLocked = trophyFrameLocked(!entry.unlocked, entryMax);
+              const entryFrameLocked = trophyFrameLocked(!entry.unlocked);
               return (
               <div
                 key={entry.definition.id}
@@ -160,7 +168,7 @@ export function TrophyCabinetStack({
                 </div>
                 {showsRarityTag(entry.definition.rarity) && (
                   <span
-                    className={`mt-1 ${TROPHY_RARITY_TAG_CLASS} ${rarityBadgeClass(displayRarity, frameLocked)}`}
+                    className={`mt-1 ${TROPHY_RARITY_TAG_CLASS} ${rarityBadgeClass(displayRarity, entryFrameLocked)}`}
                   >
                     {t(rarityLabelKey(entry.definition.rarity))}
                   </span>
@@ -252,7 +260,7 @@ export function TrophyCabinetStack({
         >
           <span
             id={labelId}
-            className={`flex w-full items-center justify-center gap-0.5 text-[11px] font-semibold leading-tight ${rarityTextClass(top.definition.rarity, frameLocked)}`}
+            className={`flex w-full items-center justify-center gap-0.5 text-[11px] font-semibold leading-tight ${rarityTextClass(faceDisplayRarity, faceFrameLocked)}`}
           >
             <span className="line-clamp-1">{t(familyKey)}</span>
             <span className="shrink-0 text-[9px] opacity-70" aria-hidden>

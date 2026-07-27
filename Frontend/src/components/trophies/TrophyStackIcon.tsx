@@ -62,8 +62,8 @@ export function TrophyStackIcon({
   const { definition, instances, progress } = entry;
   const primary = instances[0] ?? null;
   const hasPinned = instances.some((i) => pinnedInstanceIds.has(i.id));
-  const displayRarity = trophyMaxLevelDisplayRarity(maxLevel, definition.rarity);
-  const frameLocked = trophyFrameLocked(locked, maxLevel);
+  const displayRarity = trophyMaxLevelDisplayRarity(maxLevel, !locked, definition.rarity);
+  const frameLocked = trophyFrameLocked(locked);
 
   const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
@@ -91,7 +91,7 @@ export function TrophyStackIcon({
           }`}
         >
           <div className="relative">
-            {(!locked || maxLevel) && (
+            {!locked && (
               <div
                 className={`pointer-events-none absolute inset-0 -m-1 rounded-full bg-gradient-to-b opacity-70 blur-md ${rarityAuraClass(displayRarity)}`}
                 aria-hidden

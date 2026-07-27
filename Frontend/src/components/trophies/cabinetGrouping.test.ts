@@ -75,7 +75,7 @@ describe('sortStackEntries', () => {
 });
 
 describe('sortFamilyStackEntries', () => {
-  it('puts unlocked best→worst then locked next-chase→hardest', () => {
+  it('orders low → max for expand left → right', () => {
     const sorted = sortFamilyStackEntries([
       entry(def({ id: 'habit_games_10', ruleKind: 'HABIT_VOLUME', threshold: 10 }), true),
       entry(def({ id: 'habit_games_50', ruleKind: 'HABIT_VOLUME', threshold: 50 }), true),
@@ -91,8 +91,8 @@ describe('sortFamilyStackEntries', () => {
       ),
     ]);
     expect(sorted.map((e) => e.definition.id)).toEqual([
-      'habit_games_50',
       'habit_games_10',
+      'habit_games_50',
       'habit_games_500',
       'habit_games_1000',
     ]);
@@ -182,9 +182,9 @@ describe('groupCabinetRailItems', () => {
     expect(items[0]).toMatchObject({ kind: 'stack', unlocked: true, ruleKind: 'HABIT_VOLUME' });
     if (items[0]?.kind === 'stack') {
       expect(items[0].entries.map((e) => e.definition.id)).toEqual([
-        'habit_games_50',
-        'habit_games_10',
         'habit_first_padel_game',
+        'habit_games_10',
+        'habit_games_50',
       ]);
     }
   });
@@ -212,9 +212,9 @@ describe('groupCabinetRailItems', () => {
     expect(items[0]).toMatchObject({ kind: 'stack', unlocked: true, ruleKind: 'HABIT_WINS' });
     if (items[0]?.kind === 'stack') {
       expect(items[0].entries.map((e) => e.definition.id)).toEqual([
-        'habit_wins_25',
-        'habit_wins_10',
         'habit_first_win',
+        'habit_wins_10',
+        'habit_wins_25',
       ]);
     }
     if (items[1]?.kind === 'card') {
@@ -255,8 +255,8 @@ describe('groupCabinetRailItems', () => {
     expect(items[1]).toMatchObject({ kind: 'stack', unlocked: false, ruleKind: 'HABIT_VOLUME' });
     if (items[0]?.kind === 'stack') {
       expect(items[0].entries.map((e) => e.definition.id)).toEqual([
-        'habit_games_50',
         'habit_games_10',
+        'habit_games_50',
       ]);
     }
   });
@@ -301,8 +301,8 @@ describe('groupCabinetRailItems', () => {
     });
     if (items[0]?.kind === 'stack') {
       expect(items[0].entries.map((e) => e.definition.id)).toEqual([
-        'habit_games_50',
         'habit_games_10',
+        'habit_games_50',
         'habit_games_500',
         'habit_games_1000',
       ]);
@@ -327,8 +327,8 @@ describe('groupCabinetRailItems', () => {
     expect(items[0]).toMatchObject({ kind: 'stack', unlocked: true, ruleKind: 'HABIT_WINS' });
     if (items[0]?.kind === 'stack') {
       expect(items[0].entries.map((e) => e.definition.id)).toEqual([
-        'habit_wins_10',
         'habit_first_win',
+        'habit_wins_10',
         'habit_wins_50',
       ]);
     }
@@ -348,7 +348,10 @@ describe('groupCabinetRailItems', () => {
     ]);
     expect(items[0]?.kind).toBe('stack');
     if (items[0]?.kind === 'stack') {
-      expect(items[0].entries[0]?.definition.id).toBe('habit_games_100');
+      expect(items[0].entries.map((e) => e.definition.id)).toEqual([
+        'habit_games_10',
+        'habit_games_100',
+      ]);
     }
     expect(items[1]?.kind).toBe('card');
     if (items[1]?.kind === 'card') {

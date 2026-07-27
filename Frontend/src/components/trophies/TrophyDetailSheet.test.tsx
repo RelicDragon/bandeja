@@ -132,7 +132,7 @@ describe('TrophyDetailSheet', () => {
     ).toBeTruthy();
   });
 
-  it('uses golden progress chrome for catalog max level without explicit prop', () => {
+  it('uses emerald chase progress even when targeting catalog max (gold only when unlocked)', () => {
     const container = document.createElement('div');
     document.body.append(container);
     containers.push(container);
@@ -163,7 +163,7 @@ describe('TrophyDetailSheet', () => {
     const panel = container.querySelector('[data-testid="trophy-detail-progress"]');
     const bar = container.querySelector('[data-testid="trophy-detail-progress-bar"]');
     expect(panel?.getAttribute('data-max-level')).toBe('true');
-    expect(bar?.getAttribute('data-max-level')).toBe('true');
-    expect(bar?.className).toContain('from-amber-400');
+    expect(bar?.className).toContain('bg-emerald-500');
+    expect(bar?.className).not.toContain('from-amber-400');
   });
 });

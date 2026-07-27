@@ -5,7 +5,7 @@ import { logLlmUsage } from './llmUsageLog.service';
 
 const OPENAI_DEFAULT_MODEL = 'gpt-5-mini';
 const DEEPSEEK_BASE_URL = 'https://api.deepseek.com';
-const DEEPSEEK_DEFAULT_MODEL = 'deepseek-v4-pro';
+const DEEPSEEK_DEFAULT_MODEL = 'deepseek-v4-flash';
 
 function getClient(): OpenAI | null {
   const provider = config.ai.provider;

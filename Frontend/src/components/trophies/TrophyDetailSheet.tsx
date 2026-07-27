@@ -99,8 +99,8 @@ export function TrophyDetailSheet({
     typeof isMaxLevel === 'boolean'
       ? isMaxLevel
       : isCatalogFamilyMaxLevel(definition);
-  const displayRarity = trophyMaxLevelDisplayRarity(maxLevel, definition.rarity);
-  const frameLocked = trophyFrameLocked(locked, maxLevel);
+  const displayRarity = trophyMaxLevelDisplayRarity(maxLevel, !locked, definition.rarity);
+  const frameLocked = trophyFrameLocked(locked);
   const progressPercent =
     progress &&
     progress.target > 0 &&
@@ -143,22 +143,14 @@ export function TrophyDetailSheet({
               <div
                 data-testid="trophy-detail-progress"
                 data-max-level={maxLevel ? 'true' : 'false'}
-                className={
-                  maxLevel
-                    ? 'relative overflow-hidden rounded-3xl border border-amber-200/80 bg-gradient-to-b from-amber-50/90 to-white px-5 py-4 text-center shadow-[0_14px_30px_-24px_rgba(245,158,11,0.75)] dark:border-amber-500/25 dark:from-amber-950/40 dark:to-white/[0.03]'
-                    : 'relative overflow-hidden rounded-3xl border border-emerald-100/80 bg-gradient-to-b from-emerald-50/90 to-white px-5 py-4 text-center shadow-[0_14px_30px_-24px_rgba(16,185,129,0.7)] dark:border-emerald-500/20 dark:from-emerald-950/35 dark:to-white/[0.03]'
-                }
+                className="relative overflow-hidden rounded-3xl border border-emerald-100/80 bg-gradient-to-b from-emerald-50/90 to-white px-5 py-4 text-center shadow-[0_14px_30px_-24px_rgba(16,185,129,0.7)] dark:border-emerald-500/20 dark:from-emerald-950/35 dark:to-white/[0.03]"
                 aria-label={t('trophies.detail.progress', {
                   current: progress.current,
                   target: progress.target,
                 })}
               >
                 <div
-                  className={
-                    maxLevel
-                      ? 'pointer-events-none absolute inset-x-10 -top-8 h-16 rounded-full bg-amber-400/20 blur-2xl dark:bg-amber-400/10'
-                      : 'pointer-events-none absolute inset-x-10 -top-8 h-16 rounded-full bg-emerald-400/15 blur-2xl dark:bg-emerald-400/10'
-                  }
+                  className="pointer-events-none absolute inset-x-10 -top-8 h-16 rounded-full bg-emerald-400/15 blur-2xl dark:bg-emerald-400/10"
                   aria-hidden
                 />
                 <div className="relative">
@@ -176,11 +168,7 @@ export function TrophyDetailSheet({
                     </div>
                     <span
                       data-testid="trophy-detail-progress-percent"
-                      className={
-                        maxLevel
-                          ? 'absolute right-0 text-sm font-bold tabular-nums text-amber-700 dark:text-amber-300'
-                          : 'absolute right-0 text-sm font-bold tabular-nums text-emerald-600 dark:text-emerald-300'
-                      }
+                      className="absolute right-0 text-sm font-bold tabular-nums text-emerald-600 dark:text-emerald-300"
                     >
                       {Math.round(progressPercent)}%
                     </span>
@@ -194,11 +182,7 @@ export function TrophyDetailSheet({
                       aria-valuemin={0}
                       aria-valuemax={100}
                       aria-valuenow={Math.round(progressPercent)}
-                      className={`relative h-full overflow-hidden rounded-full transition-[width] duration-500 ease-out ${trophyProgressFillClass(maxLevel)} ${
-                        maxLevel
-                          ? 'shadow-[0_0_12px_rgba(245,158,11,0.45)]'
-                          : 'shadow-[0_0_12px_rgba(16,185,129,0.35)]'
-                      }`}
+                      className={`relative h-full overflow-hidden rounded-full shadow-[0_0_12px_rgba(16,185,129,0.35)] transition-[width] duration-500 ease-out ${trophyProgressFillClass()}`}
                       style={{ width: `${progressPercent}%` }}
                     >
                       <span

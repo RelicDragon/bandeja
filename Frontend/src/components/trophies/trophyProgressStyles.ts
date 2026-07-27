@@ -1,20 +1,22 @@
-/** Intermediate chase = green; max-level chase = golden. */
-export function trophyProgressFillClass(isMaxLevel: boolean): string {
-  if (isMaxLevel) {
-    return 'bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500';
-  }
+/** Chase progress fill — emerald for all locked chases (gold is unlock-only). */
+export function trophyProgressFillClass(_isMaxLevel = false): string {
+  void _isMaxLevel;
   return 'bg-emerald-500';
 }
 
-/** Frame/text/badge rarity used when max-level gold chrome applies. */
+/**
+ * Golden LEGENDARY chrome only when the family max is unlocked.
+ * Locked max/legendary stays on its native rarity with locked (gray) treatment.
+ */
 export function trophyMaxLevelDisplayRarity(
   isMaxLevel: boolean,
+  unlocked: boolean,
   rarity: 'COMMON' | 'RARE' | 'LEGENDARY',
 ): 'COMMON' | 'RARE' | 'LEGENDARY' {
-  return isMaxLevel ? 'LEGENDARY' : rarity;
+  return isMaxLevel && unlocked ? 'LEGENDARY' : rarity;
 }
 
-/** Locked chrome stays gray unless this is the family max (gold while still locked). */
-export function trophyFrameLocked(locked: boolean, isMaxLevel: boolean): boolean {
-  return locked && !isMaxLevel;
+/** Locked entries always use locked chrome — no gold while still locked. */
+export function trophyFrameLocked(locked: boolean): boolean {
+  return locked;
 }

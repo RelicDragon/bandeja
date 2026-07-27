@@ -313,7 +313,7 @@ describe('TrophyCabinetStack', () => {
     expect(fill?.className).toContain('bg-emerald-500');
   });
 
-  it('uses golden progress fill when chasing the max level', () => {
+  it('keeps emerald progress fill when chasing the max level (gold only after unlock)', () => {
     const container = document.createElement('div');
     document.body.append(container);
     containers.push(container);
@@ -324,6 +324,7 @@ describe('TrophyCabinetStack', () => {
 
     const fill = container.querySelector('[data-testid="trophy-progress-fill"]');
     expect(fill?.getAttribute('data-max-level')).toBe('true');
-    expect(fill?.className).toContain('from-amber-400');
+    expect(fill?.className).toContain('bg-emerald-500');
+    expect(fill?.className).not.toContain('from-amber-400');
   });
 });
