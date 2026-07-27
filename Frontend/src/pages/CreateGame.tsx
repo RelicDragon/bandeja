@@ -69,6 +69,7 @@ import { CreateGameQuestionnaireBanner } from '@/components/sportQuestionnaire';
 import { GameFormatGenderFields } from '@/components/gameFormat/GameFormatTeamsFields';
 import {
   entitySupportsPlayersPerMatchControls,
+  gameFormatFixedTeamsToggleVisible,
   gameFormatGenderVisible,
 } from '@/components/gameFormat/gameFormatTeamsVisibility';
 import type { CreateTemplateDurationContext } from '@/components/createGame/createTemplateDurationLabels';
@@ -966,7 +967,7 @@ export const CreateGame = ({
   ]);
 
   useEffect(() => {
-    if (entityType !== 'GAME' && entityType !== 'LEAGUE') return;
+    if (!entitySupportsPlayersPerMatchControls(entityType)) return;
     const allowed = sportConfig.allowedPlayerCountsPerMatch;
     if (allowed.includes(playersPerMatch)) return;
     const fallback = allowed.includes(sportConfig.defaultPlayersPerMatch)
@@ -1332,9 +1333,13 @@ export const CreateGame = ({
         gameData.gameType = gameFormat.gameType;
         gameData.affectsRating = isRatingGame;
         gameData.resultsByAnyone = entityType === 'TOURNAMENT' ? false : resultsByAnyone;
-        gameData.hasFixedTeams = hasFixedTeams;
+        const fixedTeamsApplicable =
+          entitySupportsPlayersPerMatchControls(entityType) &&
+          playersPerMatch === 4 &&
+          gameFormatFixedTeamsToggleVisible(entityType, maxParticipants);
+        gameData.hasFixedTeams = fixedTeamsApplicable ? hasFixedTeams : false;
         gameData.allowUserInMultipleTeams =
-          playersPerMatch === 2 || !hasFixedTeams ? false : allowUserInMultipleTeams;
+          !fixedTeamsApplicable || !hasFixedTeams ? false : allowUserInMultipleTeams;
         gameData.pointsPerWin = setup.pointsPerWin;
         gameData.pointsPerLoose = setup.pointsPerLoose;
         gameData.pointsPerTie = setup.pointsPerTie;

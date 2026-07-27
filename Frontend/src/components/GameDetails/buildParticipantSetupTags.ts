@@ -25,7 +25,7 @@ export function buildParticipantSetupTags(
 
   if (
     game.hasFixedTeams &&
-    game.maxParticipants > 2 &&
+    playersPerMatch === 4 &&
     gameFormatFixedTeamsToggleVisible(game.entityType, game.maxParticipants)
   ) {
     tags.push({

@@ -73,12 +73,13 @@ export const EditMaxParticipantsModal = ({
     if (isOpen) {
       prevMaxParticipantsRef.current = game.maxParticipants;
       setNewMaxParticipants(game.maxParticipants);
-      setPlayersPerMatch(game.playersPerMatch ?? sportConfig.defaultPlayersPerMatch);
+      const ppm = game.playersPerMatch ?? sportConfig.defaultPlayersPerMatch;
+      setPlayersPerMatch(ppm);
       setLevelRange([game.minLevel ?? 1.0, game.maxLevel ?? 7.0]);
       setGenderTeams(game.genderTeams ?? 'ANY');
-      setHasFixedTeams(
-        game.maxParticipants === 2 ? false : (game.hasFixedTeams ?? false),
-      );
+      const fixedApplicable =
+        gameFormatFixedTeamsToggleVisible(game.entityType, game.maxParticipants) && ppm === 4;
+      setHasFixedTeams(fixedApplicable ? (game.hasFixedTeams ?? false) : false);
       setRemovedPlayerIds(new Set());
       setOriginalParticipants(game.participants.filter(p => p.status === 'PLAYING'));
       setIsEditingMaxParticipants(false);
@@ -119,22 +120,25 @@ export const EditMaxParticipantsModal = ({
     sportConfig.allowedPlayerCountsPerMatch,
   ]);
 
+  // After user changes roster/format only — not on modal open (avoids clearing with stale ppm).
   useEffect(() => {
-    if (!isOpen) return;
     if (newMaxParticipants === 2 || playersPerMatch !== 4) {
       setHasFixedTeams(false);
     }
-  }, [isOpen, newMaxParticipants, playersPerMatch]);
+  }, [newMaxParticipants, playersPerMatch]);
 
   useEffect(() => {
     if (!isOpen) return;
-    if (game.entityType !== 'GAME' && game.entityType !== 'LEAGUE') return;
+    if (!entitySupportsPlayersPerMatchControls(game.entityType)) return;
     const allowed = sportConfig.allowedPlayerCountsPerMatch;
     if (allowed.includes(playersPerMatch)) return;
     const fallback = allowed.includes(sportConfig.defaultPlayersPerMatch)
       ? sportConfig.defaultPlayersPerMatch
       : allowed[0] ?? sportConfig.defaultPlayersPerMatch;
     setPlayersPerMatch(fallback);
+    if (fallback === 2) {
+      setHasFixedTeams(false);
+    }
   }, [
     isOpen,
     game.entityType,

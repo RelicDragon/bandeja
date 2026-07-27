@@ -1,5 +1,6 @@
 import { EntityType, Game } from '@/types';
 import type { BasicUser } from '@/types';
+import { playersPerMatchOf } from '@/utils/matchFormat';
 
 export function gameFormatGenderVisible(entityType: EntityType): boolean {
   return (
@@ -31,9 +32,8 @@ export function gameFormatTeamsFieldsVisible(entityType: EntityType, participant
 export function fixedTeamsManagementVisible(game: Game, user: BasicUser | null | undefined): boolean {
   if (!user) return false;
   if (game.resultsStatus !== 'NONE') return false;
-  if (game.entityType === 'BAR' || game.entityType === 'TRAINING') return false;
   if (!game.hasFixedTeams) return false;
-  const n = game.maxParticipants;
-  if (n === 2 || n < 4 || n % 2 !== 0) return false;
+  if (playersPerMatchOf(game) !== 4) return false;
+  if (!gameFormatFixedTeamsToggleVisible(game.entityType, game.maxParticipants)) return false;
   return true;
 }

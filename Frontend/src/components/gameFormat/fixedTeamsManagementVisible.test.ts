@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   entitySupportsPlayersPerMatchControls,
   fixedTeamsManagementVisible,
+  gameFormatFixedTeamsToggleVisible,
 } from './gameFormatTeamsVisibility';
 import type { BasicUser, Game } from '@/types';
 
@@ -12,6 +13,7 @@ const baseGame = {
   entityType: 'GAME',
   hasFixedTeams: true,
   maxParticipants: 4,
+  playersPerMatch: 4,
 } as Game;
 
 describe('entitySupportsPlayersPerMatchControls', () => {
@@ -27,6 +29,22 @@ describe('entitySupportsPlayersPerMatchControls', () => {
   });
 });
 
+describe('gameFormatFixedTeamsToggleVisible', () => {
+  it('shows for tournament even roster >= 4', () => {
+    expect(gameFormatFixedTeamsToggleVisible('TOURNAMENT', 8)).toBe(true);
+  });
+
+  it('hides for odd roster and singles-sized roster', () => {
+    expect(gameFormatFixedTeamsToggleVisible('TOURNAMENT', 5)).toBe(false);
+    expect(gameFormatFixedTeamsToggleVisible('GAME', 2)).toBe(false);
+  });
+
+  it('hides for TRAINING and BAR', () => {
+    expect(gameFormatFixedTeamsToggleVisible('TRAINING', 8)).toBe(false);
+    expect(gameFormatFixedTeamsToggleVisible('BAR', 8)).toBe(false);
+  });
+});
+
 describe('fixedTeamsManagementVisible', () => {
   it('shows when all conditions met', () => {
     expect(fixedTeamsManagementVisible(baseGame, user)).toBe(true);
@@ -39,6 +57,12 @@ describe('fixedTeamsManagementVisible', () => {
         user,
       ),
     ).toBe(true);
+  });
+
+  it('hides when singles playersPerMatch', () => {
+    expect(
+      fixedTeamsManagementVisible({ ...baseGame, playersPerMatch: 2 }, user),
+    ).toBe(false);
   });
 
   it('hides without user', () => {
