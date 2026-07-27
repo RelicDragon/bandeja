@@ -889,8 +889,16 @@
 
       .donation-group legend {
         width: 100%;
-        margin-bottom: 10px;
+        margin-bottom: 8px;
         padding: 0;
+      }
+
+      .donation-hint {
+        margin: 0 0 12px;
+        color: var(--muted);
+        font-size: 0.78rem;
+        font-weight: 650;
+        line-height: 1.5;
       }
 
       .donation-options {
@@ -2221,6 +2229,10 @@
 
                 <fieldset class="donation-group">
                   <legend data-i18n="giftLegend">Want to leave a birthday donation?</legend>
+                  <p class="donation-hint" data-i18n="giftHint">
+                    Not sure what to gift her? Donate — she wants to play padel nonstop, so it helps
+                    her afford a KSC membership.
+                  </p>
                   <div class="donation-options">
                     <label class="donation-option donation-option--full">
                       <input type="radio" name="donation" value="none" checked />
@@ -2467,6 +2479,8 @@
             messageLabel: "Your birthday wish",
             messagePlaceholder: "A memory, a wish, an inside joke…",
             giftLegend: "Want to leave a birthday donation?",
+            giftHint:
+              "Not sure what to gift her? Donate — she wants to play padel nonstop, so it helps her afford a KSC membership.",
             giftNone: "Just my message",
             giftRsd: "Donate RSD",
             giftRub: "Donate RUB",
@@ -2543,6 +2557,8 @@
             messageLabel: "Ваше поздравление",
             messagePlaceholder: "Пожелание, воспоминание или ваша общая шутка…",
             giftLegend: "Хотите сделать донат на день рождения?",
+            giftHint:
+              "Не знаете, что подарить? Задонатьте — она хочет играть в падел без остановки, и это поможет ей оплатить членство в KSC.",
             giftNone: "Только поздравление",
             giftRsd: "Донат RSD",
             giftRub: "Донат RUB",
@@ -2619,6 +2635,8 @@
             messageLabel: "Vaša rođendanska poruka",
             messagePlaceholder: "Uspomena, želja ili vaša interna šala…",
             giftLegend: "Želite li da ostavite rođendansku donaciju?",
+            giftHint:
+              "Ne znate šta da joj poklonite? Donirajte — hoće da igra padel non-stop, pa će joj to pomoći da priušti članarinu u KSC.",
             giftNone: "Samo moja poruka",
             giftRsd: "Donacija RSD",
             giftRub: "Donacija RUB",
