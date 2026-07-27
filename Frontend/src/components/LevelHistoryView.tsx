@@ -284,18 +284,20 @@ const LevelHistoryViewComponent = ({
         />
       )}
 
+      {!hideUserCard && showStatisticsContent && (
+        <TrophyCabinet
+          trophies={alignedSportStats?.user.trophies ?? alignedParentStats?.user.trophies ?? user.trophies}
+          isOwn={isOwnProfile}
+          ownerUserId={user.id}
+        />
+      )}
+
       {showStatisticsContent && (
         <>
           <LevelHistoryProfileStatsSection
             user={user}
             followersCount={stats.followersCount}
             followingCount={stats.followingCount}
-          />
-
-          <TrophyCabinet
-            trophies={alignedSportStats?.user.trophies ?? alignedParentStats?.user.trophies ?? user.trophies}
-            isOwn={isOwnProfile}
-            ownerUserId={user.id}
           />
 
           {showItemsToSell && (

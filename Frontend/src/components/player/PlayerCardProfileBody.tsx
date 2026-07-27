@@ -13,6 +13,7 @@ import { LeaderboardSportPicker } from '@/components/leaderboard/LeaderboardSpor
 import { useFavoritesStore } from '@/store/favoritesStore';
 import { usePresenceStore } from '@/store/presenceStore';
 import { PlayStreakChip } from '@/components/playStreak/PlayStreakChip';
+import { TrophyCabinet } from '@/components/trophies/TrophyCabinet';
 import { TrophyShowcase } from '@/components/trophies/TrophyShowcase';
 import { TrophyPendingCelebrationHost } from '@/components/trophies/TrophyPendingCelebrationHost';
 import { useAuthStore } from '@/store/authStore';
@@ -318,6 +319,14 @@ const PlayerCardProfileBodyComponent = ({
           {prependBeforeLevelHistory}
         </motion.div>
       )}
+
+      <motion.div variants={itemVariants}>
+        <TrophyCabinet
+          trophies={user.trophies}
+          isOwn={isOwnProfile}
+          ownerUserId={user.id}
+        />
+      </motion.div>
 
       {showExternalSportPicker && pickerSport && (
         <motion.div variants={itemVariants}>

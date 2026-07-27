@@ -162,14 +162,22 @@ describe('TrophyCabinetStack', () => {
 
     expect(frameBefore).not.toBeNull();
     expect(frameBefore?.className).not.toContain('h-40');
-    expect(
-      frameBefore?.querySelector('[data-testid="trophy-stack-height-probe"]'),
-    ).not.toBeNull();
+    const heightProbe = frameBefore?.querySelector(
+      '[data-testid="trophy-stack-height-probe"]',
+    );
+    expect(heightProbe).not.toBeNull();
+    expect(heightProbe?.className).toContain('pb-6');
     expect(
       frameBefore
         ?.querySelector<HTMLElement>('[data-testid="trophy-stack-collapsed-label"]')
         ?.style.top,
     ).toBe('6rem');
+    const collapsedSubtitle = frameBefore?.querySelector(
+      '[data-testid="trophy-stack-collapsed-subtitle"]',
+    );
+    expect(collapsedSubtitle).not.toBeNull();
+    expect(collapsedSubtitle?.className).toContain('line-clamp-2');
+    expect(collapsedSubtitle?.className).not.toContain('truncate');
     expect(iconsBefore).toHaveLength(2);
     expect(container.querySelector('button button')).toBeNull();
     expect(expandButton).not.toBeNull();

@@ -110,9 +110,15 @@ describe('TrophyStackIcon', () => {
     );
     const tag = container.querySelector('[data-testid="trophy-rarity-tag"]');
     const titleSlot = container.querySelector('[data-testid="trophy-title-slot"]');
+    const expandedLabel = container.querySelector<HTMLElement>(
+      '[data-stack-label="visible"]',
+    );
+    const title = titleSlot?.querySelector('span');
     expect(iconButton).not.toBeNull();
     expect(tag).not.toBeNull();
     expect(titleSlot).not.toBeNull();
+    expect(expandedLabel?.style.width).toBe('5.25rem');
+    expect(title?.className).toContain('break-words');
     expect(iconButton?.contains(titleSlot)).toBe(false);
     expect(iconButton?.contains(tag)).toBe(false);
     expect(tag?.textContent).toBe('trophies.rarity.rare');

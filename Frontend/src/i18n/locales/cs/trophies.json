@@ -27,7 +27,7 @@
       "pinsFull": "Výloha je plná — nejdřív jednu odepni (max. 3)."
     },
     "cabinet": {
-      "title": "Vitrína trofejí",
+      "title": "Úspěchy",
       "count": "Získáno: {{count}}",
       "ownEmpty": "Stíhej pódia, série a milníky — zamčené trofeje ukazují další cíle.",
       "visitorEmpty": "Zatím žádné trofeje.",
@@ -74,51 +74,51 @@
         "description": "3. místo v lize nebo turnaji s alespoň 8 hráči."
       },
       "firstWin": {
-        "title": "První výhra",
+        "title": "První triumf",
         "description": "Vyhraj svůj první započítávaný zápas."
       },
       "firstPadelGame": {
-        "title": "První padelový zápas",
+        "title": "Padelový debut",
         "description": "Dokonči svůj první započítávaný padelový zápas."
       },
       "wins10": {
-        "title": "Deset výher",
+        "title": "Desítka",
         "description": "Vyhraj 10 započítávaných zápasů."
       },
       "wins25": {
-        "title": "Pětadvacet výher",
+        "title": "Čtvrtstovka",
         "description": "Vyhraj 25 započítávaných zápasů."
       },
       "wins50": {
-        "title": "Padesát výher",
+        "title": "Půlstovka",
         "description": "Vyhraj 50 započítávaných zápasů."
       },
       "wins100": {
-        "title": "Sto výher",
+        "title": "Stotník výher",
         "description": "Vyhraj 100 započítávaných zápasů."
       },
       "wins500": {
-        "title": "Pětiset výher",
+        "title": "Stroj na výhry",
         "description": "Vyhraj 500 započítávaných zápasů."
       },
       "games10": {
-        "title": "Začínáme",
+        "title": "Rozjezd",
         "description": "Dokonči 10 započítávaných zápasů."
       },
       "games50": {
-        "title": "Pravidelný",
+        "title": "Stálice",
         "description": "Dokonči 50 započítávaných zápasů."
       },
       "games100": {
-        "title": "Stovka",
+        "title": "Centurion",
         "description": "Dokonči 100 započítávaných zápasů."
       },
       "games500": {
-        "title": "Pětiset",
+        "title": "Klub pětiset",
         "description": "Dokonči 500 započítávaných zápasů."
       },
       "games1000": {
-        "title": "Tisícovka",
+        "title": "Klub tisíce",
         "description": "Dokonči 1000 započítávaných zápasů."
       },
       "streak4": {
@@ -126,7 +126,7 @@
         "description": "Udrž 4týdenní sérii."
       },
       "streak8": {
-        "title": "Dva měsíce",
+        "title": "Dva měsíce síly",
         "description": "Udrž 8týdenní sérii."
       },
       "streak12": {
@@ -134,7 +134,7 @@
         "description": "Udrž 12týdenní sérii."
       },
       "streak16": {
-        "title": "Čtyři měsíce ohně",
+        "title": "Čtyři měsíce žáru",
         "description": "Udrž 16týdenní sérii."
       },
       "streak32": {

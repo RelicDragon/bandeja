@@ -27,7 +27,7 @@
       "pinsFull": "Izlog je pun — prvo skini jedan (max 3)."
     },
     "cabinet": {
-      "title": "Vitrina pehara",
+      "title": "Dostignuća",
       "count": "Osvojeno: {{count}}",
       "ownEmpty": "Juri podijume, serije i prekretnice — zaključani pehari pokazuju sledeće ciljeve.",
       "visitorEmpty": "Još nema pehara.",
@@ -74,51 +74,51 @@
         "description": "3. mesto u ligi ili turniru sa najmanje 8 igrača."
       },
       "firstWin": {
-        "title": "Prva pobeda",
+        "title": "Prvi trijumf",
         "description": "Pobedi u prvoj važećoj utakmici."
       },
       "firstPadelGame": {
-        "title": "Prva padel utakmica",
+        "title": "Debi u padelu",
         "description": "Završi prvu važeću padel utakmicu."
       },
       "wins10": {
-        "title": "Deset pobeda",
+        "title": "Desetka",
         "description": "Pobedi u 10 važećih utakmica."
       },
       "wins25": {
-        "title": "Dvadeset pet pobeda",
+        "title": "Četvrt stoleća",
         "description": "Pobedi u 25 važećih utakmica."
       },
       "wins50": {
-        "title": "Pedeset pobeda",
+        "title": "Pedesetka",
         "description": "Pobedi u 50 važećih utakmica."
       },
       "wins100": {
-        "title": "Sto pobeda",
+        "title": "Stotnik pobeda",
         "description": "Pobedi u 100 važećih utakmica."
       },
       "wins500": {
-        "title": "Pet stotina pobeda",
+        "title": "Mašina za pobede",
         "description": "Pobedi u 500 važećih utakmica."
       },
       "games10": {
-        "title": "Početak",
+        "title": "Prvi koraci",
         "description": "Završi 10 važećih utakmica."
       },
       "games50": {
-        "title": "Redovan",
+        "title": "Stalni gost",
         "description": "Završi 50 važećih utakmica."
       },
       "games100": {
-        "title": "Stotina",
+        "title": "Centurion",
         "description": "Završi 100 važećih utakmica."
       },
       "games500": {
-        "title": "Pet stotina",
+        "title": "Klub petstotih",
         "description": "Završi 500 važećih utakmica."
       },
       "games1000": {
-        "title": "Hiljada",
+        "title": "Klub hiljade",
         "description": "Završi 1000 važećih utakmica."
       },
       "streak4": {
@@ -126,7 +126,7 @@
         "description": "Održavaj seriju od 4 nedelje."
       },
       "streak8": {
-        "title": "Dva meseca",
+        "title": "Dva meseca snage",
         "description": "Održavaj seriju od 8 nedelja."
       },
       "streak12": {
@@ -134,7 +134,7 @@
         "description": "Održavaj seriju od 12 nedelja."
       },
       "streak16": {
-        "title": "Četiri meseca vatre",
+        "title": "Četiri meseca žara",
         "description": "Održavaj seriju od 16 nedelja."
       },
       "streak32": {

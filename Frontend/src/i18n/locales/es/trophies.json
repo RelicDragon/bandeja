@@ -27,7 +27,7 @@
       "pinsFull": "El escaparate está lleno — quita uno primero (máx. 3)."
     },
     "cabinet": {
-      "title": "Vitrina de trofeos",
+      "title": "Logros",
       "count": "{{count}} conseguidos",
       "ownEmpty": "Persigue podios, rachas e hitos: los trofeos bloqueados muestran tus siguientes metas.",
       "visitorEmpty": "Aún no hay trofeos.",
@@ -74,31 +74,31 @@
         "description": "3.º en una liga o torneo con al menos 8 jugadores."
       },
       "firstWin": {
-        "title": "Primera victoria",
+        "title": "Primer triunfo",
         "description": "Gana tu primer partido válido."
       },
       "firstPadelGame": {
-        "title": "Primer partido de pádel",
+        "title": "Debut en pádel",
         "description": "Termina tu primer partido de pádel válido."
       },
       "wins10": {
-        "title": "Diez victorias",
+        "title": "Doble dígito",
         "description": "Gana 10 partidos válidos."
       },
       "wins25": {
-        "title": "Veinticinco victorias",
+        "title": "Cuarto de siglo",
         "description": "Gana 25 partidos válidos."
       },
       "wins50": {
-        "title": "Cincuenta victorias",
+        "title": "Medio centenar",
         "description": "Gana 50 partidos válidos."
       },
       "wins100": {
-        "title": "Cien victorias",
+        "title": "Centena de victorias",
         "description": "Gana 100 partidos válidos."
       },
       "wins500": {
-        "title": "Quinientas victorias",
+        "title": "Máquina de ganar",
         "description": "Gana 500 partidos válidos."
       },
       "games10": {
@@ -106,7 +106,7 @@
         "description": "Termina 10 partidos válidos."
       },
       "games50": {
-        "title": "Habitual",
+        "title": "Asiduo",
         "description": "Termina 50 partidos válidos."
       },
       "games100": {
@@ -114,7 +114,7 @@
         "description": "Termina 100 partidos válidos."
       },
       "games500": {
-        "title": "Quinientos",
+        "title": "Club de los 500",
         "description": "Termina 500 partidos válidos."
       },
       "games1000": {

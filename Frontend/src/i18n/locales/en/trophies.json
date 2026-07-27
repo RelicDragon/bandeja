@@ -27,7 +27,7 @@
       "pinsFull": "Showcase is full — unpin one first (max 3)."
     },
     "cabinet": {
-      "title": "Trophy cabinet",
+      "title": "Achievements",
       "count": "{{count}} earned",
       "ownEmpty": "Chase podium finishes, streaks, and milestones — locked trophies show your next goals.",
       "visitorEmpty": "No trophies yet.",
@@ -74,31 +74,31 @@
         "description": "Finish 3rd in a league or tournament with at least 8 players."
       },
       "firstWin": {
-        "title": "First win",
+        "title": "First triumph",
         "description": "Win your first qualifying game."
       },
       "firstPadelGame": {
-        "title": "First padel game",
+        "title": "Padel debut",
         "description": "Finish your first qualifying padel game."
       },
       "wins10": {
-        "title": "Ten wins",
+        "title": "Double digits",
         "description": "Win 10 qualifying games."
       },
       "wins25": {
-        "title": "Twenty-five wins",
+        "title": "Quarter century",
         "description": "Win 25 qualifying games."
       },
       "wins50": {
-        "title": "Fifty wins",
+        "title": "Half-century",
         "description": "Win 50 qualifying games."
       },
       "wins100": {
-        "title": "Hundred wins",
+        "title": "Century of wins",
         "description": "Win 100 qualifying games."
       },
       "wins500": {
-        "title": "Five hundred wins",
+        "title": "Win machine",
         "description": "Win 500 qualifying games."
       },
       "games10": {
@@ -114,7 +114,7 @@
         "description": "Finish 100 qualifying games."
       },
       "games500": {
-        "title": "Five hundred",
+        "title": "Five-hundred club",
         "description": "Finish 500 qualifying games."
       },
       "games1000": {

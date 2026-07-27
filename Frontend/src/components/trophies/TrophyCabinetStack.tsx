@@ -127,7 +127,7 @@ export function TrophyCabinetStack({
       >
         <div
           data-testid="trophy-stack-height-probe"
-          className="pointer-events-none invisible flex w-[4.75rem] flex-col items-center pb-3 pt-2.5"
+          className="pointer-events-none invisible flex w-[4.75rem] flex-col items-center pb-6 pt-2.5"
           aria-hidden
         >
           <div className="h-[4.5rem] w-full shrink-0" />
@@ -233,15 +233,18 @@ export function TrophyCabinetStack({
         >
           <span
             id={labelId}
-            className={`line-clamp-1 w-full text-[11px] font-semibold leading-tight ${rarityTextClass(top.definition.rarity, locked)}`}
+            className={`flex w-full items-center justify-center gap-0.5 text-[11px] font-semibold leading-tight ${rarityTextClass(top.definition.rarity, locked)}`}
           >
-            {t(familyKey)}
-          </span>
-          <span className="flex max-w-full items-center justify-center gap-0.5 text-[10px] font-medium leading-tight text-gray-400 dark:text-gray-500">
-            <span className="truncate">{t(top.definition.titleKey)}</span>
-            <span className="text-[9px] opacity-70" aria-hidden>
+            <span className="line-clamp-1">{t(familyKey)}</span>
+            <span className="shrink-0 text-[9px] opacity-70" aria-hidden>
               ▾
             </span>
+          </span>
+          <span
+            data-testid="trophy-stack-collapsed-subtitle"
+            className="line-clamp-2 w-full break-words text-[10px] font-medium leading-[1.15] text-gray-400 dark:text-gray-500"
+          >
+            {t(top.definition.titleKey)}
           </span>
         </motion.div>
 
