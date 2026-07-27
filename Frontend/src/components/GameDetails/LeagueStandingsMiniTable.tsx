@@ -10,6 +10,7 @@ import {
   standingsTieClusterKind,
   type StandingsTieDecideBy,
 } from '@/utils/leagueStandingsTieExplain';
+import { LeagueStandingsTeamPlayersCell } from './LeagueStandingsTeamPlayersCell';
 
 type Props = {
   cluster: LeagueStandingsTieCluster;
@@ -18,22 +19,6 @@ type Props = {
   columns: LeagueStandingsColumnFlags;
   anchorId: string;
 };
-
-function participantLabel(standing: LeagueStanding | undefined, hasFixedTeams: boolean): string {
-  if (!standing) return '—';
-  if (hasFixedTeams && standing.leagueTeam) {
-    return (
-      standing.leagueTeam.players
-        ?.map((p) => `${p.user?.firstName ?? ''} ${p.user?.lastName ?? ''}`.trim())
-        .filter(Boolean)
-        .join(', ') || '—'
-    );
-  }
-  if (standing.user) {
-    return [standing.user.firstName, standing.user.lastName].filter(Boolean).join(' ') || '—';
-  }
-  return '—';
-}
 
 function decideLabel(
   by: StandingsTieDecideBy,
@@ -68,31 +53,25 @@ function ParticipantCell({
   hasFixedTeams: boolean;
 }) {
   if (hasFixedTeams && standing?.leagueTeam) {
-    return (
-      <div className="flex min-w-0 items-center gap-2">
-        <div className="flex shrink-0 -space-x-2">
-          {standing.leagueTeam.players?.slice(0, 3).map((player) => (
-            <PlayerAvatar
-              key={player.id}
-              player={player.user}
-              extrasmall
-              showName={false}
-              fullHideName
-            />
-          ))}
-        </div>
-        <span className="truncate text-sm text-gray-900 dark:text-white">
-          {participantLabel(standing, hasFixedTeams)}
-        </span>
-      </div>
-    );
+    return <LeagueStandingsTeamPlayersCell players={standing.leagueTeam.players} />;
   }
   if (standing?.user) {
+    const name =
+      [standing.user.firstName, standing.user.lastName].filter(Boolean).join(' ') || '—';
     return (
-      <div className="flex min-w-0 items-center gap-2">
-        <PlayerAvatar player={standing.user} extrasmall showName={false} fullHideName />
-        <span className="truncate text-sm text-gray-900 dark:text-white">
-          {participantLabel(standing, hasFixedTeams)}
+      <div className="flex min-w-0 items-center gap-1.5">
+        <PlayerAvatar
+          player={standing.user}
+          showName={false}
+          fullHideName
+          inlineFace
+          inlineFacePlain
+          inlineFaceSize="sm"
+          subscribePresence={false}
+          asDiv
+        />
+        <span className="min-w-0 truncate text-xs leading-tight text-gray-900 dark:text-white">
+          {name}
         </span>
       </div>
     );
