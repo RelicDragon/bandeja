@@ -173,4 +173,30 @@ import {
   assert.equal(readHabitUnlocksFromMetadata(null).length, 0);
 }
 
+{
+  // Organize/partner must append, not replace play-habit unlocks on the same outcome.
+  const withPlay = mergeHabitUnlocksMetadata(null, [
+    {
+      definitionId: 'habit_first_win',
+      rarity: 'COMMON',
+      artKey: 'habit_first_win',
+      titleKey: 'trophies.defs.firstWin.title',
+      achievementId: 'a1',
+    },
+  ]);
+  const withOrg = mergeHabitUnlocksMetadata(withPlay, [
+    {
+      definitionId: 'habit_org_game_1',
+      rarity: 'COMMON',
+      artKey: 'habit_org_game_1',
+      titleKey: 'trophies.defs.orgGame1.title',
+      achievementId: 'a2',
+    },
+  ]);
+  const ids = readHabitUnlocksFromMetadata(withOrg as object)
+    .map((u) => u.definitionId)
+    .sort();
+  assert.deepEqual(ids, ['habit_first_win', 'habit_org_game_1']);
+}
+
 console.log('habitGrant.service.test.ts: ok');

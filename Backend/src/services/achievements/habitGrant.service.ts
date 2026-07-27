@@ -49,7 +49,12 @@ export function mergeHabitUnlocksMetadata(
       ? { ...(existing as Record<string, unknown>) }
       : {};
   if (unlocks.length > 0) {
-    base[HABIT_UNLOCKS_KEY] = unlocks;
+    // Append — organize/partner grants run after play habits and must not wipe them.
+    const prior = readHabitUnlocksFromMetadata(base as Prisma.JsonValue);
+    const byDefinition = new Map<string, HabitUnlockMeta>();
+    for (const row of prior) byDefinition.set(row.definitionId, row);
+    for (const row of unlocks) byDefinition.set(row.definitionId, row);
+    base[HABIT_UNLOCKS_KEY] = [...byDefinition.values()];
   }
   return base as Prisma.InputJsonValue;
 }

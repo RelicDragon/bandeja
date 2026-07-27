@@ -185,6 +185,7 @@ model User {
   contextUnreadStates             UserContextUnreadState[]
   achievements                    UserAchievement[]
   achievementPins                 UserAchievementPin[]
+  achievementStats                UserAchievementStats?
 
   @@index([phone])
   @@index([telegramId])
@@ -1888,6 +1889,23 @@ model UserAchievementPin {
   @@id([userId, slot])
   @@unique([userId, achievementId])
   @@index([achievementId])
+}
+
+/// Cached counters for organize / partner habit cabinets (refreshed on FINAL grants + backfill).
+model UserAchievementStats {
+  userId               String    @id
+  organizedGames       Int       @default(0)
+  organizedTournaments Int       @default(0)
+  organizedBars        Int       @default(0)
+  giantKillerWins      Int       @default(0)
+  dynamicDuoMaxWins    Int       @default(0)
+  openCourtPartners    Int       @default(0)
+  /// Null until organize counters have been computed at least once.
+  organizeRefreshedAt  DateTime?
+  /// Null until partner counters have been computed at least once.
+  partnerRefreshedAt   DateTime?
+  updatedAt            DateTime  @updatedAt
+  user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model BlockedUser {

@@ -185,6 +185,58 @@ const SPECS: Spec[] = [
     key: 'habit_org_bar_100',
     prompt: `${STYLE} Legendary Soul of the Party crest: ornate gold cocktail glass with radiant neon party energy, dark badge bright white "100".`,
   },
+  {
+    key: 'habit_giant_killer_1',
+    prompt: `${STYLE} Giant Killer emblem: small padel warrior toppling a taller giant silhouette, slingshot vibe, bronze, dark badge bright white "1".`,
+  },
+  {
+    key: 'habit_giant_killer_5',
+    prompt: `${STYLE} Giant Killer emblem: underdog padel player vs giant figure, copper metal, dark badge bright white "5".`,
+  },
+  {
+    key: 'habit_giant_killer_10',
+    prompt: `${STYLE} Rare Giant Killer emblem: silver underdog defeating giant, lightning crack, dark badge bright white "10".`,
+  },
+  {
+    key: 'habit_giant_killer_25',
+    prompt: `${STYLE} Rare Giant Killer emblem: platinum underdog vs colossus, dark badge bright white "25".`,
+  },
+  {
+    key: 'habit_giant_killer_50',
+    prompt: `${STYLE} Legendary Giant Killer crest: ornate gold giant-slayer with padel racket, emerald accents, dark badge bright white "50".`,
+  },
+  {
+    key: 'habit_dynamic_duo_10',
+    prompt: `${STYLE} Dynamic Duo emblem: two interlocking padel rackets forming a heart-pair bond, bronze, dark badge bright white "10".`,
+  },
+  {
+    key: 'habit_dynamic_duo_50',
+    prompt: `${STYLE} Rare Dynamic Duo emblem: twin padel rackets bonded with silver ribbon, dark badge bright white "50".`,
+  },
+  {
+    key: 'habit_dynamic_duo_100',
+    prompt: `${STYLE} Legendary Dynamic Duo crest: ornate gold twin rackets with emerald partnership gem, dark badge bright white "100".`,
+  },
+  {
+    key: 'habit_open_court_10',
+    prompt: `${STYLE} Open Court emblem: padel court gate opening with many small partner silhouettes, bronze, dark badge bright white "10".`,
+  },
+  {
+    key: 'habit_open_court_25',
+    prompt: `${STYLE} Open Court emblem: open padel court with partner network nodes, copper, dark badge bright white "25".`,
+  },
+  {
+    key: 'habit_open_court_50',
+    prompt: `${STYLE} Rare Open Court emblem: silver open court with constellation of partners, dark badge bright white "50".`,
+  },
+  {
+    key: 'habit_open_court_100',
+    prompt: `${STYLE} Rare Open Court emblem: platinum open court social network motif, dark badge bright white "100".`,
+  },
+  {
+    key: 'habit_open_court_250',
+    prompt: `${STYLE} Legendary Open Court crest: ornate gold open padel court with radiant partner constellation, dark badge bright white "250".`,
+  },
 ];
 
 async function downloadUrl(url: string): Promise<Buffer> {

@@ -69,6 +69,7 @@ import {
   writePodiumUnlocksToGameOutcomes,
 } from '../achievements/podiumGrant.service';
 import { grantOrganizeAchievementsForFinalizedGame } from '../achievements/organizeGrant.service';
+import { grantPartnerAchievementsForFinalizedGame } from '../achievements/partnerGrant.service';
 import { countsAsRatingActivity, countsForPlayStreak } from './ratingActivity';
 
 async function rebuildLeagueSeasonStandingsIfNeeded(
@@ -823,6 +824,7 @@ export async function applyGameOutcomes(
     await writePodiumUnlocksToGameOutcomes({ db: tx, gameId, batch: podiumBatch });
 
     await grantOrganizeAchievementsForFinalizedGame({ gameId, tx });
+    await grantPartnerAchievementsForFinalizedGame({ gameId, tx });
 
     // Fixture under an already-FINAL season: re-sync season podium to corrected standings (X1).
     await syncParentSeasonPodiumIfFinal({ gameId, tx });

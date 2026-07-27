@@ -47,3 +47,31 @@ export {
   ORGANIZE_TOURNAMENT_THRESHOLDS,
   type OrganizeHabitKind,
 } from './organizeEligibility';
+
+export {
+  filterThresholdDefinitionsDue,
+  GIANT_KILLER_MIN_LEVEL_GAP,
+  GIANT_KILLER_MIN_RELIABILITY,
+  GIANT_KILLER_THRESHOLDS,
+  DYNAMIC_DUO_THRESHOLDS,
+  OPEN_COURT_THRESHOLDS,
+  type PartnerHabitRuleKind,
+} from './partnerEligibility';
+
+export {
+  accumulatePartnerCountersForUser,
+  partnerCountersBeforeAfter,
+  type PartnerHabitCounters,
+  type PartnerPlayerSnap,
+  type PartnerScannedMatch,
+} from './partnerMatchScan';
+
+export {
+  groupUserIdsByPodiumPlace,
+  isPodiumEligibleEntityType,
+  isPodiumPlace,
+  meetsPodiumParticipantFloor,
+  podiumDefinitionForPodiumPlace,
+  usesBracketPlacesForEventPodium,
+  type PodiumPlace,
+} from './podiumEligibility';

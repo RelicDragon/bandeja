@@ -12,6 +12,7 @@ import {
 import prisma from '../../config/database';
 import { purgeOrphanPinsForUser } from './achievementPin.service';
 import { loadOrganizeHabitCounters } from './organizeGrant.service';
+import { loadPartnerHabitCounters } from './partnerGrant.service';
 
 export type TrophyDefinitionView = {
   id: string;
@@ -192,7 +193,8 @@ export async function buildTrophiesPayload(params: {
 }): Promise<TrophiesPayload> {
   const isOwner = Boolean(params.viewerUserId && params.viewerUserId === params.userId);
   const organize = await loadOrganizeHabitCounters(params.userId);
-  const counters: HabitProgressCounters = { ...params.counters, ...organize };
+  const partner = await loadPartnerHabitCounters(params.userId);
+  const counters: HabitProgressCounters = { ...params.counters, ...organize, ...partner };
 
   await purgeOrphanPinsForUser({ userId: params.userId });
 

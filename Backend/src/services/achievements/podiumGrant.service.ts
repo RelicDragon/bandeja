@@ -22,6 +22,9 @@ import {
 import prisma from '../../config/database';
 import { findTeamParticipantByRoster } from '../league/leagueParticipantResolve';
 import { resolveLeagueGroupStandingsMode } from '../league/leagueGroupStandingsMode';
+import {
+  HABIT_UNLOCKS_KEY,
+} from './habitGrant.service';
 import { clearPinsForAchievementIds } from './achievementPin.service';
 
 export const PODIUM_UNLOCKS_KEY = 'podiumUnlocks';
@@ -48,6 +51,8 @@ export type PodiumGrantBatch = {
   byUserId: Map<string, PodiumUnlockMeta[]>;
   /** True when rows were revoked/recreated because standings changed. */
   replaced: boolean;
+  /** True when new UserAchievement rows were created this call. */
+  materialized: boolean;
 };
 
 type DbClient = Prisma.TransactionClient | typeof prisma;
@@ -59,7 +64,7 @@ type DesiredPodiumAward = {
 };
 
 function emptyBatch(replaced = false): PodiumGrantBatch {
-  return { grants: [], byUserId: new Map(), replaced };
+  return { grants: [], byUserId: new Map(), replaced, materialized: false };
 }
 
 function toUnlockMeta(
@@ -203,8 +208,16 @@ export async function clearPodiumUnlocksMetadataForGame(
       continue;
     }
     const meta = { ...(row.metadata as Record<string, unknown>) };
-    if (!(PODIUM_UNLOCKS_KEY in meta)) continue;
-    delete meta[PODIUM_UNLOCKS_KEY];
+    let changed = false;
+    if (PODIUM_UNLOCKS_KEY in meta) {
+      delete meta[PODIUM_UNLOCKS_KEY];
+      changed = true;
+    }
+    if (HABIT_UNLOCKS_KEY in meta) {
+      delete meta[HABIT_UNLOCKS_KEY];
+      changed = true;
+    }
+    if (!changed) continue;
     await db.gameOutcome.update({
       where: { gameId_userId: { gameId, userId: row.userId } },
       data: { metadata: meta as Prisma.InputJsonValue },
@@ -379,6 +392,7 @@ async function createPodiumInstance(params: {
 function collectBatch(
   rows: Array<PodiumGrantRow | null>,
   replaced: boolean,
+  materialized: boolean,
 ): PodiumGrantBatch {
   const grants = rows.filter((r): r is PodiumGrantRow => Boolean(r));
   const byUserId = new Map<string, PodiumUnlockMeta[]>();
@@ -387,7 +401,7 @@ function collectBatch(
     list.push(grant.unlock);
     byUserId.set(grant.userId, list);
   }
-  return { grants, byUserId, replaced };
+  return { grants, byUserId, replaced, materialized };
 }
 
 function batchFromExistingRows(
@@ -412,7 +426,7 @@ function batchFromExistingRows(
       unlock,
     });
   }
-  return collectBatch(grants, false);
+  return collectBatch(grants, false, false);
 }
 
 async function desiredFromOutcomePositions(params: {
@@ -898,7 +912,7 @@ async function materializeDesiredAwards(params: {
       }),
     );
   }
-  return collectBatch(created, params.replaced);
+  return collectBatch(created, params.replaced, true);
 }
 
 export async function writePodiumUnlocksToGameOutcomes(params: {
@@ -925,7 +939,8 @@ export async function writePodiumUnlocksToGameOutcomes(params: {
     return;
   }
 
-  if (params.batch.grants.length === 0) return;
+  // Awards unchanged (kept existing rows) — do not rewrite celebration payloads.
+  if (!params.batch.materialized || params.batch.grants.length === 0) return;
 
   for (const [userId, unlocks] of params.batch.byUserId) {
     const gameOutcome = await params.db.gameOutcome.findUnique({

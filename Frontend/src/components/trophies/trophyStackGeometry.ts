@@ -84,6 +84,12 @@ export function stackFamilyLabelKey(ruleKind: string): string {
       return 'trophies.cabinet.family.tournamentHost';
     case 'HABIT_ORGANIZE_BAR':
       return 'trophies.cabinet.family.soulOfTheParty';
+    case 'HABIT_GIANT_KILLER':
+      return 'trophies.cabinet.family.giantKiller';
+    case 'HABIT_DYNAMIC_DUO':
+      return 'trophies.cabinet.family.dynamicDuo';
+    case 'HABIT_OPEN_COURT':
+      return 'trophies.cabinet.family.openCourt';
     case 'PODIUM':
       return 'trophies.cabinet.family.podium';
     default:

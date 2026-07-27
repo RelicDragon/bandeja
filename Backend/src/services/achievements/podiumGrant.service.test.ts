@@ -629,6 +629,7 @@ async function runAsyncPodiumRevokeTests() {
       tx: db as never,
     });
     assert.equal(batch.replaced, false);
+    assert.equal(batch.materialized, false);
     assert.equal(batch.grants.length, 3);
     assert.ok(batch.grants.every((g) => g.achievementId.startsWith('keep-')));
     assert.equal(db._pins.length, 1);
@@ -697,6 +698,7 @@ async function runAsyncPodiumRevokeTests() {
       tx: db as never,
     });
     assert.equal(batch.replaced, true);
+    assert.equal(batch.materialized, true);
     assert.equal(db._pins.length, 0);
     assert.equal(db._achievements.filter((a) => a.id.startsWith('old-') && a.isActive).length, 0);
     assert.ok(db._achievements.every((a) => (a.id.startsWith('old-') ? a.revokedAt != null : true)));

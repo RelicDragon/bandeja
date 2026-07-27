@@ -9,7 +9,10 @@ export type TrophyRuleKind =
   | 'HABIT_SPORT_VOLUME'
   | 'HABIT_ORGANIZE_GAME'
   | 'HABIT_ORGANIZE_TOURNAMENT'
-  | 'HABIT_ORGANIZE_BAR';
+  | 'HABIT_ORGANIZE_BAR'
+  | 'HABIT_GIANT_KILLER'
+  | 'HABIT_DYNAMIC_DUO'
+  | 'HABIT_OPEN_COURT';
 
 export type TrophyArtKey =
   | 'podium_gold'
@@ -50,7 +53,20 @@ export type TrophyArtKey =
   | 'habit_org_bar_10'
   | 'habit_org_bar_25'
   | 'habit_org_bar_50'
-  | 'habit_org_bar_100';
+  | 'habit_org_bar_100'
+  | 'habit_giant_killer_1'
+  | 'habit_giant_killer_5'
+  | 'habit_giant_killer_10'
+  | 'habit_giant_killer_25'
+  | 'habit_giant_killer_50'
+  | 'habit_dynamic_duo_10'
+  | 'habit_dynamic_duo_50'
+  | 'habit_dynamic_duo_100'
+  | 'habit_open_court_10'
+  | 'habit_open_court_25'
+  | 'habit_open_court_50'
+  | 'habit_open_court_100'
+  | 'habit_open_court_250';
 
 export type AchievementDefinitionId =
   | 'podium_gold'
@@ -91,7 +107,20 @@ export type AchievementDefinitionId =
   | 'habit_org_bar_10'
   | 'habit_org_bar_25'
   | 'habit_org_bar_50'
-  | 'habit_org_bar_100';
+  | 'habit_org_bar_100'
+  | 'habit_giant_killer_1'
+  | 'habit_giant_killer_5'
+  | 'habit_giant_killer_10'
+  | 'habit_giant_killer_25'
+  | 'habit_giant_killer_50'
+  | 'habit_dynamic_duo_10'
+  | 'habit_dynamic_duo_50'
+  | 'habit_dynamic_duo_100'
+  | 'habit_open_court_10'
+  | 'habit_open_court_25'
+  | 'habit_open_court_50'
+  | 'habit_open_court_100'
+  | 'habit_open_court_250';
 
 export type AchievementDefinition = {
   id: AchievementDefinitionId;

@@ -24,6 +24,12 @@ export type HabitProgressCounters = {
   organizedTournaments?: number;
   /** FINAL BAR events owned (any sport). */
   organizedBars?: number;
+  /** Upset wins vs ≥0.5 higher-rated 2v2 (padel rated, reliability). */
+  giantKillerWins?: number;
+  /** Max wins with any single doubles partner (padel rated). */
+  dynamicDuoMaxWins?: number;
+  /** Distinct doubles partners in completed qualifying matches. */
+  openCourtPartners?: number;
 };
 
 export type CabinetEntry = {
@@ -60,6 +66,15 @@ export function habitProgressForDefinition(
   }
   if (definition.ruleKind === 'HABIT_ORGANIZE_BAR') {
     return { current: Math.min(counters.organizedBars ?? 0, target), target };
+  }
+  if (definition.ruleKind === 'HABIT_GIANT_KILLER') {
+    return { current: Math.min(counters.giantKillerWins ?? 0, target), target };
+  }
+  if (definition.ruleKind === 'HABIT_DYNAMIC_DUO') {
+    return { current: Math.min(counters.dynamicDuoMaxWins ?? 0, target), target };
+  }
+  if (definition.ruleKind === 'HABIT_OPEN_COURT') {
+    return { current: Math.min(counters.openCourtPartners ?? 0, target), target };
   }
   return null;
 }

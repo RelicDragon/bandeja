@@ -383,6 +383,43 @@ describe('habitUnlocksNewlyCrossed', () => {
       }).map((d) => d.id),
     ).toEqual(['habit_first_win', 'habit_games_10', 'habit_streak_4']);
   });
+
+  it('never grants organize/partner via play-habit path', () => {
+    const ids = habitUnlocksNewlyCrossed({
+      before: {
+        streakBest: 0,
+        gamesFinished: 0,
+        gamesWon: 0,
+        organizedGames: 0,
+        giantKillerWins: 0,
+      },
+      after: {
+        streakBest: 0,
+        gamesFinished: 0,
+        gamesWon: 0,
+        organizedGames: 50,
+        giantKillerWins: 25,
+      },
+      ownedDefinitionIds: new Set(),
+    }).map((d) => d.id);
+    expect(ids).toEqual([]);
+  });
+});
+
+describe('habitUnlocksDue organize backfill', () => {
+  it('includes organize when counters meet threshold', () => {
+    const ids = habitUnlocksDue({
+      counters: {
+        streakBest: 0,
+        gamesFinished: 0,
+        gamesWon: 0,
+        organizedGames: 1,
+      },
+      ownedDefinitionIds: new Set(),
+    }).map((d) => d.id);
+    expect(ids).toContain('habit_org_game_1');
+    expect(ids.every((id) => !id.startsWith('habit_games_'))).toBe(true);
+  });
 });
 
 describe('podium eligibility', () => {

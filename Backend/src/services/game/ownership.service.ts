@@ -5,6 +5,7 @@ import { SystemMessageType, getUserDisplayName } from '../../utils/systemMessage
 import { GameService } from './game.service';
 import { ParticipantMessageHelper } from './participantMessageHelper';
 import { createSystemMessage } from '../../controllers/chat.controller';
+import { invalidateAchievementStatsCache } from '../achievements/achievementStats.service';
 
 export class OwnershipService {
   static async transferOwnership(gameId: string, currentOwnerId: string, newOwnerId: string) {
@@ -40,7 +41,7 @@ export class OwnershipService {
       throw new ApiError(404, 'User is not a participant of this game');
     }
 
-    await prisma.$transaction(async (tx: any) => {
+    await prisma.$transaction(async (tx) => {
       await tx.gameParticipant.update({
         where: { id: owner.id },
         data: { role: ParticipantRole.ADMIN },
@@ -50,15 +51,24 @@ export class OwnershipService {
         where: { id: newOwnerParticipant.id },
         data: { role: ParticipantRole.OWNER },
       });
+
+      // Progress only — never mint organize trophies on ownership receive.
+      await invalidateAchievementStatsCache({
+        userIds: [currentOwnerId, newOwnerId],
+        tx,
+      });
     });
 
     if (newOwnerParticipant.user) {
-      const newOwnerName = getUserDisplayName(newOwnerParticipant.user.firstName, newOwnerParticipant.user.lastName);
-      
+      const newOwnerName = getUserDisplayName(
+        newOwnerParticipant.user.firstName,
+        newOwnerParticipant.user.lastName,
+      );
+
       try {
         await createSystemMessage(gameId, {
           type: SystemMessageType.OWNERSHIP_TRANSFERRED,
-          variables: { newOwnerName }
+          variables: { newOwnerName },
         });
       } catch (error) {
         console.error('Failed to create system message for ownership transfer:', error);
@@ -70,4 +80,3 @@ export class OwnershipService {
     return 'Ownership transferred successfully';
   }
 }
-

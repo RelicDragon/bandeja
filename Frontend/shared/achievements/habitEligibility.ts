@@ -1,35 +1,54 @@
 import { ACHIEVEMENT_CATALOG } from './catalog';
 import { habitProgressForDefinition, type HabitProgressCounters } from './projectCabinet';
-import type { AchievementDefinition } from './types';
+import type { AchievementDefinition, TrophyRuleKind } from './types';
+
+/** Play-habit rule kinds granted via results apply (not organize/partner services). */
+const PLAY_HABIT_RULE_KINDS: ReadonlySet<TrophyRuleKind> = new Set([
+  'HABIT_STREAK',
+  'HABIT_VOLUME',
+  'HABIT_FIRST_WIN',
+  'HABIT_WINS',
+  'HABIT_SPORT_VOLUME',
+]);
+
+function isOneShotWithProgress(definition: AchievementDefinition): boolean {
+  return definition.multiplicity === 'one_shot';
+}
+
+function isPlayHabit(definition: AchievementDefinition): boolean {
+  return isOneShotWithProgress(definition) && PLAY_HABIT_RULE_KINDS.has(definition.ruleKind);
+}
 
 /** True when counters alone would unlock this one-shot habit (ignores ownership). */
 export function habitThresholdMet(
   definition: AchievementDefinition,
   counters: HabitProgressCounters,
 ): boolean {
-  if (definition.multiplicity !== 'one_shot') return false;
+  if (!isOneShotWithProgress(definition)) return false;
   const progress = habitProgressForDefinition(definition, counters);
   return Boolean(progress && progress.current >= progress.target);
 }
 
 /**
  * Habit definitions whose counters meet threshold and are not yet owned.
- * Useful for progress UI; grants must use {@link habitUnlocksNewlyCrossed}.
+ * Includes organize/partner (used by ops backfill). Live play grants use
+ * {@link habitUnlocksNewlyCrossed} instead.
  */
 export function habitUnlocksDue(params: {
   counters: HabitProgressCounters;
   ownedDefinitionIds: ReadonlySet<string>;
 }): AchievementDefinition[] {
   return ACHIEVEMENT_CATALOG.filter((definition) => {
-    if (definition.multiplicity !== 'one_shot') return false;
+    if (!isOneShotWithProgress(definition)) return false;
     if (params.ownedDefinitionIds.has(definition.id)) return false;
     return habitThresholdMet(definition, params.counters);
   });
 }
 
 /**
- * One-shot habits newly crossed on this event (after meets, before did not).
+ * Play habits newly crossed on this event (after meets, before did not).
  * Forward-only: no soft backfill from historical counters already above threshold.
+ * Organize/partner are excluded — dedicated grant services own those ladders.
  */
 export function habitUnlocksNewlyCrossed(params: {
   before: HabitProgressCounters;
@@ -37,7 +56,7 @@ export function habitUnlocksNewlyCrossed(params: {
   ownedDefinitionIds: ReadonlySet<string>;
 }): AchievementDefinition[] {
   return ACHIEVEMENT_CATALOG.filter((definition) => {
-    if (definition.multiplicity !== 'one_shot') return false;
+    if (!isPlayHabit(definition)) return false;
     if (params.ownedDefinitionIds.has(definition.id)) return false;
     if (!habitThresholdMet(definition, params.after)) return false;
     if (habitThresholdMet(definition, params.before)) return false;

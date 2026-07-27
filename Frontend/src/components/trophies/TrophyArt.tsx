@@ -46,6 +46,19 @@ const ART_SRC: Record<TrophyArtKey, string> = {
   habit_org_bar_25: '/trophies/habit_org_bar_25.png',
   habit_org_bar_50: '/trophies/habit_org_bar_50.png',
   habit_org_bar_100: '/trophies/habit_org_bar_100.png',
+  habit_giant_killer_1: '/trophies/habit_giant_killer_1.png',
+  habit_giant_killer_5: '/trophies/habit_giant_killer_5.png',
+  habit_giant_killer_10: '/trophies/habit_giant_killer_10.png',
+  habit_giant_killer_25: '/trophies/habit_giant_killer_25.png',
+  habit_giant_killer_50: '/trophies/habit_giant_killer_50.png',
+  habit_dynamic_duo_10: '/trophies/habit_dynamic_duo_10.png',
+  habit_dynamic_duo_50: '/trophies/habit_dynamic_duo_50.png',
+  habit_dynamic_duo_100: '/trophies/habit_dynamic_duo_100.png',
+  habit_open_court_10: '/trophies/habit_open_court_10.png',
+  habit_open_court_25: '/trophies/habit_open_court_25.png',
+  habit_open_court_50: '/trophies/habit_open_court_50.png',
+  habit_open_court_100: '/trophies/habit_open_court_100.png',
+  habit_open_court_250: '/trophies/habit_open_court_250.png',
 };
 
 function resolveSrc(artKey: string): { key: string; src: string } {

@@ -43,7 +43,10 @@
         "generic": "Trofeje",
         "rallyStarter": "Rally Starter",
         "tournamentHost": "Pořadatel turnaje",
-        "soulOfTheParty": "Duše party"
+        "soulOfTheParty": "Duše party",
+        "giantKiller": "Lovci obrů",
+        "dynamicDuo": "Dynamické duo",
+        "openCourt": "Otevřený kurt"
       }
     },
     "detail": {
@@ -219,6 +222,58 @@
       "orgBar100": {
         "title": "Duše party ×100",
         "description": "Uspořádej 100 Bar eventů až do finalizace výsledků."
+      },
+      "giantKiller1": {
+        "title": "Giant Killer",
+        "description": "Win a rated 2v2 padel match against a team averaging at least 0.5 higher, with all players above 10% reliability."
+      },
+      "giantKiller5": {
+        "title": "Giant Killer ×5",
+        "description": "Win 5 rated 2v2 padel upsets (≥0.5 higher avg, all players above 10% reliability)."
+      },
+      "giantKiller10": {
+        "title": "Giant Killer ×10",
+        "description": "Win 10 rated 2v2 padel upsets (≥0.5 higher avg, all players above 10% reliability)."
+      },
+      "giantKiller25": {
+        "title": "Giant Killer ×25",
+        "description": "Win 25 rated 2v2 padel upsets (≥0.5 higher avg, all players above 10% reliability)."
+      },
+      "giantKiller50": {
+        "title": "Giant Killer ×50",
+        "description": "Win 50 rated 2v2 padel upsets (≥0.5 higher avg, all players above 10% reliability)."
+      },
+      "dynamicDuo10": {
+        "title": "Dynamic Duo",
+        "description": "Win 10 qualifying padel matches with the same partner."
+      },
+      "dynamicDuo50": {
+        "title": "Dynamic Duo ×50",
+        "description": "Win 50 qualifying padel matches with the same partner."
+      },
+      "dynamicDuo100": {
+        "title": "Dynamic Duo ×100",
+        "description": "Win 100 qualifying padel matches with the same partner."
+      },
+      "openCourt10": {
+        "title": "Open Court",
+        "description": "Complete qualifying padel matches with 10 different partners."
+      },
+      "openCourt25": {
+        "title": "Open Court ×25",
+        "description": "Complete qualifying padel matches with 25 different partners."
+      },
+      "openCourt50": {
+        "title": "Open Court ×50",
+        "description": "Complete qualifying padel matches with 50 different partners."
+      },
+      "openCourt100": {
+        "title": "Open Court ×100",
+        "description": "Complete qualifying padel matches with 100 different partners."
+      },
+      "openCourt250": {
+        "title": "Open Court ×250",
+        "description": "Complete qualifying padel matches with 250 different partners."
       }
     }
   }

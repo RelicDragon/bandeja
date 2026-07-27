@@ -15,19 +15,22 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-import { EntityType, type Sport } from '@prisma/client';
+import { EntityType, ParticipantRole, type Sport } from '@prisma/client';
 import { habitUnlocksDue } from '@bandeja/shared/achievements';
 import prisma from '../src/config/database';
 import {
   computeHabitCrossingDates,
   type HabitCrossingEvent,
 } from '../src/services/achievements/habitCrossingDates';
+import { computeOrganizeCrossingDates } from '../src/services/achievements/organizeCrossingDates';
+import { computePartnerCrossingDates } from '../src/services/achievements/partnerCrossingDates';
 import { countersFromSportProfiles } from '../src/services/achievements/achievementProjection.service';
 import {
   backfillHabitAchievementsForUser,
   type HabitGrantTiming,
 } from '../src/services/achievements/habitGrant.service';
-import { loadOrganizeHabitCounters } from '../src/services/achievements/organizeGrant.service';
+import { refreshOrganizeHabitCounters } from '../src/services/achievements/organizeGrant.service';
+import { refreshPartnerHabitCounters } from '../src/services/achievements/partnerGrant.service';
 import { resolveSportStatsDeltasForReconcile } from '../src/services/results/outcomeStatsSnapshot';
 import { countsForPlayStreak } from '../src/services/results/ratingActivity';
 import { getUserTimezone } from '../src/services/user-timezone.service';
@@ -39,6 +42,30 @@ function playAt(game: {
   createdAt: Date;
 }): Date {
   return game.finishedDate ?? game.endTime ?? game.startTime ?? game.createdAt;
+}
+
+async function crossingsForDue(params: {
+  userId: string;
+  dueIds: ReadonlySet<string>;
+}): Promise<Map<string, { earnedAt: Date; sourceGameId: string }>> {
+  const timezone = await getUserTimezone(params.userId);
+  const events = await loadEventsForUser(params.userId);
+  const out = computeHabitCrossingDates({
+    events,
+    timezone,
+    definitionIds: params.dueIds,
+  });
+  const organize = await computeOrganizeCrossingDates({
+    userId: params.userId,
+    definitionIds: params.dueIds,
+  });
+  const partner = await computePartnerCrossingDates({
+    userId: params.userId,
+    definitionIds: params.dueIds,
+  });
+  for (const [id, crossing] of organize) out.set(id, crossing);
+  for (const [id, crossing] of partner) out.set(id, crossing);
+  return out;
 }
 
 async function loadEventsForUser(userId: string): Promise<HabitCrossingEvent[]> {
@@ -112,8 +139,41 @@ async function run(apply: boolean, userIdFilter: string | null): Promise<void> {
   }
 
   if (userIdFilter && !byUser.has(userIdFilter)) {
-    console.log(`No sport profiles for user ${userIdFilter}; nothing to backfill.`);
-    return;
+    byUser.set(userIdFilter, []);
+  } else if (!userIdFilter) {
+    const [owners, doublesPlayers] = await Promise.all([
+      prisma.gameParticipant.findMany({
+        where: {
+          role: ParticipantRole.OWNER,
+          game: { resultsStatus: 'FINAL' },
+        },
+        select: { userId: true },
+        distinct: ['userId'],
+      }),
+      prisma.teamPlayer.findMany({
+        where: {
+          team: {
+            match: {
+              round: {
+                game: {
+                  sport: 'PADEL',
+                  affectsRating: true,
+                  resultsStatus: 'FINAL',
+                  entityType: {
+                    in: [EntityType.GAME, EntityType.TOURNAMENT, EntityType.LEAGUE],
+                  },
+                },
+              },
+            },
+          },
+        },
+        select: { userId: true },
+        distinct: ['userId'],
+      }),
+    ]);
+    for (const row of [...owners, ...doublesPlayers]) {
+      if (!byUser.has(row.userId)) byUser.set(row.userId, []);
+    }
   }
 
   const existing = await prisma.userAchievement.findMany({
@@ -138,21 +198,17 @@ async function run(apply: boolean, userIdFilter: string | null): Promise<void> {
   let untimedGrants = 0;
 
   for (const [userId, userProfiles] of byUser) {
-    const organize = await loadOrganizeHabitCounters(userId);
-    const counters = { ...countersFromSportProfiles(userProfiles), ...organize };
+    const organize = await refreshOrganizeHabitCounters(userId);
+    const partner = await refreshPartnerHabitCounters(userId);
+    const counters = { ...countersFromSportProfiles(userProfiles), ...organize, ...partner };
     const due = habitUnlocksDue({
       counters,
       ownedDefinitionIds: ownedByUser.get(userId) ?? new Set(),
     });
     if (due.length === 0) continue;
 
-    const timezone = await getUserTimezone(userId);
-    const events = await loadEventsForUser(userId);
-    const crossings = computeHabitCrossingDates({
-      events,
-      timezone,
-      definitionIds: new Set(due.map((d) => d.id)),
-    });
+    const dueIds = new Set(due.map((d) => d.id));
+    const crossings = await crossingsForDue({ userId, dueIds });
 
     const timing = new Map<string, HabitGrantTiming>();
     for (const def of due) {
@@ -193,8 +249,9 @@ async function run(apply: boolean, userIdFilter: string | null): Promise<void> {
   let usersTouched = 0;
   for (const plan of plans) {
     const userProfiles = byUser.get(plan.userId) ?? [];
-    const organize = await loadOrganizeHabitCounters(plan.userId);
-    const counters = { ...countersFromSportProfiles(userProfiles), ...organize };
+    const organize = await refreshOrganizeHabitCounters(plan.userId);
+    const partner = await refreshPartnerHabitCounters(plan.userId);
+    const counters = { ...countersFromSportProfiles(userProfiles), ...organize, ...partner };
     const result = await backfillHabitAchievementsForUser({
       userId: plan.userId,
       counters,

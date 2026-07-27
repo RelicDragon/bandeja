@@ -26,6 +26,7 @@ import { updateMatchWinners } from './results/matchWinner.service';
 import { undoGameOutcomes } from './results/outcomes.service';
 import { revertForGame } from './levelChange';
 import { syncPodiumAfterLeavingFinal } from './achievements/podiumGrant.service';
+import { invalidateAchievementStatsForGame } from './achievements/achievementStats.service';
 
 const SUPPLEMENTAL_SET_SCORE_MAX = 9999;
 
@@ -215,6 +216,7 @@ export async function deleteGameResults(gameId: string) {
       });
     }
     await syncPodiumAfterLeavingFinal({ gameId, tx });
+    await invalidateAchievementStatsForGame({ gameId, tx });
   });
 }
 
@@ -317,6 +319,7 @@ export async function resetGameResults(gameId: string) {
       });
     }
     await syncPodiumAfterLeavingFinal({ gameId, tx });
+    await invalidateAchievementStatsForGame({ gameId, tx });
   });
 }
 
@@ -377,6 +380,7 @@ export async function editGameResults(gameId: string) {
         await updateMatchWinners(gameId, tx);
         // X1: undo already rebuilt season standings; sync podium for event / parent season.
         await syncPodiumAfterLeavingFinal({ gameId, tx });
+        await invalidateAchievementStatsForGame({ gameId, tx });
       }
   });
 }
@@ -389,6 +393,7 @@ export async function syncResults(gameId: string, rounds: any[]) {
     where: { id: gameId },
     include: {
       participants: true,
+      outcomes: { select: { id: true } },
     },
   });
 
@@ -413,6 +418,15 @@ export async function syncResults(gameId: string, rounds: any[]) {
   await cancelAllMatchTimersForGame(gameId);
 
   await prisma.$transaction(async (tx) => {
+    const wasFinal = game.resultsStatus === 'FINAL';
+    if (wasFinal) {
+      if (game.outcomes.length > 0) {
+        await undoGameOutcomes(gameId, tx);
+      } else {
+        await revertForGame(gameId, 'all', tx);
+      }
+    }
+
     await tx.roundOutcome.deleteMany({
       where: {
         round: {
@@ -535,7 +549,6 @@ export async function syncResults(gameId: string, rounds: any[]) {
     }
 
     const cityTimezone = await getUserTimezoneFromCityId(game.cityId);
-    const wasFinal = game.resultsStatus === 'FINAL';
     await tx.game.update({
       where: { id: gameId },
       data: {
@@ -556,6 +569,7 @@ export async function syncResults(gameId: string, rounds: any[]) {
     });
     if (wasFinal) {
       await syncPodiumAfterLeavingFinal({ gameId, tx, rebuildSeasonStandings: true });
+      await invalidateAchievementStatsForGame({ gameId, tx });
     }
   });
 }
@@ -581,6 +595,7 @@ export async function createRound(gameId: string, roundId: string) {
       timeIsSet: true,
       entityType: true,
       resultsStatus: true,
+      outcomes: { select: { id: true } },
     },
   });
   if (!gameRow) {
@@ -589,6 +604,13 @@ export async function createRound(gameId: string, roundId: string) {
   const cityTimezone = await getUserTimezoneFromCityId(gameRow.cityId);
   const wasFinal = gameRow.resultsStatus === 'FINAL';
   await prisma.$transaction(async (tx) => {
+    if (wasFinal) {
+      if (gameRow.outcomes.length > 0) {
+        await undoGameOutcomes(gameId, tx);
+      } else {
+        await revertForGame(gameId, 'all', tx);
+      }
+    }
     await tx.game.update({
       where: { id: gameId },
       data: {
@@ -609,6 +631,7 @@ export async function createRound(gameId: string, roundId: string) {
     });
     if (wasFinal) {
       await syncPodiumAfterLeavingFinal({ gameId, tx, rebuildSeasonStandings: true });
+      await invalidateAchievementStatsForGame({ gameId, tx });
     }
   });
 }
@@ -793,6 +816,7 @@ export async function updateMatch(
       timeIsSet: true,
       entityType: true,
       resultsStatus: true,
+      outcomes: { select: { id: true } },
     },
   });
 
@@ -905,6 +929,13 @@ export async function updateMatch(
   const cityTimezone = await getUserTimezoneFromCityId(game.cityId);
   const wasFinal = game.resultsStatus === 'FINAL';
   await prisma.$transaction(async (tx) => {
+    if (wasFinal) {
+      if (game.outcomes.length > 0) {
+        await undoGameOutcomes(gameId, tx);
+      } else {
+        await revertForGame(gameId, 'all', tx);
+      }
+    }
     await tx.game.update({
       where: { id: gameId },
       data: {
@@ -925,6 +956,7 @@ export async function updateMatch(
     });
     if (wasFinal) {
       await syncPodiumAfterLeavingFinal({ gameId, tx, rebuildSeasonStandings: true });
+      await invalidateAchievementStatsForGame({ gameId, tx });
     }
   });
 

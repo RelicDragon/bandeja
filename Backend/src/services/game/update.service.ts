@@ -44,6 +44,8 @@ import {
   writePodiumUnlocksToGameOutcomes,
 } from '../achievements/podiumGrant.service';
 import { grantOrganizeAchievementsForFinalizedGame } from '../achievements/organizeGrant.service';
+import { grantPartnerAchievementsForFinalizedGame } from '../achievements/partnerGrant.service';
+import { invalidateAchievementStatsForGame } from '../achievements/achievementStats.service';
 
 /** Only scalar fields — nested writes / API echo keys force Prisma onto GameUpdateInput where courtId/clubId are invalid. */
 const GAME_UNCHECKED_SCALAR_KEYS = new Set<string>([
@@ -703,6 +705,7 @@ export class GameUpdateService {
           tx,
           rebuildSeasonStandings: true,
         });
+        await invalidateAchievementStatsForGame({ gameId: id, tx });
       }
 
       if (finalizingViaUpdate) {
@@ -727,9 +730,11 @@ export class GameUpdateService {
           currentGame?.entityType === EntityType.BAR
         ) {
           await grantOrganizeAchievementsForFinalizedGame({ gameId: id, tx });
+          await grantPartnerAchievementsForFinalizedGame({ gameId: id, tx });
         }
         if (currentGame?.entityType === EntityType.LEAGUE && currentGame.parentId) {
           await syncParentSeasonPodiumIfFinal({ gameId: id, tx });
+          await grantPartnerAchievementsForFinalizedGame({ gameId: id, tx });
         }
       }
     });
@@ -754,6 +759,8 @@ export class GameUpdateService {
         const { recalculateGameOutcomes } = await import('../results/outcomes.service');
         await recalculateGameOutcomes(id);
       }
+      // Eligibility of FINAL events changed — drop organize/partner caches even if no outcomes.
+      await invalidateAchievementStatsForGame({ gameId: id });
     }
 
     const updatedGame = await prisma.game.findUnique({

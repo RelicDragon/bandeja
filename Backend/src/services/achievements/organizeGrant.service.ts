@@ -7,10 +7,14 @@ import {
 } from '@bandeja/shared/achievements';
 import prisma from '../../config/database';
 import {
-  mergeHabitUnlocksMetadata,
   type HabitGrantResult,
   type HabitUnlockMeta,
 } from './habitGrant.service';
+import { attachHabitUnlocksToGameOutcome } from './habitUnlockAttach.service';
+import {
+  readOrganizeAchievementStats,
+  upsertOrganizeAchievementStats,
+} from './achievementStats.service';
 
 type DbClient = Prisma.TransactionClient | typeof prisma;
 
@@ -55,6 +59,8 @@ export async function countOrganizedFinalEvents(params: {
       ...base,
       resultsStatus: 'FINAL',
       ...(params.excludeGameId ? { id: { not: params.excludeGameId } } : {}),
+      // Rated padel organize credit requires real results (blocks status-only FINAL abuse).
+      ...(params.kind === 'BAR' ? {} : { outcomes: { some: {} } }),
       participants: {
         some: { userId: params.userId, role: ParticipantRole.OWNER },
       },
@@ -70,17 +76,33 @@ export async function loadOrganizeHabitCounters(
   organizedTournaments: number;
   organizedBars: number;
 }> {
+  const cached = await readOrganizeAchievementStats(userId, tx);
+  if (cached) return cached;
+  return refreshOrganizeHabitCounters(userId, tx);
+}
+
+export async function refreshOrganizeHabitCounters(
+  userId: string,
+  tx?: DbClient,
+): Promise<{
+  organizedGames: number;
+  organizedTournaments: number;
+  organizedBars: number;
+}> {
   const [organizedGames, organizedTournaments, organizedBars] = await Promise.all([
     countOrganizedFinalEvents({ userId, kind: 'GAME', tx }),
     countOrganizedFinalEvents({ userId, kind: 'TOURNAMENT', tx }),
     countOrganizedFinalEvents({ userId, kind: 'BAR', tx }),
   ]);
-  return { organizedGames, organizedTournaments, organizedBars };
+  const organize = { organizedGames, organizedTournaments, organizedBars };
+  await upsertOrganizeAchievementStats({ userId, organize, tx });
+  return organize;
 }
 
 /**
  * Grant organizer habits when a qualifying event becomes FINAL.
  * Forward-only on this event (before = count excluding game, after = including).
+ * One-shot habits are never revoked on leave-FINAL (unlike podium).
  */
 export async function grantOrganizeAchievementsForFinalizedGame(params: {
   gameId: string;
@@ -100,10 +122,16 @@ export async function grantOrganizeAchievementsForFinalizedGame(params: {
         select: { userId: true },
         take: 1,
       },
+      _count: { select: { outcomes: true } },
     },
   });
 
   if (!game || game.resultsStatus !== 'FINAL') {
+    return { granted: [], unlocks: [] };
+  }
+
+  // GAME/TOURNAMENT: require outcomes so patch-FINAL without results cannot climb the ladder.
+  if (game.entityType !== EntityType.BAR && game._count.outcomes === 0) {
     return { granted: [], unlocks: [] };
   }
 
@@ -161,7 +189,6 @@ export async function grantOrganizeAchievementsForFinalizedGame(params: {
     after,
     ownedDefinitionIds,
   });
-  if (due.length === 0) return { granted: [], unlocks: [] };
 
   const granted: HabitGrantResult['granted'] = [];
   const unlocks: HabitUnlockMeta[] = [];
@@ -190,19 +217,24 @@ export async function grantOrganizeAchievementsForFinalizedGame(params: {
   }
 
   if (unlocks.length > 0) {
-    const outcome = await db.gameOutcome.findUnique({
-      where: { gameId_userId: { gameId: game.id, userId: ownerId } },
-      select: { id: true, metadata: true },
+    await attachHabitUnlocksToGameOutcome({
+      db,
+      gameId: game.id,
+      userId: ownerId,
+      unlocks,
     });
-    if (outcome) {
-      await db.gameOutcome.update({
-        where: { id: outcome.id },
-        data: {
-          metadata: mergeHabitUnlocksMetadata(outcome.metadata, unlocks),
-        },
-      });
-    }
   }
+
+  const organize = {
+    organizedGames: await countOrganizedFinalEvents({ userId: ownerId, kind: 'GAME', tx: db }),
+    organizedTournaments: await countOrganizedFinalEvents({
+      userId: ownerId,
+      kind: 'TOURNAMENT',
+      tx: db,
+    }),
+    organizedBars: await countOrganizedFinalEvents({ userId: ownerId, kind: 'BAR', tx: db }),
+  };
+  await upsertOrganizeAchievementStats({ userId: ownerId, organize, tx: db });
 
   return { granted, unlocks };
 }

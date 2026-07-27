@@ -170,6 +170,19 @@
         'habit_org_bar_25',
         'habit_org_bar_50',
         'habit_org_bar_100',
+        'habit_giant_killer_1',
+        'habit_giant_killer_5',
+        'habit_giant_killer_10',
+        'habit_giant_killer_25',
+        'habit_giant_killer_50',
+        'habit_dynamic_duo_10',
+        'habit_dynamic_duo_50',
+        'habit_dynamic_duo_100',
+        'habit_open_court_10',
+        'habit_open_court_25',
+        'habit_open_court_50',
+        'habit_open_court_100',
+        'habit_open_court_250',
       ];
       const grid = document.getElementById('grid');
       const sizes = [
@@ -184,8 +197,7 @@
         const stage = document.createElement('div');
         stage.className = 'stage';
         const img = document.createElement('img');
-        img.src = `/trophies/${key}.png?v=6`;
-        img.alt = key;
+        img.src = `/trophies/${key}.png?v=7`;        img.alt = key;
         stage.appendChild(img);
         const label = document.createElement('div');
         label.className = 'key';

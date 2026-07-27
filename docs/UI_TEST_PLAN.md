@@ -1267,6 +1267,9 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PR-trophy-6c | Rally Starter organize games | Owner of rated PADEL GAME reaches FINAL (1 / 10 / 25 / 50 / 100 / 500) | Matching org-game trophies grant once; non-rating / non-padel / non-OWNER do not |
 | PR-trophy-6d | Tournament host organize | Owner of rated PADEL TOURNAMENT reaches FINAL (1 / 5 / 10 / 25 / 50 / 100) | Matching org-tournament trophies grant once |
 | PR-trophy-6e | Soul of the party (Bar) | OWNER of BAR reaches FINAL (1 / 5 / 10 / 25 / 50 / 100) | Matching org-bar trophies grant (any sport); no affectsRating required |
+| PR-trophy-6f | Giant Killer | Win rated PADEL 2v2 vs team ≥0.5 higher avg; all 4 players reliability >10% (1 / 5 / 10 / 25 / 50) | Matching Giant Killer trophies; non-rated / low reliability / insufficient gap do not count |
+| PR-trophy-6g | Dynamic Duo | Win 10 / 50 / 100 qualifying PADEL matches with same partner | Matching Dynamic Duo trophies; progress shows best partner win count |
+| PR-trophy-6h | Open Court | Complete qualifying PADEL doubles with 10 / 25 / 50 / 100 / 250 distinct partners (ties count; wins not required) | Matching Open Court trophies |
 
 | PR-trophy-6b | Habit unlock wins milestones | Cross 10 / 25 / 50 / 100 / 500 qualifying wins | Matching win trophies grant once; 10–25 Common banner; 50–100 Rare + 500 Legendary celebration |
 | PR-trophy-7 | Habit unlock volume | Cross 10 / 50 / 100 / 500 / 1000 qualifying finished games | Matching volume trophy grants once; 10–100 Common banner; 500 Rare + 1000 Legendary celebration sheet |

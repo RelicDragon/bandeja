@@ -17,6 +17,8 @@ import {
   computeHabitCrossingDates,
   type HabitCrossingEvent,
 } from '../src/services/achievements/habitCrossingDates';
+import { computeOrganizeCrossingDates } from '../src/services/achievements/organizeCrossingDates';
+import { computePartnerCrossingDates } from '../src/services/achievements/partnerCrossingDates';
 import { resolveSportStatsDeltasForReconcile } from '../src/services/results/outcomeStatsSnapshot';
 import { countsForPlayStreak } from '../src/services/results/ratingActivity';
 import { getUserTimezone } from '../src/services/user-timezone.service';
@@ -28,6 +30,30 @@ function playAt(game: {
   createdAt: Date;
 }): Date {
   return game.finishedDate ?? game.endTime ?? game.startTime ?? game.createdAt;
+}
+
+async function crossingsForDefinitions(params: {
+  userId: string;
+  definitionIds: ReadonlySet<string>;
+}): Promise<Map<string, { earnedAt: Date; sourceGameId: string }>> {
+  const timezone = await getUserTimezone(params.userId);
+  const events = await loadEventsForUser(params.userId);
+  const out = computeHabitCrossingDates({
+    events,
+    timezone,
+    definitionIds: params.definitionIds,
+  });
+  const organize = await computeOrganizeCrossingDates({
+    userId: params.userId,
+    definitionIds: params.definitionIds,
+  });
+  const partner = await computePartnerCrossingDates({
+    userId: params.userId,
+    definitionIds: params.definitionIds,
+  });
+  for (const [id, crossing] of organize) out.set(id, crossing);
+  for (const [id, crossing] of partner) out.set(id, crossing);
+  return out;
 }
 
 async function loadEventsForUser(userId: string): Promise<HabitCrossingEvent[]> {
@@ -109,11 +135,8 @@ async function run(apply: boolean, userIdFilter: string | null): Promise<void> {
   let updated = 0;
 
   for (const [userId, rows] of byUser) {
-    const timezone = await getUserTimezone(userId);
-    const events = await loadEventsForUser(userId);
-    const crossings = computeHabitCrossingDates({
-      events,
-      timezone,
+    const crossings = await crossingsForDefinitions({
+      userId,
       definitionIds: new Set(rows.map((r) => r.definitionId)),
     });
 
@@ -139,7 +162,10 @@ async function run(apply: boolean, userIdFilter: string | null): Promise<void> {
       }
       await prisma.userAchievement.update({
         where: { id: row.id },
-        data: { earnedAt: crossing.earnedAt },
+        data: {
+          earnedAt: crossing.earnedAt,
+          sourceGameId: crossing.sourceGameId,
+        },
       });
       updated += 1;
     }
