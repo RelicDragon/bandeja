@@ -16,12 +16,18 @@ import {
   rarityTextClass,
   showsRarityTag,
 } from '@/components/trophies/trophyRarityStyles';
+import {
+  trophyFrameLocked,
+  trophyMaxLevelDisplayRarity,
+} from '@/components/trophies/trophyProgressStyles';
 import { STACK_LABEL_WIDTH_REM } from '@/components/trophies/trophyStackGeometry';
 import type { TrophyCabinetEntryView } from '@/types/trophies';
 
 type TrophyStackIconProps = {
   entry: TrophyCabinetEntryView;
   locked: boolean;
+  /** Highest tier in the family stack — golden highlight. */
+  maxLevel?: boolean;
   labelVisible: boolean;
   interactive: boolean;
   isOwn: boolean;
@@ -38,6 +44,7 @@ type TrophyStackIconProps = {
 export function TrophyStackIcon({
   entry,
   locked,
+  maxLevel = false,
   labelVisible,
   interactive,
   isOwn,
@@ -55,6 +62,8 @@ export function TrophyStackIcon({
   const { definition, instances, progress } = entry;
   const primary = instances[0] ?? null;
   const hasPinned = instances.some((i) => pinnedInstanceIds.has(i.id));
+  const displayRarity = trophyMaxLevelDisplayRarity(maxLevel, definition.rarity);
+  const frameLocked = trophyFrameLocked(locked, maxLevel);
 
   const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
@@ -71,6 +80,7 @@ export function TrophyStackIcon({
         <button
           type="button"
           data-testid="trophy-icon-button"
+          data-max-level={maxLevel ? 'true' : 'false'}
           onClick={handleClick}
           disabled={!interactive}
           tabIndex={interactive ? 0 : -1}
@@ -81,15 +91,15 @@ export function TrophyStackIcon({
           }`}
         >
           <div className="relative">
-            {!locked && (
+            {(!locked || maxLevel) && (
               <div
-                className={`pointer-events-none absolute inset-0 -m-1 rounded-full bg-gradient-to-b opacity-70 blur-md ${rarityAuraClass(definition.rarity)}`}
+                className={`pointer-events-none absolute inset-0 -m-1 rounded-full bg-gradient-to-b opacity-70 blur-md ${rarityAuraClass(displayRarity)}`}
                 aria-hidden
               />
             )}
             <TrophyRarityFrame
-              rarity={definition.rarity}
-              locked={locked}
+              rarity={displayRarity}
+              locked={frameLocked}
               className="relative h-[4.5rem] w-[4.5rem] rounded-2xl shadow-[0_6px_14px_-8px_rgba(0,0,0,0.35)]"
             >
               <TrophyArt
@@ -128,7 +138,7 @@ export function TrophyStackIcon({
             className={TROPHY_TILE_LABEL_SLOT_CLASS}
           >
             <span
-              className={`line-clamp-2 w-full break-words text-[11px] font-semibold leading-tight ${rarityTextClass(definition.rarity, locked)}`}
+              className={`line-clamp-2 w-full break-words text-[11px] font-semibold leading-tight ${rarityTextClass(displayRarity, frameLocked)}`}
             >
               {t(definition.titleKey)}
             </span>
@@ -136,7 +146,7 @@ export function TrophyStackIcon({
           {showsRarityTag(definition.rarity) && (
             <span
               data-testid="trophy-rarity-tag"
-              className={`mt-1 ${TROPHY_RARITY_TAG_CLASS} ${rarityBadgeClass(definition.rarity, locked)}`}
+              className={`mt-1 ${TROPHY_RARITY_TAG_CLASS} ${rarityBadgeClass(displayRarity, frameLocked)}`}
             >
               {t(rarityLabelKey(definition.rarity))}
             </span>
@@ -152,6 +162,7 @@ export function TrophyStackIcon({
           instances={instances}
           locked={locked}
           progress={progress}
+          isMaxLevel={maxLevel}
           isOwn={isOwn}
           pinsEditable={pinsEditable}
           pinnedInstanceIds={pinnedInstanceIds}

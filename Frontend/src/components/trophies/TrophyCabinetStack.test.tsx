@@ -85,7 +85,7 @@ afterEach(() => {
   }
 });
 
-function entry(id: string, title: string): TrophyCabinetEntryView {
+function entry(id: string, title: string, threshold = 10): TrophyCabinetEntryView {
   return {
     definition: {
       id,
@@ -94,7 +94,7 @@ function entry(id: string, title: string): TrophyCabinetEntryView {
       ruleKind: 'HABIT_WINS',
       titleKey: title,
       descriptionKey: `${title}.description`,
-      threshold: id === 'habit_first_win' ? 1 : 10,
+      threshold,
       multiplicity: 'ONCE',
     },
     unlocked: true,
@@ -108,8 +108,8 @@ function Harness() {
   return (
     <TrophyCabinetStack
       entries={[
-        entry('habit_wins_10', 'trophies.defs.wins10.title'),
-        entry('habit_first_win', 'trophies.defs.firstWin.title'),
+        entry('habit_wins_10', 'trophies.defs.wins10.title', 10),
+        entry('habit_first_win', 'trophies.defs.firstWin.title', 1),
       ]}
       unlocked
       isOwn
@@ -122,17 +122,17 @@ function Harness() {
 }
 
 function LockedExpandedHarness() {
-  const lockedEntry = (id: string, title: string): TrophyCabinetEntryView => ({
-    ...entry(id, title),
+  const lockedEntry = (id: string, title: string, threshold: number): TrophyCabinetEntryView => ({
+    ...entry(id, title, threshold),
     unlocked: false,
-    progress: { current: 25, target: 100 },
+    progress: { current: 25, target: threshold },
   });
 
   return (
     <TrophyCabinetStack
       entries={[
-        lockedEntry('habit_wins_500', 'trophies.defs.wins500.title'),
-        lockedEntry('habit_wins_100', 'trophies.defs.wins100.title'),
+        lockedEntry('habit_wins_500', 'trophies.defs.wins500.title', 500),
+        lockedEntry('habit_wins_100', 'trophies.defs.wins100.title', 100),
       ]}
       unlocked={false}
       isOwn
@@ -144,6 +144,64 @@ function LockedExpandedHarness() {
   );
 }
 
+function MixedProgressHarness() {
+  return (
+    <TrophyCabinetStack
+      entries={[
+        {
+          ...entry('habit_wins_10', 'trophies.defs.wins10.title', 10),
+          unlocked: true,
+          progress: null,
+        },
+        {
+          ...entry('habit_wins_100', 'trophies.defs.wins100.title', 100),
+          unlocked: false,
+          progress: { current: 25, target: 100 },
+        },
+        {
+          ...entry('habit_wins_500', 'trophies.defs.wins500.title', 500),
+          unlocked: false,
+          progress: { current: 25, target: 500 },
+        },
+      ]}
+      unlocked
+      isOwn
+      pinsEditable
+      pinnedInstanceIds={new Set()}
+      expanded
+      onExpandedChange={() => undefined}
+    />
+  );
+}
+
+function MaxLevelChaseHarness() {
+  return (
+    <TrophyCabinetStack
+      entries={[
+        {
+          ...entry('habit_wins_10', 'trophies.defs.wins10.title', 10),
+          unlocked: true,
+          progress: null,
+        },
+        {
+          ...entry('habit_wins_500', 'trophies.defs.wins500.title', 500),
+          definition: {
+            ...entry('habit_wins_500', 'trophies.defs.wins500.title', 500).definition,
+            rarity: 'LEGENDARY',
+          },
+          unlocked: false,
+          progress: { current: 400, target: 500 },
+        },
+      ]}
+      unlocked
+      isOwn
+      pinsEditable
+      pinnedInstanceIds={new Set()}
+      expanded
+      onExpandedChange={() => undefined}
+    />
+  );
+}
 describe('TrophyCabinetStack', () => {
   it('moves persistent icons inside one persistent group frame', () => {
     const container = document.createElement('div');
@@ -236,5 +294,36 @@ describe('TrophyCabinetStack', () => {
     expect(progress).not.toBeNull();
     expect(progress?.className).toContain('bottom-2');
     expect(progress?.getAttribute('aria-hidden')).toBeNull();
+  });
+
+  it('shows chase progress on mixed unlocked+locked stacks until max level', () => {
+    const container = document.createElement('div');
+    document.body.append(container);
+    containers.push(container);
+    const root = createRoot(container);
+    roots.push(root);
+
+    act(() => root.render(<MixedProgressHarness />));
+
+    const progress = container.querySelector('[data-testid="trophy-progress"]');
+    expect(progress).not.toBeNull();
+    expect(progress?.className).toContain('bottom-2');
+    const fill = container.querySelector('[data-testid="trophy-progress-fill"]');
+    expect(fill?.getAttribute('data-max-level')).toBe('false');
+    expect(fill?.className).toContain('bg-emerald-500');
+  });
+
+  it('uses golden progress fill when chasing the max level', () => {
+    const container = document.createElement('div');
+    document.body.append(container);
+    containers.push(container);
+    const root = createRoot(container);
+    roots.push(root);
+
+    act(() => root.render(<MaxLevelChaseHarness />));
+
+    const fill = container.querySelector('[data-testid="trophy-progress-fill"]');
+    expect(fill?.getAttribute('data-max-level')).toBe('true');
+    expect(fill?.className).toContain('from-amber-400');
   });
 });

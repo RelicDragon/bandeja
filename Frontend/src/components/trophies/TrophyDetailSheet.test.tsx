@@ -125,8 +125,45 @@ describe('TrophyDetailSheet', () => {
     expect(bar?.getAttribute('role')).toBe('progressbar');
     expect(bar?.getAttribute('aria-valuenow')).toBe('25');
     expect(bar?.style.width).toBe('25%');
+    expect(bar?.getAttribute('data-max-level')).toBe('false');
+    expect(panel?.getAttribute('data-max-level')).toBe('false');
     expect(
       value!.compareDocumentPosition(bar!) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
+  });
+
+  it('uses golden progress chrome for catalog max level without explicit prop', () => {
+    const container = document.createElement('div');
+    document.body.append(container);
+    containers.push(container);
+    const root = createRoot(container);
+    roots.push(root);
+
+    act(() =>
+      root.render(
+        <TrophyDetailSheet
+          open
+          onOpenChange={() => undefined}
+          definition={{
+            ...definition,
+            id: 'habit_wins_500',
+            rarity: 'LEGENDARY',
+            artKey: 'habit_wins_500',
+            threshold: 500,
+          }}
+          instance={null}
+          instances={[]}
+          locked
+          progress={{ current: 400, target: 500 }}
+          isOwn
+        />,
+      ),
+    );
+
+    const panel = container.querySelector('[data-testid="trophy-detail-progress"]');
+    const bar = container.querySelector('[data-testid="trophy-detail-progress-bar"]');
+    expect(panel?.getAttribute('data-max-level')).toBe('true');
+    expect(bar?.getAttribute('data-max-level')).toBe('true');
+    expect(bar?.className).toContain('from-amber-400');
   });
 });

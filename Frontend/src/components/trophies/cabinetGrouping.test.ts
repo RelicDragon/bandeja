@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
   groupCabinetRailItems,
+  isCatalogFamilyMaxLevel,
+  isMaxLevelEntry,
+  nextChaseEntry,
+  sortFamilyStackEntries,
   sortStackEntries,
 } from '@/components/trophies/cabinetGrouping';
 import type { TrophyCabinetEntryView, TrophyDefinitionView } from '@/types/trophies';
@@ -70,6 +74,100 @@ describe('sortStackEntries', () => {
   });
 });
 
+describe('sortFamilyStackEntries', () => {
+  it('puts unlocked best→worst then locked next-chase→hardest', () => {
+    const sorted = sortFamilyStackEntries([
+      entry(def({ id: 'habit_games_10', ruleKind: 'HABIT_VOLUME', threshold: 10 }), true),
+      entry(def({ id: 'habit_games_50', ruleKind: 'HABIT_VOLUME', threshold: 50 }), true),
+      entry(
+        def({ id: 'habit_games_500', ruleKind: 'HABIT_VOLUME', threshold: 500 }),
+        false,
+        { progress: { current: 120, target: 500 } },
+      ),
+      entry(
+        def({ id: 'habit_games_1000', ruleKind: 'HABIT_VOLUME', threshold: 1000 }),
+        false,
+        { progress: { current: 120, target: 1000 } },
+      ),
+    ]);
+    expect(sorted.map((e) => e.definition.id)).toEqual([
+      'habit_games_50',
+      'habit_games_10',
+      'habit_games_500',
+      'habit_games_1000',
+    ]);
+  });
+});
+
+describe('nextChaseEntry', () => {
+  it('picks the easiest locked level', () => {
+    const chase = nextChaseEntry([
+      entry(def({ id: 'habit_games_50', ruleKind: 'HABIT_VOLUME', threshold: 50 }), true),
+      entry(
+        def({ id: 'habit_games_500', ruleKind: 'HABIT_VOLUME', threshold: 500 }),
+        false,
+        { progress: { current: 120, target: 500 } },
+      ),
+      entry(
+        def({ id: 'habit_games_1000', ruleKind: 'HABIT_VOLUME', threshold: 1000 }),
+        false,
+        { progress: { current: 120, target: 1000 } },
+      ),
+    ]);
+    expect(chase?.definition.id).toBe('habit_games_500');
+  });
+
+  it('returns null when max level is reached', () => {
+    expect(
+      nextChaseEntry([
+        entry(def({ id: 'habit_games_10', ruleKind: 'HABIT_VOLUME', threshold: 10 }), true),
+        entry(def({ id: 'habit_games_50', ruleKind: 'HABIT_VOLUME', threshold: 50 }), true),
+      ]),
+    ).toBeNull();
+  });
+
+  it('detects the max level entry in a family', () => {
+    const rows = [
+      entry(def({ id: 'habit_games_10', ruleKind: 'HABIT_VOLUME', threshold: 10 }), true),
+      entry(def({ id: 'habit_games_1000', ruleKind: 'HABIT_VOLUME', threshold: 1000 }), false),
+      entry(def({ id: 'habit_games_500', ruleKind: 'HABIT_VOLUME', threshold: 500 }), false),
+    ];
+    expect(isMaxLevelEntry(rows[1]!, rows)).toBe(true);
+    expect(isMaxLevelEntry(rows[2]!, rows)).toBe(false);
+  });
+
+  it('resolves catalog family max by score, not rarity alone', () => {
+    expect(
+      isCatalogFamilyMaxLevel({
+        id: 'habit_wins_500',
+        ruleKind: 'HABIT_WINS',
+        threshold: 500,
+      }),
+    ).toBe(true);
+    expect(
+      isCatalogFamilyMaxLevel({
+        id: 'habit_wins_100',
+        ruleKind: 'HABIT_WINS',
+        threshold: 100,
+      }),
+    ).toBe(false);
+    expect(
+      isCatalogFamilyMaxLevel({
+        id: 'podium_gold',
+        ruleKind: 'PODIUM',
+        place: 1,
+      }),
+    ).toBe(true);
+    expect(
+      isCatalogFamilyMaxLevel({
+        id: 'podium_silver',
+        ruleKind: 'PODIUM',
+        place: 2,
+      }),
+    ).toBe(false);
+  });
+});
+
 describe('groupCabinetRailItems', () => {
   it('stacks first padel game with volume games ladder', () => {
     const items = groupCabinetRailItems([
@@ -124,7 +222,7 @@ describe('groupCabinetRailItems', () => {
     }
   });
 
-  it('stacks unlocked habit_games separately from locked', () => {
+  it('stacks unlocked habit_games separately from locked by default', () => {
     const unlocked10 = entry(
       def({ id: 'habit_games_10', ruleKind: 'HABIT_VOLUME', threshold: 10 }),
       true,
@@ -159,6 +257,79 @@ describe('groupCabinetRailItems', () => {
       expect(items[0].entries.map((e) => e.definition.id)).toEqual([
         'habit_games_50',
         'habit_games_10',
+      ]);
+    }
+  });
+
+  it('merges locked and unlocked into one family stack for own cabinet', () => {
+    const unlocked10 = entry(
+      def({ id: 'habit_games_10', ruleKind: 'HABIT_VOLUME', threshold: 10 }),
+      true,
+      { earnedAt: '2026-02-01T00:00:00.000Z' },
+    );
+    const unlocked50 = entry(
+      def({ id: 'habit_games_50', ruleKind: 'HABIT_VOLUME', threshold: 50 }),
+      true,
+      { earnedAt: '2026-03-01T00:00:00.000Z' },
+    );
+    const locked500 = entry(
+      def({ id: 'habit_games_500', ruleKind: 'HABIT_VOLUME', threshold: 500, rarity: 'RARE' }),
+      false,
+      { progress: { current: 120, target: 500 } },
+    );
+    const locked1000 = entry(
+      def({
+        id: 'habit_games_1000',
+        ruleKind: 'HABIT_VOLUME',
+        threshold: 1000,
+        rarity: 'LEGENDARY',
+      }),
+      false,
+      { progress: { current: 120, target: 1000 } },
+    );
+
+    const items = groupCabinetRailItems(
+      [unlocked10, unlocked50, locked500, locked1000],
+      { mergeLockState: true },
+    );
+    expect(items).toHaveLength(1);
+    expect(items[0]).toMatchObject({
+      kind: 'stack',
+      unlocked: true,
+      ruleKind: 'HABIT_VOLUME',
+      key: 'HABIT_VOLUME',
+    });
+    if (items[0]?.kind === 'stack') {
+      expect(items[0].entries.map((e) => e.definition.id)).toEqual([
+        'habit_games_50',
+        'habit_games_10',
+        'habit_games_500',
+        'habit_games_1000',
+      ]);
+      expect(nextChaseEntry(items[0].entries)?.definition.id).toBe('habit_games_500');
+    }
+  });
+
+  it('merges first win unlocked with locked wins ladder for own cabinet', () => {
+    const items = groupCabinetRailItems(
+      [
+        entry(def({ id: 'habit_first_win', ruleKind: 'HABIT_FIRST_WIN', threshold: 1 }), true),
+        entry(def({ id: 'habit_wins_10', ruleKind: 'HABIT_WINS', threshold: 10 }), true),
+        entry(
+          def({ id: 'habit_wins_50', ruleKind: 'HABIT_WINS', threshold: 50, rarity: 'RARE' }),
+          false,
+          { progress: { current: 30, target: 50 } },
+        ),
+      ],
+      { mergeLockState: true },
+    );
+    expect(items).toHaveLength(1);
+    expect(items[0]).toMatchObject({ kind: 'stack', unlocked: true, ruleKind: 'HABIT_WINS' });
+    if (items[0]?.kind === 'stack') {
+      expect(items[0].entries.map((e) => e.definition.id)).toEqual([
+        'habit_wins_10',
+        'habit_first_win',
+        'habit_wins_50',
       ]);
     }
   });

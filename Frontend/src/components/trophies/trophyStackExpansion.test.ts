@@ -13,11 +13,9 @@ describe('trophy stack expansion helpers', () => {
   });
 
   it('resolves only keys that still exist', () => {
-    const keys = new Set(['HABIT_VOLUME-unlocked']);
-    expect(resolveExpandedStackKey('HABIT_VOLUME-unlocked', keys)).toBe(
-      'HABIT_VOLUME-unlocked',
-    );
-    expect(resolveExpandedStackKey('HABIT_VOLUME-unlocked', new Set())).toBe(null);
+    const keys = new Set(['HABIT_VOLUME']);
+    expect(resolveExpandedStackKey('HABIT_VOLUME', keys)).toBe('HABIT_VOLUME');
+    expect(resolveExpandedStackKey('HABIT_VOLUME', new Set())).toBe(null);
     expect(resolveExpandedStackKey(null, keys)).toBe(null);
   });
 });

@@ -1,5 +1,10 @@
 /** Shared pile geometry for collapsed trophy stacks (rem-based; no root-font px assumptions). */
-import { stackFamilyKey } from '@/components/trophies/cabinetGrouping';
+import {
+  nextChaseEntry,
+  stackBetterScore,
+  stackFamilyKey,
+} from '@/components/trophies/cabinetGrouping';
+import type { TrophyCabinetEntryView } from '@/types/trophies';
 
 export const STACK_CARD_WIDTH_REM = 6.75;
 export const STACK_CARD_GAP_REM = 0.5;
@@ -41,6 +46,56 @@ export function selectPileLayers<T>(entries: readonly T[]): readonly T[] {
   const head = MAX_PILE_LAYERS - 1;
   const kept = [...entries.slice(0, head), entries[entries.length - 1]!];
   return kept.reverse();
+}
+
+/**
+ * Collapsed pile for family stacks (including mixed locked+unlocked order).
+ * Keeps face (`entries[0]`), next chase, and max tier visible when capped.
+ * Paint order ends with face on top.
+ */
+export function selectFamilyPileLayers(
+  entries: readonly TrophyCabinetEntryView[],
+): TrophyCabinetEntryView[] {
+  if (entries.length === 0) return [];
+  if (entries.length <= MAX_PILE_LAYERS) {
+    return [...entries].reverse();
+  }
+
+  const mixed =
+    entries.some((e) => e.unlocked) && entries.some((e) => !e.unlocked);
+  if (!mixed) {
+    return [...selectPileLayers(entries)];
+  }
+
+  const face = entries[0]!;
+  const chase = nextChaseEntry(entries);
+  let maxEntry = face;
+  for (const entry of entries) {
+    if (stackBetterScore(entry) > stackBetterScore(maxEntry)) {
+      maxEntry = entry;
+    }
+  }
+
+  const kept: TrophyCabinetEntryView[] = [];
+  const seen = new Set<string>();
+  const push = (entry: TrophyCabinetEntryView | null) => {
+    if (!entry || seen.has(entry.definition.id) || kept.length >= MAX_PILE_LAYERS) {
+      return;
+    }
+    seen.add(entry.definition.id);
+    kept.push(entry);
+  };
+
+  push(face);
+  push(chase);
+  push(maxEntry);
+  for (const entry of entries) {
+    push(entry);
+    if (kept.length >= MAX_PILE_LAYERS) break;
+  }
+
+  const under = kept.filter((e) => e.definition.id !== face.definition.id);
+  return [...under.reverse(), face];
 }
 
 export function pileLayerStyle(index: number, count: number): {

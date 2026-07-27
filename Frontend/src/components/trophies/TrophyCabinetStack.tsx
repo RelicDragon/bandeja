@@ -13,6 +13,12 @@ import {
   rarityTextClass,
   showsRarityTag,
 } from '@/components/trophies/trophyRarityStyles';
+import { isMaxLevelEntry, nextChaseEntry } from '@/components/trophies/cabinetGrouping';
+import {
+  trophyFrameLocked,
+  trophyMaxLevelDisplayRarity,
+  trophyProgressFillClass,
+} from '@/components/trophies/trophyProgressStyles';
 import {
   STACK_CARD_GAP_REM,
   STACK_CARD_WIDTH_REM,
@@ -22,7 +28,7 @@ import {
   STACK_LABEL_WIDTH_REM,
   pileLayerStyle,
   scrollChildIntoHorizontalView,
-  selectPileLayers,
+  selectFamilyPileLayers,
   stackExpandedWidthRem,
   stackFamilyLabelKey,
 } from '@/components/trophies/trophyStackGeometry';
@@ -60,7 +66,7 @@ export function TrophyCabinetStack({
   const labelId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
   const reduceMotion = useReducedMotion();
-  const locked = !unlocked;
+  const frameLocked = !unlocked;
 
   useEffect(() => {
     if (!expanded) return;
@@ -73,7 +79,7 @@ export function TrophyCabinetStack({
     };
   }, [expanded, reduceMotion, entries.length]);
 
-  const pilePaint = useMemo(() => selectPileLayers(entries), [entries]);
+  const pilePaint = useMemo(() => selectFamilyPileLayers(entries), [entries]);
   const pileIndexById = useMemo(() => {
     const map = new Map<string, number>();
     pilePaint.forEach((e, i) => map.set(e.definition.id, i));
@@ -87,10 +93,11 @@ export function TrophyCabinetStack({
     e.instances.some((i) => pinnedInstanceIds.has(i.id)),
   );
   const familyKey = stackFamilyLabelKey(top.definition.ruleKind);
-  const nextChase = locked ? entries[entries.length - 1]! : null;
-  const progress = nextChase?.progress;
+  const nextChase = nextChaseEntry(entries);
+  const progress = nextChase?.progress ?? null;
+  const chaseIsMaxLevel =
+    nextChase != null && isMaxLevelEntry(nextChase, entries);
   const showProgress =
-    locked &&
     isOwn &&
     progress != null &&
     progress.target > 0 &&
@@ -115,7 +122,7 @@ export function TrophyCabinetStack({
       <div
         data-testid="trophy-stack-frame"
         data-state={expanded ? 'expanded' : 'collapsed'}
-        className={trophyGroupFrameClass(locked)}
+        className={trophyGroupFrameClass(frameLocked)}
         onClick={(event) => {
           if (
             expanded &&
@@ -134,7 +141,14 @@ export function TrophyCabinetStack({
         >
           <div className="h-[4.5rem] w-full shrink-0" />
           <div className="mt-2 grid w-full grid-cols-1 px-0.5">
-            {entries.map((entry) => (
+            {entries.map((entry) => {
+              const entryMax = isMaxLevelEntry(entry, entries);
+              const displayRarity = trophyMaxLevelDisplayRarity(
+                entryMax,
+                entry.definition.rarity,
+              );
+              const frameLocked = trophyFrameLocked(!entry.unlocked, entryMax);
+              return (
               <div
                 key={entry.definition.id}
                 className="col-start-1 row-start-1 flex w-full flex-col items-center"
@@ -146,17 +160,19 @@ export function TrophyCabinetStack({
                 </div>
                 {showsRarityTag(entry.definition.rarity) && (
                   <span
-                    className={`mt-1 ${TROPHY_RARITY_TAG_CLASS} ${rarityBadgeClass(entry.definition.rarity, locked)}`}
+                    className={`mt-1 ${TROPHY_RARITY_TAG_CLASS} ${rarityBadgeClass(displayRarity, frameLocked)}`}
                   >
                     {t(rarityLabelKey(entry.definition.rarity))}
                   </span>
                 )}
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
         {entries.map((entry, index) => {
+          const entryLocked = !entry.unlocked;
           const pileIndex = pileIndexById.get(entry.definition.id);
           const layer =
             pileIndex == null ? null : pileLayerStyle(pileIndex, pilePaint.length);
@@ -195,7 +211,8 @@ export function TrophyCabinetStack({
             >
               <TrophyStackIcon
                 entry={entry}
-                locked={locked}
+                locked={entryLocked}
+                maxLevel={isMaxLevelEntry(entry, entries)}
                 labelVisible={expanded}
                 interactive={expanded}
                 isOwn={isOwn}
@@ -235,7 +252,7 @@ export function TrophyCabinetStack({
         >
           <span
             id={labelId}
-            className={`flex w-full items-center justify-center gap-0.5 text-[11px] font-semibold leading-tight ${rarityTextClass(top.definition.rarity, locked)}`}
+            className={`flex w-full items-center justify-center gap-0.5 text-[11px] font-semibold leading-tight ${rarityTextClass(top.definition.rarity, frameLocked)}`}
           >
             <span className="line-clamp-1">{t(familyKey)}</span>
             <span className="shrink-0 text-[9px] opacity-70" aria-hidden>
@@ -293,7 +310,9 @@ export function TrophyCabinetStack({
           >
             <div className="h-1 overflow-hidden rounded-full bg-gray-200/90 dark:bg-white/10">
               <div
-                className="h-full rounded-full bg-primary-500"
+                data-testid="trophy-progress-fill"
+                data-max-level={chaseIsMaxLevel ? 'true' : 'false'}
+                className={`h-full rounded-full ${trophyProgressFillClass(chaseIsMaxLevel)}`}
                 style={{ width: `${progressPct}%` }}
               />
             </div>

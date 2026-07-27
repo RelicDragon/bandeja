@@ -69,7 +69,10 @@ function TrophyCabinetRail({
   ownerUserId?: string;
 }) {
   const { t } = useTranslation();
-  const rows = useMemo(() => groupCabinetRailItems(cabinet), [cabinet]);
+  const rows = useMemo(
+    () => groupCabinetRailItems(cabinet, { mergeLockState: isOwn }),
+    [cabinet, isOwn],
+  );
   const stackKeys = useMemo(() => {
     const keys = new Set<string>();
     for (const item of rows) {
