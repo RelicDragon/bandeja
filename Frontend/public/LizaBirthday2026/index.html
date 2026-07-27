@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="dark">
+<html lang="ru" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -7,9 +7,9 @@
     <meta name="robots" content="noindex, nofollow" />
     <meta
       name="description"
-      content="Leave a birthday wish for Liza from the Bandeja padel community."
+      content="Оставьте поздравление для Лизы от падел-сообщества Bandeja."
     />
-    <title>Liza's birthday · 2 August 2026</title>
+    <title>День рождения Лизы · 2 августа 2026</title>
     <link rel="icon" href="/favicon/favicon.svg" type="image/svg+xml" />
     <style>
       :root {
@@ -2052,8 +2052,8 @@
 
           <div class="controls">
             <div class="locale-control" role="group" aria-label="Language">
-              <button class="locale-button" type="button" data-locale="en" aria-pressed="true">EN</button>
-              <button class="locale-button" type="button" data-locale="ru" aria-pressed="false">RU</button>
+              <button class="locale-button" type="button" data-locale="en" aria-pressed="false">EN</button>
+              <button class="locale-button" type="button" data-locale="ru" aria-pressed="true">RU</button>
               <button class="locale-button" type="button" data-locale="rs" aria-pressed="false">SR</button>
             </div>
             <button class="theme-button" type="button" id="theme-toggle" aria-label="Use light theme">
@@ -2662,7 +2662,7 @@
             ? "rs"
             : translations[requestedLocale]
               ? requestedLocale
-              : "en";
+              : "ru";
         const theme = params.get("theme") === "light" ? "light" : "dark";
         const suppliedName = (params.get("user_name") || "").trim().slice(0, 80);
         const adToken = (params.get("ad_token") || "").trim();
@@ -2751,7 +2751,7 @@
 
         function applyLocale(nextLocale, syncUrl) {
           activeLocale =
-            nextLocale === "sr" ? "rs" : translations[nextLocale] ? nextLocale : "en";
+            nextLocale === "sr" ? "rs" : translations[nextLocale] ? nextLocale : "ru";
           const copy = translations[activeLocale];
 
           root.lang = activeLocale === "rs" ? "sr" : activeLocale;
