@@ -1,5 +1,6 @@
-import { AdLandingDonationIntent } from '@prisma/client';
+import { AdLandingDonationIntent, Prisma } from '@prisma/client';
 import prisma from '../../config/database';
+import { AdCampaignCache } from './ad.cache';
 import { verifyAdClickToken } from './ad.token.util';
 import type { AdLandingKey } from './adLandingWish.constants';
 import type { AdLandingWishCreateInput } from './adLandingWish.schemas';
@@ -16,8 +17,47 @@ export type CreatedAdLandingWish = {
   createdAt: Date;
 };
 
+function isDonationIntent(intent: AdLandingDonationIntent): boolean {
+  return intent === AdLandingDonationIntent.RSD || intent === AdLandingDonationIntent.RUB;
+}
+
+/**
+ * Append user to campaign targeting.excludeUserIds so the ad stops showing after a donation.
+ */
+async function excludeUserFromCampaign(campaignId: string, userId: string): Promise<void> {
+  const campaign = await prisma.adCampaign.findUnique({
+    where: { id: campaignId },
+    select: { targeting: true },
+  });
+  if (!campaign) return;
+
+  const targeting =
+    campaign.targeting && typeof campaign.targeting === 'object' && !Array.isArray(campaign.targeting)
+      ? { ...(campaign.targeting as Record<string, unknown>) }
+      : {};
+
+  const existing = Array.isArray(targeting.excludeUserIds)
+    ? targeting.excludeUserIds.filter((id): id is string => typeof id === 'string' && id.length > 0)
+    : [];
+
+  if (existing.includes(userId)) return;
+
+  await prisma.adCampaign.update({
+    where: { id: campaignId },
+    data: {
+      targeting: {
+        ...targeting,
+        excludeUserIds: [...existing, userId],
+      } as Prisma.InputJsonValue,
+    },
+  });
+
+  AdCampaignCache.clearCache();
+}
+
 /**
  * Persist a landing wish. Valid `adToken` links user/campaign; missing/invalid token → anonymous wish.
+ * Donation (RSD/RUB) with a linked user → add that user to the campaign's excludeUserIds.
  */
 export async function createAdLandingWish(
   landingKey: AdLandingKey,
@@ -36,6 +76,7 @@ export async function createAdLandingWish(
   }
 
   const locale = input.locale?.trim() || null;
+  const donationIntent = input.donationIntent as AdLandingDonationIntent;
 
   const row = await prisma.adLandingWish.create({
     data: {
@@ -44,10 +85,14 @@ export async function createAdLandingWish(
       campaignId,
       displayName: input.name.trim(),
       message: input.message.trim(),
-      donationIntent: input.donationIntent as AdLandingDonationIntent,
+      donationIntent,
       locale,
     },
   });
+
+  if (userId && campaignId && isDonationIntent(donationIntent)) {
+    await excludeUserFromCampaign(campaignId, userId);
+  }
 
   return {
     id: row.id,

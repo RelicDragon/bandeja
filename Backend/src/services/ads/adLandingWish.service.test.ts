@@ -75,6 +75,16 @@ async function main() {
     assert(first.userId === user.id, 'linked user');
     assert(first.campaignId === campaign.id, 'linked campaign');
 
+    const afterDonation = await prisma.adCampaign.findUnique({
+      where: { id: campaign.id },
+      select: { targeting: true },
+    });
+    const targeting = afterDonation?.targeting as { excludeUserIds?: string[] } | null;
+    assert(
+      Array.isArray(targeting?.excludeUserIds) && targeting!.excludeUserIds!.includes(user.id),
+      'donation adds user to excludeUserIds'
+    );
+
     const second = await createAdLandingWish(AD_LANDING_LIZA_BIRTHDAY_2026, {
       name: 'Linked Two',
       message: 'Wish 2',
@@ -84,6 +94,16 @@ async function main() {
     });
     assert(second.userId === user.id, 'second wish same user');
     assert(second.id !== first.id, 'multiple wishes allowed');
+
+    const afterNone = await prisma.adCampaign.findUnique({
+      where: { id: campaign.id },
+      select: { targeting: true },
+    });
+    const targetingAfterNone = afterNone?.targeting as { excludeUserIds?: string[] } | null;
+    assert(
+      (targetingAfterNone?.excludeUserIds ?? []).filter((id) => id === user.id).length === 1,
+      'NONE donation does not duplicate excludeUserIds'
+    );
   } finally {
     await prisma.adLandingWish.deleteMany({
       where: {

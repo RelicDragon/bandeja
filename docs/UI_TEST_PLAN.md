@@ -1515,6 +1515,7 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | X-26f | Birthday wish from native app | Tap ad in Capacitor (absolute `https://bandeja.me/LizaBirthday2026…`) → submit → tap Back to Bandeja | Landing stays in the current app WebView using its local static path; wish POST uses the production API; Back restores the exact originating Bandeja screen |
 | X-26g | Birthday wish return on web/dev | From `bandeja.me` or `localhost:3001`, tap the Liza ad → submit → tap Back to Bandeja | Landing uses the current tab and Back restores the exact originating Bandeja screen |
 | X-26h | Birthday wish return fallback | Prevent Back to Bandeja from navigating, or tap it twice | A localized animated hint appears below the button after the failed first attempt or immediately after the second tap, asking the user to close the page manually |
+| X-26i | Birthday donation excludes user from ad | Open `/LizaBirthday2026?ad_token=…`; submit with Donate RSD/RUB | Wish saved; user id appended to that campaign’s `targeting.excludeUserIds`; ad no longer served to that user |
 
 ### 18.7 Navigation shell
 
