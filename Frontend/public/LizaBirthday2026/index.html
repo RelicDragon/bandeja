@@ -983,66 +983,7 @@
           0 9px 24px color-mix(in srgb, var(--primary) 9%, transparent);
       }
 
-      .amount-wrap {
-        display: grid;
-        max-height: 0;
-        margin-top: 0;
-        grid-template-columns: 1fr auto;
-        overflow: hidden;
-        align-items: center;
-        border: 0 solid var(--line);
-        border-radius: 17px;
-        background: var(--surface-soft);
-        opacity: 0;
-        transition:
-          max-height 180ms ease,
-          margin 180ms ease,
-          opacity 150ms ease,
-          border-width 180ms ease;
-      }
-
-      .amount-wrap.is-visible {
-        max-height: 58px;
-        margin-top: 10px;
-        border-width: 1px;
-        opacity: 1;
-      }
-
-      .amount-wrap:focus-within {
-        border-color: var(--focus);
-        background: var(--surface-solid);
-        box-shadow: 0 0 0 4px color-mix(in srgb, var(--focus) 16%, transparent);
-      }
-
-      .amount-input {
-        min-width: 0;
-        height: 55px;
-        padding: 0 17px;
-        border: 0;
-        outline: 0;
-        color: var(--ink);
-        background: transparent;
-        font-size: 1rem;
-        font-weight: 750;
-      }
-
-      .amount-input::placeholder {
-        color: var(--ink-soft);
-        font-weight: 500;
-      }
-
-      .amount-currency {
-        margin-right: 14px;
-        padding: 5px 8px;
-        border-radius: 8px;
-        color: var(--ink-muted);
-        background: var(--line);
-        font-size: 0.69rem;
-        font-weight: 850;
-        letter-spacing: 0.08em;
-      }
-
-      .rub-transfer {
+      .transfer-panel {
         display: grid;
         max-height: 0;
         margin-top: 0;
@@ -1057,14 +998,14 @@
           transform 220ms ease;
       }
 
-      .rub-transfer.is-visible {
+      .transfer-panel.is-visible {
         max-height: 190px;
         margin-top: 12px;
         opacity: 1;
         transform: translateY(0);
       }
 
-      .rub-transfer__title {
+      .transfer-panel__title {
         margin: 0 0 2px;
         color: var(--ink);
         font-size: 0.78rem;
@@ -1202,28 +1143,6 @@
         100% {
           transform: scale(1);
         }
-      }
-
-      .donation-note {
-        display: none;
-        margin: 9px 0 0;
-        align-items: flex-start;
-        gap: 6px;
-        color: var(--ink-soft);
-        font-size: 0.68rem;
-        font-weight: 600;
-        line-height: 1.45;
-      }
-
-      .donation-note.is-visible {
-        display: flex;
-      }
-
-      .donation-note svg {
-        width: 13px;
-        height: 13px;
-        flex: 0 0 auto;
-        margin-top: 1px;
       }
 
       .submit-button {
@@ -2198,26 +2117,30 @@
           return copied;
         }
 
-        async function copyToClipboard(value) {
-          if (copyWithSelection(value)) return true;
-
+        function copyToClipboard(value) {
+          const copiedWithSelection = copyWithSelection(value);
           if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
             try {
-              await Promise.race([
-                navigator.clipboard.writeText(value),
-                new Promise(function (_, reject) {
-                  window.setTimeout(function () {
-                    reject(new Error("Clipboard write timed out"));
-                  }, 700);
-                }),
-              ]);
-              return true;
+              const verification = Promise.resolve(navigator.clipboard.writeText(value))
+                .then(function () {
+                  return true;
+                })
+                .catch(function () {
+                  return copiedWithSelection;
+                });
+              return { accepted: true, verification };
             } catch {
-              return false;
+              return {
+                accepted: copiedWithSelection,
+                verification: Promise.resolve(copiedWithSelection),
+              };
             }
           }
 
-          return false;
+          return {
+            accepted: copiedWithSelection,
+            verification: Promise.resolve(copiedWithSelection),
+          };
         }
 
         function resetCopyFeedback(button) {
@@ -2288,9 +2211,12 @@
         });
 
         copyRows.forEach(function (button) {
-          button.addEventListener("click", async function () {
-            const succeeded = await copyToClipboard(button.dataset.copy);
-            showCopyFeedback(button, succeeded);
+          button.addEventListener("click", function () {
+            const copyResult = copyToClipboard(button.dataset.copy);
+            showCopyFeedback(button, copyResult.accepted);
+            copyResult.verification.then(function (verified) {
+              if (!verified) showCopyFeedback(button, false);
+            });
           });
         });
 
