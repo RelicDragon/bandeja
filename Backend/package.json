@@ -47,6 +47,7 @@
     "backfill:play-streak": "ts-node scripts/backfillPlayStreak.ts",
     "backfill:habit-achievements": "ts-node --transpile-only scripts/backfillHabitAchievements.ts",
     "backfill:habit-achievement-dates": "ts-node --transpile-only scripts/backfillHabitAchievementDates.ts",
+    "backfill:podium-achievements": "ts-node --transpile-only scripts/backfillPodiumAchievements.ts",
     "audit:court-club-sports": "ts-node scripts/audit-court-club-sports.ts",
     "backfill:court-club-sports": "ts-node scripts/backfill-court-club-sports.ts",
     "seed:padeloo-avantura": "ts-node -r dotenv/config scripts/seed-padeloo-avantura.ts",
