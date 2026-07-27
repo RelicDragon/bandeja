@@ -747,6 +747,19 @@
         line-height: 1.68;
       }
 
+      .surprise-note {
+        max-width: 390px;
+        margin: 18px 0 0;
+        padding: 14px 16px;
+        border: 1px solid color-mix(in srgb, var(--coral) 34%, transparent);
+        border-radius: 14px;
+        color: var(--ink);
+        background: color-mix(in srgb, var(--coral) 10%, transparent);
+        font-size: 0.8rem;
+        font-weight: 720;
+        line-height: 1.48;
+      }
+
       .finals-note {
         display: flex;
         margin: 25px 0 0;
@@ -1516,7 +1529,7 @@
         display: none;
       }
 
-      .success-celebration__return-hint::before {
+      .success-celebration__return-hint-icon {
         display: grid;
         width: 24px;
         height: 24px;
@@ -1525,7 +1538,6 @@
         border-radius: 50%;
         color: var(--acid);
         background: rgba(217, 255, 87, 0.1);
-        content: "×";
         font-size: 1rem;
         font-weight: 500;
         line-height: 1;
@@ -1594,6 +1606,10 @@
         }
 
         .wish-intro__text {
+          max-width: 650px;
+        }
+
+        .surprise-note {
           max-width: 650px;
         }
       }
@@ -2156,6 +2172,10 @@
                 Liza on her birthday.
               </p>
 
+              <p class="surprise-note" data-i18n="surpriseNote">
+                This is a surprise for Liza — not just a gift. Please keep it quiet until 2 August.
+              </p>
+
               <p class="finals-note">
                 <strong data-i18n="finalsLabel">The birthday rule:</strong>
                 <span data-i18n="finalsValue">warm words count more than winners.</span>
@@ -2392,10 +2412,12 @@
           id="success-return-hint"
           role="status"
           aria-live="polite"
-          data-i18n="successReturnHint"
           hidden
         >
-          If Bandeja does not return, close this page manually to go back to the app.
+          <span class="success-celebration__return-hint-icon" aria-hidden="true">×</span>
+          <span data-i18n="successReturnHint">
+            If Bandeja does not return, close this page manually to go back to the app.
+          </span>
         </p>
       </div>
     </div>
@@ -2434,6 +2456,8 @@
             formTitleNamed: "{name}, add your voice to the team card.",
             formIntro:
               "Leave your name and a birthday message. We will print every wish and give them to Liza on her birthday.",
+            surpriseNote:
+              "This is a surprise for Liza — not just a gift. Please keep it quiet until 2 August.",
             finalsLabel: "The birthday rule:",
             finalsValue: "warm words count more than winners.",
             formHeading: "Your message for Liza",
@@ -2508,6 +2532,8 @@
             formTitleNamed: "{name}, добавьте свои слова в открытку команды.",
             formIntro:
               "Оставьте имя и поздравление. Мы распечатаем все пожелания и передадим их Лизе в день рождения.",
+            surpriseNote:
+              "Это сюрприз для Лизы — не просто подарок. Пожалуйста, не рассказывайте ей до 2 августа.",
             finalsLabel: "Правило дня рождения:",
             finalsValue: "тёплые слова важнее побед.",
             formHeading: "Ваше сообщение для Лизы",
@@ -2582,6 +2608,8 @@
             formTitleNamed: "{name}, dodajte svoj glas timskoj čestitki.",
             formIntro:
               "Ostavite ime i rođendansku poruku. Odštampaćemo sve čestitke i predati ih Lizi na rođendan.",
+            surpriseNote:
+              "Ovo je iznenađenje za Lizu — ne samo poklon. Molimo, ne otkrivajte joj do 2. avgusta.",
             finalsLabel: "Rođendansko pravilo:",
             finalsValue: "tople reči vrede više od pobede.",
             formHeading: "Vaša poruka za Lizu",
