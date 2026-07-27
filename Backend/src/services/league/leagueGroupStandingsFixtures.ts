@@ -11,6 +11,9 @@ import { loadSeasonRosterAliasMap } from './leagueTeamRosterAlias.util';
 import type { LeagueGroupStandingsMode } from './leagueGroupStandingsMode';
 import type { RankFixture, RankParticipant } from './leagueGroupStandingsRank.util';
 import {
+  buildEqualWinsTieClusters,
+  computeParticipantGameDeltas,
+  computeParticipantSetDeltas,
   orderByRankedIds,
   rankFixedTeamGroupStandings,
 } from './leagueGroupStandingsRank.util';
@@ -20,10 +23,27 @@ type Tx = Prisma.TransactionClient | typeof import('../../config/database').defa
 export type GroupStandingRow = {
   id: string;
   wins: number;
+  losses?: number;
+  ties?: number;
   currentGroupId: string | null;
   userId?: string | null;
   leagueTeamId?: string | null;
   leagueTeam?: { players: { userId: string }[] } | null;
+  /** Sets won − sets lost across REGULAR fixtures (tie-break metric). */
+  setDelta?: number;
+  /** Games/balls won − lost across REGULAR fixtures (same unit as mini-table game Δ). */
+  gameDelta?: number;
+};
+
+export type LeagueStandingsTieClusterDto = {
+  groupId: string | null;
+  seasonWins: number;
+  rows: Array<{
+    participantId: string;
+    miniWins: number;
+    setDiff: number;
+    gameDiff: number;
+  }>;
 };
 
 /** @deprecated Use GroupStandingRow */
@@ -470,12 +490,43 @@ export async function applyGroupStandingsTiebreakers<T extends GroupStandingRow>
   participants: T[],
   mode: LeagueGroupStandingsMode
 ): Promise<T[]> {
-  if (participants.length <= 1) return participants;
+  const { ranked } = await applyGroupStandingsTiebreakersWithClusters(
+    tx,
+    leagueSeasonId,
+    participants,
+    mode
+  );
+  return ranked;
+}
+
+export async function applyGroupStandingsTiebreakersWithClusters<T extends GroupStandingRow>(
+  tx: Tx,
+  leagueSeasonId: string,
+  participants: T[],
+  mode: LeagueGroupStandingsMode
+): Promise<{ ranked: T[]; tieClusters: LeagueStandingsTieClusterDto[] }> {
+  if (participants.length === 0) return { ranked: participants, tieClusters: [] };
 
   const fixtures =
     mode === 'fixedTeam'
       ? await loadFixedTeamGroupFixtures(tx, leagueSeasonId, participants)
       : await loadUserSinglesGroupFixtures(tx, leagueSeasonId, participants);
+  const setDeltas = computeParticipantSetDeltas(fixtures);
+  const gameDeltas = computeParticipantGameDeltas(fixtures);
+
+  if (participants.length === 1) {
+    const only = participants[0];
+    return {
+      ranked: [
+        {
+          ...only,
+          setDelta: setDeltas.get(only.id) ?? 0,
+          gameDelta: gameDeltas.get(only.id) ?? 0,
+        },
+      ],
+      tieClusters: [],
+    };
+  }
 
   const byGroup = new Map<string | null, T[]>();
   for (const p of participants) {
@@ -486,6 +537,7 @@ export async function applyGroupStandingsTiebreakers<T extends GroupStandingRow>
   }
 
   const ranked: T[] = [];
+  const tieClusters: LeagueStandingsTieClusterDto[] = [];
   const groupKeys: (string | null)[] = [];
   const seen = new Set<string | null>();
   for (const p of participants) {
@@ -502,13 +554,37 @@ export async function applyGroupStandingsTiebreakers<T extends GroupStandingRow>
       continue;
     }
     const idSet = new Set(rows.map((r) => r.id));
-    const rankInput: RankParticipant[] = rows.map((r) => ({ id: r.id, wins: r.wins }));
+    const rankInput: RankParticipant[] = rows.map((r) => ({
+      id: r.id,
+      wins: r.wins,
+      losses: r.losses ?? 0,
+      ties: r.ties ?? 0,
+    }));
     const groupFixtures = fixtures.filter((f) => idSet.has(f.aId) && idSet.has(f.bId));
     const orderedIds = rankFixedTeamGroupStandings(rankInput, groupFixtures);
     ranked.push(...orderByRankedIds(rows, orderedIds));
+
+    for (const cluster of buildEqualWinsTieClusters(
+      rows.map((r) => ({
+        id: r.id,
+        wins: r.wins,
+        losses: r.losses ?? 0,
+        ties: r.ties ?? 0,
+      })),
+      groupFixtures
+    )) {
+      tieClusters.push({ groupId: key, ...cluster });
+    }
   }
 
-  return ranked;
+  return {
+    ranked: ranked.map((row) => ({
+      ...row,
+      setDelta: setDeltas.get(row.id) ?? 0,
+      gameDelta: gameDeltas.get(row.id) ?? 0,
+    })),
+    tieClusters,
+  };
 }
 
 /** @deprecated Prefer applyGroupStandingsTiebreakers(..., 'fixedTeam') */

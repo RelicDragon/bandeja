@@ -4,6 +4,7 @@ import { AdCampaignCache } from './ad.cache';
 import { verifyAdClickToken } from './ad.token.util';
 import type { AdLandingKey } from './adLandingWish.constants';
 import type { AdLandingWishCreateInput } from './adLandingWish.schemas';
+import { notifyDevelopersAdLandingWish } from './adLandingWish.notify';
 
 export type CreatedAdLandingWish = {
   id: string;
@@ -94,7 +95,7 @@ export async function createAdLandingWish(
     await excludeUserFromCampaign(campaignId, userId);
   }
 
-  return {
+  const created: CreatedAdLandingWish = {
     id: row.id,
     landingKey: row.landingKey,
     userId: row.userId,
@@ -105,4 +106,10 @@ export async function createAdLandingWish(
     locale: row.locale,
     createdAt: row.createdAt,
   };
+
+  void notifyDevelopersAdLandingWish(created).catch((err) => {
+    console.error('[adLandingWish] developer Telegram notify failed:', err);
+  });
+
+  return created;
 }

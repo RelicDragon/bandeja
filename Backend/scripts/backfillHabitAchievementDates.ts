@@ -13,6 +13,7 @@ dotenv.config();
 import { EntityType, type Sport } from '@prisma/client';
 import { getAchievementDefinition } from '@bandeja/shared/achievements';
 import prisma from '../src/config/database';
+import { achievementPlayAt } from '../src/services/achievements/achievementPlayAt';
 import {
   computeHabitCrossingDates,
   type HabitCrossingEvent,
@@ -23,14 +24,6 @@ import { resolveSportStatsDeltasForReconcile } from '../src/services/results/out
 import { countsForPlayStreak } from '../src/services/results/ratingActivity';
 import { getUserTimezone } from '../src/services/user-timezone.service';
 
-function playAt(game: {
-  finishedDate: Date | null;
-  endTime: Date | null;
-  startTime: Date | null;
-  createdAt: Date;
-}): Date {
-  return game.finishedDate ?? game.endTime ?? game.startTime ?? game.createdAt;
-}
 
 async function crossingsForDefinitions(params: {
   userId: string;
@@ -97,7 +90,7 @@ async function loadEventsForUser(userId: string): Promise<HabitCrossingEvent[]> 
     events.push({
       gameId: row.game.id,
       sport: row.game.sport as Sport,
-      at: playAt({ ...row.game, createdAt: row.createdAt }),
+      at: achievementPlayAt({ ...row.game, createdAt: row.createdAt }),
       gamesPlayedDelta: deltas.gamesPlayedDelta,
       gamesWonDelta: deltas.gamesWonDelta,
       qualifiesForStreak,

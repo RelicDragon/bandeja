@@ -14,6 +14,9 @@ export type RankFixture = {
 export type RankParticipant = {
   id: string;
   wins: number;
+  /** Used to park no-outcome rows (0–0–0) after active tie-break. */
+  losses?: number;
+  ties?: number;
 };
 
 type MiniStats = {
@@ -24,6 +27,15 @@ type MiniStats = {
 
 function stableId(a: string, b: string): number {
   return a.localeCompare(b);
+}
+
+/** No REGULAR outcomes yet — excluded from equal-wins collision resolve. */
+export function hasNoStandingOutcome(p: {
+  wins: number;
+  losses?: number;
+  ties?: number;
+}): boolean {
+  return p.wins === 0 && (p.losses ?? 0) === 0 && (p.ties ?? 0) === 0;
 }
 
 function fixturesAmong(ids: Set<string>, fixtures: RankFixture[]): RankFixture[] {
@@ -146,6 +158,7 @@ function resolveCluster(ids: string[], fixtures: RankFixture[]): string[] {
  * Rank fixed-team participants in one group.
  * 1) match wins; 2) two-way H2H; 3) 3+ mini-table (wins → set Δ → game Δ);
  * 4) two left equal after mini → H2H.
+ * No-outcome (0–0–0) rows stay after active teams in the same wins bucket.
  */
 export function rankFixedTeamGroupStandings(
   participants: RankParticipant[],
@@ -154,9 +167,88 @@ export function rankFixedTeamGroupStandings(
   if (participants.length === 0) return [];
   const ordered: string[] = [];
   for (const cluster of partitionByEqualWins(participants)) {
-    ordered.push(...resolveCluster(cluster.map((p) => p.id), fixtures));
+    const active = cluster.filter((p) => !hasNoStandingOutcome(p));
+    const idle = cluster.filter((p) => hasNoStandingOutcome(p));
+    if (active.length === 1) ordered.push(active[0].id);
+    else if (active.length > 1) {
+      ordered.push(...resolveCluster(active.map((p) => p.id), fixtures));
+    }
+    ordered.push(...[...idle].map((p) => p.id).sort(stableId));
   }
   return ordered;
+}
+
+export type EqualWinsTieClusterRow = {
+  participantId: string;
+  miniWins: number;
+  setDiff: number;
+  gameDiff: number;
+};
+
+export type EqualWinsTieCluster = {
+  seasonWins: number;
+  rows: EqualWinsTieClusterRow[];
+};
+
+/**
+ * Equal-wins collision clusters for display (H2H / mini-table).
+ * Skips teams with no outcomes yet (0 wins / 0 losses / 0 ties).
+ * Row order matches `rankFixedTeamGroupStandings` for the same active set.
+ */
+export function buildEqualWinsTieClusters(
+  participants: Array<{ id: string; wins: number; losses: number; ties?: number }>,
+  fixtures: RankFixture[]
+): EqualWinsTieCluster[] {
+  const out: EqualWinsTieCluster[] = [];
+  for (const cluster of partitionByEqualWins(participants)) {
+    const eligible = cluster.filter((p) => !hasNoStandingOutcome(p));
+    if (eligible.length < 2) continue;
+    const rankInput = eligible.map((p) => ({
+      id: p.id,
+      wins: p.wins,
+      losses: p.losses,
+      ties: p.ties ?? 0,
+    }));
+    const idSet = new Set(rankInput.map((p) => p.id));
+    const among = fixturesAmong(idSet, fixtures);
+    const orderedIds = rankFixedTeamGroupStandings(rankInput, among);
+    const stats = computeMiniStats(orderedIds, among);
+    out.push({
+      seasonWins: eligible[0].wins,
+      rows: orderedIds.map((id) => {
+        const s = stats.get(id)!;
+        return {
+          participantId: id,
+          miniWins: s.wins,
+          setDiff: s.setDiff,
+          gameDiff: s.gameDiff,
+        };
+      }),
+    });
+  }
+  return out;
+}
+
+/** Season-wide set difference (sets won − sets lost) from fixtures. */
+export function computeParticipantSetDeltas(fixtures: RankFixture[]): Map<string, number> {
+  const map = new Map<string, number>();
+  const add = (id: string, d: number) => map.set(id, (map.get(id) ?? 0) + d);
+  for (const f of fixtures) {
+    add(f.aId, f.setsA - f.setsB);
+    add(f.bId, f.setsB - f.setsA);
+  }
+  return map;
+}
+
+/** Season-wide game/ball difference (fixture gamesA − gamesB) — same unit as mini-table game Δ. */
+export function computeParticipantGameDeltas(fixtures: RankFixture[]): Map<string, number> {
+  const map = new Map<string, number>();
+  const add = (id: string, d: number) => map.set(id, (map.get(id) ?? 0) + d);
+  for (const f of fixtures) {
+    add(f.aId, f.gamesA - f.gamesB);
+    add(f.bId, f.gamesB - f.gamesA);
+  }
+  return map;
 }
 
 /** Reorder rows by ranked participant ids; unknown ids keep relative order at end. */

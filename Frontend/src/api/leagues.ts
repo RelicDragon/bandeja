@@ -235,6 +235,10 @@ export interface LeagueStanding {
   ties: number;
   losses: number;
   scoreDelta: number;
+  /** Sets won − lost (fixed-team / 1v1); from REGULAR fixtures. */
+  setDelta?: number;
+  /** Games/balls won − lost (fixed-team / 1v1); from REGULAR fixtures. */
+  gameDelta?: number;
   user?: any;
   leagueTeam?: {
     id: string;
@@ -251,6 +255,17 @@ export interface LeagueStanding {
     worseGroupId?: string | null;
     color?: string | null;
   };
+}
+
+export interface LeagueStandingsTieCluster {
+  groupId: string | null;
+  seasonWins: number;
+  rows: Array<{
+    participantId: string;
+    miniWins: number;
+    setDiff: number;
+    gameDiff: number;
+  }>;
 }
 
 /** Historical fixed-team roster (`userId:userId`) → current franchise leagueTeamId. */
@@ -344,7 +359,12 @@ export const leaguesApi = {
   },
   getStandings: async (leagueSeasonId: string) => {
     const response = await api.get<
-      ApiResponse<LeagueStanding[]> & { meta?: { rosterAliases?: LeagueRosterAlias[] } }
+      ApiResponse<LeagueStanding[]> & {
+        meta?: {
+          rosterAliases?: LeagueRosterAlias[];
+          tieClusters?: LeagueStandingsTieCluster[];
+        };
+      }
     >(`/leagues/${leagueSeasonId}/standings`);
     return response.data;
   },

@@ -10,6 +10,7 @@ import {
 } from '@bandeja/shared/achievements';
 import prisma from '../../config/database';
 import { upsertPartnerAchievementStats, readPartnerAchievementStats } from './achievementStats.service';
+import { achievementPlayAt } from './achievementPlayAt';
 import { attachHabitUnlocksToGameOutcome } from './habitUnlockAttach.service';
 import type { HabitGrantResult, HabitUnlockMeta } from './habitGrant.service';
 
@@ -27,15 +28,6 @@ type ScannedGame = {
     }
   >;
 };
-
-function playAt(game: {
-  finishedDate: Date | null;
-  endTime: Date | null;
-  startTime: Date | null;
-  createdAt: Date;
-}): Date {
-  return game.finishedDate ?? game.endTime ?? game.startTime ?? game.createdAt;
-}
 
 export type { PartnerHabitCounters };
 
@@ -93,7 +85,8 @@ async function loadScannedGamesForUser(params: {
         },
       },
     },
-    orderBy: [{ finishedDate: 'asc' }, { endTime: 'asc' }, { createdAt: 'asc' }],
+    // Order in JS by playAt — finishedDate ASC puts null finishedDate last while
+    // playAt falls back to earlier endTime/startTime (inverts crossing dates).
     select: {
       id: true,
       entityType: true,
@@ -134,7 +127,7 @@ async function loadScannedGamesForUser(params: {
     },
   });
 
-  return games.map((game) => {
+  const scanned = games.map((game) => {
     const outcomeByUser = new Map(game.outcomes.map((o) => [o.userId, o]));
     const playerIds = new Set<string>();
     for (const round of game.rounds) {
@@ -177,11 +170,18 @@ async function loadScannedGamesForUser(params: {
       id: game.id,
       entityType: game.entityType,
       sport: game.sport,
-      finishedAt: playAt(game),
+      finishedAt: achievementPlayAt(game),
       players,
       matches,
     };
   });
+
+  scanned.sort((a, b) => {
+    const t = a.finishedAt.getTime() - b.finishedAt.getTime();
+    if (t !== 0) return t;
+    return a.id.localeCompare(b.id);
+  });
+  return scanned;
 }
 
 /** Chronological partner-eligible games for backfill crossing dates. */

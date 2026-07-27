@@ -304,7 +304,7 @@ async function getLeagueStandingsOrder(
 ): Promise<string[] | null> {
   if (game.entityType !== 'LEAGUE' || !game.parentId) return null;
   try {
-    let standings: any[] = await LeagueReadService.getLeagueStandings(game.parentId);
+    let standings: any[] = (await LeagueReadService.getLeagueStandings(game.parentId)).standings;
     if (game.leagueGroupId) {
       standings = standings.filter(
         (s) => (s.currentGroupId ?? s.currentGroup?.id) === game.leagueGroupId

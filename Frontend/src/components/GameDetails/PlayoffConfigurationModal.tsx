@@ -20,6 +20,11 @@ import {
 import { Loader2, Check } from 'lucide-react';
 import { getLeagueGroupColor, getLeagueGroupSoftColor } from '@/utils/leagueGroupColors';
 import { leaguePreservesApiStandingsOrder } from '@/utils/leagueGroupStandingsOrder';
+import {
+  formatSignedDelta,
+  resolveLeagueStandingsColumns,
+  standingsScoreUnitDelta,
+} from '@/utils/leagueStandingsColumns';
 import { resultsRoundGenV2Payload } from '@/utils/resultsRoundGenV2';
 import { PlayoffGameSetupStep } from './PlayoffGameSetupStep';
 import { BracketStructureSummary } from './BracketStructureSummary';
@@ -252,6 +257,14 @@ export const PlayoffConfigurationModal = ({
   const preserveApiStandingsOrder = leaguePreservesApiStandingsOrder(
     seasonGame ?? { hasFixedTeams }
   );
+  // Wait for season game so playersPerMatch / ballsInGames don't flip columns after load.
+  const standingsColumns = seasonGame
+    ? resolveLeagueStandingsColumns({
+        hasFixedTeams,
+        playersPerMatch: seasonGame.playersPerMatch,
+        ballsInGames: seasonGame.ballsInGames ?? false,
+      })
+    : null;
 
   const getStandingsForGroup = useCallback(
     (groupId: string) =>
@@ -1056,6 +1069,10 @@ export const PlayoffConfigurationModal = ({
                   <p className="text-sm text-gray-500 dark:text-gray-400 py-4">
                     {t('gameDetails.noParticipantsInGroup', { defaultValue: 'No participants in this group.' })}
                   </p>
+                ) : !standingsColumns ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
+                  </div>
                 ) : (
                   <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
                     <table className="w-full text-sm">
@@ -1070,10 +1087,29 @@ export const PlayoffConfigurationModal = ({
                           <th className="text-left py-2 pr-2 font-semibold text-gray-700 dark:text-gray-300">
                             {hasFixedTeams ? t('gameDetails.team') : t('gameDetails.player')}
                           </th>
+                          {standingsColumns.showPoints && (
+                            <th className="text-center py-2 px-1 font-semibold text-gray-700 dark:text-gray-300">
+                              {t('gameDetails.points')}
+                            </th>
+                          )}
                           <th className="text-center py-2 font-semibold text-gray-700 dark:text-gray-300">
                             {t('gameResults.winsTiesLosses')}
                           </th>
-                          <th className="text-center py-2 px-2 font-semibold text-gray-700 dark:text-gray-300">Δ</th>
+                          {standingsColumns.showSets && (
+                            <th className="text-center py-2 px-2 font-semibold text-gray-700 dark:text-gray-300">
+                              {t('gameResults.sets')}
+                            </th>
+                          )}
+                          {standingsColumns.showGames && (
+                            <th className="text-center py-2 px-2 font-semibold text-gray-700 dark:text-gray-300">
+                              {t('gameResults.extraUnitGames')}
+                            </th>
+                          )}
+                          {standingsColumns.showBalls && (
+                            <th className="text-center py-2 px-2 font-semibold text-gray-700 dark:text-gray-300">
+                              {t('gameResults.extraUnitBalls')}
+                            </th>
+                          )}
                         </tr>
                       </thead>
                       <tbody>
@@ -1171,13 +1207,29 @@ export const PlayoffConfigurationModal = ({
                                   </div>
                                 ) : null}
                               </td>
+                              {standingsColumns.showPoints && (
+                                <td className="py-2 px-1 text-center font-semibold text-gray-900 dark:text-white">
+                                  {standing.points}
+                                </td>
+                              )}
                               <td className="py-2 text-center text-gray-700 dark:text-gray-300 whitespace-nowrap">
                                 {standing.wins}-{standing.ties}-{standing.losses}
                               </td>
-                              <td className="py-2 px-2 text-center text-gray-700 dark:text-gray-300">
-                                {standing.scoreDelta > 0 ? '+' : ''}
-                                {standing.scoreDelta}
-                              </td>
+                              {standingsColumns.showSets && (
+                                <td className="py-2 px-2 text-center text-gray-700 dark:text-gray-300">
+                                  {formatSignedDelta(standing.setDelta ?? 0)}
+                                </td>
+                              )}
+                              {standingsColumns.showGames && (
+                                <td className="py-2 px-2 text-center text-gray-700 dark:text-gray-300">
+                                  {formatSignedDelta(standingsScoreUnitDelta(standing))}
+                                </td>
+                              )}
+                              {standingsColumns.showBalls && (
+                                <td className="py-2 px-2 text-center text-gray-700 dark:text-gray-300">
+                                  {formatSignedDelta(standingsScoreUnitDelta(standing))}
+                                </td>
+                              )}
                             </tr>
                           );
                         })}

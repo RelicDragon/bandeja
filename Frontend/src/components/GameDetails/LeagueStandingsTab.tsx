@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card } from '@/components';
-import { PlayerAvatar } from '@/components/PlayerAvatar';
 import {
   leaguesApi,
   LeagueStanding,
@@ -9,8 +8,9 @@ import {
   LeagueRound,
   type BracketPlayoffGroupDto,
   type BracketPlayoffResponse,
+  type LeagueStandingsTieCluster,
 } from '@/api/leagues';
-import { Loader2, Trophy, Medal } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { getLeagueGroupColor, getLeagueGroupSoftColor } from '@/utils/leagueGroupColors';
 import { GroupFilterDropdown } from './GroupFilterDropdown';
 import { RoundTypeFilterSwitch } from './RoundTypeFilterSwitch';
@@ -31,12 +31,26 @@ import {
   getActiveBracketGroup,
   isCrossGroupBracket,
 } from '@/features/leagueBracket';
+import { resolveLeagueStandingsColumns } from '@/utils/leagueStandingsColumns';
+import { standingsTieClusterAnchorId } from '@/utils/leagueStandingsTieExplain';
+import { LeagueStandingsTable } from './LeagueStandingsTable';
+import { LeagueStandingsTieBreakSection } from './LeagueStandingsTieBreakSection';
 
 const ALL_GROUP_ID = 'ALL';
+const NO_GROUP_KEY = 'no-group';
+
+function compareStandingsByPoints(a: LeagueStanding, b: LeagueStanding) {
+  if (b.points !== a.points) return b.points - a.points;
+  if (b.wins !== a.wins) return b.wins - a.wins;
+  if (b.scoreDelta !== a.scoreDelta) return b.scoreDelta - a.scoreDelta;
+  return 0;
+}
 
 interface LeagueStandingsTabProps {
   leagueSeasonId: string;
   hasFixedTeams: boolean;
+  playersPerMatch?: number | null;
+  ballsInGames?: boolean;
   /** When true (fixed teams or 1v1), keep API order — do not re-sort by points. */
   preserveApiOrder?: boolean;
 }
@@ -44,20 +58,28 @@ interface LeagueStandingsTabProps {
 export const LeagueStandingsTab = ({
   leagueSeasonId,
   hasFixedTeams,
+  playersPerMatch = null,
+  ballsInGames = false,
   preserveApiOrder = false,
 }: LeagueStandingsTabProps) => {
   const { t, i18n } = useTranslation();
+  const columns = useMemo(
+    () => resolveLeagueStandingsColumns({ hasFixedTeams, playersPerMatch, ballsInGames }),
+    [hasFixedTeams, playersPerMatch, ballsInGames]
+  );
   const [standings, setStandings] = useState<LeagueStanding[]>([]);
+  const [tieClusters, setTieClusters] = useState<LeagueStandingsTieCluster[]>([]);
   const [groups, setGroups] = useState<LeagueGroup[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showAwardIcons, setShowAwardIcons] = useState(false);
   const [selectedGroupId, setSelectedGroupId] = useState<string>(ALL_GROUP_ID);
   const [selectedRoundType, setSelectedRoundType] = useState<RoundTypeFilterValue>('REGULAR');
   const [bracketPayload, setBracketPayload] = useState<BracketPlayoffResponse | null>(null);
   const [bracketRounds, setBracketRounds] = useState<LeagueRound[]>([]);
   const [selectedBracketRoundId, setSelectedBracketRoundId] = useState<string | null>(null);
-  const NO_GROUP_KEY = 'no-group';
+
   useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
     const fetchData = async () => {
       try {
         const [standingsResponse, groupsResponse, roundsResponse] = await Promise.all([
@@ -65,18 +87,22 @@ export const LeagueStandingsTab = ({
           leaguesApi.getGroups(leagueSeasonId).catch(() => ({ data: { groups: [] } })),
           leaguesApi.getRounds(leagueSeasonId).catch(() => ({ data: [] })),
         ]);
+        if (cancelled) return;
         setStandings(standingsResponse.data);
+        setTieClusters(standingsResponse.meta?.tieClusters ?? []);
         setGroups(groupsResponse.data.groups);
         const rounds = roundsResponse.data ?? [];
         setSelectedRoundType(findBracketRounds(rounds).length > 0 ? 'PLAYOFF' : 'REGULAR');
       } catch (error) {
-        console.error('Failed to fetch league data:', error);
+        if (!cancelled) console.error('Failed to fetch league data:', error);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
-
-    fetchData();
+    void fetchData();
+    return () => {
+      cancelled = true;
+    };
   }, [leagueSeasonId]);
 
   const loadBracketPodium = useCallback(async () => {
@@ -117,24 +143,21 @@ export const LeagueStandingsTab = ({
   }, [bracketRounds]);
 
   useEffect(() => {
-    loadBracketPodium().catch(() => {});
+    void loadBracketPodium();
   }, [loadBracketPodium]);
 
   useEffect(() => {
-    const interval = setInterval(() => setShowAwardIcons((prev) => !prev), 1500);
-    return () => clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
-    const loadSavedFilter = async () => {
-      const savedGroupId = await getGroupFilter(leagueSeasonId);
-      if (savedGroupId) setSelectedGroupId(savedGroupId);
+    let cancelled = false;
+    void getGroupFilter(leagueSeasonId).then((savedGroupId) => {
+      if (!cancelled && savedGroupId) setSelectedGroupId(savedGroupId);
+    });
+    return () => {
+      cancelled = true;
     };
-    loadSavedFilter();
   }, [leagueSeasonId]);
 
   useEffect(() => {
-    setGroupFilter(leagueSeasonId, selectedGroupId);
+    void setGroupFilter(leagueSeasonId, selectedGroupId);
   }, [selectedGroupId, leagueSeasonId]);
 
   useEffect(() => {
@@ -149,46 +172,86 @@ export const LeagueStandingsTab = ({
     [standings, hasFixedTeams]
   );
 
-  const compareStandings = (a: LeagueStanding, b: LeagueStanding) => {
-    if (b.points !== a.points) return b.points - a.points;
-    if (b.wins !== a.wins) return b.wins - a.wins;
-    if (b.scoreDelta !== a.scoreDelta) return b.scoreDelta - a.scoreDelta;
-    return 0;
-  };
+  const standingsById = useMemo(() => {
+    const map = new Map<string, LeagueStanding>();
+    for (const s of displayStandings) map.set(s.id, s);
+    return map;
+  }, [displayStandings]);
 
-  const groupStandingsMap = new Map<string, LeagueStanding[]>();
-
-  displayStandings.forEach((standing) => {
-    const key = standing.currentGroup?.id ?? NO_GROUP_KEY;
-    if (!groupStandingsMap.has(key)) {
-      groupStandingsMap.set(key, []);
+  const tieClustersByGroupId = useMemo(() => {
+    if (!preserveApiOrder) return new Map<string, LeagueStandingsTieCluster[]>();
+    const map = new Map<string, LeagueStandingsTieCluster[]>();
+    for (const cluster of tieClusters) {
+      const key = cluster.groupId ?? NO_GROUP_KEY;
+      const list = map.get(key);
+      if (list) list.push(cluster);
+      else map.set(key, [cluster]);
     }
-    groupStandingsMap.get(key)!.push(standing);
-  });
+    return map;
+  }, [tieClusters, preserveApiOrder]);
 
-  const orderedGroupIds = groups.map((g) => g.id);
-  const orderedGroups = groups.map((group) => {
-    const rows = groupStandingsMap.get(group.id) || [];
-    return {
-      id: group.id,
-      name: group.name || t('gameDetails.group') || 'Group',
-      color: group.color,
-      // Fixed-team / 1v1 order comes from API (H2H / mini-table); do not re-sort.
-      standings: preserveApiOrder ? rows : [...rows].sort(compareStandings),
-    };
-  });
+  const tieMetaByGroupKey = useMemo(() => {
+    const map = new Map<
+      string,
+      { ids: Set<string>; anchorById: Map<string, string> }
+    >();
+    for (const [groupKey, clusters] of tieClustersByGroupId) {
+      const ids = new Set<string>();
+      const anchorById = new Map<string, string>();
+      for (const cluster of clusters) {
+        const anchor = standingsTieClusterAnchorId(groupKey, cluster.seasonWins);
+        for (const row of cluster.rows) {
+          ids.add(row.participantId);
+          anchorById.set(row.participantId, anchor);
+        }
+      }
+      map.set(groupKey, { ids, anchorById });
+    }
+    return map;
+  }, [tieClustersByGroupId]);
+
+  const orderedGroups = useMemo(() => {
+    const byGroup = new Map<string, LeagueStanding[]>();
+    for (const standing of displayStandings) {
+      const key = standing.currentGroup?.id ?? NO_GROUP_KEY;
+      const list = byGroup.get(key);
+      if (list) list.push(standing);
+      else byGroup.set(key, [standing]);
+    }
+    return groups.map((group) => {
+      const rows = byGroup.get(group.id) ?? [];
+      return {
+        id: group.id,
+        name: group.name || t('gameDetails.group') || 'Group',
+        color: group.color,
+        standings: preserveApiOrder ? rows : [...rows].sort(compareStandingsByPoints),
+      };
+    });
+  }, [displayStandings, groups, preserveApiOrder, t]);
+
+  const groupIdKey = useMemo(() => groups.map((g) => g.id).join(','), [groups]);
 
   useEffect(() => {
     if (loading) return;
-    if (selectedGroupId !== ALL_GROUP_ID && !orderedGroupIds.includes(selectedGroupId)) {
+    if (selectedGroupId === ALL_GROUP_ID) return;
+    if (!groupIdKey.split(',').filter(Boolean).includes(selectedGroupId)) {
       setSelectedGroupId(ALL_GROUP_ID);
-      setGroupFilter(leagueSeasonId, ALL_GROUP_ID);
+      void setGroupFilter(leagueSeasonId, ALL_GROUP_ID);
     }
-  }, [loading, orderedGroupIds, selectedGroupId, leagueSeasonId]);
+  }, [loading, groupIdKey, selectedGroupId, leagueSeasonId]);
 
-  const ungroupedStandings = groupStandingsMap.get(NO_GROUP_KEY);
-  const hasGroups = orderedGroups.length > 0;
-  const filteredGroups = selectedGroupId === ALL_GROUP_ID ? orderedGroups : orderedGroups.filter((group) => group.id === selectedGroupId);
+  const ungroupedStandings = useMemo(() => {
+    const rows = displayStandings.filter((s) => !s.currentGroup?.id);
+    return preserveApiOrder ? rows : [...rows].sort(compareStandingsByPoints);
+  }, [displayStandings, preserveApiOrder]);
+
+  const filteredGroups = useMemo(
+    () =>
+      selectedGroupId === ALL_GROUP_ID
+        ? orderedGroups
+        : orderedGroups.filter((group) => group.id === selectedGroupId),
+    [orderedGroups, selectedGroupId]
+  );
 
   const crossGroupBracket = isCrossGroupBracket(bracketPayload);
   const seasonBracketGroup = getActiveBracketGroup(bracketPayload);
@@ -249,147 +312,6 @@ export const LeagueStandingsTab = ({
     );
   }
 
-  const getPlaceIcon = (index: number) => {
-    if (index === 0) {
-      return <Trophy className="h-5 w-5 text-yellow-500" />;
-    } else if (index === 1) {
-      return <Medal className="h-5 w-5 text-gray-400" />;
-    } else if (index === 2) {
-      return <Medal className="h-5 w-5 text-amber-600" />;
-    }
-    return null;
-  };
-
-  const renderPlaceDisplay = (index: number) => {
-    const icon = getPlaceIcon(index);
-    const placeNumber = index + 1;
-
-    if (!icon) {
-      return (
-        <span className="text-sm font-medium text-gray-900 dark:text-white">
-          {placeNumber}
-        </span>
-      );
-    }
-
-    return (
-      <div className="relative flex items-center justify-center w-12 h-6 overflow-hidden">
-        <span
-          className={`text-sm font-semibold text-gray-900 dark:text-white transition-all duration-500 transform ${
-            showAwardIcons ? 'opacity-0 -translate-y-2' : 'opacity-100 translate-y-0'
-          }`}
-        >
-          {placeNumber}
-        </span>
-        <span
-          className={`absolute inset-0 flex items-center justify-center transition-all duration-500 transform ${
-            showAwardIcons ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
-          }`}
-        >
-          {icon}
-        </span>
-      </div>
-    );
-  };
-
-  const renderStandingsTable = (groupStandings: LeagueStanding[], startIndex: number = 0) => (
-    <div className="overflow-x-auto">
-      <table className="w-full">
-        <thead>
-          <tr className="border-b border-gray-200 dark:border-gray-700">
-            <th className="w-14" />
-            <th className="text-left py-2 pl-0 pr-0 text-xs font-semibold text-gray-700 dark:text-gray-300">
-              <div className="-translate-x-2">
-                {hasFixedTeams ? t('gameDetails.team') : t('gameDetails.player')}
-              </div>
-            </th>
-            <th className="text-center py-2 pl-0 pr-2 text-xs font-semibold text-gray-700 dark:text-gray-300">
-              {t('gameDetails.points')}
-            </th>
-            <th className="text-center py-2 pl-4 pr-2 text-xs font-semibold text-gray-700 dark:text-gray-300 whitespace-nowrap">
-              {t('gameResults.winsTiesLosses')}
-            </th>
-            <th className="text-center py-2 px-2 text-xs font-semibold text-gray-700 dark:text-gray-300">
-              Δ
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {groupStandings.map((standing, index) => (
-            <tr
-              key={standing.id}
-              className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50"
-            >
-              <td className="py-2 pl-0 pr-0">
-                <div className="flex items-center justify-center -translate-x-2">
-                  {renderPlaceDisplay(startIndex + index)}
-                </div>
-              </td>
-              <td className="py-2 pl-0 pr-0">
-                {hasFixedTeams ? (
-                  standing.leagueTeam ? (
-                    <div className="flex items-center gap-3 -translate-x-2">
-                      <div className="flex -space-x-2">
-                        {standing.leagueTeam.players?.slice(0, 3).map((player: any) => (
-                          <PlayerAvatar
-                            key={player.id}
-                            player={player.user}
-                            extrasmall={true}
-                            showName={false}
-                            fullHideName={true}
-                          />
-                        ))}
-                      </div>
-                      <div className="text-sm text-gray-900 dark:text-white">
-                        {standing.leagueTeam.players
-                          ?.map((p: any) => `${p.user?.firstName ?? ''} ${p.user?.lastName ?? ''}`.trim())
-                          .filter(Boolean)
-                          .join(', ')}
-                      </div>
-                    </div>
-                  ) : null
-                ) : standing.user ? (
-                  <div className="flex items-center gap-3 -translate-x-2">
-                    <PlayerAvatar
-                      player={standing.user}
-                      extrasmall={true}
-                      showName={false}
-                      fullHideName={true}
-                    />
-                    <div>
-                      <div className="text-sm text-gray-900 dark:text-white">
-                        {[standing.user.firstName, standing.user.lastName].filter(Boolean).join(' ')}
-                      </div>
-                      {standing.user.verbalStatus && (
-                        <p className="verbal-status">
-                          {standing.user.verbalStatus}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                ) : null}
-              </td>
-              <td className="py-2 pl-0 pr-2 text-center text-sm font-semibold text-gray-900 dark:text-white">
-                {standing.points}
-              </td>
-              <td className="py-2 pl-4 pr-2 text-center text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">
-                <span>
-                  {standing.wins}-{standing.ties}-{standing.losses}
-                  <span className="text-[8px] text-gray-500 dark:text-gray-400 ml-0.5">
-                    {standing.wins + standing.ties + standing.losses}
-                  </span>
-                </span>
-              </td>
-              <td className="py-2 px-2 text-center text-sm text-gray-700 dark:text-gray-300">
-                {standing.scoreDelta > 0 ? '+' : ''}{standing.scoreDelta}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-
   return (
     <div className="space-y-3">
       <RoundTypeFilterSwitch
@@ -401,7 +323,11 @@ export const LeagueStandingsTab = ({
       {orderedGroups.length > 0 && (
         <GroupFilterDropdown
           selectedGroupId={selectedGroupId}
-          groups={orderedGroups.map((g) => ({ id: g.id, name: g.name, color: g.color ?? undefined }))}
+          groups={orderedGroups.map((g) => ({
+            id: g.id,
+            name: g.name,
+            color: g.color ?? undefined,
+          }))}
           allGroupsLabel={t('gameDetails.allGroups') || 'All groups'}
           onSelect={setSelectedGroupId}
           allGroupId={ALL_GROUP_ID}
@@ -428,18 +354,21 @@ export const LeagueStandingsTab = ({
           layoutIdPrefix={`${leagueSeasonId}-standings`}
         />
       )}
-      {showBracketPodium && crossGroupBracket && seasonBracketGroup && (() => {
-        const vm = podiumVmForGroup(seasonBracketGroup);
-        return (
-        <LeagueBracketPodiumCard
-          key="podium-season"
-          group={seasonBracketGroup}
-          rows={vm.podiumRows}
-          crossGroupBracket
-          fullscreenPath={vm.sharePaths?.fullscreenPath}
-        />
-        );
-      })()}
+      {showBracketPodium &&
+        crossGroupBracket &&
+        seasonBracketGroup &&
+        (() => {
+          const vm = podiumVmForGroup(seasonBracketGroup);
+          return (
+            <LeagueBracketPodiumCard
+              key="podium-season"
+              group={seasonBracketGroup}
+              rows={vm.podiumRows}
+              crossGroupBracket
+              fullscreenPath={vm.sharePaths?.fullscreenPath}
+            />
+          );
+        })()}
       {showBracketPodium &&
         !crossGroupBracket &&
         filteredGroups.map(({ id }) => {
@@ -457,12 +386,13 @@ export const LeagueStandingsTab = ({
             />
           );
         })}
-      {hasGroups ? (
+      {orderedGroups.length > 0 ? (
         <>
           {filteredGroups.map(({ id, name, color, standings: groupStandings }) => {
             const accent = getLeagueGroupColor(color);
             const soft = getLeagueGroupSoftColor(color, '1A');
-            
+            const groupClusters = tieClustersByGroupId.get(id) ?? [];
+            const tieMeta = tieMetaByGroupKey.get(id);
             return (
               <Card key={id}>
                 {selectedGroupId === ALL_GROUP_ID && (
@@ -481,32 +411,69 @@ export const LeagueStandingsTab = ({
                     </div>
                   </div>
                 )}
-                {renderStandingsTable(groupStandings, 0)}
+                <LeagueStandingsTable
+                  rows={groupStandings}
+                  hasFixedTeams={hasFixedTeams}
+                  columns={columns}
+                  tieParticipantIds={tieMeta?.ids}
+                  tieAnchorByParticipantId={tieMeta?.anchorById}
+                />
+                <LeagueStandingsTieBreakSection
+                  groupKey={id}
+                  clusters={groupClusters}
+                  standingsById={standingsById}
+                  hasFixedTeams={hasFixedTeams}
+                  columns={columns}
+                />
               </Card>
             );
           })}
-          {selectedGroupId === ALL_GROUP_ID && ungroupedStandings && ungroupedStandings.length > 0 && (
+          {selectedGroupId === ALL_GROUP_ID && ungroupedStandings.length > 0 && (
             <Card key={NO_GROUP_KEY}>
               <div className="px-4 py-3 bg-gradient-to-r from-primary-50 to-primary-100/50 dark:from-primary-900/20 dark:to-primary-800/10 border-b border-gray-200 dark:border-gray-700">
                 <h3 className="text-sm font-bold text-gray-900 dark:text-white">
                   {t('gameDetails.noGroup') || 'No Group'}
                 </h3>
               </div>
-              {renderStandingsTable(
-                preserveApiOrder
-                  ? ungroupedStandings
-                  : [...ungroupedStandings].sort(compareStandings),
-                0
-              )}
+              <LeagueStandingsTable
+                rows={ungroupedStandings}
+                hasFixedTeams={hasFixedTeams}
+                columns={columns}
+                tieParticipantIds={tieMetaByGroupKey.get(NO_GROUP_KEY)?.ids}
+                tieAnchorByParticipantId={tieMetaByGroupKey.get(NO_GROUP_KEY)?.anchorById}
+              />
+              <LeagueStandingsTieBreakSection
+                groupKey={NO_GROUP_KEY}
+                clusters={tieClustersByGroupId.get(NO_GROUP_KEY) ?? []}
+                standingsById={standingsById}
+                hasFixedTeams={hasFixedTeams}
+                columns={columns}
+              />
             </Card>
           )}
         </>
       ) : (
         <Card>
-          {renderStandingsTable(displayStandings, 0)}
+          <LeagueStandingsTable
+            rows={
+              preserveApiOrder
+                ? displayStandings
+                : [...displayStandings].sort(compareStandingsByPoints)
+            }
+            hasFixedTeams={hasFixedTeams}
+            columns={columns}
+            tieParticipantIds={tieMetaByGroupKey.get(NO_GROUP_KEY)?.ids}
+            tieAnchorByParticipantId={tieMetaByGroupKey.get(NO_GROUP_KEY)?.anchorById}
+          />
+          <LeagueStandingsTieBreakSection
+            groupKey={NO_GROUP_KEY}
+            clusters={tieClustersByGroupId.get(NO_GROUP_KEY) ?? tieClusters}
+            standingsById={standingsById}
+            hasFixedTeams={hasFixedTeams}
+            columns={columns}
+          />
         </Card>
       )}
     </div>
   );
 };
-

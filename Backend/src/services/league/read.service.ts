@@ -11,7 +11,7 @@ import {
   projectLeagueParticipants,
   projectLeagueRounds,
 } from './leagueSportProjection.util';
-import { applyGroupStandingsTiebreakers } from './leagueGroupStandingsFixtures';
+import { applyGroupStandingsTiebreakersWithClusters } from './leagueGroupStandingsFixtures';
 import { resolveLeagueGroupStandingsMode } from './leagueGroupStandingsMode';
 
 export class LeagueReadService {
@@ -228,15 +228,23 @@ export class LeagueReadService {
 
     const wantType = hasFixedTeams ? LeagueParticipantType.TEAM : LeagueParticipantType.USER;
     let filtered = participants.filter((p) => p.participantType === wantType);
+    let tieClusters: Awaited<
+      ReturnType<typeof applyGroupStandingsTiebreakersWithClusters>
+    >['tieClusters'] = [];
     if (standingsMode) {
-      filtered = await applyGroupStandingsTiebreakers(
+      const result = await applyGroupStandingsTiebreakersWithClusters(
         prisma,
         leagueSeasonId,
         filtered,
         standingsMode
       );
+      filtered = result.ranked;
+      tieClusters = result.tieClusters;
     }
-    return projectLeagueParticipants(filtered, seasonSport);
+    return {
+      standings: projectLeagueParticipants(filtered, seasonSport),
+      tieClusters,
+    };
   }
 }
 

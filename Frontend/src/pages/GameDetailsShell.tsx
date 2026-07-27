@@ -1661,6 +1661,8 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
           <LeagueStandingsTab
             leagueSeasonId={game.id}
             hasFixedTeams={game.hasFixedTeams || false}
+            playersPerMatch={game.playersPerMatch}
+            ballsInGames={game.ballsInGames || false}
             preserveApiOrder={leaguePreservesApiStandingsOrder(game)}
           />
         </div>
