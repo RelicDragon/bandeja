@@ -164,9 +164,16 @@ export async function grantHabitAchievements(params: {
  * threshold and that has never been granted (incl. revoked). Silent — no celebration.
  * Uses the same aggregated counters as the cabinet progress UI.
  */
+export type HabitGrantTiming = {
+  earnedAt: Date;
+  sourceGameId?: string | null;
+};
+
 export async function backfillHabitAchievementsForUser(params: {
   userId: string;
   counters: HabitProgressCounters;
+  /** Historical unlock times / source games (e.g. from outcome replay). */
+  timingByDefinitionId?: ReadonlyMap<string, HabitGrantTiming>;
   tx?: Prisma.TransactionClient | typeof prisma;
 }): Promise<HabitGrantResult> {
   const db = params.tx ?? prisma;
@@ -185,6 +192,7 @@ export async function backfillHabitAchievementsForUser(params: {
     due,
     sport: null,
     sourceGameId: null,
+    timingByDefinitionId: params.timingByDefinitionId,
   });
 }
 
@@ -194,6 +202,7 @@ async function createHabitGrants(params: {
   due: AchievementDefinition[];
   sport: Sport | null;
   sourceGameId: string | null;
+  timingByDefinitionId?: ReadonlyMap<string, HabitGrantTiming>;
 }): Promise<HabitGrantResult> {
   if (params.due.length === 0) {
     return { granted: [], unlocks: [] };
@@ -202,14 +211,20 @@ async function createHabitGrants(params: {
   const granted: AchievementDefinition[] = [];
   const unlocks: HabitUnlockMeta[] = [];
   for (const definition of params.due) {
+    const timing = params.timingByDefinitionId?.get(definition.id);
+    const sportFromDef =
+      typeof definition.sport === 'string' && definition.sport.length > 0
+        ? (definition.sport as Sport)
+        : null;
     try {
       const row = await params.db.userAchievement.create({
         data: {
           userId: params.userId,
           definitionId: definition.id,
           sourceKey: '',
-          sport: params.sport,
-          sourceGameId: params.sourceGameId,
+          sport: sportFromDef ?? params.sport,
+          sourceGameId: timing?.sourceGameId ?? params.sourceGameId,
+          ...(timing?.earnedAt ? { earnedAt: timing.earnedAt } : {}),
           isActive: true,
         },
       });

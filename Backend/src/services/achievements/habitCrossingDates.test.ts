@@ -87,4 +87,29 @@ function ev(
   assert.equal(crossings.get('habit_streak_4')?.sourceGameId, 't3');
 }
 
+{
+  const events: HabitCrossingEvent[] = [
+    ev({
+      gameId: 'tennis1',
+      sport: 'TENNIS',
+      at: new Date('2024-01-01T12:00:00.000Z'),
+    }),
+    ev({
+      gameId: 'padel1',
+      sport: 'PADEL',
+      at: new Date('2024-02-15T18:00:00.000Z'),
+    }),
+  ];
+  const crossings = computeHabitCrossingDates({
+    events,
+    timezone: TZ,
+    definitionIds: new Set(['habit_first_padel_game']),
+  });
+  assert.equal(crossings.get('habit_first_padel_game')?.sourceGameId, 'padel1');
+  assert.equal(
+    crossings.get('habit_first_padel_game')?.earnedAt.toISOString(),
+    '2024-02-15T18:00:00.000Z',
+  );
+}
+
 console.log('habitCrossingDates.test.ts: ok');

@@ -46,25 +46,42 @@ function maxAliveStreak(
   return max;
 }
 
+function sortByThreshold(defs: AchievementDefinition[]): AchievementDefinition[] {
+  return [...defs].sort((a, b) => (a.threshold ?? 0) - (b.threshold ?? 0));
+}
+
 function habitDefsByRule(): {
   volume: AchievementDefinition[];
   wins: AchievementDefinition[];
   streak: AchievementDefinition[];
+  /** Sport code → sport-scoped volume habits. */
+  sportVolume: Map<string, AchievementDefinition[]>;
 } {
   const volume: AchievementDefinition[] = [];
   const wins: AchievementDefinition[] = [];
   const streak: AchievementDefinition[] = [];
+  const sportVolume = new Map<string, AchievementDefinition[]>();
   for (const def of ACHIEVEMENT_CATALOG) {
     if (def.multiplicity !== 'one_shot' || def.threshold == null) continue;
     if (def.ruleKind === 'HABIT_VOLUME') volume.push(def);
     else if (def.ruleKind === 'HABIT_FIRST_WIN' || def.ruleKind === 'HABIT_WINS') {
       wins.push(def);
     } else if (def.ruleKind === 'HABIT_STREAK') streak.push(def);
+    else if (def.ruleKind === 'HABIT_SPORT_VOLUME' && def.sport) {
+      const list = sportVolume.get(def.sport) ?? [];
+      list.push(def);
+      sportVolume.set(def.sport, list);
+    }
   }
-  volume.sort((a, b) => (a.threshold ?? 0) - (b.threshold ?? 0));
-  wins.sort((a, b) => (a.threshold ?? 0) - (b.threshold ?? 0));
-  streak.sort((a, b) => (a.threshold ?? 0) - (b.threshold ?? 0));
-  return { volume, wins, streak };
+  for (const [sport, list] of sportVolume) {
+    sportVolume.set(sport, sortByThreshold(list));
+  }
+  return {
+    volume: sortByThreshold(volume),
+    wins: sortByThreshold(wins),
+    streak: sortByThreshold(streak),
+    sportVolume,
+  };
 }
 
 /**
@@ -81,10 +98,18 @@ export function computeHabitCrossingDates(params: {
   const out = new Map<string, HabitCrossing>();
   if (wanted.size === 0) return out;
 
-  const { volume, wins, streak } = habitDefsByRule();
+  const { volume, wins, streak, sportVolume } = habitDefsByRule();
   const pendingVolume = volume.filter((d) => wanted.has(d.id));
   const pendingWins = wins.filter((d) => wanted.has(d.id));
   const pendingStreak = streak.filter((d) => wanted.has(d.id));
+  const pendingSportVolume = new Map<string, AchievementDefinition[]>();
+  let pendingSportVolumeCount = 0;
+  for (const [sport, defs] of sportVolume) {
+    const pending = defs.filter((d) => wanted.has(d.id));
+    if (pending.length === 0) continue;
+    pendingSportVolume.set(sport, pending);
+    pendingSportVolumeCount += pending.length;
+  }
 
   const sorted = [...params.events].sort((a, b) => {
     const t = a.at.getTime() - b.at.getTime();
@@ -94,10 +119,16 @@ export function computeHabitCrossingDates(params: {
 
   let gamesFinished = 0;
   let gamesWon = 0;
+  const gamesFinishedBySport = new Map<string, number>();
   const streakBySport = new Map<Sport, PlayStreakState>();
 
   for (const event of sorted) {
-    if (pendingVolume.length === 0 && pendingWins.length === 0 && pendingStreak.length === 0) {
+    if (
+      pendingVolume.length === 0 &&
+      pendingWins.length === 0 &&
+      pendingStreak.length === 0 &&
+      pendingSportVolumeCount === 0
+    ) {
       break;
     }
 
@@ -108,6 +139,25 @@ export function computeHabitCrossingDates(params: {
         gamesFinished >= (pendingVolume[0].threshold ?? Number.POSITIVE_INFINITY)
       ) {
         const def = pendingVolume.shift()!;
+        out.set(def.id, {
+          definitionId: def.id,
+          earnedAt: event.at,
+          sourceGameId: event.gameId,
+        });
+      }
+
+      const sportKey = event.sport;
+      const sportCount =
+        (gamesFinishedBySport.get(sportKey) ?? 0) + event.gamesPlayedDelta;
+      gamesFinishedBySport.set(sportKey, sportCount);
+      const pendingForSport = pendingSportVolume.get(sportKey);
+      while (
+        pendingForSport &&
+        pendingForSport.length > 0 &&
+        sportCount >= (pendingForSport[0].threshold ?? Number.POSITIVE_INFINITY)
+      ) {
+        const def = pendingForSport.shift()!;
+        pendingSportVolumeCount -= 1;
         out.set(def.id, {
           definitionId: def.id,
           earnedAt: event.at,
