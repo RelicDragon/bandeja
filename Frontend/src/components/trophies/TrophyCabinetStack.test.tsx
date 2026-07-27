@@ -215,7 +215,16 @@ function PinnedCollapsedHarness() {
       entries={[
         {
           ...entry('habit_wins_10', 'trophies.defs.wins10.title', 10),
-          instances: [{ id: 'inst-pinned', unlockedAt: '2026-01-01T00:00:00.000Z' }],
+          instances: [
+            {
+              id: 'inst-pinned',
+              definitionId: 'habit_wins_10',
+              earnedAt: '2026-01-01T00:00:00.000Z',
+              sport: null,
+              place: null,
+              source: null,
+            },
+          ],
         },
         entry('habit_first_win', 'trophies.defs.firstWin.title', 1),
       ]}
@@ -235,7 +244,16 @@ function PinnedExpandedHarness() {
       entries={[
         {
           ...entry('habit_wins_10', 'trophies.defs.wins10.title', 10),
-          instances: [{ id: 'inst-pinned', unlockedAt: '2026-01-01T00:00:00.000Z' }],
+          instances: [
+            {
+              id: 'inst-pinned',
+              definitionId: 'habit_wins_10',
+              earnedAt: '2026-01-01T00:00:00.000Z',
+              sport: null,
+              place: null,
+              source: null,
+            },
+          ],
         },
         entry('habit_first_win', 'trophies.defs.firstWin.title', 1),
       ]}

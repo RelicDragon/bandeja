@@ -147,7 +147,16 @@ describe('TrophyStackIcon', () => {
 
     const pinned = {
       ...commonEntry(),
-      instances: [{ id: 'inst-1', unlockedAt: '2026-01-01T00:00:00.000Z' }],
+      instances: [
+        {
+          id: 'inst-1',
+          definitionId: 'habit_first_win',
+          earnedAt: '2026-01-01T00:00:00.000Z',
+          sport: null,
+          place: null,
+          source: null,
+        },
+      ],
     };
 
     act(() =>
