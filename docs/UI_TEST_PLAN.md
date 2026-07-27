@@ -1512,7 +1512,8 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | X-26c | Static landing URL (dev Vite) | Open `/LizaBirthday2026` (no trailing index.html) on Vite | Serves `public/LizaBirthday2026/index.html`; does not bounce to `/` via SPA catch-all |
 | X-26d | Birthday wish submit (linked) | Open `/LizaBirthday2026?ad_token=…` from ad; fill name+message; submit | Wish saved; success message; may submit again |
 | X-26e | Birthday wish submit (anonymous) | Open landing without `ad_token` (or with garbage token); submit wish | Wish still saved (no user link); success message |
-| X-26f | Birthday wish from native app | Tap ad in Capacitor (absolute `https://bandeja.me/LizaBirthday2026…`) → submit | Opens web (or in-WebView with prod API); wish POST succeeds |
+| X-26f | Birthday wish from native app | Tap ad in Capacitor (absolute `https://bandeja.me/LizaBirthday2026…`) → submit → tap Back to Bandeja | Landing stays in the current app WebView using its local static path; wish POST uses the production API; Back restores the exact originating Bandeja screen |
+| X-26g | Birthday wish return on web/dev | From `bandeja.me` or `localhost:3001`, tap the Liza ad → submit → tap Back to Bandeja | Landing uses the current tab and Back restores the exact originating Bandeja screen |
 
 ### 18.7 Navigation shell
 

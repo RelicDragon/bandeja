@@ -1,6 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { adClickNeedsLeavingConfirm, executeAdClick } from './adClickHandler';
 import type { AdPlacementPayload } from '@/api/sponsorPlacements';
+import { openExternalUrl } from '@/utils/openExternalUrl';
+
+vi.mock('@/utils/openExternalUrl', () => ({
+  openExternalUrl: vi.fn(),
+}));
 
 function payload(overrides: Partial<AdPlacementPayload>): AdPlacementPayload {
   return {
@@ -41,6 +46,7 @@ describe('executeAdClick OPEN_URL static pages', () => {
   afterEach(() => {
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
+    vi.clearAllMocks();
   });
 
   it('full-page navigates relative same-host static paths', async () => {
@@ -56,4 +62,33 @@ describe('executeAdClick OPEN_URL static pages', () => {
     expect(assign).toHaveBeenCalledWith('/LizaBirthday2026');
     expect(navigate).not.toHaveBeenCalled();
   });
+
+  it.each([
+    ['Capacitor', 'https://localhost'],
+    ['local web', 'http://localhost:3001'],
+  ])(
+    'keeps an absolute Bandeja birthday landing in the current document on %s',
+    async (_surface, origin) => {
+      const assign = vi.fn();
+      vi.stubGlobal('window', {
+        location: { assign, origin, href: `${origin}/` },
+      });
+      const navigate = vi.fn();
+
+      await executeAdClick(
+        payload({
+          clickAction: 'OPEN_URL',
+          clickUrl:
+            'https://bandeja.me/LizaBirthday2026?locale=ru&theme=dark&ad_token=token',
+        }),
+        navigate as never,
+      );
+
+      expect(assign).toHaveBeenCalledWith(
+        '/LizaBirthday2026?locale=ru&theme=dark&ad_token=token',
+      );
+      expect(openExternalUrl).not.toHaveBeenCalled();
+      expect(navigate).not.toHaveBeenCalled();
+    },
+  );
 });

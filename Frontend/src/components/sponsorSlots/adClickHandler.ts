@@ -29,6 +29,28 @@ function isSameOriginAbsoluteUrl(url: string): boolean {
   }
 }
 
+const APP_HOSTED_STATIC_LANDINGS = new Set(['/LizaBirthday2026']);
+const BANDEJA_WEB_HOSTS = new Set(['bandeja.me', 'www.bandeja.me']);
+
+function resolveAppHostedStaticLandingHref(url: string): string | null {
+  if (!isExternalUrl(url)) return null;
+
+  try {
+    const parsed = new URL(url);
+    const normalizedPath = parsed.pathname.replace(/\/+$/, '') || '/';
+    if (
+      parsed.protocol !== 'https:' ||
+      !BANDEJA_WEB_HOSTS.has(parsed.hostname) ||
+      !APP_HOSTED_STATIC_LANDINGS.has(normalizedPath)
+    ) {
+      return null;
+    }
+    return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+  } catch {
+    return null;
+  }
+}
+
 /** Full document navigation — required for static `public/` pages (nginx), not SPA routes. */
 function navigateSameOriginDocument(pathOrUrl: string) {
   const href = isExternalUrl(pathOrUrl)
@@ -81,6 +103,11 @@ export async function executeAdClick(
       // Relative / same-origin → full page load (static landings like /LizaBirthday2026).
       // Cross-origin https → external browser / new tab.
       if (isExternalUrl(clickUrl)) {
+        const appHostedLandingHref = resolveAppHostedStaticLandingHref(clickUrl);
+        if (appHostedLandingHref) {
+          navigateSameOriginDocument(appHostedLandingHref);
+          return;
+        }
         if (isSameOriginAbsoluteUrl(clickUrl)) {
           navigateSameOriginDocument(clickUrl);
           return;

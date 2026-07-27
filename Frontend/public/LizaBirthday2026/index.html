@@ -2326,7 +2326,7 @@
           id="success-done"
           data-i18n="successButton"
         >
-          Back to the birthday page
+          Back to Bandeja
         </button>
       </div>
     </div>
@@ -2399,7 +2399,7 @@
             successMessage:
               "Your birthday wish is safely in the team card. We cannot wait to celebrate Liza together.",
             successSignature: "Bandeja community · 02.08.2026",
-            successButton: "Back to the birthday page",
+            successButton: "Back to Bandeja",
             successClose: "Close celebration",
             footerMade: "Made with",
             footerLove: "love",
@@ -2471,7 +2471,7 @@
             successMessage:
               "Ваше поздравление уже в общей открытке. Скоро мы все вместе будем праздновать день рождения Лизы.",
             successSignature: "Сообщество Bandeja · 02.08.2026",
-            successButton: "Вернуться на страницу",
+            successButton: "Вернуться в Bandeja",
             successClose: "Закрыть поздравление",
             footerMade: "Сделано с",
             footerLove: "любовью",
@@ -2543,7 +2543,7 @@
             successMessage:
               "Vaša rođendanska poruka je bezbedno sačuvana u zajedničkoj čestitki. Jedva čekamo da zajedno proslavimo Lizin rođendan.",
             successSignature: "Bandeja zajednica · 02.08.2026.",
-            successButton: "Nazad na rođendansku stranicu",
+            successButton: "Nazad u aplikaciju Bandeja",
             successClose: "Zatvori proslavu",
             footerMade: "Napravljeno s",
             footerLove: "ljubavlju",
@@ -2779,6 +2779,20 @@
           }, 420);
         }
 
+        function returnToCallingApp() {
+          successDone.disabled = true;
+
+          if (window.history.length > 1) {
+            window.history.back();
+            return;
+          }
+
+          window.close();
+          window.setTimeout(function () {
+            if (!window.closed) window.location.replace("/");
+          }, 120);
+        }
+
         function applyDonationChoice(currency) {
           transferPanels.forEach(function (panel) {
             const isVisible = panel.dataset.currency === currency;
@@ -2889,7 +2903,7 @@
         });
 
         successClose.addEventListener("click", hideSuccessCelebration);
-        successDone.addEventListener("click", hideSuccessCelebration);
+        successDone.addEventListener("click", returnToCallingApp);
 
         successCelebration.addEventListener("keydown", function (event) {
           if (event.key === "Escape") {
