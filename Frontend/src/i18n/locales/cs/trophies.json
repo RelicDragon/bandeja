@@ -41,10 +41,10 @@
         "podium": "Pódium",
         "debut": "Debut",
         "generic": "Trofeje",
-        "rallyStarter": "Rally Starter",
+        "rallyStarter": "Kovárna zápasů",
         "tournamentHost": "Pořadatel turnaje",
         "soulOfTheParty": "Duše party",
-        "giantKiller": "Lovci obrů",
+        "giantKiller": "Lovec obrů",
         "dynamicDuo": "Dynamické duo",
         "openCourt": "Otevřený kurt"
       }
@@ -152,28 +152,28 @@
         "description": "Udrž 64týdenní sérii."
       },
       "orgGame1": {
-        "title": "Rally Starter",
-        "description": "Zorganizuj svůj první ratingový padelový zápas až do finalizace výsledků."
+        "title": "Start zápasů",
+        "description": "Zorganizuj první ratingový padel až do finále výsledků."
       },
       "orgGame10": {
-        "title": "Rally Starter ×10",
-        "description": "Zorganizuj 10 ratingových padelových zápasů až do finalizace výsledků."
+        "title": "Stavitel zápasů",
+        "description": "Zorganizuj 10 ratingových padelů až do finále výsledků."
       },
       "orgGame25": {
-        "title": "Rally Starter ×25",
-        "description": "Zorganizuj 25 ratingových padelových zápasů až do finalizace výsledků."
+        "title": "Architekt klubu",
+        "description": "Zorganizuj 25 ratingových padelů až do finále výsledků."
       },
       "orgGame50": {
-        "title": "Rally Starter ×50",
-        "description": "Zorganizuj 50 ratingových padelových zápasů až do finalizace výsledků."
+        "title": "Mistr organizátor",
+        "description": "Zorganizuj 50 ratingových padelů až do finále výsledků."
       },
       "orgGame100": {
-        "title": "Rally Starter ×100",
-        "description": "Zorganizuj 100 ratingových padelových zápasů až do finalizace výsledků."
+        "title": "Legenda klubu",
+        "description": "Zorganizuj 100 ratingových padelů až do finále výsledků."
       },
       "orgGame500": {
-        "title": "Rally Starter ×500",
-        "description": "Zorganizuj 500 ratingových padelových zápasů až do finalizace výsledků."
+        "title": "Nesmrtelný organizátor",
+        "description": "Zorganizuj 500 ratingových padelů až do finále výsledků."
       },
       "orgTournament1": {
         "title": "Otevření pavouka",
@@ -224,24 +224,24 @@
         "description": "Uspořádej 100 Bar eventů až do finalizace výsledků."
       },
       "giantKiller1": {
-        "title": "Giant Killer",
-        "description": "Win a rated 2v2 padel match against a team averaging at least 0.5 higher, with all players above 10% reliability."
+        "title": "Lovec obrů",
+        "description": "Vyhraj ratingový 2v2 proti týmu ≥0,5 silnějšímu (všichni >10 % reliability)."
       },
       "giantKiller5": {
-        "title": "Giant Killer ×5",
-        "description": "Win 5 rated 2v2 padel upsets (≥0.5 higher avg, all players above 10% reliability)."
+        "title": "Velký lov",
+        "description": "5 ratingových 2v2 upsets (≥0,5 výhoda soupeře, >10 % reliability)."
       },
       "giantKiller10": {
-        "title": "Giant Killer ×10",
-        "description": "Win 10 rated 2v2 padel upsets (≥0.5 higher avg, all players above 10% reliability)."
+        "title": "Hubitel obrů",
+        "description": "10 ratingových 2v2 upsets (≥0,5 výhoda soupeře, >10 % reliability)."
       },
       "giantKiller25": {
-        "title": "Giant Killer ×25",
-        "description": "Win 25 rated 2v2 padel upsets (≥0.5 higher avg, all players above 10% reliability)."
+        "title": "Zhouba titánů",
+        "description": "25 ratingových 2v2 upsets (≥0,5 výhoda soupeře, >10 % reliability)."
       },
       "giantKiller50": {
-        "title": "Giant Killer ×50",
-        "description": "Win 50 rated 2v2 padel upsets (≥0.5 higher avg, all players above 10% reliability)."
+        "title": "Lamač kolosů",
+        "description": "50 ratingových 2v2 upsets (≥0,5 výhoda soupeře, >10 % reliability)."
       },
       "dynamicDuo10": {
         "title": "Dynamic Duo",
@@ -256,24 +256,24 @@
         "description": "Win 100 qualifying padel matches with the same partner."
       },
       "openCourt10": {
-        "title": "Open Court",
-        "description": "Complete qualifying padel matches with 10 different partners."
+        "title": "Otevřený kurt",
+        "description": "Dohraj kvalifikační padely s 10 různými partáky."
       },
       "openCourt25": {
-        "title": "Open Court ×25",
-        "description": "Complete qualifying padel matches with 25 different partners."
+        "title": "Spojovatel kurtu",
+        "description": "Dohraj kvalifikační padely s 25 různými partáky."
       },
       "openCourt50": {
-        "title": "Open Court ×50",
-        "description": "Complete qualifying padel matches with 50 different partners."
+        "title": "Magnet na partáky",
+        "description": "Dohraj kvalifikační padely s 50 různými partáky."
       },
       "openCourt100": {
-        "title": "Open Court ×100",
-        "description": "Complete qualifying padel matches with 100 different partners."
+        "title": "Duše klubu",
+        "description": "Dohraj kvalifikační padely se 100 různými partáky."
       },
       "openCourt250": {
-        "title": "Open Court ×250",
-        "description": "Complete qualifying padel matches with 250 different partners."
+        "title": "Sociální legenda",
+        "description": "Dohraj kvalifikační padely s 250 různými partáky."
       }
     }
   }

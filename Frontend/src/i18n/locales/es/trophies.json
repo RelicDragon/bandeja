@@ -41,7 +41,7 @@
         "podium": "Podio",
         "debut": "Debut",
         "generic": "Trofeos",
-        "rallyStarter": "Rally Starter",
+        "rallyStarter": "Forja del rally",
         "tournamentHost": "Anfitrión de torneo",
         "soulOfTheParty": "Alma de la fiesta",
         "giantKiller": "Cazagigantes",
@@ -152,28 +152,28 @@
         "description": "Mantén una racha de 64 semanas."
       },
       "orgGame1": {
-        "title": "Rally Starter",
-        "description": "Organiza tu primer partido de pádel con rating hasta resultados finales."
+        "title": "Arranque de partidos",
+        "description": "Organiza tu primer partido de pádel con rating hasta el final."
       },
       "orgGame10": {
-        "title": "Rally Starter ×10",
-        "description": "Organiza 10 partidos de pádel con rating hasta resultados finales."
+        "title": "Montador de partidos",
+        "description": "Organiza 10 partidos de pádel con rating hasta el final."
       },
       "orgGame25": {
-        "title": "Rally Starter ×25",
-        "description": "Organiza 25 partidos de pádel con rating hasta resultados finales."
+        "title": "Arquitecto del club",
+        "description": "Organiza 25 partidos de pádel con rating hasta el final."
       },
       "orgGame50": {
-        "title": "Rally Starter ×50",
-        "description": "Organiza 50 partidos de pádel con rating hasta resultados finales."
+        "title": "Maestro organizador",
+        "description": "Organiza 50 partidos de pádel con rating hasta el final."
       },
       "orgGame100": {
-        "title": "Rally Starter ×100",
-        "description": "Organiza 100 partidos de pádel con rating hasta resultados finales."
+        "title": "Leyenda del club",
+        "description": "Organiza 100 partidos de pádel con rating hasta el final."
       },
       "orgGame500": {
-        "title": "Rally Starter ×500",
-        "description": "Organiza 500 partidos de pádel con rating hasta resultados finales."
+        "title": "Inmortal del pádel",
+        "description": "Organiza 500 partidos de pádel con rating hasta el final."
       },
       "orgTournament1": {
         "title": "Apertura de cuadro",
@@ -224,24 +224,24 @@
         "description": "Organiza 100 eventos Bar hasta resultados finales."
       },
       "giantKiller1": {
-        "title": "Giant Killer",
-        "description": "Win a rated 2v2 padel match against a team averaging at least 0.5 higher, with all players above 10% reliability."
+        "title": "Cazagigantes",
+        "description": "Gana un 2v2 con rating a un equipo ≥0,5 más fuerte (todos con >10% fiabilidad)."
       },
       "giantKiller5": {
-        "title": "Giant Killer ×5",
-        "description": "Win 5 rated 2v2 padel upsets (≥0.5 higher avg, all players above 10% reliability)."
+        "title": "Caza mayor",
+        "description": "5 upsets en 2v2 con rating (≥0,5 de ventaja rival, >10% fiabilidad)."
       },
       "giantKiller10": {
-        "title": "Giant Killer ×10",
-        "description": "Win 10 rated 2v2 padel upsets (≥0.5 higher avg, all players above 10% reliability)."
+        "title": "Matagigantes",
+        "description": "10 upsets en 2v2 con rating (≥0,5 de ventaja rival, >10% fiabilidad)."
       },
       "giantKiller25": {
-        "title": "Giant Killer ×25",
-        "description": "Win 25 rated 2v2 padel upsets (≥0.5 higher avg, all players above 10% reliability)."
+        "title": "Azote de titanes",
+        "description": "25 upsets en 2v2 con rating (≥0,5 de ventaja rival, >10% fiabilidad)."
       },
       "giantKiller50": {
-        "title": "Giant Killer ×50",
-        "description": "Win 50 rated 2v2 padel upsets (≥0.5 higher avg, all players above 10% reliability)."
+        "title": "Rompecolosos",
+        "description": "50 upsets en 2v2 con rating (≥0,5 de ventaja rival, >10% fiabilidad)."
       },
       "dynamicDuo10": {
         "title": "Dynamic Duo",
@@ -256,24 +256,24 @@
         "description": "Win 100 qualifying padel matches with the same partner."
       },
       "openCourt10": {
-        "title": "Open Court",
-        "description": "Complete qualifying padel matches with 10 different partners."
+        "title": "Cancha abierta",
+        "description": "Juega partidos clasificables con 10 parejas distintas."
       },
       "openCourt25": {
-        "title": "Open Court ×25",
-        "description": "Complete qualifying padel matches with 25 different partners."
+        "title": "Conecta la pista",
+        "description": "Juega partidos clasificables con 25 parejas distintas."
       },
       "openCourt50": {
-        "title": "Open Court ×50",
-        "description": "Complete qualifying padel matches with 50 different partners."
+        "title": "Imán de parejas",
+        "description": "Juega partidos clasificables con 50 parejas distintas."
       },
       "openCourt100": {
-        "title": "Open Court ×100",
-        "description": "Complete qualifying padel matches with 100 different partners."
+        "title": "Alma del club",
+        "description": "Juega partidos clasificables con 100 parejas distintas."
       },
       "openCourt250": {
-        "title": "Open Court ×250",
-        "description": "Complete qualifying padel matches with 250 different partners."
+        "title": "Leyenda social",
+        "description": "Juega partidos clasificables con 250 parejas distintas."
       }
     }
   }

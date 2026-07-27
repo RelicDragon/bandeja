@@ -41,7 +41,7 @@
         "podium": "Подиум",
         "debut": "Дебют",
         "generic": "Кубки",
-        "rallyStarter": "Rally Starter",
+        "rallyStarter": "Кузница матчей",
         "tournamentHost": "Хозяин турнира",
         "soulOfTheParty": "Душа компании",
         "giantKiller": "Убийца гигантов",
@@ -152,28 +152,28 @@
         "description": "Серия из 64 недель."
       },
       "orgGame1": {
-        "title": "Rally Starter",
-        "description": "Организуйте первую рейтинговую игру в падел до финализации результатов."
+        "title": "Старт матчей",
+        "description": "Организуй первую рейтинговую падел-игру до финала результатов."
       },
       "orgGame10": {
-        "title": "Rally Starter ×10",
-        "description": "Организуйте 10 рейтинговых игр в падел до финализации результатов."
+        "title": "Собиратель матчей",
+        "description": "Организуй 10 рейтинговых падел-игр до финала результатов."
       },
       "orgGame25": {
-        "title": "Rally Starter ×25",
-        "description": "Организуйте 25 рейтинговых игр в падел до финализации результатов."
+        "title": "Архитектор клуба",
+        "description": "Организуй 25 рейтинговых падел-игр до финала результатов."
       },
       "orgGame50": {
-        "title": "Rally Starter ×50",
-        "description": "Организуйте 50 рейтинговых игр в падел до финализации результатов."
+        "title": "Маэстро клуба",
+        "description": "Организуй 50 рейтинговых падел-игр до финала результатов."
       },
       "orgGame100": {
-        "title": "Rally Starter ×100",
-        "description": "Организуйте 100 рейтинговых игр в падел до финализации результатов."
+        "title": "Легенда клуба",
+        "description": "Организуй 100 рейтинговых падел-игр до финала результатов."
       },
       "orgGame500": {
-        "title": "Rally Starter ×500",
-        "description": "Организуйте 500 рейтинговых игр в падел до финализации результатов."
+        "title": "Бессмертный организатор",
+        "description": "Организуй 500 рейтинговых падел-игр до финала результатов."
       },
       "orgTournament1": {
         "title": "Старт сетки",
@@ -224,24 +224,24 @@
         "description": "Проведите 100 Bar-ивентов до финализации результатов."
       },
       "giantKiller1": {
-        "title": "Giant Killer",
-        "description": "Win a rated 2v2 padel match against a team averaging at least 0.5 higher, with all players above 10% reliability."
+        "title": "Убийца гигантов",
+        "description": "Выиграй рейтинговый 2v2 у команды сильнее ≥0,5 (у всех reliability >10%)."
       },
       "giantKiller5": {
-        "title": "Giant Killer ×5",
-        "description": "Win 5 rated 2v2 padel upsets (≥0.5 higher avg, all players above 10% reliability)."
+        "title": "Охотник на гигантов",
+        "description": "5 рейтинговых 2v2-апсетов (≥0,5 сильнее, reliability >10%)."
       },
       "giantKiller10": {
-        "title": "Giant Killer ×10",
-        "description": "Win 10 rated 2v2 padel upsets (≥0.5 higher avg, all players above 10% reliability)."
+        "title": "Истребитель гигантов",
+        "description": "10 рейтинговых 2v2-апсетов (≥0,5 сильнее, reliability >10%)."
       },
       "giantKiller25": {
-        "title": "Giant Killer ×25",
-        "description": "Win 25 rated 2v2 padel upsets (≥0.5 higher avg, all players above 10% reliability)."
+        "title": "Гроза титанов",
+        "description": "25 рейтинговых 2v2-апсетов (≥0,5 сильнее, reliability >10%)."
       },
       "giantKiller50": {
-        "title": "Giant Killer ×50",
-        "description": "Win 50 rated 2v2 padel upsets (≥0.5 higher avg, all players above 10% reliability)."
+        "title": "Сокрушитель колоссов",
+        "description": "50 рейтинговых 2v2-апсетов (≥0,5 сильнее, reliability >10%)."
       },
       "dynamicDuo10": {
         "title": "Dynamic Duo",
@@ -256,24 +256,24 @@
         "description": "Win 100 qualifying padel matches with the same partner."
       },
       "openCourt10": {
-        "title": "Open Court",
-        "description": "Complete qualifying padel matches with 10 different partners."
+        "title": "Открытый корт",
+        "description": "Сыграй рейтинговые матчи с 10 разными партнёрами."
       },
       "openCourt25": {
-        "title": "Open Court ×25",
-        "description": "Complete qualifying padel matches with 25 different partners."
+        "title": "Коннектор корта",
+        "description": "Сыграй рейтинговые матчи с 25 разными партнёрами."
       },
       "openCourt50": {
-        "title": "Open Court ×50",
-        "description": "Complete qualifying padel matches with 50 different partners."
+        "title": "Магнит партнёров",
+        "description": "Сыграй рейтинговые матчи с 50 разными партнёрами."
       },
       "openCourt100": {
-        "title": "Open Court ×100",
-        "description": "Complete qualifying padel matches with 100 different partners."
+        "title": "Душа клуба",
+        "description": "Сыграй рейтинговые матчи со 100 разными партнёрами."
       },
       "openCourt250": {
-        "title": "Open Court ×250",
-        "description": "Complete qualifying padel matches with 250 different partners."
+        "title": "Соцлегенда",
+        "description": "Сыграй рейтинговые матчи с 250 разными партнёрами."
       }
     }
   }

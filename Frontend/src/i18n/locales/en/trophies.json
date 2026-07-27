@@ -40,7 +40,7 @@
         "wins": "Wins",
         "podium": "Podium",
         "debut": "Debut",
-        "rallyStarter": "Rally Starter",
+        "rallyStarter": "Rally Forge",
         "tournamentHost": "Tournament host",
         "soulOfTheParty": "Soul of the party",
         "generic": "Trophies",
@@ -156,23 +156,23 @@
         "description": "Organize your first rated padel game through final results."
       },
       "orgGame10": {
-        "title": "Rally Starter ×10",
+        "title": "Rally Builder",
         "description": "Organize 10 rated padel games through final results."
       },
       "orgGame25": {
-        "title": "Rally Starter ×25",
+        "title": "Rally Architect",
         "description": "Organize 25 rated padel games through final results."
       },
       "orgGame50": {
-        "title": "Rally Starter ×50",
+        "title": "Rally Maestro",
         "description": "Organize 50 rated padel games through final results."
       },
       "orgGame100": {
-        "title": "Rally Starter ×100",
+        "title": "Rally Legend",
         "description": "Organize 100 rated padel games through final results."
       },
       "orgGame500": {
-        "title": "Rally Starter ×500",
+        "title": "Rally Immortal",
         "description": "Organize 500 rated padel games through final results."
       },
       "orgTournament1": {
@@ -228,19 +228,19 @@
         "description": "Win a rated 2v2 padel match against a team averaging at least 0.5 higher at event start, with all players above 10% reliability."
       },
       "giantKiller5": {
-        "title": "Giant Killer ×5",
+        "title": "Giant Hunter",
         "description": "Win 5 rated 2v2 padel upsets (≥0.5 higher avg, all players above 10% reliability)."
       },
       "giantKiller10": {
-        "title": "Giant Killer ×10",
+        "title": "Giant Slayer",
         "description": "Win 10 rated 2v2 padel upsets (≥0.5 higher avg, all players above 10% reliability)."
       },
       "giantKiller25": {
-        "title": "Giant Killer ×25",
+        "title": "Titan Bane",
         "description": "Win 25 rated 2v2 padel upsets (≥0.5 higher avg, all players above 10% reliability)."
       },
       "giantKiller50": {
-        "title": "Giant Killer ×50",
+        "title": "Colossus Breaker",
         "description": "Win 50 rated 2v2 padel upsets (≥0.5 higher avg, all players above 10% reliability)."
       },
       "dynamicDuo10": {
@@ -260,19 +260,19 @@
         "description": "Complete qualifying padel matches with 10 different partners."
       },
       "openCourt25": {
-        "title": "Open Court ×25",
+        "title": "Court Connector",
         "description": "Complete qualifying padel matches with 25 different partners."
       },
       "openCourt50": {
-        "title": "Open Court ×50",
+        "title": "Partner Magnet",
         "description": "Complete qualifying padel matches with 50 different partners."
       },
       "openCourt100": {
-        "title": "Open Court ×100",
+        "title": "Community Pillar",
         "description": "Complete qualifying padel matches with 100 different partners."
       },
       "openCourt250": {
-        "title": "Open Court ×250",
+        "title": "Network Legend",
         "description": "Complete qualifying padel matches with 250 different partners."
       }
     }
