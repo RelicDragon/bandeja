@@ -14,6 +14,7 @@ import {
   GameFormatGenderFields,
 } from '@/components/gameFormat/GameFormatTeamsFields';
 import {
+  entitySupportsPlayersPerMatchControls,
   gameFormatFixedTeamsToggleVisible,
   gameFormatGenderVisible,
 } from '@/components/gameFormat/gameFormatTeamsVisibility';
@@ -266,7 +267,7 @@ export const EditMaxParticipantsModal = ({
   const minParticipants = game.entityType === 'TRAINING' ? 1 : 2;
 
   const showTeamFormat =
-    (game.entityType === 'GAME' || game.entityType === 'LEAGUE') &&
+    entitySupportsPlayersPerMatchControls(game.entityType) &&
     sportConfig.allowedPlayerCountsPerMatch.length > 1;
 
   const shouldShowTeamFormat =
@@ -356,7 +357,7 @@ export const EditMaxParticipantsModal = ({
         minLevel: levelRange[0],
         maxLevel: levelRange[1],
       };
-      if (game.entityType === 'GAME' || game.entityType === 'LEAGUE') {
+      if (entitySupportsPlayersPerMatchControls(game.entityType)) {
         updatePayload.playersPerMatch = playersPerMatch;
         const fixedTeamsApplicable =
           gameFormatFixedTeamsToggleVisible(game.entityType, newMaxParticipants) &&

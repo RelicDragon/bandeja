@@ -67,7 +67,10 @@ import { clubSupportsSport, filterClubsBySport } from '@/utils/courtSport';
 import { invalidateBooktimeAllUpcomingCache } from '@/integrations/booktime/booktimeAllUpcomingLoader';
 import { CreateGameQuestionnaireBanner } from '@/components/sportQuestionnaire';
 import { GameFormatGenderFields } from '@/components/gameFormat/GameFormatTeamsFields';
-import { gameFormatGenderVisible } from '@/components/gameFormat/gameFormatTeamsVisibility';
+import {
+  entitySupportsPlayersPerMatchControls,
+  gameFormatGenderVisible,
+} from '@/components/gameFormat/gameFormatTeamsVisibility';
 import type { CreateTemplateDurationContext } from '@/components/createGame/createTemplateDurationLabels';
 import { Sports, type Sport } from '@shared/sport';
 import { SportLevelProvider } from '@/contexts/SportLevelContext';
@@ -1296,8 +1299,9 @@ export const CreateGame = ({
         timeOverride: bookingFields.timeOverride,
         timeIsSet: true,
         maxParticipants,
-        playersPerMatch:
-          entityType === 'GAME' || entityType === 'LEAGUE' ? playersPerMatch : undefined,
+        playersPerMatch: entitySupportsPlayersPerMatchControls(entityType)
+          ? playersPerMatch
+          : undefined,
         minParticipants: 2,
         minLevel: playerLevelRange[0],
         maxLevel: playerLevelRange[1],
@@ -1558,14 +1562,18 @@ export const CreateGame = ({
           user={user}
           maxParticipants={maxParticipants}
           allowedParticipantOptions={allowedParticipantOptions}
-          playersPerMatch={entityType === 'GAME' || entityType === 'LEAGUE' ? playersPerMatch : undefined}
+          playersPerMatch={
+            entitySupportsPlayersPerMatchControls(entityType) ? playersPerMatch : undefined
+          }
           allowedPlayerCountsPerMatch={
-            entityType === 'GAME' || entityType === 'LEAGUE'
+            entitySupportsPlayersPerMatchControls(entityType)
               ? sportConfig.allowedPlayerCountsPerMatch
               : undefined
           }
           onPlayersPerMatchChange={
-            entityType === 'GAME' || entityType === 'LEAGUE' ? handlePlayersPerMatchChange : undefined
+            entitySupportsPlayersPerMatchControls(entityType)
+              ? handlePlayersPerMatchChange
+              : undefined
           }
           hasFixedTeams={hasFixedTeams}
           onHasFixedTeamsChange={(v) => {
@@ -1863,14 +1871,18 @@ export const CreateGame = ({
           canInvitePlayers={true}
           creatorNonPlaying={creatorNonPlaying}
           allowedParticipantOptions={allowedParticipantOptions}
-          playersPerMatch={entityType === 'GAME' || entityType === 'LEAGUE' ? playersPerMatch : undefined}
+          playersPerMatch={
+            entitySupportsPlayersPerMatchControls(entityType) ? playersPerMatch : undefined
+          }
           allowedPlayerCountsPerMatch={
-            entityType === 'GAME' || entityType === 'LEAGUE'
+            entitySupportsPlayersPerMatchControls(entityType)
               ? sportConfig.allowedPlayerCountsPerMatch
               : undefined
           }
           onPlayersPerMatchChange={
-            entityType === 'GAME' || entityType === 'LEAGUE' ? handlePlayersPerMatchChange : undefined
+            entitySupportsPlayersPerMatchControls(entityType)
+              ? handlePlayersPerMatchChange
+              : undefined
           }
           onMaxParticipantsChange={handleMaxParticipantsChange}
           onAddUserToGame={handleAddMeToGame}

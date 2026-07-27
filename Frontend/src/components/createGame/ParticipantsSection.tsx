@@ -12,6 +12,7 @@ import {
   trainingParticipantOptions,
 } from '@/utils/userMaxParticipantsInGame';
 import { MatchFormatControl } from './MatchFormatControl';
+import { entitySupportsPlayersPerMatchControls } from '@/components/gameFormat/gameFormatTeamsVisibility';
 
 interface ParticipantsSectionProps {
   participants: Array<string | null>;
@@ -84,7 +85,7 @@ export const ParticipantsSection = ({
       ? tournamentSlots.length > 0
       : effectiveGameLeagueSlots.length > 0);
   const showMatchFormat =
-    (isGame || entityType === 'LEAGUE') &&
+    entitySupportsPlayersPerMatchControls(entityType) &&
     playersPerMatch != null &&
     allowedPlayerCountsPerMatch != null &&
     allowedPlayerCountsPerMatch.length > 1 &&

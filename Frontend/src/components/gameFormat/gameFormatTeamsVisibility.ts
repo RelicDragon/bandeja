@@ -10,6 +10,11 @@ export function gameFormatGenderVisible(entityType: EntityType): boolean {
   );
 }
 
+/** 1v1/2v2 + rotating/fixed pairs controls (participants setup / edit roster). */
+export function entitySupportsPlayersPerMatchControls(entityType: EntityType): boolean {
+  return entityType === 'GAME' || entityType === 'LEAGUE' || entityType === 'TOURNAMENT';
+}
+
 export function gameFormatFixedTeamsToggleVisible(entityType: EntityType, participantCount: number): boolean {
   return (
     participantCount >= 4 &&

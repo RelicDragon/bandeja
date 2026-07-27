@@ -2,6 +2,7 @@ import { GAME_FORMAT_UPDATE_KEYS } from '@shared/gameFormatUpdateKeys';
 import { normalizeGameFormatPatch } from '@shared/gameFormat';
 import type { UseGameFormatResult } from '@/hooks/useGameFormat';
 import type { EntityType } from '@/types';
+import { entitySupportsPlayersPerMatchControls } from '@/components/gameFormat/gameFormatTeamsVisibility';
 import { resultsRoundGenV2Payload } from '@/utils/resultsRoundGenV2';
 
 export type BuildGameFormatUpdateParams = {
@@ -43,7 +44,7 @@ export function buildGameFormatUpdatePayload({
     ballsInGames: setup.ballsInGames,
     scoringPreset: setup.scoringPreset,
     deucesBeforeGoldenPoint: setup.deucesBeforeGoldenPoint,
-    ...(entityType === 'GAME' || entityType === 'LEAGUE'
+    ...(entitySupportsPlayersPerMatchControls(entityType)
       ? playersPerMatch !== undefined
         ? { playersPerMatch }
         : {}

@@ -610,6 +610,7 @@ Frontend/e2e/
 | C-49 | Game match format only | Create GAME on padel/tennis | No participant-count grid; 1v1/2v2 selector sets roster to 2 or 4 |
 | C-50 | Game fixed roster | Create GAME singles then doubles | Roster slots and `maxParticipants` follow format (2 ↔ 4) |
 | C-27 | Fixed pairs segmented switch | Create GAME doubles → pick Rotating or Fixed pairs | Team setup shown when Fixed pairs selected |
+| C-27t | Tournament match format + fixed pairs | Create TOURNAMENT → pick participant count cards → 1v1/2v2 then Rotating/Fixed pairs | Same controls as GAME; roster cards unchanged; Fixed pairs only when 2v2 |
 | C-28 | Game name & miscellaneous | Name input inside Name & photo card at top; description and price in Miscellaneous section | Saved on submit |
 | C-29 | Price fields | Set price type/currency/total under Miscellaneous | Saved correctly |
 | C-30 | Avatar upload | Upload game image via Name & photo card (avatar left of name input) | Preview shown |
@@ -751,6 +752,7 @@ Frontend/e2e/
 | GD-109 | Edit modal discard confirm | Change any field → close via X / swipe dismiss / Cancel | "Discard changes?" confirm shown; Keep editing returns to drawer with edits intact; Discard closes without saving |
 | GD-23 | Edit level range | Level modal | Min/max saved |
 | GD-24 | Edit max participants | Max participants modal | Capacity updated; GAME modal shows 1v1/2v2 only (no current/maximum summary) |
+| GD-24t | Edit tournament match format / fixed pairs | TOURNAMENT → edit participants setup | Modal keeps participant cards; shows 1v1/2v2 + Rotating/Fixed pairs; save updates `playersPerMatch` / `hasFixedTeams` |
 | GD-25 | Edit game format | Format wizard (pre-results) | Format updated |
 | GD-95 | Format summary for read-only viewer | Open padel game pre-results as participant without format edit rights, or non-participant who can view the game | “What kind of game?” picker hidden; format card shows title + summary (includes gender label when not Any); tap help icon expands full format details; no pencil; no gender row below card |
 | GD-96 | Format picker for editor | Open same game as owner/admin or `resultsByAnyone` playing participant | “What kind of game?” picker shown; can change template / format |

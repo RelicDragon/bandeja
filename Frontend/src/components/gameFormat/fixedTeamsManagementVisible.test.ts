@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { fixedTeamsManagementVisible } from './gameFormatTeamsVisibility';
+import {
+  entitySupportsPlayersPerMatchControls,
+  fixedTeamsManagementVisible,
+} from './gameFormatTeamsVisibility';
 import type { BasicUser, Game } from '@/types';
 
 const user = { id: 'u1' } as BasicUser;
@@ -11,9 +14,31 @@ const baseGame = {
   maxParticipants: 4,
 } as Game;
 
+describe('entitySupportsPlayersPerMatchControls', () => {
+  it('includes GAME, LEAGUE, TOURNAMENT', () => {
+    expect(entitySupportsPlayersPerMatchControls('GAME')).toBe(true);
+    expect(entitySupportsPlayersPerMatchControls('LEAGUE')).toBe(true);
+    expect(entitySupportsPlayersPerMatchControls('TOURNAMENT')).toBe(true);
+  });
+
+  it('excludes TRAINING and BAR', () => {
+    expect(entitySupportsPlayersPerMatchControls('TRAINING')).toBe(false);
+    expect(entitySupportsPlayersPerMatchControls('BAR')).toBe(false);
+  });
+});
+
 describe('fixedTeamsManagementVisible', () => {
   it('shows when all conditions met', () => {
     expect(fixedTeamsManagementVisible(baseGame, user)).toBe(true);
+  });
+
+  it('shows for tournament with fixed pairs', () => {
+    expect(
+      fixedTeamsManagementVisible(
+        { ...baseGame, entityType: 'TOURNAMENT', maxParticipants: 8 },
+        user,
+      ),
+    ).toBe(true);
   });
 
   it('hides without user', () => {

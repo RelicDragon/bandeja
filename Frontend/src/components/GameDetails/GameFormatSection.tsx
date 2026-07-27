@@ -8,7 +8,10 @@ import {
   gameFormatTeamsFieldsVisible,
   type GameFormatTeamsBinding,
 } from '@/components/gameFormat';
-import { gameFormatGenderVisible } from '@/components/gameFormat/gameFormatTeamsVisibility';
+import {
+  entitySupportsPlayersPerMatchControls,
+  gameFormatGenderVisible,
+} from '@/components/gameFormat/gameFormatTeamsVisibility';
 import { CreateGameIntentPicker } from '@/components/createGame/CreateGameIntentPicker';
 import { useGameFormat } from '@/hooks/useGameFormat';
 import { useGameFormatTemplateFlow } from '@/hooks/useGameFormatTemplateFlow';
@@ -243,8 +246,9 @@ export const GameFormatSection = ({ game, canEdit, onGameUpdate }: GameFormatSec
     setIsWizardOpen(true);
   };
 
-  const summaryPlayersPerMatch =
-    game.entityType === 'GAME' || game.entityType === 'LEAGUE' ? playersPerMatchOf(game) : undefined;
+  const summaryPlayersPerMatch = entitySupportsPlayersPerMatchControls(game.entityType)
+    ? playersPerMatchOf(game)
+    : undefined;
 
   const genderSection =
     teamsForCard && gameFormatGenderVisible(game.entityType) ? (

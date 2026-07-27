@@ -10,6 +10,7 @@ import {
 } from '@/utils/userMaxParticipantsInGame';
 import { MatchFormatControl } from './MatchFormatControl';
 import { GameFormatFixedTeamsToggle } from '@/components/gameFormat/GameFormatTeamsFields';
+import { entitySupportsPlayersPerMatchControls } from '@/components/gameFormat/gameFormatTeamsVisibility';
 
 interface ParticipantsSetupSectionProps {
   entityType: EntityType;
@@ -56,7 +57,7 @@ export const ParticipantsSetupSection = ({
       : effectiveGameLeagueSlots.length > 0);
 
   const showMatchFormat =
-    (isGame || entityType === 'LEAGUE') &&
+    entitySupportsPlayersPerMatchControls(entityType) &&
     playersPerMatch != null &&
     allowedPlayerCountsPerMatch != null &&
     allowedPlayerCountsPerMatch.length > 1 &&

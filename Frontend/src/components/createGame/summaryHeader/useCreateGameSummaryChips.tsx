@@ -20,6 +20,7 @@ import { formatDate } from '@/utils/dateFormat';
 import { getCurrencySymbol, resolveUserCurrency } from '@/utils/currency';
 import { resolveCourtNameParts } from '@/utils/courtDisplayName';
 import {
+  entitySupportsPlayersPerMatchControls,
   gameFormatFixedTeamsToggleVisible,
   gameFormatGenderVisible,
 } from '@/components/gameFormat/gameFormatTeamsVisibility';
@@ -104,7 +105,7 @@ export function useCreateGameSummaryChips({
 
   return useMemo(() => {
     const chips: SummaryChipItem[] = [];
-    const isMatchEntity = entityType === 'GAME' || entityType === 'LEAGUE';
+    const isMatchEntity = entitySupportsPlayersPerMatchControls(entityType);
 
     if (past.sport && showSportChip) {
       const config = getSportConfig(selectedSport);
