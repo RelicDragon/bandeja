@@ -308,7 +308,14 @@
     "shareCardFailed": "No se pudo compartir",
     "shareCardNoSummary": "¡Gran sesión!",
     "playAgainCta": "Jugar de nuevo",
-    "showInStories": "Mostrar este {{entity}} en mis stories",
+    "showInStories": {
+      "GAME": "Mostrar este partido en mis stories",
+      "BAR": "Mostrar este evento de bar en mis stories",
+      "TRAINING": "Mostrar este entrenamiento en mis stories",
+      "TOURNAMENT": "Mostrar este torneo en mis stories",
+      "LEAGUE": "Mostrar este partido de la liga en mis stories",
+      "LEAGUE_SEASON": "Mostrar esta temporada de liga en mis stories"
+    },
     "showInStoriesFailed": "No se pudo actualizar la visibilidad en stories",
     "configureGameRules": "Configure game rules",
     "viewGameRules": "View game rules",

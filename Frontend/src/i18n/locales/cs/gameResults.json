@@ -311,7 +311,14 @@
     "shareCardFailed": "Sdílení se nepodařilo",
     "shareCardNoSummary": "Skvělá session!",
     "playAgainCta": "Hrát znovu",
-    "showInStories": "Zobrazit {{entity}} v mých stories",
+    "showInStories": {
+      "GAME": "Zobrazit tento zápas v mých stories",
+      "BAR": "Zobrazit tuto barovou akci v mých stories",
+      "TRAINING": "Zobrazit tento trénink v mých stories",
+      "TOURNAMENT": "Zobrazit tento turnaj v mých stories",
+      "LEAGUE": "Zobrazit tuto hru v lize v mých stories",
+      "LEAGUE_SEASON": "Zobrazit tuto sezonu ligy v mých stories"
+    },
     "showInStoriesFailed": "Nepodařilo se aktualizovat viditelnost ve stories"
   }
 }

@@ -315,7 +315,14 @@
     "shareCardFailed": "Не удалось поделиться",
     "shareCardNoSummary": "Отличная игра!",
     "playAgainCta": "Сыграть снова",
-    "showInStories": "Показывать {{entity}} в моих stories",
+    "showInStories": {
+      "GAME": "Показывать эту игру в моих stories",
+      "BAR": "Показывать это бар-событие в моих stories",
+      "TRAINING": "Показывать эту тренировку в моих stories",
+      "TOURNAMENT": "Показывать этот турнир в моих stories",
+      "LEAGUE": "Показывать эту игру в лиге в моих stories",
+      "LEAGUE_SEASON": "Показывать этот сезон лиги в моих stories"
+    },
     "showInStoriesFailed": "Не удалось обновить видимость в stories"
   }
 }

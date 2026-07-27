@@ -43,9 +43,9 @@ export function GameResultsShowInStoriesSwitch({
 
   if (!userId || !canToggle || !participant) return null;
 
-  const entityLabel = t(`games.entityTypes.${game.entityType}`, {
-    defaultValue: t('games.entityTypes.GAME'),
-  }).toLowerCase();
+  const label = t(`gameResults.showInStories.${game.entityType}`, {
+    defaultValue: t('gameResults.showInStories.GAME'),
+  });
 
   const patchShowInStories = (base: Game, value: boolean): Game => ({
     ...base,
@@ -83,12 +83,12 @@ export function GameResultsShowInStoriesSwitch({
   const switchId = `show-in-stories-${game.id}`;
 
   return (
-    <div className="mb-4 flex items-center justify-between gap-4 rounded-xl border border-gray-200 bg-white/60 px-3 py-2.5 dark:border-gray-700 dark:bg-gray-900/40">
+    <div className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white/60 px-3.5 py-3 dark:border-gray-700 dark:bg-gray-900/40">
       <label
         htmlFor={switchId}
-        className="min-w-0 flex-1 cursor-pointer text-sm font-medium text-gray-800 dark:text-gray-200"
+        className="min-w-0 flex-1 cursor-pointer text-sm leading-snug text-gray-800 dark:text-gray-200"
       >
-        {t('gameResults.showInStories', { entity: entityLabel })}
+        {label}
       </label>
       <ToggleSwitch
         id={switchId}

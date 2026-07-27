@@ -312,7 +312,14 @@
     "shareCardFailed": "Deljenje nije uspelo",
     "shareCardNoSummary": "Odlična sesija!",
     "playAgainCta": "Igraj ponovo",
-    "showInStories": "Prikaži ovaj {{entity}} u mojim stories",
+    "showInStories": {
+      "GAME": "Prikaži ovu igru u mojim stories",
+      "BAR": "Prikaži ovaj bar događaj u mojim stories",
+      "TRAINING": "Prikaži ovaj trening u mojim stories",
+      "TOURNAMENT": "Prikaži ovaj turnir u mojim stories",
+      "LEAGUE": "Prikaži ovu igru u ligi u mojim stories",
+      "LEAGUE_SEASON": "Prikaži ovu sezonu lige u mojim stories"
+    },
     "showInStoriesFailed": "Nije moguće ažurirati vidljivost u stories",
     "configureGameRules": "Configure game rules",
     "viewGameRules": "View game rules",
