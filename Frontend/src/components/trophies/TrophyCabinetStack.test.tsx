@@ -43,9 +43,11 @@ vi.mock('@/components/trophies/TrophyStackIcon', () => ({
   TrophyStackIcon: ({
     entry,
     labelVisible,
+    pinnedInstanceIds,
   }: {
     entry: TrophyCabinetEntryView;
     labelVisible?: boolean;
+    pinnedInstanceIds?: ReadonlySet<string>;
   }) => (
     <>
       <div data-icon={entry.definition.id}>
@@ -54,6 +56,10 @@ vi.mock('@/components/trophies/TrophyStackIcon', () => ({
           data-testid="trophy-icon-button"
           onClick={(event) => event.stopPropagation()}
         />
+        {labelVisible &&
+          entry.instances.some((i) => pinnedInstanceIds?.has(i.id)) && (
+            <span data-testid="trophy-pinned-badge">★</span>
+          )}
         <span data-stack-label={labelVisible ? 'visible' : 'hidden'}>
           {labelVisible ? entry.definition.titleKey : null}
         </span>
@@ -202,6 +208,46 @@ function MaxLevelChaseHarness() {
     />
   );
 }
+
+function PinnedCollapsedHarness() {
+  return (
+    <TrophyCabinetStack
+      entries={[
+        {
+          ...entry('habit_wins_10', 'trophies.defs.wins10.title', 10),
+          instances: [{ id: 'inst-pinned', unlockedAt: '2026-01-01T00:00:00.000Z' }],
+        },
+        entry('habit_first_win', 'trophies.defs.firstWin.title', 1),
+      ]}
+      unlocked
+      isOwn
+      pinsEditable
+      pinnedInstanceIds={new Set(['inst-pinned'])}
+      expanded={false}
+      onExpandedChange={() => undefined}
+    />
+  );
+}
+
+function PinnedExpandedHarness() {
+  return (
+    <TrophyCabinetStack
+      entries={[
+        {
+          ...entry('habit_wins_10', 'trophies.defs.wins10.title', 10),
+          instances: [{ id: 'inst-pinned', unlockedAt: '2026-01-01T00:00:00.000Z' }],
+        },
+        entry('habit_first_win', 'trophies.defs.firstWin.title', 1),
+      ]}
+      unlocked
+      isOwn
+      pinsEditable
+      pinnedInstanceIds={new Set(['inst-pinned'])}
+      expanded
+      onExpandedChange={() => undefined}
+    />
+  );
+}
 describe('TrophyCabinetStack', () => {
   it('moves persistent icons inside one persistent group frame', () => {
     const container = document.createElement('div');
@@ -326,5 +372,32 @@ describe('TrophyCabinetStack', () => {
     expect(fill?.getAttribute('data-max-level')).toBe('true');
     expect(fill?.className).toContain('bg-emerald-500');
     expect(fill?.className).not.toContain('from-amber-400');
+  });
+
+  it('shows a single group pin badge when collapsed with a pinned tier', () => {
+    const container = document.createElement('div');
+    document.body.append(container);
+    containers.push(container);
+    const root = createRoot(container);
+    roots.push(root);
+
+    act(() => root.render(<PinnedCollapsedHarness />));
+
+    expect(container.querySelectorAll('[data-testid="trophy-stack-pinned-badge"]')).toHaveLength(1);
+    expect(container.querySelectorAll('[data-testid="trophy-pinned-badge"]')).toHaveLength(0);
+  });
+
+  it('moves pin badges onto pinned tier icons when expanded', () => {
+    const container = document.createElement('div');
+    document.body.append(container);
+    containers.push(container);
+    const root = createRoot(container);
+    roots.push(root);
+
+    act(() => root.render(<PinnedExpandedHarness />));
+
+    const groupBadge = container.querySelector('[data-testid="trophy-stack-pinned-badge"]');
+    expect(groupBadge?.getAttribute('aria-hidden')).toBe('true');
+    expect(container.querySelectorAll('[data-testid="trophy-pinned-badge"]')).toHaveLength(1);
   });
 });

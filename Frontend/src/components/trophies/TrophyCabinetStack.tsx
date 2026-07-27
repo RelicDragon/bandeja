@@ -290,6 +290,7 @@ export function TrophyCabinetStack({
 
         {hasPinned && (
           <motion.div
+            data-testid="trophy-stack-pinned-badge"
             className="pointer-events-none absolute left-1 top-1 z-30"
             initial={false}
             animate={{
@@ -303,7 +304,7 @@ export function TrophyCabinetStack({
               className="flex h-4 w-4 items-center justify-center rounded-full bg-primary-600 text-[9px] font-black text-white shadow-sm ring-2 ring-white dark:ring-gray-900"
               aria-label={t('trophies.detail.pinnedBadge')}
             >
-              ✦
+              ★
             </span>
           </motion.div>
         )}

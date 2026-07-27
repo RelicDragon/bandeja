@@ -108,12 +108,13 @@ export function TrophyStackIcon({
                 className="h-12 w-14"
               />
             </TrophyRarityFrame>
-            {hasPinned && (
+            {hasPinned && labelVisible && (
               <span
+                data-testid="trophy-pinned-badge"
                 className="absolute -left-0.5 -top-1 z-10 flex h-4 w-4 items-center justify-center rounded-full bg-primary-600 text-[9px] font-black text-white shadow-sm ring-2 ring-white dark:ring-gray-900"
                 aria-label={t('trophies.detail.pinnedBadge')}
               >
-                ✦
+                ★
               </span>
             )}
           </div>

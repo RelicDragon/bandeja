@@ -1289,7 +1289,9 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PR-trophy-17 | Tournament podium N<8 | Finalize TOURNAMENT with <8 PLAYING | No podium trophies; no podium celebration |
 | PR-trophy-18 | Podium stack per event | Gold in two different qualifying FINAL events | Two distinct gold instances in cabinet |
 | PR-trophy-19 | Celebration pin CTA | From Rare/Legendary celebration sheet tap Pin | Showcase pin persists; sheet shows pinned state |
-| PR-trophy-19b | Cabinet pin / unpin | Own unlocked trophy → detail → Pin; then Unpin | Optimistic update; pinned badge on tile + showcase ✦; after unpin falls back to auto showcase |
+| PR-trophy-19b | Cabinet pin / unpin | Own unlocked trophy → detail → Pin; then Unpin | Optimistic update; pinned ★ on own cabinet tile + own showcase; after unpin falls back to auto showcase |
+| PR-trophy-19h | Pinned badge on family stack | Pin one tier inside a habit family stack; view collapsed then expanded | Collapsed: single ★ on group frame (not doubled on face icon); expanded: ★ only on the pinned tier icon(s), group ★ hidden |
+| PR-trophy-19i | Showcase ★ owner-only | Own profile with pinned showcase trophy; open same player as visitor | Owner sees ★ under pinned showcase slot; visitor sees trophy art without ★ |
 | PR-trophy-19c | Visitor locked visibility | Open another user’s Statistics with some unlocks | Only unlocked tiles; no locked catalog / progress bars |
 | PR-trophy-19d | Owner locked progress | Own Statistics with incomplete habit | Locked tiles + progress bars for streak/volume/first-win |
 | PR-trophy-19e | Max 3 pins refuse | Own profile with 3 pins → pin a 4th | No optimistic flip; error “unpin one first”; existing pins unchanged |

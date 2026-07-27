@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { Star } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
@@ -383,13 +384,25 @@ export function TrophyCelebrationSheet({
                     type="button"
                     disabled={pinning || pinned}
                     onClick={() => void handlePin()}
-                    className="rounded-xl bg-primary-600 px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-primary-700 disabled:opacity-70 dark:bg-primary-500 dark:hover:bg-primary-400"
+                    className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition active:scale-[0.99] disabled:opacity-70 ${
+                      pinned
+                        ? 'bg-amber-50 text-amber-950 ring-1 ring-amber-200/90 dark:bg-amber-400/10 dark:text-amber-50 dark:ring-amber-400/30'
+                        : 'bg-primary-600 text-white shadow-sm hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-400'
+                    }`}
                   >
-                    {pinned
-                      ? t('trophies.celebration.pinned')
-                      : pinning
-                        ? t('trophies.celebration.pinning')
-                        : t('trophies.celebration.pin')}
+                    <Star
+                      aria-hidden
+                      className="h-4 w-4 shrink-0"
+                      strokeWidth={2.25}
+                      fill={pinned ? 'currentColor' : 'none'}
+                    />
+                    <span>
+                      {pinned
+                        ? t('trophies.celebration.pinned')
+                        : pinning
+                          ? t('trophies.celebration.pinning')
+                          : t('trophies.celebration.pin')}
+                    </span>
                   </button>
                 )}
                 <button

@@ -137,12 +137,12 @@ function ShowcaseSlot({
               >
                 <TrophyArt artKey={slot.definition!.artKey} className="h-8 w-9" />
               </TrophyRarityFrame>
-              {slot.pinned && (
+              {isOwn && slot.pinned && (
                 <span
-                  className="absolute -bottom-0.5 left-1/2 flex h-3.5 min-w-3.5 -translate-x-1/2 items-center justify-center rounded-full bg-white px-0.5 text-[8px] font-black text-primary-700 shadow-sm ring-1 ring-black/10"
+                  className="absolute -bottom-1.5 left-1/2 flex h-3.5 min-w-3.5 -translate-x-1/2 items-center justify-center rounded-full bg-white px-0.5 text-[8px] font-black text-primary-700 shadow-sm ring-1 ring-black/10"
                   aria-hidden
                 >
-                  ✦
+                  ★
                 </span>
               )}
             </motion.button>

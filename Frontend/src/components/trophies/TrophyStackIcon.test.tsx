@@ -137,4 +137,47 @@ describe('TrophyStackIcon', () => {
     expect(drawer).not.toBeNull();
     expect(drawer?.parentElement).toBe(container);
   });
+
+  it('hides pin badge while collapsed and shows it when labels are visible', () => {
+    const container = document.createElement('div');
+    document.body.append(container);
+    containers.push(container);
+    const root = createRoot(container);
+    roots.push(root);
+
+    const pinned = {
+      ...commonEntry(),
+      instances: [{ id: 'inst-1', unlockedAt: '2026-01-01T00:00:00.000Z' }],
+    };
+
+    act(() =>
+      root.render(
+        <TrophyStackIcon
+          entry={pinned}
+          locked={false}
+          labelVisible={false}
+          interactive={false}
+          isOwn
+          pinsEditable
+          pinnedInstanceIds={new Set(['inst-1'])}
+        />,
+      ),
+    );
+    expect(container.querySelector('[data-testid="trophy-pinned-badge"]')).toBeNull();
+
+    act(() =>
+      root.render(
+        <TrophyStackIcon
+          entry={pinned}
+          locked={false}
+          labelVisible
+          interactive
+          isOwn
+          pinsEditable
+          pinnedInstanceIds={new Set(['inst-1'])}
+        />,
+      ),
+    );
+    expect(container.querySelector('[data-testid="trophy-pinned-badge"]')).not.toBeNull();
+  });
 });
