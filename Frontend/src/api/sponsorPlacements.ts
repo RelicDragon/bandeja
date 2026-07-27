@@ -34,6 +34,8 @@ export type AdSportsByPlacement = Partial<Record<AdPlacementKey, Sport>>;
 export type AdPlacementsRequestContext = {
   cityId?: string;
   sportsByPlacement?: AdSportsByPlacement;
+  locale?: string;
+  theme?: 'light' | 'dark';
 };
 
 export type AdEventInput = {
@@ -72,8 +74,15 @@ export const adsApi = {
         keys: keys.join(','),
         adSessionId,
         ...(context?.cityId ? { cityId: context.cityId } : {}),
-        ...(context?.sportsByPlacement
-          ? { context: JSON.stringify({ sportsByPlacement: context.sportsByPlacement }) }
+        ...(context?.cityId || context?.sportsByPlacement || context?.locale || context?.theme
+          ? {
+              context: JSON.stringify({
+                ...(context.cityId ? { cityId: context.cityId } : {}),
+                ...(context.sportsByPlacement ? { sportsByPlacement: context.sportsByPlacement } : {}),
+                ...(context.locale ? { locale: context.locale } : {}),
+                ...(context.theme ? { theme: context.theme } : {}),
+              }),
+            }
           : {}),
       },
     });

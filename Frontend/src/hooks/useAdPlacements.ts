@@ -10,6 +10,8 @@ import {
 } from '@/api/sponsorPlacements';
 import { AD_PLACEMENT_KEYS, AD_PLACEMENTS, type AdPlacementKey } from '@/shared/adPlacements';
 import { useAuthStore } from '@/store/authStore';
+import { useResolvedAppAppearance, useThemeStore } from '@/store/themeStore';
+import { resolveAdClickLocale, resolveAdClickTheme } from '@/utils/adClickPersonalization';
 import { useNetworkStore } from '@/utils/networkStatus';
 import { getViewerPrimarySport } from '@/utils/profileSports';
 import type { Sport } from '@/types';
@@ -99,8 +101,13 @@ export function enqueueAdEvent(event: Omit<AdEventInput, 'eventId'> & { eventId?
   }
 }
 
-function sportsContextKey(sports: AdSportsByPlacement, cityId: string | undefined): string {
-  return JSON.stringify({ cityId: cityId ?? null, sports });
+function placementsFetchKey(
+  sports: AdSportsByPlacement,
+  cityId: string | undefined,
+  locale: string,
+  theme: 'light' | 'dark',
+): string {
+  return JSON.stringify({ cityId: cityId ?? null, sports, locale, theme });
 }
 
 /** Seed known defaults so the first placements fetch includes sport context before tab mounts. */
@@ -120,10 +127,13 @@ let lastFetchKey: string | null = null;
 
 /** Fetches placements once auth/city/sport context is ready — mount at app shell, not only inside AdSlot. */
 export function useAdPlacementsFetcher() {
+  const { i18n } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const isInitializing = useAuthStore((s) => s.isInitializing);
   const isOnline = useNetworkStore((s) => s.isOnline);
+  const themePreference = useThemeStore((s) => s.theme);
+  const resolvedAppearance = useResolvedAppAppearance();
   const sportsByPlacement = useAdPlacementsStore((s) => s.sportsByPlacement);
   const setCityId = useAdPlacementsStore((s) => s.setCityId);
   const setPlacements = useAdPlacementsStore((s) => s.setPlacements);
@@ -131,6 +141,14 @@ export function useAdPlacementsFetcher() {
 
   const userCityId = user?.currentCity?.id ?? user?.currentCityId;
   const primarySport = getViewerPrimarySport(user);
+  const locale = resolveAdClickLocale(
+    i18n.language,
+    user?.language,
+    typeof navigator !== 'undefined' ? navigator.language : null,
+  );
+  const theme = resolveAdClickTheme(themePreference, {
+    systemIsDark: resolvedAppearance === 'dark',
+  });
 
   const effectiveSportsByPlacement = useMemo(
     () => buildEffectiveSportsByPlacement(sportsByPlacement, primarySport),
@@ -149,23 +167,30 @@ export function useAdPlacementsFetcher() {
       return;
     }
 
-    const fetchKey = sportsContextKey(effectiveSportsByPlacement, userCityId);
+    const fetchKey = placementsFetchKey(effectiveSportsByPlacement, userCityId, locale, theme);
     if (lastFetchKey === fetchKey) return;
 
     let cancelled = false;
     const run = async () => {
       setLoading(true);
       try {
-        const response = await adsApi.getPlacements(AD_PLACEMENT_KEYS, adSessionId, {
-          cityId: userCityId,
-          sportsByPlacement: effectiveSportsByPlacement,
-        });
-        if (cancelled) return;
-        setPlacements(response.placements ?? {});
-        lastFetchKey = fetchKey;
-      } catch {
-        if (!cancelled) {
-          setPlacements({});
+        for (let attempt = 0; attempt <= 2; attempt++) {
+          try {
+            const response = await adsApi.getPlacements(AD_PLACEMENT_KEYS, adSessionId, {
+              cityId: userCityId,
+              sportsByPlacement: effectiveSportsByPlacement,
+              locale,
+              theme,
+            });
+            if (cancelled) return;
+            setPlacements(response.placements ?? {});
+            lastFetchKey = fetchKey;
+            return;
+          } catch {
+            if (cancelled) return;
+            if (attempt >= 2) return;
+            await new Promise((resolve) => setTimeout(resolve, 400 * (attempt + 1)));
+          }
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -176,7 +201,18 @@ export function useAdPlacementsFetcher() {
     return () => {
       cancelled = true;
     };
-  }, [isInitializing, isAuthenticated, user?.id, isOnline, effectiveSportsByPlacement, userCityId, setLoading, setPlacements]);
+  }, [
+    isInitializing,
+    isAuthenticated,
+    user?.id,
+    isOnline,
+    effectiveSportsByPlacement,
+    userCityId,
+    locale,
+    theme,
+    setLoading,
+    setPlacements,
+  ]);
 }
 
 export function useRegisterAdSportContext(placement: AdPlacementKey, sport: Sport | undefined) {
@@ -195,7 +231,10 @@ export function useAdPlacementEventMeta(placement: AdPlacementKey) {
     () => ({
       cityId,
       sport,
-      locale: i18n.language.split('-')[0],
+      locale: resolveAdClickLocale(
+        i18n.language,
+        typeof navigator !== 'undefined' ? navigator.language : null,
+      ),
     }),
     [cityId, i18n.language, sport],
   );

@@ -74,7 +74,7 @@ async function main() {
       sponsorId: sponsor.id,
       name: `Campaign ${suffix}`,
       status: AdCampaignStatus.ACTIVE,
-      priority: 10,
+      priority: 10_000,
       weight: 100,
       targeting: { cityIds: [city.id], sports: ['PADEL'] },
       frequencyCap: { maxImpressions: 3, windowDays: 7 },
@@ -107,6 +107,53 @@ async function main() {
 
   assert(!!resolved.home_hero, 'resolves active campaign');
   assert(resolved.home_hero!.campaignId === campaign.id, 'correct campaign');
+  assert(!resolved.home_hero!.clickUrl.includes('user_name'), 'default clickUrl has no user_name');
+
+  await prisma.adCampaign.update({
+    where: { id: campaign.id },
+    data: {
+      appendUserNameToClickUrl: true,
+      appendLocaleToClickUrl: true,
+      appendThemeToClickUrl: true,
+    },
+  });
+  AdCampaignCache.clearCache();
+  await AdCampaignCache.refreshCache();
+  const personalized = await AdDeliveryService.resolvePlacements(
+    user.id,
+    randomUUID(),
+    [AdPlacementKey.home_hero],
+    {
+      cityId: city.id,
+      sportsByPlacement: { home_hero: Sport.PADEL },
+      theme: 'dark',
+    },
+    'ru',
+    Sport.PADEL,
+    `AdQA ${suffix}`
+  );
+  assert(
+    personalized.home_hero!.clickUrl.includes('user_name=AdQA'),
+    `personalized user_name: ${personalized.home_hero!.clickUrl}`
+  );
+  assert(
+    personalized.home_hero!.clickUrl.includes('locale=ru'),
+    `personalized locale: ${personalized.home_hero!.clickUrl}`
+  );
+  assert(
+    personalized.home_hero!.clickUrl.includes('theme=dark'),
+    `personalized theme: ${personalized.home_hero!.clickUrl}`
+  );
+  await prisma.adCampaign.update({
+    where: { id: campaign.id },
+    data: {
+      appendUserNameToClickUrl: false,
+      appendLocaleToClickUrl: false,
+      appendThemeToClickUrl: false,
+    },
+  });
+  AdCampaignCache.clearCache();
+  await AdCampaignCache.refreshCache();
 
   const session2 = randomUUID();
   const again = await AdDeliveryService.resolvePlacements(
@@ -212,6 +259,7 @@ async function main() {
       sponsorId: sponsor.id,
       name: `Multi ${suffix}`,
       status: AdCampaignStatus.ACTIVE,
+      priority: 10_001,
       targeting: { cityIds: [city.id], sports: ['PADEL'] },
       placements: {
         create: [

@@ -3135,11 +3135,14 @@ model AdCampaign {
   endsAt            DateTime?
   defaultLocale     String                 @default("en")
   frequencyCap      Json?
-  dismissible       Boolean                @default(true)
-  dismissSnoozeDays Int?
-  clickUrlTrusted   Boolean                @default(true)
-  disclosureLabel   String?
-  hideDisclosure    Boolean                @default(false)
+  dismissible              Boolean                @default(true)
+  dismissSnoozeDays        Int?
+  clickUrlTrusted          Boolean                @default(true)
+  appendUserNameToClickUrl Boolean                @default(false)
+  appendLocaleToClickUrl   Boolean                @default(false)
+  appendThemeToClickUrl    Boolean                @default(false)
+  disclosureLabel          String?
+  hideDisclosure           Boolean                @default(false)
   targeting         Json
   testUserIds       String[]               @default([])
   createdAt         DateTime               @default(now())

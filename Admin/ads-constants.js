@@ -71,6 +71,9 @@
  * @property {boolean} dismissible
  * @property {number|null} dismissSnoozeDays
  * @property {boolean} clickUrlTrusted
+ * @property {boolean} [appendUserNameToClickUrl]
+ * @property {boolean} [appendLocaleToClickUrl]
+ * @property {boolean} [appendThemeToClickUrl]
  * @property {string|null} disclosureLabel
  * @property {boolean} hideDisclosure
  * @property {AdTargeting} targeting

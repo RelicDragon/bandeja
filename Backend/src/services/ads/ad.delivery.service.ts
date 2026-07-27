@@ -22,6 +22,8 @@ import {
   loadUserStates,
   parseFrequencyCap,
 } from './ad.userState.service';
+import { personalizeClickUrl, resolveAdClickUserName } from './ad.clickUrl.util';
+import type { AdClickUrlPersonalizationValues } from './ad.clickUrl.util';
 
 export type ResolvedAdCard = {
   placement: AdPlacementKey;
@@ -125,7 +127,8 @@ export class AdDeliveryService {
   static buildResolvedCard(
     campaign: CachedAdCampaign,
     creative: ReturnType<typeof resolveCreative> extends infer T ? NonNullable<T> : never,
-    placement: AdPlacementKey
+    placement: AdPlacementKey,
+    personalization?: AdClickUrlPersonalizationValues
   ): ResolvedAdCard {
     return {
       placement,
@@ -138,7 +141,15 @@ export class AdDeliveryService {
       title: creative.title,
       subtitle: creative.subtitle,
       ctaLabel: creative.ctaLabel,
-      clickUrl: creative.clickUrl,
+      clickUrl: personalizeClickUrl(
+        creative.clickUrl,
+        {
+          appendUserNameToClickUrl: Boolean(campaign.appendUserNameToClickUrl),
+          appendLocaleToClickUrl: Boolean(campaign.appendLocaleToClickUrl),
+          appendThemeToClickUrl: Boolean(campaign.appendThemeToClickUrl),
+        },
+        personalization ?? {}
+      ),
       clickAction: creative.clickAction,
       dismissible: campaign.dismissible,
       dismissSnoozeDays: campaign.dismissSnoozeDays,
@@ -154,11 +165,17 @@ export class AdDeliveryService {
     placementKeys: AdPlacementKey[],
     context: AdDeliveryContext,
     userLocale: string,
-    primarySport: Sport | undefined
+    primarySport: Sport | undefined,
+    displayName?: string | null
   ): Promise<Partial<Record<AdPlacementKey, ResolvedAdCard>>> {
     const campaigns = await AdCampaignCache.getCampaigns();
     const campaignIds = campaigns.map((c) => c.id);
     const userStates = await loadUserStates(userId, campaignIds);
+    const personalization: AdClickUrlPersonalizationValues = {
+      userName: displayName ?? null,
+      locale: userLocale,
+      theme: context.theme ?? null,
+    };
 
     const result: Partial<Record<AdPlacementKey, ResolvedAdCard>> = {};
     const userLevelBySport = new Map<Sport, number | undefined>();
@@ -215,7 +232,7 @@ export class AdDeliveryService {
             userStates,
           });
           if (creative && stillEligible.length > 0) {
-            result[placement] = this.buildResolvedCard(campaign, creative, placement);
+            result[placement] = this.buildResolvedCard(campaign, creative, placement, personalization);
             continue;
           }
         }
@@ -259,18 +276,22 @@ export class AdDeliveryService {
       );
       if (!creative) continue;
 
-      await prisma.adSessionPick.create({
-        data: {
-          adSessionId,
-          userId,
-          placement,
-          contextKey,
-          campaignId: campaign.id,
-          creativeId: creative.id,
-        },
-      });
+      try {
+        await prisma.adSessionPick.create({
+          data: {
+            adSessionId,
+            userId,
+            placement,
+            contextKey,
+            campaignId: campaign.id,
+            creativeId: creative.id,
+          },
+        });
+      } catch {
+        // Concurrent resolve can race on unique(adSessionId,userId,placement,contextKey).
+      }
 
-      result[placement] = this.buildResolvedCard(campaign, creative, placement);
+      result[placement] = this.buildResolvedCard(campaign, creative, placement, personalization);
     }
 
     return result;
@@ -329,6 +350,19 @@ export class AdDeliveryService {
     });
     if (!creative) return null;
 
-    return this.buildResolvedCard(campaign, creative, placement);
+    let userName: string | null = null;
+    if (Boolean(campaign.appendUserNameToClickUrl)) {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { firstName: true, lastName: true },
+      });
+      userName = resolveAdClickUserName(user?.firstName, user?.lastName);
+    }
+
+    return this.buildResolvedCard(campaign, creative, placement, {
+      userName,
+      locale,
+      theme: context.theme ?? null,
+    });
   }
 }

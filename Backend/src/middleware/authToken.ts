@@ -19,6 +19,7 @@ export const AUTH_USER_SELECT = {
   isTrainer: true,
   currentCityId: true,
   lastUserIP: true,
+  language: true,
 } as const;
 
 function tokenFromHeader(req: Request): string | undefined {

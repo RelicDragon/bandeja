@@ -1505,6 +1505,9 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | X-24 | Leaderboard banner ad | Ad on leaderboard tab |
 | X-25 | Ad click in-app route | Tap ad with internal action → navigates |
 | X-26 | Ad click external URL | Tap ad with URL → opens browser |
+| X-26a | Personalized click URL | Campaign with append user_name / locale / theme on; tap ad | Opened URL includes enabled params (`user_name`, `locale`, `theme=light|dark`); flags off → no params |
+| X-26b | Ad click static same-host page | Tap home hero with `OPEN_URL` + `/LizaBirthday2026` | Full document load of static landing (not SPA route); page renders birthday wish form |
+| X-26c | Static landing URL (dev Vite) | Open `/LizaBirthday2026` (no trailing index.html) on Vite | Serves `public/LizaBirthday2026/index.html`; does not bounce to `/` via SPA catch-all |
 
 ### 18.7 Navigation shell
 

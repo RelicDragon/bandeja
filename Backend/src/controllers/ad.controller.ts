@@ -6,6 +6,7 @@ import { AuthRequest } from '../middleware/auth';
 import { AdDeliveryService } from '../services/ads/ad.delivery.service';
 import { AdEventService } from '../services/ads/ad.event.service';
 import { adDeliveryContextSchema, adPlacementKeySchema } from '../services/ads/ad.schemas';
+import { resolveAdClickUserName, resolveAdClickLocale } from '../services/ads/ad.clickUrl.util';
 import { resolveSportForPlacement } from '../services/ads/ad.context.util';
 
 function parsePlacementKeys(raw: unknown): AdPlacementKey[] {
@@ -23,25 +24,29 @@ function parsePlacementKeys(raw: unknown): AdPlacementKey[] {
 }
 
 function parseContext(req: AuthRequest) {
+  let fromJson: {
+    cityId?: string;
+    sportsByPlacement?: Partial<Record<AdPlacementKey, Sport>>;
+    locale?: string;
+    theme?: 'light' | 'dark';
+  } | null = null;
+
   const raw = req.query.context;
   if (typeof raw === 'string' && raw.trim()) {
     try {
       const json = JSON.parse(raw);
       const result = adDeliveryContextSchema.safeParse(json);
       if (!result.success) throw new ApiError(400, result.error.message);
-      return result.data;
+      fromJson = result.data;
     } catch (e) {
       if (e instanceof ApiError) throw e;
       throw new ApiError(400, 'Invalid context JSON');
     }
   }
 
-  const cityId =
-    (typeof req.query.cityId === 'string' ? req.query.cityId : undefined) ??
-    req.user?.currentCityId ??
-    undefined;
-
-  const sportsByPlacement: Partial<Record<AdPlacementKey, Sport>> = {};
+  const sportsByPlacement: Partial<Record<AdPlacementKey, Sport>> = {
+    ...(fromJson?.sportsByPlacement ?? {}),
+  };
   for (const key of Object.values(AdPlacementKey)) {
     const param = req.query[`sport_${key}`];
     if (typeof param === 'string' && param) {
@@ -49,13 +54,35 @@ function parseContext(req: AuthRequest) {
     }
   }
 
-  return { cityId, sportsByPlacement: Object.keys(sportsByPlacement).length ? sportsByPlacement : undefined };
+  const cityId =
+    fromJson?.cityId ??
+    (typeof req.query.cityId === 'string' ? req.query.cityId : undefined) ??
+    req.user?.currentCityId ??
+    undefined;
+
+  return {
+    cityId,
+    sportsByPlacement: Object.keys(sportsByPlacement).length ? sportsByPlacement : undefined,
+    locale: fromJson?.locale,
+    theme: fromJson?.theme,
+  };
 }
 
-function resolveUserLocale(req: AuthRequest): string {
-  const lang = req.user?.translateToLanguage ?? req.user?.language;
-  if (lang && lang !== 'auto') return lang.split('-')[0];
-  return 'en';
+function parseAcceptLanguageCandidates(header: string | undefined): string[] {
+  if (!header?.trim()) return [];
+  return header
+    .split(',')
+    .map((part) => part.trim().split(';')[0]?.trim())
+    .filter((part): part is string => Boolean(part));
+}
+
+function resolveUserLocale(req: AuthRequest, contextLocale?: string): string {
+  const acceptCandidates = parseAcceptLanguageCandidates(req.get('Accept-Language'));
+  return resolveAdClickLocale(
+    contextLocale,
+    req.user?.language,
+    ...acceptCandidates,
+  );
 }
 
 export const getAdPlacements = asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -72,8 +99,9 @@ export const getAdPlacements = asyncHandler(async (req: AuthRequest, res: Respon
     adSessionId,
     keys,
     context,
-    resolveUserLocale(req),
-    req.user?.primarySport
+    resolveUserLocale(req, context.locale),
+    req.user?.primarySport,
+    resolveAdClickUserName(req.user?.firstName, req.user?.lastName)
   );
 
   res.json({ success: true, data: { placements } });

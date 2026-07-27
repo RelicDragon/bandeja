@@ -37,6 +37,37 @@ const ensureWellKnown = () => {
   }
 }
 
+// Match nginx: serve public landing index.html for clean URLs (Vite SPA otherwise swallows them).
+const STATIC_LANDING_PATHS: Record<string, string> = {
+  '/ad-test': 'ad-test/index.html',
+  '/LizaBirthday2026': 'LizaBirthday2026/index.html',
+}
+
+const serveStaticLandings = () => {
+  return {
+    name: 'serve-static-landings',
+    configureServer(server: import('vite').ViteDevServer) {
+      server.middlewares.use((req, res, next) => {
+        const raw = req.url?.split('?')[0] ?? ''
+        const pathname = raw.replace(/\/+$/, '') || '/'
+        const relative = STATIC_LANDING_PATHS[pathname]
+        if (!relative) {
+          next()
+          return
+        }
+        const filePath = join(__dirname, 'public', relative)
+        if (!existsSync(filePath)) {
+          next()
+          return
+        }
+        res.setHeader('Content-Type', 'text/html; charset=utf-8')
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate')
+        res.end(readFileSync(filePath, 'utf8'))
+      })
+    },
+  }
+}
+
 const swcMinify = defineRollupSwcMinifyOption({
   module: true,
   compress: {
@@ -51,7 +82,7 @@ export default defineConfig(({ command }) => {
   const defaultMediaBaseUrl = isDevServer ? 'http://localhost:3000' : 'https://bandeja.me';
 
   return {
-  plugins: [react(), tailwindcss(), viteMinify(swcMinify), ensureWellKnown()],
+  plugins: [react(), tailwindcss(), viteMinify(swcMinify), ensureWellKnown(), serveStaticLandings()],
   worker: {
     format: 'es',
   },

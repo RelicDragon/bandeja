@@ -20,6 +20,25 @@ function isExternalUrl(url: string): boolean {
   return /^https?:\/\//i.test(url.trim());
 }
 
+function isSameOriginAbsoluteUrl(url: string): boolean {
+  if (typeof window === 'undefined' || !isExternalUrl(url)) return false;
+  try {
+    return new URL(url).origin === window.location.origin;
+  } catch {
+    return false;
+  }
+}
+
+/** Full document navigation — required for static `public/` pages (nginx), not SPA routes. */
+function navigateSameOriginDocument(pathOrUrl: string) {
+  const href = isExternalUrl(pathOrUrl)
+    ? pathOrUrl
+    : pathOrUrl.startsWith('/')
+      ? pathOrUrl
+      : `/${pathOrUrl}`;
+  window.location.assign(href);
+}
+
 function navigateInApp(navigate: ReturnType<typeof useNavigate>, path: string) {
   if (!path.startsWith('/')) {
     navigate(buildUrl('home'));
@@ -59,8 +78,18 @@ export async function executeAdClick(
     }
     case 'OPEN_URL':
     default:
+      // Relative / same-origin → full page load (static landings like /LizaBirthday2026).
+      // Cross-origin https → external browser / new tab.
       if (isExternalUrl(clickUrl)) {
+        if (isSameOriginAbsoluteUrl(clickUrl)) {
+          navigateSameOriginDocument(clickUrl);
+          return;
+        }
         await openExternalUrl(clickUrl);
+        return;
+      }
+      if (clickUrl.startsWith('/')) {
+        navigateSameOriginDocument(clickUrl);
         return;
       }
       navigateInApp(navigate, clickUrl);

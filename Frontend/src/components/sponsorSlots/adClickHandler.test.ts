@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { adClickNeedsLeavingConfirm } from './adClickHandler';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { adClickNeedsLeavingConfirm, executeAdClick } from './adClickHandler';
 import type { AdPlacementPayload } from '@/api/sponsorPlacements';
 
 function payload(overrides: Partial<AdPlacementPayload>): AdPlacementPayload {
@@ -34,5 +34,26 @@ describe('adClickNeedsLeavingConfirm', () => {
     expect(
       adClickNeedsLeavingConfirm(payload({ clickUrlTrusted: false, clickUrl: '/games' })),
     ).toBe(false);
+  });
+});
+
+describe('executeAdClick OPEN_URL static pages', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it('full-page navigates relative same-host static paths', async () => {
+    const assign = vi.fn();
+    vi.stubGlobal('window', {
+      location: { assign, origin: 'http://localhost:3001', href: 'http://localhost:3001/' },
+    });
+    const navigate = vi.fn();
+    await executeAdClick(
+      payload({ clickAction: 'OPEN_URL', clickUrl: '/LizaBirthday2026' }),
+      navigate as never,
+    );
+    expect(assign).toHaveBeenCalledWith('/LizaBirthday2026');
+    expect(navigate).not.toHaveBeenCalled();
   });
 });

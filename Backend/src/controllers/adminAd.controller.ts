@@ -230,6 +230,10 @@ export const previewAd = asyncHandler(async (req: AuthRequest, res: Response) =>
   const resolvedContext = {
     cityId: contextResult.data.cityId ?? user.currentCityId ?? undefined,
     sportsByPlacement: contextResult.data.sportsByPlacement,
+    theme:
+      req.query.theme === 'light' || req.query.theme === 'dark'
+        ? req.query.theme
+        : contextResult.data.theme,
   };
 
   const variantKey =

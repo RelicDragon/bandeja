@@ -75,6 +75,9 @@ export const adCampaignWriteSchema = z.object({
   dismissible: z.boolean().optional(),
   dismissSnoozeDays: z.number().int().positive().nullable().optional(),
   clickUrlTrusted: z.boolean().optional(),
+  appendUserNameToClickUrl: z.boolean().optional(),
+  appendLocaleToClickUrl: z.boolean().optional(),
+  appendThemeToClickUrl: z.boolean().optional(),
   disclosureLabel: z.string().max(100).nullable().optional(),
   hideDisclosure: z.boolean().optional(),
   targeting: adTargetingSchema,
@@ -107,6 +110,8 @@ export const adCreativeWriteSchema = z.object({
 export const adDeliveryContextSchema = z.object({
   cityId: z.string().min(1).optional(),
   sportsByPlacement: z.record(adPlacementKeySchema, z.nativeEnum(Sport)).optional(),
+  locale: z.string().min(2).max(10).optional(),
+  theme: z.enum(['light', 'dark']).optional(),
 });
 
 export const adEventInputSchema = z.object({

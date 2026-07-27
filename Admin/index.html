@@ -713,6 +713,18 @@
                                         <input type="checkbox" id="adCampaignClickUrlTrusted" checked>
                                         Trusted external URL (skip interstitial)
                                     </label>
+                                    <label class="ads-check-item">
+                                        <input type="checkbox" id="adCampaignAppendUserNameToClickUrl">
+                                        Append <code>user_name</code> to click URL
+                                    </label>
+                                    <label class="ads-check-item">
+                                        <input type="checkbox" id="adCampaignAppendLocaleToClickUrl">
+                                        Append <code>locale</code> to click URL
+                                    </label>
+                                    <label class="ads-check-item">
+                                        <input type="checkbox" id="adCampaignAppendThemeToClickUrl">
+                                        Append <code>theme</code> to click URL (<code>light</code>/<code>dark</code>)
+                                    </label>
                                     <div class="form-group">
                                         <label for="adCampaignDisclosureLabel">Disclosure label override</label>
                                         <input type="text" id="adCampaignDisclosureLabel" placeholder="Sponsored">
@@ -790,6 +802,13 @@
                                         <option value="es">Spanish</option>
                                         <option value="sr">Serbian</option>
                                         <option value="cs">Czech</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="adPreviewTheme">Theme</label>
+                                    <select id="adPreviewTheme">
+                                        <option value="light">light</option>
+                                        <option value="dark">dark</option>
                                     </select>
                                 </div>
                                 <div class="form-group">

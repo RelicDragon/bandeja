@@ -126,6 +126,9 @@ async function openAdsCampaignEditor(campaignId) {
         document.getElementById('adCampaignStatus').value = 'DRAFT';
         document.getElementById('adCampaignDismissible').checked = true;
         document.getElementById('adCampaignClickUrlTrusted').checked = true;
+        document.getElementById('adCampaignAppendUserNameToClickUrl').checked = false;
+        document.getElementById('adCampaignAppendLocaleToClickUrl').checked = false;
+        document.getElementById('adCampaignAppendThemeToClickUrl').checked = false;
         document.getElementById('adCampaignHideDisclosure').checked = false;
         document.getElementById('adCampaignFreqCapEnabled').checked = true;
         document.getElementById('adCampaignFreqMax').value = String(AD_DEFAULT_FREQUENCY_CAP.maxImpressions);
@@ -337,6 +340,9 @@ function populateAdsCampaignForm(campaign) {
     document.getElementById('adCampaignDismissible').checked = campaign.dismissible !== false;
     document.getElementById('adCampaignDismissSnoozeDays').value = campaign.dismissSnoozeDays ?? '';
     document.getElementById('adCampaignClickUrlTrusted').checked = campaign.clickUrlTrusted !== false;
+    document.getElementById('adCampaignAppendUserNameToClickUrl').checked = !!campaign.appendUserNameToClickUrl;
+    document.getElementById('adCampaignAppendLocaleToClickUrl').checked = !!campaign.appendLocaleToClickUrl;
+    document.getElementById('adCampaignAppendThemeToClickUrl').checked = !!campaign.appendThemeToClickUrl;
     document.getElementById('adCampaignDisclosureLabel').value = campaign.disclosureLabel || '';
     document.getElementById('adCampaignHideDisclosure').checked = !!campaign.hideDisclosure;
     document.getElementById('adCampaignTestUserIds').value = formatTestUserIds(campaign.testUserIds);
@@ -376,6 +382,9 @@ function collectAdsCampaignPayload() {
             ? parseInt(document.getElementById('adCampaignDismissSnoozeDays').value, 10) || null
             : null,
         clickUrlTrusted: document.getElementById('adCampaignClickUrlTrusted').checked,
+        appendUserNameToClickUrl: document.getElementById('adCampaignAppendUserNameToClickUrl').checked,
+        appendLocaleToClickUrl: document.getElementById('adCampaignAppendLocaleToClickUrl').checked,
+        appendThemeToClickUrl: document.getElementById('adCampaignAppendThemeToClickUrl').checked,
         disclosureLabel: optionalTrimToNull(document.getElementById('adCampaignDisclosureLabel').value),
         hideDisclosure: document.getElementById('adCampaignHideDisclosure').checked,
         targeting: collectAdsExtendedTargeting(),
@@ -688,6 +697,7 @@ async function runAdsPreview() {
     const userId = document.getElementById('adPreviewUserId').value.trim();
     const placement = document.getElementById('adPreviewPlacement').value;
     const locale = document.getElementById('adPreviewLocale').value;
+    const theme = document.getElementById('adPreviewTheme')?.value || 'light';
     const variantKey = document.getElementById('adPreviewVariant')?.value || 'A';
     const resultEl = document.getElementById('adPreviewResult');
     resultEl.innerHTML = 'Loading preview…';
@@ -697,6 +707,7 @@ async function runAdsPreview() {
             userId: userId || undefined,
             placement,
             locale,
+            theme,
             variantKey,
         });
         if (!data || data.empty) {
@@ -716,6 +727,7 @@ async function runAdsPreview() {
                 <div class="ads-preview-meta text-muted">
                     Campaign: ${escapeHtml(data.campaignName || adsEditingCampaignId)} ·
                     ${data.clickUrlTrusted === false ? 'Leaving Bandeja interstitial' : 'Trusted URL'}
+                    ${data.clickUrl ? `<br><code>${escapeHtml(data.clickUrl)}</code>` : ''}
                 </div>
             </div>`;
     } catch (error) {

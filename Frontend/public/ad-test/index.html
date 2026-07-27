@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Bandeja ad test</title>
+  <meta name="robots" content="noindex,nofollow" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      color: #0f172a;
+      background:
+        radial-gradient(900px 420px at 12% -10%, rgba(16, 185, 129, 0.28), transparent 60%),
+        radial-gradient(700px 380px at 100% 0%, rgba(14, 165, 233, 0.22), transparent 55%),
+        #f8fafc;
+    }
+    main {
+      width: min(440px, 100%);
+      text-align: center;
+    }
+    h1 {
+      font-size: 1.75rem;
+      letter-spacing: -0.03em;
+      margin-bottom: 0.5rem;
+    }
+    p {
+      color: #475569;
+      line-height: 1.5;
+      margin-bottom: 1.25rem;
+    }
+    code {
+      display: inline-block;
+      padding: 0.2rem 0.45rem;
+      border-radius: 0.4rem;
+      background: #e2e8f0;
+      font-size: 0.85rem;
+      word-break: break-all;
+    }
+    .meta {
+      margin-top: 1.5rem;
+      font-size: 0.8rem;
+      color: #64748b;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Ad click test</h1>
+    <p>Static page opened from a home hero ad. No app update needed when the ad uses <code>OPEN_URL</code> to this live URL.</p>
+    <code id="href"></code>
+    <p class="meta" id="userName"></p>
+    <p class="meta" id="ts"></p>
+  </main>
+  <script>
+    document.getElementById('href').textContent = location.href;
+    const name = new URLSearchParams(location.search).get('user_name');
+    const locale = new URLSearchParams(location.search).get('locale');
+    const theme = new URLSearchParams(location.search).get('theme');
+    const parts = [
+      name ? ('user_name = ' + name) : 'user_name missing',
+      locale ? ('locale = ' + locale) : 'locale missing',
+      theme ? ('theme = ' + theme) : 'theme missing',
+    ];
+    document.getElementById('userName').textContent = parts.join(' · ');
+    document.getElementById('ts').textContent = 'Loaded ' + new Date().toISOString();
+  </script>
+</body>
+</html>

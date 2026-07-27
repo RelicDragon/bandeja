@@ -1,7 +1,7 @@
 import { getRedisClient, isRedisConfigured } from '../redis/redisClient';
 import type { CachedAdCampaign } from './ad.cache';
 
-const CACHE_KEY = 'pp:ads:campaigns';
+const CACHE_KEY = 'pp:ads:campaigns:v2';
 const CACHE_TTL_SEC = 300;
 
 export function isAdsRedisCacheEnabled(): boolean {
