@@ -25,6 +25,11 @@ import {
   applyAllReadToOwnVisibleMessages,
   applySyncReadBatchToMessages,
 } from './chatSyncReadBatchReact';
+import {
+  pendingReceiptsToMessageReadReceipts,
+  stashPendingThreadReadReceipt,
+  takePendingThreadReadReceipts,
+} from './pendingThreadReadReceipts';
 
 /**
  * Configuration for a live thread projection.
@@ -365,6 +370,25 @@ function reduceSingleEvent(
   }
 }
 
+function attachPendingReadReceipts(
+  message: ChatMessageWithStatus,
+  config: ThreadLiveConfig
+): ChatMessageWithStatus {
+  const pending = takePendingThreadReadReceipts(
+    config.contextType,
+    config.contextId,
+    message.id
+  );
+  if (pending.length === 0) return message;
+  return {
+    ...message,
+    readReceipts: mergeReadReceipts(
+      message.readReceipts ?? [],
+      pendingReceiptsToMessageReadReceipts(message.id, pending)
+    ),
+  };
+}
+
 /**
  * Handle inbound message event.
  *
@@ -383,12 +407,24 @@ function reduceInboundMessage(
     }
   }
 
+  const inbound = attachPendingReadReceipts(
+    event.message as ChatMessageWithStatus,
+    config
+  );
+
   const prevMessages = state.messages;
-  const merged = mergeChatMessagesAscending(prevMessages, [event.message]);
+  const merged = mergeChatMessagesAscending(prevMessages, [inbound]);
 
   // Detect if actually changed
   const prevIds = new Set(prevMessages.map((m) => m.id));
-  const isNewOrUpdated = !prevIds.has(event.message.id) || merged.length !== prevMessages.length;
+  const prev = prevMessages.find((m) => m.id === inbound.id);
+  const receiptsChanged =
+    readReceiptsFingerprint(prev?.readReceipts) !==
+    readReceiptsFingerprint(inbound.readReceipts);
+  const isNewOrUpdated =
+    !prevIds.has(inbound.id) ||
+    merged.length !== prevMessages.length ||
+    receiptsChanged;
 
   if (isNewOrUpdated) {
     state.messages = merged;
@@ -396,12 +432,12 @@ function reduceInboundMessage(
     state.effects.push({ type: 'persist', event });
 
     // If this has a syncSeq, acknowledge it
-    if (event.message.syncSeq !== undefined) {
-      state.effects.push({ type: 'ack', syncSeq: event.message.syncSeq });
+    if (inbound.syncSeq !== undefined) {
+      state.effects.push({ type: 'ack', syncSeq: inbound.syncSeq });
     }
 
     // If inbound message is from another user, clear unread
-    if (event.message.senderId !== config.viewerUserId) {
+    if (inbound.senderId !== config.viewerUserId) {
       state.effects.push({
         type: 'clearUnread',
         contextType: config.contextType,
@@ -425,8 +461,21 @@ function reduceInboundMessage(
 function reduceReadBatch(
   state: ReductionState,
   event: ReadBatchEvent,
-  _config: ThreadLiveConfig
+  config: ThreadLiveConfig
 ): void {
+  const present = new Set(state.messages.map((m) => m.id));
+  for (const messageId of event.messageIds) {
+    if (!present.has(messageId)) {
+      stashPendingThreadReadReceipt(
+        config.contextType,
+        config.contextId,
+        messageId,
+        event.userId,
+        event.readAt
+      );
+    }
+  }
+
   const result = applySyncReadBatchToMessages(
     state.messages,
     event.userId,
@@ -449,11 +498,18 @@ function reduceReadBatch(
 function reduceReadReceipt(
   state: ReductionState,
   event: ReadReceiptEvent,
-  _config: ThreadLiveConfig
+  config: ThreadLiveConfig
 ): void {
   const targetMessage = state.messages.find((m) => m.id === event.messageId);
   if (!targetMessage) {
-    return; // Message not in current thread
+    stashPendingThreadReadReceipt(
+      config.contextType,
+      config.contextId,
+      event.messageId,
+      event.receipt.userId,
+      event.receipt.readAt
+    );
+    return;
   }
 
   const prevReceipts = targetMessage.readReceipts ?? [];
@@ -658,6 +714,10 @@ function reduceMessageAck(
 ): void {
   const prevMessages = state.messages;
   let matchedTempId: string | undefined;
+  const acked = attachPendingReadReceipts(
+    event.message as ChatMessageWithStatus,
+    config
+  );
 
   const nextMessages = prevMessages.map((m) => {
     const isMatch =
@@ -669,7 +729,11 @@ function reduceMessageAck(
       matchedTempId = m.id;
       // Merge server message over optimistic one, removing _status
       const { _status: _, _optimisticId: __, ...realRest } = m as any;
-      return { ...realRest, ...event.message };
+      return {
+        ...realRest,
+        ...acked,
+        readReceipts: mergeReadReceipts(m.readReceipts ?? [], acked.readReceipts ?? []),
+      };
     }
     return m;
   });
@@ -682,12 +746,12 @@ function reduceMessageAck(
     state.effects.push({
       type: 'reconcileAck',
       tempId: matchedTempId,
-      message: event.message,
+      message: acked,
     });
     state.effects.push({ type: 'l1Put', messages: sorted });
   } else {
     // If not found in current UI state, treat as a normal inbound
-    reduceInboundMessage(state, { type: 'inboundMessage', message: event.message }, config);
+    reduceInboundMessage(state, { type: 'inboundMessage', message: acked }, config);
   }
 }
 
@@ -697,10 +761,10 @@ function reduceMessageAck(
 function reduceHydrateSnapshot(
   state: ReductionState,
   event: HydrateSnapshotEvent,
-  _config: ThreadLiveConfig
+  config: ThreadLiveConfig
 ): void {
   const currentMessages = state.messages;
-  const hydratedMessages = event.messages;
+  const hydratedMessages = event.messages.map((m) => attachPendingReadReceipts(m, config));
 
   const merged = mergeHydratedSnapshot(currentMessages, hydratedMessages);
 

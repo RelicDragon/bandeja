@@ -5,7 +5,7 @@
  * without React, Dexie, or socket mocks.
  */
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, beforeEach } from 'vitest';
 import type { ChatMessageWithStatus } from '@/api/chat';
 import {
   reduceThreadLiveSnapshot,
@@ -13,7 +13,9 @@ import {
   type InboundMessageEvent,
   type ReadBatchEvent,
   type AllReadEvent,
+  type MessageAckEvent,
 } from '@/services/chat/threadLiveProjection';
+import { resetPendingThreadReadReceiptsForTests } from '@/services/chat/pendingThreadReadReceipts';
 
 /** Test fixture: create a basic message */
 function createMessage(
@@ -59,6 +61,10 @@ const USER_CONFIG: ThreadLiveConfig = {
 };
 
 describe('reduceThreadLiveSnapshot', () => {
+  beforeEach(() => {
+    resetPendingThreadReadReceiptsForTests();
+  });
+
   describe('inboundMessage events', () => {
     it('merges a single inbound message into empty thread', () => {
       const prev: ChatMessageWithStatus[] = [];
@@ -235,6 +241,73 @@ describe('reduceThreadLiveSnapshot', () => {
       // Should not mark as changed since receipt already present
       expect(result.changed).toBe(false);
       expect(result.effects).toHaveLength(0);
+    });
+
+    it('buffers readBatch for missing ids and applies on inbound', () => {
+      const readAt = '2026-01-01T01:00:00.000Z';
+      const buffered = reduceThreadLiveSnapshot(
+        [],
+        [
+          {
+            type: 'readBatch',
+            userId: 'reader-user',
+            readAt,
+            messageIds: ['late-img'],
+          },
+        ],
+        USER_CONFIG
+      );
+      expect(buffered.changed).toBe(false);
+
+      const result = reduceThreadLiveSnapshot(
+        [],
+        [
+          {
+            type: 'inboundMessage',
+            message: createMessage({ id: 'late-img', senderId: 'viewer-1' }),
+          },
+        ],
+        USER_CONFIG
+      );
+
+      expect(result.changed).toBe(true);
+      const msg = result.next.find((m) => m.id === 'late-img');
+      expect(msg?.readReceipts).toHaveLength(1);
+      expect(msg?.readReceipts[0]?.userId).toBe('reader-user');
+    });
+
+    it('applies buffered readBatch on messageAck', () => {
+      const readAt = '2026-01-01T01:00:00.000Z';
+      reduceThreadLiveSnapshot(
+        [],
+        [
+          {
+            type: 'readBatch',
+            userId: 'reader-user',
+            readAt,
+            messageIds: ['srv-img'],
+          },
+        ],
+        USER_CONFIG
+      );
+
+      const optimistic = createMessage({
+        id: 'temp-1',
+        senderId: 'viewer-1',
+        clientMutationId: 'cid-1',
+      });
+      const prev = [{ ...optimistic, _status: 'SENDING' as const }];
+      const events: MessageAckEvent[] = [
+        {
+          type: 'messageAck',
+          clientId: 'cid-1',
+          message: createMessage({ id: 'srv-img', senderId: 'viewer-1', clientMutationId: 'cid-1' }),
+        },
+      ];
+
+      const result = reduceThreadLiveSnapshot(prev, events, USER_CONFIG);
+      const msg = result.next.find((m) => m.id === 'srv-img');
+      expect(msg?.readReceipts?.some((r) => r.userId === 'reader-user')).toBe(true);
     });
   });
 

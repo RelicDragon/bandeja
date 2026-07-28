@@ -35,6 +35,7 @@ import {
   type ThreadLiveConfig,
   type ThreadLiveEvent,
 } from '@/services/chat/threadLiveProjection';
+import { markReadAfterSend } from '@/services/chat/markReadAfterSend';
 
 function revokeReconciledOptimisticBlobs(
   prev: readonly ChatMessageWithStatus[],
@@ -272,6 +273,9 @@ export function useThreadOptimistic({
       donateOutgoingChatIntent(serverMessage);
       if (id) {
         messageQueueStorage.remove(optimisticId, contextType, id).catch((err) => console.error('[messageQueue] remove', err));
+        if (contextType === 'GAME' || contextType === 'USER' || contextType === 'GROUP') {
+          markReadAfterSend(contextType, id);
+        }
       }
       cancelSend(optimisticId);
     },

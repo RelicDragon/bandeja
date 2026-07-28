@@ -23,8 +23,8 @@ import { UserChatService } from './userChat.service';
 import { hasParentGamePermissionWithUserCheck } from '../../utils/parentGamePermissions';
 import { TranslationService } from './translation.service';
 import { translationIsRedundantOfSource } from './translationRedundant';
-import { ReadReceiptService } from './readReceipt.service';
 import { DraftService } from './draft.service';
+import { ReadReceiptService } from './readReceipt.service';
 import { invalidateBasicUsersAllowedCacheForMessage } from '../user/basicUsersForMessageAllowedCache';
 import { updateLastMessagePreview } from './lastMessagePreview.service';
 import { computeContentSearchable, computeVoiceContentSearchable } from '../../utils/messageSearchContent';
@@ -589,14 +589,15 @@ export class MessageService {
       return;
     }
 
-    const unread = await ReadReceiptService.getUnreadCountForContext(
-      markContextType,
-      markContextId,
-      senderId
-    );
-    if (unread === 0) return;
-
     try {
+      // Unread count can be 0 via ChatReadCursor while older rows still lack receipts.
+      const needsReceiptBackfill = await ReadReceiptService.hasMissingReceiptsForContext(
+        markContextType,
+        markContextId,
+        senderId
+      );
+      if (!needsReceiptBackfill) return;
+
       await UnreadSnapshotService.markContextRead(senderId, {
         contextType: markContextType,
         contextId: markContextId,
@@ -1297,6 +1298,20 @@ export class MessageService {
     );
 
     if (!(message as { _deduped?: boolean })._deduped) {
+      const { ReadReceiptService } = await import('./readReceipt.service');
+      ReadReceiptService.scheduleReceiptsForLateInsertReaders({
+        id: message.id,
+        chatContextType: message.chatContextType,
+        contextId: message.contextId,
+        chatType: message.chatType,
+        serverSyncSeq:
+          (message as { serverSyncSeq?: number | null }).serverSyncSeq ??
+          (message as { syncSeq?: number | null }).syncSeq ??
+          null,
+        createdAt: new Date(message.createdAt),
+        senderId: message.senderId,
+      });
+
       const { ChatAutoTranslateEnqueueService } = await import('./chatAutoTranslateEnqueue.service');
       void ChatAutoTranslateEnqueueService.enqueueForMessage(message.id).catch((err) => {
         console.error('[auto-translate] enqueue failed', { messageId: message.id, err });

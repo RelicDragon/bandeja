@@ -8,6 +8,11 @@ import { mergeReactionListSync } from './chatSyncEventsToPatches';
 import { mergeReadReceipts } from './mergeReadReceipts';
 import { rowFromMessage } from './chatSyncRowUtils';
 import { putChatLocalRowsWithSearchTokens } from './chatLocalApplyWrite';
+import {
+  pendingReceiptsToMessageReadReceipts,
+  stashPendingThreadReadReceipt,
+  takePendingThreadReadReceipts,
+} from './pendingThreadReadReceipts';
 
 export type ChatSyncPatchApplySideEffects = {
   putMessagesForMedia: ChatMessage[];
@@ -42,16 +47,27 @@ export async function applyChatSyncPatchesInSlice(
     switch (p.op) {
       case 'putMessage': {
         const existing = await ensureRow(p.message.id);
+        const pending = takePendingThreadReadReceipts(contextType, contextId, p.message.id);
+        const withPending =
+          pending.length > 0
+            ? {
+                ...p.message,
+                readReceipts: mergeReadReceipts(
+                  p.message.readReceipts ?? [],
+                  pendingReceiptsToMessageReadReceipts(p.message.id, pending)
+                ),
+              }
+            : p.message;
         const merged = existing
           ? {
               ...existing.payload,
-              ...p.message,
+              ...withPending,
               readReceipts: mergeReadReceipts(
                 existing.payload.readReceipts ?? [],
-                p.message.readReceipts ?? []
+                withPending.readReceipts ?? []
               ),
             }
-          : p.message;
+          : withPending;
         writeRow(rowFromMessage(merged));
         putMessagesForMedia.push(merged);
         break;
@@ -125,7 +141,10 @@ export async function applyChatSyncPatchesInSlice(
       case 'readBatch': {
         for (const mid of p.messageIds) {
           const r = await ensureRow(mid);
-          if (!r) continue;
+          if (!r) {
+            stashPendingThreadReadReceipt(contextType, contextId, mid, p.userId, p.readAt);
+            continue;
+          }
           const receipts = r.payload.readReceipts ?? [];
           const next: MessageReadReceipt = {
             id: `batch-${mid}-${p.userId}`,
@@ -144,7 +163,10 @@ export async function applyChatSyncPatchesInSlice(
       case 'readReceipt': {
         const { messageId, userId, readAt } = p.receipt;
         const r = await ensureRow(messageId);
-        if (!r) break;
+        if (!r) {
+          stashPendingThreadReadReceipt(contextType, contextId, messageId, userId, readAt);
+          break;
+        }
         const receipts = r.payload.readReceipts ?? [];
         const next: MessageReadReceipt = {
           id: `sync-${messageId}-${userId}`,
