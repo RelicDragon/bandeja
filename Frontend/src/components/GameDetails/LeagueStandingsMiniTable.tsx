@@ -10,6 +10,7 @@ import {
   standingsTieClusterKind,
   type StandingsTieDecideBy,
 } from '@/utils/leagueStandingsTieExplain';
+import { formatFixtureMatrixPlayerName } from '@/utils/leagueFixtureMatrix';
 import { LeagueStandingsTeamPlayersCell } from './LeagueStandingsTeamPlayersCell';
 
 type Props = {
@@ -56,8 +57,7 @@ function ParticipantCell({
     return <LeagueStandingsTeamPlayersCell players={standing.leagueTeam.players} />;
   }
   if (standing?.user) {
-    const name =
-      [standing.user.firstName, standing.user.lastName].filter(Boolean).join(' ') || '—';
+    const name = formatFixtureMatrixPlayerName(standing.user) || '—';
     return (
       <div className="flex min-w-0 items-center gap-1.5">
         <PlayerAvatar

@@ -1,11 +1,8 @@
 import { PlayerAvatar } from '@/components/PlayerAvatar';
 import type { LeagueStanding } from '@/api/leagues';
+import { formatFixtureMatrixPlayerName } from '@/utils/leagueFixtureMatrix';
 
 type LeagueTeamPlayer = NonNullable<NonNullable<LeagueStanding['leagueTeam']>['players']>[number];
-
-function playerDisplayName(player: LeagueTeamPlayer): string {
-  return `${player.user?.firstName ?? ''} ${player.user?.lastName ?? ''}`.trim();
-}
 
 export function LeagueStandingsTeamPlayersCell({
   players,
@@ -20,7 +17,7 @@ export function LeagueStandingsTeamPlayersCell({
   return (
     <div className="flex min-w-0 flex-col gap-0.5">
       {list.map((player) => {
-        const name = playerDisplayName(player);
+        const name = formatFixtureMatrixPlayerName(player.user);
         return (
           <div key={player.id} className="flex min-w-0 items-center gap-1.5">
             <PlayerAvatar
