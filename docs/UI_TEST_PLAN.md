@@ -841,7 +841,7 @@ Frontend/e2e/
 | GD-120 | Season table after roster swap | After GD-118, open Schedule → Table (and fullscreen table) for the group | Cells vs opponents still show prior played results for the franchise; empty only if no fixture existed |
 | GD-120 | Group standings tie-break (fixed / 1v1) | Fixed-team **or** 1v1 group: two equal on wins, A beat B | Standings order A above B (H2H); three+ equal wins use mini-table (mutual wins → set Δ → game Δ), then H2H if two remain tied; 2v2 non-fixed stays points-first |
 | GD-121 | Playoff wizard uses API standings order | Fixed-team season; open playoff config; pick top teams | Order matches Standings tab (not points-only re-sort) |
-| GD-123 | Equal-wins mini-tables on standings | Fixed-team or 1v1; ≥2 tied on wins (not 0–0–0); Standings | Tied rows highlighted + **Why?** scrolls to mini block; section explains H2H vs mini; “Why above next” + highlighted deciding metric; order matches main table; fixed-team mini rows show tiny avatars with each player on its own line (not comma-joined) |
+| GD-123 | Equal-wins mini-tables on standings | Fixed-team or 1v1; ≥2 tied on wins (not 0–0–0); Standings | Tied rows highlighted + circular **?** scrolls to mini block; section title + short equal-wins hint; deciding metric highlighted; order matches main table; main + mini fixed-team rows use tiny avatars, initial+last per player line (no comma join) |
 | GD-62 | Pending trainer invite | TRAINING without trainer | Pending trainer row + accept flow |
 | GD-63 | FAQ edit (owner) | Edit game FAQs | Content saved |
 | GD-64 | Announced game results gate | Enter results on ANNOUNCED game | Confirm modal before entry |

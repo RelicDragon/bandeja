@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { HelpCircle } from 'lucide-react';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
 import type { LeagueStanding } from '@/api/leagues';
 import type { LeagueStandingsColumnFlags } from '@/utils/leagueStandingsColumns';
@@ -6,7 +7,9 @@ import {
   formatSignedDelta,
   standingsScoreUnitDelta,
 } from '@/utils/leagueStandingsColumns';
+import { formatFixtureMatrixPlayerName } from '@/utils/leagueFixtureMatrix';
 import { LeagueStandingsPlaceCell } from './LeagueStandingsPlaceCell';
+import { LeagueStandingsTeamPlayersCell } from './LeagueStandingsTeamPlayersCell';
 
 type Props = {
   rows: LeagueStanding[];
@@ -41,35 +44,35 @@ export function LeagueStandingsTable({
         <thead>
           <tr className="border-b border-gray-200 dark:border-gray-700">
             <th className="w-14" />
-            <th className="text-left py-2 pl-0 pr-0 text-xs font-semibold text-gray-700 dark:text-gray-300">
+            <th className="py-2 pl-0 pr-0 text-left text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
               <div className="-translate-x-2">
                 {hasFixedTeams ? t('gameDetails.team') : t('gameDetails.player')}
               </div>
             </th>
             {columns.showPoints && (
-              <th className="text-center py-2 pl-0 pr-2 text-xs font-semibold text-gray-700 dark:text-gray-300">
+              <th className="py-2 pl-0 pr-2 text-center text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
                 {t('gameDetails.points')}
               </th>
             )}
-            <th className="text-center py-2 pl-4 pr-2 text-xs font-semibold text-gray-700 dark:text-gray-300 whitespace-nowrap">
+            <th className="whitespace-nowrap py-2 pl-4 pr-2 text-center text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
               {t('gameResults.winsTiesLosses')}
             </th>
             {columns.showSets && (
-              <th className="text-center py-2 pl-0 pr-2 text-xs font-semibold text-gray-700 dark:text-gray-300">
+              <th className="py-2 pl-0 pr-2 text-center text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
                 {t('gameResults.sets')}
               </th>
             )}
             {columns.showGames && (
-              <th className="text-center py-2 px-2 text-xs font-semibold text-gray-700 dark:text-gray-300">
+              <th className="px-2 py-2 text-center text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
                 {t('gameResults.extraUnitGames')}
               </th>
             )}
             {columns.showBalls && (
-              <th className="text-center py-2 px-2 text-xs font-semibold text-gray-700 dark:text-gray-300">
+              <th className="px-2 py-2 text-center text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
                 {t('gameResults.extraUnitBalls')}
               </th>
             )}
-            {tieParticipantIds && tieParticipantIds.size > 0 && <th className="w-16" />}
+            {tieParticipantIds && tieParticipantIds.size > 0 && <th className="w-10" />}
           </tr>
         </thead>
         <tbody>
@@ -92,55 +95,41 @@ export function LeagueStandingsTable({
                 <td className="py-2 pl-0 pr-0">
                   {hasFixedTeams ? (
                     standing.leagueTeam ? (
-                      <div className="flex items-center gap-3 -translate-x-2">
-                        <div className="flex -space-x-2">
-                          {standing.leagueTeam.players?.slice(0, 3).map((player) => (
-                            <PlayerAvatar
-                              key={player.id}
-                              player={player.user}
-                              extrasmall
-                              showName={false}
-                              fullHideName
-                            />
-                          ))}
-                        </div>
-                        <div className="text-sm text-gray-900 dark:text-white">
-                          {standing.leagueTeam.players
-                            ?.map((p) =>
-                              `${p.user?.firstName ?? ''} ${p.user?.lastName ?? ''}`.trim()
-                            )
-                            .filter(Boolean)
-                            .join(', ')}
-                        </div>
+                      <div className="-translate-x-2">
+                        <LeagueStandingsTeamPlayersCell players={standing.leagueTeam.players} />
                       </div>
                     ) : null
                   ) : standing.user ? (
-                    <div className="flex items-center gap-3 -translate-x-2">
-                      <PlayerAvatar
-                        player={standing.user}
-                        extrasmall
-                        showName={false}
-                        fullHideName
-                      />
-                      <div>
-                        <div className="text-sm text-gray-900 dark:text-white">
-                          {[standing.user.firstName, standing.user.lastName]
-                            .filter(Boolean)
-                            .join(' ')}
+                    <div className="-translate-x-2">
+                      <div className="flex min-w-0 items-center gap-1.5">
+                        <PlayerAvatar
+                          player={standing.user}
+                          showName={false}
+                          fullHideName
+                          inlineFace
+                          inlineFacePlain
+                          inlineFaceSize="sm"
+                          subscribePresence={false}
+                          asDiv
+                        />
+                        <div className="min-w-0">
+                          <div className="truncate text-xs leading-tight text-gray-900 dark:text-white">
+                            {formatFixtureMatrixPlayerName(standing.user) || '—'}
+                          </div>
+                          {standing.user.verbalStatus && (
+                            <p className="verbal-status">{standing.user.verbalStatus}</p>
+                          )}
                         </div>
-                        {standing.user.verbalStatus && (
-                          <p className="verbal-status">{standing.user.verbalStatus}</p>
-                        )}
                       </div>
                     </div>
                   ) : null}
                 </td>
                 {columns.showPoints && (
-                  <td className="py-2 pl-0 pr-2 text-center text-sm font-semibold text-gray-900 dark:text-white">
+                  <td className="py-2 pl-0 pr-2 text-center text-xs font-semibold text-gray-900 dark:text-white">
                     {standing.points}
                   </td>
                 )}
-                <td className="py-2 pl-4 pr-2 text-center text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                <td className="whitespace-nowrap py-2 pl-4 pr-2 text-center text-xs text-gray-700 dark:text-gray-300">
                   <span>
                     {standing.wins}-{standing.ties}-{standing.losses}
                     <span className="ml-0.5 text-[8px] text-gray-500 dark:text-gray-400">
@@ -149,32 +138,31 @@ export function LeagueStandingsTable({
                   </span>
                 </td>
                 {columns.showSets && (
-                  <td className="py-2 pl-0 pr-2 text-center text-sm font-semibold text-gray-900 dark:text-white">
+                  <td className="py-2 pl-0 pr-2 text-center text-xs font-semibold text-gray-900 dark:text-white">
                     {formatSignedDelta(standing.setDelta ?? 0)}
                   </td>
                 )}
                 {columns.showGames && (
-                  <td className="py-2 px-2 text-center text-sm text-gray-700 dark:text-gray-300">
+                  <td className="px-2 py-2 text-center text-xs text-gray-700 dark:text-gray-300">
                     {formatSignedDelta(standingsScoreUnitDelta(standing))}
                   </td>
                 )}
                 {columns.showBalls && (
-                  <td className="py-2 px-2 text-center text-sm text-gray-700 dark:text-gray-300">
+                  <td className="px-2 py-2 text-center text-xs text-gray-700 dark:text-gray-300">
                     {formatSignedDelta(standingsScoreUnitDelta(standing))}
                   </td>
                 )}
                 {tieParticipantIds && tieParticipantIds.size > 0 && (
-                  <td className="py-2 pr-2 text-right">
+                  <td className="py-2 pr-1 text-right">
                     {inTie ? (
                       <button
                         type="button"
                         onClick={() => jumpToTie(standing.id)}
-                        aria-label={t('gameDetails.standingsSeeWhyAria', {
-                          defaultValue: 'See why this place was decided',
-                        })}
-                        className="inline-flex min-h-8 items-center rounded-full bg-teal-600/10 px-2.5 text-[11px] font-semibold text-teal-800 transition hover:bg-teal-600/20 dark:bg-teal-400/10 dark:text-teal-200 dark:hover:bg-teal-400/20"
+                        aria-label={t('gameDetails.standingsSeeWhyAria')}
+                        title={t('gameDetails.standingsSeeWhyAria')}
+                        className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-teal-600/10 text-teal-800 transition hover:bg-teal-600/20 dark:bg-teal-400/10 dark:text-teal-200 dark:hover:bg-teal-400/20"
                       >
-                        {t('gameDetails.standingsSeeWhy')}
+                        <HelpCircle className="h-3.5 w-3.5" strokeWidth={2.25} aria-hidden />
                       </button>
                     ) : null}
                   </td>
