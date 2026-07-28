@@ -157,7 +157,7 @@ export function LeagueStandingsMiniTable({
             {cluster.rows.map((row, index) => {
               const standing = standingsById.get(row.participantId);
               const decideBy = stepByRow[index];
-              const highlightWins = decideBy === 'h2h' || decideBy === 'miniWins';
+              const highlightWins = decideBy === 'miniWins' || (decideBy === 'h2h' && kind === 'h2h');
               const highlightSets = decideBy === 'setDiff';
               const highlightGames = decideBy === 'gameDiff';
 

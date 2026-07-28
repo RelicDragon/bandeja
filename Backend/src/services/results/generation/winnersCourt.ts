@@ -310,12 +310,7 @@ async function getLeagueStandingsOrder(
         (s) => (s.currentGroupId ?? s.currentGroup?.id) === game.leagueGroupId
       );
     }
-    standings.sort((a, b) => {
-      if (b.points !== a.points) return b.points - a.points;
-      if (b.wins !== a.wins) return b.wins - a.wins;
-      if (b.scoreDelta !== a.scoreDelta) return b.scoreDelta - a.scoreDelta;
-      return 0;
-    });
+    // Keep API standings order (wins → H2H / mini-table for fixed-team & 1v1).
     const participantIds = new Set(participants.map((p) => p.userId));
     const positionMap = new Map<string, number>();
     standings.forEach((s, idx) => {

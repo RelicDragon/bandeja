@@ -354,6 +354,8 @@
     "standingsMiniWinsMiniHint": "Pobede u ovoj mini-tabeli",
     "standingsTieBreakSectionTitle": "Iste pobede — kako su mesta odlučena",
     "standingsTieBreakSectionHint": "Istaknuti redovi imaju isti broj pobeda.",
+    "standingsShowExplanations": "Prikaži objašnjenja",
+    "standingsShowExplanationsHint": "Istakni nerešene i otvori mini-tabele za iste pobede.",
     "standingsSeeWhyAria": "Pogledaj zašto je ovo mesto odlučeno",
     "standingsTieWhy": "Zašto iznad sledećeg",
     "standingsTieReasonH2h": "Pobedio međusobni meč",

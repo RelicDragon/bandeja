@@ -373,6 +373,8 @@
     "standingsMiniWinsMiniHint": "Победы в мини-таблице",
     "standingsTieBreakSectionTitle": "Равные победы — как распределились места",
     "standingsTieBreakSectionHint": "Подсвеченные строки с одинаковыми победами.",
+    "standingsShowExplanations": "Показать объяснения",
+    "standingsShowExplanationsHint": "Подсветка ничьих и мини-таблицы при равных победах.",
     "standingsSeeWhyAria": "Посмотреть, почему решено это место",
     "standingsTieWhy": "Почему выше следующего",
     "standingsTieReasonH2h": "Выиграл личную встречу",

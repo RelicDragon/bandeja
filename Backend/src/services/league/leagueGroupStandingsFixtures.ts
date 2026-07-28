@@ -271,8 +271,6 @@ function emitMatchFixturesForPair(
   let winsB = 0;
   for (const round of game.rounds) {
     for (const match of round.matches) {
-      if (!match.winnerId) continue;
-
       const team1 = match.teams.find((t) => t.teamNumber === 1) ?? match.teams[0];
       const team2 = match.teams.find((t) => t.teamNumber === 2) ?? match.teams[1];
       if (!team1 || !team2) continue;
@@ -282,21 +280,41 @@ function emitMatchFixturesForPair(
       if (!mA || !mB) continue;
       if (!(mA === aId && mB === bId) && !(mA === bId && mB === aId)) continue;
 
+      const scores = matchSetSideScores(match.sets);
+      const flipped = mA === bId;
+      const setsA = flipped ? scores.setsB : scores.setsA;
+      const setsB = flipped ? scores.setsA : scores.setsB;
+      const gamesA = flipped ? scores.gamesB : scores.gamesA;
+      const gamesB = flipped ? scores.gamesA : scores.gamesB;
+
+      if (!match.winnerId) {
+        // Completed draw (or scored no-winner): still feed set/game Δ into mini-table.
+        if (setsA + setsB + gamesA + gamesB <= 0) continue;
+        fixtures.push({
+          aId,
+          bId,
+          winnerId: null,
+          setsA,
+          setsB,
+          gamesA,
+          gamesB,
+        });
+        continue;
+      }
+
       const winTeam = match.teams.find((t) => t.id === match.winnerId);
       if (!winTeam) continue;
       const wPid = resolveSide(winTeam.players.map((p) => p.userId));
       if (wPid !== aId && wPid !== bId) continue;
 
-      const flipped = mA === bId;
-      const scores = matchSetSideScores(match.sets);
       fixtures.push({
         aId,
         bId,
         winnerId: wPid,
-        setsA: flipped ? scores.setsB : scores.setsA,
-        setsB: flipped ? scores.setsA : scores.setsB,
-        gamesA: flipped ? scores.gamesB : scores.gamesA,
-        gamesB: flipped ? scores.gamesA : scores.gamesB,
+        setsA,
+        setsB,
+        gamesA,
+        gamesB,
       });
       if (wPid === aId) winsA += 1;
       else winsB += 1;

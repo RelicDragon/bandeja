@@ -350,6 +350,8 @@
     "standingsMiniWinsMiniHint": "Victorias en esta minitabla",
     "standingsTieBreakSectionTitle": "Empate en victorias — cómo se decidieron los puestos",
     "standingsTieBreakSectionHint": "Las filas resaltadas comparten victorias.",
+    "standingsShowExplanations": "Mostrar explicaciones",
+    "standingsShowExplanationsHint": "Resalta empates y abre mini-tablas con victorias iguales.",
     "standingsSeeWhyAria": "Ver por qué se decidió este puesto",
     "standingsTieWhy": "Por qué sobre el siguiente",
     "standingsTieReasonH2h": "Ganó el cara a cara",

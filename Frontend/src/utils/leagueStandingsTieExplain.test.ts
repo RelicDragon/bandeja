@@ -24,11 +24,11 @@ describe('explainStandingsTieStep', () => {
     expect(explainStandingsTieStep(row(2, -4, -10), row(0, 4, 10), 'h2h')).toBe('h2h');
   });
 
-  it('mini: wins then sets then games then nested h2h', () => {
+  it('mini: wins then sets then games then stable when still level', () => {
     expect(explainStandingsTieStep(row(2, 0, 0), row(1, 5, 5), 'mini')).toBe('miniWins');
     expect(explainStandingsTieStep(row(1, 3, 0), row(1, 1, 9), 'mini')).toBe('setDiff');
     expect(explainStandingsTieStep(row(1, 2, 5), row(1, 2, 1), 'mini')).toBe('gameDiff');
-    expect(explainStandingsTieStep(row(1, 2, 5), row(1, 2, 5), 'mini')).toBe('h2h');
+    expect(explainStandingsTieStep(row(1, 2, 5), row(1, 2, 5), 'mini')).toBe('stable');
   });
 });
 

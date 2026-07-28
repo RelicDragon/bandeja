@@ -35,9 +35,17 @@ import { resolveLeagueStandingsColumns } from '@/utils/leagueStandingsColumns';
 import { standingsTieClusterAnchorId } from '@/utils/leagueStandingsTieExplain';
 import { LeagueStandingsTable } from './LeagueStandingsTable';
 import { LeagueStandingsTieBreakSection } from './LeagueStandingsTieBreakSection';
+import { LeagueStandingsExplanationsSwitch } from './LeagueStandingsExplanationsSwitch';
 
 const ALL_GROUP_ID = 'ALL';
 const NO_GROUP_KEY = 'no-group';
+
+function standingGroupKey(standing: {
+  currentGroupId?: string | null;
+  currentGroup?: { id: string } | null;
+}): string {
+  return standing.currentGroupId ?? standing.currentGroup?.id ?? NO_GROUP_KEY;
+}
 
 function compareStandingsByPoints(a: LeagueStanding, b: LeagueStanding) {
   if (b.points !== a.points) return b.points - a.points;
@@ -76,6 +84,7 @@ export const LeagueStandingsTab = ({
   const [bracketPayload, setBracketPayload] = useState<BracketPlayoffResponse | null>(null);
   const [bracketRounds, setBracketRounds] = useState<LeagueRound[]>([]);
   const [selectedBracketRoundId, setSelectedBracketRoundId] = useState<string | null>(null);
+  const [showExplanations, setShowExplanations] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -213,7 +222,8 @@ export const LeagueStandingsTab = ({
   const orderedGroups = useMemo(() => {
     const byGroup = new Map<string, LeagueStanding[]>();
     for (const standing of displayStandings) {
-      const key = standing.currentGroup?.id ?? NO_GROUP_KEY;
+      const key = standingGroupKey(standing);
+      if (key === NO_GROUP_KEY) continue;
       const list = byGroup.get(key);
       if (list) list.push(standing);
       else byGroup.set(key, [standing]);
@@ -241,7 +251,7 @@ export const LeagueStandingsTab = ({
   }, [loading, groupIdKey, selectedGroupId, leagueSeasonId]);
 
   const ungroupedStandings = useMemo(() => {
-    const rows = displayStandings.filter((s) => !s.currentGroup?.id);
+    const rows = displayStandings.filter((s) => standingGroupKey(s) === NO_GROUP_KEY);
     return preserveApiOrder ? rows : [...rows].sort(compareStandingsByPoints);
   }, [displayStandings, preserveApiOrder]);
 
@@ -252,6 +262,39 @@ export const LeagueStandingsTab = ({
         : orderedGroups.filter((group) => group.id === selectedGroupId),
     [orderedGroups, selectedGroupId]
   );
+
+  const visibleTieClusters = useMemo(() => {
+    if (!preserveApiOrder) return [] as LeagueStandingsTieCluster[];
+    if (orderedGroups.length === 0) {
+      return tieClustersByGroupId.get(NO_GROUP_KEY) ?? [];
+    }
+    if (selectedGroupId === ALL_GROUP_ID) {
+      const all: LeagueStandingsTieCluster[] = [];
+      for (const group of orderedGroups) {
+        all.push(...(tieClustersByGroupId.get(group.id) ?? []));
+      }
+      if (ungroupedStandings.length > 0) {
+        all.push(...(tieClustersByGroupId.get(NO_GROUP_KEY) ?? []));
+      }
+      return all;
+    }
+    return tieClustersByGroupId.get(selectedGroupId) ?? [];
+  }, [
+    preserveApiOrder,
+    orderedGroups,
+    selectedGroupId,
+    tieClustersByGroupId,
+    ungroupedStandings.length,
+  ]);
+
+  const showExplanationsSwitch = preserveApiOrder && visibleTieClusters.length > 0;
+  const explanationsActive = showExplanationsSwitch && showExplanations;
+
+  useEffect(() => {
+    if (!showExplanationsSwitch && showExplanations) {
+      setShowExplanations(false);
+    }
+  }, [showExplanationsSwitch, showExplanations]);
 
   const crossGroupBracket = isCrossGroupBracket(bracketPayload);
   const seasonBracketGroup = getActiveBracketGroup(bracketPayload);
@@ -386,6 +429,12 @@ export const LeagueStandingsTab = ({
             />
           );
         })}
+      {showExplanationsSwitch && (
+        <LeagueStandingsExplanationsSwitch
+          checked={showExplanations}
+          onChange={setShowExplanations}
+        />
+      )}
       {orderedGroups.length > 0 ? (
         <>
           {filteredGroups.map(({ id, name, color, standings: groupStandings }) => {
@@ -415,16 +464,20 @@ export const LeagueStandingsTab = ({
                   rows={groupStandings}
                   hasFixedTeams={hasFixedTeams}
                   columns={columns}
-                  tieParticipantIds={tieMeta?.ids}
-                  tieAnchorByParticipantId={tieMeta?.anchorById}
+                  tieParticipantIds={explanationsActive ? tieMeta?.ids : undefined}
+                  tieAnchorByParticipantId={
+                    explanationsActive ? tieMeta?.anchorById : undefined
+                  }
                 />
-                <LeagueStandingsTieBreakSection
-                  groupKey={id}
-                  clusters={groupClusters}
-                  standingsById={standingsById}
-                  hasFixedTeams={hasFixedTeams}
-                  columns={columns}
-                />
+                {explanationsActive ? (
+                  <LeagueStandingsTieBreakSection
+                    groupKey={id}
+                    clusters={groupClusters}
+                    standingsById={standingsById}
+                    hasFixedTeams={hasFixedTeams}
+                    columns={columns}
+                  />
+                ) : null}
               </Card>
             );
           })}
@@ -439,16 +492,26 @@ export const LeagueStandingsTab = ({
                 rows={ungroupedStandings}
                 hasFixedTeams={hasFixedTeams}
                 columns={columns}
-                tieParticipantIds={tieMetaByGroupKey.get(NO_GROUP_KEY)?.ids}
-                tieAnchorByParticipantId={tieMetaByGroupKey.get(NO_GROUP_KEY)?.anchorById}
+                tieParticipantIds={
+                  explanationsActive
+                    ? tieMetaByGroupKey.get(NO_GROUP_KEY)?.ids
+                    : undefined
+                }
+                tieAnchorByParticipantId={
+                  explanationsActive
+                    ? tieMetaByGroupKey.get(NO_GROUP_KEY)?.anchorById
+                    : undefined
+                }
               />
-              <LeagueStandingsTieBreakSection
-                groupKey={NO_GROUP_KEY}
-                clusters={tieClustersByGroupId.get(NO_GROUP_KEY) ?? []}
-                standingsById={standingsById}
-                hasFixedTeams={hasFixedTeams}
-                columns={columns}
-              />
+              {explanationsActive ? (
+                <LeagueStandingsTieBreakSection
+                  groupKey={NO_GROUP_KEY}
+                  clusters={tieClustersByGroupId.get(NO_GROUP_KEY) ?? []}
+                  standingsById={standingsById}
+                  hasFixedTeams={hasFixedTeams}
+                  columns={columns}
+                />
+              ) : null}
             </Card>
           )}
         </>
@@ -462,16 +525,26 @@ export const LeagueStandingsTab = ({
             }
             hasFixedTeams={hasFixedTeams}
             columns={columns}
-            tieParticipantIds={tieMetaByGroupKey.get(NO_GROUP_KEY)?.ids}
-            tieAnchorByParticipantId={tieMetaByGroupKey.get(NO_GROUP_KEY)?.anchorById}
+            tieParticipantIds={
+              explanationsActive
+                ? tieMetaByGroupKey.get(NO_GROUP_KEY)?.ids
+                : undefined
+            }
+            tieAnchorByParticipantId={
+              explanationsActive
+                ? tieMetaByGroupKey.get(NO_GROUP_KEY)?.anchorById
+                : undefined
+            }
           />
-          <LeagueStandingsTieBreakSection
-            groupKey={NO_GROUP_KEY}
-            clusters={tieClustersByGroupId.get(NO_GROUP_KEY) ?? tieClusters}
-            standingsById={standingsById}
-            hasFixedTeams={hasFixedTeams}
-            columns={columns}
-          />
+          {explanationsActive ? (
+            <LeagueStandingsTieBreakSection
+              groupKey={NO_GROUP_KEY}
+              clusters={tieClustersByGroupId.get(NO_GROUP_KEY) ?? tieClusters}
+              standingsById={standingsById}
+              hasFixedTeams={hasFixedTeams}
+              columns={columns}
+            />
+          ) : null}
         </Card>
       )}
     </div>

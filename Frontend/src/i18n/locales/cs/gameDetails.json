@@ -362,6 +362,8 @@
     "standingsMiniWinsMiniHint": "Výhry v této minitabulce",
     "standingsTieBreakSectionTitle": "Stejné výhry — jak se rozhodla místa",
     "standingsTieBreakSectionHint": "Zvýrazněné řádky mají stejný počet výher.",
+    "standingsShowExplanations": "Zobrazit vysvětlení",
+    "standingsShowExplanationsHint": "Zvýrazní remízy a otevře mini-tabulky při stejných výhrách.",
     "standingsSeeWhyAria": "Zobrazit, proč bylo toto místo rozhodnuto",
     "standingsTieWhy": "Proč nad dalším",
     "standingsTieReasonH2h": "Vyhrál vzájemný zápas",

@@ -383,6 +383,8 @@
     "standingsMiniWinsMiniHint": "Wins in this mini-table",
     "standingsTieBreakSectionTitle": "Equal wins — how places were decided",
     "standingsTieBreakSectionHint": "Highlighted rows share the same win count.",
+    "standingsShowExplanations": "Show explanations",
+    "standingsShowExplanationsHint": "Highlight ties and open mini-tables for equal wins.",
     "standingsSeeWhyAria": "See why this place was decided",
     "standingsTieWhy": "Why above next",
     "standingsTieReasonH2h": "Won head-to-head",

@@ -20,7 +20,8 @@ export function explainStandingsTieStep(
   if (kind === 'h2h') return 'stable';
   if (above.setDiff !== below.setDiff) return 'setDiff';
   if (above.gameDiff !== below.gameDiff) return 'gameDiff';
-  return 'h2h';
+  // Metrics tied: nested H2H already folded into mini wins, or stable id order.
+  return 'stable';
 }
 
 export function standingsTieClusterAnchorId(
