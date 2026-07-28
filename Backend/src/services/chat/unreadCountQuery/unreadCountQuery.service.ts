@@ -4,6 +4,7 @@ import { ChatMuteService } from '../chatMute.service';
 import { ReadReceiptService } from '../readReceipt.service';
 import { UnreadObjectsService } from '../unreadObjects.service';
 import { computeTotals } from '@bandeja/unread-contract';
+import { sqlMessageNotReadByUser } from '../chatReadUnreadSql';
 import {
   buildByContextFromUnreadObjects,
   buildGroupChannelMeta,
@@ -59,29 +60,7 @@ async function getScopedGameTotals(
         AND m."deletedAt" IS NULL
         AND m."senderId" IS NOT NULL
         AND m."senderId" <> ${userId}
-        AND NOT EXISTS (
-          SELECT 1 FROM "MessageReadReceipt" r
-          WHERE r."messageId" = m.id AND r."userId" = ${userId}
-        )
-        AND NOT EXISTS (
-          SELECT 1 FROM "ChatReadCursor" c
-          WHERE c."userId" = ${userId}
-            AND c."chatContextType" = m."chatContextType"
-            AND c."contextId" = m."contextId"
-            AND c."chatType" = m."chatType"
-            AND (
-              COALESCE(m."serverSyncSeq", -1) < c."readMaxServerSyncSeq"
-              OR (
-                COALESCE(m."serverSyncSeq", -1) = c."readMaxServerSyncSeq"
-                AND m."createdAt" < c."readMaxCreatedAt"
-              )
-              OR (
-                COALESCE(m."serverSyncSeq", -1) = c."readMaxServerSyncSeq"
-                AND m."createdAt" = c."readMaxCreatedAt"
-                AND m."id" <= c."readMaxMessageId"
-              )
-            )
-        )
+        AND ${sqlMessageNotReadByUser(userId)}
     `
   );
 

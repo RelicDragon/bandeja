@@ -24,7 +24,6 @@ import { hasParentGamePermissionWithUserCheck } from '../../utils/parentGamePerm
 import { TranslationService } from './translation.service';
 import { translationIsRedundantOfSource } from './translationRedundant';
 import { DraftService } from './draft.service';
-import { ReadReceiptService } from './readReceipt.service';
 import { config } from '../../config/env';
 import { invalidateBasicUsersAllowedCacheForMessage } from '../user/basicUsersForMessageAllowedCache';
 import { updateLastMessagePreview } from './lastMessagePreview.service';
@@ -590,16 +589,8 @@ export class MessageService {
     }
 
     try {
-      if (config.chatReadReceiptDualWrite) {
-        // Unread count can be 0 via ChatReadCursor while older rows still lack receipts.
-        const needsReceiptBackfill = await ReadReceiptService.hasMissingReceiptsForContext(
-          markContextType,
-          markContextId,
-          senderId
-        );
-        if (!needsReceiptBackfill) return;
-      }
-
+      // Always advance cursor (and dual-write receipts when enabled). Do not skip when
+      // receipts are already complete — cursor may still lag (late-insert / race).
       await UnreadSnapshotService.markContextRead(senderId, {
         contextType: markContextType,
         contextId: markContextId,

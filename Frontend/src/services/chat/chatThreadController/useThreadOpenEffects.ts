@@ -139,7 +139,12 @@ export function useThreadOpenEffects(params: UseThreadOpenEffectsParams) {
   useEffect(() => {
     if (!id) return;
     const chatType = contextType === 'GAME' ? currentChatType : 'PUBLIC';
-    void hydratePeerReadCursorsFromDexie(contextType, id, chatType);
+    const contextId = id;
+    void (async () => {
+      await hydratePeerReadCursorsFromDexie(contextType, contextId, chatType);
+      // Warm L1/Dexie open skips message first-page; always refresh maxPeerCursor (forward-only).
+      await chatApi.getMessages(contextType, contextId, 1, 1, chatType).catch(() => {});
+    })();
   }, [id, contextType, currentChatType]);
 
   useEffect(() => {

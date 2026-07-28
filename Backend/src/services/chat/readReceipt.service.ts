@@ -115,16 +115,62 @@ export class ReadReceiptService {
       });
     }
 
-    const mergeResult = await ChatReadCursorService.mergeFromMessage(tx, userId, {
-      id: message.id,
-      chatContextType: message.chatContextType,
-      contextId: message.contextId,
-      chatType: message.chatType,
-      serverSyncSeq: message.serverSyncSeq,
-      createdAt: message.createdAt,
-    });
+    const mergeSlices: Array<{
+      id: string;
+      chatContextType: typeof message.chatContextType;
+      contextId: string;
+      chatType: typeof message.chatType;
+      serverSyncSeq: number | null;
+      createdAt: Date;
+    }> = [
+      {
+        id: message.id,
+        chatContextType: message.chatContextType,
+        contextId: message.contextId,
+        chatType: message.chatType,
+        serverSyncSeq: message.serverSyncSeq,
+        createdAt: message.createdAt,
+      },
+    ];
 
-    let syncSeq = await appendReadCursorUpdatesInTransaction(tx, [mergeResult]);
+    if (message.chatContextType === 'GROUP') {
+      const bugId = (
+        await tx.groupChannel.findUnique({
+          where: { id: message.contextId },
+          select: { bugId: true },
+        })
+      )?.bugId;
+      if (bugId) {
+        mergeSlices.push({
+          id: message.id,
+          chatContextType: 'BUG',
+          contextId: bugId,
+          chatType: message.chatType,
+          serverSyncSeq: message.serverSyncSeq,
+          createdAt: message.createdAt,
+        });
+      }
+    } else if (message.chatContextType === 'BUG') {
+      const groupId = (
+        await tx.groupChannel.findFirst({
+          where: { bugId: message.contextId },
+          select: { id: true },
+        })
+      )?.id;
+      if (groupId) {
+        mergeSlices.push({
+          id: message.id,
+          chatContextType: 'GROUP',
+          contextId: groupId,
+          chatType: message.chatType,
+          serverSyncSeq: message.serverSyncSeq,
+          createdAt: message.createdAt,
+        });
+      }
+    }
+
+    const mergeResults = await ChatReadCursorService.mergeFromMessages(tx, userId, mergeSlices);
+    let syncSeq = await appendReadCursorUpdatesInTransaction(tx, mergeResults);
 
     if (writeReceipts) {
       const messageIds = [...new Set([message.id, ...missing.map((r) => r.id)])];
