@@ -78,7 +78,7 @@ test.describe('auth login', () => {
     const login = new LoginPage(page);
     await login.goto();
     const popupPromise = context.waitForEvent('page');
-    await page.getByRole('link', { name: /terms of service|eula/i }).click();
+    await page.getByRole('link', { name: /privacy policy.*terms of service|terms of service|eula/i }).click();
     const popup = await popupPromise;
     await expect(popup).toHaveURL(/eula\.html/);
     await popup.close();

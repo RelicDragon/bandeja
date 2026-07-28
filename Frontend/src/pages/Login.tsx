@@ -432,7 +432,7 @@ export const Login = () => {
                   openEula();
                 }}
               >
-                {t('auth.eula') || 'Terms of Service'}
+                {t('auth.privacyPolicyAndTerms') || 'Privacy Policy & Terms of Service'}
               </a>
             </p>
             {appVersion && (

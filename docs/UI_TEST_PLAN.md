@@ -195,7 +195,7 @@ Frontend/e2e/
 | A-06a | Google email already registered | Sign in with Google whose verified email matches an existing phone/Apple/Telegram account (no `googleId` yet) | Logs into that account and attaches Google — no “merge in Profile” error |
 | A-07 | Google OAuth error | `?google_error=` | Error shown |
 | A-08 | Telegram auto-login route | `/login/:telegramKey` | Auto login or error |
-| A-09 | EULA link | Open terms | External/legal page opens |
+| A-09 | Privacy Policy & Terms link | Open Privacy Policy & Terms of Service | External/legal page opens |
 | A-09a | Web store download buttons | Open `/login` in browser (not Capacitor) | App Store + Google Play badges visible under same OR divider style as phone sign-in; links open store pages |
 | A-09b | Cap hides store buttons | Open `/login` inside Capacitor app | Store download badges not shown |
 | A-27 | Android Google login stable session | Capacitor Android: logout → Google sign-in → complete | Lands on My tab; no bounce back to `/login` within 10s |
