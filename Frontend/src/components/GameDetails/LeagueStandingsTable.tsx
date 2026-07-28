@@ -73,18 +73,25 @@ export function LeagueStandingsTable({
         <tbody>
           {rows.map((standing, index) => {
             const inTie = tieParticipantIds?.has(standing.id) ?? false;
+            const withdrawn = Boolean(standing.withdrawnAt);
+            const activePlaceIndex = withdrawn
+              ? 0
+              : startIndex +
+                rows.slice(0, index).filter((r) => !r.withdrawnAt).length;
             return (
               <tr
                 key={standing.id}
                 className={`border-b border-gray-100 dark:border-gray-800 ${
-                  inTie
-                    ? 'border-l-[3px] border-l-teal-500 bg-teal-50/60 dark:border-l-teal-400 dark:bg-teal-950/25'
-                    : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'
+                  withdrawn
+                    ? 'opacity-55 grayscale'
+                    : inTie
+                      ? 'border-l-[3px] border-l-teal-500 bg-teal-50/60 dark:border-l-teal-400 dark:bg-teal-950/25'
+                      : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'
                 }`}
               >
                 <td className="py-2 pl-0 pr-0">
                   <div className="flex items-center justify-center -translate-x-2">
-                    <LeagueStandingsPlaceCell index={startIndex + index} />
+                    <LeagueStandingsPlaceCell index={activePlaceIndex} withdrawn={withdrawn} />
                   </div>
                 </td>
                 <td className="py-2 pl-0 pr-0">

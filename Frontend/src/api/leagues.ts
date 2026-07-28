@@ -235,6 +235,8 @@ export interface LeagueStanding {
   ties: number;
   losses: number;
   scoreDelta: number;
+  /** ISO timestamp when the franchise withdrew; null/undefined = active. */
+  withdrawnAt?: string | null;
   /** Sets won − lost (fixed-team / 1v1); from REGULAR fixtures. */
   setDelta?: number;
   /** Games/balls won − lost (fixed-team / 1v1); from REGULAR fixtures. */
@@ -460,6 +462,12 @@ export const leaguesApi = {
         franchiseTeamId: string;
       }>
     >(`/leagues/${leagueSeasonId}/participants/${participantId}/swap-player`, body);
+    return response.data;
+  },
+  withdrawTeam: async (leagueSeasonId: string, participantId: string) => {
+    const response = await api.post<
+      ApiResponse<{ participant: LeagueStanding; technicalFixtures: number }>
+    >(`/leagues/${leagueSeasonId}/participants/${participantId}/withdraw`);
     return response.data;
   },
   reorderGroups: async (leagueSeasonId: string, groupIds: string[]) => {

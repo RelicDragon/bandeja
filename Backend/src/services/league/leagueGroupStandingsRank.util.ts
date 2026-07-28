@@ -17,6 +17,8 @@ export type RankParticipant = {
   /** Used to park no-outcome rows (0–0–0) after active tie-break. */
   losses?: number;
   ties?: number;
+  /** Withdrawn franchise — ranked in a separate cluster after all active teams. */
+  withdrawn?: boolean;
 };
 
 type MiniStats = {
@@ -154,13 +156,7 @@ function resolveCluster(ids: string[], fixtures: RankFixture[]): string[] {
   return out;
 }
 
-/**
- * Rank fixed-team participants in one group.
- * 1) match wins; 2) two-way H2H; 3) 3+ mini-table (wins → set Δ → game Δ);
- * 4) two left equal after mini → H2H.
- * No-outcome (0–0–0) rows stay after active teams in the same wins bucket.
- */
-export function rankFixedTeamGroupStandings(
+function rankStandingCluster(
   participants: RankParticipant[],
   fixtures: RankFixture[]
 ): string[] {
@@ -176,6 +172,26 @@ export function rankFixedTeamGroupStandings(
     ordered.push(...[...idle].map((p) => p.id).sort(stableId));
   }
   return ordered;
+}
+
+/**
+ * Rank fixed-team participants in one group.
+ * 1) match wins; 2) two-way H2H; 3) 3+ mini-table (wins → set Δ → game Δ);
+ * 4) two left equal after mini → H2H.
+ * No-outcome (0–0–0) rows stay after active teams in the same wins bucket.
+ * Withdrawn teams use the same rules in a cluster after all non-withdrawn teams.
+ */
+export function rankFixedTeamGroupStandings(
+  participants: RankParticipant[],
+  fixtures: RankFixture[]
+): string[] {
+  if (participants.length === 0) return [];
+  const competing = participants.filter((p) => !p.withdrawn);
+  const withdrawn = participants.filter((p) => p.withdrawn);
+  return [
+    ...rankStandingCluster(competing, fixtures),
+    ...rankStandingCluster(withdrawn, fixtures),
+  ];
 }
 
 export type EqualWinsTieClusterRow = {

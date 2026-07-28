@@ -25,12 +25,12 @@ import { TranslationService } from './translation.service';
 import { translationIsRedundantOfSource } from './translationRedundant';
 import { DraftService } from './draft.service';
 import { ReadReceiptService } from './readReceipt.service';
+import { config } from '../../config/env';
 import { invalidateBasicUsersAllowedCacheForMessage } from '../user/basicUsersForMessageAllowedCache';
 import { updateLastMessagePreview } from './lastMessagePreview.service';
 import { computeContentSearchable, computeVoiceContentSearchable } from '../../utils/messageSearchContent';
 import { ImageProcessor } from '../../utils/imageProcessor';
 import { S3Service } from '../s3.service';
-import { config } from '../../config/env';
 import { ChatSyncEventService } from './chatSyncEvent.service';
 import { normalizeChatClientMutationId } from '../../utils/chatClientMutationId';
 import { chatSyncMessageUpdatedCompactPayload } from '../../utils/chatSyncMessageUpdatePayload';
@@ -590,13 +590,15 @@ export class MessageService {
     }
 
     try {
-      // Unread count can be 0 via ChatReadCursor while older rows still lack receipts.
-      const needsReceiptBackfill = await ReadReceiptService.hasMissingReceiptsForContext(
-        markContextType,
-        markContextId,
-        senderId
-      );
-      if (!needsReceiptBackfill) return;
+      if (config.chatReadReceiptDualWrite) {
+        // Unread count can be 0 via ChatReadCursor while older rows still lack receipts.
+        const needsReceiptBackfill = await ReadReceiptService.hasMissingReceiptsForContext(
+          markContextType,
+          markContextId,
+          senderId
+        );
+        if (!needsReceiptBackfill) return;
+      }
 
       await UnreadSnapshotService.markContextRead(senderId, {
         contextType: markContextType,

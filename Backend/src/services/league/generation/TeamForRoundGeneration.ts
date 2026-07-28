@@ -128,7 +128,9 @@ export class TeamForRoundGeneration {
     });
 
     if (seasonGame.hasFixedTeams) {
-      const teamParticipants = participants.filter((p) => p.participantType === 'TEAM');
+      const teamParticipants = participants.filter(
+        (p) => p.participantType === 'TEAM' && !p.withdrawnAt
+      );
       await this.generateGamesForFixedTeamsGroup(
         teamParticipants,
         leagueSeasonId,

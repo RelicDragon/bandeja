@@ -285,6 +285,11 @@ export async function generateGameOutcomes(gameId: string, tx?: Prisma.Transacti
 }
 
 export async function undoGameOutcomes(gameId: string, tx: Prisma.TransactionClient) {
+  const { assertGameNotLockedTechnicalWithdrawal } = await import(
+    '../league/leagueTechnicalWithdrawalGuard'
+  );
+  await assertGameNotLockedTechnicalWithdrawal(gameId, tx);
+
   const game = await tx.game.findUnique({
     where: { id: gameId },
     select: {
@@ -856,6 +861,11 @@ export async function recalculateGameOutcomes(gameId: string) {
     console.log(`[RECALCULATE GAME OUTCOMES] Game ${gameId} not found`);
     throw new ApiError(404, 'Game not found');
   }
+
+  const { assertGameNotLockedTechnicalWithdrawal } = await import(
+    '../league/leagueTechnicalWithdrawalGuard'
+  );
+  await assertGameNotLockedTechnicalWithdrawal(gameId, prisma);
 
   console.log(`[RECALCULATE GAME OUTCOMES] Game ${gameId} configuration: winnerOfMatch=${game.winnerOfMatch}, winnerOfGame=${game.winnerOfGame}`);
 

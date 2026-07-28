@@ -39,6 +39,10 @@ export function clearGameChatSyncContextCache(): void {
   contextByGameId.clear();
 }
 
+export function clearGameChatSyncContext(gameId: string): void {
+  contextByGameId.delete(gameId);
+}
+
 function typesFromContext(context: GameChatSyncContext): ChatType[] {
   return getGameChatTypesForUnreadAndMarkRead(
     context.game,

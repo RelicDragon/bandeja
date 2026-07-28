@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { ChatMessage } from '@/api/chat';
 import { readReceiptsFromOthers, resolveOwnMessageTicks } from './messageTickState';
+import type { MaxPeerReadCursor } from './peerReadCursor';
 
 function msg(overrides: Partial<ChatMessage> = {}): ChatMessage {
   const createdAt = overrides.createdAt ?? '2026-01-01T00:00:00.000Z';
@@ -20,9 +21,26 @@ function msg(overrides: Partial<ChatMessage> = {}): ChatMessage {
     sender: null,
     reactions: [],
     readReceipts: [],
+    serverSyncSeq: 10,
     ...overrides,
   };
 }
+
+const peerPast: MaxPeerReadCursor = {
+  chatContextType: 'GROUP',
+  contextId: 'g1',
+  chatType: 'PUBLIC',
+  readMaxServerSyncSeq: 10,
+  readMaxCreatedAt: '2026-01-01T00:00:00.000Z',
+  readMaxMessageId: 'm1',
+  updatedAt: '2026-01-01T01:00:00.000Z',
+};
+
+const peerBefore: MaxPeerReadCursor = {
+  ...peerPast,
+  readMaxServerSyncSeq: 5,
+  readMaxMessageId: 'm0',
+};
 
 describe('readReceiptsFromOthers', () => {
   it('excludes sender receipts', () => {
@@ -48,60 +66,69 @@ describe('readReceiptsFromOthers', () => {
 });
 
 describe('resolveOwnMessageTicks', () => {
-  it('does not show read for empty receipts', () => {
+  it('does not show read without peer cursor', () => {
     expect(resolveOwnMessageTicks(msg())).toEqual({ tickRead: false, tickDelivered: false });
   });
 
-  it('does not show read for sender-only receipt', () => {
+  it('ignores receipts without peer cursor (old-client dual-write is not tick authority)', () => {
     const ticks = resolveOwnMessageTicks(
       msg({
-        readReceipts: [{ id: 'r1', messageId: 'm1', userId: 'sender', readAt: '2026-01-01T01:00:00.000Z' }],
+        readReceipts: [{ id: 'r1', messageId: 'm1', userId: 'other', readAt: '2026-01-01T01:00:00.000Z' }],
       })
     );
     expect(ticks).toEqual({ tickRead: false, tickDelivered: false });
   });
 
-  it('shows read when another user has a receipt', () => {
+  it('ignores receipts when peer cursor is behind message', () => {
     const ticks = resolveOwnMessageTicks(
       msg({
         readReceipts: [{ id: 'r1', messageId: 'm1', userId: 'other', readAt: '2026-01-01T01:00:00.000Z' }],
-      })
+      }),
+      'sender',
+      peerBefore
     );
+    expect(ticks).toEqual({ tickRead: false, tickDelivered: false });
+  });
+
+  it('shows read when peer cursor covers message', () => {
+    const ticks = resolveOwnMessageTicks(msg(), 'sender', peerPast);
     expect(ticks).toEqual({ tickRead: true, tickDelivered: false });
   });
 
-  it('ignores viewer self receipt when senderId is missing', () => {
+  it('late higher seq remains unread until peer cursor advances', () => {
     const ticks = resolveOwnMessageTicks(
-      msg({
-        senderId: null,
-        readReceipts: [{ id: 'r1', messageId: 'm1', userId: 'me', readAt: '2026-01-01T01:00:00.000Z' }],
-      }),
-      'me'
+      msg({ id: 'm-late', serverSyncSeq: 20, createdAt: '2025-12-01T00:00:00.000Z' }),
+      'sender',
+      peerPast
     );
     expect(ticks.tickRead).toBe(false);
   });
 
-  it('ignores message.state READ without other receipts', () => {
+  it('does not use cursor path when message lacks sync seq', () => {
+    const ticks = resolveOwnMessageTicks(
+      msg({ serverSyncSeq: undefined, syncSeq: undefined }),
+      'sender',
+      peerPast
+    );
+    expect(ticks.tickRead).toBe(false);
+  });
+
+  it('ignores message.state READ without peer cursor', () => {
     const ticks = resolveOwnMessageTicks(msg({ state: 'READ' }));
     expect(ticks.tickRead).toBe(false);
   });
 
-  it('shows delivered when state is DELIVERED and unread by others', () => {
+  it('shows delivered when state is DELIVERED and not covered by peer cursor', () => {
     const ticks = resolveOwnMessageTicks(msg({ state: 'DELIVERED' }));
     expect(ticks).toEqual({ tickRead: false, tickDelivered: true });
   });
 
-  it('prefers read over delivered when others have read', () => {
-    const ticks = resolveOwnMessageTicks(
-      msg({
-        state: 'DELIVERED',
-        readReceipts: [{ id: 'r1', messageId: 'm1', userId: 'other', readAt: '2026-01-01T01:00:00.000Z' }],
-      })
-    );
+  it('prefers read over delivered when peer cursor covers', () => {
+    const ticks = resolveOwnMessageTicks(msg({ state: 'DELIVERED' }), 'sender', peerPast);
     expect(ticks).toEqual({ tickRead: true, tickDelivered: false });
   });
 
-  it('image-only delivered without receipts is not read', () => {
+  it('image-only delivered without peer cursor is not read', () => {
     const ticks = resolveOwnMessageTicks(
       msg({
         messageType: 'IMAGE',

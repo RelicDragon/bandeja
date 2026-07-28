@@ -593,7 +593,7 @@ export class LeagueCreateService {
 
     for (const g of groups) {
       const participants = await prisma.leagueParticipant.findMany({
-        where: { leagueSeasonId, currentGroupId: g.id },
+        where: { leagueSeasonId, currentGroupId: g.id, withdrawnAt: null },
         include: {
           leagueTeam: {
             include: {
@@ -1077,6 +1077,10 @@ export class LeagueCreateService {
       throw new ApiError(400, 'Invalid or duplicate participant selection');
     }
 
+    if (participants.some((p) => p.withdrawnAt)) {
+      throw new ApiError(400, 'Withdrawn teams cannot enter playoffs');
+    }
+
     const hasFixedTeams = leagueSeason.game.hasFixedTeams ?? false;
     let participantUserIds: string[] = [];
     let teams: string[][] | undefined;
@@ -1264,6 +1268,10 @@ export class LeagueCreateService {
 
       if (participants.length !== g.participantIds.length) {
         throw new ApiError(400, 'Invalid or duplicate participant selection for a group');
+      }
+
+      if (participants.some((p) => p.withdrawnAt)) {
+        throw new ApiError(400, 'Withdrawn teams cannot enter playoffs');
       }
 
       let participantUserIds: string[];

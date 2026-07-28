@@ -621,7 +621,7 @@ Offline-first real-time messaging system.
 
 ### 12.3 Message features
 
-- Text, **@mentions**, replies, reactions, read receipts
+- Text, **@mentions**, replies, reactions, **peer read cursors** (new-client own-message ✓✓ when a peer’s `ChatReadCursor` is at/past the message; `MessageReadReceipt` dual-written by default for old clients until `CHAT_READ_RECEIPT_DUAL_WRITE=0`)
 - **Edit** and **delete** own messages (sync + offline outbox; edit shows error if message was deleted server-side)
 - **Report message** — reason (spam, harassment, inappropriate, fake info, other) + optional description → admin Reports queue
 - Photos, video (transcode/compress), voice/audio, documents
@@ -652,9 +652,11 @@ Offline-first real-time messaging system.
 ### 12.5 Sync protocol & unread
 
 - Socket.IO + IndexedDB local DB
-- Event-based sync (`MESSAGE_CREATE`, `MESSAGE_UPDATE`, `MESSAGE_DELETE`, `REACTION_ADD/REMOVE`, `READ_CURSOR_UPDATE`)
+- Event-based sync (`MESSAGE_CREATE`, `MESSAGE_UPDATE`, `MESSAGE_DELETE`, `REACTION_ADD/REMOVE`, `READ_CURSOR_UPDATE`; receipt batches while `CHAT_READ_RECEIPT_DUAL_WRITE` is ON, default)
 - Background sync worker
+- Thread hydrate returns `maxPeerCursor` for tick UI; clients store peer cursors in IndexedDB + memory
 - **Unread authority:** `@bandeja/unread-contract` merge helpers + FE `unreadStore` / `unreadSnapshot` — Chats bottom-tab badge + app icon badge; optimistic bumps on send/receive; muted threads excluded from totals; open-thread clears without waiting for socket round-trip. My/Market bottom-tab selectors exist but are not shown on those tabs; Market unread is under Chats → Market filter; game cards can still show chat unread chips
+- See `docs/adr/0002-chat-read-cursor-authority.md`
 
 ---
 

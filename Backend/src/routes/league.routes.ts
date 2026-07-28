@@ -335,6 +335,13 @@ router.post(
   leagueController.swapLeagueTeamPlayer
 );
 
+router.post(
+  '/:leagueSeasonId/participants/:participantId/withdraw',
+  authenticate,
+  canEditGame,
+  leagueController.withdrawLeagueTeam
+);
+
 router.put(
   '/:leagueSeasonId/groups/reorder',
   authenticate,

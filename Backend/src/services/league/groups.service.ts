@@ -224,6 +224,13 @@ export class LeagueGroupManagementService {
   static async deleteGroup(groupId: string) {
     const group = await this.ensureGroupAccess(groupId);
 
+    const withdrawnInGroup = await prisma.leagueParticipant.count({
+      where: { currentGroupId: groupId, withdrawnAt: { not: null } },
+    });
+    if (withdrawnInGroup > 0) {
+      throw new ApiError(409, 'Cannot delete a group that still has withdrawn teams');
+    }
+
     const operations: Prisma.PrismaPromise<unknown>[] = [
       prisma.leagueParticipant.updateMany({
         where: { currentGroupId: groupId },
@@ -265,11 +272,15 @@ export class LeagueGroupManagementService {
 
     const participant = await prisma.leagueParticipant.findUnique({
       where: { id: participantId },
-      select: { id: true, leagueSeasonId: true, currentGroupId: true },
+      select: { id: true, leagueSeasonId: true, currentGroupId: true, withdrawnAt: true },
     });
 
     if (!participant || participant.leagueSeasonId !== group.leagueSeasonId) {
       throw new ApiError(404, 'Participant not found in this league season');
+    }
+
+    if (participant.withdrawnAt) {
+      throw new ApiError(409, 'Cannot assign a withdrawn team to a group');
     }
 
     if (participant.currentGroupId && participant.currentGroupId !== groupId) {
@@ -289,11 +300,14 @@ export class LeagueGroupManagementService {
 
     const participant = await prisma.leagueParticipant.findFirst({
       where: { id: participantId, currentGroupId: groupId },
-      select: { id: true },
+      select: { id: true, withdrawnAt: true },
     });
 
     if (!participant) {
       throw new ApiError(404, 'Participant not found in this group');
+    }
+    if (participant.withdrawnAt) {
+      throw new ApiError(409, 'Cannot remove a withdrawn team from its group');
     }
 
     await prisma.leagueParticipant.update({

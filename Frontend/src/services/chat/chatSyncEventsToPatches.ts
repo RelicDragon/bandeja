@@ -12,6 +12,19 @@ export type ChatSyncPatch =
   | { op: 'transcriptionUpdated'; messageId: string; audioTranscription: NonNullable<ChatMessage['audioTranscription']> }
   | { op: 'readBatch'; userId: string; readAt: string; messageIds: string[] }
   | { op: 'readReceipt'; receipt: { messageId: string; userId: string; readAt: string } }
+  | {
+      op: 'readCursorUpdate';
+      cursor: {
+        userId: string;
+        chatContextType: ChatMessage['chatContextType'];
+        contextId: string;
+        chatType: ChatMessage['chatType'];
+        readMaxServerSyncSeq: number;
+        readMaxCreatedAt: string;
+        readMaxMessageId: string;
+        updatedAt: string;
+      };
+    }
   | { op: 'translationUpdated'; messageId: string; languageCode: string; translation: string }
   | { op: 'translationRemoved'; messageId: string; languageCode: string }
   | { op: 'stateUpdated'; messageId: string; state: ChatMessage['state']; syncSeq: number }
@@ -116,6 +129,41 @@ export function chatSyncEventsToPatches(events: ChatSyncEventDTO[]): ChatSyncPat
               messageId: readReceipt.messageId,
               userId: readReceipt.userId,
               readAt: readReceipt.readAt,
+            },
+          });
+        }
+        break;
+      }
+      case ChatSyncEventType.READ_CURSOR_UPDATE: {
+        const userId = p.userId as string | undefined;
+        const chatContextType = p.chatContextType as string | undefined;
+        const contextId = p.contextId as string | undefined;
+        const chatType = p.chatType as string | undefined;
+        const readMaxServerSyncSeq = p.readMaxServerSyncSeq as number | undefined;
+        const readMaxCreatedAt = p.readMaxCreatedAt as string | undefined;
+        const readMaxMessageId = p.readMaxMessageId as string | undefined;
+        const updatedAt = (p.updatedAt as string | undefined) ?? readMaxCreatedAt;
+        if (
+          userId &&
+          chatContextType &&
+          contextId &&
+          chatType &&
+          typeof readMaxServerSyncSeq === 'number' &&
+          readMaxCreatedAt &&
+          readMaxMessageId &&
+          updatedAt
+        ) {
+          out.push({
+            op: 'readCursorUpdate',
+            cursor: {
+              userId,
+              chatContextType: chatContextType as ChatMessage['chatContextType'],
+              contextId,
+              chatType: chatType as ChatMessage['chatType'],
+              readMaxServerSyncSeq,
+              readMaxCreatedAt,
+              readMaxMessageId,
+              updatedAt,
             },
           });
         }

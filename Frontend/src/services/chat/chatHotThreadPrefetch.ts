@@ -81,6 +81,10 @@ export async function runHotThreadPrefetchNow(): Promise<void> {
       gameChatType,
     }).catch(() => {});
 
+    // Missed 403/404 may have purged the thread — don't immediately re-pull.
+    const stillThere = await chatLocalDb.chatThreads.get(r.key);
+    if (!stillThere) continue;
+
     enqueueChatSyncPull(parsed.contextType, parsed.contextId, SYNC_PRIORITY_COOP);
 
     await new Promise((res) => setTimeout(res, 400));

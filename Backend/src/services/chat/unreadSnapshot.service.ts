@@ -10,6 +10,8 @@ import type { UnreadObjectsResult } from './unreadObjects.service';
 import { UnreadAuthority } from './unreadAuthority';
 import { MarkAllReadService, type MarkAllReadContext } from './unreadAuthority/markAllRead.service';
 import type { UnreadAuthorityClock, UnreadChangeReason } from './unreadAuthority/types';
+import { emitPeerReadCursorsAfterMark } from './emitPeerReadCursorsAfterMark';
+import type { ChatContextType } from '@prisma/client';
 
 export { computeTotals } from '@bandeja/unread-contract';
 
@@ -207,6 +209,17 @@ export class UnreadSnapshotService {
       },
     });
 
+    if ((emitSocket ?? true) && syncSeq != null) {
+      await emitPeerReadCursorsAfterMark({
+        userId,
+        chatContextType: contextType as ChatContextType,
+        contextId,
+        syncSeq,
+        chatTypes: gameChatTypes,
+        force: markedCount === 0,
+      });
+    }
+
     return {
       markedCount,
       unreadCount: 0,
@@ -235,17 +248,29 @@ export class UnreadSnapshotService {
       userId,
       contexts,
       performMarkRead: async (ctx) => {
+        let syncSeq: number | undefined;
         if (ctx.contextType === 'GAME') {
-          await ReadReceiptService.markAllMessagesAsRead(ctx.contextId, userId, []);
+          const r = await ReadReceiptService.markAllMessagesAsRead(ctx.contextId, userId, []);
+          syncSeq = r.syncSeq;
         } else if (ctx.contextType === 'USER') {
-          await ReadReceiptService.markUserChatAsRead(ctx.contextId, userId);
+          const r = await ReadReceiptService.markUserChatAsRead(ctx.contextId, userId);
+          syncSeq = r.syncSeq;
         } else {
-          await ReadReceiptService.markAllMessagesAsReadForContext(
+          const r = await ReadReceiptService.markAllMessagesAsReadForContext(
             'GROUP',
             ctx.contextId,
             userId,
             undefined
           );
+          syncSeq = r.syncSeq;
+        }
+        if (syncSeq != null) {
+          await emitPeerReadCursorsAfterMark({
+            userId,
+            chatContextType: ctx.contextType as ChatContextType,
+            contextId: ctx.contextId,
+            syncSeq,
+          });
         }
       },
     });

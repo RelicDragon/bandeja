@@ -771,6 +771,9 @@ async function resolveStandingsPodiumParticipantIds(
       wins: true,
       points: true,
       scoreDelta: true,
+      losses: true,
+      ties: true,
+      withdrawnAt: true,
       currentGroupId: true,
       userId: true,
       leagueTeamId: true,
@@ -781,10 +784,12 @@ async function resolveStandingsPodiumParticipantIds(
     orderBy: [{ wins: 'desc' }, { points: 'desc' }, { scoreDelta: 'desc' }, { id: 'asc' }],
   });
 
-  let ordered = participants.map((p) => ({
-    ...p,
-    currentGroupId: p.currentGroupId ?? null,
-  }));
+  let ordered = participants
+    .filter((p) => !p.withdrawnAt)
+    .map((p) => ({
+      ...p,
+      currentGroupId: p.currentGroupId ?? null,
+    }));
 
   if (standingsMode && ordered.length > 1) {
     const { applyGroupStandingsTiebreakers } = await import(

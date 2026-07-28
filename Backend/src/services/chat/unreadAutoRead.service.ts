@@ -4,6 +4,8 @@ import { ChatContextType } from '@prisma/client';
 import { subMonths } from 'date-fns';
 import { ChatSyncEventService } from './chatSyncEvent.service';
 import { ChatReadCursorService, type ReadCursorMessageSlice } from './chatReadCursor.service';
+import { appendReadCursorUpdatesInTransaction } from './readCursorSync';
+import { config } from '../../config/env';
 import {
   type AutoReadAffectedContext,
   dedupeAutoReadAffected,
@@ -90,7 +92,7 @@ export class UnreadAutoReadService {
           }
         }
 
-        if (toCreate.length > 0) {
+        if (toCreate.length > 0 && config.chatReadReceiptDualWrite) {
           const existingSet = new Set<string>();
           for (let o = 0; o < toCreate.length; o += EXISTING_OR_BATCH) {
             const slice = toCreate.slice(o, o + EXISTING_OR_BATCH);
@@ -254,7 +256,8 @@ export class UnreadAutoReadService {
     await prisma.$transaction(
       async (tx) => {
         for (const [userId, rows] of byUser) {
-          await ChatReadCursorService.mergeFromMessages(tx, userId, rows);
+          const results = await ChatReadCursorService.mergeFromMessages(tx, userId, rows);
+          await appendReadCursorUpdatesInTransaction(tx, results);
         }
       },
       { timeout: 120_000 }
@@ -267,6 +270,7 @@ export class UnreadAutoReadService {
     messageIdToContextId: Map<string, string>,
     readAtIso: string
   ): Promise<void> {
+    if (!config.chatReadReceiptDualWrite) return;
     const byKey = new Map<string, { contextId: string; userId: string; messageIds: string[] }>();
     for (const { messageId, userId } of batch) {
       const contextId = messageIdToContextId.get(messageId);

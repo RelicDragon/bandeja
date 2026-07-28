@@ -164,6 +164,9 @@ export class LeagueTeamPlayerSwapService {
       if (!participant?.leagueTeam) {
         throw new ApiError(404, 'Fixed team not found');
       }
+      if (participant.withdrawnAt) {
+        throw new ApiError(409, 'Cannot swap players on a withdrawn team');
+      }
 
       const oldPlayerIds = participant.leagueTeam.players.map((p) => p.userId);
       if (oldPlayerIds.length !== 2) {
@@ -479,6 +482,9 @@ export class LeagueTeamPlayerSwapService {
 
     if (!participant?.leagueTeam) {
       throw new ApiError(404, 'Fixed team not found');
+    }
+    if (participant.withdrawnAt) {
+      throw new ApiError(409, 'Cannot swap players on a withdrawn team');
     }
 
     const rosterIds = new Set(participant.leagueTeam.players.map((p) => p.userId));

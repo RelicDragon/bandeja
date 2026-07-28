@@ -36,6 +36,16 @@ interface ChatReactionData {
   contextType: string;
   contextId: string;
   reaction: any;
+  readCursor?: {
+    userId: string;
+    chatContextType: string;
+    contextId: string;
+    chatType: string;
+    readMaxServerSyncSeq: number;
+    readMaxCreatedAt: string;
+    readMaxMessageId: string;
+    updatedAt: string;
+  };
   syncSeq?: number;
 }
 
@@ -43,6 +53,18 @@ interface ChatReadReceiptData {
   contextType: string;
   contextId: string;
   readReceipt: any;
+  readCursor?: {
+    userId: string;
+    chatContextType: string;
+    contextId: string;
+    chatType: string;
+    readMaxServerSyncSeq: number;
+    readMaxCreatedAt: string;
+    readMaxMessageId: string;
+    updatedAt: string;
+  };
+  messageId?: string;
+  timestamp?: string;
   syncSeq?: number;
 }
 

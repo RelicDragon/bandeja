@@ -2083,6 +2083,7 @@ enum ChatSyncEventType {
   MESSAGE_READ_RECEIPT
   MESSAGE_TRANSLATION_UPDATED
   MESSAGES_READ_BATCH
+  READ_CURSOR_UPDATE
   MESSAGE_PINNED
   MESSAGE_UNPINNED
   MESSAGE_STATE_UPDATED
@@ -2684,6 +2685,7 @@ model LeagueParticipant {
   ties            Int                   @default(0)
   losses          Int                   @default(0)
   scoreDelta      Int                   @default(0)
+  withdrawnAt     DateTime?
   createdAt       DateTime              @default(now())
   updatedAt       DateTime              @updatedAt
   league          League                @relation(fields: [leagueId], references: [id], onDelete: Cascade)
@@ -2699,6 +2701,7 @@ model LeagueParticipant {
   @@index([leagueTeamId])
   @@index([currentGroupId])
   @@index([participantType])
+  @@index([withdrawnAt])
 }
 
 enum RoundType {

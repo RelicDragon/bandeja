@@ -15,6 +15,16 @@ import {
   unreadApiCacheState,
   unreadCountCache,
 } from './chatUnreadApiCache';
+import { parseMaxPeerCursor } from '@/services/chat/peerReadCursor';
+import { seedMaxPeerReadCursor } from '@/services/chat/peerReadCursorStore';
+
+function seedMaxPeerFromMessagesResponse(body: {
+  maxPeerCursor?: unknown;
+}): void {
+  const max = parseMaxPeerCursor(body.maxPeerCursor);
+  if (!max) return;
+  seedMaxPeerReadCursor(max);
+}
 
 export type { ChatType };
 export type {
@@ -506,7 +516,11 @@ export const chatApi = {
   getBugMessages: async (bugId: string, page = 1, limit = 50, beforeMessageId?: string) => {
     const params: Record<string, string | number> = { page, limit };
     if (beforeMessageId) params.beforeMessageId = beforeMessageId;
-    const response = await api.get<ApiResponse<ChatMessage[]>>(`/chat/bugs/${bugId}/messages`, { params });
+    const response = await api.get<ApiResponse<ChatMessage[]> & { maxPeerCursor?: unknown }>(
+      `/chat/bugs/${bugId}/messages`,
+      { params }
+    );
+    seedMaxPeerFromMessagesResponse(response.data);
     return response.data.data;
   },
 
@@ -520,7 +534,11 @@ export const chatApi = {
     const normalizedChatType = normalizeChatType(chatType);
     const params: Record<string, string | number> = { page, limit, chatType: normalizedChatType };
     if (beforeMessageId) params.beforeMessageId = beforeMessageId;
-    const response = await api.get<ApiResponse<ChatMessage[]>>(`/chat/games/${gameId}/messages`, { params });
+    const response = await api.get<ApiResponse<ChatMessage[]> & { maxPeerCursor?: unknown }>(
+      `/chat/games/${gameId}/messages`,
+      { params }
+    );
+    seedMaxPeerFromMessagesResponse(response.data);
     return response.data.data;
   },
 
@@ -768,7 +786,11 @@ export const chatApi = {
   getUserChatMessages: async (chatId: string, page = 1, limit = 50, beforeMessageId?: string) => {
     const params: Record<string, string | number> = { page, limit };
     if (beforeMessageId) params.beforeMessageId = beforeMessageId;
-    const response = await api.get<ApiResponse<ChatMessage[]>>(`/chat/user-chats/${chatId}/messages`, { params });
+    const response = await api.get<ApiResponse<ChatMessage[]> & { maxPeerCursor?: unknown }>(
+      `/chat/user-chats/${chatId}/messages`,
+      { params }
+    );
+    seedMaxPeerFromMessagesResponse(response.data);
     return response.data.data;
   },
 
@@ -921,7 +943,11 @@ export const chatApi = {
   getGroupChannelMessages: async (id: string, page = 1, limit = 50, beforeMessageId?: string) => {
     const params: Record<string, string | number> = { page, limit };
     if (beforeMessageId) params.beforeMessageId = beforeMessageId;
-    const response = await api.get<ApiResponse<ChatMessage[]>>(`/group-channels/${id}/messages`, { params });
+    const response = await api.get<ApiResponse<ChatMessage[]> & { maxPeerCursor?: unknown }>(
+      `/group-channels/${id}/messages`,
+      { params }
+    );
+    seedMaxPeerFromMessagesResponse(response.data);
     return response.data.data;
   },
 

@@ -246,10 +246,13 @@ export const LeagueFixtureMatrix = ({
                     const primary = pickPrimaryGame(cellGames);
                     let outcomeChar: string | null = null;
                     let live = false;
+                    let technical = false;
                     if (primary) {
                       const r = rowPerspectiveOutcome(primary, row.sig, col.sig, sigResolveMap);
-                      if (r.outcome) outcomeChar = r.outcome;
-                      else if (r.scoreHint === 'live') live = true;
+                      if (r.outcome) {
+                        outcomeChar = r.outcome;
+                        technical = r.scoreHint === 'tech';
+                      } else if (r.scoreHint === 'live') live = true;
                     }
                     const stacked = cellGames.length > 1;
                     const aria = cellLabel(t, row, col, cellGames, outcomeChar, live);
@@ -300,8 +303,9 @@ export const LeagueFixtureMatrix = ({
                           {cellGames.length > 0 && outcomeChar && (
                             <span
                               className={`inline-flex h-7 min-w-[1.75rem] items-center justify-center rounded-full px-2 text-xs font-bold tabular-nums ${outcomeBadgeClass(outcomeChar)}`}
+                              title={technical ? t('gameDetails.fixtureCellTechnical') : undefined}
                             >
-                              {outcomeChar}
+                              {technical ? `${outcomeChar}*` : outcomeChar}
                             </span>
                           )}
                           {cellGames.length > 0 && !outcomeChar && live && (

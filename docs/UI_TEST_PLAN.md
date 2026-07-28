@@ -711,7 +711,8 @@ Frontend/e2e/
 | ID | Test | Steps | Expected |
 |----|------|-------|----------|
 | GD-08 | Join open game | Join CTA | Participant added |
-| GD-09 | Leave game | Leave → confirm | Removed |
+| GD-09 | Leave game | Leave → confirm | Removed; local game chat thread purged so background sync does not keep hitting 403 |
+| GD-09a | Leave chat only | Guest/non-playing leave chat from details | Chat access removed; local game chat purged |
 | GD-10 | Decline pending invite | From participants | Invite declined |
 | GD-11 | Join queue | Full game | Queue position shown |
 | GD-12 | Owner accept queue | Accept queued user | User becomes participant |
@@ -842,6 +843,10 @@ Frontend/e2e/
 | GD-120 | Group standings tie-break (fixed / 1v1) | Fixed-team **or** 1v1 group: two equal on wins, A beat B | Standings order A above B (H2H); three+ equal wins use mini-table (mutual wins → set Δ → game Δ), then H2H if two remain tied; 2v2 non-fixed stays points-first |
 | GD-121 | Playoff wizard uses API standings order | Fixed-team season; open playoff config; pick top teams | Order matches Standings tab (not points-only re-sort) |
 | GD-123 | Equal-wins mini-tables on standings | Fixed-team or 1v1; ≥2 tied on wins (not 0–0–0); Standings | **Show explanations** switch appears only with equal-wins clusters for the visible group filter (after bracket UI, before tables); off/hidden → no highlight, **?**, or mini blocks (toggle resets when switch hides); on → highlight + **?** scrolls to mini; deciding metric highlighted only when it differs; order matches main table; tiny avatars + initial+last per player line |
+| GD-124 | Withdraw fixed team mid-season | Fixed-team league; Manage groups → withdraw on team row → confirm | Team `withdrawnAt` set; unfinished REGULAR fixtures → technical W for opponents (no score Δ / rating); played FINAL kept; standings: active places 1…N, withdrawn grey bottom with **—**; swap/remove blocked; matrix shows W*/L* for technical |
+| GD-125 | Withdraw standings places shift | After GD-124 with ≥3 teams | Remaining active teams keep contiguous places; withdrawn has no place number |
+| GD-126 | Withdrawn excluded from playoffs | After GD-124; open playoff config | Withdrawn team not listed/selectable; API rejects if forced |
+| GD-127 | No new fixtures vs withdrawn | After withdraw; recreate/fill RR or new REGULAR round | New pairings only among active teams; technical fixtures stay FINAL; Edit results hidden on technical games |
 | GD-62 | Pending trainer invite | TRAINING without trainer | Pending trainer row + accept flow |
 | GD-63 | FAQ edit (owner) | Edit game FAQs | Content saved |
 | GD-64 | Announced game results gate | Enter results on ANNOUNCED game | Confirm modal before entry |
@@ -1020,8 +1025,12 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | CH-147 | Attach flyout entries | Game chat → tap paperclip attach | Flyout shows File, Video, Images, Poll (no GIF); GIFs still via sticker tray (CH-117 / CH-107) |
 | CH-148 | Send document file | Attach → File → pick PDF/DOC/DOCX/TXT (desktop, mobile browser, Capacitor) | Optimistic file bubble with name/size; CDN upload; confirmed DOCUMENT; tap opens/downloads (native Share uses unique file URI; web blob download); chat list + push show File/name (not Photo); Copy copies `[file] name` (not image toast); re-open thread while pending still shows file bubble |
 | CH-149 | Own ticks backfill on reply/react | `@two-user` A sends image then text; B reacts to or replies after only the later message is marked read | A’s earlier image also shows read (double) ticks — not left as single-tick while the later message is read |
-| CH-150 | Own ticks when read arrives before media ack | `@two-user` A sends slow image; B marks thread read (or replies) before A’s upload confirms | After image confirms, A’s image shows read ticks (receipt was buffered until message id was in thread) |
-| CH-151 | Late media after reader left | `@two-user` A starts image upload; B reads/replies then leaves; image finishes upload with earlier createdAt | A’s image shows read ticks (server late-insert receipts for readers already past that createdAt) |
+| CH-150 | Own ticks when read arrives before media ack | `@two-user` A sends slow image; B marks thread read (or replies) before A’s upload confirms | After image confirms, A’s image shows read ticks (peer cursor / buffered receipt until message id was in thread) |
+| CH-151 | Late media seq-honest unread | `@two-user` A starts image upload; B reads then leaves; image finishes with earlier createdAt but newer serverSyncSeq (`CHAT_READ_RECEIPT_DUAL_WRITE=0` so late-insert receipt backfill is off) | A’s image stays sent (not ✓✓) until B opens/marks again |
+| CH-152 | Peer cursor own-message ticks | `@two-user` A sends DM; B opens thread (marks read) while A’s chat stays open | A’s message flips to read ticks from peer `READ_CURSOR_UPDATE` / hydrate `maxPeerCursor` without requiring receipt rows |
+| CH-153 | Mark-all advances peer ticks | `@two-user` A sends several messages; B marks context read (or opens near bottom) | All of A’s earlier messages in that chatType show read ticks (monotonic via max peer cursor) |
+| CH-154 | Leave game stops chat sync polls | Join game chat → leave game or leave chat from details/thread | Local game thread purged (socket leave + Dexie); no repeating 403 on `/chat/sync/events` or `/chat/messages/missed` for that game |
+| CH-155 | Non-admin skips PRIVATE/ADMINS probes | Playing participant (not owner/admin) opens game details | No `GET .../messages?chatType=PRIVATE|ADMINS` probes; participants-only chat section stays hidden |
 | CH-118 | Tap sticker sends via outbox | Open tray → tap a sticker in Packs | Optimistic sticker appears in thread immediately (fully transparent panel, no bubble chrome); create confirms via sync; no image upload / pending blobs |
 | CH-119 | Sticker send offline retry | Go briefly offline → send sticker from tray → come online | Outbox retries create-only (no media upload); sticker confirms when network returns |
 | CH-119a | Sticker cannot be edited | Own sticker → context menu / ArrowUp | No Edit action; API rejects content update if attempted |

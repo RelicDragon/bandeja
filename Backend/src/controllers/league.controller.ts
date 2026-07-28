@@ -11,6 +11,7 @@ import { LeagueRecreateRegularSeasonService } from '../services/league/recreateR
 import { LeagueStandingsRecalculateService } from '../services/league/leagueStandingsRecalculate.service';
 import { BracketPlayoffService } from '../services/league/bracketPlayoff.service';
 import { LeagueTeamPlayerSwapService } from '../services/league/leagueTeamPlayerSwap.service';
+import { LeagueTeamWithdrawalService } from '../services/league/leagueTeamWithdrawal.service';
 import prisma from '../config/database';
 import { ApiError } from '../utils/ApiError';
 
@@ -358,6 +359,21 @@ export const listLeagueTeamSwapCandidates = asyncHandler(async (req: AuthRequest
     leagueSeasonId,
     participantId,
     outUserId,
+  });
+
+  res.json({
+    success: true,
+    data,
+  });
+});
+
+export const withdrawLeagueTeam = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { leagueSeasonId, participantId } = req.params;
+
+  const data = await LeagueTeamWithdrawalService.withdrawTeam({
+    leagueSeasonId,
+    participantId,
+    actorUserId: req.userId!,
   });
 
   res.json({

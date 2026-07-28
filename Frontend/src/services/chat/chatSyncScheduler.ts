@@ -6,6 +6,10 @@ import {
 } from '@/services/chat/chatOfflineBanner';
 import { recordChatSyncPullFailure, resetChatSyncMetrics } from '@/services/chat/chatSyncMetrics';
 import { shouldDeferLowPriorityChatSyncPull } from '@/services/chat/chatSyncAppVisibility';
+import {
+  isGameChatContextGoneHttpError,
+  purgeGameChatLocal,
+} from '@/services/chat/purgeGameChatLocal';
 import { chatCursorKey, chatLocalDb } from './chatLocalDb';
 import { pullAndApplyChatSyncEvents } from './chatLocalApply';
 import { parsePositiveIntEnv } from './chatSyncEnv';
@@ -146,9 +150,14 @@ function pump(): void {
           }
         );
         await markPullEnd(key);
-      } catch {
-        recordChatSyncPullFailure();
-        await markPullFailed(key);
+      } catch (error) {
+        if (job.contextType === 'GAME' && isGameChatContextGoneHttpError(error)) {
+          await purgeGameChatLocal(job.contextId);
+          cancelChatSyncPull(job.contextType, job.contextId);
+        } else {
+          recordChatSyncPullFailure();
+          await markPullFailed(key);
+        }
       } finally {
         chatSyncPullEnded();
         running--;
@@ -199,4 +208,9 @@ export function clearChatSyncScheduler(): void {
   resetLowPriorityChatSyncPullBudget();
   resetChatSyncMetrics();
   resetChatSyncPullDepth();
+}
+
+/** Drop a queued pull so a just-purged thread is not immediately re-fetched. */
+export function cancelChatSyncPull(contextType: ChatContextType, contextId: string): void {
+  pending.delete(chatCursorKey(contextType, contextId));
 }

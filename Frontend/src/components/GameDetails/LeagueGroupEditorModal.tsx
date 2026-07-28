@@ -6,6 +6,7 @@ import { PlayerAvatar, ConfirmationModal } from '@/components';
 import { leaguesApi, LeagueGroupManagementPayload, type LeagueStanding } from '@/api/leagues';
 import { LeagueGroupParticipantRow } from './LeagueGroupParticipantRow';
 import { LeagueTeamPlayerSwapModal } from './LeagueTeamPlayerSwapModal';
+import { LeagueTeamWithdrawModal } from './LeagueTeamWithdrawModal';
 import { getLeagueGroupColor, getLeagueGroupSoftColor } from '@/utils/leagueGroupColors';
 import { formatRecreateSeasonTableSummary } from '@/utils/leagueRecreateSeasonSummary';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
@@ -45,6 +46,7 @@ export const LeagueGroupEditorModal = ({
   const [showRecreateSeasonTableConfirm, setShowRecreateSeasonTableConfirm] = useState(false);
   const [isRecreatingSeasonTable, setIsRecreatingSeasonTable] = useState(false);
   const [swapParticipant, setSwapParticipant] = useState<LeagueStanding | null>(null);
+  const [withdrawParticipant, setWithdrawParticipant] = useState<LeagueStanding | null>(null);
   const dropdownRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const renameTimeouts = useRef<Record<string, ReturnType<typeof setTimeout> | null>>({});
 
@@ -307,9 +309,10 @@ export const LeagueGroupEditorModal = ({
   const isFixedTeamsMode = !!data && [...data.groups.flatMap((group) => group.participants), ...data.unassignedParticipants]
     .some((participant) => participant.participantType === 'TEAM' || !!participant.leagueTeam);
 
-  const selectableParticipants = isFixedTeamsMode
+  const selectableParticipants = (isFixedTeamsMode
     ? (data?.unassignedParticipants ?? []).filter((participant) => participant.participantType === 'TEAM' || !!participant.leagueTeam)
-    : (data?.unassignedParticipants ?? []);
+    : (data?.unassignedParticipants ?? [])
+  ).filter((participant) => !participant.withdrawnAt);
 
   return (
     <Dialog open={isOpen} onClose={onClose} modalId="league-group-editor-modal">
@@ -434,20 +437,34 @@ export const LeagueGroupEditorModal = ({
                         {t('gameDetails.noStandings')}
                       </p>
                     ) : (
-                      group.participants.map((participant, participantIndex) => (
+                      group.participants.map((participant) => {
+                        const activeIndex = group.participants
+                          .filter((p) => !p.withdrawnAt)
+                          .findIndex((p) => p.id === participant.id);
+                        return (
                         <LeagueGroupParticipantRow
                           key={participant.id}
                           participant={participant}
-                          index={participantIndex}
+                          index={activeIndex >= 0 ? activeIndex : 0}
                           onRemove={() => handleRemoveParticipant(group.id, participant.id)}
                           removing={removeLoading === participant.id}
                           onSwap={
-                            participant.participantType === 'TEAM' && participant.leagueTeam
+                            participant.participantType === 'TEAM' &&
+                            participant.leagueTeam &&
+                            !participant.withdrawnAt
                               ? () => setSwapParticipant(participant)
                               : undefined
                           }
+                          onWithdraw={
+                            participant.participantType === 'TEAM' &&
+                            participant.leagueTeam &&
+                            !participant.withdrawnAt
+                              ? () => setWithdrawParticipant(participant)
+                              : undefined
+                          }
                         />
-                      ))
+                        );
+                      })
                     )}
                   </div>
 
@@ -692,6 +709,18 @@ export const LeagueGroupEditorModal = ({
           leagueSeasonId={leagueSeasonId}
           participant={swapParticipant}
           onSwapped={() => {
+            void fetchGroups({ silent: true });
+            onUpdated?.();
+          }}
+        />
+      ) : null}
+      {withdrawParticipant ? (
+        <LeagueTeamWithdrawModal
+          isOpen={Boolean(withdrawParticipant)}
+          onClose={() => setWithdrawParticipant(null)}
+          leagueSeasonId={leagueSeasonId}
+          participant={withdrawParticipant}
+          onWithdrawn={() => {
             void fetchGroups({ silent: true });
             onUpdated?.();
           }}

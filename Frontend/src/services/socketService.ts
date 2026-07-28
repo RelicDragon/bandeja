@@ -76,7 +76,22 @@ export interface SocketEvents {
     chatTypeKey: string;
     timestamp?: string;
   }) => void;
-  'chat:reaction': (data: { contextType: string; contextId: string; reaction: any; syncSeq?: number }) => void;
+  'chat:reaction': (data: {
+    contextType: string;
+    contextId: string;
+    reaction: any;
+    readCursor?: {
+      userId: string;
+      chatContextType: string;
+      contextId: string;
+      chatType: string;
+      readMaxServerSyncSeq: number;
+      readMaxCreatedAt: string;
+      readMaxMessageId: string;
+      updatedAt: string;
+    };
+    syncSeq?: number;
+  }) => void;
   'chat:read-receipt': (data: {
     contextType: string;
     contextId: string;

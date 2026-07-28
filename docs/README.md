@@ -1,6 +1,6 @@
 # Docs
 
-Current-state docs only. No plans, migrations, audits, or ADR folders.
+Current-state docs primarily. ADRs under `adr/` for hard-to-reverse trade-offs. No migrations/audits as living docs.
 
 | Doc | Purpose |
 |-----|---------|
@@ -9,6 +9,7 @@ Current-state docs only. No plans, migrations, audits, or ADR folders.
 | [APP_RELEASE.md](./APP_RELEASE.md) | Store baseline (script-managed) + What's new |
 | [UI_TEST_PLAN.md](./UI_TEST_PLAN.md) | Manual/E2E catalog — update when UI changes |
 | [UI_TEST_PLAN_TWO_USER.md](./UI_TEST_PLAN_TWO_USER.md) | Two-user / Socket cases |
+| [adr/](./adr/) | Hard-to-reverse decisions (e.g. chat read cursor authority) |
 | [agents/](./agents/) | Skill config (issues, triage, domain) |
 | `app-release-baseline.txt` | Last shipped commit SHA |
 

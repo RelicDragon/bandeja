@@ -29,6 +29,7 @@ export type GroupStandingRow = {
   userId?: string | null;
   leagueTeamId?: string | null;
   leagueTeam?: { players: { userId: string }[] } | null;
+  withdrawnAt?: Date | string | null;
   /** Sets won − sets lost across REGULAR fixtures (tie-break metric). */
   setDelta?: number;
   /** Games/balls won − lost across REGULAR fixtures (same unit as mini-table game Δ). */
@@ -577,18 +578,21 @@ export async function applyGroupStandingsTiebreakersWithClusters<T extends Group
       wins: r.wins,
       losses: r.losses ?? 0,
       ties: r.ties ?? 0,
+      withdrawn: Boolean(r.withdrawnAt),
     }));
     const groupFixtures = fixtures.filter((f) => idSet.has(f.aId) && idSet.has(f.bId));
     const orderedIds = rankFixedTeamGroupStandings(rankInput, groupFixtures);
     ranked.push(...orderByRankedIds(rows, orderedIds));
 
     for (const cluster of buildEqualWinsTieClusters(
-      rows.map((r) => ({
-        id: r.id,
-        wins: r.wins,
-        losses: r.losses ?? 0,
-        ties: r.ties ?? 0,
-      })),
+      rows
+        .filter((r) => !r.withdrawnAt)
+        .map((r) => ({
+          id: r.id,
+          wins: r.wins,
+          losses: r.losses ?? 0,
+          ties: r.ties ?? 0,
+        })),
       groupFixtures
     )) {
       tieClusters.push({ groupId: key, ...cluster });

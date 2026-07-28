@@ -183,6 +183,11 @@ export async function patchMatchLiveScoring(
     });
   }
 
+  const { assertGameNotLockedTechnicalWithdrawal } = await import(
+    '../league/leagueTechnicalWithdrawalGuard'
+  );
+  await assertGameNotLockedTechnicalWithdrawal(gameId, prisma);
+
   const current = readMatchLiveScoringEnvelope(match.metadata);
   const currentRevision = current?.revision ?? 0;
 

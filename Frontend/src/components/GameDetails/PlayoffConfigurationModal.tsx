@@ -269,7 +269,10 @@ export const PlayoffConfigurationModal = ({
   const getStandingsForGroup = useCallback(
     (groupId: string) =>
       orderGroupStandings(
-        standings.filter((s) => (s.currentGroupId ?? s.currentGroup?.id) === groupId),
+        standings.filter(
+          (s) =>
+            !s.withdrawnAt && (s.currentGroupId ?? s.currentGroup?.id) === groupId
+        ),
         preserveApiStandingsOrder
       ),
     [standings, preserveApiStandingsOrder]
@@ -295,7 +298,10 @@ export const PlayoffConfigurationModal = ({
   );
 
   const filteredStandings = selectedGroupId === ALL_GROUP_ID
-    ? orderGroupStandings(standings, preserveApiStandingsOrder)
+    ? orderGroupStandings(
+        standings.filter((s) => !s.withdrawnAt),
+        preserveApiStandingsOrder
+      )
     : getStandingsForGroup(selectedGroupId);
 
   const currentGroupSelected = selectedIdsByGroup[selectedGroupId];

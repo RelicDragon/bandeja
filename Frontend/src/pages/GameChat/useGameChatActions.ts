@@ -221,6 +221,9 @@ export function useGameChatActions(params: UseGameChatActionsParams) {
         } else {
           await gamesApi.leave(id);
         }
+        await import('@/services/chat/purgeGameChatLocal').then(({ purgeGameChatLocal }) =>
+          purgeGameChatLocal(id)
+        );
         navigate(-1);
       } else if (contextType === 'GROUP') {
         await chatApi.leaveGroupChannel(id);

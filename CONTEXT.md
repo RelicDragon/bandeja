@@ -53,3 +53,19 @@ _Avoid_: player self-withdraw, admin-only gate
 **Results vs withdrawn**:
 Fixtures against a withdrawn team (played or technical) remain full standings inputs for active teams — wins, H2H, and mini-table.
 _Avoid_: annulling games vs withdrawn for ranking
+
+**Withdrawn cluster order**:
+Among withdrawn rows, apply the same ranking rules as among active teams; the whole cluster sits after all active rows without places.
+_Avoid_: withdraw-time order, name-only order
+
+**Withdrawn roster lock**:
+A withdrawn team’s roster cannot be changed via player swap (or equivalent mid-season roster edits).
+_Avoid_: post-withdraw swap
+
+**Withdrawn group lock**:
+A withdrawn team stays in its group for standings history; it cannot be removed, reassigned, or left behind by deleting its group. New REGULAR fixtures are generated only among non-withdrawn teams.
+_Avoid_: scheduling withdrawn teams, rehoming withdrawn franchises
+
+**Withdraw team action (UI)**:
+Editor action next to mid-season player swap in Manage groups / team actions, with an explicit confirm.
+_Avoid_: standings-only withdraw control

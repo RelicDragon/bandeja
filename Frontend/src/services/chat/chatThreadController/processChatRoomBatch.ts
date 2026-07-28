@@ -25,6 +25,9 @@ import {
   type ThreadLiveEffect,
   type ThreadLiveEvent,
 } from '@/services/chat/threadLiveProjection';
+import { upsertPeerReadCursor } from '@/services/chat/peerReadCursorStore';
+import { parsePeerReadCursor } from '@/services/chat/peerReadCursor';
+import { useAuthStore } from '@/store/authStore';
 
 export type ProcessChatRoomBatchCtx = {
   id: string | undefined;
@@ -67,7 +70,18 @@ function mapBatchToLiveEvents(batch: ChatRoomEvent[]): ThreadLiveEvent[] {
         break;
       }
       case 'readReceipt': {
-        const data = ev.data;
+        const data = ev.data as typeof ev.data & { readCursors?: unknown[] };
+        const viewerId = useAuthStore.getState().user?.id;
+        const applyCursor = (raw: unknown) => {
+          const parsedCursor = parsePeerReadCursor(raw);
+          if (!parsedCursor) return;
+          if (viewerId && parsedCursor.userId === viewerId) return;
+          upsertPeerReadCursor(parsedCursor);
+        };
+        applyCursor(data.readCursor);
+        if (Array.isArray(data.readCursors)) {
+          for (const c of data.readCursors) applyCursor(c);
+        }
         const rr = data.readReceipt;
         const readAt =
           rr?.readAt == null
@@ -76,6 +90,8 @@ function mapBatchToLiveEvents(batch: ChatRoomEvent[]): ThreadLiveEvent[] {
               ? rr.readAt
               : new Date(rr.readAt as string | number | Date).toISOString();
 
+        // Still apply receipt/allRead for dual-write / old-path local rows + syncPull.
+        // New-client ✓✓ ignores receipts (resolveOwnMessageTicks is cursor-only).
         if (rr?.allRead && rr.userId && readAt) {
           events.push({
             type: 'allRead',
@@ -97,6 +113,14 @@ function mapBatchToLiveEvents(batch: ChatRoomEvent[]): ThreadLiveEvent[] {
         break;
       }
       case 'reaction': {
+        const reactionData = ev.data as typeof ev.data & { readCursor?: unknown };
+        const parsedReactionCursor = parsePeerReadCursor(reactionData.readCursor);
+        if (parsedReactionCursor) {
+          const viewerId = useAuthStore.getState().user?.id;
+          if (!viewerId || parsedReactionCursor.userId !== viewerId) {
+            upsertPeerReadCursor(parsedReactionCursor);
+          }
+        }
         const reaction = ev.data.reaction as MessageReaction & { action?: string };
         if (!reaction?.messageId) break;
         events.push({

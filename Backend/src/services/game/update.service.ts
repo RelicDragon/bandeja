@@ -314,6 +314,7 @@ export class GameUpdateService {
         parentId: true,
         timeIsSet: true,
         finishedDate: true,
+        metadata: true,
       },
     });
 
@@ -616,6 +617,15 @@ export class GameUpdateService {
       data.resultsStatus !== undefined &&
       data.resultsStatus !== 'FINAL' &&
       currentGame?.resultsStatus === 'FINAL';
+
+    if (leavingFinalViaUpdate) {
+      const { gameMetadataIsTechnicalWithdrawal } = await import(
+        '../league/leagueTechnicalWithdrawalGuard'
+      );
+      if (gameMetadataIsTechnicalWithdrawal(currentGame?.metadata)) {
+        throw new ApiError(409, 'Technical withdrawal results cannot be edited or cleared');
+      }
+    }
 
     await prisma.$transaction(async (tx) => {
       await tx.$executeRaw(Prisma.sql`SELECT id FROM "Game" WHERE id = ${id} FOR UPDATE`);

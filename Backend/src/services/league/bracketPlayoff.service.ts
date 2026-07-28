@@ -318,6 +318,9 @@ export class BracketPlayoffService {
       if (p.participantType !== 'TEAM' || !p.leagueTeam?.players?.length) {
         throw new ApiError(400, 'Bracket playoffs require TEAM participants with valid rosters');
       }
+      if (p.withdrawnAt) {
+        throw new ApiError(400, 'Withdrawn teams cannot enter playoffs');
+      }
     }
 
     const participantById = new Map(participants.map((p) => [p.id, p]));
@@ -595,6 +598,9 @@ export class BracketPlayoffService {
       if (p.participantType !== 'TEAM' || !p.leagueTeam?.players?.length) {
         throw new ApiError(400, 'Bracket playoffs require TEAM participants with valid rosters');
       }
+      if (p.withdrawnAt) {
+        throw new ApiError(400, 'Withdrawn teams cannot enter playoffs');
+      }
       if (!p.currentGroupId || !includedGroupIds.includes(p.currentGroupId)) {
         throw new ApiError(400, 'Participant does not belong to an included group');
       }
@@ -719,6 +725,7 @@ export class BracketPlayoffService {
         leagueSeasonId,
         participantType: wantType,
         currentGroupId: { in: groupIds },
+        withdrawnAt: null,
       },
       include: {
         leagueTeam: { include: { players: { select: { userId: true } } } },

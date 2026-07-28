@@ -16,6 +16,7 @@ import { peekCachedLinkPreview } from './linkPreview/useLinkPreview';
 import { Pencil } from 'lucide-react';
 import { MessageSendStatusIcon } from './MessageSendStatusIcon';
 import { resolveOwnMessageTicks } from '@/services/chat/messageTickState';
+import { useMaxPeerReadCursor } from '@/services/chat/useMaxPeerReadCursor';
 import { TFunction } from 'i18next';
 import type { MessageGroupPosition } from '@/utils/chatMessageGrouping';
 import type { ParsedContentPart } from './types';
@@ -150,7 +151,16 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
             (part.type === 'url' && matchesMessageUrl(part.url, firstExternalHttpUrl))
         )
       : matchesMessageUrl(message.content?.trim(), firstExternalHttpUrl));
-  const { tickRead, tickDelivered } = resolveOwnMessageTicks(message, currentUserId);
+  const maxPeerCursor = useMaxPeerReadCursor(
+    message.chatContextType,
+    message.contextId,
+    message.chatType
+  );
+  const { tickRead, tickDelivered } = resolveOwnMessageTicks(
+    message,
+    currentUserId,
+    maxPeerCursor
+  );
   const contentVariantForTranslation = isOwnMessage ? 'own' : 'other';
   const hasMediaOrVoice = isVoice || isVideo || isSticker || isDocument || hasMedia;
   const paddingClass = isFloatingMedia || isPreviewOnlyMessage

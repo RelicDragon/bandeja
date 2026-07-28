@@ -18,7 +18,11 @@ export async function loadGroupSortedTeams(
   groupId: string
 ): Promise<GroupSortedTeam[]> {
   const participants = await db.leagueParticipant.findMany({
-    where: { leagueSeasonId, currentGroupId: groupId },
+    where: {
+      leagueSeasonId,
+      currentGroupId: groupId,
+      withdrawnAt: null,
+    },
     include: {
       leagueTeam: {
         include: {

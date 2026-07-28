@@ -1,4 +1,4 @@
-import { Loader2, ArrowLeftRight, Trash2 } from 'lucide-react';
+import { Loader2, ArrowLeftRight, Trash2, Ban } from 'lucide-react';
 import { PlayerAvatar } from '@/components';
 import { LeagueStanding } from '@/api/leagues';
 import type { BasicUser } from '@/types';
@@ -29,6 +29,8 @@ interface LeagueGroupParticipantRowProps {
   onRemove: () => void;
   removing?: boolean;
   onSwap?: () => void;
+  onWithdraw?: () => void;
+  withdrawing?: boolean;
 }
 
 export const LeagueGroupParticipantRow = ({
@@ -37,18 +39,26 @@ export const LeagueGroupParticipantRow = ({
   onRemove,
   removing = false,
   onSwap,
+  onWithdraw,
+  withdrawing = false,
 }: LeagueGroupParticipantRowProps) => {
   const teamPlayers = participant.leagueTeam?.players.filter((p) => p.user) ?? [];
-  const showSwap = Boolean(onSwap) && teamPlayers.length === 2;
+  const withdrawn = Boolean(participant.withdrawnAt);
+  const showSwap = Boolean(onSwap) && teamPlayers.length === 2 && !withdrawn;
+  const showWithdraw = Boolean(onWithdraw) && !withdrawn;
 
   return (
-    <div className="flex items-stretch overflow-hidden rounded-xl border border-gray-200/90 bg-gray-50/90 dark:border-gray-700/70 dark:bg-gray-800/45">
+    <div
+      className={`flex items-stretch overflow-hidden rounded-xl border border-gray-200/90 bg-gray-50/90 dark:border-gray-700/70 dark:bg-gray-800/45 ${
+        withdrawn ? 'opacity-55 grayscale' : ''
+      }`}
+    >
       <div
         className="flex w-9 shrink-0 items-center justify-center border-r border-gray-200/90 bg-emerald-500/10 dark:border-gray-700/70 dark:bg-emerald-500/15"
         aria-hidden
       >
         <span className="text-xs font-bold tabular-nums text-emerald-700 dark:text-emerald-400">
-          {index + 1}
+          {withdrawn ? '—' : index + 1}
         </span>
       </div>
 
@@ -61,6 +71,17 @@ export const LeagueGroupParticipantRow = ({
       </div>
 
       <div className="flex shrink-0 items-center gap-0.5 border-l border-gray-200/90 px-1.5 dark:border-gray-700/70">
+        {showWithdraw ? (
+          <button
+            type="button"
+            onClick={onWithdraw}
+            disabled={withdrawing}
+            className="rounded-lg p-1.5 text-amber-700 transition hover:bg-amber-50 hover:text-amber-800 disabled:opacity-50 dark:text-amber-400 dark:hover:bg-amber-900/25"
+            aria-label="Withdraw team"
+          >
+            {withdrawing ? <Loader2 size={14} className="animate-spin" /> : <Ban size={14} />}
+          </button>
+        ) : null}
         {showSwap ? (
           <button
             type="button"
@@ -74,7 +95,7 @@ export const LeagueGroupParticipantRow = ({
         <button
           type="button"
           onClick={onRemove}
-          disabled={removing}
+          disabled={removing || withdrawn}
           className="rounded-lg p-1.5 text-red-600 transition hover:bg-red-50 hover:text-red-700 disabled:opacity-50 dark:hover:bg-red-900/20"
           aria-label="Remove"
         >

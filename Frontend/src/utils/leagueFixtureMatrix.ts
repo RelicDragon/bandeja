@@ -110,6 +110,11 @@ export function rowPerspectiveOutcome(
 
   const scheduled = Boolean(game.timeIsSet) && Boolean(game.clubId);
   const played = game.resultsStatus === 'FINAL' && (game.outcomes?.length ?? 0) > 0;
+  const technical = Boolean(
+    game.metadata &&
+      typeof game.metadata === 'object' &&
+      (game.metadata as Record<string, unknown>).technicalWithdrawal
+  );
 
   if (played && game.outcomes) {
     // Outcomes belong to who actually played (historical roster), not the current franchise pair.
@@ -125,10 +130,13 @@ export function rowPerspectiveOutcome(
       noneWinners &&
       rowOutcomes.some((o) => (o.ties ?? 0) > 0) &&
       rowOutcomes.every((o) => !o.isWinner && (o.wins ?? 0) === 0 && (o.losses ?? 0) === 0);
-    if (allWinners) return { outcome: 'W', scoreHint: null };
+    if (allWinners) return { outcome: 'W', scoreHint: technical ? 'tech' : null };
     if (tieish) return { outcome: 'T', scoreHint: null };
-    if (noneWinners) return { outcome: 'L', scoreHint: null };
-    return { outcome: rowOutcomes.some((o) => o.isWinner) ? 'W' : 'L', scoreHint: null };
+    if (noneWinners) return { outcome: 'L', scoreHint: technical ? 'tech' : null };
+    return {
+      outcome: rowOutcomes.some((o) => o.isWinner) ? 'W' : 'L',
+      scoreHint: technical ? 'tech' : null,
+    };
   }
 
   if (scheduled) {

@@ -178,6 +178,11 @@ export async function deleteGameResults(gameId: string) {
     throw new ApiError(404, 'Game not found');
   }
 
+  const { assertGameNotLockedTechnicalWithdrawal } = await import(
+    './league/leagueTechnicalWithdrawalGuard'
+  );
+  await assertGameNotLockedTechnicalWithdrawal(gameId, prisma);
+
   await prisma.$transaction(async (tx) => {
     if (game.outcomes.length > 0) {
       await undoGameOutcomes(gameId, tx);
@@ -221,6 +226,11 @@ export async function deleteGameResults(gameId: string) {
 }
 
 export async function resetGameResults(gameId: string) {
+  const { assertGameNotLockedTechnicalWithdrawal } = await import(
+    './league/leagueTechnicalWithdrawalGuard'
+  );
+  await assertGameNotLockedTechnicalWithdrawal(gameId, prisma);
+
   const game = await prisma.game.findUnique({
     where: { id: gameId },
     include: {
@@ -324,6 +334,11 @@ export async function resetGameResults(gameId: string) {
 }
 
 export async function editGameResults(gameId: string) {
+  const { assertGameNotLockedTechnicalWithdrawal } = await import(
+    './league/leagueTechnicalWithdrawalGuard'
+  );
+  await assertGameNotLockedTechnicalWithdrawal(gameId, prisma);
+
   const game = await prisma.game.findUnique({
     where: { id: gameId },
     include: {
@@ -388,6 +403,11 @@ export async function editGameResults(gameId: string) {
 export async function syncResults(gameId: string, rounds: any[]) {
   const normalizedRounds = Array.isArray(rounds) ? rounds : [];
   console.log(`[SYNC RESULTS] gameId=${gameId} roundsCount=${normalizedRounds.length}`);
+
+  const { assertGameNotLockedTechnicalWithdrawal } = await import(
+    './league/leagueTechnicalWithdrawalGuard'
+  );
+  await assertGameNotLockedTechnicalWithdrawal(gameId, prisma);
 
   const game = await prisma.game.findUnique({
     where: { id: gameId },
@@ -575,6 +595,10 @@ export async function syncResults(gameId: string, rounds: any[]) {
 }
 
 export async function createRound(gameId: string, roundId: string) {
+  const { assertGameNotLockedTechnicalWithdrawal } = await import(
+    './league/leagueTechnicalWithdrawalGuard'
+  );
+  await assertGameNotLockedTechnicalWithdrawal(gameId, prisma);
 
   const roundCount = await prisma.round.count({ where: { gameId } });
 
@@ -637,6 +661,10 @@ export async function createRound(gameId: string, roundId: string) {
 }
 
 export async function deleteRound(gameId: string, roundId: string) {
+  const { assertGameNotLockedTechnicalWithdrawal } = await import(
+    './league/leagueTechnicalWithdrawalGuard'
+  );
+  await assertGameNotLockedTechnicalWithdrawal(gameId, prisma);
 
   const round = await prisma.round.findUnique({
     where: { id: roundId },
@@ -674,6 +702,10 @@ export async function deleteRound(gameId: string, roundId: string) {
 }
 
 export async function createMatch(gameId: string, roundId: string, matchId: string) {
+  const { assertGameNotLockedTechnicalWithdrawal } = await import(
+    './league/leagueTechnicalWithdrawalGuard'
+  );
+  await assertGameNotLockedTechnicalWithdrawal(gameId, prisma);
 
   const round = await prisma.round.findUnique({
     where: { id: roundId },
@@ -715,6 +747,10 @@ export async function createMatch(gameId: string, roundId: string, matchId: stri
 }
 
 export async function deleteMatch(gameId: string, matchId: string) {
+  const { assertGameNotLockedTechnicalWithdrawal } = await import(
+    './league/leagueTechnicalWithdrawalGuard'
+  );
+  await assertGameNotLockedTechnicalWithdrawal(gameId, prisma);
 
   const match = await prisma.match.findUnique({
     where: { id: matchId },
@@ -801,6 +837,11 @@ export async function updateMatch(
   if (match.round.gameId !== gameId) {
     throw new ApiError(400, 'Match does not belong to the specified game');
   }
+
+  const { assertGameNotLockedTechnicalWithdrawal } = await import(
+    './league/leagueTechnicalWithdrawalGuard'
+  );
+  await assertGameNotLockedTechnicalWithdrawal(gameId, prisma);
 
   const game = await prisma.game.findUnique({
     where: { id: gameId },
@@ -981,6 +1022,11 @@ export async function patchMatchMetadata(
   patch: Record<string, unknown>,
   options?: { userId?: string | null }
 ): Promise<{ liveScoringCleared: boolean }> {
+  const { assertGameNotLockedTechnicalWithdrawal } = await import(
+    './league/leagueTechnicalWithdrawalGuard'
+  );
+  await assertGameNotLockedTechnicalWithdrawal(gameId, prisma);
+
   const match = await prisma.match.findUnique({
     where: { id: matchId },
     select: {

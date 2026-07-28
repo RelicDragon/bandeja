@@ -1,6 +1,7 @@
 import type { ChatContextType } from '@/api/chat';
 import { bridgeClearChatSyncTailState } from './chatLocalApplyStoreBridge';
 import { chatCursorKey, chatLocalDb } from './chatLocalDb';
+import { purgePeerReadCursorsForThread } from './peerReadCursorStore';
 
 export async function purgeLocalDexieThread(contextType: ChatContextType, contextId: string): Promise<void> {
   const pair: [ChatContextType, string] = [contextType, contextId];
@@ -18,6 +19,7 @@ export async function purgeLocalDexieThread(contextType: ChatContextType, contex
       chatLocalDb.chatSyncCursor,
       chatLocalDb.chatThreads,
       chatLocalDb.threadScroll,
+      chatLocalDb.peerReadCursors,
     ],
     async () => {
       await chatLocalDb.messages.bulkDelete(msgIds);
@@ -36,8 +38,14 @@ export async function purgeLocalDexieThread(contextType: ChatContextType, contex
       }
       await chatLocalDb.chatSyncCursor.delete(chatCursorKey(contextType, contextId));
       await chatLocalDb.chatThreads.delete(chatCursorKey(contextType, contextId));
+      const peerPrefix = `${contextType}:${contextId}:`;
+      const peerKeys = await chatLocalDb.peerReadCursors
+        .filter((r) => r.threadKey.startsWith(peerPrefix) || r.threadKey === `${contextType}:${contextId}`)
+        .primaryKeys();
+      await chatLocalDb.peerReadCursors.bulkDelete(peerKeys);
     }
   );
 
+  await purgePeerReadCursorsForThread(contextType, contextId);
   bridgeClearChatSyncTailState(contextType, contextId);
 }

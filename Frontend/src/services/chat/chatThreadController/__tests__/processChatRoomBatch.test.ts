@@ -59,6 +59,7 @@ vi.mock('@/services/chat/chatLocalApplyPull', () => ({
 }));
 
 import { resolveOwnMessageTicks } from '@/services/chat/messageTickState';
+import { getMaxPeerReadCursor } from '@/services/chat/peerReadCursorStore';
 import { processChatRoomBatch, type ProcessChatRoomBatchCtx } from '../processChatRoomBatch';
 
 function inboundMessage(id: string, senderId = 'other-user'): ChatMessage {
@@ -211,9 +212,10 @@ describe('processChatRoomBatch allRead read receipt', () => {
     vi.clearAllMocks();
   });
 
-  it('updates all own message ticks on bulk mark-read without per-message ids', () => {
+  it('applies dual-write allRead rows; ticks need peer cursor (new client)', () => {
     const own = (id: string): ChatMessageWithStatus => ({
       ...inboundMessage(id, 'sender-a'),
+      serverSyncSeq: 10,
       status: 'sent',
     });
     const ctx = makeCtx({ userId: 'sender-a' });
@@ -236,6 +238,16 @@ describe('processChatRoomBatch allRead read receipt', () => {
               readAt: '2026-01-01T01:00:00.000Z',
               allRead: true,
             },
+            readCursor: {
+              userId: 'reader-b',
+              chatContextType: 'USER',
+              contextId: 'thread-1',
+              chatType: 'PUBLIC',
+              readMaxServerSyncSeq: 10,
+              readMaxCreatedAt: '2026-01-01T00:00:00.000Z',
+              readMaxMessageId: 'm2',
+              updatedAt: '2026-01-01T01:00:00.000Z',
+            },
             syncSeq: 50,
           },
         },
@@ -243,12 +255,18 @@ describe('processChatRoomBatch allRead read receipt', () => {
       ctx
     );
 
-    expect(resolveOwnMessageTicks(ctx.messagesRef.current[0]!)).toEqual({
+    const max = getMaxPeerReadCursor('USER', 'thread-1', 'PUBLIC');
+    expect(resolveOwnMessageTicks(ctx.messagesRef.current[0]!, 'sender-a', max)).toEqual({
       tickRead: true,
       tickDelivered: false,
     });
-    expect(resolveOwnMessageTicks(ctx.messagesRef.current[1]!)).toEqual({
+    expect(resolveOwnMessageTicks(ctx.messagesRef.current[1]!, 'sender-a', max)).toEqual({
       tickRead: true,
+      tickDelivered: false,
+    });
+    // Receipts alone must not flip ticks on the new client.
+    expect(resolveOwnMessageTicks(ctx.messagesRef.current[0]!)).toEqual({
+      tickRead: false,
       tickDelivered: false,
     });
     expect(patchLocalReadReceipt).toHaveBeenCalledWith(
@@ -297,9 +315,10 @@ describe('processChatRoomBatch with Thread Live Projection (Phase 2)', () => {
     expect(ctx.onInboundMessage).toHaveBeenCalledWith(expect.objectContaining({ id: 'm1' }));
   });
 
-  it('routes readReceipt with allRead through reducer', async () => {
+  it('routes readReceipt with allRead + readCursor (new-client ticks via cursor)', async () => {
     const own = (id: string): ChatMessageWithStatus => ({
       ...inboundMessage(id, 'sender-a'),
+      serverSyncSeq: 10,
       status: 'sent',
     });
     const ctx = makeCtx({
@@ -324,6 +343,16 @@ describe('processChatRoomBatch with Thread Live Projection (Phase 2)', () => {
               readAt: '2026-01-01T01:00:00.000Z',
               allRead: true,
             },
+            readCursor: {
+              userId: 'reader-b',
+              chatContextType: 'USER',
+              contextId: 'thread-1',
+              chatType: 'PUBLIC',
+              readMaxServerSyncSeq: 10,
+              readMaxCreatedAt: '2026-01-01T00:00:00.000Z',
+              readMaxMessageId: 'm2',
+              updatedAt: '2026-01-01T01:00:00.000Z',
+            },
             syncSeq: 50,
           },
         },
@@ -331,16 +360,15 @@ describe('processChatRoomBatch with Thread Live Projection (Phase 2)', () => {
       ctx
     );
 
-    // Reducer should have applied read receipts to own messages
-    expect(resolveOwnMessageTicks(ctx.messagesRef.current[0]!)).toEqual({
+    const max = getMaxPeerReadCursor('USER', 'thread-1', 'PUBLIC');
+    expect(resolveOwnMessageTicks(ctx.messagesRef.current[0]!, 'sender-a', max)).toEqual({
       tickRead: true,
       tickDelivered: false,
     });
-    expect(resolveOwnMessageTicks(ctx.messagesRef.current[1]!)).toEqual({
+    expect(resolveOwnMessageTicks(ctx.messagesRef.current[1]!, 'sender-a', max)).toEqual({
       tickRead: true,
       tickDelivered: false,
     });
-    // Third message (not own) should not have read receipt
     expect(ctx.messagesRef.current[2]?.readReceipts).toHaveLength(0);
 
     expect(pullAndApplyChatSyncEventsDirect).toHaveBeenCalledWith('USER', 'thread-1');

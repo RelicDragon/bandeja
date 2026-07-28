@@ -1,5 +1,11 @@
 import type { ChatMessage, MessageReadReceipt } from '@/api/chat';
+import {
+  isMessageCoveredByCursor,
+  type MaxPeerReadCursor,
+  type ReadCursorPosition,
+} from './peerReadCursor';
 
+/** Still used for “Read by N” / receipt lists — not for own-message ✓✓ (ADR 0002). */
 export function readReceiptsFromOthers(
   readReceipts: readonly MessageReadReceipt[] | undefined,
   senderId: string | null | undefined,
@@ -13,15 +19,26 @@ export function readReceiptsFromOthers(
   });
 }
 
-/** Own-message send ticks: read only when another participant has a read receipt. */
+function messageHasSyncPosition(message: ChatMessage): boolean {
+  const seq = message.serverSyncSeq ?? message.syncSeq;
+  return typeof seq === 'number' && Number.isFinite(seq);
+}
+
+/**
+ * Own-message send ticks (ADR 0002 — new client):
+ * Peer read cursor only. Receipts are dual-written for old clients and ignored here.
+ */
 export function resolveOwnMessageTicks(
   message: ChatMessage,
-  viewerUserId?: string | null
+  _viewerUserId?: string | null,
+  maxPeerCursor?: ReadCursorPosition | MaxPeerReadCursor | null
 ): { tickRead: boolean; tickDelivered: boolean } {
-  const readByOthers =
-    readReceiptsFromOthers(message.readReceipts, message.senderId, viewerUserId).length > 0;
+  const tickRead =
+    maxPeerCursor != null &&
+    messageHasSyncPosition(message) &&
+    isMessageCoveredByCursor(message, maxPeerCursor);
   return {
-    tickRead: readByOthers,
-    tickDelivered: message.state === 'DELIVERED' && !readByOthers,
+    tickRead,
+    tickDelivered: message.state === 'DELIVERED' && !tickRead,
   };
 }

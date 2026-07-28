@@ -156,6 +156,14 @@ export type MessageSearchTokenRow = {
   token: string;
 };
 
+export type PeerReadCursorLocalRow = {
+  key: string;
+  threadKey: string;
+  userId: string;
+  payload: import('./peerReadCursor').PeerReadCursor;
+  updatedAt: number;
+};
+
 class ChatLocalDexie extends Dexie {
   messages!: Table<ChatLocalRow, string>;
   chatSyncCursor!: Table<ChatLocalCursorRow, string>;
@@ -169,6 +177,7 @@ class ChatLocalDexie extends Dexie {
   mutationQueue!: Table<ChatMutationQueueRow, string>;
   outboxMediaBlobs!: Table<OutboxMediaBlobRow, string>;
   messageSearchTokens!: Table<MessageSearchTokenRow, string>;
+  peerReadCursors!: Table<PeerReadCursorLocalRow, string>;
 
   constructor() {
     super('BandejaChatLocal');
@@ -432,6 +441,22 @@ class ChatLocalDexie extends Dexie {
       mutationQueue: 'id, [contextType+contextId], status, createdAt',
       outboxMediaBlobs: 'id, tempId',
       messageSearchTokens: 'id, token, messageId',
+    });
+    this.version(18).stores({
+      messages:
+        'id, [contextType+contextId+chatType], [contextType+contextId+chatType+sortKey], [contextType+contextId], createdAt, deletedAt, searchText',
+      chatSyncCursor: 'key',
+      outbox: 'tempId, [contextType+contextId], createdAt',
+      chatThreads: 'key, updatedAt, lastOpenedAt, openCount',
+      threadIndex: 'rowKey, listFilter, sortAt, contextType, contextId, [contextType+contextId]',
+      messageContextHead: 'key, updatedAt',
+      threadScroll: 'key, updatedAt',
+      messageRowHeights: 'messageId, updatedAt',
+      chatDrafts: 'key, updatedAt',
+      mutationQueue: 'id, [contextType+contextId], status, createdAt',
+      outboxMediaBlobs: 'id, tempId',
+      messageSearchTokens: 'id, token, messageId',
+      peerReadCursors: 'key, threadKey, userId, updatedAt',
     });
   }
 }

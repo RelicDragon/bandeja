@@ -7,6 +7,7 @@ import { MessageService } from '../services/chat/message.service';
 import { ReadReceiptService } from '../services/chat/readReceipt.service';
 import { UnreadSnapshotService } from '../services/chat/unreadSnapshot.service';
 import { ChatType } from '@prisma/client';
+import { loadMaxPeerCursorDto } from '../services/chat/peerReadCursor.dto';
 
 export const createGroupChannel = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { name, avatar, isChannel, isPublic } = req.body;
@@ -254,16 +255,23 @@ export const getGroupChannelMessages = asyncHandler(async (req: AuthRequest, res
     throw new ApiError(401, 'Unauthorized');
   }
 
+  const resolvedChatType = chatType as ChatType;
   const messages = await MessageService.getMessages('GROUP', id, userId, {
     page: Number(page),
     limit: Number(limit),
-    chatType: chatType as ChatType,
+    chatType: resolvedChatType,
     ...(typeof beforeMessageId === 'string' && beforeMessageId ? { beforeMessageId } : {})
   });
 
+  const isFirstPage = Number(page) === 1 && !(typeof beforeMessageId === 'string' && beforeMessageId);
+  const maxPeerCursor = isFirstPage
+    ? await loadMaxPeerCursorDto('GROUP', id, resolvedChatType, userId)
+    : undefined;
+
   res.json({
     success: true,
-    data: messages
+    data: messages,
+    ...(isFirstPage ? { maxPeerCursor } : {}),
   });
 });
 

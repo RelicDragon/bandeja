@@ -139,6 +139,17 @@ export const config = {
   cityGroupRefinedSystemMessages: process.env.CITY_GROUP_REFINED_SYSTEM_MESSAGES === 'true',
   /** JSON lines to stderr for /api/chat/sync/* errors (log drain / external APM). */
   chatSyncHttpErrorLog: process.env.CHAT_SYNC_HTTP_ERROR_LOG === 'true' || process.env.CHAT_SYNC_HTTP_ERROR_LOG === '1',
+  /**
+   * ADR 0002: dual-write MessageReadReceipt + MESSAGES_READ_BATCH for old clients.
+   * Default ON until sunset; set CHAT_READ_RECEIPT_DUAL_WRITE=0|false to stop (Phase D prep).
+   * New clients ignore receipts for ticks and use peer read cursors.
+   */
+  chatReadReceiptDualWrite: (() => {
+    const v = process.env.CHAT_READ_RECEIPT_DUAL_WRITE;
+    if (v === '0' || v === 'false') return false;
+    if (v === '1' || v === 'true') return true;
+    return true;
+  })(),
   translationQueue: {
     concurrency: parseInt(process.env.TRANSLATION_QUEUE_CONCURRENCY || '3', 10),
     minIntervalMs: parseInt(process.env.TRANSLATION_QUEUE_MIN_INTERVAL_MS || '300', 10),

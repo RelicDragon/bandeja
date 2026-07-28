@@ -1143,6 +1143,9 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
     setIsLeaving(true);
     try {
       await gamesApi.leave(id);
+      await import('@/services/chat/purgeGameChatLocal').then(({ purgeGameChatLocal }) =>
+        purgeGameChatLocal(id)
+      );
       const response = await gamesApi.getById(id);
       setGame(response.data);
       toast.success(t(getLeftGameText(game?.entityType || 'GAME')));
@@ -1167,6 +1170,9 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
     setIsLeaving(true);
     try {
       await gamesApi.leave(id);
+      await import('@/services/chat/purgeGameChatLocal').then(({ purgeGameChatLocal }) =>
+        purgeGameChatLocal(id)
+      );
       const response = await gamesApi.getById(id);
       setGame(response.data);
       toast.success(t('gameDetails.leftChat'));

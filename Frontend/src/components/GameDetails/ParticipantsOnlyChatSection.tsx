@@ -18,16 +18,18 @@ interface ParticipantsOnlyChatSectionProps {
 export const ParticipantsOnlyChatSection = ({ game, userId }: ParticipantsOnlyChatSectionProps) => {
   const { t } = useTranslation();
   const reduceMotion = usePrefersReducedMotion();
-  const { isLoading, bothEnabled, refresh } = useParticipantChatsEnabled(game.id);
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [isEnabling, setIsEnabling] = useState(false);
-  const [dismissed, setDismissed] = useState(false);
-
   const canManage =
     isUserGameAdminOrOwner(game, userId) &&
     game.status !== 'ARCHIVED' &&
     game.entityType !== 'BAR' &&
     game.entityType !== 'TRAINING';
+
+  const { isLoading, bothEnabled, refresh } = useParticipantChatsEnabled(
+    canManage ? game.id : undefined
+  );
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [isEnabling, setIsEnabling] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
 
   const visible =
     canManage && game.resultsStatus === 'NONE' && !isLoading && !bothEnabled && !dismissed;

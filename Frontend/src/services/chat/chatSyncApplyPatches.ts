@@ -13,6 +13,8 @@ import {
   stashPendingThreadReadReceipt,
   takePendingThreadReadReceipts,
 } from './pendingThreadReadReceipts';
+import { upsertPeerReadCursor } from './peerReadCursorStore';
+import { useAuthStore } from '@/store/authStore';
 
 export type ChatSyncPatchApplySideEffects = {
   putMessagesForMedia: ChatMessage[];
@@ -179,6 +181,12 @@ export async function applyChatSyncPatchesInSlice(
           ...r,
           payload: { ...r.payload, readReceipts: merged },
         });
+        break;
+      }
+      case 'readCursorUpdate': {
+        const viewerId = useAuthStore.getState().user?.id;
+        if (viewerId && p.cursor.userId === viewerId) break;
+        upsertPeerReadCursor(p.cursor);
         break;
       }
       case 'translationUpdated': {

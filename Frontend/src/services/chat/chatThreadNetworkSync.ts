@@ -8,8 +8,9 @@ import { applyThreadEvent } from '@/services/chat/chatLocalApplyThreadEvent';
 import {
   archiveGameChatLocal,
   isGameChatArchivedHttpError,
-  isGameChatContextGoneHttpError,
+  isGameChatChannelDeniedHttpError,
   purgeGameChatLocal,
+  shouldPurgeGameChatOnHttpError,
 } from '@/services/chat/purgeGameChatLocal';
 
 export async function pullMissedAndPersistToDexie(opts: {
@@ -47,8 +48,13 @@ export async function pullMissedAndPersistToDexie(opts: {
         await archiveGameChatLocal(contextId);
         return [];
       }
-      if (isGameChatContextGoneHttpError(error)) {
+      // Match the chatType actually requested (undefined → PUBLIC).
+      const deniedType = normalized;
+      if (shouldPurgeGameChatOnHttpError(error, deniedType)) {
         await purgeGameChatLocal(contextId);
+        return [];
+      }
+      if (isGameChatChannelDeniedHttpError(error, deniedType)) {
         return [];
       }
     }

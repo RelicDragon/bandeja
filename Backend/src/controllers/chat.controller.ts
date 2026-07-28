@@ -36,6 +36,9 @@ import { hashChatMutationPayload } from '../utils/chatClientMutationId';
 import { ChatListRowPreviewService } from '../services/chat/chatListRowPreview.service';
 import { getChatNotifier } from '../services/chat/chatNotifier';
 import { lookupBugGroupChannelIds } from '../services/chat/bugGroupChannelLookup';
+import { loadMaxPeerCursorDto } from '../services/chat/peerReadCursor.dto';
+import { loadActorReadCursorsForSocket } from '../services/chat/actorReadCursorSocket';
+import { emitPeerReadCursorsAfterMark } from '../services/chat/emitPeerReadCursorsAfterMark';
 import {
   notifyMessageDeletedUnread,
   notifyUserContextUnreadAuthority,
@@ -343,16 +346,23 @@ export const getGameMessages = asyncHandler(async (req: AuthRequest, res: Respon
     throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
   }
 
+  const resolvedChatType = chatType as ChatType;
   const messages = await MessageService.getMessages('GAME', gameId, userId, {
     page: Number(page),
     limit: Number(limit),
-    chatType: chatType as ChatType,
+    chatType: resolvedChatType,
     ...(typeof beforeMessageId === 'string' && beforeMessageId ? { beforeMessageId } : {})
   });
 
+  const isFirstPage = Number(page) === 1 && !(typeof beforeMessageId === 'string' && beforeMessageId);
+  const maxPeerCursor = isFirstPage
+    ? await loadMaxPeerCursorDto('GAME', gameId, resolvedChatType, userId)
+    : undefined;
+
   res.json({
     success: true,
-    data: messages
+    data: messages,
+    ...(isFirstPage ? { maxPeerCursor } : {}),
   });
 });
 
@@ -372,9 +382,15 @@ export const getBugMessages = asyncHandler(async (req: AuthRequest, res: Respons
     ...(typeof beforeMessageId === 'string' && beforeMessageId ? { beforeMessageId } : {})
   });
 
+  const isFirstPage = Number(page) === 1 && !(typeof beforeMessageId === 'string' && beforeMessageId);
+  const maxPeerCursor = isFirstPage
+    ? await loadMaxPeerCursorDto('BUG', bugId, ChatType.PUBLIC, userId)
+    : undefined;
+
   res.json({
     success: true,
-    data: messages
+    data: messages,
+    ...(isFirstPage ? { maxPeerCursor } : {}),
   });
 });
 
@@ -609,7 +625,7 @@ export const markMessageAsRead = asyncHandler(async (req: AuthRequest, res: Resp
   }
 
   const marked = await ReadReceiptService.markMessageAsRead(messageId, userId);
-  const { syncSeq, ...readReceipt } = marked;
+  const { syncSeq, readCursor, ...readReceipt } = marked;
 
   const message = await prisma.chatMessage.findUnique({
     where: { id: messageId },
@@ -625,11 +641,20 @@ export const markMessageAsRead = asyncHandler(async (req: AuthRequest, res: Resp
       message.chatContextType,
       message.contextId,
       'read-receipt',
-      { readReceipt },
+      { readReceipt, ...(readCursor ? { readCursor } : {}) },
       messageId,
       syncSeq,
       notifyUserIds
     );
+
+    await emitPeerReadCursorsAfterMark({
+      userId,
+      chatContextType: message.chatContextType,
+      contextId: message.contextId,
+      syncSeq,
+      force: true,
+      mirrorsOnly: true,
+    });
 
     let bugGroupChannelId: string | null | undefined;
     if (message.chatContextType === ChatContextType.BUG) {
@@ -698,7 +723,7 @@ export const addReaction = asyncHandler(async (req: AuthRequest, res: Response) 
     if (reaction) {
       const message = await prisma.chatMessage.findUnique({
         where: { id: messageId },
-        select: { chatContextType: true, contextId: true }
+        select: { chatContextType: true, contextId: true, chatType: true }
       });
 
       if (message) {
@@ -706,15 +731,33 @@ export const addReaction = asyncHandler(async (req: AuthRequest, res: Response) 
           message.chatContextType === ChatContextType.USER
             ? await notifyUserIdsForUserChat(message.contextId)
             : undefined;
+        const readCursors = await loadActorReadCursorsForSocket(
+          userId,
+          message.chatContextType,
+          message.contextId,
+          [message.chatType]
+        );
         getChatNotifier().emitChatEvent(
           message.chatContextType,
           message.contextId,
           'reaction',
-          { reaction },
+          {
+            reaction,
+            ...(readCursors[0] ? { readCursor: readCursors[0] } : {}),
+          },
           messageId,
           syncSeq,
           notifyUserIds
         );
+        await emitPeerReadCursorsAfterMark({
+          userId,
+          chatContextType: message.chatContextType,
+          contextId: message.contextId,
+          syncSeq,
+          chatTypes: [message.chatType],
+          force: true,
+          mirrorsOnly: true,
+        });
       }
     }
 
@@ -925,17 +968,6 @@ export const markAllMessagesAsRead = asyncHandler(async (req: AuthRequest, res: 
     gameChatTypes: chatTypes,
   });
 
-  if (result.markedCount > 0 && result.syncSeq != null) {
-    getChatNotifier().emitChatEvent(
-      'GAME',
-      gameId,
-      'read-receipt',
-      { readReceipt: { userId, readAt: new Date().toISOString(), allRead: true } },
-      undefined,
-      result.syncSeq
-    );
-  }
-
   res.json({
     success: true,
     data: { count: result.markedCount, syncSeq: result.syncSeq },
@@ -1043,9 +1075,15 @@ export const getUserChatMessages = asyncHandler(async (req: AuthRequest, res: Re
     ...(typeof beforeMessageId === 'string' && beforeMessageId ? { beforeMessageId } : {})
   });
 
+  const isFirstPage = Number(page) === 1 && !(typeof beforeMessageId === 'string' && beforeMessageId);
+  const maxPeerCursor = isFirstPage
+    ? await loadMaxPeerCursorDto('USER', chatId, ChatType.PUBLIC, userId)
+    : undefined;
+
   res.json({
     success: true,
-    data: messages
+    data: messages,
+    ...(isFirstPage ? { maxPeerCursor } : {}),
   });
 });
 
@@ -1097,25 +1135,6 @@ export const markUserChatAsRead = asyncHandler(async (req: AuthRequest, res: Res
     contextType: 'USER',
     contextId: chatId,
   });
-
-  if (result.markedCount > 0 && result.syncSeq != null) {
-    const peers = await prisma.userChat.findUnique({
-      where: { id: chatId },
-      select: { user1Id: true, user2Id: true },
-    });
-    const notifyUserIds = peers
-      ? [peers.user1Id, peers.user2Id].filter((id): id is string => typeof id === 'string' && id.length > 0)
-      : undefined;
-    getChatNotifier().emitChatEvent(
-      'USER',
-      chatId,
-      'read-receipt',
-      { readReceipt: { userId, readAt: new Date().toISOString(), allRead: true } },
-      undefined,
-      result.syncSeq,
-      notifyUserIds
-    );
-  }
 
   res.json({
     success: true,
@@ -1800,38 +1819,6 @@ export const markContextRead = asyncHandler(async (req: AuthRequest, res: Respon
     clientOpId,
   });
 
-  if (result.markedCount > 0 && result.syncSeq != null) {
-    let notifyUserIds: string[] | undefined;
-    if (contextType === 'USER') {
-      const peers = await prisma.userChat.findUnique({
-        where: { id: contextId },
-        select: { user1Id: true, user2Id: true },
-      });
-      if (peers) {
-        notifyUserIds = [peers.user1Id, peers.user2Id].filter(
-          (id): id is string => typeof id === 'string' && id.length > 0
-        );
-      }
-    }
-    const socketContextType =
-      contextType === 'GROUP' ? 'GROUP' : (contextType as ChatContextType);
-    getChatNotifier().emitChatEvent(
-      socketContextType,
-      contextId,
-      'read-receipt',
-      {
-        readReceipt: {
-          userId,
-          readAt: new Date().toISOString(),
-          allRead: true,
-        },
-      },
-      undefined,
-      result.syncSeq,
-      notifyUserIds
-    );
-  }
-
   res.json({
     success: true,
     data: result,
@@ -1873,19 +1860,63 @@ export const markAllMessagesAsReadForContext = asyncHandler(async (req: AuthRequ
   }
 
   if (contextType === 'BUG') {
-    const result = await ReadReceiptService.markAllMessagesAsReadForContext(
-      'BUG',
-      contextId,
-      userId,
-      chatTypes
-    );
     const bugChannelIds = await lookupBugGroupChannelIds([contextId]);
+    const groupChannelId = bugChannelIds.get(contextId) ?? null;
+
+    // Prefer GROUP authority when a bug channel exists (messages + FE ticks live there).
+    let result: { count: number; syncSeq?: number };
+    if (groupChannelId) {
+      const groupResult = await UnreadSnapshotService.markContextRead(userId, {
+        contextType: 'GROUP',
+        contextId: groupChannelId,
+        gameChatTypes: chatTypes,
+        emitSocket: true,
+      });
+      const bugResult = await ReadReceiptService.markAllMessagesAsReadForContext(
+        'BUG',
+        contextId,
+        userId,
+        chatTypes
+      );
+      if (bugResult.syncSeq != null) {
+        await emitPeerReadCursorsAfterMark({
+          userId,
+          chatContextType: 'BUG',
+          contextId,
+          syncSeq: bugResult.syncSeq,
+          chatTypes,
+          force: bugResult.count === 0,
+        });
+      }
+      result = {
+        count: groupResult.markedCount + bugResult.count,
+        syncSeq: bugResult.syncSeq ?? groupResult.syncSeq,
+      };
+    } else {
+      result = await ReadReceiptService.markAllMessagesAsReadForContext(
+        'BUG',
+        contextId,
+        userId,
+        chatTypes
+      );
+      if (result.syncSeq != null) {
+        await emitPeerReadCursorsAfterMark({
+          userId,
+          chatContextType: 'BUG',
+          contextId,
+          syncSeq: result.syncSeq,
+          chatTypes,
+          force: result.count === 0,
+        });
+      }
+    }
+
     await notifyUserContextUnreadAuthority({
       userId,
       chatContextType: 'BUG',
       contextId,
       reason: 'mark_context_read',
-      bugGroupChannelId: bugChannelIds.get(contextId) ?? null,
+      bugGroupChannelId: groupChannelId,
     });
     res.json({ success: true, data: result });
     return;

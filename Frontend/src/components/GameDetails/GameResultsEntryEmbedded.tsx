@@ -209,7 +209,12 @@ export const GameResultsEntryEmbedded = ({
     !isEditingResults &&
     isFinalStatus &&
     isResultsEntryMode &&
-    currentGame?.status !== 'ARCHIVED';
+    currentGame?.status !== 'ARCHIVED' &&
+    !(
+      currentGame?.metadata &&
+      typeof currentGame.metadata === 'object' &&
+      (currentGame.metadata as Record<string, unknown>).technicalWithdrawal
+    );
 
   useEffect(() => {
     const checkServerProblem = async () => {

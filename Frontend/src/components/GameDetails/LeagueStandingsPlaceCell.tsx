@@ -9,10 +9,22 @@ function placeIcon(index: number) {
 }
 
 /** Isolated so the award flip does not re-render the standings table body. */
-export function LeagueStandingsPlaceCell({ index }: { index: number }) {
-  const icon = placeIcon(index);
+export function LeagueStandingsPlaceCell({
+  index,
+  withdrawn = false,
+}: {
+  index: number;
+  withdrawn?: boolean;
+}) {
+  const icon = withdrawn ? null : placeIcon(index);
   const showAward = useStandingsAwardFlip(icon != null);
   const placeNumber = index + 1;
+
+  if (withdrawn) {
+    return (
+      <span className="text-sm font-medium text-gray-400 dark:text-gray-500">—</span>
+    );
+  }
 
   if (!icon) {
     return (

@@ -119,7 +119,12 @@ app.use(e2eTestContextMiddleware);
 if (config.nodeEnv === 'development') {
   app.use(morgan('dev'));
 } else {
-  app.use(morgan('combined'));
+  // combined + response-time for prod slow-route analysis
+  app.use(
+    morgan(
+      ':remote-addr - :remote-user [:date[clf]] ":method :url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent" :response-time ms',
+    ),
+  );
 }
 
 const limiter = rateLimit({

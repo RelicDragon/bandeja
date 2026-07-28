@@ -277,6 +277,23 @@ function run() {
   );
   assert.ok(!miniClusters.some((c) => c.rows.some((r) => r.participantId === 'd')));
 
+  // Withdrawn cluster after all active; same H2H rules within withdrawn
+  assert.deepEqual(
+    rankFixedTeamGroupStandings(
+      [
+        { id: 'a', wins: 1, losses: 2 },
+        { id: 'b', wins: 2, losses: 1 },
+        { id: 'w1', wins: 0, losses: 3, withdrawn: true },
+        { id: 'w2', wins: 1, losses: 2, withdrawn: true },
+      ],
+      [
+        fix('a', 'b', 'b', 2, 0, 12, 6),
+        fix('w1', 'w2', 'w2', 0, 0, 0, 0),
+      ]
+    ),
+    ['b', 'a', 'w2', 'w1']
+  );
+
   // Main-table order parks 0–0 after active 0-win teams; mini order matches active subset
   const zeroWinParts = [
     { id: 'a', wins: 0, losses: 1, ties: 0 },

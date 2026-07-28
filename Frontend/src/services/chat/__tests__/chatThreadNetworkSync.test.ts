@@ -23,18 +23,16 @@ vi.mock('@/services/chat/chatLocalApplyThreadEvent', () => ({
   applyThreadEvent: (...args: unknown[]) => applyThreadEventMock(...args),
 }));
 
-vi.mock('@/services/chat/purgeGameChatLocal', () => ({
-  purgeGameChatLocal: (...args: unknown[]) => purgeGameChatLocalMock(...args),
-  archiveGameChatLocal: (...args: unknown[]) => archiveGameChatLocalMock(...args),
-  isGameChatContextGoneHttpError: (error: unknown) => {
-    const err = error as { response?: { status?: number } };
-    return err.response?.status === 404;
-  },
-  isGameChatArchivedHttpError: (error: unknown) => {
-    const err = error as { response?: { status?: number; data?: { cancelled?: boolean } } };
-    return err.response?.status === 410 && err.response?.data?.cancelled === true;
-  },
-}));
+vi.mock('@/services/chat/purgeGameChatLocal', async () => {
+  const actual = await vi.importActual<typeof import('@/services/chat/purgeGameChatLocal')>(
+    '@/services/chat/purgeGameChatLocal'
+  );
+  return {
+    ...actual,
+    purgeGameChatLocal: (...args: unknown[]) => purgeGameChatLocalMock(...args),
+    archiveGameChatLocal: (...args: unknown[]) => archiveGameChatLocalMock(...args),
+  };
+});
 
 import { pullMissedAndPersistToDexie } from '@/services/chat/chatThreadNetworkSync';
 
@@ -88,6 +86,32 @@ describe('pullMissedAndPersistToDexie', () => {
     expect(out).toEqual([]);
     expect(purgeGameChatLocalMock).toHaveBeenCalledWith('game-3');
     expect(archiveGameChatLocalMock).not.toHaveBeenCalled();
+  });
+
+  it('purges local game chat on 403 for PUBLIC missed pull', async () => {
+    getMissedMessagesMock.mockRejectedValue({ response: { status: 403 } });
+
+    const out = await pullMissedAndPersistToDexie({
+      contextType: 'GAME',
+      contextId: 'game-4',
+      gameChatType: 'PUBLIC',
+    });
+
+    expect(out).toEqual([]);
+    expect(purgeGameChatLocalMock).toHaveBeenCalledWith('game-4');
+  });
+
+  it('does not purge on channel-scoped 403 for PRIVATE', async () => {
+    getMissedMessagesMock.mockRejectedValue({ response: { status: 403 } });
+
+    const out = await pullMissedAndPersistToDexie({
+      contextType: 'GAME',
+      contextId: 'game-5',
+      gameChatType: 'PRIVATE',
+    });
+
+    expect(out).toEqual([]);
+    expect(purgeGameChatLocalMock).not.toHaveBeenCalled();
   });
 
   it('persists returned messages for non-game contexts', async () => {

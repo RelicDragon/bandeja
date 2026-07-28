@@ -22,6 +22,7 @@ import {
 } from '@/services/chat/chatThreadLifecycle';
 import type { ChatThreadController } from './ChatThreadController';
 import { buildGameChatMarkReadParams } from '@/services/chat/gameChatMarkReadParams';
+import { hydratePeerReadCursorsFromDexie } from '@/services/chat/peerReadCursorStore';
 
 export interface UseThreadOpenEffectsParams {
   id: string | undefined;
@@ -134,6 +135,12 @@ export function useThreadOpenEffects(params: UseThreadOpenEffectsParams) {
     },
     [controllerRef, gameMarkReadRef, isGameChatArchived]
   );
+
+  useEffect(() => {
+    if (!id) return;
+    const chatType = contextType === 'GAME' ? currentChatType : 'PUBLIC';
+    void hydratePeerReadCursorsFromDexie(contextType, id, chatType);
+  }, [id, contextType, currentChatType]);
 
   useEffect(() => {
     const ac = new AbortController();
