@@ -14,6 +14,7 @@ import {
 } from '../user/userSportProfile.service';
 import {
   gameBaseInclude,
+  gameMyTabListInclude,
   gameWithRoundsAndOutcomes,
   MAIN_PHOTO_RELATION_SELECT,
 } from './gamePrismaIncludes';
@@ -29,9 +30,10 @@ import {
 import { WeatherForecastService } from '../weatherForecast.service';
 import { getUserTimezoneFromCityId } from '../user-timezone.service';
 import { formatInTimeZone } from 'date-fns-tz';
+import { enrichAvailableGamesSafe } from './availableGamesEnrichment';
 
 export { MAIN_PHOTO_RELATION_SELECT };
-export { getAvailableGamesCardInclude } from './availableGamesCard.projection';
+export { getAvailableGamesCardInclude, getAvailableGamesCardSelect } from './availableGamesCard.projection';
 
 function buildPhotoViewer(userId?: string, isAdmin?: boolean): GamePhotosViewer | undefined {
   if (!userId) return undefined;
@@ -421,7 +423,10 @@ export class GameReadService {
       userNote,
       joinQueues: computeJoinQueuesFromParticipants(gameWithSportLevels),
     };
-    const [baseWithWeather] = await WeatherForecastService.attachSummariesToGames([base]);
+    const [baseWithWeather] = await WeatherForecastService.attachSummariesToGames([base], {
+      refresh: 'blocking',
+      softWaitMs: 3000,
+    });
     const reactionsMap = await fetchReactionsByGameIds([id]);
     return attachReactionsToGames([baseWithWeather], reactionsMap)[0];
   }
@@ -516,12 +521,16 @@ export class GameReadService {
         ...game,
         userNote: notesMap.get(game.id) || null,
       }));
-      const withWeather = await WeatherForecastService.attachSummariesToGames(withNotes);
+      const withWeather = await WeatherForecastService.attachSummariesToGames(withNotes, {
+        refresh: 'background',
+      });
       const reactionsMap = await fetchReactionsByGameIds(gameIds);
       return attachReactionsToGames(withWeather, reactionsMap);
     }
 
-    const withWeather = await WeatherForecastService.attachSummariesToGames(games);
+    const withWeather = await WeatherForecastService.attachSummariesToGames(games, {
+      refresh: 'background',
+    });
     const reactionsMap = await fetchReactionsByGameIds(games.map((g) => g.id));
     return attachReactionsToGames(withWeather, reactionsMap);
   }
@@ -557,27 +566,14 @@ export class GameReadService {
 
     const gamesRaw = await prisma.game.findMany({
       where,
-      include: gameWithRoundsAndOutcomes,
+      include: gameMyTabListInclude,
       orderBy: { startTime: 'desc' },
     });
     const games = gamesRaw.map((g) =>
       projectGamePhotoPayload(projectGameUsersForSportContext(g), photoViewer)
     );
 
-    // Batch fetch user notes
-    if (games.length > 0) {
-      const gameIds = games.map(g => g.id);
-      const notesMap = await getUserNotesForGames(userId, gameIds);
-      const withNotes = games.map(game => ({
-        ...game,
-        userNote: notesMap.get(game.id) || null,
-      }));
-      const withWeather = await WeatherForecastService.attachSummariesToGames(withNotes);
-      const reactionsMap = await fetchReactionsByGameIds(gameIds);
-      return attachReactionsToGames(withWeather, reactionsMap);
-    }
-
-    return WeatherForecastService.attachSummariesToGames(games);
+    return enrichAvailableGamesSafe(userId, games);
   }
 
   static async getMyGamesWithUnread(userId: string, userCityId?: string) {
@@ -588,7 +584,13 @@ export class GameReadService {
     const gamesUnreadCounts =
       games.length > 0
         ? await ReadReceiptService.getGamesUnreadCountsFromGames(
-            games.map((g) => ({ id: g.id, status: g.status, participants: (g as any).participants ?? [] })),
+            games.map((g) => ({
+              id: g.id,
+              status: g.status,
+              participants: ((g as { participants?: Array<{ userId?: string; status: string; role: string }> }).participants ?? []).map(
+                (p) => ({ userId: p.userId, status: p.status, role: p.role }),
+              ),
+            })),
             userId
           )
         : {};
@@ -672,12 +674,14 @@ export class GameReadService {
         ...game,
         userNote: notesMap.get(game.id) || null,
       }));
-      const withWeather = await WeatherForecastService.attachSummariesToGames(withNotes);
+      const withWeather = await WeatherForecastService.attachSummariesToGames(withNotes, {
+        refresh: 'background',
+      });
       const reactionsMap = await fetchReactionsByGameIds(gameIds);
       return attachReactionsToGames(withWeather, reactionsMap);
     }
 
-    return WeatherForecastService.attachSummariesToGames(games);
+    return WeatherForecastService.attachSummariesToGames(games, { refresh: 'background' });
   }
 
   static async getAvailableGames(

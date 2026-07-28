@@ -13,7 +13,7 @@ import type { EntityType, Prisma } from '@prisma/client';
  * | levelMin/levelMax| inclusive band overlap on min/maxLevel       | suitable rating |
  * | requireTimeSet   | calendar: timeIsSet must be true             | —               |
  * | (upcoming always)| timeIsSet OR LEAGUE_SEASON                   | —               |
- * | availableSlots   | PLAYING count < maxParticipants (approx)     | MIX gender slots|
+ * | availableSlots   | PLAYING count < maxParticipants (SQL on ids) | MIX gender slots|
  *
  * Viewer-only heuristics stay on the client FindFilter Module:
  * suitable rating, blocked organizer, no-rating discovery, gender MIX precision,
@@ -168,8 +168,8 @@ export function appendStructuralFiltersToWhere(
     });
   }
 
-  // availableSlots: Prisma cannot compare PLAYING count to maxParticipants —
-  // see filterIdsByAvailableSlots in availableGamesQuery.ts.
+  // availableSlots: applied in SQL via filterOrderedRowsByAvailableSlots after
+  // an id-only scan (Prisma cannot compare PLAYING count to maxParticipants).
 
   if (and.length > 0) {
     where.AND = and;

@@ -83,12 +83,21 @@ export function buildAvailableGamesPageMeta(
   };
 }
 
-/** Prisma cursor/OR for stable (startTime, id) pagination ascending. */
+/** Prisma cursor/OR for stable (startTime, id) pagination. */
 export function availableGamesCursorWhere(
   cursor: AvailableGamesCursor | null,
+  order: 'asc' | 'desc' = 'asc',
 ): Record<string, unknown> | undefined {
   if (!cursor) return undefined;
   const startTime = new Date(cursor.startTime);
+  if (order === 'desc') {
+    return {
+      OR: [
+        { startTime: { lt: startTime } },
+        { startTime, id: { lt: cursor.id } },
+      ],
+    };
+  }
   return {
     OR: [
       { startTime: { gt: startTime } },

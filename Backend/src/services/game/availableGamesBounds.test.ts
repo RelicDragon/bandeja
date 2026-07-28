@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {
   AVAILABLE_GAMES_MAX_TAKE,
+  availableGamesCursorWhere,
   buildAvailableGamesPageMeta,
   clampAvailableTake,
   decodeAvailableGamesCursor,
@@ -94,6 +95,19 @@ import {
   assert.equal(page.length, 1);
   assert.equal(hasMore, false);
   assert.equal(cursorTip, null);
+}
+
+{
+  const asc = availableGamesCursorWhere(
+    { startTime: '2026-07-01T10:00:00.000Z', id: 'g1' },
+    'asc',
+  ) as { OR: Array<Record<string, unknown>> };
+  assert.ok(asc.OR.some((c) => 'gt' in ((c.startTime as object) ?? {})));
+  const desc = availableGamesCursorWhere(
+    { startTime: '2026-07-01T10:00:00.000Z', id: 'g1' },
+    'desc',
+  ) as { OR: Array<Record<string, unknown>> };
+  assert.ok(desc.OR.some((c) => 'lt' in ((c.startTime as object) ?? {})));
 }
 
 console.log('availableGamesBounds.test.ts: ok');

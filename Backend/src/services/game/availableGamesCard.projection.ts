@@ -1,3 +1,4 @@
+import type { Prisma } from '@prisma/client';
 import { MAIN_PHOTO_RELATION_SELECT } from './gamePrismaIncludes';
 
 /** Minimal sport profile fields needed to project card-level `level` + confirmation on Find. */
@@ -31,20 +32,62 @@ export const FIND_CARD_USER_SELECT = {
   },
 } as const;
 
-const leagueSeasonCardInclude = {
-  league: {
-    select: {
-      id: true,
-      name: true,
+/**
+ * Game scalars required by Find GameCard / residual filters.
+ * Omits description, mediaUrls, metadata, scoring dumps, telegram/summary texts, etc.
+ */
+export const FIND_CARD_GAME_SELECT = {
+  id: true,
+  entityType: true,
+  sport: true,
+  gameType: true,
+  name: true,
+  clubId: true,
+  courtId: true,
+  cityId: true,
+  startTime: true,
+  endTime: true,
+  maxParticipants: true,
+  playersPerMatch: true,
+  minLevel: true,
+  maxLevel: true,
+  isPublic: true,
+  affectsRating: true,
+  hasBookedCourt: true,
+  bookingStatus: true,
+  hasFixedTeams: true,
+  genderTeams: true,
+  status: true,
+  resultsStatus: true,
+  photosCount: true,
+  forbidOthersPhotosView: true,
+  parentId: true,
+  trainerId: true,
+  leagueRoundId: true,
+  leagueGroupId: true,
+  timeIsSet: true,
+  timeOverride: true,
+  /** Legacy FE `hasGoldenPoint` projection. */
+  deucesBeforeGoldenPoint: true,
+} as const;
+
+const leagueSeasonCardSelect = {
+  select: {
+    id: true,
+    league: {
+      select: {
+        id: true,
+        name: true,
+      },
     },
-  },
-  game: {
-    select: {
-      id: true,
-      name: true,
-      avatar: true,
-      originalAvatar: true,
-      sport: true,
+    game: {
+      select: {
+        id: true,
+        name: true,
+        avatar: true,
+        originalAvatar: true,
+        sport: true,
+      },
     },
   },
 } as const;
@@ -62,99 +105,126 @@ const clubCardSelect = {
   },
 } as const;
 
-/**
- * Prisma include for Find available / upcoming card payloads.
- * Intentionally omits full USER_SELECT_WITH_SPORT_PROFILES, club integrationConfig,
- * telegramGroupId, and resultsArtifactJob.
- *
- * Size/cost vs prior Find include (before #281):
- * - participants.user: dropped bio/verbalStatus/weeklyAvailability/availabilityBucketBoundaries/
- *   socialLevel; sportProfiles trimmed to level/reliability/gamesPlayed/gamesWon + confirmation
- *   (no streak/questionnaire/uncertainty columns).
- * - club/court.club: dropped integrationType + integrationConfig JSON.
- * - city: dropped telegramGroupId.
- * - dropped resultsArtifactJob join + response artifacts/linkedBookings projection.
- * Typical busy-city month: fewer JOINed user columns and no integrationConfig blobs per club nest.
- */
-export function getAvailableGamesCardInclude() {
-  return {
-    city: {
-      select: {
-        id: true,
-        name: true,
-        country: true,
-        timezone: true,
-      },
+const findCardParticipantSelect = {
+  id: true,
+  userId: true,
+  gameId: true,
+  role: true,
+  status: true,
+  user: {
+    select: FIND_CARD_USER_SELECT,
+  },
+} as const;
+
+/** Statuses (plus OWNER/ADMIN role / viewer row) needed for Find card UI. */
+export const FIND_CARD_PARTICIPANT_STATUSES = ['PLAYING', 'IN_QUEUE', 'INVITED'] as const;
+
+function findCardParticipantsWhere(viewerUserId?: string): Prisma.GameParticipantWhereInput {
+  const or: Prisma.GameParticipantWhereInput[] = [
+    { status: { in: [...FIND_CARD_PARTICIPANT_STATUSES] } },
+    { role: { in: ['OWNER', 'ADMIN'] } },
+  ];
+  if (viewerUserId) {
+    or.push({ userId: viewerUserId });
+  }
+  return { OR: or };
+}
+
+const findCardRelationSelect = {
+  city: {
+    select: {
+      id: true,
+      name: true,
+      country: true,
+      timezone: true,
     },
-    club: {
-      select: clubCardSelect,
-    },
-    court: {
-      select: {
-        id: true,
-        name: true,
-        clubId: true,
-        club: {
-          select: {
-            id: true,
-            name: true,
-            avatar: true,
-            address: true,
-            city: {
-              select: {
-                name: true,
-                timezone: true,
-              },
+  },
+  club: {
+    select: clubCardSelect,
+  },
+  court: {
+    select: {
+      id: true,
+      name: true,
+      clubId: true,
+      club: {
+        select: {
+          id: true,
+          name: true,
+          avatar: true,
+          address: true,
+          city: {
+            select: {
+              name: true,
+              timezone: true,
             },
           },
         },
       },
     },
+  },
+  leagueSeason: leagueSeasonCardSelect,
+  leagueGroup: {
+    select: {
+      id: true,
+      name: true,
+      color: true,
+    },
+  },
+  leagueRound: {
+    select: {
+      id: true,
+      orderIndex: true,
+      roundType: true,
+      playoffFormat: true,
+      bracketScope: true,
+    },
+  },
+  parent: {
+    select: {
+      id: true,
+      leagueSeason: leagueSeasonCardSelect,
+    },
+  },
+  mainPhoto: MAIN_PHOTO_RELATION_SELECT,
+} as const;
+
+export type AvailableGamesCardSelectOptions = {
+  /** Always include the viewer's participant row (invite / queue / join state). */
+  viewerUserId?: string;
+};
+
+/**
+ * Prisma `select` for Find available / upcoming card payloads (not `include` —
+ * `include` still loads every Game scalar).
+ *
+ * Outcomes are attached separately for FINAL games only (see availableGamesQuery).
+ */
+export function getAvailableGamesCardSelect(
+  options?: AvailableGamesCardSelectOptions,
+): Prisma.GameSelect {
+  return {
+    ...FIND_CARD_GAME_SELECT,
+    ...findCardRelationSelect,
     participants: {
-      select: {
-        id: true,
-        userId: true,
-        gameId: true,
-        role: true,
-        status: true,
-        joinedAt: true,
-        inviteMessage: true,
-        inviteExpiresAt: true,
-        showInStories: true,
-        user: {
-          select: FIND_CARD_USER_SELECT,
-        },
-      },
+      where: findCardParticipantsWhere(options?.viewerUserId),
+      select: findCardParticipantSelect,
     },
-    leagueSeason: {
-      include: leagueSeasonCardInclude,
+  };
+}
+
+/**
+ * @deprecated Prefer {@link getAvailableGamesCardSelect}. Kept for callers/tests that
+ * still inspect the relation shape; does not include Game scalars.
+ */
+export function getAvailableGamesCardInclude(options?: AvailableGamesCardSelectOptions) {
+  return {
+    ...findCardRelationSelect,
+    participants: {
+      where: findCardParticipantsWhere(options?.viewerUserId),
+      select: findCardParticipantSelect,
     },
-    leagueGroup: {
-      select: {
-        id: true,
-        name: true,
-        color: true,
-      },
-    },
-    leagueRound: {
-      select: {
-        id: true,
-        orderIndex: true,
-        roundType: true,
-        playoffFormat: true,
-        bracketScope: true,
-      },
-    },
-    parent: {
-      select: {
-        id: true,
-        leagueSeason: {
-          include: leagueSeasonCardInclude,
-        },
-      },
-    },
-    mainPhoto: MAIN_PHOTO_RELATION_SELECT,
-    /** Slim standings for FINAL GameCard place badges (positioned rows only). */
+    /** Slim standings for FINAL GameCard place badges — prefer deferred attach. */
     outcomes: {
       where: { position: { not: null } },
       select: {
@@ -182,6 +252,17 @@ export const FIND_CARD_FORBIDDEN_NESTED_KEYS = [
   'integrationConfig',
   'integrationType',
   'telegramGroupId',
+] as const;
+
+/** Fat Game scalars that must not appear on Find card responses. */
+export const FIND_CARD_FORBIDDEN_GAME_KEYS = [
+  'description',
+  'mediaUrls',
+  'metadata',
+  'telegramResultsSummary',
+  'resultsSummaryText',
+  'resultsMeta',
+  'lastMessagePreview',
 ] as const;
 
 export type AvailableGamesCardContractIssue = {
@@ -212,6 +293,14 @@ export function collectAvailableGamesCardContractIssues(
         path: `[${gameIndex}].resultsArtifactJob`,
         reason: 'resultsArtifactJob must not be loaded for Find cards',
       });
+    }
+    for (const key of FIND_CARD_FORBIDDEN_GAME_KEYS) {
+      if (key in g && g[key] != null) {
+        issues.push({
+          path: `[${gameIndex}].${key}`,
+          reason: `${key} must not be loaded for Find cards`,
+        });
+      }
     }
 
     const city = g.city as Record<string, unknown> | null | undefined;
@@ -244,10 +333,16 @@ export function collectAvailableGamesCardContractIssues(
     const participants = Array.isArray(g.participants) ? g.participants : [];
     participants.forEach((participant, pIndex) => {
       if (!participant || typeof participant !== 'object') return;
-      const user = (participant as Record<string, unknown>).user as
-        | Record<string, unknown>
-        | null
-        | undefined;
+      const row = participant as Record<string, unknown>;
+      for (const key of ['inviteMessage', 'inviteExpiresAt', 'showInStories', 'joinedAt'] as const) {
+        if (key in row && row[key] != null) {
+          issues.push({
+            path: `[${gameIndex}].participants[${pIndex}].${key}`,
+            reason: `${key} not part of Find card participant`,
+          });
+        }
+      }
+      const user = row.user as Record<string, unknown> | null | undefined;
       if (!user) {
         issues.push({
           path: `[${gameIndex}].participants[${pIndex}].user`,

@@ -1,5 +1,10 @@
 import assert from 'node:assert/strict';
-import { MyTabDataService, type MyTabDataOutput } from './myTabData.service';
+import {
+  hashMyTabVersionFingerprint,
+  isInviteActiveForVersion,
+  MyTabDataService,
+  type MyTabDataOutput,
+} from './myTabData.service';
 
 function emptyMyTabData(overrides?: Partial<MyTabDataOutput>): MyTabDataOutput {
   return {
@@ -55,10 +60,52 @@ function testGenerateETagIsStableWhenOptionalFieldsUnchanged(): void {
   assert.equal(MyTabDataService.generateETag(data), MyTabDataService.generateETag({ ...data }));
 }
 
+function testInviteActiveForVersion(): void {
+  const now = Date.parse('2026-07-28T12:00:00.000Z');
+  assert.equal(isInviteActiveForVersion(null, now), true);
+  assert.equal(isInviteActiveForVersion(undefined, now), true);
+  assert.equal(isInviteActiveForVersion(new Date('2026-07-28T13:00:00.000Z'), now), true);
+  assert.equal(isInviteActiveForVersion(new Date('2026-07-28T11:00:00.000Z'), now), false);
+  assert.equal(isInviteActiveForVersion(new Date(now), now), false);
+}
+
+function testInviteActiveFlipChangesFingerprint(): void {
+  const invite = {
+    id: 'i1',
+    status: 'INVITED',
+    joinedAt: '2026-07-28T10:00:00.000Z',
+    inviteExpiresAt: '2026-07-28T12:00:00.000Z',
+  };
+  const before = hashMyTabVersionFingerprint({
+    v: 2,
+    invites: [{ ...invite, active: true }],
+  });
+  const after = hashMyTabVersionFingerprint({
+    v: 2,
+    invites: [{ ...invite, active: false }],
+  });
+  assert.notEqual(before, after);
+}
+
+function testRosterHashChangeChangesFingerprint(): void {
+  const a = hashMyTabVersionFingerprint({
+    v: 2,
+    games: [{ id: 'g1', rosterHash: 'aaa' }],
+  });
+  const b = hashMyTabVersionFingerprint({
+    v: 2,
+    games: [{ id: 'g1', rosterHash: 'bbb' }],
+  });
+  assert.notEqual(a, b);
+}
+
 testGenerateETagChangesWhenStoriesCountChanges();
 testGenerateETagChangesWhenBooktimeConnectedChanges();
 testGenerateETagChangesWhenMembershipsChange();
 testGenerateETagTreatsNullMembershipsDifferentlyFromEmpty();
 testGenerateETagIsStableWhenOptionalFieldsUnchanged();
+testInviteActiveForVersion();
+testInviteActiveFlipChangesFingerprint();
+testRosterHashChangeChangesFingerprint();
 
 console.log('ok: myTabData.service.test.ts');

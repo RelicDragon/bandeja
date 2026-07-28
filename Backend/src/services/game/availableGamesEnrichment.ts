@@ -1,6 +1,9 @@
 import prisma from '../../config/database';
 import { getUserNotesForGames } from '../userGameNote.service';
-import { WeatherForecastService } from '../weatherForecast.service';
+import {
+  FIND_WEATHER_SOFT_WAIT_MS,
+  WeatherForecastService,
+} from '../weatherForecast.service';
 import { attachReactionsToGames, fetchReactionsByGameIds } from './gameReaction.service';
 
 export const AVAILABLE_ENRICH_MAX_IDS = 100;
@@ -27,51 +30,56 @@ export async function enrichAvailableGamesSafe<T extends {
 ): Promise<(T & AvailableGameEnrichFields)[]> {
   if (games.length === 0) return games;
 
-  let result: (T & AvailableGameEnrichFields)[] = games.map((g) => ({ ...g }));
+  const gameIds = games.map((g) => g.id);
+  const withSchedule = games.filter(
+    (g): g is T & {
+      id: string;
+      cityId: string;
+      startTime: Date | string;
+      endTime: Date | string;
+      timeIsSet: true;
+    } =>
+      typeof g.cityId === 'string' &&
+      g.startTime != null &&
+      g.endTime != null &&
+      g.timeIsSet === true,
+  );
 
-  try {
-    const notesMap = await getUserNotesForGames(
-      userId,
-      result.map((g) => g.id),
-    );
-    result = result.map((game) => ({
-      ...game,
-      userNote: notesMap.get(game.id) || null,
-    }));
-  } catch (err) {
-    console.warn('[availableGamesEnrichment] notes failed', err);
-  }
+  const [notesMap, weatherById, reactionsMap] = await Promise.all([
+    getUserNotesForGames(userId, gameIds).catch((err) => {
+      console.warn('[availableGamesEnrichment] notes failed', err);
+      return null;
+    }),
+    withSchedule.length > 0
+      ? WeatherForecastService.attachSummariesToGames(withSchedule, {
+          refresh: 'background',
+          softWaitMs: FIND_WEATHER_SOFT_WAIT_MS,
+        })
+          .then((weathered) => new Map(weathered.map((g) => [g.id, g.weatherSummary])))
+          .catch((err) => {
+            console.warn('[availableGamesEnrichment] weather failed', err);
+            return null;
+          })
+      : Promise.resolve(null),
+    fetchReactionsByGameIds(gameIds).catch((err) => {
+      console.warn('[availableGamesEnrichment] reactions failed', err);
+      return null;
+    }),
+  ]);
 
-  try {
-    const withSchedule = result.filter(
-      (g): g is T & {
-        id: string;
-        cityId: string;
-        startTime: Date | string;
-        endTime: Date | string;
-        timeIsSet: boolean;
-      } =>
-        typeof g.cityId === 'string' &&
-        g.startTime != null &&
-        g.endTime != null &&
-        typeof g.timeIsSet === 'boolean',
-    );
-    if (withSchedule.length > 0) {
-      const weathered = await WeatherForecastService.attachSummariesToGames(withSchedule);
-      const byId = new Map(weathered.map((g) => [g.id, g.weatherSummary]));
-      result = result.map((game) =>
-        byId.has(game.id) ? { ...game, weatherSummary: byId.get(game.id) ?? null } : game,
-      );
+  let result: (T & AvailableGameEnrichFields)[] = games.map((game) => {
+    const next: T & AvailableGameEnrichFields = { ...game };
+    if (notesMap) {
+      next.userNote = notesMap.get(game.id) || null;
     }
-  } catch (err) {
-    console.warn('[availableGamesEnrichment] weather failed', err);
-  }
+    if (weatherById?.has(game.id)) {
+      next.weatherSummary = weatherById.get(game.id) ?? null;
+    }
+    return next;
+  });
 
-  try {
-    const reactionsMap = await fetchReactionsByGameIds(result.map((g) => g.id));
+  if (reactionsMap) {
     result = attachReactionsToGames(result, reactionsMap) as (T & AvailableGameEnrichFields)[];
-  } catch (err) {
-    console.warn('[availableGamesEnrichment] reactions failed', err);
   }
 
   return result;

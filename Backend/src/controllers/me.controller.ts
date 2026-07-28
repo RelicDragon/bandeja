@@ -32,39 +32,54 @@ export class MeController {
     const startTime = Date.now();
 
     try {
-      // Parse query options
       const options = {
         includeStories: req.query.includeStories === 'true',
         includeBooktime: req.query.includeBooktime === 'true',
-        pastGamesLimit: req.query.pastGamesLimit ? parseInt(req.query.pastGamesLimit as string) : undefined,
+        pastGamesLimit: req.query.pastGamesLimit
+          ? parseInt(req.query.pastGamesLimit as string)
+          : undefined,
       };
 
-      // Fetch data
+      const ifNoneMatch = req.get('If-None-Match');
+      if (ifNoneMatch) {
+        try {
+          const versionEtag = await MyTabDataService.computeVersionETag(userId, options);
+          if (ifNoneMatch === versionEtag) {
+            res.set('ETag', versionEtag);
+            res.set('Cache-Control', 'private, no-cache, must-revalidate');
+            res.status(304).end();
+            return;
+          }
+        } catch (err) {
+          // Short-circuit must never block the fat path.
+          console.warn('[MeController] version etag short-circuit failed; loading full payload', err);
+        }
+      }
+
       const data = await MyTabDataService.getMyTabData({
         userId,
         userCityId: req.user?.currentCityId,
         options,
       });
 
-      // Generate ETag
-      const etag = MyTabDataService.generateETag(data);
+      let etag: string;
+      try {
+        etag = await MyTabDataService.computeVersionETag(userId, options, {
+          storiesCount: data.storiesCount ?? null,
+          booktimeConnected: data.booktimeConnected ?? null,
+        });
+      } catch (err) {
+        console.warn('[MeController] version etag failed after load; using payload hash', err);
+        etag = MyTabDataService.generateETag(data);
+      }
+
       data._meta = {
         timestamp: data._meta?.timestamp ?? new Date().toISOString(),
         etag,
       };
 
-      // Check for conditional request (If-None-Match header)
-      const ifNoneMatch = req.get('If-None-Match');
-      if (ifNoneMatch && ifNoneMatch === etag) {
-        res.status(304).end();
-        return;
-      }
-
-      // Set caching headers.
-      // `no-cache, must-revalidate` lets the client (and native WebView) store the
-      // response but forces a revalidation (conditional GET) before reuse, so an
-      // accepted/declined invite can never be resurrected from a stale transport
-      // cache after the local ETag cache is cleared. 304/ETag behavior is preserved.
+      // `no-cache, must-revalidate` lets the client store the response but forces
+      // revalidation before reuse (invite accept/decline safety).
       res.set('ETag', etag);
       res.set('Cache-Control', 'private, no-cache, must-revalidate');
 

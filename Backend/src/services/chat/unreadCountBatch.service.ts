@@ -120,4 +120,102 @@ export class UnreadCountBatchService {
     );
     return this.buildGameChatTypeFilter(participant, gameStatus, isParentGameAdminOrOwner);
   }
+
+  /**
+   * Batch resolve chat-type filters for many games.
+   * Loads isAdmin once + one parentId query + one parent-participant query
+   * instead of per-game hasParentGamePermissionWithUserCheck.
+   */
+  static async resolveGameChatTypeFiltersForUserBatch(
+    games: Array<{
+      id: string;
+      status: string;
+      participants: Array<{ userId?: string; status: string; role: string }>;
+    }>,
+    userId: string
+  ): Promise<Map<string, ChatType[]>> {
+    const result = new Map<string, ChatType[]>();
+    if (games.length === 0) return result;
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { isAdmin: true },
+    });
+    const isAdmin = user?.isAdmin ?? false;
+
+    const viewerParticipant = (
+      game: (typeof games)[number],
+    ): { status: string; role: string } | undefined => {
+      const byUser = game.participants.find((p) => p.userId === userId);
+      if (byUser) return byUser;
+      // Callers that pre-filter `participants` to the viewer often omit userId.
+      if (game.participants.length === 1) return game.participants[0];
+      return undefined;
+    };
+
+    if (isAdmin) {
+      for (const game of games) {
+        result.set(
+          game.id,
+          this.buildGameChatTypeFilter(viewerParticipant(game), game.status, true),
+        );
+      }
+      return result;
+    }
+
+    const needsParentCheck: string[] = [];
+    for (const game of games) {
+      const participant = viewerParticipant(game);
+      const alreadyAdmin =
+        participant?.role === 'OWNER' || participant?.role === 'ADMIN';
+      if (!alreadyAdmin) {
+        needsParentCheck.push(game.id);
+      }
+    }
+
+    const parentAdminGameIds = new Set<string>();
+    if (needsParentCheck.length > 0) {
+      const parentRows = await prisma.game.findMany({
+        where: { id: { in: needsParentCheck }, parentId: { not: null } },
+        select: { id: true, parentId: true },
+      });
+      const parentIds = [
+        ...new Set(
+          parentRows
+            .map((r) => r.parentId)
+            .filter((id): id is string => typeof id === 'string' && id.length > 0),
+        ),
+      ];
+      if (parentIds.length > 0) {
+        const parentAdminRows = await prisma.gameParticipant.findMany({
+          where: {
+            gameId: { in: parentIds },
+            userId,
+            role: { in: [ParticipantRole.OWNER, ParticipantRole.ADMIN] },
+            status: { in: ['PLAYING', 'NON_PLAYING', 'IN_QUEUE'] },
+          },
+          select: { gameId: true },
+        });
+        const adminParentIds = new Set(parentAdminRows.map((r) => r.gameId));
+        for (const row of parentRows) {
+          if (row.parentId && adminParentIds.has(row.parentId)) {
+            parentAdminGameIds.add(row.id);
+          }
+        }
+      }
+    }
+
+    for (const game of games) {
+      const participant = viewerParticipant(game);
+      result.set(
+        game.id,
+        this.buildGameChatTypeFilter(
+          participant,
+          game.status,
+          parentAdminGameIds.has(game.id),
+        ),
+      );
+    }
+    return result;
+  }
 }

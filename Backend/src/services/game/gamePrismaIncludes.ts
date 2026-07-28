@@ -222,6 +222,135 @@ export const gameWithRoundsAndOutcomes = {
   },
 } satisfies Prisma.GameInclude;
 
+/** Slim sport profile for My Tab / GameCard list (level chips only). */
+const myTabListSportProfileSelect = {
+  sport: true,
+  level: true,
+  reliability: true,
+  gamesPlayed: true,
+  gamesWon: true,
+  approvedLevel: true,
+  approvedById: true,
+  approvedWhen: true,
+} as const;
+
+/** Slim user for My Tab cards — no bio/availability dumps. */
+const myTabListUserSelect = {
+  id: true,
+  firstName: true,
+  lastName: true,
+  avatar: true,
+  gender: true,
+  approvedLevel: true,
+  isPremium: true,
+  isTrainer: true,
+  primarySport: true,
+  sportsEnabled: true,
+  trainerRating: true,
+  trainerReviewCount: true,
+  sportProfiles: {
+    select: myTabListSportProfileSelect,
+  },
+} as const;
+
+const myTabListClubSelect = {
+  id: true,
+  name: true,
+  avatar: true,
+  address: true,
+  cityId: true,
+  city: {
+    select: {
+      name: true,
+      timezone: true,
+    },
+  },
+} as const;
+
+/**
+ * My Tab / getMyGames list projection.
+ * Omits rounds/matches/sets, club.courts dump, inviteOutcomes, resultsArtifactJob,
+ * and fat parent participants. Keeps GameCard + leagues-home fields.
+ */
+export const gameMyTabListInclude = {
+  city: gameBaseInclude.city,
+  club: {
+    select: myTabListClubSelect,
+  },
+  court: {
+    select: {
+      id: true,
+      name: true,
+      clubId: true,
+      club: {
+        select: myTabListClubSelect,
+      },
+    },
+  },
+  participants: {
+    select: {
+      id: true,
+      userId: true,
+      gameId: true,
+      role: true,
+      status: true,
+      joinedAt: true,
+      inviteMessage: true,
+      inviteExpiresAt: true,
+      showInStories: true,
+      user: {
+        select: myTabListUserSelect,
+      },
+    },
+  },
+  fixedTeams: {
+    include: {
+      players: {
+        include: {
+          user: {
+            select: myTabListUserSelect,
+          },
+        },
+      },
+    },
+    orderBy: { teamNumber: 'asc' as const },
+  },
+  leagueSeason: {
+    include: leagueSeasonInclude,
+  },
+  leagueGroup: gameBaseInclude.leagueGroup,
+  leagueRound: gameBaseInclude.leagueRound,
+  bracketSlot: gameBaseInclude.bracketSlot,
+  mainPhoto: MAIN_PHOTO_RELATION_SELECT,
+  ...gameDetailExternalBookingsInclude,
+  gameCourts: gameCourtInclude,
+  outcomes: {
+    where: { position: { not: null } },
+    select: {
+      userId: true,
+      position: true,
+    },
+    orderBy: { position: 'asc' as const },
+  },
+  parent: {
+    select: {
+      id: true,
+      status: true,
+      resultsStatus: true,
+      entityType: true,
+      name: true,
+      avatar: true,
+      leagueSeason: {
+        include: leagueSeasonInclude,
+      },
+    },
+  },
+} satisfies Prisma.GameInclude;
+
+export type GameMyTabList = Prisma.GameGetPayload<{
+  include: typeof gameMyTabListInclude;
+}>;
+
 export const gameForRoundGeneration = {
   participants: participantWithSportUser(roundGenerationUserSelect),
   fixedTeams: {

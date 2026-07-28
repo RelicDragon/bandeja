@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const querySrc = readFileSync(join(__dirname, 'availableGamesQuery.ts'), 'utf8');
+const enrichmentSrc = readFileSync(join(__dirname, 'availableGamesEnrichment.ts'), 'utf8');
 const controllerSrc = readFileSync(
   join(__dirname, '../../controllers/game.controller.ts'),
   'utf8',
@@ -11,6 +12,8 @@ const protocolSrc = readFileSync(join(__dirname, 'availableGamesProtocol.ts'), '
 
 assert.match(querySrc, /enrich = false/);
 assert.match(querySrc, /if \(enrich && games\.length > 0\)/);
+assert.match(enrichmentSrc, /refresh:\s*'background'/);
+assert.match(enrichmentSrc, /FIND_WEATHER_SOFT_WAIT_MS/);
 assert.match(controllerSrc, /resolveAvailableEnrich\(req\.query\)/);
 assert.match(controllerSrc, /enrichAvailableGames/);
 assert.match(protocolSrc, /format=card/);

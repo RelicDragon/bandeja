@@ -31,6 +31,20 @@ export interface MyTabDataOutput {
   };
 }
 
+/** Keep in sync with fetchUserTeams take. */
+const MY_TAB_TEAMS_LIMIT = 10;
+
+export function isInviteActiveForVersion(
+  inviteExpiresAt: Date | null | undefined,
+  nowMs: number,
+): boolean {
+  return !inviteExpiresAt || inviteExpiresAt.getTime() > nowMs;
+}
+
+export function hashMyTabVersionFingerprint(fingerprint: unknown): string {
+  return createHash('sha256').update(JSON.stringify(fingerprint)).digest('base64');
+}
+
 /**
  * MyTabDataService - Aggregates all data needed for the My Tab in a single, optimized call.
  *
@@ -176,7 +190,8 @@ export class MyTabDataService {
           },
         },
       },
-      take: 10,
+      orderBy: { updatedAt: 'desc' },
+      take: MY_TAB_TEAMS_LIMIT,
     });
   }
 
@@ -230,9 +245,175 @@ export class MyTabDataService {
     return booktimeCount > 0 || padelooCount > 0 || klikterenCount > 0;
   }
 
+  /** Same game visibility window as GameReadService.getMyGames. */
+  private static myGamesCutoff(): Date {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return today;
+  }
+
+  private static isoOrNull(value: Date | null | undefined): string | null {
+    return value ? value.toISOString() : null;
+  }
+
   /**
-   * Generate ETag for response caching.
-   * Based on data hash for conditional requests.
+   * Cheap version token for conditional GET short-circuit (no fat game payload).
+   * Games+roster compacted via one SQL aggregate (md5 of sorted userId/status/role).
+   * Pass `hints` after a full load to reuse already-fetched stories/booktime.
+   */
+  static async computeVersionETag(
+    userId: string,
+    options: MyTabDataOptions = {},
+    hints?: {
+      storiesCount?: number | null;
+      booktimeConnected?: boolean | null;
+    },
+  ): Promise<string> {
+    const cutoff = this.myGamesCutoff();
+    const nowMs = Date.now();
+    const reuseStories = hints != null && 'storiesCount' in hints;
+    const reuseBooktime = hints != null && 'booktimeConnected' in hints;
+
+    const [
+      gameRows,
+      inviteRows,
+      teamRows,
+      membershipRows,
+      unreadState,
+      storiesCount,
+      booktimeConnected,
+    ] = await Promise.all([
+      prisma.$queryRaw<
+        Array<{
+          id: string;
+          status: string;
+          startTime: Date;
+          updatedAt: Date;
+          rosterHash: string;
+        }>
+      >`
+        SELECT
+          g.id,
+          g.status::text AS status,
+          g."startTime" AS "startTime",
+          g."updatedAt" AS "updatedAt",
+          COALESCE(
+            md5(
+              string_agg(
+                gp."userId" || chr(1) || gp.status::text || chr(1) || gp.role::text,
+                chr(2)
+                ORDER BY gp."userId"
+              )
+            ),
+            ''
+          ) AS "rosterHash"
+        FROM "Game" g
+        INNER JOIN "GameParticipant" me
+          ON me."gameId" = g.id AND me."userId" = ${userId}
+        LEFT JOIN "GameParticipant" gp
+          ON gp."gameId" = g.id
+        WHERE g.status <> 'ARCHIVED'::"GameStatus"
+           OR g."startTime" >= ${cutoff}
+        GROUP BY g.id
+        ORDER BY g.id ASC
+      `,
+      prisma.gameParticipant.findMany({
+        where: { userId, status: 'INVITED' },
+        select: {
+          id: true,
+          status: true,
+          joinedAt: true,
+          inviteExpiresAt: true,
+        },
+        orderBy: { id: 'asc' },
+      }),
+      prisma.userTeam.findMany({
+        where: {
+          members: { some: { userId, status: 'ACCEPTED' } },
+        },
+        select: { id: true, updatedAt: true },
+        orderBy: { updatedAt: 'desc' },
+        take: MY_TAB_TEAMS_LIMIT,
+      }),
+      prisma.userTeamMember.findMany({
+        where: { userId },
+        select: { id: true, teamId: true, status: true, updatedAt: true },
+        orderBy: { id: 'asc' },
+      }),
+      prisma.userUnreadState.findUnique({
+        where: { userId },
+        select: { unreadRevision: true },
+      }),
+      reuseStories
+        ? Promise.resolve(hints!.storiesCount ?? null)
+        : options.includeStories
+          ? this.fetchStoriesCount(userId)
+          : Promise.resolve(null),
+      reuseBooktime
+        ? Promise.resolve(hints!.booktimeConnected ?? null)
+        : options.includeBooktime
+          ? this.fetchBooktimeStatus(userId)
+          : Promise.resolve(null),
+    ]);
+
+    const teamIds = teamRows.map((t) => t.id);
+    const teamMemberAgg =
+      teamIds.length === 0
+        ? { count: 0, maxUpdatedAt: null as string | null }
+        : await prisma.userTeamMember
+            .aggregate({
+              where: {
+                teamId: { in: teamIds },
+                status: 'ACCEPTED',
+              },
+              _count: { _all: true },
+              _max: { updatedAt: true },
+            })
+            .then((agg) => ({
+              count: agg._count._all,
+              maxUpdatedAt: this.isoOrNull(agg._max.updatedAt),
+            }));
+
+    const fingerprint = {
+      v: 2,
+      games: gameRows.map((g) => ({
+        id: g.id,
+        status: g.status,
+        startTime: this.isoOrNull(g.startTime),
+        updatedAt: this.isoOrNull(g.updatedAt),
+        rosterHash: g.rosterHash,
+      })),
+      invites: inviteRows.map((i) => ({
+        id: i.id,
+        status: i.status,
+        joinedAt: this.isoOrNull(i.joinedAt),
+        inviteExpiresAt: this.isoOrNull(i.inviteExpiresAt),
+        active: isInviteActiveForVersion(i.inviteExpiresAt, nowMs),
+      })),
+      teams: teamRows.map((t) => ({
+        id: t.id,
+        updatedAt: this.isoOrNull(t.updatedAt),
+      })),
+      teamMembers: teamMemberAgg,
+      memberships: membershipRows.map((m) => ({
+        id: m.id,
+        teamId: m.teamId,
+        status: m.status,
+        updatedAt: this.isoOrNull(m.updatedAt),
+      })),
+      unreadRevision: unreadState?.unreadRevision ?? 0,
+      storiesCount: storiesCount ?? null,
+      booktimeConnected: booktimeConnected ?? null,
+      includeStories: Boolean(options.includeStories),
+      includeBooktime: Boolean(options.includeBooktime),
+    };
+
+    return hashMyTabVersionFingerprint(fingerprint);
+  }
+
+  /**
+   * Generate ETag from a loaded payload (fallback if version token fails).
+   * Runtime my-tab conditional GET prefers computeVersionETag.
    */
   static generateETag(data: MyTabDataOutput): string {
     const hash = createHash('sha256');

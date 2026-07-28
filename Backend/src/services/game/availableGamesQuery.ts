@@ -2,7 +2,7 @@ import type { Prisma, Sport } from '@prisma/client';
 import prisma from '../../config/database';
 import { resolvePublicGamesSportFilter } from '../user/userSportProfile.service';
 import { getUserTimezoneFromCityId } from '../user-timezone.service';
-import { getAvailableGamesCardInclude } from './availableGamesCard.projection';
+import { getAvailableGamesCardSelect, FIND_CARD_USER_SELECT } from './availableGamesCard.projection';
 import {
   AVAILABLE_GAMES_DAY_TAKE,
   AVAILABLE_GAMES_MAX_TAKE,
@@ -17,7 +17,7 @@ import {
 } from './availableGamesBounds';
 import { calendarDateBounds, startOfCalendarDate, endOfCalendarDate, InvalidCalendarDateError } from './calendarDateBounds';
 import { enrichAvailableGamesSafe } from './availableGamesEnrichment';
-import { filterIdsByAvailableSlots } from './availableGamesSlotsSql';
+import { filterOrderedRowsByAvailableSlots } from './availableGamesSlotsSql';
 import {
   appendStructuralFiltersToWhere,
   type AvailableStructuralFilters,
@@ -75,6 +75,8 @@ export type AvailableGamesFetchOptions = {
   /** Calendar month badges only — skip fat card page (Find uses day-scoped cards). */
   indexOnly?: boolean;
 };
+
+type SlimIdRow = { id: string; startTime: Date };
 
 function buildVisibilityOr(
   userId: string,
@@ -199,6 +201,9 @@ async function buildAvailableWhere(
   return { where, structuralForMode };
 }
 
+/**
+ * Month badge rows: scalar select only, then one batch for owner/viewer participation.
+ */
 async function fetchCalendarDayIndex(
   where: Prisma.GameWhereInput,
   availableSlots: boolean | undefined,
@@ -221,12 +226,6 @@ async function fetchCalendarDayIndex(
       timeIsSet: true,
       affectsRating: true,
       court: { select: { clubId: true } },
-      participants: {
-        where: {
-          OR: [{ role: 'OWNER' }, { userId: viewerUserId }],
-        },
-        select: { userId: true, role: true },
-      },
     },
     orderBy: [{ startTime: 'asc' }, { id: 'asc' }],
     take: AVAILABLE_GAMES_DAY_INDEX_CAP + 1,
@@ -237,32 +236,154 @@ async function fetchCalendarDayIndex(
   if (dayIndexTruncated) list = list.slice(0, AVAILABLE_GAMES_DAY_INDEX_CAP);
 
   if (availableSlots && list.length > 0) {
-    const openIds = new Set(await filterIdsByAvailableSlots(list.map((g) => g.id)));
-    list = list.filter((g) => openIds.has(g.id));
+    list = await filterOrderedRowsByAvailableSlots(list);
   }
 
-  const dayIndex: AvailableDayIndexRow[] = list.map((g) => {
-    const owner = g.participants.find((p) => p.role === 'OWNER');
-    return {
-      id: g.id,
-      startTime: g.startTime.toISOString(),
-      sport: g.sport,
-      entityType: g.entityType,
-      minLevel: g.minLevel,
-      maxLevel: g.maxLevel,
-      maxParticipants: g.maxParticipants,
-      genderTeams: g.genderTeams,
-      trainerId: g.trainerId,
-      clubId: g.clubId ?? g.court?.clubId ?? null,
-      isPublic: g.isPublic,
-      timeIsSet: g.timeIsSet,
-      affectsRating: g.affectsRating,
-      ownerUserId: owner?.userId ?? null,
-      viewerIsParticipant: g.participants.some((p) => p.userId === viewerUserId),
-    };
-  });
+  const participantMeta =
+    list.length === 0
+      ? []
+      : await prisma.gameParticipant.findMany({
+          where: {
+            gameId: { in: list.map((g) => g.id) },
+            OR: [{ role: 'OWNER' }, { userId: viewerUserId }],
+          },
+          select: { gameId: true, userId: true, role: true },
+        });
+
+  const ownerByGame = new Map<string, string>();
+  const viewerGames = new Set<string>();
+  for (const p of participantMeta) {
+    if (p.role === 'OWNER' && !ownerByGame.has(p.gameId)) {
+      ownerByGame.set(p.gameId, p.userId);
+    }
+    if (p.userId === viewerUserId) {
+      viewerGames.add(p.gameId);
+    }
+  }
+
+  const dayIndex: AvailableDayIndexRow[] = list.map((g) => ({
+    id: g.id,
+    startTime: g.startTime.toISOString(),
+    sport: g.sport,
+    entityType: g.entityType,
+    minLevel: g.minLevel,
+    maxLevel: g.maxLevel,
+    maxParticipants: g.maxParticipants,
+    genderTeams: g.genderTeams,
+    trainerId: g.trainerId,
+    clubId: g.clubId ?? g.court?.clubId ?? null,
+    isPublic: g.isPublic,
+    timeIsSet: g.timeIsSet,
+    affectsRating: g.affectsRating,
+    ownerUserId: ownerByGame.get(g.id) ?? null,
+    viewerIsParticipant: viewerGames.has(g.id),
+  }));
 
   return { dayIndex, dayIndexTruncated };
+}
+
+/** Id-only scan for pagination / open-slots overscan (no card joins). */
+async function fetchSlimIdPage(
+  pageWhere: Prisma.GameWhereInput,
+  order: 'asc' | 'desc',
+  fetchTake: number,
+): Promise<{ scanned: SlimIdRow[]; scannedHasMore: boolean }> {
+  const rows = await prisma.game.findMany({
+    where: pageWhere,
+    select: { id: true, startTime: true },
+    orderBy: [{ startTime: order }, { id: order }],
+    take: fetchTake + 1,
+  });
+  const scannedHasMore = rows.length > fetchTake;
+  const scanned = scannedHasMore ? rows.slice(0, fetchTake) : rows;
+  return { scanned, scannedHasMore };
+}
+
+/** Hydrate card select for page ids; attach FINAL outcomes only; fill missing trainers. */
+async function hydrateAvailableGameCards(
+  pageIds: string[],
+  viewerUserId: string,
+): Promise<Map<string, Record<string, unknown>>> {
+  const byId = new Map<string, Record<string, unknown>>();
+  if (pageIds.length === 0) return byId;
+
+  const games = await prisma.game.findMany({
+    where: { id: { in: pageIds } },
+    select: getAvailableGamesCardSelect({ viewerUserId }),
+  });
+
+  const finalIds = games
+    .filter((g) => g.resultsStatus === 'FINAL')
+    .map((g) => g.id);
+
+  const outcomesByGame = new Map<string, Array<{ userId: string; position: number | null }>>();
+  if (finalIds.length > 0) {
+    const outcomeRows = await prisma.gameOutcome.findMany({
+      where: {
+        gameId: { in: finalIds },
+        position: { not: null },
+      },
+      select: { gameId: true, userId: true, position: true },
+      orderBy: { position: 'asc' },
+    });
+    for (const row of outcomeRows) {
+      const list = outcomesByGame.get(row.gameId) ?? [];
+      list.push({ userId: row.userId, position: row.position });
+      outcomesByGame.set(row.gameId, list);
+    }
+  }
+
+  // TRAINING cards need the trainer participant even when NON_PLAYING.
+  const missingTrainerKeys: Array<{ gameId: string; trainerId: string }> = [];
+  for (const game of games) {
+    if (game.entityType !== 'TRAINING' || !game.trainerId) continue;
+    const hasTrainer = game.participants.some((p) => p.userId === game.trainerId);
+    if (!hasTrainer) {
+      missingTrainerKeys.push({ gameId: game.id, trainerId: game.trainerId });
+    }
+  }
+
+  const trainerByGame = new Map<string, unknown>();
+  if (missingTrainerKeys.length > 0) {
+    const trainerRows = await prisma.gameParticipant.findMany({
+      where: {
+        OR: missingTrainerKeys.map((k) => ({
+          gameId: k.gameId,
+          userId: k.trainerId,
+        })),
+      },
+      select: {
+        id: true,
+        userId: true,
+        gameId: true,
+        role: true,
+        status: true,
+        user: {
+          select: FIND_CARD_USER_SELECT,
+        },
+      },
+    });
+    for (const row of trainerRows) {
+      trainerByGame.set(row.gameId, row);
+    }
+  }
+
+  for (const game of games) {
+    const next: Record<string, unknown> = { ...game };
+    const participants: unknown[] = [...game.participants];
+    const trainerRow = trainerByGame.get(game.id);
+    if (trainerRow) {
+      participants.push(trainerRow);
+    }
+    next.participants = participants;
+    const outcomes = outcomesByGame.get(game.id);
+    if (outcomes && outcomes.length > 0) {
+      next.outcomes = outcomes;
+    }
+    byId.set(game.id, next);
+  }
+
+  return byId;
 }
 
 export async function fetchAvailableGamesPage(
@@ -309,7 +430,7 @@ export async function fetchAvailableGamesPage(
 
   const cursor = decodeAvailableGamesCursor(options.cursor);
   const pageWhere: Prisma.GameWhereInput = { ...where };
-  const cursorWhere = availableGamesCursorWhere(cursor);
+  const cursorWhere = availableGamesCursorWhere(cursor, order);
   if (cursorWhere) {
     const and = Array.isArray(pageWhere.AND)
       ? [...pageWhere.AND]
@@ -327,33 +448,39 @@ export async function fetchAvailableGamesPage(
     ? Math.min(AVAILABLE_GAMES_MAX_TAKE, Math.max(take * 4, take + 1))
     : take;
 
-  const [gamesRaw, dayIndexResult] = await Promise.all([
-    prisma.game.findMany({
-      where: pageWhere,
-      include: getAvailableGamesCardInclude() as Prisma.GameInclude,
-      orderBy: [{ startTime: order }, { id: order }],
-      take: fetchTake + 1,
-    }),
+  const [idPage, dayIndexResult] = await Promise.all([
+    fetchSlimIdPage(pageWhere, order, fetchTake),
     wantDayIndex
       ? fetchCalendarDayIndex(where, structuralForMode.availableSlots, userId)
       : Promise.resolve(null),
   ]);
 
-  const scannedHasMore = gamesRaw.length > fetchTake;
-  const scanned = scannedHasMore ? gamesRaw.slice(0, fetchTake) : gamesRaw;
-
-  let filtered = scanned;
+  let filtered = idPage.scanned;
   if (structuralForMode.availableSlots && filtered.length > 0) {
-    const openIds = new Set(await filterIdsByAvailableSlots(filtered.map((g) => g.id)));
-    filtered = filtered.filter((g) => openIds.has(g.id));
+    filtered = await filterOrderedRowsByAvailableSlots(filtered);
   }
 
   const { page, hasMore, cursorTip } = resolveAvailablePageAfterFilter(
-    scanned,
+    idPage.scanned,
     filtered,
     take,
-    scannedHasMore,
+    idPage.scannedHasMore,
   );
+
+  const hydratedById = await hydrateAvailableGameCards(
+    page.map((p) => p.id),
+    userId,
+  );
+  const gamesRaw = page
+    .map((p) => hydratedById.get(p.id))
+    .filter((g): g is Record<string, unknown> => g != null);
+
+  if (gamesRaw.length !== page.length) {
+    console.warn('[fetchAvailableGamesPage] hydrate miss', {
+      requested: page.length,
+      hydrated: gamesRaw.length,
+    });
+  }
 
   const meta: AvailableGamesListResult['meta'] = {
     take,
@@ -374,7 +501,7 @@ export async function fetchAvailableGamesPage(
     meta.dayIndexTruncated = dayIndexResult.dayIndexTruncated;
   }
 
-  let games = page.map((g) => project(g));
+  let games = gamesRaw.map((g) => project(g));
 
   if (enrich && games.length > 0) {
     games = await enrichAvailableGamesSafe(userId, games as Array<{ id: string }>);

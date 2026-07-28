@@ -78,4 +78,48 @@ describe('attachAvailableGamesEnrichment', () => {
     expect(client.getQueryData(key)).toEqual(page);
     warn.mockRestore();
   });
+
+  it('retries weather enrichment until summary lands or delays exhaust', async () => {
+    vi.useFakeTimers();
+    const client = new QueryClient();
+    const key = ['games', 'available', 'h'] as const;
+    const page: AvailableGamesPage = {
+      games: [{ id: 'g1', name: 'A', timeIsSet: true } as Game],
+      meta: EMPTY_AVAILABLE_META,
+    };
+    client.setQueryData(key, page);
+    getAvailableGamesEnrichment
+      .mockResolvedValueOnce({
+        data: { byGameId: { g1: { weatherSummary: null, reactions: [] } } },
+      })
+      .mockResolvedValueOnce({
+        data: { byGameId: { g1: { weatherSummary: null, reactions: [] } } },
+      })
+      .mockResolvedValueOnce({
+        data: {
+          byGameId: {
+            g1: {
+              weatherSummary: { temperatureC: 22, conditionKey: 'clear' },
+              reactions: [],
+            },
+          },
+        },
+      });
+
+    const { AVAILABLE_WEATHER_RETRY_DELAYS_MS } = await import('./attachAvailableGamesEnrichment');
+    await attachAvailableGamesEnrichment(client, key, page.games);
+    expect(getAvailableGamesEnrichment).toHaveBeenCalledTimes(1);
+
+    await vi.advanceTimersByTimeAsync(AVAILABLE_WEATHER_RETRY_DELAYS_MS[0]);
+    await Promise.resolve();
+    expect(getAvailableGamesEnrichment).toHaveBeenCalledTimes(2);
+
+    await vi.advanceTimersByTimeAsync(AVAILABLE_WEATHER_RETRY_DELAYS_MS[1]);
+    await Promise.resolve();
+    expect(getAvailableGamesEnrichment).toHaveBeenCalledTimes(3);
+
+    const next = client.getQueryData(key) as AvailableGamesPage;
+    expect(next.games[0].weatherSummary).toMatchObject({ temperatureC: 22 });
+    vi.useRealTimers();
+  });
 });

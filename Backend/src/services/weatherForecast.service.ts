@@ -92,6 +92,22 @@ type CacheLike = {
 
 const inFlightByCity = new Map<string, Promise<CacheLike>>();
 
+/** How Open-Meteo refresh interacts with cache reads. */
+export type WeatherCacheRefreshMode = 'blocking' | 'background' | 'never';
+
+/** Cap concurrent background Open-Meteo fetches (enrichment kicks + shared queue). */
+const BACKGROUND_REFRESH_CONCURRENCY = 2;
+/** Max cities kicked from a single non-blocking attachSummaries call. */
+const BACKGROUND_REFRESH_KICK_BUDGET = 20;
+/** Brief wait for an in-flight refresh so cold-cache Find enrichment often gets weather without timing out. */
+export const FIND_WEATHER_SOFT_WAIT_MS = 750;
+/** Detail/window soft budget — never wait the full Open-Meteo 8s timeout on request path. */
+const BLOCKING_SOFT_WAIT_MS = 3000;
+
+const backgroundQueuedCityIds = new Set<string>();
+const backgroundQueue: CityForWeather[] = [];
+let backgroundActive = 0;
+
 function cToF(c: number): number {
   return Math.round(((c * 9) / 5 + 32) * 10) / 10;
 }
@@ -188,11 +204,11 @@ function getPayload(cache: CacheLike): WeatherForecastPayload {
   return cache.payload as WeatherForecastPayload;
 }
 
-function isFresh(cache: CacheLike, now: Date): boolean {
+function isFresh(cache: { expiresAt: Date }, now: Date): boolean {
   return cache.expiresAt.getTime() > now.getTime();
 }
 
-function isUsablyStale(cache: CacheLike, now: Date): boolean {
+function isUsablyStale(cache: { fetchedAt: Date }, now: Date): boolean {
   return now.getTime() - cache.fetchedAt.getTime() <= STALE_FALLBACK_MS;
 }
 
@@ -316,7 +332,94 @@ async function markRefreshError(cityId: string, error: unknown): Promise<void> {
   }
 }
 
-async function getCacheForCity(cityId: string): Promise<{ cache: CacheLike | null; stale: boolean; unavailableReason?: 'missing_city_coordinates' }> {
+function scheduleCityRefresh(city: CityForWeather): Promise<CacheLike> {
+  const inFlightKey = `${PROVIDER}:${city.id}`;
+  let refresh = inFlightByCity.get(inFlightKey);
+  if (!refresh) {
+    refresh = refreshCache(city).finally(() => {
+      inFlightByCity.delete(inFlightKey);
+    });
+    inFlightByCity.set(inFlightKey, refresh);
+  }
+  return refresh;
+}
+
+function pumpBackgroundRefreshQueue(): void {
+  while (backgroundActive < BACKGROUND_REFRESH_CONCURRENCY && backgroundQueue.length > 0) {
+    const city = backgroundQueue.shift();
+    if (!city) break;
+    backgroundQueuedCityIds.delete(city.id);
+    backgroundActive += 1;
+    void scheduleCityRefresh(city)
+      .catch(async (error) => {
+        await markRefreshError(city.id, error);
+      })
+      .finally(() => {
+        backgroundActive -= 1;
+        pumpBackgroundRefreshQueue();
+      });
+  }
+}
+
+/**
+ * Queue a non-blocking Open-Meteo refresh. Dedupes by city and rate-limits concurrency.
+ * @returns true when the city was newly queued.
+ */
+function kickCityRefresh(city: CityForWeather): boolean {
+  const inFlightKey = `${PROVIDER}:${city.id}`;
+  if (inFlightByCity.has(inFlightKey) || backgroundQueuedCityIds.has(city.id)) {
+    return false;
+  }
+  backgroundQueuedCityIds.add(city.id);
+  backgroundQueue.push(city);
+  pumpBackgroundRefreshQueue();
+  return true;
+}
+
+function delayMs(ms: number): Promise<null> {
+  return new Promise((resolve) => setTimeout(() => resolve(null), ms));
+}
+
+/**
+ * Ensure a refresh is actually running (not only sitting in the background queue),
+ * then await it up to budgetMs. Failures are swallowed / marked — never unhandled.
+ */
+async function awaitCityRefreshSoft(
+  city: CityForWeather,
+  budgetMs: number,
+): Promise<CacheLike | null> {
+  const refresh = scheduleCityRefresh(city);
+  void refresh.catch(async (error) => {
+    await markRefreshError(city.id, error);
+  });
+  try {
+    return await Promise.race([refresh, delayMs(budgetMs)]);
+  } catch {
+    return null;
+  }
+}
+
+type CityCacheResult = {
+  cache: CacheLike | null;
+  stale: boolean;
+  unavailableReason?: 'missing_city_coordinates';
+};
+
+export type WeatherAttachOptions = {
+  refresh?: WeatherCacheRefreshMode;
+  /**
+   * After kicking/starting refresh, wait up to this many ms for in-flight work
+   * before returning null/stale. Caps request latency while still filling cold cache.
+   */
+  softWaitMs?: number;
+};
+
+async function getCacheForCity(
+  cityId: string,
+  options?: WeatherAttachOptions,
+): Promise<CityCacheResult> {
+  const refreshMode = options?.refresh ?? 'blocking';
+  const softWaitMs = options?.softWaitMs;
   const now = new Date();
   const city = await readCity(cityId);
 
@@ -337,17 +440,36 @@ async function getCacheForCity(cityId: string): Promise<{ cache: CacheLike | nul
     return { cache: existing, stale: false };
   }
 
-  const inFlightKey = `${PROVIDER}:${cityId}`;
-  let refresh = inFlightByCity.get(inFlightKey);
-  if (!refresh) {
-    refresh = refreshCache(city).finally(() => {
-      inFlightByCity.delete(inFlightKey);
-    });
-    inFlightByCity.set(inFlightKey, refresh);
+  if (refreshMode === 'never') {
+    if (existing && isUsablyStale(existing, now)) {
+      return { cache: existing, stale: true };
+    }
+    return { cache: null, stale: false };
   }
 
+  if (refreshMode === 'background') {
+    kickCityRefresh(city);
+    if (existing && isUsablyStale(existing, now)) {
+      return { cache: existing, stale: true };
+    }
+    if (softWaitMs != null && softWaitMs > 0) {
+      const warmed = await awaitCityRefreshSoft(city, softWaitMs);
+      if (warmed) return { cache: warmed, stale: false };
+    }
+    return { cache: null, stale: false };
+  }
+
+  // blocking
   try {
-    const cache = await refresh;
+    if (softWaitMs != null && softWaitMs > 0) {
+      const warmed = await awaitCityRefreshSoft(city, softWaitMs);
+      if (warmed) return { cache: warmed, stale: false };
+      if (existing && isUsablyStale(existing, now)) {
+        return { cache: existing, stale: true };
+      }
+      return { cache: null, stale: false };
+    }
+    const cache = await scheduleCityRefresh(city);
     return { cache, stale: false };
   } catch (error) {
     await markRefreshError(cityId, error);
@@ -356,6 +478,93 @@ async function getCacheForCity(cityId: string): Promise<{ cache: CacheLike | nul
     }
     return { cache: null, stale: false };
   }
+}
+
+/**
+ * Batch cache read for list/enrichment paths.
+ * Optionally queues rate-limited background refreshes and soft-waits briefly.
+ */
+async function getCachesForCitiesNonBlocking(
+  cityIds: string[],
+  refreshMode: 'background' | 'never',
+  softWaitMs?: number,
+): Promise<Map<string, CityCacheResult>> {
+  const result = new Map<string, CityCacheResult>();
+  const unique = [...new Set(cityIds.filter(Boolean))];
+  if (unique.length === 0) return result;
+
+  const now = new Date();
+  const [cities, caches] = await Promise.all([
+    prisma.city.findMany({
+      where: { id: { in: unique } },
+      select: {
+        id: true,
+        name: true,
+        timezone: true,
+        latitude: true,
+        longitude: true,
+      },
+    }),
+    prisma.weatherForecastCache.findMany({
+      where: {
+        provider: PROVIDER,
+        cityId: { in: unique },
+      },
+    }),
+  ]);
+
+  const cityById = new Map(cities.map((c) => [c.id, c]));
+  const cacheByCity = new Map(caches.map((c) => [c.cityId, c]));
+  let kickBudget = BACKGROUND_REFRESH_KICK_BUDGET;
+  const waitingCities: CityForWeather[] = [];
+
+  for (const cityId of unique) {
+    const city = cityById.get(cityId);
+    if (!city) {
+      result.set(cityId, { cache: null, stale: false });
+      continue;
+    }
+    if (city.latitude == null || city.longitude == null) {
+      result.set(cityId, { cache: null, stale: false, unavailableReason: 'missing_city_coordinates' });
+      continue;
+    }
+
+    const existing = cacheByCity.get(cityId) ?? null;
+    if (existing && isFresh(existing, now)) {
+      result.set(cityId, { cache: existing, stale: false });
+      continue;
+    }
+
+    if (refreshMode === 'background' && kickBudget > 0) {
+      if (kickCityRefresh(city)) {
+        kickBudget -= 1;
+      }
+    }
+
+    if (existing && isUsablyStale(existing, now)) {
+      result.set(cityId, { cache: existing, stale: true });
+    } else {
+      result.set(cityId, { cache: null, stale: false });
+      if (refreshMode === 'background' && softWaitMs != null && softWaitMs > 0) {
+        waitingCities.push(city);
+      }
+    }
+  }
+
+  if (waitingCities.length > 0 && softWaitMs != null && softWaitMs > 0) {
+    // Soft-wait only a few cities and force-start them so they are not stuck behind the queue.
+    const toWait = waitingCities.slice(0, BACKGROUND_REFRESH_CONCURRENCY);
+    await Promise.all(
+      toWait.map(async (city) => {
+        const warmed = await awaitCityRefreshSoft(city, softWaitMs);
+        if (warmed) {
+          result.set(city.id, { cache: warmed, stale: false });
+        }
+      }),
+    );
+  }
+
+  return result;
 }
 
 function nearestPoint(payload: WeatherForecastPayload, at: Date): WeatherHourlyPoint | null {
@@ -576,7 +785,10 @@ export async function getForecastDay(
   cityId: string,
   date: string,
 ): Promise<{ hours: WeatherHourlyPoint[]; fetchedAt: Date; stale: boolean } | null> {
-  const { cache, stale } = await getCacheForCity(cityId);
+  const { cache, stale } = await getCacheForCity(cityId, {
+    refresh: 'blocking',
+    softWaitMs: BLOCKING_SOFT_WAIT_MS,
+  });
   if (!cache) return null;
 
   const payload = getPayload(cache);
@@ -592,8 +804,95 @@ export async function getForecastDay(
 }
 
 export class WeatherForecastService {
-  static async warmCityForecast(cityId: string): Promise<void> {
-    await getCacheForCity(cityId);
+  /** @returns true when a usable cache row is present after the call. */
+  static async warmCityForecast(cityId: string): Promise<boolean> {
+    const result = await getCacheForCity(cityId, { refresh: 'blocking' });
+    return result.cache != null;
+  }
+
+  /**
+   * Refresh forecast caches for cities that have upcoming scheduled games.
+   * Skips cities whose cache is already fresh. Rate-limited for Open-Meteo.
+   */
+  static async prewarmUpcomingGameCities(options?: {
+    horizonDays?: number;
+    concurrency?: number;
+    maxCities?: number;
+  }): Promise<{ warmed: number; skippedFresh: number; candidates: number; failed: number }> {
+    const horizonDays = options?.horizonDays ?? FORECAST_DAYS;
+    const concurrency = Math.max(1, options?.concurrency ?? 2);
+    const maxCities = Math.max(1, options?.maxCities ?? 50);
+    const now = new Date();
+    const horizon = new Date(now.getTime() + horizonDays * 24 * 60 * 60 * 1000);
+
+    const groups = await prisma.game.groupBy({
+      by: ['cityId'],
+      where: {
+        timeIsSet: true,
+        endTime: { gt: now },
+        startTime: { lt: horizon },
+        status: { not: 'ARCHIVED' },
+      },
+    });
+    const candidateIds = groups.map((g) => g.cityId);
+    if (candidateIds.length === 0) {
+      return { warmed: 0, skippedFresh: 0, candidates: 0, failed: 0 };
+    }
+
+    const [coordCities, caches] = await Promise.all([
+      prisma.city.findMany({
+        where: {
+          id: { in: candidateIds },
+          latitude: { not: null },
+          longitude: { not: null },
+        },
+        select: { id: true },
+      }),
+      prisma.weatherForecastCache.findMany({
+        where: {
+          provider: PROVIDER,
+          cityId: { in: candidateIds },
+        },
+        select: { cityId: true, expiresAt: true },
+      }),
+    ]);
+
+    const cityIds = coordCities.map((c) => c.id);
+    const freshIds = new Set(
+      caches.filter((c) => isFresh(c, now)).map((c) => c.cityId),
+    );
+    const toWarm = cityIds.filter((id) => !freshIds.has(id)).slice(0, maxCities);
+    const skippedFreshCount = cityIds.filter((id) => freshIds.has(id)).length;
+
+    let warmed = 0;
+    let failed = 0;
+    for (let i = 0; i < toWarm.length; i += concurrency) {
+      const batch = toWarm.slice(i, i + concurrency);
+      const results = await Promise.allSettled(
+        batch.map((cityId) => WeatherForecastService.warmCityForecast(cityId)),
+      );
+      for (const r of results) {
+        if (r.status === 'fulfilled' && r.value) {
+          warmed += 1;
+        } else {
+          failed += 1;
+          const error =
+            r.status === 'rejected'
+              ? r.reason
+              : 'warm returned empty cache';
+          console.warn('[WeatherForecastService] prewarm failed', {
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
+      }
+    }
+
+    return {
+      warmed,
+      skippedFresh: skippedFreshCount,
+      candidates: cityIds.length,
+      failed,
+    };
   }
 
   static async getSummaryForGame(game: {
@@ -621,7 +920,10 @@ export class WeatherForecastService {
       }
     }
 
-    const { cache, stale } = await getCacheForCity(game.cityId);
+    const { cache, stale } = await getCacheForCity(game.cityId, {
+      refresh: 'blocking',
+      softWaitMs: BLOCKING_SOFT_WAIT_MS,
+    });
     if (!cache) return null;
 
     return buildSummary(cache, stale, startTime);
@@ -633,7 +935,12 @@ export class WeatherForecastService {
     startTime: Date | string;
     endTime: Date | string;
     timeIsSet: boolean;
-  }>(games: T[]): Promise<Array<T & { weatherSummary?: WeatherSummaryDto | null }>> {
+  }>(
+    games: T[],
+    options?: WeatherAttachOptions,
+  ): Promise<Array<T & { weatherSummary?: WeatherSummaryDto | null }>> {
+    const refreshMode = options?.refresh ?? 'blocking';
+    const softWaitMs = options?.softWaitMs;
     const eligible = games.filter((game) => game.timeIsSet);
     if (eligible.length === 0) return games;
 
@@ -643,20 +950,39 @@ export class WeatherForecastService {
 
     const archivedSummaries = await WeatherDayArchiveService.getSummariesFromDbForGames(pastGames);
 
-    const cityCaches = new Map<string, Awaited<ReturnType<typeof getCacheForCity>>>();
-    await Promise.all(
-      Array.from(new Set(futureGames.map((game) => game.cityId))).map(async (cityId) => {
-        try {
-          cityCaches.set(cityId, await getCacheForCity(cityId));
-        } catch (error) {
-          console.warn('[WeatherForecastService] Failed to attach weather summary', {
-            cityId,
-            error: error instanceof Error ? error.message : String(error),
-          });
-          cityCaches.set(cityId, { cache: null, stale: false });
-        }
-      }),
-    );
+    const cityCaches = new Map<string, CityCacheResult>();
+    const futureCityIds = Array.from(new Set(futureGames.map((game) => game.cityId)));
+
+    if (refreshMode === 'background' || refreshMode === 'never') {
+      const batched = await getCachesForCitiesNonBlocking(
+        futureCityIds,
+        refreshMode,
+        refreshMode === 'background' ? softWaitMs : undefined,
+      );
+      for (const [cityId, value] of batched) {
+        cityCaches.set(cityId, value);
+      }
+    } else {
+      await Promise.all(
+        futureCityIds.map(async (cityId) => {
+          try {
+            cityCaches.set(
+              cityId,
+              await getCacheForCity(cityId, {
+                refresh: 'blocking',
+                softWaitMs: softWaitMs ?? BLOCKING_SOFT_WAIT_MS,
+              }),
+            );
+          } catch (error) {
+            console.warn('[WeatherForecastService] Failed to attach weather summary', {
+              cityId,
+              error: error instanceof Error ? error.message : String(error),
+            });
+            cityCaches.set(cityId, { cache: null, stale: false });
+          }
+        }),
+      );
+    }
 
     return games.map((game) => {
       if (!game.timeIsSet) return game;
@@ -714,7 +1040,10 @@ export class WeatherForecastService {
       throw new ApiError(400, 'Valid startTime and endTime are required');
     }
 
-    const { cache, stale, unavailableReason } = await getCacheForCity(params.cityId);
+    const { cache, stale, unavailableReason } = await getCacheForCity(params.cityId, {
+      refresh: 'blocking',
+      softWaitMs: BLOCKING_SOFT_WAIT_MS,
+    });
     if (!cache) {
       return {
         provider: PROVIDER,

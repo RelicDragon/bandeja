@@ -529,7 +529,11 @@ export class ReadReceiptService {
   }
 
   static async getGamesUnreadCountsFromGames(
-    games: Array<{ id: string; status: string; participants: Array<{ status: string; role: string }> }>,
+    games: Array<{
+      id: string;
+      status: string;
+      participants: Array<{ userId?: string; status: string; role: string }>;
+    }>,
     userId: string
   ): Promise<Record<string, number>> {
     if (games.length === 0) return {};
@@ -544,23 +548,17 @@ export class ReadReceiptService {
       if (!countByContextAndType[contextId]) countByContextAndType[contextId] = {};
       countByContextAndType[contextId][chatType] = cnt;
     }
+    const filtersByGameId =
+      await UnreadCountBatchService.resolveGameChatTypeFiltersForUserBatch(games, userId);
     const unreadCounts: Record<string, number> = {};
-    await Promise.all(
-      games.map(async (game) => {
-        const participant = game.participants[0];
-        const chatTypeFilter = await UnreadCountBatchService.resolveGameChatTypeFilterForUser(
-          game.id,
-          userId,
-          participant,
-          game.status
-        );
-        let total = 0;
-        for (const chatType of chatTypeFilter) {
-          total += countByContextAndType[game.id]?.[chatType] ?? 0;
-        }
-        unreadCounts[game.id] = total;
-      })
-    );
+    for (const game of games) {
+      const chatTypeFilter = filtersByGameId.get(game.id) ?? ['PUBLIC'];
+      let total = 0;
+      for (const chatType of chatTypeFilter) {
+        total += countByContextAndType[game.id]?.[chatType] ?? 0;
+      }
+      unreadCounts[game.id] = total;
+    }
     return unreadCounts;
   }
 
