@@ -6,34 +6,34 @@ import {
 } from './leagueStandingsColumns';
 
 describe('resolveLeagueStandingsColumns', () => {
-  it('fixed teams + classic → Sets + Games', () => {
+  it('fixed teams + classic → Games (no Sets on main table)', () => {
     expect(
       resolveLeagueStandingsColumns({ hasFixedTeams: true, playersPerMatch: 4, ballsInGames: true })
     ).toEqual({
       showPoints: false,
-      showSets: true,
+      showSets: false,
       showGames: true,
       showBalls: false,
     });
   });
 
-  it('fixed teams + simple points → Sets + Balls', () => {
+  it('fixed teams + simple points → Balls (no Sets on main table)', () => {
     expect(
       resolveLeagueStandingsColumns({ hasFixedTeams: true, playersPerMatch: 4, ballsInGames: false })
     ).toEqual({
       showPoints: false,
-      showSets: true,
+      showSets: false,
       showGames: false,
       showBalls: true,
     });
   });
 
-  it('1v1 + classic → Sets + Games (same as fixed H2H mode)', () => {
+  it('1v1 + classic → Games (same H2H mode, no Sets on main table)', () => {
     expect(
       resolveLeagueStandingsColumns({ hasFixedTeams: false, playersPerMatch: 2, ballsInGames: true })
     ).toEqual({
       showPoints: false,
-      showSets: true,
+      showSets: false,
       showGames: true,
       showBalls: false,
     });

@@ -10,9 +10,9 @@ export type LeagueStandingsColumnFlags = {
 };
 
 /**
- * Order: Points → W-T-L → Sets → Games → Balls
+ * Order: Points → W-T-L → Games → Balls
  * - Points: rotating / non–H2H seasons only (not fixed-team, not 1v1)
- * - Sets: fixed-team and 1v1 (same modes as wins → H2H → mini-table ranking)
+ * - Sets: never on the main standings table (mini-tables still show set Δ)
  * - Games: classic balls-in-games scoring
  * - Balls: simple points scoring (mutually exclusive with Games)
  */
@@ -25,7 +25,7 @@ export function resolveLeagueStandingsColumns(game: {
   const ballsInGames = !!game.ballsInGames;
   return {
     showPoints: !useSetTiebreakColumns,
-    showSets: useSetTiebreakColumns,
+    showSets: false,
     showGames: ballsInGames,
     showBalls: !ballsInGames,
   };

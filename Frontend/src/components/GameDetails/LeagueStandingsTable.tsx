@@ -57,11 +57,6 @@ export function LeagueStandingsTable({
             <th className="whitespace-nowrap py-2 pl-4 pr-2 text-center text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
               {t('gameResults.winsTiesLosses')}
             </th>
-            {columns.showSets && (
-              <th className="py-2 pl-0 pr-2 text-center text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                {t('gameResults.sets')}
-              </th>
-            )}
             {columns.showGames && (
               <th className="px-2 py-2 text-center text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
                 {t('gameResults.extraUnitGames')}
@@ -137,11 +132,6 @@ export function LeagueStandingsTable({
                     </span>
                   </span>
                 </td>
-                {columns.showSets && (
-                  <td className="py-2 pl-0 pr-2 text-center text-xs font-semibold text-gray-900 dark:text-white">
-                    {formatSignedDelta(standing.setDelta ?? 0)}
-                  </td>
-                )}
                 {columns.showGames && (
                   <td className="px-2 py-2 text-center text-xs text-gray-700 dark:text-gray-300">
                     {formatSignedDelta(standingsScoreUnitDelta(standing))}
