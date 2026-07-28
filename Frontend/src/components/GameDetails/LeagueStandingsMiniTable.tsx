@@ -138,7 +138,14 @@ export function LeagueStandingsMiniTable({
               <th className="px-2 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
                 {hasFixedTeams ? t('gameDetails.team') : t('gameDetails.player')}
               </th>
-              <th className="px-2 py-2.5 text-center text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+              <th
+                className="px-2 py-2.5 text-center text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400"
+                title={
+                  kind === 'h2h'
+                    ? t('gameDetails.standingsMiniWinsH2hHint')
+                    : t('gameDetails.standingsMiniWinsMiniHint')
+                }
+              >
                 {kind === 'h2h' ? t('gameDetails.standingsMiniWinsH2h') : t('gameDetails.standingsMiniWins')}
               </th>
               {showScoreUnits && (
