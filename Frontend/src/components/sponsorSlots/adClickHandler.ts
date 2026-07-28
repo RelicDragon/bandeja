@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { isCapacitor } from '@/utils/capacitor';
 import { openExternalUrl } from '@/utils/openExternalUrl';
 import { buildUrl } from '@/utils/urlSchema';
 import type { AdClickAction, AdPlacementPayload } from '@/api/sponsorPlacements';
@@ -100,11 +101,16 @@ export async function executeAdClick(
     }
     case 'OPEN_URL':
     default:
-      // Relative / same-origin → full page load (static landings like /LizaBirthday2026).
-      // Cross-origin https → external browser / new tab.
+      // Web: same-host static landings stay in-document.
+      // Capacitor: never assign /LizaBirthday2026 inside the WebView (bundle/SPA bounce → home).
+      // Use system browser for absolute bandeja URLs; relative paths also go external on native.
       if (isExternalUrl(clickUrl)) {
         const appHostedLandingHref = resolveAppHostedStaticLandingHref(clickUrl);
         if (appHostedLandingHref) {
+          if (isCapacitor()) {
+            await openExternalUrl(clickUrl);
+            return;
+          }
           navigateSameOriginDocument(appHostedLandingHref);
           return;
         }
@@ -116,6 +122,11 @@ export async function executeAdClick(
         return;
       }
       if (clickUrl.startsWith('/')) {
+        const pathOnly = (clickUrl.split('?')[0] || '').replace(/\/+$/, '') || '/';
+        if (isCapacitor() && APP_HOSTED_STATIC_LANDINGS.has(pathOnly)) {
+          await openExternalUrl(`https://bandeja.me${clickUrl}`);
+          return;
+        }
         navigateSameOriginDocument(clickUrl);
         return;
       }

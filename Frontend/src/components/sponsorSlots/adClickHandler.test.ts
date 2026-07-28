@@ -7,6 +7,12 @@ vi.mock('@/utils/openExternalUrl', () => ({
   openExternalUrl: vi.fn(),
 }));
 
+vi.mock('@/utils/capacitor', () => ({
+  isCapacitor: vi.fn(() => false),
+}));
+
+import { isCapacitor } from '@/utils/capacitor';
+
 function payload(overrides: Partial<AdPlacementPayload>): AdPlacementPayload {
   return {
     campaignId: 'c1',
@@ -63,32 +69,55 @@ describe('executeAdClick OPEN_URL static pages', () => {
     expect(navigate).not.toHaveBeenCalled();
   });
 
-  it.each([
-    ['Capacitor', 'https://localhost'],
-    ['local web', 'http://localhost:3001'],
-  ])(
-    'keeps an absolute Bandeja birthday landing in the current document on %s',
-    async (_surface, origin) => {
-      const assign = vi.fn();
-      vi.stubGlobal('window', {
-        location: { assign, origin, href: `${origin}/` },
-      });
-      const navigate = vi.fn();
+  it('keeps an absolute Bandeja birthday landing in the current document on web', async () => {
+    vi.mocked(isCapacitor).mockReturnValue(false);
+    const assign = vi.fn();
+    vi.stubGlobal('window', {
+      location: {
+        assign,
+        origin: 'http://localhost:3001',
+        href: 'http://localhost:3001/',
+      },
+    });
+    const navigate = vi.fn();
 
-      await executeAdClick(
-        payload({
-          clickAction: 'OPEN_URL',
-          clickUrl:
-            'https://bandeja.me/LizaBirthday2026?locale=ru&theme=dark&ad_token=token',
-        }),
-        navigate as never,
-      );
+    await executeAdClick(
+      payload({
+        clickAction: 'OPEN_URL',
+        clickUrl:
+          'https://bandeja.me/LizaBirthday2026?locale=ru&theme=dark&ad_token=token',
+      }),
+      navigate as never,
+    );
 
-      expect(assign).toHaveBeenCalledWith(
-        '/LizaBirthday2026?locale=ru&theme=dark&ad_token=token',
-      );
-      expect(openExternalUrl).not.toHaveBeenCalled();
-      expect(navigate).not.toHaveBeenCalled();
-    },
-  );
+    expect(assign).toHaveBeenCalledWith(
+      '/LizaBirthday2026?locale=ru&theme=dark&ad_token=token',
+    );
+    expect(openExternalUrl).not.toHaveBeenCalled();
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it('opens absolute Bandeja birthday landing externally on Capacitor', async () => {
+    vi.mocked(isCapacitor).mockReturnValue(true);
+    const assign = vi.fn();
+    vi.stubGlobal('window', {
+      location: {
+        assign,
+        origin: 'https://localhost',
+        href: 'https://localhost/',
+      },
+    });
+    const navigate = vi.fn();
+    const clickUrl =
+      'https://bandeja.me/LizaBirthday2026?locale=ru&theme=dark&ad_token=token';
+
+    await executeAdClick(
+      payload({ clickAction: 'OPEN_URL', clickUrl }),
+      navigate as never,
+    );
+
+    expect(openExternalUrl).toHaveBeenCalledWith(clickUrl);
+    expect(assign).not.toHaveBeenCalled();
+    expect(navigate).not.toHaveBeenCalled();
+  });
 });
