@@ -122,6 +122,28 @@ describe('findFilter', () => {
     expect(passesFindFilter(game, viewer, state)).toBe(false);
   });
 
+  it('keeps BAR events regardless of rating filters or stale rating metadata', () => {
+    const bar = baseGame({
+      entityType: 'BAR',
+      minLevel: 5,
+      maxLevel: 7,
+      affectsRating: true,
+    });
+    const viewer = baseViewer({ level: 3, sportProfiles: undefined });
+    const state = baseState({
+      filterSuitableRating: true,
+      findDiscoveryEnabled: true,
+      filterNoRating: true,
+      panel: {
+        ...DEFAULT_AVAILABLE_GAME_PANEL_FILTERS,
+        filterLevelMin: 1,
+        filterLevelMax: 3,
+      },
+    });
+
+    expect(passesFindFilter(bar, viewer, state)).toBe(true);
+  });
+
   it('hides private games unless participant or admin show-private', () => {
     const game = baseGame({ isPublic: false });
     const outsider = baseViewer({ id: 'outsider' });

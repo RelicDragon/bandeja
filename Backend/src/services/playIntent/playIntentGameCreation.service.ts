@@ -209,6 +209,7 @@ export class PlayIntentGameCreationService {
     });
     if (!city) throw new ApiError(404, 'City not found');
     const gameCriteria = {
+      entityType: context.entityType,
       dateKey: formatInTimeZone(context.startTime, city.timezone, 'yyyy-MM-dd'),
       clubId: context.clubId,
       startTime: context.startTime,

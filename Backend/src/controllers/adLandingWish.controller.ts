@@ -1,7 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
 import { asyncHandler } from '../utils/asyncHandler';
 import { ApiError } from '../utils/ApiError';
-import { createAdLandingWish } from '../services/ads/adLandingWish.service';
+import {
+  createAdLandingWish,
+  listPublicAdLandingWishes,
+} from '../services/ads/adLandingWish.service';
 import {
   adLandingKeyParamSchema,
   adLandingWishCreateSchema,
@@ -28,6 +31,26 @@ export const postAdLandingWish = asyncHandler(
         linkedUser: Boolean(wish.userId),
         createdAt: wish.createdAt.toISOString(),
       },
+    });
+  }
+);
+
+export const getAdLandingWishes = asyncHandler(
+  async (req: Request, res: Response, _next: NextFunction) => {
+    const keyParsed = adLandingKeyParamSchema.safeParse(req.params.landingKey);
+    if (!keyParsed.success) {
+      throw new ApiError(404, 'Landing not found', true, { code: 'ads.landing.notFound' });
+    }
+
+    const wishes = await listPublicAdLandingWishes(keyParsed.data);
+    res.setHeader('Cache-Control', 'public, max-age=30, stale-while-revalidate=120');
+    res.json({
+      success: true,
+      total: wishes.length,
+      wishes: wishes.map((wish) => ({
+        ...wish,
+        createdAt: wish.createdAt.toISOString(),
+      })),
     });
   }
 );

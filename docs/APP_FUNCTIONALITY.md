@@ -98,6 +98,7 @@ These are surprising, load-bearing choices still true in code:
 | **Court occupancy** | FE owns external snapshot refresh; BE returns merged occupancy blocks (app games + admin holds + external busy). Snapshot freshness: `BOOKTIME_SNAPSHOT_FRESH_MS` (60s) — shared constant used for Booktime/Padeloo/Klikteren snapshot staleness. |
 | **External booking** | Provider ports in `@shared/booking/` with adapters for **Booktime**, **Padeloo**, and **Klikteren** (`ClubIntegrationType`). Separate persistence per provider (`UserClub*Auth` + `Club*BusySnapshot`). Shared freshness constant `BOOKTIME_SNAPSHOT_FRESH_MS` (60s). |
 | **Open chat thread** | Live projection module (`threadLiveProjection`) — inbox can update while an open thread must still apply inbound + read-receipt paths without requiring refresh. Bootstrap invariants live in `Frontend/src/services/chat/threadOpen/types.ts`. |
+| **Play-intent notifications** | Intent/game matching is transactionally queued. Recipient delivery is persisted per event + user + channel, revalidated before send, retried with backoff, and deduplicated by that key. Do not replace it with post-commit fire-and-forget sends. |
 
 ### 2.3 Shared packages & modules
 
@@ -1188,7 +1189,7 @@ Each sport in the registry defines:
 | PWA / service worker cache | ✓ | — | — | — | — | — |
 | Apple Sign-In | — | ✓ | — | — | — | — |
 | Google Sign-In | ✓ | — | ✓ | — | — | — |
-| Push notifications | ✓ (web push where supported) | ✓ APNs | ✓ FCM | — | bot msgs | mass push |
+| Push notifications | — | ✓ APNs | ✓ FCM | — | bot msgs | mass push |
 | Inline chat reply from notification | limited | ✓ (+ token-only when killed) | ✓ (+ native replyToken) | — | — | — |
 | Invite actions from notification shade | — | partial | ✓ game + team | — | inline buttons | — |
 | Rich push (image/video/story thumb) | — | ✓ (+ NSE) | ✓ MessagingStyle | — | — | — |

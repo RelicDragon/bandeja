@@ -10,6 +10,7 @@ import {
   PUSH_CATEGORY_CHAT_REPLY,
   resolveApnsNotificationCategory,
 } from './notifications/chat-push-reply.utils';
+import { deliveryCollapseKey } from './deliveryCollapseKey';
 
 export function shouldSetApnsMutableContent(
   category: string | undefined,
@@ -83,6 +84,10 @@ class PushNotificationService {
       };
       notification.topic = config.apns.bundleId;
       notification.sound = payload.sound || 'default';
+      const collapseId = deliveryCollapseKey(payload.data?.deliveryKey);
+      if (collapseId) {
+        notification.collapseId = collapseId;
+      }
       if (payload.badge !== undefined) {
         notification.badge = payload.badge;
       }

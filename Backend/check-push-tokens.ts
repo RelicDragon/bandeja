@@ -69,10 +69,15 @@ async function checkPushTokens() {
       firstName: true,
       lastName: true,
       phone: true,
-      sendPushMessages: true,
-      sendPushInvites: true,
-      sendPushDirectMessages: true,
-      sendPushReminders: true
+      notificationPreferences: {
+        where: { channelType: 'PUSH' },
+        select: {
+          sendMessages: true,
+          sendInvites: true,
+          sendDirectMessages: true,
+          sendReminders: true
+        }
+      }
     }
   });
 
@@ -86,10 +91,11 @@ async function checkPushTokens() {
   console.log(`Phone: ${user.phone}`);
   console.log(`User ID: ${user.id}`);
   console.log('\n=== Push Notification Settings ===');
-  console.log(`Send Push Messages: ${user.sendPushMessages}`);
-  console.log(`Send Push Invites: ${user.sendPushInvites}`);
-  console.log(`Send Push Direct Messages: ${user.sendPushDirectMessages}`);
-  console.log(`Send Push Reminders: ${user.sendPushReminders}`);
+  const pushPreferences = user.notificationPreferences[0];
+  console.log(`Send Push Messages: ${pushPreferences?.sendMessages ?? true}`);
+  console.log(`Send Push Invites: ${pushPreferences?.sendInvites ?? true}`);
+  console.log(`Send Push Direct Messages: ${pushPreferences?.sendDirectMessages ?? true}`);
+  console.log(`Send Push Reminders: ${pushPreferences?.sendReminders ?? true}`);
 
   const tokens = await prisma.pushToken.findMany({
     where: { userId },

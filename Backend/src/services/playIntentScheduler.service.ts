@@ -2,6 +2,7 @@ import * as cron from 'node-cron';
 import { PlayIntentService } from './playIntent/playIntent.service';
 import { MatchProposalService } from './playIntent/matchProposal.service';
 import { InviteService } from './invite.service';
+import { PlayIntentMatchService } from './playIntent/playIntentMatch.service';
 
 export class PlayIntentScheduler {
   private expireCron: cron.ScheduledTask | null = null;
@@ -15,9 +16,10 @@ export class PlayIntentScheduler {
         const invites = await InviteService.expireDueInvites();
         const intents = await PlayIntentService.expireDueIntents();
         const proposals = await MatchProposalService.expireDue();
-        if (invites > 0 || intents > 0 || proposals > 0) {
+        const matches = await PlayIntentMatchService.runClusterPass();
+        if (invites > 0 || intents > 0 || proposals > 0 || matches > 0) {
           console.log(
-            `[PlayIntentScheduler] Expired invites=${invites} intents=${intents} proposals=${proposals}`,
+            `[PlayIntentScheduler] Expired invites=${invites} intents=${intents} proposals=${proposals}; proposals created=${matches}`,
           );
         }
       } catch (err) {
@@ -27,7 +29,7 @@ export class PlayIntentScheduler {
       }
     });
 
-    console.log('🎾 Play Intent scheduler started (expire: 5m)');
+    console.log('🎾 Play Intent scheduler started (expire/reconcile: 5m)');
   }
 
   stop() {

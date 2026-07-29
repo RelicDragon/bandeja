@@ -71,11 +71,14 @@ const translations: Record<string, Record<string, string>> = {
     'telegram.errorLoadingMatch': 'Failed to open match',
     'telegram.openApp': 'Open',
     'playIntent.matchTitle': 'Players ready to play',
-    'playIntent.matchBody': 'Open to form a game together',
+    'playIntent.matchBody':
+      '{{count}} players · {{sport}} · {{when}} · {{city}}. Open to form a game.',
     'playIntent.gameMatchTitle': 'A game fits your wish',
-    'playIntent.gameMatchBody': 'Open to join — slots are available',
+    'playIntent.gameMatchBody':
+      '{{sport}} · {{when}} · {{place}} · {{slots}} slots open. Tap to join.',
     'playIntent.ownerPingTitle': 'Players are looking',
-    'playIntent.ownerPingBody': 'Someone nearby wants a game like yours',
+    'playIntent.ownerPingBody':
+      'Matching players: {{count}} · {{sport}} · {{when}} · {{place}}.',
     'playIntent.today': 'Today',
     'playIntent.tomorrow': 'Tomorrow',
     'playIntent.dayAfter': 'Day after tomorrow',
@@ -389,6 +392,15 @@ const translations: Record<string, Record<string, string>> = {
     'telegram.showTraining': 'Показать тренировку',
     'telegram.showBar': 'Показать бар',
     'telegram.playToo': 'Я тоже хочу играть',
+    'playIntent.matchTitle': 'Игроки готовы играть',
+    'playIntent.matchBody':
+      'Игроков: {{count}} · {{sport}} · {{when}} · {{city}}. Откройте, чтобы создать игру.',
+    'playIntent.gameMatchTitle': 'Есть подходящая игра',
+    'playIntent.gameMatchBody':
+      '{{sport}} · {{when}} · {{place}} · свободных мест: {{slots}}. Нажмите, чтобы присоединиться.',
+    'playIntent.ownerPingTitle': 'Игроки ищут игру',
+    'playIntent.ownerPingBody':
+      'Подходящих игроков: {{count}} · {{sport}} · {{when}} · {{place}}.',
     'playIntent.today': 'Сегодня',
     'playIntent.tomorrow': 'Завтра',
     'playIntent.dayAfter': 'Послезавтра',
@@ -684,6 +696,15 @@ const translations: Record<string, Record<string, string>> = {
     'telegram.showTraining': 'Prikaži trening',
     'telegram.showBar': 'Prikaži bar',
     'telegram.playToo': 'I ja želim da igram',
+    'playIntent.matchTitle': 'Igrači su spremni',
+    'playIntent.matchBody':
+      'Igrača: {{count}} · {{sport}} · {{when}} · {{city}}. Otvori da napravite igru.',
+    'playIntent.gameMatchTitle': 'Pronađena je odgovarajuća igra',
+    'playIntent.gameMatchBody':
+      '{{sport}} · {{when}} · {{place}} · slobodnih mesta: {{slots}}. Dodirni da se pridružiš.',
+    'playIntent.ownerPingTitle': 'Igrači traže igru',
+    'playIntent.ownerPingBody':
+      'Odgovarajućih igrača: {{count}} · {{sport}} · {{when}} · {{place}}.',
     'playIntent.today': 'Danas',
     'playIntent.tomorrow': 'Sutra',
     'playIntent.dayAfter': 'Prekosutra',
@@ -979,6 +1000,15 @@ const translations: Record<string, Record<string, string>> = {
     'telegram.showTraining': 'Mostrar entrenamiento',
     'telegram.showBar': 'Mostrar bar',
     'telegram.playToo': 'Yo también quiero jugar',
+    'playIntent.matchTitle': 'Jugadores listos para jugar',
+    'playIntent.matchBody':
+      '{{count}} jugadores · {{sport}} · {{when}} · {{city}}. Abre para crear un partido.',
+    'playIntent.gameMatchTitle': 'Hay un partido para ti',
+    'playIntent.gameMatchBody':
+      '{{sport}} · {{when}} · {{place}} · {{slots}} plazas libres. Toca para unirte.',
+    'playIntent.ownerPingTitle': 'Hay jugadores buscando',
+    'playIntent.ownerPingBody':
+      'Jugadores compatibles: {{count}} · {{sport}} · {{when}} · {{place}}.',
     'playIntent.today': 'Hoy',
     'playIntent.tomorrow': 'Mañana',
     'playIntent.dayAfter': 'Pasado mañana',
@@ -1274,6 +1304,15 @@ const translations: Record<string, Record<string, string>> = {
     'telegram.showTraining': 'Zobrazit trénink',
     'telegram.showBar': 'Zobrazit bar',
     'telegram.playToo': 'Chci si také zahrát',
+    'playIntent.matchTitle': 'Hráči jsou připraveni',
+    'playIntent.matchBody':
+      '{{count}} hráčů · {{sport}} · {{when}} · {{city}}. Otevřete a vytvořte hru.',
+    'playIntent.gameMatchTitle': 'Našli jsme vhodnou hru',
+    'playIntent.gameMatchBody':
+      '{{sport}} · {{when}} · {{place}} · volná místa: {{slots}}. Klepnutím se připojíte.',
+    'playIntent.ownerPingTitle': 'Hráči hledají hru',
+    'playIntent.ownerPingBody':
+      'Vhodní hráči: {{count}} · {{sport}} · {{when}} · {{place}}.',
     'playIntent.today': 'Dnes',
     'playIntent.tomorrow': 'Zítra',
     'playIntent.dayAfter': 'Pozítří',

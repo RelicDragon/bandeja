@@ -54,9 +54,28 @@ function testFcmIncludesUnreadBadgeInData(): void {
   assert.equal(message.data?.unreadBadgeCount, '12');
 }
 
+function testFcmCollapsesOutboxRetries(): void {
+  const message = buildFcmMessage('token-4', {
+    type: NotificationType.FOLLOWED_USER_PLAY_INTENT,
+    title: 'A friend wants to play',
+    body: 'Tap to join',
+    data: {
+      playIntentId: 'intent-1',
+      deliveryKey: 'FOLLOWED_USER_PLAY_INTENT:intent-1',
+    },
+  });
+
+  assert.equal(message.android?.collapseKey?.length, 64);
+  assert.equal(
+    message.data?.deliveryKey,
+    'FOLLOWED_USER_PLAY_INTENT:intent-1',
+  );
+}
+
 void (async () => {
   testFcmIncludesAndroidImageWhenPreviewPresent();
   testFcmOmitsAndroidImageWithoutPreview();
   testFcmIncludesUnreadBadgeInData();
+  testFcmCollapsesOutboxRetries();
   console.log('fcm.service.test.ts: ok');
 })();

@@ -493,7 +493,11 @@ export const MyTab = () => {
             </AnimatedMount>
           )}
           {user && (
-            <PlayIntentHomeStrip cityId={user.currentCity?.id} sport={primarySport} />
+            <PlayIntentHomeStrip
+              cityId={user.currentCity?.id}
+              sport={primarySport}
+              acceptSharedDeepLinks
+            />
           )}
           {!hideHomeHeroAd && user && (
             <AdSlot placement={AD_PLACEMENTS.HOME_HERO} />
@@ -603,7 +607,11 @@ export const MyTab = () => {
             </AnimatedMount>
           )}
           {user && (
-            <PlayIntentHomeStrip cityId={user.currentCity?.id} sport={primarySport} />
+            <PlayIntentHomeStrip
+              cityId={user.currentCity?.id}
+              sport={primarySport}
+              acceptSharedDeepLinks
+            />
           )}
           {!hideHomeHeroAd && user && (
             <AdSlot placement={AD_PLACEMENTS.HOME_HERO} />

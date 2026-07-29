@@ -91,6 +91,7 @@ import {
   linkedPlayIntentInviteeIds,
   selectPlayIntentCreateSource,
 } from '@/utils/selectPlayIntentCreateSource';
+import { resolveCreateGameRatingFields } from '@/utils/createGameRatingFields';
 
 interface CreateGameProps {
   entityType: EntityType;
@@ -1318,6 +1319,11 @@ export const CreateGame = ({
     setLoading(true);
     try {
       const bookingFields = await prepareBookingFields(overrides);
+      const ratingFields = resolveCreateGameRatingFields(
+        entityType,
+        playerLevelRange,
+        isRatingGame,
+      );
 
       const gameData: Record<string, unknown> = {
         sport: selectedSport,
@@ -1334,8 +1340,8 @@ export const CreateGame = ({
           ? playersPerMatch
           : undefined,
         minParticipants: 2,
-        minLevel: playerLevelRange[0],
-        maxLevel: playerLevelRange[1],
+        minLevel: ratingFields.minLevel,
+        maxLevel: ratingFields.maxLevel,
         isPublic,
         anyoneCanInvite,
         allowDirectJoin,
@@ -1361,7 +1367,7 @@ export const CreateGame = ({
       if (entityType !== 'TRAINING') {
         const setup = gameFormat.setupPayload;
         gameData.gameType = gameFormat.gameType;
-        gameData.affectsRating = isRatingGame;
+        gameData.affectsRating = ratingFields.affectsRating;
         gameData.resultsByAnyone = entityType === 'TOURNAMENT' ? false : resultsByAnyone;
         const fixedTeamsApplicable =
           entitySupportsPlayersPerMatchControls(entityType) &&

@@ -45,7 +45,17 @@ export const NotificationSettingsModal = ({
 }: NotificationSettingsModalProps) => {
   const { t } = useTranslation();
   const [activeChannel, setActiveChannel] = useState<NotificationChannelType | null>(null);
-  const TOGGLE_KEYS: (keyof NotificationPreference)[] = ['sendMessages', 'sendInvites', 'sendDirectMessages', 'sendReminders', 'sendWalletNotifications', 'sendMarketplaceNotifications', 'sendTeamNotifications', 'sendPlayIntentNotifications'];
+  const TOGGLE_KEYS: (keyof NotificationPreference)[] = [
+    'sendMessages',
+    'sendInvites',
+    'sendDirectMessages',
+    'sendReminders',
+    'sendWalletNotifications',
+    'sendMarketplaceNotifications',
+    'sendTeamNotifications',
+    'sendPlayIntentNotifications',
+    'sendPlayIntentSocialNotifications',
+  ];
   const [isSaving, setIsSaving] = useState(false);
   const [localPrefs, setLocalPrefs] = useState<Record<string, NotificationPreference>>({});
   const [highlightedToggle, setHighlightedToggle] = useState<{
@@ -62,7 +72,9 @@ export const NotificationSettingsModal = ({
         map[p.channelType] = {
           ...p,
           sendTeamNotifications: p.sendTeamNotifications ?? true,
-          sendPlayIntentNotifications: p.sendPlayIntentNotifications ?? true,
+          sendPlayIntentNotifications: p.sendPlayIntentNotifications,
+          sendPlayIntentSocialNotifications:
+            p.sendPlayIntentSocialNotifications,
         };
       }
       setLocalPrefs(map);
@@ -77,7 +89,8 @@ export const NotificationSettingsModal = ({
       map[p.channelType] = {
         ...p,
         sendTeamNotifications: p.sendTeamNotifications ?? true,
-        sendPlayIntentNotifications: p.sendPlayIntentNotifications ?? true,
+        sendPlayIntentNotifications: p.sendPlayIntentNotifications,
+        sendPlayIntentSocialNotifications: p.sendPlayIntentSocialNotifications,
       };
     }
     setLocalPrefs(map);
@@ -98,6 +111,8 @@ export const NotificationSettingsModal = ({
         sendMarketplaceNotifications: p.sendMarketplaceNotifications,
         sendTeamNotifications: p.sendTeamNotifications,
         sendPlayIntentNotifications: p.sendPlayIntentNotifications,
+        sendPlayIntentSocialNotifications:
+          p.sendPlayIntentSocialNotifications,
       }));
       const res = await usersApi.updateNotificationPreferences(payload);
       onUpdate(res.data);
@@ -272,6 +287,10 @@ export const NotificationSettingsModal = ({
     sendPlayIntentNotifications: {
       label: 'profile.playIntentNotifications',
       desc: 'profile.playIntentNotificationsDescription',
+    },
+    sendPlayIntentSocialNotifications: {
+      label: 'profile.playIntentSocialNotifications',
+      desc: 'profile.playIntentSocialNotificationsDescription',
     },
   };
 

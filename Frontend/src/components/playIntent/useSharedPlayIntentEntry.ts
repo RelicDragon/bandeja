@@ -9,6 +9,10 @@ import {
 } from '@/api/playIntents';
 import { playIntentKeys } from '@/hooks/usePlayIntent';
 import type { Sport } from '@/types';
+import { resolveSharedPlayIntentProgress } from './sharedPlayIntentProgress';
+
+/** Defense if multiple hosts ever listen for the same join deep link. */
+const automaticJoinLocks = new Set<string>();
 
 export function useSharedPlayIntentEntry(enabled: boolean) {
   const { t } = useTranslation();
@@ -20,8 +24,8 @@ export function useSharedPlayIntentEntry(enabled: boolean) {
   const [joinedSport, setJoinedSport] = useState<Sport | null>(null);
   const joiningRef = useRef(false);
   const automaticJoinRef = useRef<string | null>(null);
-  const sharedId = searchParams.get('playIntent');
-  const automaticJoinId = searchParams.get('joinPlayIntent');
+  const sharedId = enabled ? searchParams.get('playIntent') : null;
+  const automaticJoinId = enabled ? searchParams.get('joinPlayIntent') : null;
 
   const replaceParams = useCallback(
     (configure: (next: URLSearchParams) => void) => {
@@ -130,16 +134,25 @@ export function useSharedPlayIntentEntry(enabled: boolean) {
     }
     if (
       !enabled ||
-      automaticJoinRef.current === automaticJoinId
+      automaticJoinRef.current === automaticJoinId ||
+      automaticJoinLocks.has(automaticJoinId)
     ) {
       return;
     }
     automaticJoinRef.current = automaticJoinId;
-    void join(automaticJoinId);
+    automaticJoinLocks.add(automaticJoinId);
+    void join(automaticJoinId).finally(() => {
+      automaticJoinLocks.delete(automaticJoinId);
+    });
   }, [automaticJoinId, enabled, join]);
 
-  const progress: 'loading' | 'joining' | null =
-    loadingShared ? 'loading' : joining && !intent ? 'joining' : null;
+  const progress = resolveSharedPlayIntentProgress({
+    loading: loadingShared,
+    joining,
+    hasDialogIntent: !!intent,
+    joinedSport: !!joinedSport,
+    lobbyRequested: searchParams.get('lobby') === '1',
+  });
 
   return {
     intent,

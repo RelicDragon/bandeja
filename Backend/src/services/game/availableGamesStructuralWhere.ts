@@ -153,9 +153,14 @@ export function appendStructuralFiltersToWhere(
     const max = filters.levelMax ?? DEFAULT_LEVEL_MAX;
     // Overlap: game.maxLevel >= filterMin AND game.minLevel <= filterMax (null = open)
     and.push({
-      AND: [
-        { OR: [{ maxLevel: null }, { maxLevel: { gte: min } }] },
-        { OR: [{ minLevel: null }, { minLevel: { lte: max } }] },
+      OR: [
+        { entityType: 'BAR' },
+        {
+          AND: [
+            { OR: [{ maxLevel: null }, { maxLevel: { gte: min } }] },
+            { OR: [{ minLevel: null }, { minLevel: { lte: max } }] },
+          ],
+        },
       ],
     });
   }

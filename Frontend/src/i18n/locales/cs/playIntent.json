@@ -90,6 +90,7 @@
     "sharedJoiningTitle": "Spouštíme tvoje hledání",
     "sharedJoiningHint": "Kopírujeme preference a připravujeme lobby…",
     "sharedUnavailable": "Tento požadavek už není dostupný",
-    "sharedAccessDenied": "Tento požadavek pro tebe není dostupný"
+    "sharedAccessDenied": "Tento požadavek pro tebe není dostupný",
+    "proposalUnavailable": "Tento zápas už není dostupný. Obnovili jsme tvoji lobby."
   }
 }

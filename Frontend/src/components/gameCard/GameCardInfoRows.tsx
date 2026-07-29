@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { MapPin, Users, Plane, Check, CalendarOff } from 'lucide-react';
 import type { Game } from '@/types';
 import { GameCardDateTile } from '@/components/gameCard/GameCardDateTile';
+import { gameShowsLevelBand } from '@/utils/gameRatingSemantics';
 
 interface GameCardInfoRowsProps {
   game: Game;
@@ -27,7 +28,7 @@ export const GameCardInfoRows = memo(function GameCardInfoRows({
   className = '',
 }: GameCardInfoRowsProps) {
   const { t } = useTranslation();
-  const hasLevels = typeof game.minLevel === 'number' && typeof game.maxLevel === 'number';
+  const hasLevels = gameShowsLevelBand(game);
   const fillRatio = game.maxParticipants
     ? Math.min(playingCount / game.maxParticipants, 1)
     : 0;

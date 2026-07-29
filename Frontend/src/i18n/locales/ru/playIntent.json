@@ -90,6 +90,7 @@
     "sharedJoiningTitle": "Начинаем ваш поиск",
     "sharedJoiningHint": "Копируем пожелания и готовим лобби корта…",
     "sharedUnavailable": "Этот запрос на игру больше недоступен",
-    "sharedAccessDenied": "Этот запрос на игру вам недоступен"
+    "sharedAccessDenied": "Этот запрос на игру вам недоступен",
+    "proposalUnavailable": "Этот матч больше недоступен. Мы обновили ваш список игроков."
   }
 }

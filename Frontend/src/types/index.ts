@@ -256,16 +256,6 @@ export interface User extends BasicUser {
   preferredHandRight?: boolean;
   preferredCourtSideLeft?: boolean;
   preferredCourtSideRight?: boolean;
-  sendTelegramMessages?: boolean;
-  sendTelegramInvites?: boolean;
-  sendTelegramDirectMessages?: boolean;
-  sendTelegramReminders?: boolean;
-  sendTelegramWalletNotifications?: boolean;
-  sendPushMessages?: boolean;
-  sendPushInvites?: boolean;
-  sendPushDirectMessages?: boolean;
-  sendPushReminders?: boolean;
-  sendPushWalletNotifications?: boolean;
   wallet?: number;
   blockedUserIds?: string[];
   showOnlineStatus?: boolean;

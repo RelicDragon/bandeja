@@ -4,10 +4,11 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { AnimatedMount } from '@/components/motion/AnimatedMount';
 import { useAuthStore } from '@/store/authStore';
@@ -88,21 +89,33 @@ function timeHint(intent: PlayIntent | null | undefined, t: (k: string) => strin
   }
 }
 
+/** My + Find both mount providers; only one may claim a proposal deep link. */
+const proposalDeepLinkLocks = new Set<string>();
+
 type ProviderProps = {
   cityId?: string | null;
   sport?: Sport | string | null;
+  /** Push/Telegram “play too” deep links are owned by My tab only. */
+  acceptSharedDeepLinks?: boolean;
   children: ReactNode;
 };
 
-export function PlayIntentProvider({ cityId, sport, children }: ProviderProps) {
+export function PlayIntentProvider({
+  cityId,
+  sport,
+  acceptSharedDeepLinks = false,
+  children,
+}: ProviderProps) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
   const [searchParams, setSearchParams] = useSearchParams();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [sheetMode, setSheetMode] = useState<'compose' | 'lobby'>('compose');
   const [deepProposal, setDeepProposal] = useState<MatchProposalSummary | null>(null);
+  const proposalRequestRef = useRef<string | null>(null);
 
-  const sharedEntry = useSharedPlayIntentEntry(!!user);
+  const sharedEntry = useSharedPlayIntentEntry(!!user && acceptSharedDeepLinks);
   const { clearJoinedSport, joinedSport } = sharedEntry;
   const resolvedSport = parseSport(
     joinedSport || sport || user?.primarySport || 'PADEL',
@@ -140,21 +153,82 @@ export function PlayIntentProvider({ cityId, sport, children }: ProviderProps) {
 
   useEffect(() => {
     const proposalId = searchParams.get('proposal');
-    if (!proposalId || !user) return;
+    if (!proposalId) {
+      proposalRequestRef.current = null;
+      return;
+    }
+    if (
+      !user ||
+      proposalRequestRef.current === proposalId ||
+      proposalDeepLinkLocks.has(proposalId)
+    ) {
+      return;
+    }
+    proposalRequestRef.current = proposalId;
+    proposalDeepLinkLocks.add(proposalId);
+    let clearProposalParam = false;
     void playIntentsApi
       .getProposal(proposalId)
       .then((p) => {
+        if (proposalRequestRef.current !== proposalId) return;
+        clearProposalParam = true;
+        if (p.gameId) {
+          navigate(`/games/${p.gameId}`);
+          return;
+        }
         setDeepProposal(p);
         setSheetMode('lobby');
         setSheetOpen(true);
       })
-      .catch(() => {})
+      .catch((error: unknown) => {
+        if (proposalRequestRef.current !== proposalId) return;
+        const response = (
+          error as {
+            response?: { status?: number; data?: { code?: string } };
+          }
+        ).response;
+        const unavailable =
+          response?.data?.code === 'playIntent.proposalUnavailable' ||
+          response?.status === 404;
+        if (unavailable) {
+          clearProposalParam = true;
+          toast.error(t('playIntent.proposalUnavailable'));
+          void refetch();
+          if (looking) {
+            setSheetMode('lobby');
+            setSheetOpen(true);
+          }
+          return;
+        }
+        // Keep ?proposal= for retry after transient network/API failures.
+        proposalRequestRef.current = null;
+        toast.error(
+          t('common.error', { defaultValue: 'Something went wrong' }),
+        );
+      })
       .finally(() => {
-        const next = new URLSearchParams(searchParams);
-        next.delete('proposal');
-        setSearchParams(next, { replace: true });
+        proposalDeepLinkLocks.delete(proposalId);
+        if (!clearProposalParam) return;
+        setSearchParams(
+          (current) => {
+            const next = new URLSearchParams(current);
+            if (next.get('proposal') === proposalId) {
+              next.delete('proposal');
+            }
+            return next;
+          },
+          { replace: true },
+        );
       });
-  }, [searchParams, setSearchParams, user]);
+  }, [
+    looking,
+    navigate,
+    refetch,
+    searchParams,
+    setSearchParams,
+    t,
+    user,
+  ]);
 
   useEffect(() => {
     if (searchParams.get('lobby') === '1' && looking) {
@@ -326,12 +400,18 @@ export function PlayIntentIdleCta() {
 export function PlayIntentHomeStrip({
   cityId,
   sport,
+  acceptSharedDeepLinks = false,
 }: {
   cityId?: string | null;
   sport?: Sport | string | null;
+  acceptSharedDeepLinks?: boolean;
 }) {
   return (
-    <PlayIntentProvider cityId={cityId} sport={sport}>
+    <PlayIntentProvider
+      cityId={cityId}
+      sport={sport}
+      acceptSharedDeepLinks={acceptSharedDeepLinks}
+    >
       <PlayIntentIdleCta />
       <PlayIntentActiveStrip />
     </PlayIntentProvider>

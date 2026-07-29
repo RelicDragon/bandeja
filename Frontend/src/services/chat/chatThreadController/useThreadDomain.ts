@@ -20,7 +20,12 @@ export interface UseThreadDomainParams {
   game: Game | null;
   groupChannel: GroupChannel | null;
   userChat: UserChat | null;
-  user: { id: string; language?: string | null; isAdmin?: boolean | null } | null;
+  user: {
+    id: string;
+    language?: string | null;
+    translateToLanguage?: string | null;
+    isAdmin?: boolean | null;
+  } | null;
   messages: ChatMessageWithStatus[];
   setMessages: React.Dispatch<React.SetStateAction<ChatMessageWithStatus[]>>;
   messagesRef: React.MutableRefObject<ChatMessageWithStatus[]>;
@@ -110,7 +115,7 @@ export function useThreadDomain(params: UseThreadDomainParams) {
     id,
     contextType,
     effectiveChatType,
-    userLanguage: user?.language,
+    user,
     setMessages,
     messagesRef,
     onAutoTranslateConfigFromSocket: autoTranslate.setAutoTranslateFromSocket,

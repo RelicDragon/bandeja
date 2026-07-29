@@ -4,7 +4,7 @@ import { ChatContextType, ChatType } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
 import { MessageService } from './message.service';
 import { GameChatViewerAccessService } from './gameChatViewerAccess.service';
-import { TranslationService } from './translation.service';
+import { resolveTranslationTargetLanguage } from './resolveTranslationTargetLanguage';
 import { ChatSyncEventService } from './chatSyncEvent.service';
 import { getChatNotifier } from './chatNotifier';
 
@@ -43,9 +43,9 @@ export class PinnedMessageService {
     const messages = pins.map((p) => p.message).filter(Boolean);
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { language: true }
+      select: { language: true, translateToLanguage: true }
     });
-    const languageCode = user ? TranslationService.extractLanguageCode(user.language) : 'en';
+    const languageCode = resolveTranslationTargetLanguage(user);
     return MessageService.enrichMessagesWithTranslations(messages, languageCode);
   }
 

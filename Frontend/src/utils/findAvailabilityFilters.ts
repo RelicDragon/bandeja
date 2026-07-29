@@ -36,6 +36,7 @@ export function passesFindAvailableSlotsFilter(game: Game, user: User | null | u
 }
 
 export function passesFindSuitableRatingFilter(game: Game, user: User | null | undefined): boolean {
+  if (game.entityType === 'BAR') return true;
   if (!user) return true;
 
   const gameSport = parseGameSport(game.sport);

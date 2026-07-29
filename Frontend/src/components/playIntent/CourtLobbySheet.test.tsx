@@ -11,11 +11,13 @@ import type {
 
 const mocks = vi.hoisted(() => ({
   declineProposal: vi.fn().mockResolvedValue({ declined: true }),
+  confirmProposal: vi.fn(),
   fetchFavorites: vi.fn().mockResolvedValue(undefined),
   navigate: vi.fn(),
   onChanged: vi.fn(),
   onOpenChange: vi.fn(),
   t: vi.fn((key: string) => key),
+  toastError: vi.fn(),
 }));
 
 (
@@ -33,7 +35,7 @@ vi.mock('react-router-dom', () => ({
 }));
 
 vi.mock('react-hot-toast', () => ({
-  default: { error: vi.fn() },
+  default: { error: mocks.toastError },
 }));
 
 vi.mock('@/components/ui/Drawer', () => ({
@@ -157,7 +159,7 @@ vi.mock('@/api/playIntents', () => ({
   playIntentsApi: {
     addProposalMember: vi.fn(),
     removeProposalMember: vi.fn(),
-    confirmProposal: vi.fn(),
+    confirmProposal: mocks.confirmProposal,
     declineProposal: mocks.declineProposal,
   },
 }));
@@ -282,6 +284,44 @@ describe('CourtLobbySheet proposal dismissal', () => {
     await act(async () => root.render(render(true)));
 
     expect(container.textContent).toContain('playIntent.createGame');
+  });
+
+  it('closes a stale proposal with a clear localized message', async () => {
+    mocks.confirmProposal.mockRejectedValueOnce({
+      response: { data: { code: 'playIntent.proposalUnavailable' } },
+    });
+    const { CourtLobbyPanel } = await import('./CourtLobbySheet');
+
+    await act(async () => {
+      root.render(
+        <CourtLobbyPanel
+          open
+          onOpenChange={mocks.onOpenChange}
+          members={[]}
+          overflow={0}
+          partySize={4}
+          availableCount={0}
+          clusterProgress={4}
+          sport="PADEL"
+          proposal={proposal}
+          onChanged={mocks.onChanged}
+        />,
+      );
+    });
+
+    const createGame = [...container.querySelectorAll('button')].find(
+      (button) => button.textContent === 'playIntent.createGame',
+    );
+    await act(async () => {
+      createGame?.click();
+      await Promise.resolve();
+    });
+
+    expect(mocks.toastError).toHaveBeenCalledWith(
+      'playIntent.proposalUnavailable',
+    );
+    expect(mocks.onChanged).toHaveBeenCalled();
+    expect(mocks.onOpenChange).toHaveBeenCalledWith(false);
   });
 
   it('can create from a ready lobby even when players have other pending proposals', async () => {

@@ -1,3 +1,5 @@
+import type { NotificationChannelType } from '@prisma/client';
+
 export enum PreferenceKey {
   SEND_MESSAGES = 'sendMessages',
   SEND_INVITES = 'sendInvites',
@@ -7,6 +9,7 @@ export enum PreferenceKey {
   SEND_MARKETPLACE_NOTIFICATIONS = 'sendMarketplaceNotifications',
   SEND_TEAM_NOTIFICATIONS = 'sendTeamNotifications',
   SEND_PLAY_INTENT_NOTIFICATIONS = 'sendPlayIntentNotifications',
+  SEND_PLAY_INTENT_SOCIAL_NOTIFICATIONS = 'sendPlayIntentSocialNotifications',
 }
 
 export enum NotificationType {
@@ -74,6 +77,8 @@ export interface NotificationData {
   previewImageUrl?: string;
   previewMediaType?: string;
   mediaCount?: number;
+  /** Stable outbox event key used by push providers to collapse retries. */
+  deliveryKey?: string;
   /** Authoritative unread total for native app icon badge (chat push). */
   unreadBadgeCount?: number;
 }
@@ -96,17 +101,6 @@ export interface UnifiedNotificationRequest {
   payload: NotificationPayload;
   preferTelegram?: boolean;
   preferPush?: boolean;
-}
-
-export interface NotificationPreferences {
-  sendTelegramMessages?: boolean;
-  sendTelegramInvites?: boolean;
-  sendTelegramDirectMessages?: boolean;
-  sendTelegramReminders?: boolean;
-  sendTelegramWalletNotifications?: boolean;
-  sendPushMessages?: boolean;
-  sendPushInvites?: boolean;
-  sendPushDirectMessages?: boolean;
-  sendPushReminders?: boolean;
-  sendPushWalletNotifications?: boolean;
+  /** Restrict delivery to these channels. Preferences are still rechecked. */
+  channels?: NotificationChannelType[];
 }

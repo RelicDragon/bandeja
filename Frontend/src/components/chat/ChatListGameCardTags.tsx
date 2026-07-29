@@ -10,6 +10,7 @@ import { getGameParticipationState } from '@/utils/gameParticipationState';
 import { getGameCardMyParticipationBadge } from '@/utils/gameCardMyParticipationBadge';
 import { getViewerPrimarySport, shouldShowGameCardSportGlyph } from '@/utils/findSportFilter';
 import { parseGameSport } from '@/utils/gameSport';
+import { gameIsNonRating } from '@/utils/gameRatingSemantics';
 
 type Props = {
   game: Game;
@@ -132,7 +133,7 @@ export function ChatListGameCardTags({ game, userId }: Props) {
           {t(`games.entityTypes.${game.entityType}`)}
         </span>
       )}
-      {!game.affectsRating && (
+      {gameIsNonRating(game) && (
         <span className={`${tagClass} bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400`}>
           <Award size={10} />
           <Ban size={10} />

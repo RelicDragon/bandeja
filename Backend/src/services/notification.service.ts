@@ -43,12 +43,35 @@ class NotificationService {
       return { telegram: false, push: false };
     }
 
-    const { userId, type, payload, preferTelegram = false, preferPush = false } = request;
+    const {
+      userId,
+      type,
+      payload,
+      preferTelegram = false,
+      preferPush = false,
+      channels,
+    } = request;
+    const telegramRequested =
+      channels === undefined || channels.includes(NotificationChannelType.TELEGRAM);
+    const pushRequested =
+      channels === undefined || channels.includes(NotificationChannelType.PUSH);
 
     const prefKey = NOTIFICATION_TYPE_TO_PREF[type];
     const [shouldSendTelegram, shouldSendPush] = await Promise.all([
-      preferTelegram || NotificationPreferenceService.doesUserAllow(userId, NotificationChannelType.TELEGRAM, prefKey),
-      preferPush || NotificationPreferenceService.doesUserAllow(userId, NotificationChannelType.PUSH, prefKey),
+      telegramRequested &&
+        (preferTelegram ||
+          NotificationPreferenceService.doesUserAllow(
+            userId,
+            NotificationChannelType.TELEGRAM,
+            prefKey,
+          )),
+      pushRequested &&
+        (preferPush ||
+          NotificationPreferenceService.doesUserAllow(
+            userId,
+            NotificationChannelType.PUSH,
+            prefKey,
+          )),
     ]);
 
     const results = {
@@ -629,8 +652,6 @@ class NotificationService {
         OR: [
           { notificationPreferences: { some: { channelType: NotificationChannelType.PUSH, sendMessages: true } } },
           { notificationPreferences: { some: { channelType: NotificationChannelType.TELEGRAM, sendMessages: true } } },
-          { AND: [{ telegramId: { not: null } }, { sendTelegramMessages: true }] },
-          { AND: [{ pushTokens: { some: {} } }, { sendPushMessages: true }] },
         ],
       },
       select: {

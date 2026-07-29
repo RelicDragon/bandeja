@@ -2,7 +2,7 @@ import { AdCampaignStatus, AdClickAction, AdPlacementKey } from '@prisma/client'
 import prisma from '../../config/database';
 import { mintAdClickToken } from './ad.token.util';
 import { AD_LANDING_LIZA_BIRTHDAY_2026 } from './adLandingWish.constants';
-import { createAdLandingWish } from './adLandingWish.service';
+import { createAdLandingWish, listPublicAdLandingWishes } from './adLandingWish.service';
 
 function assert(cond: boolean, msg: string) {
   if (!cond) {
@@ -31,6 +31,20 @@ async function main() {
   });
   assert(broken.userId === null, 'broken token → null user');
   assert(broken.donationIntent === 'RSD', 'donation RSD');
+
+  const publicWishes = await listPublicAdLandingWishes(AD_LANDING_LIZA_BIRTHDAY_2026);
+  const publicAnon = publicWishes.find((wish) => wish.id === anon.id);
+  const publicBroken = publicWishes.find((wish) => wish.id === broken.id);
+  assert(publicAnon?.displayName === 'Anon Friend', 'public list includes display name');
+  assert(publicAnon?.message === 'Happy birthday!', 'public list includes message');
+  assert(publicBroken?.locale === 'ru', 'public list includes message locale');
+  assert(
+    publicAnon !== undefined &&
+      !('userId' in publicAnon) &&
+      !('campaignId' in publicAnon) &&
+      !('donationIntent' in publicAnon),
+    'public list excludes private attribution and donation fields'
+  );
 
   const user = await prisma.user.findFirst({ select: { id: true } });
   const sponsor =

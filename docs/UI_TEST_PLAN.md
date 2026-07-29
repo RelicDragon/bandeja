@@ -422,14 +422,14 @@ Frontend/e2e/
 | F-65 | Filters persist game→Back | Set panel filters (slots/rating/hide-bar/clubs/bars/time/level/no-rating/private) + entity chip + sport → open game → Back | Same total filter state restored in panel and chips |
 | F-15 | Favorite clubs shortcut | Use favorites in panel | Clubs pre-selected |
 | F-16 | Time range filter | Set start/end time | Games outside range hidden |
-| F-17 | Level range filter | Adjust min/max level | Out-of-range hidden |
+| F-17 | Level range filter | Adjust min/max level with regular games and BAR events present | Out-of-range regular games hidden; BAR events remain visible |
 | F-18 | Sport filter | Switch primary/all sport | API refetch with sport; club list matches sport |
 | F-20 | No-rating filter | Enable no-rating | Only casual games |
 | F-21 | Show private games | `@admin` toggle | Private games appear |
 | F-22 | Reset filters | Reset button | Defaults restored |
 | F-23 | Filter persistence | Set filters → reload; leave Find and return | Filters restored from storage |
 | F-42 | Available slots filter | Enable available slots toggle | Full games hidden |
-| F-43 | Suitable rating filter | Enable suitable rating toggle | Out-of-band level games hidden |
+| F-43 | Suitable rating filter | Enable suitable rating toggle with regular games and BAR events present | Out-of-band regular games hidden; BAR events remain visible |
 | F-44 | Hide bar games | Enable hide bar games toggle | Bars section hidden; bar games excluded |
 
 ### 7.4 Game discovery actions
@@ -494,7 +494,7 @@ Frontend/e2e/
 |----|------|-------|----------|
 | C-01 | Invalid create route | `/create-game` without state | Redirect home |
 | C-02 | Create GAME | Pick GAME intent | Wizard loads |
-| C-03 | Create BAR | Pick BAR | Bar-specific fields |
+| C-03 | Create BAR | Pick BAR and create the event | Bar-specific fields; created BAR has no level band and never affects rating |
 | C-04 | Create TRAINING | Pick TRAINING | Trainer fields |
 | C-05 | Create TOURNAMENT | Pick TOURNAMENT (any logged-in user) | Roster/tournament defaults; cap 8–12 for normal users, up to 32 for `canCreateTournament` |
 | C-06 | Duplicate game | From game details duplicate | Pre-filled form |
@@ -1092,6 +1092,7 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | CH-35a | Auto-translate toggle | Tap “Translated” on auto-translated message | Swaps to original with “Original” label; tap again restores translation |
 | CH-35b | Preferred incoming translation language | Open Translation modal (composer translate button) → top section → pick e.g. Spanish | Selection saved; reopening modal shows Spanish selected |
 | CH-35c | Translate message uses preferred language | Set preferred incoming language to Spanish (app UI may be English) → long-press foreign message → Translate | Menu shows “Translate to Spanish”; message appears in Spanish |
+| CH-35d | Auto-translate uses preferred incoming language | Keep app UI in English → set preferred incoming language to Russian → enable English, Russian, and Serbian auto-translate → receive a non-Russian message | Message automatically appears in Russian, including after reopening the chat |
 | CH-36 | Draft persistence | Type without send → leave → return | Draft restored |
 | CH-36a | Draft stays on source chat (desktop) | Desktop split view: type draft in chat A → switch to chat B → return to A | B composer empty (or B's own draft); A restores the typed draft; draft is not copied into B |
 | CH-37 | Offline send queue | `@offline` send | Queued state + retry on online |
@@ -1452,14 +1453,14 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PI-22 | Match roster progress UI | Open a lobby with a partial and then full selected roster | Progress bar is directly above the player carousel; selected/needed count is in the card’s top-right; title and hint change from Not enough players to Match is ready |
 | PI-23 | Direct match editor | Open a lobby with compatible free players → remove one from the roster → add one from the court → tap I’ll create the game inside the editor | Best compatible players start selected around the center court and in the editable roster; available unselected players use a yellow glow and plus only while a vacancy exists; a full roster shows no plus badges; empty slots remain visible below party size; there is no separate footer; Create Game always appears inside the editor and opens with every currently selected player invited |
 | PI-06 | Host handoff | Confirm as first confirmer | Navigates to create-game prefilled; invitees preselected |
-| PI-07 | Push deep link | Tap PLAY_INTENT_MATCH notification | Opens Find with proposal sheet |
+| PI-07 | Push deep link | Tap PLAY_INTENT_MATCH notification; also retry after a brief offline/network failure before the proposal loads | Opens Find with proposal sheet; transient failures keep `?proposal=` so a retry can recover the same sheet |
 | PI-08 | Game-fit deep link | Tap GAME_MATCHES_INTENT notification | Opens matching game details |
 | PI-09 | Idle Find not bloated | Browse Find without looking | Only one strip above list; no mid-list or below-list play-intent chrome |
 | PI-10 | Matched strip stays | After peer match (MATCHED intent) | Status strip stays; “Match ready” — not idle CTA |
 | PI-11 | Host abandon create | Confirm → create-game → Back without saving | Proposal released to PENDING; others can confirm |
 | PI-12 | Non-host waiting | Second user opens proposal after host claimed | Waiting copy; Not now available |
 | PI-13 | Compose more options | CTA → More options → pick club + level band + Custom time → Start | Intent saves with clubIds, min/max, CUSTOM window |
-| PI-14 | Mute play-intent notifs | Profile → Notification settings → turn off Want to play | No play-intent push/Telegram; chat prefs unchanged |
+| PI-14 | Mute play-intent notifs | Profile → Notification settings → turn off Want to play and Friends looking separately | Match/game-fit mute leaves friend/owner social alerts on; social mute leaves match/game-fit on; chat prefs unchanged |
 | PI-15 | My tab strip | Open My tab while logged in | Same Want to play / Looking strip sits below stories (and hero ad if shown) and above Bookings/Teams/Leagues switch |
 | PI-16 | Activity selector | CTA → pick sport or Bar (first control) → Start | Intent uses chosen sport/BAR; More options clubs filter (bars-only for Bar; sport clubs otherwise) |
 | PI-17 | Sport ≠ Find filter | On Find with sport A selected, compose sport B (or Bar) → Start | Looking strip still shows (city-scoped); stop cancels that intent |
@@ -1472,8 +1473,8 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PI-29 | Intent lifecycle after invite response | From PI-28, B accepts, C declines, and D lets the invite expire | B’s looking intent ends; C’s valid intent returns to the lobby; D’s intent returns only if still valid, otherwise expires; none remain silently reserved |
 | PI-30 | No game-fit for past start times | With an open public game that already started earlier today, start looking for Today / Anytime in that city | No “A game fits your wish” notification for the past game; only games starting later than now are offered (and the owner gets no “Players are looking” ping for it) |
 | PI-31 | Wish expires with its playable window | Start looking for Today / Morning, then cross 12:00 city-local time; refresh Find and try a pending proposal deep link | Looking state disappears, the intent is absent/ineligible in the lobby, stale proposals cannot open or confirm, and no match/game-fit notification is sent |
-| PI-32 | Push opens friend intent prompt | Follow user A in the same city with A’s sport enabled, have A create a GAME intent, then tap the localized push | Bandeja opens on My, shows localized loading feedback, then a dialog with A, sport, city/clubs, days, time, and level; “I want to play too” is available |
-| PI-33 | Follower notification privacy and spam controls | Block A (either direction), mute Want to play, follow from another city / without the sport enabled, edit A’s intent, then cancel/recreate within six hours | Blocked, muted, other-city, or sport-disabled followers receive nothing; edits and rapid recreation do not repeat the follower notification; BAR intents do not send play wording |
+| PI-32 | Push opens friend intent prompt | Follow user A in the same city with A’s sport enabled, have A create a GAME intent, then tap the localized push (Find may stay mounted in background) | Bandeja opens on My only, shows localized loading feedback, then a single dialog with A, sport, city/clubs, days, time, and level; “I want to play too” is available; Find does not also open the dialog |
+| PI-33 | Follower notification privacy and spam controls | Block A (either direction), mute Friends looking (social), leave Want to play (match) on, follow from another city / without the sport enabled, edit A’s intent, then cancel/recreate within six hours | Blocked, socially muted, other-city, or sport-disabled followers receive nothing; match mute alone does not suppress friend alerts; edits and rapid recreation do not repeat the follower notification; BAR intents do not send play wording |
 | PI-34 | Join friend intent from push | From PI-32, tap “I want to play too” | A similar intent is created for the follower, the dialog closes, and My opens the Court lobby drawer with the follower and A in the matching pool |
 | PI-35 | Join friend intent from Telegram | Tap the localized “I want to play too” Telegram button while authenticated, then repeat while signed out and complete login | The new My deep link survives login, shows localized progress while creating an idempotent similar intent, and opens the Court lobby drawer; reopening the same link does not replace an identical active intent |
 | PI-36 | Shared intent unavailable or forbidden | Open a shared-intent link after expiry/cancel/consumption, after unfollowing, or after either user blocks the other | No intent is created; a localized unavailable/access error appears and the stale query parameter is removed |

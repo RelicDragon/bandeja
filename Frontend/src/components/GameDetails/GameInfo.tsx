@@ -28,6 +28,7 @@ import { useGameLinkedBookingViewer } from '@/hooks/useGameLinkedBookingViewer';
 import { InfoIconChip } from './InfoIconChip';
 import { GameInfoUserNote } from './GameInfoUserNote';
 import { Share } from '@capacitor/share';
+import { gameIsNonRating } from '@/utils/gameRatingSemantics';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { AnimatedChildrenStagger } from '@/components/motion/AnimatedChildrenStagger';
@@ -478,7 +479,7 @@ export const GameInfo = ({
             {t('chat.guest')}
           </span>
         )}
-        {!game.affectsRating && (
+        {gameIsNonRating(game) && (
           <span className={`${tagPadding} ${tagText} font-medium rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 flex items-center gap-1`}>
             <Ban size={iconSize} />
             {t('games.noRating')}

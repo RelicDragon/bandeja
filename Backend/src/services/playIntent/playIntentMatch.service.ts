@@ -12,6 +12,7 @@ import {
 } from '@prisma/client';
 import { formatInTimeZone } from 'date-fns-tz';
 import { getSportConfig } from '../../sport/sportRegistry';
+import { NotificationType } from '../../types/notifications.types';
 import { startOfCalendarDate, endOfCalendarDate } from '../game/calendarDateBounds';
 import {
   affinityScore,
@@ -82,9 +83,29 @@ export class PlayIntentMatchService {
         city: { select: { timezone: true } },
       },
     });
-    if (!intent || intent.status !== PlayIntentStatus.OPEN) return;
+    if (!intent) return;
+    if (intent.status === PlayIntentStatus.MATCHED) {
+      const existingProposal = await prisma.matchProposal.findFirst({
+        where: {
+          status: {
+            in: [MatchProposalStatus.PENDING, MatchProposalStatus.ACCEPTED],
+          },
+          expiresAt: { gt: new Date() },
+          gameId: null,
+          members: { some: { intentId: intent.id } },
+        },
+        select: { id: true },
+        orderBy: { createdAt: 'desc' },
+      });
+      if (existingProposal) {
+        await PlayIntentNotifyService.notifyPlayIntentMatch(existingProposal.id);
+      }
+      return;
+    }
+    if (intent.status !== PlayIntentStatus.OPEN) return;
 
     await this.matchIntentToGames(intent as IntentRow & { city: { timezone: string } });
+    await this.clusterCitySport(intent.cityId, intent.sport, intent.entityType);
   }
 
   static async onPublicGameCreated(gameId: string, creatorId: string) {
@@ -153,6 +174,7 @@ export class PlayIntentMatchService {
         intentMatchesGame(
           criteria,
           {
+            entityType: game.entityType,
             dateKey,
             clubId: game.clubId,
             startTime: game.startTime,
@@ -253,6 +275,7 @@ export class PlayIntentMatchService {
         intentMatchesGame(
           criteria,
           {
+            entityType: game.entityType,
             dateKey,
             clubId: game.clubId,
             startTime: game.startTime,
@@ -744,13 +767,92 @@ export class PlayIntentMatchService {
   }
 
   static async runClusterPass(): Promise<number> {
+    const { PlayIntentMatchQueueService } = await import(
+      './playIntentMatchQueue.service'
+    );
+    const replayed = await PlayIntentMatchQueueService.requeueFailedJobs();
+    if (replayed > 0) {
+      await PlayIntentMatchQueueService.drain();
+    }
+
+    let cursor: string | undefined;
+    while (true) {
+      const activeProposals = await prisma.matchProposal.findMany({
+        where: {
+          status: {
+            in: [MatchProposalStatus.PENDING, MatchProposalStatus.ACCEPTED],
+          },
+          expiresAt: { gt: new Date() },
+          gameId: null,
+        },
+        select: {
+          id: true,
+          _count: { select: { members: true } },
+        },
+        take: 50,
+        orderBy: { createdAt: 'asc' },
+        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+      });
+      if (activeProposals.length === 0) break;
+
+      const existingDeliveries =
+        await prisma.playIntentNotificationDelivery.findMany({
+          where: {
+            notificationType: NotificationType.PLAY_INTENT_MATCH,
+            sourceId: { in: activeProposals.map((proposal) => proposal.id) },
+          },
+          select: { sourceId: true, userId: true },
+          distinct: ['sourceId', 'userId'],
+        });
+      const deliveredRecipients = new Map<string, number>();
+      for (const delivery of existingDeliveries) {
+        deliveredRecipients.set(
+          delivery.sourceId,
+          (deliveredRecipients.get(delivery.sourceId) ?? 0) + 1,
+        );
+      }
+      for (const proposal of activeProposals) {
+        if (
+          (deliveredRecipients.get(proposal.id) ?? 0) <
+          proposal._count.members
+        ) {
+          await PlayIntentNotifyService.notifyPlayIntentMatch(proposal.id);
+        }
+      }
+
+      cursor = activeProposals.at(-1)?.id;
+      if (activeProposals.length < 50 || !cursor) break;
+    }
+
     const open = await prisma.playIntent.findMany({
       where: { status: PlayIntentStatus.OPEN, expiresAt: { gt: new Date() } },
-      select: { cityId: true, sport: true, entityType: true },
-      distinct: ['cityId', 'sport', 'entityType'],
+      select: {
+        id: true,
+        cityId: true,
+        sport: true,
+        entityType: true,
+        userId: true,
+        dateKeys: true,
+        clubIds: true,
+        minLevel: true,
+        maxLevel: true,
+        timeOfDay: true,
+        startTime: true,
+        endTime: true,
+        genderTeams: true,
+        status: true,
+        expiresAt: true,
+        city: { select: { timezone: true } },
+        user: { select: intentUserSelect },
+      },
     });
     let created = 0;
+    const clustered = new Set<string>();
     for (const row of open) {
+      await this.matchIntentToGames(row as IntentRow & { city: { timezone: string } });
+      const key = `${row.cityId}:${row.sport}:${row.entityType}`;
+      if (clustered.has(key)) continue;
+      clustered.add(key);
       const id = await this.clusterCitySport(row.cityId, row.sport, row.entityType);
       if (id) created += 1;
     }

@@ -7,189 +7,180 @@ datasource db {
 }
 
 model User {
-  id                              String                      @id @default(cuid())
-  phone                           String?                     @unique
-  email                           String?                     @unique
-  telegramId                      String?                     @unique
-  telegramUsername                String?
-  appleSub                        String?                     @unique
-  appleEmail                      String?
-  appleEmailVerified              Boolean                     @default(false)
-  googleId                        String?                     @unique
-  googleEmail                     String?
-  googleEmailVerified             Boolean                     @default(false)
-  firstName                       String?
-  lastName                        String?
-  avatar                          String?
-  originalAvatar                  String?
-  passwordHash                    String?
-  isActive                        Boolean                     @default(true)
-  primarySport                    Sport                       @default(PADEL)
-  sportsEnabled                   Sport[]                     @default([PADEL])
-  lastCreatedSport                Sport?
-  socialLevel                     Float                       @default(1.0)
-  totalPoints                     Int                         @default(0)
-  wallet                          Int                         @default(0)
-  currentCityId                   String?
-  lastUserIP                      String?
-  latitudeByIP                    Float?
-  longitudeByIP                   Float?
-  defaultCurrency                 String                      @default("EUR")
-  language                        String?                     @default("auto")
-  translateToLanguage             String?                     @db.VarChar(10)
-  timeFormat                      String                      @default("auto")
-  weekStart                       String                      @default("auto")
-  preferredHandLeft               Boolean                     @default(false)
-  preferredHandRight              Boolean                     @default(false)
-  preferredCourtSideLeft          Boolean                     @default(false)
-  preferredCourtSideRight         Boolean                     @default(false)
-  verbalStatus                    String?                     @db.VarChar(32)
-  bio                             String?                     @db.VarChar(128)
-  weeklyAvailability              Json?
-  availabilityBucketBoundaries    Json?
-  createdAt                       DateTime                    @default(now())
-  updatedAt                       DateTime                    @updatedAt
-  isAdmin                         Boolean                     @default(false)
-  isDeveloper                     Boolean                     @default(false)
-  isTrainer                       Boolean                     @default(false)
-  canCreateTournament             Boolean                     @default(false)
-  maxParticipantsInGame           Int                         @default(12)
-  canCreateLeague                 Boolean                     @default(false)
-  isPremium                       Boolean                     @default(false)
-  gender                          Gender                      @default(PREFER_NOT_TO_SAY)
-  genderIsSet                     Boolean                     @default(false)
-  nameIsSet                       Boolean                     @default(false)
-  primarySportIsSet               Boolean                     @default(false)
-  cityIsSet                       Boolean                     @default(false)
-  welcomeScreenPassed             Boolean                     @default(false)
-  booktimeConnectHintDismissed    Boolean                     @default(false)
-  approvedLevel                   Boolean                     @default(false)
-  approvedById                    String?
-  approvedWhen                    DateTime?
-  favoriteTrainerId               String?
-  sendTelegramMessages            Boolean                     @default(true)
-  sendTelegramInvites             Boolean                     @default(true)
-  sendTelegramDirectMessages      Boolean                     @default(true)
-  sendTelegramReminders           Boolean                     @default(true)
-  sendTelegramWalletNotifications Boolean                     @default(true)
-  chatMessages                    ChatMessage[]
-  stickerPrefs                    UserStickerPrefs?
-  ownedStickerPacks               StickerPack[]
-  participateInGames              GameParticipant[]           @relation("ParticipantUser")
-  cancelledGameParticipants       CancelledGameParticipant[]
-  participantsInvitedByMe         GameParticipant[]           @relation("ParticipantInvitedBy")
-  gameInviteOutcomes              GameInviteOutcome[]         @relation("GameInviteOutcomeUser")
-  gameInviteOutcomesSent          GameInviteOutcome[]         @relation("GameInviteOutcomeInvitedBy")
-  gameLogsAsActor                 GameLog[]                   @relation("GameLogActor")
-  gameLogsAsTarget                GameLog[]                   @relation("GameLogTarget")
-  userChats1                      UserChat[]                  @relation("UserChat1")
-  userChats2                      UserChat[]                  @relation("UserChat2")
-  pinnedUserChats                 PinnedUserChat[]
-  pinnedGroupChannels             PinnedGroupChannel[]
-  pinnedMessages                  PinnedMessage[]
-  messageReactions                MessageReaction[]
-  gameReactions                   GameReaction[]
-  messageReadReceipts             MessageReadReceipt[]
-  currentCity                     City?                       @relation("UserCurrentCity", fields: [currentCityId], references: [id])
-  approvedBy                      User?                       @relation("UserApprovedBy", fields: [approvedById], references: [id])
-  approvedUsers                   User[]                      @relation("UserApprovedBy")
-  sportProfilesApproved           UserSportProfile[]          @relation("SportProfileApprovedBy")
-  favoriteTrainer                 User?                       @relation("UserFavoriteTrainer", fields: [favoriteTrainerId], references: [id], onDelete: SetNull)
-  usersWithFavoriteTrainer        User[]                      @relation("UserFavoriteTrainer")
-  favoriteClubs                   UserFavoriteClub[]
-  adClickTokens                   AdClickToken[]
-  adLandingWishes                 AdLandingWish[]
-  favoriteUsers                   UserFavoriteUser[]          @relation("UserFavorites")
-  favoritedBy                     UserFavoriteUser[]          @relation("UserFavoritedBy")
-  interactionsFrom                UserInteraction[]           @relation("InteractionFromUser")
-  interactionsTo                  UserInteraction[]           @relation("InteractionToUser")
-  teamPlayers                     TeamPlayer[]
-  roundOutcomes                   RoundOutcome[]
-  gameOutcomes                    GameOutcome[]
-  gameTeamPlayers                 GameTeamPlayer[]
-  bugs                            Bug[]
-  bugParticipants                 BugParticipant[]
-  lundaProfile                    LundaProfile?
-  transactionsFrom                Transaction[]               @relation("TransactionFromUser")
-  transactionsTo                  Transaction[]               @relation("TransactionToUser")
-  levelChangeEvents               LevelChangeEvent[]
-  leagueParticipants              LeagueParticipant[]
-  leagueTeamPlayers               LeagueTeamPlayer[]
-  sendPushMessages                Boolean                     @default(true)
-  sendPushInvites                 Boolean                     @default(true)
-  sendPushDirectMessages          Boolean                     @default(true)
-  sendPushReminders               Boolean                     @default(true)
-  sendPushWalletNotifications     Boolean                     @default(true)
-  allowMessagesFromNonContacts    Boolean                     @default(true)
-  showOnlineStatus                Boolean                     @default(true)
-  alwaysShowUserNames             Boolean                     @default(true)
-  shareGamePhotosToFollowers      Boolean                     @default(true)
-  shareGameCreationsToFollowers   Boolean                     @default(true)
-  shareGameResultsToFollowers     Boolean                     @default(true)
-  appIcon                         String?                     @default("tiger")
-  trainerRating                   Float?
-  trainerReviewCount              Int                         @default(0)
-  pushTokens                      PushToken[]
-  pushReplyTokens                 PushReplyToken[]
-  messageReports                  MessageReport[]             @relation("MessageReportReporter")
-  blockedUsers                    BlockedUser[]               @relation("UserBlocked")
-  blockedBy                       BlockedUser[]               @relation("UserBlockedBy")
-  chatMutes                       ChatMute[]
-  chatTranslationPreferences      ChatTranslationPreference[]
-  gameSubscriptions               GameSubscription[]
-  playIntents                     PlayIntent[]
-  matchProposalMembers            MatchProposalMember[]
-  groupChannelParticipants        GroupChannelParticipant[]
-  groupInvitesSent                GroupChannelInvite[]        @relation("GroupInviteSender")
-  groupInvitesReceived            GroupChannelInvite[]        @relation("GroupInviteReceiver")
-  betsCreated                     Bet[]                       @relation("BetCreator")
-  betsAccepted                    Bet[]                       @relation("BetAcceptor")
-  betsWon                         Bet[]                       @relation("BetWinner")
-  betParticipants                 BetParticipant[]
-  messageTranslations             MessageTranslation[]
-  messageTranscriptions           MessageTranscription[]
-  chatDrafts                      ChatDraft[]
-  chatMutationIdempotencies       ChatMutationIdempotency[]
-  chatReadCursors                 ChatReadCursor[]
-  reactionEmojiUsageVersion       Int                         @default(0)
-  reactionEmojiStats              UserReactionEmojiStat[]
-  notificationPreferences         NotificationPreference[]
-  pollVotes                       PollVote[]
-  marketItems                     MarketItem[]                @relation("MarketItemSeller")
-  marketItemsWon                  MarketItem[]                @relation("MarketItemWinner")
-  marketItemBids                  MarketItemBid[]
-  trainedGames                    Game[]                      @relation("GameTrainer")
-  buyerGroupChannels              GroupChannel[]              @relation("GroupChannelBuyer")
-  groupChannelsLastMessageFrom    GroupChannel[]              @relation("GroupChannelLastMessageSender")
-  reviewsReceivedAsTrainer        TrainerReview[]             @relation("TrainerReviewsReceived")
-  reviewsGiven                    TrainerReview[]             @relation("TrainerReviewsGiven")
-  clubReviewsGiven                ClubReview[]                @relation("ClubReviewsGiven")
-  gameWorkoutSummaries            GameWorkoutSummary[]
-  telegramLinkIntents             TelegramAccountLinkIntent[]
-  ownedUserTeams                  UserTeam[]                  @relation("UserTeamOwner")
-  userTeamMemberships             UserTeamMember[]
-  refreshSessions                 UserRefreshSession[]
-  clubAdmins                      ClubAdmin[]
-  courtSlotHoldsCreated           CourtSlotHold[]
-  booktimeClubAuths               UserClubBooktimeAuth[]
-  padelooClubAuths                UserClubPadelooAuth[]
-  klikterenClubAuths              UserClubKlikterenAuth[]
-  sportProfiles                   UserSportProfile[]
-  gamePhotosUploaded              GamePhoto[]                 @relation("GamePhotoUploader")
-  stories                         UserStory[]                 @relation("UserStoryOwner")
-  storyViewsAsViewer              StoryView[]                 @relation("StoryViewViewer")
-  storyViewsAsOwner               StoryView[]                 @relation("StoryViewOwner")
-  storySegmentLikes               StorySegmentLike[]          @relation("StorySegmentLikeUser")
-  storySegmentCommentsAuthored    StorySegmentComment[]       @relation("StorySegmentCommentAuthor")
-  storySegmentCommentsOwned       StorySegmentComment[]       @relation("StorySegmentCommentOwner")
-  storyCommentLikes               StoryCommentLike[]          @relation("StoryCommentLikeUser")
-  storyCommentReports             StoryCommentReport[]        @relation("StoryCommentReportReporter")
-  storySegmentDismissals          StorySegmentDismissal[]
-  unreadState                     UserUnreadState?
-  contextUnreadStates             UserContextUnreadState[]
-  achievements                    UserAchievement[]
-  achievementPins                 UserAchievementPin[]
-  achievementStats                UserAchievementStats?
+  id                            String                           @id @default(cuid())
+  phone                         String?                          @unique
+  email                         String?                          @unique
+  telegramId                    String?                          @unique
+  telegramUsername              String?
+  appleSub                      String?                          @unique
+  appleEmail                    String?
+  appleEmailVerified            Boolean                          @default(false)
+  googleId                      String?                          @unique
+  googleEmail                   String?
+  googleEmailVerified           Boolean                          @default(false)
+  firstName                     String?
+  lastName                      String?
+  avatar                        String?
+  originalAvatar                String?
+  passwordHash                  String?
+  isActive                      Boolean                          @default(true)
+  primarySport                  Sport                            @default(PADEL)
+  sportsEnabled                 Sport[]                          @default([PADEL])
+  lastCreatedSport              Sport?
+  socialLevel                   Float                            @default(1.0)
+  totalPoints                   Int                              @default(0)
+  wallet                        Int                              @default(0)
+  currentCityId                 String?
+  lastUserIP                    String?
+  latitudeByIP                  Float?
+  longitudeByIP                 Float?
+  defaultCurrency               String                           @default("EUR")
+  language                      String?                          @default("auto")
+  translateToLanguage           String?                          @db.VarChar(10)
+  timeFormat                    String                           @default("auto")
+  weekStart                     String                           @default("auto")
+  preferredHandLeft             Boolean                          @default(false)
+  preferredHandRight            Boolean                          @default(false)
+  preferredCourtSideLeft        Boolean                          @default(false)
+  preferredCourtSideRight       Boolean                          @default(false)
+  verbalStatus                  String?                          @db.VarChar(32)
+  bio                           String?                          @db.VarChar(128)
+  weeklyAvailability            Json?
+  availabilityBucketBoundaries  Json?
+  createdAt                     DateTime                         @default(now())
+  updatedAt                     DateTime                         @updatedAt
+  isAdmin                       Boolean                          @default(false)
+  isDeveloper                   Boolean                          @default(false)
+  isTrainer                     Boolean                          @default(false)
+  canCreateTournament           Boolean                          @default(false)
+  maxParticipantsInGame         Int                              @default(12)
+  canCreateLeague               Boolean                          @default(false)
+  isPremium                     Boolean                          @default(false)
+  gender                        Gender                           @default(PREFER_NOT_TO_SAY)
+  genderIsSet                   Boolean                          @default(false)
+  nameIsSet                     Boolean                          @default(false)
+  primarySportIsSet             Boolean                          @default(false)
+  cityIsSet                     Boolean                          @default(false)
+  welcomeScreenPassed           Boolean                          @default(false)
+  booktimeConnectHintDismissed  Boolean                          @default(false)
+  approvedLevel                 Boolean                          @default(false)
+  approvedById                  String?
+  approvedWhen                  DateTime?
+  favoriteTrainerId             String?
+  chatMessages                  ChatMessage[]
+  stickerPrefs                  UserStickerPrefs?
+  ownedStickerPacks             StickerPack[]
+  participateInGames            GameParticipant[]                @relation("ParticipantUser")
+  cancelledGameParticipants     CancelledGameParticipant[]
+  participantsInvitedByMe       GameParticipant[]                @relation("ParticipantInvitedBy")
+  gameInviteOutcomes            GameInviteOutcome[]              @relation("GameInviteOutcomeUser")
+  gameInviteOutcomesSent        GameInviteOutcome[]              @relation("GameInviteOutcomeInvitedBy")
+  gameLogsAsActor               GameLog[]                        @relation("GameLogActor")
+  gameLogsAsTarget              GameLog[]                        @relation("GameLogTarget")
+  userChats1                    UserChat[]                       @relation("UserChat1")
+  userChats2                    UserChat[]                       @relation("UserChat2")
+  pinnedUserChats               PinnedUserChat[]
+  pinnedGroupChannels           PinnedGroupChannel[]
+  pinnedMessages                PinnedMessage[]
+  messageReactions              MessageReaction[]
+  gameReactions                 GameReaction[]
+  messageReadReceipts           MessageReadReceipt[]
+  currentCity                   City?                            @relation("UserCurrentCity", fields: [currentCityId], references: [id])
+  approvedBy                    User?                            @relation("UserApprovedBy", fields: [approvedById], references: [id])
+  approvedUsers                 User[]                           @relation("UserApprovedBy")
+  sportProfilesApproved         UserSportProfile[]               @relation("SportProfileApprovedBy")
+  favoriteTrainer               User?                            @relation("UserFavoriteTrainer", fields: [favoriteTrainerId], references: [id], onDelete: SetNull)
+  usersWithFavoriteTrainer      User[]                           @relation("UserFavoriteTrainer")
+  favoriteClubs                 UserFavoriteClub[]
+  adClickTokens                 AdClickToken[]
+  adLandingWishes               AdLandingWish[]
+  favoriteUsers                 UserFavoriteUser[]               @relation("UserFavorites")
+  favoritedBy                   UserFavoriteUser[]               @relation("UserFavoritedBy")
+  interactionsFrom              UserInteraction[]                @relation("InteractionFromUser")
+  interactionsTo                UserInteraction[]                @relation("InteractionToUser")
+  teamPlayers                   TeamPlayer[]
+  roundOutcomes                 RoundOutcome[]
+  gameOutcomes                  GameOutcome[]
+  gameTeamPlayers               GameTeamPlayer[]
+  bugs                          Bug[]
+  bugParticipants               BugParticipant[]
+  lundaProfile                  LundaProfile?
+  transactionsFrom              Transaction[]                    @relation("TransactionFromUser")
+  transactionsTo                Transaction[]                    @relation("TransactionToUser")
+  levelChangeEvents             LevelChangeEvent[]
+  leagueParticipants            LeagueParticipant[]
+  leagueTeamPlayers             LeagueTeamPlayer[]
+  allowMessagesFromNonContacts  Boolean                          @default(true)
+  showOnlineStatus              Boolean                          @default(true)
+  alwaysShowUserNames           Boolean                          @default(true)
+  shareGamePhotosToFollowers    Boolean                          @default(true)
+  shareGameCreationsToFollowers Boolean                          @default(true)
+  shareGameResultsToFollowers   Boolean                          @default(true)
+  appIcon                       String?                          @default("tiger")
+  trainerRating                 Float?
+  trainerReviewCount            Int                              @default(0)
+  pushTokens                    PushToken[]
+  pushReplyTokens               PushReplyToken[]
+  messageReports                MessageReport[]                  @relation("MessageReportReporter")
+  blockedUsers                  BlockedUser[]                    @relation("UserBlocked")
+  blockedBy                     BlockedUser[]                    @relation("UserBlockedBy")
+  chatMutes                     ChatMute[]
+  chatTranslationPreferences    ChatTranslationPreference[]
+  gameSubscriptions             GameSubscription[]
+  playIntents                   PlayIntent[]
+  matchProposalMembers          MatchProposalMember[]
+  groupChannelParticipants      GroupChannelParticipant[]
+  groupInvitesSent              GroupChannelInvite[]             @relation("GroupInviteSender")
+  groupInvitesReceived          GroupChannelInvite[]             @relation("GroupInviteReceiver")
+  betsCreated                   Bet[]                            @relation("BetCreator")
+  betsAccepted                  Bet[]                            @relation("BetAcceptor")
+  betsWon                       Bet[]                            @relation("BetWinner")
+  betParticipants               BetParticipant[]
+  messageTranslations           MessageTranslation[]
+  messageTranscriptions         MessageTranscription[]
+  chatDrafts                    ChatDraft[]
+  chatMutationIdempotencies     ChatMutationIdempotency[]
+  chatReadCursors               ChatReadCursor[]
+  reactionEmojiUsageVersion     Int                              @default(0)
+  reactionEmojiStats            UserReactionEmojiStat[]
+  notificationPreferences       NotificationPreference[]
+  playIntentDeliveries          PlayIntentNotificationDelivery[]
+  pollVotes                     PollVote[]
+  marketItems                   MarketItem[]                     @relation("MarketItemSeller")
+  marketItemsWon                MarketItem[]                     @relation("MarketItemWinner")
+  marketItemBids                MarketItemBid[]
+  trainedGames                  Game[]                           @relation("GameTrainer")
+  buyerGroupChannels            GroupChannel[]                   @relation("GroupChannelBuyer")
+  groupChannelsLastMessageFrom  GroupChannel[]                   @relation("GroupChannelLastMessageSender")
+  reviewsReceivedAsTrainer      TrainerReview[]                  @relation("TrainerReviewsReceived")
+  reviewsGiven                  TrainerReview[]                  @relation("TrainerReviewsGiven")
+  clubReviewsGiven              ClubReview[]                     @relation("ClubReviewsGiven")
+  gameWorkoutSummaries          GameWorkoutSummary[]
+  telegramLinkIntents           TelegramAccountLinkIntent[]
+  ownedUserTeams                UserTeam[]                       @relation("UserTeamOwner")
+  userTeamMemberships           UserTeamMember[]
+  refreshSessions               UserRefreshSession[]
+  clubAdmins                    ClubAdmin[]
+  courtSlotHoldsCreated         CourtSlotHold[]
+  booktimeClubAuths             UserClubBooktimeAuth[]
+  padelooClubAuths              UserClubPadelooAuth[]
+  klikterenClubAuths            UserClubKlikterenAuth[]
+  sportProfiles                 UserSportProfile[]
+  gamePhotosUploaded            GamePhoto[]                      @relation("GamePhotoUploader")
+  stories                       UserStory[]                      @relation("UserStoryOwner")
+  storyViewsAsViewer            StoryView[]                      @relation("StoryViewViewer")
+  storyViewsAsOwner             StoryView[]                      @relation("StoryViewOwner")
+  storySegmentLikes             StorySegmentLike[]               @relation("StorySegmentLikeUser")
+  storySegmentCommentsAuthored  StorySegmentComment[]            @relation("StorySegmentCommentAuthor")
+  storySegmentCommentsOwned     StorySegmentComment[]            @relation("StorySegmentCommentOwner")
+  storyCommentLikes             StoryCommentLike[]               @relation("StoryCommentLikeUser")
+  storyCommentReports           StoryCommentReport[]             @relation("StoryCommentReportReporter")
+  storySegmentDismissals        StorySegmentDismissal[]
+  unreadState                   UserUnreadState?
+  contextUnreadStates           UserContextUnreadState[]
+  achievements                  UserAchievement[]
+  achievementPins               UserAchievementPin[]
+  achievementStats              UserAchievementStats?
 
   @@index([phone])
   @@index([telegramId])
@@ -2915,20 +2906,21 @@ enum NotificationChannelType {
 }
 
 model NotificationPreference {
-  id                           String                  @id @default(cuid())
-  userId                       String
-  channelType                  NotificationChannelType
-  sendMessages                 Boolean                 @default(true)
-  sendInvites                  Boolean                 @default(true)
-  sendDirectMessages           Boolean                 @default(true)
-  sendReminders                Boolean                 @default(true)
-  sendWalletNotifications      Boolean                 @default(true)
-  sendMarketplaceNotifications Boolean                 @default(true)
-  sendTeamNotifications        Boolean                 @default(true)
-  sendPlayIntentNotifications  Boolean                 @default(true)
-  createdAt                    DateTime                @default(now())
-  updatedAt                    DateTime                @updatedAt
-  user                         User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                                String                  @id @default(cuid())
+  userId                            String
+  channelType                       NotificationChannelType
+  sendMessages                      Boolean                 @default(true)
+  sendInvites                       Boolean                 @default(true)
+  sendDirectMessages                Boolean                 @default(true)
+  sendReminders                     Boolean                 @default(true)
+  sendWalletNotifications           Boolean                 @default(true)
+  sendMarketplaceNotifications      Boolean                 @default(true)
+  sendTeamNotifications             Boolean                 @default(true)
+  sendPlayIntentNotifications       Boolean                 @default(true)
+  sendPlayIntentSocialNotifications Boolean                 @default(true)
+  createdAt                         DateTime                @default(now())
+  updatedAt                         DateTime                @updatedAt
+  user                              User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, channelType])
   @@index([userId])
@@ -3024,6 +3016,19 @@ enum MatchProposalMemberResponse {
   DECLINED
 }
 
+enum PlayIntentJobStatus {
+  pending
+  running
+  done
+  failed
+  skipped
+}
+
+enum PlayIntentMatchJobKind {
+  INTENT_CREATED
+  PUBLIC_GAME_CREATED
+}
+
 model PlayIntent {
   id                      String                             @id @default(cuid())
   userId                  String
@@ -3057,21 +3062,60 @@ model PlayIntent {
 }
 
 model PlayIntentFollowerNotificationJob {
-  id          String     @id @default(cuid())
-  intentId    String     @unique
+  id          String              @id @default(cuid())
+  intentId    String              @unique
   userId      String
   cityId      String
-  status      String     @default("pending")
-  attempts    Int        @default(0)
-  runAfter    DateTime   @default(now())
+  status      PlayIntentJobStatus @default(pending)
+  attempts    Int                 @default(0)
+  runAfter    DateTime            @default(now())
   deliveredAt DateTime?
   lastError   String?
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  intent      PlayIntent @relation(fields: [intentId], references: [id], onDelete: Cascade)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  intent      PlayIntent          @relation(fields: [intentId], references: [id], onDelete: Cascade)
 
   @@index([status, runAfter])
   @@index([userId, cityId, deliveredAt])
+}
+
+model PlayIntentMatchJob {
+  id        String                 @id @default(cuid())
+  kind      PlayIntentMatchJobKind
+  sourceId  String
+  creatorId String?
+  status    PlayIntentJobStatus    @default(pending)
+  attempts  Int                    @default(0)
+  runAfter  DateTime               @default(now())
+  lastError String?
+  createdAt DateTime               @default(now())
+  updatedAt DateTime               @updatedAt
+
+  @@unique([kind, sourceId])
+  @@index([status, runAfter])
+}
+
+model PlayIntentNotificationDelivery {
+  id               String                  @id @default(cuid())
+  eventKey         String
+  notificationType String
+  sourceId         String
+  userId           String
+  channelType      NotificationChannelType
+  payload          Json
+  status           PlayIntentJobStatus     @default(pending)
+  attempts         Int                     @default(0)
+  runAfter         DateTime                @default(now())
+  deliveredAt      DateTime?
+  lastError        String?
+  createdAt        DateTime                @default(now())
+  updatedAt        DateTime                @updatedAt
+  user             User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventKey, userId, channelType])
+  @@index([status, runAfter])
+  @@index([userId, createdAt])
+  @@index([notificationType, sourceId])
 }
 
 model MatchProposal {

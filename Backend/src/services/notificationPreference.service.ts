@@ -31,8 +31,10 @@ export const NOTIFICATION_TYPE_TO_PREF: Record<NotificationType, PreferenceKey> 
   [NotificationType.TEAM_DELETED]: PreferenceKey.SEND_TEAM_NOTIFICATIONS,
   [NotificationType.PLAY_INTENT_MATCH]: PreferenceKey.SEND_PLAY_INTENT_NOTIFICATIONS,
   [NotificationType.GAME_MATCHES_INTENT]: PreferenceKey.SEND_PLAY_INTENT_NOTIFICATIONS,
-  [NotificationType.INTENT_PLAYERS_FOR_GAME]: PreferenceKey.SEND_PLAY_INTENT_NOTIFICATIONS,
-  [NotificationType.FOLLOWED_USER_PLAY_INTENT]: PreferenceKey.SEND_PLAY_INTENT_NOTIFICATIONS,
+  [NotificationType.INTENT_PLAYERS_FOR_GAME]:
+    PreferenceKey.SEND_PLAY_INTENT_SOCIAL_NOTIFICATIONS,
+  [NotificationType.FOLLOWED_USER_PLAY_INTENT]:
+    PreferenceKey.SEND_PLAY_INTENT_SOCIAL_NOTIFICATIONS,
 };
 
 export type NotificationPreferenceData = {
@@ -45,6 +47,7 @@ export type NotificationPreferenceData = {
   sendMarketplaceNotifications: boolean;
   sendTeamNotifications: boolean;
   sendPlayIntentNotifications: boolean;
+  sendPlayIntentSocialNotifications: boolean;
 };
 
 type PrefFlags = Omit<NotificationPreferenceData, 'channelType'>;
@@ -58,6 +61,7 @@ export const DEFAULT_PREFERENCES: PrefFlags = {
   sendMarketplaceNotifications: true,
   sendTeamNotifications: true,
   sendPlayIntentNotifications: true,
+  sendPlayIntentSocialNotifications: true,
 };
 
 function toData(
@@ -74,6 +78,7 @@ function toData(
     sendMarketplaceNotifications: p.sendMarketplaceNotifications,
     sendTeamNotifications: p.sendTeamNotifications,
     sendPlayIntentNotifications: p.sendPlayIntentNotifications,
+    sendPlayIntentSocialNotifications: p.sendPlayIntentSocialNotifications,
   };
 }
 
@@ -87,6 +92,7 @@ function countTrue(p: PrefFlags): number {
     p.sendMarketplaceNotifications,
     p.sendTeamNotifications,
     p.sendPlayIntentNotifications,
+    p.sendPlayIntentSocialNotifications,
   ].filter(Boolean).length;
 }
 
@@ -99,6 +105,7 @@ function flagsFromRow(p: {
   sendMarketplaceNotifications: boolean;
   sendTeamNotifications: boolean;
   sendPlayIntentNotifications: boolean;
+  sendPlayIntentSocialNotifications: boolean;
 }): PrefFlags {
   return {
     sendMessages: p.sendMessages,
@@ -109,6 +116,7 @@ function flagsFromRow(p: {
     sendMarketplaceNotifications: p.sendMarketplaceNotifications,
     sendTeamNotifications: p.sendTeamNotifications,
     sendPlayIntentNotifications: p.sendPlayIntentNotifications,
+    sendPlayIntentSocialNotifications: p.sendPlayIntentSocialNotifications,
   };
 }
 
@@ -198,13 +206,33 @@ export class NotificationPreferenceService {
     userId: string,
     preferences: Array<{ channelType: NotificationChannelType } & Partial<PrefFlags>>,
   ): Promise<NotificationPreferenceData[]> {
-    const results = await Promise.all(
+    const results = await prisma.$transaction(
       preferences.map((pref) => {
         const { channelType, ...rest } = pref;
-        return this.updatePreference(userId, channelType, rest);
+        // Old clients only send the legacy match toggle; keep social in sync
+        // unless the client explicitly sends both split fields.
+        if (
+          rest.sendPlayIntentNotifications !== undefined &&
+          rest.sendPlayIntentSocialNotifications === undefined
+        ) {
+          rest.sendPlayIntentSocialNotifications =
+            rest.sendPlayIntentNotifications;
+        }
+        return prisma.notificationPreference.upsert({
+          where: { userId_channelType: { userId, channelType } },
+          create: {
+            userId,
+            channelType,
+            ...DEFAULT_PREFERENCES,
+            ...rest,
+          },
+          update: rest,
+        });
       }),
     );
-    return results.filter((r): r is NotificationPreferenceData => r != null);
+    return results.map((result) =>
+      toData(result.channelType, flagsFromRow(result)),
+    );
   }
 
   static async getPreferenceForChannel(
@@ -243,16 +271,6 @@ export class NotificationPreferenceService {
         where: { id: userId },
         select: {
           telegramId: true,
-          sendTelegramMessages: true,
-          sendTelegramInvites: true,
-          sendTelegramDirectMessages: true,
-          sendTelegramReminders: true,
-          sendTelegramWalletNotifications: true,
-          sendPushMessages: true,
-          sendPushInvites: true,
-          sendPushDirectMessages: true,
-          sendPushReminders: true,
-          sendPushWalletNotifications: true,
         },
       }),
       prisma.notificationPreference.findMany({ where: { userId } }),
@@ -274,31 +292,11 @@ export class NotificationPreferenceService {
     }
 
     const telegramPref = hasTelegram
-      ? prefMap.TELEGRAM ??
-        /* REMOVE_BY_10_02_2026 */ {
-          sendMessages: user.sendTelegramMessages,
-          sendInvites: user.sendTelegramInvites,
-          sendDirectMessages: user.sendTelegramDirectMessages,
-          sendReminders: user.sendTelegramReminders,
-          sendWalletNotifications: user.sendTelegramWalletNotifications,
-          sendMarketplaceNotifications: true,
-          sendTeamNotifications: true,
-          sendPlayIntentNotifications: true,
-        }
+      ? prefMap.TELEGRAM ?? DEFAULT_PREFERENCES
       : null;
 
     const pushPref = hasPush
-      ? prefMap.PUSH ??
-        /* REMOVE_BY_10_02_2026 */ {
-          sendMessages: user.sendPushMessages,
-          sendInvites: user.sendPushInvites,
-          sendDirectMessages: user.sendPushDirectMessages,
-          sendReminders: user.sendPushReminders,
-          sendWalletNotifications: user.sendPushWalletNotifications,
-          sendMarketplaceNotifications: true,
-          sendTeamNotifications: true,
-          sendPlayIntentNotifications: true,
-        }
+      ? prefMap.PUSH ?? DEFAULT_PREFERENCES
       : null;
 
     return { telegram: telegramPref, push: pushPref };
@@ -333,9 +331,6 @@ export class NotificationPreferenceService {
     channelType: NotificationChannelType,
     preferenceKey: PreferenceKey,
   ): Promise<boolean> {
-    const hasCh = await this.hasChannel(userId, channelType);
-    if (!hasCh) return false;
-
     const prefs = await this.getEffectivePreferencesForNotification(userId);
     const channelPrefs = channelType === NotificationChannelType.TELEGRAM ? prefs.telegram : prefs.push;
     if (!channelPrefs) return false;

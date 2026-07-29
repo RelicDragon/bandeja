@@ -138,6 +138,28 @@ assert.deepEqual(resolveTimeWindow({ timeOfDay: 'CUSTOM', startTime: '10:00', en
 }
 
 {
+  const intent = base({ minLevel: 2, maxLevel: 3, userLevel: 2.5 });
+  const gameStart = new Date('2026-07-28T18:00:00Z');
+  assert.equal(
+    intentMatchesGame(
+      intent,
+      {
+        entityType: 'BAR',
+        dateKey: '2026-07-28',
+        clubId: null,
+        startTime: gameStart,
+        startTimeMinutes: 18 * 60,
+        minLevel: 5,
+        maxLevel: 7,
+        genderTeams: 'ANY',
+      },
+      new Date('2026-07-28T12:00:00Z'),
+    ),
+    true,
+  );
+}
+
+{
   const timezone = 'UTC';
   const intent = { dateKeys: ['2026-07-28'], timeOfDay: 'MORNING' as const, startTime: null, endTime: null };
   assert.equal(intentWindowIsReachable(intent, timezone, new Date('2026-07-28T07:00:00Z')), true);

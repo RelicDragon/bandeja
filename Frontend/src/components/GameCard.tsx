@@ -13,6 +13,7 @@ import { GameCardTitle } from '@/components/gameCard/GameCardTitle';
 import { gameCardHasVisibleTitle } from '@/utils/gameCardVisibleTitle';
 import { GameCardRightRail } from '@/components/gameCard/GameCardRightRail';
 import { GameCardPlayersPhoto } from '@/components/gameCard/GameCardPlayersPhoto';
+import { gameIsNonRating } from '@/utils/gameRatingSemantics';
 import { GameCardUserNote } from '@/components/gameCard/GameCardUserNote';
 import { GameCardJoinButton } from '@/components/gameCard/GameCardJoinButton';
 import { Game } from '@/types';
@@ -291,7 +292,7 @@ export const GameCard = memo(function GameCard({
     myParticipationBadge != null ||
     !game.isPublic ||
     (game.genderTeams != null && game.genderTeams !== 'ANY') ||
-    !game.affectsRating ||
+    gameIsNonRating(game) ||
     game.hasFixedTeams ||
     ((game.status === 'STARTED' || game.status === 'FINISHED' || game.status === 'ARCHIVED') &&
       game.resultsStatus === 'FINAL');

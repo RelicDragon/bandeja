@@ -38,5 +38,6 @@ export function passesFindTierFilter(game: Game, filterTier: FindTierFilter | un
 
 export function passesFindNoRatingFilter(game: Game, filterNoRating: boolean | undefined): boolean {
   if (!filterNoRating) return true;
+  if (game.entityType === 'BAR') return true;
   return game.affectsRating === false;
 }

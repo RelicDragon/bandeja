@@ -1,0 +1,11 @@
+ALTER TABLE "User"
+DROP COLUMN "sendTelegramMessages",
+DROP COLUMN "sendTelegramInvites",
+DROP COLUMN "sendTelegramDirectMessages",
+DROP COLUMN "sendTelegramReminders",
+DROP COLUMN "sendTelegramWalletNotifications",
+DROP COLUMN "sendPushMessages",
+DROP COLUMN "sendPushInvites",
+DROP COLUMN "sendPushDirectMessages",
+DROP COLUMN "sendPushReminders",
+DROP COLUMN "sendPushWalletNotifications";

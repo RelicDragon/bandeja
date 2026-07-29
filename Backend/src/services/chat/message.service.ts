@@ -22,6 +22,7 @@ import notificationService from '../notification.service';
 import { UserChatService } from './userChat.service';
 import { hasParentGamePermissionWithUserCheck } from '../../utils/parentGamePermissions';
 import { TranslationService } from './translation.service';
+import { resolveTranslationTargetLanguage } from './resolveTranslationTargetLanguage';
 import { translationIsRedundantOfSource } from './translationRedundant';
 import { DraftService } from './draft.service';
 import { config } from '../../config/env';
@@ -1574,9 +1575,9 @@ export class MessageService {
 
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { language: true },
+      select: { language: true, translateToLanguage: true },
     });
-    const languageCode = user ? TranslationService.extractLanguageCode(user.language) : 'en';
+    const languageCode = resolveTranslationTargetLanguage(user);
 
     if (beforeMessageId) {
       const beforeMessage = await prisma.chatMessage.findFirst({
@@ -1649,9 +1650,9 @@ export class MessageService {
     await this.validateMessageAccess(message, userId, false);
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { language: true },
+      select: { language: true, translateToLanguage: true },
     });
-    const languageCode = user ? TranslationService.extractLanguageCode(user.language) : 'en';
+    const languageCode = resolveTranslationTargetLanguage(user);
     return this.finalizeMessageForClient(
       message,
       languageCode,
@@ -1674,9 +1675,9 @@ export class MessageService {
     }
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { language: true },
+      select: { language: true, translateToLanguage: true },
     });
-    const languageCode = user ? TranslationService.extractLanguageCode(user.language) : 'en';
+    const languageCode = resolveTranslationTargetLanguage(user);
     const row = await prisma.chatMessage.findFirst({
       where: {
         chatContextType,
@@ -1755,9 +1756,9 @@ export class MessageService {
         recent.reverse();
         const user = await prisma.user.findUnique({
           where: { id: userId },
-          select: { language: true },
+          select: { language: true, translateToLanguage: true },
         });
-        const languageCode = user ? TranslationService.extractLanguageCode(user.language) : 'en';
+        const languageCode = resolveTranslationTargetLanguage(user);
         return {
           messages: await this.enrichMessagesWithTranslations(recent, languageCode),
         };
@@ -1806,9 +1807,9 @@ export class MessageService {
 
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { language: true },
+      select: { language: true, translateToLanguage: true },
     });
-    const languageCode = user ? TranslationService.extractLanguageCode(user.language) : 'en';
+    const languageCode = resolveTranslationTargetLanguage(user);
     return {
       messages: await this.enrichMessagesWithTranslations(all, languageCode),
     };

@@ -6,6 +6,7 @@ import {
   hasFullChatReplyContext,
   isReplyableChatNotificationType,
 } from './notifications/chat-push-reply.utils';
+import { deliveryCollapseKey } from './deliveryCollapseKey';
 
 const DATA_ONLY_ANDROID_TYPES = new Set<NotificationType>([
   NotificationType.USER_CHAT,
@@ -80,6 +81,7 @@ export function buildFcmMessage(
   const data = buildDataMap(payload);
   const previewImageUrl = payload.data?.previewImageUrl;
   const hasPreviewImage = isValidHttpsPreviewUrl(previewImageUrl);
+  const collapseKey = deliveryCollapseKey(payload.data?.deliveryKey);
 
   const androidNotification: admin.messaging.AndroidNotification = {
     ...(dataOnly ? {} : { sound: payload.sound || 'default', channelId: 'default' }),
@@ -93,6 +95,7 @@ export function buildFcmMessage(
     data,
     android: {
       priority: 'high' as const,
+      ...(collapseKey ? { collapseKey } : {}),
       ...(hasAndroidNotification ? { notification: androidNotification } : {}),
     },
     ...(dataOnly

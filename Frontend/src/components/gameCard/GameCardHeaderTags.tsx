@@ -3,6 +3,7 @@ import { Users, Ban, Award, Lock } from 'lucide-react';
 import type { Game } from '@/types';
 import type { GameCardMyParticipationBadge } from '@/utils/gameCardMyParticipationBadge';
 import { genderTeamsSummaryLabelKey } from '@/utils/genderTeamsSummaryLabel';
+import { gameIsNonRating } from '@/utils/gameRatingSemantics';
 
 interface GameCardHeaderTagsProps {
   game: Game;
@@ -93,7 +94,7 @@ export const GameCardHeaderTags = ({
           )}
         </span>
       )}
-      {!game.affectsRating && (
+      {gameIsNonRating(game) && (
         <span
           className={`${PILL} bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400`}
         >

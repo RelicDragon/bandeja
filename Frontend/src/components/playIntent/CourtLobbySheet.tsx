@@ -80,6 +80,27 @@ export function CourtLobbyPanel({
   const [busy, setBusy] = useState(false);
   const [waitingHost, setWaitingHost] = useState(false);
 
+  const handleProposalActionError = useCallback(
+    (error: unknown) => {
+      const response = (
+        error as {
+          response?: { data?: { code?: string; message?: string } };
+        }
+      ).response?.data;
+      if (response?.code === 'playIntent.proposalUnavailable') {
+        toast.error(t('playIntent.proposalUnavailable'));
+        onChanged?.();
+        onOpenChange(false);
+        return;
+      }
+      toast.error(
+        response?.message ||
+          t('common.error', { defaultValue: 'Something went wrong' }),
+      );
+    },
+    [onChanged, onOpenChange, t],
+  );
+
   const hasProposal = !!proposal;
   const rosterLocked = !!(proposal?.hostUserId || proposal?.status === 'ACCEPTED');
   const isHost = !!proposal?.hostUserId && proposal.hostUserId === userId;
@@ -320,8 +341,8 @@ export function CourtLobbyPanel({
       if (result.dissolved) {
         onOpenChange(false);
       }
-    } catch {
-      toast.error(t('common.error', { defaultValue: 'Something went wrong' }));
+    } catch (error: unknown) {
+      handleProposalActionError(error);
     } finally {
       setBusy(false);
     }
@@ -358,8 +379,8 @@ export function CourtLobbyPanel({
         return;
       }
       setWaitingHost(true);
-    } catch {
-      toast.error(t('common.error', { defaultValue: 'Something went wrong' }));
+    } catch (error: unknown) {
+      handleProposalActionError(error);
     } finally {
       setBusy(false);
     }

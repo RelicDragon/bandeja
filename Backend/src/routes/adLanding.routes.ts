@@ -18,6 +18,8 @@ const wishSubmitLimiter = rateLimit({
   },
 });
 
+router.get('/:landingKey/wishes', adLandingWishController.getAdLandingWishes);
+
 router.post(
   '/:landingKey/wishes',
   wishSubmitLimiter,

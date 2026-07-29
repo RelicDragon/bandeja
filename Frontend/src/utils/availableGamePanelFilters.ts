@@ -44,7 +44,7 @@ export const passesAvailableGamePanelFilters = (
     }
   }
   const levelActive = p.filterLevelMin > 1.0 + 1e-6 || p.filterLevelMax < 7.0 - 1e-6;
-  if (levelActive) {
+  if (levelActive && game.entityType !== 'BAR') {
     const gMin = game.minLevel ?? 1.0;
     const gMax = game.maxLevel ?? 7.0;
     if (gMax < p.filterLevelMin || gMin > p.filterLevelMax) {

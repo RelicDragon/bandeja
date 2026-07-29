@@ -40,4 +40,16 @@ assert.deepEqual(
   },
 );
 
+for (const language of ['sr', 'es', 'cs']) {
+  const localized = buildPlayIntentFollowerNotification(
+    base,
+    language,
+    new Date('2026-07-29T12:00:00Z'),
+  );
+  assert.notEqual(localized.title, 'Ana wants to play');
+  assert.ok(!localized.title.includes('{{'));
+  assert.ok(!localized.body.includes('{{'));
+  assert.ok(localized.body.includes('Belgrade'));
+}
+
 console.log('playIntentFollowerNotification.test.ts: ok');

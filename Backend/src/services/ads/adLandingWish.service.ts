@@ -18,6 +18,14 @@ export type CreatedAdLandingWish = {
   createdAt: Date;
 };
 
+export type PublicAdLandingWish = {
+  id: string;
+  displayName: string;
+  message: string;
+  locale: string | null;
+  createdAt: Date;
+};
+
 function isDonationIntent(intent: AdLandingDonationIntent): boolean {
   return intent === AdLandingDonationIntent.RSD || intent === AdLandingDonationIntent.RUB;
 }
@@ -112,4 +120,24 @@ export async function createAdLandingWish(
   });
 
   return created;
+}
+
+/**
+ * Return the public birthday-card projection only. Donation choices, campaign
+ * attribution and linked user ids must never leave this service.
+ */
+export async function listPublicAdLandingWishes(
+  landingKey: AdLandingKey
+): Promise<PublicAdLandingWish[]> {
+  return prisma.adLandingWish.findMany({
+    where: { landingKey },
+    orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+    select: {
+      id: true,
+      displayName: true,
+      message: true,
+      locale: true,
+      createdAt: true,
+    },
+  });
 }

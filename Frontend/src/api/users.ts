@@ -221,6 +221,7 @@ export interface NotificationPreference {
   sendMarketplaceNotifications: boolean;
   sendTeamNotifications: boolean;
   sendPlayIntentNotifications: boolean;
+  sendPlayIntentSocialNotifications: boolean;
 }
 
 export type ReactionEmojiUsageRow = { emoji: string; count: number; lastUsedAt: string | null };

@@ -88,11 +88,13 @@ function passesDayIndexResidualFilters(
   const genderTeams = row.genderTeams ?? 'ANY';
   if (genderTeams !== 'ANY' && viewer?.gender === 'PREFER_NOT_TO_SAY') return false;
 
-  if (state.findDiscoveryEnabled && state.filterNoRating) {
+  const isBar = row.entityType === 'BAR';
+
+  if (!isBar && state.findDiscoveryEnabled && state.filterNoRating) {
     if (row.affectsRating !== false) return false;
   }
 
-  if (state.filterSuitableRating && viewer) {
+  if (!isBar && state.filterSuitableRating && viewer) {
     const gameSport = parseGameSport(row.sport ?? 'PADEL');
     const userLevel = getDisplayLevelForSport(viewer as never, gameSport);
     const minLevel = row.minLevel ?? 0;

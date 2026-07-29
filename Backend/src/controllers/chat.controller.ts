@@ -18,6 +18,7 @@ import { withTimeout } from '../utils/promiseWithTimeout';
 import { ChatMuteService } from '../services/chat/chatMute.service';
 import { ChatTranslationPreferenceService } from '../services/chat/chatTranslationPreference.service';
 import { TranslationService, TRANSLATE_TO_LANGUAGE_CODES } from '../services/chat/translation.service';
+import { resolveTranslationTargetLanguage } from '../services/chat/resolveTranslationTargetLanguage';
 import { TranscriptionService } from '../services/chat/transcription.service';
 import { MESSAGE_TRANSCRIPTION_PENDING, normalizeClientMutationId } from '@bandeja/chat-contract';
 import { DraftService } from '../services/chat/draft.service';
@@ -1286,11 +1287,7 @@ export const translateMessage = asyncHandler(async (req: AuthRequest, res: Respo
     throw new ApiError(404, 'User not found');
   }
 
-  const languageCode =
-    user.translateToLanguage &&
-    TRANSLATE_TO_LANGUAGE_CODES.includes(user.translateToLanguage.toLowerCase())
-      ? user.translateToLanguage.toLowerCase()
-      : TranslationService.extractLanguageCode(user.language);
+  const languageCode = resolveTranslationTargetLanguage(user);
 
   const translation = await TranslationService.getOrCreateTranslation(
     messageId,

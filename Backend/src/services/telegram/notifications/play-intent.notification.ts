@@ -64,12 +64,11 @@ export async function sendPlayIntentTelegramNotification(
     const { message: finalMessage, options } = buildMessageWithButtons(message, buttons, lang);
     const trimmedMessage = trimTextForTelegram(finalMessage, false);
 
-    await guardedTelegramSendMessage(
+    return guardedTelegramSendMessage(
       api,
       { userId, telegramId, kind: `play-intent-${payload.type.toLowerCase()}` },
       () => api.sendMessage(telegramId, trimmedMessage, options),
     );
-    return true;
   } catch (error) {
     if (isBenignTelegramRecipientError(error)) return false;
     console.error(`Failed to send Telegram play-intent notification to user ${userId}:`, error);

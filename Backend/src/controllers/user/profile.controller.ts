@@ -13,8 +13,7 @@ import {
 import { PROFILE_SELECT_FIELDS, SUPPORTED_CURRENCIES } from '../../utils/constants';
 import { config } from '../../config/env';
 import { getClientIp, updateUserIpLocation } from '../../services/ipLocation.service';
-import { NotificationChannelType, Prisma } from '@prisma/client';
-import { DEFAULT_PREFERENCES } from '../../services/notificationPreference.service';
+import { Prisma } from '@prisma/client';
 import telegramBotService from '../../services/telegram/bot.service';
 import { syncTelegramProfileFromUpdate } from '../../services/telegram/syncTelegramProfile.service';
 import { TRANSLATE_TO_LANGUAGE_CODES } from '../../services/chat/translation.service';
@@ -115,7 +114,7 @@ export const getIpLocation = asyncHandler(async (req: AuthRequest, res: Response
 });
 
 export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { firstName, lastName, email, avatar, originalAvatar, language, translateToLanguage, timeFormat, weekStart, defaultCurrency, gender, genderIsSet, nameIsSet, cityIsSet, preferredHandLeft, preferredHandRight, preferredCourtSideLeft, preferredCourtSideRight, sendTelegramMessages, sendTelegramInvites, sendTelegramDirectMessages, sendTelegramReminders, sendTelegramWalletNotifications, sendPushMessages, sendPushInvites, sendPushDirectMessages, sendPushReminders, sendPushWalletNotifications, allowMessagesFromNonContacts, showOnlineStatus, alwaysShowUserNames, shareGamePhotosToFollowers, shareGameCreationsToFollowers, shareGameResultsToFollowers, favoriteTrainerId, appIcon, verbalStatus, bio, weeklyAvailability, availabilityBucketBoundaries } = req.body;
+  const { firstName, lastName, email, avatar, originalAvatar, language, translateToLanguage, timeFormat, weekStart, defaultCurrency, gender, genderIsSet, nameIsSet, cityIsSet, preferredHandLeft, preferredHandRight, preferredCourtSideLeft, preferredCourtSideRight, allowMessagesFromNonContacts, showOnlineStatus, alwaysShowUserNames, shareGamePhotosToFollowers, shareGameCreationsToFollowers, shareGameResultsToFollowers, favoriteTrainerId, appIcon, verbalStatus, bio, weeklyAvailability, availabilityBucketBoundaries } = req.body;
 
   let normalizedWeeklyAvailability =
     weeklyAvailability === undefined ? undefined : validateWeeklyAvailability(weeklyAvailability);
@@ -247,11 +246,7 @@ export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response
     }
   }
 
-  const hasTelegramPrefs = sendTelegramMessages !== undefined || sendTelegramInvites !== undefined || sendTelegramDirectMessages !== undefined || sendTelegramReminders !== undefined || sendTelegramWalletNotifications !== undefined;
-  const hasPushPrefs = sendPushMessages !== undefined || sendPushInvites !== undefined || sendPushDirectMessages !== undefined || sendPushReminders !== undefined || sendPushWalletNotifications !== undefined;
-
-  const user = await prisma.$transaction(async (tx) => {
-    const updated = await tx.user.update({
+  const user = await prisma.user.update({
       where: { id: req.userId },
       data: {
         ...(resolvedNames && {
@@ -275,16 +270,6 @@ export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response
         ...(preferredHandRight !== undefined && { preferredHandRight }),
         ...(preferredCourtSideLeft !== undefined && { preferredCourtSideLeft }),
         ...(preferredCourtSideRight !== undefined && { preferredCourtSideRight }),
-        ...(sendTelegramMessages !== undefined && { sendTelegramMessages }),
-        ...(sendTelegramInvites !== undefined && { sendTelegramInvites }),
-        ...(sendTelegramDirectMessages !== undefined && { sendTelegramDirectMessages }),
-        ...(sendTelegramReminders !== undefined && { sendTelegramReminders }),
-        ...(sendTelegramWalletNotifications !== undefined && { sendTelegramWalletNotifications }),
-        ...(sendPushMessages !== undefined && { sendPushMessages }),
-        ...(sendPushInvites !== undefined && { sendPushInvites }),
-        ...(sendPushDirectMessages !== undefined && { sendPushDirectMessages }),
-        ...(sendPushReminders !== undefined && { sendPushReminders }),
-        ...(sendPushWalletNotifications !== undefined && { sendPushWalletNotifications }),
         ...(allowMessagesFromNonContacts !== undefined && { allowMessagesFromNonContacts }),
         ...(normalizedShowOnlineStatus !== undefined && { showOnlineStatus: normalizedShowOnlineStatus }),
         ...(normalizedAlwaysShowUserNames !== undefined && { alwaysShowUserNames: normalizedAlwaysShowUserNames }),
@@ -302,60 +287,6 @@ export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response
       },
       select: PROFILE_SELECT_FIELDS,
     });
-    if (hasTelegramPrefs || hasPushPrefs) {
-      const [userRow, pushCount] = await Promise.all([
-        tx.user.findUnique({ where: { id: req.userId }, select: { telegramId: true } }),
-        tx.pushToken.count({ where: { userId: req.userId! } }),
-      ]);
-      const hasTelegram = !!userRow?.telegramId;
-      const hasPush = pushCount > 0;
-      if (hasTelegramPrefs && hasTelegram) {
-        await tx.notificationPreference.upsert({
-          where: { userId_channelType: { userId: req.userId!, channelType: NotificationChannelType.TELEGRAM } },
-          create: {
-            userId: req.userId!,
-            channelType: NotificationChannelType.TELEGRAM,
-            ...DEFAULT_PREFERENCES,
-            ...(sendTelegramMessages !== undefined && { sendMessages: sendTelegramMessages }),
-            ...(sendTelegramInvites !== undefined && { sendInvites: sendTelegramInvites }),
-            ...(sendTelegramDirectMessages !== undefined && { sendDirectMessages: sendTelegramDirectMessages }),
-            ...(sendTelegramReminders !== undefined && { sendReminders: sendTelegramReminders }),
-            ...(sendTelegramWalletNotifications !== undefined && { sendWalletNotifications: sendTelegramWalletNotifications }),
-          },
-          update: {
-            ...(sendTelegramMessages !== undefined && { sendMessages: sendTelegramMessages }),
-            ...(sendTelegramInvites !== undefined && { sendInvites: sendTelegramInvites }),
-            ...(sendTelegramDirectMessages !== undefined && { sendDirectMessages: sendTelegramDirectMessages }),
-            ...(sendTelegramReminders !== undefined && { sendReminders: sendTelegramReminders }),
-            ...(sendTelegramWalletNotifications !== undefined && { sendWalletNotifications: sendTelegramWalletNotifications }),
-          },
-        });
-      }
-      if (hasPushPrefs && hasPush) {
-        await tx.notificationPreference.upsert({
-          where: { userId_channelType: { userId: req.userId!, channelType: NotificationChannelType.PUSH } },
-          create: {
-            userId: req.userId!,
-            channelType: NotificationChannelType.PUSH,
-            ...DEFAULT_PREFERENCES,
-            ...(sendPushMessages !== undefined && { sendMessages: sendPushMessages }),
-            ...(sendPushInvites !== undefined && { sendInvites: sendPushInvites }),
-            ...(sendPushDirectMessages !== undefined && { sendDirectMessages: sendPushDirectMessages }),
-            ...(sendPushReminders !== undefined && { sendReminders: sendPushReminders }),
-            ...(sendPushWalletNotifications !== undefined && { sendWalletNotifications: sendPushWalletNotifications }),
-          },
-          update: {
-            ...(sendPushMessages !== undefined && { sendMessages: sendPushMessages }),
-            ...(sendPushInvites !== undefined && { sendInvites: sendPushInvites }),
-            ...(sendPushDirectMessages !== undefined && { sendDirectMessages: sendPushDirectMessages }),
-            ...(sendPushReminders !== undefined && { sendReminders: sendPushReminders }),
-            ...(sendPushWalletNotifications !== undefined && { sendWalletNotifications: sendPushWalletNotifications }),
-          },
-        });
-      }
-    }
-    return updated;
-  });
 
   if (shouldDeletePreviousCircular) {
     await deleteOurCircularAvatar(currentUser?.avatar);

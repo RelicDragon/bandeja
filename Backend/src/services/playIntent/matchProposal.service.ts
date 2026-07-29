@@ -21,6 +21,15 @@ import {
 
 class ClusterClaimConflict extends Error {}
 
+function proposalUnavailable(
+  message = 'Match proposal is no longer available',
+  statusCode = 409,
+): ApiError {
+  return new ApiError(statusCode, message, true, {
+    code: 'playIntent.proposalUnavailable',
+  });
+}
+
 export class MatchProposalService {
   static async createFromCluster(input: {
     cityId: string;
@@ -149,20 +158,23 @@ export class MatchProposalService {
         city: { select: { id: true, name: true, timezone: true } },
       },
     });
-    if (!proposal) throw new ApiError(404, 'Match proposal not found');
+    if (!proposal) throw proposalUnavailable('Match proposal not found', 404);
     if (!proposal.members.some((m) => m.userId === userId)) {
       throw new ApiError(403, 'Not a member of this proposal');
     }
+    const active =
+      proposal.status === MatchProposalStatus.PENDING ||
+      proposal.status === MatchProposalStatus.ACCEPTED;
     if (
       !proposal.gameId &&
-      (proposal.status === MatchProposalStatus.PENDING ||
-        proposal.status === MatchProposalStatus.ACCEPTED) &&
-      !intentWindowIsReachable(
-        proposalWindowSource(proposal),
-        proposal.city.timezone,
-      )
+      (!active ||
+        proposal.expiresAt <= new Date() ||
+        !intentWindowIsReachable(
+          proposalWindowSource(proposal),
+          proposal.city.timezone,
+        ))
     ) {
-      throw new ApiError(400, 'Proposal expired');
+      throw proposalUnavailable();
     }
     return {
       ...proposal,
@@ -285,7 +297,7 @@ export class MatchProposalService {
         };
       }
       if (proposal.status !== MatchProposalStatus.PENDING) {
-        throw new ApiError(400, 'Proposal is no longer pending');
+        throw proposalUnavailable();
       }
       const activeMembers = proposal.members.filter(
         (member) => member.response !== MatchProposalMemberResponse.DECLINED,
@@ -319,7 +331,7 @@ export class MatchProposalService {
     });
 
     if (result.kind === 'expired') {
-      throw new ApiError(400, 'Proposal expired');
+      throw proposalUnavailable();
     }
     const latest = await this.getById(proposalId, userId);
     if (result.kind === 'converted') {
@@ -429,7 +441,7 @@ export class MatchProposalService {
         proposal.status !== MatchProposalStatus.PENDING &&
         proposal.status !== MatchProposalStatus.ACCEPTED
       ) {
-        throw new ApiError(400, 'Proposal is no longer active');
+        throw proposalUnavailable();
       }
       const membership = proposal.members.find((m) => m.userId === userId);
       if (!membership) throw new ApiError(403, 'Not a member of this proposal');
@@ -564,7 +576,7 @@ export class MatchProposalService {
       );
       return { expired: false };
     });
-    if (result.expired) throw new ApiError(400, 'Proposal expired');
+    if (result.expired) throw proposalUnavailable();
 
     return {
       removed: true,
@@ -624,7 +636,7 @@ export class MatchProposalService {
             now,
           );
         }
-        throw new ApiError(400, 'Proposal expired');
+        throw proposalUnavailable();
       }
       if (proposal.status !== MatchProposalStatus.PENDING || proposal.hostUserId) {
         throw new ApiError(400, 'Roster is locked');

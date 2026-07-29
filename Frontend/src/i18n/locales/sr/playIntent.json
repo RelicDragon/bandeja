@@ -90,6 +90,7 @@
     "sharedJoiningTitle": "Pokrećemo tvoju pretragu",
     "sharedJoiningHint": "Kopiramo želje i pripremamo lobi…",
     "sharedUnavailable": "Ovaj zahtev za igru više nije dostupan",
-    "sharedAccessDenied": "Ovaj zahtev za igru ti nije dostupan"
+    "sharedAccessDenied": "Ovaj zahtev za igru ti nije dostupan",
+    "proposalUnavailable": "Ovaj meč više nije dostupan. Osvežili smo tvoj lobi."
   }
 }

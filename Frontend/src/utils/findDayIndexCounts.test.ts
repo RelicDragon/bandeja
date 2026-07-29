@@ -119,6 +119,30 @@ describe('countFindDayIndexByDay', () => {
     const total = [...counts.values()].reduce((s, n) => s + n, 0);
     expect(total).toBe(1);
   });
+
+  it('keeps BAR events in counts regardless of rating filters', () => {
+    const counts = countFindDayIndexByDay(
+      [
+        row({
+          id: 'bar',
+          startTime: '2026-07-01T10:00:00.000Z',
+          entityType: 'BAR',
+          minLevel: 5,
+          maxLevel: 7,
+          affectsRating: true,
+        }),
+      ],
+      { id: 'u1', level: 2 },
+      {
+        ...baseState,
+        filterSuitableRating: true,
+        findDiscoveryEnabled: true,
+        filterNoRating: true,
+      },
+    );
+
+    expect([...counts.values()]).toEqual([1]);
+  });
 });
 
 describe('aggregateFindDayIndexByDay', () => {

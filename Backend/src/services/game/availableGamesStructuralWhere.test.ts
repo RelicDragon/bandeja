@@ -46,6 +46,23 @@ import {
 }
 
 {
+  const where = appendStructuralFiltersToWhere({}, { levelMin: 2, levelMax: 4 });
+  assert.ok(Array.isArray(where.AND));
+  const levelClause = (where.AND as Array<Record<string, unknown>>).find(
+    (clause) => Array.isArray(clause.OR),
+  );
+  assert.ok(levelClause);
+  const levelOr = levelClause.OR as Array<Record<string, unknown>>;
+  assert.deepEqual(levelOr[0], { entityType: 'BAR' });
+  assert.deepEqual(levelOr[1], {
+    AND: [
+      { OR: [{ maxLevel: null }, { maxLevel: { gte: 2 } }] },
+      { OR: [{ minLevel: null }, { minLevel: { lte: 4 } }] },
+    ],
+  });
+}
+
+{
   const defaults = parseStructuralFiltersFromQuery({
     levelMin: '1',
     levelMax: '7',

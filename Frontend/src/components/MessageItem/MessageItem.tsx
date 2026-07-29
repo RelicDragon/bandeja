@@ -15,9 +15,9 @@ import { formatSystemMessageForDisplay, SystemMessageType } from '@/utils/system
 import { FullscreenImageViewer } from '../FullscreenImageViewer';
 import { FullscreenVideoViewer } from '../FullscreenVideoViewer';
 import { ReportMessageModal } from '../ReportMessageModal';
-import { extractLanguageCode } from '@/utils/language';
 import { isMessageTranslationPending as isTranslationPending } from '@bandeja/chat-contract';
 import { translationIsRedundantOfSource } from '@/utils/translationRedundant';
+import { resolveIncomingTranslationTargetCode } from '@/utils/translationLanguages';
 import { useChatAutoTranslateSlots } from '@/contexts/ChatAutoTranslateContext';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { MessageItemProps } from './types';
@@ -44,6 +44,7 @@ import { LayoutGroup } from 'framer-motion';
 import { isAppLinkPreviewHost, isEligibleLinkPreviewUrl } from './linkPreview/eligibility';
 import { parseStoredLinkPreview } from './linkPreview/parseStoredLinkPreview';
 import { OfflineIntent } from '@/services/chat/offlineIntent';
+import { resolveMessageTranslation } from './resolveMessageTranslation';
 import {
   isRetryableMutationError,
   shouldQueueChatMutation,
@@ -189,15 +190,10 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
     () => parseStoredLinkPreview(currentMessage.linkPreview),
     [currentMessage.linkPreview]
   );
-  const userLanguageCode = user?.language ? extractLanguageCode(user.language).toLowerCase() : 'en';
+  const userLanguageCode = resolveIncomingTranslationTargetCode(user);
   const autoTranslateSlots = useChatAutoTranslateSlots();
 
-  let matchingTranslation = currentMessage.translation;
-  if (currentMessage.translations && currentMessage.translations.length > 0) {
-    matchingTranslation =
-      currentMessage.translations.find((tr) => tr.languageCode.toLowerCase() === userLanguageCode) ||
-      currentMessage.translation;
-  }
+  const matchingTranslation = resolveMessageTranslation(currentMessage, user);
   const translationReady =
     !!matchingTranslation &&
     matchingTranslation.languageCode.toLowerCase() === userLanguageCode &&

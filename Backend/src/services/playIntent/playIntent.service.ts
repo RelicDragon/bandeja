@@ -23,10 +23,10 @@ import {
   intentWindowEndsAt,
   intentWindowIsReachable,
 } from './playIntentFreshness';
-import { PlayIntentMatchService } from './playIntentMatch.service';
 import { PlayIntentFollowerNotificationQueueService } from './playIntentFollowerNotificationQueue.service';
 import { PlayIntentGameLifecycleService } from './playIntentGameLifecycle.service';
 import { lockMatchProposal } from './matchProposalLock';
+import { PlayIntentMatchQueueService } from './playIntentMatchQueue.service';
 
 export type CreatePlayIntentDto = {
   cityId?: string;
@@ -348,6 +348,7 @@ export class PlayIntentService {
           },
         });
       }
+      await PlayIntentMatchQueueService.enqueueIntentCreated(tx, created.id);
       return {
         intent: created,
         shouldNotifyFollowers: shouldNotify,
@@ -362,9 +363,7 @@ export class PlayIntentService {
       }
     }
 
-    void PlayIntentMatchService.onIntentCreated(intent.id).catch((err) => {
-      console.error('[PlayIntent] onIntentCreated failed:', err);
-    });
+    void PlayIntentMatchQueueService.drain();
     if (shouldNotifyFollowers) {
       void PlayIntentFollowerNotificationQueueService.drain();
     }

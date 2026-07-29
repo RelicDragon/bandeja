@@ -46,6 +46,7 @@ import {
 import { grantOrganizeAchievementsForFinalizedGame } from '../achievements/organizeGrant.service';
 import { grantPartnerAchievementsForFinalizedGame } from '../achievements/partnerGrant.service';
 import { invalidateAchievementStatsForGame } from '../achievements/achievementStats.service';
+import { normalizeGameRatingFields } from './normalizeGameRatingFields';
 
 /** Only scalar fields — nested writes / API echo keys force Prisma onto GameUpdateInput where courtId/clubId are invalid. */
 const GAME_UNCHECKED_SCALAR_KEYS = new Set<string>([
@@ -223,6 +224,14 @@ export class GameUpdateService {
 
     if (game.entityType === 'TOURNAMENT') {
       updateData.resultsByAnyone = false;
+    }
+    const nextEntityType =
+      (data.entityType as EntityType | undefined) ?? game.entityType;
+    if (nextEntityType === EntityType.BAR) {
+      Object.assign(
+        updateData,
+        normalizeGameRatingFields({ entityType: EntityType.BAR }),
+      );
     }
     validateGameForSport({
       sport: sportForValidation,

@@ -1,4 +1,4 @@
-import type { PlayIntentTimeOfDay } from '@prisma/client';
+import type { EntityType, PlayIntentTimeOfDay } from '@prisma/client';
 
 const MINUTES_IN_DAY = 1440;
 
@@ -18,6 +18,7 @@ export type IntentCriteria = {
 };
 
 export type GameCriteria = {
+  entityType?: EntityType;
   dateKey: string;
   clubId: string | null;
   startTime: Date;
@@ -211,7 +212,9 @@ export function intentMatchesGame(
     }
   }
 
-  const gameHasLevels = game.minLevel != null || game.maxLevel != null;
+  const gameHasLevels =
+    game.entityType !== 'BAR' &&
+    (game.minLevel != null || game.maxLevel != null);
   if (gameHasLevels && (intent.minLevel != null || intent.maxLevel != null)) {
     const iMin = intent.minLevel ?? Number.NEGATIVE_INFINITY;
     const iMax = intent.maxLevel ?? Number.POSITIVE_INFINITY;

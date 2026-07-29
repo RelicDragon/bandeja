@@ -1,9 +1,9 @@
 import { useEffect } from 'react';
 import type { ChatContextType, ChatMessageWithStatus } from '@/api/chat';
 import type { ChatType } from '@/types';
-import { extractLanguageCode } from '@/utils/language';
 import { isMessageTranslationPending as isTranslationPending } from '@bandeja/chat-contract';
 import { chatAutoTranslateTypeKey } from '@/utils/chatAutoTranslateTypeKey';
+import { resolveIncomingTranslationTargetCode } from '@/utils/translationLanguages';
 import {
   patchMessageTranslationInDexie,
   removeMessageTranslationInDexie,
@@ -14,7 +14,10 @@ export interface UseThreadTranslationLiveParams {
   id: string | undefined;
   contextType: ChatContextType;
   effectiveChatType: ChatType;
-  userLanguage: string | null | undefined;
+  user: {
+    language?: string | null;
+    translateToLanguage?: string | null;
+  } | null;
   setMessages: React.Dispatch<React.SetStateAction<ChatMessageWithStatus[]>>;
   messagesRef: React.MutableRefObject<ChatMessageWithStatus[]>;
   onAutoTranslateConfigFromSocket?: (languageCodes: string[], chatTypeKey: string) => void;
@@ -24,12 +27,12 @@ export function useThreadTranslationLive({
   id,
   contextType,
   effectiveChatType,
-  userLanguage,
+  user,
   setMessages,
   messagesRef,
   onAutoTranslateConfigFromSocket,
 }: UseThreadTranslationLiveParams) {
-  const userLocale = extractLanguageCode(userLanguage).toLowerCase();
+  const userLocale = resolveIncomingTranslationTargetCode(user);
   const expectedTypeKey = chatAutoTranslateTypeKey(contextType, effectiveChatType);
 
   useEffect(() => {

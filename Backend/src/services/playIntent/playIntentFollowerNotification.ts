@@ -3,7 +3,7 @@ import { formatInTimeZone } from 'date-fns-tz';
 import { getSportConfig } from '../../sport/sportRegistry';
 import { t } from '../../utils/translations';
 
-type PlayIntentFollowerNotificationInput = {
+export type PlayIntentFollowerNotificationInput = {
   creatorFirstName: string | null;
   sport: Sport;
   cityName: string;
@@ -24,7 +24,10 @@ function addDays(dateKey: string, days: number): string {
   ].join('-');
 }
 
-function interpolate(template: string, values: Record<string, string>): string {
+export function interpolatePlayIntentCopy(
+  template: string,
+  values: Record<string, string>,
+): string {
   return Object.entries(values).reduce(
     (result, [key, value]) => result.replaceAll(`{{${key}}}`, value),
     template,
@@ -50,23 +53,37 @@ function timeLabel(
   return t(`playIntent.${timeOfDay.toLowerCase()}`, lang);
 }
 
+export function buildPlayIntentWhenLabel(
+  input: Pick<
+    PlayIntentFollowerNotificationInput,
+    'timezone' | 'dateKeys' | 'timeOfDay' | 'startTime' | 'endTime'
+  >,
+  lang: string,
+  now = new Date(),
+): string {
+  const todayKey = formatInTimeZone(now, input.timezone, 'yyyy-MM-dd');
+  const days = input.dateKeys.map((key) => dateLabel(key, todayKey, lang)).join(', ');
+  return [
+    days,
+    timeLabel(input.timeOfDay, input.startTime, input.endTime, lang),
+  ]
+    .filter(Boolean)
+    .join(' · ');
+}
+
 export function buildPlayIntentFollowerNotification(
   input: PlayIntentFollowerNotificationInput,
   lang: string,
   now = new Date(),
 ): { title: string; body: string } {
-  const todayKey = formatInTimeZone(now, input.timezone, 'yyyy-MM-dd');
-  const days = input.dateKeys.map((key) => dateLabel(key, todayKey, lang)).join(', ');
-  const when = [days, timeLabel(input.timeOfDay, input.startTime, input.endTime, lang)]
-    .filter(Boolean)
-    .join(' · ');
+  const when = buildPlayIntentWhenLabel(input, lang, now);
   const titleKey = input.creatorFirstName
     ? 'playIntent.followerTitle'
     : 'playIntent.followerFallbackTitle';
-  const title = interpolate(t(titleKey, lang), {
+  const title = interpolatePlayIntentCopy(t(titleKey, lang), {
     name: input.creatorFirstName ?? '',
   });
-  const body = interpolate(t('playIntent.followerBody', lang), {
+  const body = interpolatePlayIntentCopy(t('playIntent.followerBody', lang), {
     sport: t(getSportConfig(input.sport).labelKey, lang),
     when,
     city: input.cityName,

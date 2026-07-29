@@ -12,7 +12,12 @@ import { useThreadDomain } from './useThreadDomain';
 import { isThreadArchivedInMemory } from '@/services/chat/chatThreadLifecycle';
 
 export type UseChatThreadControllerParams = UseThreadMessagesParams & {
-  user: { id: string; language?: string | null; isAdmin?: boolean | null } | null;
+  user: {
+    id: string;
+    language?: string | null;
+    translateToLanguage?: string | null;
+    isAdmin?: boolean | null;
+  } | null;
   setUserChat: React.Dispatch<React.SetStateAction<UserChat | null>>;
   userChat: UserChat | null;
   isEmbedded?: boolean;

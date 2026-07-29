@@ -73,16 +73,6 @@ const survivorSelect = {
   approvedById: true,
   approvedWhen: true,
   favoriteTrainerId: true,
-  sendTelegramMessages: true,
-  sendTelegramInvites: true,
-  sendTelegramDirectMessages: true,
-  sendTelegramReminders: true,
-  sendTelegramWalletNotifications: true,
-  sendPushMessages: true,
-  sendPushInvites: true,
-  sendPushDirectMessages: true,
-  sendPushReminders: true,
-  sendPushWalletNotifications: true,
   allowMessagesFromNonContacts: true,
   showOnlineStatus: true,
   alwaysShowUserNames: true,
@@ -596,19 +586,6 @@ function buildMergedUserData(survivor: SurvivorRow, source: SurvivorRow): Prisma
           ? survivor.approvedWhen
           : source.approvedWhen
         : nn(survivor.approvedWhen, source.approvedWhen) ?? null,
-    sendTelegramMessages: survivor.sendTelegramMessages || source.sendTelegramMessages,
-    sendTelegramInvites: survivor.sendTelegramInvites || source.sendTelegramInvites,
-    sendTelegramDirectMessages:
-      survivor.sendTelegramDirectMessages || source.sendTelegramDirectMessages,
-    sendTelegramReminders: survivor.sendTelegramReminders || source.sendTelegramReminders,
-    sendTelegramWalletNotifications:
-      survivor.sendTelegramWalletNotifications || source.sendTelegramWalletNotifications,
-    sendPushMessages: survivor.sendPushMessages || source.sendPushMessages,
-    sendPushInvites: survivor.sendPushInvites || source.sendPushInvites,
-    sendPushDirectMessages: survivor.sendPushDirectMessages || source.sendPushDirectMessages,
-    sendPushReminders: survivor.sendPushReminders || source.sendPushReminders,
-    sendPushWalletNotifications:
-      survivor.sendPushWalletNotifications || source.sendPushWalletNotifications,
     allowMessagesFromNonContacts:
       survivor.allowMessagesFromNonContacts || source.allowMessagesFromNonContacts,
     showOnlineStatus: survivor.showOnlineStatus || source.showOnlineStatus,

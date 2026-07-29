@@ -22,6 +22,9 @@ const config: CapacitorConfig = {
     minWebViewVersion: 60
   },
   plugins: {
+    PushNotifications: {
+      presentationOptions: ['badge', 'sound', 'alert']
+    },
     SystemBars: {
       insetsHandling: 'css'
     },

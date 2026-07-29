@@ -1,0 +1,2228 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#170d14" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta
+      name="description"
+      content="Тёплые слова для Лизы от друзей и падел-сообщества Bandeja."
+    />
+    <title>Для Лизы, с любовью · 2 августа 2026</title>
+    <link rel="icon" href="/favicon/favicon.svg" type="image/svg+xml" />
+    <style>
+      :root {
+        color-scheme: dark;
+        --page: #170d14;
+        --page-soft: #25131e;
+        --panel: rgba(255, 248, 239, 0.07);
+        --panel-strong: #fff8ef;
+        --ink: #fff8ef;
+        --ink-dark: #24131c;
+        --muted: #cbbbc3;
+        --soft: #9e8793;
+        --line: rgba(255, 248, 239, 0.14);
+        --rose: #ff8e9f;
+        --rose-deep: #c94d70;
+        --gold: #ffd68a;
+        --butter: #fff0bd;
+        --acid: #d9ff57;
+        --shadow: 0 30px 90px rgba(7, 2, 6, 0.44);
+        --display: "Arial Narrow", "Avenir Next Condensed", "Roboto Condensed",
+          "Helvetica Neue", Arial, sans-serif;
+        --body: "Avenir Next", Avenir, Inter, "Segoe UI", Helvetica, Arial, sans-serif;
+        --serif: Iowan Old Style, Baskerville, "Times New Roman", Times, serif;
+        --script: "Snell Roundhand", "Segoe Script", "Bradley Hand", cursive;
+        --safe-top: env(safe-area-inset-top, 0px);
+        --safe-right: env(safe-area-inset-right, 0px);
+        --safe-bottom: env(safe-area-inset-bottom, 0px);
+        --safe-left: env(safe-area-inset-left, 0px);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        min-width: 320px;
+        background: var(--page);
+        scroll-behavior: smooth;
+      }
+
+      body {
+        min-width: 320px;
+        min-height: 100vh;
+        margin: 0;
+        overflow-x: hidden;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at 84% 10%, rgba(255, 142, 159, 0.17), transparent 28rem),
+          radial-gradient(circle at 8% 40%, rgba(255, 214, 138, 0.09), transparent 31rem),
+          linear-gradient(180deg, #1c0e18 0%, var(--page) 48%, #0e080d 100%);
+        font-family: var(--body);
+      }
+
+      body::before {
+        position: fixed;
+        z-index: -1;
+        inset: 0;
+        opacity: 0.15;
+        pointer-events: none;
+        content: "";
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.95' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.28'/%3E%3C/svg%3E");
+      }
+
+      button {
+        font: inherit;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      button,
+      a {
+        outline-offset: 4px;
+      }
+
+      .skip-link {
+        position: fixed;
+        z-index: 100;
+        top: 8px;
+        left: 8px;
+        padding: 10px 14px;
+        border-radius: 999px;
+        color: var(--ink-dark);
+        background: var(--acid);
+        font-weight: 800;
+        text-decoration: none;
+        transform: translateY(-160%);
+        transition: transform 160ms ease;
+      }
+
+      .skip-link:focus {
+        transform: translateY(0);
+      }
+
+      .page {
+        position: relative;
+        isolation: isolate;
+        overflow: hidden;
+        overflow: clip;
+        min-height: 100vh;
+        padding:
+          calc(18px + var(--safe-top))
+          calc(24px + var(--safe-right))
+          calc(40px + var(--safe-bottom))
+          calc(24px + var(--safe-left));
+      }
+
+      .orb {
+        position: absolute;
+        z-index: -1;
+        border: 1px solid rgba(255, 248, 239, 0.12);
+        border-radius: 50%;
+        pointer-events: none;
+      }
+
+      .orb--one {
+        top: 120px;
+        right: -180px;
+        width: 520px;
+        height: 520px;
+      }
+
+      .orb--two {
+        top: 550px;
+        left: -240px;
+        width: 460px;
+        height: 460px;
+      }
+
+      .shell {
+        width: min(1240px, 100%);
+        margin: 0 auto;
+      }
+
+      .topbar {
+        position: relative;
+        z-index: 10;
+        display: flex;
+        min-height: 62px;
+        padding: 6px 8px 6px 15px;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        background: rgba(24, 13, 21, 0.72);
+        box-shadow: 0 12px 40px rgba(4, 1, 3, 0.14);
+        -webkit-backdrop-filter: blur(18px) saturate(140%);
+        backdrop-filter: blur(18px) saturate(140%);
+      }
+
+      .brand {
+        display: inline-flex;
+        width: 112px;
+        height: 48px;
+        align-items: center;
+        overflow: hidden;
+        border-radius: 12px;
+      }
+
+      .brand img {
+        display: block;
+        width: 106px;
+        height: auto;
+      }
+
+      .topbar__right {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .topbar__note {
+        color: var(--soft);
+        font-family: var(--display);
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      .locale-control {
+        display: flex;
+        padding: 3px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        gap: 2px;
+      }
+
+      .locale-button {
+        min-width: 38px;
+        min-height: 34px;
+        padding: 0 9px;
+        border: 0;
+        border-radius: 999px;
+        color: var(--soft);
+        background: transparent;
+        font-size: 0.72rem;
+        font-weight: 850;
+        letter-spacing: 0.08em;
+        cursor: pointer;
+        transition:
+          color 160ms ease,
+          background 160ms ease;
+      }
+
+      .locale-button:hover {
+        color: var(--ink);
+      }
+
+      .locale-button.is-active {
+        color: var(--ink-dark);
+        background: var(--ink);
+      }
+
+      .hero {
+        display: grid;
+        min-height: min(800px, calc(100vh - 100px));
+        padding: clamp(64px, 9vw, 118px) 0 70px;
+        align-items: center;
+        grid-template-columns: minmax(0, 1.08fr) minmax(350px, 0.72fr);
+        gap: clamp(50px, 7vw, 110px);
+      }
+
+      .hero__copy {
+        position: relative;
+        z-index: 2;
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--gold);
+        font-family: var(--display);
+        font-size: 0.78rem;
+        font-weight: 850;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+      }
+
+      .eyebrow::before {
+        width: 34px;
+        height: 1px;
+        background: currentColor;
+        content: "";
+      }
+
+      .hero h1 {
+        max-width: 800px;
+        margin: 24px 0 26px;
+        font-family: var(--serif);
+        font-size: clamp(4.4rem, 8.6vw, 8.1rem);
+        font-weight: 400;
+        letter-spacing: -0.068em;
+        line-height: 0.82;
+      }
+
+      .hero h1 .script {
+        display: block;
+        margin: 0.11em 0 0 0.37em;
+        color: var(--rose);
+        font-family: var(--script);
+        font-size: 0.67em;
+        letter-spacing: -0.035em;
+        line-height: 0.9;
+        transform: rotate(-3deg);
+      }
+
+      .hero__lead {
+        max-width: 620px;
+        margin: 0;
+        color: var(--muted);
+        font-size: clamp(1.02rem, 1.6vw, 1.25rem);
+        line-height: 1.7;
+      }
+
+      .hero__actions {
+        display: flex;
+        margin-top: 38px;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 14px;
+      }
+
+      .button {
+        display: inline-flex;
+        min-height: 54px;
+        padding: 0 22px;
+        border: 0;
+        border-radius: 999px;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        color: var(--ink-dark);
+        background: var(--ink);
+        box-shadow: 0 12px 34px rgba(0, 0, 0, 0.2);
+        font-weight: 850;
+        text-decoration: none;
+        cursor: pointer;
+        transition:
+          transform 160ms ease,
+          box-shadow 160ms ease;
+      }
+
+      .button:hover {
+        box-shadow: 0 16px 42px rgba(0, 0, 0, 0.28);
+        transform: translateY(-2px);
+      }
+
+      .button:active {
+        transform: translateY(0);
+      }
+
+      .button svg {
+        width: 18px;
+        height: 18px;
+      }
+
+      .button--secondary {
+        border: 1px solid var(--line);
+        color: var(--ink);
+        background: rgba(255, 248, 239, 0.055);
+        box-shadow: none;
+      }
+
+      .button:disabled {
+        opacity: 0.45;
+        cursor: wait;
+        transform: none;
+      }
+
+      .hero__count {
+        display: flex;
+        margin-top: 34px;
+        align-items: center;
+        gap: 14px;
+        color: var(--soft);
+        font-size: 0.9rem;
+      }
+
+      .hero__count strong {
+        color: var(--ink);
+        font-family: var(--serif);
+        font-size: 2rem;
+        font-weight: 400;
+      }
+
+      .avatar-stack {
+        display: flex;
+        padding-left: 8px;
+      }
+
+      .avatar-dot {
+        display: grid;
+        width: 34px;
+        height: 34px;
+        margin-left: -8px;
+        border: 2px solid var(--page);
+        border-radius: 50%;
+        place-items: center;
+        color: var(--ink-dark);
+        background: var(--gold);
+        font-size: 0.69rem;
+        font-weight: 900;
+        text-transform: uppercase;
+      }
+
+      .avatar-dot:nth-child(2) {
+        background: var(--rose);
+      }
+
+      .avatar-dot:nth-child(3) {
+        background: var(--acid);
+      }
+
+      .avatar-dot:nth-child(4) {
+        background: #afc9ff;
+      }
+
+      .portrait-stage {
+        position: relative;
+        justify-self: end;
+        width: min(430px, 100%);
+      }
+
+      .portrait-glow {
+        position: absolute;
+        z-index: -1;
+        inset: 13% -12% -4%;
+        border-radius: 48% 52% 46% 54%;
+        background: rgba(255, 142, 159, 0.27);
+        filter: blur(54px);
+      }
+
+      .portrait-frame {
+        position: relative;
+        overflow: hidden;
+        aspect-ratio: 0.73;
+        padding: 10px;
+        border: 1px solid rgba(255, 248, 239, 0.22);
+        border-radius: 48% 48% 30px 30px;
+        background: rgba(255, 248, 239, 0.07);
+        box-shadow: var(--shadow);
+        transform: rotate(2.4deg);
+      }
+
+      .portrait-frame::after {
+        position: absolute;
+        inset: 10px;
+        border-radius: inherit;
+        box-shadow: inset 0 -90px 80px rgba(28, 9, 18, 0.36);
+        pointer-events: none;
+        content: "";
+      }
+
+      .portrait-frame img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        border-radius: 48% 48% 23px 23px;
+        object-fit: cover;
+        object-position: center 30%;
+      }
+
+      .portrait-stamp {
+        position: absolute;
+        right: -28px;
+        bottom: 38px;
+        z-index: 2;
+        display: grid;
+        width: 132px;
+        height: 132px;
+        border-radius: 50%;
+        place-items: center;
+        color: var(--ink-dark);
+        background: var(--gold);
+        box-shadow: 0 16px 36px rgba(0, 0, 0, 0.25);
+        text-align: center;
+        transform: rotate(8deg);
+      }
+
+      .portrait-stamp span {
+        font-family: var(--display);
+        font-size: 0.7rem;
+        font-weight: 900;
+        letter-spacing: 0.11em;
+        line-height: 1.35;
+        text-transform: uppercase;
+      }
+
+      .portrait-stamp strong {
+        display: block;
+        margin-top: 4px;
+        font-family: var(--serif);
+        font-size: 1.65rem;
+        font-weight: 400;
+        letter-spacing: -0.05em;
+      }
+
+      .name-ribbon {
+        position: relative;
+        left: 50%;
+        width: 100vw;
+        margin: 0 0 112px;
+        overflow: hidden;
+        border-top: 1px solid var(--line);
+        border-bottom: 1px solid var(--line);
+        background: rgba(255, 248, 239, 0.035);
+        transform: translateX(-50%) rotate(-1deg);
+      }
+
+      .name-ribbon__track {
+        display: flex;
+        width: max-content;
+        min-width: 100%;
+        padding: 16px 0;
+        color: var(--muted);
+        font-family: var(--serif);
+        font-size: 1.03rem;
+        white-space: nowrap;
+        animation: ribbon 36s linear infinite;
+      }
+
+      .name-ribbon__item {
+        display: inline-flex;
+        align-items: center;
+      }
+
+      .name-ribbon__item::after {
+        margin: 0 22px;
+        color: var(--rose);
+        font-family: var(--body);
+        content: "♥";
+      }
+
+      .wishes-section {
+        position: relative;
+        scroll-margin-top: 30px;
+      }
+
+      .section-head {
+        display: grid;
+        margin-bottom: 48px;
+        align-items: end;
+        grid-template-columns: minmax(0, 1fr) minmax(260px, 0.52fr);
+        gap: 40px;
+      }
+
+      .section-head h2 {
+        max-width: 770px;
+        margin: 15px 0 0;
+        font-family: var(--serif);
+        font-size: clamp(3.2rem, 6vw, 6.25rem);
+        font-weight: 400;
+        letter-spacing: -0.06em;
+        line-height: 0.94;
+      }
+
+      .section-head__note {
+        margin: 0 0 8px;
+        color: var(--muted);
+        font-size: 1rem;
+        line-height: 1.65;
+      }
+
+      .loading-state,
+      .empty-state,
+      .error-state {
+        display: grid;
+        min-height: 310px;
+        padding: 44px;
+        border: 1px solid var(--line);
+        border-radius: 32px;
+        place-items: center;
+        background: var(--panel);
+        text-align: center;
+      }
+
+      .loading-state__inner {
+        display: grid;
+        justify-items: center;
+        gap: 18px;
+      }
+
+      .loader-heart {
+        position: relative;
+        width: 34px;
+        height: 30px;
+        animation: heartbeat 1.15s ease-in-out infinite;
+      }
+
+      .loader-heart::before,
+      .loader-heart::after {
+        position: absolute;
+        top: 0;
+        width: 18px;
+        height: 28px;
+        border-radius: 18px 18px 0 0;
+        background: var(--rose);
+        content: "";
+      }
+
+      .loader-heart::before {
+        left: 17px;
+        transform: rotate(-45deg);
+        transform-origin: 0 100%;
+      }
+
+      .loader-heart::after {
+        left: 0;
+        transform: rotate(45deg);
+        transform-origin: 100% 100%;
+      }
+
+      .state-title {
+        margin: 0;
+        font-family: var(--serif);
+        font-size: 2rem;
+        font-weight: 400;
+      }
+
+      .state-text {
+        max-width: 480px;
+        margin: 9px 0 22px;
+        color: var(--muted);
+        line-height: 1.6;
+      }
+
+      .wishes-grid {
+        display: grid;
+        align-items: stretch;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 18px;
+      }
+
+      .wish-card {
+        --card-bg: #fff8ef;
+        --card-ink: #24131c;
+        position: relative;
+        display: flex;
+        min-height: 325px;
+        padding: clamp(26px, 3vw, 38px);
+        overflow: hidden;
+        border: 0;
+        border-radius: 28px;
+        flex-direction: column;
+        justify-content: space-between;
+        color: var(--card-ink);
+        background: var(--card-bg);
+        box-shadow: 0 18px 48px rgba(7, 2, 6, 0.18);
+        text-align: left;
+        cursor: pointer;
+        opacity: 0;
+        transform: translateY(26px);
+        transition:
+          opacity 520ms ease,
+          transform 520ms ease,
+          box-shadow 180ms ease;
+      }
+
+      .wish-card.is-visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .wish-card:hover {
+        box-shadow: 0 26px 64px rgba(7, 2, 6, 0.31);
+        transform: translateY(-4px);
+      }
+
+      .wish-card:nth-child(8n + 1) {
+        --card-bg: #ffecb7;
+        grid-column: span 2;
+      }
+
+      .wish-card:nth-child(8n + 3) {
+        --card-bg: #ffc0ca;
+      }
+
+      .wish-card:nth-child(8n + 5) {
+        --card-bg: #dff69b;
+      }
+
+      .wish-card:nth-child(8n + 7) {
+        --card-bg: #c9d9ff;
+      }
+
+      .wish-card:nth-child(8n + 8) {
+        --card-bg: #ffe2d4;
+        grid-column: span 2;
+      }
+
+      .wish-card__number {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        color: rgba(36, 19, 28, 0.58);
+        font-family: var(--display);
+        font-size: 0.72rem;
+        font-weight: 850;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      .wish-card__number svg {
+        width: 19px;
+        height: 19px;
+      }
+
+      .wish-card__message {
+        position: relative;
+        z-index: 1;
+        max-width: 780px;
+        margin: 34px 0 38px;
+        font-family: var(--serif);
+        font-size: clamp(1.55rem, 2.4vw, 2.25rem);
+        letter-spacing: -0.025em;
+        line-height: 1.2;
+        white-space: pre-line;
+      }
+
+      .wish-card:not(:nth-child(8n + 1)):not(:nth-child(8n + 8)) .wish-card__message {
+        font-size: clamp(1.38rem, 1.8vw, 1.75rem);
+      }
+
+      .wish-card__quote {
+        position: absolute;
+        right: 24px;
+        bottom: -56px;
+        color: rgba(36, 19, 28, 0.055);
+        font-family: Georgia, serif;
+        font-size: 13rem;
+        line-height: 1;
+        pointer-events: none;
+      }
+
+      .wish-card__from {
+        display: flex;
+        position: relative;
+        z-index: 1;
+        align-items: center;
+        gap: 12px;
+        font-weight: 850;
+      }
+
+      .wish-card__initial {
+        display: grid;
+        width: 38px;
+        height: 38px;
+        flex: 0 0 auto;
+        border: 1px solid rgba(36, 19, 28, 0.22);
+        border-radius: 50%;
+        place-items: center;
+        font-size: 0.79rem;
+        text-transform: uppercase;
+      }
+
+      .closing-note {
+        display: grid;
+        min-height: 500px;
+        margin-top: 90px;
+        padding: 60px 24px;
+        place-items: center;
+        border-top: 1px solid var(--line);
+        text-align: center;
+      }
+
+      .closing-note__heart {
+        color: var(--rose);
+        font-size: 1.5rem;
+      }
+
+      .closing-note h2 {
+        max-width: 830px;
+        margin: 20px auto;
+        font-family: var(--serif);
+        font-size: clamp(3.4rem, 7vw, 7rem);
+        font-weight: 400;
+        letter-spacing: -0.06em;
+        line-height: 0.92;
+      }
+
+      .closing-note p {
+        margin: 0;
+        color: var(--muted);
+      }
+
+      .footer {
+        display: flex;
+        padding: 24px 0 8px;
+        border-top: 1px solid var(--line);
+        justify-content: space-between;
+        gap: 24px;
+        color: var(--soft);
+        font-family: var(--display);
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.13em;
+        text-transform: uppercase;
+      }
+
+      .footer__love {
+        color: var(--rose);
+      }
+
+      .presentation {
+        position: fixed;
+        inset: 0;
+        width: 100vw;
+        max-width: none;
+        height: 100dvh;
+        max-height: none;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        border: 0;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at 80% 18%, rgba(255, 142, 159, 0.25), transparent 34rem),
+          radial-gradient(circle at 12% 82%, rgba(255, 214, 138, 0.16), transparent 34rem),
+          #160c13;
+      }
+
+      .presentation::backdrop {
+        background: rgba(4, 1, 3, 0.8);
+        -webkit-backdrop-filter: blur(12px);
+        backdrop-filter: blur(12px);
+      }
+
+      .presentation[open] {
+        display: grid;
+      }
+
+      .presentation__top {
+        position: absolute;
+        z-index: 5;
+        top: calc(18px + var(--safe-top));
+        right: calc(22px + var(--safe-right));
+        left: calc(22px + var(--safe-left));
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+      }
+
+      .presentation__brand {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        color: var(--muted);
+        font-family: var(--display);
+        font-size: 0.73rem;
+        font-weight: 850;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      .presentation__brand::before {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: var(--rose);
+        box-shadow: 0 0 0 5px rgba(255, 142, 159, 0.12);
+        content: "";
+      }
+
+      .icon-button {
+        display: grid;
+        width: 48px;
+        height: 48px;
+        border: 1px solid var(--line);
+        border-radius: 50%;
+        place-items: center;
+        color: var(--ink);
+        background: rgba(255, 248, 239, 0.06);
+        cursor: pointer;
+        transition:
+          background 160ms ease,
+          transform 160ms ease;
+      }
+
+      .icon-button:hover {
+        background: rgba(255, 248, 239, 0.12);
+        transform: scale(1.04);
+      }
+
+      .icon-button svg {
+        width: 20px;
+        height: 20px;
+      }
+
+      .presentation__stage {
+        display: grid;
+        width: min(1040px, calc(100% - 48px));
+        height: 100%;
+        margin: 0 auto;
+        padding: 100px 0 112px;
+        place-items: center;
+        text-align: center;
+      }
+
+      .presentation__content {
+        width: 100%;
+        max-height: calc(100dvh - 220px);
+        padding: 10px 4px;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        scrollbar-width: none;
+        transition:
+          opacity 180ms ease,
+          transform 180ms ease;
+      }
+
+      .presentation__content::-webkit-scrollbar {
+        display: none;
+      }
+
+      .presentation__content.is-changing {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+
+      .presentation__kicker {
+        display: block;
+        margin-bottom: 26px;
+        color: var(--gold);
+        font-family: var(--display);
+        font-size: 0.78rem;
+        font-weight: 850;
+        letter-spacing: 0.17em;
+        text-transform: uppercase;
+      }
+
+      .presentation__message {
+        max-width: 980px;
+        margin: 0 auto;
+        font-family: var(--serif);
+        font-size: clamp(2.6rem, 5.8vw, 6rem);
+        font-weight: 400;
+        letter-spacing: -0.045em;
+        line-height: 1.05;
+        white-space: pre-line;
+      }
+
+      .presentation__from {
+        display: inline-flex;
+        margin-top: 40px;
+        align-items: center;
+        gap: 12px;
+        color: var(--muted);
+        font-size: 1rem;
+        font-weight: 800;
+      }
+
+      .presentation__from::before,
+      .presentation__from::after {
+        width: 26px;
+        height: 1px;
+        background: var(--line);
+        content: "";
+      }
+
+      .presentation__content.is-long .presentation__message {
+        font-size: clamp(1.7rem, 3.7vw, 3.65rem);
+        line-height: 1.12;
+      }
+
+      .presentation__content.is-very-long .presentation__message {
+        font-size: clamp(1.28rem, 2.3vw, 2.15rem);
+        letter-spacing: -0.025em;
+        line-height: 1.2;
+      }
+
+      .presentation__content.is-finale .presentation__message {
+        color: var(--rose);
+        font-family: var(--script);
+        font-size: clamp(4rem, 9vw, 9rem);
+        line-height: 0.92;
+        transform: rotate(-2deg);
+      }
+
+      .presentation__content.is-finale .presentation__from {
+        max-width: 740px;
+        line-height: 1.6;
+      }
+
+      .presentation__controls {
+        position: absolute;
+        z-index: 5;
+        right: calc(22px + var(--safe-right));
+        bottom: calc(20px + var(--safe-bottom));
+        left: calc(22px + var(--safe-left));
+        display: grid;
+        align-items: center;
+        grid-template-columns: 1fr auto 1fr;
+        gap: 20px;
+      }
+
+      .presentation__progress {
+        display: flex;
+        min-width: 0;
+        align-items: center;
+        gap: 13px;
+      }
+
+      .presentation__counter {
+        min-width: 58px;
+        color: var(--muted);
+        font-family: var(--display);
+        font-size: 0.77rem;
+        font-weight: 850;
+        letter-spacing: 0.1em;
+      }
+
+      .progress-track {
+        position: relative;
+        width: min(300px, 28vw);
+        height: 2px;
+        overflow: hidden;
+        background: rgba(255, 248, 239, 0.16);
+      }
+
+      .progress-track__fill {
+        width: 0;
+        height: 100%;
+        background: var(--rose);
+        transition: width 280ms ease;
+      }
+
+      .presentation__nav {
+        display: flex;
+        gap: 10px;
+      }
+
+      .presentation__autoplay {
+        display: flex;
+        justify-self: end;
+      }
+
+      .autoplay-button {
+        display: inline-flex;
+        min-height: 46px;
+        padding: 0 17px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        align-items: center;
+        gap: 9px;
+        color: var(--ink);
+        background: rgba(255, 248, 239, 0.06);
+        font-size: 0.8rem;
+        font-weight: 800;
+        cursor: pointer;
+      }
+
+      .autoplay-button svg {
+        width: 16px;
+        height: 16px;
+      }
+
+      .celebration-particle {
+        position: fixed;
+        z-index: 1;
+        top: -40px;
+        color: var(--rose);
+        font-size: 15px;
+        pointer-events: none;
+        opacity: 0;
+        animation: fall var(--duration) linear var(--delay) forwards;
+      }
+
+      [hidden] {
+        display: none !important;
+      }
+
+      @keyframes ribbon {
+        to {
+          transform: translateX(-50%);
+        }
+      }
+
+      @keyframes heartbeat {
+        0%,
+        100% {
+          transform: scale(0.86);
+        }
+        45% {
+          transform: scale(1.05);
+        }
+      }
+
+      @keyframes fall {
+        0% {
+          opacity: 0;
+          transform: translate3d(0, -30px, 0) rotate(0deg);
+        }
+        10% {
+          opacity: 0.75;
+        }
+        100% {
+          opacity: 0;
+          transform: translate3d(var(--drift), 105vh, 0) rotate(580deg);
+        }
+      }
+
+      @media (max-width: 960px) {
+        .hero {
+          min-height: auto;
+          grid-template-columns: minmax(0, 1fr) minmax(290px, 0.72fr);
+          gap: 42px;
+        }
+
+        .hero h1 {
+          font-size: clamp(4.1rem, 9.5vw, 6.3rem);
+        }
+
+        .portrait-stamp {
+          right: -8px;
+          width: 108px;
+          height: 108px;
+        }
+
+        .portrait-stamp strong {
+          font-size: 1.35rem;
+        }
+
+        .wishes-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .wish-card:nth-child(8n + 1),
+        .wish-card:nth-child(8n + 8) {
+          grid-column: span 2;
+        }
+      }
+
+      @media (max-width: 720px) {
+        .page {
+          padding-right: calc(15px + var(--safe-right));
+          padding-left: calc(15px + var(--safe-left));
+        }
+
+        .topbar {
+          min-height: 56px;
+          padding-left: 10px;
+        }
+
+        .brand {
+          width: 92px;
+          height: 42px;
+        }
+
+        .brand img {
+          width: 90px;
+        }
+
+        .topbar__note {
+          display: none;
+        }
+
+        .locale-button {
+          min-width: 34px;
+          min-height: 31px;
+          padding: 0 7px;
+        }
+
+        .hero {
+          padding: 68px 2px 72px;
+          grid-template-columns: 1fr;
+          gap: 54px;
+        }
+
+        .hero h1 {
+          margin-top: 20px;
+          font-size: clamp(4rem, 21vw, 6.2rem);
+        }
+
+        .hero h1 .script {
+          margin-left: 0.2em;
+        }
+
+        .hero__actions {
+          align-items: stretch;
+          flex-direction: column;
+        }
+
+        .button {
+          width: 100%;
+        }
+
+        .hero__count {
+          align-items: flex-start;
+          flex-wrap: wrap;
+        }
+
+        .portrait-stage {
+          width: min(360px, calc(100% - 22px));
+          margin: 0 auto;
+          justify-self: center;
+        }
+
+        .portrait-stamp {
+          right: -14px;
+          bottom: 28px;
+        }
+
+        .name-ribbon {
+          margin-bottom: 82px;
+        }
+
+        .section-head {
+          margin-bottom: 34px;
+          grid-template-columns: 1fr;
+          gap: 20px;
+        }
+
+        .section-head h2 {
+          font-size: clamp(3.2rem, 15vw, 5rem);
+        }
+
+        .wishes-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .wish-card,
+        .wish-card:nth-child(8n + 1),
+        .wish-card:nth-child(8n + 8) {
+          min-height: 285px;
+          grid-column: auto;
+        }
+
+        .wish-card__message,
+        .wish-card:not(:nth-child(8n + 1)):not(:nth-child(8n + 8)) .wish-card__message {
+          font-size: clamp(1.45rem, 7vw, 2rem);
+        }
+
+        .closing-note {
+          min-height: 430px;
+          margin-top: 72px;
+        }
+
+        .footer {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .presentation__stage {
+          width: calc(100% - 34px);
+          padding: 96px 0 132px;
+        }
+
+        .presentation__message {
+          font-size: clamp(2.4rem, 11vw, 4.4rem);
+        }
+
+        .presentation__content {
+          max-height: calc(100dvh - 235px);
+        }
+
+        .presentation__content.is-long .presentation__message {
+          font-size: clamp(1.58rem, 7.2vw, 2.35rem);
+        }
+
+        .presentation__content.is-very-long .presentation__message {
+          font-size: clamp(1.16rem, 5.2vw, 1.58rem);
+          line-height: 1.23;
+        }
+
+        .presentation__controls {
+          grid-template-columns: 1fr auto;
+        }
+
+        .presentation__nav {
+          justify-self: end;
+        }
+
+        .presentation__autoplay {
+          grid-column: 1 / -1;
+          grid-row: 2;
+          justify-self: center;
+        }
+
+        .progress-track {
+          width: min(42vw, 180px);
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+
+        .name-ribbon__track,
+        .loader-heart,
+        .celebration-particle {
+          animation: none;
+        }
+
+        .wish-card {
+          opacity: 1;
+          transform: none;
+          transition: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <a class="skip-link" href="#wishes" data-i18n="skipLink">К поздравлениям</a>
+
+    <div class="page">
+      <div class="orb orb--one" aria-hidden="true"></div>
+      <div class="orb orb--two" aria-hidden="true"></div>
+
+      <div class="shell">
+        <header class="topbar">
+          <a class="brand" href="/" aria-label="Bandeja">
+            <img
+              src="/bandeja2-white-tr.png"
+              width="1080"
+              height="675"
+              alt="Bandeja"
+            />
+          </a>
+
+          <div class="topbar__right">
+            <span class="topbar__note" data-i18n="topNote">Открытка нашего сообщества</span>
+            <div class="locale-control" role="group" aria-label="Language">
+              <button class="locale-button" type="button" data-locale="en" aria-pressed="false">
+                EN
+              </button>
+              <button
+                class="locale-button is-active"
+                type="button"
+                data-locale="ru"
+                aria-pressed="true"
+              >
+                RU
+              </button>
+              <button class="locale-button" type="button" data-locale="rs" aria-pressed="false">
+                SR
+              </button>
+            </div>
+          </div>
+        </header>
+
+        <main>
+          <section class="hero" aria-labelledby="page-title">
+            <div class="hero__copy">
+              <span class="eyebrow" data-i18n="eyebrow">2 августа 2026 · от всех нас</span>
+              <h1 id="page-title" data-i18n-html="heroTitle">
+                Лиза, это всё <span class="script">для тебя.</span>
+              </h1>
+              <p class="hero__lead" data-i18n="heroLead">
+                Ты собрала нас на корте, а сегодня мы собрали здесь слова, которые давно хотели
+                тебе сказать. Открывай — по одному тёплому объятию за раз.
+              </p>
+
+              <div class="hero__actions">
+                <button class="button" type="button" id="start-presentation" disabled>
+                  <span data-i18n="startButton">Открыть поздравления</span>
+                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path
+                      d="m9 6 6 6-6 6"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </button>
+                <a class="button button--secondary" href="#wishes" data-i18n="allButton">
+                  Прочитать все
+                </a>
+              </div>
+
+              <div class="hero__count" id="hero-count" aria-live="polite">
+                <div class="avatar-stack" id="avatar-stack" aria-hidden="true"></div>
+                <strong id="wish-count">—</strong>
+                <span id="wish-count-label" data-i18n="countLoading">собираем тёплые слова…</span>
+              </div>
+            </div>
+
+            <div class="portrait-stage">
+              <div class="portrait-glow" aria-hidden="true"></div>
+              <div class="portrait-frame">
+                <img
+                  src="/LizaBirthday2026/avatar.jpeg"
+                  width="800"
+                  height="1200"
+                  alt="Лиза улыбается"
+                  data-i18n-alt="avatarAlt"
+                />
+              </div>
+              <div class="portrait-stamp" aria-hidden="true">
+                <span>
+                  <span data-i18n="stampTop">С любовью</span>
+                  <strong>Bandeja</strong>
+                  <span>02.08.26</span>
+                </span>
+              </div>
+            </div>
+          </section>
+
+          <div class="name-ribbon" id="name-ribbon" aria-hidden="true" hidden>
+            <div class="name-ribbon__track" id="name-ribbon-track"></div>
+          </div>
+
+          <section class="wishes-section" id="wishes" aria-labelledby="wishes-title">
+            <div class="section-head">
+              <div>
+                <span class="eyebrow" data-i18n="sectionEyebrow">Твоя большая открытка</span>
+                <h2 id="wishes-title" data-i18n="sectionTitle">Каждое слово — тебе.</h2>
+              </div>
+              <p class="section-head__note" data-i18n="sectionNote">
+                Здесь нет рейтинга и победителей. Только люди, чьи дни стали лучше, потому что в них
+                есть ты.
+              </p>
+            </div>
+
+            <div class="loading-state" id="loading-state" role="status">
+              <div class="loading-state__inner">
+                <span class="loader-heart" aria-hidden="true"></span>
+                <span data-i18n="loading">Собираем поздравления в одну большую открытку…</span>
+              </div>
+            </div>
+
+            <div class="empty-state" id="empty-state" hidden>
+              <div>
+                <h3 class="state-title" data-i18n="emptyTitle">Открытка уже здесь.</h3>
+                <p class="state-text" data-i18n="emptyText">
+                  Поздравления появятся совсем скоро. Эта страница обновится сама.
+                </p>
+              </div>
+            </div>
+
+            <div class="error-state" id="error-state" hidden>
+              <div>
+                <h3 class="state-title" data-i18n="errorTitle">Тёплые слова немного задержались.</h3>
+                <p class="state-text" data-i18n="errorText">
+                  Проверьте соединение и попробуйте открыть открытку ещё раз.
+                </p>
+                <button class="button" type="button" id="retry-button" data-i18n="retryButton">
+                  Попробовать снова
+                </button>
+              </div>
+            </div>
+
+            <div class="wishes-grid" id="wishes-grid" hidden></div>
+          </section>
+
+          <section class="closing-note" id="closing-note" hidden>
+            <div>
+              <span class="closing-note__heart" aria-hidden="true">♥</span>
+              <h2 data-i18n="closingTitle">С днём рождения, Лиза.</h2>
+              <p data-i18n="closingText">Спасибо, что сделала нашу падел-семью семьёй.</p>
+            </div>
+          </section>
+        </main>
+
+        <footer class="footer">
+          <span>
+            <span data-i18n="footerMade">Сделано с</span>
+            <span class="footer__love" data-i18n="footerLove">любовью</span>
+            <span data-i18n="footerFor">для Лизы</span>
+          </span>
+          <span data-i18n="footerDate">Bandeja community · 02.08.2026</span>
+        </footer>
+      </div>
+    </div>
+
+    <dialog
+      class="presentation"
+      id="presentation"
+      aria-labelledby="presentation-message"
+      aria-describedby="presentation-from"
+    >
+      <div class="presentation__top">
+        <span class="presentation__brand" data-i18n="presentationBrand">
+          Слова от твоих людей
+        </span>
+        <button
+          class="icon-button"
+          type="button"
+          id="presentation-close"
+          aria-label="Закрыть"
+          data-i18n-aria-label="closeButton"
+        >
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path
+              d="M6 6l12 12M18 6 6 18"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+            />
+          </svg>
+        </button>
+      </div>
+
+      <div class="presentation__stage" id="presentation-stage">
+        <div class="presentation__content" id="presentation-content">
+          <span class="presentation__kicker" id="presentation-kicker"></span>
+          <p class="presentation__message" id="presentation-message"></p>
+          <p class="presentation__from" id="presentation-from"></p>
+        </div>
+      </div>
+
+      <div class="presentation__controls">
+        <div class="presentation__progress">
+          <span class="presentation__counter" id="presentation-counter">01 / 01</span>
+          <span class="progress-track" aria-hidden="true">
+            <span class="progress-track__fill" id="presentation-progress"></span>
+          </span>
+        </div>
+        <div class="presentation__nav">
+          <button
+            class="icon-button"
+            type="button"
+            id="presentation-prev"
+            aria-label="Назад"
+            data-i18n-aria-label="previousButton"
+          >
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path
+                d="m15 6-6 6 6 6"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </button>
+          <button
+            class="icon-button"
+            type="button"
+            id="presentation-next"
+            aria-label="Вперёд"
+            data-i18n-aria-label="nextButton"
+          >
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path
+                d="m9 6 6 6-6 6"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </button>
+        </div>
+        <div class="presentation__autoplay">
+          <button class="autoplay-button" type="button" id="autoplay-button">
+            <svg class="play-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path
+                d="m8 5 11 7-11 7V5Z"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linejoin="round"
+              />
+            </svg>
+            <svg class="pause-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true" hidden>
+              <path
+                d="M9 6v12M15 6v12"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+              />
+            </svg>
+            <span id="autoplay-label" data-i18n="autoplayStart">Включить показ</span>
+          </button>
+        </div>
+      </div>
+      <div id="celebration-particles" aria-hidden="true"></div>
+    </dialog>
+
+    <script>
+      (function () {
+        const translations = {
+          en: {
+            pageTitle: "For Liza, with love · 2 August 2026",
+            pageDescription: "Warm words for Liza from her friends and the Bandeja community.",
+            skipLink: "Skip to the wishes",
+            topNote: "Our community card",
+            eyebrow: "2 August 2026 · from all of us",
+            heroTitle: 'Liza, this is all <span class="script">for you.</span>',
+            heroLead:
+              "You brought us together on court. Today, we brought together the words we have long wanted to tell you. Open them — one warm hug at a time.",
+            startButton: "Open the wishes",
+            allButton: "Read them all",
+            countLoading: "gathering warm words…",
+            countOne: "person, one very big hug",
+            countMany: "people, one very big hug",
+            avatarAlt: "Liza smiling",
+            stampTop: "With love",
+            sectionEyebrow: "Your big birthday card",
+            sectionTitle: "Every word is for you.",
+            sectionNote:
+              "No rankings and no winners here. Just people whose days are better because you are in them.",
+            loading: "Gathering every wish into one big birthday card…",
+            emptyTitle: "The card is ready.",
+            emptyText: "The wishes will appear very soon. This page will refresh itself.",
+            errorTitle: "The warm words are running a little late.",
+            errorText: "Check the connection and try opening the card again.",
+            retryButton: "Try again",
+            cardLabel: "A wish for Liza",
+            cardFrom: "From {name}",
+            closingTitle: "Happy birthday, Liza.",
+            closingText: "Thank you for making our padel family feel like family.",
+            footerMade: "Made with",
+            footerLove: "love",
+            footerFor: "for Liza",
+            footerDate: "Bandeja community · 02.08.2026",
+            presentationBrand: "Words from your people",
+            presentationWish: "Wish {current} of {total}",
+            finaleKicker: "And one more thing",
+            finaleMessage: "Happy birthday, Liza!",
+            finaleFrom: "With love, your whole Bandeja family",
+            closeButton: "Close",
+            previousButton: "Previous wish",
+            nextButton: "Next wish",
+            autoplayStart: "Start slideshow",
+            autoplayPause: "Pause slideshow",
+            autoplayAgain: "Play again",
+          },
+          ru: {
+            pageTitle: "Для Лизы, с любовью · 2 августа 2026",
+            pageDescription:
+              "Тёплые слова для Лизы от друзей и падел-сообщества Bandeja.",
+            skipLink: "К поздравлениям",
+            topNote: "Открытка нашего сообщества",
+            eyebrow: "2 августа 2026 · от всех нас",
+            heroTitle: 'Лиза, это всё <span class="script">для тебя.</span>',
+            heroLead:
+              "Ты собрала нас на корте, а сегодня мы собрали здесь слова, которые давно хотели тебе сказать. Открывай — по одному тёплому объятию за раз.",
+            startButton: "Открыть поздравления",
+            allButton: "Прочитать все",
+            countLoading: "собираем тёплые слова…",
+            countOne: "человек, одно большое объятие",
+            countFew: "человека, одно большое объятие",
+            countMany: "человек, одно большое объятие",
+            avatarAlt: "Лиза улыбается",
+            stampTop: "С любовью",
+            sectionEyebrow: "Твоя большая открытка",
+            sectionTitle: "Каждое слово — тебе.",
+            sectionNote:
+              "Здесь нет рейтинга и победителей. Только люди, чьи дни стали лучше, потому что в них есть ты.",
+            loading: "Собираем поздравления в одну большую открытку…",
+            emptyTitle: "Открытка уже здесь.",
+            emptyText: "Поздравления появятся совсем скоро. Эта страница обновится сама.",
+            errorTitle: "Тёплые слова немного задержались.",
+            errorText: "Проверьте соединение и попробуйте открыть открытку ещё раз.",
+            retryButton: "Попробовать снова",
+            cardLabel: "Пожелание для Лизы",
+            cardFrom: "От {name}",
+            closingTitle: "С днём рождения, Лиза.",
+            closingText: "Спасибо, что сделала нашу падел-семью семьёй.",
+            footerMade: "Сделано с",
+            footerLove: "любовью",
+            footerFor: "для Лизы",
+            footerDate: "Bandeja community · 02.08.2026",
+            presentationBrand: "Слова от твоих людей",
+            presentationWish: "Пожелание {current} из {total}",
+            finaleKicker: "И ещё кое-что",
+            finaleMessage: "С днём рождения, Лиза!",
+            finaleFrom: "С любовью, вся твоя семья Bandeja",
+            closeButton: "Закрыть",
+            previousButton: "Предыдущее пожелание",
+            nextButton: "Следующее пожелание",
+            autoplayStart: "Включить показ",
+            autoplayPause: "Остановить показ",
+            autoplayAgain: "Посмотреть ещё раз",
+          },
+          rs: {
+            pageTitle: "Za Lizu, s ljubavlju · 2. avgust 2026.",
+            pageDescription: "Tople reči za Lizu od prijatelja i Bandeja zajednice.",
+            skipLink: "Pređi na čestitke",
+            topNote: "Čestitka naše zajednice",
+            eyebrow: "2. avgust 2026. · od svih nas",
+            heroTitle: 'Liza, sve ovo je <span class="script">za tebe.</span>',
+            heroLead:
+              "Okupila si nas na terenu, a danas smo mi ovde okupili reči koje smo dugo želeli da ti kažemo. Otvaraj ih — jedan topli zagrljaj za drugim.",
+            startButton: "Otvori čestitke",
+            allButton: "Pročitaj sve",
+            countLoading: "skupljamo tople reči…",
+            countOne: "osoba, jedan veliki zagrljaj",
+            countMany: "ljudi, jedan veliki zagrljaj",
+            avatarAlt: "Liza se osmehuje",
+            stampTop: "S ljubavlju",
+            sectionEyebrow: "Tvoja velika čestitka",
+            sectionTitle: "Svaka reč je za tebe.",
+            sectionNote:
+              "Ovde nema rangiranja ni pobednika. Samo ljudi čiji su dani bolji zato što si ti u njima.",
+            loading: "Skupljamo sve želje u jednu veliku rođendansku čestitku…",
+            emptyTitle: "Čestitka je spremna.",
+            emptyText: "Poruke stižu veoma brzo. Ova stranica će se sama osvežiti.",
+            errorTitle: "Tople reči malo kasne.",
+            errorText: "Proverite vezu i pokušajte ponovo da otvorite čestitku.",
+            retryButton: "Pokušaj ponovo",
+            cardLabel: "Želja za Lizu",
+            cardFrom: "Od {name}",
+            closingTitle: "Srećan rođendan, Liza.",
+            closingText: "Hvala ti što si od naše padel porodice napravila pravu porodicu.",
+            footerMade: "Napravljeno s",
+            footerLove: "ljubavlju",
+            footerFor: "za Lizu",
+            footerDate: "Bandeja zajednica · 02.08.2026.",
+            presentationBrand: "Reči tvojih ljudi",
+            presentationWish: "Želja {current} od {total}",
+            finaleKicker: "I još nešto",
+            finaleMessage: "Srećan rođendan, Liza!",
+            finaleFrom: "S ljubavlju, cela tvoja Bandeja porodica",
+            closeButton: "Zatvori",
+            previousButton: "Prethodna želja",
+            nextButton: "Sledeća želja",
+            autoplayStart: "Pokreni prikaz",
+            autoplayPause: "Pauziraj prikaz",
+            autoplayAgain: "Pogledaj ponovo",
+          },
+        };
+
+        const params = new URLSearchParams(window.location.search);
+        const requestedLocale = (params.get("locale") || "").toLowerCase();
+        let activeLocale =
+          requestedLocale === "sr"
+            ? "rs"
+            : translations[requestedLocale]
+              ? requestedLocale
+              : "ru";
+        let wishes = [];
+        let activeWishIndex = 0;
+        let autoplayTimer = null;
+        let isAutoplaying = false;
+        let touchStartX = null;
+        let refreshTimer = null;
+
+        const root = document.documentElement;
+        const startButton = document.getElementById("start-presentation");
+        const wishCount = document.getElementById("wish-count");
+        const wishCountLabel = document.getElementById("wish-count-label");
+        const avatarStack = document.getElementById("avatar-stack");
+        const ribbon = document.getElementById("name-ribbon");
+        const ribbonTrack = document.getElementById("name-ribbon-track");
+        const loadingState = document.getElementById("loading-state");
+        const emptyState = document.getElementById("empty-state");
+        const errorState = document.getElementById("error-state");
+        const wishesGrid = document.getElementById("wishes-grid");
+        const closingNote = document.getElementById("closing-note");
+        const retryButton = document.getElementById("retry-button");
+        const presentation = document.getElementById("presentation");
+        const presentationStage = document.getElementById("presentation-stage");
+        const presentationContent = document.getElementById("presentation-content");
+        const presentationKicker = document.getElementById("presentation-kicker");
+        const presentationMessage = document.getElementById("presentation-message");
+        const presentationFrom = document.getElementById("presentation-from");
+        const presentationCounter = document.getElementById("presentation-counter");
+        const presentationProgress = document.getElementById("presentation-progress");
+        const presentationClose = document.getElementById("presentation-close");
+        const presentationPrevious = document.getElementById("presentation-prev");
+        const presentationNext = document.getElementById("presentation-next");
+        const autoplayButton = document.getElementById("autoplay-button");
+        const autoplayLabel = document.getElementById("autoplay-label");
+        const playIcon = autoplayButton.querySelector(".play-icon");
+        const pauseIcon = autoplayButton.querySelector(".pause-icon");
+        const particles = document.getElementById("celebration-particles");
+
+        function interpolate(template, values) {
+          return Object.keys(values).reduce(function (result, key) {
+            return result.replace(new RegExp("\\{" + key + "\\}", "g"), values[key]);
+          }, template);
+        }
+
+        function updateUrl(key, value) {
+          const next = new URL(window.location.href);
+          next.searchParams.set(key, value);
+          window.history.replaceState({}, "", next);
+        }
+
+        function getCountLabel(total) {
+          const copy = translations[activeLocale];
+          if (activeLocale === "ru") {
+            const lastTwo = total % 100;
+            const last = total % 10;
+            if (lastTwo >= 11 && lastTwo <= 14) return copy.countMany;
+            if (last === 1) return copy.countOne;
+            if (last >= 2 && last <= 4) return copy.countFew;
+            return copy.countMany;
+          }
+          return total === 1 ? copy.countOne : copy.countMany;
+        }
+
+        function applyLocale(nextLocale, syncUrl) {
+          activeLocale =
+            nextLocale === "sr" ? "rs" : translations[nextLocale] ? nextLocale : "ru";
+          const copy = translations[activeLocale];
+
+          root.lang = activeLocale === "rs" ? "sr" : activeLocale;
+          document.title = copy.pageTitle;
+          document
+            .querySelector('meta[name="description"]')
+            .setAttribute("content", copy.pageDescription);
+
+          document.querySelectorAll("[data-i18n]").forEach(function (element) {
+            const value = copy[element.dataset.i18n];
+            if (value !== undefined) element.textContent = value;
+          });
+
+          document.querySelectorAll("[data-i18n-html]").forEach(function (element) {
+            const value = copy[element.dataset.i18nHtml];
+            if (value !== undefined) element.innerHTML = value;
+          });
+
+          document.querySelectorAll("[data-i18n-alt]").forEach(function (element) {
+            const value = copy[element.dataset.i18nAlt];
+            if (value !== undefined) element.setAttribute("alt", value);
+          });
+
+          document.querySelectorAll("[data-i18n-aria-label]").forEach(function (element) {
+            const value = copy[element.dataset.i18nAriaLabel];
+            if (value !== undefined) element.setAttribute("aria-label", value);
+          });
+
+          document.querySelectorAll(".locale-button").forEach(function (button) {
+            const isActive = button.dataset.locale === activeLocale;
+            button.classList.toggle("is-active", isActive);
+            button.setAttribute("aria-pressed", String(isActive));
+          });
+
+          if (wishes.length > 0) {
+            wishCountLabel.textContent = getCountLabel(wishes.length);
+            renderWishes();
+            renderPresentation(false);
+          }
+
+          updateAutoplayButton();
+          if (syncUrl) updateUrl("locale", activeLocale);
+        }
+
+        function resolveWishesUrl() {
+          const path = "/api/public/landings/liza_birthday_2026/wishes";
+          const host = window.location.hostname;
+          if (host === "bandeja.me" || host === "www.bandeja.me") return path;
+          const cap = window.Capacitor;
+          if (cap && typeof cap.isNativePlatform === "function" && cap.isNativePlatform()) {
+            return "https://bandeja.me" + path;
+          }
+          if (
+            (host === "localhost" || host === "127.0.0.1") &&
+            window.location.protocol === "https:"
+          ) {
+            return "https://bandeja.me" + path;
+          }
+          return path;
+        }
+
+        function initialFor(name) {
+          const trimmed = String(name || "").trim();
+          return trimmed ? Array.from(trimmed)[0] : "♥";
+        }
+
+        function renderAvatarStack() {
+          avatarStack.replaceChildren();
+          wishes.slice(0, 4).forEach(function (wish) {
+            const dot = document.createElement("span");
+            dot.className = "avatar-dot";
+            dot.textContent = initialFor(wish.displayName);
+            avatarStack.appendChild(dot);
+          });
+        }
+
+        function renderRibbon() {
+          ribbonTrack.replaceChildren();
+          const names = wishes.map(function (wish) {
+            return wish.displayName;
+          });
+          if (names.length === 0) {
+            ribbon.hidden = true;
+            return;
+          }
+
+          const repetitions = Math.max(2, Math.ceil(18 / names.length));
+          for (let pass = 0; pass < repetitions; pass += 1) {
+            names.forEach(function (name) {
+              const item = document.createElement("span");
+              item.className = "name-ribbon__item";
+              item.textContent = name;
+              ribbonTrack.appendChild(item);
+            });
+          }
+          ribbon.hidden = false;
+        }
+
+        function createWishCard(wish, index) {
+          const copy = translations[activeLocale];
+          const card = document.createElement("button");
+          card.className = "wish-card";
+          card.type = "button";
+          card.setAttribute(
+            "aria-label",
+            interpolate(copy.cardFrom, { name: wish.displayName }),
+          );
+
+          const top = document.createElement("span");
+          top.className = "wish-card__number";
+
+          const label = document.createElement("span");
+          label.textContent =
+            copy.cardLabel + " · " + String(index + 1).padStart(2, "0");
+          top.appendChild(label);
+
+          const heart = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+          heart.setAttribute("viewBox", "0 0 24 24");
+          heart.setAttribute("fill", "none");
+          heart.setAttribute("aria-hidden", "true");
+          const heartPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+          heartPath.setAttribute(
+            "d",
+            "M20.8 4.7a5.5 5.5 0 0 0-7.8 0L12 5.8l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21l7.8-7.4 1.1-1.1a5.5 5.5 0 0 0-.1-7.8Z",
+          );
+          heartPath.setAttribute("stroke", "currentColor");
+          heartPath.setAttribute("stroke-width", "1.6");
+          heart.appendChild(heartPath);
+          top.appendChild(heart);
+
+          const message = document.createElement("span");
+          message.className = "wish-card__message";
+          message.textContent = wish.message;
+
+          const quote = document.createElement("span");
+          quote.className = "wish-card__quote";
+          quote.setAttribute("aria-hidden", "true");
+          quote.textContent = "”";
+
+          const from = document.createElement("span");
+          from.className = "wish-card__from";
+          const initial = document.createElement("span");
+          initial.className = "wish-card__initial";
+          initial.setAttribute("aria-hidden", "true");
+          initial.textContent = initialFor(wish.displayName);
+          const name = document.createElement("span");
+          name.textContent = interpolate(copy.cardFrom, { name: wish.displayName });
+          from.append(initial, name);
+
+          card.append(top, message, quote, from);
+          card.addEventListener("click", function () {
+            openPresentation(index, false);
+          });
+          return card;
+        }
+
+        function renderWishes() {
+          wishesGrid.replaceChildren();
+          wishes.forEach(function (wish, index) {
+            wishesGrid.appendChild(createWishCard(wish, index));
+          });
+
+          const cards = wishesGrid.querySelectorAll(".wish-card");
+          if ("IntersectionObserver" in window) {
+            const observer = new IntersectionObserver(
+              function (entries) {
+                entries.forEach(function (entry) {
+                  if (!entry.isIntersecting) return;
+                  entry.target.classList.add("is-visible");
+                  observer.unobserve(entry.target);
+                });
+              },
+              { threshold: 0.12 },
+            );
+            cards.forEach(function (card) {
+              observer.observe(card);
+            });
+          } else {
+            cards.forEach(function (card) {
+              card.classList.add("is-visible");
+            });
+          }
+        }
+
+        function showLoadedState() {
+          loadingState.hidden = true;
+          errorState.hidden = true;
+          emptyState.hidden = wishes.length > 0;
+          wishesGrid.hidden = wishes.length === 0;
+          closingNote.hidden = wishes.length === 0;
+          startButton.disabled = wishes.length === 0;
+        }
+
+        async function loadWishes() {
+          window.clearTimeout(refreshTimer);
+          loadingState.hidden = false;
+          emptyState.hidden = true;
+          errorState.hidden = true;
+          wishesGrid.hidden = true;
+
+          try {
+            const response = await fetch(resolveWishesUrl(), {
+              headers: { Accept: "application/json" },
+            });
+            if (!response.ok) throw new Error("wish request failed");
+            const payload = await response.json();
+            if (!payload || !Array.isArray(payload.wishes)) {
+              throw new Error("unexpected wish response");
+            }
+
+            wishes = payload.wishes.filter(function (wish) {
+              return (
+                wish &&
+                typeof wish.displayName === "string" &&
+                typeof wish.message === "string"
+              );
+            });
+
+            wishCount.textContent = String(wishes.length);
+            wishCountLabel.textContent = getCountLabel(wishes.length);
+            renderAvatarStack();
+            renderRibbon();
+            renderWishes();
+            showLoadedState();
+
+            if (wishes.length === 0) {
+              refreshTimer = window.setTimeout(loadWishes, 30000);
+            }
+          } catch (_error) {
+            loadingState.hidden = true;
+            emptyState.hidden = true;
+            wishesGrid.hidden = true;
+            closingNote.hidden = true;
+            errorState.hidden = false;
+            startButton.disabled = true;
+            wishCount.textContent = "—";
+            wishCountLabel.textContent = translations[activeLocale].countLoading;
+          }
+        }
+
+        function updateAutoplayButton() {
+          const copy = translations[activeLocale];
+          const isFinale = activeWishIndex === wishes.length;
+          autoplayLabel.textContent = isFinale
+            ? copy.autoplayAgain
+            : isAutoplaying
+              ? copy.autoplayPause
+              : copy.autoplayStart;
+          playIcon.hidden = isAutoplaying;
+          pauseIcon.hidden = !isAutoplaying;
+        }
+
+        function stopAutoplay() {
+          window.clearTimeout(autoplayTimer);
+          autoplayTimer = null;
+          isAutoplaying = false;
+          updateAutoplayButton();
+        }
+
+        function scheduleAutoplayAdvance() {
+          window.clearTimeout(autoplayTimer);
+          if (!isAutoplaying || activeWishIndex >= wishes.length) return;
+          const readingTime = 4500 + wishes[activeWishIndex].message.length * 30;
+          const delay = Math.min(30000, Math.max(8000, readingTime));
+          autoplayTimer = window.setTimeout(function () {
+            if (!isAutoplaying) return;
+            activeWishIndex += 1;
+            renderPresentation(true);
+            if (activeWishIndex === wishes.length) {
+              stopAutoplay();
+            } else {
+              scheduleAutoplayAdvance();
+            }
+          }, delay);
+        }
+
+        function startAutoplay() {
+          if (wishes.length === 0) return;
+          if (activeWishIndex === wishes.length) {
+            activeWishIndex = 0;
+            renderPresentation(true);
+          }
+          isAutoplaying = true;
+          updateAutoplayButton();
+          scheduleAutoplayAdvance();
+        }
+
+        function renderPresentation(animate) {
+          if (wishes.length === 0) return;
+          const copy = translations[activeLocale];
+          const totalSlides = wishes.length + 1;
+          const isFinale = activeWishIndex === wishes.length;
+
+          function updateContent() {
+            presentationContent.classList.toggle("is-finale", isFinale);
+            presentationContent.classList.remove("is-long", "is-very-long");
+            if (isFinale) {
+              presentationKicker.textContent = copy.finaleKicker;
+              presentationMessage.textContent = copy.finaleMessage;
+              presentationFrom.textContent = copy.finaleFrom;
+            } else {
+              const wish = wishes[activeWishIndex];
+              presentationContent.classList.toggle(
+                "is-long",
+                wish.message.length > 260 && wish.message.length <= 560,
+              );
+              presentationContent.classList.toggle(
+                "is-very-long",
+                wish.message.length > 560,
+              );
+              presentationKicker.textContent = interpolate(copy.presentationWish, {
+                current: activeWishIndex + 1,
+                total: wishes.length,
+              });
+              presentationMessage.textContent = wish.message;
+              presentationFrom.textContent = interpolate(copy.cardFrom, {
+                name: wish.displayName,
+              });
+            }
+            presentationContent.scrollTop = 0;
+
+            presentationCounter.textContent =
+              String(activeWishIndex + 1).padStart(2, "0") +
+              " / " +
+              String(totalSlides).padStart(2, "0");
+            presentationProgress.style.width =
+              ((activeWishIndex + 1) / totalSlides) * 100 + "%";
+            presentationPrevious.disabled = activeWishIndex === 0;
+            presentationNext.disabled = activeWishIndex === wishes.length;
+            updateAutoplayButton();
+          }
+
+          if (animate && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+            presentationContent.classList.add("is-changing");
+            window.setTimeout(function () {
+              updateContent();
+              presentationContent.classList.remove("is-changing");
+            }, 180);
+          } else {
+            updateContent();
+          }
+        }
+
+        function createCelebrationParticles() {
+          particles.replaceChildren();
+          if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+          for (let index = 0; index < 18; index += 1) {
+            const particle = document.createElement("span");
+            particle.className = "celebration-particle";
+            particle.textContent = index % 4 === 0 ? "●" : "♥";
+            particle.style.left = Math.round(Math.random() * 100) + "vw";
+            particle.style.setProperty("--delay", Math.random() * 1.5 + "s");
+            particle.style.setProperty("--duration", 5 + Math.random() * 4 + "s");
+            particle.style.setProperty("--drift", -70 + Math.random() * 140 + "px");
+            particle.style.color =
+              index % 3 === 0 ? "var(--gold)" : index % 3 === 1 ? "var(--rose)" : "var(--acid)";
+            particles.appendChild(particle);
+          }
+        }
+
+        function openPresentation(index, autoplay) {
+          if (wishes.length === 0) return;
+          activeWishIndex = Math.max(0, Math.min(index, wishes.length));
+          renderPresentation(false);
+          createCelebrationParticles();
+          if (typeof presentation.showModal === "function") {
+            presentation.showModal();
+          } else {
+            presentation.setAttribute("open", "");
+          }
+          document.body.style.overflow = "hidden";
+          if (autoplay) startAutoplay();
+          else stopAutoplay();
+        }
+
+        function closePresentation() {
+          stopAutoplay();
+          if (typeof presentation.close === "function") presentation.close();
+          else presentation.removeAttribute("open");
+          document.body.style.overflow = "";
+          startButton.focus();
+        }
+
+        function showPreviousWish() {
+          if (activeWishIndex <= 0) return;
+          stopAutoplay();
+          activeWishIndex -= 1;
+          renderPresentation(true);
+        }
+
+        function showNextWish() {
+          if (activeWishIndex >= wishes.length) return;
+          stopAutoplay();
+          activeWishIndex += 1;
+          renderPresentation(true);
+        }
+
+        document.querySelectorAll(".locale-button").forEach(function (button) {
+          button.addEventListener("click", function () {
+            applyLocale(button.dataset.locale, true);
+          });
+        });
+
+        startButton.addEventListener("click", function () {
+          openPresentation(0, true);
+        });
+        retryButton.addEventListener("click", loadWishes);
+        presentationClose.addEventListener("click", closePresentation);
+        presentationPrevious.addEventListener("click", showPreviousWish);
+        presentationNext.addEventListener("click", showNextWish);
+        autoplayButton.addEventListener("click", function () {
+          if (isAutoplaying) stopAutoplay();
+          else startAutoplay();
+        });
+
+        presentation.addEventListener("cancel", function (event) {
+          event.preventDefault();
+          closePresentation();
+        });
+
+        presentation.addEventListener("click", function (event) {
+          if (event.target === presentation) closePresentation();
+        });
+
+        presentationStage.addEventListener(
+          "touchstart",
+          function (event) {
+            touchStartX = event.changedTouches[0].clientX;
+          },
+          { passive: true },
+        );
+        presentationStage.addEventListener(
+          "touchend",
+          function (event) {
+            if (touchStartX === null) return;
+            const delta = event.changedTouches[0].clientX - touchStartX;
+            touchStartX = null;
+            if (Math.abs(delta) < 45) return;
+            if (delta > 0) showPreviousWish();
+            else showNextWish();
+          },
+          { passive: true },
+        );
+
+        document.addEventListener("keydown", function (event) {
+          if (!presentation.open) return;
+          if (event.key === "ArrowLeft") showPreviousWish();
+          if (event.key === "ArrowRight") showNextWish();
+          if (event.key === " ") {
+            event.preventDefault();
+            if (isAutoplaying) stopAutoplay();
+            else startAutoplay();
+          }
+        });
+
+        document.addEventListener("visibilitychange", function () {
+          if (document.hidden && isAutoplaying) stopAutoplay();
+        });
+
+        applyLocale(activeLocale, false);
+        loadWishes();
+      })();
+    </script>
+  </body>
+</html>

@@ -22,4 +22,6 @@ jobs:
       - run: npm ci
       - run: npx prisma migrate deploy
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          # Prisma config reads DB_URL (not DATABASE_URL).
+          DB_URL: ${{ secrets.DATABASE_URL }}
+          DB_SCHEMA: padelpulse

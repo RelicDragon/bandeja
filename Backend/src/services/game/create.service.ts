@@ -33,6 +33,8 @@ import {
 import { GameCourtService } from '../gameCourt/gameCourt.service';
 import { PlayIntentGameCreationService } from '../playIntent/playIntentGameCreation.service';
 import { appendGameLog } from './gameLog.service';
+import { PlayIntentMatchQueueService } from '../playIntent/playIntentMatchQueue.service';
+import { normalizeGameRatingFields } from './normalizeGameRatingFields';
 
 async function runSerializableCreate<T>(
   operation: (tx: Prisma.TransactionClient) => Promise<T>,
@@ -390,10 +392,12 @@ export class GameCreateService {
     const ballsInGames = Boolean(formatNorm.ballsInGames);
     const fixedSetsCreate = data.fixedNumberOfSets ?? 0;
 
-    const affectsRatingCreate =
-      data.affectsRating !== undefined
-        ? data.affectsRating
-        : true;
+    const ratingFields = normalizeGameRatingFields({
+      entityType,
+      minLevel: data.minLevel,
+      maxLevel: data.maxLevel,
+      affectsRating: data.affectsRating,
+    });
 
     const createdGame = await runSerializableCreate(async (tx) => {
       const lifecycleNow = new Date();
@@ -418,8 +422,8 @@ export class GameCreateService {
           entityType,
           startTime,
           clubId: data.clubId ?? null,
-          minLevel: data.minLevel ?? null,
-          maxLevel: data.maxLevel ?? null,
+          minLevel: ratingFields.minLevel,
+          maxLevel: ratingFields.maxLevel,
           genderTeams: data.genderTeams ?? 'ANY',
           maxParticipants,
         },
@@ -444,10 +448,10 @@ export class GameCreateService {
         maxParticipants: maxParticipants,
         playersPerMatch,
         minParticipants: minParticipantsCreate,
-        minLevel: data.minLevel,
-        maxLevel: data.maxLevel,
+        minLevel: ratingFields.minLevel,
+        maxLevel: ratingFields.maxLevel,
         isPublic: data.isPublic !== undefined ? data.isPublic : true,
-        affectsRating: affectsRatingCreate,
+        affectsRating: ratingFields.affectsRating,
         anyoneCanInvite: data.anyoneCanInvite || false,
         resultsByAnyone: entityType === EntityType.TOURNAMENT ? false : (data.resultsByAnyone || false),
         allowDirectJoin: data.allowDirectJoin || false,
@@ -575,6 +579,18 @@ export class GameCreateService {
 
       await syncGameBookingState(tx, game.id);
 
+      if (
+        game.isPublic &&
+        game.entityType !== EntityType.LEAGUE &&
+        game.entityType !== EntityType.LEAGUE_SEASON
+      ) {
+        await PlayIntentMatchQueueService.enqueuePublicGameCreated(
+          tx,
+          game.id,
+          userId,
+        );
+      }
+
       return game;
     });
 
@@ -657,13 +673,7 @@ export class GameCreateService {
       notificationService.sendNewGameNotification(finalGame, cityId, userId).catch((error) => {
         console.error('Failed to send new game notifications:', error);
       });
-      void import('../playIntent/playIntentMatch.service')
-        .then(({ PlayIntentMatchService }) =>
-          PlayIntentMatchService.onPublicGameCreated(finalGame.id, userId),
-        )
-        .catch((error) => {
-          console.error('Failed to match play intents to new game:', error);
-        });
+      void PlayIntentMatchQueueService.drain();
     }
 
     if (!finalGame) return finalGame;

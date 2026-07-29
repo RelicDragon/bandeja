@@ -12,44 +12,21 @@ import {
   normalizeTranslationOutput,
 } from './translationOutputNormalize';
 import { translationIsRedundantOfSource } from './translationRedundant';
-
-export const TRANSLATION_LANGUAGE_NAMES: Record<string, string> = {
-  en: 'English',
-  ru: 'Russian',
-  sr: 'Serbian',
-  es: 'Spanish',
-  fr: 'French',
-  de: 'German',
-  it: 'Italian',
-  pt: 'Portuguese',
-  nl: 'Dutch',
-  pl: 'Polish',
-  cs: 'Czech',
-  sk: 'Slovak',
-  hr: 'Croatian',
-  bg: 'Bulgarian',
-  ro: 'Romanian',
-  hu: 'Hungarian',
-  el: 'Greek',
-  tr: 'Turkish',
-  ar: 'Arabic',
-  zh: 'Chinese',
-  ja: 'Japanese',
-  ko: 'Korean',
-};
-
-export const TRANSLATE_TO_LANGUAGE_CODES = Object.keys(TRANSLATION_LANGUAGE_NAMES);
+import {
+  extractTranslationLanguageCode,
+  TRANSLATION_LANGUAGE_NAMES,
+} from './resolveTranslationTargetLanguage';
+export {
+  TRANSLATION_LANGUAGE_NAMES,
+  TRANSLATE_TO_LANGUAGE_CODES,
+} from './resolveTranslationTargetLanguage';
 
 const TRANSLATION_POLL_MS = 125;
 const TRANSLATION_FOLLOWER_MAX_WAIT_MS = 15_000;
 
 export class TranslationService {
   static extractLanguageCode(locale: string | null | undefined): string {
-    if (!locale || locale === 'auto') {
-      return 'en';
-    }
-    const parts = locale.split('-');
-    return parts[0]?.toLowerCase() || 'en';
+    return extractTranslationLanguageCode(locale);
   }
 
   static async getTranslationFromChatGPT(

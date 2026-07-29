@@ -23,8 +23,8 @@
     "myGenderOnly": "Match my gender only",
     "startLooking": "Start looking",
     "search": "Search",
-    "changeIntent": "Change intent",
-    "cancelIntent": "Cancel intent",
+    "changeIntent": "Change search",
+    "cancelIntent": "Stop looking",
     "emptyPool": "You’re first — we’ll ping you when others join",
     "othersLooking": "{{count}} also looking nearby",
     "lobbyTitle": "Wanting to play",
@@ -84,6 +84,7 @@
     "sharedJoiningTitle": "Starting your search",
     "sharedJoiningHint": "Copying the preferences and preparing your court lobby…",
     "sharedUnavailable": "This play request is no longer available",
-    "sharedAccessDenied": "This play request is not available to you"
+    "sharedAccessDenied": "This play request is not available to you",
+    "proposalUnavailable": "This match is no longer available. We refreshed your lobby."
   }
 }

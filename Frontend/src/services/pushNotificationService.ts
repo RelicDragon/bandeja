@@ -24,6 +24,9 @@ import { restoreAuthIfNeeded } from '@/utils/authPersistence';
 import { getTokenNative } from '@/services/authBridge';
 import { setPushReplyJsReadyNative } from '@/services/push/pushDelegateBridge';
 import { hasExplicitLogoutMarker } from '@/utils/authExplicitLogout';
+import { queryClient } from '@/queries/queryClient';
+import { playIntentKeys } from '@/hooks/usePlayIntent';
+import { isPlayIntentPushType } from '@/services/push/isPlayIntentPushType';
 
 interface NotificationData {
   type: string;
@@ -158,6 +161,10 @@ class PushNotificationService {
         const auth = useAuthStore.getState();
         if (auth.isAuthenticated && !auth.isInitializing) {
           void useUnreadStore.getState().refreshAll();
+        }
+        const normalized = this.normalizeNotificationData(notification.data);
+        if (isPlayIntentPushType(normalized?.type)) {
+          void queryClient.invalidateQueries({ queryKey: playIntentKeys.all });
         }
         if (Capacitor.getPlatform() === 'android' && parsePushChatContext(notification.data)) {
           return;
