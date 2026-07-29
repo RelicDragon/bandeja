@@ -41,6 +41,7 @@
     "freeNow_other": "{{count}} свободны",
     "openProposal": "К матчу",
     "proposalReady": "Матч готов — нажмите, чтобы собрать игру",
+    "proposalArrivedAnnouncement": "Матч найден. Игроки готовы создать игру.",
     "matchNotReadyTitle": "Недостаточно игроков",
     "matchNotReadyHint_one": "Выберите ещё {{count}} игрока, чтобы собрать матч.",
     "matchNotReadyHint_few": "Выберите ещё {{count}} игроков, чтобы собрать матч.",

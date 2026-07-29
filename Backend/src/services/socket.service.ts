@@ -24,6 +24,10 @@ import {
   createCorsOriginDelegate,
   getCorsAllowedOrigins,
 } from '../config/corsOrigins';
+import {
+  PLAY_INTENT_INVALIDATE_EVENT,
+  type PlayIntentInvalidation,
+} from './playIntent/playIntentRealtime';
 
 interface AuthenticatedSocket extends Socket {
   userId?: string;
@@ -32,6 +36,7 @@ interface AuthenticatedSocket extends Socket {
   bugRooms?: Set<string>;
   userChatRooms?: Set<string>;
   groupRooms?: Set<string>;
+  playIntentPoolRooms?: Set<string>;
 }
 
 const PRESENCE_ONLINE_FLUSH_MS = 5000;
@@ -40,6 +45,12 @@ const MAX_PRESENCE_SUBSCRIPTION = 3000;
 const PRESENCE_SUBSCRIBE_COOLDOWN_MS = 2000;
 const MAX_PRESENCE_USER_ID_LENGTH = 64;
 const TYPING_INDICATOR_TTL_MS = 6000;
+const MAX_PLAY_INTENT_POOL_ROOMS = 4;
+const MAX_PLAY_INTENT_CITY_ID_LENGTH = 128;
+
+function playIntentPoolRoom(cityId: string): string {
+  return `play-intent-pool:${cityId}`;
+}
 
 class SocketService {
   private io: SocketIOServer;
@@ -182,6 +193,7 @@ class SocketService {
       socket.bugRooms = new Set();
       socket.userChatRooms = new Set();
       socket.groupRooms = new Set();
+      socket.playIntentPoolRooms = new Set();
 
       socket.on('join-game-room', this.wrapAsync(socket, async (gameId: string) => {
         if (!socket.userId) return;
@@ -454,6 +466,52 @@ class SocketService {
           socket.emit('left-market-item-room', { marketItemId });
         }
       });
+
+      socket.on(
+        'subscribe-play-intent-pool',
+        (data: { cityId?: unknown }) => {
+          if (!socket.userId) return;
+          const cityId =
+            typeof data?.cityId === 'string' ? data.cityId.trim() : '';
+          if (
+            !cityId ||
+            cityId.length > MAX_PLAY_INTENT_CITY_ID_LENGTH ||
+            !/^[a-zA-Z0-9_-]+$/.test(cityId)
+          ) {
+            socket.emit('error', {
+              message: 'Invalid play-intent pool subscription',
+            });
+            return;
+          }
+          const room = playIntentPoolRoom(cityId);
+          if (
+            !socket.playIntentPoolRooms?.has(room) &&
+            (socket.playIntentPoolRooms?.size ?? 0) >=
+              MAX_PLAY_INTENT_POOL_ROOMS
+          ) {
+            socket.emit('error', {
+              message: 'Too many play-intent pool subscriptions',
+            });
+            return;
+          }
+          socket.join(room);
+          socket.playIntentPoolRooms?.add(room);
+          socket.emit('subscribed-play-intent-pool', { cityId });
+        },
+      );
+
+      socket.on(
+        'unsubscribe-play-intent-pool',
+        (data: { cityId?: unknown }) => {
+          const cityId =
+            typeof data?.cityId === 'string' ? data.cityId.trim() : '';
+          if (!cityId) return;
+          const room = playIntentPoolRoom(cityId);
+          socket.leave(room);
+          socket.playIntentPoolRooms?.delete(room);
+          socket.emit('unsubscribed-play-intent-pool', { cityId });
+        },
+      );
 
       socket.emit('sync-required', { timestamp: new Date().toISOString() });
 
@@ -1333,6 +1391,20 @@ class SocketService {
   public emitAuctionUpdate(marketItemId: string, event: string, payload: any) {
     const room = `market-item-${marketItemId}`;
     this.io.to(room).emit(event, payload);
+  }
+
+  public emitPlayIntentInvalidation(
+    payload: PlayIntentInvalidation,
+    userIds: string[],
+  ): void {
+    this.io
+      .to(playIntentPoolRoom(payload.cityId))
+      .emit(PLAY_INTENT_INVALIDATE_EVENT, payload);
+    for (const userId of new Set(userIds)) {
+      this.io
+        .to(`notify-user-${userId}`)
+        .emit(PLAY_INTENT_INVALIDATE_EVENT, payload);
+    }
   }
 
   public getIO(): SocketIOServer {

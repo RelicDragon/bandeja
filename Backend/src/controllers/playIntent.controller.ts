@@ -93,17 +93,20 @@ export const releaseMatchProposal = asyncHandler(async (req: AuthRequest, res: R
 
 export const removeMatchProposalMember = asyncHandler(async (req: AuthRequest, res: Response) => {
   if (!req.userId) throw new Error('User ID not found');
-  const userId = typeof req.body?.userId === 'string' ? req.body.userId : undefined;
-  if (!userId) throw new ApiError(400, 'userId is required');
-  const result = await MatchProposalService.removeMember(req.params.id, req.userId, userId);
+  const result = await MatchProposalService.removeMember(
+    req.params.id,
+    req.userId,
+    req.body.userId,
+  );
   res.json({ success: true, data: result });
 });
 
 export const addMatchProposalMember = asyncHandler(async (req: AuthRequest, res: Response) => {
   if (!req.userId) throw new Error('User ID not found');
-  const userId = typeof req.body?.userId === 'string' ? req.body.userId : undefined;
-  const intentId = typeof req.body?.intentId === 'string' ? req.body.intentId : undefined;
-  if (!userId || !intentId) throw new ApiError(400, 'userId and intentId are required');
-  const result = await MatchProposalService.addMember(req.params.id, req.userId, { userId, intentId });
+  const result = await MatchProposalService.addMember(
+    req.params.id,
+    req.userId,
+    req.body,
+  );
   res.json({ success: true, data: result });
 });

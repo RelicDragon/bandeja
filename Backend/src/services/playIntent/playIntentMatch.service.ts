@@ -6,6 +6,7 @@ import {
   ParticipantStatus,
   PlayIntentStatus,
   Sport,
+  type Prisma,
   type GenderTeam,
   type PlayIntentTimeOfDay,
   type Gender,
@@ -35,6 +36,7 @@ import {
   proposalWindowSource,
 } from './playIntentFreshness';
 import { derivePlayIntentPoolAvailability } from './playIntentPoolAvailability';
+import { rankPlayIntentPoolMembers } from './playIntentPoolRanking';
 
 const REMATCH_COOLDOWN_MS = 12 * 60 * 60 * 1000;
 const PROPOSAL_TTL_MS = 2 * 60 * 60 * 1000;
@@ -591,6 +593,19 @@ export class PlayIntentMatchService {
     const entityType =
       viewerIntent?.entityType ?? pendingProposal?.entityType ?? EntityType.GAME;
 
+    const compatibilityWhere: Prisma.PlayIntentWhereInput = viewerIntent
+      ? {
+          dateKeys: { hasSome: viewerIntent.dateKeys },
+          ...(viewerIntent.clubIds.length > 0
+            ? {
+                OR: [
+                  { clubIds: { isEmpty: true } },
+                  { clubIds: { hasSome: viewerIntent.clubIds } },
+                ],
+              }
+            : {}),
+        }
+      : {};
     const foundIntents = await prisma.playIntent.findMany({
       where: {
         cityId,
@@ -600,10 +615,10 @@ export class PlayIntentMatchService {
         expiresAt: { gt: now },
         userId: { not: userId },
         gameParticipants: { none: {} },
+        ...compatibilityWhere,
       },
       include: { user: { select: intentUserSelect } },
       orderBy: { createdAt: 'asc' },
-      take: 80,
     });
     const intents = foundIntents.filter((intent) =>
       intentWindowIsReachable(intent, timezone, now),
@@ -693,15 +708,7 @@ export class PlayIntentMatchService {
       });
     }
 
-    members.sort(
-      (a, b) =>
-        Number(b.eligibleForProposal) - Number(a.eligibleForProposal) ||
-        b.affinityScore - a.affinityScore ||
-        a.userId.localeCompare(b.userId),
-    );
-    const total = members.length;
-    const capped = members.slice(0, LOBBY_CAP);
-    const overflow = Math.max(0, total - capped.length);
+    const ranked = rankPlayIntentPoolMembers(members, LOBBY_CAP);
 
     const { availableCount, clusterProgress } =
       derivePlayIntentPoolAvailability({
@@ -737,9 +744,9 @@ export class PlayIntentMatchService {
       partySize,
       availableCount,
       clusterProgress,
-      members: capped,
-      total,
-      overflow,
+      members: ranked.members,
+      total: ranked.total,
+      overflow: ranked.overflow,
       pendingProposal: pendingProposal
         ? {
             id: pendingProposal.id,

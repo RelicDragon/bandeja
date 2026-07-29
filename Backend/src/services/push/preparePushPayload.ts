@@ -38,6 +38,11 @@ function resolvePushThreadId(payload: NotificationPayload): string | undefined {
   if (!data) return undefined;
 
   switch (payload.type) {
+    case NotificationType.PLAY_INTENT_MATCH:
+    case NotificationType.GAME_MATCHES_INTENT:
+    case NotificationType.INTENT_PLAYERS_FOR_GAME:
+    case NotificationType.FOLLOWED_USER_PLAY_INTENT:
+      return 'play-intent';
     case NotificationType.USER_CHAT:
       if (data.userChatId) return `user-chat:${data.userChatId}`;
       break;
@@ -68,6 +73,7 @@ export async function preparePushPayloadForRecipient(
   let next: NotificationPayload = {
     ...payload,
     category: resolveApnsNotificationCategory(payload),
+    threadId: payload.threadId ?? resolvePushThreadId(payload),
   };
 
   if (next.category === PUSH_CATEGORY_CHAT_REPLY && hasFullChatReplyContext(next.data as Record<string, unknown>)) {

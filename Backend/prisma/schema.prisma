@@ -3029,6 +3029,9 @@ enum PlayIntentMatchJobKind {
   PUBLIC_GAME_CREATED
 }
 
+/// A partial unique index in migration
+/// 20260730120000_harden_play_intent_active_uniqueness enforces one
+/// OPEN/MATCHED intent per user and city.
 model PlayIntent {
   id                      String                             @id @default(cuid())
   userId                  String
@@ -3115,6 +3118,7 @@ model PlayIntentNotificationDelivery {
   @@unique([eventKey, userId, channelType])
   @@index([status, runAfter])
   @@index([userId, createdAt])
+  @@index([userId, notificationType, createdAt])
   @@index([notificationType, sourceId])
 }
 

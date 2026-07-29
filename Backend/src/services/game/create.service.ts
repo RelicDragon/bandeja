@@ -32,6 +32,7 @@ import {
 } from './gameExternalBooking.service';
 import { GameCourtService } from '../gameCourt/gameCourt.service';
 import { PlayIntentGameCreationService } from '../playIntent/playIntentGameCreation.service';
+import { publishPlayIntentInvalidation } from '../playIntent/playIntentRealtime';
 import { appendGameLog } from './gameLog.service';
 import { PlayIntentMatchQueueService } from '../playIntent/playIntentMatchQueue.service';
 import { normalizeGameRatingFields } from './normalizeGameRatingFields';
@@ -399,7 +400,7 @@ export class GameCreateService {
       affectsRating: data.affectsRating,
     });
 
-    const createdGame = await runSerializableCreate(async (tx) => {
+    const createResult = await runSerializableCreate(async (tx) => {
       const lifecycleNow = new Date();
       if (
         data.playIntentSource &&
@@ -591,8 +592,27 @@ export class GameCreateService {
         );
       }
 
-      return game;
+      return { game, playIntentSource };
     });
+    const createdGame = createResult.game;
+    if (createResult.playIntentSource) {
+      const source = createResult.playIntentSource;
+      publishPlayIntentInvalidation({
+        reason: source.proposalId
+          ? 'proposal-converted'
+          : 'intent-status-changed',
+        ...(source.proposalId
+          ? { proposalId: source.proposalId }
+          : { intentId: source.host.id }),
+        cityId: source.host.cityId,
+        sport: source.host.sport,
+        entityType: source.host.entityType,
+        userIds: [
+          source.host.userId,
+          ...source.invitees.map((invitee) => invitee.userId),
+        ],
+      });
+    }
 
     await GameReadinessService.updateGameReadiness(createdGame.id);
     await touchLastCreatedSport(userId, sport);

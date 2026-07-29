@@ -39,6 +39,7 @@
     "freeNow_other": "{{count}} free",
     "openProposal": "See match",
     "proposalReady": "Match ready — tap to form a game",
+    "proposalArrivedAnnouncement": "Match found. Players are ready to form a game.",
     "matchNotReadyTitle": "Not enough players",
     "matchNotReadyHint_one": "Select {{count}} more player to complete the match.",
     "matchNotReadyHint_other": "Select {{count}} more players to complete the match.",

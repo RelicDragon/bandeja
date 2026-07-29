@@ -41,6 +41,7 @@
     "freeNow_other": "{{count}} volných",
     "openProposal": "Zobrazit zápas",
     "proposalReady": "Zápas připraven — klepni a vytvoř hru",
+    "proposalArrivedAnnouncement": "Zápas nalezen. Hráči jsou připraveni vytvořit hru.",
     "matchNotReadyTitle": "Není dost hráčů",
     "matchNotReadyHint_one": "Do zápasu chybí ještě {{count}} hráč.",
     "matchNotReadyHint_few": "Do zápasu chybí ještě {{count}} hráči.",

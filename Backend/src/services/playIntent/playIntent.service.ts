@@ -27,6 +27,11 @@ import { PlayIntentFollowerNotificationQueueService } from './playIntentFollower
 import { PlayIntentGameLifecycleService } from './playIntentGameLifecycle.service';
 import { lockMatchProposal } from './matchProposalLock';
 import { PlayIntentMatchQueueService } from './playIntentMatchQueue.service';
+import {
+  declineProposalMember,
+  type ProposalMutation,
+} from './matchProposalMemberLifecycle';
+import { publishPlayIntentInvalidation } from './playIntentRealtime';
 
 export type CreatePlayIntentDto = {
   cityId?: string;
@@ -224,20 +229,12 @@ export class PlayIntentService {
       });
     }
 
-    // One active looking state per city — leave prior intents/proposals only when replacing.
-    const pendingMemberships = await prisma.matchProposalMember.findMany({
-      where: {
-        userId,
-        proposal: {
-          cityId,
-          status: { in: [MatchProposalStatus.PENDING, MatchProposalStatus.ACCEPTED] },
-          gameId: null,
-        },
-      },
-      select: { proposalId: true },
-    });
-
-    const { intent, shouldNotifyFollowers, replacedLooking } = await prisma.$transaction(async (tx) => {
+    const {
+      intent,
+      shouldNotifyFollowers,
+      replacedLooking,
+      proposalMutations,
+    } = await prisma.$transaction(async (tx) => {
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`play-intent:${userId}:${cityId}`}))`;
       if (expiresAt <= new Date()) {
         throw new ApiError(400, 'Selected play window has already ended', true, {
@@ -254,7 +251,13 @@ export class PlayIntentService {
             status: PlayIntentStatus.MATCHED,
           },
         },
-        select: { id: true },
+        select: {
+          id: true,
+          userId: true,
+          cityId: true,
+          sport: true,
+          entityType: true,
+        },
       });
       if (linkedInvite) {
         throw new ApiError(409, 'Answer the pending game invite first', true, {
@@ -303,7 +306,37 @@ export class PlayIntentService {
           intent: existingActive,
           shouldNotifyFollowers: false,
           replacedLooking: false,
+          proposalMutations: [] as ProposalMutation[],
         };
+      }
+      const pendingMemberships = await tx.matchProposalMember.findMany({
+        where: {
+          userId,
+          proposal: {
+            cityId,
+            status: {
+              in: [
+                MatchProposalStatus.PENDING,
+                MatchProposalStatus.ACCEPTED,
+              ],
+            },
+            gameId: null,
+          },
+        },
+        select: { proposalId: true },
+        orderBy: { proposalId: 'asc' },
+      });
+      const proposalMutations: ProposalMutation[] = [];
+      for (const proposalId of [
+        ...new Set(pendingMemberships.map((row) => row.proposalId)),
+      ]) {
+        const mutation = await declineProposalMember(
+          tx,
+          proposalId,
+          userId,
+          { allowUnavailable: true },
+        );
+        if (mutation) proposalMutations.push(mutation);
       }
       await tx.playIntent.updateMany({
         where: {
@@ -353,14 +386,29 @@ export class PlayIntentService {
         intent: created,
         shouldNotifyFollowers: shouldNotify,
         replacedLooking: true,
+        proposalMutations,
       };
     });
 
-    if (replacedLooking && pendingMemberships.length > 0) {
-      const { MatchProposalService } = await import('./matchProposal.service');
-      for (const m of pendingMemberships) {
-        await MatchProposalService.decline(m.proposalId, userId).catch(() => {});
-      }
+    for (const mutation of proposalMutations) {
+      publishPlayIntentInvalidation({
+        reason: 'proposal-updated',
+        proposalId: mutation.proposalId,
+        cityId: mutation.cityId,
+        sport: mutation.sport,
+        entityType: mutation.entityType,
+        userIds: mutation.userIds,
+      });
+    }
+    if (replacedLooking) {
+      publishPlayIntentInvalidation({
+        reason: 'intent-created',
+        intentId: intent.id,
+        cityId: intent.cityId,
+        sport: intent.sport,
+        entityType: intent.entityType,
+        userIds: [userId],
+      });
     }
 
     void PlayIntentMatchQueueService.drain();
@@ -385,7 +433,12 @@ export class PlayIntentService {
 
     const intents = await prisma.playIntent.findMany({
       where,
-      select: { id: true, cityId: true, sport: true },
+      select: {
+        id: true,
+        cityId: true,
+        sport: true,
+        entityType: true,
+      },
     });
     if (intents.length === 0) {
       throw new ApiError(404, 'No open play intent found');
@@ -404,25 +457,41 @@ export class PlayIntentService {
       });
     }
 
-    for (const intent of intents) {
-      const memberships = await prisma.matchProposalMember.findMany({
+    const { updated, proposalMutations } = await prisma.$transaction(async (tx) => {
+      for (const cityId of [
+        ...new Set(intents.map((intent) => intent.cityId)),
+      ].sort()) {
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`play-intent:${userId}:${cityId}`}))`;
+      }
+      const memberships = await tx.matchProposalMember.findMany({
         where: {
           userId,
-          intentId: intent.id,
+          intentId: { in: intents.map((intent) => intent.id) },
           proposal: {
-            status: { in: [MatchProposalStatus.PENDING, MatchProposalStatus.ACCEPTED] },
+            status: {
+              in: [
+                MatchProposalStatus.PENDING,
+                MatchProposalStatus.ACCEPTED,
+              ],
+            },
             gameId: null,
           },
         },
         select: { proposalId: true },
+        orderBy: { proposalId: 'asc' },
       });
-      const { MatchProposalService } = await import('./matchProposal.service');
-      for (const m of memberships) {
-        await MatchProposalService.decline(m.proposalId, userId).catch(() => {});
+      const proposalMutations: ProposalMutation[] = [];
+      for (const proposalId of [
+        ...new Set(memberships.map((row) => row.proposalId)),
+      ]) {
+        const mutation = await declineProposalMember(
+          tx,
+          proposalId,
+          userId,
+          { allowUnavailable: true },
+        );
+        if (mutation) proposalMutations.push(mutation);
       }
-    }
-
-    const result = await prisma.$transaction(async (tx) => {
       const updated = await tx.playIntent.updateMany({
         where: {
           id: { in: intents.map((intent) => intent.id) },
@@ -443,10 +512,33 @@ export class PlayIntentService {
           inviteId: linkedInvite.id,
         });
       }
-      return updated;
+      return { updated, proposalMutations };
     });
 
-    return { cancelled: result.count };
+    for (const mutation of proposalMutations) {
+      publishPlayIntentInvalidation({
+        reason: 'proposal-updated',
+        proposalId: mutation.proposalId,
+        cityId: mutation.cityId,
+        sport: mutation.sport,
+        entityType: mutation.entityType,
+        userIds: mutation.userIds,
+      });
+    }
+    if (updated.count > 0) {
+      for (const intent of intents) {
+        publishPlayIntentInvalidation({
+          reason: 'intent-cancelled',
+          intentId: intent.id,
+          cityId: intent.cityId,
+          sport: intent.sport,
+          entityType: intent.entityType,
+          userIds: [userId],
+        });
+      }
+    }
+
+    return { cancelled: updated.count };
   }
 
   static allowedDateKeys(timezone: string, now = new Date()): string[] {
@@ -489,7 +581,13 @@ export class PlayIntentService {
           expiresAt: { lte: now },
           gameParticipants: { none: {} },
         },
-        select: { id: true },
+        select: {
+          id: true,
+          userId: true,
+          cityId: true,
+          sport: true,
+          entityType: true,
+        },
         orderBy: { expiresAt: 'asc' },
         take: 500,
       });
@@ -506,9 +604,10 @@ export class PlayIntentService {
         orderBy: { id: 'asc' },
       });
 
-      const expiredInBatch = await prisma.$transaction(async (tx) => {
+      const batchResult = await prisma.$transaction(async (tx) => {
         const proposalIntentIds = new Set<string>();
         const dueIntentIds = new Set(intentIds);
+        const proposalMutations: ProposalMutation[] = [];
         let releasedExpired = 0;
         for (const proposal of linkedProposals) {
           await lockMatchProposal(tx, proposal.id);
@@ -520,7 +619,11 @@ export class PlayIntentService {
               },
               gameId: null,
             },
-            include: { members: { select: { intentId: true } } },
+            include: {
+              members: {
+                select: { intentId: true, userId: true },
+              },
+            },
           });
           if (!current) continue;
           await tx.matchProposal.update({
@@ -530,6 +633,13 @@ export class PlayIntentService {
           current.members.forEach((member) =>
             proposalIntentIds.add(member.intentId),
           );
+          proposalMutations.push({
+            proposalId: current.id,
+            cityId: current.cityId,
+            sport: current.sport,
+            entityType: current.entityType,
+            userIds: current.members.map((member) => member.userId),
+          });
         }
         for (const intentId of [...proposalIntentIds].sort()) {
           const status = await PlayIntentGameLifecycleService.release(
@@ -549,9 +659,32 @@ export class PlayIntentService {
           },
           data: { status: PlayIntentStatus.EXPIRED },
         });
-        return releasedExpired + updated.count;
+        return {
+          expiredCount: releasedExpired + updated.count,
+          proposalMutations,
+        };
       });
-      expired += expiredInBatch;
+      expired += batchResult.expiredCount;
+      for (const mutation of batchResult.proposalMutations) {
+        publishPlayIntentInvalidation({
+          reason: 'proposal-expired',
+          proposalId: mutation.proposalId,
+          cityId: mutation.cityId,
+          sport: mutation.sport,
+          entityType: mutation.entityType,
+          userIds: mutation.userIds,
+        });
+      }
+      for (const intent of due) {
+        publishPlayIntentInvalidation({
+          reason: 'intent-expired',
+          intentId: intent.id,
+          cityId: intent.cityId,
+          sport: intent.sport,
+          entityType: intent.entityType,
+          userIds: [intent.userId],
+        });
+      }
     }
   }
 

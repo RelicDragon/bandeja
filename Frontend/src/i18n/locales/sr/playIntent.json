@@ -41,6 +41,7 @@
     "freeNow_other": "{{count}} slobodnih",
     "openProposal": "Vidi meč",
     "proposalReady": "Meč spreman — dodirni da napraviš igru",
+    "proposalArrivedAnnouncement": "Meč je pronađen. Igrači su spremni da naprave igru.",
     "matchNotReadyTitle": "Nema dovoljno igrača",
     "matchNotReadyHint_one": "Izaberi još {{count}} igrača da kompletiraš meč.",
     "matchNotReadyHint_few": "Izaberi još {{count}} igrača da kompletiraš meč.",

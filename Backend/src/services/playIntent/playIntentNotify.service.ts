@@ -29,6 +29,10 @@ import {
 import { followerAudienceWhere } from './playIntentFollowerAudience';
 import { formatSportLabel } from '../shared/notificationSport';
 import { PlayIntentNotificationDeliveryQueueService } from './playIntentNotificationDeliveryQueue.service';
+import {
+  canSendGameMatchNotification,
+  GAME_MATCH_NOTIFICATION_WINDOW_MS,
+} from './playIntentNotificationBudget';
 
 function toCriteria(intent: {
   dateKeys: string[];
@@ -90,6 +94,59 @@ async function enqueueForUser(input: {
   return PlayIntentNotificationDeliveryQueueService.enqueue({
     ...input,
     channels,
+  });
+}
+
+async function enqueueGameMatchForUser(input: {
+  eventKey: string;
+  sourceId: string;
+  userId: string;
+  payload: NotificationPayload;
+  now: Date;
+}): Promise<number> {
+  const channels =
+    await PlayIntentNotificationDeliveryQueueService.enabledChannels(
+      input.userId,
+      NotificationType.GAME_MATCHES_INTENT,
+    );
+  if (channels.length === 0) return 0;
+
+  return prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`play-intent-game-match-notification:${input.userId}`}))`;
+    const recent = await tx.playIntentNotificationDelivery.findMany({
+      where: {
+        userId: input.userId,
+        notificationType: NotificationType.GAME_MATCHES_INTENT,
+        createdAt: {
+          gte: new Date(
+            input.now.getTime() -
+              GAME_MATCH_NOTIFICATION_WINDOW_MS,
+          ),
+        },
+      },
+      select: { eventKey: true, createdAt: true },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (
+      !canSendGameMatchNotification(
+        recent,
+        input.eventKey,
+        input.now,
+      )
+    ) {
+      return 0;
+    }
+    return PlayIntentNotificationDeliveryQueueService.enqueue(
+      {
+        eventKey: input.eventKey,
+        sourceId: input.sourceId,
+        userId: input.userId,
+        type: NotificationType.GAME_MATCHES_INTENT,
+        payload: input.payload,
+        channels,
+      },
+      tx,
+    );
   });
 }
 
@@ -363,11 +420,12 @@ export class PlayIntentNotifyService {
       const lang = user.language || 'en';
       if (!gameStartIsFuture(game.startTime)) return notified;
 
-      const deliveries = await enqueueForUser({
-        eventKey: `${NotificationType.GAME_MATCHES_INTENT}:${game.id}`,
+      const eventKey = `${NotificationType.GAME_MATCHES_INTENT}:${game.id}`;
+      const deliveries = await enqueueGameMatchForUser({
+        eventKey,
         sourceId: game.id,
         userId: user.id,
-        type: NotificationType.GAME_MATCHES_INTENT,
+        now,
         payload: {
           type: NotificationType.GAME_MATCHES_INTENT,
           title: t('playIntent.gameMatchTitle', lang) || 'A game fits your wish',

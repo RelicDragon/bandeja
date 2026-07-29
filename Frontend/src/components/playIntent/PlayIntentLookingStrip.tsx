@@ -5,6 +5,7 @@ import { X } from 'lucide-react';
 import { AnimatedMount } from '@/components/motion/AnimatedMount';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
 import { StatusPulseDot } from '@/components/StatusPulseDot';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import type { BasicUser } from '@/types';
 
 type StripMember = {
@@ -23,6 +24,7 @@ type Props = {
   onOpenLobby: () => void;
   onOpenProposal: () => void;
   onConfirmStop: () => void;
+  proposalArrivalToken?: number;
 };
 
 export function PlayIntentLookingStrip({
@@ -34,8 +36,10 @@ export function PlayIntentLookingStrip({
   onOpenLobby,
   onOpenProposal,
   onConfirmStop,
+  proposalArrivalToken = 0,
 }: Props) {
   const { t } = useTranslation();
+  const reduceMotion = usePrefersReducedMotion();
   const [confirmStop, setConfirmStop] = useState(false);
   const hasAvatarOverflow = othersCount > 3;
   const visibleStripMembers = stripMembers.slice(0, hasAvatarOverflow ? 2 : 3);
@@ -53,6 +57,19 @@ export function PlayIntentLookingStrip({
         }`}
         data-testid="play-intent-status"
       >
+        {proposal && proposalArrivalToken > 0 && !reduceMotion && (
+          <motion.div
+            key={proposalArrivalToken}
+            className="pointer-events-none absolute inset-0 z-0 rounded-xl border-2 border-emerald-400"
+            initial={{ opacity: 0.9, scale: 0.94 }}
+            animate={{ opacity: 0, scale: 1.08 }}
+            transition={{
+              duration: 1.1,
+              ease: [0.22, 1, 0.36, 1],
+            }}
+            aria-hidden
+          />
+        )}
         <button
           type="button"
           className="flex min-w-0 flex-1 items-start gap-2.5 text-left"

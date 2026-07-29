@@ -22,6 +22,25 @@ export interface UserChatReadReceipt {
 
 export type SocketConnectionState = 'disconnected' | 'connecting' | 'connected';
 
+export type PlayIntentInvalidation = {
+  version: 1;
+  reason:
+    | 'intent-created'
+    | 'intent-cancelled'
+    | 'intent-expired'
+    | 'intent-status-changed'
+    | 'proposal-created'
+    | 'proposal-updated'
+    | 'proposal-expired'
+    | 'proposal-converted';
+  cityId: string;
+  sport: string;
+  entityType: string;
+  occurredAt: string;
+  intentId?: string;
+  proposalId?: string;
+};
+
 export interface SocketEvents {
   'new-invite': (invite: any) => void;
   'invite-deleted': (data: InviteDeletedSocketPayload) => void;
@@ -183,6 +202,9 @@ export interface SocketEvents {
     likeCount: number;
     segmentOwnerHasLiked: boolean;
   }) => void;
+  'play-intent:invalidate': (data: PlayIntentInvalidation) => void;
+  'subscribed-play-intent-pool': (data: { cityId: string }) => void;
+  'unsubscribed-play-intent-pool': (data: { cityId: string }) => void;
 }
 
 class SocketService {
@@ -212,6 +234,7 @@ class SocketService {
   private delayedRetryTimeoutId: ReturnType<typeof setTimeout> | null = null;
   private readonly delayedRetryMs = 20000;
   private readonly reconnectDelayMaxMs = 30000;
+  private playIntentPoolSubscriptions = new Map<string, number>();
 
   constructor() {
     // Don't auto-connect in constructor - let components trigger connection when needed
@@ -390,6 +413,7 @@ class SocketService {
         this.startHeartbeat();
       }
       this.rejoinActiveChatRooms();
+      this.rejoinPlayIntentPoolRooms();
       this.connectCallbacks.forEach((cb) => {
         try {
           cb();
@@ -558,6 +582,13 @@ class SocketService {
       }
     } finally {
       this.isRejoining = false;
+    }
+  }
+
+  private rejoinPlayIntentPoolRooms(): void {
+    if (!this.socket?.connected) return;
+    for (const cityId of this.playIntentPoolSubscriptions.keys()) {
+      this.socket.emit('subscribe-play-intent-pool', { cityId });
     }
   }
 
@@ -976,6 +1007,35 @@ class SocketService {
     if (!this.socket?.connected) return;
     const safe = Array.isArray(userIds) ? userIds.slice(0, 3000) : [];
     this.socket.emit('subscribe-presence', { userIds: safe });
+  }
+
+  public subscribePlayIntentPool(cityId: string): () => void {
+    const normalized = cityId.trim();
+    if (!normalized) return () => undefined;
+    const count = this.playIntentPoolSubscriptions.get(normalized) ?? 0;
+    this.playIntentPoolSubscriptions.set(normalized, count + 1);
+    this.ensureConnection();
+    if (count === 0 && this.socket?.connected) {
+      this.socket.emit('subscribe-play-intent-pool', {
+        cityId: normalized,
+      });
+    }
+    let active = true;
+    return () => {
+      if (!active) return;
+      active = false;
+      const current = this.playIntentPoolSubscriptions.get(normalized) ?? 0;
+      if (current > 1) {
+        this.playIntentPoolSubscriptions.set(normalized, current - 1);
+        return;
+      }
+      this.playIntentPoolSubscriptions.delete(normalized);
+      if (this.socket?.connected) {
+        this.socket.emit('unsubscribe-play-intent-pool', {
+          cityId: normalized,
+        });
+      }
+    };
   }
 
   public getConnectionStatus(): boolean {

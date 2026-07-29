@@ -37,6 +37,7 @@
     "freeNow_other": "{{count}} libres",
     "openProposal": "Ver partido",
     "proposalReady": "Partido listo — toca para formarlo",
+    "proposalArrivedAnnouncement": "Partido encontrado. Los jugadores están listos para crear una partida.",
     "matchNotReadyTitle": "Faltan jugadores",
     "matchNotReadyHint_one": "Selecciona {{count}} jugador más para completar el partido.",
     "matchNotReadyHint_other": "Selecciona {{count}} jugadores más para completar el partido.",

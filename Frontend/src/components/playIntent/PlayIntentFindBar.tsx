@@ -44,6 +44,7 @@ type PlayIntentCtx = {
     lastName?: string | null;
     avatar: string | null;
   }[];
+  proposalArrivalToken: number;
 };
 
 const Ctx = createContext<PlayIntentCtx | null>(null);
@@ -113,7 +114,15 @@ export function PlayIntentProvider({
   const [sheetOpen, setSheetOpen] = useState(false);
   const [sheetMode, setSheetMode] = useState<'compose' | 'lobby'>('compose');
   const [deepProposal, setDeepProposal] = useState<MatchProposalSummary | null>(null);
+  const [proposalArrivalToken, setProposalArrivalToken] = useState(0);
+  const [proposalAnnouncement, setProposalAnnouncement] = useState<{
+    id: string;
+    text: string;
+  } | null>(null);
   const proposalRequestRef = useRef<string | null>(null);
+  const previousLiveProposalIdRef = useRef<string | null | undefined>(
+    undefined,
+  );
 
   const sharedEntry = useSharedPlayIntentEntry(!!user && acceptSharedDeepLinks);
   const { clearJoinedSport, joinedSport } = sharedEntry;
@@ -129,6 +138,21 @@ export function PlayIntentProvider({
 
   const proposal = resolvePlayIntentProposal(pool?.pendingProposal, deepProposal);
   const looking = !!pool?.myIntent || !!proposal;
+
+  useEffect(() => {
+    if (!pool) return;
+    const nextId = pool.pendingProposal?.id ?? null;
+    const previousId = previousLiveProposalIdRef.current;
+    previousLiveProposalIdRef.current = nextId;
+    if (previousId === undefined || !nextId || nextId === previousId) return;
+    setProposalArrivalToken((token) => token + 1);
+    setProposalAnnouncement({
+      id: nextId,
+      text: t('playIntent.proposalArrivedAnnouncement', {
+        defaultValue: 'Match found. Players are ready to form a game.',
+      }),
+    });
+  }, [pool, t]);
 
   useEffect(() => {
     if (
@@ -296,12 +320,37 @@ export function PlayIntentProvider({
       emptyPool: (pool?.total ?? 0) === 0,
       othersCount: pool?.total ?? 0,
       stripMembers,
+      proposalArrivalToken,
     }),
-    [enabled, looking, isLoading, openCompose, openLobby, stopLooking, proposal, whenLabel, pool?.total, stripMembers],
+    [
+      enabled,
+      looking,
+      isLoading,
+      openCompose,
+      openLobby,
+      stopLooking,
+      proposal,
+      whenLabel,
+      pool?.total,
+      stripMembers,
+      proposalArrivalToken,
+    ],
   );
 
   return (
     <Ctx.Provider value={value}>
+      <div
+        className="sr-only"
+        aria-live="polite"
+        aria-atomic="true"
+        role="status"
+      >
+        {proposalAnnouncement ? (
+          <span key={proposalAnnouncement.id}>
+            {proposalAnnouncement.text}
+          </span>
+        ) : null}
+      </div>
       {children}
       {enabled && (
         <PlayIntentSheet
@@ -349,6 +398,7 @@ export function PlayIntentActiveStrip() {
     emptyPool,
     othersCount,
     stripMembers,
+    proposalArrivalToken,
     openLobby,
     stopLooking,
   } = usePlayIntentUi();
@@ -362,6 +412,7 @@ export function PlayIntentActiveStrip() {
       emptyPool={emptyPool}
       othersCount={othersCount}
       stripMembers={stripMembers}
+      proposalArrivalToken={proposalArrivalToken}
       onOpenLobby={openLobby}
       onOpenProposal={openLobby}
       onConfirmStop={stopLooking}
