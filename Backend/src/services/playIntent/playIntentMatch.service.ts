@@ -28,6 +28,11 @@ import {
 import { PlayIntentService } from './playIntent.service';
 import { MatchProposalService } from './matchProposal.service';
 import { PlayIntentNotifyService } from './playIntentNotify.service';
+import {
+  futureGameDateBounds,
+  intentWindowIsReachable,
+  proposalWindowSource,
+} from './playIntentFreshness';
 import { derivePlayIntentPoolAvailability } from './playIntentPoolAvailability';
 
 const REMATCH_COOLDOWN_MS = 12 * 60 * 60 * 1000;
@@ -103,6 +108,9 @@ export class PlayIntentMatchService {
     const intentEntityType =
       game.entityType === EntityType.BAR ? EntityType.BAR : EntityType.GAME;
 
+    const now = new Date();
+    if (game.startTime.getTime() <= now.getTime()) return;
+
     const timezone = game.city?.timezone || 'UTC';
     const openSlots = Math.max(0, (game.maxParticipants || 0) - game.participants.length);
     if (openSlots <= 0) return;
@@ -116,7 +124,7 @@ export class PlayIntentMatchService {
         sport: game.sport,
         entityType: intentEntityType,
         status: PlayIntentStatus.OPEN,
-        expiresAt: { gt: new Date() },
+        expiresAt: { gt: now },
         userId: { not: creatorId },
       },
       include: {
@@ -139,24 +147,37 @@ export class PlayIntentMatchService {
 
     for (const intent of intents) {
       if (busyUserIds.has(intent.userId)) continue;
+      if (!intentWindowIsReachable(intent, timezone, now)) continue;
       const criteria = PlayIntentService.toCriteria({ ...intent, sport: intent.sport });
       if (
-        intentMatchesGame(criteria, {
-          dateKey,
-          clubId: game.clubId,
-          startTimeMinutes: startMinutes,
-          minLevel: game.minLevel,
-          maxLevel: game.maxLevel,
-          genderTeams: game.genderTeams,
-        })
+        intentMatchesGame(
+          criteria,
+          {
+            dateKey,
+            clubId: game.clubId,
+            startTime: game.startTime,
+            startTimeMinutes: startMinutes,
+            minLevel: game.minLevel,
+            maxLevel: game.maxLevel,
+            genderTeams: game.genderTeams,
+          },
+          now,
+        )
       ) {
         matchingUserIds.push(intent.userId);
       }
     }
 
     if (matchingUserIds.length > 0) {
-      await PlayIntentNotifyService.notifyGameMatchesIntent(matchingUserIds, game.id);
-      await PlayIntentNotifyService.maybeNotifyOwnerLookingPlayers(game.id, creatorId, matchingUserIds.length);
+      const notified = await PlayIntentNotifyService.notifyGameMatchesIntent(
+        matchingUserIds,
+        game.id,
+      );
+      await PlayIntentNotifyService.maybeNotifyOwnerLookingPlayers(
+        game.id,
+        creatorId,
+        notified,
+      );
     }
   }
 
@@ -179,16 +200,17 @@ export class PlayIntentMatchService {
       }));
     if (!city) return;
 
+    const now = new Date();
+    if (!intentWindowIsReachable(intent, city.timezone, now)) return;
+
     const busy = await this.usersBusyPlaying([intent.userId], intent.dateKeys, intent.cityId);
     if (busy.has(intent.userId)) return;
 
-    const dateBounds = intent.dateKeys.flatMap((key) => {
-      try {
-        return [{ gte: startOfCalendarDate(key, city.timezone), lte: endOfCalendarDate(key, city.timezone) }];
-      } catch {
-        return [];
-      }
-    });
+    const dateBounds = futureGameDateBounds(
+      intent.dateKeys,
+      city.timezone,
+      now,
+    );
     if (dateBounds.length === 0) return;
 
     const games = await prisma.game.findMany({
@@ -228,25 +250,39 @@ export class PlayIntentMatchService {
       const dateKey = formatInTimeZone(game.startTime, city.timezone, 'yyyy-MM-dd');
       const startMinutes = timeStringToMinutes(formatInTimeZone(game.startTime, city.timezone, 'HH:mm'));
       if (
-        intentMatchesGame(criteria, {
-          dateKey,
-          clubId: game.clubId,
-          startTimeMinutes: startMinutes,
-          minLevel: game.minLevel,
-          maxLevel: game.maxLevel,
-          genderTeams: game.genderTeams,
-        })
+        intentMatchesGame(
+          criteria,
+          {
+            dateKey,
+            clubId: game.clubId,
+            startTime: game.startTime,
+            startTimeMinutes: startMinutes,
+            minLevel: game.minLevel,
+            maxLevel: game.maxLevel,
+            genderTeams: game.genderTeams,
+          },
+          now,
+        )
       ) {
         matched.push(game);
       }
     }
 
     if (matched.length > 0) {
-      await PlayIntentNotifyService.notifyGameMatchesIntent([intent.userId], matched[0].id);
-      for (const game of matched.slice(0, 3)) {
-        const owner = game.participants.find((p) => p.role === ParticipantRole.OWNER);
-        if (owner?.userId) {
-          await PlayIntentNotifyService.maybeNotifyOwnerLookingPlayers(game.id, owner.userId, 1);
+      const notified = await PlayIntentNotifyService.notifyGameMatchesIntent(
+        [intent.userId],
+        matched[0].id,
+      );
+      if (notified > 0) {
+        for (const game of matched.slice(0, 3)) {
+          const owner = game.participants.find((p) => p.role === ParticipantRole.OWNER);
+          if (owner?.userId) {
+            await PlayIntentNotifyService.maybeNotifyOwnerLookingPlayers(
+              game.id,
+              owner.userId,
+              1,
+            );
+          }
         }
       }
     }
@@ -261,7 +297,13 @@ export class PlayIntentMatchService {
       entityType === EntityType.BAR ? 2 : getSportConfig(sport).defaultPlayersPerMatch;
     const now = new Date();
 
-    const intents = (await prisma.playIntent.findMany({
+    const city = await prisma.city.findUnique({
+      where: { id: cityId },
+      select: { timezone: true },
+    });
+    if (!city) return null;
+
+    const allIntents = (await prisma.playIntent.findMany({
       where: {
         cityId,
         sport,
@@ -272,6 +314,10 @@ export class PlayIntentMatchService {
       include: { user: { select: intentUserSelect } },
       orderBy: { createdAt: 'asc' },
     })) as IntentRow[];
+
+    const intents = allIntents.filter((intent) =>
+      intentWindowIsReachable(intent, city.timezone, now),
+    );
 
     if (intents.length < partySize) return null;
 
@@ -410,7 +456,13 @@ export class PlayIntentMatchService {
     const playing = await prisma.gameParticipant.findMany({
       where: {
         userId: { in: userIds },
-        status: ParticipantStatus.PLAYING,
+        OR: [
+          { status: ParticipantStatus.PLAYING },
+          {
+            status: ParticipantStatus.INVITED,
+            playIntentId: { not: null },
+          },
+        ],
         game: {
           cityId,
           OR: orDates,
@@ -433,7 +485,7 @@ export class PlayIntentMatchService {
     const now = new Date();
 
     // City-scoped: compose may create a different sport/BAR than the strip's hint.
-    const viewerIntent = await prisma.playIntent.findFirst({
+    const foundViewerIntent = await prisma.playIntent.findFirst({
       where: {
         userId,
         cityId,
@@ -451,7 +503,7 @@ export class PlayIntentMatchService {
       orderBy: { createdAt: 'desc' },
     });
 
-    const pendingProposal = await prisma.matchProposal.findFirst({
+    const foundPendingProposal = await prisma.matchProposal.findFirst({
       where: {
         cityId,
         status: { in: [MatchProposalStatus.PENDING, MatchProposalStatus.ACCEPTED] },
@@ -497,11 +549,26 @@ export class PlayIntentMatchService {
       orderBy: { createdAt: 'desc' },
     });
 
+    const viewerIntent =
+      foundViewerIntent &&
+      intentWindowIsReachable(foundViewerIntent, timezone, now)
+        ? foundViewerIntent
+        : null;
+    const pendingProposal =
+      foundPendingProposal &&
+      intentWindowIsReachable(
+        proposalWindowSource(foundPendingProposal),
+        timezone,
+        now,
+      )
+        ? foundPendingProposal
+        : null;
+
     const sport = viewerIntent?.sport ?? pendingProposal?.sport ?? sportHint;
     const entityType =
       viewerIntent?.entityType ?? pendingProposal?.entityType ?? EntityType.GAME;
 
-    const intents = await prisma.playIntent.findMany({
+    const foundIntents = await prisma.playIntent.findMany({
       where: {
         cityId,
         sport,
@@ -509,11 +576,15 @@ export class PlayIntentMatchService {
         status: { in: [PlayIntentStatus.OPEN, PlayIntentStatus.MATCHED] },
         expiresAt: { gt: now },
         userId: { not: userId },
+        gameParticipants: { none: {} },
       },
       include: { user: { select: intentUserSelect } },
       orderBy: { createdAt: 'asc' },
       take: 80,
     });
+    const intents = foundIntents.filter((intent) =>
+      intentWindowIsReachable(intent, timezone, now),
+    );
 
     const blocked = await prisma.blockedUser.findMany({
       where: { OR: [{ userId }, { blockedUserId: userId }] },

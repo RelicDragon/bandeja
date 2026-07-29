@@ -1,5 +1,5 @@
 import prisma from '../../config/database';
-import { ClubIntegrationType, EntityType } from '@prisma/client';
+import { ClubIntegrationType, EntityType, Prisma } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
 import { USER_SELECT_WITH_SPORT_PROFILES, SUPPORTED_CURRENCIES } from '../../utils/constants';
 import { GameReadinessService } from './readiness.service';
@@ -31,6 +31,26 @@ import {
   serializeLinkedBooking,
 } from './gameExternalBooking.service';
 import { GameCourtService } from '../gameCourt/gameCourt.service';
+import { PlayIntentGameCreationService } from '../playIntent/playIntentGameCreation.service';
+import { appendGameLog } from './gameLog.service';
+
+async function runSerializableCreate<T>(
+  operation: (tx: Prisma.TransactionClient) => Promise<T>,
+): Promise<T> {
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    try {
+      return await prisma.$transaction(operation, {
+        isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+      });
+    } catch (error) {
+      const retryable =
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2034';
+      if (!retryable || attempt === 3) throw error;
+    }
+  }
+  throw new Error('Unreachable serializable transaction retry state');
+}
 
 function normalizeCreateCourtIds(data: { courtIds?: unknown }): string[] | null {
   if (!Array.isArray(data.courtIds)) return null;
@@ -375,7 +395,38 @@ export class GameCreateService {
         ? data.affectsRating
         : true;
 
-    const createdGame = await prisma.$transaction(async (tx) => {
+    const createdGame = await runSerializableCreate(async (tx) => {
+      const lifecycleNow = new Date();
+      if (
+        data.playIntentSource &&
+        (creatorNonPlaying || !ownerIsPlaying)
+      ) {
+        throw new ApiError(
+          409,
+          'A play-intent match creator must remain a playing participant',
+          true,
+          { code: 'playIntent.creatorMustPlay' },
+        );
+      }
+      const playIntentSource = await PlayIntentGameCreationService.prepare(
+        tx,
+        data.playIntentSource,
+        userId,
+        {
+          cityId: cityId as string,
+          sport,
+          entityType,
+          startTime,
+          clubId: data.clubId ?? null,
+          minLevel: data.minLevel ?? null,
+          maxLevel: data.maxLevel ?? null,
+          genderTeams: data.genderTeams ?? 'ANY',
+          maxParticipants,
+        },
+        lifecycleNow,
+      );
+      const linkedParticipants =
+        PlayIntentGameCreationService.participantCreates(playIntentSource);
       const game = await tx.game.create({
       data: {
         entityType: entityType,
@@ -443,11 +494,12 @@ export class GameCreateService {
         status: 'ANNOUNCED',
         ...(trainerId && { trainerId }),
         participants: {
-          create: {
-            userId,
-            role: 'OWNER',
-            status: creatorNonPlaying || !ownerIsPlaying ? 'NON_PLAYING' : 'PLAYING',
-          },
+          create:
+            linkedParticipants ?? {
+              userId,
+              role: 'OWNER',
+              status: creatorNonPlaying || !ownerIsPlaying ? 'NON_PLAYING' : 'PLAYING',
+            },
         },
       },
       include: {
@@ -489,6 +541,13 @@ export class GameCreateService {
         },
       },
     });
+
+      await PlayIntentGameCreationService.finalize(
+        tx,
+        playIntentSource,
+        game.id,
+        lifecycleNow,
+      );
 
       if (booking.externalBookingIds.length > 0 && booking.externalBookingProvider) {
         const snapshotCourtIds = Array.from(
@@ -608,6 +667,45 @@ export class GameCreateService {
     }
 
     if (!finalGame) return finalGame;
+
+    const owner = finalGame.participants.find((participant) => participant.role === 'OWNER');
+    for (const participant of finalGame.participants) {
+      if (
+        participant.status !== 'INVITED' ||
+        !participant.playIntentId ||
+        !owner
+      ) {
+        continue;
+      }
+      const invite = {
+        id: participant.id,
+        receiverId: participant.userId,
+        gameId: finalGame.id,
+        status: 'PENDING',
+        message: participant.inviteMessage,
+        expiresAt: participant.inviteExpiresAt,
+        createdAt: participant.joinedAt,
+        updatedAt: participant.joinedAt,
+        receiver: participant.user,
+        sender: owner.user,
+        game: finalGame,
+      };
+      if ((global as any).socketService) {
+        (global as any).socketService.emitNewInvite(participant.userId, invite);
+      }
+      notificationService.sendInviteNotification(invite).catch((error) => {
+        console.error('Failed to send linked play intent invite notification:', error);
+      });
+      appendGameLog({
+        gameId: finalGame.id,
+        type: 'USER_INVITED',
+        actorId: userId,
+        targetId: participant.userId,
+        metadata: { inviteId: participant.id, playIntentId: participant.playIntentId },
+      }).catch((error) => {
+        console.error('Failed to append linked play intent invite log:', error);
+      });
+    }
 
     const gameSport = finalGame.sport;
     const { externalBookings, ...gameRest } = finalGame;

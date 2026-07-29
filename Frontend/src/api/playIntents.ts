@@ -149,14 +149,6 @@ export const playIntentsApi = {
     return data.data;
   },
 
-  convertProposal: async (id: string, gameId: string) => {
-    const { data } = await api.post<{ success: boolean; data: { gameId: string } }>(
-      `/play-intents/proposals/${id}/convert`,
-      { gameId },
-    );
-    return data.data;
-  },
-
   releaseProposal: async (id: string) => {
     const { data } = await api.post<{ success: boolean; data: { released: boolean; expired?: boolean } }>(
       `/play-intents/proposals/${id}/release`,

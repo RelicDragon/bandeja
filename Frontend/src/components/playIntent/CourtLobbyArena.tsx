@@ -42,7 +42,11 @@ type DriftNode = {
   orbitAngle: number;
   orbitRadius: number;
   orbitSpeed: number;
+  orbitSlot: number;
+  handoffElapsed: number | null;
 };
+
+type ArenaSize = { width: number; height: number };
 
 const COURT_CX = 50;
 const COURT_CY = 54;
@@ -55,6 +59,10 @@ const MATCH_ORBIT_START_ANGLE = -0.32;
 const MATCH_ORBIT_SECONDS = 190;
 const ACTIONABLE_ORBIT_START_ANGLE = Math.PI * 0.82;
 const ACTIONABLE_ORBIT_SECONDS = 225;
+const AVATAR_BASE_SIZE = 50;
+const HANDOFF_SECONDS = 0.65;
+const HANDOFF_BLEND_AT_TWENTY_FPS = 0.22;
+const DEFAULT_ARENA_SIZE: ArenaSize = { width: 330, height: 330 };
 
 function memberVisual(member: PoolMember, hasProposal: boolean) {
   if (member.busyInGame) return { size: 31, opacity: 0.38 };
@@ -143,6 +151,35 @@ function pushOutsideCenter(x: number, y: number, minR: number) {
   };
 }
 
+function measureArena(element: HTMLDivElement | null): ArenaSize {
+  if (!element) return DEFAULT_ARENA_SIZE;
+  const bounds = element.getBoundingClientRect();
+  return {
+    width: element.clientWidth || bounds.width || DEFAULT_ARENA_SIZE.width,
+    height: element.clientHeight || bounds.height || DEFAULT_ARENA_SIZE.height,
+  };
+}
+
+function positionTransform(x: number, y: number, arena: ArenaSize) {
+  return `translate3d(${(x / 100) * arena.width}px, ${(y / 100) * arena.height}px, 0) translate(-50%, -50%)`;
+}
+
+function setElementPosition(
+  element: HTMLElement | null | undefined,
+  x: number,
+  y: number,
+  arena: ArenaSize,
+) {
+  if (!element) return;
+  if (element.style.left !== '0px') element.style.left = '0px';
+  if (element.style.top !== '0px') element.style.top = '0px';
+  element.style.transform = positionTransform(x, y, arena);
+}
+
+function frameAdjustedBlend(baseAtTwentyFps: number, elapsedSeconds: number) {
+  return 1 - Math.pow(1 - baseAtTwentyFps, elapsedSeconds / 0.05);
+}
+
 function initials(member: { firstName: string | null; lastName?: string | null }) {
   const a = (member.firstName || '').charAt(0);
   const b = (member.lastName || '').charAt(0);
@@ -208,6 +245,8 @@ function CourtLobbyArenaComponent({
   const isFavorite = useFavoritesStore((s) => s.isFavorite);
   const viewer = useAuthStore((s) => s.user);
   const [shuffleTick, setShuffleTick] = useState(0);
+  const arenaRef = useRef<HTMLDivElement | null>(null);
+  const arenaSizeRef = useRef<ArenaSize>(DEFAULT_ARENA_SIZE);
   const nodesRef = useRef<DriftNode[]>([]);
   const positionsRef = useRef(new Map<string, { x: number; y: number }>());
   const avatarEls = useRef(new Map<string, HTMLButtonElement>());
@@ -246,7 +285,7 @@ function CourtLobbyArenaComponent({
         : -1;
       const orbitAngle = inProposal
         ? matchOrbitRef.current.angle +
-          ((inMatchIndex + 1) / (inMatch.length + 1)) * Math.PI * 2
+          ((inMatchIndex + 1) / Math.max(partySize, 1)) * Math.PI * 2
         : isActionable
           ? actionableOrbitRef.current.angle +
             (actionableIndex / actionable.length) * Math.PI * 2
@@ -266,7 +305,7 @@ function CourtLobbyArenaComponent({
         orbitRadius,
       };
     });
-  }, [hasProposal, members]);
+  }, [hasProposal, members, partySize]);
 
   const thunderActors = useMemo(
     () =>
@@ -310,7 +349,7 @@ function CourtLobbyArenaComponent({
     const matchSlotById = new Map(
       inMatchNodes.map((node, index) => [node.id, index + 1]),
     );
-    const centralRosterSize = inMatchNodes.length + 1;
+    const matchSlotCount = Math.max(partySize, 1);
     const actionableNodes = nodesRef.current
       .filter(
         (node) =>
@@ -331,7 +370,7 @@ function CourtLobbyArenaComponent({
         !node.member.inProposal && !!node.member.eligibleForProposal;
       const targetAngle = node.member.inProposal
         ? matchOrbitRef.current.angle +
-          (matchSlot / centralRosterSize) * Math.PI * 2
+          (matchSlot / matchSlotCount) * Math.PI * 2
         : isActionable
           ? actionableOrbitRef.current.angle +
             (actionableSlot / Math.max(actionableNodes.length, 1)) *
@@ -360,12 +399,19 @@ function CourtLobbyArenaComponent({
 
     if (reduceMotion) {
       for (const node of next) {
-        positionsRef.current.set(node.id, { x: node.x, y: node.y });
-        const el = avatarEls.current.get(node.id);
-        if (el) {
-          el.style.left = `${node.x}%`;
-          el.style.top = `${node.y}%`;
+        const currentPosition = positionsRef.current.get(node.id);
+        if (currentPosition) {
+          currentPosition.x = node.x;
+          currentPosition.y = node.y;
+        } else {
+          positionsRef.current.set(node.id, { x: node.x, y: node.y });
         }
+        setElementPosition(
+          avatarEls.current.get(node.id),
+          node.x,
+          node.y,
+          arenaSizeRef.current,
+        );
       }
       const selfMarker = selfMarkerRef.current;
       if (selfMarker && inMatchNodes.length > 0) {
@@ -373,8 +419,12 @@ function CourtLobbyArenaComponent({
           matchOrbitRef.current.angle,
           ORBIT_IN_MATCH,
         );
-        selfMarker.style.left = `${selfPosition.x}%`;
-        selfMarker.style.top = `${selfPosition.y}%`;
+        setElementPosition(
+          selfMarker,
+          selfPosition.x,
+          selfPosition.y,
+          arenaSizeRef.current,
+        );
       }
     }
 
@@ -386,36 +436,44 @@ function CourtLobbyArenaComponent({
     const inMatch = members
       .filter((member) => member.inProposal)
       .sort((a, b) => a.userId.localeCompare(b.userId));
+    const inMatchSlotById = new Map(
+      inMatch.map((member, index) => [member.userId, index + 1]),
+    );
     const actionable = members
       .filter((member) => !member.inProposal && member.eligibleForProposal)
       .sort((a, b) => a.userId.localeCompare(b.userId));
+    const actionableSlotById = new Map(
+      actionable.map((member, index) => [member.userId, index]),
+    );
     const reduceMotion =
       typeof window !== 'undefined' &&
       window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    const previousNodesById = new Map(
+      nodesRef.current.map((node) => [node.id, node]),
+    );
+    const arenaSize = measureArena(arenaRef.current);
+    arenaSizeRef.current = arenaSize;
     const next: DriftNode[] = members.map((member, i) => {
       const inProposal = !!member.inProposal;
       const isActionable = !inProposal && !!member.eligibleForProposal;
       const visual = memberVisual(member, hasProposal);
-      const inMatchIndex = inProposal
-        ? inMatch.findIndex((candidate) => candidate.userId === member.userId)
-        : -1;
-      const actionableIndex = isActionable
-        ? actionable.findIndex(
-            (candidate) => candidate.userId === member.userId,
-          )
-        : -1;
+      const orbitSlot = inProposal
+        ? (inMatchSlotById.get(member.userId) ?? 1)
+        : isActionable
+          ? (actionableSlotById.get(member.userId) ?? 0)
+          : i;
       const orbitAngle = inProposal
         ? matchOrbitRef.current.angle +
-          ((inMatchIndex + 1) / (inMatch.length + 1)) * Math.PI * 2
+          (orbitSlot / Math.max(partySize, 1)) * Math.PI * 2
         : isActionable
           ? actionableOrbitRef.current.angle +
-            (actionableIndex / actionable.length) * Math.PI * 2
+            (orbitSlot / actionable.length) * Math.PI * 2
         : (i / n) * Math.PI * 2;
       const orbitRadius = isActionable
         ? actionableOrbitRadius(actionable.length)
         : orbitRadiusFor(member, hasProposal);
       const pos = polarToXY(orbitAngle, orbitRadius);
-      const prev = nodesRef.current.find((node) => node.id === member.userId);
+      const prev = previousNodesById.get(member.userId);
       const changedProposalState =
         !!prev && !!prev.member.inProposal !== inProposal;
       const changedActionableState =
@@ -437,17 +495,25 @@ function CourtLobbyArenaComponent({
             : prev?.orbitAngle ?? orbitAngle,
         orbitRadius,
         orbitSpeed: orbitSpeedFor(member),
+        orbitSlot,
+        handoffElapsed:
+          reduceMotion
+            ? null
+            : changedProposalState || changedActionableState
+              ? 0
+              : prev?.handoffElapsed ?? null,
       };
     });
     nodesRef.current = next;
     const map = new Map<string, { x: number; y: number }>();
     for (const node of next) {
       map.set(node.id, { x: node.x, y: node.y });
-      const el = avatarEls.current.get(node.id);
-      if (el) {
-        el.style.left = `${node.x}%`;
-        el.style.top = `${node.y}%`;
-      }
+      setElementPosition(
+        avatarEls.current.get(node.id),
+        node.x,
+        node.y,
+        arenaSize,
+      );
     }
     positionsRef.current = map;
 
@@ -458,14 +524,60 @@ function CourtLobbyArenaComponent({
           matchOrbitRef.current.angle,
           ORBIT_IN_MATCH,
         );
-        selfMarker.style.left = `${selfPosition.x}%`;
-        selfMarker.style.top = `${selfPosition.y}%`;
+        setElementPosition(
+          selfMarker,
+          selfPosition.x,
+          selfPosition.y,
+          arenaSize,
+        );
       } else {
         selfMarker.style.removeProperty('left');
         selfMarker.style.removeProperty('top');
+        selfMarker.style.removeProperty('transform');
       }
     }
-  }, [hasProposal, key, members]);
+  }, [hasProposal, key, members, partySize]);
+
+  useLayoutEffect(() => {
+    const syncPositionsToArenaSize = () => {
+      const arenaSize = measureArena(arenaRef.current);
+      arenaSizeRef.current = arenaSize;
+      for (const node of nodesRef.current) {
+        setElementPosition(
+          avatarEls.current.get(node.id),
+          node.x,
+          node.y,
+          arenaSize,
+        );
+      }
+
+      if (
+        selfMarkerRef.current &&
+        nodesRef.current.some((node) => node.member.inProposal)
+      ) {
+        const selfPosition = polarToXY(
+          matchOrbitRef.current.angle,
+          ORBIT_IN_MATCH,
+        );
+        setElementPosition(
+          selfMarkerRef.current,
+          selfPosition.x,
+          selfPosition.y,
+          arenaSize,
+        );
+      }
+    };
+
+    syncPositionsToArenaSize();
+    if (typeof ResizeObserver !== 'undefined' && arenaRef.current) {
+      const observer = new ResizeObserver(syncPositionsToArenaSize);
+      observer.observe(arenaRef.current);
+      return () => observer.disconnect();
+    }
+
+    window.addEventListener('resize', syncPositionsToArenaSize);
+    return () => window.removeEventListener('resize', syncPositionsToArenaSize);
+  }, []);
 
   useEffect(() => {
     const reduceMotion =
@@ -474,131 +586,139 @@ function CourtLobbyArenaComponent({
     if (reduceMotion || members.length === 0) return;
 
     let last = 0;
+    let inMatchCount = 0;
+    let actionableCount = 0;
+    for (const node of nodesRef.current) {
+      if (node.member.inProposal) inMatchCount += 1;
+      else if (node.member.eligibleForProposal) actionableCount += 1;
+    }
+    const matchSlotCount = Math.max(partySize, 1);
+    const actionableRadius = actionableOrbitRadius(actionableCount);
+
     const tick = (ts: number) => {
-      if (ts - last < 50) {
-        frameRef.current = requestAnimationFrame(tick);
-        return;
-      }
-      const elapsedSeconds = last === 0 ? 0.05 : Math.min((ts - last) / 1000, 0.1);
-      last = ts;
       if (typeof document !== 'undefined' && document.hidden) {
+        last = ts;
         frameRef.current = requestAnimationFrame(tick);
         return;
       }
 
-      const inMatchNodes = nodesRef.current
-        .filter((node) => node.member.inProposal)
-        .sort((a, b) => a.id.localeCompare(b.id));
-      const matchSlotById = new Map(
-        inMatchNodes.map((node, index) => [node.id, index + 1]),
-      );
-      const centralRosterSize = inMatchNodes.length + 1;
-      const actionableNodes = nodesRef.current
-        .filter(
-          (node) =>
-            !node.member.inProposal && node.member.eligibleForProposal,
-        )
-        .sort((a, b) => a.id.localeCompare(b.id));
-      const actionableSlotById = new Map(
-        actionableNodes.map((node, index) => [node.id, index]),
-      );
-      const actionableRadius = actionableOrbitRadius(actionableNodes.length);
-      if (inMatchNodes.length > 0) {
+      const elapsedSeconds =
+        last === 0 ? 1 / 60 : Math.min((ts - last) / 1000, 0.1);
+      last = ts;
+      if (inMatchCount > 0) {
         matchOrbitRef.current.angle +=
           matchOrbitRef.current.speed * elapsedSeconds;
       }
-      if (actionableNodes.length > 0) {
+      if (actionableCount > 0) {
         actionableOrbitRef.current.angle +=
           actionableOrbitRef.current.speed * elapsedSeconds;
       }
 
-      const updated = nodesRef.current.map((node) => {
+      const matchBlend = frameAdjustedBlend(0.065, elapsedSeconds);
+      const actionableBlend = frameAdjustedBlend(0.055, elapsedSeconds);
+      const freeBlend = frameAdjustedBlend(0.045, elapsedSeconds);
+      const handoffBlend = frameAdjustedBlend(
+        HANDOFF_BLEND_AT_TWENTY_FPS,
+        elapsedSeconds,
+      );
+      const frameScale = elapsedSeconds / 0.05;
+      const randomScale = Math.sqrt(frameScale);
+      const nodes = nodesRef.current;
+      for (const node of nodes) {
         let { x, y, vx, vy, orbitAngle } = node;
+        const inHandoff = node.handoffElapsed !== null;
         const inProposal = !!node.member.inProposal;
         if (inProposal) {
-          const slot = matchSlotById.get(node.id) ?? 1;
           orbitAngle =
             matchOrbitRef.current.angle +
-            (slot / centralRosterSize) * Math.PI * 2;
+            (node.orbitSlot / matchSlotCount) * Math.PI * 2;
           const target = polarToXY(orbitAngle, ORBIT_IN_MATCH);
-          x += (target.x - x) * 0.065;
-          y += (target.y - y) * 0.065;
-          return {
-            ...node,
-            x,
-            y,
-            vx: 0,
-            vy: 0,
-            orbitAngle,
-            orbitRadius: ORBIT_IN_MATCH,
-          };
-        }
-
-        const isActionable = !!node.member.eligibleForProposal;
-        if (isActionable) {
-          const slot = actionableSlotById.get(node.id) ?? 0;
+          const blend = inHandoff ? handoffBlend : matchBlend;
+          x += (target.x - x) * blend;
+          y += (target.y - y) * blend;
+          vx = 0;
+          vy = 0;
+          node.orbitRadius = ORBIT_IN_MATCH;
+        } else if (node.member.eligibleForProposal) {
           orbitAngle =
             actionableOrbitRef.current.angle +
-            (slot / actionableNodes.length) * Math.PI * 2;
+            (node.orbitSlot / actionableCount) * Math.PI * 2;
           const target = polarToXY(orbitAngle, actionableRadius);
-          x += (target.x - x) * 0.055;
-          y += (target.y - y) * 0.055;
-          return {
-            ...node,
-            x,
-            y,
-            vx: 0,
-            vy: 0,
-            orbitAngle,
-            orbitRadius: actionableRadius,
-          };
+          const blend = inHandoff ? handoffBlend : actionableBlend;
+          x += (target.x - x) * blend;
+          y += (target.y - y) * blend;
+          vx = 0;
+          vy = 0;
+          node.orbitRadius = actionableRadius;
+        } else {
+          const targetR = Math.max(node.orbitRadius, CENTER_CLEARANCE);
+          const target = polarToXY(orbitAngle, targetR);
+
+          const blend = inHandoff ? handoffBlend : freeBlend;
+          x += (target.x - x) * blend;
+          y += (target.y - y) * blend;
+          orbitAngle += node.orbitSpeed * elapsedSeconds;
+          vx += (Math.random() - 0.5) * 0.005 * randomScale;
+          vy += (Math.random() - 0.5) * 0.005 * randomScale;
+          vx = Math.max(-0.065, Math.min(0.065, vx));
+          vy = Math.max(-0.065, Math.min(0.065, vy));
+          x += vx * 0.28 * frameScale;
+          y += vy * 0.28 * frameScale;
+
+          const clamped = pushOutsideCenter(x, y, CENTER_CLEARANCE);
+          x = Math.max(7, Math.min(93, clamped.x));
+          y = Math.max(20, Math.min(89, clamped.y));
+          node.orbitRadius = targetR;
         }
 
-        const targetR = Math.max(node.orbitRadius, CENTER_CLEARANCE);
-        const target = polarToXY(orbitAngle, targetR);
+        node.x = x;
+        node.y = y;
+        node.vx = vx;
+        node.vy = vy;
+        node.orbitAngle = orbitAngle;
+        if (node.handoffElapsed !== null) {
+          node.handoffElapsed += elapsedSeconds;
+          if (node.handoffElapsed >= HANDOFF_SECONDS) {
+            node.handoffElapsed = null;
+          }
+        }
+      }
 
-        x += (target.x - x) * 0.045;
-        y += (target.y - y) * 0.045;
-        orbitAngle += node.orbitSpeed * elapsedSeconds;
-        vx += (Math.random() - 0.5) * 0.005;
-        vy += (Math.random() - 0.5) * 0.005;
-        vx = Math.max(-0.065, Math.min(0.065, vx));
-        vy = Math.max(-0.065, Math.min(0.065, vy));
-        x += vx * 0.28;
-        y += vy * 0.28;
-
-        const clamped = inProposal
-          ? { x, y }
-          : pushOutsideCenter(x, y, CENTER_CLEARANCE);
-        x = Math.max(7, Math.min(93, clamped.x));
-        y = Math.max(20, Math.min(89, clamped.y));
-
-        return { ...node, x, y, vx, vy, orbitAngle, orbitRadius: targetR };
-      });
-
-      nodesRef.current = updated;
       const map = positionsRef.current;
-      for (const node of updated) {
-        map.set(node.id, { x: node.x, y: node.y });
-        const el = avatarEls.current.get(node.id);
-        if (el) {
-          el.style.left = `${node.x}%`;
-          el.style.top = `${node.y}%`;
+      const arenaSize = arenaSizeRef.current;
+      for (const node of nodes) {
+        const currentPosition = map.get(node.id);
+        if (currentPosition) {
+          currentPosition.x = node.x;
+          currentPosition.y = node.y;
+        } else {
+          map.set(node.id, { x: node.x, y: node.y });
         }
+        setElementPosition(
+          avatarEls.current.get(node.id),
+          node.x,
+          node.y,
+          arenaSize,
+        );
       }
 
       const selfMarker = selfMarkerRef.current;
       if (selfMarker) {
-        if (inMatchNodes.length > 0) {
+        if (inMatchCount > 0) {
           const selfPosition = polarToXY(
             matchOrbitRef.current.angle,
             ORBIT_IN_MATCH,
           );
-          selfMarker.style.left = `${selfPosition.x}%`;
-          selfMarker.style.top = `${selfPosition.y}%`;
+          setElementPosition(
+            selfMarker,
+            selfPosition.x,
+            selfPosition.y,
+            arenaSize,
+          );
         } else {
           selfMarker.style.removeProperty('left');
           selfMarker.style.removeProperty('top');
+          selfMarker.style.removeProperty('transform');
         }
       }
 
@@ -607,12 +727,16 @@ function CourtLobbyArenaComponent({
 
     frameRef.current = requestAnimationFrame(tick);
     return () => {
-      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+      if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
+      frameRef.current = null;
     };
-  }, [key, members.length]);
+  }, [key, members.length, partySize]);
 
   return (
-    <div className="court-lobby-arena relative h-[330px] overflow-hidden rounded-[28px]">
+    <div
+      ref={arenaRef}
+      className="court-lobby-arena relative h-[330px] overflow-hidden rounded-[28px]"
+    >
       <div className="court-lobby-arena__aurora" aria-hidden />
       <div className="court-lobby-arena__grid" aria-hidden />
       <div className="court-lobby-arena__scan" aria-hidden />
@@ -682,7 +806,13 @@ function CourtLobbyArenaComponent({
         >
           <span className="court-lobby-arena__self-avatar" aria-hidden>
             {viewerAvatar ? (
-              <img src={viewerAvatar} alt="" className="h-full w-full object-cover" />
+              <img
+                src={viewerAvatar}
+                alt=""
+                decoding="async"
+                draggable={false}
+                className="h-full w-full object-cover"
+              />
             ) : (
               initials({
                 firstName: viewer.firstName ?? null,
@@ -703,8 +833,13 @@ function CourtLobbyArenaComponent({
       {layout.map((node) => {
         const favorite = isFavorite(node.member.userId);
         const inProposal = !!node.member.inProposal;
+        const avatarScale = node.size / AVATAR_BASE_SIZE;
+        const inverseAvatarScale = 1 / avatarScale;
         const highlightedForReAdd =
-          !inProposal && !!node.member.eligibleForProposal;
+          vacancy > 0 &&
+          !rosterLocked &&
+          !inProposal &&
+          !!node.member.eligibleForProposal;
         const src = node.member.avatar
           ? userAvatarTinyUrlFromStandard(node.member.avatar)
           : null;
@@ -750,23 +885,46 @@ function CourtLobbyArenaComponent({
               if (el) avatarEls.current.set(node.id, el);
               else avatarEls.current.delete(node.id);
             }}
-            className="court-lobby-arena__avatar absolute -translate-x-1/2 -translate-y-1/2"
+            className="court-lobby-arena__avatar absolute"
             style={{
-              left: `${node.x}%`,
-              top: `${node.y}%`,
+              left: '0px',
+              top: '0px',
+              transform: positionTransform(
+                node.x,
+                node.y,
+                arenaSizeRef.current,
+              ),
               width: node.size,
               height: node.size,
               opacity: node.opacity,
             }}
             onClick={() => void onAvatarClick(node.member)}
           >
-            <span className="court-lobby-arena__avatar-halo" aria-hidden />
-            <span className="court-lobby-arena__avatar-image">
-              {src ? (
-                <img src={src} alt="" className="h-full w-full object-cover" />
-              ) : (
-                initials(node.member)
-              )}
+            <span
+              className="court-lobby-arena__avatar-visual"
+              style={{
+                transform: `translate(-50%, -50%) scale(${avatarScale})`,
+              }}
+            >
+              <span className="court-lobby-arena__avatar-halo" aria-hidden />
+              <span className="court-lobby-arena__avatar-image">
+                {src ? (
+                  <img
+                    src={src}
+                    alt=""
+                    decoding="async"
+                    draggable={false}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <span
+                    className="court-lobby-arena__avatar-initials"
+                    style={{ scale: `${inverseAvatarScale}` }}
+                  >
+                    {initials(node.member)}
+                  </span>
+                )}
+              </span>
             </span>
             {inProposal && (
               <span className="court-lobby-arena__avatar-check" aria-hidden>

@@ -21,6 +21,7 @@
     "invitePlayers": "Pozovi igrače",
     "pendingInvites": "Pozivi na čekanju",
     "badgeDeclined": "Declined",
+    "badgeExpired": "Poziv je istekao",
     "badgeInviteCancelled": "Invite cancelled",
     "sectionTerminalInvites": "Invite responses",
     "inviteAgainHint": "You can send a new invite.",

@@ -1,11 +1,18 @@
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import { ImageProcessor } from '../../utils/imageProcessor';
-import { ChatContextType, ChatSyncEventType, ParticipantRole, Sport } from '@prisma/client';
+import {
+  ChatContextType,
+  ChatSyncEventType,
+  GameInviteOutcomeType,
+  ParticipantRole,
+  Sport,
+} from '@prisma/client';
 import { ChatSyncEventService } from '../chat/chatSyncEvent.service';
 import notificationService from '../notification.service';
 import { USER_SELECT_FIELDS, USER_SPORT_PROFILE_SELECT } from '../../utils/constants';
 import { projectUserForSportContext } from '../user/userSportProfile.service';
+import { PlayIntentGameLifecycleService } from '../playIntent/playIntentGameLifecycle.service';
 
 export class GameDeleteService {
   static async deleteGame(id: string, cancelledByUserId: string) {
@@ -23,7 +30,14 @@ export class GameDeleteService {
         status: true,
         resultsStatus: true,
         participants: {
-          select: { userId: true, role: true, status: true },
+          select: {
+            id: true,
+            userId: true,
+            role: true,
+            status: true,
+            invitedByUserId: true,
+            playIntentId: true,
+          },
         },
       },
     });
@@ -93,6 +107,35 @@ export class GameDeleteService {
         { reason: 'game_cancelled', archivedAt }
       );
 
+      const invitedParticipants = await tx.gameParticipant.findMany({
+        where: {
+          gameId: id,
+          status: 'INVITED',
+          role: { not: ParticipantRole.OWNER },
+        },
+        select: {
+          id: true,
+          userId: true,
+          invitedByUserId: true,
+          playIntentId: true,
+        },
+        orderBy: { id: 'asc' },
+      });
+      const closedAt = new Date();
+      for (const participant of invitedParticipants) {
+        await PlayIntentGameLifecycleService.closeLinkedInvite(
+          tx,
+          {
+            id: participant.id,
+            gameId: id,
+            userId: participant.userId,
+            invitedByUserId: participant.invitedByUserId,
+            playIntentId: participant.playIntentId,
+          },
+          GameInviteOutcomeType.CANCELLED,
+          closedAt,
+        );
+      }
       await tx.game.delete({ where: { id } });
     });
 

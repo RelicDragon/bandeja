@@ -42,35 +42,15 @@
   }
 }
 
-@keyframes courtLobbyReAddGlow {
-  0%,
-  100% {
-    box-shadow:
-      0 0 0 3px rgb(251 191 36 / 0.14),
-      0 0 15px rgb(245 158 11 / 0.28),
-      0 9px 23px rgb(2 6 23 / 0.5);
-  }
-  50% {
-    box-shadow:
-      0 0 0 5px rgb(251 191 36 / 0.22),
-      0 0 25px rgb(245 158 11 / 0.48),
-      0 9px 23px rgb(2 6 23 / 0.5);
-  }
-}
-
 @keyframes courtLobbySelfPresence {
   0%,
   100% {
-    box-shadow:
-      0 0 0 2px rgb(52 211 153 / 0.14),
-      0 0 10px rgb(52 211 153 / 0.24),
-      0 5px 11px rgb(2 6 23 / 0.45);
+    opacity: 0.9;
+    transform: scale(0.97);
   }
   50% {
-    box-shadow:
-      0 0 0 3px rgb(52 211 153 / 0.2),
-      0 0 15px rgb(52 211 153 / 0.34),
-      0 5px 11px rgb(2 6 23 / 0.45);
+    opacity: 1;
+    transform: scale(1.04);
   }
 }
 
@@ -390,10 +370,8 @@
   top: calc(54% - 6px);
   display: block;
   transform: translate(-50%, -50%);
-  transition:
-    left 140ms linear,
-    top 140ms linear;
-  will-change: left, top;
+  backface-visibility: hidden;
+  will-change: transform;
   pointer-events: none;
 }
 
@@ -426,6 +404,10 @@
   border: 1.5px solid rgb(167 243 208 / 0.92);
   border-radius: 999px;
   background: linear-gradient(145deg, #334155, #0f172a);
+  box-shadow:
+    0 0 0 2px rgb(52 211 153 / 0.17),
+    0 0 13px rgb(52 211 153 / 0.28),
+    0 5px 11px rgb(2 6 23 / 0.45);
   color: white;
   font-size: 8px;
   font-weight: 800;
@@ -445,17 +427,25 @@
   font-weight: 750;
   line-height: 1;
   outline: none;
-  transition:
-    left 140ms linear,
-    top 140ms linear,
-    width 520ms cubic-bezier(0.2, 0.8, 0.2, 1),
-    height 520ms cubic-bezier(0.2, 0.8, 0.2, 1),
-    opacity 220ms ease,
-    filter 220ms ease;
-  will-change: left, top, width, height;
+  backface-visibility: hidden;
+  contain: layout style;
+  transition: opacity 220ms ease;
+  will-change: transform;
 }
 
-.court-lobby-arena__avatar::after {
+.court-lobby-arena__avatar-visual {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 50px;
+  height: 50px;
+  border-radius: 999px;
+  transition: transform 420ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  will-change: transform;
+  pointer-events: none;
+}
+
+.court-lobby-arena__avatar-visual::after {
   position: absolute;
   z-index: -1;
   inset: -7px;
@@ -473,7 +463,7 @@
   filter: none;
 }
 
-.court-lobby-arena__avatar[data-readd='true']::before {
+.court-lobby-arena__avatar[data-readd='true'] .court-lobby-arena__avatar-visual::before {
   position: absolute;
   z-index: 2;
   inset: -7px;
@@ -507,6 +497,14 @@
   box-shadow:
     inset 0 1px 0 rgb(255 255 255 / 0.14),
     0 7px 18px rgb(2 6 23 / 0.48);
+}
+
+.court-lobby-arena__avatar-initials {
+  display: block;
+}
+
+.court-lobby-arena__avatar-initials {
+  transition: scale 420ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .court-lobby-arena__avatar[data-affinity='far'] {
@@ -546,7 +544,10 @@
 
 .court-lobby-arena__avatar[data-readd='true'] .court-lobby-arena__avatar-image {
   border: 2px solid rgb(253 224 71 / 0.96);
-  animation: courtLobbyReAddGlow 2.4s ease-in-out infinite;
+  box-shadow:
+    0 0 0 4px rgb(251 191 36 / 0.18),
+    0 0 20px rgb(245 158 11 / 0.38),
+    0 9px 23px rgb(2 6 23 / 0.5);
 }
 
 .court-lobby-arena__avatar[data-favorite='true'] .court-lobby-arena__avatar-image {
@@ -805,7 +806,7 @@ html:not(.dark) .court-lobby-arena__self-avatar {
   background: linear-gradient(145deg, #64748b, #334155);
 }
 
-html:not(.dark) .court-lobby-arena__avatar::after {
+html:not(.dark) .court-lobby-arena__avatar-visual::after {
   border-color: rgb(2 132 199 / 0.16);
 }
 
@@ -837,7 +838,7 @@ html:not(.dark) .court-lobby-arena__avatar[data-in-proposal='true'] .court-lobby
     0 8px 20px rgb(15 23 42 / 0.22);
 }
 
-html:not(.dark) .court-lobby-arena__avatar[data-readd='true']::before {
+html:not(.dark) .court-lobby-arena__avatar[data-readd='true'] .court-lobby-arena__avatar-visual::before {
   border-color: rgb(217 119 6 / 0.82);
   box-shadow: 0 0 13px rgb(245 158 11 / 0.34);
 }
@@ -907,12 +908,17 @@ html:not(.dark) .court-lobby-arena__chip--action {
   .court-lobby-arena__self-avatar,
   .court-lobby-arena__shuffle svg.is-shuffling,
   .court-lobby-arena__avatar-halo,
-  .court-lobby-arena__avatar[data-readd='true']::before,
+  .court-lobby-arena__avatar[data-readd='true'] .court-lobby-arena__avatar-visual::before,
   .court-lobby-arena__avatar[data-readd='true'] .court-lobby-arena__avatar-image {
     animation: none;
   }
 
-  .court-lobby-arena__avatar {
+  .court-lobby-arena__avatar,
+  .court-lobby-arena__avatar-visual {
+    transition: none;
+  }
+
+  .court-lobby-arena__avatar-initials {
     transition: none;
   }
 

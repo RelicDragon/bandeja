@@ -1,5 +1,9 @@
 import prisma from '../../config/database';
-import { ParticipantRole, EntityType } from '@prisma/client';
+import {
+  ParticipantRole,
+  EntityType,
+  GameInviteOutcomeType,
+} from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
 import { SystemMessageType, getUserDisplayName } from '../../utils/systemMessages';
 import { GameService } from './game.service';
@@ -8,6 +12,7 @@ import { createSystemMessage } from '../../controllers/chat.controller';
 import { hasParentGamePermission, getParentGameParticipant } from '../../utils/parentGamePermissions';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 import { removeUserFromGameFixedTeams } from './fixedTeamsCleanup';
+import { PlayIntentGameLifecycleService } from '../playIntent/playIntentGameLifecycle.service';
 
 export class AdminService {
   static async addAdmin(gameId: string, ownerId: string, userId: string) {
@@ -172,7 +177,22 @@ export class AdminService {
           await tx.game.update({ where: { id: gameId }, data: { trainerId: null } });
         }
         await removeUserFromGameFixedTeams(tx, gameId, targetUserId);
-        await tx.gameParticipant.delete({ where: { id: targetParticipant.id } });
+        if (targetParticipant.status === 'INVITED') {
+          await PlayIntentGameLifecycleService.closeLinkedInvite(
+            tx,
+            {
+              id: targetParticipant.id,
+              gameId: targetParticipant.gameId,
+              userId: targetParticipant.userId,
+              invitedByUserId: targetParticipant.invitedByUserId,
+              playIntentId: targetParticipant.playIntentId,
+            },
+            GameInviteOutcomeType.CANCELLED,
+            new Date(),
+          );
+        } else {
+          await tx.gameParticipant.delete({ where: { id: targetParticipant.id } });
+        }
       });
 
       if (targetParticipant.user) {

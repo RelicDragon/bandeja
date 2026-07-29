@@ -18,7 +18,13 @@ import {
   resolveTimeWindow,
   timeStringToMinutes,
 } from './playIntentCriteria';
+import {
+  intentWindowEndsAt,
+  intentWindowIsReachable,
+} from './playIntentFreshness';
 import { PlayIntentMatchService } from './playIntentMatch.service';
+import { PlayIntentGameLifecycleService } from './playIntentGameLifecycle.service';
+import { lockMatchProposal } from './matchProposalLock';
 
 export type CreatePlayIntentDto = {
   cityId?: string;
@@ -94,13 +100,19 @@ export class PlayIntentService {
     if (cityId) where.cityId = cityId;
     if (sport) where.sport = sport;
 
-    return prisma.playIntent.findFirst({
+    const intents = await prisma.playIntent.findMany({
       where,
       include: {
         city: { select: { id: true, name: true, timezone: true, country: true } },
       },
       orderBy: { createdAt: 'desc' },
     });
+    const now = new Date();
+    return (
+      intents.find((intent) =>
+        intentWindowIsReachable(intent, intent.city.timezone, now),
+      ) ?? null
+    );
   }
 
   static async createOrReplace(userId: string, data: CreatePlayIntentDto) {
@@ -159,8 +171,45 @@ export class PlayIntentService {
       throw new ApiError(400, 'Select at least one day (today, tomorrow, or day after)');
     }
 
-    const lastDate = dateKeys[dateKeys.length - 1];
-    const expiresAt = endOfCalendarDate(lastDate, city.timezone);
+    const expiresAt =
+      intentWindowEndsAt(
+        {
+          dateKeys,
+          timeOfDay,
+          startTime:
+            timeOfDay === PlayIntentTimeOfDay.CUSTOM
+              ? data.startTime ?? null
+              : null,
+          endTime:
+            timeOfDay === PlayIntentTimeOfDay.CUSTOM
+              ? data.endTime ?? null
+              : null,
+        },
+        city.timezone,
+      ) ?? endOfCalendarDate(dateKeys[dateKeys.length - 1], city.timezone);
+    if (expiresAt <= new Date()) {
+      throw new ApiError(400, 'Selected play window has already ended', true, {
+        code: 'playIntent.windowEnded',
+      });
+    }
+
+    const reservedInvite = await prisma.gameParticipant.findFirst({
+      where: {
+        userId,
+        status: 'INVITED',
+        playIntent: {
+          cityId,
+          status: PlayIntentStatus.MATCHED,
+        },
+      },
+      select: { id: true },
+    });
+    if (reservedInvite) {
+      throw new ApiError(409, 'Answer the pending game invite first', true, {
+        code: 'playIntent.pendingGameInvite',
+        inviteId: reservedInvite.id,
+      });
+    }
 
     // One active looking state per city — leave all prior intents/proposals in this city.
     const pendingMemberships = await prisma.matchProposalMember.findMany({
@@ -181,35 +230,59 @@ export class PlayIntentService {
       }
     }
 
-    await prisma.playIntent.updateMany({
-      where: {
-        userId,
-        cityId,
-        status: { in: [PlayIntentStatus.OPEN, PlayIntentStatus.MATCHED] },
-      },
-      data: { status: PlayIntentStatus.CANCELLED },
-    });
-
-    const intent = await prisma.playIntent.create({
-      data: {
-        userId,
-        cityId,
-        sport,
-        entityType,
-        dateKeys,
-        timeOfDay,
-        startTime: timeOfDay === PlayIntentTimeOfDay.CUSTOM ? data.startTime ?? null : null,
-        endTime: timeOfDay === PlayIntentTimeOfDay.CUSTOM ? data.endTime ?? null : null,
-        clubIds: data.clubIds ?? [],
-        minLevel: entityType === EntityType.BAR ? null : data.minLevel ?? null,
-        maxLevel: entityType === EntityType.BAR ? null : data.maxLevel ?? null,
-        genderTeams: entityType === EntityType.BAR ? GenderTeam.ANY : genderTeams,
-        status: PlayIntentStatus.OPEN,
-        expiresAt,
-      },
-      include: {
-        city: { select: { id: true, name: true, timezone: true, country: true } },
-      },
+    const intent = await prisma.$transaction(async (tx) => {
+      if (expiresAt <= new Date()) {
+        throw new ApiError(400, 'Selected play window has already ended', true, {
+          code: 'playIntent.windowEnded',
+        });
+      }
+      await tx.playIntent.updateMany({
+        where: {
+          userId,
+          cityId,
+          status: { in: [PlayIntentStatus.OPEN, PlayIntentStatus.MATCHED] },
+          gameParticipants: { none: {} },
+        },
+        data: { status: PlayIntentStatus.CANCELLED },
+      });
+      const linkedInvite = await tx.gameParticipant.findFirst({
+        where: {
+          userId,
+          status: 'INVITED',
+          playIntent: {
+            cityId,
+            status: PlayIntentStatus.MATCHED,
+          },
+        },
+        select: { id: true },
+      });
+      if (linkedInvite) {
+        throw new ApiError(409, 'Answer the pending game invite first', true, {
+          code: 'playIntent.pendingGameInvite',
+          inviteId: linkedInvite.id,
+        });
+      }
+      return tx.playIntent.create({
+        data: {
+          userId,
+          cityId,
+          sport,
+          entityType,
+          dateKeys,
+          timeOfDay,
+          startTime: timeOfDay === PlayIntentTimeOfDay.CUSTOM ? data.startTime ?? null : null,
+          endTime: timeOfDay === PlayIntentTimeOfDay.CUSTOM ? data.endTime ?? null : null,
+          clubIds: data.clubIds ?? [],
+          minLevel: entityType === EntityType.BAR ? null : data.minLevel ?? null,
+          maxLevel: entityType === EntityType.BAR ? null : data.maxLevel ?? null,
+          genderTeams: entityType === EntityType.BAR ? GenderTeam.ANY : genderTeams,
+          status: PlayIntentStatus.OPEN,
+          expiresAt,
+        },
+        include: {
+          city: { select: { id: true, name: true, timezone: true, country: true } },
+        },
+      });
     });
 
     void PlayIntentMatchService.onIntentCreated(intent.id).catch((err) => {
@@ -238,6 +311,19 @@ export class PlayIntentService {
     if (intents.length === 0) {
       throw new ApiError(404, 'No open play intent found');
     }
+    const reservedInvite = await prisma.gameParticipant.findFirst({
+      where: {
+        status: 'INVITED',
+        playIntentId: { in: intents.map((intent) => intent.id) },
+      },
+      select: { id: true },
+    });
+    if (reservedInvite) {
+      throw new ApiError(409, 'Answer the pending game invite first', true, {
+        code: 'playIntent.pendingGameInvite',
+        inviteId: reservedInvite.id,
+      });
+    }
 
     for (const intent of intents) {
       const memberships = await prisma.matchProposalMember.findMany({
@@ -257,9 +343,28 @@ export class PlayIntentService {
       }
     }
 
-    const result = await prisma.playIntent.updateMany({
-      where: { id: { in: intents.map((i) => i.id) } },
-      data: { status: PlayIntentStatus.CANCELLED },
+    const result = await prisma.$transaction(async (tx) => {
+      const updated = await tx.playIntent.updateMany({
+        where: {
+          id: { in: intents.map((intent) => intent.id) },
+          gameParticipants: { none: {} },
+        },
+        data: { status: PlayIntentStatus.CANCELLED },
+      });
+      const linkedInvite = await tx.gameParticipant.findFirst({
+        where: {
+          status: 'INVITED',
+          playIntentId: { in: intents.map((intent) => intent.id) },
+        },
+        select: { id: true },
+      });
+      if (linkedInvite) {
+        throw new ApiError(409, 'Answer the pending game invite first', true, {
+          code: 'playIntent.pendingGameInvite',
+          inviteId: linkedInvite.id,
+        });
+      }
+      return updated;
     });
 
     return { cancelled: result.count };
@@ -297,37 +402,78 @@ export class PlayIntentService {
 
   static async expireDueIntents(): Promise<number> {
     const now = new Date();
-    const due = await prisma.playIntent.findMany({
-      where: {
-        status: { in: [PlayIntentStatus.OPEN, PlayIntentStatus.MATCHED] },
-        expiresAt: { lte: now },
-      },
-      select: { id: true },
-    });
-    if (due.length === 0) return 0;
+    let expired = 0;
+    while (true) {
+      const due = await prisma.playIntent.findMany({
+        where: {
+          status: { in: [PlayIntentStatus.OPEN, PlayIntentStatus.MATCHED] },
+          expiresAt: { lte: now },
+          gameParticipants: { none: {} },
+        },
+        select: { id: true },
+        orderBy: { expiresAt: 'asc' },
+        take: 500,
+      });
+      if (due.length === 0) return expired;
 
-    const intentIds = due.map((d) => d.id);
-    const linkedProposals = await prisma.matchProposal.findMany({
-      where: {
-        status: { in: [MatchProposalStatus.PENDING, MatchProposalStatus.ACCEPTED] },
-        gameId: null,
-        members: { some: { intentId: { in: intentIds } } },
-      },
-      select: { id: true },
-    });
+      const intentIds = due.map((intent) => intent.id);
+      const linkedProposals = await prisma.matchProposal.findMany({
+        where: {
+          status: { in: [MatchProposalStatus.PENDING, MatchProposalStatus.ACCEPTED] },
+          gameId: null,
+          members: { some: { intentId: { in: intentIds } } },
+        },
+        select: { id: true },
+        orderBy: { id: 'asc' },
+      });
 
-    await prisma.$transaction([
-      prisma.matchProposal.updateMany({
-        where: { id: { in: linkedProposals.map((p) => p.id) } },
-        data: { status: MatchProposalStatus.EXPIRED, hostUserId: null },
-      }),
-      prisma.playIntent.updateMany({
-        where: { id: { in: intentIds } },
-        data: { status: PlayIntentStatus.EXPIRED },
-      }),
-    ]);
-
-    return intentIds.length;
+      const expiredInBatch = await prisma.$transaction(async (tx) => {
+        const proposalIntentIds = new Set<string>();
+        const dueIntentIds = new Set(intentIds);
+        let releasedExpired = 0;
+        for (const proposal of linkedProposals) {
+          await lockMatchProposal(tx, proposal.id);
+          const current = await tx.matchProposal.findFirst({
+            where: {
+              id: proposal.id,
+              status: {
+                in: [MatchProposalStatus.PENDING, MatchProposalStatus.ACCEPTED],
+              },
+              gameId: null,
+            },
+            include: { members: { select: { intentId: true } } },
+          });
+          if (!current) continue;
+          await tx.matchProposal.update({
+            where: { id: current.id },
+            data: { status: MatchProposalStatus.EXPIRED, hostUserId: null },
+          });
+          current.members.forEach((member) =>
+            proposalIntentIds.add(member.intentId),
+          );
+        }
+        for (const intentId of [...proposalIntentIds].sort()) {
+          const status = await PlayIntentGameLifecycleService.release(
+            tx,
+            intentId,
+            now,
+          );
+          if (dueIntentIds.has(intentId) && status === PlayIntentStatus.EXPIRED) {
+            releasedExpired += 1;
+          }
+        }
+        const updated = await tx.playIntent.updateMany({
+          where: {
+            id: { in: intentIds },
+            status: { in: [PlayIntentStatus.OPEN, PlayIntentStatus.MATCHED] },
+            gameParticipants: { none: {} },
+          },
+          data: { status: PlayIntentStatus.EXPIRED },
+        });
+        return releasedExpired + updated.count;
+      });
+      expired += expiredInBatch;
+    }
   }
 
   static summarizeWindow(intent: {

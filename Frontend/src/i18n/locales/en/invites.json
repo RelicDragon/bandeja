@@ -20,6 +20,7 @@
     "shareAppBody": "Join me on Bandeja: {{url}}",
     "pendingInvites": "Pending Invites",
     "badgeDeclined": "Declined",
+    "badgeExpired": "Invite expired",
     "badgeInviteCancelled": "Invite cancelled",
     "sectionTerminalInvites": "Invite responses",
     "inviteAgainHint": "You can send a new invite.",

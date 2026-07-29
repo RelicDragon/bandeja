@@ -722,6 +722,7 @@ Frontend/e2e/
 | GD-15a | Invite search Cyrillic→Latin | Open invite list; type Cyrillic prefix of a Latin-named player (e.g. `ив` for Ivan) | Player stays in results after debounce (does not flash then vanish) |
 | GD-15b | Invite search clear | Open invite list; type 2+ chars so results update; clear the search field | List stays mounted (no full-modal spinner); default invitable list restores after debounce |
 | GD-16 | Cancel invite | Owner cancels pending | Invite removed |
+| GD-16a | Expired invite outcome | Let a pending invite expire → open player list | Player appears under invite responses with “Invite expired”, not “Invite cancelled” |
 | GD-17 | Guest join chat only | Join as guest | Chat access without full join |
 | GD-18 | Carousel vs list participants | Toggle view mode | Layout switches |
 | GD-18a | Invite not in game chat | Owner invites player from participants list | Pending invite on participants panel; no "X invites Y" system message in game chat; other participants get no chat/push notification for the invite |
@@ -1446,9 +1447,9 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PI-05 | Proposal sheet | Open `/find?proposal=<id>` (or tap ready strip) → tap Not now → reopen lobby | Not now only dismisses the drawer; ready match remains and Create is still available when reopened |
 | PI-19 | Friend ring in lobby | Favorite is in intersecting pool | Avatar has golden favorite ring |
 | PI-20 | Full pool + affinity weight | Looking with mixed-compatible peers | Lobby shows all city peers; near=large+highlighted, mid=smaller, far=smallest/muted outer orbit (not hidden) |
-| PI-21 | Roster edit | Match ready with 5+ intersecting → remove one → tap pool avatar | Removed returns to pool; tap adds into vacancy; Create enabled at full party |
-| PI-22 | Cluster progress UI | Open lobby while compatible players have pending proposals or are already playing in an actual game | Pending proposals do not reserve players; only actual-game participants are excluded from the free count and shown muted |
-| PI-23 | Direct match editor | Open a lobby with compatible free players → remove one from the roster → add one from the court → tap I’ll create the game inside the editor | Best compatible players start selected around the center court and in the editable roster; available unselected players use a yellow glow and plus; empty slots remain visible below party size; there is no separate footer; Create Game always appears inside the editor and opens with every currently selected player invited |
+| PI-21 | Roster edit | Open a match-ready deep link with 5+ intersecting → remove one → tap a pool avatar | Removed returns to pool; tap adds into vacancy; court, roster, and count refresh together to full party; Create enabled |
+| PI-22 | Match roster progress UI | Open a lobby with a partial and then full selected roster | Progress bar is directly above the player carousel; selected/needed count is in the card’s top-right; title and hint change from Not enough players to Match is ready |
+| PI-23 | Direct match editor | Open a lobby with compatible free players → remove one from the roster → add one from the court → tap I’ll create the game inside the editor | Best compatible players start selected around the center court and in the editable roster; available unselected players use a yellow glow and plus only while a vacancy exists; a full roster shows no plus badges; empty slots remain visible below party size; there is no separate footer; Create Game always appears inside the editor and opens with every currently selected player invited |
 | PI-06 | Host handoff | Confirm as first confirmer | Navigates to create-game prefilled; invitees preselected |
 | PI-07 | Push deep link | Tap PLAY_INTENT_MATCH notification | Opens Find with proposal sheet |
 | PI-08 | Game-fit deep link | Tap GAME_MATCHES_INTENT notification | Opens matching game details |
@@ -1464,6 +1465,12 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PI-18 | My ↔ Find parity | Start looking on Find → open My (same city) | Looking strip present; stop on either clears both |
 | PI-24 | Change intent in radar | Open radar → Change intent → edit day/time/options → Start looking | Same drawer animates to the prefilled intent form, then back to radar with the replacement intent |
 | PI-25 | Cancel intent in radar | Open radar → Cancel intent → Cancel, then repeat and confirm Don’t want to play | First Cancel restores radar actions; confirm cancels intent, closes drawer, and restores idle CTA |
+| PI-27 | Fill last slot from outside the auto-picked players | Open a lobby where more compatible players exist than party size → remove one from the roster → tap a compatible player that was not auto-selected | Tapped player moves to the court and is counted in the roster, so the count reaches full party (e.g. 4/4) and Create Game invites them |
+| PI-26 | Looking strip avatars | Look with at least four compatible nearby players, including one without a photo | Two overlapping tiny player avatars and a final `N+` counter appear; missing photos show initials instead of blank circles |
+| PI-28 | Intent lifecycle after game creation | User A creates a game from the match editor with users B–D selected | A’s looking state ends only after successful creation; B–D receive game invites and are reserved from other matching while their looking intents remain pending |
+| PI-29 | Intent lifecycle after invite response | From PI-28, B accepts, C declines, and D lets the invite expire | B’s looking intent ends; C’s valid intent returns to the lobby; D’s intent returns only if still valid, otherwise expires; none remain silently reserved |
+| PI-30 | No game-fit for past start times | With an open public game that already started earlier today, start looking for Today / Anytime in that city | No “A game fits your wish” notification for the past game; only games starting later than now are offered (and the owner gets no “Players are looking” ping for it) |
+| PI-31 | Wish expires with its playable window | Start looking for Today / Morning, then cross 12:00 city-local time; refresh Find and try a pending proposal deep link | Looking state disappears, the intent is absent/ineligible in the lobby, stale proposals cannot open or confirm, and no match/game-fit notification is sent |
 
 ---
 

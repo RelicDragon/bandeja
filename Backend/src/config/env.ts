@@ -24,6 +24,8 @@ const nodeEnv = normalizeNodeEnv(process.env.NODE_ENV);
 
 export const config = {
   port: parseInt(process.env.PORT || '3000', 10),
+  /** Bind address for the HTTP server. Production defaults to all interfaces. */
+  host: process.env.HOST || '0.0.0.0',
   nodeEnv,
   /** Express trust proxy (default 1 hop). Set TRUST_PROXY=false behind no proxy. */
   trustProxy: parseTrustProxy(),

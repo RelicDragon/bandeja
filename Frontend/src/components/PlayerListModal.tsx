@@ -351,7 +351,11 @@ export const PlayerListModal = ({
     const m = new Map<string, { main: string; sub: string }>();
     for (const row of invitePickerOutcomes) {
       const main =
-        row.outcome === 'DECLINED' ? t('invites.badgeDeclined') : t('invites.badgeInviteCancelled');
+        row.outcome === 'DECLINED'
+          ? t('invites.badgeDeclined')
+          : row.outcome === 'EXPIRED'
+            ? t('invites.badgeExpired')
+            : t('invites.badgeInviteCancelled');
       m.set(row.userId, { main, sub: t('invites.inviteAgainHint') });
     }
     return m;

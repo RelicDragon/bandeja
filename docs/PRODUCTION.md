@@ -15,6 +15,59 @@ Backend runs under **pm2** (`pm2 restart backend`). Frontend uses versioned rele
 
 Node **24** on servers (`nvm use 24`).
 
+## Isolated web test environment
+
+The frontend host also runs a production-data test clone at
+`https://thisistestfor.bandeja.me`. It is isolated from production:
+
+- Backend: `127.0.0.1:3100`, pm2 process `bandeja-test-backend`
+- PostgreSQL 18: local-only database `padelpulse_test`
+- Frontend: `/home/relic/bandeja-test/frontend-current`
+- Source: `/home/relic/bandeja-test/source`
+- nginx: `/etc/nginx/sites-available/bandeja-test.conf`
+- Frontend is built with Vite mode `staging` and an explicit `VITE_DEPLOYMENT_ENV=staging`
+- Every frontend route has a fixed `BETA · STAGING ENVIRONMENT · NOT PRODUCTION` banner
+- Push, Telegram, S3 writes, Redis, AI, and Replicate are disabled in its generated backend environment
+
+Deploy the **current local working tree** (including uncommitted changes):
+
+```bash
+./scripts/deploy-test.sh
+```
+
+Dependencies are reused until their lockfiles change. Both backend and frontend
+are rebuilt; Prisma migrations run against only `padelpulse_test`; the frontend
+release is switched atomically.
+
+Replace the test database with a fresh streamed production clone, then deploy:
+
+```bash
+./scripts/deploy-test.sh --refresh-db
+```
+
+`--refresh-db` is destructive only to `padelpulse_test`; it never writes to the
+production database. The production dump is streamed between SSH sessions and
+is not stored on disk.
+
+First-time/idempotent provisioning and TLS setup:
+
+```bash
+./scripts/deploy-test.sh --provision --refresh-db
+./scripts/deploy-test.sh --tls
+```
+
+Operational checks:
+
+```bash
+ssh -i ~/.ssh/id_hetzner relic@front.bandeja.com
+pm2 logs bandeja-test-backend
+cat /home/relic/bandeja-test/deployment.txt
+```
+
+The cloned database contains production personal data. Treat the server and its
+test credentials as production-sensitive even though outbound integrations are
+disabled.
+
 ## Prerequisites
 
 - SSH key: `~/.ssh/id_hetzner` (passphrase-protected)

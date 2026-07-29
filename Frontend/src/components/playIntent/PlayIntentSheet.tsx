@@ -93,8 +93,9 @@ export function PlayIntentSheet({
           aria-label={t('common.close', { defaultValue: 'Close' })}
         />
 
-        {mode === 'lobby' && activeIntent && (
-          <div className="relative z-10 mx-4 mt-3 shrink-0 overflow-hidden rounded-2xl border border-gray-200/80 bg-white/90 p-1.5 shadow-sm dark:border-white/10 dark:bg-white/[0.055]">
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          {mode === 'lobby' && activeIntent && (
+            <div className="relative z-10 mx-4 mt-3 overflow-hidden rounded-2xl border border-gray-200/80 bg-white/90 p-1.5 shadow-sm dark:border-white/10 dark:bg-white/[0.055]">
             {reduceMotion ? (
               confirmCancel ? (
                 <div className="flex gap-2">
@@ -204,10 +205,10 @@ export function PlayIntentSheet({
                 )}
               </AnimatePresence>
             )}
-          </div>
-        )}
+            </div>
+          )}
 
-        <div className="min-h-0 flex-1 overflow-hidden">
+          <div>
           {reduceMotion ? (
             mode === 'compose' ? (
               <PlayIntentComposePanel
@@ -241,7 +242,7 @@ export function PlayIntentSheet({
             <AnimatePresence mode="wait" initial={false}>
               <motion.div
                 key={mode}
-                className="flex h-full min-h-0 flex-col"
+                className="flex min-h-0 flex-col"
                 initial={{ opacity: 0, x: mode === 'lobby' ? 36 : -36 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: mode === 'lobby' ? -36 : 36 }}
@@ -278,6 +279,7 @@ export function PlayIntentSheet({
               </motion.div>
             </AnimatePresence>
           )}
+          </div>
         </div>
       </DrawerContent>
     </Drawer>

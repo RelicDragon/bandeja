@@ -13,6 +13,7 @@
     "build:contract": "npm run build --prefix ../packages/chat-contract",
     "build:unread-contract": "npm run build --prefix ../packages/unread-contract",
     "build": "tsc && vite build",
+    "build:staging": "tsc && vite build --mode staging",
     "postbuild": "node scripts/force-sw-update.js",
     "preview": "vite preview",
     "test:deep-link-catalog": "vitest run src/deepLinks/catalog.parity.test.ts src/deepLinks/catalog.path.test.ts src/deepLinks/assistantRegistry.parity.test.ts",

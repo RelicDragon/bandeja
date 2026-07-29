@@ -72,14 +72,6 @@ export const declineMatchProposal = asyncHandler(async (req: AuthRequest, res: R
   res.json({ success: true, data: result });
 });
 
-export const convertMatchProposal = asyncHandler(async (req: AuthRequest, res: Response) => {
-  if (!req.userId) throw new Error('User ID not found');
-  const gameId = req.body?.gameId;
-  if (!gameId || typeof gameId !== 'string') throw new ApiError(400, 'gameId is required');
-  const result = await MatchProposalService.markConverted(req.params.id, req.userId, gameId);
-  res.json({ success: true, data: result });
-});
-
 export const releaseMatchProposal = asyncHandler(async (req: AuthRequest, res: Response) => {
   if (!req.userId) throw new Error('User ID not found');
   const result = await MatchProposalService.releaseHost(req.params.id, req.userId);

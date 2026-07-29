@@ -25,6 +25,7 @@ export class OwnershipService {
       where: {
         gameId,
         userId: newOwnerId,
+        status: { in: ['PLAYING', 'NON_PLAYING', 'IN_QUEUE'] },
       },
       include: {
         user: {

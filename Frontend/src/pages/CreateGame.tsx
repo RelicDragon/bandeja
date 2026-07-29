@@ -86,6 +86,11 @@ import { useCreateGameSummaryChips } from '@/components/createGame/summaryHeader
 import { WeatherPreviewCard } from '@/components/weather/WeatherPreviewCard';
 import { ClubPoliciesBlock } from '@/components/createGame/ClubPoliciesBlock';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
+import type { PlayIntentCreateSource } from '@shared/playIntentCreateSource';
+import {
+  linkedPlayIntentInviteeIds,
+  selectPlayIntentCreateSource,
+} from '@/utils/selectPlayIntentCreateSource';
 
 interface CreateGameProps {
   entityType: EntityType;
@@ -95,6 +100,7 @@ interface CreateGameProps {
   initialBookingIds?: string[];
   initialInvitedPlayerIds?: string[];
   matchProposalId?: string;
+  playIntentSource?: PlayIntentCreateSource;
   onMatchProposalConverted?: () => void;
 }
 
@@ -116,6 +122,7 @@ export const CreateGame = ({
   initialBookingIds = [],
   initialInvitedPlayerIds = [],
   matchProposalId,
+  playIntentSource,
   onMatchProposalConverted,
 }: CreateGameProps) => {
   const { t } = useTranslation();
@@ -1385,6 +1392,15 @@ export const CreateGame = ({
         gameData.genderTeams = genderTeams;
       }
 
+      const selectedPlayIntentSource = selectPlayIntentCreateSource(
+        playIntentSource,
+        invitedPlayerIds,
+      );
+      const linkedInviteeIds = linkedPlayIntentInviteeIds(selectedPlayIntentSource);
+      if (selectedPlayIntentSource) {
+        gameData.playIntentSource = selectedPlayIntentSource;
+      }
+
       const gameResponse = await gamesApi.create(gameData);
 
       if ((bookingFields.externalBookingIds?.length ?? 0) > 0) {
@@ -1403,6 +1419,7 @@ export const CreateGame = ({
         try {
           const gid = gameResponse.data.id;
           for (const receiverId of invitedPlayerIds) {
+            if (linkedInviteeIds.has(receiverId)) continue;
             await invitesApi.send({
               receiverId,
               gameId: gid,
@@ -1415,13 +1432,7 @@ export const CreateGame = ({
       }
 
       if (matchProposalId && gameResponse.data.id) {
-        try {
-          const { playIntentsApi } = await import('@/api/playIntents');
-          await playIntentsApi.convertProposal(matchProposalId, gameResponse.data.id);
-          onMatchProposalConverted?.();
-        } catch (convertError) {
-          console.error('Failed to convert match proposal:', convertError);
-        }
+        onMatchProposalConverted?.();
       }
 
       if (participantsOnlyChat && gameResponse.data.id) {

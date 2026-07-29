@@ -1,0 +1,1 @@
+ALTER TYPE "GameInviteOutcomeType" ADD VALUE IF NOT EXISTS 'EXPIRED';

@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   CalendarDays,
-  CheckCircle2,
   Clock3,
   Loader2,
   Radio,
@@ -11,10 +10,6 @@ import {
   UsersRound,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import {
-  DrawerHeader,
-  DrawerTitle,
-} from '@/components/ui/Drawer';
 import { Button } from '@/components';
 import { PlayersCarousel } from '@/components/GameDetails/PlayersCarousel';
 import { PlayIntentClusterProgress } from '@/components/playIntent/PlayIntentClusterProgress';
@@ -28,7 +23,6 @@ import {
 import { usePlayerCardModal } from '@/hooks/usePlayerCardModal';
 import { useFavoritesStore } from '@/store/favoritesStore';
 import { useAuthStore } from '@/store/authStore';
-import { SportPublicIcon } from '@/components/sport/SportPublicIcon';
 import type { GameParticipant, Sport } from '@/types';
 
 type Props = {
@@ -72,8 +66,6 @@ export function CourtLobbyPanel({
   members,
   overflow,
   partySize,
-  availableCount,
-  clusterProgress,
   sport,
   intent,
   proposal,
@@ -95,7 +87,7 @@ export function CourtLobbyPanel({
   const vacancy = Math.max(0, partySize - (proposal?.members.length ?? 0));
   const rosterFull = (proposal?.members.length ?? 0) >= partySize;
   const proposalId = proposal?.id;
-  const directCandidates = useMemo(
+  const compatibleMembers = useMemo(
     () =>
       [...members]
         .filter(
@@ -105,13 +97,16 @@ export function CourtLobbyPanel({
           (a, b) =>
             b.affinityScore - a.affinityScore ||
             a.userId.localeCompare(b.userId),
-        )
-        .slice(0, Math.max(0, partySize - 1)),
-    [members, partySize],
+        ),
+    [members],
+  );
+  const directCandidates = useMemo(
+    () => compatibleMembers.slice(0, Math.max(0, partySize - 1)),
+    [compatibleMembers, partySize],
   );
   const [directSelectedIds, setDirectSelectedIds] = useState<string[]>([]);
   const directSelectionSessionRef = useRef<string | null>(null);
-  const directCandidateIdsKey = directCandidates
+  const compatibleMemberIdsKey = compatibleMembers
     .map((member) => member.userId)
     .join('|');
 
@@ -122,18 +117,26 @@ export function CourtLobbyPanel({
       return;
     }
 
-    const candidateIds = directCandidates.map((member) => member.userId);
     if (directSelectionSessionRef.current !== sessionKey) {
       directSelectionSessionRef.current = sessionKey;
-      setDirectSelectedIds(candidateIds);
+      setDirectSelectedIds(directCandidates.map((member) => member.userId));
       return;
     }
 
-    const candidateIdSet = new Set(candidateIds);
-    setDirectSelectedIds((current) =>
-      current.filter((userId) => candidateIdSet.has(userId)),
+    const compatibleIdSet = new Set(
+      compatibleMembers.map((member) => member.userId),
     );
-  }, [directCandidateIdsKey, directCandidates, intent, open, proposal]);
+    setDirectSelectedIds((current) =>
+      current.filter((userId) => compatibleIdSet.has(userId)),
+    );
+  }, [
+    compatibleMemberIdsKey,
+    compatibleMembers,
+    directCandidates,
+    intent,
+    open,
+    proposal,
+  ]);
 
   const directSelectedIdSet = useMemo(
     () => new Set(directSelectedIds),
@@ -141,10 +144,10 @@ export function CourtLobbyPanel({
   );
   const directMembers = useMemo(
     () =>
-      directCandidates.filter((member) =>
+      compatibleMembers.filter((member) =>
         directSelectedIdSet.has(member.userId),
       ),
-    [directCandidates, directSelectedIdSet],
+    [compatibleMembers, directSelectedIdSet],
   );
   const directInviteeIds = useMemo(
     () => [...directSelectedIds],
@@ -210,6 +213,9 @@ export function CourtLobbyPanel({
   const displayedVacancy = proposal
     ? vacancy
     : Math.max(0, partySize - directRosterParticipants.length);
+  const selectedPlayerCount = displayedRosterParticipants.length;
+  const missingPlayerCount = Math.max(0, partySize - selectedPlayerCount);
+  const isRosterReady = missingPlayerCount === 0;
   const arenaMembers = useMemo(
     () =>
       proposal
@@ -342,6 +348,11 @@ export function CourtLobbyPanel({
             },
             invitedPlayerIds: prefill.inviteeIds,
             matchProposalId: prefill.proposalId,
+            playIntentSource: {
+              type: 'PROPOSAL',
+              proposalId: prefill.proposalId,
+              inviteeIds: prefill.inviteeIds,
+            },
           },
         });
         return;
@@ -378,44 +389,21 @@ export function CourtLobbyPanel({
           ...window,
         },
         invitedPlayerIds: directInviteeIds,
+        playIntentSource: {
+          type: 'DIRECT',
+          hostIntentId: intent.id,
+          invitees: directMembers.map((member) => ({
+            userId: member.userId,
+            intentId: member.intentId,
+          })),
+        },
       },
     });
   };
 
   return (
     <>
-        <DrawerHeader className="relative shrink-0 gap-0 px-4 pb-3 pt-3 text-left">
-          <div className="flex items-center gap-3 pr-11">
-            <div className="relative grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-2xl border border-emerald-200/80 bg-gradient-to-br from-emerald-50 via-white to-sky-50 shadow-sm dark:border-emerald-300/15 dark:from-emerald-400/15 dark:via-white/5 dark:to-sky-400/10">
-              <div
-                className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.9),transparent_45%)] opacity-80 dark:opacity-20"
-                aria-hidden
-              />
-              <SportPublicIcon sport={sport} className="relative h-7 w-7 object-contain" />
-            </div>
-
-            <div className="flex min-w-0 flex-1 items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-emerald-700 dark:text-emerald-300">
-              <span className="relative flex h-2 w-2 shrink-0" aria-hidden>
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-              </span>
-              <DrawerTitle className="text-[11px] font-bold uppercase tracking-[0.12em] text-emerald-700 dark:text-emerald-300">
-                {t('playIntent.looking')}
-              </DrawerTitle>
-            </div>
-          </div>
-
-        </DrawerHeader>
-
-        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 pb-5">
-          <div className="rounded-2xl border border-gray-200/80 bg-white/90 p-3.5 shadow-[0_8px_30px_rgba(15,23,42,0.05)] dark:border-white/10 dark:bg-white/[0.055] dark:shadow-none">
-            <PlayIntentClusterProgress
-              current={clusterProgress}
-              needed={partySize}
-              freeCount={availableCount}
-            />
-          </div>
-
+        <div className="space-y-3 px-4 pb-5 pt-3">
           {members.length === 0 ? (
             <div className="relative isolate flex min-h-[330px] flex-col items-center justify-center overflow-hidden rounded-[28px] border border-dashed border-gray-300 bg-white px-8 text-center dark:border-white/15 dark:bg-white/[0.035]">
               <div
@@ -456,20 +444,27 @@ export function CourtLobbyPanel({
                 className="absolute -right-16 -top-20 -z-10 h-48 w-48 rounded-full bg-emerald-100/70 blur-3xl dark:bg-emerald-400/10"
                 aria-hidden
               />
-              <div className="mb-4 flex items-start gap-3">
-                <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-emerald-100 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-300">
-                  {rosterLocked ? (
-                    <CheckCircle2 size={20} strokeWidth={2.2} />
-                  ) : (
-                    <Sparkles size={20} strokeWidth={2.2} />
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
+              <span className="absolute right-4 top-4 text-sm font-bold tabular-nums text-gray-700 dark:text-gray-200">
+                {selectedPlayerCount}
+                <span className="font-medium text-gray-400 dark:text-gray-500">
+                  /{partySize}
+                </span>
+              </span>
+              <div className="mb-4 pr-12">
+                <div className="min-w-0">
                   <h2 className="text-[15px] font-bold tracking-[-0.01em] text-gray-950 dark:text-white">
-                    {t('playIntent.proposalTitle')}
+                    {t(
+                      isRosterReady
+                        ? 'playIntent.matchReadyTitle'
+                        : 'playIntent.matchNotReadyTitle',
+                    )}
                   </h2>
                   <p className="mt-0.5 text-xs leading-relaxed text-gray-500 dark:text-gray-400">
-                    {t('playIntent.proposalSubtitle')}
+                    {isRosterReady
+                      ? t('playIntent.matchReadyHint')
+                      : t('playIntent.matchNotReadyHint', {
+                          count: missingPlayerCount,
+                        })}
                   </p>
                   {proposal && (proposal.dateKeys.length > 0 || proposal.startTime || proposal.endTime) && (
                     <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
@@ -493,6 +488,13 @@ export function CourtLobbyPanel({
                 </div>
               </div>
 
+              <div className="mb-4">
+                <PlayIntentClusterProgress
+                  current={selectedPlayerCount}
+                  needed={partySize}
+                />
+              </div>
+
               <PlayersCarousel
                 participants={displayedRosterParticipants}
                 emptySlots={displayedVacancy}
@@ -504,21 +506,16 @@ export function CourtLobbyPanel({
                 canRemoveParticipant={(id) => !!userId && id !== userId}
               />
 
-              <div className="mt-4 border-t border-gray-200/80 pt-4 dark:border-white/10">
+              <div className="mt-4">
                 {!proposal ? (
-                  <div className="space-y-3">
-                    <p className="text-xs leading-relaxed text-gray-500 dark:text-gray-400">
-                      {t('playIntent.readyCreateHint', { count: availableCount })}
-                    </p>
-                    <Button
-                      variant="primary"
-                      className="h-12 w-full rounded-2xl shadow-[0_10px_25px_rgba(14,165,233,0.22)]"
-                      onClick={createFromLobby}
-                    >
-                      <Sparkles className="h-4 w-4" />
-                      {t('playIntent.createGame')}
-                    </Button>
-                  </div>
+                  <Button
+                    variant="primary"
+                    className="h-12 w-full rounded-2xl shadow-[0_10px_25px_rgba(14,165,233,0.22)]"
+                    onClick={createFromLobby}
+                  >
+                    <Sparkles className="h-4 w-4" />
+                    {t('playIntent.createGame')}
+                  </Button>
                 ) : showWaiting ? (
                   <div className="flex items-center gap-3">
                     <div className="min-w-0 flex-1">

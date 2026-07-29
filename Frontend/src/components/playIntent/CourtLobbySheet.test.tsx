@@ -95,18 +95,41 @@ vi.mock('@/components/GameDetails/PlayersCarousel', () => ({
 }));
 
 vi.mock('@/components/playIntent/PlayIntentClusterProgress', () => ({
-  PlayIntentClusterProgress: () => null,
+  PlayIntentClusterProgress: ({ current, needed }: { current: number; needed: number }) => (
+    <div
+      data-testid="play-intent-cluster-progress"
+      data-current={current}
+      data-needed={needed}
+    />
+  ),
 }));
 
 vi.mock('@/components/playIntent/CourtLobbyArena', () => ({
-  CourtLobbyArena: ({ members }: { members: PoolMember[] }) => (
+  CourtLobbyArena: ({
+    members,
+    onAvatarClick,
+  }: {
+    members: PoolMember[];
+    onAvatarClick: (member: PoolMember) => void;
+  }) => (
     <div
       data-testid="court-selection"
       data-selected-player-ids={members
         .filter((member) => member.inProposal)
         .map((member) => member.userId)
         .join(',')}
-    />
+    >
+      {members.map((member) => (
+        <button
+          key={member.userId}
+          type="button"
+          data-pool-member={member.userId}
+          onClick={() => onAvatarClick(member)}
+        >
+          {member.userId}
+        </button>
+      ))}
+    </div>
   ),
 }));
 
@@ -289,7 +312,15 @@ describe('CourtLobbySheet proposal dismissal', () => {
     expect(
       container.querySelector('[data-testid="match-editor"]')?.contains(createGame ?? null),
     ).toBe(true);
-    expect(mocks.t).toHaveBeenCalledWith('playIntent.readyCreateHint', { count: 3 });
+    expect(container.textContent).toContain('playIntent.matchReadyTitle');
+    expect(container.textContent).toContain('playIntent.matchReadyHint');
+    const progress = container.querySelector('[data-testid="play-intent-cluster-progress"]');
+    const roster = container.querySelector('[data-testid="ready-roster"]');
+    expect(progress?.getAttribute('data-current')).toBe('4');
+    expect(progress?.getAttribute('data-needed')).toBe('4');
+    expect(
+      progress?.compareDocumentPosition(roster as Node) ?? 0,
+    ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
 
     await act(async () => {
       createGame?.click();
@@ -301,6 +332,15 @@ describe('CourtLobbySheet proposal dismissal', () => {
         state: expect.objectContaining({
           entityType: 'GAME',
           invitedPlayerIds: ['two', 'three', 'four'],
+          playIntentSource: {
+            type: 'DIRECT',
+            hostIntentId: 'intent-viewer',
+            invitees: [
+              { userId: 'two', intentId: 'intent-two' },
+              { userId: 'three', intentId: 'intent-three' },
+              { userId: 'four', intentId: 'intent-four' },
+            ],
+          },
         }),
       }),
     );
@@ -330,6 +370,8 @@ describe('CourtLobbySheet proposal dismissal', () => {
     const roster = container.querySelector('[data-testid="ready-roster"]');
     expect(roster?.getAttribute('data-player-ids')).toBe('viewer,two');
     expect(roster?.getAttribute('data-empty-slots')).toBe('2');
+    expect(container.textContent).toContain('playIntent.matchNotReadyTitle');
+    expect(mocks.t).toHaveBeenCalledWith('playIntent.matchNotReadyHint', { count: 2 });
     const court = container.querySelector('[data-testid="court-selection"]');
     expect(court?.getAttribute('data-selected-player-ids')).toBe('two');
 
@@ -339,6 +381,7 @@ describe('CourtLobbySheet proposal dismissal', () => {
 
     expect(roster?.getAttribute('data-player-ids')).toBe('viewer');
     expect(roster?.getAttribute('data-empty-slots')).toBe('3');
+    expect(mocks.t).toHaveBeenCalledWith('playIntent.matchNotReadyHint', { count: 3 });
     expect(court?.getAttribute('data-selected-player-ids')).toBe('');
 
     const createGame = [...container.querySelectorAll('button')].find(
@@ -358,8 +401,64 @@ describe('CourtLobbySheet proposal dismissal', () => {
       expect.objectContaining({
         state: expect.objectContaining({
           invitedPlayerIds: [],
+          playIntentSource: {
+            type: 'DIRECT',
+            hostIntentId: 'intent-viewer',
+            invitees: [],
+          },
         }),
       }),
     );
+  });
+
+  it('counts a tapped compatible player outside the auto-picked best three', async () => {
+    const { CourtLobbyPanel } = await import('./CourtLobbySheet');
+    const members = [
+      ...freeMembers,
+      {
+        ...freeMembers[0],
+        userId: 'five',
+        intentId: 'intent-five',
+        firstName: 'five',
+        affinity: 'mid' as const,
+        affinityScore: 1,
+      },
+    ];
+
+    await act(async () => {
+      root.render(
+        <CourtLobbyPanel
+          open
+          onOpenChange={mocks.onOpenChange}
+          members={members}
+          overflow={0}
+          partySize={4}
+          availableCount={4}
+          clusterProgress={4}
+          sport="PADEL"
+          intent={intent}
+          proposal={null}
+          onChanged={mocks.onChanged}
+        />,
+      );
+    });
+
+    const roster = container.querySelector('[data-testid="ready-roster"]');
+    const court = container.querySelector('[data-testid="court-selection"]');
+    expect(roster?.getAttribute('data-player-ids')).toBe('viewer,two,three,four');
+
+    await act(async () => {
+      container.querySelector<HTMLButtonElement>('[data-remove-player="four"]')?.click();
+    });
+
+    expect(roster?.getAttribute('data-empty-slots')).toBe('1');
+
+    await act(async () => {
+      container.querySelector<HTMLButtonElement>('[data-pool-member="five"]')?.click();
+    });
+
+    expect(court?.getAttribute('data-selected-player-ids')).toBe('two,three,five');
+    expect(roster?.getAttribute('data-player-ids')).toBe('viewer,two,three,five');
+    expect(roster?.getAttribute('data-empty-slots')).toBe('0');
   });
 });

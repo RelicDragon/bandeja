@@ -17,6 +17,7 @@ import {
   mergeDuplicateUserInteractions,
   remapAllUserScopedCompositeRows,
 } from './userMergeRemaps';
+import { PlayIntentGameLifecycleService } from '../playIntent/playIntentGameLifecycle.service';
 
 type Tx = Prisma.TransactionClient;
 
@@ -114,6 +115,33 @@ function participantStatusMergeRank(status: string): number {
   return i === -1 ? 99 : i;
 }
 
+async function settleMergedInviteIntent(
+  tx: Tx,
+  playIntentId: string,
+  userId: string,
+  mergedStatus: string,
+  now: Date,
+) {
+  const linkedIntent = await tx.playIntent.findUnique({
+    where: { id: playIntentId },
+    select: { expiresAt: true },
+  });
+  if (
+    linkedIntent &&
+    linkedIntent.expiresAt > now &&
+    ['PLAYING', 'NON_PLAYING', 'IN_QUEUE'].includes(mergedStatus)
+  ) {
+    await PlayIntentGameLifecycleService.consume(
+      tx,
+      playIntentId,
+      userId,
+      now,
+    );
+    return;
+  }
+  await PlayIntentGameLifecycleService.release(tx, playIntentId, now);
+}
+
 async function resolveOverlappingGameParticipants(
   tx: Tx,
   survivorId: string,
@@ -131,6 +159,7 @@ async function resolveOverlappingGameParticipants(
       invitedByUserId: true,
       inviteMessage: true,
       inviteExpiresAt: true,
+      playIntentId: true,
     },
   });
   const byGame = new Map(survRows.map((p) => [p.gameId, p]));
@@ -146,6 +175,7 @@ async function resolveOverlappingGameParticipants(
       invitedByUserId: true,
       inviteMessage: true,
       inviteExpiresAt: true,
+      playIntentId: true,
     },
   });
   for (const src of sourceRows) {
@@ -155,6 +185,56 @@ async function resolveOverlappingGameParticipants(
     const sr = roleRank(src.role);
     const dupSr = participantStatusMergeRank(dup.status);
     const srcSr = participantStatusMergeRank(src.status);
+    const mergedStatus =
+      sr > rr
+        ? src.status
+        : sr === rr && srcSr < dupSr
+          ? src.status
+          : dup.status;
+    const transferLinkedIntent =
+      src.status === 'INVITED' &&
+      !!src.playIntentId &&
+      mergedStatus === 'INVITED' &&
+      !dup.playIntentId;
+    const now = new Date();
+    if (
+      dup.status === 'INVITED' &&
+      dup.playIntentId &&
+      mergedStatus !== 'INVITED'
+    ) {
+      await settleMergedInviteIntent(
+        tx,
+        dup.playIntentId,
+        survivorId,
+        mergedStatus,
+        now,
+      );
+    }
+    if (transferLinkedIntent) {
+      await tx.gameParticipant.delete({ where: { id: src.id } });
+    } else if (src.status === 'INVITED' && src.playIntentId) {
+      await settleMergedInviteIntent(
+        tx,
+        src.playIntentId,
+        sourceId,
+        mergedStatus,
+        now,
+      );
+    }
+    const mergedInviteData =
+      mergedStatus === 'INVITED'
+        ? {
+            invitedByUserId:
+              nn(dup.invitedByUserId, src.invitedByUserId) ?? null,
+            inviteMessage: nn(dup.inviteMessage, src.inviteMessage) ?? null,
+            inviteExpiresAt:
+              nn(dup.inviteExpiresAt, src.inviteExpiresAt) ?? null,
+          }
+        : {
+            invitedByUserId: null,
+            inviteMessage: null,
+            inviteExpiresAt: null,
+          };
     if (sr > rr) {
       await tx.gameParticipant.update({
         where: { id: dup.id },
@@ -162,25 +242,29 @@ async function resolveOverlappingGameParticipants(
           role: src.role,
           stats: (src.stats ?? dup.stats) as Prisma.InputJsonValue | undefined,
           status: src.status,
-          invitedByUserId: nn(dup.invitedByUserId, src.invitedByUserId) ?? null,
-          inviteMessage: nn(dup.inviteMessage, src.inviteMessage) ?? null,
-          inviteExpiresAt: nn(dup.inviteExpiresAt, src.inviteExpiresAt) ?? null,
+          ...mergedInviteData,
+          ...(transferLinkedIntent ? { playIntentId: src.playIntentId } : {}),
         },
       });
     } else if (sr === rr) {
-      const mergedStatus = dupSr <= srcSr ? dup.status : src.status;
       await tx.gameParticipant.update({
         where: { id: dup.id },
         data: {
           status: mergedStatus,
           stats: (src.stats ?? dup.stats) as Prisma.InputJsonValue | undefined,
-          invitedByUserId: nn(dup.invitedByUserId, src.invitedByUserId) ?? null,
-          inviteMessage: nn(dup.inviteMessage, src.inviteMessage) ?? null,
-          inviteExpiresAt: nn(dup.inviteExpiresAt, src.inviteExpiresAt) ?? null,
+          ...mergedInviteData,
+          ...(transferLinkedIntent ? { playIntentId: src.playIntentId } : {}),
         },
       });
+    } else if (transferLinkedIntent) {
+      await tx.gameParticipant.update({
+        where: { id: dup.id },
+        data: { playIntentId: src.playIntentId },
+      });
     }
-    await tx.gameParticipant.delete({ where: { id: src.id } });
+    if (!transferLinkedIntent) {
+      await tx.gameParticipant.delete({ where: { id: src.id } });
+    }
   }
 }
 
@@ -298,6 +382,7 @@ async function resolveOverlappingGameInviteOutcomes(tx: Tx, survivorId: string, 
           data: {
             outcome: src.outcome,
             invitedByUserId: src.invitedByUserId,
+            playIntentId: src.playIntentId,
             closedAt: src.closedAt,
           },
         });
@@ -312,9 +397,113 @@ async function resolveOverlappingGameInviteOutcomes(tx: Tx, survivorId: string, 
   }
 }
 
+function proposalResponseRank(response: string): number {
+  if (response === 'ACCEPTED') return 3;
+  if (response === 'PENDING') return 2;
+  return 1;
+}
+
+async function releaseDiscardedProposalIntent(
+  tx: Tx,
+  intentId: string,
+) {
+  const [participant, activeMembership] = await Promise.all([
+    tx.gameParticipant.findFirst({
+      where: { playIntentId: intentId },
+      select: { id: true },
+    }),
+    tx.matchProposalMember.findFirst({
+      where: {
+        intentId,
+        proposal: {
+          gameId: null,
+          status: { in: ['PENDING', 'ACCEPTED'] },
+        },
+      },
+      select: { id: true },
+    }),
+  ]);
+  if (!participant && !activeMembership) {
+    await PlayIntentGameLifecycleService.release(tx, intentId, new Date());
+  }
+}
+
+async function resolveOverlappingMatchProposalMembers(
+  tx: Tx,
+  survivorId: string,
+  sourceId: string,
+) {
+  const sourceRows = await tx.matchProposalMember.findMany({
+    where: { userId: sourceId },
+  });
+  for (const src of sourceRows) {
+    const dup = await tx.matchProposalMember.findUnique({
+      where: {
+        proposalId_userId: {
+          proposalId: src.proposalId,
+          userId: survivorId,
+        },
+      },
+    });
+    if (!dup) continue;
+    const keepSource =
+      (src.isHost && !dup.isHost) ||
+      (src.isHost === dup.isHost &&
+        (proposalResponseRank(src.response) > proposalResponseRank(dup.response) ||
+          (proposalResponseRank(src.response) ===
+            proposalResponseRank(dup.response) &&
+            src.updatedAt > dup.updatedAt)));
+    const discardedIntentId = keepSource ? dup.intentId : src.intentId;
+    await tx.matchProposalMember.delete({ where: { id: src.id } });
+    if (keepSource) {
+      await tx.matchProposalMember.update({
+        where: { id: dup.id },
+        data: {
+          intentId: src.intentId,
+          response: src.response,
+          isHost: src.isHost,
+        },
+      });
+    }
+    await releaseDiscardedProposalIntent(tx, discardedIntentId);
+  }
+}
+
+async function reconcileOpenPlayIntents(
+  tx: Tx,
+  survivorId: string,
+  sourceId: string,
+) {
+  const intents = await tx.playIntent.findMany({
+    where: {
+      userId: { in: [survivorId, sourceId] },
+      status: 'OPEN',
+    },
+    select: { id: true, cityId: true, updatedAt: true },
+    orderBy: [{ updatedAt: 'desc' }, { id: 'desc' }],
+  });
+  const keptCities = new Set<string>();
+  const duplicateIds: string[] = [];
+  for (const intent of intents) {
+    if (keptCities.has(intent.cityId)) {
+      duplicateIds.push(intent.id);
+    } else {
+      keptCities.add(intent.cityId);
+    }
+  }
+  if (duplicateIds.length > 0) {
+    await tx.playIntent.updateMany({
+      where: { id: { in: duplicateIds }, status: 'OPEN' },
+      data: { status: 'CANCELLED' },
+    });
+  }
+}
+
 async function preDeleteConflicts(tx: Tx, survivorId: string, sourceId: string) {
   await resolveOverlappingGameParticipants(tx, survivorId, sourceId);
   await resolveOverlappingGameInviteOutcomes(tx, survivorId, sourceId);
+  await resolveOverlappingMatchProposalMembers(tx, survivorId, sourceId);
+  await reconcileOpenPlayIntents(tx, survivorId, sourceId);
 }
 
 async function clearSourceUniquesForTransfer(tx: Tx, survivor: SurvivorRow, source: SurvivorRow) {

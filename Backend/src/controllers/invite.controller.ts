@@ -278,7 +278,8 @@ export const declineInvite = asyncHandler(async (req: AuthRequest, res: Response
 });
 
 export const deleteExpiredInvites = asyncHandler(async (_req: AuthRequest, res: Response) => {
-  res.json({ success: true, deleted: 0 });
+  const deleted = await InviteService.expireDueInvites();
+  res.json({ success: true, deleted });
 });
 
 export const getGameInvites = asyncHandler(async (req: AuthRequest, res: Response) => {

@@ -8,9 +8,18 @@ import {
   Sport,
 } from '@prisma/client';
 import { getSportConfig } from '../../sport/sportRegistry';
-import { startOfCalendarDate } from '../game/calendarDateBounds';
-import { canIntentJoinProposal, timeStringToMinutes } from './playIntentCriteria';
+import { canIntentJoinProposal } from './playIntentCriteria';
 import { PlayIntentService } from './playIntent.service';
+import { PlayIntentGameLifecycleService } from './playIntentGameLifecycle.service';
+import { lockMatchProposal } from './matchProposalLock';
+import {
+  intentWindowEndsAt,
+  intentWindowIsReachable,
+  nextSuggestedStart,
+  proposalWindowSource,
+} from './playIntentFreshness';
+
+class ClusterClaimConflict extends Error {}
 
 export class MatchProposalService {
   static async createFromCluster(input: {
@@ -32,66 +41,92 @@ export class MatchProposalService {
       where: { id: input.cityId },
       select: { timezone: true },
     });
-    let suggestedStartTime: Date | null = null;
-    if (city && input.dateKeys[0]) {
-      try {
-        const dayStart = startOfCalendarDate(input.dateKeys[0], city.timezone);
-        const minutes = input.startTime ? timeStringToMinutes(input.startTime) : 18 * 60;
-        suggestedStartTime = new Date(dayStart.getTime() + minutes * 60 * 1000);
-      } catch {
-        suggestedStartTime = null;
-      }
-    }
+    if (!city) return null;
+    const windowSource = proposalWindowSource(input);
+    const windowEndsAt = intentWindowEndsAt(windowSource, city.timezone);
+    if (!windowEndsAt || windowEndsAt <= new Date()) return null;
 
     const intentIds = input.members.map((m) => m.intentId);
 
-    return prisma.$transaction(async (tx) => {
-      const locked = await tx.playIntent.updateMany({
-        where: { id: { in: intentIds }, status: PlayIntentStatus.OPEN },
-        data: { status: PlayIntentStatus.MATCHED },
-      });
-      if (locked.count !== intentIds.length) {
-        return null;
-      }
+    try {
+      return await prisma.$transaction(async (tx) => {
+        const locked = await tx.playIntent.updateMany({
+          where: { id: { in: intentIds }, status: PlayIntentStatus.OPEN },
+          data: { status: PlayIntentStatus.MATCHED },
+        });
+        if (locked.count !== intentIds.length) {
+          throw new ClusterClaimConflict();
+        }
+        const now = new Date();
+        const suggestedStartTime = nextSuggestedStart(
+          windowSource,
+          city.timezone,
+          now,
+        );
+        if (!suggestedStartTime || input.expiresAt <= now) {
+          const status = intentWindowIsReachable(
+            windowSource,
+            city.timezone,
+            now,
+          )
+            ? PlayIntentStatus.OPEN
+            : PlayIntentStatus.EXPIRED;
+          await tx.playIntent.updateMany({
+            where: {
+              id: { in: intentIds },
+              status: PlayIntentStatus.MATCHED,
+            },
+            data: { status },
+          });
+          return null;
+        }
+        const expiresAt =
+          input.expiresAt.getTime() < windowEndsAt.getTime()
+            ? input.expiresAt
+            : windowEndsAt;
 
-      return tx.matchProposal.create({
-        data: {
-          cityId: input.cityId,
-          sport: input.sport,
-          entityType: input.entityType === EntityType.BAR ? EntityType.BAR : EntityType.GAME,
-          status: MatchProposalStatus.PENDING,
-          dateKeys: input.dateKeys,
-          startTime: input.startTime,
-          endTime: input.endTime,
-          clubIds: input.clubIds,
-          suggestedStartTime,
-          expiresAt: input.expiresAt,
-          rematchKey: input.rematchKey,
-          members: {
-            create: input.members.map((m) => ({
-              userId: m.userId,
-              intentId: m.intentId,
-              response: MatchProposalMemberResponse.PENDING,
-            })),
+        return tx.matchProposal.create({
+          data: {
+            cityId: input.cityId,
+            sport: input.sport,
+            entityType: input.entityType === EntityType.BAR ? EntityType.BAR : EntityType.GAME,
+            status: MatchProposalStatus.PENDING,
+            dateKeys: input.dateKeys,
+            startTime: input.startTime,
+            endTime: input.endTime,
+            clubIds: input.clubIds,
+            suggestedStartTime,
+            expiresAt,
+            rematchKey: input.rematchKey,
+            members: {
+              create: input.members.map((m) => ({
+                userId: m.userId,
+                intentId: m.intentId,
+                response: MatchProposalMemberResponse.PENDING,
+              })),
+            },
           },
-        },
-        include: {
-          members: {
-            include: {
-              user: {
-                select: {
-                  id: true,
-                  firstName: true,
-                  lastName: true,
-                  avatar: true,
-                  sportProfiles: { select: { sport: true, level: true } },
+          include: {
+            members: {
+              include: {
+                user: {
+                  select: {
+                    id: true,
+                    firstName: true,
+                    lastName: true,
+                    avatar: true,
+                    sportProfiles: { select: { sport: true, level: true } },
+                  },
                 },
               },
             },
           },
-        },
+        });
       });
-    });
+    } catch (error) {
+      if (error instanceof ClusterClaimConflict) return null;
+      throw error;
+    }
   }
 
   static async getById(proposalId: string, userId: string) {
@@ -117,6 +152,17 @@ export class MatchProposalService {
     if (!proposal) throw new ApiError(404, 'Match proposal not found');
     if (!proposal.members.some((m) => m.userId === userId)) {
       throw new ApiError(403, 'Not a member of this proposal');
+    }
+    if (
+      !proposal.gameId &&
+      (proposal.status === MatchProposalStatus.PENDING ||
+        proposal.status === MatchProposalStatus.ACCEPTED) &&
+      !intentWindowIsReachable(
+        proposalWindowSource(proposal),
+        proposal.city.timezone,
+      )
+    ) {
+      throw new ApiError(400, 'Proposal expired');
     }
     return {
       ...proposal,
@@ -144,23 +190,24 @@ export class MatchProposalService {
       endTime: string | null;
       suggestedStartTime: Date | null;
       city: { timezone: string };
-      members: { userId: string }[];
+      members: { userId: string; response?: MatchProposalMemberResponse }[];
     },
     hostUserId: string,
   ) {
-    const inviteeIds = proposal.members.filter((m) => m.userId !== hostUserId).map((m) => m.userId);
+    const inviteeIds = proposal.members
+      .filter(
+        (member) =>
+          member.userId !== hostUserId &&
+          member.response !== MatchProposalMemberResponse.DECLINED,
+      )
+      .map((member) => member.userId);
     const startIso =
       proposal.suggestedStartTime?.toISOString() ||
-      (proposal.dateKeys[0] && proposal.startTime
-        ? new Date(
-            startOfCalendarDate(proposal.dateKeys[0], proposal.city.timezone).getTime() +
-              timeStringToMinutes(proposal.startTime) * 60 * 1000,
-          ).toISOString()
-        : proposal.dateKeys[0]
-          ? new Date(
-              startOfCalendarDate(proposal.dateKeys[0], proposal.city.timezone).getTime() + 18 * 60 * 60 * 1000,
-            ).toISOString()
-          : undefined);
+      nextSuggestedStart(
+        proposalWindowSource(proposal),
+        proposal.city.timezone,
+      )?.toISOString() ||
+      undefined;
     const endIso = startIso
       ? new Date(new Date(startIso).getTime() + 90 * 60 * 1000).toISOString()
       : undefined;
@@ -181,63 +228,86 @@ export class MatchProposalService {
   }
 
   static async confirm(proposalId: string, userId: string) {
-    const proposal = await prisma.matchProposal.findUnique({
-      where: { id: proposalId },
-      include: { members: true, city: { select: { timezone: true } } },
-    });
-    if (!proposal) throw new ApiError(404, 'Match proposal not found');
-    if (proposal.expiresAt <= new Date()) {
-      await this.expireOne(proposalId);
-      throw new ApiError(400, 'Proposal expired');
-    }
-    const membership = proposal.members.find((m) => m.userId === userId);
-    if (!membership) throw new ApiError(403, 'Not a member of this proposal');
-
-    if (proposal.status === MatchProposalStatus.ACCEPTED && proposal.hostUserId) {
-      if (proposal.hostUserId === userId) {
+    const result = await prisma.$transaction(async (tx) => {
+      await lockMatchProposal(tx, proposalId);
+      const proposal = await tx.matchProposal.findUnique({
+        where: { id: proposalId },
+        include: { members: true, city: { select: { timezone: true } } },
+      });
+      if (!proposal) throw new ApiError(404, 'Match proposal not found');
+      const membership = proposal.members.find((member) => member.userId === userId);
+      if (
+        !membership ||
+        membership.response === MatchProposalMemberResponse.DECLINED
+      ) {
+        throw new ApiError(403, 'Not an active member of this proposal');
+      }
+      if (
+        proposal.gameId ||
+        proposal.status === MatchProposalStatus.CONVERTED_TO_GAME
+      ) {
         return {
-          role: 'host' as const,
-          proposal: await this.getById(proposalId, userId),
-          createPrefill: this.buildCreatePrefill(proposal, userId),
+          kind: 'converted' as const,
+          role:
+            proposal.hostUserId === userId
+              ? ('host' as const)
+              : ('invitee' as const),
+          proposal,
         };
       }
-      return {
-        role: 'invitee' as const,
-        proposal: await this.getById(proposalId, userId),
-        createPrefill: null,
-        gameId: proposal.gameId,
-      };
-    }
-
-    if (proposal.status !== MatchProposalStatus.PENDING) {
-      throw new ApiError(400, 'Proposal is no longer pending');
-    }
-
-    const partySize =
-      proposal.entityType === EntityType.BAR
-        ? 2
-        : getSportConfig(proposal.sport).defaultPlayersPerMatch;
-    if (proposal.members.length < partySize) {
-      throw new ApiError(400, 'Match roster is incomplete', true, {
-        code: 'playIntent.rosterIncomplete',
-        needed: partySize,
-        current: proposal.members.length,
-      });
-    }
-
-    const claimed = await prisma.$transaction(async (tx) => {
-      const updated = await tx.matchProposal.updateMany({
-        where: {
-          id: proposalId,
-          status: MatchProposalStatus.PENDING,
-          hostUserId: null,
-        },
+      const now = new Date();
+      if (
+        proposal.expiresAt <= now ||
+        !intentWindowIsReachable(
+          proposalWindowSource(proposal),
+          proposal.city.timezone,
+          now,
+        )
+      ) {
+        await tx.matchProposal.update({
+          where: { id: proposalId },
+          data: { status: MatchProposalStatus.EXPIRED, hostUserId: null },
+        });
+        for (const member of [...proposal.members].sort((a, b) =>
+          a.intentId.localeCompare(b.intentId),
+        )) {
+          await PlayIntentGameLifecycleService.release(tx, member.intentId, now);
+        }
+        return { kind: 'expired' as const, proposal };
+      }
+      if (proposal.status === MatchProposalStatus.ACCEPTED && proposal.hostUserId) {
+        return {
+          kind:
+            proposal.hostUserId === userId
+              ? ('host' as const)
+              : ('invitee' as const),
+          proposal,
+        };
+      }
+      if (proposal.status !== MatchProposalStatus.PENDING) {
+        throw new ApiError(400, 'Proposal is no longer pending');
+      }
+      const activeMembers = proposal.members.filter(
+        (member) => member.response !== MatchProposalMemberResponse.DECLINED,
+      );
+      const partySize =
+        proposal.entityType === EntityType.BAR
+          ? 2
+          : getSportConfig(proposal.sport).defaultPlayersPerMatch;
+      if (activeMembers.length < partySize) {
+        throw new ApiError(400, 'Match roster is incomplete', true, {
+          code: 'playIntent.rosterIncomplete',
+          needed: partySize,
+          current: activeMembers.length,
+        });
+      }
+      await tx.matchProposal.update({
+        where: { id: proposalId },
         data: {
           status: MatchProposalStatus.ACCEPTED,
           hostUserId: userId,
         },
       });
-      if (updated.count === 0) return false;
       await tx.matchProposalMember.update({
         where: { id: membership.id },
         data: {
@@ -245,11 +315,22 @@ export class MatchProposalService {
           response: MatchProposalMemberResponse.ACCEPTED,
         },
       });
-      return true;
+      return { kind: 'host' as const, proposal };
     });
 
-    if (!claimed) {
-      const latest = await this.getById(proposalId, userId);
+    if (result.kind === 'expired') {
+      throw new ApiError(400, 'Proposal expired');
+    }
+    const latest = await this.getById(proposalId, userId);
+    if (result.kind === 'converted') {
+      return {
+        role: result.role,
+        proposal: latest,
+        createPrefill: null,
+        gameId: latest.gameId ?? null,
+      };
+    }
+    if (result.kind === 'invitee') {
       return {
         role: 'invitee' as const,
         proposal: latest,
@@ -257,30 +338,61 @@ export class MatchProposalService {
         gameId: latest.gameId ?? null,
       };
     }
-
     return {
       role: 'host' as const,
-      proposal: await this.getById(proposalId, userId),
-      createPrefill: this.buildCreatePrefill(proposal, userId),
+      proposal: latest,
+      createPrefill: this.buildCreatePrefill(result.proposal, userId),
     };
   }
 
   /** Host abandoned create-game — reopen proposal for others within TTL. */
   static async releaseHost(proposalId: string, userId: string) {
-    const proposal = await prisma.matchProposal.findUnique({
-      where: { id: proposalId },
-      include: { members: true },
-    });
-    if (!proposal) throw new ApiError(404, 'Match proposal not found');
-    if (proposal.gameId) throw new ApiError(400, 'Proposal already converted');
-    if (proposal.hostUserId !== userId) throw new ApiError(403, 'Only the host can release');
-
-    if (proposal.expiresAt <= new Date()) {
-      await this.expireOne(proposalId);
-      return { released: true, expired: true };
-    }
-
-    await prisma.$transaction(async (tx) => {
+    return prisma.$transaction(async (tx) => {
+      await lockMatchProposal(tx, proposalId);
+      const proposal = await tx.matchProposal.findUnique({
+        where: { id: proposalId },
+        include: {
+          members: true,
+          city: { select: { timezone: true } },
+        },
+      });
+      if (!proposal) throw new ApiError(404, 'Match proposal not found');
+      if (
+        proposal.gameId ||
+        proposal.status === MatchProposalStatus.CONVERTED_TO_GAME
+      ) {
+        throw new ApiError(400, 'Proposal already converted');
+      }
+      if (proposal.hostUserId !== userId) {
+        throw new ApiError(403, 'Only the host can release');
+      }
+      const now = new Date();
+      if (
+        proposal.expiresAt <= now ||
+        !intentWindowIsReachable(
+          proposalWindowSource(proposal),
+          proposal.city.timezone,
+          now,
+        )
+      ) {
+        await tx.matchProposal.update({
+          where: { id: proposalId },
+          data: {
+            status: MatchProposalStatus.EXPIRED,
+            hostUserId: null,
+          },
+        });
+        for (const member of [...proposal.members].sort((a, b) =>
+          a.intentId.localeCompare(b.intentId),
+        )) {
+          await PlayIntentGameLifecycleService.release(
+            tx,
+            member.intentId,
+            now,
+          );
+        }
+        return { released: true, expired: true };
+      }
       await tx.matchProposal.update({
         where: { id: proposalId },
         data: {
@@ -295,26 +407,38 @@ export class MatchProposalService {
           response: MatchProposalMemberResponse.PENDING,
         },
       });
+      return { released: true, expired: false };
     });
-
-    return { released: true, expired: false };
   }
 
   static async decline(proposalId: string, userId: string) {
-    const proposal = await prisma.matchProposal.findUnique({
-      where: { id: proposalId },
-      include: { members: true },
-    });
-    if (!proposal) throw new ApiError(404, 'Match proposal not found');
-    if (proposal.status === MatchProposalStatus.CONVERTED_TO_GAME) {
-      throw new ApiError(400, 'Proposal already converted');
-    }
-    const membership = proposal.members.find((m) => m.userId === userId);
-    if (!membership) throw new ApiError(403, 'Not a member of this proposal');
-
-    const partySize = getSportConfig(proposal.sport).defaultPlayersPerMatch;
-
     await prisma.$transaction(async (tx) => {
+      await lockMatchProposal(tx, proposalId);
+      const proposal = await tx.matchProposal.findUnique({
+        where: { id: proposalId },
+        include: { members: true },
+      });
+      if (!proposal) throw new ApiError(404, 'Match proposal not found');
+      if (
+        proposal.gameId ||
+        proposal.status === MatchProposalStatus.CONVERTED_TO_GAME
+      ) {
+        throw new ApiError(400, 'Proposal already converted');
+      }
+      if (
+        proposal.status !== MatchProposalStatus.PENDING &&
+        proposal.status !== MatchProposalStatus.ACCEPTED
+      ) {
+        throw new ApiError(400, 'Proposal is no longer active');
+      }
+      const membership = proposal.members.find((m) => m.userId === userId);
+      if (!membership) throw new ApiError(403, 'Not a member of this proposal');
+      if (membership.response === MatchProposalMemberResponse.DECLINED) return;
+      const partySize =
+        proposal.entityType === EntityType.BAR
+          ? 2
+          : getSportConfig(proposal.sport).defaultPlayersPerMatch;
+      const now = new Date();
       await tx.matchProposalMember.update({
         where: { id: membership.id },
         data: {
@@ -324,10 +448,11 @@ export class MatchProposalService {
       });
 
       // Decliner returns to OPEN pool immediately.
-      await tx.playIntent.updateMany({
-        where: { id: membership.intentId, status: PlayIntentStatus.MATCHED },
-        data: { status: PlayIntentStatus.OPEN },
-      });
+      await PlayIntentGameLifecycleService.release(
+        tx,
+        membership.intentId,
+        now,
+      );
 
       const remaining = proposal.members.filter(
         (m) =>
@@ -348,59 +473,46 @@ export class MatchProposalService {
           where: { id: proposalId },
           data: { status: MatchProposalStatus.DECLINED, hostUserId: null },
         });
-        await tx.playIntent.updateMany({
-          where: {
-            id: { in: remaining.map((m) => m.intentId) },
-            status: PlayIntentStatus.MATCHED,
-          },
-          data: { status: PlayIntentStatus.OPEN },
-        });
+        for (const member of [...remaining].sort((a, b) =>
+          a.intentId.localeCompare(b.intentId),
+        )) {
+          await PlayIntentGameLifecycleService.release(
+            tx,
+            member.intentId,
+            now,
+          );
+        }
       }
     });
 
     return { declined: true };
   }
 
-  static async markConverted(proposalId: string, userId: string, gameId: string) {
-    const proposal = await prisma.matchProposal.findUnique({
-      where: { id: proposalId },
-      include: { members: true },
-    });
-    if (!proposal) throw new ApiError(404, 'Match proposal not found');
-    if (proposal.hostUserId && proposal.hostUserId !== userId) {
-      throw new ApiError(403, 'Only the host can convert this proposal');
-    }
-
-    await prisma.$transaction(async (tx) => {
-      await tx.matchProposal.update({
-        where: { id: proposalId },
-        data: {
-          status: MatchProposalStatus.CONVERTED_TO_GAME,
-          gameId,
-          hostUserId: userId,
-        },
-      });
-      await tx.playIntent.updateMany({
-        where: {
-          id: { in: proposal.members.map((m) => m.intentId) },
-          status: { in: [PlayIntentStatus.MATCHED, PlayIntentStatus.OPEN] },
-        },
-        data: { status: PlayIntentStatus.CONSUMED },
-      });
-    });
-
-    return { gameId };
-  }
-
   static async expireDue(): Promise<number> {
-    const due = await prisma.matchProposal.findMany({
+    const candidates = await prisma.matchProposal.findMany({
       where: {
         status: { in: [MatchProposalStatus.PENDING, MatchProposalStatus.ACCEPTED] },
-        expiresAt: { lte: new Date() },
         gameId: null,
       },
-      select: { id: true },
+      select: {
+        id: true,
+        dateKeys: true,
+        startTime: true,
+        endTime: true,
+        expiresAt: true,
+        city: { select: { timezone: true } },
+      },
     });
+    const now = new Date();
+    const due = candidates.filter(
+      (proposal) =>
+        proposal.expiresAt <= now ||
+        !intentWindowIsReachable(
+          proposalWindowSource(proposal),
+          proposal.city.timezone,
+          now,
+        ),
+    );
 
     for (const p of due) {
       await this.expireOne(p.id);
@@ -410,34 +522,49 @@ export class MatchProposalService {
 
   /** Drop a member from a pending proposal (roster edit). Intent returns to OPEN. */
   static async removeMember(proposalId: string, actorUserId: string, targetUserId: string) {
-    const proposal = await prisma.matchProposal.findUnique({
-      where: { id: proposalId },
-      include: { members: true },
-    });
-    if (!proposal) throw new ApiError(404, 'Match proposal not found');
-    if (proposal.expiresAt <= new Date()) {
-      await this.expireOne(proposalId);
-      throw new ApiError(400, 'Proposal expired');
-    }
-    if (proposal.status !== MatchProposalStatus.PENDING || proposal.hostUserId) {
-      throw new ApiError(400, 'Roster is locked');
-    }
-    if (!proposal.members.some((m) => m.userId === actorUserId)) {
-      throw new ApiError(403, 'Not a member of this proposal');
-    }
-    if (targetUserId === actorUserId) {
-      throw new ApiError(400, 'You cannot remove yourself from the match roster');
-    }
-    const target = proposal.members.find((m) => m.userId === targetUserId);
-    if (!target) throw new ApiError(404, 'Member not found');
-
-    await prisma.$transaction(async (tx) => {
-      await tx.matchProposalMember.delete({ where: { id: target.id } });
-      await tx.playIntent.updateMany({
-        where: { id: target.intentId, status: PlayIntentStatus.MATCHED },
-        data: { status: PlayIntentStatus.OPEN },
+    const result = await prisma.$transaction(async (tx) => {
+      await lockMatchProposal(tx, proposalId);
+      const proposal = await tx.matchProposal.findUnique({
+        where: { id: proposalId },
+        include: { members: true },
       });
+      if (!proposal) throw new ApiError(404, 'Match proposal not found');
+      if (proposal.expiresAt <= new Date()) {
+        await tx.matchProposal.update({
+          where: { id: proposalId },
+          data: { status: MatchProposalStatus.EXPIRED, hostUserId: null },
+        });
+        for (const member of [...proposal.members].sort((a, b) =>
+          a.intentId.localeCompare(b.intentId),
+        )) {
+          await PlayIntentGameLifecycleService.release(
+            tx,
+            member.intentId,
+            new Date(),
+          );
+        }
+        return { expired: true };
+      }
+      if (proposal.status !== MatchProposalStatus.PENDING || proposal.hostUserId) {
+        throw new ApiError(400, 'Roster is locked');
+      }
+      if (!proposal.members.some((m) => m.userId === actorUserId)) {
+        throw new ApiError(403, 'Not a member of this proposal');
+      }
+      if (targetUserId === actorUserId) {
+        throw new ApiError(400, 'You cannot remove yourself from the match roster');
+      }
+      const target = proposal.members.find((m) => m.userId === targetUserId);
+      if (!target) throw new ApiError(404, 'Member not found');
+      await tx.matchProposalMember.delete({ where: { id: target.id } });
+      await PlayIntentGameLifecycleService.release(
+        tx,
+        target.intentId,
+        new Date(),
+      );
+      return { expired: false };
     });
+    if (result.expired) throw new ApiError(400, 'Proposal expired');
 
     return {
       removed: true,
@@ -452,9 +579,12 @@ export class MatchProposalService {
     actorUserId: string,
     input: { userId: string; intentId: string },
   ) {
-    const proposal = await prisma.matchProposal.findUnique({
+    const added = await prisma.$transaction(async (tx) => {
+      await lockMatchProposal(tx, proposalId);
+      const proposal = await tx.matchProposal.findUnique({
       where: { id: proposalId },
       include: {
+        city: { select: { timezone: true } },
         members: {
           include: {
             intent: {
@@ -470,31 +600,51 @@ export class MatchProposalService {
           },
         },
       },
-    });
-    if (!proposal) throw new ApiError(404, 'Match proposal not found');
-    if (proposal.expiresAt <= new Date()) {
-      await this.expireOne(proposalId);
-      throw new ApiError(400, 'Proposal expired');
-    }
-    if (proposal.status !== MatchProposalStatus.PENDING || proposal.hostUserId) {
-      throw new ApiError(400, 'Roster is locked');
-    }
-    if (!proposal.members.some((m) => m.userId === actorUserId)) {
-      throw new ApiError(403, 'Not a member of this proposal');
-    }
+      });
+      if (!proposal) throw new ApiError(404, 'Match proposal not found');
+      const now = new Date();
+      if (
+        proposal.expiresAt <= now ||
+        !intentWindowIsReachable(
+          proposalWindowSource(proposal),
+          proposal.city.timezone,
+          now,
+        )
+      ) {
+        await tx.matchProposal.update({
+          where: { id: proposalId },
+          data: { status: MatchProposalStatus.EXPIRED, hostUserId: null },
+        });
+        for (const member of [...proposal.members].sort((a, b) =>
+          a.intentId.localeCompare(b.intentId),
+        )) {
+          await PlayIntentGameLifecycleService.release(
+            tx,
+            member.intentId,
+            now,
+          );
+        }
+        throw new ApiError(400, 'Proposal expired');
+      }
+      if (proposal.status !== MatchProposalStatus.PENDING || proposal.hostUserId) {
+        throw new ApiError(400, 'Roster is locked');
+      }
+      if (!proposal.members.some((m) => m.userId === actorUserId)) {
+        throw new ApiError(403, 'Not a member of this proposal');
+      }
 
-    const partySize =
-      proposal.entityType === EntityType.BAR
-        ? 2
-        : getSportConfig(proposal.sport).defaultPlayersPerMatch;
-    if (proposal.members.length >= partySize) {
-      throw new ApiError(400, 'Match roster is full', true, { code: 'playIntent.rosterFull' });
-    }
-    if (proposal.members.some((m) => m.userId === input.userId)) {
-      throw new ApiError(400, 'Already in the match');
-    }
+      const partySize =
+        proposal.entityType === EntityType.BAR
+          ? 2
+          : getSportConfig(proposal.sport).defaultPlayersPerMatch;
+      if (proposal.members.length >= partySize) {
+        throw new ApiError(400, 'Match roster is full', true, { code: 'playIntent.rosterFull' });
+      }
+      if (proposal.members.some((m) => m.userId === input.userId)) {
+        throw new ApiError(400, 'Already in the match');
+      }
 
-    const intent = await prisma.playIntent.findFirst({
+      const intent = await tx.playIntent.findFirst({
       where: {
         id: input.intentId,
         userId: input.userId,
@@ -504,7 +654,8 @@ export class MatchProposalService {
         status: {
           in: [PlayIntentStatus.OPEN, PlayIntentStatus.MATCHED],
         },
-        expiresAt: { gt: new Date() },
+        expiresAt: { gt: now },
+        gameParticipants: { none: {} },
       },
       include: {
         user: {
@@ -514,31 +665,34 @@ export class MatchProposalService {
           },
         },
       },
-    });
-    if (!intent) throw new ApiError(404, 'Open play intent not found');
-
-    const candidateCrit = PlayIntentService.toCriteria(intent);
-    const proposalMemberCriteria = proposal.members.map((member) =>
-      PlayIntentService.toCriteria(member.intent),
-    );
-    if (!canIntentJoinProposal(candidateCrit, proposalMemberCriteria)) {
-      throw new ApiError(400, 'Player does not intersect with the match', true, {
-        code: 'playIntent.noIntersection',
       });
-    }
+      if (!intent) throw new ApiError(404, 'Open play intent not found');
+      if (!intentWindowIsReachable(intent, proposal.city.timezone, now)) {
+        throw new ApiError(409, 'Intent no longer available');
+      }
 
-    const locked = await prisma.$transaction(async (tx) => {
+      const candidateCrit = PlayIntentService.toCriteria(intent);
+      const proposalMemberCriteria = proposal.members.map((member) =>
+        PlayIntentService.toCriteria(member.intent),
+      );
+      if (!canIntentJoinProposal(candidateCrit, proposalMemberCriteria)) {
+        throw new ApiError(400, 'Player does not intersect with the match', true, {
+          code: 'playIntent.noIntersection',
+        });
+      }
+
       const updated = await tx.playIntent.updateMany({
         where: {
           id: intent.id,
           status: {
             in: [PlayIntentStatus.OPEN, PlayIntentStatus.MATCHED],
           },
-          expiresAt: { gt: new Date() },
+          expiresAt: { gt: now },
+          gameParticipants: { none: {} },
         },
         data: { status: PlayIntentStatus.MATCHED },
       });
-      if (updated.count !== 1) return null;
+      if (updated.count !== 1) return false;
       await tx.matchProposalMember.create({
         data: {
           proposalId,
@@ -549,31 +703,44 @@ export class MatchProposalService {
       });
       return true;
     });
-    if (!locked) throw new ApiError(409, 'Intent no longer available');
+    if (!added) throw new ApiError(409, 'Intent no longer available');
 
     return { added: true, proposal: await this.getById(proposalId, actorUserId) };
   }
 
   static async expireOne(proposalId: string) {
-    const proposal = await prisma.matchProposal.findUnique({
-      where: { id: proposalId },
-      include: { members: { select: { intentId: true } } },
-    });
-    if (!proposal) return;
-    if (proposal.status === MatchProposalStatus.CONVERTED_TO_GAME) return;
-
     await prisma.$transaction(async (tx) => {
+      await lockMatchProposal(tx, proposalId);
+      const proposal = await tx.matchProposal.findUnique({
+        where: { id: proposalId },
+        include: { members: { select: { intentId: true } } },
+      });
+      if (
+        !proposal ||
+        proposal.gameId ||
+        proposal.status === MatchProposalStatus.CONVERTED_TO_GAME
+      ) {
+        return;
+      }
+      if (
+        proposal.status !== MatchProposalStatus.PENDING &&
+        proposal.status !== MatchProposalStatus.ACCEPTED
+      ) {
+        return;
+      }
       await tx.matchProposal.update({
         where: { id: proposalId },
         data: { status: MatchProposalStatus.EXPIRED, hostUserId: null },
       });
-      await tx.playIntent.updateMany({
-        where: {
-          id: { in: proposal.members.map((m) => m.intentId) },
-          status: PlayIntentStatus.MATCHED,
-        },
-        data: { status: PlayIntentStatus.OPEN },
-      });
+      for (const member of [...proposal.members].sort((a, b) =>
+        a.intentId.localeCompare(b.intentId),
+      )) {
+        await PlayIntentGameLifecycleService.release(
+          tx,
+          member.intentId,
+          new Date(),
+        );
+      }
     });
   }
 }

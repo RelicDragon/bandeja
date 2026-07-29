@@ -20,6 +20,7 @@
     "shareAppBody": "Únete a Bandeja: {{url}}",
     "pendingInvites": "Invitaciones pendientes",
     "badgeDeclined": "Rechazada",
+    "badgeExpired": "Invitación caducada",
     "badgeInviteCancelled": "Invitación cancelada",
     "sectionTerminalInvites": "Respuestas a invitaciones",
     "inviteAgainHint": "Puedes enviar una nueva invitación.",

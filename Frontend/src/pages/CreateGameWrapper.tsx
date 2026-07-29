@@ -7,6 +7,7 @@ import { createGameDataFromDeepLinkSearch } from '@shared/gameBooking/parseCreat
 import { useShellNavStore } from '@/store/shellNavStore';
 import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
 import { playIntentsApi } from '@/api/playIntents';
+import type { PlayIntentCreateSource } from '@shared/playIntentCreateSource';
 
 export const CreateGameWrapper = () => {
   const location = useLocation();
@@ -18,6 +19,7 @@ export const CreateGameWrapper = () => {
     selectedTemplateId?: CreateTemplateId;
     invitedPlayerIds?: string[];
     matchProposalId?: string;
+    playIntentSource?: PlayIntentCreateSource;
   };
   const queryInitial = useMemo(
     () => createGameDataFromDeepLinkSearch(location.search),
@@ -65,6 +67,7 @@ export const CreateGameWrapper = () => {
       initialBookingIds={queryInitial.bookingIds}
       initialInvitedPlayerIds={state?.invitedPlayerIds}
       matchProposalId={matchProposalId}
+      playIntentSource={state?.playIntentSource}
       onMatchProposalConverted={() => {
         convertedRef.current = true;
       }}

@@ -694,6 +694,7 @@ model Game {
   bracketSlot               LeagueBracketSlot?      @relation("BracketSlotGame")
   participants              GameParticipant[]
   inviteOutcomes            GameInviteOutcome[]
+  matchProposal             MatchProposal?
   logs                      GameLog[]
   rounds                    Round[]
   outcomes                  GameOutcome[]
@@ -1031,6 +1032,7 @@ model GameParticipant {
   /// When set, accepting this invite can auto-assign this user-team to game fixed teams once all members are playing.
   inviteUserTeamId String?
   inviteClosedAt   DateTime?
+  playIntentId     String?           @unique
   /// Watch / client: match the user is currently scoring (cleared on finalize).
   activeMatchId    String?
   /// When false, this participant's result/champion story for this game is hidden from followers' feeds.
@@ -1039,6 +1041,7 @@ model GameParticipant {
   user             User              @relation("ParticipantUser", fields: [userId], references: [id], onDelete: Cascade)
   invitedByUser    User?             @relation("ParticipantInvitedBy", fields: [invitedByUserId], references: [id], onDelete: SetNull)
   activeMatch      Match?            @relation("ParticipantActiveMatch", fields: [activeMatchId], references: [id], onDelete: SetNull)
+  playIntent       PlayIntent?       @relation(fields: [playIntentId], references: [id], onDelete: SetNull)
 
   @@unique([userId, gameId])
   @@index([userId])
@@ -1046,6 +1049,7 @@ model GameParticipant {
   @@index([gameId, status])
   @@index([role])
   @@index([status])
+  @@index([status, inviteExpiresAt])
   @@index([activeMatchId])
   @@index([inviteUserTeamId])
 }
@@ -1057,14 +1061,17 @@ model GameInviteOutcome {
   userId          String
   outcome         GameInviteOutcomeType
   invitedByUserId String?
+  playIntentId    String?
   closedAt        DateTime              @default(now())
   game            Game                  @relation(fields: [gameId], references: [id], onDelete: Cascade)
   user            User                  @relation("GameInviteOutcomeUser", fields: [userId], references: [id], onDelete: Cascade)
   invitedByUser   User?                 @relation("GameInviteOutcomeInvitedBy", fields: [invitedByUserId], references: [id], onDelete: SetNull)
+  playIntent      PlayIntent?           @relation(fields: [playIntentId], references: [id], onDelete: SetNull)
 
   @@unique([gameId, userId])
   @@index([gameId])
   @@index([userId])
+  @@index([playIntentId])
 }
 
 enum GameLogType {
@@ -2039,6 +2046,7 @@ enum ParticipantStatus {
 enum GameInviteOutcomeType {
   DECLINED
   CANCELLED
+  EXPIRED
 }
 
 enum MessageState {
@@ -3037,6 +3045,8 @@ model PlayIntent {
   user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   city         City                @relation(fields: [cityId], references: [id], onDelete: Cascade)
   proposalMembers MatchProposalMember[]
+  gameParticipants GameParticipant[]
+  inviteOutcomes   GameInviteOutcome[]
 
   @@index([userId, status])
   @@index([cityId, sport, status])
@@ -3057,12 +3067,13 @@ model MatchProposal {
   clubIds            String[]
   suggestedStartTime DateTime?
   expiresAt          DateTime
-  gameId             String?
+  gameId             String?             @unique
   hostUserId         String?
   rematchKey         String
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
   city               City                @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  game               Game?               @relation(fields: [gameId], references: [id], onDelete: SetNull)
   members            MatchProposalMember[]
 
   @@index([status, expiresAt])

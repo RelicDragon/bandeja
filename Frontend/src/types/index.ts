@@ -43,7 +43,7 @@ export type ParticipantStatus =
   | 'PLAYING'
   | 'NON_PLAYING';
 
-export type GameInviteOutcomeType = 'DECLINED' | 'CANCELLED';
+export type GameInviteOutcomeType = 'DECLINED' | 'CANCELLED' | 'EXPIRED';
 
 export interface GameInviteOutcome {
   id: string;

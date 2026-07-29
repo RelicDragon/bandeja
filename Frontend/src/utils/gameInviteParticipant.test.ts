@@ -78,6 +78,33 @@ describe('gameInviteParticipant', () => {
     expect(applyInviteDeletedToGame(game, payload, 'u2')?.inviteOutcomes?.[0].outcome).toBe('DECLINED');
   });
 
+  it('preserves expired invite outcomes from sockets', () => {
+    const game = g({
+      id: 'g1',
+      participants: [
+        p({ id: 'gp1', userId: 'u1', status: 'INVITED' }),
+        p({ userId: 'u2', status: 'PLAYING' }),
+      ],
+    });
+    const next = applyInviteDeletedToGame(
+      game,
+      {
+        inviteId: 'gp1',
+        gameId: 'g1',
+        removedParticipantId: 'gp1',
+        removedUserId: 'u1',
+        inviteOutcome: {
+          userId: 'u1',
+          outcome: 'EXPIRED',
+          closedAt: '2020-01-01T00:00:00.000Z',
+          invitedByUserId: null,
+        },
+      },
+      'u2',
+    );
+    expect(next?.inviteOutcomes?.[0]?.outcome).toBe('EXPIRED');
+  });
+
   it('applyInviteDeletedToGames', () => {
     const games = [
       g({ id: 'g1', participants: [p({ id: 'gp1', userId: 'u1', status: 'INVITED' })] }),

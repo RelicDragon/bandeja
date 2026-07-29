@@ -12,12 +12,19 @@ import { InviteService } from '../invite.service';
 import { deleteGameInviteOutcome, findGameInviteOutcome } from '../../utils/gameInviteOutcome';
 import { USER_SELECT_WITH_SPORT_PROFILES } from '../../utils/constants';
 import { createSystemMessageWithNotification } from '../../utils/systemMessageHelper';
-import { ChatType, GameStatus, ParticipantRole, UserTeamMemberStatus } from '@prisma/client';
+import {
+  ChatType,
+  GameInviteOutcomeType,
+  GameStatus,
+  ParticipantRole,
+  UserTeamMemberStatus,
+} from '@prisma/client';
 import { BetService } from '../bets/bet.service';
 import { removeUserFromGameFixedTeams } from './fixedTeamsCleanup';
 import { applyUserTeamToFixedTeamsIfReady } from './userTeamFixedTeams.service';
 import { projectUserForSportContext } from '../user/userSportProfile.service';
 import { syncParticipantShowInStoriesSideEffects } from '../story/participantShowInStories.sync';
+import { PlayIntentGameLifecycleService } from '../playIntent/playIntentGameLifecycle.service';
 
 const PLAYING_STATUS = 'PLAYING' as const;
 const IN_QUEUE_STATUS = 'IN_QUEUE' as const;
@@ -74,6 +81,18 @@ export class ParticipantService {
         }
         if (!gameInTx.allowDirectJoin) {
           throw new ApiError(400, 'errors.games.directJoinNotAllowed');
+        }
+        const linkedInvite = await tx.gameParticipant.findFirst({
+          where: { gameId, userId, status: INVITED_STATUS },
+          select: { playIntentId: true },
+        });
+        if (linkedInvite?.playIntentId) {
+          await PlayIntentGameLifecycleService.consume(
+            tx,
+            linkedInvite.playIntentId,
+            userId,
+            new Date(),
+          );
         }
         await addOrUpdateParticipant(tx, gameId, userId);
       });
@@ -181,9 +200,24 @@ export class ParticipantService {
         await tx.game.update({ where: { id: gameId }, data: { trainerId: null } });
       }
       await removeUserFromGameFixedTeams(tx, gameId, userId);
-      await tx.gameParticipant.delete({
-        where: { id: participant.id },
-      });
+      if (participant.status === INVITED_STATUS) {
+        await PlayIntentGameLifecycleService.closeLinkedInvite(
+          tx,
+          {
+            id: participant.id,
+            gameId: participant.gameId,
+            userId: participant.userId,
+            invitedByUserId: participant.invitedByUserId,
+            playIntentId: participant.playIntentId,
+          },
+          GameInviteOutcomeType.DECLINED,
+          new Date(),
+        );
+      } else {
+        await tx.gameParticipant.delete({
+          where: { id: participant.id },
+        });
+      }
     });
 
     await ParticipantMessageHelper.sendLeaveMessage(gameId, participant.user, SystemMessageType.USER_LEFT_CHAT);
@@ -325,6 +359,14 @@ export class ParticipantService {
     }
 
     await prisma.$transaction(async (tx) => {
+      if (participant.status === INVITED_STATUS && participant.playIntentId) {
+        await PlayIntentGameLifecycleService.consume(
+          tx,
+          participant.playIntentId,
+          userId,
+          new Date(),
+        );
+      }
       await tx.gameParticipant.update({
         where: { id: participant.id },
         data: {
@@ -362,6 +404,18 @@ export class ParticipantService {
     validateGameCanAcceptParticipants(game);
 
     await prisma.$transaction(async (tx) => {
+      const linkedInvite = await tx.gameParticipant.findFirst({
+        where: { gameId, userId, status: INVITED_STATUS },
+        select: { playIntentId: true },
+      });
+      if (linkedInvite?.playIntentId) {
+        await PlayIntentGameLifecycleService.consume(
+          tx,
+          linkedInvite.playIntentId,
+          userId,
+          new Date(),
+        );
+      }
       await tx.gameParticipant.updateMany({
         where: { gameId, userId },
         data: { status: IN_QUEUE_STATUS },

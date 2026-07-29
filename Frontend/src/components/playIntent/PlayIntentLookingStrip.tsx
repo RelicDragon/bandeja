@@ -3,15 +3,23 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
 import { AnimatedMount } from '@/components/motion/AnimatedMount';
+import { PlayerAvatar } from '@/components/PlayerAvatar';
 import { StatusPulseDot } from '@/components/StatusPulseDot';
-import { userAvatarTinyUrlFromStandard } from '@/utils/userAvatarTinyUrl';
+import type { BasicUser } from '@/types';
+
+type StripMember = {
+  userId: string;
+  firstName?: string | null;
+  lastName?: string | null;
+  avatar: string | null;
+};
 
 type Props = {
   proposal: boolean;
   whenLabel: string;
   emptyPool: boolean;
   othersCount: number;
-  stripMembers: { userId: string; avatar: string | null }[];
+  stripMembers: StripMember[];
   onOpenLobby: () => void;
   onOpenProposal: () => void;
   onConfirmStop: () => void;
@@ -29,6 +37,9 @@ export function PlayIntentLookingStrip({
 }: Props) {
   const { t } = useTranslation();
   const [confirmStop, setConfirmStop] = useState(false);
+  const hasAvatarOverflow = othersCount > 3;
+  const visibleStripMembers = stripMembers.slice(0, hasAvatarOverflow ? 2 : 3);
+  const hiddenMembersCount = Math.max(0, othersCount - visibleStripMembers.length);
 
   useEffect(() => {
     setConfirmStop(false);
@@ -68,18 +79,37 @@ export function PlayIntentLookingStrip({
             )}
           </div>
           {!proposal && stripMembers.length > 0 && (
-            <div className="mt-0.5 flex shrink-0 -space-x-1.5">
-              {stripMembers.slice(0, 2).map((m) => {
-                const src = m.avatar ? userAvatarTinyUrlFromStandard(m.avatar) : null;
+            <div className="mt-0.5 flex shrink-0 -space-x-1.5" aria-hidden>
+              {visibleStripMembers.map((member) => {
+                const player: BasicUser = {
+                  id: member.userId,
+                  firstName: member.firstName ?? undefined,
+                  lastName: member.lastName ?? undefined,
+                  avatar: member.avatar,
+                  level: 0,
+                  socialLevel: 0,
+                  gender: 'PREFER_NOT_TO_SAY',
+                  approvedLevel: false,
+                  isTrainer: false,
+                };
                 return (
-                  <div
-                    key={m.userId}
-                    className="h-6 w-6 overflow-hidden rounded-full border border-background bg-muted"
-                  >
-                    {src ? <img src={src} alt="" className="h-full w-full object-cover" /> : null}
-                  </div>
+                  <PlayerAvatar
+                    key={member.userId}
+                    player={player}
+                    subscribePresence={false}
+                    fullHideName
+                    inlineFace
+                    inlineFacePlain
+                    inlineFaceFlatStack
+                    asDiv
+                  />
                 );
               })}
+              {hasAvatarOverflow && (
+                <span className="relative z-0 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-background bg-muted text-[9px] font-semibold leading-none text-muted-foreground">
+                  {hiddenMembersCount}+
+                </span>
+              )}
             </div>
           )}
         </button>

@@ -1,6 +1,7 @@
 import * as cron from 'node-cron';
 import { PlayIntentService } from './playIntent/playIntent.service';
 import { MatchProposalService } from './playIntent/matchProposal.service';
+import { InviteService } from './invite.service';
 
 export class PlayIntentScheduler {
   private expireCron: cron.ScheduledTask | null = null;
@@ -11,10 +12,13 @@ export class PlayIntentScheduler {
       if (this.expireRunning) return;
       this.expireRunning = true;
       try {
+        const invites = await InviteService.expireDueInvites();
         const intents = await PlayIntentService.expireDueIntents();
         const proposals = await MatchProposalService.expireDue();
-        if (intents > 0 || proposals > 0) {
-          console.log(`[PlayIntentScheduler] Expired intents=${intents} proposals=${proposals}`);
+        if (invites > 0 || intents > 0 || proposals > 0) {
+          console.log(
+            `[PlayIntentScheduler] Expired invites=${invites} intents=${intents} proposals=${proposals}`,
+          );
         }
       } catch (err) {
         console.error('[PlayIntentScheduler] expire error:', err);

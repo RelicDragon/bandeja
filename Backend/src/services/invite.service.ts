@@ -3,7 +3,6 @@ import { ChatContextType, ChatType, EntityType, GameInviteOutcomeType, Participa
 import { MessageService } from './chat/message.service';
 import {
   deleteGameInviteOutcome,
-  upsertGameInviteOutcome,
 } from '../utils/gameInviteOutcome';
 import { createSystemMessage } from '../controllers/chat.controller';
 import { USER_SELECT_WITH_SPORT_PROFILES } from '../utils/constants';
@@ -18,6 +17,7 @@ import { createSystemMessageWithNotification } from '../utils/systemMessageHelpe
 import { GameService } from './game/game.service';
 import { ParticipantMessageHelper } from './game/participantMessageHelper';
 import { projectUserForSportContext } from './user/userSportProfile.service';
+import { PlayIntentGameLifecycleService } from './playIntent/playIntentGameLifecycle.service';
 
 export interface InviteActionResult {
   success: boolean;
@@ -59,7 +59,8 @@ async function emitDeclineCancelSockets(
   invitedByUserId: string | null,
   extras:
     | { participantPatch: { id?: string; userId: string; status: string; inviteClosedAt?: string | null } }
-    | { removedParticipantId: string; removedUserId: string; inviteOutcome: InviteOutcomeSocketPayload }
+    | { removedParticipantId: string; removedUserId: string; inviteOutcome: InviteOutcomeSocketPayload },
+  refreshGame = true,
 ) {
   const socketService = (global as any).socketService as
     | {
@@ -72,30 +73,33 @@ async function emitDeclineCancelSockets(
   if (invitedByUserId) {
     socketService.emitInviteDeleted(invitedByUserId, participantId, gameId || undefined, extras);
   }
-  if (gameId) {
+  if (gameId && refreshGame) {
     await socketService.emitGameUpdate(gameId, userId, undefined, false);
   }
 }
 
 async function recordInviteOutcomeAndRemoveParticipant(
-  participant: { id: string; gameId: string; userId: string; invitedByUserId: string | null },
+  participant: {
+    id: string;
+    gameId: string;
+    userId: string;
+    invitedByUserId: string | null;
+    playIntentId: string | null;
+  },
   outcome: GameInviteOutcomeType
 ): Promise<InviteOutcomeSocketPayload> {
   const closedAt = new Date();
   const record = await prisma.$transaction(async (tx) => {
-    const row = await upsertGameInviteOutcome(
-      {
-        gameId: participant.gameId,
-        userId: participant.userId,
-        outcome,
-        invitedByUserId: participant.invitedByUserId,
-        closedAt,
-      },
-      tx
+    return PlayIntentGameLifecycleService.closeLinkedInvite(
+      tx,
+      participant,
+      outcome,
+      closedAt,
     );
-    await tx.gameParticipant.delete({ where: { id: participant.id } });
-    return row;
   });
+  if (!record) {
+    throw new ApiError(400, 'errors.invites.notFound');
+  }
   return {
     userId: record.userId,
     outcome: record.outcome,
@@ -284,6 +288,27 @@ export class InviteService {
       return { success: true, message: 'invites.acceptedSuccessfully' };
     }
     if (participant.inviteExpiresAt && new Date() > participant.inviteExpiresAt) {
+      const inviteOutcome = await recordInviteOutcomeAndRemoveParticipant(
+        {
+          id: participant.id,
+          gameId: participant.gameId,
+          userId: participant.userId,
+          invitedByUserId: participant.invitedByUserId,
+          playIntentId: participant.playIntentId,
+        },
+        GameInviteOutcomeType.EXPIRED,
+      );
+      await emitDeclineCancelSockets(
+        participant.gameId,
+        participant.id,
+        participant.userId,
+        participant.invitedByUserId,
+        {
+          removedParticipantId: participant.id,
+          removedUserId: participant.userId,
+          inviteOutcome,
+        },
+      );
       return { success: false, message: 'errors.invites.expired' };
     }
     const gameId = participant.gameId;
@@ -308,25 +333,74 @@ export class InviteService {
         : 'PLAYING';
 
     try {
-        await prisma.$transaction(async (tx: any) => {
+        const acceptance = await prisma.$transaction(async (tx) => {
           const locked = await tx.gameParticipant.findFirst({
             where: { id: participantId, status: 'INVITED' },
           });
           if (!locked) {
             throw new ApiError(400, 'errors.invites.notFound');
           }
+          const acceptedAt = new Date();
+          const linkedIntent = locked.playIntentId
+            ? await tx.playIntent.findUnique({
+                where: { id: locked.playIntentId },
+                select: { expiresAt: true },
+              })
+            : null;
+          if (
+            (locked.inviteExpiresAt && locked.inviteExpiresAt <= acceptedAt) ||
+            (linkedIntent && linkedIntent.expiresAt <= acceptedAt)
+          ) {
+            const record =
+              await PlayIntentGameLifecycleService.closeLinkedInvite(
+                tx,
+                locked,
+                GameInviteOutcomeType.EXPIRED,
+                acceptedAt,
+              );
+            return { queued: false, expired: true, record };
+          }
           const currentGame = await fetchGameWithPlayingParticipants(tx, gameId);
           validateGameCanAcceptParticipants(currentGame);
           const joinResult = await validatePlayerCanJoinGame(currentGame, receiverId, { skipLevelCheck: true });
           if (!joinResult.canJoin && joinResult.shouldQueue) {
-            throw new ApiError(400, joinResult.reason || 'errors.invites.gameFull', true, {
-              code: 'INVITE_ACCEPT_TO_QUEUE',
+            if (locked.playIntentId) {
+              await PlayIntentGameLifecycleService.consume(
+                tx,
+                locked.playIntentId,
+                receiverId,
+                new Date(),
+              );
+            }
+            await tx.gameParticipant.update({
+              where: { id: participantId, status: 'INVITED' },
+              data: {
+                status: 'IN_QUEUE',
+                role: ParticipantRole.PARTICIPANT,
+                invitedByUserId: null,
+                inviteMessage: null,
+                inviteExpiresAt: null,
+                inviteClosedAt: null,
+                inviteUserTeamId: inviteUserTeamIdForFixedTeams,
+              },
             });
+            return { queued: true, expired: false, record: null };
+          }
+          if (!joinResult.canJoin) {
+            throw new ApiError(400, joinResult.reason || 'errors.invites.gameFull');
           }
           const isTrainerInvite =
             locked.role === ParticipantRole.ADMIN && currentGame.entityType === EntityType.TRAINING;
           if (isTrainerInvite) {
             await tx.game.update({ where: { id: gameId }, data: { trainerId: receiverId } });
+          }
+          if (locked.playIntentId) {
+            await PlayIntentGameLifecycleService.consume(
+              tx,
+              locked.playIntentId,
+              receiverId,
+              new Date(),
+            );
           }
           await tx.gameParticipant.update({
             where: { id: participantId, status: 'INVITED' },
@@ -340,32 +414,31 @@ export class InviteService {
               inviteClosedAt: null,
             },
           });
+          return { queued: false, expired: false, record: null };
         });
-        await performPostJoinOperations(gameId, receiverId);
-        if (inviteUserTeamIdForFixedTeams) {
-          try {
-            await applyUserTeamToFixedTeamsIfReady(gameId, inviteUserTeamIdForFixedTeams);
-          } catch (e) {
-            console.error('[userTeamFixedTeams] apply after invite accept', e);
-          }
-        }
-      } catch (error: any) {
-        if (gameId && error instanceof ApiError && error.statusCode === 400 && error.data?.code === 'INVITE_ACCEPT_TO_QUEUE') {
-          const u = await prisma.gameParticipant.updateMany({
-            where: { id: participantId, userId: receiverId, status: 'INVITED' },
-            data: {
-              status: 'IN_QUEUE',
-              role: ParticipantRole.PARTICIPANT,
-              invitedByUserId: null,
-              inviteMessage: null,
-              inviteExpiresAt: null,
-              inviteClosedAt: null,
-              inviteUserTeamId: inviteUserTeamIdForFixedTeams,
-            },
-          });
-          if (u.count === 0) {
+        if (acceptance.expired) {
+          if (!acceptance.record) {
             return { success: false, message: 'errors.invites.notFound' };
           }
+          await emitDeclineCancelSockets(
+            gameId,
+            participantId,
+            receiverId,
+            participant.invitedByUserId,
+            {
+              removedParticipantId: participantId,
+              removedUserId: receiverId,
+              inviteOutcome: {
+                userId: acceptance.record.userId,
+                outcome: acceptance.record.outcome,
+                closedAt: acceptance.record.closedAt.toISOString(),
+                invitedByUserId: acceptance.record.invitedByUserId,
+              },
+            },
+          );
+          return { success: false, message: 'errors.invites.expired' };
+        }
+        if (acceptance.queued) {
           await createSystemMessageWithNotification(
             gameId,
             SystemMessageType.USER_JOINED_JOIN_QUEUE,
@@ -395,6 +468,15 @@ export class InviteService {
           }
           return { success: true, message: 'games.addedToJoinQueue' };
         }
+        await performPostJoinOperations(gameId, receiverId);
+        if (inviteUserTeamIdForFixedTeams) {
+          try {
+            await applyUserTeamToFixedTeamsIfReady(gameId, inviteUserTeamIdForFixedTeams);
+          } catch (e) {
+            console.error('[userTeamFixedTeams] apply after invite accept', e);
+          }
+        }
+      } catch (error: unknown) {
         throw error;
       }
     if ((global as any).socketService) {
@@ -519,6 +601,7 @@ export class InviteService {
         gameId: participant.gameId,
         userId: participant.userId,
         invitedByUserId: participant.invitedByUserId,
+        playIntentId: participant.playIntentId,
       },
       GameInviteOutcomeType.DECLINED
     );
@@ -551,6 +634,7 @@ export class InviteService {
         invitedByUserId: true,
         userId: true,
         gameId: true,
+        playIntentId: true,
       },
     });
     if (!participant || participant.status !== 'INVITED') {
@@ -590,6 +674,7 @@ export class InviteService {
         gameId: participant.gameId,
         userId: participant.userId,
         invitedByUserId: participant.invitedByUserId,
+        playIntentId: participant.playIntentId,
       },
       GameInviteOutcomeType.CANCELLED
     );
@@ -599,5 +684,128 @@ export class InviteService {
       inviteOutcome,
     });
     return { success: true, message: 'invites.cancelledSuccessfully' };
+  }
+
+  static async expireDueInvites(now = new Date()): Promise<number> {
+    let expired = 0;
+    const failedIds = new Set<string>();
+    const gamesToRefresh = new Map<string, string>();
+    while (true) {
+      const due = await prisma.gameParticipant.findMany({
+        where: {
+          id: failedIds.size > 0 ? { notIn: [...failedIds] } : undefined,
+          status: 'INVITED',
+          OR: [
+            { inviteExpiresAt: { lte: now } },
+            { playIntent: { expiresAt: { lte: now } } },
+          ],
+        },
+        select: { id: true },
+        orderBy: { inviteExpiresAt: 'asc' },
+        take: 100,
+      });
+      if (due.length === 0) break;
+      for (let offset = 0; offset < due.length; offset += 10) {
+        const batch = due.slice(offset, offset + 10);
+        const results = await Promise.all(
+          batch.map(async ({ id }) => {
+            try {
+              return await prisma.$transaction(async (tx) => {
+                const participant = await tx.gameParticipant.findFirst({
+                  where: {
+                    id,
+                    status: 'INVITED',
+                    OR: [
+                      { inviteExpiresAt: { lte: now } },
+                      { playIntent: { expiresAt: { lte: now } } },
+                    ],
+                  },
+                  select: {
+                    id: true,
+                    gameId: true,
+                    userId: true,
+                    invitedByUserId: true,
+                    playIntentId: true,
+                  },
+                });
+                if (!participant) return null;
+                const record =
+                  await PlayIntentGameLifecycleService.closeLinkedInvite(
+                    tx,
+                    participant,
+                    GameInviteOutcomeType.EXPIRED,
+                    now,
+                  );
+                if (!record) return null;
+                return { participant, record };
+              });
+            } catch (error) {
+              failedIds.add(id);
+              console.error('[InviteService] Failed to expire invite', {
+                inviteId: id,
+                error,
+              });
+              return null;
+            }
+          }),
+        );
+        for (const result of results) {
+          if (!result) continue;
+          expired += 1;
+          const { participant, record } = result;
+          if (participant.gameId) {
+            gamesToRefresh.set(participant.gameId, participant.userId);
+          }
+          try {
+            await emitDeclineCancelSockets(
+              participant.gameId,
+              participant.id,
+              participant.userId,
+              participant.invitedByUserId,
+              {
+                removedParticipantId: participant.id,
+                removedUserId: participant.userId,
+                inviteOutcome: {
+                  userId: record.userId,
+                  outcome: record.outcome,
+                  closedAt: record.closedAt.toISOString(),
+                  invitedByUserId: record.invitedByUserId,
+                },
+              },
+              false,
+            );
+          } catch (error) {
+            console.error('[InviteService] Failed to emit expired invite', {
+              inviteId: participant.id,
+              error,
+            });
+          }
+        }
+      }
+      if (due.length < 100) break;
+    }
+    const socketService = (global as any).socketService as
+      | {
+          emitGameUpdate: (
+            gameId: string,
+            userId: string,
+            payload?: unknown,
+            notify?: boolean,
+          ) => Promise<void>;
+        }
+      | undefined;
+    if (socketService) {
+      for (const [gameId, userId] of gamesToRefresh) {
+        try {
+          await socketService.emitGameUpdate(gameId, userId, undefined, false);
+        } catch (error) {
+          console.error('[InviteService] Failed to refresh expired invites', {
+            gameId,
+            error,
+          });
+        }
+      }
+    }
+    return expired;
   }
 }

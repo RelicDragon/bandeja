@@ -20,6 +20,7 @@
     "shareAppBody": "Přidej se ke mně na Bandeja: {{url}}",
     "pendingInvites": "Čekající pozvánky",
     "badgeDeclined": "Declined",
+    "badgeExpired": "Platnost pozvánky vypršela",
     "badgeInviteCancelled": "Invite cancelled",
     "sectionTerminalInvites": "Invite responses",
     "inviteAgainHint": "You can send a new invite.",

@@ -121,8 +121,10 @@ const startServer = async () => {
     console.log('🌐 Translation queue worker started');
     console.log('🎨 Results artifacts queue worker started');
 
-    const server = httpServer.listen(config.port, '0.0.0.0', () => {
-      console.log(`🚀 Server running on port ${config.port} in ${config.nodeEnv} mode`);
+    const server = httpServer.listen(config.port, config.host, () => {
+      console.log(
+        `🚀 Server running on ${config.host}:${config.port} in ${config.nodeEnv} mode`
+      );
       console.log(`📍 Health check: http://localhost:${config.port}/health`);
       console.log(`📍 API endpoints: http://localhost:${config.port}/api`);
       console.log(`🔌 Socket.IO server ready`);
@@ -181,4 +183,3 @@ const startServer = async () => {
 };
 
 startServer();
-

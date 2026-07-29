@@ -1163,6 +1163,11 @@ const suites: Suite[] = [
       path.join(backendRoot, 'scripts', 'lib', 'app-release-finalize.test.ts'),
     ],
   },
+  {
+    label: 'play intent',
+    command: 'npm',
+    args: ['run', 'test:play-intent'],
+  },
 ];
 
 function parseSuiteIndexArg(prefix: string): number | null {

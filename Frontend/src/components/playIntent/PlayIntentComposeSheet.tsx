@@ -203,7 +203,7 @@ export function PlayIntentComposePanel({
       </DrawerHeader>
       <div
         data-play-intent-compose-scroll
-        className="min-h-0 flex-1 space-y-5 overflow-y-auto px-4 pb-6"
+        className="space-y-5 px-4 pb-6"
       >
           <DrawerDescription className="text-center">
             {t('playIntent.composeHint')}

@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { body } from 'express-validator';
 import { validate } from '../middleware/validate';
-import { authenticate, canAccessGameIncludingArchived } from '../middleware/auth';
+import { authenticate, canAccessGameIncludingArchived, requireAdmin } from '../middleware/auth';
 import * as inviteController from '../controllers/invite.controller';
 
 const router = Router();
@@ -32,7 +32,7 @@ router.post(
 
 router.delete('/:id/cancel', authenticate, inviteController.cancelInvite);
 
-router.delete('/expired', authenticate, inviteController.deleteExpiredInvites);
+router.delete('/expired', authenticate, requireAdmin, inviteController.deleteExpiredInvites);
 
 export default router;
 

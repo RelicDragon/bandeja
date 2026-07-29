@@ -20,6 +20,7 @@
     "shareAppBody": "Присоединяйся к Bandeja: {{url}}",
     "pendingInvites": "Ожидающие приглашения",
     "badgeDeclined": "Declined",
+    "badgeExpired": "Срок приглашения истёк",
     "badgeInviteCancelled": "Invite cancelled",
     "sectionTerminalInvites": "Invite responses",
     "inviteAgainHint": "You can send a new invite.",

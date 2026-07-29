@@ -46,26 +46,38 @@ function base(overrides: Partial<IntentCriteria> = {}): IntentCriteria {
 
 {
   const intent = base({ minLevel: 3, maxLevel: 4 });
+  const now = new Date('2026-07-28T10:00:00Z');
+  const gameStart = new Date('2026-07-28T18:00:00Z');
   assert.equal(
-    intentMatchesGame(intent, {
-      dateKey: '2026-07-28',
-      clubId: 'c1',
-      startTimeMinutes: 18 * 60,
-      minLevel: 2,
-      maxLevel: 5,
-      genderTeams: null,
-    }),
+    intentMatchesGame(
+      intent,
+      {
+        dateKey: '2026-07-28',
+        clubId: 'c1',
+        startTime: gameStart,
+        startTimeMinutes: 18 * 60,
+        minLevel: 2,
+        maxLevel: 5,
+        genderTeams: null,
+      },
+      now,
+    ),
     true,
   );
   assert.equal(
-    intentMatchesGame(intent, {
-      dateKey: '2026-07-28',
-      clubId: 'c1',
-      startTimeMinutes: 18 * 60,
-      minLevel: 5,
-      maxLevel: 7,
-      genderTeams: null,
-    }),
+    intentMatchesGame(
+      intent,
+      {
+        dateKey: '2026-07-28',
+        clubId: 'c1',
+        startTime: gameStart,
+        startTimeMinutes: 18 * 60,
+        minLevel: 5,
+        maxLevel: 7,
+        genderTeams: null,
+      },
+      now,
+    ),
     false,
   );
 }

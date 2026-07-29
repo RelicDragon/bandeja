@@ -11,6 +11,14 @@ import {
   buildRematchKey,
   type IntentCriteria,
 } from './playIntentCriteria';
+import {
+  gameStartIsFuture,
+  futureGameDateBounds,
+  intentWindowEndsAt,
+  intentWindowIsReachable,
+  nextSuggestedStart,
+  proposalWindowSource,
+} from './playIntentFreshness';
 
 function base(overrides: Partial<IntentCriteria> = {}): IntentCriteria {
   return {
@@ -77,27 +85,157 @@ assert.deepEqual(resolveTimeWindow({ timeOfDay: 'CUSTOM', startTime: '10:00', en
     minLevel: 2,
     maxLevel: 5,
   });
+  const now = new Date('2026-07-28T12:00:00Z');
+  const gameStart = new Date('2026-07-28T18:00:00Z');
   assert.equal(
-    intentMatchesGame(intent, {
-      dateKey: '2026-07-28',
-      clubId: 'club1',
-      startTimeMinutes: 18 * 60,
-      minLevel: 2.5,
-      maxLevel: 4,
-      genderTeams: 'ANY',
-    }),
+    intentMatchesGame(
+      intent,
+      {
+        dateKey: '2026-07-28',
+        clubId: 'club1',
+        startTime: gameStart,
+        startTimeMinutes: 18 * 60,
+        minLevel: 2.5,
+        maxLevel: 4,
+        genderTeams: 'ANY',
+      },
+      now,
+    ),
     true,
   );
   assert.equal(
-    intentMatchesGame(intent, {
-      dateKey: '2026-07-28',
-      clubId: 'other',
-      startTimeMinutes: 18 * 60,
-      minLevel: 2.5,
-      maxLevel: 4,
-      genderTeams: 'ANY',
-    }),
+    intentMatchesGame(
+      intent,
+      {
+        dateKey: '2026-07-28',
+        clubId: 'other',
+        startTime: gameStart,
+        startTimeMinutes: 18 * 60,
+        minLevel: 2.5,
+        maxLevel: 4,
+        genderTeams: 'ANY',
+      },
+      now,
+    ),
     false,
+  );
+  assert.equal(
+    intentMatchesGame(
+      intent,
+      {
+        dateKey: '2026-07-28',
+        clubId: 'club1',
+        startTime: gameStart,
+        startTimeMinutes: 18 * 60,
+        minLevel: 2.5,
+        maxLevel: 4,
+        genderTeams: 'ANY',
+      },
+      new Date('2026-07-28T18:30:00Z'),
+    ),
+    false,
+  );
+}
+
+{
+  const timezone = 'UTC';
+  const intent = { dateKeys: ['2026-07-28'], timeOfDay: 'MORNING' as const, startTime: null, endTime: null };
+  assert.equal(intentWindowIsReachable(intent, timezone, new Date('2026-07-28T07:00:00Z')), true);
+  assert.equal(intentWindowIsReachable(intent, timezone, new Date('2026-07-28T18:00:00Z')), false);
+  assert.equal(
+    intentWindowIsReachable(
+      { ...intent, dateKeys: ['2026-07-28', '2026-07-29'] },
+      timezone,
+      new Date('2026-07-28T18:00:00Z'),
+    ),
+    true,
+  );
+  assert.equal(
+    intentWindowIsReachable(
+      { ...intent, timeOfDay: 'ANYTIME' },
+      timezone,
+      new Date('2026-07-28T18:00:00Z'),
+    ),
+    true,
+  );
+  assert.equal(
+    intentWindowIsReachable(
+      intent,
+      timezone,
+      new Date('2026-07-28T12:00:00Z'),
+    ),
+    false,
+  );
+  assert.equal(
+    intentWindowEndsAt(intent, 'Europe/Belgrade')?.toISOString(),
+    '2026-07-28T10:00:00.000Z',
+  );
+}
+
+{
+  const now = new Date('2026-07-28T18:07:00Z');
+  const source = proposalWindowSource({
+    dateKeys: ['2026-07-28'],
+    startTime: '17:00',
+    endTime: '21:00',
+  });
+  assert.equal(
+    nextSuggestedStart(source, 'UTC', now)?.toISOString(),
+    '2026-07-28T18:30:00.000Z',
+  );
+  assert.equal(
+    nextSuggestedStart(source, 'UTC', new Date('2026-07-28T18:15:00Z'))?.toISOString(),
+    '2026-07-28T18:30:00.000Z',
+  );
+  assert.equal(
+    nextSuggestedStart(
+      {
+        dateKeys: ['2026-07-28'],
+        timeOfDay: 'MORNING',
+        startTime: null,
+        endTime: null,
+      },
+      'UTC',
+      new Date('2026-07-28T18:00:00Z'),
+    ),
+    null,
+  );
+  assert.equal(gameStartIsFuture(new Date('2026-07-28T18:00:01Z'), new Date('2026-07-28T18:00:00Z')), true);
+  assert.equal(gameStartIsFuture(new Date('2026-07-28T18:00:00Z'), new Date('2026-07-28T18:00:00Z')), false);
+  assert.equal(
+    nextSuggestedStart(
+      proposalWindowSource({
+        dateKeys: ['2026-03-08'],
+        startTime: '02:30',
+        endTime: '03:00',
+      }),
+      'America/New_York',
+      new Date('2026-03-08T05:00:00Z'),
+    ),
+    null,
+  );
+  const bounds = futureGameDateBounds(
+    ['2026-07-28', '2026-07-29'],
+    'UTC',
+    new Date('2026-07-28T18:00:00Z'),
+  );
+  assert.equal(bounds.length, 2);
+  assert.equal('gt' in bounds[0] && bounds[0].gt.toISOString(), '2026-07-28T18:00:00.000Z');
+  assert.equal('gte' in bounds[1] && bounds[1].gte.toISOString(), '2026-07-29T00:00:00.000Z');
+  assert.equal(
+    bounds.some(
+      (bound) =>
+        ('gt' in bound
+          ? new Date('2026-07-28T10:00:00Z') > bound.gt
+          : new Date('2026-07-28T10:00:00Z') >= bound.gte) &&
+        new Date('2026-07-28T10:00:00Z') <= bound.lte,
+    ),
+    false,
+  );
+  assert.equal(
+    new Date('2026-07-29T00:00:00Z') >=
+      ('gte' in bounds[1] ? bounds[1].gte : bounds[1].gt),
+    true,
   );
 }
 

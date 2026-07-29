@@ -20,6 +20,7 @@ export type IntentCriteria = {
 export type GameCriteria = {
   dateKey: string;
   clubId: string | null;
+  startTime: Date;
   startTimeMinutes: number;
   minLevel: number | null;
   maxLevel: number | null;
@@ -190,7 +191,13 @@ export function canIntentJoinProposal(
   return proposalMembers.every((member) => intentsCompatible(candidate, member).ok);
 }
 
-export function intentMatchesGame(intent: IntentCriteria, game: GameCriteria): boolean {
+export function intentMatchesGame(
+  intent: IntentCriteria,
+  game: GameCriteria,
+  now: Date = new Date(),
+): boolean {
+  if (game.startTime.getTime() <= now.getTime()) return false;
+
   if (!intent.dateKeys.includes(game.dateKey)) return false;
 
   if (intent.clubIds.length > 0) {

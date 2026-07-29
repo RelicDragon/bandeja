@@ -12,10 +12,15 @@ import { installUnreadThreadIndexSync } from './services/chat/unreadThreadIndexS
 import { installUnreadNativeBadgeSync } from './services/chat/unreadNativeBadgeSync';
 import { installChunkLoadRecovery } from './utils/chunkLoadRecovery';
 import { applyDevFavicon } from './utils/devFavicon';
+import { StagingEnvironmentBanner } from './components/StagingEnvironmentBanner';
+import { isCurrentStagingDeployment } from './config/deploymentEnvironment';
 
 const CACHE_VERSION = 'v1';
 
-if (import.meta.env.DEV) {
+if (isCurrentStagingDeployment()) {
+  document.title = `[STAGING] ${document.title}`;
+  document.documentElement.dataset.deploymentEnvironment = 'staging';
+} else if (import.meta.env.DEV) {
   document.title = `[DEV] ${document.title}`;
   applyDevFavicon();
 }
@@ -78,5 +83,8 @@ if ('serviceWorker' in navigator && !isCapacitor()) {
 }
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
-  <App />
+  <>
+    <StagingEnvironmentBanner />
+    <App />
+  </>
 );

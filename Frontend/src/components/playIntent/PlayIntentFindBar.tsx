@@ -14,6 +14,7 @@ import { useAuthStore } from '@/store/authStore';
 import { usePlayIntentMutations, usePlayIntentPool } from '@/hooks/usePlayIntent';
 import { PlayIntentSheet } from './PlayIntentSheet';
 import { PlayIntentLookingStrip } from './PlayIntentLookingStrip';
+import { resolvePlayIntentProposal } from './playIntentProposal';
 import { playIntentsApi, type MatchProposalSummary, type PlayIntent } from '@/api/playIntents';
 import { SportPublicIcon } from '@/components/sport/SportPublicIcon';
 import { getViewerPrimarySport } from '@/utils/profileSports';
@@ -33,7 +34,12 @@ type PlayIntentCtx = {
   whenLabel: string;
   emptyPool: boolean;
   othersCount: number;
-  stripMembers: { userId: string; avatar: string | null }[];
+  stripMembers: {
+    userId: string;
+    firstName?: string | null;
+    lastName?: string | null;
+    avatar: string | null;
+  }[];
 };
 
 const Ctx = createContext<PlayIntentCtx | null>(null);
@@ -101,7 +107,7 @@ export function PlayIntentProvider({ cityId, sport, children }: ProviderProps) {
   );
   const { cancel } = usePlayIntentMutations(cityId, resolvedSport);
 
-  const proposal = deepProposal || pool?.pendingProposal || null;
+  const proposal = resolvePlayIntentProposal(pool?.pendingProposal, deepProposal);
   const looking = !!pool?.myIntent || !!proposal;
 
   useEffect(() => {
@@ -138,15 +144,17 @@ export function PlayIntentProvider({ cityId, sport, children }: ProviderProps) {
     if (liveId && liveId !== deepProposal.id) {
       setDeepProposal(null);
     }
-    if (pool && !pool.pendingProposal && !sheetOpen) {
+    if (pool && !pool.pendingProposal) {
       setDeepProposal(null);
     }
-  }, [pool, deepProposal, sheetOpen]);
+  }, [pool, deepProposal]);
 
   const stripMembers = useMemo(
     () =>
-      (pool?.members.filter((m) => m.affinity !== 'far').slice(0, 2) ?? []).map((m) => ({
+      (pool?.members.filter((m) => m.affinity !== 'far').slice(0, 3) ?? []).map((m) => ({
         userId: m.userId,
+        firstName: m.firstName,
+        lastName: m.lastName,
         avatar: m.avatar,
       })),
     [pool?.members],

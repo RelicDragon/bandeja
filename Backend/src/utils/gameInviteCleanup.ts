@@ -1,7 +1,7 @@
-import { ParticipantRole, Prisma } from '@prisma/client';
+import { GameInviteOutcomeType, ParticipantRole, Prisma } from '@prisma/client';
 import prisma from '../config/database';
 import { ParticipantMessageHelper } from '../services/game/participantMessageHelper';
-import { deleteGameInviteOutcomesForGame } from './gameInviteOutcome';
+import { PlayIntentGameLifecycleService } from '../services/playIntent/playIntentGameLifecycle.service';
 
 export const INVITE_CLEANUP_STATUSES = ['INVITED'] as const;
 
@@ -27,39 +27,50 @@ export async function cleanupInviteParticipantsForEndedGame(
   gameId: string,
   tx?: Tx
 ): Promise<void> {
-  const client = tx ?? prisma;
-  const rows = await client.gameParticipant.findMany({
-    where: {
-      gameId,
-      status: { in: [...INVITE_CLEANUP_STATUSES] },
+  const rows = await (tx ?? prisma).gameParticipant.findMany({
+    where: { gameId, status: { in: [...INVITE_CLEANUP_STATUSES] } },
+    select: {
+      id: true,
+      gameId: true,
+      userId: true,
+      invitedByUserId: true,
+      role: true,
+      playIntentId: true,
     },
-    select: { id: true, userId: true, invitedByUserId: true, role: true },
   });
   if (rows.length === 0) return;
 
   const ownerIds = rows.filter((p) => p.role === ParticipantRole.OWNER).map((p) => p.id);
   const nonOwner = rows.filter((p) => p.role !== ParticipantRole.OWNER);
 
-  if (nonOwner.length > 0) {
-    await client.gameParticipant.deleteMany({
-      where: { id: { in: nonOwner.map((p) => p.id) } },
-    });
+  const cleanup = async (client: Tx) => {
+    for (const participant of nonOwner) {
+      await PlayIntentGameLifecycleService.closeLinkedInvite(
+        client,
+        participant,
+        GameInviteOutcomeType.CANCELLED,
+        new Date(),
+      );
+    }
+    if (ownerIds.length > 0) {
+      await client.gameParticipant.updateMany({
+        where: { id: { in: ownerIds } },
+        data: {
+          status: 'NON_PLAYING',
+          invitedByUserId: null,
+          inviteMessage: null,
+          inviteExpiresAt: null,
+          inviteUserTeamId: null,
+          inviteClosedAt: null,
+        },
+      });
+    }
+  };
+  if (tx) {
+    await cleanup(tx);
+  } else {
+    await prisma.$transaction(cleanup);
   }
-  if (ownerIds.length > 0) {
-    await client.gameParticipant.updateMany({
-      where: { id: { in: ownerIds } },
-      data: {
-        status: 'NON_PLAYING',
-        invitedByUserId: null,
-        inviteMessage: null,
-        inviteExpiresAt: null,
-        inviteUserTeamId: null,
-        inviteClosedAt: null,
-      },
-    });
-  }
-
-  await deleteGameInviteOutcomesForGame(gameId, tx);
 
   if (!tx) {
     emitInviteCleanupSockets(gameId, nonOwner);
