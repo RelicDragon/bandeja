@@ -51,7 +51,19 @@ export function useSharedPlayIntentEntry(enabled: boolean) {
       try {
         const joinedIntent = await playIntentsApi.joinShared(intentId);
         setJoinedSport(joinedIntent.sport);
-        await queryClient.invalidateQueries({ queryKey: playIntentKeys.all });
+        try {
+          const freshPool = await playIntentsApi.getPool({
+            cityId: joinedIntent.cityId,
+            sport: joinedIntent.sport,
+          });
+          queryClient.setQueryData(
+            playIntentKeys.pool(joinedIntent.cityId),
+            freshPool,
+          );
+        } catch (error) {
+          console.error('[PlayIntent] Failed to refresh joined lobby:', error);
+        }
+        void queryClient.invalidateQueries({ queryKey: playIntentKeys.all });
         setIntent(null);
         replaceParams((next) => {
           next.delete('playIntent');
