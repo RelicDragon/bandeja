@@ -17,6 +17,8 @@ function isLocalhostUrl(url: string): boolean {
   return url.includes('localhost') || url.includes('127.0.0.1');
 }
 
+export { isLocalhostUrl };
+
 export function buildMessageWithButtons(
   message: string,
   buttons: TelegramButton[][],

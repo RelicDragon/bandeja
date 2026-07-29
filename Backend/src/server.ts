@@ -20,6 +20,7 @@ import { AdAnalyticsScheduler } from './services/adAnalyticsScheduler.service';
 import { BetPayoutReconcileScheduler } from './services/bets/betPayoutReconcileScheduler.service';
 import { PushReplyTokenCleanupScheduler } from './services/push/pushReplyTokenCleanupScheduler.service';
 import { WeatherForecastScheduler } from './services/weatherForecastScheduler.service';
+import { PlayIntentScheduler } from './services/playIntentScheduler.service';
 import { reportCriticalError, maybeReportFromConsole } from './services/developerAlert.service';
 import { createServer } from 'http';
 import { resumeMatchTimerSchedulesOnStartup } from './services/results/matchTimer.service';
@@ -99,6 +100,9 @@ const startServer = async () => {
     const weatherForecastScheduler = new WeatherForecastScheduler();
     weatherForecastScheduler.start();
 
+    const playIntentScheduler = new PlayIntentScheduler();
+    playIntentScheduler.start();
+
     // Create HTTP server
     const httpServer = createServer(app);
     
@@ -150,6 +154,7 @@ const startServer = async () => {
         betPayoutReconcileScheduler.stop();
         pushReplyTokenCleanupScheduler.stop();
         weatherForecastScheduler.stop();
+        playIntentScheduler.stop();
         stopQueueWorkers();
         telegramBotService.stop();
         pushNotificationService.shutdown();

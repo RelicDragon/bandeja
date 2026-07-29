@@ -80,6 +80,8 @@ const ParticipantCarouselSlot = memo(function ParticipantCarouselSlot({
   draggable,
   draggedPlayerId,
   onLeave,
+  onRemoveParticipant,
+  canRemoveParticipant,
   onDragStart,
   onDragEnd,
   onTouchStart,
@@ -99,6 +101,8 @@ const ParticipantCarouselSlot = memo(function ParticipantCarouselSlot({
   draggable: boolean;
   draggedPlayerId?: string | null;
   onLeave?: () => void;
+  onRemoveParticipant?: (userId: string) => void;
+  canRemoveParticipant?: (userId: string) => boolean;
   onDragStart?: (e: React.DragEvent, playerId: string) => void;
   onDragEnd?: () => void;
   onTouchStart?: (e: TouchEvent, playerId: string) => void;
@@ -114,6 +118,13 @@ const ParticipantCarouselSlot = memo(function ParticipantCarouselSlot({
   const unreadCount = useUnreadByUserIdBridge(participant.userId, propUnread);
   const isDragged = draggedPlayerId === participant.user.id;
   const alignForPlaces = reserveStandingPlace || place != null;
+  const canRemoveThroughHandler =
+    !!onRemoveParticipant && (canRemoveParticipant?.(participant.user.id) ?? true);
+  const canRemove =
+    canRemoveThroughHandler || (participant.user.id === userId && !!onLeave);
+  const handleRemove = canRemoveThroughHandler
+    ? () => onRemoveParticipant(participant.user.id)
+    : onLeave;
   return (
     <motion.div
       layout
@@ -135,8 +146,8 @@ const ParticipantCarouselSlot = memo(function ParticipantCarouselSlot({
         <PlayerAvatar
           player={participant.user}
           isCurrentUser={participant.user.id === userId}
-          removable={participant.user.id === userId}
-          onRemoveClick={participant.user.id === userId ? onLeave : undefined}
+          removable={canRemove}
+          onRemoveClick={canRemove ? handleRemove : undefined}
           role={shouldShowCrowns ? (participant.role as 'OWNER' | 'ADMIN' | 'PLAYER') : undefined}
           smallLayout={true}
           showName={showName}
@@ -166,6 +177,10 @@ interface PlayersCarouselProps {
   autoHideNames?: boolean;
   participantUnreadCounts?: Record<string, number>;
   onLeave?: () => void;
+  /** When set, X on any participant (not only current user). */
+  onRemoveParticipant?: (userId: string) => void;
+  /** Optional per-player guard for onRemoveParticipant. */
+  canRemoveParticipant?: (userId: string) => boolean;
   onShowPlayerList?: (gender?: 'MALE' | 'FEMALE') => void;
   draggable?: boolean;
   draggedPlayerId?: string | null;
@@ -204,6 +219,8 @@ function PlayersCarouselInner({
   levelSport,
   placeByUserId,
   standingMedalMode = 'winner',
+  onRemoveParticipant,
+  canRemoveParticipant,
 }: PlayersCarouselProps) {
   const carouselRef = useRef<HTMLDivElement>(null);
   const [showLeftFade, setShowLeftFade] = useState(false);
@@ -363,6 +380,8 @@ function PlayersCarouselInner({
                 draggable={draggable}
                 draggedPlayerId={draggedPlayerId}
                 onLeave={onLeave}
+                onRemoveParticipant={onRemoveParticipant}
+                canRemoveParticipant={canRemoveParticipant}
                 onDragStart={onDragStart}
                 onDragEnd={onDragEnd}
                 onTouchStart={onTouchStart}

@@ -137,6 +137,8 @@ model User {
   chatMutes                       ChatMute[]
   chatTranslationPreferences      ChatTranslationPreference[]
   gameSubscriptions               GameSubscription[]
+  playIntents                     PlayIntent[]
+  matchProposalMembers            MatchProposalMember[]
   groupChannelParticipants        GroupChannelParticipant[]
   groupInvitesSent                GroupChannelInvite[]        @relation("GroupInviteSender")
   groupInvitesReceived            GroupChannelInvite[]        @relation("GroupInviteReceiver")
@@ -262,6 +264,8 @@ model City {
   leagues                 League[]
   games                   Game[]
   gameSubscriptions       GameSubscription[]
+  playIntents             PlayIntent[]
+  matchProposals          MatchProposal[]
   groupChannels           GroupChannel[]         @relation("GroupChannelCity")
   marketItems             MarketItem[]
   cancelledGames          CancelledGame[]
@@ -2913,6 +2917,7 @@ model NotificationPreference {
   sendWalletNotifications      Boolean                 @default(true)
   sendMarketplaceNotifications Boolean                 @default(true)
   sendTeamNotifications        Boolean                 @default(true)
+  sendPlayIntentNotifications  Boolean                 @default(true)
   createdAt                    DateTime                @default(now())
   updatedAt                    DateTime                @updatedAt
   user                         User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -2979,6 +2984,118 @@ model GameSubscription {
   @@index([cityId])
   @@index([isActive])
   @@index([userId, isActive, cityId])
+}
+
+enum PlayIntentStatus {
+  OPEN
+  MATCHED
+  CONSUMED
+  EXPIRED
+  CANCELLED
+}
+
+enum PlayIntentTimeOfDay {
+  ANYTIME
+  MORNING
+  AFTERNOON
+  EVENING
+  CUSTOM
+}
+
+enum MatchProposalStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  EXPIRED
+  CONVERTED_TO_GAME
+}
+
+enum MatchProposalMemberResponse {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+model PlayIntent {
+  id           String              @id @default(cuid())
+  userId       String
+  cityId       String
+  sport        Sport
+  entityType   EntityType          @default(GAME)
+  dateKeys     String[]
+  timeOfDay    PlayIntentTimeOfDay @default(ANYTIME)
+  startTime    String?
+  endTime      String?
+  clubIds      String[]
+  minLevel     Float?
+  maxLevel     Float?
+  genderTeams  GenderTeam          @default(ANY)
+  status       PlayIntentStatus    @default(OPEN)
+  expiresAt    DateTime
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  city         City                @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  proposalMembers MatchProposalMember[]
+
+  @@index([userId, status])
+  @@index([cityId, sport, status])
+  @@index([cityId, sport, entityType, status])
+  @@index([status, expiresAt])
+  @@index([cityId, sport, status, expiresAt])
+}
+
+model MatchProposal {
+  id                 String              @id @default(cuid())
+  cityId             String
+  sport              Sport
+  entityType         EntityType          @default(GAME)
+  status             MatchProposalStatus @default(PENDING)
+  dateKeys           String[]
+  startTime          String?
+  endTime            String?
+  clubIds            String[]
+  suggestedStartTime DateTime?
+  expiresAt          DateTime
+  gameId             String?
+  hostUserId         String?
+  rematchKey         String
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  city               City                @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  members            MatchProposalMember[]
+
+  @@index([status, expiresAt])
+  @@index([rematchKey, createdAt])
+  @@index([cityId, sport, status])
+}
+
+model MatchProposalMember {
+  id         String                       @id @default(cuid())
+  proposalId String
+  userId     String
+  intentId   String
+  response   MatchProposalMemberResponse  @default(PENDING)
+  isHost     Boolean                      @default(false)
+  createdAt  DateTime                     @default(now())
+  updatedAt  DateTime                     @updatedAt
+  proposal   MatchProposal                @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  user       User                         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  intent     PlayIntent                   @relation(fields: [intentId], references: [id], onDelete: Cascade)
+
+  @@unique([proposalId, userId])
+  @@index([userId])
+  @@index([intentId])
+  @@index([proposalId])
+}
+
+model PlayIntentGameOwnerPing {
+  id        String   @id @default(cuid())
+  gameId    String   @unique
+  ownerId   String
+  createdAt DateTime @default(now())
+
+  @@index([ownerId, createdAt])
 }
 
 model Bet {

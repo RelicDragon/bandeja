@@ -29,6 +29,7 @@ interface NotificationData {
   type: string;
   data?: {
     gameId?: string;
+    proposalId?: string;
     bugId?: string;
     marketItemId?: string;
     userId?: string;
@@ -385,11 +386,21 @@ class PushNotificationService {
       case 'GAME_CANCELLED':
       case 'MATCH_TIMER_CAP':
       case 'NEW_GAME':
+      case 'GAME_MATCHES_INTENT':
+      case 'INTENT_PLAYERS_FOR_GAME':
         if (this.tryNavigateToBracketSchedule(payload)) {
           break;
         }
         if (payload?.gameId) {
           navigationService.navigateToGame(payload.gameId);
+        }
+        break;
+
+      case 'PLAY_INTENT_MATCH':
+        if (payload?.proposalId) {
+          navigationService.navigateToFind({ proposal: payload.proposalId });
+        } else {
+          navigationService.navigateToFind({ lobby: 1 });
         }
         break;
 

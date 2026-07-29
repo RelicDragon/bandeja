@@ -1,0 +1,934 @@
+@keyframes courtLobbyAuroraDrift {
+  0%,
+  100% {
+    transform: translate3d(-2%, -1%, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(3%, 2%, 0) scale(1.08);
+  }
+}
+
+@keyframes courtLobbyScan {
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+@keyframes courtLobbyZoneBreathe {
+  0%,
+  100% {
+    opacity: 0.42;
+  }
+  50% {
+    opacity: 0.78;
+  }
+}
+
+@keyframes courtLobbyAvatarHalo {
+  0%,
+  100% {
+    opacity: 0.52;
+    transform: scale(0.94);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.1);
+  }
+}
+
+@keyframes courtLobbyReAddOrbit {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes courtLobbyReAddGlow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 3px rgb(251 191 36 / 0.14),
+      0 0 15px rgb(245 158 11 / 0.28),
+      0 9px 23px rgb(2 6 23 / 0.5);
+  }
+  50% {
+    box-shadow:
+      0 0 0 5px rgb(251 191 36 / 0.22),
+      0 0 25px rgb(245 158 11 / 0.48),
+      0 9px 23px rgb(2 6 23 / 0.5);
+  }
+}
+
+@keyframes courtLobbySelfPresence {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 2px rgb(52 211 153 / 0.14),
+      0 0 10px rgb(52 211 153 / 0.24),
+      0 5px 11px rgb(2 6 23 / 0.45);
+  }
+  50% {
+    box-shadow:
+      0 0 0 3px rgb(52 211 153 / 0.2),
+      0 0 15px rgb(52 211 153 / 0.34),
+      0 5px 11px rgb(2 6 23 / 0.45);
+  }
+}
+
+@keyframes courtLobbyShuffleSpin {
+  from {
+    transform: rotate(0deg) scale(0.88);
+  }
+  70% {
+    transform: rotate(390deg) scale(1.08);
+  }
+  to {
+    transform: rotate(360deg) scale(1);
+  }
+}
+
+.court-lobby-arena {
+  isolation: isolate;
+  border: 1px solid rgb(148 163 184 / 0.16);
+  background:
+    radial-gradient(ellipse 37% 34% at 50% 54%, rgb(16 185 129 / 0.3), transparent 72%),
+    radial-gradient(circle at 12% 10%, rgb(56 189 248 / 0.14), transparent 32%),
+    radial-gradient(circle at 88% 92%, rgb(45 212 191 / 0.13), transparent 35%),
+    linear-gradient(152deg, #071725 0%, #061713 48%, #07131f 100%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.08),
+    inset 0 -30px 70px rgb(2 6 23 / 0.35),
+    0 20px 45px rgb(2 6 23 / 0.18);
+  transition:
+    border-color 300ms ease,
+    background 300ms ease,
+    box-shadow 300ms ease;
+}
+
+.court-lobby-arena::after {
+  position: absolute;
+  z-index: 40;
+  inset: 0;
+  border: 1px solid rgb(255 255 255 / 0.06);
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 5px rgb(2 6 23 / 0.1);
+  content: '';
+  pointer-events: none;
+}
+
+.court-lobby-arena__aurora {
+  position: absolute;
+  z-index: -1;
+  inset: -30%;
+  background:
+    radial-gradient(circle at 35% 45%, rgb(14 165 233 / 0.2), transparent 22%),
+    radial-gradient(circle at 62% 55%, rgb(52 211 153 / 0.2), transparent 25%),
+    radial-gradient(circle at 72% 32%, rgb(99 102 241 / 0.1), transparent 20%);
+  filter: blur(30px);
+  animation: courtLobbyAuroraDrift 10s ease-in-out infinite;
+}
+
+.court-lobby-arena__grid {
+  position: absolute;
+  z-index: 0;
+  inset: 13% -12% -24%;
+  background-image:
+    linear-gradient(rgb(125 211 252 / 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(125 211 252 / 0.07) 1px, transparent 1px);
+  background-size: 25px 25px;
+  mask-image: linear-gradient(to bottom, transparent 0%, rgb(0 0 0 / 0.8) 45%, transparent 93%);
+  transform: perspective(300px) rotateX(56deg) scale(1.35);
+  transform-origin: center bottom;
+  pointer-events: none;
+}
+
+.court-lobby-arena__scan {
+  position: absolute;
+  z-index: 1;
+  left: 50%;
+  top: 54%;
+  width: 150%;
+  aspect-ratio: 1;
+  border-radius: 999px;
+  background: conic-gradient(
+    from 10deg,
+    transparent 0deg 317deg,
+    rgb(94 234 212 / 0.025) 330deg,
+    rgb(94 234 212 / 0.15) 355deg,
+    transparent 360deg
+  );
+  mask-image: radial-gradient(circle, transparent 0 15%, #000 52%, transparent 71%);
+  transform: translate(-50%, -50%);
+  animation: courtLobbyScan 14s linear infinite;
+  pointer-events: none;
+}
+
+.court-lobby-arena__hint {
+  position: absolute;
+  z-index: 30;
+  top: 14px;
+  left: 14px;
+  width: max-content;
+  max-width: calc(100% - 122px);
+  margin: 0;
+  overflow: hidden;
+  color: rgb(226 232 240 / 0.76);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.055em;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.court-lobby-arena__guide {
+  position: absolute;
+  z-index: 30;
+  top: 11px;
+  right: 46px;
+  display: flex;
+  height: 18px;
+  align-items: center;
+  gap: 3px;
+  color: rgb(110 231 183 / 0.75);
+}
+
+.court-lobby-arena__shuffle {
+  position: absolute;
+  z-index: 35;
+  top: 7px;
+  right: 8px;
+  display: grid;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  place-items: center;
+  border: 1px solid rgb(110 231 183 / 0.24);
+  border-radius: 999px;
+  background: rgb(6 78 59 / 0.5);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.1),
+    0 5px 14px rgb(2 6 23 / 0.26);
+  color: rgb(167 243 208 / 0.88);
+  cursor: pointer;
+  transition:
+    border-color 180ms ease,
+    background 180ms ease,
+    color 180ms ease,
+    transform 180ms ease;
+}
+
+.court-lobby-arena__shuffle:not(:disabled):hover,
+.court-lobby-arena__shuffle:not(:disabled):focus-visible {
+  border-color: rgb(110 231 183 / 0.58);
+  background: rgb(5 150 105 / 0.62);
+  color: white;
+  transform: scale(1.06);
+}
+
+.court-lobby-arena__shuffle:focus-visible {
+  outline: 2px solid rgb(167 243 208 / 0.9);
+  outline-offset: 2px;
+}
+
+.court-lobby-arena__shuffle:disabled {
+  cursor: default;
+  opacity: 0.38;
+}
+
+.court-lobby-arena__shuffle svg.is-shuffling {
+  animation: courtLobbyShuffleSpin 620ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.court-lobby-arena__guide-edge,
+.court-lobby-arena__guide-core,
+.court-lobby-arena__guide-track i {
+  display: block;
+  border-radius: 999px;
+}
+
+.court-lobby-arena__guide-edge {
+  width: 4px;
+  height: 4px;
+  background: rgb(125 211 252 / 0.35);
+}
+
+.court-lobby-arena__guide-core {
+  width: 8px;
+  height: 8px;
+  border: 1px solid rgb(167 243 208 / 0.8);
+  background: rgb(52 211 153 / 0.5);
+  box-shadow: 0 0 9px rgb(52 211 153 / 0.8);
+}
+
+.court-lobby-arena__guide-track {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.court-lobby-arena__guide-track i {
+  width: 8px;
+  height: 1px;
+  background: rgb(125 211 252 / 0.22);
+}
+
+.court-lobby-arena__guide-track i:nth-child(2) {
+  background: rgb(94 234 212 / 0.4);
+}
+
+.court-lobby-arena__guide-track i:nth-child(3) {
+  background: rgb(110 231 183 / 0.72);
+}
+
+.court-lobby-arena__zone {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  top: 54%;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.court-lobby-arena__zone::before {
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  content: '';
+}
+
+.court-lobby-arena__zone--far {
+  width: 91%;
+  height: 74%;
+  border: 1px solid rgb(125 211 252 / 0.13);
+  box-shadow:
+    0 0 25px rgb(14 165 233 / 0.035),
+    inset 0 0 35px rgb(14 165 233 / 0.025);
+}
+
+.court-lobby-arena__zone--far::before {
+  border-top: 1px solid rgb(125 211 252 / 0.22);
+  border-bottom: 1px solid rgb(125 211 252 / 0.06);
+}
+
+.court-lobby-arena__zone--mid {
+  width: 68%;
+  height: 57%;
+  border: 1px dashed rgb(94 234 212 / 0.21);
+}
+
+.court-lobby-arena__zone--near {
+  width: 44%;
+  height: 39%;
+  border: 1px solid rgb(110 231 183 / 0.33);
+  background: radial-gradient(ellipse, rgb(52 211 153 / 0.07), transparent 72%);
+  box-shadow:
+    0 0 28px rgb(52 211 153 / 0.06),
+    inset 0 0 24px rgb(52 211 153 / 0.06);
+  animation: courtLobbyZoneBreathe 3.6s ease-in-out infinite;
+}
+
+.court-lobby-arena__game-core {
+  position: absolute;
+  z-index: 12;
+  left: 50%;
+  top: 54%;
+  display: flex;
+  width: 94px;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.court-lobby-arena__court {
+  display: block;
+  width: 72px;
+  height: 78px;
+  filter:
+    drop-shadow(0 0 8px rgb(52 211 153 / 0.22))
+    drop-shadow(0 8px 10px rgb(2 6 23 / 0.35));
+}
+
+.court-lobby-arena__core-label {
+  display: block;
+  max-width: 94px;
+  overflow: hidden;
+  color: rgb(236 253 245 / 0.92);
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  line-height: 1;
+  text-overflow: ellipsis;
+  text-shadow: 0 0 10px rgb(52 211 153 / 0.7);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.court-lobby-arena__game-core.is-ready .court-lobby-arena__court {
+  filter:
+    drop-shadow(0 0 9px rgb(163 230 53 / 0.38))
+    drop-shadow(0 9px 11px rgb(2 6 23 / 0.38));
+}
+
+.court-lobby-arena__game-core[data-sport='TABLE_TENNIS'] .court-lobby-arena__court {
+  width: 68px;
+  height: 74px;
+}
+
+.court-lobby-arena__game-core[data-sport='SQUASH'] .court-lobby-arena__court {
+  width: 68px;
+  height: 76px;
+}
+
+.court-lobby-arena__self-marker {
+  position: absolute;
+  z-index: 22;
+  left: calc(50% + 33px);
+  top: calc(54% - 6px);
+  display: block;
+  transform: translate(-50%, -50%);
+  transition:
+    left 140ms linear,
+    top 140ms linear;
+  will-change: left, top;
+  pointer-events: none;
+}
+
+.court-lobby-arena__self-marker::before {
+  position: absolute;
+  z-index: -1;
+  right: calc(100% - 4px);
+  bottom: 2px;
+  width: 9px;
+  height: 1px;
+  background: linear-gradient(90deg, rgb(110 231 183 / 0.12), rgb(110 231 183 / 0.72));
+  box-shadow: 0 0 5px rgb(52 211 153 / 0.45);
+  content: '';
+  transform: rotate(-28deg);
+  transform-origin: right center;
+  transition: opacity 220ms ease;
+}
+
+.court-lobby-arena__self-marker[data-orbiting='true']::before {
+  opacity: 0;
+}
+
+.court-lobby-arena__self-avatar {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  flex: 0 0 26px;
+  place-items: center;
+  overflow: hidden;
+  border: 1.5px solid rgb(167 243 208 / 0.92);
+  border-radius: 999px;
+  background: linear-gradient(145deg, #334155, #0f172a);
+  color: white;
+  font-size: 8px;
+  font-weight: 800;
+  line-height: 1;
+  animation: courtLobbySelfPresence 3.8s ease-in-out infinite;
+}
+
+.court-lobby-arena__avatar {
+  z-index: 20;
+  display: grid;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: white;
+  font-size: 11px;
+  font-weight: 750;
+  line-height: 1;
+  outline: none;
+  transition:
+    left 140ms linear,
+    top 140ms linear,
+    width 520ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    height 520ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    opacity 220ms ease,
+    filter 220ms ease;
+  will-change: left, top, width, height;
+}
+
+.court-lobby-arena__avatar::after {
+  position: absolute;
+  z-index: -1;
+  inset: -7px;
+  border: 1px solid rgb(125 211 252 / 0.12);
+  border-radius: inherit;
+  content: '';
+}
+
+.court-lobby-arena__avatar[data-readd='true'] {
+  opacity: 1 !important;
+  filter: none;
+}
+
+.court-lobby-arena__avatar[data-in-proposal='true'] {
+  filter: none;
+}
+
+.court-lobby-arena__avatar[data-readd='true']::before {
+  position: absolute;
+  z-index: 2;
+  inset: -7px;
+  border: 1.5px dashed rgb(253 224 71 / 0.92);
+  border-radius: inherit;
+  box-shadow: 0 0 14px rgb(245 158 11 / 0.42);
+  content: '';
+  pointer-events: none;
+  animation: courtLobbyReAddOrbit 12s linear infinite;
+}
+
+.court-lobby-arena__avatar-halo,
+.court-lobby-arena__avatar-image {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.court-lobby-arena__avatar-halo {
+  z-index: -1;
+  background: rgb(56 189 248 / 0.22);
+  filter: blur(7px);
+}
+
+.court-lobby-arena__avatar-image {
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 1.5px solid rgb(186 230 253 / 0.45);
+  background: linear-gradient(145deg, #334155, #0f172a);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.14),
+    0 7px 18px rgb(2 6 23 / 0.48);
+}
+
+.court-lobby-arena__avatar[data-affinity='far'] {
+  filter: grayscale(0.78) saturate(0.55);
+}
+
+.court-lobby-arena__avatar[data-affinity='mid'] .court-lobby-arena__avatar-image {
+  border-color: rgb(103 232 249 / 0.58);
+}
+
+.court-lobby-arena__avatar[data-affinity='near'] .court-lobby-arena__avatar-image {
+  border: 2px solid rgb(110 231 183 / 0.86);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.18),
+    0 0 0 3px rgb(16 185 129 / 0.11),
+    0 8px 21px rgb(2 6 23 / 0.5);
+}
+
+.court-lobby-arena__avatar[data-affinity='near'] .court-lobby-arena__avatar-halo,
+.court-lobby-arena__avatar[data-in-proposal='true'] .court-lobby-arena__avatar-halo {
+  background: rgb(52 211 153 / 0.45);
+  animation: courtLobbyAvatarHalo 2.8s ease-in-out infinite;
+}
+
+.court-lobby-arena__avatar[data-readd='true'] .court-lobby-arena__avatar-halo {
+  background: rgb(251 191 36 / 0.5);
+  animation: courtLobbyAvatarHalo 2.8s ease-in-out infinite;
+}
+
+.court-lobby-arena__avatar[data-in-proposal='true'] .court-lobby-arena__avatar-image {
+  border: 2px solid rgb(217 249 157 / 0.95);
+  box-shadow:
+    0 0 0 3px rgb(163 230 53 / 0.13),
+    0 0 22px rgb(52 211 153 / 0.34),
+    0 9px 23px rgb(2 6 23 / 0.52);
+}
+
+.court-lobby-arena__avatar[data-readd='true'] .court-lobby-arena__avatar-image {
+  border: 2px solid rgb(253 224 71 / 0.96);
+  animation: courtLobbyReAddGlow 2.4s ease-in-out infinite;
+}
+
+.court-lobby-arena__avatar[data-favorite='true'] .court-lobby-arena__avatar-image {
+  border-color: rgb(250 204 21 / 0.95);
+  box-shadow:
+    0 0 0 3px rgb(250 204 21 / 0.13),
+    0 0 18px rgb(250 204 21 / 0.24),
+    0 9px 23px rgb(2 6 23 / 0.52);
+}
+
+.court-lobby-arena__avatar:not(:disabled):hover,
+.court-lobby-arena__avatar:not(:disabled):focus-visible {
+  z-index: 25;
+  filter: none;
+}
+
+.court-lobby-arena__avatar[data-actionable='true'],
+.court-lobby-arena__avatar[data-actionable='true']:not(:disabled):hover,
+.court-lobby-arena__avatar[data-actionable='true']:not(:disabled):focus-visible {
+  z-index: 30;
+}
+
+.court-lobby-arena__avatar:not(:disabled):hover .court-lobby-arena__avatar-image,
+.court-lobby-arena__avatar:not(:disabled):focus-visible .court-lobby-arena__avatar-image {
+  box-shadow:
+    0 0 0 3px rgb(255 255 255 / 0.16),
+    0 0 24px rgb(94 234 212 / 0.4),
+    0 10px 24px rgb(2 6 23 / 0.55);
+  transform: scale(1.08);
+}
+
+.court-lobby-arena__avatar[data-busy-in-game='true'] {
+  filter: grayscale(0.92) saturate(0.32);
+}
+
+.court-lobby-arena__avatar[data-busy-in-game='true'] .court-lobby-arena__avatar-halo {
+  background: transparent;
+  animation: none;
+}
+
+.court-lobby-arena__avatar[data-busy-in-game='true'] .court-lobby-arena__avatar-image {
+  border-color: rgb(148 163 184 / 0.34);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.08),
+    0 5px 14px rgb(2 6 23 / 0.32);
+}
+
+.court-lobby-arena__avatar:focus-visible .court-lobby-arena__avatar-image {
+  outline: 2px solid rgb(255 255 255 / 0.9);
+  outline-offset: 3px;
+}
+
+.court-lobby-arena__avatar:disabled {
+  cursor: wait;
+}
+
+.court-lobby-arena__avatar-check {
+  position: absolute;
+  z-index: 3;
+  right: -2px;
+  bottom: -1px;
+  display: grid;
+  width: 16px;
+  height: 16px;
+  place-items: center;
+  border: 2px solid #071713;
+  border-radius: 999px;
+  background: #a3e635;
+  color: #0f291e;
+  box-shadow: 0 0 10px rgb(163 230 53 / 0.55);
+}
+
+.court-lobby-arena__avatar[data-in-proposal='true'] .court-lobby-arena__avatar-check {
+  right: -3px;
+  bottom: -2px;
+  width: 13px;
+  height: 13px;
+  border-width: 1.5px;
+}
+
+.court-lobby-arena__avatar-readd {
+  position: absolute;
+  z-index: 4;
+  right: -3px;
+  bottom: -2px;
+  display: grid;
+  width: 18px;
+  height: 18px;
+  place-items: center;
+  border: 2px solid #071713;
+  border-radius: 999px;
+  background: #facc15;
+  color: #422006;
+  box-shadow: 0 0 11px rgb(245 158 11 / 0.68);
+}
+
+.court-lobby-arena__chip {
+  z-index: 30;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  border-radius: 999px;
+  background: rgb(2 6 23 / 0.62);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.06),
+    0 8px 22px rgb(2 6 23 / 0.24);
+  padding: 5px 10px;
+  color: rgb(226 232 240 / 0.82);
+  font-size: 10px;
+  font-weight: 650;
+  line-height: 1;
+  backdrop-filter: blur(12px);
+}
+
+.court-lobby-arena__chip--action {
+  border-color: rgb(110 231 183 / 0.28);
+  background: rgb(6 78 59 / 0.74);
+  color: rgb(236 253 245 / 0.95);
+}
+
+html:not(.dark) .court-lobby-arena {
+  border-color: rgb(14 116 144 / 0.2);
+  background:
+    radial-gradient(ellipse 37% 34% at 50% 54%, rgb(16 185 129 / 0.2), transparent 72%),
+    radial-gradient(circle at 12% 10%, rgb(56 189 248 / 0.17), transparent 34%),
+    radial-gradient(circle at 88% 92%, rgb(45 212 191 / 0.14), transparent 36%),
+    linear-gradient(152deg, #f4fbff 0%, #ecf9f4 48%, #eef7fb 100%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.9),
+    inset 0 -30px 70px rgb(15 118 110 / 0.06),
+    0 18px 42px rgb(15 23 42 / 0.12);
+}
+
+html:not(.dark) .court-lobby-arena::after {
+  border-color: rgb(255 255 255 / 0.72);
+  box-shadow: inset 0 0 0 5px rgb(15 118 110 / 0.025);
+}
+
+html:not(.dark) .court-lobby-arena__aurora {
+  background:
+    radial-gradient(circle at 35% 45%, rgb(14 165 233 / 0.17), transparent 22%),
+    radial-gradient(circle at 62% 55%, rgb(16 185 129 / 0.18), transparent 25%),
+    radial-gradient(circle at 72% 32%, rgb(99 102 241 / 0.07), transparent 20%);
+}
+
+html:not(.dark) .court-lobby-arena__grid {
+  background-image:
+    linear-gradient(rgb(14 116 144 / 0.09) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(14 116 144 / 0.09) 1px, transparent 1px);
+}
+
+html:not(.dark) .court-lobby-arena__scan {
+  background: conic-gradient(
+    from 10deg,
+    transparent 0deg 317deg,
+    rgb(13 148 136 / 0.02) 330deg,
+    rgb(13 148 136 / 0.13) 355deg,
+    transparent 360deg
+  );
+}
+
+html:not(.dark) .court-lobby-arena__hint {
+  color: rgb(15 23 42 / 0.7);
+}
+
+html:not(.dark) .court-lobby-arena__guide {
+  color: rgb(5 150 105 / 0.82);
+}
+
+html:not(.dark) .court-lobby-arena__guide-edge {
+  background: rgb(2 132 199 / 0.48);
+}
+
+html:not(.dark) .court-lobby-arena__guide-core {
+  border-color: rgb(5 150 105 / 0.65);
+  background: rgb(16 185 129 / 0.48);
+  box-shadow: 0 0 8px rgb(16 185 129 / 0.42);
+}
+
+html:not(.dark) .court-lobby-arena__guide-track i {
+  background: rgb(2 132 199 / 0.26);
+}
+
+html:not(.dark) .court-lobby-arena__guide-track i:nth-child(2) {
+  background: rgb(13 148 136 / 0.42);
+}
+
+html:not(.dark) .court-lobby-arena__guide-track i:nth-child(3) {
+  background: rgb(5 150 105 / 0.65);
+}
+
+html:not(.dark) .court-lobby-arena__zone--far {
+  border-color: rgb(2 132 199 / 0.17);
+  box-shadow:
+    0 0 25px rgb(2 132 199 / 0.035),
+    inset 0 0 35px rgb(2 132 199 / 0.025);
+}
+
+html:not(.dark) .court-lobby-arena__zone--far::before {
+  border-top-color: rgb(2 132 199 / 0.28);
+  border-bottom-color: rgb(2 132 199 / 0.08);
+}
+
+html:not(.dark) .court-lobby-arena__zone--mid {
+  border-color: rgb(13 148 136 / 0.25);
+}
+
+html:not(.dark) .court-lobby-arena__zone--near {
+  border-color: rgb(5 150 105 / 0.34);
+  background: radial-gradient(ellipse, rgb(16 185 129 / 0.09), transparent 72%);
+  box-shadow:
+    0 0 28px rgb(16 185 129 / 0.08),
+    inset 0 0 24px rgb(16 185 129 / 0.07);
+}
+
+html:not(.dark) .court-lobby-arena__court {
+  filter:
+    drop-shadow(0 0 7px rgb(16 185 129 / 0.2))
+    drop-shadow(0 7px 9px rgb(15 23 42 / 0.2));
+}
+
+html:not(.dark) .court-lobby-arena__game-core.is-ready .court-lobby-arena__court {
+  filter:
+    drop-shadow(0 0 8px rgb(101 163 13 / 0.28))
+    drop-shadow(0 8px 10px rgb(15 23 42 / 0.2));
+}
+
+html:not(.dark) .court-lobby-arena__core-label {
+  color: rgb(6 95 70 / 0.9);
+  text-shadow:
+    0 1px 0 rgb(255 255 255 / 0.9),
+    0 0 8px rgb(16 185 129 / 0.24);
+}
+
+html:not(.dark) .court-lobby-arena__shuffle {
+  border-color: rgb(5 150 105 / 0.2);
+  background: rgb(255 255 255 / 0.72);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.95),
+    0 5px 12px rgb(15 23 42 / 0.1);
+  color: rgb(5 150 105 / 0.84);
+}
+
+html:not(.dark) .court-lobby-arena__shuffle:not(:disabled):hover,
+html:not(.dark) .court-lobby-arena__shuffle:not(:disabled):focus-visible {
+  border-color: rgb(5 150 105 / 0.45);
+  background: rgb(236 253 245 / 0.94);
+  color: rgb(4 120 87);
+}
+
+html:not(.dark) .court-lobby-arena__self-marker::before {
+  background: linear-gradient(90deg, rgb(5 150 105 / 0.08), rgb(5 150 105 / 0.6));
+  box-shadow: 0 0 4px rgb(5 150 105 / 0.25);
+}
+
+html:not(.dark) .court-lobby-arena__self-avatar {
+  border-color: rgb(5 150 105 / 0.78);
+  background: linear-gradient(145deg, #64748b, #334155);
+}
+
+html:not(.dark) .court-lobby-arena__avatar::after {
+  border-color: rgb(2 132 199 / 0.16);
+}
+
+html:not(.dark) .court-lobby-arena__avatar-halo {
+  background: rgb(14 165 233 / 0.2);
+}
+
+html:not(.dark) .court-lobby-arena__avatar-image {
+  border-color: rgb(14 116 144 / 0.38);
+  background: linear-gradient(145deg, #64748b, #334155);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.2),
+    0 7px 16px rgb(15 23 42 / 0.2);
+}
+
+html:not(.dark) .court-lobby-arena__avatar[data-affinity='near'] .court-lobby-arena__avatar-image {
+  border-color: rgb(5 150 105 / 0.8);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.2),
+    0 0 0 3px rgb(16 185 129 / 0.1),
+    0 8px 18px rgb(15 23 42 / 0.2);
+}
+
+html:not(.dark) .court-lobby-arena__avatar[data-in-proposal='true'] .court-lobby-arena__avatar-image {
+  border-color: rgb(101 163 13 / 0.88);
+  box-shadow:
+    0 0 0 3px rgb(132 204 22 / 0.12),
+    0 0 18px rgb(16 185 129 / 0.23),
+    0 8px 20px rgb(15 23 42 / 0.22);
+}
+
+html:not(.dark) .court-lobby-arena__avatar[data-readd='true']::before {
+  border-color: rgb(217 119 6 / 0.82);
+  box-shadow: 0 0 13px rgb(245 158 11 / 0.34);
+}
+
+html:not(.dark) .court-lobby-arena__avatar[data-readd='true'] .court-lobby-arena__avatar-image {
+  border-color: rgb(234 179 8 / 0.94);
+}
+
+html:not(.dark) .court-lobby-arena__avatar-readd {
+  border-color: #fffbeb;
+  background: #eab308;
+  color: #422006;
+  box-shadow: 0 0 10px rgb(217 119 6 / 0.44);
+}
+
+html:not(.dark) .court-lobby-arena__avatar[data-favorite='true'] .court-lobby-arena__avatar-image {
+  border-color: rgb(202 138 4 / 0.9);
+  box-shadow:
+    0 0 0 3px rgb(234 179 8 / 0.12),
+    0 0 16px rgb(234 179 8 / 0.2),
+    0 8px 20px rgb(15 23 42 / 0.22);
+}
+
+html:not(.dark) .court-lobby-arena__avatar:not(:disabled):hover .court-lobby-arena__avatar-image,
+html:not(.dark) .court-lobby-arena__avatar:not(:disabled):focus-visible .court-lobby-arena__avatar-image {
+  box-shadow:
+    0 0 0 3px rgb(255 255 255 / 0.72),
+    0 0 20px rgb(13 148 136 / 0.27),
+    0 9px 21px rgb(15 23 42 / 0.22);
+}
+
+html:not(.dark) .court-lobby-arena__avatar[data-busy-in-game='true'] .court-lobby-arena__avatar-image {
+  border-color: rgb(100 116 139 / 0.28);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.42),
+    0 5px 13px rgb(15 23 42 / 0.12);
+}
+
+html:not(.dark) .court-lobby-arena__avatar:focus-visible .court-lobby-arena__avatar-image {
+  outline-color: rgb(15 118 110 / 0.88);
+}
+
+html:not(.dark) .court-lobby-arena__avatar-check {
+  border-color: #f0fdf4;
+  box-shadow: 0 0 9px rgb(101 163 13 / 0.36);
+}
+
+html:not(.dark) .court-lobby-arena__chip {
+  border-color: rgb(15 118 110 / 0.15);
+  background: rgb(255 255 255 / 0.76);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.9),
+    0 7px 18px rgb(15 23 42 / 0.1);
+  color: rgb(30 41 59 / 0.82);
+}
+
+html:not(.dark) .court-lobby-arena__chip--action {
+  border-color: rgb(5 150 105 / 0.34);
+  background: rgb(5 150 105 / 0.86);
+  color: white;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .court-lobby-arena__aurora,
+  .court-lobby-arena__scan,
+  .court-lobby-arena__zone--near,
+  .court-lobby-arena__self-avatar,
+  .court-lobby-arena__shuffle svg.is-shuffling,
+  .court-lobby-arena__avatar-halo,
+  .court-lobby-arena__avatar[data-readd='true']::before,
+  .court-lobby-arena__avatar[data-readd='true'] .court-lobby-arena__avatar-image {
+    animation: none;
+  }
+
+  .court-lobby-arena__avatar {
+    transition: none;
+  }
+
+  .court-lobby-arena__self-marker {
+    transition: none;
+  }
+}
+
+@media (max-width: 370px) {
+  .court-lobby-arena__hint {
+    left: 12px;
+    max-width: calc(100% - 24px);
+    font-size: 9px;
+  }
+
+  .court-lobby-arena__guide {
+    display: none;
+  }
+}

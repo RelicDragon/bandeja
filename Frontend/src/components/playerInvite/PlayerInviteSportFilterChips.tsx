@@ -32,7 +32,7 @@ export function PlayerInviteSportFilterChips({
       <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
         {t('sportFilter.section')}
       </p>
-      <div className="flex flex-wrap gap-2 py-0.5 pr-0.5">
+      <div className="flex flex-nowrap gap-2 overflow-x-auto py-0.5 pr-0.5 scrollbar-hide">
         <button type="button" onClick={() => onChange('all')} className={chipClass(isActive('all'))}>
           {t('sportFilter.allSports')}
         </button>

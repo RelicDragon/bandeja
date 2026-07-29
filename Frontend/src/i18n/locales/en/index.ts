@@ -23,6 +23,7 @@ import gameDetails from './gameDetails.json';
 import gameFormat from './gameFormat.json';
 import gameResults from './gameResults.json';
 import gameSubscriptions from './gameSubscriptions.json';
+import playIntent from './playIntent.json';
 import games from './games.json';
 import healthWorkout from './healthWorkout.json';
 import home from './home.json';
@@ -83,6 +84,7 @@ export default {
     ...gameFormat,
     ...gameResults,
     ...gameSubscriptions,
+    ...playIntent,
     ...games,
     ...healthWorkout,
     ...home,

@@ -1,7 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import './MonthCalendar.css';
 import { ChevronLeft, ChevronRight, Calendar, List, Users, Swords, Dumbbell, Trophy, Beer } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, isToday, addMonths, subMonths, getMonth, getYear, startOfDay } from 'date-fns';
 import { enGB, ru, es, sr, cs } from 'date-fns/locale';
@@ -11,6 +10,7 @@ import { Game } from '@/types';
 import { useAuthStore } from '@/store/authStore';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { formatShortWeekday, formatCompactMonthHeader } from '@/utils/dateFormat';
+import { StatusPulseDot } from '@/components/StatusPulseDot';
 import {
   DEFAULT_AVAILABLE_GAME_PANEL_FILTERS,
   type AvailableGamePanelFilterState,
@@ -593,14 +593,8 @@ export const MonthCalendar = ({
             >
               <span>{format(day, 'd')}</span>
               {unreadCount > 0 && (
-                <div
-                  className={`
-                    absolute -top-0 left-1/2 z-10 h-2 w-2 -translate-x-1/2 rounded-full
-                    border border-white dark:border-gray-900 calendar-unread-dot
-                    bg-red-500 dark:bg-red-400
-                    ${!isCurrentMonth ? 'opacity-60' : ''}
-                  `}
-                  aria-hidden
+                <StatusPulseDot
+                  className={`absolute -top-0 left-1/2 z-10 -translate-x-1/2 ${!isCurrentMonth ? 'opacity-60' : ''}`}
                 />
               )}
               {gameCount > 0 && (

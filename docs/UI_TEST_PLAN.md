@@ -1435,6 +1435,36 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | GS-04 | Delete subscription | Delete confirm | Removed |
 | GS-05 | Club filter in form | Pick clubs | Saved filters |
 
+### 16.1 Play Intents (Find lobby)
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| PI-01 | Want-to-play CTA | Open Find while logged in and not looking | Compact “I want to play” strip is the topmost Find content, above the hero ad; same slot as Looking |
+| PI-02 | Create intent | Tap CTA → pick Today + Anytime → Start looking | The same drawer animates from intent form to radar; idle CTA swaps to Looking status strip |
+| PI-03 | Stop looking | Tap × on status strip → Don’t want to play | Confirm overlay (Cancel / Don’t want to play) animates over strip without layout jump; confirm cancels intent; Cancel restores × |
+| PI-04 | Empty lobby | Looking with no other pool members → tap status strip | Honest empty copy; no fake avatars |
+| PI-05 | Proposal sheet | Open `/find?proposal=<id>` (or tap ready strip) → tap Not now → reopen lobby | Not now only dismisses the drawer; ready match remains and Create is still available when reopened |
+| PI-19 | Friend ring in lobby | Favorite is in intersecting pool | Avatar has golden favorite ring |
+| PI-20 | Full pool + affinity weight | Looking with mixed-compatible peers | Lobby shows all city peers; near=large+highlighted, mid=smaller, far=smallest/muted outer orbit (not hidden) |
+| PI-21 | Roster edit | Match ready with 5+ intersecting → remove one → tap pool avatar | Removed returns to pool; tap adds into vacancy; Create enabled at full party |
+| PI-22 | Cluster progress UI | Open lobby while compatible players have pending proposals or are already playing in an actual game | Pending proposals do not reserve players; only actual-game participants are excluded from the free count and shown muted |
+| PI-23 | Direct match editor | Open a lobby with compatible free players → remove one from the roster → add one from the court → tap I’ll create the game inside the editor | Best compatible players start selected around the center court and in the editable roster; available unselected players use a yellow glow and plus; empty slots remain visible below party size; there is no separate footer; Create Game always appears inside the editor and opens with every currently selected player invited |
+| PI-06 | Host handoff | Confirm as first confirmer | Navigates to create-game prefilled; invitees preselected |
+| PI-07 | Push deep link | Tap PLAY_INTENT_MATCH notification | Opens Find with proposal sheet |
+| PI-08 | Game-fit deep link | Tap GAME_MATCHES_INTENT notification | Opens matching game details |
+| PI-09 | Idle Find not bloated | Browse Find without looking | Only one strip above list; no mid-list or below-list play-intent chrome |
+| PI-10 | Matched strip stays | After peer match (MATCHED intent) | Status strip stays; “Match ready” — not idle CTA |
+| PI-11 | Host abandon create | Confirm → create-game → Back without saving | Proposal released to PENDING; others can confirm |
+| PI-12 | Non-host waiting | Second user opens proposal after host claimed | Waiting copy; Not now available |
+| PI-13 | Compose more options | CTA → More options → pick club + level band + Custom time → Start | Intent saves with clubIds, min/max, CUSTOM window |
+| PI-14 | Mute play-intent notifs | Profile → Notification settings → turn off Want to play | No play-intent push/Telegram; chat prefs unchanged |
+| PI-15 | My tab strip | Open My tab while logged in | Same Want to play / Looking strip sits below stories (and hero ad if shown) and above Bookings/Teams/Leagues switch |
+| PI-16 | Activity selector | CTA → pick sport or Bar (first control) → Start | Intent uses chosen sport/BAR; More options clubs filter (bars-only for Bar; sport clubs otherwise) |
+| PI-17 | Sport ≠ Find filter | On Find with sport A selected, compose sport B (or Bar) → Start | Looking strip still shows (city-scoped); stop cancels that intent |
+| PI-18 | My ↔ Find parity | Start looking on Find → open My (same city) | Looking strip present; stop on either clears both |
+| PI-24 | Change intent in radar | Open radar → Change intent → edit day/time/options → Start looking | Same drawer animates to the prefilled intent form, then back to radar with the replacement intent |
+| PI-25 | Cancel intent in radar | Open radar → Cancel intent → Cancel, then repeat and confirm Don’t want to play | First Cancel restores radar actions; confirm cancels intent, closes drawer, and restores idle CTA |
+
 ---
 
 ## 17. Club admin (`/my-clubs/*`)

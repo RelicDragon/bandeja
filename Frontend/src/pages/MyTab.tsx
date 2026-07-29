@@ -16,6 +16,7 @@ import {
 } from '@/components/home';
 import { SportQuestionnairePrompt } from '@/components/sportQuestionnaire';
 import { StoriesRail } from '@/components/stories/StoriesRail';
+import { PlayIntentHomeStrip } from '@/components/playIntent/PlayIntentFindBar';
 import { AdSlot } from '@/components/sponsorSlots';
 import { AD_PLACEMENTS } from '@/shared/adPlacements';
 import { useRegisterAdSportContext } from '@/hooks/useAdPlacements';
@@ -491,6 +492,9 @@ export const MyTab = () => {
               <StoriesRail />
             </AnimatedMount>
           )}
+          {user && (
+            <PlayIntentHomeStrip cityId={user.currentCity?.id} sport={primarySport} />
+          )}
           {!hideHomeHeroAd && user && (
             <AdSlot placement={AD_PLACEMENTS.HOME_HERO} />
           )}
@@ -597,6 +601,9 @@ export const MyTab = () => {
             <AnimatedMount layout>
               <StoriesRail />
             </AnimatedMount>
+          )}
+          {user && (
+            <PlayIntentHomeStrip cityId={user.currentCity?.id} sport={primarySport} />
           )}
           {!hideHomeHeroAd && user && (
             <AdSlot placement={AD_PLACEMENTS.HOME_HERO} />

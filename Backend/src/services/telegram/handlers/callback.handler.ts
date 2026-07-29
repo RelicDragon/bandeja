@@ -2,13 +2,14 @@ import { Middleware } from 'grammy';
 import { BotContext, PendingTelegramInput } from '../types';
 import { ChatType } from '@prisma/client';
 import prisma from '../../../config/database';
+import { config } from '../../../config/env';
 import { t } from '../../../utils/translations';
 import telegramNotificationService from '../notification.service';
 import { acceptInviteFromTelegram, declineInviteFromTelegram } from '../invite.service';
 import { acceptUserTeamInviteFromTelegram, declineUserTeamInviteFromTelegram } from '../userTeamInviteTelegram.service';
 import { escapeMarkdown, escapeHTML, getUserLanguage } from '../utils';
 import { updateInviteTelegramMessage } from '../inviteMessageUpdate';
-
+import { buildMessageWithButtons, isLocalhostUrl } from '../shared/message-builder';
 export function createCallbackHandler(
   pendingReplies: Map<string, PendingTelegramInput>
 ): Middleware<BotContext> {
@@ -294,6 +295,98 @@ export function createCallbackHandler(
             text: 'Unauthorized',
             show_alert: true
           });
+        }
+      } else if (query.data.startsWith('sip:')) {
+        const parts = query.data.split(':');
+        if (parts.length !== 3) {
+          await ctx.answerCallbackQuery({ text: 'Invalid request', show_alert: true });
+          return;
+        }
+
+        const [, proposalId, userId] = parts;
+        const telegramId = ctx.telegramId;
+
+        const user = await prisma.user.findUnique({
+          where: { id: userId },
+          select: { telegramId: true, language: true },
+        });
+
+        if (user?.telegramId !== telegramId) {
+          await ctx.answerCallbackQuery({ text: 'Unauthorized', show_alert: true });
+          return;
+        }
+
+        const membership = await prisma.matchProposalMember.findFirst({
+          where: { proposalId, userId },
+          select: { id: true },
+        });
+        if (!membership) {
+          await ctx.answerCallbackQuery({
+            text: t('telegram.matchNotFound', user.language || 'en') || 'Match not found',
+            show_alert: true,
+          });
+          return;
+        }
+
+        const lang = getUserLanguage(user.language, ctx.from?.language_code);
+        const deepLink = `${config.frontendUrl}/find?proposal=${proposalId}`;
+
+        try {
+          if (!isLocalhostUrl(config.frontendUrl)) {
+            await ctx.answerCallbackQuery({ url: deepLink });
+            return;
+          }
+
+          await ctx.answerCallbackQuery({
+            text: t('telegram.openingMatch', lang) || 'Opening match…',
+            show_alert: false,
+          });
+
+          const proposal = await prisma.matchProposal.findUnique({
+            where: { id: proposalId },
+            include: {
+              members: {
+                include: { user: { select: { firstName: true } } },
+              },
+            },
+          });
+          if (!proposal) return;
+
+          const names = proposal.members
+            .map((m) => m.user.firstName || '—')
+            .filter(Boolean)
+            .join(', ');
+          const when = [proposal.dateKeys.join(', '), proposal.startTime, proposal.endTime]
+            .filter(Boolean)
+            .join(' · ');
+          const card = [
+            `🎾 ${escapeMarkdown(t('playIntent.matchTitle', lang) || 'Players ready to play')}`,
+            names ? `👥 ${escapeMarkdown(names)}` : null,
+            when ? `📅 ${escapeMarkdown(when)}` : null,
+            escapeMarkdown(t('playIntent.matchBody', lang) || 'Open to form a game together'),
+          ]
+            .filter(Boolean)
+            .join('\n\n');
+
+          const { message: finalMessage, options } = buildMessageWithButtons(
+            card,
+            [[{ text: t('telegram.viewMatch', lang) || 'View match', url: deepLink }]],
+            lang,
+          );
+
+          if (query.message && 'chat' in query.message && query.message.chat && 'id' in query.message.chat) {
+            await ctx.api.sendMessage(query.message.chat.id, finalMessage, options);
+          }
+        } catch (error) {
+          console.error('Error opening play-intent match:', error);
+          try {
+            await ctx.answerCallbackQuery({
+              text: t('telegram.errorLoadingMatch', lang) || 'Failed to open match',
+              show_alert: true,
+            });
+          } catch {
+            /* already answered */
+          }
         }
       } else if (query.data.startsWith('rm:')) {
         const parts = query.data.split(':');

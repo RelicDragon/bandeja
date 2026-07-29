@@ -426,12 +426,7 @@ export const GameStartSection = ({
   const content = (
     <div className="space-y-4">
       {clubPickerSection}
-      {showClubPicker && !selectedClub ? (
-        <div className="flex items-center justify-center gap-2 rounded-lg border border-dashed border-gray-200 dark:border-gray-700 px-3 py-2.5 text-sm text-gray-500 dark:text-gray-400">
-          <ArrowUp size={16} className="shrink-0" aria-hidden />
-          <span className="text-center">{t('createGame.selectClubFirst')}</span>
-        </div>
-      ) : (
+      {showClubPicker && !selectedClub ? null : (
         <>
           {dateSection}
           {afterClubScheduling}

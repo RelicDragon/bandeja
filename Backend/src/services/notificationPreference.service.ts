@@ -29,6 +29,9 @@ export const NOTIFICATION_TYPE_TO_PREF: Record<NotificationType, PreferenceKey> 
   [NotificationType.TEAM_MEMBER_REMOVED]: PreferenceKey.SEND_TEAM_NOTIFICATIONS,
   [NotificationType.TEAM_MEMBER_LEFT]: PreferenceKey.SEND_TEAM_NOTIFICATIONS,
   [NotificationType.TEAM_DELETED]: PreferenceKey.SEND_TEAM_NOTIFICATIONS,
+  [NotificationType.PLAY_INTENT_MATCH]: PreferenceKey.SEND_PLAY_INTENT_NOTIFICATIONS,
+  [NotificationType.GAME_MATCHES_INTENT]: PreferenceKey.SEND_PLAY_INTENT_NOTIFICATIONS,
+  [NotificationType.INTENT_PLAYERS_FOR_GAME]: PreferenceKey.SEND_PLAY_INTENT_NOTIFICATIONS,
 };
 
 export type NotificationPreferenceData = {
@@ -40,9 +43,12 @@ export type NotificationPreferenceData = {
   sendWalletNotifications: boolean;
   sendMarketplaceNotifications: boolean;
   sendTeamNotifications: boolean;
+  sendPlayIntentNotifications: boolean;
 };
 
-export const DEFAULT_PREFERENCES: Omit<NotificationPreferenceData, 'channelType'> = {
+type PrefFlags = Omit<NotificationPreferenceData, 'channelType'>;
+
+export const DEFAULT_PREFERENCES: PrefFlags = {
   sendMessages: true,
   sendInvites: true,
   sendDirectMessages: true,
@@ -50,7 +56,60 @@ export const DEFAULT_PREFERENCES: Omit<NotificationPreferenceData, 'channelType'
   sendWalletNotifications: true,
   sendMarketplaceNotifications: true,
   sendTeamNotifications: true,
+  sendPlayIntentNotifications: true,
 };
+
+function toData(
+  channelType: NotificationChannelType,
+  p: PrefFlags,
+): NotificationPreferenceData {
+  return {
+    channelType,
+    sendMessages: p.sendMessages,
+    sendInvites: p.sendInvites,
+    sendDirectMessages: p.sendDirectMessages,
+    sendReminders: p.sendReminders,
+    sendWalletNotifications: p.sendWalletNotifications,
+    sendMarketplaceNotifications: p.sendMarketplaceNotifications,
+    sendTeamNotifications: p.sendTeamNotifications,
+    sendPlayIntentNotifications: p.sendPlayIntentNotifications,
+  };
+}
+
+function countTrue(p: PrefFlags): number {
+  return [
+    p.sendMessages,
+    p.sendInvites,
+    p.sendDirectMessages,
+    p.sendReminders,
+    p.sendWalletNotifications,
+    p.sendMarketplaceNotifications,
+    p.sendTeamNotifications,
+    p.sendPlayIntentNotifications,
+  ].filter(Boolean).length;
+}
+
+function flagsFromRow(p: {
+  sendMessages: boolean;
+  sendInvites: boolean;
+  sendDirectMessages: boolean;
+  sendReminders: boolean;
+  sendWalletNotifications: boolean;
+  sendMarketplaceNotifications: boolean;
+  sendTeamNotifications: boolean;
+  sendPlayIntentNotifications: boolean;
+}): PrefFlags {
+  return {
+    sendMessages: p.sendMessages,
+    sendInvites: p.sendInvites,
+    sendDirectMessages: p.sendDirectMessages,
+    sendReminders: p.sendReminders,
+    sendWalletNotifications: p.sendWalletNotifications,
+    sendMarketplaceNotifications: p.sendMarketplaceNotifications,
+    sendTeamNotifications: p.sendTeamNotifications,
+    sendPlayIntentNotifications: p.sendPlayIntentNotifications,
+  };
+}
 
 export class NotificationPreferenceService {
   static async getForUser(userId: string): Promise<NotificationPreferenceData[]> {
@@ -68,60 +127,42 @@ export class NotificationPreferenceService {
     const hasTelegram = !!user?.telegramId;
     const hasPush = pushCount > 0;
     return prefs
-      .filter((p) => (p.channelType === NotificationChannelType.TELEGRAM && hasTelegram) || (p.channelType === NotificationChannelType.PUSH && hasPush))
-      .map((p) => ({
-        channelType: p.channelType,
-        sendMessages: p.sendMessages,
-        sendInvites: p.sendInvites,
-        sendDirectMessages: p.sendDirectMessages,
-        sendReminders: p.sendReminders,
-        sendWalletNotifications: p.sendWalletNotifications,
-        sendMarketplaceNotifications: p.sendMarketplaceNotifications,
-        sendTeamNotifications: p.sendTeamNotifications,
-      }));
+      .filter(
+        (p) =>
+          (p.channelType === NotificationChannelType.TELEGRAM && hasTelegram) ||
+          (p.channelType === NotificationChannelType.PUSH && hasPush),
+      )
+      .map((p) => toData(p.channelType, flagsFromRow(p)));
   }
 
   static async ensurePreferenceForChannel(
     userId: string,
-    channelType: NotificationChannelType
+    channelType: NotificationChannelType,
   ): Promise<NotificationPreferenceData | null> {
     const existing = await prisma.notificationPreference.findUnique({
       where: { userId_channelType: { userId, channelType } },
     });
     if (existing) {
-      return {
-        channelType: existing.channelType,
-        sendMessages: existing.sendMessages,
-        sendInvites: existing.sendInvites,
-        sendDirectMessages: existing.sendDirectMessages,
-        sendReminders: existing.sendReminders,
-        sendWalletNotifications: existing.sendWalletNotifications,
-        sendMarketplaceNotifications: existing.sendMarketplaceNotifications,
-        sendTeamNotifications: existing.sendTeamNotifications,
-      };
+      return toData(existing.channelType, flagsFromRow(existing));
     }
 
     const otherPrefs = await prisma.notificationPreference.findMany({
       where: { userId },
     });
 
-    const basePrefs = otherPrefs.length > 0
-      ? (() => {
-          const mostTrue = otherPrefs.reduce((best, p) => {
-            const trueCount = [p.sendMessages, p.sendInvites, p.sendDirectMessages, p.sendReminders, p.sendWalletNotifications, p.sendMarketplaceNotifications, p.sendTeamNotifications].filter(Boolean).length;
-            return trueCount > best.count ? { prefs: p, count: trueCount } : best;
-          }, { prefs: otherPrefs[0], count: 0 });
-          return {
-            sendMessages: mostTrue.prefs.sendMessages,
-            sendInvites: mostTrue.prefs.sendInvites,
-            sendDirectMessages: mostTrue.prefs.sendDirectMessages,
-            sendReminders: mostTrue.prefs.sendReminders,
-            sendWalletNotifications: mostTrue.prefs.sendWalletNotifications,
-            sendMarketplaceNotifications: mostTrue.prefs.sendMarketplaceNotifications,
-            sendTeamNotifications: mostTrue.prefs.sendTeamNotifications,
-          };
-        })()
-      : DEFAULT_PREFERENCES;
+    const basePrefs =
+      otherPrefs.length > 0
+        ? (() => {
+            const mostTrue = otherPrefs.reduce(
+              (best, p) => {
+                const trueCount = countTrue(flagsFromRow(p));
+                return trueCount > best.count ? { prefs: flagsFromRow(p), count: trueCount } : best;
+              },
+              { prefs: flagsFromRow(otherPrefs[0]), count: 0 },
+            );
+            return mostTrue.prefs;
+          })()
+        : DEFAULT_PREFERENCES;
 
     const created = await prisma.notificationPreference.create({
       data: {
@@ -131,22 +172,13 @@ export class NotificationPreferenceService {
       },
     });
 
-    return {
-      channelType: created.channelType,
-      sendMessages: created.sendMessages,
-      sendInvites: created.sendInvites,
-      sendDirectMessages: created.sendDirectMessages,
-      sendReminders: created.sendReminders,
-      sendWalletNotifications: created.sendWalletNotifications,
-      sendMarketplaceNotifications: created.sendMarketplaceNotifications,
-      sendTeamNotifications: created.sendTeamNotifications,
-    };
+    return toData(created.channelType, flagsFromRow(created));
   }
 
   static async updatePreference(
     userId: string,
     channelType: NotificationChannelType,
-    data: Partial<Omit<NotificationPreferenceData, 'channelType'>>
+    data: Partial<PrefFlags>,
   ): Promise<NotificationPreferenceData | null> {
     const updated = await prisma.notificationPreference.upsert({
       where: { userId_channelType: { userId, channelType } },
@@ -158,52 +190,36 @@ export class NotificationPreferenceService {
       },
       update: data,
     });
-    return {
-      channelType: updated.channelType,
-      sendMessages: updated.sendMessages,
-      sendInvites: updated.sendInvites,
-      sendDirectMessages: updated.sendDirectMessages,
-      sendReminders: updated.sendReminders,
-      sendWalletNotifications: updated.sendWalletNotifications,
-      sendMarketplaceNotifications: updated.sendMarketplaceNotifications,
-      sendTeamNotifications: updated.sendTeamNotifications,
-    };
+    return toData(updated.channelType, flagsFromRow(updated));
   }
 
   static async updateMany(
     userId: string,
-    preferences: Array<{ channelType: NotificationChannelType } & Partial<Omit<NotificationPreferenceData, 'channelType'>>>
+    preferences: Array<{ channelType: NotificationChannelType } & Partial<PrefFlags>>,
   ): Promise<NotificationPreferenceData[]> {
     const results = await Promise.all(
       preferences.map((pref) => {
         const { channelType, ...rest } = pref;
         return this.updatePreference(userId, channelType, rest);
-      })
+      }),
     );
     return results.filter((r): r is NotificationPreferenceData => r != null);
   }
 
   static async getPreferenceForChannel(
     userId: string,
-    channelType: NotificationChannelType
+    channelType: NotificationChannelType,
   ): Promise<NotificationPreferenceData | null> {
     const pref = await prisma.notificationPreference.findUnique({
       where: { userId_channelType: { userId, channelType } },
     });
     if (!pref) return null;
-    return {
-      channelType: pref.channelType,
-      sendMessages: pref.sendMessages,
-      sendInvites: pref.sendInvites,
-      sendDirectMessages: pref.sendDirectMessages,
-      sendReminders: pref.sendReminders,
-      sendWalletNotifications: pref.sendWalletNotifications,
-      sendMarketplaceNotifications: pref.sendMarketplaceNotifications,
-      sendTeamNotifications: pref.sendTeamNotifications,
-    };
+    return toData(pref.channelType, flagsFromRow(pref));
   }
 
-  static async getPreferenceMapForUser(userId: string): Promise<Record<NotificationChannelType, NotificationPreferenceData | null>> {
+  static async getPreferenceMapForUser(
+    userId: string,
+  ): Promise<Record<NotificationChannelType, NotificationPreferenceData | null>> {
     const prefs = await this.getForUser(userId);
     const map: Record<string, NotificationPreferenceData | null> = {
       PUSH: null,
@@ -218,8 +234,8 @@ export class NotificationPreferenceService {
   }
 
   static async getEffectivePreferencesForNotification(userId: string): Promise<{
-    telegram: { sendMessages: boolean; sendInvites: boolean; sendDirectMessages: boolean; sendReminders: boolean; sendWalletNotifications: boolean; sendMarketplaceNotifications: boolean; sendTeamNotifications: boolean } | null;
-    push: { sendMessages: boolean; sendInvites: boolean; sendDirectMessages: boolean; sendReminders: boolean; sendWalletNotifications: boolean; sendMarketplaceNotifications: boolean; sendTeamNotifications: boolean } | null;
+    telegram: PrefFlags | null;
+    push: PrefFlags | null;
   }> {
     const [user, prefs, pushCount] = await Promise.all([
       prisma.user.findUnique({
@@ -246,50 +262,42 @@ export class NotificationPreferenceService {
 
     const hasTelegram = !!user.telegramId;
     const hasPush = pushCount > 0;
-    const prefMap: Record<string, NotificationPreferenceData | null> = { PUSH: null, TELEGRAM: null };
+    const prefMap: Record<string, PrefFlags | null> = { PUSH: null, TELEGRAM: null };
     for (const p of prefs) {
-      if ((p.channelType === NotificationChannelType.TELEGRAM && hasTelegram) || (p.channelType === NotificationChannelType.PUSH && hasPush)) {
-        prefMap[p.channelType] = {
-          channelType: p.channelType,
-          sendMessages: p.sendMessages,
-          sendInvites: p.sendInvites,
-          sendDirectMessages: p.sendDirectMessages,
-          sendReminders: p.sendReminders,
-          sendWalletNotifications: p.sendWalletNotifications,
-          sendMarketplaceNotifications: p.sendMarketplaceNotifications,
-          sendTeamNotifications: p.sendTeamNotifications,
-        };
+      if (
+        (p.channelType === NotificationChannelType.TELEGRAM && hasTelegram) ||
+        (p.channelType === NotificationChannelType.PUSH && hasPush)
+      ) {
+        prefMap[p.channelType] = flagsFromRow(p);
       }
     }
 
-    const toPref = (p: { sendMessages: boolean; sendInvites: boolean; sendDirectMessages: boolean; sendReminders: boolean; sendWalletNotifications: boolean; sendMarketplaceNotifications: boolean; sendTeamNotifications: boolean }) => p;
-
     const telegramPref = hasTelegram
-      ? (prefMap.TELEGRAM
-          ? toPref(prefMap.TELEGRAM)
-          : /* REMOVE_BY_10_02_2026 */ toPref({
-              sendMessages: user.sendTelegramMessages,
-              sendInvites: user.sendTelegramInvites,
-              sendDirectMessages: user.sendTelegramDirectMessages,
-              sendReminders: user.sendTelegramReminders,
-              sendWalletNotifications: user.sendTelegramWalletNotifications,
-              sendMarketplaceNotifications: true,
-              sendTeamNotifications: true,
-            }))
+      ? prefMap.TELEGRAM ??
+        /* REMOVE_BY_10_02_2026 */ {
+          sendMessages: user.sendTelegramMessages,
+          sendInvites: user.sendTelegramInvites,
+          sendDirectMessages: user.sendTelegramDirectMessages,
+          sendReminders: user.sendTelegramReminders,
+          sendWalletNotifications: user.sendTelegramWalletNotifications,
+          sendMarketplaceNotifications: true,
+          sendTeamNotifications: true,
+          sendPlayIntentNotifications: true,
+        }
       : null;
 
     const pushPref = hasPush
-      ? (prefMap.PUSH
-          ? toPref(prefMap.PUSH)
-          : /* REMOVE_BY_10_02_2026 */ toPref({
-              sendMessages: user.sendPushMessages,
-              sendInvites: user.sendPushInvites,
-              sendDirectMessages: user.sendPushDirectMessages,
-              sendReminders: user.sendPushReminders,
-              sendWalletNotifications: user.sendPushWalletNotifications,
-              sendMarketplaceNotifications: true,
-              sendTeamNotifications: true,
-            }))
+      ? prefMap.PUSH ??
+        /* REMOVE_BY_10_02_2026 */ {
+          sendMessages: user.sendPushMessages,
+          sendInvites: user.sendPushInvites,
+          sendDirectMessages: user.sendPushDirectMessages,
+          sendReminders: user.sendPushReminders,
+          sendWalletNotifications: user.sendPushWalletNotifications,
+          sendMarketplaceNotifications: true,
+          sendTeamNotifications: true,
+          sendPlayIntentNotifications: true,
+        }
       : null;
 
     return { telegram: telegramPref, push: pushPref };
@@ -310,7 +318,10 @@ export class NotificationPreferenceService {
     return false;
   }
 
-  static async deletePreferenceForChannel(userId: string, channelType: NotificationChannelType): Promise<void> {
+  static async deletePreferenceForChannel(
+    userId: string,
+    channelType: NotificationChannelType,
+  ): Promise<void> {
     await prisma.notificationPreference.deleteMany({
       where: { userId, channelType },
     });
@@ -319,7 +330,7 @@ export class NotificationPreferenceService {
   static async doesUserAllow(
     userId: string,
     channelType: NotificationChannelType,
-    preferenceKey: PreferenceKey
+    preferenceKey: PreferenceKey,
   ): Promise<boolean> {
     const hasCh = await this.hasChannel(userId, channelType);
     if (!hasCh) return false;

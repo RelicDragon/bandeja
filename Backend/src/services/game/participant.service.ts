@@ -164,6 +164,9 @@ export class ParticipantService {
       await BetService.cancelBetsWithUserInCondition(gameId, userId).catch(err =>
         console.error('Failed to cancel bets with user in condition:', err)
       );
+      void import('../playIntent/playIntentMatch.service')
+        .then(({ PlayIntentMatchService }) => PlayIntentMatchService.onPublicGameSlotsOpened(gameId))
+        .catch((err) => console.error('Play intent slot-open match failed:', err));
       return 'games.leftSuccessfully';
     }
 

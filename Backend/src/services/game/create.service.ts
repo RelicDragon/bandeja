@@ -598,6 +598,13 @@ export class GameCreateService {
       notificationService.sendNewGameNotification(finalGame, cityId, userId).catch((error) => {
         console.error('Failed to send new game notifications:', error);
       });
+      void import('../playIntent/playIntentMatch.service')
+        .then(({ PlayIntentMatchService }) =>
+          PlayIntentMatchService.onPublicGameCreated(finalGame.id, userId),
+        )
+        .catch((error) => {
+          console.error('Failed to match play intents to new game:', error);
+        });
     }
 
     if (!finalGame) return finalGame;

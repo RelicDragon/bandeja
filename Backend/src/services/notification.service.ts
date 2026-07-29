@@ -57,6 +57,32 @@ class NotificationService {
     };
 
     if (shouldSendTelegram) {
+      const isPlayIntent =
+        type === NotificationType.PLAY_INTENT_MATCH ||
+        type === NotificationType.GAME_MATCHES_INTENT ||
+        type === NotificationType.INTENT_PLAYERS_FOR_GAME;
+      if (isPlayIntent) {
+        try {
+          const user = await prisma.user.findUnique({
+            where: { id: userId },
+            select: { telegramId: true },
+          });
+          if (user?.telegramId) {
+            await telegramNotificationService.sendPlayIntentNotification(userId, user.telegramId, {
+              type,
+              title: payload.title,
+              body: payload.body,
+              data: {
+                proposalId: payload.data?.proposalId,
+                gameId: payload.data?.gameId,
+              },
+            });
+            results.telegram = true;
+          }
+        } catch (error) {
+          console.error('[NotificationService] Failed to send play-intent telegram:', error);
+        }
+      }
     }
 
     if (shouldSendPush) {

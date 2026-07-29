@@ -212,6 +212,8 @@
     "marketplaceNotificationsDescription": "Primajte obaveštenja o novim oglasima u vašem gradu",
     "teamNotifications": "Timske pare",
     "teamNotificationsDescription": "Pozivi, prihvatanje/odbijanje, uklanjanja i izmene tima",
+    "playIntentNotifications": "Želim da igram",
+    "playIntentNotificationsDescription": "Predlozi meča, igre koje odgovaraju želji i obaveštenja o igračima za tvoje igre",
     "enable": "Uključi",
     "disable": "Isključi",
     "notificationSettings": "Podešavanja obaveštenja",

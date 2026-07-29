@@ -709,6 +709,22 @@ export class UserMergeService {
           where: { userId: sourceId },
           data: { userId: survivorId },
         });
+        await tx.playIntent.updateMany({
+          where: { userId: sourceId },
+          data: { userId: survivorId },
+        });
+        await tx.matchProposalMember.updateMany({
+          where: { userId: sourceId },
+          data: { userId: survivorId },
+        });
+        await tx.matchProposal.updateMany({
+          where: { hostUserId: sourceId },
+          data: { hostUserId: survivorId },
+        });
+        await tx.playIntentGameOwnerPing.updateMany({
+          where: { ownerId: sourceId },
+          data: { ownerId: survivorId },
+        });
         await tx.groupChannelInvite.updateMany({
           where: { senderId: sourceId },
           data: { senderId: survivorId },

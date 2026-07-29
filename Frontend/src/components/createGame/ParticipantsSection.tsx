@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { UserPlus, Users2, Plus, Trophy, ChevronDown } from 'lucide-react';
+import { UserPlus, Users2, Plus, Trophy, ChevronDown, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button, PlayerAvatar, RangeSlider } from '@/components';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
@@ -317,16 +317,37 @@ export const ParticipantsSection = ({
               <Users2 size={16} />
               <span>{t('createGame.invitesWillBeSent', { count: invitedPlayers.length })}</span>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="space-y-1">
               {invitedPlayers.map((player) => (
-                <PlayerAvatar
+                <div
                   key={player.id}
-                  player={player}
-                  showName={false}
-                  smallLayout={true}
-                  removable={true}
-                  onRemoveClick={onRemoveInvitedPlayer ? () => onRemoveInvitedPlayer(player.id) : undefined}
-                />
+                  className="relative flex items-center gap-3 rounded-xl border border-transparent bg-white/80 p-2.5 pr-10 transition-colors hover:border-blue-200 hover:bg-white dark:bg-gray-800/70 dark:hover:border-blue-800 dark:hover:bg-gray-800"
+                >
+                  <PlayerAvatar
+                    player={player}
+                    showName={false}
+                    fullHideName={true}
+                    extrasmall={true}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                      {player.firstName} {player.lastName}
+                    </p>
+                    {player.verbalStatus ? (
+                      <p className="verbal-status">{player.verbalStatus}</p>
+                    ) : null}
+                  </div>
+                  {onRemoveInvitedPlayer ? (
+                    <button
+                      type="button"
+                      onClick={() => onRemoveInvitedPlayer(player.id)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-red-600 transition hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-900/20"
+                      aria-label={t('common.remove', { defaultValue: 'Remove' })}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  ) : null}
+                </div>
               ))}
             </div>
           </div>

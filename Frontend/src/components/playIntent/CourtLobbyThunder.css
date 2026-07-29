@@ -1,0 +1,70 @@
+@keyframes courtLobbyThunderFlicker {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  8% {
+    opacity: 0.85;
+  }
+  14% {
+    opacity: 0.15;
+  }
+  22% {
+    opacity: 0.7;
+  }
+  40% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.court-lobby-thunder__glow,
+.court-lobby-thunder__core {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  animation: courtLobbyThunderFlicker 1.35s ease-in-out infinite;
+}
+
+.court-lobby-thunder__bolt--strong .court-lobby-thunder__glow {
+  stroke: rgb(110 231 183 / 0.3);
+  stroke-width: 1.25;
+}
+
+.court-lobby-thunder__bolt--strong .court-lobby-thunder__core {
+  stroke: rgb(217 249 157 / 0.82);
+  stroke-width: 0.3;
+}
+
+.court-lobby-thunder__bolt--soft .court-lobby-thunder__glow {
+  stroke: rgb(125 211 252 / 0.2);
+  stroke-width: 0.85;
+}
+
+.court-lobby-thunder__bolt--soft .court-lobby-thunder__core {
+  stroke: rgb(207 250 254 / 0.48);
+  stroke-width: 0.24;
+}
+
+html:not(.dark) .court-lobby-thunder__bolt--strong .court-lobby-thunder__glow {
+  stroke: rgb(5 150 105 / 0.22);
+}
+
+html:not(.dark) .court-lobby-thunder__bolt--strong .court-lobby-thunder__core {
+  stroke: rgb(4 120 87 / 0.68);
+}
+
+html:not(.dark) .court-lobby-thunder__bolt--soft .court-lobby-thunder__glow {
+  stroke: rgb(2 132 199 / 0.16);
+}
+
+html:not(.dark) .court-lobby-thunder__bolt--soft .court-lobby-thunder__core {
+  stroke: rgb(3 105 161 / 0.4);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .court-lobby-thunder {
+    display: none;
+  }
+}

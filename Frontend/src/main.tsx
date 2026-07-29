@@ -80,4 +80,3 @@ if ('serviceWorker' in navigator && !isCapacitor()) {
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <App />
 );
-

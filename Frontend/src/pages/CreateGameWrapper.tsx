@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useLocation, Navigate, useNavigate } from 'react-router-dom';
 import { CreateGame } from './CreateGame';
 import { EntityType, Game } from '@/types';
@@ -6,6 +6,7 @@ import type { CreateFlowIntent, CreateTemplateId } from '@/sport/createFlow';
 import { createGameDataFromDeepLinkSearch } from '@shared/gameBooking/parseCreateGameDeepLinkSearch';
 import { useShellNavStore } from '@/store/shellNavStore';
 import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
+import { playIntentsApi } from '@/api/playIntents';
 
 export const CreateGameWrapper = () => {
   const location = useLocation();
@@ -15,6 +16,8 @@ export const CreateGameWrapper = () => {
     initialGameData?: Partial<Game>;
     createIntent?: CreateFlowIntent;
     selectedTemplateId?: CreateTemplateId;
+    invitedPlayerIds?: string[];
+    matchProposalId?: string;
   };
   const queryInitial = useMemo(
     () => createGameDataFromDeepLinkSearch(location.search),
@@ -30,14 +33,19 @@ export const CreateGameWrapper = () => {
   );
   const initialCreateIntent = state?.createIntent;
   const initialTemplateId = state?.selectedTemplateId;
+  const matchProposalId = state?.matchProposalId;
+  const convertedRef = useRef(false);
   const { setBottomTabsVisible } = useShellNavStore();
-  
+
   useEffect(() => {
     setBottomTabsVisible(false);
     return () => {
       setBottomTabsVisible(true);
+      if (matchProposalId && !convertedRef.current) {
+        void playIntentsApi.releaseProposal(matchProposalId).catch(() => {});
+      }
     };
-  }, [setBottomTabsVisible]);
+  }, [setBottomTabsVisible, matchProposalId]);
 
   useBackButtonHandler(() => {
     navigate('/', { replace: true });
@@ -55,6 +63,11 @@ export const CreateGameWrapper = () => {
       initialCreateIntent={initialCreateIntent}
       initialTemplateId={initialTemplateId}
       initialBookingIds={queryInitial.bookingIds}
+      initialInvitedPlayerIds={state?.invitedPlayerIds}
+      matchProposalId={matchProposalId}
+      onMatchProposalConverted={() => {
+        convertedRef.current = true;
+      }}
     />
   );
 };

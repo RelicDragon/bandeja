@@ -103,7 +103,7 @@ export const PlayerListModal = ({
   const authUser = useAuthStore((s) => s.user);
   const isFavorite = useFavoritesStore((state) => state.isFavorite);
   const invitableMaxSocial = usePlayersStore((s) => s.invitableMaxSocialLevel);
-  const { getUserMetadata } = usePlayersStore();
+  const getUserMetadata = usePlayersStore((s) => s.getUserMetadata);
 
   const [players, setPlayers] = useState<BasicUser[]>([]);
   const [readyTeams, setReadyTeams] = useState<UserTeam[]>([]);
@@ -623,7 +623,7 @@ export const PlayerListModal = ({
           </div>
         ) : (
           <>
-            <div className="flex-shrink-0 px-2.5 pt-3">
+            <div className="flex-shrink-0 px-2.5 pt-3 pb-2">
               <div className="relative">
                 <Search className="pointer-events-none absolute left-3.5 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-gray-400 dark:text-gray-500" />
                 <input
@@ -636,126 +636,121 @@ export const PlayerListModal = ({
               </div>
             </div>
 
-            {listHasSourceRows && gameSport && (
-              <div className="flex-shrink-0 px-2.5 pt-2">
-                <PlayerInviteSportFilterChips
-                  gameSport={gameSport}
-                  extraSports={inviteExtraSports}
-                  filter={inviteSportFilter}
-                  onChange={setInviteSportFilter}
-                />
-              </div>
-            )}
-
-            {listHasSourceRows && showTeams && (
-              <div className="flex flex-shrink-0 justify-center px-2.5 pt-2">
-                <SegmentedSwitch
-                  tabs={inviteListKindTabs}
-                  activeId={inviteListKind}
-                  onChange={(id) => setInviteListKind(id as 'all' | 'users' | 'teams')}
-                  showOnlyActiveTabText={false}
-                  layoutId="player-invite-list-kind"
-                />
-              </div>
-            )}
-
-            {listHasSourceRows && (
-              <div className="flex-shrink-0 px-2.5 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setFiltersOpen((v) => !v)}
-                  className="w-full flex items-center justify-between rounded-xl border border-gray-200/90 bg-white/90 px-2.5 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:border-primary-300 hover:text-primary-700 dark:border-gray-700 dark:bg-gray-900/80 dark:text-gray-200 dark:hover:border-primary-600 dark:hover:text-primary-300"
-                >
-                  <span className="flex items-center gap-2">
-                    <span>{t('playerInvite.filtersTitle')}</span>
-                    <span className="rounded-full bg-primary-100 px-2 py-0.5 text-xs font-bold text-primary-700 dark:bg-primary-900/60 dark:text-primary-300">
-                      {segmentFilteredEntries.length} / {preFilterCount}
-                    </span>
-                  </span>
-                  <span className="flex items-center gap-2 text-xs font-medium">
-                    {hasActiveFilters && (
-                      <span
-                        role="button"
-                        tabIndex={0}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          resetFilters();
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            resetFilters();
-                          }
-                        }}
-                        className="inline-flex items-center gap-1 rounded-full border border-gray-200/90 bg-white/80 px-2 py-0.5 text-[11px] font-medium text-gray-600 shadow-sm transition hover:border-primary-300 hover:text-primary-700 active:scale-[0.98] dark:border-gray-600 dark:bg-gray-800/80 dark:text-gray-300 dark:hover:border-primary-600 dark:hover:text-primary-200"
-                      >
-                        <RotateCcw className="h-3 w-3" />
-                        {t('playerInvite.reset')}
-                      </span>
-                    )}
-                    {filtersOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                  </span>
-                </button>
-
-                {filtersOpen && (
-                  <div className="pt-2">
-                    <PlayerListFilterBar
-                      filters={filters}
-                      onChange={setFilters}
-                      socialLevelMax={socialLevelSliderMax}
-                      genderLocked={filterGender ?? null}
-                      onApplyClose={() => setFiltersOpen(false)}
-                    />
+            <div className="relative z-10 flex min-h-0 flex-1 flex-col">
+              {!listHasSourceRows ? (
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                  <div className="mb-3 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-gray-100 to-gray-50 shadow-inner dark:from-gray-800 dark:to-gray-900">
+                    <UserPlus className="h-8 w-8 text-gray-400 dark:text-gray-500" />
                   </div>
-                )}
-              </div>
-            )}
-
-            {!filtersOpen && (
-              <div className="relative z-10 flex min-h-0 flex-1 flex-col">
-                {!listHasSourceRows ? (
-                  <div className="flex flex-col items-center justify-center py-16 text-center">
-                    <div className="mb-3 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-gray-100 to-gray-50 shadow-inner dark:from-gray-800 dark:to-gray-900">
-                      <UserPlus className="h-8 w-8 text-gray-400 dark:text-gray-500" />
-                    </div>
-                    <p className="text-gray-600 dark:text-gray-400">{t('invites.noPlayersAvailable')}</p>
-                  </div>
-                ) : segmentFilteredEntries.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-16 text-center px-1">
-                    <p className="text-gray-600 dark:text-gray-400">{t('common.noResults') || 'No results found'}</p>
-                    {showInviteFriendCta && (
-                      <div className="mt-5 flex w-full max-w-sm justify-center">
-                        <InviteFriendToBandejaButton />
+                  <p className="text-gray-600 dark:text-gray-400">{t('invites.noPlayersAvailable')}</p>
+                </div>
+              ) : (
+                <PlayerInviteVirtualList
+                  entries={segmentFilteredEntries}
+                  renderEntry={renderEntry}
+                  className={`min-h-0 flex-1 overflow-y-auto scrollbar-auto px-2.5 ${
+                    showCountHint ? 'pb-28' : 'pb-20'
+                  }`}
+                  header={
+                    <div className="space-y-2 pb-2">
+                      {gameSport ? (
+                        <PlayerInviteSportFilterChips
+                          gameSport={gameSport}
+                          extraSports={inviteExtraSports}
+                          filter={inviteSportFilter}
+                          onChange={setInviteSportFilter}
+                        />
+                      ) : null}
+                      {showTeams ? (
+                        <div className="flex justify-center">
+                          <SegmentedSwitch
+                            tabs={inviteListKindTabs}
+                            activeId={inviteListKind}
+                            onChange={(id) => setInviteListKind(id as 'all' | 'users' | 'teams')}
+                            showOnlyActiveTabText={false}
+                            layoutId="player-invite-list-kind"
+                          />
+                        </div>
+                      ) : null}
+                      <div>
+                        <button
+                          type="button"
+                          onClick={() => setFiltersOpen((v) => !v)}
+                          className="w-full flex items-center justify-between rounded-xl border border-gray-200/90 bg-white/90 px-2.5 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:border-primary-300 hover:text-primary-700 dark:border-gray-700 dark:bg-gray-900/80 dark:text-gray-200 dark:hover:border-primary-600 dark:hover:text-primary-300"
+                        >
+                          <span className="flex items-center gap-2">
+                            <span>{t('playerInvite.filtersTitle')}</span>
+                            <span className="rounded-full bg-primary-100 px-2 py-0.5 text-xs font-bold text-primary-700 dark:bg-primary-900/60 dark:text-primary-300">
+                              {segmentFilteredEntries.length} / {preFilterCount}
+                            </span>
+                          </span>
+                          <span className="flex items-center gap-2 text-xs font-medium">
+                            {hasActiveFilters && (
+                              <span
+                                role="button"
+                                tabIndex={0}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  resetFilters();
+                                }}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter' || e.key === ' ') {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    resetFilters();
+                                  }
+                                }}
+                                className="inline-flex items-center gap-1 rounded-full border border-gray-200/90 bg-white/80 px-2 py-0.5 text-[11px] font-medium text-gray-600 shadow-sm transition hover:border-primary-300 hover:text-primary-700 active:scale-[0.98] dark:border-gray-600 dark:bg-gray-800/80 dark:text-gray-300 dark:hover:border-primary-600 dark:hover:text-primary-200"
+                              >
+                                <RotateCcw className="h-3 w-3" />
+                                {t('playerInvite.reset')}
+                              </span>
+                            )}
+                            {filtersOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                          </span>
+                        </button>
+                        {filtersOpen ? (
+                          <div className="pt-2">
+                            <PlayerListFilterBar
+                              filters={filters}
+                              onChange={setFilters}
+                              socialLevelMax={socialLevelSliderMax}
+                              genderLocked={filterGender ?? null}
+                              onApplyClose={() => setFiltersOpen(false)}
+                            />
+                          </div>
+                        ) : null}
                       </div>
-                    )}
-                  </div>
-                ) : (
-                  <PlayerInviteVirtualList
-                    entries={segmentFilteredEntries}
-                    renderEntry={renderEntry}
-                    className={`min-h-0 flex-1 overflow-y-auto scrollbar-auto px-2.5 pt-1 ${
-                      showCountHint ? 'pb-28' : 'pb-20'
-                    }`}
-                    footer={
-                      showInviteFriendCta ? (
-                        <div className="flex justify-center pt-2">
+                    </div>
+                  }
+                  empty={
+                    <div className="flex flex-col items-center justify-center py-16 text-center px-1">
+                      <p className="text-gray-600 dark:text-gray-400">{t('common.noResults') || 'No results found'}</p>
+                      {showInviteFriendCta ? (
+                        <div className="mt-5 flex w-full max-w-sm justify-center">
                           <InviteFriendToBandejaButton />
                         </div>
-                      ) : null
-                    }
-                  />
-                )}
-
-                {showCountHint && (
-                  <div className="pointer-events-none absolute inset-x-0 bottom-3 z-20 flex justify-center">
-                    <div className="rounded-full bg-primary-100/95 px-3 py-2 text-center text-sm font-medium text-primary-700 shadow-lg shadow-primary-500/30 backdrop-blur-sm dark:bg-primary-900/70 dark:text-primary-300 dark:shadow-primary-900/50">
-                      {t('games.playersSelected', { count: selectedUniqueCount })}
+                      ) : null}
                     </div>
+                  }
+                  footer={
+                    showInviteFriendCta && segmentFilteredEntries.length > 0 ? (
+                      <div className="flex justify-center pt-2">
+                        <InviteFriendToBandejaButton />
+                      </div>
+                    ) : null
+                  }
+                />
+              )}
+
+              {showCountHint && (
+                <div className="pointer-events-none absolute inset-x-0 bottom-3 z-20 flex justify-center">
+                  <div className="rounded-full bg-primary-100/95 px-3 py-2 text-center text-sm font-medium text-primary-700 shadow-lg shadow-primary-500/30 backdrop-blur-sm dark:bg-primary-900/70 dark:text-primary-300 dark:shadow-primary-900/50">
+                    {t('games.playersSelected', { count: selectedUniqueCount })}
                   </div>
-                )}
-              </div>
-            )}
+                </div>
+              )}
+            </div>
 
             {canInviteAsTrainer && gameId && !multiSelect && !inviteAsTrainerOnly && segmentFilteredEntries.length > 0 && (
               <label className="flex-shrink-0 mx-2.5 mb-2 flex items-center gap-2 cursor-pointer">

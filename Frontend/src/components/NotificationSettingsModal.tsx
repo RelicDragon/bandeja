@@ -45,7 +45,7 @@ export const NotificationSettingsModal = ({
 }: NotificationSettingsModalProps) => {
   const { t } = useTranslation();
   const [activeChannel, setActiveChannel] = useState<NotificationChannelType | null>(null);
-  const TOGGLE_KEYS: (keyof NotificationPreference)[] = ['sendMessages', 'sendInvites', 'sendDirectMessages', 'sendReminders', 'sendWalletNotifications', 'sendMarketplaceNotifications', 'sendTeamNotifications'];
+  const TOGGLE_KEYS: (keyof NotificationPreference)[] = ['sendMessages', 'sendInvites', 'sendDirectMessages', 'sendReminders', 'sendWalletNotifications', 'sendMarketplaceNotifications', 'sendTeamNotifications', 'sendPlayIntentNotifications'];
   const [isSaving, setIsSaving] = useState(false);
   const [localPrefs, setLocalPrefs] = useState<Record<string, NotificationPreference>>({});
   const [highlightedToggle, setHighlightedToggle] = useState<{
@@ -59,7 +59,11 @@ export const NotificationSettingsModal = ({
     if (isOpen && preferences.length > 0) {
       const map: Record<string, NotificationPreference> = {};
       for (const p of preferences) {
-        map[p.channelType] = { ...p, sendTeamNotifications: p.sendTeamNotifications ?? true };
+        map[p.channelType] = {
+          ...p,
+          sendTeamNotifications: p.sendTeamNotifications ?? true,
+          sendPlayIntentNotifications: p.sendPlayIntentNotifications ?? true,
+        };
       }
       setLocalPrefs(map);
       setActiveChannel(preferences[0].channelType);
@@ -70,7 +74,11 @@ export const NotificationSettingsModal = ({
   const resetToInitialValues = () => {
     const map: Record<string, NotificationPreference> = {};
     for (const p of preferences) {
-      map[p.channelType] = { ...p, sendTeamNotifications: p.sendTeamNotifications ?? true };
+      map[p.channelType] = {
+        ...p,
+        sendTeamNotifications: p.sendTeamNotifications ?? true,
+        sendPlayIntentNotifications: p.sendPlayIntentNotifications ?? true,
+      };
     }
     setLocalPrefs(map);
   };
@@ -89,6 +97,7 @@ export const NotificationSettingsModal = ({
         sendWalletNotifications: p.sendWalletNotifications,
         sendMarketplaceNotifications: p.sendMarketplaceNotifications,
         sendTeamNotifications: p.sendTeamNotifications,
+        sendPlayIntentNotifications: p.sendPlayIntentNotifications,
       }));
       const res = await usersApi.updateNotificationPreferences(payload);
       onUpdate(res.data);
@@ -260,6 +269,10 @@ export const NotificationSettingsModal = ({
     sendWalletNotifications: { label: 'profile.walletNotifications', desc: 'profile.walletNotificationsDescription' },
     sendMarketplaceNotifications: { label: 'profile.marketplaceNotifications', desc: 'profile.marketplaceNotificationsDescription' },
     sendTeamNotifications: { label: 'profile.teamNotifications', desc: 'profile.teamNotificationsDescription' },
+    sendPlayIntentNotifications: {
+      label: 'profile.playIntentNotifications',
+      desc: 'profile.playIntentNotificationsDescription',
+    },
   };
 
   if (preferences.length === 0) return null;

@@ -6,6 +6,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { addDays, addMonths, startOfDay, format, parse } from 'date-fns';
 import { AvailableGamesSection } from '@/components/home';
 import { AdSlot } from '@/components/sponsorSlots';
+import { PlayIntentHomeStrip } from '@/components/playIntent/PlayIntentFindBar';
 import { AD_PLACEMENTS } from '@/shared/adPlacements';
 import { useRegisterAdSportContext } from '@/hooks/useAdPlacements';
 import { MainTabFooter } from '@/components';
@@ -16,7 +17,12 @@ import { useDesktop } from '@/hooks/useDesktop';
 import { useAvailableGames } from '@/hooks/useAvailableGames';
 import { useAvailableUpcomingGames } from '@/hooks/useAvailableUpcomingGames';
 import { useGameFilters } from '@/hooks/useGameFilters';
-import { findSportFilterToApiParam, getViewerPrimarySport, resolveFindAdSportContext } from '@/utils/findSportFilter';
+import {
+  findSportFilterToApiParam,
+  getViewerPrimarySport,
+  resolveFindAdSportContext,
+  resolveFindLevelFilterSport,
+} from '@/utils/findSportFilter';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import {
   computeFindMonthDateRange,
@@ -84,6 +90,10 @@ export const FindTab = () => {
   }, [findSelectedDay, setFindSelectedDay, isHydrated]);
 
   const viewerPrimarySport = useMemo(() => getViewerPrimarySport(user), [user]);
+  const findLevelSport = useMemo(
+    () => resolveFindLevelFilterSport(filters.filterSport, viewerPrimarySport),
+    [filters.filterSport, viewerPrimarySport],
+  );
   const findSportApiParam = useMemo(
     () => findSportFilterToApiParam(filters.filterSport, viewerPrimarySport),
     [filters.filterSport, viewerPrimarySport],
@@ -454,6 +464,7 @@ export const FindTab = () => {
   if (splitView) {
     return (
       <>
+        <PlayIntentHomeStrip cityId={user?.currentCity?.id} sport={findLevelSport} />
         <AdSlot placement={AD_PLACEMENTS.FIND_TOP} className="mb-4 w-full min-w-0 px-4" />
         <AvailableGamesSection {...sectionProps} splitView={true} />
       </>
@@ -464,6 +475,7 @@ export const FindTab = () => {
     <PullToRefreshShell onRefresh={handleRefresh}>
       {({ isRefreshing }) => (
         <>
+          <PlayIntentHomeStrip cityId={user?.currentCity?.id} sport={findLevelSport} />
           <AdSlot placement={AD_PLACEMENTS.FIND_TOP} className="mb-4 w-full min-w-0" />
           <AvailableGamesSection {...sectionProps} />
           <MainTabFooter isLoading={loadingAvailableGames || isRefreshing} />

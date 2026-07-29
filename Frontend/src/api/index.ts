@@ -25,4 +25,5 @@ export * from './currency';
 export * from './weather';
 export * from './userTeams';
 export * from './sponsorPlacements';
+export * from './playIntents';
 export { default as api } from './axios';

@@ -141,6 +141,8 @@
     "marketplaceNotificationsDescription": "Get notified when new items are listed in your city",
     "teamNotifications": "Buddy teams",
     "teamNotificationsDescription": "Invites, accept/decline, removals, and team updates",
+    "playIntentNotifications": "Want to play",
+    "playIntentNotificationsDescription": "Match proposals, games that fit your wish, and looking-player tips for your games",
     "enable": "Enable",
     "disable": "Disable",
     "notificationSettings": "Notification Settings",

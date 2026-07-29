@@ -25,6 +25,8 @@ import {
   sendUserTeamMemberLeftTelegram,
   sendUserTeamDeletedTelegram,
 } from './notifications/team.notification';
+import { sendPlayIntentTelegramNotification } from './notifications/play-intent.notification';
+import { NotificationType } from '../../types/notifications.types';
 
 class TelegramNotificationService {
   private bot: Bot | null = null;
@@ -172,6 +174,20 @@ class TelegramNotificationService {
   async sendUserTeamDeletedNotification(teamName: string, memberUserId: string) {
     if (!this.bot) return;
     await sendUserTeamDeletedTelegram(this.bot.api, teamName, memberUserId);
+  }
+
+  async sendPlayIntentNotification(
+    userId: string,
+    telegramId: string,
+    payload: {
+      type: NotificationType;
+      title: string;
+      body: string;
+      data?: { proposalId?: string; gameId?: string };
+    },
+  ) {
+    if (!this.bot) return;
+    await sendPlayIntentTelegramNotification(this.bot.api, userId, telegramId, payload);
   }
 }
 

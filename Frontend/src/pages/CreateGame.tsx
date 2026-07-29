@@ -93,6 +93,9 @@ interface CreateGameProps {
   initialCreateIntent?: CreateFlowIntent;
   initialTemplateId?: CreateTemplateId;
   initialBookingIds?: string[];
+  initialInvitedPlayerIds?: string[];
+  matchProposalId?: string;
+  onMatchProposalConverted?: () => void;
 }
 
 const getDefaultLevelRange = (level?: number): [number, number] => {
@@ -111,6 +114,9 @@ export const CreateGame = ({
   initialCreateIntent,
   initialTemplateId,
   initialBookingIds = [],
+  initialInvitedPlayerIds = [],
+  matchProposalId,
+  onMatchProposalConverted,
 }: CreateGameProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -310,10 +316,27 @@ export const CreateGame = ({
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [isInvitePlayersModalOpen, setIsInvitePlayersModalOpen] = useState(false);
-  const [invitedPlayerIds, setInvitedPlayerIds] = useState<string[]>([]);
+  const [invitedPlayerIds, setInvitedPlayerIds] = useState<string[]>(() => initialInvitedPlayerIds);
   const [inviteUserTeamByReceiverId, setInviteUserTeamByReceiverId] = useState<Record<string, string>>({});
   const [invitedPlayers, setInvitedPlayers] = useState<BasicUser[]>([]);
   const [creatorNonPlaying, setCreatorNonPlaying] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (!initialInvitedPlayerIds.length) return;
+    let cancelled = false;
+    void (async () => {
+      await usePlayersStore.getState().fetchPlayers(undefined, selectedSport);
+      if (cancelled) return;
+      const users = usePlayersStore.getState().users;
+      const selected = initialInvitedPlayerIds
+        .map((id) => users[id])
+        .filter(Boolean) as BasicUser[];
+      setInvitedPlayers(selected);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [initialInvitedPlayerIds, selectedSport]);
   
   const {
     selectedDate,
@@ -1388,6 +1411,16 @@ export const CreateGame = ({
           }
         } catch (inviteError) {
           console.error('Failed to send invites:', inviteError);
+        }
+      }
+
+      if (matchProposalId && gameResponse.data.id) {
+        try {
+          const { playIntentsApi } = await import('@/api/playIntents');
+          await playIntentsApi.convertProposal(matchProposalId, gameResponse.data.id);
+          onMatchProposalConverted?.();
+        } catch (convertError) {
+          console.error('Failed to convert match proposal:', convertError);
         }
       }
 
