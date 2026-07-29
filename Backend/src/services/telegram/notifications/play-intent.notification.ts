@@ -11,9 +11,11 @@ type PlayIntentTelegramPayload = {
   type: NotificationType;
   title: string;
   body: string;
+  language?: string;
   data?: {
     proposalId?: string;
     gameId?: string;
+    playIntentId?: string;
   };
 };
 
@@ -22,11 +24,13 @@ export async function sendPlayIntentTelegramNotification(
   userId: string,
   telegramId: string,
   payload: PlayIntentTelegramPayload,
-) {
-  if (!telegramId) return;
+): Promise<boolean> {
+  if (!telegramId) return false;
 
   try {
-    const lang = await getUserLanguageFromTelegramId(telegramId, undefined);
+    const lang =
+      payload.language ||
+      (await getUserLanguageFromTelegramId(telegramId, undefined));
     const title = escapeMarkdown(payload.title);
     const body = escapeMarkdown(payload.body);
     const message = `🎾 ${title}\n\n${body}`;
@@ -48,6 +52,13 @@ export async function sendPlayIntentTelegramNotification(
     ) {
       buttonText = t('telegram.showGame', lang) || t('telegram.viewGame', lang) || 'View Game';
       buttons = [[{ text: buttonText, callback_data: `sg:${payload.data.gameId}:${userId}` }]];
+    } else if (
+      payload.type === NotificationType.FOLLOWED_USER_PLAY_INTENT &&
+      payload.data?.playIntentId
+    ) {
+      buttonText = t('telegram.playToo', lang) || 'I want to play too';
+      const joinUrl = `${config.frontendUrl.replace(/\/$/, '')}/?joinPlayIntent=${encodeURIComponent(payload.data.playIntentId)}`;
+      buttons = [[{ text: buttonText, url: joinUrl }]];
     }
 
     const { message: finalMessage, options } = buildMessageWithButtons(message, buttons, lang);
@@ -58,8 +69,10 @@ export async function sendPlayIntentTelegramNotification(
       { userId, telegramId, kind: `play-intent-${payload.type.toLowerCase()}` },
       () => api.sendMessage(telegramId, trimmedMessage, options),
     );
+    return true;
   } catch (error) {
-    if (isBenignTelegramRecipientError(error)) return;
+    if (isBenignTelegramRecipientError(error)) return false;
     console.error(`Failed to send Telegram play-intent notification to user ${userId}:`, error);
+    return false;
   }
 }

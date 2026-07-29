@@ -77,6 +77,19 @@
     "rosterFullHint": "Сначала уберите кого-то из матча",
     "tapToAdd": "Нажмите на игрока · свободно {{count}}",
     "youAreHere": "Вы здесь",
-    "refreshArena": "Перемешать позиции игроков"
+    "refreshArena": "Перемешать позиции игроков",
+    "friendFallback": "Ваш друг",
+    "friendIntentTitle": "{{name}} хочет поиграть",
+    "friendIntentHint": "Начните такой же поиск. В лобби появятся подходящие игроки.",
+    "playToo": "Я тоже хочу играть",
+    "levelRange": "Уровень {{min}}–{{max}}",
+    "levelMin": "Уровень от {{min}}",
+    "levelMax": "Уровень до {{max}}",
+    "sharedLoadingTitle": "Открываем запрос на игру",
+    "sharedLoadingHint": "Загружаем актуальные пожелания друга…",
+    "sharedJoiningTitle": "Начинаем ваш поиск",
+    "sharedJoiningHint": "Копируем пожелания и готовим лобби корта…",
+    "sharedUnavailable": "Этот запрос на игру больше недоступен",
+    "sharedAccessDenied": "Этот запрос на игру вам недоступен"
   }
 }

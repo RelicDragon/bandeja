@@ -32,6 +32,7 @@ export const NOTIFICATION_TYPE_TO_PREF: Record<NotificationType, PreferenceKey> 
   [NotificationType.PLAY_INTENT_MATCH]: PreferenceKey.SEND_PLAY_INTENT_NOTIFICATIONS,
   [NotificationType.GAME_MATCHES_INTENT]: PreferenceKey.SEND_PLAY_INTENT_NOTIFICATIONS,
   [NotificationType.INTENT_PLAYERS_FOR_GAME]: PreferenceKey.SEND_PLAY_INTENT_NOTIFICATIONS,
+  [NotificationType.FOLLOWED_USER_PLAY_INTENT]: PreferenceKey.SEND_PLAY_INTENT_NOTIFICATIONS,
 };
 
 export type NotificationPreferenceData = {

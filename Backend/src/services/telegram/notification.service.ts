@@ -183,11 +183,12 @@ class TelegramNotificationService {
       type: NotificationType;
       title: string;
       body: string;
-      data?: { proposalId?: string; gameId?: string };
+      language?: string;
+      data?: { proposalId?: string; gameId?: string; playIntentId?: string };
     },
-  ) {
-    if (!this.bot) return;
-    await sendPlayIntentTelegramNotification(this.bot.api, userId, telegramId, payload);
+  ): Promise<boolean> {
+    if (!this.bot) return false;
+    return sendPlayIntentTelegramNotification(this.bot.api, userId, telegramId, payload);
   }
 }
 

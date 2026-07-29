@@ -8,6 +8,8 @@ import {
   getMatchProposal,
   getMyPlayIntent,
   getPlayIntentPool,
+  getSharedPlayIntent,
+  joinSharedPlayIntent,
   releaseMatchProposal,
   removeMatchProposalMember,
   addMatchProposalMember,
@@ -19,6 +21,8 @@ router.get('/me', authenticate, getMyPlayIntent);
 router.post('/', authenticate, createPlayIntent);
 router.delete('/me', authenticate, cancelPlayIntent);
 router.get('/pool', authenticate, getPlayIntentPool);
+router.get('/shared/:id', authenticate, getSharedPlayIntent);
+router.post('/shared/:id/join', authenticate, joinSharedPlayIntent);
 
 router.get('/proposals/:id', authenticate, getMatchProposal);
 router.post('/proposals/:id/confirm', authenticate, confirmMatchProposal);

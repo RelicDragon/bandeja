@@ -77,6 +77,19 @@
     "rosterFullHint": "Prvo ukloni nekoga iz meča",
     "tapToAdd": "Dodirni igrača · {{count}} slobodno",
     "youAreHere": "Ti si ovde",
-    "refreshArena": "Promeni pozicije igrača"
+    "refreshArena": "Promeni pozicije igrača",
+    "friendFallback": "Tvoj prijatelj",
+    "friendIntentTitle": "{{name}} želi da igra",
+    "friendIntentHint": "Pokreni istu pretragu. U lobiju ćeš videti odgovarajuće igrače.",
+    "playToo": "I ja želim da igram",
+    "levelRange": "Nivo {{min}}–{{max}}",
+    "levelMin": "Nivo od {{min}}",
+    "levelMax": "Nivo do {{max}}",
+    "sharedLoadingTitle": "Otvaramo zahtev",
+    "sharedLoadingHint": "Učitavamo najnovije želje tvog prijatelja…",
+    "sharedJoiningTitle": "Pokrećemo tvoju pretragu",
+    "sharedJoiningHint": "Kopiramo želje i pripremamo lobi…",
+    "sharedUnavailable": "Ovaj zahtev za igru više nije dostupan",
+    "sharedAccessDenied": "Ovaj zahtev za igru ti nije dostupan"
   }
 }

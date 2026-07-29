@@ -60,24 +60,26 @@ class NotificationService {
       const isPlayIntent =
         type === NotificationType.PLAY_INTENT_MATCH ||
         type === NotificationType.GAME_MATCHES_INTENT ||
-        type === NotificationType.INTENT_PLAYERS_FOR_GAME;
+        type === NotificationType.INTENT_PLAYERS_FOR_GAME ||
+        type === NotificationType.FOLLOWED_USER_PLAY_INTENT;
       if (isPlayIntent) {
         try {
           const user = await prisma.user.findUnique({
             where: { id: userId },
-            select: { telegramId: true },
+            select: { telegramId: true, language: true },
           });
           if (user?.telegramId) {
-            await telegramNotificationService.sendPlayIntentNotification(userId, user.telegramId, {
+            results.telegram = await telegramNotificationService.sendPlayIntentNotification(userId, user.telegramId, {
               type,
               title: payload.title,
               body: payload.body,
+              language: user.language || 'en',
               data: {
                 proposalId: payload.data?.proposalId,
                 gameId: payload.data?.gameId,
+                playIntentId: payload.data?.playIntentId,
               },
             });
-            results.telegram = true;
           }
         } catch (error) {
           console.error('[NotificationService] Failed to send play-intent telegram:', error);

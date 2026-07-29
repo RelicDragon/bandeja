@@ -71,6 +71,19 @@
     "rosterFullHint": "Remove someone from the match first",
     "tapToAdd": "Tap a player to add · {{count}} open",
     "youAreHere": "You are here",
-    "refreshArena": "Shuffle player positions"
+    "refreshArena": "Shuffle player positions",
+    "friendFallback": "Your friend",
+    "friendIntentTitle": "{{name}} wants to play",
+    "friendIntentHint": "Start the same search. You’ll see matching players in the court lobby.",
+    "playToo": "I want to play too",
+    "levelRange": "Level {{min}}–{{max}}",
+    "levelMin": "Level {{min}}+",
+    "levelMax": "Up to level {{max}}",
+    "sharedLoadingTitle": "Opening play request",
+    "sharedLoadingHint": "Getting your friend’s latest playing preferences…",
+    "sharedJoiningTitle": "Starting your search",
+    "sharedJoiningHint": "Copying the preferences and preparing your court lobby…",
+    "sharedUnavailable": "This play request is no longer available",
+    "sharedAccessDenied": "This play request is not available to you"
   }
 }

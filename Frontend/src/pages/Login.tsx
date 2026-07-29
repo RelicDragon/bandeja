@@ -24,6 +24,7 @@ import { openEula } from '@/utils/openEula';
 import { AppleIcon } from '@/components/AppleIcon';
 import { normalizeLanguageForProfile } from '@/utils/displayPreferences';
 import { extractApiErrorMessage } from '@/utils/extractApiErrorMessage';
+import { consumePostLoginPath, readPostLoginPath, clearPostLoginPath } from '@/utils/postLoginRedirect';
 
 type LoginTab = 'main' | 'phone';
 
@@ -69,8 +70,16 @@ export const Login = () => {
   const [telegramOtpCode, setTelegramOtpCode] = useState('');
   const [appVersion, setAppVersion] = useState<{ version: string; buildNumber: string } | null>(null);
   const [searchParams] = useSearchParams();
+  const [postLoginPath] = useState(() => readPostLoginPath());
   const isWeb = !isCapacitor();
   const [welcomeBack] = useState(() => localStorage.getItem('bandeja_has_signed_in') === '1');
+  const finishLogin = useCallback(
+    (replace = false) => {
+      consumePostLoginPath();
+      navigate(postLoginPath, { replace });
+    },
+    [navigate, postLoginPath],
+  );
 
   useEffect(() => {
     if (error) {
@@ -89,9 +98,18 @@ export const Login = () => {
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/', { replace: true });
+      finishLogin(true);
     }
-  }, [isAuthenticated, navigate]);
+  }, [finishLogin, isAuthenticated]);
+
+  useEffect(() => {
+    return () => {
+      if (useAuthStore.getState().isAuthenticated) return;
+      const path = window.location.pathname;
+      if (path === '/register' || path.startsWith('/login')) return;
+      clearPostLoginPath();
+    };
+  }, []);
 
   const completeGoogleSession = useCallback(async (result: GoogleAuthResult) => {
     const response = await loginWithGoogleCredentials(result);
@@ -100,8 +118,8 @@ export const Login = () => {
       currentSessionId: response.data.currentSessionId,
     });
     await pushNotificationService.ensureTokenSentToBackend();
-    navigate('/', { replace: true });
-  }, [navigate, setAuth]);
+    finishLogin(true);
+  }, [finishLogin, setAuth]);
 
   useEffect(() => {
     if (!isAndroid() || isAuthenticated) return;
@@ -163,7 +181,7 @@ export const Login = () => {
             currentSessionId: response.data.currentSessionId,
           });
           await pushNotificationService.ensureTokenSentToBackend();
-          navigate('/');
+          finishLogin();
         })
         .catch((err: any) => {
           if (!isCancelError(err)) setError(extractApiErrorMessage(err, t));
@@ -172,7 +190,7 @@ export const Login = () => {
     } else if (googleError && googleError !== 'access_denied') {
       setError(t('auth.googleSignInFailed') || 'Google sign-in failed');
     }
-  }, [searchParams, setAuth, navigate, t]);
+  }, [finishLogin, searchParams, setAuth, t]);
 
   const goToTab = (next: LoginTab) => {
     setPanelDirection(next === 'main' ? -1 : 1);
@@ -196,7 +214,7 @@ export const Login = () => {
         currentSessionId: response.data.currentSessionId,
       });
       await pushNotificationService.ensureTokenSentToBackend();
-      navigate('/');
+      finishLogin();
     } catch (err: any) {
       setError(extractApiErrorMessage(err, t));
     } finally {
@@ -254,7 +272,7 @@ export const Login = () => {
         currentSessionId: response.data.currentSessionId,
       });
       await pushNotificationService.ensureTokenSentToBackend();
-      navigate('/', { replace: true });
+      finishLogin(true);
     } catch (err: any) {
       setError(extractApiErrorMessage(err, t));
     } finally {
@@ -291,7 +309,7 @@ export const Login = () => {
         currentSessionId: response.data.currentSessionId,
       });
       await pushNotificationService.ensureTokenSentToBackend();
-      navigate('/');
+      finishLogin();
     } catch (err: any) {
       if (!isCancelError(err)) setError(extractApiErrorMessage(err, t));
     } finally {

@@ -71,6 +71,19 @@
     "rosterFullHint": "Primero quita a alguien del partido",
     "tapToAdd": "Toca un jugador · {{count}} libres",
     "youAreHere": "Estás aquí",
-    "refreshArena": "Cambiar posiciones de los jugadores"
+    "refreshArena": "Cambiar posiciones de los jugadores",
+    "friendFallback": "Tu amigo",
+    "friendIntentTitle": "{{name}} quiere jugar",
+    "friendIntentHint": "Inicia la misma búsqueda. Verás jugadores compatibles en el lobby.",
+    "playToo": "Yo también quiero jugar",
+    "levelRange": "Nivel {{min}}–{{max}}",
+    "levelMin": "Nivel desde {{min}}",
+    "levelMax": "Hasta nivel {{max}}",
+    "sharedLoadingTitle": "Abriendo la solicitud",
+    "sharedLoadingHint": "Cargando las preferencias actuales de tu amigo…",
+    "sharedJoiningTitle": "Iniciando tu búsqueda",
+    "sharedJoiningHint": "Copiando las preferencias y preparando el lobby…",
+    "sharedUnavailable": "Esta búsqueda ya no está disponible",
+    "sharedAccessDenied": "Esta búsqueda no está disponible para ti"
   }
 }

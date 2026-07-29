@@ -11,18 +11,28 @@ import { installMarkReadFlushFailureResync } from './services/chat/chatMarkReadR
 import { installUnreadThreadIndexSync } from './services/chat/unreadThreadIndexSync';
 import { installUnreadNativeBadgeSync } from './services/chat/unreadNativeBadgeSync';
 import { installChunkLoadRecovery } from './utils/chunkLoadRecovery';
-import { applyDevFavicon } from './utils/devFavicon';
+import {
+  applyDevFavicon,
+  applyTestProductionFavicon,
+} from './utils/environmentFavicon';
 import { StagingEnvironmentBanner } from './components/StagingEnvironmentBanner';
-import { isCurrentStagingDeployment } from './config/deploymentEnvironment';
+import {
+  isCurrentStagingDeployment,
+  isTestProductionHostname,
+} from './config/deploymentEnvironment';
 
 const CACHE_VERSION = 'v1';
 
 if (isCurrentStagingDeployment()) {
   document.title = `[STAGING] ${document.title}`;
   document.documentElement.dataset.deploymentEnvironment = 'staging';
-} else if (import.meta.env.DEV) {
+}
+
+if (import.meta.env.DEV) {
   document.title = `[DEV] ${document.title}`;
   applyDevFavicon();
+} else if (isTestProductionHostname(window.location.hostname)) {
+  applyTestProductionFavicon();
 }
 
 installChunkLoadRecovery();

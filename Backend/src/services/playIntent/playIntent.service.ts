@@ -7,6 +7,7 @@ import {
   Sport,
   GenderTeam,
   EntityType,
+  Prisma,
   type Gender,
 } from '@prisma/client';
 import { formatInTimeZone } from 'date-fns-tz';
@@ -23,6 +24,7 @@ import {
   intentWindowIsReachable,
 } from './playIntentFreshness';
 import { PlayIntentMatchService } from './playIntentMatch.service';
+import { PlayIntentFollowerNotificationQueueService } from './playIntentFollowerNotificationQueue.service';
 import { PlayIntentGameLifecycleService } from './playIntentGameLifecycle.service';
 import { lockMatchProposal } from './matchProposalLock';
 
@@ -42,6 +44,13 @@ export type CreatePlayIntentDto = {
 };
 
 const MAX_DAY_OFFSET = 2;
+
+function arraysEqual(a: string[], b: string[]): boolean {
+  if (a.length !== b.length) return false;
+  const left = [...a].sort();
+  const right = [...b].sort();
+  return left.every((value, index) => value === right[index]);
+}
 
 function validateTime(value: string | null | undefined, label: string) {
   if (!value) return;
@@ -115,7 +124,11 @@ export class PlayIntentService {
     );
   }
 
-  static async createOrReplace(userId: string, data: CreatePlayIntentDto) {
+  static async createOrReplace(
+    userId: string,
+    data: CreatePlayIntentDto,
+    transactionGuard?: (tx: Prisma.TransactionClient) => Promise<void>,
+  ) {
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: {
@@ -211,7 +224,7 @@ export class PlayIntentService {
       });
     }
 
-    // One active looking state per city — leave all prior intents/proposals in this city.
+    // One active looking state per city — leave prior intents/proposals only when replacing.
     const pendingMemberships = await prisma.matchProposalMember.findMany({
       where: {
         userId,
@@ -223,28 +236,15 @@ export class PlayIntentService {
       },
       select: { proposalId: true },
     });
-    if (pendingMemberships.length > 0) {
-      const { MatchProposalService } = await import('./matchProposal.service');
-      for (const m of pendingMemberships) {
-        await MatchProposalService.decline(m.proposalId, userId).catch(() => {});
-      }
-    }
 
-    const intent = await prisma.$transaction(async (tx) => {
+    const { intent, shouldNotifyFollowers, replacedLooking } = await prisma.$transaction(async (tx) => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`play-intent:${userId}:${cityId}`}))`;
       if (expiresAt <= new Date()) {
         throw new ApiError(400, 'Selected play window has already ended', true, {
           code: 'playIntent.windowEnded',
         });
       }
-      await tx.playIntent.updateMany({
-        where: {
-          userId,
-          cityId,
-          status: { in: [PlayIntentStatus.OPEN, PlayIntentStatus.MATCHED] },
-          gameParticipants: { none: {} },
-        },
-        data: { status: PlayIntentStatus.CANCELLED },
-      });
+      await transactionGuard?.(tx);
       const linkedInvite = await tx.gameParticipant.findFirst({
         where: {
           userId,
@@ -262,7 +262,59 @@ export class PlayIntentService {
           inviteId: linkedInvite.id,
         });
       }
-      return tx.playIntent.create({
+      const now = new Date();
+      const existingActive = await tx.playIntent.findFirst({
+        where: {
+          userId,
+          cityId,
+          status: { in: [PlayIntentStatus.OPEN, PlayIntentStatus.MATCHED] },
+          expiresAt: { gt: now },
+        },
+        include: {
+          city: { select: { id: true, name: true, timezone: true, country: true } },
+        },
+      });
+      const requestedStart =
+        timeOfDay === PlayIntentTimeOfDay.CUSTOM ? data.startTime ?? null : null;
+      const requestedEnd =
+        timeOfDay === PlayIntentTimeOfDay.CUSTOM ? data.endTime ?? null : null;
+      const requestedClubs = data.clubIds ?? [];
+      const requestedMin =
+        entityType === EntityType.BAR ? null : data.minLevel ?? null;
+      const requestedMax =
+        entityType === EntityType.BAR ? null : data.maxLevel ?? null;
+      const requestedGender =
+        entityType === EntityType.BAR ? GenderTeam.ANY : genderTeams;
+      if (
+        existingActive &&
+        intentWindowIsReachable(existingActive, city.timezone, now) &&
+        existingActive.sport === sport &&
+        existingActive.entityType === entityType &&
+        arraysEqual(existingActive.dateKeys, dateKeys) &&
+        existingActive.timeOfDay === timeOfDay &&
+        existingActive.startTime === requestedStart &&
+        existingActive.endTime === requestedEnd &&
+        arraysEqual(existingActive.clubIds, requestedClubs) &&
+        existingActive.minLevel === requestedMin &&
+        existingActive.maxLevel === requestedMax &&
+        existingActive.genderTeams === requestedGender
+      ) {
+        return {
+          intent: existingActive,
+          shouldNotifyFollowers: false,
+          replacedLooking: false,
+        };
+      }
+      await tx.playIntent.updateMany({
+        where: {
+          userId,
+          cityId,
+          status: { in: [PlayIntentStatus.OPEN, PlayIntentStatus.MATCHED] },
+          gameParticipants: { none: {} },
+        },
+        data: { status: PlayIntentStatus.CANCELLED },
+      });
+      const created = await tx.playIntent.create({
         data: {
           userId,
           cityId,
@@ -270,12 +322,12 @@ export class PlayIntentService {
           entityType,
           dateKeys,
           timeOfDay,
-          startTime: timeOfDay === PlayIntentTimeOfDay.CUSTOM ? data.startTime ?? null : null,
-          endTime: timeOfDay === PlayIntentTimeOfDay.CUSTOM ? data.endTime ?? null : null,
-          clubIds: data.clubIds ?? [],
-          minLevel: entityType === EntityType.BAR ? null : data.minLevel ?? null,
-          maxLevel: entityType === EntityType.BAR ? null : data.maxLevel ?? null,
-          genderTeams: entityType === EntityType.BAR ? GenderTeam.ANY : genderTeams,
+          startTime: requestedStart,
+          endTime: requestedEnd,
+          clubIds: requestedClubs,
+          minLevel: requestedMin,
+          maxLevel: requestedMax,
+          genderTeams: requestedGender,
           status: PlayIntentStatus.OPEN,
           expiresAt,
         },
@@ -283,11 +335,39 @@ export class PlayIntentService {
           city: { select: { id: true, name: true, timezone: true, country: true } },
         },
       });
+      const hadReachableActive =
+        !!existingActive && intentWindowIsReachable(existingActive, city.timezone, now);
+      const shouldNotify = entityType === EntityType.GAME && !hadReachableActive;
+      if (shouldNotify) {
+        await tx.playIntentFollowerNotificationJob.create({
+          data: {
+            intentId: created.id,
+            userId,
+            cityId,
+            runAfter: new Date(Date.now() + 1_000),
+          },
+        });
+      }
+      return {
+        intent: created,
+        shouldNotifyFollowers: shouldNotify,
+        replacedLooking: true,
+      };
     });
+
+    if (replacedLooking && pendingMemberships.length > 0) {
+      const { MatchProposalService } = await import('./matchProposal.service');
+      for (const m of pendingMemberships) {
+        await MatchProposalService.decline(m.proposalId, userId).catch(() => {});
+      }
+    }
 
     void PlayIntentMatchService.onIntentCreated(intent.id).catch((err) => {
       console.error('[PlayIntent] onIntentCreated failed:', err);
     });
+    if (shouldNotifyFollowers) {
+      void PlayIntentFollowerNotificationQueueService.drain();
+    }
 
     return intent;
   }

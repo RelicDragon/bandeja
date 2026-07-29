@@ -16,7 +16,7 @@
     "build:staging": "tsc && vite build --mode staging",
     "postbuild": "node scripts/force-sw-update.js",
     "preview": "vite preview",
-    "test:deep-link-catalog": "vitest run src/deepLinks/catalog.parity.test.ts src/deepLinks/catalog.path.test.ts src/deepLinks/assistantRegistry.parity.test.ts",
+    "test:deep-link-catalog": "vitest run src/deepLinks/catalog.parity.test.ts src/deepLinks/catalog.path.test.ts src/deepLinks/assistantRegistry.parity.test.ts src/utils/postLoginRedirect.test.ts",
     "sync:deep-link-catalog": "node --experimental-strip-types scripts/sync-deep-link-catalog.ts",
     "test:next-game": "vitest run src/utils/pickNextGame.test.ts src/utils/resolveNextGamePath.test.ts",
     "verify:next-game": "bash scripts/verify-next-game-parity.sh",

@@ -16,6 +16,7 @@ import {
   readRegistrationPrimarySport,
   writeRegistrationPrimarySport,
 } from '@/utils/registrationPrimarySport';
+import { consumePostLoginPath } from '@/utils/postLoginRedirect';
 
 export const Register = () => {
   const { t, i18n } = useTranslation();
@@ -156,7 +157,7 @@ export const Register = () => {
         currentSessionId: response.data.currentSessionId,
       });
       await pushNotificationService.ensureTokenSentToBackend();
-      navigate('/');
+      navigate(consumePostLoginPath(), { replace: true });
     } catch (err: any) {
       const requestUrl = err?.config?.url ? `${err.config.baseURL || ''}${err.config.url}` : 'unknown';
       const method = err?.config?.method?.toUpperCase() || 'unknown';

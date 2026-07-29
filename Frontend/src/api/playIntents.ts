@@ -87,6 +87,27 @@ export type PlayIntentPool = {
   pendingProposal: MatchProposalSummary | null;
 };
 
+export type SharedPlayIntent = {
+  id: string;
+  creator: {
+    id: string;
+    firstName: string | null;
+    lastName: string | null;
+    avatar: string | null;
+  };
+  city: { id: string; name: string; timezone: string };
+  sport: Sport;
+  dateKeys: string[];
+  timeOfDay: PlayIntentTimeOfDay;
+  startTime: string | null;
+  endTime: string | null;
+  clubs: { id: string; name: string }[];
+  minLevel: number | null;
+  maxLevel: number | null;
+  genderTeams: 'ANY' | 'MEN' | 'WOMEN' | 'MIX_PAIRS';
+  expiresAt: string;
+};
+
 export type CreatePrefill = {
   proposalId: string;
   sport: Sport;
@@ -124,6 +145,20 @@ export const playIntentsApi = {
     const { data } = await api.get<{ success: boolean; data: PlayIntentPool }>('/play-intents/pool', {
       params,
     });
+    return data.data;
+  },
+
+  getShared: async (id: string) => {
+    const { data } = await api.get<{ success: boolean; data: SharedPlayIntent }>(
+      `/play-intents/shared/${id}`,
+    );
+    return data.data;
+  },
+
+  joinShared: async (id: string) => {
+    const { data } = await api.post<{ success: boolean; data: PlayIntent }>(
+      `/play-intents/shared/${id}/join`,
+    );
     return data.data;
   },
 

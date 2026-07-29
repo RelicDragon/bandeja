@@ -37,6 +37,7 @@ export enum NotificationType {
   PLAY_INTENT_MATCH = 'PLAY_INTENT_MATCH',
   GAME_MATCHES_INTENT = 'GAME_MATCHES_INTENT',
   INTENT_PLAYERS_FOR_GAME = 'INTENT_PLAYERS_FOR_GAME',
+  FOLLOWED_USER_PLAY_INTENT = 'FOLLOWED_USER_PLAY_INTENT',
 }
 
 export interface NotificationAction {
@@ -61,6 +62,7 @@ export interface NotificationData {
   transactionId?: string;
   marketItemId?: string;
   proposalId?: string;
+  playIntentId?: string;
   shortDayOfWeek?: string;
   teamId?: string;
   replyToken?: string;

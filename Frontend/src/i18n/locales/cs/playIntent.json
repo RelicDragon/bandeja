@@ -77,6 +77,19 @@
     "rosterFullHint": "Nejdřív někoho ze zápasu odeber",
     "tapToAdd": "Klepni na hráče · {{count}} volných",
     "youAreHere": "Jsi tady",
-    "refreshArena": "Změnit pozice hráčů"
+    "refreshArena": "Změnit pozice hráčů",
+    "friendFallback": "Tvůj kamarád",
+    "friendIntentTitle": "{{name}} si chce zahrát",
+    "friendIntentHint": "Spusť stejné hledání. V lobby uvidíš odpovídající hráče.",
+    "playToo": "Chci si také zahrát",
+    "levelRange": "Úroveň {{min}}–{{max}}",
+    "levelMin": "Úroveň od {{min}}",
+    "levelMax": "Úroveň do {{max}}",
+    "sharedLoadingTitle": "Otevíráme požadavek",
+    "sharedLoadingHint": "Načítáme aktuální preference tvého kamaráda…",
+    "sharedJoiningTitle": "Spouštíme tvoje hledání",
+    "sharedJoiningHint": "Kopírujeme preference a připravujeme lobby…",
+    "sharedUnavailable": "Tento požadavek už není dostupný",
+    "sharedAccessDenied": "Tento požadavek pro tebe není dostupný"
   }
 }

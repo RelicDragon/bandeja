@@ -21,6 +21,9 @@ import { getViewerPrimarySport } from '@/utils/profileSports';
 import { parseSport } from '@/sport/sportRegistry';
 import type { Sport } from '@/types';
 import toast from 'react-hot-toast';
+import { SharedPlayIntentDialog } from './SharedPlayIntentDialog';
+import { SharedPlayIntentProgressDialog } from './SharedPlayIntentProgressDialog';
+import { useSharedPlayIntentEntry } from './useSharedPlayIntentEntry';
 
 type PlayIntentCtx = {
   enabled: boolean;
@@ -99,7 +102,11 @@ export function PlayIntentProvider({ cityId, sport, children }: ProviderProps) {
   const [sheetMode, setSheetMode] = useState<'compose' | 'lobby'>('compose');
   const [deepProposal, setDeepProposal] = useState<MatchProposalSummary | null>(null);
 
-  const resolvedSport = parseSport(sport || user?.primarySport || 'PADEL');
+  const sharedEntry = useSharedPlayIntentEntry(!!user);
+  const { clearJoinedSport, joinedSport } = sharedEntry;
+  const resolvedSport = parseSport(
+    joinedSport || sport || user?.primarySport || 'PADEL',
+  );
   const enabled = !!user && !!cityId;
   const { data: pool, refetch, isLoading } = usePlayIntentPool(
     enabled ? cityId : undefined,
@@ -109,6 +116,27 @@ export function PlayIntentProvider({ cityId, sport, children }: ProviderProps) {
 
   const proposal = resolvePlayIntentProposal(pool?.pendingProposal, deepProposal);
   const looking = !!pool?.myIntent || !!proposal;
+
+  useEffect(() => {
+    if (
+      joinedSport &&
+      pool &&
+      !isLoading &&
+      !looking &&
+      !sheetOpen &&
+      searchParams.get('lobby') !== '1'
+    ) {
+      clearJoinedSport();
+    }
+  }, [
+    isLoading,
+    looking,
+    pool,
+    searchParams,
+    clearJoinedSport,
+    joinedSport,
+    sheetOpen,
+  ]);
 
   useEffect(() => {
     const proposalId = searchParams.get('proposal');
@@ -219,6 +247,20 @@ export function PlayIntentProvider({ cityId, sport, children }: ProviderProps) {
           onChanged={handleLobbyChanged}
         />
       )}
+      {sharedEntry.intent && (
+        <SharedPlayIntentDialog
+          intent={sharedEntry.intent}
+          open
+          joining={sharedEntry.joining}
+          onOpenChange={(open) => {
+            if (!open) sharedEntry.dismiss();
+          }}
+          onJoin={() => sharedEntry.join?.()}
+        />
+      )}
+      {sharedEntry.progress && (
+        <SharedPlayIntentProgressDialog mode={sharedEntry.progress} />
+      )}
     </Ctx.Provider>
   );
 }
@@ -268,7 +310,7 @@ export function PlayIntentIdleCta() {
         type="button"
         onClick={openCompose}
         data-testid="play-intent-cta"
-        className="flex w-full items-center gap-2.5 rounded-xl border border-border/70 bg-muted/40 px-2.5 py-2 text-left transition-colors hover:border-emerald-500/40 hover:bg-emerald-500/5"
+        className="flex w-full items-center gap-2.5 rounded-xl border border-border/70 bg-white px-2.5 py-2 text-left transition-colors hover:border-emerald-500/40 hover:bg-emerald-500/5 dark:bg-gray-900"
       >
         <SportPublicIcon sport={primarySport} className="h-5 w-5 shrink-0 object-contain" />
         <div className="min-w-0 flex-1">

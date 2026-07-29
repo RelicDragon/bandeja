@@ -128,9 +128,9 @@ class NavigationService {
     this.navigate!(buildUrl('createMarketItem'), { replace: true });
   }
 
-  navigateToHome() {
+  navigateToHome(params?: PlaceParams) {
     if (!this.ensureInitialized()) return;
-    this.navigate!(buildUrl('home'), { replace: true });
+    this.navigate!(buildUrl('home', params), { replace: true });
   }
 
   navigateToFind(params?: PlaceParams) {

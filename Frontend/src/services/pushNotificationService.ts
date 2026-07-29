@@ -30,6 +30,7 @@ interface NotificationData {
   data?: {
     gameId?: string;
     proposalId?: string;
+    playIntentId?: string;
     bugId?: string;
     marketItemId?: string;
     userId?: string;
@@ -401,6 +402,12 @@ class PushNotificationService {
           navigationService.navigateToFind({ proposal: payload.proposalId });
         } else {
           navigationService.navigateToFind({ lobby: 1 });
+        }
+        break;
+
+      case 'FOLLOWED_USER_PLAY_INTENT':
+        if (payload?.playIntentId) {
+          navigationService.navigateToHome({ playIntent: payload.playIntentId });
         }
         break;
 

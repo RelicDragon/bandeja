@@ -5,6 +5,7 @@ import { ApiError } from '../utils/ApiError';
 import { PlayIntentService } from '../services/playIntent/playIntent.service';
 import { PlayIntentMatchService } from '../services/playIntent/playIntentMatch.service';
 import { MatchProposalService } from '../services/playIntent/matchProposal.service';
+import { PlayIntentShareService } from '../services/playIntent/playIntentShare.service';
 import { parseSport } from '../sport/sportIds';
 import prisma from '../config/database';
 
@@ -27,6 +28,18 @@ export const cancelPlayIntent = asyncHandler(async (req: AuthRequest, res: Respo
   const intentId = typeof req.params.id === 'string' ? req.params.id : undefined;
   const result = await PlayIntentService.cancel(req.userId, intentId === 'me' ? undefined : intentId);
   res.json({ success: true, data: result });
+});
+
+export const getSharedPlayIntent = asyncHandler(async (req: AuthRequest, res: Response) => {
+  if (!req.userId) throw new Error('User ID not found');
+  const intent = await PlayIntentShareService.getSharedIntent(req.params.id, req.userId);
+  res.json({ success: true, data: intent });
+});
+
+export const joinSharedPlayIntent = asyncHandler(async (req: AuthRequest, res: Response) => {
+  if (!req.userId) throw new Error('User ID not found');
+  const intent = await PlayIntentShareService.joinSharedIntent(req.params.id, req.userId);
+  res.json({ success: true, data: intent });
 });
 
 export const getPlayIntentPool = asyncHandler(async (req: AuthRequest, res: Response) => {

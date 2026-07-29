@@ -161,6 +161,7 @@ Frontend/e2e/
 | G-48 | Cap `/next-game` single owner | Cap launch / `appUrlOpen` for `/next-game` (`?open=chat\|live`) | Navigates to `/next-game` route; `NextGameRedirect` resolves (same destinations as web) |
 | G-49 | Assistant feature vs game-entity layers | Run `npm run test:deep-link-catalog`; Cap: after My-games sync, “Find games today” / “Open chat for my next game” / “Open [cached title] in Bandeja”; Android long-press static vs `dyn_game_*` | Suite green; Find/next-chat use feature intents; named game uses entity (Siri params refreshed on sync); static shortcuts ≠ dynamic open-game shortcuts |
 | G-50 | App Shortcuts priority cap (iOS) | Inspect Siri / App Shortcuts donated set after install | At most 10 donated shortcuts; Create league + entity chat/live not in donated set (still in Shortcuts library) |
+| G-51 | Environment favicon highlighting | Open local Vite dev, `thisistestfor.bandeja.me`, and production `bandeja.me` | Dev favicon has a red background; test-production favicon has a yellow background; production favicon is unchanged |
 
 ### 4.2 Onboarding gates & prompts
 
@@ -1471,6 +1472,11 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PI-29 | Intent lifecycle after invite response | From PI-28, B accepts, C declines, and D lets the invite expire | B’s looking intent ends; C’s valid intent returns to the lobby; D’s intent returns only if still valid, otherwise expires; none remain silently reserved |
 | PI-30 | No game-fit for past start times | With an open public game that already started earlier today, start looking for Today / Anytime in that city | No “A game fits your wish” notification for the past game; only games starting later than now are offered (and the owner gets no “Players are looking” ping for it) |
 | PI-31 | Wish expires with its playable window | Start looking for Today / Morning, then cross 12:00 city-local time; refresh Find and try a pending proposal deep link | Looking state disappears, the intent is absent/ineligible in the lobby, stale proposals cannot open or confirm, and no match/game-fit notification is sent |
+| PI-32 | Push opens friend intent prompt | Follow user A in the same city with A’s sport enabled, have A create a GAME intent, then tap the localized push | Bandeja opens on My, shows localized loading feedback, then a dialog with A, sport, city/clubs, days, time, and level; “I want to play too” is available |
+| PI-33 | Follower notification privacy and spam controls | Block A (either direction), mute Want to play, follow from another city / without the sport enabled, edit A’s intent, then cancel/recreate within six hours | Blocked, muted, other-city, or sport-disabled followers receive nothing; edits and rapid recreation do not repeat the follower notification; BAR intents do not send play wording |
+| PI-34 | Join friend intent from push | From PI-32, tap “I want to play too” | A similar intent is created for the follower, the dialog closes, and My opens the Court lobby drawer with the follower and A in the matching pool |
+| PI-35 | Join friend intent from Telegram | Tap the localized “I want to play too” Telegram button while authenticated, then repeat while signed out and complete login | The new My deep link survives login, shows localized progress while creating an idempotent similar intent, and opens the Court lobby drawer; reopening the same link does not replace an identical active intent |
+| PI-36 | Shared intent unavailable or forbidden | Open a shared-intent link after expiry/cancel/consumption, after unfollowing, or after either user blocks the other | No intent is created; a localized unavailable/access error appears and the stale query parameter is removed |
 
 ---
 

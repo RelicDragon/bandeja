@@ -5,6 +5,7 @@ import {
   EntityType,
   NotificationChannelType,
   PlayIntentStatus,
+  Sport,
 } from '@prisma/client';
 import { formatInTimeZone } from 'date-fns-tz';
 import { NotificationType, PreferenceKey } from '../../types/notifications.types';
@@ -19,6 +20,7 @@ import {
   timeStringToMinutes,
   type IntentCriteria,
 } from './playIntentCriteria';
+import { buildPlayIntentFollowerNotification } from './playIntentFollowerNotification';
 
 const PREF = PreferenceKey.SEND_PLAY_INTENT_NOTIFICATIONS;
 
@@ -61,6 +63,90 @@ async function channelAllows(userId: string) {
 }
 
 export class PlayIntentNotifyService {
+  static async notifyFollowers(intentId: string): Promise<number> {
+    const intent = await prisma.playIntent.findUnique({
+      where: { id: intentId },
+      include: {
+        city: { select: { name: true, timezone: true } },
+        user: { select: { firstName: true } },
+      },
+    });
+    if (
+      !intent ||
+      intent.entityType !== EntityType.GAME ||
+      intent.status !== PlayIntentStatus.OPEN ||
+      !intentWindowIsReachable(intent, intent.city.timezone)
+    ) {
+      return 0;
+    }
+
+    const followers = await prisma.userFavoriteUser.findMany({
+      where: {
+        favoriteUserId: intent.userId,
+        user: {
+          currentCityId: intent.cityId,
+          OR:
+            intent.sport === Sport.PADEL
+              ? [
+                  { sportsEnabled: { has: intent.sport } },
+                  { sportsEnabled: { isEmpty: true } },
+                ]
+              : [{ sportsEnabled: { has: intent.sport } }],
+          blockedUsers: { none: { blockedUserId: intent.userId } },
+          blockedBy: { none: { userId: intent.userId } },
+        },
+      },
+      select: {
+        user: { select: { id: true, language: true } },
+      },
+    });
+
+    let notified = 0;
+    let hardFailures = 0;
+    for (let offset = 0; offset < followers.length; offset += 5) {
+      const batch = followers.slice(offset, offset + 5);
+      const results = await Promise.allSettled(
+        batch.map(async ({ user }) => {
+          const { title, body } = buildPlayIntentFollowerNotification(
+            {
+              creatorFirstName: intent.user.firstName,
+              sport: intent.sport,
+              cityName: intent.city.name,
+              timezone: intent.city.timezone,
+              dateKeys: intent.dateKeys,
+              timeOfDay: intent.timeOfDay,
+              startTime: intent.startTime,
+              endTime: intent.endTime,
+            },
+            user.language || 'en',
+          );
+          const delivery = await notificationService.sendNotification({
+            userId: user.id,
+            type: NotificationType.FOLLOWED_USER_PLAY_INTENT,
+            payload: {
+              type: NotificationType.FOLLOWED_USER_PLAY_INTENT,
+              title,
+              body,
+              data: { playIntentId: intent.id },
+              sound: 'default',
+            },
+          });
+          return delivery.push || delivery.telegram;
+        }),
+      );
+      for (const result of results) {
+        if (result.status === 'fulfilled' && result.value) {
+          notified += 1;
+        } else if (result.status === 'rejected') {
+          hardFailures += 1;
+          console.error('[PlayIntent] follower delivery failed:', result.reason);
+        }
+      }
+    }
+    if (hardFailures > 0 && notified === 0) return -1;
+    return notified;
+  }
+
   static async notifyPlayIntentMatch(proposalId: string) {
     const proposal = await prisma.matchProposal.findUnique({
       where: { id: proposalId },

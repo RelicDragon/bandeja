@@ -312,13 +312,13 @@ model WeatherDayArchive {
 }
 
 model Club {
-  id                      String                     @id @default(cuid())
+  id                      String                      @id @default(cuid())
   name                    String
   normalizedName          String
   description             String?
   avatar                  String?
   originalAvatar          String?
-  photos                  Json                       @default("[]")
+  photos                  Json                        @default("[]")
   address                 String
   cityId                  String
   phone                   String?
@@ -329,22 +329,22 @@ model Club {
   openingTime             String?
   closingTime             String?
   amenities               Json?
-  isActive                Boolean                    @default(true)
-  isBar                   Boolean                    @default(false)
-  isForPlaying            Boolean                    @default(true)
+  isActive                Boolean                     @default(true)
+  isBar                   Boolean                     @default(false)
+  isForPlaying            Boolean                     @default(true)
   integrationType         ClubIntegrationType?
   integrationConfig       Json?
-  ptMeta                  Json?                      @map("pt_meta")
-  courtsNumber            Int                        @default(0)
-  sports                  Sport[]                    @default([PADEL])
+  ptMeta                  Json?                       @map("pt_meta")
+  courtsNumber            Int                         @default(0)
+  sports                  Sport[]                     @default([PADEL])
   clubRating              Float?
-  clubReviewCount         Int                        @default(0)
+  clubReviewCount         Int                         @default(0)
   defaultSlotMinutes      Int?
   cancellationNoticeHours Int?
   policyText              String?
-  createdAt               DateTime                   @default(now())
-  updatedAt               DateTime                   @updatedAt
-  city                    City                       @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  createdAt               DateTime                    @default(now())
+  updatedAt               DateTime                    @updatedAt
+  city                    City                        @relation(fields: [cityId], references: [id], onDelete: Cascade)
   courts                  Court[]
   games                   Game[]
   favoritedBy             UserFavoriteClub[]
@@ -532,29 +532,29 @@ model UserSportProfile {
 }
 
 model Court {
-  id                    String                     @id @default(cuid())
-  name                  String
-  clubId                String
-  sport                 Sport?
-  courtType             String?
-  isIndoor              Boolean                    @default(false)
-  surfaceType           String?
-  pricePerHour          Float?
-  externalCourtId       String?
-  integrationCourtName  String?
-  webCameraUrl          String?
-  isActive              Boolean                    @default(true)
-  createdAt             DateTime                   @default(now())
-  updatedAt             DateTime                   @updatedAt
-  club                  Club                       @relation(fields: [clubId], references: [id], onDelete: Cascade)
-  games                 Game[]
-  gameCourts            GameCourt[]
-  matches               Match[]
-  courtSlotHolds        CourtSlotHold[]
-  booktimeBusySnapshots ClubBooktimeBusySnapshot[]
-  padelooBusySnapshots    ClubPadelooBusySnapshot[]
-  klikterenBusySnapshots  ClubKlikterenBusySnapshot[]
-  gameExternalBookings    GameExternalBooking[]
+  id                     String                      @id @default(cuid())
+  name                   String
+  clubId                 String
+  sport                  Sport?
+  courtType              String?
+  isIndoor               Boolean                     @default(false)
+  surfaceType            String?
+  pricePerHour           Float?
+  externalCourtId        String?
+  integrationCourtName   String?
+  webCameraUrl           String?
+  isActive               Boolean                     @default(true)
+  createdAt              DateTime                    @default(now())
+  updatedAt              DateTime                    @updatedAt
+  club                   Club                        @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  games                  Game[]
+  gameCourts             GameCourt[]
+  matches                Match[]
+  courtSlotHolds         CourtSlotHold[]
+  booktimeBusySnapshots  ClubBooktimeBusySnapshot[]
+  padelooBusySnapshots   ClubPadelooBusySnapshot[]
+  klikterenBusySnapshots ClubKlikterenBusySnapshot[]
+  gameExternalBookings   GameExternalBooking[]
 
   @@index([clubId])
   @@index([isActive])
@@ -1366,65 +1366,65 @@ model PinnedUserChat {
 }
 
 model ChatMessage {
-  id                  String                @id @default(cuid())
-  chatContextType     ChatContextType       @default(GAME)
-  contextId           String
-  gameId              String?
-  senderId            String?
-  content             String?
-  contentSearchable   String?
-  mediaUrls           String[]
-  thumbnailUrls       String[]
-  mentionIds          String[]
-  state               MessageState          @default(SENT)
-  chatType            ChatType              @default(PUBLIC)
-  messageType         MessageType           @default(TEXT)
-  audioDurationMs     Int?
-  videoDurationMs     Int?
-  videoWidth          Int?
-  videoHeight         Int?
-  waveformData        Float[]               @default([])
+  id                     String                @id @default(cuid())
+  chatContextType        ChatContextType       @default(GAME)
+  contextId              String
+  gameId                 String?
+  senderId               String?
+  content                String?
+  contentSearchable      String?
+  mediaUrls              String[]
+  thumbnailUrls          String[]
+  mentionIds             String[]
+  state                  MessageState          @default(SENT)
+  chatType               ChatType              @default(PUBLIC)
+  messageType            MessageType           @default(TEXT)
+  audioDurationMs        Int?
+  videoDurationMs        Int?
+  videoWidth             Int?
+  videoHeight            Int?
+  waveformData           Float[]               @default([])
   /// Set iff messageType = DOCUMENT; display name from upload.
-  documentFileName    String?
-  documentMimeType    String?
-  documentSize        Int?
+  documentFileName       String?
+  documentMimeType       String?
+  documentSize           Int?
   /// Set iff messageType = STICKER; catalog identity (mediaUrls stay empty).
-  stickerId           String?
+  stickerId              String?
   /// Denormalized emoji for list preview / old clients without catalog join.
-  stickerEmoji        String?
-  createdAt           DateTime              @default(now())
-  updatedAt           DateTime              @updatedAt
-  editedAt            DateTime?
-  deletedAt           DateTime?
-  clientMutationId    String?
+  stickerEmoji           String?
+  createdAt              DateTime              @default(now())
+  updatedAt              DateTime              @updatedAt
+  editedAt               DateTime?
+  deletedAt              DateTime?
+  clientMutationId       String?
   /// Sync log seq last written onto this ChatMessage row (create, edit, delete, delivery state). Side tables (reactions, etc.) do not bump this; idempotent create replays use this as syncSeq, not head.
-  serverSyncSeq       Int?
-  replyToId           String?
+  serverSyncSeq          Int?
+  replyToId              String?
   /// Instagram-style story reply context: { sourceType, sourceId, ownerUserId, thumbnailUrl?, mediaUrl?, mediaType? }
-  storyReply          Json?
+  storyReply             Json?
   /// Snapshot of first eligible URL preview at send (LinkPreviewResult JSON); clients may still refresh.
-  linkPreview         Json?
-  linkPreviewUrl      String?
+  linkPreview            Json?
+  linkPreviewUrl         String?
   /// Sender-controlled per-message suppression; URL text remains untouched.
-  linkPreviewDisabled Boolean               @default(false)
+  linkPreviewDisabled    Boolean               @default(false)
   /// Original message this row forwards (shared CDN URLs; SetNull if original deleted).
   forwardedFromMessageId String?
   /// Attribution snapshot: { title, chatContextType, contextId, isChannel?, messageId }
   forwardedFrom          Json?
-  replyTo             ChatMessage?          @relation("MessageReply", fields: [replyToId], references: [id])
-  replies             ChatMessage[]         @relation("MessageReply")
-  forwardedFromMessage ChatMessage?         @relation("MessageForward", fields: [forwardedFromMessageId], references: [id], onDelete: SetNull)
-  forwards             ChatMessage[]        @relation("MessageForward")
-  sender              User?                 @relation(fields: [senderId], references: [id], onDelete: Cascade)
-  sticker             Sticker?              @relation(fields: [stickerId], references: [id], onDelete: Restrict)
-  reactions           MessageReaction[]
-  readReceipts        MessageReadReceipt[]
-  reports             MessageReport[]
-  translations        MessageTranslation[]
-  audioTranscription  MessageTranscription?
-  poll                Poll?
-  pollId              String?               @unique
-  pinnedIn            PinnedMessage[]
+  replyTo                ChatMessage?          @relation("MessageReply", fields: [replyToId], references: [id])
+  replies                ChatMessage[]         @relation("MessageReply")
+  forwardedFromMessage   ChatMessage?          @relation("MessageForward", fields: [forwardedFromMessageId], references: [id], onDelete: SetNull)
+  forwards               ChatMessage[]         @relation("MessageForward")
+  sender                 User?                 @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  sticker                Sticker?              @relation(fields: [stickerId], references: [id], onDelete: Restrict)
+  reactions              MessageReaction[]
+  readReceipts           MessageReadReceipt[]
+  reports                MessageReport[]
+  translations           MessageTranslation[]
+  audioTranscription     MessageTranscription?
+  poll                   Poll?
+  pollId                 String?               @unique
+  pinnedIn               PinnedMessage[]
 
   @@unique([senderId, clientMutationId])
   @@index([chatContextType, contextId])
@@ -1865,22 +1865,22 @@ model UserFavoriteUser {
 
 /// Cosmetic trophy unlock instance (catalog definition id is code-defined).
 model UserAchievement {
-  id               String      @id @default(cuid())
+  id               String               @id @default(cuid())
   userId           String
   definitionId     String
-  earnedAt         DateTime    @default(now())
+  earnedAt         DateTime             @default(now())
   sport            Sport?
   place            Int?
   sourceEntityType EntityType?
   sourceEntityId   String?
   sourceGameId     String?
   /// Idempotency: "" for one-shot habits; source entity id for podium stacks.
-  sourceKey        String      @default("")
+  sourceKey        String               @default("")
   revokedAt        DateTime?
-  isActive         Boolean     @default(true)
-  createdAt        DateTime    @default(now())
-  updatedAt        DateTime    @updatedAt
-  user             User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  isActive         Boolean              @default(true)
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+  user             User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   pins             UserAchievementPin[]
 
   /// Active uniqueness is enforced by partial unique index in SQL
@@ -2647,11 +2647,11 @@ model LeagueGroup {
 }
 
 model LeagueTeam {
-  id           String                  @id @default(cuid())
-  createdAt    DateTime                @default(now())
-  updatedAt    DateTime                @updatedAt
-  players      LeagueTeamPlayer[]
-  participants LeagueParticipant[]
+  id            String                  @id @default(cuid())
+  createdAt     DateTime                @default(now())
+  updatedAt     DateTime                @updatedAt
+  players       LeagueTeamPlayer[]
+  participants  LeagueParticipant[]
   rosterAliases LeagueTeamRosterAlias[]
 
   @@index([id])
@@ -3025,28 +3025,29 @@ enum MatchProposalMemberResponse {
 }
 
 model PlayIntent {
-  id           String              @id @default(cuid())
-  userId       String
-  cityId       String
-  sport        Sport
-  entityType   EntityType          @default(GAME)
-  dateKeys     String[]
-  timeOfDay    PlayIntentTimeOfDay @default(ANYTIME)
-  startTime    String?
-  endTime      String?
-  clubIds      String[]
-  minLevel     Float?
-  maxLevel     Float?
-  genderTeams  GenderTeam          @default(ANY)
-  status       PlayIntentStatus    @default(OPEN)
-  expiresAt    DateTime
-  createdAt    DateTime            @default(now())
-  updatedAt    DateTime            @updatedAt
-  user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  city         City                @relation(fields: [cityId], references: [id], onDelete: Cascade)
-  proposalMembers MatchProposalMember[]
-  gameParticipants GameParticipant[]
-  inviteOutcomes   GameInviteOutcome[]
+  id                      String                             @id @default(cuid())
+  userId                  String
+  cityId                  String
+  sport                   Sport
+  entityType              EntityType                         @default(GAME)
+  dateKeys                String[]
+  timeOfDay               PlayIntentTimeOfDay                @default(ANYTIME)
+  startTime               String?
+  endTime                 String?
+  clubIds                 String[]
+  minLevel                Float?
+  maxLevel                Float?
+  genderTeams             GenderTeam                         @default(ANY)
+  status                  PlayIntentStatus                   @default(OPEN)
+  expiresAt               DateTime
+  createdAt               DateTime                           @default(now())
+  updatedAt               DateTime                           @updatedAt
+  user                    User                               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  city                    City                               @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  proposalMembers         MatchProposalMember[]
+  gameParticipants        GameParticipant[]
+  inviteOutcomes          GameInviteOutcome[]
+  followerNotificationJob PlayIntentFollowerNotificationJob?
 
   @@index([userId, status])
   @@index([cityId, sport, status])
@@ -3055,25 +3056,43 @@ model PlayIntent {
   @@index([cityId, sport, status, expiresAt])
 }
 
+model PlayIntentFollowerNotificationJob {
+  id          String     @id @default(cuid())
+  intentId    String     @unique
+  userId      String
+  cityId      String
+  status      String     @default("pending")
+  attempts    Int        @default(0)
+  runAfter    DateTime   @default(now())
+  deliveredAt DateTime?
+  lastError   String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  intent      PlayIntent @relation(fields: [intentId], references: [id], onDelete: Cascade)
+
+  @@index([status, runAfter])
+  @@index([userId, cityId, deliveredAt])
+}
+
 model MatchProposal {
-  id                 String              @id @default(cuid())
+  id                 String                @id @default(cuid())
   cityId             String
   sport              Sport
-  entityType         EntityType          @default(GAME)
-  status             MatchProposalStatus @default(PENDING)
+  entityType         EntityType            @default(GAME)
+  status             MatchProposalStatus   @default(PENDING)
   dateKeys           String[]
   startTime          String?
   endTime            String?
   clubIds            String[]
   suggestedStartTime DateTime?
   expiresAt          DateTime
-  gameId             String?             @unique
+  gameId             String?               @unique
   hostUserId         String?
   rematchKey         String
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
-  city               City                @relation(fields: [cityId], references: [id], onDelete: Cascade)
-  game               Game?               @relation(fields: [gameId], references: [id], onDelete: SetNull)
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+  city               City                  @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  game               Game?                 @relation(fields: [gameId], references: [id], onDelete: SetNull)
   members            MatchProposalMember[]
 
   @@index([status, expiresAt])
@@ -3082,17 +3101,17 @@ model MatchProposal {
 }
 
 model MatchProposalMember {
-  id         String                       @id @default(cuid())
+  id         String                      @id @default(cuid())
   proposalId String
   userId     String
   intentId   String
-  response   MatchProposalMemberResponse  @default(PENDING)
-  isHost     Boolean                      @default(false)
-  createdAt  DateTime                     @default(now())
-  updatedAt  DateTime                     @updatedAt
-  proposal   MatchProposal                @relation(fields: [proposalId], references: [id], onDelete: Cascade)
-  user       User                         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  intent     PlayIntent                   @relation(fields: [intentId], references: [id], onDelete: Cascade)
+  response   MatchProposalMemberResponse @default(PENDING)
+  isHost     Boolean                     @default(false)
+  createdAt  DateTime                    @default(now())
+  updatedAt  DateTime                    @updatedAt
+  proposal   MatchProposal               @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  user       User                        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  intent     PlayIntent                  @relation(fields: [intentId], references: [id], onDelete: Cascade)
 
   @@unique([proposalId, userId])
   @@index([userId])
@@ -3260,16 +3279,16 @@ model AdSponsor {
 }
 
 model AdCampaign {
-  id                String                 @id @default(cuid())
-  sponsorId         String
-  name              String
-  status            AdCampaignStatus       @default(DRAFT)
-  priority          Int                    @default(0)
-  weight            Int                    @default(100)
-  startsAt          DateTime?
-  endsAt            DateTime?
-  defaultLocale     String                 @default("en")
-  frequencyCap      Json?
+  id                       String                 @id @default(cuid())
+  sponsorId                String
+  name                     String
+  status                   AdCampaignStatus       @default(DRAFT)
+  priority                 Int                    @default(0)
+  weight                   Int                    @default(100)
+  startsAt                 DateTime?
+  endsAt                   DateTime?
+  defaultLocale            String                 @default("en")
+  frequencyCap             Json?
   dismissible              Boolean                @default(true)
   dismissSnoozeDays        Int?
   clickUrlTrusted          Boolean                @default(true)
@@ -3279,19 +3298,19 @@ model AdCampaign {
   appendAdTokenToClickUrl  Boolean                @default(false)
   disclosureLabel          String?
   hideDisclosure           Boolean                @default(false)
-  targeting         Json
-  testUserIds       String[]               @default([])
-  createdAt         DateTime               @default(now())
-  updatedAt         DateTime               @updatedAt
-  sponsor           AdSponsor              @relation(fields: [sponsorId], references: [id], onDelete: Cascade)
-  creatives         AdCreative[]
-  placements        AdCampaignPlacement[]
-  events            AdEvent[]
-  userStates        AdUserState[]
-  sessionPicks      AdSessionPick[]
-  dailyStats        AdCampaignDailyStats[]
-  clickTokens       AdClickToken[]
-  landingWishes     AdLandingWish[]
+  targeting                Json
+  testUserIds              String[]               @default([])
+  createdAt                DateTime               @default(now())
+  updatedAt                DateTime               @updatedAt
+  sponsor                  AdSponsor              @relation(fields: [sponsorId], references: [id], onDelete: Cascade)
+  creatives                AdCreative[]
+  placements               AdCampaignPlacement[]
+  events                   AdEvent[]
+  userStates               AdUserState[]
+  sessionPicks             AdSessionPick[]
+  dailyStats               AdCampaignDailyStats[]
+  clickTokens              AdClickToken[]
+  landingWishes            AdLandingWish[]
 
   @@index([sponsorId])
   @@index([status])
@@ -3325,17 +3344,17 @@ enum AdLandingDonationIntent {
 }
 
 model AdLandingWish {
-  id             String                   @id @default(cuid())
+  id             String                  @id @default(cuid())
   landingKey     String
   userId         String?
   campaignId     String?
   displayName    String
   message        String
-  donationIntent AdLandingDonationIntent  @default(NONE)
+  donationIntent AdLandingDonationIntent @default(NONE)
   locale         String?
-  createdAt      DateTime                 @default(now())
-  user           User?                    @relation(fields: [userId], references: [id], onDelete: SetNull)
-  campaign       AdCampaign?              @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  createdAt      DateTime                @default(now())
+  user           User?                   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  campaign       AdCampaign?             @relation(fields: [campaignId], references: [id], onDelete: SetNull)
 
   @@index([landingKey, createdAt])
   @@index([userId])
