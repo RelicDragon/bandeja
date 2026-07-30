@@ -124,6 +124,10 @@ void (async () => {
       0,
     );
 
+    await prisma.playIntent.update({
+      where: { id: firstIntent.id },
+      data: { status: PlayIntentStatus.CANCELLED },
+    });
     const secondIntent = await createIntent(PlayIntentStatus.OPEN);
     await prisma.playIntentFollowerNotificationJob.create({
       data: {
