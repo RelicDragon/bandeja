@@ -253,10 +253,6 @@ export class PlayIntentService {
         },
         select: {
           id: true,
-          userId: true,
-          cityId: true,
-          sport: true,
-          entityType: true,
         },
       });
       if (linkedInvite) {
