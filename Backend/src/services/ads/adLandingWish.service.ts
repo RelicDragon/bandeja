@@ -5,6 +5,7 @@ import { verifyAdClickToken } from './ad.token.util';
 import type { AdLandingKey } from './adLandingWish.constants';
 import type { AdLandingWishCreateInput } from './adLandingWish.schemas';
 import { notifyDevelopersAdLandingWish } from './adLandingWish.notify';
+import { isKnownAdLandingWishSmokeProbe } from './adLandingWish.visibility';
 
 export type CreatedAdLandingWish = {
   id: string;
@@ -23,6 +24,7 @@ export type PublicAdLandingWish = {
   displayName: string;
   message: string;
   locale: string | null;
+  avatarUrl: string | null;
   createdAt: Date;
 };
 
@@ -129,7 +131,7 @@ export async function createAdLandingWish(
 export async function listPublicAdLandingWishes(
   landingKey: AdLandingKey
 ): Promise<PublicAdLandingWish[]> {
-  return prisma.adLandingWish.findMany({
+  const rows = await prisma.adLandingWish.findMany({
     where: { landingKey },
     orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
     select: {
@@ -138,6 +140,18 @@ export async function listPublicAdLandingWishes(
       message: true,
       locale: true,
       createdAt: true,
+      user: {
+        select: {
+          avatar: true,
+        },
+      },
     },
   });
+
+  return rows
+    .filter((row) => !isKnownAdLandingWishSmokeProbe(row))
+    .map(({ user, ...row }) => ({
+      ...row,
+      avatarUrl: user?.avatar?.trim() || null,
+    }));
 }

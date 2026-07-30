@@ -37,6 +37,7 @@ async function main() {
   const publicBroken = publicWishes.find((wish) => wish.id === broken.id);
   assert(publicAnon?.displayName === 'Anon Friend', 'public list includes display name');
   assert(publicAnon?.message === 'Happy birthday!', 'public list includes message');
+  assert(publicAnon?.avatarUrl === null, 'anonymous wish has no user avatar');
   assert(publicBroken?.locale === 'ru', 'public list includes message locale');
   assert(
     publicAnon !== undefined &&

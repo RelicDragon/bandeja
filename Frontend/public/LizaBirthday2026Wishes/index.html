@@ -366,6 +366,7 @@
         width: 34px;
         height: 34px;
         margin-left: -8px;
+        overflow: hidden;
         border: 2px solid var(--page);
         border-radius: 50%;
         place-items: center;
@@ -374,6 +375,13 @@
         font-size: 0.69rem;
         font-weight: 900;
         text-transform: uppercase;
+      }
+
+      .avatar-dot img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
       }
 
       .avatar-dot:nth-child(2) {
@@ -720,11 +728,19 @@
         width: 38px;
         height: 38px;
         flex: 0 0 auto;
+        overflow: hidden;
         border: 1px solid rgba(36, 19, 28, 0.22);
         border-radius: 50%;
         place-items: center;
         font-size: 0.79rem;
         text-transform: uppercase;
+      }
+
+      .wish-card__initial img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
       }
 
       .closing-note {
@@ -914,6 +930,23 @@
         white-space: pre-line;
       }
 
+      .presentation__word {
+        display: inline-block;
+        opacity: 0;
+        filter: blur(3px);
+        transform: translateY(0.34em) scale(0.98);
+        transition:
+          opacity 460ms ease,
+          filter 520ms ease,
+          transform 520ms cubic-bezier(0.2, 0.72, 0.2, 1);
+      }
+
+      .presentation__word.is-visible {
+        opacity: 1;
+        filter: blur(0);
+        transform: translateY(0) scale(1);
+      }
+
       .presentation__from {
         display: inline-flex;
         margin-top: 40px;
@@ -922,6 +955,17 @@
         color: var(--muted);
         font-size: 1rem;
         font-weight: 800;
+        opacity: 0;
+        transform: translateY(10px);
+        transition:
+          opacity 420ms ease,
+          transform 420ms ease;
+      }
+
+      .presentation__content.is-message-complete .presentation__from,
+      .presentation__content.is-finale .presentation__from {
+        opacity: 1;
+        transform: translateY(0);
       }
 
       .presentation__from::before,
@@ -930,6 +974,27 @@
         height: 1px;
         background: var(--line);
         content: "";
+      }
+
+      .presentation__from-avatar {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .presentation__from-avatar-wrap {
+        display: grid;
+        width: 38px;
+        height: 38px;
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 50%;
+        flex: 0 0 auto;
+        place-items: center;
+        color: var(--ink);
+        font-size: 0.75rem;
+        font-weight: 900;
       }
 
       .presentation__content.is-long .presentation__message {
@@ -1269,6 +1334,13 @@
 
         .wish-card {
           opacity: 1;
+          transform: none;
+          transition: none;
+        }
+
+        .presentation__word {
+          opacity: 1;
+          filter: none;
           transform: none;
           transition: none;
         }
@@ -1700,6 +1772,10 @@
         let activeWishIndex = 0;
         let autoplayTimer = null;
         let isAutoplaying = false;
+        let wordRevealTimer = null;
+        let scrollSettleFrame = null;
+        let messageRevealRun = 0;
+        let messageRevealComplete = false;
         let touchStartX = null;
         let refreshTimer = null;
 
@@ -1798,7 +1874,7 @@
           if (wishes.length > 0) {
             wishCountLabel.textContent = getCountLabel(wishes.length);
             renderWishes();
-            renderPresentation(false);
+            if (presentation.open) renderPresentation(false);
           }
 
           updateAutoplayButton();
@@ -1827,12 +1903,55 @@
           return trimmed ? Array.from(trimmed)[0] : "♥";
         }
 
+        function resolveAvatarUrl(value) {
+          if (typeof value !== "string" || !value.trim()) return null;
+          const raw = value.trim();
+          try {
+            const normalized =
+              raw.startsWith("http://") ||
+              raw.startsWith("https://") ||
+              raw.startsWith("//") ||
+              raw.startsWith("/")
+                ? raw
+                : "/" + raw;
+            const url = new URL(normalized, window.location.origin);
+            return url.protocol === "http:" || url.protocol === "https:" ? url.href : null;
+          } catch (_error) {
+            return null;
+          }
+        }
+
+        function appendAvatarOrInitial(container, wish, imageClass) {
+          const fallback = initialFor(wish.displayName);
+          const avatarUrl = resolveAvatarUrl(wish.avatarUrl);
+          if (!avatarUrl) {
+            container.textContent = fallback;
+            return;
+          }
+
+          const image = document.createElement("img");
+          if (imageClass) image.className = imageClass;
+          image.src = avatarUrl;
+          image.alt = "";
+          image.decoding = "async";
+          image.loading = "lazy";
+          image.addEventListener(
+            "error",
+            function () {
+              container.replaceChildren();
+              container.textContent = fallback;
+            },
+            { once: true },
+          );
+          container.appendChild(image);
+        }
+
         function renderAvatarStack() {
           avatarStack.replaceChildren();
           wishes.slice(0, 4).forEach(function (wish) {
             const dot = document.createElement("span");
             dot.className = "avatar-dot";
-            dot.textContent = initialFor(wish.displayName);
+            appendAvatarOrInitial(dot, wish);
             avatarStack.appendChild(dot);
           });
         }
@@ -1905,7 +2024,7 @@
           const initial = document.createElement("span");
           initial.className = "wish-card__initial";
           initial.setAttribute("aria-hidden", "true");
-          initial.textContent = initialFor(wish.displayName);
+          appendAvatarOrInitial(initial, wish);
           const name = document.createElement("span");
           name.textContent = interpolate(copy.cardFrom, { name: wish.displayName });
           from.append(initial, name);
@@ -2020,21 +2139,157 @@
           updateAutoplayButton();
         }
 
+        function cancelMessageReveal() {
+          messageRevealRun += 1;
+          window.clearTimeout(wordRevealTimer);
+          wordRevealTimer = null;
+          if (scrollSettleFrame !== null) {
+            window.cancelAnimationFrame(scrollSettleFrame);
+            scrollSettleFrame = null;
+          }
+          messageRevealComplete = false;
+          presentationContent.classList.remove("is-message-complete");
+        }
+
+        function followRevealedWord(word) {
+          const contentRect = presentationContent.getBoundingClientRect();
+          const wordRect = word.getBoundingClientRect();
+          const followLine = contentRect.bottom - Math.min(110, contentRect.height * 0.2);
+          if (wordRect.bottom <= followLine) return;
+
+          const maxScroll = Math.max(
+            0,
+            presentationContent.scrollHeight - presentationContent.clientHeight,
+          );
+          const target = Math.min(
+            maxScroll,
+            presentationContent.scrollTop + wordRect.bottom - followLine,
+          );
+          presentationContent.scrollTo({ top: target, behavior: "smooth" });
+        }
+
+        function finishMessageReveal(runId) {
+          if (runId !== messageRevealRun) return;
+          presentationContent.classList.add("is-message-complete");
+
+          const maxScroll = Math.max(
+            0,
+            presentationContent.scrollHeight - presentationContent.clientHeight,
+          );
+          if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+            presentationContent.scrollTop = maxScroll;
+          } else {
+            presentationContent.scrollTo({ top: maxScroll, behavior: "smooth" });
+          }
+
+          const startedAt = Date.now();
+          function waitUntilBottom() {
+            if (runId !== messageRevealRun) return;
+            const latestMax = Math.max(
+              0,
+              presentationContent.scrollHeight - presentationContent.clientHeight,
+            );
+            const distance = latestMax - presentationContent.scrollTop;
+            if (distance <= 2 || Date.now() - startedAt > 2600) {
+              presentationContent.scrollTop = latestMax;
+              scrollSettleFrame = null;
+              messageRevealComplete = true;
+              scheduleAutoplayAdvance();
+              return;
+            }
+            scrollSettleFrame = window.requestAnimationFrame(waitUntilBottom);
+          }
+          scrollSettleFrame = window.requestAnimationFrame(waitUntilBottom);
+        }
+
+        function renderAnimatedMessage(message) {
+          const runId = messageRevealRun;
+          const parts = message.split(/(\s+)/);
+          const words = [];
+          presentationMessage.replaceChildren();
+          presentationMessage.setAttribute("aria-label", message);
+
+          parts.forEach(function (part) {
+            if (!part) return;
+            if (/^\s+$/.test(part)) {
+              presentationMessage.appendChild(document.createTextNode(part));
+              return;
+            }
+            const word = document.createElement("span");
+            word.className = "presentation__word";
+            word.setAttribute("aria-hidden", "true");
+            word.textContent = part;
+            presentationMessage.appendChild(word);
+            words.push(word);
+          });
+
+          if (
+            words.length === 0 ||
+            window.matchMedia("(prefers-reduced-motion: reduce)").matches
+          ) {
+            words.forEach(function (word) {
+              word.classList.add("is-visible");
+            });
+            finishMessageReveal(runId);
+            return;
+          }
+
+          const wordDelay = words.length > 170 ? 68 : words.length > 90 ? 82 : 105;
+          let wordIndex = 0;
+
+          function revealNextWord() {
+            if (runId !== messageRevealRun) return;
+            const word = words[wordIndex];
+            word.classList.add("is-visible");
+            followRevealedWord(word);
+            wordIndex += 1;
+
+            if (wordIndex >= words.length) {
+              wordRevealTimer = window.setTimeout(function () {
+                finishMessageReveal(runId);
+              }, 560);
+              return;
+            }
+
+            const punctuationPause = /[.!?…,:;]$/.test(word.textContent || "") ? 85 : 0;
+            wordRevealTimer = window.setTimeout(
+              revealNextWord,
+              wordDelay + punctuationPause,
+            );
+          }
+
+          wordRevealTimer = window.setTimeout(revealNextWord, 180);
+        }
+
         function scheduleAutoplayAdvance() {
           window.clearTimeout(autoplayTimer);
-          if (!isAutoplaying || activeWishIndex >= wishes.length) return;
-          const readingTime = 4500 + wishes[activeWishIndex].message.length * 30;
-          const delay = Math.min(30000, Math.max(8000, readingTime));
-          autoplayTimer = window.setTimeout(function () {
+          autoplayTimer = null;
+          if (
+            !isAutoplaying ||
+            !messageRevealComplete ||
+            activeWishIndex >= wishes.length
+          ) {
+            return;
+          }
+
+          function advanceWhenStillAtBottom() {
             if (!isAutoplaying) return;
+            const maxScroll = Math.max(
+              0,
+              presentationContent.scrollHeight - presentationContent.clientHeight,
+            );
+            if (maxScroll - presentationContent.scrollTop > 3) {
+              autoplayTimer = window.setTimeout(advanceWhenStillAtBottom, 500);
+              return;
+            }
             activeWishIndex += 1;
             renderPresentation(true);
             if (activeWishIndex === wishes.length) {
               stopAutoplay();
-            } else {
-              scheduleAutoplayAdvance();
             }
-          }, delay);
+          }
+
+          autoplayTimer = window.setTimeout(advanceWhenStillAtBottom, 3200);
         }
 
         function startAutoplay() {
@@ -2055,12 +2310,16 @@
           const isFinale = activeWishIndex === wishes.length;
 
           function updateContent() {
+            cancelMessageReveal();
             presentationContent.classList.toggle("is-finale", isFinale);
             presentationContent.classList.remove("is-long", "is-very-long");
             if (isFinale) {
               presentationKicker.textContent = copy.finaleKicker;
               presentationMessage.textContent = copy.finaleMessage;
+              presentationMessage.removeAttribute("aria-label");
               presentationFrom.textContent = copy.finaleFrom;
+              presentationContent.classList.add("is-message-complete");
+              messageRevealComplete = true;
             } else {
               const wish = wishes[activeWishIndex];
               presentationContent.classList.toggle(
@@ -2075,12 +2334,22 @@
                 current: activeWishIndex + 1,
                 total: wishes.length,
               });
-              presentationMessage.textContent = wish.message;
-              presentationFrom.textContent = interpolate(copy.cardFrom, {
+              presentationFrom.replaceChildren();
+              const avatarUrl = resolveAvatarUrl(wish.avatarUrl);
+              if (avatarUrl) {
+                const avatarWrap = document.createElement("span");
+                avatarWrap.className = "presentation__from-avatar-wrap";
+                appendAvatarOrInitial(avatarWrap, wish, "presentation__from-avatar");
+                presentationFrom.appendChild(avatarWrap);
+              }
+              const author = document.createElement("span");
+              author.textContent = interpolate(copy.cardFrom, {
                 name: wish.displayName,
               });
+              presentationFrom.appendChild(author);
             }
             presentationContent.scrollTop = 0;
+            if (!isFinale) renderAnimatedMessage(wishes[activeWishIndex].message);
 
             presentationCounter.textContent =
               String(activeWishIndex + 1).padStart(2, "0") +
@@ -2124,7 +2393,6 @@
         function openPresentation(index, autoplay) {
           if (wishes.length === 0) return;
           activeWishIndex = Math.max(0, Math.min(index, wishes.length));
-          renderPresentation(false);
           createCelebrationParticles();
           if (typeof presentation.showModal === "function") {
             presentation.showModal();
@@ -2132,12 +2400,14 @@
             presentation.setAttribute("open", "");
           }
           document.body.style.overflow = "hidden";
+          renderPresentation(false);
           if (autoplay) startAutoplay();
           else stopAutoplay();
         }
 
         function closePresentation() {
           stopAutoplay();
+          cancelMessageReveal();
           if (typeof presentation.close === "function") presentation.close();
           else presentation.removeAttribute("open");
           document.body.style.overflow = "";
