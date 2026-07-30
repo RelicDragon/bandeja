@@ -16,6 +16,7 @@ npm -v
 RELEASES="$FRONTEND/releases"
 CONTRACT="$REPO_ROOT/packages/chat-contract"
 UNREAD_CONTRACT="$REPO_ROOT/packages/unread-contract"
+RUN_HEAVY="$REPO_ROOT/scripts/run-heavy"
 
 if [[ ! -f "$CONTRACT/package.json" ]]; then
   echo "error: packages/chat-contract missing — deploy the full repo, not Frontend/ alone." >&2
@@ -24,6 +25,11 @@ fi
 
 if [[ ! -f "$UNREAD_CONTRACT/package.json" ]]; then
   echo "error: packages/unread-contract missing — deploy the full repo, not Frontend/ alone." >&2
+  exit 1
+fi
+
+if [[ ! -f "$RUN_HEAVY" ]]; then
+  echo "error: scripts/run-heavy missing — deploy the full repo." >&2
   exit 1
 fi
 
@@ -41,7 +47,7 @@ WORKDIR="$(mktemp -d "/tmp/frontend-build-${RID}-XXXXXX")"
 cleanup() { rm -rf "$WORKDIR"; }
 trap cleanup EXIT
 
-mkdir -p "$WORKDIR/Frontend" "$WORKDIR/packages"
+mkdir -p "$WORKDIR/Frontend" "$WORKDIR/packages" "$WORKDIR/scripts"
 
 rsync -a \
   --exclude 'dist' \
@@ -50,6 +56,7 @@ rsync -a \
 
 rsync -a "$CONTRACT/" "$WORKDIR/packages/chat-contract/"
 rsync -a "$UNREAD_CONTRACT/" "$WORKDIR/packages/unread-contract/"
+install -m 755 "$RUN_HEAVY" "$WORKDIR/scripts/run-heavy"
 
 cd "$WORKDIR/packages/chat-contract"
 npm ci

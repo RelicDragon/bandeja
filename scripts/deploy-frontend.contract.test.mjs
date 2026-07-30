@@ -14,6 +14,12 @@ assert.match(
 );
 
 assert.match(
+  deployScript,
+  /install -m 755 "\$RUN_HEAVY" "\$WORKDIR\/scripts\/run-heavy"/,
+  'deploy-frontend.sh must copy scripts/run-heavy into the isolated build workdir'
+);
+
+assert.match(
   updScript,
   /packages\/unread-contract\/\*/,
   'upd.sh must treat packages/unread-contract changes as deployable'
