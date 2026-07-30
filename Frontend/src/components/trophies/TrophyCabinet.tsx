@@ -1,11 +1,13 @@
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
+import { getHorizontalScrollFadeMaskStyle } from '@/components/HorizontalScrollFadeEdges';
 import { groupCabinetRailItems } from '@/components/trophies/cabinetGrouping';
 import { TrophyCabinetCard } from '@/components/trophies/TrophyCabinetCard';
 import { TrophyCabinetStack } from '@/components/trophies/TrophyCabinetStack';
 import { TROPHY_TILE_WIDTH_CLASS } from '@/components/trophies/trophyCabinetTileChrome';
 import { useTrophyStackExpansion } from '@/components/trophies/useTrophyStackExpansion';
+import { useHorizontalScrollFade } from '@/hooks/useHorizontalScrollFade';
 import type { TrophiesPayload, TrophyCabinetEntryView } from '@/types/trophies';
 
 type TrophyCabinetProps = {
@@ -81,6 +83,15 @@ function TrophyCabinetRail({
     return keys;
   }, [rows]);
   const { isExpanded, setExpanded } = useTrophyStackExpansion(stackKeys);
+  const carouselRef = useRef<HTMLDivElement>(null);
+  const { showLeftFade, showRightFade } = useHorizontalScrollFade(
+    carouselRef,
+    rows.length,
+  );
+  const carouselFadeStyle = getHorizontalScrollFadeMaskStyle(
+    showLeftFade,
+    showRightFade,
+  );
 
   return (
     <section className="space-y-2.5">
@@ -96,7 +107,10 @@ function TrophyCabinetRail({
       </div>
 
       <motion.div
-        className="flex flex-nowrap items-stretch gap-2.5 overflow-x-auto px-1 py-3 scrollbar-hide [touch-action:pan-x_pan-y] overscroll-x-contain snap-x snap-mandatory [-webkit-overflow-scrolling:touch]"
+        ref={carouselRef}
+        data-testid="achievement-carousel"
+        className="achievement-carousel-scrollbar flex flex-nowrap items-stretch gap-2.5 overflow-x-auto px-1 py-3 [touch-action:pan-x_pan-y] overscroll-x-contain snap-x snap-proximity scroll-px-1 [-webkit-overflow-scrolling:touch]"
+        style={carouselFadeStyle}
         initial="hidden"
         animate="visible"
         variants={{

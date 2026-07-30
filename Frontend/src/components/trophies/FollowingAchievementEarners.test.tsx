@@ -59,7 +59,7 @@ describe('FollowingAchievementEarners', () => {
       .not.toEqual(queryKeys.followingAchievementEarners('viewer-b', 'dynamic_duo_10'));
   });
 
-  it('renders followed earners in one horizontal row', () => {
+  it('renders followed earners in a wrapping tag list', () => {
     const container = document.createElement('div');
     document.body.append(container);
     const root = createRoot(container);
@@ -70,27 +70,15 @@ describe('FollowingAchievementEarners', () => {
       );
     });
 
-    const rail = container.querySelector('[data-testid="following-achievement-earners-rail"]');
+    const list = container.querySelector('[data-testid="following-achievement-earners-list"]');
     expect(container.querySelectorAll('[data-testid="avatar"]')).toHaveLength(2);
     expect(container.textContent).toContain('A. Smith');
     expect(container.textContent).toContain('B. Jones');
-    expect(rail?.className).toContain('overflow-x-auto');
-    expect(rail?.className).toContain('px-1');
+    expect(list?.className).toContain('flex-wrap');
+    expect(list?.className).not.toContain('overflow-x-auto');
+    expect(list?.className).toContain('px-1');
     expect(container.querySelector('button[aria-label="Ana Smith"]')).not.toBeNull();
     expect(container.querySelector('button span:last-child')?.className).toContain('truncate');
-
-    Object.defineProperties(rail!, {
-      clientWidth: { configurable: true, value: 200 },
-      scrollWidth: { configurable: true, value: 400 },
-      scrollLeft: { configurable: true, value: 0, writable: true },
-    });
-    act(() => rail!.dispatchEvent(new Event('scroll', { bubbles: true })));
-    expect(container.querySelector('[data-testid="following-achievement-earners-right-fade"]')).not.toBeNull();
-    expect(container.querySelector('[data-testid="following-achievement-earners-left-fade"]')).toBeNull();
-
-    (rail as HTMLDivElement).scrollLeft = 100;
-    act(() => rail!.dispatchEvent(new Event('scroll', { bubbles: true })));
-    expect(container.querySelector('[data-testid="following-achievement-earners-left-fade"]')).not.toBeNull();
 
     act(() => root.unmount());
     container.remove();

@@ -97,6 +97,7 @@
       "pinnedBadge": "Pinned",
       "followingEarners": "People you follow who also earned this",
       "followingEarnersError": "Couldn’t load followed players — tap to retry",
+      "familyLeaders": "Top 3 in this achievement group",
       "pinWhich": "Choose which to pin",
       "pinHint": "Pinned trophies stay in your showcase even when newer ones unlock.",
       "pinsFull": "Showcase is full — unpin one first (max 3).",

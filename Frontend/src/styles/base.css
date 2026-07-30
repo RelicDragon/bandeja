@@ -72,3 +72,49 @@ body.capacitor-android #root {
   scrollbar-width: thin;
   scrollbar-color: var(--ui-scrollbar-thumb) transparent;
 }
+
+.achievement-carousel-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.achievement-carousel-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .achievement-carousel-scrollbar {
+    -ms-overflow-style: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--ui-scrollbar-thumb) transparent;
+  }
+
+  .achievement-carousel-scrollbar::-webkit-scrollbar {
+    display: block;
+    height: 8px;
+  }
+
+  .achievement-carousel-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .achievement-carousel-scrollbar::-webkit-scrollbar-thumb {
+    background-color: var(--ui-scrollbar-thumb);
+    border-radius: 9999px;
+  }
+
+  .achievement-carousel-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: var(--ui-scrollbar-thumb-hover);
+  }
+}
+
+body.capacitor-ios .achievement-carousel-scrollbar,
+body.capacitor-android .achievement-carousel-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+body.capacitor-ios .achievement-carousel-scrollbar::-webkit-scrollbar,
+body.capacitor-android .achievement-carousel-scrollbar::-webkit-scrollbar {
+  display: none;
+}

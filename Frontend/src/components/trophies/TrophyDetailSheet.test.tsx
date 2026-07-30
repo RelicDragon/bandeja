@@ -63,6 +63,10 @@ vi.mock('@/components/trophies/FollowingAchievementEarners', () => ({
   FollowingAchievementEarners: () => null,
 }));
 
+vi.mock('@/components/trophies/AchievementFamilyLeaders', () => ({
+  AchievementFamilyLeaders: () => null,
+}));
+
 import { TrophyDetailSheet } from '@/components/trophies/TrophyDetailSheet';
 
 const roots: Root[] = [];
@@ -89,6 +93,38 @@ const definition: TrophyDefinitionView = {
 };
 
 describe('TrophyDetailSheet', () => {
+  it('closes from the final chevron control', () => {
+    const container = document.createElement('div');
+    document.body.append(container);
+    containers.push(container);
+    const root = createRoot(container);
+    roots.push(root);
+    const onOpenChange = vi.fn();
+
+    act(() =>
+      root.render(
+        <TrophyDetailSheet
+          open
+          onOpenChange={onOpenChange}
+          definition={definition}
+          instance={null}
+          instances={[]}
+          locked
+          progress={null}
+          isOwn
+        />,
+      ),
+    );
+
+    const closeButton = container.querySelector<HTMLButtonElement>(
+      '[data-testid="trophy-detail-close"]',
+    );
+    expect(closeButton).not.toBeNull();
+
+    act(() => closeButton!.click());
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
   it('centers locked progress and renders its progress bar below', () => {
     const container = document.createElement('div');
     document.body.append(container);

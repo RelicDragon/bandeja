@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { ChevronDown } from 'lucide-react';
 import {
   Drawer,
   DrawerContent,
@@ -6,6 +7,7 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from '@/components/ui/Drawer';
+import { AchievementFamilyLeaders } from '@/components/trophies/AchievementFamilyLeaders';
 import { TrophyArt } from '@/components/trophies/TrophyArt';
 import { TrophyPinControls } from '@/components/trophies/TrophyPinControls';
 import { TrophyRarityBadge } from '@/components/trophies/TrophyRarityBadge';
@@ -112,185 +114,208 @@ export function TrophyDetailSheet({
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="mx-auto max-w-lg overflow-y-auto overscroll-y-contain px-4 pb-8">
-        <DrawerHeader className="text-left">
-          <div className="mb-4 flex justify-center">
-            <TrophyRarityFrame
-              rarity={displayRarity}
-              locked={frameLocked}
-              className="h-28 w-28 rounded-3xl"
-            >
-              <TrophyArt artKey={definition.artKey} locked={locked} className="h-[4.5rem] w-[5.5rem]" />
-            </TrophyRarityFrame>
-          </div>
-          <div className="mb-2 flex flex-wrap items-center gap-2">
-            <TrophyRarityBadge
-              rarity={displayRarity}
-              locked={frameLocked}
-            />
-            {anyPinned && (
-              <span className="rounded-full bg-primary-500/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-primary-700 dark:text-primary-300">
-                {t('trophies.detail.pinnedBadge')}
-              </span>
-            )}
-          </div>
-          <DrawerTitle>{t(definition.titleKey)}</DrawerTitle>
-          <DrawerDescription>{t(definition.descriptionKey)}</DrawerDescription>
-        </DrawerHeader>
-
-        <div className="space-y-3 px-1 text-sm">
-          {locked && isOwn && (
-            progress ? (
-              <div
-                data-testid="trophy-detail-progress"
-                data-max-level={maxLevel ? 'true' : 'false'}
-                className="relative overflow-hidden rounded-3xl border border-emerald-100/80 bg-gradient-to-b from-emerald-50/90 to-white px-5 py-4 text-center shadow-[0_14px_30px_-24px_rgba(16,185,129,0.7)] dark:border-emerald-500/20 dark:from-emerald-950/35 dark:to-white/[0.03]"
-                aria-label={t('trophies.detail.progress', {
-                  current: progress.current,
-                  target: progress.target,
-                })}
+      <DrawerContent className="mx-auto max-w-lg">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-4 pb-4">
+          <DrawerHeader className="text-left">
+            <div className="mb-4 flex justify-center">
+              <TrophyRarityFrame
+                rarity={displayRarity}
+                locked={frameLocked}
+                className="h-28 w-28 rounded-3xl"
               >
+                <TrophyArt artKey={definition.artKey} locked={locked} className="h-[4.5rem] w-[5.5rem]" />
+              </TrophyRarityFrame>
+            </div>
+            <div className="mb-2 flex flex-wrap items-center gap-2">
+              <TrophyRarityBadge
+                rarity={displayRarity}
+                locked={frameLocked}
+              />
+              {anyPinned && (
+                <span className="rounded-full bg-primary-500/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-primary-700 dark:text-primary-300">
+                  {t('trophies.detail.pinnedBadge')}
+                </span>
+              )}
+            </div>
+            <DrawerTitle>{t(definition.titleKey)}</DrawerTitle>
+            <DrawerDescription>{t(definition.descriptionKey)}</DrawerDescription>
+          </DrawerHeader>
+
+          <div className="space-y-3 px-1 text-sm">
+            {locked && isOwn && (
+              progress ? (
                 <div
-                  className="pointer-events-none absolute inset-x-10 -top-8 h-16 rounded-full bg-emerald-400/15 blur-2xl dark:bg-emerald-400/10"
-                  aria-hidden
-                />
-                <div className="relative">
-                  <div className="relative flex items-baseline justify-center">
-                    <div
-                      data-testid="trophy-detail-progress-value"
-                      className="flex items-baseline justify-center gap-1.5 tabular-nums"
-                    >
-                      <span className="text-3xl font-black tracking-tight text-gray-900 dark:text-white">
-                        {progress.current}
-                      </span>
-                      <span className="text-sm font-bold text-gray-400 dark:text-gray-500">
-                        / {progress.target}
+                  data-testid="trophy-detail-progress"
+                  data-max-level={maxLevel ? 'true' : 'false'}
+                  className="relative overflow-hidden rounded-3xl border border-emerald-100/80 bg-gradient-to-b from-emerald-50/90 to-white px-5 py-4 text-center shadow-[0_14px_30px_-24px_rgba(16,185,129,0.7)] dark:border-emerald-500/20 dark:from-emerald-950/35 dark:to-white/[0.03]"
+                  aria-label={t('trophies.detail.progress', {
+                    current: progress.current,
+                    target: progress.target,
+                  })}
+                >
+                  <div
+                    className="pointer-events-none absolute inset-x-10 -top-8 h-16 rounded-full bg-emerald-400/15 blur-2xl dark:bg-emerald-400/10"
+                    aria-hidden
+                  />
+                  <div className="relative">
+                    <div className="relative flex items-baseline justify-center">
+                      <div
+                        data-testid="trophy-detail-progress-value"
+                        className="flex items-baseline justify-center gap-1.5 tabular-nums"
+                      >
+                        <span className="text-3xl font-black tracking-tight text-gray-900 dark:text-white">
+                          {progress.current}
+                        </span>
+                        <span className="text-sm font-bold text-gray-400 dark:text-gray-500">
+                          / {progress.target}
+                        </span>
+                      </div>
+                      <span
+                        data-testid="trophy-detail-progress-percent"
+                        className="absolute right-0 text-sm font-bold tabular-nums text-emerald-600 dark:text-emerald-300"
+                      >
+                        {Math.round(progressPercent)}%
                       </span>
                     </div>
-                    <span
-                      data-testid="trophy-detail-progress-percent"
-                      className="absolute right-0 text-sm font-bold tabular-nums text-emerald-600 dark:text-emerald-300"
-                    >
-                      {Math.round(progressPercent)}%
-                    </span>
-                  </div>
 
-                  <div className="mt-3 h-2.5 w-full overflow-hidden rounded-full bg-gray-200/90 p-0.5 shadow-inner dark:bg-white/10">
-                    <div
-                      data-testid="trophy-detail-progress-bar"
-                      data-max-level={maxLevel ? 'true' : 'false'}
-                      role="progressbar"
-                      aria-valuemin={0}
-                      aria-valuemax={100}
-                      aria-valuenow={Math.round(progressPercent)}
-                      className={`relative h-full overflow-hidden rounded-full shadow-[0_0_12px_rgba(16,185,129,0.35)] transition-[width] duration-500 ease-out ${trophyProgressFillClass()}`}
-                      style={{ width: `${progressPercent}%` }}
-                    >
-                      <span
-                        className="absolute inset-0 bg-gradient-to-b from-white/45 via-transparent to-transparent"
-                        aria-hidden
-                      />
+                    <div className="mt-3 h-2.5 w-full overflow-hidden rounded-full bg-gray-200/90 p-0.5 shadow-inner dark:bg-white/10">
+                      <div
+                        data-testid="trophy-detail-progress-bar"
+                        data-max-level={maxLevel ? 'true' : 'false'}
+                        role="progressbar"
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        aria-valuenow={Math.round(progressPercent)}
+                        className={`relative h-full overflow-hidden rounded-full shadow-[0_0_12px_rgba(16,185,129,0.35)] transition-[width] duration-500 ease-out ${trophyProgressFillClass()}`}
+                        style={{ width: `${progressPercent}%` }}
+                      >
+                        <span
+                          className="absolute inset-0 bg-gradient-to-b from-white/45 via-transparent to-transparent"
+                          aria-hidden
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ) : (
-              <p className="rounded-2xl bg-gray-50/90 px-4 py-3 text-center text-gray-600 dark:bg-white/[0.04] dark:text-gray-300">
-                {t('trophies.detail.lockedHint')}
-              </p>
-            )
-          )}
-
-          {!locked && instance && (
-            <div className="space-y-2 rounded-2xl bg-gray-50/90 px-3.5 py-3 dark:bg-white/[0.04]">
-              <p className="text-gray-700 dark:text-gray-200">
-                {t('trophies.detail.earnedOn', {
-                  date: formatEarned(instance.earnedAt, i18n.language),
-                })}
-              </p>
-              {sportLabel && (
-                <p className="text-gray-600 dark:text-gray-300">
-                  {t('trophies.detail.sport', { sport: sportLabel })}
+              ) : (
+                <p className="rounded-2xl bg-gray-50/90 px-4 py-3 text-center text-gray-600 dark:bg-white/[0.04] dark:text-gray-300">
+                  {t('trophies.detail.lockedHint')}
                 </p>
-              )}
-              {sourceTitle && (
-                <p className="font-medium text-gray-800 dark:text-gray-100">{sourceTitle}</p>
-              )}
-              {instances.length > 1 && (
-                <p className="text-gray-600 dark:text-gray-300">
-                  {t('trophies.detail.timesEarned', { count: instances.length })}
+              )
+            )}
+
+            {!locked && instance && (
+              <div className="space-y-2 rounded-2xl bg-gray-50/90 px-3.5 py-3 dark:bg-white/[0.04]">
+                <p className="text-gray-700 dark:text-gray-200">
+                  {t('trophies.detail.earnedOn', {
+                    date: formatEarned(instance.earnedAt, i18n.language),
+                  })}
                 </p>
-              )}
-              {deepLinkId && (
-                <button
-                  type="button"
-                  className="font-semibold text-primary-600 underline-offset-2 hover:underline dark:text-primary-400"
-                  onClick={() => {
-                    onOpenChange(false);
-                    navigate(buildUrl('game', { id: deepLinkId }));
-                  }}
-                >
-                  {t('trophies.detail.openEvent')}
-                </button>
-              )}
-            </div>
-          )}
-
-          <FollowingAchievementEarners
-            definitionId={definition.id}
-            open={open}
-          />
-
-          {canPin && ownerUserId && !showStackedPins && instance && (
-            <TrophyPinControls
-              achievementId={instance.id}
-              isPinned={pinned.has(instance.id)}
-              ownerUserId={ownerUserId}
-              className="pt-1"
-            />
-          )}
-
-          {showStackedPins && ownerUserId && (
-            <div className="space-y-2 pt-1">
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                {t('trophies.detail.pinWhich')}
-              </p>
-              <p className="text-[11px] text-gray-500 dark:text-gray-400">
-                {t('trophies.detail.pinHint')}
-              </p>
-              {instances.map((row) => {
-                const rowSport = sportLabelFor(row.sport, t);
-                const rowTitle = row.source?.title?.trim() || null;
-                return (
-                  <div
-                    key={row.id}
-                    className="rounded-2xl border border-gray-100 bg-gray-50/80 p-3 dark:border-gray-700/60 dark:bg-gray-900/50"
+                {sportLabel && (
+                  <p className="text-gray-600 dark:text-gray-300">
+                    {t('trophies.detail.sport', { sport: sportLabel })}
+                  </p>
+                )}
+                {sourceTitle && (
+                  <p className="font-medium text-gray-800 dark:text-gray-100">{sourceTitle}</p>
+                )}
+                {instances.length > 1 && (
+                  <p className="text-gray-600 dark:text-gray-300">
+                    {t('trophies.detail.timesEarned', { count: instances.length })}
+                  </p>
+                )}
+                {deepLinkId && (
+                  <button
+                    type="button"
+                    className="font-semibold text-primary-600 underline-offset-2 hover:underline dark:text-primary-400"
+                    onClick={() => {
+                      onOpenChange(false);
+                      navigate(buildUrl('game', { id: deepLinkId }));
+                    }}
                   >
-                    <div className="mb-2 space-y-0.5 text-xs text-gray-600 dark:text-gray-300">
-                      <div className="flex flex-wrap items-baseline justify-between gap-2">
-                        <span>
-                          {t('trophies.detail.earnedOn', {
-                            date: formatEarned(row.earnedAt, i18n.language),
-                          })}
-                        </span>
-                        {rowSport && <span>{rowSport}</span>}
+                    {t('trophies.detail.openEvent')}
+                  </button>
+                )}
+              </div>
+            )}
+
+            <FollowingAchievementEarners
+              definitionId={definition.id}
+              open={open}
+            />
+
+            <AchievementFamilyLeaders
+              ruleKind={definition.ruleKind}
+              open={open}
+            />
+
+            {canPin && ownerUserId && !showStackedPins && instance && (
+              <TrophyPinControls
+                achievementId={instance.id}
+                isPinned={pinned.has(instance.id)}
+                ownerUserId={ownerUserId}
+                className="pt-1"
+              />
+            )}
+
+            {showStackedPins && ownerUserId && (
+              <div className="space-y-2 pt-1">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                  {t('trophies.detail.pinWhich')}
+                </p>
+                <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                  {t('trophies.detail.pinHint')}
+                </p>
+                {instances.map((row) => {
+                  const rowSport = sportLabelFor(row.sport, t);
+                  const rowTitle = row.source?.title?.trim() || null;
+                  return (
+                    <div
+                      key={row.id}
+                      className="rounded-2xl border border-gray-100 bg-gray-50/80 p-3 dark:border-gray-700/60 dark:bg-gray-900/50"
+                    >
+                      <div className="mb-2 space-y-0.5 text-xs text-gray-600 dark:text-gray-300">
+                        <div className="flex flex-wrap items-baseline justify-between gap-2">
+                          <span>
+                            {t('trophies.detail.earnedOn', {
+                              date: formatEarned(row.earnedAt, i18n.language),
+                            })}
+                          </span>
+                          {rowSport && <span>{rowSport}</span>}
+                        </div>
+                        {rowTitle && (
+                          <p className="font-medium text-gray-800 dark:text-gray-100">{rowTitle}</p>
+                        )}
                       </div>
-                      {rowTitle && (
-                        <p className="font-medium text-gray-800 dark:text-gray-100">{rowTitle}</p>
-                      )}
+                      <TrophyPinControls
+                        achievementId={row.id}
+                        isPinned={pinned.has(row.id)}
+                        ownerUserId={ownerUserId}
+                        compact
+                        showHint={false}
+                      />
                     </div>
-                    <TrophyPinControls
-                      achievementId={row.id}
-                      isPinned={pinned.has(row.id)}
-                      ownerUserId={ownerUserId}
-                      compact
-                      showHint={false}
-                    />
-                  </div>
-                );
-              })}
-            </div>
-          )}
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-center pb-1 pt-4">
+            <button
+              type="button"
+              data-testid="trophy-detail-close"
+              aria-label={t('common.close', { defaultValue: 'Close' })}
+              onClick={() => onOpenChange(false)}
+              className="group flex h-11 w-20 items-center justify-center rounded-full border border-gray-200/80 bg-gradient-to-b from-white to-gray-50 text-gray-500 shadow-[0_8px_24px_-12px_rgba(15,23,42,0.45)] transition duration-200 hover:-translate-y-0.5 hover:border-gray-300 hover:text-gray-800 hover:shadow-[0_10px_28px_-12px_rgba(15,23,42,0.55)] active:translate-y-0 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:border-white/10 dark:from-white/10 dark:to-white/[0.04] dark:text-gray-300 dark:hover:border-white/20 dark:hover:text-white dark:focus-visible:ring-offset-gray-800"
+            >
+              <ChevronDown
+                aria-hidden
+                className="h-5 w-5 transition-transform duration-200 group-hover:translate-y-0.5"
+                strokeWidth={2.25}
+              />
+            </button>
+          </div>
         </div>
       </DrawerContent>
     </Drawer>

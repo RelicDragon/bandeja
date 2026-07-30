@@ -1,5 +1,8 @@
 import { useEffect, useState, type RefObject } from 'react';
 
+/** Absorbs sub-pixel rounding and scroll-snap settling near either edge. */
+const EDGE_TOLERANCE_PX = 2;
+
 export function useHorizontalScrollFade(
   containerRef: RefObject<HTMLElement | null>,
   itemCount: number
@@ -13,8 +16,9 @@ export function useHorizontalScrollFade(
 
     const checkScrollPosition = () => {
       const { scrollLeft, scrollWidth, clientWidth } = container;
-      setShowLeftFade(scrollLeft > 0);
-      setShowRightFade(scrollLeft < scrollWidth - clientWidth - 1);
+      const maxScrollLeft = Math.max(0, scrollWidth - clientWidth);
+      setShowLeftFade(scrollLeft > EDGE_TOLERANCE_PX);
+      setShowRightFade(maxScrollLeft - scrollLeft > EDGE_TOLERANCE_PX);
     };
 
     checkScrollPosition();
