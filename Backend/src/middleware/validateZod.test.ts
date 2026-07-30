@@ -27,4 +27,27 @@ assert.deepEqual(
 );
 assert.equal(request.query.cityId, '  city-1  ');
 
+const cacheBustedRequest = {
+  body: {},
+  params: {},
+  query: { cityId: 'city-1', _t: '1785444814529' },
+} as unknown as Request;
+let cacheBustedError: unknown;
+
+validateZod({
+  query: z.object({ cityId: z.string() }).strict(),
+})(
+  cacheBustedRequest,
+  {} as Response,
+  ((error?: unknown) => {
+    cacheBustedError = error;
+  }) as NextFunction,
+);
+
+assert.equal(cacheBustedError, undefined);
+assert.deepEqual(
+  getValidatedRequestPart<{ cityId: string }>(cacheBustedRequest, 'query'),
+  { cityId: 'city-1' },
+);
+
 console.log('validateZod.test.ts: ok');

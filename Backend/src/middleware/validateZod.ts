@@ -13,6 +13,17 @@ type ValidatedRequestParts = Partial<Record<RequestTarget, unknown>>;
 
 const validatedRequestParts = new WeakMap<Request, ValidatedRequestParts>();
 
+/** Web clients stamp every request with a cache-buster that is not application input. */
+const TRANSPORT_QUERY_KEYS = ['_t'] as const;
+
+function stripTransportQueryKeys(query: unknown): unknown {
+  if (!query || typeof query !== 'object' || Array.isArray(query)) return query;
+  const entries = Object.entries(query as Record<string, unknown>).filter(
+    ([key]) => !TRANSPORT_QUERY_KEYS.includes(key as (typeof TRANSPORT_QUERY_KEYS)[number]),
+  );
+  return Object.fromEntries(entries);
+}
+
 export function getValidatedRequestPart<T>(
   req: Request,
   target: RequestTarget
@@ -47,7 +58,9 @@ export function validateZod(schemas: RequestSchemas) {
     for (const target of ['params', 'query', 'body'] as const) {
       const schema = schemas[target];
       if (!schema) continue;
-      const result = schema.safeParse(req[target]);
+      const input =
+        target === 'query' ? stripTransportQueryKeys(req.query) : req[target];
+      const result = schema.safeParse(input);
       if (!result.success) {
         next(
           new ApiError(400, validationMessage(result.error), true, {
