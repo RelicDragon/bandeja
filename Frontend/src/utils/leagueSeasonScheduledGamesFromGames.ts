@@ -18,6 +18,7 @@ function leagueSeasonParticipantGamesFromGames(
   if (!userId) return result;
   for (const game of games) {
     if (game.entityType !== 'LEAGUE') continue;
+    if (game.resultsStatus === 'FINAL') continue;
     if (game.status !== 'ANNOUNCED' && game.status !== 'STARTED') continue;
     if (timeFilter === 'scheduled') {
       if (game.timeIsSet !== true) continue;
