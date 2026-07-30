@@ -59,6 +59,10 @@ vi.mock('@/components/trophies/TrophyRarityFrame', () => ({
   TrophyRarityFrame: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
 
+vi.mock('@/components/trophies/FollowingAchievementEarners', () => ({
+  FollowingAchievementEarners: () => null,
+}));
+
 import { TrophyDetailSheet } from '@/components/trophies/TrophyDetailSheet';
 
 const roots: Root[] = [];

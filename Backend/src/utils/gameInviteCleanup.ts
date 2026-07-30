@@ -2,6 +2,7 @@ import { GameInviteOutcomeType, ParticipantRole, Prisma } from '@prisma/client';
 import prisma from '../config/database';
 import { ParticipantMessageHelper } from '../services/game/participantMessageHelper';
 import { PlayIntentGameLifecycleService } from '../services/playIntent/playIntentGameLifecycle.service';
+import { publishCommittedPlayIntentStatusChanges } from '../services/playIntent/playIntentRealtime';
 
 export const INVITE_CLEANUP_STATUSES = ['INVITED'] as const;
 
@@ -26,7 +27,7 @@ function emitInviteCleanupSockets(
 export async function cleanupInviteParticipantsForEndedGame(
   gameId: string,
   tx?: Tx
-): Promise<void> {
+): Promise<string[]> {
   const rows = await (tx ?? prisma).gameParticipant.findMany({
     where: { gameId, status: { in: [...INVITE_CLEANUP_STATUSES] } },
     select: {
@@ -38,7 +39,7 @@ export async function cleanupInviteParticipantsForEndedGame(
       playIntentId: true,
     },
   });
-  if (rows.length === 0) return;
+  if (rows.length === 0) return [];
 
   const ownerIds = rows.filter((p) => p.role === ParticipantRole.OWNER).map((p) => p.id);
   const nonOwner = rows.filter((p) => p.role !== ParticipantRole.OWNER);
@@ -73,10 +74,16 @@ export async function cleanupInviteParticipantsForEndedGame(
   }
 
   if (!tx) {
+    await publishCommittedPlayIntentStatusChanges(
+      nonOwner.map((participant) => participant.playIntentId),
+    );
     emitInviteCleanupSockets(gameId, nonOwner);
     const firstNotify = rows[0]?.userId;
     if (firstNotify) {
       await ParticipantMessageHelper.emitGameUpdate(gameId, firstNotify);
     }
   }
+  return nonOwner
+    .map((participant) => participant.playIntentId)
+    .filter((intentId): intentId is string => !!intentId);
 }

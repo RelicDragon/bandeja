@@ -9,9 +9,9 @@
     "packages/*"
   ],
   "scripts": {
-    "build:contract": "npm run build -w @bandeja/chat-contract",
-    "test:contract": "npm run test -w @bandeja/chat-contract",
-    "build:unread-contract": "npm run build -w @bandeja/unread-contract",
-    "test:unread-contract": "npm run test -w @bandeja/unread-contract"
+    "build:contract": "./scripts/run-heavy npm run build -w @bandeja/chat-contract",
+    "test:contract": "./scripts/run-heavy npm run test -w @bandeja/chat-contract",
+    "build:unread-contract": "./scripts/run-heavy npm run build -w @bandeja/unread-contract",
+    "test:unread-contract": "./scripts/run-heavy npm run test -w @bandeja/unread-contract"
   }
 }

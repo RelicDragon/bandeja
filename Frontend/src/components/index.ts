@@ -8,6 +8,7 @@ export * from './NavigationErrorBoundary';
 export * from './Select';
 export * from './ToggleGroup';
 export * from './PlayerAvatar';
+export * from './leaderboard/AchievementLeaderboard';
 export * from './TeamAvatar';
 export * from './TeamAvatarCutDial';
 export * from './GameAvatar';

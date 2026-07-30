@@ -32,6 +32,7 @@ import {
   type IntentCriteria,
 } from './playIntentCriteria';
 import { reportPlayIntentQueueError } from './playIntentQueueFailure';
+import { PlayIntentDrainCoordinator } from './playIntentDrainCoordinator';
 
 const POLL_INTERVAL_MS = 5_000;
 const STALE_RUNNING_MS = 5 * 60 * 1000;
@@ -41,7 +42,7 @@ const MAX_RETRY_DELAY_MS = 10 * 60 * 1000;
 const TELEGRAM_DISPATCHING_MARKER = 'dispatching:telegram';
 
 let workerTimer: ReturnType<typeof setInterval> | null = null;
-let draining = false;
+const drainCoordinator = new PlayIntentDrainCoordinator();
 
 type DeliveryDb = Pick<
   Prisma.TransactionClient,
@@ -507,24 +508,22 @@ export class PlayIntentNotificationDeliveryQueueService {
     }
   }
 
-  static async drain(): Promise<void> {
-    if (draining) return;
-    draining = true;
-    try {
-      await this.recoverStaleJobs();
-      while (true) {
-        const job = await this.claimNext();
-        if (!job) break;
-        await this.process(job);
+  static drain(): Promise<void> {
+    return drainCoordinator.run(async () => {
+      try {
+        await this.recoverStaleJobs();
+        while (true) {
+          const job = await this.claimNext();
+          if (!job) break;
+          await this.process(job);
+        }
+      } catch (error) {
+        reportPlayIntentQueueError(
+          'play-intent-delivery',
+          'drain failed',
+          error instanceof Error ? error.message : String(error),
+        );
       }
-    } catch (error) {
-      reportPlayIntentQueueError(
-        'play-intent-delivery',
-        'drain failed',
-        error instanceof Error ? error.message : String(error),
-      );
-    } finally {
-      draining = false;
-    }
+    });
   }
 }

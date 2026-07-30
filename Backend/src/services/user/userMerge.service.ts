@@ -18,6 +18,7 @@ import {
   remapAllUserScopedCompositeRows,
 } from './userMergeRemaps';
 import { PlayIntentGameLifecycleService } from '../playIntent/playIntentGameLifecycle.service';
+import { publishCommittedPlayIntentTargetChanges } from '../playIntent/playIntentRealtime';
 
 type Tx = Prisma.TransactionClient;
 
@@ -818,6 +819,17 @@ export class UserMergeService {
       throw new ApiError(403, 'Cannot merge admin users');
     }
 
+    const affectedPlayIntents = await prisma.playIntent.findMany({
+      where: { userId: { in: [survivorId, sourceId] } },
+      select: {
+        id: true,
+        userId: true,
+        cityId: true,
+        sport: true,
+        entityType: true,
+      },
+    });
+
     await prisma.$transaction(
       async (tx) => {
         await mergeUserChats(tx, survivorId, sourceId);
@@ -1020,6 +1032,7 @@ export class UserMergeService {
       },
       { timeout: 120_000, maxWait: 60_000 },
     );
+    publishCommittedPlayIntentTargetChanges(affectedPlayIntents);
 
     return { survivorId, sourceIdMerged: sourceId };
   }

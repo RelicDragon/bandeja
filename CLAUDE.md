@@ -36,6 +36,15 @@ This file provides comprehensive guidance to Claude Code (claude.ai/code) when w
 - **Cache/Queue**: Redis
 - **Mobile**: Capacitor 8
 
+### Heavy command serialization
+
+- Builds, tests, type checks, Prisma generation, and Playwright must never run concurrently within the same frontend or backend lane.
+- One frontend and one backend heavy command may run simultaneously because they use separate locks.
+- Use the existing serialized npm scripts.
+- Run any direct or unwrapped heavy command through `scripts/run-heavy`, for example `./scripts/run-heavy npm --prefix Backend run test:play-intent`.
+- Never invoke `tsc`, `vite build`, Vitest, Playwright, backend test runners, or Prisma generation directly.
+- Lint does not require the heavy-task lock.
+
 ---
 
 ## Project Structure

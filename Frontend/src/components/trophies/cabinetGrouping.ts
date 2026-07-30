@@ -1,4 +1,7 @@
-import { ACHIEVEMENT_CATALOG } from '@shared/achievements';
+import {
+  ACHIEVEMENT_CATALOG,
+  achievementLeaderboardFamilyForRuleKind,
+} from '@shared/achievements';
 import type { TrophyCabinetEntryView, TrophyDefinitionView } from '@/types/trophies';
 
 export type TrophyCabinetRailItem =
@@ -15,9 +18,7 @@ export type TrophyCabinetRailItem =
 
 /** First win → wins ladder; sport debut games → volume games ladder. */
 export function stackFamilyKey(ruleKind: string): string {
-  if (ruleKind === 'HABIT_FIRST_WIN') return 'HABIT_WINS';
-  if (ruleKind === 'HABIT_SPORT_VOLUME') return 'HABIT_VOLUME';
-  return ruleKind;
+  return achievementLeaderboardFamilyForRuleKind(ruleKind) ?? ruleKind;
 }
 
 /** Higher = better (harder threshold, better podium place). */

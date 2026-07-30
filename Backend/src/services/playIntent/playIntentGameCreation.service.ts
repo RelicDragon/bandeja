@@ -58,6 +58,7 @@ type PreparedSource = {
   host: PreparedIntent;
   invitees: PreparedIntent[];
   proposalId: string | null;
+  releasedIntentIds: string[];
 };
 
 const intentInclude = {
@@ -351,7 +352,13 @@ export class PlayIntentGameCreationService {
       }
     }
 
-    return { source, host, invitees, proposalId };
+    return {
+      source,
+      host,
+      invitees,
+      proposalId,
+      releasedIntentIds: [...intentIdsToRelease],
+    };
   }
 
   static participantCreates(prepared: PreparedSource | null) {

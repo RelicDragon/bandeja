@@ -1,11 +1,11 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 
-export type LeaderboardType = 'level' | 'games' | 'social';
+export type LeaderboardType = 'level' | 'achievements' | 'social';
 export type LeaderboardGender = 'all' | 'men' | 'women';
 
 const LEADERBOARD_TYPE_INDEX: Record<LeaderboardType, number> = {
   level: 0,
-  games: 1,
+  achievements: 1,
   social: 2,
 };
 
@@ -41,21 +41,40 @@ export class LeaderboardPage {
   }
 
   async switchType(type: LeaderboardType) {
-    const response = this.page.waitForResponse(
-      (res) => res.url().includes('/rankings/user-context') && res.ok(),
-      { timeout: 30_000 },
-    );
+    const response = type === 'achievements'
+      ? null
+      : this.page.waitForResponse(
+          (res) => res.url().includes('/rankings/user-context') && res.ok(),
+          { timeout: 30_000 },
+        );
     const tab = this.leaderboardTablist().getByRole('tab').nth(LEADERBOARD_TYPE_INDEX[type]);
     await tab.click();
     await expect(tab).toHaveAttribute('aria-selected', 'true');
-    await response.catch(() => undefined);
-    await this.waitForLoaded();
+    await response?.catch(() => undefined);
+    if (type !== 'achievements') await this.waitForLoaded();
   }
 
-  async switchGender(gender: LeaderboardGender) {
+  achievementFamilies(): Locator {
+    return this.page.getByTestId('achievement-family-picker').getByRole('button');
+  }
+
+  achievementFamilyBack(): Locator {
+    return this.page.getByTestId('achievement-family-back');
+  }
+
+  async selectFirstAchievementFamily(): Promise<string> {
+    const response = this.page.waitForResponse(
+      (res) => res.url().includes('/rankings/achievement-context') && res.ok(),
+      { timeout: 30_000 },
+    );
+    await this.achievementFamilies().first().click();
+    return (await response).url();
+  }
+
+  async switchGender(gender: LeaderboardGender): Promise<string | undefined> {
     const response = this.page.waitForResponse(
       (res) =>
-        res.url().includes('/rankings/user-context') &&
+        res.url().includes('/rankings/') &&
         res.url().includes(`gender=${gender}`) &&
         res.ok(),
       { timeout: 30_000 },
@@ -63,8 +82,10 @@ export class LeaderboardPage {
     const tab = this.genderTablist().getByRole('tab').nth(LEADERBOARD_GENDER_INDEX[gender]);
     await tab.click();
     await expect(tab).toHaveAttribute('aria-selected', 'true');
-    await response.catch(() => undefined);
-    await this.waitForLoaded();
+    const responseUrl = await response.then((result) => result.url()).catch(() => undefined);
+    const spinner = this.page.locator('.animate-spin').first();
+    await spinner.waitFor({ state: 'hidden', timeout: 15_000 }).catch(() => undefined);
+    return responseUrl;
   }
 
   sportPicker(): Locator {

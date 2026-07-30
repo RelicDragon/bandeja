@@ -8,8 +8,12 @@ export const LeaderboardTabController = () => {
   const { leaderboardType, setLeaderboardType } = useHeaderStore();
 
   const tabs: SegmentedSwitchTab[] = [
+    {
+      id: 'achievements',
+      label: t('trophies.cabinet.title', { defaultValue: 'Achievements' }),
+      icon: Trophy,
+    },
     { id: 'level', label: t('profile.level', { defaultValue: 'Level' }), icon: Award },
-    { id: 'games', label: t('profile.games', { defaultValue: 'Games' }), icon: Trophy },
     { id: 'social', label: t('profile.social', { defaultValue: 'Social' }), icon: Beer },
   ];
 
@@ -17,8 +21,10 @@ export const LeaderboardTabController = () => {
     <SegmentedSwitch
       tabs={tabs}
       activeId={leaderboardType}
-      onChange={(id) => setLeaderboardType(id as 'level' | 'social' | 'games')}
+      onChange={(id) => setLeaderboardType(id as 'level' | 'social' | 'achievements')}
       showOnlyActiveTabText
+      activeLabelMaxWidth={120}
+      className="[&_button]:px-2 [&_button]:text-xs"
       layoutId="leaderboardSubtab"
     />
   );

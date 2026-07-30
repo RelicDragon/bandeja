@@ -16,11 +16,17 @@ assert.equal(resolveLeaderboardGenderFilter(['all']), null);
 
 assert.throws(
   () => resolveLeaderboardGenderFilter('other'),
-  (err: unknown) => err instanceof ApiError && err.statusCode === 400,
+  (err: unknown) =>
+    err instanceof ApiError &&
+    err.statusCode === 400 &&
+    err.data?.code === 'ranking.invalidGender',
 );
 assert.throws(
   () => resolveLeaderboardGenderFilter(['nope']),
-  (err: unknown) => err instanceof ApiError && err.statusCode === 400,
+  (err: unknown) =>
+    err instanceof ApiError &&
+    err.statusCode === 400 &&
+    err.data?.code === 'ranking.invalidGender',
 );
 
 console.log('leaderboardGenderFilter: ok');

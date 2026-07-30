@@ -15,6 +15,7 @@ const DATA_ONLY_ANDROID_TYPES = new Set<NotificationType>([
   NotificationType.BUG_CHAT,
   NotificationType.INVITE,
   NotificationType.TEAM_INVITE,
+  NotificationType.FOLLOWED_USER_PLAY_INTENT,
 ]);
 
 function isValidHttpsPreviewUrl(url: string | undefined): url is string {
@@ -70,13 +71,16 @@ function buildDataMap(payload: NotificationPayload): Record<string, string> {
   if (payload.type === NotificationType.INVITE || payload.type === NotificationType.TEAM_INVITE) {
     data.nativeHandler = 'invite_actions';
   }
+  if (payload.type === NotificationType.FOLLOWED_USER_PLAY_INTENT) {
+    data.nativeHandler = 'play_intent_actions';
+  }
   return data;
 }
 
 export function buildFcmMessage(
   token: string,
   payload: NotificationPayload
-): admin.messaging.Message {
+): admin.messaging.TokenMessage {
   const dataOnly = usesDataOnlyPath(payload);
   const data = buildDataMap(payload);
   const previewImageUrl = payload.data?.previewImageUrl;
@@ -106,6 +110,22 @@ export function buildFcmMessage(
             body: payload.body,
           },
         }),
+  };
+}
+
+export function buildFcmMulticastMessage(
+  tokens: string[],
+  payload: NotificationPayload
+): admin.messaging.MulticastMessage {
+  const message = buildFcmMessage(tokens[0] ?? '', payload);
+  return {
+    tokens,
+    ...(message.data ? { data: message.data } : {}),
+    ...(message.notification ? { notification: message.notification } : {}),
+    ...(message.android ? { android: message.android } : {}),
+    ...(message.apns ? { apns: message.apns } : {}),
+    ...(message.webpush ? { webpush: message.webpush } : {}),
+    ...(message.fcmOptions ? { fcmOptions: message.fcmOptions } : {}),
   };
 }
 
@@ -153,45 +173,58 @@ class FCMService {
   }
 
   async sendNotification(token: string, payload: NotificationPayload): Promise<boolean> {
+    return (await this.sendNotifications([token], payload)) === 1;
+  }
+
+  async sendNotifications(
+    tokens: string[],
+    payload: NotificationPayload
+  ): Promise<number> {
     if (!this.isInitialized) {
       console.log('[FCM] Admin SDK not initialized, skipping Android notification');
-      return false;
+      return 0;
     }
 
-    try {
-      console.log(`[FCM] Preparing to send notification to token: ${token.substring(0, 20)}...`);
-      console.log(`[FCM] Payload:`, { title: payload.title, type: payload.type });
+    const uniqueTokens = [...new Set(tokens.filter(Boolean))];
+    let successCount = 0;
+    for (let offset = 0; offset < uniqueTokens.length; offset += 500) {
+      const batchTokens = uniqueTokens.slice(offset, offset + 500);
+      try {
+        const message = buildFcmMulticastMessage(batchTokens, payload);
+        const response = await admin.messaging().sendEachForMulticast(message);
+        successCount += response.successCount;
 
-      const dataOnly = usesDataOnlyPath(payload);
-      const message = buildFcmMessage(token, payload);
-
-      console.log(`[FCM] Sending message to Firebase (${dataOnly ? 'data-only' : 'notification'})...`);
-      const response = await admin.messaging().send(message);
-
-      if (response) {
-        console.log(`[FCM] ✅ Notification sent successfully, message ID: ${response}`);
-        return true;
+        const staleTokens: string[] = [];
+        response.responses.forEach((result, index) => {
+          if (result.success) return;
+          const code = result.error?.code;
+          if (
+            code === 'messaging/invalid-registration-token' ||
+            code === 'messaging/registration-token-not-registered'
+          ) {
+            staleTokens.push(batchTokens[index]);
+          } else {
+            console.error('[FCM] Notification failed:', {
+              token: `${batchTokens[index]?.substring(0, 20)}...`,
+              code,
+              message: result.error?.message,
+            });
+          }
+        });
+        await Promise.allSettled(
+          staleTokens.map((token) => PushTokenService.removeInvalidToken(token))
+        );
+      } catch (error: unknown) {
+        const err = error as { code?: string; message?: string; stack?: string };
+        console.error('[FCM] ❌ Exception sending Android notification batch:', {
+          code: err.code,
+          message: err.message,
+          stack: err.stack,
+          batchSize: batchTokens.length,
+        });
       }
-
-      console.log(`[FCM] ❌ No response from Firebase`);
-      return false;
-    } catch (error: unknown) {
-      const err = error as { code?: string; message?: string; stack?: string };
-      console.error('[FCM] ❌ Exception while sending Android notification:', error);
-      console.error('[FCM] Error details:', {
-        code: err.code,
-        message: err.message,
-        stack: err.stack
-      });
-
-      if (err.code === 'messaging/invalid-registration-token' ||
-          err.code === 'messaging/registration-token-not-registered') {
-        console.log(`[FCM] Removing invalid token`);
-        await PushTokenService.removeInvalidToken(token);
-      }
-
-      return false;
     }
+    return successCount;
   }
 }
 

@@ -109,7 +109,6 @@ async function checkPushTokens() {
   } else {
     const iosTokens = tokens.filter(t => t.platform === 'IOS');
     const androidTokens = tokens.filter(t => t.platform === 'ANDROID');
-    const webTokens = tokens.filter(t => t.platform === 'WEB');
 
     console.log(`\niOS Tokens: ${iosTokens.length}`);
     iosTokens.forEach((token, i) => {
@@ -120,13 +119,6 @@ async function checkPushTokens() {
 
     console.log(`\nAndroid Tokens: ${androidTokens.length}`);
     androidTokens.forEach((token, i) => {
-      console.log(`  ${i + 1}. Token: ${token.token.substring(0, 30)}...`);
-      console.log(`     Device ID: ${token.deviceId || 'N/A'}`);
-      console.log(`     Updated: ${token.updatedAt.toISOString()}`);
-    });
-
-    console.log(`\nWeb Tokens: ${webTokens.length}`);
-    webTokens.forEach((token, i) => {
       console.log(`  ${i + 1}. Token: ${token.token.substring(0, 30)}...`);
       console.log(`     Device ID: ${token.deviceId || 'N/A'}`);
       console.log(`     Updated: ${token.updatedAt.toISOString()}`);

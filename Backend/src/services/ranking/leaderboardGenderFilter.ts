@@ -22,5 +22,7 @@ export function resolveLeaderboardGenderFilter(genderQuery: unknown): Leaderboar
   if (raw === undefined || ALL_VALUES.has(raw)) return null;
   if (MEN_VALUES.has(raw)) return 'MALE';
   if (WOMEN_VALUES.has(raw)) return 'FEMALE';
-  throw new ApiError(400, 'Invalid gender. Must be all, men, or women');
+  throw new ApiError(400, 'Invalid gender. Must be all, men, or women', true, {
+    code: 'ranking.invalidGender',
+  });
 }

@@ -27,6 +27,14 @@ public class ChatReplyMessagingService extends FirebaseMessagingService {
             return;
         }
 
+        if (
+            "play_intent_actions".equals(nativeHandler) ||
+            PlayIntentPushData.isPlayIntent(data)
+        ) {
+            PlayIntentNotificationHelper.show(getApplicationContext(), data);
+            return;
+        }
+
         PushNotificationsPlugin.sendRemoteMessage(remoteMessage);
     }
 

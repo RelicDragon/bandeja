@@ -1,6 +1,7 @@
 import api from './axios';
-import type { ApiResponse, Sport, User } from '@/types';
+import type { ApiResponse, BasicUser, Sport, User } from '@/types';
 import type { LeaderboardGenderFilter } from '@/components/leaderboard/leaderboardGender';
+import type { AchievementLeaderboardFamily } from '@shared/achievements';
 
 export interface LeaderboardEntry extends User {
   rank: number;
@@ -19,6 +20,19 @@ export interface UserLeaderboardContext {
   userRank: number;
 }
 
+export interface AchievementLeaderboardEntry extends BasicUser {
+  progress: number;
+  rank: number;
+}
+
+export interface AchievementLeaderboardContext {
+  leaderboard: AchievementLeaderboardEntry[];
+  viewerEntry: AchievementLeaderboardEntry | null;
+  total: number;
+  limit: number;
+  isTruncated: boolean;
+}
+
 export type LeaderboardGenderParam = LeaderboardGenderFilter;
 
 export const rankingApi = {
@@ -34,5 +48,16 @@ export const rankingApi = {
     });
     return response.data;
   },
-};
 
+  getAchievementLeaderboardContext: async (
+    family: AchievementLeaderboardFamily,
+    scope: 'city' | 'global' = 'global',
+    gender: LeaderboardGenderParam = 'all',
+  ) => {
+    const response = await api.get<ApiResponse<AchievementLeaderboardContext>>(
+      '/rankings/achievement-context',
+      { params: { family, scope, gender } },
+    );
+    return response.data.data;
+  },
+};

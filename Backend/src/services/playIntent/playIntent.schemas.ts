@@ -2,15 +2,16 @@ import {
   EntityType,
   GenderTeam,
   PlayIntentTimeOfDay,
+  Sport,
 } from '@prisma/client';
 import { z } from 'zod';
 
 const identifier = z.string().trim().min(1).max(128);
-const sport = z.string().trim().min(1).max(32);
+const sport = z.nativeEnum(Sport);
 const dateKey = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const time = z
   .string()
-  .regex(/^(?:[01]\d|2[0-3]):[0-5]\d$|^24:00$/)
+  .regex(/^(?:(?:[01]\d|2[0-3]):[0-5]\d|24:00)$/)
   .nullable();
 const level = z.number().finite().min(0).max(10).nullable();
 
@@ -85,11 +86,23 @@ export const addProposalMemberBodySchema = z
     userId: identifier,
     intentId: identifier,
   })
-  .strict()
-  .refine((input) => input.userId !== input.intentId, {
-    message: 'userId and intentId must be different identifiers',
-  });
+  .strict();
 
 export type ValidatedCreatePlayIntentInput = z.infer<
   typeof createPlayIntentBodySchema
+>;
+export type ValidatedPlayIntentScopeQuery = z.infer<
+  typeof playIntentOptionalScopeQuerySchema
+>;
+export type ValidatedPlayIntentIdParams = z.infer<
+  typeof playIntentIdParamsSchema
+>;
+export type ValidatedProposalIdParams = z.infer<
+  typeof proposalIdParamsSchema
+>;
+export type ValidatedRemoveProposalMemberInput = z.infer<
+  typeof removeProposalMemberBodySchema
+>;
+export type ValidatedAddProposalMemberInput = z.infer<
+  typeof addProposalMemberBodySchema
 >;

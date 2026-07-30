@@ -645,7 +645,11 @@ export class MatchProposalService {
             now,
           );
         }
-        throw proposalUnavailable();
+        return {
+          added: false as const,
+          expired: true as const,
+          mutation: proposalMutation(proposal),
+        };
       }
       if (proposal.status !== MatchProposalStatus.PENDING || proposal.hostUserId) {
         throw new ApiError(400, 'Roster is locked');
@@ -714,7 +718,11 @@ export class MatchProposalService {
         data: { status: PlayIntentStatus.MATCHED },
       });
       if (updated.count !== 1) {
-        return { added: false as const, mutation: null };
+        return {
+          added: false as const,
+          expired: false as const,
+          mutation: null,
+        };
       }
       await tx.matchProposalMember.create({
         data: {
@@ -726,6 +734,7 @@ export class MatchProposalService {
       });
       return {
         added: true as const,
+        expired: false as const,
         mutation: {
           proposalId,
           cityId: proposal.cityId,
@@ -738,6 +747,10 @@ export class MatchProposalService {
         } satisfies ProposalMutation,
       };
     });
+    if (added.expired) {
+      publishProposalMutation(added.mutation, 'proposal-expired');
+      throw proposalUnavailable();
+    }
     if (!added.added) {
       throw new ApiError(409, 'Intent no longer available');
     }

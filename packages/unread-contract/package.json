@@ -8,8 +8,8 @@
     "dist"
   ],
   "scripts": {
-    "build": "npx -p typescript@6.0.3 tsc",
-    "test": "npm run build && node --test test/*.test.mjs"
+    "build": "../../scripts/run-heavy npx -p typescript@6.0.3 tsc",
+    "test": "../../scripts/run-heavy sh -c 'npm run build && node --test test/*.test.mjs'"
   },
   "license": "ISC",
   "devDependencies": {

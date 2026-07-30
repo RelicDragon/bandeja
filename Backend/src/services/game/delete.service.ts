@@ -13,6 +13,7 @@ import notificationService from '../notification.service';
 import { USER_SELECT_FIELDS, USER_SPORT_PROFILE_SELECT } from '../../utils/constants';
 import { projectUserForSportContext } from '../user/userSportProfile.service';
 import { PlayIntentGameLifecycleService } from '../playIntent/playIntentGameLifecycle.service';
+import { publishCommittedPlayIntentStatusChanges } from '../playIntent/playIntentRealtime';
 
 export class GameDeleteService {
   static async deleteGame(id: string, cancelledByUserId: string) {
@@ -138,6 +139,15 @@ export class GameDeleteService {
       }
       await tx.game.delete({ where: { id } });
     });
+    await publishCommittedPlayIntentStatusChanges(
+      game.participants
+        .filter(
+          (participant) =>
+            participant.status === 'INVITED' &&
+            participant.role !== ParticipantRole.OWNER,
+        )
+        .map((participant) => participant.playIntentId),
+    );
 
     const cancelledSport = game.sport ?? Sport.PADEL;
     const cancelledByUserRaw = await prisma.user.findUnique({

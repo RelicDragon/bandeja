@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { body, param } from 'express-validator';
+import { body, param, query } from 'express-validator';
 import rateLimit from 'express-rate-limit';
 import {
   registerToken,
@@ -31,7 +31,7 @@ router.post(
   registerTokenLimiter,
   validate([
     body('token').isString().notEmpty().withMessage('Token is required'),
-    body('platform').isIn(['IOS', 'ANDROID', 'WEB']).withMessage('Invalid platform'),
+    body('platform').isIn(['IOS', 'ANDROID']).withMessage('Invalid platform'),
     body('deviceId').optional().isString(),
     body('appVersion').optional().isString().isLength({ max: 32 }),
     body('appBuild').optional().isInt({ min: 1 })
@@ -60,7 +60,16 @@ router.post(
   renewToken
 );
 
-router.get('/tokens', getTokens);
+router.get(
+  '/tokens',
+  validate([
+    query('platform')
+      .optional()
+      .isIn(['IOS', 'ANDROID'])
+      .withMessage('Invalid platform'),
+  ]),
+  getTokens,
+);
 
 router.post('/test', sendTestNotification);
 

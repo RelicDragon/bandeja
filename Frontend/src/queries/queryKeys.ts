@@ -1,5 +1,7 @@
 import { format } from 'date-fns';
 import type { Sport } from '@shared/sport';
+import type { AchievementLeaderboardFamily } from '@shared/achievements';
+import type { LeaderboardGenderFilter } from '@/components/leaderboard/leaderboardGender';
 import {
   buildStructuralFilterHashPart,
   type FindStructuralApiParams,
@@ -44,6 +46,15 @@ export function buildAvailableUpcomingFilterHash(params: Omit<AvailableGamesFilt
 export const queryKeys = {
   userStats: (userId: string, sport?: Sport) =>
     ['users', 'stats', userId, sport ?? 'default'] as const,
+  followingAchievementEarnersAll: (viewerUserId: string) =>
+    ['users', viewerUserId, 'achievements'] as const,
+  followingAchievementEarners: (viewerUserId: string, definitionId: string) =>
+    ['users', viewerUserId, 'achievements', definitionId, 'following-earners'] as const,
+  achievementLeaderboard: (
+    family: AchievementLeaderboardFamily,
+    scope: 'city' | 'global',
+    gender: LeaderboardGenderFilter,
+  ) => ['rankings', 'achievements', family, scope, gender] as const,
   questionnaire: {
     all: ['questionnaire'] as const,
     status: (userId: string, sport: Sport | 'inactive') =>

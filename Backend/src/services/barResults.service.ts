@@ -9,7 +9,7 @@ import { grantOrganizeAchievementsForFinalizedGame } from './achievements/organi
 
 export class BarResultsService {
   static async setBarResults(gameId: string, tx?: Prisma.TransactionClient): Promise<void> {
-    const executeInTransaction = async (client: Prisma.TransactionClient | typeof prisma) => {
+    const executeInTransaction = async (client: Prisma.TransactionClient) => {
       const game = await client.game.findUnique({
         where: { id: gameId },
         select: {
@@ -229,4 +229,3 @@ export class BarResultsService {
     return games.length;
   }
 }
-

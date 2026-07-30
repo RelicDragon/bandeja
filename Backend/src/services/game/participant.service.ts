@@ -25,6 +25,7 @@ import { applyUserTeamToFixedTeamsIfReady } from './userTeamFixedTeams.service';
 import { projectUserForSportContext } from '../user/userSportProfile.service';
 import { syncParticipantShowInStoriesSideEffects } from '../story/participantShowInStories.sync';
 import { PlayIntentGameLifecycleService } from '../playIntent/playIntentGameLifecycle.service';
+import { publishCommittedPlayIntentStatusChanges } from '../playIntent/playIntentRealtime';
 
 const PLAYING_STATUS = 'PLAYING' as const;
 const IN_QUEUE_STATUS = 'IN_QUEUE' as const;
@@ -73,7 +74,7 @@ export class ParticipantService {
         return joinResult.reason || 'games.addedToJoinQueue';
       }
 
-      await prisma.$transaction(async (tx) => {
+      const changedIntentId = await prisma.$transaction(async (tx) => {
         const gameInTx = await fetchGameWithPlayingParticipants(tx, gameId);
         const txJoinResult = await validatePlayerCanJoinGame(gameInTx, userId);
         if (!txJoinResult.canJoin) {
@@ -95,7 +96,9 @@ export class ParticipantService {
           );
         }
         await addOrUpdateParticipant(tx, gameId, userId);
+        return linkedInvite?.playIntentId ?? null;
       });
+      await publishCommittedPlayIntentStatusChanges([changedIntentId]);
 
       await performPostJoinOperations(gameId, userId);
       return 'games.joinedSuccessfully';
@@ -219,6 +222,11 @@ export class ParticipantService {
         });
       }
     });
+    await publishCommittedPlayIntentStatusChanges([
+      participant.status === INVITED_STATUS
+        ? participant.playIntentId
+        : null,
+    ]);
 
     await ParticipantMessageHelper.sendLeaveMessage(gameId, participant.user, SystemMessageType.USER_LEFT_CHAT);
     await GameService.updateGameReadiness(gameId);
@@ -380,6 +388,11 @@ export class ParticipantService {
         await removeUserFromGameFixedTeams(tx, gameId, userId);
       }
     });
+    await publishCommittedPlayIntentStatusChanges([
+      participant.status === INVITED_STATUS
+        ? participant.playIntentId
+        : null,
+    ]);
 
     if (isPlaying) {
       await InviteService.deleteInvitesForUserInGame(gameId, userId);
@@ -403,7 +416,7 @@ export class ParticipantService {
     if (!game) throw new ApiError(404, 'Game not found');
     validateGameCanAcceptParticipants(game);
 
-    await prisma.$transaction(async (tx) => {
+    const changedIntentId = await prisma.$transaction(async (tx) => {
       const linkedInvite = await tx.gameParticipant.findFirst({
         where: { gameId, userId, status: INVITED_STATUS },
         select: { playIntentId: true },
@@ -421,7 +434,9 @@ export class ParticipantService {
         data: { status: IN_QUEUE_STATUS },
       });
       await removeUserFromGameFixedTeams(tx, gameId, userId);
+      return linkedInvite?.playIntentId ?? null;
     });
+    await publishCommittedPlayIntentStatusChanges([changedIntentId]);
 
     await createSystemMessageWithNotification(
       gameId,
@@ -896,4 +911,3 @@ export class ParticipantService {
     return updated.showInStories;
   }
 }
-

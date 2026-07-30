@@ -10,6 +10,7 @@ import { TrophyArt } from '@/components/trophies/TrophyArt';
 import { TrophyPinControls } from '@/components/trophies/TrophyPinControls';
 import { TrophyRarityBadge } from '@/components/trophies/TrophyRarityBadge';
 import { TrophyRarityFrame } from '@/components/trophies/TrophyRarityFrame';
+import { FollowingAchievementEarners } from '@/components/trophies/FollowingAchievementEarners';
 import { isCatalogFamilyMaxLevel } from '@/components/trophies/cabinetGrouping';
 import {
   trophyFrameLocked,
@@ -111,7 +112,7 @@ export function TrophyDetailSheet({
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="mx-auto max-w-lg px-4 pb-8">
+      <DrawerContent className="mx-auto max-w-lg overflow-y-auto overscroll-y-contain px-4 pb-8">
         <DrawerHeader className="text-left">
           <div className="mb-4 flex justify-center">
             <TrophyRarityFrame
@@ -234,6 +235,11 @@ export function TrophyDetailSheet({
               )}
             </div>
           )}
+
+          <FollowingAchievementEarners
+            definitionId={definition.id}
+            open={open}
+          />
 
           {canPin && ownerUserId && !showStackedPins && instance && (
             <TrophyPinControls

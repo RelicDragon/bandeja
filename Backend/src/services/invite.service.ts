@@ -18,6 +18,7 @@ import { GameService } from './game/game.service';
 import { ParticipantMessageHelper } from './game/participantMessageHelper';
 import { projectUserForSportContext } from './user/userSportProfile.service';
 import { PlayIntentGameLifecycleService } from './playIntent/playIntentGameLifecycle.service';
+import { publishCommittedPlayIntentStatusChanges } from './playIntent/playIntentRealtime';
 
 export interface InviteActionResult {
   success: boolean;
@@ -97,6 +98,7 @@ async function recordInviteOutcomeAndRemoveParticipant(
       closedAt,
     );
   });
+  await publishCommittedPlayIntentStatusChanges([participant.playIntentId]);
   if (!record) {
     throw new ApiError(400, 'errors.invites.notFound');
   }
@@ -358,7 +360,12 @@ export class InviteService {
                 GameInviteOutcomeType.EXPIRED,
                 acceptedAt,
               );
-            return { queued: false, expired: true, record };
+            return {
+              queued: false,
+              expired: true,
+              record,
+              playIntentId: locked.playIntentId,
+            };
           }
           const currentGame = await fetchGameWithPlayingParticipants(tx, gameId);
           validateGameCanAcceptParticipants(currentGame);
@@ -384,7 +391,12 @@ export class InviteService {
                 inviteUserTeamId: inviteUserTeamIdForFixedTeams,
               },
             });
-            return { queued: true, expired: false, record: null };
+            return {
+              queued: true,
+              expired: false,
+              record: null,
+              playIntentId: locked.playIntentId,
+            };
           }
           if (!joinResult.canJoin) {
             throw new ApiError(400, joinResult.reason || 'errors.invites.gameFull');
@@ -414,8 +426,16 @@ export class InviteService {
               inviteClosedAt: null,
             },
           });
-          return { queued: false, expired: false, record: null };
+          return {
+            queued: false,
+            expired: false,
+            record: null,
+            playIntentId: locked.playIntentId,
+          };
         });
+        await publishCommittedPlayIntentStatusChanges([
+          acceptance.playIntentId,
+        ]);
         if (acceptance.expired) {
           if (!acceptance.record) {
             return { success: false, message: 'errors.invites.notFound' };
@@ -748,6 +768,9 @@ export class InviteService {
               return null;
             }
           }),
+        );
+        await publishCommittedPlayIntentStatusChanges(
+          results.map((result) => result?.participant.playIntentId),
         );
         for (const result of results) {
           if (!result) continue;

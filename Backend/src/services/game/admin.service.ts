@@ -13,6 +13,7 @@ import { hasParentGamePermission, getParentGameParticipant } from '../../utils/p
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 import { removeUserFromGameFixedTeams } from './fixedTeamsCleanup';
 import { PlayIntentGameLifecycleService } from '../playIntent/playIntentGameLifecycle.service';
+import { publishCommittedPlayIntentStatusChanges } from '../playIntent/playIntentRealtime';
 
 export class AdminService {
   static async addAdmin(gameId: string, ownerId: string, userId: string) {
@@ -194,6 +195,11 @@ export class AdminService {
           await tx.gameParticipant.delete({ where: { id: targetParticipant.id } });
         }
       });
+      await publishCommittedPlayIntentStatusChanges([
+        targetParticipant.status === 'INVITED'
+          ? targetParticipant.playIntentId
+          : null,
+      ]);
 
       if (targetParticipant.user) {
         const userName = getUserDisplayName(targetParticipant.user.firstName, targetParticipant.user.lastName);
@@ -273,4 +279,3 @@ export class AdminService {
     return isTrainer ? 'Trainer set successfully' : 'Trainer removed successfully';
   }
 }
-

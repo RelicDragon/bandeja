@@ -169,12 +169,17 @@ export function usePlayerProfile(
         addFavorite(playerId);
         toast.success(t('favorites.userAddedToFavorites'));
       }
+      if (viewerUserId) {
+        await queryClient.invalidateQueries({
+          queryKey: queryKeys.followingAchievementEarnersAll(viewerUserId),
+        });
+      }
     } catch (err: unknown) {
       const errorMessage =
         (err as { response?: { data?: { message?: string } } }).response?.data?.message || 'errors.generic';
       toast.error(t(errorMessage, { defaultValue: errorMessage }));
     }
-  }, [playerId, stats, isBlocked, t, removeFavorite, addFavorite, setStats]);
+  }, [playerId, stats, isBlocked, t, removeFavorite, addFavorite, setStats, viewerUserId, queryClient]);
 
   const startChat = useCallback(async () => {
     if (!playerId || startingChat || isBlocked) return;
@@ -232,6 +237,11 @@ export function usePlayerProfile(
         toast.success(t('playerCard.userBlocked') || 'User blocked');
         onBlocked?.();
       }
+      if (viewerUserId) {
+        await queryClient.invalidateQueries({
+          queryKey: queryKeys.followingAchievementEarnersAll(viewerUserId),
+        });
+      }
       try {
         const profileResponse = await usersApi.getProfile();
         updateUser(profileResponse.data);
@@ -245,7 +255,7 @@ export function usePlayerProfile(
     } finally {
       setBlockingUser(false);
     }
-  }, [playerId, blockingUser, isBlocked, t, updateUser, onBlocked]);
+  }, [playerId, blockingUser, isBlocked, t, updateUser, onBlocked, viewerUserId, queryClient]);
 
   const block = useCallback(async () => {
     if (isBlocked) return;

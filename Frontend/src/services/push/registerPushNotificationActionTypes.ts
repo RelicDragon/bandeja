@@ -4,9 +4,11 @@ import { isIOS } from '@/utils/capacitor';
 import {
   PUSH_ACTION_ACCEPT,
   PUSH_ACTION_DECLINE,
+  PUSH_ACTION_PLAY_TOO,
   PUSH_ACTION_REPLY,
   PUSH_CATEGORY_CHAT_REPLY,
   PUSH_CATEGORY_INVITE,
+  PUSH_CATEGORY_PLAY_INTENT,
   PUSH_CATEGORY_TEAM_INVITE,
 } from './pushNotificationConstants';
 
@@ -39,6 +41,15 @@ export async function registerPushNotificationActionTypes(): Promise<void> {
             title: i18n.t('push.reply'),
             input: true,
             inputPlaceholder: i18n.t('push.replyPlaceholder'),
+          },
+        ],
+      },
+      {
+        id: PUSH_CATEGORY_PLAY_INTENT,
+        actions: [
+          {
+            id: PUSH_ACTION_PLAY_TOO,
+            title: i18n.t('playIntent.playToo'),
           },
         ],
       },

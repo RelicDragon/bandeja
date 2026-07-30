@@ -53,6 +53,12 @@ assert.equal(
   false,
 );
 assert.equal(
+  playIntentOptionalScopeQuerySchema.safeParse({
+    sport: 'TENNISS',
+  }).success,
+  false,
+);
+assert.equal(
   addProposalMemberBodySchema.safeParse({
     userId: 'user-1',
     intentId: 'intent-1',

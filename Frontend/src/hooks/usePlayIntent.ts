@@ -4,8 +4,11 @@ import { playIntentsApi, type CreatePlayIntentDto } from '@/api/playIntents';
 import { useAuthStore } from '@/store/authStore';
 import {
   socketService,
-  type PlayIntentInvalidation,
 } from '@/services/socketService';
+import {
+  PLAY_INTENT_INVALIDATE_EVENT,
+  type PlayIntentInvalidation,
+} from '@shared/playIntentRealtime';
 
 export const playIntentKeys = {
   all: ['play-intents'] as const,
@@ -18,15 +21,16 @@ export const playIntentKeys = {
 export function usePlayIntentPool(cityId?: string | null, sportHint?: string | null) {
   const isAuthenticated = useAuthStore((s) => !!s.user);
   const queryClient = useQueryClient();
-  const normalizedCityId = cityId ?? undefined;
+  const normalizedCityId = cityId?.trim() || undefined;
+  const normalizedSportHint = sportHint?.trim() || undefined;
   const query = useQuery({
-    queryKey: playIntentKeys.pool(cityId ?? undefined),
+    queryKey: playIntentKeys.pool(normalizedCityId),
     queryFn: () =>
       playIntentsApi.getPool({
-        cityId: cityId ?? undefined,
-        sport: sportHint ?? undefined,
+        cityId: normalizedCityId,
+        sport: normalizedSportHint,
       }),
-    enabled: isAuthenticated && !!cityId,
+    enabled: isAuthenticated && !!normalizedCityId,
     refetchInterval: (query) => {
       const data = query.state.data;
       if (data?.pendingProposal || data?.myIntent) return 2 * 60_000;
@@ -56,12 +60,12 @@ export function usePlayIntentPool(cityId?: string | null, sportHint?: string | n
     const unsubscribePool =
       socketService.subscribePlayIntentPool(normalizedCityId);
     const unsubscribeConnect = socketService.onConnect(invalidate);
-    socketService.on('play-intent:invalidate', handleInvalidation);
+    socketService.on(PLAY_INTENT_INVALIDATE_EVENT, handleInvalidation);
     return () => {
       if (invalidateTimer) clearTimeout(invalidateTimer);
       unsubscribePool();
       unsubscribeConnect();
-      socketService.off('play-intent:invalidate', handleInvalidation);
+      socketService.off(PLAY_INTENT_INVALIDATE_EVENT, handleInvalidation);
     };
   }, [isAuthenticated, normalizedCityId, queryClient]);
 

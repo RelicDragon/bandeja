@@ -4,6 +4,7 @@ import { NotificationType } from '../../types/notifications.types';
 import { PlayIntentNotifyService } from './playIntentNotify.service';
 import { PlayIntentNotificationDeliveryQueueService } from './playIntentNotificationDeliveryQueue.service';
 import { reportPlayIntentQueueError } from './playIntentQueueFailure';
+import { PlayIntentDrainCoordinator } from './playIntentDrainCoordinator';
 
 const POLL_INTERVAL_MS = 5_000;
 const STALE_RUNNING_MS = 5 * 60 * 1000;
@@ -12,7 +13,7 @@ const MAX_ATTEMPTS = 12;
 const MAX_RETRY_DELAY_MS = 10 * 60 * 1000;
 
 let workerTimer: ReturnType<typeof setInterval> | null = null;
-let draining = false;
+const drainCoordinator = new PlayIntentDrainCoordinator();
 
 export class PlayIntentFollowerNotificationQueueService {
   static startWorker(): void {
@@ -195,24 +196,22 @@ export class PlayIntentFollowerNotificationQueueService {
     }
   }
 
-  static async drain(): Promise<void> {
-    if (draining) return;
-    draining = true;
-    try {
-      await this.recoverStaleJobs();
-      while (true) {
-        const job = await this.claimNext();
-        if (!job) break;
-        await this.process(job);
+  static drain(): Promise<void> {
+    return drainCoordinator.run(async () => {
+      try {
+        await this.recoverStaleJobs();
+        while (true) {
+          const job = await this.claimNext();
+          if (!job) break;
+          await this.process(job);
+        }
+      } catch (error) {
+        reportPlayIntentQueueError(
+          'play-intent-follower-fanout',
+          'drain failed',
+          error instanceof Error ? error.message : String(error),
+        );
       }
-    } catch (error) {
-      reportPlayIntentQueueError(
-        'play-intent-follower-fanout',
-        'drain failed',
-        error instanceof Error ? error.message : String(error),
-      );
-    } finally {
-      draining = false;
-    }
+    });
   }
 }

@@ -12,6 +12,10 @@ import {
 } from './habitGrant.service';
 import { attachHabitUnlocksToGameOutcome } from './habitUnlockAttach.service';
 import {
+  AchievementStatsRefreshError,
+  beginAchievementStatsRefresh,
+  commitOrganizeAchievementStatsIfUnchanged,
+  lockAchievementStatsWrite,
   readOrganizeAchievementStats,
   upsertOrganizeAchievementStats,
 } from './achievementStats.service';
@@ -89,14 +93,24 @@ export async function refreshOrganizeHabitCounters(
   organizedTournaments: number;
   organizedBars: number;
 }> {
-  const [organizedGames, organizedTournaments, organizedBars] = await Promise.all([
-    countOrganizedFinalEvents({ userId, kind: 'GAME', tx }),
-    countOrganizedFinalEvents({ userId, kind: 'TOURNAMENT', tx }),
-    countOrganizedFinalEvents({ userId, kind: 'BAR', tx }),
-  ]);
-  const organize = { organizedGames, organizedTournaments, organizedBars };
-  await upsertOrganizeAchievementStats({ userId, organize, tx });
-  return organize;
+  const startedRevision = await beginAchievementStatsRefresh(userId, tx);
+  try {
+    const [organizedGames, organizedTournaments, organizedBars] = await Promise.all([
+      countOrganizedFinalEvents({ userId, kind: 'GAME', tx }),
+      countOrganizedFinalEvents({ userId, kind: 'TOURNAMENT', tx }),
+      countOrganizedFinalEvents({ userId, kind: 'BAR', tx }),
+    ]);
+    const organize = { organizedGames, organizedTournaments, organizedBars };
+    await commitOrganizeAchievementStatsIfUnchanged({
+      userId,
+      startedRevision,
+      organize,
+      tx,
+    });
+    return organize;
+  } catch (error) {
+    throw new AchievementStatsRefreshError(startedRevision, error);
+  }
 }
 
 /**
@@ -106,9 +120,17 @@ export async function refreshOrganizeHabitCounters(
  */
 export async function grantOrganizeAchievementsForFinalizedGame(params: {
   gameId: string;
-  tx?: DbClient;
+  tx?: Prisma.TransactionClient;
 }): Promise<HabitGrantResult> {
-  const db = params.tx ?? prisma;
+  if (!params.tx) {
+    return prisma.$transaction((tx) =>
+      grantOrganizeAchievementsForFinalizedGame({
+        gameId: params.gameId,
+        tx,
+      }),
+    );
+  }
+  const db = params.tx;
   const game = await db.game.findUnique({
     where: { id: params.gameId },
     select: {
@@ -168,6 +190,12 @@ export async function grantOrganizeAchievementsForFinalizedGame(params: {
     kind = 'BAR';
   }
   if (!kind) return { granted: [], unlocks: [] };
+
+  await lockAchievementStatsWrite({
+    userId: ownerId,
+    kind: 'organize',
+    tx: db,
+  });
 
   const before = await countOrganizedFinalEvents({
     userId: ownerId,

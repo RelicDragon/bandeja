@@ -34,3 +34,4 @@ export { getBasicUsersByIds } from './user/basicUsersBatch.controller';
 export { getMyWorkoutSessions } from './user/workoutSessions.controller';
 export { getReactionEmojiUsage } from './user/reactionEmojiUsage.controller';
 export { pinMyAchievement, unpinMyAchievement } from './user/achievementPins.controller';
+export { getMyFollowingAchievementEarners } from './user/achievementEarners.controller';

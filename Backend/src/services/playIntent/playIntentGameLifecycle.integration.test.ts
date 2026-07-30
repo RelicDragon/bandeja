@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {
   EntityType,
   GameInviteOutcomeType,
+  MatchProposalStatus,
   ParticipantRole,
   ParticipantStatus,
   PlayIntentStatus,
@@ -11,6 +12,7 @@ import prisma from '../../config/database';
 import { InviteService } from '../invite.service';
 import { PlayIntentGameCreationService } from './playIntentGameCreation.service';
 import { PlayIntentGameLifecycleService } from './playIntentGameLifecycle.service';
+import { MatchProposalService } from './matchProposal.service';
 
 void (async () => {
   const suffix = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -51,6 +53,23 @@ void (async () => {
       },
     }),
   ]);
+  const realtimeInvalidations: Array<{
+    reason?: string;
+    intentId?: string;
+  }> = [];
+  const originalSocketService = (global as { socketService?: unknown })
+    .socketService;
+  (global as { socketService?: unknown }).socketService = new Proxy(
+    {},
+    {
+      get: (_target, property) =>
+        property === 'emitPlayIntentInvalidation'
+          ? (payload: { reason?: string; intentId?: string }) => {
+              realtimeInvalidations.push(payload);
+            }
+          : () => undefined,
+    },
+  );
   const startTime = new Date(Date.now() + 24 * 60 * 60 * 1000);
   startTime.setUTCHours(18, 0, 0, 0);
   const endTime = new Date(startTime.getTime() + 90 * 60 * 1000);
@@ -159,6 +178,13 @@ void (async () => {
       where: { id: inviteeIntent.id },
     });
     assert.equal(consumed.status, PlayIntentStatus.CONSUMED);
+    assert.ok(
+      realtimeInvalidations.some(
+        (event) =>
+          event.reason === 'intent-status-changed' &&
+          event.intentId === inviteeIntent.id,
+      ),
+    );
     const acceptedParticipant = await prisma.gameParticipant.findUniqueOrThrow({
       where: { id: pendingInvite.id },
     });
@@ -199,6 +225,13 @@ void (async () => {
         })
       ).status,
       PlayIntentStatus.OPEN,
+    );
+    assert.ok(
+      realtimeInvalidations.some(
+        (event) =>
+          event.reason === 'intent-status-changed' &&
+          event.intentId === declinerIntent.id,
+      ),
     );
 
     const expiredAt = new Date(Date.now() - 60_000);
@@ -253,13 +286,89 @@ void (async () => {
       ).status,
       PlayIntentStatus.EXPIRED,
     );
+
+    const [proposalIntent, candidateIntent] = await Promise.all([
+      prisma.playIntent.create({
+        data: {
+          userId: host.id,
+          cityId: city.id,
+          sport: Sport.PADEL,
+          entityType: EntityType.GAME,
+          dateKeys: [dateKey],
+          clubIds: [],
+          status: PlayIntentStatus.MATCHED,
+          expiresAt,
+        },
+      }),
+      prisma.playIntent.create({
+        data: {
+          userId: invitee.id,
+          cityId: city.id,
+          sport: Sport.PADEL,
+          entityType: EntityType.GAME,
+          dateKeys: [dateKey],
+          clubIds: [],
+          status: PlayIntentStatus.OPEN,
+          expiresAt,
+        },
+      }),
+    ]);
+    const expiredProposal = await prisma.matchProposal.create({
+      data: {
+        cityId: city.id,
+        sport: Sport.PADEL,
+        entityType: EntityType.GAME,
+        status: MatchProposalStatus.PENDING,
+        dateKeys: [dateKey],
+        clubIds: [],
+        suggestedStartTime: startTime,
+        expiresAt: new Date(Date.now() - 60_000),
+        rematchKey: `expired-add-member-${suffix}`,
+        members: {
+          create: {
+            userId: host.id,
+            intentId: proposalIntent.id,
+          },
+        },
+      },
+    });
+
+    await assert.rejects(
+      () =>
+        MatchProposalService.addMember(expiredProposal.id, host.id, {
+          userId: invitee.id,
+          intentId: candidateIntent.id,
+        }),
+      (error: unknown) =>
+        error instanceof Error &&
+        'data' in error &&
+        (error as { data?: { code?: string } }).data?.code ===
+          'playIntent.proposalUnavailable',
+    );
+    assert.equal(
+      (
+        await prisma.matchProposal.findUniqueOrThrow({
+          where: { id: expiredProposal.id },
+        })
+      ).status,
+      MatchProposalStatus.EXPIRED,
+    );
+    assert.equal(
+      (
+        await prisma.playIntent.findUniqueOrThrow({
+          where: { id: proposalIntent.id },
+        })
+      ).status,
+      PlayIntentStatus.OPEN,
+    );
   } finally {
+    (global as { socketService?: unknown }).socketService =
+      originalSocketService;
     if (gameId) {
       await prisma.game.deleteMany({ where: { id: gameId } });
     }
-    await prisma.playIntent.deleteMany({
-      where: { id: { in: [hostIntent.id, inviteeIntent.id] } },
-    });
+    await prisma.matchProposal.deleteMany({ where: { cityId: city.id } });
+    await prisma.playIntent.deleteMany({ where: { cityId: city.id } });
     await prisma.user.deleteMany({
       where: {
         id: { in: [host.id, invitee.id, decliner.id, expiringUser.id] },

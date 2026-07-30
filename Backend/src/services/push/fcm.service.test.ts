@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { NotificationType } from '../../types/notifications.types';
-import { buildFcmMessage } from './fcm.service';
+import { buildFcmMessage, buildFcmMulticastMessage } from './fcm.service';
 
 function testFcmIncludesAndroidImageWhenPreviewPresent(): void {
   const previewUrl = 'https://d1afylun4w6qxe.cloudfront.net/uploads/chat/thumbnails/photo_thumb.jpg';
@@ -70,6 +70,24 @@ function testFcmCollapsesOutboxRetries(): void {
     message.data?.deliveryKey,
     'FOLLOWED_USER_PLAY_INTENT:intent-1',
   );
+  assert.equal(message.data?.nativeHandler, 'play_intent_actions');
+  assert.equal(message.notification, undefined);
+}
+
+function testFcmBuildsOneMulticastMessage(): void {
+  const message = buildFcmMulticastMessage(['token-1', 'token-2'], {
+    type: NotificationType.FOLLOWED_USER_PLAY_INTENT,
+    title: 'A friend wants to play',
+    body: 'Tap to join',
+    data: {
+      playIntentId: 'intent-1',
+      playTooActionTitle: 'I want to play too',
+    },
+  });
+
+  assert.deepEqual(message.tokens, ['token-1', 'token-2']);
+  assert.equal(message.data?.playTooActionTitle, 'I want to play too');
+  assert.equal('token' in message, false);
 }
 
 void (async () => {
@@ -77,5 +95,6 @@ void (async () => {
   testFcmOmitsAndroidImageWithoutPreview();
   testFcmIncludesUnreadBadgeInData();
   testFcmCollapsesOutboxRetries();
+  testFcmBuildsOneMulticastMessage();
   console.log('fcm.service.test.ts: ok');
 })();

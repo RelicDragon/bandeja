@@ -21,6 +21,7 @@ import { attemptBetResolutionAfterOutcomesRecalc } from '../bets/betResolution.s
 import resultsSenderService from '../telegram/resultsSender.service';
 import { resetMatchTimersInGameTx, cancelAllMatchTimersForGame } from './matchTimer.service';
 import { cleanupInviteParticipantsForEndedGame } from '../../utils/gameInviteCleanup';
+import { publishCommittedPlayIntentStatusChanges } from '../playIntent/playIntentRealtime';
 import {
   isPlacementProtectedFromNegativeRating,
   mergePlacementRatingFloorMetadata,
@@ -437,7 +438,12 @@ export async function applyGameOutcomes(
     levelChange: number;
   }>>,
   tx: Prisma.TransactionClient
-): Promise<{ wasEdited: boolean; shouldResolveBets: boolean; bracketCreatedGameIds: string[] }> {
+): Promise<{
+  wasEdited: boolean;
+  shouldResolveBets: boolean;
+  bracketCreatedGameIds: string[];
+  releasedPlayIntentIds: string[];
+}> {
   const game = await tx.game.findUnique({
     where: { id: gameId },
     select: {
@@ -743,6 +749,7 @@ export async function applyGameOutcomes(
     }
   }
 
+  let releasedPlayIntentIds: string[] = [];
   const updatedGame = await tx.game.findUnique({
     where: { id: gameId },
     select: { startTime: true, endTime: true, resultsStatus: true, cityId: true, timeIsSet: true, entityType: true, finishedDate: true },
@@ -786,7 +793,8 @@ export async function applyGameOutcomes(
     });
 
     if (updateData.status === 'FINISHED' || updateData.status === 'ARCHIVED') {
-      await cleanupInviteParticipantsForEndedGame(gameId, tx);
+      releasedPlayIntentIds =
+        await cleanupInviteParticipantsForEndedGame(gameId, tx);
     }
 
     await resetMatchTimersInGameTx(tx, gameId);
@@ -842,10 +850,16 @@ export async function applyGameOutcomes(
       wasEdited: previousResultsStatus === 'FINAL' || previousResultsStatus === 'IN_PROGRESS',
       shouldResolveBets: previousResultsStatus !== 'FINAL',
       bracketCreatedGameIds,
+      releasedPlayIntentIds,
     };
   }
   
-  return { wasEdited: false, shouldResolveBets: false, bracketCreatedGameIds: [] as string[] };
+  return {
+    wasEdited: false,
+    shouldResolveBets: false,
+    bracketCreatedGameIds: [] as string[],
+    releasedPlayIntentIds,
+  };
 }
 
 export async function recalculateGameOutcomes(gameId: string) {
@@ -896,6 +910,7 @@ export async function recalculateGameOutcomes(gameId: string) {
     wasEdited = applyResult.wasEdited;
     const shouldResolveBets = applyResult.shouldResolveBets;
     const bracketCreatedGameIds = applyResult.bracketCreatedGameIds;
+    const releasedPlayIntentIds = applyResult.releasedPlayIntentIds;
 
     const game = await tx.game.findUnique({
       where: { id: gameId },
@@ -943,10 +958,14 @@ export async function recalculateGameOutcomes(gameId: string) {
       game: game ? projectGameUsersForSportContext(game) : game,
       shouldResolveBets,
       bracketCreatedGameIds,
+      releasedPlayIntentIds,
     };
   });
   
   console.log(`[RECALCULATE GAME OUTCOMES] Transaction completed, wasEdited: ${wasEdited}`);
+  await publishCommittedPlayIntentStatusChanges(
+    result.releasedPlayIntentIds,
+  );
 
   await cancelAllMatchTimersForGame(gameId);
 
@@ -970,4 +989,3 @@ export async function recalculateGameOutcomes(gameId: string) {
 
   return result.game;
 }
-

@@ -35,6 +35,13 @@ export {
   type HabitProgressCounters,
 } from './projectCabinet';
 
+export {
+  ACHIEVEMENT_LEADERBOARD_FAMILIES,
+  achievementLeaderboardFamilyForRuleKind,
+  isAchievementLeaderboardFamily,
+  type AchievementLeaderboardFamily,
+} from './leaderboardFamilies';
+
 export { habitThresholdMet, habitUnlocksDue, habitUnlocksNewlyCrossed } from './habitEligibility';
 
 export {

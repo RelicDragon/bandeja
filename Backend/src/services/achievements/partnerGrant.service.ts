@@ -9,7 +9,14 @@ import {
   type PartnerScannedMatch,
 } from '@bandeja/shared/achievements';
 import prisma from '../../config/database';
-import { upsertPartnerAchievementStats, readPartnerAchievementStats } from './achievementStats.service';
+import {
+  AchievementStatsRefreshError,
+  beginAchievementStatsRefresh,
+  commitPartnerAchievementStatsIfUnchanged,
+  lockAchievementStatsWrite,
+  readPartnerAchievementStats,
+  upsertPartnerAchievementStats,
+} from './achievementStats.service';
 import { achievementPlayAt } from './achievementPlayAt';
 import { attachHabitUnlocksToGameOutcome } from './habitUnlockAttach.service';
 import type { HabitGrantResult, HabitUnlockMeta } from './habitGrant.service';
@@ -233,9 +240,19 @@ export async function refreshPartnerHabitCounters(
   userId: string,
   tx?: DbClient,
 ): Promise<PartnerHabitCounters> {
-  const computed = await computePartnerHabitCounters(userId, tx);
-  await upsertPartnerAchievementStats({ userId, partner: computed, tx });
-  return computed;
+  const startedRevision = await beginAchievementStatsRefresh(userId, tx);
+  try {
+    const computed = await computePartnerHabitCounters(userId, tx);
+    await commitPartnerAchievementStatsIfUnchanged({
+      userId,
+      startedRevision,
+      partner: computed,
+      tx,
+    });
+    return computed;
+  } catch (error) {
+    throw new AchievementStatsRefreshError(startedRevision, error);
+  }
 }
 
 async function grantDueForUser(params: {
@@ -320,9 +337,17 @@ async function grantDueForUser(params: {
  */
 export async function grantPartnerAchievementsForFinalizedGame(params: {
   gameId: string;
-  tx?: DbClient;
+  tx?: Prisma.TransactionClient;
 }): Promise<HabitGrantResult> {
-  const db = params.tx ?? prisma;
+  if (!params.tx) {
+    return prisma.$transaction((tx) =>
+      grantPartnerAchievementsForFinalizedGame({
+        gameId: params.gameId,
+        tx,
+      }),
+    );
+  }
+  const db = params.tx;
   const game = await db.game.findUnique({
     where: { id: params.gameId },
     select: {
@@ -362,7 +387,16 @@ export async function grantPartnerAchievementsForFinalizedGame(params: {
   const allGranted: AchievementDefinition[] = [];
   const allUnlocks: HabitUnlockMeta[] = [];
 
-  for (const { userId } of participantIds) {
+  const sortedParticipantIds = participantIds
+    .map(({ userId }) => userId)
+    .sort((left, right) => left.localeCompare(right));
+
+  for (const userId of sortedParticipantIds) {
+    await lockAchievementStatsWrite({
+      userId,
+      kind: 'partner',
+      tx: db,
+    });
     const games = await loadScannedGamesForUser({ userId, tx: db });
     const { before, after } = partnerCountersBeforeAfter({
       games: toScanInput(games),

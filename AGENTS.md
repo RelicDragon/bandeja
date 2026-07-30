@@ -14,6 +14,14 @@
 
 Frontend proxies `/api` and `/socket.io/` to backend port 3000 (configured in `vite.config.ts`).
 
+### Heavy command serialization
+- Builds, tests, type checks, Prisma generation, and Playwright must never run concurrently within the same frontend or backend lane.
+- One frontend and one backend heavy command may run simultaneously because they use separate locks.
+- Use the existing npm scripts when they are serialized.
+- For any direct or otherwise unwrapped heavy command, run it through `scripts/run-heavy`, for example `./scripts/run-heavy npm --prefix Backend run test:play-intent`.
+- Never invoke `tsc`, `vite build`, Vitest, Playwright, backend test runners, or Prisma generation directly.
+- Lint may run without the heavy-task lock.
+
 ### Database setup (first time only)
 After PostgreSQL is running:
 ```

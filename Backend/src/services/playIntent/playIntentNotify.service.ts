@@ -251,6 +251,15 @@ export class PlayIntentNotifyService {
                   title,
                   body,
                   data: { playIntentId: intent.id },
+                  actions: [
+                    {
+                      id: 'play-too',
+                      title:
+                        t('telegram.playToo', user.language || 'en') ||
+                        'I want to play too',
+                      action: 'play-too',
+                    },
+                  ],
                   sound: 'default',
                 },
                 channels,

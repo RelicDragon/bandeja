@@ -40,6 +40,15 @@ const reactionEmojiUsageGetLimiter = rateLimit({
   keyGenerator: (req) => (req as AuthRequest).userId ?? rateLimitKeyFromRequest(req),
 });
 
+const achievementEarnersLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 60,
+  message: { success: false, message: 'Too many requests. Please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => (req as AuthRequest).userId ?? rateLimitKeyFromRequest(req),
+});
+
 const router = Router();
 
 router.get('/profile', authenticate, userController.getProfile);
@@ -59,6 +68,20 @@ router.delete(
     param('achievementId').isString().notEmpty().withMessage('achievementId is required'),
   ]),
   userController.unpinMyAchievement
+);
+router.get(
+  '/me/achievements/:definitionId/following-earners',
+  authenticate,
+  achievementEarnersLimiter,
+  validate([
+    param('definitionId')
+      .isString()
+      .trim()
+      .notEmpty()
+      .isLength({ max: 128 })
+      .withMessage('Invalid achievement definition'),
+  ]),
+  userController.getMyFollowingAchievementEarners,
 );
 router.get(
   '/me/reaction-emoji-usage',

@@ -74,6 +74,7 @@ export interface NotificationData {
   conversationKey?: string;
   acceptActionTitle?: string;
   declineActionTitle?: string;
+  playTooActionTitle?: string;
   previewImageUrl?: string;
   previewMediaType?: string;
   mediaCount?: number;

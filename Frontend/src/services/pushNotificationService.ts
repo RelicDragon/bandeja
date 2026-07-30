@@ -16,6 +16,7 @@ import { useUnreadStore } from '@/store/unreadStore';
 import {
   PUSH_ACTION_ACCEPT,
   PUSH_ACTION_DECLINE,
+  PUSH_ACTION_PLAY_TOO,
   PUSH_ACTION_REPLY,
   PUSH_REPLY_MAX_CONTENT_LENGTH,
 } from '@/services/push/pushNotificationConstants';
@@ -321,6 +322,15 @@ class PushNotificationService {
       }
       const content = action.inputValue.trim().slice(0, PUSH_REPLY_MAX_CONTENT_LENGTH);
       await this.handleChatReply(ctx, content);
+    } else if (
+      actionId === PUSH_ACTION_PLAY_TOO &&
+      normalizedData.type === 'FOLLOWED_USER_PLAY_INTENT'
+    ) {
+      this.pendingNotificationTap = {
+        data: normalizedData,
+        rawData: notification.data,
+      };
+      await this.dispatchNotificationTap();
     }
   }
 

@@ -8,6 +8,7 @@ import { useChatSyncStore } from '@/store/chatSyncStore';
 import { runChatSyncBatchWarmOnConnect } from '@/services/chat/chatSyncBatchWarm';
 import { refreshChatOfflineBanner, setChatBannerSocketConnected } from '@/services/chat/chatOfflineBanner';
 import type { InviteDeletedSocketPayload } from '@/utils/gameInviteParticipant';
+import type { PlayIntentInvalidation } from '@shared/playIntentRealtime';
 
 export interface NewUserChatMessage {
   contextId: string;
@@ -22,24 +23,7 @@ export interface UserChatReadReceipt {
 
 export type SocketConnectionState = 'disconnected' | 'connecting' | 'connected';
 
-export type PlayIntentInvalidation = {
-  version: 1;
-  reason:
-    | 'intent-created'
-    | 'intent-cancelled'
-    | 'intent-expired'
-    | 'intent-status-changed'
-    | 'proposal-created'
-    | 'proposal-updated'
-    | 'proposal-expired'
-    | 'proposal-converted';
-  cityId: string;
-  sport: string;
-  entityType: string;
-  occurredAt: string;
-  intentId?: string;
-  proposalId?: string;
-};
+export type { PlayIntentInvalidation } from '@shared/playIntentRealtime';
 
 export interface SocketEvents {
   'new-invite': (invite: any) => void;

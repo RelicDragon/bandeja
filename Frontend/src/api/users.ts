@@ -479,6 +479,13 @@ export const usersApi = {
     return response.data.data.pin;
   },
 
+  getFollowingAchievementEarners: async (definitionId: string) => {
+    const response = await api.get<ApiResponse<BasicUser[]>>(
+      `/users/me/achievements/${encodeURIComponent(definitionId)}/following-earners`,
+    );
+    return response.data.data ?? [];
+  },
+
   getCommonChats: async (userId: string) => {
     const response = await api.get<ApiResponse<CommonChatItem[]>>(`/users/${userId}/common-groups`);
     return response.data;

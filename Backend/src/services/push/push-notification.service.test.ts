@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict';
 import { PUSH_CATEGORY_CHAT_REPLY } from './notifications/chat-push-reply.utils';
-import { shouldSetApnsMutableContent } from './push-notification.service';
+import {
+  isDefinitivelyInvalidApnsToken,
+  shouldSetApnsMutableContent,
+} from './push-notification.service';
 
 function testMutableContentForHttpsPreview(): void {
   assert.equal(
@@ -27,10 +30,35 @@ function testNoMutableContentForHttpPreview(): void {
   );
 }
 
+function testInvalidTokenClassification(): void {
+  assert.equal(
+    isDefinitivelyInvalidApnsToken({
+      status: 400,
+      response: { reason: 'BadDeviceToken' },
+    }),
+    true
+  );
+  assert.equal(
+    isDefinitivelyInvalidApnsToken({
+      status: 410,
+      response: { reason: 'Unregistered' },
+    }),
+    true
+  );
+  for (const failure of [
+    { status: 400, response: { reason: 'BadTopic' } },
+    { status: 400, response: { reason: 'BadCollapseId' } },
+    { status: 500, response: { reason: 'InternalServerError' } },
+  ]) {
+    assert.equal(isDefinitivelyInvalidApnsToken(failure), false);
+  }
+}
+
 void (async () => {
   testMutableContentForHttpsPreview();
   testMutableContentForChatReplyCategory();
   testNoMutableContentWithoutPreviewOrChatReply();
   testNoMutableContentForHttpPreview();
+  testInvalidTokenClassification();
   console.log('push-notification.service.test.ts: ok');
 })();

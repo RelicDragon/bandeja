@@ -1397,14 +1397,11 @@ class SocketService {
     payload: PlayIntentInvalidation,
     userIds: string[],
   ): void {
-    this.io
-      .to(playIntentPoolRoom(payload.cityId))
-      .emit(PLAY_INTENT_INVALIDATE_EVENT, payload);
-    for (const userId of new Set(userIds)) {
-      this.io
-        .to(`notify-user-${userId}`)
-        .emit(PLAY_INTENT_INVALIDATE_EVENT, payload);
-    }
+    const rooms = [
+      playIntentPoolRoom(payload.cityId),
+      ...[...new Set(userIds)].map((userId) => `notify-user-${userId}`),
+    ];
+    this.io.to(rooms).emit(PLAY_INTENT_INVALIDATE_EVENT, payload);
   }
 
   public getIO(): SocketIOServer {

@@ -24,12 +24,27 @@ import { SportLevelProvider } from '@/contexts/SportLevelContext';
 import { AdSlot } from '@/components/sponsorSlots';
 import { AD_PLACEMENTS } from '@/shared/adPlacements';
 import { useRegisterAdSportContext } from '@/hooks/useAdPlacements';
+import { AchievementLeaderboard } from '@/components/leaderboard/AchievementLeaderboard';
 
 export const ProfileLeaderboard = () => {
+  const leaderboardType = useHeaderStore((state) => state.leaderboardType);
+  return leaderboardType === 'achievements'
+    ? <AchievementLeaderboard />
+    : <StandardLeaderboard />;
+};
+
+const StandardLeaderboard = () => {
   const { t } = useTranslation();
   const { translateCity } = useTranslatedGeo();
   const { user } = useAuthStore();
-  const { leaderboardType, leaderboardScope, leaderboardTimePeriod, leaderboardGender, setLeaderboardScope, setLeaderboardTimePeriod, setLeaderboardGender } = useHeaderStore();
+  const {
+    leaderboardType: storedLeaderboardType,
+    leaderboardScope,
+    leaderboardGender,
+    setLeaderboardScope,
+    setLeaderboardGender,
+  } = useHeaderStore();
+  const leaderboardType = storedLeaderboardType === 'social' ? 'social' : 'level';
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -100,7 +115,7 @@ export const ProfileLeaderboard = () => {
         const response = await rankingApi.getUserLeaderboardContext(
           leaderboardType,
           leaderboardScope,
-          leaderboardType === 'games' ? leaderboardTimePeriod : undefined,
+          undefined,
           activeLeaderboardSport,
           leaderboardGender,
         );
@@ -119,7 +134,7 @@ export const ProfileLeaderboard = () => {
     return () => {
       cancelled = true;
     };
-  }, [t, leaderboardType, leaderboardScope, leaderboardTimePeriod, leaderboardGender, activeLeaderboardSport]);
+  }, [t, leaderboardType, leaderboardScope, leaderboardGender, activeLeaderboardSport]);
 
   useEffect(() => {
     if (!loading && leaderboard.length > 0 && !isScrolled) {
@@ -163,10 +178,8 @@ export const ProfileLeaderboard = () => {
               {t('gameDetails.player') || 'Player'}
             </th>
             <th className="whitespace-nowrap py-2 pl-2 pr-0 text-right text-xs font-semibold text-gray-700 dark:text-gray-300">
-              {leaderboardType === 'social' 
-                ? (t('profile.social') || 'Social') 
-                : leaderboardType === 'games' 
-                ? (t('profile.games') || 'Games') 
+              {leaderboardType === 'social'
+                ? (t('profile.social') || 'Social')
                 : (t('profile.level') || 'Level')}
             </th>
           </tr>
@@ -174,9 +187,7 @@ export const ProfileLeaderboard = () => {
         <tbody>
           {filteredLeaderboard.map((entry) => {
             const isCurrentUser = entry.id === user?.id;
-            const displayValue = leaderboardType === 'games'
-              ? (entry.gamesCount ?? 0).toString()
-              : leaderboardType === 'social'
+            const displayValue = leaderboardType === 'social'
               ? entry.socialLevel.toFixed(1)
               : entry.level.toFixed(1);
 
@@ -228,8 +239,7 @@ export const ProfileLeaderboard = () => {
                 </td>
                 <td className="whitespace-nowrap py-2 pl-2 pr-0 text-right align-middle">
                   <div className="flex items-center justify-end gap-1">
-                    {leaderboardType !== 'games' &&
-                      entry.lastGameRatingChange !== null &&
+                    {entry.lastGameRatingChange !== null &&
                       entry.lastGameRatingChange !== undefined && (
                         <span
                           className={`rounded px-1 py-0.5 text-[10px] font-medium tabular-nums ${
@@ -351,41 +361,6 @@ export const ProfileLeaderboard = () => {
           value={leaderboardGender}
           onChange={setLeaderboardGender}
         />
-        {leaderboardType === 'games' && (
-          <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-xl p-1">
-            <button
-              onClick={() => setLeaderboardTimePeriod('10')}
-              className={`flex-1 px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-300 ease-in-out ${
-                leaderboardTimePeriod === '10'
-                  ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-              }`}
-            >
-              10 {t('profile.days') || 'Days'}
-            </button>
-            <button
-              onClick={() => setLeaderboardTimePeriod('30')}
-              className={`flex-1 px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-300 ease-in-out ${
-                leaderboardTimePeriod === '30'
-                  ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-              }`}
-            >
-              30 {t('profile.days') || 'Days'}
-            </button>
-            <button
-              onClick={() => setLeaderboardTimePeriod('all')}
-              className={`flex-1 px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-300 ease-in-out ${
-                leaderboardTimePeriod === 'all'
-                  ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-              }`}
-            >
-              {t('profile.all') || 'All'}
-            </button>
-          </div>
-        )}
-
         <div className="hidden flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-xl p-1">
           <button
             onClick={() => setLeaderboardScope('city')}
@@ -428,4 +403,3 @@ export const ProfileLeaderboard = () => {
     </SportLevelProvider>
   );
 };
-

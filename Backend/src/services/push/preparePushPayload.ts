@@ -14,6 +14,10 @@ const INVITE_ACTION_TYPES = new Set<NotificationType>([
   NotificationType.TEAM_INVITE,
 ]);
 
+const PLAY_INTENT_ACTION_TYPES = new Set<NotificationType>([
+  NotificationType.FOLLOWED_USER_PLAY_INTENT,
+]);
+
 function pushThreadId(
   chatContextType: string,
   contextId: string,
@@ -104,6 +108,17 @@ export async function preparePushPayloadForRecipient(
         ...next.data,
         acceptActionTitle: accept?.title,
         declineActionTitle: decline?.title,
+      },
+    };
+  }
+
+  if (PLAY_INTENT_ACTION_TYPES.has(next.type) && next.actions?.length) {
+    const playToo = next.actions.find((action) => action.id === 'play-too');
+    next = {
+      ...next,
+      data: {
+        ...next.data,
+        playTooActionTitle: playToo?.title,
       },
     };
   }

@@ -7,7 +7,6 @@ import { Button } from '@/components';
 import { TimeRangeSlider } from '@/components/TimeRangeSlider';
 import {
   DrawerHeader,
-  DrawerTitle,
   DrawerDescription,
 } from '@/components/ui/Drawer';
 import type { PlayIntent, PlayIntentTimeOfDay } from '@/api/playIntents';
@@ -199,7 +198,9 @@ export function PlayIntentComposePanel({
   return (
     <>
       <DrawerHeader className="shrink-0 pr-16">
-        <DrawerTitle>{t('playIntent.composeTitle')}</DrawerTitle>
+        <h2 className="text-lg font-semibold leading-none tracking-tight">
+          {t('playIntent.composeTitle')}
+        </h2>
       </DrawerHeader>
       <div
         data-play-intent-compose-scroll

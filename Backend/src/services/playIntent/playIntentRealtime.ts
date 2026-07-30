@@ -1,33 +1,25 @@
-import type { EntityType, Sport } from '@prisma/client';
+import type { PlayIntentInvalidation } from '@bandeja/shared/playIntentRealtime';
+import prisma from '../../config/database';
 
-export const PLAY_INTENT_INVALIDATE_EVENT = 'play-intent:invalidate' as const;
-
-export type PlayIntentInvalidationReason =
-  | 'intent-created'
-  | 'intent-cancelled'
-  | 'intent-expired'
-  | 'intent-status-changed'
-  | 'proposal-created'
-  | 'proposal-updated'
-  | 'proposal-expired'
-  | 'proposal-converted';
-
-export type PlayIntentInvalidation = {
-  version: 1;
-  reason: PlayIntentInvalidationReason;
-  cityId: string;
-  sport: Sport;
-  entityType: EntityType;
-  occurredAt: string;
-  intentId?: string;
-  proposalId?: string;
-};
+export {
+  PLAY_INTENT_INVALIDATE_EVENT,
+  type PlayIntentInvalidation,
+  type PlayIntentInvalidationReason,
+} from '@bandeja/shared/playIntentRealtime';
 
 export type PublishPlayIntentInvalidation = Omit<
   PlayIntentInvalidation,
   'version' | 'occurredAt'
 > & {
   userIds?: string[];
+};
+
+export type PlayIntentRealtimeTarget = Pick<
+  PublishPlayIntentInvalidation,
+  'cityId' | 'sport' | 'entityType'
+> & {
+  id: string;
+  userId: string;
 };
 
 type PlayIntentSocketEmitter = {
@@ -59,4 +51,78 @@ export function publishPlayIntentInvalidation(
     },
     [...new Set(userIds.filter(Boolean))],
   );
+}
+
+/**
+ * Publishes already-captured lifecycle metadata after commit. Callers that
+ * delete intents (for example user merge) must use this form because the rows
+ * are no longer queryable after the transaction.
+ */
+export function publishCommittedPlayIntentTargetChanges(
+  targets: PlayIntentRealtimeTarget[],
+): void {
+  if (targets.length === 0) return;
+  try {
+    const groups = new Map<string, PlayIntentRealtimeTarget[]>();
+    for (const target of targets) {
+      const key = [target.cityId, target.sport, target.entityType].join(':');
+      const group = groups.get(key);
+      if (group) {
+        group.push(target);
+      } else {
+        groups.set(key, [target]);
+      }
+    }
+
+    for (const group of groups.values()) {
+      const [first] = group;
+      if (!first) continue;
+      publishPlayIntentInvalidation({
+        reason: 'intent-status-changed',
+        ...(group.length === 1 ? { intentId: first.id } : {}),
+        cityId: first.cityId,
+        sport: first.sport,
+        entityType: first.entityType,
+        userIds: group.map((intent) => intent.userId),
+      });
+    }
+  } catch (error) {
+    console.error('[PlayIntentRealtime] Failed to publish committed lifecycle targets', {
+      intentIds: targets.map((target) => target.id),
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+}
+
+/**
+ * Resolves lifecycle metadata only after the surrounding transaction commits,
+ * then emits one invalidation per affected city/sport/entity group. Realtime
+ * is best-effort: a lookup failure must not turn an already-committed API
+ * operation into an apparent failure. Reconnect/focus and the slow
+ * reconciliation poll remain the recovery path.
+ */
+export async function publishCommittedPlayIntentStatusChanges(
+  intentIds: Array<string | null | undefined>,
+): Promise<void> {
+  const uniqueIds = [...new Set(intentIds.filter((id): id is string => !!id))];
+  if (uniqueIds.length === 0) return;
+
+  try {
+    const intents = await prisma.playIntent.findMany({
+      where: { id: { in: uniqueIds } },
+      select: {
+        id: true,
+        userId: true,
+        cityId: true,
+        sport: true,
+        entityType: true,
+      },
+    });
+    publishCommittedPlayIntentTargetChanges(intents);
+  } catch (error) {
+    console.error('[PlayIntentRealtime] Failed to publish committed lifecycle changes', {
+      intentIds: uniqueIds,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
 }

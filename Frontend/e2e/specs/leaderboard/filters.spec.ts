@@ -7,21 +7,27 @@ test.describe('leaderboard filters @auth', () => {
     await new ShellPage(page).expectAuthenticatedHome();
   });
 
-  test('LB-02 Sport/type filter refetches rankings', async ({ page }) => {
+  test('LB-02 Achievement type opens families and loads selected leaders', async ({ page }) => {
     const leaderboard = new LeaderboardPage(page);
     await leaderboard.goto();
     await leaderboard.waitForLoaded();
 
-    const response = page.waitForResponse(
-      (res) => res.url().includes('/rankings/user-context') && res.url().includes('type=games') && res.ok(),
-      { timeout: 30_000 },
-    );
-    await leaderboard.switchType('games');
-    await response;
+    await leaderboard.switchType('achievements');
+    await expect(leaderboard.achievementFamilies().first()).toBeVisible();
+    await expect(leaderboard.achievementFamilies()).toHaveCount(10);
+    const responseUrl = await leaderboard.selectFirstAchievementFamily();
+    expect(responseUrl).toContain('family=HABIT_VOLUME');
     await expect(page).toHaveURL(/\/leaderboard/);
-    const rows = leaderboard.rankingRows();
-    const empty = leaderboard.emptyState();
-    await expect(rows.first().or(empty)).toBeVisible({ timeout: 20_000 });
+    await expect(
+      page.getByText(/top players|the top is open/i).first(),
+    ).toBeVisible({ timeout: 20_000 });
+
+    const genderResponseUrl = await leaderboard.switchGender('men');
+    expect(genderResponseUrl).toContain('/rankings/achievement-context');
+    expect(genderResponseUrl).toContain('gender=men');
+
+    await leaderboard.achievementFamilyBack().click();
+    await expect(leaderboard.achievementFamilies()).toHaveCount(10);
   });
 
   test('LB-06 Current user highlight when ranked', async ({ page }) => {

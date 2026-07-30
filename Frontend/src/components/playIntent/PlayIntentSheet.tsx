@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Loader2, Pencil, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -60,6 +60,7 @@ export function PlayIntentSheet({
   const [mode, setMode] = useState<Mode>(initialMode);
   const [submittedIntent, setSubmittedIntent] = useState<PlayIntent | null>(null);
   const [confirmCancel, setConfirmCancel] = useState(false);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -83,12 +84,24 @@ export function PlayIntentSheet({
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="max-h-[94dvh] overflow-hidden rounded-t-[32px] border-x border-t border-gray-200/80 bg-gray-50 text-gray-950 shadow-[0_-24px_70px_rgba(15,23,42,0.18)] dark:border-white/10 dark:bg-[#0b111b] dark:text-white">
+      <DrawerContent
+        className="max-h-[94dvh] overflow-hidden rounded-t-[32px] border-x border-t border-gray-200/80 bg-gray-50 text-gray-950 shadow-[0_-24px_70px_rgba(15,23,42,0.18)] dark:border-white/10 dark:bg-[#0b111b] dark:text-white"
+        accessibleTitle={t(
+          mode === 'compose'
+            ? 'playIntent.composeTitle'
+            : 'playIntent.lobbyTitle',
+        )}
+        onOpenAutoFocus={(event) => {
+          event.preventDefault();
+          closeButtonRef.current?.focus();
+        }}
+      >
         <div
           className="mx-auto mt-2.5 h-1 w-10 shrink-0 rounded-full bg-gray-300 dark:bg-white/20"
           aria-hidden
         />
         <DrawerCloseButton
+          ref={closeButtonRef}
           className="absolute right-4 top-3.5 z-20 bg-white text-gray-500 shadow-sm ring-1 ring-gray-200 hover:bg-gray-100 dark:bg-white/10 dark:text-gray-300 dark:ring-white/10 dark:hover:bg-white/15"
           aria-label={t('common.close', { defaultValue: 'Close' })}
         />

@@ -10,6 +10,7 @@ import {
 import { playIntentKeys } from '@/hooks/usePlayIntent';
 import type { Sport } from '@/types';
 import { resolveSharedPlayIntentProgress } from './sharedPlayIntentProgress';
+import { sharedPlayIntentErrorTranslationKey } from './sharedPlayIntentError';
 
 /** Defense if multiple hosts ever listen for the same join deep link. */
 const automaticJoinLocks = new Set<string>();
@@ -74,9 +75,9 @@ export function useSharedPlayIntentEntry(enabled: boolean) {
           next.delete('joinPlayIntent');
           next.set('lobby', '1');
         });
-      } catch (error: any) {
+      } catch (error: unknown) {
         automaticJoinRef.current = null;
-        const key = error?.response?.data?.code || error?.response?.data?.message;
+        const key = sharedPlayIntentErrorTranslationKey(error);
         toast.error(
           t(key || 'playIntent.sharedUnavailable', {
             defaultValue: t('playIntent.sharedUnavailable'),
@@ -111,9 +112,9 @@ export function useSharedPlayIntentEntry(enabled: boolean) {
           setLoadingShared(false);
         }
       })
-      .catch((error: any) => {
+      .catch((error: unknown) => {
         if (cancelled) return;
-        const key = error?.response?.data?.code || error?.response?.data?.message;
+        const key = sharedPlayIntentErrorTranslationKey(error);
         toast.error(
           t(key || 'playIntent.sharedUnavailable', {
             defaultValue: t('playIntent.sharedUnavailable'),

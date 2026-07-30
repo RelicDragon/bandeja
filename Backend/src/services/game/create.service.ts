@@ -32,7 +32,10 @@ import {
 } from './gameExternalBooking.service';
 import { GameCourtService } from '../gameCourt/gameCourt.service';
 import { PlayIntentGameCreationService } from '../playIntent/playIntentGameCreation.service';
-import { publishPlayIntentInvalidation } from '../playIntent/playIntentRealtime';
+import {
+  publishCommittedPlayIntentStatusChanges,
+  publishPlayIntentInvalidation,
+} from '../playIntent/playIntentRealtime';
 import { appendGameLog } from './gameLog.service';
 import { PlayIntentMatchQueueService } from '../playIntent/playIntentMatchQueue.service';
 import { normalizeGameRatingFields } from './normalizeGameRatingFields';
@@ -612,6 +615,7 @@ export class GameCreateService {
           ...source.invitees.map((invitee) => invitee.userId),
         ],
       });
+      await publishCommittedPlayIntentStatusChanges(source.releasedIntentIds);
     }
 
     await GameReadinessService.updateGameReadiness(createdGame.id);

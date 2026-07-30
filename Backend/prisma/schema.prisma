@@ -1899,19 +1899,25 @@ model UserAchievementPin {
 
 /// Cached counters for organize / partner habit cabinets (refreshed on FINAL grants + backfill).
 model UserAchievementStats {
-  userId               String    @id
-  organizedGames       Int       @default(0)
-  organizedTournaments Int       @default(0)
-  organizedBars        Int       @default(0)
-  giantKillerWins      Int       @default(0)
-  dynamicDuoMaxWins    Int       @default(0)
-  openCourtPartners    Int       @default(0)
+  userId                    String    @id
+  /// Monotonic optimistic-lock token advanced by every cache invalidation.
+  revision                  Int       @default(0)
+  organizedGames            Int       @default(0)
+  organizedTournaments      Int       @default(0)
+  organizedBars             Int       @default(0)
+  giantKillerWins           Int       @default(0)
+  dynamicDuoMaxWins         Int       @default(0)
+  openCourtPartners         Int       @default(0)
   /// Null until organize counters have been computed at least once.
-  organizeRefreshedAt  DateTime?
+  organizeRefreshedAt       DateTime?
   /// Null until partner counters have been computed at least once.
-  partnerRefreshedAt   DateTime?
-  updatedAt            DateTime  @updatedAt
-  user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  partnerRefreshedAt        DateTime?
+  organizeRepairFailures    Int       @default(0)
+  partnerRepairFailures     Int       @default(0)
+  organizeRepairFailedAt    DateTime?
+  partnerRepairFailedAt     DateTime?
+  updatedAt                 DateTime  @updatedAt
+  user                      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model BlockedUser {
@@ -2895,7 +2901,6 @@ model DeletedUser {
 enum PushPlatform {
   IOS
   ANDROID
-  WEB
 }
 
 enum NotificationChannelType {

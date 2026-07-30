@@ -12,6 +12,9 @@ import {
   meetsPodiumParticipantFloor,
   isPodiumEligibleEntityType,
   groupUserIdsByPodiumPlace,
+  ACHIEVEMENT_LEADERBOARD_FAMILIES,
+  achievementLeaderboardFamilyForRuleKind,
+  isAchievementLeaderboardFamily,
 } from '@shared/achievements';
 
 describe('achievement catalog', () => {
@@ -86,6 +89,26 @@ describe('achievement catalog', () => {
 
     const artKeys = ACHIEVEMENT_CATALOG.map((d) => d.artKey);
     expect(new Set(artKeys).size).toBe(artKeys.length);
+  });
+});
+
+describe('achievement leaderboard families', () => {
+  it('matches the cabinet family grouping', () => {
+    expect(achievementLeaderboardFamilyForRuleKind('HABIT_FIRST_WIN')).toBe('HABIT_WINS');
+    expect(achievementLeaderboardFamilyForRuleKind('HABIT_SPORT_VOLUME')).toBe('HABIT_VOLUME');
+    expect(achievementLeaderboardFamilyForRuleKind('PODIUM')).toBe('PODIUM');
+    expect(achievementLeaderboardFamilyForRuleKind('UNKNOWN')).toBeNull();
+  });
+
+  it('covers every catalog definition and rejects unknown input', () => {
+    for (const definition of ACHIEVEMENT_CATALOG) {
+      const family = achievementLeaderboardFamilyForRuleKind(definition.ruleKind);
+      expect(family).not.toBeNull();
+      expect(isAchievementLeaderboardFamily(family)).toBe(true);
+    }
+    expect(ACHIEVEMENT_LEADERBOARD_FAMILIES).toHaveLength(10);
+    expect(isAchievementLeaderboardFamily('HABIT_FIRST_WIN')).toBe(false);
+    expect(isAchievementLeaderboardFamily('anything')).toBe(false);
   });
 });
 

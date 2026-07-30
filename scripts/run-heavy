@@ -1,0 +1,36 @@
+#!/bin/sh
+set -eu
+
+if [ "${PADELPULSE_HEAVY_LOCK_HELD:-}" = "1" ]; then
+  exec "$@"
+fi
+
+SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+REPO_ROOT=$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)
+
+case "$PWD/" in
+  "$REPO_ROOT/Frontend/"*)
+    LOCK_LANE="frontend"
+    ;;
+  "$REPO_ROOT/Backend/"*)
+    LOCK_LANE="backend"
+    ;;
+  *)
+    LOCK_LANE="shared"
+    ;;
+esac
+
+LOCK_FILE="${PADELPULSE_HEAVY_LOCK_FILE:-/tmp/padelpulse-$LOCK_LANE-heavy.lock}"
+
+echo "Waiting for PadelPulse $LOCK_LANE heavy-task slot: $*"
+
+if command -v lockf >/dev/null 2>&1; then
+  exec lockf -k "$LOCK_FILE" env PADELPULSE_HEAVY_LOCK_HELD=1 "$@"
+fi
+
+if command -v flock >/dev/null 2>&1; then
+  exec flock "$LOCK_FILE" env PADELPULSE_HEAVY_LOCK_HELD=1 "$@"
+fi
+
+echo "Cannot serialize heavy task: lockf or flock is required." >&2
+exit 1

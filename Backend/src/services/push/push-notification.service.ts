@@ -22,6 +22,22 @@ export function shouldSetApnsMutableContent(
   return !!previewImageUrl?.trim() && previewImageUrl.trim().startsWith('https://');
 }
 
+type ApnsFailure = {
+  status?: number | string;
+  response?: { reason?: string };
+};
+
+/**
+ * APNs uses HTTP 400 for both invalid device tokens and request/configuration
+ * mistakes. Only the two token-specific reasons are safe to delete.
+ */
+export function isDefinitivelyInvalidApnsToken(
+  failure: ApnsFailure
+): boolean {
+  const reason = failure.response?.reason;
+  return reason === 'BadDeviceToken' || reason === 'Unregistered';
+}
+
 class PushNotificationService {
   private apnProvider: apn.Provider | null = null;
 
@@ -67,86 +83,92 @@ class PushNotificationService {
     console.log('[PUSH] Push notification services initialization complete');
   }
 
+  private buildIOSNotification(payload: NotificationPayload): apn.Notification {
+    const notification = new apn.Notification();
+    notification.alert = {
+      title: payload.title,
+      body: payload.body
+    };
+    notification.topic = config.apns.bundleId;
+    notification.sound = payload.sound || 'default';
+    const collapseId = deliveryCollapseKey(payload.data?.deliveryKey);
+    if (collapseId) {
+      notification.collapseId = collapseId;
+    }
+    if (payload.badge !== undefined) {
+      notification.badge = payload.badge;
+    }
+    notification.payload = {
+      type: payload.type,
+      data: payload.data || {}
+    };
+
+    const resolvedCategory = payload.category ?? resolveApnsNotificationCategory(payload);
+    if (resolvedCategory) {
+      (notification as apn.Notification & { category?: string }).category = resolvedCategory;
+    }
+    if (payload.threadId) {
+      (notification as apn.Notification & { threadId?: string }).threadId = payload.threadId;
+    }
+    if (shouldSetApnsMutableContent(resolvedCategory, payload.data?.previewImageUrl)) {
+      notification.mutableContent = true;
+    }
+    return notification;
+  }
+
   async sendIOSNotification(token: string, payload: NotificationPayload): Promise<boolean> {
+    return (await this.sendIOSNotifications([token], payload)) === 1;
+  }
+
+  async sendIOSNotifications(
+    tokens: string[],
+    payload: NotificationPayload
+  ): Promise<number> {
     if (!this.apnProvider) {
       console.log('[APNS] Provider not initialized, skipping iOS notification');
-      return false;
+      return 0;
     }
 
+    const uniqueTokens = [...new Set(tokens.filter(Boolean))];
+    if (uniqueTokens.length === 0) return 0;
+
     try {
-      console.log(`[APNS] Preparing to send notification to token: ${token.substring(0, 20)}...`);
-      console.log(`[APNS] Payload:`, { title: payload.title, type: payload.type });
-
-      const notification = new apn.Notification();
-      notification.alert = {
-        title: payload.title,
-        body: payload.body
-      };
-      notification.topic = config.apns.bundleId;
-      notification.sound = payload.sound || 'default';
-      const collapseId = deliveryCollapseKey(payload.data?.deliveryKey);
-      if (collapseId) {
-        notification.collapseId = collapseId;
-      }
-      if (payload.badge !== undefined) {
-        notification.badge = payload.badge;
-      }
-      notification.payload = {
-        type: payload.type,
-        data: payload.data || {}
-      };
-
-      const resolvedCategory = payload.category ?? resolveApnsNotificationCategory(payload);
-      if (resolvedCategory) {
-        (notification as apn.Notification & { category?: string }).category = resolvedCategory;
-      }
-
-      if (payload.threadId) {
-        (notification as apn.Notification & { threadId?: string }).threadId = payload.threadId;
-      }
-
-      const previewImageUrl = payload.data?.previewImageUrl;
-      if (shouldSetApnsMutableContent(resolvedCategory, previewImageUrl)) {
-        notification.mutableContent = true;
-      }
-
-      console.log(`[APNS] Sending notification with topic: ${config.apns.bundleId}`);
-      const result = await this.apnProvider.send(notification, token);
-
-      console.log(`[APNS] Send result:`, {
-        sent: result.sent?.length || 0,
-        failed: result.failed?.length || 0
-      });
-
-      if (result.failed && result.failed.length > 0) {
-        const failure = result.failed[0];
-        const staleToken = failure.status === '410' || failure.status === '400';
-        if (staleToken) {
-          console.log('[APNS] Stale token, removing', {
-            token: token.substring(0, 20) + '...',
-            status: failure.status,
-            response: failure.response,
-          });
-          await PushTokenService.removeInvalidToken(token);
+      const result = await this.apnProvider.send(
+        this.buildIOSNotification(payload),
+        uniqueTokens
+      );
+      const staleFailures = [];
+      for (const failure of result.failed ?? []) {
+        if (isDefinitivelyInvalidApnsToken(failure)) {
+          staleFailures.push(failure);
         } else {
           console.error('[APNS] Notification failed:', {
-            token: token.substring(0, 20) + '...',
+            token: `${failure.device.substring(0, 20)}...`,
             status: failure.status,
             response: failure.response,
           });
         }
-        return false;
       }
-
-      console.log(`[APNS] ✅ Notification sent successfully`);
-      return true;
+      await Promise.all(
+        staleFailures.map(async (failure) => {
+          try {
+            await PushTokenService.removeInvalidToken(failure.device);
+          } catch (error) {
+            console.error('[APNS] Failed to remove invalid device token:', {
+              token: `${failure.device.substring(0, 20)}...`,
+              error: error instanceof Error ? error.message : String(error),
+            });
+          }
+        })
+      );
+      return result.sent?.length ?? 0;
     } catch (error) {
-      console.error('[APNS] ❌ Exception while sending iOS notification:', error);
+      console.error('[APNS] ❌ Exception sending iOS notification batch:', error);
       console.error('[APNS] Error details:', {
         message: error instanceof Error ? error.message : 'Unknown error',
         stack: error instanceof Error ? error.stack : undefined
       });
-      return false;
+      return 0;
     }
   }
 
@@ -169,23 +191,10 @@ class PushNotificationService {
 
     const prepared = await preparePushPayloadForRecipient(userId, payload);
 
-    let successCount = 0;
-    for (let i = 0; i < tokens.length; i++) {
-      const tokenRecord = tokens[i];
-      console.log(`[APNS] Sending to iOS token ${i + 1}/${tokens.length} (deviceId: ${tokenRecord.deviceId || 'unknown'})`);
-      
-      try {
-        const success = await this.sendIOSNotification(tokenRecord.token, prepared);
-        if (success) {
-          successCount++;
-          console.log(`[APNS] ✅ Success for token ${i + 1}/${tokens.length}`);
-        } else {
-          console.log(`[APNS] ❌ Failed for token ${i + 1}/${tokens.length}`);
-        }
-      } catch (error) {
-        console.error(`[APNS] ❌ Exception sending to token ${i + 1}/${tokens.length}:`, error);
-      }
-    }
+    const successCount = await this.sendIOSNotifications(
+      tokens.map((token) => token.token),
+      prepared
+    );
 
     console.log(`[APNS] Sent to ${successCount}/${tokens.length} iOS device(s) for user ${userId}`);
     return successCount;
@@ -214,31 +223,13 @@ class PushNotificationService {
 
     const prepared = await preparePushPayloadForRecipient(userId, payload);
 
-    let successCount = 0;
-    for (let i = 0; i < tokens.length; i++) {
-      const tokenRecord = tokens[i];
-      console.log(`[FCM] Sending to Android token ${i + 1}/${tokens.length} (deviceId: ${tokenRecord.deviceId || 'unknown'})`);
-      
-      try {
-        const success = await this.sendAndroidNotification(tokenRecord.token, prepared);
-        if (success) {
-          successCount++;
-          console.log(`[FCM] ✅ Success for token ${i + 1}/${tokens.length}`);
-        } else {
-          console.log(`[FCM] ❌ Failed for token ${i + 1}/${tokens.length}`);
-        }
-      } catch (error) {
-        console.error(`[FCM] ❌ Exception sending to token ${i + 1}/${tokens.length}:`, error);
-      }
-    }
+    const successCount = await fcmService.sendNotifications(
+      tokens.map((token) => token.token),
+      prepared
+    );
 
     console.log(`[FCM] Sent to ${successCount}/${tokens.length} Android device(s) for user ${userId}`);
     return successCount;
-  }
-
-  async sendWebNotification(_token: string, _payload: NotificationPayload): Promise<boolean> {
-    console.log('Web push notifications not implemented yet');
-    return false;
   }
 
   async sendNotificationToUser(userId: string, payload: NotificationPayload): Promise<number> {

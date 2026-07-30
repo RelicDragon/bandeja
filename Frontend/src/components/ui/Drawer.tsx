@@ -68,10 +68,26 @@ const DrawerOverlay = React.forwardRef<
 ));
 DrawerOverlay.displayName = 'DrawerOverlay';
 
+type DrawerContentProps =
+  React.ComponentPropsWithoutRef<typeof VaulDrawer.Content> & {
+    accessibleTitle?: React.ReactNode;
+  };
+
 const DrawerContent = React.forwardRef<
   React.ElementRef<typeof VaulDrawer.Content>,
-  React.ComponentPropsWithoutRef<typeof VaulDrawer.Content>
->(({ className, children, 'aria-labelledby': ariaLabelledBy, 'aria-describedby': ariaDescribedBy, ...props }, ref) => (
+  DrawerContentProps
+>(
+  (
+    {
+      className,
+      children,
+      accessibleTitle,
+      'aria-labelledby': ariaLabelledBy,
+      'aria-describedby': ariaDescribedBy,
+      ...props
+    }: DrawerContentProps,
+    ref,
+  ) => (
   <DrawerPortal>
     <DrawerOverlay />
     <VaulDrawer.Content
@@ -81,11 +97,14 @@ const DrawerContent = React.forwardRef<
       aria-describedby={ariaDescribedBy ?? undefined}
       {...props}
     >
-      <VaulDrawer.Title className="sr-only">Drawer</VaulDrawer.Title>
+      <VaulDrawer.Title className="sr-only">
+        {accessibleTitle ?? 'Drawer'}
+      </VaulDrawer.Title>
       {children}
     </VaulDrawer.Content>
   </DrawerPortal>
-));
+  ),
+);
 DrawerContent.displayName = 'DrawerContent';
 
 const DrawerHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (

@@ -1,0 +1,4 @@
+ALTER TABLE "UserAchievementStats"
+ADD COLUMN "revision" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN "organizeRepairFailures" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN "partnerRepairFailures" INTEGER NOT NULL DEFAULT 0;

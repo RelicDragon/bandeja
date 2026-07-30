@@ -10,9 +10,8 @@ interface HeaderState {
   decrementedInviteIds: Set<string>;
   isNewInviteAnimating: boolean;
   syncStatus: SyncStatus;
-  leaderboardType: 'level' | 'social' | 'games';
+  leaderboardType: 'level' | 'social' | 'achievements';
   leaderboardScope: 'city' | 'global';
-  leaderboardTimePeriod: '10' | '30' | 'all';
   leaderboardGender: LeaderboardGenderFilter;
   createGameInitialDate: string | null;
   setPendingInvites: (count: number) => void;
@@ -22,9 +21,8 @@ interface HeaderState {
   decrementPendingInvite: (inviteId: string) => void;
   triggerNewInviteAnimation: () => void;
   setSyncStatus: (status: SyncStatus) => void;
-  setLeaderboardType: (type: 'level' | 'social' | 'games') => void;
+  setLeaderboardType: (type: 'level' | 'social' | 'achievements') => void;
   setLeaderboardScope: (scope: 'city' | 'global') => void;
-  setLeaderboardTimePeriod: (period: '10' | '30' | 'all') => void;
   setLeaderboardGender: (gender: LeaderboardGenderFilter) => void;
   setCreateGameInitialDate: (date: Date | null) => void;
 }
@@ -34,9 +32,8 @@ export const useHeaderStore = create<HeaderState>((set) => ({
   decrementedInviteIds: new Set<string>(),
   isNewInviteAnimating: false,
   syncStatus: 'IDLE',
-  leaderboardType: 'level',
+  leaderboardType: 'achievements',
   leaderboardScope: 'city',
-  leaderboardTimePeriod: 'all',
   leaderboardGender: 'all',
   createGameInitialDate: null,
   setPendingInvites: (count) => set({ pendingInvites: count }),
@@ -59,7 +56,6 @@ export const useHeaderStore = create<HeaderState>((set) => ({
   setSyncStatus: (status) => set({ syncStatus: status }),
   setLeaderboardType: (type) => set({ leaderboardType: type }),
   setLeaderboardScope: (scope) => set({ leaderboardScope: scope }),
-  setLeaderboardTimePeriod: (period) => set({ leaderboardTimePeriod: period }),
   setLeaderboardGender: (gender) => set({ leaderboardGender: gender }),
   setCreateGameInitialDate: (date) =>
     set({ createGameInitialDate: date ? (() => {

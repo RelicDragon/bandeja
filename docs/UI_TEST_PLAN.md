@@ -1279,6 +1279,7 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PR-trophy-2d | Stack expand → detail | Tap a trophy stack in the cabinet | The existing group frame widens while the same piled icon-frames fan into one row inside it; all rail cards share the tallest natural content height (no fixed-height blank area); each column is icon → fixed two-line title slot → compact rarity tag, keeping every tag on one baseline; progress remains pinned below the tags at the frame bottom; collapsed pile depth clears the family label, and its localized subtitle wraps to at most two lines without ellipsis or bottom clipping; only an expanded icon opens detail, while tapping its title/tag or any other group-frame space smoothly collapses the group; a standalone card opens detail from its whole card surface |
 | PR-trophy-3 | Visitor empty trophies | Open another user’s card with zero trophies | Showcase hidden; cabinet calm empty (“No trophies yet”) — no locked graveyard |
 | PR-trophy-4 | Trophy detail sheet | Tap locked or unlocked trophy tile | Sheet with title, rarity, description; locked progress is centered as current / target with a percentage and polished progress bar directly below; locked trophies without measurable progress show a centered hint; tapping the backdrop dismisses detail from both grouped icons and standalone cards without collapsing an expanded group |
+| PR-trophy-4b | Followed achievement earners | Follow users who earned the selected trophy → open its detail sheet | Reserved loading rail avoids layout jump, then one horizontally scrollable row shows each matching followed user as a tiny avatar/initial and abbreviated name; tapping the avatar/name opens that player; long names truncate; users without the achievement and blocked users are absent; load failure offers tap-to-retry |
 | PR-trophy-5 | Dark/light trophy UI | Toggle theme on Statistics with cabinet visible | Trophy frames/labels readable in both themes |
 | PR-trophy-6 | Habit unlock first win | Finish a qualifying rated win when user has 0 prior wins | `habit_first_win` appears on own cabinet/showcase; Common banner on Results once |
 | PR-trophy-6a | Habit unlock first padel game | Finish first qualifying PADEL game (0 prior padel finishes) | `habit_first_padel_game` unlocks; Common banner; tennis-only play does not unlock |
@@ -1403,7 +1404,7 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 
 | ID | Test | Steps | Expected |
 |----|------|-------|----------|
-| LB-01 | Leaderboard loads | Open tab | Rankings list |
+| LB-01 | Leaderboard loads | Open tab | Achievements is the first and active subtab; achievement rankings load |
 | LB-02 | Sport filter | Switch sport | Rankings refetch |
 | LB-03 | City scope | City-specific board | Filtered players |
 | LB-04 | Open player from row | Tap player | Profile/card |
@@ -1478,6 +1479,9 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PI-34 | Join friend intent from push | From PI-32, tap “I want to play too” | A similar intent is created for the follower, the dialog closes, and My opens the Court lobby drawer with the follower and A in the matching pool |
 | PI-35 | Join friend intent from Telegram | Tap the localized “I want to play too” Telegram button while authenticated, then repeat while signed out and complete login | The new My deep link survives login, shows localized progress while creating an idempotent similar intent, and opens the Court lobby drawer; reopening the same link does not replace an identical active intent |
 | PI-36 | Shared intent unavailable or forbidden | Open a shared-intent link after expiry/cancel/consumption, after unfollowing, or after either user blocks the other | No intent is created; a localized unavailable/access error appears and the stale query parameter is removed |
+| PI-37 | Realtime lobby reconciliation | Keep Find open for users in the same city; create, replace, cancel, expire, edit a proposal roster, and convert a proposal from another client; briefly disconnect/reconnect one client | The lobby refetches immediately from authoritative HTTP state for every committed transition; reconnect/focus also reconciles; no 12–30s wait or duplicate visible transition occurs |
+| PI-38 | Accessible proposal arrival | Start with an active intent and form a new proposal from other clients while a screen reader is active; repeat with Reduce Motion enabled | The new proposal is announced once through a polite live region; the ready strip celebrates once when motion is allowed and stays static with Reduce Motion |
+| PI-39 | Native friend-intent action | Receive a followed-user play-intent push on iOS and Android, then use “I want to play too” from the notification | iOS groups the alert in the play-intent thread; both platforms open the shared-intent confirmation flow with localized action copy; a repeated provider delivery collapses instead of stacking |
 
 ---
 
