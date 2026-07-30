@@ -9,7 +9,7 @@ const getUriMock = vi.fn();
 const shareMock = vi.fn();
 const isCapacitorMock = vi.fn(() => false);
 
-vi.mock('html2canvas', () => ({
+vi.mock('html2canvas-pro', () => ({
   default: (...args: unknown[]) => html2canvasMock(...args),
 }));
 

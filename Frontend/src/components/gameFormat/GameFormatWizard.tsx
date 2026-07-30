@@ -169,7 +169,7 @@ export const GameFormatWizard = ({
   const { generationType, scoringMode, setGenerationType } = format;
 
   useEffect(() => {
-    if (!isOpen || showGenerationStep || !wizardEntityType) return;
+    if (!isOpen || hideGenerationStep || showGenerationStep || !wizardEntityType) return;
     if (wizardSelectableGenerations.includes(generationType)) return;
     const next =
       wizardSelectableGenerations[0] ??
@@ -177,6 +177,7 @@ export const GameFormatWizard = ({
     setGenerationType(next);
   }, [
     isOpen,
+    hideGenerationStep,
     showGenerationStep,
     wizardEntityType,
     wizardSelectableGenerations,

@@ -46,7 +46,7 @@ export type TemplateFormatCoordinatorFlags = {
 };
 
 export function participantContextKey(ctx: CreateTemplateParticipantContext): string {
-  return `${ctx.maxParticipants}:${ctx.playersPerMatch}:${ctx.hasFixedTeams}:${ctx.genderTeams}`;
+  return `${ctx.maxParticipants}:${ctx.playersPerMatch}:${ctx.hasFixedTeams}:${ctx.genderTeams}:${ctx.lockPlayersPerMatch ? '1' : '0'}`;
 }
 
 /** Registry metadata is the single authority for format ↔ template match. */

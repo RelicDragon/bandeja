@@ -125,4 +125,43 @@ describe('createTemplateParticipantFit', () => {
       ),
     ).toBe(false);
   });
+
+  it('lockPlayersPerMatch hides flexible-sport mismatched match size', () => {
+    const presets = [
+      'POINTS_21',
+      'POINTS_15',
+      'BEST_OF_3_21',
+      'BEST_OF_3_15',
+      'CUSTOM',
+    ] as const;
+    const unlocked = listTemplatesForParticipantSetup(Sports.BADMINTON, [...presets], {
+      maxParticipants: 4,
+      playersPerMatch: 4,
+      hasFixedTeams: false,
+    });
+    expect(unlocked.some((t) => t.playersPerMatch === 2)).toBe(true);
+
+    const locked = listTemplatesForParticipantSetup(Sports.BADMINTON, [...presets], {
+      maxParticipants: 4,
+      playersPerMatch: 4,
+      hasFixedTeams: false,
+      lockPlayersPerMatch: true,
+    });
+    expect(locked.every((t) => t.playersPerMatch === 4)).toBe(true);
+    expect(locked.map((t) => t.id)).toEqual(['BADMINTON_AMERICANO_21']);
+  });
+
+  it('lockPlayersPerMatch keeps tennis doubles playoff from offering singles templates', () => {
+    const list = listTemplatesForParticipantSetup(
+      Sports.TENNIS,
+      ['CLASSIC_BEST_OF_3', 'CLASSIC_FAST4', 'CUSTOM'],
+      {
+        maxParticipants: 4,
+        playersPerMatch: 4,
+        hasFixedTeams: true,
+        lockPlayersPerMatch: true,
+      },
+    );
+    expect(list).toEqual([]);
+  });
 });

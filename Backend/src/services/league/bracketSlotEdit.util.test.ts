@@ -72,6 +72,50 @@ assert(collectDescendantSlotIds('pi', byId).has('qf0'), 'pi feeds qf0');
 assert(hasBlockingDownstreamMainFinal('pi', byId), 'pi blocked when qf final');
 assert(hasBlockingDownstreamMainFinal('bye', byId), 'bye blocked when descendant qf final');
 
+const consolationTree = [
+  {
+    id: 'main0',
+    slotKind: BracketSlotKind.MAIN,
+    phaseIndex: 1,
+    roundIndex: 0,
+    leagueParticipantId: null,
+    gameId: 'g-main0',
+    winnerSlotId: 'final',
+    feederSlotAId: null,
+    feederSlotBId: null,
+    game: { resultsStatus: ResultsStatus.NONE },
+  },
+  {
+    id: 'consolation',
+    slotKind: BracketSlotKind.CONSOLATION,
+    phaseIndex: 2,
+    roundIndex: 0,
+    leagueParticipantId: null,
+    gameId: 'g-consolation',
+    winnerSlotId: null,
+    feederSlotAId: 'main0',
+    feederSlotBId: null,
+    game: { resultsStatus: ResultsStatus.FINAL },
+  },
+  {
+    id: 'final',
+    slotKind: BracketSlotKind.MAIN,
+    phaseIndex: 1,
+    roundIndex: 1,
+    leagueParticipantId: null,
+    gameId: null,
+    winnerSlotId: null,
+    feederSlotAId: 'main0',
+    feederSlotBId: null,
+    game: null,
+  },
+];
+const consolationById = slotsById(consolationTree);
+assert(
+  hasBlockingDownstreamMainFinal('main0', consolationById),
+  'blocked when descendant consolation is final'
+);
+
 const piFinal = [
   {
     ...slots[1],

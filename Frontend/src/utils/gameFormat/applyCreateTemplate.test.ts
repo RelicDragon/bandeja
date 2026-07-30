@@ -23,6 +23,7 @@ function mockFormat(overrides: Partial<UseGameFormatResult> = {}): UseGameFormat
     setScoringPreset: vi.fn(),
     setGenerationType: vi.fn(),
     setHasGoldenPoint: vi.fn(),
+    setDeucesBeforeGoldenPoint: vi.fn(),
     setCustomPointsTotal: vi.fn(),
     setMatchTimerEnabled: vi.fn(),
     setMatchTimedCapMinutes: vi.fn(),

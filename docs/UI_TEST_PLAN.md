@@ -825,6 +825,19 @@ Frontend/e2e/
 | GD-48 | Fullscreen bracket | `/games/:id/league-bracket` | Bracket view |
 | GD-49 | Edit league teams | Team assignment modal | Teams saved |
 | GD-50 | Playoff configuration | Playoff wizard | Bracket generated |
+| GD-128 | Playoff player name format | Open playoff creation, seed order, summary, and bracket preview for individual and fixed-team seasons | Every player is shown as initial + last name, matching league standings/matrix formatting |
+| GD-129 | Bracket game format templates | Fixed-team season → create bracket playoff → Game Setup | GAME format templates are shown; group fixture format is preselected and unchanged until user selects a template or customizes it; confirmed format applies to bracket games |
+| GD-130 | Bracket game setup remount restore | Confirm Game Setup → summary → Back → Game Setup | Previously confirmed template/custom format is restored; Next keeps that payload |
+| GD-131 | Bracket handmade season stays Custom | Season fixture uses HANDMADE + classic scoring → Game Setup | Format stays Custom with season generation/scoring; not silently clamped to AUTOMATIC |
+| GD-132 | Bracket locked match size templates | Tennis/badminton doubles season → Game Setup | Only templates matching season `playersPerMatch` are listed; singles templates absent |
+| GD-133 | Per-group advanced bracket settings | In a multi-group separate bracket, change third-place for Group A; observe mismatch hint; use Copy to other groups; continue to preview | Localized animated hint names only differing eligible groups and states on/off; copy action disappears after values match; copied third-place fixtures appear beneath Final for every eligible group |
+| GD-134 | Playoff wizard progress header | Move through playoff creation steps, including Game Setup | Step fraction pill and animated progress bar reflect the current step; title remains visually centered beneath the close button |
+| GD-135 | Live bracket third-place placement | Open a created playoff bracket with a third-place match | Third-place heading and match card render beneath Final in the same horizontal column, including fullscreen/export |
+| GD-136 | Bracket image export with modern theme colors | Open a populated playoff bracket in light/dark mode → Export image | PNG downloads successfully with Tailwind theme colors and the complete horizontal bracket |
+| GD-137 | Custom bye keeps all entrants | Create bracket with custom bye on a non-top seed (e.g. 7 teams, bye seed #3/#4) | Preview and created bracket include every entrant once; play-in count matches non-bye pool; no missing feeder slots |
+| GD-138 | Championship walkover | Assign walkover on unfinished Final / third-place / grand final with both contestants | Match finalizes; champion/podium updates; no “no advancement target” error |
+| GD-139 | Ineligible advanced options cleared | Enable third place (or consolation) with enough entrants, then reduce selection below eligibility | Toggle disappears; summary/create payload no longer requests the ineligible option |
+| GD-140 | Bracket game setup blocks points winner | Bracket Game Setup → Customize → Ranking | Winner-by-points is unavailable; only deterministic match-winner options remain |
 | GD-51 | Walkover / BYE handling | Set walkover | Bracket updates |
 | GD-52 | Club favorite toggle | Star on club in game info | Favorited state persists |
 | GD-53 | Club mini map | Game with geo | Map renders |

@@ -43,6 +43,7 @@ export type UseGameFormatTemplateFlowParams = {
   participantContext: CreateTemplateParticipantContext;
   initial?: GameFormatTemplateFlowInitial;
   skipInitialAutoSelect?: boolean;
+  preserveInitialFormat?: boolean;
   onIntentSideEffects?: (intent: CreateFlowIntent, template: CreateTemplate | null) => void;
   onAfterTemplateApply?: (template: CreateTemplate) => void | Promise<void>;
   formatWizardOpen?: boolean;
@@ -59,6 +60,7 @@ export function useGameFormatTemplateFlow({
   participantContext,
   initial,
   skipInitialAutoSelect = false,
+  preserveInitialFormat = false,
   onIntentSideEffects,
   onAfterTemplateApply,
   formatWizardOpen = false,
@@ -76,8 +78,12 @@ export function useGameFormatTemplateFlow({
   const initialParticipantContextKeyRef = useRef<string | null>(
     skipInitialAutoSelect ? participantContextKey(participantContext) : null,
   );
-  const bootstrapRef = useRef(false);
-  const lastAppliedTemplateKeyRef = useRef<string | null>(null);
+  const bootstrapRef = useRef(preserveInitialFormat);
+  const lastAppliedTemplateKeyRef = useRef<string | null>(
+    preserveInitialFormat && initial?.templateId
+      ? `${initial.templateId}:${maxParticipants}`
+      : null,
+  );
   const explicitTemplatePickRef = useRef(false);
   const userChoseManualRef = useRef(false);
   const [wizardUsesFullPresets, setWizardUsesFullPresets] = useState(false);

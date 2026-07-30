@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/Dialog';
+import { Dialog, DialogContent, DialogFooter } from '@/components/ui/Dialog';
 import { Button } from '@/components';
 import { SegmentedSwitch } from '@/components/SegmentedSwitch';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
@@ -30,6 +30,7 @@ import { PlayoffGameSetupStep } from './PlayoffGameSetupStep';
 import { BracketStructureSummary } from './BracketStructureSummary';
 import { BracketPlayoffPreview } from './BracketPlayoffPreview';
 import { BracketPlayoffGameSetupStep } from './BracketPlayoffGameSetupStep';
+import { PlayoffWizardHeader } from './PlayoffWizardHeader';
 import {
   BRACKET_MAX_ENTRANTS,
   BRACKET_MIN_ENTRANTS,
@@ -39,9 +40,12 @@ import { BracketPhase4CreateOptions } from './BracketPhase4CreateOptions';
 import { BracketPlayInPairEditor } from './BracketPlayInPairEditor';
 import {
   byeCountForEntrants,
+  supportsThirdPlaceMatch,
   validateCustomByeSeedRanks,
   type CustomByeValidationError,
 } from '@/utils/customByeSeedRanks.util';
+import { supportsConsolationBracket } from '@/utils/consolationBracket.util';
+import { supportsDoubleElimination } from '@/utils/doubleElimBracket.util';
 import {
   validateCustomPlayInSeedPairs,
   type PlayInSeedPair,
@@ -67,7 +71,11 @@ import {
 } from '@/utils/playoffWizardSeedLabels.util';
 import { getGroupSetupStatus } from '@/utils/playoffWizardGroupSetup.util';
 import {
+  clearIneligiblePhase4Flags,
+  copyExclusivePhase4FlagToGroups,
+  copyPhase4FlagToGroups,
   getPhase4FlagForGroup,
+  getPhase4MismatchGroupNames,
   setPhase4FlagForGroup,
 } from '@/utils/playoffWizardPhase4ByGroup.util';
 import {
@@ -814,6 +822,93 @@ export const PlayoffConfigurationModal = ({
   );
 
   const groupTitle = selectedGroup?.name ?? t('gameDetails.group', { defaultValue: 'Group' });
+  const thirdPlaceEligibleGroups = groups.filter((group) =>
+    supportsThirdPlaceMatch(selectedIdsByGroup[group.id]?.size ?? 0)
+  );
+  const consolationEligibleGroups = groups.filter((group) =>
+    supportsConsolationBracket(
+      selectedIdsByGroup[group.id]?.size ?? 0,
+      customByeEnabledByGroup[group.id] ? customByeRanksByGroup[group.id] : undefined
+    )
+  );
+  const doubleEliminationEligibleGroups = groups.filter((group) =>
+    supportsDoubleElimination(
+      selectedIdsByGroup[group.id]?.size ?? 0,
+      customByeEnabledByGroup[group.id] ? customByeRanksByGroup[group.id] : undefined
+    )
+  );
+
+  useEffect(() => {
+    if (!isBracket || isCrossGroupBracket) return;
+    const thirdIds = groups
+      .filter((group) => supportsThirdPlaceMatch(selectedIdsByGroup[group.id]?.size ?? 0))
+      .map((group) => group.id);
+    const consolationIds = groups
+      .filter((group) =>
+        supportsConsolationBracket(
+          selectedIdsByGroup[group.id]?.size ?? 0,
+          customByeEnabledByGroup[group.id] ? customByeRanksByGroup[group.id] : undefined
+        )
+      )
+      .map((group) => group.id);
+    const doubleIds = groups
+      .filter((group) =>
+        supportsDoubleElimination(
+          selectedIdsByGroup[group.id]?.size ?? 0,
+          customByeEnabledByGroup[group.id] ? customByeRanksByGroup[group.id] : undefined
+        )
+      )
+      .map((group) => group.id);
+    setIncludeThirdPlaceByGroup((prev) => clearIneligiblePhase4Flags(prev, thirdIds));
+    setIncludeConsolationBracketByGroup((prev) => clearIneligiblePhase4Flags(prev, consolationIds));
+    setIncludeDoubleEliminationByGroup((prev) => clearIneligiblePhase4Flags(prev, doubleIds));
+  }, [
+    isBracket,
+    isCrossGroupBracket,
+    groups,
+    selectedIdsByGroup,
+    customByeEnabledByGroup,
+    customByeRanksByGroup,
+  ]);
+
+  useEffect(() => {
+    if (!isCrossGroupBracket) return;
+    const crossByeRanks = crossCustomByeEnabled ? crossCustomByeRanks : undefined;
+    if (!supportsThirdPlaceMatch(crossDerived.totalN)) {
+      setCrossIncludeThirdPlace((prev) => (prev ? false : prev));
+    }
+    if (!supportsConsolationBracket(crossDerived.totalN, crossByeRanks)) {
+      setCrossIncludeConsolationBracket((prev) => (prev ? false : prev));
+    }
+    if (!supportsDoubleElimination(crossDerived.totalN, crossByeRanks)) {
+      setCrossIncludeDoubleElimination((prev) => (prev ? false : prev));
+    }
+  }, [
+    isCrossGroupBracket,
+    crossDerived.totalN,
+    crossCustomByeEnabled,
+    crossCustomByeRanks,
+  ]);
+
+  const phase4MismatchHint = (
+    map: Record<string, boolean>,
+    eligibleGroups: Array<{ id: string; name: string }>
+  ): string | undefined => {
+    const names = getPhase4MismatchGroupNames(map, selectedGroupId, eligibleGroups);
+    if (names.length === 0) return undefined;
+    const currentEnabled = getPhase4FlagForGroup(map, selectedGroupId);
+    return t(
+      currentEnabled
+        ? 'gameDetails.bracketSettingOtherGroupsOffHint'
+        : 'gameDetails.bracketSettingOtherGroupsOnHint',
+      {
+        defaultValue: currentEnabled
+          ? 'Turned off in: {{groups}}.'
+          : 'Turned on in: {{groups}}.',
+        groups: names.join(', '),
+      }
+    );
+  };
 
   const formatLabel = isBracket
     ? t('gameDetails.bracketPlayoffFormat', { defaultValue: 'Knockout bracket' })
@@ -839,16 +934,16 @@ export const PlayoffConfigurationModal = ({
   const modalBody = (
     <Dialog open={isOpen} onClose={onClose} modalId="playoff-configuration-modal">
       <DialogContent className="max-w-lg max-h-[90vh] flex flex-col">
-        <DialogHeader className="flex-col items-center gap-1">
-          <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
-            {t('gameDetails.playoffWizardStep', {
-              current: wizardStepIndex,
-              total: wizardStepTotal,
-              defaultValue: 'Step {{current}} of {{total}}',
-            })}
-          </p>
-          <DialogTitle className="text-center">{stepTitle()}</DialogTitle>
-        </DialogHeader>
+        <PlayoffWizardHeader
+          current={wizardStepIndex}
+          total={wizardStepTotal}
+          title={stepTitle()}
+          stepLabel={t('gameDetails.playoffWizardStep', {
+            current: wizardStepIndex,
+            total: wizardStepTotal,
+            defaultValue: 'Step {{current}} of {{total}}',
+          })}
+        />
 
         <div className="flex-1 overflow-y-auto scrollbar-auto px-4 py-2">
           {step === 'config' && (
@@ -1189,13 +1284,7 @@ export const PlayoffConfigurationModal = ({
                                       ))}
                                     </div>
                                     <span className="text-gray-900 dark:text-white">
-                                      {standing.leagueTeam.players
-                                        ?.map(
-                                          (p: { user?: { firstName?: string; lastName?: string } }) =>
-                                            [p.user?.firstName, p.user?.lastName].filter(Boolean).join(' ')
-                                        )
-                                        .filter(Boolean)
-                                        .join(', ')}
+                                      {getStandingDisplayName(standing)}
                                     </span>
                                   </div>
                                 ) : standing.user ? (
@@ -1208,7 +1297,7 @@ export const PlayoffConfigurationModal = ({
                                       levelSport={seasonSport ?? undefined}
                                     />
                                     <span className="text-gray-900 dark:text-white">
-                                      {[standing.user.firstName, standing.user.lastName].filter(Boolean).join(' ')}
+                                      {getStandingDisplayName(standing)}
                                     </span>
                                   </div>
                                 ) : null}
@@ -1281,29 +1370,80 @@ export const PlayoffConfigurationModal = ({
                   <BracketPhase4CreateOptions
                     entrantCount={selectedCount}
                     includeThirdPlace={getPhase4FlagForGroup(includeThirdPlaceByGroup, selectedGroupId)}
+                    thirdPlaceMismatchHint={phase4MismatchHint(
+                      includeThirdPlaceByGroup,
+                      thirdPlaceEligibleGroups
+                    )}
                     onIncludeThirdPlaceChange={(value) =>
                       setIncludeThirdPlaceByGroup((prev) =>
                         setPhase4FlagForGroup(prev, selectedGroupId, value)
+                      )
+                    }
+                    onCopyThirdPlaceToOtherGroups={() =>
+                      setIncludeThirdPlaceByGroup((prev) =>
+                        copyPhase4FlagToGroups(
+                          prev,
+                          thirdPlaceEligibleGroups.map((g) => g.id),
+                          getPhase4FlagForGroup(prev, selectedGroupId)
+                        )
                       )
                     }
                     includeConsolationBracket={getPhase4FlagForGroup(
                       includeConsolationBracketByGroup,
                       selectedGroupId
                     )}
+                    consolationMismatchHint={phase4MismatchHint(
+                      includeConsolationBracketByGroup,
+                      consolationEligibleGroups
+                    )}
                     onIncludeConsolationBracketChange={(value) =>
                       setIncludeConsolationBracketByGroup((prev) =>
                         setPhase4FlagForGroup(prev, selectedGroupId, value)
                       )
                     }
+                    onCopyConsolationToOtherGroups={() => {
+                      const groupIds = consolationEligibleGroups.map((g) => g.id);
+                      const value = getPhase4FlagForGroup(
+                        includeConsolationBracketByGroup,
+                        selectedGroupId
+                      );
+                      const next = copyExclusivePhase4FlagToGroups({
+                        targetMap: includeConsolationBracketByGroup,
+                        opposingMap: includeDoubleEliminationByGroup,
+                        groupIds,
+                        value,
+                      });
+                      setIncludeConsolationBracketByGroup(next.targetMap);
+                      setIncludeDoubleEliminationByGroup(next.opposingMap);
+                    }}
                     includeDoubleElimination={getPhase4FlagForGroup(
                       includeDoubleEliminationByGroup,
                       selectedGroupId
+                    )}
+                    doubleEliminationMismatchHint={phase4MismatchHint(
+                      includeDoubleEliminationByGroup,
+                      doubleEliminationEligibleGroups
                     )}
                     onIncludeDoubleEliminationChange={(value) =>
                       setIncludeDoubleEliminationByGroup((prev) =>
                         setPhase4FlagForGroup(prev, selectedGroupId, value)
                       )
                     }
+                    onCopyDoubleEliminationToOtherGroups={() => {
+                      const groupIds = doubleEliminationEligibleGroups.map((g) => g.id);
+                      const value = getPhase4FlagForGroup(
+                        includeDoubleEliminationByGroup,
+                        selectedGroupId
+                      );
+                      const next = copyExclusivePhase4FlagToGroups({
+                        targetMap: includeDoubleEliminationByGroup,
+                        opposingMap: includeConsolationBracketByGroup,
+                        groupIds,
+                        value,
+                      });
+                      setIncludeDoubleEliminationByGroup(next.targetMap);
+                      setIncludeConsolationBracketByGroup(next.opposingMap);
+                    }}
                     customByeEnabled={customByeEnabledByGroup[selectedGroupId] ?? false}
                     onCustomByeEnabledChange={(enabled) =>
                       setCustomByeEnabledByGroup((prev) => ({ ...prev, [selectedGroupId]: enabled }))
@@ -1349,10 +1489,15 @@ export const PlayoffConfigurationModal = ({
               <BracketPlayoffPreview
                 plan={crossPreviewPlan}
                 standingsById={standingsById}
+                includeThirdPlace={crossIncludeThirdPlace}
                 qualifierLabels={crossQualifierLabels}
                 playersPerMatch={seasonGame?.playersPerMatch}
                 reorderable
                 onPlanChange={(next) => setCrossPreviewOrderedIds(next.orderedParticipantIds)}
+              />
+              <BracketPlayoffConfirmOptions
+                includeConsolationBracket={crossIncludeConsolationBracket}
+                includeDoubleElimination={crossIncludeDoubleElimination}
               />
             </div>
           )}
@@ -1389,6 +1534,7 @@ export const PlayoffConfigurationModal = ({
                     <BracketPlayoffPreview
                       plan={plan}
                       standingsById={standingsById}
+                      includeThirdPlace={getPhase4FlagForGroup(includeThirdPlaceByGroup, g.id)}
                       groupColor={g.color}
                       playersPerMatch={seasonGame?.playersPerMatch}
                       reorderable
@@ -1398,6 +1544,16 @@ export const PlayoffConfigurationModal = ({
                           [g.id]: next.orderedParticipantIds,
                         }))
                       }
+                    />
+                    <BracketPlayoffConfirmOptions
+                      includeConsolationBracket={getPhase4FlagForGroup(
+                        includeConsolationBracketByGroup,
+                        g.id
+                      )}
+                      includeDoubleElimination={getPhase4FlagForGroup(
+                        includeDoubleEliminationByGroup,
+                        g.id
+                      )}
                     />
                   </div>
                 );
@@ -1578,8 +1734,9 @@ export const PlayoffConfigurationModal = ({
 
           {step === 'gameSetup' && seasonGame && isBracket && (
             <BracketPlayoffGameSetupStep
-              key={`bracket-${seasonGame.id}`}
+              key={`bracket-${seasonGame.id}-${bracketGameSetup ? 'confirmed' : 'default'}`}
               seasonGame={seasonGame}
+              initialSetup={bracketGameSetup}
               onBack={() => setStep('preview')}
               onConfirm={handleBracketGameSetupConfirm}
               submitting={submitting}

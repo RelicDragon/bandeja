@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { ChevronDown, ChevronUp, ChevronsDown, ChevronsUp } from 'lucide-react';
 import type { LeagueGroup, LeagueStanding } from '@/api/leagues';
 import { getLeagueGroupColor } from '@/utils/leagueGroupColors';
+import { getStandingDisplayName } from '@/utils/playoffWizardSeedLabels.util';
 
 interface CrossGroupBracketSeedListProps {
   globalIds: string[];
@@ -10,20 +11,6 @@ interface CrossGroupBracketSeedListProps {
   groupsById: Map<string, LeagueGroup>;
   onReorder?: (next: string[]) => void;
   readOnly?: boolean;
-}
-
-function displayName(standing: LeagueStanding | undefined): string {
-  if (!standing) return '—';
-  if (standing.leagueTeam?.players?.length) {
-    return standing.leagueTeam.players
-      .map((p) => [p.user?.firstName, p.user?.lastName].filter(Boolean).join(' '))
-      .filter(Boolean)
-      .join(', ');
-  }
-  if (standing.user) {
-    return [standing.user.firstName, standing.user.lastName].filter(Boolean).join(' ');
-  }
-  return '—';
 }
 
 export function CrossGroupBracketSeedList({
@@ -110,7 +97,9 @@ export function CrossGroupBracketSeedList({
                     {index + 1}
                   </span>
                   <div className="flex-1 min-w-0">
-                    <span className="text-gray-900 dark:text-white truncate block">{displayName(standing)}</span>
+                    <span className="text-gray-900 dark:text-white truncate block">
+                      {getStandingDisplayName(standing) || '—'}
+                    </span>
                     {group && (
                       <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
                         {accent && (

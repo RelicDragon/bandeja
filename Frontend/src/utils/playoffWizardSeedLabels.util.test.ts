@@ -27,8 +27,8 @@ describe('playoffWizardSeedLabels.util (UX-B5)', () => {
       ],
     ]);
     expect(buildBracketSeedLabels(['p2', 'p1'], standings)).toEqual({
-      1: 'Sam Two',
-      2: 'Alex One',
+      1: 'S. Two',
+      2: 'A. One',
     });
   });
 
@@ -41,8 +41,8 @@ describe('playoffWizardSeedLabels.util (UX-B5)', () => {
     expect(
       getStandingDisplayName({
         id: 's1',
-        user: { firstName: 'A', lastName: 'B' },
+        user: { firstName: 'Alex', lastName: 'Brown' },
       } as LeagueStanding)
-    ).toBe('A B');
+    ).toBe('A. Brown');
   });
 });

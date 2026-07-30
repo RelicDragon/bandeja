@@ -528,6 +528,32 @@ export class BracketAdvancementService {
         },
       });
     }
+
+    const refreshed = await tx.game.findUnique({
+      where: { id: gameId },
+      include: {
+        fixedTeams: { include: { players: { select: { userId: true } } } },
+        participants: { select: { id: true, userId: true, status: true, role: true } },
+      },
+    });
+    if (refreshed) {
+      const allowedUserIds = new Set(
+        refreshed.fixedTeams.flatMap((team) => team.players.map((player) => player.userId))
+      );
+      const staleParticipantIds = refreshed.participants
+        .filter(
+          (participant) =>
+            participant.role === 'PARTICIPANT' &&
+            participant.status === 'PLAYING' &&
+            !allowedUserIds.has(participant.userId)
+        )
+        .map((participant) => participant.id);
+      if (staleParticipantIds.length > 0) {
+        await tx.gameParticipant.deleteMany({
+          where: { id: { in: staleParticipantIds } },
+        });
+      }
+    }
   }
 
   private static async rosterForParticipant(

@@ -50,4 +50,24 @@ assert.deepEqual(
   { cityId: 'city-1' },
 );
 
+const unknownKeyRequest = {
+  body: {},
+  params: {},
+  query: { cityId: 'city-1', _t: '1785444814529', foo: 'bar' },
+} as unknown as Request;
+let unknownKeyError: unknown;
+
+validateZod({
+  query: z.object({ cityId: z.string() }).strict(),
+})(
+  unknownKeyRequest,
+  {} as Response,
+  ((error?: unknown) => {
+    unknownKeyError = error;
+  }) as NextFunction,
+);
+
+assert.ok(unknownKeyError instanceof Error);
+assert.match(String(unknownKeyError), /Unrecognized key\(s\) in object: 'foo'/);
+
 console.log('validateZod.test.ts: ok');

@@ -1,4 +1,4 @@
-import html2canvas from 'html2canvas';
+import html2canvas from 'html2canvas-pro';
 import { BRACKET_EXPORT_COLUMN_WIDTH } from '@/utils/bracketTreeCard.util';
 
 export function buildLeagueBracketScheduleQuery(params: {
@@ -143,11 +143,11 @@ export function applyBracketExportCapture(exportRoot: HTMLElement): () => void {
 }
 
 /** Hide chrome on cloned game cards only — live LeagueGameCard stays unchanged. */
-function prepareClonedBracketGameCards(root: ParentNode): void {
+export function prepareClonedBracketGameCards(root: ParentNode): void {
   root.querySelectorAll<HTMLElement>('.bracket-tree-game-wrap > div').forEach((card) => {
     card.style.overflow = 'visible';
     card.querySelectorAll<HTMLElement>(':scope > div').forEach((row) => {
-      if (row.querySelector('button')) {
+      if (row.classList.contains('bracket-export-hide')) {
         row.style.display = 'none';
         return;
       }

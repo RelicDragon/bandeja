@@ -1,5 +1,10 @@
-import type { Game, ScoringPreset } from '@/types';
+import type { Game, GameSetupParams, MatchGenerationType, ScoringPreset } from '@/types';
 import type { Sport } from '@shared/sport';
+import {
+  detectScoringMode,
+  detectScoringPreset,
+} from '@/utils/gameFormat';
+import type { GameFormatTemplateSnapshot } from '@/utils/gameFormat/gameFormatSnapshot';
 import { parseGameSport } from '@/utils/gameSport';
 
 export const PLAYOFF_GAME_TYPE_SEEDS: Record<'WINNER_COURT' | 'AMERICANO', Partial<Game>> = {
@@ -25,6 +30,34 @@ export function playoffFormatInitialFromSeason(
     maxParticipants: 4,
     ...(seasonGame ?? {}),
     ...overrides,
+  };
+}
+
+export function bracketPlayoffFormatInitialFromSeason(
+  seasonGame: Partial<Game>,
+  confirmedSetup?: GameSetupParams | null,
+): Partial<Game> {
+  const fixtureCapacity = seasonGame.playersPerMatch === 2 ? 2 : 4;
+  return playoffFormatInitialFromSeason(seasonGame, {
+    ...(confirmedSetup ?? {}),
+    maxParticipants: fixtureCapacity,
+  });
+}
+
+/** Snapshot without roster-size generation clamp — preserves season HANDMADE/FIXED. */
+export function bracketPlayoffFormatSnapshot(
+  format: Partial<Game>,
+): GameFormatTemplateSnapshot {
+  const scoringPreset = detectScoringPreset(format) ?? 'CLASSIC_BEST_OF_3';
+  return {
+    scoringMode: detectScoringMode(format),
+    scoringPreset,
+    generationType: (format.matchGenerationType as MatchGenerationType) ?? 'AUTOMATIC',
+    matchTimerEnabled: Boolean(format.matchTimerEnabled),
+    matchTimedCapMinutes: format.matchTimedCapMinutes ?? 15,
+    customPointsTotal: null,
+    winnerOfGame: format.winnerOfGame ?? 'BY_MATCHES_WON',
+    deucesBeforeGoldenPoint: format.deucesBeforeGoldenPoint ?? null,
   };
 }
 

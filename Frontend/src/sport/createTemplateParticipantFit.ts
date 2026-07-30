@@ -25,6 +25,8 @@ export type CreateTemplateParticipantContext = {
   playersPerMatch: 2 | 4;
   hasFixedTeams: boolean;
   genderTeams?: GenderTeam;
+  /** When set, ignore flexible-sport match-size mixing (e.g. bracket playoff fixtures). */
+  lockPlayersPerMatch?: boolean;
 };
 
 function rotationKeyForTemplate(tpl: CreateTemplate): RotationFormatKey | undefined {
@@ -64,7 +66,9 @@ export function isCreateTemplateCompatible(
   ctx: CreateTemplateParticipantContext,
 ): boolean {
   if (!allowedScoringPresets.includes(tpl.scoringPreset)) return false;
-  if (!FLEXIBLE_MATCH_SIZE_SPORTS.has(sport) && tpl.playersPerMatch !== ctx.playersPerMatch) return false;
+  if (tpl.playersPerMatch !== ctx.playersPerMatch) {
+    if (ctx.lockPlayersPerMatch || !FLEXIBLE_MATCH_SIZE_SPORTS.has(sport)) return false;
+  }
 
   if (ctx.genderTeams === 'MIX_PAIRS' && ctx.playersPerMatch === 2) return false;
 

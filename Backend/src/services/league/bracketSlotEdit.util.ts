@@ -84,7 +84,9 @@ export function hasBlockingDownstreamMainFinal(
     if (
       (s?.slotKind === BracketSlotKind.MAIN ||
         s?.slotKind === BracketSlotKind.THIRD_PLACE ||
-        s?.slotKind === BracketSlotKind.GRAND_FINAL) &&
+        s?.slotKind === BracketSlotKind.GRAND_FINAL ||
+        s?.slotKind === BracketSlotKind.CONSOLATION ||
+        s?.slotKind === BracketSlotKind.LOSERS) &&
       s.game?.resultsStatus === ResultsStatus.FINAL
     ) {
       return true;

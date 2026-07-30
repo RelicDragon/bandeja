@@ -118,12 +118,17 @@ export function buildBracketColumns(
     });
   }
   if (thirdPlace.length > 0) {
-    cols.push({
-      id: 'third-place',
-      label: thirdPlace[0]?.roundLabel ?? columnLabels.thirdPlace,
-      kind: 'THIRD_PLACE',
-      slots: thirdPlace,
-    });
+    const finalColumn = [...cols].reverse().find((column) => column.kind === 'MAIN');
+    if (finalColumn) {
+      finalColumn.slots = [...finalColumn.slots, ...thirdPlace];
+    } else {
+      cols.push({
+        id: 'third-place',
+        label: thirdPlace[0]?.roundLabel ?? columnLabels.thirdPlace,
+        kind: 'THIRD_PLACE',
+        slots: thirdPlace,
+      });
+    }
   }
   return cols;
 }

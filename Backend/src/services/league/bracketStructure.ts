@@ -55,22 +55,47 @@ export function byeCount(entrantCount: number, bracketSize: number): number {
   return bracketSize - entrantCount;
 }
 
+function pairPlayInPoolHighLow(pool: number[]): [number, number][] {
+  const sorted = [...pool].sort((a, b) => a - b);
+  const result: [number, number][] = [];
+  let lo = 0;
+  let hi = sorted.length - 1;
+  while (lo < hi) {
+    result.push([sorted[lo]!, sorted[hi]!]);
+    lo += 1;
+    hi -= 1;
+  }
+  result.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  return result;
+}
+
 export function playInPairings(
   entrantCount: number,
   bracketSize: number,
   byeSeedRanks?: number[]
 ): [number, number][] {
-  const bye = byeCount(entrantCount, bracketSize);
   if (entrantCount === bracketSize) return [];
+  const pool = playInSeedPool(entrantCount, bracketSize, byeSeedRanks);
+  if (pool.length === 0) return [];
+  if (pool.length % 2 !== 0) {
+    throw new Error(`play-in pool size must be even, got ${pool.length}`);
+  }
+
+  const bye = byeCount(entrantCount, bracketSize);
   const byeSet = new Set(byeSeedRanks ?? Array.from({ length: bye }, (_, i) => i + 1));
-  const result: [number, number][] = [];
+  const ncaa: [number, number][] = [];
   for (const [va, vb] of mainFirstRoundPairings(bracketSize)) {
     if (byeSet.has(va) || byeSet.has(vb)) continue;
     if (va > entrantCount || vb > entrantCount) continue;
-    result.push([va, vb]);
+    ncaa.push([va, vb]);
   }
-  result.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
-  return result;
+  ncaa.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+
+  const covered = new Set(ncaa.flat());
+  if (covered.size === pool.length && ncaa.length === pool.length / 2) {
+    return ncaa;
+  }
+  return pairPlayInPoolHighLow(pool);
 }
 
 export function mainRoundCount(bracketSize: number): number {
@@ -285,6 +310,12 @@ export function buildBracketPlan(
   const piPairings: [number, number][] = options?.customPlayInPairings?.length
     ? options.customPlayInPairings.map((p) => [p.seedA, p.seedB])
     : defaultPiPairings;
+  const expectedPlayInGames = playInTeams / 2;
+  if (piPairings.length !== expectedPlayInGames) {
+    throw new Error(
+      `play-in pairing count must be ${expectedPlayInGames}, got ${piPairings.length}`
+    );
+  }
   const playInGames = piPairings.length;
   const mainRounds = mainRoundCount(bracketSize);
   const includeThirdPlace = Boolean(options?.includeThirdPlace && bracketSize >= 4);
@@ -383,7 +414,10 @@ export function buildBracketPlan(
     });
     for (const feederKey of [feederA, feederB]) {
       const feeder = slots.find((s) => s.slotKey === feederKey);
-      if (feeder) feeder.winnerSlotKey = `MAIN-R0-M${matchIndex}`;
+      if (!feeder) {
+        throw new Error(`Missing main feeder slot ${feederKey}`);
+      }
+      feeder.winnerSlotKey = `MAIN-R0-M${matchIndex}`;
     }
   }
 

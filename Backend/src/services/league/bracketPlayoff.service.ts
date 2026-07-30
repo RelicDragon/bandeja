@@ -628,12 +628,12 @@ export class BracketPlayoffService {
       globalParticipantIds.length,
       globalParticipantIds,
       bracketPlanOptionsFromPayload(globalParticipantIds.length, {
-        includeThirdPlace: crossGroup.includeThirdPlace,
+        includeThirdPlace: crossGroup.includeThirdPlace ?? payload.includeThirdPlace,
         includeConsolationBracket:
           crossGroup.includeConsolationBracket ?? payload.includeConsolationBracket,
         includeDoubleElimination:
           crossGroup.includeDoubleElimination ?? payload.includeDoubleElimination,
-        customByeSeedRanks: crossGroup.customByeSeedRanks,
+        customByeSeedRanks: crossGroup.customByeSeedRanks ?? payload.customByeSeedRanks,
         customPlayInPairings: crossGroup.customPlayInPairings ?? payload.customPlayInPairings,
       })
     );
@@ -1061,9 +1061,9 @@ export class BracketPlayoffService {
       throw new ApiError(404, 'Bracket playoff round not found');
     }
 
-    const slotIds = new Set(updates.map((u) => u.slotId));
-    if (slotIds.size !== updates.length) {
-      throw new ApiError(400, 'Duplicate slotId in slots');
+    const slotSideKeys = new Set(updates.map((u) => `${u.slotId}:${u.side ?? '_'}`));
+    if (slotSideKeys.size !== updates.length) {
+      throw new ApiError(400, 'Duplicate slotId/side in slots');
     }
 
     const gameIds = new Set(gameTeamUpdates.map((g) => g.gameId));

@@ -53,4 +53,25 @@ describe('buildBracketColumns roundLabel (UX-A13)', () => {
     });
     expect(cols.find((c) => c.kind === 'PLAY_IN')?.label).toBe('Play-in round');
   });
+
+  it('places the third-place match beneath the final in one column', () => {
+    const slots = [
+      slot({ id: 'sf-1', slotKind: 'MAIN', roundIndex: 0, roundLabel: 'Semifinals' }),
+      slot({ id: 'final', slotKind: 'MAIN', roundIndex: 1, roundLabel: 'Final' }),
+      slot({ id: 'third', slotKind: 'THIRD_PLACE', roundIndex: 1, roundLabel: 'Third place' }),
+    ];
+    const cols = buildBracketColumns(slots, {
+      playIn: 'Play-in',
+      byes: 'Byes',
+      thirdPlace: 'Third place',
+      mainFallback: (i) => `Round ${i + 1}`,
+    });
+
+    expect(cols).toHaveLength(2);
+    expect(cols.at(-1)).toMatchObject({
+      id: 'main-1',
+      label: 'Final',
+      slots: [{ id: 'final' }, { id: 'third' }],
+    });
+  });
 });

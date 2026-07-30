@@ -19,11 +19,14 @@ import {
   feederMatchLabelsForRound,
   firstMainRoundPairingsForPlan,
 } from '@/utils/bracketPreviewKnockout.util';
+import { supportsThirdPlaceMatch } from '@/utils/customByeSeedRanks.util';
 import { maxPlayersPerTeamForGame } from '@/utils/matchFormat';
+import { getStandingDisplayName } from '@/utils/playoffWizardSeedLabels.util';
 
 interface BracketPlayoffPreviewProps {
   plan: BracketPlan;
   standingsById: Map<string, LeagueStanding>;
+  includeThirdPlace?: boolean;
   groupColor?: string | null;
   qualifierLabels?: Map<string, string>;
   playersPerMatch?: number;
@@ -42,20 +45,6 @@ function buildSlotLabelsForPlan(
     if (label) labels.set(seed, label);
   }
   return labels;
-}
-
-function standingLabel(standing: LeagueStanding | undefined): string {
-  if (!standing) return '—';
-  if (standing.leagueTeam?.players?.length) {
-    return standing.leagueTeam.players
-      .map((p) => [p.user?.firstName, p.user?.lastName].filter(Boolean).join(' '))
-      .filter(Boolean)
-      .join(', ');
-  }
-  if (standing.user) {
-    return [standing.user.firstName, standing.user.lastName].filter(Boolean).join(' ');
-  }
-  return '—';
 }
 
 function PreviewMatchFrame({
@@ -108,7 +97,7 @@ function SeedChip({
   const { t } = useTranslation();
   const emptySlot = !participantId;
   const standing = participantId ? standingsById.get(participantId) : undefined;
-  const teamName = emptySlot ? '—' : standingLabel(standing);
+  const teamName = emptySlot ? '—' : getStandingDisplayName(standing) || '—';
   const primary = displayLabel ?? teamName;
   const showTeamSubtitle = !!displayLabel && !emptySlot && teamName !== '—';
   const interactive = reorderable && !!onSelect && (!emptySlot || !!displayLabel);
@@ -367,6 +356,7 @@ function FeederMatchPair({ labelA, labelB }: { labelA: string; labelB: string })
 export const BracketPlayoffPreview = ({
   plan,
   standingsById,
+  includeThirdPlace = false,
   groupColor,
   qualifierLabels,
   playersPerMatch,
@@ -633,6 +623,25 @@ export const BracketPlayoffPreview = ({
                   const [labelA, labelB] = feederMatchLabelsForRound(displayPlan, round.roundIndex, i);
                   return <FeederMatchPair key={i} labelA={labelA} labelB={labelB} />;
                 })}
+            {round.labelKey === 'final' &&
+              includeThirdPlace &&
+              supportsThirdPlaceMatch(displayPlan.entrantCount) && (
+                <div className="mt-2 flex flex-col gap-2">
+                  <h4 className="text-xs font-semibold text-center text-gray-600 dark:text-gray-400 uppercase tracking-wide">
+                    {t('gameDetails.bracketColumnThirdPlace', { defaultValue: 'Third place' })}
+                  </h4>
+                  <FeederMatchPair
+                    labelA={t('gameDetails.bracketPreviewLoserOf', {
+                      defaultValue: 'Loser {{match}}',
+                      match: 'SF1',
+                    })}
+                    labelB={t('gameDetails.bracketPreviewLoserOf', {
+                      defaultValue: 'Loser {{match}}',
+                      match: 'SF2',
+                    })}
+                  />
+                </div>
+              )}
           </section>
         ))}
       </div>
@@ -647,7 +656,7 @@ export const BracketPlayoffPreview = ({
           <div className="flex flex-wrap justify-center gap-1.5">
           {unassignedIds.map((id) => {
             const standing = standingsById.get(id);
-            const name = standingLabel(standing);
+            const name = getStandingDisplayName(standing);
             const selected = selectedUnassignedId === id;
             return (
               <button

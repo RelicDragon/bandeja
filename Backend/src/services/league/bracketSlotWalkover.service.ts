@@ -73,7 +73,14 @@ export class BracketSlotWalkoverService {
     if (slot.slotKind === BracketSlotKind.BYE) {
       throw new ApiError(400, 'Cannot assign walkover on a bye slot');
     }
-    if (!slot.winnerSlotId) {
+    const isTerminalChampionship =
+      slot.slotKind === BracketSlotKind.GRAND_FINAL ||
+      slot.slotKind === BracketSlotKind.THIRD_PLACE ||
+      (slot.slotKind === BracketSlotKind.MAIN && !slot.winnerSlotId);
+    if (!slot.winnerSlotId && payload.skipGameFinal) {
+      throw new ApiError(400, 'Cannot skip game final without an advancement target');
+    }
+    if (!slot.winnerSlotId && !slot.gameId && !isTerminalChampionship) {
       throw new ApiError(400, 'This slot has no advancement target');
     }
 
@@ -118,9 +125,9 @@ export class BracketSlotWalkoverService {
           '../achievements/podiumGrant.service'
         );
         await syncParentSeasonPodiumIfFinal({ gameId: slot.gameId, tx });
-      } else {
+      } else if (slot.winnerSlotId) {
         await tx.leagueBracketSlot.update({
-          where: { id: slot.winnerSlotId! },
+          where: { id: slot.winnerSlotId },
           data: { leagueParticipantId: payload.leagueParticipantId },
         });
         const ids = await BracketAdvancementService.tryCreateReadyGames(
@@ -129,18 +136,13 @@ export class BracketSlotWalkoverService {
           tx
         );
         createdGameIds.push(...ids);
-
-        if (
-          (slot.slotKind === BracketSlotKind.MAIN && !slot.winnerSlotId) ||
-          slot.slotKind === BracketSlotKind.GRAND_FINAL
-        ) {
-          const { BracketRoundSummaryService } = await import('./bracketRoundSummary.service');
-          void BracketRoundSummaryService.notifyChampionIfNeeded({
-            leagueRoundId: slot.leagueRoundId,
-            leagueGroupId: slot.leagueGroupId ?? null,
-            leagueSeasonId,
-          }).catch((err) => console.error('[BracketSummary] Failed after walkover:', err));
-        }
+      } else if (isTerminalChampionship) {
+        const { BracketRoundSummaryService } = await import('./bracketRoundSummary.service');
+        void BracketRoundSummaryService.notifyChampionIfNeeded({
+          leagueRoundId: slot.leagueRoundId,
+          leagueGroupId: slot.leagueGroupId ?? null,
+          leagueSeasonId,
+        }).catch((err) => console.error('[BracketSummary] Failed after walkover:', err));
       }
     });
 

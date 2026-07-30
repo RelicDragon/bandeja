@@ -122,6 +122,19 @@ const byeRanks = plan7Bye.slots
   .map((s) => s.seedRank)
   .sort((a, b) => (a ?? 0) - (b ?? 0));
 assert(deepEqual(byeRanks, [3]), 'custom bye seed #3 only for N=7');
+assert(plan7Bye.playInGames === 3, 'custom bye N=7 keeps 3 play-in games');
+const plan7PlayInSeeds = plan7Bye.slots
+  .filter((s) => s.slotKind === BracketSlotKind.PLAY_IN)
+  .flatMap((s) => [s.seedRankA, s.seedRankB])
+  .filter((s): s is number => s != null)
+  .sort((a, b) => a - b);
+assert(deepEqual(plan7PlayInSeeds, [1, 2, 4, 5, 6, 7]), 'custom bye N=7 covers all non-bye seeds');
+const plan7MissingFeeders = plan7Bye.slots
+  .filter((s) => s.slotKind === BracketSlotKind.MAIN && s.roundIndex === 0)
+  .flatMap((s) => [s.feederSlotAKey, s.feederSlotBKey])
+  .filter((key): key is string => Boolean(key))
+  .filter((key) => !plan7Bye.slots.some((s) => s.slotKey === key));
+assert(plan7MissingFeeders.length === 0, 'custom bye N=7 main feeders all exist');
 
 let threw = false;
 try {

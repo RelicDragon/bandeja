@@ -62,6 +62,8 @@ export interface UseGameFormatResult {
 
 export interface UseGameFormatOptions {
   skipGenerationParticipantDefaults?: boolean;
+  /** Keep initial matchGenerationType; do not clamp to roster-size defaults. */
+  preserveInitialGeneration?: boolean;
   entityType?: EntityType;
   sport?: Sport;
 }
@@ -79,6 +81,7 @@ function defaultScoringPresetForNewGame(
 
 export const useGameFormat = (initial?: Partial<Game>, options?: UseGameFormatOptions): UseGameFormatResult => {
   const skipGenerationParticipantDefaults = options?.skipGenerationParticipantDefaults === true;
+  const preserveInitialGeneration = options?.preserveInitialGeneration === true;
   const initialPreset = detectScoringPreset(initial) ?? defaultScoringPresetForNewGame(initial, options);
   const initialMode: ScoringMode = detectScoringMode(initial);
   const maxParticipants = initial?.maxParticipants;
@@ -88,12 +91,14 @@ export const useGameFormat = (initial?: Partial<Game>, options?: UseGameFormatOp
     (initial?.matchGenerationType as MatchGenerationType) ??
     getGameTypeTemplate(initialGameType).matchGenerationType ??
     DEFAULT_GENERATION_BY_MODE[initialMode];
-  const initialGeneration = skipGenerationParticipantDefaults
-    ? clampMatchGenerationType(
-        effectiveMatchGeneration(initialMode, rawInitialGeneration, maxParticipants),
-        maxParticipants,
-      )
-    : defaultMatchGenerationForParticipants(initialMode, maxParticipants, rawInitialGeneration);
+  const initialGeneration = preserveInitialGeneration
+    ? effectiveMatchGeneration(initialMode, rawInitialGeneration, maxParticipants)
+    : skipGenerationParticipantDefaults
+      ? clampMatchGenerationType(
+          effectiveMatchGeneration(initialMode, rawInitialGeneration, maxParticipants),
+          maxParticipants,
+        )
+      : defaultMatchGenerationForParticipants(initialMode, maxParticipants, rawInitialGeneration);
 
   const [scoringMode, setScoringModeState] = useState<ScoringMode>(initialMode);
   const [scoringPreset, setScoringPresetState] = useState<ScoringPreset>(initialPreset);
@@ -230,12 +235,14 @@ export const useGameFormat = (initial?: Partial<Game>, options?: UseGameFormatOp
   }, []);
 
   useEffect(() => {
+    if (preserveInitialGeneration) return;
     if (!skipGenerationParticipantDefaults || maxParticipants == null) return;
     const next = clampMatchGenerationType(generationType, maxParticipants);
     if (next !== generationType) {
       setGenerationType(next);
     }
   }, [
+    preserveInitialGeneration,
     skipGenerationParticipantDefaults,
     maxParticipants,
     generationType,

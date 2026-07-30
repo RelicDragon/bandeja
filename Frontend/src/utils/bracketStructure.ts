@@ -137,17 +137,47 @@ function buildBracketSeedOrder(bracketSize: number): number[] {
   return order;
 }
 
+function playInSeedPool(entrantCount: number, byeSeeds: Set<number>): number[] {
+  const pool: number[] = [];
+  for (let seed = 1; seed <= entrantCount; seed++) {
+    if (!byeSeeds.has(seed)) pool.push(seed);
+  }
+  return pool;
+}
+
+function pairPlayInPoolHighLow(pool: number[]): Array<[number, number]> {
+  const sorted = [...pool].sort((a, b) => a - b);
+  const result: Array<[number, number]> = [];
+  let lo = 0;
+  let hi = sorted.length - 1;
+  while (lo < hi) {
+    result.push([sorted[lo]!, sorted[hi]!]);
+    lo += 1;
+    hi -= 1;
+  }
+  return result.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+}
+
 function buildPlayInMatchups(entrantCount: number, byeSeeds: Set<number>): BracketPlayInMatchup[] {
   const bracketSize = nextPowerOf2(entrantCount);
   if (entrantCount >= bracketSize) return [];
-  return standardFirstRoundPairings(bracketSize)
+  const pool = playInSeedPool(entrantCount, byeSeeds);
+  if (pool.length === 0) return [];
+
+  const ncaa = standardFirstRoundPairings(bracketSize)
     .filter(([va, vb]) => !byeSeeds.has(va) && !byeSeeds.has(vb) && va <= entrantCount && vb <= entrantCount)
-    .sort((a, b) => a[0] - b[0] || a[1] - b[1])
-    .map(([seedA, seedB], matchIndex) => ({
-      matchIndex,
-      seedA,
-      seedB,
-    }));
+    .sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  const covered = new Set(ncaa.flat());
+  const pairings =
+    covered.size === pool.length && ncaa.length === pool.length / 2
+      ? ncaa
+      : pairPlayInPoolHighLow(pool);
+
+  return pairings.map(([seedA, seedB], matchIndex) => ({
+    matchIndex,
+    seedA,
+    seedB,
+  }));
 }
 
 function buildMainRoundPreviews(bracketSize: number): BracketMainRoundPreview[] {

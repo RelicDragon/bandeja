@@ -133,10 +133,13 @@ export interface BracketPlayoffGroupDto {
   bracketSize: number;
   byeCount: number;
   playInGameCount: number;
+  includeThirdPlace?: boolean;
   includeConsolationBracket?: boolean;
   includeDoubleElimination?: boolean;
   slots: BracketSlotDto[];
   championParticipantId?: string;
+  finalistParticipantId?: string;
+  thirdPlaceParticipantId?: string;
 }
 
 export interface BracketPlayoffResponse {
@@ -199,7 +202,13 @@ export type CreateBracketPlayoffRequest =
 export interface BracketRoundConfigDto {
   scope?: 'CROSS_GROUP';
   equalTopK?: number;
-  teamsPerGroup?: Record<string, number>;
+  unequalK?: boolean;
+  teamsPerGroup?: TeamsPerGroupEntryDto[];
+  includedGroupIds?: string[];
+  includeThirdPlace?: boolean;
+  includeConsolationBracket?: boolean;
+  includeDoubleElimination?: boolean;
+  customByeSeedRanks?: number[];
 }
 
 export interface NotifyBracketSummaryRequest {

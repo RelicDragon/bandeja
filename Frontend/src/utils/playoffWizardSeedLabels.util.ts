@@ -1,15 +1,14 @@
 import type { LeagueStanding } from '@/api/leagues';
+import { formatFixtureMatrixPlayerName } from '@/utils/leagueFixtureMatrix';
 
 export function getStandingDisplayName(standing: LeagueStanding | undefined): string {
   if (!standing) return '';
   if (standing.user) {
-    return [standing.user.firstName, standing.user.lastName].filter(Boolean).join(' ');
+    return formatFixtureMatrixPlayerName(standing.user);
   }
   if (standing.leagueTeam?.players?.length) {
     return standing.leagueTeam.players
-      .map((p: { user?: { firstName?: string; lastName?: string } }) =>
-        [p.user?.firstName, p.user?.lastName].filter(Boolean).join(' ')
-      )
+      .map((p) => formatFixtureMatrixPlayerName(p.user))
       .filter(Boolean)
       .join(', ');
   }

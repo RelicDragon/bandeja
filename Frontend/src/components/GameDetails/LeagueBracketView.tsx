@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { Fragment, useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { Card } from '@/components';
@@ -14,6 +14,7 @@ import { BracketEditOverlay } from './BracketEditOverlay';
 import { BracketShareToolbar } from './BracketShareToolbar';
 import { LeagueBracketPodiumCard } from './LeagueBracketPodiumCard';
 import { useLeagueGameResultsMap } from '@/hooks/useLeagueGameResultsMap';
+import { isThirdPlaceSlot } from '@/utils/bracketThirdPlace.util';
 import {
   BRACKET_EXPORT_COLUMN_ATTR,
   BRACKET_EXPORT_SCROLL_ATTR,
@@ -277,6 +278,13 @@ export function LeagueBracketView({
             <div className="flex flex-col gap-2" {...{ [BRACKET_EXPORT_SLOTS_ATTR]: '' }}>
               {col.slots.map((slot) => {
                 const highlight = vm.slotHighlights.get(slot.id);
+                const thirdPlace = isThirdPlaceSlot(slot);
+                const thirdPlaceLabel = t('gameDetails.bracketColumnThirdPlace');
+                const thirdPlaceHeading = thirdPlace ? (
+                  <h4 className="mt-2 rounded-md px-2 py-1 text-center text-xs font-semibold uppercase tracking-wide text-gray-700 dark:text-gray-200">
+                    {thirdPlaceLabel}
+                  </h4>
+                ) : null;
                 if (slot.slotKind === 'BYE') {
                   const byeView = vm.byeCardViews.get(slot.id);
                   if (!byeView) return null;
@@ -304,37 +312,42 @@ export function LeagueBracketView({
                     .filter(Boolean)
                     .join(' ');
                   return (
-                    <div key={slot.id} className={gameWrapClass}>
-                      <LeagueGameCard
-                        game={matchGame}
-                        onOpen={onOpenGame ? () => onOpenGame(matchGame) : undefined}
-                        onEdit={onEditGame ? () => onEditGame(matchGame) : undefined}
-                        showGroupTag={false}
-                        showLeagueGroupSideAccent={!crossGroupBracket}
-                        bracketRoundBadge={col.label}
-                        allRounds={gameResultsMap.get(matchGame.id) ?? null}
-                      />
-                    </div>
+                    <Fragment key={slot.id}>
+                      {thirdPlaceHeading}
+                      <div className={gameWrapClass}>
+                        <LeagueGameCard
+                          game={matchGame}
+                          onOpen={onOpenGame ? () => onOpenGame(matchGame) : undefined}
+                          onEdit={onEditGame ? () => onEditGame(matchGame) : undefined}
+                          showGroupTag={false}
+                          showLeagueGroupSideAccent={!crossGroupBracket}
+                          bracketRoundBadge={thirdPlace ? thirdPlaceLabel : col.label}
+                          allRounds={gameResultsMap.get(matchGame.id) ?? null}
+                        />
+                      </div>
+                    </Fragment>
                   );
                 }
                 if (!cardView) return null;
                 return (
-                  <LeagueBracketSlotCard
-                    key={slot.id}
-                    slot={slot}
-                    cardView={cardView}
-                    groups={groups}
-                    showOriginGroupBadge={crossGroupBracket}
-                    onOpenGame={onOpenGame}
-                    compact={compact}
-                    winnerSide={highlight?.winnerSide}
-                    loserSide={highlight?.loserSide}
-                    onChampionPath={highlight?.onChampionPath}
-                    deEmphasize={highlight?.deEmphasize}
-                    canAwardWalkover={canEditBracket}
-                    leagueSeasonId={leagueSeasonId}
-                    onBracketUpdated={onBracketUpdated}
-                  />
+                  <Fragment key={slot.id}>
+                    {thirdPlaceHeading}
+                    <LeagueBracketSlotCard
+                      slot={slot}
+                      cardView={cardView}
+                      groups={groups}
+                      showOriginGroupBadge={crossGroupBracket}
+                      onOpenGame={onOpenGame}
+                      compact={compact}
+                      winnerSide={highlight?.winnerSide}
+                      loserSide={highlight?.loserSide}
+                      onChampionPath={highlight?.onChampionPath}
+                      deEmphasize={highlight?.deEmphasize}
+                      canAwardWalkover={canEditBracket}
+                      leagueSeasonId={leagueSeasonId}
+                      onBracketUpdated={onBracketUpdated}
+                    />
+                  </Fragment>
                 );
               })}
             </div>

@@ -1,3 +1,5 @@
+// @vitest-environment jsdom
+
 import { describe, expect, it, vi } from 'vitest';
 import {
   applyBracketExportCapture,
@@ -5,8 +7,16 @@ import {
   BRACKET_EXPORT_COLUMN_ATTR,
   BRACKET_EXPORT_SCROLL_ATTR,
   buildLeagueBracketScheduleQuery,
+  exportBracketContainerPng,
   findBracketExportScrollRoot,
+  prepareClonedBracketGameCards,
 } from './leagueBracketShare.util';
+
+const html2canvasMock = vi.hoisted(() => vi.fn());
+
+vi.mock('html2canvas-pro', () => ({
+  default: (...args: unknown[]) => html2canvasMock(...args),
+}));
 
 describe('buildLeagueBracketScheduleQuery', () => {
   it('includes roundId and group for schedule bracket deep link', () => {
@@ -20,6 +30,23 @@ describe('buildLeagueBracketScheduleQuery', () => {
 });
 
 describe('bracket PNG export capture layout', () => {
+  it('keeps team rows containing avatar buttons while hiding action controls', () => {
+    const root = document.createElement('div');
+    root.innerHTML = `
+      <div class="bracket-tree-game-wrap">
+        <div>
+          <div class="team-row"><button>Player avatar</button><span>Team A vs Team B</span></div>
+          <div class="bracket-export-hide"><button>Open game</button></div>
+        </div>
+      </div>
+    `;
+
+    prepareClonedBracketGameCards(root);
+
+    expect((root.querySelector('.team-row') as HTMLElement).style.display).not.toBe('none');
+    expect((root.querySelector('.bracket-export-hide') as HTMLElement).style.display).toBe('none');
+  });
+
   it('uses data attribute selector for scroll root', () => {
     expect(BRACKET_EXPORT_SCROLL_ATTR).toBe('data-bracket-export-scroll');
   });
@@ -76,5 +103,38 @@ describe('bracket PNG export capture layout', () => {
     expect(col.style.width).toBe('17rem');
     restore();
     expect(root.removeAttribute).toHaveBeenCalledWith(BRACKET_EXPORT_CAPTURE_ATTR);
+  });
+
+  it('exports through the modern-color-compatible renderer', async () => {
+    const root = document.createElement('div');
+    const scroll = document.createElement('div');
+    scroll.setAttribute(BRACKET_EXPORT_SCROLL_ATTR, '');
+    Object.defineProperty(scroll, 'scrollWidth', { value: 720 });
+    root.appendChild(scroll);
+    document.body.appendChild(root);
+
+    html2canvasMock.mockResolvedValue({
+      toBlob: (callback: (blob: Blob | null) => void) =>
+        callback(new Blob(['png'], { type: 'image/png' })),
+    });
+    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
+      callback(0);
+      return 1;
+    });
+    vi.stubGlobal('URL', {
+      createObjectURL: vi.fn(() => 'blob:bracket'),
+      revokeObjectURL: vi.fn(),
+    });
+    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
+
+    await exportBracketContainerPng(root);
+
+    expect(html2canvasMock).toHaveBeenCalledWith(scroll, expect.any(Object));
+    expect(click).toHaveBeenCalledOnce();
+    expect(root.hasAttribute(BRACKET_EXPORT_CAPTURE_ATTR)).toBe(false);
+
+    click.mockRestore();
+    vi.unstubAllGlobals();
+    root.remove();
   });
 });
