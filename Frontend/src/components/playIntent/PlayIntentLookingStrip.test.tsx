@@ -60,3 +60,24 @@ describe('PlayIntentLookingStrip', () => {
     expect(html).toContain('12+');
   });
 });
+
+describe('PlayIntentIdleCtaCard', () => {
+  it('shows nearby player activity before the viewer starts looking', async () => {
+    const { PlayIntentIdleCtaCard } = await import('./PlayIntentIdleCtaCard');
+    const html = renderToStaticMarkup(
+      <PlayIntentIdleCtaCard
+        sport="PADEL"
+        title="I want to play"
+        hint="2 players want to play Today, Tomorrow"
+        members={[
+          { userId: 'one', firstName: 'One', avatar: '/one.jpg' },
+          { userId: 'two', firstName: 'Two', avatar: null },
+        ]}
+        onClick={vi.fn()}
+      />,
+    );
+
+    expect(html).toContain('2 players want to play Today, Tomorrow');
+    expect(html.match(/data-testid="tiny-player-avatar"/g)).toHaveLength(2);
+  });
+});

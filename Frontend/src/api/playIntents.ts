@@ -77,6 +77,7 @@ export type MatchProposalSummary = {
 export type PlayIntentPool = {
   todayKey: string;
   cityTimezone: string;
+  discoveryDateKeys: string[];
   myIntent: PlayIntent | null;
   partySize: number;
   availableCount: number;

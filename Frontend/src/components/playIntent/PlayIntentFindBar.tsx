@@ -15,9 +15,9 @@ import { useAuthStore } from '@/store/authStore';
 import { usePlayIntentMutations, usePlayIntentPool } from '@/hooks/usePlayIntent';
 import { PlayIntentSheet } from './PlayIntentSheet';
 import { PlayIntentLookingStrip } from './PlayIntentLookingStrip';
+import { PlayIntentIdleCtaCard } from './PlayIntentIdleCtaCard';
 import { resolvePlayIntentProposal } from './playIntentProposal';
 import { playIntentsApi, type MatchProposalSummary, type PlayIntent } from '@/api/playIntents';
-import { SportPublicIcon } from '@/components/sport/SportPublicIcon';
 import { getViewerPrimarySport } from '@/utils/profileSports';
 import { parseSport } from '@/sport/sportRegistry';
 import type { Sport } from '@/types';
@@ -36,6 +36,7 @@ type PlayIntentCtx = {
   stopLooking: () => void;
   proposal: MatchProposalSummary | null;
   whenLabel: string;
+  idleWhenLabel: string;
   emptyPool: boolean;
   othersCount: number;
   stripMembers: {
@@ -287,6 +288,11 @@ export function PlayIntentProvider({
   );
   const dayLabel = humanDays(pool?.myIntent?.dateKeys || [], pool?.todayKey || '', t);
   const whenLabel = [dayLabel, timeHint(pool?.myIntent, t)].filter(Boolean).join(' · ');
+  const idleWhenLabel = humanDays(
+    pool?.discoveryDateKeys || [],
+    pool?.todayKey || '',
+    t,
+  );
 
   const stopLooking = useCallback(() => {
     void cancel.mutateAsync(pool?.myIntent?.id).catch(() => {
@@ -317,6 +323,7 @@ export function PlayIntentProvider({
       stopLooking,
       proposal,
       whenLabel,
+      idleWhenLabel,
       emptyPool: (pool?.total ?? 0) === 0,
       othersCount: pool?.total ?? 0,
       stripMembers,
@@ -331,6 +338,7 @@ export function PlayIntentProvider({
       stopLooking,
       proposal,
       whenLabel,
+      idleWhenLabel,
       pool?.total,
       stripMembers,
       proposalArrivalToken,
@@ -424,25 +432,34 @@ export function PlayIntentActiveStrip() {
 export function PlayIntentIdleCta() {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
-  const { enabled, looking, openCompose } = usePlayIntentUi();
+  const {
+    enabled,
+    looking,
+    openCompose,
+    idleWhenLabel,
+    othersCount,
+    stripMembers,
+  } = usePlayIntentUi();
   const primarySport = getViewerPrimarySport(user);
 
   if (!enabled || looking) return null;
 
   return (
     <AnimatedMount className="mb-3">
-      <button
-        type="button"
+      <PlayIntentIdleCtaCard
+        sport={primarySport}
+        title={t('playIntent.wantToPlay')}
+        hint={
+          othersCount > 0
+            ? t('playIntent.idleOthersLooking', {
+                count: othersCount,
+                days: idleWhenLabel,
+              })
+            : t('playIntent.ctaHint')
+        }
+        members={stripMembers}
         onClick={openCompose}
-        data-testid="play-intent-cta"
-        className="flex w-full items-center gap-2.5 rounded-xl border border-border/70 bg-white px-2.5 py-2 text-left transition-colors hover:border-emerald-500/40 hover:bg-emerald-500/5 dark:bg-gray-900"
-      >
-        <SportPublicIcon sport={primarySport} className="h-5 w-5 shrink-0 object-contain" />
-        <div className="min-w-0 flex-1">
-          <div className="truncate text-sm font-medium text-foreground">{t('playIntent.wantToPlay')}</div>
-          <p className="text-xs leading-snug text-muted-foreground">{t('playIntent.ctaHint')}</p>
-        </div>
-      </button>
+      />
     </AnimatedMount>
   );
 }

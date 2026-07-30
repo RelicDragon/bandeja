@@ -2,6 +2,10 @@
   "playIntent": {
     "wantToPlay": "Chci hrát",
     "ctaHint": "Spárujeme tě s hráči nebo hrami",
+    "idleOthersLooking_one": "{{count}} hráč chce hrát {{days}}",
+    "idleOthersLooking_few": "{{count}} hráči chtějí hrát {{days}}",
+    "idleOthersLooking_many": "{{count}} hráčů chce hrát {{days}}",
+    "idleOthersLooking_other": "{{count}} hráče chce hrát {{days}}",
     "looking": "Hledám hru",
     "stopLooking": "Stop",
     "stopLookingAria": "Přestat hledat hru",

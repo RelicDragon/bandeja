@@ -1458,7 +1458,7 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PI-06 | Host handoff | Confirm as first confirmer | Navigates to create-game prefilled; invitees preselected |
 | PI-07 | Push deep link | Tap PLAY_INTENT_MATCH notification; also retry after a brief offline/network failure before the proposal loads | Opens Find with proposal sheet; transient failures keep `?proposal=` so a retry can recover the same sheet |
 | PI-08 | Game-fit deep link | Tap GAME_MATCHES_INTENT notification | Opens matching game details |
-| PI-09 | Idle Find not bloated | Browse Find without looking | Only one strip above list; no mid-list or below-list play-intent chrome |
+| PI-09 | Idle Find discovery | Browse Find without looking, before and after 18:00 city time, with active players for today/tomorrow | The single top strip shows today’s willing-player count and avatars; from 18:00 it includes today and tomorrow; tapping still opens the intent form |
 | PI-10 | Matched strip stays | After peer match (MATCHED intent) | Status strip stays; “Match ready” — not idle CTA |
 | PI-11 | Host abandon create | Confirm → create-game → Back without saving | Proposal released to PENDING; others can confirm |
 | PI-12 | Non-host waiting | Second user opens proposal after host claimed | Waiting copy; Not now available |

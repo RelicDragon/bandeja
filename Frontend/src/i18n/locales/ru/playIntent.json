@@ -2,6 +2,10 @@
   "playIntent": {
     "wantToPlay": "Хочу поиграть",
     "ctaHint": "Подберём игроков или подходящую игру",
+    "idleOthersLooking_one": "{{count}} игрок хочет играть {{days}}",
+    "idleOthersLooking_few": "{{count}} игрока хотят играть {{days}}",
+    "idleOthersLooking_many": "{{count}} игроков хотят играть {{days}}",
+    "idleOthersLooking_other": "{{count}} игрока хотят играть {{days}}",
     "looking": "Ищу игру",
     "stopLooking": "Стоп",
     "stopLookingAria": "Перестать искать игру",

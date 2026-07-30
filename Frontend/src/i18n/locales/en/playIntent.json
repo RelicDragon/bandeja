@@ -2,6 +2,8 @@
   "playIntent": {
     "wantToPlay": "I want to play",
     "ctaHint": "We’ll match you with players or open games",
+    "idleOthersLooking_one": "{{count}} player wants to play {{days}}",
+    "idleOthersLooking_other": "{{count}} players want to play {{days}}",
     "looking": "Looking for a game",
     "stopLooking": "Stop",
     "stopLookingAria": "Stop looking for a game",

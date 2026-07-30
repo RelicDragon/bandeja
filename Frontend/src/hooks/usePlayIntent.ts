@@ -31,11 +31,7 @@ export function usePlayIntentPool(cityId?: string | null, sportHint?: string | n
         sport: normalizedSportHint,
       }),
     enabled: isAuthenticated && !!normalizedCityId,
-    refetchInterval: (query) => {
-      const data = query.state.data;
-      if (data?.pendingProposal || data?.myIntent) return 2 * 60_000;
-      return false;
-    },
+    refetchInterval: 2 * 60_000,
     refetchOnReconnect: true,
     refetchOnWindowFocus: true,
     staleTime: 15_000,

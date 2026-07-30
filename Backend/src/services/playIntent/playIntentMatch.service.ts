@@ -37,6 +37,7 @@ import {
 } from './playIntentFreshness';
 import { derivePlayIntentPoolAvailability } from './playIntentPoolAvailability';
 import { rankPlayIntentPoolMembers } from './playIntentPoolRanking';
+import { playIntentDiscoveryDateKeys } from './playIntentDiscoveryWindow';
 
 const REMATCH_COOLDOWN_MS = 12 * 60 * 60 * 1000;
 const PROPOSAL_TTL_MS = 2 * 60 * 60 * 1000;
@@ -592,6 +593,8 @@ export class PlayIntentMatchService {
     const sport = viewerIntent?.sport ?? pendingProposal?.sport ?? sportHint;
     const entityType =
       viewerIntent?.entityType ?? pendingProposal?.entityType ?? EntityType.GAME;
+    const discoveryMode = !viewerIntent && !pendingProposal;
+    const discoveryDateKeys = playIntentDiscoveryDateKeys(timezone, now);
 
     const compatibilityWhere: Prisma.PlayIntentWhereInput = viewerIntent
       ? {
@@ -605,7 +608,9 @@ export class PlayIntentMatchService {
               }
             : {}),
         }
-      : {};
+      : discoveryMode
+        ? { dateKeys: { hasSome: discoveryDateKeys } }
+        : {};
     const foundIntents = await prisma.playIntent.findMany({
       where: {
         cityId,
@@ -650,7 +655,7 @@ export class PlayIntentMatchService {
     );
     const busyUserIds = await this.usersBusyPlaying(
       intents.map((intent) => intent.userId),
-      viewerIntent?.dateKeys ?? pendingProposal?.dateKeys ?? [],
+      viewerIntent?.dateKeys ?? pendingProposal?.dateKeys ?? discoveryDateKeys,
       cityId,
     );
 
@@ -681,8 +686,12 @@ export class PlayIntentMatchService {
     for (const intent of intents) {
       if (blockedIds.has(intent.userId)) continue;
       const otherCrit = PlayIntentService.toCriteria(intent);
-      if (!viewerCriteria) continue;
-      const aff = affinityScore(viewerCriteria, otherCrit);
+      const aff = viewerCriteria
+        ? affinityScore(viewerCriteria, otherCrit)
+        : discoveryMode
+          ? { bucket: 'mid' as const, score: 0 }
+          : null;
+      if (!aff) continue;
       const profile = intent.user.sportProfiles.find((p) => p.sport === sport);
       const inProposal = proposalMemberIds.has(intent.userId);
       const busyInGame = busyUserIds.has(intent.userId);
@@ -723,6 +732,7 @@ export class PlayIntentMatchService {
     return {
       todayKey,
       cityTimezone: timezone,
+      discoveryDateKeys,
       myIntent: viewerIntent
         ? {
             id: viewerIntent.id,

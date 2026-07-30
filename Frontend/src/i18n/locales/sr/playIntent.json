@@ -2,6 +2,10 @@
   "playIntent": {
     "wantToPlay": "Želim da igram",
     "ctaHint": "Uparujemo te sa igračima ili igrama",
+    "idleOthersLooking_one": "{{count}} igrač želi da igra {{days}}",
+    "idleOthersLooking_few": "{{count}} igrača žele da igraju {{days}}",
+    "idleOthersLooking_many": "{{count}} igrača želi da igra {{days}}",
+    "idleOthersLooking_other": "{{count}} igrača želi da igra {{days}}",
     "looking": "Tražim igru",
     "stopLooking": "Stani",
     "stopLookingAria": "Prestani da tražiš igru",

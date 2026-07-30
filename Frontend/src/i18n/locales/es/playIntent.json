@@ -2,6 +2,8 @@
   "playIntent": {
     "wantToPlay": "Quiero jugar",
     "ctaHint": "Te emparejamos con jugadores o partidas",
+    "idleOthersLooking_one": "{{count}} jugador quiere jugar {{days}}",
+    "idleOthersLooking_other": "{{count}} jugadores quieren jugar {{days}}",
     "looking": "Buscando partida",
     "stopLooking": "Parar",
     "stopLookingAria": "Dejar de buscar partida",
