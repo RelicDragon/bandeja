@@ -223,7 +223,7 @@ export const canUserSeeGame = (game: Game, user: GameResultsViewer): boolean => 
 };
 
 type TournamentTableViewGameLike = Pick<Game, 'entityType' | 'fixedNumberOfSets' | 'resultsStatus'> | null | undefined;
-type TournamentTableViewUserLike = Pick<User, 'isPremium'> | null | undefined;
+type TournamentTableViewUserLike = Pick<User, 'isPremium' | 'isAdmin'> | null | undefined;
 
 export const canShowTournamentTableView = (game: TournamentTableViewGameLike): boolean => {
   if (!game) return false;
@@ -237,7 +237,7 @@ export const canViewTournamentTableByAccess = (
   user: TournamentTableViewUserLike
 ): boolean => {
   if (!canShowTournamentTableView(game)) return false;
-  return !!(user?.isPremium || game?.resultsStatus === 'FINAL');
+  return !!(user?.isPremium || user?.isAdmin || game?.resultsStatus === 'FINAL');
 };
 
 /**

@@ -794,6 +794,7 @@ Frontend/e2e/
 | GD-36f | Toggle survives tab switch | Toggle off, switch to Scores then back | Switch stays off; card+switch remain above Results/Stats/Scores control |
 | GD-36g | League season stories switch | Open LEAGUE_SEASON as player (even if season resultsStatus is not FINAL) | Switch visible; toggles season story visibility including bracket champion |
 | GD-36h | Landscape table view switch | FINAL game in landscape/table view as player | Stories switch remains visible above the table (not only in hidden results engine host) |
+| GD-36j | Table view for admin | TOURNAMENT IN_PROGRESS; open as isAdmin (non-premium) | Table View toggle opens ResultsTableView |
 | GD-36i | Final fixture also gates champion | Toggle off on playoff final (GRAND_FINAL / terminal MAIN) | Hides that fixture GAME_RESULT and mirrors to season participant → BRACKET_CHAMPION hidden too |
 | GD-37 | Game results artifact | Photo/story from results | Artifact flow |
 
