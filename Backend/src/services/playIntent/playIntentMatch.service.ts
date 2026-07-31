@@ -124,13 +124,7 @@ export class PlayIntentMatchService {
     });
     if (!game) return;
     if (!game.isPublic || !game.clubId) return;
-    if (game.entityType === EntityType.LEAGUE || game.entityType === EntityType.LEAGUE_SEASON) return;
-    if (game.entityType !== EntityType.BAR && game.entityType !== EntityType.GAME && game.entityType !== EntityType.TRAINING && game.entityType !== EntityType.TOURNAMENT) {
-      return;
-    }
-
-    const intentEntityType =
-      game.entityType === EntityType.BAR ? EntityType.BAR : EntityType.GAME;
+    if (game.entityType !== EntityType.GAME && game.entityType !== EntityType.BAR) return;
 
     const now = new Date();
     if (game.startTime.getTime() <= now.getTime()) return;
@@ -146,7 +140,7 @@ export class PlayIntentMatchService {
       where: {
         cityId: game.cityId,
         sport: game.sport,
-        entityType: intentEntityType,
+        entityType: game.entityType,
         status: PlayIntentStatus.OPEN,
         expiresAt: { gt: now },
         userId: { not: creatorId },
@@ -245,9 +239,7 @@ export class PlayIntentMatchService {
         isPublic: true,
         clubId: { not: null },
         entityType:
-          intent.entityType === EntityType.BAR
-            ? EntityType.BAR
-            : { in: [EntityType.GAME, EntityType.TRAINING, EntityType.TOURNAMENT] },
+          intent.entityType === EntityType.BAR ? EntityType.BAR : EntityType.GAME,
         OR: dateBounds.map((b) => ({ startTime: b })),
         status: { in: ['ANNOUNCED', 'STARTED'] },
         participants: {

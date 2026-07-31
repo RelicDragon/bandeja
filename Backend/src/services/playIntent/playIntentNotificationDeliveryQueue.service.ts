@@ -160,6 +160,7 @@ async function deliveryIsStillRelevant(
   if (
     !game ||
     !game.isPublic ||
+    (game.entityType !== EntityType.GAME && game.entityType !== EntityType.BAR) ||
     (game.status !== 'ANNOUNCED' && game.status !== 'STARTED') ||
     !gameStartIsFuture(game.startTime) ||
     game.participants.filter(
@@ -220,8 +221,6 @@ async function deliveryIsStillRelevant(
   const startTimeMinutes = timeStringToMinutes(
     formatInTimeZone(game.startTime, timezone, 'HH:mm'),
   );
-  const intentEntityType =
-    game.entityType === EntityType.BAR ? EntityType.BAR : EntityType.GAME;
   const intents = await prisma.playIntent.findMany({
     where: {
       userId:
@@ -230,7 +229,7 @@ async function deliveryIsStillRelevant(
           : { not: job.userId },
       cityId: game.cityId,
       sport: game.sport,
-      entityType: intentEntityType,
+      entityType: game.entityType,
       status: 'OPEN',
       expiresAt: { gt: now },
       gameParticipants: { none: {} },

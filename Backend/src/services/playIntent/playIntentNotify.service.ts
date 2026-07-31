@@ -367,11 +367,12 @@ export class PlayIntentNotifyService {
       },
     });
     if (!game || !gameStartIsFuture(game.startTime)) return 0;
+    if (game.entityType !== EntityType.GAME && game.entityType !== EntityType.BAR) {
+      return 0;
+    }
 
     const now = new Date();
     const timezone = game.city?.timezone || 'UTC';
-    const intentEntityType =
-      game.entityType === EntityType.BAR ? EntityType.BAR : EntityType.GAME;
     const dateKey = formatInTimeZone(game.startTime, timezone, 'yyyy-MM-dd');
     const startMinutes = timeStringToMinutes(
       formatInTimeZone(game.startTime, timezone, 'HH:mm'),
@@ -382,7 +383,7 @@ export class PlayIntentNotifyService {
         userId: { in: userIds },
         cityId: game.cityId,
         sport: game.sport,
-        entityType: intentEntityType,
+        entityType: game.entityType,
         status: PlayIntentStatus.OPEN,
         expiresAt: { gt: now },
         gameParticipants: { none: {} },
