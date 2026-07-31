@@ -104,7 +104,7 @@ function testWriteRoundTrip() {
     startedAt: '2026-01-01T00:00:01.000Z',
   };
   const written = writeExplanationBlob({}, blob);
-  const read = readExplanationBlob(written);
+  const read = readExplanationBlob(JSON.parse(JSON.stringify(written)));
   assert.equal(read?.source.text, 'Hi');
   assert.equal(read?.translations.es?.text, 'Hola');
 }

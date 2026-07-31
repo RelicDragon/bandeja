@@ -1,6 +1,6 @@
 import { BracketSlotKind } from '@prisma/client';
 
-export const BRACKET_TEMPLATE_VERSION = 1;
+export const BRACKET_TEMPLATE_VERSION = 2;
 
 const SUPPORTED_BRACKET_SIZES = [2, 4, 8, 16] as const;
 
@@ -317,8 +317,10 @@ export function buildBracketPlan(
     );
   }
   const playInGames = piPairings.length;
-  const mainRounds = mainRoundCount(bracketSize);
-  const includeThirdPlace = Boolean(options?.includeThirdPlace && bracketSize >= 4);
+  const hasPlayInPhase = playInTeams > 0;
+  const mainBracketSize = hasPlayInPhase ? bracketSize / 2 : bracketSize;
+  const mainRounds = mainRoundCount(mainBracketSize);
+  const includeThirdPlace = Boolean(options?.includeThirdPlace && mainBracketSize >= 4);
   const includeConsolationBracket = Boolean(
     options?.includeConsolationBracket && supportsConsolationBracket(entrantCount, byeSeeds)
   );
@@ -328,8 +330,10 @@ export function buildBracketPlan(
   if (includeConsolationBracket && includeDoubleElimination) {
     throw new Error('includeConsolationBracket and includeDoubleElimination are mutually exclusive');
   }
+  if (includeThirdPlace && includeDoubleElimination) {
+    throw new Error('includeThirdPlace and includeDoubleElimination are mutually exclusive');
+  }
   const slots: PlannedBracketSlot[] = [];
-  const hasPlayInPhase = playInTeams > 0;
 
   byeSeeds.forEach((seed, matchIndex) => {
     slots.push({
@@ -391,7 +395,7 @@ export function buildBracketPlan(
         winnerSlotKey,
         feederSlotAKey: null,
         feederSlotBKey: null,
-        roundLabel: mainRoundLabel(bracketSize, 0),
+        roundLabel: mainRoundLabel(mainBracketSize, 0),
       });
       continue;
     }
@@ -410,7 +414,7 @@ export function buildBracketPlan(
       winnerSlotKey,
       feederSlotAKey: feederA,
       feederSlotBKey: feederB,
-      roundLabel: mainRoundLabel(bracketSize, 0),
+      roundLabel: mainRoundLabel(mainBracketSize, 0),
     });
     for (const feederKey of [feederA, feederB]) {
       const feeder = slots.find((s) => s.slotKey === feederKey);
@@ -422,9 +426,7 @@ export function buildBracketPlan(
   }
 
   for (let roundIndex = 1; roundIndex < mainRounds; roundIndex++) {
-    const matchesInRound = hasPlayInPhase
-      ? Math.max(1, bracketSize / Math.pow(2, roundIndex + 2))
-      : bracketSize / Math.pow(2, roundIndex + 1);
+    const matchesInRound = mainBracketSize / Math.pow(2, roundIndex + 1);
     for (let matchIndex = 0; matchIndex < matchesInRound; matchIndex++) {
       const feederA = `MAIN-R${roundIndex - 1}-M${matchIndex * 2}`;
       const feederB = `MAIN-R${roundIndex - 1}-M${matchIndex * 2 + 1}`;
@@ -447,7 +449,7 @@ export function buildBracketPlan(
         winnerSlotKey,
         feederSlotAKey: feederA,
         feederSlotBKey: feederB,
-        roundLabel: mainRoundLabel(bracketSize, roundIndex),
+        roundLabel: mainRoundLabel(mainBracketSize, roundIndex),
       });
       const prevA = slots.find((s) => s.slotKey === feederA);
       const prevB = slots.find((s) => s.slotKey === feederB);
@@ -521,60 +523,96 @@ export function buildBracketPlan(
 }
 
 function appendLosersBracketSlots(slots: PlannedBracketSlot[]): void {
-  const mainR0Keys = slots
-    .filter((s) => s.slotKind === BracketSlotKind.MAIN && s.roundIndex === 0)
-    .sort((a, b) => a.matchIndex - b.matchIndex)
-    .map((s) => s.slotKey);
-  const loserCount = mainR0Keys.length;
-  if (loserCount < 2) return;
+  const mainRounds = new Map<number, PlannedBracketSlot[]>();
+  for (const slot of slots.filter((s) => s.slotKind === BracketSlotKind.MAIN)) {
+    const round = mainRounds.get(slot.roundIndex) ?? [];
+    round.push(slot);
+    mainRounds.set(slot.roundIndex, round);
+  }
+  for (const round of mainRounds.values()) {
+    round.sort((a, b) => a.matchIndex - b.matchIndex);
+  }
 
-  const losersSize = loserCount;
-  const losersRounds = mainRoundCount(losersSize);
+  const firstMainRound = mainRounds.get(0) ?? [];
+  if (firstMainRound.length < 2) return;
+  const winnersRoundCount = mainRounds.size;
+  let losersRoundIndex = 0;
 
-  for (let roundIndex = 0; roundIndex < losersRounds; roundIndex++) {
-    const matchesInRound = losersSize / Math.pow(2, roundIndex + 1);
-    for (let matchIndex = 0; matchIndex < matchesInRound; matchIndex++) {
-      let feederA: string;
-      let feederB: string;
-      if (roundIndex === 0) {
-        feederA = mainR0Keys[matchIndex * 2]!;
-        feederB = mainR0Keys[matchIndex * 2 + 1]!;
-      } else {
-        feederA = `LOS-R${roundIndex - 1}-M${matchIndex * 2}`;
-        feederB = `LOS-R${roundIndex - 1}-M${matchIndex * 2 + 1}`;
+  const appendLosersSlot = (
+    matchIndex: number,
+    feederAKey: string,
+    feederBKey: string
+  ): void => {
+    const slotKey = `LOS-R${losersRoundIndex}-M${matchIndex}`;
+    slots.push({
+      slotKey,
+      slotKind: BracketSlotKind.LOSERS,
+      phaseIndex: 3,
+      roundIndex: losersRoundIndex,
+      matchIndex,
+      leagueParticipantId: null,
+      seedRank: null,
+      seedRankA: null,
+      seedRankB: null,
+      winnerSlotKey: null,
+      feederSlotAKey: feederAKey,
+      feederSlotBKey: feederBKey,
+      roundLabel: `Losers round ${losersRoundIndex + 1}`,
+    });
+    for (const feederKey of [feederAKey, feederBKey]) {
+      const feeder = slots.find((s) => s.slotKey === feederKey);
+      if (feeder?.slotKind === BracketSlotKind.LOSERS) {
+        feeder.winnerSlotKey = slotKey;
       }
-      const winnerSlotKey =
-        roundIndex < losersRounds - 1
-          ? `LOS-R${roundIndex + 1}-M${Math.floor(matchIndex / 2)}`
-          : 'GRAND-FINAL-M0';
-      slots.push({
-        slotKey: `LOS-R${roundIndex}-M${matchIndex}`,
-        slotKind: BracketSlotKind.LOSERS,
-        phaseIndex: 3,
-        roundIndex,
+    }
+  };
+
+  for (let matchIndex = 0; matchIndex < firstMainRound.length / 2; matchIndex++) {
+    appendLosersSlot(
+      matchIndex,
+      firstMainRound[matchIndex * 2]!.slotKey,
+      firstMainRound[matchIndex * 2 + 1]!.slotKey
+    );
+  }
+
+  for (let winnersRoundIndex = 1; winnersRoundIndex < winnersRoundCount; winnersRoundIndex++) {
+    const winnersRound = mainRounds.get(winnersRoundIndex) ?? [];
+    const previousLosersRound = losersRoundIndex;
+    losersRoundIndex += 1;
+
+    for (let matchIndex = 0; matchIndex < winnersRound.length; matchIndex++) {
+      const crossedMainMatchIndex =
+        winnersRound.length > 1 ? matchIndex ^ 1 : matchIndex;
+      appendLosersSlot(
         matchIndex,
-        leagueParticipantId: null,
-        seedRank: null,
-        seedRankA: null,
-        seedRankB: null,
-        winnerSlotKey,
-        feederSlotAKey: feederA,
-        feederSlotBKey: feederB,
-        roundLabel: losersRoundLabel(losersSize, roundIndex),
-      });
-      const prevA = slots.find((s) => s.slotKey === feederA);
-      const prevB = slots.find((s) => s.slotKey === feederB);
-      if (prevA && prevA.slotKind === BracketSlotKind.LOSERS) {
-        prevA.winnerSlotKey = `LOS-R${roundIndex}-M${matchIndex}`;
-      }
-      if (prevB && prevB.slotKind === BracketSlotKind.LOSERS) {
-        prevB.winnerSlotKey = `LOS-R${roundIndex}-M${matchIndex}`;
+        `LOS-R${previousLosersRound}-M${matchIndex}`,
+        winnersRound[crossedMainMatchIndex]!.slotKey
+      );
+    }
+
+    if (winnersRoundIndex < winnersRoundCount - 1) {
+      const injectionRound = losersRoundIndex;
+      losersRoundIndex += 1;
+      for (let matchIndex = 0; matchIndex < winnersRound.length / 2; matchIndex++) {
+        appendLosersSlot(
+          matchIndex,
+          `LOS-R${injectionRound}-M${matchIndex * 2}`,
+          `LOS-R${injectionRound}-M${matchIndex * 2 + 1}`
+        );
       }
     }
   }
+
+  const losersFinal = slots
+    .filter((s) => s.slotKind === BracketSlotKind.LOSERS)
+    .sort((a, b) => b.roundIndex - a.roundIndex || a.matchIndex - b.matchIndex)[0];
+  if (losersFinal) {
+    losersFinal.winnerSlotKey = 'GRAND-FINAL-M0';
+    losersFinal.roundLabel = losersRoundLabel(2, 0);
+  }
 }
 
-/** Grand final: winners-bracket champion vs losers-bracket champion. Same team in both feeders may skip GF (product choice; not auto-skipped here). */
+/** Grand final plus conditional reset when the losers-bracket champion wins the first final. */
 function appendGrandFinalSlot(slots: PlannedBracketSlot[], mainRounds: number): void {
   const mainFinalKey = `MAIN-R${mainRounds - 1}-M0`;
   const losersFinal = slots
@@ -593,10 +631,25 @@ function appendGrandFinalSlot(slots: PlannedBracketSlot[], mainRounds: number): 
     seedRank: null,
     seedRankA: null,
     seedRankB: null,
-    winnerSlotKey: null,
+    winnerSlotKey: 'GRAND-FINAL-M1',
     feederSlotAKey: mainFinalKey,
     feederSlotBKey: losersChampionFeeder,
     roundLabel: 'Grand final',
+  });
+  slots.push({
+    slotKey: 'GRAND-FINAL-M1',
+    slotKind: BracketSlotKind.GRAND_FINAL,
+    phaseIndex: 4,
+    roundIndex: 1,
+    matchIndex: 0,
+    leagueParticipantId: null,
+    seedRank: null,
+    seedRankA: null,
+    seedRankB: null,
+    winnerSlotKey: null,
+    feederSlotAKey: 'GRAND-FINAL-M0',
+    feederSlotBKey: 'GRAND-FINAL-M0',
+    roundLabel: 'Grand final reset',
   });
 }
 

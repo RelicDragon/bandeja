@@ -53,18 +53,25 @@ export function buildGrandFinalColumns(
   slots: BracketSlotDto[],
   grandFinalLabel: string
 ): BracketColumn[] {
-  const gf = slots
-    .filter((s) => s.slotKind === 'GRAND_FINAL')
-    .sort((a, b) => a.matchIndex - b.matchIndex || a.slotKey.localeCompare(b.slotKey));
-  if (gf.length === 0) return [];
-  return [
-    {
-      id: 'grand-final',
-      label: gf[0]?.roundLabel ?? grandFinalLabel,
-      kind: 'GRAND_FINAL',
-      slots: gf,
-    },
-  ];
+  const byRound = new Map<number, BracketSlotDto[]>();
+  for (const slot of slots.filter((s) => s.slotKind === 'GRAND_FINAL')) {
+    const round = byRound.get(slot.roundIndex) ?? [];
+    round.push(slot);
+    byRound.set(slot.roundIndex, round);
+  }
+  return [...byRound.entries()]
+    .sort(([roundA], [roundB]) => roundA - roundB)
+    .map(([roundIndex, roundSlots]) => ({
+      id: roundIndex === 0 ? 'grand-final' : `grand-final-reset-${roundIndex}`,
+      label:
+        roundSlots.find((slot) => slot.roundLabel)?.roundLabel ??
+        (roundIndex === 0 ? grandFinalLabel : `${grandFinalLabel} reset`),
+      kind: 'GRAND_FINAL' as const,
+      roundIndex,
+      slots: roundSlots.sort(
+        (a, b) => a.matchIndex - b.matchIndex || a.slotKey.localeCompare(b.slotKey)
+      ),
+    }));
 }
 
 export function buildBracketColumns(
@@ -212,19 +219,21 @@ function findParticipantInLookup(
   return null;
 }
 
-function participantFromGameWinner(
+function participantFromGameOutcome(
   slot: BracketSlotDto,
-  lookup: Map<string, BracketSlotDto>
+  lookup: Map<string, BracketSlotDto>,
+  outcome: 'winner' | 'loser'
 ): BracketSlotDto['participant'] | null {
   const game = slot.game;
   if (!game || !isFullGame(game) || game.resultsStatus !== 'FINAL') return null;
   const winnerTeam = winningTeamFromFinalGame(game);
   if (!winnerTeam) return null;
-  const teamIdx = winnerTeam === 'teamA' ? 0 : 1;
+  const winnerTeamIndex = winnerTeam === 'teamA' ? 0 : 1;
+  const teamIdx = outcome === 'winner' ? winnerTeamIndex : 1 - winnerTeamIndex;
   const winnerUserIds = new Set(
     game.fixedTeams?.[teamIdx]?.players?.map((p) => p.user?.id).filter(Boolean) ?? []
   );
-  if (winnerUserIds.size === 0) return slot.participant ?? null;
+  if (winnerUserIds.size === 0) return outcome === 'winner' ? slot.participant ?? null : null;
   for (const s of lookup.values()) {
     const p = s.participant;
     const players = p?.leagueTeam?.players ?? [];
@@ -232,13 +241,13 @@ function participantFromGameWinner(
     const roster = players.map((pl) => pl.user?.id).filter(Boolean);
     if (roster.length > 0 && roster.every((id) => winnerUserIds.has(id!))) return p;
   }
-  return slot.participant ?? null;
+  return outcome === 'winner' ? slot.participant ?? null : null;
 }
 
-/** Winner from a completed feeder match; null while the feeder knockout is still open. */
-function winnerParticipantFromFinalSlot(
+function participantFromFinalSlot(
   slot: BracketSlotDto,
-  lookup: Map<string, BracketSlotDto>
+  lookup: Map<string, BracketSlotDto>,
+  outcome: 'winner' | 'loser'
 ): BracketSlotDto['participant'] | null {
   const game = slot.game;
   if (!game || !isFullGame(game) || game.resultsStatus !== 'FINAL') return null;
@@ -252,16 +261,33 @@ function winnerParticipantFromFinalSlot(
   }
 
   const sideA =
-    resolveFeederParticipant(slot.feederSlotAId, lookup) ??
+    resolveSlotFeederParticipant(slot, 'A', lookup) ??
     (slot.slotKind === 'PLAY_IN' ? slot.participant ?? null : null);
-  const sideB = resolveFeederParticipant(slot.feederSlotBId, lookup);
+  const sideB = resolveSlotFeederParticipant(slot, 'B', lookup);
   const winnerParticipant = winnerTeam === 'teamA' ? sideA : sideB;
-  if (winnerParticipant) return winnerParticipant;
+  const loserParticipant = winnerTeam === 'teamA' ? sideB : sideA;
+  const resolvedParticipant = outcome === 'winner' ? winnerParticipant : loserParticipant;
+  if (resolvedParticipant) return resolvedParticipant;
 
-  if (slot.leagueParticipantId) {
+  if (outcome === 'winner' && slot.leagueParticipantId) {
     return findParticipantInLookup(slot.leagueParticipantId, lookup) ?? slot.participant ?? null;
   }
-  return participantFromGameWinner(slot, lookup);
+  return participantFromGameOutcome(slot, lookup, outcome);
+}
+
+/** Winner from a completed feeder match; null while the feeder knockout is still open. */
+function winnerParticipantFromFinalSlot(
+  slot: BracketSlotDto,
+  lookup: Map<string, BracketSlotDto>
+): BracketSlotDto['participant'] | null {
+  return participantFromFinalSlot(slot, lookup, 'winner');
+}
+
+function loserParticipantFromFinalSlot(
+  slot: BracketSlotDto,
+  lookup: Map<string, BracketSlotDto>
+): BracketSlotDto['participant'] | null {
+  return participantFromFinalSlot(slot, lookup, 'loser');
 }
 
 export function resolveFeederParticipant(
@@ -289,14 +315,40 @@ export function resolveFeederParticipant(
   return feeder.participant ?? null;
 }
 
+export function resolveSlotFeederParticipant(
+  targetSlot: BracketSlotDto,
+  side: 'A' | 'B',
+  lookup: Map<string, BracketSlotDto>
+): BracketSlotDto['participant'] | null {
+  const feederId = side === 'A' ? targetSlot.feederSlotAId : targetSlot.feederSlotBId;
+  if (!feederId) return null;
+  const feeder = lookup.get(feederId);
+  if (!feeder) return null;
+  if (feeder.slotKind === 'BYE') return feeder.participant ?? null;
+
+  const needsLoser =
+    targetSlot.slotKind === 'THIRD_PLACE' ||
+    ((targetSlot.slotKind === 'CONSOLATION' || targetSlot.slotKind === 'LOSERS') &&
+      feeder.slotKind === 'MAIN') ||
+    (targetSlot.slotKind === 'GRAND_FINAL' &&
+      targetSlot.roundIndex > 0 &&
+      side === 'A' &&
+      targetSlot.feederSlotAId === targetSlot.feederSlotBId);
+
+  if (needsLoser) {
+    return loserParticipantFromFinalSlot(feeder, lookup);
+  }
+  return resolveFeederParticipant(feederId, lookup);
+}
+
 export function resolveSlotSideParticipants(
   slot: BracketSlotDto,
   lookup: Map<string, BracketSlotDto>
 ): { participantAId: string | null; participantBId: string | null } {
   const sideA =
-    resolveFeederParticipant(slot.feederSlotAId, lookup) ??
+    resolveSlotFeederParticipant(slot, 'A', lookup) ??
     (slot.slotKind === 'PLAY_IN' ? null : slot.participant);
-  const sideB = resolveFeederParticipant(slot.feederSlotBId, lookup);
+  const sideB = resolveSlotFeederParticipant(slot, 'B', lookup);
   return {
     participantAId: sideA?.id ?? null,
     participantBId: sideB?.id ?? null,

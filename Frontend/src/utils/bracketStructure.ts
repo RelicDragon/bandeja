@@ -64,7 +64,8 @@ export function getBracketStructureMetrics(
       ? [...customByeSeedRanks].sort((a, b) => a - b)
       : Array.from({ length: byeCount }, (_, i) => i + 1);
   const playInMatchups = buildPlayInMatchups(entrantCount, new Set(byeSeeds));
-  const mainRounds = buildMainRoundPreviews(bracketSize);
+  const mainBracketSize = playInTeams > 0 ? bracketSize / 2 : bracketSize;
+  const mainRounds = buildMainRoundPreviews(mainBracketSize);
 
   return {
     entrantCount,

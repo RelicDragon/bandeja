@@ -18,6 +18,9 @@ const BRACKET_ROUND_LABEL_KEYS: Record<string, string> = {
   byes: 'gameDetails.bracketColumnByes',
   'third place': 'gameDetails.bracketColumnThirdPlace',
   'grand final': 'gameDetails.bracketTabGrandFinal',
+  'grand final reset': 'gameDetails.bracketGrandFinalReset',
+  'losers final': 'gameDetails.bracketLosersFinal',
+  'consolation final': 'gameDetails.bracketConsolationFinal',
 };
 
 /** Maps backend English roundLabel values to localized UI strings. */
@@ -39,6 +42,18 @@ export function translateBracketRoundLabel(
   const roundMatch = /^round\s+(\d+)$/i.exec(trimmed);
   if (roundMatch) {
     return t('gameDetails.bracketColumnMainRound', { round: Number(roundMatch[1]) });
+  }
+
+  const losersRoundMatch = /^losers round\s+(\d+)$/i.exec(trimmed);
+  if (losersRoundMatch) {
+    return t('gameDetails.bracketLosersRound', { round: Number(losersRoundMatch[1]) });
+  }
+
+  const consolationRoundMatch = /^consolation round\s+(\d+)$/i.exec(trimmed);
+  if (consolationRoundMatch) {
+    return t('gameDetails.bracketConsolationRound', {
+      round: Number(consolationRoundMatch[1]),
+    });
   }
 
   return trimmed;

@@ -1,7 +1,7 @@
 import type { BracketPlayoffGroupDto, BracketSlotDto } from '@/api/leagues';
 import type { Game } from '@/types';
 import { isFullGame } from '@/utils/leagueBracketEnrich';
-import { resolveFeederParticipant, slotsById } from '@/utils/leagueBracketLayout';
+import { resolveSlotFeederParticipant, slotsById } from '@/utils/leagueBracketLayout';
 import { isThirdPlaceSlot } from '@/utils/bracketThirdPlace.util';
 import {
   bracketMatchStatusFromGame,
@@ -51,9 +51,9 @@ export function resolveSlotSides(
   lookup: Map<string, BracketSlotDto>
 ): { sideA: BracketSlotDto['participant'] | null; sideB: BracketSlotDto['participant'] | null } {
   const sideA =
-    resolveFeederParticipant(slot.feederSlotAId, lookup) ??
+    resolveSlotFeederParticipant(slot, 'A', lookup) ??
     (slot.slotKind === 'PLAY_IN' ? slot.participant ?? null : null);
-  const sideB = resolveFeederParticipant(slot.feederSlotBId, lookup);
+  const sideB = resolveSlotFeederParticipant(slot, 'B', lookup);
   return { sideA, sideB };
 }
 
@@ -92,9 +92,29 @@ export function slotWinnerParticipantId(
   return participantIdFromSide(sideB);
 }
 
-export function collectChampionPathSlotIds(slots: BracketSlotDto[]): Set<string> {
+function resolvedChampionshipSlot(group: BracketPlayoffGroupDto): BracketSlotDto | null {
+  const completedGrandFinals = group.slots
+    .filter(
+      (slot) =>
+        slot.slotKind === 'GRAND_FINAL' &&
+        slot.game?.resultsStatus === 'FINAL'
+    )
+    .sort((a, b) => b.roundIndex - a.roundIndex);
+  if (group.championParticipantId && completedGrandFinals.length > 0) {
+    return completedGrandFinals[0] ?? null;
+  }
+  if (group.slots.some((slot) => slot.slotKind === 'GRAND_FINAL')) return null;
+  return findFinalMainSlot(group.slots);
+}
+
+export function collectChampionPathSlotIds(
+  slots: BracketSlotDto[],
+  championshipSlotId?: string | null
+): Set<string> {
   const lookup = slotsById(slots);
-  const finalSlot = findFinalMainSlot(slots);
+  const finalSlot =
+    (championshipSlotId ? lookup.get(championshipSlotId) : null) ??
+    findFinalMainSlot(slots);
   if (!finalSlot) return new Set();
 
   const path = new Set<string>();
@@ -112,6 +132,28 @@ export function collectChampionPathSlotIds(slots: BracketSlotDto[]): Set<string>
   return path;
 }
 
+function collectParticipantPathSlotIds(
+  slots: BracketSlotDto[],
+  championshipSlotId: string,
+  participantId: string
+): Set<string> {
+  const lookup = slotsById(slots);
+  const path = new Set<string>();
+  const visit = (slotId: string) => {
+    const slot = lookup.get(slotId);
+    if (!slot || path.has(slotId)) return;
+    path.add(slotId);
+    const { sideA, sideB } = resolveSlotSides(slot, lookup);
+    if (participantIdFromSide(sideA) === participantId && slot.feederSlotAId) {
+      visit(slot.feederSlotAId);
+    } else if (participantIdFromSide(sideB) === participantId && slot.feederSlotBId) {
+      visit(slot.feederSlotBId);
+    }
+  };
+  visit(championshipSlotId);
+  return path;
+}
+
 export function bracketGroupHasPodium(group: BracketPlayoffGroupDto): boolean {
   const podium = buildBracketPodium(group);
   return !!(
@@ -125,11 +167,11 @@ export function bracketGroupHasPodium(group: BracketPlayoffGroupDto): boolean {
 export function buildBracketPodium(group: BracketPlayoffGroupDto): BracketPodium {
   const lookup = slotsById(group.slots);
   const championId = group.championParticipantId ?? null;
-  const finalSlot = findFinalMainSlot(group.slots);
-  let finalistId: string | null = null;
+  const finalSlot = resolvedChampionshipSlot(group);
+  let finalistId: string | null = group.finalistParticipantId ?? null;
   const semifinalistIds: string[] = [];
 
-  if (finalSlot) {
+  if (finalSlot && !finalistId) {
     const winnerId = slotWinnerParticipantId(finalSlot, lookup);
     const { sideA, sideB } = resolveSlotSides(finalSlot, lookup);
     const idA = participantIdFromSide(sideA);
@@ -139,9 +181,9 @@ export function buildBracketPodium(group: BracketPlayoffGroupDto): BracketPodium
     }
   }
 
-  let thirdPlaceId: string | null = null;
+  let thirdPlaceId: string | null = group.thirdPlaceParticipantId ?? null;
   const thirdSlot = group.slots.find(isThirdPlaceSlot);
-  if (thirdSlot) {
+  if (thirdSlot && !thirdPlaceId) {
     thirdPlaceId = slotWinnerParticipantId(thirdSlot, lookup);
   }
 
@@ -164,13 +206,18 @@ export function buildBracketPodium(group: BracketPlayoffGroupDto): BracketPodium
     }
   }
 
-  const hideSfLosers = !!thirdSlot;
-  const semifinalists = hideSfLosers
-    ? semifinalistIds.filter((id) => id !== thirdPlaceId && id !== finalistId && id !== championId)
-    : semifinalistIds;
+  const semifinalists = semifinalistIds.filter(
+    (id) => id !== thirdPlaceId && id !== finalistId && id !== championId
+  );
 
   return {
-    championId: championId ?? (finalSlot ? slotWinnerParticipantId(finalSlot, lookup) : null),
+    championId:
+      championId ??
+      (group.slots.some((slot) => slot.slotKind === 'GRAND_FINAL')
+        ? null
+        : finalSlot
+          ? slotWinnerParticipantId(finalSlot, lookup)
+          : null),
     finalistId,
     thirdPlaceId,
     semifinalistIds: semifinalists,
@@ -191,7 +238,17 @@ export function buildBracketSlotHighlights(
   group: BracketPlayoffGroupDto
 ): Map<string, BracketSlotHighlight> {
   const playInDone = isPlayInPhaseComplete(group);
-  const pathIds = collectChampionPathSlotIds(group.slots);
+  const championshipSlot = resolvedChampionshipSlot(group);
+  const pathIds =
+    championshipSlot && group.championParticipantId
+    ? collectParticipantPathSlotIds(
+        group.slots,
+        championshipSlot.id,
+        group.championParticipantId
+      )
+    : championshipSlot
+      ? collectChampionPathSlotIds(group.slots, championshipSlot.id)
+    : new Set<string>();
   const lookup = slotsById(group.slots);
   const map = new Map<string, BracketSlotHighlight>();
 

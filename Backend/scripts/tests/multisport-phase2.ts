@@ -50,14 +50,15 @@ function testResolveLeaderboardSportMode(): void {
 
 function testSourceFindApi(): void {
   const readSrc = readSrcFile('services/game/read.service.ts');
+  const querySrc = readSrcFile('services/game/availableGamesQuery.ts');
   const controllerSrc = readSrcFile('controllers/game.controller.ts');
 
-  assert(readSrc.includes('resolvePublicGamesSportFilter'), 'read.service imports resolvePublicGamesSportFilter');
-  assert(readSrc.includes("if (sportFilter.mode === 'single')"), 'getAvailableGames applies sport when single');
-  assert(readSrc.includes('where.sport = sportFilter.sport'), 'getAvailableGames sets where.sport');
+  assert(querySrc.includes('resolvePublicGamesSportFilter'), 'available query imports sport filter');
+  assert(querySrc.includes("if (sportFilter.mode === 'single')"), 'available query applies sport when single');
+  assert(querySrc.includes('where.sport = sportFilter.sport'), 'available query sets where.sport');
 
   const availableBlock = sliceBetween(readSrc, 'static async getAvailableGames', 'static async getMyGames');
-  assert(availableBlock.includes('resolvePublicGamesSportFilter'), 'sport filter only in getAvailableGames');
+  assert(availableBlock.includes('fetchAvailableGamesPage'), 'available games delegates to filtered query');
 
   const getGamesBlock = sliceBetween(readSrc, 'static async getGames(', 'static async getMyGames');
   assert(!getGamesBlock.includes('resolvePublicGamesSportFilter'), 'getGames must not use Find sport filter');
@@ -98,7 +99,8 @@ function testSourceInvitesChatsNoSportFilter(): void {
 
 function testGateG4Asymmetry(): void {
   const readSrc = readSrcFile('services/game/read.service.ts');
-  const hasFindFilter = readSrc.includes('resolvePublicGamesSportFilter') && readSrc.includes('where.sport = sportFilter.sport');
+  const querySrc = readSrcFile('services/game/availableGamesQuery.ts');
+  const hasFindFilter = querySrc.includes('resolvePublicGamesSportFilter') && querySrc.includes('where.sport = sportFilter.sport');
   const myBlock = sliceBetween(readSrc, 'static async getMyGames', 'static async getMyGamesWithUnread');
   const myFiltered = /where\.sport/.test(myBlock);
   assert(hasFindFilter && !myFiltered, 'G4: Find filters by sport; My does not');
@@ -139,63 +141,95 @@ function sliceBetween(src: string, start: string, end: string): string {
 }
 
 async function testDbFindMyAsymmetry(): Promise<void> {
-  const user = await prisma.user.findFirst({
+  const users = await prisma.user.findMany({
     where: { isActive: true, currentCityId: { not: null } },
     select: { id: true, currentCityId: true, primarySport: true },
+    take: 20,
   });
-  if (!user?.currentCityId) {
-    console.log('skip: db Find/My asymmetry (no active user with city)');
+  const viewer = users.find((candidate) =>
+    users.some(
+      (owner) =>
+        owner.id !== candidate.id &&
+        owner.currentCityId === candidate.currentCityId
+    )
+  );
+  const owner = viewer
+    ? users.find(
+        (candidate) =>
+          candidate.id !== viewer.id &&
+          candidate.currentCityId === viewer.currentCityId
+      )
+    : undefined;
+  if (!viewer?.currentCityId || !owner) {
+    console.log('skip: db Find/My asymmetry (needs two active users in one city)');
     return;
   }
 
-  const primary = user.primarySport ?? Sport.PADEL;
+  const primary = viewer.primarySport ?? Sport.PADEL;
   const otherSport = primary === Sport.PADEL ? Sport.TENNIS : Sport.PADEL;
   const start = new Date(Date.now() + 3 * 86400000);
   const end = new Date(start.getTime() + 7200000);
   const base = {
     gameType: 'CLASSIC' as const,
-    cityId: user.currentCityId,
+    cityId: viewer.currentCityId,
     startTime: start.toISOString(),
     endTime: end.toISOString(),
-    maxParticipants: 4,
+    timeIsSet: true,
     isPublic: true,
-    participants: [user.id],
+    allowDirectJoin: true,
+    participants: [owner.id],
   };
+  const matchFormat = (sport: Sport) => ({
+    playersPerMatch: sport === Sport.PADEL ? 4 : 2,
+    maxParticipants: sport === Sport.PADEL ? 4 : 2,
+  });
 
-  const primaryGame = await GameCreateService.createGame({ ...base, sport: primary }, user.id, false);
-  const otherGame = await GameCreateService.createGame({ ...base, sport: otherSport }, user.id, false);
+  const primaryGame = await GameCreateService.createGame(
+    { ...base, ...matchFormat(primary), sport: primary },
+    owner.id,
+    false
+  );
+  const otherGame = await GameCreateService.createGame(
+    { ...base, ...matchFormat(otherSport), sport: otherSport },
+    owner.id,
+    false
+  );
   assert(primaryGame != null && otherGame != null, 'created test games');
 
   const ids = new Set([primaryGame!.id, otherGame!.id]);
 
   const findDefault = await GameReadService.getAvailableGames(
-    user.id,
-    user.currentCityId,
-    undefined,
-    undefined,
+    viewer.id,
+    viewer.currentCityId,
+    start.toISOString().slice(0, 10),
+    end.toISOString().slice(0, 10),
     true,
     false,
     undefined,
     primary,
   );
-  const findDefaultHits = findDefault.filter((g) => ids.has(g.id));
+  const findDefaultHits = (
+    findDefault.games as Array<{ id: string; sport: Sport }>
+  ).filter((g) => ids.has(g.id));
   assert(findDefaultHits.some((g) => g.sport === primary), 'Find default includes primary-sport game');
   assert(!findDefaultHits.some((g) => g.sport === otherSport), 'Find default excludes other sport');
 
   const findAll = await GameReadService.getAvailableGames(
-    user.id,
-    user.currentCityId,
-    undefined,
-    undefined,
+    viewer.id,
+    viewer.currentCityId,
+    start.toISOString().slice(0, 10),
+    end.toISOString().slice(0, 10),
     true,
     false,
     'all',
     primary,
   );
-  const findAllHits = findAll.filter((g) => ids.has(g.id));
+  const findAllHits = (
+    findAll.games as Array<{ id: string; sport: Sport }>
+  ).filter((g) => ids.has(g.id));
   assert(findAllHits.length === 2, 'Find sport=all returns both test games');
 
-  const myGames = await GameReadService.getMyGames(user.id, user.currentCityId);
+  const myGames = await GameReadService.getMyGames(owner.id, owner.currentCityId ?? undefined);
   const myHits = myGames.filter((g) => ids.has(g.id));
   assert(myHits.length === 2, 'My feed includes both sports');
 

@@ -4,6 +4,7 @@ import {
   BracketScope,
   BracketSlotKind,
   PlayoffFormat,
+  Prisma,
   ResultsStatus,
   RoundType,
 } from '@prisma/client';
@@ -18,6 +19,49 @@ type BracketConfigShape = {
 };
 
 export class BracketRoundSummaryService {
+  static async notifyChampionForGameIfNeeded(gameId: string): Promise<void> {
+    const slot = await prisma.leagueBracketSlot.findFirst({
+      where: { gameId },
+      select: {
+        leagueRoundId: true,
+        leagueGroupId: true,
+        leagueRound: { select: { leagueSeasonId: true } },
+      },
+    });
+    if (!slot) return;
+    await this.notifyChampionIfNeeded({
+      leagueRoundId: slot.leagueRoundId,
+      leagueGroupId: slot.leagueGroupId ?? null,
+      leagueSeasonId: slot.leagueRound.leagueSeasonId,
+    });
+  }
+
+  static async clearSentStateForTree(
+    leagueRoundId: string,
+    leagueGroupId: string | null,
+    tx: Prisma.TransactionClient
+  ): Promise<void> {
+    await tx.$queryRaw`
+      SELECT "id"
+      FROM "LeagueRound"
+      WHERE "id" = ${leagueRoundId}
+      FOR UPDATE
+    `;
+    const round = await tx.leagueRound.findUnique({
+      where: { id: leagueRoundId },
+      select: { bracketConfig: true },
+    });
+    const config = (round?.bracketConfig ?? {}) as BracketConfigShape;
+    const sentKey = leagueGroupId ?? '__cross__';
+    if (!config.bracketSummarySent?.[sentKey]) return;
+    const bracketSummarySent = { ...config.bracketSummarySent };
+    delete bracketSummarySent[sentKey];
+    await tx.leagueRound.update({
+      where: { id: leagueRoundId },
+      data: { bracketConfig: { ...config, bracketSummarySent } },
+    });
+  }
+
   static async notifyChampionIfNeeded(params: {
     leagueRoundId: string;
     leagueGroupId: string | null;
@@ -38,30 +82,54 @@ export class BracketRoundSummaryService {
     const summary = await this.buildGroupSummary(round.id, params.leagueGroupId);
     if (!summary?.championParticipantId) return;
 
-    const config = (round.bracketConfig ?? {}) as BracketConfigShape;
     const sentKey = params.leagueGroupId ?? '__cross__';
-    if (config.bracketSummarySent?.[sentKey]) return;
-
-    await this.sendSummaryToParticipants({
-      leagueRoundId: round.id,
-      leagueSeasonId: params.leagueSeasonId ?? round.leagueSeasonId,
-      leagueGroupId: params.leagueGroupId,
-      bracketScope: round.bracketScope === BracketScope.CROSS_GROUP ? 'CROSS_GROUP' : 'PER_GROUP',
-      summary,
+    const claimed = await prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`
+        SELECT "id"
+        FROM "LeagueRound"
+        WHERE "id" = ${round.id}
+        FOR UPDATE
+      `;
+      const lockedRound = await tx.leagueRound.findUnique({
+        where: { id: round.id },
+        select: { bracketConfig: true },
+      });
+      const config = (lockedRound?.bracketConfig ?? {}) as BracketConfigShape;
+      if (config.bracketSummarySent?.[sentKey]) return false;
+      const bracketSummarySent = {
+        ...(config.bracketSummarySent ?? {}),
+        [sentKey]: true,
+      };
+      await tx.leagueRound.update({
+        where: { id: round.id },
+        data: { bracketConfig: { ...config, bracketSummarySent } },
+      });
+      return true;
     });
+    if (!claimed) return;
+
+    try {
+      await this.sendSummaryToParticipants({
+        leagueRoundId: round.id,
+        leagueSeasonId: params.leagueSeasonId ?? round.leagueSeasonId,
+        leagueGroupId: params.leagueGroupId,
+        bracketScope:
+          round.bracketScope === BracketScope.CROSS_GROUP ? 'CROSS_GROUP' : 'PER_GROUP',
+        summary,
+      });
+    } catch (error) {
+      await prisma.$transaction((tx) =>
+        this.clearSentStateForTree(round.id, params.leagueGroupId, tx)
+      );
+      throw error;
+    }
 
     const { BracketChampionStoryService } = await import('../story/bracketChampionStory.service');
-    void BracketChampionStoryService.emitStoriesIfNeeded({
+    await BracketChampionStoryService.emitStoriesIfNeeded({
       leagueRoundId: round.id,
       leagueGroupId: params.leagueGroupId,
       leagueSeasonId: params.leagueSeasonId ?? round.leagueSeasonId,
     }).catch((err) => console.error('[BracketChampionStory] Failed:', err));
-
-    const nextSent = { ...(config.bracketSummarySent ?? {}), [sentKey]: true };
-    await prisma.leagueRound.update({
-      where: { id: round.id },
-      data: { bracketConfig: { ...config, bracketSummarySent: nextSent } },
-    });
   }
 
   static async notifyBracketSummaryManual(
@@ -139,24 +207,11 @@ export class BracketRoundSummaryService {
     });
     if (slots.length === 0) return null;
 
-    const grandFinalSlot = slots.find((s) => s.slotKind === BracketSlotKind.GRAND_FINAL);
-    const finalSlot =
-      grandFinalSlot ??
-      slots.find((s) => s.slotKind === BracketSlotKind.MAIN && s.winnerSlotId == null);
     const thirdSlot = slots.find((s) => s.slotKind === BracketSlotKind.THIRD_PLACE);
 
-    let championParticipantId: string | null = null;
-    let finalistParticipantId: string | null = null;
+    const championship = await BracketAdvancementService.resolveChampionshipFromSlots(slots);
+    const { championParticipantId, finalistParticipantId } = championship;
     let thirdPlaceParticipantId: string | null = null;
-
-    if (finalSlot?.gameId && finalSlot.game?.resultsStatus === ResultsStatus.FINAL) {
-      championParticipantId = await BracketAdvancementService.resolveWinnerParticipantIdFromGame(
-        finalSlot.gameId
-      );
-      finalistParticipantId = await BracketAdvancementService.resolveLoserParticipantIdFromGame(
-        finalSlot.gameId
-      );
-    }
 
     if (thirdSlot?.gameId && thirdSlot.game?.resultsStatus === ResultsStatus.FINAL) {
       thirdPlaceParticipantId = await BracketAdvancementService.resolveWinnerParticipantIdFromGame(

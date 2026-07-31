@@ -3,6 +3,7 @@ import { buildBracketPlan } from '@/utils/bracketStructure';
 import {
   feederMatchLabelsForRound,
   feederRoundAbbrev,
+  firstMainRoundFeederForVirtualSeed,
   firstMainRoundPairingsForPlan,
 } from './bracketPreviewKnockout.util';
 
@@ -14,6 +15,26 @@ describe('bracketPreviewKnockout.util', () => {
       [4, 5],
       [2, 7],
       [3, 6],
+    ]);
+  });
+
+  it('maps play-in virtual slots to the actual bye and play-in winners', () => {
+    const plan = buildBracketPlan(7, ['a', 'b', 'c', 'd', 'e', 'f', 'g'], {
+      customByeSeedRanks: [4],
+    });
+    expect(firstMainRoundPairingsForPlan(plan)).toEqual([
+      [1, 4],
+      [2, 3],
+    ]);
+    expect(
+      [1, 4, 2, 3].map((virtualSeed) =>
+        firstMainRoundFeederForVirtualSeed(plan, virtualSeed)
+      )
+    ).toEqual([
+      { kind: 'SEED', seed: 4 },
+      { kind: 'PLAY_IN_WINNER', matchIndex: 2 },
+      { kind: 'PLAY_IN_WINNER', matchIndex: 0 },
+      { kind: 'PLAY_IN_WINNER', matchIndex: 1 },
     ]);
   });
 

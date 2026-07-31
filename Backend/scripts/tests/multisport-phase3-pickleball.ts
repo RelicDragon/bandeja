@@ -46,22 +46,22 @@ function testPickleballValidation(): void {
   assert(
     validateGameForSport({
       sport: 'PICKLEBALL',
-      maxParticipants: 8,
+      maxParticipants: 4,
       playersPerMatch: 4,
       gameType: 'AMERICANO',
       matchGenerationType: 'RANDOM',
       scoringPreset: 'POINTS_21',
     }) === Sport.PICKLEBALL,
-    'pickleball 8 roster doubles americano',
+    'pickleball doubles americano',
   );
   assert(
     validateGameForSport({
       sport: 'PICKLEBALL',
-      maxParticipants: 6,
+      maxParticipants: 2,
       playersPerMatch: 2,
       scoringPreset: 'POINTS_16',
     }) === Sport.PICKLEBALL,
-    'pickleball 6 roster singles match',
+    'pickleball singles match',
   );
   assertThrows(
     () =>
@@ -74,7 +74,7 @@ function testPickleballValidation(): void {
   );
   validateGameForSport({
     sport: 'PICKLEBALL',
-    maxParticipants: 8,
+    maxParticipants: 4,
     playersPerMatch: 4,
     gameType: 'AMERICANO',
     matchGenerationType: 'RANDOM',

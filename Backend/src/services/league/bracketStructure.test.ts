@@ -82,26 +82,74 @@ const plan8De = buildBracketPlan(8, Array.from({ length: 8 }, (_, i) => `p${i + 
 });
 assert(plan8De.includeDoubleElimination, 'N=8 double elim flag');
 assert(
-  plan8De.slots.filter((s) => s.slotKind === BracketSlotKind.LOSERS).length === 3,
-  'N=8 double elim: 2 losers R0 + 1 losers final'
+  plan8De.slots.filter((s) => s.slotKind === BracketSlotKind.LOSERS).length === 6,
+  'N=8 double elim: complete six-game losers bracket'
 );
 assert(
-  plan8De.slots.filter((s) => s.slotKind === BracketSlotKind.GRAND_FINAL).length === 1,
-  'N=8 double elim: grand final slot'
+  plan8De.slots.filter((s) => s.slotKind === BracketSlotKind.GRAND_FINAL).length === 2,
+  'N=8 double elim: grand final and conditional reset slots'
 );
 const losR0 = plan8De.slots.find((s) => s.slotKey === 'LOS-R0-M0');
 assert(losR0?.feederSlotAKey === 'MAIN-R0-M0', 'losers R0 fed by MAIN R0 losers');
 assert(losR0?.feederSlotBKey === 'MAIN-R0-M1', 'losers R0 pair');
+const losR1M0 = plan8De.slots.find((s) => s.slotKey === 'LOS-R1-M0');
+assert(losR1M0?.feederSlotAKey === 'LOS-R0-M0', 'losers R1 keeps earlier survivor');
+assert(losR1M0?.feederSlotBKey === 'MAIN-R1-M1', 'losers R1 receives crossed semifinal loser');
+const losR2 = plan8De.slots.find((s) => s.slotKey === 'LOS-R2-M0');
+assert(losR2?.feederSlotAKey === 'LOS-R1-M0', 'losers consolidation feeder A');
+assert(losR2?.feederSlotBKey === 'LOS-R1-M1', 'losers consolidation feeder B');
+const losersFinal = plan8De.slots.find((s) => s.slotKey === 'LOS-R3-M0');
+assert(losersFinal?.feederSlotAKey === 'LOS-R2-M0', 'losers final keeps lower-bracket survivor');
+assert(losersFinal?.feederSlotBKey === 'MAIN-R2-M0', 'losers final receives winners-final loser');
 const mainFinal = plan8De.slots.find((s) => s.slotKey === 'MAIN-R2-M0');
 assert(mainFinal?.winnerSlotKey === 'GRAND-FINAL-M0', 'main final feeds grand final');
 const gf = plan8De.slots.find((s) => s.slotKey === 'GRAND-FINAL-M0');
 assert(gf?.feederSlotAKey === 'MAIN-R2-M0', 'GF fed by winners final');
-assert(gf?.feederSlotBKey === 'LOS-R1-M0', 'GF fed by losers champion');
+assert(gf?.feederSlotBKey === 'LOS-R3-M0', 'GF fed by losers champion');
+assert(gf?.winnerSlotKey === 'GRAND-FINAL-M1', 'GF feeds conditional reset');
+const reset = plan8De.slots.find((s) => s.slotKey === 'GRAND-FINAL-M1');
+assert(reset?.feederSlotAKey === 'GRAND-FINAL-M0', 'reset waits for first grand final');
+assert(reset?.feederSlotBKey === 'GRAND-FINAL-M0', 'reset reuses both grand-final contestants');
 assert(!plan8De.initialGameSlotKeys.some((k) => k.startsWith('LOS-')), 'losers games lazy');
 assert(!plan8De.initialGameSlotKeys.includes('GRAND-FINAL-M0'), 'grand final game lazy');
 
 const plan2De = buildBracketPlan(2, ['p1', 'p2'], { includeDoubleElimination: true });
 assert(!plan2De.includeDoubleElimination, 'N=2 cannot enable double elim');
+
+for (let n = 4; n <= 16; n++) {
+  const bracketSize = Math.pow(2, Math.ceil(Math.log2(n)));
+  const hasPlayIn = n < bracketSize;
+  const mainSize = hasPlayIn ? bracketSize / 2 : bracketSize;
+  const plan = buildBracketPlan(
+    n,
+    Array.from({ length: n }, (_, i) => `p${i + 1}`),
+    { includeDoubleElimination: true }
+  );
+  if (mainSize < 4) continue;
+  assert(plan.includeDoubleElimination, `N=${n} enables double elimination`);
+  assert(
+    plan.slots.filter((s) => s.slotKind === BracketSlotKind.LOSERS).length === mainSize - 2,
+    `N=${n} losers bracket has mainSize-2 games`
+  );
+  assert(
+    plan.slots.filter((s) => s.slotKind === BracketSlotKind.GRAND_FINAL).length === 2,
+    `N=${n} has grand final and reset`
+  );
+  const slotKeys = new Set(plan.slots.map((s) => s.slotKey));
+  const losersSlots = plan.slots.filter((s) => s.slotKind === BracketSlotKind.LOSERS);
+  const mainLoserFeeders = losersSlots.flatMap((s) => [s.feederSlotAKey, s.feederSlotBKey]);
+  for (const mainSlot of plan.slots.filter((s) => s.slotKind === BracketSlotKind.MAIN)) {
+    assert(
+      mainLoserFeeders.filter((key) => key === mainSlot.slotKey).length === 1,
+      `N=${n} every winners-bracket loser enters the losers bracket exactly once`
+    );
+  }
+  const missingFeeders = plan.slots
+    .flatMap((s) => [s.feederSlotAKey, s.feederSlotBKey])
+    .filter((key): key is string => Boolean(key))
+    .filter((key) => !slotKeys.has(key));
+  assert(missingFeeders.length === 0, `N=${n} double elimination has no dangling feeders`);
+}
 
 let mutualThrew = false;
 try {
@@ -113,6 +161,17 @@ try {
   mutualThrew = true;
 }
 assert(mutualThrew, 'reject consolation + double elim together');
+
+let thirdPlaceDoubleElimThrew = false;
+try {
+  buildBracketPlan(8, Array.from({ length: 8 }, (_, i) => `p${i + 1}`), {
+    includeThirdPlace: true,
+    includeDoubleElimination: true,
+  });
+} catch {
+  thirdPlaceDoubleElimThrew = true;
+}
+assert(thirdPlaceDoubleElimThrew, 'reject third place + double elim together');
 
 const plan7Bye = buildBracketPlan(7, Array.from({ length: 7 }, (_, i) => `p${i + 1}`), {
   byeSeedRanks: [3],
@@ -135,6 +194,15 @@ const plan7MissingFeeders = plan7Bye.slots
   .filter((key): key is string => Boolean(key))
   .filter((key) => !plan7Bye.slots.some((s) => s.slotKey === key));
 assert(plan7MissingFeeders.length === 0, 'custom bye N=7 main feeders all exist');
+const plan7AllMissingFeeders = plan7Bye.slots
+  .flatMap((s) => [s.feederSlotAKey, s.feederSlotBKey])
+  .filter((key): key is string => Boolean(key))
+  .filter((key) => !plan7Bye.slots.some((s) => s.slotKey === key));
+assert(plan7AllMissingFeeders.length === 0, 'custom bye N=7 has no dangling feeder');
+assert(
+  plan7Bye.slots.filter((s) => s.slotKind === BracketSlotKind.MAIN).length === 3,
+  'custom bye N=7 has two semifinals and one final'
+);
 
 let threw = false;
 try {

@@ -186,6 +186,41 @@ function snapshotShape(vm: BracketViewModel) {
 }
 
 describe('buildBracketViewModel', () => {
+  it('hides an unused reset final after the winners-bracket champion closes GF1', () => {
+    const base = eightTeamPartialGroup();
+    const group: BracketPlayoffGroupDto = {
+      ...base,
+      championParticipantId: 'p-win',
+      includeDoubleElimination: true,
+      slots: [
+        ...base.slots,
+        slot({
+          id: 'gf1',
+          slotKind: 'GRAND_FINAL',
+          roundIndex: 0,
+          roundLabel: 'Grand final',
+        }),
+        slot({
+          id: 'gf-reset',
+          slotKind: 'GRAND_FINAL',
+          roundIndex: 1,
+          roundLabel: 'Grand final reset',
+          feederSlotAId: 'gf1',
+          feederSlotBId: 'gf1',
+        }),
+      ],
+    };
+
+    const vm = buildBracketViewModel({
+      group,
+      locale: 'en',
+      translate,
+      treeTab: 'grand',
+    });
+
+    expect(vm.columns.flatMap((column) => column.slots.map((item) => item.id))).toEqual(['gf1']);
+  });
+
   it('maps fixture API payload to stable view model shape', () => {
     const group = eightTeamPartialGroup();
     const vm = buildBracketViewModel({

@@ -23,6 +23,24 @@ export function firstMainRoundPairingsForPlan(plan: BracketPlan): Array<[number,
   return standardFirstRoundPairings(pairingSize);
 }
 
+export type FirstMainRoundFeeder =
+  | { kind: 'SEED'; seed: number }
+  | { kind: 'PLAY_IN_WINNER'; matchIndex: number };
+
+export function firstMainRoundFeederForVirtualSeed(
+  plan: BracketPlan,
+  virtualSeed: number
+): FirstMainRoundFeeder {
+  if (plan.playInGameCount === 0) return { kind: 'SEED', seed: virtualSeed };
+  if (virtualSeed <= plan.byeSeeds.length) {
+    return { kind: 'SEED', seed: plan.byeSeeds[virtualSeed - 1]! };
+  }
+  return {
+    kind: 'PLAY_IN_WINNER',
+    matchIndex: virtualSeed - plan.byeSeeds.length - 1,
+  };
+}
+
 export function feederMatchLabelsForRound(
   plan: BracketPlan,
   roundIndex: number,

@@ -35,13 +35,13 @@ describe('getBracketStructureMetrics', () => {
     firstMain: string;
     playInPairs?: Array<[number, number]>;
   }> = [
-    { n: 5, bracketSize: 8, byeCount: 3, playInGameCount: 1, firstMain: 'quarterfinals', playInPairs: [[4, 5]] },
-    { n: 6, bracketSize: 8, byeCount: 2, playInGameCount: 2, firstMain: 'quarterfinals', playInPairs: [[3, 6], [4, 5]] },
-    { n: 7, bracketSize: 8, byeCount: 1, playInGameCount: 3, firstMain: 'quarterfinals', playInPairs: [[2, 7], [3, 6], [4, 5]] },
+    { n: 5, bracketSize: 8, byeCount: 3, playInGameCount: 1, firstMain: 'semifinals', playInPairs: [[4, 5]] },
+    { n: 6, bracketSize: 8, byeCount: 2, playInGameCount: 2, firstMain: 'semifinals', playInPairs: [[3, 6], [4, 5]] },
+    { n: 7, bracketSize: 8, byeCount: 1, playInGameCount: 3, firstMain: 'semifinals', playInPairs: [[2, 7], [3, 6], [4, 5]] },
     { n: 8, bracketSize: 8, byeCount: 0, playInGameCount: 0, firstMain: 'quarterfinals' },
-    { n: 9, bracketSize: 16, byeCount: 7, playInGameCount: 1, firstMain: 'roundOf16', playInPairs: [[8, 9]] },
-    { n: 10, bracketSize: 16, byeCount: 6, playInGameCount: 2, firstMain: 'roundOf16', playInPairs: [[7, 10], [8, 9]] },
-    { n: 11, bracketSize: 16, byeCount: 5, playInGameCount: 3, firstMain: 'roundOf16', playInPairs: [[6, 11], [7, 10], [8, 9]] },
+    { n: 9, bracketSize: 16, byeCount: 7, playInGameCount: 1, firstMain: 'quarterfinals', playInPairs: [[8, 9]] },
+    { n: 10, bracketSize: 16, byeCount: 6, playInGameCount: 2, firstMain: 'quarterfinals', playInPairs: [[7, 10], [8, 9]] },
+    { n: 11, bracketSize: 16, byeCount: 5, playInGameCount: 3, firstMain: 'quarterfinals', playInPairs: [[6, 11], [7, 10], [8, 9]] },
     { n: 2, bracketSize: 2, byeCount: 0, playInGameCount: 0, firstMain: 'final' },
     { n: 4, bracketSize: 4, byeCount: 0, playInGameCount: 0, firstMain: 'semifinals' },
   ];

@@ -1379,15 +1379,21 @@ export const PlayoffConfigurationModal = ({
                         setPhase4FlagForGroup(prev, selectedGroupId, value)
                       )
                     }
-                    onCopyThirdPlaceToOtherGroups={() =>
+                    onCopyThirdPlaceToOtherGroups={() => {
+                      const groupIds = thirdPlaceEligibleGroups.map((g) => g.id);
+                      const value = getPhase4FlagForGroup(
+                        includeThirdPlaceByGroup,
+                        selectedGroupId
+                      );
                       setIncludeThirdPlaceByGroup((prev) =>
-                        copyPhase4FlagToGroups(
-                          prev,
-                          thirdPlaceEligibleGroups.map((g) => g.id),
-                          getPhase4FlagForGroup(prev, selectedGroupId)
-                        )
-                      )
-                    }
+                        copyPhase4FlagToGroups(prev, groupIds, value)
+                      );
+                      if (value) {
+                        setIncludeDoubleEliminationByGroup((prev) =>
+                          copyPhase4FlagToGroups(prev, groupIds, false)
+                        );
+                      }
+                    }}
                     includeConsolationBracket={getPhase4FlagForGroup(
                       includeConsolationBracketByGroup,
                       selectedGroupId
@@ -1443,6 +1449,11 @@ export const PlayoffConfigurationModal = ({
                       });
                       setIncludeDoubleEliminationByGroup(next.targetMap);
                       setIncludeConsolationBracketByGroup(next.opposingMap);
+                      if (value) {
+                        setIncludeThirdPlaceByGroup((prev) =>
+                          copyPhase4FlagToGroups(prev, groupIds, false)
+                        );
+                      }
                     }}
                     customByeEnabled={customByeEnabledByGroup[selectedGroupId] ?? false}
                     onCustomByeEnabledChange={(enabled) =>
@@ -1490,14 +1501,12 @@ export const PlayoffConfigurationModal = ({
                 plan={crossPreviewPlan}
                 standingsById={standingsById}
                 includeThirdPlace={crossIncludeThirdPlace}
+                includeConsolationBracket={crossIncludeConsolationBracket}
+                includeDoubleElimination={crossIncludeDoubleElimination}
                 qualifierLabels={crossQualifierLabels}
                 playersPerMatch={seasonGame?.playersPerMatch}
                 reorderable
                 onPlanChange={(next) => setCrossPreviewOrderedIds(next.orderedParticipantIds)}
-              />
-              <BracketPlayoffConfirmOptions
-                includeConsolationBracket={crossIncludeConsolationBracket}
-                includeDoubleElimination={crossIncludeDoubleElimination}
               />
             </div>
           )}
@@ -1535,6 +1544,14 @@ export const PlayoffConfigurationModal = ({
                       plan={plan}
                       standingsById={standingsById}
                       includeThirdPlace={getPhase4FlagForGroup(includeThirdPlaceByGroup, g.id)}
+                      includeConsolationBracket={getPhase4FlagForGroup(
+                        includeConsolationBracketByGroup,
+                        g.id
+                      )}
+                      includeDoubleElimination={getPhase4FlagForGroup(
+                        includeDoubleEliminationByGroup,
+                        g.id
+                      )}
                       groupColor={g.color}
                       playersPerMatch={seasonGame?.playersPerMatch}
                       reorderable
@@ -1544,16 +1561,6 @@ export const PlayoffConfigurationModal = ({
                           [g.id]: next.orderedParticipantIds,
                         }))
                       }
-                    />
-                    <BracketPlayoffConfirmOptions
-                      includeConsolationBracket={getPhase4FlagForGroup(
-                        includeConsolationBracketByGroup,
-                        g.id
-                      )}
-                      includeDoubleElimination={getPhase4FlagForGroup(
-                        includeDoubleEliminationByGroup,
-                        g.id
-                      )}
                     />
                   </div>
                 );

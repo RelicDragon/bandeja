@@ -54,4 +54,39 @@ describe('BracketPlayoffPreview', () => {
 
     expect(html).not.toContain('Third place');
   });
+
+  it('renders the consolation bracket matches', () => {
+    const eightTeamPlan = buildBracketPlan(8, ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']);
+    const html = renderToStaticMarkup(
+      <BracketPlayoffPreview
+        plan={eightTeamPlan}
+        standingsById={standingsById}
+        includeConsolationBracket
+      />
+    );
+
+    expect(html).toContain('Consolation bracket');
+    expect(html).toContain('Loser QF1');
+    expect(html).toContain('Consolation final');
+  });
+
+  it('renders every losers round, grand final, and reset final', () => {
+    const eightTeamPlan = buildBracketPlan(8, ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']);
+    const html = renderToStaticMarkup(
+      <BracketPlayoffPreview
+        plan={eightTeamPlan}
+        standingsById={standingsById}
+        includeDoubleElimination
+      />
+    );
+
+    expect(html).toContain('Losers bracket');
+    expect(html).toContain('Loser QF1');
+    expect(html).toContain('Loser SF2');
+    expect(html).toContain('Loser F');
+    expect(html).toContain('Grand final');
+    expect(html).toContain('Reset final if required');
+    expect(html).toContain('Winner GF1');
+    expect(html).toContain('Loser GF1');
+  });
 });

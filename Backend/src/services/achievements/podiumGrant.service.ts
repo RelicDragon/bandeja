@@ -707,10 +707,40 @@ async function resolveBracketPodiumParticipantIds(
     });
     if (slots.length === 0) continue;
 
-    const grandFinalSlot = slots.find((s) => s.slotKind === BracketSlotKind.GRAND_FINAL);
-    const finalSlot =
-      grandFinalSlot ??
-      slots.find((s) => s.slotKind === BracketSlotKind.MAIN && s.winnerSlotId == null);
+    const grandFinalSlots = slots
+      .filter((s) => s.slotKind === BracketSlotKind.GRAND_FINAL)
+      .sort((a, b) => b.roundIndex - a.roundIndex);
+    const legacyGrandFinal =
+      grandFinalSlots.length === 1 &&
+      grandFinalSlots[0]?.game?.resultsStatus === ResultsStatus.FINAL
+        ? grandFinalSlots[0]
+        : undefined;
+    const completedReset = grandFinalSlots.find(
+      (s) => s.roundIndex > 0 && s.game?.resultsStatus === ResultsStatus.FINAL
+    );
+    const firstGrandFinal = grandFinalSlots.find((s) => s.roundIndex === 0);
+    let finalSlot = legacyGrandFinal ?? completedReset;
+    if (
+      !finalSlot &&
+      firstGrandFinal?.gameId &&
+      firstGrandFinal.game?.resultsStatus === ResultsStatus.FINAL
+    ) {
+      const winnersFinal = slots.find((s) => s.id === firstGrandFinal.feederSlotAId);
+      const [grandFinalWinner, winnersChampion] = await Promise.all([
+        resolveParticipantIdFromFinalGame(db, firstGrandFinal.gameId, 'winner'),
+        winnersFinal?.gameId
+          ? resolveParticipantIdFromFinalGame(db, winnersFinal.gameId, 'winner')
+          : Promise.resolve(null),
+      ]);
+      if (grandFinalWinner && grandFinalWinner === winnersChampion) {
+        finalSlot = firstGrandFinal;
+      }
+    }
+    if (grandFinalSlots.length === 0) {
+      finalSlot = slots.find(
+        (s) => s.slotKind === BracketSlotKind.MAIN && s.winnerSlotId == null
+      );
+    }
     const thirdSlot = slots.find((s) => s.slotKind === BracketSlotKind.THIRD_PLACE);
 
     let championParticipantId: string | null = null;

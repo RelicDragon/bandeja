@@ -205,10 +205,14 @@ export interface BracketRoundConfigDto {
   unequalK?: boolean;
   teamsPerGroup?: TeamsPerGroupEntryDto[];
   includedGroupIds?: string[];
+  globalParticipantIds?: string[];
+  seedingPreset?: CrossGroupSeedingPreset;
+  qualifiers?: Record<string, { participantIds: string[] }>;
   includeThirdPlace?: boolean;
   includeConsolationBracket?: boolean;
   includeDoubleElimination?: boolean;
   customByeSeedRanks?: number[];
+  gameSetup?: GameSetupParams;
 }
 
 export interface NotifyBracketSummaryRequest {

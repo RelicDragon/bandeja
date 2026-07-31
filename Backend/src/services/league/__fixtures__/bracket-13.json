@@ -9,7 +9,7 @@
   "slotCounts": {
     "PLAY_IN": 5,
     "BYE": 3,
-    "MAIN": 8,
+    "MAIN": 7,
     "THIRD_PLACE": 0,
     "CONSOLATION": 0,
     "LOSERS": 0,
@@ -73,7 +73,7 @@
       "winnerSlotKey": "MAIN-R1-M0",
       "feederSlotAKey": "BYE-S1",
       "feederSlotBKey": "PI-M4",
-      "roundLabel": "Round of 16",
+      "roundLabel": "Quarterfinals",
       "initialGame": false
     },
     {
@@ -88,7 +88,7 @@
       "winnerSlotKey": "MAIN-R1-M0",
       "feederSlotAKey": "PI-M0",
       "feederSlotBKey": "PI-M1",
-      "roundLabel": "Round of 16",
+      "roundLabel": "Quarterfinals",
       "initialGame": false
     },
     {
@@ -103,7 +103,7 @@
       "winnerSlotKey": "MAIN-R1-M1",
       "feederSlotAKey": "BYE-S2",
       "feederSlotBKey": "PI-M3",
-      "roundLabel": "Round of 16",
+      "roundLabel": "Quarterfinals",
       "initialGame": false
     },
     {
@@ -118,7 +118,7 @@
       "winnerSlotKey": "MAIN-R1-M1",
       "feederSlotAKey": "BYE-S3",
       "feederSlotBKey": "PI-M2",
-      "roundLabel": "Round of 16",
+      "roundLabel": "Quarterfinals",
       "initialGame": false
     },
     {
@@ -133,7 +133,7 @@
       "winnerSlotKey": "MAIN-R2-M0",
       "feederSlotAKey": "MAIN-R0-M0",
       "feederSlotBKey": "MAIN-R0-M1",
-      "roundLabel": "Quarterfinals",
+      "roundLabel": "Semifinals",
       "initialGame": false
     },
     {
@@ -148,7 +148,7 @@
       "winnerSlotKey": "MAIN-R2-M0",
       "feederSlotAKey": "MAIN-R0-M2",
       "feederSlotBKey": "MAIN-R0-M3",
-      "roundLabel": "Quarterfinals",
+      "roundLabel": "Semifinals",
       "initialGame": false
     },
     {
@@ -160,24 +160,9 @@
       "seedRank": null,
       "seedRankA": null,
       "seedRankB": null,
-      "winnerSlotKey": "MAIN-R3-M0",
+      "winnerSlotKey": null,
       "feederSlotAKey": "MAIN-R1-M0",
       "feederSlotBKey": "MAIN-R1-M1",
-      "roundLabel": "Semifinals",
-      "initialGame": false
-    },
-    {
-      "slotKey": "MAIN-R3-M0",
-      "slotKind": "MAIN",
-      "phaseIndex": 1,
-      "roundIndex": 3,
-      "matchIndex": 0,
-      "seedRank": null,
-      "seedRankA": null,
-      "seedRankB": null,
-      "winnerSlotKey": null,
-      "feederSlotAKey": "MAIN-R2-M0",
-      "feederSlotBKey": "MAIN-R2-M1",
       "roundLabel": "Final",
       "initialGame": false
     },

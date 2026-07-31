@@ -18,8 +18,6 @@ import {
   BracketPlan,
   consolationRoundLabel,
   CustomPlayInPairing,
-  losersRoundLabel,
-  mainFirstRoundPairings,
   mainRoundLabel,
   validateByeSeedRanks,
 } from './bracketStructure';
@@ -30,6 +28,8 @@ import {
 } from './gameCreation.util';
 import { BracketAdvancementService } from './bracketAdvancement.service';
 import { BracketGameNotificationService } from './bracketGameNotification.service';
+import { hasDuplicateBracketSlotSideUpdates } from './bracketSlotPatch.util';
+import { resolveCrossGroupBracketPlanOptions } from './bracketCrossGroupOptions.util';
 import {
   assertEditablePhase,
   hasBlockingDownstreamMainFinal,
@@ -99,10 +99,20 @@ function bracketPlanOptionsFromPayload(
     customPlayInPairings?: CustomPlayInPairing[];
   }
 ) {
+  if (opts?.includeDoubleElimination && opts.includeThirdPlace) {
+    throw new ApiError(400, 'Third-place match and double elimination are mutually exclusive');
+  }
+  if (opts?.includeDoubleElimination && opts.includeConsolationBracket) {
+    throw new ApiError(400, 'Consolation bracket and double elimination are mutually exclusive');
+  }
   const bracketSize = Math.pow(2, Math.ceil(Math.log2(entrantCount)));
   const byes = bracketSize - entrantCount;
   if (opts?.customByeSeedRanks?.length) {
-    validateByeSeedRanks(opts.customByeSeedRanks, entrantCount, byes);
+    try {
+      validateByeSeedRanks(opts.customByeSeedRanks, entrantCount, byes);
+    } catch (error) {
+      throw new ApiError(400, error instanceof Error ? error.message : 'Invalid custom byes');
+    }
   }
   if (
     !opts?.includeThirdPlace &&
@@ -120,6 +130,22 @@ function bracketPlanOptionsFromPayload(
     byeSeedRanks: opts.customByeSeedRanks,
     customPlayInPairings: opts.customPlayInPairings,
   };
+}
+
+function buildBracketPlanForRequest(
+  entrantCount: number,
+  participantIds: string[],
+  options: ReturnType<typeof bracketPlanOptionsFromPayload>
+): BracketPlan {
+  try {
+    return buildBracketPlan(entrantCount, participantIds, options);
+  } catch (error) {
+    if (error instanceof ApiError) throw error;
+    throw new ApiError(
+      400,
+      error instanceof Error ? error.message : 'Invalid bracket configuration'
+    );
+  }
 }
 
 type BracketGroupConfigEntry = {
@@ -362,7 +388,11 @@ export class BracketPlayoffService {
           g.customPlayInPairings ??
           (groups.length === 1 ? payload.customPlayInPairings : undefined),
       };
-      const plan = buildBracketPlan(n, g.participantIds, bracketPlanOptionsFromPayload(n, planOpts));
+      const plan = buildBracketPlanForRequest(
+        n,
+        g.participantIds,
+        bracketPlanOptionsFromPayload(n, planOpts)
+      );
       bracketConfig[g.leagueGroupId] = {
         participantIds: g.participantIds,
         entrantCount: plan.entrantCount,
@@ -624,18 +654,13 @@ export class BracketPlayoffService {
       throw new ApiError(404, 'League season game not found');
     }
 
-    const plan = buildBracketPlan(
+    const plan = buildBracketPlanForRequest(
       globalParticipantIds.length,
       globalParticipantIds,
-      bracketPlanOptionsFromPayload(globalParticipantIds.length, {
-        includeThirdPlace: crossGroup.includeThirdPlace ?? payload.includeThirdPlace,
-        includeConsolationBracket:
-          crossGroup.includeConsolationBracket ?? payload.includeConsolationBracket,
-        includeDoubleElimination:
-          crossGroup.includeDoubleElimination ?? payload.includeDoubleElimination,
-        customByeSeedRanks: crossGroup.customByeSeedRanks ?? payload.customByeSeedRanks,
-        customPlayInPairings: crossGroup.customPlayInPairings ?? payload.customPlayInPairings,
-      })
+      bracketPlanOptionsFromPayload(
+        globalParticipantIds.length,
+        resolveCrossGroupBracketPlanOptions(crossGroup, payload)
+      )
     );
     const maxK = Math.max(...includedGroupIds.map((gid) => qualifiers[gid]?.length ?? 0));
     const bracketConfig: BracketConfigShape = {
@@ -898,23 +923,10 @@ export class BracketPlayoffService {
           : (configEntry?.bracketSize ?? round.bracketSize);
         const byeCount = isCross ? round.byeCount : (configEntry?.byeCount ?? round.byeCount);
         const playInGameCount = slots.filter((s) => s.slotKind === BracketSlotKind.PLAY_IN).length;
-        const grandFinalSlot = slots.find((s) => s.slotKind === BracketSlotKind.GRAND_FINAL);
-        const finalSlot =
-          grandFinalSlot ??
-          slots.find((s) => s.slotKind === BracketSlotKind.MAIN && s.winnerSlotId == null);
-        let championParticipantId: string | undefined;
-        let finalistParticipantId: string | undefined;
+        const championship = await BracketAdvancementService.resolveChampionshipFromSlots(slots);
+        const championParticipantId = championship.championParticipantId ?? undefined;
+        const finalistParticipantId = championship.finalistParticipantId ?? undefined;
         let thirdPlaceParticipantId: string | undefined;
-        if (finalSlot?.gameId && finalSlot.game?.resultsStatus === 'FINAL') {
-          const champ = await BracketAdvancementService.resolveWinnerParticipantIdFromGame(
-            finalSlot.gameId
-          );
-          championParticipantId = champ ?? undefined;
-          const finalist = await BracketAdvancementService.resolveLoserParticipantIdFromGame(
-            finalSlot.gameId
-          );
-          finalistParticipantId = finalist ?? undefined;
-        }
         const thirdSlot = slots.find((s) => s.slotKind === BracketSlotKind.THIRD_PLACE);
         if (thirdSlot?.gameId && thirdSlot.game?.resultsStatus === 'FINAL') {
           const third = await BracketAdvancementService.resolveWinnerParticipantIdFromGame(
@@ -1061,14 +1073,27 @@ export class BracketPlayoffService {
       throw new ApiError(404, 'Bracket playoff round not found');
     }
 
-    const slotSideKeys = new Set(updates.map((u) => `${u.slotId}:${u.side ?? '_'}`));
-    if (slotSideKeys.size !== updates.length) {
+    const slotIds = new Set(updates.map((u) => u.slotId));
+    if (hasDuplicateBracketSlotSideUpdates(updates)) {
       throw new ApiError(400, 'Duplicate slotId/side in slots');
     }
 
     const gameIds = new Set(gameTeamUpdates.map((g) => g.gameId));
     if (gameIds.size !== gameTeamUpdates.length) {
       throw new ApiError(400, 'Duplicate gameId in gameTeamUpdates');
+    }
+    const sideUpdatedSlotIds = new Set(
+      updates.filter((update) => update.side).map((update) => update.slotId)
+    );
+    if (
+      round.bracketSlots.some(
+        (slot) =>
+          sideUpdatedSlotIds.has(slot.id) &&
+          slot.gameId &&
+          gameIds.has(slot.gameId)
+      )
+    ) {
+      throw new ApiError(400, 'Use either slots or gameTeamUpdates for each bracket game');
     }
 
     const config = round.bracketConfig as BracketConfigShape | null;
@@ -1079,11 +1104,23 @@ export class BracketPlayoffService {
       ...(config?.groups ?? {}),
     };
     let globalParticipantIds = [...(config?.globalParticipantIds ?? [])];
+    const originalGlobalParticipantIds = [...globalParticipantIds];
+    const originalParticipantIdsByGroup = Object.fromEntries(
+      Object.entries(configGroups).map(([groupId, entry]) => [
+        groupId,
+        [...entry.participantIds],
+      ])
+    );
 
     const poolForSlot = (slot: { leagueGroupId: string | null }): string[] => {
       if (isCross) return globalParticipantIds;
       if (!slot.leagueGroupId) return [];
       return configGroups[slot.leagueGroupId]?.participantIds ?? [];
+    };
+    const originalPoolForSlot = (slot: { leagueGroupId: string | null }): string[] => {
+      if (isCross) return originalGlobalParticipantIds;
+      if (!slot.leagueGroupId) return [];
+      return originalParticipantIdsByGroup[slot.leagueGroupId] ?? [];
     };
 
     const treeKey = (slot: { leagueGroupId: string | null }): string | null =>
@@ -1091,6 +1128,22 @@ export class BracketPlayoffService {
 
     const createdGameIds: string[] = [];
     await prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`
+        SELECT "id"
+        FROM "LeagueRound"
+        WHERE "id" = ${round.id}
+        FOR UPDATE
+      `;
+      const lockedRound = await tx.leagueRound.findUnique({
+        where: { id: round.id },
+        select: { bracketConfig: true },
+      });
+      if (
+        JSON.stringify(lockedRound?.bracketConfig ?? null) !==
+        JSON.stringify(round.bracketConfig ?? null)
+      ) {
+        throw new ApiError(409, 'Bracket changed while editing; reload and try again');
+      }
       const slots =
         updates.length > 0
           ? await tx.leagueBracketSlot.findMany({
@@ -1110,11 +1163,26 @@ export class BracketPlayoffService {
         list.push(s);
         slotsByTree.set(key, list);
       }
+      const originalSideParticipants = new Map<string, string>();
+      for (const slot of slots.filter((candidate) =>
+        updates.some((update) => update.slotId === candidate.id && update.side)
+      )) {
+        if (!slot.gameId) {
+          throw new ApiError(400, 'Side assignment requires an existing bracket game');
+        }
+        const participantIds =
+          await BracketAdvancementService.participantIdsFromGame(slot.gameId, tx);
+        if (participantIds.length !== 2) {
+          throw new ApiError(400, 'Cannot determine current bracket match participants');
+        }
+        originalSideParticipants.set(`${slot.id}:A`, participantIds[0]!);
+        originalSideParticipants.set(`${slot.id}:B`, participantIds[1]!);
+      }
 
       for (const update of updates) {
         const slot = slots.find((s) => s.id === update.slotId)!;
         const groupSlots = slotsByTree.get(treeKey(slot)) ?? [];
-        const pool = poolForSlot(slot);
+        const pool = originalPoolForSlot(slot);
         const poolSet = new Set(pool);
 
         try {
@@ -1158,25 +1226,6 @@ export class BracketPlayoffService {
             after: { leagueParticipantId: update.leagueParticipantId, side: update.side },
           });
 
-          const byeSource = groupSlots.find(
-            (s) =>
-              s.slotKind === BracketSlotKind.BYE &&
-              s.leagueParticipantId === update.leagueParticipantId
-          );
-          if (byeSource) {
-            await BracketAdvancementService.cascadeClearDescendants(
-              byeSource.id,
-              round.id,
-              treeKey(slot),
-              tx,
-              { excludeSlotIds: new Set([byeSource.id]) }
-            );
-            await tx.leagueBracketSlot.update({
-              where: { id: byeSource.id },
-              data: { leagueParticipantId: null },
-            });
-          }
-
           await BracketAdvancementService.cascadeClearDescendants(
             slot.id,
             round.id,
@@ -1190,6 +1239,28 @@ export class BracketPlayoffService {
             update.leagueParticipantId,
             tx
           );
+          const originalParticipantId = originalSideParticipants.get(
+            `${slot.id}:${update.side}`
+          );
+          const originalOrder = originalPoolForSlot(slot);
+          const destinationIndex = originalParticipantId
+            ? originalOrder.indexOf(originalParticipantId)
+            : -1;
+          if (destinationIndex < 0) {
+            throw new ApiError(400, 'Current match participant is missing from bracket order');
+          }
+          const order = isCross
+            ? [...globalParticipantIds]
+            : [...poolForSlot(slot)];
+          order[destinationIndex] = update.leagueParticipantId;
+          if (isCross) {
+            globalParticipantIds = order;
+          } else if (slot.leagueGroupId) {
+            configGroups[slot.leagueGroupId] = {
+              ...configGroups[slot.leagueGroupId],
+              participantIds: order,
+            };
+          }
           continue;
         }
 
@@ -1208,18 +1279,6 @@ export class BracketPlayoffService {
               ? 'Participant is not in the cross-group bracket pool'
               : 'Participant is not in the bracket pool for this group'
           );
-        }
-
-        if (slot.slotKind === BracketSlotKind.BYE && nextParticipantId) {
-          const otherBye = groupSlots.find(
-            (s) =>
-              s.slotKind === BracketSlotKind.BYE &&
-              s.id !== slot.id &&
-              s.leagueParticipantId === nextParticipantId
-          );
-          if (otherBye) {
-            throw new ApiError(400, 'Participant is already assigned to another bye slot');
-          }
         }
 
         if (hasBlockingDownstreamMainFinal(slot.id, slotsById(groupSlots))) {
@@ -1268,7 +1327,7 @@ export class BracketPlayoffService {
           throw new ApiError(400, 'gameId is not linked to a bracket slot in this round');
         }
         const groupSlots = slotsByTree.get(treeKey(slot)) ?? [];
-        const pool = poolForSlot(slot);
+        const pool = originalPoolForSlot(slot);
         const poolSet = new Set(pool);
 
         try {
@@ -1312,6 +1371,14 @@ export class BracketPlayoffService {
           },
         });
 
+        const currentGameParticipants =
+          await BracketAdvancementService.participantIdsFromGame(
+            gameUpdate.gameId,
+            tx
+          );
+        if (currentGameParticipants.length !== 2) {
+          throw new ApiError(400, 'Cannot determine current bracket match participants');
+        }
         await BracketAdvancementService.cascadeClearDescendants(
           slot.id,
           round.id,
@@ -1333,40 +1400,47 @@ export class BracketPlayoffService {
         );
 
         const entrantCount = pool.length;
-        const bracketSize =
-          isCross
-            ? (round.bracketSize ?? entrantCount)
-            : (configGroups[slot.leagueGroupId!]?.bracketSize ?? round.bracketSize ?? entrantCount);
         if (entrantCount >= 2) {
           const order = isCross ? [...globalParticipantIds] : [...pool];
-          if (slot.slotKind === BracketSlotKind.PLAY_IN) {
-            const plan = buildBracketPlan(entrantCount, order);
-            const piSlot = plan.slots.find((s) => s.slotKey === slot.slotKey);
-            if (piSlot?.seedRankA != null && piSlot.seedRankB != null) {
-              order[piSlot.seedRankA - 1] = gameUpdate.participantA;
-              order[piSlot.seedRankB - 1] = gameUpdate.participantB;
-              if (isCross) globalParticipantIds = order;
-              else if (slot.leagueGroupId) {
-                configGroups[slot.leagueGroupId] = {
-                  ...configGroups[slot.leagueGroupId],
-                  participantIds: order,
-                };
-              }
-            }
-          } else if (slot.slotKind === BracketSlotKind.MAIN && slot.roundIndex === 0) {
-            const seeds = planMainR0Seeds(bracketSize, slot, groupSlots);
-            if (seeds) {
-              order[seeds.seedA - 1] = gameUpdate.participantA;
-              order[seeds.seedB - 1] = gameUpdate.participantB;
-              if (isCross) globalParticipantIds = order;
-              else if (slot.leagueGroupId) {
-                configGroups[slot.leagueGroupId] = {
-                  ...configGroups[slot.leagueGroupId],
-                  participantIds: order,
-                };
-              }
+          const originalOrder = isCross
+            ? originalGlobalParticipantIds
+            : originalParticipantIdsByGroup[slot.leagueGroupId ?? ''] ?? [];
+          const sideAIndex = originalOrder.indexOf(currentGameParticipants[0]!);
+          const sideBIndex = originalOrder.indexOf(currentGameParticipants[1]!);
+          if (sideAIndex < 0 || sideBIndex < 0) {
+            throw new ApiError(400, 'Current match participants are missing from bracket order');
+          }
+          if (
+            slot.slotKind === BracketSlotKind.PLAY_IN ||
+            (slot.slotKind === BracketSlotKind.MAIN && slot.roundIndex === 0)
+          ) {
+            order[sideAIndex] = gameUpdate.participantA;
+            order[sideBIndex] = gameUpdate.participantB;
+            if (isCross) globalParticipantIds = order;
+            else if (slot.leagueGroupId) {
+              configGroups[slot.leagueGroupId] = {
+                ...configGroups[slot.leagueGroupId],
+                participantIds: order,
+              };
             }
           }
+        }
+      }
+
+      const assertPermutation = (current: string[], original: string[]): void => {
+        if (
+          current.length !== original.length ||
+          new Set(current).size !== current.length ||
+          current.some((participantId) => !original.includes(participantId))
+        ) {
+          throw new ApiError(400, 'Bracket team edits must preserve a complete participant order');
+        }
+      };
+      if (isCross) {
+        assertPermutation(globalParticipantIds, originalGlobalParticipantIds);
+      } else {
+        for (const [groupId, original] of Object.entries(originalParticipantIdsByGroup)) {
+          assertPermutation(configGroups[groupId]?.participantIds ?? [], original);
         }
       }
 
@@ -1452,23 +1526,6 @@ type BracketAuditEntry = {
   }>;
 };
 
-function planMainR0Seeds(
-  bracketSize: number,
-  slot: { slotKind: BracketSlotKind; roundIndex: number; matchIndex: number; id: string },
-  groupSlots: Array<{ slotKind: BracketSlotKind; roundIndex: number; matchIndex: number; id: string }>
-): { seedA: number; seedB: number } | null {
-  if (slot.slotKind !== BracketSlotKind.MAIN || slot.roundIndex !== 0) return null;
-  const mainR0 = groupSlots
-    .filter((s) => s.slotKind === BracketSlotKind.MAIN && s.roundIndex === 0)
-    .sort((a, b) => a.matchIndex - b.matchIndex);
-  const idx = mainR0.findIndex((s) => s.id === slot.id);
-  if (idx < 0) return null;
-  const pairings = mainFirstRoundPairings(bracketSize);
-  const pair = pairings[idx];
-  if (!pair) return null;
-  return { seedA: pair[0], seedB: pair[1] };
-}
-
 function roundLabelForSlot(slot: SlotRow, bracketSize: number, groupSlots?: SlotRow[]): string {
   if (slot.slotKind === BracketSlotKind.BYE) return 'Bye';
   if (slot.slotKind === BracketSlotKind.PLAY_IN) return 'Play-in';
@@ -1480,11 +1537,21 @@ function roundLabelForSlot(slot: SlotRow, bracketSize: number, groupSlots?: Slot
     return consolationRoundLabel(consR0 * 2, slot.roundIndex);
   }
   if (slot.slotKind === BracketSlotKind.LOSERS) {
-    const losR0 = (groupSlots ?? []).filter(
-      (s) => s.slotKind === BracketSlotKind.LOSERS && s.roundIndex === 0
-    ).length;
-    return losersRoundLabel(losR0 * 2, slot.roundIndex);
+    const maxLosersRound = Math.max(
+      ...(groupSlots ?? [])
+        .filter((s) => s.slotKind === BracketSlotKind.LOSERS)
+        .map((s) => s.roundIndex),
+      0
+    );
+    return slot.roundIndex === maxLosersRound
+      ? 'Losers final'
+      : `Losers round ${slot.roundIndex + 1}`;
   }
-  if (slot.slotKind === BracketSlotKind.GRAND_FINAL) return 'Grand final';
-  return mainRoundLabel(bracketSize, slot.roundIndex);
+  if (slot.slotKind === BracketSlotKind.GRAND_FINAL) {
+    return slot.roundIndex > 0 ? 'Grand final reset' : 'Grand final';
+  }
+  const mainR0Count = (groupSlots ?? []).filter(
+    (s) => s.slotKind === BracketSlotKind.MAIN && s.roundIndex === 0
+  ).length;
+  return mainRoundLabel(mainR0Count > 0 ? mainR0Count * 2 : bracketSize, slot.roundIndex);
 }

@@ -838,6 +838,8 @@ Frontend/e2e/
 | GD-138 | Championship walkover | Assign walkover on unfinished Final / third-place / grand final with both contestants | Match finalizes; champion/podium updates; no “no advancement target” error |
 | GD-139 | Ineligible advanced options cleared | Enable third place (or consolation) with enough entrants, then reduce selection below eligibility | Toggle disappears; summary/create payload no longer requests the ineligible option |
 | GD-140 | Bracket game setup blocks points winner | Bracket Game Setup → Customize → Ranking | Winner-by-points is unavailable; only deterministic match-winner options remain |
+| GD-141 | Complete double-elimination progression | Create an 8-team double-elimination playoff; finish winners and losers matches, making the losers-bracket champion win GF1 | Every winners-round loser enters the losers bracket after its first loss; GF1 creates a reset final only when the previously unbeaten team receives its first loss; the reset winner becomes champion |
+| GD-142 | Advanced bracket visual preview | Enable consolation or double elimination in per-group and cross-group creation; open Preview | Preview draws every consolation/losers round and grand final; double elimination also shows the conditional reset final; mutually exclusive options cannot remain enabled together |
 | GD-51 | Walkover / BYE handling | Set walkover | Bracket updates |
 | GD-52 | Club favorite toggle | Star on club in game info | Favorited state persists |
 | GD-53 | Club mini map | Game with geo | Map renders |

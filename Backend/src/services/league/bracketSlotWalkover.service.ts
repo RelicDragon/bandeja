@@ -50,8 +50,24 @@ export class BracketSlotWalkoverService {
       where: { id: slotId },
       include: {
         game: { select: { id: true, resultsStatus: true, parentId: true } },
-        feederSlotA: { select: { id: true, slotKind: true, leagueParticipantId: true, gameId: true } },
-        feederSlotB: { select: { id: true, slotKind: true, leagueParticipantId: true, gameId: true } },
+        feederSlotA: {
+          select: {
+            id: true,
+            slotKind: true,
+            leagueParticipantId: true,
+            gameId: true,
+            game: { select: { resultsStatus: true } },
+          },
+        },
+        feederSlotB: {
+          select: {
+            id: true,
+            slotKind: true,
+            leagueParticipantId: true,
+            gameId: true,
+            game: { select: { resultsStatus: true } },
+          },
+        },
         leagueRound: {
           select: {
             id: true,
@@ -83,6 +99,9 @@ export class BracketSlotWalkoverService {
     if (!slot.winnerSlotId && !slot.gameId && !isTerminalChampionship) {
       throw new ApiError(400, 'This slot has no advancement target');
     }
+    if (isTerminalChampionship && !slot.gameId) {
+      throw new ApiError(400, 'Championship contestants must be resolved before a walkover');
+    }
 
     const config = (slot.leagueRound.bracketConfig ?? {}) as BracketConfigShape;
     const isCross = slot.leagueRound.bracketScope === BracketScope.CROSS_GROUP;
@@ -98,13 +117,61 @@ export class BracketSlotWalkoverService {
 
     const createdGameIds: string[] = [];
     await prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`
+        SELECT "id"
+        FROM "LeagueBracketSlot"
+        WHERE "id" = ${slot.id}
+        FOR UPDATE
+      `;
+      if (slot.gameId) {
+        await tx.$queryRaw`
+          SELECT "id"
+          FROM "Game"
+          WHERE "id" = ${slot.gameId}
+          FOR UPDATE
+        `;
+        const lockedGame = await tx.game.findUnique({
+          where: { id: slot.gameId },
+          select: { resultsStatus: true },
+        });
+        if (lockedGame?.resultsStatus === ResultsStatus.FINAL) {
+          throw new ApiError(409, 'Match is already final');
+        }
+      }
       const eligible = await this.resolveEligibleWinners(slot, pool, tx);
       if (!eligible.includes(payload.leagueParticipantId)) {
         throw new ApiError(400, 'Winner must be a contestant in this bracket match');
       }
 
-      if (slot.gameId && slot.game?.resultsStatus === ResultsStatus.FINAL) {
-        throw new ApiError(409, 'Match is already final');
+      if (payload.skipGameFinal) {
+        const downstreamConsumers = await tx.leagueBracketSlot.findMany({
+          where: {
+            OR: [{ feederSlotAId: slot.id }, { feederSlotBId: slot.id }],
+          },
+          select: {
+            slotKind: true,
+            roundIndex: true,
+            feederSlotAId: true,
+            feederSlotBId: true,
+          },
+        });
+        const loserIsRequired = downstreamConsumers.some(
+          (consumer) =>
+            consumer.slotKind === BracketSlotKind.THIRD_PLACE ||
+            ((consumer.slotKind === BracketSlotKind.LOSERS ||
+              consumer.slotKind === BracketSlotKind.CONSOLATION) &&
+              slot.slotKind === BracketSlotKind.MAIN) ||
+            (consumer.slotKind === BracketSlotKind.GRAND_FINAL &&
+              consumer.roundIndex > 0 &&
+              consumer.feederSlotAId === slot.id &&
+              consumer.feederSlotBId === slot.id)
+        );
+        if (loserIsRequired) {
+          throw new ApiError(
+            400,
+            'Cannot skip the game final when both winner and loser feed later bracket matches'
+          );
+        }
       }
 
       if (slot.slotKind === BracketSlotKind.MAIN) {
@@ -127,6 +194,10 @@ export class BracketSlotWalkoverService {
         await syncParentSeasonPodiumIfFinal({ gameId: slot.gameId, tx });
       } else if (slot.winnerSlotId) {
         await tx.leagueBracketSlot.update({
+          where: { id: slot.id },
+          data: { leagueParticipantId: payload.leagueParticipantId },
+        });
+        await tx.leagueBracketSlot.update({
           where: { id: slot.winnerSlotId },
           data: { leagueParticipantId: payload.leagueParticipantId },
         });
@@ -136,17 +207,16 @@ export class BracketSlotWalkoverService {
           tx
         );
         createdGameIds.push(...ids);
-      } else if (isTerminalChampionship) {
-        const { BracketRoundSummaryService } = await import('./bracketRoundSummary.service');
-        void BracketRoundSummaryService.notifyChampionIfNeeded({
-          leagueRoundId: slot.leagueRoundId,
-          leagueGroupId: slot.leagueGroupId ?? null,
-          leagueSeasonId,
-        }).catch((err) => console.error('[BracketSummary] Failed after walkover:', err));
       }
     });
 
     BracketGameNotificationService.notifyCreatedGames(createdGameIds);
+    const { BracketRoundSummaryService } = await import('./bracketRoundSummary.service');
+    await BracketRoundSummaryService.notifyChampionIfNeeded({
+      leagueRoundId: slot.leagueRoundId,
+      leagueGroupId: slot.leagueGroupId ?? null,
+      leagueSeasonId,
+    }).catch((err) => console.error('[BracketSummary] Failed after committed walkover:', err));
 
     const round = await prisma.leagueRound.findFirst({
       where: {
@@ -173,15 +243,20 @@ export class BracketSlotWalkoverService {
       leagueGroupId: string | null;
       leagueRoundId: string;
       feederSlotA: {
+        id: string;
         slotKind: BracketSlotKind;
         leagueParticipantId: string | null;
         gameId: string | null;
+        game: { resultsStatus: ResultsStatus } | null;
       } | null;
       feederSlotB: {
+        id: string;
         slotKind: BracketSlotKind;
         leagueParticipantId: string | null;
         gameId: string | null;
+        game: { resultsStatus: ResultsStatus } | null;
       } | null;
+      roundIndex: number;
     },
     pool: string[],
     tx: Prisma.TransactionClient
@@ -192,18 +267,20 @@ export class BracketSlotWalkoverService {
     }
 
     const fromFeeders: string[] = [];
-    for (const feeder of [slot.feederSlotA, slot.feederSlotB]) {
+    for (const [index, feeder] of [slot.feederSlotA, slot.feederSlotB].entries()) {
       if (!feeder) continue;
-      if (feeder.slotKind === BracketSlotKind.BYE && feeder.leagueParticipantId) {
-        fromFeeders.push(feeder.leagueParticipantId);
-      } else if (feeder.gameId) {
-        const winner = await BracketAdvancementService.resolveWinnerParticipantIdFromGame(
-          feeder.gameId
-        );
-        if (winner) fromFeeders.push(winner);
-      } else if (feeder.leagueParticipantId) {
-        fromFeeders.push(feeder.leagueParticipantId);
-      }
+      const participant =
+        slot.slotKind === BracketSlotKind.GRAND_FINAL &&
+        slot.roundIndex > 0 &&
+        index === 0 &&
+        feeder.gameId
+          ? await BracketAdvancementService.resolveLoserParticipantId(feeder.gameId, tx)
+          : await BracketAdvancementService.participantIdFromFeeder(
+              feeder,
+              tx,
+              slot.slotKind
+            );
+      if (participant) fromFeeders.push(participant);
     }
     const unique = [...new Set(fromFeeders)].filter((id) => pool.includes(id));
     if (unique.length < 2) {

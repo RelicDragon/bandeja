@@ -170,30 +170,20 @@ export class BracketChampionStoryService {
     const seasonGame = round.leagueSeason?.game;
     if (!seasonGame?.isPublic) return;
 
-    const finalSlot = await prisma.leagueBracketSlot.findFirst({
+    const bracketSlots = await prisma.leagueBracketSlot.findMany({
       where: {
         leagueRoundId: params.leagueRoundId,
         leagueGroupId: params.leagueGroupId,
-        OR: [
-          {
-            slotKind: BracketSlotKind.GRAND_FINAL,
-            game: { resultsStatus: ResultsStatus.FINAL },
-          },
-          {
-            slotKind: BracketSlotKind.MAIN,
-            winnerSlotId: null,
-            game: { resultsStatus: ResultsStatus.FINAL },
-          },
-        ],
       },
-      include: { game: { select: { finishedDate: true } } },
+      include: {
+        game: { select: { resultsStatus: true, finishedDate: true } },
+      },
     });
-    if (!finalSlot?.gameId) return;
-
-    const championParticipantId = await BracketAdvancementService.resolveWinnerParticipantIdFromGame(
-      finalSlot.gameId
-    );
-    if (!championParticipantId) return;
+    const championship =
+      await BracketAdvancementService.resolveChampionshipFromSlots(bracketSlots);
+    const finalSlot = bracketSlots.find((slot) => slot.gameId === championship.finalGameId);
+    const championParticipantId = championship.championParticipantId;
+    if (!championParticipantId || !finalSlot) return;
 
     const sourceId = bracketChampionSourceId(params.leagueRoundId, params.leagueGroupId);
     const championTeamLabel = await resolveChampionTeamLabel(championParticipantId);
@@ -296,14 +286,38 @@ export class BracketChampionStoryService {
     });
 
     const raw: BracketChampionRawSegment[] = [];
+    const processedTrees = new Set<string>();
 
-    for (const slot of finalSlots) {
-      const seasonGame = slot.leagueRound.leagueSeason?.game;
-      if (!seasonGame?.isPublic || !slot.gameId) continue;
-
-      const championParticipantId = await BracketAdvancementService.resolveWinnerParticipantIdFromGame(
-        slot.gameId
+    for (const candidate of finalSlots) {
+      const treeKey = `${candidate.leagueRoundId}:${candidate.leagueGroupId ?? '__cross__'}`;
+      if (processedTrees.has(treeKey)) continue;
+      processedTrees.add(treeKey);
+      const treeSlots = await prisma.leagueBracketSlot.findMany({
+        where: {
+          leagueRoundId: candidate.leagueRoundId,
+          leagueGroupId: candidate.leagueGroupId,
+        },
+        include: {
+          game: { select: { resultsStatus: true, finishedDate: true } },
+        },
+      });
+      const championship =
+        await BracketAdvancementService.resolveChampionshipFromSlots(treeSlots);
+      const resolvedFinalSlot = treeSlots.find(
+        (row) => row.gameId === championship.finalGameId
       );
+      if (
+        !resolvedFinalSlot?.gameId ||
+        !resolvedFinalSlot.game?.finishedDate ||
+        resolvedFinalSlot.game.finishedDate < params.activitySince
+      ) {
+        continue;
+      }
+      const slot = candidate;
+      const seasonGame = slot.leagueRound.leagueSeason?.game;
+      if (!seasonGame?.isPublic) continue;
+
+      const championParticipantId = championship.championParticipantId;
       if (!championParticipantId) continue;
 
       const rosterIds = await rosterUserIds(championParticipantId);
@@ -326,7 +340,7 @@ export class BracketChampionStoryService {
 
       const sourceId = bracketChampionSourceId(slot.leagueRoundId, slot.leagueGroupId);
       const championLabel = await resolveChampionTeamLabel(championParticipantId);
-      const createdAt = slot.game?.finishedDate ?? new Date();
+      const createdAt = resolvedFinalSlot.game.finishedDate;
       const preview = storyGameBackdropUrl(seasonGame, params.viewer);
       const bracketScope: BracketScopeDto =
         slot.leagueRound.bracketScope === BracketScope.CROSS_GROUP ? 'CROSS_GROUP' : 'PER_GROUP';

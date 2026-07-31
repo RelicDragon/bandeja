@@ -14,7 +14,7 @@ import {
   hasDoubleEliminationSlots,
   participantDisplayName,
   resolveByeAdvanceRoundLabel,
-  resolveFeederParticipant,
+  resolveSlotFeederParticipant,
   resolveSlotSideParticipants,
   slotsById,
   teamUsersFromParticipant,
@@ -128,9 +128,9 @@ function buildSlotCardViews(
     if (slot.slotKind === 'BYE') continue;
 
     const sideAParticipant =
-      resolveFeederParticipant(slot.feederSlotAId, lookup) ??
+      resolveSlotFeederParticipant(slot, 'A', lookup) ??
       (slot.slotKind === 'PLAY_IN' ? null : slot.participant);
-    const sideBParticipant = resolveFeederParticipant(slot.feederSlotBId, lookup);
+    const sideBParticipant = resolveSlotFeederParticipant(slot, 'B', lookup);
     const { participantAId, participantBId } = resolveSlotSideParticipants(slot, lookup);
     const game = slot.game ?? null;
     const matchStatus = bracketMatchStatusFromGame(game);
@@ -236,7 +236,15 @@ export function buildBracketViewModel(input: BuildBracketViewModelInput): Bracke
     return { ...emptyViewModel(), group };
   }
 
-  const slots = group.slots;
+  const slots = group.slots.filter(
+    (slot) =>
+      !(
+        slot.slotKind === 'GRAND_FINAL' &&
+        slot.roundIndex > 0 &&
+        !slot.gameId &&
+        group.championParticipantId
+      )
+  );
   const showConsolationTab = hasConsolationSlots(slots);
   const showDoubleElimTabs = hasDoubleEliminationSlots(slots);
   const playInComplete = isPlayInPhaseComplete(group);

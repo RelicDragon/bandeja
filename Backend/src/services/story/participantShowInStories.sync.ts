@@ -304,11 +304,28 @@ async function forEachRecentSeasonChampionForUser(
     take: 50,
   });
 
-  for (const slot of slots) {
-    if (!slot.gameId) continue;
-    const championParticipantId = await BracketAdvancementService.resolveWinnerParticipantIdFromGame(
-      slot.gameId
+  const processedTrees = new Set<string>();
+  for (const candidate of slots) {
+    const treeKey = `${candidate.leagueRoundId}:${candidate.leagueGroupId ?? '__cross__'}`;
+    if (processedTrees.has(treeKey)) continue;
+    processedTrees.add(treeKey);
+    const treeSlots = await prisma.leagueBracketSlot.findMany({
+      where: {
+        leagueRoundId: candidate.leagueRoundId,
+        leagueGroupId: candidate.leagueGroupId,
+      },
+      include: {
+        game: { select: { resultsStatus: true, finishedDate: true } },
+      },
+    });
+    const championship =
+      await BracketAdvancementService.resolveChampionshipFromSlots(treeSlots);
+    const resolvedFinalSlot = treeSlots.find(
+      (row) => row.gameId === championship.finalGameId
     );
+    if (!resolvedFinalSlot?.gameId) continue;
+    const slot = candidate;
+    const championParticipantId = championship.championParticipantId;
     if (!championParticipantId) continue;
     const roster = await prisma.leagueParticipant.findUnique({
       where: { id: championParticipantId },
@@ -327,7 +344,7 @@ async function forEachRecentSeasonChampionForUser(
       leagueSeasonId: season.id,
       leagueName: season.league.name,
       championParticipantId,
-      finishedDate: slot.game?.finishedDate ?? null,
+      finishedDate: resolvedFinalSlot.game?.finishedDate ?? null,
       bracketScope: slot.leagueRound.bracketScope,
       seasonGame: season.game as Parameters<typeof toGameSummary>[0],
     });

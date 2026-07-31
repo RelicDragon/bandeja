@@ -15,6 +15,11 @@ import {
   playInPhaseComplete,
   slotsById,
 } from './bracketSlotEdit.util';
+import {
+  championshipResolvedByFirstGrandFinal,
+  grandFinalResetRequired,
+} from './bracketDoubleElimination.util';
+import { stalePlayingParticipantIds } from './bracketSlotPatch.util';
 
 const PLAY_IN_GATE_MESSAGE =
   'Complete all play-in games before scheduling or finishing knockout matches';
@@ -87,21 +92,6 @@ export class BracketAdvancementService {
       tx
     );
 
-    if (
-      winnerId &&
-      ((slot.slotKind === BracketSlotKind.MAIN && slot.winnerSlotId == null) ||
-        slot.slotKind === BracketSlotKind.GRAND_FINAL)
-    ) {
-      const { BracketRoundSummaryService } = await import('./bracketRoundSummary.service');
-      void BracketRoundSummaryService.notifyChampionIfNeeded({
-        leagueRoundId: slot.leagueRoundId,
-        leagueGroupId: slot.leagueGroupId ?? null,
-        leagueSeasonId: slot.leagueRound?.leagueSeasonId,
-      }).catch((err) =>
-        console.error('[BracketSummary] Failed after final:', err)
-      );
-    }
-
     return createdGameIds;
   }
 
@@ -141,8 +131,19 @@ export class BracketAdvancementService {
     });
 
     for (const slot of slots) {
-      const teamA = await this.participantIdFromFeeder(slot.feederSlotA, tx, slot.slotKind);
-      const teamB = await this.participantIdFromFeeder(slot.feederSlotB, tx, slot.slotKind);
+      const resetParticipants =
+        slot.slotKind === BracketSlotKind.GRAND_FINAL && slot.roundIndex > 0
+          ? await this.grandFinalResetParticipants(slot.feederSlotAId, tx)
+          : null;
+      const teamA =
+        resetParticipants?.teamA ??
+        (await this.participantIdFromFeeder(slot.feederSlotA, tx, slot.slotKind));
+      const teamB =
+        resetParticipants?.teamB ??
+        (await this.participantIdFromFeeder(slot.feederSlotB, tx, slot.slotKind));
+      if (slot.slotKind === BracketSlotKind.GRAND_FINAL && slot.roundIndex > 0 && !resetParticipants) {
+        continue;
+      }
       if (!teamA || !teamB) continue;
 
       const gameId = await this.attachGameToSlot(tx, {
@@ -158,6 +159,46 @@ export class BracketAdvancementService {
       if (gameId) createdGameIds.push(gameId);
     }
     return createdGameIds;
+  }
+
+  private static async grandFinalResetParticipants(
+    firstGrandFinalSlotId: string | null,
+    tx: Prisma.TransactionClient
+  ): Promise<{ teamA: string; teamB: string } | null> {
+    if (!firstGrandFinalSlotId) return null;
+    const firstFinal = await tx.leagueBracketSlot.findUnique({
+      where: { id: firstGrandFinalSlotId },
+      include: {
+        game: { select: { id: true, resultsStatus: true } },
+        feederSlotA: { include: { game: true } },
+        feederSlotB: { include: { game: true } },
+      },
+    });
+    if (
+      !firstFinal?.gameId ||
+      firstFinal.game?.resultsStatus !== ResultsStatus.FINAL ||
+      firstFinal.slotKind !== BracketSlotKind.GRAND_FINAL
+    ) {
+      return null;
+    }
+
+    const [firstFinalWinner, winnersChampion, losersChampion] = await Promise.all([
+      this.resolveWinnerParticipantId(firstFinal.gameId, tx),
+      this.participantIdFromFeeder(firstFinal.feederSlotA, tx, BracketSlotKind.GRAND_FINAL),
+      this.participantIdFromFeeder(firstFinal.feederSlotB, tx, BracketSlotKind.GRAND_FINAL),
+    ]);
+    if (
+      !grandFinalResetRequired({
+        firstFinalWinnerId: firstFinalWinner,
+        winnersChampionId: winnersChampion,
+        losersChampionId: losersChampion,
+      }) ||
+      !winnersChampion ||
+      !losersChampion
+    ) {
+      return null;
+    }
+    return { teamA: winnersChampion, teamB: losersChampion };
   }
 
   static async createGameForSlot(
@@ -235,9 +276,20 @@ export class BracketAdvancementService {
       seasonGame: Parameters<typeof createLeagueGame>[0]['seasonGame'];
       gameSetup?: PlayoffGameSetupOverrides;
     }
-  ): Promise<string> {
+  ): Promise<string | null> {
     const { slotId, leagueRoundId, leagueSeasonId, leagueGroupId, participantA, participantB, seasonGame, gameSetup } =
       params;
+    await tx.$queryRaw`
+      SELECT "id"
+      FROM "LeagueBracketSlot"
+      WHERE "id" = ${slotId}
+      FOR UPDATE
+    `;
+    const existingSlot = await tx.leagueBracketSlot.findUnique({
+      where: { id: slotId },
+      select: { gameId: true },
+    });
+    if (!existingSlot || existingSlot.gameId) return null;
 
     const [team1, team2] = await Promise.all([
       this.rosterForParticipant(participantA, tx),
@@ -268,7 +320,7 @@ export class BracketAdvancementService {
     return prisma.$transaction((tx) => this.resolveWinnerParticipantId(gameId, tx));
   }
 
-  private static async resolveWinnerParticipantId(
+  static async resolveWinnerParticipantId(
     gameId: string,
     tx: Prisma.TransactionClient
   ): Promise<string | null> {
@@ -328,7 +380,140 @@ export class BracketAdvancementService {
     return prisma.$transaction((tx) => this.resolveLoserParticipantId(gameId, tx));
   }
 
-  private static async resolveLoserParticipantId(
+  static async participantIdsFromGame(
+    gameId: string,
+    tx: Prisma.TransactionClient
+  ): Promise<string[]> {
+    const game = await tx.game.findUnique({
+      where: { id: gameId },
+      include: { fixedTeams: { include: { players: true }, orderBy: { teamNumber: 'asc' } } },
+    });
+    if (!game?.parentId) return [];
+    const { findTeamParticipantByRoster } = await import('./leagueParticipantResolve');
+    const participantIds: string[] = [];
+    for (const team of game.fixedTeams) {
+      const playerIds = team.players
+        .map((player) => player.userId)
+        .filter((id): id is string => typeof id === 'string' && id.length > 0);
+      const participant = await findTeamParticipantByRoster(tx, game.parentId, playerIds);
+      if (participant?.id) participantIds.push(participant.id);
+    }
+    return participantIds;
+  }
+
+  static async resolveChampionshipFromSlots(
+    slots: Array<{
+      slotKind: BracketSlotKind;
+      roundIndex: number;
+      gameId: string | null;
+      winnerSlotId: string | null;
+      feederSlotAId: string | null;
+      game?: { resultsStatus: ResultsStatus | string } | null;
+    }>
+  ): Promise<{
+    championParticipantId: string | null;
+    finalistParticipantId: string | null;
+    finalGameId: string | null;
+  }> {
+    return prisma.$transaction(async (tx) => {
+      const grandFinals = slots
+        .filter((slot) => slot.slotKind === BracketSlotKind.GRAND_FINAL)
+        .sort((a, b) => b.roundIndex - a.roundIndex);
+      const legacyGrandFinal = grandFinals.length === 1 ? grandFinals[0] : null;
+      if (
+        legacyGrandFinal?.gameId &&
+        legacyGrandFinal.game?.resultsStatus === ResultsStatus.FINAL
+      ) {
+        return {
+          championParticipantId: await this.resolveWinnerParticipantId(
+            legacyGrandFinal.gameId,
+            tx
+          ),
+          finalistParticipantId: await this.resolveLoserParticipantId(
+            legacyGrandFinal.gameId,
+            tx
+          ),
+          finalGameId: legacyGrandFinal.gameId,
+        };
+      }
+      const completedReset = grandFinals.find(
+        (slot) =>
+          slot.roundIndex > 0 &&
+          slot.gameId &&
+          slot.game?.resultsStatus === ResultsStatus.FINAL
+      );
+      if (completedReset?.gameId) {
+        return {
+          championParticipantId: await this.resolveWinnerParticipantId(completedReset.gameId, tx),
+          finalistParticipantId: await this.resolveLoserParticipantId(completedReset.gameId, tx),
+          finalGameId: completedReset.gameId,
+        };
+      }
+
+      const firstGrandFinal = grandFinals.find((slot) => slot.roundIndex === 0);
+      if (
+        firstGrandFinal?.gameId &&
+        firstGrandFinal.game?.resultsStatus === ResultsStatus.FINAL &&
+        firstGrandFinal.feederSlotAId
+      ) {
+        const winner = await this.resolveWinnerParticipantId(firstGrandFinal.gameId, tx);
+        const winnersFeeder = await tx.leagueBracketSlot.findUnique({
+          where: { id: firstGrandFinal.feederSlotAId },
+          include: { game: true },
+        });
+        const winnersChampion = await this.participantIdFromFeeder(
+          winnersFeeder,
+          tx,
+          BracketSlotKind.GRAND_FINAL
+        );
+        if (
+          championshipResolvedByFirstGrandFinal({
+            firstFinalWinnerId: winner,
+            winnersChampionId: winnersChampion,
+          })
+        ) {
+          return {
+            championParticipantId: winner,
+            finalistParticipantId: await this.resolveLoserParticipantId(
+              firstGrandFinal.gameId,
+              tx
+            ),
+            finalGameId: firstGrandFinal.gameId,
+          };
+        }
+        return {
+          championParticipantId: null,
+          finalistParticipantId: null,
+          finalGameId: null,
+        };
+      }
+
+      if (grandFinals.length > 0) {
+        return {
+          championParticipantId: null,
+          finalistParticipantId: null,
+          finalGameId: null,
+        };
+      }
+      const mainFinal = slots.find(
+        (slot) => slot.slotKind === BracketSlotKind.MAIN && slot.winnerSlotId == null
+      );
+      if (!mainFinal?.gameId || mainFinal.game?.resultsStatus !== ResultsStatus.FINAL) {
+        return {
+          championParticipantId: null,
+          finalistParticipantId: null,
+          finalGameId: null,
+        };
+      }
+      return {
+        championParticipantId: await this.resolveWinnerParticipantId(mainFinal.gameId, tx),
+        finalistParticipantId: await this.resolveLoserParticipantId(mainFinal.gameId, tx),
+        finalGameId: mainFinal.gameId,
+      };
+    });
+  }
+
+  static async resolveLoserParticipantId(
     gameId: string,
     tx: Prisma.TransactionClient
   ): Promise<string | null> {
@@ -359,7 +544,7 @@ export class BracketAdvancementService {
     return null;
   }
 
-  private static async participantIdFromFeeder(
+  static async participantIdFromFeeder(
     feeder: {
       id: string;
       slotKind: BracketSlotKind;
@@ -392,7 +577,7 @@ export class BracketAdvancementService {
       }
       return this.resolveWinnerParticipantId(feeder.gameId, tx);
     }
-    return null;
+    return feeder.leagueParticipantId;
   }
 
   /** Clears downstream bracket games when a bracket game result is undone (§3.3). */
@@ -426,6 +611,12 @@ export class BracketAdvancementService {
     await this.cascadeClearDescendants(slot.id, slot.leagueRoundId, slot.leagueGroupId ?? null, tx, {
       excludeSlotIds: new Set([slot.id]),
     });
+    const { BracketRoundSummaryService } = await import('./bracketRoundSummary.service');
+    await BracketRoundSummaryService.clearSentStateForTree(
+      slot.leagueRoundId,
+      slot.leagueGroupId ?? null,
+      tx
+    );
 
     if (slot.winnerSlotId) {
       await tx.leagueBracketSlot.update({
@@ -540,14 +731,10 @@ export class BracketAdvancementService {
       const allowedUserIds = new Set(
         refreshed.fixedTeams.flatMap((team) => team.players.map((player) => player.userId))
       );
-      const staleParticipantIds = refreshed.participants
-        .filter(
-          (participant) =>
-            participant.role === 'PARTICIPANT' &&
-            participant.status === 'PLAYING' &&
-            !allowedUserIds.has(participant.userId)
-        )
-        .map((participant) => participant.id);
+      const staleParticipantIds = stalePlayingParticipantIds(
+        refreshed.participants,
+        allowedUserIds
+      );
       if (staleParticipantIds.length > 0) {
         await tx.gameParticipant.deleteMany({
           where: { id: { in: staleParticipantIds } },

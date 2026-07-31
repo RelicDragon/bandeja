@@ -137,7 +137,10 @@ export function BracketPhase4CreateOptions({
           checked={includeDoubleElimination}
           onChange={(on) => {
             onIncludeDoubleEliminationChange(on);
-            if (on && onIncludeConsolationBracketChange) onIncludeConsolationBracketChange(false);
+            if (on) {
+              if (onIncludeConsolationBracketChange) onIncludeConsolationBracketChange(false);
+              onIncludeThirdPlaceChange(false);
+            }
           }}
           label={t('gameDetails.bracketDoubleElimination')}
           hint={t('gameDetails.bracketDoubleEliminationHint', {
@@ -167,7 +170,12 @@ export function BracketPhase4CreateOptions({
       {showThird && (
         <Phase4Toggle
           checked={includeThirdPlace}
-          onChange={onIncludeThirdPlaceChange}
+          onChange={(on) => {
+            onIncludeThirdPlaceChange(on);
+            if (on && onIncludeDoubleEliminationChange) {
+              onIncludeDoubleEliminationChange(false);
+            }
+          }}
           label={t('gameDetails.bracketThirdPlaceMatch')}
           hint={t('gameDetails.bracketThirdPlaceMatchHint', {
             defaultValue: 'Semifinal losers play one extra match for bronze.',

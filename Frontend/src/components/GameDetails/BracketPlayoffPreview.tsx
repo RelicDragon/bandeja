@@ -17,16 +17,20 @@ import {
 import { qualifierLabelForParticipant } from '@/utils/groupQualifierLabel.util';
 import {
   feederMatchLabelsForRound,
+  firstMainRoundFeederForVirtualSeed,
   firstMainRoundPairingsForPlan,
 } from '@/utils/bracketPreviewKnockout.util';
 import { supportsThirdPlaceMatch } from '@/utils/customByeSeedRanks.util';
 import { maxPlayersPerTeamForGame } from '@/utils/matchFormat';
 import { getStandingDisplayName } from '@/utils/playoffWizardSeedLabels.util';
+import { BracketAdvancedPhasePreview } from './BracketAdvancedPhasePreview';
 
 interface BracketPlayoffPreviewProps {
   plan: BracketPlan;
   standingsById: Map<string, LeagueStanding>;
   includeThirdPlace?: boolean;
+  includeConsolationBracket?: boolean;
+  includeDoubleElimination?: boolean;
   groupColor?: string | null;
   qualifierLabels?: Map<string, string>;
   playersPerMatch?: number;
@@ -357,6 +361,8 @@ export const BracketPlayoffPreview = ({
   plan,
   standingsById,
   includeThirdPlace = false,
+  includeConsolationBracket = false,
+  includeDoubleElimination = false,
   groupColor,
   qualifierLabels,
   playersPerMatch,
@@ -578,6 +584,38 @@ export const BracketPlayoffPreview = ({
             </h4>
             {round.roundIndex === 0
               ? firstMainPairings.map(([seedA, seedB], i) => {
+                  if (displayPlan.playInGameCount > 0) {
+                    const labelForVirtualSeed = (virtualSeed: number) => {
+                      const feeder = firstMainRoundFeederForVirtualSeed(
+                        displayPlan,
+                        virtualSeed
+                      );
+                      if (feeder.kind === 'PLAY_IN_WINNER') {
+                        return t('gameDetails.bracketPreviewWinnerOf', {
+                          defaultValue: 'Winner {{match}}',
+                          match: `PI${feeder.matchIndex + 1}`,
+                        });
+                      }
+                      const participantId =
+                        displayPlan.orderedParticipantIds[feeder.seed - 1];
+                      const qualifierLabel = qualifierLabelForParticipant(
+                        participantId,
+                        qualifierLabels,
+                        feeder.seed
+                      );
+                      const standingLabel = participantId
+                        ? getStandingDisplayName(standingsById.get(participantId))
+                        : '';
+                      return qualifierLabel || standingLabel || `#${feeder.seed}`;
+                    };
+                    return (
+                      <FeederMatchPair
+                        key={i}
+                        labelA={labelForVirtualSeed(seedA)}
+                        labelB={labelForVirtualSeed(seedB)}
+                      />
+                    );
+                  }
                   const posA = positionBySeed.get(seedA);
                   const posB = positionBySeed.get(seedB);
                   const participantAId = posA?.participantId ?? displayPlan.orderedParticipantIds[seedA - 1];
@@ -645,6 +683,12 @@ export const BracketPlayoffPreview = ({
           </section>
         ))}
       </div>
+
+      <BracketAdvancedPhasePreview
+        plan={displayPlan}
+        includeConsolationBracket={includeConsolationBracket}
+        includeDoubleElimination={includeDoubleElimination}
+      />
 
       {reorderable && unassignedIds.length > 0 && (
         <div className="space-y-1.5 pt-2 border-t border-gray-200 dark:border-gray-700">

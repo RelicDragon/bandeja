@@ -19,7 +19,17 @@ vi.mock('react-i18next', () => ({
 }));
 
 vi.mock('@/components/ToggleSwitch', () => ({
-  ToggleSwitch: ({ id }: { id?: string }) => <button type="button" id={id} role="switch" />,
+  ToggleSwitch: ({
+    id,
+    checked,
+    onChange,
+  }: {
+    id?: string;
+    checked: boolean;
+    onChange: (checked: boolean) => void;
+  }) => (
+    <button type="button" id={id} role="switch" onClick={() => onChange(!checked)} />
+  ),
 }));
 
 vi.mock('./BracketCustomByePicker', () => ({
@@ -123,5 +133,28 @@ describe('BracketPhase4CreateOptions', () => {
     expect(container.innerHTML.match(/grid-rows-\[0fr\] opacity-0/g)).toHaveLength(3);
     expect(container.querySelectorAll('[aria-hidden="true"]')).toHaveLength(3);
     expect(container.querySelectorAll('button[disabled][tabindex="-1"]')).toHaveLength(3);
+  });
+
+  it('keeps double elimination mutually exclusive with third place and consolation', async () => {
+    const onThird = vi.fn();
+    const onConsolation = vi.fn();
+    const onDouble = vi.fn();
+    await renderOptions(
+      <BracketPhase4CreateOptions
+        {...sharedProps}
+        includeThirdPlace={false}
+        onIncludeThirdPlaceChange={onThird}
+        onIncludeConsolationBracketChange={onConsolation}
+        onIncludeDoubleEliminationChange={onDouble}
+      />
+    );
+
+    await act(async () => {
+      (container.querySelectorAll('button[role="switch"]')[0] as HTMLButtonElement).click();
+    });
+
+    expect(onDouble).toHaveBeenCalledWith(true);
+    expect(onConsolation).toHaveBeenCalledWith(false);
+    expect(onThird).toHaveBeenCalledWith(false);
   });
 });

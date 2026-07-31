@@ -415,6 +415,7 @@ export async function undoGameOutcomes(gameId: string, tx: Prisma.TransactionCli
 
   if (shouldCascadeBracket) {
     await BracketAdvancementService.onBracketGameResultsUndone(gameId, tx);
+    await syncParentSeasonPodiumIfFinal({ gameId, tx });
   }
 }
 
@@ -977,6 +978,12 @@ export async function recalculateGameOutcomes(gameId: string) {
       BracketGameNotificationService.notifyCreatedGames(bracketCreatedGameIds);
     });
   }
+  const { BracketRoundSummaryService } = await import(
+    '../league/bracketRoundSummary.service'
+  );
+  await BracketRoundSummaryService.notifyChampionForGameIfNeeded(gameId).catch((err) =>
+    console.error('[BracketSummary] Failed after committed final:', err)
+  );
 
   console.log(`[TELEGRAM NOTIFICATION] Preparing to send notifications for game ${gameId}`);
   

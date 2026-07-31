@@ -178,6 +178,45 @@ describe('buildBracketPodium', () => {
     expect(podium.championId).toBe('p-a');
     expect(podium.finalistId).toBe('p-b');
   });
+
+  it('uses API championship places for double elimination', () => {
+    const group: BracketPlayoffGroupDto = {
+      leagueGroupId: 'g1',
+      entrantCount: 8,
+      bracketSize: 8,
+      byeCount: 0,
+      playInGameCount: 0,
+      includeDoubleElimination: true,
+      championParticipantId: 'lower-champion',
+      finalistParticipantId: 'upper-finalist',
+      slots: [
+        slot({
+          id: 'winners-final',
+          slotKey: 'MAIN-R2-M0',
+          slotKind: 'MAIN',
+          roundIndex: 2,
+          winnerSlotId: 'gf1',
+        }),
+        slot({
+          id: 'gf1',
+          slotKey: 'GRAND-FINAL-M0',
+          slotKind: 'GRAND_FINAL',
+          winnerSlotId: 'reset',
+        }),
+        slot({
+          id: 'reset',
+          slotKey: 'GRAND-FINAL-M1',
+          slotKind: 'GRAND_FINAL',
+          roundIndex: 1,
+        }),
+      ],
+    };
+
+    expect(buildBracketPodium(group)).toMatchObject({
+      championId: 'lower-champion',
+      finalistId: 'upper-finalist',
+    });
+  });
 });
 
 describe('slotWinnerParticipantId', () => {
@@ -243,6 +282,62 @@ describe('buildBracketSlotHighlights', () => {
     expect(qf?.winnerSide).toBe('A');
     expect(qf?.loserSide).toBe('B');
     expect(qf?.onChampionPath).toBe(false);
+  });
+
+  it('highlights only the champion feeder route', () => {
+    const participants = ['a', 'b', 'c', 'd'].map((id) =>
+      slot({
+        id,
+        slotKey: `seed-${id}`,
+        slotKind: 'BYE',
+        participant: { id: `p-${id}`, displayName: id },
+      })
+    );
+    const sfA = slot({
+      id: 'sf-a',
+      slotKey: 'MAIN-R0-M0',
+      slotKind: 'MAIN',
+      feederSlotAId: 'a',
+      feederSlotBId: 'b',
+      game: finalGame('teamA', 'u-a', 'u-b'),
+      winnerSlotId: 'final',
+    });
+    const sfB = slot({
+      id: 'sf-b',
+      slotKey: 'MAIN-R0-M1',
+      slotKind: 'MAIN',
+      matchIndex: 1,
+      feederSlotAId: 'c',
+      feederSlotBId: 'd',
+      game: finalGame('teamA', 'u-c', 'u-d'),
+      winnerSlotId: 'final',
+    });
+    const final = slot({
+      id: 'final',
+      slotKey: 'MAIN-R1-M0',
+      slotKind: 'MAIN',
+      roundIndex: 1,
+      feederSlotAId: 'sf-a',
+      feederSlotBId: 'sf-b',
+      game: finalGame('teamA', 'u-a', 'u-c'),
+    });
+    const group: BracketPlayoffGroupDto = {
+      leagueGroupId: 'g1',
+      entrantCount: 4,
+      bracketSize: 4,
+      byeCount: 0,
+      playInGameCount: 0,
+      championParticipantId: 'p-a',
+      finalistParticipantId: 'p-c',
+      slots: [...participants, sfA, sfB, final],
+    };
+
+    const highlights = buildBracketSlotHighlights(group);
+    expect(highlights.get('final')?.onChampionPath).toBe(true);
+    expect(highlights.get('sf-a')?.onChampionPath).toBe(true);
+    expect(highlights.get('a')?.onChampionPath).toBe(true);
+    expect(highlights.get('sf-b')?.onChampionPath).toBe(false);
+    expect(highlights.get('c')?.onChampionPath).toBe(false);
   });
 });
 

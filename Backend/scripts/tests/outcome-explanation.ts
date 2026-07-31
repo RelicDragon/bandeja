@@ -127,6 +127,7 @@ function testMultiMatchMatchesCalculator(): void {
     level: user.sportProfiles![0].level,
     reliability: 50,
     gamesPlayed: 20,
+    ratingUncertainty: 0,
   }));
 
   const roundResults = [match1, match2].map((match) => ({

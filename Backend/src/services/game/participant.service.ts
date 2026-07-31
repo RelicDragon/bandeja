@@ -868,7 +868,7 @@ export class ParticipantService {
         ? participant.game.parent.id
         : null;
 
-    const terminalFinal =
+    const terminalFinalCandidate =
       seasonParentId == null
         ? null
         : await prisma.leagueBracketSlot.findFirst({
@@ -881,8 +881,30 @@ export class ParticipantService {
             },
             select: { id: true },
           });
+    let isResolvedTerminalFinal = false;
+    if (terminalFinalCandidate) {
+      const slot = await prisma.leagueBracketSlot.findUnique({
+        where: { id: terminalFinalCandidate.id },
+        select: { leagueRoundId: true, leagueGroupId: true },
+      });
+      if (slot) {
+        const treeSlots = await prisma.leagueBracketSlot.findMany({
+          where: {
+            leagueRoundId: slot.leagueRoundId,
+            leagueGroupId: slot.leagueGroupId,
+          },
+          include: { game: { select: { resultsStatus: true } } },
+        });
+        const { BracketAdvancementService } = await import(
+          '../league/bracketAdvancement.service'
+        );
+        const championship =
+          await BracketAdvancementService.resolveChampionshipFromSlots(treeSlots);
+        isResolvedTerminalFinal = championship.finalGameId === gameId;
+      }
+    }
 
-    if (seasonParentId && terminalFinal) {
+    if (seasonParentId && isResolvedTerminalFinal) {
       await prisma.gameParticipant.updateMany({
         where: { gameId: seasonParentId, userId },
         data: { showInStories },
@@ -896,7 +918,7 @@ export class ParticipantService {
         showInStories: updated.showInStories,
         entityType: participant.game.entityType,
       });
-      if (seasonParentId && terminalFinal) {
+      if (seasonParentId && isResolvedTerminalFinal) {
         await syncParticipantShowInStoriesSideEffects({
           gameId: seasonParentId,
           userId,
