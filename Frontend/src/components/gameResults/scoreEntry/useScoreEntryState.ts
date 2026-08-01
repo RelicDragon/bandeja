@@ -154,6 +154,13 @@ export function useScoreEntryState({
     }
   }, [currentSet, isAutomaticRelaxed, match.metadata, match.sets, rules, setIndex]);
 
+  const handleSuperTiebreakChange = useCallback((use: boolean) => {
+    setUseSuperTiebreak(use);
+    setIsTieBreak(use);
+    setTeamAScore(0);
+    setTeamBScore(0);
+  }, []);
+
   useEffect(() => {
     if (!isSupplementalRow || extraRole !== 'EXTRA_BALLS') return;
     setTeamAScore((a) => Math.min(EXTRA_BALLS_SCORE_MAX, a));
@@ -405,7 +412,7 @@ export function useScoreEntryState({
     persistedRecordMode,
     canUseSuperTiebreak,
     useSuperTiebreak,
-    setUseSuperTiebreak,
+    setUseSuperTiebreak: handleSuperTiebreakChange,
     pickerTeam,
     setPickerTeam,
     scoreMax,

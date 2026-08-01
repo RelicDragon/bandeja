@@ -77,4 +77,27 @@ assert(
   'matchTimerEnabled skips incomplete regular set validation',
 );
 
+const automaticGame = {
+  scoringPreset: ScoringPreset.CLASSIC_AUTOMATIC,
+  fixedNumberOfSets: 3,
+  ballsInGames: true,
+  winnerOfMatch: WinnerOfMatch.BY_SETS,
+};
+assert(
+  validateMatchClassicSetScores(automaticGame, [
+    { teamA: 6, teamB: 4 },
+    { teamA: 4, teamB: 6 },
+    { teamA: 6, teamB: 0, isTieBreak: true },
+  ]) === null,
+  'CLASSIC_AUTOMATIC allows STB row with non-STB point totals (mode switch leftover)',
+);
+assert(
+  validateMatchClassicSetScores(automaticGame, [
+    { teamA: 6, teamB: 4 },
+    { teamA: 4, teamB: 6 },
+    { teamA: 6, teamB: 0, isTieBreak: false },
+  ]) === null,
+  'CLASSIC_AUTOMATIC allows games decider after clearing STB flag',
+);
+
 console.log('ok: classicSetScoreValidation.test.ts');

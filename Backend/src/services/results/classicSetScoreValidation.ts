@@ -158,6 +158,11 @@ export function validateMatchClassicSetScores(
     const tb = s.teamB ?? 0;
     if (ta === 0 && tb === 0) continue;
 
+    // Automatic: flexible entry (games / americano / STB); structural TB rules live in matchSetsValidation.
+    if (game.scoringPreset === ScoringPreset.CLASSIC_AUTOMATIC) {
+      continue;
+    }
+
     if (s.isTieBreak) {
       if (isSuperTiebreakDeciderRow(i, rules, sets)) {
         const err = validateTiebreakPoints(ta, tb, rules.superTieBreakFirstTo, rules.superTieBreakWinBy);
@@ -167,11 +172,7 @@ export function validateMatchClassicSetScores(
         if (err) return `Set ${i + 1}: ${err}`;
       }
     } else {
-      if (
-        game.matchTimerEnabled ||
-        game.scoringPreset === ScoringPreset.CLASSIC_TIMED ||
-        game.scoringPreset === ScoringPreset.CLASSIC_AUTOMATIC
-      ) {
+      if (game.matchTimerEnabled || game.scoringPreset === ScoringPreset.CLASSIC_TIMED) {
         continue;
       }
       const err = validateClassicRegularGames(ta, tb, rules);
