@@ -10,6 +10,7 @@ import {
   recommendAutomaticSetScore,
   resolveAutomaticSetEntryMode,
 } from './automaticRelaxedScoring';
+import { getSetKind } from './setKind';
 
 describe('automaticRelaxedScoring', () => {
   const rules = getRules({ sport: Sports.PADEL, scoringPreset: 'CLASSIC_AUTOMATIC' } as never);
@@ -28,6 +29,16 @@ describe('automaticRelaxedScoring', () => {
     ];
     expect(canUseSuperTiebreakEntry(2, sets, rules)).toBe(true);
     expect(canUseSuperTiebreakEntry(1, sets, rules)).toBe(false);
+  });
+
+  it('does not treat 1–1 decider as super tiebreak until opted in', () => {
+    const sets = [
+      { teamA: 6, teamB: 4, isTieBreak: false },
+      { teamA: 4, teamB: 6, isTieBreak: false },
+      { teamA: 0, teamB: 0, isTieBreak: false },
+    ];
+    expect(getSetKind(2, sets, rules)).toBe('REGULAR');
+    expect(getSetKind(2, sets, rules, { teamA: 0, teamB: 0, isTieBreak: true })).toBe('SUPER_TIEBREAK');
   });
 
   it('uses match metadata for later sets and super tiebreak override on decider', () => {

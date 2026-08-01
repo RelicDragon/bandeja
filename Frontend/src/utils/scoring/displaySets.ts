@@ -1,7 +1,7 @@
 import type { SetResult } from '@/types/gameResults';
 import { isOfficialMatchSet, isSupplementalMatchSet, splitOfficialAndSupplementalSets } from '@/utils/matchSetRole';
 import type { ScoringRules } from './rulebook';
-import { isClassicRules, isPointsRules, isTimedRules } from './rulebook';
+import { isClassicAutomaticRelaxedScores, isClassicRules, isPointsRules, isTimedRules } from './rulebook';
 import {
   countSetsWon,
   getStandingsMatchOutcome,
@@ -11,6 +11,15 @@ import {
 const emptySet = (isTieBreak = false): SetResult => ({ teamA: 0, teamB: 0, isTieBreak, role: 'OFFICIAL' });
 
 const isScored = (set: SetResult | undefined): boolean => !!set && (set.teamA > 0 || set.teamB > 0);
+
+/** Forced STB presets premark the empty decider; Automatic leaves it opt-in via the UI switch. */
+const shouldPremarkEmptyDeciderAsSuperTiebreak = (rules: ScoringRules, nextSetIndex: number): boolean => {
+  if (isClassicAutomaticRelaxedScores(rules)) return false;
+  return (
+    rules.superTieBreakReplacesDeciderAtIndex !== null &&
+    nextSetIndex === rules.superTieBreakReplacesDeciderAtIndex
+  );
+};
 
 export const initialSetsForRules = (rules: ScoringRules): SetResult[] => {
   if (isPointsRules(rules) || isTimedRules(rules)) {
@@ -106,10 +115,7 @@ export const expandSetsForDisplay = (
     if (options.canEditResults && scoredCount === base.length && base.length < cap) {
       const { a, b } = countSetsWon(base);
       if (Math.max(a, b) < rules.minSetsToWin) {
-        const isSuperTb =
-          rules.superTieBreakReplacesDeciderAtIndex !== null &&
-          base.length === rules.superTieBreakReplacesDeciderAtIndex;
-        base.push(emptySet(isSuperTb));
+        base.push(emptySet(shouldPremarkEmptyDeciderAsSuperTiebreak(rules, base.length)));
       }
     }
 
@@ -146,10 +152,12 @@ export const shouldAppendSetAfterUpdate = (sets: SetResult[], rules: ScoringRule
   if (scoredCount !== official.length) return null;
   const { a, b } = countSetsWon(official);
   if (Math.max(a, b) >= rules.minSetsToWin) return null;
-  const isSuperTb =
-    rules.superTieBreakReplacesDeciderAtIndex !== null &&
-    official.length === rules.superTieBreakReplacesDeciderAtIndex;
-  return { teamA: 0, teamB: 0, isTieBreak: isSuperTb, role: 'OFFICIAL' };
+  return {
+    teamA: 0,
+    teamB: 0,
+    isTieBreak: shouldPremarkEmptyDeciderAsSuperTiebreak(rules, official.length),
+    role: 'OFFICIAL',
+  };
 };
 
 export const trimTrailingEmptyAfterDecision = (sets: SetResult[], rules: ScoringRules): SetResult[] => {

@@ -62,13 +62,13 @@ describe('CLASSIC_AUTOMATIC set entry slots', () => {
     ]);
   });
 
-  it('after 1-1, entry pipeline keeps STB 0:0 slot', () => {
+  it('after 1-1, entry pipeline keeps regular 0:0 slot (STB opt-in)', () => {
     const working = [
       { teamA: 6, teamB: 4, role: 'OFFICIAL' as const },
       { teamA: 4, teamB: 6, role: 'OFFICIAL' as const },
     ];
     const { nextSets } = pipelineAfterSetUpdate(working, rules);
     expect(nextSets.length).toBeGreaterThanOrEqual(3);
-    expect(nextSets[2]).toMatchObject({ teamA: 0, teamB: 0, isTieBreak: true });
+    expect(nextSets[2]).toMatchObject({ teamA: 0, teamB: 0, isTieBreak: false });
   });
 });

@@ -1,7 +1,14 @@
 import type { SetResult } from '@/types/gameResults';
 import { isSupplementalMatchSet } from '@/utils/matchSetRole';
 import type { ScoringRules, SetKind } from './rulebook';
-import { isClassicRules, isPointsRules, isRallyGameRules, isRallyPointsRules, isTimedRules } from './rulebook';
+import {
+  isClassicAutomaticRelaxedScores,
+  isClassicRules,
+  isPointsRules,
+  isRallyGameRules,
+  isRallyPointsRules,
+  isTimedRules,
+} from './rulebook';
 import { countSetsWon } from './matchWinner';
 
 export const getSetKind = (
@@ -20,12 +27,17 @@ export const getSetKind = (
   const current = effective[setIndex] ?? { teamA: 0, teamB: 0, isTieBreak: false };
 
   if (rules.superTieBreakReplacesDeciderAtIndex !== null && setIndex === rules.superTieBreakReplacesDeciderAtIndex) {
-    const priorPlayed = effective.slice(0, setIndex).filter(s => s.teamA > 0 || s.teamB > 0);
-    if (priorPlayed.length === setIndex) {
-      const { a, b } = countSetsWon(priorPlayed);
-      if (a === b && a >= setIndex / 2) return 'SUPER_TIEBREAK';
+    // Automatic: STB is opt-in via isTieBreak; forced STB presets still infer from 1–1 geometry.
+    if (isClassicAutomaticRelaxedScores(rules)) {
+      if (current.isTieBreak) return 'SUPER_TIEBREAK';
+    } else {
+      const priorPlayed = effective.slice(0, setIndex).filter(s => s.teamA > 0 || s.teamB > 0);
+      if (priorPlayed.length === setIndex) {
+        const { a, b } = countSetsWon(priorPlayed);
+        if (a === b && a >= setIndex / 2) return 'SUPER_TIEBREAK';
+      }
+      if (current.isTieBreak) return 'SUPER_TIEBREAK';
     }
-    if (current.isTieBreak) return 'SUPER_TIEBREAK';
   }
 
   if (current.isTieBreak) return 'TIEBREAK_GAME';
