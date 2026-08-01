@@ -28,26 +28,6 @@ struct ClassicScoringView: View {
             footerActions(lang)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .confirmationDialog(
-            WatchCopy.setFormatChoiceTitle(lang),
-            isPresented: Binding(
-                get: { vm.pendingSetFormatChoiceIndex != nil },
-                set: { if !$0 { vm.cancelSetFormatChoice() } }
-            ),
-            titleVisibility: .visible
-        ) {
-            Button(WatchCopy.normalSetChoice(lang)) {
-                vm.confirmSetFormatNormal()
-            }
-            Button(WatchCopy.superTieBreakChoice(lang)) {
-                vm.confirmSetFormatSuper()
-            }
-            Button(WatchCopy.cancelAction(lang), role: .cancel) {
-                vm.cancelSetFormatChoice()
-            }
-        } message: {
-            Text(WatchCopy.setFormatChoiceMessage(lang))
-        }
     }
 
     @ViewBuilder
@@ -221,6 +201,11 @@ struct ClassicScoringView: View {
         }
         Button(WatchCopy.addExtraBallsRow(lang)) {
             vm.appendSupplementalSet(kind: .extraBalls)
+        }
+        if vm.canAutomaticFinishSet {
+            Button(WatchCopy.automaticFinishSetCta(lang)) {
+                vm.confirmAutomaticOpenEndedSet()
+            }
         }
         if vm.canAdvanceToNextSet() {
             Button(WatchCopy.nextSet(lang)) { vm.beginAdvanceToNextSet() }

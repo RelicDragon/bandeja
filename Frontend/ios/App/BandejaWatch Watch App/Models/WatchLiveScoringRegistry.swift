@@ -10,6 +10,7 @@ enum WatchLiveScoringUiId: Sendable, Equatable {
 
 enum WatchLiveScoringRegistry {
     private static let tennisClassicPresets: Set<WatchScoringPreset> = [
+        .classicAutomatic,
         .classicBo3,
         .classicBo5,
         .classicSuperTb,
@@ -30,9 +31,18 @@ enum WatchLiveScoringRegistry {
     }
 
     /// `sport + preset → UI` (padel/tennis classic; rally boards per sport; open-ended → americano).
-    static func resolve(game: WatchGame?, rules: WatchScoringRules) -> WatchLiveScoringUiId {
+    static func resolve(
+        game: WatchGame?,
+        rules: WatchScoringRules,
+        automaticRecordMode: String? = nil
+    ) -> WatchLiveScoringUiId {
         let sport = game?.resolvedSport ?? .padel
         let preset = game?.scoringPreset.flatMap { WatchScoringPreset(rawValue: $0.uppercased()) }
+
+        if rules.isClassicAutomaticRelaxed,
+           automaticRecordMode == WatchAutomaticFlexible.RecordMode.americanoPoints.rawValue {
+            return .americanoPoints
+        }
 
         if let preset, usesOpenEndedPointsUi(preset: preset, rules: rules) {
             return .americanoPoints

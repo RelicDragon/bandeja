@@ -329,6 +329,13 @@ export async function patchMatchLiveScoring(
       ? {}
       : { ...(match.metadata as Record<string, unknown>) };
   prevMeta.liveScoring = envelope as unknown as Prisma.JsonObject;
+  // Keep results/rating metadata in sync with live Automatic mode (single write — no FE race).
+  const liveMode = body.state && typeof body.state === 'object' && !Array.isArray(body.state)
+    ? (body.state as Record<string, unknown>).automaticRecordMode
+    : undefined;
+  if (liveMode === 'GAMES' || liveMode === 'AMERICANO_POINTS') {
+    prevMeta.automaticRecordMode = liveMode;
+  }
 
   await prisma.$transaction(async (tx) => {
     if (liveSets) {

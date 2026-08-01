@@ -128,6 +128,9 @@ export const isOfficialPointsBallBudgetExhausted = (
 };
 
 export const isLiveScoringInputLocked = (sets: SetResult[], activeSetIndex: number, rules: ScoringRules): boolean => {
-  if (isLiveMatchCompleteForScoring(sets, rules)) return true;
+  // CLASSIC_AUTOMATIC live completion is state-aware (`isAutomaticLiveMatchComplete`).
+  if (rules.strictValidation !== 'CLASSIC_AUTOMATIC_RELAXED') {
+    if (isLiveMatchCompleteForScoring(sets, rules)) return true;
+  }
   return isOfficialPointsBallBudgetExhausted(sets, activeSetIndex, rules);
 };

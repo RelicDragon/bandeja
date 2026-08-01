@@ -161,6 +161,16 @@ export function useScoreEntryState({
     setTeamBScore(0);
   }, []);
 
+  const handleMatchRecordModeChange = useCallback((mode: AutomaticMatchRecordMode) => {
+    setMatchRecordMode(mode);
+    setTeamAScore(0);
+    setTeamBScore(0);
+    if (useSuperTiebreak) {
+      setUseSuperTiebreak(false);
+      setIsTieBreak(false);
+    }
+  }, [useSuperTiebreak]);
+
   useEffect(() => {
     if (!isSupplementalRow || extraRole !== 'EXTRA_BALLS') return;
     setTeamAScore((a) => Math.min(EXTRA_BALLS_SCORE_MAX, a));
@@ -242,7 +252,10 @@ export function useScoreEntryState({
       : validation;
   const suggestions: ScoreSuggestion[] =
     !recommendation.ok && (teamAScore > 0 || teamBScore > 0)
-      ? suggestLegalScores(teamAScore, teamBScore, rules, setIndex, match.sets)
+      ? suggestLegalScores(teamAScore, teamBScore, rules, setIndex, match.sets, {
+          isTieBreak: isAutomaticRelaxed ? useSuperTiebreak : isTieBreak,
+          entryMode,
+        })
       : [];
 
   const handleSave = () => {
@@ -270,7 +283,10 @@ export function useScoreEntryState({
   const applySuggestion = (s: ScoreSuggestion) => {
     setTeamAScore(s.teamA);
     setTeamBScore(s.teamB);
-    if (typeof s.isTieBreak === 'boolean') setIsTieBreak(s.isTieBreak);
+    if (typeof s.isTieBreak === 'boolean') {
+      setIsTieBreak(s.isTieBreak);
+      if (isAutomaticRelaxed) setUseSuperTiebreak(s.isTieBreak);
+    }
   };
 
   const maxPlayersPerTeam = maxPlayersPerTeamForGame(game ?? null, players.length);
@@ -408,7 +424,7 @@ export function useScoreEntryState({
     teamBScore,
     setTeamScore,
     matchRecordMode,
-    setMatchRecordMode,
+    setMatchRecordMode: handleMatchRecordModeChange,
     persistedRecordMode,
     canUseSuperTiebreak,
     useSuperTiebreak,

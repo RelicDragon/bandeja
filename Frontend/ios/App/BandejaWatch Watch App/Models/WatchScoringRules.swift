@@ -1,6 +1,7 @@
 import Foundation
 
 enum WatchScoringPreset: String, Sendable {
+    case classicAutomatic = "CLASSIC_AUTOMATIC"
     case classicBo3 = "CLASSIC_BEST_OF_3"
     case classicBo5 = "CLASSIC_BEST_OF_5"
     case classicSuperTb = "CLASSIC_SUPER_TIEBREAK"
@@ -57,6 +58,8 @@ struct WatchScoringRules: Sendable, Equatable {
     var deucesBeforeGoldenPoint: Int?
     var allowRemoveSet: Bool
     var allowIncompleteRegularSetGames: Bool
+    /// Mirrors FE `strictValidation === 'CLASSIC_AUTOMATIC_RELAXED'`.
+    var isClassicAutomaticRelaxed: Bool
 
     var isClassic: Bool { ballsInGames && winnerOfMatch == .bySets }
 
@@ -157,12 +160,18 @@ enum WatchScoringRulebook {
             allowDrawPerSet: false,
             deucesBeforeGoldenPoint: nil,
             allowRemoveSet: allowRemoveSet,
-            allowIncompleteRegularSetGames: false
+            allowIncompleteRegularSetGames: false,
+            isClassicAutomaticRelaxed: false
         )
     }
 
     static func skeleton(for preset: WatchScoringPreset) -> WatchScoringRules {
         switch preset {
+        case .classicAutomatic:
+            var r = classicBo3
+            r.allowRemoveSet = true
+            r.isClassicAutomaticRelaxed = true
+            return r
         case .classicBo3:
             return classicBo3
         case .classicBo5:
@@ -292,7 +301,12 @@ enum WatchScoringRulebook {
         let skeleton: WatchScoringRules = preset.map(self.skeleton(for:)) ?? derive(from: game)
         var r = skeleton
         r.maxPointsPerTeam = game?.maxPointsPerTeam ?? 0
-        r.allowIncompleteRegularSetGames = (game?.isMatchTimerEnabled ?? false) || preset == .classicTimed
+        r.allowIncompleteRegularSetGames =
+            (game?.isMatchTimerEnabled ?? false) || preset == .classicTimed || preset == .classicAutomatic
+        if preset == .classicAutomatic {
+            r.isClassicAutomaticRelaxed = true
+            r.allowRemoveSet = true
+        }
         let goldenApplies = r.ballsInGames && r.winnerOfMatch == .bySets
         if goldenApplies, let raw = game?.deucesBeforeGoldenPoint {
             r.deucesBeforeGoldenPoint = raw

@@ -54,8 +54,8 @@
       "tiebreakWinBy2": "Tiebreak je třeba vyhrát o 2 body",
       "tiebreakTooLow": "Tiebreak jde minimálně do {{target}} bodů",
       "superTiebreakDraw": "Super tiebreak nemůže skončit remízou",
-      "superTiebreakWinBy2": "Super tiebreak je třeba vyhrát o 2 body",
-      "superTiebreakTooLow": "Super tiebreak jde minimálně do {{target}} bodů",
+      "superTiebreakWinBy2": "Super tiebreak je třeba vyhrát o {{winBy}} body",
+      "superTiebreakTooLow": "Super tiebreak jde minimálně do {{target}} bodů, o {{winBy}} body",
       "setAfterMatchDecided": "Zápas je již rozhodnutý"
     },
     "addMatch": "Přidat zápas",

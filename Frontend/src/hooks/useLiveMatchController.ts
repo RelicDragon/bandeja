@@ -12,13 +12,22 @@ import {
 } from '@shared/timedCustomPresets';
 import { playersPerMatchOf } from '@/utils/matchFormat';
 import {
+  applyAutomaticContinueChoice,
+  applyAutomaticOpenEndedSetConfirm,
+  applyAutomaticRecordMode as applyAutomaticRecordModeAction,
   applyOptionalDeciderFormat,
+  automaticRecordModeChoicePending,
+  canConfirmAutomaticOpenEndedSetChoice,
   clearTimedClassicSetLock,
   freezeTimedSetAtPartialScore,
+  isAutomaticLiveMatchComplete,
+  optionalContinueSetChoicePending,
   optionalDeciderChoicePending,
   parseLiveBoardTheme,
   scoreLivePoint,
   unscoreLivePoint,
+  type LiveAutomaticContinueChoice,
+  type LiveAutomaticRecordMode,
   type LiveBoardTheme,
   type LiveMatchCourtOrientation,
   type LiveOptionalDeciderFormat,
@@ -183,7 +192,10 @@ export function useLiveMatchController(
   const scoringLocked = useMemo(() => {
     if (!liveState || !rules) return false;
     if (liveScoringClosedByMatchMetadata(rawMatch?.metadata)) return true;
+    if (automaticRecordModeChoicePending(liveState, rules)) return true;
     if (optionalDeciderChoicePending(liveState, rules)) return true;
+    if (optionalContinueSetChoicePending(liveState, rules)) return true;
+    if (isAutomaticLiveMatchComplete(liveState, rules)) return true;
     return isLiveScoringInputLocked(liveState.sets, liveState.activeSetIndex, rules);
   }, [liveState, rawMatch?.metadata, rules]);
 
@@ -192,8 +204,23 @@ export function useLiveMatchController(
       return t('gameDetails.liveScoring.scoringClosedSpecialOutcome');
     }
     if (!liveState || !rules) return null;
+    if (automaticRecordModeChoicePending(liveState, rules)) {
+      return t('gameDetails.liveScoring.chooseAutomaticRecordMode');
+    }
     if (optionalDeciderChoicePending(liveState, rules)) return t('gameDetails.liveScoring.chooseDeciderFormat');
-    if (isLiveMatchCompleteForScoring(liveState.sets, rules)) return t('gameDetails.liveScoring.matchComplete');
+    if (optionalContinueSetChoicePending(liveState, rules)) {
+      return t('gameDetails.liveScoring.chooseAutomaticContinue');
+    }
+    if (canConfirmAutomaticOpenEndedSetChoice(liveState, rules)) {
+      return t('gameDetails.liveScoring.chooseAutomaticFinishSet');
+    }
+    if (
+      isAutomaticLiveMatchComplete(liveState, rules) ||
+      (rules.strictValidation !== 'CLASSIC_AUTOMATIC_RELAXED' &&
+        isLiveMatchCompleteForScoring(liveState.sets, rules))
+    ) {
+      return t('gameDetails.liveScoring.matchComplete');
+    }
     if (liveState.mode === 'points' && isLiveScoringInputLocked(liveState.sets, liveState.activeSetIndex, rules)) {
       return t('gameDetails.liveScoring.pointsBudgetComplete');
     }
@@ -205,6 +232,25 @@ export function useLiveMatchController(
 
   const showOptionalDeciderSheet = Boolean(
     liveState && rules && optionalDeciderChoicePending(liveState, rules) && !tv && isAuthenticated
+  );
+  const showAutomaticRecordModeSheet = Boolean(
+    liveState && rules && automaticRecordModeChoicePending(liveState, rules) && !tv && isAuthenticated
+  );
+  const showAutomaticContinueSheet = Boolean(
+    liveState &&
+      rules &&
+      optionalContinueSetChoicePending(liveState, rules) &&
+      !optionalDeciderChoicePending(liveState, rules) &&
+      !tv &&
+      isAuthenticated
+  );
+  const canAutomaticFinishSet = Boolean(
+    liveState &&
+      rules &&
+      canConfirmAutomaticOpenEndedSetChoice(liveState, rules) &&
+      !tv &&
+      isAuthenticated &&
+      !saving
   );
 
   const canTimedSetFreeze = useMemo(() => {
@@ -340,7 +386,12 @@ export function useLiveMatchController(
       const s = liveStateRef.current;
       const r = rulesRef.current;
       if (!s || savingRef.current || !isAuthenticated || !r) return;
-      if (isLiveMatchCompleteForScoring(s.sets, r)) return;
+      if (
+        isAutomaticLiveMatchComplete(s, r) ||
+        (r.strictValidation !== 'CLASSIC_AUTOMATIC_RELAXED' && isLiveMatchCompleteForScoring(s.sets, r))
+      ) {
+        return;
+      }
       applyLiveAction(unscoreLivePoint(s, side, r));
     },
     [isAuthenticated, applyLiveAction]
@@ -355,6 +406,36 @@ export function useLiveMatchController(
     },
     [isAuthenticated, applyLiveAction]
   );
+
+  const applyAutomaticRecordModeChoice = useCallback(
+    (mode: LiveAutomaticRecordMode) => {
+      const s = liveStateRef.current;
+      const r = rulesRef.current;
+      if (!s || !r || savingRef.current || !isAuthenticated || !gameId || !matchId) return;
+      const result = applyAutomaticRecordModeAction(s, r, mode);
+      if (!result.changed) return;
+      // Server merges automaticRecordMode into match metadata on live PATCH (avoids race).
+      applyLiveAction(result);
+    },
+    [isAuthenticated, applyLiveAction, gameId, matchId]
+  );
+
+  const applyAutomaticContinue = useCallback(
+    (choice: LiveAutomaticContinueChoice) => {
+      const s = liveStateRef.current;
+      const r = rulesRef.current;
+      if (!s || !r || savingRef.current || !isAuthenticated) return;
+      applyLiveAction(applyAutomaticContinueChoice(s, r, choice));
+    },
+    [isAuthenticated, applyLiveAction]
+  );
+
+  const confirmAutomaticOpenEndedSet = useCallback(() => {
+    const s = liveStateRef.current;
+    const r = rulesRef.current;
+    if (!s || !r || savingRef.current || !isAuthenticated) return;
+    applyLiveAction(applyAutomaticOpenEndedSetConfirm(s, r));
+  }, [isAuthenticated, applyLiveAction]);
 
   const kitchenFault = useCallback(
     (faultingTeam: LiveTeamSide) => {
@@ -469,6 +550,10 @@ export function useLiveMatchController(
     scorePoint,
     unscorePoint,
     applyOptionalDecider,
+    applyAutomaticRecordMode: applyAutomaticRecordModeChoice,
+    applyAutomaticContinue,
+    confirmAutomaticOpenEndedSet,
+    canAutomaticFinishSet,
     kitchenFault,
     letPending,
     letReplay,
@@ -482,6 +567,8 @@ export function useLiveMatchController(
     scoringLocked,
     liveMatchStatusNote,
     showOptionalDeciderSheet,
+    showAutomaticRecordModeSheet,
+    showAutomaticContinueSheet,
     canTimedSetFreeze,
     canTimedSetUnlock,
     shareBoardThemeParam,

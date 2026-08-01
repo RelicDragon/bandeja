@@ -17,6 +17,10 @@ export type LiveScoringMode = 'classic' | 'points';
 
 export type LiveOptionalDeciderFormat = 'REGULAR_SET' | 'SUPER_TIEBREAK';
 
+export type LiveAutomaticRecordMode = 'GAMES' | 'AMERICANO_POINTS';
+
+export type LiveAutomaticContinueChoice = 'CONTINUE' | 'END';
+
 export type LivePointsServeRotation = 'official' | 'simple';
 
 export type LiveScoringClassicState = {
@@ -42,6 +46,10 @@ export type LiveScoringState = {
   pointsServeRotation?: LivePointsServeRotation;
   serveGuideSkipped?: boolean;
   optionalDeciderFormat?: LiveOptionalDeciderFormat;
+  automaticRecordMode?: LiveAutomaticRecordMode;
+  automaticEarlyFinish?: boolean;
+  /** CLASSIC_AUTOMATIC americano: operator confirmed open-ended set finished. */
+  automaticOpenEndedSetConfirmed?: boolean;
   timedClassicSetLocked?: boolean;
   /** Strict officiating: let called — block scoring until replay confirmed. */
   officiatingLetPending?: boolean;

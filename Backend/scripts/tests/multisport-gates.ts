@@ -13,10 +13,14 @@ import { validateGameForSport } from '../../src/utils/validators/validateGameFor
 import { generateRandomRound } from '../../src/services/results/generation/random';
 import { projectUserForSportContext } from '../../src/services/user/userSportProfile.service';
 import {
+  applyAutomaticContinueChoice,
+  applyAutomaticRecordMode,
+  createInitialLiveScoringState,
   freezeTimedOpenEndedRallyAtPartialScore,
   freezeTimedSetAtPartialScore,
   scoreLivePoint,
 } from '../../src/services/results/liveScoringEngine/core';
+import { isLiveScoringTransitionWithinSteps } from '../../src/services/results/liveScoringEngine/liveScoringTransitionVerify';
 import type { LiveScoringState } from '../../src/services/results/liveScoringEngine/types';
 import type { GenGame as Game } from '../../src/services/results/generation/types';
 
@@ -181,6 +185,74 @@ function testC5SocialTime(): void {
   console.log('ok: C5 social time');
 }
 
+/** Automatic live scoring must stay closed once two completed sets decide the match. */
+function testAutomaticLiveCompletionGate(): void {
+  const rules = getRules({ sport: 'PADEL', scoringPreset: 'CLASSIC_AUTOMATIC' });
+  const state: LiveScoringState = {
+    mode: 'classic',
+    automaticRecordMode: 'GAMES',
+    sets: [
+      { teamA: 6, teamB: 4, isTieBreak: false },
+      { teamA: 6, teamB: 3, isTieBreak: false },
+    ],
+    activeSetIndex: 1,
+    classic: {
+      pointState: { kind: 'regular', teamA: 0, teamB: 0 },
+      withinSetTieBreak: false,
+      tieBreakA: 0,
+      tieBreakB: 0,
+      classicPointsPlayedInGame: 0,
+      deuceCount: 0,
+    },
+  };
+
+  assert(!scoreLivePoint(state, 'teamA', rules).changed, 'Automatic blocks score after match completion');
+}
+
+/** Automatic choices are accepted by the same transition graph used by live PATCH. */
+function testAutomaticLiveChoiceTransitionGraph(): void {
+  const rules = getRules({ sport: 'PADEL', scoringPreset: 'CLASSIC_AUTOMATIC' });
+  const initial = createInitialLiveScoringState(rules);
+  const mode = applyAutomaticRecordMode(initial, rules, 'GAMES');
+  assert(mode.changed, 'Automatic record mode choice changes state');
+  assert(
+    isLiveScoringTransitionWithinSteps(initial, mode.state, rules, initial.sets, 1),
+    'Automatic record mode choice accepted by transition graph'
+  );
+
+  const completedFirst: LiveScoringState = {
+    ...mode.state,
+    sets: [{ teamA: 6, teamB: 4, isTieBreak: false }],
+    activeSetIndex: 0,
+  };
+  const continued = applyAutomaticContinueChoice(completedFirst, rules, 'CONTINUE');
+  assert(continued.changed, 'Automatic continue choice changes state');
+  assert(
+    isLiveScoringTransitionWithinSteps(completedFirst, continued.state, rules, completedFirst.sets, 1),
+    'Automatic continue choice accepted by transition graph'
+  );
+
+  const completedMatch: LiveScoringState = {
+    ...mode.state,
+    sets: [
+      { teamA: 6, teamB: 4, isTieBreak: false },
+      { teamA: 6, teamB: 3, isTieBreak: false },
+    ],
+    activeSetIndex: 1,
+  };
+  const illegalPostMatchScore: LiveScoringState = {
+    ...completedMatch,
+    classic: {
+      ...completedMatch.classic!,
+      pointState: { kind: 'regular', teamA: 15, teamB: 0 },
+    },
+  };
+  assert(
+    !isLiveScoringTransitionWithinSteps(completedMatch, illegalPostMatchScore, rules, completedMatch.sets, 1),
+    'Automatic post-completion score rejected by transition graph'
+  );
+}
+
 /** G-STRICT: BWF cap on BEST_OF_3_21; social POINTS_21 not capped */
 function testGStrict(): void {
   assert(getStrictValidationForPreset('BADMINTON', 'BEST_OF_3_21') === 'BWF_21', 'BWF on Bo3 21');
@@ -233,6 +305,8 @@ function main(): void {
   testGRotation();
   testGCasual();
   testC5SocialTime();
+  testAutomaticLiveCompletionGate();
+  testAutomaticLiveChoiceTransitionGraph();
   testGStrict();
   testGRatingProjection();
   testGPadelReg();

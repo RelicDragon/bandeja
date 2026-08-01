@@ -1,5 +1,8 @@
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
+  LiveAutomaticContinueSheet,
+  LiveAutomaticFinishSetControl,
+  LiveAutomaticRecordModeSheet,
   LiveMatchPageChrome,
   LiveMatchRevisionFooter,
   LiveMatchTimedSetControls,
@@ -51,6 +54,10 @@ export const GameLiveMatchPage = () => {
     scorePoint,
     unscorePoint,
     applyOptionalDecider,
+    applyAutomaticRecordMode,
+    applyAutomaticContinue,
+    confirmAutomaticOpenEndedSet,
+    canAutomaticFinishSet,
     kitchenFault,
     letPending,
     letReplay,
@@ -62,6 +69,8 @@ export const GameLiveMatchPage = () => {
     scoringLocked,
     liveMatchStatusNote,
     showOptionalDeciderSheet,
+    showAutomaticRecordModeSheet,
+    showAutomaticContinueSheet,
     canTimedSetFreeze,
     canTimedSetUnlock,
     spectatorTvUrl,
@@ -127,12 +136,19 @@ export const GameLiveMatchPage = () => {
           ) : liveState && rules ? (
             <>
               {!tv ? (
-                <LiveMatchTimedSetControls
-                  canFreeze={canTimedSetFreeze}
-                  canUnlock={canTimedSetUnlock}
-                  onFreeze={timedFreeze}
-                  onUnlock={timedUnlock}
-                />
+                <>
+                  <LiveMatchTimedSetControls
+                    canFreeze={canTimedSetFreeze}
+                    canUnlock={canTimedSetUnlock}
+                    onFreeze={timedFreeze}
+                    onUnlock={timedUnlock}
+                  />
+                  <LiveAutomaticFinishSetControl
+                    canFinish={canAutomaticFinishSet}
+                    onFinish={confirmAutomaticOpenEndedSet}
+                    disabled={saving}
+                  />
+                </>
               ) : null}
               <div className="flex min-h-0 flex-1 flex-col">
                 <LiveScoreShell
@@ -171,7 +187,22 @@ export const GameLiveMatchPage = () => {
           )}
         </main>
 
-        <LiveOptionalDeciderSheet open={showOptionalDeciderSheet} onChoose={applyOptionalDecider} />
+        <LiveAutomaticRecordModeSheet
+          open={showAutomaticRecordModeSheet}
+          onChoose={applyAutomaticRecordMode}
+          disabled={saving}
+        />
+        <LiveAutomaticContinueSheet
+          open={showAutomaticContinueSheet}
+          onChoose={applyAutomaticContinue}
+          disabled={saving}
+        />
+        <LiveOptionalDeciderSheet
+          open={showOptionalDeciderSheet}
+          onChoose={applyOptionalDecider}
+          recordMode={liveState?.automaticRecordMode}
+          disabled={saving}
+        />
         {liveState ? (
           <LiveMatchRevisionFooter revision={revision} saving={saving} boardTheme={boardTheme} tv={tv} />
         ) : null}

@@ -5,16 +5,20 @@ private let watchLiveScoringVersion = 1
 struct WatchMatchMetadata: Decodable, Sendable {
     let liveScoring: WatchLiveScoringEnvelope?
     let nonRallyOutcome: String?
+    /// `GAMES` | `AMERICANO_POINTS` — CLASSIC_AUTOMATIC results/live seed.
+    let automaticRecordMode: String?
 
     enum CodingKeys: String, CodingKey {
         case liveScoring
         case nonRallyOutcome
+        case automaticRecordMode
     }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         liveScoring = try? c.decodeIfPresent(WatchLiveScoringEnvelope.self, forKey: .liveScoring)
         nonRallyOutcome = try? c.decodeIfPresent(String.self, forKey: .nonRallyOutcome)
+        automaticRecordMode = try? c.decodeIfPresent(String.self, forKey: .automaticRecordMode)
     }
 }
 
@@ -43,6 +47,10 @@ struct WatchLiveScoringState: Codable, Sendable {
     var serveGuideSkipped: Bool?
     /// `REGULAR_SET` | `SUPER_TIEBREAK` — mirrors web live metadata optional Bo3 decider.
     var optionalDeciderFormat: String?
+    /// `GAMES` | `AMERICANO_POINTS` — CLASSIC_AUTOMATIC record mode.
+    var automaticRecordMode: String?
+    var automaticEarlyFinish: Bool?
+    var automaticOpenEndedSetConfirmed: Bool?
     var timedClassicSetLocked: Bool?
     var pointWinnerLog: [TeamSide]?
     var officiatingLetPending: Bool?

@@ -12,6 +12,11 @@ export type LiveScoringMode = 'classic' | 'points';
 
 export type LiveOptionalDeciderFormat = 'REGULAR_SET' | 'SUPER_TIEBREAK';
 
+/** Flexible Automatic match recording: classic games vs americano points. */
+export type LiveAutomaticRecordMode = 'GAMES' | 'AMERICANO_POINTS';
+
+export type LiveAutomaticContinueChoice = 'CONTINUE' | 'END';
+
 /** Americano / super tie-break serve rotation (official = TB-style 2 points per team). */
 export type LivePointsServeRotation = 'official' | 'simple';
 
@@ -42,6 +47,15 @@ export type LiveScoringState = {
   serveGuideSkipped?: boolean;
   /** Third-set (etc.) format when rules do not mandate super tie-break. */
   optionalDeciderFormat?: LiveOptionalDeciderFormat;
+  /** CLASSIC_AUTOMATIC: games vs americano points (chosen at live start). */
+  automaticRecordMode?: LiveAutomaticRecordMode;
+  /** CLASSIC_AUTOMATIC: operator ended the match without playing further sets. */
+  automaticEarlyFinish?: boolean;
+  /**
+   * CLASSIC_AUTOMATIC americano points: operator confirmed the open-ended set is finished
+   * (required before continue / end-match sheet).
+   */
+  automaticOpenEndedSetConfirmed?: boolean;
   /** True when the operator locked the current classic set at a partial games score (timed / buzzer). */
   timedClassicSetLocked?: boolean;
   /** Strict officiating: let called — block scoring until replay confirmed. */

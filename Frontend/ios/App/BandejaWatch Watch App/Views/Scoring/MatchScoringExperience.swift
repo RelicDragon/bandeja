@@ -144,6 +144,64 @@ struct MatchScoringExperience: View {
         } message: {
             Text(WatchCopy.fixStartingServerConfirm(lang))
         }
+        .confirmationDialog(
+            WatchCopy.setFormatChoiceTitle(lang),
+            isPresented: Binding(
+                get: { vm.pendingSetFormatChoiceIndex != nil },
+                set: { if !$0 { vm.cancelSetFormatChoice() } }
+            ),
+            titleVisibility: .visible
+        ) {
+            Button(
+                vm.automaticRecordMode == WatchAutomaticFlexible.RecordMode.americanoPoints.rawValue
+                    ? WatchCopy.automaticDeciderPointsChoice(lang)
+                    : WatchCopy.normalSetChoice(lang)
+            ) {
+                vm.confirmSetFormatNormal()
+            }
+            Button(WatchCopy.superTieBreakChoice(lang)) {
+                vm.confirmSetFormatSuper()
+            }
+            Button(WatchCopy.cancelAction(lang), role: .cancel) {
+                vm.cancelSetFormatChoice()
+            }
+        } message: {
+            Text(WatchCopy.setFormatChoiceMessage(lang))
+        }
+        .confirmationDialog(
+            WatchCopy.automaticRecordModeTitle(lang),
+            isPresented: Binding(
+                get: { vm.showAutomaticRecordModeChoice },
+                set: { if !$0 { /* keep until chosen */ } }
+            ),
+            titleVisibility: .visible
+        ) {
+            Button(WatchCopy.automaticRecordModeGames(lang)) {
+                vm.confirmAutomaticRecordMode(.games)
+            }
+            Button(WatchCopy.automaticRecordModeAmericano(lang)) {
+                vm.confirmAutomaticRecordMode(.americanoPoints)
+            }
+        } message: {
+            Text(WatchCopy.automaticRecordModeMessage(lang))
+        }
+        .confirmationDialog(
+            WatchCopy.automaticContinueTitle(lang),
+            isPresented: Binding(
+                get: { vm.showAutomaticContinueChoice },
+                set: { if !$0 { /* keep until chosen */ } }
+            ),
+            titleVisibility: .visible
+        ) {
+            Button(WatchCopy.automaticContinueCta(lang)) {
+                vm.confirmAutomaticContinue(.continueSet)
+            }
+            Button(WatchCopy.automaticEndCta(lang), role: .destructive) {
+                vm.confirmAutomaticContinue(.end)
+            }
+        } message: {
+            Text(WatchCopy.automaticContinueMessage(lang))
+        }
     }
 
     private func pushWidgetSnapshot() {

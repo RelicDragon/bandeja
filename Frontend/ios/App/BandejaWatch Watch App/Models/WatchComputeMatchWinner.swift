@@ -81,11 +81,58 @@ enum WatchComputeMatchWinner {
         return out
     }
 
+    private static func countSetsWonSides(_ playedSets: [WatchSetWrite]) -> (a: Int, b: Int) {
+        var a = 0
+        var b = 0
+        for s in playedSets {
+            guard let w = setWinner(s) else { continue }
+            switch w {
+            case .teamA: a += 1
+            case .teamB: b += 1
+            }
+        }
+        return (a, b)
+    }
+
+    /// CLASSIC_AUTOMATIC standings: one completed set can pick a winner; entry may still be open.
+    private static func computeAutomaticRelaxedBySetsWinner(_ playedSets: [WatchSetWrite]) -> WatchMatchWinnerSide? {
+        guard !playedSets.isEmpty else { return nil }
+        let counts = countSetsWonSides(playedSets)
+        if playedSets.count == 1 {
+            if counts.a == 1 { return .teamA }
+            if counts.b == 1 { return .teamB }
+            return nil
+        }
+        if counts.a > counts.b { return .teamA }
+        if counts.b > counts.a { return .teamB }
+        return nil
+    }
+
+    /// Whether official set entry is complete (parity with FE `isMatchOfficialSetEntryComplete`).
+    static func isMatchOfficialSetEntryComplete(sets: [WatchSetWrite], rules: WatchScoringRules) -> Bool {
+        if !rules.isClassicAutomaticRelaxed {
+            return isMatchDecidedForLiveScoring(sets: sets, rules: rules)
+        }
+        let official = sets.filter(isOfficialMatchSet)
+        let played = official.filter(isSetPlayed)
+        let counts = countSetsWonSides(played)
+        if max(counts.a, counts.b) >= rules.minSetsToWin { return true }
+        if let stbIdx = rules.superTieBreakReplacesDeciderAtIndex, counts.a == counts.b, counts.a > 0 {
+            let stb = official[safe: stbIdx]
+            return stb.map(isSetPlayed) ?? false
+        }
+        if rules.maxSetsPlayed > 0, played.count >= rules.maxSetsPlayed { return true }
+        return false
+    }
+
     static func computeMatchWinnerLiveScoring(sets: [WatchSetWrite], rules: WatchScoringRules) -> WatchMatchWinnerSide? {
         let playedSets = completedOfficialSetsForLive(sets: sets, rules: rules)
         guard !playedSets.isEmpty else { return nil }
 
         if rules.winnerOfMatch == .bySets {
+            if rules.isClassicAutomaticRelaxed {
+                return computeAutomaticRelaxedBySetsWinner(playedSets)
+            }
             var a = 0
             var b = 0
             for s in playedSets {

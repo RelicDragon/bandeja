@@ -509,7 +509,7 @@ Frontend/e2e/
 | C-10 | Template picker | Select template | Format + rating defaults applied |
 | C-10a | Padel Automatic default | Create padel doubles game (default load) | **Automatic** template selected (Match badge); `CLASSIC_AUTOMATIC` preset; generation Automatic; rating game on |
 | C-10b | Automatic customize demote | Automatic template → Customize format → change any param | Custom/advanced card; template no longer matches |
-| C-10c | Automatic set entry | Automatic game → set 1: SegmentedSwitch Set/games vs Americano points (match-level); set 2+ uses same mode; at 1–1 decider can pick super tiebreak; next match can differ | Set/games 0–10; after 1–1 third set defaults to match mode (not STB); STB only after switch; switching decider mode clears scores to 0–0 and saves without sync/offline banner; STB uses tiebreak point cap (first-to+5); hint/examples follow active mode; title shows STB suffix only when STB selected |
+| C-10c | Automatic set entry | Automatic game → set 1: SegmentedSwitch Set/games vs Americano points (match-level); set 2+ uses same mode; at 1–1 decider can pick super tiebreak; next match can differ | Set/games 0–10; after 1–1 third set defaults to match mode (not STB); STB only after switch; switching decider mode clears scores to 0–0 and saves without sync/offline banner; STB hint says first-to + win-by-2 and chips are 10–8 / 11–9 / 12–10 (not 6–0 set scores); non-blocking; title shows STB suffix only when STB selected |
 | C-10d | Padel Super tie-break template | Create padel doubles → pick **Super tie-break** | `CLASSIC_SUPER_TIEBREAK` preset; Match badge; rating on; duration estimate shown; reopening format picker keeps template selected |
 | C-11 | Game format wizard | Open/close wizard | Scoring preset saved |
 | C-47 | Golden point deuce count | Create/edit classic game → Set structure step → pick Off / At 40–40 / After 1–4 deuces | Setting saved on game; live scoring uses advantage until threshold then sudden death at 40–40; watch matches web |
@@ -903,6 +903,15 @@ Frontend/e2e/
 | LS-03 | Undo last point | Undo action | Score reverts |
 | LS-04 | Change server | Serve indicator | Correct server side |
 | LS-05 | End set / start next | Set completion | New set state |
+| LS-05a | Automatic live start mode | Automatic padel → open live on empty match | Sheet asks Set/games vs Americano points before scoring; choice persists on match metadata |
+| LS-05b | Automatic continue set | After completing a games set with match still open | Sheet asks Continue vs End match; Continue advances; End finishes early |
+| LS-05b2 | Automatic americano finish set | Automatic → Americano points → score several points (non-draw) | Scoring stays open until Finish set; then Continue/End sheet; can keep scoring until Finish |
+| LS-05b3 | Automatic continue into set 2 | After set 1 Continue → score points in set 2 (same leader) | Scoring/undo stay open; match does not lock as complete mid-set |
+| LS-05c | Automatic 1–1 decider | After 1–1, Continue | Decider sheet: regular (games or points per mode) vs STB (to 10, win by 2); scoring blocked until chosen |
+| LS-05d | Watch Automatic record mode | `@watch` Automatic padel → open empty match | Dialog: Set/games vs Americano; scoring blocked until chosen; choice in live state |
+| LS-05e | Watch Automatic continue / end | `@watch` finish a games set | Continue vs End dialog; Continue advances; End sets early finish |
+| LS-05f | Watch Automatic americano finish | `@watch` Americano points → score non-draw | Primary Finish set CTA; then Continue/End; undo still works after set 1; no silent advance |
+| LS-05g | Watch Automatic 1–1 + phone sync | `@two devices` Automatic decisions on `@watch` | Phone sees same mode / early finish / STB; Watch does not strip Automatic fields on PATCH |
 | LS-06 | Match completion | Finish match | Final state |
 | LS-07 | Sport variants smoke | Sample: padel, badminton, pickleball, squash, table tennis | Sport-specific court renders |
 | LS-08 | Spectator token | `?spectatorToken=` | View without auth |

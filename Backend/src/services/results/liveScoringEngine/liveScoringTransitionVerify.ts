@@ -1,6 +1,9 @@
 import type { ScoringRules } from './rulebook';
 import {
   advanceLiveSet,
+  applyAutomaticContinueChoice,
+  applyAutomaticOpenEndedSetConfirm,
+  applyAutomaticRecordMode,
   applyOptionalDeciderFormat,
   clearTimedClassicSetLock,
   freezeTimedClassicSetAtPartialScore,
@@ -60,6 +63,9 @@ function canonicalLiveScoringStateForTransitionCompare(state: LiveScoringState):
   if (state.pointsServeRotation) out.pointsServeRotation = state.pointsServeRotation;
   if (state.serveGuideSkipped === true) out.serveGuideSkipped = true;
   if (state.optionalDeciderFormat) out.optionalDeciderFormat = state.optionalDeciderFormat;
+  if (state.automaticRecordMode) out.automaticRecordMode = state.automaticRecordMode;
+  if (state.automaticEarlyFinish === true) out.automaticEarlyFinish = true;
+  if (state.automaticOpenEndedSetConfirmed === true) out.automaticOpenEndedSetConfirmed = true;
   if (state.timedClassicSetLocked === true) out.timedClassicSetLocked = true;
   return sortKeysDeep(out);
 }
@@ -148,6 +154,16 @@ function expandNeighbors(prev: LiveScoringState, rules: ScoringRules): LiveScori
   for (const fmt of ['REGULAR_SET', 'SUPER_TIEBREAK'] as const) {
     const d = applyOptionalDeciderFormat(prev, rules, fmt);
     if (d.changed) push(d.state);
+  }
+  for (const mode of ['GAMES', 'AMERICANO_POINTS'] as const) {
+    const m = applyAutomaticRecordMode(prev, rules, mode);
+    if (m.changed) push(m.state);
+  }
+  const confirmed = applyAutomaticOpenEndedSetConfirm(prev, rules);
+  if (confirmed.changed) push(confirmed.state);
+  for (const choice of ['CONTINUE', 'END'] as const) {
+    const c = applyAutomaticContinueChoice(prev, rules, choice);
+    if (c.changed) push(c.state);
   }
 
   return out.slice(0, MAX_NEIGHBORS_PER_NODE);

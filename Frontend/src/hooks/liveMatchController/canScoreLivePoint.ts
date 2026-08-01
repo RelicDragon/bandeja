@@ -1,5 +1,11 @@
 import { isLiveScoringInputLocked } from '@/utils/scoring/matchWinner';
-import { activeSetScore, optionalDeciderChoicePending } from '@/utils/liveScoring';
+import {
+  activeSetScore,
+  automaticRecordModeChoicePending,
+  isAutomaticLiveMatchComplete,
+  optionalContinueSetChoicePending,
+  optionalDeciderChoicePending,
+} from '@/utils/liveScoring';
 import { isLetReplayBlockingScore, validateStrictBadmintonServeBeforePoint } from '@shared/officiatingEnforcement';
 import { officiatingIsStrict } from '@shared/officiatingLevel';
 import { resolveLiveScoringPlugin, computeServeGuideSnapshotByPlugin } from '@/liveScoring/registry';
@@ -28,8 +34,17 @@ export function canScoreLivePoint(
   if (liveScoringClosedByMatchMetadata(rawMatch?.metadata)) {
     return { ok: false, reason: 'closed' };
   }
+  if (automaticRecordModeChoicePending(liveState, rules)) {
+    return { ok: false, reason: 'recordMode' };
+  }
   if (optionalDeciderChoicePending(liveState, rules)) {
     return { ok: false, reason: 'decider' };
+  }
+  if (optionalContinueSetChoicePending(liveState, rules)) {
+    return { ok: false, reason: 'continue' };
+  }
+  if (isAutomaticLiveMatchComplete(liveState, rules)) {
+    return { ok: false, reason: 'locked' };
   }
   if (isLiveScoringInputLocked(liveState.sets, liveState.activeSetIndex, rules)) {
     return { ok: false, reason: 'locked' };

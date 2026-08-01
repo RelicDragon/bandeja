@@ -35,6 +35,9 @@ enum WatchLiveScoringEngine {
             matchStartTeamBSidesMirrored: nil,
             serveGuideSkipped: nil,
             optionalDeciderFormat: nil,
+            automaticRecordMode: nil,
+            automaticEarlyFinish: nil,
+            automaticOpenEndedSetConfirmed: nil,
             timedClassicSetLocked: nil,
             pointWinnerLog: nil
         )
@@ -58,7 +61,7 @@ enum WatchLiveScoringEngine {
                 classicPointsPlayedInGame: 0
             )
         }
-        return WatchLiveScoringState(
+        var parsed = WatchLiveScoringState(
             activeSetIndex: active,
             mode: mode,
             sets: sets,
@@ -71,10 +74,18 @@ enum WatchLiveScoringEngine {
             matchStartTeamBSidesMirrored: raw.matchStartTeamBSidesMirrored,
             serveGuideSkipped: raw.serveGuideSkipped,
             optionalDeciderFormat: raw.optionalDeciderFormat,
+            automaticRecordMode: raw.automaticRecordMode,
+            automaticEarlyFinish: raw.automaticEarlyFinish == true ? true : nil,
+            automaticOpenEndedSetConfirmed: raw.automaticOpenEndedSetConfirmed == true ? true : nil,
             timedClassicSetLocked: raw.timedClassicSetLocked,
             pointWinnerLog: raw.pointWinnerLog,
             officiatingLetPending: raw.officiatingLetPending
         )
+        if parsed.automaticRecordMode == nil,
+           let inferred = WatchAutomaticFlexible.inferAutomaticRecordMode(state: parsed, rules: rules) {
+            parsed.automaticRecordMode = inferred.rawValue
+        }
+        return parsed
     }
 
     // MARK: - Mutations
@@ -87,7 +98,24 @@ enum WatchLiveScoringEngine {
         if state.timedClassicSetLocked == true {
             return ActionResult(state: state, changed: false)
         }
-        if rules.isClassic, optionalDeciderChoicePending(state: state, rules: rules) {
+        if state.automaticEarlyFinish == true {
+            return ActionResult(state: state, changed: false)
+        }
+        if WatchAutomaticFlexible.isAutomaticLiveMatchComplete(state: state, rules: rules) {
+            return ActionResult(state: state, changed: false)
+        }
+        if WatchAutomaticFlexible.automaticRecordModeChoicePending(state: state, rules: rules) {
+            return ActionResult(state: state, changed: false)
+        }
+        if optionalDeciderChoicePending(state: state, rules: rules) {
+            return ActionResult(state: state, changed: false)
+        }
+        if WatchAutomaticFlexible.optionalContinueSetPending(
+            state: state,
+            rules: rules,
+            canAdvance: canAdvanceLiveSet,
+            deciderPending: optionalDeciderChoicePending
+        ) {
             return ActionResult(state: state, changed: false)
         }
 
@@ -98,12 +126,25 @@ enum WatchLiveScoringEngine {
             guard var row = copy.sets[safe: copy.activeSetIndex] else {
                 return ActionResult(state: state, changed: false)
             }
+            if row.isTieBreak {
+                if pointRaceCompleted(
+                    teamA: row.teamA,
+                    teamB: row.teamB,
+                    target: superTieBreakTarget(rules: rules),
+                    winBy: max(rules.superTieBreakWinBy, 1)
+                ) {
+                    return ActionResult(state: state, changed: false)
+                }
+                if side == .teamA { row.teamA += 1 } else { row.teamB += 1 }
+                copy.sets[copy.activeSetIndex] = row
+                return ActionResult(state: autoAdvanceCompletedSets(state: copy, rules: rules), changed: true)
+            }
             if side == .teamA { row.teamA += 1 } else { row.teamB += 1 }
             copy.sets[copy.activeSetIndex] = row
             var log = copy.pointWinnerLog ?? []
             log.append(side)
             copy.pointWinnerLog = log
-            return ActionResult(state: copy, changed: true)
+            return ActionResult(state: autoAdvanceCompletedSets(state: copy, rules: rules), changed: true)
         }
 
         guard var classic = copy.classic else {
@@ -156,6 +197,12 @@ enum WatchLiveScoringEngine {
         if state.timedClassicSetLocked == true {
             return ActionResult(state: state, changed: false)
         }
+        if state.automaticEarlyFinish == true {
+            return ActionResult(state: state, changed: false)
+        }
+        if WatchAutomaticFlexible.isAutomaticLiveMatchComplete(state: state, rules: rules) {
+            return ActionResult(state: state, changed: false)
+        }
 
         var copy = state
         ensureSetExists(state: &copy, rules: rules)
@@ -176,6 +223,11 @@ enum WatchLiveScoringEngine {
                     log = []
                 }
                 copy.pointWinnerLog = log.isEmpty ? nil : log
+            }
+            if copy.automaticOpenEndedSetConfirmed == true,
+               WatchAutomaticFlexible.isAutomaticOpenEndedPointsSet(state: copy, rules: rules),
+               row.teamA == row.teamB || (row.teamA == 0 && row.teamB == 0) {
+                copy.automaticOpenEndedSetConfirmed = nil
             }
             return ActionResult(state: copy, changed: true)
         }
@@ -279,6 +331,7 @@ enum WatchLiveScoringEngine {
         var copy = state
         copy.activeSetIndex += 1
         copy.timedClassicSetLocked = nil
+        copy.automaticOpenEndedSetConfirmed = nil
         copy.pointWinnerLog = []
         ensureSetExists(state: &copy, rules: rules)
         if var row = copy.sets[safe: copy.activeSetIndex] {
@@ -305,10 +358,18 @@ enum WatchLiveScoringEngine {
     // MARK: - Queries
 
     static func canAdvanceLiveSet(state: WatchLiveScoringState, rules: WatchScoringRules) -> Bool {
+        if state.automaticEarlyFinish == true { return false }
         if state.activeSetIndex + 1 >= max(rules.maxSetsPlayed, 1) { return false }
         guard let set = state.sets[safe: state.activeSetIndex] else { return false }
         let official = splitOfficialSupplemental(state.sets).official
-        if state.mode != .classic {
+        if set.isTieBreak {
+            if !pointRaceCompleted(
+                teamA: set.teamA,
+                teamB: set.teamB,
+                target: superTieBreakTarget(rules: rules),
+                winBy: max(rules.superTieBreakWinBy, 1)
+            ) { return false }
+        } else if state.mode != .classic {
             if rules.isRallyGame {
                 if !pointRaceCompleted(
                     teamA: set.teamA,
@@ -316,16 +377,13 @@ enum WatchLiveScoringEngine {
                     target: rules.totalPointsPerSet,
                     winBy: max(rules.winBy, 2)
                 ) { return false }
+            } else if WatchAutomaticFlexible.isAutomaticOpenEndedPointsSet(state: state, rules: rules) {
+                if state.automaticOpenEndedSetConfirmed != true { return false }
+                if set.teamA == 0 && set.teamB == 0 { return false }
+                if set.teamA == set.teamB { return false }
             } else if set.teamA == 0 && set.teamB == 0 {
                 return false
             }
-        } else if set.isTieBreak {
-            if !pointRaceCompleted(
-                teamA: set.teamA,
-                teamB: set.teamB,
-                target: superTieBreakTarget(rules: rules),
-                winBy: max(rules.superTieBreakWinBy, 1)
-            ) { return false }
         } else if state.classic?.withinSetTieBreak == true {
             return false
         } else if !classicSetCompleted(
@@ -336,14 +394,23 @@ enum WatchLiveScoringEngine {
         ) {
             return false
         }
-        if WatchComputeMatchWinner.isMatchDecidedForLiveScoring(sets: official, rules: rules) { return false }
+        if rules.isClassicAutomaticRelaxed {
+            if WatchAutomaticFlexible.isAutomaticLiveMatchComplete(state: state, rules: rules) { return false }
+        } else if WatchComputeMatchWinner.isMatchDecidedForLiveScoring(sets: official, rules: rules) {
+            return false
+        }
         return true
     }
 
     static func canUnscore(state: WatchLiveScoringState, side: TeamSide, rules: WatchScoringRules) -> Bool {
         if state.timedClassicSetLocked == true { return false }
+        if state.automaticEarlyFinish == true { return false }
         let official = splitOfficialSupplemental(state.sets).official
-        if WatchComputeMatchWinner.isMatchDecidedForLiveScoring(sets: official, rules: rules) { return false }
+        if rules.isClassicAutomaticRelaxed {
+            if WatchAutomaticFlexible.isAutomaticLiveMatchComplete(state: state, rules: rules) { return false }
+        } else if WatchComputeMatchWinner.isMatchDecidedForLiveScoring(sets: official, rules: rules) {
+            return false
+        }
 
         let supplemental = state.sets[safe: state.activeSetIndex].map { $0.resolvedRole != .official } ?? false
         if supplemental {
@@ -426,7 +493,11 @@ enum WatchLiveScoringEngine {
     }
 
     static func autoAdvanceCompletedSets(state: WatchLiveScoringState, rules: WatchScoringRules) -> WatchLiveScoringState {
-        guard rules.isClassic else { return state }
+        // Automatic: operator confirms continue / decider — never silent-advance.
+        if rules.isClassicAutomaticRelaxed {
+            return normalizeLiveSetsAfterDecision(state: state, rules: rules)
+        }
+        guard rules.isClassic || rules.isRallyGame else { return state }
         var s = state
         while canAdvanceLiveSet(state: s, rules: rules) {
             let next = advanceLiveSet(
@@ -446,6 +517,12 @@ enum WatchLiveScoringEngine {
         state: WatchLiveScoringState,
         rules: WatchScoringRules
     ) -> AutoAdvanceResult {
+        if rules.isClassicAutomaticRelaxed {
+            return AutoAdvanceResult(
+                state: normalizeLiveSetsAfterDecision(state: state, rules: rules),
+                pendingOptionalDeciderAtSetIndex: nil
+            )
+        }
         guard rules.isClassic else {
             return AutoAdvanceResult(state: state, pendingOptionalDeciderAtSetIndex: nil)
         }
@@ -473,7 +550,10 @@ enum WatchLiveScoringEngine {
         rules: WatchScoringRules
     ) -> Bool {
         if state.optionalDeciderFormat != nil { return false }
-        guard rules.isClassic, !rules.isBallBudgetPoints else { return false }
+        let classicOrAutomaticPoints =
+            rules.isClassic
+            || (rules.isClassicAutomaticRelaxed && state.mode == .points)
+        guard classicOrAutomaticPoints, !rules.isBallBudgetPoints else { return false }
         if rules.superTieBreakReplacesDeciderAtIndex != nil { return false }
         if state.sets[safe: nextIndex].map({ $0.resolvedRole != .official }) ?? false { return false }
         let deciderIndex = max(0, rules.maxSetsPlayed - 1)
@@ -482,9 +562,12 @@ enum WatchLiveScoringEngine {
     }
 
     static func normalizeLiveSetsAfterDecision(state: WatchLiveScoringState, rules: WatchScoringRules) -> WatchLiveScoringState {
-        guard rules.isClassic, !rules.isBallBudgetPoints else { return state }
+        guard state.mode == .classic, rules.isClassic, !rules.isBallBudgetPoints else { return state }
         let official = splitOfficialSupplemental(state.sets).official
-        guard WatchComputeMatchWinner.isMatchDecidedForLiveScoring(sets: official, rules: rules) else {
+        let decided = rules.isClassicAutomaticRelaxed
+            ? WatchAutomaticFlexible.isAutomaticLiveMatchComplete(state: state, rules: rules)
+            : WatchComputeMatchWinner.isMatchDecidedForLiveScoring(sets: official, rules: rules)
+        guard decided else {
             return state
         }
         var copy = state
@@ -652,24 +735,38 @@ enum WatchLiveScoringEngine {
         classic.withinSetTieBreak = false
     }
 
+    private static func priorSetCompleteForDecider(
+        state: WatchLiveScoringState,
+        set: WatchSetWrite,
+        rules: WatchScoringRules
+    ) -> Bool {
+        if set.isTieBreak {
+            return pointRaceCompleted(
+                teamA: set.teamA,
+                teamB: set.teamB,
+                target: superTieBreakTarget(rules: rules),
+                winBy: max(rules.superTieBreakWinBy, 1)
+            )
+        }
+        if state.automaticRecordMode == WatchAutomaticFlexible.RecordMode.americanoPoints.rawValue
+            || state.mode == .points {
+            return (set.teamA > 0 || set.teamB > 0) && set.teamA != set.teamB
+        }
+        return classicSetCompleted(teamA: set.teamA, teamB: set.teamB, rules: rules, timedLocked: false)
+    }
+
     private static func isOptionalDeciderContext(state: WatchLiveScoringState, rules: WatchScoringRules) -> Bool {
         if rules.superTieBreakReplacesDeciderAtIndex != nil { return false }
-        if state.mode != .classic { return false }
+        if state.mode != .classic,
+           !(rules.isClassicAutomaticRelaxed && state.mode == .points) {
+            return false
+        }
         if rules.fixedNumberOfSets < 3 || rules.maxSetsPlayed < 3 { return false }
         let official = splitOfficialSupplemental(state.sets).official
         if official.count < 3 { return false }
         let prev = Array(official.dropLast())
         for s in prev {
-            if s.isTieBreak {
-                if !pointRaceCompleted(
-                    teamA: s.teamA,
-                    teamB: s.teamB,
-                    target: superTieBreakTarget(rules: rules),
-                    winBy: max(rules.superTieBreakWinBy, 1)
-                ) { return false }
-            } else if !classicSetCompleted(teamA: s.teamA, teamB: s.teamB, rules: rules, timedLocked: false) {
-                return false
-            }
+            if !priorSetCompleteForDecider(state: state, set: s, rules: rules) { return false }
         }
         let decider = official[official.count - 1]
         if decider.teamA > 0 || decider.teamB > 0 { return false }
@@ -682,6 +779,101 @@ enum WatchLiveScoringEngine {
             else if s.teamB > s.teamA { bWins += 1 }
         }
         return aWins == 1 && bWins == 1
+    }
+
+    static func applyAutomaticRecordMode(
+        state: WatchLiveScoringState,
+        rules: WatchScoringRules,
+        mode: WatchAutomaticFlexible.RecordMode
+    ) -> ActionResult {
+        WatchAutomaticFlexible.applyAutomaticRecordMode(state: state, rules: rules, mode: mode)
+    }
+
+    static func applyAutomaticContinueChoice(
+        state: WatchLiveScoringState,
+        rules: WatchScoringRules,
+        choice: WatchAutomaticFlexible.ContinueChoice
+    ) -> ActionResult {
+        WatchAutomaticFlexible.applyAutomaticContinueChoice(
+            state: state,
+            rules: rules,
+            choice: choice,
+            canAdvance: canAdvanceLiveSet,
+            deciderPending: optionalDeciderChoicePending,
+            advance: { s, r in
+                advanceLiveSet(
+                    state: s,
+                    rules: r,
+                    superTieBreak: mandatedSuperTieBreak(at: s.activeSetIndex + 1, rules: r)
+                )
+            }
+        )
+    }
+
+    static func applyAutomaticOpenEndedSetConfirm(
+        state: WatchLiveScoringState,
+        rules: WatchScoringRules
+    ) -> ActionResult {
+        WatchAutomaticFlexible.applyAutomaticOpenEndedSetConfirm(
+            state: state,
+            rules: rules,
+            deciderPending: optionalDeciderChoicePending
+        )
+    }
+
+    static func optionalContinueSetChoicePending(state: WatchLiveScoringState, rules: WatchScoringRules) -> Bool {
+        WatchAutomaticFlexible.optionalContinueSetPending(
+            state: state,
+            rules: rules,
+            canAdvance: canAdvanceLiveSet,
+            deciderPending: optionalDeciderChoicePending
+        )
+    }
+
+    /// Parity with FE `applyOptionalDeciderFormat`.
+    static func applyOptionalDeciderFormat(
+        state: WatchLiveScoringState,
+        rules: WatchScoringRules,
+        format: String
+    ) -> ActionResult {
+        guard optionalDeciderChoicePending(state: state, rules: rules) else {
+            return ActionResult(state: state, changed: false)
+        }
+        guard format == "REGULAR_SET" || format == "SUPER_TIEBREAK" else {
+            return ActionResult(state: state, changed: false)
+        }
+        var copy = state
+        let official = splitOfficialSupplemental(copy.sets).official
+        let idx = official.count - 1
+        guard idx >= 0, idx < copy.sets.count else {
+            return ActionResult(state: state, changed: false)
+        }
+        let isTb = format == "SUPER_TIEBREAK"
+        copy.sets[idx].isTieBreak = isTb
+        copy.optionalDeciderFormat = format
+        if isTb {
+            if copy.mode == .classic {
+                copy.classic = WatchLiveClassicState(
+                    pointState: .regular(teamA: .zero, teamB: .zero),
+                    withinSetTieBreak: false,
+                    tieBreakA: 0,
+                    tieBreakB: 0,
+                    classicPointsPlayedInGame: 0
+                )
+            }
+        } else if copy.automaticRecordMode == WatchAutomaticFlexible.RecordMode.americanoPoints.rawValue {
+            copy.mode = .points
+            copy.classic = nil
+        } else if copy.mode == .classic, copy.activeSetIndex == idx {
+            copy.classic = WatchLiveClassicState(
+                pointState: .regular(teamA: .zero, teamB: .zero),
+                withinSetTieBreak: tieBreakActive(in: copy.sets, index: idx, rules: rules),
+                tieBreakA: 0,
+                tieBreakB: 0,
+                classicPointsPlayedInGame: 0
+            )
+        }
+        return ActionResult(state: copy, changed: true)
     }
 
     private static func classicSetCompleted(
@@ -747,7 +939,7 @@ enum WatchLiveScoringEngine {
         }
     }
 
-    private static func splitOfficialSupplemental(_ rows: [WatchSetWrite]) -> (official: [WatchSetWrite], supplemental: [WatchSetWrite]) {
+    static func splitOfficialSupplemental(_ rows: [WatchSetWrite]) -> (official: [WatchSetWrite], supplemental: [WatchSetWrite]) {
         if let idx = rows.firstIndex(where: { $0.resolvedRole != .official }) {
             return (Array(rows[..<idx]), Array(rows[idx...]))
         }

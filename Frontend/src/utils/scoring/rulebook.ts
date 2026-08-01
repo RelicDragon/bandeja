@@ -168,7 +168,7 @@ const customRule: RuleSkeleton = {
 
 const classicAutomatic: RuleSkeleton = {
   ...classicBo3,
-  superTieBreakReplacesDeciderAtIndex: 2,
+  // STB opt-in via live/results UI (not mandated at set index 2).
   allowRemoveSet: true,
 };
 

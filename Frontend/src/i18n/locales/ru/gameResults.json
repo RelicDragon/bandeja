@@ -54,8 +54,8 @@
       "tiebreakWinBy2": "Тайбрейк должен быть выигран с разницей в 2 очка",
       "tiebreakTooLow": "Тайбрейк идёт минимум до {{target}} очков",
       "superTiebreakDraw": "Супер-тайбрейк не может закончиться ничьёй",
-      "superTiebreakWinBy2": "Супер-тайбрейк должен быть выигран с разницей в 2 очка",
-      "superTiebreakTooLow": "Супер-тайбрейк идёт минимум до {{target}} очков",
+      "superTiebreakWinBy2": "Супер-тайбрейк должен быть выигран с разницей в {{winBy}} очка",
+      "superTiebreakTooLow": "Супер-тайбрейк идёт минимум до {{target}} очков, разница {{winBy}}",
       "setAfterMatchDecided": "Матч уже определён"
     },
     "addMatch": "Добавить Матч",

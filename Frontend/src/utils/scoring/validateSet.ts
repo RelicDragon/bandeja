@@ -86,10 +86,17 @@ export const validateSuperTiebreak = (a: number, b: number, rules: ScoringRules)
   if (a === b) return fail('SUPER_TIEBREAK_DRAW');
   const hi = Math.max(a, b);
   const lo = Math.min(a, b);
-  if (hi < rules.superTieBreakFirstTo) return fail('SUPER_TIEBREAK_TOO_LOW', { target: rules.superTieBreakFirstTo });
-  if (hi - lo < rules.superTieBreakWinBy) return fail('SUPER_TIEBREAK_WIN_BY_2', { diff: hi - lo });
+  if (hi < rules.superTieBreakFirstTo) {
+    return fail('SUPER_TIEBREAK_TOO_LOW', {
+      target: rules.superTieBreakFirstTo,
+      winBy: rules.superTieBreakWinBy,
+    });
+  }
+  if (hi - lo < rules.superTieBreakWinBy) {
+    return fail('SUPER_TIEBREAK_WIN_BY_2', { diff: hi - lo, winBy: rules.superTieBreakWinBy });
+  }
   if (hi > rules.superTieBreakFirstTo && hi - lo !== rules.superTieBreakWinBy) {
-    return fail('SUPER_TIEBREAK_WIN_BY_2', { diff: hi - lo });
+    return fail('SUPER_TIEBREAK_WIN_BY_2', { diff: hi - lo, winBy: rules.superTieBreakWinBy });
   }
   return ok('SUPER_TIEBREAK');
 };

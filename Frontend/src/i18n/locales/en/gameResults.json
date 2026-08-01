@@ -54,8 +54,8 @@
       "tiebreakWinBy2": "Tiebreak must be won by 2 points",
       "tiebreakTooLow": "Tiebreak goes to at least {{target}} points",
       "superTiebreakDraw": "Super tiebreak cannot end in a draw",
-      "superTiebreakWinBy2": "Super tiebreak must be won by 2 points",
-      "superTiebreakTooLow": "Super tiebreak goes to at least {{target}} points",
+      "superTiebreakWinBy2": "Super tiebreak must be won by {{winBy}} points",
+      "superTiebreakTooLow": "Super tiebreak goes to at least {{target}} points, win by {{winBy}}",
       "setAfterMatchDecided": "Match already decided"
     },
     "addMatch": "Add Match",

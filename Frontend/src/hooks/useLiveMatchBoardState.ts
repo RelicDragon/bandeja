@@ -14,8 +14,31 @@ import {
 import type { BasicUser, Game, Gender } from '@/types';
 import type { SetResult } from '@/types/gameResults';
 import { maxPlayersPerTeamForGame } from '@/utils/matchFormat';
-import { getRules } from '@/utils/scoring';
-import { createInitialLiveScoringState, parseLiveScoringState, type LiveScoringState } from '@/utils/liveScoring';
+import {
+  AUTOMATIC_RECORD_MODE_METADATA_KEY,
+  getRules,
+  parseAutomaticMatchRecordMode,
+} from '@/utils/scoring';
+import {
+  createInitialLiveScoringState,
+  parseLiveScoringState,
+  seedAutomaticRecordModeOnState,
+  type LiveScoringState,
+} from '@/utils/liveScoring';
+
+function hydrateAutomaticLiveState(
+  state: LiveScoringState,
+  rules: ReturnType<typeof getRules>,
+  matchMeta: Record<string, unknown> | undefined,
+): LiveScoringState {
+  return seedAutomaticRecordModeOnState(
+    state,
+    rules,
+    matchMeta,
+    parseAutomaticMatchRecordMode,
+    AUTOMATIC_RECORD_MODE_METADATA_KEY,
+  );
+}
 
 export type RawMatch = {
   id: string;
@@ -167,11 +190,14 @@ export function useLiveMatchBoardState(gameId: string, matchId: string, options?
         return;
       }
       setRawMatch(found);
-      const env = parseMatchLiveEnvelope((found.metadata as Record<string, unknown> | undefined)?.liveScoring);
+      const matchMeta = found.metadata as Record<string, unknown> | undefined;
+      const env = parseMatchLiveEnvelope(matchMeta?.liveScoring);
       const rulesSource = (spectatorToken ? spectatorGame : gameRes?.data) as Game | undefined;
-      setLiveState(
-        env ? parseLiveScoringState(env.state, getRules(rulesSource), found.sets) : createInitialLiveScoringState(getRules(rulesSource), found.sets)
-      );
+      const nextRules = getRules(rulesSource);
+      const base = env
+        ? parseLiveScoringState(env.state, nextRules, found.sets)
+        : createInitialLiveScoringState(nextRules, found.sets);
+      setLiveState(hydrateAutomaticLiveState(base, nextRules, matchMeta));
       setRevision(env?.revision ?? 0);
     } catch {
       setError('Failed to load');
@@ -194,9 +220,17 @@ export function useLiveMatchBoardState(gameId: string, matchId: string, options?
         const m = r.matches?.find((x) => x.id === matchId);
         if (m) {
           setRawMatch(m);
-          const env = parseMatchLiveEnvelope((m.metadata as Record<string, unknown> | undefined)?.liveScoring);
+          const matchMeta = m.metadata as Record<string, unknown> | undefined;
+          const env = parseMatchLiveEnvelope(matchMeta?.liveScoring);
           if (env) {
-            setLiveState(parseLiveScoringState(env.state, getRules(game), m.sets));
+            const nextRules = getRules(game);
+            setLiveState(
+              hydrateAutomaticLiveState(
+                parseLiveScoringState(env.state, nextRules, m.sets),
+                nextRules,
+                matchMeta,
+              ),
+            );
             setRevision(env.revision);
           }
           return;
@@ -239,14 +273,30 @@ export function useLiveMatchBoardState(gameId: string, matchId: string, options?
   useEffect(() => {
     if (!lastLive || lastLive.gameId !== gameId || lastLive.matchId !== matchId || spectatorToken) return;
     if (lastLive.liveScoring === null) {
-      setLiveState(rawMatch ? createInitialLiveScoringState(rules, rawMatch.sets) : null);
+      const matchMeta = rawMatch?.metadata as Record<string, unknown> | undefined;
+      setLiveState(
+        rawMatch
+          ? hydrateAutomaticLiveState(
+              createInitialLiveScoringState(rules, rawMatch.sets),
+              rules,
+              matchMeta,
+            )
+          : null,
+      );
       setRevision(0);
       return;
     }
     const env = parseMatchLiveEnvelope(lastLive.liveScoring);
     if (env) {
       if (env.revision <= revisionRef.current) return;
-      setLiveState(parseLiveScoringState(env.state, rules, rawMatch?.sets));
+      const matchMeta = rawMatch?.metadata as Record<string, unknown> | undefined;
+      setLiveState(
+        hydrateAutomaticLiveState(
+          parseLiveScoringState(env.state, rules, rawMatch?.sets),
+          rules,
+          matchMeta,
+        ),
+      );
       setRevision(env.revision);
     }
   }, [lastLive, gameId, matchId, rawMatch, rules, spectatorToken]);

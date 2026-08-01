@@ -24,7 +24,6 @@ const classicBo3: ClassicGameRules = {
 
 const classicAutomatic: ClassicGameRules = {
   ...classicBo3,
-  superTieBreakReplacesDeciderAtIndex: 2,
 };
 
 const PRESET_RULES: Partial<Record<ScoringPreset, ClassicGameRules>> = {

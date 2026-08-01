@@ -196,7 +196,8 @@ const customRule: RuleSkeleton = {
 };
 
 const classicAutomatic: RuleSkeleton = {
-  ...classicSuperTb,
+  ...classicBo3,
+  // STB opt-in via live/results UI (not mandated at set index 2).
   allowRemoveSet: true,
 };
 
@@ -348,3 +349,6 @@ export const isTimedRules = (rules: ScoringRules): boolean => !rules.ballsInGame
 /** Timed one-set classic: any non-negative games score (e.g. at buzzer) except tiebreak rows stay strict. */
 export const isClassicTimedRelaxedGameScores = (rules: ScoringRules): boolean =>
   rules.allowIncompleteRegularSetGames === true;
+
+export const isClassicAutomaticRelaxedScores = (rules: ScoringRules): boolean =>
+  rules.strictValidation === 'CLASSIC_AUTOMATIC_RELAXED';

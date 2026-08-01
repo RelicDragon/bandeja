@@ -12,6 +12,7 @@ import { LiveServeSetupCard } from './LiveServeSetupCard';
 import { LiveServeServerLine } from './LiveServeServerLine';
 import type { ScoringRules } from '@/utils/scoring';
 import { isLiveMatchCompleteForScoring } from '@/utils/scoring';
+import { isAutomaticLiveMatchComplete } from '@/utils/liveScoring';
 import type { LiveBoardTheme } from '@/utils/liveScoring';
 import { AnimatedLiveBoardValue } from './AnimatedLiveBoardValue';
 import { LiveBandejaRotatingLogo } from './LiveBandejaRotatingLogo';
@@ -126,7 +127,10 @@ export const LiveScoreShell = ({
     sport !== 'BADMINTON' &&
     sport !== 'SQUASH' &&
     sport !== 'PICKLEBALL';
-  const matchDecided = isLiveMatchCompleteForScoring(state.sets, rules);
+  const matchDecided =
+    rules.strictValidation === 'CLASSIC_AUTOMATIC_RELAXED'
+      ? isAutomaticLiveMatchComplete(state, rules)
+      : isLiveMatchCompleteForScoring(state.sets, rules);
   const panelDisabled = Boolean(saving || setupBlocks || scoringLocked);
   const activeSetLabel = useMemo(() => liveSetLabelForRow(set, state.activeSetIndex, rules), [
     set,

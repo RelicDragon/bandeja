@@ -135,7 +135,12 @@ export function useSetEntryOperations({
             ? mergeAutomaticMatchRecordMetadata(match.metadata, options.automaticRecordMode)
             : match.metadata;
 
-        if (isClassicRules(rules) && rules.superTieBreakReplacesDeciderAtIndex === null) {
+        // Mandated-optional Bo3: at most one STB row. CLASSIC_AUTOMATIC keeps opt-in STB.
+        if (
+          isClassicRules(rules) &&
+          rules.superTieBreakReplacesDeciderAtIndex === null &&
+          !isClassicAutomaticRelaxedScores(rules)
+        ) {
           for (let i = 0; i < workingSets.length; i++) {
             if (i !== setIndex && workingSets[i].isTieBreak) {
               workingSets[i] = { ...workingSets[i], isTieBreak: false };

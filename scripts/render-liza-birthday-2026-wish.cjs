@@ -54,6 +54,17 @@ function resolveIndex(total) {
   return requested - 1;
 }
 
+function resolveSupplementalImagePath() {
+  const flagIndex = process.argv.indexOf('--extra-image');
+  const inlineFlag = process.argv.find((argument) =>
+    argument.startsWith('--extra-image=')
+  );
+  const requested =
+    (flagIndex >= 0 ? process.argv[flagIndex + 1] : undefined) ||
+    inlineFlag?.slice('--extra-image='.length);
+  return requested ? path.resolve(requested) : null;
+}
+
 async function fetchWishes(url = process.env.WISHES_URL || DEFAULT_WISHES_URL) {
   const response = await fetch(url, {
     headers: { Accept: 'application/json' },
@@ -146,12 +157,23 @@ async function buildAvatarDataUri(wish) {
   }
 }
 
+async function buildSupplementalImageDataUri(imagePath) {
+  if (!imagePath) return null;
+  const image = await sharp(imagePath)
+    .rotate()
+    .resize({ width: 960, withoutEnlargement: true })
+    .jpeg({ quality: 94, chromaSubsampling: '4:4:4' })
+    .toBuffer();
+  return `data:image/jpeg;base64,${image.toString('base64')}`;
+}
+
 function buildHtml({
   avatarDataUri,
   fontDataUris,
   index,
   logoDataUri,
   padelIconDataUri,
+  supplementalImageDataUri,
   total,
   wish,
 }) {
@@ -512,10 +534,15 @@ function buildHtml({
     display: flex;
     align-items: center;
   }
+  .message-stack {
+    width: 100%;
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
   .message-text {
     width: 100%;
-    max-height: 100%;
-    overflow: hidden;
     white-space: pre-wrap;
     overflow-wrap: anywhere;
     font-size: 68px;
@@ -523,6 +550,27 @@ function buildHtml({
     line-height: 1.19;
     letter-spacing: -1.35px;
     color: #28131d;
+  }
+  .supplemental-photo {
+    width: 630px;
+    height: 315px;
+    margin-top: 34px;
+    padding: 8px;
+    flex: 0 0 auto;
+    border: 1px solid rgba(37, 15, 27, 0.13);
+    border-radius: 15px;
+    background: #fffdf9;
+    box-shadow:
+      14px 16px 0 rgba(238, 127, 152, 0.12),
+      0 16px 34px rgba(37, 15, 27, 0.14);
+    transform: rotate(-1.2deg);
+  }
+  .supplemental-photo img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: 9px;
+    object-fit: cover;
   }
   .message-footer {
     display: flex;
@@ -642,7 +690,14 @@ function buildHtml({
       <section class="message-panel">
         <div class="message-label">Пожелание для Лизы</div>
         <div class="message-fit">
-          <div class="message-text">${message}</div>
+          <div class="message-stack">
+            <div class="message-text">${message}</div>
+            ${
+              supplementalImageDataUri
+                ? `<figure class="supplemental-photo"><img src="${supplementalImageDataUri}" alt=""></figure>`
+                : ''
+            }
+          </div>
         </div>
         <div class="message-footer">
           <div class="message-footer__text">Собрано на корте · сказано от сердца</div>
@@ -664,8 +719,11 @@ function buildHtml({
   window.__fitCard = () => {
     const message = document.querySelector('.message-text');
     const messageFit = document.querySelector('.message-fit');
+    const messageStack = document.querySelector('.message-stack');
     const authorName = document.querySelector('.author-name');
     const card = document.querySelector('.card');
+    const verticalSafetyGutter = 72;
+    const safeMessageHeight = messageFit.clientHeight - verticalSafetyGutter;
 
     const length = message.textContent.trim().length;
     let messageFont = 68;
@@ -674,8 +732,8 @@ function buildHtml({
 
     while (
       messageFont > 25 &&
-      (message.scrollHeight > messageFit.clientHeight ||
-        message.scrollWidth > messageFit.clientWidth)
+      (messageStack.scrollHeight > safeMessageHeight ||
+        messageStack.scrollWidth > messageFit.clientWidth)
     ) {
       messageFont -= 1;
       message.style.fontSize = messageFont + 'px';
@@ -694,6 +752,8 @@ function buildHtml({
     }
 
     const cardRect = card.getBoundingClientRect();
+    const messageFitRect = messageFit.getBoundingClientRect();
+    const messageStackRect = messageStack.getBoundingClientRect();
     const primary = Array.from(card.querySelectorAll('.header, .wish-shell, .footer'));
     window.__renderStats = {
       author: authorName.textContent.trim(),
@@ -702,8 +762,9 @@ function buildHtml({
       messageFontPx: Number.parseFloat(getComputedStyle(message).fontSize),
       messageLength: length,
       messageOverflow:
-        message.scrollHeight > messageFit.clientHeight ||
-        message.scrollWidth > messageFit.clientWidth,
+        messageStack.scrollHeight > safeMessageHeight ||
+        messageStack.scrollWidth > messageFit.clientWidth,
+      messageBottomClearancePx: messageFitRect.bottom - messageStackRect.bottom,
       contentOverflow: primary.some((element) => {
         const rect = element.getBoundingClientRect();
         return (
@@ -715,6 +776,9 @@ function buildHtml({
       }),
       avatarLoaded: document.querySelector('.portrait').complete &&
         document.querySelector('.portrait').naturalWidth > 0,
+      supplementalImageLoaded: !document.querySelector('.supplemental-photo img') ||
+        (document.querySelector('.supplemental-photo img').complete &&
+          document.querySelector('.supplemental-photo img').naturalWidth > 0),
     };
   };
 </script>
@@ -733,7 +797,7 @@ async function createRenderSession() {
   let closed = false;
 
   return {
-    async renderCard({ wish, index, total, outputPath }) {
+    async renderCard({ wish, index, total, outputPath, supplementalImagePath }) {
       if (closed) throw new Error('Render session is already closed');
       if (!wish || !Number.isInteger(index) || index < 0 || index >= total) {
         throw new Error('Invalid wish render request');
@@ -744,6 +808,9 @@ async function createRenderSession() {
         avatarDataUri = await buildAvatarDataUri(wish);
         avatarCache.set(wish.avatarUrl || wish.displayName, avatarDataUri);
       }
+      const supplementalImageDataUri = await buildSupplementalImageDataUri(
+        supplementalImagePath
+      );
 
       const page = await browser.newPage({
         viewport: { width: WIDTH, height: HEIGHT },
@@ -757,6 +824,7 @@ async function createRenderSession() {
             index,
             logoDataUri,
             padelIconDataUri,
+            supplementalImageDataUri,
             total,
             wish,
           }),
@@ -789,10 +857,18 @@ async function createRenderSession() {
         if (!stats.avatarLoaded) {
           throw new Error(`Avatar failed to render for card ${index + 1}`);
         }
-        if (stats.messageOverflow || stats.contentOverflow) {
+        if (!stats.supplementalImageLoaded) {
+          throw new Error(`Supplemental image failed on card ${index + 1}`);
+        }
+        if (
+          stats.messageOverflow ||
+          stats.contentOverflow ||
+          stats.messageBottomClearancePx < 28
+        ) {
           throw new Error(
             `Layout overflow on card ${index + 1}: message=${stats.messageOverflow} ` +
-              `content=${stats.contentOverflow}`
+              `content=${stats.contentOverflow} ` +
+              `bottom-clearance=${stats.messageBottomClearancePx}px`
           );
         }
         if (stats.messageFontPx < 25 || stats.authorFontPx < 27) {
@@ -835,6 +911,7 @@ async function createRenderSession() {
 async function renderSelectedWish() {
   const wishes = await fetchWishes();
   const index = resolveIndex(wishes.length);
+  const supplementalImagePath = resolveSupplementalImagePath();
   const outputPath = path.join(OUTPUT_DIR, cardFilename(index));
   const session = await createRenderSession();
   try {
@@ -843,6 +920,7 @@ async function renderSelectedWish() {
       index,
       total: wishes.length,
       outputPath,
+      supplementalImagePath,
     });
     console.log(
       `Rendered ${cardFilename(index)} — ${wishes[index].displayName} ` +

@@ -1,11 +1,24 @@
 import { isGoldenPointActive } from '@shared/gameFormat/goldenPoint';
 import type { ScoringRules } from '@/utils/scoring';
-import { isClassicRules, isRallyGameRules, isRallyPointsRules } from '@/utils/scoring';
+import { isClassicAutomaticRelaxedScores, isClassicRules, isRallyGameRules, isRallyPointsRules } from '@/utils/scoring';
 import { trimTrailingEmptyAfterDecision } from '@/utils/scoring/displaySets';
 import { isMatchOfficialSetEntryComplete } from '@/utils/scoring/matchWinner';
 import { splitOfficialAndSupplementalSets } from '@/utils/matchSetRole';
 import { validatePointsSet } from '@/utils/scoring/validateSet';
+import {
+  applyAutomaticContinueChoice as applyAutomaticContinueChoiceHelper,
+  applyAutomaticOpenEndedSetConfirm as applyAutomaticOpenEndedSetConfirmHelper,
+  applyAutomaticRecordMode as applyAutomaticRecordModeHelper,
+  automaticRecordModeChoicePending,
+  canConfirmAutomaticOpenEndedSet,
+  inferAutomaticRecordMode,
+  isAutomaticLiveMatchComplete,
+  isAutomaticOpenEndedPointsSet,
+  optionalContinueSetPending,
+} from './automaticFlexible';
 import type {
+  LiveAutomaticContinueChoice,
+  LiveAutomaticRecordMode,
   LiveClassicPointState,
   LiveOptionalDeciderFormat,
   LivePointValue,
@@ -80,6 +93,12 @@ export const parseLiveScoringState = (raw: unknown, rules: ScoringRules, fallbac
       o.optionalDeciderFormat === 'REGULAR_SET' || o.optionalDeciderFormat === 'SUPER_TIEBREAK'
         ? o.optionalDeciderFormat
         : undefined,
+    automaticRecordMode:
+      o.automaticRecordMode === 'GAMES' || o.automaticRecordMode === 'AMERICANO_POINTS'
+        ? o.automaticRecordMode
+        : undefined,
+    automaticEarlyFinish: o.automaticEarlyFinish === true ? true : undefined,
+    automaticOpenEndedSetConfirmed: o.automaticOpenEndedSetConfirmed === true ? true : undefined,
     timedClassicSetLocked: o.timedClassicSetLocked === true ? true : undefined,
     officiatingLetPending: o.officiatingLetPending === true ? true : undefined,
     pointWinnerLog: Array.isArray(o.pointWinnerLog)
@@ -87,6 +106,10 @@ export const parseLiveScoringState = (raw: unknown, rules: ScoringRules, fallbac
       : undefined,
   };
   if (mode === 'classic') alignMandatedSuperTieBreakDecider(parsed, rules);
+  if (!parsed.automaticRecordMode) {
+    const inferred = inferAutomaticRecordMode(parsed, rules);
+    if (inferred) parsed.automaticRecordMode = inferred;
+  }
   return parsed;
 };
 
@@ -95,14 +118,25 @@ export const scoreLivePoint = (input: LiveScoringState, side: LiveTeamSide, rule
     return { state: input, changed: false };
   }
   if (input.timedClassicSetLocked) return { state: input, changed: false };
-  if (input.mode === 'classic') {
-    if (optionalDeciderChoicePending(input, rules)) return { state: input, changed: false };
+  if (input.automaticEarlyFinish) return { state: input, changed: false };
+  if (isAutomaticLiveMatchComplete(input, rules)) return { state: input, changed: false };
+  if (automaticRecordModeChoicePending(input, rules)) return { state: input, changed: false };
+  if (optionalDeciderChoicePending(input, rules)) return { state: input, changed: false };
+  if (optionalContinueSetPending(input, rules, canAdvanceLiveSet, optionalDeciderChoicePending)) {
+    return { state: input, changed: false };
   }
   const state = cloneState(input);
   ensureSetExists(state, rules);
 
   if (state.mode !== 'classic') {
     const active = state.sets[state.activeSetIndex];
+    if (active.isTieBreak) {
+      if (pointRaceCompleted(active.teamA, active.teamB, superTieBreakTarget(rules), rules.superTieBreakWinBy)) {
+        return { state: input, changed: false };
+      }
+      active[side] += 1;
+      return { state: autoAdvanceCompletedSets(state, rules), changed: true };
+    }
     if (isLivePointsFrozen(active, rules)) return { state: input, changed: false };
     const nextA = side === 'teamA' ? active.teamA + 1 : active.teamA;
     const nextB = side === 'teamB' ? active.teamB + 1 : active.teamB;
@@ -151,6 +185,8 @@ export const unscoreLivePoint = (
   rules: ScoringRules
 ): LiveScoringActionResult => {
   if (input.timedClassicSetLocked) return { state: input, changed: false };
+  if (input.automaticEarlyFinish) return { state: input, changed: false };
+  if (isAutomaticLiveMatchComplete(input, rules)) return { state: input, changed: false };
   const state = cloneState(input);
   ensureSetExists(state, rules);
 
@@ -165,6 +201,13 @@ export const unscoreLivePoint = (
       } else {
         state.pointWinnerLog = [];
       }
+    }
+    if (
+      state.automaticOpenEndedSetConfirmed &&
+      isAutomaticOpenEndedPointsSet(state, rules) &&
+      (!(set.teamA > 0 || set.teamB > 0) || set.teamA === set.teamB)
+    ) {
+      state.automaticOpenEndedSetConfirmed = undefined;
     }
     return { state, changed: true };
   }
@@ -223,22 +266,30 @@ export const unscoreLivePoint = (
 };
 
 export const canAdvanceLiveSet = (state: LiveScoringState, rules: ScoringRules): boolean => {
+  if (state.automaticEarlyFinish) return false;
   if (state.activeSetIndex + 1 >= rules.maxSetsPlayed) return false;
   const set = state.sets[state.activeSetIndex];
   if (!set) return false;
   const { official } = splitOfficialAndSupplementalSets(state.sets);
 
-  if (state.mode !== 'classic') {
+  if (set.isTieBreak) {
+    if (!pointRaceCompleted(set.teamA, set.teamB, superTieBreakTarget(rules), rules.superTieBreakWinBy)) return false;
+  } else if (state.mode !== 'classic') {
     if (isRallyGameRules(rules)) {
       if (!pointRaceCompleted(set.teamA, set.teamB, rules.totalPointsPerSet, rules.winBy)) return false;
+    } else if (isAutomaticOpenEndedPointsSet(state, rules)) {
+      if (!state.automaticOpenEndedSetConfirmed) return false;
+      if (!(set.teamA > 0 || set.teamB > 0) || set.teamA === set.teamB) return false;
     } else if (!(set.teamA > 0 || set.teamB > 0)) return false;
-  } else if (set.isTieBreak) {
-    if (!pointRaceCompleted(set.teamA, set.teamB, superTieBreakTarget(rules), rules.superTieBreakWinBy)) return false;
   } else if (!classicSetCompleted(set.teamA, set.teamB, rules, Boolean(state.timedClassicSetLocked))) {
     return false;
   }
 
-  if (isMatchOfficialSetEntryComplete(official, rules)) return false;
+  if (isClassicAutomaticRelaxedScores(rules)) {
+    if (isAutomaticLiveMatchComplete(state, rules)) return false;
+  } else if (isMatchOfficialSetEntryComplete(official, rules)) {
+    return false;
+  }
 
   return true;
 };
@@ -248,6 +299,7 @@ export const advanceLiveSet = (input: LiveScoringState, rules: ScoringRules): Li
   const state = cloneState(input);
   state.activeSetIndex += 1;
   state.timedClassicSetLocked = undefined;
+  state.automaticOpenEndedSetConfirmed = undefined;
   state.pointWinnerLog = [];
   ensureSetExists(state, rules);
   if (state.mode === 'classic') {
@@ -257,6 +309,10 @@ export const advanceLiveSet = (input: LiveScoringState, rules: ScoringRules): Li
 };
 
 function autoAdvanceCompletedSets(state: LiveScoringState, rules: ScoringRules): LiveScoringState {
+  // Automatic: operator confirms continue / decider format — never silent-advance.
+  if (isClassicAutomaticRelaxedScores(rules)) {
+    return normalizeLiveSetsAfterDecision(state, rules);
+  }
   let s = state;
   while ((s.mode === 'classic' || isRallyGameRules(rules)) && canAdvanceLiveSet(s, rules)) {
     const next = advanceLiveSet(s, rules);
@@ -364,7 +420,10 @@ const alignMandatedSuperTieBreakDecider = (state: LiveScoringState, rules: Scori
 const normalizeLiveSetsAfterDecision = (state: LiveScoringState, rules: ScoringRules): LiveScoringState => {
   if (state.mode !== 'classic') return state;
   const { official } = splitOfficialAndSupplementalSets(state.sets);
-  if (!isMatchOfficialSetEntryComplete(official, rules)) return state;
+  const decided = isClassicAutomaticRelaxedScores(rules)
+    ? isAutomaticLiveMatchComplete(state, rules)
+    : isMatchOfficialSetEntryComplete(official, rules);
+  if (!decided) return state;
   const trimmed = trimTrailingEmptyAfterDecision(state.sets, rules);
   state.sets = trimmed;
   const { official: off } = splitOfficialAndSupplementalSets(trimmed);
@@ -504,17 +563,27 @@ function countOfficialSetsWon(sets: SetResult[]): { a: number; b: number } {
   return { a, b };
 }
 
+function priorSetCompleteForDecider(state: LiveScoringState, set: SetResult, rules: ScoringRules): boolean {
+  if (set.isTieBreak) {
+    return pointRaceCompleted(set.teamA, set.teamB, superTieBreakTarget(rules), rules.superTieBreakWinBy);
+  }
+  if (state.automaticRecordMode === 'AMERICANO_POINTS' || state.mode === 'points') {
+    return (set.teamA > 0 || set.teamB > 0) && set.teamA !== set.teamB;
+  }
+  return classicSetCompleted(set.teamA, set.teamB, rules, false);
+}
+
 function isOptionalDeciderContext(state: LiveScoringState, rules: ScoringRules): boolean {
   if (rules.superTieBreakReplacesDeciderAtIndex !== null) return false;
-  if (state.mode !== 'classic') return false;
+  if (state.mode !== 'classic' && !(isClassicAutomaticRelaxedScores(rules) && state.mode === 'points')) {
+    return false;
+  }
   if (rules.fixedNumberOfSets < 3 || rules.maxSetsPlayed < 3) return false;
   const { official } = splitOfficialAndSupplementalSets(state.sets);
   if (official.length < 3) return false;
   const prev = official.slice(0, -1);
   for (const s of prev) {
-    if (s.isTieBreak) {
-      if (!pointRaceCompleted(s.teamA, s.teamB, superTieBreakTarget(rules), rules.superTieBreakWinBy)) return false;
-    } else if (!classicSetCompleted(s.teamA, s.teamB, rules, false)) return false;
+    if (!priorSetCompleteForDecider(state, s, rules)) return false;
   }
   const decider = official[official.length - 1];
   if (decider.teamA > 0 || decider.teamB > 0) return false;
@@ -531,6 +600,7 @@ function deciderRowPristineForOptionalChoice(state: LiveScoringState, rules: Sco
   const row = state.sets[idx];
   if (row.teamA > 0 || row.teamB > 0) return false;
   if (row.isTieBreak) return true;
+  if (state.mode === 'points') return state.activeSetIndex === idx;
   const c = state.classic;
   if (!c || state.activeSetIndex !== idx) return false;
   if (c.withinSetTieBreak) return false;
@@ -550,10 +620,59 @@ export const applyOptionalDeciderFormat = (
   const isTb = format === 'SUPER_TIEBREAK';
   state.sets[idx] = { ...state.sets[idx], isTieBreak: isTb };
   state.optionalDeciderFormat = format;
-  if (state.classic && state.activeSetIndex === idx) {
+  if (isTb) {
+    // STB is a points race on the set row; keep points mode if americano, else classic TB sync.
+    if (state.mode === 'classic') {
+      state.classic = syncClassicTieBreakForActiveSet(emptyClassic(), state.sets, idx, rules);
+    }
+  } else if (state.automaticRecordMode === 'AMERICANO_POINTS') {
+    state.mode = 'points';
+    state.classic = undefined;
+  } else if (state.mode === 'classic' && state.activeSetIndex === idx) {
     state.classic = syncClassicTieBreakForActiveSet(emptyClassic(), state.sets, idx, rules);
   }
   return { state, changed: true };
+};
+
+export const applyAutomaticRecordMode = (
+  input: LiveScoringState,
+  rules: ScoringRules,
+  mode: LiveAutomaticRecordMode,
+): LiveScoringActionResult => applyAutomaticRecordModeHelper(input, rules, mode);
+
+export const applyAutomaticContinueChoice = (
+  input: LiveScoringState,
+  rules: ScoringRules,
+  choice: LiveAutomaticContinueChoice,
+): LiveScoringActionResult =>
+  applyAutomaticContinueChoiceHelper(
+    input,
+    rules,
+    choice,
+    canAdvanceLiveSet,
+    optionalDeciderChoicePending,
+    advanceLiveSet,
+  );
+
+export const applyAutomaticOpenEndedSetConfirm = (
+  input: LiveScoringState,
+  rules: ScoringRules,
+): LiveScoringActionResult =>
+  applyAutomaticOpenEndedSetConfirmHelper(input, rules, optionalDeciderChoicePending);
+
+export function canConfirmAutomaticOpenEndedSetChoice(state: LiveScoringState, rules: ScoringRules): boolean {
+  return canConfirmAutomaticOpenEndedSet(state, rules, optionalDeciderChoicePending);
+}
+
+/** True when Automatic continue sheet should open (set complete, more sets available). */
+export function optionalContinueSetChoicePending(state: LiveScoringState, rules: ScoringRules): boolean {
+  return optionalContinueSetPending(state, rules, canAdvanceLiveSet, optionalDeciderChoicePending);
+}
+
+export {
+  automaticRecordModeChoicePending,
+  optionalContinueSetPending,
+  isAutomaticLiveMatchComplete,
 };
 
 export const freezeTimedOpenEndedRallyAtPartialScore = (

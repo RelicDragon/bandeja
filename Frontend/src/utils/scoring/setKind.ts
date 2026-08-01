@@ -26,18 +26,18 @@ export const getSetKind = (
   const effective = sets.map((s, i) => (i === setIndex && setBeingUpdated ? { ...s, ...setBeingUpdated } : s));
   const current = effective[setIndex] ?? { teamA: 0, teamB: 0, isTieBreak: false };
 
+  // Automatic: STB is opt-in via isTieBreak (not mandated by set index).
+  if (isClassicAutomaticRelaxedScores(rules) && current.isTieBreak) {
+    return 'SUPER_TIEBREAK';
+  }
+
   if (rules.superTieBreakReplacesDeciderAtIndex !== null && setIndex === rules.superTieBreakReplacesDeciderAtIndex) {
-    // Automatic: STB is opt-in via isTieBreak; forced STB presets still infer from 1–1 geometry.
-    if (isClassicAutomaticRelaxedScores(rules)) {
-      if (current.isTieBreak) return 'SUPER_TIEBREAK';
-    } else {
-      const priorPlayed = effective.slice(0, setIndex).filter(s => s.teamA > 0 || s.teamB > 0);
-      if (priorPlayed.length === setIndex) {
-        const { a, b } = countSetsWon(priorPlayed);
-        if (a === b && a >= setIndex / 2) return 'SUPER_TIEBREAK';
-      }
-      if (current.isTieBreak) return 'SUPER_TIEBREAK';
+    const priorPlayed = effective.slice(0, setIndex).filter(s => s.teamA > 0 || s.teamB > 0);
+    if (priorPlayed.length === setIndex) {
+      const { a, b } = countSetsWon(priorPlayed);
+      if (a === b && a >= setIndex / 2) return 'SUPER_TIEBREAK';
     }
+    if (current.isTieBreak) return 'SUPER_TIEBREAK';
   }
 
   if (current.isTieBreak) return 'TIEBREAK_GAME';
@@ -46,5 +46,8 @@ export const getSetKind = (
 };
 
 /** Persisted `isTieBreak` on the match-decider super tie-break row (points, not games). */
-export const isSuperTieBreakDeciderRow = (rules: ScoringRules, setIndex: number, isTieBreak?: boolean): boolean =>
-  Boolean(isTieBreak && rules.superTieBreakReplacesDeciderAtIndex === setIndex);
+export const isSuperTieBreakDeciderRow = (rules: ScoringRules, setIndex: number, isTieBreak?: boolean): boolean => {
+  if (!isTieBreak) return false;
+  if (isClassicAutomaticRelaxedScores(rules)) return true;
+  return rules.superTieBreakReplacesDeciderAtIndex === setIndex;
+};

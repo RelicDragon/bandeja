@@ -506,8 +506,99 @@ enum WatchCopy {
         }
     }
 
+    nonisolated static func automaticRecordModeTitle(_ lang: String) -> String {
+        switch lang {
+        case "cs": return "Jak zapisovat skóre?"
+        case "es": return "¿Cómo puntúas?"
+        case "ru": return "Как считаете очки?"
+        case "sr": return "Како бележите поене?"
+        default: return "How are you scoring?"
+        }
+    }
+
+    nonisolated static func automaticRecordModeMessage(_ lang: String) -> String {
+        switch lang {
+        case "cs": return "Klasické sety/gemy, nebo body Americano."
+        case "es": return "Set/juegos clásicos o puntos americano."
+        case "ru": return "Классические геймы или очки американо."
+        case "sr": return "Класични гемови или американо поени."
+        default: return "Classic set/games or americano points."
+        }
+    }
+
+    nonisolated static func automaticRecordModeGames(_ lang: String) -> String {
+        switch lang {
+        case "cs": return "Set / gemy"
+        case "es": return "Set / juegos"
+        case "ru": return "Сет / геймы"
+        case "sr": return "Сет / гемови"
+        default: return "Set / games"
+        }
+    }
+
+    nonisolated static func automaticRecordModeAmericano(_ lang: String) -> String {
+        switch lang {
+        case "cs": return "Body Americano"
+        case "es": return "Puntos americano"
+        case "ru": return "Очки американо"
+        case "sr": return "Американо поени"
+        default: return "Americano points"
+        }
+    }
+
+    nonisolated static func automaticContinueTitle(_ lang: String) -> String {
+        switch lang {
+        case "cs": return "Další set?"
+        case "es": return "¿Siguiente set?"
+        case "ru": return "Следующий сет?"
+        case "sr": return "Следећи сет?"
+        default: return "Continue to next set?"
+        }
+    }
+
+    nonisolated static func automaticContinueMessage(_ lang: String) -> String {
+        switch lang {
+        case "cs": return "Set skončil. Další set, nebo ukončit zápas."
+        case "es": return "Este set terminó. Jugar otro o terminar el partido."
+        case "ru": return "Сет закончен. Ещё сет или завершить матч."
+        case "sr": return "Сет је готов. Још један сет или крај меча."
+        default: return "This set is finished. Play another set, or end the match."
+        }
+    }
+
+    nonisolated static func automaticContinueCta(_ lang: String) -> String {
+        switch lang {
+        case "cs": return "Další set"
+        case "es": return "Siguiente set"
+        case "ru": return "Следующий сет"
+        case "sr": return "Следећи сет"
+        default: return "Continue to next set"
+        }
+    }
+
+    nonisolated static func automaticEndCta(_ lang: String) -> String {
+        switch lang {
+        case "cs": return "Ukončit zápas"
+        case "es": return "Terminar partido"
+        case "ru": return "Завершить матч"
+        case "sr": return "Заврши меч"
+        default: return "End match"
+        }
+    }
+
+    nonisolated static func automaticFinishSetCta(_ lang: String) -> String {
+        switch lang {
+        case "cs": return "Ukončit set s tímto skóre"
+        case "es": return "Cerrar set con este marcador"
+        case "ru": return "Завершить сет с этим счётом"
+        case "sr": return "Заврши сет са овим резултатом"
+        default: return "Finish set at current score"
+        }
+    }
+
     nonisolated static func setFormatChoiceTitle(_ lang: String) -> String {
         switch lang {
+        case "cs": return "Typ setu"
         case "es": return "Tipo de set"
         case "ru": return "Тип сета"
         case "sr": return "Тип сета"
@@ -517,6 +608,7 @@ enum WatchCopy {
 
     nonisolated static func setFormatChoiceMessage(_ lang: String) -> String {
         switch lang {
+        case "cs": return "Stav setů je vyrovnaný. Jak hrát rozhodující set?"
         case "es": return "Sets empatados. ¿Cómo se juega el decisivo?"
         case "ru": return "Счёт по сетам равный. Как играть решающий сет?"
         case "sr": return "Сетови су изједначени. Како играти одлучујући сет?"
@@ -526,6 +618,7 @@ enum WatchCopy {
 
     nonisolated static func normalSetChoice(_ lang: String) -> String {
         switch lang {
+        case "cs": return "Běžný set (gemy)"
         case "es": return "Set normal (juegos)"
         case "ru": return "Обычный сет (геймы)"
         case "sr": return "Нормалан сет (гемови)"
@@ -533,12 +626,23 @@ enum WatchCopy {
         }
     }
 
+    nonisolated static func automaticDeciderPointsChoice(_ lang: String) -> String {
+        switch lang {
+        case "cs": return "Další bodový set"
+        case "es": return "Otro set de puntos"
+        case "ru": return "Ещё сет на очки"
+        case "sr": return "Још један сет поена"
+        default: return "Another points set"
+        }
+    }
+
     nonisolated static func superTieBreakChoice(_ lang: String) -> String {
         switch lang {
-        case "es": return "Super tie-break (puntos)"
-        case "ru": return "Супер ТБ (очки)"
-        case "sr": return "Супер ТБ (поени)"
-        default: return "Super tie-break (points)"
+        case "cs": return "Super tie-break (do 10, rozdíl 2)"
+        case "es": return "Super tie-break (a 10, diferencia 2)"
+        case "ru": return "Супер ТБ (до 10, разница 2)"
+        case "sr": return "Супер ТБ (до 10, разлика 2)"
+        default: return "Super tie-break (to 10, win by 2)"
         }
     }
 

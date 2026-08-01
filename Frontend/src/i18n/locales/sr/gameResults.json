@@ -54,8 +54,8 @@
       "tiebreakWinBy2": "Tajbrejk mora biti dobijen sa razlikom od 2 poena",
       "tiebreakTooLow": "Tajbrejk ide minimum do {{target}} poena",
       "superTiebreakDraw": "Super tajbrejk ne može završiti nerešenim rezultatom",
-      "superTiebreakWinBy2": "Super tajbrejk mora biti dobijen sa razlikom od 2 poena",
-      "superTiebreakTooLow": "Super tajbrejk ide minimum do {{target}} poena",
+      "superTiebreakWinBy2": "Super tajbrejk mora biti dobijen sa razlikom od {{winBy}} poena",
+      "superTiebreakTooLow": "Super tajbrejk ide minimum do {{target}} poena, razlika {{winBy}}",
       "setAfterMatchDecided": "Meč je već odlučen"
     },
     "addMatch": "Dodaj Meč",

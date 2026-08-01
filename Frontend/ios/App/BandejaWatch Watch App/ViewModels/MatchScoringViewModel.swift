@@ -25,8 +25,16 @@ final class MatchScoringViewModel {
     var pendingSetFormatChoiceIndex: Int?
     /// Mirrors web `LiveScoringState.optionalDeciderFormat` for PATCH / envelope merge.
     var optionalDeciderFormat: String?
+    /// `GAMES` | `AMERICANO_POINTS` — CLASSIC_AUTOMATIC.
+    var automaticRecordMode: String?
+    var automaticEarlyFinish = false
+    var automaticOpenEndedSetConfirmed = false
     /// Partial classic set locked at buzzer (mirrors `timedClassicSetLocked` in `core.ts`).
     var timedClassicSetLocked = false
+    /// CLASSIC_AUTOMATIC: show continue vs end dialog.
+    var showAutomaticContinueChoice = false
+    /// CLASSIC_AUTOMATIC: show games vs americano dialog at match start.
+    var showAutomaticRecordModeChoice = false
 
     /// Points completed in the current classic game (drives serve L/R); persisted for deuce accuracy.
     var classicPointsPlayedInGame = 0
@@ -101,6 +109,10 @@ final class MatchScoringViewModel {
         NetworkDeliveryOutbox.shared.registerSink(self)
     }
 
+    static func initialLiveScoringRevision(hasSupportedEnvelope: Bool) -> Int {
+        hasSupportedEnvelope ? -1 : 0
+    }
+
     private func splitOfficialSupplementalSets(_ rows: [WatchSetWrite]) -> (official: [WatchSetWrite], supplemental: [WatchSetWrite]) {
         if let idx = rows.firstIndex(where: { $0.resolvedRole != .official }) {
             return (Array(rows[..<idx]), Array(rows[idx...]))
@@ -121,6 +133,7 @@ final class MatchScoringViewModel {
         guard let row = sets[safe: deciderIdx] else { return false }
         if row.teamA > 0 || row.teamB > 0 { return false }
         if row.isTieBreak { return true }
+        if usesBallCapPerSetUI { return true }
         if withinSetTieBreakMode { return false }
         switch classicPointState {
         case .regular(let a, let b):
@@ -169,10 +182,25 @@ final class MatchScoringViewModel {
     private func blocksFurtherOfficialTaps() -> Bool {
         if activeSetIsSupplemental { return false }
         if nonRallyOutcomeBlocksScoring { return true }
+        if WatchAutomaticFlexible.automaticRecordModeChoicePending(
+            state: liveScoringEngineState(),
+            rules: rules
+        ) { return true }
         if optionalDeciderChoicePending() { return true }
+        if WatchLiveScoringEngine.optionalContinueSetChoicePending(
+            state: liveScoringEngineState(),
+            rules: rules
+        ) { return true }
+        if WatchAutomaticFlexible.isAutomaticLiveMatchComplete(
+            state: liveScoringEngineState(),
+            rules: rules
+        ) { return true }
         if timedClassicSetLocked { return true }
         if officiatingLetReplayBlocksScoring { return true }
-        if WatchComputeMatchWinner.isMatchDecidedForLiveScoring(sets: sets, rules: rules) { return true }
+        if !rules.isClassicAutomaticRelaxed,
+           WatchComputeMatchWinner.isMatchDecidedForLiveScoring(sets: sets, rules: rules) {
+            return true
+        }
         if isAmericano,
            WatchComputeMatchWinner.isPointsOfficialBudgetExhausted(activeSet: sets[safe: activeSetIndex], rules: rules) {
             return true
@@ -209,10 +237,22 @@ final class MatchScoringViewModel {
     }
 
     var pointsOfficialDecrementDisabled: Bool {
-        isReadOnly || (!activeSetIsSupplemental && WatchComputeMatchWinner.isMatchDecidedForLiveScoring(sets: sets, rules: rules))
+        if isReadOnly { return true }
+        if activeSetIsSupplemental { return false }
+        // CLASSIC_AUTOMATIC can have a standings winner after one set while entry continues.
+        if rules.isClassicAutomaticRelaxed {
+            return WatchAutomaticFlexible.isAutomaticLiveMatchComplete(
+                state: liveScoringEngineState(),
+                rules: rules
+            )
+        }
+        return WatchComputeMatchWinner.isMatchDecidedForLiveScoring(sets: sets, rules: rules)
     }
 
     var usesBallCapPerSetUI: Bool {
+        if automaticRecordMode == WatchAutomaticFlexible.RecordMode.americanoPoints.rawValue {
+            return true
+        }
         if isAmericano { return true }
         guard game?.usesRallySetScoring == true else { return false }
         return !rules.isClassic
@@ -226,6 +266,8 @@ final class MatchScoringViewModel {
     }
 
     var usesTennisStyleServeGuide: Bool {
+        // Open-ended Automatic americano points has no tennis game/point serve model.
+        if usesAutomaticAmericanoPointsUI { return false }
         if rules.isBallBudgetPoints { return false }
         if game?.resolvedSport == .tennis, !isAmericano { return true }
         if usesRallyPointsServeGuide { return true }
@@ -267,15 +309,34 @@ final class MatchScoringViewModel {
         if optionalDeciderChoicePending() { return true }
         if timedClassicSetLocked { return true }
         if serveSeedBlocksScoring { return true }
-        if !activeSetIsSupplemental,
-           WatchComputeMatchWinner.isMatchDecidedForLiveScoring(sets: sets, rules: rules) {
-            return true
+        if !activeSetIsSupplemental {
+            if rules.isClassicAutomaticRelaxed {
+                if WatchAutomaticFlexible.isAutomaticLiveMatchComplete(
+                    state: liveScoringEngineState(),
+                    rules: rules
+                ) { return true }
+            } else if WatchComputeMatchWinner.isMatchDecidedForLiveScoring(sets: sets, rules: rules) {
+                return true
+            }
         }
         return false
     }
 
     var liveScoringUiId: WatchLiveScoringUiId {
-        WatchLiveScoringRegistry.resolve(game: game, rules: rules)
+        WatchLiveScoringRegistry.resolve(
+            game: game,
+            rules: rules,
+            automaticRecordMode: automaticRecordMode
+        )
+    }
+
+    var canAutomaticFinishSet: Bool {
+        !isReadOnly
+            && WatchAutomaticFlexible.canConfirmAutomaticOpenEndedSet(
+                state: liveScoringEngineState(),
+                rules: rules,
+                deciderPending: WatchLiveScoringEngine.optionalDeciderChoicePending
+            )
     }
 
     func ballCapScoringTitle(lang: String) -> String {
@@ -368,14 +429,23 @@ final class MatchScoringViewModel {
                     tieBreakA = 0
                     tieBreakB = 0
                     syncWithinSetTieBreakForActiveSet()
-                    liveScoringRevision = -1
-                    if let live = m.metadata?.liveScoring, live.isSupported {
+                    let supportedLive = m.metadata?.liveScoring.flatMap { $0.isSupported ? $0 : nil }
+                    liveScoringRevision = Self.initialLiveScoringRevision(
+                        hasSupportedEnvelope: supportedLive != nil
+                    )
+                    if let live = supportedLive {
                         suppressRemoteWriterAttribution = true
                         applyLiveScoringEnvelopeIfNewer(live, force: true)
                         suppressRemoteWriterAttribution = false
                     } else {
+                        if let metaMode = m.metadata?.automaticRecordMode,
+                           metaMode == WatchAutomaticFlexible.RecordMode.games.rawValue
+                            || metaMode == WatchAutomaticFlexible.RecordMode.americanoPoints.rawValue {
+                            automaticRecordMode = metaMode
+                        }
                         hydrateServeSeedFromOfflineCache()
                         syncClassicPointsPlayedFromState()
+                        syncAutomaticChoiceSheets()
                     }
                     normalizeClassicPointStateForGoldenPointRules()
                     return
@@ -564,9 +634,18 @@ final class MatchScoringViewModel {
         APIError.warrantsDeliveryRetry(error)
     }
 
+    private var usesAutomaticAmericanoPointsUI: Bool {
+        rules.isClassicAutomaticRelaxed
+            && automaticRecordMode == WatchAutomaticFlexible.RecordMode.americanoPoints.rawValue
+    }
+
     func incrementAmericanoTeamA() {
         guard !isReadOnly, !isSaving else { return }
         guard usesBallCapPerSetUI, activeSetIndex < sets.count else { return }
+        if usesAutomaticAmericanoPointsUI {
+            scorePoint(.teamA)
+            return
+        }
         if activeSetIsSupplemental {
             ensureSetExists(activeSetIndex)
             let prev = sets[activeSetIndex].teamA
@@ -611,6 +690,10 @@ final class MatchScoringViewModel {
     func decrementAmericanoTeamA() {
         guard !isReadOnly, !isSaving else { return }
         guard usesBallCapPerSetUI, activeSetIndex < sets.count else { return }
+        if usesAutomaticAmericanoPointsUI {
+            unscorePoint(.teamA)
+            return
+        }
         if timedClassicSetLocked, !activeSetIsSupplemental { return }
         if activeSetIsSupplemental {
             ensureSetExists(activeSetIndex)
@@ -634,6 +717,10 @@ final class MatchScoringViewModel {
     func incrementAmericanoTeamB() {
         guard !isReadOnly, !isSaving else { return }
         guard usesBallCapPerSetUI, activeSetIndex < sets.count else { return }
+        if usesAutomaticAmericanoPointsUI {
+            scorePoint(.teamB)
+            return
+        }
         if activeSetIsSupplemental {
             ensureSetExists(activeSetIndex)
             let prev = sets[activeSetIndex].teamB
@@ -678,6 +765,10 @@ final class MatchScoringViewModel {
     func decrementAmericanoTeamB() {
         guard !isReadOnly, !isSaving else { return }
         guard usesBallCapPerSetUI, activeSetIndex < sets.count else { return }
+        if usesAutomaticAmericanoPointsUI {
+            unscorePoint(.teamB)
+            return
+        }
         if timedClassicSetLocked, !activeSetIsSupplemental { return }
         if activeSetIsSupplemental {
             ensureSetExists(activeSetIndex)
@@ -699,12 +790,14 @@ final class MatchScoringViewModel {
     }
 
     func canUnscore(_ side: TeamSide) -> Bool {
-        guard !isReadOnly, !usesBallCapPerSetUI else { return false }
+        guard !isReadOnly else { return false }
+        if usesBallCapPerSetUI, !usesAutomaticAmericanoPointsUI { return false }
         return WatchLiveScoringEngine.canUnscore(state: liveScoringEngineState(), side: side, rules: rules)
     }
 
     func unscorePoint(_ side: TeamSide) {
-        guard !isReadOnly, !isSaving, !usesBallCapPerSetUI else { return }
+        guard !isReadOnly, !isSaving else { return }
+        if usesBallCapPerSetUI, !usesAutomaticAmericanoPointsUI { return }
         let engineState = liveScoringEngineState()
         guard WatchLiveScoringEngine.canUnscore(state: engineState, side: side, rules: rules) else { return }
         defer { scheduleLiveScoringSave() }
@@ -723,6 +816,7 @@ final class MatchScoringViewModel {
         guard result.changed else { return }
         applyLiveScoringEngineState(result.state)
         WatchScoreHaptics.undo()
+        syncAutomaticChoiceSheets()
     }
 
     /// Clears modal scoring state before the review screen; flushes pending live save first.
@@ -746,15 +840,38 @@ final class MatchScoringViewModel {
     }
 
     func confirmSetFormatNormal() {
-        guard let idx = pendingSetFormatChoiceIndex else { return }
+        let pendingIdx = pendingSetFormatChoiceIndex
         pendingSetFormatChoiceIndex = nil
+        let result = WatchLiveScoringEngine.applyOptionalDeciderFormat(
+            state: liveScoringEngineState(),
+            rules: rules,
+            format: "REGULAR_SET"
+        )
+        if result.changed {
+            applyLiveScoringEngineState(result.state)
+            scheduleLiveScoringSave()
+            return
+        }
+        // Pre-advance Bo3 prompt (index = next set before stepping onto it).
+        guard let idx = pendingIdx else { return }
         optionalDeciderFormat = "REGULAR_SET"
         advanceToSet(index: idx, superTieBreak: false)
     }
 
     func confirmSetFormatSuper() {
-        guard let idx = pendingSetFormatChoiceIndex else { return }
+        let pendingIdx = pendingSetFormatChoiceIndex
         pendingSetFormatChoiceIndex = nil
+        let result = WatchLiveScoringEngine.applyOptionalDeciderFormat(
+            state: liveScoringEngineState(),
+            rules: rules,
+            format: "SUPER_TIEBREAK"
+        )
+        if result.changed {
+            applyLiveScoringEngineState(result.state)
+            scheduleLiveScoringSave()
+            return
+        }
+        guard let idx = pendingIdx else { return }
         optionalDeciderFormat = "SUPER_TIEBREAK"
         advanceToSet(index: idx, superTieBreak: true)
     }
@@ -906,6 +1023,9 @@ final class MatchScoringViewModel {
             matchStartTeamBSidesMirrored: matchStartTeamBSidesMirrored == true ? true : nil,
             serveGuideSkipped: serveGuideSkipped ? true : nil,
             optionalDeciderFormat: optionalDeciderFormat,
+            automaticRecordMode: automaticRecordMode,
+            automaticEarlyFinish: automaticEarlyFinish ? true : nil,
+            automaticOpenEndedSetConfirmed: automaticOpenEndedSetConfirmed ? true : nil,
             timedClassicSetLocked: timedClassicSetLocked ? true : nil,
             pointWinnerLog: pointWinnerLog.isEmpty ? nil : pointWinnerLog,
             officiatingLetPending: officiatingLetPending ? true : nil
@@ -916,8 +1036,12 @@ final class MatchScoringViewModel {
         sets = state.sets
         activeSetIndex = state.activeSetIndex
         optionalDeciderFormat = state.optionalDeciderFormat
+        automaticRecordMode = state.automaticRecordMode
+        automaticEarlyFinish = state.automaticEarlyFinish == true
+        automaticOpenEndedSetConfirmed = state.automaticOpenEndedSetConfirmed == true
         timedClassicSetLocked = state.timedClassicSetLocked == true
         pointWinnerLog = state.pointWinnerLog ?? []
+        syncAutomaticChoiceSheets()
 
         if let classic = state.classic {
             classicPointState = classic.pointState.padelPointState
@@ -939,9 +1063,8 @@ final class MatchScoringViewModel {
 
     func scorePoint(_ side: TeamSide) {
         guard !isReadOnly, !isSaving else { return }
-        if usesTennisSetRules, !activeSetIsSupplemental, optionalDeciderChoicePending() { return }
-        if usesTennisSetRules, !activeSetIsSupplemental, timedClassicSetLocked { return }
         if !activeSetIsSupplemental, blocksFurtherOfficialTaps() { return }
+        if usesTennisSetRules, !activeSetIsSupplemental, timedClassicSetLocked { return }
         defer { scheduleLiveScoringSave() }
         if activeSetIsSupplemental {
             ensureSetExists(activeSetIndex)
@@ -962,6 +1085,7 @@ final class MatchScoringViewModel {
         applyLiveScoringEngineState(result.state)
         WatchScoreHaptics.point()
         applyEngineAutoAdvanceAfterMutation()
+        syncAutomaticChoiceSheets()
     }
 
     func nextSet() {
@@ -969,6 +1093,8 @@ final class MatchScoringViewModel {
     }
 
     func canAdvanceToNextSet() -> Bool {
+        // Automatic uses Continue/End sheet instead of Next set.
+        if rules.isClassicAutomaticRelaxed { return false }
         if WatchComputeMatchWinner.isMatchDecidedForLiveScoring(sets: sets, rules: rules) { return false }
         let next = activeSetIndex + 1
         let cap = max(rules.maxSetsPlayed, 1)
@@ -999,6 +1125,7 @@ final class MatchScoringViewModel {
     }
 
     private func applyEngineAutoAdvanceAfterMutation() {
+        if rules.isClassicAutomaticRelaxed { return }
         guard usesTennisSetRules, !isAmericano else { return }
         if sets[safe: activeSetIndex].map({ $0.resolvedRole != .official }) ?? false { return }
         let outcome = WatchLiveScoringEngine.autoAdvanceCompletedSetsAllowingOptionalDeciderPrompt(
@@ -1009,6 +1136,71 @@ final class MatchScoringViewModel {
         if let idx = outcome.pendingOptionalDeciderAtSetIndex {
             pendingSetFormatChoiceIndex = idx
         }
+    }
+
+    private func syncAutomaticChoiceSheets() {
+        let state = liveScoringEngineState()
+        showAutomaticRecordModeChoice = WatchAutomaticFlexible.automaticRecordModeChoicePending(
+            state: state,
+            rules: rules
+        )
+        let continuePending = WatchLiveScoringEngine.optionalContinueSetChoicePending(
+            state: state,
+            rules: rules
+        )
+        showAutomaticContinueChoice = continuePending && !optionalDeciderChoicePending()
+        if optionalDeciderChoicePending(), let decIdx = officialDeciderIndex() {
+            pendingSetFormatChoiceIndex = decIdx
+        }
+    }
+
+    func confirmAutomaticRecordMode(_ mode: WatchAutomaticFlexible.RecordMode) {
+        guard !isReadOnly, !isSaving else { return }
+        let result = WatchLiveScoringEngine.applyAutomaticRecordMode(
+            state: liveScoringEngineState(),
+            rules: rules,
+            mode: mode
+        )
+        guard result.changed else { return }
+        applyLiveScoringEngineState(result.state)
+        scheduleLiveScoringSave()
+    }
+
+    func confirmAutomaticContinue(_ choice: WatchAutomaticFlexible.ContinueChoice) {
+        guard !isReadOnly, !isSaving else { return }
+        let before = liveScoringEngineState()
+        if choice == .continueSet {
+            let next = before.activeSetIndex + 1
+            if WatchLiveScoringEngine.shouldPromptOptionalDeciderBeforeAdvancing(
+                to: next,
+                state: before,
+                rules: rules
+            ) {
+                // Advance onto empty decider via engine, then format sheet.
+            }
+        }
+        let result = WatchLiveScoringEngine.applyAutomaticContinueChoice(
+            state: before,
+            rules: rules,
+            choice: choice
+        )
+        guard result.changed else { return }
+        applyLiveScoringEngineState(result.state)
+        if choice == .continueSet, optionalDeciderChoicePending(), let decIdx = officialDeciderIndex() {
+            pendingSetFormatChoiceIndex = decIdx
+        }
+        scheduleLiveScoringSave()
+    }
+
+    func confirmAutomaticOpenEndedSet() {
+        guard !isReadOnly, !isSaving else { return }
+        let result = WatchLiveScoringEngine.applyAutomaticOpenEndedSetConfirm(
+            state: liveScoringEngineState(),
+            rules: rules
+        )
+        guard result.changed else { return }
+        applyLiveScoringEngineState(result.state)
+        scheduleLiveScoringSave()
     }
 
     private func nextEditableSetIndex() -> Int {
@@ -1075,8 +1267,27 @@ final class MatchScoringViewModel {
         } else {
             optionalDeciderFormat = nil
         }
+        if let mode = state.automaticRecordMode,
+           mode == WatchAutomaticFlexible.RecordMode.games.rawValue
+            || mode == WatchAutomaticFlexible.RecordMode.americanoPoints.rawValue {
+            automaticRecordMode = mode
+        } else if let inferred = WatchAutomaticFlexible.inferAutomaticRecordMode(
+            state: state,
+            rules: rules
+        ) {
+            automaticRecordMode = inferred.rawValue
+        } else if let metaMode = match?.metadata?.automaticRecordMode,
+                  metaMode == WatchAutomaticFlexible.RecordMode.games.rawValue
+                    || metaMode == WatchAutomaticFlexible.RecordMode.americanoPoints.rawValue {
+            automaticRecordMode = metaMode
+        } else {
+            automaticRecordMode = nil
+        }
+        automaticEarlyFinish = state.automaticEarlyFinish == true
+        automaticOpenEndedSetConfirmed = state.automaticOpenEndedSetConfirmed == true
         timedClassicSetLocked = state.timedClassicSetLocked == true
         syncOptionalDeciderPendingAfterEnvelopeMerge()
+        syncAutomaticChoiceSheets()
 
         if let classic = state.classic {
             classicPointState = classic.pointState.padelPointState

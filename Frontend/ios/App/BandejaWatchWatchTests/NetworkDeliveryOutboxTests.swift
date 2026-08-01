@@ -23,6 +23,9 @@ final class NetworkDeliveryOutboxTests: XCTestCase {
             matchStartTeamBSidesMirrored: nil,
             serveGuideSkipped: nil,
             optionalDeciderFormat: nil,
+            automaticRecordMode: nil,
+            automaticEarlyFinish: nil,
+            automaticOpenEndedSetConfirmed: nil,
             timedClassicSetLocked: nil,
             pointWinnerLog: nil,
             officiatingLetPending: nil

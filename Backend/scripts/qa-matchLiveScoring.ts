@@ -8,6 +8,12 @@ import { EntityType, ParticipantRole, Sport } from '@prisma/client';
 import { ApiError } from '../src/utils/ApiError';
 import { patchMatchLiveScoring, notifyMatchLiveScoringCleared } from '../src/services/results/matchLiveScoring.service';
 import { updateMatch, createRound, createMatch, patchMatchMetadata } from '../src/services/results.service';
+import {
+  applyAutomaticRecordMode,
+  createInitialLiveScoringState,
+  scoreLivePoint,
+} from '../src/services/results/liveScoringEngine/core';
+import { getRules } from '../src/services/results/liveScoringEngine/rulebook';
 
 function ensureDbUrl() {
   let url = process.env.DB_URL;
@@ -379,7 +385,77 @@ async function main() {
     assert(tennisClear.liveScoringCleared === true, 'tennis updateMatch diverged grid clears live scoring');
     console.log('ok: tennis reconcile clears incompatible live grid');
 
-    console.log('\nqa-matchLiveScoring: all checks passed (padel regression + tennis phase 1).');
+    const automaticSuffix = `${Date.now()}-automatic`;
+    const automaticGameId = `qa-mls-automatic-g-${automaticSuffix}`;
+    const automaticRoundId = `qa-mls-automatic-r-${automaticSuffix}`;
+    const automaticMatchId = `qa-mls-automatic-m-${automaticSuffix}`;
+    cleanupGameIds.push(automaticGameId);
+    await prisma.game.create({
+      data: {
+        id: automaticGameId,
+        entityType: EntityType.GAME,
+        sport: Sport.PADEL,
+        gameType: 'CLASSIC',
+        cityId: city.id,
+        startTime: start,
+        endTime: end,
+        maxParticipants: 4,
+        minParticipants: 2,
+        hasFixedTeams: false,
+        timeIsSet: true,
+        resultsByAnyone: false,
+        ballsInGames: true,
+        scoringPreset: 'CLASSIC_AUTOMATIC',
+        fixedNumberOfSets: 3,
+        winnerOfMatch: 'BY_SETS',
+        participants: {
+          create: [
+            { userId: u1, role: ParticipantRole.OWNER },
+            { userId: u2, role: ParticipantRole.PARTICIPANT },
+            { userId: u3, role: ParticipantRole.PARTICIPANT },
+            { userId: u4, role: ParticipantRole.PARTICIPANT },
+          ],
+        },
+      },
+    });
+    await createRound(automaticGameId, automaticRoundId);
+    await createMatch(automaticGameId, automaticRoundId, automaticMatchId);
+    await updateMatch(automaticGameId, automaticMatchId, {
+      teamA: [u1, u2],
+      teamB: [u3, u4],
+      sets: [{ teamA: 0, teamB: 0 }],
+    });
+
+    const automaticRules = getRules({ sport: 'PADEL', scoringPreset: 'CLASSIC_AUTOMATIC' });
+    const automaticInitial = createInitialLiveScoringState(automaticRules);
+    const automaticMode = applyAutomaticRecordMode(automaticInitial, automaticRules, 'GAMES');
+    assert(automaticMode.changed, 'automatic initial record-mode choice changes state');
+    const automaticLive = await patchMatchLiveScoring(automaticGameId, automaticMatchId, u1, false, {
+      state: automaticMode.state as unknown as Record<string, unknown>,
+      baseRevision: 0,
+      clientMessageId: 'automatic-mode',
+    });
+    assert(automaticLive.revision === 1, 'fresh Automatic PATCH accepts revision-zero baseline');
+    const automaticRow = await prisma.match.findUnique({
+      where: { id: automaticMatchId },
+      select: { metadata: true },
+    });
+    assert(
+      (automaticRow?.metadata as Record<string, unknown> | null)?.automaticRecordMode === 'GAMES',
+      'Automatic mode persisted into match metadata',
+    );
+
+    const automaticPoint = scoreLivePoint(automaticMode.state, 'teamA', automaticRules);
+    assert(automaticPoint.changed, 'Automatic scoring changes state after mode choice');
+    const automaticScored = await patchMatchLiveScoring(automaticGameId, automaticMatchId, u1, false, {
+      state: automaticPoint.state as unknown as Record<string, unknown>,
+      baseRevision: 1,
+      clientMessageId: 'automatic-first-point',
+    });
+    assert(automaticScored.revision === 2, 'Automatic first point passes structured transition verification');
+    console.log('ok: fresh Automatic revision, mode metadata, and first point');
+
+    console.log('\nqa-matchLiveScoring: all checks passed (padel + tennis + Automatic).');
   } finally {
     delete (globalThis as { socketService?: unknown }).socketService;
     for (const id of cleanupGameIds) {

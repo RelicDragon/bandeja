@@ -71,6 +71,11 @@ enum WatchValidateSet {
             if current.isTieBreak { return .superTiebreak }
         }
 
+        // CLASSIC_AUTOMATIC: opt-in STB rows (stbIdx is null).
+        if rules.isClassicAutomaticRelaxed, current.isTieBreak {
+            return .superTiebreak
+        }
+
         if current.isTieBreak { return .tiebreakGame }
         return .regular
     }
@@ -170,6 +175,15 @@ enum WatchValidateSet {
         return true
     }
 
+    /// Whether an Automatic official row is a finished set (classic games or STB), not mid-entry.
+    static func isClosedAutomaticSetScore(_ set: WatchSetWrite, rules: WatchScoringRules) -> Bool {
+        guard set.teamA > 0 || set.teamB > 0 else { return false }
+        if set.isTieBreak {
+            return validateSuperTiebreak(a: set.teamA, b: set.teamB, rules: rules)
+        }
+        return validateClassicRegularSet(a: set.teamA, b: set.teamB, rules: rules)
+    }
+
     static func isLegalSetScore(
         teamA a: Int,
         teamB b: Int,
@@ -188,6 +202,10 @@ enum WatchValidateSet {
         let kind = watchGetSetKind(setIndex: setIndex, sets: sets, rules: rules, isTieBreakOverride: isTieBreakFlag)
 
         if a == 0, b == 0 { return true }
+
+        if rules.isClassicAutomaticRelaxed {
+            return true
+        }
 
         switch kind {
         case .points:

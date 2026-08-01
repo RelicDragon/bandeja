@@ -5,6 +5,8 @@ import type { RallyCourtProps } from '@/components/liveScoring/rally/RallyCourtP
 import type { RawMatch } from '@/hooks/useLiveMatchBoardState';
 import type { MatchTimerSnapshot } from '@/utils/matchTimer';
 import type {
+  LiveAutomaticContinueChoice,
+  LiveAutomaticRecordMode,
   LiveBoardTheme,
   LiveOptionalDeciderFormat,
   LiveMatchCourtOrientation,
@@ -55,6 +57,8 @@ export type UseLiveMatchControllerReturn = {
   scorePoint: (team: LiveTeamSide) => void;
   unscorePoint: (team: LiveTeamSide) => void;
   applyOptionalDecider: (format: LiveOptionalDeciderFormat) => void;
+  applyAutomaticRecordMode: (mode: LiveAutomaticRecordMode) => void;
+  applyAutomaticContinue: (choice: LiveAutomaticContinueChoice) => void;
   kitchenFault: (faultingTeam: LiveTeamSide) => void;
   letPending: () => void;
   letReplay: () => void;
@@ -73,6 +77,10 @@ export type UseLiveMatchControllerReturn = {
   scoringLocked: boolean;
   liveMatchStatusNote: string | null;
   showOptionalDeciderSheet: boolean;
+  showAutomaticRecordModeSheet: boolean;
+  showAutomaticContinueSheet: boolean;
+  canAutomaticFinishSet: boolean;
+  confirmAutomaticOpenEndedSet: () => void;
   canTimedSetFreeze: boolean;
   canTimedSetUnlock: boolean;
   shareBoardThemeParam: 'light' | 'dark';

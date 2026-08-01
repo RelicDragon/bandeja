@@ -34,9 +34,18 @@ export const validationMessage = (
     case 'SUPER_TIEBREAK_DRAW':
       return t('gameResults.scoringErrors.superTiebreakDraw') || 'Super tiebreak cannot end in a draw';
     case 'SUPER_TIEBREAK_WIN_BY_2':
-      return t('gameResults.scoringErrors.superTiebreakWinBy2') || 'Super tiebreak must be won by 2 points';
+      return (
+        t('gameResults.scoringErrors.superTiebreakWinBy2', { winBy: detail?.winBy ?? 2 }) ||
+        `Super tiebreak must be won by ${detail?.winBy ?? 2} points`
+      );
     case 'SUPER_TIEBREAK_TOO_LOW':
-      return t('gameResults.scoringErrors.superTiebreakTooLow', { target: detail?.target ?? '' }) || `Super tiebreak goes to at least ${detail?.target} points`;
+      return (
+        t('gameResults.scoringErrors.superTiebreakTooLow', {
+          target: detail?.target ?? '',
+          winBy: detail?.winBy ?? 2,
+        }) ||
+        `Super tiebreak goes to at least ${detail?.target} points, win by ${detail?.winBy ?? 2}`
+      );
     case 'SET_AFTER_MATCH_DECIDED':
       return t('gameResults.scoringErrors.setAfterMatchDecided') || 'Match already decided';
     default:

@@ -72,6 +72,14 @@ struct RallyPointsScoringView: View {
 
             Spacer(minLength: 0)
 
+            if vm.canAutomaticFinishSet {
+                Button(WatchCopy.automaticFinishSetCta(lang)) {
+                    vm.confirmAutomaticOpenEndedSet()
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.mini)
+            }
+
             footerActions(lang)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -130,6 +138,11 @@ struct RallyPointsScoringView: View {
         }
         Button(WatchCopy.addExtraBallsRow(lang)) {
             vm.appendSupplementalSet(kind: .extraBalls)
+        }
+        if vm.canAutomaticFinishSet {
+            Button(WatchCopy.automaticFinishSetCta(lang)) {
+                vm.confirmAutomaticOpenEndedSet()
+            }
         }
         if vm.canAdvanceToNextSet() {
             Button(WatchCopy.nextSet(lang)) { vm.nextSet() }

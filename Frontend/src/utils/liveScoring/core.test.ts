@@ -1,14 +1,29 @@
 import { describe, expect, it } from 'vitest';
-import { computeMatchWinner, getRulesFromPreset, isOfficialPointsBallBudgetExhausted } from '@/utils/scoring';
+import { Sports } from '@shared/sport';
+import {
+  computeMatchWinner,
+  getRules,
+  getRulesFromPreset,
+  isOfficialPointsBallBudgetExhausted,
+} from '@/utils/scoring';
 import {
   advanceLiveSet,
+  applyAutomaticContinueChoice,
+  applyAutomaticOpenEndedSetConfirm,
+  applyAutomaticRecordMode,
   applyOptionalDeciderFormat,
+  automaticRecordModeChoicePending,
+  canConfirmAutomaticOpenEndedSetChoice,
   createInitialLiveScoringState,
   freezeTimedClassicSetAtPartialScore,
+  isAutomaticLiveMatchComplete,
+  optionalContinueSetChoicePending,
   optionalDeciderChoicePending,
+  parseLiveScoringState,
   scoreLivePoint,
   unscoreLivePoint,
 } from './core';
+import { seedAutomaticRecordModeOnState } from './automaticFlexible';
 
 const classicRules = {
   ...getRulesFromPreset('CLASSIC_BEST_OF_3'),
@@ -274,6 +289,223 @@ describe('live scoring core golden transitions', () => {
     expect(picked.changed).toBe(true);
     expect(picked.state.sets[2].isTieBreak).toBe(true);
     expect(optionalDeciderChoicePending(picked.state, rules)).toBe(false);
+  });
+
+  it('CLASSIC_AUTOMATIC asks record mode, continue, then optional decider', () => {
+    const rules = getRules({ sport: Sports.PADEL, scoringPreset: 'CLASSIC_AUTOMATIC' } as never);
+    expect(rules.superTieBreakReplacesDeciderAtIndex).toBeNull();
+    expect(rules.strictValidation).toBe('CLASSIC_AUTOMATIC_RELAXED');
+
+    let state = createInitialLiveScoringState(rules);
+    expect(automaticRecordModeChoicePending(state, rules)).toBe(true);
+    expect(scoreLivePoint(state, 'teamA', rules).changed).toBe(false);
+
+    const mode = applyAutomaticRecordMode(state, rules, 'GAMES');
+    expect(mode.changed).toBe(true);
+    state = mode.state;
+    expect(state.automaticRecordMode).toBe('GAMES');
+    expect(automaticRecordModeChoicePending(state, rules)).toBe(false);
+
+    state = {
+      ...state,
+      sets: [{ teamA: 6, teamB: 4, isTieBreak: false, role: 'OFFICIAL' }],
+      activeSetIndex: 0,
+      classic: { ...state.classic!, pointState: { kind: 'regular', teamA: 0, teamB: 0 } },
+    };
+    expect(optionalContinueSetChoicePending(state, rules)).toBe(true);
+    expect(scoreLivePoint(state, 'teamA', rules).changed).toBe(false);
+
+    const continued = applyAutomaticContinueChoice(state, rules, 'CONTINUE');
+    expect(continued.changed).toBe(true);
+    state = continued.state;
+    expect(state.activeSetIndex).toBe(1);
+
+    state = {
+      ...state,
+      sets: [
+        { teamA: 6, teamB: 4, isTieBreak: false, role: 'OFFICIAL' },
+        { teamA: 4, teamB: 6, isTieBreak: false, role: 'OFFICIAL' },
+      ],
+      activeSetIndex: 1,
+    };
+    const toDecider = applyAutomaticContinueChoice(state, rules, 'CONTINUE');
+    expect(toDecider.changed).toBe(true);
+    state = toDecider.state;
+    expect(state.activeSetIndex).toBe(2);
+    expect(optionalDeciderChoicePending(state, rules)).toBe(true);
+
+    const stb = applyOptionalDeciderFormat(state, rules, 'SUPER_TIEBREAK');
+    expect(stb.changed).toBe(true);
+    expect(stb.state.sets[2].isTieBreak).toBe(true);
+  });
+
+  it('CLASSIC_AUTOMATIC americano keeps scoring until finish set, then early end', () => {
+    const rules = getRules({ sport: Sports.PADEL, scoringPreset: 'CLASSIC_AUTOMATIC' } as never);
+    let state = applyAutomaticRecordMode(createInitialLiveScoringState(rules), rules, 'AMERICANO_POINTS').state;
+    expect(state.mode).toBe('points');
+
+    state = scoreLivePoint(state, 'teamA', rules).state;
+    expect(state.sets[0]).toMatchObject({ teamA: 1, teamB: 0 });
+    expect(optionalContinueSetChoicePending(state, rules)).toBe(false);
+    expect(canConfirmAutomaticOpenEndedSetChoice(state, rules)).toBe(true);
+
+    for (let i = 0; i < 8; i += 1) {
+      const next = scoreLivePoint(state, i % 2 === 0 ? 'teamB' : 'teamA', rules);
+      expect(next.changed).toBe(true);
+      state = next.state;
+    }
+    // 1-0 then B/A×4 → 5-4
+    expect(state.sets[0].teamA).not.toBe(state.sets[0].teamB);
+    expect(optionalContinueSetChoicePending(state, rules)).toBe(false);
+
+    const finished = applyAutomaticOpenEndedSetConfirm(state, rules);
+    expect(finished.changed).toBe(true);
+    state = finished.state;
+    expect(optionalContinueSetChoicePending(state, rules)).toBe(true);
+    expect(scoreLivePoint(state, 'teamA', rules).changed).toBe(false);
+
+    const ended = applyAutomaticContinueChoice(state, rules, 'END');
+    expect(ended.changed).toBe(true);
+    expect(ended.state.automaticEarlyFinish).toBe(true);
+    expect(isAutomaticLiveMatchComplete(ended.state, rules)).toBe(true);
+  });
+
+  it('CLASSIC_AUTOMATIC keeps scoring after continue into set 2', () => {
+    const rules = getRules({ sport: Sports.PADEL, scoringPreset: 'CLASSIC_AUTOMATIC' } as never);
+    let state = applyAutomaticRecordMode(createInitialLiveScoringState(rules), rules, 'AMERICANO_POINTS').state;
+    state = {
+      ...state,
+      sets: [{ teamA: 24, teamB: 18, isTieBreak: false, role: 'OFFICIAL' }],
+      activeSetIndex: 0,
+      automaticOpenEndedSetConfirmed: true,
+    };
+    state = applyAutomaticContinueChoice(state, rules, 'CONTINUE').state;
+    expect(state.activeSetIndex).toBe(1);
+    state = scoreLivePoint(state, 'teamA', rules).state;
+    expect(state.sets[1]).toMatchObject({ teamA: 1, teamB: 0 });
+    expect(isAutomaticLiveMatchComplete(state, rules)).toBe(false);
+    expect(scoreLivePoint(state, 'teamA', rules).changed).toBe(true);
+  });
+
+  it('CLASSIC_AUTOMATIC americano continues into optional STB', () => {
+    const rules = getRules({ sport: Sports.PADEL, scoringPreset: 'CLASSIC_AUTOMATIC' } as never);
+    let state = applyAutomaticRecordMode(createInitialLiveScoringState(rules), rules, 'AMERICANO_POINTS').state;
+    state = {
+      ...state,
+      sets: [{ teamA: 24, teamB: 18, isTieBreak: false, role: 'OFFICIAL' }],
+      activeSetIndex: 0,
+      automaticOpenEndedSetConfirmed: true,
+    };
+    state = applyAutomaticContinueChoice(state, rules, 'CONTINUE').state;
+    expect(state.activeSetIndex).toBe(1);
+    expect(state.automaticOpenEndedSetConfirmed).toBeUndefined();
+
+    state = {
+      ...state,
+      sets: [
+        { teamA: 24, teamB: 18, isTieBreak: false, role: 'OFFICIAL' },
+        { teamA: 18, teamB: 24, isTieBreak: false, role: 'OFFICIAL' },
+      ],
+      activeSetIndex: 1,
+      automaticOpenEndedSetConfirmed: true,
+    };
+    state = applyAutomaticContinueChoice(state, rules, 'CONTINUE').state;
+    expect(optionalDeciderChoicePending(state, rules)).toBe(true);
+
+    const stb = applyOptionalDeciderFormat(state, rules, 'SUPER_TIEBREAK');
+    expect(stb.changed).toBe(true);
+    state = stb.state;
+    expect(state.sets[2].isTieBreak).toBe(true);
+    expect(state.mode).toBe('points');
+
+    state = { ...state, sets: [state.sets[0], state.sets[1], { teamA: 9, teamB: 8, isTieBreak: true, role: 'OFFICIAL' }] };
+    state = scoreLivePoint(state, 'teamA', rules).state;
+    expect(state.sets[2]).toMatchObject({ teamA: 10, teamB: 8 });
+    expect(isAutomaticLiveMatchComplete(state, rules)).toBe(true);
+  });
+
+  it('CLASSIC_AUTOMATIC supports a regular deciding set in either record mode', () => {
+    const rules = getRules({ sport: Sports.PADEL, scoringPreset: 'CLASSIC_AUTOMATIC' } as never);
+    const splitSets = [
+      { teamA: 6, teamB: 4, isTieBreak: false, role: 'OFFICIAL' as const },
+      { teamA: 4, teamB: 6, isTieBreak: false, role: 'OFFICIAL' as const },
+      { teamA: 0, teamB: 0, isTieBreak: false, role: 'OFFICIAL' as const },
+    ];
+
+    let gamesState = {
+      ...applyAutomaticRecordMode(createInitialLiveScoringState(rules), rules, 'GAMES').state,
+      sets: splitSets,
+      activeSetIndex: 2,
+    };
+    gamesState = applyOptionalDeciderFormat(gamesState, rules, 'REGULAR_SET').state;
+    expect(gamesState.optionalDeciderFormat).toBe('REGULAR_SET');
+    expect(gamesState.mode).toBe('classic');
+    expect(gamesState.sets[2].isTieBreak).toBe(false);
+    gamesState = {
+      ...gamesState,
+      sets: [gamesState.sets[0], gamesState.sets[1], { ...gamesState.sets[2], teamA: 6, teamB: 4 }],
+    };
+    expect(isAutomaticLiveMatchComplete(gamesState, rules)).toBe(true);
+
+    let pointsState = {
+      ...applyAutomaticRecordMode(createInitialLiveScoringState(rules), rules, 'AMERICANO_POINTS').state,
+      sets: [
+        { ...splitSets[0], teamA: 24, teamB: 18 },
+        { ...splitSets[1], teamA: 18, teamB: 24 },
+        splitSets[2],
+      ],
+      activeSetIndex: 2,
+    };
+    pointsState = applyOptionalDeciderFormat(pointsState, rules, 'REGULAR_SET').state;
+    expect(pointsState.mode).toBe('points');
+    expect(pointsState.sets[2].isTieBreak).toBe(false);
+    pointsState = {
+      ...pointsState,
+      sets: [pointsState.sets[0], pointsState.sets[1], { ...pointsState.sets[2], teamA: 7, teamB: 5 }],
+    };
+    expect(isAutomaticLiveMatchComplete(pointsState, rules)).toBe(false);
+    pointsState = applyAutomaticOpenEndedSetConfirm(pointsState, rules).state;
+    expect(isAutomaticLiveMatchComplete(pointsState, rules)).toBe(true);
+  });
+
+  it('CLASSIC_AUTOMATIC restores or infers the selected record mode', () => {
+    const rules = getRules({ sport: Sports.PADEL, scoringPreset: 'CLASSIC_AUTOMATIC' } as never);
+    const pristine = createInitialLiveScoringState(rules);
+    const seeded = seedAutomaticRecordModeOnState(
+      pristine,
+      rules,
+      { automaticRecordMode: 'AMERICANO_POINTS' },
+      (meta) => meta?.automaticRecordMode === 'AMERICANO_POINTS' ? 'AMERICANO_POINTS' : 'GAMES',
+      'automaticRecordMode',
+    );
+    expect(seeded.automaticRecordMode).toBe('AMERICANO_POINTS');
+    expect(seeded.mode).toBe('points');
+
+    const inferred = parseLiveScoringState(
+      {
+        mode: 'points',
+        sets: [{ teamA: 3, teamB: 1, isTieBreak: false }],
+        activeSetIndex: 0,
+      },
+      rules,
+    );
+    expect(inferred.automaticRecordMode).toBe('AMERICANO_POINTS');
+  });
+
+  it('CLASSIC_AUTOMATIC rejects scoring after the match is complete', () => {
+    const rules = getRules({ sport: Sports.PADEL, scoringPreset: 'CLASSIC_AUTOMATIC' } as never);
+    const gamesState = {
+      ...applyAutomaticRecordMode(createInitialLiveScoringState(rules), rules, 'GAMES').state,
+      sets: [
+        { teamA: 6, teamB: 4, isTieBreak: false, role: 'OFFICIAL' as const },
+        { teamA: 6, teamB: 3, isTieBreak: false, role: 'OFFICIAL' as const },
+      ],
+      activeSetIndex: 1,
+    };
+
+    expect(isAutomaticLiveMatchComplete(gamesState, rules)).toBe(true);
+    expect(scoreLivePoint(gamesState, 'teamA', rules).changed).toBe(false);
+    expect(unscoreLivePoint(gamesState, 'teamA', rules).changed).toBe(false);
   });
 
   it('timed partial lock allows advancing an incomplete set', () => {
