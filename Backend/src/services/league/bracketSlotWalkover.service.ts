@@ -93,14 +93,8 @@ export class BracketSlotWalkoverService {
       slot.slotKind === BracketSlotKind.GRAND_FINAL ||
       slot.slotKind === BracketSlotKind.THIRD_PLACE ||
       (slot.slotKind === BracketSlotKind.MAIN && !slot.winnerSlotId);
-    if (!slot.winnerSlotId && payload.skipGameFinal) {
-      throw new ApiError(400, 'Cannot skip game final without an advancement target');
-    }
     if (!slot.winnerSlotId && !slot.gameId && !isTerminalChampionship) {
       throw new ApiError(400, 'This slot has no advancement target');
-    }
-    if (isTerminalChampionship && !slot.gameId) {
-      throw new ApiError(400, 'Championship contestants must be resolved before a walkover');
     }
 
     const config = (slot.leagueRound.bracketConfig ?? {}) as BracketConfigShape;
@@ -117,66 +111,66 @@ export class BracketSlotWalkoverService {
 
     const createdGameIds: string[] = [];
     await prisma.$transaction(async (tx) => {
+      await BracketAdvancementService.lockBracketRound(slot.leagueRoundId, tx);
       await tx.$queryRaw`
         SELECT "id"
         FROM "LeagueBracketSlot"
         WHERE "id" = ${slot.id}
         FOR UPDATE
       `;
-      if (slot.gameId) {
+      const lockedSlot = await tx.leagueBracketSlot.findUnique({
+        where: { id: slot.id },
+        include: {
+          game: { select: { id: true, resultsStatus: true, parentId: true } },
+          feederSlotA: {
+            select: {
+              id: true,
+              slotKind: true,
+              leagueParticipantId: true,
+              gameId: true,
+              game: { select: { resultsStatus: true } },
+            },
+          },
+          feederSlotB: {
+            select: {
+              id: true,
+              slotKind: true,
+              leagueParticipantId: true,
+              gameId: true,
+              game: { select: { resultsStatus: true } },
+            },
+          },
+        },
+      });
+      if (!lockedSlot) {
+        throw new ApiError(404, 'Bracket slot not found');
+      }
+      if (lockedSlot.gameId) {
         await tx.$queryRaw`
           SELECT "id"
           FROM "Game"
-          WHERE "id" = ${slot.gameId}
+          WHERE "id" = ${lockedSlot.gameId}
           FOR UPDATE
         `;
         const lockedGame = await tx.game.findUnique({
-          where: { id: slot.gameId },
+          where: { id: lockedSlot.gameId },
           select: { resultsStatus: true },
         });
         if (lockedGame?.resultsStatus === ResultsStatus.FINAL) {
           throw new ApiError(409, 'Match is already final');
         }
       }
-      const eligible = await this.resolveEligibleWinners(slot, pool, tx);
+      const eligible = await this.resolveEligibleWinners(lockedSlot, pool, tx);
       if (!eligible.includes(payload.leagueParticipantId)) {
         throw new ApiError(400, 'Winner must be a contestant in this bracket match');
       }
 
-      if (payload.skipGameFinal) {
-        const downstreamConsumers = await tx.leagueBracketSlot.findMany({
-          where: {
-            OR: [{ feederSlotAId: slot.id }, { feederSlotBId: slot.id }],
-          },
-          select: {
-            slotKind: true,
-            roundIndex: true,
-            feederSlotAId: true,
-            feederSlotBId: true,
-          },
-        });
-        const loserIsRequired = downstreamConsumers.some(
-          (consumer) =>
-            consumer.slotKind === BracketSlotKind.THIRD_PLACE ||
-            ((consumer.slotKind === BracketSlotKind.LOSERS ||
-              consumer.slotKind === BracketSlotKind.CONSOLATION) &&
-              slot.slotKind === BracketSlotKind.MAIN) ||
-            (consumer.slotKind === BracketSlotKind.GRAND_FINAL &&
-              consumer.roundIndex > 0 &&
-              consumer.feederSlotAId === slot.id &&
-              consumer.feederSlotBId === slot.id)
-        );
-        if (loserIsRequired) {
-          throw new ApiError(
-            400,
-            'Cannot skip the game final when both winner and loser feed later bracket matches'
-          );
-        }
-      }
-
-      if (slot.slotKind === BracketSlotKind.MAIN) {
+      if (lockedSlot.slotKind === BracketSlotKind.MAIN) {
         const treeSlots = await tx.leagueBracketSlot.findMany({
-          where: { leagueRoundId: slot.leagueRoundId, leagueGroupId: slot.leagueGroupId },
+          where: {
+            leagueRoundId: lockedSlot.leagueRoundId,
+            leagueGroupId: lockedSlot.leagueGroupId,
+          },
           include: { game: { select: { resultsStatus: true } } },
         });
         if (!playInPhaseComplete(treeSlots)) {
@@ -184,30 +178,34 @@ export class BracketSlotWalkoverService {
         }
       }
 
-      if (slot.gameId && !payload.skipGameFinal) {
-        await this.finalizeWalkoverGame(slot.gameId, payload.leagueParticipantId, tx);
-        const ids = await BracketAdvancementService.onGameFinalized(slot.gameId, tx);
-        createdGameIds.push(...ids);
-        const { syncParentSeasonPodiumIfFinal } = await import(
-          '../achievements/podiumGrant.service'
-        );
-        await syncParentSeasonPodiumIfFinal({ gameId: slot.gameId, tx });
-      } else if (slot.winnerSlotId) {
-        await tx.leagueBracketSlot.update({
-          where: { id: slot.id },
-          data: { leagueParticipantId: payload.leagueParticipantId },
-        });
-        await tx.leagueBracketSlot.update({
-          where: { id: slot.winnerSlotId },
-          data: { leagueParticipantId: payload.leagueParticipantId },
-        });
+      let gameId = lockedSlot.gameId;
+      if (!gameId) {
         const ids = await BracketAdvancementService.tryCreateReadyGames(
-          slot.leagueRoundId,
-          slot.leagueGroupId ?? null,
+          lockedSlot.leagueRoundId,
+          lockedSlot.leagueGroupId ?? null,
           tx
         );
         createdGameIds.push(...ids);
+        const materialized = await tx.leagueBracketSlot.findUnique({
+          where: { id: lockedSlot.id },
+          select: { gameId: true },
+        });
+        gameId = materialized?.gameId ?? null;
       }
+      if (!gameId) {
+        throw new ApiError(400, 'Championship contestants must be resolved before a walkover');
+      }
+
+      // `skipGameFinal` remains accepted for older clients, but advancement is
+      // always backed by an auditable FINAL game. A cached participant on a
+      // non-BYE slot is deliberately never treated as proof of a winner.
+      await this.finalizeWalkoverGame(gameId, payload.leagueParticipantId, tx);
+      const ids = await BracketAdvancementService.onGameFinalized(gameId, tx);
+      createdGameIds.push(...ids);
+      const { syncParentSeasonPodiumIfFinal } = await import(
+        '../achievements/podiumGrant.service'
+      );
+      await syncParentSeasonPodiumIfFinal({ gameId, tx });
     });
 
     BracketGameNotificationService.notifyCreatedGames(createdGameIds);

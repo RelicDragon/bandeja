@@ -31,6 +31,41 @@ const PLAY_IN_GATE_MESSAGE =
 type BracketRoundConfigShape = BracketGameSetupConfig;
 
 export class BracketAdvancementService {
+  /**
+   * Serializes every mutation that can resolve or invalidate games in one
+   * bracket round. Results for different semifinals are saved in separate
+   * transactions, so without this shared lock both transactions could observe
+   * the other semifinal as unfinished and neither would create the final.
+   */
+  static async lockBracketRound(
+    leagueRoundId: string,
+    tx: Prisma.TransactionClient
+  ): Promise<void> {
+    await tx.$queryRaw`
+      SELECT "id"
+      FROM "LeagueRound"
+      WHERE "id" = ${leagueRoundId}
+      FOR UPDATE
+    `;
+  }
+
+  /** Acquires the bracket-round lock before a result transaction mutates a game. */
+  static async lockRoundForBracketGame(
+    gameId: string,
+    tx: Prisma.TransactionClient
+  ): Promise<void> {
+    const slot = await tx.leagueBracketSlot.findFirst({
+      where: { gameId },
+      select: {
+        leagueRoundId: true,
+        leagueRound: { select: { playoffFormat: true } },
+      },
+    });
+    if (slot?.leagueRound.playoffFormat === PlayoffFormat.BRACKET) {
+      await this.lockBracketRound(slot.leagueRoundId, tx);
+    }
+  }
+
   static async assertPlayInCompleteForMainBracketGame(
     gameId: string,
     tx: Prisma.TransactionClient
@@ -102,6 +137,7 @@ export class BracketAdvancementService {
     leagueGroupId: string | null,
     tx: Prisma.TransactionClient
   ): Promise<string[]> {
+    await this.lockBracketRound(leagueRoundId, tx);
     const round = await tx.leagueRound.findUnique({
       where: { id: leagueRoundId },
       include: {
@@ -378,21 +414,24 @@ export class BracketAdvancementService {
       teamScores.set(team.teamNumber, prev);
     }
 
-    let winningTeamNumber: number | null = null;
-    for (const [teamNumber, score] of teamScores) {
-      if (score.isWinner) {
-        winningTeamNumber = teamNumber;
-        break;
-      }
-    }
+    // A FINAL marker alone is insufficient proof of a winner. Require an
+    // outcome for every fixed team and reject contradictory/tied data instead
+    // of advancing whichever team happened to be iterated first.
+    if (teamScores.size !== game.fixedTeams.length) return null;
+
+    const explicitWinners = [...teamScores.entries()]
+      .filter(([, score]) => score.isWinner)
+      .map(([teamNumber]) => teamNumber);
+    if (explicitWinners.length > 1) return null;
+
+    let winningTeamNumber: number | null = explicitWinners[0] ?? null;
     if (winningTeamNumber == null) {
-      let bestWins = -1;
-      for (const [teamNumber, score] of teamScores) {
-        if (score.wins > bestWins) {
-          bestWins = score.wins;
-          winningTeamNumber = teamNumber;
-        }
-      }
+      const bestWins = Math.max(...[...teamScores.values()].map((score) => score.wins));
+      const bestTeams = [...teamScores.entries()]
+        .filter(([, score]) => score.wins === bestWins)
+        .map(([teamNumber]) => teamNumber);
+      if (bestTeams.length !== 1) return null;
+      winningTeamNumber = bestTeams[0];
     }
 
     const winningTeam = game.fixedTeams.find((t) => t.teamNumber === winningTeamNumber);
@@ -629,6 +668,8 @@ export class BracketAdvancementService {
     if (!slot || slot.leagueRound.playoffFormat !== PlayoffFormat.BRACKET) {
       return;
     }
+
+    await this.lockBracketRound(slot.leagueRoundId, tx);
 
     const groupSlots = await tx.leagueBracketSlot.findMany({
       where: { leagueRoundId: slot.leagueRoundId, leagueGroupId: slot.leagueGroupId },

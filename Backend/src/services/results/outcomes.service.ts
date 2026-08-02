@@ -887,6 +887,11 @@ export async function recalculateGameOutcomes(gameId: string) {
   let wasEdited = false;
   
   const result = await prisma.$transaction(async (tx) => {
+    // Bracket results must lock their shared round before any result mutation.
+    // This makes simultaneous semifinal completions deterministic: the second
+    // transaction always observes the first committed winner and materializes
+    // the final/bronze exactly once.
+    await BracketAdvancementService.lockRoundForBracketGame(gameId, tx);
     await tx.gameParticipant.updateMany({
       where: { gameId },
       data: { activeMatchId: null },

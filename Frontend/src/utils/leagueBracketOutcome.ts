@@ -83,7 +83,9 @@ export function slotWinnerParticipantId(
   }
   const game = slot.game;
   if (!game || !isFullGame(game) || game.resultsStatus !== 'FINAL') {
-    return slot.leagueParticipantId ?? null;
+    // Non-BYE slot participants are only a navigation/cache hint. They must
+    // never be presented as a winner before the slot's own game is final.
+    return null;
   }
   const winnerTeam = winningTeamFromFinalGame(game);
   if (!winnerTeam) return slot.leagueParticipantId ?? null;

@@ -232,6 +232,18 @@ describe('slotWinnerParticipantId', () => {
     ];
     expect(slotWinnerParticipantId(slots[0], new Map(slots.map((s) => [s.id, s])))).toBe('p1');
   });
+
+  it('ignores a cached participant on an unresolved non-BYE match', () => {
+    const unresolved = slot({
+      id: 'semi',
+      slotKey: 'MAIN-R1-M0',
+      slotKind: 'MAIN',
+      leagueParticipantId: 'cached-quarterfinal-winner',
+      gameId: null,
+      game: null,
+    });
+    expect(slotWinnerParticipantId(unresolved, new Map([[unresolved.id, unresolved]]))).toBeNull();
+  });
 });
 
 describe('buildBracketSlotHighlights', () => {
