@@ -202,7 +202,12 @@ describe('FullscreenImageViewer chat gallery navigation', () => {
     expect(chrome?.getAttribute('aria-hidden')).toBe('true');
     expect(chrome?.hasAttribute('inert')).toBe(true);
 
-    act(() => click(mediaButton));
+    act(() => {
+      document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+    });
+    expect(chrome?.getAttribute('aria-hidden')).toBe('true');
+
+    act(() => click(document.querySelector('video')!));
     expect(chrome?.getAttribute('aria-hidden')).toBe('false');
     expect(chrome?.hasAttribute('inert')).toBe(false);
   });

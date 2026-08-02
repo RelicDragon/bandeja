@@ -124,6 +124,12 @@ describe('buildChatMediaGallery', () => {
         }),
         message({ id: 'voice', messageType: 'VOICE', mediaUrls: ['/voice.m4a'] }),
         message({
+          id: 'poster-only-video',
+          messageType: 'VIDEO',
+          mediaUrls: [],
+          thumbnailUrls: ['/poster.jpg'],
+        }),
+        message({
           id: 'legacy-image-document',
           messageType: 'DOCUMENT',
           documentMimeType: 'application/octet-stream',

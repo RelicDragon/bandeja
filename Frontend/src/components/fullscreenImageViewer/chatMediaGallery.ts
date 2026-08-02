@@ -84,9 +84,13 @@ export function buildChatMediaGallery(
       : availableMediaCount;
 
     for (let mediaIndex = 0; mediaIndex < count; mediaIndex += 1) {
-      const originalUrl = mediaUrls[mediaIndex]?.trim() || message.thumbnailUrls?.[mediaIndex]?.trim();
+      const mediaUrl = mediaUrls[mediaIndex]?.trim() ?? '';
+      const thumbnailUrl = message.thumbnailUrls?.[mediaIndex]?.trim() ?? '';
+      // A poster is enough to preview an image, but it must never be promoted
+      // to a playable video source.
+      const originalUrl = kind === 'video' ? mediaUrl : mediaUrl || thumbnailUrl;
       if (!originalUrl) continue;
-      const previewUrl = message.thumbnailUrls?.[mediaIndex]?.trim() || originalUrl;
+      const previewUrl = thumbnailUrl || originalUrl;
       items.push({
         id: chatMediaGalleryItemId(message.id, mediaIndex),
         messageId: message.id,

@@ -262,16 +262,16 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
     setIsZoomed(false);
     setMediaReady(false);
     setMediaLoadError(false);
-    setChromeVisible(true);
     pendingOlderNavigationRef.current = false;
     sawOlderLoadingRef.current = false;
     if (isOpen) zoomRef.current?.resetTransform();
     const backdrop = overlayRef.current ?? containerRef.current;
     if (backdrop) backdrop.style.backgroundColor = dismissBackdropRgba(0);
-    if (chromeLayerRef.current) {
-      chromeLayerRef.current.style.opacity = '1';
-    }
   }, [activeMediaId, isOpen, shownUrl, swipeX, videoDismissY]);
+
+  useEffect(() => {
+    if (isOpen) setChromeVisible(true);
+  }, [isOpen]);
 
   // Cached and data-URL media can finish loading before React's event handler
   // is attached. Reconcile the native element state after every item change so
