@@ -1,6 +1,6 @@
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
-import { WinnerOfGame, Prisma, EntityType, ResultsStatus } from '@prisma/client';
+import { WinnerOfGame, Prisma, EntityType } from '@prisma/client';
 import { getMatchScoresForDelta } from './setScoreDelta';
 import { calculateByMatchesWonOutcomes, calculateByScoresDeltaOutcomes, calculateByPointsOutcomes } from './calculator.service';
 import { applySharedPlacementToOutcomes } from './outcomeComputation';
@@ -72,6 +72,10 @@ import {
 import { grantOrganizeAchievementsForFinalizedGame } from '../achievements/organizeGrant.service';
 import { grantPartnerAchievementsForFinalizedGame } from '../achievements/partnerGrant.service';
 import { countsAsRatingActivity, countsForPlayStreak } from './ratingActivity';
+import {
+  type OutcomeRecalculationOptions,
+  shouldCascadeBracketOutcomesUndo,
+} from './outcomeRecalculationPolicy';
 
 async function rebuildLeagueSeasonStandingsIfNeeded(
   gameId: string,
@@ -285,7 +289,11 @@ export async function generateGameOutcomes(gameId: string, tx?: Prisma.Transacti
   };
 }
 
-export async function undoGameOutcomes(gameId: string, tx: Prisma.TransactionClient) {
+export async function undoGameOutcomes(
+  gameId: string,
+  tx: Prisma.TransactionClient,
+  options: OutcomeRecalculationOptions = {},
+) {
   const { assertGameNotLockedTechnicalWithdrawal } = await import(
     '../league/leagueTechnicalWithdrawalGuard'
   );
@@ -309,8 +317,11 @@ export async function undoGameOutcomes(gameId: string, tx: Prisma.TransactionCli
     return;
   }
 
-  const shouldCascadeBracket =
-    game.resultsStatus === ResultsStatus.FINAL && Boolean(game.bracketSlot);
+  const shouldCascadeBracket = shouldCascadeBracketOutcomesUndo({
+    resultsStatus: game.resultsStatus,
+    hasBracketSlot: Boolean(game.bracketSlot),
+    preserveBracketStructure: options.preserveBracketStructure ?? false,
+  });
 
   const isLeagueRoundGame =
     game.entityType === EntityType.LEAGUE && Boolean(game.parentId);
@@ -863,7 +874,10 @@ export async function applyGameOutcomes(
   };
 }
 
-export async function recalculateGameOutcomes(gameId: string) {
+export async function recalculateGameOutcomes(
+  gameId: string,
+  options: OutcomeRecalculationOptions = {},
+) {
   console.log(`[RECALCULATE GAME OUTCOMES] Starting recalculation for game ${gameId}`);
   const game = await prisma.game.findUnique({
     where: { id: gameId },
@@ -897,7 +911,7 @@ export async function recalculateGameOutcomes(gameId: string) {
       data: { activeMatchId: null },
     });
     console.log(`[RECALCULATE GAME OUTCOMES] Step 1: Undoing existing outcomes`);
-    await undoGameOutcomes(gameId, tx);
+    await undoGameOutcomes(gameId, tx, options);
 
     console.log(`[RECALCULATE GAME OUTCOMES] Step 2: Updating match winners based on set scores`);
     await updateMatchWinners(gameId, tx);

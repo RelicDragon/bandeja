@@ -30,6 +30,12 @@ const PLAY_IN_GATE_MESSAGE =
 
 type BracketRoundConfigShape = BracketGameSetupConfig;
 
+export function resolveBracketFixtureAffectsRating(
+  seasonGame: { affectsRating?: boolean | null },
+): boolean {
+  return seasonGame.affectsRating ?? true;
+}
+
 export class BracketAdvancementService {
   /**
    * Serializes every mutation that can resolve or invalidate games in one
@@ -369,7 +375,7 @@ export class BracketAdvancementService {
       team1PlayerIds: team1,
       team2PlayerIds: team2,
       leagueGroupId: leagueGroupId ?? undefined,
-      affectsRating: false,
+      affectsRating: resolveBracketFixtureAffectsRating(seasonGame),
       gameSetup,
       scheduleTemplate,
       db: tx,

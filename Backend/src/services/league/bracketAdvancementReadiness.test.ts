@@ -1,8 +1,47 @@
 import assert from 'node:assert/strict';
 import { BracketSlotKind, ResultsStatus, type Prisma } from '@prisma/client';
-import { BracketAdvancementService } from './bracketAdvancement.service';
+import {
+  BracketAdvancementService,
+  resolveBracketFixtureAffectsRating,
+} from './bracketAdvancement.service';
+import { shouldCascadeBracketOutcomesUndo } from '../results/outcomeRecalculationPolicy';
 
 async function run(): Promise<void> {
+  assert.equal(
+    resolveBracketFixtureAffectsRating({ affectsRating: true }),
+    true,
+    'rated league seasons must create rated bracket fixtures',
+  );
+  assert.equal(
+    resolveBracketFixtureAffectsRating({ affectsRating: false }),
+    false,
+    'bracket fixtures inherit an explicitly non-rating league season',
+  );
+  assert.equal(
+    resolveBracketFixtureAffectsRating({}),
+    true,
+    'legacy league seasons default bracket fixtures to rated',
+  );
+
+  assert.equal(
+    shouldCascadeBracketOutcomesUndo({
+      resultsStatus: ResultsStatus.FINAL,
+      hasBracketSlot: true,
+      preserveBracketStructure: false,
+    }),
+    true,
+    'ordinary result edits must continue invalidating downstream bracket games',
+  );
+  assert.equal(
+    shouldCascadeBracketOutcomesUndo({
+      resultsStatus: ResultsStatus.FINAL,
+      hasBracketSlot: true,
+      preserveBracketStructure: true,
+    }),
+    false,
+    'rating-only recalculation must preserve downstream bracket games',
+  );
+
   const targetKinds = [
     BracketSlotKind.MAIN,
     BracketSlotKind.THIRD_PLACE,

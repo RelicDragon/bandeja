@@ -805,7 +805,7 @@ export class GameUpdateService {
       const outcomeCount = await prisma.gameOutcome.count({ where: { gameId: id } });
       if (outcomeCount > 0) {
         const { recalculateGameOutcomes } = await import('../results/outcomes.service');
-        await recalculateGameOutcomes(id);
+        await recalculateGameOutcomes(id, { preserveBracketStructure: true });
       }
       // Eligibility of FINAL events changed — drop organize/partner caches even if no outcomes.
       await invalidateAchievementStatsForGame({ gameId: id });
