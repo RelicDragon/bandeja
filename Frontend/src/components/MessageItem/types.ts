@@ -38,6 +38,7 @@ export interface MessageItemProps {
   entityType?: string | null;
   isThreadSearchOutline?: boolean;
   threadSearchHighlightQuery?: string | null;
+  onOpenChatMedia?: (messageId: string, mediaIndex: number) => void;
 }
 
 export type ParsedContentPart =

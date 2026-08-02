@@ -42,7 +42,9 @@ type MessageListRowProps = {
     | 'onUnpin'
     | 'showReply'
     | 'onForwardMessage'
-  >;
+  > & {
+    onOpenChatMedia?: (messageId: string, mediaIndex: number) => void;
+  };
   entityType?: string | null;
   threadSearchOutlineQuery?: string | null;
 };
@@ -128,6 +130,7 @@ export const MessageListRow = memo(function MessageListRow({
         entityType={entityType}
         isThreadSearchOutline={isThreadSearchOutline}
         threadSearchHighlightQuery={threadSearchHighlightQuery}
+        onOpenChatMedia={handlers.onOpenChatMedia}
       />
     </div>
   );

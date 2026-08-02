@@ -36,7 +36,7 @@ interface MessageBubbleProps {
   formatMessageTime: (dateString: string) => string;
   getThumbnailUrl: (index: number) => string;
   getFullscreenUrl: (index: number) => string;
-  onImageClick: (url: string) => void;
+  onImageClick: (url: string, mediaIndex?: number) => void;
   onMentionClick: (userId: string) => void;
   onUrlClick: (url: string, e: React.MouseEvent) => void;
   mentionIds: string[];
@@ -57,7 +57,7 @@ interface MessageBubbleProps {
   canDismissLinkPreview?: boolean;
   onDismissLinkPreview?: () => Promise<void> | void;
   voiceTranscriptionNoSpeech?: boolean;
-  onVideoOpen?: (videoUrl: string, posterUrl: string) => void;
+  onVideoOpen?: (videoUrl: string, posterUrl: string, mediaIndex?: number) => void;
   inlineVideoPlaybackPaused?: boolean;
   loadMediaEager?: boolean;
   t: TFunction;
@@ -283,6 +283,19 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
           isOwnMessage={isOwnMessage}
           isChannel={isChannel}
           isSending={isSending}
+          onOpenPreview={
+            message.mediaUrls?.[0] && message.documentMimeType?.toLowerCase().startsWith('image/')
+              ? () => onImageClick(message.mediaUrls[0], 0)
+              : message.mediaUrls?.[0] &&
+                  message.documentMimeType?.toLowerCase().startsWith('video/') &&
+                  onVideoOpen
+                ? () => onVideoOpen(
+                    message.mediaUrls[0],
+                    message.thumbnailUrls?.[0] || message.mediaUrls[0],
+                    0
+                  )
+                : undefined
+          }
         />
       )}
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useState, useEffect, useLayoutEffect, useMemo, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AnimatePresence, motion } from 'framer-motion';
 import toast from 'react-hot-toast';
@@ -33,6 +33,10 @@ interface EditMaxParticipantsModalProps {
   onClose: () => void;
   onUpdate: (game: Game) => void;
   onKickUser: (userId: string) => Promise<void>;
+  presentation?: 'dialog' | 'embedded';
+  onDirtyChange?: (isDirty: boolean) => void;
+  onSavingChange?: (isSaving: boolean) => void;
+  closeOnSave?: boolean;
 }
 
 export const EditMaxParticipantsModal = ({
@@ -41,6 +45,10 @@ export const EditMaxParticipantsModal = ({
   onClose,
   onUpdate,
   onKickUser,
+  presentation = 'dialog',
+  onDirtyChange,
+  onSavingChange,
+  closeOnSave = presentation === 'dialog',
 }: EditMaxParticipantsModalProps) => {
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
@@ -81,10 +89,19 @@ export const EditMaxParticipantsModal = ({
         gameFormatFixedTeamsToggleVisible(game.entityType, game.maxParticipants) && ppm === 4;
       setHasFixedTeams(fixedApplicable ? (game.hasFixedTeams ?? false) : false);
       setRemovedPlayerIds(new Set());
-      setOriginalParticipants(game.participants.filter(p => p.status === 'PLAYING'));
       setIsEditingMaxParticipants(false);
     }
-  }, [isOpen, game, sportConfig.defaultPlayersPerMatch]);
+  }, [
+    isOpen,
+    game.entityType,
+    game.maxParticipants,
+    game.playersPerMatch,
+    game.minLevel,
+    game.maxLevel,
+    game.genderTeams,
+    game.hasFixedTeams,
+    sportConfig.defaultPlayersPerMatch,
+  ]);
 
   useEffect(() => {
     if (isOpen) {
@@ -148,8 +165,9 @@ export const EditMaxParticipantsModal = ({
   ]);
 
   const handleClose = useCallback(() => {
+    if (isSaving) return;
     onClose();
-  }, [onClose]);
+  }, [isSaving, onClose]);
 
   const playingParticipants = originalParticipants.filter(p => !removedPlayerIds.has(p.userId));
   const currentPlayingCount = playingParticipants.filter(p => p.status === 'PLAYING').length;
@@ -248,6 +266,38 @@ export const EditMaxParticipantsModal = ({
     const currentParticipantIds = new Set(originalParticipants.map(p => p.userId));
     return new Set(Array.from(removedPlayerIds).filter(userId => currentParticipantIds.has(userId)));
   }, [removedPlayerIds, originalParticipants]);
+
+  const initialPlayersPerMatch = game.playersPerMatch ?? sportConfig.defaultPlayersPerMatch;
+  const initialHasFixedTeams =
+    gameFormatFixedTeamsToggleVisible(game.entityType, game.maxParticipants) &&
+    initialPlayersPerMatch === 4
+      ? (game.hasFixedTeams ?? false)
+      : false;
+  const isDirty =
+    newMaxParticipants !== game.maxParticipants ||
+    levelRange[0] !== (game.minLevel ?? 1.0) ||
+    levelRange[1] !== (game.maxLevel ?? 7.0) ||
+    (entitySupportsPlayersPerMatchControls(game.entityType) &&
+      playersPerMatch !== initialPlayersPerMatch) ||
+    hasFixedTeams !== initialHasFixedTeams ||
+    (gameFormatGenderVisible(game.entityType) && genderTeams !== (game.genderTeams ?? 'ANY')) ||
+    validRemovedPlayerIds.size > 0;
+
+  useLayoutEffect(() => {
+    onDirtyChange?.(isOpen && isDirty);
+  }, [isDirty, isOpen, onDirtyChange]);
+
+  useLayoutEffect(() => {
+    onSavingChange?.(isSaving);
+  }, [isSaving, onSavingChange]);
+
+  useEffect(
+    () => () => {
+      onDirtyChange?.(false);
+      onSavingChange?.(false);
+    },
+    [onDirtyChange, onSavingChange],
+  );
 
   const hasUnlimitedTournamentCapacity = Boolean(user?.isAdmin || user?.canCreateTournament);
   const userParticipantCap = user?.maxParticipantsInGame ?? 12;
@@ -378,7 +428,7 @@ export const EditMaxParticipantsModal = ({
       const response = await gamesApi.getById(game.id);
       onUpdate(response.data);
       toast.success(t('gameDetails.participantsUpdated', { defaultValue: 'Participants updated' }));
-      handleClose();
+      if (closeOnSave) handleClose();
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'errors.generic';
       toast.error(t(errorMessage, { defaultValue: errorMessage }));
@@ -401,6 +451,7 @@ export const EditMaxParticipantsModal = ({
     onUpdate,
     t,
     handleClose,
+    closeOnSave,
   ]);
 
   const handleMarkForRemoval = useCallback((userId: string) => {
@@ -463,14 +514,21 @@ export const EditMaxParticipantsModal = ({
 
   const modalOpen = isOpen && !confirmationModal.isOpen;
 
-  return (
-    <Dialog open={modalOpen} onClose={handleClose} modalId="edit-max-participants-modal">
-      <DialogContent>
+  const editorContent = (
+    <>
+      {presentation === 'dialog' ? (
         <DialogHeader>
           <DialogTitle>{t('gameDetails.editParticipants', { defaultValue: 'Edit Participants' })}</DialogTitle>
         </DialogHeader>
+      ) : null}
 
-        <div className="overflow-y-auto p-4 space-y-4">
+        <div
+          className={
+            presentation === 'embedded'
+              ? 'min-h-0 flex-1 space-y-4 overflow-y-auto pb-4'
+              : 'space-y-4 overflow-y-auto p-4'
+          }
+        >
           {game.entityType !== 'GAME' && (
           <div className="flex items-center gap-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
             <div className="flex items-center gap-2 flex-1">
@@ -503,6 +561,9 @@ export const EditMaxParticipantsModal = ({
                   {isEditingMaxParticipants ? (
                     <input
                       type="number"
+                      aria-label={t('gameDetails.newMaxParticipants', {
+                        defaultValue: 'New Max Participants',
+                      })}
                       min={8}
                       max={participantSliderMax}
                       value={tempMaxParticipants}
@@ -541,6 +602,10 @@ export const EditMaxParticipantsModal = ({
                     />
                   ) : (
                     <button
+                      type="button"
+                      aria-label={`${t('gameDetails.newMaxParticipants', {
+                        defaultValue: 'New Max Participants',
+                      })}: ${newMaxParticipants}`}
                       onClick={() => {
                         setTempMaxParticipants(newMaxParticipants.toString());
                         setIsEditingMaxParticipants(true);
@@ -559,6 +624,9 @@ export const EditMaxParticipantsModal = ({
                     max={participantSliderMax}
                     step={1}
                     value={newMaxParticipants}
+                    ariaLabelForHandle={t('gameDetails.newMaxParticipants', {
+                      defaultValue: 'New Max Participants',
+                    })}
                     onChange={(val) => {
                       if (typeof val === 'number') {
                         setNewMaxParticipants(val);
@@ -665,6 +733,10 @@ export const EditMaxParticipantsModal = ({
               value={levelRange}
               onChange={setLevelRange}
               step={0.1}
+              ariaLabels={[
+                t('createGame.minLevel', { defaultValue: 'Minimum Level' }),
+                t('createGame.maxLevel', { defaultValue: 'Maximum Level' }),
+              ]}
             />
           </div>
 
@@ -888,9 +960,16 @@ export const EditMaxParticipantsModal = ({
           )}
         </div>
 
-        <div className="p-4 border-t border-gray-200 dark:border-gray-800 flex-shrink-0">
+        <div
+          className={
+            presentation === 'embedded'
+              ? '-mx-4 flex-shrink-0 border-t border-gray-200 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] dark:border-gray-800'
+              : 'flex-shrink-0 border-t border-gray-200 p-4 dark:border-gray-800'
+          }
+        >
           <div className="flex gap-2">
             <Button
+              type="button"
               onClick={handleClose}
               variant="outline"
               className="flex-1"
@@ -899,9 +978,11 @@ export const EditMaxParticipantsModal = ({
               {t('common.cancel')}
             </Button>
             <Button
+              type="button"
               onClick={handleSave}
               className="flex-1"
-              disabled={!canSave || isSaving}
+              disabled={!canSave || !isDirty || isSaving}
+              aria-busy={isSaving}
             >
               {isSaving ? (
                 <div className="flex items-center justify-center gap-2">
@@ -943,8 +1024,17 @@ export const EditMaxParticipantsModal = ({
         onConfirm={handleKickAllNonCompliant}
         onClose={() => setConfirmationModal({ isOpen: false, type: 'NON_MALE', count: 0 })}
       />
-      </DialogContent>
+    </>
+  );
+
+  if (presentation === 'embedded') {
+    if (!isOpen) return null;
+    return <div className="flex min-h-0 flex-1 flex-col">{editorContent}</div>;
+  }
+
+  return (
+    <Dialog open={modalOpen} onClose={handleClose} modalId="edit-max-participants-modal">
+      <DialogContent>{editorContent}</DialogContent>
     </Dialog>
   );
 };
-

@@ -75,6 +75,57 @@ export async function getGameResults(gameId: string) {
         },
         orderBy: { position: 'asc' },
       },
+      leagueGroup: {
+        select: {
+          id: true,
+          name: true,
+          color: true,
+        },
+      },
+      leagueRound: {
+        select: {
+          id: true,
+          orderIndex: true,
+          roundType: true,
+          playoffFormat: true,
+          bracketScope: true,
+          entrantCount: true,
+          bracketSize: true,
+        },
+      },
+      bracketSlot: {
+        select: {
+          slotKind: true,
+          roundIndex: true,
+        },
+      },
+      parent: {
+        select: {
+          id: true,
+          leagueSeason: {
+            select: {
+              id: true,
+              leagueId: true,
+              sport: true,
+              league: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
+              game: {
+                select: {
+                  id: true,
+                  name: true,
+                  avatar: true,
+                  originalAvatar: true,
+                  sport: true,
+                },
+              },
+            },
+          },
+        },
+      },
     },
   });
 
@@ -1073,4 +1124,3 @@ export async function patchMatchMetadata(
 
   return { liveScoringCleared };
 }
-

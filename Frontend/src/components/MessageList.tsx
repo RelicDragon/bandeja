@@ -1,4 +1,4 @@
-import { useEffect, useMemo, forwardRef, memo, useCallback, useRef } from 'react';
+import { useEffect, useMemo, forwardRef, memo, useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MessageListRow } from './MessageList/MessageListRow';
 import { messageListPropsEqual } from './MessageList/messageListPropsEqual';
@@ -19,6 +19,11 @@ import {
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { getChatDateSeparatorLabel } from '@/utils/chatDateSeparator';
 import { getMessageGroupPosition } from '@/utils/chatMessageGrouping';
+import { FullscreenImageViewer } from '@/components/FullscreenImageViewer';
+import {
+  buildChatMediaGallery,
+  chatMediaGalleryItemId,
+} from '@/components/fullscreenImageViewer/chatMediaGallery';
 
 export type { MessageListHandle, MessageListProps };
 
@@ -62,6 +67,7 @@ const MessageListInner = forwardRef<MessageListHandle, MessageListProps>(functio
     onScrollTargetReached,
     threadSearchOutlineQuery = null,
     entityType,
+    chatMediaScope,
   },
   ref
 ) {
@@ -70,10 +76,34 @@ const MessageListInner = forwardRef<MessageListHandle, MessageListProps>(functio
   const pinnedSet = useMemo(() => new Set(pinnedMessageIds), [pinnedMessageIds]);
   const messagesRef = useRef(messages);
   messagesRef.current = messages;
+  const [fullscreenMediaId, setFullscreenMediaId] = useState<string | null>(null);
+  const chatMediaItems = useMemo(
+    () => (chatMediaScope ? buildChatMediaGallery(messages, chatMediaScope) : []),
+    [chatMediaScope, messages]
+  );
+  const chatMediaItemsRef = useRef(chatMediaItems);
+  chatMediaItemsRef.current = chatMediaItems;
+
+  const handleOpenChatMedia = useCallback((messageId: string, mediaIndex: number) => {
+    const itemId = chatMediaGalleryItemId(messageId, mediaIndex);
+    if (chatMediaItemsRef.current.some((item) => item.id === itemId)) {
+      setFullscreenMediaId(itemId);
+    }
+  }, []);
 
   useEffect(() => {
     resetMessageListContextMenu();
+    setFullscreenMediaId(null);
   }, [threadScrollKey]);
+
+  useEffect(() => {
+    if (
+      fullscreenMediaId &&
+      !chatMediaItems.some((item) => item.id === fullscreenMediaId)
+    ) {
+      setFullscreenMediaId(null);
+    }
+  }, [chatMediaItems, fullscreenMediaId]);
 
   const replyCountMap = useMemo(() => buildReplyCountMap(messages), [messages]);
 
@@ -101,6 +131,7 @@ const MessageListInner = forwardRef<MessageListHandle, MessageListProps>(functio
       onUnpin,
       showReply,
       onForwardMessage,
+      onOpenChatMedia: handleOpenChatMedia,
     }),
     [
       onAddReaction,
@@ -120,6 +151,7 @@ const MessageListInner = forwardRef<MessageListHandle, MessageListProps>(functio
       onUnpin,
       showReply,
       onForwardMessage,
+      handleOpenChatMedia,
     ]
   );
 
@@ -267,6 +299,23 @@ const MessageListInner = forwardRef<MessageListHandle, MessageListProps>(functio
         </ThreadScrollViewport>
         ) : null}
       {threadStatusLayer}
+      {fullscreenMediaId ? (
+        <FullscreenImageViewer
+          imageUrl={
+            chatMediaItems.find((item) => item.id === fullscreenMediaId)?.originalUrl ?? ''
+          }
+          mediaItems={chatMediaItems}
+          initialMediaId={fullscreenMediaId}
+          onActiveMediaChange={setFullscreenMediaId}
+          hasMoreItemsBefore={hasMoreMessages}
+          isLoadingMoreItems={isLoadingMore}
+          onRequestMoreItemsBefore={onLoadMore}
+          sourceItemCount={messages.length}
+          onClose={() => setFullscreenMediaId(null)}
+          isOpen
+          modalId="chat-fullscreen-media-viewer"
+        />
+      ) : null}
     </div>
   );
 });

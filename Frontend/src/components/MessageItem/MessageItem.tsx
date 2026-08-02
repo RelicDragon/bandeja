@@ -84,6 +84,7 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
   entityType,
   isThreadSearchOutline = false,
   threadSearchHighlightQuery = null,
+  onOpenChatMedia,
 }) {
   const { user } = useAuthStore();
   const navigate = useNavigate();
@@ -295,10 +296,20 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
       )
     );
 
-  const handleImageClick = (url: string) =>
+  const handleImageClick = (url: string, mediaIndex?: number) => {
+    if (mediaIndex != null && onOpenChatMedia) {
+      onOpenChatMedia(currentMessage.id, mediaIndex);
+      return;
+    }
     setFullscreenImage(url ? resolveChatMediaUrl(url) : null);
-  const handleVideoOpen = (videoUrl: string, posterUrl: string) =>
+  };
+  const handleVideoOpen = (videoUrl: string, posterUrl: string, mediaIndex?: number) => {
+    if (mediaIndex != null && onOpenChatMedia) {
+      onOpenChatMedia(currentMessage.id, mediaIndex);
+      return;
+    }
     setFullscreenVideo({ videoUrl, posterUrl });
+  };
 
   const handleCopyMessage = async (msg: ChatMessage) => {
     // 1. Copy text when present (system / voice transcription / plain text / caption).
@@ -739,6 +750,7 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
     </>
   );
 }, (prev, next) => {
+  if (prev.onOpenChatMedia !== next.onOpenChatMedia) return false;
   const menuEqual =
     (prev.contextMenuState.isOpen && prev.contextMenuState.messageId === prev.message.id) ===
     (next.contextMenuState.isOpen && next.contextMenuState.messageId === next.message.id);

@@ -11,6 +11,7 @@ import { parseGameSport } from '@/utils/gameSport';
 import { ParticipantsSectionHeader } from './ParticipantsSectionHeader';
 import { ParticipantsActionBar } from './ParticipantsActionBar';
 import { useAuthStore } from '@/store/authStore';
+import { entitySupportsParticipantSetup } from '@/components/gameFormat/gameFormatTeamsVisibility';
 
 interface GameParticipantsProps {
   game: Game;
@@ -105,7 +106,7 @@ export const GameParticipants = ({
   
   const hasUnoccupiedSlots = game.entityType === 'BAR' || !isFull;
   const canEditParticipantsSetup =
-    canViewSettings && game.entityType !== 'BAR' && !!onEditMaxParticipants;
+    canViewSettings && entitySupportsParticipantSetup(game.entityType) && !!onEditMaxParticipants;
   const playingCount = game.participants.filter((p) => p.status === 'PLAYING').length;
 
   return (

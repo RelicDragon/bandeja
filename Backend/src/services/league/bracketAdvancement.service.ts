@@ -287,7 +287,14 @@ export class BracketAdvancementService {
     `;
     const existingSlot = await tx.leagueBracketSlot.findUnique({
       where: { id: slotId },
-      select: { gameId: true },
+      select: {
+        gameId: true,
+        scheduledClubId: true,
+        scheduledCourtId: true,
+        scheduledStartTime: true,
+        scheduledEndTime: true,
+        scheduledClub: { select: { cityId: true } },
+      },
     });
     if (!existingSlot || existingSlot.gameId) return null;
 
@@ -295,6 +302,23 @@ export class BracketAdvancementService {
       this.rosterForParticipant(participantA, tx),
       this.rosterForParticipant(participantB, tx),
     ]);
+
+    const scheduleTemplate =
+      existingSlot.scheduledClubId &&
+      existingSlot.scheduledCourtId &&
+      existingSlot.scheduledStartTime &&
+      existingSlot.scheduledEndTime &&
+      existingSlot.scheduledClub
+        ? {
+            clubId: existingSlot.scheduledClubId,
+            courtId: existingSlot.scheduledCourtId,
+            cityId: existingSlot.scheduledClub.cityId,
+            startTime: existingSlot.scheduledStartTime,
+            endTime: existingSlot.scheduledEndTime,
+            timeIsSet: true,
+            gameCourts: [{ courtId: existingSlot.scheduledCourtId, order: 1 }],
+          }
+        : null;
 
     const game = await createLeagueGame({
       leagueRoundId,
@@ -305,6 +329,7 @@ export class BracketAdvancementService {
       leagueGroupId: leagueGroupId ?? undefined,
       affectsRating: false,
       gameSetup,
+      scheduleTemplate,
       db: tx,
     });
 

@@ -24,6 +24,10 @@ type UseFullscreenImageGesturesArgs = {
   contentRef: React.RefObject<HTMLElement | null>;
   onDismiss?: () => void;
   onDismissOffsetChange?: (offsetY: number) => void;
+  onZoomChange?: (zoomed: boolean) => void;
+  onHorizontalSwipeStart?: () => void;
+  onHorizontalSwipeMove?: (offsetX: number) => void;
+  onHorizontalSwipeEnd?: (offsetX: number, velocityX: number) => void;
 };
 
 export type FullscreenImageGestureApi = {
@@ -52,6 +56,10 @@ export function useFullscreenImageGestures({
   contentRef,
   onDismiss,
   onDismissOffsetChange,
+  onZoomChange,
+  onHorizontalSwipeStart,
+  onHorizontalSwipeMove,
+  onHorizontalSwipeEnd,
 }: UseFullscreenImageGesturesArgs): FullscreenImageGestureApi {
   const transformRef = useRef<ImageViewTransform>(
     copyImageViewTransform(IDENTITY_IMAGE_VIEW_TRANSFORM),
@@ -60,8 +68,17 @@ export function useFullscreenImageGestures({
   const gestureBusyRef = useRef(false);
   const onDismissRef = useRef(onDismiss);
   const onDismissOffsetChangeRef = useRef(onDismissOffsetChange);
+  const onZoomChangeRef = useRef(onZoomChange);
+  const onHorizontalSwipeStartRef = useRef(onHorizontalSwipeStart);
+  const onHorizontalSwipeMoveRef = useRef(onHorizontalSwipeMove);
+  const onHorizontalSwipeEndRef = useRef(onHorizontalSwipeEnd);
+  const zoomedRef = useRef(false);
   onDismissRef.current = onDismiss;
   onDismissOffsetChangeRef.current = onDismissOffsetChange;
+  onZoomChangeRef.current = onZoomChange;
+  onHorizontalSwipeStartRef.current = onHorizontalSwipeStart;
+  onHorizontalSwipeMoveRef.current = onHorizontalSwipeMove;
+  onHorizontalSwipeEndRef.current = onHorizontalSwipeEnd;
 
   const paint = useCallback(
     (next: ImageViewTransform, dismissY = 0) => {
@@ -73,6 +90,11 @@ export function useFullscreenImageGestures({
       el.style.transform = dismissY
         ? `${base} translate3d(0, ${dismissY}px, 0)`
         : base;
+      const zoomed = isImageViewZoomed(next);
+      if (zoomedRef.current !== zoomed) {
+        zoomedRef.current = zoomed;
+        onZoomChangeRef.current?.(zoomed);
+      }
     },
     [contentRef],
   );
@@ -148,7 +170,7 @@ export function useFullscreenImageGestures({
         last,
         canceled,
         movement: [mx, my],
-        velocity: [, vy],
+        velocity: [vx, vy],
         pinching,
         touches,
         cancel,
@@ -158,10 +180,18 @@ export function useFullscreenImageGestures({
       }) => {
         if (!enabled) return memo;
         if (canceled) {
+          const state = memo as { mode?: string } | undefined;
+          if (state?.mode === 'horizontal') {
+            onHorizontalSwipeEndRef.current?.(0, 0);
+          }
           endDragGesture();
           return memo;
         }
         if (pinching || touches > 1) {
+          const state = memo as { mode?: string } | undefined;
+          if (state?.mode === 'horizontal') {
+            onHorizontalSwipeEndRef.current?.(0, 0);
+          }
           endDragGesture();
           cancel();
           return memo;
@@ -174,10 +204,37 @@ export function useFullscreenImageGestures({
         if (!zoomed) {
           if (first) {
             gestureBusyRef.current = false;
-            return { mode: 'dismiss' as const };
+            return { mode: 'undecided' as const };
           }
-          const state = memo as { mode?: 'dismiss' | 'pan' } | undefined;
-          if (state?.mode !== 'dismiss') return memo;
+          const state = memo as {
+            mode?: 'undecided' | 'dismiss' | 'horizontal' | 'ignored';
+          } | undefined;
+          let mode = state?.mode ?? 'undecided';
+
+          if (mode === 'undecided' && (Math.abs(mx) > 8 || Math.abs(my) > 8)) {
+            if (Math.abs(mx) > Math.abs(my)) {
+              mode = 'horizontal';
+              gestureBusyRef.current = true;
+              onHorizontalSwipeStartRef.current?.();
+            } else if (my > 0) {
+              mode = 'dismiss';
+            } else {
+              mode = 'ignored';
+            }
+          }
+
+          if (mode === 'horizontal') {
+            gestureBusyRef.current = true;
+            if (event.cancelable) event.preventDefault();
+            onHorizontalSwipeMoveRef.current?.(mx);
+            if (last) {
+              gestureBusyRef.current = false;
+              onHorizontalSwipeEndRef.current?.(mx, vx);
+            }
+            return { mode };
+          }
+
+          if (mode !== 'dismiss') return { mode };
 
           if (my > 8 && Math.abs(my) > Math.abs(mx)) {
             gestureBusyRef.current = true;
@@ -196,7 +253,7 @@ export function useFullscreenImageGestures({
               endDragGesture();
             }
           }
-          return memo ?? { mode: 'dismiss' as const };
+          return { mode };
         }
 
         if (event.cancelable) event.preventDefault();

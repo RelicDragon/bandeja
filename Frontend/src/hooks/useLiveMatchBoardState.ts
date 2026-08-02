@@ -116,6 +116,7 @@ export function useLiveMatchBoardState(gameId: string, matchId: string, options?
   const [gameTitle, setGameTitle] = useState('');
   const [game, setGame] = useState<Game | null>(null);
   const [rawMatch, setRawMatch] = useState<RawMatch | null>(null);
+  const [matchRoundNumber, setMatchRoundNumber] = useState<number | null>(null);
   const [liveState, setLiveState] = useState<LiveScoringState | null>(null);
   const [revision, setRevision] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -156,6 +157,7 @@ export function useLiveMatchBoardState(gameId: string, matchId: string, options?
     if (spectatorToken && spectatorToken.length > 4096) {
       setError('Invalid spectator link');
       setRawMatch(null);
+      setMatchRoundNumber(null);
       setLiveState(null);
       setRevision(0);
       setLoading(false);
@@ -173,23 +175,30 @@ export function useLiveMatchBoardState(gameId: string, matchId: string, options?
       setGame(spectatorToken ? spectatorGame ?? null : ((gameRes?.data as Game | undefined) ?? null));
       setGameTitle(gamePayload?.name || (spectatorGame as { name?: string } | undefined)?.name || '');
 
-      const rounds = gr.data?.rounds as Array<{ matches?: RawMatch[] }> | undefined;
+      const rounds = gr.data?.rounds as Array<{ roundNumber?: number; matches?: RawMatch[] }> | undefined;
       let found: RawMatch | null = null;
-      for (const r of rounds || []) {
+      let foundRoundNumber: number | null = null;
+      for (const [roundIndex, r] of (rounds || []).entries()) {
         const m = r.matches?.find((x) => x.id === matchId);
         if (m) {
           found = m;
+          foundRoundNumber =
+            typeof r.roundNumber === 'number' && Number.isFinite(r.roundNumber)
+              ? r.roundNumber
+              : roundIndex + 1;
           break;
         }
       }
       if (!found) {
         setError('Match not found');
         setRawMatch(null);
+        setMatchRoundNumber(null);
         setLiveState(null);
         setRevision(0);
         return;
       }
       setRawMatch(found);
+      setMatchRoundNumber(foundRoundNumber);
       const matchMeta = found.metadata as Record<string, unknown> | undefined;
       const env = parseMatchLiveEnvelope(matchMeta?.liveScoring);
       const rulesSource = (spectatorToken ? spectatorGame : gameRes?.data) as Game | undefined;
@@ -202,6 +211,7 @@ export function useLiveMatchBoardState(gameId: string, matchId: string, options?
     } catch {
       setError('Failed to load');
       setRawMatch(null);
+      setMatchRoundNumber(null);
     } finally {
       setLoading(false);
     }
@@ -215,11 +225,16 @@ export function useLiveMatchBoardState(gameId: string, matchId: string, options?
       const gr = spectatorToken
         ? await resultsApi.getGameResultsForSpectator(gameId, spectatorToken)
         : await resultsApi.getGameResults(gameId);
-      const rounds = gr.data?.rounds as Array<{ matches?: RawMatch[] }> | undefined;
-      for (const r of rounds || []) {
+      const rounds = gr.data?.rounds as Array<{ roundNumber?: number; matches?: RawMatch[] }> | undefined;
+      for (const [roundIndex, r] of (rounds || []).entries()) {
         const m = r.matches?.find((x) => x.id === matchId);
         if (m) {
           setRawMatch(m);
+          setMatchRoundNumber(
+            typeof r.roundNumber === 'number' && Number.isFinite(r.roundNumber)
+              ? r.roundNumber
+              : roundIndex + 1,
+          );
           const matchMeta = m.metadata as Record<string, unknown> | undefined;
           const env = parseMatchLiveEnvelope(matchMeta?.liveScoring);
           if (env) {
@@ -318,6 +333,7 @@ export function useLiveMatchBoardState(gameId: string, matchId: string, options?
     game,
     gameTitle,
     rawMatch,
+    matchRoundNumber,
     liveState,
     setLiveState,
     revision,

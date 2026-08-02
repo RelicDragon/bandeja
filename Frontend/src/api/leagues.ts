@@ -125,6 +125,45 @@ export interface BracketSlotDto {
     };
   } | null;
   game?: Game | BracketSlotGameSummary | null;
+  schedule?: BracketSlotScheduleDto | null;
+}
+
+export interface BracketSlotScheduleDto {
+  clubId: string;
+  courtId: string;
+  startTime: string;
+  endTime: string;
+  club?: { id: string; name: string; cityId?: string } | null;
+  court?: { id: string; name: string; clubId: string } | null;
+}
+
+export interface BracketSlotScheduleInput {
+  leagueGroupId?: string | null;
+  slotKey: string;
+  clubId: string;
+  courtId: string;
+  startTime: string;
+  endTime: string;
+}
+
+export interface BracketPreviewSlotDto {
+  slotKey: string;
+  slotKind: BracketSlotKind;
+  phaseIndex: number;
+  roundIndex: number;
+  matchIndex: number;
+  roundLabel: string;
+  feederSlotAKey?: string | null;
+  feederSlotBKey?: string | null;
+}
+
+export interface BracketPlayoffPreviewResponse {
+  groups: Array<{
+    leagueGroupId: string | null;
+    entrantCount: number;
+    bracketSize: number;
+    slots: BracketPreviewSlotDto[];
+  }>;
 }
 
 export interface BracketPlayoffGroupDto {
@@ -168,6 +207,7 @@ export interface CreateBracketPlayoffPerGroupRequest {
   groups: CreateBracketPlayoffGroupEntry[];
   gameSetup?: GameSetupParams;
   resultsRoundGenV2?: boolean;
+  schedules?: BracketSlotScheduleInput[];
 }
 
 export interface TeamsPerGroupEntryDto {
@@ -193,6 +233,7 @@ export interface CreateBracketPlayoffCrossGroupRequest {
   };
   gameSetup?: GameSetupParams;
   resultsRoundGenV2?: boolean;
+  schedules?: BracketSlotScheduleInput[];
 }
 
 export type CreateBracketPlayoffRequest =
@@ -543,6 +584,17 @@ export const leaguesApi = {
     );
     return response.data;
   },
+
+  previewBracketPlayoff: async (
+    leagueSeasonId: string,
+    payload: CreateBracketPlayoffRequest
+  ) => {
+    const response = await api.post<ApiResponse<BracketPlayoffPreviewResponse>>(
+      `/leagues/${leagueSeasonId}/playoff/bracket/preview`,
+      payload
+    );
+    return response.data;
+  },
   getBracketPlayoff: async (
     leagueSeasonId: string,
     params?: { roundId?: string; leagueGroupId?: string }
@@ -585,4 +637,3 @@ export const leaguesApi = {
     return response.data;
   },
 };
-

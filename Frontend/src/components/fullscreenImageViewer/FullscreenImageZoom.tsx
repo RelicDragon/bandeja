@@ -14,10 +14,17 @@ export type FullscreenImageZoomHandle = {
 
 type FullscreenImageZoomProps = {
   src: string;
+  alt?: string;
   active: boolean;
   onTap?: () => void;
   onDismiss?: () => void;
   onDismissOffsetChange?: (offsetY: number) => void;
+  onZoomChange?: (zoomed: boolean) => void;
+  onHorizontalSwipeStart?: () => void;
+  onHorizontalSwipeMove?: (offsetX: number) => void;
+  onHorizontalSwipeEnd?: (offsetX: number, velocityX: number) => void;
+  onLoad?: () => void;
+  onError?: () => void;
 };
 
 const TAP_MOVE_THRESHOLD_PX = 12;
@@ -25,7 +32,20 @@ const DOUBLE_TAP_MS = 280;
 
 export const FullscreenImageZoom = forwardRef<FullscreenImageZoomHandle, FullscreenImageZoomProps>(
   function FullscreenImageZoom(
-    { src, active, onTap, onDismiss, onDismissOffsetChange },
+    {
+      src,
+      alt = '',
+      active,
+      onTap,
+      onDismiss,
+      onDismissOffsetChange,
+      onZoomChange,
+      onHorizontalSwipeStart,
+      onHorizontalSwipeMove,
+      onHorizontalSwipeEnd,
+      onLoad,
+      onError,
+    },
     ref,
   ) {
     const containerRef = useRef<HTMLDivElement>(null);
@@ -44,6 +64,10 @@ export const FullscreenImageZoom = forwardRef<FullscreenImageZoomHandle, Fullscr
         contentRef,
         onDismiss,
         onDismissOffsetChange,
+        onZoomChange,
+        onHorizontalSwipeStart,
+        onHorizontalSwipeMove,
+        onHorizontalSwipeEnd,
       });
 
     useImperativeHandle(
@@ -180,10 +204,13 @@ export const FullscreenImageZoom = forwardRef<FullscreenImageZoomHandle, Fullscr
         >
           <img
             src={src}
-            alt=""
+            alt={alt}
             draggable={false}
             decoding="async"
             fetchPriority="high"
+            data-fullscreen-current-image=""
+            onLoad={onLoad}
+            onError={onError}
             className="max-h-full max-w-full object-contain pointer-events-none"
           />
         </div>

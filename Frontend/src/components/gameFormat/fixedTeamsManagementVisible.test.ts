@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  entitySupportsParticipantSetup,
   entitySupportsPlayersPerMatchControls,
   fixedTeamsManagementVisible,
   gameFormatFixedTeamsToggleVisible,
@@ -26,6 +27,19 @@ describe('entitySupportsPlayersPerMatchControls', () => {
   it('excludes TRAINING and BAR', () => {
     expect(entitySupportsPlayersPerMatchControls('TRAINING')).toBe(false);
     expect(entitySupportsPlayersPerMatchControls('BAR')).toBe(false);
+  });
+});
+
+describe('entitySupportsParticipantSetup', () => {
+  it.each(['GAME', 'TRAINING', 'TOURNAMENT', 'LEAGUE', 'LEAGUE_SEASON'] as const)(
+    'supports %s participant setup',
+    (entityType) => {
+      expect(entitySupportsParticipantSetup(entityType)).toBe(true);
+    },
+  );
+
+  it('excludes open BAR lobbies', () => {
+    expect(entitySupportsParticipantSetup('BAR')).toBe(false);
   });
 });
 

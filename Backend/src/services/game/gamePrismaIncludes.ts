@@ -157,6 +157,8 @@ export const gameBaseInclude = {
       roundType: true,
       playoffFormat: true,
       bracketScope: true,
+      entrantCount: true,
+      bracketSize: true,
     },
   },
   bracketSlot: {

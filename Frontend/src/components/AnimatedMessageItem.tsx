@@ -44,6 +44,7 @@ interface AnimatedMessageItemProps {
   entityType?: string | null;
   isThreadSearchOutline?: boolean;
   threadSearchHighlightQuery?: string | null;
+  onOpenChatMedia?: (messageId: string, mediaIndex: number) => void;
 }
 
 export const AnimatedMessageItem: React.FC<AnimatedMessageItemProps> = memo(function AnimatedMessageItem({
@@ -77,6 +78,7 @@ export const AnimatedMessageItem: React.FC<AnimatedMessageItemProps> = memo(func
   entityType,
   isThreadSearchOutline = false,
   threadSearchHighlightQuery = null,
+  onOpenChatMedia,
 }) {
   const { skipStaggerOnOpen, suppressOpenReactionMotion } = useLayoutSettlingForRow();
   const contextMenuState = useRowContextMenuState(message.id);
@@ -124,6 +126,7 @@ export const AnimatedMessageItem: React.FC<AnimatedMessageItemProps> = memo(func
         entityType={entityType}
         isThreadSearchOutline={isThreadSearchOutline}
         threadSearchHighlightQuery={threadSearchHighlightQuery}
+        onOpenChatMedia={onOpenChatMedia}
       />
     </MessageRowEnterMotion>
   );
@@ -134,6 +137,7 @@ export const AnimatedMessageItem: React.FC<AnimatedMessageItemProps> = memo(func
   prev.fadeDateSeparator === next.fadeDateSeparator &&
   prev.isThreadSearchOutline === next.isThreadSearchOutline &&
   prev.threadSearchHighlightQuery === next.threadSearchHighlightQuery &&
+  prev.onOpenChatMedia === next.onOpenChatMedia &&
   messageRowPropsEqual(
     {
       message: prev.message,

@@ -242,6 +242,27 @@ export function LeagueBracketSlotCard({
           </>
         )}
       </button>
+      {slot.schedule ? (
+        <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 border-t border-gray-100 pt-1.5 text-[10px] font-medium text-gray-600 dark:border-gray-800 dark:text-gray-300">
+          <span>
+            {new Intl.DateTimeFormat(undefined, {
+              month: 'short',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+            }).format(new Date(slot.schedule.startTime))}
+          </span>
+          <span>
+            {slot.schedule.club?.name ?? t('gameDetails.bracketPlannedVenue', { defaultValue: 'Venue TBD' })}
+            {slot.schedule.court?.name ? ` · ${slot.schedule.court.name}` : ''}
+          </span>
+          {!fullGame ? (
+            <span className="rounded-full bg-indigo-50 px-1.5 py-0.5 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-200">
+              {t('gameDetails.bracketTeamsPending', { defaultValue: 'Teams pending' })}
+            </span>
+          ) : null}
+        </div>
+      ) : null}
       {canWalkover && (
         <div className="bracket-export-hide mt-1.5 border-t border-gray-100 pt-1.5 dark:border-gray-800">
           {!walkoverOpen ? (

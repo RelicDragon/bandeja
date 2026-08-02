@@ -53,6 +53,10 @@ export function YourLeaguesHomeLeagueGameRow({
   const clubName = game.court?.club?.name || game.club?.name;
   const groupName = game.leagueGroup?.name;
   const roundIndex = game.leagueRound?.orderIndex;
+  const displayedRoundIndex =
+    game.leagueRound?.roundType === 'PLAYOFF'
+      ? null
+      : (roundIndex ?? null);
   const matchup = getLeagueHomeGameMatchup(game, user?.id);
   const bracketCtx = getLeagueHomeBracketRowContext(game);
 
@@ -116,17 +120,17 @@ export function YourLeaguesHomeLeagueGameRow({
                 {t('home.leagueGameBracketKnockoutUrgency', { defaultValue: 'Knockout match' })}
               </span>
             )}
-            {typeof (bracketCtx?.roundIndex ?? roundIndex) === 'number' && (
+            {typeof displayedRoundIndex === 'number' && (
               <span>
                 {t('league.roundShort', {
-                  index: (bracketCtx?.roundIndex ?? roundIndex)! + 1,
-                  defaultValue: `R${(bracketCtx?.roundIndex ?? roundIndex)! + 1}`,
+                  index: displayedRoundIndex + 1,
+                  defaultValue: `R${displayedRoundIndex + 1}`,
                 })}
               </span>
             )}
             {(bracketCtx?.groupName ?? groupName) && (
               <>
-                {typeof (bracketCtx?.roundIndex ?? roundIndex) === 'number' ? (
+                {typeof displayedRoundIndex === 'number' ? (
                   <span aria-hidden>·</span>
                 ) : null}
                 <span className="truncate">{bracketCtx?.groupName ?? groupName}</span>

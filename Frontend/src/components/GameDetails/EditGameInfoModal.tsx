@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { addHours, format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
-import { Save, Edit3, CalendarClock, Banknote, Loader2, Settings } from 'lucide-react';
+import { Save, Edit3, CalendarClock, Banknote, Loader2, Settings, Users } from 'lucide-react';
 import { Game, Club, Court, PriceType, PriceCurrency } from '@/types';
 import type { BookingSnapshotInput } from '@shared/gameBooking/contracts';
 import { gamesApi, courtsApi, mediaApi } from '@/api';
@@ -61,7 +61,9 @@ import {
 import { WeatherPreviewCard } from '@/components/weather/WeatherPreviewCard';
 import { ClubPoliciesBlock } from '@/components/createGame/ClubPoliciesBlock';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
-export type EditGameInfoTabId = 'general' | 'locationTime' | 'price' | 'settings';
+import { EditMaxParticipantsModal } from '@/components/EditMaxParticipantsModal';
+import { entitySupportsParticipantSetup } from '@/components/gameFormat/gameFormatTeamsVisibility';
+export type EditGameInfoTabId = 'general' | 'locationTime' | 'price' | 'participants' | 'settings';
 export type EditGameInfoInitialTabId = EditGameInfoTabId | 'where' | 'when';
 
 interface EditGameInfoModalProps {
@@ -81,6 +83,7 @@ const TABS = [
   { id: 'general' as const, icon: Edit3 },
   { id: 'locationTime' as const, icon: CalendarClock },
   { id: 'price' as const, icon: Banknote },
+  { id: 'participants' as const, icon: Users },
   { id: 'settings' as const, icon: Settings },
 ];
 
@@ -125,6 +128,8 @@ export const EditGameInfoModal = ({
   const user = useAuthStore((s) => s.user);
   const userCurrency = resolveUserCurrency(user?.defaultCurrency);
   const displaySettings = useMemo(() => resolveDisplaySettings(user), [user]);
+  const canEditParticipants =
+    canEditSettings && Boolean(onGameUpdate) && entitySupportsParticipantSetup(game.entityType);
 
   const initialTab: EditGameInfoTabId =
     initialTabProp === 'where' || initialTabProp === 'when' ? 'locationTime' : initialTabProp;
@@ -164,6 +169,8 @@ export const EditGameInfoModal = ({
     [game.gameCourts, game.courtId],
   );
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
+  const [participantsDirty, setParticipantsDirty] = useState(false);
+  const [participantsSaving, setParticipantsSaving] = useState(false);
   const firstLocationDraftRef = useRef<EditLocationTimeDraft | null>(null);
   const hasLocationTimeDraft = locationTimeDraft != null;
   const pendingUnlinkIds = useMemo(
@@ -218,9 +225,13 @@ export const EditGameInfoModal = ({
   openInitRef.current = { initialTab, game, userCurrency, courts, whenInitialValues };
 
   const segmentedTabs = useMemo(() => {
-    const tabs = canEditSettings && onGameUpdate ? TABS : TABS.filter((tab) => tab.id !== 'settings');
+    const tabs = TABS.filter((tab) => {
+      if (tab.id === 'settings') return canEditSettings && Boolean(onGameUpdate);
+      if (tab.id === 'participants') return canEditParticipants;
+      return true;
+    });
     return tabs.map((tab) => ({ id: tab.id, label: t(`gameDetails.editTab.${tab.id}`), icon: tab.icon }));
-  }, [canEditSettings, onGameUpdate, t]);
+  }, [canEditParticipants, canEditSettings, onGameUpdate, t]);
 
   const handleSettingsGameUpdate = useCallback(
     (updated: Game) => {
@@ -230,10 +241,13 @@ export const EditGameInfoModal = ({
   );
 
   useEffect(() => {
-    if (activeTab === 'settings' && (!canEditSettings || !onGameUpdate)) {
+    const activeTabUnavailable =
+      (activeTab === 'settings' && (!canEditSettings || !onGameUpdate)) ||
+      (activeTab === 'participants' && !canEditParticipants);
+    if (activeTabUnavailable) {
       setActiveTab('general');
     }
-  }, [activeTab, canEditSettings, onGameUpdate]);
+  }, [activeTab, canEditParticipants, canEditSettings, onGameUpdate]);
 
   const {
     selectedDate: hookDate,
@@ -265,7 +279,10 @@ export const EditGameInfoModal = ({
         whenInitialValues: when,
       } = openInitRef.current;
       const resolvedTab =
-        tab === 'settings' && (!canEditSettings || !onGameUpdate) ? 'general' : tab;
+        (tab === 'settings' && (!canEditSettings || !onGameUpdate)) ||
+        (tab === 'participants' && !canEditParticipants)
+          ? 'general'
+          : tab;
       setActiveTab(resolvedTab);
       setGeneral(getInitialGeneralState(openGame));
       setWhere(getInitialWhereState(openGame));
@@ -291,10 +308,12 @@ export const EditGameInfoModal = ({
       setShowDiscardConfirm(false);
       setConfirmModalOpen(false);
       setShowConfirmUnlinkSave(false);
+      setParticipantsDirty(false);
+      setParticipantsSaving(false);
       setTimeout(() => setDisableWhenAutoAdjust(false), 200);
     }
     prevIsOpenRef.current = isOpen;
-  }, [isOpen, canEditSettings, onGameUpdate, setHookDate, setHookTime, setHookDuration]);
+  }, [isOpen, canEditParticipants, canEditSettings, onGameUpdate, setHookDate, setHookTime, setHookDuration]);
 
   useEffect(() => {
     if (!disableWhenAutoAdjust) {
@@ -573,16 +592,17 @@ export const EditGameInfoModal = ({
       locationTimeDraft.overrideStartTime !== firstDraft.overrideStartTime ||
       locationTimeDraft.overrideEndTime !== firstDraft.overrideEndTime ||
       locationTimeDraft.selectedBookingIds.join(',') !== firstDraft.selectedBookingIds.join(','));
-  const isDirty = generalDirty || priceDirty || scheduleDirty || locationDraftDirty;
+  const isDirty =
+    generalDirty || priceDirty || scheduleDirty || locationDraftDirty || participantsDirty;
 
   const handleRequestClose = useCallback(() => {
-    if (isSaving) return;
+    if (isSaving || participantsSaving) return;
     if (isDirty) {
       setShowDiscardConfirm(true);
       return;
     }
     onClose();
-  }, [isSaving, isDirty, onClose]);
+  }, [isSaving, participantsSaving, isDirty, onClose]);
 
   useBackButtonModal(isOpen, handleRequestClose, 'edit-game-info-modal');
 
@@ -657,6 +677,11 @@ export const EditGameInfoModal = ({
 
   const handleSave = async () => {
     if (!game.id) return;
+    if (participantsDirty) {
+      setActiveTab('participants');
+      toast(t('gameDetails.editModal.saveParticipantsFirst'));
+      return;
+    }
     if (!validatePrice()) {
       toast.error(t('createGame.priceRequired', { defaultValue: 'Price must be greater than 0 for this price type' }));
       return;
@@ -892,13 +917,15 @@ export const EditGameInfoModal = ({
             showOnlyActiveTabText={true}
             activeLabelMaxWidth={200}
             layoutId="edit-game-info-tabs"
-            disabled={isSaving}
+            disabled={isSaving || participantsSaving}
           />
         </div>
         <div
           ref={contentScrollRef}
           className={`min-h-0 flex-1 px-4 py-3 ${
-            activeTab === 'general' ? 'flex flex-col overflow-hidden' : 'overflow-y-auto'
+            activeTab === 'general' || activeTab === 'participants'
+              ? 'flex flex-col overflow-hidden'
+              : 'overflow-y-auto'
           }`}
         >
           {activeTab === 'general' && (
@@ -1002,6 +1029,29 @@ export const EditGameInfoModal = ({
           {activeTab === 'price' && (
             <PriceTab state={price} onChange={(patch) => setPrice((s) => ({ ...s, ...patch }))} />
           )}
+          {canEditParticipants ? (
+            <div
+              className={
+                activeTab === 'participants'
+                  ? 'flex min-h-0 flex-1 flex-col'
+                  : 'hidden'
+              }
+            >
+              <EditMaxParticipantsModal
+                isOpen={isOpen}
+                game={game}
+                presentation="embedded"
+                closeOnSave={false}
+                onClose={handleRequestClose}
+                onUpdate={handleSettingsGameUpdate}
+                onKickUser={async (userId) => {
+                  await gamesApi.kickUser(game.id, userId);
+                }}
+                onDirtyChange={setParticipantsDirty}
+                onSavingChange={setParticipantsSaving}
+              />
+            </div>
+          ) : null}
           {activeTab === 'settings' && onGameUpdate && canEditSettings && (
             <GameSettings
               game={game}
@@ -1011,7 +1061,7 @@ export const EditGameInfoModal = ({
             />
           )}
         </div>
-        {activeTab !== 'settings' ? (
+        {activeTab !== 'settings' && activeTab !== 'participants' ? (
         <div className="mt-auto flex shrink-0 items-center gap-3 border-t border-gray-200 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] dark:border-gray-800">
           <span
             aria-live="polite"
@@ -1046,7 +1096,7 @@ export const EditGameInfoModal = ({
             {isSaving ? t('common.saving') : t('common.save')}
           </button>
         </div>
-        ) : (
+        ) : activeTab === 'settings' ? (
           <div className="mt-auto flex shrink-0 items-center gap-3 border-t border-gray-200 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] dark:border-gray-800">
             <span className="flex-1 min-w-0 text-xs text-gray-500 dark:text-gray-400">
               {t('gameDetails.editModal.autoSaveNote')}
@@ -1059,7 +1109,7 @@ export const EditGameInfoModal = ({
               {t('common.close')}
             </button>
           </div>
-        )}
+        ) : null}
       </DrawerContent>
     </Drawer>
 

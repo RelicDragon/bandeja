@@ -53,6 +53,8 @@ export const GameChatMessagesPane: React.FC = () => {
     panels,
     autoTranslateLanguageCodes,
     currentChatType,
+    effectiveChatType,
+    id,
     game,
     scrollTargetMessageId,
     handleScrollTargetReached,
@@ -80,6 +82,13 @@ export const GameChatMessagesPane: React.FC = () => {
   const exitX = -slideDirection * CHAT_PANE_SLIDE_OFFSET;
 
   const pinnedBarIds = useMemo(() => pinnedMessages.map((m) => m.id), [pinnedMessages]);
+  const chatMediaScope = useMemo(
+    () =>
+      id
+        ? { contextType, contextId: id, chatType: effectiveChatType }
+        : undefined,
+    [contextType, effectiveChatType, id]
+  );
   const scrollTargetSessionActive = loadingScrollTargetId != null;
   const panelOverlayActive =
     panels.showParticipantsPage ||
@@ -130,6 +139,7 @@ export const GameChatMessagesPane: React.FC = () => {
       onScrollTargetReached={handleScrollTargetReached}
       threadSearchOutlineQuery={threadSearchOutlineQuery}
       entityType={contextType === 'GAME' ? game?.entityType : undefined}
+      chatMediaScope={chatMediaScope}
     />
   );
 

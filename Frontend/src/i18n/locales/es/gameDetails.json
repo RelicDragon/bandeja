@@ -24,12 +24,14 @@
       "where": "Dónde",
       "locationTime": "Ubicación y horario",
       "price": "Precio",
+      "participants": "Participantes",
       "settings": "Ajustes",
       "eraseTime": "Quitar hora"
     },
     "editModal": {
       "title": "Editar detalles",
       "unsavedChanges": "Cambios sin guardar",
+      "saveParticipantsFirst": "Guarda los cambios de participantes antes de guardar los demás detalles.",
       "autoSaveNote": "Los cambios aquí se guardan automáticamente",
       "discardTitle": "¿Descartar cambios?",
       "discardMessage": "Tienes cambios sin guardar que se perderán si cierras ahora.",

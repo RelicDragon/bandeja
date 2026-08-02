@@ -1,5 +1,7 @@
 {
   "media": {
+    "viewerTitle": "Visor multimedia",
+    "fullscreenItemLabel": "Elemento multimedia {{current}} de {{total}}",
     "resetView": "Restablecer Vista",
     "download": "Descargar",
     "copyImage": "Copiar imagen",

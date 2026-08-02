@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FileText, Download, Loader2 } from 'lucide-react';
+import { FileText, Download, Loader2, Maximize2 } from 'lucide-react';
 import type { ChatMessage } from '@/api/chat';
 import { resolveChatMediaUrl } from '@/components/audio/audioWaveformUtils';
 import { Filesystem, Directory } from '@capacitor/filesystem';
@@ -43,6 +43,7 @@ type Props = {
   isOwnMessage: boolean;
   isChannel?: boolean;
   isSending?: boolean;
+  onOpenPreview?: () => void;
 };
 
 export const ChatDocumentBubble: React.FC<Props> = ({
@@ -50,6 +51,7 @@ export const ChatDocumentBubble: React.FC<Props> = ({
   isOwnMessage,
   isChannel,
   isSending = false,
+  onOpenPreview,
 }) => {
   const { t } = useTranslation();
   const [busy, setBusy] = useState(false);
@@ -62,6 +64,10 @@ export const ChatDocumentBubble: React.FC<Props> = ({
   const onLight = isChannel || !isOwnMessage;
 
   const handleOpen = async () => {
+    if (onOpenPreview && !isSending) {
+      onOpenPreview();
+      return;
+    }
     if (!canOpen || !url) return;
     setBusy(true);
     try {
@@ -98,7 +104,7 @@ export const ChatDocumentBubble: React.FC<Props> = ({
     <button
       type="button"
       onClick={() => void handleOpen()}
-      disabled={!canOpen}
+      disabled={!onOpenPreview && !canOpen}
       className={`flex w-full max-w-[280px] items-center gap-3 px-3 py-2.5 text-left transition-colors ${
         onLight
           ? 'hover:bg-black/5 dark:hover:bg-white/5'
@@ -128,10 +134,19 @@ export const ChatDocumentBubble: React.FC<Props> = ({
           </span>
         ) : null}
       </span>
-      <Download
-        size={18}
-        className={`flex-shrink-0 ${onLight ? 'text-gray-400 dark:text-gray-500' : 'text-blue-100'}`}
-      />
+      {onOpenPreview ? (
+        <Maximize2
+          size={18}
+          aria-hidden="true"
+          className={`flex-shrink-0 ${onLight ? 'text-gray-400 dark:text-gray-500' : 'text-blue-100'}`}
+        />
+      ) : (
+        <Download
+          size={18}
+          aria-hidden="true"
+          className={`flex-shrink-0 ${onLight ? 'text-gray-400 dark:text-gray-500' : 'text-blue-100'}`}
+        />
+      )}
     </button>
   );
 };

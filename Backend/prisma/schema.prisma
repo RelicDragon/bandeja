@@ -341,6 +341,7 @@ model Club {
   favoritedBy             UserFavoriteClub[]
   leagues                 League[]
   clubReviews             ClubReview[]
+  scheduledBracketSlots   LeagueBracketSlot[]        @relation("BracketScheduledClub")
   clubAdmins              ClubAdmin[]
   courtSlotHolds          CourtSlotHold[]
   adSponsors              AdSponsor[]
@@ -546,6 +547,7 @@ model Court {
   padelooBusySnapshots   ClubPadelooBusySnapshot[]
   klikterenBusySnapshots ClubKlikterenBusySnapshot[]
   gameExternalBookings   GameExternalBooking[]
+  scheduledBracketSlots  LeagueBracketSlot[]         @relation("BracketScheduledCourt")
 
   @@index([clubId])
   @@index([isActive])
@@ -2778,12 +2780,18 @@ model LeagueBracketSlot {
   feederSlotAId       String?
   feederSlotBId       String?
   seedRank            Int?
+  scheduledClubId     String?
+  scheduledCourtId    String?
+  scheduledStartTime  DateTime?
+  scheduledEndTime    DateTime?
   createdAt           DateTime            @default(now())
   updatedAt           DateTime            @updatedAt
   leagueRound         LeagueRound         @relation(fields: [leagueRoundId], references: [id], onDelete: Cascade)
   leagueGroup         LeagueGroup?        @relation(fields: [leagueGroupId], references: [id], onDelete: Cascade)
   leagueParticipant   LeagueParticipant?  @relation(fields: [leagueParticipantId], references: [id], onDelete: SetNull)
   game                Game?               @relation("BracketSlotGame", fields: [gameId], references: [id], onDelete: SetNull)
+  scheduledClub       Club?               @relation("BracketScheduledClub", fields: [scheduledClubId], references: [id], onDelete: SetNull)
+  scheduledCourt      Court?              @relation("BracketScheduledCourt", fields: [scheduledCourtId], references: [id], onDelete: SetNull)
   winnerSlot          LeagueBracketSlot?  @relation("BracketWinnerFeed", fields: [winnerSlotId], references: [id], onDelete: SetNull)
   slotsFedByWinner    LeagueBracketSlot[] @relation("BracketWinnerFeed")
   feederSlotA         LeagueBracketSlot?  @relation("BracketFeederA", fields: [feederSlotAId], references: [id], onDelete: SetNull)
@@ -2795,6 +2803,8 @@ model LeagueBracketSlot {
   @@index([leagueRoundId])
   @@index([leagueGroupId])
   @@index([gameId])
+  @@index([scheduledClubId])
+  @@index([scheduledCourtId, scheduledStartTime])
 }
 
 enum LeagueParticipantType {

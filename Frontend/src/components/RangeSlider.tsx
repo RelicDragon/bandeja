@@ -6,6 +6,7 @@ interface RangeSliderProps {
   onChange: (value: [number, number]) => void;
   step?: number;
   compact?: boolean;
+  ariaLabels?: [string, string];
 }
 
 export const RangeSlider = ({
@@ -15,6 +16,7 @@ export const RangeSlider = ({
   onChange,
   step = 0.1,
   compact = false,
+  ariaLabels,
 }: RangeSliderProps) => {
   const trackH = compact ? 4 : 6;
   const handleSize = compact ? 14 : 20;
@@ -60,6 +62,7 @@ export const RangeSlider = ({
           max={max}
           step={step}
           value={value}
+          ariaLabelForHandle={ariaLabels}
           onChange={(val) => {
             if (Array.isArray(val) && val.length === 2) {
               onChange([val[0], val[1]]);

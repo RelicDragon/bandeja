@@ -192,7 +192,15 @@ function buildScheduleListRows(
       ? translateBracketRoundLabel(entry.roundLabel, translate)
       : entry.kind === 'PLAY_IN'
         ? translate('gameDetails.bracketColumnPlayIn')
-        : translate('gameDetails.bracketColumnMainRound', { round: entry.roundIndex + 1 }),
+        : entry.kind === 'THIRD_PLACE'
+          ? translate('gameDetails.bracketColumnThirdPlace')
+          : entry.kind === 'GRAND_FINAL'
+            ? translate('gameDetails.bracketTabGrandFinal')
+            : entry.kind === 'LOSERS'
+              ? translate('gameDetails.bracketTabLosers')
+              : entry.kind === 'CONSOLATION'
+                ? translate('gameDetails.bracketTabConsolation')
+                : translate('gameDetails.bracketColumnMainRound', { round: entry.roundIndex + 1 }),
   }));
 }
 

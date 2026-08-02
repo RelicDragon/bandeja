@@ -4,6 +4,7 @@ import { Card, SegmentedSwitch } from '@/components';
 import type { BracketPlayoffGroupDto } from '@/api/leagues';
 import type { Game } from '@/types';
 import { LeagueGameCard } from './LeagueGameCard';
+import { LeagueBracketSlotCard } from './LeagueBracketSlotCard';
 import { buildBracketViewModel, type BracketListFilter } from '@/features/leagueBracket';
 import { useLeagueGameResultsMap } from '@/hooks/useLeagueGameResultsMap';
 
@@ -68,14 +69,14 @@ export function LeagueBracketListPanel({
   }, [showPhaseFilters, group?.leagueGroupId]);
 
   const scheduleGames = useMemo(
-    () => vm.scheduleListRows.map((entry) => entry.game),
+    () => vm.scheduleListRows.flatMap((entry) => entry.game ? [entry.game] : []),
     [vm.scheduleListRows]
   );
   const gameResultsMap = useLeagueGameResultsMap(scheduleGames);
 
   const filtered = useMemo(() => {
     if (filter === 'PLAY_IN') return vm.scheduleListRows.filter((g) => g.kind === 'PLAY_IN');
-    if (filter === 'KNOCKOUT') return vm.scheduleListRows.filter((g) => g.kind === 'MAIN');
+    if (filter === 'KNOCKOUT') return vm.scheduleListRows.filter((g) => g.kind !== 'PLAY_IN');
     return vm.scheduleListRows;
   }, [vm.scheduleListRows, filter]);
 
@@ -168,18 +169,33 @@ export function LeagueBracketListPanel({
         </p>
       ) : (
         <div className="space-y-3">
-          {filtered.map(({ game, roundBadge }) => (
-            <LeagueGameCard
-              key={game.id}
-              game={game}
-              onOpen={onOpenGame ? () => onOpenGame(game) : undefined}
-              onEdit={onEditGame ? () => onEditGame(game) : undefined}
-              showGroupTag={false}
-              allRounds={gameResultsMap.get(game.id) ?? null}
-              bracketRoundBadge={roundBadge}
-              seasonPlayoffBadge={crossGroupBracket}
-            />
-          ))}
+          {filtered.map((entry) => {
+            if (entry.entryType === 'GAME') {
+              const { game, roundBadge } = entry;
+              return (
+                <LeagueGameCard
+                  key={game.id}
+                  game={game}
+                  onOpen={onOpenGame ? () => onOpenGame(game) : undefined}
+                  onEdit={onEditGame ? () => onEditGame(game) : undefined}
+                  showGroupTag={false}
+                  allRounds={gameResultsMap.get(game.id) ?? null}
+                  bracketRoundBadge={roundBadge}
+                  seasonPlayoffBadge={crossGroupBracket}
+                />
+              );
+            }
+            const cardView = vm.slotCardViews.get(entry.slot.id);
+            if (!cardView) return null;
+            return (
+              <LeagueBracketSlotCard
+                key={entry.slot.id}
+                slot={entry.slot}
+                cardView={cardView}
+                compact
+              />
+            );
+          })}
         </div>
       )}
     </div>

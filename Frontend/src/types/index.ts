@@ -687,6 +687,8 @@ export interface Game {
     roundType?: 'REGULAR' | 'PLAYOFF';
     playoffFormat?: 'BRACKET' | 'WINNERS_COURT' | 'AMERICANO' | null;
     bracketScope?: 'PER_GROUP' | 'CROSS_GROUP' | null;
+    entrantCount?: number | null;
+    bracketSize?: number | null;
   } | null;
   bracketSlot?: {
     slotKind?: 'PLAY_IN' | 'BYE' | 'MAIN' | 'THIRD_PLACE' | 'CONSOLATION' | 'LOSERS' | 'GRAND_FINAL';

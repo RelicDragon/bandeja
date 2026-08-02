@@ -42,7 +42,6 @@ import { fixedTeamsManagementVisible } from '@/components/gameFormat/gameFormatT
 import { LeagueSeasonPointsSection } from '@/components/GameDetails/LeagueSeasonPointsSection';
 import { FaqTab } from '@/components/GameDetails/FaqTab';
 import { FaqEdit } from '@/components/GameDetails/FaqEdit';
-import { EditMaxParticipantsModal } from '@/components/EditMaxParticipantsModal';
 import { EditGameInfoModal, type EditGameInfoInitialTabId } from '@/components/GameDetails/EditGameInfoModal';
 import { GameResultsEntryEmbedded } from '@/components/GameDetails/GameResultsEntryEmbedded';
 import { GameResultsShowInStoriesSwitch } from '@/components/GameDetails/GameResultsShowInStoriesSwitch';
@@ -174,7 +173,6 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
   } | null>(null);
   const [showLeaveConfirmation, setShowLeaveConfirmation] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
-  const [isEditMaxParticipantsModalOpen, setIsEditMaxParticipantsModalOpen] = useState(false);
   const [isEditGameInfoModalOpen, setIsEditGameInfoModalOpen] = useState(false);
   const [editGameInfoInitialTab, setEditGameInfoInitialTab] = useState<EditGameInfoInitialTabId>('general');
   const [activeTab, setActiveTab] = useState<LeagueSeasonShellTab>(() => leagueTabFromSearch(location.search));
@@ -1453,7 +1451,10 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
                   setShowPlayerList(true);
                 }}
                 onShowManageUsers={() => setShowManageUsers(true)}
-                onEditMaxParticipants={() => setIsEditMaxParticipantsModalOpen(true)}
+                onEditMaxParticipants={() => {
+                  setEditGameInfoInitialTab('participants');
+                  setIsEditGameInfoModalOpen(true);
+                }}
               />
             </div>
           ) : null}
@@ -1900,27 +1901,6 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
           confirmVariant="primary"
           onConfirm={proceedWithResultsEntry}
           onClose={() => setShowAnnouncedConfirm(false)}
-        />
-      )}
-
-      {isEditMaxParticipantsModalOpen && game && (
-        <EditMaxParticipantsModal
-          isOpen={isEditMaxParticipantsModalOpen}
-          game={game}
-          onClose={() => setIsEditMaxParticipantsModalOpen(false)}
-          onUpdate={(updatedGame) => setGame(updatedGame)}
-          onKickUser={async (userId) => {
-            if (!id) return;
-            const run = async () => {
-              await gamesApi.kickUser(id, userId);
-            };
-            const authUser = useAuthStore.getState().user;
-            if (authUser && authUser.nameIsSet !== true) {
-              runWithProfileName(() => void run());
-              return;
-            }
-            await run();
-          }}
         />
       )}
 

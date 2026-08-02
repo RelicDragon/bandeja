@@ -15,7 +15,10 @@ import {
   type BracketScope,
   type CrossGroupSeedingPreset,
   type CreateBracketPlayoffGroupEntry,
+  type CreateBracketPlayoffRequest,
   type CustomPlayInPairingDto,
+  type BracketPlayoffPreviewResponse,
+  type BracketSlotScheduleInput,
 } from '@/api/leagues';
 import { Loader2, Check } from 'lucide-react';
 import { getLeagueGroupColor, getLeagueGroupSoftColor } from '@/utils/leagueGroupColors';
@@ -85,6 +88,7 @@ import {
 } from '@/features/leagueBracket';
 import { getSportConfig } from '@/sport/sportRegistry';
 import { parseSport } from '@shared/sport';
+import { BracketPlayoffScheduleStep } from './BracketPlayoffScheduleStep';
 
 const ALL_GROUP_ID = 'ALL';
 const SESSION_MIN_PARTICIPANTS = 4;
@@ -165,6 +169,9 @@ export const PlayoffConfigurationModal = ({
   const [crossCustomPlayInEnabled, setCrossCustomPlayInEnabled] = useState(false);
   const [crossPlayInPairs, setCrossPlayInPairs] = useState<PlayInSeedPair[]>([]);
   const [previewReturnStep, setPreviewReturnStep] = useState<'config' | 'summary' | null>(null);
+  const [bracketPreview, setBracketPreview] = useState<BracketPlayoffPreviewResponse | null>(null);
+  const [bracketSchedules, setBracketSchedules] = useState<BracketSlotScheduleInput[]>([]);
+  const [bracketScheduleValid, setBracketScheduleValid] = useState(false);
 
   const isBracket = formatChoice === 'BRACKET';
   const showBracketScopeSwitch = isBracket && groups.length >= 2;
@@ -208,6 +215,9 @@ export const PlayoffConfigurationModal = ({
       setStep('config');
       setSelectedIdsByGroup({});
       setBracketGameSetup(null);
+      setBracketPreview(null);
+      setBracketSchedules([]);
+      setBracketScheduleValid(false);
       setSeasonGame(null);
       setBracketScope('PER_GROUP');
       setCrossTeamsPerGroup({});
@@ -565,11 +575,6 @@ export const PlayoffConfigurationModal = ({
     [previewOrderedByGroup, getOrderedParticipantIds]
   );
 
-  const handleBracketGameSetupConfirm = (gameSetup: GameSetupParams) => {
-    setBracketGameSetup(gameSetup);
-    setStep('summary');
-  };
-
   const handleSessionGameSetupConfirm = async (gameSetup: GameSetupParams) => {
     if (!canCreate || isBracket) return;
     setSubmitting(true);
@@ -646,104 +651,135 @@ export const PlayoffConfigurationModal = ({
     return ranks;
   };
 
+  const buildBracketRequestPayload = (gameSetup: GameSetupParams): CreateBracketPlayoffRequest => {
+    if (isCrossGroupBracket) {
+      const { groupOrder, qualifiers, globalParticipantIds } = crossDerived;
+      validateUnequalCrossGroupPool({
+        includedGroupIds: groupOrder,
+        qualifiers,
+        globalParticipantIds,
+        teamsPerGroup: crossTeamsPerGroup,
+        groupNames: Object.fromEntries(groups.map((g) => [g.id, g.name])),
+      });
+      const crossByes = customByePayload(
+        crossDerived.totalN,
+        crossCustomByeEnabled,
+        crossCustomByeRanks
+      );
+      const crossPlayIn = playInPairsPayload(
+        crossDerived.totalN,
+        crossCustomPlayInEnabled,
+        crossPlayInPairs,
+        crossByes
+      );
+      const kValues = groupOrder.map((gid) => crossTeamsPerGroup[gid] ?? 0);
+      const allEqualK = new Set(kValues).size === 1 && kValues[0] >= 1;
+      return {
+        ...resultsRoundGenV2Payload,
+        bracketScope: 'CROSS_GROUP',
+        crossGroup: {
+          ...(allEqualK
+            ? { equalTopK: kValues[0] }
+            : {
+                unequalK: true,
+                teamsPerGroup: groupOrder
+                  .map((leagueGroupId) => ({
+                    leagueGroupId,
+                    k: crossTeamsPerGroup[leagueGroupId] ?? 0,
+                  }))
+                  .filter((entry) => entry.k >= 1),
+              }),
+          includedGroupIds: groupOrder,
+          seedingPreset: crossSeedingPreset,
+          globalParticipantIds: crossPreviewOrderedIds ?? crossDerived.globalParticipantIds,
+          qualifiers: groupOrder.map((leagueGroupId) => ({
+            leagueGroupId,
+            participantIds: qualifiers[leagueGroupId] ?? [],
+          })),
+          includeThirdPlace: crossIncludeThirdPlace || undefined,
+          includeConsolationBracket: crossIncludeConsolationBracket || undefined,
+          includeDoubleElimination: crossIncludeDoubleElimination || undefined,
+          customByeSeedRanks: crossByes,
+          customPlayInPairings: toCustomPlayInPairings(crossPlayIn),
+        },
+        gameSetup,
+      };
+    }
+
+    const groupsPayload = groups
+      .map((g): CreateBracketPlayoffGroupEntry | null => {
+        const participantIds = participantIdsForGroupCreate(g.id);
+        if (participantIds.length < BRACKET_MIN_ENTRANTS) return null;
+        const customByeSeedRanks = customByePayload(
+          participantIds.length,
+          customByeEnabledByGroup[g.id] ?? false,
+          customByeRanksByGroup[g.id] ?? []
+        );
+        const playInPairs = playInPairsPayload(
+          participantIds.length,
+          customPlayInEnabledByGroup[g.id] ?? false,
+          playInPairsByGroup[g.id] ?? [],
+          customByeSeedRanks
+        );
+        return buildCreatePayload({
+          leagueGroupId: g.id,
+          participantIds,
+          customByeEnabled: customByeEnabledByGroup[g.id] ?? false,
+          customByeSeedRanks: customByeEnabledByGroup[g.id]
+            ? customByeRanksByGroup[g.id] ?? []
+            : [],
+          customPlayInEnabled: customPlayInEnabledByGroup[g.id] ?? false,
+          playInSeedPairs: playInPairs ?? [],
+          includeThirdPlace: getPhase4FlagForGroup(includeThirdPlaceByGroup, g.id),
+          includeConsolationBracket: getPhase4FlagForGroup(
+            includeConsolationBracketByGroup,
+            g.id
+          ),
+          includeDoubleElimination: getPhase4FlagForGroup(
+            includeDoubleEliminationByGroup,
+            g.id
+          ),
+        });
+      })
+      .filter((entry): entry is CreateBracketPlayoffGroupEntry => entry !== null);
+    return {
+      ...resultsRoundGenV2Payload,
+      bracketScope: 'PER_GROUP',
+      groups: groupsPayload,
+      gameSetup,
+    };
+  };
+
+  const handleBracketGameSetupConfirm = async (gameSetup: GameSetupParams) => {
+    setSubmitting(true);
+    try {
+      const payload = buildBracketRequestPayload(gameSetup);
+      const response = await leaguesApi.previewBracketPlayoff(leagueSeasonId, payload);
+      if (!response.data) throw new Error('Bracket preview unavailable');
+      setBracketGameSetup(gameSetup);
+      setBracketPreview(response.data);
+      setBracketSchedules([]);
+      setBracketScheduleValid(false);
+      setStep('schedule');
+    } catch (err: unknown) {
+      const message =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+        (err instanceof Error ? err.message : 'errors.generic');
+      toast.error(t(message, { defaultValue: message }));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const handleBracketCreateConfirm = async () => {
     if (!canCreate || !bracketGameSetup) return;
     setSubmitting(true);
     try {
-      if (isCrossGroupBracket) {
-        const { groupOrder, qualifiers, globalParticipantIds } = crossDerived;
-        validateUnequalCrossGroupPool({
-          includedGroupIds: groupOrder,
-          qualifiers,
-          globalParticipantIds,
-          teamsPerGroup: crossTeamsPerGroup,
-          groupNames: Object.fromEntries(groups.map((g) => [g.id, g.name])),
-        });
-        const crossByes = customByePayload(
-          crossDerived.totalN,
-          crossCustomByeEnabled,
-          crossCustomByeRanks
-        );
-        const crossPlayIn = playInPairsPayload(
-          crossDerived.totalN,
-          crossCustomPlayInEnabled,
-          crossPlayInPairs,
-          crossByes
-        );
-        const kValues = groupOrder.map((gid) => crossTeamsPerGroup[gid] ?? 0);
-        const allEqualK = new Set(kValues).size === 1 && kValues[0] >= 1;
-        await leaguesApi.createBracketPlayoff(leagueSeasonId, {
-          ...resultsRoundGenV2Payload,
-          bracketScope: 'CROSS_GROUP',
-          crossGroup: {
-            ...(allEqualK
-              ? { equalTopK: kValues[0] }
-              : {
-                  unequalK: true,
-                  teamsPerGroup: groupOrder
-                    .map((leagueGroupId) => ({
-                      leagueGroupId,
-                      k: crossTeamsPerGroup[leagueGroupId] ?? 0,
-                    }))
-                    .filter((e) => e.k >= 1),
-                }),
-            includedGroupIds: groupOrder,
-            seedingPreset: crossSeedingPreset,
-            globalParticipantIds: crossPreviewOrderedIds ?? crossDerived.globalParticipantIds,
-            qualifiers: groupOrder.map((leagueGroupId) => ({
-              leagueGroupId,
-              participantIds: qualifiers[leagueGroupId] ?? [],
-            })),
-            includeThirdPlace: crossIncludeThirdPlace || undefined,
-            includeConsolationBracket: crossIncludeConsolationBracket || undefined,
-            includeDoubleElimination: crossIncludeDoubleElimination || undefined,
-            customByeSeedRanks: crossByes,
-            customPlayInPairings: toCustomPlayInPairings(crossPlayIn),
-          },
-          gameSetup: bracketGameSetup,
-        });
-      } else {
-        const groupsPayload = groups
-          .map((g): CreateBracketPlayoffGroupEntry | null => {
-            const participantIds = participantIdsForGroupCreate(g.id);
-            if (participantIds.length < BRACKET_MIN_ENTRANTS) return null;
-            const customByeSeedRanks = customByePayload(
-              participantIds.length,
-              customByeEnabledByGroup[g.id] ?? false,
-              customByeRanksByGroup[g.id] ?? []
-            );
-            const playInPairs = playInPairsPayload(
-              participantIds.length,
-              customPlayInEnabledByGroup[g.id] ?? false,
-              playInPairsByGroup[g.id] ?? [],
-              customByeSeedRanks
-            );
-            return buildCreatePayload({
-              leagueGroupId: g.id,
-              participantIds,
-              customByeEnabled: customByeEnabledByGroup[g.id] ?? false,
-              customByeSeedRanks: customByeEnabledByGroup[g.id] ? customByeRanksByGroup[g.id] ?? [] : [],
-              customPlayInEnabled: customPlayInEnabledByGroup[g.id] ?? false,
-              playInSeedPairs: playInPairs ?? [],
-              includeThirdPlace: getPhase4FlagForGroup(includeThirdPlaceByGroup, g.id),
-              includeConsolationBracket: getPhase4FlagForGroup(
-                includeConsolationBracketByGroup,
-                g.id
-              ),
-              includeDoubleElimination: getPhase4FlagForGroup(
-                includeDoubleEliminationByGroup,
-                g.id
-              ),
-            });
-          })
-          .filter((x): x is CreateBracketPlayoffGroupEntry => x !== null);
-        await leaguesApi.createBracketPlayoff(leagueSeasonId, {
-          ...resultsRoundGenV2Payload,
-          bracketScope: 'PER_GROUP',
-          groups: groupsPayload,
-          gameSetup: bracketGameSetup,
-        });
-      }
+      const payload = buildBracketRequestPayload(bracketGameSetup);
+      await leaguesApi.createBracketPlayoff(leagueSeasonId, {
+        ...payload,
+        schedules: bracketSchedules.length ? bracketSchedules : undefined,
+      } as CreateBracketPlayoffRequest);
       toast.success(t('gameDetails.bracketPlayoffCreated', { defaultValue: 'Bracket playoff created' }));
       onCreated();
       onClose();
@@ -926,6 +962,8 @@ export const PlayoffConfigurationModal = ({
         return t('gameDetails.confirmPlayoff', { defaultValue: 'Confirm playoff' });
       case 'gameSetup':
         return t('gameResults.setupGame');
+      case 'schedule':
+        return t('gameDetails.bracketScheduleTitle', { defaultValue: 'Schedule fixtures' });
       default:
         return '';
     }
@@ -933,7 +971,7 @@ export const PlayoffConfigurationModal = ({
 
   const modalBody = (
     <Dialog open={isOpen} onClose={onClose} modalId="playoff-configuration-modal">
-      <DialogContent className="max-w-lg max-h-[90vh] flex flex-col">
+      <DialogContent className={`${step === 'schedule' ? 'max-w-6xl' : 'max-w-lg'} max-h-[90vh] flex flex-col`}>
         <PlayoffWizardHeader
           current={wizardStepIndex}
           total={wizardStepTotal}
@@ -1587,6 +1625,23 @@ export const PlayoffConfigurationModal = ({
                 </Button>
               )}
               <dl className="space-y-2 text-sm">
+                {isBracket ? (
+                  <div className="rounded-lg bg-gray-50 p-3 dark:bg-gray-800/70">
+                    <dt className="text-gray-500 dark:text-gray-400">
+                      {t('gameDetails.bracketScheduleTitle', { defaultValue: 'Fixture schedule' })}
+                    </dt>
+                    <dd className="font-medium text-gray-900 dark:text-white">
+                      {bracketSchedules.length
+                        ? t('gameDetails.bracketScheduleSummary', {
+                            defaultValue: '{{count}} fixtures with published time and court',
+                            count: bracketSchedules.length,
+                          })
+                        : t('gameDetails.bracketScheduleNotPublished', {
+                            defaultValue: 'Times will be added later',
+                          })}
+                    </dd>
+                  </div>
+                ) : null}
                 <div>
                   <dt className="text-gray-500 dark:text-gray-400">{t('gameDetails.playoffFormat')}</dt>
                   <dd className="font-medium text-gray-900 dark:text-white">{formatLabel}</dd>
@@ -1749,6 +1804,17 @@ export const PlayoffConfigurationModal = ({
               submitting={submitting}
             />
           )}
+
+          {step === 'schedule' && seasonGame && bracketPreview && (
+            <BracketPlayoffScheduleStep
+              preview={bracketPreview}
+              seasonGame={seasonGame}
+              groups={groups}
+              value={bracketSchedules}
+              onChange={setBracketSchedules}
+              onValidityChange={setBracketScheduleValid}
+            />
+          )}
         </div>
 
         {step !== 'gameSetup' && (
@@ -1757,7 +1823,7 @@ export const PlayoffConfigurationModal = ({
               <>
                 <Button
                   variant="outline"
-                  onClick={() => setStep(isBracket ? 'gameSetup' : 'config')}
+                  onClick={() => setStep(isBracket ? 'schedule' : 'config')}
                   className="flex-1"
                   disabled={submitting}
                 >
@@ -1773,6 +1839,15 @@ export const PlayoffConfigurationModal = ({
                   ) : (
                     t(isBracket ? 'gameDetails.createPlayoff' : 'common.confirm')
                   )}
+                </Button>
+              </>
+            ) : step === 'schedule' ? (
+              <>
+                <Button variant="outline" onClick={() => setStep('gameSetup')} className="flex-1">
+                  {t('common.back', { defaultValue: 'Back' })}
+                </Button>
+                <Button onClick={() => setStep('summary')} disabled={!bracketScheduleValid} className="flex-1">
+                  {t('common.next', { defaultValue: 'Next' })}
                 </Button>
               </>
             ) : step === 'preview' ? (

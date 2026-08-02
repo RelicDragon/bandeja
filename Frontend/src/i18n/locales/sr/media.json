@@ -1,5 +1,7 @@
 {
   "media": {
+    "viewerTitle": "Pregled medija",
+    "fullscreenItemLabel": "Medij {{current}} od {{total}}",
     "resetView": "Resetuj prikaz",
     "download": "Preuzmi",
     "copyImage": "Kopiraj sliku",

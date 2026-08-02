@@ -1,5 +1,6 @@
 import type { ChatMessage, Poll } from '@/api/chat';
 import type { ThreadInitialScroll } from '@/services/chat/chatOpenScrollPolicy';
+import type { ChatMediaGalleryScope } from '@/components/fullscreenImageViewer/chatMediaGallery';
 
 export type MessageListHandle = {
   scrollToMessageById: (messageId: string) => void;
@@ -46,4 +47,6 @@ export interface MessageListProps {
   onScrollTargetReached?: (messageId: string) => void;
   threadSearchOutlineQuery?: string | null;
   entityType?: string | null;
+  /** Exact conversation scope for fullscreen media navigation. */
+  chatMediaScope?: ChatMediaGalleryScope;
 }

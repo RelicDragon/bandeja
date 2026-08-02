@@ -272,6 +272,7 @@ Frontend/e2e/
 | H-08 | User teams section | User in teams | My tab → Teams switch shows teams row |
 | H-09 | Your leagues section | User in leagues | My tab → Leagues switch shows league cards |
 | H-10 | League game sections collapse | My tab → Leagues → league hub with scheduled/unscheduled and FINAL games → tap section header | Section collapses/expands with chevron; both sections expanded by default; FINAL games appear in neither section |
+| H-72 | Playoff game metadata | My tab → Leagues → league hub with playoff and regular-round games | Playoff cards omit the redundant round number (for example, `R12`) while regular league cards keep it; group names remain visible |
 | H-11 | Mark all read banner | Unread games exist | Banner + action clears counts |
 
 ### 6.2 Invites
@@ -841,6 +842,10 @@ Frontend/e2e/
 | GD-140 | Bracket game setup blocks points winner | Bracket Game Setup → Customize → Ranking | Winner-by-points is unavailable; only deterministic match-winner options remain |
 | GD-141 | Complete double-elimination progression | Create an 8-team double-elimination playoff; finish winners and losers matches, making the losers-bracket champion win GF1 | Every winners-round loser enters the losers bracket after its first loss; GF1 creates a reset final only when the previously unbeaten team receives its first loss; the reset winner becomes champion |
 | GD-142 | Advanced bracket visual preview | Enable consolation or double elimination in per-group and cross-group creation; open Preview | Preview draws every consolation/losers round and grand final; double elimination also shows the conditional reset final; mutually exclusive options cannot remain enabled together |
+| GD-143 | Bracket playoff-day scheduler | Create separate 8-team brackets for groups A/B/C → Schedule fixtures; select one club, four courts, C→B→A, 45 minutes, 10:00 → Build | Five-step wizard shows a compact wave×court plan; all 24 quarterfinal/semifinal/final/bronze fixtures are present; no court overlap or feeder timing conflict |
+| GD-144 | Bracket schedule fine tuning | Expand Fine-tune; change one future fixture court/start/duration | Grid and validation update immediately; overlapping court or start-before-feeder blocks Next; valid edits persist after Back/Next |
+| GD-145 | Planned fixture visibility | Create scheduled bracket before semifinal teams are known; open Schedule → Bracket as another league user | Future slot is visible with date, time, club, court, round and “Teams pending”; there is no fake game chat/join/results action |
+| GD-146 | Planned fixture materialization | Finish both feeder games for a scheduled semifinal/final/bronze slot | Real game is created with that slot’s exact time/location, no booking state; manually editing the game schedule updates the slot; undo removes downstream game but preserves planned fixture schedule |
 | GD-51 | Walkover / BYE handling | Set walkover | Bracket updates |
 | GD-52 | Club favorite toggle | Star on club in game info | Favorited state persists |
 | GD-53 | Club mini map | Game with geo | Map renders |

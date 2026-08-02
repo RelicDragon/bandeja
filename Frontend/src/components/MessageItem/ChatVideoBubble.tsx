@@ -16,7 +16,7 @@ type ChatVideoBubbleProps = {
   optimisticId?: string;
   posterUrl: string;
   inlinePlaybackPaused?: boolean;
-  onOpenFullscreen?: (videoUrl: string, posterUrl: string) => void;
+  onOpenFullscreen?: (videoUrl: string, posterUrl: string, mediaIndex: number) => void;
 };
 
 export const ChatVideoBubble: React.FC<ChatVideoBubbleProps> = ({
@@ -103,7 +103,7 @@ export const ChatVideoBubble: React.FC<ChatVideoBubbleProps> = ({
   const handleOpenFullscreen = useCallback(() => {
     if (!canPlay || !onOpenFullscreen) return;
     videoRef.current?.pause();
-    onOpenFullscreen(videoUrl, posterUrl);
+    onOpenFullscreen(videoUrl, posterUrl, 0);
   }, [canPlay, onOpenFullscreen, posterUrl, videoUrl]);
 
   return (

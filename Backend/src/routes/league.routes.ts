@@ -99,6 +99,18 @@ router.post(
 );
 
 router.post(
+  '/:leagueSeasonId/playoff/bracket/preview',
+  authenticate,
+  canEditGame,
+  validate([
+    body('bracketScope').optional().isIn(['PER_GROUP', 'CROSS_GROUP']),
+    body('groups').optional().isArray({ min: 1 }),
+    body('crossGroup').optional().isObject(),
+  ]),
+  leagueController.previewBracketPlayoff
+);
+
+router.post(
   '/:leagueSeasonId/playoff/bracket',
   authenticate,
   canEditGame,
@@ -157,6 +169,13 @@ router.post(
     body('crossGroup.qualifiers.*.leagueGroupId').optional().isString(),
     body('crossGroup.qualifiers.*.participantIds').optional().isArray({ min: 1, max: 16 }),
     body('crossGroup.qualifiers.*.participantIds.*').optional().isString(),
+    body('schedules').optional().isArray(),
+    body('schedules.*.leagueGroupId').optional({ nullable: true }).isString(),
+    body('schedules.*.slotKey').optional().isString(),
+    body('schedules.*.clubId').optional().isString(),
+    body('schedules.*.courtId').optional().isString(),
+    body('schedules.*.startTime').optional().isISO8601(),
+    body('schedules.*.endTime').optional().isISO8601(),
     body().custom((value) => {
       const scope = value.bracketScope ?? 'PER_GROUP';
       const hasGroups = Array.isArray(value.groups) && value.groups.length > 0;
@@ -354,4 +373,3 @@ router.put(
 );
 
 export default router;
-

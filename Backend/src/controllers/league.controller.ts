@@ -169,6 +169,11 @@ export const createBracketPlayoff = asyncHandler(async (req: AuthRequest, res: R
   });
 });
 
+export const previewBracketPlayoff = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const result = BracketPlayoffService.previewBracketPlayoff(req.body);
+  res.json({ success: true, data: result });
+});
+
 export const getBracketPlayoff = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { leagueSeasonId } = req.params;
   const roundId = typeof req.query.roundId === 'string' ? req.query.roundId : undefined;
@@ -403,4 +408,3 @@ export const sendRoundStartMessage = asyncHandler(async (req: AuthRequest, res: 
     data: result,
   });
 });
-

@@ -1,5 +1,7 @@
 {
   "media": {
+    "viewerTitle": "Просмотр медиа",
+    "fullscreenItemLabel": "Медиа {{current}} из {{total}}",
     "resetView": "Сбросить вид",
     "download": "Скачать",
     "copyImage": "Копировать изображение",

@@ -24,12 +24,14 @@
       "where": "Gde",
       "locationTime": "Lokacija i vreme",
       "price": "Cena",
+      "participants": "Učesnici",
       "settings": "Podešavanja",
       "eraseTime": "Ukloni vreme"
     },
     "editModal": {
       "title": "Izmeni detalje",
       "unsavedChanges": "Nesačuvane izmene",
+      "saveParticipantsFirst": "Sačuvajte izmene učesnika pre čuvanja ostalih detalja.",
       "autoSaveNote": "Izmene ovde se čuvaju automatski",
       "discardTitle": "Odbaciti izmene?",
       "discardMessage": "Imate nesačuvane izmene koje će biti izgubljene ako sada zatvorite.",

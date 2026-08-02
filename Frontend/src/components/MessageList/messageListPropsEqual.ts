@@ -22,6 +22,19 @@ function initialScrollEqual(a?: ThreadInitialScroll, b?: ThreadInitialScroll): b
   return false;
 }
 
+function chatMediaScopeEqual(
+  a: MessageListProps['chatMediaScope'],
+  b: MessageListProps['chatMediaScope']
+): boolean {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  return (
+    a.contextType === b.contextType &&
+    a.contextId === b.contextId &&
+    a.chatType === b.chatType
+  );
+}
+
 export function messageListPropsEqual(prev: MessageListProps, next: MessageListProps): boolean {
   if (prev.messages !== next.messages) return false;
   if (prev.onAddReaction !== next.onAddReaction) return false;
@@ -59,6 +72,7 @@ export function messageListPropsEqual(prev: MessageListProps, next: MessageListP
   if (prev.loadingScrollTargetId !== next.loadingScrollTargetId) return false;
   if (prev.onScrollTargetReached !== next.onScrollTargetReached) return false;
   if (prev.threadSearchOutlineQuery !== next.threadSearchOutlineQuery) return false;
+  if (!chatMediaScopeEqual(prev.chatMediaScope, next.chatMediaScope)) return false;
 
   if (!pinnedIdsEqual(prev.pinnedMessageIds, next.pinnedMessageIds)) return false;
   if (!initialScrollEqual(prev.initialScroll, next.initialScroll)) return false;

@@ -1,10 +1,10 @@
-export type PlayoffWizardStep = 'config' | 'preview' | 'summary' | 'gameSetup';
+export type PlayoffWizardStep = 'config' | 'preview' | 'summary' | 'gameSetup' | 'schedule';
 
-const BRACKET_STEP_ORDER: PlayoffWizardStep[] = ['config', 'preview', 'gameSetup', 'summary'];
+const BRACKET_STEP_ORDER: PlayoffWizardStep[] = ['config', 'preview', 'gameSetup', 'schedule', 'summary'];
 const SESSION_STEP_ORDER: PlayoffWizardStep[] = ['config', 'summary', 'gameSetup'];
 
 export function getPlayoffWizardStepTotal(isBracket: boolean): number {
-  return isBracket ? 4 : 3;
+  return isBracket ? 5 : 3;
 }
 
 export function getPlayoffWizardStepIndex(step: PlayoffWizardStep, isBracket: boolean): number {

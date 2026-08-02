@@ -6,6 +6,7 @@ import {
   PlayoffFormat,
   Prisma,
   RoundType,
+  Sport,
 } from '@prisma/client';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 import {
@@ -51,6 +52,13 @@ import {
   validateCrossGroupPool,
   validateUnequalCrossGroupPool,
 } from './crossGroupBracketSeeding';
+import {
+  bracketScheduleKey,
+  normalizeBracketSchedules,
+  type BracketSchedulePlanTree,
+  type BracketSlotSchedulePayload,
+  type NormalizedBracketSlotSchedule,
+} from './bracketSchedule.util';
 
 export type BracketScopeDto = 'PER_GROUP' | 'CROSS_GROUP';
 
@@ -87,6 +95,7 @@ export interface CreateBracketPlayoffPayload {
     customPlayInPairings?: CustomPlayInPairing[];
   };
   gameSetup?: PlayoffGameSetupOverrides;
+  schedules?: BracketSlotSchedulePayload[];
 }
 
 function bracketPlanOptionsFromPayload(
@@ -209,6 +218,12 @@ type SlotRow = {
   feederSlotAId: string | null;
   feederSlotBId: string | null;
   winnerSlotId: string | null;
+  scheduledClubId: string | null;
+  scheduledCourtId: string | null;
+  scheduledStartTime: Date | null;
+  scheduledEndTime: Date | null;
+  scheduledClub?: { id: string; name: string; cityId: string } | null;
+  scheduledCourt?: { id: string; name: string; clubId: string } | null;
   game?: {
     id: string;
     resultsStatus: string;
@@ -225,6 +240,73 @@ type SlotRow = {
 };
 
 export class BracketPlayoffService {
+  static previewBracketPlayoff(payload: CreateBracketPlayoffPayload) {
+    const scope = payload.bracketScope ?? 'PER_GROUP';
+    let trees: BracketSchedulePlanTree[];
+    if (scope === 'CROSS_GROUP') {
+      const ids = payload.crossGroup?.globalParticipantIds;
+      if (!payload.crossGroup || !ids || ids.length < 2 || ids.length > 16) {
+        throw new ApiError(400, 'Cross-group preview requires 2..16 globalParticipantIds');
+      }
+      trees = [
+        {
+          leagueGroupId: null,
+          plan: buildBracketPlanForRequest(
+            ids.length,
+            ids,
+            bracketPlanOptionsFromPayload(
+              ids.length,
+              resolveCrossGroupBracketPlanOptions(payload.crossGroup, payload)
+            )
+          ),
+        },
+      ];
+    } else {
+      if (!payload.groups?.length) throw new ApiError(400, 'groups must not be empty');
+      const payloadGroups = payload.groups;
+      trees = payloadGroups.map((group) => ({
+        leagueGroupId: group.leagueGroupId,
+        plan: buildBracketPlanForRequest(
+          group.participantIds.length,
+          group.participantIds,
+          bracketPlanOptionsFromPayload(group.participantIds.length, {
+            includeThirdPlace: group.includeThirdPlace ?? payload.includeThirdPlace,
+            includeConsolationBracket:
+              group.includeConsolationBracket ?? payload.includeConsolationBracket,
+            includeDoubleElimination:
+              group.includeDoubleElimination ?? payload.includeDoubleElimination,
+            customByeSeedRanks:
+              group.customByeSeedRanks ??
+              (payloadGroups.length === 1 ? payload.customByeSeedRanks : undefined),
+            customPlayInPairings:
+              group.customPlayInPairings ??
+              (payloadGroups.length === 1 ? payload.customPlayInPairings : undefined),
+          })
+        ),
+      }));
+    }
+
+    return {
+      groups: trees.map(({ leagueGroupId, plan }) => ({
+        leagueGroupId,
+        entrantCount: plan.entrantCount,
+        bracketSize: plan.bracketSize,
+        slots: plan.slots
+          .filter((slot) => slot.slotKind !== BracketSlotKind.BYE)
+          .map((slot) => ({
+            slotKey: slot.slotKey,
+            slotKind: slot.slotKind,
+            phaseIndex: slot.phaseIndex,
+            roundIndex: slot.roundIndex,
+            matchIndex: slot.matchIndex,
+            roundLabel: slot.roundLabel,
+            feederSlotAKey: slot.feederSlotAKey,
+            feederSlotBKey: slot.feederSlotBKey,
+          })),
+      })),
+    };
+  }
+
   static async createBracketPlayoff(
     leagueSeasonId: string,
     userId: string,
@@ -405,6 +487,12 @@ export class BracketPlayoffService {
       };
       return { ...g, plan };
     });
+    const scheduleTrees = groupPlans.map((group) => ({
+      leagueGroupId: group.leagueGroupId,
+      plan: group.plan,
+    }));
+    const schedules = normalizeBracketSchedules(payload.schedules, scheduleTrees);
+    await this.validateScheduleLocations(schedules, seasonSport);
     const multiGroup = groups.length > 1;
     const singlePlan = groupPlans[0].plan;
     const roundBracketConfig: BracketConfigShape = {
@@ -449,6 +537,7 @@ export class BracketPlayoffService {
           orderedParticipantIds: g.participantIds,
           seasonGame,
           gameSetup,
+          schedules,
         });
         createdGameIds.push(...ids);
       }
@@ -662,6 +751,9 @@ export class BracketPlayoffService {
         resolveCrossGroupBracketPlanOptions(crossGroup, payload)
       )
     );
+    const scheduleTrees = [{ leagueGroupId: null, plan }];
+    const schedules = normalizeBracketSchedules(payload.schedules, scheduleTrees);
+    await this.validateScheduleLocations(schedules, seasonSport);
     const maxK = Math.max(...includedGroupIds.map((gid) => qualifiers[gid]?.length ?? 0));
     const bracketConfig: BracketConfigShape = {
       scope: 'CROSS_GROUP',
@@ -713,6 +805,7 @@ export class BracketPlayoffService {
         orderedParticipantIds: globalParticipantIds,
         seasonGame,
         gameSetup,
+        schedules,
       });
       createdGameIds.push(...ids);
     });
@@ -783,12 +876,14 @@ export class BracketPlayoffService {
       orderedParticipantIds: string[];
       seasonGame: Parameters<typeof createLeagueGame>[0]['seasonGame'];
       gameSetup?: PlayoffGameSetupOverrides;
+      schedules: Map<string, NormalizedBracketSlotSchedule>;
     }
   ): Promise<string[]> {
-    const { roundId, leagueSeasonId, leagueGroupId, plan, orderedParticipantIds, seasonGame, gameSetup } = params;
+    const { roundId, leagueSeasonId, leagueGroupId, plan, orderedParticipantIds, seasonGame, gameSetup, schedules } = params;
     const keyToId = new Map<string, string>();
 
     for (const planned of plan.slots) {
+      const schedule = schedules.get(bracketScheduleKey(leagueGroupId, planned.slotKey));
       const row = await tx.leagueBracketSlot.create({
         data: {
           leagueRoundId: roundId,
@@ -800,6 +895,10 @@ export class BracketPlayoffService {
           matchIndex: planned.matchIndex,
           leagueParticipantId: planned.leagueParticipantId,
           seedRank: planned.seedRank,
+          scheduledClubId: schedule?.clubId,
+          scheduledCourtId: schedule?.courtId,
+          scheduledStartTime: schedule?.startTime,
+          scheduledEndTime: schedule?.endTime,
         },
       });
       keyToId.set(planned.slotKey, row.id);
@@ -833,6 +932,31 @@ export class BracketPlayoffService {
       if (gameId) createdGameIds.push(gameId);
     }
     return createdGameIds;
+  }
+
+  private static async validateScheduleLocations(
+    schedules: Map<string, NormalizedBracketSlotSchedule>,
+    seasonSport: Sport
+  ): Promise<void> {
+    if (schedules.size === 0) return;
+    const courtIds = [...new Set([...schedules.values()].map((schedule) => schedule.courtId))];
+    const courts = await prisma.court.findMany({
+      where: { id: { in: courtIds } },
+      include: { club: { select: { id: true, isActive: true } } },
+    });
+    const byId = new Map(courts.map((court) => [court.id, court]));
+    for (const schedule of schedules.values()) {
+      const court = byId.get(schedule.courtId);
+      if (!court || !court.isActive || !court.club.isActive) {
+        throw new ApiError(400, 'One or more scheduled courts are unavailable');
+      }
+      if (court.clubId !== schedule.clubId) {
+        throw new ApiError(400, 'Scheduled court does not belong to the selected club');
+      }
+      if (court.sport != null && court.sport !== seasonSport) {
+        throw new ApiError(400, 'Scheduled court does not support the league sport');
+      }
+    }
   }
 
   static async getBracketPlayoff(
@@ -882,6 +1006,8 @@ export class BracketPlayoffService {
                 },
               },
             },
+            scheduledClub: { select: { id: true, name: true, cityId: true } },
+            scheduledCourt: { select: { id: true, name: true, clubId: true } },
           },
           orderBy: [{ leagueGroupId: 'asc' }, { phaseIndex: 'asc' }, { roundIndex: 'asc' }, { matchIndex: 'asc' }],
         },
@@ -991,6 +1117,20 @@ export class BracketPlayoffService {
               originGroup: originGroup
                 ? { id: originGroup.id, name: originGroup.name, color: originGroup.color }
                 : undefined,
+              schedule:
+                s.scheduledStartTime &&
+                s.scheduledEndTime &&
+                s.scheduledClubId &&
+                s.scheduledCourtId
+                  ? {
+                      clubId: s.scheduledClubId,
+                      courtId: s.scheduledCourtId,
+                      startTime: s.scheduledStartTime,
+                      endTime: s.scheduledEndTime,
+                      club: s.scheduledClub,
+                      court: s.scheduledCourt,
+                    }
+                  : null,
             };
           }),
         };

@@ -6,11 +6,12 @@ import {
 
 describe('playoffWizardSteps.util (UX-B3)', () => {
   it('bracket flow has 4 steps in order', () => {
-    expect(getPlayoffWizardStepTotal(true)).toBe(4);
+    expect(getPlayoffWizardStepTotal(true)).toBe(5);
     expect(getPlayoffWizardStepIndex('config', true)).toBe(1);
     expect(getPlayoffWizardStepIndex('preview', true)).toBe(2);
     expect(getPlayoffWizardStepIndex('gameSetup', true)).toBe(3);
-    expect(getPlayoffWizardStepIndex('summary', true)).toBe(4);
+    expect(getPlayoffWizardStepIndex('schedule', true)).toBe(4);
+    expect(getPlayoffWizardStepIndex('summary', true)).toBe(5);
   });
 
   it('session flow has 3 steps', () => {

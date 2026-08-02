@@ -8,7 +8,7 @@ interface MessageMediaGridProps {
   mediaUrls: string[];
   getThumbnailUrl: (index: number) => string;
   getFullscreenUrl: (index: number) => string;
-  onImageClick: (url: string) => void;
+  onImageClick: (url: string, mediaIndex: number) => void;
   hasContentBelow?: boolean;
   loadEager?: boolean;
   /** Lone GIF: round the asset itself, no bubble chrome. */
@@ -63,7 +63,7 @@ export const MessageMediaGrid: React.FC<MessageMediaGridProps> = ({
               background: 'transparent',
               textAlign: 'left',
             }}
-            onClick={() => onImageClick(resolveChatMediaUrl(getFullscreenUrl(index) || url))}
+            onClick={() => onImageClick(resolveChatMediaUrl(getFullscreenUrl(index) || url), index)}
           >
             <ChatMediaImage
               src={getThumbnailUrl(index)}

@@ -34,12 +34,14 @@
       "where": "Where",
       "locationTime": "Location & time",
       "price": "Price",
+      "participants": "Participants",
       "settings": "Settings",
       "eraseTime": "Erase time"
     },
     "editModal": {
       "title": "Edit details",
       "unsavedChanges": "Unsaved changes",
+      "saveParticipantsFirst": "Save participant changes before saving the other details.",
       "autoSaveNote": "Changes here are saved automatically",
       "discardTitle": "Discard changes?",
       "discardMessage": "You have unsaved changes that will be lost if you close now.",

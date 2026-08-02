@@ -22,6 +22,10 @@ import {
 } from '../../utils/validators/validateLeagueSeasonSport';
 import type { Sport } from '@prisma/client';
 import { validateGameForSport } from '../../utils/validators/validateGameForSport';
+import {
+  inheritBracketGameSchedule,
+  type BracketGameScheduleSource,
+} from './bracketGameScheduleInheritance';
 
 export function resolveLeagueMatchCapacity(
   seasonSport: Sport,
@@ -69,6 +73,7 @@ interface CreateLeagueGameParams {
   isPublic?: boolean;
   affectsRating?: boolean;
   gameSetup?: PlayoffGameSetupOverrides;
+  scheduleTemplate?: BracketGameScheduleSource | null;
   db?: GameReadinessDb;
 }
 
@@ -261,6 +266,7 @@ export async function createLeagueGame(params: CreateLeagueGameParams) {
     isPublic = false,
     affectsRating = true,
     gameSetup,
+    scheduleTemplate,
     db: dbClient = prisma,
   } = params;
 
@@ -309,8 +315,11 @@ export async function createLeagueGame(params: CreateLeagueGameParams) {
       throw new ApiError(400, 'Fixed teams must not share participants');
     }
   }
-  const startTime = new Date();
-  const endTime = new Date(startTime.getTime() + 1 * 60 * 60 * 1000);
+  const inheritedSchedule = inheritBracketGameSchedule(scheduleTemplate ?? null);
+  const defaultStartTime = new Date();
+  const startTime = inheritedSchedule?.startTime ?? defaultStartTime;
+  const endTime =
+    inheritedSchedule?.endTime ?? new Date(defaultStartTime.getTime() + 1 * 60 * 60 * 1000);
   const format = resolveLeagueFixtureFormatFields(seasonGame, gameSetup);
 
   const game = await dbClient.game.create({
@@ -319,10 +328,13 @@ export async function createLeagueGame(params: CreateLeagueGameParams) {
       sport: seasonSport,
       gameType: seasonGame.gameType || 'CLASSIC',
       name: `Round ${round.orderIndex + 1} - Game`,
-      clubId: seasonGame.clubId,
-      cityId: seasonGame.cityId,
+      clubId: inheritedSchedule ? inheritedSchedule.clubId : seasonGame.clubId,
+      courtId: inheritedSchedule?.courtId,
+      cityId: inheritedSchedule?.cityId ?? seasonGame.cityId,
       startTime,
       endTime,
+      timeIsSet: inheritedSchedule?.timeIsSet ?? false,
+      timeOverride: false,
       maxParticipants,
       playersPerMatch,
       minParticipants,
@@ -343,6 +355,14 @@ export async function createLeagueGame(params: CreateLeagueGameParams) {
       leagueRoundId: leagueRoundId,
       leagueGroupId,
       status: 'ANNOUNCED',
+      gameCourts: inheritedSchedule?.gameCourts.length
+        ? {
+            create: inheritedSchedule.gameCourts.map(({ courtId, order }) => ({
+              courtId,
+              order,
+            })),
+          }
+        : undefined,
       participants: {
         create: participantUserIds.map(userId => ({
           userId,

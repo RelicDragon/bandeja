@@ -16,6 +16,11 @@ export function entitySupportsPlayersPerMatchControls(entityType: EntityType): b
   return entityType === 'GAME' || entityType === 'LEAGUE' || entityType === 'TOURNAMENT';
 }
 
+/** Participant setup is meaningful for every managed competition/session except open BAR lobbies. */
+export function entitySupportsParticipantSetup(entityType: EntityType): boolean {
+  return entityType !== 'BAR';
+}
+
 export function gameFormatFixedTeamsToggleVisible(entityType: EntityType, participantCount: number): boolean {
   return (
     participantCount >= 4 &&

@@ -1,5 +1,7 @@
 {
   "media": {
+    "viewerTitle": "Prohlížeč médií",
+    "fullscreenItemLabel": "Médium {{current}} z {{total}}",
     "resetView": "Resetovat zobrazení",
     "download": "Stáhnout",
     "copyImage": "Kopírovat obrázek",

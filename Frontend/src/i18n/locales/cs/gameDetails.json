@@ -21,12 +21,14 @@
       "where": "Kde",
       "locationTime": "Místo a čas",
       "price": "Cena",
+      "participants": "Účastníci",
       "settings": "Nastavení",
       "eraseTime": "Zrušit čas"
     },
     "editModal": {
       "title": "Upravit údaje",
       "unsavedChanges": "Neuložené změny",
+      "saveParticipantsFirst": "Před uložením ostatních údajů uložte změny účastníků.",
       "autoSaveNote": "Změny zde se ukládají automaticky",
       "discardTitle": "Zahodit změny?",
       "discardMessage": "Máte neuložené změny, které se zavřením ztratí.",

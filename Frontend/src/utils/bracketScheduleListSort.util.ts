@@ -1,28 +1,50 @@
-import type { BracketSlotDto } from '@/api/leagues';
+import type { BracketSlotDto, BracketSlotKind } from '@/api/leagues';
 import type { Game } from '@/types';
 import { isFullGame } from '@/utils/leagueBracketEnrich';
 
-export type BracketScheduleListEntry = {
-  game: Game;
-  kind: 'PLAY_IN' | 'MAIN';
+type BracketScheduleBase = {
+  kind: Exclude<BracketSlotKind, 'BYE'>;
   roundIndex: number;
   roundLabel: string | null;
+  slot: BracketSlotDto;
+  startTime: string;
 };
+
+export type BracketScheduleListEntry =
+  | (BracketScheduleBase & { entryType: 'GAME'; game: Game })
+  | (BracketScheduleBase & { entryType: 'PLANNED'; game: null });
 
 export function collectBracketScheduleGames(slots: BracketSlotDto[]): BracketScheduleListEntry[] {
   const seen = new Set<string>();
   const list: BracketScheduleListEntry[] = [];
 
   for (const slot of slots) {
-    if (!slot.game || !isFullGame(slot.game) || seen.has(slot.game.id)) continue;
-    if (slot.slotKind !== 'PLAY_IN' && slot.slotKind !== 'MAIN') continue;
-    seen.add(slot.game.id);
-    list.push({
-      game: slot.game as Game,
-      kind: slot.slotKind,
-      roundIndex: slot.roundIndex,
-      roundLabel: slot.roundLabel?.trim() ?? null,
-    });
+    if (slot.slotKind === 'BYE') continue;
+    if (slot.game && isFullGame(slot.game)) {
+      if (seen.has(slot.game.id)) continue;
+      seen.add(slot.game.id);
+      list.push({
+        entryType: 'GAME',
+        game: slot.game as Game,
+        slot,
+        startTime: (slot.game as Game).startTime,
+        kind: slot.slotKind,
+        roundIndex: slot.roundIndex,
+        roundLabel: slot.roundLabel?.trim() ?? null,
+      });
+      continue;
+    }
+    if (slot.schedule) {
+      list.push({
+        entryType: 'PLANNED',
+        game: null,
+        slot,
+        startTime: slot.schedule.startTime,
+        kind: slot.slotKind,
+        roundIndex: slot.roundIndex,
+        roundLabel: slot.roundLabel?.trim() ?? null,
+      });
+    }
   }
 
   return sortBracketScheduleGames(list);
@@ -30,10 +52,12 @@ export function collectBracketScheduleGames(slots: BracketSlotDto[]): BracketSch
 
 export function sortBracketScheduleGames(entries: BracketScheduleListEntry[]): BracketScheduleListEntry[] {
   return [...entries].sort((a, b) => {
-    if (a.kind !== b.kind) return a.kind === 'PLAY_IN' ? -1 : 1;
+    const time = a.startTime.localeCompare(b.startTime);
+    if (time !== 0) return time;
+    if (a.kind !== b.kind) return a.kind === 'PLAY_IN' ? -1 : b.kind === 'PLAY_IN' ? 1 : 0;
     if (a.kind === 'MAIN' && b.kind === 'MAIN' && a.roundIndex !== b.roundIndex) {
       return a.roundIndex - b.roundIndex;
     }
-    return (a.game.startTime ?? '').localeCompare(b.game.startTime ?? '');
+    return a.slot.matchIndex - b.slot.matchIndex;
   });
 }

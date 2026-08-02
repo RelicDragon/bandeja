@@ -36,6 +36,7 @@ import { RallyOfficiatingButtons } from './rally/RallyOfficiatingButtons';
 import { liveCourtAspectForUiId, resolveCourtSchemaComponent, resolveRallyCourtForPlugin } from './courtRegistry';
 import { RallyScoreBoard } from './rally/RallyScoreBoard';
 import { rallyScoreMetaForState } from '@/liveScoring/rallyScoreMeta';
+import type { LiveBroadcastContext } from '@/utils/liveBroadcastContext.util';
 
 type LiveScoreShellProps = {
   state: LiveScoringState;
@@ -47,6 +48,8 @@ type LiveScoreShellProps = {
   boardTheme?: LiveBoardTheme;
   tv?: boolean;
   broadcast?: boolean;
+  broadcastContext?: LiveBroadcastContext | null;
+  broadcastTimer?: string | null;
   saving?: boolean;
   error?: string | null;
   statusNote?: string | null;
@@ -84,6 +87,8 @@ export const LiveScoreShell = ({
   boardTheme = 'dark',
   tv,
   broadcast,
+  broadcastContext,
+  broadcastTimer,
   saving,
   error,
   statusNote,
@@ -189,6 +194,8 @@ export const LiveScoreShell = ({
         boardTheme={boardTheme}
         serveIndicator={serveIndicator}
         sport={sport}
+        broadcastContext={broadcastContext}
+        broadcastTimer={broadcastTimer}
       />
     );
   }

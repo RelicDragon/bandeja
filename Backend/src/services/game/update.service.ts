@@ -708,6 +708,35 @@ export class GameUpdateService {
         },
       });
 
+      const bracketScheduleChanged =
+        data.startTime !== undefined ||
+        data.endTime !== undefined ||
+        data.timeIsSet !== undefined ||
+        data.clubId !== undefined ||
+        data.courtId !== undefined;
+      if (bracketScheduleChanged && currentGame) {
+        const nextTimeIsSet = updateData.timeIsSet ?? currentGame.timeIsSet;
+        const nextClubId = updateData.clubId !== undefined ? updateData.clubId : currentGame.clubId;
+        const nextCourtId = updateData.courtId !== undefined ? updateData.courtId : currentGame.courtId;
+        await tx.leagueBracketSlot.updateMany({
+          where: { gameId: id },
+          data:
+            nextTimeIsSet && nextClubId && nextCourtId
+              ? {
+                  scheduledClubId: nextClubId,
+                  scheduledCourtId: nextCourtId,
+                  scheduledStartTime: updateData.startTime ?? currentGame.startTime,
+                  scheduledEndTime: updateData.endTime ?? currentGame.endTime,
+                }
+              : {
+                  scheduledClubId: null,
+                  scheduledCourtId: null,
+                  scheduledStartTime: null,
+                  scheduledEndTime: null,
+                },
+        });
+      }
+
       if (
         gamePatchAffectsBookingStatus(data) ||
         gamePatchAffectsBookingStatus(updateData as Record<string, unknown>)

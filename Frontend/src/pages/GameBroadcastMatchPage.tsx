@@ -7,6 +7,7 @@ import { useNetworkStore } from '@/utils/networkStatus';
 import { parseLiveBoardTheme, type LiveTeamSide } from '@/utils/liveScoring';
 import { isLiveMatchCompleteForScoring } from '@/utils/scoring';
 import { playersPerMatchOf } from '@/utils/matchFormat';
+import { liveBroadcastContext } from '@/utils/liveBroadcastContext.util';
 
 const noop = () => {};
 const noopSide = (_side: LiveTeamSide) => {};
@@ -22,16 +23,17 @@ export const GameBroadcastMatchPage = () => {
   const boardTheme = parseLiveBoardTheme(searchParams.get('theme'));
   const { t } = useTranslation();
   const isOnline = useNetworkStore((s) => s.isOnline);
-  const { game, rawMatch, liveState, revision, loading, error, rules, timerDisplay } = useLiveMatchBoardState(
-    gameId,
-    matchId,
-    { spectatorToken }
-  );
+  const { game, rawMatch, matchRoundNumber, liveState, revision, loading, error, rules, timerDisplay } =
+    useLiveMatchBoardState(gameId, matchId, { spectatorToken });
 
   const playersPerMatch = useMemo(() => playersPerMatchOf(game ?? {}), [game]);
   const teamAPlayers = useMemo(() => (rawMatch ? liveBoardPlayersForTeam(rawMatch, 1, game) : []), [rawMatch, game]);
   const teamBPlayers = useMemo(() => (rawMatch ? liveBoardPlayersForTeam(rawMatch, 2, game) : []), [rawMatch, game]);
   const matchDecided = Boolean(liveState && rules && isLiveMatchCompleteForScoring(liveState.sets, rules));
+  const broadcastContext = useMemo(
+    () => liveBroadcastContext(game, matchRoundNumber, t),
+    [game, matchRoundNumber, t],
+  );
 
   useEffect(() => {
     if (!transparent) return;
@@ -104,17 +106,6 @@ export const GameBroadcastMatchPage = () => {
         <div className="flex min-h-0 w-full flex-1 flex-col">
           <div className="min-h-0 flex-1" aria-hidden />
           <div className="flex w-full shrink-0 flex-col items-start px-2 pb-[max(0.35rem,env(safe-area-inset-bottom))] pt-2 sm:px-4 sm:pb-4">
-            {timerDisplay ? (
-              <div
-                className={`mb-2 w-fit max-w-full rounded-md border px-2 py-1 text-left font-mono text-[11px] font-semibold tabular-nums sm:text-xs ${
-                  boardTheme === 'light'
-                    ? 'border-zinc-200 bg-zinc-50 text-zinc-700'
-                    : 'border-zinc-600/50 bg-zinc-950/80 text-zinc-200'
-                }`}
-              >
-                {timerDisplay}
-              </div>
-            ) : null}
             <main className="flex w-full justify-start">
               {loading ? (
                 <div className="w-full py-2 text-center text-sm opacity-60">…</div>
@@ -138,6 +129,8 @@ export const GameBroadcastMatchPage = () => {
                   gameId={gameId}
                   boardTheme={boardTheme}
                   broadcast
+                  broadcastContext={broadcastContext}
+                  broadcastTimer={timerDisplay}
                   scoringLocked
                   onScore={noopSide}
                   onUndo={noopSide}
