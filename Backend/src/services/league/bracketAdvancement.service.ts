@@ -20,13 +20,15 @@ import {
   grandFinalResetRequired,
 } from './bracketDoubleElimination.util';
 import { stalePlayingParticipantIds } from './bracketSlotPatch.util';
+import {
+  BracketGameSetupConfig,
+  resolveBracketSlotGameSetup,
+} from './bracketSlotGameSetup';
 
 const PLAY_IN_GATE_MESSAGE =
   'Complete all play-in games before scheduling or finishing knockout matches';
 
-type BracketRoundConfigShape = {
-  gameSetup?: PlayoffGameSetupOverrides;
-};
+type BracketRoundConfigShape = BracketGameSetupConfig;
 
 export class BracketAdvancementService {
   static async assertPlayInCompleteForMainBracketGame(
@@ -120,7 +122,7 @@ export class BracketAdvancementService {
     if (!round?.leagueSeason?.game) return [];
 
     const seasonGame = round.leagueSeason.game;
-    const gameSetup = (round.bracketConfig as BracketRoundConfigShape | null)?.gameSetup;
+    const bracketConfig = round.bracketConfig as BracketRoundConfigShape | null;
     const createdGameIds: string[] = [];
     const slots = await tx.leagueBracketSlot.findMany({
       where: { leagueRoundId, leagueGroupId, gameId: null, slotKind: { not: BracketSlotKind.BYE } },
@@ -154,7 +156,11 @@ export class BracketAdvancementService {
         participantA: teamA,
         participantB: teamB,
         seasonGame,
-        gameSetup,
+        gameSetup: resolveBracketSlotGameSetup(
+          bracketConfig,
+          leagueGroupId,
+          slot.slotKey,
+        ),
       });
       if (gameId) createdGameIds.push(gameId);
     }
