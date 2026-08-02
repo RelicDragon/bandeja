@@ -75,6 +75,7 @@ import { countsAsRatingActivity, countsForPlayStreak } from './ratingActivity';
 import {
   type OutcomeRecalculationOptions,
   shouldCascadeBracketOutcomesUndo,
+  shouldRebuildLeagueStandingsForGame,
 } from './outcomeRecalculationPolicy';
 
 async function rebuildLeagueSeasonStandingsIfNeeded(
@@ -83,9 +84,21 @@ async function rebuildLeagueSeasonStandingsIfNeeded(
 ): Promise<void> {
   const row = await tx.game.findUnique({
     where: { id: gameId },
-    select: { entityType: true, parentId: true },
+    select: {
+      entityType: true,
+      parentId: true,
+      leagueRound: { select: { roundType: true } },
+    },
   });
-  if (row?.entityType === EntityType.LEAGUE && row.parentId) {
+  if (
+    row &&
+    shouldRebuildLeagueStandingsForGame({
+      entityType: row.entityType,
+      parentId: row.parentId,
+      roundType: row.leagueRound?.roundType,
+    }) &&
+    row.parentId
+  ) {
     await LeagueStandingsRecalculateService.recalculateFromPlayedGames(row.parentId, tx);
   }
 }
@@ -310,6 +323,7 @@ export async function undoGameOutcomes(
       resultsStatus: true,
       outcomes: true,
       bracketSlot: { select: { id: true } },
+      leagueRound: { select: { roundType: true } },
     },
   });
 
@@ -420,7 +434,15 @@ export async function undoGameOutcomes(
     await recomputePlayStreakForUserSport(userId, game.sport, tx);
   }
 
-  if (isLeagueRoundGame && game.parentId) {
+  if (
+    isLeagueRoundGame &&
+    game.parentId &&
+    shouldRebuildLeagueStandingsForGame({
+      entityType: game.entityType,
+      parentId: game.parentId,
+      roundType: game.leagueRound?.roundType,
+    })
+  ) {
     await LeagueStandingsRecalculateService.recalculateFromPlayedGames(game.parentId, tx);
   }
 

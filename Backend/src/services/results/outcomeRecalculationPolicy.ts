@@ -1,4 +1,4 @@
-import { ResultsStatus } from '@prisma/client';
+import { EntityType, ResultsStatus, RoundType } from '@prisma/client';
 
 export type OutcomeRecalculationOptions = {
   /**
@@ -18,5 +18,17 @@ export function shouldCascadeBracketOutcomesUndo(input: {
     input.resultsStatus === ResultsStatus.FINAL &&
     input.hasBracketSlot &&
     !input.preserveBracketStructure
+  );
+}
+
+export function shouldRebuildLeagueStandingsForGame(input: {
+  entityType: EntityType;
+  parentId: string | null;
+  roundType?: RoundType | null;
+}): boolean {
+  return (
+    input.entityType === EntityType.LEAGUE &&
+    Boolean(input.parentId) &&
+    input.roundType !== RoundType.PLAYOFF
   );
 }

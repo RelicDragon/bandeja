@@ -1,10 +1,19 @@
 import assert from 'node:assert/strict';
-import { BracketSlotKind, ResultsStatus, type Prisma } from '@prisma/client';
+import {
+  BracketSlotKind,
+  EntityType,
+  ResultsStatus,
+  RoundType,
+  type Prisma,
+} from '@prisma/client';
 import {
   BracketAdvancementService,
   resolveBracketFixtureAffectsRating,
 } from './bracketAdvancement.service';
-import { shouldCascadeBracketOutcomesUndo } from '../results/outcomeRecalculationPolicy';
+import {
+  shouldCascadeBracketOutcomesUndo,
+  shouldRebuildLeagueStandingsForGame,
+} from '../results/outcomeRecalculationPolicy';
 
 async function run(): Promise<void> {
   assert.equal(
@@ -40,6 +49,24 @@ async function run(): Promise<void> {
     }),
     false,
     'rating-only recalculation must preserve downstream bracket games',
+  );
+  assert.equal(
+    shouldRebuildLeagueStandingsForGame({
+      entityType: EntityType.LEAGUE,
+      parentId: 'season-1',
+      roundType: RoundType.PLAYOFF,
+    }),
+    false,
+    'playoff outcome recalculation must not rebuild regular-season standings',
+  );
+  assert.equal(
+    shouldRebuildLeagueStandingsForGame({
+      entityType: EntityType.LEAGUE,
+      parentId: 'season-1',
+      roundType: RoundType.REGULAR,
+    }),
+    true,
+    'regular league fixtures must continue rebuilding standings',
   );
 
   const targetKinds = [
