@@ -608,7 +608,11 @@ export class BracketAdvancementService {
       }
       return this.resolveWinnerParticipantId(feeder.gameId, tx);
     }
-    return feeder.leagueParticipantId;
+    // A participant cached on a match slot is not proof that the match has
+    // produced a winner. Only BYEs can feed a participant without a FINAL
+    // game; otherwise downstream games could be created from an earlier-round
+    // winner before this feeder match is even played.
+    return null;
   }
 
   /** Clears downstream bracket games when a bracket game result is undone (§3.3). */
