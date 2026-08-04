@@ -1,5 +1,4 @@
 import html2canvas from 'html2canvas-pro';
-import { BRACKET_EXPORT_COLUMN_WIDTH } from '@/utils/bracketTreeCard.util';
 
 export function buildLeagueBracketScheduleQuery(params: {
   roundId?: string;
@@ -101,25 +100,12 @@ export function applyBracketExportCapture(exportRoot: HTMLElement): () => void {
         overflowX: 'visible',
         flexWrap: 'nowrap',
         maxWidth: 'none',
+        width: 'max-content',
       })
     );
-    void scrollRoot.offsetHeight;
-    const fullWidth = scrollRoot.scrollWidth;
-    restores.push(saveInlineStyles(scrollRoot, { width: `${fullWidth}px` }));
   }
 
-  const columnWidth = BRACKET_EXPORT_COLUMN_WIDTH;
   exportRoot.querySelectorAll<HTMLElement>(`[${BRACKET_EXPORT_COLUMN_ATTR}]`).forEach((col) => {
-    restores.push(
-      saveInlineStyles(col, {
-        width: columnWidth,
-        minWidth: columnWidth,
-        maxWidth: columnWidth,
-        flexShrink: '0',
-        alignSelf: 'flex-start',
-        height: 'auto',
-      })
-    );
     const slotsCol = col.querySelector<HTMLElement>(`[${BRACKET_EXPORT_SLOTS_ATTR}]`);
     if (slotsCol) {
       restores.push(
@@ -127,12 +113,38 @@ export function applyBracketExportCapture(exportRoot: HTMLElement): () => void {
           flex: 'none',
           height: 'auto',
           justifyContent: 'flex-start',
+          width: 'max-content',
+          maxWidth: 'none',
         })
       );
     }
+    restores.push(
+      saveInlineStyles(col, {
+        width: 'max-content',
+        minWidth: 'max-content',
+        maxWidth: 'none',
+        flexShrink: '0',
+        alignSelf: 'flex-start',
+        height: 'auto',
+      })
+    );
   });
 
   void exportRoot.offsetHeight;
+
+  exportRoot.querySelectorAll<HTMLElement>(`[${BRACKET_EXPORT_COLUMN_ATTR}]`).forEach((col) => {
+    const measured = Math.ceil(Math.max(col.scrollWidth || 0, col.offsetWidth || 0, 1));
+    const columnWidth = `${measured}px`;
+    col.style.width = columnWidth;
+    col.style.minWidth = columnWidth;
+    col.style.maxWidth = columnWidth;
+  });
+
+  if (scrollRoot) {
+    void scrollRoot.offsetHeight;
+    const fullWidth = scrollRoot.scrollWidth;
+    restores.push(saveInlineStyles(scrollRoot, { width: `${fullWidth}px` }));
+  }
 
   return () => {
     exportRoot.removeAttribute(BRACKET_EXPORT_CAPTURE_ATTR);

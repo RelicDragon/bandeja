@@ -57,7 +57,7 @@ export function LeagueBracketByeCard({
             ))}
           </div>
         ) : null}
-        <p className="min-w-0 truncate text-xs font-medium text-gray-800 dark:text-gray-100">
+        <p className="min-w-0 break-words text-xs font-medium text-gray-800 dark:text-gray-100">
           {name || t('gameDetails.bracketTbd')}
         </p>
       </div>

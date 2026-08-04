@@ -1,4 +1,5 @@
-import type { BracketPlayoffGroupDto, BracketSlotDto } from '@/api/leagues';
+import { finalistFromChampionshipSides } from '@shared/achievements';
+import type { BracketPlayoffGroupDto, BracketSlotDto, BracketSlotParticipantDto } from '@/api/leagues';
 import type { Game } from '@/types';
 import { isFullGame } from '@/utils/leagueBracketEnrich';
 import { resolveSlotFeederParticipant, slotsById } from '@/utils/leagueBracketLayout';
@@ -176,11 +177,11 @@ export function buildBracketPodium(group: BracketPlayoffGroupDto): BracketPodium
   if (finalSlot && !finalistId) {
     const winnerId = slotWinnerParticipantId(finalSlot, lookup);
     const { sideA, sideB } = resolveSlotSides(finalSlot, lookup);
-    const idA = participantIdFromSide(sideA);
-    const idB = participantIdFromSide(sideB);
-    if (winnerId && idA && idB) {
-      finalistId = winnerId === idA ? idB : idA;
-    }
+    finalistId = finalistFromChampionshipSides(
+      winnerId,
+      participantIdFromSide(sideA),
+      participantIdFromSide(sideB),
+    );
   }
 
   let thirdPlaceId: string | null = group.thirdPlaceParticipantId ?? null;
@@ -295,19 +296,42 @@ export function buildBracketSlotHighlights(
   return map;
 }
 
+/**
+ * Builds a display label from a single resolved participant object (prefers
+ * `displayName`, else joins the team players' names). Returns '' when no label
+ * can be derived.
+ */
+export function participantLabel(participant: BracketSlotParticipantDto | null | undefined): string {
+  if (!participant) return '';
+  const name = participant.displayName?.trim();
+  if (name) return name;
+  const players = participant.leagueTeam?.players ?? [];
+  const names = players
+    .map((p) => `${p.user?.firstName ?? ''} ${p.user?.lastName ?? ''}`.trim())
+    .filter(Boolean);
+  if (names.length) return names.join(' / ');
+  return '';
+}
+
+/**
+ * Resolves a display label for a participant id. When the backend provides a
+ * resolved participant object (e.g. group.champion/finalist/thirdPlace), that is
+ * preferred so a label renders even if the bracket slot cache is stale and the
+ * participant isn't attached to any slot. Falls back to scanning slot participants.
+ */
 export function participantLabelFromSlots(
   participantId: string,
-  slots: BracketSlotDto[]
+  slots: BracketSlotDto[],
+  resolved?: BracketSlotParticipantDto | null
 ): string {
+  if (resolved?.id === participantId) {
+    const label = participantLabel(resolved);
+    if (label) return label;
+  }
   for (const slot of slots) {
     if (slot.participant?.id === participantId) {
-      const name = slot.participant.displayName?.trim();
-      if (name) return name;
-      const players = slot.participant.leagueTeam?.players ?? [];
-      const names = players
-        .map((p) => `${p.user?.firstName ?? ''} ${p.user?.lastName ?? ''}`.trim())
-        .filter(Boolean);
-      if (names.length) return names.join(' / ');
+      const label = participantLabel(slot.participant);
+      if (label) return label;
     }
   }
   return '';

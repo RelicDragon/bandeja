@@ -15,6 +15,7 @@ import { LeagueGameResultsService } from '../league/gameResults.service';
 import { BracketAdvancementService } from '../league/bracketAdvancement.service';
 import { BracketGameNotificationService } from '../league/bracketGameNotification.service';
 import { LeagueStandingsRecalculateService } from '../league/leagueStandingsRecalculate.service';
+import { maybeFinalizeSeasonAfterBracketGame } from '../league/leagueSeasonFinalize.service';
 import { SocialParticipantLevelService } from '../socialParticipantLevel.service';
 import { calculateGameStatus, isResultsBasedEntityType, ARCHIVE_BY_FINISHED_DATE_TYPES } from '../../utils/gameStatus';
 import { attemptBetResolutionAfterOutcomesRecalc } from '../bets/betResolution.service';
@@ -476,6 +477,7 @@ export async function applyGameOutcomes(
   wasEdited: boolean;
   shouldResolveBets: boolean;
   bracketCreatedGameIds: string[];
+  bracketFinalizedSeasonIds: string[];
   releasedPlayIntentIds: string[];
 }> {
   const game = await tx.game.findUnique({
@@ -862,8 +864,17 @@ export async function applyGameOutcomes(
     await rebuildLeagueSeasonStandingsIfNeeded(gameId, tx);
 
     let bracketCreatedGameIds: string[] = [];
+    const bracketFinalizedSeasonIds: string[] = [];
     if (previousResultsStatus !== 'FINAL') {
       bracketCreatedGameIds = await BracketAdvancementService.onGameFinalized(gameId, tx);
+      // When a bracket game finalizes, check if the parent season's playoff is
+      // fully decided and auto-finalize it (which grants podium trophies) in the
+      // same transaction. Idempotent: no-op if not a bracket game or season is
+      // already FINAL / not all decisive games are done.
+      const finalizedSeasonId = await maybeFinalizeSeasonAfterBracketGame(gameId, tx);
+      if (finalizedSeasonId) {
+        bracketFinalizedSeasonIds.push(finalizedSeasonId);
+      }
     }
 
     // Sync podium on FINAL (idempotent; revoke+re-award only when winner set changes).
@@ -884,6 +895,7 @@ export async function applyGameOutcomes(
       wasEdited: previousResultsStatus === 'FINAL' || previousResultsStatus === 'IN_PROGRESS',
       shouldResolveBets: previousResultsStatus !== 'FINAL',
       bracketCreatedGameIds,
+      bracketFinalizedSeasonIds,
       releasedPlayIntentIds,
     };
   }
@@ -892,6 +904,7 @@ export async function applyGameOutcomes(
     wasEdited: false,
     shouldResolveBets: false,
     bracketCreatedGameIds: [] as string[],
+    bracketFinalizedSeasonIds: [] as string[],
     releasedPlayIntentIds,
   };
 }

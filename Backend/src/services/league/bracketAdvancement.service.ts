@@ -19,6 +19,10 @@ import {
   championshipResolvedByFirstGrandFinal,
   grandFinalResetRequired,
 } from './bracketDoubleElimination.util';
+import { selectChampionshipGame, isThirdPlaceTreeDecided } from './bracketChampionship.util';
+import {
+  pickChampionAndFinalistTeamNumbers,
+} from './fixedTeamMatchOutcome.util';
 import { stalePlayingParticipantIds } from './bracketSlotPatch.util';
 import {
   BracketGameSetupConfig,
@@ -122,11 +126,20 @@ export class BracketAdvancementService {
     }
 
     const winnerId = await this.resolveWinnerParticipantId(gameId, tx);
-    if (winnerId && slot.winnerSlotId) {
+    if (winnerId) {
+      // Always pin this game's winner on the slot itself so labels / winners-block
+      // match outcomes (feeders only seed the *next* match and were historically
+      // last-write-wins between two quarterfinals feeding the same slot).
       await tx.leagueBracketSlot.update({
-        where: { id: slot.winnerSlotId },
+        where: { id: slot.id },
         data: { leagueParticipantId: winnerId },
       });
+      if (slot.winnerSlotId) {
+        await tx.leagueBracketSlot.update({
+          where: { id: slot.winnerSlotId },
+          data: { leagueParticipantId: winnerId },
+        });
+      }
     }
 
     const createdGameIds = await this.tryCreateReadyGames(
@@ -230,11 +243,17 @@ export class BracketAdvancementService {
       return null;
     }
 
-    const [firstFinalWinner, winnersChampion, losersChampion] = await Promise.all([
-      this.resolveWinnerParticipantId(firstFinal.gameId, tx),
-      this.participantIdFromFeeder(firstFinal.feederSlotA, tx, BracketSlotKind.GRAND_FINAL),
-      this.participantIdFromFeeder(firstFinal.feederSlotB, tx, BracketSlotKind.GRAND_FINAL),
-    ]);
+    const firstFinalWinner = await this.resolveWinnerParticipantId(firstFinal.gameId, tx);
+    const winnersChampion = await this.participantIdFromFeeder(
+      firstFinal.feederSlotA,
+      tx,
+      BracketSlotKind.GRAND_FINAL
+    );
+    const losersChampion = await this.participantIdFromFeeder(
+      firstFinal.feederSlotB,
+      tx,
+      BracketSlotKind.GRAND_FINAL
+    );
     if (
       !grandFinalResetRequired({
         firstFinalWinnerId: firstFinalWinner,
@@ -346,10 +365,8 @@ export class BracketAdvancementService {
     });
     if (!existingSlot || existingSlot.gameId) return null;
 
-    const [team1, team2] = await Promise.all([
-      this.rosterForParticipant(participantA, tx),
-      this.rosterForParticipant(participantB, tx),
-    ]);
+    const team1 = await this.rosterForParticipant(participantA, tx);
+    const team2 = await this.rosterForParticipant(participantB, tx);
 
     const scheduleTemplate =
       existingSlot.scheduledClubId &&
@@ -393,10 +410,14 @@ export class BracketAdvancementService {
     return prisma.$transaction((tx) => this.resolveWinnerParticipantId(gameId, tx));
   }
 
-  static async resolveWinnerParticipantId(
+  /**
+   * Single load for fixed-team finals: champion + finalist are always derived
+   * together so trophies, API labels, and advancement cannot disagree.
+   */
+  static async resolveChampionAndFinalistParticipantIds(
     gameId: string,
     tx: Prisma.TransactionClient
-  ): Promise<string | null> {
+  ): Promise<{ championId: string | null; finalistId: string | null }> {
     const game = await tx.game.findUnique({
       where: { id: gameId },
       include: {
@@ -404,52 +425,44 @@ export class BracketAdvancementService {
         fixedTeams: { include: { players: true } },
       },
     });
-    if (!game?.fixedTeams?.length || game.resultsStatus !== ResultsStatus.FINAL) {
-      return null;
+    if (!game?.fixedTeams?.length || game.resultsStatus !== ResultsStatus.FINAL || !game.parentId) {
+      return { championId: null, finalistId: null };
     }
 
-    const teamScores = new Map<number, { wins: number; isWinner: boolean }>();
-    for (const outcome of game.outcomes) {
-      const team = game.fixedTeams.find((t) =>
-        t.players.some((p) => p.userId === outcome.userId)
-      );
-      if (!team) continue;
-      const prev = teamScores.get(team.teamNumber) ?? { wins: 0, isWinner: false };
-      prev.wins += outcome.wins ?? 0;
-      if (outcome.isWinner) prev.isWinner = true;
-      teamScores.set(team.teamNumber, prev);
-    }
+    const pair = pickChampionAndFinalistTeamNumbers({
+      fixedTeams: game.fixedTeams,
+      outcomes: game.outcomes,
+    });
+    if (!pair) return { championId: null, finalistId: null };
 
-    // A FINAL marker alone is insufficient proof of a winner. Require an
-    // outcome for every fixed team and reject contradictory/tied data instead
-    // of advancing whichever team happened to be iterated first.
-    if (teamScores.size !== game.fixedTeams.length) return null;
+    const winningTeam = game.fixedTeams.find((t) => t.teamNumber === pair.winningTeamNumber);
+    const losingTeam = game.fixedTeams.find((t) => t.teamNumber === pair.losingTeamNumber);
+    if (!winningTeam || !losingTeam) return { championId: null, finalistId: null };
 
-    const explicitWinners = [...teamScores.entries()]
-      .filter(([, score]) => score.isWinner)
-      .map(([teamNumber]) => teamNumber);
-    if (explicitWinners.length > 1) return null;
-
-    let winningTeamNumber: number | null = explicitWinners[0] ?? null;
-    if (winningTeamNumber == null) {
-      const bestWins = Math.max(...[...teamScores.values()].map((score) => score.wins));
-      const bestTeams = [...teamScores.entries()]
-        .filter(([, score]) => score.wins === bestWins)
-        .map(([teamNumber]) => teamNumber);
-      if (bestTeams.length !== 1) return null;
-      winningTeamNumber = bestTeams[0];
-    }
-
-    const winningTeam = game.fixedTeams.find((t) => t.teamNumber === winningTeamNumber);
-    if (!winningTeam || !game.parentId) return null;
-
-    const playerIds = winningTeam.players
+    const { findTeamParticipantByRoster } = await import('./leagueParticipantResolve');
+    const winnerPlayers = winningTeam.players
+      .map((p) => p.userId)
+      .filter((id): id is string => typeof id === 'string' && id.length > 0);
+    const loserPlayers = losingTeam.players
       .map((p) => p.userId)
       .filter((id): id is string => typeof id === 'string' && id.length > 0);
 
-    const { findTeamParticipantByRoster } = await import('./leagueParticipantResolve');
-    const participant = await findTeamParticipantByRoster(tx, game.parentId, playerIds);
-    return participant?.id ?? null;
+    const champion = await findTeamParticipantByRoster(tx, game.parentId, winnerPlayers);
+    const finalist = await findTeamParticipantByRoster(tx, game.parentId, loserPlayers);
+    const championId = champion?.id ?? null;
+    const finalistId = finalist?.id ?? null;
+    if (!championId || !finalistId || championId === finalistId) {
+      return { championId: null, finalistId: null };
+    }
+    return { championId, finalistId };
+  }
+
+  static async resolveWinnerParticipantId(
+    gameId: string,
+    tx: Prisma.TransactionClient
+  ): Promise<string | null> {
+    const pair = await this.resolveChampionAndFinalistParticipantIds(gameId, tx);
+    return pair.championId;
   }
 
   static async resolveLoserParticipantIdFromGame(gameId: string): Promise<string | null> {
@@ -479,62 +492,42 @@ export class BracketAdvancementService {
 
   static async resolveChampionshipFromSlots(
     slots: Array<{
+      id?: string;
       slotKind: BracketSlotKind;
       roundIndex: number;
       gameId: string | null;
       winnerSlotId: string | null;
       feederSlotAId: string | null;
       game?: { resultsStatus: ResultsStatus | string } | null;
-    }>
+    }>,
+    /** Prefer the caller's transaction so uncommitted FINAL games are visible. */
+    db?: Prisma.TransactionClient
   ): Promise<{
     championParticipantId: string | null;
     finalistParticipantId: string | null;
     finalGameId: string | null;
   }> {
-    return prisma.$transaction(async (tx) => {
-      const grandFinals = slots
-        .filter((slot) => slot.slotKind === BracketSlotKind.GRAND_FINAL)
-        .sort((a, b) => b.roundIndex - a.roundIndex);
-      const legacyGrandFinal = grandFinals.length === 1 ? grandFinals[0] : null;
-      if (
-        legacyGrandFinal?.gameId &&
-        legacyGrandFinal.game?.resultsStatus === ResultsStatus.FINAL
-      ) {
+    const run = async (tx: Prisma.TransactionClient) => {
+      const selection = selectChampionshipGame(slots);
+      if (selection.kind === 'resolved_game') {
+        const pair = await this.resolveChampionAndFinalistParticipantIds(selection.gameId, tx);
         return {
-          championParticipantId: await this.resolveWinnerParticipantId(
-            legacyGrandFinal.gameId,
-            tx
-          ),
-          finalistParticipantId: await this.resolveLoserParticipantId(
-            legacyGrandFinal.gameId,
-            tx
-          ),
-          finalGameId: legacyGrandFinal.gameId,
+          championParticipantId: pair.championId,
+          finalistParticipantId: pair.finalistId,
+          finalGameId: pair.championId && pair.finalistId ? selection.gameId : null,
         };
       }
-      const completedReset = grandFinals.find(
-        (slot) =>
-          slot.roundIndex > 0 &&
-          slot.gameId &&
-          slot.game?.resultsStatus === ResultsStatus.FINAL
-      );
-      if (completedReset?.gameId) {
-        return {
-          championParticipantId: await this.resolveWinnerParticipantId(completedReset.gameId, tx),
-          finalistParticipantId: await this.resolveLoserParticipantId(completedReset.gameId, tx),
-          finalGameId: completedReset.gameId,
-        };
-      }
-
-      const firstGrandFinal = grandFinals.find((slot) => slot.roundIndex === 0);
-      if (
-        firstGrandFinal?.gameId &&
-        firstGrandFinal.game?.resultsStatus === ResultsStatus.FINAL &&
-        firstGrandFinal.feederSlotAId
-      ) {
-        const winner = await this.resolveWinnerParticipantId(firstGrandFinal.gameId, tx);
+      if (selection.kind === 'first_grand_final_candidate') {
+        const pair = await this.resolveChampionAndFinalistParticipantIds(selection.gameId, tx);
+        if (!pair.championId) {
+          return {
+            championParticipantId: null,
+            finalistParticipantId: null,
+            finalGameId: null,
+          };
+        }
         const winnersFeeder = await tx.leagueBracketSlot.findUnique({
-          where: { id: firstGrandFinal.feederSlotAId },
+          where: { id: selection.winnersFeederSlotId },
           include: { game: true },
         });
         const winnersChampion = await this.participantIdFromFeeder(
@@ -544,80 +537,87 @@ export class BracketAdvancementService {
         );
         if (
           championshipResolvedByFirstGrandFinal({
-            firstFinalWinnerId: winner,
+            firstFinalWinnerId: pair.championId,
             winnersChampionId: winnersChampion,
           })
         ) {
           return {
-            championParticipantId: winner,
-            finalistParticipantId: await this.resolveLoserParticipantId(
-              firstGrandFinal.gameId,
-              tx
-            ),
-            finalGameId: firstGrandFinal.gameId,
+            championParticipantId: pair.championId,
+            finalistParticipantId: pair.finalistId,
+            finalGameId: pair.finalistId ? selection.gameId : null,
           };
         }
-        return {
-          championParticipantId: null,
-          finalistParticipantId: null,
-          finalGameId: null,
-        };
-      }
-
-      if (grandFinals.length > 0) {
-        return {
-          championParticipantId: null,
-          finalistParticipantId: null,
-          finalGameId: null,
-        };
-      }
-      const mainFinal = slots.find(
-        (slot) => slot.slotKind === BracketSlotKind.MAIN && slot.winnerSlotId == null
-      );
-      if (!mainFinal?.gameId || mainFinal.game?.resultsStatus !== ResultsStatus.FINAL) {
-        return {
-          championParticipantId: null,
-          finalistParticipantId: null,
-          finalGameId: null,
-        };
       }
       return {
-        championParticipantId: await this.resolveWinnerParticipantId(mainFinal.gameId, tx),
-        finalistParticipantId: await this.resolveLoserParticipantId(mainFinal.gameId, tx),
-        finalGameId: mainFinal.gameId,
+        championParticipantId: null,
+        finalistParticipantId: null,
+        finalGameId: null,
       };
-    });
+    };
+
+    if (db) return run(db);
+    return prisma.$transaction(run);
+  }
+
+  /**
+   * Tree podium for a single group/season tree (API + trophies share this).
+   * Returns null ids when championship or required bronze is not decided.
+   */
+  static async resolveTreePodiumFromSlots(
+    slots: Array<{
+      id?: string;
+      slotKind: BracketSlotKind;
+      roundIndex: number;
+      gameId: string | null;
+      winnerSlotId: string | null;
+      feederSlotAId: string | null;
+      game?: { resultsStatus: ResultsStatus | string } | null;
+    }>,
+    tx: Prisma.TransactionClient,
+    opts?: { requireThirdPlaceWhenPresent?: boolean }
+  ): Promise<{
+    championParticipantId: string | null;
+    finalistParticipantId: string | null;
+    thirdPlaceParticipantId: string | null;
+  }> {
+    const requireThird = opts?.requireThirdPlaceWhenPresent ?? true;
+    const hasThirdSlot = slots.some((s) => s.slotKind === BracketSlotKind.THIRD_PLACE);
+    if (requireThird && hasThirdSlot && !isThirdPlaceTreeDecided(slots, true)) {
+      return {
+        championParticipantId: null,
+        finalistParticipantId: null,
+        thirdPlaceParticipantId: null,
+      };
+    }
+
+    const championship = await this.resolveChampionshipFromSlots(slots, tx);
+    if (!championship.championParticipantId || !championship.finalistParticipantId) {
+      return {
+        championParticipantId: null,
+        finalistParticipantId: null,
+        thirdPlaceParticipantId: null,
+      };
+    }
+
+    let thirdPlaceParticipantId: string | null = null;
+    const thirdSlot = slots.find((s) => s.slotKind === BracketSlotKind.THIRD_PLACE);
+    if (thirdSlot?.gameId && thirdSlot.game?.resultsStatus === ResultsStatus.FINAL) {
+      thirdPlaceParticipantId = await this.resolveWinnerParticipantId(thirdSlot.gameId, tx);
+    }
+
+    return {
+      championParticipantId: championship.championParticipantId,
+      finalistParticipantId: championship.finalistParticipantId,
+      thirdPlaceParticipantId,
+    };
   }
 
   static async resolveLoserParticipantId(
     gameId: string,
     tx: Prisma.TransactionClient
   ): Promise<string | null> {
-    const game = await tx.game.findUnique({
-      where: { id: gameId },
-      include: {
-        outcomes: true,
-        fixedTeams: { include: { players: true } },
-      },
-    });
-    if (!game?.fixedTeams?.length || game.resultsStatus !== ResultsStatus.FINAL) {
-      return null;
-    }
-
-    const winnerId = await this.resolveWinnerParticipantId(gameId, tx);
-    if (!winnerId || !game.parentId) return null;
-
-    const { findTeamParticipantByRoster } = await import('./leagueParticipantResolve');
-    for (const team of game.fixedTeams) {
-      const playerIds = team.players
-        .map((p) => p.userId)
-        .filter((id): id is string => typeof id === 'string' && id.length > 0);
-      const participant = await findTeamParticipantByRoster(tx, game.parentId, playerIds);
-      if (participant?.id && participant.id !== winnerId) {
-        return participant.id;
-      }
-    }
-    return null;
+    const pair = await this.resolveChampionAndFinalistParticipantIds(gameId, tx);
+    return pair.finalistId;
   }
 
   static async participantIdFromFeeder(

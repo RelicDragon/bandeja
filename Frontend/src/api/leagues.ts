@@ -97,6 +97,18 @@ export interface BracketOriginGroupDto {
   color?: string | null;
 }
 
+export type BracketSlotParticipantDto = {
+  id: string;
+  seedRank?: number | null;
+  displayName?: string | null;
+  originGroupId?: string | null;
+  originGroup?: BracketOriginGroupDto | null;
+  leagueTeam?: {
+    id: string;
+    players: Array<{ id: string; userId: string; user?: import('@/types').BasicUser }>;
+  };
+};
+
 export interface BracketSlotDto {
   id: string;
   slotKey: string;
@@ -113,17 +125,7 @@ export interface BracketSlotDto {
   winnerSlotId?: string | null;
   originGroupId?: string | null;
   originGroup?: BracketOriginGroupDto | null;
-  participant?: {
-    id: string;
-    seedRank?: number | null;
-    displayName?: string | null;
-    originGroupId?: string | null;
-    originGroup?: BracketOriginGroupDto | null;
-    leagueTeam?: {
-      id: string;
-      players: Array<{ id: string; userId: string; user?: import('@/types').BasicUser }>;
-    };
-  } | null;
+  participant?: BracketSlotParticipantDto | null;
   game?: Game | BracketSlotGameSummary | null;
   schedule?: BracketSlotScheduleDto | null;
 }
@@ -179,6 +181,11 @@ export interface BracketPlayoffGroupDto {
   championParticipantId?: string;
   finalistParticipantId?: string;
   thirdPlaceParticipantId?: string;
+  /** Resolved participant objects (with team + players) so podium labels can be
+   * rendered even when bracket slot caches are stale. */
+  champion?: BracketSlotParticipantDto | null;
+  finalist?: BracketSlotParticipantDto | null;
+  thirdPlace?: BracketSlotParticipantDto | null;
 }
 
 export interface BracketPlayoffResponse {

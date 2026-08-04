@@ -1,9 +1,12 @@
 import assert from 'node:assert/strict';
 import {
+  finalistFromChampionshipSides,
   groupUserIdsByPodiumPlace,
   isPodiumEligibleEntityType,
   meetsPodiumParticipantFloor,
+  mergeTreePodiumsIntoEventPlaces,
   podiumDefinitionForPlace,
+  treeKeysForBracketPodium,
   usesBracketPlacesForEventPodium,
 } from '@bandeja/shared/achievements';
 import {
@@ -33,11 +36,98 @@ import {
 }
 
 {
+  // CROSS_GROUP and PER_GROUP both drive the event podium from bracket places.
+  // Each PER_GROUP tree contributes its own champion/finalist/third, so a
+  // multi-group season awards one gold/silver/bronze set per group.
   assert.equal(usesBracketPlacesForEventPodium('CROSS_GROUP', 0), true);
   assert.equal(usesBracketPlacesForEventPodium('CROSS_GROUP', 5), true);
   assert.equal(usesBracketPlacesForEventPodium('PER_GROUP', 0), true);
   assert.equal(usesBracketPlacesForEventPodium('PER_GROUP', 1), true);
-  assert.equal(usesBracketPlacesForEventPodium('PER_GROUP', 2), false);
+  assert.equal(usesBracketPlacesForEventPodium('PER_GROUP', 2), true);
+  assert.equal(usesBracketPlacesForEventPodium('PER_GROUP', 3), true);
+}
+
+{
+  // Season-wide (CROSS_GROUP): one null-scoped tree.
+  assert.deepEqual(treeKeysForBracketPodium('CROSS_GROUP', ['g1', 'g2', 'g3']), [null]);
+  assert.deepEqual(treeKeysForBracketPodium('CROSS_GROUP', []), [null]);
+  // Per-group: one tree key per division.
+  assert.deepEqual(treeKeysForBracketPodium('PER_GROUP', ['g1', 'g2']), ['g1', 'g2']);
+  assert.deepEqual(treeKeysForBracketPodium('PER_GROUP', ['only']), ['only']);
+  // No groups yet: still one tree so empty seasons don't fall through to RR.
+  assert.deepEqual(treeKeysForBracketPodium('PER_GROUP', []), [null]);
+}
+
+{
+  // Finalist is always the other side of a completed final.
+  assert.equal(finalistFromChampionshipSides('champ', 'champ', 'runner'), 'runner');
+  assert.equal(finalistFromChampionshipSides('runner', 'champ', 'runner'), 'champ');
+  assert.equal(finalistFromChampionshipSides(null, 'a', 'b'), null);
+  assert.equal(finalistFromChampionshipSides('c', 'a', 'b'), null, 'winner not on either side');
+}
+
+{
+  // CROSS_GROUP / single tree: one finalist (final-game loser), not RR #2.
+  const seasonWide = mergeTreePodiumsIntoEventPlaces([
+    {
+      championParticipantId: 'season-champ',
+      finalistParticipantId: 'season-finalist',
+      thirdPlaceParticipantId: 'season-third',
+    },
+  ]);
+  assert.deepEqual(seasonWide.get(1), ['season-champ']);
+  assert.deepEqual(seasonWide.get(2), ['season-finalist']);
+  assert.deepEqual(seasonWide.get(3), ['season-third']);
+}
+
+{
+  // PER_GROUP multi: each division contributes its own finalist (silver).
+  // Must NOT collapse to a single season finalist or RR standings rows.
+  const multiGroup = mergeTreePodiumsIntoEventPlaces([
+    {
+      championParticipantId: 'g1-champ',
+      finalistParticipantId: 'g1-finalist',
+      thirdPlaceParticipantId: 'g1-third',
+    },
+    {
+      championParticipantId: 'g2-champ',
+      finalistParticipantId: 'g2-finalist',
+      thirdPlaceParticipantId: 'g2-third',
+    },
+  ]);
+  assert.deepEqual(multiGroup.get(1), ['g1-champ', 'g2-champ']);
+  assert.deepEqual(multiGroup.get(2), ['g1-finalist', 'g2-finalist']);
+  assert.deepEqual(multiGroup.get(3), ['g1-third', 'g2-third']);
+}
+
+{
+  // Tree without a champion contributes no places (partial season).
+  const partial = mergeTreePodiumsIntoEventPlaces([
+    {
+      championParticipantId: null,
+      finalistParticipantId: 'should-not-appear',
+    },
+    {
+      championParticipantId: 'done-champ',
+      finalistParticipantId: 'done-finalist',
+    },
+  ]);
+  assert.deepEqual(partial.get(1), ['done-champ']);
+  assert.deepEqual(partial.get(2), ['done-finalist']);
+  assert.equal(partial.has(3), false);
+}
+
+{
+  // Completed final without third: finalist still awarded (silver only).
+  const noThird = mergeTreePodiumsIntoEventPlaces([
+    {
+      championParticipantId: 'c',
+      finalistParticipantId: 'f',
+      thirdPlaceParticipantId: null,
+    },
+  ]);
+  assert.deepEqual(noThird.get(2), ['f']);
+  assert.equal(noThird.has(3), false);
 }
 
 {

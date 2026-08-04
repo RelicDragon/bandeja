@@ -12,6 +12,8 @@
 [data-bracket-export-capture] [data-bracket-export-column] {
   align-self: flex-start !important;
   height: auto !important;
+  width: max-content !important;
+  max-width: none !important;
 }
 
 [data-bracket-export-capture] [data-bracket-export-slots] {
@@ -25,6 +27,7 @@
 }
 
 [data-bracket-export-capture] .bracket-tree-card {
-  min-width: 16rem !important;
-  max-width: 17rem !important;
+  width: 100% !important;
+  min-width: max-content !important;
+  max-width: none !important;
 }

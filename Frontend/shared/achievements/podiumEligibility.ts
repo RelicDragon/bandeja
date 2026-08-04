@@ -41,13 +41,73 @@ export function isPodiumEligibleEntityType(
 }
 
 /**
- * Event-wide podium uses bracket places only for a single tree (CROSS_GROUP, or
- * PER_GROUP with ≤1 group). Multi-group PER_GROUP is division trees → RR standings.
+ * Event-wide podium uses bracket places whenever a playoff bracket exists
+ * (CROSS_GROUP or PER_GROUP). Multi-group PER_GROUP awards one gold/silver/bronze
+ * set per division tree — never RR standings for a bracket season.
+ * `groupCount` is retained for callers; it does not change the decision.
  */
 export function usesBracketPlacesForEventPodium(
-  bracketScope: string,
-  groupCount: number,
+  _bracketScope: string,
+  _groupCount: number,
 ): boolean {
-  if (bracketScope === 'CROSS_GROUP') return true;
-  return groupCount <= 1;
+  return true;
+}
+
+/**
+ * Which bracket trees contribute podium places for a season.
+ * CROSS_GROUP: one season tree (`null` group key).
+ * PER_GROUP: one tree per league group id (empty group list falls back to `[null]`).
+ */
+export function treeKeysForBracketPodium(
+  bracketScope: string,
+  groupIds: readonly string[],
+): Array<string | null> {
+  if (bracketScope === 'CROSS_GROUP') return [null];
+  if (groupIds.length === 0) return [null];
+  return [...groupIds];
+}
+
+/**
+ * Finalist of a single-elim (or resolved DE) final is the side that lost to the
+ * champion. Returns null when sides or winner are incomplete/inconsistent.
+ */
+export function finalistFromChampionshipSides(
+  championParticipantId: string | null | undefined,
+  sideAParticipantId: string | null | undefined,
+  sideBParticipantId: string | null | undefined,
+): string | null {
+  if (!championParticipantId || !sideAParticipantId || !sideBParticipantId) return null;
+  if (championParticipantId === sideAParticipantId) return sideBParticipantId;
+  if (championParticipantId === sideBParticipantId) return sideAParticipantId;
+  return null;
+}
+
+export type TreeBracketPodiumIds = {
+  championParticipantId: string | null;
+  finalistParticipantId: string | null;
+  thirdPlaceParticipantId?: string | null;
+};
+
+/**
+ * Merges per-tree champion/finalist/third into event-wide place bags.
+ * Multi-group PER_GROUP seasons pass one entry per group; CROSS_GROUP passes one.
+ * Finalists are place 2 (silver) — one per tree, never inferred from RR standings.
+ */
+export function mergeTreePodiumsIntoEventPlaces(
+  trees: readonly TreeBracketPodiumIds[],
+): Map<PodiumPlace, string[]> {
+  const placeToParticipants = new Map<PodiumPlace, string[]>();
+  const push = (place: PodiumPlace, id: string | null | undefined) => {
+    if (!id) return;
+    const list = placeToParticipants.get(place) ?? [];
+    if (!list.includes(id)) list.push(id);
+    placeToParticipants.set(place, list);
+  };
+  for (const tree of trees) {
+    if (!tree.championParticipantId) continue;
+    push(1, tree.championParticipantId);
+    push(2, tree.finalistParticipantId);
+    push(3, tree.thirdPlaceParticipantId ?? null);
+  }
+  return placeToParticipants;
 }

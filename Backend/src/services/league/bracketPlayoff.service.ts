@@ -1075,6 +1075,24 @@ export class BracketPlayoffService {
           configEntry?.includeDoubleElimination ??
           hasDoubleElim;
 
+        // Resolve full participant objects for the podium ids so the client can
+        // render champion/finalist/third labels even when the bracket slot cache
+        // is stale (the slot cache is a navigation hint, not a source of truth).
+        // Reuse participants already loaded on the group's slots; fall back to a
+        // DB lookup only for ids not present on any slot.
+        const champion = await this.resolvePodiumParticipant(
+          championParticipantId,
+          slots
+        );
+        const finalist = await this.resolvePodiumParticipant(
+          finalistParticipantId,
+          slots
+        );
+        const thirdPlace = await this.resolvePodiumParticipant(
+          thirdPlaceParticipantId,
+          slots
+        );
+
         return {
           leagueGroupId,
           entrantCount,
@@ -1087,6 +1105,9 @@ export class BracketPlayoffService {
           championParticipantId,
           finalistParticipantId,
           thirdPlaceParticipantId,
+          champion,
+          finalist,
+          thirdPlace,
           slots: slots.map((s) => {
             const lp = s.leagueParticipant as
               | {
@@ -1153,6 +1174,37 @@ export class BracketPlayoffService {
       },
       groups: projectBracketPlayoffGroups(groups, seasonSport),
     };
+  }
+
+  /**
+   * Resolves a full LeagueParticipant object (with team + players + user) for a
+   * podium id (champion/finalist/third). Reuses participants already loaded on
+   * the group's slots to avoid extra queries; falls back to a DB lookup for ids
+   * not present on any slot (which happens when the slot cache is stale).
+   * Returns undefined when no id is provided.
+   */
+  private static async resolvePodiumParticipant(
+    participantId: string | undefined,
+    slots: SlotRow[]
+  ): Promise<unknown> {
+    if (!participantId) return undefined;
+    const fromSlot = slots.find(
+      (s) => s.leagueParticipant?.id === participantId
+    )?.leagueParticipant;
+    if (fromSlot) return fromSlot;
+    // Stale slot cache: the podium participant isn't attached to any slot.
+    // Fetch it directly so the client can still render the label.
+    return prisma.leagueParticipant.findUnique({
+      where: { id: participantId },
+      include: {
+        currentGroup: { select: { id: true, name: true, color: true } },
+        leagueTeam: {
+          include: {
+            players: { include: { user: { select: LEAGUE_USER_SELECT } } },
+          },
+        },
+      },
+    });
   }
 
   static async patchBracketSlots(

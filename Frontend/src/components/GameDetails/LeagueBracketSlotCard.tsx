@@ -111,7 +111,7 @@ function SideRow({
           </div>
         ) : null}
         <span
-          className={`min-w-0 truncate text-xs font-medium ${
+          className={`min-w-0 break-words text-xs font-medium ${
             loser
               ? 'text-gray-400 line-through decoration-gray-400/70 dark:text-gray-500 dark:decoration-gray-500/70'
               : 'text-gray-800 dark:text-gray-100'
@@ -207,14 +207,14 @@ export function LeagueBracketSlotCard({
           ) : null}
         </div>
         {bothSidesUnknown ? (
-          <div className="flex min-w-0 items-center justify-center gap-2 py-1">
-            <span className="min-w-0 truncate text-xs font-medium text-gray-800 dark:text-gray-100">
+          <div className="flex min-w-max items-center justify-center gap-2 py-1">
+            <span className="min-w-0 break-words text-xs font-medium text-gray-800 dark:text-gray-100">
               {sideA.label}
             </span>
             <span className="shrink-0 text-[10px] font-bold uppercase text-indigo-600 dark:text-indigo-400">
               {t('gameDetails.fixtureVsShort')}
             </span>
-            <span className="min-w-0 truncate text-xs font-medium text-gray-800 dark:text-gray-100">
+            <span className="min-w-0 break-words text-xs font-medium text-gray-800 dark:text-gray-100">
               {sideB.label}
             </span>
           </div>

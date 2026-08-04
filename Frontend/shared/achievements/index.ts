@@ -74,11 +74,15 @@ export {
 } from './partnerMatchScan';
 
 export {
+  finalistFromChampionshipSides,
   groupUserIdsByPodiumPlace,
   isPodiumEligibleEntityType,
   isPodiumPlace,
   meetsPodiumParticipantFloor,
+  mergeTreePodiumsIntoEventPlaces,
   podiumDefinitionForPodiumPlace,
+  treeKeysForBracketPodium,
   usesBracketPlacesForEventPodium,
   type PodiumPlace,
+  type TreeBracketPodiumIds,
 } from './podiumEligibility';

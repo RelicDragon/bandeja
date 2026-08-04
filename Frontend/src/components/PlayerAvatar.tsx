@@ -108,7 +108,7 @@ export const PlayerAvatar = ({ player, subscribePresence = true, isCurrentUser, 
       };
     }
     if (superTiny) return { avatar: 'w-4 h-4', text: 'text-[7px] leading-none', name: '', level: 'w-4 h-4 text-[8px]', crown: 'w-4 h-4', crownIcon: 8, remove: 'w-3 h-3', removeIcon: 6 };
-    if (extrasmall) return { avatar: 'w-8 h-8', text: 'text-xs', name: 'pt-1.5   text-[10px] h-8 leading-tight', level: 'w-4 h-4 text-[8px]', crown: 'w-4 h-4', crownIcon: 8, remove: 'w-4 h-4', removeIcon: 8 };
+    if (extrasmall) return { avatar: 'w-8 h-8', text: 'text-xs', name: 'pt-1.5 text-[10px] min-h-8 w-full leading-tight', level: 'w-4 h-4 text-[8px]', crown: 'w-4 h-4', crownIcon: 8, remove: 'w-4 h-4', removeIcon: 8 };
     if (smallLayout) return { avatar: 'w-12 h-12', text: 'text-sm', name: 'mt-1 text-xs w-full', level: 'w-5 h-5 text-[10px]', crown: 'w-5 h-5', crownIcon: 10, remove: 'w-5 h-5', removeIcon: 10 };
     return { avatar: 'w-16 h-16', text: 'text-lg', name: 'mt-2 text-sm h-10', level: 'w-7 h-7 text-xs font-bold border-2', crown: 'w-6 h-6', crownIcon: 12, remove: 'w-6 h-6', removeIcon: 14 };
   };
@@ -362,12 +362,16 @@ export const PlayerAvatar = ({ player, subscribePresence = true, isCurrentUser, 
       : ''
   }`;
 
+  const nameVisible = showName && !fullHideName && !superTiny && !inlineFace;
+
   return (
     <div
       className={
         inlineFace
           ? 'inline-flex flex-col items-center shrink-0 overflow-visible'
-          : 'flex flex-col items-center overflow-visible'
+          : extrasmall && nameVisible
+            ? 'flex w-[5.5rem] flex-col items-center overflow-visible'
+            : 'flex flex-col items-center overflow-visible'
       }
     >
       <div className="relative overflow-visible">
@@ -420,7 +424,7 @@ export const PlayerAvatar = ({ player, subscribePresence = true, isCurrentUser, 
                 {t('createGame.you')}
               </span>
             ) : smallLayout || extrasmall ? (
-              <span className="w-full break-words leading-tight [overflow-wrap:anywhere]">
+              <span className="w-full break-words hyphens-auto leading-tight [overflow-wrap:break-word]">
                 {[player.firstName, player.lastName].filter(Boolean).join(' ')}
               </span>
             ) : (

@@ -209,9 +209,15 @@ export const LeagueGameCard = ({
     }
   };
 
+  const showSideAccent = showLeagueGroupSideAccent && !!game.leagueGroup;
+
   return (
-    <div className="relative pl-2 pt-1.5 pb-2 pr-2 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-      {showLeagueGroupSideAccent && game.leagueGroup && (
+    <div
+      className={`relative border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden ${
+        showSideAccent ? 'pl-3.5 pt-1.5 pb-2 pr-2.5' : 'pl-2.5 pt-1.5 pb-2 pr-2.5'
+      }`}
+    >
+      {showSideAccent && (
         <div
           className="absolute left-0 top-0 bottom-0 w-1"
           style={{
@@ -249,12 +255,12 @@ export const LeagueGameCard = ({
           (showGroupTag && game.leagueGroup) || bracketRoundBadge?.trim() || seasonPlayoffBadge ? 'mt-5' : ''
         }`}
       >
-        <div className="flex w-full min-w-0 items-center justify-center gap-2 sm:gap-3">
-          <div className="flex justify-start">
+        <div className="flex w-max max-w-none items-center justify-center gap-2 sm:gap-3 mx-auto">
+          <div className="flex shrink-0 justify-start">
             <div
-              className={`min-h-[20px] p-2 flex items-center justify-center ${teamHighlightClass('teamA', winner, isTie)}`}
+              className={`min-h-[20px] px-1.5 py-1.5 flex items-center justify-center ${teamHighlightClass('teamA', winner, isTie)}`}
             >
-              <div className="flex gap-3 justify-center sm:gap-5">
+              <div className="flex gap-2.5 justify-center sm:gap-3.5">
                 {teamAPlayers.map((player) => (
                   <PlayerAvatar
                     key={player.id}
@@ -270,7 +276,7 @@ export const LeagueGameCard = ({
           </div>
 
           {showScores ? (
-            <div className="flex min-w-0 flex-row flex-wrap items-center justify-center gap-1">
+            <div className="flex shrink-0 flex-row flex-wrap items-center justify-center gap-1">
               {scoreSets.map((set) => (
                 <div
                   key={set.key}
@@ -293,7 +299,7 @@ export const LeagueGameCard = ({
               ))}
             </div>
           ) : isNonPlayedFinal ? (
-            <div className="flex min-w-0 flex-col items-center justify-center gap-0.5 px-2">
+            <div className="flex shrink-0 flex-col items-center justify-center gap-0.5 px-2">
               <span
                 className={`rounded-md px-2 py-1 text-xs font-bold uppercase tracking-wide ${
                   isForfeitFinal
@@ -307,14 +313,14 @@ export const LeagueGameCard = ({
               </span>
             </div>
           ) : (
-            <div className="text-sm font-semibold text-gray-500 dark:text-gray-400">VS</div>
+            <div className="shrink-0 text-sm font-semibold text-gray-500 dark:text-gray-400">VS</div>
           )}
 
-          <div className="flex justify-start">
+          <div className="flex shrink-0 justify-start">
             <div
-              className={`min-h-[20px] p-2 flex items-center justify-center ${teamHighlightClass('teamB', winner, isTie)}`}
+              className={`min-h-[20px] px-1.5 py-1.5 flex items-center justify-center ${teamHighlightClass('teamB', winner, isTie)}`}
             >
-              <div className="flex gap-3 justify-center sm:gap-5">
+              <div className="flex gap-2.5 justify-center sm:gap-3.5">
                 {teamBPlayers.map((player) => (
                   <PlayerAvatar
                     key={player.id}

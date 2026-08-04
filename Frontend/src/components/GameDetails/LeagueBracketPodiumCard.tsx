@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Crown, Medal, Trophy } from 'lucide-react';
 import { Card } from '@/components';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
-import type { BracketPlayoffGroupDto } from '@/api/leagues';
+import type { BracketPlayoffGroupDto, BracketSlotParticipantDto } from '@/api/leagues';
 import type { LeagueGroup } from '@/api/leagues';
 import {
   type BracketPodiumDisplayRow,
@@ -49,7 +49,11 @@ function podiumIcon(kind: BracketPodiumDisplayRow['kind']): ReactNode {
     case 'thirdPlace':
       return <Medal className="h-5 w-5 text-amber-600" />;
     case 'semifinalist':
-      return <Medal className="h-5 w-5 text-amber-700/80" />;
+      return (
+        <span className="flex h-5 w-5 items-center justify-center text-sm font-semibold text-gray-900 dark:text-white">
+          4
+        </span>
+      );
     default:
       return null;
   }
@@ -59,59 +63,75 @@ function podiumAccent(kind: BracketPodiumDisplayRow['kind'], inProgress: boolean
   if (inProgress) {
     return 'bg-gray-50/50 dark:bg-gray-800/30 ring-1 ring-dashed ring-gray-300/80 dark:ring-gray-600/60';
   }
-  switch (kind) {
+  if (kind === 'champion') {
+    return 'bg-amber-50/90 dark:bg-amber-950/30 ring-1 ring-amber-200/80 dark:ring-amber-900/50';
+  }
+  return 'bg-gray-50/80 dark:bg-gray-800/50';
+}
+
+/** Picks the backend-resolved participant object for a podium row kind, so the
+ * name/avatar render even when the bracket slot cache is stale. */
+function podiumResolvedParticipant(
+  row: BracketPodiumDisplayRow,
+  group: BracketPlayoffGroupDto
+): BracketSlotParticipantDto | null | undefined {
+  switch (row.kind) {
     case 'champion':
-      return 'bg-amber-50/90 dark:bg-amber-950/30 ring-1 ring-amber-200/80 dark:ring-amber-900/50';
+      return group.champion;
+    case 'finalist':
+      return group.finalist;
     case 'thirdPlace':
-      return 'bg-amber-50/70 dark:bg-amber-950/25 ring-1 ring-amber-200/60 dark:ring-amber-900/40';
+      return group.thirdPlace;
     default:
-      return 'bg-gray-50/80 dark:bg-gray-800/50';
+      return null;
   }
 }
 
 function PodiumRow({
   row,
   slots,
+  resolvedParticipant,
   label,
   icon,
   accentClass,
 }: {
   row: BracketPodiumDisplayRow;
   slots: BracketPlayoffGroupDto['slots'];
+  resolvedParticipant?: BracketSlotParticipantDto | null;
   label: string;
   icon: ReactNode;
   accentClass: string;
 }) {
   const { t } = useTranslation();
   const inProgress = row.status === 'in_progress';
+  // Prefer the backend-resolved podium participant (works even with a stale slot
+  // cache); fall back to a slot lookup for navigation/avatars.
   const slot = row.participantId ? slots.find((s) => s.participant?.id === row.participantId) : null;
-  const users = teamUsersFromParticipant(slot?.participant);
+  const participant = resolvedParticipant ?? slot?.participant ?? null;
+  const users = teamUsersFromParticipant(participant);
   const name = inProgress
     ? t('gameDetails.bracketPodiumInProgress')
-    : participantLabelFromSlots(row.participantId ?? '', slots) || '—';
+    : participantLabelFromSlots(row.participantId ?? '', slots, resolvedParticipant) || '—';
 
   return (
     <div className={`flex items-center gap-3 rounded-lg px-3 py-2 ${accentClass}`}>
       <span className="shrink-0">{icon}</span>
       <div className="flex min-w-0 flex-1 items-center gap-2">
         {users.length > 0 ? (
-          <div className="flex -space-x-1.5 shrink-0">
-            {users.map((u, i) => (
-              <span
+          <div className="flex shrink-0 items-center -space-x-1">
+            {users.map((u) => (
+              <PlayerAvatar
                 key={u.id}
-                className="relative rounded-full ring-2 ring-white dark:ring-gray-900"
-                style={{ zIndex: i + 1 }}
-              >
-                <PlayerAvatar
-                  player={u}
-                  inlineFace
-                  inlineFacePlain
-                  inlineFaceSize="sm"
-                  showName={false}
-                  subscribePresence={false}
-                  asDiv
-                />
-              </span>
+                player={u}
+                showName={false}
+                fullHideName
+                inlineFace
+                inlineFacePlain
+                inlineFaceSize="sm"
+                inlineFaceFlatStack
+                subscribePresence={false}
+                asDiv
+              />
             ))}
           </div>
         ) : null}
@@ -178,6 +198,7 @@ export function LeagueBracketPodiumCard({
             key={`${row.kind}-${row.participantId ?? 'pending'}-${row.semifinalistIndex ?? 0}`}
             row={row}
             slots={group.slots}
+            resolvedParticipant={podiumResolvedParticipant(row, group)}
             label={podiumLabel(row, t)}
             icon={podiumIcon(row.kind)}
             accentClass={podiumAccent(row.kind, row.status === 'in_progress')}

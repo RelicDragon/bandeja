@@ -471,11 +471,43 @@ describe('podiumEligibility', () => {
     expect(isPodiumEligibleEntityType('GAME', null)).toBe(false);
   });
 
-  it('uses bracket places only for single event tree', async () => {
-    const { usesBracketPlacesForEventPodium } = await import('@shared/achievements');
+  it('uses bracket places for every event tree (per-group podium)', async () => {
+    const {
+      usesBracketPlacesForEventPodium,
+      treeKeysForBracketPodium,
+      finalistFromChampionshipSides,
+      mergeTreePodiumsIntoEventPlaces,
+    } = await import('@shared/achievements');
     expect(usesBracketPlacesForEventPodium('CROSS_GROUP', 3)).toBe(true);
     expect(usesBracketPlacesForEventPodium('PER_GROUP', 1)).toBe(true);
-    expect(usesBracketPlacesForEventPodium('PER_GROUP', 2)).toBe(false);
+    expect(usesBracketPlacesForEventPodium('PER_GROUP', 2)).toBe(true);
+    expect(usesBracketPlacesForEventPodium('PER_GROUP', 3)).toBe(true);
+
+    // Season-wide tree vs per-group trees.
+    expect(treeKeysForBracketPodium('CROSS_GROUP', ['a', 'b'])).toEqual([null]);
+    expect(treeKeysForBracketPodium('PER_GROUP', ['a', 'b'])).toEqual(['a', 'b']);
+
+    // Finalist = non-champion side of the final.
+    expect(finalistFromChampionshipSides('w', 'w', 'l')).toBe('l');
+    expect(finalistFromChampionshipSides('l', 'w', 'l')).toBe('w');
+
+    // Season-wide: one finalist.
+    const season = mergeTreePodiumsIntoEventPlaces([
+      {
+        championParticipantId: 'sc',
+        finalistParticipantId: 'sf',
+        thirdPlaceParticipantId: 'st',
+      },
+    ]);
+    expect(season.get(2)).toEqual(['sf']);
+
+    // Per-group multi: independent finalists (silver bag has both).
+    const multi = mergeTreePodiumsIntoEventPlaces([
+      { championParticipantId: 'c1', finalistParticipantId: 'f1' },
+      { championParticipantId: 'c2', finalistParticipantId: 'f2' },
+    ]);
+    expect(multi.get(1)).toEqual(['c1', 'c2']);
+    expect(multi.get(2)).toEqual(['f1', 'f2']);
   });
 
   it('groups outcome positions into podium places', () => {

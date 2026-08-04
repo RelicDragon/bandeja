@@ -1,6 +1,5 @@
 import {
   BracketScope,
-  BracketSlotKind,
   EntityType,
   LeagueParticipantType,
   PlayoffFormat,
@@ -15,13 +14,15 @@ import {
   isPodiumEligibleEntityType,
   isPodiumPlace,
   meetsPodiumParticipantFloor,
+  mergeTreePodiumsIntoEventPlaces,
   podiumDefinitionForPlace,
+  treeKeysForBracketPodium,
   usesBracketPlacesForEventPodium,
   type PodiumPlace,
 } from '@bandeja/shared/achievements';
 import prisma from '../../config/database';
-import { findTeamParticipantByRoster } from '../league/leagueParticipantResolve';
 import { resolveLeagueGroupStandingsMode } from '../league/leagueGroupStandingsMode';
+import { BracketAdvancementService } from '../league/bracketAdvancement.service';
 import {
   HABIT_UNLOCKS_KEY,
 } from './habitGrant.service';
@@ -504,18 +505,24 @@ export function eligibleUserIdsFromFinalFixtures(params: {
   return [...userIds];
 }
 
-async function resolveEligibleUserIdsForParticipant(params: {
-  db: DbClient;
-  seasonId: string;
-  participant: {
-    id: string;
-    participantType: LeagueParticipantType;
-    userId: string | null;
-  };
-}): Promise<string[]> {
-  const fixtures = await params.db.game.findMany({
+type FixtureEligibilitySnapshot = {
+  participantUserIds: string[];
+  outcomeUserIds: string[];
+  teams: Array<{ playerIds: string[]; resolvedParticipantId: string | null }>;
+};
+
+/**
+ * Load FINAL league fixtures once and map fixed-team rosters → season participants
+ * using an in-memory index (avoids N×findTeamParticipantByRoster full-table scans).
+ */
+async function loadSeasonFinalFixtureSnapshots(
+  db: DbClient,
+  seasonId: string,
+): Promise<FixtureEligibilitySnapshot[]> {
+  // Keep sequential on tx clients (pg adapter forbids concurrent queries).
+  const fixtures = await db.game.findMany({
     where: {
-      parentId: params.seasonId,
+      parentId: seasonId,
       entityType: EntityType.LEAGUE,
       resultsStatus: ResultsStatus.FINAL,
     },
@@ -529,136 +536,63 @@ async function resolveEligibleUserIdsForParticipant(params: {
       outcomes: { select: { userId: true } },
     },
   });
+  const teamParticipants = await db.leagueParticipant.findMany({
+    where: {
+      leagueSeasonId: seasonId,
+      participantType: LeagueParticipantType.TEAM,
+    },
+    select: {
+      id: true,
+      leagueTeam: { select: { players: { select: { userId: true } } } },
+    },
+  });
 
-  const snapshots: Array<{
-    participantUserIds: string[];
-    outcomeUserIds: string[];
-    teams: Array<{ playerIds: string[]; resolvedParticipantId: string | null }>;
-  }> = [];
+  const rosterKeyToParticipantId = new Map<string, string>();
+  for (const p of teamParticipants) {
+    const ids = (p.leagueTeam?.players ?? []).map((pl) => pl.userId).filter(Boolean);
+    if (ids.length === 0) continue;
+    rosterKeyToParticipantId.set([...ids].sort().join(':'), p.id);
+  }
 
-  for (const fixture of fixtures) {
-    const teams: Array<{ playerIds: string[]; resolvedParticipantId: string | null }> = [];
-    for (const team of fixture.fixedTeams) {
+  return fixtures.map((fixture) => {
+    const teams = fixture.fixedTeams.map((team) => {
       const playerIds = team.players
         .map((p) => p.userId)
         .filter((id): id is string => typeof id === 'string' && id.length > 0);
       if (playerIds.length === 0) {
-        teams.push({ playerIds: [], resolvedParticipantId: null });
-        continue;
+        return { playerIds: [] as string[], resolvedParticipantId: null };
       }
-      const resolved = await findTeamParticipantByRoster(
-        params.db as Prisma.TransactionClient,
-        params.seasonId,
+      const key = [...playerIds].sort().join(':');
+      return {
         playerIds,
-      );
-      teams.push({ playerIds, resolvedParticipantId: resolved?.id ?? null });
-    }
-    snapshots.push({
+        resolvedParticipantId: rosterKeyToParticipantId.get(key) ?? null,
+      };
+    });
+    return {
       participantUserIds: fixture.participants.map((p) => p.userId),
       outcomeUserIds: fixture.outcomes.map((o) => o.userId),
       teams,
-    });
-  }
-
-  return eligibleUserIdsFromFinalFixtures({
-    participant: params.participant,
-    fixtures: snapshots,
+    };
   });
 }
 
-async function resolveParticipantIdFromFinalGame(
-  db: DbClient,
-  gameId: string,
-  side: 'winner' | 'loser',
-): Promise<string | null> {
-  const game = await db.game.findUnique({
-    where: { id: gameId },
-    select: {
-      parentId: true,
-      resultsStatus: true,
-      hasFixedTeams: true,
-      outcomes: { select: { userId: true, isWinner: true, position: true, wins: true } },
-      fixedTeams: { select: { teamNumber: true, players: { select: { userId: true } } } },
-      participants: {
-        where: { status: 'PLAYING' },
-        select: { userId: true },
-      },
-    },
+async function resolveEligibleUserIdsForParticipant(params: {
+  db: DbClient;
+  seasonId: string;
+  participant: {
+    id: string;
+    participantType: LeagueParticipantType;
+    userId: string | null;
+  };
+  fixtures?: FixtureEligibilitySnapshot[];
+}): Promise<string[]> {
+  const fixtures =
+    params.fixtures ?? (await loadSeasonFinalFixtureSnapshots(params.db, params.seasonId));
+
+  return eligibleUserIdsFromFinalFixtures({
+    participant: params.participant,
+    fixtures,
   });
-  if (!game || game.resultsStatus !== ResultsStatus.FINAL || !game.parentId) return null;
-
-  if (game.fixedTeams.length > 0) {
-    const teamScores = new Map<number, { wins: number; isWinner: boolean }>();
-    for (const outcome of game.outcomes) {
-      const team = game.fixedTeams.find((t) =>
-        t.players.some((p) => p.userId === outcome.userId),
-      );
-      if (!team) continue;
-      const prev = teamScores.get(team.teamNumber) ?? { wins: 0, isWinner: false };
-      prev.wins += outcome.wins ?? 0;
-      if (outcome.isWinner) prev.isWinner = true;
-      teamScores.set(team.teamNumber, prev);
-    }
-
-    let winningTeamNumber: number | null = null;
-    for (const [teamNumber, score] of teamScores) {
-      if (score.isWinner) {
-        winningTeamNumber = teamNumber;
-        break;
-      }
-    }
-    if (winningTeamNumber == null) {
-      let bestWins = -1;
-      for (const [teamNumber, score] of teamScores) {
-        if (score.wins > bestWins) {
-          bestWins = score.wins;
-          winningTeamNumber = teamNumber;
-        }
-      }
-    }
-
-    const winningTeam = game.fixedTeams.find((t) => t.teamNumber === winningTeamNumber);
-    if (!winningTeam) return null;
-
-    const loserTeam =
-      game.fixedTeams.find((t) => t.teamNumber !== winningTeamNumber) ?? null;
-
-    const targetTeam = side === 'winner' ? winningTeam : loserTeam;
-    if (!targetTeam) return null;
-
-    const playerIds = targetTeam.players
-      .map((p) => p.userId)
-      .filter((id): id is string => typeof id === 'string' && id.length > 0);
-    const participant = await findTeamParticipantByRoster(
-      db as Prisma.TransactionClient,
-      game.parentId,
-      playerIds,
-    );
-    return participant?.id ?? null;
-  }
-
-  // Singles / no fixed teams: map outcome winner/loser user → USER league participant.
-  const ranked = [...game.outcomes].sort((a, b) => {
-    if (a.isWinner !== b.isWinner) return a.isWinner ? -1 : 1;
-    const posA = a.position ?? 999;
-    const posB = b.position ?? 999;
-    if (posA !== posB) return posA - posB;
-    return (b.wins ?? 0) - (a.wins ?? 0);
-  });
-  if (ranked.length === 0) return null;
-  const target =
-    side === 'winner' ? ranked[0] : ranked.find((o) => o.userId !== ranked[0]?.userId) ?? null;
-  if (!target) return null;
-
-  const participant = await db.leagueParticipant.findFirst({
-    where: {
-      leagueSeasonId: game.parentId,
-      participantType: LeagueParticipantType.USER,
-      userId: target.userId,
-    },
-    select: { id: true },
-  });
-  return participant?.id ?? null;
 }
 
 async function resolveBracketPodiumParticipantIds(
@@ -684,93 +618,47 @@ async function resolveBracketPodiumParticipantIds(
           select: { id: true },
         });
 
-  // Multi-group PER_GROUP = division trees, not one event podium → RR standings.
-  if (
-    !usesBracketPlacesForEventPodium(round.bracketScope, groups.length)
-  ) {
+  // Bracket seasons always take podium from bracket trees (incl. multi-group
+  // PER_GROUP: one champion/finalist/third set per division). Never RR.
+  if (!usesBracketPlacesForEventPodium(round.bracketScope, groups.length)) {
     return { hasBracket: false, places: null };
   }
 
-  const groupIds: Array<string | null> =
-    round.bracketScope === BracketScope.CROSS_GROUP ? [null] : groups.map((g) => g.id);
+  const groupIds = treeKeysForBracketPodium(
+    round.bracketScope,
+    groups.map((g) => g.id),
+  );
 
-  if (groupIds.length === 0) {
-    groupIds.push(null);
-  }
+  const treePodiums: Array<{
+    championParticipantId: string | null;
+    finalistParticipantId: string | null;
+    thirdPlaceParticipantId: string | null;
+  }> = [];
 
-  const placeToParticipants = new Map<PodiumPlace, string[]>();
-
+  const tx = db as Prisma.TransactionClient;
   for (const leagueGroupId of groupIds) {
     const slots = await db.leagueBracketSlot.findMany({
       where: { leagueRoundId: round.id, leagueGroupId },
-      include: { game: { select: { id: true, resultsStatus: true } } },
+      select: {
+        id: true,
+        slotKind: true,
+        roundIndex: true,
+        gameId: true,
+        winnerSlotId: true,
+        feederSlotAId: true,
+        game: { select: { resultsStatus: true } },
+      },
     });
     if (slots.length === 0) continue;
 
-    const grandFinalSlots = slots
-      .filter((s) => s.slotKind === BracketSlotKind.GRAND_FINAL)
-      .sort((a, b) => b.roundIndex - a.roundIndex);
-    const legacyGrandFinal =
-      grandFinalSlots.length === 1 &&
-      grandFinalSlots[0]?.game?.resultsStatus === ResultsStatus.FINAL
-        ? grandFinalSlots[0]
-        : undefined;
-    const completedReset = grandFinalSlots.find(
-      (s) => s.roundIndex > 0 && s.game?.resultsStatus === ResultsStatus.FINAL
-    );
-    const firstGrandFinal = grandFinalSlots.find((s) => s.roundIndex === 0);
-    let finalSlot = legacyGrandFinal ?? completedReset;
-    if (
-      !finalSlot &&
-      firstGrandFinal?.gameId &&
-      firstGrandFinal.game?.resultsStatus === ResultsStatus.FINAL
-    ) {
-      const winnersFinal = slots.find((s) => s.id === firstGrandFinal.feederSlotAId);
-      const [grandFinalWinner, winnersChampion] = await Promise.all([
-        resolveParticipantIdFromFinalGame(db, firstGrandFinal.gameId, 'winner'),
-        winnersFinal?.gameId
-          ? resolveParticipantIdFromFinalGame(db, winnersFinal.gameId, 'winner')
-          : Promise.resolve(null),
-      ]);
-      if (grandFinalWinner && grandFinalWinner === winnersChampion) {
-        finalSlot = firstGrandFinal;
-      }
-    }
-    if (grandFinalSlots.length === 0) {
-      finalSlot = slots.find(
-        (s) => s.slotKind === BracketSlotKind.MAIN && s.winnerSlotId == null
-      );
-    }
-    const thirdSlot = slots.find((s) => s.slotKind === BracketSlotKind.THIRD_PLACE);
-
-    let championParticipantId: string | null = null;
-    let finalistParticipantId: string | null = null;
-    let thirdPlaceParticipantId: string | null = null;
-
-    if (finalSlot?.gameId && finalSlot.game?.resultsStatus === ResultsStatus.FINAL) {
-      championParticipantId = await resolveParticipantIdFromFinalGame(db, finalSlot.gameId, 'winner');
-      finalistParticipantId = await resolveParticipantIdFromFinalGame(db, finalSlot.gameId, 'loser');
-    }
-    if (thirdSlot?.gameId && thirdSlot.game?.resultsStatus === ResultsStatus.FINAL) {
-      thirdPlaceParticipantId = await resolveParticipantIdFromFinalGame(
-        db,
-        thirdSlot.gameId,
-        'winner',
-      );
-    }
-
-    if (!championParticipantId) continue;
-
-    const push = (place: PodiumPlace, id: string | null) => {
-      if (!id) return;
-      const list = placeToParticipants.get(place) ?? [];
-      if (!list.includes(id)) list.push(id);
-      placeToParticipants.set(place, list);
-    };
-    push(1, championParticipantId);
-    push(2, finalistParticipantId);
-    push(3, thirdPlaceParticipantId);
+    // Single shared path with the bracket API (selectChampionshipGame + coupled
+    // champion/finalist + third-place gate when a bronze slot exists).
+    const tree = await BracketAdvancementService.resolveTreePodiumFromSlots(slots, tx);
+    if (!tree.championParticipantId || !tree.finalistParticipantId) continue;
+    treePodiums.push(tree);
   }
+
+  const placeToParticipants = mergeTreePodiumsIntoEventPlaces(treePodiums);
 
   return {
     hasBracket: true,
@@ -902,6 +790,9 @@ async function desiredFromLeagueSeason(params: {
   });
   const byId = new Map(participants.map((p) => [p.id, p]));
 
+  // One fixture scan for all podium teams (was reloaded per participant).
+  const fixtures = await loadSeasonFinalFixtureSnapshots(params.db, params.seasonId);
+
   const desired: DesiredPodiumAward[] = [];
   for (const place of [1, 2, 3] as const) {
     const definition = podiumDefinitionForPlace(place);
@@ -913,6 +804,7 @@ async function desiredFromLeagueSeason(params: {
         db: params.db,
         seasonId: params.seasonId,
         participant,
+        fixtures,
       });
       for (const userId of userIds) {
         desired.push({ userId, place, definitionId: definition.id });

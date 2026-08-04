@@ -81,6 +81,8 @@ describe('bracket PNG export capture layout', () => {
     } as HTMLElement;
     const col = {
       style: { width: '', minWidth: '', maxWidth: '', flexShrink: '', alignSelf: '', height: '' },
+      scrollWidth: 342,
+      offsetWidth: 320,
       querySelector: () => null,
     } as HTMLElement;
     const root = {
@@ -100,7 +102,9 @@ describe('bracket PNG export capture layout', () => {
     expect(scroll.style.height).toBe('auto');
     expect(scroll.style.alignItems).toBe('flex-start');
     expect(scroll.style.width).toBe('1200px');
-    expect(col.style.width).toBe('17rem');
+    expect(col.style.width).toBe('342px');
+    expect(col.style.minWidth).toBe('342px');
+    expect(col.style.maxWidth).toBe('342px');
     restore();
     expect(root.removeAttribute).toHaveBeenCalledWith(BRACKET_EXPORT_CAPTURE_ATTR);
   });

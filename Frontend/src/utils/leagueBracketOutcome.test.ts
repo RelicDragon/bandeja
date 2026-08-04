@@ -8,6 +8,8 @@ import {
   collectChampionPathSlotIds,
   findFinalMainSlot,
   isPlayInPhaseComplete,
+  participantLabel,
+  participantLabelFromSlots,
   slotWinnerParticipantId,
 } from './leagueBracketOutcome';
 
@@ -217,6 +219,106 @@ describe('buildBracketPodium', () => {
       finalistId: 'upper-finalist',
     });
   });
+
+  it('keeps independent finalists for multi-group PER_GROUP trees', () => {
+    // Two parallel division finals: each group carries its own API finalist id.
+    const groupA: BracketPlayoffGroupDto = {
+      leagueGroupId: 'div-a',
+      entrantCount: 4,
+      bracketSize: 4,
+      byeCount: 0,
+      playInGameCount: 0,
+      championParticipantId: 'a-champ',
+      finalistParticipantId: 'a-finalist',
+      slots: [
+        slot({
+          id: 'a-fin',
+          slotKey: 'MAIN-R1-M0',
+          slotKind: 'MAIN',
+          roundIndex: 1,
+          winnerSlotId: null,
+          feederSlotAId: 'a-sf1',
+          feederSlotBId: 'a-sf2',
+          game: finalGame('teamA', 'u-ac', 'u-af'),
+        }),
+      ],
+    };
+    const groupB: BracketPlayoffGroupDto = {
+      leagueGroupId: 'div-b',
+      entrantCount: 4,
+      bracketSize: 4,
+      byeCount: 0,
+      playInGameCount: 0,
+      championParticipantId: 'b-champ',
+      finalistParticipantId: 'b-finalist',
+      slots: [
+        slot({
+          id: 'b-fin',
+          slotKey: 'MAIN-R1-M0',
+          slotKind: 'MAIN',
+          roundIndex: 1,
+          winnerSlotId: null,
+          feederSlotAId: 'b-sf1',
+          feederSlotBId: 'b-sf2',
+          game: finalGame('teamB', 'u-bf', 'u-bc'),
+        }),
+      ],
+    };
+
+    expect(buildBracketPodium(groupA)).toMatchObject({
+      championId: 'a-champ',
+      finalistId: 'a-finalist',
+    });
+    expect(buildBracketPodium(groupB)).toMatchObject({
+      championId: 'b-champ',
+      finalistId: 'b-finalist',
+    });
+  });
+
+  it('derives CROSS_GROUP / season-wide finalist from final-game sides when API finalist is absent', () => {
+    // Season-wide tree uses leagueGroupId null (CROSS_GROUP response shape).
+    const slots: BracketSlotDto[] = [
+      slot({
+        id: 'seed-a',
+        slotKey: 'seed-a',
+        slotKind: 'BYE',
+        participant: { id: 'p-champ', displayName: 'Champ' },
+        winnerSlotId: 'fin',
+      }),
+      slot({
+        id: 'seed-b',
+        slotKey: 'seed-b',
+        slotKind: 'BYE',
+        participant: { id: 'p-finalist', displayName: 'Finalist' },
+        winnerSlotId: 'fin',
+      }),
+      slot({
+        id: 'fin',
+        slotKey: 'MAIN-R0-M0',
+        slotKind: 'MAIN',
+        roundIndex: 0,
+        winnerSlotId: null,
+        feederSlotAId: 'seed-a',
+        feederSlotBId: 'seed-b',
+        gameId: 'g-final',
+        game: finalGame('teamA', 'u-a', 'u-b'),
+      }),
+    ];
+    const group: BracketPlayoffGroupDto = {
+      leagueGroupId: null,
+      entrantCount: 2,
+      bracketSize: 2,
+      byeCount: 0,
+      playInGameCount: 0,
+      championParticipantId: 'p-champ',
+      // no finalistParticipantId — must come from final loser side
+      slots,
+    };
+    expect(buildBracketPodium(group)).toMatchObject({
+      championId: 'p-champ',
+      finalistId: 'p-finalist',
+    });
+  });
 });
 
 describe('slotWinnerParticipantId', () => {
@@ -377,5 +479,48 @@ describe('bracketHasPodium', () => {
       slots: [slot({ id: 'fin', slotKey: 'MAIN-R1-M0', slotKind: 'MAIN', roundIndex: 1 })],
     };
     expect(bracketHasPodium(group)).toBe(false);
+  });
+});
+
+describe('participantLabelFromSlots (stale slot cache resilience)', () => {
+  const player = (id: string, first: string, last: string) => ({
+    id: `${id}-p`,
+    userId: id,
+    user: { id, firstName: first, lastName: last },
+  });
+
+  it('resolves a label from a slot participant when present', () => {
+    const slots: BracketSlotDto[] = [
+      slot({
+        id: 's1',
+        slotKey: 'MAIN-R2-M0',
+        slotKind: 'MAIN',
+        roundIndex: 2,
+        participant: { id: 'champ', leagueTeam: { id: 'lt1', players: [player('u1', 'Ada', 'Lovelace')] } },
+      }),
+    ];
+    expect(participantLabelFromSlots('champ', slots)).toBe('Ada Lovelace');
+  });
+
+  it('falls back to the resolved participant object when no slot carries the id (stale cache)', () => {
+    // Champion id 'champ' is NOT attached to any slot (stale slot cache), but the
+    // backend provides a resolved champion participant object.
+    const slots: BracketSlotDto[] = [
+      slot({
+        id: 's1',
+        slotKey: 'MAIN-R2-M0',
+        slotKind: 'MAIN',
+        roundIndex: 2,
+        participant: { id: 'loser', leagueTeam: { id: 'lt2', players: [player('u2', 'Bob', 'Hope')] } },
+      }),
+    ];
+    const resolved = { id: 'champ', leagueTeam: { id: 'lt1', players: [player('u1', 'Ada', 'Lovelace')] } };
+    expect(participantLabelFromSlots('champ', slots, resolved)).toBe('Ada Lovelace');
+    // Without the resolved object it would be empty (the original bug).
+    expect(participantLabelFromSlots('champ', slots)).toBe('');
+  });
+
+  it('prefers displayName when present', () => {
+    expect(participantLabel({ id: 'x', displayName: 'Team Rocket' })).toBe('Team Rocket');
   });
 });
