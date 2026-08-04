@@ -77,18 +77,25 @@ function humanDays(dateKeys: string[], todayKey: string, t: (k: string) => strin
 
 function timeHint(intent: PlayIntent | null | undefined, t: (k: string) => string): string {
   if (!intent) return '';
-  switch (intent.timeOfDay) {
-    case 'MORNING':
-      return t('playIntent.morning');
-    case 'AFTERNOON':
-      return t('playIntent.afternoon');
-    case 'EVENING':
-      return t('playIntent.evening');
-    case 'CUSTOM':
-      return [intent.startTime, intent.endTime].filter(Boolean).join('–');
-    default:
-      return t('playIntent.anytime');
-  }
+  const periods = intent.timeOfDays?.length
+    ? intent.timeOfDays
+    : [intent.timeOfDay];
+  return periods
+    .map((period) => {
+      switch (period) {
+        case 'MORNING':
+          return t('playIntent.morning');
+        case 'AFTERNOON':
+          return t('playIntent.afternoon');
+        case 'EVENING':
+          return t('playIntent.evening');
+        case 'CUSTOM':
+          return [intent.startTime, intent.endTime].filter(Boolean).join('–');
+        default:
+          return t('playIntent.anytime');
+      }
+    })
+    .join(' + ');
 }
 
 /** My + Find both mount providers; only one may claim a proposal deep link. */

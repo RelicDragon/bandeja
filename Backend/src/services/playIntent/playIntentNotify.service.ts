@@ -40,6 +40,7 @@ function toCriteria(intent: {
   minLevel: number | null;
   maxLevel: number | null;
   timeOfDay: IntentCriteria['timeOfDay'];
+  timeOfDays?: IntentCriteria['timeOfDays'];
   startTime: string | null;
   endTime: string | null;
   genderTeams: IntentCriteria['genderTeams'];
@@ -56,6 +57,7 @@ function toCriteria(intent: {
     minLevel: intent.minLevel,
     maxLevel: intent.maxLevel,
     timeOfDay: intent.timeOfDay,
+    timeOfDays: intent.timeOfDays,
     startTime: intent.startTime,
     endTime: intent.endTime,
     genderTeams: intent.genderTeams,
@@ -218,6 +220,7 @@ export class PlayIntentNotifyService {
                 timezone: intent.city.timezone,
                 dateKeys: intent.dateKeys,
                 timeOfDay: intent.timeOfDay,
+                timeOfDays: intent.timeOfDays,
                 startTime: intent.startTime,
                 endTime: intent.endTime,
               },

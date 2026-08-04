@@ -96,6 +96,7 @@ export class PlayIntentShareService {
       sport: intent.sport,
       dateKeys: intent.dateKeys,
       timeOfDay: intent.timeOfDay,
+      timeOfDays: intent.timeOfDays,
       startTime: intent.startTime,
       endTime: intent.endTime,
       clubs,
@@ -128,6 +129,7 @@ export class PlayIntentShareService {
       existing &&
       sameValues(existing.dateKeys, dateKeys) &&
       existing.timeOfDay === source.timeOfDay &&
+      sameValues(existing.timeOfDays, source.timeOfDays) &&
       existing.startTime === source.startTime &&
       existing.endTime === source.endTime &&
       sameValues(existing.clubIds, source.clubIds) &&
@@ -145,6 +147,7 @@ export class PlayIntentShareService {
         sport: source.sport,
         dateKeys,
         timeOfDay: source.timeOfDay,
+        timeOfDays: source.timeOfDays,
         startTime: source.startTime,
         endTime: source.endTime,
         clubIds: source.clubIds,

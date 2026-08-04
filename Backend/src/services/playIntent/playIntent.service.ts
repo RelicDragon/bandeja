@@ -39,6 +39,7 @@ export type CreatePlayIntentDto = {
   dayOffsets?: number[];
   dateKeys?: string[];
   timeOfDay?: PlayIntentTimeOfDay;
+  timeOfDays?: PlayIntentTimeOfDay[];
   startTime?: string | null;
   endTime?: string | null;
   clubIds?: string[];
@@ -75,6 +76,7 @@ function toIntentCriteria(row: {
   minLevel: number | null;
   maxLevel: number | null;
   timeOfDay: PlayIntentTimeOfDay;
+  timeOfDays?: PlayIntentTimeOfDay[];
   startTime: string | null;
   endTime: string | null;
   genderTeams: GenderTeam;
@@ -88,6 +90,7 @@ function toIntentCriteria(row: {
     minLevel: row.minLevel,
     maxLevel: row.maxLevel,
     timeOfDay: row.timeOfDay,
+    timeOfDays: row.timeOfDays,
     startTime: row.startTime,
     endTime: row.endTime,
     genderTeams: row.genderTeams,
@@ -161,12 +164,32 @@ export class PlayIntentService {
     const entityType =
       data.entityType === EntityType.BAR ? EntityType.BAR : EntityType.GAME;
 
-    const timeOfDay = data.timeOfDay ?? PlayIntentTimeOfDay.ANYTIME;
+    const requestedPeriods = data.timeOfDays?.length
+      ? [...new Set(data.timeOfDays)]
+      : [data.timeOfDay ?? PlayIntentTimeOfDay.ANYTIME];
+    const periodOrder = new Map<PlayIntentTimeOfDay, number>([
+      [PlayIntentTimeOfDay.ANYTIME, 0],
+      [PlayIntentTimeOfDay.MORNING, 1],
+      [PlayIntentTimeOfDay.AFTERNOON, 2],
+      [PlayIntentTimeOfDay.EVENING, 3],
+      [PlayIntentTimeOfDay.CUSTOM, 4],
+    ]);
+    const timeOfDays = requestedPeriods.sort(
+      (a, b) => (periodOrder.get(a) ?? 99) - (periodOrder.get(b) ?? 99),
+    );
+    if (
+      timeOfDays.length > 1 &&
+      (timeOfDays.includes(PlayIntentTimeOfDay.ANYTIME) ||
+        timeOfDays.includes(PlayIntentTimeOfDay.CUSTOM))
+    ) {
+      throw new ApiError(400, 'Anytime and custom hours must be selected on their own');
+    }
+    const timeOfDay = timeOfDays[0] ?? PlayIntentTimeOfDay.ANYTIME;
     const genderTeams = data.genderTeams ?? GenderTeam.ANY;
     if (!Object.values(GenderTeam).includes(genderTeams)) {
       throw new ApiError(400, 'Invalid genderTeams');
     }
-    if (timeOfDay === PlayIntentTimeOfDay.CUSTOM) {
+    if (timeOfDays.includes(PlayIntentTimeOfDay.CUSTOM)) {
       validateTime(data.startTime, 'Start time');
       validateTime(data.endTime, 'End time');
       if (data.startTime && data.endTime) {
@@ -194,12 +217,13 @@ export class PlayIntentService {
         {
           dateKeys,
           timeOfDay,
+          timeOfDays,
           startTime:
-            timeOfDay === PlayIntentTimeOfDay.CUSTOM
+            timeOfDays.includes(PlayIntentTimeOfDay.CUSTOM)
               ? data.startTime ?? null
               : null,
           endTime:
-            timeOfDay === PlayIntentTimeOfDay.CUSTOM
+            timeOfDays.includes(PlayIntentTimeOfDay.CUSTOM)
               ? data.endTime ?? null
               : null,
         },
@@ -274,9 +298,13 @@ export class PlayIntentService {
         },
       });
       const requestedStart =
-        timeOfDay === PlayIntentTimeOfDay.CUSTOM ? data.startTime ?? null : null;
+        timeOfDays.includes(PlayIntentTimeOfDay.CUSTOM)
+          ? data.startTime ?? null
+          : null;
       const requestedEnd =
-        timeOfDay === PlayIntentTimeOfDay.CUSTOM ? data.endTime ?? null : null;
+        timeOfDays.includes(PlayIntentTimeOfDay.CUSTOM)
+          ? data.endTime ?? null
+          : null;
       const requestedClubs = data.clubIds ?? [];
       const requestedMin =
         entityType === EntityType.BAR ? null : data.minLevel ?? null;
@@ -291,6 +319,7 @@ export class PlayIntentService {
         existingActive.entityType === entityType &&
         arraysEqual(existingActive.dateKeys, dateKeys) &&
         existingActive.timeOfDay === timeOfDay &&
+        arraysEqual(existingActive.timeOfDays, timeOfDays) &&
         existingActive.startTime === requestedStart &&
         existingActive.endTime === requestedEnd &&
         arraysEqual(existingActive.clubIds, requestedClubs) &&
@@ -351,6 +380,7 @@ export class PlayIntentService {
           entityType,
           dateKeys,
           timeOfDay,
+          timeOfDays,
           startTime: requestedStart,
           endTime: requestedEnd,
           clubIds: requestedClubs,

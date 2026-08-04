@@ -13,6 +13,7 @@
     "composeHint": "Javićemo ti kad se poklope igrači — ili kad se pojavi odgovarajuća javna igra.",
     "whenLabel": "Dan",
     "timeLabel": "Vreme",
+    "timeMultiHint": "Izaberi sva vremena koja ti odgovaraju",
     "today": "Danas",
     "tomorrow": "Sutra",
     "dayAfter": "Prekosutra",

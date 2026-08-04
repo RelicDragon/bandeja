@@ -1,7 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
-import { Loader2 } from 'lucide-react';
+import {
+  CalendarDays,
+  Check,
+  Clock3,
+  Loader2,
+  SunMedium,
+  Sunrise,
+  Sunset,
+} from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Button } from '@/components';
 import { TimeRangeSlider } from '@/components/TimeRangeSlider';
@@ -41,12 +49,25 @@ const DAY_OPTIONS = [
   { offset: 2, key: 'dayAfter' },
 ] as const;
 
-const TIME_OPTIONS: { value: PlayIntentTimeOfDay; key: string }[] = [
-  { value: 'ANYTIME', key: 'anytime' },
-  { value: 'MORNING', key: 'morning' },
-  { value: 'AFTERNOON', key: 'afternoon' },
-  { value: 'EVENING', key: 'evening' },
-  { value: 'CUSTOM', key: 'customTime' },
+const TIME_OPTIONS: {
+  value: PlayIntentTimeOfDay;
+  key: string;
+  range: string;
+  icon: typeof Clock3;
+}[] = [
+  { value: 'ANYTIME', key: 'anytime', range: '06–24', icon: Clock3 },
+  { value: 'MORNING', key: 'morning', range: '06–12', icon: Sunrise },
+  { value: 'AFTERNOON', key: 'afternoon', range: '12–18', icon: SunMedium },
+  { value: 'EVENING', key: 'evening', range: '18–24', icon: Sunset },
+  { value: 'CUSTOM', key: 'customTime', range: '', icon: Clock3 },
+];
+
+const PERIOD_ORDER: PlayIntentTimeOfDay[] = [
+  'ANYTIME',
+  'MORNING',
+  'AFTERNOON',
+  'EVENING',
+  'CUSTOM',
 ];
 
 function dateKeyOffset(dateKey: string, todayKey?: string): number | null {
@@ -81,7 +102,7 @@ export function PlayIntentComposePanel({
   const [activity, setActivity] = useState<PlayIntentActivityId>(defaultSport);
   const { create } = usePlayIntentMutations(cityId, activity === 'BAR' ? defaultSport : activity);
   const [dayOffsets, setDayOffsets] = useState<number[]>([0]);
-  const [timeOfDay, setTimeOfDay] = useState<PlayIntentTimeOfDay>('ANYTIME');
+  const [timeOfDays, setTimeOfDays] = useState<PlayIntentTimeOfDay[]>(['ANYTIME']);
   const [customRange, setCustomRange] = useState<[string, string]>(['17:00', '21:00']);
   const [genderTeams, setGenderTeams] = useState<GenderTeam>('ANY');
   const [showMore, setShowMore] = useState(false);
@@ -107,7 +128,11 @@ export function PlayIntentComposePanel({
       .filter((offset): offset is number => offset != null);
     setActivity(nextActivity);
     setDayOffsets(nextOffsets?.length ? nextOffsets : [0]);
-    setTimeOfDay(initialIntent?.timeOfDay ?? 'ANYTIME');
+    setTimeOfDays(
+      initialIntent?.timeOfDays?.length
+        ? initialIntent.timeOfDays
+        : [initialIntent?.timeOfDay ?? 'ANYTIME'],
+    );
     setCustomRange([
       initialIntent?.startTime ?? '17:00',
       initialIntent?.endTime ?? '21:00',
@@ -172,6 +197,24 @@ export function PlayIntentComposePanel({
     setClubIds((prev) => (prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]));
   };
 
+  const toggleTime = (value: PlayIntentTimeOfDay) => {
+    setTimeOfDays((current) => {
+      if (value === 'ANYTIME' || value === 'CUSTOM') return [value];
+      const withoutExclusive = current.filter(
+        (period) => period !== 'ANYTIME' && period !== 'CUSTOM',
+      );
+      if (withoutExclusive.includes(value)) {
+        const next = withoutExclusive.filter((period) => period !== value);
+        return next.length ? next : current;
+      }
+      const selected = new Set<PlayIntentTimeOfDay>([
+        ...withoutExclusive,
+        value,
+      ]);
+      return PERIOD_ORDER.filter((period) => selected.has(period));
+    });
+  };
+
   const submit = async () => {
     const isBar = activity === 'BAR';
     const resolvedSport = isBar ? defaultSport : activity;
@@ -181,9 +224,10 @@ export function PlayIntentComposePanel({
         sport: resolvedSport,
         entityType: isBar ? 'BAR' : 'GAME',
         dayOffsets,
-        timeOfDay,
-        startTime: timeOfDay === 'CUSTOM' ? customRange[0] : null,
-        endTime: timeOfDay === 'CUSTOM' ? customRange[1] : null,
+        timeOfDay: timeOfDays[0],
+        timeOfDays,
+        startTime: timeOfDays.includes('CUSTOM') ? customRange[0] : null,
+        endTime: timeOfDays.includes('CUSTOM') ? customRange[1] : null,
         clubIds: clubIds.length ? clubIds : undefined,
         minLevel: !isBar && levelEnabled ? levelRange[0] : null,
         maxLevel: !isBar && levelEnabled ? levelRange[1] : null,
@@ -217,11 +261,12 @@ export function PlayIntentComposePanel({
             defaultSport={defaultSport}
           />
 
-          <div>
-            <div className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          <div className="space-y-2.5">
+            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+              <CalendarDays className="h-3.5 w-3.5" />
               {t('playIntent.whenLabel')}
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="grid grid-cols-3 gap-2">
               {DAY_OPTIONS.map((d) => {
                 const active = dayOffsets.includes(d.offset);
                 return (
@@ -229,12 +274,18 @@ export function PlayIntentComposePanel({
                     key={d.offset}
                     type="button"
                     onClick={() => toggleDay(d.offset)}
-                    className={`rounded-full px-3.5 py-2 text-sm font-medium transition-colors ${
+                    aria-pressed={active}
+                    className={`relative min-h-14 rounded-2xl border px-2.5 py-2 text-sm font-semibold transition-all ${
                       active
-                        ? 'bg-emerald-600 text-white shadow-sm'
-                        : 'bg-muted text-foreground/80 hover:bg-muted/80'
+                        ? 'border-emerald-500/60 bg-emerald-500/10 text-emerald-700 shadow-sm dark:text-emerald-300'
+                        : 'border-border/70 bg-card text-foreground/70 hover:border-emerald-500/30 hover:bg-emerald-500/5'
                     }`}
                   >
+                    {active && (
+                      <span className="absolute right-1.5 top-1.5 grid h-4 w-4 place-items-center rounded-full bg-emerald-600 text-white">
+                        <Check className="h-2.5 w-2.5" strokeWidth={3} />
+                      </span>
+                    )}
                     {t(`playIntent.${d.key}`)}
                   </button>
                 );
@@ -242,37 +293,53 @@ export function PlayIntentComposePanel({
             </div>
           </div>
 
-          <div>
-            <div className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              {t('playIntent.timeLabel')}
+          <div className="space-y-2.5">
+            <div>
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                <Clock3 className="h-3.5 w-3.5" />
+                {t('playIntent.timeLabel')}
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {t('playIntent.timeMultiHint')}
+              </p>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="grid grid-cols-2 gap-2 rounded-3xl border border-border/60 bg-muted/30 p-2">
               {TIME_OPTIONS.map((opt) => {
-                const active = timeOfDay === opt.value;
+                const active = timeOfDays.includes(opt.value);
+                const Icon = opt.icon;
                 return (
                   <button
                     key={opt.value}
                     type="button"
-                    onClick={() => {
-                      if (opt.value === 'CUSTOM' && timeOfDay === 'CUSTOM') {
-                        setTimeOfDay('ANYTIME');
-                        return;
-                      }
-                      setTimeOfDay(opt.value);
-                    }}
-                    className={`rounded-full px-3.5 py-2 text-sm font-medium transition-colors ${
+                    onClick={() => toggleTime(opt.value)}
+                    aria-pressed={active}
+                    className={`flex min-h-14 items-center gap-2.5 rounded-2xl border px-3 py-2 text-left transition-all ${opt.value === 'CUSTOM' ? 'col-span-2' : ''} ${
                       active
-                        ? 'bg-sky-600 text-white shadow-sm'
-                        : 'bg-muted text-foreground/80 hover:bg-muted/80'
+                        ? 'border-sky-500/60 bg-sky-500 text-white shadow-md shadow-sky-500/15'
+                        : 'border-transparent bg-background/80 text-foreground/80 hover:border-sky-500/25 hover:bg-background'
                     }`}
                   >
-                    {t(`playIntent.${opt.key}`)}
+                    <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-xl ${
+                      active ? 'bg-white/20' : 'bg-sky-500/10 text-sky-600 dark:text-sky-300'
+                    }`}>
+                      <Icon className="h-4 w-4" />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-semibold">
+                        {t(`playIntent.${opt.key}`)}
+                      </span>
+                      {opt.range && (
+                        <span className={`block text-[11px] ${active ? 'text-white/75' : 'text-muted-foreground'}`}>
+                          {opt.range}
+                        </span>
+                      )}
+                    </span>
                   </button>
                 );
               })}
             </div>
             <AnimatePresence initial={false}>
-              {timeOfDay === 'CUSTOM' && (
+              {timeOfDays.includes('CUSTOM') && (
                 <motion.div
                   key="custom-time"
                   initial={{ height: 0, opacity: 0 }}

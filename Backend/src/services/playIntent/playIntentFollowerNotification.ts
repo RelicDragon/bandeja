@@ -10,6 +10,7 @@ export type PlayIntentFollowerNotificationInput = {
   timezone: string;
   dateKeys: string[];
   timeOfDay: PlayIntentTimeOfDay;
+  timeOfDays?: PlayIntentTimeOfDay[];
   startTime: string | null;
   endTime: string | null;
 };
@@ -43,20 +44,29 @@ function dateLabel(dateKey: string, todayKey: string, lang: string): string {
 
 function timeLabel(
   timeOfDay: PlayIntentTimeOfDay,
+  timeOfDays: PlayIntentTimeOfDay[] | undefined,
   startTime: string | null,
   endTime: string | null,
   lang: string,
 ): string {
-  if (timeOfDay === PlayIntentTimeOfDay.CUSTOM) {
+  const periods = timeOfDays?.length ? timeOfDays : [timeOfDay];
+  if (periods.includes(PlayIntentTimeOfDay.CUSTOM)) {
     return [startTime, endTime].filter(Boolean).join('–');
   }
-  return t(`playIntent.${timeOfDay.toLowerCase()}`, lang);
+  return periods
+    .map((period) => t(`playIntent.${period.toLowerCase()}`, lang))
+    .join(' + ');
 }
 
 export function buildPlayIntentWhenLabel(
   input: Pick<
     PlayIntentFollowerNotificationInput,
-    'timezone' | 'dateKeys' | 'timeOfDay' | 'startTime' | 'endTime'
+    | 'timezone'
+    | 'dateKeys'
+    | 'timeOfDay'
+    | 'timeOfDays'
+    | 'startTime'
+    | 'endTime'
   >,
   lang: string,
   now = new Date(),
@@ -65,7 +75,13 @@ export function buildPlayIntentWhenLabel(
   const days = input.dateKeys.map((key) => dateLabel(key, todayKey, lang)).join(', ');
   return [
     days,
-    timeLabel(input.timeOfDay, input.startTime, input.endTime, lang),
+    timeLabel(
+      input.timeOfDay,
+      input.timeOfDays,
+      input.startTime,
+      input.endTime,
+      lang,
+    ),
   ]
     .filter(Boolean)
     .join(' · ');

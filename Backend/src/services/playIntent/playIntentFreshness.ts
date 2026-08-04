@@ -4,7 +4,7 @@ import {
   endOfCalendarDate,
   startOfCalendarDate,
 } from '../game/calendarDateBounds';
-import { resolveTimeWindow } from './playIntentCriteria';
+import { resolveTimeWindows } from './playIntentCriteria';
 
 const MINUTES_IN_DAY = 1440;
 const SUGGESTED_START_STEP_MINUTES = 15;
@@ -12,6 +12,7 @@ const SUGGESTED_START_STEP_MINUTES = 15;
 export type IntentWindowSource = {
   dateKeys: string[];
   timeOfDay: PlayIntentTimeOfDay;
+  timeOfDays?: PlayIntentTimeOfDay[];
   startTime?: string | null;
   endTime?: string | null;
 };
@@ -79,7 +80,10 @@ export function intentWindowEndsAt(
   intent: IntentWindowSource,
   timezone: string,
 ): Date | null {
-  const endMinutes = resolveTimeWindow(intent)?.endMinutes ?? MINUTES_IN_DAY;
+  const windows = resolveTimeWindows(intent);
+  const endMinutes = windows?.length
+    ? Math.max(...windows.map((window) => window.endMinutes))
+    : MINUTES_IN_DAY;
   const dateKeys = [...new Set(intent.dateKeys)].sort().reverse();
   for (const dateKey of dateKeys) {
     const end = dateAtLocalMinutes(dateKey, endMinutes, timezone);
@@ -115,20 +119,31 @@ export function nextSuggestedStart(
   timezone: string,
   now: Date = new Date(),
 ): Date | null {
-  const window = resolveTimeWindow(intent);
-  const startMinutes = window?.startMinutes ?? 18 * 60;
-  const endMinutes = window?.endMinutes ?? MINUTES_IN_DAY;
+  const resolvedWindows = resolveTimeWindows(intent);
+  const windows = resolvedWindows?.length
+    ? resolvedWindows
+    : [{ startMinutes: 18 * 60, endMinutes: MINUTES_IN_DAY }];
   const stepMs = SUGGESTED_START_STEP_MINUTES * 60_000;
   const earliestStart = now.getTime() + stepMs;
   const roundedNow = new Date(Math.ceil(earliestStart / stepMs) * stepMs);
 
   for (const dateKey of [...new Set(intent.dateKeys)].sort()) {
-    const windowStart = dateAtLocalMinutes(dateKey, startMinutes, timezone);
-    const windowEnd = dateAtLocalMinutes(dateKey, endMinutes, timezone);
-    if (!windowStart || !windowEnd) continue;
-    const candidate =
-      windowStart.getTime() > roundedNow.getTime() ? windowStart : roundedNow;
-    if (candidate.getTime() < windowEnd.getTime()) return candidate;
+    for (const window of windows) {
+      const windowStart = dateAtLocalMinutes(
+        dateKey,
+        window.startMinutes,
+        timezone,
+      );
+      const windowEnd = dateAtLocalMinutes(
+        dateKey,
+        window.endMinutes,
+        timezone,
+      );
+      if (!windowStart || !windowEnd) continue;
+      const candidate =
+        windowStart.getTime() > roundedNow.getTime() ? windowStart : roundedNow;
+      if (candidate.getTime() < windowEnd.getTime()) return candidate;
+    }
   }
   return null;
 }

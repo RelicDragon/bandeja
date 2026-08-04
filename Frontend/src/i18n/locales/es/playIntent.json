@@ -11,6 +11,7 @@
     "composeHint": "Te avisamos cuando haya jugadores compatibles — o una partida pública que encaje.",
     "whenLabel": "Día",
     "timeLabel": "Hora",
+    "timeMultiHint": "Elige todos los horarios que te vengan bien",
     "today": "Hoy",
     "tomorrow": "Mañana",
     "dayAfter": "Pasado",

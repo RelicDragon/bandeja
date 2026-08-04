@@ -36,6 +36,11 @@ export const createPlayIntentBodySchema = z
     dayOffsets: z.array(z.number().int().min(0).max(2)).max(3).optional(),
     dateKeys: z.array(dateKey).max(3).optional(),
     timeOfDay: z.nativeEnum(PlayIntentTimeOfDay).optional(),
+    timeOfDays: z
+      .array(z.nativeEnum(PlayIntentTimeOfDay))
+      .min(1)
+      .max(4)
+      .optional(),
     startTime: time.optional(),
     endTime: time.optional(),
     clubIds: z.array(identifier).max(100).optional(),
@@ -56,6 +61,41 @@ export const createPlayIntentBodySchema = z
       });
     }
     if (input.timeOfDay === PlayIntentTimeOfDay.CUSTOM) {
+      if (!input.startTime) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['startTime'],
+          message: 'Start time is required for a custom window',
+        });
+      }
+      if (!input.endTime) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['endTime'],
+          message: 'End time is required for a custom window',
+        });
+      }
+    }
+    const selectedTimes = input.timeOfDays ?? [];
+    if (new Set(selectedTimes).size !== selectedTimes.length) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['timeOfDays'],
+        message: 'Time periods must be unique',
+      });
+    }
+    if (
+      selectedTimes.length > 1 &&
+      (selectedTimes.includes(PlayIntentTimeOfDay.ANYTIME) ||
+        selectedTimes.includes(PlayIntentTimeOfDay.CUSTOM))
+    ) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['timeOfDays'],
+        message: 'Anytime and custom hours must be selected on their own',
+      });
+    }
+    if (selectedTimes.includes(PlayIntentTimeOfDay.CUSTOM)) {
       if (!input.startTime) {
         context.addIssue({
           code: z.ZodIssueCode.custom,

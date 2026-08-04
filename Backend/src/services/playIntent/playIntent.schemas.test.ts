@@ -29,6 +29,28 @@ assert.equal(
 );
 assert.equal(
   createPlayIntentBodySchema.safeParse({
+    dayOffsets: [1],
+    timeOfDays: ['MORNING', 'EVENING'],
+  }).success,
+  true,
+);
+assert.equal(
+  createPlayIntentBodySchema.safeParse({
+    dayOffsets: [1],
+    timeOfDays: ['ANYTIME', 'EVENING'],
+  }).success,
+  false,
+);
+assert.equal(
+  createPlayIntentBodySchema.safeParse({
+    dayOffsets: [1],
+    timeOfDays: ['CUSTOM'],
+    startTime: '17:00',
+  }).success,
+  false,
+);
+assert.equal(
+  createPlayIntentBodySchema.safeParse({
     timeOfDay: 'CUSTOM',
     startTime: '18:00',
   }).success,

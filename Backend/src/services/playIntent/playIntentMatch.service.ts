@@ -22,10 +22,10 @@ import {
   intentMatchesGame,
   intentsCompatible,
   minutesToTimeString,
-  resolveTimeWindow,
+  resolveTimeWindows,
+  timeWindowSetsIntersect,
   timeStringToMinutes,
   type IntentCriteria,
-  type TimeWindow,
 } from './playIntentCriteria';
 import { PlayIntentService } from './playIntent.service';
 import { MatchProposalService } from './matchProposal.service';
@@ -54,6 +54,7 @@ type IntentRow = {
   minLevel: number | null;
   maxLevel: number | null;
   timeOfDay: PlayIntentTimeOfDay;
+  timeOfDays?: PlayIntentTimeOfDay[];
   startTime: string | null;
   endTime: string | null;
   genderTeams: GenderTeam;
@@ -377,7 +378,6 @@ export class PlayIntentMatchService {
         tightness: number;
         dateKeys: string[];
         clubIds: string[];
-        timeWindow: TimeWindow | null;
       }[] = [];
 
       for (const other of available) {
@@ -390,7 +390,6 @@ export class PlayIntentMatchService {
             tightness: compat.tightness,
             dateKeys: compat.dateKeys,
             clubIds: compat.clubIds,
-            timeWindow: compat.timeWindow,
           });
         }
       }
@@ -399,7 +398,7 @@ export class PlayIntentMatchService {
       const group = [seed];
       let groupDates = [...seed.dateKeys];
       let groupClubs = [...seed.clubIds];
-      let groupWindow = resolveTimeWindow(seedCrit);
+      let groupWindows = resolveTimeWindows(seedCrit);
 
       for (const cand of candidates) {
         if (group.length >= partySize) break;
@@ -412,7 +411,10 @@ export class PlayIntentMatchService {
         else if (cand.clubIds.length > 0) {
           groupClubs = groupClubs.filter((c) => cand.clubIds.includes(c));
         }
-        if (cand.timeWindow) groupWindow = cand.timeWindow;
+        groupWindows = timeWindowSetsIntersect(
+          groupWindows,
+          resolveTimeWindows(criteriaMap.get(cand.intent.id)!),
+        );
       }
 
       if (group.length < partySize) continue;
@@ -438,8 +440,12 @@ export class PlayIntentMatchService {
         members: group.map((g) => ({ userId: g.userId, intentId: g.id })),
         dateKeys: groupDates.length ? groupDates : group[0].dateKeys,
         clubIds: groupClubs,
-        startTime: groupWindow ? minutesToTimeString(groupWindow.startMinutes) : null,
-        endTime: groupWindow ? minutesToTimeString(groupWindow.endMinutes) : null,
+        startTime: groupWindows?.[0]
+          ? minutesToTimeString(groupWindows[0].startMinutes)
+          : null,
+        endTime: groupWindows?.[0]
+          ? minutesToTimeString(groupWindows[0].endMinutes)
+          : null,
         rematchKey,
         expiresAt: new Date(now.getTime() + PROPOSAL_TTL_MS),
       });
@@ -733,6 +739,7 @@ export class PlayIntentMatchService {
             entityType: viewerIntent.entityType,
             dateKeys: viewerIntent.dateKeys,
             timeOfDay: viewerIntent.timeOfDay,
+            timeOfDays: viewerIntent.timeOfDays,
             startTime: viewerIntent.startTime,
             endTime: viewerIntent.endTime,
             clubIds: viewerIntent.clubIds,
@@ -846,6 +853,7 @@ export class PlayIntentMatchService {
         minLevel: true,
         maxLevel: true,
         timeOfDay: true,
+        timeOfDays: true,
         startTime: true,
         endTime: true,
         genderTeams: true,

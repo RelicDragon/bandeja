@@ -25,6 +25,26 @@ assert.deepEqual(
   buildPlayIntentFollowerNotification(
     {
       ...base,
+      dateKeys: ['2026-07-30'],
+      timeOfDay: PlayIntentTimeOfDay.MORNING,
+      timeOfDays: [
+        PlayIntentTimeOfDay.MORNING,
+        PlayIntentTimeOfDay.EVENING,
+      ],
+    },
+    'en',
+    new Date('2026-07-29T12:00:00Z'),
+  ),
+  {
+    title: 'Ana wants to play',
+    body: 'Padel · Tomorrow · Morning + Evening · Belgrade. Tap to join.',
+  },
+);
+
+assert.deepEqual(
+  buildPlayIntentFollowerNotification(
+    {
+      ...base,
       creatorFirstName: null,
       dateKeys: ['2026-07-31'],
       timeOfDay: PlayIntentTimeOfDay.CUSTOM,

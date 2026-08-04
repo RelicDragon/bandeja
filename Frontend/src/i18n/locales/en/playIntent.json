@@ -11,6 +11,7 @@
     "composeHint": "We’ll notify you when enough players overlap — or when a public game fits.",
     "whenLabel": "Day",
     "timeLabel": "Time",
+    "timeMultiHint": "Choose every time that works for you",
     "today": "Today",
     "tomorrow": "Tomorrow",
     "dayAfter": "Day after",

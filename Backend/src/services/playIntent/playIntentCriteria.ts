@@ -10,6 +10,7 @@ export type IntentCriteria = {
   minLevel: number | null;
   maxLevel: number | null;
   timeOfDay: PlayIntentTimeOfDay;
+  timeOfDays?: PlayIntentTimeOfDay[];
   startTime: string | null;
   endTime: string | null;
   genderTeams: 'ANY' | 'MEN' | 'WOMEN' | 'MIX_PAIRS';
@@ -67,6 +68,30 @@ export function resolveTimeWindow(intent: {
   }
 }
 
+export function resolveTimeWindows(intent: {
+  timeOfDay: PlayIntentTimeOfDay;
+  timeOfDays?: PlayIntentTimeOfDay[];
+  startTime?: string | null;
+  endTime?: string | null;
+}): TimeWindow[] | null {
+  const periods = intent.timeOfDays?.length
+    ? [...new Set(intent.timeOfDays)]
+    : [intent.timeOfDay];
+  if (periods.includes('ANYTIME')) return null;
+
+  const windows = periods
+    .map((timeOfDay) =>
+      resolveTimeWindow({
+        timeOfDay,
+        startTime: intent.startTime,
+        endTime: intent.endTime,
+      }),
+    )
+    .filter((window): window is TimeWindow => window !== null)
+    .sort((a, b) => a.startMinutes - b.startMinutes);
+  return windows;
+}
+
 export function datesIntersect(a: string[], b: string[]): string[] {
   if (a.length === 0 || b.length === 0) return [];
   const setB = new Set(b);
@@ -90,6 +115,31 @@ export function timeWindowsIntersect(a: TimeWindow | null, b: TimeWindow | null)
   const end = Math.min(a.endMinutes, b.endMinutes);
   if (start >= end) return null;
   return { startMinutes: start, endMinutes: end };
+}
+
+export function timeWindowSetsIntersect(
+  a: TimeWindow[] | null,
+  b: TimeWindow[] | null,
+): TimeWindow[] | null {
+  if (a === null && b === null) return null;
+  if (a === null) return b ? [...b] : null;
+  if (b === null) return [...a];
+
+  const intersections = a.flatMap((left) =>
+    b.flatMap((right) => {
+      const overlap = timeWindowsIntersect(left, right);
+      return overlap ? [overlap] : [];
+    }),
+  );
+  const unique = new Map(
+    intersections.map((window) => [
+      `${window.startMinutes}:${window.endMinutes}`,
+      window,
+    ]),
+  );
+  return [...unique.values()].sort((left, right) =>
+    left.startMinutes - right.startMinutes,
+  );
 }
 
 export function levelWithinBand(
@@ -135,35 +185,39 @@ export function intentsCompatible(a: IntentCriteria, b: IntentCriteria): {
   dateKeys: string[];
   clubIds: string[];
   timeWindow: TimeWindow | null;
+  timeWindows: TimeWindow[] | null;
   tightness: number;
 } {
   const dateKeys = datesIntersect(a.dateKeys, b.dateKeys);
   if (dateKeys.length === 0) {
-    return { ok: false, dateKeys: [], clubIds: [], timeWindow: null, tightness: 0 };
+    return { ok: false, dateKeys: [], clubIds: [], timeWindow: null, timeWindows: [], tightness: 0 };
   }
 
   const clubs = clubsIntersect(a.clubIds, b.clubIds);
   if (clubs === null) {
-    return { ok: false, dateKeys: [], clubIds: [], timeWindow: null, tightness: 0 };
+    return { ok: false, dateKeys: [], clubIds: [], timeWindow: null, timeWindows: [], tightness: 0 };
   }
 
-  const timeWindow = timeWindowsIntersect(resolveTimeWindow(a), resolveTimeWindow(b));
-  if (resolveTimeWindow(a) && resolveTimeWindow(b) && timeWindow === null) {
-    return { ok: false, dateKeys: [], clubIds: [], timeWindow: null, tightness: 0 };
+  const windowsA = resolveTimeWindows(a);
+  const windowsB = resolveTimeWindows(b);
+  const timeWindows = timeWindowSetsIntersect(windowsA, windowsB);
+  if (windowsA !== null && windowsB !== null && timeWindows?.length === 0) {
+    return { ok: false, dateKeys: [], clubIds: [], timeWindow: null, timeWindows: [], tightness: 0 };
   }
+  const timeWindow = timeWindows?.[0] ?? null;
 
   if (!levelsCompatible(a, b)) {
-    return { ok: false, dateKeys: [], clubIds: [], timeWindow: null, tightness: 0 };
+    return { ok: false, dateKeys: [], clubIds: [], timeWindow: null, timeWindows: [], tightness: 0 };
   }
 
   if (!genderPrefsCompatible(a.genderTeams, b.genderTeams)) {
-    return { ok: false, dateKeys: [], clubIds: [], timeWindow: null, tightness: 0 };
+    return { ok: false, dateKeys: [], clubIds: [], timeWindow: null, timeWindows: [], tightness: 0 };
   }
   if (!userMatchesGenderPref(a.genderTeams, b.userGender)) {
-    return { ok: false, dateKeys: [], clubIds: [], timeWindow: null, tightness: 0 };
+    return { ok: false, dateKeys: [], clubIds: [], timeWindow: null, timeWindows: [], tightness: 0 };
   }
   if (!userMatchesGenderPref(b.genderTeams, a.userGender)) {
-    return { ok: false, dateKeys: [], clubIds: [], timeWindow: null, tightness: 0 };
+    return { ok: false, dateKeys: [], clubIds: [], timeWindow: null, timeWindows: [], tightness: 0 };
   }
 
   let tightness = dateKeys.length;
@@ -172,12 +226,12 @@ export function intentsCompatible(a: IntentCriteria, b: IntentCriteria): {
   if (timeWindow) {
     const span = timeWindow.endMinutes - timeWindow.startMinutes;
     tightness += span <= 3 * 60 ? 3 : span <= 6 * 60 ? 2 : 1;
-  } else if (!resolveTimeWindow(a) && !resolveTimeWindow(b)) {
+  } else if (windowsA === null && windowsB === null) {
     // Both anytime: flexible overlap is a solid match, not a weak one.
     tightness += 2;
   }
 
-  return { ok: true, dateKeys, clubIds: clubs, timeWindow, tightness };
+  return { ok: true, dateKeys, clubIds: clubs, timeWindow, timeWindows, tightness };
 }
 
 /**
@@ -205,9 +259,14 @@ export function intentMatchesGame(
     if (!game.clubId || !intent.clubIds.includes(game.clubId)) return false;
   }
 
-  const window = resolveTimeWindow(intent);
-  if (window) {
-    if (game.startTimeMinutes < window.startMinutes || game.startTimeMinutes >= window.endMinutes) {
+  const windows = resolveTimeWindows(intent);
+  if (windows) {
+    const isInsideSelectedPeriod = windows.some(
+      (window) =>
+        game.startTimeMinutes >= window.startMinutes &&
+        game.startTimeMinutes < window.endMinutes,
+    );
+    if (!isInsideSelectedPeriod) {
       return false;
     }
   }

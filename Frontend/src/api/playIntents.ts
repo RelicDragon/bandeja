@@ -11,6 +11,7 @@ export type PlayIntent = {
   entityType: 'GAME' | 'BAR';
   dateKeys: string[];
   timeOfDay: PlayIntentTimeOfDay;
+  timeOfDays?: PlayIntentTimeOfDay[];
   startTime: string | null;
   endTime: string | null;
   clubIds: string[];
@@ -28,6 +29,7 @@ export type CreatePlayIntentDto = {
   dayOffsets?: number[];
   dateKeys?: string[];
   timeOfDay?: PlayIntentTimeOfDay;
+  timeOfDays?: PlayIntentTimeOfDay[];
   startTime?: string | null;
   endTime?: string | null;
   clubIds?: string[];
@@ -100,6 +102,7 @@ export type SharedPlayIntent = {
   sport: Sport;
   dateKeys: string[];
   timeOfDay: PlayIntentTimeOfDay;
+  timeOfDays?: PlayIntentTimeOfDay[];
   startTime: string | null;
   endTime: string | null;
   clubs: { id: string; name: string }[];

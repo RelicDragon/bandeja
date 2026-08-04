@@ -13,6 +13,7 @@
     "composeHint": "Dáme vědět, až se sejdou hráči — nebo když se objeví vhodná veřejná hra.",
     "whenLabel": "Den",
     "timeLabel": "Čas",
+    "timeMultiHint": "Vyber všechny časy, které ti vyhovují",
     "today": "Dnes",
     "tomorrow": "Zítra",
     "dayAfter": "Pozítří",

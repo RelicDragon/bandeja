@@ -3056,6 +3056,9 @@ model PlayIntent {
   entityType              EntityType                         @default(GAME)
   dateKeys                String[]
   timeOfDay               PlayIntentTimeOfDay                @default(ANYTIME)
+  /// Ordered availability periods. `timeOfDay` remains as a legacy projection
+  /// for older clients while matching uses this list when it is populated.
+  timeOfDays              PlayIntentTimeOfDay[]               @default([])
   startTime               String?
   endTime                 String?
   clubIds                 String[]

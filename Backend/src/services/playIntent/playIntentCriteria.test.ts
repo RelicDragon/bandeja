@@ -5,6 +5,7 @@ import {
   clubsIntersect,
   timeWindowsIntersect,
   resolveTimeWindow,
+  resolveTimeWindows,
   intentsCompatible,
   intentMatchesGame,
   affinityScore,
@@ -67,6 +68,31 @@ assert.deepEqual(resolveTimeWindow({ timeOfDay: 'CUSTOM', startTime: '10:00', en
   startMinutes: 600,
   endMinutes: 720,
 });
+assert.deepEqual(
+  resolveTimeWindows({
+    timeOfDay: 'MORNING',
+    timeOfDays: ['MORNING', 'EVENING'],
+  }),
+  [
+    { startMinutes: 360, endMinutes: 720 },
+    { startMinutes: 1080, endMinutes: 1440 },
+  ],
+);
+
+{
+  const split = base({
+    timeOfDay: 'MORNING',
+    timeOfDays: ['MORNING', 'EVENING'],
+  });
+  assert.equal(
+    intentsCompatible(split, base({ timeOfDay: 'EVENING' })).ok,
+    true,
+  );
+  assert.equal(
+    intentsCompatible(split, base({ timeOfDay: 'AFTERNOON' })).ok,
+    false,
+  );
+}
 
 {
   const a = base({ clubIds: ['c1'], timeOfDay: 'EVENING' });
@@ -138,6 +164,47 @@ assert.deepEqual(resolveTimeWindow({ timeOfDay: 'CUSTOM', startTime: '10:00', en
 }
 
 {
+  const intent = base({
+    timeOfDay: 'MORNING',
+    timeOfDays: ['MORNING', 'EVENING'],
+  });
+  const now = new Date('2026-07-28T05:00:00Z');
+  const gameStart = new Date('2026-07-28T19:00:00Z');
+  assert.equal(
+    intentMatchesGame(
+      intent,
+      {
+        dateKey: '2026-07-28',
+        clubId: null,
+        startTime: gameStart,
+        startTimeMinutes: 19 * 60,
+        minLevel: null,
+        maxLevel: null,
+        genderTeams: 'ANY',
+      },
+      now,
+    ),
+    true,
+  );
+  assert.equal(
+    intentMatchesGame(
+      intent,
+      {
+        dateKey: '2026-07-28',
+        clubId: null,
+        startTime: new Date('2026-07-28T15:00:00Z'),
+        startTimeMinutes: 15 * 60,
+        minLevel: null,
+        maxLevel: null,
+        genderTeams: 'ANY',
+      },
+      now,
+    ),
+    false,
+  );
+}
+
+{
   const intent = base({ minLevel: 2, maxLevel: 3, userLevel: 2.5 });
   const gameStart = new Date('2026-07-28T18:00:00Z');
   assert.equal(
@@ -187,6 +254,14 @@ assert.deepEqual(resolveTimeWindow({ timeOfDay: 'CUSTOM', startTime: '10:00', en
       new Date('2026-07-28T12:00:00Z'),
     ),
     false,
+  );
+  assert.equal(
+    intentWindowIsReachable(
+      { ...intent, timeOfDays: ['MORNING', 'EVENING'] },
+      timezone,
+      new Date('2026-07-28T13:00:00Z'),
+    ),
+    true,
   );
   assert.equal(
     intentWindowEndsAt(intent, 'Europe/Belgrade')?.toISOString(),
