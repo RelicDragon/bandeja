@@ -89,7 +89,7 @@ const definition: TrophyDefinitionView = {
   titleKey: 'trophies.defs.wins100.title',
   descriptionKey: 'trophies.defs.wins100.description',
   threshold: 100,
-  multiplicity: 'ONCE',
+  type: 'MILESTONE',
 };
 
 describe('TrophyDetailSheet', () => {

@@ -101,8 +101,11 @@ export function isMaxLevelEntry(
  * (used for solo cards / detail when no stack siblings are in hand).
  */
 export function isCatalogFamilyMaxLevel(
-  definition: Pick<TrophyDefinitionView, 'id' | 'ruleKind' | 'threshold' | 'place'>,
+  definition: Pick<TrophyDefinitionView, 'id' | 'type' | 'ruleKind' | 'threshold' | 'place'>,
 ): boolean {
+  // Standalone mechanics have no higher cabinet tier. Repeatable podium medals
+  // remain separate definitions even though they share a leaderboard family.
+  if (definition.type !== 'MILESTONE') return true;
   if (!definition.ruleKind) return false;
   const family = stackFamilyKey(definition.ruleKind);
   let maxScore = Number.NEGATIVE_INFINITY;
@@ -206,9 +209,13 @@ export function groupCabinetRailItems(
     const ruleKind = entry.definition?.ruleKind;
     if (!ruleKind || !entry.definition?.id) continue;
     const family = stackFamilyKey(ruleKind);
-    const key = mergeLockState
+    const groupsAsMilestone = entry.definition.type === 'MILESTONE';
+    const familyOrDefinition = groupsAsMilestone
       ? family
-      : `${family}::${entry.unlocked ? 'u' : 'l'}`;
+      : `definition:${entry.definition.id}`;
+    const key = mergeLockState
+      ? familyOrDefinition
+      : `${familyOrDefinition}::${entry.unlocked ? 'u' : 'l'}`;
     let bucket = buckets.get(key);
     if (!bucket) {
       bucket = [];

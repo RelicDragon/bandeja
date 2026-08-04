@@ -55,6 +55,10 @@ export function TrophyCabinetCard({
   const displayRarity = trophyMaxLevelDisplayRarity(isMaxLevel, unlocked, definition.rarity);
   const frameLocked = trophyFrameLocked(locked);
   const hasPinned = instances.some((i) => pinnedInstanceIds?.has(i.id));
+  const showEarnedCount =
+    unlocked &&
+    instances.length > 0 &&
+    (definition.type === 'REPEATABLE' || instances.length > 1);
   const progressSafe =
     progress != null &&
     progress.target > 0 &&
@@ -94,8 +98,11 @@ export function TrophyCabinetCard({
               <TrophyArt artKey={definition.artKey} locked={locked} className="h-12 w-14" />
             </motion.div>
           </TrophyRarityFrame>
-          {instances.length > 1 && (
-            <span className="absolute -right-0.5 -top-1 rounded-full bg-gray-900 px-1.5 text-[10px] font-bold text-white dark:bg-white dark:text-gray-900">
+          {showEarnedCount && (
+            <span
+              data-testid="trophy-earned-count"
+              className="absolute -right-0.5 -top-1 rounded-full bg-gray-900 px-1.5 text-[10px] font-bold text-white dark:bg-white dark:text-gray-900"
+            >
               ×{instances.length}
             </span>
           )}

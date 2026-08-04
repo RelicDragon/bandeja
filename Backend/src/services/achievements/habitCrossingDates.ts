@@ -1,6 +1,7 @@
 import type { Sport } from '@prisma/client';
 import {
   ACHIEVEMENT_CATALOG,
+  isLifetimeAchievement,
   type AchievementDefinition,
 } from '@bandeja/shared/achievements';
 import {
@@ -62,7 +63,7 @@ function habitDefsByRule(): {
   const streak: AchievementDefinition[] = [];
   const sportVolume = new Map<string, AchievementDefinition[]>();
   for (const def of ACHIEVEMENT_CATALOG) {
-    if (def.multiplicity !== 'one_shot' || def.threshold == null) continue;
+    if (!isLifetimeAchievement(def) || def.threshold == null) continue;
     if (def.ruleKind === 'HABIT_VOLUME') volume.push(def);
     else if (def.ruleKind === 'HABIT_FIRST_WIN' || def.ruleKind === 'HABIT_WINS') {
       wins.push(def);
@@ -85,7 +86,7 @@ function habitDefsByRule(): {
 }
 
 /**
- * Replay outcome timeline and record the first instant each one-shot habit
+ * Replay outcome timeline and record the first instant each lifetime habit
  * threshold was crossed (volume / wins / streak).
  */
 export function computeHabitCrossingDates(params: {

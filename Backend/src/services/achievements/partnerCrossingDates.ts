@@ -1,6 +1,7 @@
 import {
   ACHIEVEMENT_CATALOG,
   accumulatePartnerCountersForUser,
+  isLifetimeAchievement,
   type AchievementDefinition,
 } from '@bandeja/shared/achievements';
 import type { HabitCrossing } from './habitCrossingDates';
@@ -15,7 +16,7 @@ function defsFor(
 ): AchievementDefinition[] {
   return sortByThreshold(
     ACHIEVEMENT_CATALOG.filter(
-      (d) => d.multiplicity === 'one_shot' && d.ruleKind === ruleKind && d.threshold != null,
+      (d) => isLifetimeAchievement(d) && d.ruleKind === ruleKind && d.threshold != null,
     ),
   );
 }

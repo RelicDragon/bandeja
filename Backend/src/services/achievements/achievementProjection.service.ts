@@ -5,6 +5,7 @@ import {
   getAchievementDefinition,
   projectTrophyCabinet,
   resolveTrophyShowcase,
+  type AchievementType,
   type AchievementDefinitionId,
   type AchievementInstanceInput,
   type HabitProgressCounters,
@@ -16,6 +17,7 @@ import { loadPartnerHabitCounters } from './partnerGrant.service';
 
 export type TrophyDefinitionView = {
   id: string;
+  type: AchievementType;
   rarity: string;
   artKey: string;
   ruleKind: string;
@@ -23,7 +25,6 @@ export type TrophyDefinitionView = {
   descriptionKey: string;
   place?: number;
   threshold?: number;
-  multiplicity: string;
 };
 
 export type TrophyInstanceView = {
@@ -90,6 +91,7 @@ function toDefinitionView(
 ): TrophyDefinitionView {
   return {
     id: def.id,
+    type: def.type,
     rarity: def.rarity,
     artKey: def.artKey,
     ruleKind: def.ruleKind,
@@ -97,7 +99,6 @@ function toDefinitionView(
     descriptionKey: def.descriptionKey,
     ...(def.place != null ? { place: def.place } : {}),
     ...(def.threshold != null ? { threshold: def.threshold } : {}),
-    multiplicity: def.multiplicity,
   };
 }
 

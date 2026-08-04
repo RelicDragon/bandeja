@@ -1,7 +1,11 @@
+import type { AchievementType } from '@shared/achievements';
+
 export type TrophyRarity = 'COMMON' | 'RARE' | 'LEGENDARY';
+export type { AchievementType };
 
 export type TrophyDefinitionView = {
   id: string;
+  type: AchievementType;
   rarity: TrophyRarity;
   artKey: string;
   ruleKind: string;
@@ -9,7 +13,6 @@ export type TrophyDefinitionView = {
   descriptionKey: string;
   place?: number;
   threshold?: number;
-  multiplicity: string;
 };
 
 export type TrophyInstanceView = {

@@ -135,6 +135,7 @@ import {
   const silver = podiumDefinitionForPlace(2);
   const bronze = podiumDefinitionForPlace(3);
   assert.equal(gold.rarity, 'LEGENDARY');
+  assert.equal(gold.type, 'REPEATABLE');
   assert.equal(silver.rarity, 'RARE');
   assert.equal(bronze.rarity, 'RARE');
 }

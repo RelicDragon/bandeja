@@ -19,7 +19,7 @@ function def(
     artKey: partial.id,
     titleKey: `trophies.defs.${partial.id}.title`,
     descriptionKey: `trophies.defs.${partial.id}.description`,
-    multiplicity: 'one_shot',
+    type: 'MILESTONE',
     ...partial,
   };
 }

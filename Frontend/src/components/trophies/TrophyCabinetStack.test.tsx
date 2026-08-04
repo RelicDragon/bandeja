@@ -101,7 +101,7 @@ function entry(id: string, title: string, threshold = 10): TrophyCabinetEntryVie
       titleKey: title,
       descriptionKey: `${title}.description`,
       threshold,
-      multiplicity: 'ONCE',
+      type: 'MILESTONE',
     },
     unlocked: true,
     instances: [],

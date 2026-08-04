@@ -13,6 +13,7 @@ import {
   groupUserIdsByPodiumPlace,
   isPodiumEligibleEntityType,
   isPodiumPlace,
+  isRepeatableAchievement,
   meetsPodiumParticipantFloor,
   mergeTreePodiumsIntoEventPlaces,
   podiumDefinitionForPlace,
@@ -336,7 +337,9 @@ async function createPodiumInstance(params: {
   sourceKey: string;
 }): Promise<PodiumGrantRow | null> {
   const definition = podiumDefinitionForPlace(params.place);
-  if (!getAchievementDefinition(definition.id)) return null;
+  if (!getAchievementDefinition(definition.id) || !isRepeatableAchievement(definition)) {
+    return null;
+  }
 
   try {
     const row = await params.db.userAchievement.create({
@@ -418,7 +421,13 @@ function batchFromExistingRows(
   for (const row of rows) {
     if (row.place == null || !isPodiumPlace(row.place)) continue;
     const definition = getAchievementDefinition(row.definitionId);
-    if (!definition || definition.ruleKind !== 'PODIUM') continue;
+    if (
+      !definition ||
+      definition.ruleKind !== 'PODIUM' ||
+      !isRepeatableAchievement(definition)
+    ) {
+      continue;
+    }
     const unlock = toUnlockMeta(definition, row.id, row.place, row.sport);
     grants.push({
       userId: row.userId,

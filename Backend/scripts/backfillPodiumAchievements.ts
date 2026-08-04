@@ -1,6 +1,7 @@
 /**
- * Sync podium trophies for every FINAL podium-eligible event.
+ * Reconcile REPEATABLE podium trophies for every FINAL podium-eligible event.
  * Idempotent via grantPodiumAchievementsForFinalizedGame.
+ * Existing rows are retained when correct; missing/wrong medal rows are repaired.
  *
  *   npx ts-node --transpile-only scripts/backfillPodiumAchievements.ts
  *   npx ts-node --transpile-only scripts/backfillPodiumAchievements.ts --apply
@@ -68,12 +69,14 @@ async function run(apply: boolean, gameIdFilter: string | null): Promise<void> {
 
   console.log(
     `${apply ? 'Applying' : 'Dry run'}: ${eligible.length} eligible FINAL events; ` +
-      `${needGrant} with floor & 0 podium rows, ${alreadyHave} already awarded, ` +
+      `${needGrant} with floor & 0 podium rows, ${alreadyHave} with existing rows, ` +
       `${belowFloor} below N≥8 floor`,
   );
 
   if (!apply) {
-    console.log('Pass --apply to sync via grantPodiumAchievementsForFinalizedGame');
+    console.log(
+      'Pass --apply to reconcile every eligible event, including medal placement changes',
+    );
     return;
   }
 

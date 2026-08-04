@@ -14,6 +14,7 @@ import {
 {
   assert.equal(catalogDefinitionCount(), ACHIEVEMENT_CATALOG.length);
   assert.ok(getAchievementDefinition('podium_gold')?.rarity === 'LEGENDARY');
+  assert.ok(getAchievementDefinition('podium_gold')?.type === 'REPEATABLE');
   assert.ok(getAchievementDefinition('podium_silver')?.place === 2);
   assert.ok(getAchievementDefinition('habit_streak_4')?.threshold === 4);
   assert.ok(getAchievementDefinition('habit_streak_8')?.threshold === 8);
@@ -30,6 +31,8 @@ import {
   assert.ok(getAchievementDefinition('habit_games_1000')?.threshold === 1000);
   assert.ok(getAchievementDefinition('habit_games_1000')?.rarity === 'LEGENDARY');
   assert.ok(getAchievementDefinition('habit_first_win')?.ruleKind === 'HABIT_FIRST_WIN');
+  assert.ok(getAchievementDefinition('habit_first_win')?.type === 'UNIQUE');
+  assert.ok(getAchievementDefinition('habit_games_10')?.type === 'MILESTONE');
   assert.ok(getAchievementDefinition('habit_first_padel_game')?.sport === 'PADEL');
   assert.ok(getAchievementDefinition('habit_wins_10')?.threshold === 10);
   assert.ok(getAchievementDefinition('habit_wins_25')?.threshold === 25);

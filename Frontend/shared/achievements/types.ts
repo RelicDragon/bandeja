@@ -1,5 +1,13 @@
 export type TrophyRarity = 'COMMON' | 'RARE' | 'LEGENDARY';
 
+/**
+ * Award and cabinet mechanics for a catalog definition.
+ * - UNIQUE: earned at most once in a user's lifetime and shown on its own.
+ * - MILESTONE: earned at most once, but grouped with its progression family.
+ * - REPEATABLE: earned once per source event and shown on its own with a count.
+ */
+export type AchievementType = 'UNIQUE' | 'MILESTONE' | 'REPEATABLE';
+
 export type TrophyRuleKind =
   | 'PODIUM'
   | 'HABIT_STREAK'
@@ -124,6 +132,7 @@ export type AchievementDefinitionId =
 
 export type AchievementDefinition = {
   id: AchievementDefinitionId;
+  type: AchievementType;
   rarity: TrophyRarity;
   artKey: TrophyArtKey;
   ruleKind: TrophyRuleKind;
@@ -137,8 +146,6 @@ export type AchievementDefinition = {
   threshold?: number;
   /** Sport scope for HABIT_SPORT_VOLUME (e.g. PADEL). */
   sport?: string;
-  /** Habit milestones are one-shot; podium stacks per event. */
-  multiplicity: 'one_shot' | 'per_event';
 };
 
 export type AchievementInstanceInput = {

@@ -1,4 +1,5 @@
 import { ACHIEVEMENT_CATALOG } from './catalog';
+import { isLifetimeAchievement } from './mechanics';
 import { habitProgressForDefinition, type HabitProgressCounters } from './projectCabinet';
 import type { AchievementDefinition, TrophyRuleKind } from './types';
 
@@ -12,14 +13,14 @@ const PLAY_HABIT_RULE_KINDS: ReadonlySet<TrophyRuleKind> = new Set([
 ]);
 
 function isOneShotWithProgress(definition: AchievementDefinition): boolean {
-  return definition.multiplicity === 'one_shot';
+  return isLifetimeAchievement(definition);
 }
 
 function isPlayHabit(definition: AchievementDefinition): boolean {
   return isOneShotWithProgress(definition) && PLAY_HABIT_RULE_KINDS.has(definition.ruleKind);
 }
 
-/** True when counters alone would unlock this one-shot habit (ignores ownership). */
+/** True when counters alone would unlock this lifetime habit (ignores ownership). */
 export function habitThresholdMet(
   definition: AchievementDefinition,
   counters: HabitProgressCounters,

@@ -17,7 +17,7 @@ function def(
     artKey: partial.id,
     titleKey: `trophies.defs.${partial.id}.title`,
     descriptionKey: `trophies.defs.${partial.id}.description`,
-    multiplicity: 'one_shot',
+    type: 'MILESTONE',
     ...partial,
   };
 }
@@ -140,6 +140,7 @@ describe('nextChaseEntry', () => {
     expect(
       isCatalogFamilyMaxLevel({
         id: 'habit_wins_500',
+        type: 'MILESTONE',
         ruleKind: 'HABIT_WINS',
         threshold: 500,
       }),
@@ -147,6 +148,7 @@ describe('nextChaseEntry', () => {
     expect(
       isCatalogFamilyMaxLevel({
         id: 'habit_wins_100',
+        type: 'MILESTONE',
         ruleKind: 'HABIT_WINS',
         threshold: 100,
       }),
@@ -154,6 +156,7 @@ describe('nextChaseEntry', () => {
     expect(
       isCatalogFamilyMaxLevel({
         id: 'podium_gold',
+        type: 'REPEATABLE',
         ruleKind: 'PODIUM',
         place: 1,
       }),
@@ -161,32 +164,41 @@ describe('nextChaseEntry', () => {
     expect(
       isCatalogFamilyMaxLevel({
         id: 'podium_silver',
+        type: 'REPEATABLE',
         ruleKind: 'PODIUM',
         place: 2,
       }),
-    ).toBe(false);
+    ).toBe(true);
   });
 });
 
 describe('groupCabinetRailItems', () => {
-  it('stacks first padel game with volume games ladder', () => {
+  it('keeps a unique padel debut separate from the volume milestone ladder', () => {
     const items = groupCabinetRailItems([
       entry(
-        def({ id: 'habit_first_padel_game', ruleKind: 'HABIT_SPORT_VOLUME', threshold: 1 }),
+        def({
+          id: 'habit_first_padel_game',
+          type: 'UNIQUE',
+          ruleKind: 'HABIT_SPORT_VOLUME',
+          threshold: 1,
+        }),
         true,
       ),
       entry(def({ id: 'habit_games_10', ruleKind: 'HABIT_VOLUME', threshold: 10 }), true),
       entry(def({ id: 'habit_games_50', ruleKind: 'HABIT_VOLUME', threshold: 50 }), true),
     ]);
-    expect(items).toHaveLength(1);
+    expect(items).toHaveLength(2);
     expect(items[0]).toMatchObject({ kind: 'stack', unlocked: true, ruleKind: 'HABIT_VOLUME' });
     if (items[0]?.kind === 'stack') {
       expect(items[0].entries.map((e) => e.definition.id)).toEqual([
-        'habit_first_padel_game',
         'habit_games_10',
         'habit_games_50',
       ]);
     }
+    expect(items[1]).toMatchObject({
+      kind: 'card',
+      entry: { definition: { id: 'habit_first_padel_game' } },
+    });
   });
 
   it('keeps a single entry as a card', () => {
@@ -197,9 +209,9 @@ describe('groupCabinetRailItems', () => {
     expect(items[0]?.kind).toBe('card');
   });
 
-  it('stacks first win with wins ladder (same family)', () => {
+  it('keeps a unique first win separate from the wins milestone ladder', () => {
     const items = groupCabinetRailItems([
-      entry(def({ id: 'habit_first_win', ruleKind: 'HABIT_FIRST_WIN', threshold: 1 }), true),
+      entry(def({ id: 'habit_first_win', type: 'UNIQUE', ruleKind: 'HABIT_FIRST_WIN', threshold: 1 }), true),
       entry(def({ id: 'habit_wins_10', ruleKind: 'HABIT_WINS', threshold: 10 }), true),
       entry(def({ id: 'habit_wins_25', ruleKind: 'HABIT_WINS', threshold: 25 }), true),
       entry(
@@ -208,18 +220,18 @@ describe('groupCabinetRailItems', () => {
         { progress: { current: 30, target: 50 } },
       ),
     ]);
-    expect(items.map((i) => i.kind)).toEqual(['stack', 'card']);
+    expect(items.map((i) => i.kind)).toEqual(['stack', 'card', 'card']);
     expect(items[0]).toMatchObject({ kind: 'stack', unlocked: true, ruleKind: 'HABIT_WINS' });
     if (items[0]?.kind === 'stack') {
       expect(items[0].entries.map((e) => e.definition.id)).toEqual([
-        'habit_first_win',
         'habit_wins_10',
         'habit_wins_25',
       ]);
     }
-    if (items[1]?.kind === 'card') {
-      expect(items[1].entry.definition.id).toBe('habit_wins_50');
-    }
+    expect(items.slice(1).map((item) => item.key).sort()).toEqual([
+      'habit_first_win',
+      'habit_wins_50',
+    ]);
   });
 
   it('stacks unlocked habit_games separately from locked by default', () => {
@@ -310,10 +322,10 @@ describe('groupCabinetRailItems', () => {
     }
   });
 
-  it('merges first win unlocked with locked wins ladder for own cabinet', () => {
+  it('does not merge a unique first win into the wins ladder for own cabinet', () => {
     const items = groupCabinetRailItems(
       [
-        entry(def({ id: 'habit_first_win', ruleKind: 'HABIT_FIRST_WIN', threshold: 1 }), true),
+        entry(def({ id: 'habit_first_win', type: 'UNIQUE', ruleKind: 'HABIT_FIRST_WIN', threshold: 1 }), true),
         entry(def({ id: 'habit_wins_10', ruleKind: 'HABIT_WINS', threshold: 10 }), true),
         entry(
           def({ id: 'habit_wins_50', ruleKind: 'HABIT_WINS', threshold: 50, rarity: 'RARE' }),
@@ -323,14 +335,43 @@ describe('groupCabinetRailItems', () => {
       ],
       { mergeLockState: true },
     );
-    expect(items).toHaveLength(1);
+    expect(items).toHaveLength(2);
     expect(items[0]).toMatchObject({ kind: 'stack', unlocked: true, ruleKind: 'HABIT_WINS' });
     if (items[0]?.kind === 'stack') {
       expect(items[0].entries.map((e) => e.definition.id)).toEqual([
-        'habit_first_win',
         'habit_wins_10',
         'habit_wins_50',
       ]);
+    }
+    expect(items[1]).toMatchObject({
+      kind: 'card',
+      entry: { definition: { id: 'habit_first_win' } },
+    });
+  });
+
+  it('shows repeatable podium medals as separate counted cards', () => {
+    const gold = entry(
+      def({ id: 'podium_gold', type: 'REPEATABLE', ruleKind: 'PODIUM', place: 1 }),
+      true,
+    );
+    gold.instances = [
+      { ...gold.instances[0]!, id: 'gold-1' },
+      { ...gold.instances[0]!, id: 'gold-2' },
+      { ...gold.instances[0]!, id: 'gold-3' },
+    ];
+    const silver = entry(
+      def({ id: 'podium_silver', type: 'REPEATABLE', ruleKind: 'PODIUM', place: 2 }),
+      true,
+    );
+
+    const items = groupCabinetRailItems([silver, gold], { mergeLockState: true });
+
+    expect(items).toHaveLength(2);
+    expect(items.every((item) => item.kind === 'card')).toBe(true);
+    expect(items.map((item) => item.key)).toEqual(['podium_gold', 'podium_silver']);
+    if (items[0]?.kind === 'card' && items[1]?.kind === 'card') {
+      expect(items[0].entry.instances).toHaveLength(3);
+      expect(items[1].entry.instances).toHaveLength(1);
     }
   });
 
@@ -408,7 +449,7 @@ describe('groupCabinetRailItems', () => {
           artKey: '',
           titleKey: '',
           descriptionKey: '',
-          multiplicity: 'one_shot',
+          type: 'MILESTONE',
         },
         unlocked: true,
         instances: [],

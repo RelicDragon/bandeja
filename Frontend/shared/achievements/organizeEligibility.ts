@@ -1,6 +1,7 @@
 import type { AchievementDefinition } from './types';
+import { isLifetimeAchievement } from './mechanics';
 
-/** Organizer habit families (one-shot ladders). */
+/** Organizer MILESTONE families (lifetime ladders). */
 export type OrganizeHabitKind = 'GAME' | 'TOURNAMENT' | 'BAR';
 
 export const ORGANIZE_GAME_THRESHOLDS = [1, 10, 25, 50, 100, 500] as const;
@@ -49,7 +50,7 @@ export function filterOrganizeDefinitionsDue(params: {
   const ruleKind = organizeRuleKindFor(params.kind);
   return params.definitions.filter((definition) => {
     if (definition.ruleKind !== ruleKind) return false;
-    if (definition.multiplicity !== 'one_shot') return false;
+    if (!isLifetimeAchievement(definition)) return false;
     if (params.ownedDefinitionIds.has(definition.id)) return false;
     const target = definition.threshold;
     if (target == null || target <= 0) return false;

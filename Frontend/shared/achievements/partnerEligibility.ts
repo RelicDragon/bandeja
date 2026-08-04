@@ -1,4 +1,5 @@
 import type { AchievementDefinition } from './types';
+import { isLifetimeAchievement } from './mechanics';
 
 export const GIANT_KILLER_THRESHOLDS = [1, 5, 10, 25, 50] as const;
 export const DYNAMIC_DUO_THRESHOLDS = [10, 50, 100] as const;
@@ -21,7 +22,7 @@ export function filterThresholdDefinitionsDue(params: {
 }): AchievementDefinition[] {
   return params.definitions.filter((definition) => {
     if (definition.ruleKind !== params.ruleKind) return false;
-    if (definition.multiplicity !== 'one_shot') return false;
+    if (!isLifetimeAchievement(definition)) return false;
     if (params.ownedDefinitionIds.has(definition.id)) return false;
     const target = definition.threshold;
     if (target == null || target <= 0) return false;

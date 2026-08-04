@@ -21,7 +21,7 @@ function baseTrophies(): TrophiesPayload {
     ruleKind: 'HABIT_FIRST_WIN',
     titleKey: 'trophies.defs.firstWin.title',
     descriptionKey: 'trophies.defs.firstWin.description',
-    multiplicity: 'one_shot',
+    type: 'MILESTONE',
   };
   return {
     showcase: [

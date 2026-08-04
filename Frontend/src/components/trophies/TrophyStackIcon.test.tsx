@@ -74,7 +74,7 @@ function commonEntry(): TrophyCabinetEntryView {
       titleKey: 'trophies.defs.firstWin.title',
       descriptionKey: 'trophies.defs.firstWin.description',
       threshold: 1,
-      multiplicity: 'ONCE',
+      type: 'MILESTONE',
     },
     unlocked: true,
     instances: [],

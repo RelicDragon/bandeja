@@ -17,6 +17,7 @@ function toDefinitionView(
 ): TrophyDefinitionView {
   return {
     id: def.id,
+    type: def.type,
     rarity: def.rarity,
     artKey: def.artKey,
     ruleKind: def.ruleKind,
@@ -24,7 +25,6 @@ function toDefinitionView(
     descriptionKey: def.descriptionKey,
     ...(def.place != null ? { place: def.place } : {}),
     ...(def.threshold != null ? { threshold: def.threshold } : {}),
-    multiplicity: def.multiplicity,
   };
 }
 

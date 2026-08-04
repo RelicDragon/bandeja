@@ -129,7 +129,7 @@ export async function habitCounterPairForSportUpdate(params: {
 }
 
 /**
- * Grant one-shot habit trophies newly crossed on this event.
+ * Grant lifetime UNIQUE/MILESTONE habit trophies newly crossed on this event.
  * Idempotent: any prior row for the definition (active or not) blocks re-grant;
  * partial unique on active rows still guards concurrent creates.
  * Forward-only: requires before→after threshold crossing (no historical soft backfill).
@@ -144,7 +144,7 @@ export async function grantHabitAchievements(params: {
 }): Promise<HabitGrantResult> {
   const db = params.tx ?? prisma;
 
-  // One-shot: any historical instance (including revoked) means already granted.
+  // Lifetime award: any historical instance (including revoked) blocks re-grant.
   const existing = await db.userAchievement.findMany({
     where: { userId: params.userId },
     select: { definitionId: true },
@@ -165,7 +165,7 @@ export async function grantHabitAchievements(params: {
 }
 
 /**
- * One-time / ops backfill: grant every one-shot habit whose counters already meet
+ * One-time / ops backfill: grant every lifetime habit whose counters already meet
  * threshold and that has never been granted (incl. revoked). Silent — no celebration.
  * Uses the same aggregated counters as the cabinet progress UI.
  */

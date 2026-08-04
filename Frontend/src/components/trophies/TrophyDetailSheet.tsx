@@ -219,11 +219,12 @@ export function TrophyDetailSheet({
                 {sourceTitle && (
                   <p className="font-medium text-gray-800 dark:text-gray-100">{sourceTitle}</p>
                 )}
-                {instances.length > 1 && (
-                  <p className="text-gray-600 dark:text-gray-300">
-                    {t('trophies.detail.timesEarned', { count: instances.length })}
-                  </p>
-                )}
+                {instances.length > 0 &&
+                  (definition.type === 'REPEATABLE' || instances.length > 1) && (
+                    <p className="text-gray-600 dark:text-gray-300">
+                      {t('trophies.detail.timesEarned', { count: instances.length })}
+                    </p>
+                  )}
                 {deepLinkId && (
                   <button
                     type="button"

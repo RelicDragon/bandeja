@@ -1,9 +1,9 @@
 import type { TrophyRuleKind } from './types';
 
 /**
- * Achievement families shown by both the trophy cabinet and the achievement
- * leaderboard. First-win and sport-debut definitions intentionally roll into
- * their broader Wins and Games families, matching the cabinet carousel.
+ * Achievement leaderboard families. First-win and sport-debut definitions roll
+ * into the broader Wins and Games rankings even though UNIQUE cabinet entries
+ * are displayed as standalone cards.
  */
 export const ACHIEVEMENT_LEADERBOARD_FAMILIES = [
   'HABIT_VOLUME',

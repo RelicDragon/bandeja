@@ -3,12 +3,18 @@ export type {
   AchievementDefinitionId,
   AchievementInstanceInput,
   AchievementPinInput,
+  AchievementType,
   TrophyArtKey,
   TrophyProgress,
   TrophyRarity,
   TrophyRuleKind,
   TrophyShowcaseResolvedSlot,
 } from './types';
+
+export {
+  isLifetimeAchievement,
+  isRepeatableAchievement,
+} from './mechanics';
 
 export {
   ACHIEVEMENT_CATALOG,

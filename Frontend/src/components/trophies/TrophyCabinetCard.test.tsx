@@ -71,7 +71,7 @@ function lockedEntry(): TrophyCabinetEntryView {
       titleKey: 'trophies.defs.wins100.title',
       descriptionKey: 'trophies.defs.wins100.description',
       threshold: 100,
-      multiplicity: 'ONCE',
+      type: 'MILESTONE',
     },
     unlocked: false,
     instances: [],
@@ -121,5 +121,92 @@ describe('TrophyCabinetCard', () => {
     expect(
       container.querySelector('[data-testid="trophy-detail-drawer"]'),
     ).not.toBeNull();
+  });
+
+  it('shows the number of times a repeatable podium medal was earned', () => {
+    const container = document.createElement('div');
+    document.body.append(container);
+    containers.push(container);
+    const root = createRoot(container);
+    roots.push(root);
+    const base = lockedEntry();
+    const podium: TrophyCabinetEntryView = {
+      ...base,
+      definition: {
+        ...base.definition,
+        id: 'podium_gold',
+        type: 'REPEATABLE',
+        ruleKind: 'PODIUM',
+        artKey: 'podium_gold',
+        place: 1,
+        threshold: undefined,
+      },
+      unlocked: true,
+      progress: null,
+      instances: [1, 2, 3].map((index) => ({
+        id: `gold-${index}`,
+        definitionId: 'podium_gold',
+        earnedAt: `2026-0${index}-01T00:00:00.000Z`,
+        sport: 'PADEL',
+        place: 1,
+        source: null,
+      })),
+    };
+
+    act(() =>
+      root.render(
+        <TrophyCabinetCard
+          entry={podium}
+          isOwn
+          pinnedInstanceIds={new Set()}
+        />,
+      ),
+    );
+
+    expect(container.textContent).toContain('×3');
+  });
+
+  it('shows ×1 for a repeatable podium medal earned once', () => {
+    const container = document.createElement('div');
+    document.body.append(container);
+    containers.push(container);
+    const root = createRoot(container);
+    roots.push(root);
+    const base = lockedEntry();
+    const silver: TrophyCabinetEntryView = {
+      ...base,
+      definition: {
+        ...base.definition,
+        id: 'podium_silver',
+        type: 'REPEATABLE',
+        ruleKind: 'PODIUM',
+        artKey: 'podium_silver',
+        place: 2,
+        threshold: undefined,
+      },
+      unlocked: true,
+      progress: null,
+      instances: [{
+        id: 'silver-1',
+        definitionId: 'podium_silver',
+        earnedAt: '2026-01-01T00:00:00.000Z',
+        sport: 'PADEL',
+        place: 2,
+        source: null,
+      }],
+    };
+
+    act(() =>
+      root.render(
+        <TrophyCabinetCard
+          entry={silver}
+          isOwn
+          pinnedInstanceIds={new Set()}
+        />,
+      ),
+    );
+
+    expect(container.querySelector('[data-testid="trophy-earned-count"]')?.textContent)
+      .toBe('×1');
   });
 });

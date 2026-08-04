@@ -15,6 +15,8 @@ import {
   ACHIEVEMENT_LEADERBOARD_FAMILIES,
   achievementLeaderboardFamilyForRuleKind,
   isAchievementLeaderboardFamily,
+  isLifetimeAchievement,
+  isRepeatableAchievement,
 } from '@shared/achievements';
 
 describe('achievement catalog', () => {
@@ -29,6 +31,10 @@ describe('achievement catalog', () => {
     expect(silver?.rarity).toBe('RARE');
     expect(bronze?.rarity).toBe('RARE');
     expect(gold?.place).toBe(1);
+    expect(gold?.type).toBe('REPEATABLE');
+    expect(silver?.type).toBe('REPEATABLE');
+    expect(bronze?.type).toBe('REPEATABLE');
+    expect(gold && isRepeatableAchievement(gold)).toBe(true);
 
     const streak = [
       'habit_streak_4',
@@ -58,9 +64,16 @@ describe('achievement catalog', () => {
     expect(getAchievementDefinition('habit_games_500')?.rarity).toBe('RARE');
     expect(getAchievementDefinition('habit_games_1000')?.rarity).toBe('LEGENDARY');
     expect(getAchievementDefinition('habit_first_win')?.ruleKind).toBe('HABIT_FIRST_WIN');
+    expect(getAchievementDefinition('habit_first_win')?.type).toBe('UNIQUE');
     expect(getAchievementDefinition('habit_first_padel_game')?.ruleKind).toBe('HABIT_SPORT_VOLUME');
     expect(getAchievementDefinition('habit_first_padel_game')?.sport).toBe('PADEL');
     expect(getAchievementDefinition('habit_first_padel_game')?.threshold).toBe(1);
+    expect(getAchievementDefinition('habit_first_padel_game')?.type).toBe('UNIQUE');
+    expect(getAchievementDefinition('habit_games_10')?.type).toBe('MILESTONE');
+    const firstWin = getAchievementDefinition('habit_first_win');
+    const games10 = getAchievementDefinition('habit_games_10');
+    expect(firstWin && isLifetimeAchievement(firstWin)).toBe(true);
+    expect(games10 && isLifetimeAchievement(games10)).toBe(true);
 
     const wins = [
       'habit_wins_10',

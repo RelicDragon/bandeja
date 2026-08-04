@@ -1867,7 +1867,7 @@ model UserAchievement {
   sourceEntityType EntityType?
   sourceEntityId   String?
   sourceGameId     String?
-  /// Idempotency: "" for one-shot habits; source entity id for podium stacks.
+  /// Idempotency: "" for lifetime (UNIQUE/MILESTONE) awards; source id for REPEATABLE awards.
   sourceKey        String               @default("")
   revokedAt        DateTime?
   isActive         Boolean              @default(true)
@@ -1878,6 +1878,7 @@ model UserAchievement {
 
   /// Active uniqueness is enforced by partial unique index in SQL
   /// (userId, definitionId, sourceKey) WHERE isActive = true — see migrations.
+  /// Lifetime uniqueness for sourceKey="" is enforced across active + revoked rows in SQL.
   @@index([userId, isActive])
   @@index([userId, definitionId, sourceKey])
   @@index([sourceEntityId, definitionId])

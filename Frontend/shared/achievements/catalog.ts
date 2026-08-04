@@ -11,7 +11,7 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
     titleKey: 'trophies.defs.podiumGold.title',
     descriptionKey: 'trophies.defs.podiumGold.description',
     place: 1,
-    multiplicity: 'per_event',
+    type: 'REPEATABLE',
   },
   {
     id: 'podium_silver',
@@ -21,7 +21,7 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
     titleKey: 'trophies.defs.podiumSilver.title',
     descriptionKey: 'trophies.defs.podiumSilver.description',
     place: 2,
-    multiplicity: 'per_event',
+    type: 'REPEATABLE',
   },
   {
     id: 'podium_bronze',
@@ -31,7 +31,7 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
     titleKey: 'trophies.defs.podiumBronze.title',
     descriptionKey: 'trophies.defs.podiumBronze.description',
     place: 3,
-    multiplicity: 'per_event',
+    type: 'REPEATABLE',
   },
   {
     id: 'habit_first_win',
@@ -41,7 +41,7 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
     titleKey: 'trophies.defs.firstWin.title',
     descriptionKey: 'trophies.defs.firstWin.description',
     threshold: 1,
-    multiplicity: 'one_shot',
+    type: 'UNIQUE',
   },
   {
     id: 'habit_first_padel_game',
@@ -52,7 +52,7 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
     descriptionKey: 'trophies.defs.firstPadelGame.description',
     threshold: 1,
     sport: 'PADEL',
-    multiplicity: 'one_shot',
+    type: 'UNIQUE',
   },
   {
     id: 'habit_wins_10',
@@ -62,7 +62,7 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
     titleKey: 'trophies.defs.wins10.title',
     descriptionKey: 'trophies.defs.wins10.description',
     threshold: 10,
-    multiplicity: 'one_shot',
+    type: 'MILESTONE',
   },
   {
     id: 'habit_wins_25',
@@ -72,7 +72,7 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
     titleKey: 'trophies.defs.wins25.title',
     descriptionKey: 'trophies.defs.wins25.description',
     threshold: 25,
-    multiplicity: 'one_shot',
+    type: 'MILESTONE',
   },
   {
     id: 'habit_wins_50',
@@ -82,7 +82,7 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
     titleKey: 'trophies.defs.wins50.title',
     descriptionKey: 'trophies.defs.wins50.description',
     threshold: 50,
-    multiplicity: 'one_shot',
+    type: 'MILESTONE',
   },
   {
     id: 'habit_wins_100',
@@ -92,7 +92,7 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
     titleKey: 'trophies.defs.wins100.title',
     descriptionKey: 'trophies.defs.wins100.description',
     threshold: 100,
-    multiplicity: 'one_shot',
+    type: 'MILESTONE',
   },
   {
     id: 'habit_wins_500',
@@ -102,7 +102,7 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
     titleKey: 'trophies.defs.wins500.title',
     descriptionKey: 'trophies.defs.wins500.description',
     threshold: 500,
-    multiplicity: 'one_shot',
+    type: 'MILESTONE',
   },
   {
     id: 'habit_games_10',
@@ -112,7 +112,7 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
     titleKey: 'trophies.defs.games10.title',
     descriptionKey: 'trophies.defs.games10.description',
     threshold: 10,
-    multiplicity: 'one_shot',
+    type: 'MILESTONE',
   },
   {
     id: 'habit_games_50',
@@ -122,7 +122,7 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
     titleKey: 'trophies.defs.games50.title',
     descriptionKey: 'trophies.defs.games50.description',
     threshold: 50,
-    multiplicity: 'one_shot',
+    type: 'MILESTONE',
   },
   {
     id: 'habit_games_100',
@@ -132,7 +132,7 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
     titleKey: 'trophies.defs.games100.title',
     descriptionKey: 'trophies.defs.games100.description',
     threshold: 100,
-    multiplicity: 'one_shot',
+    type: 'MILESTONE',
   },
   {
     id: 'habit_games_500',
@@ -142,7 +142,7 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
     titleKey: 'trophies.defs.games500.title',
     descriptionKey: 'trophies.defs.games500.description',
     threshold: 500,
-    multiplicity: 'one_shot',
+    type: 'MILESTONE',
   },
   {
     id: 'habit_games_1000',
@@ -152,7 +152,7 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
     titleKey: 'trophies.defs.games1000.title',
     descriptionKey: 'trophies.defs.games1000.description',
     threshold: 1000,
-    multiplicity: 'one_shot',
+    type: 'MILESTONE',
   },
   {
     id: 'habit_streak_4',
@@ -162,7 +162,7 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
     titleKey: 'trophies.defs.streak4.title',
     descriptionKey: 'trophies.defs.streak4.description',
     threshold: 4,
-    multiplicity: 'one_shot',
+    type: 'MILESTONE',
   },
   {
     id: 'habit_streak_8',
@@ -172,7 +172,7 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
     titleKey: 'trophies.defs.streak8.title',
     descriptionKey: 'trophies.defs.streak8.description',
     threshold: 8,
-    multiplicity: 'one_shot',
+    type: 'MILESTONE',
   },
   {
     id: 'habit_streak_12',
@@ -182,7 +182,7 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
     titleKey: 'trophies.defs.streak12.title',
     descriptionKey: 'trophies.defs.streak12.description',
     threshold: 12,
-    multiplicity: 'one_shot',
+    type: 'MILESTONE',
   },
   {
     id: 'habit_streak_16',
@@ -192,7 +192,7 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
     titleKey: 'trophies.defs.streak16.title',
     descriptionKey: 'trophies.defs.streak16.description',
     threshold: 16,
-    multiplicity: 'one_shot',
+    type: 'MILESTONE',
   },
   {
     id: 'habit_streak_32',
@@ -202,7 +202,7 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
     titleKey: 'trophies.defs.streak32.title',
     descriptionKey: 'trophies.defs.streak32.description',
     threshold: 32,
-    multiplicity: 'one_shot',
+    type: 'MILESTONE',
   },
   {
     id: 'habit_streak_64',
@@ -212,7 +212,7 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
     titleKey: 'trophies.defs.streak64.title',
     descriptionKey: 'trophies.defs.streak64.description',
     threshold: 64,
-    multiplicity: 'one_shot',
+    type: 'MILESTONE',
   },
   // Rally Starter — padel rated game organizing
   {
@@ -224,7 +224,7 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
     descriptionKey: 'trophies.defs.orgGame1.description',
     threshold: 1,
     sport: 'PADEL',
-    multiplicity: 'one_shot',
+    type: 'MILESTONE',
   },
   {
     id: 'habit_org_game_10',
@@ -235,7 +235,7 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
     descriptionKey: 'trophies.defs.orgGame10.description',
     threshold: 10,
     sport: 'PADEL',
-    multiplicity: 'one_shot',
+    type: 'MILESTONE',
   },
   {
     id: 'habit_org_game_25',
@@ -246,7 +246,7 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
     descriptionKey: 'trophies.defs.orgGame25.description',
     threshold: 25,
     sport: 'PADEL',
-    multiplicity: 'one_shot',
+    type: 'MILESTONE',
   },
   {
     id: 'habit_org_game_50',
@@ -257,7 +257,7 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
     descriptionKey: 'trophies.defs.orgGame50.description',
     threshold: 50,
     sport: 'PADEL',
-    multiplicity: 'one_shot',
+    type: 'MILESTONE',
   },
   {
     id: 'habit_org_game_100',
@@ -268,7 +268,7 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
     descriptionKey: 'trophies.defs.orgGame100.description',
     threshold: 100,
     sport: 'PADEL',
-    multiplicity: 'one_shot',
+    type: 'MILESTONE',
   },
   {
     id: 'habit_org_game_500',
@@ -279,7 +279,7 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
     descriptionKey: 'trophies.defs.orgGame500.description',
     threshold: 500,
     sport: 'PADEL',
-    multiplicity: 'one_shot',
+    type: 'MILESTONE',
   },
   // Padel tournament organizing
   {
@@ -291,7 +291,7 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
     descriptionKey: 'trophies.defs.orgTournament1.description',
     threshold: 1,
     sport: 'PADEL',
-    multiplicity: 'one_shot',
+    type: 'MILESTONE',
   },
   {
     id: 'habit_org_tournament_5',
@@ -302,7 +302,7 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
     descriptionKey: 'trophies.defs.orgTournament5.description',
     threshold: 5,
     sport: 'PADEL',
-    multiplicity: 'one_shot',
+    type: 'MILESTONE',
   },
   {
     id: 'habit_org_tournament_10',
@@ -313,7 +313,7 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
     descriptionKey: 'trophies.defs.orgTournament10.description',
     threshold: 10,
     sport: 'PADEL',
-    multiplicity: 'one_shot',
+    type: 'MILESTONE',
   },
   {
     id: 'habit_org_tournament_25',
@@ -324,7 +324,7 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
     descriptionKey: 'trophies.defs.orgTournament25.description',
     threshold: 25,
     sport: 'PADEL',
-    multiplicity: 'one_shot',
+    type: 'MILESTONE',
   },
   {
     id: 'habit_org_tournament_50',
@@ -335,7 +335,7 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
     descriptionKey: 'trophies.defs.orgTournament50.description',
     threshold: 50,
     sport: 'PADEL',
-    multiplicity: 'one_shot',
+    type: 'MILESTONE',
   },
   {
     id: 'habit_org_tournament_100',
@@ -346,7 +346,7 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
     descriptionKey: 'trophies.defs.orgTournament100.description',
     threshold: 100,
     sport: 'PADEL',
-    multiplicity: 'one_shot',
+    type: 'MILESTONE',
   },
   // Soul of the Party — BAR organizing (any sport)
   {
@@ -357,7 +357,7 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
     titleKey: 'trophies.defs.orgBar1.title',
     descriptionKey: 'trophies.defs.orgBar1.description',
     threshold: 1,
-    multiplicity: 'one_shot',
+    type: 'MILESTONE',
   },
   {
     id: 'habit_org_bar_5',
@@ -367,7 +367,7 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
     titleKey: 'trophies.defs.orgBar5.title',
     descriptionKey: 'trophies.defs.orgBar5.description',
     threshold: 5,
-    multiplicity: 'one_shot',
+    type: 'MILESTONE',
   },
   {
     id: 'habit_org_bar_10',
@@ -377,7 +377,7 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
     titleKey: 'trophies.defs.orgBar10.title',
     descriptionKey: 'trophies.defs.orgBar10.description',
     threshold: 10,
-    multiplicity: 'one_shot',
+    type: 'MILESTONE',
   },
   {
     id: 'habit_org_bar_25',
@@ -387,7 +387,7 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
     titleKey: 'trophies.defs.orgBar25.title',
     descriptionKey: 'trophies.defs.orgBar25.description',
     threshold: 25,
-    multiplicity: 'one_shot',
+    type: 'MILESTONE',
   },
   {
     id: 'habit_org_bar_50',
@@ -397,7 +397,7 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
     titleKey: 'trophies.defs.orgBar50.title',
     descriptionKey: 'trophies.defs.orgBar50.description',
     threshold: 50,
-    multiplicity: 'one_shot',
+    type: 'MILESTONE',
   },
   {
     id: 'habit_org_bar_100',
@@ -407,7 +407,7 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
     titleKey: 'trophies.defs.orgBar100.title',
     descriptionKey: 'trophies.defs.orgBar100.description',
     threshold: 100,
-    multiplicity: 'one_shot',
+    type: 'MILESTONE',
   },
   // Giant Killer — upset wins vs higher-rated 2v2 teams (padel rated)
   {
@@ -419,7 +419,7 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
     descriptionKey: 'trophies.defs.giantKiller1.description',
     threshold: 1,
     sport: 'PADEL',
-    multiplicity: 'one_shot',
+    type: 'MILESTONE',
   },
   {
     id: 'habit_giant_killer_5',
@@ -430,7 +430,7 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
     descriptionKey: 'trophies.defs.giantKiller5.description',
     threshold: 5,
     sport: 'PADEL',
-    multiplicity: 'one_shot',
+    type: 'MILESTONE',
   },
   {
     id: 'habit_giant_killer_10',
@@ -441,7 +441,7 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
     descriptionKey: 'trophies.defs.giantKiller10.description',
     threshold: 10,
     sport: 'PADEL',
-    multiplicity: 'one_shot',
+    type: 'MILESTONE',
   },
   {
     id: 'habit_giant_killer_25',
@@ -452,7 +452,7 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
     descriptionKey: 'trophies.defs.giantKiller25.description',
     threshold: 25,
     sport: 'PADEL',
-    multiplicity: 'one_shot',
+    type: 'MILESTONE',
   },
   {
     id: 'habit_giant_killer_50',
@@ -463,7 +463,7 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
     descriptionKey: 'trophies.defs.giantKiller50.description',
     threshold: 50,
     sport: 'PADEL',
-    multiplicity: 'one_shot',
+    type: 'MILESTONE',
   },
   // Dynamic Duo — wins with the same partner
   {
@@ -475,7 +475,7 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
     descriptionKey: 'trophies.defs.dynamicDuo10.description',
     threshold: 10,
     sport: 'PADEL',
-    multiplicity: 'one_shot',
+    type: 'MILESTONE',
   },
   {
     id: 'habit_dynamic_duo_50',
@@ -486,7 +486,7 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
     descriptionKey: 'trophies.defs.dynamicDuo50.description',
     threshold: 50,
     sport: 'PADEL',
-    multiplicity: 'one_shot',
+    type: 'MILESTONE',
   },
   {
     id: 'habit_dynamic_duo_100',
@@ -497,7 +497,7 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
     descriptionKey: 'trophies.defs.dynamicDuo100.description',
     threshold: 100,
     sport: 'PADEL',
-    multiplicity: 'one_shot',
+    type: 'MILESTONE',
   },
   // Open Court — distinct partners in qualifying doubles
   {
@@ -509,7 +509,7 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
     descriptionKey: 'trophies.defs.openCourt10.description',
     threshold: 10,
     sport: 'PADEL',
-    multiplicity: 'one_shot',
+    type: 'MILESTONE',
   },
   {
     id: 'habit_open_court_25',
@@ -520,7 +520,7 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
     descriptionKey: 'trophies.defs.openCourt25.description',
     threshold: 25,
     sport: 'PADEL',
-    multiplicity: 'one_shot',
+    type: 'MILESTONE',
   },
   {
     id: 'habit_open_court_50',
@@ -531,7 +531,7 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
     descriptionKey: 'trophies.defs.openCourt50.description',
     threshold: 50,
     sport: 'PADEL',
-    multiplicity: 'one_shot',
+    type: 'MILESTONE',
   },
   {
     id: 'habit_open_court_100',
@@ -542,7 +542,7 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
     descriptionKey: 'trophies.defs.openCourt100.description',
     threshold: 100,
     sport: 'PADEL',
-    multiplicity: 'one_shot',
+    type: 'MILESTONE',
   },
   {
     id: 'habit_open_court_250',
@@ -553,7 +553,7 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
     descriptionKey: 'trophies.defs.openCourt250.description',
     threshold: 250,
     sport: 'PADEL',
-    multiplicity: 'one_shot',
+    type: 'MILESTONE',
   },
 ] as const;
 
