@@ -89,6 +89,14 @@
     "sharedJoiningHint": "Copiando las preferencias y preparando el lobby…",
     "sharedUnavailable": "Esta búsqueda ya no está disponible",
     "sharedAccessDenied": "Esta búsqueda no está disponible para ti",
-    "proposalUnavailable": "Este partido ya no está disponible. Hemos actualizado tu sala."
+    "proposalUnavailable": "Este partido ya no está disponible. Hemos actualizado tu sala.",
+    "windowEnded": "Ese horario ya pasó. Elige una franja más tarde.",
+    "windowEndedHint": "Ese horario ya pasó — elige una franja más tarde.",
+    "customEndBeforeStart": "La hora de fin debe ser posterior a la de inicio",
+    "customStartRequired": "La hora de inicio es obligatoria para un horario personalizado",
+    "customEndRequired": "La hora de fin es obligatoria para un horario personalizado",
+    "selectAtLeastOneDay": "Selecciona al menos un día (hoy, mañana o pasado mañana)",
+    "maxLevelBelowMin": "El nivel máximo debe ser mayor o igual que el mínimo",
+    "anytimeCustomExclusive": "Cualquier hora y horas personalizadas deben seleccionarse por separado"
   }
 }

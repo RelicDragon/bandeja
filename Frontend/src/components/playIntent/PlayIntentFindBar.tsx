@@ -375,6 +375,7 @@ export function PlayIntentProvider({
           cityId={cityId}
           sport={resolvedSport}
           todayKey={pool?.todayKey}
+          timezone={pool?.cityTimezone}
           members={pool?.members ?? []}
           overflow={pool?.overflow ?? 0}
           partySize={pool?.partySize ?? 4}

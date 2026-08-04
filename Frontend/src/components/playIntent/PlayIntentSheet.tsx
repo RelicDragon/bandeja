@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/Drawer';
 import { usePlayIntentMutations } from '@/hooks/usePlayIntent';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
+import { extractApiErrorMessage } from '@/utils/extractApiErrorMessage';
 import type {
   MatchProposalSummary,
   PlayIntent,
@@ -28,6 +29,7 @@ type Props = {
   cityId?: string | null;
   sport: Sport;
   todayKey?: string;
+  timezone?: string;
   members: PoolMember[];
   overflow: number;
   partySize: number;
@@ -45,6 +47,7 @@ export function PlayIntentSheet({
   cityId,
   sport,
   todayKey,
+  timezone,
   members,
   overflow,
   partySize,
@@ -77,8 +80,8 @@ export function PlayIntentSheet({
       setConfirmCancel(false);
       onOpenChange(false);
       onChanged?.();
-    } catch {
-      toast.error(t('common.error', { defaultValue: 'Something went wrong' }));
+    } catch (err) {
+      toast.error(extractApiErrorMessage(err, t));
     }
   };
 
@@ -229,6 +232,7 @@ export function PlayIntentSheet({
                 cityId={cityId}
                 sport={sport}
                 todayKey={todayKey}
+                timezone={timezone}
                 initialIntent={activeIntent}
                 onSubmitted={(nextIntent) => {
                   setSubmittedIntent(nextIntent);
@@ -267,6 +271,7 @@ export function PlayIntentSheet({
                     cityId={cityId}
                     sport={sport}
                     todayKey={todayKey}
+                    timezone={timezone}
                     initialIntent={activeIntent}
                     onSubmitted={(nextIntent) => {
                       setSubmittedIntent(nextIntent);

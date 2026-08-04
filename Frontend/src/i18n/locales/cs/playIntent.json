@@ -97,6 +97,14 @@
     "sharedJoiningHint": "Kopírujeme preference a připravujeme lobby…",
     "sharedUnavailable": "Tento požadavek už není dostupný",
     "sharedAccessDenied": "Tento požadavek pro tebe není dostupný",
-    "proposalUnavailable": "Tento zápas už není dostupný. Obnovili jsme tvoji lobby."
+    "proposalUnavailable": "Tento zápas už není dostupný. Obnovili jsme tvoji lobby.",
+    "windowEnded": "Tento čas už proběhl. Vyber si pozdější termín.",
+    "windowEndedHint": "Tento čas už proběhl — vyber si pozdější termín.",
+    "customEndBeforeStart": "Čas konce musí být po čase začátku",
+    "customStartRequired": "Pro vlastní čas je potřeba zadat čas začátku",
+    "customEndRequired": "Pro vlastní čas je potřeba zadat čas konce",
+    "selectAtLeastOneDay": "Vyber alespoň jeden den (dnes, zítra nebo pozítří)",
+    "maxLevelBelowMin": "Maximální úroveň musí být vyšší nebo rovna minimální",
+    "anytimeCustomExclusive": "Kdykoliv a vlastní hodiny se musí volit samostatně"
   }
 }

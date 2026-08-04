@@ -22,6 +22,8 @@ import { clubsApi } from '@/api/clubs';
 import { usePlayIntentMutations } from '@/hooks/usePlayIntent';
 import { useAuthStore } from '@/store/authStore';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
+import { extractApiErrorMessage } from '@/utils/extractApiErrorMessage';
+import { playWindowIsInPast } from '@/utils/playIntentWindow';
 import {
   getViewerPrimarySport,
   listEnabledSports,
@@ -39,6 +41,7 @@ type Props = {
   cityId?: string | null;
   sport?: Sport | string | null;
   todayKey?: string;
+  timezone?: string;
   initialIntent?: PlayIntent | null;
   onSubmitted: (intent: PlayIntent) => void;
 };
@@ -86,6 +89,7 @@ export function PlayIntentComposePanel({
   cityId,
   sport,
   todayKey,
+  timezone,
   initialIntent,
   onSubmitted,
 }: Props) {
@@ -183,6 +187,21 @@ export function PlayIntentComposePanel({
     setClubIds((prev) => prev.filter((id) => allowed.has(id)));
   }, [filteredClubs]);
 
+  // Mirrors the backend's intentWindowEndsAt + "expiresAt <= now" check so we
+  // can refuse to submit a request the server would reject with 400
+  // playIntent.windowEnded (e.g. today + a custom range that already ended).
+  const windowInPast = useMemo(
+    () =>
+      playWindowIsInPast({
+        dayOffsets,
+        timeOfDays,
+        customRange,
+        todayKey,
+        timezone,
+      }),
+    [dayOffsets, timeOfDays, customRange, todayKey, timezone],
+  );
+
   const toggleDay = (offset: number) => {
     setDayOffsets((prev) => {
       if (prev.includes(offset)) {
@@ -234,8 +253,8 @@ export function PlayIntentComposePanel({
         genderTeams: isBar ? 'ANY' : genderTeams,
       });
       onSubmitted(nextIntent);
-    } catch {
-      toast.error(t('common.error', { defaultValue: 'Something went wrong' }));
+    } catch (err) {
+      toast.error(extractApiErrorMessage(err, t));
     }
   };
 
@@ -354,6 +373,11 @@ export function PlayIntentComposePanel({
                       onChange={setCustomRange}
                       hour12={displaySettings.hour12}
                     />
+                    {windowInPast && (
+                      <p className="mt-2 text-center text-xs font-medium text-amber-600 dark:text-amber-400">
+                        {t('playIntent.windowEndedHint')}
+                      </p>
+                    )}
                   </div>
                 </motion.div>
               )}
@@ -380,7 +404,7 @@ export function PlayIntentComposePanel({
             variant="primary"
             className="w-full"
             onClick={() => void submit()}
-            disabled={create.isPending || !dayOffsets.length}
+            disabled={create.isPending || !dayOffsets.length || windowInPast}
           >
             {create.isPending ? (
               <>

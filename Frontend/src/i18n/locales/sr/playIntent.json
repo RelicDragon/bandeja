@@ -97,6 +97,14 @@
     "sharedJoiningHint": "Kopiramo želje i pripremamo lobi…",
     "sharedUnavailable": "Ovaj zahtev za igru više nije dostupan",
     "sharedAccessDenied": "Ovaj zahtev za igru ti nije dostupan",
-    "proposalUnavailable": "Ovaj meč više nije dostupan. Osvežili smo tvoj lobi."
+    "proposalUnavailable": "Ovaj meč više nije dostupan. Osvežili smo tvoj lobi.",
+    "windowEnded": "Taj termin je već prošao. Izaberi kasniji termin.",
+    "windowEndedHint": "Taj termin je već prošao — izaberi kasniji termin.",
+    "customEndBeforeStart": "Vreme kraja mora biti posle vremena početka",
+    "customStartRequired": "Za posebno vreme potrebno je uneti vreme početka",
+    "customEndRequired": "Za posebno vreme potrebno je uneti vreme kraja",
+    "selectAtLeastOneDay": "Izaberi barem jedan dan (danas, sutra ili prekosutra)",
+    "maxLevelBelowMin": "Maksimalni nivo mora biti veći ili jednak minimalnom",
+    "anytimeCustomExclusive": "Bilo kad i posebni sati moraju se birati zasebno"
   }
 }

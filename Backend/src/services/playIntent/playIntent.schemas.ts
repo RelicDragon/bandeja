@@ -92,7 +92,7 @@ export const createPlayIntentBodySchema = z
       context.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['timeOfDays'],
-        message: 'Anytime and custom hours must be selected on their own',
+        message: 'playIntent.anytimeCustomExclusive',
       });
     }
     if (selectedTimes.includes(PlayIntentTimeOfDay.CUSTOM)) {
@@ -100,14 +100,14 @@ export const createPlayIntentBodySchema = z
         context.addIssue({
           code: z.ZodIssueCode.custom,
           path: ['startTime'],
-          message: 'Start time is required for a custom window',
+          message: 'playIntent.customStartRequired',
         });
       }
       if (!input.endTime) {
         context.addIssue({
           code: z.ZodIssueCode.custom,
           path: ['endTime'],
-          message: 'End time is required for a custom window',
+          message: 'playIntent.customEndRequired',
         });
       }
     }

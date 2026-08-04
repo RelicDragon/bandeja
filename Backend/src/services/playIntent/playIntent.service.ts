@@ -182,7 +182,7 @@ export class PlayIntentService {
       (timeOfDays.includes(PlayIntentTimeOfDay.ANYTIME) ||
         timeOfDays.includes(PlayIntentTimeOfDay.CUSTOM))
     ) {
-      throw new ApiError(400, 'Anytime and custom hours must be selected on their own');
+      throw new ApiError(400, 'playIntent.anytimeCustomExclusive');
     }
     const timeOfDay = timeOfDays[0] ?? PlayIntentTimeOfDay.ANYTIME;
     const genderTeams = data.genderTeams ?? GenderTeam.ANY;
@@ -194,13 +194,13 @@ export class PlayIntentService {
       validateTime(data.endTime, 'End time');
       if (data.startTime && data.endTime) {
         if (timeStringToMinutes(data.startTime) >= timeStringToMinutes(data.endTime)) {
-          throw new ApiError(400, 'End time must be after start time');
+          throw new ApiError(400, 'playIntent.customEndBeforeStart');
         }
       }
     }
 
     if (entityType !== EntityType.BAR && data.maxLevel != null && data.minLevel != null && data.maxLevel < data.minLevel) {
-      throw new ApiError(400, 'Max level must be greater than or equal to min level');
+      throw new ApiError(400, 'playIntent.maxLevelBelowMin');
     }
 
     const dateKeys = this.resolveDateKeys({
@@ -209,7 +209,7 @@ export class PlayIntentService {
       dateKeys: data.dateKeys,
     });
     if (dateKeys.length === 0) {
-      throw new ApiError(400, 'Select at least one day (today, tomorrow, or day after)');
+      throw new ApiError(400, 'playIntent.selectAtLeastOneDay');
     }
 
     const expiresAt =
@@ -230,7 +230,7 @@ export class PlayIntentService {
         city.timezone,
       ) ?? endOfCalendarDate(dateKeys[dateKeys.length - 1], city.timezone);
     if (expiresAt <= new Date()) {
-      throw new ApiError(400, 'Selected play window has already ended', true, {
+      throw new ApiError(400, 'playIntent.windowEnded', true, {
         code: 'playIntent.windowEnded',
       });
     }
@@ -261,7 +261,7 @@ export class PlayIntentService {
     } = await prisma.$transaction(async (tx) => {
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`play-intent:${userId}:${cityId}`}))`;
       if (expiresAt <= new Date()) {
-        throw new ApiError(400, 'Selected play window has already ended', true, {
+        throw new ApiError(400, 'playIntent.windowEnded', true, {
           code: 'playIntent.windowEnded',
         });
       }

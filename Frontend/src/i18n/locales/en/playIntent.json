@@ -89,6 +89,14 @@
     "sharedJoiningHint": "Copying the preferences and preparing your court lobby…",
     "sharedUnavailable": "This play request is no longer available",
     "sharedAccessDenied": "This play request is not available to you",
-    "proposalUnavailable": "This match is no longer available. We refreshed your lobby."
+    "proposalUnavailable": "This match is no longer available. We refreshed your lobby.",
+    "windowEnded": "That time has already passed. Pick a later slot.",
+    "windowEndedHint": "That time has already passed — pick a later slot.",
+    "customEndBeforeStart": "End time must be after start time",
+    "customStartRequired": "Start time is required for a custom window",
+    "customEndRequired": "End time is required for a custom window",
+    "selectAtLeastOneDay": "Select at least one day (today, tomorrow, or day after)",
+    "maxLevelBelowMin": "Max level must be greater than or equal to min level",
+    "anytimeCustomExclusive": "Anytime and custom hours must be selected on their own"
   }
 }
