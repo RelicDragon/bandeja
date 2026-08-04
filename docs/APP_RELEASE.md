@@ -6,12 +6,12 @@ Marks the last commit that was shipped to **Google Play** and **App Store**. Use
 
 | | |
 |---|---|
-| **Version** | 0.97.23 |
-| **Build** | 205 |
-| **Commit** | `6726cf21d1c289ea165373a2104fa1009082ca6a` |
-| **Short** | `6726cf21` |
-| **Date** | 2026-08-02 |
-| **Message** | Bump app release to 0.97.23 (build 205) |
+| **Version** | 0.97.24 |
+| **Build** | 206 |
+| **Commit** | `5d4e441c71c4879d8e3f607759e14676af46fe3d` |
+| **Short** | `5d4e441c` |
+| **Date** | 2026-08-04 |
+| **Message** | feat(achievements): enhance participant tracking for Leto 2026 awards |
 
 Canonical commit hash: `docs/app-release-baseline.txt` (one line, full SHA).
 
@@ -68,6 +68,7 @@ Generate **What's new** (LLM summarizes commits since baseline):
 
 | Version | Build | Commit | Date |
 |---------|-------|--------|------|
+| 0.97.24 | 206 | `5d4e441c` | 2026-08-04 |
 | 0.97.23 | 205 | `6726cf21` | 2026-08-02 |
 | 0.97.22 | 204 | `d981819c` | 2026-08-01 |
 | 0.97.21 | 203 | `b87703fa` | 2026-07-30 |
