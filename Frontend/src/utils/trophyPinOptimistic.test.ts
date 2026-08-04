@@ -25,9 +25,9 @@ function baseTrophies(): TrophiesPayload {
   };
   return {
     showcase: [
-      { slot: 0, pinned: false, definition, instance },
-      { slot: 1, pinned: false, definition: null, instance: null },
-      { slot: 2, pinned: false, definition: null, instance: null },
+      { slot: 0, pinned: false, definition, instance, instances: [instance] },
+      { slot: 1, pinned: false, definition: null, instance: null, instances: [] },
+      { slot: 2, pinned: false, definition: null, instance: null, instances: [] },
     ],
     cabinet: [
       {

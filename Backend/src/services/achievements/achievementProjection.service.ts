@@ -53,6 +53,7 @@ export type TrophyShowcaseSlotView = {
   pinned: boolean;
   definition: TrophyDefinitionView | null;
   instance: TrophyInstanceView | null;
+  instances: TrophyInstanceView[];
 };
 
 export type TrophyPendingCelebration = {
@@ -148,6 +149,7 @@ export function emptyTrophiesPayload(isOwner: boolean): TrophiesPayload {
       pinned: false,
       definition: null,
       instance: null,
+      instances: [],
     })),
     cabinet,
     pinsEditable: isOwner,
@@ -271,12 +273,20 @@ export async function buildTrophiesPayload(params: {
 
   const showcase: TrophyShowcaseSlotView[] = showcaseResolved.map((s) => {
     const instance = s.instance ? instanceViewsById.get(s.instance.id) ?? null : null;
+    const instances = s.instances
+      ? s.instances
+          .map((inst) => instanceViewsById.get(inst.id))
+          .filter((v): v is TrophyInstanceView => Boolean(v))
+      : instance
+      ? [instance]
+      : [];
     const def = s.definitionId ? getAchievementDefinition(s.definitionId) : undefined;
     return {
       slot: s.slot,
       pinned: s.pinned,
       definition: def ? toDefinitionView(def) : null,
       instance,
+      instances,
     };
   });
 

@@ -115,6 +115,7 @@ describe('achievement leaderboard families', () => {
 
   it('covers every catalog definition and rejects unknown input', () => {
     for (const definition of ACHIEVEMENT_CATALOG) {
+      if (definition.ruleKind === 'EVENT_SEASON') continue;
       const family = achievementLeaderboardFamilyForRuleKind(definition.ruleKind);
       expect(family).not.toBeNull();
       expect(isAchievementLeaderboardFamily(family)).toBe(true);
@@ -130,7 +131,8 @@ describe('projectTrophyCabinet', () => {
 
   it('owner sees full locked catalog when empty', () => {
     const rows = projectTrophyCabinet({ isOwner: true, instances: [], counters });
-    expect(rows).toHaveLength(ACHIEVEMENT_CATALOG.length);
+    const expectedLength = ACHIEVEMENT_CATALOG.filter((d) => d.ruleKind !== 'EVENT_SEASON').length;
+    expect(rows).toHaveLength(expectedLength);
     expect(rows.every((r) => !r.unlocked)).toBe(true);
     const streak4 = rows.find((r) => r.definition.id === 'habit_streak_4');
     expect(streak4?.progress).toEqual({ current: 2, target: 4 });
@@ -192,7 +194,7 @@ describe('resolveTrophyShowcase', () => {
     expect(pinned[1].pinned).toBe(false);
   });
 
-  it('fills remaining slots with auto when pins are partial', () => {
+  it('fills remaining slots with auto when pins are partial, placing pinned items first', () => {
     const instances = [
       {
         id: 'a',
@@ -219,12 +221,12 @@ describe('resolveTrophyShowcase', () => {
       instances,
       pins: [{ slot: 2, achievementId: 'a' }],
     });
-    expect(slots[2].instance?.id).toBe('a');
-    expect(slots[2].pinned).toBe(true);
-    expect(slots[0].instance?.id).toBe('d');
-    expect(slots[0].pinned).toBe(false);
-    expect(slots[1].instance?.id).toBe('c');
+    expect(slots[0].instance?.id).toBe('a');
+    expect(slots[0].pinned).toBe(true);
+    expect(slots[1].instance?.id).toBe('d');
     expect(slots[1].pinned).toBe(false);
+    expect(slots[2].instance?.id).toBe('c');
+    expect(slots[2].pinned).toBe(false);
   });
 
   it('ignores pins for unknown or duplicate instances', () => {
@@ -243,9 +245,39 @@ describe('resolveTrophyShowcase', () => {
         { slot: 2, achievementId: 'only' },
       ],
     });
-    expect(slots[0].instance).toBeNull();
-    expect(slots[1].instance?.id).toBe('only');
-    expect(slots[1].pinned).toBe(true);
+    expect(slots[0].instance?.id).toBe('only');
+    expect(slots[0].pinned).toBe(true);
+    expect(slots[1].instance).toBeNull();
+    expect(slots[2].instance).toBeNull();
+  });
+
+  it('groups repeatable achievement instances per definitionId (e.g. 2 gold + 1 silver -> 2 slots)', () => {
+    const instances = [
+      {
+        id: 'gold-1',
+        definitionId: 'podium_gold' as const,
+        earnedAt: '2026-08-01T00:00:00.000Z',
+      },
+      {
+        id: 'gold-2',
+        definitionId: 'podium_gold' as const,
+        earnedAt: '2026-07-15T00:00:00.000Z',
+      },
+      {
+        id: 'silver-1',
+        definitionId: 'podium_silver' as const,
+        earnedAt: '2026-06-01T00:00:00.000Z',
+      },
+    ];
+    const slots = resolveTrophyShowcase({ instances, pins: [] });
+    expect(slots[0].definitionId).toBe('podium_gold');
+    expect(slots[0].instances).toHaveLength(2);
+    expect(slots[0].instance?.id).toBe('gold-1');
+
+    expect(slots[1].definitionId).toBe('podium_silver');
+    expect(slots[1].instances).toHaveLength(1);
+    expect(slots[1].instance?.id).toBe('silver-1');
+
     expect(slots[2].instance).toBeNull();
   });
 

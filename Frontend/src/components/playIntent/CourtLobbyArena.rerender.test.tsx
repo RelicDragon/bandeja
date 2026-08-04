@@ -185,6 +185,80 @@ describe('CourtLobbyArena refresh stability', () => {
     await act(async () => root.unmount());
   });
 
+  it('re-renders when a far member\'s mismatch reason changes, but not for an identical clone', async () => {
+    Object.defineProperty(window, 'matchMedia', {
+      configurable: true,
+      value: () => ({
+        matches: true,
+        addEventListener: () => undefined,
+        removeEventListener: () => undefined,
+      }),
+    });
+    const { CourtLobbyArena } = await import('./CourtLobbyArena');
+    const container = document.createElement('div');
+    const root = createRoot(container);
+    const farMembers: PoolMember[] = [
+      {
+        userId: 'u3',
+        intentId: 'i3',
+        firstName: 'Far',
+        lastName: 'Player',
+        avatar: null,
+        level: 4,
+        affinity: 'far',
+        affinityScore: 0,
+        status: 'OPEN',
+        busyInGame: false,
+        inProposal: false,
+        eligibleForProposal: false,
+        mismatch: { reason: 'time', period: 'EVENING' },
+      },
+    ];
+    const props = {
+      overflow: 0,
+      busy: false,
+      hasProposal: true,
+      vacancy: 1,
+      rosterLocked: false,
+      sport: 'PADEL' as const,
+      partySize: 4,
+      onAvatarClick: vi.fn(),
+    };
+
+    await act(async () => {
+      root.render(<CourtLobbyArena {...props} members={farMembers} />);
+    });
+    const rendersAfterFirstSnapshot = counters.pulseRenders;
+
+    // Semantically identical clone (same mismatch) must NOT trigger a re-render.
+    await act(async () => {
+      root.render(
+        <CourtLobbyArena
+          {...props}
+          members={farMembers.map((member) => ({ ...member, mismatch: { ...member.mismatch! } }))}
+        />,
+      );
+    });
+    expect(counters.pulseRenders).toBe(rendersAfterFirstSnapshot);
+
+    // A change in the mismatch reason MUST trigger a re-render — this is the
+    // clause added to `membersKey` / `arenaMembersEqual` for the bubble feature.
+    await act(async () => {
+      root.render(
+        <CourtLobbyArena
+          {...props}
+          members={farMembers.map((member) => ({
+            ...member,
+            mismatch: { reason: 'level' as const },
+          }))}
+        />,
+      );
+    });
+    expect(counters.pulseRenders).toBeGreaterThan(rendersAfterFirstSnapshot);
+
+    await act(async () => root.unmount());
+  });
+
   it('positions moving avatars with compositor transforms', async () => {
     Object.defineProperty(window, 'matchMedia', {
       configurable: true,

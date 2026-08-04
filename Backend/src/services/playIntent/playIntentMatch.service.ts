@@ -20,7 +20,9 @@ import {
   buildRematchKey,
   canIntentJoinProposal,
   intentMatchesGame,
+  intentMismatch,
   intentsCompatible,
+  type IntentMismatch,
   minutesToTimeString,
   resolveTimeWindows,
   timeWindowSetsIntersect,
@@ -670,6 +672,7 @@ export class PlayIntentMatchService {
       busyInGame: boolean;
       inProposal: boolean;
       eligibleForProposal: boolean;
+      mismatch: IntentMismatch | null;
     }[] = [];
 
     const proposalMemberCriteria =
@@ -693,6 +696,10 @@ export class PlayIntentMatchService {
       const profile = intent.user.sportProfiles.find((p) => p.sport === sport);
       const inProposal = proposalMemberIds.has(intent.userId);
       const busyInGame = busyUserIds.has(intent.userId);
+      const mismatch =
+        viewerCriteria && !busyInGame && aff.bucket === 'far'
+          ? intentMismatch(viewerCriteria, otherCrit)
+          : null;
       members.push({
         userId: intent.user.id,
         intentId: intent.id,
@@ -705,6 +712,7 @@ export class PlayIntentMatchService {
         status: intent.status,
         busyInGame,
         inProposal,
+        mismatch,
         eligibleForProposal:
           !!proposalCanAcceptMembers &&
           !inProposal &&

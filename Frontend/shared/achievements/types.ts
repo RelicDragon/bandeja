@@ -189,6 +189,7 @@ export type TrophyProgress = {
 export type TrophyShowcaseResolvedSlot = {
   slot: number;
   instance: AchievementInstanceInput | null;
+  instances: AchievementInstanceInput[];
   definitionId: AchievementDefinitionId | null;
   pinned: boolean;
 };

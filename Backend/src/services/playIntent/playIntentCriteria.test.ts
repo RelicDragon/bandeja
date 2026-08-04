@@ -8,6 +8,7 @@ import {
   resolveTimeWindows,
   intentsCompatible,
   intentMatchesGame,
+  intentMismatch,
   affinityScore,
   buildRematchKey,
   type IntentCriteria,
@@ -356,6 +357,63 @@ assert.deepEqual(
   const a = base({ dateKeys: ['2026-07-28'], timeOfDay: 'ANYTIME' });
   const b = base({ dateKeys: ['2026-07-29'], timeOfDay: 'ANYTIME' });
   assert.equal(affinityScore(a, b).bucket, 'far');
+}
+
+// --- intentMismatch: explains the first failing dimension for a far pair ---
+
+{
+  // Compatible pair -> no mismatch.
+  const a = base();
+  assert.equal(intentMismatch(a, base()), null);
+}
+
+{
+  // No shared day.
+  const a = base({ dateKeys: ['2026-07-28'] });
+  const b = base({ dateKeys: ['2026-07-30'] });
+  assert.deepEqual(intentMismatch(a, b), { reason: 'dates' });
+}
+
+{
+  // Clubs both set, no overlap.
+  const a = base({ clubIds: ['c1'] });
+  const b = base({ clubIds: ['c2'] });
+  assert.deepEqual(intentMismatch(a, b), { reason: 'clubs' });
+}
+
+{
+  // Time windows don't overlap — other plays evenings.
+  const a = base({ timeOfDay: 'MORNING' });
+  const b = base({ timeOfDay: 'EVENING' });
+  assert.deepEqual(intentMismatch(a, b), { reason: 'time', period: 'EVENING' });
+}
+
+{
+  // Multi-period timeOfDays on the other side — first concrete period wins.
+  const a = base({ timeOfDay: 'MORNING' });
+  const b = base({ timeOfDays: ['AFTERNOON', 'EVENING'], timeOfDay: 'ANYTIME' });
+  assert.deepEqual(intentMismatch(a, b), { reason: 'time', period: 'AFTERNOON' });
+}
+
+{
+  // Level out of band.
+  const a = base({ userLevel: 2, minLevel: null, maxLevel: 3 });
+  const b = base({ userLevel: 7, minLevel: null, maxLevel: null });
+  assert.deepEqual(intentMismatch(a, b), { reason: 'level' });
+}
+
+{
+  // Gender preference conflict.
+  const a = base({ genderTeams: 'MEN', userGender: 'MALE' });
+  const b = base({ genderTeams: 'WOMEN', userGender: 'FEMALE' });
+  assert.deepEqual(intentMismatch(a, b), { reason: 'gender' });
+}
+
+{
+  // First failing dimension wins (dates short-circuits before clubs).
+  const a = base({ dateKeys: ['2026-07-28'], clubIds: ['c1'] });
+  const b = base({ dateKeys: ['2026-07-30'], clubIds: ['c2'] });
+  assert.deepEqual(intentMismatch(a, b), { reason: 'dates' });
 }
 
 console.log('playIntentCriteria.test.ts: ok');

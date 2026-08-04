@@ -51,6 +51,10 @@ export type PoolMember = {
   busyInGame: boolean;
   inProposal?: boolean;
   eligibleForProposal?: boolean;
+  mismatch?: {
+    reason: 'dates' | 'clubs' | 'time' | 'level' | 'gender';
+    period?: PlayIntentTimeOfDay;
+  } | null;
 };
 
 export type MatchProposalSummary = {

@@ -234,6 +234,62 @@ export function intentsCompatible(a: IntentCriteria, b: IntentCriteria): {
   return { ok: true, dateKeys, clubIds: clubs, timeWindow, timeWindows, tightness };
 }
 
+export type IntentMismatchReason = 'dates' | 'clubs' | 'time' | 'level' | 'gender';
+
+export type IntentMismatch = {
+  reason: IntentMismatchReason;
+  /** For time mismatches: the other player's dominant period, so the UI can say "Plays mornings". */
+  period?: PlayIntentTimeOfDay;
+};
+
+/**
+ * Runs the same 5 compatibility checks as {@link intentsCompatible}, in the same
+ * order, but returns the first failing dimension instead of a boolean. Returns
+ * null when the two intents are compatible. Used to explain *why* a far-field
+ * player is not a fit in the court lobby.
+ */
+export function intentMismatch(a: IntentCriteria, b: IntentCriteria): IntentMismatch | null {
+  if (datesIntersect(a.dateKeys, b.dateKeys).length === 0) return { reason: 'dates' };
+
+  if (clubsIntersect(a.clubIds, b.clubIds) === null) return { reason: 'clubs' };
+
+  const windowsA = resolveTimeWindows(a);
+  const windowsB = resolveTimeWindows(b);
+  const timeWindows = timeWindowSetsIntersect(windowsA, windowsB);
+  if (windowsA !== null && windowsB !== null && timeWindows?.length === 0) {
+    return { reason: 'time', period: dominantPlayPeriod(b) };
+  }
+
+  if (!levelsCompatible(a, b)) return { reason: 'level' };
+
+  if (
+    !genderPrefsCompatible(a.genderTeams, b.genderTeams) ||
+    !userMatchesGenderPref(a.genderTeams, b.userGender) ||
+    !userMatchesGenderPref(b.genderTeams, a.userGender)
+  ) {
+    return { reason: 'gender' };
+  }
+
+  return null;
+}
+
+/**
+ * Resolves a single representative period for an intent's time windows, used to
+ * phrase a time mismatch ("Plays evenings"). Picks the first concrete period
+ * (MORNING/AFTERNOON/EVENING/CUSTOM) from `timeOfDays` (or the legacy single
+ * `timeOfDay`), falling back to ANYTIME when the player is fully flexible.
+ */
+function dominantPlayPeriod(intent: {
+  timeOfDay: PlayIntentTimeOfDay;
+  timeOfDays?: PlayIntentTimeOfDay[];
+}): PlayIntentTimeOfDay {
+  const periods = intent.timeOfDays?.length
+    ? [...new Set(intent.timeOfDays)]
+    : [intent.timeOfDay];
+  const concrete = periods.find((p) => p !== 'ANYTIME');
+  return concrete ?? 'ANYTIME';
+}
+
 /**
  * Uses the same pairwise compatibility rule as proposal roster mutation.
  * This is intentionally derived from current proposal data so clients can

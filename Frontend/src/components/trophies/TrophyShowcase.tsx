@@ -95,6 +95,19 @@ function ShowcaseSlot({
   const unlocked = Boolean(slot.instance && slot.definition);
   const contentKey = slot.instance?.id ?? `empty-${slot.slot}`;
 
+  const instancesList =
+    slot.instances && slot.instances.length > 0
+      ? slot.instances
+      : slot.instance
+      ? [slot.instance]
+      : [];
+
+  const showEarnedCount =
+    unlocked &&
+    slot.definition != null &&
+    instancesList.length > 0 &&
+    (slot.definition.type === 'REPEATABLE' || instancesList.length > 1);
+
   return (
     <>
       <div className="relative h-12 w-12">
@@ -137,6 +150,14 @@ function ShowcaseSlot({
               >
                 <TrophyArt artKey={slot.definition!.artKey} className="h-8 w-9" />
               </TrophyRarityFrame>
+              {showEarnedCount && (
+                <span
+                  data-testid="showcase-earned-count"
+                  className="absolute -right-1 -top-1.5 z-10 flex h-4 min-w-4 items-center justify-center rounded-full bg-gray-900 px-1 text-[9px] font-bold text-white shadow-sm ring-1 ring-black/10 dark:bg-white dark:text-gray-900"
+                >
+                  ×{instancesList.length}
+                </span>
+              )}
               {isOwn && slot.pinned && (
                 <span
                   className="absolute -bottom-1.5 left-1/2 flex h-3.5 min-w-3.5 -translate-x-1/2 items-center justify-center rounded-full bg-white px-0.5 text-[8px] font-black text-primary-700 shadow-sm ring-1 ring-black/10"
@@ -155,7 +176,7 @@ function ShowcaseSlot({
           onOpenChange={setOpen}
           definition={slot.definition}
           instance={slot.instance}
-          instances={[slot.instance]}
+          instances={instancesList}
           locked={false}
           progress={null}
           isOwn={isOwn}

@@ -11,6 +11,7 @@ import { Check, ChevronsRight, Plus, RotateCw } from 'lucide-react';
 import { CourtLobbyPulseRing } from '@/components/playIntent/CourtLobbyPulseRing';
 import { CourtLobbySportCourt } from '@/components/playIntent/CourtLobbySportCourt';
 import { CourtLobbyThunder } from '@/components/playIntent/CourtLobbyThunder';
+import { CourtLobbyMismatchBubbles } from '@/components/playIntent/CourtLobbyMismatchBubbles';
 import type { PoolMember } from '@/api/playIntents';
 import { useAuthStore } from '@/store/authStore';
 import { useFavoritesStore } from '@/store/favoritesStore';
@@ -190,7 +191,7 @@ function membersKey(members: PoolMember[]) {
   return members
     .map(
       (m) =>
-        `${m.userId}:${m.status}:${m.busyInGame ? 1 : 0}:${m.affinity}:${m.inProposal ? 1 : 0}:${m.eligibleForProposal ? 1 : 0}:${m.intentId}`,
+        `${m.userId}:${m.status}:${m.busyInGame ? 1 : 0}:${m.affinity}:${m.inProposal ? 1 : 0}:${m.eligibleForProposal ? 1 : 0}:${m.intentId}:${m.mismatch ? `${m.mismatch.reason}:${m.mismatch.period ?? ''}` : ''}`,
     )
     .join('|');
 }
@@ -210,7 +211,9 @@ function arenaMembersEqual(previous: PoolMember[], next: PoolMember[]) {
       member.busyInGame === candidate.busyInGame &&
       member.affinity === candidate.affinity &&
       !!member.inProposal === !!candidate.inProposal &&
-      !!member.eligibleForProposal === !!candidate.eligibleForProposal
+      !!member.eligibleForProposal === !!candidate.eligibleForProposal &&
+      member.mismatch?.reason === candidate.mismatch?.reason &&
+      member.mismatch?.period === candidate.mismatch?.period
     );
   });
 }
@@ -321,6 +324,17 @@ function CourtLobbyArenaComponent({
         inProposal: !!m.inProposal,
       })),
     [hasProposal, members],
+  );
+  const mismatchedMembers = useMemo(
+    () =>
+      members.filter(
+        (m) =>
+          !m.busyInGame &&
+          m.affinity === 'far' &&
+          !!m.mismatch &&
+          !m.inProposal,
+      ),
+    [members],
   );
   const viewerAvatar = viewer
     ? userAvatarTinyUrlFromStandard(viewer.avatar) ?? viewer.avatar ?? null
@@ -830,6 +844,13 @@ function CourtLobbyArenaComponent({
         cy={COURT_CY}
         ringRadius={10}
       />
+      {!busy && mismatchedMembers.length > 0 && (
+        <CourtLobbyMismatchBubbles
+          positionsRef={positionsRef}
+          arenaSizeRef={arenaSizeRef}
+          members={mismatchedMembers}
+        />
+      )}
       {layout.map((node) => {
         const favorite = isFavorite(node.member.userId);
         const inProposal = !!node.member.inProposal;

@@ -57,12 +57,20 @@ function resolveShowcaseViews(
   const byId = new Map(instances.map((i) => [i.id, i]));
   return resolved.map((s) => {
     const instance = s.instance ? byId.get(s.instance.id) ?? null : null;
+    const instances = s.instances
+      ? s.instances
+          .map((inst) => byId.get(inst.id))
+          .filter((v): v is TrophyInstanceView => Boolean(v))
+      : instance
+      ? [instance]
+      : [];
     const def = s.definitionId ? getAchievementDefinition(s.definitionId) : undefined;
     return {
       slot: s.slot,
       pinned: s.pinned,
       definition: def ? toDefinitionView(def) : null,
       instance,
+      instances,
     };
   });
 }

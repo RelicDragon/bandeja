@@ -41,6 +41,7 @@ export type TrophyShowcaseSlotView = {
   pinned: boolean;
   definition: TrophyDefinitionView | null;
   instance: TrophyInstanceView | null;
+  instances: TrophyInstanceView[];
 };
 
 export type TrophyPendingCelebration = {
@@ -66,9 +67,9 @@ export type TrophiesPayload = {
 export function emptyTrophiesPayload(isOwner = false): TrophiesPayload {
   return {
     showcase: [
-      { slot: 0, pinned: false, definition: null, instance: null },
-      { slot: 1, pinned: false, definition: null, instance: null },
-      { slot: 2, pinned: false, definition: null, instance: null },
+      { slot: 0, pinned: false, definition: null, instance: null, instances: [] },
+      { slot: 1, pinned: false, definition: null, instance: null, instances: [] },
+      { slot: 2, pinned: false, definition: null, instance: null, instances: [] },
     ],
     cabinet: [],
     pinsEditable: isOwner,

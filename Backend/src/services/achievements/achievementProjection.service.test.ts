@@ -43,7 +43,8 @@ import {
 
 {
   const own = emptyTrophiesPayload(true);
-  assert.equal(own.cabinet.length, ACHIEVEMENT_CATALOG.length);
+  const expectedCabinetLength = ACHIEVEMENT_CATALOG.filter((d) => d.ruleKind !== 'EVENT_SEASON').length;
+  assert.equal(own.cabinet.length, expectedCabinetLength);
   assert.equal(own.unlockedCount, 0);
   assert.equal(own.pinsEditable, true);
   assert.deepEqual(own.pinnedInstanceIds, []);
@@ -113,10 +114,10 @@ import {
     ],
     pins: [{ slot: 1, achievementId: 'gold' }],
   });
-  assert.equal(slots[1].instance?.id, 'gold');
-  assert.equal(slots[1].pinned, true);
-  assert.equal(slots[0].instance?.id, 'new');
-  assert.equal(slots[0].pinned, false);
+  assert.equal(slots[0].instance?.id, 'gold');
+  assert.equal(slots[0].pinned, true);
+  assert.equal(slots[1].instance?.id, 'new');
+  assert.equal(slots[1].pinned, false);
 }
 
 console.log('achievementProjection.service.test.ts: ok');

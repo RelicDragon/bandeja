@@ -666,6 +666,58 @@
   color: rgb(236 253 245 / 0.95);
 }
 
+/* Why-this-player-isn't-a-fit bubble, floating above a far-field avatar. */
+.court-lobby-arena__mismatch-bubble {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 35;
+  max-width: 142px;
+  padding: 4px 9px;
+  border-radius: 11px;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  background: rgb(15 23 42 / 0.74);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.07),
+    0 8px 20px rgb(2 6 23 / 0.34);
+  color: rgb(226 232 240 / 0.9);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  text-align: center;
+  backdrop-filter: blur(10px);
+  pointer-events: none;
+  opacity: 0;
+  transform-origin: 50% 100%;
+  transition:
+    opacity 0.35s ease,
+    scale 0.35s ease;
+  scale: 0.92;
+}
+
+.court-lobby-arena__mismatch-bubble[data-visible='true'] {
+  opacity: 1;
+  scale: 1;
+}
+
+.court-lobby-arena__mismatch-text {
+  display: inline-block;
+}
+
+.court-lobby-arena__mismatch-tail {
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  background: inherit;
+  border-right: 1px solid rgb(255 255 255 / 0.1);
+  border-bottom: 1px solid rgb(255 255 255 / 0.1);
+  transform: translateX(-50%) rotate(45deg);
+}
+
 html:not(.dark) .court-lobby-arena {
   border-color: rgb(14 116 144 / 0.2);
   background:
@@ -901,6 +953,20 @@ html:not(.dark) .court-lobby-arena__chip--action {
   color: white;
 }
 
+html:not(.dark) .court-lobby-arena__mismatch-bubble {
+  border-color: rgb(15 118 110 / 0.16);
+  background: rgb(255 255 255 / 0.86);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.9),
+    0 7px 18px rgb(15 23 42 / 0.12);
+  color: rgb(51 65 85 / 0.92);
+}
+
+html:not(.dark) .court-lobby-arena__mismatch-tail {
+  border-right-color: rgb(15 118 110 / 0.16);
+  border-bottom-color: rgb(15 118 110 / 0.16);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .court-lobby-arena__aurora,
   .court-lobby-arena__scan,
@@ -924,6 +990,11 @@ html:not(.dark) .court-lobby-arena__chip--action {
 
   .court-lobby-arena__self-marker {
     transition: none;
+  }
+
+  .court-lobby-arena__mismatch-bubble {
+    transition: opacity 0.15s ease;
+    scale: 1;
   }
 }
 

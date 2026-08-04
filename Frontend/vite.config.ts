@@ -102,7 +102,7 @@ export default defineConfig(({ command, mode }) => {
   test: {
     server: {
       deps: {
-        inline: ['@backend/sport/sportRegistry', '@bandeja/chat-contract', '@bandeja/unread-contract', '@bandeja/shared'],
+        inline: ['@backend/sport/sportRegistry', '@bandeja/chat-contract', '@bandeja/unread-contract', '@bandeja/shared', '@shared'],
       },
     },
   },
