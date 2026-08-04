@@ -193,7 +193,7 @@ export type GroupCabinetRailOptions = {
 /**
  * Group cabinet entries by stack family (and optionally lock state).
  * Singles stay cards; 2+ become stacks.
- * Rail order: unlocked/mixed first (best leftmost), then locked (closest progress leftmost).
+ * Rail order: unlocked/mixed first (newest earned leftmost), then locked (closest progress leftmost).
  */
 export function groupCabinetRailItems(
   entries: TrophyCabinetEntryView[],
@@ -254,9 +254,9 @@ export function groupCabinetRailItems(
     if (aUnlocked !== bUnlocked) return aUnlocked ? -1 : 1;
 
     if (aUnlocked && bUnlocked) {
-      const better = itemBetterScore(b) - itemBetterScore(a);
-      if (better !== 0) return better;
-      return itemRecency(b) - itemRecency(a);
+      const recency = itemRecency(b) - itemRecency(a);
+      if (recency !== 0) return recency;
+      return itemBetterScore(b) - itemBetterScore(a);
     }
 
     const prog = itemProgressRatio(b) - itemProgressRatio(a);

@@ -558,7 +558,7 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
   // Fix Liga — Leto 2026 (unique season medals; best tier only per player)
   {
     id: 'leto_2026_participant',
-    rarity: 'COMMON',
+    rarity: 'UNIQUE',
     artKey: 'leto_2026_participant',
     ruleKind: 'EVENT_SEASON',
     titleKey: 'trophies.defs.leto2026Participant.title',
@@ -569,7 +569,7 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
   },
   {
     id: 'leto_2026_playoffs',
-    rarity: 'COMMON',
+    rarity: 'UNIQUE',
     artKey: 'leto_2026_playoffs',
     ruleKind: 'EVENT_SEASON',
     titleKey: 'trophies.defs.leto2026Playoffs.title',
@@ -580,7 +580,7 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
   },
   {
     id: 'leto_2026_place4',
-    rarity: 'COMMON',
+    rarity: 'UNIQUE',
     artKey: 'leto_2026_place4',
     ruleKind: 'EVENT_SEASON',
     titleKey: 'trophies.defs.leto2026Place4.title',
@@ -592,7 +592,7 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
   },
   {
     id: 'leto_2026_bronze',
-    rarity: 'RARE',
+    rarity: 'UNIQUE',
     artKey: 'leto_2026_bronze',
     ruleKind: 'EVENT_SEASON',
     titleKey: 'trophies.defs.leto2026Bronze.title',
@@ -604,7 +604,7 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
   },
   {
     id: 'leto_2026_silver',
-    rarity: 'RARE',
+    rarity: 'UNIQUE',
     artKey: 'leto_2026_silver',
     ruleKind: 'EVENT_SEASON',
     titleKey: 'trophies.defs.leto2026Silver.title',
@@ -616,7 +616,7 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementDefinition[] = [
   },
   {
     id: 'leto_2026_gold',
-    rarity: 'LEGENDARY',
+    rarity: 'UNIQUE',
     artKey: 'leto_2026_gold',
     ruleKind: 'EVENT_SEASON',
     titleKey: 'trophies.defs.leto2026Gold.title',

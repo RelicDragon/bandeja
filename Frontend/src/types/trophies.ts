@@ -1,6 +1,6 @@
 import type { AchievementType } from '@shared/achievements';
 
-export type TrophyRarity = 'COMMON' | 'RARE' | 'LEGENDARY';
+export type TrophyRarity = 'COMMON' | 'RARE' | 'LEGENDARY' | 'UNIQUE';
 export type { AchievementType };
 
 export type TrophyDefinitionView = {

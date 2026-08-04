@@ -299,7 +299,7 @@ export async function buildTrophiesPayload(params: {
     for (const row of knownRows) {
       const def = getAchievementDefinition(row.definitionId);
       if (!def) continue;
-      if (def.rarity !== 'RARE' && def.rarity !== 'LEGENDARY') continue;
+      if (def.rarity !== 'RARE' && def.rarity !== 'LEGENDARY' && def.rarity !== 'UNIQUE') continue;
       if (row.earnedAt.getTime() < cutoff) continue;
       pendingCelebrations.push({
         definitionId: def.id,

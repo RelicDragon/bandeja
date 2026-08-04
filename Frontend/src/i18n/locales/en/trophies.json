@@ -3,7 +3,8 @@
     "rarity": {
       "common": "Common",
       "rare": "Rare",
-      "legendary": "Legendary"
+      "legendary": "Legendary",
+      "unique": "Unique"
     },
     "showcase": {
       "hint": "Win leagues & keep playing to fill your showcase",

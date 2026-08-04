@@ -62,8 +62,8 @@ const SPARKS = [
   { x: -58, y: 2, delay: 0.12, size: 3 },
 ] as const;
 
-function isRareOrLegendary(rarity: string): rarity is 'RARE' | 'LEGENDARY' {
-  return rarity === 'RARE' || rarity === 'LEGENDARY';
+function isCelebratedRarity(rarity: string): rarity is 'RARE' | 'LEGENDARY' | 'UNIQUE' {
+  return rarity === 'RARE' || rarity === 'LEGENDARY' || rarity === 'UNIQUE';
 }
 
 function readUnlocksFromOutcome(outcome: GameOutcome): CelebrationUnlock[] {
@@ -85,7 +85,7 @@ function readUnlocksFromOutcome(outcome: GameOutcome): CelebrationUnlock[] {
       ) {
         continue;
       }
-      if (!isRareOrLegendary(row.rarity)) continue;
+      if (!isCelebratedRarity(row.rarity)) continue;
       if (seen.has(row.definitionId)) continue;
       seen.add(row.definitionId);
       out.push({
@@ -111,6 +111,7 @@ function readUnlocksFromOutcome(outcome: GameOutcome): CelebrationUnlock[] {
 function pickPrimaryCelebration(unlocks: CelebrationUnlock[]): CelebrationUnlock | null {
   if (unlocks.length === 0) return null;
   const rank = (u: CelebrationUnlock) => {
+    if (u.rarity === 'UNIQUE') return 400 + (u.place === 1 ? 10 : 0);
     if (u.rarity === 'LEGENDARY') return 300 + (u.place === 1 ? 10 : 0);
     if (u.definitionId === 'habit_streak_12') return 220;
     if (u.definitionId === 'habit_streak_8') return 210;
@@ -294,11 +295,13 @@ export function TrophyCelebrationSheet({
   };
 
   const sparkColor =
-    unlock?.rarity === 'LEGENDARY'
-      ? 'bg-amber-400'
-      : unlock?.rarity === 'RARE'
-        ? 'bg-cyan-400'
-        : 'bg-emerald-400';
+    unlock?.rarity === 'UNIQUE'
+      ? 'bg-fuchsia-400'
+      : unlock?.rarity === 'LEGENDARY'
+        ? 'bg-amber-400'
+        : unlock?.rarity === 'RARE'
+          ? 'bg-cyan-400'
+          : 'bg-emerald-400';
 
   return (
     <Drawer open={open} onOpenChange={persistAndClose} nested={nested}>

@@ -4,6 +4,7 @@ const RARITY_RANK: Record<TrophyRarity, number> = {
   COMMON: 1,
   RARE: 2,
   LEGENDARY: 3,
+  UNIQUE: 4,
 };
 
 export function rarityRank(rarity: TrophyRarity): number {

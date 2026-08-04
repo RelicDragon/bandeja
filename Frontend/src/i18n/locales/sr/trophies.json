@@ -3,7 +3,8 @@
     "rarity": {
       "common": "Običan",
       "rare": "Retko",
-      "legendary": "Legendarno"
+      "legendary": "Legendarno",
+      "unique": "Jedinstven"
     },
     "showcase": {
       "hint": "Pobedi lige i igraj redovno — vitrina će se popuniti",

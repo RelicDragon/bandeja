@@ -5,14 +5,15 @@ export function trophyProgressFillClass(_isMaxLevel = false): string {
 }
 
 /**
- * Golden LEGENDARY chrome only when the family max is unlocked.
- * Locked max/legendary stays on its native rarity with locked (gray) treatment.
+ * Promotes max-level unlocked family face to LEGENDARY chrome (progress ladders).
+ * Event UNIQUE stays UNIQUE when unlocked as max.
  */
 export function trophyMaxLevelDisplayRarity(
   isMaxLevel: boolean,
   unlocked: boolean,
-  rarity: 'COMMON' | 'RARE' | 'LEGENDARY',
-): 'COMMON' | 'RARE' | 'LEGENDARY' {
+  rarity: 'COMMON' | 'RARE' | 'LEGENDARY' | 'UNIQUE',
+): 'COMMON' | 'RARE' | 'LEGENDARY' | 'UNIQUE' {
+  if (rarity === 'UNIQUE') return 'UNIQUE';
   return isMaxLevel && unlocked ? 'LEGENDARY' : rarity;
 }
 

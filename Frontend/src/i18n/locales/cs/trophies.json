@@ -3,7 +3,8 @@
     "rarity": {
       "common": "Běžný",
       "rare": "Vzácný",
-      "legendary": "Legendární"
+      "legendary": "Legendární",
+      "unique": "Unikátní"
     },
     "showcase": {
       "hint": "Vyhrávej ligy a hraj pravidelně — vitrína se naplní",

@@ -1,4 +1,4 @@
-export type TrophyRarity = 'COMMON' | 'RARE' | 'LEGENDARY';
+export type TrophyRarity = 'COMMON' | 'RARE' | 'LEGENDARY' | 'UNIQUE';
 
 /**
  * Award and cabinet mechanics for a catalog definition.

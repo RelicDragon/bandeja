@@ -375,7 +375,7 @@ describe('groupCabinetRailItems', () => {
     }
   });
 
-  it('puts better unlocked items leftmost in the carousel', () => {
+  it('puts newest unlocked items leftmost in the carousel', () => {
     const items = groupCabinetRailItems([
       entry(def({ id: 'habit_first_win', ruleKind: 'HABIT_FIRST_WIN', threshold: 1 }), true, {
         earnedAt: '2026-06-01T00:00:00.000Z',
@@ -387,16 +387,17 @@ describe('groupCabinetRailItems', () => {
         earnedAt: '2026-02-01T00:00:00.000Z',
       }),
     ]);
-    expect(items[0]?.kind).toBe('stack');
-    if (items[0]?.kind === 'stack') {
-      expect(items[0].entries.map((e) => e.definition.id)).toEqual([
+    // first_win (Jun) before volume stack (latest earn Feb)
+    expect(items[0]?.kind).toBe('card');
+    if (items[0]?.kind === 'card') {
+      expect(items[0].entry.definition.id).toBe('habit_first_win');
+    }
+    expect(items[1]?.kind).toBe('stack');
+    if (items[1]?.kind === 'stack') {
+      expect(items[1].entries.map((e) => e.definition.id)).toEqual([
         'habit_games_10',
         'habit_games_100',
       ]);
-    }
-    expect(items[1]?.kind).toBe('card');
-    if (items[1]?.kind === 'card') {
-      expect(items[1].entry.definition.id).toBe('habit_first_win');
     }
   });
 
