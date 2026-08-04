@@ -161,7 +161,7 @@ export async function resolveLeto2026Awards(params?: {
     byUser.set(userId, prev ? betterTier(prev, tier) : tier);
   };
 
-  // All historical roster players (incl. withdrawn teams).
+  // Current franchise rosters (incl. withdrawn teams still attached).
   const allPlayers = await db.leagueTeamPlayer.findMany({
     where: {
       leagueTeam: {
@@ -172,6 +172,32 @@ export async function resolveLeto2026Awards(params?: {
     distinct: ['userId'],
   });
   for (const row of allPlayers) bump(row.userId, 'leto_2026_participant');
+
+  // Pre-swap roster keys — swap removes the outgoing player from LeagueTeamPlayer.
+  const rosterAliases = await db.leagueTeamRosterAlias.findMany({
+    where: { leagueSeasonId: seasonId },
+    select: { rosterKey: true },
+  });
+  for (const alias of rosterAliases) {
+    for (const userId of alias.rosterKey.split(':')) {
+      if (userId) bump(userId, 'leto_2026_participant');
+    }
+  }
+
+  // Anyone who stayed on a scored fixed-team fixture after being swapped out.
+  const historicalFixturePlayers = await db.gameTeamPlayer.findMany({
+    where: {
+      gameTeam: {
+        game: {
+          parentId: seasonId,
+          entityType: EntityType.LEAGUE,
+        },
+      },
+    },
+    select: { userId: true },
+    distinct: ['userId'],
+  });
+  for (const row of historicalFixturePlayers) bump(row.userId, 'leto_2026_participant');
 
   // Anyone who appeared on a playoff bracket slot (current occupant).
   const playoffSlots = await db.leagueBracketSlot.findMany({
