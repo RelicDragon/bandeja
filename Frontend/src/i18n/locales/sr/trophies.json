@@ -46,7 +46,8 @@
         "soulOfTheParty": "Duša žurke",
         "giantKiller": "Ubica giganta",
         "dynamicDuo": "Dinamični duo",
-        "openCourt": "Otvoreni teren"
+        "openCourt": "Otvoreni teren",
+        "leto2026": "Leto 2026"
       }
     },
     "leaderboard": {
@@ -311,6 +312,30 @@
       "openCourt250": {
         "title": "Socijalna legenda",
         "description": "Odigraj kvalifikacione mečeve sa 250 različitih partnera."
+      },
+      "leto2026Participant": {
+        "title": "Ekipa Leto 2026",
+        "description": "Igrao/la si sezonu Fix Liga — Leto 2026."
+      },
+      "leto2026Playoffs": {
+        "title": "Plej-of Leto 2026",
+        "description": "Ušao/la si u plej-of Fix Liga Leto 2026."
+      },
+      "leto2026Place4": {
+        "title": "Četvrto Leto 2026",
+        "description": "Završio/la si 4. na Fix Liga Leto 2026."
+      },
+      "leto2026Bronze": {
+        "title": "Bronza Leto 2026",
+        "description": "Bronzani podijum Fix Liga Leto 2026."
+      },
+      "leto2026Silver": {
+        "title": "Srebro Leto 2026",
+        "description": "Srebrni podijum Fix Liga Leto 2026."
+      },
+      "leto2026Gold": {
+        "title": "Šampion Leto 2026",
+        "description": "Zlatni podijum Fix Liga Leto 2026."
       }
     }
   }

@@ -104,6 +104,8 @@ export function projectTrophyCabinet(input: {
     const instances = byDefinition.get(definition.id) ?? [];
     const unlocked = instances.length > 0;
     if (!input.isOwner && !unlocked) continue;
+    // Event medals: only show when earned (no locked graveyard for past seasons).
+    if (definition.ruleKind === 'EVENT_SEASON' && !unlocked) continue;
     rows.push({
       definition,
       unlocked,

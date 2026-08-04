@@ -239,6 +239,47 @@ const SPECS: Spec[] = [
   },
 ];
 
+const LETO_REF = path.resolve(__dirname, '../../Frontend/public/bandeja2-white-tr.png');
+
+const LETO_STYLE = [
+  'Premium mobile-game achievement emblem, high-contrast linocut / woodcut illustration style matching the reference mascot exactly:',
+  'black linework, white fills, dense stipple shading, monochrome B&W only for figures,',
+  'bearded athletic man on leaping tiger hitting a padel bandeja overhead (padel racket with holes, not tennis strings),',
+  'same energy and silhouette language as the reference image, reimagined as a circular medal / badge icon,',
+  'single centered emblem filling ~80% of frame, pure flat solid #00FF00 chroma-key background,',
+  'no multi-panel story, no text unless specified, no watermark, no UI chrome, no border frame around the full canvas.',
+].join(' ');
+
+const LETO_SPECS: Spec[] = [
+  {
+    key: 'leto_2026_participant',
+    prompt: `${LETO_STYLE} Circulo bronze participation medal of the tiger-rider bandeja mascot, subtle "L26" monogram on a small bronze rim badge, humble common-tier metal rim, brush bronze edges.`,
+  },
+  {
+    key: 'leto_2026_playoffs',
+    prompt: `${LETO_STYLE} Playoff medal: tiger-rider bandeja mascot over a bracket / chevron motif, polished steel rim, small dark badge with bright white "PO", competitive escalation.`,
+  },
+  {
+    key: 'leto_2026_place4',
+    prompt: `${LETO_STYLE} Fourth-place medal: tiger-rider bandeja mascot with four-point star motif, warm copper-bronze rim, small dark badge with bold bright white numeral "4".`,
+  },
+  {
+    key: 'leto_2026_bronze',
+    prompt: `${LETO_STYLE} Bronze podium medal: tiger-rider bandeja mascot with bronze laurel leaves, polished warm bronze metal rim and ribbon loop, dark badge bright white "3", third-place prestige.`,
+  },
+  {
+    key: 'leto_2026_silver',
+    prompt: `${LETO_STYLE} Silver podium medal: tiger-rider bandeja mascot with silver laurel and platinum sheen rim, dark badge bright white "2", runner-up prestige.`,
+  },
+  {
+    key: 'leto_2026_gold',
+    prompt: `${LETO_STYLE} Legendary gold championship medal: tiger-rider bandeja mascot with rich polished gold rim, gold laurel and mini crown accents, dark badge bright white "1", champion glory.`,
+  },
+];
+
+const ALL_SPECS: Spec[] = [...SPECS, ...LETO_SPECS];
+const LETO_KEYS = new Set(LETO_SPECS.map((s) => s.key));
+
 async function downloadUrl(url: string): Promise<Buffer> {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Download failed ${res.status}: ${url}`);
@@ -306,14 +347,22 @@ async function generateOne(client: Replicate, spec: Spec): Promise<void> {
   }
 
   console.log(`[gen] ${spec.key}…`);
-  const genUrl = await runOfficial(client, GEN_MODEL, {
+  const input: Record<string, unknown> = {
     prompt: spec.prompt,
     aspect_ratio: '1:1',
     resolution: '1K',
     output_format: 'png',
     google_search: false,
     image_search: false,
-  });
+  };
+
+  if (LETO_KEYS.has(spec.key)) {
+    const ref = await fs.readFile(LETO_REF);
+    const b64 = ref.toString('base64');
+    input.image_input = [`data:image/png;base64,${b64}`];
+  }
+
+  const genUrl = await runOfficial(client, GEN_MODEL, input);
   console.log(`[bg]  ${spec.key}…`);
   const cutUrl = await runVersioned(client, REMOVE_BG_VERSION, { image: genUrl });
   const raw = await downloadUrl(cutUrl);
@@ -333,8 +382,8 @@ async function main(): Promise<void> {
     .map((s) => s.trim())
     .filter(Boolean);
   const specs = filter.length
-    ? SPECS.filter((s) => filter.includes(s.key))
-    : SPECS;
+    ? ALL_SPECS.filter((s) => filter.includes(s.key))
+    : ALL_SPECS;
   if (!specs.length) throw new Error('No matching KEYS');
 
   const client = new Replicate({ auth: token });

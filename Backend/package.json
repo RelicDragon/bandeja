@@ -47,6 +47,8 @@
     "backfill:play-streak": "ts-node scripts/backfillPlayStreak.ts",
     "backfill:habit-achievements": "ts-node --transpile-only scripts/backfillHabitAchievements.ts",
     "backfill:habit-achievement-dates": "ts-node --transpile-only scripts/backfillHabitAchievementDates.ts",
+    "backfill:leto-2026-season": "ts-node --transpile-only scripts/backfillLeto2026SeasonAchievements.ts",
+    "generate:trophy-art": "ts-node --transpile-only scripts/generate-trophy-art.ts",
     "backfill:podium-achievements": "ts-node --transpile-only scripts/backfillPodiumAchievements.ts",
     "fix:bracket-slot-cache": "ts-node --transpile-only -r dotenv/config scripts/fixBracketSlotChampionCache.ts",
     "finalize:league-season": "ts-node --transpile-only -r dotenv/config scripts/finalizeLeagueSeason.ts",

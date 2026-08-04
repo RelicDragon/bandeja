@@ -20,7 +20,9 @@ export type TrophyRuleKind =
   | 'HABIT_ORGANIZE_BAR'
   | 'HABIT_GIANT_KILLER'
   | 'HABIT_DYNAMIC_DUO'
-  | 'HABIT_OPEN_COURT';
+  | 'HABIT_OPEN_COURT'
+  /** One-off league-season event medals (e.g. Fix Liga Leto 2026). */
+  | 'EVENT_SEASON';
 
 export type TrophyArtKey =
   | 'podium_gold'
@@ -74,7 +76,13 @@ export type TrophyArtKey =
   | 'habit_open_court_25'
   | 'habit_open_court_50'
   | 'habit_open_court_100'
-  | 'habit_open_court_250';
+  | 'habit_open_court_250'
+  | 'leto_2026_participant'
+  | 'leto_2026_playoffs'
+  | 'leto_2026_place4'
+  | 'leto_2026_bronze'
+  | 'leto_2026_silver'
+  | 'leto_2026_gold';
 
 export type AchievementDefinitionId =
   | 'podium_gold'
@@ -128,7 +136,13 @@ export type AchievementDefinitionId =
   | 'habit_open_court_25'
   | 'habit_open_court_50'
   | 'habit_open_court_100'
-  | 'habit_open_court_250';
+  | 'habit_open_court_250'
+  | 'leto_2026_participant'
+  | 'leto_2026_playoffs'
+  | 'leto_2026_place4'
+  | 'leto_2026_bronze'
+  | 'leto_2026_silver'
+  | 'leto_2026_gold';
 
 export type AchievementDefinition = {
   id: AchievementDefinitionId;
@@ -141,11 +155,13 @@ export type AchievementDefinition = {
   /** i18n key under trophies.* */
   descriptionKey: string;
   /** Podium place 1–3; habit milestones use threshold. */
-  place?: 1 | 2 | 3;
+  place?: 1 | 2 | 3 | 4;
   /** Habit unlock threshold (weeks or games). */
   threshold?: number;
   /** Sport scope for HABIT_SPORT_VOLUME (e.g. PADEL). */
   sport?: string;
+  /** Fixed source event (e.g. LEAGUE_SEASON game id) for EVENT_SEASON medals. */
+  eventGameId?: string;
 };
 
 export type AchievementInstanceInput = {

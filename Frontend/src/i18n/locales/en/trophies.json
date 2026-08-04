@@ -46,7 +46,8 @@
         "generic": "Trophies",
         "giantKiller": "Giant Killer",
         "dynamicDuo": "Dynamic Duo",
-        "openCourt": "Open Court"
+        "openCourt": "Open Court",
+        "leto2026": "Leto 2026"
       }
     },
     "leaderboard": {
@@ -311,6 +312,30 @@
       "openCourt250": {
         "title": "Network Legend",
         "description": "Complete qualifying padel matches with 250 different partners."
+      },
+      "leto2026Participant": {
+        "title": "Leto 2026 crew",
+        "description": "Played in Fix Liga — Leto 2026 season."
+      },
+      "leto2026Playoffs": {
+        "title": "Leto 2026 playoffs",
+        "description": "Reached the Fix Liga Leto 2026 playoff bracket."
+      },
+      "leto2026Place4": {
+        "title": "Leto 2026 fourth",
+        "description": "Finished 4th in Fix Liga Leto 2026."
+      },
+      "leto2026Bronze": {
+        "title": "Leto 2026 bronze",
+        "description": "Bronze podium of Fix Liga Leto 2026."
+      },
+      "leto2026Silver": {
+        "title": "Leto 2026 silver",
+        "description": "Silver podium of Fix Liga Leto 2026."
+      },
+      "leto2026Gold": {
+        "title": "Leto 2026 champion",
+        "description": "Gold podium of Fix Liga Leto 2026."
       }
     }
   }

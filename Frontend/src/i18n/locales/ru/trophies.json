@@ -46,7 +46,8 @@
         "soulOfTheParty": "Душа компании",
         "giantKiller": "Убийца гигантов",
         "dynamicDuo": "Динамичный дуэт",
-        "openCourt": "Открытый корт"
+        "openCourt": "Открытый корт",
+        "leto2026": "Leto 2026"
       }
     },
     "leaderboard": {
@@ -311,6 +312,30 @@
       "openCourt250": {
         "title": "Соцлегенда",
         "description": "Сыграй рейтинговые матчи с 250 разными партнёрами."
+      },
+      "leto2026Participant": {
+        "title": "Состав Leto 2026",
+        "description": "Играл(а) в сезоне Fix Liga — Leto 2026."
+      },
+      "leto2026Playoffs": {
+        "title": "Плей-офф Leto 2026",
+        "description": "Вышел(ла) в плей-офф Fix Liga Leto 2026."
+      },
+      "leto2026Place4": {
+        "title": "Четвёртое Leto 2026",
+        "description": "Занял(а) 4-е место в Fix Liga Leto 2026."
+      },
+      "leto2026Bronze": {
+        "title": "Бронза Leto 2026",
+        "description": "Бронзовый подиум Fix Liga Leto 2026."
+      },
+      "leto2026Silver": {
+        "title": "Серебро Leto 2026",
+        "description": "Серебряный подиум Fix Liga Leto 2026."
+      },
+      "leto2026Gold": {
+        "title": "Чемпион Leto 2026",
+        "description": "Золотой подиум Fix Liga Leto 2026."
       }
     }
   }

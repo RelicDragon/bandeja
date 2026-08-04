@@ -46,7 +46,8 @@
         "soulOfTheParty": "Duše party",
         "giantKiller": "Lovec obrů",
         "dynamicDuo": "Dynamické duo",
-        "openCourt": "Otevřený kurt"
+        "openCourt": "Otevřený kurt",
+        "leto2026": "Leto 2026"
       }
     },
     "leaderboard": {
@@ -311,6 +312,30 @@
       "openCourt250": {
         "title": "Sociální legenda",
         "description": "Dohraj kvalifikační padely s 250 různými partáky."
+      },
+      "leto2026Participant": {
+        "title": "Parta Leto 2026",
+        "description": "Hrál(a) jsi sezónu Fix Liga — Leto 2026."
+      },
+      "leto2026Playoffs": {
+        "title": "Playoff Leto 2026",
+        "description": "Postoupil(a) jsi do playoff Fix Liga Leto 2026."
+      },
+      "leto2026Place4": {
+        "title": "Čtvrté místo Leto 2026",
+        "description": "Skončil(a) jsi 4. ve Fix Liga Leto 2026."
+      },
+      "leto2026Bronze": {
+        "title": "Bronz Leto 2026",
+        "description": "Bronzové pódium Fix Liga Leto 2026."
+      },
+      "leto2026Silver": {
+        "title": "Stříbro Leto 2026",
+        "description": "Stříbrné pódium Fix Liga Leto 2026."
+      },
+      "leto2026Gold": {
+        "title": "Šampion Leto 2026",
+        "description": "Zlaté pódium Fix Liga Leto 2026."
       }
     }
   }

@@ -46,7 +46,8 @@
         "soulOfTheParty": "Alma de la fiesta",
         "giantKiller": "Cazagigantes",
         "dynamicDuo": "Dúo dinámico",
-        "openCourt": "Cancha abierta"
+        "openCourt": "Cancha abierta",
+        "leto2026": "Leto 2026"
       }
     },
     "leaderboard": {
@@ -311,6 +312,30 @@
       "openCourt250": {
         "title": "Leyenda social",
         "description": "Juega partidos clasificables con 250 parejas distintas."
+      },
+      "leto2026Participant": {
+        "title": "Equipo Leto 2026",
+        "description": "Jugaste en la temporada Fix Liga — Leto 2026."
+      },
+      "leto2026Playoffs": {
+        "title": "Playoffs Leto 2026",
+        "description": "Llegaste al cuadro de playoffs Fix Liga Leto 2026."
+      },
+      "leto2026Place4": {
+        "title": "Cuarto Leto 2026",
+        "description": "Terminaste 4º en Fix Liga Leto 2026."
+      },
+      "leto2026Bronze": {
+        "title": "Bronce Leto 2026",
+        "description": "Podio de bronce de Fix Liga Leto 2026."
+      },
+      "leto2026Silver": {
+        "title": "Plata Leto 2026",
+        "description": "Podio de plata de Fix Liga Leto 2026."
+      },
+      "leto2026Gold": {
+        "title": "Campeón Leto 2026",
+        "description": "Podio de oro de Fix Liga Leto 2026."
       }
     }
   }

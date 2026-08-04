@@ -59,6 +59,12 @@ const ART_SRC: Record<TrophyArtKey, string> = {
   habit_open_court_50: '/trophies/habit_open_court_50.png',
   habit_open_court_100: '/trophies/habit_open_court_100.png',
   habit_open_court_250: '/trophies/habit_open_court_250.png',
+  leto_2026_participant: '/trophies/leto_2026_participant.png',
+  leto_2026_playoffs: '/trophies/leto_2026_playoffs.png',
+  leto_2026_place4: '/trophies/leto_2026_place4.png',
+  leto_2026_bronze: '/trophies/leto_2026_bronze.png',
+  leto_2026_silver: '/trophies/leto_2026_silver.png',
+  leto_2026_gold: '/trophies/leto_2026_gold.png',
 };
 
 function resolveSrc(artKey: string): { key: string; src: string } {
