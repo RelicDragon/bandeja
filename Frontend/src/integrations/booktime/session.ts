@@ -19,6 +19,11 @@ import {
 } from './proactiveRefresh';
 import { invalidateExternalBookingCache } from './booktimeAllUpcomingCacheInvalidation';
 import { clearRateLimitState, type BooktimeRateLimitConfig } from './rateLimiter';
+import { emitBookingAuthInvalidated } from '@/integrations/booking/bookingAuthInvalidation';
+import {
+  clearBookingAuthNeedsReauth,
+  markBookingAuthNeedsReauth,
+} from '@/integrations/booking/bookingAuthReauthRegistry';
 
 type SessionEntry = {
   client: BooktimeClient;
@@ -102,6 +107,27 @@ function markSessionBlocked(clubId: string): void {
   sessionBlockedUntil.set(clubId, Date.now() + SESSION_RETRY_COOLDOWN_MS);
 }
 
+/** Local clear + backend auth delete when tokens cannot be recovered (e.g. 401 after refresh fail). */
+function handleUnrecoverableSession(clubId: string): void {
+  clearProactiveBooktimeRefresh(clubId);
+  const syncTimer = backendSyncTimers.get(clubId);
+  if (syncTimer) {
+    clearTimeout(syncTimer);
+    backendSyncTimers.delete(clubId);
+  }
+  clearRateLimitState(clubId);
+  clearStoredSession(clubId);
+  memoryClients.delete(clubId);
+  markSessionBlocked(clubId);
+  invalidateExternalBookingCache();
+  markBookingAuthNeedsReauth(clubId, 'BOOKTIME');
+  void booktimeApi.deleteAuth(clubId).catch(() => {
+    /* best-effort: local session already cleared */
+  });
+  notifyReconnect(clubId);
+  emitBookingAuthInvalidated({ clubId, provider: 'BOOKTIME' });
+}
+
 function isSessionBlocked(clubId: string): boolean {
   const until = sessionBlockedUntil.get(clubId);
   if (until == null) return false;
@@ -154,17 +180,7 @@ function createClient(
       scheduleProactiveBooktimeRefresh(clubId, accessToken, client);
     },
     onSessionExpired: () => {
-      clearProactiveBooktimeRefresh(clubId);
-      const syncTimer = backendSyncTimers.get(clubId);
-      if (syncTimer) {
-        clearTimeout(syncTimer);
-        backendSyncTimers.delete(clubId);
-      }
-      clearStoredSession(clubId);
-      memoryClients.delete(clubId);
-      markSessionBlocked(clubId);
-      invalidateExternalBookingCache();
-      notifyReconnect(clubId);
+      handleUnrecoverableSession(clubId);
     },
   });
   if (stored?.accessToken && stored.refreshToken) {
@@ -352,6 +368,7 @@ export async function persistBooktimeSessionAfterConnect(
     lastName: payload.lastName ?? null,
   });
   sessionBlockedUntil.delete(clubId);
+  clearBookingAuthNeedsReauth(clubId);
   invalidateExternalBookingCache();
 }
 
@@ -362,6 +379,7 @@ export async function disconnectBooktimeClub(clubId: string): Promise<void> {
   clearStoredSession(clubId);
   memoryClients.delete(clubId);
   sessionBlockedUntil.delete(clubId);
+  clearBookingAuthNeedsReauth(clubId);
   invalidateExternalBookingCache();
 }
 
@@ -371,6 +389,7 @@ export function clearBooktimeSessionLocal(clubId: string): void {
   clearStoredSession(clubId);
   memoryClients.delete(clubId);
   sessionBlockedUntil.delete(clubId);
+  clearBookingAuthNeedsReauth(clubId);
   invalidateExternalBookingCache();
 }
 

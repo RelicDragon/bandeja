@@ -10,6 +10,8 @@ export type ConnectedBookingClubRow = {
   avatar: string | null;
   integrationType: ClubIntegrationType;
   connected: boolean;
+  /** True when a previous connection’s tokens became unusable and need sign-in again. */
+  needsReauth: boolean;
   scoutOptIn: boolean;
   cityTimezone: string | null;
   courts: Array<{
@@ -38,6 +40,7 @@ export function mapBooktimeClubRow(row: BooktimeMyClubRow): ConnectedBookingClub
     avatar: row.avatar,
     integrationType: 'BOOKTIME',
     connected: row.connected,
+    needsReauth: false,
     scoutOptIn: row.scoutOptIn,
     cityTimezone: row.cityTimezone,
     courts: row.courts,
@@ -53,6 +56,7 @@ export function mapPadelooClubRow(row: PadelooMyClubRow): ConnectedBookingClubRo
     avatar: row.avatar,
     integrationType: 'PADELOO',
     connected: row.connected,
+    needsReauth: false,
     scoutOptIn: row.scoutOptIn,
     cityTimezone: row.cityTimezone,
     courts: row.courts,
@@ -68,6 +72,7 @@ export function mapKlikterenClubRow(row: KlikterenMyClubRow): ConnectedBookingCl
     avatar: row.avatar,
     integrationType: 'KLIKTEREN',
     connected: row.connected,
+    needsReauth: false,
     scoutOptIn: row.scoutOptIn,
     cityTimezone: row.cityTimezone,
     courts: row.courts,
@@ -94,6 +99,23 @@ export function mergeConnectedBookingClubs(
   return [...byId.values()].sort((a, b) =>
     a.clubName.localeCompare(b.clubName, undefined, { sensitivity: 'base' }),
   );
+}
+
+export function applyBookingAuthNeedsReauth(
+  clubs: ConnectedBookingClubRow[],
+  clubIdsNeedingReauth: Iterable<string>,
+): ConnectedBookingClubRow[] {
+  const need = new Set(clubIdsNeedingReauth);
+  if (need.size === 0) return clubs.map((c) => ({ ...c, needsReauth: false }));
+  return clubs.map((club) => {
+    const needsReauth = need.has(club.clubId);
+    return {
+      ...club,
+      needsReauth,
+      // If tokens are dead we never treat the club as actively connected.
+      connected: needsReauth ? false : club.connected,
+    };
+  });
 }
 
 export function connectedClubRowToBooktimeRow(row: ConnectedBookingClubRow): BooktimeMyClubRow {

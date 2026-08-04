@@ -7,6 +7,11 @@ import {
   KLIKTEREN_SESSION_STORAGE_PREFIX,
   type KlikterenStoredSession,
 } from './config';
+import { emitBookingAuthInvalidated } from '@/integrations/booking/bookingAuthInvalidation';
+import {
+  clearBookingAuthNeedsReauth,
+  markBookingAuthNeedsReauth,
+} from '@/integrations/booking/bookingAuthReauthRegistry';
 
 type SessionEntry = {
   client: KlikterenClient;
@@ -79,6 +84,23 @@ function markSessionBlocked(clubId: string): void {
   sessionBlockedUntil.set(clubId, Date.now() + SESSION_RETRY_COOLDOWN_MS);
 }
 
+function handleUnrecoverableSession(clubId: string): void {
+  const syncTimer = backendSyncTimers.get(clubId);
+  if (syncTimer) {
+    clearTimeout(syncTimer);
+    backendSyncTimers.delete(clubId);
+  }
+  clearStoredSession(clubId);
+  memoryClients.delete(clubId);
+  markSessionBlocked(clubId);
+  markBookingAuthNeedsReauth(clubId, 'KLIKTEREN');
+  void klikterenApi.deleteAuth(clubId).catch(() => {
+    /* best-effort: local session already cleared */
+  });
+  notifyReconnect(clubId);
+  emitBookingAuthInvalidated({ clubId, provider: 'KLIKTEREN' });
+}
+
 function isSessionBlocked(clubId: string): boolean {
   const until = sessionBlockedUntil.get(clubId);
   if (until == null) return false;
@@ -124,15 +146,7 @@ function createClient(
       scheduleBackendTokenSync(clubId, updated);
     },
     onSessionExpired: () => {
-      const syncTimer = backendSyncTimers.get(clubId);
-      if (syncTimer) {
-        clearTimeout(syncTimer);
-        backendSyncTimers.delete(clubId);
-      }
-      clearStoredSession(clubId);
-      memoryClients.delete(clubId);
-      markSessionBlocked(clubId);
-      notifyReconnect(clubId);
+      handleUnrecoverableSession(clubId);
     },
   });
 }
@@ -250,6 +264,7 @@ export async function persistKlikterenSessionAfterConnect(
     lastName: payload.lastName ?? null,
   });
   sessionBlockedUntil.delete(clubId);
+  clearBookingAuthNeedsReauth(clubId);
 }
 
 export async function disconnectKlikterenClub(clubId: string): Promise<void> {
@@ -267,12 +282,14 @@ export async function disconnectKlikterenClub(clubId: string): Promise<void> {
   clearStoredSession(clubId);
   memoryClients.delete(clubId);
   sessionBlockedUntil.delete(clubId);
+  clearBookingAuthNeedsReauth(clubId);
 }
 
 export function clearKlikterenSessionLocal(clubId: string): void {
   clearStoredSession(clubId);
   memoryClients.delete(clubId);
   sessionBlockedUntil.delete(clubId);
+  clearBookingAuthNeedsReauth(clubId);
 }
 
 export function hasKlikterenSession(clubId: string): boolean {

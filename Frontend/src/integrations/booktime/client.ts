@@ -121,6 +121,7 @@ export class BooktimeClient {
   private refreshInFlight: Promise<boolean> | null = null;
   private upcomingInFlight: Promise<BooktimeBookingsPage> | null = null;
   private rateLimitConfig?: BooktimeRateLimitConfig;
+  private sessionExpired = false;
 
   constructor(options: BooktimeClientOptions) {
     this.companyId = options.companyId;
@@ -148,6 +149,7 @@ export class BooktimeClient {
   applyTokens(accessToken: string, refreshToken: string): void {
     this.accessToken = accessToken;
     this.refreshToken = refreshToken;
+    this.sessionExpired = false;
     this.onTokensUpdated?.({ accessToken, refreshToken });
   }
 
@@ -203,6 +205,8 @@ export class BooktimeClient {
   }
 
   expireSession(): void {
+    if (this.sessionExpired) return;
+    this.sessionExpired = true;
     this.clearSession();
     if (this.clubId) {
       clearRateLimitState(this.clubId);

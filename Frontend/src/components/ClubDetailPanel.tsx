@@ -15,6 +15,7 @@ import { useTranslatedGeo } from '@/hooks/useTranslatedGeo';
 import { useAuthStore } from '@/store/authStore';
 import { useClubBookingAuth } from '@/hooks/useClubBookingAuth';
 import { useBooktimeReconnectPrompt } from '@/hooks/useBooktimeReconnectPrompt';
+import { useBookingAuthNeedsReauth } from '@/hooks/useBookingAuthNeedsReauth';
 import {
   ConnectClubSheet,
   type BooktimeIntegrationConfig,
@@ -81,6 +82,8 @@ export function ClubDetailPanel({ club, onOpenFullscreenPhoto, onClubRefresh, sn
     club.id,
     isAuthenticated && isBooktime,
   );
+  const needsReauth = useBookingAuthNeedsReauth(isAuthenticated ? club.id : undefined);
+  const showReauthBanner = needsReauth || reconnectRequired;
   const [connectOpen, setConnectOpen] = useState(false);
   const [availabilityDate, setAvailabilityDate] = useState(() => snapshotDate ?? new Date());
   const [bookingsRefreshKey, setBookingsRefreshKey] = useState(0);
@@ -141,13 +144,7 @@ export function ClubDetailPanel({ club, onOpenFullscreenPhoto, onClubRefresh, sn
     hasBookingIntegration &&
     isAuthenticated &&
     !clubAuthLoading &&
-    (!clubAuth?.connected || (isBooktime && reconnectRequired));
-
-  useEffect(() => {
-    if (reconnectRequired && booktimeConfig) {
-      setConnectOpen(true);
-    }
-  }, [reconnectRequired, booktimeConfig]);
+    (!clubAuth?.connected || showReauthBanner);
 
   const handleConnected = async () => {
     clearReconnectRequired();
@@ -183,18 +180,44 @@ export function ClubDetailPanel({ club, onOpenFullscreenPhoto, onClubRefresh, sn
       </div>
 
       {showBookingConnect ? (
-        <div className="rounded-xl border border-primary-200 dark:border-primary-800/60 bg-primary-50/80 dark:bg-primary-950/30 p-3">
+        <div
+          className={`rounded-xl border p-3 ${
+            showReauthBanner
+              ? 'border-amber-200 dark:border-amber-900/60 bg-amber-50/90 dark:bg-amber-950/25'
+              : 'border-primary-200 dark:border-primary-800/60 bg-primary-50/80 dark:bg-primary-950/30'
+          }`}
+        >
           <div className="flex items-start gap-3">
-            <Link2 size={18} className="text-primary-600 dark:text-primary-400 shrink-0 mt-0.5" aria-hidden />
+            <Link2
+              size={18}
+              className={`shrink-0 mt-0.5 ${
+                showReauthBanner
+                  ? 'text-amber-700 dark:text-amber-300'
+                  : 'text-primary-600 dark:text-primary-400'
+              }`}
+              aria-hidden
+            />
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium text-gray-900 dark:text-white">{t('club.booktime.connectBannerTitle')}</p>
-              <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">{t('club.booktime.connectBannerHint')}</p>
+              <p className="text-sm font-medium text-gray-900 dark:text-white">
+                {showReauthBanner
+                  ? t('club.booktime.reauthBannerTitle')
+                  : t('club.booktime.connectBannerTitle')}
+              </p>
+              <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
+                {showReauthBanner
+                  ? t('club.booktime.reauthBannerHint')
+                  : t('club.booktime.connectBannerHint')}
+              </p>
               <button
                 type="button"
                 onClick={() => setConnectOpen(true)}
-                className="mt-2 inline-flex items-center rounded-lg bg-primary-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-primary-700"
+                className={`mt-2 inline-flex items-center rounded-lg px-3 py-1.5 text-sm font-medium text-white ${
+                  showReauthBanner
+                    ? 'bg-amber-600 hover:bg-amber-700'
+                    : 'bg-primary-600 hover:bg-primary-700'
+                }`}
               >
-                {t('club.booktime.connectCta')}
+                {showReauthBanner ? t('club.booktime.reauthorizeCta') : t('club.booktime.connectCta')}
               </button>
             </div>
           </div>
@@ -211,7 +234,7 @@ export function ClubDetailPanel({ club, onOpenFullscreenPhoto, onClubRefresh, sn
           selectedDate={scheduleDate}
           onDateChange={setAvailabilityDate}
           lastFetchedAt={lastFetchedAt}
-          connected={!!clubAuth?.connected}
+          connected={!!clubAuth?.connected && !showReauthBanner}
           onConnectRequest={() => setConnectOpen(true)}
           onRefreshSnapshot={refreshSnapshot}
           onBooked={() => setBookingsRefreshKey((k) => k + 1)}
@@ -219,7 +242,7 @@ export function ClubDetailPanel({ club, onOpenFullscreenPhoto, onClubRefresh, sn
         />
       ) : null}
 
-      {hasBookingIntegration && isAuthenticated && clubAuth?.connected ? (
+      {hasBookingIntegration && isAuthenticated && clubAuth?.connected && !showReauthBanner ? (
         <ClubUpcomingBookings
           club={club}
           connected

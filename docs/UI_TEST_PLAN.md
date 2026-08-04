@@ -1429,6 +1429,11 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PR-57d | Link booking to game (failure) | Link to game while offline or on already-linked booking | Error toast; no partial link (game unchanged if request failed) |
 | PR-57e | Bookings back navigation | My tab → See all → back; Profile → Bookings → back | Browser back returns to previous screen (My tab or Profile) |
 | PR-59 | Club account disconnect | Bookings page → Integrations tab → Disconnect | Toast "Club account disconnected"; club shows connect CTA |
+| PR-59a | Booking auth expired toast | Force external booking 401 with failed refresh while signed in | Unobtrusive toast: title + body; **Reauthorize** → Integrations tab; **Not now** dismisses; app stays usable |
+| PR-59b | Needs reauthorize badge | After expired auth (PR-59a) open Bookings → Integrations | Club badge is **Reauthorize** (not Connected/Disconnected); hint visible; primary **Reauthorize** + secondary **Remove connection** |
+| PR-59c | Reauthorize recovers | Integrations → Reauthorize → complete connect sheet | Badge becomes Connected; needs-reauth cleared; bookings can sync again |
+| PR-59d | Remove connection after expiry | Integrations needs-reauth club → Remove connection | Flag cleared; club shows plain **Connect account** (no reauth state) |
+| PR-59e | Club detail reauth banner | Club detail for expired booking connection | Amber renew banner with Reauthorize CTA (not first-time connect copy) |
 | PR-60 | Club booking cancel from settings | Settings page upcoming → cancel booking | Same policy modal + snapshot refresh as club detail |
 
 ---

@@ -3,6 +3,7 @@ import { booktimeApi, type BooktimeAuthStatus } from '@/api/booktime';
 import { padelooApi, type PadelooAuthStatus } from '@/api/padeloo';
 import { klikterenApi, type KlikterenAuthStatus } from '@/api/klikteren';
 import { isBooktimeClub, isKlikterenClub, isPadelooClub, type ClubIntegrationRef } from '@shared/clubIntegration';
+import { onBookingAuthInvalidated } from '@/integrations/booking/bookingAuthInvalidation';
 
 export type ClubBookingAuthStatus = {
   connected: boolean;
@@ -126,6 +127,15 @@ export function useClubBookingAuth(club: (ClubIntegrationRef & { id: string }) |
   useEffect(() => {
     void refresh();
   }, [refresh]);
+
+  useEffect(() => {
+    if (!clubId || !enabled) return;
+    return onBookingAuthInvalidated((event) => {
+      if (event.clubId === clubId) {
+        void refresh();
+      }
+    });
+  }, [clubId, enabled, refresh]);
 
   return { status, loading, refresh };
 }

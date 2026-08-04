@@ -231,6 +231,7 @@ export class KlikterenClient {
   private upstreamCookie: string | null = null;
   private onTokenUpdated?: (accessToken: string) => void;
   private onSessionExpired?: () => void;
+  private sessionExpired = false;
 
   constructor(options: KlikterenClientOptions) {
     this.klikterenVenueId = options.klikterenVenueId;
@@ -249,6 +250,7 @@ export class KlikterenClient {
 
   applyToken(accessToken: string): void {
     this.accessToken = accessToken;
+    this.sessionExpired = false;
     this.onTokenUpdated?.(accessToken);
   }
 
@@ -258,6 +260,8 @@ export class KlikterenClient {
   }
 
   expireSession(): void {
+    if (this.sessionExpired) return;
+    this.sessionExpired = true;
     this.clearSession();
     this.onSessionExpired?.();
   }

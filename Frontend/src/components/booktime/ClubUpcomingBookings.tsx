@@ -26,6 +26,7 @@ function clubToConnectedRow(club: Club, connected: boolean): ConnectedBookingClu
     clubName: club.name,
     avatar: club.avatar ?? null,
     connected,
+    needsReauth: false,
     scoutOptIn: true,
     cityTimezone: club.city?.timezone ?? null,
     courts: (club.courts ?? []).map((c) => ({

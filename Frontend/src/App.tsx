@@ -90,6 +90,7 @@ import i18n from './i18n/config';
 import './i18n/config';
 import { parseLiveBoardTheme } from '@/utils/liveScoring';
 import { useUnreadAuthBootstrapRefresh } from '@/hooks/useUnreadAuthBootstrapRefresh';
+import { useBookingAuthInvalidationPrompt } from '@/hooks/useBookingAuthInvalidationPrompt';
 import {
   isTelegramAutoLoginPath,
   shouldConsumePendingTelegramAuthPath,
@@ -202,6 +203,7 @@ function AppContent() {
   }, [isInitializing, isAuthenticated, location.pathname]);
 
   useUnreadAuthBootstrapRefresh(isInitializing, isAuthenticated);
+  useBookingAuthInvalidationPrompt(!isInitializing && isAuthenticated);
 
   useEffect(() => {
     if (!isCapacitor()) return;

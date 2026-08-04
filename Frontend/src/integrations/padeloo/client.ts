@@ -67,6 +67,7 @@ export class PadelooClient {
   private padelooClubId: number;
   private onTokenUpdated?: (accessToken: string) => void;
   private onSessionExpired?: () => void;
+  private sessionExpired = false;
 
   constructor(options: PadelooClientOptions) {
     this.padelooClubId = options.padelooClubId;
@@ -85,6 +86,7 @@ export class PadelooClient {
 
   applyToken(accessToken: string): void {
     this.accessToken = accessToken;
+    this.sessionExpired = false;
     this.onTokenUpdated?.(accessToken);
   }
 
@@ -93,6 +95,8 @@ export class PadelooClient {
   }
 
   expireSession(): void {
+    if (this.sessionExpired) return;
+    this.sessionExpired = true;
     this.clearSession();
     this.onSessionExpired?.();
   }
