@@ -821,11 +821,6 @@ function CourtLobbyArenaComponent({
           aria-hidden
         />
       </button>
-      <p className="court-lobby-arena__hint">
-        {t('playIntent.proximityHint', {
-          defaultValue: 'Closer to center · closer to a game',
-        })}
-      </p>
 
       <div className="court-lobby-arena__zone court-lobby-arena__zone--far" aria-hidden />
       <div className="court-lobby-arena__zone court-lobby-arena__zone--mid" aria-hidden />
@@ -892,6 +887,13 @@ function CourtLobbyArenaComponent({
         const inProposal = !!node.member.inProposal;
         const avatarScale = node.size / AVATAR_BASE_SIZE;
         const inverseAvatarScale = 1 / avatarScale;
+        // `frozen` covers the whole pin lifecycle (open + exit) so the avatar
+        // stays positionally locked and on top while the card animates. `pinned`
+        // is the visual enlargement/glow — it lifts on open and releases the
+        // instant the exit begins, so the avatar shrinks in sync with the card
+        // instead of pausing at full size and shrinking afterwards.
+        const frozen = pinnedUserId === node.id;
+        const pinned = frozen && !closingCard;
         const highlightedForReAdd =
           vacancy > 0 &&
           !rosterLocked &&
@@ -938,7 +940,8 @@ function CourtLobbyArenaComponent({
             data-favorite={favorite ? 'true' : 'false'}
             data-readd={highlightedForReAdd ? 'true' : 'false'}
             data-actionable={highlightedForReAdd ? 'true' : 'false'}
-            data-pinned={pinnedUserId === node.id ? 'true' : 'false'}
+            data-pinned={frozen ? 'true' : 'false'}
+            data-pinned-active={pinned ? 'true' : 'false'}
             ref={(el) => {
               if (el) avatarEls.current.set(node.id, el);
               else avatarEls.current.delete(node.id);
@@ -970,7 +973,7 @@ function CourtLobbyArenaComponent({
               className="court-lobby-arena__avatar-visual"
               style={{
                 transform: `translate(-50%, -50%) scale(${
-                  pinnedUserId === node.id ? avatarScale * 1.5 : avatarScale
+                  pinned ? avatarScale * 1.5 : avatarScale
                 })`,
               }}
             >
