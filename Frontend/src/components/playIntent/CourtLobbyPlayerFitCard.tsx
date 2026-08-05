@@ -15,6 +15,7 @@ import {
   Clock3,
   Gauge,
   MapPin,
+  MessageCircle,
   Users,
   X,
 } from 'lucide-react';
@@ -25,7 +26,7 @@ import type {
   PoolMember,
 } from '@/api/playIntents';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
-import { userAvatarTinyUrlFromStandard } from '@/utils/userAvatarTinyUrl';
+import { CourtLobbyAvatarImage } from '@/components/playIntent/CourtLobbyAvatarImage';
 import './CourtLobbyPlayerFitCard.css';
 
 type AnchorRect = { left: number; top: number; width: number; height: number };
@@ -40,6 +41,8 @@ type Props = {
   onExited: () => void;
   onClose: () => void;
   onOpenProfile: (userId: string) => void;
+  /** Starts (or continues) a 1:1 chat with this player. */
+  onStartChat?: (userId: string) => void;
 };
 
 /** Safe rectangle in viewport coordinates for `position: fixed` popovers. */
@@ -225,6 +228,7 @@ export function CourtLobbyPlayerFitCard({
   onExited,
   onClose,
   onOpenProfile,
+  onStartChat,
 }: Props) {
   const { t } = useTranslation();
   const reduceMotion = usePrefersReducedMotion();
@@ -304,14 +308,17 @@ export function CourtLobbyPlayerFitCard({
     onOpenProfile(member.userId);
   };
 
+  const handleChatClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    requestClose();
+    onStartChat?.(member.userId);
+  };
+
   if (layout == null) return null;
 
   const originClass = layout.placement === 'below' ? 'origin-top' : 'origin-bottom';
   const motionY = layout.placement === 'below' ? { in: -12, out: -8 } : { in: 12, out: 8 };
-  const avatarSrc = member.avatar
-    ? userAvatarTinyUrlFromStandard(member.avatar)
-    : null;
-  const initials = `${(member.firstName || '').charAt(0)}${(member.lastName || '').charAt(0)}`.toUpperCase() || '?';
+  const memberInitials = `${(member.firstName || '').charAt(0)}${(member.lastName || '').charAt(0)}`.toUpperCase() || '?';
   const hasFitData = all > 0;
   const summaryTone = okCount === 0 ? 'none' : okCount === all ? 'all' : 'partial';
 
@@ -358,11 +365,11 @@ export function CourtLobbyPlayerFitCard({
             >
               <span className="court-lobby-fit-card__avatar-ring" aria-hidden />
               <span className="court-lobby-fit-card__avatar-img">
-                {avatarSrc ? (
-                  <img src={avatarSrc} alt="" decoding="async" draggable={false} />
-                ) : (
-                  <span className="court-lobby-fit-card__avatar-initials">{initials}</span>
-                )}
+                <CourtLobbyAvatarImage
+                  avatar={member.avatar}
+                  initials={memberInitials}
+                  initialsClassName="court-lobby-fit-card__avatar-initials"
+                />
               </span>
             </button>
             <div className="court-lobby-fit-card__title-block">
@@ -384,6 +391,23 @@ export function CourtLobbyPlayerFitCard({
                 </p>
               )}
             </div>
+            {onStartChat && (
+              <button
+                type="button"
+                className="court-lobby-fit-card__chat"
+                aria-label={t('playIntent.startChat', {
+                  defaultValue: 'Message {{name}}',
+                  name: displayName,
+                })}
+                title={t('playIntent.startChat', {
+                  defaultValue: 'Message {{name}}',
+                  name: displayName,
+                })}
+                onClick={handleChatClick}
+              >
+                <MessageCircle size={16} strokeWidth={2.2} />
+              </button>
+            )}
           </div>
 
           {hasFitData ? (

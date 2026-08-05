@@ -13,10 +13,10 @@ import { CourtLobbySportCourt } from '@/components/playIntent/CourtLobbySportCou
 import { CourtLobbyThunder } from '@/components/playIntent/CourtLobbyThunder';
 import { CourtLobbyMismatchBubbles } from '@/components/playIntent/CourtLobbyMismatchBubbles';
 import { CourtLobbyPlayerFitCard } from '@/components/playIntent/CourtLobbyPlayerFitCard';
+import { CourtLobbyAvatarImage } from '@/components/playIntent/CourtLobbyAvatarImage';
 import type { PoolMember } from '@/api/playIntents';
 import { useAuthStore } from '@/store/authStore';
 import { useFavoritesStore } from '@/store/favoritesStore';
-import { userAvatarTinyUrlFromStandard } from '@/utils/userAvatarTinyUrl';
 import type { Sport } from '@/types';
 import './CourtLobbyArena.css';
 
@@ -34,6 +34,8 @@ type Props = {
   onAvatarClick: (member: PoolMember) => void | Promise<void>;
   /** Opens the full player profile for the pinned avatar. */
   onOpenProfile?: (userId: string) => void;
+  /** Starts (or continues) a 1:1 chat with the pinned player. */
+  onStartChat?: (userId: string) => void;
   /** Closes the fit card (called by the card itself). */
   onPinnedChange?: (userId: string | null) => void;
 };
@@ -243,6 +245,7 @@ function arenaPropsEqual(previous: Props, next: Props) {
     previous.onAvatarClick === next.onAvatarClick &&
     previous.pinnedUserId === next.pinnedUserId &&
     previous.onOpenProfile === next.onOpenProfile &&
+    previous.onStartChat === next.onStartChat &&
     previous.onPinnedChange === next.onPinnedChange &&
     arenaMembersEqual(previous.members, next.members)
   );
@@ -261,6 +264,7 @@ function CourtLobbyArenaComponent({
   pinnedUserId,
   onAvatarClick,
   onOpenProfile,
+  onStartChat,
   onPinnedChange,
 }: Props) {
   const { t } = useTranslation();
@@ -353,9 +357,13 @@ function CourtLobbyArenaComponent({
       ),
     [members],
   );
-  const viewerAvatar = viewer
-    ? userAvatarTinyUrlFromStandard(viewer.avatar) ?? viewer.avatar ?? null
-    : null;
+  const viewerAvatar = viewer ? viewer.avatar ?? null : null;
+  const viewerInitials = viewer
+    ? initials({
+        firstName: viewer.firstName ?? null,
+        lastName: viewer.lastName ?? null,
+      })
+    : '';
 
   const shufflePlayers = () => {
     const reduceMotion =
@@ -850,20 +858,11 @@ function CourtLobbyArenaComponent({
           aria-label={t('playIntent.youAreHere', { defaultValue: 'You are here' })}
         >
           <span className="court-lobby-arena__self-avatar" aria-hidden>
-            {viewerAvatar ? (
-              <img
-                src={viewerAvatar}
-                alt=""
-                decoding="async"
-                draggable={false}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              initials({
-                firstName: viewer.firstName ?? null,
-                lastName: viewer.lastName ?? null,
-              })
-            )}
+            <CourtLobbyAvatarImage
+              avatar={viewerAvatar}
+              initials={viewerInitials}
+              imgClassName="h-full w-full object-cover"
+            />
           </span>
         </div>
       )}
@@ -899,9 +898,6 @@ function CourtLobbyArenaComponent({
           !rosterLocked &&
           !inProposal &&
           !!node.member.eligibleForProposal;
-        const src = node.member.avatar
-          ? userAvatarTinyUrlFromStandard(node.member.avatar)
-          : null;
         const displayName =
           [node.member.firstName, node.member.lastName].filter(Boolean).join(' ') ||
           t('common.player', { defaultValue: 'Player' });
@@ -979,22 +975,13 @@ function CourtLobbyArenaComponent({
             >
               <span className="court-lobby-arena__avatar-halo" aria-hidden />
               <span className="court-lobby-arena__avatar-image">
-                {src ? (
-                  <img
-                    src={src}
-                    alt=""
-                    decoding="async"
-                    draggable={false}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <span
-                    className="court-lobby-arena__avatar-initials"
-                    style={{ scale: `${inverseAvatarScale}` }}
-                  >
-                    {initials(node.member)}
-                  </span>
-                )}
+                <CourtLobbyAvatarImage
+                  avatar={node.member.avatar}
+                  initials={initials(node.member)}
+                  imgClassName="h-full w-full object-cover"
+                  initialsClassName="court-lobby-arena__avatar-initials"
+                  initialsStyle={{ scale: `${inverseAvatarScale}` }}
+                />
               </span>
             </span>
             {inProposal && (
@@ -1038,6 +1025,7 @@ function CourtLobbyArenaComponent({
               }}
               onClose={() => setClosingCard(true)}
               onOpenProfile={(id) => onOpenProfile?.(id)}
+              onStartChat={onStartChat ? (id) => onStartChat(id) : undefined}
             />
           );
         })()}

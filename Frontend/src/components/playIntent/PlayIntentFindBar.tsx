@@ -8,7 +8,8 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigateWithTracking } from '@/hooks/useNavigateWithTracking';
 import { useTranslation } from 'react-i18next';
 import { AnimatedMount } from '@/components/motion/AnimatedMount';
 import { useAuthStore } from '@/store/authStore';
@@ -117,10 +118,18 @@ export function PlayIntentProvider({
 }: ProviderProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
+  const navigateTracked = useNavigateWithTracking();
   const user = useAuthStore((s) => s.user);
   const [searchParams, setSearchParams] = useSearchParams();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [sheetMode, setSheetMode] = useState<'compose' | 'lobby'>('compose');
+  /**
+   * True only when the sheet was opened by pushing the `?playIntent=1` URL
+   * entry. Deep-link openings (`?proposal=`, `?lobby=1`) set `sheetOpen`
+   * directly without a pushed entry, so the back-sync effect must ignore them.
+   */
+  const sheetOpenedViaUrlRef = useRef(false);
   const [deepProposal, setDeepProposal] = useState<MatchProposalSummary | null>(null);
   const [proposalArrivalToken, setProposalArrivalToken] = useState(0);
   const [proposalAnnouncement, setProposalAnnouncement] = useState<{
@@ -307,14 +316,54 @@ export function PlayIntentProvider({
     });
   }, [cancel, pool?.myIntent?.id, t]);
 
+  /** Pushes `?playIntent=1` so the open sheet becomes a back-stack entry. */
+  const pushIntentUrl = useCallback(() => {
+    sheetOpenedViaUrlRef.current = true;
+    setSheetOpen(true);
+    const next = new URLSearchParams(searchParams);
+    next.set('playIntent', '1');
+    navigateTracked(`${location.pathname}?${next.toString()}`);
+  }, [location.pathname, navigateTracked, searchParams]);
   const openLobby = useCallback(() => {
     setSheetMode('lobby');
-    setSheetOpen(true);
-  }, []);
+    pushIntentUrl();
+  }, [pushIntentUrl]);
   const openCompose = useCallback(() => {
     setSheetMode('compose');
-    setSheetOpen(true);
-  }, []);
+    pushIntentUrl();
+  }, [pushIntentUrl]);
+  /**
+   * Closing via drag/overlay/close-button strips the `?playIntent=1` entry
+   * (replace) so the back stack stays consistent. Deep-link-opened sheets
+   * never pushed the entry, so they just flip state.
+   */
+  const handleSheetOpenChange = useCallback(
+    (open: boolean) => {
+      if (open) {
+        setSheetOpen(true);
+        return;
+      }
+      setSheetOpen(false);
+      if (!sheetOpenedViaUrlRef.current) return;
+      sheetOpenedViaUrlRef.current = false;
+      const next = new URLSearchParams(searchParams);
+      if (next.get('playIntent') !== '1') return;
+      next.delete('playIntent');
+      const qs = next.toString();
+      navigate(`${location.pathname}${qs ? `?${qs}` : ''}`, { replace: true });
+    },
+    [location.pathname, navigate, searchParams],
+  );
+  /**
+   * When the user navigates back from the pushed `?playIntent=1` entry, the
+   * param disappears — sync the sheet closed. Ignored for deep-link openings.
+   */
+  useEffect(() => {
+    if (searchParams.get('playIntent') === '1') return;
+    if (!sheetOpenedViaUrlRef.current) return;
+    sheetOpenedViaUrlRef.current = false;
+    setSheetOpen(false);
+  }, [searchParams]);
   const handleLobbyChanged = useCallback(() => {
     void refetch();
   }, [refetch]);
@@ -370,7 +419,7 @@ export function PlayIntentProvider({
       {enabled && (
         <PlayIntentSheet
           open={sheetOpen}
-          onOpenChange={setSheetOpen}
+          onOpenChange={handleSheetOpenChange}
           initialMode={sheetMode}
           cityId={cityId}
           sport={resolvedSport}

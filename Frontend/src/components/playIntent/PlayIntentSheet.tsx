@@ -9,6 +9,7 @@ import {
   DrawerContent,
 } from '@/components/ui/Drawer';
 import { usePlayIntentMutations } from '@/hooks/usePlayIntent';
+import { useBackButtonModal } from '@/hooks/useBackButtonModal';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { extractApiErrorMessage } from '@/utils/extractApiErrorMessage';
 import type {
@@ -64,6 +65,10 @@ export function PlayIntentSheet({
   const [submittedIntent, setSubmittedIntent] = useState<PlayIntent | null>(null);
   const [confirmCancel, setConfirmCancel] = useState(false);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Register the sheet as a modal so Android hardware-back / iOS swipe-back
+  // closes it directly instead of navigating away.
+  useBackButtonModal(open, () => onOpenChange(false), 'play-intent-sheet');
 
   useEffect(() => {
     if (!open) return;

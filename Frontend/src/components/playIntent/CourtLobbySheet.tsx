@@ -23,6 +23,7 @@ import {
 import { usePlayerCardModal } from '@/hooks/usePlayerCardModal';
 import { useFavoritesStore } from '@/store/favoritesStore';
 import { useAuthStore } from '@/store/authStore';
+import { usePlayersStore } from '@/store/playersStore';
 import type { GameParticipant, Sport } from '@/types';
 
 type Props = {
@@ -351,6 +352,30 @@ export function CourtLobbyPanel({
     t,
   ]);
 
+  const onStartChat = useCallback(
+    async (chatUserId: string) => {
+      if (chatUserId === userId) return;
+      try {
+        const chat = await usePlayersStore
+          .getState()
+          .getOrCreateAndAddUserChat(chatUserId);
+        if (!chat) {
+          toast.error(t('errors.generic', { defaultValue: 'Something went wrong' }));
+          return;
+        }
+        navigate(`/user-chat/${chat.id}`, {
+          state: { chat, contextType: 'USER' },
+        });
+      } catch (err: unknown) {
+        const errorMessage =
+          (err as { response?: { data?: { message?: string } } }).response?.data
+            ?.message || 'errors.generic';
+        toast.error(t(errorMessage, { defaultValue: errorMessage }));
+      }
+    },
+    [navigate, t, userId],
+  );
+
   const onRemoveMember = async (targetUserId: string) => {
     if (!proposal) {
       if (targetUserId !== userId) {
@@ -482,6 +507,7 @@ export function CourtLobbyPanel({
               pinnedUserId={pinnedUserId}
               onAvatarClick={onPoolAvatarClick}
               onOpenProfile={openPlayerCard}
+              onStartChat={onStartChat}
               onPinnedChange={setPinnedUserId}
             />
           )}

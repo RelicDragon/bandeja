@@ -2,6 +2,9 @@
 node_modules/
 */node_modules/
 
+.zcode/
+*/.zcode/
+
 #keys
 Backend/keys/
 

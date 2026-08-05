@@ -13,10 +13,7 @@ import {
 import toast from 'react-hot-toast';
 import { Button } from '@/components';
 import { TimeRangeSlider } from '@/components/TimeRangeSlider';
-import {
-  DrawerHeader,
-  DrawerDescription,
-} from '@/components/ui/Drawer';
+import { DrawerHeader } from '@/components/ui/Drawer';
 import type { PlayIntent, PlayIntentTimeOfDay } from '@/api/playIntents';
 import { clubsApi } from '@/api/clubs';
 import { usePlayIntentMutations } from '@/hooks/usePlayIntent';
@@ -269,10 +266,6 @@ export function PlayIntentComposePanel({
         data-play-intent-compose-scroll
         className="space-y-5 px-4 pb-6"
       >
-          <DrawerDescription className="text-center">
-            {t('playIntent.composeHint')}
-          </DrawerDescription>
-
           <PlayIntentActivitySelector
             sports={enabledSports}
             value={activity}

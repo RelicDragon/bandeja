@@ -35,6 +35,8 @@
     "backfill:city-groups": "ts-node scripts/backfillCityGroups.ts",
     "backfill:city-group-welcome-messages": "ts-node scripts/backfillCityGroupWelcomeMessages.ts",
     "backfill:user-name-is-set": "ts-node scripts/backfillUserNameIsSet.ts",
+    "backfill:user-avatar-tiny": "ts-node --transpile-only scripts/backfillUserAvatarTiny.ts",
+    "backfill:normalize-user-avatar-png": "ts-node --transpile-only scripts/backfillNormalizeUserAvatarPng.ts",
     "backfill:city-is-set": "ts-node scripts/backfillCityIsSet.ts",
     "backfill:padel-questionnaire-from-welcome": "ts-node scripts/backfillPadelQuestionnaireFromWelcome.ts",
     "backfill:sport-questionnaire-markers": "ts-node scripts/backfillSportQuestionnaireMarkers.ts",

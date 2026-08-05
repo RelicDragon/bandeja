@@ -30,6 +30,7 @@ import { PlayerProfileActionBar } from '@/components/player/PlayerProfileActionB
 import { usePlayerProfile } from '@/features/playerProfile';
 import { resolveActivePrimarySport } from '@/utils/profileSports';
 import { useSportLevelContext } from '@/contexts/useSportLevelContext';
+import { useBackButtonModal } from '@/hooks/useBackButtonModal';
 
 interface PlayerCardBottomSheetProps {
   playerId: string | null;
@@ -213,6 +214,16 @@ export const PlayerCardBottomSheet = memo(function PlayerCardBottomSheet({
     if (Date.now() < suppressDrawerDismissUntilRef.current) return;
     handleClose();
   }, [avatarViewerUrl, handleAvatarViewerClose, handleClose]);
+
+  // Register with the Android/iOS back-button service so hardware-back closes
+  // the player card directly (top of the modal stack) instead of navigating
+  // away. Routed through handleDrawerOpenChange so the same close path as
+  // drag-to-dismiss runs (overlay stripping, suppress-guard, avatar viewer).
+  useBackButtonModal(
+    !!playerId,
+    () => handleDrawerOpenChange(false),
+    'player-card-sheet',
+  );
 
   const handleOpenCommonChat = useCallback((chat: CommonChatItem) => {
     markReopenOnBack();

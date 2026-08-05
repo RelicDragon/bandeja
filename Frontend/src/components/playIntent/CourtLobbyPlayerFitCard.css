@@ -129,6 +129,42 @@
   min-width: 0;
   flex: 1 1 auto;
 }
+
+.court-lobby-fit-card__chat {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  margin-top: -2px;
+  align-self: flex-start;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  color: rgb(255 255 255);
+  background: linear-gradient(135deg, rgb(59 130 246), rgb(37 99 235));
+  box-shadow: 0 3px 9px rgb(37 99 235 / 0.4);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
+}
+.court-lobby-fit-card__chat:hover {
+  filter: brightness(1.07);
+  box-shadow: 0 4px 12px rgb(37 99 235 / 0.5);
+}
+.court-lobby-fit-card__chat:active {
+  transform: scale(0.92);
+}
+.court-lobby-fit-card__chat:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px rgb(255 255 255),
+    0 0 0 4px rgb(59 130 246 / 0.6);
+}
+:global(html.dark) .court-lobby-fit-card__chat {
+  background: linear-gradient(135deg, rgb(96 165 250), rgb(59 130 246));
+  box-shadow: 0 3px 11px rgb(37 99 235 / 0.55);
+}
 .court-lobby-fit-card__name {
   margin: 0;
   font-size: 14px;

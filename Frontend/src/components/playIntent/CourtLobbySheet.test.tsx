@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
   declineProposal: vi.fn().mockResolvedValue({ declined: true }),
   confirmProposal: vi.fn(),
   fetchFavorites: vi.fn().mockResolvedValue(undefined),
+  getOrCreateAndAddUserChat: vi.fn().mockResolvedValue({ id: 'chat-1' }),
   navigate: vi.fn(),
   onChanged: vi.fn(),
   onOpenChange: vi.fn(),
@@ -153,6 +154,19 @@ vi.mock('@/store/authStore', () => ({
   useAuthStore: (
     selector: (state: { user: { id: string } }) => unknown,
   ) => selector({ user: { id: 'viewer' } }),
+}));
+
+vi.mock('@/store/playersStore', () => ({
+  usePlayersStore: Object.assign(
+    () => ({
+      getOrCreateAndAddUserChat: mocks.getOrCreateAndAddUserChat,
+    }),
+    {
+      getState: () => ({
+        getOrCreateAndAddUserChat: mocks.getOrCreateAndAddUserChat,
+      }),
+    },
+  ),
 }));
 
 vi.mock('@/api/playIntents', () => ({
