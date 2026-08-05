@@ -267,6 +267,55 @@ void (async () => {
       data: { sendPlayIntentSocialNotifications: true },
     });
 
+    // A permanent failure (e.g. user has no telegram id, bot not configured,
+    // user blocked the bot) must be skipped after a single attempt — not retried
+    // 12× and then surfaced as a noisy "exhausted retries" alert.
+    const permanentEventKey = `${NotificationType.FOLLOWED_USER_PLAY_INTENT}:${intent.id}:permanent`;
+    let permanentProviderCalls = 0;
+    notificationService.sendNotification = async () => {
+      permanentProviderCalls += 1;
+      return {
+        push: false,
+        telegram: false,
+        permanentFailure: 'telegram-permanent-rejection',
+      };
+    };
+    await PlayIntentNotificationDeliveryQueueService.enqueue({
+      eventKey: permanentEventKey,
+      sourceId: intent.id,
+      userId: follower.id,
+      type: NotificationType.FOLLOWED_USER_PLAY_INTENT,
+      payload: {
+        type: NotificationType.FOLLOWED_USER_PLAY_INTENT,
+        title: 'A friend wants to play',
+        body: 'Open the request',
+        data: { playIntentId: intent.id },
+      },
+      channels: [NotificationChannelType.PUSH],
+    });
+    await PlayIntentNotificationDeliveryQueueService.drain();
+    const permanentDelivery =
+      await prisma.playIntentNotificationDelivery.findFirstOrThrow({
+        where: { userId: follower.id, eventKey: permanentEventKey },
+      });
+    assert.equal(permanentDelivery.status, PlayIntentJobStatus.skipped);
+    assert.equal(permanentDelivery.attempts, 1);
+    assert.equal(permanentProviderCalls, 1);
+    // A second drain must not reprocess a skipped job.
+    await PlayIntentNotificationDeliveryQueueService.drain();
+    const permanentDeliveryAfterRedrain =
+      await prisma.playIntentNotificationDelivery.findFirstOrThrow({
+        where: { userId: follower.id, eventKey: permanentEventKey },
+      });
+    assert.equal(permanentDeliveryAfterRedrain.status, PlayIntentJobStatus.skipped);
+    assert.equal(permanentProviderCalls, 1);
+    // Restore the original stub so the remaining blocks behave as before.
+    providerCalls = 4;
+    notificationService.sendNotification = async () => {
+      providerCalls += 1;
+      return { push: providerAccepts, telegram: false };
+    };
+
     await prisma.userFavoriteUser.deleteMany({
       where: { userId: follower.id, favoriteUserId: creator.id },
     });

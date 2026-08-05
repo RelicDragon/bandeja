@@ -309,11 +309,24 @@ export class PlayIntentNotificationDeliveryQueueService {
         userId,
       );
     const preferenceKey = NOTIFICATION_TYPE_TO_PREF[type];
+    // A channel can only deliver if the user can actually receive on it —
+    // preference-on is not enough. This mirrors the inline check in
+    // notifyFollowers and prevents enqueuing undeliverable jobs that would
+    // burn all retries before alerting ("provider did not accept delivery").
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        telegramId: true,
+        _count: { select: { pushTokens: true } },
+      },
+    });
+    const canPush = Boolean(user) && (user?._count.pushTokens ?? 0) > 0;
+    const canTelegram = Boolean(user?.telegramId);
     return [
-      ...(preferences.push?.[preferenceKey]
+      ...(preferences.push?.[preferenceKey] && canPush
         ? [NotificationChannelType.PUSH]
         : []),
-      ...(preferences.telegram?.[preferenceKey]
+      ...(preferences.telegram?.[preferenceKey] && canTelegram
         ? [NotificationChannelType.TELEGRAM]
         : []),
     ];
@@ -469,6 +482,19 @@ export class PlayIntentNotificationDeliveryQueueService {
           ? delivery.push
           : delivery.telegram;
       if (!delivered) {
+        // A flagged permanent failure (no chat id, bot not configured, dispatch
+        // guard block, user blocked the bot) will never succeed on retry — skip
+        // immediately instead of burning all attempts and firing a noisy alert.
+        if (delivery.permanentFailure) {
+          await prisma.playIntentNotificationDelivery.update({
+            where: { id: job.id },
+            data: {
+              status: PlayIntentJobStatus.skipped,
+              lastError: delivery.permanentFailure.slice(0, 2_000),
+            },
+          });
+          return;
+        }
         throw new Error(`${job.channelType.toLowerCase()} provider did not accept delivery`);
       }
 

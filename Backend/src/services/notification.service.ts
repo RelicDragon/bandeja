@@ -1,5 +1,9 @@
 import prisma from '../config/database';
-import { NotificationType, UnifiedNotificationRequest } from '../types/notifications.types';
+import {
+  NotificationType,
+  UnifiedNotificationRequest,
+  type NotificationDeliveryResult,
+} from '../types/notifications.types';
 import { ChatContextType, ChatType, NotificationChannelType } from '@prisma/client';
 import telegramNotificationService from './telegram/notification.service';
 import { NotificationPreferenceService, NOTIFICATION_TYPE_TO_PREF } from './notificationPreference.service';
@@ -38,7 +42,7 @@ import {
 } from '../utils/notificationDispatchGuard';
 
 class NotificationService {
-  async sendNotification(request: UnifiedNotificationRequest) {
+  async sendNotification(request: UnifiedNotificationRequest): Promise<NotificationDeliveryResult> {
     if (shouldSuppressAllOutboundNotifications()) {
       return { telegram: false, push: false };
     }
@@ -74,7 +78,7 @@ class NotificationService {
           )),
     ]);
 
-    const results = {
+    const results: NotificationDeliveryResult = {
       telegram: false,
       push: false
     };
@@ -92,7 +96,7 @@ class NotificationService {
             select: { telegramId: true, language: true },
           });
           if (user?.telegramId) {
-            results.telegram = await telegramNotificationService.sendPlayIntentNotification(userId, user.telegramId, {
+            const outcome = await telegramNotificationService.sendPlayIntentNotification(userId, user.telegramId, {
               type,
               title: payload.title,
               body: payload.body,
@@ -103,6 +107,14 @@ class NotificationService {
                 playIntentId: payload.data?.playIntentId,
               },
             });
+            results.telegram = outcome.delivered;
+            if (!outcome.delivered && outcome.permanent) {
+              results.permanentFailure = 'telegram-permanent-rejection';
+            }
+          } else {
+            // Telegram was requested but the user has no linked chat id — this
+            // will never succeed, so flag it for the queue to skip, not retry.
+            results.permanentFailure = 'user-has-no-telegram-id';
           }
         } catch (error) {
           console.error('[NotificationService] Failed to send play-intent telegram:', error);

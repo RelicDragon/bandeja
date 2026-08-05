@@ -26,6 +26,7 @@ import {
   sendUserTeamDeletedTelegram,
 } from './notifications/team.notification';
 import { sendPlayIntentTelegramNotification } from './notifications/play-intent.notification';
+import type { PlayIntentTelegramResult } from './notifications/play-intent.notification';
 import { NotificationType } from '../../types/notifications.types';
 
 class TelegramNotificationService {
@@ -186,8 +187,10 @@ class TelegramNotificationService {
       language?: string;
       data?: { proposalId?: string; gameId?: string; playIntentId?: string };
     },
-  ): Promise<boolean> {
-    if (!this.bot) return false;
+  ): Promise<PlayIntentTelegramResult> {
+    // Bot not configured (e.g. TELEGRAM_BOT_TOKEN unset) — permanent for this
+    // runtime; retries will keep hitting a null bot.
+    if (!this.bot) return { delivered: false, permanent: true };
     return sendPlayIntentTelegramNotification(this.bot.api, userId, telegramId, payload);
   }
 }

@@ -19,13 +19,27 @@ type PlayIntentTelegramPayload = {
   };
 };
 
+/**
+ * Outcome of a play-intent telegram send attempt.
+ * - `delivered: true`  → message accepted by the provider.
+ * - `delivered: false, permanent: true`  → never going to succeed on retry
+ *   (no telegramId, dispatch guard blocked it, user blocked the bot, account
+ *   deactivated, or the bot is not configured). The queue should skip, not retry.
+ * - `delivered: false` (no permanent flag)  → transient failure; retry is useful.
+ */
+export type PlayIntentTelegramResult = {
+  delivered: boolean;
+  permanent?: boolean;
+};
+
 export async function sendPlayIntentTelegramNotification(
   api: Api,
   userId: string,
   telegramId: string,
   payload: PlayIntentTelegramPayload,
-): Promise<boolean> {
-  if (!telegramId) return false;
+): Promise<PlayIntentTelegramResult> {
+  // No chat id means the user has no Telegram linkage; retrying cannot fix this.
+  if (!telegramId) return { delivered: false, permanent: true };
 
   try {
     const lang =
@@ -64,14 +78,20 @@ export async function sendPlayIntentTelegramNotification(
     const { message: finalMessage, options } = buildMessageWithButtons(message, buttons, lang);
     const trimmedMessage = trimTextForTelegram(finalMessage, false);
 
-    return guardedTelegramSendMessage(
+    const sent = await guardedTelegramSendMessage(
       api,
       { userId, telegramId, kind: `play-intent-${payload.type.toLowerCase()}` },
       () => api.sendMessage(telegramId, trimmedMessage, options),
     );
+    // `sent === false` here means the dispatch guard blocked this user — a
+    // configuration/runtime decision that will not change across retries.
+    if (!sent) return { delivered: false, permanent: true };
+    return { delivered: true };
   } catch (error) {
-    if (isBenignTelegramRecipientError(error)) return false;
+    // A benign 403 (user blocked the bot, account deactivated) is permanent:
+    // retrying within the backoff window will not make the user un-block the bot.
+    if (isBenignTelegramRecipientError(error)) return { delivered: false, permanent: true };
     console.error(`Failed to send Telegram play-intent notification to user ${userId}:`, error);
-    return false;
+    return { delivered: false };
   }
 }

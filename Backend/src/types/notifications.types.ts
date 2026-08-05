@@ -105,3 +105,18 @@ export interface UnifiedNotificationRequest {
   /** Restrict delivery to these channels. Preferences are still rechecked. */
   channels?: NotificationChannelType[];
 }
+
+/**
+ * Result of a {@link NotificationService.sendNotification} dispatch.
+ *
+ * `telegram`/`push` are truthy when the provider accepted the message.
+ * `permanentFailure` is set only when a requested channel came back `false`
+ * for a reason that will never succeed on retry (e.g. the user has no
+ * `telegramId`, blocked the bot, or the bot is not configured). Queues use it
+ * to skip such jobs instead of burning retries.
+ */
+export interface NotificationDeliveryResult {
+  telegram: boolean;
+  push: boolean;
+  permanentFailure?: string;
+}
