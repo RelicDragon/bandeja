@@ -754,6 +754,17 @@
   transform: translateX(-50%) rotate(45deg);
 }
 
+/* Tail flipped to the top when the bubble is placed below its avatar. */
+.court-lobby-arena__mismatch-tail[data-below='true'] {
+  bottom: auto;
+  top: -4px;
+  border-right: none;
+  border-bottom: none;
+  border-left: 1px solid rgb(255 255 255 / 0.1);
+  border-top: 1px solid rgb(255 255 255 / 0.1);
+  transform: translateX(-50%) rotate(45deg);
+}
+
 html:not(.dark) .court-lobby-arena {
   border-color: rgb(14 116 144 / 0.2);
   background:

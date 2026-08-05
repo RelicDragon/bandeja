@@ -19,9 +19,63 @@ const CYCLE_MS = 4500;
 
 /** Bubbles float above the avatar so the tail points down at the head. */
 const BUBBLE_OFFSET_Y = -5.5;
+/** Keep the bubble this far inside the arena box so it's never cropped. */
+const BUBBLE_MARGIN = 4;
 
-function positionTransform(x: number, y: number, arena: ArenaSize) {
-  return `translate3d(${(x / 100) * arena.width}px, ${(y / 100) * arena.height}px, 0) translate(-50%, -100%)`;
+type PlacedBubble = {
+  /** translate3d for the bubble's top-left, in px. */
+  transform: string;
+  /** Where to put the tail (0..1 of the bubble width) so it points at the avatar. */
+  tailRatio: number;
+  /** Whether the tail should flip below (avatar below bubble) or stay above. */
+  tailBelow: boolean;
+};
+
+/**
+ * Positions a bubble so its body stays fully inside the arena box while the
+ * tail stays anchored to the avatar. Computes the bubble's ideal center above
+ * the avatar's head, then clamps the rectangle into the arena and shifts the
+ * tail horizontally (and flips it vertically if needed) to keep pointing at
+ * the player. `elW`/`elH` are the bubble's measured pixel dimensions.
+ */
+function placeBubble(
+  x: number,
+  y: number,
+  arena: ArenaSize,
+  elW: number,
+  elH: number,
+): PlacedBubble {
+  const anchorXpx = (x / 100) * arena.width;
+  const anchorYpx = ((y + BUBBLE_OFFSET_Y) / 100) * arena.height;
+
+  // Ideal: bubble bottom-center at the anchor (floats above the head).
+  const idealLeft = anchorXpx - elW / 2;
+  const idealTop = anchorYpx - elH;
+
+  // Clamp the bubble body inside the arena with a small margin.
+  const left = Math.max(
+    BUBBLE_MARGIN,
+    Math.min(arena.width - elW - BUBBLE_MARGIN, idealLeft),
+  );
+  // Vertically prefer above; if that would crop the top, drop it below the
+  // avatar instead so the tail flips downward.
+  let top = idealTop;
+  let tailBelow = false;
+  if (top < BUBBLE_MARGIN) {
+    // Place below the avatar: top = anchor (head) + small gap.
+    top = anchorYpx + elH + 6;
+    tailBelow = true;
+  }
+  top = Math.max(BUBBLE_MARGIN, Math.min(arena.height - elH - BUBBLE_MARGIN, top));
+
+  // Tail x: where the avatar sits relative to the clamped bubble, as a ratio.
+  const tailRatio = elW > 0 ? Math.max(0.12, Math.min(0.88, (anchorXpx - left) / elW)) : 0.5;
+
+  return {
+    transform: `translate3d(${left}px, ${top}px, 0)`,
+    tailRatio,
+    tailBelow,
+  };
 }
 
 /**
@@ -111,6 +165,7 @@ export function CourtLobbyMismatchBubbles({
   // re-reads the refs each frame so an arena resize or positions mutation is
   // picked up immediately instead of lagging until `allIds` changes.
   const bubbleEls = useRef(new Map<string, HTMLDivElement>());
+  const tailEls = useRef(new Map<string, HTMLSpanElement>());
   useEffect(() => {
     const place = (ids: string[]) => {
       const positions = positionsRef.current;
@@ -118,8 +173,14 @@ export function CourtLobbyMismatchBubbles({
       for (const id of ids) {
         const pos = positions.get(id);
         const el = bubbleEls.current.get(id);
+        const tail = tailEls.current.get(id);
         if (!pos || !el) continue;
-        el.style.transform = positionTransform(pos.x, pos.y + BUBBLE_OFFSET_Y, arena);
+        const placed = placeBubble(pos.x, pos.y, arena, el.offsetWidth, el.offsetHeight);
+        el.style.transform = placed.transform;
+        if (tail) {
+          tail.style.left = `${placed.tailRatio * 100}%`;
+          tail.dataset.below = placed.tailBelow ? 'true' : 'false';
+        }
       }
     };
     place([...visibleIds]);
@@ -160,7 +221,14 @@ export function CourtLobbyMismatchBubbles({
             <span className="court-lobby-arena__mismatch-text">
               {mismatchLabel(t, mismatch)}
             </span>
-            <span className="court-lobby-arena__mismatch-tail" aria-hidden />
+            <span
+              ref={(el) => {
+                if (el) tailEls.current.set(id, el);
+                else tailEls.current.delete(id);
+              }}
+              className="court-lobby-arena__mismatch-tail"
+              aria-hidden
+            />
           </div>
         );
       })}
