@@ -34,7 +34,6 @@ import { PhotosSection } from '@/components/GameDetails/PhotosSection';
 import { GameWebCamerasSection } from '@/components/GameDetails/GameWebCamerasSection';
 import { canViewGamePhotos } from '@shared/gamePhotos/permissions';
 import { BarParticipantsList } from '@/components/GameDetails/BarParticipantsList';
-import { LeaveGameConfirmationModal } from '@/components/LeaveGameConfirmationModal';
 import { LeagueFixedTeamsSection } from '@/components/GameDetails/LeagueFixedTeamsSection';
 import { FixedTeamsManagement } from '@/components/GameDetails/FixedTeamsManagement';
 import { GameFormatSection } from '@/components/GameDetails/GameFormatSection';
@@ -1117,6 +1116,18 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
     return keyMap[entityType] || 'gameDetails.leaveGame';
   };
 
+  const getLeaveGameConfirmationText = (entityType: string) => {
+    const keyMap: Record<string, string> = {
+      'GAME': 'gameDetails.leaveGameConfirmationGame',
+      'TOURNAMENT': 'gameDetails.leaveGameConfirmationTournament',
+      'LEAGUE': 'gameDetails.leaveGameConfirmationLeague',
+      'LEAGUE_SEASON': 'gameDetails.leaveGameConfirmationLeagueSeason',
+      'BAR': 'gameDetails.leaveGameConfirmationBar',
+      'TRAINING': 'gameDetails.leaveGameConfirmationTraining',
+    };
+    return keyMap[entityType] || 'gameDetails.leaveGameConfirmation';
+  };
+
   const getDeleteGameText = (entityType: string) => {
     const keyMap: Record<string, string> = {
       'GAME': 'gameDetails.deleteGameGame',
@@ -1578,7 +1589,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
                 ? { tone: 'danger' as const, buttonLabel: t('common.leave'), onClick: () => setShowLeaveConfirmation(true), hint: undefined }
                 : { tone: 'danger' as const, buttonLabel: t('gameDetails.leaveChat'), onClick: handleLeaveChat, hint: t(getNotPlayingHintText(game.entityType)) }
               : isUserPlaying
-                ? { tone: 'danger' as const, buttonLabel: t('gameDetails.dontPlayInGame'), onClick: handleLeaveGame, hint: undefined }
+                ? { tone: 'danger' as const, buttonLabel: t('gameDetails.dontPlayInGame'), onClick: () => setShowLeaveConfirmation(true), hint: undefined }
                 : {
                     tone: 'success' as const,
                     buttonLabel: game.status !== 'ARCHIVED' && !isFull ? t('games.playInGame') : undefined,
@@ -1843,12 +1854,18 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
         />
       )}
 
-      <LeaveGameConfirmationModal
+      <ConfirmationModal
         isOpen={showLeaveConfirmation}
+        title={t('gameDetails.leaveGame')}
+        message={t(getLeaveGameConfirmationText(game?.entityType || 'GAME'))}
+        confirmText={t('common.leave')}
+        cancelText={t('common.cancel')}
+        confirmVariant="danger"
+        isLoading={isLeaving}
+        loadingText={t('common.leaving')}
+        closeOnConfirm={false}
         onConfirm={handleLeaveGame}
         onClose={() => setShowLeaveConfirmation(false)}
-        isLeaving={isLeaving}
-        entityType={game?.entityType || 'GAME'}
       />
 
       <ConfirmationModal
