@@ -67,6 +67,7 @@
     "mismatchGender": "Different group",
     "fitTitle": "Fit for your request",
     "fitSummary": "{{count}} of {{total}} match",
+    "fitNoRequest": "Open a play request to compare",
     "fitDimDates": "Days",
     "fitDimClubs": "Clubs",
     "fitDimTime": "Time",

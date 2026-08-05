@@ -73,6 +73,7 @@
     "mismatchGender": "Другая группа",
     "fitTitle": "Совпадение с вашим запросом",
     "fitSummary": "Совпадает {{count}} из {{total}}",
+    "fitNoRequest": "Откройте запрос, чтобы сравнить",
     "fitDimDates": "Дни",
     "fitDimClubs": "Клубы",
     "fitDimTime": "Время",

@@ -73,6 +73,7 @@
     "mismatchGender": "Jiná skupina",
     "fitTitle": "Shoda s tvým hledáním",
     "fitSummary": "Shoda {{count}} z {{total}}",
+    "fitNoRequest": "Otevři žádost pro porovnání",
     "fitDimDates": "Dny",
     "fitDimClubs": "Kluby",
     "fitDimTime": "Čas",

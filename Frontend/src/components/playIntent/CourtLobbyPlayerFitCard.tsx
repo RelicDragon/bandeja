@@ -312,6 +312,7 @@ export function CourtLobbyPlayerFitCard({
     ? userAvatarTinyUrlFromStandard(member.avatar)
     : null;
   const initials = `${(member.firstName || '').charAt(0)}${(member.lastName || '').charAt(0)}`.toUpperCase() || '?';
+  const hasFitData = all > 0;
   const summaryTone = okCount === 0 ? 'none' : okCount === all ? 'all' : 'partial';
 
   return createPortal(
@@ -369,23 +370,29 @@ export function CourtLobbyPlayerFitCard({
               <p className="court-lobby-fit-card__title">
                 {t('playIntent.fitTitle')}
               </p>
-              <p
-                className={`court-lobby-fit-card__summary tone-${summaryTone}`}
-              >
-                {t('playIntent.fitSummary', {
-                  count: okCount,
-                  total: all,
-                  defaultValue: `{{count}} of {{total}} match`,
-                })}
-              </p>
+              {hasFitData ? (
+                <p className={`court-lobby-fit-card__summary tone-${summaryTone}`}>
+                  {t('playIntent.fitSummary', {
+                    count: okCount,
+                    total: all,
+                    defaultValue: `{{count}} of {{total}} match`,
+                  })}
+                </p>
+              ) : (
+                <p className="court-lobby-fit-card__title">
+                  {t('playIntent.fitNoRequest')}
+                </p>
+              )}
             </div>
           </div>
 
-          <div className="court-lobby-fit-card__rows">
-            {fit.map((check, index) => (
-              <FitRow key={check.dimension} check={check} index={index} />
-            ))}
-          </div>
+          {hasFitData ? (
+            <div className="court-lobby-fit-card__rows">
+              {fit.map((check, index) => (
+                <FitRow key={check.dimension} check={check} index={index} />
+              ))}
+            </div>
+          ) : null}
         </div>
       </motion.div>
       )}

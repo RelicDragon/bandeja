@@ -45,10 +45,21 @@ export const ManageUsersModal = ({ game, onClose, onUserAction }: ManageUsersMod
   const isOwner = currentUserParticipant?.role === 'OWNER';
   const isAdmin = currentUserParticipant?.role === 'ADMIN';
 
+  // Group ordering: 0 = owners/admins, 1 = playing participants, 2 = everyone else.
+  // Within each group, sort alphabetically by name.
+  const statusSortIndex = (p: GameParticipant) => {
+    if (p.role === 'OWNER' || p.role === 'ADMIN') return 0;
+    if (p.status === 'PLAYING') return 1;
+    return 2;
+  };
+
   const participants = game.participants
     .filter((p) => p.userId !== user?.id)
     .slice()
     .sort((a, b) => {
+      const groupA = statusSortIndex(a);
+      const groupB = statusSortIndex(b);
+      if (groupA !== groupB) return groupA - groupB;
       const nameA = `${a.user?.firstName ?? ''} ${a.user?.lastName ?? ''}`.trim().toLowerCase();
       const nameB = `${b.user?.firstName ?? ''} ${b.user?.lastName ?? ''}`.trim().toLowerCase();
       return nameA.localeCompare(nameB);

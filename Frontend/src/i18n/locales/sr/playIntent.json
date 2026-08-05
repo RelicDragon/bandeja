@@ -73,6 +73,7 @@
     "mismatchGender": "Druga grupa",
     "fitTitle": "Poklapanje sa tvojom pretragom",
     "fitSummary": "Poklapa se {{count}} od {{total}}",
+    "fitNoRequest": "Otvori zahtev za upoređivanje",
     "fitDimDates": "Dani",
     "fitDimClubs": "Klubovi",
     "fitDimTime": "Vreme",

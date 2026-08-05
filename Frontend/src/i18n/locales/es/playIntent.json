@@ -65,6 +65,7 @@
     "mismatchGender": "Otro grupo",
     "fitTitle": "Encaje con tu búsqueda",
     "fitSummary": "Coinciden {{count}} de {{total}}",
+    "fitNoRequest": "Abre una solicitud para comparar",
     "fitDimDates": "Días",
     "fitDimClubs": "Clubs",
     "fitDimTime": "Hora",

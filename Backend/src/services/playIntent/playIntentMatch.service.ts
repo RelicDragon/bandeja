@@ -704,7 +704,7 @@ export class PlayIntentMatchService {
           ? intentMismatch(viewerCriteria, otherCrit)
           : null;
       const fit =
-        viewerCriteria && !busyInGame
+        viewerCriteria
           ? intentFitBreakdown(viewerCriteria, otherCrit)
           : null;
       members.push({
