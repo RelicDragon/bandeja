@@ -595,6 +595,42 @@
     0 5px 14px rgb(2 6 23 / 0.32);
 }
 
+/* Pinned avatar: frozen + enlarged + glowing while its fit card is open.
+ * Un-grays so the player is legible against the dimmed far-field ring. */
+.court-lobby-arena__avatar[data-pinned='true'] {
+  z-index: 40;
+  filter: none;
+}
+
+.court-lobby-arena__avatar[data-pinned='true'] .court-lobby-arena__avatar-visual {
+  transition: transform 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.court-lobby-arena__avatar[data-pinned='true'] .court-lobby-arena__avatar-image {
+  border-color: rgb(255 255 255 / 0.9);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.18),
+    0 0 0 2px rgb(14 165 233 / 0.6),
+    0 0 22px rgb(56 189 248 / 0.55),
+    0 12px 28px rgb(2 6 23 / 0.5);
+}
+
+.court-lobby-arena__avatar[data-pinned='true'] .court-lobby-arena__avatar-halo {
+  background: radial-gradient(
+    circle,
+    rgb(56 189 248 / 0.55),
+    rgb(16 185 129 / 0.18) 60%,
+    transparent 72%
+  );
+  animation: court-lobby-arena__avatar-halo-spin 2.6s linear infinite;
+}
+
+@keyframes court-lobby-arena__avatar-halo-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .court-lobby-arena__avatar:focus-visible .court-lobby-arena__avatar-image {
   outline: 2px solid rgb(255 255 255 / 0.9);
   outline-offset: 3px;
@@ -976,6 +1012,14 @@ html:not(.dark) .court-lobby-arena__mismatch-tail {
   .court-lobby-arena__avatar-halo,
   .court-lobby-arena__avatar[data-readd='true'] .court-lobby-arena__avatar-visual::before,
   .court-lobby-arena__avatar[data-readd='true'] .court-lobby-arena__avatar-image {
+    animation: none;
+  }
+
+  .court-lobby-arena__avatar[data-pinned='true'] .court-lobby-arena__avatar-visual {
+    transition: none;
+  }
+
+  .court-lobby-arena__avatar[data-pinned='true'] .court-lobby-arena__avatar-halo {
     animation: none;
   }
 

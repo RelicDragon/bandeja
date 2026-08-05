@@ -9,6 +9,7 @@ import {
   intentsCompatible,
   intentMatchesGame,
   intentMismatch,
+  intentFitBreakdown,
   affinityScore,
   buildRematchKey,
   type IntentCriteria,
@@ -414,6 +415,118 @@ assert.deepEqual(
   const a = base({ dateKeys: ['2026-07-28'], clubIds: ['c1'] });
   const b = base({ dateKeys: ['2026-07-30'], clubIds: ['c2'] });
   assert.deepEqual(intentMismatch(a, b), { reason: 'dates' });
+}
+
+// --- intentFitBreakdown: full per-dimension pass/fail report ---
+
+{
+  const ALL_OK = [
+    { dimension: 'dates', ok: true },
+    { dimension: 'clubs', ok: true },
+    { dimension: 'time', ok: true, period: 'ANYTIME' },
+    { dimension: 'level', ok: true },
+    { dimension: 'gender', ok: true },
+  ];
+
+  // Fully compatible pair -> every dimension ok.
+  assert.deepEqual(intentFitBreakdown(base(), base()), ALL_OK);
+}
+
+{
+  // Order is always dates, clubs, time, level, gender.
+  const result = intentFitBreakdown(base(), base());
+  assert.deepEqual(
+    result.map((c) => c.dimension),
+    ['dates', 'clubs', 'time', 'level', 'gender'],
+  );
+}
+
+{
+  // Dates fail (no shared day), everything else ok.
+  const a = base({ dateKeys: ['2026-07-28'] });
+  const b = base({ dateKeys: ['2026-07-30'] });
+  assert.deepEqual(intentFitBreakdown(a, b), [
+    { dimension: 'dates', ok: false },
+    { dimension: 'clubs', ok: true },
+    { dimension: 'time', ok: true, period: 'ANYTIME' },
+    { dimension: 'level', ok: true },
+    { dimension: 'gender', ok: true },
+  ]);
+}
+
+{
+  // Clubs both pinned, no overlap -> only clubs fails.
+  const a = base({ clubIds: ['c1'] });
+  const b = base({ clubIds: ['c2'] });
+  assert.deepEqual(intentFitBreakdown(a, b), [
+    { dimension: 'dates', ok: true },
+    { dimension: 'clubs', ok: false },
+    { dimension: 'time', ok: true, period: 'ANYTIME' },
+    { dimension: 'level', ok: true },
+    { dimension: 'gender', ok: true },
+  ]);
+}
+
+{
+  // Time windows don't overlap (other plays evenings) -> time fails with period.
+  const a = base({ timeOfDay: 'MORNING' });
+  const b = base({ timeOfDay: 'EVENING' });
+  assert.deepEqual(intentFitBreakdown(a, b), [
+    { dimension: 'dates', ok: true },
+    { dimension: 'clubs', ok: true },
+    { dimension: 'time', ok: false, period: 'EVENING' },
+    { dimension: 'level', ok: true },
+    { dimension: 'gender', ok: true },
+  ]);
+}
+
+{
+  // Multi-period on the other side — first concrete period is reported.
+  const a = base({ timeOfDay: 'MORNING' });
+  const b = base({ timeOfDays: ['AFTERNOON', 'EVENING'], timeOfDay: 'ANYTIME' });
+  const result = intentFitBreakdown(a, b);
+  assert.equal(result[2].dimension, 'time');
+  assert.equal(result[2].ok, false);
+  assert.equal(result[2].period, 'AFTERNOON');
+}
+
+{
+  // Level out of band (b too strong for a's cap) -> only level fails.
+  const a = base({ userLevel: 2, minLevel: null, maxLevel: 3 });
+  const b = base({ userLevel: 7, minLevel: null, maxLevel: null });
+  assert.deepEqual(intentFitBreakdown(a, b), [
+    { dimension: 'dates', ok: true },
+    { dimension: 'clubs', ok: true },
+    { dimension: 'time', ok: true, period: 'ANYTIME' },
+    { dimension: 'level', ok: false },
+    { dimension: 'gender', ok: true },
+  ]);
+}
+
+{
+  // Gender conflict -> only gender fails.
+  const a = base({ genderTeams: 'MEN', userGender: 'MALE' });
+  const b = base({ genderTeams: 'WOMEN', userGender: 'FEMALE' });
+  assert.deepEqual(intentFitBreakdown(a, b), [
+    { dimension: 'dates', ok: true },
+    { dimension: 'clubs', ok: true },
+    { dimension: 'time', ok: true, period: 'ANYTIME' },
+    { dimension: 'level', ok: true },
+    { dimension: 'gender', ok: false },
+  ]);
+}
+
+{
+  // Multiple failures reported simultaneously (unlike intentMismatch).
+  const a = base({ dateKeys: ['2026-07-28'], clubIds: ['c1'], timeOfDay: 'MORNING' });
+  const b = base({ dateKeys: ['2026-07-30'], clubIds: ['c2'], timeOfDay: 'EVENING' });
+  assert.deepEqual(intentFitBreakdown(a, b), [
+    { dimension: 'dates', ok: false },
+    { dimension: 'clubs', ok: false },
+    { dimension: 'time', ok: false, period: 'EVENING' },
+    { dimension: 'level', ok: true },
+    { dimension: 'gender', ok: true },
+  ]);
 }
 
 console.log('playIntentCriteria.test.ts: ok');

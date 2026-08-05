@@ -12,6 +12,7 @@ import { CourtLobbyPulseRing } from '@/components/playIntent/CourtLobbyPulseRing
 import { CourtLobbySportCourt } from '@/components/playIntent/CourtLobbySportCourt';
 import { CourtLobbyThunder } from '@/components/playIntent/CourtLobbyThunder';
 import { CourtLobbyMismatchBubbles } from '@/components/playIntent/CourtLobbyMismatchBubbles';
+import { CourtLobbyPlayerFitCard } from '@/components/playIntent/CourtLobbyPlayerFitCard';
 import type { PoolMember } from '@/api/playIntents';
 import { useAuthStore } from '@/store/authStore';
 import { useFavoritesStore } from '@/store/favoritesStore';
@@ -28,7 +29,13 @@ type Props = {
   rosterLocked: boolean;
   sport: Sport;
   partySize: number;
+  /** userId of the far-side player whose fit card is open (freezes that avatar). */
+  pinnedUserId?: string | null;
   onAvatarClick: (member: PoolMember) => void | Promise<void>;
+  /** Opens the full player profile for the pinned avatar. */
+  onOpenProfile?: (userId: string) => void;
+  /** Closes the fit card (called by the card itself). */
+  onPinnedChange?: (userId: string | null) => void;
 };
 
 type DriftNode = {
@@ -187,11 +194,16 @@ function initials(member: { firstName: string | null; lastName?: string | null }
   return (a + b).toUpperCase() || '?';
 }
 
+function fitKey(fit: PoolMember['fit']) {
+  if (!fit || fit.length === 0) return '';
+  return fit.map((c) => `${c.dimension}:${c.ok ? 1 : 0}:${c.period ?? ''}`).join(',');
+}
+
 function membersKey(members: PoolMember[]) {
   return members
     .map(
       (m) =>
-        `${m.userId}:${m.status}:${m.busyInGame ? 1 : 0}:${m.affinity}:${m.inProposal ? 1 : 0}:${m.eligibleForProposal ? 1 : 0}:${m.intentId}:${m.mismatch ? `${m.mismatch.reason}:${m.mismatch.period ?? ''}` : ''}`,
+        `${m.userId}:${m.status}:${m.busyInGame ? 1 : 0}:${m.affinity}:${m.inProposal ? 1 : 0}:${m.eligibleForProposal ? 1 : 0}:${m.intentId}:${m.mismatch ? `${m.mismatch.reason}:${m.mismatch.period ?? ''}` : ''}:${fitKey(m.fit)}`,
     )
     .join('|');
 }
@@ -213,7 +225,8 @@ function arenaMembersEqual(previous: PoolMember[], next: PoolMember[]) {
       !!member.inProposal === !!candidate.inProposal &&
       !!member.eligibleForProposal === !!candidate.eligibleForProposal &&
       member.mismatch?.reason === candidate.mismatch?.reason &&
-      member.mismatch?.period === candidate.mismatch?.period
+      member.mismatch?.period === candidate.mismatch?.period &&
+      fitKey(member.fit) === fitKey(candidate.fit)
     );
   });
 }
@@ -228,6 +241,9 @@ function arenaPropsEqual(previous: Props, next: Props) {
     previous.sport === next.sport &&
     previous.partySize === next.partySize &&
     previous.onAvatarClick === next.onAvatarClick &&
+    previous.pinnedUserId === next.pinnedUserId &&
+    previous.onOpenProfile === next.onOpenProfile &&
+    previous.onPinnedChange === next.onPinnedChange &&
     arenaMembersEqual(previous.members, next.members)
   );
 }
@@ -242,12 +258,16 @@ function CourtLobbyArenaComponent({
   rosterLocked,
   sport,
   partySize,
+  pinnedUserId,
   onAvatarClick,
+  onOpenProfile,
+  onPinnedChange,
 }: Props) {
   const { t } = useTranslation();
   const isFavorite = useFavoritesStore((s) => s.isFavorite);
   const viewer = useAuthStore((s) => s.user);
   const [shuffleTick, setShuffleTick] = useState(0);
+  const [closingCard, setClosingCard] = useState(false);
   const arenaRef = useRef<HTMLDivElement | null>(null);
   const arenaSizeRef = useRef<ArenaSize>(DEFAULT_ARENA_SIZE);
   const nodesRef = useRef<DriftNode[]>([]);
@@ -263,6 +283,7 @@ function CourtLobbyArenaComponent({
     speed: -(Math.PI * 2) / ACTIONABLE_ORBIT_SECONDS,
   });
   const frameRef = useRef<number | null>(null);
+  const pinnedUserIdRef = useRef<string | null>(pinnedUserId ?? null);
   const key = membersKey(members);
   const inMatchCount = members.filter((member) => member.inProposal).length;
 
@@ -593,6 +614,14 @@ function CourtLobbyArenaComponent({
     return () => window.removeEventListener('resize', syncPositionsToArenaSize);
   }, []);
 
+  // Keep the pinned-user id in a ref so the rAF loop reads the latest value
+  // without restarting on every pin toggle. A fresh pin also cancels any
+  // in-flight exit animation.
+  useEffect(() => {
+    pinnedUserIdRef.current = pinnedUserId ?? null;
+    setClosingCard(false);
+  }, [pinnedUserId]);
+
   useEffect(() => {
     const reduceMotion =
       typeof window !== 'undefined' &&
@@ -642,6 +671,17 @@ function CourtLobbyArenaComponent({
         let { x, y, vx, vy, orbitAngle } = node;
         const inHandoff = node.handoffElapsed !== null;
         const inProposal = !!node.member.inProposal;
+        // Frozen while its fit card is open — keep position & zero velocity.
+        if (pinnedUserIdRef.current === node.id) {
+          vx = 0;
+          vy = 0;
+          node.x = x;
+          node.y = y;
+          node.vx = 0;
+          node.vy = 0;
+          node.orbitAngle = orbitAngle;
+          continue;
+        }
         if (inProposal) {
           orbitAngle =
             matchOrbitRef.current.angle +
@@ -902,6 +942,7 @@ function CourtLobbyArenaComponent({
             data-favorite={favorite ? 'true' : 'false'}
             data-readd={highlightedForReAdd ? 'true' : 'false'}
             data-actionable={highlightedForReAdd ? 'true' : 'false'}
+            data-pinned={pinnedUserId === node.id ? 'true' : 'false'}
             ref={(el) => {
               if (el) avatarEls.current.set(node.id, el);
               else avatarEls.current.delete(node.id);
@@ -919,12 +960,22 @@ function CourtLobbyArenaComponent({
               height: node.size,
               opacity: node.opacity,
             }}
-            onClick={() => void onAvatarClick(node.member)}
+            onClick={() => {
+              // Tapping the already-pinned avatar toggles the card closed via
+              // the exit animation (rather than a hard unmount from the parent).
+              if (pinnedUserId === node.id) {
+                setClosingCard(true);
+                return;
+              }
+              void onAvatarClick(node.member);
+            }}
           >
             <span
               className="court-lobby-arena__avatar-visual"
               style={{
-                transform: `translate(-50%, -50%) scale(${avatarScale})`,
+                transform: `translate(-50%, -50%) scale(${
+                  pinnedUserId === node.id ? avatarScale * 1.5 : avatarScale
+                })`,
               }}
             >
               <span className="court-lobby-arena__avatar-halo" aria-hidden />
@@ -970,6 +1021,27 @@ function CourtLobbyArenaComponent({
           {t('playIntent.tapToAdd', { count: vacancy })}
         </div>
       )}
+      {(pinnedUserId || closingCard) &&
+        (() => {
+          const activeId = pinnedUserId;
+          if (!activeId) return null;
+          const pinnedMember = members.find((m) => m.userId === activeId);
+          if (!pinnedMember) return null;
+          const anchorEl = avatarEls.current.get(activeId) ?? null;
+          return (
+            <CourtLobbyPlayerFitCard
+              member={pinnedMember}
+              anchorEl={anchorEl}
+              closing={closingCard}
+              onExited={() => {
+                setClosingCard(false);
+                onPinnedChange?.(null);
+              }}
+              onClose={() => setClosingCard(true)}
+              onOpenProfile={(id) => onOpenProfile?.(id)}
+            />
+          );
+        })()}
     </div>
   );
 }

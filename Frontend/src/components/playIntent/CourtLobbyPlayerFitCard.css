@@ -1,0 +1,287 @@
+/* CourtLobbyPlayerFitCard — expanding "why don't they fit" card.
+ * Springy popover anchored to the frozen (pinned) far-side avatar. */
+
+.court-lobby-fit-card {
+  transform-origin: var(--tw-transform-origin, 50% 0%);
+  will-change: transform, opacity;
+}
+
+.court-lobby-fit-card__caret {
+  position: absolute;
+  z-index: 1;
+  width: 11px;
+  height: 11px;
+  border-radius: 2px;
+  background: rgb(255 255 255);
+  border: 1px solid rgb(229 231 235 / 0.7);
+  box-shadow: 0 4px 12px rgb(15 23 42 / 0.15);
+  transform: translateX(-50%) rotate(45deg);
+  pointer-events: none;
+}
+:global(html.dark) .court-lobby-fit-card__caret {
+  background: rgb(23 23 26);
+  border-color: rgb(255 255 255 / 0.12);
+  box-shadow: 0 4px 14px rgb(0 0 0 / 0.45);
+}
+.court-lobby-fit-card__caret.is-below {
+  top: 0;
+  transform: translate(-50%, -45%) rotate(45deg);
+}
+.court-lobby-fit-card__caret.is-above {
+  bottom: 0;
+  transform: translate(-50%, 45%) rotate(45deg);
+}
+
+.court-lobby-fit-card__shell {
+  position: relative;
+  overflow: hidden;
+  border-radius: 20px;
+  border: 1px solid rgb(229 231 235 / 0.7);
+  background: rgb(255 255 255 / 0.97);
+  padding: 14px 14px 12px;
+  box-shadow:
+    0 22px 56px -10px rgb(15 23 42 / 0.32),
+    0 10px 28px -6px rgb(15 23 42 / 0.2),
+    0 4px 12px -2px rgb(15 23 42 / 0.12);
+  backdrop-filter: blur(12px);
+}
+:global(html.dark) .court-lobby-fit-card__shell {
+  border-color: rgb(255 255 255 / 0.1);
+  background: rgb(23 23 26 / 0.96);
+  box-shadow:
+    0 28px 64px -8px rgb(0 0 0 / 0.72),
+    0 14px 36px -10px rgb(0 0 0 / 0.55),
+    inset 0 0 0 1px rgb(255 255 255 / 0.05);
+}
+
+/* --- Header --- */
+.court-lobby-fit-card__header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 11px;
+  margin-bottom: 9px;
+  border-bottom: 1px solid rgb(243 244 246 / 0.9);
+}
+:global(html.dark) .court-lobby-fit-card__header {
+  border-bottom-color: rgb(255 255 255 / 0.06);
+}
+
+.court-lobby-fit-card__avatar {
+  position: relative;
+  flex: 0 0 auto;
+  width: 50px;
+  height: 50px;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: 50%;
+  outline: none;
+}
+.court-lobby-fit-card__avatar:focus-visible {
+  box-shadow: 0 0 0 2px rgb(14 165 233 / 0.5);
+}
+.court-lobby-fit-card__avatar-ring {
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 120deg,
+    rgb(56 189 248),
+    rgb(16 185 129),
+    rgb(56 189 248)
+  );
+  opacity: 0.9;
+  filter: blur(0.5px);
+  animation: court-lobby-fit-card-spin 3.4s linear infinite;
+}
+.court-lobby-fit-card__avatar-img {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: 50%;
+  border: 2px solid rgb(255 255 255);
+  background: linear-gradient(135deg, rgb(56 189 248), rgb(16 185 129));
+  box-shadow: 0 4px 12px rgb(15 23 42 / 0.2);
+}
+:global(html.dark) .court-lobby-fit-card__avatar-img {
+  border-color: rgb(23 23 26);
+}
+.court-lobby-fit-card__avatar-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.court-lobby-fit-card__avatar-initials {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: rgb(255 255 255);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.court-lobby-fit-card__title-block {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.court-lobby-fit-card__name {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: rgb(15 23 42);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+:global(html.dark) .court-lobby-fit-card__name {
+  color: rgb(255 255 255);
+}
+.court-lobby-fit-card__title {
+  margin: 2px 0 0;
+  font-size: 11px;
+  font-weight: 500;
+  color: rgb(100 116 139);
+}
+:global(html.dark) .court-lobby-fit-card__title {
+  color: rgb(148 163 184);
+}
+.court-lobby-fit-card__summary {
+  margin: 4px 0 0;
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 3px 7px;
+  border-radius: 999px;
+}
+.court-lobby-fit-card__summary.tone-none {
+  color: rgb(190 18 60);
+  background: rgb(254 226 226);
+}
+.court-lobby-fit-card__summary.tone-partial {
+  color: rgb(154 52 18);
+  background: rgb(254 215 170);
+}
+.court-lobby-fit-card__summary.tone-all {
+  color: rgb(21 128 61);
+  background: rgb(209 250 229);
+}
+:global(html.dark) .court-lobby-fit-card__summary.tone-none {
+  color: rgb(253 164 175);
+  background: rgb(136 19 55 / 0.32);
+}
+:global(html.dark) .court-lobby-fit-card__summary.tone-partial {
+  color: rgb(253 186 116);
+  background: rgb(154 52 18 / 0.3);
+}
+:global(html.dark) .court-lobby-fit-card__summary.tone-all {
+  color: rgb(134 239 172);
+  background: rgb(20 83 45 / 0.32);
+}
+
+/* --- Rows --- */
+.court-lobby-fit-card__rows {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.court-lobby-fit-card__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 6px;
+  border-radius: 12px;
+}
+
+.court-lobby-fit-card__row-icon {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+}
+.court-lobby-fit-card__row-icon.is-ok {
+  color: rgb(16 185 129);
+  background: rgb(209 250 229);
+}
+.court-lobby-fit-card__row-icon.is-no {
+  color: rgb(225 29 72);
+  background: rgb(254 226 226);
+}
+:global(html.dark) .court-lobby-fit-card__row-icon.is-ok {
+  color: rgb(110 231 183);
+  background: rgb(20 83 45 / 0.4);
+}
+:global(html.dark) .court-lobby-fit-card__row-icon.is-no {
+  color: rgb(253 164 175);
+  background: rgb(136 19 55 / 0.36);
+}
+
+.court-lobby-fit-card__row-text {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.court-lobby-fit-card__row-label {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  color: rgb(30 41 59);
+  line-height: 1.2;
+}
+:global(html.dark) .court-lobby-fit-card__row-label {
+  color: rgb(226 232 240);
+}
+.court-lobby-fit-card__row-sub {
+  margin: 1px 0 0;
+  font-size: 10.5px;
+  font-weight: 500;
+  color: rgb(100 116 139);
+  line-height: 1.2;
+}
+:global(html.dark) .court-lobby-fit-card__row-sub {
+  color: rgb(148 163 184);
+}
+
+.court-lobby-fit-card__row-mark {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+}
+.court-lobby-fit-card__row-mark.is-ok {
+  color: rgb(255 255 255);
+  background: rgb(16 185 129);
+  box-shadow: 0 2px 6px rgb(16 185 129 / 0.4);
+}
+.court-lobby-fit-card__row-mark.is-no {
+  color: rgb(255 255 255);
+  background: rgb(225 29 72);
+  box-shadow: 0 2px 6px rgb(225 29 72 / 0.32);
+}
+
+@keyframes court-lobby-fit-card-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .court-lobby-fit-card__avatar-ring {
+    animation: none;
+  }
+}

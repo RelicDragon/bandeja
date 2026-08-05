@@ -273,6 +273,48 @@ export function intentMismatch(a: IntentCriteria, b: IntentCriteria): IntentMism
   return null;
 }
 
+export type FitDimension = 'dates' | 'clubs' | 'time' | 'level' | 'gender';
+
+export type FitCheck = {
+  dimension: FitDimension;
+  ok: boolean;
+  /** For the 'time' dimension: the other player's dominant period, so the UI
+   *  can phrase the row ("Plays mornings") whether or not it overlaps. */
+  period?: PlayIntentTimeOfDay;
+};
+
+/**
+ * Per-dimension fit breakdown between two intents, for the court-lobby "why
+ * don't they fit" card. Runs the same 5 checks as {@link intentsCompatible} /
+ * {@link intentMismatch}, but instead of returning only the first failure it
+ * reports every dimension's pass/fail so the client can render a full list of
+ * conditions with green checks / red crosses. The 'time' entry also carries
+ * the other player's dominant play period for natural phrasing.
+ */
+export function intentFitBreakdown(a: IntentCriteria, b: IntentCriteria): FitCheck[] {
+  const period = dominantPlayPeriod(b);
+  const windowsA = resolveTimeWindows(a);
+  const windowsB = resolveTimeWindows(b);
+  const timeOverlap = timeWindowSetsIntersect(windowsA, windowsB);
+  const timeOk =
+    windowsA === null ||
+    windowsB === null ||
+    (timeOverlap !== null && timeOverlap.length > 0);
+  return [
+    { dimension: 'dates', ok: datesIntersect(a.dateKeys, b.dateKeys).length > 0 },
+    { dimension: 'clubs', ok: clubsIntersect(a.clubIds, b.clubIds) !== null },
+    { dimension: 'time', ok: timeOk, period },
+    { dimension: 'level', ok: levelsCompatible(a, b) },
+    {
+      dimension: 'gender',
+      ok:
+        genderPrefsCompatible(a.genderTeams, b.genderTeams) &&
+        userMatchesGenderPref(a.genderTeams, b.userGender) &&
+        userMatchesGenderPref(b.genderTeams, a.userGender),
+    },
+  ];
+}
+
 /**
  * Resolves a single representative period for an intent's time windows, used to
  * phrase a time mismatch ("Plays evenings"). Picks the first concrete period

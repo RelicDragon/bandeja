@@ -4,6 +4,20 @@ import type { Sport } from '@/types';
 export type PlayIntentTimeOfDay = 'ANYTIME' | 'MORNING' | 'AFTERNOON' | 'EVENING' | 'CUSTOM';
 export type PlayIntentStatus = 'OPEN' | 'MATCHED' | 'CONSUMED' | 'EXPIRED' | 'CANCELLED';
 
+export type FitDimension = 'dates' | 'clubs' | 'time' | 'level' | 'gender';
+
+/**
+ * One row of the per-condition fit breakdown used by the court-lobby player
+ * card. `ok` is true when the viewer's intent and this player's intent agree on
+ * the dimension; `period` carries the other player's dominant time-of-day so a
+ * time row can read naturally ("Plays mornings").
+ */
+export type FitCheck = {
+  dimension: FitDimension;
+  ok: boolean;
+  period?: PlayIntentTimeOfDay;
+};
+
 export type PlayIntent = {
   id: string;
   cityId: string;
@@ -55,6 +69,7 @@ export type PoolMember = {
     reason: 'dates' | 'clubs' | 'time' | 'level' | 'gender';
     period?: PlayIntentTimeOfDay;
   } | null;
+  fit?: FitCheck[] | null;
 };
 
 export type MatchProposalSummary = {

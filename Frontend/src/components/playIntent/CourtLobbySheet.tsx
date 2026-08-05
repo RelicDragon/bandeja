@@ -79,6 +79,7 @@ export function CourtLobbyPanel({
   const fetchFavorites = useFavoritesStore((s) => s.fetchFavorites);
   const [busy, setBusy] = useState(false);
   const [waitingHost, setWaitingHost] = useState(false);
+  const [pinnedUserId, setPinnedUserId] = useState<string | null>(null);
 
   const handleProposalActionError = useCallback(
     (error: unknown) => {
@@ -262,13 +263,29 @@ export function CourtLobbyPanel({
     if (!open) setWaitingHost(false);
   }, [open, proposal?.id]);
 
+  // Auto-close the fit card when its player leaves the pool or the sheet closes.
+  useEffect(() => {
+    if (!open || !pinnedUserId) {
+      setPinnedUserId(null);
+      return;
+    }
+    if (!members.some((m) => m.userId === pinnedUserId)) {
+      setPinnedUserId(null);
+    }
+  }, [open, pinnedUserId, members]);
+
   const onPoolAvatarClick = useCallback(async (member: PoolMember) => {
     if (!proposalId && intent) {
       const compatible = !member.busyInGame && member.affinity !== 'far';
       if (!compatible) {
-        openPlayerCard(member.userId);
+        // Non-fit player: toggle the expanding fit card.
+        setPinnedUserId((current) =>
+          current === member.userId ? null : member.userId,
+        );
         return;
       }
+      // Fit player tapped — close any open card first.
+      setPinnedUserId(null);
       if (directSelectedIdSet.has(member.userId)) {
         setDirectSelectedIds((current) =>
           current.filter((userId) => userId !== member.userId),
@@ -291,9 +308,19 @@ export function CourtLobbyPanel({
       !!member.eligibleForProposal;
 
     if (!canAddToMatch) {
-      openPlayerCard(member.userId);
+      const nonFit = member.busyInGame || member.affinity === 'far';
+      if (nonFit) {
+        // Non-fit player: toggle the expanding fit card.
+        setPinnedUserId((current) =>
+          current === member.userId ? null : member.userId,
+        );
+      } else {
+        openPlayerCard(member.userId);
+      }
       return;
     }
+    // Adding a fit player — close any open card first.
+    setPinnedUserId(null);
     if (rosterFull) {
       toast.error(t('playIntent.rosterFullHint'));
       return;
@@ -452,7 +479,10 @@ export function CourtLobbyPanel({
               rosterLocked={rosterLocked}
               sport={sport}
               partySize={partySize}
+              pinnedUserId={pinnedUserId}
               onAvatarClick={onPoolAvatarClick}
+              onOpenProfile={openPlayerCard}
+              onPinnedChange={setPinnedUserId}
             />
           )}
 

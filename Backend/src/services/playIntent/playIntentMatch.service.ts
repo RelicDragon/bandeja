@@ -19,9 +19,11 @@ import {
   affinityScore,
   buildRematchKey,
   canIntentJoinProposal,
+  intentFitBreakdown,
   intentMatchesGame,
   intentMismatch,
   intentsCompatible,
+  type FitCheck,
   type IntentMismatch,
   minutesToTimeString,
   resolveTimeWindows,
@@ -673,6 +675,7 @@ export class PlayIntentMatchService {
       inProposal: boolean;
       eligibleForProposal: boolean;
       mismatch: IntentMismatch | null;
+      fit: FitCheck[] | null;
     }[] = [];
 
     const proposalMemberCriteria =
@@ -700,6 +703,10 @@ export class PlayIntentMatchService {
         viewerCriteria && !busyInGame && aff.bucket === 'far'
           ? intentMismatch(viewerCriteria, otherCrit)
           : null;
+      const fit =
+        viewerCriteria && !busyInGame
+          ? intentFitBreakdown(viewerCriteria, otherCrit)
+          : null;
       members.push({
         userId: intent.user.id,
         intentId: intent.id,
@@ -713,6 +720,7 @@ export class PlayIntentMatchService {
         busyInGame,
         inProposal,
         mismatch,
+        fit,
         eligibleForProposal:
           !!proposalCanAcceptMembers &&
           !inProposal &&
