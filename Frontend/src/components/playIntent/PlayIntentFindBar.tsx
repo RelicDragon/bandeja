@@ -125,7 +125,7 @@ export function PlayIntentProvider({
   const [sheetOpen, setSheetOpen] = useState(false);
   const [sheetMode, setSheetMode] = useState<'compose' | 'lobby'>('compose');
   /**
-   * True only when the sheet was opened by pushing the `?playIntent=1` URL
+   * True only when the sheet was opened by pushing the `?playIntentOpen=1` URL
    * entry. Deep-link openings (`?proposal=`, `?lobby=1`) set `sheetOpen`
    * directly without a pushed entry, so the back-sync effect must ignore them.
    */
@@ -316,12 +316,14 @@ export function PlayIntentProvider({
     });
   }, [cancel, pool?.myIntent?.id, t]);
 
-  /** Pushes `?playIntent=1` so the open sheet becomes a back-stack entry. */
+  /** Pushes `?playIntentOpen=1` so the open sheet becomes a back-stack entry.
+   *  Uses a dedicated param (not `?playIntent=`) so it is never mistaken for a
+   *  shared-intent deep-link id by `useSharedPlayIntentEntry`. */
   const pushIntentUrl = useCallback(() => {
     sheetOpenedViaUrlRef.current = true;
     setSheetOpen(true);
     const next = new URLSearchParams(searchParams);
-    next.set('playIntent', '1');
+    next.set('playIntentOpen', '1');
     navigateTracked(`${location.pathname}?${next.toString()}`);
   }, [location.pathname, navigateTracked, searchParams]);
   const openLobby = useCallback(() => {
@@ -333,7 +335,7 @@ export function PlayIntentProvider({
     pushIntentUrl();
   }, [pushIntentUrl]);
   /**
-   * Closing via drag/overlay/close-button strips the `?playIntent=1` entry
+   * Closing via drag/overlay/close-button strips the `?playIntentOpen=1` entry
    * (replace) so the back stack stays consistent. Deep-link-opened sheets
    * never pushed the entry, so they just flip state.
    */
@@ -347,19 +349,20 @@ export function PlayIntentProvider({
       if (!sheetOpenedViaUrlRef.current) return;
       sheetOpenedViaUrlRef.current = false;
       const next = new URLSearchParams(searchParams);
-      if (next.get('playIntent') !== '1') return;
-      next.delete('playIntent');
+      if (next.get('playIntentOpen') !== '1') return;
+      next.delete('playIntentOpen');
       const qs = next.toString();
       navigate(`${location.pathname}${qs ? `?${qs}` : ''}`, { replace: true });
     },
     [location.pathname, navigate, searchParams],
   );
   /**
-   * When the user navigates back from the pushed `?playIntent=1` entry, the
-   * param disappears — sync the sheet closed. Ignored for deep-link openings.
+   * When the user navigates back from the pushed `?playIntentOpen=1` entry,
+   * the param disappears — sync the sheet closed. Ignored for deep-link
+   * openings.
    */
   useEffect(() => {
-    if (searchParams.get('playIntent') === '1') return;
+    if (searchParams.get('playIntentOpen') === '1') return;
     if (!sheetOpenedViaUrlRef.current) return;
     sheetOpenedViaUrlRef.current = false;
     setSheetOpen(false);
