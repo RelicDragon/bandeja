@@ -46,35 +46,50 @@ export function MyTabPanelSwitcher({
     ? { duration: 0 }
     : { duration: 0.28, ease: [0.21, 0.47, 0.32, 0.98] as const };
 
+  const hasLeagues = panelCounts.leagues > 0;
+
   const tabs = useMemo<SegmentedSwitchTab[]>(
-    () => [
-      {
-        id: 'calendar',
-        label: '',
-        icon: Calendar,
-        ariaLabel: t('games.calendar'),
-      },
-      {
-        id: 'bookings',
-        label: t('club.booktime.tabBookings'),
-        icon: Ticket,
-        badge: panelCounts.bookings,
-      },
-      {
-        id: 'teams',
-        label: t('teams.title'),
-        icon: Users,
-        badge: panelCounts.teams,
-      },
-      {
-        id: 'leagues',
-        label: t('home.yourLeagues', { defaultValue: 'Leagues' }),
-        icon: Trophy,
-        badge: panelCounts.leagues,
-      },
-    ],
-    [panelCounts.bookings, panelCounts.leagues, panelCounts.teams, t],
+    () => {
+      const base: SegmentedSwitchTab[] = [
+        {
+          id: 'calendar',
+          label: '',
+          icon: Calendar,
+          ariaLabel: t('games.calendar'),
+        },
+        {
+          id: 'bookings',
+          label: t('club.booktime.tabBookings'),
+          icon: Ticket,
+          badge: panelCounts.bookings,
+        },
+        {
+          id: 'teams',
+          label: t('teams.title'),
+          icon: Users,
+          badge: panelCounts.teams,
+        },
+      ];
+      // Only show the Leagues subtab when the user has at least one league to show.
+      if (hasLeagues) {
+        base.push({
+          id: 'leagues',
+          label: t('home.yourLeagues', { defaultValue: 'Leagues' }),
+          icon: Trophy,
+          badge: panelCounts.leagues,
+        });
+      }
+      return base;
+    },
+    [panelCounts.bookings, panelCounts.leagues, panelCounts.teams, hasLeagues, t],
   );
+
+  // If the user was viewing Leagues and the last league is removed, fall back to the default view.
+  useEffect(() => {
+    if (activeSwitch === 'leagues' && !hasLeagues) {
+      setActiveSwitch(null);
+    }
+  }, [activeSwitch, hasLeagues]);
 
   const handleSwitchChange = (id: string | null) => {
     if (id === 'bookings' || id === 'teams' || id === 'leagues') {
