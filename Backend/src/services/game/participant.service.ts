@@ -100,7 +100,7 @@ export class ParticipantService {
       });
       await publishCommittedPlayIntentStatusChanges([changedIntentId]);
 
-      await performPostJoinOperations(gameId, userId);
+      await performPostJoinOperations(gameId, userId, { excludeUserId: userId });
       return 'games.joinedSuccessfully';
     }
 
@@ -133,7 +133,7 @@ export class ParticipantService {
       await addOrUpdateParticipant(tx, gameId, userId);
     });
 
-    await performPostJoinOperations(gameId, userId);
+    await performPostJoinOperations(gameId, userId, { excludeUserId: userId });
     return 'games.joinedSuccessfully';
   }
 
@@ -277,7 +277,7 @@ export class ParticipantService {
       },
     });
 
-    await ParticipantMessageHelper.sendJoinMessage(gameId, userId, SystemMessageType.USER_JOINED_CHAT);
+    await ParticipantMessageHelper.sendJoinMessage(gameId, userId, SystemMessageType.USER_JOINED_CHAT, { excludeUserId: userId });
     await GameService.updateGameReadiness(gameId);
     await ParticipantMessageHelper.emitGameUpdate(gameId, userId);
     return 'games.joinedChatAsGuest';
@@ -400,7 +400,7 @@ export class ParticipantService {
 
     if (participant.user) {
       if (isPlaying) {
-        await ParticipantMessageHelper.sendJoinMessage(gameId, userId);
+        await ParticipantMessageHelper.sendJoinMessage(gameId, userId, undefined, { excludeUserId: userId });
       } else {
         await ParticipantMessageHelper.sendLeaveMessage(gameId, participant.user, SystemMessageType.USER_LEFT_GAME);
       }

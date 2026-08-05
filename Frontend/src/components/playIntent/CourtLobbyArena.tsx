@@ -349,11 +349,7 @@ function CourtLobbyArenaComponent({
   const mismatchedMembers = useMemo(
     () =>
       members.filter(
-        (m) =>
-          !m.busyInGame &&
-          m.affinity === 'far' &&
-          !!m.mismatch &&
-          !m.inProposal,
+        (m) => m.affinity === 'far' && !!m.mismatch && !m.inProposal,
       ),
     [members],
   );

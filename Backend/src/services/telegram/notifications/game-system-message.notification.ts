@@ -22,7 +22,8 @@ import { translateSystemMessageContent } from '../../../utils/translateSystemMes
 export async function sendGameSystemMessageNotification(
   api: Api,
   message: any,
-  game: any
+  game: any,
+  excludeUserId?: string
 ) {
 
   const chatType = message.chatType as ChatType;
@@ -43,6 +44,9 @@ export async function sendGameSystemMessageNotification(
 
   for (const participant of participants) {
     const user = participant.user;
+    // Skip the user whose own action triggered this system message (e.g. a user
+    // accepting their own invite should not be notified that they joined the game).
+    if (excludeUserId && user.id === excludeUserId) continue;
     const allowed = await NotificationPreferenceService.doesUserAllow(user.id, NotificationChannelType.TELEGRAM, PreferenceKey.SEND_MESSAGES);
     if (!allowed || !user.telegramId) continue;
     const telegramId = user.telegramId;

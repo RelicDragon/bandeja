@@ -73,9 +73,9 @@ class TelegramNotificationService {
     await sendGameCard(api, gameId, telegramId);
   }
 
-  async sendGameSystemMessageNotification(message: any, game: any) {
+  async sendGameSystemMessageNotification(message: any, game: any, excludeUserId?: string) {
     if (!this.bot) return;
-    await sendGameSystemMessageNotification(this.bot.api, message, game);
+    await sendGameSystemMessageNotification(this.bot.api, message, game, excludeUserId);
   }
 
   async sendLeagueRoundStartNotification(game: any, user: any) {

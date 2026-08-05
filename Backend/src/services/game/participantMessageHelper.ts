@@ -6,7 +6,12 @@ import notificationService from '../notification.service';
 import { BasicUser } from '../../types/user.types';
 
 export class ParticipantMessageHelper {
-  static async sendJoinMessage(gameId: string, userId: string, messageType = SystemMessageType.USER_JOINED_GAME) {
+  static async sendJoinMessage(
+    gameId: string,
+    userId: string,
+    messageType = SystemMessageType.USER_JOINED_GAME,
+    opts: { excludeUserId?: string } = {}
+  ) {
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: {
@@ -39,9 +44,11 @@ export class ParticipantMessageHelper {
           });
 
           if (game) {
-            notificationService.sendGameSystemMessageNotification(systemMessage, game).catch(error => {
-              console.error('Failed to send notifications for join:', error);
-            });
+            notificationService
+              .sendGameSystemMessageNotification(systemMessage, game, opts.excludeUserId)
+              .catch(error => {
+                console.error('Failed to send notifications for join:', error);
+              });
           }
         }
 

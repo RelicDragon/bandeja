@@ -700,7 +700,7 @@ export class PlayIntentMatchService {
       const inProposal = proposalMemberIds.has(intent.userId);
       const busyInGame = busyUserIds.has(intent.userId);
       const mismatch =
-        viewerCriteria && !busyInGame && aff.bucket === 'far'
+        viewerCriteria && aff.bucket === 'far'
           ? intentMismatch(viewerCriteria, otherCrit)
           : null;
       const fit =

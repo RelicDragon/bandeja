@@ -5,13 +5,14 @@ import { ensureUserSportProfileForGame } from '../services/user/userSportProfile
 
 export async function performPostJoinOperations(
   gameId: string,
-  userId: string
+  userId: string,
+  opts: { excludeUserId?: string } = {}
 ): Promise<void> {
   await ensureUserSportProfileForGame(userId, gameId);
 
   await Promise.all([
     InviteService.deleteInvitesForUserInGame(gameId, userId),
-    ParticipantMessageHelper.sendJoinMessage(gameId, userId),
+    ParticipantMessageHelper.sendJoinMessage(gameId, userId, undefined, opts),
   ]);
 
   await GameService.updateGameReadiness(gameId);

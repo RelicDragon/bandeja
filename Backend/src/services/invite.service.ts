@@ -488,7 +488,11 @@ export class InviteService {
           }
           return { success: true, message: 'games.addedToJoinQueue' };
         }
-        await performPostJoinOperations(gameId, receiverId);
+        // A user accepting their own invite already knows they joined; only notify
+        // them when an admin/owner accepted the invite on their behalf.
+        await performPostJoinOperations(gameId, receiverId, {
+          excludeUserId: isReceiver ? receiverId : undefined,
+        });
         if (inviteUserTeamIdForFixedTeams) {
           try {
             await applyUserTeamToFixedTeamsIfReady(gameId, inviteUserTeamIdForFixedTeams);
