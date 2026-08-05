@@ -73,7 +73,7 @@ function patchAvailableCache(
   queryKey: readonly unknown[],
   byGameId: Record<string, AvailableEnrichmentFields>,
 ): void {
-  queryClient.setQueryData(queryKey, (prev) => {
+  queryClient.setQueryData(queryKey, (prev: unknown) => {
     if (!prev) return prev;
     const list = getGamesFromAvailableCache(prev);
     if (!list) return prev;

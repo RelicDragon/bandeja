@@ -115,7 +115,7 @@ export function usePlayerProfile(
       queryClient.setQueryData(queryKeys.userStats(playerId, sportKey), nextStats);
       queryClient.setQueriesData<UserStats>(
         { queryKey: ['users', 'stats', playerId] },
-        (previous) => {
+        (previous: UserStats | undefined) => {
           if (!previous) return previous;
           const previousSport = previous.sport ?? levelSport;
           if (previousSport === sportKey) return nextStats;

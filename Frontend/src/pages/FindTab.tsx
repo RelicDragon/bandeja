@@ -41,6 +41,7 @@ import {
   seedDayScopedAvailableCache,
 } from '@/queries/games/seedDayScopedAvailableCache';
 import { sortGamesByStatusAndStartTime } from '@/queries/games/sortGames';
+import type { Game } from '@/types';
 import {
   buildAvailableGamesFilterHash,
   buildAvailableUpcomingFilterHash,
@@ -330,8 +331,8 @@ export const FindTab = () => {
   ]);
 
   const filteredAvailableGames = useMemo(() => {
-    if (findViewMode === 'list') return sortGamesByStatusAndStartTime(upcomingGames);
-    return sortGamesByStatusAndStartTime(calendarGames);
+    if (findViewMode === 'list') return sortGamesByStatusAndStartTime<Game>(upcomingGames);
+    return sortGamesByStatusAndStartTime<Game>(calendarGames);
   }, [findViewMode, upcomingGames, calendarGames]);
 
   // undefined = day not ready (skeleton); [] = settled empty; non-empty = cards.

@@ -9,7 +9,10 @@ import type { ChatItem } from './chatListTypes';
 export function useChatListMarketUnread(chatsFilter: ChatsFilterType, chats: ChatItem[]) {
   const warm = useUnreadStoreWarm();
   const marketChannelIds = useMemo(
-    () => (chatsFilter === 'market' ? chats.filter((c) => c.type === 'channel').map((c) => c.data.id) : []),
+    () =>
+      chatsFilter === 'market'
+        ? chats.filter((c): c is Extract<ChatItem, { type: 'channel' }> => c.type === 'channel').map((c) => c.data.id)
+        : [],
     [chatsFilter, chats]
   );
   const marketChannelIdsKey = useMemo(() => {

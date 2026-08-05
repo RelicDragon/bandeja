@@ -182,7 +182,7 @@ function WeatherWindowDialogInner({
 
   useEffect(() => {
     if (!selectedTime) return;
-    if (!sortedRows.some((point) => point.time === selectedTime)) {
+    if (!sortedRows.some((point: WeatherHourlyPoint) => point.time === selectedTime)) {
       setSelectedTime(null);
     }
   }, [selectedTime, sortedRows]);
@@ -194,7 +194,7 @@ function WeatherWindowDialogInner({
     }
     if (!hasRows || !isGameDay || typeof window === 'undefined') return;
 
-    const firstGameHourIndex = sortedRows.findIndex((point) => resolveRowPhase(point, startTime, endTime) === 'game');
+    const firstGameHourIndex = sortedRows.findIndex((point: WeatherHourlyPoint) => resolveRowPhase(point, startTime, endTime) === 'game');
     if (firstGameHourIndex < 0) return;
 
     const targetRow = sortedRows[Math.max(0, firstGameHourIndex - 1)];
@@ -378,7 +378,7 @@ function WeatherWindowDialogInner({
                     </div>
                   ) : (
                     <div className="divide-y divide-gray-100 dark:divide-gray-800">
-                      {sortedRows.map((point) => {
+                      {sortedRows.map((point: WeatherHourlyPoint) => {
                         const condition = getWeatherConditionLabel(t, point.conditionKey);
                         const temperatureColor = getWeatherTemperatureColor(point);
                         const iconPalette = getWeatherIconPalette(point.conditionKey, point.isDay);

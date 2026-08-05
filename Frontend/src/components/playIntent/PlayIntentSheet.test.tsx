@@ -30,6 +30,9 @@ const intent: PlayIntent = {
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
+  // i18n/config.ts calls i18n.use(initReactI18next).init(...) at import time
+  // (pulled in transitively via useBackButtonModal). Provide a no-op stub.
+  initReactI18next: { type: '3rdParty', init: () => {} },
 }));
 
 vi.mock('react-hot-toast', () => ({

@@ -6,6 +6,7 @@ import {
 import { PlayerAvatar } from '@/components/PlayerAvatar';
 import { usePlayerCardModal } from '@/hooks/usePlayerCardModal';
 import { useAchievementLeaderboardQuery } from '@/queries/useAchievementLeaderboardQuery';
+import type { AchievementLeaderboardEntry } from '@/api/ranking';
 import { formatFixtureMatrixPlayerName } from '@/utils/leagueFixtureMatrix';
 
 type AchievementFamilyLeadersProps = {
@@ -65,7 +66,7 @@ export function AchievementFamilyLeaders({
                 className="h-12 w-32 animate-pulse rounded-2xl bg-gray-200/70 dark:bg-white/[0.07]"
               />
             ))
-          : leaders.map((leader) => {
+          : leaders.map((leader: AchievementLeaderboardEntry) => {
               const fullName = [leader.firstName, leader.lastName]
                 .filter(Boolean)
                 .join(' ');

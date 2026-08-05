@@ -49,10 +49,10 @@ export const usePastGames = (
         const updatedGame = response.data as Game;
         queryClient.setQueryData<InfiniteData<PastGamesPage>>(
           queryKeys.games.past(userId),
-          (old) => {
+          (old: InfiniteData<PastGamesPage> | undefined) => {
             if (!old) return old;
-            const exists = old.pages.some((page) =>
-              page.games.some((g) => g.id === gameId),
+            const exists = old.pages.some((page: PastGamesPage) =>
+              page.games.some((g: Game) => g.id === gameId),
             );
             if (!exists) return old;
             if (
@@ -61,18 +61,18 @@ export const usePastGames = (
             ) {
               return {
                 ...old,
-                pages: old.pages.map((page) => ({
+                pages: old.pages.map((page: PastGamesPage) => ({
                   ...page,
-                  games: page.games.filter((g) => g.id !== gameId),
+                  games: page.games.filter((g: Game) => g.id !== gameId),
                 })),
               };
             }
             return {
               ...old,
-              pages: old.pages.map((page) => ({
+              pages: old.pages.map((page: PastGamesPage) => ({
                 ...page,
                 games: sortGames(
-                  page.games.map((g) => (g.id === gameId ? updatedGame : g)),
+                  page.games.map((g: Game) => (g.id === gameId ? updatedGame : g)),
                 ),
               })),
             };

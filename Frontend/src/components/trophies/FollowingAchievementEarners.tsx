@@ -3,6 +3,7 @@ import { PlayerAvatar } from '@/components/PlayerAvatar';
 import { usePlayerCardModal } from '@/hooks/usePlayerCardModal';
 import { useFollowingAchievementEarnersQuery } from '@/queries/useFollowingAchievementEarnersQuery';
 import { useAuthStore } from '@/store/authStore';
+import type { BasicUser } from '@/types';
 import { formatFixtureMatrixPlayerName } from '@/utils/leagueFixtureMatrix';
 
 type FollowingAchievementEarnersProps = {
@@ -74,7 +75,7 @@ export function FollowingAchievementEarners({
         data-testid="following-achievement-earners-list"
         className="flex flex-wrap gap-1 px-1 py-1"
       >
-          {users.map((user) => {
+          {users.map((user: BasicUser) => {
             const fullName = [user.firstName, user.lastName].filter(Boolean).join(' ');
             return (
               <button

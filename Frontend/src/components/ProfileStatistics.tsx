@@ -28,7 +28,7 @@ export const ProfileStatistics = () => {
       queryClient.setQueryData(queryKeys.userStats(user.id, sportKey), nextStats);
       queryClient.setQueriesData<UserStats>(
         { queryKey: ['users', 'stats', user.id] },
-        (previous) => {
+        (previous: UserStats | undefined) => {
           if (!previous) return previous;
           const previousSport = previous.sport ?? sport;
           if (previousSport === sportKey) return nextStats;

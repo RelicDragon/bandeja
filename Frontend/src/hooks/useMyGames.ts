@@ -27,7 +27,7 @@ export const useMyGames = (
       if (!userId) return;
       queryClient.setQueryData<MyGamesData>(
         queryKeys.games.my(userId),
-        (old) => {
+        (old: MyGamesData | undefined) => {
           const prevInvites = old?.invites ?? [];
           const nextInvites =
             typeof newInvites === 'function' ? newInvites(prevInvites) : newInvites;

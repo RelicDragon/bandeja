@@ -44,7 +44,7 @@ export function useTrophyPinActions(ownerUserId: string | undefined) {
   const patchCaches = useCallback(
     (mutate: (trophies: TrophiesPayload) => TrophiesPayload) => {
       if (!ownerUserId) return;
-      queryClient.setQueriesData<UserStats>({ queryKey: ['users', 'stats', ownerUserId] }, (prev) => {
+      queryClient.setQueriesData<UserStats>({ queryKey: ['users', 'stats', ownerUserId] }, (prev: UserStats | undefined) => {
         if (!prev?.user.trophies) return prev;
         return patchUserStatsTrophies(prev, mutate(prev.user.trophies));
       });

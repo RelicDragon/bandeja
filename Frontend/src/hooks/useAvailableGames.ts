@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { useAvailableGamesQuery } from '@/queries/games/useAvailableGamesQuery';
+import type { Game } from '@/types';
 import type { FindStructuralApiParams } from '@/utils/findStructuralApiParams';
 import { EMPTY_AVAILABLE_META } from '@/queries/games/availableGamesPage';
 
@@ -51,7 +52,7 @@ export const useAvailableGames = (
     );
 
   const hidePlaceholder = rejectPlaceholderData && isPlaceholderData;
-  const games = hidePlaceholder ? [] : (data?.games ?? []);
+  const games: Game[] = hidePlaceholder ? [] : (data?.games ?? []);
   const meta = hidePlaceholder ? EMPTY_AVAILABLE_META : (data?.meta ?? EMPTY_AVAILABLE_META);
   const hasData = !hidePlaceholder && data != null;
 

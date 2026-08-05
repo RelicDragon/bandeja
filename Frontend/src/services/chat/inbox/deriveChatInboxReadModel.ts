@@ -197,7 +197,11 @@ export function deriveChatInboxReadModel(input: DeriveChatInboxReadModelInput): 
   };
 
   const marketChannelIds =
-    chatsFilter === 'market' ? threads.filter((c) => c.type === 'channel').map((c) => c.data.id) : [];
+    chatsFilter === 'market'
+      ? threads
+          .filter((c): c is Extract<ChatItem, { type: 'channel' }> => c.type === 'channel')
+          .map((c) => c.data.id)
+      : [];
   const marketChannelIdsKey =
     chatsFilter !== 'market' || marketChannelIds.length === 0 ? '' : [...marketChannelIds].sort().join(',');
 

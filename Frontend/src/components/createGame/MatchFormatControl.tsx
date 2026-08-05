@@ -53,7 +53,7 @@ export const MatchFormatControl = ({
             : 'text-gray-500 dark:text-gray-400';
           const { primary: hintPrimary, secondary: hintSecondary } = hintLabel
             ? splitMatchFormatLabel(hintLabel)
-            : { primary: '' };
+            : { primary: '', secondary: undefined };
 
           const iconRow = (Icon: LucideIcon, content: ReactNode) => (
             <span className="flex items-center justify-center gap-1 leading-tight">

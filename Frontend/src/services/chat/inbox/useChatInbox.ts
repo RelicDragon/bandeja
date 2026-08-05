@@ -361,7 +361,9 @@ export function useChatInbox(opts: UseChatInboxOptions) {
   const marketUnknownGroupFetchRef = useRef<string | null>(null);
   useEffect(() => {
     const data = lastChatUnreadCount as { contextType?: string; contextId?: string } | null;
-    const ids = chatsRef.current.filter((c) => c.type === 'channel').map((c) => c.data.id);
+    const ids = chatsRef.current
+      .filter((c): c is Extract<ChatItem, { type: 'channel' }> => c.type === 'channel')
+      .map((c) => c.data.id);
     if (
       !shouldFetchMarketForUnknownGroupUnread(
         chatsFilter,
@@ -390,7 +392,12 @@ export function useChatInbox(opts: UseChatInboxOptions) {
   }, [lastChatUnreadCount, chatsFilter, fetchOps, userId]);
 
   const marketChannelIds = useMemo(
-    () => (chatsFilter === 'market' ? threads.filter((c) => c.type === 'channel').map((c) => c.data.id) : []),
+    () =>
+      chatsFilter === 'market'
+        ? threads
+            .filter((c): c is Extract<ChatItem, { type: 'channel' }> => c.type === 'channel')
+            .map((c) => c.data.id)
+        : [],
     [chatsFilter, threads]
   );
 

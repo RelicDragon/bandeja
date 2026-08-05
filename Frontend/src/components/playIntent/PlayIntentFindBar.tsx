@@ -18,7 +18,7 @@ import { PlayIntentSheet } from './PlayIntentSheet';
 import { PlayIntentLookingStrip } from './PlayIntentLookingStrip';
 import { PlayIntentIdleCtaCard } from './PlayIntentIdleCtaCard';
 import { resolvePlayIntentProposal } from './playIntentProposal';
-import { playIntentsApi, type MatchProposalSummary, type PlayIntent } from '@/api/playIntents';
+import { playIntentsApi, type MatchProposalSummary, type PlayIntent, type PoolMember } from '@/api/playIntents';
 import { getViewerPrimarySport } from '@/utils/profileSports';
 import { parseSport } from '@/sport/sportRegistry';
 import type { Sport } from '@/types';
@@ -294,7 +294,7 @@ export function PlayIntentProvider({
 
   const stripMembers = useMemo(
     () =>
-      (pool?.members.filter((m) => m.affinity !== 'far').slice(0, 3) ?? []).map((m) => ({
+      (pool?.members.filter((m: PoolMember) => m.affinity !== 'far').slice(0, 3) ?? []).map((m: PoolMember) => ({
         userId: m.userId,
         firstName: m.firstName,
         lastName: m.lastName,

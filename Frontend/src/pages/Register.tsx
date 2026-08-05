@@ -111,11 +111,11 @@ export const Register = () => {
     };
 
     for (const field of errorFields) {
-      if (validationErrors[field] && refs[field]?.current) {
-        const element = refs[field].current;
+      const element = refs[field]?.current;
+      if (validationErrors[field] && element) {
         const rect = element.getBoundingClientRect();
         const isVisible = rect.top >= 0 && rect.bottom <= window.innerHeight;
-        
+
         if (!isVisible) {
           element.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }

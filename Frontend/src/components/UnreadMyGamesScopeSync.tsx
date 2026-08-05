@@ -6,6 +6,7 @@ import {
 } from '@/queries/games/usePastGamesQuery';
 import { useMyGamesQuery } from '@/queries/games/useMyGamesQuery';
 import { useUnreadStore } from '@/store/unreadStore';
+import type { Game } from '@/types';
 import { pastGameIdsFromMyTabGames } from '@/utils/pastGameIdsFromMyTabGames';
 
 /** Keeps unreadStore myGames/pastGames scope aligned with loaded game lists. */
@@ -15,13 +16,13 @@ export function UnreadMyGamesScopeSync() {
   const { data: pastData } = usePastGamesQuery(userId, { enabled: false });
 
   const myGameIds = useMemo(
-    () => (myData?.games ?? []).map((g) => g.id),
+    () => (myData?.games ?? []).map((g: Game) => g.id),
     [myData?.games]
   );
   const pastGameIds = useMemo(() => {
     const cached = flattenPastGamesPages(pastData?.pages);
     if (cached.length > 0) {
-      return cached.map((g) => g.id);
+      return cached.map((g: Game) => g.id);
     }
     return pastGameIdsFromMyTabGames(myData?.games);
   }, [pastData?.pages, myData?.games]);
