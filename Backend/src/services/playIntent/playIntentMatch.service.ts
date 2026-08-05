@@ -481,16 +481,14 @@ export class PlayIntentMatchService {
     });
     if (orDates.length === 0) return new Set();
 
+    // Only a committed participant (PLAYING) counts as busy. A mere INVITED
+    // row is tentative — the user is free to be added to other proposals or
+    // matched into other games until they actually accept, at which point the
+    // participant flips to PLAYING (and the intent to CONSUMED).
     const playing = await prisma.gameParticipant.findMany({
       where: {
         userId: { in: userIds },
-        OR: [
-          { status: ParticipantStatus.PLAYING },
-          {
-            status: ParticipantStatus.INVITED,
-            playIntentId: { not: null },
-          },
-        ],
+        status: ParticipantStatus.PLAYING,
         game: {
           cityId,
           OR: orDates,
@@ -671,7 +669,7 @@ export class PlayIntentMatchService {
       affinity: 'near' | 'mid' | 'far';
       affinityScore: number;
       status: PlayIntentStatus;
-      busyInGame: boolean;
+      inGame: boolean;
       inProposal: boolean;
       eligibleForProposal: boolean;
       mismatch: IntentMismatch | null;
@@ -698,7 +696,11 @@ export class PlayIntentMatchService {
       if (!aff) continue;
       const profile = intent.user.sportProfiles.find((p) => p.sport === sport);
       const inProposal = proposalMemberIds.has(intent.userId);
-      const busyInGame = busyUserIds.has(intent.userId);
+      // Informational only — surfaced as a badge so the inviter knows the player
+      // has a committed game elsewhere. It does NOT gate eligibility: a live play
+      // intent is the source of truth for availability, so an in-game player with
+      // a fresh OPEN/MATCHED intent is free to be added to another proposal.
+      const inGame = busyUserIds.has(intent.userId);
       const mismatch =
         viewerCriteria && aff.bucket === 'far'
           ? intentMismatch(viewerCriteria, otherCrit)
@@ -717,14 +719,13 @@ export class PlayIntentMatchService {
         affinity: aff.bucket,
         affinityScore: aff.score,
         status: intent.status,
-        busyInGame,
+        inGame,
         inProposal,
         mismatch,
         fit,
         eligibleForProposal:
           !!proposalCanAcceptMembers &&
           !inProposal &&
-          !busyInGame &&
           (intent.status === PlayIntentStatus.OPEN ||
             intent.status === PlayIntentStatus.MATCHED) &&
           canIntentJoinProposal(otherCrit, proposalMemberCriteria),

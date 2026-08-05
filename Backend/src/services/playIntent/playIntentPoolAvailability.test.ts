@@ -7,14 +7,14 @@ import { derivePlayIntentPoolAvailability } from './playIntentPoolAvailability';
     viewerIsAvailable: true,
     proposalMemberCount: null,
     members: [
-      { affinity: 'near', status: 'OPEN', busyInGame: false },
-      { affinity: 'near', status: 'MATCHED', busyInGame: false },
-      { affinity: 'near', status: 'MATCHED', busyInGame: false },
-      { affinity: 'mid', status: 'MATCHED', busyInGame: false },
-      { affinity: 'mid', status: 'MATCHED', busyInGame: false },
-      { affinity: 'near', status: 'MATCHED', busyInGame: false },
-      { affinity: 'mid', status: 'MATCHED', busyInGame: false },
-      { affinity: 'near', status: 'MATCHED', busyInGame: false },
+      { affinity: 'near', status: 'OPEN', inGame: false },
+      { affinity: 'near', status: 'MATCHED', inGame: false },
+      { affinity: 'near', status: 'MATCHED', inGame: false },
+      { affinity: 'mid', status: 'MATCHED', inGame: false },
+      { affinity: 'mid', status: 'MATCHED', inGame: false },
+      { affinity: 'near', status: 'MATCHED', inGame: false },
+      { affinity: 'mid', status: 'MATCHED', inGame: false },
+      { affinity: 'near', status: 'MATCHED', inGame: false },
     ],
   });
 
@@ -31,9 +31,9 @@ import { derivePlayIntentPoolAvailability } from './playIntentPoolAvailability';
     viewerIsAvailable: true,
     proposalMemberCount: null,
     members: [
-      { affinity: 'near', status: 'MATCHED', busyInGame: false },
-      { affinity: 'mid', status: 'MATCHED', busyInGame: false },
-      { affinity: 'near', status: 'OPEN', busyInGame: false },
+      { affinity: 'near', status: 'MATCHED', inGame: false },
+      { affinity: 'mid', status: 'MATCHED', inGame: false },
+      { affinity: 'near', status: 'OPEN', inGame: false },
     ],
   });
 
@@ -50,9 +50,9 @@ import { derivePlayIntentPoolAvailability } from './playIntentPoolAvailability';
     viewerIsAvailable: true,
     proposalMemberCount: 4,
     members: [
-      { affinity: 'near', status: 'MATCHED', busyInGame: false },
-      { affinity: 'near', status: 'MATCHED', busyInGame: false },
-      { affinity: 'near', status: 'MATCHED', busyInGame: false },
+      { affinity: 'near', status: 'MATCHED', inGame: false },
+      { affinity: 'near', status: 'MATCHED', inGame: false },
+      { affinity: 'near', status: 'MATCHED', inGame: false },
     ],
   });
 
@@ -64,21 +64,24 @@ import { derivePlayIntentPoolAvailability } from './playIntentPoolAvailability';
 }
 
 {
+  // An in-game player with a live intent is still available — the intent is
+  // the source of truth, the game is just context (signalled via a badge).
+  // Only a far (incompatible) fit removes a player from availability.
   const availability = derivePlayIntentPoolAvailability({
     partySize: 4,
     viewerIsAvailable: true,
     proposalMemberCount: null,
     members: [
-      { affinity: 'near', status: 'MATCHED', busyInGame: false },
-      { affinity: 'near', status: 'OPEN', busyInGame: true },
-      { affinity: 'mid', status: 'MATCHED', busyInGame: true },
+      { affinity: 'near', status: 'MATCHED', inGame: false },
+      { affinity: 'near', status: 'OPEN', inGame: true },
+      { affinity: 'mid', status: 'MATCHED', inGame: true },
     ],
   });
 
   assert.deepEqual(
     availability,
-    { availableCount: 1, clusterProgress: 2 },
-    'only an actual game removes an otherwise compatible player from availability',
+    { availableCount: 3, clusterProgress: 4 },
+    'an in-game player with a live intent stays available; only far fits are excluded',
   );
 }
 

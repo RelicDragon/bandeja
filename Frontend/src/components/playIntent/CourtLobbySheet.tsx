@@ -114,7 +114,7 @@ export function CourtLobbyPanel({
     () =>
       [...members]
         .filter(
-          (member) => !member.busyInGame && member.affinity !== 'far',
+          (member) => member.affinity !== 'far',
         )
         .sort(
           (a, b) =>
@@ -244,8 +244,7 @@ export function CourtLobbyPanel({
       proposal
         ? members
         : members.map((member) => {
-            const compatible =
-              !member.busyInGame && member.affinity !== 'far';
+            const compatible = member.affinity !== 'far';
             const selected = directSelectedIdSet.has(member.userId);
             return {
               ...member,
@@ -277,7 +276,7 @@ export function CourtLobbyPanel({
 
   const onPoolAvatarClick = useCallback(async (member: PoolMember) => {
     if (!proposalId && intent) {
-      const compatible = !member.busyInGame && member.affinity !== 'far';
+      const compatible = member.affinity !== 'far';
       if (!compatible) {
         // Non-fit player: toggle the expanding fit card.
         setPinnedUserId((current) =>
@@ -309,7 +308,7 @@ export function CourtLobbyPanel({
       !!member.eligibleForProposal;
 
     if (!canAddToMatch) {
-      const nonFit = member.busyInGame || member.affinity === 'far';
+      const nonFit = member.affinity === 'far';
       if (nonFit) {
         // Non-fit player: toggle the expanding fit card.
         setPinnedUserId((current) =>

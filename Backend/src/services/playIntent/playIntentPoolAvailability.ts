@@ -3,7 +3,7 @@ import type { PlayIntentStatus } from '@prisma/client';
 type AvailabilityMember = {
   affinity: 'near' | 'mid' | 'far';
   status: PlayIntentStatus;
-  busyInGame: boolean;
+  inGame: boolean;
 };
 
 export function derivePlayIntentPoolAvailability(input: {
@@ -12,10 +12,12 @@ export function derivePlayIntentPoolAvailability(input: {
   viewerIsAvailable: boolean;
   proposalMemberCount: number | null;
 }) {
-  // Pending proposals are suggestions, not reservations. A compatible player
-  // stays available until an actual game makes them busy.
+  // A live play intent is the source of truth for availability. Being in
+  // another game (inGame) is context, not a block — the player stays available
+  // as long as their intent is live and they're not an incompatible (far) fit.
+  // `inGame` is retained on the type for callers but no longer filters here.
   const availableCount = input.members.filter(
-    (member) => !member.busyInGame && member.affinity !== 'far',
+    (member) => member.affinity !== 'far',
   ).length;
   const clusterProgress =
     input.proposalMemberCount !== null

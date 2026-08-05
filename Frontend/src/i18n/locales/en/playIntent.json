@@ -56,6 +56,7 @@
     "affinityFar": "Exploring",
     "affinityInMatch": "In the match",
     "busyInGame": "Already in a game",
+    "inGame": "In another game",
     "addBackToMatch": "Add back to match",
     "mismatchTime": "Plays {{period}}",
     "mismatchTimeAnytime": "Flexible timing",

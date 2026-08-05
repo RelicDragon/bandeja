@@ -62,6 +62,7 @@
     "affinityFar": "В поиске",
     "affinityInMatch": "В матче",
     "busyInGame": "Уже участвует в игре",
+    "inGame": "В другой игре",
     "addBackToMatch": "Вернуть в матч",
     "mismatchTime": "Играет {{period}}",
     "mismatchTimeAnytime": "Гибкое время",

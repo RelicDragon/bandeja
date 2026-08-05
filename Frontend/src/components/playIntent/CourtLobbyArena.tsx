@@ -7,7 +7,7 @@ import {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Check, ChevronsRight, Plus, RotateCw } from 'lucide-react';
+import { Check, ChevronsRight, Clock, Plus, RotateCw } from 'lucide-react';
 import { CourtLobbyPulseRing } from '@/components/playIntent/CourtLobbyPulseRing';
 import { CourtLobbySportCourt } from '@/components/playIntent/CourtLobbySportCourt';
 import { CourtLobbyThunder } from '@/components/playIntent/CourtLobbyThunder';
@@ -75,7 +75,6 @@ const HANDOFF_BLEND_AT_TWENTY_FPS = 0.22;
 const DEFAULT_ARENA_SIZE: ArenaSize = { width: 330, height: 330 };
 
 function memberVisual(member: PoolMember, hasProposal: boolean) {
-  if (member.busyInGame) return { size: 31, opacity: 0.38 };
   if (member.inProposal) return { size: 30, opacity: 1 };
   if (
     member.eligibleForProposal ||
@@ -90,7 +89,6 @@ function memberVisual(member: PoolMember, hasProposal: boolean) {
 }
 
 function orbitRadiusFor(member: PoolMember, hasProposal: boolean): number {
-  if (member.busyInGame) return ORBIT_FAR;
   if (member.inProposal) return ORBIT_IN_MATCH;
   if (member.eligibleForProposal) return ORBIT_NEAR;
   if (hasProposal && member.affinity === 'near') return ORBIT_MID;
@@ -113,30 +111,26 @@ function stableUnitInterval(value: string): number {
 }
 
 function orbitSpeedFor(member: PoolMember): number {
-  const revolutionSeconds = member.busyInGame
-    ? 360
-    : member.inProposal
-      ? 210
-      : member.eligibleForProposal || member.affinity === 'near'
-        ? 195
-        : member.affinity === 'mid'
-          ? 255
-          : 330;
+  const revolutionSeconds = member.inProposal
+    ? 210
+    : member.eligibleForProposal || member.affinity === 'near'
+      ? 195
+      : member.affinity === 'mid'
+        ? 255
+        : 330;
   const stableVariation = 0.82 + stableUnitInterval(`${member.userId}:speed`) * 0.4;
   const direction = stableUnitInterval(`${member.userId}:direction`) < 0.28 ? -1 : 1;
   return direction * ((Math.PI * 2) / (revolutionSeconds * stableVariation));
 }
 
 function randomizedOrbitSpeedFor(member: PoolMember): number {
-  const baseRevolutionSeconds = member.busyInGame
-    ? 360
-    : member.inProposal
-      ? 210
-      : member.eligibleForProposal || member.affinity === 'near'
-        ? 195
-        : member.affinity === 'mid'
-          ? 255
-          : 330;
+  const baseRevolutionSeconds = member.inProposal
+    ? 210
+    : member.eligibleForProposal || member.affinity === 'near'
+      ? 195
+      : member.affinity === 'mid'
+        ? 255
+        : 330;
   const speedVariation = 0.72 + Math.random() * 0.62;
   const direction = Math.random() < 0.5 ? -1 : 1;
   return direction * ((Math.PI * 2) / (baseRevolutionSeconds * speedVariation));
@@ -205,7 +199,7 @@ function membersKey(members: PoolMember[]) {
   return members
     .map(
       (m) =>
-        `${m.userId}:${m.status}:${m.busyInGame ? 1 : 0}:${m.affinity}:${m.inProposal ? 1 : 0}:${m.eligibleForProposal ? 1 : 0}:${m.intentId}:${m.mismatch ? `${m.mismatch.reason}:${m.mismatch.period ?? ''}` : ''}:${fitKey(m.fit)}`,
+        `${m.userId}:${m.status}:${m.inGame ? 1 : 0}:${m.affinity}:${m.inProposal ? 1 : 0}:${m.eligibleForProposal ? 1 : 0}:${m.intentId}:${m.mismatch ? `${m.mismatch.reason}:${m.mismatch.period ?? ''}` : ''}:${fitKey(m.fit)}`,
     )
     .join('|');
 }
@@ -222,7 +216,7 @@ function arenaMembersEqual(previous: PoolMember[], next: PoolMember[]) {
       member.lastName === candidate.lastName &&
       member.avatar === candidate.avatar &&
       member.status === candidate.status &&
-      member.busyInGame === candidate.busyInGame &&
+      member.inGame === candidate.inGame &&
       member.affinity === candidate.affinity &&
       !!member.inProposal === !!candidate.inProposal &&
       !!member.eligibleForProposal === !!candidate.eligibleForProposal &&
@@ -339,13 +333,11 @@ function CourtLobbyArenaComponent({
     () =>
       members.map((m) => ({
         id: m.userId,
-        affinity: m.busyInGame
-          ? ('far' as const)
-          : m.eligibleForProposal
-            ? ('near' as const)
-            : hasProposal && m.affinity === 'near'
-              ? ('mid' as const)
-              : m.affinity,
+        affinity: m.eligibleForProposal
+          ? ('near' as const)
+          : hasProposal && m.affinity === 'near'
+            ? ('mid' as const)
+            : m.affinity,
         inProposal: !!m.inProposal,
       })),
     [hasProposal, members],
@@ -901,27 +893,28 @@ function CourtLobbyArenaComponent({
         const displayName =
           [node.member.firstName, node.member.lastName].filter(Boolean).join(' ') ||
           t('common.player', { defaultValue: 'Player' });
-        const affinityLabel = node.member.busyInGame
-          ? t('playIntent.busyInGame', { defaultValue: 'Already in a game' })
-          : highlightedForReAdd
-            ? t('playIntent.addBackToMatch', {
-                defaultValue: 'Add back to match',
+        // The affinity label reflects how good a fit the player is. A separate
+        // "in another game" badge (rendered below) carries that context without
+        // overriding the fit signal.
+        const affinityLabel = highlightedForReAdd
+          ? t('playIntent.addBackToMatch', {
+              defaultValue: 'Add back to match',
+            })
+          : inProposal
+            ? t('playIntent.affinityInMatch', {
+                defaultValue: 'In the match',
               })
-            : inProposal
-              ? t('playIntent.affinityInMatch', {
-                  defaultValue: 'In the match',
-                })
-              : t(
-                  `playIntent.affinity${node.member.affinity[0].toUpperCase()}${node.member.affinity.slice(1)}`,
-                  {
-                    defaultValue:
-                      node.member.affinity === 'near'
-                        ? 'Great fit'
-                        : node.member.affinity === 'mid'
-                          ? 'Possible fit'
-                          : 'Exploring',
-                  },
-                );
+            : t(
+                `playIntent.affinity${node.member.affinity[0].toUpperCase()}${node.member.affinity.slice(1)}`,
+                {
+                  defaultValue:
+                    node.member.affinity === 'near'
+                      ? 'Great fit'
+                      : node.member.affinity === 'mid'
+                        ? 'Possible fit'
+                        : 'Exploring',
+                },
+              );
 
         return (
           <button
@@ -932,7 +925,7 @@ function CourtLobbyArenaComponent({
             title={`${displayName} · ${affinityLabel}`}
             data-affinity={node.member.affinity}
             data-in-proposal={inProposal ? 'true' : 'false'}
-            data-busy-in-game={node.member.busyInGame ? 'true' : 'false'}
+            data-in-game={node.member.inGame ? 'true' : 'false'}
             data-favorite={favorite ? 'true' : 'false'}
             data-readd={highlightedForReAdd ? 'true' : 'false'}
             data-actionable={highlightedForReAdd ? 'true' : 'false'}
@@ -992,6 +985,16 @@ function CourtLobbyArenaComponent({
             {highlightedForReAdd && (
               <span className="court-lobby-arena__avatar-readd" aria-hidden>
                 <Plus size={10} strokeWidth={3} />
+              </span>
+            )}
+            {node.member.inGame && !inProposal && (
+              <span
+                className="court-lobby-arena__avatar-in-game"
+                aria-label={t('playIntent.inGame', {
+                  defaultValue: 'In another game',
+                })}
+              >
+                <Clock size={9} strokeWidth={3} />
               </span>
             )}
           </button>

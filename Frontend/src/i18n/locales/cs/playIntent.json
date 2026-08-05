@@ -62,6 +62,7 @@
     "affinityFar": "Hledá se",
     "affinityInMatch": "V zápase",
     "busyInGame": "Už je ve hře",
+    "inGame": "V jiné hře",
     "addBackToMatch": "Přidat zpět do zápasu",
     "mismatchTime": "Hraje {{period}}",
     "mismatchTimeAnytime": "Flexibilní čas",

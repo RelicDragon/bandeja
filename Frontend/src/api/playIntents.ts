@@ -62,7 +62,7 @@ export type PoolMember = {
   affinity: 'near' | 'mid' | 'far';
   affinityScore: number;
   status: 'OPEN' | 'MATCHED' | 'CONSUMED' | 'EXPIRED' | 'CANCELLED';
-  busyInGame: boolean;
+  inGame: boolean;
   inProposal?: boolean;
   eligibleForProposal?: boolean;
   mismatch?: {

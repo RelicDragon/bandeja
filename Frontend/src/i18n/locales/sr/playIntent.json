@@ -62,6 +62,7 @@
     "affinityFar": "U potrazi",
     "affinityInMatch": "U meču",
     "busyInGame": "Već je u igri",
+    "inGame": "U drugoj igri",
     "addBackToMatch": "Vrati u meč",
     "mismatchTime": "Igra {{period}}",
     "mismatchTimeAnytime": "Fleksibilno vreme",

@@ -240,7 +240,7 @@ const freeMembers: PoolMember[] = ['two', 'three', 'four'].map((id, index) => ({
   affinity: index === 2 ? 'mid' : 'near',
   affinityScore: 10 - index,
   status: 'MATCHED',
-  busyInGame: false,
+  inGame: false,
   inProposal: false,
   eligibleForProposal: false,
 }));

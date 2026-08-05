@@ -54,6 +54,7 @@
     "affinityFar": "Explorando",
     "affinityInMatch": "En el partido",
     "busyInGame": "Ya está en una partida",
+    "inGame": "En otra partida",
     "addBackToMatch": "Volver a añadir al partido",
     "mismatchTime": "Juega {{period}}",
     "mismatchTimeAnytime": "Horario flexible",
