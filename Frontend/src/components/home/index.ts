@@ -5,5 +5,6 @@ export { AvailableGamesSection } from './AvailableGamesSection';
 export { CityPromptBanner } from './CityPromptBanner';
 export { UserTeamsHomeSection } from './UserTeamsHomeSection';
 export { YourLeaguesHomeSection } from './YourLeaguesHomeSection';
-export { MyTabPanelSwitcher } from './MyTabPanelSwitcher';
+export { HomeActionGrid } from './HomeActionGrid';
+export { HomeTodayHeading } from './HomeTodayHeading';
 

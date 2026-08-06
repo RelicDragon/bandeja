@@ -11,26 +11,25 @@ import {
   InvitesSection,
   MyGamesSection,
   PastGamesSection,
-  CityPromptBanner,
-  MyTabPanelSwitcher,
+  UserTeamsHomeSection,
 } from '@/components/home';
-import { SportQuestionnairePrompt } from '@/components/sportQuestionnaire';
 import { StoriesRail } from '@/components/stories/StoriesRail';
-import { PlayIntentHomeStrip } from '@/components/playIntent/PlayIntentFindBar';
+import { HomeActionGrid } from '@/components/home/HomeActionGrid';
+import { HomeTodayHeading } from '@/components/home/HomeTodayHeading';
 import { AdSlot } from '@/components/sponsorSlots';
 import { AD_PLACEMENTS } from '@/shared/adPlacements';
 import { useRegisterAdSportContext } from '@/hooks/useAdPlacements';
-import { useQuestionnaireStatus } from '@/hooks/useQuestionnaireStatus';
-import { isHomeHeroAdBlocked } from '@/utils/adHomeHeroVisibility';
 import { getViewerPrimarySport } from '@/utils/profileSports';
-import { Button, MainTabFooter } from '@/components';
+import { MainTabFooter } from '@/components';
 import { gamesApi } from '@/api';
-import { useTotalUnreadForMarkAllBanner, useGameUnreadCountsForIds } from '@/hooks/useUnreadBridge';
-import { useUnreadStore } from '@/store/unreadStore';
+import { useGameUnreadCountsForIds } from '@/hooks/useUnreadBridge';
 import { useAuthStore } from '@/store/authStore';
 import { useShellNavStore } from '@/store/shellNavStore';
 import { useHeaderStore } from '@/store/headerStore';
 import { useMyGames } from '@/hooks/useMyGames';
+import { useMyTabClubBookings } from '@/hooks/useMyTabClubBookings';
+import { useUserTeamsBootstrap } from '@/hooks/useUserTeamsBootstrap';
+import { useMyTabPanelCounts } from '@/hooks/useMyTabPanelCounts';
 import { CalendarSection } from '@/components/home/CalendarSection';
 import { usePastGames } from '@/hooks/usePastGames';
 import { usePastGamesPrefetch } from '@/hooks/useMyTabPrefetch';
@@ -98,7 +97,6 @@ export const MyTab = () => {
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
   const isDesktop = useDesktop();
-  const markAllBannerUnread = useTotalUnreadForMarkAllBanner();
   const { tab: homeTab } = useHomeFromUrl();
   const isCalendarTab = homeTab === 'calendar';
   const requestFocusInvitesNonce = useShellNavStore((s) => s.requestFocusInvitesNonce);
@@ -109,9 +107,12 @@ export const MyTab = () => {
   const setMyGamesCalendarDateAfterCreate = useShellNavStore((s) => s.setMyGamesCalendarDateAfterCreate);
   const setCreateGameInitialDate = useHeaderStore((s) => s.setCreateGameInitialDate);
   const primarySport = getViewerPrimarySport(user);
-  const { status: questionnaireStatus } = useQuestionnaireStatus(primarySport);
   useRegisterAdSportContext(AD_PLACEMENTS.HOME_HERO, primarySport);
-  const hideHomeHeroAd = isHomeHeroAdBlocked(user, primarySport, questionnaireStatus);
+
+  // Hooks relocated from the removed MyTabPanelSwitcher (teams bootstrap + panel
+  // counts drive the action grid's earned surfaces and the bottom Teams section).
+  useUserTeamsBootstrap();
+  const booktime = useMyTabClubBookings();
 
   const [myGamesViewMode, setMyGamesViewMode] = useState<MyGamesViewMode>(() =>
     readMyGamesViewMode(user?.id),
@@ -133,6 +134,7 @@ export const MyTab = () => {
     unreadCounts,
     refetch: refetchMyGames,
   } = useMyGames(user, setLoading);
+  const panelCounts = useMyTabPanelCounts(games, booktime);
 
   useEffect(() => {
     if (!requestFocusInvitesNonce || loading) return;
@@ -379,37 +381,13 @@ export const MyTab = () => {
     weatherModeScope: 'my' as const,
     selectedDateEmptyHint,
   };
-  const myTabPanelSwitcherProps = {
-    games,
-    gamesUnreadCounts: calendarMergedUnreadCounts,
-    calendarVisible,
-    onCalendarVisibleChange: handleCalendarVisibleChange,
-  };
   const filteredPastGames = useMemo(() => {
     const list = pastGames.filter((g) => g.entityType !== 'LEAGUE_SEASON');
     return sortMyGamesByStatusAndDateTime(list, gameUnreadForSort);
   }, [pastGames, gameUnreadForSort]);
 
-  const [isMarkingAllAsRead, setIsMarkingAllAsRead] = useState(false);
   const [decliningInviteIds, setDecliningInviteIds] = useState<Set<string>>(new Set());
   const acceptingInviteIdsRef = useRef<Set<string>>(new Set());
-
-  const handleMarkAllAsRead = async () => {
-    if (!user?.id || isMarkingAllAsRead || markAllBannerUnread === 0) return;
-
-    setIsMarkingAllAsRead(true);
-    try {
-      await useUnreadStore.getState().markAllRead();
-      await refetchMyGames();
-      toast.success(t('chat.allMarkedAsRead', { defaultValue: 'All messages marked as read' }));
-    } catch (error) {
-      console.error('Failed to mark all messages as read:', error);
-      toast.error(t('errors.generic', { defaultValue: 'Failed to mark all messages as read' }));
-    } finally {
-      setIsMarkingAllAsRead(false);
-    }
-  };
-
   const handleAcceptInvite = async (inviteId: string) => {
     const authUser = useAuthStore.getState().user;
     if (authUser && authUser.nameIsSet !== true) {
@@ -480,6 +458,7 @@ export const MyTab = () => {
         onLoadMore={loadPastGames}
         onNoteSaved={(gameId) => refetchGame(gameId)}
       />
+      <UserTeamsHomeSection embedded />
       <MainTabFooter isLoading={footerLoading} />
     </>
   );
@@ -492,29 +471,18 @@ export const MyTab = () => {
               <StoriesRail />
             </AnimatedMount>
           )}
-          {user && (
-            <PlayIntentHomeStrip
-              cityId={user.currentCity?.id}
-              sport={primarySport}
-              acceptSharedDeepLinks
-            />
-          )}
-          {!hideHomeHeroAd && user && (
+          {user && user.cityIsSet === true && (
             <AdSlot placement={AD_PLACEMENTS.HOME_HERO} />
           )}
           {user && (
-            <AnimatedMount layout>
-              <MyTabPanelSwitcher {...myTabPanelSwitcherProps} />
-            </AnimatedMount>
+            <HomeActionGrid
+              user={user}
+              games={games}
+              gamesUnreadCounts={calendarMergedUnreadCounts}
+              primarySport={primarySport}
+              panelCounts={panelCounts}
+            />
           )}
-          {user && (
-            <AnimatedMount layout>
-              <SportQuestionnairePrompt sport={primarySport} />
-            </AnimatedMount>
-          )}
-          <AnimatedMount layout>
-            <CityPromptBanner />
-          </AnimatedMount>
           {!loading && (
             <div id="home-invites-section">
               <InvitesSection
@@ -526,6 +494,10 @@ export const MyTab = () => {
               />
             </div>
           )}
+          <HomeTodayHeading
+            calendarVisible={calendarVisible}
+            onToggleCalendar={() => handleCalendarVisibleChange(!calendarVisible)}
+          />
           <AnimatedMount>
             <MyGamesSection
               games={gamesSectionGames}
@@ -537,18 +509,7 @@ export const MyTab = () => {
               onSwitchToSearch={!hasUpcomingGames ? () => navigationService.navigateToFind() : undefined}
             />
           </AnimatedMount>
-          <AnimatedMount show={markAllBannerUnread > 0} className="mb-4">
-            <div className="flex items-center justify-center pt-4">
-              <Button
-                onClick={handleMarkAllAsRead}
-                variant="primary"
-                size="sm"
-                disabled={isMarkingAllAsRead || markAllBannerUnread === 0}
-              >
-                {isMarkingAllAsRead ? t('common.loading', { defaultValue: 'Loading...' }) : t('chat.markAllAsRead', { defaultValue: 'Mark all as read' })}
-              </Button>
-            </div>
-          </AnimatedMount>
+          <UserTeamsHomeSection embedded />
         </TabContentStack>
         <MainTabFooter isLoading={loading} />
       </div>
@@ -606,29 +567,18 @@ export const MyTab = () => {
               <StoriesRail />
             </AnimatedMount>
           )}
-          {user && (
-            <PlayIntentHomeStrip
-              cityId={user.currentCity?.id}
-              sport={primarySport}
-              acceptSharedDeepLinks
-            />
-          )}
-          {!hideHomeHeroAd && user && (
+          {user && user.cityIsSet === true && (
             <AdSlot placement={AD_PLACEMENTS.HOME_HERO} />
           )}
           {user && (
-            <AnimatedMount layout>
-              <MyTabPanelSwitcher {...myTabPanelSwitcherProps} />
-            </AnimatedMount>
+            <HomeActionGrid
+              user={user}
+              games={games}
+              gamesUnreadCounts={calendarMergedUnreadCounts}
+              primarySport={primarySport}
+              panelCounts={panelCounts}
+            />
           )}
-          {user && (
-            <AnimatedMount layout>
-              <SportQuestionnairePrompt sport={primarySport} />
-            </AnimatedMount>
-          )}
-          <AnimatedMount layout>
-            <CityPromptBanner />
-          </AnimatedMount>
           {!loading && (
             <div id="home-invites-section">
               <InvitesSection
@@ -646,6 +596,10 @@ export const MyTab = () => {
               <CalendarSection {...myTabCalendarProps} />
             </AnimatedMount>
           ) : null}
+          <HomeTodayHeading
+            calendarVisible={calendarVisible}
+            onToggleCalendar={() => handleCalendarVisibleChange(!calendarVisible)}
+          />
           <AnimatedMount>
             <MyGamesSection
               games={gamesSectionGames}
@@ -658,18 +612,7 @@ export const MyTab = () => {
             />
           </AnimatedMount>
 
-          <AnimatedMount show={markAllBannerUnread > 0} className="mb-4">
-            <div className="flex items-center justify-center pt-4">
-              <Button
-                onClick={handleMarkAllAsRead}
-                variant="primary"
-                size="sm"
-                disabled={isMarkingAllAsRead || markAllBannerUnread === 0}
-              >
-                {isMarkingAllAsRead ? t('common.loading', { defaultValue: 'Loading...' }) : t('chat.markAllAsRead', { defaultValue: 'Mark all as read' })}
-              </Button>
-            </div>
-          </AnimatedMount>
+          <UserTeamsHomeSection embedded />
         </TabContentStack>
         <MainTabFooter isLoading={loading || isRefreshing} />
           </>

@@ -1,7 +1,5 @@
 import {
-  createContext,
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useRef,
@@ -26,36 +24,7 @@ import toast from 'react-hot-toast';
 import { SharedPlayIntentDialog } from './SharedPlayIntentDialog';
 import { SharedPlayIntentProgressDialog } from './SharedPlayIntentProgressDialog';
 import { useSharedPlayIntentEntry } from './useSharedPlayIntentEntry';
-
-type PlayIntentCtx = {
-  enabled: boolean;
-  looking: boolean;
-  isLoading: boolean;
-  openCompose: () => void;
-  openLobby: () => void;
-  openProposal: () => void;
-  stopLooking: () => void;
-  proposal: MatchProposalSummary | null;
-  whenLabel: string;
-  idleWhenLabel: string;
-  emptyPool: boolean;
-  othersCount: number;
-  stripMembers: {
-    userId: string;
-    firstName?: string | null;
-    lastName?: string | null;
-    avatar: string | null;
-  }[];
-  proposalArrivalToken: number;
-};
-
-const Ctx = createContext<PlayIntentCtx | null>(null);
-
-function usePlayIntentUi() {
-  const ctx = useContext(Ctx);
-  if (!ctx) throw new Error('PlayIntent UI must be inside PlayIntentProvider');
-  return ctx;
-}
+import { PlayIntentUiContext as Ctx, type PlayIntentCtx, usePlayIntentContext as usePlayIntentUi } from './PlayIntentContext';
 
 function humanDays(dateKeys: string[], todayKey: string, t: (k: string) => string): string {
   if (!dateKeys.length) return t('playIntent.looking');

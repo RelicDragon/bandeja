@@ -164,4 +164,42 @@ describe('PlayIntentSheet', () => {
     expect(mocks.cancel).toHaveBeenCalledWith('intent-1');
     expect(mocks.onOpenChange).toHaveBeenCalledWith(false);
   });
+
+  it('shows the spectator "play too" CTA in lobby and swaps to compose on tap', async () => {
+    const { PlayIntentSheet } = await import('./PlayIntentSheet');
+    await act(async () => {
+      root.render(
+        // No `intent` → spectator: no change/cancel bar, only the play-too CTA.
+        <PlayIntentSheet
+          open
+          onOpenChange={mocks.onOpenChange}
+          initialMode="lobby"
+          cityId="city-1"
+          sport="PADEL"
+          members={[]}
+          overflow={0}
+          partySize={4}
+          availableCount={0}
+          clusterProgress={1}
+        />,
+      );
+    });
+
+    // Spectator sees the play-too CTA, not the change/cancel action bar.
+    expect(
+      container.querySelector('[data-testid="play-intent-play-too"]'),
+    ).not.toBeNull();
+    expect(
+      container.querySelector('[data-testid="play-intent-change"]'),
+    ).toBeNull();
+
+    await act(async () => {
+      container
+        .querySelector<HTMLButtonElement>('[data-testid="play-intent-play-too"]')
+        ?.click();
+    });
+
+    // Tapping it animates (swaps) into the full create-play-intent panel.
+    expect(container.querySelector('[data-testid="compose"]')).not.toBeNull();
+  });
 });

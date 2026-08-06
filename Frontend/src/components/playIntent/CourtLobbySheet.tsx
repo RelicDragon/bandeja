@@ -503,6 +503,7 @@ export function CourtLobbyPanel({
               rosterLocked={rosterLocked}
               sport={sport}
               partySize={partySize}
+              viewerInLobby={!!intent}
               pinnedUserId={pinnedUserId}
               onAvatarClick={onPoolAvatarClick}
               onOpenProfile={openPlayerCard}

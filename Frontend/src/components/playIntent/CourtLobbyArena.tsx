@@ -29,6 +29,10 @@ type Props = {
   rosterLocked: boolean;
   sport: Sport;
   partySize: number;
+  /** False when the viewer is spectating (no play-intent) — hides the
+   *  court-center "You are here" self-marker so a spectator isn't shown
+   *  occupying a court slot. */
+  viewerInLobby?: boolean;
   /** userId of the far-side player whose fit card is open (freezes that avatar). */
   pinnedUserId?: string | null;
   onAvatarClick: (member: PoolMember) => void | Promise<void>;
@@ -236,6 +240,7 @@ function arenaPropsEqual(previous: Props, next: Props) {
     previous.rosterLocked === next.rosterLocked &&
     previous.sport === next.sport &&
     previous.partySize === next.partySize &&
+    previous.viewerInLobby === next.viewerInLobby &&
     previous.onAvatarClick === next.onAvatarClick &&
     previous.pinnedUserId === next.pinnedUserId &&
     previous.onOpenProfile === next.onOpenProfile &&
@@ -255,6 +260,7 @@ function CourtLobbyArenaComponent({
   rosterLocked,
   sport,
   partySize,
+  viewerInLobby = true,
   pinnedUserId,
   onAvatarClick,
   onOpenProfile,
@@ -842,7 +848,7 @@ function CourtLobbyArenaComponent({
         </span>
       </div>
 
-      {viewer && (
+      {viewer && viewerInLobby && (
         <div
           ref={selfMarkerRef}
           className="court-lobby-arena__self-marker"

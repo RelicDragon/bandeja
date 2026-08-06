@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Loader2, Pencil, Trash2 } from 'lucide-react';
+import { Loader2, Pencil, Trash2, Zap } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import {
@@ -226,6 +226,20 @@ export function PlayIntentSheet({
                 )}
               </AnimatePresence>
             )}
+            </div>
+          )}
+
+          {mode === 'lobby' && !activeIntent && (
+            <div className="relative z-10 mx-4 mt-3 overflow-hidden rounded-2xl border border-emerald-200/80 bg-white/90 p-1.5 shadow-sm dark:border-white/10 dark:bg-white/[0.055]">
+              <button
+                type="button"
+                className="flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-3 text-sm font-semibold text-white transition-transform active:scale-[0.99]"
+                onClick={() => setMode('compose')}
+                data-testid="play-intent-play-too"
+              >
+                <Zap className="h-4 w-4" strokeWidth={2.5} />
+                {t('playIntent.playToo')}
+              </button>
             </div>
           )}
 
