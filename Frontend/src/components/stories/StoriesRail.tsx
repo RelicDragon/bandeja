@@ -10,6 +10,7 @@ import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { useStoriesFeed } from '@/hooks/useStoriesFeed';
 import { useDeferredVisible } from '@/hooks/useDeferredVisible';
 import { STAGGER_CHILDREN, STAGGER_ITEM_TRANSITION } from '@/components/motion/motionTokens';
+import { useSocialConnectionsQuery } from '@/queries/useSocialConnectionsQuery';
 import { StoriesRailBubble } from './StoriesRailBubble';
 import { StoriesViewer } from './StoriesViewer';
 import { StoryCreateSheet } from './create/StoryCreateSheet';
@@ -36,15 +37,18 @@ const bubbleVariants = {
 export function StoriesRail() {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
+  const { data: socialConnections, isFetched: socialFetched } = useSocialConnectionsQuery(user?.id);
   const { data: myTabData, isFetched: myTabFetched } = useMyGamesQuery(user?.id);
   const reduceMotion = usePrefersReducedMotion();
   const railRootRef = useRef<HTMLDivElement>(null);
   const railVisible = useDeferredVisible(railRootRef);
   const storiesCount = myTabData?.storiesCount;
+  const hasConnections = socialConnections?.hasConnections ?? false;
   const shouldFetchStoriesFeed =
     railVisible &&
     myTabFetched &&
-    storiesCount !== 0;
+    storiesCount !== 0 &&
+    hasConnections;
   const { feed, refresh, enabled } = useStoriesFeed({ enabled: shouldFetchStoriesFeed });
   const carouselRef = useRef<HTMLDivElement>(null);
   const [createOpen, setCreateOpen] = useState(false);
@@ -139,7 +143,7 @@ export function StoriesRail() {
     return idx != null && idx >= 0 ? idx : 0;
   }, [viewerSegmentKey, viewerBubbles, viewerBubbleIndex]);
 
-  if (!enabled || !user) return null;
+  if (!enabled || !user || (socialFetched && !hasConnections)) return null;
 
   const onlySelf = feed != null && serverBubbles.length === 0;
   const visibleBubbles = bubbles.filter(

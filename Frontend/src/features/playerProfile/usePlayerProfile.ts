@@ -170,9 +170,14 @@ export function usePlayerProfile(
         toast.success(t('favorites.userAddedToFavorites'));
       }
       if (viewerUserId) {
-        await queryClient.invalidateQueries({
-          queryKey: queryKeys.followingAchievementEarnersAll(viewerUserId),
-        });
+        await Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.followingAchievementEarnersAll(viewerUserId),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.socialConnections(viewerUserId),
+          }),
+        ]);
       }
     } catch (err: unknown) {
       const errorMessage =
