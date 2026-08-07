@@ -73,7 +73,6 @@ export class StoryDeleteService {
 
       if (!seasonLinked) {
         await ParticipantService.setShowInStories(trimmedId, userId, false);
-        return { segmentKey: key };
       }
     }
 
@@ -122,6 +121,12 @@ async function assertOwnsProjectedSegment(
       return;
     }
     case StorySourceType.GAME_RESULT: {
+      const participant = await prisma.gameParticipant.findUnique({
+        where: { userId_gameId: { userId, gameId: sourceId } },
+        select: { userId: true },
+      });
+      if (participant) return;
+
       const outcome = await prisma.gameOutcome.findFirst({
         where: { gameId: sourceId, userId },
         select: { id: true },

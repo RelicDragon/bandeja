@@ -26,8 +26,9 @@ export async function softDeleteStoryItemRow(item: StoryItemRow): Promise<string
 
   if (remaining === 0) {
     await prisma.userStory.delete({ where: { id: item.storyId } });
-    await deleteStoryMedia([item.mediaUrl, item.thumbnailUrl, item.posterUrl]);
   }
+
+  await deleteStoryMedia([item.mediaUrl, item.thumbnailUrl, item.posterUrl]);
 
   await emitStoryDeleted(item.story.userId, segmentKey);
   return segmentKey;

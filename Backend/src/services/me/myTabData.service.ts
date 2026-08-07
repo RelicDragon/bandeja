@@ -216,6 +216,7 @@ export class MyTabDataService {
       FROM "UserStory" us
       INNER JOIN "UserStoryItem" ui ON ui."storyId" = us.id
       WHERE us."userId" != ${userId}
+        AND ui."deletedAt" IS NULL
         AND us."expiresAt" > NOW()
         AND us."createdAt" >= ${oneDayAgo}
         AND EXISTS (

@@ -499,6 +499,24 @@ async function main() {
     assert(emitted.some((e) => e.includes('story:deleted')), 'socket story:deleted emitted');
     console.log('ok: socket story:deleted smoke');
 
+    emitted.length = 0;
+    await StoryDeleteService.deleteSegment(photoUploaderId, StorySourceType.GAME_RESULT, publicGameId);
+    assert(
+      emitted.some((e) => e.includes('story:deleted')),
+      'socket story:deleted emitted for GAME_RESULT'
+    );
+    const dismissal = await prisma.storySegmentDismissal.findUnique({
+      where: {
+        userId_sourceType_sourceId: {
+          userId: photoUploaderId,
+          sourceType: StorySourceType.GAME_RESULT,
+          sourceId: publicGameId,
+        },
+      },
+    });
+    assert(!!dismissal, 'dismissal upserted for GAME_RESULT deletion');
+    console.log('ok: GAME_RESULT story deletion socket + dismissal');
+
     console.log('\nstories: all checks passed');
   } finally {
     await prisma.storyView.deleteMany({
