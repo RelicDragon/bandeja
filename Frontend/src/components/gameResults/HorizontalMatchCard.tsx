@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Trash2, MapPin, Play } from 'lucide-react';
@@ -15,6 +16,7 @@ import {
 } from '@/utils/scoring';
 import { isSupplementalMatchSet } from '@/utils/matchSetRole';
 import { maxPlayersPerTeamForGame } from '@/utils/matchFormat';
+import { formatFixtureMatrixPlayerName } from '@/utils/leagueFixtureMatrix';
 import { MatchHeaderEditToggleButton } from '@/components/gameResults/MatchHeaderEditToggleButton';
 import { SetScoreTile } from '@/components/gameResults/SetScoreTile';
 import { getSetScoreTileState } from '@/components/gameResults/setScoreTileState';
@@ -81,6 +83,14 @@ export const HorizontalMatchCard = ({
   onAddSupplementalSet,
 }: HorizontalMatchCardProps) => {
   const { t } = useTranslation();
+  const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1024);
+
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const rules = getRules(game ?? { fixedNumberOfSets, maxTotalPointsPerSet: 0, maxPointsPerTeam: 0, winnerOfMatch: 'BY_SCORES', ballsInGames: false, deucesBeforeGoldenPoint: null, pointsPerTie: 0, scoringPreset: null } as any);
   const displaySets = expandSetsForDisplay(match.sets, rules, { canEditResults });
   const resultsFinal = game?.resultsStatus === 'FINAL';
@@ -154,20 +164,21 @@ export const HorizontalMatchCard = ({
   const renderTeam = (team: 'teamA' | 'teamB') => {
     const teamPlayers = match[team].slice(0, maxPlayersPerTeam);
     const isWinner = resolvedWinnerTeam === team;
+    const isTeamA = team === 'teamA';
 
     return (
       <div
         data-drop-zone
         data-match-id={match.id}
         data-team={team}
-        className={`relative flex min-h-[40px] w-full items-center justify-center px-0 py-2 ${
+        className={`relative flex min-h-[40px] w-full items-center justify-center px-1 py-1.5 ${
           (isEditing || draggedPlayer) && canEditResults ? 'rounded-xl border-2 border-dashed border-gray-300 transition-colors dark:border-gray-600' : ''
         } ${
           canEditResults && draggedPlayer ? 'border-primary-400 bg-primary-50 dark:bg-primary-900/20' : ''
         } ${
           isWinner
             ? `rounded-xl ring-1 ring-inset ring-emerald-300/60 dark:ring-emerald-700/50 ${
-                team === 'teamA'
+                isTeamA
                   ? 'bg-gradient-to-r from-emerald-100/90 to-transparent dark:from-emerald-900/40 dark:to-transparent'
                   : 'bg-gradient-to-l from-emerald-100/90 to-transparent dark:from-emerald-900/40 dark:to-transparent'
               }`
@@ -176,17 +187,31 @@ export const HorizontalMatchCard = ({
         onDragOver={canEditResults ? onDragOver : undefined}
         onDrop={canEditResults ? (e) => onDrop(e, team) : undefined}
       >
-        <div className="flex gap-5 justify-center">
+        <div className={`flex flex-col gap-1.5 w-full min-w-0 ${isTeamA ? 'items-start justify-center' : 'items-end justify-center'}`}>
           {teamPlayers.map(playerId => {
             const player = players.find(p => p.id === playerId);
-            return player ? (
-              <div key={playerId} className="flex flex-col items-center">
-                <PlayerAvatar
-                  player={player}
-                  draggable={false}
-                  showName={true}
-                  extrasmall={true}
-                />
+            if (!player) return null;
+            const fullName = [player.firstName, player.lastName].filter(Boolean).join(' ') || '—';
+            const compactName = formatFixtureMatrixPlayerName(player) || fullName;
+            const playerName = windowWidth < 640 ? compactName : fullName;
+
+            return (
+              <div
+                key={playerId}
+                className={`flex items-center gap-1.5 min-w-0 max-w-full ${isTeamA ? '' : 'flex-row-reverse text-right'}`}
+              >
+                <div className="shrink-0">
+                  <PlayerAvatar
+                    player={player}
+                    draggable={false}
+                    showName={false}
+                    fullHideName={true}
+                    extrasmall={true}
+                  />
+                </div>
+                <span className={`truncate text-xs font-semibold text-gray-800 dark:text-gray-100 leading-tight ${isTeamA ? 'text-left' : 'text-right'}`}>
+                  {playerName}
+                </span>
                 {isEditing && canEditResults && (
                   <button
                     type="button"
@@ -194,31 +219,37 @@ export const HorizontalMatchCard = ({
                       e.stopPropagation();
                       onRemovePlayer(team, playerId);
                     }}
-                    className="mt-1 w-7 h-7 rounded-full bg-red-500 dark:bg-red-600 hover:bg-red-600 dark:hover:bg-red-700 flex items-center justify-center transition-colors border-2 border-white dark:border-gray-900"
+                    className={`${isTeamA ? 'ml-0.5' : 'mr-0.5'} shrink-0 h-5 w-5 rounded-full bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 flex items-center justify-center transition-colors border border-white dark:border-gray-900`}
                   >
-                    <Trash2 size={14} className="text-white" />
+                    <Trash2 size={10} className="text-white" />
                   </button>
                 )}
               </div>
-            ) : null;
+            );
           })}
           {Array.from({ length: Math.max(0, maxPlayersPerTeam - teamPlayers.length) }).map((_, index) => (
-            <div key={`placeholder-${index}`}>
+            <div key={`placeholder-${index}`} className="w-full">
               <div
                 onClick={() => {
                   if (isEditing && canEditResults) {
                     onPlayerPlaceholderClick(team);
                   }
                 }}
-                className={`${
+                className={`flex items-center gap-1.5 min-w-0 max-w-full ${isTeamA ? '' : 'flex-row-reverse text-right'} ${
                   isEditing && canEditResults ? 'cursor-pointer hover:opacity-80' : 'cursor-default'
                 }`}
               >
-                <PlayerAvatar
-                  player={null}
-                  showName={false}
-                  extrasmall={true}
-                />
+                <div className="shrink-0">
+                  <PlayerAvatar
+                    player={null}
+                    showName={false}
+                    fullHideName={true}
+                    extrasmall={true}
+                  />
+                </div>
+                <span className={`truncate text-xs text-gray-400 dark:text-gray-500 italic ${isTeamA ? 'text-left' : 'text-right'}`}>
+                  {t('gameResults.selectPlayer', 'Player')}
+                </span>
               </div>
             </div>
           ))}
