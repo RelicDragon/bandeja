@@ -22,10 +22,35 @@ export class ImageProcessor {
   static async processAvatar(
     imageBuffer: Buffer,
     filename: string,
-    options?: ProcessAvatarOptions
+    optionsOrOriginalBuffer?: ProcessAvatarOptions | Buffer,
+    originalFilename?: string,
+    maybeOptions?: ProcessAvatarOptions
   ): Promise<ImageProcessingResult> {
     const uniqueId = crypto.randomUUID();
-    const ext = path.extname(filename);
+
+    // Support new cropped-avatar call: processAvatar(avatarBuffer, avatarFilename, originalBuffer, originalFilename, options)
+    // and legacy call: processAvatar(imageBuffer, filename, options)
+    let avatarBuffer: Buffer;
+    let originalBuffer: Buffer;
+    let avatarFilename: string;
+    let originalFilenameResolved: string;
+    let options: ProcessAvatarOptions | undefined;
+
+    if (Buffer.isBuffer(optionsOrOriginalBuffer) && typeof originalFilename === 'string') {
+      avatarBuffer = imageBuffer;
+      avatarFilename = filename;
+      originalBuffer = optionsOrOriginalBuffer;
+      originalFilenameResolved = originalFilename;
+      options = maybeOptions;
+    } else {
+      avatarBuffer = imageBuffer;
+      originalBuffer = imageBuffer;
+      avatarFilename = filename;
+      originalFilenameResolved = filename;
+      options = optionsOrOriginalBuffer as ProcessAvatarOptions | undefined;
+    }
+
+    const ext = path.extname(originalFilenameResolved);
     const baseName = `${uniqueId}${ext}`;
     const avatarName = `${uniqueId}_avatar.jpg`;
     const avatarTinyName = `${uniqueId}_avatar.tiny.jpg`;
@@ -35,7 +60,7 @@ export class ImageProcessor {
     const avatarTinyS3Key = `uploads/avatars/circular/${avatarTinyName}`;
     
     // Process original image to max 1920x1920 while maintaining aspect ratio
-    const originalImage = await sharp(imageBuffer)
+    const originalImage = await sharp(originalBuffer)
       .resize(1920, 1920, {
         fit: 'inside',
         withoutEnlargement: true
@@ -43,8 +68,10 @@ export class ImageProcessor {
       .jpeg({ quality: 90 })
       .toBuffer();
     
-    // Create square avatar 256x256 (NOT circular)
-    const avatarImage = await sharp(imageBuffer)
+    // Create square avatar 256x256 from the already-cropped avatar buffer.
+    // The frontend crop (zoom/pan) is baked into avatarBuffer, so we must NOT
+    // re-crop from the original's center — just scale/convert the supplied crop.
+    const avatarImage = await sharp(avatarBuffer)
       .resize(256, 256, {
         fit: 'cover',
         position: 'center'
@@ -58,7 +85,7 @@ export class ImageProcessor {
     let avatarTinyPath: string | undefined;
     let avatarTinySize: { width: number; height: number } | undefined;
     if (options?.userTiny) {
-      const avatarTinyImage = await sharp(imageBuffer)
+      const avatarTinyImage = await sharp(avatarBuffer)
         .resize(96, 96, {
           fit: 'cover',
           position: 'center'
@@ -73,6 +100,7 @@ export class ImageProcessor {
       };
     }
 
+    void avatarFilename;
     const originalPath = await S3Service.uploadFile(originalImage, originalS3Key, 'image/jpeg');
     const avatarPath = await S3Service.uploadFile(avatarImage, avatarS3Key, 'image/jpeg');
 

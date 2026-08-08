@@ -148,7 +148,7 @@ type AvatarUploadResult = {
   originalSize: { width: number; height: number };
 };
 
-function requireAvatarOriginalFile(req: AuthRequest): Express.Multer.File {
+function requireAvatarFiles(req: AuthRequest): { avatarFile: Express.Multer.File; originalFile: Express.Multer.File } {
   const bucket = req.files as Record<string, Express.Multer.File[] | Express.Multer.File> | undefined;
   if (!bucket) {
     throw new ApiError(400, 'Both avatar and original image files are required');
@@ -160,7 +160,7 @@ function requireAvatarOriginalFile(req: AuthRequest): Express.Multer.File {
   if (!avatarFile || !originalFile) {
     throw new ApiError(400, 'Both avatar and original image files are required');
   }
-  return originalFile;
+  return { avatarFile, originalFile };
 }
 
 function requireAuthUserId(req: AuthRequest): string {
@@ -186,7 +186,8 @@ function sendAvatarUploadJson(res: Response, result: AvatarUploadResult, message
 async function uploadAvatarForEntity(
   entityType: AvatarEntityType,
   entityId: string,
-  originalFile: Express.Multer.File
+  originalFile: Express.Multer.File,
+  avatarFile?: Express.Multer.File
 ): Promise<AvatarUploadResult> {
   let entity: AvatarEntity | null = null;
 
@@ -233,9 +234,17 @@ async function uploadAvatarForEntity(
   const previousAvatar = entity.avatar;
   const previousOriginal = entity.originalAvatar;
 
-  const result = await ImageProcessor.processAvatar(originalFile.buffer, originalFile.originalname, {
-    userTiny: entityType === 'user',
-  });
+  const result = avatarFile
+    ? await ImageProcessor.processAvatar(
+        avatarFile.buffer,
+        avatarFile.originalname,
+        originalFile.buffer,
+        originalFile.originalname,
+        { userTiny: entityType === 'user' }
+      )
+    : await ImageProcessor.processAvatar(originalFile.buffer, originalFile.originalname, {
+        userTiny: entityType === 'user',
+      });
 
   if (!result.avatarPath || !result.avatarSize) {
     throw new ApiError(500, 'Failed to process avatar');
@@ -308,8 +317,8 @@ async function uploadAvatarForEntity(
 
 export const uploadAvatar = asyncHandler(async (req: AuthRequest, res: Response) => {
   const userId = requireAuthUserId(req);
-  const originalFile = requireAvatarOriginalFile(req);
-  const result = await uploadAvatarForEntity('user', userId, originalFile);
+  const { avatarFile, originalFile } = requireAvatarFiles(req);
+  const result = await uploadAvatarForEntity('user', userId, originalFile, avatarFile);
   sendAvatarUploadJson(res, result, 'Avatar uploaded successfully');
 });
 
@@ -320,8 +329,8 @@ export const uploadGameAvatar = asyncHandler(async (req: AuthRequest, res: Respo
     throw new ApiError(400, 'Game ID is required');
   }
 
-  const originalFile = requireAvatarOriginalFile(req);
-  const result = await uploadAvatarForEntity('game', gameId, originalFile);
+  const { avatarFile, originalFile } = requireAvatarFiles(req);
+  const result = await uploadAvatarForEntity('game', gameId, originalFile, avatarFile);
   sendAvatarUploadJson(res, result, 'Game avatar uploaded successfully');
 });
 
@@ -347,8 +356,8 @@ export const uploadGroupChannelAvatar = asyncHandler(async (req: AuthRequest, re
     throw new ApiError(403, 'Only owner or admin can upload group/channel avatar');
   }
 
-  const originalFile = requireAvatarOriginalFile(req);
-  const result = await uploadAvatarForEntity('groupChannel', groupChannelId, originalFile);
+  const { avatarFile, originalFile } = requireAvatarFiles(req);
+  const result = await uploadAvatarForEntity('groupChannel', groupChannelId, originalFile, avatarFile);
   sendAvatarUploadJson(res, result, 'Group/Channel avatar uploaded successfully');
 });
 
@@ -370,8 +379,8 @@ export const uploadUserTeamAvatar = asyncHandler(async (req: AuthRequest, res: R
     throw new ApiError(403, 'Only team owner can upload team avatar');
   }
 
-  const originalFile = requireAvatarOriginalFile(req);
-  const result = await uploadAvatarForEntity('userTeam', userTeamId, originalFile);
+  const { avatarFile, originalFile } = requireAvatarFiles(req);
+  const result = await uploadAvatarForEntity('userTeam', userTeamId, originalFile, avatarFile);
   await UserTeamService.emitUpdatedTeam(userTeamId);
   sendAvatarUploadJson(res, result, 'User team avatar uploaded successfully');
 });
