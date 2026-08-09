@@ -1,10 +1,11 @@
 import assert from 'node:assert/strict';
-import { PlayerLevelVerdict } from '@prisma/client';
+import { MatchSetRole, PlayerLevelVerdict } from '@prisma/client';
 import {
   aggregateLevelFeedback,
+  isEvaluationStillEligible,
   roundVerdictPercentages,
   sharedOpponentIds,
-} from './playerLevelEvaluation.service';
+} from './player-level-evaluation.service';
 
 const counts = {
   [PlayerLevelVerdict.LOWER]: 1,
@@ -53,16 +54,69 @@ assert.deepEqual(
         { players: [{ userId: 'u1' }, { userId: 'u2' }] },
         { players: [{ userId: 'u3' }, { userId: 'u4' }] },
       ],
+      sets: [{ teamAScore: 6, teamBScore: 4, role: MatchSetRole.OFFICIAL }],
     },
     {
       teams: [
         { players: [{ userId: 'u5' }] },
         { players: [{ userId: 'u6' }] },
       ],
+      sets: [{ teamAScore: 6, teamBScore: 0, role: MatchSetRole.OFFICIAL }],
+    },
+    {
+      teams: [
+        { players: [{ userId: 'u1' }] },
+        { players: [{ userId: 'u7' }] },
+      ],
+      sets: [{ teamAScore: 3, teamBScore: 2, role: MatchSetRole.EXTRA_GAMES }],
+    },
+    {
+      teams: [
+        { players: [{ userId: 'u1' }] },
+        { players: [{ userId: 'u8' }] },
+      ],
+      sets: [{ teamAScore: 0, teamBScore: 0, role: MatchSetRole.OFFICIAL }],
     },
   ])].sort(),
   ['u2', 'u3', 'u4'],
   'only players who shared a recorded match are eligible',
+);
+
+const eligibleGame = {
+  id: 'g1',
+  participants: [{ userId: 'u1' }, { userId: 'u2' }],
+  rounds: [{
+    matches: [{
+      teams: [
+        { players: [{ userId: 'u1' }] },
+        { players: [{ userId: 'u2' }] },
+      ],
+      sets: [{ teamAScore: 6, teamBScore: 2, role: MatchSetRole.OFFICIAL }],
+    }],
+  }],
+};
+assert.equal(
+  isEvaluationStillEligible(
+    { evaluatorUserId: 'u1', targetUserId: 'u2' },
+    eligibleGame,
+  ),
+  true,
+);
+assert.equal(
+  isEvaluationStillEligible(
+    { evaluatorUserId: 'u1', targetUserId: 'u2' },
+    { ...eligibleGame, participants: [{ userId: 'u1' }] },
+  ),
+  false,
+  'a participant removed after finalization invalidates the vote',
+);
+assert.equal(
+  isEvaluationStillEligible(
+    { evaluatorUserId: 'u1', targetUserId: 'u2' },
+    { ...eligibleGame, rounds: [] },
+  ),
+  false,
+  'a removed shared match invalidates the vote',
 );
 
 console.log('playerLevelEvaluation.test: ok');

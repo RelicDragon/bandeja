@@ -284,7 +284,7 @@ const LevelHistoryViewComponent = ({
             includeSportsInSelector={includeSportsInSelector}
             competitiveSport={competitiveSport}
           />
-          {!showSocialLevel ? (
+          {!showSocialLevel && (alignedSportStats || alignedParentStats) ? (
             <PlayerLevelFeedbackAggregateCard
               aggregate={alignedSportStats?.levelFeedback ?? alignedParentStats?.levelFeedback}
               isOwnProfile={isOwnProfile}

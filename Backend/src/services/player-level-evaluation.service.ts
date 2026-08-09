@@ -1,12 +1,15 @@
 import {
   EntityType,
+  MatchSetRole,
   ParticipantStatus,
   PlayerLevelVerdict,
+  Prisma,
   ResultsStatus,
   Sport,
 } from '@prisma/client';
 import prisma from '../config/database';
 import { ApiError } from '../utils/ApiError';
+import { isOfficialMatchSetRole } from './results/matchSetRole';
 
 const EDIT_WINDOW_DAYS = 14;
 const AGGREGATE_WINDOW_DAYS = 365;
@@ -36,6 +39,23 @@ type AggregateRow = {
   evaluatorUserId: string;
   gameId: string;
 };
+
+type SharedMatch = {
+  teams: Array<{ players: Array<{ userId: string }> }>;
+  sets: Array<{
+    teamAScore: number;
+    teamBScore: number;
+    role: MatchSetRole;
+  }>;
+};
+
+type AggregateGame = {
+  id: string;
+  participants: Array<{ userId: string }>;
+  rounds: Array<{ matches: SharedMatch[] }>;
+};
+
+type EvaluationDb = Prisma.TransactionClient;
 
 export function roundVerdictPercentages(
   counts: Record<PlayerLevelVerdict, number>,
@@ -103,10 +123,16 @@ function plusDays(date: Date, days: number): Date {
 
 export function sharedOpponentIds(
   evaluatorUserId: string,
-  matches: Array<{ teams: Array<{ players: Array<{ userId: string }> }> }>,
+  matches: SharedMatch[],
 ): Set<string> {
   const ids = new Set<string>();
   for (const match of matches) {
+    const hasPlayedOfficialSet = match.sets.some(
+      (set) =>
+        isOfficialMatchSetRole(set.role) &&
+        (set.teamAScore > 0 || set.teamBScore > 0),
+    );
+    if (!hasPlayedOfficialSet) continue;
     const matchPlayerIds = new Set(
       match.teams.flatMap((team) => team.players.map((player) => player.userId)),
     );
@@ -118,8 +144,25 @@ export function sharedOpponentIds(
   return ids;
 }
 
-async function loadEvaluationContext(gameId: string, evaluatorUserId: string) {
-  const game = await prisma.game.findUnique({
+export function isEvaluationStillEligible(
+  row: Pick<AggregateRow, 'evaluatorUserId'> & { targetUserId: string },
+  game: AggregateGame | undefined,
+): boolean {
+  if (!game) return false;
+  const playingIds = new Set(game.participants.map((participant) => participant.userId));
+  if (!playingIds.has(row.evaluatorUserId) || !playingIds.has(row.targetUserId)) return false;
+  return sharedOpponentIds(
+    row.evaluatorUserId,
+    game.rounds.flatMap((round) => round.matches),
+  ).has(row.targetUserId);
+}
+
+async function loadEvaluationContext(
+  db: EvaluationDb,
+  gameId: string,
+  evaluatorUserId: string,
+) {
+  const game = await db.game.findUnique({
     where: { id: gameId },
     select: {
       id: true,
@@ -154,6 +197,9 @@ async function loadEvaluationContext(gameId: string, evaluatorUserId: string) {
             select: {
               teams: {
                 select: { players: { select: { userId: true } } },
+              },
+              sets: {
+                select: { teamAScore: true, teamBScore: true, role: true },
               },
             },
           },
@@ -194,9 +240,13 @@ async function loadEvaluationContext(gameId: string, evaluatorUserId: string) {
   return { game, editableUntil, eligibleIds, outcomesByUser };
 }
 
-async function blockedPeerIds(evaluatorUserId: string, candidateIds: string[]): Promise<Set<string>> {
+async function blockedPeerIds(
+  db: EvaluationDb,
+  evaluatorUserId: string,
+  candidateIds: string[],
+): Promise<Set<string>> {
   if (candidateIds.length === 0) return new Set();
-  const rows = await prisma.blockedUser.findMany({
+  const rows = await db.blockedUser.findMany({
     where: {
       OR: [
         { userId: evaluatorUserId, blockedUserId: { in: candidateIds } },
@@ -213,9 +263,9 @@ async function blockedPeerIds(evaluatorUserId: string, candidateIds: string[]): 
 }
 
 export async function getGameLevelEvaluations(gameId: string, evaluatorUserId: string) {
-  const context = await loadEvaluationContext(gameId, evaluatorUserId);
+  const context = await loadEvaluationContext(prisma, gameId, evaluatorUserId);
   const candidateIds = [...context.eligibleIds];
-  const blockedIds = await blockedPeerIds(evaluatorUserId, candidateIds);
+  const blockedIds = await blockedPeerIds(prisma, evaluatorUserId, candidateIds);
   const eligibleIds = candidateIds.filter((id) => !blockedIds.has(id));
   const existing = await prisma.playerLevelEvaluation.findMany({
     where: { gameId, evaluatorUserId, targetUserId: { in: eligibleIds } },
@@ -258,36 +308,44 @@ export async function upsertGameLevelEvaluation(
   verdict: PlayerLevelVerdict,
 ) {
   if (targetUserId === evaluatorUserId) throw new ApiError(400, 'You cannot evaluate yourself');
-  const context = await loadEvaluationContext(gameId, evaluatorUserId);
-  if (Date.now() > context.editableUntil.getTime()) {
-    throw new ApiError(409, 'The level feedback window has closed');
-  }
-  if (!context.eligibleIds.has(targetUserId)) {
-    throw new ApiError(403, 'You can only evaluate players you played with');
-  }
-  const blocked = await blockedPeerIds(evaluatorUserId, [targetUserId]);
-  if (blocked.has(targetUserId)) throw new ApiError(403, 'Level feedback is unavailable for this player');
-  const outcome = context.outcomesByUser.get(targetUserId);
-  if (!outcome) throw new ApiError(409, 'The player has no finalized outcome');
+  return prisma.$transaction(async (tx) => {
+    // A shared row lock makes the eligibility check and write atomic with result reset/delete.
+    await tx.$queryRaw(
+      Prisma.sql`SELECT "id" FROM "Game" WHERE "id" = ${gameId} FOR SHARE`,
+    );
+    const context = await loadEvaluationContext(tx, gameId, evaluatorUserId);
+    if (Date.now() > context.editableUntil.getTime()) {
+      throw new ApiError(409, 'The level feedback window has closed');
+    }
+    if (!context.eligibleIds.has(targetUserId)) {
+      throw new ApiError(403, 'You can only evaluate players you played with');
+    }
+    const blocked = await blockedPeerIds(tx, evaluatorUserId, [targetUserId]);
+    if (blocked.has(targetUserId)) {
+      throw new ApiError(403, 'Level feedback is unavailable for this player');
+    }
+    const outcome = context.outcomesByUser.get(targetUserId);
+    if (!outcome) throw new ApiError(409, 'The player has no finalized outcome');
 
-  return prisma.playerLevelEvaluation.upsert({
-    where: {
-      gameId_evaluatorUserId_targetUserId: { gameId, evaluatorUserId, targetUserId },
-    },
-    create: {
-      gameId,
-      sport: context.game.sport,
-      evaluatorUserId,
-      targetUserId,
-      verdict,
-      levelSnapshot: outcome.levelAfter,
-    },
-    update: {
-      verdict,
-      sport: context.game.sport,
-      levelSnapshot: outcome.levelAfter,
-    },
-    select: { targetUserId: true, verdict: true, levelSnapshot: true, updatedAt: true },
+    return tx.playerLevelEvaluation.upsert({
+      where: {
+        gameId_evaluatorUserId_targetUserId: { gameId, evaluatorUserId, targetUserId },
+      },
+      create: {
+        gameId,
+        sport: context.game.sport,
+        evaluatorUserId,
+        targetUserId,
+        verdict,
+        levelSnapshot: outcome.levelAfter,
+      },
+      update: {
+        verdict,
+        sport: context.game.sport,
+        levelSnapshot: outcome.levelAfter,
+      },
+      select: { targetUserId: true, verdict: true, levelSnapshot: true, updatedAt: true },
+    });
   });
 }
 
@@ -312,7 +370,37 @@ export async function getPlayerLevelFeedbackAggregate(
   });
   if (rows.length === 0) return { available: false };
 
-  const evaluatorIds = [...new Set(rows.map((row) => row.evaluatorUserId))];
+  const gameIds = [...new Set(rows.map((row) => row.gameId))];
+  const games = await prisma.game.findMany({
+    where: { id: { in: gameIds }, resultsStatus: ResultsStatus.FINAL },
+    select: {
+      id: true,
+      participants: {
+        where: { status: ParticipantStatus.PLAYING },
+        select: { userId: true },
+      },
+      rounds: {
+        select: {
+          matches: {
+            select: {
+              teams: { select: { players: { select: { userId: true } } } },
+              sets: { select: { teamAScore: true, teamBScore: true, role: true } },
+            },
+          },
+        },
+      },
+    },
+  });
+  const gamesById = new Map(games.map((game) => [game.id, game]));
+  const eligibleRows = rows.filter((row) =>
+    isEvaluationStillEligible(
+      { evaluatorUserId: row.evaluatorUserId, targetUserId },
+      gamesById.get(row.gameId),
+    ),
+  );
+  if (eligibleRows.length === 0) return { available: false };
+
+  const evaluatorIds = [...new Set(eligibleRows.map((row) => row.evaluatorUserId))];
   const blocks = await prisma.blockedUser.findMany({
     where: {
       OR: [
@@ -328,6 +416,6 @@ export async function getPlayerLevelFeedbackAggregate(
     ),
   );
   return aggregateLevelFeedback(
-    rows.filter((row) => !blockedEvaluatorIds.has(row.evaluatorUserId)),
+    eligibleRows.filter((row) => !blockedEvaluatorIds.has(row.evaluatorUserId)),
   );
 }

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   ArrowDown,
@@ -26,6 +26,13 @@ import {
   DrawerTitle,
 } from '@/components/ui/Drawer';
 import { useBackButtonModal } from '@/hooks/useBackButtonModal';
+import { queryKeys } from '@/queries/queryKeys';
+import {
+  findNextFeedbackIndex,
+  findNextUnansweredIndex,
+  loadLevelEvaluationsWithRetry,
+} from '@/features/player-level-feedback/player-level-feedback';
+import { recordPlayerLevelFeedbackMetric } from '@/services/player-level-feedback-metrics';
 
 type Props = { gameId: string };
 
@@ -68,13 +75,17 @@ export function PlayerLevelFeedbackCard({ gameId }: Props) {
   const [index, setIndex] = useState(0);
   const [savingTargetId, setSavingTargetId] = useState<string | null>(null);
   const [finished, setFinished] = useState(false);
+  const [editingCompleteSet, setEditingCompleteSet] = useState(false);
+  const promptSeenGameIdRef = useRef<string | null>(null);
   useBackButtonModal(open, () => setOpen(false), 'player-level-feedback');
 
   useEffect(() => {
     let active = true;
-    void resultsApi.getLevelEvaluations(gameId)
-      .then((response) => {
-        if (active) setData(response.data);
+    void loadLevelEvaluationsWithRetry(
+      async () => (await resultsApi.getLevelEvaluations(gameId)).data,
+    )
+      .then((responseData) => {
+        if (active) setData(responseData);
       })
       .catch(() => {
         // Ineligible event types and non-playing viewers intentionally see no prompt.
@@ -89,37 +100,61 @@ export function PlayerLevelFeedbackCard({ gameId }: Props) {
   const allComplete = Boolean(data?.players.length && completedCount === data.players.length);
   const current = data?.players[index];
 
+  useEffect(() => {
+    if (!data?.players.length || (!data.canEdit && !allComplete)) return;
+    if (promptSeenGameIdRef.current === gameId) return;
+    promptSeenGameIdRef.current = gameId;
+    recordPlayerLevelFeedbackMetric({
+      event: 'prompt_seen',
+      completedCount,
+      totalCount: data.players.length,
+    });
+  }, [allComplete, completedCount, data, gameId]);
+
   const openFlow = useCallback(() => {
     if (!data?.canEdit) return;
     const firstUnanswered = data.players.findIndex((player) => player.verdict === null);
     setIndex(firstUnanswered >= 0 ? firstUnanswered : 0);
+    setEditingCompleteSet(allComplete);
     setFinished(false);
     setOpen(true);
-  }, [data]);
+    recordPlayerLevelFeedbackMetric({
+      event: 'opened',
+      completedCount,
+      totalCount: data.players.length,
+    });
+  }, [allComplete, completedCount, data]);
 
   const answer = useCallback(async (verdict: PlayerLevelVerdict) => {
     if (!data || !current || savingTargetId || !data.canEdit) return;
     const targetId = current.user.id;
     const previous = current.verdict;
+    const nextPlayers = data.players.map((player) =>
+      player.user.id === targetId ? { ...player, verdict } : player
+    );
     setSavingTargetId(targetId);
     setData((value) => value ? {
       ...value,
-      players: value.players.map((player) =>
-        player.user.id === targetId ? { ...player, verdict } : player
-      ),
+      players: nextPlayers,
     } : value);
     try {
       await resultsApi.upsertLevelEvaluation(gameId, targetId, verdict);
-      void queryClient.invalidateQueries({ queryKey: ['users', 'stats', targetId] });
-      const nextUnanswered = data.players.findIndex(
-        (player, playerIndex) => playerIndex > index && player.verdict === null,
-      );
-      if (nextUnanswered >= 0) {
-        setIndex(nextUnanswered);
-      } else if (allComplete && index < data.players.length - 1) {
-        setIndex(index + 1);
+      void queryClient.invalidateQueries({ queryKey: queryKeys.userStatsAll(targetId) });
+      if (previous !== null && previous !== verdict) {
+        recordPlayerLevelFeedbackMetric({ event: 'edited' });
+      }
+      const nextIndex = findNextFeedbackIndex(nextPlayers, index, editingCompleteSet);
+      if (nextIndex !== null) {
+        setIndex(nextIndex);
       } else {
         setFinished(true);
+        if (!editingCompleteSet) {
+          recordPlayerLevelFeedbackMetric({
+            event: 'completed',
+            completedCount: nextPlayers.filter((player) => player.verdict !== null).length,
+            totalCount: nextPlayers.length,
+          });
+        }
       }
     } catch {
       setData((value) => value ? {
@@ -128,11 +163,12 @@ export function PlayerLevelFeedbackCard({ gameId }: Props) {
           player.user.id === targetId ? { ...player, verdict: previous } : player
         ),
       } : value);
+      recordPlayerLevelFeedbackMetric({ event: 'save_failed' });
       toast.error(t('gameResults.levelFeedback.saveFailed'));
     } finally {
       setSavingTargetId(null);
     }
-  }, [allComplete, current, data, gameId, index, queryClient, savingTargetId, t]);
+  }, [current, data, editingCompleteSet, gameId, index, queryClient, savingTargetId, t]);
 
   const progressLabel = useMemo(() => {
     if (!data?.players.length) return '';
@@ -170,7 +206,9 @@ export function PlayerLevelFeedbackCard({ gameId }: Props) {
             </span>
             <span className="mt-0.5 block text-xs leading-relaxed text-slate-600 dark:text-slate-300">
               {allComplete
-                ? t('gameResults.levelFeedback.sentDescription')
+                ? t(data.canEdit
+                  ? 'gameResults.levelFeedback.sentDescription'
+                  : 'gameResults.levelFeedback.sentDescriptionReadOnly')
                 : t('gameResults.levelFeedback.cardDescription')}
             </span>
             {!allComplete && completedCount > 0 ? (
@@ -303,20 +341,20 @@ export function PlayerLevelFeedbackCard({ gameId }: Props) {
                     <button
                       type="button"
                       onClick={() => {
-                        if (allComplete) {
-                          if (index < data.players.length - 1) setIndex(index + 1);
-                          else setOpen(false);
-                          return;
-                        }
-                        const nextUnanswered = data.players.findIndex(
-                          (player, playerIndex) => playerIndex > index && player.verdict === null,
-                        );
-                        if (nextUnanswered >= 0) setIndex(nextUnanswered);
+                        recordPlayerLevelFeedbackMetric({
+                          event: 'skipped',
+                          completedCount,
+                          totalCount: data.players.length,
+                        });
+                        const nextIndex = editingCompleteSet
+                          ? findNextFeedbackIndex(data.players, index, true)
+                          : findNextUnansweredIndex(data.players, index);
+                        if (nextIndex !== null) setIndex(nextIndex);
                         else setOpen(false);
                       }}
                       className="rounded-xl px-3 py-2 text-sm font-semibold text-slate-500 hover:bg-slate-200/60 dark:text-slate-400 dark:hover:bg-white/5"
                     >
-                      {allComplete
+                      {editingCompleteSet
                         ? t('common.next', { defaultValue: 'Next' })
                         : t('gameResults.levelFeedback.skip')}
                     </button>

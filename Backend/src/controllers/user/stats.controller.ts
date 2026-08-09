@@ -31,7 +31,7 @@ import { accrueRatingUncertainty, isRatingSettling } from '../../services/result
 import { EntityType, ParticipantRole, Sport } from '@prisma/client';
 import { resolveSport } from '../../sport/sportRegistry';
 import type { Prisma } from '@prisma/client';
-import { getPlayerLevelFeedbackAggregate } from '../../services/playerLevelEvaluation.service';
+import { getPlayerLevelFeedbackAggregate } from '../../services/player-level-evaluation.service';
 
 const COMPARISON_USER_SELECT = {
   ...USER_SELECT_FIELDS,

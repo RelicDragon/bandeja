@@ -1,11 +1,11 @@
-import { Response } from 'express';
+import type { Response } from 'express';
 import { PlayerLevelVerdict } from '@prisma/client';
-import { AuthRequest } from '../middleware/auth';
+import type { AuthRequest } from '../middleware/auth';
 import { asyncHandler } from '../utils/asyncHandler';
 import {
   getGameLevelEvaluations,
   upsertGameLevelEvaluation,
-} from '../services/playerLevelEvaluation.service';
+} from '../services/player-level-evaluation.service';
 
 export const getForGame = asyncHandler(async (req: AuthRequest, res: Response) => {
   const data = await getGameLevelEvaluations(req.params.gameId, req.userId!);

@@ -50,6 +50,7 @@ import { useResultsArtifactsTelegram } from './resultsEntry/useResultsArtifactsT
 import { useSetEntryOperations } from './resultsEntry/useSetEntryOperations';
 import { useResultsLifecycle } from './resultsEntry/useResultsLifecycle';
 import { PlayerLevelFeedbackCard } from './PlayerLevelFeedbackCard';
+import { isPlayerLevelFeedbackEnabled } from '@/features/player-level-feedback/player-level-feedback';
 
 interface GameResultsEntryEmbeddedProps {
   game: Game;
@@ -471,7 +472,9 @@ export const GameResultsEntryEmbedded = ({
                     }}
                   />
                 </div>
-                <PlayerLevelFeedbackCard gameId={currentGame.id} />
+                {isPlayerLevelFeedbackEnabled() ? (
+                  <PlayerLevelFeedbackCard gameId={currentGame.id} />
+                ) : null}
                 {showWorkoutSummaryCard ? (
                   <GameWorkoutSummaryCard gameId={currentGame.id} />
                 ) : null}

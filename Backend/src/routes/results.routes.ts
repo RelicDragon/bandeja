@@ -1,10 +1,10 @@
 import { Router } from 'express';
-import { body } from 'express-validator';
+import { body, param } from 'express-validator';
 import { validate } from '../middleware/validate';
 import { authenticate, optionalAuth, requireCanModifyResults } from '../middleware/auth';
 import * as resultsController from '../controllers/results.controller';
 import * as matchTimerController from '../controllers/matchTimer.controller';
-import * as playerLevelEvaluationController from '../controllers/playerLevelEvaluation.controller';
+import * as playerLevelEvaluationController from '../controllers/player-level-evaluation.controller';
 
 const router = Router();
 
@@ -19,6 +19,10 @@ router.put(
   '/game/:gameId/level-evaluations/:targetUserId',
   authenticate,
   validate([
+    param('targetUserId')
+      .isString()
+      .isLength({ min: 1, max: 64 })
+      .withMessage('targetUserId must be a valid identifier'),
     body('verdict')
       .isIn(['LOWER', 'ABOUT_RIGHT', 'HIGHER'])
       .withMessage('verdict must be LOWER, ABOUT_RIGHT, or HIGHER'),

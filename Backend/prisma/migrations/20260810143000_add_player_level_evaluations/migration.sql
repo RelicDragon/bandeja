@@ -16,6 +16,11 @@ CREATE TABLE "PlayerLevelEvaluation" (
     CONSTRAINT "PlayerLevelEvaluation_pkey" PRIMARY KEY ("id")
 );
 
+-- Prevent self-evaluation even if a future write path bypasses API validation.
+ALTER TABLE "PlayerLevelEvaluation"
+ADD CONSTRAINT "PlayerLevelEvaluation_distinct_users_check"
+CHECK ("evaluatorUserId" <> "targetUserId");
+
 -- CreateIndex
 CREATE UNIQUE INDEX "PlayerLevelEvaluation_gameId_evaluatorUserId_targetUserId_key"
 ON "PlayerLevelEvaluation"("gameId", "evaluatorUserId", "targetUserId");

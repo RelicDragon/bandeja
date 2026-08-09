@@ -44,6 +44,7 @@ export function buildAvailableUpcomingFilterHash(params: Omit<AvailableGamesFilt
 }
 
 export const queryKeys = {
+  userStatsAll: (userId: string) => ['users', 'stats', userId] as const,
   userStats: (userId: string, sport?: Sport) =>
     ['users', 'stats', userId, sport ?? 'default'] as const,
   socialConnections: (userId: string) =>
