@@ -325,6 +325,7 @@
       "cardDescription": "Sdílejte krátký anonymní dojem, dokud máte zápas čerstvě v paměti.",
       "sentTitle": "Hodnocení úrovní odesláno",
       "sentDescription": "Děkujeme. Své odpovědi můžete ještě upravit.",
+      "sentDescriptionReadOnly": "Děkujeme, že pomáháte zlepšovat úrovňové profily. Vaše odpovědi jsou nyní jen ke čtení.",
       "savedProgress": "Uloženo {{completed}} z {{total}}",
       "open": "Ohodnotit úrovně hráčů",
       "sheetTitle": "Jak působily úrovně hráčů?",

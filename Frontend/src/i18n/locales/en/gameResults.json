@@ -327,6 +327,7 @@
       "cardDescription": "Share a quick, anonymous impression while the match is fresh.",
       "sentTitle": "Level feedback sent",
       "sentDescription": "Thanks for helping make level profiles more useful. You can still edit your answers.",
+      "sentDescriptionReadOnly": "Thanks for helping make level profiles more useful. Your feedback is now read-only.",
       "savedProgress": "{{completed}} of {{total}} saved",
       "open": "Give level feedback",
       "sheetTitle": "How did the levels feel?",

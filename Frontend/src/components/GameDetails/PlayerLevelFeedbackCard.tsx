@@ -70,6 +70,7 @@ export function PlayerLevelFeedbackCard({ gameId }: Props) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [data, setData] = useState<GameLevelEvaluations | null>(null);
+  const [loadedGameId, setLoadedGameId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [index, setIndex] = useState(0);
@@ -81,11 +82,15 @@ export function PlayerLevelFeedbackCard({ gameId }: Props) {
 
   useEffect(() => {
     let active = true;
+    setLoading(true);
     void loadLevelEvaluationsWithRetry(
       async () => (await resultsApi.getLevelEvaluations(gameId)).data,
     )
       .then((responseData) => {
-        if (active) setData(responseData);
+        if (active) {
+          setData(responseData);
+          setLoadedGameId(gameId);
+        }
       })
       .catch(() => {
         // Ineligible event types and non-playing viewers intentionally see no prompt.
@@ -178,7 +183,7 @@ export function PlayerLevelFeedbackCard({ gameId }: Props) {
     });
   }, [data?.players.length, index, t]);
 
-  if (loading || !data?.players.length) return null;
+  if (loading || loadedGameId !== gameId || !data?.players.length) return null;
   if (!data.canEdit && !allComplete) return null;
 
   return (

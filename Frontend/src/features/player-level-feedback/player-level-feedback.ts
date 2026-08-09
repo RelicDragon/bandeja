@@ -39,7 +39,7 @@ function shouldRetryLoad(error: unknown): boolean {
 }
 
 function wait(ms: number): Promise<void> {
-  return new Promise((resolve) => window.setTimeout(resolve, ms));
+  return new Promise((resolve) => globalThis.setTimeout(resolve, ms));
 }
 
 export async function loadLevelEvaluationsWithRetry(

@@ -325,6 +325,7 @@
       "cardDescription": "Comparte una impresión rápida y anónima mientras el partido está reciente.",
       "sentTitle": "Evaluación de niveles enviada",
       "sentDescription": "Gracias. Todavía puedes editar tus respuestas.",
+      "sentDescriptionReadOnly": "Gracias por ayudar a mejorar los perfiles de nivel. Tus respuestas ahora son de solo lectura.",
       "savedProgress": "{{completed}} de {{total}} guardados",
       "open": "Evaluar niveles",
       "sheetTitle": "¿Cómo se sintieron los niveles?",

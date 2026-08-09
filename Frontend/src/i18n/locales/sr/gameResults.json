@@ -329,6 +329,7 @@
       "cardDescription": "Podelite kratak anoniman utisak dok je meč još svež.",
       "sentTitle": "Procena nivoa je poslata",
       "sentDescription": "Hvala! Odgovore još uvek možete da izmenite.",
+      "sentDescriptionReadOnly": "Hvala što pomažete da profili nivoa budu korisniji. Vaši odgovori su sada samo za pregled.",
       "savedProgress": "Sačuvano {{completed}} od {{total}}",
       "open": "Proceni nivoe igrača",
       "sheetTitle": "Kako su delovali nivoi igrača?",
