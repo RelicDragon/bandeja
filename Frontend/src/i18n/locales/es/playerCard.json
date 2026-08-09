@@ -15,6 +15,14 @@
     "message": "Mensaje",
     "levelHistory": "Historial de nivel",
     "levelHistorySelector": "Tipo de historial de nivel",
+    "levelFeedback": {
+      "title": "Evaluación del nivel por jugadores",
+      "pending": "Cuando respondan suficientes jugadores de varios partidos, el resumen anónimo aparecerá aquí.",
+      "basedOn": "Basado en {{count}} evaluaciones anónimas de {{games}} partidos recientes",
+      "players": "Jugadores",
+      "verdict": { "HIGHER": "Más alto que el mostrado", "ABOUT_RIGHT": "Adecuado", "LOWER": "Más bajo que el mostrado" },
+      "disclaimer": "La opinión de otros jugadores es una señal de la comunidad. No establece ni modifica la puntuación oficial."
+    },
     "isTrainer": "Entrenador",
     "currentLevel": "Nivel Actual",
     "recentChanges": "Cambios Recientes",

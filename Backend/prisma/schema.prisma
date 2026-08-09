@@ -181,6 +181,8 @@ model User {
   achievements                  UserAchievement[]
   achievementPins               UserAchievementPin[]
   achievementStats              UserAchievementStats?
+  levelEvaluationsGiven         PlayerLevelEvaluation[]         @relation("LevelEvaluationEvaluator")
+  levelEvaluationsReceived      PlayerLevelEvaluation[]         @relation("LevelEvaluationTarget")
 
   @@index([phone])
   @@index([telegramId])
@@ -705,6 +707,7 @@ model Game {
   mainPhoto                 GamePhoto?              @relation("GameMainPhoto", fields: [mainPhotoId], references: [id], onDelete: SetNull)
   resultsArtifactJob        GameResultsArtifactJob?
   externalBookings          GameExternalBooking[]
+  levelEvaluations          PlayerLevelEvaluation[]
 
   @@index([clubId])
   @@index([courtId])
@@ -1280,6 +1283,28 @@ model GameOutcome {
   @@index([gameId])
   @@index([userId])
   @@index([isWinner])
+}
+
+/// Anonymous, sport-scoped peer feedback captured after finalized results.
+/// It is a profile insight only and never changes the official rating.
+model PlayerLevelEvaluation {
+  id              String                 @id @default(cuid())
+  gameId          String
+  sport           Sport
+  evaluatorUserId String
+  targetUserId    String
+  verdict         PlayerLevelVerdict
+  levelSnapshot   Float
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+  game            Game                   @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  evaluator       User                   @relation("LevelEvaluationEvaluator", fields: [evaluatorUserId], references: [id], onDelete: Cascade)
+  target          User                   @relation("LevelEvaluationTarget", fields: [targetUserId], references: [id], onDelete: Cascade)
+
+  @@unique([gameId, evaluatorUserId, targetUserId])
+  @@index([targetUserId, sport, createdAt])
+  @@index([evaluatorUserId, createdAt])
+  @@index([gameId])
 }
 
 model GameTeam {
@@ -2411,6 +2436,12 @@ enum ResultsStatus {
   NONE
   IN_PROGRESS
   FINAL
+}
+
+enum PlayerLevelVerdict {
+  LOWER
+  ABOUT_RIGHT
+  HIGHER
 }
 
 enum WinnerOfGame {

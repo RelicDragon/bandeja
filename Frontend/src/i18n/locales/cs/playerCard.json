@@ -15,6 +15,14 @@
     "message": "Zpráva",
     "levelHistory": "Historie úrovně",
     "levelHistorySelector": "Typ historie úrovně",
+    "levelFeedback": {
+      "title": "Hodnocení úrovně hráči",
+      "pending": "Až odpoví dostatek hráčů z několika zápasů, zobrazí se zde anonymní souhrn.",
+      "basedOn": "Na základě {{count}} anonymních hodnocení z {{games}} nedávných zápasů",
+      "players": "Hráči",
+      "verdict": { "HIGHER": "Vyšší než zobrazená", "ABOUT_RIGHT": "Odpovídající", "LOWER": "Nižší než zobrazená" },
+      "disclaimer": "Názory hráčů jsou komunitním signálem. Nenastavují ani nemění oficiální hodnocení."
+    },
     "isTrainer": "Trenér",
     "currentLevel": "Aktuální úroveň",
     "recentChanges": "Nedávné změny",

@@ -111,7 +111,19 @@ export interface UserStats {
   gamesStats: GamesStat[];
   gamesStatsAllSports?: GamesStat[];
   performanceInsights?: UserPerformanceInsights;
+  levelFeedback?: PlayerLevelFeedbackAggregate;
 }
+
+export type PlayerLevelFeedbackAggregate =
+  | { available: false }
+  | {
+      available: true;
+      totalEvaluations: number;
+      totalGames: number;
+      distinctEvaluators: number;
+      counts: Record<'LOWER' | 'ABOUT_RIGHT' | 'HIGHER', number>;
+      percentages: Record<'LOWER' | 'ABOUT_RIGHT' | 'HIGHER', number>;
+    };
 
 export interface PlayerComparison {
   otherUser: BasicUser;

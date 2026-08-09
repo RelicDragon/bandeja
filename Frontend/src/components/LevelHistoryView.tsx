@@ -23,6 +23,7 @@ import { MarketItem, type Sport } from '@/types';
 import { formatDate } from '@/utils/dateFormat';
 import { XAxis, YAxis, CartesianGrid, ResponsiveContainer, Area, AreaChart } from 'recharts';
 import { useAuthStore } from '@/store/authStore';
+import { PlayerLevelFeedbackAggregateCard } from './PlayerLevelFeedbackAggregateCard';
 
 interface LevelHistoryViewProps {
   stats: UserStats;
@@ -269,19 +270,27 @@ const LevelHistoryViewComponent = ({
   return (
     <div className={`${padding} space-y-3`}>
       {showLevelsContent && (
-        <LevelHistoryLevelPanel
-          user={
-            alignedSportStats?.user
-              ? { ...user, ...alignedSportStats.user, sportProfiles: user.sportProfiles ?? alignedSportStats.user.sportProfiles }
-              : user
-          }
-          sports={selectorSports}
-          selection={selection}
-          onChange={setSelection}
-          variant={hideUserCard ? 'compact' : 'hero'}
-          includeSportsInSelector={includeSportsInSelector}
-          competitiveSport={competitiveSport}
-        />
+        <>
+          <LevelHistoryLevelPanel
+            user={
+              alignedSportStats?.user
+                ? { ...user, ...alignedSportStats.user, sportProfiles: user.sportProfiles ?? alignedSportStats.user.sportProfiles }
+                : user
+            }
+            sports={selectorSports}
+            selection={selection}
+            onChange={setSelection}
+            variant={hideUserCard ? 'compact' : 'hero'}
+            includeSportsInSelector={includeSportsInSelector}
+            competitiveSport={competitiveSport}
+          />
+          {!showSocialLevel ? (
+            <PlayerLevelFeedbackAggregateCard
+              aggregate={alignedSportStats?.levelFeedback ?? alignedParentStats?.levelFeedback}
+              isOwnProfile={isOwnProfile}
+            />
+          ) : null}
+        </>
       )}
 
       {!hideUserCard && showStatisticsContent && (

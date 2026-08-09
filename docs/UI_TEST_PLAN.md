@@ -778,6 +778,10 @@ Frontend/e2e/
 | GD-112 | Extra set entry switch | Add extra set → open its score modal | Games/Balls segmented switch in header; Balls caps score values |
 | GD-29 | Conflict resolution | Conflicting entries | Conflict modal |
 | GD-30 | Submit results | Finalize results | Status updates |
+| GD-30a | Post-match level feedback eligibility | FINAL GAME/LEAGUE/TOURNAMENT as PLAYING participant | Inline feedback card lists only other PLAYING users who shared a recorded match; self, non-playing owners, blocked users, BAR, and TRAINING are absent |
+| GD-30b | Level feedback autosave | Open card → choose Lower / About right / Higher for each player | One-player sheet advances, progress updates, each tap persists immediately, retry toast + optimistic rollback on failure, answers restore after reload |
+| GD-30c | Level feedback edit window | Reopen completed feedback before and after 14-day deadline | Before deadline answers can be changed; after deadline completed summary remains read-only and incomplete prompt is hidden |
+| GD-30d | Result reset feedback lifecycle | Submit level feedback → fully reset/delete results → finalize again | Prior evaluations are removed with reset/delete; newly finalized game can be evaluated again |
 | GR-streak-1 | Play streak banner on finalize | Rated finish that advances own weekly streak → Results tab | Banner once (“Streak started!” / “Streak · N weeks”); absent on same-week refresh |
 | GD-31 | Recalculate results | Owner recalc | Standings update |
 | GD-32 | Training level edit | Training game → level modal | Levels updated |
@@ -1405,6 +1409,8 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PR-45 | Send money from card | Player card → send money | `SendMoneyToUserModal` transfer |
 | PR-46 | Wallet transaction history | Open wallet modal | Balance + history visible |
 | PR-47 | Level history panel | Statistics → level history | Per-sport history chart |
+| PR-47a | Level feedback privacy threshold | Levels tab with 4 distinct evaluators, then 5 evaluators across 3 games | Own profile shows neutral pending state below threshold; other profile hides card; at threshold both show anonymous donut and percentages total exactly 100% |
+| PR-47b | Level feedback sport/relevance | Switch profile sport; include feedback older than 12 months or >0.5 from current level | Card follows selected sport; stale or level-irrelevant evaluations are excluded; no voter names, games, or timestamps are exposed |
 | PR-48 | Edit sport level on profile | Enabled sport → Show details → Edit level in panel below grid | Panel opens; level saved; Show/Hide on every enabled sport |
 | PR-49 | Comparison tab pick player | Comparison → select opponent | Head-to-head stats load |
 | PR-50 | Comparison sport switch | Change sport in comparison | Stats refetch for sport |

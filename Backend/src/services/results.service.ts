@@ -235,6 +235,7 @@ export async function deleteGameResults(gameId: string) {
   await assertGameNotLockedTechnicalWithdrawal(gameId, prisma);
 
   await prisma.$transaction(async (tx) => {
+    await tx.playerLevelEvaluation.deleteMany({ where: { gameId } });
     if (game.outcomes.length > 0) {
       await undoGameOutcomes(gameId, tx);
     } else {
@@ -295,6 +296,7 @@ export async function resetGameResults(gameId: string) {
   }
 
   await prisma.$transaction(async (tx) => {
+    await tx.playerLevelEvaluation.deleteMany({ where: { gameId } });
     if (game.outcomes.length > 0) {
       await undoGameOutcomes(gameId, tx);
     } else {

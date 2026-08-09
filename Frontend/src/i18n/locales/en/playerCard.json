@@ -15,6 +15,14 @@
     "message": "Message",
     "levelHistory": "Level History",
     "levelHistorySelector": "Level history type",
+    "levelFeedback": {
+      "title": "Level feedback from players",
+      "pending": "Once enough players from several matches respond, your anonymous summary will appear here.",
+      "basedOn": "Based on {{count}} anonymous evaluations across {{games}} recent matches",
+      "players": "Players",
+      "verdict": { "HIGHER": "Higher than shown", "ABOUT_RIGHT": "About right", "LOWER": "Lower than shown" },
+      "disclaimer": "Peer feedback is a private community signal. It does not set or change the official rating."
+    },
     "isTrainer": "Trainer",
     "currentLevel": "Current Level",
     "recentChanges": "Recent Changes",

@@ -323,6 +323,26 @@
     "showInStoriesFailed": "Nije moguće ažurirati vidljivost u stories",
     "configureGameRules": "Configure game rules",
     "viewGameRules": "View game rules",
-    "setupConfigured": "Game setup configured"
+    "setupConfigured": "Game setup configured",
+    "levelFeedback": {
+      "cardTitle": "Kako su delovali nivoi igrača?",
+      "cardDescription": "Podelite kratak anoniman utisak dok je meč još svež.",
+      "sentTitle": "Procena nivoa je poslata",
+      "sentDescription": "Hvala! Odgovore još uvek možete da izmenite.",
+      "savedProgress": "Sačuvano {{completed}} od {{total}}",
+      "open": "Proceni nivoe igrača",
+      "sheetTitle": "Kako su delovali nivoi igrača?",
+      "sheetDescription": "Dovoljan je brz utisak. Uporedite igru svakog igrača sa nivoom prikazanim posle meča.",
+      "progress": "Igrač {{current}} od {{total}}",
+      "autoSaved": "Čuva se automatski",
+      "shownAs": "Prikazani nivo · {{level}}",
+      "question": "Njihov nivo igre delovao je…",
+      "verdict": { "LOWER": "Niži", "ABOUT_RIGHT": "Otprilike tačan", "HIGHER": "Viši" },
+      "privacy": "Odgovori su anonimni i nikada ne menjaju zvanični rejting igrača.",
+      "skip": "Preskoči za sada",
+      "thanksTitle": "Hvala — ovo pomaže",
+      "thanksDescription": "Utisak će se prikazati samo kao deo dovoljno velikog anonimnog sažetka.",
+      "saveFailed": "Odgovor nije sačuvan. Pokušajte ponovo."
+    }
   }
 }

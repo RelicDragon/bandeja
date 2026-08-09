@@ -179,6 +179,62 @@ async function remapGameOutcomesForMerge(tx: MergeTx, survivorId: string, source
   }
 }
 
+async function remapPlayerLevelEvaluationsForMerge(
+  tx: MergeTx,
+  survivorId: string,
+  sourceId: string,
+) {
+  const given = await tx.playerLevelEvaluation.findMany({
+    where: { evaluatorUserId: sourceId },
+  });
+  for (const row of given) {
+    if (row.targetUserId === survivorId) {
+      await tx.playerLevelEvaluation.delete({ where: { id: row.id } });
+      continue;
+    }
+    const twin = await tx.playerLevelEvaluation.findFirst({
+      where: {
+        gameId: row.gameId,
+        evaluatorUserId: survivorId,
+        targetUserId: row.targetUserId,
+      },
+    });
+    if (twin) {
+      await tx.playerLevelEvaluation.delete({ where: { id: row.id } });
+    } else {
+      await tx.playerLevelEvaluation.update({
+        where: { id: row.id },
+        data: { evaluatorUserId: survivorId },
+      });
+    }
+  }
+
+  const received = await tx.playerLevelEvaluation.findMany({
+    where: { targetUserId: sourceId },
+  });
+  for (const row of received) {
+    if (row.evaluatorUserId === survivorId) {
+      await tx.playerLevelEvaluation.delete({ where: { id: row.id } });
+      continue;
+    }
+    const twin = await tx.playerLevelEvaluation.findFirst({
+      where: {
+        gameId: row.gameId,
+        evaluatorUserId: row.evaluatorUserId,
+        targetUserId: survivorId,
+      },
+    });
+    if (twin) {
+      await tx.playerLevelEvaluation.delete({ where: { id: row.id } });
+    } else {
+      await tx.playerLevelEvaluation.update({
+        where: { id: row.id },
+        data: { targetUserId: survivorId },
+      });
+    }
+  }
+}
+
 async function remapRoundOutcomesForMerge(tx: MergeTx, survivorId: string, sourceId: string) {
   const rows = await tx.roundOutcome.findMany({ where: { userId: sourceId } });
   for (const row of rows) {
@@ -757,6 +813,7 @@ export async function remapAllUserScopedCompositeRows(
   sourceId: string,
 ) {
   await remapGameOutcomesForMerge(tx, survivorId, sourceId);
+  await remapPlayerLevelEvaluationsForMerge(tx, survivorId, sourceId);
   await remapRoundOutcomesForMerge(tx, survivorId, sourceId);
   await remapTeamPlayersForMerge(tx, survivorId, sourceId);
   await remapGameTeamPlayersForMerge(tx, survivorId, sourceId);

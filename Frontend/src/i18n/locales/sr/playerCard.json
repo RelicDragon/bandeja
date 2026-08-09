@@ -15,6 +15,14 @@
     "message": "Poruka",
     "levelHistory": "Istorija nivoa",
     "levelHistorySelector": "Tip istorije nivoa",
+    "levelFeedback": {
+      "title": "Procena nivoa od igrača",
+      "pending": "Kada odgovori dovoljno igrača iz više mečeva, ovde će se pojaviti anoniman sažetak.",
+      "basedOn": "Na osnovu {{count}} anonimnih procena u {{games}} nedavnih mečeva",
+      "players": "Igrači",
+      "verdict": { "HIGHER": "Viši od prikazanog", "ABOUT_RIGHT": "Otprilike tačan", "LOWER": "Niži od prikazanog" },
+      "disclaimer": "Utisci igrača su signal zajednice. Ne postavljaju niti menjaju zvanični rejting."
+    },
     "isTrainer": "Trener",
     "currentLevel": "Trenutni Nivo",
     "recentChanges": "Nedavne Promene",

@@ -17,17 +17,30 @@ import {
 export const googleOAuthRedirect = asyncHandler(async (req: Request, res: Response) => {
   const lang = typeof req.query.lang === 'string' ? req.query.lang : 'en';
   const primarySport = req.query.primarySport;
-  const url = generateGoogleAuthUrl(lang, primarySport);
+  const redirectUri = typeof req.query.redirect_uri === 'string' ? req.query.redirect_uri : undefined;
+  const url = generateGoogleAuthUrl(lang, primarySport, redirectUri);
   res.redirect(url);
 });
 
 export const googleOAuthCallback = asyncHandler(async (req: Request, res: Response) => {
-  const frontendLogin = `${config.frontendUrl}/login`;
+  const fallbackLogin = `${config.frontendUrl}/login`;
 
   // Google may redirect back with ?error= when user denies consent
   if (req.query.error) {
+    const stateRaw = typeof req.query.state === 'string' ? req.query.state : '';
+    if (stateRaw) {
+      try {
+        const { redirectUri } = consumeState(stateRaw);
+        const frontendLogin = new URL(redirectUri).origin + '/login';
+        const errorMsg = typeof req.query.error === 'string' ? req.query.error : 'unknown';
+        res.redirect(`${frontendLogin}?google_error=${encodeURIComponent(errorMsg)}`);
+        return;
+      } catch {
+        // fall through to fallback
+      }
+    }
     const errorMsg = typeof req.query.error === 'string' ? req.query.error : 'unknown';
-    res.redirect(`${frontendLogin}?google_error=${encodeURIComponent(errorMsg)}`);
+    res.redirect(`${fallbackLogin}?google_error=${encodeURIComponent(errorMsg)}`);
     return;
   }
 
@@ -35,18 +48,24 @@ export const googleOAuthCallback = asyncHandler(async (req: Request, res: Respon
   const code = typeof req.query.code === 'string' ? req.query.code : '';
 
   if (!state || !code) {
-    res.redirect(`${frontendLogin}?google_error=${encodeURIComponent('missing_params')}`);
+    res.redirect(`${fallbackLogin}?google_error=${encodeURIComponent('missing_params')}`);
     return;
   }
 
   try {
-    const { codeVerifier, language, primarySport, primarySportIsSet } = consumeState(state);
-    const googleToken = await exchangeCodeForGoogleToken(code, codeVerifier);
-    const oneTimeCode = storeOneTimeCode(googleToken, language, primarySport, primarySportIsSet);
-    res.redirect(`${frontendLogin}?google_code=${encodeURIComponent(oneTimeCode)}`);
+    const { codeVerifier, language, primarySport, primarySportIsSet, redirectUri } = consumeState(state);
+    const frontendLogin = new URL(redirectUri).origin + '/login';
+    try {
+      const googleToken = await exchangeCodeForGoogleToken(code, codeVerifier, redirectUri);
+      const oneTimeCode = storeOneTimeCode(googleToken, language, primarySport, primarySportIsSet);
+      res.redirect(`${frontendLogin}?google_code=${encodeURIComponent(oneTimeCode)}`);
+    } catch (err: any) {
+      const msg = err?.message || 'auth_failed';
+      res.redirect(`${frontendLogin}?google_error=${encodeURIComponent(msg)}`);
+    }
   } catch (err: any) {
     const msg = err?.message || 'auth_failed';
-    res.redirect(`${frontendLogin}?google_error=${encodeURIComponent(msg)}`);
+    res.redirect(`${fallbackLogin}?google_error=${encodeURIComponent(msg)}`);
   }
 });
 

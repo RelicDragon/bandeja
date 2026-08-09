@@ -49,6 +49,7 @@ import { ResultsRoundsBoard } from './resultsEntry/ResultsRoundsBoard';
 import { useResultsArtifactsTelegram } from './resultsEntry/useResultsArtifactsTelegram';
 import { useSetEntryOperations } from './resultsEntry/useSetEntryOperations';
 import { useResultsLifecycle } from './resultsEntry/useResultsLifecycle';
+import { PlayerLevelFeedbackCard } from './PlayerLevelFeedbackCard';
 
 interface GameResultsEntryEmbeddedProps {
   game: Game;
@@ -470,6 +471,7 @@ export const GameResultsEntryEmbedded = ({
                     }}
                   />
                 </div>
+                <PlayerLevelFeedbackCard gameId={currentGame.id} />
                 {showWorkoutSummaryCard ? (
                   <GameWorkoutSummaryCard gameId={currentGame.id} />
                 ) : null}

@@ -4,11 +4,27 @@ import { validate } from '../middleware/validate';
 import { authenticate, optionalAuth, requireCanModifyResults } from '../middleware/auth';
 import * as resultsController from '../controllers/results.controller';
 import * as matchTimerController from '../controllers/matchTimer.controller';
+import * as playerLevelEvaluationController from '../controllers/playerLevelEvaluation.controller';
 
 const router = Router();
 
 router.get('/game/:gameId/spectator', resultsController.getGameResultsForSpectator);
 router.get('/game/:gameId', optionalAuth, resultsController.getGameResults);
+router.get(
+  '/game/:gameId/level-evaluations',
+  authenticate,
+  playerLevelEvaluationController.getForGame,
+);
+router.put(
+  '/game/:gameId/level-evaluations/:targetUserId',
+  authenticate,
+  validate([
+    body('verdict')
+      .isIn(['LOWER', 'ABOUT_RIGHT', 'HIGHER'])
+      .withMessage('verdict must be LOWER, ABOUT_RIGHT, or HIGHER'),
+  ]),
+  playerLevelEvaluationController.upsertForGame,
+);
 router.get('/round/:roundId', optionalAuth, resultsController.getRoundResults);
 router.get('/match/:matchId', optionalAuth, resultsController.getMatchResults);
 router.get('/game/:gameId/outcome/:userId/explanation', optionalAuth, resultsController.getOutcomeExplanation);
@@ -180,4 +196,3 @@ router.post(
 );
 
 export default router;
-

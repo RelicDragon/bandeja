@@ -24,7 +24,7 @@ export const MainTabFooter = ({ isLoading = false, compact = false }: MainTabFoo
         type="button"
         onClick={handleClick}
         disabled={isLoading}
-        className="auth-mascot-btn cursor-pointer select-none rounded-lg p-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 disabled:cursor-default"
+        className="auth-mascot-btn cursor-pointer select-none rounded-lg bg-[#abdee3] p-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 disabled:cursor-default dark:bg-transparent"
         aria-label="Logo"
       >
         <img

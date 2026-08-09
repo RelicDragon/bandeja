@@ -319,6 +319,26 @@
     "showInStoriesFailed": "No se pudo actualizar la visibilidad en stories",
     "configureGameRules": "Configure game rules",
     "viewGameRules": "View game rules",
-    "setupConfigured": "Game setup configured"
+    "setupConfigured": "Game setup configured",
+    "levelFeedback": {
+      "cardTitle": "¿Cómo se sintieron los niveles?",
+      "cardDescription": "Comparte una impresión rápida y anónima mientras el partido está reciente.",
+      "sentTitle": "Evaluación de niveles enviada",
+      "sentDescription": "Gracias. Todavía puedes editar tus respuestas.",
+      "savedProgress": "{{completed}} de {{total}} guardados",
+      "open": "Evaluar niveles",
+      "sheetTitle": "¿Cómo se sintieron los niveles?",
+      "sheetDescription": "Basta con una impresión rápida. Compara el juego de cada persona con el nivel mostrado tras el partido.",
+      "progress": "Jugador {{current}} de {{total}}",
+      "autoSaved": "Guardado automático",
+      "shownAs": "Nivel mostrado · {{level}}",
+      "question": "Su nivel de juego pareció…",
+      "verdict": { "LOWER": "Más bajo", "ABOUT_RIGHT": "Adecuado", "HIGHER": "Más alto" },
+      "privacy": "Tus respuestas son anónimas y nunca cambian la puntuación oficial de nadie.",
+      "skip": "Omitir por ahora",
+      "thanksTitle": "Gracias, esto ayuda",
+      "thanksDescription": "Tu opinión solo aparecerá dentro de un resumen anónimo suficientemente amplio.",
+      "saveFailed": "No pudimos guardar la respuesta. Inténtalo de nuevo."
+    }
   }
 }

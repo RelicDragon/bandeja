@@ -321,6 +321,26 @@
     "extraUnitGames": "Games",
     "extraUnitBalls": "Balls",
     "extraUnitGamesAbbr": "Games",
-    "extraUnitBallsAbbr": "Balls"
+    "extraUnitBallsAbbr": "Balls",
+    "levelFeedback": {
+      "cardTitle": "How did the levels feel?",
+      "cardDescription": "Share a quick, anonymous impression while the match is fresh.",
+      "sentTitle": "Level feedback sent",
+      "sentDescription": "Thanks for helping make level profiles more useful. You can still edit your answers.",
+      "savedProgress": "{{completed}} of {{total}} saved",
+      "open": "Give level feedback",
+      "sheetTitle": "How did the levels feel?",
+      "sheetDescription": "A quick impression is enough. Choose how each player's level compared with the level shown after this match.",
+      "progress": "Player {{current}} of {{total}}",
+      "autoSaved": "Saved automatically",
+      "shownAs": "Shown level · {{level}}",
+      "question": "Their playing level felt…",
+      "verdict": { "LOWER": "Lower", "ABOUT_RIGHT": "About right", "HIGHER": "Higher" },
+      "privacy": "Your answers are anonymous and never change anyone's official rating.",
+      "skip": "Skip for now",
+      "thanksTitle": "Thanks—that helps",
+      "thanksDescription": "Your private feedback will only appear as part of a sufficiently large anonymous summary.",
+      "saveFailed": "We couldn't save that answer. Please try again."
+    }
   }
 }

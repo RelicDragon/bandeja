@@ -45,7 +45,51 @@ export interface GameResultsData {
   }>;
 }
 
+export type PlayerLevelVerdict = 'LOWER' | 'ABOUT_RIGHT' | 'HIGHER';
+
+export interface GameLevelEvaluationPlayer {
+  user: {
+    id: string;
+    firstName?: string | null;
+    lastName?: string | null;
+    avatar?: string | null;
+    originalAvatar?: string | null;
+  };
+  levelSnapshot: number;
+  verdict: PlayerLevelVerdict | null;
+  updatedAt: string | null;
+}
+
+export interface GameLevelEvaluations {
+  sport: string;
+  canEdit: boolean;
+  editableUntil: string;
+  completedCount: number;
+  players: GameLevelEvaluationPlayer[];
+}
+
 export const resultsApi = {
+  getLevelEvaluations: async (gameId: string) => {
+    const response = await api.get<ApiResponse<GameLevelEvaluations>>(
+      `/results/game/${gameId}/level-evaluations`,
+    );
+    return response.data;
+  },
+
+  upsertLevelEvaluation: async (
+    gameId: string,
+    targetUserId: string,
+    verdict: PlayerLevelVerdict,
+  ) => {
+    const response = await api.put<ApiResponse<{
+      targetUserId: string;
+      verdict: PlayerLevelVerdict;
+      levelSnapshot: number;
+      updatedAt: string;
+    }>>(`/results/game/${gameId}/level-evaluations/${targetUserId}`, { verdict });
+    return response.data;
+  },
+
   recalculateOutcomes: async (gameId: string) => {
     const response = await api.post<ApiResponse<any>>(`/results/game/${gameId}/recalculate`);
     return response.data;

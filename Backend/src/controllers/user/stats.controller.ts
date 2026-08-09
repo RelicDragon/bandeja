@@ -31,6 +31,7 @@ import { accrueRatingUncertainty, isRatingSettling } from '../../services/result
 import { EntityType, ParticipantRole, Sport } from '@prisma/client';
 import { resolveSport } from '../../sport/sportRegistry';
 import type { Prisma } from '@prisma/client';
+import { getPlayerLevelFeedbackAggregate } from '../../services/playerLevelEvaluation.service';
 
 const COMPARISON_USER_SELECT = {
   ...USER_SELECT_FIELDS,
@@ -214,10 +215,11 @@ export const getUserStats = asyncHandler(async (req: AuthRequest, res: Response)
     },
   });
 
-  const [{ gamesLast30Days, gamesStats }, allSportsAggregates, performanceInsights] = await Promise.all([
+  const [{ gamesLast30Days, gamesStats }, allSportsAggregates, performanceInsights, levelFeedback] = await Promise.all([
     getUserGameOutcomeAggregates(userId, sport),
     explicitSport ? null : getUserGameOutcomeAggregates(userId),
     getUserPerformanceInsights(userId, sport),
+    getPlayerLevelFeedbackAggregate(userId, sport, projectedUserBase.level),
   ]);
 
   const isFavorite = req.userId ? await prisma.userFavoriteUser.findUnique({
@@ -304,6 +306,7 @@ export const getUserStats = asyncHandler(async (req: AuthRequest, res: Response)
       followingCount,
       gamesStats,
       performanceInsights,
+      levelFeedback,
       ...(allSportsAggregates
         ? {
             gamesStatsAllSports: allSportsAggregates.gamesStats,

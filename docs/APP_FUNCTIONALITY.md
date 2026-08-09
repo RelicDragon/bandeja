@@ -495,6 +495,7 @@ Central hub for any scheduled event. Layout adapts by `entityType`.
 **Content:**
 - Photo gallery — upload, set main, delete; privacy toggle (`forbidOthersPhotosView`); visible only when results FINAL
 - Results section — rounds, matches; **outcome explanation** modal per player (rating delta breakdown)
+- Finalized GAME / LEAGUE / TOURNAMENT results offer playing participants anonymous **peer level feedback** for players they shared a recorded match with (lower / about right / higher than the post-match shown level); answers are editable for 14 days and never change rating directly
 - Results **sync conflict** modal when local and server results diverge (choose load-from-server vs push-local)
 - Enter results on **ANNOUNCED** games requires confirmation gate
 - **Reset all results**, **finish results** confirm, **edit finalized results** with danger confirm
@@ -768,6 +769,7 @@ Peer-to-peer listings within the app.
 - **Play streak** — consecutive weeks with a finished game per sport (current / best / at-risk); shown on own profile
 - **Reliability** — per-sport reliability score (see §29); shown with stats / results deltas
 - **Level history** chart (competitive vs social level over time)
+- **Player level feedback** aggregate per sport — recent, level-relevant anonymous evaluations only; visible after the privacy threshold (5 distinct evaluators across 3 games), with no voter or game breakdown
 
 ### 15.3 Other user profile (`/user-profile/:userId`) — guest-readable
 
@@ -1010,6 +1012,7 @@ Per-channel toggles (Telegram vs Push). Respects chat mute state.
 - Player comparison (head-to-head)
 - External rating display mappings (Playtomic, NTRP, DUPR, etc.)
 - Questionnaire-based initial level calibration
+- Anonymous post-match player level feedback is a profile-only community signal; it is deliberately separate from ELO, reliability, and rating uncertainty
 
 ---
 
