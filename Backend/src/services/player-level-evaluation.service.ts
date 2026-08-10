@@ -162,7 +162,7 @@ async function loadEvaluationContext(
   gameId: string,
   evaluatorUserId: string,
 ) {
-  const game = await db.game.findUnique({
+  const nestedGameQuery = () => db.game.findUnique({
     where: { id: gameId },
     select: {
       id: true,
@@ -207,6 +207,90 @@ async function loadEvaluationContext(
       },
     },
   });
+  const loadTransactionGame = async () => {
+    const game = await db.game.findUnique({
+      where: { id: gameId },
+      select: {
+        id: true,
+        sport: true,
+        entityType: true,
+        resultsStatus: true,
+        finishedDate: true,
+        endTime: true,
+      },
+    });
+    if (!game) return null;
+
+    // Keep relation reads sequential inside an interactive transaction. Prisma's
+    // query strategy otherwise schedules them concurrently on one pg connection.
+    const participants = await db.gameParticipant.findMany({
+      where: { gameId, status: ParticipantStatus.PLAYING },
+      select: { userId: true },
+    });
+    const outcomeRows = await db.gameOutcome.findMany({
+      where: { gameId },
+      select: { userId: true, levelAfter: true, createdAt: true },
+    });
+    const users = await db.user.findMany({
+      where: { id: { in: outcomeRows.map((outcome) => outcome.userId) } },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        avatar: true,
+        originalAvatar: true,
+      },
+    });
+    const usersById = new Map(users.map((user) => [user.id, user]));
+    const outcomes = outcomeRows.map((outcome) => {
+      const user = usersById.get(outcome.userId);
+      if (!user) throw new ApiError(409, 'A finalized outcome has no player');
+      return { ...outcome, user };
+    });
+
+    const matchRows = await db.match.findMany({
+      where: { round: { gameId } },
+      select: { id: true },
+    });
+    const matchIds = matchRows.map((match) => match.id);
+    const teams = await db.team.findMany({
+      where: { matchId: { in: matchIds } },
+      select: { id: true, matchId: true },
+    });
+    const teamPlayers = await db.teamPlayer.findMany({
+      where: { teamId: { in: teams.map((team) => team.id) } },
+      select: { teamId: true, userId: true },
+    });
+    const sets = await db.set.findMany({
+      where: { matchId: { in: matchIds } },
+      select: { matchId: true, teamAScore: true, teamBScore: true, role: true },
+    });
+    const playersByTeam = new Map<string, Array<{ userId: string }>>();
+    for (const player of teamPlayers) {
+      const players = playersByTeam.get(player.teamId) ?? [];
+      players.push({ userId: player.userId });
+      playersByTeam.set(player.teamId, players);
+    }
+    const teamsByMatch = new Map<string, Array<{ players: Array<{ userId: string }> }>>();
+    for (const team of teams) {
+      const matchTeams = teamsByMatch.get(team.matchId) ?? [];
+      matchTeams.push({ players: playersByTeam.get(team.id) ?? [] });
+      teamsByMatch.set(team.matchId, matchTeams);
+    }
+    const setsByMatch = new Map<string, SharedMatch['sets']>();
+    for (const { matchId, teamAScore, teamBScore, role } of sets) {
+      const matchSets = setsByMatch.get(matchId) ?? [];
+      matchSets.push({ teamAScore, teamBScore, role });
+      setsByMatch.set(matchId, matchSets);
+    }
+    const matches = matchRows.map((match) => ({
+      teams: teamsByMatch.get(match.id) ?? [],
+      sets: setsByMatch.get(match.id) ?? [],
+    }));
+
+    return { ...game, participants, outcomes, rounds: [{ matches }] };
+  };
+  const game = db === prisma ? await nestedGameQuery() : await loadTransactionGame();
   if (!game) throw new ApiError(404, 'Game not found');
 
   const isPlaying = game.participants.some((participant) => participant.userId === evaluatorUserId);

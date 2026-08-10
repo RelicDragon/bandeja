@@ -31,6 +31,7 @@ import {
   findNextFeedbackIndex,
   findNextUnansweredIndex,
   loadLevelEvaluationsWithRetry,
+  runLevelFeedbackRequestWithRetry,
 } from '@/features/player-level-feedback/player-level-feedback';
 import { recordPlayerLevelFeedbackMetric } from '@/services/player-level-feedback-metrics';
 
@@ -143,7 +144,9 @@ export function PlayerLevelFeedbackCard({ gameId }: Props) {
       players: nextPlayers,
     } : value);
     try {
-      await resultsApi.upsertLevelEvaluation(gameId, targetId, verdict);
+      await runLevelFeedbackRequestWithRetry(
+        () => resultsApi.upsertLevelEvaluation(gameId, targetId, verdict),
+      );
       void queryClient.invalidateQueries({ queryKey: queryKeys.userStatsAll(targetId) });
       if (previous !== null && previous !== verdict) {
         recordPlayerLevelFeedbackMetric({ event: 'edited' });
@@ -198,7 +201,9 @@ export function PlayerLevelFeedbackCard({ gameId }: Props) {
           onClick={openFlow}
           disabled={!data.canEdit}
           className="flex w-full items-center gap-3 p-4 text-left transition-colors enabled:hover:bg-white/45 disabled:cursor-default dark:enabled:hover:bg-white/[0.035]"
-          aria-label={t('gameResults.levelFeedback.open')}
+          aria-label={t(data.canEdit
+            ? 'gameResults.levelFeedback.open'
+            : 'gameResults.levelFeedback.sentTitle')}
         >
           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-sky-600 text-white shadow-md shadow-sky-600/20">
             {allComplete ? <Check size={22} aria-hidden /> : <BarChart3 size={22} aria-hidden />}

@@ -778,7 +778,7 @@ Frontend/e2e/
 | GD-112 | Extra set entry switch | Add extra set → open its score modal | Games/Balls segmented switch in header; Balls caps score values |
 | GD-29 | Conflict resolution | Conflicting entries | Conflict modal |
 | GD-30 | Submit results | Finalize results | Status updates |
-| GD-30a | Post-match level feedback eligibility | FINAL GAME/LEAGUE/TOURNAMENT as PLAYING participant | Inline feedback card lists only other PLAYING users who shared a recorded match; self, non-playing owners, blocked users, BAR, and TRAINING are absent |
+| GD-30a | Post-match level feedback eligibility | FINAL GAME/LEAGUE/TOURNAMENT as PLAYING participant | Inline feedback card lists only other PLAYING users who shared an officially scored match; self, non-playing owners, blocked users, unplayed/extra-only matches, BAR, and TRAINING are absent |
 | GD-30b | Level feedback autosave | Open card → choose Lower / About right / Higher for each player | One-player sheet advances, progress updates, each tap persists immediately, retry toast + optimistic rollback on failure, answers restore after reload |
 | GD-30c | Level feedback edit window | Reopen completed feedback before and after 14-day deadline | Before deadline answers can be changed; after deadline completed summary remains read-only and incomplete prompt is hidden |
 | GD-30d | Result reset feedback lifecycle | Submit level feedback → fully reset/delete results → finalize again | Prior evaluations are removed with reset/delete; newly finalized game can be evaluated again |

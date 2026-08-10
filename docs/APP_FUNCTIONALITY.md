@@ -495,7 +495,7 @@ Central hub for any scheduled event. Layout adapts by `entityType`.
 **Content:**
 - Photo gallery — upload, set main, delete; privacy toggle (`forbidOthersPhotosView`); visible only when results FINAL
 - Results section — rounds, matches; **outcome explanation** modal per player (rating delta breakdown)
-- Finalized GAME / LEAGUE / TOURNAMENT results offer playing participants anonymous **peer level feedback** for players they shared a recorded match with (lower / about right / higher than the post-match shown level); answers are editable for 14 days and never change rating directly
+- Finalized GAME / LEAGUE / TOURNAMENT results offer playing participants anonymous **peer level feedback** for players they shared an officially scored match with (lower / about right / higher than the post-match shown level); answers are editable for 14 days and never change rating directly. The UI can be disabled instantly at build/deploy time with `VITE_PLAYER_LEVEL_FEEDBACK_ENABLED=false`, while backend authorization remains enforced.
 - Results **sync conflict** modal when local and server results diverge (choose load-from-server vs push-local)
 - Enter results on **ANNOUNCED** games requires confirmation gate
 - **Reset all results**, **finish results** confirm, **edit finalized results** with danger confirm

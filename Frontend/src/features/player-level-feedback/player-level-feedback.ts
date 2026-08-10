@@ -42,17 +42,24 @@ function wait(ms: number): Promise<void> {
   return new Promise((resolve) => globalThis.setTimeout(resolve, ms));
 }
 
-export async function loadLevelEvaluationsWithRetry(
-  load: () => Promise<GameLevelEvaluations>,
+export async function runLevelFeedbackRequestWithRetry<T>(
+  request: () => Promise<T>,
   sleep: (ms: number) => Promise<void> = wait,
-): Promise<GameLevelEvaluations> {
+): Promise<T> {
   for (let attempt = 0; ; attempt += 1) {
     try {
-      return await load();
+      return await request();
     } catch (error) {
       const delay = LOAD_RETRY_DELAYS_MS[attempt];
       if (delay === undefined || !shouldRetryLoad(error)) throw error;
       await sleep(delay);
     }
   }
+}
+
+export function loadLevelEvaluationsWithRetry(
+  load: () => Promise<GameLevelEvaluations>,
+  sleep?: (ms: number) => Promise<void>,
+): Promise<GameLevelEvaluations> {
+  return runLevelFeedbackRequestWithRetry(load, sleep);
 }
