@@ -2,7 +2,7 @@ import type { EntityType } from '@/types';
 import type { BooktimeCompany } from './client';
 
 export const DEFAULT_GAME_DURATIONS_HOURS = [1, 1.5, 2] as const;
-export const DEFAULT_TOURNAMENT_DURATIONS_HOURS = [1, 1.5, 2, 3, 4, 6] as const;
+export const DEFAULT_TOURNAMENT_DURATIONS_HOURS = [1, 1.5, 2, 3, 4, 5, 6, 7, 8] as const;
 export const BOOKTIME_FALLBACK_DURATIONS_MINUTES = [60, 120] as const;
 
 export function minutesToDurationHours(minutes: number): number {

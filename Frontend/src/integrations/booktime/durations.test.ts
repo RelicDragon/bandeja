@@ -49,4 +49,8 @@ describe('defaultDurationOptionsHours', () => {
   it('includes 1.5h for games', () => {
     expect(defaultDurationOptionsHours('GAME')).toContain(1.5);
   });
+
+  it('offers tournament durations from 1 through 8 hours', () => {
+    expect(defaultDurationOptionsHours('TOURNAMENT')).toEqual([1, 1.5, 2, 3, 4, 5, 6, 7, 8]);
+  });
 });
