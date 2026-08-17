@@ -102,14 +102,9 @@ export async function getRefreshTokenForRequest(): Promise<string | null> {
   }
   const ls = getStoredRefreshTokenSync()?.trim() ?? '';
   if (isWebHttpOnlyRefreshCookie()) {
-    if (ls) {
-      try {
-        localStorage.removeItem(LS_REFRESH);
-      } catch {
-        /* no-op */
-      }
-    }
-    return null;
+    // Cookie is authoritative once set. Until then, keep legacy LS as a one-time body fallback
+    // so a deploy reload cannot delete the only refresh credential before refresh runs.
+    return ls || null;
   }
   return ls || null;
 }

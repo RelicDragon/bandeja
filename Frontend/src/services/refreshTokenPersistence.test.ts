@@ -86,13 +86,13 @@ describe('native refresh-token persistence', () => {
     expect(setRefreshTokenNativeMock).not.toHaveBeenCalled();
   });
 
-  it('removes legacy JavaScript refresh credentials when web uses HttpOnly cookies', async () => {
+  it('keeps legacy web refresh in LS until cookie auth replaces it', async () => {
     nativePlatform = false;
     storage.set('padelpulse_refresh_token', 'legacy-web-token');
     const { getRefreshTokenForRequest } = await import('@/services/refreshTokenPersistence');
 
-    await expect(getRefreshTokenForRequest()).resolves.toBeNull();
-    expect(storage.has('padelpulse_refresh_token')).toBe(false);
+    await expect(getRefreshTokenForRequest()).resolves.toBe('legacy-web-token');
+    expect(storage.has('padelpulse_refresh_token')).toBe(true);
   });
 
   it('persists one refresh request id until the response is durably applied', async () => {
