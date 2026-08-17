@@ -6,12 +6,12 @@ Marks the last commit that was shipped to **Google Play** and **App Store**. Use
 
 | | |
 |---|---|
-| **Version** | 0.97.27 |
-| **Build** | 209 |
-| **Commit** | `1a88dcb8c33df5658143f53575cddb4d6a0bd01c` |
-| **Short** | `1a88dcb8` |
-| **Date** | 2026-08-08 |
-| **Message** | refactor(media): update avatar file handling and image processing logic |
+| **Version** | 0.97.28 |
+| **Build** | 210 |
+| **Commit** | `7fd150494ed4ed775d448cf1c6d175e80437a333` |
+| **Short** | `7fd15049` |
+| **Date** | 2026-08-17 |
+| **Message** | refactor(WatchSessionManager): simplify application context handling |
 
 Canonical commit hash: `docs/app-release-baseline.txt` (one line, full SHA).
 
@@ -68,6 +68,7 @@ Generate **What's new** (LLM summarizes commits since baseline):
 
 | Version | Build | Commit | Date |
 |---------|-------|--------|------|
+| 0.97.28 | 210 | `7fd15049` | 2026-08-17 |
 | 0.97.27 | 209 | `1a88dcb8` | 2026-08-08 |
 | 0.97.26 | 208 | `61aacfdc` | 2026-08-06 |
 | 0.97.25 | 207 | `fbf21670` | 2026-08-05 |
