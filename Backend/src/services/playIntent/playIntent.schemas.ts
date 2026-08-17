@@ -128,6 +128,12 @@ export const addProposalMemberBodySchema = z
   })
   .strict();
 
+export const discussPlayIntentBodySchema = z
+  .object({
+    userIds: z.array(identifier).min(2).max(15),
+  })
+  .strict();
+
 export type ValidatedCreatePlayIntentInput = z.infer<
   typeof createPlayIntentBodySchema
 >;
@@ -145,4 +151,7 @@ export type ValidatedRemoveProposalMemberInput = z.infer<
 >;
 export type ValidatedAddProposalMemberInput = z.infer<
   typeof addProposalMemberBodySchema
+>;
+export type ValidatedDiscussPlayIntentInput = z.infer<
+  typeof discussPlayIntentBodySchema
 >;

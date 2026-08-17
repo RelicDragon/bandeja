@@ -408,6 +408,22 @@ assert.deepEqual(
 }
 
 {
+  const a = base({ timeOfDay: 'EVENING' });
+  const b = base({
+    timeOfDay: 'MORNING',
+    timeOfDays: ['MORNING', 'CUSTOM'],
+    startTime: '11:00',
+    endTime: '13:00',
+  });
+  assert.deepEqual(intentMismatch(a, b), {
+    reason: 'time',
+    period: 'CUSTOM',
+    startTime: '11:00',
+    endTime: '13:00',
+  });
+}
+
+{
   // Level out of band.
   const a = base({ userLevel: 2, minLevel: null, maxLevel: 3 });
   const b = base({ userLevel: 7, minLevel: null, maxLevel: null });
@@ -507,6 +523,18 @@ assert.deepEqual(
   assert.deepEqual(intentFitBreakdown(a, b)[2], {
     dimension: 'time',
     ok: false,
+    period: 'CUSTOM',
+    startTime: '11:00',
+    endTime: '13:00',
+  });
+}
+
+{
+  const a = base({ timeOfDay: 'CUSTOM', startTime: '10:00', endTime: '14:00' });
+  const b = base({ timeOfDay: 'CUSTOM', startTime: '11:00', endTime: '13:00' });
+  assert.deepEqual(intentFitBreakdown(a, b)[2], {
+    dimension: 'time',
+    ok: true,
     period: 'CUSTOM',
     startTime: '11:00',
     endTime: '13:00',

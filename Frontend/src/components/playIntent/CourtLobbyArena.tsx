@@ -194,16 +194,31 @@ function initials(member: { firstName: string | null; lastName?: string | null }
   return (a + b).toUpperCase() || '?';
 }
 
+function hourWindowKey(input: {
+  startTime?: string | null;
+  endTime?: string | null;
+} | null | undefined): string {
+  if (!input) return '';
+  return `${input.startTime ?? ''}:${input.endTime ?? ''}`;
+}
+
+function mismatchKey(mismatch: PoolMember['mismatch']): string {
+  if (!mismatch) return '';
+  return `${mismatch.reason}:${mismatch.period ?? ''}:${hourWindowKey(mismatch)}`;
+}
+
 function fitKey(fit: PoolMember['fit']) {
   if (!fit || fit.length === 0) return '';
-  return fit.map((c) => `${c.dimension}:${c.ok ? 1 : 0}:${c.period ?? ''}`).join(',');
+  return fit
+    .map((c) => `${c.dimension}:${c.ok ? 1 : 0}:${c.period ?? ''}:${hourWindowKey(c)}`)
+    .join(',');
 }
 
 function membersKey(members: PoolMember[]) {
   return members
     .map(
       (m) =>
-        `${m.userId}:${m.status}:${m.inGame ? 1 : 0}:${m.affinity}:${m.inProposal ? 1 : 0}:${m.eligibleForProposal ? 1 : 0}:${m.intentId}:${m.mismatch ? `${m.mismatch.reason}:${m.mismatch.period ?? ''}` : ''}:${fitKey(m.fit)}`,
+        `${m.userId}:${m.status}:${m.inGame ? 1 : 0}:${m.affinity}:${m.inProposal ? 1 : 0}:${m.eligibleForProposal ? 1 : 0}:${m.intentId}:${mismatchKey(m.mismatch)}:${fitKey(m.fit)}`,
     )
     .join('|');
 }
@@ -224,8 +239,7 @@ function arenaMembersEqual(previous: PoolMember[], next: PoolMember[]) {
       member.affinity === candidate.affinity &&
       !!member.inProposal === !!candidate.inProposal &&
       !!member.eligibleForProposal === !!candidate.eligibleForProposal &&
-      member.mismatch?.reason === candidate.mismatch?.reason &&
-      member.mismatch?.period === candidate.mismatch?.period &&
+      mismatchKey(member.mismatch) === mismatchKey(candidate.mismatch) &&
       fitKey(member.fit) === fitKey(candidate.fit)
     );
   });

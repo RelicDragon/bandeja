@@ -1,5 +1,6 @@
 import type { TFunction } from 'i18next';
 import type { SharedPlayIntent } from '@/api/playIntents';
+import { formatPlayIntentHourRange } from '@/utils/playIntentWindow';
 
 function addDays(dateKey: string, days: number): string {
   const [year, month, day] = dateKey.split('-').map(Number);
@@ -28,7 +29,7 @@ export function sharedIntentDays(
 
 export function sharedIntentTime(intent: SharedPlayIntent, t: TFunction): string {
   if (intent.timeOfDay === 'CUSTOM') {
-    return [intent.startTime, intent.endTime].filter(Boolean).join('–');
+    return formatPlayIntentHourRange(intent.startTime, intent.endTime) ?? '';
   }
   return t(`playIntent.${intent.timeOfDay.toLowerCase()}`);
 }

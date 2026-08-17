@@ -259,6 +259,109 @@ describe('CourtLobbyArena refresh stability', () => {
     await act(async () => root.unmount());
   });
 
+  it('re-renders when a custom-hour mismatch window changes', async () => {
+    Object.defineProperty(window, 'matchMedia', {
+      configurable: true,
+      value: () => ({
+        matches: true,
+        addEventListener: () => undefined,
+        removeEventListener: () => undefined,
+      }),
+    });
+    const { CourtLobbyArena } = await import('./CourtLobbyArena');
+    const container = document.createElement('div');
+    const root = createRoot(container);
+    const farMembers: PoolMember[] = [
+      {
+        userId: 'u3',
+        intentId: 'i3',
+        firstName: 'Far',
+        lastName: 'Player',
+        avatar: null,
+        level: 4,
+        affinity: 'far',
+        affinityScore: 0,
+        status: 'OPEN',
+        inGame: false,
+        inProposal: false,
+        eligibleForProposal: false,
+        mismatch: {
+          reason: 'time',
+          period: 'CUSTOM',
+          startTime: '11:00',
+          endTime: '13:00',
+        },
+        fit: [
+          {
+            dimension: 'time',
+            ok: false,
+            period: 'CUSTOM',
+            startTime: '11:00',
+            endTime: '13:00',
+          },
+        ],
+      },
+    ];
+    const props = {
+      overflow: 0,
+      busy: false,
+      hasProposal: true,
+      vacancy: 1,
+      rosterLocked: false,
+      sport: 'PADEL' as const,
+      partySize: 4,
+      onAvatarClick: vi.fn(),
+    };
+
+    await act(async () => {
+      root.render(<CourtLobbyArena {...props} members={farMembers} />);
+    });
+    const rendersAfterFirstSnapshot = counters.pulseRenders;
+
+    await act(async () => {
+      root.render(
+        <CourtLobbyArena
+          {...props}
+          members={farMembers.map((member) => ({
+            ...member,
+            mismatch: { ...member.mismatch! },
+            fit: member.fit?.map((check) => ({ ...check })),
+          }))}
+        />,
+      );
+    });
+    expect(counters.pulseRenders).toBe(rendersAfterFirstSnapshot);
+
+    await act(async () => {
+      root.render(
+        <CourtLobbyArena
+          {...props}
+          members={farMembers.map((member) => ({
+            ...member,
+            mismatch: {
+              reason: 'time' as const,
+              period: 'CUSTOM' as const,
+              startTime: '14:00',
+              endTime: '16:00',
+            },
+            fit: [
+              {
+                dimension: 'time' as const,
+                ok: false,
+                period: 'CUSTOM' as const,
+                startTime: '14:00',
+                endTime: '16:00',
+              },
+            ],
+          }))}
+        />,
+      );
+    });
+    expect(counters.pulseRenders).toBeGreaterThan(rendersAfterFirstSnapshot);
+
+    await act(async () => root.unmount());
+  });
+
   it('positions moving avatars with compositor transforms', async () => {
     Object.defineProperty(window, 'matchMedia', {
       configurable: true,

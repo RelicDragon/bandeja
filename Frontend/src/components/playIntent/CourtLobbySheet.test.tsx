@@ -12,6 +12,7 @@ import type {
 const mocks = vi.hoisted(() => ({
   declineProposal: vi.fn().mockResolvedValue({ declined: true }),
   confirmProposal: vi.fn(),
+  discussGroup: vi.fn().mockResolvedValue({ id: 'group-1' }),
   fetchFavorites: vi.fn().mockResolvedValue(undefined),
   getOrCreateAndAddUserChat: vi.fn().mockResolvedValue({ id: 'chat-1' }),
   navigate: vi.fn(),
@@ -175,6 +176,7 @@ vi.mock('@/api/playIntents', () => ({
     removeProposalMember: vi.fn(),
     confirmProposal: mocks.confirmProposal,
     declineProposal: mocks.declineProposal,
+    discussGroup: mocks.discussGroup,
   },
 }));
 
@@ -514,5 +516,155 @@ describe('CourtLobbySheet proposal dismissal', () => {
     expect(court?.getAttribute('data-selected-player-ids')).toBe('two,three,five');
     expect(roster?.getAttribute('data-player-ids')).toBe('viewer,two,three,five');
     expect(roster?.getAttribute('data-empty-slots')).toBe('0');
+  });
+
+  it('opens a user chat when discussing with one other selected player', async () => {
+    const { CourtLobbyPanel } = await import('./CourtLobbySheet');
+
+    await act(async () => {
+      root.render(
+        <CourtLobbyPanel
+          open
+          onOpenChange={mocks.onOpenChange}
+          members={[freeMembers[0]]}
+          overflow={0}
+          partySize={4}
+          availableCount={1}
+          clusterProgress={2}
+          sport="PADEL"
+          intent={intent}
+          proposal={null}
+          onChanged={mocks.onChanged}
+        />,
+      );
+    });
+
+    const discuss = container.querySelector<HTMLButtonElement>(
+      '[data-testid="lobby-discuss"]',
+    );
+    expect(discuss).not.toBeNull();
+
+    await act(async () => {
+      discuss?.click();
+      await Promise.resolve();
+    });
+
+    expect(mocks.getOrCreateAndAddUserChat).toHaveBeenCalledWith('two');
+    expect(mocks.discussGroup).not.toHaveBeenCalled();
+    expect(mocks.navigate).toHaveBeenCalledWith(
+      '/user-chat/chat-1',
+      expect.objectContaining({
+        state: expect.objectContaining({ contextType: 'USER' }),
+      }),
+    );
+    expect(mocks.onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it('opens or creates an exact-member group when discussing with several players', async () => {
+    const { CourtLobbyPanel } = await import('./CourtLobbySheet');
+
+    await act(async () => {
+      root.render(
+        <CourtLobbyPanel
+          open
+          onOpenChange={mocks.onOpenChange}
+          members={freeMembers}
+          overflow={0}
+          partySize={4}
+          availableCount={3}
+          clusterProgress={4}
+          sport="PADEL"
+          intent={intent}
+          proposal={null}
+          onChanged={mocks.onChanged}
+        />,
+      );
+    });
+
+    expect(container.textContent).toContain('playIntent.discussInGroup');
+    const discuss = container.querySelector<HTMLButtonElement>(
+      '[data-testid="lobby-discuss"]',
+    );
+    expect(
+      container.querySelector('[data-testid="match-editor"]')?.contains(discuss),
+    ).toBe(true);
+
+    await act(async () => {
+      discuss?.click();
+      await Promise.resolve();
+    });
+
+    expect(mocks.discussGroup).toHaveBeenCalledWith(['two', 'three', 'four']);
+    expect(mocks.navigate).toHaveBeenCalledWith(
+      '/group-chat/group-1',
+      expect.objectContaining({
+        state: expect.objectContaining({ contextType: 'GROUP' }),
+      }),
+    );
+    expect(mocks.onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it('refreshes the lobby when discuss rejects a player who left', async () => {
+    mocks.discussGroup.mockRejectedValueOnce({
+      response: { data: { code: 'playIntent.discussNotInLobby' } },
+    });
+    const { CourtLobbyPanel } = await import('./CourtLobbySheet');
+
+    await act(async () => {
+      root.render(
+        <CourtLobbyPanel
+          open
+          onOpenChange={mocks.onOpenChange}
+          members={freeMembers}
+          overflow={0}
+          partySize={4}
+          availableCount={3}
+          clusterProgress={4}
+          sport="PADEL"
+          intent={intent}
+          proposal={null}
+          onChanged={mocks.onChanged}
+        />,
+      );
+    });
+
+    await act(async () => {
+      container.querySelector<HTMLButtonElement>('[data-testid="lobby-discuss"]')?.click();
+      await Promise.resolve();
+    });
+
+    expect(mocks.toastError).toHaveBeenCalled();
+    expect(mocks.onChanged).toHaveBeenCalled();
+    expect(mocks.navigate).not.toHaveBeenCalled();
+    expect(mocks.onOpenChange).not.toHaveBeenCalled();
+  });
+
+  it('hides discuss when the roster is only the viewer', async () => {
+    const { CourtLobbyPanel } = await import('./CourtLobbySheet');
+
+    await act(async () => {
+      root.render(
+        <CourtLobbyPanel
+          open
+          onOpenChange={mocks.onOpenChange}
+          members={[freeMembers[0]]}
+          overflow={0}
+          partySize={4}
+          availableCount={1}
+          clusterProgress={2}
+          sport="PADEL"
+          intent={intent}
+          proposal={null}
+          onChanged={mocks.onChanged}
+        />,
+      );
+    });
+
+    await act(async () => {
+      container.querySelector<HTMLButtonElement>('[data-remove-player="two"]')?.click();
+    });
+
+    expect(container.querySelector('[data-testid="lobby-discuss"]')).toBeNull();
+    expect(container.textContent).toContain('playIntent.createGame');
   });
 });

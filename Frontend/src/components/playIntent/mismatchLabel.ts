@@ -1,13 +1,15 @@
 import type { FitCheck, PlayIntentTimeOfDay, PoolMember } from '@/api/playIntents';
+import { formatPlayIntentHourRange } from '@/utils/playIntentWindow';
 
 export type Mismatch = NonNullable<PoolMember['mismatch']>;
 
-const PERIOD_I18N_KEY: Record<PlayIntentTimeOfDay, string> = {
+const NAMED_PERIOD_I18N_KEY: Record<
+  Exclude<PlayIntentTimeOfDay, 'ANYTIME' | 'CUSTOM'>,
+  string
+> = {
   MORNING: 'playIntent.morning',
   AFTERNOON: 'playIntent.afternoon',
   EVENING: 'playIntent.evening',
-  ANYTIME: 'playIntent.anytime',
-  CUSTOM: 'playIntent.customTime',
 };
 
 const REASON_I18N_KEY: Record<Mismatch['reason'], string> = {
@@ -18,26 +20,13 @@ const REASON_I18N_KEY: Record<Mismatch['reason'], string> = {
   gender: 'playIntent.mismatchGender',
 };
 
-export type TimePhraseInput = {
+type TimePhraseInput = {
   period?: PlayIntentTimeOfDay;
   startTime?: string | null;
   endTime?: string | null;
 };
 
-export function formatCustomHourRange(
-  startTime?: string | null,
-  endTime?: string | null,
-): string | null {
-  const range = [startTime, endTime].filter(Boolean).join('–');
-  return range || null;
-}
-
-/**
- * Phrases a player's time window for the court-lobby mismatch bubble and fit
- * card. Named periods read naturally ("Plays mornings"); CUSTOM uses the
- * chosen hour range ("11:00–13:00").
- */
-export function timeMismatchLabel(
+function timeMismatchLabel(
   t: (key: string, opts?: Record<string, unknown>) => string,
   input: TimePhraseInput,
 ): string {
@@ -46,11 +35,11 @@ export function timeMismatchLabel(
   }
   if (input.period === 'CUSTOM') {
     return (
-      formatCustomHourRange(input.startTime, input.endTime) ??
+      formatPlayIntentHourRange(input.startTime, input.endTime) ??
       t('playIntent.mismatchTimeCustom', { defaultValue: 'Custom hours' })
     );
   }
-  const periodLabel = t(PERIOD_I18N_KEY[input.period], {
+  const periodLabel = t(NAMED_PERIOD_I18N_KEY[input.period], {
     defaultValue: input.period.toLowerCase(),
   });
   return t(REASON_I18N_KEY.time, {

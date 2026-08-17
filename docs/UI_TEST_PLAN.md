@@ -1543,6 +1543,8 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PI-39 | Native friend-intent action | Receive a followed-user play-intent push on iOS and Android, then use “I want to play too” from the notification | iOS groups the alert in the play-intent thread; both platforms open the shared-intent confirmation flow with localized action copy; a repeated provider delivery collapses instead of stacking |
 | PI-41 | Custom-hours mismatch bubble | Look with Evening while another city player is looking Custom 11:00–13:00 | Far-field bubble shows `11:00–13:00`, not “Custom hours” |
 | PI-42 | Custom-hours fit popup | From PI-41, tap the far-field avatar | Fit card Time row subtitle is `11:00–13:00`, not “Custom hours” |
+| PI-43 | Discuss from lobby roster | Open a lobby with me + 1 selected player and tap Discuss in group; repeat with me + 2 or more | One other player opens (or creates) the 1:1 chat; two or more opens an existing group with exactly those people or creates `Discussion for <date> · <time> · <club>` and opens it; Create Game remains available |
+| PI-44 | Discuss after a player left | In a me + 2 lobby, one selected player stops looking, then tap Discuss in group | Toast says they are no longer in the lobby; roster refreshes; chat does not open |
 
 ---
 

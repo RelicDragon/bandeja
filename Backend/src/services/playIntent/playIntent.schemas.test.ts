@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {
   addProposalMemberBodySchema,
   createPlayIntentBodySchema,
+  discussPlayIntentBodySchema,
   playIntentOptionalScopeQuerySchema,
 } from './playIntent.schemas';
 
@@ -84,6 +85,18 @@ assert.equal(
   addProposalMemberBodySchema.safeParse({
     userId: 'user-1',
     intentId: 'intent-1',
+  }).success,
+  true,
+);
+assert.equal(
+  discussPlayIntentBodySchema.safeParse({
+    userIds: ['a'],
+  }).success,
+  false,
+);
+assert.equal(
+  discussPlayIntentBodySchema.safeParse({
+    userIds: ['a', 'b'],
   }).success,
   true,
 );

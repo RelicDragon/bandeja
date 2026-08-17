@@ -14,6 +14,16 @@ export function timeStringToMinutes(time: string | null | undefined): number {
   return (hours || 0) * 60 + (minutes || 0);
 }
 
+export function formatPlayIntentHourRange(
+  startTime?: string | null,
+  endTime?: string | null,
+): string | null {
+  const parts = [startTime, endTime]
+    .map((part) => part?.trim())
+    .filter((part): part is string => Boolean(part));
+  return parts.length > 0 ? parts.join('–') : null;
+}
+
 /**
  * The end-of-day minute each fixed time-of-day bucket covers.
  * Mirrors resolveTimeWindow() on the backend. CUSTOM is resolved from the

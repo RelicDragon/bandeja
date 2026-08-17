@@ -14,9 +14,11 @@ import {
   releaseMatchProposal,
   removeMatchProposalMember,
   addMatchProposalMember,
+  discussPlayIntent,
 } from '../controllers/playIntent.controller';
 import {
   addProposalMemberBodySchema,
+  discussPlayIntentBodySchema,
   createPlayIntentBodySchema,
   playIntentIdParamsSchema,
   playIntentOptionalScopeQuerySchema,
@@ -91,6 +93,13 @@ router.post(
   }),
   removeMatchProposalMember,
 );
+router.post(
+  '/discuss',
+  authenticate,
+  validateZod({ body: discussPlayIntentBodySchema }),
+  discussPlayIntent,
+);
+
 router.post(
   '/proposals/:id/add-member',
   authenticate,

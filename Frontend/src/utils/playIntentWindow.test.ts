@@ -7,6 +7,7 @@ import {
   shiftDateKey,
   timeStringToMinutes,
   timezoneOffsetMinutes,
+  formatPlayIntentHourRange,
 } from './playIntentWindow';
 
 /**
@@ -35,6 +36,23 @@ describe('timeStringToMinutes', () => {
     expect(timeStringToMinutes(null)).toBe(0);
     expect(timeStringToMinutes(undefined)).toBe(0);
     expect(timeStringToMinutes('')).toBe(0);
+  });
+});
+
+describe('formatPlayIntentHourRange', () => {
+  it('joins start and end with an en dash', () => {
+    expect(formatPlayIntentHourRange('11:00', '13:00')).toBe('11:00–13:00');
+  });
+  it('trims whitespace around bounds', () => {
+    expect(formatPlayIntentHourRange(' 11:00 ', '13:00')).toBe('11:00–13:00');
+  });
+  it('keeps a single bound when the other is missing', () => {
+    expect(formatPlayIntentHourRange('11:00', null)).toBe('11:00');
+    expect(formatPlayIntentHourRange(null, '13:00')).toBe('13:00');
+  });
+  it('returns null when both bounds are missing', () => {
+    expect(formatPlayIntentHourRange(null, null)).toBeNull();
+    expect(formatPlayIntentHourRange()).toBeNull();
   });
 });
 

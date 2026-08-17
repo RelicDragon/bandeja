@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { mismatchLabel } from './mismatchLabel';
+import { mismatchLabel, fitTimeSubtitle } from './mismatchLabel';
 
 // The real i18n lookup maps `playIntent.<period>` to a localized period name.
 // Mirroring that here keeps the assertions close to production behavior.
@@ -61,6 +61,20 @@ describe('mismatchLabel', () => {
     expect(label).toBe('11:00–13:00');
     expect(t).not.toHaveBeenCalledWith('playIntent.mismatchTimeCustom', expect.anything());
     expect(t).not.toHaveBeenCalledWith('playIntent.mismatchTime', expect.anything());
+  });
+
+  it('uses the same custom hour range on the fit-card time row', () => {
+    const t = makeT();
+    expect(
+      fitTimeSubtitle(t, {
+        dimension: 'time',
+        ok: false,
+        period: 'CUSTOM',
+        startTime: '11:00',
+        endTime: '13:00',
+      }),
+    ).toBe('11:00–13:00');
+    expect(fitTimeSubtitle(t, { dimension: 'level', ok: false })).toBeNull();
   });
 
   it('falls back to Custom hours when a CUSTOM period has no window', () => {

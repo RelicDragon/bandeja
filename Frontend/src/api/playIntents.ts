@@ -1,4 +1,5 @@
 import api from './axios';
+import type { GroupChannel } from './chat';
 import type { Sport } from '@/types';
 
 export type PlayIntentTimeOfDay = 'ANYTIME' | 'MORNING' | 'AFTERNOON' | 'EVENING' | 'CUSTOM';
@@ -231,6 +232,14 @@ export const playIntentsApi = {
       success: boolean;
       data: { added: boolean; proposal: MatchProposalSummary };
     }>(`/play-intents/proposals/${id}/add-member`, body);
+    return data.data;
+  },
+
+  discussGroup: async (userIds: string[]) => {
+    const { data } = await api.post<{
+      success: boolean;
+      data: GroupChannel;
+    }>('/play-intents/discuss', { userIds });
     return data.data;
   },
 };

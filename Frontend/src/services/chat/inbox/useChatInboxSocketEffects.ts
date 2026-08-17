@@ -481,7 +481,12 @@ export function useChatInboxSocketEffects(p: SocketEventsParams) {
 
         if (chatExists) {
           next = deduplicateChats(updateChatMessageInList(next, contextType, contextId, message as ChatMessage, chatsFilter, userId));
-        } else if ((contextType === 'USER' || contextType === 'GAME') && chatsFilter === 'users') {
+        } else if (
+          (contextType === 'USER' ||
+            contextType === 'GAME' ||
+            contextType === 'GROUP') &&
+          chatsFilter === 'users'
+        ) {
           needsUserListRefetch = true;
         }
       }
@@ -543,6 +548,15 @@ export function useChatInboxSocketEffects(p: SocketEventsParams) {
         }
 
         if (contextType === 'GROUP') {
+          const exists = next.some(
+            (chat) =>
+              (chat.type === 'group' || chat.type === 'channel') &&
+              chat.data.id === contextId,
+          );
+          if (!exists) {
+            if (chatsFilter === 'users') userListRefetchFromUnread = true;
+            continue;
+          }
           if (!lm) groupRefreshIds.add(contextId);
           if (lm) {
             const updatedAt = lm.updatedAt ?? lm.createdAt;

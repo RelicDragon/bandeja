@@ -238,7 +238,7 @@ export type IntentMismatchReason = 'dates' | 'clubs' | 'time' | 'level' | 'gende
 
 export type IntentMismatch = {
   reason: IntentMismatchReason;
-  /** For time mismatches: the other player's dominant period, so the UI can say "Plays mornings". */
+  /** For time mismatches: the other player's period, or their custom hour window. */
   period?: PlayIntentTimeOfDay;
   startTime?: string | null;
   endTime?: string | null;
@@ -259,8 +259,7 @@ export function intentMismatch(a: IntentCriteria, b: IntentCriteria): IntentMism
   const windowsB = resolveTimeWindows(b);
   const timeWindows = timeWindowSetsIntersect(windowsA, windowsB);
   if (windowsA !== null && windowsB !== null && timeWindows?.length === 0) {
-    const period = dominantPlayPeriod(b);
-    return { reason: 'time', period, ...customHourFields(b, period) };
+    return { reason: 'time', ...timePhraseFields(b) };
   }
 
   if (!levelsCompatible(a, b)) return { reason: 'level' };
@@ -281,8 +280,7 @@ export type FitDimension = 'dates' | 'clubs' | 'time' | 'level' | 'gender';
 export type FitCheck = {
   dimension: FitDimension;
   ok: boolean;
-  /** For the 'time' dimension: the other player's dominant period, so the UI
-   *  can phrase the row ("Plays mornings") whether or not it overlaps. */
+  /** For the 'time' dimension: the other player's period or custom hour window. */
   period?: PlayIntentTimeOfDay;
   startTime?: string | null;
   endTime?: string | null;
@@ -294,10 +292,9 @@ export type FitCheck = {
  * {@link intentMismatch}, but instead of returning only the first failure it
  * reports every dimension's pass/fail so the client can render a full list of
  * conditions with green checks / red crosses. The 'time' entry also carries
- * the other player's dominant play period for natural phrasing.
+ * the other player's period or custom hour window for natural phrasing.
  */
 export function intentFitBreakdown(a: IntentCriteria, b: IntentCriteria): FitCheck[] {
-  const period = dominantPlayPeriod(b);
   const windowsA = resolveTimeWindows(a);
   const windowsB = resolveTimeWindows(b);
   const timeOverlap = timeWindowSetsIntersect(windowsA, windowsB);
@@ -308,7 +305,7 @@ export function intentFitBreakdown(a: IntentCriteria, b: IntentCriteria): FitChe
   return [
     { dimension: 'dates', ok: datesIntersect(a.dateKeys, b.dateKeys).length > 0 },
     { dimension: 'clubs', ok: clubsIntersect(a.clubIds, b.clubIds) !== null },
-    { dimension: 'time', ok: timeOk, period, ...customHourFields(b, period) },
+    { dimension: 'time', ok: timeOk, ...timePhraseFields(b) },
     { dimension: 'level', ok: levelsCompatible(a, b) },
     {
       dimension: 'gender',
@@ -326,23 +323,36 @@ export function intentFitBreakdown(a: IntentCriteria, b: IntentCriteria): FitChe
  * (MORNING/AFTERNOON/EVENING/CUSTOM) from `timeOfDays` (or the legacy single
  * `timeOfDay`), falling back to ANYTIME when the player is fully flexible.
  */
+function intentPeriods(intent: {
+  timeOfDay: PlayIntentTimeOfDay;
+  timeOfDays?: PlayIntentTimeOfDay[];
+}): PlayIntentTimeOfDay[] {
+  return intent.timeOfDays?.length
+    ? [...new Set(intent.timeOfDays)]
+    : [intent.timeOfDay];
+}
+
 function dominantPlayPeriod(intent: {
   timeOfDay: PlayIntentTimeOfDay;
   timeOfDays?: PlayIntentTimeOfDay[];
 }): PlayIntentTimeOfDay {
-  const periods = intent.timeOfDays?.length
-    ? [...new Set(intent.timeOfDays)]
-    : [intent.timeOfDay];
-  const concrete = periods.find((p) => p !== 'ANYTIME');
+  const concrete = intentPeriods(intent).find((p) => p !== 'ANYTIME');
   return concrete ?? 'ANYTIME';
 }
 
-function customHourFields(
-  intent: IntentCriteria,
-  period: PlayIntentTimeOfDay,
-): { startTime?: string | null; endTime?: string | null } {
-  if (period !== 'CUSTOM') return {};
-  return { startTime: intent.startTime, endTime: intent.endTime };
+function timePhraseFields(intent: IntentCriteria): {
+  period: PlayIntentTimeOfDay;
+  startTime?: string | null;
+  endTime?: string | null;
+} {
+  if (intentPeriods(intent).includes('CUSTOM')) {
+    return {
+      period: 'CUSTOM',
+      startTime: intent.startTime,
+      endTime: intent.endTime,
+    };
+  }
+  return { period: dominantPlayPeriod(intent) };
 }
 
 /**

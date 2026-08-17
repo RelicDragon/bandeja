@@ -17,6 +17,7 @@ import { PlayIntentLookingStrip } from './PlayIntentLookingStrip';
 import { PlayIntentIdleCtaCard } from './PlayIntentIdleCtaCard';
 import { resolvePlayIntentProposal } from './playIntentProposal';
 import { playIntentsApi, type MatchProposalSummary, type PlayIntent, type PoolMember } from '@/api/playIntents';
+import { formatPlayIntentHourRange } from '@/utils/playIntentWindow';
 import { getViewerPrimarySport } from '@/utils/profileSports';
 import { parseSport } from '@/sport/sportRegistry';
 import type { Sport } from '@/types';
@@ -60,7 +61,7 @@ function timeHint(intent: PlayIntent | null | undefined, t: (k: string) => strin
         case 'EVENING':
           return t('playIntent.evening');
         case 'CUSTOM':
-          return [intent.startTime, intent.endTime].filter(Boolean).join('–');
+          return formatPlayIntentHourRange(intent.startTime, intent.endTime) ?? '';
         default:
           return t('playIntent.anytime');
       }

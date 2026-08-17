@@ -5,6 +5,7 @@ import {
   CalendarDays,
   Clock3,
   Loader2,
+  MessageCircle,
   Radio,
   Sparkles,
   UsersRound,
@@ -14,6 +15,7 @@ import { Button } from '@/components';
 import { PlayersCarousel } from '@/components/GameDetails/PlayersCarousel';
 import { PlayIntentClusterProgress } from '@/components/playIntent/PlayIntentClusterProgress';
 import { CourtLobbyArena } from '@/components/playIntent/CourtLobbyArena';
+import { openLobbyDiscussion } from '@/components/playIntent/openLobbyDiscussion';
 import {
   playIntentsApi,
   type MatchProposalSummary,
@@ -81,6 +83,8 @@ export function CourtLobbyPanel({
   const [busy, setBusy] = useState(false);
   const [waitingHost, setWaitingHost] = useState(false);
   const [pinnedUserId, setPinnedUserId] = useState<string | null>(null);
+  const [discussing, setDiscussing] = useState(false);
+  const discussInFlightRef = useRef(false);
 
   const handleProposalActionError = useCallback(
     (error: unknown) => {
@@ -351,29 +355,68 @@ export function CourtLobbyPanel({
     t,
   ]);
 
-  const onStartChat = useCallback(
-    async (chatUserId: string) => {
-      if (chatUserId === userId) return;
+  const openDiscussion = useCallback(
+    async (otherUserIds: string[], closeLobby: boolean) => {
+      if (!userId) return;
       try {
-        const chat = await usePlayersStore
-          .getState()
-          .getOrCreateAndAddUserChat(chatUserId);
-        if (!chat) {
-          toast.error(t('errors.generic', { defaultValue: 'Something went wrong' }));
+        await openLobbyDiscussion({
+          viewerId: userId,
+          otherUserIds,
+          getOrCreateUserChat: (chatUserId) =>
+            usePlayersStore.getState().getOrCreateAndAddUserChat(chatUserId),
+          discussGroup: (ids) => playIntentsApi.discussGroup(ids),
+          navigate,
+        });
+        if (closeLobby) onOpenChange(false);
+      } catch (err: unknown) {
+        const response = (
+          err as {
+            response?: { data?: { code?: string; message?: string } };
+          }
+        ).response?.data;
+        const key =
+          response?.code ||
+          response?.message ||
+          (err instanceof Error ? err.message : 'errors.generic');
+        toast.error(t(key, { defaultValue: key }));
+        if (key === 'playIntent.discussUnavailable') {
+          onChanged?.();
+          onOpenChange(false);
           return;
         }
-        navigate(`/user-chat/${chat.id}`, {
-          state: { chat, contextType: 'USER' },
-        });
-      } catch (err: unknown) {
-        const errorMessage =
-          (err as { response?: { data?: { message?: string } } }).response?.data
-            ?.message || 'errors.generic';
-        toast.error(t(errorMessage, { defaultValue: errorMessage }));
+        if (key === 'playIntent.discussNotInLobby') {
+          onChanged?.();
+        }
       }
     },
-    [navigate, t, userId],
+    [navigate, onChanged, onOpenChange, t, userId],
   );
+
+  const onStartChat = useCallback(
+    async (chatUserId: string) => {
+      if (!userId || chatUserId === userId) return;
+      await openDiscussion([chatUserId], false);
+    },
+    [openDiscussion, userId],
+  );
+
+  const otherDiscussIds = displayedRosterParticipants
+    .map((participant) => participant.userId)
+    .filter((id) => !!userId && id !== userId);
+  const canDiscuss = otherDiscussIds.length > 0;
+  const actionsLocked = busy || discussing;
+
+  const discuss = async () => {
+    if (!userId || !canDiscuss || discussInFlightRef.current) return;
+    discussInFlightRef.current = true;
+    setDiscussing(true);
+    try {
+      await openDiscussion(otherDiscussIds, true);
+    } finally {
+      discussInFlightRef.current = false;
+      setDiscussing(false);
+    }
+  };
 
   const onRemoveMember = async (targetUserId: string) => {
     if (!proposal) {
@@ -497,7 +540,7 @@ export function CourtLobbyPanel({
             <CourtLobbyArena
               members={arenaMembers}
               overflow={overflow}
-              busy={busy}
+              busy={actionsLocked}
               hasProposal={hasProposal || canCreateFromLobby}
               vacancy={displayedVacancy}
               rosterLocked={rosterLocked}
@@ -578,17 +621,18 @@ export function CourtLobbyPanel({
                 userId={userId}
                 autoHideNames={false}
                 onRemoveParticipant={
-                  rosterLocked || busy ? undefined : (id) => void onRemoveMember(id)
+                  rosterLocked || actionsLocked ? undefined : (id) => void onRemoveMember(id)
                 }
                 canRemoveParticipant={(id) => !!userId && id !== userId}
               />
 
-              <div className="mt-4">
+              <div className="mt-4 flex flex-col gap-2.5">
                 {!proposal ? (
                   <Button
                     variant="primary"
                     className="h-12 w-full rounded-2xl shadow-[0_10px_25px_rgba(14,165,233,0.22)]"
                     onClick={createFromLobby}
+                    disabled={actionsLocked}
                   >
                     <Sparkles className="h-4 w-4" />
                     {t('playIntent.createGame')}
@@ -607,7 +651,7 @@ export function CourtLobbyPanel({
                       variant="secondary"
                       className="shrink-0 rounded-xl px-4"
                       onClick={dismissProposal}
-                      disabled={busy}
+                      disabled={actionsLocked}
                     >
                       {t('playIntent.decline')}
                     </Button>
@@ -618,7 +662,7 @@ export function CourtLobbyPanel({
                       variant="secondary"
                       className="h-12 rounded-2xl px-4"
                       onClick={dismissProposal}
-                      disabled={busy}
+                      disabled={actionsLocked}
                     >
                       {t('playIntent.decline')}
                     </Button>
@@ -626,7 +670,7 @@ export function CourtLobbyPanel({
                       variant="primary"
                       className="h-12 flex-1 rounded-2xl shadow-[0_10px_25px_rgba(14,165,233,0.22)]"
                       onClick={() => void confirm()}
-                      disabled={busy || !rosterFull}
+                      disabled={actionsLocked || !rosterFull}
                     >
                       {busy ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
@@ -638,6 +682,22 @@ export function CourtLobbyPanel({
                       )}
                     </Button>
                   </div>
+                )}
+                {canDiscuss && (
+                  <Button
+                    variant="secondary"
+                    className="h-12 w-full rounded-2xl"
+                    data-testid="lobby-discuss"
+                    onClick={() => void discuss()}
+                    disabled={actionsLocked}
+                  >
+                    {discussing ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <MessageCircle className="h-4 w-4" />
+                    )}
+                    {t('playIntent.discussInGroup')}
+                  </Button>
                 )}
               </div>
             </section>

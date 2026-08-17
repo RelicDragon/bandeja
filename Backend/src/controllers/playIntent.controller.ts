@@ -6,6 +6,7 @@ import { PlayIntentService } from '../services/playIntent/playIntent.service';
 import { PlayIntentMatchService } from '../services/playIntent/playIntentMatch.service';
 import { MatchProposalService } from '../services/playIntent/matchProposal.service';
 import { PlayIntentShareService } from '../services/playIntent/playIntentShare.service';
+import { PlayIntentDiscussService } from '../services/playIntent/playIntentDiscuss.service';
 import { parseSport } from '../sport/sportIds';
 import prisma from '../config/database';
 import { getValidatedRequestPart } from '../middleware/validateZod';
@@ -16,6 +17,7 @@ import type {
   ValidatedPlayIntentScopeQuery,
   ValidatedProposalIdParams,
   ValidatedRemoveProposalMemberInput,
+  ValidatedDiscussPlayIntentInput,
 } from '../services/playIntent/playIntent.schemas';
 
 export const getMyPlayIntent = asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -145,6 +147,19 @@ export const removeMatchProposalMember = asyncHandler(async (req: AuthRequest, r
     body.userId,
   );
   res.json({ success: true, data: result });
+});
+
+export const discussPlayIntent = asyncHandler(async (req: AuthRequest, res: Response) => {
+  if (!req.userId) throw new Error('User ID not found');
+  const body = getValidatedRequestPart<ValidatedDiscussPlayIntentInput>(
+    req,
+    'body',
+  );
+  const groupChannel = await PlayIntentDiscussService.openGroup(
+    req.userId,
+    body.userIds,
+  );
+  res.status(200).json({ success: true, data: groupChannel });
 });
 
 export const addMatchProposalMember = asyncHandler(async (req: AuthRequest, res: Response) => {
