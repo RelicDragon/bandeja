@@ -1541,6 +1541,8 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PI-37 | Realtime lobby reconciliation | Keep Find open for users in the same city; create, replace, cancel, expire, edit a proposal roster, and convert a proposal from another client; briefly disconnect/reconnect one client | The lobby refetches immediately from authoritative HTTP state for every committed transition; reconnect/focus also reconciles; no 12–30s wait or duplicate visible transition occurs |
 | PI-38 | Accessible proposal arrival | Start with an active intent and form a new proposal from other clients while a screen reader is active; repeat with Reduce Motion enabled | The new proposal is announced once through a polite live region; the ready strip celebrates once when motion is allowed and stays static with Reduce Motion |
 | PI-39 | Native friend-intent action | Receive a followed-user play-intent push on iOS and Android, then use “I want to play too” from the notification | iOS groups the alert in the play-intent thread; both platforms open the shared-intent confirmation flow with localized action copy; a repeated provider delivery collapses instead of stacking |
+| PI-41 | Custom-hours mismatch bubble | Look with Evening while another city player is looking Custom 11:00–13:00 | Far-field bubble shows `11:00–13:00`, not “Custom hours” |
+| PI-42 | Custom-hours fit popup | From PI-41, tap the far-field avatar | Fit card Time row subtitle is `11:00–13:00`, not “Custom hours” |
 
 ---
 

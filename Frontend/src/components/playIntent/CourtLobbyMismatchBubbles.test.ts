@@ -50,15 +50,25 @@ describe('mismatchLabel', () => {
     );
   });
 
-  it('uses the dedicated copy for a CUSTOM period (no raw {{period}})', () => {
+  it('shows the chosen hour range for a CUSTOM period', () => {
     const t = makeT();
-    // Regression: previously fell through to `mismatchTime` without a period,
-    // rendering the literal "Plays {{period}}" string.
+    const label = mismatchLabel(t, {
+      reason: 'time',
+      period: 'CUSTOM',
+      startTime: '11:00',
+      endTime: '13:00',
+    });
+    expect(label).toBe('11:00–13:00');
+    expect(t).not.toHaveBeenCalledWith('playIntent.mismatchTimeCustom', expect.anything());
+    expect(t).not.toHaveBeenCalledWith('playIntent.mismatchTime', expect.anything());
+  });
+
+  it('falls back to Custom hours when a CUSTOM period has no window', () => {
+    const t = makeT();
     const label = mismatchLabel(t, { reason: 'time', period: 'CUSTOM' });
     expect(label).toBe('Custom hours');
     expect(label).not.toContain('{{');
     expect(t).toHaveBeenCalledWith('playIntent.mismatchTimeCustom', expect.anything());
-    expect(t).not.toHaveBeenCalledWith('playIntent.mismatchTime', expect.anything());
   });
 
   it('treats ANYTIME (and a missing period) as flexible timing', () => {

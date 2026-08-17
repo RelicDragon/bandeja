@@ -240,6 +240,8 @@ export type IntentMismatch = {
   reason: IntentMismatchReason;
   /** For time mismatches: the other player's dominant period, so the UI can say "Plays mornings". */
   period?: PlayIntentTimeOfDay;
+  startTime?: string | null;
+  endTime?: string | null;
 };
 
 /**
@@ -257,7 +259,8 @@ export function intentMismatch(a: IntentCriteria, b: IntentCriteria): IntentMism
   const windowsB = resolveTimeWindows(b);
   const timeWindows = timeWindowSetsIntersect(windowsA, windowsB);
   if (windowsA !== null && windowsB !== null && timeWindows?.length === 0) {
-    return { reason: 'time', period: dominantPlayPeriod(b) };
+    const period = dominantPlayPeriod(b);
+    return { reason: 'time', period, ...customHourFields(b, period) };
   }
 
   if (!levelsCompatible(a, b)) return { reason: 'level' };
@@ -281,6 +284,8 @@ export type FitCheck = {
   /** For the 'time' dimension: the other player's dominant period, so the UI
    *  can phrase the row ("Plays mornings") whether or not it overlaps. */
   period?: PlayIntentTimeOfDay;
+  startTime?: string | null;
+  endTime?: string | null;
 };
 
 /**
@@ -303,7 +308,7 @@ export function intentFitBreakdown(a: IntentCriteria, b: IntentCriteria): FitChe
   return [
     { dimension: 'dates', ok: datesIntersect(a.dateKeys, b.dateKeys).length > 0 },
     { dimension: 'clubs', ok: clubsIntersect(a.clubIds, b.clubIds) !== null },
-    { dimension: 'time', ok: timeOk, period },
+    { dimension: 'time', ok: timeOk, period, ...customHourFields(b, period) },
     { dimension: 'level', ok: levelsCompatible(a, b) },
     {
       dimension: 'gender',
@@ -330,6 +335,14 @@ function dominantPlayPeriod(intent: {
     : [intent.timeOfDay];
   const concrete = periods.find((p) => p !== 'ANYTIME');
   return concrete ?? 'ANYTIME';
+}
+
+function customHourFields(
+  intent: IntentCriteria,
+  period: PlayIntentTimeOfDay,
+): { startTime?: string | null; endTime?: string | null } {
+  if (period !== 'CUSTOM') return {};
+  return { startTime: intent.startTime, endTime: intent.endTime };
 }
 
 /**

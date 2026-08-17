@@ -19,14 +19,10 @@ import {
   Users,
   X,
 } from 'lucide-react';
-import type {
-  FitCheck,
-  FitDimension,
-  PlayIntentTimeOfDay,
-  PoolMember,
-} from '@/api/playIntents';
+import type { FitCheck, FitDimension, PoolMember } from '@/api/playIntents';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { CourtLobbyAvatarImage } from '@/components/playIntent/CourtLobbyAvatarImage';
+import { fitTimeSubtitle } from '@/components/playIntent/mismatchLabel';
 import './CourtLobbyPlayerFitCard.css';
 
 type AnchorRect = { left: number; top: number; width: number; height: number };
@@ -140,14 +136,6 @@ function layoutCard(
   return { left, top, width, placement, caretLeft, originX };
 }
 
-const PERIOD_I18N_KEY: Record<PlayIntentTimeOfDay, string> = {
-  MORNING: 'playIntent.morning',
-  AFTERNOON: 'playIntent.afternoon',
-  EVENING: 'playIntent.evening',
-  ANYTIME: 'playIntent.anytime',
-  CUSTOM: 'playIntent.customTime',
-};
-
 const DIM_ICON: Record<FitDimension, typeof CalendarDays> = {
   dates: CalendarDays,
   clubs: MapPin,
@@ -164,30 +152,10 @@ const DIM_LABEL_KEY: Record<FitDimension, string> = {
   gender: 'playIntent.fitDimGender',
 };
 
-function timeRowSubtitle(
-  t: (key: string, opts?: Record<string, unknown>) => string,
-  check: FitCheck,
-): string | null {
-  if (check.dimension !== 'time') return null;
-  if (check.period === 'ANYTIME' || !check.period) {
-    return t('playIntent.mismatchTimeAnytime', { defaultValue: 'Flexible timing' });
-  }
-  if (check.period === 'CUSTOM') {
-    return t('playIntent.mismatchTimeCustom', { defaultValue: 'Custom hours' });
-  }
-  const periodLabel = t(PERIOD_I18N_KEY[check.period], {
-    defaultValue: check.period.toLowerCase(),
-  });
-  return t('playIntent.mismatchTime', {
-    period: periodLabel,
-    defaultValue: `Plays ${periodLabel}`,
-  });
-}
-
 function FitRow({ check, index }: { check: FitCheck; index: number }) {
   const { t } = useTranslation();
   const Icon = DIM_ICON[check.dimension];
-  const subtitle = timeRowSubtitle(t, check);
+  const subtitle = fitTimeSubtitle(t, check);
   const ok = check.ok;
   return (
     <motion.div

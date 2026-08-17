@@ -10,12 +10,14 @@ export type FitDimension = 'dates' | 'clubs' | 'time' | 'level' | 'gender';
  * One row of the per-condition fit breakdown used by the court-lobby player
  * card. `ok` is true when the viewer's intent and this player's intent agree on
  * the dimension; `period` carries the other player's dominant time-of-day so a
- * time row can read naturally ("Plays mornings").
+ * time row can read naturally ("Plays mornings", "11:00–13:00").
  */
 export type FitCheck = {
   dimension: FitDimension;
   ok: boolean;
   period?: PlayIntentTimeOfDay;
+  startTime?: string | null;
+  endTime?: string | null;
 };
 
 export type PlayIntent = {
@@ -68,6 +70,8 @@ export type PoolMember = {
   mismatch?: {
     reason: 'dates' | 'clubs' | 'time' | 'level' | 'gender';
     period?: PlayIntentTimeOfDay;
+    startTime?: string | null;
+    endTime?: string | null;
   } | null;
   fit?: FitCheck[] | null;
 };
