@@ -153,9 +153,10 @@ AUTH_SESSION_RETENTION_DAYS=30
 AUTH_REFRESH_EVENT_RETENTION_DAYS=30
 AUTH_REFRESH_ALERT_MIN_ATTEMPTS=20
 AUTH_REFRESH_ALERT_FAILURE_PERCENT=20
+AUTH_REFRESH_ALERT_COOLDOWN_MINUTES=60
 ```
 
-The migration adds idempotency state and durable, token-free refresh telemetry. A five-minute production monitor alerts through the developer-alert channel when the 15-minute failure rate reaches the configured minimum sample and percentage; daily maintenance removes expired/revoked session history and old telemetry. Verify `/health/details` after deploy and watch for `Auth refresh degradation` alerts before changing the force-update floor.
+The migration adds idempotency state and durable, token-free refresh telemetry. A five-minute production monitor alerts only on infrastructure outcomes (`error`, `refreshBusy`) when the 15-minute rate reaches the configured minimum sample and percentage, with a cooldown so the same window is not re-paged every 5 minutes. Expected client rejects (`refreshInvalid`, `refreshExpired`, `refreshTokenRequired`, `refreshReused`) are counted separately and do not page. Daily maintenance removes expired/revoked session history and old telemetry. Verify `/health/details` after deploy and watch for `Auth refresh degradation` alerts before changing the force-update floor.
 
 **Giphy / Klipy:** paste URL→GIF works without keys (CDN rewrite for direct media). Composer GIF search needs `GIPHY_API_KEY` and/or `KLIPY_API_KEY` in Backend `.env` on the server (Giphy preferred, Klipy fallback); without both, `/giphy/status` is unavailable and the GIF tray/attach entry stays hidden.
 

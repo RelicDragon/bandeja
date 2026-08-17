@@ -87,6 +87,12 @@ export const config = {
     1,
     100
   ),
+  authRefreshAlertCooldownMinutes: boundedInt(
+    process.env.AUTH_REFRESH_ALERT_COOLDOWN_MINUTES,
+    60,
+    5,
+    1440
+  ),
   refreshCookieName: process.env.REFRESH_COOKIE_NAME || 'pp_rt',
   refreshCookiePath: process.env.REFRESH_COOKIE_PATH || '/api',
   refreshCookieDomain: (process.env.REFRESH_COOKIE_DOMAIN || '').trim() || null,

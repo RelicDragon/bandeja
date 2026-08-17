@@ -8,10 +8,18 @@ export type AuthRefreshWindow = {
   attempts: number;
   failures: number;
   failurePercent: number;
+  expectedFailures: number;
   averageDurationMs: number;
   outcomes: Record<string, number>;
   platforms: Record<string, number>;
 };
+
+/** Server/capacity problems. Client rejects (invalid/expired/missing token) are not degradation. */
+export const AUTH_REFRESH_INFRA_OUTCOMES = new Set(['error', 'refreshBusy']);
+
+export function isAuthRefreshInfraFailure(outcome: string): boolean {
+  return AUTH_REFRESH_INFRA_OUTCOMES.has(outcome);
+}
 
 export function summarizeAuthRefreshWindow(
   events: Array<{ outcome: string; platform: string; durationMs: number }>
@@ -19,28 +27,44 @@ export function summarizeAuthRefreshWindow(
   const outcomes: Record<string, number> = {};
   const platforms: Record<string, number> = {};
   let failures = 0;
+  let expectedFailures = 0;
   let durationTotal = 0;
   for (const event of events) {
     outcomes[event.outcome] = (outcomes[event.outcome] ?? 0) + 1;
     platforms[event.platform] = (platforms[event.platform] ?? 0) + 1;
-    if (event.outcome !== 'success') failures += 1;
+    if (event.outcome === 'success') {
+      durationTotal += Math.max(0, event.durationMs);
+      continue;
+    }
+    if (isAuthRefreshInfraFailure(event.outcome)) failures += 1;
+    else expectedFailures += 1;
     durationTotal += Math.max(0, event.durationMs);
   }
   return {
     attempts: events.length,
     failures,
     failurePercent: events.length > 0 ? Math.round((failures / events.length) * 100) : 0,
+    expectedFailures,
     averageDurationMs: events.length > 0 ? Math.round(durationTotal / events.length) : 0,
     outcomes,
     platforms,
   };
 }
 
-export function shouldAlertAuthRefreshWindow(window: AuthRefreshWindow): boolean {
-  return (
-    window.attempts >= config.authRefreshAlertMinAttempts &&
-    window.failurePercent >= config.authRefreshAlertFailurePercent
-  );
+export function shouldAlertAuthRefreshWindow(
+  window: AuthRefreshWindow,
+  nowMs = Date.now(),
+  lastAlertAtMs: number | null = null
+): boolean {
+  if (window.attempts < config.authRefreshAlertMinAttempts) return false;
+  if (window.failurePercent < config.authRefreshAlertFailurePercent) return false;
+  if (
+    lastAlertAtMs != null &&
+    nowMs - lastAlertAtMs < config.authRefreshAlertCooldownMinutes * 60 * 1000
+  ) {
+    return false;
+  }
+  return true;
 }
 
 export class AuthSessionMaintenanceScheduler {
@@ -48,6 +72,7 @@ export class AuthSessionMaintenanceScheduler {
   private cleanupJob: cron.ScheduledTask | null = null;
   private monitoring = false;
   private cleaning = false;
+  private lastInfraAlertAtMs: number | null = null;
 
   start(): void {
     const tz = process.env.TZ || 'local';
@@ -71,10 +96,12 @@ export class AuthSessionMaintenanceScheduler {
           select: { outcome: true, platform: true, durationMs: true },
         });
         const summary = summarizeAuthRefreshWindow(events);
-        if (!shouldAlertAuthRefreshWindow(summary)) return;
+        const nowMs = Date.now();
+        if (!shouldAlertAuthRefreshWindow(summary, nowMs, this.lastInfraAlertAtMs)) return;
+        this.lastInfraAlertAtMs = nowMs;
         await reportCriticalError(
           new Error(
-            `Auth refresh degradation: ${summary.failures}/${summary.attempts} failed (${summary.failurePercent}%)`
+            `Auth refresh degradation: ${summary.failures}/${summary.attempts} infra failed (${summary.failurePercent}%)`
           ),
           JSON.stringify(summary)
         );
