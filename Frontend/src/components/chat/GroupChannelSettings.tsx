@@ -1,15 +1,18 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { Crown, Shield, User, UserX, ArrowRightLeft, Search, UserPlus, ChevronDown, ChevronUp, Share2, Link } from 'lucide-react';
+import { Crown, Shield, User, UserX, ArrowRightLeft, Search, UserPlus, ChevronDown, ChevronUp, Share2, Link, Trash2 } from 'lucide-react';
 import { Button, PlayerAvatar } from '@/components';
 import { JoinGroupChannelButton } from '@/components/JoinGroupChannelButton';
 import { GroupChannel, GroupChannelParticipant } from '@/api/chat';
 import { chatApi } from '@/api/chat';
 import { mediaApi } from '@/api/media';
 import { useAuthStore } from '@/store/authStore';
+import { useShellNavStore } from '@/store/shellNavStore';
 import { matchesSearch } from '@/utils/transliteration';
 import { GroupChannelInvitesModal } from '@/components/chat/GroupChannelInvitesModal';
+import { DeleteGroupChannelConfirmModal } from '@/components/chat/DeleteGroupChannelConfirmModal';
 import { ChatAutoTranslateSlots } from '@/components/chat/ChatAutoTranslateSlots';
 import { useChatAutoTranslateConfig } from '@/hooks/useChatAutoTranslateConfig';
 import { ChatAutoTranslateContext } from '@/contexts/ChatAutoTranslateContext';
@@ -30,6 +33,8 @@ export const GroupChannelSettings = ({
   onParticipantsCountChange
 }: GroupChannelSettingsProps) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const setChatsFilter = useShellNavStore((state) => state.setChatsFilter);
   const user = useAuthStore((state) => state.user);
   const [participants, setParticipants] = useState<GroupChannelParticipant[]>([]);
   const [loading, setLoading] = useState(true);
@@ -43,6 +48,8 @@ export const GroupChannelSettings = ({
   const [isSavingName, setIsSavingName] = useState(false);
   const [nameError, setNameError] = useState<string | null>(null);
   const [showInvitesModal, setShowInvitesModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeletingGroup, setIsDeletingGroup] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
 
   const canEditBug = !!(user && (user.isAdmin || groupChannel?.bug?.senderId === user.id));
@@ -56,6 +63,14 @@ export const GroupChannelSettings = ({
   const isOwner = useMemo(() => currentUserParticipant?.role === 'OWNER', [currentUserParticipant]);
   const isAdmin = useMemo(() => currentUserParticipant?.role === 'ADMIN', [currentUserParticipant]);
   const canEdit = isOwner || isAdmin || (!!user?.isAdmin && !!groupChannel.isCityGroup);
+  const canDeleteGroup = useMemo(
+    () => isOwner
+      && !groupChannelData.isCityGroup
+      && !groupChannelData.isChannel
+      && !groupChannelData.bugId
+      && !groupChannelData.marketItemId,
+    [isOwner, groupChannelData.isCityGroup, groupChannelData.isChannel, groupChannelData.bugId, groupChannelData.marketItemId]
+  );
   const isParticipant = useMemo(() => !!currentUserParticipant || groupChannelData.isParticipant, [currentUserParticipant, groupChannelData.isParticipant]);
 
   const {
@@ -313,6 +328,24 @@ export const GroupChannelSettings = ({
     }
   };
 
+  const handleDeleteGroup = useCallback(async () => {
+    setIsDeletingGroup(true);
+    try {
+      await chatApi.deleteGroupChannel(groupChannel.id);
+      toast.success(t('chat.deleteGroupSuccess'));
+      setShowDeleteModal(false);
+      setChatsFilter('users');
+      navigate('/chats', { replace: true });
+    } catch (error: unknown) {
+      console.error('Failed to delete group:', error);
+      const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message
+        ?? t('chat.deleteGroupError');
+      toast.error(message);
+    } finally {
+      setIsDeletingGroup(false);
+    }
+  }, [groupChannel.id, navigate, setChatsFilter, t]);
+
   return (
     <ChatAutoTranslateContext.Provider value={autoTranslateConfig?.languageCodes ?? []}>
     <div className="h-full overflow-y-auto bg-[#eefbfc] dark:bg-gray-900" ref={scrollContainerRef}>
@@ -506,6 +539,18 @@ export const GroupChannelSettings = ({
               </div>
             )}
           </div>
+
+          {canDeleteGroup && (
+            <Button
+              onClick={() => setShowDeleteModal(true)}
+              variant="outline"
+              size="lg"
+              className="w-full flex items-center justify-center gap-2 border-red-200 text-red-700 hover:bg-red-50 dark:border-red-900/50 dark:text-red-400 dark:hover:bg-red-950/30"
+            >
+              <Trash2 size={20} />
+              {t('chat.deleteGroup')}
+            </Button>
+          )}
         </div>
 
       {showInvitesModal && (
@@ -518,6 +563,16 @@ export const GroupChannelSettings = ({
           onUpdate={handleInvitesModalUpdate}
         />
       )}
+
+      <DeleteGroupChannelConfirmModal
+        isOpen={showDeleteModal}
+        groupName={groupChannelData.name}
+        isLoading={isDeletingGroup}
+        onClose={() => {
+          if (!isDeletingGroup) setShowDeleteModal(false);
+        }}
+        onConfirm={() => void handleDeleteGroup()}
+      />
     </div>
     </ChatAutoTranslateContext.Provider>
   );

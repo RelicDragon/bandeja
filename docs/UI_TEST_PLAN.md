@@ -1027,6 +1027,8 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | CH-15 | Channel chat | Open channel | Read/post per permissions |
 | CH-16 | Bug chat | `@admin` bug thread | Bug context panel |
 | CH-17 | Market chat | From listing | Market context panel |
+| CH-152 | Delete normal group (owner) | Owner opens `/group-chat/:id` → participants/settings slide-over → Delete group → type exact group name → confirm | Delete enabled only for owner on normal groups (not city/channel/bug/market); admin without ownership sees no delete; after delete navigates to Chats users tab; group gone for all members |
+| CH-153 | Delete group name mismatch | Owner opens delete modal → wrong name → Delete | Confirm stays disabled until name matches exactly |
 
 ### 11.3 Messaging features
 

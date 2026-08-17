@@ -567,6 +567,18 @@ export class GroupChannelService {
     return GroupChannelService.getGroupChannelById(groupChannelId, userId);
   }
 
+  static isDeletableNormalGroup(groupChannel: {
+    isCityGroup: boolean;
+    isChannel: boolean;
+    bugId: string | null;
+    marketItemId: string | null;
+  }): boolean {
+    return !groupChannel.isCityGroup
+      && !groupChannel.isChannel
+      && !groupChannel.bugId
+      && !groupChannel.marketItemId;
+  }
+
   static async deleteGroupChannel(groupChannelId: string, userId: string) {
     const groupChannel = await prisma.groupChannel.findUnique({
       where: { id: groupChannelId }
@@ -576,9 +588,13 @@ export class GroupChannelService {
       throw new ApiError(404, 'Group/Channel not found');
     }
 
+    if (!GroupChannelService.isDeletableNormalGroup(groupChannel)) {
+      throw new ApiError(403, 'This group cannot be deleted');
+    }
+
     const isOwner = await this.isGroupChannelOwner(groupChannelId, userId);
     if (!isOwner) {
-      throw new ApiError(403, 'Only owner can delete group/channel');
+      throw new ApiError(403, 'Only owner can delete group');
     }
 
     await prisma.groupChannel.delete({

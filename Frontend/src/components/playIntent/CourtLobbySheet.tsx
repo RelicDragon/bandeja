@@ -4,17 +4,14 @@ import { useTranslation } from 'react-i18next';
 import {
   CalendarDays,
   Clock3,
-  Loader2,
-  MessageCircle,
   Radio,
-  Sparkles,
   UsersRound,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { Button } from '@/components';
 import { PlayersCarousel } from '@/components/GameDetails/PlayersCarousel';
 import { PlayIntentClusterProgress } from '@/components/playIntent/PlayIntentClusterProgress';
 import { CourtLobbyArena } from '@/components/playIntent/CourtLobbyArena';
+import { CourtLobbyActions } from '@/components/playIntent/CourtLobbyActions';
 import { openLobbyDiscussion } from '@/components/playIntent/openLobbyDiscussion';
 import {
   playIntentsApi,
@@ -626,80 +623,20 @@ export function CourtLobbyPanel({
                 canRemoveParticipant={(id) => !!userId && id !== userId}
               />
 
-              <div className="mt-4 flex flex-col gap-2.5">
-                {!proposal ? (
-                  <Button
-                    variant="primary"
-                    className="h-12 w-full rounded-2xl shadow-[0_10px_25px_rgba(14,165,233,0.22)]"
-                    onClick={createFromLobby}
-                    disabled={actionsLocked}
-                  >
-                    <Sparkles className="h-4 w-4" />
-                    {t('playIntent.createGame')}
-                  </Button>
-                ) : showWaiting ? (
-                  <div className="flex items-center gap-3">
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">
-                        {t('playIntent.waitingHost')}
-                      </p>
-                      <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                        {proposal.dateKeys.join(', ')}
-                      </p>
-                    </div>
-                    <Button
-                      variant="secondary"
-                      className="shrink-0 rounded-xl px-4"
-                      onClick={dismissProposal}
-                      disabled={actionsLocked}
-                    >
-                      {t('playIntent.decline')}
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="flex gap-2.5">
-                    <Button
-                      variant="secondary"
-                      className="h-12 rounded-2xl px-4"
-                      onClick={dismissProposal}
-                      disabled={actionsLocked}
-                    >
-                      {t('playIntent.decline')}
-                    </Button>
-                    <Button
-                      variant="primary"
-                      className="h-12 flex-1 rounded-2xl shadow-[0_10px_25px_rgba(14,165,233,0.22)]"
-                      onClick={() => void confirm()}
-                      disabled={actionsLocked || !rosterFull}
-                    >
-                      {busy ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <>
-                          <Sparkles className="h-4 w-4" />
-                          {t('playIntent.createGame')}
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                )}
-                {canDiscuss && (
-                  <Button
-                    variant="secondary"
-                    className="h-12 w-full rounded-2xl"
-                    data-testid="lobby-discuss"
-                    onClick={() => void discuss()}
-                    disabled={actionsLocked}
-                  >
-                    {discussing ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <MessageCircle className="h-4 w-4" />
-                    )}
-                    {t('playIntent.discussInGroup')}
-                  </Button>
-                )}
-              </div>
+              <CourtLobbyActions
+                hasProposal={!!proposal}
+                showWaiting={showWaiting}
+                canDiscuss={canDiscuss}
+                actionsLocked={actionsLocked}
+                busy={busy}
+                discussing={discussing}
+                rosterFull={rosterFull}
+                waitingDates={proposal?.dateKeys.join(', ') ?? ''}
+                onCreate={createFromLobby}
+                onConfirm={() => void confirm()}
+                onDismiss={() => void dismissProposal()}
+                onDiscuss={() => void discuss()}
+              />
             </section>
           )}
         </div>
