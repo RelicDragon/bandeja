@@ -33,8 +33,8 @@ private enum WatchConnectivityPayload {
         Task { @MainActor in
             if auth.isLogout {
                 // Ignore stale FIFO logout if the phone already pushed a newer signed-in context.
-                if let ctx = WCSession.default.receivedApplicationContext as? [String: Any],
-                   let latest = WatchAuthSyncPayload(decode: ctx),
+                let ctx = WCSession.default.receivedApplicationContext
+                if let latest = WatchAuthSyncPayload(decode: ctx),
                    !latest.isLogout,
                    let latestToken = latest.token,
                    !latestToken.isEmpty {
