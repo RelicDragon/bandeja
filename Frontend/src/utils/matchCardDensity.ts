@@ -16,7 +16,8 @@ export type MatchCardDensityLayout = {
 
 const LAYOUTS: Record<MatchCardDensity, Omit<MatchCardDensityLayout, 'density'>> = {
   comfortable: {
-    playersCol: 'minmax(9rem, 1fr)',
+    // minmax(0,1fr) lets set columns keep fixed width; names truncate instead of cropping scores.
+    playersCol: 'minmax(0, 1fr)',
     setCol: '2.75rem',
     tileSize: 'md',
     faceSize: 'md',
@@ -30,7 +31,7 @@ const LAYOUTS: Record<MatchCardDensity, Omit<MatchCardDensityLayout, 'density'>>
     teamMinHeightClass: 'min-h-[36px]',
   },
   compact: {
-    playersCol: 'minmax(6.25rem, 1fr)',
+    playersCol: 'minmax(0, 1fr)',
     setCol: '2.25rem',
     tileSize: 'sm',
     faceSize: 'sm',
@@ -44,7 +45,7 @@ const LAYOUTS: Record<MatchCardDensity, Omit<MatchCardDensityLayout, 'density'>>
     teamMinHeightClass: 'min-h-[28px]',
   },
   dense: {
-    playersCol: 'minmax(4.75rem, 1fr)',
+    playersCol: 'minmax(0, 1fr)',
     setCol: '1.875rem',
     tileSize: 'xs',
     faceSize: 'sm',
@@ -59,19 +60,28 @@ const LAYOUTS: Record<MatchCardDensity, Omit<MatchCardDensityLayout, 'density'>>
   },
 };
 
-/** Rough CSS-px budget so set tiles stay on-screen without horizontal crop. */
+/**
+ * Pick density from container width + set count.
+ * Tuned so iPhone 12 Pro (~320–340px content) with 3 sets uses dense tiles that fully fit.
+ */
 export function resolveMatchCardDensity(
   widthPx: number,
   setCount: number,
   hasActionsColumn: boolean,
 ): MatchCardDensity {
   if (widthPx <= 0) return setCount >= 3 ? 'dense' : 'compact';
-  const actions = hasActionsColumn ? 48 : 0;
-  const fits = (playersMin: number, setW: number) =>
-    playersMin + Math.max(0, setCount) * setW + actions <= widthPx;
 
-  if (fits(144, 44)) return 'comfortable';
-  if (fits(100, 36)) return 'compact';
+  const actions = hasActionsColumn ? 48 : 0;
+  const usable = Math.max(0, widthPx - actions);
+
+  if (setCount <= 0) {
+    return usable >= 380 ? 'comfortable' : 'compact';
+  }
+
+  // Required width ≈ truncated-name floor + reserved set columns.
+  const needs = (nameFloor: number, setW: number) => nameFloor + setCount * setW;
+  if (usable >= needs(220, 58)) return 'comfortable';
+  if (usable >= needs(180, 56)) return 'compact';
   return 'dense';
 }
 
