@@ -15,6 +15,7 @@ import {
   persistSessionIdOnly,
 } from '@/services/refreshTokenPersistence';
 import { handleApiUnauthorizedIfNeeded } from '@/api/handleApiUnauthorized';
+import { awaitAuthForegroundSettle } from '@/api/authForegroundSettle';
 import {
   getApiAuthCredentialGeneration,
   isStaleApiAuthCredentialGeneration,
@@ -306,6 +307,15 @@ export async function runRefresh(): Promise<string | null> {
           continue;
         }
         if (isHardRefreshReject(code)) {
+          if (isWebHttpOnlyRefreshCookie()) {
+            try {
+              await refreshClient.post('/auth/logout', {}, {
+                ...( { skipAuth401Handler: true } as Record<string, unknown> ),
+              });
+            } catch {
+              /* best-effort cookie revoke */
+            }
+          }
           await clearRefreshBundle();
           markDurableRefreshCleared();
         }
@@ -395,6 +405,9 @@ export async function handleAxios401MaybeRefresh(error: AxiosError): Promise<unk
   if (error.response?.status !== 401) return Promise.reject(error);
   if ((error.config as { skipAuth401Handler?: boolean } | undefined)?.skipAuth401Handler) {
     return Promise.reject(error);
+  }
+  if (!isCapacitor()) {
+    await awaitAuthForegroundSettle();
   }
   if (isStaleApiAuthCredentialGeneration(error.config)) {
     return Promise.reject(error);

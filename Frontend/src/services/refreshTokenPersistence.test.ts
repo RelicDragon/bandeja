@@ -124,6 +124,19 @@ describe('native refresh-token persistence', () => {
     expect(afterLocalStateLoss).toBe(first);
   });
 
+  it('derives a stable web replay id from the session row in cookie-only mode', async () => {
+    nativePlatform = false;
+    storage.set('padelpulse_current_session_id', 'session-row-abc123');
+    const { getOrCreateRefreshRequestId } = await import('@/services/refreshTokenPersistence');
+
+    const first = await getOrCreateRefreshRequestId();
+    const second = await getOrCreateRefreshRequestId();
+
+    expect(first).toBe('web-v1-session-row-abc123');
+    expect(second).toBe(first);
+    expect(storage.has('padelpulse_refresh_request_id')).toBe(false);
+  });
+
   it('clears pending refresh replay state during logout cleanup', async () => {
     storage.set('padelpulse_refresh_request_id', 'refresh-request-pending-123');
     const { clearRefreshBundle } = await import('@/services/refreshTokenPersistence');

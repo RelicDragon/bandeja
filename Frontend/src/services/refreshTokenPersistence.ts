@@ -55,20 +55,30 @@ export async function getOrCreateRefreshRequestId(refreshToken?: string): Promis
     const deterministic = await deterministicNativeRefreshRequestId(refreshToken);
     if (deterministic) return deterministic;
   }
-  try {
-    const existing = localStorage.getItem(LS_REFRESH_REQUEST_ID)?.trim() ?? '';
-    if (REFRESH_REQUEST_ID_PATTERN.test(existing)) return existing;
-    const generated =
-      typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
-        ? crypto.randomUUID()
-        : `refresh-${Date.now()}-${Math.random().toString(36).slice(2, 14)}`;
-    localStorage.setItem(LS_REFRESH_REQUEST_ID, generated);
-    return localStorage.getItem(LS_REFRESH_REQUEST_ID) === generated ? generated : null;
-  } catch {
-    // Omitting the id keeps old-client stable-token compatibility rather than risking rotation
-    // without a durable replay key.
-    return null;
+  // Cookie-only web: derive a stable id from the session row so every tab converges
+  // on the same rotation attempt instead of racing random UUIDs after idle wake.
+  if (!Capacitor.isNativePlatform() && isWebHttpOnlyRefreshCookie() && !refreshToken?.trim()) {
+    const sessionId = getCurrentSessionIdSync()?.trim();
+    if (sessionId) return `web-v1-${sessionId}`;
   }
+  const readOrCreate = (): string | null => {
+    try {
+      const existing = localStorage.getItem(LS_REFRESH_REQUEST_ID)?.trim() ?? '';
+      if (REFRESH_REQUEST_ID_PATTERN.test(existing)) return existing;
+      const generated =
+        typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+          ? crypto.randomUUID()
+          : `refresh-${Date.now()}-${Math.random().toString(36).slice(2, 14)}`;
+      localStorage.setItem(LS_REFRESH_REQUEST_ID, generated);
+      return localStorage.getItem(LS_REFRESH_REQUEST_ID) === generated ? generated : null;
+    } catch {
+      return null;
+    }
+  };
+  if (typeof navigator !== 'undefined' && typeof navigator.locks?.request === 'function') {
+    return navigator.locks.request('padelpulse-refresh-request-id', readOrCreate);
+  }
+  return readOrCreate();
 }
 
 export function clearRefreshRequestId(): void {

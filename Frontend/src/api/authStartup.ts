@@ -17,6 +17,7 @@ import {
 import { syncLogoutToNative } from '@/services/authBridge';
 import { useAuthStore } from '@/store/authStore';
 import { hasExplicitLogoutMarker } from '@/utils/authExplicitLogout';
+import { runForegroundAuthSettle } from '@/api/authForegroundSettle';
 
 export type StoredAccessTokenState =
   | 'missing'
@@ -267,13 +268,6 @@ export async function settleStoredAuthBeforeBootstrap(opts?: {
   }
 }
 
-let foregroundSettlement: Promise<AuthStartupResult> | null = null;
-
 export function settleStoredAuthOnForeground(): Promise<AuthStartupResult> {
-  if (!foregroundSettlement) {
-    foregroundSettlement = settleStoredAuthBeforeBootstrap().finally(() => {
-      foregroundSettlement = null;
-    });
-  }
-  return foregroundSettlement;
+  return runForegroundAuthSettle(() => settleStoredAuthBeforeBootstrap());
 }
