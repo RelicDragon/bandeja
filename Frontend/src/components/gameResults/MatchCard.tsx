@@ -1,4 +1,5 @@
-import type { MouseEvent, ReactElement } from 'react';
+import type { MouseEvent, ReactElement, RefObject } from 'react';
+import { useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Trash2, MapPin, Play } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -24,6 +25,11 @@ import { getSetScoreTileState } from '@/components/gameResults/setScoreTileState
 import { MatchResultsHeaderBadges } from '@/components/gameResults/MatchResultsHeaderBadges';
 import { MatchTimerPanel } from '@/components/gameResults/matchTimer/MatchTimerPanel';
 import { useScrollbarVisibleWhileScrolling } from '@/hooks/useScrollbarVisibleWhileScrolling';
+import { useElementWidth } from '@/hooks/useElementWidth';
+import {
+  matchCardDensityLayout,
+  resolveMatchCardDensity,
+} from '@/utils/matchCardDensity';
 import type { MatchTimerAction } from '@/utils/matchTimer';
 
 interface MatchCardProps {
@@ -54,6 +60,12 @@ interface MatchCardProps {
   gameId?: string;
   onMatchTimerTransition?: (roundId: string, matchId: string, action: MatchTimerAction) => void | Promise<void>;
   onAddSupplementalSet?: () => void;
+  /** Drop outer card chrome when nested (e.g. league fixture card). */
+  embedded?: boolean;
+  /** Keep teams visible even when there are no scores yet. */
+  forceShow?: boolean;
+  /** Hide the "Match N" index chip. */
+  hideMatchIndex?: boolean;
 }
 
 export const MatchCard = ({
@@ -83,6 +95,9 @@ export const MatchCard = ({
   gameId,
   onMatchTimerTransition,
   onAddSupplementalSet,
+  embedded = false,
+  forceShow = false,
+  hideMatchIndex = false,
 }: MatchCardProps) => {
   const { t } = useTranslation();
   const { scrollRef, onScroll, scrollbarClassName } = useScrollbarVisibleWhileScrolling();
@@ -93,6 +108,7 @@ export const MatchCard = ({
   const resolvedWinnerTeam = getResultsMatchResolvedWinnerTeam(match, rules);
 
   if (
+    !forceShow &&
     !canEditResults &&
     !matchSetsHaveAnyNonZeroScore(match.sets) &&
     !matchFinished &&
@@ -154,9 +170,16 @@ export const MatchCard = ({
   const actionsColStart = setCount + 2;
 
   const showPlayerRemoveButton = isEditing && canEditResults;
+  const faceSize = embedded ? 'sm' : 'md';
+  const playerRowClass = embedded
+    ? 'relative flex min-h-[28px] w-full min-w-0 flex-row items-center gap-1 px-1 py-0'
+    : 'relative flex min-h-[40px] w-full min-w-0 flex-row items-center gap-2 px-2 py-0.5';
+  const playerNameClass = embedded
+    ? 'min-w-0 flex-1 truncate text-left text-[10px] font-medium leading-tight text-gray-800 dark:text-gray-200'
+    : 'min-w-0 flex-1 truncate text-left text-xs font-medium text-gray-800 dark:text-gray-200';
 
   const teamDropClass = (team: 'teamA' | 'teamB') =>
-    `min-h-[36px] ${(isEditing || draggedPlayer) && canEditResults ? 'border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg transition-colors' : ''} ${
+    `${embedded ? 'min-h-[24px]' : 'min-h-[36px]'} ${(isEditing || draggedPlayer) && canEditResults ? 'border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg transition-colors' : ''} ${
       canEditResults && draggedPlayer ? 'border-primary-400 bg-primary-50 dark:bg-primary-900/20' : ''
     } ${
       resolvedWinnerTeam === team
@@ -176,7 +199,7 @@ export const MatchCard = ({
         data-drop-zone
         data-match-id={match.id}
         data-team={team}
-        className={`relative flex min-h-[40px] w-full min-w-0 flex-row items-center gap-2 px-2 py-0.5 ${teamDropClass(team)}`}
+        className={`${playerRowClass} ${teamDropClass(team)}`}
         onDragOver={canEditResults ? onDragOver : undefined}
         onDrop={canEditResults ? (e) => onDrop(e, team) : undefined}
       >
@@ -187,11 +210,11 @@ export const MatchCard = ({
               draggable={false}
               showName={false}
               inlineFace
-              inlineFaceSize="md"
+              inlineFaceSize={faceSize}
               removable={false}
             />
             <span
-              className={`min-w-0 flex-1 truncate text-left text-xs font-medium text-gray-800 dark:text-gray-200 ${showPlayerRemoveButton ? 'pr-10' : ''}`}
+              className={`${playerNameClass} ${showPlayerRemoveButton ? 'pr-10' : ''}`}
             >
               {[player.firstName, player.lastName].filter(Boolean).join(' ') || '—'}
             </span>
@@ -211,7 +234,7 @@ export const MatchCard = ({
         ) : showPlaceholder ? (
           <button
             type="button"
-            className={`flex items-center gap-2 ${isEditing && canEditResults ? 'cursor-pointer hover:opacity-80' : 'cursor-default'}`}
+            className={`flex items-center ${embedded ? 'gap-1' : 'gap-2'} ${isEditing && canEditResults ? 'cursor-pointer hover:opacity-80' : 'cursor-default'}`}
             onClick={(e) => {
               e.stopPropagation();
               if (isEditing && canEditResults) {
@@ -219,8 +242,8 @@ export const MatchCard = ({
               }
             }}
           >
-            <PlayerAvatar player={null} showName={false} inlineFace inlineFaceSize="md" removable={false} />
-            <span className="text-xs text-gray-400 dark:text-gray-500">—</span>
+            <PlayerAvatar player={null} showName={false} inlineFace inlineFaceSize={faceSize} removable={false} />
+            <span className={embedded ? 'text-[10px] text-gray-400 dark:text-gray-500' : 'text-xs text-gray-400 dark:text-gray-500'}>—</span>
           </button>
         ) : null}
       </div>
@@ -392,28 +415,36 @@ export const MatchCard = ({
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, y: 10 }}
+      initial={embedded ? false : { opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ type: 'spring', stiffness: 340, damping: 30 }}
-      className={`relative rounded-2xl border bg-white px-2.5 pb-2.5 pt-2 shadow-sm transition-[border-color,box-shadow] duration-200 dark:bg-gray-800 ${
-        isEditing && canEditResults
-          ? 'border-primary-300 shadow-lg shadow-primary-500/10 ring-1 ring-primary-300/60 dark:border-primary-700 dark:ring-primary-700/50'
-          : 'border-gray-200/90 hover:shadow-md dark:border-gray-700/80'
-      }`}
+      className={
+        embedded
+          ? 'relative'
+          : `relative rounded-2xl border bg-white px-2.5 pb-2.5 pt-2 shadow-sm transition-[border-color,box-shadow] duration-200 dark:bg-gray-800 ${
+              isEditing && canEditResults
+                ? 'border-primary-300 shadow-lg shadow-primary-500/10 ring-1 ring-primary-300/60 dark:border-primary-700 dark:ring-primary-700/50'
+                : 'border-gray-200/90 hover:shadow-md dark:border-gray-700/80'
+            }`
+      }
       data-match-container
     >
-      <div
-        className={`mb-1 flex min-h-[1rem] flex-wrap items-center gap-x-1.5 gap-y-0.5 ${showHeaderEditButton || showDeleteButton ? 'pr-14' : ''}`}
-      >
-        <span className="inline-flex items-center rounded-md bg-gray-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide tabular-nums leading-none text-gray-500 dark:bg-gray-700/70 dark:text-gray-300">
-          {t('gameResults.match', { number: matchIndex + 1 })}
-        </span>
-        <MatchResultsHeaderBadges
-          showLivePulse={matchInProgressHeader}
-          showCompletedCheck={matchFinished}
-          gameResultsFinal={resultsFinal}
-        />
-      </div>
+      {(!hideMatchIndex || matchInProgressHeader || matchFinished || resultsFinal) && (
+        <div
+          className={`mb-1 flex min-h-[1rem] flex-wrap items-center gap-x-1.5 gap-y-0.5 ${showHeaderEditButton || showDeleteButton ? 'pr-14' : ''}`}
+        >
+          {!hideMatchIndex ? (
+            <span className="inline-flex items-center rounded-md bg-gray-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide tabular-nums leading-none text-gray-500 dark:bg-gray-700/70 dark:text-gray-300">
+              {t('gameResults.match', { number: matchIndex + 1 })}
+            </span>
+          ) : null}
+          <MatchResultsHeaderBadges
+            showLivePulse={matchInProgressHeader}
+            showCompletedCheck={matchFinished}
+            gameResultsFinal={resultsFinal}
+          />
+        </div>
+      )}
 
       {(headerEditButton || showDeleteButton) && (
         <div className="absolute right-2 top-1.5 z-10 flex flex-row items-center gap-1.5" onClick={(e) => e.stopPropagation()}>

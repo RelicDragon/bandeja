@@ -1,4 +1,5 @@
 import Foundation
+import CryptoKit
 
 enum APIError: Error, LocalizedError {
     case httpError(Int)
@@ -67,11 +68,49 @@ struct APIClient: Sendable {
         WatchApiConfig.mediaOrigin()
     }
 
+    /// Ensures a usable access token exists (refreshing from shared Keychain when needed).
+    static func ensureAccessToken() async -> String? {
+        if let token = KeychainHelper.shared.readToken(), !token.isEmpty {
+            return token
+        }
+        do {
+            return try await WatchAuthRefreshCoordinator.shared.refreshAccessToken()
+        } catch {
+            return nil
+        }
+    }
+
     private static let decoder: JSONDecoder = {
         let d = JSONDecoder()
         d.dateDecodingStrategy = .iso8601
         return d
     }()
+
+    private func authenticatedResponse(for request: URLRequest) async throws -> (Data, HTTPURLResponse) {
+        var token = KeychainHelper.shared.readToken()
+        if token == nil || token?.isEmpty == true {
+            // Access may have been cleared by a stale logout sync; refresh still lives in shared Keychain.
+            token = try await WatchAuthRefreshCoordinator.shared.refreshAccessToken()
+        }
+        guard let token, !token.isEmpty else {
+            throw APIError.noToken
+        }
+        var authorized = request
+        authorized.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        let (firstData, firstResponse) = try await URLSession.shared.data(for: authorized)
+        guard let firstHTTP = firstResponse as? HTTPURLResponse else {
+            throw APIError.httpError(0)
+        }
+        guard firstHTTP.statusCode == 401 else { return (firstData, firstHTTP) }
+
+        let refreshed = try await WatchAuthRefreshCoordinator.shared.refreshAccessToken()
+        authorized.setValue("Bearer \(refreshed)", forHTTPHeaderField: "Authorization")
+        let (retryData, retryResponse) = try await URLSession.shared.data(for: authorized)
+        guard let retryHTTP = retryResponse as? HTTPURLResponse else {
+            throw APIError.httpError(0)
+        }
+        return (retryData, retryHTTP)
+    }
 
     func fetch<T: Decodable>(_ endpoint: Endpoint) async throws -> T {
         try await execute(endpoint)
@@ -90,17 +129,10 @@ struct APIClient: Sendable {
     }
 
     func patchMatchLiveScoring(gameId: String, matchId: String, body: WatchPatchLiveScoringBody) async throws -> WatchPatchLiveScoringResponse {
-        guard let token = KeychainHelper.shared.readToken() else {
-            throw APIError.noToken
-        }
         var request = Endpoint.patchMatchLiveScoring(gameId: gameId, matchId: matchId).urlRequest(baseURL: Self.baseURL)
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         request.httpBody = try JSONEncoder().encode(body)
 
-        let (data, response) = try await URLSession.shared.data(for: request)
-        guard let http = response as? HTTPURLResponse else {
-            throw APIError.httpError(0)
-        }
+        let (data, http) = try await authenticatedResponse(for: request)
         if http.statusCode == 409 {
             if let parsed = try? Self.decoder.decode(LiveScoringConflictResponse.self, from: data),
                let rev = parsed.revision {
@@ -151,19 +183,12 @@ struct APIClient: Sendable {
         body: Body,
         includeBody: Bool = true
     ) async throws -> T {
-        guard let token = KeychainHelper.shared.readToken() else {
-            throw APIError.noToken
-        }
         var request = endpoint.urlRequest(baseURL: Self.baseURL)
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         if includeBody {
             request.httpBody = try JSONEncoder().encode(body)
         }
 
-        let (data, response) = try await URLSession.shared.data(for: request)
-        guard let http = response as? HTTPURLResponse else {
-            throw APIError.httpError(0)
-        }
+        let (data, http) = try await authenticatedResponse(for: request)
         guard 200..<300 ~= http.statusCode else {
             throw APIError.httpError(http.statusCode)
         }
@@ -200,4 +225,83 @@ private struct LiveScoringConflictResponse: Decodable, Sendable {
 
 private struct SimpleSuccessResponse: Codable, Sendable {
     let success: Bool
+}
+
+actor WatchAuthRefreshCoordinator {
+    static let shared = WatchAuthRefreshCoordinator()
+    private var inFlight: Task<String, Error>?
+
+    func refreshAccessToken() async throws -> String {
+        if let inFlight {
+            return try await inFlight.value
+        }
+        let task = Task { try await self.performRefresh(allowSharedCredentialRetry: true) }
+        inFlight = task
+        defer { inFlight = nil }
+        return try await task.value
+    }
+
+    private func performRefresh(allowSharedCredentialRetry: Bool, attempt: Int = 0) async throws -> String {
+        guard let refreshToken = KeychainHelper.shared.readRefreshToken(), !refreshToken.isEmpty else {
+            throw APIError.noToken
+        }
+        let requestIdInput = Data("bandeja-refresh-request-v1:\(refreshToken)".utf8)
+        let requestId = "native-v1-" + SHA256.hash(data: requestIdInput)
+            .map { String(format: "%02x", $0) }
+            .joined()
+
+        let refreshURL = await APIClient.baseURL.appendingPathComponent("auth/refresh")
+        var request = URLRequest(
+            url: refreshURL,
+            timeoutInterval: 20
+        )
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.setValue("ios", forHTTPHeaderField: "X-Client-Platform")
+        request.setValue(
+            Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0",
+            forHTTPHeaderField: "X-Client-Version"
+        )
+        request.setValue(requestId, forHTTPHeaderField: "X-Refresh-Request-Id")
+        request.httpBody = try JSONEncoder().encode(WatchRefreshRequest(refreshToken: refreshToken))
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse else { throw APIError.httpError(0) }
+        if http.statusCode == 401, allowSharedCredentialRetry,
+           let latest = KeychainHelper.shared.readRefreshToken(), latest != refreshToken {
+            return try await performRefresh(allowSharedCredentialRetry: false)
+        }
+        if [408, 429, 503].contains(http.statusCode), attempt < 2 {
+            let delayNs = UInt64(180_000_000 * (attempt + 1))
+            try await Task.sleep(nanoseconds: delayNs)
+            return try await performRefresh(
+                allowSharedCredentialRetry: allowSharedCredentialRetry,
+                attempt: attempt + 1
+            )
+        }
+        guard 200..<300 ~= http.statusCode else { throw APIError.httpError(http.statusCode) }
+        let envelope = try JSONDecoder().decode(WatchRefreshEnvelope.self, from: data)
+        guard let refreshed = envelope.data,
+              !refreshed.token.isEmpty,
+              !refreshed.refreshToken.isEmpty,
+              KeychainHelper.shared.writeRefreshToken(token: refreshed.refreshToken),
+              KeychainHelper.shared.write(token: refreshed.token) else {
+            throw APIError.noToken
+        }
+        return refreshed.token
+    }
+}
+
+nonisolated private struct WatchRefreshRequest: Encodable {
+    let refreshToken: String
+}
+
+nonisolated private struct WatchRefreshEnvelope: Decodable {
+    let data: WatchRefreshPayload?
+}
+
+nonisolated private struct WatchRefreshPayload: Decodable {
+    let token: String
+    let refreshToken: String
 }

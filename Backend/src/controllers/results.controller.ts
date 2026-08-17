@@ -27,6 +27,7 @@ export const recalculateOutcomes = asyncHandler(async (req: AuthRequest, res: Re
   const socketService = (global as any).socketService;
   if (socketService) {
     await socketService.emitGameUpdate(gameId, req.userId!);
+    await socketService.emitGameResultsUpdated(gameId, req.userId!);
   }
 
   res.json({
@@ -111,6 +112,7 @@ export const editGameResults = asyncHandler(async (req: AuthRequest, res: Respon
   const socketService = (global as any).socketService;
   if (socketService) {
     await socketService.emitGameUpdate(gameId, req.userId!);
+    await socketService.emitGameResultsUpdated(gameId, req.userId!);
   }
 
   res.json({
@@ -161,6 +163,7 @@ export const startResultsEntryWithGeneratedRound = asyncHandler(async (req: Auth
   const socketService = (global as any).socketService;
   if (socketService) {
     await socketService.emitGameResultsUpdated(gameId, req.userId!);
+    await socketService.emitGameUpdate(gameId, req.userId!);
   }
 
   const game = await GameService.getGameById(gameId, req.userId);

@@ -8,6 +8,7 @@ interface AuthBridgePlugin {
   setToken(options: { token: string }): Promise<void>;
   getToken(): Promise<{ token: string | null }>;
   deleteToken(): Promise<void>;
+  deleteSession(): Promise<void>;
   setRefreshToken(options: { token: string }): Promise<void>;
   getRefreshToken(): Promise<{ token: string | null }>;
   deleteRefreshToken(): Promise<void>;
@@ -54,12 +55,22 @@ export async function getTokenNative(): Promise<string | null> {
   }
 }
 
-export async function syncLogoutToNative(): Promise<void> {
+export async function clearAccessTokenNative(): Promise<void> {
   if (!Capacitor.isNativePlatform()) return;
   try {
     await AuthBridge.deleteToken();
   } catch (error) {
-    console.warn('AuthBridge: failed to sync logout to native', error);
+    console.warn('AuthBridge: failed to clear native access token', error);
+    throw error;
+  }
+}
+
+export async function syncLogoutToNative(): Promise<void> {
+  if (!Capacitor.isNativePlatform()) return;
+  try {
+    await AuthBridge.deleteSession();
+  } catch (error) {
+    console.warn('AuthBridge: failed to clear native session', error);
   }
 }
 
@@ -69,6 +80,7 @@ export async function setRefreshTokenNative(token: string): Promise<void> {
     await AuthBridge.setRefreshToken({ token });
   } catch (error) {
     console.warn('AuthBridge: failed to persist refresh token', error);
+    throw error;
   }
 }
 
@@ -77,8 +89,9 @@ export async function getRefreshTokenNative(): Promise<string | null> {
   try {
     const r = await AuthBridge.getRefreshToken();
     return r?.token ?? null;
-  } catch {
-    return null;
+  } catch (error) {
+    console.warn('AuthBridge: failed to read native refresh token', error);
+    throw error;
   }
 }
 
@@ -86,8 +99,9 @@ export async function clearRefreshTokenNative(): Promise<void> {
   if (!Capacitor.isNativePlatform()) return;
   try {
     await AuthBridge.deleteRefreshToken();
-  } catch {
-    /* ignore */
+  } catch (error) {
+    console.warn('AuthBridge: failed to clear native refresh token', error);
+    throw error;
   }
 }
 

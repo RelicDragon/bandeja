@@ -12,8 +12,25 @@ import {
 import { authenticate, AuthRequest } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { rateLimitKeyFromRequest } from '../utils/rateLimitClientKey';
+import { performPushInviteAction } from '../controllers/pushInviteAction.controller';
 
 const router = Router();
+
+const pushActionLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 60,
+  message: { success: false, message: 'Too many push actions' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => rateLimitKeyFromRequest(req),
+});
+
+router.post(
+  '/invite-action',
+  pushActionLimiter,
+  validate([body('actionToken').isString().isLength({ min: 16, max: 4096 })]),
+  performPushInviteAction
+);
 
 router.use(authenticate);
 

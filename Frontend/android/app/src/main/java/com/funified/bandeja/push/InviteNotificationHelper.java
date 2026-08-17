@@ -37,6 +37,7 @@ public final class InviteNotificationHelper {
         Intent acceptIntent = new Intent(context, InviteActionReceiver.class);
         acceptIntent.setAction(ACTION_ACCEPT);
         acceptIntent.putExtra("type", invite.type);
+        acceptIntent.putExtra("notificationId", invite.notificationId());
         if (invite.inviteId != null) {
             acceptIntent.putExtra("inviteId", invite.inviteId);
         }
@@ -46,15 +47,22 @@ public final class InviteNotificationHelper {
         if (invite.gameId != null) {
             acceptIntent.putExtra("gameId", invite.gameId);
         }
+        if (invite.acceptActionToken != null) {
+            acceptIntent.putExtra("actionToken", invite.acceptActionToken);
+        }
 
         Intent declineIntent = new Intent(context, InviteActionReceiver.class);
         declineIntent.setAction(ACTION_DECLINE);
         declineIntent.putExtra("type", invite.type);
+        declineIntent.putExtra("notificationId", invite.notificationId());
         if (invite.inviteId != null) {
             declineIntent.putExtra("inviteId", invite.inviteId);
         }
         if (invite.teamId != null) {
             declineIntent.putExtra("teamId", invite.teamId);
+        }
+        if (invite.declineActionToken != null) {
+            declineIntent.putExtra("actionToken", invite.declineActionToken);
         }
 
         PendingIntent acceptPending = PendingIntent.getBroadcast(

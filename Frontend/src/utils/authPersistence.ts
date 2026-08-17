@@ -73,21 +73,24 @@ export const restoreAuthIfNeeded = (): void => {
 
     const tokenAfterRestore = localStorage.getItem('token');
     const userAfterRestore = localStorage.getItem('user');
-    if (tokenAfterRestore && userAfterRestore && !useAuthStore.getState().isAuthenticated) {
-      let user: User | null = null;
-      try {
-        user = JSON.parse(userAfterRestore) as User;
-      } catch {
-        user = null;
-      }
-      if (user) {
-        useAuthStore.setState({
-          user,
-          token: tokenAfterRestore,
-          isAuthenticated: true,
-        });
-        syncTokenToNative(tokenAfterRestore);
-        scheduleProactiveAccessRefresh(tokenAfterRestore);
+    if (tokenAfterRestore && userAfterRestore) {
+      const auth = useAuthStore.getState();
+      if (!auth.isAuthenticated || !auth.token) {
+        let user: User | null = null;
+        try {
+          user = JSON.parse(userAfterRestore) as User;
+        } catch {
+          user = null;
+        }
+        if (user) {
+          useAuthStore.setState({
+            user,
+            token: tokenAfterRestore,
+            isAuthenticated: true,
+          });
+          syncTokenToNative(tokenAfterRestore);
+          scheduleProactiveAccessRefresh(tokenAfterRestore);
+        }
       }
     }
   } catch (error) {

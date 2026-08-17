@@ -20,7 +20,7 @@ interface SetScoreTileProps {
   state: SetScoreTileState;
   editable: boolean;
   isExtra?: boolean;
-  size?: 'md' | 'lg';
+  size?: 'xs' | 'sm' | 'md' | 'lg';
   /** Small label rendered at the top-right corner (e.g. tiebreak abbreviation). */
   topBadge?: string | null;
   /** Small label rendered below the tile (e.g. extra games/balls abbreviation). */
@@ -41,7 +41,16 @@ export const SetScoreTile = ({
   const sizeClass =
     size === 'lg'
       ? 'h-11 w-11 text-xl sm:h-12 sm:w-12 sm:text-2xl'
-      : 'h-10 w-10 text-lg sm:h-11 sm:w-11 sm:text-xl';
+      : size === 'xs'
+        ? 'h-7 w-7 text-sm rounded-lg'
+        : size === 'sm'
+          ? 'h-8 w-8 text-base rounded-lg'
+          : 'h-10 w-10 text-lg sm:h-11 sm:w-11 sm:text-xl';
+
+  const badgeTopClass =
+    size === 'xs' || size === 'sm'
+      ? 'absolute -right-0.5 -top-1.5 rounded px-0.5 text-[7px] font-bold leading-tight text-primary-600 shadow-sm ring-1 ring-gray-200/80 dark:bg-gray-800 dark:text-primary-400 dark:ring-gray-700 bg-white'
+      : 'absolute -right-1 -top-2 rounded-md bg-white px-1 text-[8px] font-bold leading-tight text-primary-600 shadow-sm ring-1 ring-gray-200/80 dark:bg-gray-800 dark:text-primary-400 dark:ring-gray-700 sm:text-[9px]';
 
   const stateClass = isExtra
     ? EXTRA_CLASS
@@ -68,11 +77,7 @@ export const SetScoreTile = ({
       >
         {value}
       </motion.span>
-      {topBadge ? (
-        <span className="absolute -right-1 -top-2 rounded-md bg-white px-1 text-[8px] font-bold leading-tight text-primary-600 shadow-sm ring-1 ring-gray-200/80 dark:bg-gray-800 dark:text-primary-400 dark:ring-gray-700 sm:text-[9px]">
-          {topBadge}
-        </span>
-      ) : null}
+      {topBadge ? <span className={badgeTopClass}>{topBadge}</span> : null}
       {bottomBadge ? (
         <span className="absolute -bottom-3 left-1/2 -translate-x-1/2 whitespace-nowrap text-[7px] font-bold uppercase tracking-tight text-violet-600 dark:text-violet-400">
           {bottomBadge}

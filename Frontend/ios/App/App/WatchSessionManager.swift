@@ -57,8 +57,9 @@ final class WatchSessionManager: NSObject {
         UserDefaults.standard.removeObject(forKey: Self.prefsStorageKey)
         guard session.activationState == .activated else { return }
         guard shouldAttemptWatchSync else { return }
+        // Application context is last-write-wins. Do not queue logout via transferUserInfo —
+        // a delayed FIFO message can wipe a newer post-login access token.
         let payload = WatchAuthSyncPayload.logoutPayload()
-        session.transferUserInfo(payload)
         try? session.updateApplicationContext(payload)
     }
 

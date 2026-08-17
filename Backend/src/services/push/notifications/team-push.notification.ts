@@ -5,6 +5,7 @@ import { formatUserName } from '../../shared/notification-base';
 import { NotificationPreferenceService } from '../../notificationPreference.service';
 import { NotificationChannelType } from '@prisma/client';
 import { PreferenceKey } from '../../../types/notifications.types';
+import { signPushInviteActionToken } from '../pushInviteActionToken.service';
 
 type TeamMini = { id: string; name: string };
 type UserMini = { id: string; firstName?: string | null; lastName?: string | null; avatar?: string | null };
@@ -40,7 +41,21 @@ export async function createUserTeamInvitePushNotification(
     type: NotificationType.TEAM_INVITE,
     title,
     body,
-    data: { teamId: team.id },
+    data: {
+      teamId: team.id,
+      acceptActionToken: signPushInviteActionToken({
+        userId: receiver.id,
+        kind: 'team',
+        targetId: team.id,
+        action: 'accept',
+      }),
+      declineActionToken: signPushInviteActionToken({
+        userId: receiver.id,
+        kind: 'team',
+        targetId: team.id,
+        action: 'decline',
+      }),
+    },
     actions: [
       { id: 'accept', title: t('telegram.acceptInvite', lang), action: 'accept' },
       { id: 'decline', title: t('telegram.declineInvite', lang), action: 'decline' },

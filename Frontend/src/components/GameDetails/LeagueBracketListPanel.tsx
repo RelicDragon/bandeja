@@ -179,9 +179,10 @@ export function LeagueBracketListPanel({
                   onOpen={onOpenGame ? () => onOpenGame(game) : undefined}
                   onEdit={onEditGame ? () => onEditGame(game) : undefined}
                   showGroupTag={false}
-                  allRounds={gameResultsMap.get(game.id) ?? null}
+                  liveRounds={gameResultsMap.get(game.id) ?? null}
                   bracketRoundBadge={roundBadge}
                   seasonPlayoffBadge={crossGroupBracket}
+                  onResultsChanged={onRetry}
                 />
               );
             }

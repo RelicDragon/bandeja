@@ -25,6 +25,8 @@ const PROD_OK = {
   jwtAccessExpiresIn: '30m',
   refreshTokenExpiresIn: '60d',
   refreshTokenEnabled: true,
+  refreshWebHttpOnlyCookie: true,
+  refreshWebHttpOnlyJsonBody: false,
   legacyJwtIssuanceEndAt: new Date('2026-05-15T00:00:00.000Z'),
 } as const;
 
@@ -109,12 +111,22 @@ function run() {
       nodeEnv: 'development',
       jwtSecret: DEFAULT_DEV_JWT_SECRET,
       refreshTokenEnabled: false,
+      refreshWebHttpOnlyCookie: false,
+      refreshWebHttpOnlyJsonBody: true,
       legacyJwtIssuanceEndAt: null,
     })
   );
   assert.throws(
     () => assertProductionJwtAuthConfig({ ...PROD_OK, refreshTokenEnabled: false }),
     /REFRESH_TOKEN_ENABLED/
+  );
+  assert.throws(
+    () => assertProductionJwtAuthConfig({ ...PROD_OK, refreshWebHttpOnlyCookie: false }),
+    /REFRESH_WEB_HTTPONLY_COOKIE/
+  );
+  assert.throws(
+    () => assertProductionJwtAuthConfig({ ...PROD_OK, refreshWebHttpOnlyJsonBody: true }),
+    /REFRESH_WEB_HTTPONLY_JSON_BODY/
   );
   assert.throws(
     () => assertProductionJwtAuthConfig({ ...PROD_OK, legacyJwtIssuanceEndAt: null }),

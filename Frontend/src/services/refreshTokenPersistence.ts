@@ -3,6 +3,8 @@ import { clearRefreshTokenNative, getRefreshTokenNative, setRefreshTokenNative }
 
 const LS_REFRESH = 'padelpulse_refresh_token';
 const LS_SESSION = 'padelpulse_current_session_id';
+const LS_REFRESH_REQUEST_ID = 'padelpulse_refresh_request_id';
+const REFRESH_REQUEST_ID_PATTERN = /^[A-Za-z0-9._:-]{16,128}$/;
 
 export function isWebHttpOnlyRefreshCookie(): boolean {
   if (Capacitor.isNativePlatform()) return false;
@@ -34,14 +36,79 @@ export function persistSessionIdOnly(currentSessionId: string | undefined | null
   }
 }
 
+async function deterministicNativeRefreshRequestId(refreshToken: string): Promise<string | null> {
+  try {
+    if (!globalThis.crypto?.subtle) return null;
+    const input = new TextEncoder().encode(`bandeja-refresh-request-v1:${refreshToken}`);
+    const digest = await globalThis.crypto.subtle.digest('SHA-256', input);
+    const hex = Array.from(new Uint8Array(digest), (byte) =>
+      byte.toString(16).padStart(2, '0'),
+    ).join('');
+    return `native-v1-${hex}`;
+  } catch {
+    return null;
+  }
+}
+
+export async function getOrCreateRefreshRequestId(refreshToken?: string): Promise<string | null> {
+  if (Capacitor.isNativePlatform() && refreshToken) {
+    const deterministic = await deterministicNativeRefreshRequestId(refreshToken);
+    if (deterministic) return deterministic;
+  }
+  try {
+    const existing = localStorage.getItem(LS_REFRESH_REQUEST_ID)?.trim() ?? '';
+    if (REFRESH_REQUEST_ID_PATTERN.test(existing)) return existing;
+    const generated =
+      typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+        ? crypto.randomUUID()
+        : `refresh-${Date.now()}-${Math.random().toString(36).slice(2, 14)}`;
+    localStorage.setItem(LS_REFRESH_REQUEST_ID, generated);
+    return localStorage.getItem(LS_REFRESH_REQUEST_ID) === generated ? generated : null;
+  } catch {
+    // Omitting the id keeps old-client stable-token compatibility rather than risking rotation
+    // without a durable replay key.
+    return null;
+  }
+}
+
+export function clearRefreshRequestId(): void {
+  try {
+    localStorage.removeItem(LS_REFRESH_REQUEST_ID);
+  } catch {
+    /* no-op */
+  }
+}
+
 export async function getRefreshTokenForRequest(): Promise<string | null> {
   if (Capacitor.isNativePlatform()) {
     const n = await getRefreshTokenNative();
     if (n) return n;
+    // Migrate credentials written by older app builds into authoritative secure storage.
+    const legacy = getStoredRefreshTokenSync()?.trim() ?? '';
+    if (legacy) {
+      await setRefreshTokenNative(legacy);
+      const verified = await getRefreshTokenNative();
+      if (verified) {
+        try {
+          localStorage.removeItem(LS_REFRESH);
+        } catch {
+          /* no-op */
+        }
+        return verified;
+      }
+      return legacy;
+    }
+    return null;
   }
   const ls = getStoredRefreshTokenSync()?.trim() ?? '';
   if (isWebHttpOnlyRefreshCookie()) {
-    if (ls) return ls;
+    if (ls) {
+      try {
+        localStorage.removeItem(LS_REFRESH);
+      } catch {
+        /* no-op */
+      }
+    }
     return null;
   }
   return ls || null;
@@ -52,27 +119,39 @@ export async function persistRefreshBundle(
   currentSessionId: string | undefined,
   opts?: { webCookieMode?: boolean }
 ) {
-  try {
-    if (refreshToken) {
-      localStorage.setItem(LS_REFRESH, refreshToken);
+  if (refreshToken) {
+    if (Capacitor.isNativePlatform()) {
       await setRefreshTokenNative(refreshToken);
-    } else if (opts?.webCookieMode) {
       try {
         localStorage.removeItem(LS_REFRESH);
       } catch {
         /* no-op */
       }
     } else {
+      localStorage.setItem(LS_REFRESH, refreshToken);
+    }
+  } else if (opts?.webCookieMode) {
+    try {
       localStorage.removeItem(LS_REFRESH);
-      await clearRefreshTokenNative();
+    } catch {
+      /* no-op */
     }
-    if (currentSessionId) {
+  } else {
+    localStorage.removeItem(LS_REFRESH);
+    await clearRefreshTokenNative();
+  }
+  if (currentSessionId) {
+    try {
       localStorage.setItem(LS_SESSION, currentSessionId);
-    } else {
-      localStorage.removeItem(LS_SESSION);
+    } catch {
+      /* session id is display metadata; the secure refresh credential remains authoritative */
     }
-  } catch {
-    /* no-op */
+  } else {
+    try {
+      localStorage.removeItem(LS_SESSION);
+    } catch {
+      /* no-op */
+    }
   }
 }
 
@@ -80,8 +159,13 @@ export async function clearRefreshBundle() {
   try {
     localStorage.removeItem(LS_REFRESH);
     localStorage.removeItem(LS_SESSION);
+    localStorage.removeItem(LS_REFRESH_REQUEST_ID);
+  } catch {
+    /* continue with native cleanup */
+  }
+  try {
     await clearRefreshTokenNative();
   } catch {
-    /* no-op */
+    // The bridge logged the storage failure. Local logout must still be allowed to finish.
   }
 }

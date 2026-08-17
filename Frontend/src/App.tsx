@@ -64,8 +64,8 @@ import { GeoProvider } from './contexts/GeoProvider';
 import { QueryProvider } from '@/queries/QueryProvider';
 import { useAppVersionCheck } from './hooks/useAppVersionCheck';
 import { backButtonService } from './services/backButtonService';
-import { appLifecycleService } from './services/appLifecycle.service';
-import { ensureChatSyncWarmBootstrap, warmChatSyncHeads } from '@/services/chat/chatSyncBatchWarm';
+import { appLifecycleService, runAuthenticatedForegroundSync } from './services/appLifecycle.service';
+import { ensureChatSyncWarmBootstrap } from '@/services/chat/chatSyncBatchWarm';
 import { scheduleUnifiedChatOfflineFlush } from '@/services/chat/chatUnifiedOfflineFlush';
 import { initChatOutboxRetryListeners } from '@/services/chat/chatOutboxRetryListeners';
 import { scheduleRetryStuckChatOutbox } from '@/services/chat/chatOutboxRetry';
@@ -73,7 +73,7 @@ import pushNotificationService from './services/pushNotificationService';
 import { navigationService } from './services/navigationService';
 import { markNavigation, setupPopstateFallback } from './utils/navigation';
 import { ensureAuthBroadcastListener, scheduleProactiveAccessRefresh } from '@/api/authRefresh';
-import { settleStoredAuthBeforeBootstrap } from '@/api/authStartup';
+import { settleStoredAuthBeforeBootstrap, canStartAuthenticatedNetwork } from '@/api/authStartup';
 import { ensureBooktimeProactiveRefresh } from '@/integrations/booktime/session';
 import { useUrlStoreSync } from './hooks/useUrlStoreSync';
 import { useMyTabPrefetch } from './hooks/useMyTabPrefetch';
@@ -143,6 +143,7 @@ function AppContent() {
   const token = useAuthStore((state) => state.token);
   const isInitializing = useAuthStore((state) => state.isInitializing);
   const finishInitializing = useAuthStore((state) => state.finishInitializing);
+  const authNetworkReady = canStartAuthenticatedNetwork({ isAuthenticated, isInitializing, token });
   const fetchFavorites = useFavoritesStore((state) => state.fetchFavorites);
   const isOnline = useNetworkStore((state) => state.isOnline);
   const [showOptionalUpdateModal, setShowOptionalUpdateModal] = useState(false);
@@ -196,11 +197,19 @@ function AppContent() {
     scheduleProactiveAccessRefresh(token);
   }, [isInitializing, token]);
 
+  const socketTokenRef = useRef(token);
   useEffect(() => {
-    if (isInitializing || !isAuthenticated) return;
+    const previous = socketTokenRef.current;
+    socketTokenRef.current = token;
+    if (isInitializing || !isAuthenticated || !token || token === previous) return;
+    socketService.reconnectWithNewToken();
+  }, [isAuthenticated, isInitializing, token]);
+
+  useEffect(() => {
+    if (!authNetworkReady) return;
     if (isTelegramAutoLoginPath(location.pathname)) return;
     ensureBooktimeProactiveRefresh();
-  }, [isInitializing, isAuthenticated, location.pathname]);
+  }, [authNetworkReady, location.pathname]);
 
   useUnreadAuthBootstrapRefresh(isInitializing, isAuthenticated);
   useBookingAuthInvalidationPrompt(!isInitializing && isAuthenticated);
@@ -228,7 +237,7 @@ function AppContent() {
       const auth = useAuthStore.getState();
       if (online && auth.isAuthenticated && !auth.isInitializing) {
         if (!wasOnline) {
-          void warmChatSyncHeads(undefined, { enrichFromUnread: true });
+          void runAuthenticatedForegroundSync();
         }
         scheduleUnifiedChatOfflineFlush();
         scheduleRetryStuckChatOutbox();
@@ -331,7 +340,7 @@ function AppContent() {
   }, []);
 
   useEffect(() => {
-    if (isAuthenticated && !isInitializing) {
+    if (authNetworkReady) {
       if (isTelegramAutoLoginPath(location.pathname)) return;
       if (navigator.onLine) {
         usersApi.getProfile()
@@ -360,20 +369,20 @@ function AppContent() {
     } else {
       headerService.stopPolling();
     }
-  }, [isAuthenticated, isInitializing, fetchFavorites, location.pathname]);
+  }, [authNetworkReady, fetchFavorites, location.pathname]);
 
   useEffect(() => {
-    if (!isAuthenticated || isInitializing) return;
+    if (!authNetworkReady) return;
     if (isTelegramAutoLoginPath(location.pathname)) return;
     void ensureChatSyncWarmBootstrap();
-  }, [isAuthenticated, isInitializing, location.pathname]);
+  }, [authNetworkReady, location.pathname]);
 
   const initializeSocketEvents = useSocketEventsStore((state) => state.initialize);
   const cleanupSocketEvents = useSocketEventsStore((state) => state.cleanup);
   usePresenceSubscriptionManager();
 
   useEffect(() => {
-    if (isAuthenticated && !isInitializing) {
+    if (authNetworkReady) {
       if (isTelegramAutoLoginPath(location.pathname)) return;
       const timer = setTimeout(() => {
         initializeSocketEvents();
@@ -394,7 +403,7 @@ function AppContent() {
         socketService.off('wallet-update', handleWalletUpdate);
       };
     }
-  }, [isAuthenticated, isInitializing, initializeSocketEvents, cleanupSocketEvents, location.pathname]);
+  }, [authNetworkReady, initializeSocketEvents, cleanupSocketEvents, location.pathname]);
 
   useEffect(() => {
     if (versionCheck && versionCheck.status === 'optional_update' && !showOptionalUpdateModal) {

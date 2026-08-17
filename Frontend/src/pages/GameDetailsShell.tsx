@@ -90,8 +90,9 @@ import { BasicUser } from '@/types';
 import { createPortal } from 'react-dom';
 import { canUserViewGameInvites, getGameParticipationState } from '@/utils/gameParticipationState';
 import { mergeGameWithInviteDeletedPayload, isPendingGameInvite } from '@/utils/gameInviteParticipant';
-import { socketService } from '@/services/socketService';
+import { retainGameRoom, releaseGameRoom } from '@/services/gameRoomMembership';
 import { GameResultsEngine, useGameResultsStore } from '@/services/gameResultsEngine';
+import { releaseAnyLeagueResultsEngine } from '@/services/leagueResultsEngineSession';
 import { shouldSyncEngineGameFromShell } from '@/utils/mergeGameFormatForResults';
 import {
   mergeGamePhotoRefresh,
@@ -387,9 +388,9 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
 
   useEffect(() => {
     if (!id) return;
-    socketService.joinGameRoom(id);
+    void retainGameRoom(id).catch(() => {});
     return () => {
-      socketService.leaveGameRoom(id);
+      releaseGameRoom(id);
     };
   }, [id]);
 
@@ -850,6 +851,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
       setGame(updatedGame);
 
       await GameResultsEngine.cleanup();
+      releaseAnyLeagueResultsEngine();
       await GameResultsEngine.initialize(id, user.id, t, { isAdmin: user.isAdmin });
       GameResultsEngine.updateGame(updatedGame);
 

@@ -1,18 +1,32 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { GameResultsEngine, useGameResultsStore } from '@/services/gameResultsEngine';
+import { releaseAnyLeagueResultsEngine } from '@/services/leagueResultsEngineSession';
 import { useSocketEventsStore } from '@/store/socketEventsStore';
 import { useAuthStore } from '@/store/authStore';
 
 interface UseGameResultsEngineProps {
   gameId: string | undefined;
   userId: string | undefined;
+  /** When false, do not initialize or keep the singleton attached. Defaults to true. */
+  enabled?: boolean;
+  /**
+   * When true (default), taking this engine session clears any league-card claim.
+   * League fixture cards set this false so they can own the claim themselves.
+   */
+  preemptLeagueClaim?: boolean;
 }
 
-export function useGameResultsEngine({ gameId, userId }: UseGameResultsEngineProps) {
+export function useGameResultsEngine({
+  gameId,
+  userId,
+  enabled = true,
+  preemptLeagueClaim = true,
+}: UseGameResultsEngineProps) {
   const { t } = useTranslation();
   const isGlobalAdmin = useAuthStore((state) => state.user?.isAdmin === true);
   const [error, setError] = useState<string | null>(null);
+  const activeGameId = enabled ? gameId : undefined;
 
   const game = useGameResultsStore((state) => state.game);
   const rounds = useGameResultsStore((state) => state.rounds);
@@ -29,20 +43,24 @@ export function useGameResultsEngine({ gameId, userId }: UseGameResultsEnginePro
   const lastMatchTimerUpdated = useSocketEventsStore((state) => state.lastMatchTimerUpdated);
 
   useEffect(() => {
-    if (!gameId) return;
-    
-    const currentGameId = gameId;
+    if (!activeGameId) return;
+
+    if (preemptLeagueClaim) {
+      releaseAnyLeagueResultsEngine();
+    }
+
+    const currentGameId = activeGameId;
     const currentUserId = userId || '';
-    
+
     const state = GameResultsEngine.getState();
     const needsInit =
       !state.initialized
-      || state.gameId !== gameId
+      || state.gameId !== activeGameId
       || state.userId !== currentUserId
       || state.isGlobalAdmin !== isGlobalAdmin;
-    
+
     if (needsInit) {
-      GameResultsEngine.initialize(gameId, currentUserId, t, { isAdmin: isGlobalAdmin }).catch((err) => {
+      GameResultsEngine.initialize(activeGameId, currentUserId, t, { isAdmin: isGlobalAdmin }).catch((err) => {
         if (err?.response?.status !== 401) {
           console.error('Failed to initialize GameResultsEngine:', err);
           setError(err.message || 'Failed to initialize');
@@ -50,33 +68,30 @@ export function useGameResultsEngine({ gameId, userId }: UseGameResultsEnginePro
       });
     }
 
-    console.log(`[GameResultsEngine] Connected to results stream for game ${gameId}`);
-
     return () => {
-      console.log(`[GameResultsEngine] Disconnecting from results stream for game ${gameId}`);
-      const state = GameResultsEngine.getState();
-      if (state.initialized && state.gameId === currentGameId && state.userId === currentUserId) {
+      const next = GameResultsEngine.getState();
+      if (next.initialized && next.gameId === currentGameId && next.userId === currentUserId) {
         GameResultsEngine.cleanup();
       }
     };
-  }, [gameId, userId, isGlobalAdmin, t]);
+  }, [activeGameId, userId, isGlobalAdmin, t, preemptLeagueClaim]);
 
   useEffect(() => {
-    if (!lastGameResultsUpdated || lastGameResultsUpdated.gameId !== gameId) return;
-    console.log(`[GameResultsEngine] Received results-updated notification for game ${gameId}`);
+    if (!activeGameId || !lastGameResultsUpdated || lastGameResultsUpdated.gameId !== activeGameId) return;
+    console.log(`[GameResultsEngine] Received results-updated notification for game ${activeGameId}`);
     GameResultsEngine.reloadFromRemote().catch((err) => {
       console.error('Failed to reload results:', err);
     });
-  }, [lastGameResultsUpdated, gameId]);
+  }, [lastGameResultsUpdated, activeGameId]);
 
   useEffect(() => {
-    if (!lastMatchTimerUpdated || lastMatchTimerUpdated.gameId !== gameId) return;
+    if (!activeGameId || !lastMatchTimerUpdated || lastMatchTimerUpdated.gameId !== activeGameId) return;
     GameResultsEngine.applyRemoteMatchTimerSnapshot(
       lastMatchTimerUpdated.gameId,
       lastMatchTimerUpdated.matchId,
       lastMatchTimerUpdated.snapshot
     );
-  }, [lastMatchTimerUpdated, gameId]);
+  }, [lastMatchTimerUpdated, activeGameId]);
 
   const addRound = useCallback(() => GameResultsEngine.addRound(), []);
   const removeRound = useCallback((roundId: string) => GameResultsEngine.removeRound(roundId, t), [t]);

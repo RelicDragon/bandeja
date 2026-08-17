@@ -322,7 +322,8 @@ export function LeagueBracketView({
                           showGroupTag={false}
                           showLeagueGroupSideAccent={!crossGroupBracket}
                           bracketRoundBadge={thirdPlace ? thirdPlaceLabel : col.label}
-                          allRounds={gameResultsMap.get(matchGame.id) ?? null}
+                          liveRounds={gameResultsMap.get(matchGame.id) ?? null}
+                          onResultsChanged={onRetry}
                         />
                       </div>
                     </Fragment>

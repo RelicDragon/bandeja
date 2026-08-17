@@ -246,6 +246,17 @@ Frontend/e2e/
 | A-24 | Sign out all devices | Confirm sign out all | Logout everywhere |
 | A-25 | Session persistence | Reload after login | Still authenticated |
 | A-26 | Token refresh | Expire access token | Silent refresh, no logout |
+| A-26a | Slow cold-start refresh | Expire access token; delay `/auth/refresh` several seconds | Splash waits for refresh to settle; cached shell stays signed in; no login redirect |
+| A-26b | Lost refresh response | Let server rotate refresh token, drop response, then retry with the same persisted request ID | Server returns the exact committed successor; no session loss |
+| A-26c | Native resume after days | Background iOS/Android beyond access-token expiry, then resume | Refresh completes before socket/push/chat sync; live connection uses new access token |
+| A-26d | Native secure-storage outage | Make Keychain/Keystore temporarily unavailable during resume | Session is preserved in recovery state and retries later; not treated as missing/revoked |
+| A-26e | Concurrent refresh | Trigger foreground, API 401, and another tab refresh together | Calls converge on one successor; stale callers reload the durable credential; no logout |
+| A-26f | Web credential exposure | Sign in and inspect response body/local storage/cookies | Refresh token is absent from JSON/local storage and present only in a Secure HttpOnly cookie |
+| A-26g | Cookie refresh CSRF | POST cookie-only refresh/logout from an untrusted Origin | Request is rejected; trusted production origin succeeds |
+| A-26h | Watch resume after days | Let Watch access JWT expire, then open a Watch screen with phone unavailable | Watch uses shared refresh credential, rotates safely, retries request once, stays signed in |
+| A-26i | Android invite after days | Let Android access JWT expire, then accept/decline from a notification | Scoped action succeeds without opening app; notification closes after definitive response |
+| A-26j | Idle several days then open | Leave app closed 2–7 days (access expired, refresh still valid) | Returns to last screen signed in; no login flash |
+| A-26k | Phone + Watch concurrent refresh | Open Watch and iPhone together after access expiry | Both stay signed in; they share the live successor refresh credential |
 
 ---
 
@@ -791,6 +802,7 @@ Frontend/e2e/
 | GD-113 | Round header match progress | Multi-round game with 2+ matches per round → finish some matches | Round header shows animated progress bar + `finished/total` counter; bar turns green when all matches complete |
 | GD-114 | Available players footer header | Edit a match with unassigned players in roster | Bottom sheet shows "Available Players" label with count badge above the draggable carousel |
 | GD-115 | Round added summary modal | Add round in results entry with ≤4 playing participants vs 5+ | ≤4: round added inline with no summary modal; 5+: modal lists generated match pairings |
+| GD-116 | Round added match layout | Open round-added modal at viewport <490px vs ≥490px | <490: each match stacks team A above swords above team B; ≥490: teams sit side by side; each team is a distinct neutral bordered card with vertical localized Team A/B label on the left and swords between |
 | GD-36 | Results card hidden without photo | Final results, no game photo yet | No results photo card; Play again shown only if viewer is PLAYING; stories switch shown only if viewer is PLAYING |
 | GD-36b | Results card above tabs | Final results with photo | Results card + Play again (and stories switch if PLAYING) sit above Results/Stats/Scores switch, not inside Results tab |
 | GD-36c | Play again only for players | Results as PLAYING participant vs guest/spectator/owner-only | Play again visible only when current user has PLAYING status on this game |
@@ -825,6 +837,7 @@ Frontend/e2e/
 | GD-44b | My schedule single-group no bookmark | User plays in only one group → Schedule → My | No group bookmark on cards |
 | GD-44c | My schedule group filter | User plays in 2+ groups → Schedule → My → group selector | Options: All + only groups user plays in; selecting a group shows only that group's fixtures |
 | GD-44d | My schedule status filter | Schedule → My → status selector | Options: All / Not scheduled / Scheduled / Played; list filters by timeIsSet + FINAL; empty filtered state when no matches |
+| GD-44e | League fixture MatchCard results | Owner/admin or `resultsByAnyone` player on a non-FINAL fixture → Start results; enter sets; finish when match ready. Second client on schedule/bracket/TV/live board/watch sees set tiles + Start/Finish/Edit state update without refresh (including after socket reconnect) | Uses same MatchCard + GameResultsEngine flow as a normal game: start creates round/match with 0:0; set tiles follow scoring rules (next set appears when required); Finish appears while IN_PROGRESS with teams ready; Edit reopens FINAL; walkover/forfeit stay non-editable; live updates via fixture `game-{id}` rooms + shared results cache (status + rounds) |
 | GD-45 | Planner tab | `@participant` | Planner accessible |
 | GD-46 | Standings tab | View table | Standings correct |
 | GD-47 | Fullscreen league table | `/games/:id/league-table` | Fullscreen table |
@@ -850,6 +863,7 @@ Frontend/e2e/
 | GD-144 | Bracket schedule fine tuning | Expand Fine-tune; change one future fixture court/start/duration | Grid and validation update immediately; overlapping court or start-before-feeder blocks Next; valid edits persist after Back/Next |
 | GD-145 | Planned fixture visibility | Create scheduled bracket before semifinal teams are known; open Schedule → Bracket as another league user | Future slot is visible with date, time, club, court, round and “Teams pending”; there is no fake game chat/join/results action |
 | GD-146 | Planned fixture materialization | Finish both feeder games for a scheduled semifinal/final/bronze slot | Real game is created with that slot’s exact time/location, no booking state; manually editing the game schedule updates the slot; undo removes downstream game but preserves planned fixture schedule |
+| GD-147 | Regular season after playoffs | Season with finished regular games and a bracket playoff → Schedule → Playoffs → switch Regular season → My or List | URL becomes `subtab=regular`; Regular fixtures stay visible; My/List/Table keeps a selection; switching My or List does not snap back to Playoffs. Opening schedule with no `subtab` while a playoff exists appends `subtab=bracket`. Playoff → My uses `subtab=playoff` so reload stays on Playoffs |
 | GD-51 | Walkover / BYE handling | Set walkover | Bracket updates |
 | GD-52 | Club favorite toggle | Star on club in game info | Favorited state persists |
 | GD-53 | Club mini map | Game with geo | Map renders |

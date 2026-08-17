@@ -7,6 +7,7 @@ import * as authController from '../controllers/auth.controller';
 import * as authRefreshController from '../controllers/authRefresh.controller';
 import * as googleOAuthController from '../controllers/googleOAuthRedirect.controller';
 import { rateLimitKeyFromRequest } from '../utils/rateLimitClientKey';
+import { requireTrustedRefreshOrigin } from '../middleware/refreshOrigin';
 
 const router = Router();
 
@@ -22,12 +23,14 @@ const authRefreshLimiter = rateLimit({
 router.post(
   '/refresh',
   authRefreshLimiter,
+  requireTrustedRefreshOrigin,
   validate([body('refreshToken').optional({ checkFalsy: true }).isString()]),
   authRefreshController.postRefresh
 );
 
 router.post(
   '/logout',
+  requireTrustedRefreshOrigin,
   validate([body('refreshToken').optional({ checkFalsy: true }).isString()]),
   authRefreshController.postLogout
 );
@@ -169,4 +172,3 @@ router.post(
 );
 
 export default router;
-

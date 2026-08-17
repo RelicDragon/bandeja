@@ -177,7 +177,7 @@ final class NetworkDeliveryOutbox {
             needsFollowUpFlush = true
             return
         }
-        guard KeychainHelper.shared.readToken() != nil else { return }
+        guard await APIClient.ensureAccessToken() != nil else { return }
 
         let queue = NetworkDeliveryFlushOrder.ordered(pendingEntries, matchId: matchId)
         guard !queue.isEmpty else { return }

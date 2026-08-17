@@ -22,6 +22,17 @@ final class GameListViewModel {
         currentUserId = KeychainHelper.shared.readUserId()
     }
 
+    func ensureAuthenticated() async -> Bool {
+        if let token = await APIClient.ensureAccessToken(), !token.isEmpty {
+            isAuthenticated = true
+            currentUserId = KeychainHelper.shared.readUserId()
+            return true
+        }
+        isAuthenticated = false
+        currentUserId = nil
+        return false
+    }
+
     func handleLogout() {
         games = []
         isAuthenticated = false
@@ -33,8 +44,7 @@ final class GameListViewModel {
     }
 
     func loadGames() async {
-        refreshAuthState()
-        guard isAuthenticated else {
+        guard await ensureAuthenticated() else {
             NextGamesCache.clear()
             WidgetCenter.shared.reloadAllTimelines()
             return

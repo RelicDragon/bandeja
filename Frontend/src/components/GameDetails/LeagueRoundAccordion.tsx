@@ -8,8 +8,8 @@ import { LeagueGameCard } from './LeagueGameCard';
 import { getLeagueGroupColor } from '@/utils/leagueGroupColors';
 import { isCrossGroupBracketRound } from '@/utils/bracketView.util';
 import { leagueRoundHeaderFormatLabelKey } from '@/utils/leagueRoundAccordionHeader.util';
-import { resultsApi, RoundData } from '@/api/results';
-import { useState, useEffect } from 'react';
+import { useLeagueGameResultsMap } from '@/hooks/useLeagueGameResultsMap';
+import { useMemo } from 'react';
 interface LeagueRoundAccordionProps {
   round: LeagueRound;
   groups: LeagueGroup[];
@@ -34,6 +34,7 @@ interface LeagueRoundAccordionProps {
   onSendStartMessage: () => void;
   onNoteSaved?: () => void;
   t: TFunction;
+  onResultsChanged?: () => void;
 }
 
 export const LeagueRoundAccordion = ({
@@ -59,10 +60,10 @@ export const LeagueRoundAccordion = ({
   onDeleteGame,
   onSendStartMessage,
   onNoteSaved,
+  onResultsChanged,
   t,
 }: LeagueRoundAccordionProps) => {
   const isDesktop = useDesktop();
-  const [gameResultsMap, setGameResultsMap] = useState<Map<string, RoundData[] | null>>(new Map());
 
   const hasGroups = groups.length > 0;
   const showRoundLevelAddButton = showAddGameButton && !hasGroups;
@@ -80,51 +81,16 @@ export const LeagueRoundAccordion = ({
     ? round.games.filter(gameMatchesGroupFilter).length
     : round.games.length;
 
-  useEffect(() => {
-    const fetchAllGameResults = async () => {
-      if (!shouldRenderContent) {
-        setGameResultsMap(new Map());
-        return;
-      }
+  const visibleGames = useMemo(() => {
+    if (!shouldRenderContent) return [];
+    if (!selectedGroupId) return round.games;
+    return round.games.filter((game) => {
+      if (game.leagueGroupId === selectedGroupId) return true;
+      return crossGroupPlayoffRound && !game.leagueGroupId;
+    });
+  }, [shouldRenderContent, selectedGroupId, round.games, crossGroupPlayoffRound]);
 
-      const resultsMap = new Map<string, RoundData[] | null>();
-      
-      const gamesToFetch = selectedGroupId
-        ? round.games.filter((game) => {
-            if (game.leagueGroupId === selectedGroupId) return true;
-            return crossGroupPlayoffRound && !game.leagueGroupId;
-          })
-        : round.games;
-
-      for (const game of gamesToFetch) {
-        if (game.resultsStatus !== 'NONE') {
-          try {
-            const response = await resultsApi.getGameResults(game.id);
-            const rounds = response.data?.rounds || [];
-            
-            if (rounds.length > 0) {
-              resultsMap.set(game.id, rounds);
-            } else {
-              resultsMap.set(game.id, null);
-            }
-          } catch (error) {
-            console.error(`Failed to fetch results for game ${game.id}:`, error);
-            resultsMap.set(game.id, null);
-          }
-        } else {
-          resultsMap.set(game.id, null);
-        }
-      }
-      
-      setGameResultsMap(resultsMap);
-    };
-
-    fetchAllGameResults();
-  }, [shouldRenderContent, round.games, selectedGroupId, crossGroupPlayoffRound]);
-
-  const getAllRounds = (gameId: string): RoundData[] | null => {
-    return gameResultsMap.get(gameId) || null;
-  };
+  const gameResultsMap = useLeagueGameResultsMap(visibleGames);
 
   return (
     <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm">
@@ -272,7 +238,8 @@ export const LeagueRoundAccordion = ({
                                   }
                                   onNoteSaved={onNoteSaved}
                                   showGroupTag={false}
-                                  allRounds={getAllRounds(game.id)}
+                                  liveRounds={gameResultsMap.get(game.id) ?? null}
+                                  onResultsChanged={onResultsChanged}
                                 />
                               ))
                             )}
@@ -331,7 +298,8 @@ export const LeagueRoundAccordion = ({
                               onNoteSaved={onNoteSaved}
                               showGroupTag={false}
                               seasonPlayoffBadge
-                              allRounds={getAllRounds(game.id)}
+                              liveRounds={gameResultsMap.get(game.id) ?? null}
+                              onResultsChanged={onResultsChanged}
                             />
                           ))}
                         </div>
@@ -366,7 +334,8 @@ export const LeagueRoundAccordion = ({
                               }
                               onNoteSaved={onNoteSaved}
                               showGroupTag={false}
-                              allRounds={getAllRounds(game.id)}
+                              liveRounds={gameResultsMap.get(game.id) ?? null}
+                              onResultsChanged={onResultsChanged}
                             />
                           ))}
                         </div>
@@ -395,7 +364,8 @@ export const LeagueRoundAccordion = ({
                         }
                         onNoteSaved={onNoteSaved}
                         showGroupTag={false}
-                        allRounds={getAllRounds(game.id)}
+                        liveRounds={gameResultsMap.get(game.id) ?? null}
+                        onResultsChanged={onResultsChanged}
                       />
                     ))}
                   </div>

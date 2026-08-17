@@ -1,7 +1,7 @@
 import Foundation
 import Security
 
-final class KeychainHelper: @unchecked Sendable {
+nonisolated final class KeychainHelper: @unchecked Sendable {
     static let shared = KeychainHelper()
 
     // Must match the access group configured in both iOS and watchOS entitlements.
@@ -10,23 +10,30 @@ final class KeychainHelper: @unchecked Sendable {
     private init() {}
 
     private let service = "com.funified.bandeja.jwt"
+    private let refreshService = "com.funified.bandeja.refresh"
 
-    // MARK: - Token (compatible with the format written by the iOS AuthBridgePlugin)
-
-    func write(token: String, accessGroup: String = KeychainHelper.accessGroup) {
-        guard let data = token.data(using: .utf8) else { return }
+    @discardableResult
+    private func writeCredential(token: String, service: String, accessGroup: String) -> Bool {
+        guard let data = token.data(using: .utf8) else { return false }
         let query: [CFString: Any] = [
             kSecClass: kSecClassGenericPassword,
             kSecAttrService: service,
-            kSecAttrAccessGroup: accessGroup,
+            kSecAttrAccessGroup: accessGroup
+        ]
+        let update: [CFString: Any] = [
             kSecValueData: data,
             kSecAttrAccessible: kSecAttrAccessibleAfterFirstUnlock
         ]
-        SecItemDelete(query as CFDictionary)
-        SecItemAdd(query as CFDictionary, nil)
+        let status = SecItemUpdate(query as CFDictionary, update as CFDictionary)
+        if status == errSecSuccess { return true }
+        guard status == errSecItemNotFound else { return false }
+        var insert = query
+        insert[kSecValueData] = data
+        insert[kSecAttrAccessible] = kSecAttrAccessibleAfterFirstUnlock
+        return SecItemAdd(insert as CFDictionary, nil) == errSecSuccess
     }
 
-    func readToken(accessGroup: String = KeychainHelper.accessGroup) -> String? {
+    private func readCredential(service: String, accessGroup: String) -> String? {
         let query: [CFString: Any] = [
             kSecClass: kSecClassGenericPassword,
             kSecAttrService: service,
@@ -38,6 +45,26 @@ final class KeychainHelper: @unchecked Sendable {
         let status = SecItemCopyMatching(query as CFDictionary, &result)
         guard status == errSecSuccess, let data = result as? Data else { return nil }
         return String(data: data, encoding: .utf8)
+    }
+
+    // MARK: - Token (compatible with the format written by the iOS AuthBridgePlugin)
+
+    @discardableResult
+    func write(token: String, accessGroup: String = KeychainHelper.accessGroup) -> Bool {
+        writeCredential(token: token, service: service, accessGroup: accessGroup)
+    }
+
+    func readToken(accessGroup: String = KeychainHelper.accessGroup) -> String? {
+        readCredential(service: service, accessGroup: accessGroup)
+    }
+
+    func readRefreshToken(accessGroup: String = KeychainHelper.accessGroup) -> String? {
+        readCredential(service: refreshService, accessGroup: accessGroup)
+    }
+
+    @discardableResult
+    func writeRefreshToken(token: String, accessGroup: String = KeychainHelper.accessGroup) -> Bool {
+        writeCredential(token: token, service: refreshService, accessGroup: accessGroup)
     }
 
     func deleteToken(accessGroup: String = KeychainHelper.accessGroup) {

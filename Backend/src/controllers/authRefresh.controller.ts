@@ -1,9 +1,9 @@
-import type { Response } from 'express';
+import type { Request, Response } from 'express';
 import { asyncHandler } from '../utils/asyncHandler';
 import { ApiError } from '../utils/ApiError';
 import type { AuthRequest } from '../middleware/auth';
 import {
-  refreshWithRotation,
+  refreshActiveSession,
   revokeByRawToken,
   revokeAllRefreshSessionsForUser,
   listSessionsForUser,
@@ -14,30 +14,73 @@ import {
   clearRefreshTokenCookie,
   readRefreshTokenFromRequest,
   setRefreshTokenCookie,
+  shouldUseCookieForRefreshResponse,
   shouldUseWebRefreshHttpOnlyCookie,
 } from '../utils/refreshWebCookie';
 import { config } from '../config/env';
+import { getClientPlatform } from '../utils/clientVersion';
+import {
+  authRefreshOutcomeFromCode,
+  recordAndPersistAuthRefreshMetric,
+} from '../services/auth/authRefreshMetrics';
+
+const REFRESH_REQUEST_ID_PATTERN = /^[A-Za-z0-9._:-]{16,128}$/;
+
+export function readRefreshRequestId(req: Request): string | null {
+  const raw = req.headers['x-refresh-request-id'];
+  if (typeof raw !== 'string') return null;
+  const normalized = raw.trim();
+  if (!REFRESH_REQUEST_ID_PATTERN.test(normalized)) {
+    throw new ApiError(400, 'auth.refreshRequestIdInvalid', true, {
+      code: 'auth.refreshRequestIdInvalid',
+    });
+  }
+  return normalized;
+}
 
 export const postRefresh = asyncHandler(async (req, res: Response) => {
-  const raw = readRefreshTokenFromRequest(req);
-  if (!raw.trim()) {
-    throw new ApiError(400, 'auth.refreshTokenRequired', true, { code: 'auth.refreshTokenRequired' });
+  const startedAt = Date.now();
+  const platform = getClientPlatform(req);
+  const clientVersion =
+    typeof req.headers['x-client-version'] === 'string'
+      ? req.headers['x-client-version'].slice(0, 32)
+      : null;
+  try {
+    const raw = readRefreshTokenFromRequest(req);
+    if (!raw.trim()) {
+      throw new ApiError(400, 'auth.refreshTokenRequired', true, { code: 'auth.refreshTokenRequired' });
+    }
+    const out = await refreshActiveSession(raw, req, readRefreshRequestId(req));
+    const webCookie = shouldUseCookieForRefreshResponse(req);
+    if (webCookie) {
+      setRefreshTokenCookie(res, out.refreshToken);
+    }
+    const includeJsonRefresh = !webCookie || config.refreshWebHttpOnlyJsonBody;
+    recordAndPersistAuthRefreshMetric({
+      outcome: 'success',
+      platform,
+      clientVersion,
+      durationMs: Date.now() - startedAt,
+    });
+    res.json({
+      success: true,
+      data: {
+        token: out.token,
+        ...(includeJsonRefresh ? { refreshToken: out.refreshToken } : {}),
+        user: out.user,
+        currentSessionId: out.currentSessionId,
+      },
+    });
+  } catch (error) {
+    const code = error instanceof ApiError ? error.data?.code : undefined;
+    recordAndPersistAuthRefreshMetric({
+      outcome: authRefreshOutcomeFromCode(code),
+      platform,
+      clientVersion,
+      durationMs: Date.now() - startedAt,
+    });
+    throw error;
   }
-  const out = await refreshWithRotation(raw, req);
-  const webCookie = shouldUseWebRefreshHttpOnlyCookie(req);
-  if (webCookie) {
-    setRefreshTokenCookie(res, out.refreshToken);
-  }
-  const includeJsonRefresh = !webCookie || config.refreshWebHttpOnlyJsonBody;
-  res.json({
-    success: true,
-    data: {
-      token: out.token,
-      ...(includeJsonRefresh ? { refreshToken: out.refreshToken } : {}),
-      user: out.user,
-      currentSessionId: out.currentSessionId,
-    },
-  });
 });
 
 export const postLogout = asyncHandler(async (req, res: Response) => {

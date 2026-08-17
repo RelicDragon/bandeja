@@ -154,6 +154,8 @@ export type JwtAuthRuntimeConfig = {
   jwtAccessExpiresIn: string;
   refreshTokenExpiresIn: string;
   refreshTokenEnabled: boolean;
+  refreshWebHttpOnlyCookie: boolean;
+  refreshWebHttpOnlyJsonBody: boolean;
   /** null = sunset calendar disabled (`LEGACY_JWT_ISSUANCE_END_AT=off`). */
   legacyJwtIssuanceEndAt: Date | null;
 };
@@ -170,6 +172,17 @@ export function assertProductionJwtAuthConfig(input: JwtAuthRuntimeConfig): void
   if (!input.refreshTokenEnabled) {
     throw new Error(
       'REFRESH_TOKEN_ENABLED cannot be false in production (refresh session model is required)'
+    );
+  }
+
+  if (!input.refreshWebHttpOnlyCookie) {
+    throw new Error(
+      'REFRESH_WEB_HTTPONLY_COOKIE cannot be false in production (web refresh credentials must use HttpOnly cookies)'
+    );
+  }
+  if (input.refreshWebHttpOnlyJsonBody) {
+    throw new Error(
+      'REFRESH_WEB_HTTPONLY_JSON_BODY must be false in production (web refresh credentials must not enter JavaScript storage)'
     );
   }
 

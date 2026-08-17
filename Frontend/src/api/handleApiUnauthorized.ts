@@ -2,7 +2,7 @@ import { useAuthStore } from '@/store/authStore';
 import { isWithinPostLoginGrace } from '@/utils/authLoginGrace';
 
 export type HandleApiUnauthorizedOpts = {
-  /** Always clear cookies/session (e.g. refresh rotation failed); avoids refresh spam on public routes. */
+  /** Always clear cookies/session after definitive refresh rejection; avoids refresh spam on public routes. */
   forceSessionClear?: boolean;
 };
 

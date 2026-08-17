@@ -18,7 +18,6 @@ import { getRules, initialSetsForRules } from '@/utils/scoring';
 import { matchTimerApi } from '@/api/matchTimer';
 import {
   applyOptimisticTimerTransition,
-  buildSnapshotFromServerMatch,
   isGameMatchTimerEnabled,
   type MatchTimerAction,
   type MatchTimerSnapshot,
@@ -36,6 +35,7 @@ import {
 } from '@/utils/fivePlayerMatchCombinations';
 import { maxPlayersPerTeamForGame } from '@/utils/matchFormat';
 import { isPresetResultsRoster } from '@/utils/gameResultsHelpers';
+import { convertServerResultsToRounds } from '@/utils/serverResultsToRounds';
 
 export type SyncStatus = 'IDLE' | 'SYNCING' | 'SUCCESS' | 'FAILED';
 
@@ -249,12 +249,30 @@ class GameResultsEngineClass {
           }
   }
 
+  private localMutationEpoch = 0;
+  private pendingLocalMutations = 0;
+  private remoteReloadEpoch = 0;
+
+  beginLocalMutation(): number {
+    this.pendingLocalMutations += 1;
+    this.localMutationEpoch += 1;
+    return this.localMutationEpoch;
+  }
+
+  endLocalMutation(): void {
+    this.pendingLocalMutations = Math.max(0, this.pendingLocalMutations - 1);
+  }
+
   async reloadFromRemote(): Promise<void> {
     const startState = this.getState();
     if (!startState.gameId || !startState.userId || !startState.initialized) return;
+    if (this.pendingLocalMutations > 0) return;
 
     const gameId = startState.gameId;
     const userId = startState.userId;
+    const mutationAtStart = this.localMutationEpoch;
+    this.remoteReloadEpoch += 1;
+    const reloadToken = this.remoteReloadEpoch;
 
     try {
       const [gameResponse, resultsResponse] = await Promise.all([
@@ -271,6 +289,9 @@ class GameResultsEngineClass {
 
       const liveState = this.getState();
       if (liveState.gameId !== gameId || liveState.userId !== userId) return;
+      if (this.pendingLocalMutations > 0) return;
+      if (this.localMutationEpoch !== mutationAtStart) return;
+      if (this.remoteReloadEpoch !== reloadToken) return;
 
       const patch: Partial<GameResultsState> = {};
 
@@ -301,6 +322,9 @@ class GameResultsEngineClass {
       }
 
       if (Object.keys(patch).length > 0) {
+        if (this.pendingLocalMutations > 0) return;
+        if (this.localMutationEpoch !== mutationAtStart) return;
+        if (this.remoteReloadEpoch !== reloadToken) return;
         useGameResultsStore.setState(patch);
       }
     } catch (error) {
@@ -354,10 +378,12 @@ class GameResultsEngineClass {
         const state = this.getState();
     if (!state.gameId || !state.userId || !state.canEdit) return;
 
+    this.beginLocalMutation();
     await updateFn();
     await this.saveLocal();
 
     if (state.serverProblem) {
+      this.endLocalMutation();
       return;
     }
 
@@ -369,6 +395,8 @@ class GameResultsEngineClass {
       console.error('Server call failed:', error);
       await ResultsStorage.setServerProblem(state.gameId, true);
       useGameResultsStore.setState({ serverProblem: true });
+    } finally {
+      this.endLocalMutation();
     }
   }
 
@@ -877,69 +905,7 @@ class GameResultsEngineClass {
   }
 
   private convertServerResultsToState(serverResults: any, _t: (key: string) => string): { rounds: Round[] } {
-    const rounds: Round[] = [];
-    
-    if (serverResults.rounds && Array.isArray(serverResults.rounds)) {
-      serverResults.rounds.forEach((round: any) => {
-        const matches: Match[] = [];
-        
-        if (round.matches && Array.isArray(round.matches)) {
-          round.matches.forEach((match: any) => {
-          const teamA: string[] = [];
-          const teamB: string[] = [];
-          
-          if (match.teams && Array.isArray(match.teams)) {
-            match.teams.forEach((team: any) => {
-              const playerIds = team.playerIds || (team.players || []).map((p: any) => p.userId || p.user?.id).filter(Boolean);
-              if (team.teamNumber === 1 && playerIds.length > 0) {
-                teamA.push(...playerIds);
-              } else if (team.teamNumber === 2 && playerIds.length > 0) {
-                teamB.push(...playerIds);
-              }
-            });
-          }
-            
-            const sets = match.sets && Array.isArray(match.sets) && match.sets.length > 0
-              ? match.sets.map((s: any) => ({
-                  teamA: s.teamAScore || 0,
-                  teamB: s.teamBScore || 0,
-                  isTieBreak: s.isTieBreak || false,
-                  role: parseMatchSetRole(s.role),
-                }))
-              : [{ teamA: 0, teamB: 0, isTieBreak: false }];
-            
-            let winnerTeam: 'teamA' | 'teamB' | null = null;
-            if (match.winnerId) {
-              const teamAId = match.teams?.find((t: any) => t.teamNumber === 1)?.id;
-              const teamBId = match.teams?.find((t: any) => t.teamNumber === 2)?.id;
-              if (match.winnerId === teamAId) {
-                winnerTeam = 'teamA';
-              } else if (match.winnerId === teamBId) {
-                winnerTeam = 'teamB';
-              }
-            }
-            
-            const timer = buildSnapshotFromServerMatch(match);
-            matches.push({
-              id: match.id || createId(),
-              teamA,
-              teamB,
-              sets,
-              winnerId: winnerTeam,
-              courtId: match.courtId,
-              ...(timer ? { timer } : {}),
-            });
-          });
-        }
-        
-        rounds.push({
-          id: round.id || createId(),
-          matches,
-        });
-      });
-    }
-    
-    return { rounds };
+    return { rounds: convertServerResultsToRounds(serverResults) };
   }
 
   applyRemoteMatchTimerSnapshot(gameId: string, matchId: string, snapshot: MatchTimerSnapshot): void {

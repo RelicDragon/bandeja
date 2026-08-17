@@ -11,6 +11,16 @@ export function shouldUseWebRefreshHttpOnlyCookie(req: Request): boolean {
   );
 }
 
+/**
+ * A refresh credential received from a cookie must only ever be returned as a cookie.
+ * This deliberately ignores a spoofable platform header for cookie-authenticated refreshes.
+ */
+export function shouldUseCookieForRefreshResponse(req: Request): boolean {
+  const hasBodyToken = typeof req.body?.refreshToken === 'string' && !!req.body.refreshToken.trim();
+  return config.refreshTokenEnabled && config.refreshWebHttpOnlyCookie &&
+    (shouldUseWebRefreshHttpOnlyCookie(req) || !hasBodyToken);
+}
+
 function parseCookieHeader(header: string | undefined, name: string): string | undefined {
   if (!header) return undefined;
   const segments = header.split(';');

@@ -7,6 +7,7 @@ import {
   refreshAccessTokenSingleFlight,
   scheduleProactiveAccessRefresh,
 } from '@/api/authRefresh';
+import { isHardRefreshReject } from '@/api/authRefreshCodes';
 import { bumpApiAuthCredentialGeneration } from '@/api/apiAuthCredentialGeneration';
 import {
   clearRefreshBundle,
@@ -44,7 +45,6 @@ type AuthStartupDeps = {
   refreshAccessToken: () => Promise<string | null>;
   scheduleRefresh: (token: string) => void;
   clearLocalAuth: (reason: string) => Promise<void>;
-  suspendAccessToken: (reason: string) => Promise<void>;
   hasStoredUserCandidate: () => boolean;
   hasExplicitLogoutMarker: () => boolean;
   consumeRefreshClearedCredentials: () => boolean;
@@ -53,17 +53,8 @@ type AuthStartupDeps = {
   log: (result: AuthStartupResult) => void;
 };
 
-export const AUTH_STARTUP_DEFAULT_TIMEOUT_MS = 6000;
-
-const HARD_STARTUP_REFRESH_CODES = new Set([
-  'auth.refreshInvalid',
-  'auth.refreshExpired',
-  'auth.refreshReused',
-  'auth.refreshTokenRequired',
-  'auth.userInactive',
-  'auth.userNotFound',
-  'auth.clientUpgradeRequired',
-]);
+/** 0 waits for the refresh client itself (20s). A short UI timeout must never clear the session. */
+export const AUTH_STARTUP_DEFAULT_TIMEOUT_MS = 0;
 
 function readAccessTokenFromStoreOrStorage(): string | null {
   const storeToken = useAuthStore.getState().token;
@@ -116,27 +107,6 @@ async function clearLocalAuthCandidate(reason: string): Promise<void> {
   console.info('[auth:startup] local auth cleared', { reason });
 }
 
-async function suspendAccessTokenCandidate(reason: string): Promise<void> {
-  bumpApiAuthCredentialGeneration();
-  clearProactiveAccessRefresh();
-  try {
-    localStorage.removeItem('token');
-    localStorage.removeItem('auth_backup');
-  } catch {
-    /* no-op */
-  }
-  useAuthStore.setState({ token: null, isAuthenticated: false });
-  syncLogoutToNative();
-  try {
-    const { clearWidgetNextGamesCache } = await import('@/services/widgetNextGamesSync');
-    await clearWidgetNextGamesCache();
-  } catch (e) {
-    console.warn('[auth:startup] widget cache clear failed', e);
-  }
-  bumpApiAuthCredentialGeneration();
-  console.info('[auth:startup] access token suspended', { reason });
-}
-
 function logAuthStartupResult(result: AuthStartupResult): void {
   console.info('[auth:startup] settled stored credential', result);
 }
@@ -147,7 +117,6 @@ const defaultDeps: AuthStartupDeps = {
   refreshAccessToken: refreshAccessTokenSingleFlight,
   scheduleRefresh: scheduleProactiveAccessRefresh,
   clearLocalAuth: clearLocalAuthCandidate,
-  suspendAccessToken: suspendAccessTokenCandidate,
   hasStoredUserCandidate,
   hasExplicitLogoutMarker,
   consumeRefreshClearedCredentials: consumeRefreshRunClearedCredentials,
@@ -170,8 +139,21 @@ export function classifyStoredAccessToken(
   return 'valid';
 }
 
-function isHardStartupRefreshReject(code: string | null): boolean {
-  return !!code && HARD_STARTUP_REFRESH_CODES.has(code);
+export function hasUsableAccessToken(
+  token: string | null | undefined,
+  nowMs = Date.now(),
+  leewayMs = ACCESS_LEEWAY_MS,
+): boolean {
+  const state = classifyStoredAccessToken(token, nowMs, leewayMs);
+  return state === 'valid' || state === 'near_expiry';
+}
+
+export function canStartAuthenticatedNetwork(input: {
+  isAuthenticated: boolean;
+  isInitializing: boolean;
+  token: string | null;
+}): boolean {
+  return input.isAuthenticated && !input.isInitializing && hasUsableAccessToken(input.token);
 }
 
 async function withTimeout<T>(
@@ -189,6 +171,49 @@ async function withTimeout<T>(
   } finally {
     if (timeout) clearTimeout(timeout);
   }
+}
+
+async function awaitRefresh(
+  refresh: Promise<string | null>,
+  timeoutMs: number,
+): Promise<string | null | 'timeout'> {
+  if (timeoutMs <= 0) return refresh;
+  const raced = await withTimeout(refresh, timeoutMs);
+  return raced.type === 'timeout' ? 'timeout' : raced.value;
+}
+
+async function recoverPersistedSession(
+  deps: AuthStartupDeps,
+  tokenState: StoredAccessTokenState,
+  timeoutMs: number,
+  result: (
+    status: AuthStartupStatus,
+    tokenState: StoredAccessTokenState,
+    reason?: string,
+  ) => Promise<AuthStartupResult>,
+): Promise<AuthStartupResult> {
+  const missingReason =
+    tokenState === 'invalid_shape' ? 'invalid_access_token' : 'missing_refresh_credential';
+  if (!(await deps.hasRefreshCredential())) {
+    await deps.clearLocalAuth(missingReason);
+    return result('cleared', tokenState, missingReason);
+  }
+
+  const refreshed = await awaitRefresh(deps.refreshAccessToken(), timeoutMs);
+  if (refreshed === 'timeout') {
+    return result('degraded', tokenState, 'refresh_timeout');
+  }
+  if (refreshed) {
+    deps.scheduleRefresh(refreshed);
+    return result('refreshed', tokenState);
+  }
+
+  const failureCode = deps.consumeRefreshFailureCode();
+  if (deps.consumeRefreshClearedCredentials() || isHardRefreshReject(failureCode)) {
+    await deps.clearLocalAuth(failureCode ?? 'refresh_rejected');
+    return result('cleared', tokenState, failureCode ?? 'refresh_rejected');
+  }
+  return result('degraded', tokenState, failureCode ?? 'refresh_unavailable');
 }
 
 export async function settleStoredAuthBeforeBootstrap(opts?: {
@@ -222,74 +247,33 @@ export async function settleStoredAuthBeforeBootstrap(opts?: {
       return result('cleared', tokenState, 'explicit_logout');
     }
 
-    if (tokenState === 'missing') {
-      if (!deps.hasStoredUserCandidate()) {
-        return result('anonymous', tokenState);
+    if (tokenState === 'valid' && token) {
+      // LS may have a usable JWT while the store token was cleared (e.g. mid-link reload).
+      if (!useAuthStore.getState().token) {
+        useAuthStore.getState().setToken(token);
       }
-
-      const canRefresh = await deps.hasRefreshCredential();
-      if (!canRefresh) {
-        await deps.clearLocalAuth('missing_refresh_credential');
-        return result('cleared', tokenState, 'missing_refresh_credential');
-      }
-
-      const refresh = await withTimeout(deps.refreshAccessToken(), timeoutMs);
-      if (refresh.type === 'timeout') {
-        return result('degraded', tokenState, 'refresh_timeout');
-      }
-
-      if (refresh.value) {
-        deps.scheduleRefresh(refresh.value);
-        return result('refreshed', tokenState);
-      }
-
-      const failureCode = deps.consumeRefreshFailureCode();
-      const refreshClearedCredentials = deps.consumeRefreshClearedCredentials();
-      if (refreshClearedCredentials || isHardStartupRefreshReject(failureCode)) {
-        await deps.clearLocalAuth(failureCode ?? 'refresh_rejected');
-        return result('cleared', tokenState, failureCode ?? 'refresh_rejected');
-      }
-
-      return result('degraded', tokenState, failureCode ?? 'refresh_unavailable');
-    }
-
-    if (!token || tokenState === 'invalid_shape') {
-      await deps.clearLocalAuth('invalid_access_token');
-      return result('cleared', tokenState, 'invalid_access_token');
-    }
-
-    if (tokenState === 'valid') {
       deps.scheduleRefresh(token);
       return result('valid', tokenState);
     }
 
-    const canRefresh = await deps.hasRefreshCredential();
-    if (!canRefresh) {
-      await deps.clearLocalAuth('missing_refresh_credential');
-      return result('cleared', tokenState, 'missing_refresh_credential');
+    if (tokenState === 'missing' && !deps.hasStoredUserCandidate()) {
+      return result('anonymous', tokenState);
     }
 
-    const refresh = await withTimeout(deps.refreshAccessToken(), timeoutMs);
-    if (refresh.type === 'timeout') {
-      await deps.suspendAccessToken('refresh_timeout');
-      return result('degraded', tokenState, 'refresh_timeout_access_suspended');
-    }
-
-    if (refresh.value) {
-      deps.scheduleRefresh(refresh.value);
-      return result('refreshed', tokenState);
-    }
-
-    const failureCode = deps.consumeRefreshFailureCode();
-    const refreshClearedCredentials = deps.consumeRefreshClearedCredentials();
-    if (refreshClearedCredentials || isHardStartupRefreshReject(failureCode)) {
-      await deps.clearLocalAuth(failureCode ?? 'refresh_rejected');
-      return result('cleared', tokenState, failureCode ?? 'refresh_rejected');
-    }
-
-    return result('degraded', tokenState, failureCode ?? 'refresh_unavailable');
+    return recoverPersistedSession(deps, tokenState, timeoutMs, result);
   } catch (error) {
     const reason = error instanceof Error ? error.message : 'startup_auth_error';
     return result('degraded', classifyStoredAccessToken(deps.getAccessToken(), deps.now()), reason);
   }
+}
+
+let foregroundSettlement: Promise<AuthStartupResult> | null = null;
+
+export function settleStoredAuthOnForeground(): Promise<AuthStartupResult> {
+  if (!foregroundSettlement) {
+    foregroundSettlement = settleStoredAuthBeforeBootstrap().finally(() => {
+      foregroundSettlement = null;
+    });
+  }
+  return foregroundSettlement;
 }

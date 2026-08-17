@@ -20,6 +20,12 @@ function parseTrustProxy(): boolean | number | string {
   return v;
 }
 
+function boundedInt(raw: string | undefined, fallback: number, min: number, max: number): number {
+  const parsed = Number.parseInt(raw ?? '', 10);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.max(min, Math.min(max, parsed));
+}
+
 const nodeEnv = normalizeNodeEnv(process.env.NODE_ENV);
 
 export const config = {
@@ -52,13 +58,35 @@ export const config = {
     nodeEnv
   ),
   refreshTokenEnabled: process.env.REFRESH_TOKEN_ENABLED !== 'false',
-  /** Web: Set-Cookie httpOnly refresh; omit refresh from JSON. Kill-switch: REFRESH_WEB_HTTPONLY_COOKIE=false */
+  /** Web refresh credentials are cookie-only in production. */
   refreshWebHttpOnlyCookie: process.env.REFRESH_WEB_HTTPONLY_COOKIE !== 'false',
-  /**
-   * With web httpOnly cookie, also return refreshToken in JSON (login/register/refresh) so clients can persist
-   * when Set-Cookie is dropped (e.g. strict mobile / cross-site). Set REFRESH_WEB_HTTPONLY_JSON_BODY=false for cookie-only JSON.
-   */
-  refreshWebHttpOnlyJsonBody: process.env.REFRESH_WEB_HTTPONLY_JSON_BODY !== 'false',
+  /** Native clients still receive JSON; web clients must not expose refresh credentials to JS. */
+  refreshWebHttpOnlyJsonBody: process.env.REFRESH_WEB_HTTPONLY_JSON_BODY === 'true',
+  authMaxActiveSessionsPerUser: boundedInt(
+    process.env.AUTH_MAX_ACTIVE_SESSIONS_PER_USER,
+    20,
+    2,
+    100
+  ),
+  authSessionRetentionDays: boundedInt(process.env.AUTH_SESSION_RETENTION_DAYS, 30, 1, 365),
+  authRefreshEventRetentionDays: boundedInt(
+    process.env.AUTH_REFRESH_EVENT_RETENTION_DAYS,
+    30,
+    1,
+    365
+  ),
+  authRefreshAlertMinAttempts: boundedInt(
+    process.env.AUTH_REFRESH_ALERT_MIN_ATTEMPTS,
+    20,
+    1,
+    100000
+  ),
+  authRefreshAlertFailurePercent: boundedInt(
+    process.env.AUTH_REFRESH_ALERT_FAILURE_PERCENT,
+    20,
+    1,
+    100
+  ),
   refreshCookieName: process.env.REFRESH_COOKIE_NAME || 'pp_rt',
   refreshCookiePath: process.env.REFRESH_COOKIE_PATH || '/api',
   refreshCookieDomain: (process.env.REFRESH_COOKIE_DOMAIN || '').trim() || null,
@@ -216,5 +244,7 @@ assertProductionJwtAuthConfig({
   jwtAccessExpiresIn: config.jwtAccessExpiresIn,
   refreshTokenExpiresIn: config.refreshTokenExpiresIn,
   refreshTokenEnabled: config.refreshTokenEnabled,
+  refreshWebHttpOnlyCookie: config.refreshWebHttpOnlyCookie,
+  refreshWebHttpOnlyJsonBody: config.refreshWebHttpOnlyJsonBody,
   legacyJwtIssuanceEndAt: config.legacyJwtIssuanceEndAt,
 });

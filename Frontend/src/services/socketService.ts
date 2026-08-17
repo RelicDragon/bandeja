@@ -198,6 +198,8 @@ class SocketService {
   private maxReconnectAttempts = 5;
   private reconnectDelay = 1000;
   private isConnecting = false;
+  private lastSocketAuthRetryToken: string | null = null;
+  private socketAuthRetryInFlight = false;
   private heartbeatInterval: ReturnType<typeof setInterval> | null = null;
   private heartbeatTimeout: ReturnType<typeof setTimeout> | null = null;
   private reconnectTimeoutId: ReturnType<typeof setTimeout> | null = null;
@@ -435,9 +437,33 @@ class SocketService {
       this.setConnectionState('disconnected');
       const msg = (error?.message ?? '').toLowerCase();
       const isAuthError = msg.includes('auth') || (error as any)?.data?.status === 401;
-      if (!isAuthError) {
-        this.handleReconnect();
+      if (isAuthError) {
+        const current = useAuthStore.getState().token;
+        if (!current || this.socketAuthRetryInFlight || this.lastSocketAuthRetryToken === current) {
+          return;
+        }
+        this.socketAuthRetryInFlight = true;
+        void import('@/api/authRefresh').then(
+          ({ invalidateCachedAccessToken, refreshAccessTokenSingleFlight }) => {
+            invalidateCachedAccessToken(current);
+            void refreshAccessTokenSingleFlight()
+              .then((token) => {
+                if (token && token !== current) {
+                  this.lastSocketAuthRetryToken = null;
+                  this.reconnectWithNewToken();
+                  return;
+                }
+                // Same or failed token: avoid connect_error spin until access token changes.
+                this.lastSocketAuthRetryToken = current;
+              })
+              .finally(() => {
+                this.socketAuthRetryInFlight = false;
+              });
+          },
+        );
+        return;
       }
+      this.handleReconnect();
     });
 
     this.socket.on('error', (error) => {
@@ -1078,6 +1104,7 @@ class SocketService {
 
   // Reconnect with new token
   public reconnectWithNewToken() {
+    this.lastSocketAuthRetryToken = null;
     this.disconnect();
     this.reconnectAttempts = 0;
     this.connect();

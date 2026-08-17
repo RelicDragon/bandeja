@@ -21,20 +21,39 @@ public class AuthBridgePlugin extends Plugin {
             call.reject("Missing token");
             return;
         }
-        SecureTokenStorage.setToken(getContext(), token);
+        if (!SecureTokenStorage.setToken(getContext(), token)) {
+            call.reject("Secure token storage unavailable");
+            return;
+        }
         call.resolve();
     }
 
     @PluginMethod
     public void getToken(PluginCall call) {
-        JSObject result = new JSObject();
-        result.put("token", SecureTokenStorage.getToken(getContext()));
-        call.resolve(result);
+        try {
+            JSObject result = new JSObject();
+            result.put("token", SecureTokenStorage.getTokenStrict(getContext()));
+            call.resolve(result);
+        } catch (Exception error) {
+            call.reject("Secure token storage unavailable", error);
+        }
     }
 
     @PluginMethod
     public void deleteToken(PluginCall call) {
-        SecureTokenStorage.deleteToken(getContext());
+        if (!SecureTokenStorage.deleteToken(getContext())) {
+            call.reject("Secure token storage unavailable");
+            return;
+        }
+        call.resolve();
+    }
+
+    @PluginMethod
+    public void deleteSession(PluginCall call) {
+        if (!SecureTokenStorage.deleteSession(getContext())) {
+            call.reject("Secure token storage unavailable");
+            return;
+        }
         call.resolve();
     }
 
@@ -45,20 +64,30 @@ public class AuthBridgePlugin extends Plugin {
             call.reject("Missing token");
             return;
         }
-        SecureTokenStorage.setRefreshToken(getContext(), token);
+        if (!SecureTokenStorage.setRefreshToken(getContext(), token)) {
+            call.reject("Secure token storage unavailable");
+            return;
+        }
         call.resolve();
     }
 
     @PluginMethod
     public void getRefreshToken(PluginCall call) {
-        JSObject result = new JSObject();
-        result.put("token", SecureTokenStorage.getRefreshToken(getContext()));
-        call.resolve(result);
+        try {
+            JSObject result = new JSObject();
+            result.put("token", SecureTokenStorage.getRefreshToken(getContext()));
+            call.resolve(result);
+        } catch (Exception error) {
+            call.reject("Secure token storage unavailable", error);
+        }
     }
 
     @PluginMethod
     public void deleteRefreshToken(PluginCall call) {
-        SecureTokenStorage.deleteRefreshToken(getContext());
+        if (!SecureTokenStorage.deleteRefreshToken(getContext())) {
+            call.reject("Secure token storage unavailable");
+            return;
+        }
         call.resolve();
     }
 

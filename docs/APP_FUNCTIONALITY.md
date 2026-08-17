@@ -99,6 +99,7 @@ These are surprising, load-bearing choices still true in code:
 | **External booking** | Provider ports in `@shared/booking/` with adapters for **Booktime**, **Padeloo**, and **Klikteren** (`ClubIntegrationType`). Separate persistence per provider (`UserClub*Auth` + `Club*BusySnapshot`). Shared freshness constant `BOOKTIME_SNAPSHOT_FRESH_MS` (60s). |
 | **Open chat thread** | Live projection module (`threadLiveProjection`) — inbox can update while an open thread must still apply inbound + read-receipt paths without requiring refresh. Bootstrap invariants live in `Frontend/src/services/chat/threadOpen/types.ts`. |
 | **Play-intent notifications** | Intent/game matching is transactionally queued. Recipient delivery is persisted per event + user + channel, revalidated before send, retried with backoff, and deduplicated by that key. Do not replace it with post-commit fire-and-forget sends. |
+| **Device refresh sessions are retry-safe** | Access JWTs stay short-lived. Updated clients rotate refresh credentials with a persistent request ID, so a lost-response retry receives the exact committed successor. Pre-update clients use a stable-token compatibility path until the minimum client version is raised. Never rotate without this replay protocol. |
 
 ### 2.3 Shared packages & modules
 
@@ -124,8 +125,11 @@ These are surprising, load-bearing choices still true in code:
 ### 3.2 Session management
 
 - JWT access + refresh tokens (secure storage on native)
+- Per-device refresh sessions with sliding 60-day expiry, idempotent one-time rotation, replay detection, and a 20-session cap
 - **Active sessions** page: view devices (web/iOS/Android), revoke individual sessions, sign out all devices
-- Silent token refresh on expiry
+- Silent token refresh on cold start, foreground resume, and access expiry before authenticated sync
+- Web refresh credentials are cookie-only (`HttpOnly`, `Secure`, trusted-origin protected); native credentials live in Keychain/Keystore
+- Apple Watch refreshes directly after long idle; Android invite actions use short-lived, action-scoped credentials instead of stale access JWTs
 - Logout (single device) and logout-all
 
 ### 3.3 Onboarding gates

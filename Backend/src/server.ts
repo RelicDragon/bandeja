@@ -21,6 +21,7 @@ import { BetPayoutReconcileScheduler } from './services/bets/betPayoutReconcileS
 import { PushReplyTokenCleanupScheduler } from './services/push/pushReplyTokenCleanupScheduler.service';
 import { WeatherForecastScheduler } from './services/weatherForecastScheduler.service';
 import { PlayIntentScheduler } from './services/playIntentScheduler.service';
+import { AuthSessionMaintenanceScheduler } from './services/auth/authSessionMaintenanceScheduler.service';
 import { reportCriticalError, maybeReportFromConsole } from './services/developerAlert.service';
 import { createServer } from 'http';
 import { resumeMatchTimerSchedulesOnStartup } from './services/results/matchTimer.service';
@@ -43,6 +44,8 @@ const startServer = async () => {
       jwtAccessExpiresIn: config.jwtAccessExpiresIn,
       refreshTokenExpiresIn: config.refreshTokenExpiresIn,
       refreshTokenEnabled: config.refreshTokenEnabled,
+      refreshWebHttpOnlyCookie: config.refreshWebHttpOnlyCookie,
+      refreshWebHttpOnlyJsonBody: config.refreshWebHttpOnlyJsonBody,
       legacyJwtIssuanceEndAt: config.legacyJwtIssuanceEndAt,
     });
 
@@ -96,6 +99,9 @@ const startServer = async () => {
 
     const pushReplyTokenCleanupScheduler = new PushReplyTokenCleanupScheduler();
     pushReplyTokenCleanupScheduler.start();
+
+    const authSessionMaintenanceScheduler = new AuthSessionMaintenanceScheduler();
+    authSessionMaintenanceScheduler.start();
 
     const weatherForecastScheduler = new WeatherForecastScheduler();
     weatherForecastScheduler.start();
@@ -155,6 +161,7 @@ const startServer = async () => {
         adAnalyticsScheduler.stop();
         betPayoutReconcileScheduler.stop();
         pushReplyTokenCleanupScheduler.stop();
+        authSessionMaintenanceScheduler.stop();
         weatherForecastScheduler.stop();
         playIntentScheduler.stop();
         stopQueueWorkers();

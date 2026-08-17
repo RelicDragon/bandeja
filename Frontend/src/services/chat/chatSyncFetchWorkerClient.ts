@@ -4,9 +4,11 @@ import { resolveAbsoluteApiBaseUrlForFetch } from '@/api/apiBaseUrl';
 import {
   AUTH_CODES_SKIP_REFRESH,
   consumeRefreshRunClearedCredentials,
+  invalidateCachedAccessToken,
   refreshAccessTokenSingleFlight,
 } from '@/api/authRefresh';
 import { handleApiUnauthorizedIfNeeded } from '@/api/handleApiUnauthorized';
+import { clearRefreshBundle } from '@/services/refreshTokenPersistence';
 import type { ApiResponse } from '@/types';
 import { isCapacitor } from '@/utils/capacitor';
 import { processDeletedUsers } from '@/utils/deletedUserHandler';
@@ -190,8 +192,6 @@ async function fetchChatSyncEventsPackOffMainThreadInner(
   }
 
   const initialHeaders = buildSyncFetchHeaders();
-  const hadBearerOnRequest =
-    typeof initialHeaders.Authorization === 'string' && initialHeaders.Authorization.startsWith('Bearer ');
 
   let result: { status: number; body: unknown };
   try {
@@ -212,34 +212,25 @@ async function fetchChatSyncEventsPackOffMainThreadInner(
       const body401 = result.body as { code?: string } | undefined;
       const c401 = body401 && typeof body401 === 'object' ? body401.code : undefined;
       if (typeof c401 === 'string' && AUTH_CODES_SKIP_REFRESH.has(c401)) {
+        await clearRefreshBundle();
         handleApiUnauthorizedIfNeeded({ forceSessionClear: true });
         throwAxiosLike({ status: 401 });
       }
-      const authLike =
-        c401 === 'auth.accessExpired' ||
-        c401 === 'auth.invalidToken' ||
-        c401 === 'auth.refreshExpired' ||
-        c401 === 'auth.refreshInvalid' ||
-        (c401 === undefined && hadBearerOnRequest);
-      if (!authLike) {
-        handleApiUnauthorizedIfNeeded();
-      } else {
-        const newTok = await refreshAccessTokenSingleFlight();
-        if (newTok) {
-          try {
-            result = await workerFetchOnce(w, buildSyncFetchHeaders());
-          } catch {
-            handleApiUnauthorizedIfNeeded({ forceSessionClear: true });
-            throwAxiosLike({ status: 401 });
-          }
-          if (result.status === 401) {
-            handleApiUnauthorizedIfNeeded();
-          }
-        } else if (consumeRefreshRunClearedCredentials()) {
-          handleApiUnauthorizedIfNeeded({ forceSessionClear: true });
-        } else {
-          handleApiUnauthorizedIfNeeded();
+      const failedTok =
+        typeof initialHeaders.Authorization === 'string' &&
+        initialHeaders.Authorization.startsWith('Bearer ')
+          ? initialHeaders.Authorization.slice('Bearer '.length)
+          : null;
+      invalidateCachedAccessToken(failedTok);
+      const newTok = await refreshAccessTokenSingleFlight();
+      if (newTok) {
+        try {
+          result = await workerFetchOnce(w, buildSyncFetchHeaders());
+        } catch {
+          throwAxiosLike({ status: 401 });
         }
+      } else if (consumeRefreshRunClearedCredentials()) {
+        handleApiUnauthorizedIfNeeded({ forceSessionClear: true });
       }
     }
     if (result.status >= 400) {

@@ -25,12 +25,30 @@ import {
   cleanupNativeChatViewingSync,
   initNativeChatViewingSync,
 } from '@/services/push/chatViewingBridge';
+import { settleStoredAuthOnForeground } from '@/api/authStartup';
 
 let capUnsubscribe: PluginListenerHandle | null = null;
 let visibilityCleanup: (() => void) | null = null;
 
 export function triggerForegroundChatSync(): void {
-  void runForegroundSync();
+  void runAuthenticatedForegroundSync();
+}
+
+let foregroundAuthSync: Promise<void> | null = null;
+
+export async function runAuthenticatedForegroundSync(): Promise<void> {
+  if (foregroundAuthSync) return foregroundAuthSync;
+  foregroundAuthSync = (async () => {
+    const authResult = await settleStoredAuthOnForeground();
+    if (authResult.status !== 'valid' && authResult.status !== 'refreshed') return;
+    const auth = useAuthStore.getState();
+    if (!auth.isAuthenticated || !auth.token) return;
+    await runForegroundSync();
+    void pushNotificationService.ensureTokenSentToBackend();
+  })().finally(() => {
+    foregroundAuthSync = null;
+  });
+  return foregroundAuthSync;
 }
 
 async function runForegroundSync(): Promise<void> {
@@ -124,11 +142,7 @@ export const appLifecycleService = {
             void flushAllChatOfflineQueues();
             return;
           }
-          runForegroundSync();
-          const auth = useAuthStore.getState();
-          if (auth.isAuthenticated && !auth.isInitializing) {
-            void pushNotificationService.ensureTokenSentToBackend();
-          }
+          void runAuthenticatedForegroundSync();
         }).then((h) => {
           capUnsubscribe = h;
         });
@@ -136,10 +150,10 @@ export const appLifecycleService = {
     } else {
       if (!visibilityCleanup) {
         const handler = () => {
-          if (document.visibilityState === 'visible') runForegroundSync();
+          if (document.visibilityState === 'visible') void runAuthenticatedForegroundSync();
         };
         const pageShow = (e: PageTransitionEvent) => {
-          if (e.persisted) runForegroundSync();
+          if (e.persisted) void runAuthenticatedForegroundSync();
         };
         document.addEventListener('visibilitychange', handler);
         window.addEventListener('pageshow', pageShow);

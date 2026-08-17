@@ -65,7 +65,7 @@ final class WorkoutSyncOutbox {
     }
 
     func flush() async {
-        guard KeychainHelper.shared.readToken() != nil else { return }
+        guard await APIClient.ensureAccessToken() != nil else { return }
         guard !pendingEntries.isEmpty else { return }
 
         let api = APIClient()

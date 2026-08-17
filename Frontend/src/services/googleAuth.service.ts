@@ -8,6 +8,8 @@ import { normalizeLanguageForProfile } from '@/utils/displayPreferences';
 import { useAuthStore } from '@/store/authStore';
 
 export const ANDROID_GOOGLE_LOGIN_PENDING_KEY = 'bandeja_android_google_login_pending';
+/** Profile "Link Google" while already signed in — must never wipe the live session. */
+export const ANDROID_GOOGLE_LINK_PENDING_KEY = 'bandeja_android_google_link_pending';
 
 export interface GoogleAuthResult {
   idToken: string;
@@ -417,10 +419,17 @@ function signInWithGoogleWeb(options?: GoogleSignInOptions): Promise<GoogleAuthR
   });
 }
 
-function markAndroidGoogleLoginPending(): void {
+function markAndroidGoogleAuthPending(): void {
   if (Capacitor.getPlatform() !== 'android' || typeof sessionStorage === 'undefined') return;
   try {
+    const linkingExistingSession = !!useAuthStore.getState().isAuthenticated || !!useAuthStore.getState().user;
+    if (linkingExistingSession) {
+      sessionStorage.setItem(ANDROID_GOOGLE_LINK_PENDING_KEY, '1');
+      sessionStorage.removeItem(ANDROID_GOOGLE_LOGIN_PENDING_KEY);
+      return;
+    }
     sessionStorage.setItem(ANDROID_GOOGLE_LOGIN_PENDING_KEY, '1');
+    sessionStorage.removeItem(ANDROID_GOOGLE_LINK_PENDING_KEY);
   } catch {
     /* no-op */
   }
@@ -430,6 +439,7 @@ function clearAndroidGoogleLoginPending(): void {
   if (typeof sessionStorage === 'undefined') return;
   try {
     sessionStorage.removeItem(ANDROID_GOOGLE_LOGIN_PENDING_KEY);
+    sessionStorage.removeItem(ANDROID_GOOGLE_LINK_PENDING_KEY);
   } catch {
     /* no-op */
   }
@@ -444,9 +454,26 @@ function hasAndroidGoogleLoginPending(): boolean {
   }
 }
 
-/** WebView reload during Credential Manager can leave a stale LS session that 401s before native recovery. */
+function hasAndroidGoogleLinkPending(): boolean {
+  if (typeof sessionStorage === 'undefined') return false;
+  try {
+    return sessionStorage.getItem(ANDROID_GOOGLE_LINK_PENDING_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * WebView reload during Credential Manager can leave a stale LS session that 401s before native recovery.
+ * Only wipe identity for anonymous login recovery — never for Profile "Link Google".
+ */
 export function stripStaleSessionForAndroidGoogleLoginRecovery(): void {
-  if (Capacitor.getPlatform() !== 'android' || !hasAndroidGoogleLoginPending()) return;
+  if (Capacitor.getPlatform() !== 'android') return;
+  if (hasAndroidGoogleLinkPending()) {
+    // Already signed-in link flow: never touch the live session.
+    return;
+  }
+  if (!hasAndroidGoogleLoginPending()) return;
   try {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -533,7 +560,7 @@ async function signInWithGoogleNative(options?: GoogleSignInOptions): Promise<Go
 
   await ensureSocialLoginInitialized();
   if (platform === 'android') {
-    markAndroidGoogleLoginPending();
+    markAndroidGoogleAuthPending();
   }
 
   options?.onUiOpened?.();

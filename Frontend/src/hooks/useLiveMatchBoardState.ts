@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { resultsApi } from '@/api/results';
 import { gamesApi } from '@/api/games';
 import { socketService } from '@/services/socketService';
+import { retainGameRoom, releaseGameRoom } from '@/services/gameRoomMembership';
 import { useSocketEventsStore } from '@/store/socketEventsStore';
 import { parseMatchLiveEnvelope } from '@/types/matchLiveScoring';
 import {
@@ -264,9 +265,9 @@ export function useLiveMatchBoardState(gameId: string, matchId: string, options?
 
   useEffect(() => {
     if (!gameId || spectatorToken) return;
-    void socketService.joinGameRoom(gameId).catch(() => {});
+    void retainGameRoom(gameId).catch(() => {});
     return () => {
-      socketService.leaveGameRoom(gameId);
+      releaseGameRoom(gameId);
     };
   }, [gameId, spectatorToken]);
 

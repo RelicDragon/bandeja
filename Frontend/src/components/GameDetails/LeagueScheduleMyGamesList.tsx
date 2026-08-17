@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import type { TFunction } from 'i18next';
 import type { LeagueGroup, LeagueRound } from '@/api/leagues';
 import type { Game } from '@/types';
-import { resultsApi, type RoundData } from '@/api/results';
 import { LeagueGameCard } from './LeagueGameCard';
 import { GroupFilterDropdown } from './GroupFilterDropdown';
 import { LeagueScheduleMyFilterSelect } from './LeagueScheduleMyFilterSelect';
@@ -15,6 +14,7 @@ import {
 } from '@/utils/leagueScheduleMyGameStatus';
 import { useDesktop } from '@/hooks/useDesktop';
 import { buildLeagueHomeGameBracketPath, isBracketLeagueGame } from '@/utils/leagueHomeBracket.util';
+import { useLeagueGameResultsMap } from '@/hooks/useLeagueGameResultsMap';
 
 const ALL_GROUP_ID = 'ALL';
 
@@ -29,6 +29,7 @@ interface LeagueScheduleMyGamesListProps {
   onOpenGame: (game: Game) => void;
   onDeleteGame?: () => void;
   onNoteSaved?: () => void;
+  onResultsChanged?: () => void;
   t: TFunction;
 }
 
@@ -43,11 +44,11 @@ export function LeagueScheduleMyGamesList({
   onOpenGame,
   onDeleteGame,
   onNoteSaved,
+  onResultsChanged,
   t,
 }: LeagueScheduleMyGamesListProps) {
   const isDesktop = useDesktop();
   const navigate = useNavigate();
-  const [gameResultsMap, setGameResultsMap] = useState<Map<string, RoundData[] | null>>(new Map());
   const [selectedGroupId, setSelectedGroupId] = useState(ALL_GROUP_ID);
   const [statusFilter, setStatusFilter] = useState<LeagueScheduleMyGameStatusFilter>('ALL');
 
@@ -113,6 +114,9 @@ export function LeagueScheduleMyGamesList({
     });
   }, [allEntries, selectedGroupId, showGroupFilter, statusFilter]);
 
+  const entryGames = useMemo(() => entries.map((e) => e.game), [entries]);
+  const gameResultsMap = useLeagueGameResultsMap(entryGames);
+
   const showGroupBookmark = showGroupFilter;
 
   const statusOptions = useMemo(
@@ -133,36 +137,6 @@ export function LeagueScheduleMyGamesList({
     ],
     [t],
   );
-
-  useEffect(() => {
-    if (entries.length === 0) {
-      setGameResultsMap(new Map());
-      return;
-    }
-    let cancelled = false;
-    const run = async () => {
-      const resultsMap = new Map<string, RoundData[] | null>();
-      for (const { game } of entries) {
-        if (cancelled) return;
-        if (game.resultsStatus !== 'NONE') {
-          try {
-            const response = await resultsApi.getGameResults(game.id);
-            const rounds = response.data?.rounds || [];
-            resultsMap.set(game.id, rounds.length > 0 ? rounds : null);
-          } catch {
-            resultsMap.set(game.id, null);
-          }
-        } else {
-          resultsMap.set(game.id, null);
-        }
-      }
-      if (!cancelled) setGameResultsMap(resultsMap);
-    };
-    run();
-    return () => {
-      cancelled = true;
-    };
-  }, [entries]);
 
   if (!userId) {
     return (
@@ -262,7 +236,8 @@ export function LeagueScheduleMyGamesList({
                 showGroupTag={false}
                 showGroupBookmark={showGroupBookmark && !!game.leagueGroup}
                 showLeagueGroupSideAccent={false}
-                allRounds={gameResultsMap.get(game.id) ?? null}
+                liveRounds={gameResultsMap.get(game.id) ?? null}
+                onResultsChanged={onResultsChanged}
               />
             </div>
           );

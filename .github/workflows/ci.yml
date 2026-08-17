@@ -47,6 +47,8 @@ jobs:
       - run: npm run lint
       - run: npm run test:available-games
       - run: npm run test:play-intent
+      - run: npm run test:auth-refresh
+      - run: npm run test:auth-refresh-integration
       - run: npm run test:security
         env:
           # Suite imports route modules that construct PrismaClient; no DB queries.
@@ -71,6 +73,7 @@ jobs:
       - run: npm run build:contracts
       - run: node --test ../scripts/deploy-frontend.contract.test.mjs
       - run: npm run lint
+      - run: npm run test:auth
       - run: npm run test:deep-link-catalog
       - run: npm run test:next-game
       - run: npm run test:find

@@ -1,7 +1,7 @@
 import { Edit2, ExternalLink, MapPin, Calendar, Trash2, Plane, MessageCircle, BookmarkPlus, Bookmark } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useMemo, useState } from 'react';
-import { ConfirmationModal, PlayerAvatar } from '@/components';
+import { useState } from 'react';
+import { ConfirmationModal } from '@/components';
 import { DeleteGameBookingsWarningModal } from '@/components/GameDetails/DeleteGameBookingsWarningModal';
 import { UserGameNoteModal } from '@/components/GameDetails/UserGameNoteModal';
 import { Game } from '@/types';
@@ -14,15 +14,10 @@ import { gamesApi } from '@/api/games';
 import toast from 'react-hot-toast';
 import { RoundData } from '@/api/results';
 import { useNavigate } from 'react-router-dom';
-import { getRules, isSuperTieBreakDeciderRow } from '@/utils/scoring';
-import {
-  bracketMatchStatusFromGame,
-  type BracketMatchStatus,
-} from '@/utils/leagueBracketMatchStatus';
-import { resolveLeagueGameCardTeams } from '@/utils/leagueGameCardTeams.util';
-import { resolveLeagueGameCardWinner } from '@/utils/leagueGameCardWinner.util';
 import { gameHasLinkedExternalBooking } from '@/utils/gameHasConfirmedClubBooking';
+import type { Round } from '@/types/gameResults';
 import { LeagueGroupBookmarkTag } from './LeagueGroupBookmarkTag';
+import { LeagueGameCardResults } from './LeagueGameCardResults';
 
 interface LeagueGameCardProps {
   game: Game;
@@ -38,9 +33,13 @@ interface LeagueGameCardProps {
   seasonPlayoffBadge?: boolean;
   /** Bracket round label (e.g. Quarterfinals) — shown instead of season playoff when set. */
   bracketRoundBadge?: string | null;
+  /** @deprecated Prefer liveRounds from the live fixture results cache. */
   allRounds?: RoundData[] | null;
+  /** Live socket-backed rounds for this fixture (preferred). */
+  liveRounds?: Round[] | null;
   onDelete?: () => Promise<void> | void;
   onNoteSaved?: () => void;
+  onResultsChanged?: () => void;
 }
 
 export const LeagueGameCard = ({
@@ -56,12 +55,13 @@ export const LeagueGameCard = ({
   seasonPlayoffBadge = false,
   bracketRoundBadge,
   allRounds,
+  liveRounds,
   onDelete,
   onNoteSaved,
+  onResultsChanged,
 }: LeagueGameCardProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const leagueCardRules = useMemo(() => getRules(game), [game]);
   const { user } = useAuthStore();
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [showDeleteBookingsWarning, setShowDeleteBookingsWarning] = useState(false);
@@ -78,32 +78,10 @@ export const LeagueGameCard = ({
     t,
   });
 
-  const { teamA: teamAPlayers, teamB: teamBPlayers } = useMemo(
-    () => resolveLeagueGameCardTeams(game),
-    [game],
-  );
-
-  const isFinal = game.resultsStatus === 'FINAL';
-  const bracketStatus: BracketMatchStatus | null = isFinal
-    ? bracketMatchStatusFromGame(game, { resultsRounds: allRounds })
-    : null;
-  const isWalkoverFinal = bracketStatus === 'WALKOVER';
-  const isForfeitFinal = bracketStatus === 'FORFEIT';
-  const isNonPlayedFinal = isWalkoverFinal || isForfeitFinal;
-  const scoreSets = useMemo(
-    () => collectScoreSets(isFinal && !isNonPlayedFinal ? allRounds : null),
-    [allRounds, isFinal, isNonPlayedFinal],
-  );
-  const showScores = isFinal && !isNonPlayedFinal && scoreSets.length > 0;
   const canEdit = game.resultsStatus === 'NONE' && onEdit;
   const canDelete = game.resultsStatus === 'NONE' && onDelete;
   const groupColor = game.leagueGroup ? getLeagueGroupColor(game.leagueGroup.color) : null;
   const groupSoftColor = game.leagueGroup ? getLeagueGroupSoftColor(game.leagueGroup.color) : null;
-
-  const { winner, isTie } = useMemo(
-    () => resolveLeagueGameCardWinner(game, allRounds),
-    [game, allRounds]
-  );
 
   const getDurationLabel = () => {
     if (!game.startTime || !game.endTime) return '';
@@ -255,86 +233,12 @@ export const LeagueGameCard = ({
           (showGroupTag && game.leagueGroup) || bracketRoundBadge?.trim() || seasonPlayoffBadge ? 'mt-5' : ''
         }`}
       >
-        <div className="flex w-max max-w-none items-center justify-center gap-2 sm:gap-3 mx-auto">
-          <div className="flex shrink-0 justify-start">
-            <div
-              className={`min-h-[20px] px-1.5 py-1.5 flex items-center justify-center ${teamHighlightClass('teamA', winner, isTie)}`}
-            >
-              <div className="flex gap-2.5 justify-center sm:gap-3.5">
-                {teamAPlayers.map((player) => (
-                  <PlayerAvatar
-                    key={player.id}
-                    player={player}
-                    draggable={false}
-                    showName={true}
-                    extrasmall={true}
-                    removable={false}
-                  />
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {showScores ? (
-            <div className="flex shrink-0 flex-row flex-wrap items-center justify-center gap-1">
-              {scoreSets.map((set) => (
-                <div
-                  key={set.key}
-                  className="flex shrink-0 flex-col items-center gap-0 rounded bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-300"
-                >
-                  <span>
-                    {set.teamAScore}:{set.teamBScore}
-                    {set.role === 'EXTRA_GAMES' || set.role === 'EXTRA_BALLS' ? (
-                      <span className="text-violet-500">*</span>
-                    ) : null}
-                  </span>
-                  {set.isTieBreak ? (
-                    <span className="text-[9px] font-medium leading-none text-primary-600 dark:text-primary-400">
-                      {isSuperTieBreakDeciderRow(leagueCardRules, set.setIndex, set.isTieBreak)
-                        ? t('gameResults.superTieBreakAbbr')
-                        : t('gameResults.tieBreakAbbr')}
-                    </span>
-                  ) : null}
-                </div>
-              ))}
-            </div>
-          ) : isNonPlayedFinal ? (
-            <div className="flex shrink-0 flex-col items-center justify-center gap-0.5 px-2">
-              <span
-                className={`rounded-md px-2 py-1 text-xs font-bold uppercase tracking-wide ${
-                  isForfeitFinal
-                    ? 'bg-orange-100 text-orange-800 dark:bg-orange-950/50 dark:text-orange-200'
-                    : 'bg-slate-100 text-slate-700 dark:bg-slate-800/80 dark:text-slate-200'
-                }`}
-              >
-                {isForfeitFinal
-                  ? t('gameDetails.bracketMatchForfeitLabel')
-                  : t('gameDetails.bracketMatchWalkoverLabel')}
-              </span>
-            </div>
-          ) : (
-            <div className="shrink-0 text-sm font-semibold text-gray-500 dark:text-gray-400">VS</div>
-          )}
-
-          <div className="flex shrink-0 justify-start">
-            <div
-              className={`min-h-[20px] px-1.5 py-1.5 flex items-center justify-center ${teamHighlightClass('teamB', winner, isTie)}`}
-            >
-              <div className="flex gap-2.5 justify-center sm:gap-3.5">
-                {teamBPlayers.map((player) => (
-                  <PlayerAvatar
-                    key={player.id}
-                    player={player}
-                    draggable={false}
-                    showName={true}
-                    extrasmall={true}
-                    removable={false}
-                  />
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
+        <LeagueGameCardResults
+          game={game}
+          allRounds={allRounds}
+          liveRounds={liveRounds}
+          onResultsChanged={onResultsChanged}
+        />
       </div>
 
       {(game.club?.name || game.court?.name || (game.timeIsSet && game.startTime)) && (
@@ -486,48 +390,4 @@ export const LeagueGameCard = ({
     </div>
   );
 };
-
-type LeagueScoreSet = {
-  key: string;
-  teamAScore: number;
-  teamBScore: number;
-  setIndex: number;
-  isTieBreak?: boolean;
-  role?: string;
-};
-
-function collectScoreSets(allRounds: RoundData[] | null | undefined): LeagueScoreSet[] {
-  if (!allRounds?.length) return [];
-  const sets: LeagueScoreSet[] = [];
-  allRounds.forEach((round, roundIndex) => {
-    round.matches?.forEach((match, matchIndex) => {
-      match.sets?.forEach((set, setIndex) => {
-        if (set.teamAScore === 0 && set.teamBScore === 0) return;
-        sets.push({
-          key: `r${roundIndex}-m${matchIndex}-s${setIndex}`,
-          teamAScore: set.teamAScore,
-          teamBScore: set.teamBScore,
-          setIndex,
-          isTieBreak: set.isTieBreak,
-          role: set.role,
-        });
-      });
-    });
-  });
-  return sets;
-}
-
-function teamHighlightClass(
-  team: 'teamA' | 'teamB',
-  winner: 'teamA' | 'teamB' | null,
-  isTie: boolean,
-) {
-  if (winner === team) {
-    return 'rounded-lg border-2 border-emerald-400 bg-emerald-50 dark:border-emerald-500 dark:bg-emerald-950/40';
-  }
-  if (isTie) {
-    return 'rounded-lg border-2 border-blue-400 dark:border-blue-500 bg-blue-50 dark:bg-blue-900/20';
-  }
-  return '';
-}
 

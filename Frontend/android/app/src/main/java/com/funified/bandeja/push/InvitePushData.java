@@ -20,6 +20,8 @@ public final class InvitePushData {
     public final String teamId;
     public final String acceptActionTitle;
     public final String declineActionTitle;
+    public final String acceptActionToken;
+    public final String declineActionToken;
 
     private InvitePushData(
         String type,
@@ -29,7 +31,9 @@ public final class InvitePushData {
         String gameId,
         String teamId,
         String acceptActionTitle,
-        String declineActionTitle
+        String declineActionTitle,
+        String acceptActionToken,
+        String declineActionToken
     ) {
         this.type = type;
         this.title = title;
@@ -39,6 +43,8 @@ public final class InvitePushData {
         this.teamId = teamId;
         this.acceptActionTitle = acceptActionTitle;
         this.declineActionTitle = declineActionTitle;
+        this.acceptActionToken = acceptActionToken;
+        this.declineActionToken = declineActionToken;
     }
 
     public static boolean isInvite(Map<String, String> data) {
@@ -67,7 +73,9 @@ public final class InvitePushData {
             trim(data.get("gameId")),
             trim(data.get("teamId")),
             trim(data.get("acceptActionTitle")),
-            trim(data.get("declineActionTitle"))
+            trim(data.get("declineActionTitle")),
+            trim(data.get("acceptActionToken")),
+            trim(data.get("declineActionToken"))
         );
     }
 

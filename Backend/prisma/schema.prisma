@@ -206,12 +206,29 @@ model UserRefreshSession {
   revokedAt           DateTime?
   replacedBySessionId String?
   rotationFamilyId    String
+  rotationRequestId   String?
+  replacementTokenCiphertext String? @db.Text
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, revokedAt])
+  @@index([expiresAt])
   @@index([rotationFamilyId])
   @@map("user_refresh_sessions")
+}
+
+model AuthRefreshEvent {
+  id            String   @id @default(cuid())
+  outcome       String   @db.VarChar(48)
+  platform      String   @db.VarChar(16)
+  clientVersion String?  @db.VarChar(32)
+  durationMs    Int
+  createdAt     DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([outcome, createdAt])
+  @@index([platform, createdAt])
+  @@map("auth_refresh_events")
 }
 
 model IpLocationCache {

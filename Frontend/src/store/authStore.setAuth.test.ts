@@ -11,6 +11,7 @@ const syncTokenToNativeMock = vi.fn(async () => {
 });
 
 const updateProfileMock = vi.fn();
+const getCurrentSessionIdSyncMock = vi.fn<() => string | null>(() => null);
 
 vi.mock('@/services/refreshTokenPersistence', () => ({
   clearRefreshBundle: vi.fn(async () => {
@@ -18,6 +19,7 @@ vi.mock('@/services/refreshTokenPersistence', () => ({
   }),
   persistRefreshBundle: persistRefreshBundleMock,
   isWebHttpOnlyRefreshCookie: () => false,
+  getCurrentSessionIdSync: getCurrentSessionIdSyncMock,
 }));
 
 vi.mock('@/services/authBridge', () => ({
@@ -54,6 +56,7 @@ describe('useAuthStore.setAuth credential ordering', () => {
     persistRefreshBundleMock.mockClear();
     syncTokenToNativeMock.mockClear();
     updateProfileMock.mockReset();
+    getCurrentSessionIdSyncMock.mockReturnValue(null);
     storage.clear();
     vi.useFakeTimers();
     vi.stubGlobal('localStorage', {
@@ -110,6 +113,42 @@ describe('useAuthStore.setAuth credential ordering', () => {
 
     expect(storage.get('token')).toBeUndefined();
     expect(useAuthStore.getState().isAuthenticated).toBe(false);
+  });
+
+  it('does not expose an access-only login when durable refresh persistence fails', async () => {
+    persistRefreshBundleMock.mockRejectedValueOnce(new Error('keychain unavailable'));
+    const { useAuthStore } = await import('@/store/authStore');
+
+    await expect(
+      useAuthStore.getState().setAuth(
+        {
+          id: 'user-1',
+          firstName: 'Test',
+          lastName: 'User',
+          phone: '+10000000000',
+        } as never,
+        'access-token',
+        { refreshToken: 'refresh-token', currentSessionId: 'session-1' },
+      ),
+    ).rejects.toThrow('keychain unavailable');
+
+    expect(storage.get('token')).toBeUndefined();
+    expect(storage.get('user')).toBeUndefined();
+    expect(useAuthStore.getState().isAuthenticated).toBe(false);
+    expect(syncTokenToNativeMock).not.toHaveBeenCalled();
+  });
+
+  it('keeps a refresh-only stored session behind protected routes during recovery', async () => {
+    storage.set(
+      'user',
+      JSON.stringify({ id: 'user-1', firstName: 'Stored', lastName: 'User' }),
+    );
+    getCurrentSessionIdSyncMock.mockReturnValue(null);
+
+    const { useAuthStore } = await import('@/store/authStore');
+
+    expect(useAuthStore.getState().token).toBeNull();
+    expect(useAuthStore.getState().isAuthenticated).toBe(true);
   });
 
   it('does not keep login waiting on profile preference normalization', async () => {

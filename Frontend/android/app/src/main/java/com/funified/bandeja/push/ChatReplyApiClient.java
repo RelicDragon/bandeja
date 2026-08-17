@@ -2,6 +2,7 @@ package com.funified.bandeja.push;
 
 import android.content.Context;
 import com.funified.bandeja.auth.NativeApiConfig;
+import com.funified.bandeja.auth.NativeAuthRefresh;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -46,6 +47,16 @@ public final class ChatReplyApiClient {
                 "push-reply:" + data.messageId + ":" + System.currentTimeMillis()
             );
             return postJson(context, "/chat/push-reply", null, body);
+        } catch (Exception ignored) {
+            return new ApiResult(-1, false);
+        }
+    }
+
+    public static ApiResult performInviteAction(Context context, String actionToken) {
+        try {
+            JSONObject body = new JSONObject();
+            body.put("actionToken", actionToken);
+            return postJson(context, "/push/invite-action", null, body);
         } catch (Exception ignored) {
             return new ApiResult(-1, false);
         }
@@ -159,6 +170,16 @@ public final class ChatReplyApiClient {
 
     private static ApiResult postJson(Context context, String path, String token, JSONObject body)
         throws Exception {
+        return postJson(context, path, token, body, true);
+    }
+
+    private static ApiResult postJson(
+        Context context,
+        String path,
+        String token,
+        JSONObject body,
+        boolean allowRefreshRetry
+    ) throws Exception {
         String apiBase = NativeApiConfig.getApiBaseUrl(context);
         HttpURLConnection connection = (HttpURLConnection) new URL(apiBase + path).openConnection();
         connection.setRequestMethod("POST");
@@ -183,6 +204,18 @@ public final class ChatReplyApiClient {
         InputStream stream = statusCode >= 400 ? connection.getErrorStream() : connection.getInputStream();
         String responseBody = readStream(stream);
         connection.disconnect();
+
+        if (
+            statusCode == 401
+                && allowRefreshRetry
+                && token != null
+                && !token.isEmpty()
+        ) {
+            String fresh = NativeAuthRefresh.refreshAccessToken(context);
+            if (fresh != null && !fresh.isEmpty()) {
+                return postJson(context, path, fresh, body, false);
+            }
+        }
 
         boolean success = statusCode >= 200 && statusCode < 300;
         int unreadBadgeCount = parseUnreadBadgeCount(responseBody);

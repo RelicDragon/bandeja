@@ -54,6 +54,7 @@ let logoutInFlight: Promise<void> | null = null;
 export const useAuthStore = create<AuthState>((set, get) => {
   let savedUser = null;
   let savedToken = null;
+  let hasSavedUserCandidate = false;
   
   try {
     if (hasExplicitLogoutMarker()) {
@@ -73,6 +74,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
         savedUser = JSON.parse(userStr);
         console.log('User loaded from localStorage');
       }
+      hasSavedUserCandidate = !!savedUser;
     }
   } catch (error) {
     console.error('Error loading auth from localStorage:', error);
@@ -89,7 +91,9 @@ export const useAuthStore = create<AuthState>((set, get) => {
   return {
     user: savedUser,
     token: savedToken,
-    isAuthenticated: !!savedToken,
+    // A refresh-only persisted session is still an authenticated candidate while cold-start
+    // recovery runs. This prevents a temporary missing access token from redirecting to login.
+    isAuthenticated: !!savedToken || hasSavedUserCandidate,
     isInitializing: true,
     setAuth: async (user, token, opts) => {
       clearExplicitLogoutMarker();
@@ -101,9 +105,6 @@ export const useAuthStore = create<AuthState>((set, get) => {
       } catch (e) {
         console.warn('[auth:setAuth] my tab cache handoff failed', e);
       }
-      localStorage.setItem('user', JSON.stringify(user));
-      localStorage.setItem('token', token);
-      localStorage.setItem('bandeja_has_signed_in', '1');
       if (opts?.refreshToken) {
         await persistRefreshBundle(opts.refreshToken, opts.currentSessionId);
       } else if (opts?.currentSessionId && isWebHttpOnlyRefreshCookie()) {
@@ -111,6 +112,12 @@ export const useAuthStore = create<AuthState>((set, get) => {
       } else {
         await clearRefreshBundle();
       }
+      // The durable session credential must exist before any access-only authenticated state is
+      // exposed. Otherwise a Keychain/Keystore write failure creates a session that inevitably
+      // logs out as soon as the short-lived access token expires.
+      localStorage.setItem('user', JSON.stringify(user));
+      localStorage.setItem('token', token);
+      localStorage.setItem('bandeja_has_signed_in', '1');
       await syncTokenToNative(token);
       void syncApiBaseUrlToNative();
       set({ user, token, isAuthenticated: true });

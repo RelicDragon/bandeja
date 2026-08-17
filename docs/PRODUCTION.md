@@ -139,6 +139,24 @@ pm2 restart backend
 
 Migrations run as part of every backend deploy. Sticker seed upserts catalog rows and uploads/reuses assets under `uploads/stickers/packs/…` when AWS/S3 is configured. Safe to re-run.
 
+### Auth refresh rollout
+
+The hardened refresh flow is backward-compatible, so deploy the backend and database migration before forcing mobile clients to update. Clients that send `X-Refresh-Request-Id` get one-time rotation with idempotent lost-response replay; older clients temporarily keep a stable per-device credential. After the updated iOS/Android builds are available, set a blocking `AppVersionRequirement` for each platform in Admin (`minBuildNumber` = the new build). That is the user-facing force-update control; `MIN_CLIENT_VERSION_FOR_REFRESH` is the separate legacy-JWT issuance floor.
+
+Production startup now refuses an unsafe web-token configuration. Keep these values in `Backend/.env`:
+
+```bash
+REFRESH_WEB_HTTPONLY_COOKIE=true
+REFRESH_WEB_HTTPONLY_JSON_BODY=false
+AUTH_MAX_ACTIVE_SESSIONS_PER_USER=20
+AUTH_SESSION_RETENTION_DAYS=30
+AUTH_REFRESH_EVENT_RETENTION_DAYS=30
+AUTH_REFRESH_ALERT_MIN_ATTEMPTS=20
+AUTH_REFRESH_ALERT_FAILURE_PERCENT=20
+```
+
+The migration adds idempotency state and durable, token-free refresh telemetry. A five-minute production monitor alerts through the developer-alert channel when the 15-minute failure rate reaches the configured minimum sample and percentage; daily maintenance removes expired/revoked session history and old telemetry. Verify `/health/details` after deploy and watch for `Auth refresh degradation` alerts before changing the force-update floor.
+
 **Giphy / Klipy:** paste URL→GIF works without keys (CDN rewrite for direct media). Composer GIF search needs `GIPHY_API_KEY` and/or `KLIPY_API_KEY` in Backend `.env` on the server (Giphy preferred, Klipy fallback); without both, `/giphy/status` is unavailable and the GIF tray/attach entry stays hidden.
 
 ### Frontend deploy (`scripts/deploy-frontend.sh`)

@@ -1,43 +1,10 @@
-import { useEffect, useState } from 'react';
-import { resultsApi, type RoundData } from '@/api/results';
 import type { Game } from '@/types';
+import type { Round } from '@/types/gameResults';
+import { useLeagueFixtureResultsLive } from '@/hooks/useLeagueFixtureResultsLive';
 
-export function useLeagueGameResultsMap(games: Game[]): Map<string, RoundData[] | null> {
-  const [gameResultsMap, setGameResultsMap] = useState<Map<string, RoundData[] | null>>(
-    () => new Map()
-  );
-
-  useEffect(() => {
-    if (games.length === 0) {
-      setGameResultsMap(new Map());
-      return;
-    }
-
-    let cancelled = false;
-
-    const run = async () => {
-      const resultsMap = new Map<string, RoundData[] | null>();
-      for (const game of games) {
-        if (game.resultsStatus === 'NONE') {
-          resultsMap.set(game.id, null);
-          continue;
-        }
-        try {
-          const response = await resultsApi.getGameResults(game.id);
-          const rounds = response.data?.rounds ?? [];
-          resultsMap.set(game.id, rounds.length > 0 ? rounds : null);
-        } catch {
-          resultsMap.set(game.id, null);
-        }
-      }
-      if (!cancelled) setGameResultsMap(resultsMap);
-    };
-
-    void run();
-    return () => {
-      cancelled = true;
-    };
-  }, [games]);
-
-  return gameResultsMap;
+/** Live socket-backed results map for visible league fixtures. */
+export function useLeagueGameResultsMap(
+  games: Array<Pick<Game, 'id' | 'resultsStatus'>>,
+): Map<string, Round[] | null> {
+  return useLeagueFixtureResultsLive(games);
 }

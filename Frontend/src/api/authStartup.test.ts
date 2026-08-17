@@ -2,7 +2,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/store/authStore', () => ({
   useAuthStore: {
-    getState: vi.fn(() => ({ token: null })),
+    getState: vi.fn(() => ({
+      token: null,
+      setToken: vi.fn(),
+    })),
     setState: vi.fn(),
   },
 }));
@@ -28,7 +31,6 @@ function depsFor(token: string | null, overrides?: {
     refreshAccessToken: vi.fn(overrides?.refreshAccessToken ?? (async () => null)),
     scheduleRefresh: vi.fn(),
     clearLocalAuth: vi.fn(async () => {}),
-    suspendAccessToken: vi.fn(async () => {}),
     hasStoredUserCandidate: vi.fn(overrides?.hasStoredUserCandidate ?? (() => false)),
     hasExplicitLogoutMarker: vi.fn(overrides?.hasExplicitLogoutMarker ?? (() => false)),
     consumeRefreshClearedCredentials: vi.fn(overrides?.consumeRefreshClearedCredentials ?? (() => false)),
@@ -135,9 +137,26 @@ describe('auth startup verifier', () => {
     expect(deps.clearLocalAuth).not.toHaveBeenCalled();
   });
 
-  it('clears malformed local auth without attempting refresh', async () => {
+  it('refreshes a malformed access token when a refresh credential exists', async () => {
     const { settleStoredAuthBeforeBootstrap } = await import('@/api/authStartup');
-    const deps = depsFor('not-a-jwt');
+    const freshToken = jwtWithExp(baseNow + 10 * 60 * 1000);
+    const deps = depsFor('not-a-jwt', {
+      refreshAccessToken: async () => freshToken,
+    });
+
+    const result = await settleStoredAuthBeforeBootstrap({ deps });
+
+    expect(result.status).toBe('refreshed');
+    expect(result.tokenState).toBe('invalid_shape');
+    expect(deps.refreshAccessToken).toHaveBeenCalledTimes(1);
+    expect(deps.clearLocalAuth).not.toHaveBeenCalled();
+  });
+
+  it('clears malformed local auth when no refresh credential exists', async () => {
+    const { settleStoredAuthBeforeBootstrap } = await import('@/api/authStartup');
+    const deps = depsFor('not-a-jwt', {
+      hasRefreshCredential: async () => false,
+    });
 
     const result = await settleStoredAuthBeforeBootstrap({ deps });
 
@@ -177,7 +196,7 @@ describe('auth startup verifier', () => {
     expect(deps.clearLocalAuth).toHaveBeenCalledWith('auth.refreshExpired');
   });
 
-  it('suspends a stale access token when refresh exceeds the startup timeout', async () => {
+  it('keeps the session candidate while a stale-token refresh continues after startup timeout', async () => {
     vi.useFakeTimers();
     const { settleStoredAuthBeforeBootstrap } = await import('@/api/authStartup');
     const deps = depsFor(jwtWithExp(baseNow - 1000), {
@@ -189,9 +208,8 @@ describe('auth startup verifier', () => {
     const result = await pending;
 
     expect(result.status).toBe('degraded');
-    expect(result.reason).toBe('refresh_timeout_access_suspended');
+    expect(result.reason).toBe('refresh_timeout');
     expect(deps.clearLocalAuth).not.toHaveBeenCalled();
-    expect(deps.suspendAccessToken).toHaveBeenCalledWith('refresh_timeout');
   });
 
   it('does not suspend anything when missing-token refresh times out', async () => {
@@ -208,7 +226,6 @@ describe('auth startup verifier', () => {
 
     expect(result.status).toBe('degraded');
     expect(result.reason).toBe('refresh_timeout');
-    expect(deps.suspendAccessToken).not.toHaveBeenCalled();
     expect(deps.clearLocalAuth).not.toHaveBeenCalled();
   });
 });

@@ -13,6 +13,7 @@ function run() {
   assert.ok(detailed.database?.name);
   assert.equal(typeof detailed.database.e2eSafe, 'boolean');
   assert.ok(detailed.runtime?.nodeEnv);
+  assert.equal(typeof detailed.authRefresh.attempts, 'number');
 
   console.log('healthInfo.test.ts: ok');
 }

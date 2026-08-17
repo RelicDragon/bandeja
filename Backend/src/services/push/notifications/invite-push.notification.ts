@@ -9,6 +9,7 @@ import {
 import { NotificationPreferenceService } from '../../notificationPreference.service';
 import { NotificationChannelType } from '@prisma/client';
 import { PreferenceKey } from '../../../types/notifications.types';
+import { signPushInviteActionToken } from '../pushInviteActionToken.service';
 
 export async function createInvitePushNotification(
   invite: any
@@ -57,6 +58,18 @@ export async function createInvitePushNotification(
     data: {
       gameId: invite.game.id,
       inviteId: invite.id,
+      acceptActionToken: signPushInviteActionToken({
+        userId: receiver.id,
+        kind: 'game',
+        targetId: invite.id,
+        action: 'accept',
+      }),
+      declineActionToken: signPushInviteActionToken({
+        userId: receiver.id,
+        kind: 'game',
+        targetId: invite.id,
+        action: 'decline',
+      }),
       shortDayOfWeek: gameInfo.shortDayOfWeek
     },
     actions: [

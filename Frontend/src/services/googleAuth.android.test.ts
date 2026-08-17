@@ -11,7 +11,10 @@ const socialLoginMocks = vi.hoisted(() => ({
 const authSetStateMock = vi.hoisted(() => vi.fn());
 
 vi.mock('@/store/authStore', () => ({
-  useAuthStore: { setState: authSetStateMock },
+  useAuthStore: {
+    setState: authSetStateMock,
+    getState: () => ({ isAuthenticated: false, user: null }),
+  },
 }));
 
 vi.mock('@capgo/capacitor-social-login', () => ({
@@ -196,6 +199,18 @@ describe('stripStaleSessionForAndroidGoogleLoginRecovery', () => {
       token: null,
       isAuthenticated: false,
     });
+  });
+
+  it('keeps identity when Android Google link is pending for an existing session', async () => {
+    storage.delete('bandeja_android_google_login_pending');
+    storage.set('bandeja_android_google_link_pending', '1');
+    const { stripStaleSessionForAndroidGoogleLoginRecovery } = await import('@/services/googleAuth.service');
+    stripStaleSessionForAndroidGoogleLoginRecovery();
+
+    expect(storage.get('token')).toBe('stale');
+    expect(storage.get('user')).toBe('{"id":"u1"}');
+    expect(storage.get('auth_backup')).toBe('{"token":"stale","user":"{}","timestamp":1}');
+    expect(authSetStateMock).not.toHaveBeenCalled();
   });
 });
 

@@ -1,5 +1,6 @@
 import { config } from '../config/env';
 import { DEV_DB_NAMES, getDatabaseUrl, isProdDatabaseUrl } from './dbEnvironment';
+import { getAuthRefreshMetrics } from '../services/auth/authRefreshMetrics';
 
 /** Public liveness payload — no env/DB reconnaissance fields. */
 export function buildPublicHealthPayload() {
@@ -27,6 +28,7 @@ export function buildDetailedHealthPayload() {
     runtime: {
       nodeEnv: config.nodeEnv,
     },
+    authRefresh: getAuthRefreshMetrics(),
   };
 }
 

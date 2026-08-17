@@ -150,7 +150,7 @@ export const RoundCard = ({
               {round.matches.map((match, matchIndex) => {
                 const useHorizontalMatchCard =
                   fixedNumberOfSets === 1 &&
-                  windowWidth >= 390 &&
+                  windowWidth >= 490 &&
                   !match.sets.some(isSupplementalMatchSet);
 
                 return useHorizontalMatchCard ? (

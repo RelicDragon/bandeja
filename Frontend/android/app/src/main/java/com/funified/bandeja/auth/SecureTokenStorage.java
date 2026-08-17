@@ -26,54 +26,63 @@ public final class SecureTokenStorage {
         );
     }
 
-    public static void setToken(Context context, String token) {
+    public static boolean setToken(Context context, String token) {
         try {
-            prefs(context).edit().putString(KEY_ACCESS_TOKEN, token).apply();
+            return prefs(context).edit().putString(KEY_ACCESS_TOKEN, token).commit();
         } catch (Exception ignored) {
-            // Encrypted prefs unavailable — token stays unavailable to native reply path
+            return false;
         }
     }
 
     public static String getToken(Context context) {
         try {
-            return prefs(context).getString(KEY_ACCESS_TOKEN, null);
+            return getTokenStrict(context);
         } catch (Exception ignored) {
+            // Background notification actions cannot surface storage errors to JavaScript.
             return null;
         }
     }
 
-    public static void deleteToken(Context context) {
+    public static String getTokenStrict(Context context) throws Exception {
+        return prefs(context).getString(KEY_ACCESS_TOKEN, null);
+    }
+
+    public static boolean deleteToken(Context context) {
         try {
-            prefs(context).edit()
+            return prefs(context).edit().remove(KEY_ACCESS_TOKEN).commit();
+        } catch (Exception ignored) {
+            return false;
+        }
+    }
+
+    public static boolean deleteSession(Context context) {
+        try {
+            return prefs(context).edit()
                 .remove(KEY_ACCESS_TOKEN)
                 .remove(KEY_REFRESH_TOKEN)
-                .apply();
+                .commit();
         } catch (Exception ignored) {
-            // ignore
+            return false;
         }
     }
 
-    public static void setRefreshToken(Context context, String token) {
+    public static boolean setRefreshToken(Context context, String token) {
         try {
-            prefs(context).edit().putString(KEY_REFRESH_TOKEN, token).apply();
+            return prefs(context).edit().putString(KEY_REFRESH_TOKEN, token).commit();
         } catch (Exception ignored) {
-            // ignore
+            return false;
         }
     }
 
-    public static String getRefreshToken(Context context) {
-        try {
-            return prefs(context).getString(KEY_REFRESH_TOKEN, null);
-        } catch (Exception ignored) {
-            return null;
-        }
+    public static String getRefreshToken(Context context) throws Exception {
+        return prefs(context).getString(KEY_REFRESH_TOKEN, null);
     }
 
-    public static void deleteRefreshToken(Context context) {
+    public static boolean deleteRefreshToken(Context context) {
         try {
-            prefs(context).edit().remove(KEY_REFRESH_TOKEN).apply();
+            return prefs(context).edit().remove(KEY_REFRESH_TOKEN).commit();
         } catch (Exception ignored) {
-            // ignore
+            return false;
         }
     }
 }

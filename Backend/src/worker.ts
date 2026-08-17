@@ -15,6 +15,8 @@ const run = async () => {
       jwtAccessExpiresIn: config.jwtAccessExpiresIn,
       refreshTokenExpiresIn: config.refreshTokenExpiresIn,
       refreshTokenEnabled: config.refreshTokenEnabled,
+      refreshWebHttpOnlyCookie: config.refreshWebHttpOnlyCookie,
+      refreshWebHttpOnlyJsonBody: config.refreshWebHttpOnlyJsonBody,
       legacyJwtIssuanceEndAt: config.legacyJwtIssuanceEndAt,
     });
     await connectWorkersDatabase();

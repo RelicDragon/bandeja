@@ -1,5 +1,6 @@
 import UIKit
 import Capacitor
+import Security
 
 extension Notification.Name {
     static let bandejaAppShellReady = Notification.Name("bandejaAppShellReady")
@@ -13,6 +14,7 @@ public class AuthBridgePlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "setToken", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "getToken", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "deleteToken", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "deleteSession", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "setRefreshToken", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "getRefreshToken", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "deleteRefreshToken", returnType: CAPPluginReturnPromise),
@@ -28,7 +30,9 @@ public class AuthBridgePlugin: CAPPlugin, CAPBridgedPlugin {
         guard let token = call.getString("token") else {
             return call.reject("Missing token")
         }
-        KeychainHelper.shared.write(token: token, accessGroup: "group.com.funified.bandeja")
+        guard KeychainHelper.shared.write(token: token, accessGroup: "group.com.funified.bandeja") else {
+            return call.reject("Secure token storage unavailable")
+        }
         WatchSessionManager.shared.sendToken(token)
         call.resolve()
     }
@@ -39,8 +43,18 @@ public class AuthBridgePlugin: CAPPlugin, CAPBridgedPlugin {
     }
 
     @objc func deleteToken(_ call: CAPPluginCall) {
-        KeychainHelper.shared.deleteToken(accessGroup: "group.com.funified.bandeja")
-        KeychainHelper.shared.deleteRefreshToken(accessGroup: "group.com.funified.bandeja")
+        guard KeychainHelper.shared.deleteToken(accessGroup: "group.com.funified.bandeja") else {
+            return call.reject("Secure token storage unavailable")
+        }
+        call.resolve()
+    }
+
+    @objc func deleteSession(_ call: CAPPluginCall) {
+        let accessDeleted = KeychainHelper.shared.deleteToken(accessGroup: "group.com.funified.bandeja")
+        let refreshDeleted = KeychainHelper.shared.deleteRefreshToken(accessGroup: "group.com.funified.bandeja")
+        guard accessDeleted && refreshDeleted else {
+            return call.reject("Secure token storage unavailable")
+        }
         WatchSessionManager.shared.sendLogout()
         call.resolve()
     }
@@ -49,17 +63,25 @@ public class AuthBridgePlugin: CAPPlugin, CAPBridgedPlugin {
         guard let token = call.getString("token") else {
             return call.reject("Missing token")
         }
-        KeychainHelper.shared.writeRefreshToken(token: token, accessGroup: "group.com.funified.bandeja")
+        guard KeychainHelper.shared.writeRefreshToken(token: token, accessGroup: "group.com.funified.bandeja") else {
+            return call.reject("Secure token storage unavailable")
+        }
         call.resolve()
     }
 
     @objc func getRefreshToken(_ call: CAPPluginCall) {
-        let token = KeychainHelper.shared.readRefreshToken(accessGroup: "group.com.funified.bandeja")
-        call.resolve(["token": token as Any])
+        let result = KeychainHelper.shared.readRefreshTokenResult(accessGroup: "group.com.funified.bandeja")
+        if result.status == errSecSuccess || result.status == errSecItemNotFound {
+            call.resolve(["token": result.token as Any])
+            return
+        }
+        call.reject("Secure token storage unavailable (\(result.status))")
     }
 
     @objc func deleteRefreshToken(_ call: CAPPluginCall) {
-        KeychainHelper.shared.deleteRefreshToken(accessGroup: "group.com.funified.bandeja")
+        guard KeychainHelper.shared.deleteRefreshToken(accessGroup: "group.com.funified.bandeja") else {
+            return call.reject("Secure token storage unavailable")
+        }
         call.resolve()
     }
 

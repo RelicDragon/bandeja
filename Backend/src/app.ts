@@ -60,6 +60,7 @@ app.use(
       'If-None-Match',
       'X-Client-Version',
       'X-Client-Platform',
+      'X-Refresh-Request-Id',
       'X-E2E-Test',
       'X-Klikteren-Cookie',
     ],

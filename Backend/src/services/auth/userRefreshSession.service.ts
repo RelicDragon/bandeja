@@ -3,38 +3,22 @@ import { Prisma } from '@prisma/client';
 import type { Request } from 'express';
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
-import { hashRefreshToken, generateOpaqueRefreshToken } from '../../utils/refreshTokenCrypto';
+import {
+  decryptRefreshReplayToken,
+  encryptRefreshReplayToken,
+  generateOpaqueRefreshToken,
+  hashRefreshToken,
+} from '../../utils/refreshTokenCrypto';
 import { expiresInToDate } from '../../utils/tokenExpiry';
 import { config } from '../../config/env';
-import { getClientPlatform } from '../../utils/clientVersion';
-import { getClientIp } from '../ipLocation.service';
-import { generateShortAccessToken } from '../../utils/jwt';
-import { jwtPayloadFromAuthUser } from './authIssuance.service';
-import { PROFILE_SELECT_FIELDS } from '../../utils/constants';
-import { enrichProfileUser } from '../user/userSportProfile.service';
-
-export async function createUserRefreshSession(
-  userId: string,
-  req: Request
-): Promise<{ refreshToken: string; sessionId: string }> {
-  const raw = generateOpaqueRefreshToken();
-  const tokenHash = hashRefreshToken(raw);
-  const rotationFamilyId = randomUUID();
-  const ip = await getClientIp(req).catch(() => null);
-  const ua = typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'].slice(0, 512) : null;
-  const row = await prisma.userRefreshSession.create({
-    data: {
-      userId,
-      tokenHash,
-      expiresAt: expiresInToDate(config.refreshTokenExpiresIn),
-      rotationFamilyId,
-      platform: getClientPlatform(req),
-      userAgent: ua,
-      ip: ip ? ip.slice(0, 64) : null,
-    },
-  });
-  return { refreshToken: raw, sessionId: row.id };
-}
+import {
+  issuedRefreshCredentials,
+  readRefreshClientMetadata,
+  requireActiveRefreshUser,
+  type IssuedRefreshCredentials,
+  type RefreshClientMetadata,
+} from './refreshSessionCredentials';
+import { refreshAuthError } from './refreshSessionErrors';
 
 const REFRESH_SERIALIZATION_MAX_ATTEMPTS = 5;
 
@@ -43,83 +27,190 @@ const refreshTransactionOptions = {
   timeout: 15000,
 } as const;
 
-export async function refreshWithRotation(
-  refreshTokenRaw: string,
+type LockedRefreshSession = {
+  id: string;
+  userId: string;
+  tokenHash: string;
+  expiresAt: Date;
+  revokedAt: Date | null;
+  replacedBySessionId: string | null;
+  rotationFamilyId: string;
+  rotationRequestId: string | null;
+  replacementTokenCiphertext: string | null;
+};
+
+export async function createUserRefreshSession(
+  userId: string,
   req: Request
-): Promise<{ token: string; refreshToken: string; user: unknown; currentSessionId: string }> {
+): Promise<{ refreshToken: string; sessionId: string }> {
+  const raw = generateOpaqueRefreshToken();
+  const tokenHash = hashRefreshToken(raw);
+  const rotationFamilyId = randomUUID();
+  const metadata = await readRefreshClientMetadata(req);
+  const row = await prisma.$transaction(async (tx) => {
+    await tx.$queryRaw(Prisma.sql`SELECT id FROM "User" WHERE id = ${userId} FOR UPDATE`);
+    const created = await tx.userRefreshSession.create({
+      data: {
+        userId,
+        tokenHash,
+        expiresAt: expiresInToDate(config.refreshTokenExpiresIn),
+        rotationFamilyId,
+        ...metadata,
+      },
+    });
+    const active = await tx.userRefreshSession.findMany({
+      where: { userId, revokedAt: null, expiresAt: { gt: new Date() } },
+      orderBy: [{ lastUsedAt: 'desc' }, { createdAt: 'desc' }],
+      select: { id: true },
+    });
+    const excess = active.slice(config.authMaxActiveSessionsPerUser).map((session) => session.id);
+    if (excess.length > 0) {
+      await tx.userRefreshSession.updateMany({
+        where: { id: { in: excess }, revokedAt: null },
+        data: { revokedAt: new Date() },
+      });
+    }
+    return created;
+  }, refreshTransactionOptions);
+  return { refreshToken: raw, sessionId: row.id };
+}
+
+export function buildActiveRefreshSessionUpdate(input: {
+  now: Date;
+  expiresAt: Date;
+} & RefreshClientMetadata) {
+  return {
+    lastUsedAt: input.now,
+    expiresAt: input.expiresAt,
+    platform: input.platform,
+    userAgent: input.userAgent,
+    ip: input.ip,
+  };
+}
+
+async function lockSessionByHash(
+  tx: Prisma.TransactionClient,
+  hash: string
+): Promise<LockedRefreshSession | undefined> {
+  const locked = await tx.$queryRaw<LockedRefreshSession[]>(
+    Prisma.sql`
+      SELECT id, "userId", "tokenHash", "expiresAt", "revokedAt", "replacedBySessionId",
+             "rotationFamilyId", "rotationRequestId", "replacementTokenCiphertext"
+      FROM "user_refresh_sessions"
+      WHERE "tokenHash" = ${hash}
+      FOR UPDATE
+    `
+  );
+  return locked[0];
+}
+
+async function replayLiveSuccessor(
+  tx: Prisma.TransactionClient,
+  row: LockedRefreshSession
+): Promise<IssuedRefreshCredentials> {
+  if (!row.replacedBySessionId || !row.replacementTokenCiphertext) {
+    refreshAuthError('auth.refreshInvalid');
+  }
+  const successor = await tx.userRefreshSession.findUnique({
+    where: { id: row.replacedBySessionId },
+    select: {
+      id: true,
+      userId: true,
+      tokenHash: true,
+      expiresAt: true,
+      revokedAt: true,
+      replacedBySessionId: true,
+    },
+  });
+  if (!successor || successor.userId !== row.userId || successor.expiresAt < new Date()) {
+    refreshAuthError('auth.refreshInvalid');
+  }
+  if (successor.revokedAt) {
+    refreshAuthError(successor.replacedBySessionId ? 'auth.refreshReused' : 'auth.refreshInvalid');
+  }
+  const replayToken = decryptRefreshReplayToken(row.replacementTokenCiphertext, config.jwtSecret);
+  if (hashRefreshToken(replayToken) !== successor.tokenHash) {
+    throw new Error('Refresh replay payload does not match successor session');
+  }
+  const user = await requireActiveRefreshUser(tx, row.userId);
+  return issuedRefreshCredentials(user, replayToken, successor.id);
+}
+
+async function touchActiveSession(
+  tx: Prisma.TransactionClient,
+  sessionId: string,
+  user: Awaited<ReturnType<typeof requireActiveRefreshUser>>,
+  refreshToken: string,
+  now: Date,
+  expiresAt: Date,
+  metadata: RefreshClientMetadata
+): Promise<IssuedRefreshCredentials> {
+  await tx.userRefreshSession.update({
+    where: { id: sessionId },
+    data: buildActiveRefreshSessionUpdate({ now, expiresAt, ...metadata }),
+  });
+  return issuedRefreshCredentials(user, refreshToken, sessionId);
+}
+
+export async function refreshActiveSession(
+  refreshTokenRaw: string,
+  req: Request,
+  refreshRequestId?: string | null
+): Promise<IssuedRefreshCredentials> {
   const hash = hashRefreshToken(refreshTokenRaw.trim());
+  const metadata = await readRefreshClientMetadata(req);
 
   for (let attempt = 0; attempt < REFRESH_SERIALIZATION_MAX_ATTEMPTS; attempt++) {
     try {
-      return await prisma.$transaction(
-        async (tx) => {
-          const locked = await tx.$queryRaw<
-            Array<{
-              id: string;
-              userId: string;
-              tokenHash: string;
-              expiresAt: Date;
-              revokedAt: Date | null;
-              replacedBySessionId: string | null;
-              rotationFamilyId: string;
-            }>
-          >(
-            Prisma.sql`
-              SELECT id, "userId", "tokenHash", "expiresAt", "revokedAt", "replacedBySessionId", "rotationFamilyId"
-              FROM "user_refresh_sessions"
-              WHERE "tokenHash" = ${hash}
-              FOR UPDATE
-            `
-          );
-          const row = locked[0];
-          if (!row) {
-            throw new ApiError(401, 'auth.refreshInvalid', true, { code: 'auth.refreshInvalid' });
-          }
-          if (row.revokedAt) {
-            if (row.replacedBySessionId) {
-              throw new ApiError(401, 'auth.refreshInvalid', true, { code: 'auth.refreshInvalid' });
-            }
-            throw new ApiError(401, 'auth.refreshInvalid', true, { code: 'auth.refreshInvalid' });
-          }
-          if (row.expiresAt < new Date()) {
-            throw new ApiError(401, 'auth.refreshExpired', true, { code: 'auth.refreshExpired' });
-          }
-          const user = await tx.user.findUnique({
-            where: { id: row.userId },
-            select: PROFILE_SELECT_FIELDS,
-          });
-          if (!user?.isActive) {
-            throw new ApiError(401, 'auth.refreshInvalid', true, { code: 'auth.refreshInvalid' });
-          }
-          const newRaw = generateOpaqueRefreshToken();
-          const newHash = hashRefreshToken(newRaw);
-          const ip = await getClientIp(req).catch(() => null);
-          const ua = typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'].slice(0, 512) : null;
-          const newRow = await tx.userRefreshSession.create({
-            data: {
-              userId: row.userId,
-              tokenHash: newHash,
-              expiresAt: expiresInToDate(config.refreshTokenExpiresIn),
-              rotationFamilyId: row.rotationFamilyId,
-              platform: getClientPlatform(req),
-              userAgent: ua,
-              ip: ip ? ip.slice(0, 64) : null,
-            },
-          });
-          await tx.userRefreshSession.update({
-            where: { id: row.id },
-            data: { revokedAt: new Date(), replacedBySessionId: newRow.id, lastUsedAt: new Date() },
-          });
-          const token = generateShortAccessToken(jwtPayloadFromAuthUser(user));
-          return {
-            token,
-            refreshToken: newRaw,
-            user: enrichProfileUser(user),
-            currentSessionId: newRow.id,
-          };
-        },
-        refreshTransactionOptions
-      );
+      return await prisma.$transaction(async (tx) => {
+        const row = await lockSessionByHash(tx, hash);
+        if (!row) refreshAuthError('auth.refreshInvalid');
+        if (row.revokedAt) return replayLiveSuccessor(tx, row);
+        if (row.expiresAt < new Date()) refreshAuthError('auth.refreshExpired');
+
+        const user = await requireActiveRefreshUser(tx, row.userId);
+        const now = new Date();
+        const expiresAt = expiresInToDate(config.refreshTokenExpiresIn);
+        const presentedToken = refreshTokenRaw.trim();
+
+        if (!refreshRequestId) {
+          return touchActiveSession(tx, row.id, user, presentedToken, now, expiresAt, metadata);
+        }
+
+        const predecessorForSameRequest = await tx.userRefreshSession.findFirst({
+          where: {
+            replacedBySessionId: row.id,
+            rotationRequestId: refreshRequestId,
+          },
+          select: { id: true },
+        });
+        if (predecessorForSameRequest) {
+          return touchActiveSession(tx, row.id, user, presentedToken, now, expiresAt, metadata);
+        }
+
+        const replacementToken = generateOpaqueRefreshToken();
+        const successor = await tx.userRefreshSession.create({
+          data: {
+            userId: row.userId,
+            tokenHash: hashRefreshToken(replacementToken),
+            expiresAt,
+            rotationFamilyId: row.rotationFamilyId,
+            ...metadata,
+          },
+        });
+        await tx.userRefreshSession.update({
+          where: { id: row.id },
+          data: {
+            lastUsedAt: now,
+            revokedAt: now,
+            replacedBySessionId: successor.id,
+            rotationRequestId: refreshRequestId,
+            replacementTokenCiphertext: encryptRefreshReplayToken(replacementToken, config.jwtSecret),
+            ...metadata,
+          },
+        });
+        return issuedRefreshCredentials(user, replacementToken, successor.id);
+      }, refreshTransactionOptions);
     } catch (e) {
       if (e instanceof ApiError) throw e;
       const isSerializationConflict =
@@ -129,14 +220,24 @@ export async function refreshWithRotation(
         await new Promise((r) => setTimeout(r, base + Math.floor(Math.random() * 60)));
         continue;
       }
-      if (isSerializationConflict) {
-        throw new ApiError(401, 'auth.refreshInvalid', true, { code: 'auth.refreshInvalid' });
-      }
+      if (isSerializationConflict) refreshAuthError('auth.refreshBusy', 503);
       throw e;
     }
   }
 
-  throw new ApiError(401, 'auth.refreshInvalid', true, { code: 'auth.refreshInvalid' });
+  refreshAuthError('auth.refreshBusy', 503);
+}
+
+export async function purgeOldRefreshSessions(now = new Date()): Promise<number> {
+  const retentionCutoff = new Date(
+    now.getTime() - config.authSessionRetentionDays * 24 * 60 * 60 * 1000
+  );
+  const result = await prisma.userRefreshSession.deleteMany({
+    where: {
+      OR: [{ expiresAt: { lt: retentionCutoff } }, { revokedAt: { lt: retentionCutoff } }],
+    },
+  });
+  return result.count;
 }
 
 export async function revokeByRawToken(refreshTokenRaw: string | undefined): Promise<void> {
@@ -165,7 +266,6 @@ export async function revokeSessionByIdForUser(userId: string, sessionId: string
   }
 }
 
-/** True when `raw` is the active refresh token for this user+session row (cookie or body). */
 export async function activeUserRefreshMatchesSessionId(
   userId: string,
   sessionId: string,

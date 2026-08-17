@@ -148,16 +148,21 @@ function MatchRow({
   const { t } = useTranslation();
 
   return (
-    <div className="rounded-xl bg-gray-50 dark:bg-gray-800/60 px-3 py-3">
-      <div className="flex items-center gap-2">
-        <TeamAvatars playerIds={teamA} playerMap={playerMap} />
-        <div className="shrink-0 flex flex-col items-center justify-center">
+    <div className="rounded-xl bg-gray-50 dark:bg-gray-800/60 px-2.5 py-2.5">
+      <div className="flex flex-col min-[490px]:flex-row items-stretch gap-2">
+        <TeamAvatars
+          playerIds={teamA}
+          playerMap={playerMap}
+          label={t('gameDetails.liveScoring.teamBenchA')}
+        />
+        <div className="shrink-0 flex items-center justify-center py-0.5">
           <Swords className="w-4 h-4 text-gray-400 dark:text-gray-500" />
-          <span className="text-[10px] font-bold uppercase text-gray-400 dark:text-gray-500 leading-none mt-0.5">
-            {t('gameResults.vs', { defaultValue: 'vs' })}
-          </span>
         </div>
-        <TeamAvatars playerIds={teamB} playerMap={playerMap} justify="end" />
+        <TeamAvatars
+          playerIds={teamB}
+          playerMap={playerMap}
+          label={t('gameDetails.liveScoring.teamBenchB')}
+        />
       </div>
     </div>
   );
@@ -166,26 +171,33 @@ function MatchRow({
 function TeamAvatars({
   playerIds,
   playerMap,
-  justify = 'start',
+  label,
 }: {
   playerIds: string[];
   playerMap: Map<string, BasicUser>;
-  justify?: 'start' | 'end';
+  label: string;
 }) {
   return (
-    <div className={`flex-1 flex ${justify === 'end' ? 'justify-end' : 'justify-start'} gap-1`}>
-      {playerIds.map((id) => {
-        const player = playerMap.get(id);
-        return (
-          <PlayerAvatar
-            key={id}
-            player={player ?? null}
-            extrasmall
-            showName
-            asDiv
-          />
-        );
-      })}
+    <div className="flex w-full min-[490px]:flex-1 overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-600 dark:bg-gray-900/50">
+      <span className="flex w-6 shrink-0 items-center justify-center border-r border-gray-200/80 bg-gray-50/90 dark:border-gray-700/80 dark:bg-gray-800/50">
+        <span className="select-none whitespace-nowrap text-[9px] font-bold uppercase tracking-[0.18em] text-gray-500 [writing-mode:vertical-lr] rotate-180 dark:text-gray-400">
+          {label}
+        </span>
+      </span>
+      <div className="flex min-w-0 flex-1 items-center justify-center gap-2 px-2.5 py-2">
+        {playerIds.map((id) => {
+          const player = playerMap.get(id);
+          return (
+            <PlayerAvatar
+              key={id}
+              player={player ?? null}
+              extrasmall
+              showName
+              asDiv
+            />
+          );
+        })}
+      </div>
     </div>
   );
 }

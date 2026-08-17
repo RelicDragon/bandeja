@@ -3,6 +3,7 @@ package com.funified.bandeja.push;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.app.NotificationManager;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
@@ -36,6 +37,13 @@ public class InviteActionReceiver extends BroadcastReceiver {
             return;
         }
 
+        String actionToken = intent.getStringExtra("actionToken");
+        if (actionToken != null && !actionToken.isEmpty()) {
+            finishAction(context, intent, ChatReplyApiClient.performInviteAction(context, actionToken));
+            return;
+        }
+
+        // Compatibility for notifications delivered by older backend builds.
         String token = SecureTokenStorage.getToken(context);
         if (token == null || token.isEmpty()) {
             return;
@@ -50,9 +58,9 @@ public class InviteActionReceiver extends BroadcastReceiver {
                 return;
             }
             if (accept) {
-                ChatReplyApiClient.acceptTeamInvite(context, token, teamId);
+                finishAction(context, intent, ChatReplyApiClient.acceptTeamInvite(context, token, teamId));
             } else {
-                ChatReplyApiClient.declineTeamInvite(context, token, teamId);
+                finishAction(context, intent, ChatReplyApiClient.declineTeamInvite(context, token, teamId));
             }
             return;
         }
@@ -62,9 +70,25 @@ public class InviteActionReceiver extends BroadcastReceiver {
             return;
         }
         if (accept) {
-            ChatReplyApiClient.acceptInvite(context, token, inviteId);
+            finishAction(context, intent, ChatReplyApiClient.acceptInvite(context, token, inviteId));
         } else {
-            ChatReplyApiClient.declineInvite(context, token, inviteId);
+            finishAction(context, intent, ChatReplyApiClient.declineInvite(context, token, inviteId));
+        }
+    }
+
+    private void finishAction(Context context, Intent intent, ChatReplyApiClient.ApiResult result) {
+        // Keep the action available for connection/5xx failures, but remove a notification
+        // once the server accepted it or confirmed that it can no longer be performed.
+        if (!result.success && (result.statusCode < 400 || result.statusCode >= 500)) {
+            return;
+        }
+        int notificationId = intent.getIntExtra("notificationId", Integer.MIN_VALUE);
+        if (notificationId == Integer.MIN_VALUE) {
+            return;
+        }
+        NotificationManager manager = context.getSystemService(NotificationManager.class);
+        if (manager != null) {
+            manager.cancel(notificationId);
         }
     }
 
