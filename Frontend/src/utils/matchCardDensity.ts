@@ -65,7 +65,7 @@ export function resolveMatchCardDensity(
   setCount: number,
   hasActionsColumn: boolean,
 ): MatchCardDensity {
-  if (widthPx <= 0) return 'compact';
+  if (widthPx <= 0) return setCount >= 3 ? 'dense' : 'compact';
   const actions = hasActionsColumn ? 48 : 0;
   const fits = (playersMin: number, setW: number) =>
     playersMin + Math.max(0, setCount) * setW + actions <= widthPx;

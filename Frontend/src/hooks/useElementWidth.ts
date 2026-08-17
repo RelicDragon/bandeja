@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type RefObject } from 'react';
 
 /** Tracks element content width for container-driven density steps. */
-export function useElementWidth(ref: React.RefObject<HTMLElement | null>): number {
+export function useElementWidth(ref: RefObject<HTMLElement | null>): number {
   const [width, setWidth] = useState(0);
 
   useEffect(() => {

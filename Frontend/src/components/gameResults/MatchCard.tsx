@@ -100,12 +100,31 @@ export const MatchCard = ({
   hideMatchIndex = false,
 }: MatchCardProps) => {
   const { t } = useTranslation();
+  const rootRef = useRef<HTMLDivElement>(null);
+  const cardWidth = useElementWidth(rootRef as RefObject<HTMLElement | null>);
   const { scrollRef, onScroll, scrollbarClassName } = useScrollbarVisibleWhileScrolling();
   const rules = getRules(game ?? { fixedNumberOfSets, maxTotalPointsPerSet: 0, maxPointsPerTeam: 0, winnerOfMatch: 'BY_SCORES', ballsInGames: false, deucesBeforeGoldenPoint: null, pointsPerTie: 0, scoringPreset: null } as any);
   const displaySets = expandSetsForDisplay(match.sets, rules, { canEditResults });
   const matchFinished = isResultsMatchFinished(match, rules);
   const matchInProgressHeader = isResultsMatchInProgressForResultsHeader(match, rules);
   const resolvedWinnerTeam = getResultsMatchResolvedWinnerTeam(match, rules);
+
+  const maxPlayersPerTeam = maxPlayersPerTeamForGame(game, players.length);
+  const teamSlotsFull = (team: 'teamA' | 'teamB') =>
+    Array.from({ length: maxPlayersPerTeam }, (_, i) => Boolean(match[team][i])).every(Boolean);
+  const teamsFull = teamSlotsFull('teamA') && teamSlotsFull('teamB');
+  const canShowLivePlay = Boolean(gameId) && !matchFinished && canEditResults && !isEditing;
+  const showMatchActionsColumn = canShowLivePlay;
+  const layoutSetIndices =
+    isEditing || !teamsFull
+      ? []
+      : layoutSetIndicesForMatchGrid(displaySets, canEnterResults, game?.resultsStatus ?? null);
+  const setCount = layoutSetIndices.length;
+  const density = resolveMatchCardDensity(cardWidth, setCount, showMatchActionsColumn);
+  const densityLayout = useMemo(
+    () => matchCardDensityLayout(density, { preferSmallFaces: embedded }),
+    [density, embedded],
+  );
 
   if (
     !forceShow &&
@@ -117,12 +136,6 @@ export const MatchCard = ({
     return null;
   }
 
-  const maxPlayersPerTeam = maxPlayersPerTeamForGame(game, players.length);
-  const teamSlotsFull = (team: 'teamA' | 'teamB') =>
-    Array.from({ length: maxPlayersPerTeam }, (_, i) => Boolean(match[team][i])).every(Boolean);
-  const teamsFull = teamSlotsFull('teamA') && teamSlotsFull('teamB');
-
-  const canShowLivePlay = Boolean(gameId) && !matchFinished && canEditResults && !isEditing;
   const livePlayEnabled = canShowLivePlay && teamsFull;
 
   const matchActionRoundClass =
@@ -161,25 +174,25 @@ export const MatchCard = ({
     />
   ) : null;
 
-  const showMatchActionsColumn = Boolean(livePlayLink);
-  const layoutSetIndices = isEditing || !teamsFull
-    ? []
-    : layoutSetIndicesForMatchGrid(displaySets, canEnterResults, game?.resultsStatus ?? null);
   const resultsFinal = game?.resultsStatus === 'FINAL';
-  const setCount = layoutSetIndices.length;
   const actionsColStart = setCount + 2;
 
   const showPlayerRemoveButton = isEditing && canEditResults;
-  const faceSize = embedded ? 'sm' : 'md';
-  const playerRowClass = embedded
-    ? 'relative flex min-h-[28px] w-full min-w-0 flex-row items-center gap-1 px-1 py-0'
-    : 'relative flex min-h-[40px] w-full min-w-0 flex-row items-center gap-2 px-2 py-0.5';
-  const playerNameClass = embedded
-    ? 'min-w-0 flex-1 truncate text-left text-[10px] font-medium leading-tight text-gray-800 dark:text-gray-200'
-    : 'min-w-0 flex-1 truncate text-left text-xs font-medium text-gray-800 dark:text-gray-200';
+  const {
+    faceSize,
+    playerRowClass,
+    playerNameClass,
+    placeholderGapClass,
+    placeholderTextClass,
+    scoreCellClass,
+    teamMinHeightClass,
+    tileSize,
+    playersCol,
+    setCol,
+  } = densityLayout;
 
   const teamDropClass = (team: 'teamA' | 'teamB') =>
-    `${embedded ? 'min-h-[24px]' : 'min-h-[36px]'} ${(isEditing || draggedPlayer) && canEditResults ? 'border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg transition-colors' : ''} ${
+    `${teamMinHeightClass} ${(isEditing || draggedPlayer) && canEditResults ? 'border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg transition-colors' : ''} ${
       canEditResults && draggedPlayer ? 'border-primary-400 bg-primary-50 dark:bg-primary-900/20' : ''
     } ${
       resolvedWinnerTeam === team
@@ -234,7 +247,7 @@ export const MatchCard = ({
         ) : showPlaceholder ? (
           <button
             type="button"
-            className={`flex items-center ${embedded ? 'gap-1' : 'gap-2'} ${isEditing && canEditResults ? 'cursor-pointer hover:opacity-80' : 'cursor-default'}`}
+            className={`flex items-center ${placeholderGapClass} ${isEditing && canEditResults ? 'cursor-pointer hover:opacity-80' : 'cursor-default'}`}
             onClick={(e) => {
               e.stopPropagation();
               if (isEditing && canEditResults) {
@@ -243,7 +256,7 @@ export const MatchCard = ({
             }}
           >
             <PlayerAvatar player={null} showName={false} inlineFace inlineFaceSize={faceSize} removable={false} />
-            <span className={embedded ? 'text-[10px] text-gray-400 dark:text-gray-500' : 'text-xs text-gray-400 dark:text-gray-500'}>—</span>
+            <span className={placeholderTextClass}>—</span>
           </button>
         ) : null}
       </div>
@@ -268,13 +281,14 @@ export const MatchCard = ({
       : null;
 
     return (
-      <div key={`${team}-set-${setIndex}`} className="flex h-full min-h-[40px] items-center justify-center p-0.5">
+      <div key={`${team}-set-${setIndex}`} className={scoreCellClass}>
         {shouldShowScore ? (
           <SetScoreTile
             value={own}
             state={getSetScoreTileState(own, other)}
             editable={canEditResults}
             isExtra={isExtra}
+            size={tileSize}
             topBadge={topBadge}
             bottomBadge={bottomBadge}
             onClick={(e) => {
@@ -287,10 +301,9 @@ export const MatchCard = ({
     );
   };
 
-  const playersCol = 'minmax(10rem,1fr)';
   const gridTemplateColumns =
     setCount > 0
-      ? `${playersCol} repeat(${setCount}, 2.75rem)${showMatchActionsColumn ? ' auto' : ''}`
+      ? `${playersCol} repeat(${setCount}, ${setCol})${showMatchActionsColumn ? ' auto' : ''}`
       : `${playersCol}${showMatchActionsColumn ? ' auto' : ''}`;
 
   let row = 0;
@@ -414,20 +427,22 @@ export const MatchCard = ({
 
   return (
     <motion.div
+      ref={rootRef}
       layout
       initial={embedded ? false : { opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ type: 'spring', stiffness: 340, damping: 30 }}
       className={
         embedded
-          ? 'relative'
-          : `relative rounded-2xl border bg-white px-2.5 pb-2.5 pt-2 shadow-sm transition-[border-color,box-shadow] duration-200 dark:bg-gray-800 ${
+          ? 'relative min-w-0'
+          : `relative min-w-0 rounded-2xl border bg-white px-2.5 pb-2.5 pt-2 shadow-sm transition-[border-color,box-shadow] duration-200 dark:bg-gray-800 ${
               isEditing && canEditResults
                 ? 'border-primary-300 shadow-lg shadow-primary-500/10 ring-1 ring-primary-300/60 dark:border-primary-700 dark:ring-primary-700/50'
                 : 'border-gray-200/90 hover:shadow-md dark:border-gray-700/80'
             }`
       }
       data-match-container
+      data-match-density={density}
     >
       {(!hideMatchIndex || matchInProgressHeader || matchFinished || resultsFinal) && (
         <div
