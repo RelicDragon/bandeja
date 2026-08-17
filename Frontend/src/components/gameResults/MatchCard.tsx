@@ -1,4 +1,4 @@
-import type { MouseEvent, ReactElement, RefObject } from 'react';
+import type { MouseEvent, ReactElement } from 'react';
 import { useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Trash2, MapPin, Play } from 'lucide-react';
@@ -101,7 +101,7 @@ export const MatchCard = ({
 }: MatchCardProps) => {
   const { t } = useTranslation();
   const rootRef = useRef<HTMLDivElement>(null);
-  const cardWidth = useElementWidth(rootRef as RefObject<HTMLElement | null>);
+  const cardWidth = useElementWidth(rootRef);
   const { scrollRef, onScroll, scrollbarClassName } = useScrollbarVisibleWhileScrolling();
   const rules = getRules(game ?? { fixedNumberOfSets, maxTotalPointsPerSet: 0, maxPointsPerTeam: 0, winnerOfMatch: 'BY_SCORES', ballsInGames: false, deucesBeforeGoldenPoint: null, pointsPerTie: 0, scoringPreset: null } as any);
   const displaySets = expandSetsForDisplay(match.sets, rules, { canEditResults });
