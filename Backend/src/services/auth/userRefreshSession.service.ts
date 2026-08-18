@@ -152,34 +152,115 @@ async function touchActiveSession(
   return issuedRefreshCredentials(user, refreshToken, sessionId);
 }
 
+type RankedRefreshSession = {
+  revokedAt: Date | null;
+  expiresAt: Date;
+  lastUsedAt: Date;
+  replacedBySessionId: string | null;
+  replacementTokenCiphertext: string | null;
+};
+
+const REFRESH_CODES_TRY_NEXT_CANDIDATE = new Set([
+  'auth.refreshInvalid',
+  'auth.refreshExpired',
+  'auth.refreshReused',
+]);
+
+export function rankRefreshTokenCandidates(
+  tokens: string[],
+  rowsByHash: Map<string, RankedRefreshSession>,
+  now: Date,
+): string[] {
+  const unique = [...new Set(tokens.map((token) => token.trim()).filter(Boolean))];
+  const live: { token: string; lastUsedAt: number }[] = [];
+  const replayable: string[] = [];
+  const rest: string[] = [];
+  const placed = new Set<string>();
+  for (const token of unique) {
+    const row = rowsByHash.get(hashRefreshToken(token));
+    if (row && !row.revokedAt && row.expiresAt > now) {
+      live.push({ token, lastUsedAt: row.lastUsedAt.getTime() });
+      placed.add(token);
+      continue;
+    }
+    if (row?.revokedAt && row.replacedBySessionId && row.replacementTokenCiphertext) {
+      replayable.push(token);
+      placed.add(token);
+    }
+  }
+  live.sort((a, b) => b.lastUsedAt - a.lastUsedAt);
+  for (let i = unique.length - 1; i >= 0; i--) {
+    const token = unique[i];
+    if (!placed.has(token)) rest.push(token);
+  }
+  return [...live.map((item) => item.token), ...replayable, ...rest];
+}
+
 export async function resolvePresentedRefreshToken(candidates: string[]): Promise<string> {
   const unique = [...new Set(candidates.map((token) => token.trim()).filter(Boolean))];
   if (unique.length === 0) return '';
   if (unique.length === 1) return unique[0];
-  const hashed = unique.map((token) => ({ token, hash: hashRefreshToken(token) }));
   const rows = await prisma.userRefreshSession.findMany({
-    where: { tokenHash: { in: hashed.map((item) => item.hash) } },
+    where: { tokenHash: { in: unique.map(hashRefreshToken) } },
     select: {
       tokenHash: true,
       revokedAt: true,
       expiresAt: true,
+      lastUsedAt: true,
       replacedBySessionId: true,
       replacementTokenCiphertext: true,
     },
   });
   const byHash = new Map(rows.map((row) => [row.tokenHash, row]));
-  const now = new Date();
-  const live = hashed.find((item) => {
-    const row = byHash.get(item.hash);
-    return !!row && !row.revokedAt && row.expiresAt > now;
+  return rankRefreshTokenCandidates(unique, byHash, new Date())[0] ?? unique[unique.length - 1];
+}
+
+export async function refreshActiveSessionFromCandidates(
+  candidates: string[],
+  req: Request,
+  refreshRequestId?: string | null
+): Promise<IssuedRefreshCredentials> {
+  const unique = [...new Set(candidates.map((token) => token.trim()).filter(Boolean))];
+  if (unique.length === 0) {
+    refreshAuthError('auth.refreshTokenRequired', 400);
+  }
+  if (unique.length === 1) {
+    return refreshActiveSession(unique[0], req, refreshRequestId);
+  }
+  const rows = await prisma.userRefreshSession.findMany({
+    where: { tokenHash: { in: unique.map(hashRefreshToken) } },
+    select: {
+      tokenHash: true,
+      revokedAt: true,
+      expiresAt: true,
+      lastUsedAt: true,
+      replacedBySessionId: true,
+      replacementTokenCiphertext: true,
+    },
   });
-  if (live) return live.token;
-  const replayable = hashed.find((item) => {
-    const row = byHash.get(item.hash);
-    return !!row?.revokedAt && !!row.replacedBySessionId && !!row.replacementTokenCiphertext;
-  });
-  if (replayable) return replayable.token;
-  return unique[unique.length - 1];
+  const ordered = rankRefreshTokenCandidates(
+    unique,
+    new Map(rows.map((row) => [row.tokenHash, row])),
+    new Date()
+  );
+  let lastError: unknown;
+  for (let i = 0; i < ordered.length; i++) {
+    try {
+      return await refreshActiveSession(ordered[i], req, refreshRequestId);
+    } catch (error) {
+      lastError = error;
+      const code = error instanceof ApiError ? error.data?.code : undefined;
+      if (
+        i + 1 < ordered.length &&
+        typeof code === 'string' &&
+        REFRESH_CODES_TRY_NEXT_CANDIDATE.has(code)
+      ) {
+        continue;
+      }
+      throw error;
+    }
+  }
+  throw lastError;
 }
 
 export async function refreshActiveSession(

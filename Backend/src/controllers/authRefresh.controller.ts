@@ -3,8 +3,7 @@ import { asyncHandler } from '../utils/asyncHandler';
 import { ApiError } from '../utils/ApiError';
 import type { AuthRequest } from '../middleware/auth';
 import {
-  refreshActiveSession,
-  resolvePresentedRefreshToken,
+  refreshActiveSessionFromCandidates,
   revokePresentedRefreshTokens,
   revokeAllRefreshSessionsForUser,
   listSessionsForUser,
@@ -47,11 +46,11 @@ export const postRefresh = asyncHandler(async (req, res: Response) => {
       ? req.headers['x-client-version'].slice(0, 32)
       : null;
   try {
-    const raw = await resolvePresentedRefreshToken(readRefreshTokenCandidatesFromRequest(req));
-    if (!raw.trim()) {
-      throw new ApiError(400, 'auth.refreshTokenRequired', true, { code: 'auth.refreshTokenRequired' });
-    }
-    const out = await refreshActiveSession(raw, req, readRefreshRequestId(req));
+    const out = await refreshActiveSessionFromCandidates(
+      readRefreshTokenCandidatesFromRequest(req),
+      req,
+      readRefreshRequestId(req)
+    );
     const webCookie = shouldUseCookieForRefreshResponse(req);
     if (webCookie) {
       setRefreshTokenCookie(res, out.refreshToken, req);

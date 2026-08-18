@@ -66,14 +66,19 @@ export function readRefreshTokenFromRequest(req: Request): string {
   return candidates[candidates.length - 1] ?? '';
 }
 
-function buildCookiePair(value: string, maxAge: number, domain: string | null): string {
+function buildCookiePair(
+  value: string,
+  maxAge: number,
+  domain: string | null,
+  path: string = config.refreshCookiePath,
+): string {
   let sameSite = config.refreshCookieSameSite;
   let secure = config.refreshCookieSecure;
   if (sameSite === 'none' && !secure) secure = true;
   const ss = sameSite.charAt(0).toUpperCase() + sameSite.slice(1);
   const parts = [
     `${encodeURIComponent(config.refreshCookieName)}=${encodeURIComponent(value)}`,
-    `Path=${config.refreshCookiePath}`,
+    `Path=${path}`,
     'HttpOnly',
     `Max-Age=${maxAge}`,
     `SameSite=${ss}`,
@@ -95,9 +100,16 @@ function cookieDomainsToExpire(req?: Request): Array<string | null> {
   return [...domains];
 }
 
+function cookiePathsToExpire(): string[] {
+  const paths = new Set<string>([config.refreshCookiePath, '/']);
+  return [...paths];
+}
+
 export function clearRefreshTokenCookie(res: Response, req?: Request): void {
-  for (const domain of cookieDomainsToExpire(req)) {
-    res.append('Set-Cookie', buildCookiePair('', 0, domain));
+  for (const path of cookiePathsToExpire()) {
+    for (const domain of cookieDomainsToExpire(req)) {
+      res.append('Set-Cookie', buildCookiePair('', 0, domain, path));
+    }
   }
 }
 
