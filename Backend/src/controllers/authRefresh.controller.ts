@@ -4,7 +4,8 @@ import { ApiError } from '../utils/ApiError';
 import type { AuthRequest } from '../middleware/auth';
 import {
   refreshActiveSession,
-  revokeByRawToken,
+  resolvePresentedRefreshToken,
+  revokePresentedRefreshTokens,
   revokeAllRefreshSessionsForUser,
   listSessionsForUser,
   revokeSessionByIdForUser,
@@ -12,7 +13,7 @@ import {
 } from '../services/auth/userRefreshSession.service';
 import {
   clearRefreshTokenCookie,
-  readRefreshTokenFromRequest,
+  readRefreshTokenCandidatesFromRequest,
   setRefreshTokenCookie,
   shouldUseCookieForRefreshResponse,
   shouldUseWebRefreshHttpOnlyCookie,
@@ -46,14 +47,14 @@ export const postRefresh = asyncHandler(async (req, res: Response) => {
       ? req.headers['x-client-version'].slice(0, 32)
       : null;
   try {
-    const raw = readRefreshTokenFromRequest(req);
+    const raw = await resolvePresentedRefreshToken(readRefreshTokenCandidatesFromRequest(req));
     if (!raw.trim()) {
       throw new ApiError(400, 'auth.refreshTokenRequired', true, { code: 'auth.refreshTokenRequired' });
     }
     const out = await refreshActiveSession(raw, req, readRefreshRequestId(req));
     const webCookie = shouldUseCookieForRefreshResponse(req);
     if (webCookie) {
-      setRefreshTokenCookie(res, out.refreshToken);
+      setRefreshTokenCookie(res, out.refreshToken, req);
     }
     const includeJsonRefresh = !webCookie || config.refreshWebHttpOnlyJsonBody;
     recordAndPersistAuthRefreshMetric({
@@ -84,9 +85,8 @@ export const postRefresh = asyncHandler(async (req, res: Response) => {
 });
 
 export const postLogout = asyncHandler(async (req, res: Response) => {
-  const rt = readRefreshTokenFromRequest(req) || undefined;
-  await revokeByRawToken(rt);
-  clearRefreshTokenCookie(res);
+  await revokePresentedRefreshTokens(readRefreshTokenCandidatesFromRequest(req));
+  clearRefreshTokenCookie(res, req);
   res.json({ success: true, data: {} });
 });
 
@@ -96,7 +96,7 @@ export const postLogoutAll = asyncHandler(async (req: AuthRequest, res: Response
   }
   await revokeAllRefreshSessionsForUser(req.userId);
   if (shouldUseWebRefreshHttpOnlyCookie(req)) {
-    clearRefreshTokenCookie(res);
+    clearRefreshTokenCookie(res, req);
   }
   res.json({ success: true, data: {} });
 });
@@ -113,17 +113,22 @@ export const deleteSession = asyncHandler(async (req: AuthRequest, res: Response
   if (!req.userId) {
     throw new ApiError(401, 'Authentication required');
   }
+  const userId = req.userId;
   const { id } = req.params;
   if (!id) {
     throw new ApiError(400, 'Session id required');
   }
-  const raw = readRefreshTokenFromRequest(req);
+  const candidates = readRefreshTokenCandidatesFromRequest(req);
   const revokedCurrentWebRefresh =
     shouldUseWebRefreshHttpOnlyCookie(req) &&
-    (await activeUserRefreshMatchesSessionId(req.userId, id, raw));
-  await revokeSessionByIdForUser(req.userId, id);
+    (
+      await Promise.all(
+        candidates.map((raw) => activeUserRefreshMatchesSessionId(userId, id, raw))
+      )
+    ).some(Boolean);
+  await revokeSessionByIdForUser(userId, id);
   if (revokedCurrentWebRefresh) {
-    clearRefreshTokenCookie(res);
+    clearRefreshTokenCookie(res, req);
   }
   res.json({ success: true, data: { revokedCurrentWebRefresh } });
 });

@@ -55,11 +55,10 @@ export async function getOrCreateRefreshRequestId(refreshToken?: string): Promis
     const deterministic = await deterministicNativeRefreshRequestId(refreshToken);
     if (deterministic) return deterministic;
   }
-  // Cookie-only web: derive a stable id from the session row so every tab converges
-  // on the same rotation attempt instead of racing random UUIDs after idle wake.
+  // Cookie-only web: omit the request id so the server touches the live session instead of
+  // rotating. Rotation + a leftover host-only pp_rt duplicate is what idle-logouted bandeja.me.
   if (!Capacitor.isNativePlatform() && isWebHttpOnlyRefreshCookie() && !refreshToken?.trim()) {
-    const sessionId = getCurrentSessionIdSync()?.trim();
-    if (sessionId) return `web-v1-${sessionId}`;
+    return null;
   }
   const readOrCreate = (): string | null => {
     try {

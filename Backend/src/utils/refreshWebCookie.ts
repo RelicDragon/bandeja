@@ -21,30 +21,52 @@ export function shouldUseCookieForRefreshResponse(req: Request): boolean {
     (shouldUseWebRefreshHttpOnlyCookie(req) || !hasBodyToken);
 }
 
-function parseCookieHeader(header: string | undefined, name: string): string | undefined {
-  if (!header) return undefined;
-  const segments = header.split(';');
-  for (const seg of segments) {
+function decodeCookieValue(raw: string): string {
+  try {
+    return decodeURIComponent(raw);
+  } catch {
+    return raw;
+  }
+}
+
+export function parseNamedCookieValues(header: string | undefined, name: string): string[] {
+  if (!header) return [];
+  const values: string[] = [];
+  const seen = new Set<string>();
+  for (const seg of header.split(';')) {
     const idx = seg.indexOf('=');
     if (idx === -1) continue;
     const k = seg.slice(0, idx).trim();
     if (k !== name) continue;
-    try {
-      return decodeURIComponent(seg.slice(idx + 1).trim());
-    } catch {
-      return seg.slice(idx + 1).trim();
-    }
+    const value = decodeCookieValue(seg.slice(idx + 1).trim()).trim();
+    if (!value || seen.has(value)) continue;
+    seen.add(value);
+    values.push(value);
   }
-  return undefined;
+  return values;
+}
+
+export function readRefreshTokenCandidatesFromRequest(req: Request): string[] {
+  const body = typeof req.body?.refreshToken === 'string' ? req.body.refreshToken.trim() : '';
+  const cookies = parseNamedCookieValues(req.headers.cookie, config.refreshCookieName);
+  if (
+    cookies.length > 0 &&
+    config.refreshWebHttpOnlyCookie &&
+    getClientPlatform(req) === 'web'
+  ) {
+    return cookies;
+  }
+  if (body && !cookies.includes(body)) return [body, ...cookies];
+  if (body) return [body, ...cookies.filter((value) => value !== body)];
+  return cookies;
 }
 
 export function readRefreshTokenFromRequest(req: Request): string {
-  const body = typeof req.body?.refreshToken === 'string' ? req.body.refreshToken.trim() : '';
-  const fromCookie = parseCookieHeader(req.headers.cookie, config.refreshCookieName)?.trim() ?? '';
-  return body || fromCookie;
+  const candidates = readRefreshTokenCandidatesFromRequest(req);
+  return candidates[candidates.length - 1] ?? '';
 }
 
-function buildCookiePair(value: string, maxAge: number): string {
+function buildCookiePair(value: string, maxAge: number, domain: string | null): string {
   let sameSite = config.refreshCookieSameSite;
   let secure = config.refreshCookieSecure;
   if (sameSite === 'none' && !secure) secure = true;
@@ -57,17 +79,32 @@ function buildCookiePair(value: string, maxAge: number): string {
     `SameSite=${ss}`,
   ];
   if (secure) parts.push('Secure');
-  if (config.refreshCookieDomain) parts.push(`Domain=${config.refreshCookieDomain}`);
+  if (domain) parts.push(`Domain=${domain}`);
   return parts.join('; ');
 }
 
-export function setRefreshTokenCookie(res: Response, rawToken: string): void {
-  const maxAge = expiresInToMaxAgeSeconds(config.refreshTokenExpiresIn);
-  res.append('Set-Cookie', buildCookiePair(rawToken, maxAge));
+function cookieDomainsToExpire(req?: Request): Array<string | null> {
+  const domains = new Set<string | null>([null]);
+  if (config.refreshCookieDomain) domains.add(config.refreshCookieDomain);
+  const hostHeader = req?.hostname || (typeof req?.headers?.host === 'string' ? req.headers.host : '');
+  const host = hostHeader.split(':')[0]?.trim() ?? '';
+  if (host && host !== 'localhost' && !/^\d{1,3}(\.\d{1,3}){3}$/.test(host)) {
+    domains.add(host);
+    domains.add(`.${host.replace(/^\./, '')}`);
+  }
+  return [...domains];
 }
 
-export function clearRefreshTokenCookie(res: Response): void {
-  res.append('Set-Cookie', buildCookiePair('', 0));
+export function clearRefreshTokenCookie(res: Response, req?: Request): void {
+  for (const domain of cookieDomainsToExpire(req)) {
+    res.append('Set-Cookie', buildCookiePair('', 0, domain));
+  }
+}
+
+export function setRefreshTokenCookie(res: Response, rawToken: string, req?: Request): void {
+  clearRefreshTokenCookie(res, req);
+  const maxAge = expiresInToMaxAgeSeconds(config.refreshTokenExpiresIn);
+  res.append('Set-Cookie', buildCookiePair(rawToken, maxAge, config.refreshCookieDomain));
 }
 
 export function issuedRefreshJsonPayload(
@@ -76,11 +113,11 @@ export function issuedRefreshJsonPayload(
   issued: { refreshToken?: string; currentSessionId?: string }
 ): { refreshToken?: string; currentSessionId?: string } {
   if (!issued.refreshToken) {
-    if (shouldUseWebRefreshHttpOnlyCookie(req)) clearRefreshTokenCookie(res);
+    if (shouldUseWebRefreshHttpOnlyCookie(req)) clearRefreshTokenCookie(res, req);
     return {};
   }
   if (shouldUseWebRefreshHttpOnlyCookie(req)) {
-    setRefreshTokenCookie(res, issued.refreshToken);
+    setRefreshTokenCookie(res, issued.refreshToken, req);
     if (config.refreshWebHttpOnlyJsonBody) {
       return {
         refreshToken: issued.refreshToken,

@@ -152,6 +152,36 @@ async function touchActiveSession(
   return issuedRefreshCredentials(user, refreshToken, sessionId);
 }
 
+export async function resolvePresentedRefreshToken(candidates: string[]): Promise<string> {
+  const unique = [...new Set(candidates.map((token) => token.trim()).filter(Boolean))];
+  if (unique.length === 0) return '';
+  if (unique.length === 1) return unique[0];
+  const hashed = unique.map((token) => ({ token, hash: hashRefreshToken(token) }));
+  const rows = await prisma.userRefreshSession.findMany({
+    where: { tokenHash: { in: hashed.map((item) => item.hash) } },
+    select: {
+      tokenHash: true,
+      revokedAt: true,
+      expiresAt: true,
+      replacedBySessionId: true,
+      replacementTokenCiphertext: true,
+    },
+  });
+  const byHash = new Map(rows.map((row) => [row.tokenHash, row]));
+  const now = new Date();
+  const live = hashed.find((item) => {
+    const row = byHash.get(item.hash);
+    return !!row && !row.revokedAt && row.expiresAt > now;
+  });
+  if (live) return live.token;
+  const replayable = hashed.find((item) => {
+    const row = byHash.get(item.hash);
+    return !!row?.revokedAt && !!row.replacedBySessionId && !!row.replacementTokenCiphertext;
+  });
+  if (replayable) return replayable.token;
+  return unique[unique.length - 1];
+}
+
 export async function refreshActiveSession(
   refreshTokenRaw: string,
   req: Request,
@@ -242,9 +272,14 @@ export async function purgeOldRefreshSessions(now = new Date()): Promise<number>
 
 export async function revokeByRawToken(refreshTokenRaw: string | undefined): Promise<void> {
   if (!refreshTokenRaw?.trim()) return;
-  const h = hashRefreshToken(refreshTokenRaw.trim());
+  await revokePresentedRefreshTokens([refreshTokenRaw]);
+}
+
+export async function revokePresentedRefreshTokens(tokens: string[]): Promise<void> {
+  const hashes = [...new Set(tokens.map((token) => token.trim()).filter(Boolean).map(hashRefreshToken))];
+  if (hashes.length === 0) return;
   await prisma.userRefreshSession.updateMany({
-    where: { tokenHash: h, revokedAt: null },
+    where: { tokenHash: { in: hashes }, revokedAt: null },
     data: { revokedAt: new Date() },
   });
 }

@@ -124,16 +124,12 @@ describe('native refresh-token persistence', () => {
     expect(afterLocalStateLoss).toBe(first);
   });
 
-  it('derives a stable web replay id from the session row in cookie-only mode', async () => {
+  it('omits a refresh request id in cookie-only web mode so the server does not rotate', async () => {
     nativePlatform = false;
     storage.set('padelpulse_current_session_id', 'session-row-abc123');
     const { getOrCreateRefreshRequestId } = await import('@/services/refreshTokenPersistence');
 
-    const first = await getOrCreateRefreshRequestId();
-    const second = await getOrCreateRefreshRequestId();
-
-    expect(first).toBe('web-v1-session-row-abc123');
-    expect(second).toBe(first);
+    await expect(getOrCreateRefreshRequestId()).resolves.toBeNull();
     expect(storage.has('padelpulse_refresh_request_id')).toBe(false);
   });
 
