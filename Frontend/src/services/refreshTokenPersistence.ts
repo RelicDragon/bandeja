@@ -55,9 +55,9 @@ export async function getOrCreateRefreshRequestId(refreshToken?: string): Promis
     const deterministic = await deterministicNativeRefreshRequestId(refreshToken);
     if (deterministic) return deterministic;
   }
-  // Cookie-only web: omit the request id so the server touches the live session instead of
-  // rotating. Rotation + a leftover host-only pp_rt duplicate is what idle-logouted bandeja.me.
-  if (!Capacitor.isNativePlatform() && isWebHttpOnlyRefreshCookie() && !refreshToken?.trim()) {
+  // Web HttpOnly cookie: never send a request id. A leftover LS token must not rotate the
+  // cookie session — that is what created the dual host-only + Domain pp_rt pair.
+  if (!Capacitor.isNativePlatform() && isWebHttpOnlyRefreshCookie()) {
     return null;
   }
   const readOrCreate = (): string | null => {

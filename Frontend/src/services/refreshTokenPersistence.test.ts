@@ -133,6 +133,15 @@ describe('native refresh-token persistence', () => {
     expect(storage.has('padelpulse_refresh_request_id')).toBe(false);
   });
 
+  it('omits a refresh request id on web even when a leftover LS refresh token exists', async () => {
+    nativePlatform = false;
+    storage.set('padelpulse_refresh_token', 'legacy-web-token');
+    const { getOrCreateRefreshRequestId } = await import('@/services/refreshTokenPersistence');
+
+    await expect(getOrCreateRefreshRequestId('legacy-web-token')).resolves.toBeNull();
+    expect(storage.has('padelpulse_refresh_request_id')).toBe(false);
+  });
+
   it('clears pending refresh replay state during logout cleanup', async () => {
     storage.set('padelpulse_refresh_request_id', 'refresh-request-pending-123');
     const { clearRefreshBundle } = await import('@/services/refreshTokenPersistence');

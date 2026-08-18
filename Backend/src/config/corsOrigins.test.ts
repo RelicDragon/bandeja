@@ -39,6 +39,7 @@ assert(withExtra.includes('https://staging.example.com'), 'extra origins from en
 assert(withExtra.includes('http://evil.example'), 'extra origin trailing slash stripped');
 
 assert(isCorsOriginAllowed('https://bandeja.me', prod), 'bandeja.me allowed');
+assert(isCorsOriginAllowed('https://travel.bandeja.me', prod), 'travel.bandeja.me SSO allowed');
 assert(isCorsOriginAllowed('https://localhost', prod), 'Capacitor Android allowed');
 assert(isCorsOriginAllowed('capacitor://localhost', prod), 'Capacitor iOS allowed');
 assert(!isCorsOriginAllowed('null', prod), 'Origin null rejected');

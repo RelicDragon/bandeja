@@ -16,6 +16,7 @@ function run(input: { origin?: string; platform: string; refreshToken?: string }
 }
 
 assert.equal(run({ origin: 'https://bandeja.me', platform: 'web' }), undefined);
+assert.equal(run({ origin: 'https://travel.bandeja.me', platform: 'web' }), undefined);
 assert.equal((run({ origin: 'https://evil.example', platform: 'web' }) as { statusCode?: number }).statusCode, 403);
 assert.equal((run({ platform: 'web' }) as { statusCode?: number }).statusCode, 403);
 assert.equal(run({ platform: 'ios', refreshToken: 'native-token' }), undefined);
