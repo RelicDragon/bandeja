@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
-import { ChevronDown, ChevronUp, Radio, RotateCcw, Search, UserPlus } from 'lucide-react';
+import { ChevronDown, ChevronUp, RotateCcw, Search, UserPlus } from 'lucide-react';
 import { useDebounce } from '@/components/CityMap/useDebounce';
 import { BasicUser, UserTeam, GameParticipant } from '@/types';
 import { invitesApi } from '@/api';
@@ -180,11 +180,10 @@ export const PlayerListModal = ({
 
   const invitePaneTabs = useMemo<SegmentedSwitchTab[]>(
     () => [
-      { id: 'search', label: t('playerInvite.tabSearch'), icon: Search },
+      { id: 'search', label: t('playerInvite.tabSearch') },
       {
         id: 'looking',
         label: t('playerInvite.tabLooking'),
-        icon: Radio,
         badge: lookingPool.isPending || lookingPool.isError ? undefined : lookingCount,
         showZeroBadge: true,
       },
@@ -734,7 +733,7 @@ export const PlayerListModal = ({
     <SportLevelProvider sport={gameSport}>
     <Dialog open={isOpen} onClose={handleClose} modalId="player-list-modal">
       <DialogContent className="h-[min(92vh,720px)] flex flex-col overflow-hidden p-0 gap-0">
-        <DialogHeader className="flex-shrink-0 border-b border-gray-100/80 px-2.5 py-3 dark:border-gray-800/80">
+        <DialogHeader className="flex flex-col items-stretch justify-start gap-3 border-b border-gray-100/80 px-2.5 py-3 pr-12 dark:border-gray-800/80">
           <DialogTitle className="text-lg font-bold tracking-tight text-gray-900 dark:text-white">
             {title ||
               (inviteAsTrainerOnly
@@ -744,18 +743,17 @@ export const PlayerListModal = ({
                   : t('games.invitePlayer'))}
           </DialogTitle>
           {showLooking ? (
-            <div className="mt-3">
-              <SegmentedSwitch
-                tabs={invitePaneTabs}
-                activeId={invitePane}
-                onChange={(id) => setInvitePane(id as 'search' | 'looking')}
-                showOnlyActiveTabText={false}
-                layoutId="player-invite-pane"
-                fullWidth
-                badgeStyle="inline"
-                ariaLabel={`${t('playerInvite.tabSearch')} / ${t('playerInvite.tabLooking')}`}
-              />
-            </div>
+            <SegmentedSwitch
+              tabs={invitePaneTabs}
+              activeId={invitePane}
+              onChange={(id) => setInvitePane(id as 'search' | 'looking')}
+              showOnlyActiveTabText={false}
+              layoutId="player-invite-pane"
+              fullWidth
+              size="sm"
+              badgeStyle="inline"
+              ariaLabel={`${t('playerInvite.tabSearch')} / ${t('playerInvite.tabLooking')}`}
+            />
           ) : null}
         </DialogHeader>
 
