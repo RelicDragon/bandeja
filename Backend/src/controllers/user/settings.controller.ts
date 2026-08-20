@@ -12,6 +12,7 @@ import {
   upsertPadelSportProfileFromUser,
 } from '../../services/user/userSportProfile.service';
 import { CityGroupService } from '../../services/chat/cityGroup.service';
+import { resolveInitialDefaultCurrency } from '../../services/user/initialCurrencyAssignment';
 import { isE2eTestHeader } from '../../utils/e2eRequestContext';
 
 export const e2eClearAssignedCity = asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -59,16 +60,31 @@ export const switchCity = asyncHandler(async (req: AuthRequest, res: Response) =
 
   const currentUser = await prisma.user.findUnique({
     where: { id: userId },
-    select: { currentCityId: true },
+    select: { currentCityId: true, cityIsSet: true, defaultCurrency: true },
   });
   const previousCityId = currentUser?.currentCityId ?? null;
 
   await CityGroupService.ensureCityGroupExists(cityId);
   await CityGroupService.addUserToCityGroup(userId, cityId, { mute: true, pin: true });
 
+  const city = await prisma.city.findUnique({
+    where: { id: cityId },
+    select: { country: true },
+  });
+  const initialCurrency = !currentUser?.cityIsSet
+    ? resolveInitialDefaultCurrency({
+        currentCurrency: currentUser?.defaultCurrency,
+        cityCountry: city?.country,
+      })
+    : undefined;
+
   const user = await prisma.user.update({
     where: { id: userId },
-    data: { currentCityId: cityId, cityIsSet: true },
+    data: {
+      currentCityId: cityId,
+      cityIsSet: true,
+      ...(initialCurrency && { defaultCurrency: initialCurrency }),
+    },
     select: PROFILE_SELECT_FIELDS,
   });
 

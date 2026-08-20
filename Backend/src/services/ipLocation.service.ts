@@ -1,7 +1,12 @@
 import { Request } from 'express';
 import { config } from '../config/env';
 import prisma from '../config/database';
-import { SUPPORTED_CURRENCIES, DEFAULT_CURRENCY } from '../utils/constants';
+import { DEFAULT_CURRENCY } from '../utils/constants';
+import {
+  canApplyOngoingGeoCurrency,
+  currencyFromCountryIso2,
+  normalizeCurrencyCode,
+} from '../utils/currencyFromCountry';
 import { IP_GEO_PROVIDER_CHAIN, IpGeoProvider } from '../utils/ipGeoProvider';
 
 interface IpapiResponse {
@@ -145,53 +150,6 @@ async function readGeoJson<T>(res: Response, ipTag: string, providerLabel: strin
     console.warn('[ipLocation] invalid JSON from provider', { ip: ipTag, provider: providerLabel, err: String(err) });
     return null;
   }
-}
-
-function normalizeCurrencyCode(raw: string | undefined): string {
-  const code = (raw && typeof raw === 'string' ? raw : DEFAULT_CURRENCY).toUpperCase();
-  return SUPPORTED_CURRENCIES.includes(code as (typeof SUPPORTED_CURRENCIES)[number]) ? code : DEFAULT_CURRENCY;
-}
-
-const EUR_ZONE_ISO2 = new Set(
-  'AD AT BE CY DE EE ES FI FR GR HR IE IT LT LU LV MT NL PT SI SK MC SM VA'.split(' '),
-);
-
-function currencyFromCountryIso2(country: string | undefined): string {
-  if (!country || country.length !== 2) return DEFAULT_CURRENCY;
-  const c = country.toUpperCase();
-  if (EUR_ZONE_ISO2.has(c)) return 'EUR';
-  const map: Record<string, string> = {
-    US: 'USD',
-    GB: 'GBP',
-    CA: 'CAD',
-    AU: 'AUD',
-    NZ: 'NZD',
-    JP: 'JPY',
-    CN: 'CNY',
-    CH: 'CHF',
-    SE: 'SEK',
-    NO: 'NOK',
-    DK: 'DKK',
-    PL: 'PLN',
-    CZ: 'CZK',
-    HU: 'HUF',
-    RO: 'RON',
-    BG: 'BGN',
-    IN: 'INR',
-    BR: 'BRL',
-    MX: 'MXN',
-    RU: 'RUB',
-    RS: 'RSD',
-    TR: 'TRY',
-    SG: 'SGD',
-    HK: 'HKD',
-    KR: 'KRW',
-    TH: 'THB',
-    MY: 'MYR',
-    ID: 'IDR',
-    PH: 'PHP',
-  };
-  return normalizeCurrencyCode(map[c]);
 }
 
 function parseIpapiJson(body: IpapiResponse & { error?: boolean; reason?: string }, ipTag: string): LocationByIp | null {
@@ -339,8 +297,9 @@ export async function getLocationByIp(ip: string): Promise<LocationByIp> {
     oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
     if (cached.createdAt > oneYearAgo) {
       const meta = cached.meta as { currency?: string } | null;
-      const rawCurrency = (meta?.currency && typeof meta.currency === 'string' ? meta.currency : DEFAULT_CURRENCY).toUpperCase();
-      const currency = SUPPORTED_CURRENCIES.includes(rawCurrency as any) ? rawCurrency : DEFAULT_CURRENCY;
+      const currency = normalizeCurrencyCode(
+        meta?.currency && typeof meta.currency === 'string' ? meta.currency : DEFAULT_CURRENCY,
+      );
       return { latitude: cached.latitude, longitude: cached.longitude, currency };
     }
     console.warn('[ipLocation] cache stale, refetching', { ip: ipTag });
@@ -370,7 +329,7 @@ export async function updateUserIpLocation(userId: string, ip: string): Promise<
     select: { defaultCurrency: true },
   });
 
-  const shouldUpdateCurrency = !user || user.defaultCurrency === 'auto' || !user.defaultCurrency;
+  const shouldUpdateCurrency = canApplyOngoingGeoCurrency(user?.defaultCurrency);
 
   await prisma.user.update({
     where: { id: userId },

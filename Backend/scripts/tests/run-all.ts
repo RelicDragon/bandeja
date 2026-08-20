@@ -379,6 +379,24 @@ const suites: Suite[] = [
     ],
   },
   {
+    label: 'city currency from country',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      '--transpile-only',
+      path.join(backendRoot, 'src', 'utils', 'currencyFromCountry.test.ts'),
+    ],
+  },
+  {
+    label: 'initial currency assignment',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      '--transpile-only',
+      path.join(backendRoot, 'src', 'services', 'user', 'initialCurrencyAssignment.test.ts'),
+    ],
+  },
+  {
     label: 'multisport phase 4 leagues',
     command: process.execPath,
     args: [

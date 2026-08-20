@@ -215,6 +215,8 @@ Frontend/e2e/
 | A-14 | Gender prefer-not-to-say | Without acknowledgment | Blocked |
 | A-15 | Primary sport selection | Pick sport at register | Saved on profile |
 | A-16 | Optional email invalid | Bad email format | Validation error |
+| A-40 | Serbia city currency | Register (phone/Google/Apple/Telegram) with auto-assigned city in Serbia | `defaultCurrency` is RSD without opening Profile |
+| A-41 | Local city currency | Register with city in a non-euro country (e.g. UK/US/CZ) | Default currency is local (GBP/USD/CZK), not leftover EUR |
 
 ### 5.3 City selection (`/select-city`)
 
@@ -1434,6 +1436,8 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PR-52 | Public profile guest view | `@guest` open `/user-profile/:id` | `PublicGamePrompt` / limited stats |
 | PR-53 | Share user profile | Share button | `ShareModal` with profile URL |
 | PR-54 | Display preferences | 12h/24h, date format toggles | Affects game time display app-wide |
+| PR-84 | Default currency picker | Profile → General → change default currency | Saved; reload keeps the chosen currency |
+| PR-85 | Explicit EUR kept | User in Serbia picks EUR in Profile | Stays EUR after reload; later geo does not overwrite |
 | PR-55 | Competitive vs social badge | User with both levels | Correct badge for sport context |
 | PR-56 | Bookings settings entry | Profile → Bookings | Navigates to `/profile/connected-clubs` |
 | PR-57 | Bookings page tabs | Profile → Bookings | Segmented switch Bookings/Integrations centered; Bookings default |

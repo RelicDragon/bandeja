@@ -6,6 +6,7 @@ import { PROFILE_SELECT_FIELDS } from '../utils/constants';
 import { enrichProfileUser } from './user/userSportProfile.service';
 import { AllIpGeoProvidersFailedError, getClientIp, getLocationByIp, type LocationByIp } from './ipLocation.service';
 import { CityGroupService } from './chat/cityGroup.service';
+import { resolveInitialDefaultCurrency } from './user/initialCurrencyAssignment';
 
 const LOG = '[cityBootstrap]';
 
@@ -69,6 +70,7 @@ export async function ensureUserCityAssigned(userId: string, req?: Request) {
       currentCityId: true,
       latitudeByIP: true,
       longitudeByIP: true,
+      defaultCurrency: true,
     },
   });
 
@@ -90,6 +92,7 @@ export async function ensureUserCityAssigned(userId: string, req?: Request) {
 
   let latitude = existing.latitudeByIP ?? null;
   let longitude = existing.longitudeByIP ?? null;
+  let geoCurrency: string | null = null;
   const hadStoredIpCoords = latitude != null && longitude != null;
 
   if ((latitude == null || longitude == null) && req) {
@@ -110,6 +113,7 @@ export async function ensureUserCityAssigned(userId: string, req?: Request) {
       if (loc) {
         latitude = loc.latitude;
         longitude = loc.longitude;
+        geoCurrency = loc.currency;
         await prisma.user.update({
           where: { id: userId },
           data: {
@@ -162,7 +166,7 @@ export async function ensureUserCityAssigned(userId: string, req?: Request) {
       isCorrect: true,
       isActive: true,
     },
-    select: { id: true },
+    select: { id: true, country: true },
   });
 
   if (!city) {
@@ -170,9 +174,18 @@ export async function ensureUserCityAssigned(userId: string, req?: Request) {
     throw new ApiError(409, 'auth.cityAutoDetectFailed');
   }
 
+  const initialCurrency = resolveInitialDefaultCurrency({
+    currentCurrency: existing.defaultCurrency,
+    cityCountry: city.country,
+    geoCurrency,
+  });
+
   const user = await prisma.user.update({
     where: { id: userId },
-    data: { currentCityId: city.id },
+    data: {
+      currentCityId: city.id,
+      ...(initialCurrency && { defaultCurrency: initialCurrency }),
+    },
     select: PROFILE_SELECT_FIELDS,
   });
 
