@@ -18,11 +18,16 @@ import type { ChatSyncEventDTO } from '@/services/chat/chatSyncEventTypes';
 import { notifyInboundMessageSeen } from '@/services/chat/unreadInboundMessage';
 import { withChatLocalBulkApply } from './chatLocalApplyBulk';
 import { persistChatMessagesFromApiDirect } from './chatLocalApplyWrite';
-import { getLocalCursorSeq, reconcileCursorWithServerHead, BATCH_HEAD_CACHE_MS } from './chatLocalApplyCursor';
+import { getLocalCursorSeq, reconcileCursorWithServerHead } from './chatLocalApplyCursor';
 import {
   clearPendingSocketSeqReconcileTimer,
   markChatPullCompleted,
 } from './chatLocalApplySyncTimers';
+import {
+  shouldSkipCaughtUpSyncPull,
+  type CaughtUpSyncPullOptions,
+} from './chatLocalApplyCaughtUpPull';
+import { clearMessageDeletedCaughtUpBypass } from './chatLocalMessageTombstone';
 
 function schedulePullPageIndexHooks(
   events: ChatSyncEventDTO[],
@@ -76,10 +81,7 @@ export type PullEventsLoopResult = {
   eventsApplied: number;
 };
 
-export type PullChatSyncOptions = {
-  expectedServerMaxSeq?: number;
-  forcePull?: boolean;
-};
+export type PullChatSyncOptions = CaughtUpSyncPullOptions;
 
 const EMPTY_PULL_RESULT: PullEventsLoopResult = {
   repairedStaleCursor: false,
@@ -87,24 +89,6 @@ const EMPTY_PULL_RESULT: PullEventsLoopResult = {
   threadArchived: false,
   eventsApplied: 0,
 };
-
-async function shouldSkipCaughtUpSyncPull(
-  contextType: ChatContextType,
-  contextId: string,
-  options?: PullChatSyncOptions
-): Promise<boolean> {
-  if (options?.forcePull) return false;
-  const local = await getLocalCursorSeq(contextType, contextId);
-  if (options?.expectedServerMaxSeq != null) {
-    return local >= options.expectedServerMaxSeq;
-  }
-  const key = chatCursorKey(contextType, contextId);
-  const threadRow = await chatLocalDb.chatThreads.get(key);
-  const cachedMax = threadRow?.serverMaxSeq;
-  if (cachedMax == null) return false;
-  const age = threadRow?.updatedAt != null ? Date.now() - threadRow.updatedAt : Infinity;
-  return age < BATCH_HEAD_CACHE_MS && local >= cachedMax;
-}
 
 export async function pullEventsLoop(
   contextType: ChatContextType,
@@ -234,6 +218,7 @@ export async function pullAndApplyChatSyncEventsDirect(
     return EMPTY_PULL_RESULT;
   }
   const result = await pullEventsLoop(contextType, contextId);
+  clearMessageDeletedCaughtUpBypass(contextType, contextId);
   const { repairedStaleCursor, threadInvalidated } = result;
   markChatPullCompleted(contextType, contextId);
   await reconcileCursorWithServerHead(

@@ -6,6 +6,7 @@ import { buildOutboxOptimisticsForOpen } from '@/services/chat/chatOutboxOpenSna
 import { hydrateLastMessageIdFromDexieIfMissing } from '@/services/chat/messageContextHead';
 import { mergeServerPageWithPendingOptimistics } from '@/utils/chatMessageSort';
 import { planThreadOpen } from '@/services/chat/threadOpen/planThreadOpen';
+import { dropTombstonedChatMessages, loadTombstonedMessageIds } from '@/services/chat/chatLocalMessageTombstone';
 import type { ThreadOpenPlanResult } from '@/services/chat/threadOpen/types';
 
 export type ThreadOpenOutboxContext = {
@@ -65,6 +66,7 @@ async function planDexieTailFallback(
     peekL1: () => [],
     peekPrev: request.peekPrev ?? (() => mergedPrev),
     loadBootstrap: async () => ({ messages: dexieTail }),
+    loadTombstonedIds: (ids) => loadTombstonedMessageIds(ids),
     forceFreshOpen: request.forceFreshOpen,
     openAnchorMessageId: request.openAnchorMessageId,
   });
@@ -85,6 +87,7 @@ export async function openThread(request: ThreadOpenRequest): Promise<ThreadOpen
   if (prefetched.length > 0) {
     mergedPrev = mergeServerPageWithPendingOptimistics(mergedPrev, prefetched);
   }
+  mergedPrev = await dropTombstonedChatMessages(mergedPrev);
 
   const readPrev = request.peekPrev ?? (() => mergedPrev);
   const result = await planThreadOpen(request.threadKey, {
@@ -92,6 +95,7 @@ export async function openThread(request: ThreadOpenRequest): Promise<ThreadOpen
     peekPrev: readPrev,
     loadBootstrap: () =>
       loadLocalThreadBootstrap(request.contextType, request.contextId, request.chatType),
+    loadTombstonedIds: (ids) => loadTombstonedMessageIds(ids),
     loadOutboxOptimistics: request.outbox
       ? () =>
           buildOutboxOptimisticsForOpen({

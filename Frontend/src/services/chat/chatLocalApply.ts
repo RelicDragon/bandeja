@@ -19,6 +19,7 @@ export {
   persistChatMessagesFromApi,
   persistChatMessagesFromApiDirect,
   markLocalMessageDeleted,
+  restoreLocalMessageAfterFailedDelete,
   applyLocalMessageEditOptimistic,
   applyLocalReactionOptimisticReplace,
 } from './chatLocalApplyWrite';

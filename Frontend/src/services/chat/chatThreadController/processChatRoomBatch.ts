@@ -229,7 +229,11 @@ function executeThreadLiveEffects(
           void persistReactionSocketPayload(event.reaction).catch(() => {});
           void onSocketSyncSeq(contextType, contextId, event.syncSeq).catch(() => {});
         } else if (event.type === 'messageDeleted') {
-          void markLocalMessageDeleted(event.messageId, event.deletedAt).catch(() => {});
+          void markLocalMessageDeleted(event.messageId, event.deletedAt, {
+            contextType,
+            contextId,
+            ...(event.syncSeq != null ? { syncSeq: event.syncSeq } : {}),
+          }).catch(() => {});
           void onSocketSyncSeq(contextType, contextId, event.syncSeq).catch(() => {});
         } else if (event.type === 'messageUpdated') {
           if (event.message) {
@@ -285,6 +289,7 @@ function executeThreadLiveEffects(
           gameChatType,
           readRows: () => effect.messages,
           verify: () => true,
+          ...(effect.immediate ? { immediate: true } : {}),
         }).catch(() => {});
         break;
       }

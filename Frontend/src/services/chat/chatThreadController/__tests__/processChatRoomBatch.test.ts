@@ -450,7 +450,11 @@ describe('processChatRoomBatch with Thread Live Projection (Phase 2)', () => {
     expect(persistReactionSocketPayload).toHaveBeenCalledWith(
       expect.objectContaining({ messageId: 'm1', userId: 'user-1', emoji: '👍' })
     );
-    expect(markLocalMessageDeleted).toHaveBeenCalledWith('m1', expect.any(String));
+    expect(markLocalMessageDeleted).toHaveBeenCalledWith('m1', expect.any(String), {
+      contextType: 'USER',
+      contextId: 'thread-1',
+      syncSeq: 53,
+    });
     expect(onSocketSyncSeq).toHaveBeenCalledWith('USER', 'thread-1', 52);
     expect(onSocketSyncSeq).toHaveBeenCalledWith('USER', 'thread-1', 53);
   });
