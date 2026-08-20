@@ -555,7 +555,7 @@ class PushNotificationService {
     }
 
     try {
-      await invitesApi.accept(data.data.inviteId);
+      await invitesApi.accept(data.data.inviteId, true);
       useHeaderStore.getState().decrementPendingInvite(data.data.inviteId);
       console.log('✅ Invite accepted');
 

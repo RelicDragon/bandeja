@@ -292,6 +292,7 @@ Frontend/e2e/
 |----|------|-------|----------|
 | H-12 | View pending invite | Seed invite | Card shows game info |
 | H-13 | Accept invite | Accept | Joined game, invite gone |
+| H-13a | Accept overlapping PLAYING invite | PLAYING in game A; accept invite to overlapping game B → confirm; repeat and cancel | Confirm: joined B; Cancel: still invited to B, still PLAYING in A |
 | H-14 | Decline invite | Decline → confirm modal | Invite removed |
 | H-15 | Decline with note | Add note in modal | Note posted to game chat (with notifications), then invite declined |
 | H-15a | Telegram decline with response | Telegram game invite → Decline with response → send reason (or `/skip` / `/skip@Bot`) | Same as H-15 when reason sent; invite declined and Telegram invite message updated; `/skip` declines without chat message; prompt expires after 10m; Accept/Decline clears pending prompt |
@@ -450,6 +451,8 @@ Frontend/e2e/
 |----|------|-------|----------|
 | F-24 | Open game details | Tap card | Navigate to game |
 | F-25 | Quick join from Find | Join button on card | Joined + toast + navigate |
+| F-76 | Find overlapping join confirm | PLAYING in game A; Find join on overlapping game B (after card confirm) | Slot-overlap modal; continue joins B |
+| F-77 | Find overlapping join cancel | Same as F-76 → Cancel | Stay on Find; not in B |
 | F-26 | Join queue | Full game with queue | Added to queue toast |
 | F-27 | Join blocked no name | `@P5` join attempt | Name gate modal |
 | F-28 | Trainers list section | Training filter on | Trainers carousel visible; hint “tap a trainer to filter” |
@@ -724,6 +727,8 @@ Frontend/e2e/
 | ID | Test | Steps | Expected |
 |----|------|-------|----------|
 | GD-08 | Join open game | Join CTA | Participant added |
+| GD-08a | Overlapping PLAYING join confirm | PLAYING in game A; join game B whose time overlaps A | Confirm modal; confirm proceeds; both memberships kept |
+| GD-08b | Overlapping PLAYING join cancel | Same as GD-08a → Cancel | Modal closes; still not in B; A unchanged |
 | GD-09 | Leave game | Leave → confirm | Removed; local game chat thread purged so background sync does not keep hitting 403 |
 | GD-09a | Leave chat only | Guest/non-playing leave chat from details | Chat access removed; local game chat purged |
 | GD-10 | Decline pending invite | From participants | Invite declined |
@@ -734,6 +739,7 @@ Frontend/e2e/
 | GD-15 | Invite players | Owner opens player list → invite | Pending invites shown |
 | GD-15a | Invite search Cyrillic→Latin | Open invite list; type Cyrillic prefix of a Latin-named player (e.g. `ив` for Ivan) | Player stays in results after debounce (does not flash then vanish) |
 | GD-15b | Invite search clear | Open invite list; type 2+ chars so results update; clear the search field | List stays mounted (no full-modal spinner); default invitable list restores after debounce |
+| GD-15c | Invite picker omits busy | Open Search invite list for a timed game; city user is PLAYING in another overlapping Bandeja game | Busy user is absent from the list; INVITED-only or non-overlapping PLAYING users still appear |
 | GD-16 | Cancel invite | Owner cancels pending | Invite removed |
 | GD-16a | Expired invite outcome | Let a pending invite expire → open player list | Player appears under invite responses with “Invite expired”, not “Invite cancelled” |
 | GD-17 | Guest join chat only | Join as guest | Chat access without full join |

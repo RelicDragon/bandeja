@@ -35,6 +35,7 @@ interface UsersState {
   lastPlayersFetchTime: number;
   lastChatsFetchTime: number;
   invitableMaxSocialLevel: number | null;
+  invitableBusyUserIds: string[];
   
   getUser: (userId: string) => BasicUser | undefined;
   getUserMetadata: (userId: string) => UserMetadata | undefined;
@@ -50,7 +51,12 @@ interface UsersState {
   addChat: (chat: UserChat) => Promise<void>;
   getOrCreateAndAddUserChat: (userId: string) => Promise<UserChat | null>;
 
-  fetchPlayers: (gameId?: string, sport?: string, search?: string) => Promise<BasicUser[]>;
+  fetchPlayers: (
+    gameId?: string,
+    sport?: string,
+    search?: string,
+    slot?: { startTime: string; endTime: string },
+  ) => Promise<BasicUser[]>;
   fetchUserChats: () => Promise<void>;
   invalidateUserChatsCache: () => void;
   refresh: () => Promise<void>;
@@ -68,8 +74,13 @@ let unifiedReadReceiptHandler: (() => void) | null = null;
 let cleanupPromise: Promise<void> | null = null;
 const fetchPlayersInflight = new Map<string, Promise<BasicUser[]>>();
 
-function fetchPlayersCacheKey(gameId?: string, sport?: string, search?: string): string {
-  return `${gameId ?? ''}:${sport ?? ''}:${search?.trim() ?? ''}`;
+function fetchPlayersCacheKey(
+  gameId?: string,
+  sport?: string,
+  search?: string,
+  slot?: { startTime: string; endTime: string },
+): string {
+  return `${gameId ?? ''}:${sport ?? ''}:${search?.trim() ?? ''}:${slot?.startTime ?? ''}:${slot?.endTime ?? ''}`;
 }
 
 const createDefaultMetadata = (existing?: Partial<UserMetadata>): UserMetadata => ({
@@ -187,6 +198,7 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
   lastPlayersFetchTime: 0,
   lastChatsFetchTime: 0,
   invitableMaxSocialLevel: null,
+  invitableBusyUserIds: [],
 
   getUser: (userId: string) => {
     return get().users[userId];
@@ -356,9 +368,14 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
     }
   },
 
-  fetchPlayers: async (gameId?: string, sport?: string, search?: string): Promise<BasicUser[]> => {
+  fetchPlayers: async (
+    gameId?: string,
+    sport?: string,
+    search?: string,
+    slot?: { startTime: string; endTime: string },
+  ): Promise<BasicUser[]> => {
     const normalizedSearch = search?.trim();
-    const cacheKey = fetchPlayersCacheKey(gameId, sport, normalizedSearch);
+    const cacheKey = fetchPlayersCacheKey(gameId, sport, normalizedSearch, slot);
     const inflight = fetchPlayersInflight.get(cacheKey);
     if (inflight) return inflight;
 
@@ -370,6 +387,7 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
       !gameId &&
       !sport &&
       !normalizedSearch &&
+      !slot &&
       state.lastPlayersFetchTime > 0 &&
       now - state.lastPlayersFetchTime < CACHE_DURATION;
     if (cacheValid) {
@@ -378,10 +396,11 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
 
     set({ loading: true, isFetching: true });
     try {
-      const response = await usersApi.getInvitablePlayers(gameId, sport, normalizedSearch);
+      const response = await usersApi.getInvitablePlayers(gameId, sport, normalizedSearch, slot);
       const payload = response.data;
       const players = payload?.players ?? [];
       const maxSocialLevel = payload?.maxSocialLevel ?? null;
+      const busyUserIds = payload?.busyUserIds ?? [];
 
       set((currentState) => {
         const newUsers: Record<string, BasicUser> = {};
@@ -397,7 +416,7 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
           });
         });
 
-        const isGlobalCacheFetch = !gameId && !sport && !normalizedSearch;
+        const isGlobalCacheFetch = !gameId && !sport && !normalizedSearch && !slot;
 
         return {
           users: { ...currentState.users, ...newUsers },
@@ -406,6 +425,7 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
           loading: false,
           isFetching: false,
           invitableMaxSocialLevel: maxSocialLevel,
+          invitableBusyUserIds: busyUserIds,
         };
       });
       const { users: mergedUsers } = get();
@@ -521,6 +541,7 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
       lastPlayersFetchTime: 0,
       lastChatsFetchTime: 0,
       invitableMaxSocialLevel: null,
+      invitableBusyUserIds: [],
       isFetching: false,
       isFetchingChats: false,
     });

@@ -209,7 +209,13 @@ export interface InvitablePlayer extends BasicUser {
 export interface InvitablePlayersPayload {
   players: InvitablePlayer[];
   maxSocialLevel: number;
+  busyUserIds?: string[];
 }
+
+export type InvitableSlotWindow = {
+  startTime: string;
+  endTime: string;
+};
 
 export interface GameWorkoutSessionListItem extends GameWorkoutSummary {
   game: {
@@ -398,11 +404,20 @@ export const usersApi = {
     return response.data;
   },
 
-  getInvitablePlayers: async (gameId?: string, sport?: string, search?: string) => {
+  getInvitablePlayers: async (
+    gameId?: string,
+    sport?: string,
+    search?: string,
+    slot?: InvitableSlotWindow,
+  ) => {
     const params: Record<string, string> = {};
     if (gameId) params.gameId = gameId;
     if (sport) params.sport = sport;
     if (search?.trim()) params.search = search.trim();
+    if (!gameId && slot?.startTime && slot?.endTime) {
+      params.startTime = slot.startTime;
+      params.endTime = slot.endTime;
+    }
     const response = await api.get<ApiResponse<InvitablePlayersPayload>>('/users/invitable-players', {
       params,
     });

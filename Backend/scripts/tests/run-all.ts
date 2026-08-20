@@ -317,6 +317,15 @@ const suites: Suite[] = [
     ],
   },
   {
+    label: 'game slot overlap',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      '--transpile-only',
+      path.join(backendRoot, 'src', 'services', 'game', 'gameSlotOverlap.test.ts'),
+    ],
+  },
+  {
     label: 'multisport deferred product',
     command: process.execPath,
     args: [

@@ -19,6 +19,7 @@ import { ParticipantMessageHelper } from './game/participantMessageHelper';
 import { projectUserForSportContext } from './user/userSportProfile.service';
 import { PlayIntentGameLifecycleService } from './playIntent/playIntentGameLifecycle.service';
 import { publishCommittedPlayIntentStatusChanges } from './playIntent/playIntentRealtime';
+import { assertSlotOverlapConfirmed } from './game/gameSlotOverlap.service';
 
 export interface InviteActionResult {
   success: boolean;
@@ -222,7 +223,8 @@ export class InviteService {
     participantId: string,
     userId: string,
     _forceUpdate: boolean = false,
-    isAdmin: boolean = false
+    isAdmin: boolean = false,
+    confirmOverlap: boolean = false,
   ): Promise<InviteActionResult> {
     const participant = await prisma.gameParticipant.findUnique({
       where: { id: participantId },
@@ -327,6 +329,14 @@ export class InviteService {
     const gameForJoin = participant.game ?? refetchedGame;
     if (!gameId || !gameForJoin) {
       return { success: false, message: 'errors.invites.notFound' };
+    }
+
+    if (isReceiver) {
+      await assertSlotOverlapConfirmed({
+        userId: receiverId,
+        targetGame: gameForJoin,
+        confirmOverlap: confirmOverlap || _forceUpdate,
+      });
     }
 
     const acceptedPlayingStatus: 'PLAYING' | 'NON_PLAYING' =

@@ -26,6 +26,10 @@
     "confirmJoinMessage": "¿Seguro que quieres unirte a este juego?",
     "confirmJoinQueueTitle": "¿Unirse a la cola?",
     "confirmJoinQueueMessage": "¿Seguro que quieres unirte a la lista de espera?",
+    "overlapConfirmTitle": "Ya juegas a esta hora",
+    "overlapConfirmMessage": "Ya tienes otra partida que coincide con este horario. ¿Continuar de todos modos?",
+    "overlapConfirmProceed": "Continuar",
+    "requiresOverlapConfirm": "Ya tienes otra partida que coincide con este horario.",
     "gameTypes": {
       "CLASSIC": "Clásico",
       "AMERICANO": "Americano",

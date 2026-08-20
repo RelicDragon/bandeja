@@ -117,7 +117,7 @@ describe('playersStore.fetchPlayers', () => {
 
     const result = await usePlayersStore.getState().fetchPlayers(undefined, undefined, 'Maksim S');
 
-    expect(getInvitablePlayers).toHaveBeenCalledWith(undefined, undefined, 'Maksim S');
+    expect(getInvitablePlayers).toHaveBeenCalledWith(undefined, undefined, 'Maksim S', undefined);
     expect(result).toHaveLength(1);
     expect(result[0].id).toBe('u2');
   });

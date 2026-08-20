@@ -48,6 +48,7 @@ import { runWithProfileName } from '@/utils/runWithProfileName';
 import { AnimatedMount } from '@/components/motion/AnimatedMount';
 import { TabContentStack } from '@/components/motion/TabContentStack';
 import { useDeclineInvite } from '@/hooks/useDeclineInvite';
+import { useGameSlotOverlapConfirm } from '@/hooks/useGameSlotOverlapConfirm';
 import { ResizableSplitter } from '@/components/ResizableSplitter';
 import { navigationService } from '@/services/navigationService';
 import { useUserTeamsStore } from '@/store/userTeamsStore';
@@ -95,6 +96,7 @@ const sortMyGamesByStatusAndDateTime = <T extends { status?: string; startTime: 
 
 export const MyTab = () => {
   const { t } = useTranslation();
+  const { runWithOverlapConfirm, overlapConfirmModal } = useGameSlotOverlapConfirm();
   const user = useAuthStore((state) => state.user);
   const isDesktop = useDesktop();
   const { tab: homeTab } = useHomeFromUrl();
@@ -400,8 +402,11 @@ export const MyTab = () => {
     acceptingInviteIdsRef.current.add(inviteId);
     try {
       const { invitesApi } = await import('@/api');
-      const response = await invitesApi.accept(inviteId);
-      const message = (response as any).message || 'Invite accepted successfully';
+      const response = await runWithOverlapConfirm((confirmOverlap) =>
+        invitesApi.accept(inviteId, confirmOverlap),
+      );
+      if (!response) return;
+      const message = (response as { message?: string }).message || 'Invite accepted successfully';
 
       if (message === 'games.addedToJoinQueue') {
         toast.success(t('games.addedToJoinQueue', { defaultValue: 'Added to join queue' }));
@@ -621,6 +626,7 @@ export const MyTab = () => {
       )}
     </PullToRefreshShell>
     {declineInviteModal}
+    {overlapConfirmModal}
     </>
   );
 };

@@ -26,6 +26,7 @@ import { projectUserForSportContext } from '../user/userSportProfile.service';
 import { syncParticipantShowInStoriesSideEffects } from '../story/participantShowInStories.sync';
 import { PlayIntentGameLifecycleService } from '../playIntent/playIntentGameLifecycle.service';
 import { publishCommittedPlayIntentStatusChanges } from '../playIntent/playIntentRealtime';
+import { assertSlotOverlapConfirmed } from './gameSlotOverlap.service';
 
 const PLAYING_STATUS = 'PLAYING' as const;
 const IN_QUEUE_STATUS = 'IN_QUEUE' as const;
@@ -33,7 +34,7 @@ const GUEST_STATUS = 'GUEST' as const;
 const INVITED_STATUS = 'INVITED' as const;
 
 export class ParticipantService {
-  static async joinGame(gameId: string, userId: string) {
+  static async joinGame(gameId: string, userId: string, confirmOverlap = false) {
     const game = await prisma.game.findUnique({
       where: { id: gameId },
       include: {
@@ -46,6 +47,12 @@ export class ParticipantService {
     if (!game) {
       throw new ApiError(404, 'Game not found');
     }
+
+    await assertSlotOverlapConfirmed({
+      userId,
+      targetGame: game,
+      confirmOverlap,
+    });
 
     const existingParticipant = await prisma.gameParticipant.findFirst({
       where: {
@@ -311,7 +318,12 @@ export class ParticipantService {
     await ParticipantMessageHelper.emitGameUpdate(gameId, userId);
   }
 
-  static async togglePlayingStatus(gameId: string, userId: string, status: 'PLAYING' | 'IN_QUEUE') {
+  static async togglePlayingStatus(
+    gameId: string,
+    userId: string,
+    status: 'PLAYING' | 'IN_QUEUE',
+    confirmOverlap = false,
+  ) {
     const participant = await prisma.gameParticipant.findFirst({
       where: {
         gameId,
@@ -351,6 +363,12 @@ export class ParticipantService {
       if (!game) {
         throw new ApiError(404, 'Game not found');
       }
+
+      await assertSlotOverlapConfirmed({
+        userId,
+        targetGame: game,
+        confirmOverlap,
+      });
 
       if (!game.allowDirectJoin) {
         const isOwnerOrAdmin = participant.role === 'OWNER' || participant.role === 'ADMIN';

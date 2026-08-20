@@ -1,7 +1,7 @@
 import api from './axios';
 import { ApiResponse, Invite } from '@/types';
 import { queryClient } from '@/queries/queryClient';
-import { removeInviteFromMyGamesCache } from '@/queries/games/removeInviteFromMyGamesCache';
+import { overlapConfirmBody } from '@/utils/gameSlotOverlapConfirm';
 import { useAuthStore } from '@/store/authStore';
 
 function syncInviteClosedInMyTabCache(inviteId: string): void {
@@ -54,8 +54,11 @@ export const invitesApi = {
     return responses.map(r => r.data);
   },
 
-  accept: async (id: string) => {
-    const response = await api.post<ApiResponse<Invite>>(`/invites/${id}/accept`);
+  accept: async (id: string, confirmOverlap = false) => {
+    const response = await api.post<ApiResponse<Invite>>(
+      `/invites/${id}/accept`,
+      overlapConfirmBody(confirmOverlap),
+    );
     syncInviteClosedInMyTabCache(id);
     return response.data;
   },
