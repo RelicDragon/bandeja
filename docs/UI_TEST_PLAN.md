@@ -1325,6 +1325,10 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PR-81 | Game-open sport hint | Open `?player=` from tennis game; subject has tennis | Card opens on tennis; if subject lacks tennis → viewer primary or subject primary |
 | PR-82 | Partners ranking modes (enough data) | Player card Statistics → Partners when Rating/Games change people vs Formulae | Switch visible; each visible mode changes at least one card person; no two tabs with identical people |
 | PR-83 | Partners sparse data (one game) | Open card with 1 finished doubles game (e.g. Polina) | Ranking switch hidden; only one partner + one opponent card (no best=worst / favorite=nemesis dupes) |
+| PR-84 | Other player preferred hand | Open `/user-profile/:id` or `?player=` for a user with only left hand set | L chip selected (filled); R unset (dashed muted), not both-on |
+| PR-85 | Other player court side | Same view for a user with only left court side set | L chip selected; R unset |
+| PR-86 | Unset vs selected preference chips | Open another player with neither hand nor court side set | All four chips look unset (dashed muted), visually distinct from selected fill |
+| PR-87 | Own profile prefs save independently | Profile → General → toggle preferred hand L then R (same for court side) | Each flag saves on its own; other flag unchanged |
 | PR-streak-1 | Own profile play streak chip | Own profile/card after ≥1 qualifying week | Flame + N weeks; tap opens sheet with current/best/deadline |
 | PR-streak-2 | Other profile play streak | Open another user’s card with streak | Current/best visible; no at-risk styling or hours |
 | PR-streak-3 | Same week second game | Second rated finish same week window | Count unchanged; results streak banner absent |
