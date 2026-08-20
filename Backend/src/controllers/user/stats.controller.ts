@@ -227,7 +227,7 @@ export const getUserStats = asyncHandler(async (req: AuthRequest, res: Response)
     explicitSport ? null : getUserGameOutcomeAggregates(userId),
     getUserPerformanceInsights(userId, sport),
     getPlayerLevelFeedbackAggregate(userId, sport, projectedUserBase.level),
-    countTrainingAttendance(prisma, userId),
+    countTrainingAttendance(prisma, userId, { sport }),
   ]);
 
   const isFavorite = req.userId ? await prisma.userFavoriteUser.findUnique({

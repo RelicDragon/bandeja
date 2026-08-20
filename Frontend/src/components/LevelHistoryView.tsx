@@ -284,10 +284,11 @@ const LevelHistoryViewComponent = ({
             includeSportsInSelector={includeSportsInSelector}
             competitiveSport={competitiveSport}
             trainingAttendanceCount={
-              alignedSportStats?.trainingAttendanceCount
-              ?? alignedParentStats?.trainingAttendanceCount
-              ?? stats.trainingAttendanceCount
-              ?? 0
+              showSocialLevel
+                ? (stats.trainingAttendanceCount ?? 0)
+                : (alignedSportStats?.trainingAttendanceCount
+                  ?? alignedParentStats?.trainingAttendanceCount
+                  ?? 0)
             }
           />
           {!showSocialLevel && (alignedSportStats || alignedParentStats) ? (

@@ -62,7 +62,7 @@ describe('PlayerActivityCounts', () => {
     const el = render(
       <PlayerActivityCounts
         gamesPlayed={Number.NaN}
-        trainingAttendanceCount={undefined as unknown as number}
+        trainingAttendanceCount={undefined}
       />,
     );
     expect(el.textContent).toContain('playerCard.gamesCount:0');

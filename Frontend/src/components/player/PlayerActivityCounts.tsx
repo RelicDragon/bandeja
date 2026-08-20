@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 
 type PlayerActivityCountsProps = {
   gamesPlayed: number;
-  trainingAttendanceCount: number;
+  trainingAttendanceCount?: number;
   className?: string;
 };
 
@@ -23,7 +23,7 @@ export function PlayerActivityCounts({
   return (
     <p
       data-testid="player-activity-counts"
-      className={`flex flex-wrap items-baseline justify-center gap-x-1.5 text-xs tabular-nums ${className}`.trim()}
+      className={`flex flex-wrap items-baseline justify-center gap-x-1 text-[11px] leading-tight tabular-nums tracking-tight ${className}`.trim()}
     >
       <span>{t('playerCard.gamesCount', { count: games })}</span>
       <span aria-hidden className="opacity-40">
