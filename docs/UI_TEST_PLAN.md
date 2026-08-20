@@ -1204,7 +1204,10 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | CH-49 | Mobile full-screen thread | `@mobile` select chat | Full screen, no split |
 | CH-50 | Desktop split persist | Select chat → resize splitter | Layout preserved |
 | CH-51 | Back from thread mobile | Back | Returns to list |
-| CH-52 | Create bug report | Bugs filter → add bug | `BugModal` → bug thread created |
+| CH-52 | Create bug report | Bugs filter → add bug → submit | Modal closes; bug thread opens |
+| CH-52a | Failed create shows in-dialog error | Submit bug with API failure (4xx/5xx, timeout, or network) | Modal stays open; `bug-create-error` alert stays visible above submit (not clipped, not toast-only); network/timeout use translated copy; submit re-enables |
+| CH-52b | Hung platform info does not stick submit | `@mobile` Capacitor: `App.getInfo` hangs → submit | Submit does not stay disabled forever; create proceeds with unknown platform or in-dialog error + button re-enabled |
+| CH-52c | Close during in-flight create is ignored | Submit → Cancel or X before response | Modal closes; no late toast/error; reopen is idle (not stuck submitting) |
 | CH-53 | Bugs filter panel | Panel closed by default; non-admin: Created by me on + all statuses; admin: Created by me off + open statuses only | List matches defaults; open panel → multi-select status chips → list updates |
 | CH-54 | Pin chat from list | Pin DM/group | Pinned ordering |
 | CH-55 | Mute chat from list | Mute thread | Mute persisted; notifications suppressed |
