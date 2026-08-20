@@ -55,6 +55,7 @@ import {
   type InviteSportFilterValue,
 } from '@/utils/inviteSportFilter';
 import { listEnabledSports } from '@/utils/profileSports';
+import { PlayerInviteLookingList } from '@/components/playerInvite/PlayerInviteLookingList';
 import { SportLevelProvider } from '@/contexts/SportLevelContext';
 import { BrowseCityControl } from '@/components/browseCity/BrowseCityControl';
 import { CityPickerEmbed } from '@/components/browseCity/CityPickerEmbed';

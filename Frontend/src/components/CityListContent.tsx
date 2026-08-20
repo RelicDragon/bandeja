@@ -394,7 +394,7 @@ export const CityListContent = ({
     const suggestedIds = new Set(suggestedEntries.map((entry) => entry.city.id));
     return recentCityIds
       .map((id) => allCitiesSource.find((city) => city.id === id))
-      .filter((city): city is City => Boolean(city) && !suggestedIds.has(city.id))
+      .filter((city): city is City => city != null && !suggestedIds.has(city.id))
       .map((city) => ({ city, kind: 'recent' as const }));
   }, [allCitiesSource, recentCityIds, showSuggested, suggestedEntries]);
 
