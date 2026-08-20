@@ -1,7 +1,7 @@
 import { DEFAULT_CURRENCY, SUPPORTED_CURRENCIES } from './constants';
 
 const EUR_ZONE_ISO2 = new Set(
-  'AD AT BE CY DE EE ES FI FR GR HR IE IT LT LU LV MT NL PT SI SK MC SM VA'.split(' '),
+  'AD AT BE CY DE EE ES FI FR GR HR IE IT LT LU LV MT NL PT SI SK MC SM VA ME'.split(' '),
 );
 
 const ISO2_TO_CURRENCY: Record<string, string> = {
@@ -34,6 +34,9 @@ const ISO2_TO_CURRENCY: Record<string, string> = {
   MY: 'MYR',
   ID: 'IDR',
   PH: 'PHP',
+  EC: 'USD',
+  LI: 'CHF',
+  GG: 'GBP',
 };
 
 const COUNTRY_NAME_TO_ISO2: Record<string, string> = {
@@ -89,6 +92,14 @@ const COUNTRY_NAME_TO_ISO2: Record<string, string> = {
   serbia: 'RS',
   srbija: 'RS',
   србија: 'RS',
+  сербия: 'RS',
+  serbien: 'RS',
+  'republic of serbia': 'RS',
+  'republika srbija': 'RS',
+  montenegro: 'ME',
+  ecuador: 'EC',
+  liechtenstein: 'LI',
+  guernsey: 'GG',
   turkey: 'TR',
   singapore: 'SG',
   'hong kong': 'HK',
@@ -117,11 +128,21 @@ export function currencyFromCountryIso2OrUndefined(country: string | undefined):
   return mapped ? normalizeCurrencyCode(mapped) : undefined;
 }
 
+function isKnownIso2(code: string): boolean {
+  return EUR_ZONE_ISO2.has(code) || Object.prototype.hasOwnProperty.call(ISO2_TO_CURRENCY, code);
+}
+
 export function iso2FromCityCountry(country: string | null | undefined): string | undefined {
   if (!country) return undefined;
   const trimmed = country.trim();
   if (!trimmed) return undefined;
-  if (trimmed.length === 2) return trimmed.toUpperCase();
+  if (trimmed.length === 2) {
+    const iso = trimmed.toUpperCase();
+    if (isKnownIso2(iso)) return iso;
+    const fromName = COUNTRY_NAME_TO_ISO2[trimmed.toLowerCase()];
+    if (fromName) return fromName;
+    return iso;
+  }
   return COUNTRY_NAME_TO_ISO2[trimmed.toLowerCase()];
 }
 

@@ -1,5 +1,8 @@
 import assert from 'node:assert/strict';
-import { resolveInitialDefaultCurrency } from './initialCurrencyAssignment';
+import {
+  resolveCurrencyForFirstCityConfirm,
+  resolveInitialDefaultCurrency,
+} from './initialCurrencyAssignment';
 
 function testEurDefaultDoesNotBlockCityCurrency(): void {
   assert.equal(
@@ -64,9 +67,21 @@ function testUserChosenCurrencyIsKept(): void {
   );
 }
 
+function testFirstCityConfirmOverwritesBootstrapCurrency(): void {
+  assert.equal(
+    resolveInitialDefaultCurrency({ currentCurrency: 'HUF', cityCountry: 'Serbia' }),
+    undefined,
+  );
+  assert.equal(resolveCurrencyForFirstCityConfirm('Serbia'), 'RSD');
+  assert.equal(resolveCurrencyForFirstCityConfirm('Hungary'), 'HUF');
+  assert.equal(resolveCurrencyForFirstCityConfirm('United Kingdom'), 'GBP');
+  assert.equal(resolveCurrencyForFirstCityConfirm('Atlantis'), undefined);
+}
+
 testEurDefaultDoesNotBlockCityCurrency();
 testEurDefaultDoesNotBlockFirstGeo();
 testCityWinsOverGeo();
 testOtherCountriesGetLocalCurrency();
 testUserChosenCurrencyIsKept();
+testFirstCityConfirmOverwritesBootstrapCurrency();
 console.log('initialCurrencyAssignment.test: ok');

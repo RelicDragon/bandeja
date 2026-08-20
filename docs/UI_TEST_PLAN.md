@@ -236,6 +236,7 @@ Frontend/e2e/
 | A-38 | RU/SR club count plurals | App language RU (or SR); open country list | Counts ending in 1 but not 11 (e.g. Austria 131, Argentina 1401) show full number (`131 клуб` / `1401 клуб`), not literal `1 клуб` |
 | A-39 | Country name localization | App language RU; open country list; scroll past Andorra/Belgium/Czechia | Primary names localized (Андорра, Бельгия, Чехия), not English keys; native endonym shown when different |
 | A-39 | Map chrome overlay | Tap Map (list or change-city modal) | Map fills content; Near me + List overlay inside map (not above); List returns to search list |
+| A-42 | First city confirm currency | Auto-assigned a non-Serbia city (`cityIsSet` false), pick a Serbia city in CityModal / `/select-city` | `defaultCurrency` becomes RSD; later city changes do not overwrite a Profile pick |
 
 ### 5.4 Logout & sessions
 

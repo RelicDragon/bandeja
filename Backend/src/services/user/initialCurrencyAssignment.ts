@@ -19,3 +19,10 @@ export function resolveInitialDefaultCurrency(params: {
   }
   return undefined;
 }
+
+export function resolveCurrencyForFirstCityConfirm(cityCountry?: string | null): string | undefined {
+  return resolveInitialDefaultCurrency({
+    currentCurrency: undefined,
+    cityCountry,
+  });
+}

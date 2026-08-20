@@ -15,6 +15,9 @@ function testSerbiaMapsToRsd(): void {
   assert.equal(currencyFromCityCountry('RS'), 'RSD');
   assert.equal(currencyFromCityCountry('rs'), 'RSD');
   assert.equal(currencyFromCityCountry('Srbija'), 'RSD');
+  assert.equal(currencyFromCityCountry('србија'), 'RSD');
+  assert.equal(currencyFromCityCountry('СРБИЈА'), 'RSD');
+  assert.equal(currencyFromCityCountry('Republic of Serbia'), 'RSD');
   assert.equal(iso2FromCityCountry('Serbia'), 'RS');
 }
 
@@ -23,10 +26,13 @@ function testEurozoneAndLocals(): void {
   assert.equal(currencyFromCityCountry('Germany'), 'EUR');
   assert.equal(currencyFromCountryIso2('FR'), 'EUR');
   assert.equal(currencyFromCityCountry('United Kingdom'), 'GBP');
+  assert.equal(currencyFromCityCountry('UK'), 'GBP');
   assert.equal(currencyFromCityCountry('United States'), 'USD');
   assert.equal(currencyFromCityCountry('Czech Republic'), 'CZK');
   assert.equal(currencyFromCityCountry('Poland'), 'PLN');
   assert.equal(currencyFromCityCountry('Switzerland'), 'CHF');
+  assert.equal(currencyFromCityCountry('Ecuador'), 'USD');
+  assert.equal(currencyFromCityCountry('Montenegro'), 'EUR');
 }
 
 function testUnknownCountryLeavesMappingOpen(): void {

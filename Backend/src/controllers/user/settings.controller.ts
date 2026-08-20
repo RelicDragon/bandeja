@@ -12,7 +12,7 @@ import {
   upsertPadelSportProfileFromUser,
 } from '../../services/user/userSportProfile.service';
 import { CityGroupService } from '../../services/chat/cityGroup.service';
-import { resolveInitialDefaultCurrency } from '../../services/user/initialCurrencyAssignment';
+import { resolveCurrencyForFirstCityConfirm } from '../../services/user/initialCurrencyAssignment';
 import { isE2eTestHeader } from '../../utils/e2eRequestContext';
 
 export const e2eClearAssignedCity = asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -60,7 +60,7 @@ export const switchCity = asyncHandler(async (req: AuthRequest, res: Response) =
 
   const currentUser = await prisma.user.findUnique({
     where: { id: userId },
-    select: { currentCityId: true, cityIsSet: true, defaultCurrency: true },
+    select: { currentCityId: true, cityIsSet: true },
   });
   const previousCityId = currentUser?.currentCityId ?? null;
 
@@ -72,10 +72,7 @@ export const switchCity = asyncHandler(async (req: AuthRequest, res: Response) =
     select: { country: true },
   });
   const initialCurrency = !currentUser?.cityIsSet
-    ? resolveInitialDefaultCurrency({
-        currentCurrency: currentUser?.defaultCurrency,
-        cityCountry: city?.country,
-      })
+    ? resolveCurrencyForFirstCityConfirm(city?.country)
     : undefined;
 
   const user = await prisma.user.update({
