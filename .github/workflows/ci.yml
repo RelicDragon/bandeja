@@ -88,6 +88,7 @@ jobs:
       - run: npm run test:bugs
       - run: npm run test:live-scoring
       - run: npm run test:avatar-crop
+      - run: npm run test:keyboard-layout
       - run: npx playwright install --with-deps chromium
       - run: npm run test:game-results-share
       - run: npm run build
