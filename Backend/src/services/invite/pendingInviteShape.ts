@@ -1,3 +1,4 @@
+import { Sport } from '@prisma/client';
 import { USER_SELECT_WITH_SPORT_PROFILES } from '../../utils/constants';
 import { projectUserForSportContext } from '../user/userSportProfile.service';
 
@@ -44,7 +45,11 @@ export function mapInvitedParticipantToInboxInvite(participant: {
   invitedByUser: unknown;
   game: { sport?: string | null; participants?: unknown[] } & Record<string, unknown>;
 }) {
-  const sport = participant.game.sport;
+  const sport = (participant.game.sport ?? Sport.PADEL) as Sport;
+  const invitedBy = participant.invitedByUser as {
+    sportProfiles?: unknown;
+    [key: string]: unknown;
+  } | null;
   return {
     id: participant.id,
     receiverId: participant.userId,
@@ -55,12 +60,14 @@ export function mapInvitedParticipantToInboxInvite(participant: {
     createdAt: participant.joinedAt,
     updatedAt: participant.joinedAt,
     receiver: participant.user
-      ? projectUserForSportContext(participant.user as never, sport as never)
+      ? projectUserForSportContext(participant.user as never, sport)
       : null,
-    sender: {
-      ...projectUserForSportContext(participant.invitedByUser as never, sport as never),
-      sportProfiles: (participant.invitedByUser as { sportProfiles?: unknown } | null)?.sportProfiles,
-    },
+    sender: invitedBy
+      ? {
+          ...projectUserForSportContext(invitedBy, sport),
+          sportProfiles: invitedBy.sportProfiles,
+        }
+      : null,
     game: {
       ...participant.game,
       participants: (participant.game.participants ?? []).map((row) => {

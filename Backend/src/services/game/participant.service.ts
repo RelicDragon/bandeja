@@ -740,7 +740,7 @@ export class ParticipantService {
   ): Promise<{ participant: any; invite: any; intentLinked: boolean | null }> {
     const game = await prisma.game.findUniqueOrThrow({
       where: { id: gameId },
-      select: { entityType: true, status: true, genderTeams: true },
+      select: { id: true, entityType: true, status: true, genderTeams: true, maxParticipants: true },
     });
     validateGameCanAcceptParticipants(game);
     await validateGenderForGame(game, receiverId, { targetIsOtherUser: true });

@@ -1,6 +1,7 @@
 import api from './axios';
 import { ApiResponse, Invite } from '@/types';
 import { queryClient } from '@/queries/queryClient';
+import { removeInviteFromMyGamesCache } from '@/queries/games/removeInviteFromMyGamesCache';
 import { overlapConfirmBody } from '@/utils/gameSlotOverlapConfirm';
 import { useAuthStore } from '@/store/authStore';
 

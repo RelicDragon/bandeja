@@ -548,7 +548,8 @@ class PushNotificationService {
   }
 
   private async handleAcceptInvite(data: NotificationData) {
-    if (!data.data?.inviteId) {
+    const payload = data.data;
+    if (!payload?.inviteId) {
       console.error('No invite ID in notification data');
       return;
     }
@@ -559,7 +560,7 @@ class PushNotificationService {
       return;
     }
     if (authUser && authUser.genderIsSet !== true) {
-      const gameLike = await resolveGameLikeForPushInvite(data.data, async (gameId) => {
+      const gameLike = await resolveGameLikeForPushInvite(payload, async (gameId) => {
         const gameResponse = await gamesApi.getById(gameId);
         return gameResponse.data;
       });
@@ -568,14 +569,14 @@ class PushNotificationService {
 
     try {
       const response = await runWithOverlapConfirm((confirmOverlap) =>
-        invitesApi.accept(data.data.inviteId, confirmOverlap),
+        invitesApi.accept(payload.inviteId, confirmOverlap),
       );
       if (!response) return;
-      useHeaderStore.getState().decrementPendingInvite(data.data.inviteId);
+      useHeaderStore.getState().decrementPendingInvite(payload.inviteId);
       console.log('✅ Invite accepted');
 
-      if (data.data.gameId) {
-        navigationService.navigateToGame(data.data.gameId);
+      if (payload.gameId) {
+        navigationService.navigateToGame(payload.gameId);
       }
     } catch (error) {
       if (recoverGenderUnsetJoin(error, () => void this.handleAcceptInvite(data))) return;

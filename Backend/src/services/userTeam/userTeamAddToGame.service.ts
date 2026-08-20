@@ -3,6 +3,7 @@ import {
   GameStatus,
   ParticipantRole,
   ParticipantStatus,
+  Sport,
   UserTeamMemberStatus,
 } from '@prisma/client';
 import prisma from '../../config/database';
@@ -34,7 +35,7 @@ const INVITABLE_ENTITY_TYPES: EntityType[] = [
 export type UserTeamInvitableGame = {
   id: string;
   name: string | null;
-  sport: string;
+  sport: Sport;
   entityType: EntityType;
   startTime: Date;
   endTime: Date;
