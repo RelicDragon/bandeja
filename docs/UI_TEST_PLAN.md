@@ -1040,7 +1040,8 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | CH-20 | Reply to message | Reply action | Threaded reply |
 | CH-21 | Edit message | Edit own message | Updated content |
 | CH-22 | Delete message | Delete own | Removed/hidden |
-| CH-156 | Delete message survives leave/reopen | Delete a message in Participants (GAME PRIVATE) or any thread → leave → reopen within ~30s | Message stays gone (local tombstone; not restored from cache / skipped sync pull) |
+| CH-156 | Delete message survives leave/reopen | Delete a message in Participants (GAME PRIVATE) or any thread → leave → reopen, including a cold reload, within the ~30s skip-pull window | Message stays gone (Dexie tombstone; skip-pull bypass survives reload; not restored from L1/HTTP) |
+| CH-157 | Failed delete restores message | Delete own message → non-retryable API error (not 404) | Message reappears immediately and after leave/reopen |
 | CH-23 | Reaction | Add reaction on user or system message (e.g. join/leave) | Reaction strip visible; emoji persists |
 | CH-24 | Pin message | Pin (if permitted) | Pinned bar shows |
 | CH-25 | Unpin message | Unpin | Bar updates |

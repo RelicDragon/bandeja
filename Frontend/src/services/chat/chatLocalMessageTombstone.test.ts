@@ -1,8 +1,11 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 import type { ChatMessage } from '@/api/chat';
 import {
+  clearChatMessageTombstone,
   clearMessageDeletedCaughtUpBypass,
+  forgetInMemoryMessageDeletedCaughtUpBypassForTests,
   noteMessageDeletedForCaughtUpPull,
+  persistSocketChatDeleted,
   preferDeletedAt,
   resetMessageDeletedCaughtUpBypassForTests,
   shouldBypassCaughtUpSyncPullForMessageDeleted,
@@ -10,6 +13,20 @@ import {
   tombstoneLocalRow,
 } from './chatLocalMessageTombstone';
 import type { ChatLocalRow } from './chatLocalDb';
+
+function stubSessionStorage(): void {
+  const values = new Map<string, string>();
+  vi.stubGlobal('sessionStorage', {
+    get length() {
+      return values.size;
+    },
+    clear: () => values.clear(),
+    getItem: (key: string) => values.get(key) ?? null,
+    key: (index: number) => [...values.keys()][index] ?? null,
+    removeItem: (key: string) => values.delete(key),
+    setItem: (key: string, value: string) => values.set(key, value),
+  } satisfies Storage);
+}
 
 function msg(id: string, deletedAt?: string | null): ChatMessage {
   return {
@@ -51,6 +68,14 @@ describe('tombstone helpers', () => {
     expect(out.id).toBe('m1');
   });
 
+  it('clears a tombstone so failed-delete restore can persist', () => {
+    const out = clearChatMessageTombstone(
+      tombstoneChatMessage(msg('m1'), '2026-01-01T03:00:00.000Z')
+    );
+    expect(out.deletedAt).toBeNull();
+    expect(out.id).toBe('m1');
+  });
+
   it('stamps deletedAt on a local row', () => {
     const payload = msg('m1');
     const row: ChatLocalRow = {
@@ -70,8 +95,11 @@ describe('tombstone helpers', () => {
 
 describe('MESSAGE_DELETED caught-up pull bypass', () => {
   beforeEach(() => {
+    stubSessionStorage();
     resetMessageDeletedCaughtUpBypassForTests();
   });
+
+  afterEach(() => vi.unstubAllGlobals());
 
   it('forces a pull when a delete has no syncSeq', () => {
     noteMessageDeletedForCaughtUpPull('GAME', 'g1');
@@ -88,5 +116,22 @@ describe('MESSAGE_DELETED caught-up pull bypass', () => {
     noteMessageDeletedForCaughtUpPull('GAME', 'g1', 20);
     clearMessageDeletedCaughtUpBypass('GAME', 'g1');
     expect(shouldBypassCaughtUpSyncPullForMessageDeleted('GAME', 'g1', 0)).toBe(false);
+  });
+
+  it('keeps the bypass after an in-memory drop (cold reload / sessionStorage)', () => {
+    noteMessageDeletedForCaughtUpPull('GAME', 'g1', 20);
+    forgetInMemoryMessageDeletedCaughtUpBypassForTests();
+    expect(shouldBypassCaughtUpSyncPullForMessageDeleted('GAME', 'g1', 19)).toBe(true);
+    expect(shouldBypassCaughtUpSyncPullForMessageDeleted('GAME', 'g1', 20)).toBe(false);
+  });
+
+  it('notes a skip-pull bypass from chat:deleted before Dexie write', () => {
+    persistSocketChatDeleted({
+      contextType: 'GAME',
+      contextId: 'g1',
+      messageId: 'm1',
+      syncSeq: 13,
+    });
+    expect(shouldBypassCaughtUpSyncPullForMessageDeleted('GAME', 'g1', 12)).toBe(true);
   });
 });

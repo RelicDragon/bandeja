@@ -5,7 +5,11 @@ import { chatApi, type ChatMessage, type ChatMessageWithStatus, type ChatContext
 import { usePlayersStore } from '@/store/playersStore';
 import { shouldQueueChatMutation, isRetryableMutationError } from '@/services/chat/chatMutationNetwork';
 import { OfflineIntent } from '@/services/chat/offlineIntent';
-import { putLocalMessage, markLocalMessageDeleted } from '@/services/chat/chatLocalApply';
+import {
+  putLocalMessage,
+  markLocalMessageDeleted,
+  restoreLocalMessageAfterFailedDelete,
+} from '@/services/chat/chatLocalApply';
 import { useReactionEmojiUsageStore } from '@/store/reactionEmojiUsageStore';
 import {
   reduceThreadLiveSnapshot,
@@ -244,7 +248,7 @@ export function useThreadReactions({
           type: 'hydrateSnapshot',
           messages: [removedSnapshot as ChatMessageWithStatus],
         });
-        void putLocalMessage(removedSnapshot);
+        void restoreLocalMessageAfterFailedDelete(removedSnapshot);
       };
       const deletedAt = new Date().toISOString();
       applyLiveEvent({
@@ -252,11 +256,11 @@ export function useThreadReactions({
         messageId,
         deletedAt,
       });
-      void markLocalMessageDeleted(
+      await markLocalMessageDeleted(
         messageId,
         deletedAt,
         id ? { contextType, contextId: id } : undefined
-      );
+      ).catch(() => {});
       if (shouldQueueChatMutation() && id) {
         try {
           await OfflineIntent.enqueue({ kind: 'delete', contextType, contextId: id, messageId });

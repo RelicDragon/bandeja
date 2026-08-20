@@ -1,7 +1,13 @@
 import type { ChatContextType, ChatMessage, MessageReaction } from '@/api/chat';
 import { chatLocalDb, type ChatLocalRow } from './chatLocalDb';
-import { noteMessageDeletedForCaughtUpPull, tombstoneChatMessage } from './chatLocalMessageTombstone';
+import {
+  clearChatMessageTombstone,
+  clearMessageDeletedCaughtUpBypass,
+  noteMessageDeletedForCaughtUpPull,
+  tombstoneChatMessage,
+} from './chatLocalMessageTombstone';
 import { patchThreadIndexAfterMessageDeleted, patchThreadIndexFromMessage } from './chatThreadIndex';
+import { mergeReadReceipts } from './mergeReadReceipts';
 import {
   bumpMessageContextHead,
   refreshMessageContextHeadAfterDelete,
@@ -107,6 +113,23 @@ export async function markLocalMessageDeleted(
   return enqueueChatLocalContextApply(peek.contextType, peek.contextId, () =>
     markLocalMessageDeletedDirect(messageId, deletedAtIso)
   );
+}
+
+export async function restoreLocalMessageAfterFailedDelete(message: ChatMessage): Promise<void> {
+  clearMessageDeletedCaughtUpBypass(message.chatContextType, message.contextId);
+  return enqueueChatLocalContextApply(message.chatContextType, message.contextId, async () => {
+    const existing = await chatLocalDb.messages.get(message.id);
+    const restored = clearChatMessageTombstone(message);
+    const readReceipts = existing
+      ? mergeReadReceipts(existing.payload.readReceipts ?? [], restored.readReceipts ?? [])
+      : restored.readReceipts ?? [];
+    const row = rowFromMessage({ ...restored, readReceipts });
+    await putChatLocalRowsWithSearchTokens([row]);
+    if (!isChatLocalIndexingSuppressed()) {
+      void bumpMessageContextHead(row).catch(() => {});
+      void patchThreadIndexFromMessage(row.payload).catch(() => {});
+    }
+  });
 }
 
 export async function applyLocalMessageEditOptimistic(
