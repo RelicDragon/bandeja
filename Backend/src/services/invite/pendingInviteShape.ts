@@ -1,4 +1,37 @@
+import { USER_SELECT_WITH_SPORT_PROFILES } from '../../utils/constants';
 import { projectUserForSportContext } from '../user/userSportProfile.service';
+
+export const inboxInviteGameSelect = {
+  id: true,
+  name: true,
+  gameType: true,
+  startTime: true,
+  endTime: true,
+  maxParticipants: true,
+  minParticipants: true,
+  minLevel: true,
+  maxLevel: true,
+  isPublic: true,
+  affectsRating: true,
+  hasBookedCourt: true,
+  afterGameGoToBar: true,
+  hasFixedTeams: true,
+  teamsReady: true,
+  participantsReady: true,
+  status: true,
+  resultsStatus: true,
+  entityType: true,
+  genderTeams: true,
+  sport: true,
+  court: { select: { id: true, name: true, club: { select: { id: true, name: true, avatar: true } } } },
+  club: { select: { id: true, name: true, avatar: true } },
+  participants: {
+    include: {
+      user: { select: USER_SELECT_WITH_SPORT_PROFILES },
+      invitedByUser: { select: USER_SELECT_WITH_SPORT_PROFILES },
+    },
+  },
+} as const;
 
 export function mapInvitedParticipantToInboxInvite(participant: {
   id: string;

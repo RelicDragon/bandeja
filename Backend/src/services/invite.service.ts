@@ -19,7 +19,7 @@ import { ParticipantMessageHelper } from './game/participantMessageHelper';
 import { PlayIntentGameLifecycleService } from './playIntent/playIntentGameLifecycle.service';
 import { publishCommittedPlayIntentStatusChanges } from './playIntent/playIntentRealtime';
 import { isInviteInboxVisible } from '../utils/gameInviteInbox';
-import { mapInvitedParticipantToInboxInvite } from './invite/pendingInviteShape';
+import { inboxInviteGameSelect, mapInvitedParticipantToInboxInvite } from './invite/pendingInviteShape';
 
 export interface InviteActionResult {
   success: boolean;
@@ -119,37 +119,7 @@ export class InviteService {
         user: { select: USER_SELECT_WITH_SPORT_PROFILES },
         invitedByUser: { select: USER_SELECT_WITH_SPORT_PROFILES },
         game: {
-          select: {
-            id: true,
-            name: true,
-            gameType: true,
-            startTime: true,
-            endTime: true,
-            maxParticipants: true,
-            minParticipants: true,
-            minLevel: true,
-            maxLevel: true,
-            isPublic: true,
-            affectsRating: true,
-            hasBookedCourt: true,
-            afterGameGoToBar: true,
-            hasFixedTeams: true,
-            teamsReady: true,
-            participantsReady: true,
-            status: true,
-            resultsStatus: true,
-            entityType: true,
-            genderTeams: true,
-            sport: true,
-            court: { select: { id: true, name: true, club: { select: { id: true, name: true, avatar: true } } } },
-            club: { select: { id: true, name: true, avatar: true } },
-            participants: {
-              include: {
-                user: { select: USER_SELECT_WITH_SPORT_PROFILES },
-                invitedByUser: { select: USER_SELECT_WITH_SPORT_PROFILES },
-              },
-            },
-          },
+          select: inboxInviteGameSelect,
         },
       },
       orderBy: { joinedAt: 'desc' },

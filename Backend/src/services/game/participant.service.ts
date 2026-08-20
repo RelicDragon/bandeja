@@ -22,11 +22,11 @@ import {
 import { BetService } from '../bets/bet.service';
 import { removeUserFromGameFixedTeams } from './fixedTeamsCleanup';
 import { applyUserTeamToFixedTeamsIfReady } from './userTeamFixedTeams.service';
-import { projectUserForSportContext } from '../user/userSportProfile.service';
 import { syncParticipantShowInStoriesSideEffects } from '../story/participantShowInStories.sync';
 import { PlayIntentGameLifecycleService } from '../playIntent/playIntentGameLifecycle.service';
 import { publishCommittedPlayIntentStatusChanges } from '../playIntent/playIntentRealtime';
 import { schedulePendingInviteSlotOpenNotify } from '../invite/pendingInviteSlotOpen.service';
+import { inboxInviteGameSelect, mapInvitedParticipantToInboxInvite } from '../invite/pendingInviteShape';
 
 const PLAYING_STATUS = 'PLAYING' as const;
 const IN_QUEUE_STATUS = 'IN_QUEUE' as const;
@@ -777,52 +777,13 @@ export class ParticipantService {
           user: { select: USER_SELECT_WITH_SPORT_PROFILES },
           invitedByUser: { select: USER_SELECT_WITH_SPORT_PROFILES },
           game: {
-            select: {
-              id: true,
-              name: true,
-              gameType: true,
-              startTime: true,
-              endTime: true,
-              maxParticipants: true,
-              minParticipants: true,
-              minLevel: true,
-              maxLevel: true,
-              isPublic: true,
-              affectsRating: true,
-              hasBookedCourt: true,
-              afterGameGoToBar: true,
-              hasFixedTeams: true,
-              teamsReady: true,
-              participantsReady: true,
-              status: true,
-              resultsStatus: true,
-              entityType: true,
-              sport: true,
-              court: { select: { id: true, name: true, club: { select: { id: true, name: true, avatar: true } } } },
-              club: { select: { id: true, name: true, avatar: true } },
-            },
+            select: inboxInviteGameSelect,
           },
         },
       });
     });
 
-    const sport = participant.game.sport;
-    const invite = {
-      id: participant.id,
-      receiverId: participant.userId,
-      gameId: participant.gameId,
-      status: 'PENDING',
-      message: participant.inviteMessage,
-      expiresAt: participant.inviteExpiresAt,
-      createdAt: participant.joinedAt,
-      updatedAt: participant.joinedAt,
-      receiver: projectUserForSportContext(participant.user, sport),
-      sender: {
-        ...projectUserForSportContext(participant.invitedByUser, sport),
-        sportProfiles: participant.invitedByUser?.sportProfiles,
-      },
-      game: participant.game,
-    };
+    const invite = mapInvitedParticipantToInboxInvite(participant);
     return { participant, invite };
   }
 

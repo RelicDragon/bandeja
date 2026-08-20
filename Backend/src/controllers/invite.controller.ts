@@ -8,11 +8,12 @@ import { USER_SELECT_WITH_SPORT_PROFILES } from '../utils/constants';
 import { appendGameLog } from '../services/game/gameLog.service';
 import notificationService from '../services/notification.service';
 import { InviteService } from '../services/invite.service';
+import { inboxInviteGameSelect, mapInvitedParticipantToInboxInvite } from '../services/invite/pendingInviteShape';
 import { hasParentGamePermission, hasRealParticipantStatus } from '../utils/parentGamePermissions';
 import { ParticipantService } from '../services/game/participant.service';
 import { ParticipantMessageHelper } from '../services/game/participantMessageHelper';
 import { GameReadService, participantsToInviteShape } from '../services/game/read.service';
-import { projectUserForSportContext } from '../services/user/userSportProfile.service';
+import { isInviteInboxVisible } from '../utils/gameInviteInbox';
 
 export const sendInvite = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { receiverId, gameId, message, expiresAt, asTrainer, inviteUserTeamId } = req.body;
@@ -75,62 +76,15 @@ export const sendInvite = asyncHandler(async (req: AuthRequest, res: Response) =
         user: { select: USER_SELECT_WITH_SPORT_PROFILES },
         invitedByUser: { select: USER_SELECT_WITH_SPORT_PROFILES },
         game: {
-          select: {
-            id: true,
-            name: true,
-            gameType: true,
-            startTime: true,
-            endTime: true,
-            maxParticipants: true,
-            minParticipants: true,
-            minLevel: true,
-            maxLevel: true,
-            isPublic: true,
-            affectsRating: true,
-            hasBookedCourt: true,
-            afterGameGoToBar: true,
-            hasFixedTeams: true,
-            teamsReady: true,
-            participantsReady: true,
-            status: true,
-            resultsStatus: true,
-            entityType: true,
-            sport: true,
-            court: { select: { id: true, name: true, club: { select: { id: true, name: true, avatar: true } } } },
-            club: { select: { id: true, name: true, avatar: true } },
-            participants: {
-              include: {
-                user: { select: USER_SELECT_WITH_SPORT_PROFILES },
-                invitedByUser: { select: USER_SELECT_WITH_SPORT_PROFILES },
-              },
-            },
-          },
+          select: inboxInviteGameSelect,
         },
       },
     });
     if (existingInvited) {
-      const sport = existingInvited.game.sport;
-      const inviteShape = {
-        id: existingInvited.id,
-        receiverId: existingInvited.userId,
-        gameId: existingInvited.gameId,
-        status: 'PENDING',
-        message: existingInvited.inviteMessage,
-        expiresAt: existingInvited.inviteExpiresAt,
-        createdAt: existingInvited.joinedAt,
-        updatedAt: existingInvited.joinedAt,
-        receiver: projectUserForSportContext(existingInvited.user, sport),
-        sender: projectUserForSportContext(existingInvited.invitedByUser, sport),
-        game: {
-          ...existingInvited.game,
-          participants: existingInvited.game.participants.map((participant) => ({
-            ...participant,
-            user: projectUserForSportContext(participant.user, sport),
-            invitedByUser: projectUserForSportContext(participant.invitedByUser, sport),
-          })),
-        },
-      };
-      return res.status(200).json({ success: true, data: inviteShape });
+      return res.status(200).json({
+        success: true,
+        data: mapInvitedParticipantToInboxInvite(existingInvited),
+      });
     }
 
     const existingParticipant = await prisma.gameParticipant.findFirst({
@@ -197,7 +151,7 @@ export const sendInvite = asyncHandler(async (req: AuthRequest, res: Response) =
   }
 
   // Emit notification to receiver via Socket.IO
-  if ((global as any).socketService) {
+  if ((global as any).socketService && isInviteInboxVisible(invite)) {
     (global as any).socketService.emitNewInvite(receiverId, invite);
   }
 

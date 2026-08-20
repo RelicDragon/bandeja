@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   countPlayingParticipants,
@@ -96,5 +98,11 @@ describe('gameInviteInbox', () => {
       now,
     );
     expect(invites.map((invite) => invite.id)).toEqual(['shown']);
+  });
+
+  it('keeps FE/BE gameInviteInbox sources identical', () => {
+    const feSrc = readFileSync(join(__dirname, './gameInviteInbox.ts'), 'utf8');
+    const beSrc = readFileSync(join(__dirname, '../../../Backend/src/utils/gameInviteInbox.ts'), 'utf8');
+    expect(feSrc.replace(/\s+/g, '')).toBe(beSrc.replace(/\s+/g, ''));
   });
 });

@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import {
   countPlayingParticipants,
   didPlayingSlotOpen,
@@ -159,6 +161,16 @@ const invited = { status: 'INVITED' as const };
     }).map((invite) => invite.id),
     [],
     'MIX_PAIRS gender-slot notify requires the leaving player gender',
+  );
+}
+
+{
+  const feSrc = readFileSync(join(__dirname, '../../../Frontend/src/utils/gameInviteInbox.ts'), 'utf8');
+  const beSrc = readFileSync(join(__dirname, './gameInviteInbox.ts'), 'utf8');
+  assert.equal(
+    feSrc.replace(/\s+/g, ''),
+    beSrc.replace(/\s+/g, ''),
+    'FE/BE gameInviteInbox source must stay in lockstep',
   );
 }
 

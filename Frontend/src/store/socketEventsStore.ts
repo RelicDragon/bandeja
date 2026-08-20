@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { socketService } from '@/services/socketService';
 import { invitesApi } from '@/api';
+import { countPendingInvites } from '@/services/myTabCacheReader';
+import { isInviteInboxVisible } from '@/utils/gameInviteInbox';
 import { useHeaderStore } from './headerStore';
 import { useAuthStore } from './authStore';
 import { usePresenceStore } from './presenceStore';
@@ -416,10 +418,11 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
       if (get().initialized) return;
 
       const handleNewInvite = (invite: Invite) => {
-        const { setPendingInvites, triggerNewInviteAnimation } = useHeaderStore.getState();
-        const currentCount = useHeaderStore.getState().pendingInvites;
-        setPendingInvites(currentCount + 1);
-        triggerNewInviteAnimation();
+        if (isInviteInboxVisible(invite)) {
+          const { setPendingInvites, triggerNewInviteAnimation } = useHeaderStore.getState();
+          setPendingInvites(useHeaderStore.getState().pendingInvites + 1);
+          triggerNewInviteAnimation();
+        }
         set({ lastNewInvite: invite });
       };
 
@@ -611,7 +614,7 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
           syncRequiredEpoch: s.syncRequiredEpoch + 1,
         }));
         invitesApi.getMyInvites('PENDING')
-          .then((res) => useHeaderStore.getState().setPendingInvitesFromServer(res.data.length))
+          .then((res) => useHeaderStore.getState().setPendingInvitesFromServer(countPendingInvites(res.data)))
           .catch(() => {});
       };
 
