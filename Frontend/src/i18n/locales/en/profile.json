@@ -311,6 +311,7 @@
     "monday": "Monday",
     "sunday": "Sunday",
     "currency": "Currency",
+    "currencyAuto": "Detect automatically",
     "timeFormat12h": "12-hour",
     "timeFormat24h": "24-hour",
     "noLeaderboardData": "No leaderboard data available",

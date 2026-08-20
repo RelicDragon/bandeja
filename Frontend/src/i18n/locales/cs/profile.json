@@ -310,6 +310,7 @@
     "monday": "Pondělí",
     "sunday": "Neděle",
     "currency": "Měna",
+    "currencyAuto": "Rozpoznat automaticky",
     "timeFormat12h": "12hodinový",
     "timeFormat24h": "24hodinový",
     "characterGenerator": "Generátor postav",

@@ -29,6 +29,7 @@ function testEurozoneAndLocals(): void {
   assert.equal(currencyFromCityCountry('UK'), 'GBP');
   assert.equal(currencyFromCityCountry('United States'), 'USD');
   assert.equal(currencyFromCityCountry('Czech Republic'), 'CZK');
+  assert.equal(currencyFromCityCountry('Czechia'), 'CZK');
   assert.equal(currencyFromCityCountry('Poland'), 'PLN');
   assert.equal(currencyFromCityCountry('Switzerland'), 'CHF');
   assert.equal(currencyFromCityCountry('Ecuador'), 'USD');

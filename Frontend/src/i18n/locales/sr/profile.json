@@ -310,6 +310,7 @@
     "monday": "Ponedeljak",
     "sunday": "Nedelja",
     "currency": "Valuta",
+    "currencyAuto": "Otkrij automatski",
     "timeFormat12h": "12-časovni",
     "timeFormat24h": "24-časovni",
     "characterGenerator": "Generator karaktera",

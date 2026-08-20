@@ -310,6 +310,7 @@
     "monday": "Понедельник",
     "sunday": "Воскресенье",
     "currency": "Валюта",
+    "currencyAuto": "Определять автоматически",
     "timeFormat12h": "12-часовой",
     "timeFormat24h": "24-часовой",
     "characterGenerator": "Генератор персонажей",

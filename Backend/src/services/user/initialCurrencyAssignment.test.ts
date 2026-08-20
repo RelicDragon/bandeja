@@ -50,6 +50,10 @@ function testOtherCountriesGetLocalCurrency(): void {
     resolveInitialDefaultCurrency({ currentCurrency: 'EUR', cityCountry: 'France' }),
     'EUR',
   );
+  assert.equal(
+    resolveInitialDefaultCurrency({ currentCurrency: 'EUR', cityCountry: 'Czechia' }),
+    'CZK',
+  );
 }
 
 function testUserChosenCurrencyIsKept(): void {
@@ -72,10 +76,60 @@ function testFirstCityConfirmOverwritesBootstrapCurrency(): void {
     resolveInitialDefaultCurrency({ currentCurrency: 'HUF', cityCountry: 'Serbia' }),
     undefined,
   );
-  assert.equal(resolveCurrencyForFirstCityConfirm('Serbia'), 'RSD');
-  assert.equal(resolveCurrencyForFirstCityConfirm('Hungary'), 'HUF');
-  assert.equal(resolveCurrencyForFirstCityConfirm('United Kingdom'), 'GBP');
-  assert.equal(resolveCurrencyForFirstCityConfirm('Atlantis'), undefined);
+  assert.equal(
+    resolveCurrencyForFirstCityConfirm({
+      currentCurrency: 'HUF',
+      previousCityCountry: 'Hungary',
+      cityCountry: 'Serbia',
+    }),
+    'RSD',
+  );
+  assert.equal(
+    resolveCurrencyForFirstCityConfirm({
+      currentCurrency: 'EUR',
+      previousCityCountry: 'France',
+      cityCountry: 'Hungary',
+    }),
+    'HUF',
+  );
+  assert.equal(
+    resolveCurrencyForFirstCityConfirm({
+      currentCurrency: 'EUR',
+      cityCountry: 'United Kingdom',
+    }),
+    'GBP',
+  );
+  assert.equal(
+    resolveCurrencyForFirstCityConfirm({ cityCountry: 'Atlantis' }),
+    undefined,
+  );
+}
+
+function testFirstCityConfirmKeepsProfilePick(): void {
+  assert.equal(
+    resolveCurrencyForFirstCityConfirm({
+      currentCurrency: 'USD',
+      previousCityCountry: 'Hungary',
+      cityCountry: 'Serbia',
+    }),
+    undefined,
+  );
+  assert.equal(
+    resolveCurrencyForFirstCityConfirm({
+      currentCurrency: 'EUR',
+      previousCityCountry: 'Serbia',
+      cityCountry: 'France',
+    }),
+    undefined,
+  );
+  assert.equal(
+    resolveCurrencyForFirstCityConfirm({
+      currentCurrency: 'RSD',
+      previousCityCountry: 'Serbia',
+      cityCountry: 'France',
+    }),
+    'EUR',
+  );
 }
 
 testEurDefaultDoesNotBlockCityCurrency();
@@ -84,4 +138,5 @@ testCityWinsOverGeo();
 testOtherCountriesGetLocalCurrency();
 testUserChosenCurrencyIsKept();
 testFirstCityConfirmOverwritesBootstrapCurrency();
+testFirstCityConfirmKeepsProfilePick();
 console.log('initialCurrencyAssignment.test: ok');

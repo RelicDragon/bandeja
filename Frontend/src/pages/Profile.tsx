@@ -1353,7 +1353,7 @@ export const ProfileContent = () => {
               </label>
               <Select
                 options={[
-                  { value: 'auto', label: t('profile.auto') || 'Auto', icon: <Globe size={16} className="text-gray-900 dark:text-white" /> },
+                  { value: 'auto', label: t('profile.currencyAuto'), icon: <Globe size={16} className="text-gray-900 dark:text-white" /> },
                   ...getCurrencyOptions().map(curr => ({
                     value: curr.value,
                     label: `${curr.value} (${getCurrencySymbol(curr.value)}) - ${curr.label.split(' - ')[1]}`

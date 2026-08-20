@@ -305,6 +305,7 @@
     "monday": "Lunes",
     "sunday": "Domingo",
     "currency": "Moneda",
+    "currencyAuto": "Detectar automáticamente",
     "timeFormat12h": "12 horas",
     "timeFormat24h": "24 horas",
     "characterGenerator": "Generador de Personajes",

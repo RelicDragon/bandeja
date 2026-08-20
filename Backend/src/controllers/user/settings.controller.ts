@@ -58,21 +58,32 @@ export const switchCity = asyncHandler(async (req: AuthRequest, res: Response) =
   const { cityId } = req.body as { cityId: string };
   const userId = req.userId!;
 
-  const currentUser = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { currentCityId: true, cityIsSet: true },
-  });
+  const [currentUser, city] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        currentCityId: true,
+        cityIsSet: true,
+        defaultCurrency: true,
+        currentCity: { select: { country: true } },
+      },
+    }),
+    prisma.city.findUnique({
+      where: { id: cityId },
+      select: { country: true },
+    }),
+  ]);
   const previousCityId = currentUser?.currentCityId ?? null;
 
   await CityGroupService.ensureCityGroupExists(cityId);
   await CityGroupService.addUserToCityGroup(userId, cityId, { mute: true, pin: true });
 
-  const city = await prisma.city.findUnique({
-    where: { id: cityId },
-    select: { country: true },
-  });
   const initialCurrency = !currentUser?.cityIsSet
-    ? resolveCurrencyForFirstCityConfirm(city?.country)
+    ? resolveCurrencyForFirstCityConfirm({
+        currentCurrency: currentUser?.defaultCurrency,
+        cityCountry: city?.country,
+        previousCityCountry: currentUser?.currentCity?.country,
+      })
     : undefined;
 
   const user = await prisma.user.update({
