@@ -4,6 +4,7 @@ import {
   avatarImageOnError,
   avatarImageSrcToLoad,
 } from '@/utils/userAvatarImageFallback';
+import { UserAvatarFallbackImg } from './UserAvatarFallbackImg';
 
 type PlayerAvatarFaceProps = {
   avatar?: string | null;
@@ -41,7 +42,7 @@ export function PlayerAvatarFace({
 
   return (
     <div className="absolute inset-0 w-full h-full rounded-full overflow-hidden [&>div]:w-full [&>div]:h-full">
-      <img
+      <UserAvatarFallbackImg
         src={src}
         alt={alt}
         className="w-full h-full object-cover"

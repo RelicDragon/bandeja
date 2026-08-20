@@ -10,6 +10,7 @@ import {
   avatarImageSrcToLoad,
 } from '@/utils/userAvatarImageFallback';
 import { TeamAvatarParticipantTipShell } from '@/components/TeamAvatarParticipantTipShell';
+import { UserAvatarFallbackImg } from '@/components/UserAvatarFallbackImg';
 
 function SoloFace({
   user,
@@ -40,7 +41,7 @@ function SoloFace({
     return initials;
   }
   return (
-    <img
+    <UserAvatarFallbackImg
       src={src}
       alt=""
       className="h-full w-full object-cover"
@@ -79,7 +80,7 @@ function SplitFaceHalf({
       }}
     >
       {src ? (
-        <img
+        <UserAvatarFallbackImg
           src={src}
           alt=""
           className="h-full w-full object-cover"
@@ -131,7 +132,7 @@ export function TeamAvatar({ team, size = 'hero', className = '', showRing, part
   if (team.avatar && !customAvatarFailed) {
     const inner = (
       <div className={wrapCls}>
-        <img
+        <UserAvatarFallbackImg
           src={team.avatar}
           alt=""
           className="h-full w-full object-cover"
