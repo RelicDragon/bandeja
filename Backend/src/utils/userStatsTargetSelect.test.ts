@@ -24,6 +24,23 @@ for (const field of PREFERENCE_FLAGS) {
   assert.equal(userSelectBlock.includes(`${field}: true`), false, `${field} stays off USER_SELECT_FIELDS`);
 }
 
+for (const field of [
+  'phone',
+  'email',
+  'wallet',
+  'appleSub',
+  'googleId',
+  'allowMessagesFromNonContacts',
+  'showOnlineStatus',
+  'notificationPreferences',
+] as const) {
+  assert.equal(
+    statsBlock.includes(`${field}:`),
+    false,
+    `${field} stays off public USER_STATS_TARGET_SELECT`,
+  );
+}
+
 const controllerSrc = readFileSync(join(__dirname, '../controllers/user/stats.controller.ts'), 'utf8');
 assert.match(controllerSrc, /select:\s*USER_STATS_TARGET_SELECT/);
 assert.match(controllerSrc, /projectUserForSportContext\(user,/);

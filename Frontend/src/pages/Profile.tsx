@@ -19,6 +19,10 @@ import { useAuthStore } from '@/store/authStore';
 import { useThemeStore } from '@/store/themeStore';
 import { useShellNavStore } from '@/store/shellNavStore';
 import { usersApi, mediaApi, authApi, NotificationPreference } from '@/api';
+import type { UserStats } from '@/api/users';
+import { patchUserStatsPreferenceFlags } from '@/components/playerProfile/patchUserStatsPreferenceFlags';
+import { queryClient } from '@/queries/queryClient';
+import { queryKeys } from '@/queries/queryKeys';
 import { signInWithApple } from '@/services/appleAuth.service';
 import { signInWithGoogle } from '@/services/googleAuth.service';
 import { extractApiErrorMessage } from '@/utils/extractApiErrorMessage';
@@ -138,6 +142,10 @@ export const ProfileContent = () => {
       const response = await usersApi.updateProfile(updates);
       console.log(response.data);
       updateUser(response.data);
+      queryClient.setQueriesData<UserStats>(
+        { queryKey: queryKeys.userStatsAll(response.data.id) },
+        (prev) => (prev ? patchUserStatsPreferenceFlags(prev, response.data) : prev),
+      );
     } catch (error: any) {
       toast.error(error.response?.data?.message || t('errors.generic'));
     }

@@ -9,14 +9,14 @@ export interface PreferenceLrChipProps {
 
 export function PreferenceLrChip({ selected, label, title, testId }: PreferenceLrChipProps) {
   return (
-    <div
+    <span
       className={getPreferenceChipClassName(selected)}
       title={title}
-      aria-pressed={selected}
+      aria-hidden="true"
       data-testid={testId}
       data-selected={selected ? 'true' : 'false'}
     >
-      <span className="text-[8px] font-semibold leading-none truncate">{label}</span>
-    </div>
+      <span className="text-[10px] font-semibold leading-none truncate">{label}</span>
+    </span>
   );
 }

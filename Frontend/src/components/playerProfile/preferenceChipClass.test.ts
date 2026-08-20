@@ -17,7 +17,7 @@ describe('getPreferenceChipClassName', () => {
     const className = getPreferenceChipClassName(false);
     expect(className).toContain(PREFERENCE_CHIP_UNSET_CLASS);
     expect(className).toContain('border-dashed');
-    expect(className).not.toContain('bg-blue-500');
+    expect(className).not.toContain('bg-blue-600');
     expect(className).not.toContain(PREFERENCE_CHIP_SELECTED_CLASS);
   });
 });

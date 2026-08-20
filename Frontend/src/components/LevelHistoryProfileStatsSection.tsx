@@ -28,6 +28,7 @@ export const LevelHistoryProfileStatsSection = ({ user, followersCount, followin
           <span className="text-xs text-gray-500 dark:text-gray-400">{t('profile.preferredHand')}</span>
           <PreferenceLrChipPair
             group="hand"
+            groupLabel={t('profile.preferredHand')}
             left={user.preferredHandLeft}
             right={user.preferredHandRight}
             leftLabel={t('profile.leftShort')}
@@ -40,6 +41,7 @@ export const LevelHistoryProfileStatsSection = ({ user, followersCount, followin
           <span className="text-xs text-gray-500 dark:text-gray-400">{t('profile.preferredCourtSide')}</span>
           <PreferenceLrChipPair
             group="courtSide"
+            groupLabel={t('profile.preferredCourtSide')}
             left={user.preferredCourtSideLeft}
             right={user.preferredCourtSideRight}
             leftLabel={t('profile.leftShort')}

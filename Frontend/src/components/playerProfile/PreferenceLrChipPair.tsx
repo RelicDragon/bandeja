@@ -1,8 +1,9 @@
 import { PreferenceLrChip } from './PreferenceLrChip';
-import { resolvePreferenceChipSelection } from './preferencePair';
+import { preferenceGroupAriaLabel, resolvePreferenceChipSelection } from './preferencePair';
 
 export interface PreferenceLrChipPairProps {
   group: 'hand' | 'courtSide';
+  groupLabel: string;
   left: boolean | undefined;
   right: boolean | undefined;
   leftLabel: string;
@@ -13,6 +14,7 @@ export interface PreferenceLrChipPairProps {
 
 export function PreferenceLrChipPair({
   group,
+  groupLabel,
   left,
   right,
   leftLabel,
@@ -23,7 +25,11 @@ export function PreferenceLrChipPair({
   const selection = resolvePreferenceChipSelection({ left, right });
 
   return (
-    <div className="flex gap-1">
+    <div
+      className="flex gap-1"
+      role="group"
+      aria-label={preferenceGroupAriaLabel(groupLabel, leftTitle, rightTitle, selection)}
+    >
       <PreferenceLrChip
         selected={selection.leftSelected}
         label={leftLabel}

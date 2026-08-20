@@ -15,3 +15,16 @@ export function resolvePreferenceChipSelection(pair: PreferencePair): Preference
     rightSelected: pair.right === true,
   };
 }
+
+export function preferenceGroupAriaLabel(
+  groupLabel: string,
+  leftTitle: string,
+  rightTitle: string,
+  selection: PreferenceChipSelection,
+): string {
+  const selected = [
+    selection.leftSelected ? leftTitle : null,
+    selection.rightSelected ? rightTitle : null,
+  ].filter((title): title is string => title != null);
+  return selected.length > 0 ? `${groupLabel}: ${selected.join(', ')}` : groupLabel;
+}

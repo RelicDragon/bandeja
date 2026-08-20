@@ -27,8 +27,10 @@ describe('LevelHistoryProfileStatsSection', () => {
     expect(html).toMatch(/data-testid="preference-chip-hand-right"[^>]*data-selected="false"/);
     expect(html).toMatch(/data-testid="preference-chip-courtSide-left"[^>]*data-selected="true"/);
     expect(html).toMatch(/data-testid="preference-chip-courtSide-right"[^>]*data-selected="false"/);
-    expect(html).toContain('bg-blue-500');
+    expect(html).toContain('bg-blue-600');
     expect(html).toContain('border-dashed');
+    expect(html).toContain('aria-label="profile.preferredHand: profile.left"');
+    expect(html).toContain('aria-label="profile.preferredCourtSide: profile.left"');
   });
 
   it('treats omitted public-stats flags as unset, not both-on', () => {
@@ -36,7 +38,7 @@ describe('LevelHistoryProfileStatsSection', () => {
       <LevelHistoryProfileStatsSection user={{}} followersCount={0} followingCount={0} />,
     );
     expect(html).not.toContain('data-selected="true"');
-    expect(html).not.toContain('bg-blue-500');
+    expect(html).not.toContain('bg-blue-600');
     expect(html).toContain('border-dashed');
   });
 });
