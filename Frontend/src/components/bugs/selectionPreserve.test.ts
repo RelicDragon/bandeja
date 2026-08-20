@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   LAYOUT_JITTER_WINDOW_MS,
   SKIP_CARET_FOLLOW_SCROLL_ATTR,
+  VALUE_COMMIT_WINDOW_MS,
   applyTextSelection,
   clampSelection,
   isSpuriousStartJump,
@@ -36,6 +37,25 @@ describe('shouldRestoreSelection', () => {
   it('is false when the caret already matches', () => {
     expect(shouldRestoreSelection({ start: 3, end: 5 }, { start: 3, end: 5 })).toBe(false);
   });
+
+  it('on iOS restores only a snap to the start', () => {
+    expect(
+      shouldRestoreSelection({ start: 0, end: 0 }, { start: 7, end: 7 }, { platform: 'ios' }),
+    ).toBe(true);
+    expect(
+      shouldRestoreSelection({ start: 6, end: 6 }, { start: 2, end: 2 }, { platform: 'ios' }),
+    ).toBe(false);
+  });
+
+  it('on iOS does not restore while the user is selecting', () => {
+    expect(
+      shouldRestoreSelection(
+        { start: 0, end: 0 },
+        { start: 7, end: 7 },
+        { platform: 'ios', userSelecting: true },
+      ),
+    ).toBe(false);
+  });
 });
 
 describe('isSpuriousStartJump', () => {
@@ -49,6 +69,10 @@ describe('isSpuriousStartJump', () => {
 
   it('does not treat a non-zero selection as a start jump', () => {
     expect(isSpuriousStartJump({ start: 0, end: 4 }, { start: 9, end: 9 })).toBe(false);
+  });
+
+  it('does not treat a one-character drag to the start as a snap', () => {
+    expect(isSpuriousStartJump({ start: 0, end: 0 }, { start: 1, end: 1 })).toBe(false);
   });
 });
 
@@ -96,6 +120,42 @@ describe('shouldAdoptIncomingSelection', () => {
       }),
     ).toBe(true);
   });
+
+  it('adopts a drag to the start during jitter when the user is selecting', () => {
+    expect(
+      shouldAdoptIncomingSelection({
+        incoming: { start: 0, end: 0 },
+        previous: { start: 11, end: 11 },
+        valueChanged: false,
+        msSinceLayoutJitter: 16,
+        userSelecting: true,
+      }),
+    ).toBe(true);
+  });
+
+  it('rejects a jump to the start shortly after a value commit', () => {
+    expect(
+      shouldAdoptIncomingSelection({
+        incoming: { start: 0, end: 0 },
+        previous: { start: 12, end: 12 },
+        valueChanged: false,
+        msSinceLayoutJitter: 10_000,
+        msSinceValueCommit: 16,
+      }),
+    ).toBe(false);
+  });
+
+  it('adopts a jump to the start after the value-commit window', () => {
+    expect(
+      shouldAdoptIncomingSelection({
+        incoming: { start: 0, end: 0 },
+        previous: { start: 12, end: 12 },
+        valueChanged: false,
+        msSinceLayoutJitter: 10_000,
+        msSinceValueCommit: VALUE_COMMIT_WINDOW_MS + 1,
+      }),
+    ).toBe(true);
+  });
 });
 
 describe('nextPreservedSelection', () => {
@@ -131,6 +191,31 @@ describe('nextPreservedSelection', () => {
       }),
     ).toEqual({ start: 8, end: 8 });
   });
+
+  it('adopts the last step of a drag to the start during jitter', () => {
+    expect(
+      nextPreservedSelection({
+        incoming: { start: 0, end: 0 },
+        previous: { start: 1, end: 1 },
+        valueChanged: false,
+        msSinceLayoutJitter: 10,
+      }),
+    ).toEqual({ start: 0, end: 0 });
+  });
+
+  it('keeps the typed caret when Android resets after a controlled commit', () => {
+    const incoming = { start: 0, end: 0 };
+    const previous = { start: 12, end: 12 };
+    const next = nextPreservedSelection({
+      incoming,
+      previous,
+      valueChanged: false,
+      msSinceLayoutJitter: 10_000,
+      msSinceValueCommit: 16,
+    });
+    expect(next).toEqual(previous);
+    expect(shouldRestoreSelection(incoming, next)).toBe(true);
+  });
 });
 
 describe('readTextSelection / applyTextSelection', () => {
@@ -146,6 +231,13 @@ describe('readTextSelection / applyTextSelection', () => {
     );
     expect(next).toEqual({ start: 2, end: 5 });
     expect(setSelectionRange).toHaveBeenCalledWith(2, 5);
+  });
+
+  it('clears horizontal scroll after applying selection', () => {
+    const setSelectionRange = vi.fn();
+    const el = { value: 'hello', setSelectionRange, scrollLeft: 40 };
+    applyTextSelection(el, { start: 2, end: 2 });
+    expect(el.scrollLeft).toBe(0);
   });
 });
 
@@ -163,5 +255,12 @@ describe('shouldSkipCaretFollowScroll', () => {
 describe('LAYOUT_JITTER_WINDOW_MS', () => {
   it('covers the keyboard dialog CSS shift', () => {
     expect(LAYOUT_JITTER_WINDOW_MS).toBeGreaterThanOrEqual(250);
+  });
+});
+
+describe('VALUE_COMMIT_WINDOW_MS', () => {
+  it('is shorter than layout jitter so tap-to-start after typing is not swallowed', () => {
+    expect(VALUE_COMMIT_WINDOW_MS).toBeGreaterThan(0);
+    expect(VALUE_COMMIT_WINDOW_MS).toBeLessThan(LAYOUT_JITTER_WINDOW_MS);
   });
 });
