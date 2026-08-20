@@ -2,6 +2,11 @@ import prisma from '../config/database';
 import { Sport, ResultsStatus } from '@prisma/client';
 import { USER_SELECT_FIELDS, USER_SPORT_PROFILE_SELECT } from '../utils/constants';
 import { resolveUserSportSnapshot } from './user/userSportProfile.service';
+import {
+  orderRatingLeaderboard,
+  qualifiesForRatingRank,
+  ratingLeaderboardActivitySince,
+} from './ranking/ratingLeaderboardQualify';
 
 export type LeaderboardTieBreak = 'totalPoints' | 'gamesWon';
 
@@ -62,7 +67,46 @@ export const calculateRanks = (
   return rankMap;
 };
 
+type RatingLeaderboardCandidate = {
+  id: string;
+  level: number;
+  reliability: number;
+  gamesWon: number;
+  gamesPlayed: number;
+};
+
 export class RankingService {
+  static async qualifyAndRankRatingLeaderboard<T extends RatingLeaderboardCandidate>(
+    users: T[],
+    sportForUser: (user: T) => Sport,
+  ): Promise<{
+    users: Array<T & { qualifiesForRating: boolean }>;
+    rankMap: Map<string, number>;
+  }> {
+    const recentRatedUserIds = await RankingService.getUserIdsWithRatedGameSinceBySport(
+      users.map((user) => ({ userId: user.id, sport: sportForUser(user) })),
+      ratingLeaderboardActivitySince(),
+    );
+    const ordered = orderRatingLeaderboard(
+      users.map((user) => ({
+        ...user,
+        qualifiesForRating: qualifiesForRatingRank({
+          gamesPlayed: user.gamesPlayed,
+          hasRecentRatedGame: recentRatedUserIds.has(user.id),
+        }),
+      })),
+    );
+    return {
+      users: ordered,
+      rankMap: calculateRanks(
+        ordered.filter((user) => user.qualifiesForRating),
+        false,
+        false,
+        'gamesWon',
+      ),
+    };
+  }
+
   static async getCityLeaderboardRanks(cityId: string, sport: Sport): Promise<Map<string, number>> {
     const usersRaw = await prisma.user.findMany({
       where: {
@@ -77,7 +121,7 @@ export class RankingService {
       },
     });
 
-    const allUsers = usersRaw
+    const candidates = usersRaw
       .map((u) => {
         const snap = resolveUserSportSnapshot(u, sport);
         return {
@@ -88,15 +132,56 @@ export class RankingService {
           gamesWon: snap.gamesWon,
         };
       })
-      .filter((u) => u.gamesPlayed > 0)
-      .sort((a, b) => {
-        if (a.level !== b.level) return b.level - a.level;
-        if (a.reliability !== b.reliability) return b.reliability - a.reliability;
-        if (a.gamesWon !== b.gamesWon) return b.gamesWon - a.gamesWon;
-        return a.id.localeCompare(b.id);
-      });
+      .filter((u) => u.gamesPlayed > 0);
 
-    return calculateRanks(allUsers, false, false, 'gamesWon');
+    const ranked = await RankingService.qualifyAndRankRatingLeaderboard(candidates, () => sport);
+    return ranked.rankMap;
+  }
+
+  static async getUserIdsWithRatedGameSince(
+    userIds: string[],
+    sport: Sport,
+    since: Date,
+  ): Promise<Set<string>> {
+    if (userIds.length === 0) return new Set();
+
+    const rows = await prisma.gameParticipant.groupBy({
+      by: ['userId'],
+      where: {
+        userId: { in: userIds },
+        status: 'PLAYING',
+        game: {
+          sport,
+          resultsStatus: ResultsStatus.FINAL,
+          affectsRating: true,
+          startTime: { gte: since },
+        },
+      },
+      _count: {
+        userId: true,
+      },
+    });
+
+    return new Set(rows.map((row) => row.userId));
+  }
+
+  static async getUserIdsWithRatedGameSinceBySport(
+    userSports: Array<{ userId: string; sport: Sport }>,
+    since: Date,
+  ): Promise<Set<string>> {
+    const idsBySport = new Map<Sport, string[]>();
+    for (const { userId, sport } of userSports) {
+      const ids = idsBySport.get(sport);
+      if (ids) ids.push(userId);
+      else idsBySport.set(sport, [userId]);
+    }
+
+    const recent = new Set<string>();
+    for (const [sport, ids] of idsBySport) {
+      const found = await RankingService.getUserIdsWithRatedGameSince(ids, sport, since);
+      for (const id of found) recent.add(id);
+    }
+    return recent;
   }
 
   static async getGamesInLast30Days(

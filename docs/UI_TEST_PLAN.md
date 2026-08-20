@@ -1471,6 +1471,11 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | LB-05 | Empty leaderboard | No ranked players | Empty state |
 | LB-06 | Current user highlight | User in list | Highlighted row |
 | LB-07 | Gender filter | Switch All / Men / Women | Rankings refetch for that gender cohort; ranks restart at 1 |
+| LB-08 | Rating qualify | Open Level ranking | Players with ≥5 rated games and a rated game in the last 90 days rank normally at the top |
+| LB-09 | Rating inactive grayed | Same list, players with <5 rated games or last rated game older than 90 days | Still listed at the bottom, grayed/muted, rank shown as a dash (does not take qualifier numbers); row still opens profile |
+| LB-10 | No duplicate activity chips | Open Level ranking | No separate min-games and 90-day filter chips; gender/sport/city filters remain |
+| LB-11 | Achievements ranking unchanged | Open Achievements subtab | Family rankings are unchanged; no rating qualify grayed-at-bottom treatment |
+| LB-12 | Social ranking unchanged | Open Social subtab | Sort/rank by social level as before; rows are not grayed for rating inactivity |
 
 ---
 

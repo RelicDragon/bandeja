@@ -1164,6 +1164,11 @@ const suites: Suite[] = [
     ],
   },
   {
+    label: 'rating leaderboard qualify',
+    command: 'npm',
+    args: ['run', 'test:rating-leaderboard'],
+  },
+  {
     label: 'play intent',
     command: 'npm',
     args: ['run', 'test:play-intent'],

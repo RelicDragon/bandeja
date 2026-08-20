@@ -4,7 +4,7 @@ import type { LeaderboardGenderFilter } from '@/components/leaderboard/leaderboa
 import type { AchievementLeaderboardFamily } from '@shared/achievements';
 
 export interface LeaderboardEntry extends User {
-  rank: number;
+  rank: number | null;
   levelName: string;
   winRate: string;
   reliability: number;
@@ -13,11 +13,12 @@ export interface LeaderboardEntry extends User {
   gamesWon: number;
   lastGameRatingChange?: number | null;
   gamesCount?: number;
+  qualifiesForRating?: boolean;
 }
 
 export interface UserLeaderboardContext {
   leaderboard: LeaderboardEntry[];
-  userRank: number;
+  userRank: number | null;
 }
 
 export interface AchievementLeaderboardEntry extends BasicUser {

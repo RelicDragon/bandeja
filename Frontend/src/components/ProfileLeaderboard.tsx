@@ -5,10 +5,11 @@ import { motion } from 'framer-motion';
 import transliterate from '@sindresorhus/transliterate';
 import { rankingApi, LeaderboardEntry } from '@/api/ranking';
 import { Loading } from './Loading';
-import { PlayerAvatar } from './PlayerAvatar';
 import { LeaderboardSportPicker } from '@/components/leaderboard/LeaderboardSportPicker';
 import { LeaderboardGenderFilter } from '@/components/leaderboard/LeaderboardGenderFilter';
 import { LeaderboardScrollToTopFab } from '@/components/leaderboard/LeaderboardScrollToTopFab';
+import { StandardLeaderboardRow } from '@/components/leaderboard/StandardLeaderboardRow';
+import { ratingLeaderboardRankLabel } from '@/components/leaderboard/ratingLeaderboardDisplay';
 import { useAuthStore } from '@/store/authStore';
 import { useHeaderStore } from '@/store/headerStore';
 import { isAndroid } from '@/utils/capacitor';
@@ -103,7 +104,16 @@ const StandardLeaderboard = () => {
     });
   }, [leaderboard, searchQuery]);
 
-  const userRank = leaderboard.find(entry => entry.id === user?.id)?.rank;
+  const userEntry = leaderboard.find(entry => entry.id === user?.id);
+  const unrankedLabel = t('profile.leaderboard.unranked', { defaultValue: '—' });
+  const userRankLabel = userEntry
+    ? ratingLeaderboardRankLabel(
+        leaderboardType,
+        userEntry.rank,
+        userEntry.qualifiesForRating,
+        unrankedLabel,
+      )
+    : undefined;
 
   useEffect(() => {
     let cancelled = false;
@@ -192,73 +202,15 @@ const StandardLeaderboard = () => {
               : entry.level.toFixed(1);
 
             return (
-              <tr
+              <StandardLeaderboardRow
                 key={entry.id}
-                ref={isCurrentUser ? userRowRef : null}
-                className={`border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 ${
-                  isCurrentUser ? 'bg-primary-50 dark:bg-primary-900/20' : ''
-                }`}
-              >
-                <td className="px-0 py-2 text-left align-middle">
-                  <span
-                    className={`text-xs font-medium tabular-nums ${
-                      isCurrentUser
-                        ? 'text-primary-600 dark:text-primary-400'
-                        : 'text-gray-900 dark:text-white'
-                    }`}
-                  >
-                    {entry.rank}
-                  </span>
-                </td>
-                <td className="min-w-0 py-2 pl-0 pr-2 align-middle">
-                  <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center">
-                      <PlayerAvatar
-                        player={entry}
-                        extrasmall={true}
-                        showName={false}
-                        fullHideName={true}
-                      />
-                    </div>
-                    <div className="min-w-0 w-full flex-1">
-                      <div className="line-clamp-2 min-w-0 break-words text-xs text-gray-900 dark:text-white">
-                        {[entry.firstName, entry.lastName].filter(Boolean).join(' ')}
-                        {isCurrentUser && (
-                          <span className="ml-1.5 text-[10px] text-primary-600 dark:text-primary-400">
-                            ({t('profile.you')})
-                          </span>
-                        )}
-                      </div>
-                      {entry.verbalStatus && (
-                        <p className="verbal-status line-clamp-2 break-words">
-                          {entry.verbalStatus}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </td>
-                <td className="whitespace-nowrap py-2 pl-2 pr-0 text-right align-middle">
-                  <div className="flex items-center justify-end gap-1">
-                    {entry.lastGameRatingChange !== null &&
-                      entry.lastGameRatingChange !== undefined && (
-                        <span
-                          className={`rounded px-1 py-0.5 text-[10px] font-medium tabular-nums ${
-                            entry.lastGameRatingChange > 0
-                              ? 'bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400'
-                              : entry.lastGameRatingChange < 0
-                                ? 'bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400'
-                                : 'bg-gray-50 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
-                          }`}
-                        >
-                          {formatRatingDelta(entry.lastGameRatingChange)}
-                        </span>
-                      )}
-                    <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                      {displayValue}
-                    </span>
-                  </div>
-                </td>
-              </tr>
+                entry={entry}
+                isCurrentUser={isCurrentUser}
+                leaderboardType={leaderboardType}
+                displayValue={displayValue}
+                formatRatingDelta={formatRatingDelta}
+                rowRef={isCurrentUser ? userRowRef : null}
+              />
             );
           })}
         </tbody>
@@ -289,7 +241,7 @@ const StandardLeaderboard = () => {
     <SportLevelProvider sport={activeLeaderboardSport}>
     <div className="min-w-0 space-y-4">
       <AdSlot placement={AD_PLACEMENTS.LEADERBOARD_BANNER} className="w-full min-w-0" />
-      {hasLeaderboardData && userRank && (
+      {hasLeaderboardData && userEntry && (
         <div className="flex min-w-0 items-center gap-2">
           <motion.button
             onClick={scrollToUser}
@@ -311,7 +263,7 @@ const StandardLeaderboard = () => {
             }}
           >
             <span className="min-w-0 flex-1 truncate text-left text-xs font-medium text-primary-700 dark:text-primary-300">
-              {t('profile.myPlace', { rank: userRank, defaultValue: 'My place: {{rank}}' })}
+              {t('profile.myPlace', { rank: userRankLabel, defaultValue: 'My place: {{rank}}' })}
             </span>
             <ChevronDown size={14} className="shrink-0 text-primary-600 dark:text-primary-400" />
           </motion.button>

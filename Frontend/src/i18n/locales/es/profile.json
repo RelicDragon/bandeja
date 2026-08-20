@@ -313,7 +313,8 @@
     "noSharedGames": "No shared finished games yet",
     "noLeaderboardData": "No leaderboard data available",
     "leaderboard": {
-      "sportLabel": "Deporte del ranking"
+      "sportLabel": "Deporte del ranking",
+      "unranked": "—"
     },
     "verbalStatus": "Status",
     "verbalStatusPlaceholder": "What's on your mind?",

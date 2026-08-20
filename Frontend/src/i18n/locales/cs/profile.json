@@ -318,7 +318,8 @@
     "noSharedGames": "No shared finished games yet",
     "noLeaderboardData": "No leaderboard data available",
     "leaderboard": {
-      "sportLabel": "Sport žebříčku"
+      "sportLabel": "Sport žebříčku",
+      "unranked": "—"
     },
     "sessionsTitle": "Přihlášená zařízení",
     "sessionsSubtitle": "Spravujte, kde zůstáváte přihlášeni",

@@ -318,7 +318,8 @@
     "noSharedGames": "No shared finished games yet",
     "noLeaderboardData": "No leaderboard data available",
     "leaderboard": {
-      "sportLabel": "Sport na rang listi"
+      "sportLabel": "Sport na rang listi",
+      "unranked": "—"
     },
     "sessionsTitle": "Uređaji sa prijavom",
     "sessionsSubtitle": "Upravljajte gde ostajete prijavljeni",
