@@ -1270,8 +1270,6 @@ export const CreateGame = ({
       runWithProfileName(() => void handleCreateGame());
       return;
     }
-    if (!runWithGenderForEvent({ genderTeams, entityType }, () => void handleCreateGame())) return;
-
     if (!selectedClub) {
       scrollToAndHighlightError(locationTimeSectionRef);
       return;
@@ -1300,6 +1298,9 @@ export const CreateGame = ({
       scrollToReservationValidationIssue(validation.reason);
       return;
     }
+
+    const creatorJoining = Boolean(user.id && participants.includes(user.id));
+    if (creatorJoining && !runWithGenderForEvent({ genderTeams, entityType }, () => void handleCreateGame())) return;
 
     await handleCreateAttempt(
       async (overrides) => {

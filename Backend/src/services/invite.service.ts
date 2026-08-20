@@ -370,7 +370,10 @@ export class InviteService {
           }
           const currentGame = await fetchGameWithPlayingParticipants(tx, gameId);
           validateGameCanAcceptParticipants(currentGame);
-          const joinResult = await validatePlayerCanJoinGame(currentGame, receiverId, { skipLevelCheck: true });
+          const joinResult = await validatePlayerCanJoinGame(currentGame, receiverId, {
+            skipLevelCheck: true,
+            targetIsOtherUser: !isReceiver,
+          });
           if (!joinResult.canJoin && joinResult.shouldQueue) {
             if (locked.playIntentId) {
               await PlayIntentGameLifecycleService.consume(

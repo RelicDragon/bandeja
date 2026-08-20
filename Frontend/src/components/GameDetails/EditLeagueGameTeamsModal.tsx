@@ -18,6 +18,7 @@ import { runWithProfileName } from '@/utils/runWithProfileName';
 import { courtHasActiveBookingIntegration } from '@/utils/clubBookingIntegration';
 import { filterClubsBySport } from '@/utils/courtSport';
 import { isParticipantPlaying } from '@/utils/participantStatus';
+import { genderAddBlockReason } from '@/utils/genderJoinGate';
 
 interface EditLeagueGameTeamsModalProps {
   isOpen: boolean;
@@ -353,6 +354,12 @@ export const EditLeagueGameTeamsModal = ({
 
   const handlePlayerSelect = (player: BasicUser) => {
     if (!selectingPlayerFor) return;
+    if (genderAddBlockReason(game, player) === 'genderUnset') {
+      toast.error(t('errors.games.genderUnsetOther', {
+        defaultValue: "This player hasn't set their gender yet",
+      }));
+      return;
+    }
 
     const { team, slot } = selectingPlayerFor;
     
@@ -401,6 +408,13 @@ export const EditLeagueGameTeamsModal = ({
     
     if (uniqueIds.size !== allPlayerIds.length) {
       toast.error(t('gameDetails.playerCannotBeInBothTeams'));
+      return;
+    }
+
+    if ([...team1Valid, ...team2Valid].some((player) => genderAddBlockReason(game, player) === 'genderUnset')) {
+      toast.error(t('errors.games.genderUnsetOther', {
+        defaultValue: "This player hasn't set their gender yet",
+      }));
       return;
     }
 

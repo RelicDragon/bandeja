@@ -16,6 +16,7 @@ import {
   isSelfGenderUnsetError,
   needsGenderForEvent,
   recoverGenderUnsetJoin,
+  resolveGameLikeForPushInvite,
   runWithGenderForEvent,
 } from './genderJoinGate';
 
@@ -68,6 +69,39 @@ describe('genderJoinGate', () => {
     expect(genderAddBlockReason({ genderTeams: 'ANY' }, { genderIsSet: false })).toBeNull();
     expect(genderAddBlockReason({ genderTeams: 'MIX_PAIRS' }, {})).toBe('genderUnset');
     expect(genderAddBlockReason({ genderTeams: 'WOMEN' }, undefined)).toBe('genderUnset');
+  });
+
+  it('opens the sheet from push payload genderTeams without fetching', async () => {
+    const fetchGame = vi.fn();
+    const gameLike = await resolveGameLikeForPushInvite(
+      { genderTeams: 'MEN', entityType: 'GAME' },
+      fetchGame,
+    );
+    expect(fetchGame).not.toHaveBeenCalled();
+    const action = vi.fn();
+    expect(runWithGenderForEvent(gameLike, action)).toBe(false);
+    expect(action).not.toHaveBeenCalled();
+  });
+
+  it('fetches the game when push has gameId but no genderTeams', async () => {
+    const fetchGame = vi.fn(async () => ({ genderTeams: 'WOMEN' as const, entityType: 'GAME' }));
+    const gameLike = await resolveGameLikeForPushInvite({ gameId: 'g1' }, fetchGame);
+    expect(fetchGame).toHaveBeenCalledWith('g1');
+    expect(gameLike).toEqual({ genderTeams: 'WOMEN', entityType: 'GAME' });
+  });
+
+  it('returns null when push has no game payload, so accept can recover later', async () => {
+    const fetchGame = vi.fn();
+    expect(await resolveGameLikeForPushInvite({}, fetchGame)).toBeNull();
+    expect(await resolveGameLikeForPushInvite(undefined, fetchGame)).toBeNull();
+    expect(fetchGame).not.toHaveBeenCalled();
+  });
+
+  it('returns null when gameId fetch fails so accept can recover', async () => {
+    const fetchGame = vi.fn(async () => {
+      throw new Error('offline');
+    });
+    expect(await resolveGameLikeForPushInvite({ gameId: 'g1' }, fetchGame)).toBeNull();
   });
 
   it('reopens the sheet for a slipped-through unset error, not other-user copy', () => {

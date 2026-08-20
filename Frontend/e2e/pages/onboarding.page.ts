@@ -69,6 +69,11 @@ export class OnboardingPage {
     await expect(this.genderSetModal()).toHaveCount(0, { timeout: 15_000 });
   }
 
+  async dismissGenderGate() {
+    await this.genderSetModal().getByRole('button', { name: /^close$/i }).click();
+    await expect(this.genderSetModal()).toHaveCount(0, { timeout: 15_000 });
+  }
+
   async expectPrimarySportGate() {
     await expect(this.primarySportModal()).toBeVisible({ timeout: 20_000 });
   }

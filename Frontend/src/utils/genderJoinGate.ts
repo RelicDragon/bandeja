@@ -18,6 +18,29 @@ export function needsGenderForEvent(game: GenderedEventLike | null | undefined, 
   return isGenderedEvent(game) && user?.genderIsSet !== true;
 }
 
+export type PushInviteGenderPayload = {
+  gameId?: string;
+  genderTeams?: string;
+  entityType?: string;
+};
+
+export async function resolveGameLikeForPushInvite(
+  payload: PushInviteGenderPayload | null | undefined,
+  fetchGame: (gameId: string) => Promise<GenderedEventLike | null | undefined>,
+): Promise<GenderedEventLike | null> {
+  if (!payload) return null;
+  if (payload.genderTeams) {
+    return { genderTeams: payload.genderTeams, entityType: payload.entityType };
+  }
+  if (!payload.gameId) return null;
+  try {
+    const game = await fetchGame(payload.gameId);
+    return game ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export function genderAddBlockReason(
   game: GenderedEventLike | null | undefined,
   target: GenderFlagUser,

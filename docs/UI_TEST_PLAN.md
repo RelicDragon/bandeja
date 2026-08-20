@@ -746,6 +746,7 @@ Frontend/e2e/
 | GD-18a | Invite not in game chat | Owner invites player from participants list | Pending invite on participants panel; no "X invites Y" system message in game chat; other participants get no chat/push notification for the invite |
 | GD-148 | Organizer add unset gender | Owner invites/adds a player with `genderIsSet` false to a gendered event | Player is not added; toast that they haven't set gender (not the wrong-gender copy) |
 | GD-149 | Organizer self-add gender unset | Unset organizer taps add-me / join on their own gendered event | Gender sheet; after set, add/join proceeds |
+| GD-150 | League assign unset gender | Owner assigns an unset player to a gendered league round | Player is not assigned; toast that they haven't set gender (not the wrong-gender copy) |
 
 ### 9.3 Edit game (owner/admin)
 

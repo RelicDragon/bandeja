@@ -83,7 +83,7 @@
     "genderPromptDismissConfirm": "Už nezobrazovat",
     "genderPromptModalTitle": "Nastavte své pohlaví",
     "genderPromptModalSubtitle": "Pomůže nám to lépe doporučit zápasy a odemknout smíšené formáty.",
-    "genderPromptJoinSubtitle": "Tento zápas je omezen podle pohlaví. Nastavte si ho a pokračujte.",
+    "genderPromptJoinSubtitle": "Tento zápas je podle pohlaví. Vyberte si to své, abychom vás mohli přidat.",
     "cityPromptSubtitle": "Je vaše město {{cityName}}? Pokud ne, použijte tlačítko níže.",
     "cityPromptSubtitleNoCity": "Nastavte město, abychom vám ukázali správné zápasy poblíž.",
     "cityPromptAction": "Změnit {{cityName}}",

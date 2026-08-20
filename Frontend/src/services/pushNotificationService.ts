@@ -10,7 +10,7 @@ import { pushApi } from '@/api/push';
 import { useAuthStore } from '@/store/authStore';
 import { useHeaderStore } from '@/store/headerStore';
 import { runWithProfileName } from '@/utils/runWithProfileName';
-import { recoverGenderUnsetJoin, runWithGenderForEvent } from '@/utils/genderJoinGate';
+import { recoverGenderUnsetJoin, resolveGameLikeForPushInvite, runWithGenderForEvent } from '@/utils/genderJoinGate';
 import { parsePushChatContext } from '@/services/push/parsePushChatContext';
 import { sendChatReplyFromPush } from '@/services/push/sendChatReplyFromPush';
 import { applyPushUnreadBadgeFromNotification } from '@/services/push/applyPushUnreadBadge';
@@ -35,6 +35,8 @@ interface NotificationData {
   type: string;
   data?: {
     gameId?: string;
+    genderTeams?: string;
+    entityType?: string;
     proposalId?: string;
     playIntentId?: string;
     bugId?: string;
@@ -555,13 +557,12 @@ class PushNotificationService {
       runWithProfileName(() => void this.handleAcceptInvite(data));
       return;
     }
-    if (authUser && authUser.genderIsSet !== true && data.data.gameId) {
-      try {
-        const gameResponse = await gamesApi.getById(data.data.gameId);
-        if (!runWithGenderForEvent(gameResponse.data, () => void this.handleAcceptInvite(data))) return;
-      } catch {
-        // Accept still runs; recoverGenderUnsetJoin opens the sheet if the server rejects unset.
-      }
+    if (authUser && authUser.genderIsSet !== true) {
+      const gameLike = await resolveGameLikeForPushInvite(data.data, async (gameId) => {
+        const gameResponse = await gamesApi.getById(gameId);
+        return gameResponse.data;
+      });
+      if (gameLike && !runWithGenderForEvent(gameLike, () => void this.handleAcceptInvite(data))) return;
     }
 
     try {

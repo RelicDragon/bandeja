@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { Button, Select } from '@/components';
-import { Dialog, DialogContent } from '@/components/ui/Dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/Dialog';
 import { usersApi } from '@/api';
 import { useAuthStore } from '@/store/authStore';
 import { Gender } from '@/types';
@@ -18,7 +18,7 @@ const JOIN_GENDERS = ['MALE', 'FEMALE'] as const;
 
 function joinChoiceClass(selected: boolean): string {
   return [
-    'rounded-xl border px-3 py-3 text-sm font-semibold transition',
+    'rounded-xl border px-3 py-2.5 text-sm font-semibold transition',
     selected
       ? 'border-primary-500 bg-primary-50 text-primary-700 dark:border-primary-400 dark:bg-primary-950/40 dark:text-primary-200'
       : 'border-gray-200 bg-gray-50 text-gray-800 hover:border-gray-300 dark:border-gray-700 dark:bg-gray-800/50 dark:text-gray-100 dark:hover:border-gray-600',
@@ -77,14 +77,16 @@ export function GenderSetModal({ open, onClose, onSaved, variant = 'banner' }: G
 
   return (
     <Dialog open={open} onClose={() => !isSaving && onClose()} modalId="gender-set-modal">
-      <DialogContent className={isJoin ? 'max-w-sm p-5 pt-10' : 'max-w-md p-6 pt-10'}>
+      <DialogContent className={isJoin ? 'max-w-[20rem] p-4 pt-10' : 'max-w-md p-6 pt-10'}>
         <div className={isJoin ? 'space-y-3' : 'space-y-4'}>
-          <p className="text-lg font-semibold text-gray-900 dark:text-white">
+          <DialogTitle className="text-lg font-semibold text-gray-900 dark:text-white">
             {t('games.genderPromptModalTitle', { defaultValue: 'Set your gender' })}
-          </p>
+          </DialogTitle>
           <p className="text-sm text-gray-600 dark:text-gray-400">
             {isJoin
-              ? t('games.genderPromptJoinSubtitle', { defaultValue: 'This event is limited by gender. Set yours to continue.' })
+              ? t('games.genderPromptJoinSubtitle', {
+                  defaultValue: 'This game is for a specific gender. Pick yours so we can add you.',
+                })
               : t('games.genderPromptModalSubtitle', { defaultValue: 'This helps us show better game matches and unlock mixed-gender events.' })}
           </p>
 
@@ -94,6 +96,7 @@ export function GenderSetModal({ open, onClose, onSaved, variant = 'banner' }: G
                 <button
                   key={value}
                   type="button"
+                  aria-pressed={gender === value}
                   className={joinChoiceClass(gender === value)}
                   onClick={() => setGender(value)}
                 >
