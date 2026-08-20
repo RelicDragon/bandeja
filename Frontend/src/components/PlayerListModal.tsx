@@ -733,7 +733,7 @@ export const PlayerListModal = ({
     <SportLevelProvider sport={gameSport}>
     <Dialog open={isOpen} onClose={handleClose} modalId="player-list-modal">
       <DialogContent className="h-[min(92vh,720px)] flex flex-col overflow-hidden p-0 gap-0">
-        <DialogHeader className="flex flex-col items-stretch justify-start gap-3 border-b border-gray-100/80 px-2.5 py-3 pr-12 dark:border-gray-800/80">
+        <DialogHeader className="flex flex-col items-stretch justify-start gap-3 border-b border-gray-100/80 px-2.5 py-3 dark:border-gray-800/80">
           <DialogTitle className="text-lg font-bold tracking-tight text-gray-900 dark:text-white">
             {title ||
               (inviteAsTrainerOnly
