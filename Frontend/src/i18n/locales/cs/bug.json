@@ -29,6 +29,16 @@
     "status": "Stav",
     "priority": "Priorita",
     "priorityUpdated": "Priorita chyby aktualizována",
+    "stars": "Hvězdy",
+    "starsRequired": "Vyberte hodnocení od 1 do 5 hvězd",
+    "ratingUpdated": "Hodnocení aktualizováno",
+    "starLabels": {
+      "1": "1 hvězda",
+      "2": "2 hvězdy",
+      "3": "3 hvězdy",
+      "4": "4 hvězdy",
+      "5": "5 hvězd"
+    },
     "changeStatus": "Změnit stav",
     "changeType": "Změnit typ",
     "myBugsOnly": "Vytvořil jsem",
@@ -51,7 +61,8 @@
       "CRITICAL": "Kritická",
       "SUGGESTION": "Návrh",
       "QUESTION": "Dotaz",
-      "TASK": "Úkol"
+      "TASK": "Úkol",
+      "REVIEW": "Recenze"
     },
     "statuses": {
       "CREATED": "Vytvořeno",

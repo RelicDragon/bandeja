@@ -52,7 +52,9 @@
       "memberNotFound": "El jugador no está en el equipo",
       "cannotRemoveOwner": "No se puede eliminar al dueño",
       "userIdRequired": "Indica un jugador",
-      "nameTooShort": "El nombre del equipo debe tener al menos 3 caracteres"
+      "nameTooShort": "El nombre del equipo debe tener al menos 3 caracteres",
+      "notReady": "Invita primero a tu compañero: la pareja aún no está completa",
+      "notAcceptedMember": "Únete a la pareja antes de añadirla a un partido"
     },
     "games": {
       "cannotJoin": "No se puede unir al juego",
@@ -80,7 +82,9 @@
       "updateForbidden": "Solo el creador del error o un administrador pueden actualizar este error",
       "textRequired": "Se requiere el texto del error",
       "typeRequired": "Se requiere un tipo de error válido",
-      "statusOrTypeRequired": "Se requiere un estado o tipo de error válido"
+      "statusOrTypeRequired": "Se requiere un estado o tipo de error válido",
+      "ratingRequired": "Las reseñas requieren una valoración de 1 a 5 estrellas",
+      "ratingInvalid": "La valoración debe estar entre 1 y 5 estrellas"
     },
     "favorites": {
       "userIdRequired": "Se requiere el ID de usuario",

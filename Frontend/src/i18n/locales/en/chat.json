@@ -219,6 +219,7 @@
       "BUG_STATUS_CHANGED": "Bug status changed to {{status}}",
       "BUG_TYPE_CHANGED": "Bug type changed to {{type}}",
       "BUG_PRIORITY_CHANGED": "Bug priority changed to {{priority}}",
+      "BUG_RATING_CHANGED": "Rating changed to {{rating}}",
       "GAME_CLUB_CHANGED": "Game location changed to {{clubName}}",
       "GAME_DATE_TIME_CHANGED": "Game date/time changed to {{dateTime}}",
       "USER_CHAT_REQUEST": "{{requesterName}} requests to chat with you",

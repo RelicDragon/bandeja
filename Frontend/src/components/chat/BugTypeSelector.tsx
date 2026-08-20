@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import type { BugType } from '@/types';
+import { ALL_BUG_TYPES } from '@/components/bugs/reviewStars';
 
 interface BugTypeSelectorProps {
   currentType: BugType;
@@ -7,8 +8,6 @@ interface BugTypeSelectorProps {
   disabled?: boolean;
   readonly?: boolean;
 }
-
-const BUG_TYPES: BugType[] = ['BUG', 'CRITICAL', 'SUGGESTION', 'QUESTION', 'TASK'];
 
 export const BugTypeSelector = ({
   currentType,
@@ -30,6 +29,8 @@ export const BugTypeSelector = ({
         return 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300';
       case 'TASK':
         return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300';
+      case 'REVIEW':
+        return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300';
       default:
         return 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300';
     }
@@ -52,7 +53,7 @@ export const BugTypeSelector = ({
         {t('bug.type', { defaultValue: 'Type' })}
       </label>
       <div className="flex flex-wrap gap-2">
-        {BUG_TYPES.map((type) => (
+        {ALL_BUG_TYPES.map((type) => (
           <button
             key={type}
             onClick={() => onTypeChange(type)}

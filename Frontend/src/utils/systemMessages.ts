@@ -19,6 +19,7 @@ export enum SystemMessageType {
   BUG_STATUS_CHANGED = 'BUG_STATUS_CHANGED',
   BUG_TYPE_CHANGED = 'BUG_TYPE_CHANGED',
   BUG_PRIORITY_CHANGED = 'BUG_PRIORITY_CHANGED',
+  BUG_RATING_CHANGED = 'BUG_RATING_CHANGED',
   GAME_CLUB_CHANGED = 'GAME_CLUB_CHANGED',
   GAME_DATE_TIME_CHANGED = 'GAME_DATE_TIME_CHANGED',
   GAME_BOOKING_STATUS_CHANGED = 'GAME_BOOKING_STATUS_CHANGED',
@@ -52,6 +53,7 @@ const FALLBACK_TEMPLATES: Record<SystemMessageType, string> = {
   [SystemMessageType.BUG_STATUS_CHANGED]: 'Bug status changed to {{status}}',
   [SystemMessageType.BUG_TYPE_CHANGED]: 'Bug type changed to {{type}}',
   [SystemMessageType.BUG_PRIORITY_CHANGED]: 'Bug priority changed to {{priority}}',
+  [SystemMessageType.BUG_RATING_CHANGED]: 'Rating changed to {{rating}}',
   [SystemMessageType.GAME_CLUB_CHANGED]: 'Game location changed to {{clubName}}',
   [SystemMessageType.GAME_DATE_TIME_CHANGED]: 'Game date/time changed to {{dateTime}}',
   [SystemMessageType.GAME_BOOKING_STATUS_CHANGED]: 'Court booking status changed to {{bookingStatus}}',
@@ -110,6 +112,12 @@ const translateSystemMessageData = (
   if (type === SystemMessageType.BUG_PRIORITY_CHANGED && safeVariables.priority !== undefined) {
     const p = parsePriorityVariable(safeVariables.priority);
     safeVariables = { ...safeVariables, priority: translateFn(`bug.priorityLabels.${p}`, { defaultValue: safeVariables.priority }) };
+  }
+  if (type === SystemMessageType.BUG_RATING_CHANGED && safeVariables.rating) {
+    safeVariables = {
+      ...safeVariables,
+      rating: translateFn(`bug.starLabels.${safeVariables.rating}`, { defaultValue: safeVariables.rating }),
+    };
   }
   if (type === SystemMessageType.GAME_CLUB_CHANGED && !safeVariables.clubName?.trim()) {
     safeVariables = {

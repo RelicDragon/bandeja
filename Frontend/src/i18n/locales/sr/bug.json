@@ -29,6 +29,16 @@
     "status": "Status",
     "priority": "Prioritet",
     "priorityUpdated": "Prioritet greške ažuriran",
+    "stars": "Zvezdice",
+    "starsRequired": "Izaberite ocenu od 1 do 5 zvezdica",
+    "ratingUpdated": "Ocena ažurirana",
+    "starLabels": {
+      "1": "1 zvezdica",
+      "2": "2 zvezdice",
+      "3": "3 zvezdice",
+      "4": "4 zvezdice",
+      "5": "5 zvezdica"
+    },
     "changeStatus": "Promeni status",
     "changeType": "Promeni tip",
     "myBugsOnly": "Kreirano od mene",
@@ -51,7 +61,8 @@
       "CRITICAL": "Kritično",
       "SUGGESTION": "Predlog",
       "QUESTION": "Pitanje",
-      "TASK": "Zadatak"
+      "TASK": "Zadatak",
+      "REVIEW": "Recenzija"
     },
     "statuses": {
       "CREATED": "Kreirano",

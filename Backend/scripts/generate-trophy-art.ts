@@ -237,6 +237,46 @@ const SPECS: Spec[] = [
     key: 'habit_open_court_250',
     prompt: `${STYLE} Legendary Open Court crest: ornate gold open padel court with radiant partner constellation, dark badge bright white "250".`,
   },
+  {
+    key: 'habit_tie_break_1',
+    prompt: `${STYLE} Tie-Breaker emblem: taut net with a golden 7-6 scoreboard tile, bronze metal, lightning crack, dark badge bright white "1".`,
+  },
+  {
+    key: 'habit_tie_break_5',
+    prompt: `${STYLE} Sudden Death emblem: coiled spring and racket under a deuce scoreboard, copper metal, dark badge bright white "5".`,
+  },
+  {
+    key: 'habit_tie_break_12',
+    prompt: `${STYLE} Rare 7-6 Club emblem: silver club crest with classic 7-6 set score and tiny crown, dark badge bright white "12".`,
+  },
+  {
+    key: 'habit_tie_break_32',
+    prompt: `${STYLE} Rare Nerve of Steel emblem: platinum steel-wire racket with ice-blue glow, dark badge bright white "32".`,
+  },
+  {
+    key: 'habit_tie_break_64',
+    prompt: `${STYLE} Legendary Lottery Legend crest: ornate gold lottery-ball fused with 7-6 scoreboard, emerald and magenta sparks, dark badge bright white "64".`,
+  },
+  {
+    key: 'habit_bug_shipped_1',
+    prompt: `${STYLE} Common Bug tracker shipped emblem: brushed bronze circular badge, stylized cute ladybug with tiny wrench and soft teal checkmark, dark circular badge at base with LARGE bright white numeral "1", high contrast.`,
+  },
+  {
+    key: 'habit_bug_shipped_5',
+    prompt: `${STYLE} Common Bug tracker Patch Notes emblem: copper circular badge, ladybug with notepad and wrench, teal enamel, dark badge LARGE bright white numeral "5".`,
+  },
+  {
+    key: 'habit_bug_shipped_10',
+    prompt: `${STYLE} Rare Bug tracker Fix Factory emblem: polished silver badge, ladybug on conveyor of glowing green checkmarks, dark badge LARGE bright white numeral "10".`,
+  },
+  {
+    key: 'habit_bug_shipped_25',
+    prompt: `${STYLE} Rare Bug Wrangler emblem: platinum badge, heroic ladybug lassoing a glowing bug glyph, ice-blue accents, dark badge LARGE bright white numeral "25".`,
+  },
+  {
+    key: 'habit_bug_shipped_50',
+    prompt: `${STYLE} Legendary Release Legend crest: ornate gold badge, crowned ladybug with emerald checkmark and release rocket motif, dark badge LARGE bright white numeral "50".`,
+  },
 ];
 
 const LETO_REF = path.resolve(__dirname, '../../Frontend/public/bandeja2-white-tr.png');
@@ -387,10 +427,15 @@ async function main(): Promise<void> {
   if (!specs.length) throw new Error('No matching KEYS');
 
   const client = new Replicate({ auth: token });
-  const concurrency = 2;
-  for (let i = 0; i < specs.length; i += concurrency) {
-    const batch = specs.slice(i, i + concurrency);
-    await Promise.all(batch.map((s) => generateOne(client, s)));
+  // Low Replicate credit accounts throttle hard (≈6/min, burst 1) — one at a time + pause.
+  const pauseMs = Number(process.env.PAUSE_MS ?? 12_000);
+  for (let i = 0; i < specs.length; i++) {
+    const spec = specs[i]!;
+    await generateOne(client, spec);
+    if (i < specs.length - 1 && pauseMs > 0) {
+      console.log(`[wait] ${pauseMs}ms…`);
+      await new Promise((r) => setTimeout(r, pauseMs));
+    }
   }
   console.log('Done.');
 }

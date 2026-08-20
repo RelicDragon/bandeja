@@ -29,8 +29,14 @@ export const invitesApi = {
     expiresAt?: string;
     asTrainer?: boolean;
     userTeamId?: string;
+    inviteUserTeamId?: string;
+    playIntentId?: string;
   }) => {
-    const response = await api.post<ApiResponse<Invite>>('/invites', data);
+    const { userTeamId, inviteUserTeamId, ...rest } = data;
+    const response = await api.post<{ success: boolean; data: Invite; intentLinked?: boolean }>('/invites', {
+      ...rest,
+      inviteUserTeamId: inviteUserTeamId || userTeamId,
+    });
     return response.data;
   },
 

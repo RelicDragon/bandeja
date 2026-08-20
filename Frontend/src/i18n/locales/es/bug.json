@@ -29,6 +29,16 @@
     "status": "Estado",
     "priority": "Prioridad",
     "priorityUpdated": "Prioridad del error actualizada",
+    "stars": "Estrellas",
+    "starsRequired": "Elige una valoración de 1 a 5 estrellas",
+    "ratingUpdated": "Valoración actualizada",
+    "starLabels": {
+      "1": "1 estrella",
+      "2": "2 estrellas",
+      "3": "3 estrellas",
+      "4": "4 estrellas",
+      "5": "5 estrellas"
+    },
     "changeStatus": "Cambiar Estado",
     "changeType": "Cambiar Tipo",
     "myBugsOnly": "Creado por mí",
@@ -51,7 +61,8 @@
       "CRITICAL": "Crítico",
       "SUGGESTION": "Sugerencia",
       "QUESTION": "Pregunta",
-      "TASK": "Tarea"
+      "TASK": "Tarea",
+      "REVIEW": "Reseña"
     },
     "statuses": {
       "CREATED": "Creado",

@@ -8,6 +8,7 @@ import {
 } from '../achievements/achievementStats.service';
 import { refreshOrganizeHabitCounters } from '../achievements/organizeGrant.service';
 import { refreshPartnerHabitCounters } from '../achievements/partnerGrant.service';
+import { refreshTieBreakHabitCounters } from '../achievements/tieBreakGrant.service';
 import { projectEmbeddedUserByPrimarySport } from '../user/projectEmbeddedBasicUsers';
 import { ApiError } from '../../utils/ApiError';
 import type { LeaderboardGenderFilter } from './leaderboardGenderFilter';
@@ -23,6 +24,7 @@ const STATS_REPAIR_ERROR_RETRY_MS = 2_000;
 const STATS_REPAIR_ADVISORY_LOCK: Record<CachedStatsKind, number> = {
   organize: 7_132_001,
   partner: 7_132_002,
+  tiebreak: 7_132_003,
 };
 
 type AchievementScoreRow = {
@@ -38,7 +40,7 @@ type CachedAchievementFamily = Exclude<
   AchievementLeaderboardFamily,
   'HABIT_VOLUME' | 'HABIT_WINS' | 'HABIT_STREAK' | 'PODIUM'
 >;
-type CachedStatsKind = 'organize' | 'partner';
+type CachedStatsKind = 'organize' | 'partner' | 'tiebreak';
 
 const refreshesInFlight = new Map<string, Promise<void>>();
 const repairJobsInFlight = new Map<string, Promise<void>>();
@@ -133,6 +135,8 @@ function cachedStatScoresSql(
         return Prisma.sql`s."dynamicDuoMaxWins"`;
       case 'HABIT_OPEN_COURT':
         return Prisma.sql`s."openCourtPartners"`;
+      case 'HABIT_TIE_BREAK':
+        return Prisma.sql`s."tieBreakSetWins"`;
     }
   })();
 
@@ -146,7 +150,9 @@ function cachedStatScoresSql(
       AND ${
         statsKind === 'organize'
           ? Prisma.sql`s."organizeRefreshedAt" IS NOT NULL`
-          : Prisma.sql`s."partnerRefreshedAt" IS NOT NULL`
+          : statsKind === 'partner'
+            ? Prisma.sql`s."partnerRefreshedAt" IS NOT NULL`
+            : Prisma.sql`s."tiebreakRefreshedAt" IS NOT NULL`
       }
       AND ${progressSql} > 0
   `;
@@ -174,11 +180,15 @@ function toSafeNumber(value: number | bigint): number {
 function cachedStatsKind(
   family: CachedAchievementFamily,
 ): CachedStatsKind {
-  return family === 'HABIT_ORGANIZE_GAME' ||
+  if (
+    family === 'HABIT_ORGANIZE_GAME' ||
     family === 'HABIT_ORGANIZE_TOURNAMENT' ||
     family === 'HABIT_ORGANIZE_BAR'
-    ? 'organize'
-    : 'partner';
+  ) {
+    return 'organize';
+  }
+  if (family === 'HABIT_TIE_BREAK') return 'tiebreak';
+  return 'partner';
 }
 
 function isCachedAchievementFamily(
@@ -217,8 +227,10 @@ async function refreshCachedStatsForUser(params: {
   const refresh = async () => {
     if (params.kind === 'organize') {
       await refreshOrganizeHabitCounters(params.userId, params.tx);
-    } else {
+    } else if (params.kind === 'partner') {
       await refreshPartnerHabitCounters(params.userId, params.tx);
+    } else {
+      await refreshTieBreakHabitCounters(params.userId, params.tx);
     }
   };
 
@@ -253,7 +265,9 @@ function staleCachedStatsUserWhere(params: {
   const staleRelation: Prisma.UserWhereInput =
     params.kind === 'organize'
       ? { achievementStats: { is: { organizeRefreshedAt: null } } }
-      : { achievementStats: { is: { partnerRefreshedAt: null } } };
+      : params.kind === 'partner'
+        ? { achievementStats: { is: { partnerRefreshedAt: null } } }
+        : { achievementStats: { is: { tiebreakRefreshedAt: null } } };
   return {
     isActive: true,
     ...(params.currentCityId ? { currentCityId: params.currentCityId } : {}),
@@ -287,11 +301,17 @@ function repairFailureRelation(
           is: { organizeRepairFailures: comparison },
         },
       }
-    : {
-        achievementStats: {
-          is: { partnerRepairFailures: comparison },
-        },
-      };
+    : kind === 'partner'
+      ? {
+          achievementStats: {
+            is: { partnerRepairFailures: comparison },
+          },
+        }
+      : {
+          achievementStats: {
+            is: { tiebreakRepairFailures: comparison },
+          },
+        };
 }
 
 function repairFailedAtRelation(
@@ -304,11 +324,17 @@ function repairFailedAtRelation(
           is: { organizeRepairFailedAt: comparison },
         },
       }
-    : {
-        achievementStats: {
-          is: { partnerRepairFailedAt: comparison },
-        },
-      };
+    : kind === 'partner'
+      ? {
+          achievementStats: {
+            is: { partnerRepairFailedAt: comparison },
+          },
+        }
+      : {
+          achievementStats: {
+            is: { tiebreakRepairFailedAt: comparison },
+          },
+        };
 }
 
 function repairableCachedStatsUserWhere(params: {
@@ -547,6 +573,7 @@ async function ensureFreshCachedStats(params: {
         select: {
           organizeRepairFailedAt: true,
           partnerRepairFailedAt: true,
+          tiebreakRepairFailedAt: true,
         },
       },
     },
@@ -555,7 +582,9 @@ async function ensureFreshCachedStats(params: {
     const failedAt =
       kind === 'organize'
         ? failedUser.achievementStats?.organizeRepairFailedAt
-        : failedUser.achievementStats?.partnerRepairFailedAt;
+        : kind === 'partner'
+          ? failedUser.achievementStats?.partnerRepairFailedAt
+          : failedUser.achievementStats?.tiebreakRepairFailedAt;
     const retryAt =
       (failedAt?.getTime() ?? Date.now()) +
       STATS_REPAIR_QUARANTINE_MS;

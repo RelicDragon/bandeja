@@ -221,6 +221,7 @@
       "BUG_STATUS_CHANGED": "Status greške promenjen na {{status}}",
       "BUG_TYPE_CHANGED": "Tip greške promenjen na {{type}}",
       "BUG_PRIORITY_CHANGED": "Prioritet greške promenjen na {{priority}}",
+      "BUG_RATING_CHANGED": "Ocena promenjena na {{rating}}",
       "GAME_CLUB_CHANGED": "Lokacija igre promenjena na {{clubName}}",
       "GAME_DATE_TIME_CHANGED": "Datum/vreme igre promenjeno na {{dateTime}}",
       "USER_CHAT_REQUEST": "{{requesterName}} traži da ćaska sa vama",

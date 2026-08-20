@@ -25,6 +25,18 @@
     "statsSocialRow": "Social: {{social}}",
     "teamBadge": "Team",
     "availabilityPartial": "Partially available",
-    "availabilityNone": "Not available at this time"
+    "availabilityNone": "Not available at this time",
+    "tabSearch": "Search",
+    "tabLooking": "Looking",
+    "lookingEmpty": "Nobody’s looking right now",
+    "lookingEmptyHint": "Search the full list instead",
+    "lookingHint": "{{great}} great fit · {{total}} looking",
+    "lookingBadgeMatch": "In a match",
+    "lookingBadgeInGame": "In a game",
+    "stoppedLooking": "{{name}} stopped looking",
+    "alreadyInMatch": "They’re already in a match",
+    "lookingLoadError": "Couldn’t load who’s looking",
+    "lookingLoadErrorHint": "Use Search, or try again",
+    "lookingRetry": "Try again"
   }
 }

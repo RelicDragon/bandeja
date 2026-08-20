@@ -72,6 +72,7 @@ import {
 } from '../achievements/podiumGrant.service';
 import { grantOrganizeAchievementsForFinalizedGame } from '../achievements/organizeGrant.service';
 import { grantPartnerAchievementsForFinalizedGame } from '../achievements/partnerGrant.service';
+import { grantTieBreakAchievementsForFinalizedGame } from '../achievements/tieBreakGrant.service';
 import { countsAsRatingActivity, countsForPlayStreak } from './ratingActivity';
 import {
   type OutcomeRecalculationOptions,
@@ -883,6 +884,7 @@ export async function applyGameOutcomes(
 
     await grantOrganizeAchievementsForFinalizedGame({ gameId, tx });
     await grantPartnerAchievementsForFinalizedGame({ gameId, tx });
+    await grantTieBreakAchievementsForFinalizedGame({ gameId, tx });
 
     // Fixture under an already-FINAL season: re-sync season podium to corrected standings (X1).
     await syncParentSeasonPodiumIfFinal({ gameId, tx });

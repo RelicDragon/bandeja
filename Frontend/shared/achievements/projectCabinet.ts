@@ -30,6 +30,10 @@ export type HabitProgressCounters = {
   dynamicDuoMaxWins?: number;
   /** Distinct doubles partners in completed qualifying matches. */
   openCourtPartners?: number;
+  /** Official sets won on a tie-break (7–6 or flagged super TB). */
+  tieBreakSetWins?: number;
+  /** Bugs/suggestions shipped through in-progress/test to finished/archived. */
+  bugShippedCount?: number;
 };
 
 export type CabinetEntry = {
@@ -75,6 +79,12 @@ export function habitProgressForDefinition(
   }
   if (definition.ruleKind === 'HABIT_OPEN_COURT') {
     return { current: Math.min(counters.openCourtPartners ?? 0, target), target };
+  }
+  if (definition.ruleKind === 'HABIT_TIE_BREAK') {
+    return { current: Math.min(counters.tieBreakSetWins ?? 0, target), target };
+  }
+  if (definition.ruleKind === 'HABIT_BUG_SHIPPED') {
+    return { current: Math.min(counters.bugShippedCount ?? 0, target), target };
   }
   return null;
 }

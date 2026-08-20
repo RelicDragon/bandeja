@@ -10,6 +10,8 @@ export interface SegmentedSwitchTab {
   label: string;
   icon?: SegmentedSwitchIcon;
   badge?: number;
+  /** Show the inline badge when the count is 0. */
+  showZeroBadge?: boolean;
   ariaLabel?: string;
   disabled?: boolean;
   /** Shown when tab is disabled (native tooltip). */
@@ -168,7 +170,7 @@ export const SegmentedSwitch = ({
             ) : (
               <span className={isVertical ? '' : 'truncate whitespace-nowrap'}>{tab.label}</span>
             )}
-            {badgeStyle === 'inline' && tab.badge != null && tab.badge > 0 ? (
+            {badgeStyle === 'inline' && tab.badge != null && (tab.badge > 0 || tab.showZeroBadge) ? (
               <span
                 className={`relative z-[1] inline-flex h-5 min-w-[1.25rem] shrink-0 items-center justify-center rounded-full px-1.5 text-[10px] font-semibold tabular-nums ${
                   isActive

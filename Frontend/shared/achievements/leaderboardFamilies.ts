@@ -16,6 +16,7 @@ export const ACHIEVEMENT_LEADERBOARD_FAMILIES = [
   'HABIT_GIANT_KILLER',
   'HABIT_DYNAMIC_DUO',
   'HABIT_OPEN_COURT',
+  'HABIT_TIE_BREAK',
 ] as const;
 
 export type AchievementLeaderboardFamily =

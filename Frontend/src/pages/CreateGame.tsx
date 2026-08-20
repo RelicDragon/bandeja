@@ -328,6 +328,7 @@ export const CreateGame = ({
   const [isInvitePlayersModalOpen, setIsInvitePlayersModalOpen] = useState(false);
   const [invitedPlayerIds, setInvitedPlayerIds] = useState<string[]>(() => initialInvitedPlayerIds);
   const [inviteUserTeamByReceiverId, setInviteUserTeamByReceiverId] = useState<Record<string, string>>({});
+  const [invitePlayIntentByReceiverId, setInvitePlayIntentByReceiverId] = useState<Record<string, string>>({});
   const [invitedPlayers, setInvitedPlayers] = useState<BasicUser[]>([]);
   const [creatorNonPlaying, setCreatorNonPlaying] = useState<boolean>(false);
 
@@ -1443,14 +1444,18 @@ export const CreateGame = ({
       if (invitedPlayerIds.length > 0 && gameResponse.data.id) {
         try {
           const gid = gameResponse.data.id;
+          let unlinkedLooking = false;
           for (const receiverId of invitedPlayerIds) {
             if (linkedInviteeIds.has(receiverId)) continue;
-            await invitesApi.send({
+            const sent = await invitesApi.send({
               receiverId,
               gameId: gid,
               userTeamId: inviteUserTeamByReceiverId[receiverId],
+              playIntentId: invitePlayIntentByReceiverId[receiverId],
             });
+            if (sent.intentLinked === false) unlinkedLooking = true;
           }
+          if (unlinkedLooking) toast(t('playerInvite.alreadyInMatch'));
         } catch (inviteError) {
           console.error('Failed to send invites:', inviteError);
         }
@@ -1542,6 +1547,11 @@ export const CreateGame = ({
   const handleRemoveInvitedPlayer = (playerId: string) => {
     setInvitedPlayerIds(invitedPlayerIds.filter(id => id !== playerId));
     setInviteUserTeamByReceiverId((prev) => {
+      const next = { ...prev };
+      delete next[playerId];
+      return next;
+    });
+    setInvitePlayIntentByReceiverId((prev) => {
       const next = { ...prev };
       delete next[playerId];
       return next;
@@ -2061,9 +2071,25 @@ export const CreateGame = ({
             genderTeams={genderTeams}
             entityType={entityType}
             gameTiming={inviteGameTiming}
+            lookingDraft={
+              inviteGameTiming
+                ? {
+                    sport: selectedSport,
+                    entityType,
+                    clubId: selectedClub || null,
+                    startTime: inviteGameTiming.startTime,
+                    endTime: inviteGameTiming.endTime,
+                    timeZone: inviteGameTiming.timeZone,
+                    minLevel: playerLevelRange[0],
+                    maxLevel: playerLevelRange[1],
+                    genderTeams,
+                  }
+                : null
+            }
             onConfirm={async (playerIds, meta) => {
               setInvitedPlayerIds(playerIds);
               setInviteUserTeamByReceiverId(meta?.userTeamIdByReceiverId ?? {});
+              setInvitePlayIntentByReceiverId(meta?.playIntentIdByReceiverId ?? {});
               try {
                 const { fetchPlayers, users } = usePlayersStore.getState();
                 await fetchPlayers(undefined, selectedSport);

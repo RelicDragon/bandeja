@@ -52,7 +52,9 @@
       "memberNotFound": "Igrač nije u timu",
       "cannotRemoveOwner": "Ne možete ukloniti vlasnika",
       "userIdRequired": "Izaberite igrača",
-      "nameTooShort": "Naziv tima mora imati najmanje 3 karaktera"
+      "nameTooShort": "Naziv tima mora imati najmanje 3 karaktera",
+      "notReady": "Prvo pozovite partnera — par još nije kompletan",
+      "notAcceptedMember": "Pridružite se paru pre nego što ga dodate u igru"
     },
     "games": {
       "cannotJoin": "Ne može se pridružiti igri",
@@ -80,7 +82,9 @@
       "updateForbidden": "Samo kreator greške ili administrator mogu ažurirati ovu grešku",
       "textRequired": "Potreban je tekst greške",
       "typeRequired": "Potreban je važeći tip greške",
-      "statusOrTypeRequired": "Potreban je važeći status ili tip greške"
+      "statusOrTypeRequired": "Potreban je važeći status ili tip greške",
+      "ratingRequired": "Recenzija zahteva ocenu od 1 do 5 zvezdica",
+      "ratingInvalid": "Ocena recenzije mora biti između 1 i 5 zvezdica"
     },
     "favorites": {
       "userIdRequired": "Potreban je ID korisnika",

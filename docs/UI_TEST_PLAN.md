@@ -667,6 +667,8 @@ Frontend/e2e/
 | C-59 | Club picker states | View club picker before/after selection (create + edit location tab) | Unselected: dashed primary CTA with pin icon + “Select Club”; selected: club avatar, name, address, chevron; tap opens club modal |
 | C-60 | Location sub-step value pills | Pick date, court, time in location block (create + edit location tab) | Sub-step headers show current selection as right-aligned pill (Date: “Sat, Jul 12”; Court: name or “2/3” in multi-court; Start time: “18:00–19:30”); pill is green when the sub-step is done |
 | C-61 | Calendar picker dialog | Tap calendar tile in Date row | Calendar opens as modal dialog with title and close button; picking a date applies it and closes; X, outside tap, or hardware back dismiss without changing the date |
+| C-62 | Create game Looking | Set date/time, open invite picker, Looking tab, pick a looking player, create | Looking tab only after date/time; create sends invite with their play intent linked |
+| C-63 | No looking chrome | Wallet / team / trainer picker | No Search \| Looking switch |
 
 ### 8.4 Create league (`/create-league`)
 
@@ -757,6 +759,11 @@ Frontend/e2e/
 | GD-13 | Owner decline queue | Decline queued user | Removed from queue |
 | GD-14 | Cancel own queue request | Cancel queue | Removed |
 | GD-15 | Invite players | Owner opens player list → invite | Pending invites shown |
+| GD-148 | Invite modal tabs | Owner opens invite picker | Search is the default tab; Looking tab shows a live looking-count badge (including 0) |
+| GD-149 | Looking rank + gray | Looking tab with mixed fits | Full matches first; misses dimmed with a mismatch line; still selectable |
+| GD-150 | Looking invite reserves | Invite an OPEN looking player | Pending invite; their intent becomes MATCHED; they drop off Looking live |
+| GD-151 | In-a-match invite | Invite a player badged “In a match” | Invite sends; their lobby match is not stolen; toast that they’re already in a match |
+| GD-152 | Empty Looking | No live play intents in the city | Looking tab still visible, badge 0, empty copy, Search still works |
 | GD-15a | Invite search Cyrillic→Latin | Open invite list; type Cyrillic prefix of a Latin-named player (e.g. `ив` for Ivan) | Player stays in results after debounce (does not flash then vanish) |
 | GD-15b | Invite search clear | Open invite list; type 2+ chars so results update; clear the search field | List stays mounted (no full-modal spinner); default invitable list restores after debounce |
 | GD-15c | Invite picker omits busy | Open Search invite list for a timed game; city user is PLAYING in another overlapping Bandeja game | Busy user is absent from the list; INVITED-only or non-overlapping PLAYING users still appear |
@@ -1228,6 +1235,8 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | CH-50 | Desktop split persist | Select chat → resize splitter | Layout preserved |
 | CH-51 | Back from thread mobile | Back | Returns to list |
 | CH-52 | Create bug report | Bugs filter → add bug | `BugModal` → bug thread created |
+| CH-52a | Create review with stars | Bugs filter → add → type Review → pick 1–5 stars → submit | Submit disabled until stars picked; thread created as Review; stars shown on list row and context panel |
+| CH-52b | Review stars vs priority | Open a Review thread and a Bug thread | Review shows star rating (not -2…+2 priority); other types show priority selector |
 | CH-53 | Bugs filter panel | Panel closed by default; non-admin: Created by me on + all statuses; admin: Created by me off + open statuses only | List matches defaults; open panel → multi-select status chips → list updates |
 | CH-54 | Pin chat from list | Pin DM/group | Pinned ordering |
 | CH-55 | Mute chat from list | Mute thread | Mute persisted; notifications suppressed |
@@ -1374,6 +1383,8 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PR-trophy-6f | Giant Killer | Win rated PADEL 2v2 vs team ≥0.5 higher avg; all 4 players reliability >10% (1 / 5 / 10 / 25 / 50) | Matching Giant Killer trophies; non-rated / low reliability / insufficient gap do not count |
 | PR-trophy-6g | Dynamic Duo | Win 10 / 50 / 100 qualifying PADEL matches with same partner | Matching Dynamic Duo trophies; progress shows best partner win count |
 | PR-trophy-6h | Open Court | Complete qualifying PADEL doubles with 10 / 25 / 50 / 100 / 250 distinct partners (ties count; wins not required) | Matching Open Court trophies |
+| PR-trophy-6j | Tie-Breaker | Win official sets on a tie-break: classic 7–6 or flagged super TB (1 / 5 / 12 / 32 / 64); any sport, FINAL results | Matching Tie-Breaker family trophies; 6–4 / Americano points do not count; step 4 (32) is current prod max |
+| PR-trophy-6k | Shipped It ladder (bug tracker) | Report bugs/suggestions (not Question); each must hit In progress or Test then Finished/Archived; tiers 1 / 5 / 10 / 25 / 50 | Matching Bug tracker family stack; progress counts shipped reports; questions and ignored (never worked) reports excluded |
 | PR-trophy-6i | Leto 2026 season medal | User who played Fix Liga Leto 2026 (participant / playoffs / 4th / bronze / silver / gold) | Exactly one exclusive Leto 2026 medal (best tier only); rarity pill shows UNIQUE (above Legendary); fuchsia frame/glow; visitors only see earned; non-participants never see locked slots |
 
 | PR-trophy-6b | Habit unlock wins milestones | Cross 10 / 25 / 50 / 100 / 500 qualifying wins | Matching win trophies grant once; 10–25 Common banner; 50–100 Rare + 500 Legendary celebration |
@@ -1526,6 +1537,12 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | UT-06 | Full-height mobile layout | `@mobile` | Layout fills screen |
 | UT-07 | Dead custom avatar URL | Team whose `avatar` CDN URL 404/403s | Falls back to member composite / initials (no broken-image icon) |
 | UT-08 | Replace team avatar | Owner replaces existing team photo | New image shows; prior URL may 404 without breaking display |
+| UT-09 | Create-pair explainer | Tap Create team (home or create menu) | Sheet explains pair (not a group), city invites, add-from-page or invite list; confirm creates/opens pair |
+| UT-10 | Team page explainer | Open `/user-team/:id` | Explainer visible without hunting; pending vs ready copy |
+| UT-11 | Add pair to game | Ready pair → Add to a game → pick upcoming game user can invite to | Both accepted members tagged as that user team; partner invited if not already on the game |
+| UT-12 | Add blocked while pending | Incomplete pair (partner not accepted) | Add action unavailable with reason that partner must join first |
+| UT-13 | Invite permission filter | User cannot invite to a game | That game is absent from the picker |
+| UT-14 | Fixed-pairs seating | Add ready pair to a `hasFixedTeams` game; both become PLAYING | They occupy one pair slot, not two unlinked players |
 
 ---
 

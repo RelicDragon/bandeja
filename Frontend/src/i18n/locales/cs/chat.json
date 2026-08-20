@@ -217,6 +217,7 @@
       "BUG_STATUS_CHANGED": "Stav chyby změněn na {{status}}",
       "BUG_TYPE_CHANGED": "Typ chyby změněn na {{type}}",
       "BUG_PRIORITY_CHANGED": "Priorita chyby změněna na {{priority}}",
+      "BUG_RATING_CHANGED": "Hodnocení změněno na {{rating}}",
       "GAME_CLUB_CHANGED": "Místo zápasu změněno na {{clubName}}",
       "GAME_DATE_TIME_CHANGED": "Datum/čas zápasu změněn na {{dateTime}}",
       "USER_CHAT_REQUEST": "{{requesterName}} žádá o chat s vámi",

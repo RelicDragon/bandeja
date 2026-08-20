@@ -17,6 +17,7 @@ export enum SystemMessageType {
   BUG_STATUS_CHANGED = 'BUG_STATUS_CHANGED',
   BUG_TYPE_CHANGED = 'BUG_TYPE_CHANGED',
   BUG_PRIORITY_CHANGED = 'BUG_PRIORITY_CHANGED',
+  BUG_RATING_CHANGED = 'BUG_RATING_CHANGED',
   GAME_CLUB_CHANGED = 'GAME_CLUB_CHANGED',
   GAME_DATE_TIME_CHANGED = 'GAME_DATE_TIME_CHANGED',
   GAME_BOOKING_STATUS_CHANGED = 'GAME_BOOKING_STATUS_CHANGED',
@@ -123,6 +124,11 @@ export const SYSTEM_MESSAGE_TEMPLATES: Record<SystemMessageType, SystemMessageTe
     type: SystemMessageType.BUG_PRIORITY_CHANGED,
     template: 'Bug priority changed to {{priority}}',
     variables: ['priority']
+  },
+  [SystemMessageType.BUG_RATING_CHANGED]: {
+    type: SystemMessageType.BUG_RATING_CHANGED,
+    template: 'Rating changed to {{rating}}',
+    variables: ['rating']
   },
   [SystemMessageType.GAME_CLUB_CHANGED]: {
     type: SystemMessageType.GAME_CLUB_CHANGED,

@@ -106,8 +106,10 @@ async function verifyFamilies(tx: Prisma.TransactionClient): Promise<void> {
         giantKillerWins: 6,
         dynamicDuoMaxWins: 5,
         openCourtPartners: 4,
+        tieBreakSetWins: 32,
         organizeRefreshedAt: now,
         partnerRefreshedAt: now,
+        tiebreakRefreshedAt: now,
       },
       {
         userId: betaId,
@@ -117,8 +119,10 @@ async function verifyFamilies(tx: Prisma.TransactionClient): Promise<void> {
         giantKillerWins: 3,
         dynamicDuoMaxWins: 2,
         openCourtPartners: 1,
+        tieBreakSetWins: 3,
         organizeRefreshedAt: now,
         partnerRefreshedAt: now,
+        tiebreakRefreshedAt: now,
       },
       {
         userId: gammaId,
@@ -128,8 +132,10 @@ async function verifyFamilies(tx: Prisma.TransactionClient): Promise<void> {
         giantKillerWins: 60,
         dynamicDuoMaxWins: 50,
         openCourtPartners: 40,
+        tieBreakSetWins: 20,
         organizeRefreshedAt: now,
         partnerRefreshedAt: now,
+        tiebreakRefreshedAt: now,
       },
       {
         userId: staleId,
@@ -139,8 +145,10 @@ async function verifyFamilies(tx: Prisma.TransactionClient): Promise<void> {
         giantKillerWins: 999,
         dynamicDuoMaxWins: 999,
         openCourtPartners: 999,
+        tieBreakSetWins: 999,
         organizeRefreshedAt: null,
         partnerRefreshedAt: null,
+        tiebreakRefreshedAt: null,
       },
     ],
   });
@@ -202,6 +210,7 @@ async function verifyFamilies(tx: Prisma.TransactionClient): Promise<void> {
     ['HABIT_GIANT_KILLER', 6],
     ['HABIT_DYNAMIC_DUO', 5],
     ['HABIT_OPEN_COURT', 4],
+    ['HABIT_TIE_BREAK', 32],
   ] as const);
   for (const [family, progress] of expectedProgress) {
     const context = await getAchievementLeaderboardContext({

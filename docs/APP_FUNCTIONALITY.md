@@ -416,7 +416,7 @@ Multi-step wizard for scheduling events. Entity types:
 - Max participants, gender restriction (MEN/WOMEN/MIX)
 - Game name, description, avatar upload
 - Price section (type, currency, total)
-- Invite players from list (level filter, availability icons)
+- Invite players from list (Search \| Looking when date/time is set; level filter, availability icons)
 - Floating summary chip bar when scrolling past filled sections
 
 ### 8.3 External booking (Booktime / Padeloo / Klikteren)
@@ -490,7 +490,7 @@ Central hub for any scheduled event. Layout adapts by `entityType`.
 **Participation:**
 - Join, leave, join queue, cancel queue
 - Accept/decline invites (with note)
-- Owner: accept/decline queue, invite players, cancel invites, kick, **transfer ownership**, manage users modal (roles)
+- Owner: accept/decline queue, invite players (Search \| Looking), cancel invites, kick, **transfer ownership**, manage users modal (roles)
 - Guest join (chat-only access without full roster join)
 - Participant carousel vs list toggle
 - Fixed teams management
@@ -789,7 +789,7 @@ Peer-to-peer listings within the app.
 - **Follow / unfollow** users (API: `/favorites/users`; also used to highlight trainers in Find)
 - **Favorite clubs** (shortcut in Find filters; separate API from user follows)
 - **Block / unblock** (restricts chat and follow)
-- **User teams** (`/user-team/:id`): create, edit name/status/avatar, invite members, remove, delete team
+- **User teams** (`/user-team/:id`): create (pair explainer), edit name/status/avatar, invite partner, add the ready pair to an upcoming game the member can invite to (same invite-as-user-team path; fixed-pairs games seat them as one pair), remove, delete team
 - **Player card overlay** (`?player=`) from anywhere — avatar/stats, follow, block, start DM, invite to game, **send coins**, **common group chats** list (`/users/:id/common-groups`)
 - **Invite friend** share link from Home
 
@@ -875,8 +875,10 @@ For users with `clubAdminClubs` permission. FAB entry point.
 In-app issue reporting via chat threads.
 
 - Create bug from + menu → opens bug channel
+- Types: Bug, Critical, Suggestion, Question, Task, Review
+- Review stores 1–5 stars in `priority`; other types keep -2…+2 priority
 - Bugs inbox filter (`/bugs`)
-- Priority selector and badge
+- Priority selector and badge (star rating when type is Review)
 - Bug context panel in chat thread
 - Lifecycle: TEST → FINISHED (15d) → ARCHIVED (3d) via scheduler
 - Developer room socket notification (`new-bug`)

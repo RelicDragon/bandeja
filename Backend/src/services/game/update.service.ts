@@ -45,6 +45,7 @@ import {
 } from '../achievements/podiumGrant.service';
 import { grantOrganizeAchievementsForFinalizedGame } from '../achievements/organizeGrant.service';
 import { grantPartnerAchievementsForFinalizedGame } from '../achievements/partnerGrant.service';
+import { grantTieBreakAchievementsForFinalizedGame } from '../achievements/tieBreakGrant.service';
 import { invalidateAchievementStatsForGame } from '../achievements/achievementStats.service';
 import { normalizeGameRatingFields } from './normalizeGameRatingFields';
 
@@ -779,10 +780,12 @@ export class GameUpdateService {
         ) {
           await grantOrganizeAchievementsForFinalizedGame({ gameId: id, tx });
           await grantPartnerAchievementsForFinalizedGame({ gameId: id, tx });
+          await grantTieBreakAchievementsForFinalizedGame({ gameId: id, tx });
         }
         if (currentGame?.entityType === EntityType.LEAGUE && currentGame.parentId) {
           await syncParentSeasonPodiumIfFinal({ gameId: id, tx });
           await grantPartnerAchievementsForFinalizedGame({ gameId: id, tx });
+          await grantTieBreakAchievementsForFinalizedGame({ gameId: id, tx });
         }
       }
     });

@@ -48,7 +48,9 @@
         "giantKiller": "Ubica giganta",
         "dynamicDuo": "Dinamični duo",
         "openCourt": "Otvoreni teren",
-        "leto2026": "Leto 2026"
+        "leto2026": "Leto 2026",
+        "tieBreaker": "Taj-brejk",
+        "bugShipped": "Bug tracker"
       }
     },
     "leaderboard": {
@@ -82,7 +84,8 @@
         "hostedBars": "{{count}} Bar događaja",
         "upsets": "{{count}} iznenađenja",
         "partnerWins": "{{count}} pobeda s partnerom",
-        "partners": "{{count}} partnera"
+        "partners": "{{count}} partnera",
+        "tieBreaks": "{{count}} taj-brejkova"
       }
     },
     "detail": {
@@ -337,6 +340,46 @@
       "leto2026Gold": {
         "title": "Šampion Leto 2026",
         "description": "Zlatni podijum Fix Liga Leto 2026."
+      },
+      "tieBreak1": {
+        "title": "Taj-brejker",
+        "description": "Osvoji set na taj-brejku — klasično 7:6 ili super taj-brejk."
+      },
+      "tieBreak5": {
+        "title": "Iznenadna smrt",
+        "description": "Osvoji 5 setova na taj-brejku (7:6 ili super TB)."
+      },
+      "tieBreak12": {
+        "title": "Klub 7:6",
+        "description": "Osvoji 12 setova na taj-brejku (7:6 ili super TB)."
+      },
+      "tieBreak32": {
+        "title": "Čelični nervi",
+        "description": "Osvoji 32 seta na taj-brejku (7:6 ili super TB)."
+      },
+      "tieBreak64": {
+        "title": "Legenda lutrije",
+        "description": "Osvoji 64 seta na taj-brejku (7:6 ili super TB)."
+      },
+      "bugShipped1": {
+        "title": "Stiglo u produkciju",
+        "description": "Dovedi 1 bug ili predlog kroz u toku / test do gotovo / arhivirano. Pitanja se ne računaju."
+      },
+      "bugShipped5": {
+        "title": "Beleške za patch",
+        "description": "Dovedi 5 bugova ili predloga kroz u toku / test do gotovo / arhivirano."
+      },
+      "bugShipped10": {
+        "title": "Fabrika fixeva",
+        "description": "Dovedi 10 bugova ili predloga kroz u toku / test do gotovo / arhivirano."
+      },
+      "bugShipped25": {
+        "title": "Krotitelj bugova",
+        "description": "Dovedi 25 bugova ili predloga kroz u toku / test do gotovo / arhivirano."
+      },
+      "bugShipped50": {
+        "title": "Legenda releasa",
+        "description": "Dovedi 50 bugova ili predloga kroz u toku / test do gotovo / arhivirano."
       }
     }
   }

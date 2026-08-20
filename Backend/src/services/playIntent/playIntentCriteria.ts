@@ -367,61 +367,134 @@ export function canIntentJoinProposal(
   return proposalMembers.every((member) => intentsCompatible(candidate, member).ok);
 }
 
-export function intentMatchesGame(
-  intent: IntentCriteria,
-  game: GameCriteria,
-  now: Date = new Date(),
-): boolean {
-  if (game.startTime.getTime() <= now.getTime()) return false;
+function gameDatesFit(intent: IntentCriteria, game: GameCriteria): boolean {
+  return intent.dateKeys.includes(game.dateKey);
+}
 
-  if (!intent.dateKeys.includes(game.dateKey)) return false;
+function gameClubsFit(intent: IntentCriteria, game: GameCriteria): boolean {
+  if (intent.clubIds.length === 0) return true;
+  return !!game.clubId && intent.clubIds.includes(game.clubId);
+}
 
-  if (intent.clubIds.length > 0) {
-    if (!game.clubId || !intent.clubIds.includes(game.clubId)) return false;
-  }
-
+function gameTimeFit(intent: IntentCriteria, game: GameCriteria): boolean {
   const windows = resolveTimeWindows(intent);
-  if (windows) {
-    const isInsideSelectedPeriod = windows.some(
-      (window) =>
-        game.startTimeMinutes >= window.startMinutes &&
-        game.startTimeMinutes < window.endMinutes,
-    );
-    if (!isInsideSelectedPeriod) {
-      return false;
-    }
-  }
+  if (!windows) return true;
+  return windows.some(
+    (window) =>
+      game.startTimeMinutes >= window.startMinutes &&
+      game.startTimeMinutes < window.endMinutes,
+  );
+}
 
-  const gameHasLevels =
-    game.entityType !== 'BAR' &&
-    (game.minLevel != null || game.maxLevel != null);
-  if (gameHasLevels && (intent.minLevel != null || intent.maxLevel != null)) {
+function gameHasLevelBand(game: GameCriteria): boolean {
+  return game.entityType !== 'BAR' && (game.minLevel != null || game.maxLevel != null);
+}
+
+function gameLevelsFit(intent: IntentCriteria, game: GameCriteria): boolean {
+  if (!gameHasLevelBand(game)) return true;
+  if (intent.minLevel != null || intent.maxLevel != null) {
     const iMin = intent.minLevel ?? Number.NEGATIVE_INFINITY;
     const iMax = intent.maxLevel ?? Number.POSITIVE_INFINITY;
     const gMin = game.minLevel ?? Number.NEGATIVE_INFINITY;
     const gMax = game.maxLevel ?? Number.POSITIVE_INFINITY;
     if (gMax < iMin || gMin > iMax) return false;
   }
-
-  if (intent.userLevel != null && gameHasLevels) {
+  if (intent.userLevel != null) {
     if (game.minLevel != null && intent.userLevel < game.minLevel) return false;
     if (game.maxLevel != null && intent.userLevel > game.maxLevel) return false;
   }
+  return true;
+}
 
+function gameGenderFit(intent: IntentCriteria, game: GameCriteria): boolean {
   const gt = game.genderTeams;
   const pref = intent.genderTeams;
   if (pref === 'MEN' && gt === 'WOMEN') return false;
   if (pref === 'WOMEN' && gt === 'MEN') return false;
-  if (pref === 'MIX_PAIRS' && gt && gt !== 'ANY' && gt !== 'MIX_PAIRS' && gt !== 'MIXED') return false;
-
+  if (pref === 'MIX_PAIRS' && gt && gt !== 'ANY' && gt !== 'MIX_PAIRS' && gt !== 'MIXED') {
+    return false;
+  }
   if (intent.userGender && intent.userGender !== 'PREFER_NOT_TO_SAY') {
     if (gt && gt !== 'ANY' && gt !== 'MIX_PAIRS' && gt !== 'MIXED') {
       if (gt === 'MEN' && intent.userGender !== 'MALE') return false;
       if (gt === 'WOMEN' && intent.userGender !== 'FEMALE') return false;
     }
   }
-
   return true;
+}
+
+export function intentMatchesGame(
+  intent: IntentCriteria,
+  game: GameCriteria,
+  now: Date = new Date(),
+): boolean {
+  if (game.startTime.getTime() <= now.getTime()) return false;
+  return (
+    gameDatesFit(intent, game) &&
+    gameClubsFit(intent, game) &&
+    gameTimeFit(intent, game) &&
+    gameLevelsFit(intent, game) &&
+    gameGenderFit(intent, game)
+  );
+}
+
+export function gameFitBreakdown(intent: IntentCriteria, game: GameCriteria): FitCheck[] {
+  return [
+    { dimension: 'dates', ok: gameDatesFit(intent, game) },
+    { dimension: 'clubs', ok: gameClubsFit(intent, game) },
+    { dimension: 'time', ok: gameTimeFit(intent, game), ...timePhraseFields(intent) },
+    { dimension: 'level', ok: gameLevelsFit(intent, game) },
+    { dimension: 'gender', ok: gameGenderFit(intent, game) },
+  ];
+}
+
+export function gameMismatch(intent: IntentCriteria, game: GameCriteria): IntentMismatch | null {
+  if (!gameDatesFit(intent, game)) return { reason: 'dates' };
+  if (!gameClubsFit(intent, game)) return { reason: 'clubs' };
+  if (!gameTimeFit(intent, game)) return { reason: 'time', ...timePhraseFields(intent) };
+  if (!gameLevelsFit(intent, game)) return { reason: 'level' };
+  if (!gameGenderFit(intent, game)) return { reason: 'gender' };
+  return null;
+}
+
+export function gameMatchScore(
+  intent: IntentCriteria,
+  game: GameCriteria,
+  now: Date = new Date(),
+): {
+  matchesGame: boolean;
+  fit: FitCheck[];
+  mismatch: IntentMismatch | null;
+  score: number;
+} {
+  const fit = gameFitBreakdown(intent, game);
+  const okCount = fit.filter((check) => check.ok).length;
+  let tightness = okCount * 10;
+  if (fit.find((check) => check.dimension === 'clubs')?.ok && intent.clubIds.length > 0 && game.clubId) {
+    tightness += 3;
+  }
+  if (fit.find((check) => check.dimension === 'time')?.ok) {
+    const windows = resolveTimeWindows(intent);
+    if (!windows) {
+      tightness += 2;
+    } else {
+      const covering = windows.find(
+        (window) =>
+          game.startTimeMinutes >= window.startMinutes &&
+          game.startTimeMinutes < window.endMinutes,
+      );
+      if (covering) {
+        const span = covering.endMinutes - covering.startMinutes;
+        tightness += span <= 3 * 60 ? 3 : span <= 6 * 60 ? 2 : 1;
+      }
+    }
+  }
+  return {
+    matchesGame: intentMatchesGame(intent, game, now),
+    fit,
+    mismatch: gameMismatch(intent, game),
+    score: tightness,
+  };
 }
 
 export type AffinityBucket = 'near' | 'mid' | 'far';

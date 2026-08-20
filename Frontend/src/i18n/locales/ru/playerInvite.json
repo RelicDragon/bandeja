@@ -27,6 +27,18 @@
     "statsSocialRow": "Социальный: {{social}}",
     "teamBadge": "Команда",
     "availabilityPartial": "Частично доступен",
-    "availabilityNone": "Недоступен в это время"
+    "availabilityNone": "Недоступен в это время",
+    "tabSearch": "Поиск",
+    "tabLooking": "Хотят поиграть",
+    "lookingEmpty": "Пока никто не ищет игру",
+    "lookingEmptyHint": "Найдите игроков во вкладке Поиск",
+    "lookingHint": "{{great}} отличное совпадение · {{total}} ищут",
+    "lookingBadgeMatch": "В матче",
+    "lookingBadgeInGame": "В игре",
+    "stoppedLooking": "{{name}} больше не ищет",
+    "alreadyInMatch": "Этот игрок уже в матче",
+    "lookingLoadError": "Не удалось загрузить список",
+    "lookingLoadErrorHint": "Используйте Поиск или попробуйте снова",
+    "lookingRetry": "Повторить"
   }
 }

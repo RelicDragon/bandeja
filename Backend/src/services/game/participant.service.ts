@@ -16,6 +16,7 @@ import {
   ChatType,
   GameInviteOutcomeType,
   GameStatus,
+  MatchProposalStatus,
   ParticipantRole,
   UserTeamMemberStatus,
 } from '@prisma/client';
@@ -28,6 +29,7 @@ import { publishCommittedPlayIntentStatusChanges } from '../playIntent/playInten
 import { schedulePendingInviteSlotOpenNotify } from '../invite/pendingInviteSlotOpen.service';
 import { inboxInviteGameSelect, mapInvitedParticipantToInboxInvite } from '../invite/pendingInviteShape';
 import { assertSlotOverlapConfirmed } from './gameSlotOverlap.service';
+import { invitePlayIntentLinkOutcome, shouldLinkPlayIntent } from '../playIntent/playIntentInviteLink';
 
 const PLAYING_STATUS = 'PLAYING' as const;
 const IN_QUEUE_STATUS = 'IN_QUEUE' as const;
@@ -733,8 +735,9 @@ export class ParticipantService {
     message?: string | null,
     expiresAt?: Date | null,
     asTrainer?: boolean,
-    inviteUserTeamId?: string | null
-  ): Promise<{ participant: any; invite: any }> {
+    inviteUserTeamId?: string | null,
+    playIntentId?: string | null,
+  ): Promise<{ participant: any; invite: any; intentLinked: boolean | null }> {
     const game = await prisma.game.findUniqueOrThrow({
       where: { id: gameId },
       select: { entityType: true, status: true, genderTeams: true },
@@ -767,7 +770,7 @@ export class ParticipantService {
       resolvedInviteUserTeamId = inviteUserTeamId;
     }
 
-    const participant = await prisma.$transaction(async (tx) => {
+    const createdInvite = await prisma.$transaction(async (tx) => {
       const existing = await tx.gameParticipant.findFirst({
         where: { gameId, userId: receiverId },
       });
@@ -796,7 +799,45 @@ export class ParticipantService {
         }
       }
 
-      return tx.gameParticipant.create({
+      let linkedIntentId: string | null = null;
+      let requestedIntent: { id: string; userId: string; status: string } | null = null;
+      let inProposal = false;
+      if (playIntentId && !asTrainer) {
+        requestedIntent = await tx.playIntent.findFirst({
+          where: { id: playIntentId, userId: receiverId },
+          select: { id: true, userId: true, status: true },
+        });
+        if (requestedIntent) {
+          const proposalRow = await tx.matchProposalMember.findFirst({
+            where: {
+              intentId: requestedIntent.id,
+              userId: receiverId,
+              proposal: {
+                status: { in: [MatchProposalStatus.PENDING, MatchProposalStatus.ACCEPTED] },
+                expiresAt: { gt: new Date() },
+                gameId: null,
+              },
+            },
+            select: { id: true },
+          });
+          inProposal = Boolean(proposalRow);
+          if (shouldLinkPlayIntent(requestedIntent, receiverId, inProposal)) {
+            try {
+              await PlayIntentGameLifecycleService.reserve(
+                tx,
+                requestedIntent.id,
+                receiverId,
+                new Date(),
+              );
+              linkedIntentId = requestedIntent.id;
+            } catch (error) {
+              if (!(error instanceof ApiError && error.statusCode === 409)) throw error;
+            }
+          }
+        }
+      }
+
+      const created = await tx.gameParticipant.create({
         data: {
           gameId,
           userId: receiverId,
@@ -806,6 +847,7 @@ export class ParticipantService {
           inviteMessage: message ?? null,
           inviteExpiresAt: expiresAt ?? null,
           inviteUserTeamId: resolvedInviteUserTeamId,
+          playIntentId: linkedIntentId,
         },
         include: {
           user: { select: USER_SELECT_WITH_SPORT_PROFILES },
@@ -815,10 +857,26 @@ export class ParticipantService {
           },
         },
       });
+      return {
+        participant: created,
+        linkedIntentId,
+        intentLinked: invitePlayIntentLinkOutcome({
+          requestedPlayIntentId: playIntentId,
+          asTrainer: Boolean(asTrainer),
+          intent: requestedIntent,
+          receiverId,
+          inProposal,
+          linkedIntentId,
+        }),
+      };
     });
 
+    const { participant, linkedIntentId, intentLinked } = createdInvite;
+    if (linkedIntentId) {
+      await publishCommittedPlayIntentStatusChanges([linkedIntentId]);
+    }
     const invite = mapInvitedParticipantToInboxInvite(participant);
-    return { participant, invite };
+    return { participant, invite, intentLinked };
   }
 
   static async setShowInStories(gameId: string, userId: string, showInStories: boolean) {

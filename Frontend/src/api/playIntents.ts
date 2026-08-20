@@ -100,6 +100,37 @@ export type MatchProposalSummary = {
   }[];
 };
 
+export type InviteLookingMember = {
+  userId: string;
+  intentId: string;
+  firstName: string | null;
+  lastName: string | null;
+  avatar: string | null;
+  gender?: string | null;
+  level: number | null;
+  status: PlayIntentStatus;
+  inProposal: boolean;
+  inGame: boolean;
+  matchesGame: boolean;
+  fit: FitCheck[];
+  mismatch: {
+    reason: FitDimension;
+    period?: PlayIntentTimeOfDay;
+    startTime?: string | null;
+    endTime?: string | null;
+  } | null;
+  gamesTogetherCount: number;
+  matchScore: number;
+};
+
+export type InviteLookingPool = {
+  cityId: string;
+  sport: Sport;
+  entityType: string;
+  members: InviteLookingMember[];
+  total: number;
+};
+
 export type PlayIntentPool = {
   todayKey: string;
   cityTimezone: string;
@@ -173,6 +204,27 @@ export const playIntentsApi = {
     const { data } = await api.get<{ success: boolean; data: PlayIntentPool }>('/play-intents/pool', {
       params,
     });
+    return data.data;
+  },
+
+  getInvitePool: async (body: {
+    gameId?: string;
+    draft?: {
+      sport: Sport;
+      entityType?: string;
+      clubId?: string | null;
+      startTime: string;
+      endTime?: string;
+      timeZone?: string | null;
+      minLevel?: number | null;
+      maxLevel?: number | null;
+      genderTeams?: string | null;
+    };
+  }) => {
+    const { data } = await api.post<{ success: boolean; data: InviteLookingPool }>(
+      '/play-intents/invite-pool',
+      body,
+    );
     return data.data;
   },
 

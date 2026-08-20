@@ -134,6 +134,42 @@ export const discussPlayIntentBodySchema = z
   })
   .strict();
 
+export const invitePoolDraftSchema = z
+  .object({
+    sport,
+    entityType: z.nativeEnum(EntityType).optional(),
+    clubId: identifier.nullable().optional(),
+    startTime: z.string().trim().min(1).max(64),
+    endTime: z.string().trim().min(1).max(64).optional(),
+    timeZone: z.string().trim().min(1).max(64).nullable().optional(),
+    minLevel: level.optional(),
+    maxLevel: level.optional(),
+    genderTeams: z.string().trim().min(1).max(32).nullable().optional(),
+  })
+  .strict();
+
+export const invitePoolBodySchema = z
+  .object({
+    gameId: identifier.optional(),
+    draft: invitePoolDraftSchema.optional(),
+  })
+  .strict()
+  .superRefine((input, context) => {
+    if (!input.gameId && !input.draft) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'gameId or draft is required',
+      });
+    }
+    if (input.gameId && input.draft) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['draft'],
+        message: 'Use gameId or draft, not both',
+      });
+    }
+  });
+
 export type ValidatedCreatePlayIntentInput = z.infer<
   typeof createPlayIntentBodySchema
 >;
@@ -155,3 +191,4 @@ export type ValidatedAddProposalMemberInput = z.infer<
 export type ValidatedDiscussPlayIntentInput = z.infer<
   typeof discussPlayIntentBodySchema
 >;
+export type ValidatedInvitePoolInput = z.infer<typeof invitePoolBodySchema>;

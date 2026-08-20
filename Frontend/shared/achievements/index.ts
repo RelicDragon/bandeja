@@ -74,6 +74,25 @@ export {
 } from './partnerEligibility';
 
 export {
+  TIE_BREAK_THRESHOLDS,
+  isTieBreakSet,
+  userSideWonTieBreakSet,
+  type TieBreakSetScore,
+} from './tieBreakSet';
+
+export {
+  BUG_SHIPPED_ACHIEVEMENT_ID,
+  BUG_SHIPPED_THRESHOLDS,
+  BUG_SHIPPED_TERMINAL_STATUSES,
+  BUG_SHIPPED_WORKFLOW_MIDDLE_STATUSES,
+  bugShippedMiddleStatusInMessageContent,
+  bugTerminalStatusForShipped,
+  bugTypeCountsForShippedAchievement,
+  bugWorkflowMiddleReached,
+  isBugEligibleForShippedAchievement,
+} from './bugShipped';
+
+export {
   accumulatePartnerCountersForUser,
   partnerCountersBeforeAfter,
   type PartnerHabitCounters,
