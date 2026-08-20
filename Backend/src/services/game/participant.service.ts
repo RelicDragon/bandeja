@@ -190,7 +190,7 @@ export class ParticipantService {
       void import('../playIntent/playIntentMatch.service')
         .then(({ PlayIntentMatchService }) => PlayIntentMatchService.onPublicGameSlotsOpened(gameId))
         .catch((err) => console.error('Play intent slot-open match failed:', err));
-      schedulePendingInviteSlotOpenNotify(gameId);
+      schedulePendingInviteSlotOpenNotify(gameId, { openedGender: participant.user?.gender });
       return 'games.leftSuccessfully';
     }
 
@@ -411,7 +411,7 @@ export class ParticipantService {
     await GameService.updateGameReadiness(gameId);
     await ParticipantMessageHelper.emitGameUpdate(gameId, userId);
     if (participant.status === PLAYING_STATUS && !isPlaying) {
-      schedulePendingInviteSlotOpenNotify(gameId);
+      schedulePendingInviteSlotOpenNotify(gameId, { openedGender: participant.user?.gender });
     }
     return isPlaying ? 'games.joinedSuccessfully' : 'games.leftSuccessfully';
   }

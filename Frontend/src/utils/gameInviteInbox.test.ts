@@ -4,6 +4,7 @@ import {
   didPlayingSlotOpen,
   filterInboxVisibleInvites,
   isInviteInboxVisible,
+  isInvitePlaySlotFull,
   isPlayingRosterFull,
   pendingInvitesForSlotOpenNotify,
 } from './gameInviteInbox';
@@ -31,14 +32,27 @@ describe('gameInviteInbox', () => {
     ).toBe(false);
   });
 
+  it('hides MIX_PAIRS invites when the invitee gender bucket is full', () => {
+    const mixGame = {
+      maxParticipants: 4,
+      genderTeams: 'MIX_PAIRS',
+      participants: [
+        { status: 'PLAYING' as const, user: { gender: 'MALE' } },
+        { status: 'PLAYING' as const, user: { gender: 'MALE' } },
+        { status: 'PLAYING' as const, user: { gender: 'FEMALE' } },
+      ],
+    };
+    expect(isInvitePlaySlotFull({ status: 'PENDING', gender: 'MALE', game: mixGame })).toBe(true);
+    expect(isInviteInboxVisible({ status: 'PENDING', gender: 'MALE', game: mixGame }, now)).toBe(false);
+    expect(isInviteInboxVisible({ status: 'PENDING', gender: 'FEMALE', game: mixGame }, now)).toBe(true);
+  });
+
   it('leave that opens a previously full roster selects pending invites', () => {
     const pending = [
       { id: 'a', status: 'PENDING', game: { maxParticipants: 4, participants: playing(3) } },
     ];
     expect(
       pendingInvitesForSlotOpenNotify({
-        maxParticipants: 4,
-        playingCountAfter: 3,
         playingRemovedCount: 1,
         pending,
         now,
@@ -47,6 +61,30 @@ describe('gameInviteInbox', () => {
     expect(
       didPlayingSlotOpen({ maxParticipants: 4, playingCountBefore: 3, playingCountAfter: 2 }),
     ).toBe(false);
+  });
+
+  it('MIX_PAIRS same-gender leave re-notifies only that gender', () => {
+    const mixAfterMaleLeave = {
+      maxParticipants: 4,
+      genderTeams: 'MIX_PAIRS',
+      participants: [
+        { status: 'PLAYING' as const, user: { gender: 'MALE' } },
+        { status: 'PLAYING' as const, user: { gender: 'FEMALE' } },
+        { status: 'PLAYING' as const, user: { gender: 'FEMALE' } },
+      ],
+    };
+    const pending = [
+      { id: 'male', status: 'PENDING' as const, gender: 'MALE', game: mixAfterMaleLeave },
+      { id: 'female', status: 'PENDING' as const, gender: 'FEMALE', game: mixAfterMaleLeave },
+    ];
+    expect(
+      pendingInvitesForSlotOpenNotify({
+        playingRemovedCount: 1,
+        openedGender: 'MALE',
+        pending,
+        now,
+      }).map((invite) => invite.id),
+    ).toEqual(['male']);
   });
 
   it('filters home/badge lists without dropping INVITED rows from the game', () => {

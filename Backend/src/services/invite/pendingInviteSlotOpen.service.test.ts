@@ -21,8 +21,6 @@ void (async () => {
     },
   ];
   const selected = pendingInvitesForSlotOpenNotify({
-    maxParticipants: 4,
-    playingCountAfter: 3,
     playingRemovedCount: 1,
     pending,
     now,
@@ -57,8 +55,6 @@ void (async () => {
   assert.deepEqual(emitCalls, ['user-inv-1:inv-1', 'user-inv-2:inv-2']);
 
   const skipped = pendingInvitesForSlotOpenNotify({
-    maxParticipants: 4,
-    playingCountAfter: 4,
     playingRemovedCount: 1,
     pending: [
       {

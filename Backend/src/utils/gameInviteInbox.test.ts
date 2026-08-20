@@ -4,6 +4,7 @@ import {
   didPlayingSlotOpen,
   filterInboxVisibleInvites,
   isInviteInboxVisible,
+  isInvitePlaySlotFull,
   isPlayingRosterFull,
   pendingInvitesForSlotOpenNotify,
 } from './gameInviteInbox';
@@ -71,6 +72,32 @@ const invited = { status: 'INVITED' as const };
 }
 
 {
+  const mixGame = {
+    maxParticipants: 4,
+    genderTeams: 'MIX_PAIRS',
+    participants: [
+      { status: 'PLAYING' as const, user: { gender: 'MALE' } },
+      { status: 'PLAYING' as const, user: { gender: 'MALE' } },
+      { status: 'PLAYING' as const, user: { gender: 'FEMALE' } },
+    ],
+  };
+  assert.equal(
+    isInvitePlaySlotFull({ status: 'INVITED', gender: 'MALE', game: mixGame }),
+    true,
+    'MIX_PAIRS hides when the invitee gender bucket is full',
+  );
+  assert.equal(
+    isInviteInboxVisible({ status: 'INVITED', gender: 'MALE', game: mixGame }, now),
+    false,
+  );
+  assert.equal(
+    isInviteInboxVisible({ status: 'INVITED', gender: 'FEMALE', game: mixGame }, now),
+    true,
+    'opposite gender still has a MIX_PAIRS slot',
+  );
+}
+
+{
   const hidden = filterInboxVisibleInvites([
     { id: 'full', status: 'PENDING', game: { maxParticipants: 4, participants: playing(4) } },
     { id: 'open', status: 'PENDING', game: { maxParticipants: 4, participants: playing(3) } },
@@ -84,8 +111,6 @@ const invited = { status: 'INVITED' as const };
     { id: 'expired', status: 'INVITED', inviteExpiresAt: '2026-08-20T11:00:00.000Z', game: { maxParticipants: 4, participants: playing(3) } },
   ];
   const toNotify = pendingInvitesForSlotOpenNotify({
-    maxParticipants: 4,
-    playingCountAfter: 3,
     playingRemovedCount: 1,
     pending,
     now,
@@ -93,14 +118,47 @@ const invited = { status: 'INVITED' as const };
   assert.deepEqual(toNotify.map((i) => i.id), ['a']);
   assert.deepEqual(
     pendingInvitesForSlotOpenNotify({
-      maxParticipants: 4,
-      playingCountAfter: 2,
       playingRemovedCount: 1,
-      pending,
+      pending: [
+        { id: 'a', status: 'INVITED', game: { maxParticipants: 4, participants: playing(2) } },
+      ],
       now,
     }),
     [],
     'leave that does not open a previously-full roster must not re-push',
+  );
+}
+
+{
+  const mixAfterMaleLeave = {
+    maxParticipants: 4,
+    genderTeams: 'MIX_PAIRS',
+    participants: [
+      { status: 'PLAYING' as const, user: { gender: 'MALE' } },
+      { status: 'PLAYING' as const, user: { gender: 'FEMALE' } },
+    ],
+  };
+  const pending = [
+    { id: 'male', status: 'INVITED' as const, gender: 'MALE', game: mixAfterMaleLeave },
+    { id: 'female', status: 'INVITED' as const, gender: 'FEMALE', game: mixAfterMaleLeave },
+  ];
+  assert.deepEqual(
+    pendingInvitesForSlotOpenNotify({
+      playingRemovedCount: 1,
+      openedGender: 'MALE',
+      pending,
+      now,
+    }).map((invite) => invite.id),
+    ['male'],
+  );
+  assert.deepEqual(
+    pendingInvitesForSlotOpenNotify({
+      playingRemovedCount: 1,
+      pending,
+      now,
+    }).map((invite) => invite.id),
+    [],
+    'MIX_PAIRS gender-slot notify requires the leaving player gender',
   );
 }
 

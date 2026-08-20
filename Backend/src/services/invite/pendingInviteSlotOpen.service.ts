@@ -1,6 +1,6 @@
 import { NotificationChannelType, ParticipantStatus } from '@prisma/client';
 import prisma from '../../config/database';
-import { countPlayingParticipants, pendingInvitesForSlotOpenNotify } from '../../utils/gameInviteInbox';
+import { pendingInvitesForSlotOpenNotify } from '../../utils/gameInviteInbox';
 import { USER_SELECT_WITH_SPORT_PROFILES } from '../../utils/constants';
 import notificationService from '../notification.service';
 import { createInvitePushNotification } from '../push/notifications/invite-push.notification';
@@ -10,6 +10,12 @@ import {
   deliverSlotOpenInviteNotifications,
   type SlotOpenInviteNotifier,
 } from './pendingInviteSlotOpenNotify';
+
+export type PendingInviteSlotOpenOptions = {
+  playingRemovedCount?: number;
+  openedGender?: string | null;
+  notifier?: SlotOpenInviteNotifier;
+};
 
 export function createSlotOpenInviteNotifier(): SlotOpenInviteNotifier {
   return {
@@ -33,10 +39,11 @@ export function createSlotOpenInviteNotifier(): SlotOpenInviteNotifier {
 
 export async function notifyPendingInvitesIfPlayingSlotOpened(
   gameId: string,
-  playingRemovedCount = 1,
-  notifier: SlotOpenInviteNotifier = createSlotOpenInviteNotifier(),
+  options: PendingInviteSlotOpenOptions = {},
 ): Promise<number> {
+  const playingRemovedCount = options.playingRemovedCount ?? 1;
   if (playingRemovedCount <= 0) return 0;
+  const notifier = options.notifier ?? createSlotOpenInviteNotifier();
 
   const game = await prisma.game.findUnique({
     where: { id: gameId },
@@ -55,12 +62,12 @@ export async function notifyPendingInvitesIfPlayingSlotOpened(
 
   const pending = game.participants.filter((participant) => participant.status === ParticipantStatus.INVITED);
   const toNotify = pendingInvitesForSlotOpenNotify({
-    entityType: game.entityType,
-    maxParticipants: game.maxParticipants,
-    playingCountAfter: countPlayingParticipants(game.participants),
     playingRemovedCount,
+    openedGender: options.openedGender,
     pending: pending.map((participant) => ({
       ...participant,
+      receiverId: participant.userId,
+      gender: participant.user?.gender,
       game,
     })),
   });
@@ -71,8 +78,11 @@ export async function notifyPendingInvitesIfPlayingSlotOpened(
   );
 }
 
-export function schedulePendingInviteSlotOpenNotify(gameId: string, playingRemovedCount = 1): void {
-  void notifyPendingInvitesIfPlayingSlotOpened(gameId, playingRemovedCount).catch((error) => {
+export function schedulePendingInviteSlotOpenNotify(
+  gameId: string,
+  options: Omit<PendingInviteSlotOpenOptions, 'notifier'> = {},
+): void {
+  void notifyPendingInvitesIfPlayingSlotOpened(gameId, options).catch((error) => {
     console.error('Pending invite slot-open notify failed:', error);
   });
 }

@@ -137,6 +137,7 @@ export class AdminService {
             id: true,
             firstName: true,
             lastName: true,
+            gender: true,
           },
         },
       },
@@ -218,7 +219,7 @@ export class AdminService {
     await GameService.updateGameReadiness(gameId);
     await ParticipantMessageHelper.emitGameUpdate(gameId, currentUserId);
     if (targetParticipant.status === 'PLAYING') {
-      schedulePendingInviteSlotOpenNotify(gameId);
+      schedulePendingInviteSlotOpenNotify(gameId, { openedGender: targetParticipant.user?.gender });
     }
     return 'User kicked successfully';
   }

@@ -126,16 +126,24 @@ describe('queryInvalidationBridge', () => {
     expect(client.getQueryData(availKey)).toEqual(cached);
   });
 
-  it('new invite only scopes to My games', () => {
+  it('new invite upserts into My games cache then invalidates My only', () => {
     const client = createTestClient();
     const invalidateSpy = vi.spyOn(client, 'invalidateQueries');
+    client.setQueryData<MyGamesData>(queryKeys.games.my('u1'), {
+      games: [],
+      invites: [],
+      unreadCounts: {},
+    });
 
     setupQueryInvalidationBridge(client);
 
     useSocketEventsStore.setState({
-      lastNewInvite: { id: 'inv-2' } as never,
+      lastNewInvite: { id: 'inv-2', status: 'PENDING' } as never,
     });
 
+    expect(client.getQueryData<MyGamesData>(queryKeys.games.my('u1'))?.invites.map((invite) => invite.id)).toEqual([
+      'inv-2',
+    ]);
     expect(invalidateSpy).toHaveBeenCalledWith({
       queryKey: queryKeys.games.my('u1'),
     });
