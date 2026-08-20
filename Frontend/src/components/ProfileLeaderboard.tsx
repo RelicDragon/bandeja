@@ -105,6 +105,10 @@ const StandardLeaderboard = () => {
   }, [leaderboard, searchQuery]);
 
   const userEntry = leaderboard.find(entry => entry.id === user?.id);
+  const firstInactiveId =
+    leaderboardType === 'level'
+      ? filteredLeaderboard.find((entry) => entry.qualifiesForRating === false)?.id
+      : undefined;
   const unrankedLabel = t('profile.leaderboard.unranked', { defaultValue: '—' });
   const userRankLabel = userEntry
     ? ratingLeaderboardRankLabel(
@@ -210,6 +214,7 @@ const StandardLeaderboard = () => {
                 displayValue={displayValue}
                 formatRatingDelta={formatRatingDelta}
                 rowRef={isCurrentUser ? userRowRef : null}
+                isInactiveSectionStart={entry.id === firstInactiveId}
               />
             );
           })}

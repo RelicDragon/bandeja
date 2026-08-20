@@ -3,6 +3,7 @@ import { Sport, ResultsStatus } from '@prisma/client';
 import { USER_SELECT_FIELDS, USER_SPORT_PROFILE_SELECT } from '../utils/constants';
 import { resolveUserSportSnapshot } from './user/userSportProfile.service';
 import {
+  orderPlayedRatingLeaderboard,
   orderRatingLeaderboard,
   qualifiesForRatingRank,
   ratingLeaderboardActivitySince,
@@ -134,8 +135,12 @@ export class RankingService {
       })
       .filter((u) => u.gamesPlayed > 0);
 
-    const ranked = await RankingService.qualifyAndRankRatingLeaderboard(candidates, () => sport);
-    return ranked.rankMap;
+    return calculateRanks(
+      orderPlayedRatingLeaderboard(candidates),
+      false,
+      false,
+      'gamesWon',
+    );
   }
 
   static async getUserIdsWithRatedGameSince(
@@ -145,10 +150,10 @@ export class RankingService {
   ): Promise<Set<string>> {
     if (userIds.length === 0) return new Set();
 
+    const wanted = new Set(userIds);
     const rows = await prisma.gameParticipant.groupBy({
       by: ['userId'],
       where: {
-        userId: { in: userIds },
         status: 'PLAYING',
         game: {
           sport,
@@ -162,7 +167,11 @@ export class RankingService {
       },
     });
 
-    return new Set(rows.map((row) => row.userId));
+    const recent = new Set<string>();
+    for (const row of rows) {
+      if (wanted.has(row.userId)) recent.add(row.userId);
+    }
+    return recent;
   }
 
   static async getUserIdsWithRatedGameSinceBySport(
@@ -176,9 +185,14 @@ export class RankingService {
       else idsBySport.set(sport, [userId]);
     }
 
+    const foundSets = await Promise.all(
+      [...idsBySport.entries()].map(([sport, ids]) =>
+        RankingService.getUserIdsWithRatedGameSince(ids, sport, since),
+      ),
+    );
+
     const recent = new Set<string>();
-    for (const [sport, ids] of idsBySport) {
-      const found = await RankingService.getUserIdsWithRatedGameSince(ids, sport, since);
+    for (const found of foundSets) {
       for (const id of found) recent.add(id);
     }
     return recent;

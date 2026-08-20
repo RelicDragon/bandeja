@@ -31,6 +31,10 @@ export function compareRatingLeaderboardEntries(
   return a.id.localeCompare(b.id);
 }
 
+export function orderPlayedRatingLeaderboard<T extends RatingLeaderboardSortKey>(users: T[]): T[] {
+  return [...users].sort(compareRatingLeaderboardEntries);
+}
+
 export function orderRatingLeaderboard<T extends RatingLeaderboardSortKey & { qualifiesForRating: boolean }>(
   users: T[],
 ): T[] {
