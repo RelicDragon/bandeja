@@ -64,8 +64,7 @@ export class OnboardingPage {
 
   async saveGenderMale() {
     const dialog = this.genderSetModal();
-    await dialog.getByRole('button').filter({ hasText: /prefer not to say|male|female/i }).first().click();
-    await this.page.getByRole('button', { name: /^male$/i }).click();
+    await dialog.getByRole('button', { name: /^(male|man)$/i }).click();
     await dialog.getByRole('button', { name: /^confirm$/i }).click();
     await expect(this.genderSetModal()).toHaveCount(0, { timeout: 15_000 });
   }

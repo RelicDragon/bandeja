@@ -466,7 +466,14 @@ export const PlayerListModal = ({
     const gatedEvent = { genderTeams, entityType };
     const blockedUnset = expandedPlayerIds.some((playerId) => {
       const player = players.find((p) => p.id === playerId);
-      return genderAddBlockReason(gatedEvent, player) === 'genderUnset';
+      if (player) return genderAddBlockReason(gatedEvent, player) === 'genderUnset';
+      for (const team of readyTeams) {
+        const member = (team.members ?? []).find(
+          (m) => m.user?.id === playerId || m.userId === playerId,
+        );
+        if (member?.user) return genderAddBlockReason(gatedEvent, member.user) === 'genderUnset';
+      }
+      return genderAddBlockReason(gatedEvent, { genderIsSet: false }) === 'genderUnset';
     });
     if (blockedUnset) {
       toast.error(t('errors.games.genderUnsetOther', {
@@ -524,7 +531,8 @@ export const PlayerListModal = ({
       handleClose();
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };
-      toast.error(err.response?.data?.message || t('errors.generic'));
+      const message = err.response?.data?.message || 'errors.generic';
+      toast.error(t(message, { defaultValue: message }));
     } finally {
       setInviting(null);
     }

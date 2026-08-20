@@ -1,6 +1,7 @@
 import { PushNotifications, PushNotificationSchema, ActionPerformed, Token } from '@capacitor/push-notifications';
 import { Capacitor } from '@capacitor/core';
 import api from '@/api/axios';
+import { gamesApi } from '@/api/games';
 import { invitesApi } from '@/api/invites';
 import { userTeamsApi } from '@/api/userTeams';
 import { navigationService } from './navigationService';
@@ -9,7 +10,7 @@ import { pushApi } from '@/api/push';
 import { useAuthStore } from '@/store/authStore';
 import { useHeaderStore } from '@/store/headerStore';
 import { runWithProfileName } from '@/utils/runWithProfileName';
-import { recoverGenderUnsetJoin } from '@/utils/genderJoinGate';
+import { recoverGenderUnsetJoin, runWithGenderForEvent } from '@/utils/genderJoinGate';
 import { parsePushChatContext } from '@/services/push/parsePushChatContext';
 import { sendChatReplyFromPush } from '@/services/push/sendChatReplyFromPush';
 import { applyPushUnreadBadgeFromNotification } from '@/services/push/applyPushUnreadBadge';
@@ -553,6 +554,14 @@ class PushNotificationService {
     if (authUser && authUser.nameIsSet !== true) {
       runWithProfileName(() => void this.handleAcceptInvite(data));
       return;
+    }
+    if (authUser && authUser.genderIsSet !== true && data.data.gameId) {
+      try {
+        const gameResponse = await gamesApi.getById(data.data.gameId);
+        if (!runWithGenderForEvent(gameResponse.data, () => void this.handleAcceptInvite(data))) return;
+      } catch {
+        // Accept still runs; recoverGenderUnsetJoin opens the sheet if the server rejects unset.
+      }
     }
 
     try {

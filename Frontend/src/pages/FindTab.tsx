@@ -401,9 +401,10 @@ export const FindTab = () => {
       return;
     }
     const joinGame =
-      filteredAvailableGames.find((g) => g.id === gameId)
-      ?? sortedSelectedDayGames?.find((g) => g.id === gameId)
-      ?? upcomingGames.find((g) => g.id === gameId);
+      sortedSelectedDayGames?.find((g) => g.id === gameId)
+      ?? upcomingGames.find((g) => g.id === gameId)
+      ?? filteredAvailableGames.find((g) => g.id === gameId)
+      ?? calendarMeta.dayIndex?.find((g) => g.id === gameId);
     if (!runWithGenderForEvent(joinGame, () => void handleJoinGame(gameId, e))) return;
     try {
       const { gamesApi } = await import('@/api');

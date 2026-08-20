@@ -24,8 +24,7 @@ export function genderAddBlockReason(
 ): 'genderUnset' | null {
   if (!isGenderedEvent(game)) return null;
   if (target?.genderIsSet === true) return null;
-  if (target?.genderIsSet === false) return 'genderUnset';
-  return null;
+  return 'genderUnset';
 }
 
 export function isSelfGenderUnsetError(error: unknown): boolean {

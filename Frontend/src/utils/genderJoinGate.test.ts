@@ -66,6 +66,8 @@ describe('genderJoinGate', () => {
     expect(genderAddBlockReason({ genderTeams: 'MEN' }, { genderIsSet: false })).toBe('genderUnset');
     expect(genderAddBlockReason({ genderTeams: 'MEN' }, { genderIsSet: true })).toBeNull();
     expect(genderAddBlockReason({ genderTeams: 'ANY' }, { genderIsSet: false })).toBeNull();
+    expect(genderAddBlockReason({ genderTeams: 'MIX_PAIRS' }, {})).toBe('genderUnset');
+    expect(genderAddBlockReason({ genderTeams: 'WOMEN' }, undefined)).toBe('genderUnset');
   });
 
   it('reopens the sheet for a slipped-through unset error, not other-user copy', () => {

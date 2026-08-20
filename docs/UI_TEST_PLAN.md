@@ -180,6 +180,7 @@ Frontend/e2e/
 | OG-11 | Gender join gate | `genderIsSet` false user taps join/request on a MEN/WOMEN/MIX event | `GenderSetModal` opens; join/request is not sent until gender is saved |
 | OG-12 | Gender join resume | Set gender in the join gate sheet | Original join/request proceeds |
 | OG-13 | Gender join skipped when set | `genderIsSet` true user joins a gendered event | No extra gender sheet |
+| OG-14 | Gender join cancel | Dismiss the join gender sheet | Join/request is not sent |
 
 ---
 

@@ -356,6 +356,8 @@ export class ParticipantService {
         throw new ApiError(404, 'Game not found');
       }
 
+      await validateGenderForGame(game, userId);
+
       if (!game.allowDirectJoin) {
         const isOwnerOrAdmin = participant.role === 'OWNER' || participant.role === 'ADMIN';
         if (!isOwnerOrAdmin) {
