@@ -7,7 +7,7 @@ Shipped. Invite picker (`PlayerListModal`) has a top `SegmentedSwitch`: **Search
 | Topic | Choice |
 |---|---|
 | Population | Live Play Intents (`OPEN` + `MATCHED`), city + sport + entity |
-| Rank | `matchesGame` → fit score → `gamesTogetherCount` desc → `userId`; one row per user; cap 100 |
+| Rank | `matchesGame` → fit score → `gamesTogetherCount` desc → `userId`; one row per user; cap 1000 |
 | Mismatches | Shown, dimmed, still selectable, one mismatch line |
 | Gender-locked slot | `filterGender` on the picker (invite-a-man / invite-a-woman) also filters Looking |
 | Steal from lobby | Never. `MATCHED` / in-proposal → unlinked invite + toast |

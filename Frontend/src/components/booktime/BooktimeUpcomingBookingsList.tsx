@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { motion, type Variants } from 'framer-motion';
+import type { BooktimeLinkedGame } from '@/api/booktime';
 import type { BookingListClubRow } from '@/hooks/connectedBookingClubs';
 import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
 import { BooktimeAdjacentBookingGroup } from './BooktimeAdjacentBookingGroup';
@@ -36,6 +37,8 @@ type Props = {
   onCanceled?: (bookingId: string) => void;
   onRefreshSnapshot?: (options?: { force?: boolean }) => Promise<boolean>;
   animateEntries?: boolean;
+  linkedGamesByBookingId?: ReadonlyMap<string, BooktimeLinkedGame[]>;
+  onLinkedGamesReload?: () => void;
 };
 
 export function BooktimeUpcomingBookingsList({
@@ -51,6 +54,8 @@ export function BooktimeUpcomingBookingsList({
   onCanceled,
   onRefreshSnapshot,
   animateEntries = false,
+  linkedGamesByBookingId,
+  onLinkedGamesReload,
 }: Props) {
   const reduceMotion = usePrefersReducedMotion();
   const shouldAnimateEntries = animateEntries && !reduceMotion;
@@ -107,6 +112,8 @@ export function BooktimeUpcomingBookingsList({
                 onCanceled?.(bookingId);
               }}
               entryVariants={entryVariants}
+              linkedGamesByBookingId={linkedGamesByBookingId}
+              onLinkedGamesReload={onLinkedGamesReload}
             />
           );
         }
@@ -135,6 +142,8 @@ export function BooktimeUpcomingBookingsList({
               onCanceled?.(bookingId);
             }}
             entryVariants={entryVariants}
+            linkedGames={linkedGamesByBookingId?.get(bookingId)}
+            onLinkedGamesReload={onLinkedGamesReload}
           />
         );
       });

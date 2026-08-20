@@ -256,11 +256,15 @@ Instagram-style ephemeral content at top of Home:
 Three optional panels — Bookings, Teams, Leagues — with counts:
 
 **Bookings** (Booktime / Padeloo / Klikteren):
-- Upcoming club booking cards (up to 3 + "See all")
+- Upcoming club bookings that are not fully linked to a game appear below stories (before Play / games) so they are not forgotten
+- Confirmed via one batch linked-games lookup; a failed lookup does not pretend the booking is unlinked
+- Fully linked upcoming bookings (including those already linked on My games) stay behind the compact Bookings CTA
+- Per-slot actions: link to game, create game, cancel booking
+- "See all" opens connected clubs
+- Fully linked upcoming bookings stay behind the compact Bookings CTA (when any remain)
 - Adjacent same-court slot grouping
 - Linked game chips, occupancy % pills
-- Per-slot actions: link to game, create game, cancel booking
-- Connect-club banner for unconnected integrated clubs
+- Connect-club banner for unconnected integrated clubs (connected-clubs page)
 - Gear shortcut → connected clubs integrations
 
 **Teams:**

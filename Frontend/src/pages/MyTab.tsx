@@ -17,6 +17,7 @@ import { StoriesRail } from '@/components/stories/StoriesRail';
 import { HomeActionGrid } from '@/components/home/HomeActionGrid';
 import { HomeTodayHeading } from '@/components/home/HomeTodayHeading';
 import { AdSlot } from '@/components/sponsorSlots';
+import { MyTabUnlinkedBookingsSection } from '@/components/booktime/MyTabUnlinkedBookingsSection';
 import { AD_PLACEMENTS } from '@/shared/adPlacements';
 import { useRegisterAdSportContext } from '@/hooks/useAdPlacements';
 import { getViewerPrimarySport } from '@/utils/profileSports';
@@ -28,6 +29,7 @@ import { useShellNavStore } from '@/store/shellNavStore';
 import { useHeaderStore } from '@/store/headerStore';
 import { useMyGames } from '@/hooks/useMyGames';
 import { useMyTabClubBookings } from '@/hooks/useMyTabClubBookings';
+import { useMyTabUnlinkedBookings } from '@/hooks/useMyTabUnlinkedBookings';
 import { useUserTeamsBootstrap } from '@/hooks/useUserTeamsBootstrap';
 import { useMyTabPanelCounts } from '@/hooks/useMyTabPanelCounts';
 import { CalendarSection } from '@/components/home/CalendarSection';
@@ -115,6 +117,7 @@ export const MyTab = () => {
   // counts drive the action grid's earned surfaces and the bottom Teams section).
   useUserTeamsBootstrap();
   const booktime = useMyTabClubBookings();
+  const { reloadMyClubs, reloadBookings } = booktime;
 
   const [myGamesViewMode, setMyGamesViewMode] = useState<MyGamesViewMode>(() =>
     readMyGamesViewMode(user?.id),
@@ -136,6 +139,7 @@ export const MyTab = () => {
     unreadCounts,
     refetch: refetchMyGames,
   } = useMyGames(user, setLoading);
+  const unlinkedBookings = useMyTabUnlinkedBookings(booktime, games);
   const panelCounts = useMyTabPanelCounts(games, booktime);
 
   useEffect(() => {
@@ -451,8 +455,12 @@ export const MyTab = () => {
       refetchMyGames(),
       loadPastGames?.(),
       useUserTeamsStore.getState().refreshAll({ force: true }),
+      (async () => {
+        await reloadMyClubs();
+        await reloadBookings();
+      })(),
     ]);
-  }, [refetchMyGames, loadPastGames]);
+  }, [reloadMyClubs, reloadBookings, refetchMyGames, loadPastGames]);
 
   const scrollBottomPadding = 'calc(5rem + env(safe-area-inset-bottom, 0px))';
   const renderPastGamesContent = (footerLoading: boolean) => (
@@ -479,6 +487,9 @@ export const MyTab = () => {
               <StoriesRail />
             </AnimatedMount>
           )}
+          {user && (
+            <MyTabUnlinkedBookingsSection booktime={booktime} unlinked={unlinkedBookings} />
+          )}
           {user && user.cityIsSet === true && (
             <AdSlot placement={AD_PLACEMENTS.HOME_HERO} />
           )}
@@ -489,6 +500,7 @@ export const MyTab = () => {
               gamesUnreadCounts={calendarMergedUnreadCounts}
               primarySport={primarySport}
               panelCounts={panelCounts}
+              hideBookingsCta={unlinkedBookings.visible || unlinkedBookings.pending}
             />
           )}
           {!loading && (
@@ -575,6 +587,9 @@ export const MyTab = () => {
               <StoriesRail />
             </AnimatedMount>
           )}
+          {user && (
+            <MyTabUnlinkedBookingsSection booktime={booktime} unlinked={unlinkedBookings} />
+          )}
           {user && user.cityIsSet === true && (
             <AdSlot placement={AD_PLACEMENTS.HOME_HERO} />
           )}
@@ -585,6 +600,7 @@ export const MyTab = () => {
               gamesUnreadCounts={calendarMergedUnreadCounts}
               primarySport={primarySport}
               panelCounts={panelCounts}
+              hideBookingsCta={unlinkedBookings.visible || unlinkedBookings.pending}
             />
           )}
           {!loading && (

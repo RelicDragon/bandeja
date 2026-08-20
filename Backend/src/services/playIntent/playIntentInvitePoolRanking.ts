@@ -5,7 +5,7 @@ export type RankableInvitePoolMember = {
   gamesTogetherCount: number;
 };
 
-export const INVITE_POOL_CAP = 100;
+export const INVITE_POOL_CAP = 1000;
 
 export function rankInvitePoolMembers<T extends RankableInvitePoolMember>(members: T[]): T[] {
   const ranked = [...members].sort(

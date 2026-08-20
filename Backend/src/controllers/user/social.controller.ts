@@ -169,7 +169,7 @@ export const getInvitablePlayers = asyncHandler(async (req: AuthRequest, res: Re
       },
       select: USER_SELECT_WITH_SPORT_PROFILES,
       orderBy: searchTerms.length > 0 ? [{ firstName: 'asc' }, { lastName: 'asc' }] : undefined,
-      take: 1000,
+      take: 5000,
     }),
   ]);
 
