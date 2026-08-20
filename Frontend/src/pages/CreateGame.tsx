@@ -9,6 +9,7 @@ import { CreateGameCourtSection } from '@/components/createGame/CreateGameCourtS
 import { CreateGameDateSection } from '@/components/createGame/CreateGameDateSection';
 import { useAuthStore } from '@/store/authStore';
 import { runWithProfileName } from '@/utils/runWithProfileName';
+import { runWithGenderForEvent } from '@/utils/genderJoinGate';
 import { usePlayersStore } from '@/store/playersStore';
 import { useShellNavStore } from '@/store/shellNavStore';
 import { clubsApi, courtsApi, gamesApi, invitesApi } from '@/api';
@@ -1269,6 +1270,7 @@ export const CreateGame = ({
       runWithProfileName(() => void handleCreateGame());
       return;
     }
+    if (!runWithGenderForEvent({ genderTeams, entityType }, () => void handleCreateGame())) return;
 
     if (!selectedClub) {
       scrollToAndHighlightError(locationTimeSectionRef);
@@ -2039,6 +2041,8 @@ export const CreateGame = ({
             onClose={() => setIsInvitePlayersModalOpen(false)}
             multiSelect={true}
             gameSport={selectedSport}
+            genderTeams={genderTeams}
+            entityType={entityType}
             gameTiming={inviteGameTiming}
             onConfirm={async (playerIds, meta) => {
               setInvitedPlayerIds(playerIds);

@@ -83,6 +83,7 @@
     "genderPromptDismissConfirm": "Don't show again",
     "genderPromptModalTitle": "Set your gender",
     "genderPromptModalSubtitle": "This helps us show better game matches and unlock mixed-gender events.",
+    "genderPromptJoinSubtitle": "This event is limited by gender. Set yours to continue.",
     "cityPromptSubtitle": "Is your city {{cityName}}? If not, use the button below.",
     "cityPromptSubtitleNoCity": "Set your city so we can show the right games near you.",
     "cityPromptAction": "Change {{cityName}}",

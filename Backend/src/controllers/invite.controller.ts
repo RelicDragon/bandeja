@@ -95,6 +95,7 @@ export const sendInvite = asyncHandler(async (req: AuthRequest, res: Response) =
             status: true,
             resultsStatus: true,
             entityType: true,
+            genderTeams: true,
             sport: true,
             court: { select: { id: true, name: true, club: { select: { id: true, name: true, avatar: true } } } },
             club: { select: { id: true, name: true, avatar: true } },

@@ -66,6 +66,7 @@
     "test:chat-message-type": "ts-node --transpile-only src/services/chat/resolveOutgoingChatMessageType.test.ts",
     "test:sticker-assets": "ts-node --transpile-only src/services/stickers/stickerAsset.service.test.ts",
     "test:sticker-prefs": "ts-node --transpile-only src/services/stickers/stickerPrefsNormalize.test.ts",
+    "test:gender-eligibility": "ts-node --transpile-only src/utils/genderGameEligibility.test.ts",
     "test:sticker-pack-sort": "ts-node --transpile-only src/services/stickers/stickerPackSort.test.ts",
     "test:court-club-sports-reconcile": "ts-node scripts/lib/courtClubSportsReconcile.test.ts",
     "sunset:user-rating-columns": "ts-node scripts/sunsetUserRatingColumns.ts",

@@ -11,9 +11,10 @@ interface GenderSetModalProps {
   open: boolean;
   onClose: () => void;
   onSaved?: () => void;
+  variant?: 'banner' | 'join';
 }
 
-export function GenderSetModal({ open, onClose, onSaved }: GenderSetModalProps) {
+export function GenderSetModal({ open, onClose, onSaved, variant = 'banner' }: GenderSetModalProps) {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const updateUser = useAuthStore((s) => s.updateUser);
@@ -62,7 +63,9 @@ export function GenderSetModal({ open, onClose, onSaved }: GenderSetModalProps) 
             {t('games.genderPromptModalTitle', { defaultValue: 'Set your gender' })}
           </p>
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            {t('games.genderPromptModalSubtitle', { defaultValue: 'This helps us show better game matches and unlock mixed-gender events.' })}
+            {variant === 'join'
+              ? t('games.genderPromptJoinSubtitle', { defaultValue: 'This event is limited by gender. Set yours to continue.' })
+              : t('games.genderPromptModalSubtitle', { defaultValue: 'This helps us show better game matches and unlock mixed-gender events.' })}
           </p>
 
           <div>

@@ -8,6 +8,7 @@ import { useDeclineInvite } from '@/hooks/useDeclineInvite';
 import { RefreshIndicator } from '@/components/RefreshIndicator';
 import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
 import { runWithProfileName } from '@/utils/runWithProfileName';
+import { recoverGenderUnsetJoin, runWithGenderForEvent } from '@/utils/genderJoinGate';
 import { buildDuplicateGameInitialData } from '@/utils/buildDuplicateGameInitialData';
 import { gameHasLinkedExternalBooking } from '@/utils/gameHasConfirmedClubBooking';
 import {
@@ -575,6 +576,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
       runWithProfileName(() => void handleJoin());
       return;
     }
+    if (!runWithGenderForEvent(game, () => void handleJoin())) return;
 
     try {
       const response = await gamesApi.join(id);
@@ -592,6 +594,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
       setGame(gameResponse.data);
     } catch (error: any) {
       console.error('Failed to join game:', error);
+      if (recoverGenderUnsetJoin(error, () => void handleJoin())) return;
       const errorMessage = error.response?.data?.message || 'errors.generic';
       toast.error(t(errorMessage, { defaultValue: errorMessage }));
     }
@@ -605,6 +608,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
       runWithProfileName(() => void handleAddToGame());
       return;
     }
+    if (!runWithGenderForEvent(game, () => void handleAddToGame())) return;
 
     try {
       const result = await gamesApi.togglePlayingStatus(id, 'PLAYING') as { message?: string };
@@ -614,6 +618,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
         toast.success(t('games.addedToJoinQueue', { defaultValue: 'Added to join queue' }));
       }
     } catch (error: any) {
+      if (recoverGenderUnsetJoin(error, () => void handleAddToGame())) return;
       const errorMessage = error.response?.data?.message || 'errors.generic';
       toast.error(t(errorMessage, { defaultValue: errorMessage }));
     }
@@ -625,6 +630,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
       runWithProfileName(() => void handleAcceptInvite(inviteId));
       return;
     }
+    if (!runWithGenderForEvent(game, () => void handleAcceptInvite(inviteId))) return;
     if (acceptingInviteIdsRef.current.has(inviteId)) return;
     acceptingInviteIdsRef.current.add(inviteId);
     try {
@@ -648,6 +654,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
         }
       }
     } catch (error: any) {
+      if (recoverGenderUnsetJoin(error, () => void handleAcceptInvite(inviteId))) return;
       const errorMessage = error.response?.data?.message || 'errors.generic';
       toast.error(t(errorMessage, { defaultValue: errorMessage }));
     } finally {
@@ -1800,6 +1807,8 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
         <PlayerListModal
           gameId={id}
           gameSport={parseGameSport(game?.sport)}
+          genderTeams={game?.genderTeams}
+          entityType={game?.entityType}
           onClose={() => {
             setShowPlayerList(false);
             setPlayerListMode('players');

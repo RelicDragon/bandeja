@@ -83,6 +83,7 @@
     "genderPromptDismissConfirm": "Ne prikazuj više",
     "genderPromptModalTitle": "Podesite svoj pol",
     "genderPromptModalSubtitle": "Ovo pomaže da dobijete bolje preporuke igara i pristup mešovitim događajima.",
+    "genderPromptJoinSubtitle": "Ova igra je ograničena po polu. Podesite svoj da nastavite.",
     "cityPromptSubtitle": "Da li je vaš grad {{cityName}}? Ako nije, koristite dugme ispod.",
     "cityPromptSubtitleNoCity": "Postavite grad da bismo prikazali igre u blizini.",
     "cityPromptAction": "Promeni {{cityName}}",

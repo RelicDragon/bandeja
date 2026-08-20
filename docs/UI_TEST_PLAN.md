@@ -177,6 +177,9 @@ Frontend/e2e/
 | OG-08 | Sport questionnaire skip | Dismiss home questionnaire | Padel profile `questionnaireSkippedAt` set; prompt gone |
 | OG-09 | Sport questionnaire | Incomplete per-sport Q | `SportQuestionnairePrompt` on home |
 | OG-10 | Sport questionnaire complete | Finish questionnaire | Prompt removed; levels updated |
+| OG-11 | Gender join gate | `genderIsSet` false user taps join/request on a MEN/WOMEN/MIX event | `GenderSetModal` opens; join/request is not sent until gender is saved |
+| OG-12 | Gender join resume | Set gender in the join gate sheet | Original join/request proceeds |
+| OG-13 | Gender join skipped when set | `genderIsSet` true user joins a gendered event | No extra gender sheet |
 
 ---
 
@@ -464,7 +467,8 @@ Frontend/e2e/
 | F-31 | Filter button active state | Apply any advanced filter | Filter button highlighted |
 | F-32 | Favorite trainer highlight | `@user with favoriteTrainerId` + training filter | Favorite trainer games emphasized on calendar |
 | F-33 | Gender-restricted game card | MEN/WOMEN/MIX game | Gender badge on card |
-| F-34 | Join blocked wrong gender | User gender incompatible | Error toast / join blocked |
+| F-34 | Join blocked wrong gender | User gender incompatible (`genderIsSet` true) | Error toast with men/women/mix copy; join blocked; not the unset prompt |
+| F-76 | Join gated gender unset | `genderIsSet` false user joins a gendered Find card | Gender sheet before join; after save the original join proceeds |
 | F-35 | Level out of range | User level outside game range | Join blocked or warning |
 | F-36 | Confirmed court badge on card | Game with `timeIsSet`, `hasBookedCourt`, club + court, no `externalBookingId` | Blue “Booked” pill (no checkmark) after time on game card |
 | F-39 | Linked booking badge on card | Game with `bookingStatus=EXTERNAL_FULL` (Find tab / available games or game details) | Green “Booked” pill with checkmark after time on game card |
@@ -739,6 +743,8 @@ Frontend/e2e/
 | GD-17 | Guest join chat only | Join as guest | Chat access without full join |
 | GD-18 | Carousel vs list participants | Toggle view mode | Layout switches |
 | GD-18a | Invite not in game chat | Owner invites player from participants list | Pending invite on participants panel; no "X invites Y" system message in game chat; other participants get no chat/push notification for the invite |
+| GD-148 | Organizer add unset gender | Owner invites/adds a player with `genderIsSet` false to a gendered event | Player is not added; toast that they haven't set gender (not the wrong-gender copy) |
+| GD-149 | Organizer self-add gender unset | Unset organizer taps add-me / join on their own gendered event | Gender sheet; after set, add/join proceeds |
 
 ### 9.3 Edit game (owner/admin)
 

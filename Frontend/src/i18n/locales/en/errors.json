@@ -60,7 +60,12 @@
       "alreadyParticipant": "User is already a participant",
       "cannotJoinArchivedOrFinished": "Cannot join archived or finished game",
       "directJoinNotAllowed": "Direct join is not allowed for this game",
-      "cannotDeleteHasChildren": "Cannot delete a game that has child games (e.g. tournament with rounds). Delete or remove child games first."
+      "cannotDeleteHasChildren": "Cannot delete a game that has child games (e.g. tournament with rounds). Delete or remove child games first.",
+      "genderUnset": "Set your gender to join this game",
+      "genderUnsetOther": "This player hasn't set their gender yet",
+      "genderIncompatibleMen": "Only men can join this game",
+      "genderIncompatibleWomen": "Only women can join this game",
+      "genderIncompatibleMix": "Only men or women can join this game"
     },
     "league": {
       "gameNotFound": "Game not found",

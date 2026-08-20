@@ -83,6 +83,7 @@
     "genderPromptDismissConfirm": "No mostrar de nuevo",
     "genderPromptModalTitle": "Define tu género",
     "genderPromptModalSubtitle": "Esto nos ayuda a mostrarte mejores partidas y desbloquear eventos mixtos.",
+    "genderPromptJoinSubtitle": "Esta partida está limitada por género. Defínelo para continuar.",
     "cityPromptSubtitle": "¿Tu ciudad es {{cityName}}? Si no, usa el botón de abajo.",
     "cityPromptSubtitleNoCity": "Elige tu ciudad para ver partidas cerca de ti.",
     "cityPromptAction": "Cambiar {{cityName}}",

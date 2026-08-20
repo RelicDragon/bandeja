@@ -137,6 +137,7 @@ export class InviteService {
             status: true,
             resultsStatus: true,
             entityType: true,
+            genderTeams: true,
             sport: true,
             court: { select: { id: true, name: true, club: { select: { id: true, name: true, avatar: true } } } },
             club: { select: { id: true, name: true, avatar: true } },

@@ -4,6 +4,7 @@ import { ApiError } from './ApiError';
 import { fetchGameWithPlayingParticipants } from './gameQueries';
 import { USER_SELECT_FIELDS, USER_SPORT_PROFILE_SELECT } from './constants';
 import { resolveUserSportSnapshot } from '../services/user/userSportProfile.service';
+import { evaluateGenderForGame } from './genderGameEligibility';
 
 interface GameWithParticipants {
   id: string;
@@ -36,6 +37,7 @@ export interface PlayerJoinResult {
 
 export interface ValidatePlayerJoinOptions {
   skipLevelCheck?: boolean;
+  targetIsOtherUser?: boolean;
 }
 
 export function validateGameCanAcceptParticipants(game: { status: GameStatus }): void {
@@ -46,7 +48,8 @@ export function validateGameCanAcceptParticipants(game: { status: GameStatus }):
 
 export async function validateGenderForGame(
   game: GameWithParticipants,
-  newUserId: string
+  newUserId: string,
+  options?: { targetIsOtherUser?: boolean }
 ): Promise<void> {
   if (game.entityType === EntityType.BAR) {
     return;
@@ -54,34 +57,16 @@ export async function validateGenderForGame(
 
   const newUser = await prisma.user.findUnique({
     where: { id: newUserId },
-    select: { gender: true },
+    select: { gender: true, genderIsSet: true },
   });
 
   if (!newUser) {
     throw new ApiError(404, 'User not found');
   }
 
-  switch (game.genderTeams) {
-    case GenderTeam.ANY:
-      break;
-
-    case GenderTeam.MEN:
-      if (newUser.gender !== Gender.MALE) {
-        throw new ApiError(400, 'Only men can join this game');
-      }
-      break;
-
-    case GenderTeam.WOMEN:
-      if (newUser.gender !== Gender.FEMALE) {
-        throw new ApiError(400, 'Only women can join this game');
-      }
-      break;
-
-    case GenderTeam.MIX_PAIRS:
-      if (newUser.gender !== Gender.MALE && newUser.gender !== Gender.FEMALE) {
-        throw new ApiError(400, 'Only men or women can join this game');
-      }
-      break;
+  const result = evaluateGenderForGame(game, newUser, options);
+  if (!result.ok) {
+    throw new ApiError(400, result.message, true, { code: result.code });
   }
 }
 
@@ -190,7 +175,7 @@ export async function validatePlayerCanJoinGame(
     }
   }
 
-  await validateGenderForGame(game, userId);
+  await validateGenderForGame(game, userId, { targetIsOtherUser: options?.targetIsOtherUser });
   return await canAddPlayerToGame(game, userId);
 }
 

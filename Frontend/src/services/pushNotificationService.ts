@@ -9,6 +9,7 @@ import { pushApi } from '@/api/push';
 import { useAuthStore } from '@/store/authStore';
 import { useHeaderStore } from '@/store/headerStore';
 import { runWithProfileName } from '@/utils/runWithProfileName';
+import { recoverGenderUnsetJoin } from '@/utils/genderJoinGate';
 import { parsePushChatContext } from '@/services/push/parsePushChatContext';
 import { sendChatReplyFromPush } from '@/services/push/sendChatReplyFromPush';
 import { applyPushUnreadBadgeFromNotification } from '@/services/push/applyPushUnreadBadge';
@@ -563,6 +564,7 @@ class PushNotificationService {
         navigationService.navigateToGame(data.data.gameId);
       }
     } catch (error) {
+      if (recoverGenderUnsetJoin(error, () => void this.handleAcceptInvite(data))) return;
       console.error('❌ Failed to accept invite:', error);
     }
   }

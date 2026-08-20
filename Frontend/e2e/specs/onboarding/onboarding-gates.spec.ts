@@ -80,6 +80,42 @@ test.describe('onboarding gates', () => {
     await expect(onboarding.genderPromptBanner()).toHaveCount(0);
   });
 
+  test('OG-11 gender join gate before join', async ({ page }) => {
+    const { token, user } = await createGenderPromptUser();
+    await seedAuthInBrowser(page, token, user);
+    const { token: ownerToken, user: owner } = await registerTestUser({ gender: 'MALE', genderIsSet: true });
+    const { id: gameId } = await createJoinableGame(ownerToken, owner.id, { genderTeams: 'MEN' });
+    try {
+      await new GameDetailsPage(page).goto(gameId);
+      await joinGameButton(page).click();
+      await new OnboardingPage(page).expectGenderGateOpen();
+      await expect(joinGameButton(page)).toBeVisible();
+    } finally {
+      await deleteGameViaApi(ownerToken, gameId);
+    }
+  });
+
+  test('OG-12 gender join resume after set', async ({ page }) => {
+    const { token, user } = await createGenderPromptUser();
+    await seedAuthInBrowser(page, token, user);
+    const { token: ownerToken, user: owner } = await registerTestUser({ gender: 'MALE', genderIsSet: true });
+    const { id: gameId } = await createJoinableGame(ownerToken, owner.id, { genderTeams: 'MEN' });
+    try {
+      await new GameDetailsPage(page).goto(gameId);
+      await joinGameButton(page).click();
+      const onboarding = new OnboardingPage(page);
+      await onboarding.expectGenderGateOpen();
+      const joinResponse = page.waitForResponse(
+        (res) => res.url().includes('/join') && res.request().method() !== 'GET',
+        { timeout: 20_000 },
+      );
+      await onboarding.saveGenderMale();
+      await joinResponse;
+    } finally {
+      await deleteGameViaApi(ownerToken, gameId);
+    }
+  });
+
   test('OG-06 city prompt banner', async ({ page }) => {
     const { token, user } = await createCityPromptUser();
     await seedAuthInBrowser(page, token, user);

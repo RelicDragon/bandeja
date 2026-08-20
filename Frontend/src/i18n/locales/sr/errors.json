@@ -60,7 +60,12 @@
       "alreadyParticipant": "Korisnik je već učesnik",
       "cannotJoinArchivedOrFinished": "Ne može se pridružiti arhiviranoj ili završenoj igri",
       "directJoinNotAllowed": "Direktno pridruživanje nije dozvoljeno za ovu igru",
-      "cannotDeleteHasChildren": "Ne možete obrisati igru koja ima pod-igre (npr. turnir sa rundama). Prvo obrišite pod-igre."
+      "cannotDeleteHasChildren": "Ne možete obrisati igru koja ima pod-igre (npr. turnir sa rundama). Prvo obrišite pod-igre.",
+      "genderUnset": "Podesite pol da biste se pridružili ovoj igri",
+      "genderUnsetOther": "Ovaj igrač još nije podesio pol",
+      "genderIncompatibleMen": "Ovoj igri mogu da se pridruže samo muškarci",
+      "genderIncompatibleWomen": "Ovoj igri mogu da se pridruže samo žene",
+      "genderIncompatibleMix": "Ovoj igri mogu da se pridruže samo muškarci ili žene"
     },
     "league": {
       "gameNotFound": "Meč nije pronađen",

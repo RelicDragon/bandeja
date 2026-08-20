@@ -32,6 +32,7 @@ import {
 import { buildFindStructuralApiParams } from '@/utils/findStructuralApiParams';
 import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
 import { runWithProfileName } from '@/utils/runWithProfileName';
+import { recoverGenderUnsetJoin, runWithGenderForEvent } from '@/utils/genderJoinGate';
 import { FindHeaderActions } from '@/components/headerContent/FindHeaderActions';
 import { availableGamesQueryOptions } from '@/queries/games/useAvailableGamesQuery';
 import { availableUpcomingGamesQueryOptions } from '@/queries/games/useAvailableUpcomingGamesQuery';
@@ -399,6 +400,11 @@ export const FindTab = () => {
       runWithProfileName(() => void handleJoinGame(gameId, e));
       return;
     }
+    const joinGame =
+      filteredAvailableGames.find((g) => g.id === gameId)
+      ?? sortedSelectedDayGames?.find((g) => g.id === gameId)
+      ?? upcomingGames.find((g) => g.id === gameId);
+    if (!runWithGenderForEvent(joinGame, () => void handleJoinGame(gameId, e))) return;
     try {
       const { gamesApi } = await import('@/api');
       const response = await gamesApi.join(gameId);
@@ -412,6 +418,7 @@ export const FindTab = () => {
       refetchAvailableGames();
       navigate(`/games/${gameId}`);
     } catch (error: any) {
+      if (recoverGenderUnsetJoin(error, () => void handleJoinGame(gameId, e))) return;
       const errorMessage = error.response?.data?.message || 'errors.generic';
       toast.error(t(errorMessage, { defaultValue: errorMessage }));
     }

@@ -60,7 +60,12 @@
       "alreadyParticipant": "El usuario ya es un participante",
       "cannotJoinArchivedOrFinished": "No se puede unir a un juego archivado o finalizado",
       "directJoinNotAllowed": "No se permite unirse directamente a este juego",
-      "cannotDeleteHasChildren": "No se puede eliminar un juego que tiene juegos hijos (p. ej. torneo con rondas). Elimina o quita primero los juegos hijos."
+      "cannotDeleteHasChildren": "No se puede eliminar un juego que tiene juegos hijos (p. ej. torneo con rondas). Elimina o quita primero los juegos hijos.",
+      "genderUnset": "Define tu género para unirte a esta partida",
+      "genderUnsetOther": "Este jugador aún no ha definido su género",
+      "genderIncompatibleMen": "Solo pueden unirse hombres",
+      "genderIncompatibleWomen": "Solo pueden unirse mujeres",
+      "genderIncompatibleMix": "Solo pueden unirse hombres o mujeres"
     },
     "league": {
       "gameNotFound": "Partido no encontrado",

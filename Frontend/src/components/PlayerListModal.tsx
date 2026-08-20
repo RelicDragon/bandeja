@@ -9,6 +9,7 @@ import { gamesApi } from '@/api/games';
 import { usersApi } from '@/api/users';
 import { useAuthStore } from '@/store/authStore';
 import { runWithProfileName } from '@/utils/runWithProfileName';
+import { genderAddBlockReason } from '@/utils/genderJoinGate';
 import { Button } from './Button';
 import { useFavoritesStore } from '@/store/favoritesStore';
 import { usePlayersStore } from '@/store/playersStore';
@@ -46,7 +47,7 @@ import {
   type GameAvailabilityMatch,
 } from '@/utils/availability/gameMatch';
 import { participantBlocksInvitePlayerPicker } from '@/utils/gameInviteParticipant';
-import type { GameInviteOutcome, Sport } from '@/types';
+import type { GameInviteOutcome, GenderTeam, Sport } from '@/types';
 import { PlayerInviteSportFilterChips } from '@/components/playerInvite/PlayerInviteSportFilterChips';
 import {
   isInviteSportFilterActive,
@@ -81,6 +82,8 @@ interface PlayerListModalProps {
   gameTiming?: PlayerListModalGameTiming | null;
   /** When set, list defaults to players with this sport enabled; sport chips shown. */
   gameSport?: Sport;
+  genderTeams?: GenderTeam;
+  entityType?: string;
 }
 
 type GameAvailabilityContext = PlayerListModalGameTiming;
@@ -98,6 +101,8 @@ export const PlayerListModal = ({
   inviteAsTrainerOnly = false,
   gameTiming,
   gameSport,
+  genderTeams,
+  entityType,
 }: PlayerListModalProps) => {
   const { t } = useTranslation();
   const authUser = useAuthStore((s) => s.user);
@@ -457,6 +462,18 @@ export const PlayerListModal = ({
 
   const handleConfirm = async () => {
     if (expandedPlayerIds.length === 0) return;
+
+    const gatedEvent = { genderTeams, entityType };
+    const blockedUnset = expandedPlayerIds.some((playerId) => {
+      const player = players.find((p) => p.id === playerId);
+      return genderAddBlockReason(gatedEvent, player) === 'genderUnset';
+    });
+    if (blockedUnset) {
+      toast.error(t('errors.games.genderUnsetOther', {
+        defaultValue: "This player hasn't set their gender yet",
+      }));
+      return;
+    }
 
     if (!gameId) {
       setInviting('confirming');

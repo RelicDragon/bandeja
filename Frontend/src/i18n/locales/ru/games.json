@@ -83,6 +83,7 @@
     "genderPromptDismissConfirm": "Больше не показывать",
     "genderPromptModalTitle": "Укажите свой пол",
     "genderPromptModalSubtitle": "Это помогает точнее подбирать игры и открывает доступ к смешанным форматам.",
+    "genderPromptJoinSubtitle": "Эта игра ограничена по полу. Укажите свой, чтобы продолжить.",
     "cityPromptSubtitle": "Ваш город {{cityName}}? Если нет — нажмите кнопку ниже.",
     "cityPromptSubtitleNoCity": "Укажите город, чтобы видеть игры рядом с вами.",
     "cityPromptAction": "Сменить {{cityName}}",
