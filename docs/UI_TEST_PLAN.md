@@ -398,7 +398,7 @@ Frontend/e2e/
 | H-38k | Grouped booking card actions (My tab) | Connected user with adjacent same-court upcoming slots | Tap grouped card → per-slot rows animate in with link/create/cancel; only one card expanded at a time; tap again collapses |
 | H-38m | Padeloo upcoming (My tab) | User connected to Padeloo club (e.g. Avantura) with upcoming reservation | Bookings switch shows Padeloo booking card with provider label; cancel/link actions work |
 | H-38n | Klikteren upcoming (My tab) | User connected to Klikteren club (Padel Pro NS) with upcoming booking | Bookings switch shows Klikteren booking card with provider label; cancel/link actions work |
-| H-77 | Unlinked booking reminder | Connected user with an upcoming booking that is not fully covered by linked games | Below stories, above Play hero: booked-court cards with link/create/cancel; Bookings CTA hidden |
+| H-77 | Unlinked booking reminder | Connected user with an upcoming booking that is not fully covered by linked games | Below stories, above Play hero: booked-court cards with link/create/cancel already expanded on the first card; Bookings CTA hidden |
 | H-78 | Fully linked booking not in reminder | Upcoming booking whose linked game(s) fully cover the slot | Reminder section absent; compact Bookings CTA still available |
 | H-79 | Link fetch failure | Upcoming booking, linked-games request fails | Reminder does not appear; Bookings CTA still available |
 | H-58 | My tab list view | My tab → tap Calendar in panel switcher to turn it off | Calendar hidden; UpcomingGamesList sections; preference persists after reload for that user; desktop has no split view; bookings/teams/leagues panel state stays open |

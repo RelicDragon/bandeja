@@ -458,9 +458,10 @@ export const MyTab = () => {
       (async () => {
         await reloadMyClubs();
         await reloadBookings();
+        await unlinkedBookings.reloadLinkedGames();
       })(),
     ]);
-  }, [reloadMyClubs, reloadBookings, refetchMyGames, loadPastGames]);
+  }, [reloadMyClubs, reloadBookings, unlinkedBookings.reloadLinkedGames, refetchMyGames, loadPastGames]);
 
   const scrollBottomPadding = 'calc(5rem + env(safe-area-inset-bottom, 0px))';
   const renderPastGamesContent = (footerLoading: boolean) => (

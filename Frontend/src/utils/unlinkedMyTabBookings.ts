@@ -45,27 +45,20 @@ export function resolveUnlinkedMyTabBookings<T extends LinkBookingRecord>(input:
     return { bookings: [], visible: false, pending: bookingsLoading };
   }
 
-  const seedFullyLinked = new Set(
-    bookings
-      .filter((booking) =>
-        linkedGamesFullyCoverBookingSlot(
-          booking,
-          seedByBookingId.get(booking.uuid) ?? [],
-          timeZoneOf(booking),
-        ),
-      )
-      .map((booking) => booking.uuid),
-  );
-
   const waitingForApi = bookings.some(
-    (booking) => !seedFullyLinked.has(booking.uuid) && apiByBookingId.get(booking.uuid) === undefined,
+    (booking) => apiByBookingId.get(booking.uuid) === undefined,
   );
-  const pending = waitingForApi && (apiLoading || !apiError);
+  const allSeedFullyLinked = bookings.every((booking) =>
+    linkedGamesFullyCoverBookingSlot(
+      booking,
+      seedByBookingId.get(booking.uuid) ?? [],
+      timeZoneOf(booking),
+    ),
+  );
+  const pending = waitingForApi && (apiLoading || !apiError) && !allSeedFullyLinked;
 
   const unlinked = filterBookingsNotFullyLinked(
-    bookings.filter(
-      (booking) => !seedFullyLinked.has(booking.uuid) && apiByBookingId.get(booking.uuid) !== undefined,
-    ),
+    bookings.filter((booking) => apiByBookingId.get(booking.uuid) !== undefined),
     apiByBookingId,
     timeZoneOf,
   );

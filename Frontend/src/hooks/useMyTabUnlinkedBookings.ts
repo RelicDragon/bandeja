@@ -53,6 +53,11 @@ export function useMyTabUnlinkedBookings(
     [apiError, apiLoading, bookings, bookingsLoading, linkedGamesByBookingId, seedByBookingId, timeZoneOf],
   );
 
+  const visibleBookings = useMemo(
+    () => resolved.bookings.filter((booking) => Boolean(booking.clubId && clubById.has(booking.clubId))),
+    [clubById, resolved.bookings],
+  );
+
   const displayLinkedGames = useMemo(() => {
     const merged = new Map(seedByBookingId);
     for (const [id, gamesForId] of linkedGamesByBookingId) {
@@ -62,8 +67,8 @@ export function useMyTabUnlinkedBookings(
   }, [linkedGamesByBookingId, seedByBookingId]);
 
   return {
-    bookings: resolved.bookings,
-    visible: resolved.visible,
+    bookings: visibleBookings,
+    visible: visibleBookings.length > 0,
     pending: resolved.pending,
     linkedGamesByBookingId: displayLinkedGames,
     reloadLinkedGames: reload,

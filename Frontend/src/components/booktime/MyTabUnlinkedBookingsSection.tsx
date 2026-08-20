@@ -64,6 +64,7 @@ export function MyTabUnlinkedBookingsSection({ booktime, unlinked }: Props) {
           allowedHoursToCancelByClubId={cancelHoursByClubId}
           compact
           animateEntries
+          expandFirst
           onCanceled={removeBooking}
           linkedGamesByBookingId={linkedGamesByBookingId}
           onLinkedGamesReload={() => void reloadLinkedGames()}

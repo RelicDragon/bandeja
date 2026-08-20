@@ -53,7 +53,7 @@ describe('resolveUnlinkedMyTabBookings', () => {
     ).toEqual({ bookings: [], visible: false, pending: true });
   });
 
-  it('hides seed-fully-linked bookings without waiting for API', () => {
+  it('does not stay pending when seed says every booking is fully linked', () => {
     const seed = seedLinkedGamesFromMyGames([
       {
         id: 'game-1',
@@ -83,6 +83,39 @@ describe('resolveUnlinkedMyTabBookings', () => {
       timeZoneOf: tz,
     });
     expect(result).toEqual({ bookings: [], visible: false, pending: false });
+  });
+
+  it('lets API override a stale seed that looked fully linked', () => {
+    const seed = seedLinkedGamesFromMyGames([
+      {
+        id: 'game-1',
+        name: 'Friday',
+        startTime: covered.bookingStart,
+        endTime: covered.bookingEnd,
+        timeIsSet: true,
+        status: 'ANNOUNCED',
+        linkedBookings: [
+          {
+            id: 'l1',
+            externalBookingId: 'open',
+            externalBookingProvider: 'BOOKTIME',
+            bookingStart: covered.bookingStart,
+            bookingEnd: covered.bookingEnd,
+          },
+        ],
+      },
+    ]);
+    const result = resolveUnlinkedMyTabBookings({
+      bookings: [open],
+      bookingsLoading: false,
+      seedByBookingId: seed,
+      apiByBookingId: new Map([['open', []]]),
+      apiError: false,
+      apiLoading: false,
+      timeZoneOf: tz,
+    });
+    expect(result.visible).toBe(true);
+    expect(result.bookings.map((b) => b.uuid)).toEqual(['open']);
   });
 
   it('does not flash an unlinked card until API confirms', () => {
