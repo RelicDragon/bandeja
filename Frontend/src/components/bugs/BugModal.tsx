@@ -145,6 +145,7 @@ export const BugModal = ({ isOpen, onClose, onSuccess }: BugModalProps) => {
                 {text.length}/1000
               </div>
             </div>
+          </div>
 
           <div className="sticky bottom-0 z-10 shrink-0 bg-white dark:bg-gray-900">
             <BugCreateError message={submitError} />
