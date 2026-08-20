@@ -34,10 +34,43 @@ describe('extractBugCreateErrorMessage', () => {
     expect(extractBugCreateErrorMessage('something broke')).toBe('something broke');
   });
 
+  it('surfaces plain objects with a message', () => {
+    expect(extractBugCreateErrorMessage({ message: 'plain object fail' })).toBe('plain object fail');
+  });
+
+  it('uses the first Axios array message', () => {
+    expect(
+      extractBugCreateErrorMessage(
+        new AxiosError('Request failed', '400', undefined, undefined, {
+          status: 400,
+          data: { message: ['  first  ', 'second'] },
+          statusText: '',
+          headers: {},
+          config: {} as never,
+        })
+      )
+    ).toBe('first');
+  });
+
+  it('uses Axios data.error when message is absent', () => {
+    expect(
+      extractBugCreateErrorMessage(
+        new AxiosError('Request failed', '400', undefined, undefined, {
+          status: 400,
+          data: { error: 'nope' },
+          statusText: '',
+          headers: {},
+          config: {} as never,
+        })
+      )
+    ).toBe('nope');
+  });
+
   it('falls back for empty or unknown values', () => {
     expect(extractBugCreateErrorMessage(null)).toBe(BUG_CREATE_ERROR_FALLBACK_KEY);
     expect(extractBugCreateErrorMessage(undefined)).toBe(BUG_CREATE_ERROR_FALLBACK_KEY);
     expect(extractBugCreateErrorMessage({})).toBe(BUG_CREATE_ERROR_FALLBACK_KEY);
+    expect(extractBugCreateErrorMessage(0)).toBe(BUG_CREATE_ERROR_FALLBACK_KEY);
     expect(extractBugCreateErrorMessage(new Error('   '))).toBe(BUG_CREATE_ERROR_FALLBACK_KEY);
   });
 });

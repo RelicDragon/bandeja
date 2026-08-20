@@ -51,4 +51,16 @@ describe('getBugCreatePlatformInfo', () => {
     await vi.advanceTimersByTimeAsync(80);
     await assertion;
   });
+
+  it('skips thrown App.getInfo', async () => {
+    await expect(
+      getBugCreatePlatformInfo(
+        nativeDeps({
+          getAppInfo: async () => {
+            throw new Error('native bridge');
+          },
+        })
+      )
+    ).resolves.toBe('iOS (unknown)');
+  });
 });

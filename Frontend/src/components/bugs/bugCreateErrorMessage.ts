@@ -8,14 +8,31 @@ function trimmedString(value: unknown): string | null {
   return trimmed.length > 0 ? trimmed : null;
 }
 
+function messageFromUnknown(value: unknown, depth = 0): string | null {
+  if (depth > 3) return null;
+  const direct = trimmedString(value);
+  if (direct) return direct;
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const found = messageFromUnknown(item, depth + 1);
+      if (found) return found;
+    }
+    return null;
+  }
+  if (typeof value !== 'object' || value === null) return null;
+  if ('message' in value) {
+    const fromMessage = messageFromUnknown(value.message, depth + 1);
+    if (fromMessage) return fromMessage;
+  }
+  if ('error' in value) {
+    return messageFromUnknown(value.error, depth + 1);
+  }
+  return null;
+}
+
 function axiosResponseMessage(error: unknown): string | null {
   if (!isAxiosError(error)) return null;
-  const data = error.response?.data;
-  if (typeof data === 'object' && data && 'message' in data) {
-    return trimmedString(data.message);
-  }
-  if (typeof data === 'string') return trimmedString(data);
-  return null;
+  return messageFromUnknown(error.response?.data);
 }
 
 export function extractBugCreateErrorMessage(error: unknown): string {
@@ -27,5 +44,7 @@ export function extractBugCreateErrorMessage(error: unknown): string {
   }
   const asString = trimmedString(error);
   if (asString) return asString;
+  const fromObject = messageFromUnknown(error);
+  if (fromObject) return fromObject;
   return BUG_CREATE_ERROR_FALLBACK_KEY;
 }

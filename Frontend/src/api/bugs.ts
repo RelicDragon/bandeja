@@ -24,7 +24,9 @@ export interface UpdateBugData {
 
 export const bugsApi = {
   createBug: async (data: CreateBugData) => {
-    const response = await api.post<ApiResponse<CreateBugResponse>>('/bugs', data);
+    const response = await api.post<ApiResponse<CreateBugResponse>>('/bugs', data, {
+      timeout: 10_000,
+    });
     return response.data;
   },
 
