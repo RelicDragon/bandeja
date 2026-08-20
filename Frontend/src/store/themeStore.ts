@@ -43,7 +43,11 @@ function getSystemThemeSnapshot() {
 
 const PAGE_BG = { light: '#f9fafb', dark: '#111827' } as const;
 
-function writeResolvedTheme(actualTheme: ResolvedTheme, writeClass: boolean) {
+function writeResolvedTheme(
+  preference: ThemePreference,
+  actualTheme: ResolvedTheme,
+  writeClass: boolean,
+) {
   const root = document.documentElement;
   if (writeClass) {
     if (actualTheme === 'dark') {
@@ -52,8 +56,9 @@ function writeResolvedTheme(actualTheme: ResolvedTheme, writeClass: boolean) {
       root.classList.remove('dark');
     }
   }
-  if (root.style.colorScheme !== actualTheme) {
-    root.style.colorScheme = actualTheme;
+  const colorScheme = preference === 'system' ? 'light dark' : actualTheme;
+  if (root.style.colorScheme !== colorScheme) {
+    root.style.colorScheme = colorScheme;
   }
   const themeColor = document.querySelector('meta[name="theme-color"]');
   const nextColor = PAGE_BG[actualTheme];
@@ -68,7 +73,7 @@ const applyTheme = (theme: ThemePreference) => {
     systemScheme: getSystemTheme(),
     appliedTheme: readAppliedTheme(),
   });
-  writeResolvedTheme(decision.resolved, decision.shouldWrite);
+  writeResolvedTheme(theme, decision.resolved, decision.shouldWrite);
 };
 
 export function syncThemeOnForeground() {

@@ -24,7 +24,7 @@ vi.mock('@capacitor/app', () => ({
   },
 }));
 
-import { startThemeForegroundSync } from './themeForegroundSync';
+import { startThemeForegroundSync, THEME_FOREGROUND_RETRY_DELAYS_MS } from './themeForegroundSync';
 
 function setVisibility(state: DocumentVisibilityState) {
   Object.defineProperty(document, 'visibilityState', {
@@ -56,6 +56,7 @@ describe('startThemeForegroundSync', () => {
     stop?.();
     stop = undefined;
     setVisibility(originalVisibility);
+    vi.useRealTimers();
   });
 
   it('re-reads theme on document visibilitychange when becoming visible', () => {
@@ -104,7 +105,7 @@ describe('startThemeForegroundSync', () => {
     expect(capListeners.appStateChange).toHaveLength(0);
   });
 
-  it('registers Capacitor resume independently of visibilitychange', async () => {
+  it('coalesces resume, appStateChange, and visibilitychange in the same tick', async () => {
     native.isNative = true;
     stop = startThemeForegroundSync(onForeground);
     await Promise.resolve();
@@ -116,6 +117,43 @@ describe('startThemeForegroundSync', () => {
     setVisibility('visible');
     document.dispatchEvent(new Event('visibilitychange'));
 
+    expect(onForeground).toHaveBeenCalledTimes(1);
+  });
+
+  it('re-reads again after iOS matchMedia lag on resume', async () => {
+    vi.useFakeTimers();
+    native.isNative = true;
+    stop = startThemeForegroundSync(onForeground);
+    await Promise.resolve();
+
+    requireFn(capListeners.resume[0])();
+    expect(onForeground).toHaveBeenCalledTimes(1);
+
+    vi.advanceTimersByTime(THEME_FOREGROUND_RETRY_DELAYS_MS[0] - 1);
+    expect(onForeground).toHaveBeenCalledTimes(1);
+
+    vi.advanceTimersByTime(1);
+    expect(onForeground).toHaveBeenCalledTimes(2);
+
+    vi.advanceTimersByTime(THEME_FOREGROUND_RETRY_DELAYS_MS[1] - THEME_FOREGROUND_RETRY_DELAYS_MS[0] - 1);
+    expect(onForeground).toHaveBeenCalledTimes(2);
+
+    vi.advanceTimersByTime(1);
     expect(onForeground).toHaveBeenCalledTimes(3);
+  });
+
+  it('does not run delayed rereads after stop', async () => {
+    vi.useFakeTimers();
+    native.isNative = true;
+    stop = startThemeForegroundSync(onForeground);
+    await Promise.resolve();
+
+    requireFn(capListeners.resume[0])();
+    expect(onForeground).toHaveBeenCalledTimes(1);
+    stop();
+    stop = undefined;
+
+    vi.advanceTimersByTime(THEME_FOREGROUND_RETRY_DELAYS_MS[1]);
+    expect(onForeground).toHaveBeenCalledTimes(1);
   });
 });
