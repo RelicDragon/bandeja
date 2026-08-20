@@ -6,11 +6,13 @@ export const KEYBOARD_LAYOUT_SHRINK_THRESHOLD_PX = 80;
 /**
  * Keyboard layout module — JS/CSS contract
  *
- * DOM writer: `keyboardState.ts` (`publishKeyboardState`) sets:
- * - `--keyboard-height` on `document.documentElement` (px inset)
- * - `--vv-height`, `--vv-offset-top` on `:root` (visual viewport; set elsewhere)
- * - `body.keyboard-visible` when keyboard is open
- * - `body.keyboard-dialog-shift` when inset >= KEYBOARD_DIALOG_SHIFT_THRESHOLD_PX (80)
+ * DOM writers:
+ * - `keyboardState.ts` (`publishKeyboardState`): `--keyboard-height`,
+ *   `body.keyboard-visible`, `body.keyboard-dialog-shift` (inset >= 80)
+ * - `capacitorSetup.applyVisualViewportCssVars`: `--vv-height`, `--vv-offset-top`,
+ *   `--layout-inner-height`
+ * CSS (`styles/keyboard/variables.css`) derives `--overlay-frame-height`,
+ * `--overlay-bottom-inset`, `--overlay-pinned-max-height` (mirrors overlayKeyboardLayout.ts).
  *
  * CSS adapter: `styles/keyboard/` — surfaces that consume the contract:
  * - `.cap-keyboard-aware-dialog|sheet|overlay|bottom-panel`

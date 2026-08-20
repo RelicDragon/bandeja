@@ -163,6 +163,7 @@ export const ClubModal = ({ isOpen, onClose, clubs, selectedId, onSelect }: Club
           <div className="relative flex min-h-0 flex-1 flex-col">
             <div
               ref={scrollBodyRef}
+              data-overlay-scrollport=""
               onScroll={updateListBottomFade}
               className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain p-4"
             >

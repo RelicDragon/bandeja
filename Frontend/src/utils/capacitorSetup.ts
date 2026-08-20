@@ -50,8 +50,13 @@ const resetKeyboardLayoutUi = () => {
 };
 
 const applyVisualViewportCssVars = () => {
+  if (!document.documentElement) return;
+  const inner = Math.round(window.innerHeight || 0);
+  if (inner > 0) {
+    document.documentElement.style.setProperty('--layout-inner-height', `${inner}px`);
+  }
   const vv = window.visualViewport;
-  if (!vv || !document.documentElement) return;
+  if (!vv) return;
   document.documentElement.style.setProperty('--vv-height', `${Math.round(vv.height)}px`);
   document.documentElement.style.setProperty('--vv-offset-top', `${Math.round(vv.offsetTop)}px`);
 };

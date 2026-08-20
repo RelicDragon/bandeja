@@ -896,7 +896,7 @@ export const EditGameInfoModal = ({
       }}
     >
       <DrawerContent
-        className="!mt-10 !max-h-[min(94dvh,960px)] flex h-[min(94dvh,960px)] flex-col overflow-hidden bg-white dark:bg-gray-900"
+        className="!mt-10 !max-h-[min(94dvh,960px,var(--overlay-pinned-max-height))] flex h-[min(94dvh,960px,var(--overlay-pinned-max-height))] flex-col overflow-hidden bg-white dark:bg-gray-900"
         aria-labelledby="edit-game-info-modal-title"
       >
         <div className="mx-auto mt-2.5 h-1 w-10 shrink-0 rounded-full bg-gray-300/90 dark:bg-gray-600" aria-hidden />
