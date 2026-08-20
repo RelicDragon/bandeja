@@ -739,6 +739,9 @@ Frontend/e2e/
 | GD-17 | Guest join chat only | Join as guest | Chat access without full join |
 | GD-18 | Carousel vs list participants | Toggle view mode | Layout switches |
 | GD-18a | Invite not in game chat | Owner invites player from participants list | Pending invite on participants panel; no "X invites Y" system message in game chat; other participants get no chat/push notification for the invite |
+| GD-148 | Broken player avatar on team slot | Game details participants / fixed-team slot whose avatar CDN URL 404s (tiny and/or full) | Initials (or blank initials circle) shown; no broken-image / iOS “?” glyph |
+| GD-149 | Empty participant slot unchanged | Game with an open/guest slot (no user) | Dashed User placeholder or invite plus; no “?” glyph |
+| GD-150 | Valid player avatars still load | Game details team list with working avatar URLs | Photos shown; not forced to initials |
 
 ### 9.3 Edit game (owner/admin)
 
@@ -940,6 +943,8 @@ Frontend/e2e/
 | LS-08 | Spectator token | `?spectatorToken=` | View without auth |
 | LS-09 | Keep awake / orientation | Mobile live | Board usable landscape |
 | LS-10 | Socket sync | `@two clients` score on one | Other updates live |
+| LS-43 | Broken player avatar on live court | Live scoring court with a participant whose avatar URL 404s | Initials (or blank initials circle); no broken-image / iOS “?” glyph |
+| LS-44 | Empty live-court slot | Live court slot with no player / guest | Existing empty slot treatment; no new “?” glyph |
 
 ### 10.1 Apple Watch live scoring & serve guide
 

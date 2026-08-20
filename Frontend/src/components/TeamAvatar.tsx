@@ -4,6 +4,11 @@ import { teamAvatarHalfPlaneClipPath } from '@/utils/teamAvatarClipPolygon';
 import { getTeamAvatarPair } from '@/utils/teamAvatarPair';
 import { teamNameInitials, userInitialsFromBasicUser } from '@/utils/teamAvatarText';
 import { userAvatarTinyUrlFromStandard } from '@/utils/userAvatarTinyUrl';
+import {
+  INITIAL_AVATAR_IMAGE_FALLBACK_STATE,
+  avatarImageOnError,
+  avatarImageSrcToLoad,
+} from '@/utils/userAvatarImageFallback';
 import { TeamAvatarParticipantTipShell } from '@/components/TeamAvatarParticipantTipShell';
 
 function SoloFace({
@@ -17,13 +22,11 @@ function SoloFace({
 }) {
   const useTiny = tile;
   const tinyUrl = useTiny ? userAvatarTinyUrlFromStandard(user.avatar) : null;
-  const [tinyFailed, setTinyFailed] = useState(false);
-  const [fullFailed, setFullFailed] = useState(false);
+  const [state, setState] = useState(INITIAL_AVATAR_IMAGE_FALLBACK_STATE);
   useEffect(() => {
-    setTinyFailed(false);
-    setFullFailed(false);
+    setState(INITIAL_AVATAR_IMAGE_FALLBACK_STATE);
   }, [user.id, user.avatar, useTiny]);
-  const src = tinyUrl && !tinyFailed ? tinyUrl : user.avatar ?? '';
+  const src = avatarImageSrcToLoad({ avatar: user.avatar, tinyUrl, state });
   const textCls = tile ? 'text-sm' : 'text-lg';
   const initials = (
     <div
@@ -33,7 +36,7 @@ function SoloFace({
     </div>
   );
 
-  if (!user.avatar || !src || fullFailed) {
+  if (!src) {
     return initials;
   }
   return (
@@ -41,10 +44,7 @@ function SoloFace({
       src={src}
       alt=""
       className="h-full w-full object-cover"
-      onError={() => {
-        if (tinyUrl && !tinyFailed) setTinyFailed(true);
-        else setFullFailed(true);
-      }}
+      onError={() => setState((current) => avatarImageOnError(current, tinyUrl))}
     />
   );
 }
@@ -61,13 +61,11 @@ function SplitFaceHalf({
   z: string;
 }) {
   const tinyUrl = tile ? userAvatarTinyUrlFromStandard(user.avatar) : null;
-  const [tinyFailed, setTinyFailed] = useState(false);
-  const [fullFailed, setFullFailed] = useState(false);
+  const [state, setState] = useState(INITIAL_AVATAR_IMAGE_FALLBACK_STATE);
   useEffect(() => {
-    setTinyFailed(false);
-    setFullFailed(false);
+    setState(INITIAL_AVATAR_IMAGE_FALLBACK_STATE);
   }, [user.id, user.avatar, tile]);
-  const src = tinyUrl && !tinyFailed ? tinyUrl : user.avatar ?? '';
+  const src = avatarImageSrcToLoad({ avatar: user.avatar, tinyUrl, state });
   const textCls = tile ? 'text-sm' : 'text-lg';
 
   return (
@@ -80,15 +78,12 @@ function SplitFaceHalf({
         transform: 'translateZ(0)',
       }}
     >
-      {user.avatar && src && !fullFailed ? (
+      {src ? (
         <img
           src={src}
           alt=""
           className="h-full w-full object-cover"
-          onError={() => {
-            if (tinyUrl && !tinyFailed) setTinyFailed(true);
-            else setFullFailed(true);
-          }}
+          onError={() => setState((current) => avatarImageOnError(current, tinyUrl))}
         />
       ) : (
         <div
