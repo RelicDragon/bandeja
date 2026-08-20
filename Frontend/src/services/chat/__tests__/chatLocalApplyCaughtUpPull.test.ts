@@ -71,12 +71,12 @@ describe('shouldSkipCaughtUpSyncPull', () => {
     expect(await shouldSkipCaughtUpSyncPull('GAME', 'g1')).toBe(false);
   });
 
-  it('skips when the delete seq is already on the local cursor', async () => {
+  it('does not skip when a delete hint exists even if the local cursor already includes that seq', async () => {
     threadRows.set('GAME:g1', { serverMaxSeq: 13, updatedAt: Date.now() });
     cursorRows.set('GAME:g1', 13);
     noteMessageDeletedForCaughtUpPull('GAME', 'g1', 13);
 
-    expect(await shouldSkipCaughtUpSyncPull('GAME', 'g1')).toBe(true);
+    expect(await shouldSkipCaughtUpSyncPull('GAME', 'g1')).toBe(false);
   });
 
   it('does not skip when forcePull is set', async () => {

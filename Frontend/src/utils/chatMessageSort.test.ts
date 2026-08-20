@@ -88,4 +88,12 @@ describe('mergeChatMessagesAscending', () => {
     );
     expect(merged[0]!.readReceipts).toHaveLength(2);
   });
+
+  it('keeps a delete tombstone when incoming omits deletedAt', () => {
+    const prev = [msg('m1', { deletedAt: '2026-01-01T03:00:00.000Z', content: 'prev' })];
+    const incoming = [msg('m1', { content: 'incoming' })];
+    const merged = mergeChatMessagesAscending(prev, incoming);
+    expect(merged[0]!.deletedAt).toBe('2026-01-01T03:00:00.000Z');
+    expect(merged[0]!.content).toBe('prev');
+  });
 });

@@ -1,12 +1,18 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 import type { ChatMessage } from '@/api/chat';
 import {
+  beginLocalDeleteApply,
   clearChatMessageTombstone,
   clearMessageDeletedCaughtUpBypass,
+  excludeTombstonedChatMessages,
   forgetInMemoryMessageDeletedCaughtUpBypassForTests,
+  forgetLocalMessageTombstone,
+  isCurrentLocalDeleteApply,
+  isRememberedLocalMessageTombstone,
   noteMessageDeletedForCaughtUpPull,
   persistSocketChatDeleted,
   preferDeletedAt,
+  rememberLocalMessageTombstone,
   resetMessageDeletedCaughtUpBypassForTests,
   shouldBypassCaughtUpSyncPullForMessageDeleted,
   tombstoneChatMessage,
@@ -97,32 +103,35 @@ describe('MESSAGE_DELETED caught-up pull bypass', () => {
   beforeEach(() => {
     stubSessionStorage();
     resetMessageDeletedCaughtUpBypassForTests();
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-01-01T00:00:00.000Z'));
   });
 
-  afterEach(() => vi.unstubAllGlobals());
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
 
   it('forces a pull when a delete has no syncSeq', () => {
     noteMessageDeletedForCaughtUpPull('GAME', 'g1');
-    expect(shouldBypassCaughtUpSyncPullForMessageDeleted('GAME', 'g1', 12)).toBe(true);
+    expect(shouldBypassCaughtUpSyncPullForMessageDeleted('GAME', 'g1')).toBe(true);
   });
 
-  it('forces a pull while local cursor is behind the delete seq', () => {
+  it('forces a pull even after the local cursor already includes the delete seq', () => {
     noteMessageDeletedForCaughtUpPull('GAME', 'g1', 20);
-    expect(shouldBypassCaughtUpSyncPullForMessageDeleted('GAME', 'g1', 19)).toBe(true);
-    expect(shouldBypassCaughtUpSyncPullForMessageDeleted('GAME', 'g1', 20)).toBe(false);
+    expect(shouldBypassCaughtUpSyncPullForMessageDeleted('GAME', 'g1')).toBe(true);
   });
 
   it('clears the bypass after a successful pull', () => {
     noteMessageDeletedForCaughtUpPull('GAME', 'g1', 20);
     clearMessageDeletedCaughtUpBypass('GAME', 'g1');
-    expect(shouldBypassCaughtUpSyncPullForMessageDeleted('GAME', 'g1', 0)).toBe(false);
+    expect(shouldBypassCaughtUpSyncPullForMessageDeleted('GAME', 'g1')).toBe(false);
   });
 
   it('keeps the bypass after an in-memory drop (cold reload / sessionStorage)', () => {
     noteMessageDeletedForCaughtUpPull('GAME', 'g1', 20);
     forgetInMemoryMessageDeletedCaughtUpBypassForTests();
-    expect(shouldBypassCaughtUpSyncPullForMessageDeleted('GAME', 'g1', 19)).toBe(true);
-    expect(shouldBypassCaughtUpSyncPullForMessageDeleted('GAME', 'g1', 20)).toBe(false);
+    expect(shouldBypassCaughtUpSyncPullForMessageDeleted('GAME', 'g1')).toBe(true);
   });
 
   it('notes a skip-pull bypass from chat:deleted before Dexie write', () => {
@@ -132,6 +141,49 @@ describe('MESSAGE_DELETED caught-up pull bypass', () => {
       messageId: 'm1',
       syncSeq: 13,
     });
-    expect(shouldBypassCaughtUpSyncPullForMessageDeleted('GAME', 'g1', 12)).toBe(true);
+    expect(shouldBypassCaughtUpSyncPullForMessageDeleted('GAME', 'g1')).toBe(true);
+    expect(isRememberedLocalMessageTombstone('m1')).toBe(true);
+  });
+
+  it('expires the bypass after the skip-pull window', () => {
+    noteMessageDeletedForCaughtUpPull('GAME', 'g1', 20);
+    vi.setSystemTime(new Date('2026-01-01T00:00:31.000Z'));
+    expect(shouldBypassCaughtUpSyncPullForMessageDeleted('GAME', 'g1')).toBe(false);
+  });
+
+  it('caps sessionStorage hints so keys cannot grow without bound', () => {
+    for (let i = 0; i < 60; i += 1) {
+      noteMessageDeletedForCaughtUpPull('GAME', `g${i}`, i + 1);
+    }
+    let bypassKeys = 0;
+    for (let i = 0; i < sessionStorage.length; i += 1) {
+      const k = sessionStorage.key(i);
+      if (k?.startsWith('bandeja.chat.delBypass.')) bypassKeys += 1;
+    }
+    expect(bypassKeys).toBeLessThanOrEqual(48);
+  });
+});
+
+describe('remembered tombstones and apply generation', () => {
+  beforeEach(() => {
+    stubSessionStorage();
+    resetMessageDeletedCaughtUpBypassForTests();
+  });
+
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('drops remembered and payload tombstones from open/HTTP rows', () => {
+    rememberLocalMessageTombstone('gone');
+    const rows = [msg('keep'), msg('gone'), msg('api', '2026-01-01T03:00:00.000Z')];
+    expect(excludeTombstonedChatMessages(rows).map((m) => m.id)).toEqual(['keep']);
+    forgetLocalMessageTombstone('gone');
+    expect(excludeTombstonedChatMessages([msg('gone')]).map((m) => m.id)).toEqual(['gone']);
+  });
+
+  it('ignores a stale tombstone write after a newer restore generation', () => {
+    const tombstoneGen = beginLocalDeleteApply('m1');
+    const restoreGen = beginLocalDeleteApply('m1');
+    expect(isCurrentLocalDeleteApply('m1', tombstoneGen)).toBe(false);
+    expect(isCurrentLocalDeleteApply('m1', restoreGen)).toBe(true);
   });
 });

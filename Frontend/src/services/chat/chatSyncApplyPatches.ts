@@ -86,6 +86,7 @@ export async function applyChatSyncPatchesInSlice(
         const merged = {
           ...r.payload,
           ...p.patch,
+          deletedAt: preferDeletedAt(r.payload.deletedAt, p.patch.deletedAt),
           syncSeq: p.syncSeq,
           serverSyncSeq: p.syncSeq,
         } as ChatMessage;

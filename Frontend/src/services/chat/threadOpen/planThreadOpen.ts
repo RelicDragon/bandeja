@@ -1,6 +1,7 @@
 import type { ChatMessageWithStatus } from '@/api/chat';
 import { getThreadScrollState, type ThreadScrollRow } from '@/services/chat/chatThreadScroll';
 import { planOpenBootstrapPaints } from '@/services/chat/chatOpenSnapshot';
+import { excludeTombstonedChatMessages } from '@/services/chat/chatLocalMessageTombstone';
 import { resolvePaintScrollPlan } from '@/services/chat/threadSession';
 import type {
   ThreadOpenKey,
@@ -65,12 +66,18 @@ export async function planThreadOpen(
   threadKey: ThreadOpenKey,
   inputs: ThreadOpenInputs
 ): Promise<ThreadOpenPlanResult> {
-  const l1 = [...inputs.peekL1()];
+  const l1Raw = [...inputs.peekL1()];
   const { messages: dexieTail } = await inputs.loadBootstrap();
   const outbox = inputs.loadOutboxOptimistics
     ? [...(await inputs.loadOutboxOptimistics())]
     : [];
-  const prev = [...inputs.peekPrev()];
+  const prevRaw = [...inputs.peekPrev()];
+  const candidateIds = [...new Set([...l1Raw, ...prevRaw].map((m) => m.id).filter(Boolean))];
+  const extraTombstoned = inputs.loadTombstonedIds
+    ? await inputs.loadTombstonedIds(candidateIds)
+    : undefined;
+  const l1 = excludeTombstonedChatMessages(l1Raw, extraTombstoned);
+  const prev = excludeTombstonedChatMessages(prevRaw, extraTombstoned);
   const l1Fresh = l1.length > 0;
   const merged = mergeThreadOpenRows({ l1, dexieTail, outbox, prev, l1Fresh });
 

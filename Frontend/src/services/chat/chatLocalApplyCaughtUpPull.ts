@@ -14,10 +14,10 @@ export async function shouldSkipCaughtUpSyncPull(
   options?: CaughtUpSyncPullOptions
 ): Promise<boolean> {
   if (options?.forcePull) return false;
-  const local = await getLocalCursorSeq(contextType, contextId);
-  if (shouldBypassCaughtUpSyncPullForMessageDeleted(contextType, contextId, local)) {
+  if (shouldBypassCaughtUpSyncPullForMessageDeleted(contextType, contextId)) {
     return false;
   }
+  const local = await getLocalCursorSeq(contextType, contextId);
   if (options?.expectedServerMaxSeq != null) {
     return local >= options.expectedServerMaxSeq;
   }

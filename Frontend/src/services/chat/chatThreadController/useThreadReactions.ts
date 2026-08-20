@@ -9,6 +9,7 @@ import {
   putLocalMessage,
   markLocalMessageDeleted,
   restoreLocalMessageAfterFailedDelete,
+  applyThreadL1Put,
 } from '@/services/chat/chatLocalApply';
 import { useReactionEmojiUsageStore } from '@/store/reactionEmojiUsageStore';
 import {
@@ -231,6 +232,21 @@ export function useThreadReactions({
     [setMessages, messagesRef]
   );
 
+  const flushThreadL1 = useCallback(
+    (rows: ChatMessageWithStatus[]) => {
+      if (!id) return;
+      void applyThreadL1Put({
+        contextType,
+        contextId: id,
+        gameChatType: contextType === 'GAME' ? effectiveChatType : undefined,
+        readRows: () => rows,
+        verify: () => true,
+        immediate: true,
+      });
+    },
+    [contextType, effectiveChatType, id]
+  );
+
   const handleDeleteMessage = useCallback(
     async (messageId: string) => {
       if (isQueuedSendMessageId(messageId)) {
@@ -239,6 +255,7 @@ export function useThreadReactions({
           messageId,
           deletedAt: new Date().toISOString(),
         });
+        flushThreadL1([...messagesRef.current]);
         return;
       }
       const removedSnapshot = messagesRef.current.find((m) => m.id === messageId);
@@ -249,6 +266,7 @@ export function useThreadReactions({
           messages: [removedSnapshot as ChatMessageWithStatus],
         });
         void restoreLocalMessageAfterFailedDelete(removedSnapshot);
+        flushThreadL1([...messagesRef.current]);
       };
       const deletedAt = new Date().toISOString();
       applyLiveEvent({
@@ -256,6 +274,7 @@ export function useThreadReactions({
         messageId,
         deletedAt,
       });
+      flushThreadL1([...messagesRef.current]);
       await markLocalMessageDeleted(
         messageId,
         deletedAt,
@@ -288,7 +307,7 @@ export function useThreadReactions({
         restoreRemoved();
       }
     },
-    [id, contextType, messagesRef, applyLiveEvent]
+    [id, contextType, messagesRef, applyLiveEvent, flushThreadL1]
   );
 
   const handleReplyMessage = useCallback((message: ChatMessage) => setReplyTo(message), []);
@@ -351,6 +370,7 @@ export function useThreadReactions({
         messageId: data.messageId,
         deletedAt,
       });
+      flushThreadL1([...messagesRef.current]);
       void markLocalMessageDeleted(
         data.messageId,
         deletedAt,
@@ -358,7 +378,7 @@ export function useThreadReactions({
       );
       setEditingMessage((prev) => (prev?.id === data.messageId ? null : prev));
     },
-    [applyLiveEvent, contextType, id]
+    [applyLiveEvent, contextType, flushThreadL1, id, messagesRef]
   );
 
   const handleChatRequestRespond = useCallback(

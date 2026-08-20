@@ -289,6 +289,7 @@ function executeThreadLiveEffects(
           gameChatType,
           readRows: () => effect.messages,
           verify: () => true,
+          ...(effect.immediate ? { immediate: true } : {}),
         }).catch(() => {});
         break;
       }

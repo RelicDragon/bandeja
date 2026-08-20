@@ -25,6 +25,7 @@ import { useChatSyncStore } from '@/store/chatSyncStore';
 import { normalizeChatType } from '@/utils/chatType';
 import type { MessageListHandle } from '@/components/MessageList';
 import { mergeChatMessagesAscending, mergeServerPageWithPendingOptimistics } from '@/utils/chatMessageSort';
+import { dropTombstonedChatMessages } from '@/services/chat/chatLocalMessageTombstone';
 import type { ChatContextType } from '@/api/chat';
 import type { ChatType } from '@/types';
 import type { RefObject } from 'react';
@@ -582,6 +583,7 @@ export function useThreadMessages({
         } else {
           response = await fetchMessagesPage({ append: false, chatTypeOverride: effectiveType });
         }
+        response = await dropTombstonedChatMessages(response);
         if (currentIdRef.current !== requestId) return false;
         if (append) {
           setMessagesTagged('network-append', (prev) => {
@@ -768,11 +770,13 @@ export function useThreadMessages({
         return;
       }
 
-      const response = await fetchMessagesPage({
-        append: true,
-        oldestMessageId: oldest.id,
-        chatTypeOverride: currentChatType,
-      });
+      const response = await dropTombstonedChatMessages(
+        await fetchMessagesPage({
+          append: true,
+          oldestMessageId: oldest.id,
+          chatTypeOverride: currentChatType,
+        })
+      );
       if (currentIdRef.current !== id) return;
       if (response.length === 0) {
         setHasMoreMessages(false);
@@ -813,6 +817,8 @@ export function useThreadMessages({
         return false;
       }
       if (anchor.chatContextType !== contextType || anchor.contextId !== id) return false;
+      const [liveAnchor] = await dropTombstonedChatMessages([anchor]);
+      if (!liveAnchor) return false;
       if (
         contextType === 'GAME' &&
         normalizeChatType(anchor.chatType as ChatType) !== normalizeChatType(effectiveChatType)
@@ -820,7 +826,7 @@ export function useThreadMessages({
         return false;
       }
 
-      let acc = mergeChatMessagesAscending(messagesRef.current, [anchor]);
+      let acc = mergeChatMessagesAscending(messagesRef.current, [liveAnchor]);
       messagesRef.current = acc;
       void persistChatMessagesFromApi([anchor]).catch(() => {});
 
@@ -829,7 +835,8 @@ export function useThreadMessages({
         const batch = await chatApi.getMessages(contextType, id, 1, PAGE_SIZE, effectiveChatType, cursor);
         if (batch.length === 0) break;
         void persistChatMessagesFromApi(batch).catch(() => {});
-        acc = mergeChatMessagesAscending(acc, batch);
+        const liveBatch = await dropTombstonedChatMessages(batch);
+        acc = mergeChatMessagesAscending(acc, liveBatch);
         messagesRef.current = acc;
         if (batch.length < PAGE_SIZE) break;
         cursor = batch[0].id;

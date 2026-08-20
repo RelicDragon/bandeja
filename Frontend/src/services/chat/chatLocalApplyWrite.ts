@@ -1,11 +1,16 @@
 import type { ChatContextType, ChatMessage, MessageReaction } from '@/api/chat';
 import { chatLocalDb, type ChatLocalRow } from './chatLocalDb';
 import {
+  beginLocalDeleteApply,
   clearChatMessageTombstone,
-  clearMessageDeletedCaughtUpBypass,
+  forgetLocalMessageTombstone,
+  isCurrentLocalDeleteApply,
   noteMessageDeletedForCaughtUpPull,
+  rememberLocalMessageTombstone,
   tombstoneChatMessage,
 } from './chatLocalMessageTombstone';
+import { deleteChatThreadMemory } from './chatThreadMemoryCache';
+import { chatSyncTailKey } from '@/utils/chatSyncScope';
 import { patchThreadIndexAfterMessageDeleted, patchThreadIndexFromMessage } from './chatThreadIndex';
 import { mergeReadReceipts } from './mergeReadReceipts';
 import {
@@ -103,21 +108,30 @@ export async function markLocalMessageDeleted(
   deletedAtIso?: string,
   options?: MarkLocalMessageDeletedOptions
 ): Promise<void> {
+  rememberLocalMessageTombstone(messageId);
+  const gen = beginLocalDeleteApply(messageId);
   const peek = await chatLocalDb.messages.get(messageId);
+  if (!isCurrentLocalDeleteApply(messageId, gen)) return;
   const contextType = options?.contextType ?? peek?.contextType;
   const contextId = options?.contextId ?? peek?.contextId;
   if (contextType && contextId) {
     noteMessageDeletedForCaughtUpPull(contextType, contextId, options?.syncSeq);
   }
   if (!peek) return;
-  return enqueueChatLocalContextApply(peek.contextType, peek.contextId, () =>
-    markLocalMessageDeletedDirect(messageId, deletedAtIso)
-  );
+  return enqueueChatLocalContextApply(peek.contextType, peek.contextId, async () => {
+    if (!isCurrentLocalDeleteApply(messageId, gen)) return;
+    await markLocalMessageDeletedDirect(messageId, deletedAtIso);
+  });
 }
 
 export async function restoreLocalMessageAfterFailedDelete(message: ChatMessage): Promise<void> {
-  clearMessageDeletedCaughtUpBypass(message.chatContextType, message.contextId);
+  forgetLocalMessageTombstone(message.id);
+  const gen = beginLocalDeleteApply(message.id);
+  deleteChatThreadMemory(
+    chatSyncTailKey(message.chatContextType, message.contextId, message.chatType)
+  );
   return enqueueChatLocalContextApply(message.chatContextType, message.contextId, async () => {
+    if (!isCurrentLocalDeleteApply(message.id, gen)) return;
     const existing = await chatLocalDb.messages.get(message.id);
     const restored = clearChatMessageTombstone(message);
     const readReceipts = existing
