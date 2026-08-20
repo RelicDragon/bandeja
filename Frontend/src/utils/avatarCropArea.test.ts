@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
+  clampPixelCrop,
   computePixelCrop,
+  isUsableAvatarCropGeometry,
   resolveAvatarExportPixelCrop,
   type MediaSize,
   type PixelCrop,
@@ -65,6 +67,64 @@ describe('computePixelCrop', () => {
     expect(
       computePixelCrop({ x: 0, y: 0 }, SQUARE_MEDIA, { width: 0, height: 400 }, 1)
     ).toBeNull();
+  });
+
+  it('restricts extreme pan to the same pixels as the max offset', () => {
+    const atMax = computePixelCrop({ x: 200, y: 0 }, SQUARE_MEDIA, SQUARE_CROP, 2, {
+      aspect: 1,
+    });
+    const beyond = computePixelCrop({ x: 10_000, y: 0 }, SQUARE_MEDIA, SQUARE_CROP, 2, {
+      aspect: 1,
+    });
+    expect(atMax).toEqual({ x: 0, y: 250, width: 500, height: 500 });
+    expect(beyond).toEqual(atMax);
+  });
+
+  it('returns null when cropSize is ahead of mediaSize on both axes (layout desync)', () => {
+    expect(
+      computePixelCrop(
+        { x: 0, y: 0 },
+        { width: 200, height: 200, naturalWidth: 1000, naturalHeight: 1000 },
+        { width: 400, height: 400 },
+        2,
+        { aspect: 1 }
+      )
+    ).toBeNull();
+  });
+});
+
+describe('clampPixelCrop', () => {
+  it('keeps an in-bounds square crop unchanged', () => {
+    expect(clampPixelCrop({ x: 250, y: 250, width: 500, height: 500 }, 1000, 1000)).toEqual({
+      x: 250,
+      y: 250,
+      width: 500,
+      height: 500,
+    });
+  });
+
+  it('shrinks a crop that would overflow the source', () => {
+    expect(clampPixelCrop({ x: 800, y: 800, width: 500, height: 500 }, 1000, 1000)).toEqual({
+      x: 800,
+      y: 800,
+      width: 200,
+      height: 200,
+    });
+  });
+});
+
+describe('isUsableAvatarCropGeometry', () => {
+  it('accepts a contain-fit square where crop equals media', () => {
+    expect(isUsableAvatarCropGeometry(SQUARE_MEDIA, SQUARE_CROP)).toBe(true);
+  });
+
+  it('rejects cropSize larger than media on both axes', () => {
+    expect(
+      isUsableAvatarCropGeometry(
+        { width: 200, height: 200, naturalWidth: 1000, naturalHeight: 1000 },
+        { width: 400, height: 400 }
+      )
+    ).toBe(false);
   });
 });
 
@@ -140,6 +200,22 @@ describe('resolveAvatarExportPixelCrop', () => {
           rotation: 0,
           mediaSize: SQUARE_MEDIA,
           cropSize: null,
+        },
+        STALE_1X
+      )
+    ).toBeNull();
+  });
+
+  it('does not export a stale 1× rectangle when cropSize is ahead of mediaSize after zoom', () => {
+    expect(
+      resolveAvatarExportPixelCrop(
+        {
+          crop: { x: 0, y: 0 },
+          zoom: 2,
+          rotation: 0,
+          mediaSize: { width: 200, height: 200, naturalWidth: 1000, naturalHeight: 1000 },
+          cropSize: { width: 400, height: 400 },
+          aspect: 1,
         },
         STALE_1X
       )

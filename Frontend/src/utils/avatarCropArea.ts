@@ -36,6 +36,47 @@ function identityArea(_max: number, value: number): number {
   return value;
 }
 
+function clamp(min: number, value: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
+}
+
+function restrictCropPosition(
+  crop: CropPoint,
+  mediaSize: MediaSize,
+  cropSize: CropSize,
+  zoom: number,
+  rotation: number
+): CropPoint {
+  const bbox = rotateSize(mediaSize.width, mediaSize.height, rotation);
+  const maxX = (bbox.width * zoom) / 2 - cropSize.width / 2;
+  const maxY = (bbox.height * zoom) / 2 - cropSize.height / 2;
+  return {
+    x: clamp(-maxX, crop.x, maxX),
+    y: clamp(-maxY, crop.y, maxY),
+  };
+}
+
+export function clampPixelCrop(
+  crop: PixelCrop,
+  maxWidth: number,
+  maxHeight: number
+): PixelCrop {
+  const maxW = Math.max(1, Math.floor(maxWidth));
+  const maxH = Math.max(1, Math.floor(maxHeight));
+  const x = Math.min(Math.max(0, Math.round(crop.x)), maxW - 1);
+  const y = Math.min(Math.max(0, Math.round(crop.y)), maxH - 1);
+  const width = Math.min(Math.max(1, Math.round(crop.width)), maxW - x);
+  const height = Math.min(Math.max(1, Math.round(crop.height)), maxH - y);
+  return { x, y, width, height };
+}
+
+export function isUsableAvatarCropGeometry(mediaSize: MediaSize, cropSize: CropSize): boolean {
+  if (cropSize.width <= 0 || cropSize.height <= 0) return false;
+  if (mediaSize.width <= 0 || mediaSize.height <= 0) return false;
+  if (mediaSize.naturalWidth <= 0 || mediaSize.naturalHeight <= 0) return false;
+  return !(cropSize.width > mediaSize.width + 1 && cropSize.height > mediaSize.height + 1);
+}
+
 export function computePixelCrop(
   crop: CropPoint,
   mediaSize: MediaSize,
@@ -48,14 +89,15 @@ export function computePixelCrop(
   }
 ): PixelCrop | null {
   if (zoom <= 0) return null;
-  if (cropSize.width <= 0 || cropSize.height <= 0) return null;
-  if (mediaSize.width <= 0 || mediaSize.height <= 0) return null;
-  if (mediaSize.naturalWidth <= 0 || mediaSize.naturalHeight <= 0) return null;
+  if (!isUsableAvatarCropGeometry(mediaSize, cropSize)) return null;
 
   const rotation = options?.rotation ?? 0;
   const aspect = options?.aspect ?? 1;
   const restrictPosition = options?.restrictPosition ?? true;
   const clampArea = restrictPosition ? limitArea : identityArea;
+  const positioned = restrictPosition
+    ? restrictCropPosition(crop, mediaSize, cropSize, zoom, rotation)
+    : crop;
 
   const mediaBBoxSize = rotateSize(mediaSize.width, mediaSize.height, rotation);
   const mediaNaturalBBoxSize = rotateSize(
@@ -67,13 +109,13 @@ export function computePixelCrop(
   const croppedAreaPercentages = {
     x: clampArea(
       100,
-      (((mediaBBoxSize.width - cropSize.width / zoom) / 2 - crop.x / zoom) /
+      (((mediaBBoxSize.width - cropSize.width / zoom) / 2 - positioned.x / zoom) /
         mediaBBoxSize.width) *
         100
     ),
     y: clampArea(
       100,
-      (((mediaBBoxSize.height - cropSize.height / zoom) / 2 - crop.y / zoom) /
+      (((mediaBBoxSize.height - cropSize.height / zoom) / 2 - positioned.y / zoom) /
         mediaBBoxSize.height) *
         100
     ),
@@ -106,21 +148,25 @@ export function computePixelCrop(
         height: Math.round(widthInPixels / aspect),
       };
 
-  return {
-    ...sizePixels,
-    x: Math.round(
-      clampArea(
-        mediaNaturalBBoxSize.width - sizePixels.width,
-        (croppedAreaPercentages.x * mediaNaturalBBoxSize.width) / 100
-      )
-    ),
-    y: Math.round(
-      clampArea(
-        mediaNaturalBBoxSize.height - sizePixels.height,
-        (croppedAreaPercentages.y * mediaNaturalBBoxSize.height) / 100
-      )
-    ),
-  };
+  return clampPixelCrop(
+    {
+      ...sizePixels,
+      x: Math.round(
+        clampArea(
+          mediaNaturalBBoxSize.width - sizePixels.width,
+          (croppedAreaPercentages.x * mediaNaturalBBoxSize.width) / 100
+        )
+      ),
+      y: Math.round(
+        clampArea(
+          mediaNaturalBBoxSize.height - sizePixels.height,
+          (croppedAreaPercentages.y * mediaNaturalBBoxSize.height) / 100
+        )
+      ),
+    },
+    mediaNaturalBBoxSize.width,
+    mediaNaturalBBoxSize.height
+  );
 }
 
 function hasLiveGesture(live: AvatarCropLiveState): boolean {
@@ -131,7 +177,7 @@ export function resolveAvatarExportPixelCrop(
   live: AvatarCropLiveState,
   lastKnownPixels: PixelCrop | null
 ): PixelCrop | null {
-  if (live.mediaSize && live.cropSize) {
+  if (live.mediaSize && live.cropSize && isUsableAvatarCropGeometry(live.mediaSize, live.cropSize)) {
     const computed = computePixelCrop(live.crop, live.mediaSize, live.cropSize, live.zoom, {
       rotation: live.rotation,
       aspect: live.aspect ?? 1,
