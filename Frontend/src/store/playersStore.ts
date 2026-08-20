@@ -13,6 +13,17 @@ import {
 } from '@/services/chat/chatThreadIndex';
 import { bridgeBumpChatListDexie } from '@/services/chat/chatLocalApplyStoreBridge';
 
+export type FetchPlayersResult = BasicUser[] & { busyUserIds: string[] };
+
+function withBusyUserIds(players: BasicUser[], busyUserIds: string[]): FetchPlayersResult {
+  Object.defineProperty(players, 'busyUserIds', {
+    value: busyUserIds,
+    enumerable: false,
+    configurable: true,
+  });
+  return players as FetchPlayersResult;
+}
+
 export interface UserMetadata {
   chatId?: string;
   interactionCount: number;
@@ -56,7 +67,7 @@ interface UsersState {
     sport?: string,
     search?: string,
     slot?: { startTime: string; endTime: string },
-  ) => Promise<BasicUser[]>;
+  ) => Promise<FetchPlayersResult>;
   fetchUserChats: () => Promise<void>;
   invalidateUserChatsCache: () => void;
   refresh: () => Promise<void>;
@@ -72,7 +83,7 @@ let readReceiptHandler: ((readReceipt: UserChatReadReceipt) => void) | null = nu
 let unifiedMessageHandler: (() => void) | null = null;
 let unifiedReadReceiptHandler: (() => void) | null = null;
 let cleanupPromise: Promise<void> | null = null;
-const fetchPlayersInflight = new Map<string, Promise<BasicUser[]>>();
+const fetchPlayersInflight = new Map<string, Promise<FetchPlayersResult>>();
 
 function fetchPlayersCacheKey(
   gameId?: string,
@@ -373,13 +384,13 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
     sport?: string,
     search?: string,
     slot?: { startTime: string; endTime: string },
-  ): Promise<BasicUser[]> => {
+  ): Promise<FetchPlayersResult> => {
     const normalizedSearch = search?.trim();
     const cacheKey = fetchPlayersCacheKey(gameId, sport, normalizedSearch, slot);
     const inflight = fetchPlayersInflight.get(cacheKey);
     if (inflight) return inflight;
 
-    const run = async (): Promise<BasicUser[]> => {
+    const run = async (): Promise<FetchPlayersResult> => {
     const state = get();
     const now = Date.now();
 
@@ -391,7 +402,7 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
       state.lastPlayersFetchTime > 0 &&
       now - state.lastPlayersFetchTime < CACHE_DURATION;
     if (cacheValid) {
-      return Object.values(state.users);
+      return withBusyUserIds(Object.values(state.users), []);
     }
 
     set({ loading: true, isFetching: true });
@@ -429,11 +440,14 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
         };
       });
       const { users: mergedUsers } = get();
-      return players.map((p) => mergedUsers[p.id] ?? p);
+      return withBusyUserIds(
+        players.map((p) => mergedUsers[p.id] ?? p),
+        busyUserIds,
+      );
     } catch (error) {
       console.error('Failed to fetch players:', error);
       set({ loading: false, isFetching: false });
-      return [];
+      return withBusyUserIds([], []);
     }
     };
 

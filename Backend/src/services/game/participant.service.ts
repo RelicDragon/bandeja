@@ -48,12 +48,6 @@ export class ParticipantService {
       throw new ApiError(404, 'Game not found');
     }
 
-    await assertSlotOverlapConfirmed({
-      userId,
-      targetGame: game,
-      confirmOverlap,
-    });
-
     const existingParticipant = await prisma.gameParticipant.findFirst({
       where: {
         gameId,
@@ -80,6 +74,12 @@ export class ParticipantService {
         await this.moveExistingParticipantToQueue(gameId, userId);
         return joinResult.reason || 'games.addedToJoinQueue';
       }
+
+      await assertSlotOverlapConfirmed({
+        userId,
+        targetGame: game,
+        confirmOverlap,
+      });
 
       const changedIntentId = await prisma.$transaction(async (tx) => {
         const gameInTx = await fetchGameWithPlayingParticipants(tx, gameId);
@@ -124,6 +124,12 @@ export class ParticipantService {
       await this.addToQueueAsParticipant(gameId, userId);
       return joinResult.reason || 'games.addedToJoinQueue';
     }
+
+    await assertSlotOverlapConfirmed({
+      userId,
+      targetGame: game,
+      confirmOverlap,
+    });
 
     await prisma.$transaction(async (tx) => {
       const currentGame = await fetchGameWithPlayingParticipants(tx, gameId);
@@ -364,12 +370,6 @@ export class ParticipantService {
         throw new ApiError(404, 'Game not found');
       }
 
-      await assertSlotOverlapConfirmed({
-        userId,
-        targetGame: game,
-        confirmOverlap,
-      });
-
       if (!game.allowDirectJoin) {
         const isOwnerOrAdmin = participant.role === 'OWNER' || participant.role === 'ADMIN';
         if (!isOwnerOrAdmin) {
@@ -382,6 +382,12 @@ export class ParticipantService {
       if (!joinResult.canJoin) {
         return await this.moveExistingParticipantToQueue(gameId, userId);
       }
+
+      await assertSlotOverlapConfirmed({
+        userId,
+        targetGame: game,
+        confirmOverlap,
+      });
     }
 
     await prisma.$transaction(async (tx) => {

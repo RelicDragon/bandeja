@@ -331,18 +331,21 @@ export class InviteService {
       return { success: false, message: 'errors.invites.notFound' };
     }
 
-    if (isReceiver) {
-      await assertSlotOverlapConfirmed({
-        userId: receiverId,
-        targetGame: gameForJoin,
-        confirmOverlap: confirmOverlap || _forceUpdate,
-      });
-    }
-
     const acceptedPlayingStatus: 'PLAYING' | 'NON_PLAYING' =
       participant.role === ParticipantRole.ADMIN && gameForJoin.entityType === EntityType.TRAINING
         ? 'NON_PLAYING'
         : 'PLAYING';
+
+    if (isReceiver && acceptedPlayingStatus === 'PLAYING') {
+      const joinPreview = await validatePlayerCanJoinGame(gameForJoin, receiverId, { skipLevelCheck: true });
+      if (joinPreview.canJoin) {
+        await assertSlotOverlapConfirmed({
+          userId: receiverId,
+          targetGame: gameForJoin,
+          confirmOverlap: confirmOverlap || _forceUpdate,
+        });
+      }
+    }
 
     try {
         const acceptance = await prisma.$transaction(async (tx) => {

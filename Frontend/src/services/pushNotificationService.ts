@@ -9,6 +9,7 @@ import { pushApi } from '@/api/push';
 import { useAuthStore } from '@/store/authStore';
 import { useHeaderStore } from '@/store/headerStore';
 import { runWithProfileName } from '@/utils/runWithProfileName';
+import { runWithOverlapConfirm } from '@/utils/gameSlotOverlapConfirm';
 import { parsePushChatContext } from '@/services/push/parsePushChatContext';
 import { sendChatReplyFromPush } from '@/services/push/sendChatReplyFromPush';
 import { applyPushUnreadBadgeFromNotification } from '@/services/push/applyPushUnreadBadge';
@@ -555,7 +556,10 @@ class PushNotificationService {
     }
 
     try {
-      await invitesApi.accept(data.data.inviteId, true);
+      const response = await runWithOverlapConfirm((confirmOverlap) =>
+        invitesApi.accept(data.data.inviteId, confirmOverlap),
+      );
+      if (!response) return;
       useHeaderStore.getState().decrementPendingInvite(data.data.inviteId);
       console.log('✅ Invite accepted');
 

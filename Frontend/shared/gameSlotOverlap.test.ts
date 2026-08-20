@@ -71,6 +71,9 @@ describe('occupancyBlocksSlot', () => {
   it('ignores finished games, bars, unset time, and the target game itself', () => {
     expect(occupancyBlocksSlot(occupancy({ gameId: 'other', gameStatus: 'FINISHED' }), target)).toBe(false);
     expect(occupancyBlocksSlot(occupancy({ gameId: 'other', entityType: 'BAR' }), target)).toBe(false);
+    expect(occupancyBlocksSlot(occupancy({ gameId: 'other', entityType: 'LEAGUE_SEASON' }), target)).toBe(
+      false,
+    );
     expect(occupancyBlocksSlot(occupancy({ gameId: 'other', timeIsSet: false }), target)).toBe(false);
     expect(occupancyBlocksSlot(occupancy({ gameId: 'target' }), target)).toBe(false);
     expect(occupancyBlocksSlot(occupancy({ gameId: 'other' }), { ...target, timeIsSet: false })).toBe(

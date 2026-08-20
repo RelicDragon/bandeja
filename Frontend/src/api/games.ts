@@ -156,7 +156,7 @@ export const gamesApi = {
     return mapApiGameResponse(response.data);
   },
 
-  create: async (data: Partial<Game>) => {
+  create: async (data: Partial<Game> & { confirmOverlap?: boolean }) => {
     const response = await api.post<ApiResponse<Game>>('/games', data);
     return response.data;
   },

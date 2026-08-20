@@ -38,6 +38,7 @@ import {
 } from '../playIntent/playIntentRealtime';
 import { appendGameLog } from './gameLog.service';
 import { PlayIntentMatchQueueService } from '../playIntent/playIntentMatchQueue.service';
+import { assertSlotOverlapConfirmed } from './gameSlotOverlap.service';
 import { normalizeGameRatingFields } from './normalizeGameRatingFields';
 
 async function runSerializableCreate<T>(
@@ -302,6 +303,22 @@ export class GameCreateService {
     const endTime = booktimeTimeZone
       ? parseBooktimeStoredOrNaiveToDate(data.endTime, booktimeTimeZone) ?? new Date(data.endTime)
       : new Date(data.endTime);
+
+    if (
+      entityType !== EntityType.BAR &&
+      !creatorNonPlaying &&
+      ownerIsPlaying &&
+      data.timeIsSet !== false &&
+      Number.isFinite(startTime.getTime()) &&
+      Number.isFinite(endTime.getTime()) &&
+      startTime < endTime
+    ) {
+      await assertSlotOverlapConfirmed({
+        userId,
+        targetGame: { id: '', startTime, endTime, timeIsSet: true },
+        confirmOverlap: data.confirmOverlap === true,
+      });
+    }
     
     const priceType = data.priceType ?? 'NOT_KNOWN';
     const priceTotal = data.priceTotal;

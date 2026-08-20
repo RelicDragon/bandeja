@@ -32,7 +32,7 @@ import {
 import { buildFindStructuralApiParams } from '@/utils/findStructuralApiParams';
 import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
 import { runWithProfileName } from '@/utils/runWithProfileName';
-import { useGameSlotOverlapConfirm } from '@/hooks/useGameSlotOverlapConfirm';
+import { runWithOverlapConfirm } from '@/utils/gameSlotOverlapConfirm';
 import { FindHeaderActions } from '@/components/headerContent/FindHeaderActions';
 import { availableGamesQueryOptions } from '@/queries/games/useAvailableGamesQuery';
 import { availableUpcomingGamesQueryOptions } from '@/queries/games/useAvailableUpcomingGamesQuery';
@@ -51,7 +51,6 @@ import { deriveFindCalendarGamesLoading } from '@/utils/deriveFindCalendarGamesL
 
 export const FindTab = () => {
   const { t } = useTranslation();
-  const { runWithOverlapConfirm, overlapConfirmModal } = useGameSlotOverlapConfirm();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const user = useAuthStore((state) => state.user);
@@ -471,7 +470,6 @@ export const FindTab = () => {
         <PlayIntentHomeStrip cityId={user?.currentCity?.id} sport={findLevelSport} />
         <AdSlot placement={AD_PLACEMENTS.FIND_TOP} className="mb-4 w-full min-w-0 px-4" />
         <AvailableGamesSection {...sectionProps} splitView={true} />
-        {overlapConfirmModal}
       </>
     );
   }
@@ -484,7 +482,6 @@ export const FindTab = () => {
           <AdSlot placement={AD_PLACEMENTS.FIND_TOP} className="mb-4 w-full min-w-0" />
           <AvailableGamesSection {...sectionProps} />
           <MainTabFooter isLoading={loadingAvailableGames || isRefreshing} />
-          {overlapConfirmModal}
         </>
       )}
     </PullToRefreshShell>

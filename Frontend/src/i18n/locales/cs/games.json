@@ -26,10 +26,10 @@
     "confirmJoinMessage": "Opravdu se chcete k tomuto zápasu připojit?",
     "confirmJoinQueueTitle": "Připojit se do fronty?",
     "confirmJoinQueueMessage": "Opravdu se chcete přidat na čekací listinu?",
-    "overlapConfirmTitle": "Už hrajete v tomto čase",
-    "overlapConfirmMessage": "Už máte jiný zápas, který se s tímto termínem překrývá. Pokračovat?",
+    "overlapConfirmTitle": "Už hrajete jinde",
+    "overlapConfirmMessage": "Tento termín se překrývá s jiným zápasem.",
     "overlapConfirmProceed": "Pokračovat",
-    "requiresOverlapConfirm": "Už máte jiný zápas, který se s tímto termínem překrývá.",
+    "requiresOverlapConfirm": "Tento termín se překrývá s jiným zápasem.",
     "gameTypes": {
       "CLASSIC": "Klasický",
       "AMERICANO": "Americano",

@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 import { Trash2, LogOut, Copy, HelpCircle, ChevronRight, Trophy, LayoutDashboard, CalendarDays, LayoutGrid } from 'lucide-react';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { useDeclineInvite } from '@/hooks/useDeclineInvite';
-import { useGameSlotOverlapConfirm } from '@/hooks/useGameSlotOverlapConfirm';
+import { runWithOverlapConfirm } from '@/utils/gameSlotOverlapConfirm';
 import { RefreshIndicator } from '@/components/RefreshIndicator';
 import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
 import { runWithProfileName } from '@/utils/runWithProfileName';
@@ -137,7 +137,6 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation();
-  const { runWithOverlapConfirm, overlapConfirmModal } = useGameSlotOverlapConfirm();
   const user = useAuthStore((state) => state.user);
   const { setBottomTabsVisible } = useShellNavStore();
   const {
@@ -1947,7 +1946,6 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
       </div>
 
       {declineInviteModal}
-      {overlapConfirmModal}
     </>
     </SportLevelProvider>
   );
