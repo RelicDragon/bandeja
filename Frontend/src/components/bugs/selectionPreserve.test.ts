@@ -7,9 +7,11 @@ import {
   VALUE_COMMIT_WINDOW_MS,
   applyTextSelection,
   clampSelection,
+  isSelectionRestoreLoopActive,
   isSpuriousStartJump,
   nextPreservedSelection,
   readTextSelection,
+  selectionAfterValueChange,
   shouldAdoptIncomingSelection,
   shouldRestoreSelection,
   shouldSkipCaretFollowScroll,
@@ -56,6 +58,23 @@ describe('shouldRestoreSelection', () => {
       ),
     ).toBe(false);
   });
+
+  it('on Android restores a start snap during a drag, but does not fight other moves', () => {
+    expect(
+      shouldRestoreSelection(
+        { start: 0, end: 0 },
+        { start: 7, end: 7 },
+        { platform: 'other', userSelecting: true },
+      ),
+    ).toBe(true);
+    expect(
+      shouldRestoreSelection(
+        { start: 8, end: 8 },
+        { start: 3, end: 3 },
+        { platform: 'other', userSelecting: true },
+      ),
+    ).toBe(false);
+  });
 });
 
 describe('isSpuriousStartJump', () => {
@@ -71,8 +90,14 @@ describe('isSpuriousStartJump', () => {
     expect(isSpuriousStartJump({ start: 0, end: 4 }, { start: 9, end: 9 })).toBe(false);
   });
 
+  it('treats a 1-to-0 reset after typing as a snap', () => {
+    expect(isSpuriousStartJump({ start: 0, end: 0 }, { start: 1, end: 1 })).toBe(true);
+  });
+
   it('does not treat a one-character drag to the start as a snap', () => {
-    expect(isSpuriousStartJump({ start: 0, end: 0 }, { start: 1, end: 1 })).toBe(false);
+    expect(
+      isSpuriousStartJump({ start: 0, end: 0 }, { start: 1, end: 1 }, { userSelecting: true }),
+    ).toBe(false);
   });
 });
 
@@ -121,7 +146,7 @@ describe('shouldAdoptIncomingSelection', () => {
     ).toBe(true);
   });
 
-  it('adopts a drag to the start during jitter when the user is selecting', () => {
+  it('rejects an Android start snap while the user is dragging right', () => {
     expect(
       shouldAdoptIncomingSelection({
         incoming: { start: 0, end: 0 },
@@ -129,6 +154,20 @@ describe('shouldAdoptIncomingSelection', () => {
         valueChanged: false,
         msSinceLayoutJitter: 16,
         userSelecting: true,
+        platform: 'other',
+      }),
+    ).toBe(false);
+  });
+
+  it('adopts an iOS drag to the start during jitter', () => {
+    expect(
+      shouldAdoptIncomingSelection({
+        incoming: { start: 0, end: 0 },
+        previous: { start: 11, end: 11 },
+        valueChanged: false,
+        msSinceLayoutJitter: 16,
+        userSelecting: true,
+        platform: 'ios',
       }),
     ).toBe(true);
   });
@@ -158,6 +197,52 @@ describe('shouldAdoptIncomingSelection', () => {
   });
 });
 
+describe('selectionAfterValueChange', () => {
+  it('keeps a native caret after typing at the end', () => {
+    expect(
+      selectionAfterValueChange({
+        incoming: { start: 12, end: 12 },
+        previous: { start: 11, end: 11 },
+        previousValueLength: 11,
+        nextValueLength: 12,
+      }),
+    ).toEqual({ start: 12, end: 12 });
+  });
+
+  it('reconstructs the end caret when Android reports 0 after typing at the end', () => {
+    expect(
+      selectionAfterValueChange({
+        incoming: { start: 0, end: 0 },
+        previous: { start: 11, end: 11 },
+        previousValueLength: 11,
+        nextValueLength: 12,
+      }),
+    ).toEqual({ start: 12, end: 12 });
+  });
+
+  it('places the caret after the first character when Android reports 0', () => {
+    expect(
+      selectionAfterValueChange({
+        incoming: { start: 0, end: 0 },
+        previous: { start: 0, end: 0 },
+        previousValueLength: 0,
+        nextValueLength: 1,
+      }),
+    ).toEqual({ start: 1, end: 1 });
+  });
+
+  it('collapses a replaced range to its start', () => {
+    expect(
+      selectionAfterValueChange({
+        incoming: { start: 0, end: 0 },
+        previous: { start: 3, end: 8 },
+        previousValueLength: 12,
+        nextValueLength: 8,
+      }),
+    ).toEqual({ start: 3, end: 3 });
+  });
+});
+
 describe('nextPreservedSelection', () => {
   it('keeps the previous caret when Android resets to start mid-reflow', () => {
     expect(
@@ -176,6 +261,21 @@ describe('nextPreservedSelection', () => {
         incoming: { start: 12, end: 12 },
         previous: { start: 11, end: 11 },
         valueChanged: true,
+        previousValueLength: 11,
+        nextValueLength: 12,
+        msSinceLayoutJitter: 0,
+      }),
+    ).toEqual({ start: 12, end: 12 });
+  });
+
+  it('keeps typing at the end when the commit event already jumped to 0', () => {
+    expect(
+      nextPreservedSelection({
+        incoming: { start: 0, end: 0 },
+        previous: { start: 11, end: 11 },
+        valueChanged: true,
+        previousValueLength: 11,
+        nextValueLength: 12,
         msSinceLayoutJitter: 0,
       }),
     ).toEqual({ start: 12, end: 12 });
@@ -192,6 +292,19 @@ describe('nextPreservedSelection', () => {
     ).toEqual({ start: 8, end: 8 });
   });
 
+  it('keeps the caret when Android snaps to start during a right-drag', () => {
+    expect(
+      nextPreservedSelection({
+        incoming: { start: 0, end: 0 },
+        previous: { start: 8, end: 8 },
+        valueChanged: false,
+        msSinceLayoutJitter: 10,
+        userSelecting: true,
+        platform: 'other',
+      }),
+    ).toEqual({ start: 8, end: 8 });
+  });
+
   it('adopts the last step of a drag to the start during jitter', () => {
     expect(
       nextPreservedSelection({
@@ -199,8 +312,21 @@ describe('nextPreservedSelection', () => {
         previous: { start: 1, end: 1 },
         valueChanged: false,
         msSinceLayoutJitter: 10,
+        userSelecting: true,
       }),
     ).toEqual({ start: 0, end: 0 });
+  });
+
+  it('keeps the caret after the first character when Android snaps to 0', () => {
+    expect(
+      nextPreservedSelection({
+        incoming: { start: 0, end: 0 },
+        previous: { start: 1, end: 1 },
+        valueChanged: false,
+        msSinceLayoutJitter: 10_000,
+        msSinceValueCommit: 16,
+      }),
+    ).toEqual({ start: 1, end: 1 });
   });
 
   it('keeps the typed caret when Android resets after a controlled commit', () => {
@@ -215,6 +341,32 @@ describe('nextPreservedSelection', () => {
     });
     expect(next).toEqual(previous);
     expect(shouldRestoreSelection(incoming, next)).toBe(true);
+  });
+});
+
+describe('isSelectionRestoreLoopActive', () => {
+  it('stays active through layout jitter and the value-commit window', () => {
+    expect(
+      isSelectionRestoreLoopActive({
+        now: 200,
+        layoutJitterAt: 0,
+        valueCommitAt: Number.NEGATIVE_INFINITY,
+      }),
+    ).toBe(true);
+    expect(
+      isSelectionRestoreLoopActive({
+        now: 80,
+        layoutJitterAt: Number.NEGATIVE_INFINITY,
+        valueCommitAt: 0,
+      }),
+    ).toBe(true);
+    expect(
+      isSelectionRestoreLoopActive({
+        now: LAYOUT_JITTER_WINDOW_MS + 1,
+        layoutJitterAt: 0,
+        valueCommitAt: Number.NEGATIVE_INFINITY,
+      }),
+    ).toBe(false);
   });
 });
 

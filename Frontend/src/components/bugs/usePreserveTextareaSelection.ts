@@ -3,27 +3,29 @@ import { isIOS } from '@/utils/capacitor';
 import {
   applyTextSelection,
   clampSelection,
-  LAYOUT_JITTER_WINDOW_MS,
+  isSelectionRestoreLoopActive,
   nextPreservedSelection,
   readTextSelection,
   shouldRestoreSelection,
   type SelectionPlatform,
   type TextSelection,
 } from './selectionPreserve';
+import { createRestoreRafLoop, type RestoreRafLoop } from './selectionRestoreLoop';
 
 const selectionPlatform = (): SelectionPlatform => (isIOS() ? 'ios' : 'other');
 
 export function usePreserveTextareaSelection(
   elementRef: RefObject<HTMLTextAreaElement | null>,
+  value: string,
 ) {
   const selectionRef = useRef<TextSelection>({ start: 0, end: 0 });
-  const lastValueRef = useRef('');
+  const lastValueRef = useRef(value);
   const restoringRef = useRef(false);
   const composingRef = useRef(false);
   const userSelectingRef = useRef(false);
   const layoutJitterAtRef = useRef(Number.NEGATIVE_INFINITY);
   const valueCommitAtRef = useRef(Number.NEGATIVE_INFINITY);
-  const restoreRafRef = useRef(0);
+  const restoreLoopRef = useRef<RestoreRafLoop | null>(null);
 
   const restore = useCallback(() => {
     if (composingRef.current) return;
@@ -45,40 +47,40 @@ export function usePreserveTextareaSelection(
     restoringRef.current = false;
   }, [elementRef]);
 
-  const restoreDuringLayoutJitter = useCallback(() => {
-    restore();
-    if (performance.now() - layoutJitterAtRef.current <= LAYOUT_JITTER_WINDOW_MS) {
-      restoreRafRef.current = requestAnimationFrame(restoreDuringLayoutJitter);
-      return;
-    }
-    restoreRafRef.current = 0;
-  }, [restore]);
+  const armRestoreLoop = useCallback(() => {
+    restoreLoopRef.current?.arm();
+  }, []);
 
   const noteLayoutJitter = useCallback(() => {
     layoutJitterAtRef.current = performance.now();
-    if (restoreRafRef.current) cancelAnimationFrame(restoreRafRef.current);
-    restoreRafRef.current = requestAnimationFrame(restoreDuringLayoutJitter);
-  }, [restoreDuringLayoutJitter]);
+    armRestoreLoop();
+  }, [armRestoreLoop]);
 
   const captureFromElement = useCallback((el: HTMLTextAreaElement) => {
     if (restoringRef.current) return;
     const incoming = readTextSelection(el);
     if (!incoming) return;
+    const previousValueLength = lastValueRef.current.length;
     const valueChanged = el.value !== lastValueRef.current;
     if (valueChanged) valueCommitAtRef.current = performance.now();
+    const platform = selectionPlatform();
     const next = nextPreservedSelection({
       incoming,
       previous: selectionRef.current,
       valueChanged,
+      previousValueLength,
+      nextValueLength: el.value.length,
       msSinceLayoutJitter: performance.now() - layoutJitterAtRef.current,
       msSinceValueCommit: performance.now() - valueCommitAtRef.current,
       userSelecting: userSelectingRef.current,
+      platform,
     });
     selectionRef.current = next;
     lastValueRef.current = el.value;
+    if (valueChanged) armRestoreLoop();
     if (
       shouldRestoreSelection(incoming, next, {
-        platform: selectionPlatform(),
+        platform,
         userSelecting: userSelectingRef.current,
       })
     ) {
@@ -86,15 +88,35 @@ export function usePreserveTextareaSelection(
       applyTextSelection(el, next);
       restoringRef.current = false;
     }
-  }, []);
+  }, [armRestoreLoop]);
 
   useLayoutEffect(() => {
+    if (lastValueRef.current !== value) {
+      lastValueRef.current = value;
+      selectionRef.current = clampSelection(selectionRef.current, value.length);
+    }
     restore();
-  });
+  }, [restore, value]);
 
   useEffect(() => {
+    const loop = createRestoreRafLoop({
+      restore,
+      shouldContinue: () =>
+        isSelectionRestoreLoopActive({
+          now: performance.now(),
+          layoutJitterAt: layoutJitterAtRef.current,
+          valueCommitAt: valueCommitAtRef.current,
+        }),
+    });
+    restoreLoopRef.current = loop;
+
     const el = elementRef.current;
-    if (!el) return;
+    if (!el) {
+      return () => {
+        loop.stop();
+        restoreLoopRef.current = null;
+      };
+    }
 
     const onViewport = () => {
       if (document.activeElement !== el) return;
@@ -120,6 +142,8 @@ export function usePreserveTextareaSelection(
     window.addEventListener('pointerup', clearSelecting);
     window.addEventListener('pointercancel', clearSelecting);
     return () => {
+      loop.stop();
+      restoreLoopRef.current = null;
       vv?.removeEventListener('resize', onViewport);
       vv?.removeEventListener('scroll', onViewport);
       window.removeEventListener('resize', onViewport);
@@ -127,9 +151,8 @@ export function usePreserveTextareaSelection(
       el.removeEventListener('pointerdown', markSelecting);
       window.removeEventListener('pointerup', clearSelecting);
       window.removeEventListener('pointercancel', clearSelecting);
-      if (restoreRafRef.current) cancelAnimationFrame(restoreRafRef.current);
     };
-  }, [captureFromElement, elementRef, noteLayoutJitter]);
+  }, [captureFromElement, elementRef, noteLayoutJitter, restore]);
 
   return {
     captureFromElement,

@@ -23,7 +23,7 @@ export function SelectionPreservingTextarea({
   ...rest
 }: SelectionPreservingTextareaProps) {
   const innerRef = useRef<HTMLTextAreaElement>(null);
-  const selection = usePreserveTextareaSelection(innerRef);
+  const selection = usePreserveTextareaSelection(innerRef, value == null ? '' : String(value));
 
   return (
     <textarea
