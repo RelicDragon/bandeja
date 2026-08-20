@@ -1199,6 +1199,8 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | CH-50 | Desktop split persist | Select chat → resize splitter | Layout preserved |
 | CH-51 | Back from thread mobile | Back | Returns to list |
 | CH-52 | Create bug report | Bugs filter → add bug | `BugModal` → bug thread created |
+| CH-156 | Bug description caret (Android) | `@mobile` Capacitor Android → Bugs → add bug → type in description → drag caret right; dismiss and reopen keyboard | Caret stays where dragged; keyboard open/close does not jump caret to start; typing at end still inserts at end |
+| CH-157 | Bug description caret (iOS) | `@mobile` Capacitor iOS → Bugs → add bug → drag caret, type at end, open/close keyboard | No new caret jump; typing at end still works |
 | CH-53 | Bugs filter panel | Panel closed by default; non-admin: Created by me on + all statuses; admin: Created by me off + open statuses only | List matches defaults; open panel → multi-select status chips → list updates |
 | CH-54 | Pin chat from list | Pin DM/group | Pinned ordering |
 | CH-55 | Mute chat from list | Mute thread | Mute persisted; notifications suppressed |

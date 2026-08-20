@@ -9,6 +9,7 @@ const BUG_TYPE_VALUES: BugType[] = ['BUG', 'CRITICAL', 'SUGGESTION', 'QUESTION',
 import { toast } from 'react-hot-toast';
 import { isCapacitor, isIOS, isAndroid, getAppInfo, getCapacitorPlatform } from '@/utils/capacitor';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/Dialog';
+import { SelectionPreservingTextarea } from './SelectionPreservingTextarea';
 
 interface BugModalProps {
   isOpen: boolean;
@@ -111,7 +112,7 @@ export const BugModal = ({ isOpen, onClose, onSuccess }: BugModalProps) => {
             <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
               {t('bug.description')}
             </label>
-            <textarea
+            <SelectionPreservingTextarea
               value={text}
               onChange={(e) => setText(e.target.value)}
               placeholder={t('bug.descriptionPlaceholder')}
