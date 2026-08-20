@@ -3,7 +3,10 @@ import type { Club, Court, EntityType, Game } from '@/types';
 import type { CreateGameBookingFields } from '@shared/gameBooking/contracts';
 import { applyCourtIdsToBookingSnapshots } from '@shared/gameBooking/applyCourtIdsToBookingSnapshots';
 import { buildBookingSnapshots } from '@shared/gameBooking/buildBookingSnapshots';
-import { computeBookingSelectionLimits } from '@shared/gameBooking/computeBookingSelectionLimits';
+import {
+  computeBookingSelectionLimits,
+  computeEditBookingSelectionLimits,
+} from '@shared/gameBooking/computeBookingSelectionLimits';
 import {
   projectEditReservationActionToState,
   projectReservationIntentToState,
@@ -43,7 +46,7 @@ type UseGameLocationTimeStateArgs = {
 
 export function useGameLocationTimeState({
   entityType: _entityType,
-  panelMode: _panelMode,
+  panelMode,
   club,
   courts,
   bookingMatchCourts,
@@ -142,8 +145,15 @@ export function useGameLocationTimeState({
       : locationTimeMode === 'timeSlots');
 
   const bookingSelectionLimits = useMemo(
-    () => computeBookingSelectionLimits(maxParticipants, playersPerMatch),
-    [maxParticipants, playersPerMatch],
+    () =>
+      panelMode === 'edit'
+        ? computeEditBookingSelectionLimits(
+            maxParticipants,
+            playersPerMatch,
+            selectedCourtIds.length,
+          )
+        : computeBookingSelectionLimits(maxParticipants, playersPerMatch),
+    [panelMode, maxParticipants, playersPerMatch, selectedCourtIds.length],
   );
 
   const dirtyFlags = useMemo(() => {

@@ -126,6 +126,7 @@ export function resolveEditReservationActionOptions(input: {
   hasReservationsForDate?: boolean;
 }): EditReservationActionOption[] {
   const showUseExisting =
+    !input.hasLinkedBookings &&
     input.clubBookingFlowActive &&
     input.hasBooktimeAuthPath &&
     input.hasReservationsForDate === true;
@@ -152,29 +153,26 @@ export function resolveEditReservationActionOptions(input: {
     });
   }
 
-  if (input.clubBookingFlowActive) {
+  if (input.clubBookingFlowActive && !input.hasLinkedBookings) {
     options.push({
       id: 'reserveNew',
       enabled: true,
-      recommended: !input.hasLinkedBookings,
+      recommended: true,
     });
   }
 
-  options.push(
-    ...(input.hasLinkedBookings
-      ? [
-          {
-            id: 'unlink' as const,
-            enabled: true,
-          },
-        ]
-      : []),
-    {
+  if (input.hasLinkedBookings) {
+    options.push({
+      id: 'unlink',
+      enabled: true,
+    });
+  } else {
+    options.push({
       id: 'gameOnly',
       enabled: true,
-      recommended: !input.hasLinkedBookings && !input.clubBookingFlowActive,
-    },
-  );
+      recommended: !input.clubBookingFlowActive,
+    });
+  }
 
   return options;
 }
@@ -358,6 +356,7 @@ export function resolveEditReservationValidation(input: {
   selectedTime?: string;
   duration?: number;
   requiresSchedule: boolean;
+  clubChanged?: boolean;
 }): ReservationValidationResult {
   if (
     (input.action === 'reserveNew' || input.action === 'useExisting') &&
@@ -390,6 +389,10 @@ export function resolveEditReservationValidation(input: {
       return { ok: false, reason: 'durationRequired' };
     }
     return { ok: true };
+  }
+
+  if (input.action === 'unlink' && input.clubChanged === true && input.selectedCourtCount < 1) {
+    return { ok: false, reason: 'courtSelectionRequired' };
   }
 
   if (input.requiresSchedule) {

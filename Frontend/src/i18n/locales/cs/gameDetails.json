@@ -49,6 +49,11 @@
       "unlinkSaveConfirmMessage": "Odebíráte {{count}} propojení rezervací s touto hrou. Skutečné rezervace kurtů se automaticky nezruší.",
       "reservationActionTitle": "Co se má stát s kurtem?",
       "reservationActionSubtitle": "Vyberte, co se změní při uložení.",
+      "changeGateTitle": "Propojeno kurtů: {{count}}",
+      "changeGateBody": "Nejdřív odpojte rezervaci, abyste mohli rezervovat jiný klub nebo kurty.",
+      "changeGateBodyClub": "Nejdřív odpojte rezervaci, abyste mohli opustit {{club}} a rezervovat jinde.",
+      "clubLockedBadge": "Propojeno",
+      "clubLockedAria": "Klub je uzamčený. Odpojte rezervaci, abyste mohli změnit klub.",
       "reservationAction": {
         "keepCurrent": {
           "title": "Ponechat současnou rezervaci",
@@ -73,7 +78,7 @@
         "unlink": {
           "title": "Odpojit rezervaci",
           "chipTitle": "Odpojit",
-          "description": "Odebrat propojení rezervací pouze z této hry."
+          "description": "Odebrat propojení jen z této hry. Rezervace u klubu zůstane. Po uložení můžete rezervovat jiný klub nebo kurty."
         },
         "gameOnly": {
           "title": "Pouze hra",
@@ -87,7 +92,7 @@
         "changeGameTimeOnly": "Čas hry se změní; propojení rezervací zůstanou.",
         "useExisting": "K této hře bude propojeno {{selected}} rezervací.",
         "reserveNew": "Při uložení bude vytvořena nová skutečná rezervace kurtu.",
-        "unlink": "Propojení rezervací bude z této hry odebráno.",
+        "unlink": "Propojení rezervací bude z této hry odebráno. Po uložení můžete rezervovat jiný klub nebo kurty.",
         "gameOnly": "Hra zůstane v kalendáři bez propojení se skutečnou rezervací.",
         "reserveNewConfirm": "Před uložením si rezervaci zkontrolujete.",
         "unlinkNoCancel": "{{count}} skutečná rezervace klubu zůstane aktivní, dokud ji nezrušíte u klubu/poskytovatele."

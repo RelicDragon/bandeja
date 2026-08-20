@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { computeBookingSelectionLimits } from './computeBookingSelectionLimits';
+import {
+  computeBookingSelectionLimits,
+  computeEditBookingSelectionLimits,
+} from './computeBookingSelectionLimits';
 
 describe('computeBookingSelectionLimits', () => {
   it('requires one court per four players in 2v2', () => {
@@ -16,5 +19,23 @@ describe('computeBookingSelectionLimits', () => {
 
   it('defaults to 2v2 court sizing for non-2 playersPerMatch', () => {
     expect(computeBookingSelectionLimits(4, 4)).toEqual({ min: 1, max: 1, playersPerCourt: 4 });
+  });
+
+  it('lets edit booking follow the selected court count instead of the roster formula', () => {
+    expect(computeEditBookingSelectionLimits(16, 4, 3)).toEqual({
+      min: 3,
+      max: 3,
+      playersPerCourt: 4,
+    });
+    expect(computeEditBookingSelectionLimits(16, 4, 0)).toEqual({
+      min: 1,
+      max: 4,
+      playersPerCourt: 4,
+    });
+    expect(computeEditBookingSelectionLimits(16, 4, 8)).toEqual({
+      min: 4,
+      max: 4,
+      playersPerCourt: 4,
+    });
   });
 });

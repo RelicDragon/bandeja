@@ -54,6 +54,7 @@ import { computePendingBookingUnlinks } from '@/components/gameLocationTime/comp
 import { shouldUseBooktimeTimeOptions } from '@/hooks/createGameBookingFlow/shouldUseBooktimeTimeOptions';
 import { courtMatchesSportFilter } from '@/utils/courtSport';
 import { computeMaxSelectableCourts, computeRequiredCourtCount } from '@/utils/requiredCourtCount';
+import { computeEditBookingSelectionLimits } from '@shared/gameBooking/computeBookingSelectionLimits';
 import {
   resolveEditReservationValidation,
   resolveReservationValidationMessage,
@@ -489,10 +490,16 @@ export const EditGameInfoModal = ({
     ? (time: string) => booktimeTimeOptions.isSlotHighlighted(time, whenSelectedTime, whenDuration)
     : isSlotHighlighted;
   const { clampDate: clampBooktimeDate, fixedDates: booktimeFixedDates } = booktimeCompanyMeta;
-  const requiredReservationCount = computeRequiredCourtCount(
+  const rosterRequiredReservationCount = computeRequiredCourtCount(
     game.maxParticipants,
     game.playersPerMatch ?? 4,
   );
+  const editBookingSelectionLimits = computeEditBookingSelectionLimits(
+    game.maxParticipants,
+    game.playersPerMatch ?? 4,
+    selectedCourtIds.length,
+  );
+  const requiredReservationCount = editBookingSelectionLimits.min;
 
   useEffect(() => {
     if (!booktimeScheduleConstrained || !booktimeFixedDates?.length) return;
@@ -511,7 +518,7 @@ export const EditGameInfoModal = ({
     setHookDate,
     setHookTime,
   ]);
-  const multiCourtMode = requiredReservationCount > 1;
+  const multiCourtMode = rosterRequiredReservationCount > 1;
 
   const handleEditCourtSelect = useCallback(
     (id: string) => {
@@ -706,6 +713,7 @@ export const EditGameInfoModal = ({
         selectedTime: whenSelectedTime || undefined,
         duration: whenDuration || undefined,
         requiresSchedule,
+        clubChanged: where.clubId !== (game.clubId || ''),
       });
       if (!validation.ok) {
         const message = resolveReservationValidationMessage(validation, requiredReservationCount);

@@ -38,6 +38,7 @@ export function evaluateGameLinkedBookingCoverage(game: Game): LinkedBookingCove
       endTime: game.endTime,
       maxParticipants: game.maxParticipants,
       playersPerMatch: playersPerMatchOf(game),
+      courtCount: game.gameCourts?.length ?? (game.courtId || game.court ? 1 : 0),
     },
     { timeZone: club?.city?.timezone ?? game.city?.timezone ?? undefined },
   );

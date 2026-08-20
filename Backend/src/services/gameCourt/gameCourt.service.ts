@@ -1,6 +1,7 @@
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import { assertCourtMatchesGameSport } from '../../shared/clubSports';
+import { recomputeGameBookingStatusForGame } from '../game/gameExternalBooking.service';
 
 export class GameCourtService {
   static async getGameCourts(gameId: string) {
@@ -66,6 +67,7 @@ export class GameCourtService {
       }
     });
 
+    await recomputeGameBookingStatusForGame(gameId);
     return this.getGameCourts(gameId);
   }
 
@@ -118,6 +120,7 @@ export class GameCourtService {
       },
     });
 
+    await recomputeGameBookingStatusForGame(gameId);
     return gameCourt;
   }
 
@@ -148,6 +151,7 @@ export class GameCourtService {
       }
     });
 
+    await recomputeGameBookingStatusForGame(gameId);
     return { success: true };
   }
 

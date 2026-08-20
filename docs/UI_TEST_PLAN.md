@@ -632,8 +632,8 @@ Frontend/e2e/
 | C-14t | Multi-court shared slot hint | Intent Book a court; 2 courts selected; no intersecting Booktime slots | Amber hint: try different courts, date, or duration |
 | C-14u | Create validation toasts | Submit without court/time/auth per intent | Inline toast + scroll to location section (not silent abort) |
 | C-14v | Edit keep current reservation | Edit game with linked bookings | Default **Keep current reservation**; read-only linked list + consequence summary; no reservation picker |
-| C-14w | Edit reservation actions | Edit integrated game | Actions: keep current, change time only, use existing, reserve new, unlink, game only — unavailable actions hidden (not greyed out); picker only for use existing |
-| C-14x | Edit unlink save | Edit → Unlink reservation → Save | Consequence warns club reservation stays active + policy; confirm before save |
+| C-14w | Edit reservation actions | Edit integrated game | With linked bookings: keep current, change time only, unlink (3 chips, no scroll) — **use existing**, **reserve new**, and **game only** hidden until links are fully removed and saved; change-club gate + lock badge; tapping locked club selects Unlink and opens club picker. Time only does not change courts. After unlink save: use existing / reserve new / game only shown (unavailable actions hidden, not greyed out); picker only for use existing |
+| C-14x | Edit unlink save | Edit → Unlink reservation → Save | Consequence warns club reservation stays active + policy; confirm before save; club picker unlocked so a new club can be chosen on the same unlink save |
 | C-14y | useExisting hidden without reservations | Integrated club; connected; selected date has no club bookings | **I already have a booking** intent not shown (not blank strip / empty-state card) |
 | C-14z | Edit multi-court shared slot hint | Edit integrated game → Reserve new; 2 courts; no intersecting slots | Amber hint: try different courts, date, or duration |
 | C-24 | Date/time | Change start + duration | End time updates |
@@ -791,13 +791,17 @@ Frontend/e2e/
 | GD-20f | Edit prunes incompatible courts | Multi-sport game with padel court saved → club gains sport tags → reopen edit modal | Incompatible court selections cleared when modal opens |
 | GD-20g | Edit sport mismatch rejected | API: update game `clubId` or `courtId` to sport-incompatible venue | 400 with sport mismatch message |
 | GD-20h | Edit settings tab | Edit drawer → Settings (gear) tab | Settings always expanded (no collapse chevron, no gear title icon); hints button only; toggles save in place; footer shows "saved automatically" note + Close only, no Save |
-| GD-21 | Edit with linked bookings | Game with 2 linked courts at BOOKTIME club → edit Location & time | Unified surface: reservations strip + green grid; both links pre-selected; rows show each linked court |
+| GD-21 | Edit with linked bookings | Game with 2 linked courts at BOOKTIME club → edit Location & time | Keep current: read-only linked list; **use existing** / **reserve new** / **game only** hidden; change-club gate visible; club row shows Linked lock |
 | GD-21a | Edit add booking link | Edit game with 0 links → select reservation card | Schedule syncs from selected booking; save links game |
-| GD-21b | Edit partial unlink | Game with 2 linked courts → deselect one card → Save → confirm | Pending unlink hint; only deselected link removed; other link and courts preserved |
+| GD-21b | Edit partial unlink | Game with 2 linked courts | Partial deselect is not offered while links exist; Unlink removes all links, then a later edit can re-link fewer courts |
 | GD-21c | Edit shared reservation | Reservation card shows other linked games | Informational only; user can still link this game |
-| GD-22 | Edit unlink last booking | Deselect last linked reservation card | Pending unlink hint; after save manual time grid available; amber hint that club booking stays active; save asks confirm unlink |
+| GD-22 | Edit unlink last booking | Edit → Unlink reservation | Pending unlink hint; after save manual time grid available; amber hint that club booking stays active; save asks confirm unlink |
 | GD-22a | Edit unlink save confirm | Edit modal → unlink reservation → Save | Confirm modal warns real booking is not cancelled; save unlinks only |
-| GD-22b | Edit switch linked booking | Game linked to booking A → edit location/time → pick booking B or book new court → save | Booking A unlinked from game; only B linked; game no longer shows stale "Fully booked" for A |
+| GD-22b | Edit switch linked booking | Game linked to booking A → edit location/time | Cannot pick booking B or book new while A is still linked; Unlink + save, then edit again to link B / book new; game no longer shows stale "Fully booked" for A |
+| GD-22c | Edit club locked while linked | Game with linked bookings → Keep current or Time only | Club row shows lock (still tappable); tap selects Unlink and opens club picker; Unlink CTA on gate does the same without opening picker |
+| GD-22d | Edit fewer courts after unlink | 16-player tournament previously on 4 linked courts → unlink + save → edit → select 3 courts → link or reserve | Save succeeds with 3 courts; does not demand 4; game shows Fully booked (not partial) |
+| GD-22e | Edit time only keeps courts | Game with 3 linked courts → Time only | Date/time controls shown; court grid hidden so linked courts cannot drift |
+| GD-22f | Edit unlink club change needs courts | Linked game → Unlink → pick a different club → Save without courts | Blocked: must select at least one court |
 | GD-23 | Edit price | Price tab | Price type shown as vertical radio list with icons; amount + currency row appears only for paid types; price fields updated |
 | GD-108 | Edit modal save gating | Open edit modal, change nothing, then edit name | Save disabled with no changes; after edit an "Unsaved changes" hint appears in footer and Save enables |
 | GD-109 | Edit modal discard confirm | Change any field → close via X / swipe dismiss / Cancel | "Discard changes?" confirm shown; Keep editing returns to drawer with edits intact; Discard closes without saving |

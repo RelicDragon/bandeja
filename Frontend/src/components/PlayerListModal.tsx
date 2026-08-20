@@ -855,15 +855,15 @@ export const PlayerListModal = ({
                         />
                       ) : null}
                       {showTeams ? (
-                        <div className="flex justify-center">
-                          <SegmentedSwitch
-                            tabs={inviteListKindTabs}
-                            activeId={inviteListKind}
-                            onChange={(id) => setInviteListKind(id as 'all' | 'users' | 'teams')}
-                            showOnlyActiveTabText={false}
-                            layoutId="player-invite-list-kind"
-                          />
-                        </div>
+                        <SegmentedSwitch
+                          tabs={inviteListKindTabs}
+                          activeId={inviteListKind}
+                          onChange={(id) => setInviteListKind(id as 'all' | 'users' | 'teams')}
+                          showOnlyActiveTabText={false}
+                          layoutId="player-invite-list-kind"
+                          fullWidth
+                          size="sm"
+                        />
                       ) : null}
                       <div>
                         <button

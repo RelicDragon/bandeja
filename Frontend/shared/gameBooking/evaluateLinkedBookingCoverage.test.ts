@@ -51,4 +51,17 @@ describe('evaluateLinkedBookingCoverage', () => {
     );
     expect(result.fullyCovered).toBe(true);
   });
+
+  it('treats fewer courts as fully covered when the game is using that many courts', () => {
+    const result = evaluateLinkedBookingCoverage(
+      [
+        { bookingStart: gameWindow.startTime, bookingEnd: gameWindow.endTime },
+        { bookingStart: gameWindow.startTime, bookingEnd: gameWindow.endTime },
+        { bookingStart: gameWindow.startTime, bookingEnd: gameWindow.endTime },
+      ],
+      { ...gameWindow, maxParticipants: 16, playersPerMatch: 4, courtCount: 3 },
+    );
+    expect(result.requiredBookingCount).toBe(3);
+    expect(result.fullyCovered).toBe(true);
+  });
 });
