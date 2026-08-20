@@ -169,9 +169,7 @@ describe('processChatRoomBatch inbound message', () => {
     await vi.waitFor(() => {
       expect(persistSocketInboundMessage).toHaveBeenCalledTimes(2);
     });
-    await vi.waitFor(() => {
-      expect(dispatchChatSyncStale).toHaveBeenCalledWith('USER', 'thread-1', 'cursorStale');
-    });
+    expect(dispatchChatSyncStale).not.toHaveBeenCalled();
   });
 
   it('calls onInboundMessage synchronously without waiting on persist', () => {

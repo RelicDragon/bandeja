@@ -62,6 +62,7 @@
     "transcriptionUnavailable": "Transcription is temporarily unavailable. Please try again later.",
     "transcriptionError": "Failed to transcribe voice message. Please try again.",
     "transcriptionAudioMissing": "Voice audio could not be loaded.",
+    "mediaUnavailable": "Photo unavailable",
     "translationUnavailable": "Translation is temporarily unavailable. Please try again later.",
     "translationRateLimited": "Too many translation requests. Please try again in a few seconds.",
     "translationError": "Failed to translate message. Please try again.",

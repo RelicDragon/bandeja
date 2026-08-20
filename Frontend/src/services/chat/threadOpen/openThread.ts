@@ -8,6 +8,7 @@ import { mergeServerPageWithPendingOptimistics } from '@/utils/chatMessageSort';
 import { planThreadOpen } from '@/services/chat/threadOpen/planThreadOpen';
 import { dropTombstonedChatMessages, loadTombstonedMessageIds } from '@/services/chat/chatLocalMessageTombstone';
 import type { ThreadOpenPlanResult } from '@/services/chat/threadOpen/types';
+import { recoverEmptyMediaMessages } from '@/services/chat/chatMediaReopenRecover';
 
 export type ThreadOpenOutboxContext = {
   userId: string;
@@ -112,11 +113,15 @@ export async function openThread(request: ThreadOpenRequest): Promise<ThreadOpen
   });
 
   if (result.kind === 'painted') {
+    void recoverEmptyMediaMessages(result.plan.messages).catch(() => {});
     return { kind: 'painted', mergedPrev, result };
   }
 
   const fallback = await planDexieTailFallback(request, mergedPrev);
-  if (fallback) return fallback;
+  if (fallback) {
+    void recoverEmptyMediaMessages(fallback.result.plan.messages).catch(() => {});
+    return fallback;
+  }
 
   return { kind: 'network-fallback', mergedPrev };
 }

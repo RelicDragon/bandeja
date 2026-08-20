@@ -24,6 +24,7 @@ vi.mock('../chatLocalApplyPull', () => ({
     threadInvalidated: false,
     threadArchived: false,
     eventsApplied: 0,
+    blockedOnUnapplied: false,
   })),
 }));
 
@@ -59,10 +60,26 @@ describe('onSocketSyncSeqDirect gap fill', () => {
     expect(await getLocalCursorSeq('USER', 'u1')).toBe(10);
   });
 
-  it('pulls events and advances cursor to syncSeq when gap detected', async () => {
+  it('does not force-advance cursor when pull did not apply the inbound seq', async () => {
     await bumpCursor('USER', 'u1', 3);
     await onSocketSyncSeqDirect('USER', 'u1', 7);
     expect(pullEventsLoop).toHaveBeenCalledWith('USER', 'u1');
-    expect(await getLocalCursorSeq('USER', 'u1')).toBe(7);
+    expect(await getLocalCursorSeq('USER', 'u1')).toBe(3);
+  });
+
+  it('keeps the cursor pull applied without jumping to a later inbound seq', async () => {
+    vi.mocked(pullEventsLoop).mockImplementation(async (ct, id) => {
+      await bumpCursor(ct, id, 5);
+      return {
+        repairedStaleCursor: false,
+        threadInvalidated: false,
+        threadArchived: false,
+        eventsApplied: 1,
+        blockedOnUnapplied: true,
+      };
+    });
+    await bumpCursor('USER', 'u1', 3);
+    await onSocketSyncSeqDirect('USER', 'u1', 7);
+    expect(await getLocalCursorSeq('USER', 'u1')).toBe(5);
   });
 });

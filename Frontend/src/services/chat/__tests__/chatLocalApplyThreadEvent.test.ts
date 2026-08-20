@@ -46,6 +46,7 @@ vi.mock('../messageContextHead', () => ({
 vi.mock('../chatLocalApplyWrite', () => ({
   putLocalMessageDirect: vi.fn(async () => {}),
   persistChatMessagesFromApiDirect: vi.fn(async () => {}),
+  putChatLocalRowsWithSearchTokens: vi.fn(async () => {}),
 }));
 
 vi.mock('../chatLocalApplyPull', () => ({
@@ -169,6 +170,7 @@ describe('applyThreadEvent', () => {
       repairedStaleCursor: false,
       threadInvalidated: false,
       threadArchived: false,
+      blockedOnUnapplied: false,
     });
     const rev0 = getThreadSnapshotRevision('USER', 'u1');
     const rev = await applyThreadEvent({ kind: 'syncPull', contextType: 'USER', contextId: 'u1' });

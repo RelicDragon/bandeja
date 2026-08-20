@@ -308,6 +308,10 @@ export function markContextReadOnUserActivity(params: CoordinatorEnterParams): v
 }
 
 export async function enterContextAndMarkRead(params: CoordinatorEnterParams): Promise<void> {
+  return markReadOnThreadOpen({ ...params, forceMarkReadNetwork: true });
+}
+
+async function markReadOnThreadOpen(params: CoordinatorEnterParams): Promise<void> {
   dismissTrayForEnter(params);
   const resolved = resolveSnapshotContext(params);
   if (!resolved) return;
