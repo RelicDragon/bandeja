@@ -140,6 +140,7 @@ export const MyTab = () => {
     refetch: refetchMyGames,
   } = useMyGames(user, setLoading);
   const unlinkedBookings = useMyTabUnlinkedBookings(booktime, games);
+  const { reloadLinkedGames } = unlinkedBookings;
   const panelCounts = useMyTabPanelCounts(games, booktime);
 
   useEffect(() => {
@@ -458,10 +459,10 @@ export const MyTab = () => {
       (async () => {
         await reloadMyClubs();
         await reloadBookings();
-        await unlinkedBookings.reloadLinkedGames();
+        await reloadLinkedGames();
       })(),
     ]);
-  }, [reloadMyClubs, reloadBookings, unlinkedBookings.reloadLinkedGames, refetchMyGames, loadPastGames]);
+  }, [reloadMyClubs, reloadBookings, reloadLinkedGames, refetchMyGames, loadPastGames]);
 
   const scrollBottomPadding = 'calc(5rem + env(safe-area-inset-bottom, 0px))';
   const renderPastGamesContent = (footerLoading: boolean) => (
