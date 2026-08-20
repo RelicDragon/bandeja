@@ -1,14 +1,16 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'react-hot-toast';
 import { Button, Select } from '@/components';
 import { BugType, BugPriority } from '@/types';
 import { BugPrioritySelector } from '@/components/chat/BugPrioritySelector';
 import { bugsApi } from '@/api';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/Dialog';
+import { BugCreateError } from './BugCreateError';
+import { extractBugCreateErrorMessage } from './bugCreateErrorMessage';
+import { getBugCreatePlatformInfo } from './bugCreatePlatformInfo';
 
 const BUG_TYPE_VALUES: BugType[] = ['BUG', 'CRITICAL', 'SUGGESTION', 'QUESTION', 'TASK'];
-import { toast } from 'react-hot-toast';
-import { isCapacitor, isIOS, isAndroid, getAppInfo, getCapacitorPlatform } from '@/utils/capacitor';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/Dialog';
 
 interface BugModalProps {
   isOpen: boolean;
@@ -22,26 +24,7 @@ export const BugModal = ({ isOpen, onClose, onSuccess }: BugModalProps) => {
   const [bugType, setBugType] = useState<BugType>('BUG');
   const [priority, setPriority] = useState<BugPriority>(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const getPlatformInfo = async (): Promise<string> => {
-    if (!isCapacitor()) {
-      return 'web-app';
-    }
-
-    try {
-      const appInfo = await getAppInfo();
-      if (!appInfo) {
-        const platform = isIOS() ? 'iOS' : isAndroid() ? 'Android' : getCapacitorPlatform() || 'app';
-        return `${platform} (unknown)`;
-      }
-
-      const platform = isIOS() ? 'iOS' : isAndroid() ? 'Android' : appInfo.platform;
-      return `${platform} ${appInfo.version} (${appInfo.buildNumber})`;
-    } catch (error) {
-      const platform = isIOS() ? 'iOS' : isAndroid() ? 'Android' : getCapacitorPlatform() || 'app';
-      return `${platform} (unknown)`;
-    }
-  };
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,9 +34,10 @@ export const BugModal = ({ isOpen, onClose, onSuccess }: BugModalProps) => {
       return;
     }
 
+    setSubmitError(null);
     setIsSubmitting(true);
     try {
-      const platformInfo = await getPlatformInfo();
+      const platformInfo = await getBugCreatePlatformInfo();
       const bugText = `${text.trim()}\n${platformInfo}`;
       const res = await bugsApi.createBug({ text: bugText, bugType, priority });
       toast.success(t('bug.created'));
@@ -62,9 +46,9 @@ export const BugModal = ({ isOpen, onClose, onSuccess }: BugModalProps) => {
       setPriority(0);
       const groupChannelId = res.data?.groupChannel?.id;
       onSuccess(groupChannelId);
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'bug.createError';
-      toast.error(t(errorMessage, { defaultValue: errorMessage }));
+    } catch (error: unknown) {
+      const errorMessage = extractBugCreateErrorMessage(error);
+      setSubmitError(t(errorMessage, { defaultValue: errorMessage }));
     } finally {
       setIsSubmitting(false);
     }
@@ -74,6 +58,7 @@ export const BugModal = ({ isOpen, onClose, onSuccess }: BugModalProps) => {
     setText('');
     setBugType('BUG');
     setPriority(0);
+    setSubmitError(null);
     onClose();
   };
 
@@ -123,6 +108,8 @@ export const BugModal = ({ isOpen, onClose, onSuccess }: BugModalProps) => {
               {text.length}/1000
             </div>
           </div>
+
+          <BugCreateError message={submitError} />
 
           <DialogFooter className="flex gap-3 mt-4">
             <Button
