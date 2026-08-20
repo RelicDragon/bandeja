@@ -4,6 +4,7 @@ import { ApiError } from './ApiError';
 import { fetchGameWithPlayingParticipants } from './gameQueries';
 import { USER_SELECT_FIELDS, USER_SPORT_PROFILE_SELECT } from './constants';
 import { resolveUserSportSnapshot } from '../services/user/userSportProfile.service';
+import { isPlayingRosterFull } from './gameInviteInbox';
 
 interface GameWithParticipants {
   id: string;
@@ -126,7 +127,11 @@ export async function canAddPlayerToGame(
 
   switch (game.genderTeams) {
     case GenderTeam.ANY:
-      if (existingPlayingParticipants.length >= game.maxParticipants) {
+      if (isPlayingRosterFull({
+        entityType: game.entityType,
+        maxParticipants: game.maxParticipants,
+        participants: existingPlayingParticipants,
+      })) {
         return { canJoin: false, shouldQueue: true, reason: 'errors.invites.gameFull' };
       }
       return { canJoin: true, shouldQueue: false };

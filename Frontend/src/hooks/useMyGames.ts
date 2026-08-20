@@ -7,6 +7,7 @@ import {
   type MyGamesData,
 } from '@/queries/games/useMyGamesQuery';
 import { queryKeys } from '@/queries/queryKeys';
+import { filterInboxVisibleInvites } from '@/utils/gameInviteInbox';
 
 export const useMyGames = (
   user: { id?: string } | null | undefined,
@@ -19,7 +20,7 @@ export const useMyGames = (
   onLoadingRef.current = onLoading;
 
   const games = data?.games ?? [];
-  const invites = data?.invites ?? [];
+  const invites = filterInboxVisibleInvites(data?.invites ?? []);
   const unreadCounts = data?.unreadCounts ?? {};
 
   const setInvites = useCallback(

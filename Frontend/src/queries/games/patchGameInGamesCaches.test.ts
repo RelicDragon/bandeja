@@ -155,4 +155,36 @@ describe('patchGameInGamesCaches', () => {
     } as unknown as Game);
     expect(client.getQueryData<MyGamesData>(myKey)?.games[0].outcomes).toEqual(outcomes);
   });
+
+  it('merges socket game onto cached invite.game so a full roster can hide Home', () => {
+    const myKey = queryKeys.games.my('u1');
+    client.setQueryData<MyGamesData>(myKey, {
+      games: [],
+      invites: [
+        {
+          id: 'inv-1',
+          game: {
+            id: 'g1',
+            maxParticipants: 4,
+            participants: [{ status: 'PLAYING' }, { status: 'PLAYING' }, { status: 'PLAYING' }],
+          },
+        } as never,
+      ],
+      unreadCounts: {},
+    });
+
+    patchGameInGamesCaches(client, {
+      id: 'g1',
+      maxParticipants: 4,
+      participants: [
+        { status: 'PLAYING' },
+        { status: 'PLAYING' },
+        { status: 'PLAYING' },
+        { status: 'PLAYING' },
+      ],
+    } as Game);
+
+    const inviteGame = client.getQueryData<MyGamesData>(myKey)?.invites[0].game;
+    expect(inviteGame?.participants).toHaveLength(4);
+  });
 });

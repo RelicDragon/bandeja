@@ -16,9 +16,10 @@ import { ApiError } from '../utils/ApiError';
 import { createSystemMessageWithNotification } from '../utils/systemMessageHelper';
 import { GameService } from './game/game.service';
 import { ParticipantMessageHelper } from './game/participantMessageHelper';
-import { projectUserForSportContext } from './user/userSportProfile.service';
 import { PlayIntentGameLifecycleService } from './playIntent/playIntentGameLifecycle.service';
 import { publishCommittedPlayIntentStatusChanges } from './playIntent/playIntentRealtime';
+import { isInviteInboxVisible } from '../utils/gameInviteInbox';
+import { inboxInviteGameSelect, mapInvitedParticipantToInboxInvite } from './invite/pendingInviteShape';
 
 export interface InviteActionResult {
   success: boolean;
@@ -115,72 +116,29 @@ export class InviteService {
     const participants = await prisma.gameParticipant.findMany({
       where: { userId, status: 'INVITED' },
       include: {
+        user: { select: USER_SELECT_WITH_SPORT_PROFILES },
         invitedByUser: { select: USER_SELECT_WITH_SPORT_PROFILES },
         game: {
-          select: {
-            id: true,
-            name: true,
-            gameType: true,
-            startTime: true,
-            endTime: true,
-            maxParticipants: true,
-            minParticipants: true,
-            minLevel: true,
-            maxLevel: true,
-            isPublic: true,
-            affectsRating: true,
-            hasBookedCourt: true,
-            afterGameGoToBar: true,
-            hasFixedTeams: true,
-            teamsReady: true,
-            participantsReady: true,
-            status: true,
-            resultsStatus: true,
-            entityType: true,
-            sport: true,
-            court: { select: { id: true, name: true, club: { select: { id: true, name: true, avatar: true } } } },
-            club: { select: { id: true, name: true, avatar: true } },
-            participants: {
-              include: {
-                user: { select: USER_SELECT_WITH_SPORT_PROFILES },
-                invitedByUser: { select: USER_SELECT_WITH_SPORT_PROFILES },
-              },
-            },
-          },
+          select: inboxInviteGameSelect,
         },
       },
       orderBy: { joinedAt: 'desc' },
     });
     const now = new Date();
-    const filtered = participants.filter(
-      (p) => !p.inviteExpiresAt || new Date(p.inviteExpiresAt) > now
-    );
-    return filtered.map((p) => {
-      const sport = p.game.sport;
-      return {
-      id: p.id,
-      receiverId: p.userId,
-      gameId: p.gameId,
-      status: 'PENDING',
-      message: p.inviteMessage,
-      expiresAt: p.inviteExpiresAt,
-      createdAt: p.joinedAt,
-      updatedAt: p.joinedAt,
-      receiver: null,
-      sender: {
-        ...projectUserForSportContext(p.invitedByUser, sport),
-        sportProfiles: p.invitedByUser?.sportProfiles,
-      },
-      game: {
-        ...p.game,
-        participants: p.game.participants.map((participant) => ({
-          ...participant,
-          user: projectUserForSportContext(participant.user, sport),
-          invitedByUser: projectUserForSportContext(participant.invitedByUser, sport),
-        })),
-      },
-    };
-    });
+    return participants
+      .filter((p) =>
+        isInviteInboxVisible(
+          {
+            status: p.status,
+            inviteExpiresAt: p.inviteExpiresAt,
+            receiverId: p.userId,
+            user: p.user,
+            game: p.game,
+          },
+          now,
+        ),
+      )
+      .map((p) => mapInvitedParticipantToInboxInvite(p));
   }
 
   static async deleteInvitesForUserInGame(gameId: string, userId: string): Promise<void> {
