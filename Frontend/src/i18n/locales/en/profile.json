@@ -316,7 +316,10 @@
     "timeFormat24h": "24-hour",
     "noLeaderboardData": "No leaderboard data available",
     "leaderboard": {
-      "sportLabel": "Ranking sport"
+      "sportLabel": "Ranking sport",
+      "unranked": "—",
+      "inactiveSection": "Not ranked",
+      "inactiveHint": "Need 5 games and a rated match in 90 days"
     },
     "photoPickFailed": "Failed to pick photo",
     "characterGenerator": "Character Generator",

@@ -319,7 +319,10 @@
     "noSharedGames": "No shared finished games yet",
     "noLeaderboardData": "No leaderboard data available",
     "leaderboard": {
-      "sportLabel": "Sport na rang listi"
+      "sportLabel": "Sport na rang listi",
+      "unranked": "—",
+      "inactiveSection": "Van rangiranja",
+      "inactiveHint": "Potrebno 5 mečeva i ocenjeni meč u 90 dana"
     },
     "sessionsTitle": "Uređaji sa prijavom",
     "sessionsSubtitle": "Upravljajte gde ostajete prijavljeni",

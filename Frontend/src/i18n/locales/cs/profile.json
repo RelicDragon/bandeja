@@ -319,7 +319,10 @@
     "noSharedGames": "No shared finished games yet",
     "noLeaderboardData": "No leaderboard data available",
     "leaderboard": {
-      "sportLabel": "Sport žebříčku"
+      "sportLabel": "Sport žebříčku",
+      "unranked": "—",
+      "inactiveSection": "Bez pořadí",
+      "inactiveHint": "Potřeba 5 her a hodnocený zápas za 90 dní"
     },
     "sessionsTitle": "Přihlášená zařízení",
     "sessionsSubtitle": "Spravujte, kde zůstáváte přihlášeni",
