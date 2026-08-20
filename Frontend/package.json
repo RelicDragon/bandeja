@@ -17,6 +17,7 @@
     "postbuild": "node scripts/force-sw-update.js",
     "preview": "vite preview",
     "test:auth": "../scripts/run-heavy vitest run src/api/authRefresh.test.ts src/api/authStartup.test.ts src/api/authTimeoutRotation.test.ts src/api/handleApiUnauthorized.test.ts src/services/appLifecycle.auth.test.ts src/services/refreshTokenPersistence.test.ts src/store/authStore.setAuth.test.ts",
+    "test:theme": "../scripts/run-heavy vitest run src/store/applySystemThemeOnForeground.test.ts src/store/themeForegroundSync.test.ts src/store/themeStore.foreground.test.ts src/store/themeStore.ensure.test.ts",
     "test:deep-link-catalog": "../scripts/run-heavy vitest run src/deepLinks/catalog.parity.test.ts src/deepLinks/catalog.path.test.ts src/deepLinks/assistantRegistry.parity.test.ts src/utils/postLoginRedirect.test.ts",
     "sync:deep-link-catalog": "node --experimental-strip-types scripts/sync-deep-link-catalog.ts",
     "test:next-game": "../scripts/run-heavy vitest run src/utils/pickNextGame.test.ts src/utils/resolveNextGamePath.test.ts",

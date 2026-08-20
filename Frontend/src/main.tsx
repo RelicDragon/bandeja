@@ -3,6 +3,7 @@ import App from './App';
 import './index.css';
 import { setupCapacitor, setupBrowserKeyboardDetection, setAndroidViewportVars } from './utils/capacitorSetup';
 import { isCapacitor, isAndroid } from './utils/capacitor';
+import { ensureThemeForegroundSync } from './store/themeStore';
 import { initializeSocialLogin } from './services/socialLoginInit.service';
 import { initChatSyncMetricsSession } from './services/chat/chatSyncMetricsSession';
 import { initChatLocalDbLifecycle } from './services/chat/chatLocalDbLifecycle';
@@ -50,6 +51,7 @@ if (isCapacitor() && isAndroid()) {
 }
 setupCapacitor();
 setupBrowserKeyboardDetection();
+ensureThemeForegroundSync();
 initializeSocialLogin();
 
 // Only use service worker in web browsers, not in Capacitor apps

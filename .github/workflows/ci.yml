@@ -74,6 +74,7 @@ jobs:
       - run: node --test ../scripts/deploy-frontend.contract.test.mjs
       - run: npm run lint
       - run: npm run test:auth
+      - run: npm run test:theme
       - run: npm run test:deep-link-catalog
       - run: npm run test:next-game
       - run: npm run test:find
