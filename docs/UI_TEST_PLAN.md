@@ -1626,6 +1626,7 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PI-42 | Custom-hours fit popup | From PI-41, tap the far-field avatar | Fit card Time row subtitle is `11:00–13:00`, not “Custom hours” |
 | PI-43 | Discuss from lobby roster | Open a lobby with me + 1 selected player and tap Discuss in group; repeat with me + 2 or more | One other player opens (or creates) the 1:1 chat; two or more opens an existing group with exactly those people or creates `Discussion for <date> · <time> · <club>` and opens it; Create Game remains available |
 | PI-44 | Discuss after a player left | In a me + 2 lobby, one selected player stops looking, then tap Discuss in group | Toast says they are no longer in the lobby; roster refreshes; chat does not open |
+| PI-45 | Spectator avatar opens player card | Tap I want to play with others looking → tap a compatible court avatar | Player card sheet opens on top of the lobby; focus leaves the court avatar so the lobby is not aria-hidden while still focused |
 
 ---
 

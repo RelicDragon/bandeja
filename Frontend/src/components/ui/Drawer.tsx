@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { X } from 'lucide-react';
 import { Drawer as VaulDrawer } from 'vaul';
+import { blurForeignOverlayFocus } from '@/utils/blurForeignOverlayFocus';
 
 interface DrawerProps {
   open?: boolean;
@@ -30,6 +31,7 @@ const Drawer = ({
       direction={direction}
       dismissible={dismissible}
       repositionInputs={false}
+      autoFocus
     >
       {children}
     </Root>
@@ -87,11 +89,20 @@ const DrawerContent = React.forwardRef<
       ...props
     }: DrawerContentProps,
     ref,
-  ) => (
+  ) => {
+    const contentRef = React.useRef<HTMLElement | null>(null);
+    React.useLayoutEffect(() => {
+      blurForeignOverlayFocus(contentRef.current);
+    }, []);
+    return (
   <DrawerPortal>
     <DrawerOverlay />
     <VaulDrawer.Content
-      ref={ref}
+      ref={(node) => {
+        contentRef.current = node instanceof HTMLElement ? node : null;
+        if (typeof ref === 'function') ref(node);
+        else if (ref) ref.current = node;
+      }}
       className={`cap-keyboard-aware-sheet fixed bottom-0 left-0 right-0 z-50 mt-24 flex max-h-[75vh] min-h-0 flex-col rounded-t-3xl border border-gray-200 bg-white text-gray-900 dark:border-gray-800 dark:bg-gray-800 dark:text-white max-w-[428px] mx-auto focus:outline-none ${className ?? ''}`}
       aria-labelledby={ariaLabelledBy ?? undefined}
       aria-describedby={ariaDescribedBy ?? undefined}
@@ -103,7 +114,8 @@ const DrawerContent = React.forwardRef<
       {children}
     </VaulDrawer.Content>
   </DrawerPortal>
-  ),
+    );
+  },
 );
 DrawerContent.displayName = 'DrawerContent';
 

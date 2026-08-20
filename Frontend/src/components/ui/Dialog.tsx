@@ -1,8 +1,9 @@
 import * as React from 'react';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
-import { useRef } from 'react';
+import { useLayoutEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 import { useBackButtonModal } from '@/hooks/useBackButtonModal';
+import { blurForeignOverlayFocus } from '@/utils/blurForeignOverlayFocus';
 
 const DIALOG_OVERLAY_CLASS =
   'dialog-overlay-animate fixed inset-0 z-50 bg-black/60';
@@ -60,6 +61,10 @@ const DialogContent = React.forwardRef<
     ignoreOutsideClickSelector?: string;
   }
 >(({ className, showCloseButton = true, closeOnInteractOutside = true, ignoreOutsideClickSelector, children, ...props }, ref) => {
+  const contentRef = React.useRef<HTMLElement | null>(null);
+  useLayoutEffect(() => {
+    blurForeignOverlayFocus(contentRef.current);
+  }, []);
   const preventOutside = !closeOnInteractOutside
     ? {
         onInteractOutside: (e: Event) => e.preventDefault(),
@@ -83,7 +88,11 @@ const DialogContent = React.forwardRef<
     <DialogPortal>
       <DialogOverlay />
       <DialogPrimitive.Content
-        ref={ref}
+        ref={(node) => {
+          contentRef.current = node instanceof HTMLElement ? node : null;
+          if (typeof ref === 'function') ref(node);
+          else if (ref) ref.current = node;
+        }}
         className={className ? `${DIALOG_CONTENT_CLASS} ${className}` : DIALOG_CONTENT_CLASS}
         aria-describedby={undefined}
         {...preventOutside}
