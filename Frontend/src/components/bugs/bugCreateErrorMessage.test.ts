@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { AxiosError } from 'axios';
 import {
   BUG_CREATE_ERROR_FALLBACK_KEY,
+  BUG_CREATE_NETWORK_ERROR_KEY,
   extractBugCreateErrorMessage,
 } from './bugCreateErrorMessage';
 
@@ -20,8 +21,41 @@ describe('extractBugCreateErrorMessage', () => {
     expect(extractBugCreateErrorMessage(axiosError('Server said no'))).toBe('Server said no');
   });
 
-  it('surfaces Axios network errors without a response body', () => {
-    expect(extractBugCreateErrorMessage(new AxiosError('Network Error'))).toBe('Network Error');
+  it('maps Axios transport failures to the network i18n key', () => {
+    expect(extractBugCreateErrorMessage(new AxiosError('Network Error', 'ERR_NETWORK'))).toBe(
+      BUG_CREATE_NETWORK_ERROR_KEY
+    );
+    expect(
+      extractBugCreateErrorMessage(new AxiosError('timeout of 20000ms exceeded', 'ECONNABORTED'))
+    ).toBe(BUG_CREATE_NETWORK_ERROR_KEY);
+  });
+
+  it('does not dump raw HTML response bodies', () => {
+    expect(
+      extractBugCreateErrorMessage(
+        new AxiosError('Request failed', '502', undefined, undefined, {
+          status: 502,
+          data: '<html>502 Bad Gateway</html>',
+          statusText: 'Bad Gateway',
+          headers: {},
+          config: {} as never,
+        })
+      )
+    ).toBe(BUG_CREATE_ERROR_FALLBACK_KEY);
+  });
+
+  it('maps Axios HTTP errors without a parseable body to the fallback key', () => {
+    expect(
+      extractBugCreateErrorMessage(
+        new AxiosError('Request failed with status code 500', 'ERR_BAD_RESPONSE', undefined, undefined, {
+          status: 500,
+          data: null,
+          statusText: 'Internal Server Error',
+          headers: {},
+          config: {} as never,
+        })
+      )
+    ).toBe(BUG_CREATE_ERROR_FALLBACK_KEY);
   });
 
   it('surfaces non-Axios Error messages', () => {

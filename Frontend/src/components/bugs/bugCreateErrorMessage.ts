@@ -1,6 +1,7 @@
 import { isAxiosError } from 'axios';
 
 export const BUG_CREATE_ERROR_FALLBACK_KEY = 'bug.createError';
+export const BUG_CREATE_NETWORK_ERROR_KEY = 'errors.networkError';
 
 function trimmedString(value: unknown): string | null {
   if (typeof value !== 'string') return null;
@@ -32,12 +33,20 @@ function messageFromUnknown(value: unknown, depth = 0): string | null {
 
 function axiosResponseMessage(error: unknown): string | null {
   if (!isAxiosError(error)) return null;
-  return messageFromUnknown(error.response?.data);
+  const data = error.response?.data;
+  if (typeof data !== 'object' || data === null) return null;
+  return messageFromUnknown(data);
+}
+
+function isAxiosTransportFailure(error: unknown): boolean {
+  return isAxiosError(error) && error.response == null;
 }
 
 export function extractBugCreateErrorMessage(error: unknown): string {
   const fromAxios = axiosResponseMessage(error);
   if (fromAxios) return fromAxios;
+  if (isAxiosTransportFailure(error)) return BUG_CREATE_NETWORK_ERROR_KEY;
+  if (isAxiosError(error)) return BUG_CREATE_ERROR_FALLBACK_KEY;
   if (error instanceof Error) {
     const message = trimmedString(error.message);
     if (message) return message;

@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { withTimeout } from './bugCreateTimeout';
+import { BUG_CREATE_REQUEST_TIMEOUT_MS, withTimeout } from './bugCreateTimeout';
+import { BUG_CREATE_PLATFORM_INFO_TIMEOUT_MS } from './bugCreatePlatformInfo';
 
 describe('withTimeout', () => {
   beforeEach(() => {
@@ -23,5 +24,10 @@ describe('withTimeout', () => {
 
   it('rejects with the original error when the promise fails first', async () => {
     await expect(withTimeout(Promise.reject(new Error('boom')), 5_000)).rejects.toThrow('boom');
+  });
+
+  it('gives createBug more than the global 10s axios budget', () => {
+    expect(BUG_CREATE_REQUEST_TIMEOUT_MS).toBe(20_000);
+    expect(BUG_CREATE_REQUEST_TIMEOUT_MS).toBeGreaterThan(BUG_CREATE_PLATFORM_INFO_TIMEOUT_MS);
   });
 });

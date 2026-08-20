@@ -1,5 +1,6 @@
 import api from './axios';
 import { ApiResponse, Bug, BugsResponse, BugType, BugStatus, BugPriority } from '@/types';
+import { BUG_CREATE_REQUEST_TIMEOUT_MS } from '@/components/bugs/bugCreateTimeout';
 
 export interface CreateBugData {
   text: string;
@@ -23,9 +24,10 @@ export interface UpdateBugData {
 }
 
 export const bugsApi = {
-  createBug: async (data: CreateBugData) => {
+  createBug: async (data: CreateBugData, options?: { signal?: AbortSignal }) => {
     const response = await api.post<ApiResponse<CreateBugResponse>>('/bugs', data, {
-      timeout: 10_000,
+      timeout: BUG_CREATE_REQUEST_TIMEOUT_MS,
+      signal: options?.signal,
     });
     return response.data;
   },

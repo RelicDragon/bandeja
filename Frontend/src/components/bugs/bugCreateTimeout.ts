@@ -1,3 +1,5 @@
+export const BUG_CREATE_REQUEST_TIMEOUT_MS = 20_000;
+
 export function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   let settled = false;
   return new Promise<T>((resolve, reject) => {

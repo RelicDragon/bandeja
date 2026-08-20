@@ -1,4 +1,4 @@
-import { useRef, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
 import { Button, Select } from '@/components';
@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { BugCreateError } from './BugCreateError';
 import { extractBugCreateErrorMessage } from './bugCreateErrorMessage';
 import { getBugCreatePlatformInfo } from './bugCreatePlatformInfo';
+import { createBugCreateSubmitSession } from './bugCreateSubmitSession';
 
 const BUG_TYPE_VALUES: BugType[] = ['BUG', 'CRITICAL', 'SUGGESTION', 'QUESTION', 'TASK'];
 
@@ -25,7 +26,17 @@ export const BugModal = ({ isOpen, onClose, onSuccess }: BugModalProps) => {
   const [priority, setPriority] = useState<BugPriority>(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const submitGenerationRef = useRef(0);
+  const submitSessionRef = useRef(createBugCreateSubmitSession());
+  const abortRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    const session = submitSessionRef.current;
+    return () => {
+      abortRef.current?.abort();
+      abortRef.current = null;
+      session.invalidate();
+    };
+  }, []);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -35,14 +46,23 @@ export const BugModal = ({ isOpen, onClose, onSuccess }: BugModalProps) => {
       return;
     }
 
-    const submitGeneration = ++submitGenerationRef.current;
+    const submitGeneration = submitSessionRef.current.begin();
+    if (submitGeneration === null) return;
+
+    const abortController = new AbortController();
+    abortRef.current = abortController;
+
     setSubmitError(null);
     setIsSubmitting(true);
     try {
       const platformInfo = await getBugCreatePlatformInfo();
+      if (!submitSessionRef.current.isCurrent(submitGeneration)) return;
       const bugText = `${text.trim()}\n${platformInfo}`;
-      const res = await bugsApi.createBug({ text: bugText, bugType, priority });
-      if (submitGeneration !== submitGenerationRef.current) return;
+      const res = await bugsApi.createBug(
+        { text: bugText, bugType, priority },
+        { signal: abortController.signal }
+      );
+      if (!submitSessionRef.current.isCurrent(submitGeneration)) return;
       toast.success(t('bug.created'));
       setText('');
       setBugType('BUG');
@@ -51,18 +71,24 @@ export const BugModal = ({ isOpen, onClose, onSuccess }: BugModalProps) => {
       const groupChannelId = res.data?.groupChannel?.id;
       onSuccess(groupChannelId);
     } catch (error: unknown) {
-      if (submitGeneration !== submitGenerationRef.current) return;
+      if (!submitSessionRef.current.isCurrent(submitGeneration)) return;
       const errorMessage = extractBugCreateErrorMessage(error);
       setSubmitError(t(errorMessage, { defaultValue: errorMessage }));
     } finally {
-      if (submitGeneration === submitGenerationRef.current) {
+      if (abortRef.current === abortController) {
+        abortRef.current = null;
+      }
+      submitSessionRef.current.finish(submitGeneration);
+      if (submitSessionRef.current.isCurrent(submitGeneration)) {
         setIsSubmitting(false);
       }
     }
   };
 
   const handleClose = () => {
-    submitGenerationRef.current += 1;
+    submitSessionRef.current.invalidate();
+    abortRef.current?.abort();
+    abortRef.current = null;
     setText('');
     setBugType('BUG');
     setPriority(0);
@@ -129,7 +155,6 @@ export const BugModal = ({ isOpen, onClose, onSuccess }: BugModalProps) => {
                 variant="outline"
                 onClick={handleClose}
                 className="flex-1"
-                disabled={isSubmitting}
               >
                 {t('common.cancel')}
               </Button>
