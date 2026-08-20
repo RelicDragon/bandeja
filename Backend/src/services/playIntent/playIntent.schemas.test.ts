@@ -116,7 +116,14 @@ assert.equal(
 );
 assert.equal(
   invitePoolBodySchema.safeParse({
-    draft: { sport: 'PADEL', startTime: '2026-07-28T18:00:00.000Z', clubId: null },
+    gameId: 'game-1',
+    cityId: 'city-2',
+  }).success,
+  true,
+);
+assert.equal(
+  invitePoolBodySchema.safeParse({
+    draft: { sport: 'PADEL', startTime: '2026-07-28T18:00:00.000Z', clubId: null, cityId: 'city-2' },
   }).success,
   true,
 );

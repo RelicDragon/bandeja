@@ -1,0 +1,21 @@
+{
+  "browseCity": {
+    "chipAriaHome": "Tu ciudad, {{city}}. Ver otra.",
+    "chipAriaAway": "Viendo {{city}}. Cambiar ciudad.",
+    "chipAriaVenueHome": "Ciudad del partido {{city}}. Elige otra.",
+    "chipAriaVenueAway": "Clubes en {{city}}. Cambiar ciudad.",
+    "changeCity": "Ciudad",
+    "recent": "Recientes",
+    "nearby": "Cerca",
+    "viewCity": "Ver {{city}}",
+    "nobodyInCity": "Nadie en {{city}} para “{{query}}”",
+    "nobodyNearby": "Nadie cerca para “{{query}}”. Prueba otra ciudad.",
+    "noUsersInCity": "No hay usuarios en {{city}}",
+    "noUsersInCityHint": "Cambia de ciudad o busca un nombre",
+    "lookingEmptyInCity": "Nadie está buscando en {{city}}",
+    "noClubsInCity": "No hay clubes en {{city}}",
+    "noClubsMatch": "Ningún club para “{{query}}”",
+    "searchClubs": "Buscar clubes",
+    "km": "{{km}} km"
+  }
+}

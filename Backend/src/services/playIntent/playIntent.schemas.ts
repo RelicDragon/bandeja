@@ -138,6 +138,7 @@ export const invitePoolDraftSchema = z
   .object({
     sport,
     entityType: z.nativeEnum(EntityType).optional(),
+    cityId: identifier.optional(),
     clubId: identifier.nullable().optional(),
     startTime: z.string().trim().min(1).max(64),
     endTime: z.string().trim().min(1).max(64).optional(),
@@ -151,6 +152,7 @@ export const invitePoolDraftSchema = z
 export const invitePoolBodySchema = z
   .object({
     gameId: identifier.optional(),
+    cityId: identifier.optional(),
     draft: invitePoolDraftSchema.optional(),
   })
   .strict()

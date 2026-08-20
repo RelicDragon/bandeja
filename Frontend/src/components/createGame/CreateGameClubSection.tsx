@@ -3,7 +3,7 @@ import { ChevronRight, Lock, MapPin } from 'lucide-react';
 import { ClubModal, ClubAvatar } from '@/components';
 import { CourtLocationLinks } from '@/components/CourtLocationLinks';
 import { LocationTimeStepHeader } from '@/components/gameLocationTime/LocationTimeStepHeader';
-import type { Club, Court } from '@/types';
+import type { Club, Court, EntityType, Sport } from '@/types';
 
 interface CreateGameClubSectionProps {
   clubs: Club[];
@@ -11,11 +11,15 @@ interface CreateGameClubSectionProps {
   selectedClub: string;
   selectedCourt: string;
   isClubModalOpen: boolean;
-  onSelectClub: (id: string) => void;
+  onSelectClub: (id: string, club?: Club) => void;
   onOpenClubModal: () => void;
   onCloseClubModal: () => void;
   locked?: boolean;
   onLockedActivate?: () => void;
+  venueCityId?: string;
+  onVenueCityChange?: (cityId: string, snapshot?: { name: string; country: string }) => void;
+  entityType?: EntityType;
+  preferredSport?: Sport | null;
 }
 
 export const CreateGameClubSection = ({
@@ -29,6 +33,10 @@ export const CreateGameClubSection = ({
   onCloseClubModal,
   locked = false,
   onLockedActivate,
+  venueCityId,
+  onVenueCityChange,
+  entityType,
+  preferredSport,
 }: CreateGameClubSectionProps) => {
   const { t } = useTranslation();
   const club = clubs.find((c) => c.id === selectedClub);
@@ -41,6 +49,10 @@ export const CreateGameClubSection = ({
         clubs={clubs}
         selectedId={selectedClub}
         onSelect={onSelectClub}
+        cityId={venueCityId}
+        onVenueCityChange={onVenueCityChange}
+        entityType={entityType}
+        preferredSport={preferredSport}
       />
       <div>
         <LocationTimeStepHeader

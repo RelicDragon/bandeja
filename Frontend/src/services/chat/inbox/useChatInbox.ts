@@ -4,6 +4,7 @@ import { deduplicateChats } from '@/utils/chatListHelpers';
 import { sortChatItems } from '@/utils/chatListSort';
 import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
 import { loadGlobalInvitablePlayers } from '@/utils/loadGlobalInvitablePlayers';
+import { useBrowseCityStore } from '@/store/browseCityStore';
 import { favoritesApi } from '@/api/favorites';
 import { useAuthStore } from '@/store/authStore';
 import { useNetworkStore } from '@/utils/networkStatus';
@@ -124,9 +125,11 @@ export function useChatInbox(opts: UseChatInboxOptions) {
         setMutedChats({});
       }
       const cached = useChatListFeedStore.getState().getFilterCache(filter);
-      if (cached?.cityUsers) {
-        setCityUsers(cached.cityUsers);
-        setSearchableUsersData({ activeChats: cached.chats, cityUsers: cached.cityUsers });
+      if (cached?.chats) {
+        setSearchableUsersData((prev) => ({
+          activeChats: cached.chats,
+          cityUsers: prev?.cityUsers ?? [],
+        }));
       }
     },
     [fetchOps, chatsFilter, unreadFilterActive]
@@ -208,11 +211,10 @@ export function useChatInbox(opts: UseChatInboxOptions) {
   const [mutedChats, setMutedChats] = useState<Record<string, boolean>>({});
 
   const onUsersCacheApplied = useCallback((_cached: FilterCache, chats: ChatItem[]) => {
-    const cached = useChatListFeedStore.getState().getFilterCache('users');
-    if (cached?.cityUsers) {
-      setCityUsers(cached.cityUsers);
-      setSearchableUsersData({ activeChats: chats, cityUsers: cached.cityUsers });
-    }
+    setSearchableUsersData((prev) => ({
+      activeChats: chats,
+      cityUsers: prev?.cityUsers ?? [],
+    }));
   }, []);
 
   const onMutedChatsReset = useCallback(() => setMutedChats({}), []);
@@ -462,39 +464,60 @@ export function useChatInbox(opts: UseChatInboxOptions) {
     ]
   );
 
+  const browseCityId = useBrowseCityStore((s) => s.cityId);
+  const directoryCityId = browseCityId ?? user?.currentCity?.id ?? user?.currentCityId;
+  const loadedCityUsersForId = useRef<string | null>(null);
+  const cityUsersRequestId = useRef(0);
+
+  useEffect(() => {
+    loadedCityUsersForId.current = null;
+    cityUsersRequestId.current += 1;
+    setCityUsers([]);
+    setCityUsersLoading(Boolean(directoryCityId));
+  }, [directoryCityId]);
+
   const fetchCityUsers = useCallback(async () => {
-    if (!user?.currentCity?.id) return;
+    if (!directoryCityId) return;
+    if (loadedCityUsersForId.current === directoryCityId) return;
+    const requestId = ++cityUsersRequestId.current;
     setCityUsersLoading(true);
     try {
-      const players = await loadGlobalInvitablePlayers();
+      const players = await loadGlobalInvitablePlayers(directoryCityId);
+      if (requestId !== cityUsersRequestId.current) return;
+      loadedCityUsersForId.current = directoryCityId;
       setCityUsers(players);
     } catch {
+      if (requestId !== cityUsersRequestId.current) return;
       setCityUsers([]);
     } finally {
-      setCityUsersLoading(false);
+      if (requestId === cityUsersRequestId.current) setCityUsersLoading(false);
     }
-  }, [user?.currentCity?.id]);
+  }, [directoryCityId]);
 
   const fetchContactsData = useCallback(async () => {
-    if (!user?.currentCity?.id) return;
+    if (!directoryCityId) return;
+    const requestId = ++cityUsersRequestId.current;
     setCityUsersLoading(true);
     try {
       const [usersRes, following, followers] = await Promise.all([
-        loadGlobalInvitablePlayers(),
+        loadGlobalInvitablePlayers(directoryCityId),
         favoritesApi.getFollowing().catch(() => []),
         favoritesApi.getFollowers().catch(() => []),
       ]);
+      if (requestId !== cityUsersRequestId.current) return;
+      loadedCityUsersForId.current = directoryCityId;
       setCityUsers(usersRes);
       setFollowingUsers(following);
       setFollowersUsers(followers);
     } catch {
+      if (requestId !== cityUsersRequestId.current) return;
       setCityUsers([]);
       setFollowingUsers([]);
       setFollowersUsers([]);
     } finally {
-      setCityUsersLoading(false);
+      if (requestId === cityUsersRequestId.current) setCityUsersLoading(false);
     }
-  }, [user?.currentCity?.id]);
+  }, [directoryCityId]);
 
   const fetchUsersSearchData = useCallback(async () => {
     const data = await fetchOps.fetchUsersSearchData();

@@ -50,6 +50,8 @@ export const LeagueLocationSection = ({
         clubs={clubs}
         selectedId={selectedClubId || ''}
         onSelect={onSelectClub}
+        cityId={selectedCityId}
+        onVenueCityChange={(id) => onSelectCity(id)}
       />
       <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
         <div className="flex items-center gap-2 mb-3">

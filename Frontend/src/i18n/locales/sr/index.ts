@@ -6,6 +6,7 @@ import bottomTab from './bottomTab.json';
 import bug from './bug.json';
 import chat from './chat.json';
 import chats from './chats.json';
+import browseCity from './browseCity.json';
 import city from './city.json';
 import club from './club.json';
 import clubAdmin from './clubAdmin.json';
@@ -66,6 +67,7 @@ export default {
     ...bug,
     ...chat,
     ...chats,
+    ...browseCity,
     ...city,
     ...club,
     ...clubAdmin,

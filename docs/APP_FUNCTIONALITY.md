@@ -301,6 +301,16 @@ Three optional panels — Bookings, Teams, Leagues — with counts:
 
 Not a top-level route — embedded in city picker, Find header, and create-game club flows.
 
+Three city roles (do not collapse):
+
+| Role | Source | Drives |
+|------|--------|--------|
+| **Home** | `user.currentCity` via Profile / Find header `switchCity` | Find, My, weather, city group chats, play-intent lobby |
+| **Browse** | Session lens (`useBrowseCityStore`, `sessionStorage` `bandeja.browseCity`) | Invite Search/Looking, chat contacts, chat Users search |
+| **Venue** | Club pick (`locationCityId` / `club.cityId`) | Create-game and edit-location club list; Looking **fit** |
+
+Browse never calls `switchCity`. Default is Home. Profile city change snaps browse back to Home (recents kept). Logout clears recents. See `docs/plans/browse-city.md`.
+
 ### 6.1 City selection
 
 - Searchable **city list** and **map view** toggle (`CityMap`)
@@ -372,7 +382,7 @@ Filters persist in local storage across reloads.
 
 ### 7.5 City
 
-Change city from header → games refetch for new city.
+Change city from the Find header → `switchCity` (Home). Games refetch for the new Home city. Browse lens (invite/chat) is a different control and does not drive Find.
 
 ---
 
@@ -412,7 +422,7 @@ Multi-step wizard for scheduling events. Entity types:
 
 ### 8.2 Scheduling
 
-- Club picker (filtered by sport)
+- Club picker (filtered by sport). Header **venue** city chip (independent of browse); typed club search can find venues in other cities; pick sets game city from `club.cityId` and clears courts/bookings
 - Court grid with occupancy rings per date
 - Multi-court selection (auto-calculated from participant count)
 - Date, duration, time grid
@@ -420,7 +430,7 @@ Multi-step wizard for scheduling events. Entity types:
 - Max participants, gender restriction (MEN/WOMEN/MIX)
 - Game name, description, avatar upload
 - Price section (type, currency, total)
-- Invite players from list (Search \| Looking when date/time is set; level filter, availability icons)
+- Invite players from list (Search \| Looking when date/time is set; browse-city chip; level filter, availability icons; named miss can show Nearby people)
 - Floating summary chip bar when scrolling past filled sections
 
 ### 8.3 External booking (Booktime / Padeloo / Klikteren)
@@ -494,7 +504,7 @@ Central hub for any scheduled event. Layout adapts by `entityType`.
 **Participation:**
 - Join, leave, join queue, cancel queue
 - Accept/decline invites (with note)
-- Owner: accept/decline queue, invite players (Search \| Looking), cancel invites, kick, **transfer ownership**, manage users modal (roles)
+- Owner: accept/decline queue, invite players (Search \| Looking, browse-city chip), cancel invites, kick, **transfer ownership**, manage users modal (roles)
 - Guest join (chat-only access without full roster join)
 - Participant carousel vs list toggle
 - Fixed teams management
@@ -613,7 +623,7 @@ Offline-first real-time messaging system.
 
 | Filter | Route / param |
 |--------|---------------|
-| Users | Default — DMs + group chats |
+| Users | Default — DMs + group chats. Browse-city chip in the search field (contacts + user search). Bugs / market / channels have no chip |
 | Market | `/chats/marketplace` |
 | Channels | `?filter=channels` |
 | Bugs | `/bugs`, `/bugs/:id` |
@@ -746,7 +756,7 @@ Peer-to-peer listings within the app.
 - Weekly availability grid
 
 **Preferences:**
-- City
+- City (Home — Profile `switchCity`; invite/chat browse is a session lens and is not this control)
 - Language, time format, week start
 - Default currency
 - Theme (light/dark/system)

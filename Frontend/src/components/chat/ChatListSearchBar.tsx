@@ -5,6 +5,8 @@ import { Search, X, BookUser, Plus, Mail, SlidersHorizontal } from 'lucide-react
 import { shouldShowChatListUnreadFilter } from '@/components/chat/chatListUnreadFilter';
 import { UnreadBadge } from '@/components/UnreadBadge';
 
+import { BrowseCityControl } from '@/components/browseCity/BrowseCityControl';
+
 type ChatsFilter = 'users' | 'bugs' | 'channels' | 'market';
 
 interface ChatListSearchBarProps {
@@ -137,7 +139,7 @@ export const ChatListSearchBar = ({
             placeholder={placeholder}
             value={searchInput}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="w-full pl-9 pr-9 py-2 rounded-full border border-gray-300 dark:border-gray-600 bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+            className={`w-full pl-9 ${chatsFilter === 'users' ? (searchInput ? 'pr-[7.25rem]' : 'pr-[6.5rem]') : 'pr-9'} py-2 rounded-full border border-gray-300 dark:border-gray-600 bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400`}
           />
           {searchInput && (
             <button
@@ -148,6 +150,11 @@ export const ChatListSearchBar = ({
               <X size={16} className="text-gray-400 dark:text-gray-500" />
             </button>
           )}
+          {chatsFilter === 'users' ? (
+            <div className={`absolute top-1/2 -translate-y-1/2 ${searchInput ? 'right-8' : 'right-1.5'}`}>
+              <BrowseCityControl size="field" />
+            </div>
+          ) : null}
         </motion.div>
         {chatsFilter === 'bugs' && onBugsFilterToggle && (
           <button

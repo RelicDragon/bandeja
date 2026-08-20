@@ -40,6 +40,7 @@ export function invitePoolIntentEntityType(entityType: EntityType | string): Ent
 export type InvitePoolDraft = {
   sport: Sport;
   entityType?: EntityType | string;
+  cityId?: string | null;
   clubId?: string | null;
   startTime: string;
   endTime?: string;
@@ -197,7 +198,12 @@ async function buildPool(input: {
 }
 
 export class PlayIntentInvitePoolService {
-  static async forGame(viewerId: string, gameId: string, isAdmin: boolean): Promise<InvitePool> {
+  static async forGame(
+    viewerId: string,
+    gameId: string,
+    isAdmin: boolean,
+    browseCityId?: string,
+  ): Promise<InvitePool> {
     const game = await prisma.game.findUnique({
       where: { id: gameId },
       select: {
@@ -222,8 +228,17 @@ export class PlayIntentInvitePoolService {
       where: { id: viewerId },
       select: { currentCityId: true },
     });
-    if (viewer?.currentCityId && game.cityId !== viewer.currentCityId) {
+    if (!browseCityId && viewer?.currentCityId && game.cityId !== viewer.currentCityId) {
       throw new ApiError(400, 'Game is not in your city');
+    }
+
+    const poolCityId = browseCityId || game.cityId;
+    if (browseCityId) {
+      const browseCity = await prisma.city.findUnique({
+        where: { id: browseCityId },
+        select: { id: true, isActive: true },
+      });
+      if (!browseCity?.isActive) throw new ApiError(400, 'City is required');
     }
 
     const timezone = game.city?.timezone || 'UTC';
@@ -235,7 +250,7 @@ export class PlayIntentInvitePoolService {
 
     return buildPool({
       viewerId,
-      cityId: game.cityId,
+      cityId: poolCityId,
       timezone,
       sport: game.sport,
       entityType: invitePoolIntentEntityType(game.entityType),
@@ -255,7 +270,7 @@ export class PlayIntentInvitePoolService {
       where: { id: viewerId },
       select: { currentCityId: true },
     });
-    const cityId = viewer?.currentCityId;
+    const cityId = draft.cityId || viewer?.currentCityId;
     if (!cityId) throw new ApiError(400, 'City is required');
 
     const city = await prisma.city.findUnique({

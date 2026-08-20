@@ -209,9 +209,11 @@ export const playIntentsApi = {
 
   getInvitePool: async (body: {
     gameId?: string;
+    cityId?: string;
     draft?: {
       sport: Sport;
       entityType?: string;
+      cityId?: string;
       clubId?: string | null;
       startTime: string;
       endTime?: string;

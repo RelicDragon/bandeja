@@ -1,8 +1,11 @@
 import { useState, useEffect, useLayoutEffect, useCallback, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useAuthStore } from '@/store/authStore';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { getChatKey } from '@/utils/chatListHelpers';
-import { useAuthStore } from '@/store/authStore';
+import { useBrowseCityStore } from '@/store/browseCityStore';
+import { useResolvedBrowseCity } from '@/hooks/useResolvedBrowseCity';
+import { useNearbyPeopleSearch } from '@/hooks/useNearbyPeopleSearch';
 import { useShellNavStore } from '@/store/shellNavStore';
 import { useGameDetailsChromeStore } from '@/components/GameDetails/gameDetailsChromeStore';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
@@ -41,6 +44,8 @@ export function useChatListModel({
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
+  const browseCity = useResolvedBrowseCity();
+  const browseCityId = useBrowseCityStore((s) => s.cityId);
   const chatsFilter = useShellNavStore((s) => s.chatsFilter) as ChatsFilterType;
   const openBugModal = useGameDetailsChromeStore((s) => s.openBugModal);
   const setOpenBugModal = useGameDetailsChromeStore((s) => s.setOpenBugModal);
@@ -106,6 +111,17 @@ export function useChatListModel({
     searchableUsersData: searchData.searchableUsersData,
   });
 
+  const nearbySearch = useNearbyPeopleSearch({
+    enabled:
+      chatsFilter === 'users' &&
+      isSearchMode &&
+      !contactsMode &&
+      !searchData.cityUsersLoading &&
+      displayChats.every((row) => row.type !== 'contact'),
+    query: debouncedSearchQuery,
+    cityId: browseCity.cityId,
+  });
+
   const contactSections = useChatListContactSections(
     searchData.cityUsers,
     searchData.followingUsers,
@@ -142,10 +158,14 @@ export function useChatListModel({
     setSearchParams((prev) => clearChatListUnreadUrlParam(prev), { replace: true });
   }, [readModel.unreadChatsCount, searchParams, setSearchParams]);
   useEffect(() => {
-    if (chatsFilter !== 'users' || !debouncedSearchQuery.trim() || contactsMode) return;
-    if (searchData.searchableUsersData?.cityUsers?.length) return;
+    if (chatsFilter !== 'users' || !contactsMode) return;
+    void searchData.fetchContactsData();
+  }, [browseCityId, chatsFilter, contactsMode, searchData]);
+  const searchingUsers = debouncedSearchQuery.trim().length > 0;
+  useEffect(() => {
+    if (chatsFilter !== 'users' || contactsMode || !searchingUsers) return;
     void searchData.fetchCityUsers();
-  }, [chatsFilter, debouncedSearchQuery, contactsMode, searchData]);
+  }, [browseCityId, chatsFilter, contactsMode, searchData, searchingUsers]);
   useEffect(() => {
     if (chatsFilter === 'bugs') return;
     if (chatsFilter === 'channels' && debouncedSearchQuery.trim().length >= 2 && !searchData.searchableUsersData) {
@@ -267,6 +287,9 @@ export function useChatListModel({
       toggleUnreadFilter,
       skipUrlSyncRef,
       setSearchParams,
+      nearbyGroups: nearbySearch.groups,
+      nearbyLoading: nearbySearch.loading,
+      browseCityName: browseCity.name,
     },
     market: {
       marketChatRole,

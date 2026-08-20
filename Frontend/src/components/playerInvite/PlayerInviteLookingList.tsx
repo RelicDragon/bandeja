@@ -14,6 +14,7 @@ type Props = {
   onRetry?: () => void;
   levelSport?: Sport;
   listPadClass: string;
+  cityName?: string;
 };
 
 function LookingSkeleton() {
@@ -43,6 +44,7 @@ export function PlayerInviteLookingList({
   onRetry,
   levelSport,
   listPadClass,
+  cityName,
 }: Props) {
   const { t } = useTranslation();
   const selected = new Set(selectedUserIds);
@@ -80,7 +82,7 @@ export function PlayerInviteLookingList({
           <Radio className="h-6 w-6 text-emerald-500 dark:text-emerald-400" />
         </div>
         <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">
-          {t('playerInvite.lookingEmpty')}
+          {cityName ? t('browseCity.lookingEmptyInCity', { city: cityName }) : t('playerInvite.lookingEmpty')}
         </p>
         <p className="mt-1 max-w-[16rem] text-sm text-gray-500 dark:text-gray-400">
           {t('playerInvite.lookingEmptyHint')}

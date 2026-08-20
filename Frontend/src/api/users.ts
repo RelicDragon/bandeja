@@ -207,11 +207,26 @@ export interface InvitablePlayer extends BasicUser {
   gamesTogetherCount: number;
 }
 
-export interface InvitablePlayersPayload {
+export interface NearbyInvitableCity {
+  cityId: string;
+  name: string;
+  country: string;
+  km: number;
   players: InvitablePlayer[];
+}
+
+export interface InvitablePlayersPayload {
+  cityId?: string;
+  players: InvitablePlayer[];
+  nearby?: NearbyInvitableCity[];
   maxSocialLevel: number;
   busyUserIds?: string[];
 }
+
+export type FetchInvitableOptions = {
+  cityId?: string;
+  expandNearby?: boolean;
+};
 
 export type InvitableSlotWindow = {
   startTime: string;
@@ -410,6 +425,7 @@ export const usersApi = {
     sport?: string,
     search?: string,
     slot?: InvitableSlotWindow,
+    opts?: FetchInvitableOptions,
   ) => {
     const params: Record<string, string> = {};
     if (gameId) params.gameId = gameId;
@@ -419,6 +435,8 @@ export const usersApi = {
       params.startTime = slot.startTime;
       params.endTime = slot.endTime;
     }
+    if (opts?.cityId) params.cityId = opts.cityId;
+    if (opts?.expandNearby) params.expandNearby = '1';
     const response = await api.get<ApiResponse<InvitablePlayersPayload>>('/users/invitable-players', {
       params,
     });

@@ -2,6 +2,7 @@ import { useEffect, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { playIntentsApi } from '@/api/playIntents';
 import { useAuthStore } from '@/store/authStore';
+import { useBrowseCityStore } from '@/store/browseCityStore';
 import { socketService } from '@/services/socketService';
 import {
   PLAY_INTENT_INVALIDATE_EVENT,
@@ -13,7 +14,8 @@ const EMPTY_MEMBERS: InviteLookingMember[] = [];
 
 export const inviteLookingPoolKeys = {
   all: ['play-intents', 'invite-pool'] as const,
-  game: (gameId: string) => [...inviteLookingPoolKeys.all, 'game', gameId] as const,
+  game: (gameId: string, cityId?: string) =>
+    [...inviteLookingPoolKeys.all, 'game', gameId, cityId ?? ''] as const,
   draft: (draftKey: string) => [...inviteLookingPoolKeys.all, 'draft', draftKey] as const,
 };
 
@@ -21,6 +23,7 @@ function draftKey(draft: PlayerInviteLookingDraft): string {
   return [
     draft.sport,
     draft.entityType,
+    draft.cityId ?? '',
     draft.clubId ?? '',
     draft.startTime,
     draft.timeZone ?? '',
@@ -36,25 +39,31 @@ export function useInviteLookingPool(input: {
   lookingDraft?: PlayerInviteLookingDraft | null;
 }) {
   const isAuthenticated = useAuthStore((s) => !!s.user);
-  const cityId = useAuthStore((s) => s.user?.currentCity?.id ?? s.user?.currentCityId);
+  const homeCityId = useAuthStore((s) => s.user?.currentCity?.id ?? s.user?.currentCityId);
+  const lensCityId = useBrowseCityStore((s) => s.cityId);
+  const cityId = lensCityId ?? homeCityId;
   const queryClient = useQueryClient();
   const { enabled: enabledInput, gameId, lookingDraft } = input;
   const enabled = enabledInput && isAuthenticated && (!!gameId || !!lookingDraft);
-  const draftFingerprint = lookingDraft ? draftKey(lookingDraft) : '';
+  const draftFingerprint = lookingDraft ? draftKey({ ...lookingDraft, cityId: lookingDraft.cityId ?? cityId }) : '';
   const key = useMemo(
-    () => (gameId ? inviteLookingPoolKeys.game(gameId) : inviteLookingPoolKeys.draft(draftFingerprint)),
-    [draftFingerprint, gameId],
+    () =>
+      gameId
+        ? inviteLookingPoolKeys.game(gameId, cityId)
+        : inviteLookingPoolKeys.draft(draftFingerprint),
+    [cityId, draftFingerprint, gameId],
   );
 
   const query = useQuery({
     queryKey: key,
     queryFn: () => {
-      if (gameId) return playIntentsApi.getInvitePool({ gameId });
+      if (gameId) return playIntentsApi.getInvitePool({ gameId, cityId });
       if (!lookingDraft) throw new Error('looking draft required');
       return playIntentsApi.getInvitePool({
         draft: {
           sport: lookingDraft.sport,
           entityType: lookingDraft.entityType,
+          cityId: lookingDraft.cityId ?? cityId,
           clubId: lookingDraft.clubId,
           startTime: lookingDraft.startTime,
           endTime: lookingDraft.endTime ?? undefined,

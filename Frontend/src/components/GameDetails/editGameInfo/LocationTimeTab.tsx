@@ -41,7 +41,9 @@ type LocationTimeTabProps = {
   selectedCourtIds: string[];
   selectedCourt: string;
   hasBookedCourt: boolean;
-  onSelectClub?: (id: string) => void;
+  onSelectClub?: (id: string, club?: Club) => void;
+  onVenueCityChange?: (cityId: string) => void;
+  venueCityId?: string;
   onSelectCourt: (id: string) => void;
   onSelectCourtIds?: (ids: string[]) => void;
   onToggleHasBookedCourt: (value: boolean) => void;
@@ -94,6 +96,8 @@ export function LocationTimeTab({
   selectedCourt,
   hasBookedCourt,
   onSelectClub,
+  onVenueCityChange,
+  venueCityId,
   onSelectCourt,
   onSelectCourtIds,
   onToggleHasBookedCourt,
@@ -564,9 +568,13 @@ export function LocationTimeTab({
         selectedClub={selectedClub}
         selectedCourt={selectedCourt}
         isClubModalOpen={isClubModalOpen}
-        onSelectClub={(id) => onSelectClub?.(id)}
+        onSelectClub={(id, club) => onSelectClub?.(id, club)}
         onOpenClubModal={() => setIsClubModalOpen(true)}
         onCloseClubModal={() => setIsClubModalOpen(false)}
+        venueCityId={venueCityId}
+        onVenueCityChange={onVenueCityChange}
+        entityType={entityType}
+        preferredSport={game.sport}
         locked={clubChangeLocked}
         onLockedActivate={() => {
           setEditReservationAction('unlink');

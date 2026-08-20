@@ -6,7 +6,7 @@ Shipped. Invite picker (`PlayerListModal`) has a top `SegmentedSwitch`: **Search
 
 | Topic | Choice |
 |---|---|
-| Population | Live Play Intents (`OPEN` + `MATCHED`), city + sport + entity |
+| Population | Live Play Intents (`OPEN` + `MATCHED`), **browse city** (default Home) + sport + entity |
 | Rank | `matchesGame` → fit score → `gamesTogetherCount` desc → `userId`; one row per user; cap 1000 |
 | Mismatches | Shown, dimmed, still selectable, one mismatch line |
 | Gender-locked slot | `filterGender` on the picker (invite-a-man / invite-a-woman) also filters Looking |
@@ -21,7 +21,7 @@ Shipped. Invite picker (`PlayerListModal`) has a top `SegmentedSwitch`: **Search
 | Load error | Distinct copy + retry; do not fake an empty city |
 | Conflict badges | Only **In a match** / **In a game**. OPEN+free: no badge |
 | Default tab | Search |
-| Chrome on Looking | List only: no search, teams segment, refine filters, or invite-as-trainer |
+| Chrome on Looking | List only: no search, teams segment, refine filters, or invite-as-trainer. Browse-city chip stays under the tabs |
 | `intentLinked` | `true` linked; `false` steal-skip / reserve 409 (toast); `null` no intent or already gone (silent unlinked invite) |
 
 ## Surfaces
@@ -44,15 +44,15 @@ Entity mapping for the pool: `BAR` games → BAR intents; every other inviteable
 ## UX
 
 - Top of the modal: `SegmentedSwitch` full-width, Looking badge = visible pool size (live, including while Search is active).
-- Shared selection across tabs. Confirm footer unchanged.
+- Shared city chip under the tabs (browse lens). Confirm footer unchanged.
 - Looking row: avatar, name, 5-dot fit, games-together, conflict badge.
 - Full match: normal weight. Any missed dimension: dimmed + mismatch line.
 - Sticky hint: `{{great}} great fit · {{total}} looking`.
-- Empty: “Nobody’s looking right now” + hint to use Search.
+- Empty: `browseCity.lookingEmptyInCity` (“Nobody’s looking in {city}”) + hint to use Search.
 
 ### Copy
 
-Keys in `playerInvite.json` (`en`, `ru`, `cs`, `es`, `sr`). Do not reuse first-person `playIntent.looking`.
+Keys in `playerInvite.json` (`en`, `ru`, `cs`, `es`, `sr`). City-scoped empty copy: `browseCity.lookingEmptyInCity`. Do not reuse first-person `playIntent.looking`.
 
 | Key | EN | RU | ES | CS | SR |
 |---|---|---|---|---|---|
@@ -60,7 +60,7 @@ Keys in `playerInvite.json` (`en`, `ru`, `cs`, `es`, `sr`). Do not reuse first-p
 | `tabLooking` | Looking | Хотят поиграть | Quieren jugar | Chtějí hrát | Žele da igraju |
 | `lookingBadgeMatch` | In a match | В матче | En un partido | V zápase | U meču |
 | `lookingBadgeInGame` | In a game | В игре | En un juego | Ve hře | U igri |
-| `lookingEmpty` | Nobody’s looking right now | Пока никто не ищет игру | Nadie está buscando ahora | Nikdo teď nehledá | Niko trenutno ne traži |
+| `lookingEmpty` | Nobody’s looking right now (fallback) | Пока никто не ищет игру | Nadie está buscando ahora | Nikdo teď nehledá | Niko trenutno ne traži |
 | `stoppedLooking` | {{name}} stopped looking | {{name}} больше не ищет | {{name}} ya no busca | {{name}} už nehledá | {{name}} više ne traži |
 | `alreadyInMatch` | They’re already in a match | Этот игрок уже в матче | Ya está en un partido | Už je v zápase | Već su u meču |
 
@@ -73,7 +73,7 @@ Mismatch phrasing reuses `playIntent.mismatch*` / `fitTimeSubtitle`.
 3. `gamesTogetherCount` desc
 4. Stable `userId`
 
-Pool filters: viewer city, sport, entity mapping above, `OPEN`+`MATCHED`, reachable window, not self, not blocked, not already playing/invited on **this** game.
+Pool filters: **browse city** (session lens, default Home), sport, entity mapping above, `OPEN`+`MATCHED`, reachable window, not self, not blocked, not already playing/invited on **this** game. Fit still uses the game/draft venue (club / time / level / dates).
 
 ## API
 
@@ -81,8 +81,8 @@ Pool filters: viewer city, sport, entity mapping above, `OPEN`+`MATCHED`, reacha
 
 Auth required.
 
-- `{ gameId }` — load game, require invite permission (owner or `anyoneCanInvite` participant). Ignore client criteria.
-- `{ draft }` — create-game only. Viewer `currentCityId` + sport, entityType, ISO `startTime` (server derives the date key in city TZ), clubId, minLevel, maxLevel, genderTeams.
+- `{ gameId, cityId? }` — load game, require invite permission (owner or `anyoneCanInvite` participant). Ignore client criteria. Populate from `cityId` when set, else game city. When `cityId` is set, do not require viewer Home === game city.
+- `{ draft }` — create-game only. `draft.cityId` (browse) or viewer `currentCityId` + sport, entityType, ISO `startTime` (server derives the date key in **venue** TZ), clubId, minLevel, maxLevel, genderTeams.
 
 Response member:
 

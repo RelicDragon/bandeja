@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { chatApi, type ChatMessage, UserChat } from '@/api/chat';
-import { usersApi, type InvitablePlayer } from '@/api/users';
+import { usersApi, type InvitablePlayer, type NearbyInvitableCity } from '@/api/users';
 import { useAuthStore } from './authStore';
 import { useUnreadStore } from '@/store/unreadStore';
 import { useSocketEventsStore } from './socketEventsStore';
@@ -13,11 +13,23 @@ import {
 } from '@/services/chat/chatThreadIndex';
 import { bridgeBumpChatListDexie } from '@/services/chat/chatLocalApplyStoreBridge';
 
-export type FetchPlayersResult = BasicUser[] & { busyUserIds: string[] };
+export type FetchPlayersResult = BasicUser[] & {
+  busyUserIds: string[];
+  nearby: NearbyInvitableCity[];
+};
 
-function withBusyUserIds(players: BasicUser[], busyUserIds: string[]): FetchPlayersResult {
+function withBusyUserIds(
+  players: BasicUser[],
+  busyUserIds: string[],
+  nearby: NearbyInvitableCity[] = [],
+): FetchPlayersResult {
   Object.defineProperty(players, 'busyUserIds', {
     value: busyUserIds,
+    enumerable: false,
+    configurable: true,
+  });
+  Object.defineProperty(players, 'nearby', {
+    value: nearby,
     enumerable: false,
     configurable: true,
   });
@@ -44,6 +56,8 @@ interface UsersState {
   isFetching: boolean;
   isFetchingChats: boolean;
   lastPlayersFetchTime: number;
+  lastPlayersFetchCityId: string;
+  lastPlayersFetchIds: string[];
   lastChatsFetchTime: number;
   invitableMaxSocialLevel: number | null;
   
@@ -66,6 +80,7 @@ interface UsersState {
     sport?: string,
     search?: string,
     slot?: { startTime: string; endTime: string },
+    opts?: { cityId?: string; expandNearby?: boolean },
   ) => Promise<FetchPlayersResult>;
   fetchUserChats: () => Promise<void>;
   invalidateUserChatsCache: () => void;
@@ -89,8 +104,10 @@ function fetchPlayersCacheKey(
   sport?: string,
   search?: string,
   slot?: { startTime: string; endTime: string },
+  cityId?: string,
+  expandNearby?: boolean,
 ): string {
-  return `${gameId ?? ''}:${sport ?? ''}:${search?.trim() ?? ''}:${slot?.startTime ?? ''}:${slot?.endTime ?? ''}`;
+  return `${gameId ?? ''}:${sport ?? ''}:${search?.trim() ?? ''}:${slot?.startTime ?? ''}:${slot?.endTime ?? ''}:${cityId ?? ''}:${expandNearby ? '1' : ''}`;
 }
 
 const createDefaultMetadata = (existing?: Partial<UserMetadata>): UserMetadata => ({
@@ -206,6 +223,8 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
   isFetching: false,
   isFetchingChats: false,
   lastPlayersFetchTime: 0,
+  lastPlayersFetchCityId: '',
+  lastPlayersFetchIds: [],
   lastChatsFetchTime: 0,
   invitableMaxSocialLevel: null,
 
@@ -382,32 +401,41 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
     sport?: string,
     search?: string,
     slot?: { startTime: string; endTime: string },
+    opts?: { cityId?: string; expandNearby?: boolean },
   ): Promise<FetchPlayersResult> => {
     const normalizedSearch = search?.trim();
-    const cacheKey = fetchPlayersCacheKey(gameId, sport, normalizedSearch, slot);
+    const cityId = opts?.cityId;
+    const expandNearby = opts?.expandNearby === true;
+    const cacheKey = fetchPlayersCacheKey(gameId, sport, normalizedSearch, slot, cityId, expandNearby);
     const inflight = fetchPlayersInflight.get(cacheKey);
     if (inflight) return inflight;
 
     const run = async (): Promise<FetchPlayersResult> => {
     const state = get();
     const now = Date.now();
+    const isGlobalCacheFetch = !gameId && !sport && !normalizedSearch && !slot && !expandNearby;
 
     const cacheValid =
-      !gameId &&
-      !sport &&
-      !normalizedSearch &&
-      !slot &&
+      isGlobalCacheFetch &&
       state.lastPlayersFetchTime > 0 &&
-      now - state.lastPlayersFetchTime < CACHE_DURATION;
+      now - state.lastPlayersFetchTime < CACHE_DURATION &&
+      state.lastPlayersFetchCityId === (cityId ?? '');
     if (cacheValid) {
+      if (state.lastPlayersFetchIds.length > 0) {
+        return withBusyUserIds(
+          state.lastPlayersFetchIds.map((id) => state.users[id]).filter((user): user is BasicUser => Boolean(user)),
+          [],
+        );
+      }
       return withBusyUserIds(Object.values(state.users), []);
     }
 
     set({ loading: true, isFetching: true });
     try {
-      const response = await usersApi.getInvitablePlayers(gameId, sport, normalizedSearch, slot);
+      const response = await usersApi.getInvitablePlayers(gameId, sport, normalizedSearch, slot, opts);
       const payload = response.data;
       const players = payload?.players ?? [];
+      const nearby = payload?.nearby ?? [];
       const maxSocialLevel = payload?.maxSocialLevel ?? null;
       const busyUserIds = payload?.busyUserIds ?? [];
 
@@ -415,7 +443,8 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
         const newUsers: Record<string, BasicUser> = {};
         const newMetadata: Record<string, UserMetadata> = {};
 
-        players.forEach((player: InvitablePlayer) => {
+        const allPlayers = [...players, ...nearby.flatMap((group) => group.players)];
+        allPlayers.forEach((player: InvitablePlayer) => {
           newUsers[player.id] = mergeInvitablePlayer(currentState.users[player.id], player);
           newMetadata[player.id] = createDefaultMetadata({
             ...currentState.metadata[player.id],
@@ -425,12 +454,12 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
           });
         });
 
-        const isGlobalCacheFetch = !gameId && !sport && !normalizedSearch && !slot;
-
         return {
           users: { ...currentState.users, ...newUsers },
           metadata: { ...currentState.metadata, ...newMetadata },
           lastPlayersFetchTime: isGlobalCacheFetch ? now : currentState.lastPlayersFetchTime,
+          lastPlayersFetchCityId: isGlobalCacheFetch ? (cityId ?? '') : currentState.lastPlayersFetchCityId,
+          lastPlayersFetchIds: isGlobalCacheFetch ? players.map((p) => p.id) : currentState.lastPlayersFetchIds,
           loading: false,
           isFetching: false,
           invitableMaxSocialLevel: maxSocialLevel,
@@ -440,6 +469,7 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
       return withBusyUserIds(
         players.map((p) => mergedUsers[p.id] ?? p),
         busyUserIds,
+        nearby,
       );
     } catch (error) {
       console.error('Failed to fetch players:', error);
@@ -534,7 +564,7 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
   },
 
   invalidatePlayersCache: () => {
-    set({ lastPlayersFetchTime: 0 });
+    set({ lastPlayersFetchTime: 0, lastPlayersFetchCityId: '', lastPlayersFetchIds: [] });
   },
 
   refresh: async () => {
@@ -550,6 +580,8 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
       chats: {},
       userIdToChatId: {},
       lastPlayersFetchTime: 0,
+      lastPlayersFetchCityId: '',
+      lastPlayersFetchIds: [],
       lastChatsFetchTime: 0,
       invitableMaxSocialLevel: null,
       isFetching: false,

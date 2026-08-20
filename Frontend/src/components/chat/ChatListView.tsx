@@ -13,6 +13,8 @@ import { ChatListDisplayedRows } from './ChatListDisplayedRows';
 import { ChatListMarketGroupChannels } from './ChatListMarketGroupChannels';
 import { ChatListLoadingSkeleton } from '@/components/chat/ChatListLoadingSkeleton';
 import { ChatListEmptyPanel } from '@/components/chat/ChatListEmptyPanel';
+import { NearbyPeopleSection } from '@/components/browseCity/NearbyPeopleSection';
+import { useBrowseCityStore } from '@/store/browseCityStore';
 import { ChatListSearchSections, type ChatListSearchSectionsSharedProps } from './ChatListSearchSections';
 import type { ChatListViewModel } from './chatListViewModel.types';
 import { DESKTOP_CHAT_LIST_SCROLL_BOTTOM_PAD } from '@/utils/chatListConstants';
@@ -38,6 +40,9 @@ export function ChatListView({ model }: { model: ChatListViewModel }) {
     toggleUnreadFilter,
     skipUrlSyncRef,
     setSearchParams,
+    nearbyGroups,
+    browseCityName,
+    nearbyLoading,
   } = search;
   const {
     marketChatRole,
@@ -163,7 +168,7 @@ export function ChatListView({ model }: { model: ChatListViewModel }) {
             onAddBug={() => setShowBugModal(true)}
             onCreateListing={chatsFilter === 'market' ? handleCreateListing : undefined}
             isDesktop={isDesktop}
-            hasCity={!!user?.currentCity?.id}
+            hasCity={Boolean(browseCityName)}
             bugsFilterPanelOpen={bugsFilterPanelOpen}
             onBugsFilterToggle={() => setBugsFilterPanelOpen((o) => !o)}
           />
@@ -265,6 +270,22 @@ export function ChatListView({ model }: { model: ChatListViewModel }) {
                     ) : (
                       <ChatListSearchSections order="active-first" {...chatListSearchSectionProps} />
                     )}
+                    {chatsFilter === 'users' &&
+                    !contactsMode &&
+                    debouncedSearchQuery.trim().length >= 2 &&
+                    displayChats.every((row) => row.type !== 'contact') &&
+                    (!nearbyLoading || nearbyGroups.length > 0) ? (
+                      <NearbyPeopleSection
+                        query={debouncedSearchQuery.trim()}
+                        primaryCityName={browseCityName}
+                        groups={nearbyGroups}
+                        variant="chat"
+                        onSelectUser={handleContactClick}
+                        onViewCity={(id, snapshot) => {
+                          useBrowseCityStore.getState().setCityId(id, snapshot, user?.currentCity?.id);
+                        }}
+                      />
+                    ) : null}
                     <ChatMessageSearchResults
                       scrollElementRef={listBodyScrollRef}
                       query={debouncedSearchQuery}
@@ -293,7 +314,8 @@ export function ChatListView({ model }: { model: ChatListViewModel }) {
                 chatsFilter={chatsFilter}
                 showContactsEmpty={showContactsEmpty}
                 showChatsEmpty={showChatsEmpty}
-                userHasCity={!!user?.currentCity}
+                userHasCity={Boolean(browseCityName)}
+                cityName={browseCityName}
                 debouncedSearchQuery={debouncedSearchQuery}
                 marketChatRole={marketChatRole}
                 t={t}
@@ -347,7 +369,8 @@ export function ChatListView({ model }: { model: ChatListViewModel }) {
               chatsFilter={chatsFilter}
               showContactsEmpty={showContactsEmpty}
               showChatsEmpty={showChatsEmpty}
-              userHasCity={!!user?.currentCity}
+              userHasCity={Boolean(browseCityName)}
+              cityName={browseCityName}
               debouncedSearchQuery={debouncedSearchQuery}
               marketChatRole={marketChatRole}
               t={t}

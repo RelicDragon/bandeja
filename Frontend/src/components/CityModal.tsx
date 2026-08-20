@@ -10,17 +10,19 @@ import {
 } from '@/components/ui/Drawer';
 import { useCityList } from '@/hooks/useCityList';
 import { CityListContent } from '@/components/CityListContent';
+import type { City } from '@/types';
 
 interface CityModalProps {
   isOpen: boolean;
   onClose: () => void;
   selectedId?: string;
-  onSelect?: (id: string) => void;
+  onSelect?: (id: string, city?: City) => void;
   onCityChanged?: () => void;
   showNoCityOption?: boolean;
+  recentCityIds?: string[];
 }
 
-export const CityModal = ({ isOpen, onClose, selectedId, onSelect, onCityChanged, showNoCityOption }: CityModalProps) => {
+export const CityModal = ({ isOpen, onClose, selectedId, onSelect, onCityChanged, showNoCityOption, recentCityIds }: CityModalProps) => {
   const { t } = useTranslation();
   const updateUser = useAuthStore((state) => state.updateUser);
   const user = useAuthStore((state) => state.user);
@@ -29,7 +31,8 @@ export const CityModal = ({ isOpen, onClose, selectedId, onSelect, onCityChanged
   const wasOpenRef = useRef(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const currentCityId = isSelectorMode ? selectedId : (selectedId ?? user?.currentCity?.id);
+  const homeCityId = user?.currentCity?.id;
+  const currentCityId = isSelectorMode ? selectedId : (selectedId ?? homeCityId);
   const cityList = useCityList({
     enabled: isOpen,
     currentCityId,
@@ -50,7 +53,7 @@ export const CityModal = ({ isOpen, onClose, selectedId, onSelect, onCityChanged
 
   const handleSelect = (id: string) => {
     if (onSelect) {
-      onSelect(id);
+      onSelect(id, cityList.cities.find((city) => city.id === id));
       onClose();
     }
   };
@@ -114,15 +117,16 @@ export const CityModal = ({ isOpen, onClose, selectedId, onSelect, onCityChanged
             selectedCountry={cityList.selectedCountry}
             selectCountry={cityList.selectCountry}
             backToCountries={cityList.backToCountries}
-            currentCityId={currentCityId}
+            currentCityId={homeCityId ?? currentCityId}
             onCityClick={handleCityClick}
             isSelectorMode={isSelectorMode}
             showNoCityOption={showNoCityOption ?? isSelectorMode}
-            selectedId={selectedId}
+            selectedId={isSelectorMode ? selectedId : homeCityId}
             submitting={submitting}
             showError={true}
             showingLoading={showingLoading}
             citiesCount={cityList.cities.length}
+            recentCityIds={recentCityIds}
           />
         </div>
       </DrawerContent>

@@ -187,7 +187,7 @@ export const getPlayIntentInvitePool = asyncHandler(async (req: AuthRequest, res
   const body = getValidatedRequestPart<ValidatedInvitePoolInput>(req, 'body');
   const isAdmin = req.user?.isAdmin === true;
   const pool = body.gameId
-    ? await PlayIntentInvitePoolService.forGame(req.userId, body.gameId, isAdmin)
+    ? await PlayIntentInvitePoolService.forGame(req.userId, body.gameId, isAdmin, body.cityId)
     : await PlayIntentInvitePoolService.forDraft(req.userId, body.draft!);
   res.json({ success: true, data: pool });
 });

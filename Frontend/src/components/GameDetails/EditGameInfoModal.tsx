@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Save, Edit3, CalendarClock, Banknote, Loader2, Settings, Users } from 'lucide-react';
 import { Game, Club, Court, PriceType, PriceCurrency } from '@/types';
 import type { BookingSnapshotInput } from '@shared/gameBooking/contracts';
-import { gamesApi, courtsApi, mediaApi } from '@/api';
+import { gamesApi, courtsApi, clubsApi, mediaApi } from '@/api';
 import { useAuthStore } from '@/store/authStore';
 import { resolveUserCurrency } from '@/utils/currency';
 import toast from 'react-hot-toast';
@@ -78,6 +78,7 @@ interface EditGameInfoModalProps {
   canEditSettings?: boolean;
   onGameUpdate?: (game: Game) => void;
   onCourtsChange?: (courts: Court[]) => void;
+  onClubsChange?: (clubs: Club[]) => void;
 }
 
 const TABS = [
@@ -124,6 +125,7 @@ export const EditGameInfoModal = ({
   canEditSettings = true,
   onGameUpdate,
   onCourtsChange,
+  onClubsChange,
 }: EditGameInfoModalProps) => {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
@@ -137,6 +139,26 @@ export const EditGameInfoModal = ({
   const [activeTab, setActiveTab] = useState<EditGameInfoTabId>(initialTab);
   const [general, setGeneral] = useState<GeneralTabState>(() => getInitialGeneralState(game));
   const [where, setWhere] = useState<WhereTabState>(() => getInitialWhereState(game));
+  const [venueCityId, setVenueCityId] = useState(
+    () => game.city?.id || game.club?.cityId || '',
+  );
+
+  useEffect(() => {
+    if (!isOpen || !venueCityId) return;
+    let cancelled = false;
+    void clubsApi
+      .getByCityId(venueCityId, game.entityType)
+      .then((res) => {
+        if (cancelled || !res.success) return;
+        onClubsChange?.(res.data ?? []);
+      })
+      .catch(() => {
+        /* keep current clubs */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [game.entityType, isOpen, onClubsChange, venueCityId]);
   const [price, setPrice] = useState<PriceTabState>(() => getInitialPriceState(game, userCurrency));
   const [whenSelectedDate, setWhenSelectedDate] = useState<Date>(() =>
     game.startTime ? new Date(game.startTime) : new Date()
@@ -955,10 +977,21 @@ export const EditGameInfoModal = ({
                 selectedCourtIds={selectedCourtIds}
                 selectedCourt={where.courtId || selectedCourtIds[0] || 'notBooked'}
                 hasBookedCourt={where.hasBookedCourt}
-                onSelectClub={(id) => {
+                onSelectClub={(id, club) => {
+                  if (club && !clubs.some((c) => c.id === club.id)) {
+                    onClubsChange?.([...clubs, club]);
+                  }
+                  if (club?.cityId) setVenueCityId(club.cityId);
                   setWhere((s) => ({ ...s, clubId: id, courtId: '' }));
                   setSelectedCourtIds([]);
                 }}
+                onVenueCityChange={(id) => {
+                  if (id === venueCityId) return;
+                  setVenueCityId(id);
+                  setWhere((s) => ({ ...s, clubId: '', courtId: '' }));
+                  setSelectedCourtIds([]);
+                }}
+                venueCityId={venueCityId}
                 onSelectCourt={handleEditCourtSelect}
                 onSelectCourtIds={handleEditCourtIdsSync}
                 onToggleHasBookedCourt={(checked) => setWhere((s) => ({ ...s, hasBookedCourt: checked }))}

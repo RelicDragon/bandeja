@@ -56,7 +56,12 @@ import {
 } from '@/utils/inviteSportFilter';
 import { listEnabledSports } from '@/utils/profileSports';
 import { SportLevelProvider } from '@/contexts/SportLevelContext';
-import { PlayerInviteLookingList } from '@/components/playerInvite/PlayerInviteLookingList';
+import { BrowseCityControl } from '@/components/browseCity/BrowseCityControl';
+import { CityPickerEmbed } from '@/components/browseCity/CityPickerEmbed';
+import { NearbyPeopleSection } from '@/components/browseCity/NearbyPeopleSection';
+import { useResolvedBrowseCity } from '@/hooks/useResolvedBrowseCity';
+import { useBrowseCityStore } from '@/store/browseCityStore';
+import type { NearbyInvitableCity } from '@/api/users';
 import { useInviteLookingPool } from '@/components/playerInvite/useInviteLookingPool';
 import {
   lookingMembersForSlot,
@@ -116,17 +121,21 @@ export const PlayerListModal = ({
 }: PlayerListModalProps) => {
   const { t } = useTranslation();
   const authUser = useAuthStore((s) => s.user);
+  const browseCity = useResolvedBrowseCity();
+  const browseRecents = useBrowseCityStore((s) => s.recents);
   const isFavorite = useFavoritesStore((state) => state.isFavorite);
   const invitableMaxSocial = usePlayersStore((s) => s.invitableMaxSocialLevel);
   const getUserMetadata = usePlayersStore((s) => s.getUserMetadata);
 
   const [players, setPlayers] = useState<BasicUser[]>([]);
+  const [nearbyGroups, setNearbyGroups] = useState<NearbyInvitableCity[]>([]);
   const [readyTeams, setReadyTeams] = useState<UserTeam[]>([]);
   const [loading, setLoading] = useState(true);
   const [inviting, setInviting] = useState<string | null>(null);
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>(preSelectedIds);
   const [selectedTeamIds, setSelectedTeamIds] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [cityPickerOpen, setCityPickerOpen] = useState(false);
   const [isOpen, setIsOpen] = useState(true);
   const [canInviteAsTrainer, setCanInviteAsTrainer] = useState(inviteAsTrainerOnly);
   const [inviteAsTrainer, setInviteAsTrainer] = useState(inviteAsTrainerOnly);
@@ -261,6 +270,10 @@ export const PlayerListModal = ({
   }, [preSelectedIdsKey]);
 
   const handleClose = () => {
+    if (cityPickerOpen) {
+      setCityPickerOpen(false);
+      return;
+    }
     setIsOpen(false);
     setInviteAsTrainer(false);
     setCanInviteAsTrainer(false);
@@ -300,6 +313,10 @@ export const PlayerListModal = ({
           !gameId && gameTiming?.timeIsSet && gameTiming.startTime && gameTiming.endTime
             ? { startTime: gameTiming.startTime, endTime: gameTiming.endTime }
             : undefined,
+          {
+            cityId: browseCity.cityId,
+            expandNearby: Boolean(serverSearchQuery),
+          },
         );
         const [inviteTeams] = await Promise.all([
           userTeamsApi.getForPlayerInvite({ gameId, sport: gameSport }).catch(() => [] as UserTeam[]),
@@ -365,14 +382,20 @@ export const PlayerListModal = ({
             ? fetchedPlayers.busyUserIds
             : [];
         const busySet = new Set(busyUserIds);
-        const filtered = fetchedPlayers.filter(
-          (player) =>
-            !participantIds.has(player.id) &&
-            !invitedUserIds.has(player.id) &&
-            !busySet.has(player.id),
-        );
+        const blockedIds = new Set([...participantIds, ...invitedUserIds, ...busySet]);
+        const filtered = fetchedPlayers.filter((player) => !blockedIds.has(player.id));
         hasLoadedPlayersRef.current = true;
         setPlayers(filtered);
+        setNearbyGroups(
+          serverSearchQuery && filtered.length === 0
+            ? (fetchedPlayers.nearby ?? [])
+                .map((group) => ({
+                  ...group,
+                  players: group.players.filter((player) => !blockedIds.has(player.id)),
+                }))
+                .filter((group) => group.players.length > 0)
+            : [],
+        );
 
         const invitableTeams = merged.filter(
           (team) =>
@@ -384,6 +407,7 @@ export const PlayerListModal = ({
         if (cancelled) return;
         hasLoadedPlayersRef.current = true;
         setPlayers([]);
+        setNearbyGroups([]);
         setReadyTeams([]);
         setInvitePickerOutcomes([]);
         setFetchedGameContext(null);
@@ -397,7 +421,7 @@ export const PlayerListModal = ({
     return () => {
       cancelled = true;
     };
-  }, [gameId, gameSport, t, inviteAsTrainerOnly, filterPlayerIdsKey, serverSearchQuery, gameTiming?.timeIsSet, gameTiming?.startTime, gameTiming?.endTime]);
+  }, [browseCity.cityId, gameId, gameSport, t, inviteAsTrainerOnly, filterPlayerIdsKey, serverSearchQuery, gameTiming?.timeIsSet, gameTiming?.startTime, gameTiming?.endTime]);
 
   const effectiveGameContext: GameAvailabilityContext | null = gameTiming ?? fetchedGameContext;
   const ctxTimeIsSet = effectiveGameContext?.timeIsSet ?? false;
@@ -494,6 +518,38 @@ export const PlayerListModal = ({
     if (!listSegmentTeams) e = e.filter((x) => x.kind !== 'team');
     return e;
   }, [baseFilteredEntries, showTeams, listSegmentUsers, listSegmentTeams]);
+
+  const filteredNearbyGroups = useMemo(() => {
+    return nearbyGroups
+      .map((group) => ({
+        ...group,
+        players: filterAndSortInviteEntries(group.players, [], {
+          searchQuery,
+          filterPlayerIds: filterPlayerIdsRef.current,
+          filters,
+          filterGender,
+          inviteAsTrainerOnly,
+          isFavorite,
+          getUserMetadata,
+          showTeams: false,
+          gameSport,
+          inviteSportFilter: gameSport ? inviteSportFilter : undefined,
+        })
+          .filter((entry): entry is Extract<InviteListEntry, { kind: 'user' }> => entry.kind === 'user')
+          .map((entry) => entry.user),
+      }))
+      .filter((group) => group.players.length > 0);
+  }, [
+    nearbyGroups,
+    searchQuery,
+    filters,
+    filterGender,
+    inviteAsTrainerOnly,
+    isFavorite,
+    getUserMetadata,
+    gameSport,
+    inviteSportFilter,
+  ]);
 
   const memberOfSelectedTeam = useCallback(
     (userId: string) =>
@@ -732,7 +788,30 @@ export const PlayerListModal = ({
   return (
     <SportLevelProvider sport={gameSport}>
     <Dialog open={isOpen} onClose={handleClose} modalId="player-list-modal">
-      <DialogContent className="h-[min(92vh,720px)] flex flex-col overflow-hidden p-0 gap-0">
+      <DialogContent
+        className="relative h-[min(92vh,720px)] flex flex-col overflow-hidden p-0 gap-0"
+        showCloseButton={!cityPickerOpen}
+        onEscapeKeyDown={(event) => {
+          if (cityPickerOpen) {
+            event.preventDefault();
+            setCityPickerOpen(false);
+          }
+        }}
+      >
+        {cityPickerOpen ? (
+          <CityPickerEmbed
+            selectedId={browseCity.cityId}
+            recentCityIds={browseRecents.filter((id) => id !== browseCity.homeCityId)}
+            onClose={() => setCityPickerOpen(false)}
+            onSelect={(id, city) => {
+              useBrowseCityStore.getState().setCityId(
+                id,
+                city ? { name: city.name, country: city.country } : undefined,
+                browseCity.homeCityId,
+              );
+            }}
+          />
+        ) : null}
         <DialogHeader className="flex flex-col items-stretch justify-start gap-3 border-b border-gray-100/80 px-2.5 py-3 dark:border-gray-800/80">
           <DialogTitle className="text-lg font-bold tracking-tight text-gray-900 dark:text-white">
             {title ||
@@ -755,6 +834,9 @@ export const PlayerListModal = ({
               ariaLabel={`${t('playerInvite.tabSearch')} / ${t('playerInvite.tabLooking')}`}
             />
           ) : null}
+          {browseCity.hasCity ? (
+            <BrowseCityControl className="flex justify-start" onOpen={() => setCityPickerOpen(true)} />
+          ) : null}
         </DialogHeader>
 
         {showLooking && invitePane === 'looking' ? (
@@ -772,6 +854,7 @@ export const PlayerListModal = ({
                 }}
                 levelSport={gameSport}
                 listPadClass={showCountHint ? 'pb-28' : 'pb-20'}
+                cityName={browseCity.name}
               />
               {showCountHint && (
                 <div className="pointer-events-none absolute inset-x-0 bottom-3 z-20 flex justify-center">
@@ -829,12 +912,26 @@ export const PlayerListModal = ({
 
             <div className="relative z-10 flex min-h-0 flex-1 flex-col">
               {!listHasSourceRows ? (
+                nearbyGroups.length > 0 || serverSearchQuery ? (
+                  <NearbyPeopleSection
+                    query={serverSearchQuery ?? searchQuery}
+                    primaryCityName={browseCity.name}
+                    groups={filteredNearbyGroups}
+                    variant="invite"
+                    selectedUserIds={selectedUserIds}
+                    onSelectUser={handleUserClick}
+                    onViewCity={(cityId, snapshot) => {
+                      useBrowseCityStore.getState().setCityId(cityId, snapshot, browseCity.homeCityId);
+                    }}
+                  />
+                ) : (
                 <div className="flex flex-col items-center justify-center py-16 text-center">
                   <div className="mb-3 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-gray-100 to-gray-50 shadow-inner dark:from-gray-800 dark:to-gray-900">
                     <UserPlus className="h-8 w-8 text-gray-400 dark:text-gray-500" />
                   </div>
                   <p className="text-gray-600 dark:text-gray-400">{t('invites.noPlayersAvailable')}</p>
                 </div>
+                )
               ) : (
                 <PlayerInviteVirtualList
                   entries={segmentFilteredEntries}

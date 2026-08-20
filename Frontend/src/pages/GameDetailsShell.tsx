@@ -525,18 +525,18 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
 
   useEffect(() => {
     const fetchClubs = async () => {
-      if (!user?.currentCity) return;
-      
+      const venueCityId = game?.city?.id || game?.club?.cityId || user?.currentCity?.id;
+      if (!venueCityId) return;
       try {
-        const response = await clubsApi.getByCityId(user.currentCity.id, game?.entityType || 'GAME');
+        const response = await clubsApi.getByCityId(venueCityId, game?.entityType || 'GAME');
         setClubs(response.data);
       } catch (error) {
         console.error('Failed to fetch clubs:', error);
       }
     };
 
-    fetchClubs();
-  }, [user?.currentCity, game?.entityType]);
+    void fetchClubs();
+  }, [game?.city?.id, game?.club?.cityId, game?.entityType, user?.currentCity?.id]);
 
   useEffect(() => {
     let cancelled = false;
@@ -1870,6 +1870,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
           canEditSettings={canViewSettings}
           onGameUpdate={setGame}
           onCourtsChange={handleCourtsChange}
+          onClubsChange={setClubs}
         />
       )}
 

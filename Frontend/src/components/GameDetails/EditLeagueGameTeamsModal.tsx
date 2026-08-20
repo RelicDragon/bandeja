@@ -921,10 +921,16 @@ export const EditLeagueGameTeamsModal = ({
           onClose={() => setIsClubModalOpen(false)}
           clubs={clubsForSport}
           selectedId={selectedClubId}
-          onSelect={(clubId) => {
+          cityId={game.club?.cityId || game.city?.id}
+          preferredSport={game.sport}
+          entityType={game.entityType}
+          onSelect={(clubId, club) => {
             setSelectedClubId(clubId);
             setSelectedCourtId('');
             setIsClubModalOpen(false);
+            if (club && !clubsForSport.some((c) => c.id === club.id)) {
+              setClubs((prev) => [...prev, club]);
+            }
           }}
         />
       )}

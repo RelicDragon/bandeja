@@ -4,6 +4,7 @@ import type { InviteLookingMember, InviteLookingPool } from '@/api/playIntents';
 export type PlayerInviteLookingDraft = {
   sport: Sport;
   entityType: EntityType;
+  cityId?: string | null;
   clubId: string | null;
   startTime: string;
   endTime?: string | null;

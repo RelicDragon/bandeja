@@ -94,21 +94,27 @@ export const CreateLeague = () => {
   }, []);
 
   useEffect(() => {
-    const fetchClubs = async () => {
-      if (!selectedCityId) {
-        setClubs([]);
-        setSelectedClubId('');
-        return;
-      }
-      try {
-        const response = await clubsApi.getByCityId(selectedCityId);
+    if (!selectedCityId) {
+      setClubs([]);
+      setSelectedClubId('');
+      return;
+    }
+    let cancelled = false;
+    void clubsApi
+      .getByCityId(selectedCityId)
+      .then((response) => {
+        if (cancelled) return;
         setClubs(response.data);
-        setSelectedClubId('');
-      } catch (error) {
+        setSelectedClubId((current) =>
+          current && response.data.some((c) => c.id === current) ? current : '',
+        );
+      })
+      .catch((error) => {
         console.error('Failed to fetch clubs:', error);
-      }
+      });
+    return () => {
+      cancelled = true;
     };
-    fetchClubs();
   }, [selectedCityId]);
 
   const clubsForSport = useMemo(

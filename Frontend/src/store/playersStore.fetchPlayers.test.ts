@@ -117,7 +117,7 @@ describe('playersStore.fetchPlayers', () => {
 
     const result = await usePlayersStore.getState().fetchPlayers(undefined, undefined, 'Maksim S');
 
-    expect(getInvitablePlayers).toHaveBeenCalledWith(undefined, undefined, 'Maksim S', undefined);
+    expect(getInvitablePlayers).toHaveBeenCalledWith(undefined, undefined, 'Maksim S', undefined, undefined);
     expect(result).toHaveLength(1);
     expect(result[0].id).toBe('u2');
   });
@@ -140,6 +140,7 @@ describe('playersStore.fetchPlayers', () => {
       Sports.PADEL,
       undefined,
       { startTime: '2026-08-20T19:00:00.000Z', endTime: '2026-08-20T20:00:00.000Z' },
+      undefined,
     );
     expect(result.map((p) => p.id)).toEqual(['free']);
     expect(result.busyUserIds).toEqual(['busy']);

@@ -8,6 +8,7 @@ type ChatListEmptyPanelProps = {
   showContactsEmpty: boolean;
   showChatsEmpty: boolean;
   userHasCity: boolean;
+  cityName?: string;
   debouncedSearchQuery: string;
   marketChatRole: 'buyer' | 'seller';
   t: TFunction;
@@ -18,6 +19,7 @@ export function ChatListEmptyPanel({
   showContactsEmpty,
   showChatsEmpty,
   userHasCity,
+  cityName,
   debouncedSearchQuery,
   marketChatRole,
   t,
@@ -32,12 +34,12 @@ export function ChatListEmptyPanel({
       <p className="text-lg font-medium">
         {showContactsEmpty &&
           (userHasCity
-            ? t('chat.noCityUsers', { defaultValue: 'No users in your city' })
+            ? t('browseCity.noUsersInCity', { city: cityName })
             : t('chat.noCitySet', { defaultValue: 'Set your city to see players' }))}
         {showChatsEmpty && chatsFilter !== 'market' && t('chat.noConversations', { defaultValue: 'No conversations yet' })}
       </p>
       <p className="text-sm mt-2">
-        {showContactsEmpty && userHasCity && t('chat.noCityUsersHint', { defaultValue: 'Try a different search' })}
+        {showContactsEmpty && userHasCity && t('browseCity.noUsersInCityHint')}
         {showChatsEmpty && chatsFilter === 'users' && t('chat.noUserChats', { defaultValue: 'Start chatting with players' })}
         {showChatsEmpty && chatsFilter === 'bugs' && t('chat.noBugChats', { defaultValue: 'No bug reports yet' })}
         {showChatsEmpty && chatsFilter === 'channels' && t('chat.noChannels', { defaultValue: 'No channels yet' })}

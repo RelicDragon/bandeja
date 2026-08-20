@@ -668,6 +668,10 @@ Frontend/e2e/
 | C-57 | Location sub-step order | Open create game location block (with and without integrated club) | Order: Club → booking intent → Date → Court → Start time; date/court/time hidden until club selected (dashed “Select club first” hint below club picker) |
 | C-58 | Location sub-step completion ticks | Pick club, then court, then time | Each sub-step header (Club, Date, Court, Start time) flips its icon to a green check as it’s completed; Date is checked by default |
 | C-59 | Club picker states | View club picker before/after selection (create + edit location tab) | Unselected: dashed primary CTA with pin icon + “Select Club”; selected: club avatar, name, address, chevron; tap opens club modal |
+| C-59a | Club modal venue city | Open club picker | Header city chip is venue city (not profile browse); empty search lists that city |
+| C-59b | Club in another city | Search a club name in another city → pick it | Game city follows `club.cityId`; courts/bookings reset |
+| C-59c | Club city picker in-dialog | Open club picker → tap venue city chip | City list covers the same dialog (tappable); Back/Escape returns to clubs, does not close the club modal |
+| C-59d | Venue city independent of browse | Hop browse city in chat or invite, then open club picker | Club chip is venue/home, not the browse city |
 | C-60 | Location sub-step value pills | Pick date, court, time in location block (create + edit location tab) | Sub-step headers show current selection as right-aligned pill (Date: “Sat, Jul 12”; Court: name or “2/3” in multi-court; Start time: “18:00–19:30”); pill is green when the sub-step is done |
 | C-61 | Calendar picker dialog | Tap calendar tile in Date row | Calendar opens as modal dialog with title and close button; picking a date applies it and closes; X, outside tap, or hardware back dismiss without changing the date |
 | C-62 | Create game Looking | Set date/time, open invite picker, Looking tab, pick a looking player, create | Looking tab only after date/time; create sends invite with their play intent linked |
@@ -766,7 +770,12 @@ Frontend/e2e/
 | GD-149 | Looking rank + gray | Looking tab with mixed fits | Full matches first; misses dimmed with a mismatch line; still selectable |
 | GD-150 | Looking invite reserves | Invite an OPEN looking player | Pending invite; their intent becomes MATCHED; they drop off Looking live |
 | GD-151 | In-a-match invite | Invite a player badged “In a match” | Invite sends; their lobby match is not stolen; toast that they’re already in a match |
-| GD-152 | Empty Looking | No live play intents in the city | Looking tab still visible, badge 0, empty copy, Search still works |
+| GD-152 | Empty Looking | No live play intents in the browse city | Looking tab still visible, badge 0, “Nobody’s looking in {city}”, Search still works |
+| GD-153 | Invite browse city | Open invite picker Search/Looking | City chip shows Home city; lists are that city only |
+| GD-154 | Invite hop city | Tap city chip → pick another city | Search and Looking reload for that city; profile Home city unchanged |
+| GD-155 | Invite nearby people | Browse city has 0 name hits; nearby city has the person | Grouped Nearby section; View city sets browse city |
+| GD-156 | Invite city picker pins Home | Browse another city → open city chip | “Your city” is profile Home; picking it returns the lens to Home without `switchCity` |
+| GD-157 | Invite city picker back | Open city picker from invite → Back / Escape | Picker closes; invite modal stays open |
 | GD-15a | Invite search Cyrillic→Latin | Open invite list; type Cyrillic prefix of a Latin-named player (e.g. `ив` for Ivan) | Player stays in results after debounce (does not flash then vanish) |
 | GD-15b | Invite search clear | Open invite list; type 2+ chars so results update; clear the search field | List stays mounted (no full-modal spinner); default invitable list restores after debounce |
 | GD-15c | Invite picker omits busy | Open Search invite list for a timed game; city user is PLAYING in another overlapping Bandeja game | Busy user is absent from the list; INVITED-only or non-overlapping PLAYING users still appear |
@@ -1038,6 +1047,10 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | CH-05 | Search users | Type in search | Matching users/chats |
 | CH-06 | Unread filter toggle | Bugs tab with status filter; tap unread mail icon; open thread; browser back | `?unread=1` in URL; all unread bugs shown; back restores unread filter state |
 | CH-07 | Contacts mode | Toggle contacts | City users list |
+| CH-07a | Users browse city chip | Chats → Users | City chip in the search field; absent on Bugs/Market/Channels |
+| CH-07b | Contacts follow browse | Switch browse city, open contacts | Directory is the browse city; Home city unchanged |
+| CH-07c | Users nearby search | Users search with 0 local hits and nearby matches | Nearby groups + View city hops browse |
+| CH-07d | Users city picker | Tap city chip in Users search → pick Home or another city | Selector drawer; does not `switchCity`; Home stays first in the picker |
 | CH-08 | Start new DM | Pick user → chat | `/user-chat/:id` |
 | CH-09 | Load more pagination | Scroll list end | More threads load |
 | CH-10 | Empty inbox | New user no chats | Empty state |
@@ -1433,7 +1446,7 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PR-trophy-28 | Missed Results celebration | Unlock on Results then leave tab before dismissing sheet | Soft claim released; profile/pending can show until dismiss persists |
 | PR-trophy-29 | Status-patch tournament celebration | Patch TOURNAMENT to FINAL (≥8) without outcome recalc | Podium granted; Results outcomes carry podiumUnlocks for sheet |
 | PR-trophy-30 | Nested card celebration | Own player-card sheet open when pending Rare/Legendary | Celebration nested drawer works; card does not steal dismiss |
-| PR-19 | Change city | City modal | City updated; no Cities/Clubs switch; browse country → cities |
+| PR-19 | Change city | City modal | City updated; no Cities/Clubs switch; browse country → cities; invite/chat browse lens snaps to Home; recent browse cities kept |
 | PR-20 | Phone/password change | If exposed in UI | Auth updated |
 | PR-21 | Language selector | Pick language | i18n + profile saved |
 | PR-22 | Theme selector | Light/dark/system | Theme applied |

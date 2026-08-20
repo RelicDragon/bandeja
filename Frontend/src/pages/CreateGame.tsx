@@ -140,6 +140,9 @@ export const CreateGame = ({
   });
 
   const [clubs, setClubs] = useState<Club[]>([]);
+  const [locationCityId, setLocationCityId] = useState(
+    () => initialGameData?.city?.id || initialGameData?.club?.cityId || user?.currentCity?.id || '',
+  );
   const [courts, setCourts] = useState<Court[]>([]);
   const [allClubCourts, setAllClubCourts] = useState<Court[]>([]);
   const [selectedClub, setSelectedClub] = useState<string>(() => initialGameData?.clubId || '');
@@ -711,17 +714,50 @@ export const CreateGame = ({
     [],
   );
   useEffect(() => {
-    const fetchClubs = async () => {
-      if (!user?.currentCity) return;
-      try {
-        const response = await clubsApi.getByCityId(user.currentCity.id, entityType);
-        setClubs(response.data);
-      } catch (error) {
+    if (locationCityId) return;
+    const home = user?.currentCity?.id;
+    if (home) setLocationCityId(home);
+  }, [locationCityId, user?.currentCity?.id]);
+
+  const applyVenueCity = useCallback((id: string) => {
+    if (!id || id === locationCityId) return;
+    setLocationCityId(id);
+    setSelectedClub('');
+    setSelectedCourtIds([]);
+  }, [locationCityId, setSelectedCourtIds]);
+
+  const handleSelectClub = useCallback((id: string, club?: Club) => {
+    const picked = club ?? clubs.find((c) => c.id === id);
+    if (picked && !clubs.some((c) => c.id === picked.id)) {
+      setClubs((prev) => [...prev, picked]);
+    }
+    if (picked?.cityId) setLocationCityId(picked.cityId);
+    setSelectedClub(id);
+    setSelectedCourtIds([]);
+    resetOnClubChange();
+  }, [clubs, resetOnClubChange, setSelectedCourtIds]);
+
+  useEffect(() => {
+    if (!locationCityId) return;
+    let cancelled = false;
+    void clubsApi
+      .getByCityId(locationCityId, entityType)
+      .then((response) => {
+        if (cancelled) return;
+        setClubs((prev) => {
+          const next = response.data ?? [];
+          const keep = prev.find((c) => c.id === selectedClub);
+          if (keep && !next.some((c) => c.id === keep.id)) return [keep, ...next];
+          return next;
+        });
+      })
+      .catch((error) => {
         console.error('Failed to fetch clubs:', error);
-      }
+      });
+    return () => {
+      cancelled = true;
     };
-    fetchClubs();
-  }, [user?.currentCity, entityType]);
+  }, [entityType, locationCityId, selectedClub]);
 
   const initialCourtId = initialGameData?.courtId;
   const initialHasBookedCourt = initialGameData?.hasBookedCourt ?? false;
@@ -1333,6 +1369,7 @@ export const CreateGame = ({
       const gameData: Record<string, unknown> = {
         sport: selectedSport,
         entityType: entityType,
+        cityId: selectedClubData?.cityId || locationCityId || undefined,
         clubId: selectedClub || undefined,
         courtId: bookingFields.courtId,
         courtIds: bookingFields.courtIds,
@@ -1829,13 +1866,13 @@ export const CreateGame = ({
                       selectedClub={selectedClub}
                       selectedCourt={selectedCourt}
                       isClubModalOpen={isClubModalOpen}
-                      onSelectClub={(id: string) => {
-                        setSelectedClub(id);
-                        setSelectedCourtIds([]);
-                        resetOnClubChange();
-                      }}
+                      onSelectClub={handleSelectClub}
                       onOpenClubModal={() => setIsClubModalOpen(true)}
                       onCloseClubModal={() => setIsClubModalOpen(false)}
+                      venueCityId={locationCityId}
+                      onVenueCityChange={applyVenueCity}
+                      entityType={entityType}
+                      preferredSport={selectedSport}
                     />
                   }
                   courtSection={courtSection}
@@ -1902,12 +1939,11 @@ export const CreateGame = ({
                   courts={courts}
                   preferredSport={selectedSport}
                   isClubModalOpen={isClubModalOpen}
-                  onSelectClub={(id: string) => {
-                    setSelectedClub(id);
-                    setSelectedCourtIds([]);
-                  }}
+                  onSelectClub={handleSelectClub}
                   onOpenClubModal={() => setIsClubModalOpen(true)}
                   onCloseClubModal={() => setIsClubModalOpen(false)}
+                  venueCityId={locationCityId}
+                  onVenueCityChange={applyVenueCity}
                   selectedDate={selectedDate}
                   selectedTime={selectedTime}
                   duration={duration}
