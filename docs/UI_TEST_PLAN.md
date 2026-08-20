@@ -1295,6 +1295,9 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | ID | Test | Steps | Expected |
 |----|------|-------|----------|
 | PR-07 | Avatar upload | Upload photo | Avatar updates |
+| PR-07b | Avatar crop pinch-zoom | Profile → change avatar → pinch-zoom in the circular cropper → Upload (desktop + Capacitor iOS WebView) | Saved avatar matches the zoomed preview, not the unzoomed 1× crop |
+| PR-07c | Avatar crop pan | Same → pan the photo in the cropper → Upload (desktop + Capacitor iOS WebView) | Saved avatar matches the panned preview |
+| PR-07d | Avatar crop without zoom | Same → leave at 1× (no pinch/pan) → Upload | Saved avatar matches the unzoomed circular preview (centered square; full image if already square) |
 | PR-08 | Remove avatar | Remove button | Avatar cleared |
 | PR-09 | View original avatar | Eye button | Fullscreen viewer |
 | PR-10 | First/last name autosave | Edit name | Saving indicator → saved |
