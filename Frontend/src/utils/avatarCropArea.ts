@@ -123,6 +123,10 @@ export function computePixelCrop(
   };
 }
 
+function hasLiveGesture(live: AvatarCropLiveState): boolean {
+  return live.zoom !== 1 || live.crop.x !== 0 || live.crop.y !== 0;
+}
+
 export function resolveAvatarExportPixelCrop(
   live: AvatarCropLiveState,
   lastKnownPixels: PixelCrop | null
@@ -135,5 +139,6 @@ export function resolveAvatarExportPixelCrop(
     });
     if (computed) return computed;
   }
+  if (hasLiveGesture(live)) return null;
   return lastKnownPixels;
 }

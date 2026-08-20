@@ -30,6 +30,18 @@ describe('computePixelCrop', () => {
     ).toEqual({ x: 250, y: 250, width: 500, height: 500 });
   });
 
+  it('recomputes landscape zoom and pan together', () => {
+    const media: MediaSize = {
+      width: 800,
+      height: 400,
+      naturalWidth: 2000,
+      naturalHeight: 1000,
+    };
+    expect(
+      computePixelCrop({ x: 80, y: 0 }, media, SQUARE_CROP, 2, { aspect: 1 })
+    ).toEqual({ x: 650, y: 250, width: 500, height: 500 });
+  });
+
   it('shifts the pixel crop when panned at 2×', () => {
     expect(
       computePixelCrop({ x: 100, y: 0 }, SQUARE_MEDIA, SQUARE_CROP, 2, { aspect: 1 })
@@ -89,12 +101,57 @@ describe('resolveAvatarExportPixelCrop', () => {
     ).toEqual({ x: 125, y: 188, width: 500, height: 500 });
   });
 
-  it('falls back to last known pixels when live geometry is missing', () => {
+  it('does not export a stale 1× rectangle when zoomed without live geometry', () => {
     expect(
       resolveAvatarExportPixelCrop(
         {
           crop: { x: 0, y: 0 },
           zoom: 2,
+          rotation: 0,
+          mediaSize: null,
+          cropSize: null,
+        },
+        STALE_1X
+      )
+    ).toBeNull();
+  });
+
+  it('does not export a stale 1× rectangle when panned without live geometry', () => {
+    expect(
+      resolveAvatarExportPixelCrop(
+        {
+          crop: { x: 40, y: 0 },
+          zoom: 1,
+          rotation: 0,
+          mediaSize: null,
+          cropSize: SQUARE_CROP,
+        },
+        STALE_1X
+      )
+    ).toBeNull();
+  });
+
+  it('does not export a stale 1× rectangle when only cropSize is missing after zoom', () => {
+    expect(
+      resolveAvatarExportPixelCrop(
+        {
+          crop: { x: 0, y: 0 },
+          zoom: 2,
+          rotation: 0,
+          mediaSize: SQUARE_MEDIA,
+          cropSize: null,
+        },
+        STALE_1X
+      )
+    ).toBeNull();
+  });
+
+  it('falls back to last known pixels for an unmoved 1× crop when geometry is missing', () => {
+    expect(
+      resolveAvatarExportPixelCrop(
+        {
+          crop: { x: 0, y: 0 },
+          zoom: 1,
           rotation: 0,
           mediaSize: null,
           cropSize: null,

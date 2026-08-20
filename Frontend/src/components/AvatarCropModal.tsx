@@ -47,14 +47,31 @@ export const AvatarCropModal: React.FC<AvatarCropModalProps> = ({
     cropSize,
     lastKnownPixels: croppedAreaPixels,
   });
-  liveRef.current = {
-    crop,
-    zoom,
-    rotation,
-    mediaSize,
-    cropSize,
-    lastKnownPixels: croppedAreaPixels,
-  };
+
+  const handleCropChange = useCallback((next: CropPoint) => {
+    liveRef.current.crop = next;
+    setCrop(next);
+  }, []);
+
+  const handleZoomChange = useCallback((next: number) => {
+    liveRef.current.zoom = next;
+    setZoom(next);
+  }, []);
+
+  const handleRotationChange = useCallback((next: number) => {
+    liveRef.current.rotation = next;
+    setRotation(next);
+  }, []);
+
+  const handleMediaSize = useCallback((next: MediaSize) => {
+    liveRef.current.mediaSize = next;
+    setMediaSize(next);
+  }, []);
+
+  const handleCropSize = useCallback((next: CropSize) => {
+    liveRef.current.cropSize = next;
+    setCropSize(next);
+  }, []);
 
   const exportPixelCrop = resolveAvatarExportPixelCrop(
     {
@@ -84,6 +101,7 @@ export const AvatarCropModal: React.FC<AvatarCropModalProps> = ({
   }, [imageFile]);
 
   const persistPixelCrop = useCallback((_percentages: PixelCrop, pixels: PixelCrop) => {
+    liveRef.current.lastKnownPixels = pixels;
     setCroppedAreaPixels(pixels);
   }, []);
 
@@ -187,13 +205,13 @@ export const AvatarCropModal: React.FC<AvatarCropModalProps> = ({
               aspect={AVATAR_CROP_ASPECT}
               cropShape="round"
               showGrid={true}
-              onCropChange={setCrop}
+              onCropChange={handleCropChange}
               onCropComplete={persistPixelCrop}
               onCropAreaChange={persistPixelCrop}
-              onMediaLoaded={setMediaSize}
-              onCropSizeChange={setCropSize}
-              onZoomChange={setZoom}
-              onRotationChange={setRotation}
+              setMediaSize={handleMediaSize}
+              setCropSize={handleCropSize}
+              onZoomChange={handleZoomChange}
+              onRotationChange={handleRotationChange}
             />
           </div>
 
