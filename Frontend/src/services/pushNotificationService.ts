@@ -549,7 +549,8 @@ class PushNotificationService {
 
   private async handleAcceptInvite(data: NotificationData) {
     const payload = data.data;
-    if (!payload?.inviteId) {
+    const inviteId = payload?.inviteId;
+    if (!inviteId) {
       console.error('No invite ID in notification data');
       return;
     }
@@ -569,10 +570,10 @@ class PushNotificationService {
 
     try {
       const response = await runWithOverlapConfirm((confirmOverlap) =>
-        invitesApi.accept(payload.inviteId, confirmOverlap),
+        invitesApi.accept(inviteId, confirmOverlap),
       );
       if (!response) return;
-      useHeaderStore.getState().decrementPendingInvite(payload.inviteId);
+      useHeaderStore.getState().decrementPendingInvite(inviteId);
       console.log('✅ Invite accepted');
 
       if (payload.gameId) {

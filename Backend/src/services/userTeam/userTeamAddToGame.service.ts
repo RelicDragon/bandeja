@@ -155,41 +155,43 @@ export async function listInvitableGamesForUserTeam(
     unique.push(row);
   }
 
-  return unique
-    .filter((row) =>
-      viewerCanInviteFromLoadedGame({
+  const invitable: UserTeamInvitableGame[] = [];
+  for (const row of unique) {
+    if (
+      !viewerCanInviteFromLoadedGame({
         viewerId,
         isAdmin,
         anyoneCanInvite: row.game.anyoneCanInvite,
         participants: row.game.participants,
         parentParticipants: row.game.parent?.participants,
-      }),
-    )
-    .map((row) => {
-      const game = row.game;
-      const playingCount = game.participants.filter((p) => p.status === ParticipantStatus.PLAYING).length;
-      const partnerOnGame = partnerOnGameStatus(partnerId, game.participants);
-      const full = game.entityType !== EntityType.BAR && playingCount >= game.maxParticipants;
-      if (full && !includeFullGameForPartner(partnerOnGame)) return null;
-      return {
-        id: game.id,
-        name: game.name,
-        sport: game.sport,
-        entityType: game.entityType,
-        startTime: game.startTime,
-        endTime: game.endTime,
-        timeIsSet: game.timeIsSet,
-        avatar: game.avatar,
-        hasFixedTeams: game.hasFixedTeams,
-        maxParticipants: game.maxParticipants,
-        playingCount,
-        club: game.club,
-        city: game.city,
-        partnerOnGame,
-      };
-    })
-    .filter((game): game is UserTeamInvitableGame => game !== null)
-    .slice(0, 50);
+      })
+    ) {
+      continue;
+    }
+    const game = row.game;
+    const playingCount = game.participants.filter((p) => p.status === ParticipantStatus.PLAYING).length;
+    const partnerOnGame = partnerOnGameStatus(partnerId, game.participants);
+    const full = game.entityType !== EntityType.BAR && playingCount >= game.maxParticipants;
+    if (full && !includeFullGameForPartner(partnerOnGame)) continue;
+    invitable.push({
+      id: game.id,
+      name: game.name,
+      sport: game.sport,
+      entityType: game.entityType,
+      startTime: game.startTime,
+      endTime: game.endTime,
+      timeIsSet: game.timeIsSet,
+      avatar: game.avatar,
+      hasFixedTeams: game.hasFixedTeams,
+      maxParticipants: game.maxParticipants,
+      playingCount,
+      club: game.club,
+      city: game.city,
+      partnerOnGame,
+    });
+    if (invitable.length >= 50) break;
+  }
+  return invitable;
 }
 
 export async function addUserTeamToGame(

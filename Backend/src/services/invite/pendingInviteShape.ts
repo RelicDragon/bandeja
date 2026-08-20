@@ -46,10 +46,7 @@ export function mapInvitedParticipantToInboxInvite(participant: {
   game: { sport?: string | null; participants?: unknown[] } & Record<string, unknown>;
 }) {
   const sport = (participant.game.sport ?? Sport.PADEL) as Sport;
-  const invitedBy = participant.invitedByUser as {
-    sportProfiles?: unknown;
-    [key: string]: unknown;
-  } | null;
+  const invitedBy = participant.invitedByUser as { sportProfiles?: undefined } | null;
   return {
     id: participant.id,
     receiverId: participant.userId,
@@ -60,12 +57,12 @@ export function mapInvitedParticipantToInboxInvite(participant: {
     createdAt: participant.joinedAt,
     updatedAt: participant.joinedAt,
     receiver: participant.user
-      ? projectUserForSportContext(participant.user as never, sport)
+      ? projectUserForSportContext(participant.user as { sportProfiles?: undefined }, sport)
       : null,
     sender: invitedBy
       ? {
           ...projectUserForSportContext(invitedBy, sport),
-          sportProfiles: invitedBy.sportProfiles,
+          sportProfiles: (participant.invitedByUser as { sportProfiles?: unknown } | null)?.sportProfiles,
         }
       : null,
     game: {
