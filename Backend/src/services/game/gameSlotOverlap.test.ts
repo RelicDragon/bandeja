@@ -47,6 +47,8 @@ assert.equal(
   occupancyBlocksSlot(occupancy({ gameId: 'other', startTime: t0, endTime: t2 }), target),
   true,
 );
+assert.equal(occupancyBlocksSlot(occupancy({ gameId: 'other', gameStatus: 'STARTED' }), target), true);
+assert.equal(occupancyBlocksSlot(occupancy({ gameId: 'other', entityType: 'TRAINING' }), target), true);
 assert.equal(occupancyBlocksSlot(occupancy({ gameId: 'other', status: 'INVITED' }), target), false);
 assert.equal(occupancyBlocksSlot(occupancy({ gameId: 'other', status: 'IN_QUEUE' }), target), false);
 

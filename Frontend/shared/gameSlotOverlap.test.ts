@@ -63,6 +63,18 @@ describe('occupancyBlocksSlot', () => {
     ).toBe(true);
   });
 
+  it('treats STARTED and TRAINING the same as ANNOUNCED GAME', () => {
+    expect(
+      occupancyBlocksSlot(occupancy({ gameId: 'other', gameStatus: 'STARTED' }), target),
+    ).toBe(true);
+    expect(
+      occupancyBlocksSlot(occupancy({ gameId: 'other', entityType: 'TRAINING' }), target),
+    ).toBe(true);
+    expect(
+      occupancyBlocksSlot(occupancy({ gameId: 'other', entityType: 'LEAGUE' }), target),
+    ).toBe(true);
+  });
+
   it('does not treat INVITED or IN_QUEUE as occupying the slot', () => {
     expect(occupancyBlocksSlot(occupancy({ gameId: 'other', status: 'INVITED' }), target)).toBe(false);
     expect(occupancyBlocksSlot(occupancy({ gameId: 'other', status: 'IN_QUEUE' }), target)).toBe(false);

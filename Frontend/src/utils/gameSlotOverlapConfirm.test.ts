@@ -66,4 +66,20 @@ describe('runWithOverlapConfirm', () => {
     await expect(retry).resolves.toBe('joined');
     expect(action).toHaveBeenLastCalledWith(true);
   });
+
+  it('shares one confirm across concurrent asks', async () => {
+    const overlap = axiosError(409, { requiresOverlapConfirm: true });
+    const action = vi.fn(async (confirmOverlap: boolean) => {
+      if (!confirmOverlap) throw overlap;
+      return 'ok';
+    });
+    const first = runWithOverlapConfirm(action);
+    const second = runWithOverlapConfirm(action);
+    await vi.waitFor(() => {
+      expect(useGameSlotOverlapConfirmStore.getState().open).toBe(true);
+    });
+    useGameSlotOverlapConfirmStore.getState().settle(true);
+    await expect(first).resolves.toBe('ok');
+    await expect(second).resolves.toBe('ok');
+  });
 });

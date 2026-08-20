@@ -26,10 +26,10 @@
     "confirmJoinMessage": "Вы уверены, что хотите присоединиться к этой игре?",
     "confirmJoinQueueTitle": "Встать в очередь?",
     "confirmJoinQueueMessage": "Вы уверены, что хотите встать в список ожидания?",
-    "overlapConfirmTitle": "Уже есть игра",
-    "overlapConfirmMessage": "Это время пересекается с игрой, в которой вы участвуете.",
+    "overlapConfirmTitle": "Уже играете",
+    "overlapConfirmMessage": "Это время пересекается с другой игрой.",
     "overlapConfirmProceed": "Продолжить",
-    "requiresOverlapConfirm": "Это время пересекается с игрой, в которой вы участвуете.",
+    "requiresOverlapConfirm": "Это время пересекается с другой игрой.",
     "gameTypes": {
       "CLASSIC": "Классика",
       "AMERICANO": "Американо",

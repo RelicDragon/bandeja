@@ -1,8 +1,12 @@
 import { EntityType, GameStatus, ParticipantStatus, Prisma } from '@prisma/client';
 import {
+  occupancyBlocksSlot,
   SLOT_BUSY_PARTICIPANT_STATUSES,
   SLOT_OVERLAP_ENTITY_TYPES,
   SLOT_OVERLAP_GAME_STATUSES,
+  userIdsBusyInSlot,
+  type SlotOccupancy,
+  type SlotTarget,
 } from '@bandeja/shared/gameSlotOverlap';
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
@@ -25,6 +29,37 @@ const busyStatuses = [...SLOT_BUSY_PARTICIPANT_STATUSES] as ParticipantStatus[];
 const overlapGameStatuses = [...SLOT_OVERLAP_GAME_STATUSES] as GameStatus[];
 const overlapEntityTypes = [...SLOT_OVERLAP_ENTITY_TYPES] as EntityType[];
 
+function toSlotTarget(target: SlotOverlapTargetGame): SlotTarget {
+  return {
+    gameId: target.id,
+    startTime: target.startTime,
+    endTime: target.endTime,
+    timeIsSet: target.timeIsSet,
+  };
+}
+
+function occupancyFromBusyGame(
+  game: {
+    id: string;
+    startTime: Date;
+    endTime: Date;
+    timeIsSet: boolean;
+    status: string;
+    entityType: string;
+  },
+  status: string,
+): SlotOccupancy {
+  return {
+    gameId: game.id,
+    status,
+    startTime: game.startTime,
+    endTime: game.endTime,
+    timeIsSet: game.timeIsSet,
+    gameStatus: game.status,
+    entityType: game.entityType,
+  };
+}
+
 function overlappingSlotGameWhere(target: SlotOverlapTargetGame): Prisma.GameWhereInput {
   return {
     id: { not: target.id },
@@ -45,11 +80,22 @@ export function overlappingPlayingParticipantWhere(
   };
 }
 
+const busyGameSelect = {
+  id: true,
+  name: true,
+  startTime: true,
+  endTime: true,
+  timeIsSet: true,
+  status: true,
+  entityType: true,
+} as const;
+
 export async function findOverlappingPlayingGames(
   userId: string,
   target: SlotOverlapTargetGame,
 ): Promise<OverlappingGameSlotDto[]> {
   if (!target.timeIsSet) return [];
+  const slot = toSlotTarget(target);
   const games = await prisma.game.findMany({
     where: {
       ...overlappingSlotGameWhere(target),
@@ -60,26 +106,37 @@ export async function findOverlappingPlayingGames(
         },
       },
     },
-    select: { id: true, name: true, startTime: true, endTime: true },
+    select: busyGameSelect,
     orderBy: { startTime: 'asc' },
-    take: 8,
   });
-  return games.map((game) => ({
-    id: game.id,
-    name: game.name,
-    startTime: game.startTime.toISOString(),
-    endTime: game.endTime.toISOString(),
-  }));
+  return games
+    .filter((game) => occupancyBlocksSlot(occupancyFromBusyGame(game, 'PLAYING'), slot))
+    .slice(0, 8)
+    .map((game) => ({
+      id: game.id,
+      name: game.name,
+      startTime: game.startTime.toISOString(),
+      endTime: game.endTime.toISOString(),
+    }));
 }
 
 export async function findUserIdsBusyInSlot(target: SlotOverlapTargetGame): Promise<string[]> {
   if (!target.timeIsSet) return [];
   const rows = await prisma.gameParticipant.findMany({
     where: overlappingPlayingParticipantWhere(target),
-    select: { userId: true },
-    distinct: ['userId'],
+    select: {
+      userId: true,
+      status: true,
+      game: { select: busyGameSelect },
+    },
   });
-  return rows.map((row) => row.userId);
+  return userIdsBusyInSlot(
+    rows.map((row) => ({
+      userId: row.userId,
+      ...occupancyFromBusyGame(row.game, row.status),
+    })),
+    toSlotTarget(target),
+  );
 }
 
 export async function assertSlotOverlapConfirmed(options: {

@@ -46,7 +46,6 @@ interface UsersState {
   lastPlayersFetchTime: number;
   lastChatsFetchTime: number;
   invitableMaxSocialLevel: number | null;
-  invitableBusyUserIds: string[];
   
   getUser: (userId: string) => BasicUser | undefined;
   getUserMetadata: (userId: string) => UserMetadata | undefined;
@@ -209,7 +208,6 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
   lastPlayersFetchTime: 0,
   lastChatsFetchTime: 0,
   invitableMaxSocialLevel: null,
-  invitableBusyUserIds: [],
 
   getUser: (userId: string) => {
     return get().users[userId];
@@ -436,7 +434,6 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
           loading: false,
           isFetching: false,
           invitableMaxSocialLevel: maxSocialLevel,
-          invitableBusyUserIds: busyUserIds,
         };
       });
       const { users: mergedUsers } = get();
@@ -555,7 +552,6 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
       lastPlayersFetchTime: 0,
       lastChatsFetchTime: 0,
       invitableMaxSocialLevel: null,
-      invitableBusyUserIds: [],
       isFetching: false,
       isFetchingChats: false,
     });
