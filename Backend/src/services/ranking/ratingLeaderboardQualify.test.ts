@@ -9,6 +9,8 @@ import {
   orderRatingLeaderboard,
   qualifiesForRatingRank,
   ratingLeaderboardActivitySince,
+  recentRatedParticipantWhere,
+  selectRecentRatedUserIds,
 } from './ratingLeaderboardQualify';
 
 assert.equal(RATING_LEADERBOARD_MIN_GAMES, 5);
@@ -34,6 +36,22 @@ assert.equal(
 const now = Date.parse('2026-08-20T00:00:00.000Z');
 const since = ratingLeaderboardActivitySince(now);
 assert.equal(since.toISOString(), '2026-05-22T00:00:00.000Z');
+
+const recentWhere = recentRatedParticipantWhere('PADEL', since);
+assert.equal(recentWhere.status, 'PLAYING');
+assert.equal(recentWhere.game.sport, 'PADEL');
+assert.equal(recentWhere.game.resultsStatus, 'FINAL');
+assert.equal(recentWhere.game.affectsRating, true);
+assert.equal(recentWhere.game.startTime.gte.toISOString(), since.toISOString());
+assert.equal('userId' in recentWhere, false);
+
+const recentIds = selectRecentRatedUserIds(
+  ['qual-a', 'stale-star'],
+  [{ userId: 'qual-a' }, { userId: 'stranger' }, { userId: 'stale-star' }],
+);
+assert.deepEqual([...recentIds].sort(), ['qual-a', 'stale-star']);
+assert.equal(selectRecentRatedUserIds([], [{ userId: 'qual-a' }]).size, 0);
+assert.equal(selectRecentRatedUserIds(['qual-a'], [{ userId: 'stranger' }]).size, 0);
 
 type Entry = {
   id: string;
@@ -157,9 +175,10 @@ assert.equal(achievementSrc.includes('orderRatingLeaderboard'), false);
 assert.equal(achievementSrc.includes('RATING_LEADERBOARD_MIN_GAMES'), false);
 
 const rankingServiceSrc = readFileSync(join(rankingDir, '../ranking.service.ts'), 'utf8');
-assert.equal(rankingServiceSrc.includes('affectsRating: true'), true);
 assert.equal(rankingServiceSrc.includes('qualifyAndRankRatingLeaderboard'), true);
 assert.equal(rankingServiceSrc.includes('getUserIdsWithRatedGameSince'), true);
+assert.equal(rankingServiceSrc.includes('recentRatedParticipantWhere'), true);
+assert.equal(rankingServiceSrc.includes('selectRecentRatedUserIds'), true);
 assert.equal(rankingServiceSrc.includes('orderPlayedRatingLeaderboard'), true);
 assert.equal(rankingServiceSrc.includes('Promise.all'), true);
 
@@ -175,8 +194,8 @@ const recentEnd = rankingServiceSrc.indexOf('static async getUserIdsWithRatedGam
 assert.ok(recentStart > 0 && recentEnd > recentStart);
 const recentFn = rankingServiceSrc.slice(recentStart, recentEnd);
 assert.equal(recentFn.includes('userId: { in: userIds }'), false);
-assert.equal(recentFn.includes('startTime: { gte: since }'), true);
-assert.equal(recentFn.includes('affectsRating: true'), true);
+assert.equal(recentFn.includes('recentRatedParticipantWhere(sport, since)'), true);
+assert.equal(recentFn.includes('selectRecentRatedUserIds(userIds, rows)'), true);
 
 const controllerSrc = readFileSync(join(rankingDir, '../../controllers/ranking.controller.ts'), 'utf8');
 const gamesBranch = controllerSrc.slice(controllerSrc.indexOf('if (isGames)'));

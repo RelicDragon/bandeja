@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useMemo } from 'react';
+import { Fragment, useEffect, useState, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Search, ChevronDown, X } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -8,8 +8,12 @@ import { Loading } from './Loading';
 import { LeaderboardSportPicker } from '@/components/leaderboard/LeaderboardSportPicker';
 import { LeaderboardGenderFilter } from '@/components/leaderboard/LeaderboardGenderFilter';
 import { LeaderboardScrollToTopFab } from '@/components/leaderboard/LeaderboardScrollToTopFab';
+import { InactiveRatingSectionRow } from '@/components/leaderboard/InactiveRatingSectionRow';
 import { StandardLeaderboardRow } from '@/components/leaderboard/StandardLeaderboardRow';
-import { ratingLeaderboardRankLabel } from '@/components/leaderboard/ratingLeaderboardDisplay';
+import {
+  firstInactiveRatingRowId,
+  ratingLeaderboardRankLabel,
+} from '@/components/leaderboard/ratingLeaderboardDisplay';
 import { useAuthStore } from '@/store/authStore';
 import { useHeaderStore } from '@/store/headerStore';
 import { isAndroid } from '@/utils/capacitor';
@@ -105,17 +109,14 @@ const StandardLeaderboard = () => {
   }, [leaderboard, searchQuery]);
 
   const userEntry = leaderboard.find(entry => entry.id === user?.id);
-  const firstInactiveId =
-    leaderboardType === 'level'
-      ? filteredLeaderboard.find((entry) => entry.qualifiesForRating === false)?.id
-      : undefined;
-  const unrankedLabel = t('profile.leaderboard.unranked', { defaultValue: '—' });
+  const firstInactiveId = firstInactiveRatingRowId(leaderboardType, filteredLeaderboard);
+  const unrankedPlaceLabel = t('profile.leaderboard.inactiveSection', { defaultValue: 'Not ranked' });
   const userRankLabel = userEntry
     ? ratingLeaderboardRankLabel(
         leaderboardType,
         userEntry.rank,
         userEntry.qualifiesForRating,
-        unrankedLabel,
+        unrankedPlaceLabel,
       )
     : undefined;
 
@@ -206,16 +207,24 @@ const StandardLeaderboard = () => {
               : entry.level.toFixed(1);
 
             return (
-              <StandardLeaderboardRow
-                key={entry.id}
-                entry={entry}
-                isCurrentUser={isCurrentUser}
-                leaderboardType={leaderboardType}
-                displayValue={displayValue}
-                formatRatingDelta={formatRatingDelta}
-                rowRef={isCurrentUser ? userRowRef : null}
-                isInactiveSectionStart={entry.id === firstInactiveId}
-              />
+              <Fragment key={entry.id}>
+                {entry.id === firstInactiveId ? (
+                  <InactiveRatingSectionRow
+                    title={unrankedPlaceLabel}
+                    hint={t('profile.leaderboard.inactiveHint', {
+                      defaultValue: 'Need 5 games and a rated match in 90 days',
+                    })}
+                  />
+                ) : null}
+                <StandardLeaderboardRow
+                  entry={entry}
+                  isCurrentUser={isCurrentUser}
+                  leaderboardType={leaderboardType}
+                  displayValue={displayValue}
+                  formatRatingDelta={formatRatingDelta}
+                  rowRef={isCurrentUser ? userRowRef : null}
+                />
+              </Fragment>
             );
           })}
         </tbody>

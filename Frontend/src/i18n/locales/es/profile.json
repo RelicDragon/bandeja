@@ -314,7 +314,9 @@
     "noLeaderboardData": "No leaderboard data available",
     "leaderboard": {
       "sportLabel": "Deporte del ranking",
-      "unranked": "—"
+      "unranked": "—",
+      "inactiveSection": "Sin ranking",
+      "inactiveHint": "Necesitas 5 partidos y uno valorado en 90 días"
     },
     "verbalStatus": "Status",
     "verbalStatusPlaceholder": "What's on your mind?",

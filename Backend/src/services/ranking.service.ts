@@ -7,6 +7,8 @@ import {
   orderRatingLeaderboard,
   qualifiesForRatingRank,
   ratingLeaderboardActivitySince,
+  recentRatedParticipantWhere,
+  selectRecentRatedUserIds,
 } from './ranking/ratingLeaderboardQualify';
 
 export type LeaderboardTieBreak = 'totalPoints' | 'gamesWon';
@@ -150,28 +152,15 @@ export class RankingService {
   ): Promise<Set<string>> {
     if (userIds.length === 0) return new Set();
 
-    const wanted = new Set(userIds);
     const rows = await prisma.gameParticipant.groupBy({
       by: ['userId'],
-      where: {
-        status: 'PLAYING',
-        game: {
-          sport,
-          resultsStatus: ResultsStatus.FINAL,
-          affectsRating: true,
-          startTime: { gte: since },
-        },
-      },
+      where: recentRatedParticipantWhere(sport, since),
       _count: {
         userId: true,
       },
     });
 
-    const recent = new Set<string>();
-    for (const row of rows) {
-      if (wanted.has(row.userId)) recent.add(row.userId);
-    }
-    return recent;
+    return selectRecentRatedUserIds(userIds, rows);
   }
 
   static async getUserIdsWithRatedGameSinceBySport(

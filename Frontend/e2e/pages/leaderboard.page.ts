@@ -93,7 +93,7 @@ export class LeaderboardPage {
   }
 
   rankingRows(): Locator {
-    return this.page.locator('table tbody tr');
+    return this.page.getByTestId('leaderboard-rating-row');
   }
 
   currentUserRow(): Locator {

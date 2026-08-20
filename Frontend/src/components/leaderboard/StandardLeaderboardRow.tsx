@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { LeaderboardEntry } from '@/api/ranking';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
 import {
+  RATING_LEADERBOARD_MUTED_TEXT,
   isRatingLeaderboardGrayed,
   ratingLeaderboardDeltaClass,
   ratingLeaderboardRankLabel,
@@ -16,7 +17,6 @@ type StandardLeaderboardRowProps = {
   displayValue: string;
   formatRatingDelta: (change: number) => string;
   rowRef: Ref<HTMLTableRowElement>;
-  isInactiveSectionStart?: boolean;
 };
 
 export function StandardLeaderboardRow({
@@ -26,7 +26,6 @@ export function StandardLeaderboardRow({
   displayValue,
   formatRatingDelta,
   rowRef,
-  isInactiveSectionStart = false,
 }: StandardLeaderboardRowProps) {
   const { t } = useTranslation();
   const { openPlayerCard } = usePlayerCardModal();
@@ -37,16 +36,17 @@ export function StandardLeaderboardRow({
     entry.qualifiesForRating,
     t('profile.leaderboard.unranked', { defaultValue: '—' }),
   );
+  const playerName = [entry.firstName, entry.lastName].filter(Boolean).join(' ');
   const nameClass = isGrayed
-    ? 'text-gray-400 dark:text-gray-500'
+    ? RATING_LEADERBOARD_MUTED_TEXT
     : 'text-gray-900 dark:text-white';
   const rankClass = isCurrentUser && !isGrayed
     ? 'text-primary-600 dark:text-primary-400'
     : isGrayed
-      ? 'text-gray-300 dark:text-gray-600'
+      ? RATING_LEADERBOARD_MUTED_TEXT
       : 'text-gray-900 dark:text-white';
   const valueClass = isGrayed
-    ? 'text-sm font-medium text-gray-400 dark:text-gray-500'
+    ? `text-sm font-medium ${RATING_LEADERBOARD_MUTED_TEXT}`
     : `text-sm font-semibold ${nameClass}`;
 
   const openProfile = () => {
@@ -64,14 +64,19 @@ export function StandardLeaderboardRow({
     <tr
       ref={rowRef}
       data-testid="leaderboard-rating-row"
-      data-qualifies-for-rating={isGrayed ? 'false' : 'true'}
+      {...(leaderboardType === 'level'
+        ? { 'data-qualifies-for-rating': isGrayed ? 'false' : 'true' }
+        : {})}
       role="button"
       tabIndex={0}
+      aria-label={
+        isGrayed
+          ? `${playerName}, ${t('profile.leaderboard.inactiveSection', { defaultValue: 'Not ranked' })}`
+          : `${playerName}, ${rankLabel}`
+      }
       onClick={openProfile}
       onKeyDown={onRowKeyDown}
-      className={`cursor-pointer border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 ${
-        isInactiveSectionStart ? 'border-t border-t-gray-200 dark:border-t-gray-700' : ''
-      } ${
+      className={`min-h-11 cursor-pointer border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 focus-visible:bg-gray-50 focus-visible:outline-none dark:hover:bg-gray-800/50 dark:focus-visible:bg-gray-800/60 ${
         isCurrentUser
           ? isGrayed
             ? 'bg-gray-50 dark:bg-gray-800/40'
@@ -79,12 +84,12 @@ export function StandardLeaderboardRow({
           : ''
       }`}
     >
-      <td className="px-0 py-2 text-left align-middle">
+      <td className="px-0 py-2.5 text-left align-middle">
         <span className={`text-xs font-medium tabular-nums ${rankClass}`}>
           {rankLabel}
         </span>
       </td>
-      <td className="min-w-0 py-2 pl-0 pr-2 align-middle">
+      <td className="min-w-0 py-2.5 pl-0 pr-2 align-middle">
         <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center">
             <PlayerAvatar
@@ -97,11 +102,11 @@ export function StandardLeaderboardRow({
           </div>
           <div className="min-w-0 w-full flex-1">
             <div className={`line-clamp-2 min-w-0 break-words text-xs ${nameClass}`}>
-              {[entry.firstName, entry.lastName].filter(Boolean).join(' ')}
+              {playerName}
               {isCurrentUser && (
                 <span className={`ml-1.5 text-[10px] ${
                   isGrayed
-                    ? 'text-gray-400 dark:text-gray-500'
+                    ? RATING_LEADERBOARD_MUTED_TEXT
                     : 'text-primary-600 dark:text-primary-400'
                 }`}>
                   ({t('profile.you')})
@@ -109,14 +114,20 @@ export function StandardLeaderboardRow({
               )}
             </div>
             {entry.verbalStatus && (
-              <p className="verbal-status line-clamp-2 break-words">
+              <p
+                className={
+                  isGrayed
+                    ? `line-clamp-2 break-words text-[9px] -mb-0.5 ${RATING_LEADERBOARD_MUTED_TEXT}`
+                    : 'verbal-status line-clamp-2 break-words'
+                }
+              >
                 {entry.verbalStatus}
               </p>
             )}
           </div>
         </div>
       </td>
-      <td className="whitespace-nowrap py-2 pl-2 pr-0 text-right align-middle">
+      <td className="whitespace-nowrap py-2.5 pl-2 pr-0 text-right align-middle">
         <div className="flex items-center justify-end gap-1">
           {entry.lastGameRatingChange !== null &&
             entry.lastGameRatingChange !== undefined && (

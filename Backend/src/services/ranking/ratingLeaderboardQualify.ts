@@ -1,3 +1,5 @@
+import type { Sport } from '@prisma/client';
+
 export const RATING_LEADERBOARD_MIN_GAMES = 5;
 export const RATING_LEADERBOARD_ACTIVITY_DAYS = 90;
 
@@ -15,6 +17,31 @@ export type RatingLeaderboardQualifyInput = {
 
 export function ratingLeaderboardActivitySince(nowMs = Date.now()): Date {
   return new Date(nowMs - RATING_LEADERBOARD_ACTIVITY_DAYS * 24 * 60 * 60 * 1000);
+}
+
+export function recentRatedParticipantWhere(sport: Sport, since: Date) {
+  return {
+    status: 'PLAYING' as const,
+    game: {
+      sport,
+      resultsStatus: 'FINAL' as const,
+      affectsRating: true,
+      startTime: { gte: since },
+    },
+  };
+}
+
+export function selectRecentRatedUserIds(
+  wantedUserIds: readonly string[],
+  groupByRows: ReadonlyArray<{ userId: string }>,
+): Set<string> {
+  if (wantedUserIds.length === 0) return new Set();
+  const wanted = new Set(wantedUserIds);
+  const recent = new Set<string>();
+  for (const row of groupByRows) {
+    if (wanted.has(row.userId)) recent.add(row.userId);
+  }
+  return recent;
 }
 
 export function qualifiesForRatingRank(input: RatingLeaderboardQualifyInput): boolean {
