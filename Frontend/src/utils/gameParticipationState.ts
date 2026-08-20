@@ -1,6 +1,7 @@
 import type { GameParticipant, Game } from '@/types';
 import { isParticipantPlaying, isParticipantNonPlaying, isParticipantGuest, isParticipantInQueue } from './participantStatus';
 import { isPendingGameInvite } from './gameInviteParticipant';
+import { isPlayingRosterFull } from './gameInviteInbox';
 import { isUserGameAdminOrOwner } from './gameResults';
 
 function userIsPlayingInParticipantList(parts: GameParticipant[] | undefined, userId: string): boolean {
@@ -79,7 +80,7 @@ export function getGameParticipationState(
     isAdminOrOwner,
     isOwner,
     playingCount,
-    isFull: game ? game.entityType !== 'BAR' && playingCount >= game.maxParticipants : false,
+    isFull: game ? isPlayingRosterFull({ ...game, participants: list }) : false,
   };
 }
 

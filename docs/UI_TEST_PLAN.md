@@ -297,6 +297,9 @@ Frontend/e2e/
 | H-15a | Telegram decline with response | Telegram game invite → Decline with response → send reason (or `/skip` / `/skip@Bot`) | Same as H-15 when reason sent; invite declined and Telegram invite message updated; `/skip` declines without chat message; prompt expires after 10m; Accept/Decline clears pending prompt |
 | H-16 | Invite note on game | Save note without accept/decline | Persisted |
 | H-61 | Invite cleared after accept from game | My tab invite → open game → accept invite on game page → back to My tab | Invite card gone immediately; second accept not offered |
+| H-73 | Full roster hides home invite | Seed pending INVITED row on a game whose PLAYING count equals max participants | Home `home-invites-section` omits the card; header invite badge does not count it; participant row remains INVITED on the game |
+| H-74 | Leave reopens home invite | From H-73, a PLAYING player leaves so a slot opens | Invite card returns on Home; badge increments; invited user receives an invite push |
+| H-75 | Accept while roster is full | Pending invite on a full game (e.g. via game page or stale card) → Accept | Does not join over cap; queued (`games.addedToJoinQueue`) or a game-full error; PLAYING count stays ≤ max participants |
 
 ### 6.3 My games interactions
 

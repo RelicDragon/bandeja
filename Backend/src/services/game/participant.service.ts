@@ -26,6 +26,7 @@ import { projectUserForSportContext } from '../user/userSportProfile.service';
 import { syncParticipantShowInStoriesSideEffects } from '../story/participantShowInStories.sync';
 import { PlayIntentGameLifecycleService } from '../playIntent/playIntentGameLifecycle.service';
 import { publishCommittedPlayIntentStatusChanges } from '../playIntent/playIntentRealtime';
+import { schedulePendingInviteSlotOpenNotify } from '../invite/pendingInviteSlotOpen.service';
 
 const PLAYING_STATUS = 'PLAYING' as const;
 const IN_QUEUE_STATUS = 'IN_QUEUE' as const;
@@ -189,6 +190,7 @@ export class ParticipantService {
       void import('../playIntent/playIntentMatch.service')
         .then(({ PlayIntentMatchService }) => PlayIntentMatchService.onPublicGameSlotsOpened(gameId))
         .catch((err) => console.error('Play intent slot-open match failed:', err));
+      schedulePendingInviteSlotOpenNotify(gameId);
       return 'games.leftSuccessfully';
     }
 
@@ -408,6 +410,9 @@ export class ParticipantService {
 
     await GameService.updateGameReadiness(gameId);
     await ParticipantMessageHelper.emitGameUpdate(gameId, userId);
+    if (participant.status === PLAYING_STATUS && !isPlaying) {
+      schedulePendingInviteSlotOpenNotify(gameId);
+    }
     return isPlaying ? 'games.joinedSuccessfully' : 'games.leftSuccessfully';
   }
 

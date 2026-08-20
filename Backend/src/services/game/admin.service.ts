@@ -14,6 +14,7 @@ import { USER_SELECT_FIELDS } from '../../utils/constants';
 import { removeUserFromGameFixedTeams } from './fixedTeamsCleanup';
 import { PlayIntentGameLifecycleService } from '../playIntent/playIntentGameLifecycle.service';
 import { publishCommittedPlayIntentStatusChanges } from '../playIntent/playIntentRealtime';
+import { schedulePendingInviteSlotOpenNotify } from '../invite/pendingInviteSlotOpen.service';
 
 export class AdminService {
   static async addAdmin(gameId: string, ownerId: string, userId: string) {
@@ -216,6 +217,9 @@ export class AdminService {
 
     await GameService.updateGameReadiness(gameId);
     await ParticipantMessageHelper.emitGameUpdate(gameId, currentUserId);
+    if (targetParticipant.status === 'PLAYING') {
+      schedulePendingInviteSlotOpenNotify(gameId);
+    }
     return 'User kicked successfully';
   }
 

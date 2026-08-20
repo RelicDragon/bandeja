@@ -33,4 +33,30 @@ describe('headerService', () => {
     expect(hydrated).toBe(true);
     expect(useHeaderStore.getState().pendingInvites).toBe(2);
   });
+
+  it('omits full-roster pending invites from the header badge', () => {
+    queryClient.setQueryData(queryKeys.games.my('user-1'), {
+      games: [],
+      invites: [
+        {
+          id: 'i1',
+          status: 'PENDING',
+          game: {
+            maxParticipants: 4,
+            participants: [
+              { status: 'PLAYING' },
+              { status: 'PLAYING' },
+              { status: 'PLAYING' },
+              { status: 'PLAYING' },
+            ],
+          },
+        },
+        { id: 'i2', status: 'PENDING' },
+      ] as Invite[],
+      unreadCounts: {},
+    });
+
+    headerService.hydratePendingInvitesFromCache();
+    expect(useHeaderStore.getState().pendingInvites).toBe(1);
+  });
 });

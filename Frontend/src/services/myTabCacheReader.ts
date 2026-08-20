@@ -2,6 +2,7 @@ import type { QueryClient } from '@tanstack/react-query';
 import type { Invite, UserTeam, UserTeamMembership } from '@/types';
 import type { MyGamesData } from '@/queries/games/useMyGamesQuery';
 import { queryKeys } from '@/queries/queryKeys';
+import { filterInboxVisibleInvites } from '@/utils/gameInviteInbox';
 
 export type MyTabCacheSnapshot = MyGamesData & {
   teams?: UserTeam[];
@@ -20,7 +21,7 @@ export function readMyTabCache(
 
 export function countPendingInvites(invites: Invite[] | undefined): number {
   if (!invites?.length) return 0;
-  return invites.filter((invite) => invite.status === 'PENDING').length;
+  return filterInboxVisibleInvites(invites.filter((invite) => invite.status === 'PENDING')).length;
 }
 
 export function hasMyTabMembershipsSnapshot(
