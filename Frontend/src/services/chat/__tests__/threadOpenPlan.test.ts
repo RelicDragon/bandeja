@@ -129,6 +129,21 @@ describe('planThreadOpen / openThreadBootstrap peekPrev', () => {
     expect(viaCoordinator.plan.messages.map((m) => m.id)).toEqual(['m1', 'opt-mid']);
   });
 
+  it('drops L1 rows that are locally tombstoned', async () => {
+    const l1 = [msg('keep', '2026-01-03T10:00:00Z'), msg('gone', '2026-01-03T10:01:00Z')];
+    const dexieTail = [msg('keep', '2026-01-03T10:00:00Z')];
+    const result = await planThreadOpen('GAME:g1:PRIVATE', {
+      peekL1: () => l1,
+      peekPrev: () => l1,
+      loadBootstrap: async () => ({ messages: dexieTail }),
+      loadTombstonedIds: async () => new Set(['gone']),
+    });
+    expect(result.kind).toBe('painted');
+    if (result.kind !== 'painted') return;
+    expect(result.paintSource).toBe('l1');
+    expect(result.rows.map((m) => m.id)).toEqual(['keep']);
+  });
+
   it('returns empty with paintGeneration 0 when no local data', async () => {
     const result = await planThreadOpen('GAME:g1:PUBLIC', {
       peekL1: () => [],

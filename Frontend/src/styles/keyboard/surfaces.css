@@ -28,42 +28,15 @@ body.capacitor-android.keyboard-visible footer {
   scroll-margin-bottom: 24px;
 }
 
-/* Centered Radix dialogs: sit just above keyboard when inset is real.
-   keyboard-dialog-shift is set when --keyboard-height >= 80px (see keyboardState).
-   Do not tie this to keyboard-visible alone — that breaks vertical centering (top 50% + no translateY). */
-body.keyboard-dialog-shift .dialog-content-animate,
-body.keyboard-dialog-shift .cap-keyboard-aware-dialog {
-  top: auto !important;
-  bottom: calc(var(--keyboard-height, 0px) + max(8px, env(safe-area-inset-bottom, 0px))) !important;
-  translate: -50% 0 !important;
-  max-height: min(
-    calc(100vh - var(--keyboard-height, 0px) - env(safe-area-inset-top, 0px) - 24px),
-    calc(var(--vv-height, 100vh) - env(safe-area-inset-top, 0px) - 32px)
-  ) !important;
-  max-height: min(
-    calc(100dvh - var(--keyboard-height, 0px) - env(safe-area-inset-top, 0px) - 24px),
-    calc(var(--vv-height, 100dvh) - env(safe-area-inset-top, 0px) - 32px)
-  ) !important;
-  overflow-y: auto !important;
-  transition:
-    bottom 0.25s cubic-bezier(0.4, 0, 0.2, 1),
-    max-height 0.25s cubic-bezier(0.4, 0, 0.2, 1),
-    translate 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-}
+/* Centered dialogs + bottom sheets: overlay-chrome.css
+   Pin chrome, shrink to visual viewport, do not overflow-scroll the overlay root. */
 
 body.keyboard-visible .fullscreen-dialog-root .cap-fullscreen-dialog-body {
   padding-bottom: var(--keyboard-height, 0px);
 }
 
-/* Bottom-anchored sheets (Vaul drawers, custom fixed/absolute bottom panels):
-   lift the whole panel above the keyboard and clamp its height. */
 .cap-keyboard-aware-sheet {
   transition: bottom 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-body.keyboard-visible .cap-keyboard-aware-sheet {
-  bottom: var(--keyboard-height, 0px) !important;
-  max-height: calc(100dvh - var(--keyboard-height, 0px) - env(safe-area-inset-top, 0px) - 24px) !important;
 }
 
 /* Full-screen overlay wrappers (fixed inset-0 + flex items-end/center):

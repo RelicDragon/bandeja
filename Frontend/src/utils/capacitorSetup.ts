@@ -7,6 +7,7 @@ import pushNotificationService from '@/services/pushNotificationService';
 import { registerPushNotificationActionTypes } from '@/services/push/registerPushNotificationActionTypes';
 import { syncApiBaseUrlToNative } from '@/services/authBridge';
 import { initWatchBridge } from '@/services/watchBridgeInit';
+import { shouldSkipCaretFollowScroll } from '@/components/bugs/selectionPreserve';
 import {
   computeKeyboardInsetPx,
   isInsideKeyboardManagedSurface,
@@ -16,9 +17,17 @@ import {
 } from './keyboardLayout';
 import { getKeyboardState, publishKeyboardState } from './keyboardState';
 import {
+  computeVisualViewportCssVarWrites,
+  createFrameCoalescer,
+  pickChangedCssVars,
+} from './overlayKeyboardLayout';
+import {
   releaseKeyboardScrollAssist,
   scrollElementAboveKeyboard,
 } from './keyboardScrollAssist';
+
+const lastVisualViewportCssVars = new Map<string, string>();
+const lastAndroidViewportCssVars = new Map<string, string>();
 
 let lastPluginKeyboardInsetPx = 0;
 let nativeKeyboardVisible = false;
@@ -50,10 +59,20 @@ const resetKeyboardLayoutUi = () => {
 };
 
 const applyVisualViewportCssVars = () => {
+  if (!document.documentElement) return;
   const vv = window.visualViewport;
-  if (!vv || !document.documentElement) return;
-  document.documentElement.style.setProperty('--vv-height', `${Math.round(vv.height)}px`);
-  document.documentElement.style.setProperty('--vv-offset-top', `${Math.round(vv.offsetTop)}px`);
+  const next = computeVisualViewportCssVarWrites({
+    innerHeight: window.innerHeight || 0,
+    vvHeight: vv ? vv.height : null,
+    vvOffsetTop: vv ? vv.offsetTop : null,
+  });
+  const changed = pickChangedCssVars(lastVisualViewportCssVars, next);
+  if (changed.length === 0) return;
+  const style = document.documentElement.style;
+  for (const [name, value] of changed) {
+    lastVisualViewportCssVars.set(name, value);
+    style.setProperty(name, value);
+  }
 };
 
 export const syncKeyboardLayoutFromViewport = () => {
@@ -128,10 +147,17 @@ const getAndroidViewportWidth = (): number => {
 };
 
 export const setAndroidViewportVars = () => {
-  const w = getAndroidViewportWidth();
-  const h = getAndroidViewportHeight();
-  document.documentElement.style.setProperty('--viewport-width', `${w}px`);
-  document.documentElement.style.setProperty('--viewport-height', `${h}px`);
+  const next: Array<readonly [string, string]> = [
+    ['--viewport-width', `${getAndroidViewportWidth()}px`],
+    ['--viewport-height', `${getAndroidViewportHeight()}px`],
+  ];
+  const changed = pickChangedCssVars(lastAndroidViewportCssVars, next);
+  if (changed.length === 0) return;
+  const style = document.documentElement.style;
+  for (const [name, value] of changed) {
+    lastAndroidViewportCssVars.set(name, value);
+    style.setProperty(name, value);
+  }
 };
 
 const prefersReducedMotion = () =>
@@ -143,6 +169,7 @@ const scrollInputIntoViewIfAble = (el: HTMLElement | null) => {
   const smooth = !prefersReducedMotion();
   if (isInsideChatComposerFooter(el)) return;
   if (isSelfLiftingKeyboardBottomPanel(el)) return;
+  if (shouldSkipCaretFollowScroll(el)) return;
   if (isInsideKeyboardManagedSurface(el)) {
     // Surface already lifted above the keyboard; local scroll is enough.
     el.scrollIntoView({
@@ -171,12 +198,13 @@ export const setupCapacitor = async () => {
       setAndroidViewportVars();
       syncKeyboardLayoutFromViewport();
     };
+    const scheduleAndroidViewport = createFrameCoalescer(onAndroidViewport);
     onAndroidViewport();
     requestAnimationFrame(onAndroidViewport);
     window.addEventListener('load', () => onAndroidViewport());
-    window.visualViewport?.addEventListener('resize', onAndroidViewport);
-    window.visualViewport?.addEventListener('scroll', onAndroidViewport);
-    window.addEventListener('resize', onAndroidViewport);
+    window.visualViewport?.addEventListener('resize', scheduleAndroidViewport.schedule);
+    window.visualViewport?.addEventListener('scroll', scheduleAndroidViewport.schedule);
+    window.addEventListener('resize', scheduleAndroidViewport.schedule);
     window.addEventListener('orientationchange', () => {
       setTimeout(onAndroidViewport, 50);
       requestAnimationFrame(onAndroidViewport);
@@ -293,9 +321,10 @@ export const setupCapacitor = async () => {
     });
 
     if (isIOS()) {
+      const scheduleIosViewport = createFrameCoalescer(syncKeyboardLayoutFromViewport);
       syncKeyboardLayoutFromViewport();
-      window.visualViewport?.addEventListener('resize', syncKeyboardLayoutFromViewport);
-      window.visualViewport?.addEventListener('scroll', syncKeyboardLayoutFromViewport);
+      window.visualViewport?.addEventListener('resize', scheduleIosViewport.schedule);
+      window.visualViewport?.addEventListener('scroll', scheduleIosViewport.schedule);
     }
 
     document.addEventListener('focusin', (e) => {
@@ -389,8 +418,9 @@ export const setupBrowserKeyboardDetection = () => {
       publishManualKeyboardState();
     };
 
-    window.visualViewport.addEventListener('resize', handleViewportChange);
-    window.visualViewport.addEventListener('scroll', handleViewportChange);
+    const scheduleViewportChange = createFrameCoalescer(handleViewportChange);
+    window.visualViewport.addEventListener('resize', scheduleViewportChange.schedule);
+    window.visualViewport.addEventListener('scroll', scheduleViewportChange.schedule);
     handleViewportChange();
 
     const handleOrientationChange = () => {
@@ -404,8 +434,9 @@ export const setupBrowserKeyboardDetection = () => {
       if (loadHandler) {
         window.removeEventListener('load', loadHandler);
       }
-      window.visualViewport?.removeEventListener('resize', handleViewportChange);
-      window.visualViewport?.removeEventListener('scroll', handleViewportChange);
+      scheduleViewportChange.cancel();
+      window.visualViewport?.removeEventListener('resize', scheduleViewportChange.schedule);
+      window.visualViewport?.removeEventListener('scroll', scheduleViewportChange.schedule);
       window.removeEventListener('orientationchange', handleOrientationChange);
       window.removeEventListener('resize', handleOrientationChange);
     };

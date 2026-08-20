@@ -30,8 +30,8 @@ export const subscribeKeyboardState = (listener: () => void): (() => void) => {
 };
 
 export const publishKeyboardState = (next: KeyboardState) => {
-  applyKeyboardStateToDom(next);
   if (next.visible === state.visible && next.insetPx === state.insetPx) return;
+  applyKeyboardStateToDom(next);
   state = next;
   listeners.forEach((listener) => listener());
 };

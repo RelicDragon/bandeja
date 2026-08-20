@@ -896,11 +896,11 @@ export const EditGameInfoModal = ({
       }}
     >
       <DrawerContent
-        className="!mt-10 !max-h-[min(94dvh,960px)] flex h-[min(94dvh,960px)] flex-col overflow-hidden bg-white dark:bg-gray-900"
+        className="!mt-10 !max-h-[min(94dvh,960px,var(--overlay-pinned-max-height))] flex h-[min(94dvh,960px,var(--overlay-pinned-max-height))] flex-col overflow-hidden bg-white dark:bg-gray-900"
         aria-labelledby="edit-game-info-modal-title"
       >
         <div className="mx-auto mt-2.5 h-1 w-10 shrink-0 rounded-full bg-gray-300/90 dark:bg-gray-600" aria-hidden />
-        <div className="flex shrink-0 items-center gap-3 px-4 pb-2 pt-3">
+        <div data-overlay-chrome="" className="flex shrink-0 items-center gap-3 px-4 pb-2 pt-3">
           <h2
             id="edit-game-info-modal-title"
             className="min-w-0 flex-1 text-left text-lg font-semibold tracking-tight text-gray-900 dark:text-white"

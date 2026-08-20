@@ -1,5 +1,6 @@
 import React from 'react';
 import { useChatMediaAsset } from '@/hooks/useChatMediaAsset';
+import { ChatMediaUnavailable } from './ChatMediaUnavailable';
 
 type ChatMediaImageProps = {
   src: string;
@@ -19,6 +20,10 @@ export const ChatMediaImage: React.FC<ChatMediaImageProps> = ({
   loading = 'lazy',
 }) => {
   const { asset, recordDimensions } = useChatMediaAsset(src);
+
+  if (!src) {
+    return <ChatMediaUnavailable className={className} style={style} />;
+  }
 
   return (
     <img

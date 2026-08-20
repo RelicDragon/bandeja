@@ -1,7 +1,8 @@
 import type { ChatMessage } from '@/api/chat';
 import { mergeReadReceipts } from './mergeReadReceipts';
+import { preferDeletedAt } from './chatLocalMessageTombstone';
 
-/** Prefer incoming fields but never drop existing read receipts when incoming omits them. */
+/** Prefer incoming fields but never drop existing read receipts or delete tombstones. */
 export function mergeMessagePreservingReceipts<T extends ChatMessage>(
   existing: T | undefined,
   incoming: T
@@ -10,6 +11,7 @@ export function mergeMessagePreservingReceipts<T extends ChatMessage>(
   return {
     ...existing,
     ...incoming,
+    deletedAt: preferDeletedAt(existing.deletedAt, incoming.deletedAt),
     readReceipts: mergeReadReceipts(existing.readReceipts ?? [], incoming.readReceipts ?? []),
   };
 }

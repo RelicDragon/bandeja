@@ -38,6 +38,7 @@ export type ThreadOpenInputs = {
   peekPrev: () => readonly ChatMessageWithStatus[];
   loadBootstrap: () => Promise<{ messages: ChatMessage[] }>;
   loadOutboxOptimistics?: () => Promise<readonly ChatMessageWithStatus[]>;
+  loadTombstonedIds?: (ids: readonly string[]) => Promise<ReadonlySet<string>>;
   forceFreshOpen?: boolean;
   openAnchorMessageId?: string;
 };

@@ -6,6 +6,7 @@ import { MessageContentBody, ContentVariant } from './MessageContentBody';
 import { MessageTranslationBody } from './MessageTranslationBody';
 import { MessageExternalLinkPreview } from './MessageExternalLinkPreview';
 import { MessageMediaGrid } from './MessageMediaGrid';
+import { ChatMediaUnavailable } from './ChatMediaUnavailable';
 import { AudioMessageBubble } from '../audio/AudioMessageBubble';
 import { ChatVideoBubble } from './ChatVideoBubble';
 import { ChatDocumentBubble } from './ChatDocumentBubble';
@@ -262,6 +263,8 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
         />
       )}
 
+      {isVideo && !message.mediaUrls?.[0] && <ChatMediaUnavailable />}
+
       {isVideo && message.mediaUrls?.[0] && (
         <ChatVideoBubble
           message={message}
@@ -272,6 +275,8 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
           onOpenFullscreen={onVideoOpen}
         />
       )}
+
+      {message.messageType === 'IMAGE' && !(message.mediaUrls?.length) && <ChatMediaUnavailable />}
 
       {isSticker && (
         <StickerMessageBubble message={message} onStickerClick={onImageClick} />

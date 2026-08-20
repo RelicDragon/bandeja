@@ -18,19 +18,32 @@ import type { ChatSyncEventDTO } from '@/services/chat/chatSyncEventTypes';
 import { notifyInboundMessageSeen } from '@/services/chat/unreadInboundMessage';
 import { withChatLocalBulkApply } from './chatLocalApplyBulk';
 import { persistChatMessagesFromApiDirect } from './chatLocalApplyWrite';
-import { getLocalCursorSeq, reconcileCursorWithServerHead, BATCH_HEAD_CACHE_MS } from './chatLocalApplyCursor';
+import { persistCreatedEventMediaTombstones } from './chatLocalApplyPersistMessage';
+import { nextAppliedCursor } from './chatAppliedSeq';
+import {
+  seqApplyDecisionsForEvents,
+  seqApplyDecisionsForTombstonedCreates,
+} from './chatSyncEventApplyStatus';
+import { getLocalCursorSeq, reconcileCursorWithServerHead } from './chatLocalApplyCursor';
 import {
   clearPendingSocketSeqReconcileTimer,
   markChatPullCompleted,
 } from './chatLocalApplySyncTimers';
+import {
+  shouldSkipCaughtUpSyncPull,
+  type CaughtUpSyncPullOptions,
+} from './chatLocalApplyCaughtUpPull';
+import { clearMessageDeletedCaughtUpBypass } from './chatLocalMessageTombstone';
 
 function schedulePullPageIndexHooks(
   events: ChatSyncEventDTO[],
-  options?: { bumpUnreadForNewMessages?: boolean }
+  options?: { bumpUnreadForNewMessages?: boolean; appliedSeqs?: ReadonlySet<number> }
 ): void {
   const bumpUnread = options?.bumpUnreadForNewMessages === true;
+  const appliedSeqs = options?.appliedSeqs;
   void (async () => {
     for (const ev of events) {
+      if (appliedSeqs && !appliedSeqs.has(ev.seq)) continue;
       if (ev.eventType === 'MESSAGE_CREATED' || ev.eventType === 'MESSAGE_UPDATED') {
         const pl = ev.payload as { message?: ChatMessage; messageId?: string };
         const m = pl.message;
@@ -74,37 +87,18 @@ export type PullEventsLoopResult = {
   threadInvalidated: boolean;
   threadArchived: boolean;
   eventsApplied: number;
+  blockedOnUnapplied: boolean;
 };
 
-export type PullChatSyncOptions = {
-  expectedServerMaxSeq?: number;
-  forcePull?: boolean;
-};
+export type PullChatSyncOptions = CaughtUpSyncPullOptions;
 
 const EMPTY_PULL_RESULT: PullEventsLoopResult = {
   repairedStaleCursor: false,
   threadInvalidated: false,
   threadArchived: false,
   eventsApplied: 0,
+  blockedOnUnapplied: false,
 };
-
-async function shouldSkipCaughtUpSyncPull(
-  contextType: ChatContextType,
-  contextId: string,
-  options?: PullChatSyncOptions
-): Promise<boolean> {
-  if (options?.forcePull) return false;
-  const local = await getLocalCursorSeq(contextType, contextId);
-  if (options?.expectedServerMaxSeq != null) {
-    return local >= options.expectedServerMaxSeq;
-  }
-  const key = chatCursorKey(contextType, contextId);
-  const threadRow = await chatLocalDb.chatThreads.get(key);
-  const cachedMax = threadRow?.serverMaxSeq;
-  if (cachedMax == null) return false;
-  const age = threadRow?.updatedAt != null ? Date.now() - threadRow.updatedAt : Infinity;
-  return age < BATCH_HEAD_CACHE_MS && local >= cachedMax;
-}
 
 export async function pullEventsLoop(
   contextType: ChatContextType,
@@ -118,6 +112,7 @@ export async function pullEventsLoop(
   let threadInvalidated = false;
   let threadArchived = false;
   let eventsApplied = 0;
+  let blockedOnUnapplied = false;
   for (;;) {
     const pack = await withChatSyncRetry('events', () =>
       fetchChatSyncEventsPackOffMainThread(contextType, contextId, after, 300)
@@ -140,7 +135,7 @@ export async function pullEventsLoop(
       continue;
     }
     if (!pack.events.length) break;
-    eventsApplied += pack.events.length;
+    const appliedSeqs = new Set<number>();
     await withChatLocalBulkApply(async () => {
       let i = 0;
       while (i < pack.events.length) {
@@ -154,6 +149,8 @@ export async function pullEventsLoop(
             lastAppliedSeq: Math.max(rowInv?.lastAppliedSeq ?? 0, ev.seq),
             updatedAt: Date.now(),
           });
+          appliedSeqs.add(ev.seq);
+          eventsApplied += 1;
           i += 1;
           continue;
         }
@@ -167,6 +164,8 @@ export async function pullEventsLoop(
             ...(archivedAt != null && !Number.isNaN(archivedAt) ? { archivedAt } : {}),
           });
           threadArchived = true;
+          appliedSeqs.add(ev.seq);
+          eventsApplied += 1;
           i += 1;
           continue;
         }
@@ -180,47 +179,82 @@ export async function pullEventsLoop(
         }
         const slice = pack.events.slice(i, j);
         const patches = chatSyncEventsToPatches(slice);
-        const { putMessagesForMedia, patchMessageFallbacks } = await chatLocalDb.transaction(
-          'rw',
-          [chatLocalDb.messages, chatLocalDb.chatSyncCursor, chatLocalDb.messageSearchTokens],
-          async () => {
-            const side = await applyChatSyncPatchesInSlice(patches, contextType, contextId);
-            const lastSeq = slice[slice.length - 1]!.seq;
-            const row = await chatLocalDb.chatSyncCursor.get(key);
-            const next = Math.max(row?.lastAppliedSeq ?? 0, lastSeq);
-            await chatLocalDb.chatSyncCursor.put({
-              key,
-              lastAppliedSeq: next,
-              updatedAt: Date.now(),
-            });
-            return side;
+        try {
+          const { putMessagesForMedia, patchMessageFallbacks, decisions, nextCursor, sliceMaxSeq } =
+            await chatLocalDb.transaction(
+              'rw',
+              [chatLocalDb.messages, chatLocalDb.chatSyncCursor, chatLocalDb.messageSearchTokens],
+              async () => {
+                const side = await applyChatSyncPatchesInSlice(patches, contextType, contextId);
+                const sliceDecisions = seqApplyDecisionsForEvents(slice, side.persistedMessages);
+                const row = await chatLocalDb.chatSyncCursor.get(key);
+                const next = nextAppliedCursor(row?.lastAppliedSeq ?? 0, sliceDecisions);
+                await chatLocalDb.chatSyncCursor.put({
+                  key,
+                  lastAppliedSeq: next,
+                  updatedAt: Date.now(),
+                });
+                return {
+                  ...side,
+                  decisions: sliceDecisions,
+                  nextCursor: next,
+                  sliceMaxSeq: slice[slice.length - 1]!.seq,
+                };
+              }
+            );
+          for (const decision of decisions) {
+            if (decision.applied) {
+              appliedSeqs.add(decision.seq);
+              eventsApplied += 1;
+            }
           }
-        );
-        for (const fb of patchMessageFallbacks) {
-          try {
-            const m = await chatApi.getChatMessageById(fb.messageId);
-            if (m.chatContextType !== contextType || m.contextId !== contextId) continue;
-            await persistChatMessagesFromApiDirect([
-              { ...m, syncSeq: fb.syncSeq, serverSyncSeq: fb.syncSeq },
-            ]);
-          } catch {
-            /* offline or 404 */
+          if (nextCursor < sliceMaxSeq) blockedOnUnapplied = true;
+          for (const fb of patchMessageFallbacks) {
+            try {
+              const m = await chatApi.getChatMessageById(fb.messageId);
+              if (m.chatContextType !== contextType || m.contextId !== contextId) continue;
+              await persistChatMessagesFromApiDirect([
+                { ...m, syncSeq: fb.syncSeq, serverSyncSeq: fb.syncSeq },
+              ]);
+            } catch {
+              /* offline or 404 */
+            }
           }
-        }
-        for (const m of putMessagesForMedia) {
-          if (m.thumbnailUrls?.some((u) => u && !u.startsWith('blob:') && !u.startsWith('data:'))) {
-            scheduleChatMediaThumbPrefetchForMessage(m);
+          for (const m of putMessagesForMedia) {
+            if (m.thumbnailUrls?.some((u) => u && !u.startsWith('blob:') && !u.startsWith('data:'))) {
+              scheduleChatMediaThumbPrefetchForMessage(m);
+            }
           }
+        } catch {
+          const tombstones = await persistCreatedEventMediaTombstones(slice).catch(
+            (): Array<Pick<ChatMessage, 'id'>> => []
+          );
+          const sliceDecisions = seqApplyDecisionsForTombstonedCreates(slice, tombstones);
+          const row = await chatLocalDb.chatSyncCursor.get(key);
+          const next = nextAppliedCursor(row?.lastAppliedSeq ?? 0, sliceDecisions);
+          await chatLocalDb.chatSyncCursor.put({
+            key,
+            lastAppliedSeq: next,
+            updatedAt: Date.now(),
+          });
+          for (const decision of sliceDecisions) {
+            if (decision.applied) {
+              appliedSeqs.add(decision.seq);
+              eventsApplied += 1;
+            }
+          }
+          if (next < slice[slice.length - 1]!.seq) blockedOnUnapplied = true;
         }
         i = j;
       }
     });
-    after = pack.events[pack.events.length - 1]!.seq;
-    schedulePullPageIndexHooks(pack.events, { bumpUnreadForNewMessages });
+    const nextAfter = await getLocalCursorSeq(contextType, contextId);
+    schedulePullPageIndexHooks(pack.events, { bumpUnreadForNewMessages, appliedSeqs });
     broadcastChatPullHint(key);
-    if (!pack.hasMore) break;
+    if (blockedOnUnapplied || !pack.hasMore || nextAfter <= after) break;
+    after = nextAfter;
   }
-  return { repairedStaleCursor, threadInvalidated, threadArchived, eventsApplied };
+  return { repairedStaleCursor, threadInvalidated, threadArchived, eventsApplied, blockedOnUnapplied };
 }
 
 export async function pullAndApplyChatSyncEventsDirect(
@@ -234,15 +268,18 @@ export async function pullAndApplyChatSyncEventsDirect(
     return EMPTY_PULL_RESULT;
   }
   const result = await pullEventsLoop(contextType, contextId);
-  const { repairedStaleCursor, threadInvalidated } = result;
+  clearMessageDeletedCaughtUpBypass(contextType, contextId);
+  const { repairedStaleCursor, threadInvalidated, blockedOnUnapplied } = result;
   markChatPullCompleted(contextType, contextId);
-  await reconcileCursorWithServerHead(
-    contextType,
-    contextId,
-    options?.expectedServerMaxSeq != null
-      ? { expectedServerMaxSeq: options.expectedServerMaxSeq }
-      : undefined
-  );
+  if (!blockedOnUnapplied) {
+    await reconcileCursorWithServerHead(
+      contextType,
+      contextId,
+      options?.expectedServerMaxSeq != null
+        ? { expectedServerMaxSeq: options.expectedServerMaxSeq }
+        : undefined
+    );
+  }
   clearPendingSocketSeqReconcileTimer(contextType, contextId);
   if (repairedStaleCursor || threadInvalidated) {
     const { persistLatestTailPagesAfterStaleCursor } = await import('./chatTailRecover');

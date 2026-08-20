@@ -1,14 +1,18 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'react-hot-toast';
 import { Button, Select } from '@/components';
 import { BugType, BugPriority } from '@/types';
 import { BugPrioritySelector } from '@/components/chat/BugPrioritySelector';
 import { bugsApi } from '@/api';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/Dialog';
+import { BugCreateError } from './BugCreateError';
+import { extractBugCreateErrorMessage } from './bugCreateErrorMessage';
+import { getBugCreatePlatformInfo } from './bugCreatePlatformInfo';
+import { createBugCreateSubmitSession } from './bugCreateSubmitSession';
+import { SelectionPreservingTextarea } from './SelectionPreservingTextarea';
 
 const BUG_TYPE_VALUES: BugType[] = ['BUG', 'CRITICAL', 'SUGGESTION', 'QUESTION', 'TASK'];
-import { toast } from 'react-hot-toast';
-import { isCapacitor, isIOS, isAndroid, getAppInfo, getCapacitorPlatform } from '@/utils/capacitor';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/Dialog';
 
 interface BugModalProps {
   isOpen: boolean;
@@ -22,28 +26,20 @@ export const BugModal = ({ isOpen, onClose, onSuccess }: BugModalProps) => {
   const [bugType, setBugType] = useState<BugType>('BUG');
   const [priority, setPriority] = useState<BugPriority>(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const submitSessionRef = useRef(createBugCreateSubmitSession());
+  const abortRef = useRef<AbortController | null>(null);
 
-  const getPlatformInfo = async (): Promise<string> => {
-    if (!isCapacitor()) {
-      return 'web-app';
-    }
+  useEffect(() => {
+    const session = submitSessionRef.current;
+    return () => {
+      abortRef.current?.abort();
+      abortRef.current = null;
+      session.invalidate();
+    };
+  }, []);
 
-    try {
-      const appInfo = await getAppInfo();
-      if (!appInfo) {
-        const platform = isIOS() ? 'iOS' : isAndroid() ? 'Android' : getCapacitorPlatform() || 'app';
-        return `${platform} (unknown)`;
-      }
-
-      const platform = isIOS() ? 'iOS' : isAndroid() ? 'Android' : appInfo.platform;
-      return `${platform} ${appInfo.version} (${appInfo.buildNumber})`;
-    } catch (error) {
-      const platform = isIOS() ? 'iOS' : isAndroid() ? 'Android' : getCapacitorPlatform() || 'app';
-      return `${platform} (unknown)`;
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
     if (!text.trim()) {
@@ -51,29 +47,54 @@ export const BugModal = ({ isOpen, onClose, onSuccess }: BugModalProps) => {
       return;
     }
 
+    const submitGeneration = submitSessionRef.current.begin();
+    if (submitGeneration === null) return;
+
+    const abortController = new AbortController();
+    abortRef.current = abortController;
+
+    setSubmitError(null);
     setIsSubmitting(true);
     try {
-      const platformInfo = await getPlatformInfo();
+      const platformInfo = await getBugCreatePlatformInfo();
+      if (!submitSessionRef.current.isCurrent(submitGeneration)) return;
       const bugText = `${text.trim()}\n${platformInfo}`;
-      const res = await bugsApi.createBug({ text: bugText, bugType, priority });
+      const res = await bugsApi.createBug(
+        { text: bugText, bugType, priority },
+        { signal: abortController.signal }
+      );
+      if (!submitSessionRef.current.isCurrent(submitGeneration)) return;
       toast.success(t('bug.created'));
       setText('');
       setBugType('BUG');
       setPriority(0);
+      setSubmitError(null);
       const groupChannelId = res.data?.groupChannel?.id;
       onSuccess(groupChannelId);
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'bug.createError';
-      toast.error(t(errorMessage, { defaultValue: errorMessage }));
+    } catch (error: unknown) {
+      if (!submitSessionRef.current.isCurrent(submitGeneration)) return;
+      const errorMessage = extractBugCreateErrorMessage(error);
+      setSubmitError(t(errorMessage, { defaultValue: errorMessage }));
     } finally {
-      setIsSubmitting(false);
+      if (abortRef.current === abortController) {
+        abortRef.current = null;
+      }
+      submitSessionRef.current.finish(submitGeneration);
+      if (submitSessionRef.current.isCurrent(submitGeneration)) {
+        setIsSubmitting(false);
+      }
     }
   };
 
   const handleClose = () => {
+    submitSessionRef.current.invalidate();
+    abortRef.current?.abort();
+    abortRef.current = null;
     setText('');
     setBugType('BUG');
     setPriority(0);
+    setSubmitError(null);
+    setIsSubmitting(false);
     onClose();
   };
 
@@ -84,64 +105,69 @@ export const BugModal = ({ isOpen, onClose, onSuccess }: BugModalProps) => {
           <DialogTitle>{t('bug.addBug')}</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="px-6 py-4">
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-              {t('bug.type')}
-            </label>
-            <Select
-              options={BUG_TYPE_VALUES.map((type) => ({
-                value: type,
-                label: t(`bug.types.${type}`)
-              }))}
-              value={bugType}
-              onChange={(value) => setBugType(value as BugType)}
-            />
-          </div>
+        <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
+          <div className="min-h-0 flex-1 overflow-y-auto px-6 py-4">
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                {t('bug.type')}
+              </label>
+              <Select
+                options={BUG_TYPE_VALUES.map((type) => ({
+                  value: type,
+                  label: t(`bug.types.${type}`)
+                }))}
+                value={bugType}
+                onChange={(value) => setBugType(value as BugType)}
+              />
+            </div>
 
-          <div className="mb-4">
-            <BugPrioritySelector
-              currentPriority={priority}
-              onPriorityChange={setPriority}
-              disabled={isSubmitting}
-            />
-          </div>
+            <div className="mb-4">
+              <BugPrioritySelector
+                currentPriority={priority}
+                onPriorityChange={setPriority}
+                disabled={isSubmitting}
+              />
+            </div>
 
-          <div className="mb-6">
-            <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-              {t('bug.description')}
-            </label>
-            <textarea
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              placeholder={t('bug.descriptionPlaceholder')}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-              rows={4}
-              maxLength={1000}
-            />
-            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              {text.length}/1000
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                {t('bug.description')}
+              </label>
+              <SelectionPreservingTextarea
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                placeholder={t('bug.descriptionPlaceholder')}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                rows={4}
+                maxLength={1000}
+              />
+              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                {text.length}/1000
+              </div>
             </div>
           </div>
 
-          <DialogFooter className="flex gap-3 mt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleClose}
-              className="flex-1"
-              disabled={isSubmitting}
-            >
-              {t('common.cancel')}
-            </Button>
-            <Button
-              type="submit"
-              className="flex-1"
-              disabled={isSubmitting || !text.trim()}
-            >
-              {isSubmitting ? t('common.submitting') : t('bug.submit')}
-            </Button>
-          </DialogFooter>
+          <div className="sticky bottom-0 z-10 shrink-0 bg-white dark:bg-gray-900">
+            <BugCreateError message={submitError} />
+
+            <DialogFooter className="flex gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleClose}
+                className="flex-1"
+              >
+                {t('common.cancel')}
+              </Button>
+              <Button
+                type="submit"
+                className="flex-1"
+                disabled={isSubmitting || !text.trim()}
+              >
+                {isSubmitting ? t('common.submitting') : t('bug.submit')}
+              </Button>
+            </DialogFooter>
+          </div>
         </form>
       </DialogContent>
     </Dialog>

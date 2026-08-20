@@ -60,6 +60,7 @@
     "transcriptionUnavailable": "Přepis je dočasně nedostupný. Zkuste to později.",
     "transcriptionError": "Přepis hlasové zprávy se nepodařil. Zkuste to znovu.",
     "transcriptionAudioMissing": "Hlasovou zprávu se nepodařilo načíst.",
+    "mediaUnavailable": "Fotka není k dispozici",
     "translationUnavailable": "Překlad je dočasně nedostupný. Zkuste to později.",
     "translationRateLimited": "Příliš mnoho žádostí o překlad. Zkuste to za pár sekund.",
     "translationError": "Nepodařilo se přeložit zprávu. Zkuste to znovu.",

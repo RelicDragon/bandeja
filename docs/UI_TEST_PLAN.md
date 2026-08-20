@@ -739,6 +739,9 @@ Frontend/e2e/
 | GD-17 | Guest join chat only | Join as guest | Chat access without full join |
 | GD-18 | Carousel vs list participants | Toggle view mode | Layout switches |
 | GD-18a | Invite not in game chat | Owner invites player from participants list | Pending invite on participants panel; no "X invites Y" system message in game chat; other participants get no chat/push notification for the invite |
+| GD-148 | Broken player avatar on team slot | Game details participants / fixed-team slot whose avatar CDN URL 404s (tiny and/or full) | Initials (or blank initials circle) shown; no broken-image / iOS “?” glyph |
+| GD-149 | Empty participant slot unchanged | Game with an open/guest slot (no user) | Dashed User placeholder or invite plus; no “?” glyph |
+| GD-150 | Valid player avatars still load | Game details team list with working avatar URLs | Photos shown; not forced to initials |
 
 ### 9.3 Edit game (owner/admin)
 
@@ -746,6 +749,7 @@ Frontend/e2e/
 |----|------|-------|----------|
 | GD-19 | Edit general info | Edit drawer → general tab | Nearly fullscreen bottom drawer (city-selector style drag handle + close); "Edit details" title; fit-content centered tabs (active tab shows icon+label); avatar and name on one row; name/description updated |
 | GD-116 | Edit game info drawer height | Open edit on mobile viewport | Drawer uses most of viewport (`~94dvh`), not a small centered dialog; footer actions sit above home-indicator safe area |
+| GD-151 | Edit game name above keyboard | `@mobile` Edit details → focus game name with software keyboard (iOS Capacitor visualViewport) | Name field and close stay on-screen and tappable; sheet height shrinks to `--overlay-pinned-max-height` (visual viewport frame, including offsetTop) instead of translating the full overlay off-screen |
 | GD-20 | Edit location & time tab | Edit modal → Location & time | Single tab replaces Where+When; club picker visible; one scheduling panel (date, courts, time grid); no bookings/time segmented switch |
 | GD-20b | Edit opt-out full schedule | BOOKTIME game, integrated court, toggle "Don't book real court" ON (or Don't select court) | Full club time grid; red external cells selectable and saveable; same as create-game opt-out |
 | GD-20a | Edit game change club | Edit modal → Location & time → change club | Club modal opens; new club selected; courts refresh for new club |
@@ -940,6 +944,8 @@ Frontend/e2e/
 | LS-08 | Spectator token | `?spectatorToken=` | View without auth |
 | LS-09 | Keep awake / orientation | Mobile live | Board usable landscape |
 | LS-10 | Socket sync | `@two clients` score on one | Other updates live |
+| LS-43 | Broken player avatar on live court | Live scoring court with a participant whose avatar URL 404s | Initials (or blank initials circle); no broken-image / iOS “?” glyph |
+| LS-44 | Empty live-court slot | Live court slot with no player / guest | Existing empty slot treatment; no new “?” glyph |
 
 ### 10.1 Apple Watch live scoring & serve guide
 
@@ -1040,6 +1046,8 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | CH-20 | Reply to message | Reply action | Threaded reply |
 | CH-21 | Edit message | Edit own message | Updated content |
 | CH-22 | Delete message | Delete own | Removed/hidden |
+| CH-156 | Delete message survives leave/reopen | Delete a message in Participants (GAME PRIVATE) or any thread → leave → reopen, including a cold reload, within the ~30s skip-pull window | Message stays gone (Dexie tombstone; skip-pull bypass survives reload; not restored from L1/HTTP) |
+| CH-157 | Failed delete restores message | Delete own message → non-retryable API error (not 404) | Message reappears immediately and after leave/reopen |
 | CH-23 | Reaction | Add reaction on user or system message (e.g. join/leave) | Reaction strip visible; emoji persists |
 | CH-24 | Pin message | Pin (if permitted) | Pinned bar shows |
 | CH-25 | Unpin message | Unpin | Bar updates |
@@ -1083,6 +1091,7 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | CH-153 | Mark-all advances peer ticks | `@two-user` A sends several messages; B marks context read (or opens near bottom) | All of A’s earlier messages in that chatType show read ticks (monotonic via max peer cursor) |
 | CH-154 | Leave game stops chat sync polls | Join game chat → leave game or leave chat from details/thread | Local game thread purged (socket leave + Dexie); no repeating 403 on `/chat/sync/events` or `/chat/messages/missed` for that game |
 | CH-155 | Non-admin skips PRIVATE/ADMINS probes | Playing participant (not owner/admin) opens game details | No `GET .../messages?chatType=PRIVATE|ADMINS` probes; participants-only chat section stays hidden |
+| CH-158 | Inbound photo persist miss | `@two-user` A sends a photo while B has the thread open; leave and reopen after local persist of that image fails | Photo comes back or a durable empty placeholder stays; opening the thread clears unread on the server; no vanished bubble with a stuck badge |
 | CH-118 | Tap sticker sends via outbox | Open tray → tap a sticker in Packs | Optimistic sticker appears in thread immediately (fully transparent panel, no bubble chrome); create confirms via sync; no image upload / pending blobs |
 | CH-119 | Sticker send offline retry | Go briefly offline → send sticker from tray → come online | Outbox retries create-only (no media upload); sticker confirms when network returns |
 | CH-119a | Sticker cannot be edited | Own sticker → context menu / ArrowUp | No Edit action; API rejects content update if attempted |
@@ -1198,7 +1207,12 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | CH-49 | Mobile full-screen thread | `@mobile` select chat | Full screen, no split |
 | CH-50 | Desktop split persist | Select chat → resize splitter | Layout preserved |
 | CH-51 | Back from thread mobile | Back | Returns to list |
-| CH-52 | Create bug report | Bugs filter → add bug | `BugModal` → bug thread created |
+| CH-52 | Create bug report | Bugs filter → add bug → submit | Modal closes; bug thread opens |
+| CH-52a | Failed create shows in-dialog error | Submit bug with API failure (4xx/5xx, timeout, or network) | Modal stays open; `bug-create-error` alert stays visible above submit (not clipped, not toast-only); network/timeout use translated copy; submit re-enables |
+| CH-52b | Hung platform info does not stick submit | `@mobile` Capacitor: `App.getInfo` hangs → submit | Submit does not stay disabled forever; create proceeds with unknown platform or in-dialog error + button re-enabled |
+| CH-52c | Close during in-flight create is ignored | Submit → Cancel or X before response | Modal closes; no late toast/error; reopen is idle (not stuck submitting) |
+| CH-52d | Bug description caret (Android) | `@mobile` Capacitor Android → Bugs → add bug → type in description → drag caret right; dismiss and reopen keyboard | Caret stays where dragged; keyboard open/close does not jump caret to start; typing at end still inserts at end |
+| CH-52e | Bug description caret (iOS) | `@mobile` Capacitor iOS → Bugs → add bug → drag caret, type at end, open/close keyboard | No new caret jump; typing at end still works |
 | CH-53 | Bugs filter panel | Panel closed by default; non-admin: Created by me on + all statuses; admin: Created by me off + open statuses only | List matches defaults; open panel → multi-select status chips → list updates |
 | CH-54 | Pin chat from list | Pin DM/group | Pinned ordering |
 | CH-55 | Mute chat from list | Mute thread | Mute persisted; notifications suppressed |
@@ -1290,6 +1304,9 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | ID | Test | Steps | Expected |
 |----|------|-------|----------|
 | PR-07 | Avatar upload | Upload photo | Avatar updates |
+| PR-07b | Avatar crop pinch-zoom | Profile → change avatar → pinch-zoom in the circular cropper → Upload (desktop + Capacitor iOS WebView) | Saved avatar matches the zoomed preview, not the unzoomed 1× crop |
+| PR-07c | Avatar crop pan | Same → pan the photo in the cropper → Upload (desktop + Capacitor iOS WebView) | Saved avatar matches the panned preview |
+| PR-07d | Avatar crop without zoom | Same → leave at 1× (no pinch/pan) → Upload | Saved avatar matches the unzoomed circular preview (centered square; full image if already square) |
 | PR-08 | Remove avatar | Remove button | Avatar cleared |
 | PR-09 | View original avatar | Eye button | Fullscreen viewer |
 | PR-10 | First/last name autosave | Edit name | Saving indicator → saved |
@@ -1317,6 +1334,10 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PR-81 | Game-open sport hint | Open `?player=` from tennis game; subject has tennis | Card opens on tennis; if subject lacks tennis → viewer primary or subject primary |
 | PR-82 | Partners ranking modes (enough data) | Player card Statistics → Partners when Rating/Games change people vs Formulae | Switch visible; each visible mode changes at least one card person; no two tabs with identical people |
 | PR-83 | Partners sparse data (one game) | Open card with 1 finished doubles game (e.g. Polina) | Ranking switch hidden; only one partner + one opponent card (no best=worst / favorite=nemesis dupes) |
+| PR-84 | Other player preferred hand | Open `/user-profile/:id` or `?player=` for a user with only left hand set | L chip selected (filled); R unset (dashed muted), not both-on |
+| PR-85 | Other player court side | Same view for a user with only left court side set | L chip selected; R unset |
+| PR-86 | Unset vs selected preference chips | Open another player with neither hand nor court side set | All four chips look unset (dashed muted), visually distinct from selected fill |
+| PR-87 | Own profile prefs save independently | Profile → General → toggle preferred hand L then R (same for court side) | Each flag saves on its own; other flag unchanged |
 | PR-streak-1 | Own profile play streak chip | Own profile/card after ≥1 qualifying week | Flame + N weeks; tap opens sheet with current/best/deadline |
 | PR-streak-2 | Other profile play streak | Open another user’s card with streak | Current/best visible; no at-risk styling or hours |
 | PR-streak-3 | Same week second game | Second rated finish same week window | Count unchanged; results streak banner absent |
@@ -1386,6 +1407,10 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PR-20 | Phone/password change | If exposed in UI | Auth updated |
 | PR-21 | Language selector | Pick language | i18n + profile saved |
 | PR-22 | Theme selector | Light/dark/system | Theme applied |
+| PR-22a | System theme resume (dark) | Theme=System; background the app; OS switches to dark; resume | UI is dark without relaunch (`html.dark` present) |
+| PR-22b | System theme resume (light) | Theme=System; background the app; OS switches to light; resume | UI is light without relaunch (`html.dark` absent) |
+| PR-22c | Manual theme ignores OS on resume | Theme=Light or Dark; background; OS switches to the opposite; resume | UI stays on the manual preference |
+| PR-22d | Resume does not flicker | Theme=System already matching OS; background and resume (twice) | Appearance unchanged; no light/dark flash |
 | PR-23 | Online status toggle | Show/hide online | Preference saved |
 | PR-24 | Notification settings modal | Open + toggle prefs | Saved |
 | PR-63 | Notification cross-channel hint | Push off for a type, Telegram still on → red hint under toggle; tap hint | Switches to Telegram tab; row pulses/highlighted |
@@ -1706,8 +1731,8 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | ID | Test | Steps | Expected |
 |----|------|-------|----------|
 | X-44 | Chat composer above keyboard | Open game chat → focus composer | Composer sits on top of keyboard; message list stays scrolled to latest; no double gap |
-| X-45 | Centered dialog shift | Open any `ui/Dialog` with input (e.g. game note, city search) → focus input | Dialog re-anchors just above keyboard; content scrolls inside dialog; nothing hidden |
-| X-46 | Bottom drawer lift | Open Vaul drawer with input (story comments, market item) → focus input | Whole drawer lifts above keyboard; composer visible while typing |
+| X-45 | Centered dialog shift | Open any `ui/Dialog` with input (e.g. game note, poll) → focus input | Dialog shrinks into the visual viewport above the keyboard; title + close stay pinned; only the body scrolls |
+| X-46 | Bottom drawer keyboard | Open Vaul drawer with input (story comments, market item, edit game) → focus input | Drawer height clamps to `--overlay-pinned-max-height` (`min(--vv-height, layout − keyboard − offsetTop)` minus leftover safe-top); chrome stays on-screen; body/composer scrolls or sits above keyboard — the full-size sheet is not translated as a unit |
 | X-47 | Poll creation keyboard | Game chat → attach → poll → focus question/options | Poll dialog shifts above keyboard; all fields reachable |
 | X-48 | Club admin sheets keyboard | Schedule → cancel game / block slot / edit hold → focus reason/note | Sheet pushed above keyboard; submit button visible |
 | X-49 | Full-page form input visibility | Create game → focus a bottom field (e.g. comment) | Page scrolls so focused field sits above keyboard with gap |
@@ -1716,6 +1741,9 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | X-52 | Keyboard dismiss restores layout | Any of above → dismiss keyboard | Surfaces return to resting position; no leftover bottom padding or shifted dialogs |
 | X-52a | Sticker/GIF tray above keyboard | Chat → open Stickers & GIFs → focus search (iOS/Android Capacitor + mobile web) | Tray lifts and expands to fill space above keyboard; results not covered; dismiss restores compact sheet |
 | X-55 | Auth login keyboard (Android web) | Mobile Chrome → `/login` → focus phone field | Form sits directly above keyboard; no dark gray scroll gap between card and keyboard |
+| X-72 | Edit-game-title keyboard chrome | `@mobile` Game details → Edit details → focus name (iOS WebView) | Close + name field remain visible/tappable; overlay is not lifted off-screen |
+| X-73 | Club Location search keyboard chrome | `@mobile` Create/edit Location → Select club → focus search | X stays tappable; only the club list (and not the close control) scrolls |
+| X-74 | Overlay height ignores visualViewport without keyboard | Pinch-zoom or visualViewport scroll while no software keyboard | Sheet/dialog height stays at resting cap (`min(94dvh, 960px)` / 75vh); `--overlay-pinned-max-height` remains `100dvh` until `keyboard-visible` |
 
 ### 18.11 Home screen Next Game widgets (Capacitor iOS + Android, `@widget` `@manual`)
 

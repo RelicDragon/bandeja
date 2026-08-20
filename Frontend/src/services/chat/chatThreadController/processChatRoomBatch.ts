@@ -12,7 +12,6 @@ import {
   persistSocketTranscriptionAndSyncSeq,
 } from '@/services/chat/chatLocalApply';
 import { patchThreadIndexClearUnread } from '@/services/chat/chatThreadIndex';
-import { dispatchChatSyncStale } from '@/utils/chatSyncStaleEvents';
 import { pullAndApplyChatSyncEventsDirect } from '@/services/chat/chatLocalApplyPull';
 import type { ChatRoomEvent } from '@/store/socketEventsStore';
 import type { ChatType } from '@/types';
@@ -51,7 +50,7 @@ function persistInboundMessageWithRecovery(
   const attempt = () => persistSocketInboundMessage(contextType, contextId, message, syncSeq);
   void attempt().catch(() => {
     void attempt().catch(() => {
-      dispatchChatSyncStale(contextType, contextId, 'cursorStale');
+      /* leave live row; cursor stays so reopen/pull can recover or tombstone */
     });
   });
 }
@@ -229,7 +228,11 @@ function executeThreadLiveEffects(
           void persistReactionSocketPayload(event.reaction).catch(() => {});
           void onSocketSyncSeq(contextType, contextId, event.syncSeq).catch(() => {});
         } else if (event.type === 'messageDeleted') {
-          void markLocalMessageDeleted(event.messageId, event.deletedAt).catch(() => {});
+          void markLocalMessageDeleted(event.messageId, event.deletedAt, {
+            contextType,
+            contextId,
+            ...(event.syncSeq != null ? { syncSeq: event.syncSeq } : {}),
+          }).catch(() => {});
           void onSocketSyncSeq(contextType, contextId, event.syncSeq).catch(() => {});
         } else if (event.type === 'messageUpdated') {
           if (event.message) {
@@ -285,6 +288,7 @@ function executeThreadLiveEffects(
           gameChatType,
           readRows: () => effect.messages,
           verify: () => true,
+          ...(effect.immediate ? { immediate: true } : {}),
         }).catch(() => {});
         break;
       }
