@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { ChatMessage } from '@/api/chat';
 import {
+  isDurableMediaPersist,
   isEmptyMediaMessage,
   mediaUrlCount,
   shouldTombstoneMedia,
@@ -47,5 +48,13 @@ describe('chatMediaPersistTombstone', () => {
     const text = image({ messageType: 'TEXT', mediaUrls: [], thumbnailUrls: [] });
     expect(isEmptyMediaMessage(text)).toBe(false);
     expect(shouldTombstoneMedia(text)).toBe(false);
+  });
+
+  it('treats full media and empty image tombstones as durable persists', () => {
+    expect(isDurableMediaPersist(image())).toBe(true);
+    expect(isDurableMediaPersist(toMediaTombstone(image()))).toBe(true);
+    expect(
+      isDurableMediaPersist(image({ messageType: 'TEXT', mediaUrls: [], thumbnailUrls: [] }))
+    ).toBe(false);
   });
 });

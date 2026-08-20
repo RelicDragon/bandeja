@@ -40,4 +40,13 @@ describe('nextAppliedCursor', () => {
       ])
     ).toBe(11);
   });
+
+  it('does not jump past an unapplied seq when later seqs arrive first', () => {
+    expect(
+      nextAppliedCursor(4, [
+        { seq: 6, applied: true },
+        { seq: 5, applied: false },
+      ])
+    ).toBe(4);
+  });
 });

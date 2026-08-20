@@ -405,4 +405,32 @@ describe('pullEventsLoop thread terminal events', () => {
       expect.objectContaining({ lastAppliedSeq: 11 })
     );
   });
+
+  it('stops paging when hasMore but the local cursor cannot advance', async () => {
+    fetchPackMock.mockResolvedValue({
+      cursorStale: false,
+      events: [
+        {
+          seq: 10,
+          eventType: ChatSyncEventType.MESSAGE_CREATED,
+          payload: {
+            message: {
+              id: 'photo-1',
+              messageType: 'IMAGE',
+              mediaUrls: ['https://cdn.example/a.jpg'],
+              chatContextType: 'USER',
+              contextId: 'u1',
+              senderId: 'other-user',
+            },
+          },
+        },
+      ],
+      hasMore: true,
+    });
+
+    const result = await pullEventsLoop('USER', 'u1');
+
+    expect(result.blockedOnUnapplied).toBe(true);
+    expect(fetchPackMock).toHaveBeenCalledTimes(1);
+  });
 });

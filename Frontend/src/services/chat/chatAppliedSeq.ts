@@ -9,7 +9,9 @@ export function nextAppliedCursor(
   decisions: readonly SeqApplyDecision[]
 ): number {
   let cursor = previousCursor;
-  for (const decision of decisions) {
+  const ordered =
+    decisions.length < 2 ? decisions : [...decisions].sort((a, b) => a.seq - b.seq);
+  for (const decision of ordered) {
     if (decision.seq <= cursor) continue;
     if (!decision.applied) break;
     cursor = decision.seq;

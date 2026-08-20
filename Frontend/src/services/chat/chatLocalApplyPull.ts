@@ -196,29 +196,35 @@ export async function pullEventsLoop(
         const slice = pack.events.slice(i, j);
         const patches = chatSyncEventsToPatches(slice);
         try {
-          const { putMessagesForMedia, patchMessageFallbacks, decisions } = await chatLocalDb.transaction(
-            'rw',
-            [chatLocalDb.messages, chatLocalDb.chatSyncCursor, chatLocalDb.messageSearchTokens],
-            async () => {
-              const side = await applyChatSyncPatchesInSlice(patches, contextType, contextId);
-              const sliceDecisions = seqApplyDecisionsForEvents(slice, side.persistedMessages);
-              const row = await chatLocalDb.chatSyncCursor.get(key);
-              const next = nextAppliedCursor(row?.lastAppliedSeq ?? 0, sliceDecisions);
-              await chatLocalDb.chatSyncCursor.put({
-                key,
-                lastAppliedSeq: next,
-                updatedAt: Date.now(),
-              });
-              return { ...side, decisions: sliceDecisions };
-            }
-          );
+          const { putMessagesForMedia, patchMessageFallbacks, decisions, nextCursor, sliceMaxSeq } =
+            await chatLocalDb.transaction(
+              'rw',
+              [chatLocalDb.messages, chatLocalDb.chatSyncCursor, chatLocalDb.messageSearchTokens],
+              async () => {
+                const side = await applyChatSyncPatchesInSlice(patches, contextType, contextId);
+                const sliceDecisions = seqApplyDecisionsForEvents(slice, side.persistedMessages);
+                const row = await chatLocalDb.chatSyncCursor.get(key);
+                const next = nextAppliedCursor(row?.lastAppliedSeq ?? 0, sliceDecisions);
+                await chatLocalDb.chatSyncCursor.put({
+                  key,
+                  lastAppliedSeq: next,
+                  updatedAt: Date.now(),
+                });
+                return {
+                  ...side,
+                  decisions: sliceDecisions,
+                  nextCursor: next,
+                  sliceMaxSeq: slice[slice.length - 1]!.seq,
+                };
+              }
+            );
           for (const decision of decisions) {
             if (decision.applied) {
               appliedSeqs.add(decision.seq);
               eventsApplied += 1;
             }
           }
-          if (decisions.some((decision) => !decision.applied)) blockedOnUnapplied = true;
+          if (nextCursor < sliceMaxSeq) blockedOnUnapplied = true;
           for (const fb of patchMessageFallbacks) {
             try {
               const m = await chatApi.getChatMessageById(fb.messageId);
@@ -253,15 +259,16 @@ export async function pullEventsLoop(
               eventsApplied += 1;
             }
           }
-          if (sliceDecisions.some((decision) => !decision.applied)) blockedOnUnapplied = true;
+          if (next < slice[slice.length - 1]!.seq) blockedOnUnapplied = true;
         }
         i = j;
       }
     });
-    after = await getLocalCursorSeq(contextType, contextId);
+    const nextAfter = await getLocalCursorSeq(contextType, contextId);
     schedulePullPageIndexHooks(pack.events, { bumpUnreadForNewMessages, appliedSeqs });
     broadcastChatPullHint(key);
-    if (blockedOnUnapplied || !pack.hasMore) break;
+    if (blockedOnUnapplied || !pack.hasMore || nextAfter <= after) break;
+    after = nextAfter;
   }
   return { repairedStaleCursor, threadInvalidated, threadArchived, eventsApplied, blockedOnUnapplied };
 }

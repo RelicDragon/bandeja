@@ -23,6 +23,10 @@ export function isEmptyMediaMessage(message: ChatMessage): boolean {
   );
 }
 
+export function isDurableMediaPersist(message: ChatMessage): boolean {
+  return mediaUrlCount(message) > 0 || isEmptyMediaMessage(message);
+}
+
 export function toMediaTombstone(message: ChatMessage): ChatMessage {
   return { ...message, mediaUrls: [], thumbnailUrls: [] };
 }
