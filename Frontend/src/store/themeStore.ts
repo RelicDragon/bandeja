@@ -16,15 +16,23 @@ interface ThemeState {
 const appearanceListeners = new Set<() => void>();
 
 function emitAppearanceChange() {
-  for (const cb of appearanceListeners) cb();
+  for (const cb of [...appearanceListeners]) cb();
 }
 
 const getSystemTheme = (): ResolvedTheme => {
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  try {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  } catch {
+    return 'light';
+  }
 };
 
 function readAppliedTheme(): ResolvedTheme {
   return document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+}
+
+function isThemePreference(value: string | null): value is ThemePreference {
+  return value === 'light' || value === 'dark' || value === 'system';
 }
 
 function subscribeSystemTheme(cb: () => void) {
@@ -76,7 +84,29 @@ const applyTheme = (theme: ThemePreference) => {
   writeResolvedTheme(theme, decision.resolved, decision.shouldWrite);
 };
 
+function handleSystemThemeChange() {
+  if (useThemeStore.getState().theme === 'system') {
+    applyTheme('system');
+  }
+}
+
+let systemThemeMql: MediaQueryList | null = null;
+
+function listenForSystemThemeChanges() {
+  try {
+    const next = window.matchMedia('(prefers-color-scheme: dark)');
+    next.addEventListener('change', handleSystemThemeChange);
+    if (systemThemeMql && systemThemeMql !== next) {
+      systemThemeMql.removeEventListener('change', handleSystemThemeChange);
+    }
+    systemThemeMql = next;
+  } catch {
+    return;
+  }
+}
+
 export function syncThemeOnForeground() {
+  listenForSystemThemeChanges();
   applyTheme(useThemeStore.getState().theme);
   emitAppearanceChange();
 }
@@ -89,20 +119,11 @@ export function ensureThemeForegroundSync() {
 }
 
 export const useThemeStore = create<ThemeState>((set) => {
-  const savedTheme = localStorage.getItem('theme') as ThemePreference | null;
-  const initialTheme = savedTheme || 'light';
+  const savedTheme = localStorage.getItem('theme');
+  const initialTheme = isThemePreference(savedTheme) ? savedTheme : 'light';
 
   applyTheme(initialTheme);
-
-  const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-  const handleSystemThemeChange = () => {
-    const currentTheme = useThemeStore.getState().theme;
-    if (currentTheme === 'system') {
-      applyTheme('system');
-    }
-  };
-
-  mediaQuery.addEventListener('change', handleSystemThemeChange);
+  listenForSystemThemeChanges();
 
   return {
     theme: initialTheme,

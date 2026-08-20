@@ -1,16 +1,24 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+vi.mock('./themeForegroundSync', () => ({
+  startThemeForegroundSync: () => () => {},
+}));
+
 const media = vi.hoisted(() => {
-  const state = { dark: false };
+  const state = {
+    dark: false,
+    add: vi.fn(),
+    remove: vi.fn(),
+  };
   Object.defineProperty(window, 'matchMedia', {
     configurable: true,
     writable: true,
     value: (query: string) => ({
       matches: state.dark && String(query).includes('prefers-color-scheme: dark'),
       media: query,
-      addEventListener: () => {},
-      removeEventListener: () => {},
+      addEventListener: state.add,
+      removeEventListener: state.remove,
       addListener: () => {},
       removeListener: () => {},
       dispatchEvent: () => false,
@@ -29,6 +37,8 @@ function htmlIsDark() {
 describe('syncThemeOnForeground', () => {
   beforeEach(() => {
     media.dark = false;
+    media.add.mockClear();
+    media.remove.mockClear();
     document.documentElement.classList.remove('dark');
     document.documentElement.style.colorScheme = '';
     window.localStorage.clear();
@@ -107,5 +117,12 @@ describe('syncThemeOnForeground', () => {
     expect(remove).not.toHaveBeenCalled();
     add.mockRestore();
     remove.mockRestore();
+  });
+
+  it('rebinds matchMedia on foreground so a frozen list can emit again', () => {
+    const addsBefore = media.add.mock.calls.length;
+    syncThemeOnForeground();
+    expect(media.add.mock.calls.length).toBeGreaterThan(addsBefore);
+    expect(media.remove).toHaveBeenCalled();
   });
 });
