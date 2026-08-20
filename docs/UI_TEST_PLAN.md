@@ -1040,6 +1040,7 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | CH-20 | Reply to message | Reply action | Threaded reply |
 | CH-21 | Edit message | Edit own message | Updated content |
 | CH-22 | Delete message | Delete own | Removed/hidden |
+| CH-156 | Delete message survives leave/reopen | Delete a message in Participants (GAME PRIVATE) or any thread → leave → reopen within ~30s | Message stays gone (local tombstone; not restored from cache / skipped sync pull) |
 | CH-23 | Reaction | Add reaction on user or system message (e.g. join/leave) | Reaction strip visible; emoji persists |
 | CH-24 | Pin message | Pin (if permitted) | Pinned bar shows |
 | CH-25 | Unpin message | Unpin | Bar updates |

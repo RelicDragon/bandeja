@@ -1,5 +1,6 @@
-import type { ChatMessage, MessageReaction } from '@/api/chat';
+import type { ChatContextType, ChatMessage, MessageReaction } from '@/api/chat';
 import { chatLocalDb, type ChatLocalRow } from './chatLocalDb';
+import { noteMessageDeletedForCaughtUpPull, tombstoneChatMessage } from './chatLocalMessageTombstone';
 import { patchThreadIndexAfterMessageDeleted, patchThreadIndexFromMessage } from './chatThreadIndex';
 import {
   bumpMessageContextHead,
@@ -72,11 +73,17 @@ export async function persistChatMessagesFromApi(messages: ChatMessage[]): Promi
   return applyThreadEvent({ kind: 'httpMessages', messages });
 }
 
+export type MarkLocalMessageDeletedOptions = {
+  syncSeq?: number;
+  contextType?: ChatContextType;
+  contextId?: string;
+};
+
 async function markLocalMessageDeletedDirect(messageId: string, deletedAtIso?: string): Promise<void> {
   const row = await chatLocalDb.messages.get(messageId);
   if (!row) return;
   const iso = deletedAtIso ?? new Date().toISOString();
-  await putChatLocalRowsWithSearchTokens([rowFromMessage({ ...row.payload, deletedAt: iso })]);
+  await putChatLocalRowsWithSearchTokens([rowFromMessage(tombstoneChatMessage(row.payload, iso))]);
   if (!isChatLocalIndexingSuppressed()) {
     void refreshMessageContextHeadAfterDelete(row.contextType, row.contextId, messageId, row.chatType).catch(
       () => {}
@@ -85,8 +92,17 @@ async function markLocalMessageDeletedDirect(messageId: string, deletedAtIso?: s
   }
 }
 
-export async function markLocalMessageDeleted(messageId: string, deletedAtIso?: string): Promise<void> {
+export async function markLocalMessageDeleted(
+  messageId: string,
+  deletedAtIso?: string,
+  options?: MarkLocalMessageDeletedOptions
+): Promise<void> {
   const peek = await chatLocalDb.messages.get(messageId);
+  const contextType = options?.contextType ?? peek?.contextType;
+  const contextId = options?.contextId ?? peek?.contextId;
+  if (contextType && contextId) {
+    noteMessageDeletedForCaughtUpPull(contextType, contextId, options?.syncSeq);
+  }
   if (!peek) return;
   return enqueueChatLocalContextApply(peek.contextType, peek.contextId, () =>
     markLocalMessageDeletedDirect(messageId, deletedAtIso)

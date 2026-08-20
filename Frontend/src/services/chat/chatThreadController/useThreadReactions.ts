@@ -5,7 +5,7 @@ import { chatApi, type ChatMessage, type ChatMessageWithStatus, type ChatContext
 import { usePlayersStore } from '@/store/playersStore';
 import { shouldQueueChatMutation, isRetryableMutationError } from '@/services/chat/chatMutationNetwork';
 import { OfflineIntent } from '@/services/chat/offlineIntent';
-import { putLocalMessage } from '@/services/chat/chatLocalApply';
+import { putLocalMessage, markLocalMessageDeleted } from '@/services/chat/chatLocalApply';
 import { useReactionEmojiUsageStore } from '@/store/reactionEmojiUsageStore';
 import {
   reduceThreadLiveSnapshot,
@@ -244,12 +244,19 @@ export function useThreadReactions({
           type: 'hydrateSnapshot',
           messages: [removedSnapshot as ChatMessageWithStatus],
         });
+        void putLocalMessage(removedSnapshot);
       };
+      const deletedAt = new Date().toISOString();
       applyLiveEvent({
         type: 'messageDeleted',
         messageId,
-        deletedAt: new Date().toISOString(),
+        deletedAt,
       });
+      void markLocalMessageDeleted(
+        messageId,
+        deletedAt,
+        id ? { contextType, contextId: id } : undefined
+      );
       if (shouldQueueChatMutation() && id) {
         try {
           await OfflineIntent.enqueue({ kind: 'delete', contextType, contextId: id, messageId });
@@ -272,7 +279,9 @@ export function useThreadReactions({
             console.error('enqueue delete', e);
             restoreRemoved();
           }
+          return;
         }
+        restoreRemoved();
       }
     },
     [id, contextType, messagesRef, applyLiveEvent]
@@ -332,14 +341,20 @@ export function useThreadReactions({
 
   const handleMessageDeleted = useCallback(
     (data: { messageId: string }) => {
+      const deletedAt = new Date().toISOString();
       applyLiveEvent({
         type: 'messageDeleted',
         messageId: data.messageId,
-        deletedAt: new Date().toISOString(),
+        deletedAt,
       });
+      void markLocalMessageDeleted(
+        data.messageId,
+        deletedAt,
+        id ? { contextType, contextId: id } : undefined
+      );
       setEditingMessage((prev) => (prev?.id === data.messageId ? null : prev));
     },
-    [applyLiveEvent]
+    [applyLiveEvent, contextType, id]
   );
 
   const handleChatRequestRespond = useCallback(

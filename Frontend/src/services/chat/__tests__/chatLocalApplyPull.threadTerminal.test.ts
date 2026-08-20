@@ -53,6 +53,7 @@ vi.mock('../chatLocalDb', () => ({
 }));
 
 vi.mock('../chatLocalApplyCursor', () => ({
+  BATCH_HEAD_CACHE_MS: 30_000,
   getLocalCursorSeq: vi.fn(async () => 0),
 }));
 

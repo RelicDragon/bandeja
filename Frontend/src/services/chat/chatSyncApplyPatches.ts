@@ -8,6 +8,7 @@ import { mergeReactionListSync } from './chatSyncEventsToPatches';
 import { mergeReadReceipts } from './mergeReadReceipts';
 import { rowFromMessage } from './chatSyncRowUtils';
 import { putChatLocalRowsWithSearchTokens } from './chatLocalApplyWrite';
+import { preferDeletedAt, tombstoneLocalRow } from './chatLocalMessageTombstone';
 import {
   pendingReceiptsToMessageReadReceipts,
   stashPendingThreadReadReceipt,
@@ -64,6 +65,7 @@ export async function applyChatSyncPatchesInSlice(
           ? {
               ...existing.payload,
               ...withPending,
+              deletedAt: preferDeletedAt(existing.payload.deletedAt, withPending.deletedAt),
               readReceipts: mergeReadReceipts(
                 existing.payload.readReceipts ?? [],
                 withPending.readReceipts ?? []
@@ -94,12 +96,7 @@ export async function applyChatSyncPatchesInSlice(
       case 'deleteMessage': {
         const r = await ensureRow(p.messageId);
         if (!r) break;
-        const iso = p.deletedAt;
-        writeRow({
-          ...r,
-          deletedAt: new Date(iso).getTime(),
-          payload: { ...r.payload, deletedAt: iso },
-        });
+        writeRow(tombstoneLocalRow(r, p.deletedAt));
         break;
       }
       case 'reactionAdded': {

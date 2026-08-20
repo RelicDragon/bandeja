@@ -514,6 +514,9 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
       };
 
       const handleChatDeleted = (data: ChatDeletedData) => {
+        void import('@/services/chat/chatLocalMessageTombstone').then((m) => {
+          m.persistSocketChatDeleted(data);
+        });
         const rk = chatRoomKey(data.contextType, data.contextId);
         set((s) => ({
           lastChatDeleted: data,
