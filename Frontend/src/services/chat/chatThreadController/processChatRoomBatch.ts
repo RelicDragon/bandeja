@@ -12,7 +12,6 @@ import {
   persistSocketTranscriptionAndSyncSeq,
 } from '@/services/chat/chatLocalApply';
 import { patchThreadIndexClearUnread } from '@/services/chat/chatThreadIndex';
-import { dispatchChatSyncStale } from '@/utils/chatSyncStaleEvents';
 import { pullAndApplyChatSyncEventsDirect } from '@/services/chat/chatLocalApplyPull';
 import type { ChatRoomEvent } from '@/store/socketEventsStore';
 import type { ChatType } from '@/types';
@@ -51,7 +50,7 @@ function persistInboundMessageWithRecovery(
   const attempt = () => persistSocketInboundMessage(contextType, contextId, message, syncSeq);
   void attempt().catch(() => {
     void attempt().catch(() => {
-      dispatchChatSyncStale(contextType, contextId, 'cursorStale');
+      /* leave live row; cursor stays so reopen/pull can recover or tombstone */
     });
   });
 }

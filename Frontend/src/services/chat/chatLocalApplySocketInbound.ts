@@ -1,10 +1,6 @@
 import type { ChatContextType, ChatMessage } from '@/api/chat';
 import { chatSyncPullStarted, chatSyncPullEnded } from '@/services/chat/chatOfflineBanner';
-import {
-  bumpCursor,
-  getLocalCursorSeq,
-  reconcileCursorWithServerHead,
-} from './chatLocalApplyCursor';
+import { getLocalCursorSeq, reconcileCursorWithServerHead } from './chatLocalApplyCursor';
 import {
   clearPendingSocketSeqReconcileTimer,
   markChatPullCompleted,
@@ -23,18 +19,19 @@ export async function onSocketSyncSeqDirect(
 
   chatSyncPullStarted();
   try {
-    const { repairedStaleCursor, threadInvalidated } = await pullEventsLoop(contextType, contextId);
+    const { repairedStaleCursor, threadInvalidated, blockedOnUnapplied } = await pullEventsLoop(
+      contextType,
+      contextId
+    );
     markChatPullCompleted(contextType, contextId);
-    await reconcileCursorWithServerHead(contextType, contextId);
+    if (!blockedOnUnapplied) {
+      await reconcileCursorWithServerHead(contextType, contextId);
+    }
     if (repairedStaleCursor || threadInvalidated) {
       const { persistLatestTailPagesAfterStaleCursor } = await import('./chatTailRecover');
       await persistLatestTailPagesAfterStaleCursor(contextType, contextId).catch(() => {});
     }
     clearPendingSocketSeqReconcileTimer(contextType, contextId);
-    const after = await getLocalCursorSeq(contextType, contextId);
-    if (after < syncSeq) {
-      await bumpCursor(contextType, contextId, syncSeq);
-    }
   } catch {
     /* keep cursor unchanged so a later reconnect can retry gap fill */
   } finally {

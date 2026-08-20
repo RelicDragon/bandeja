@@ -7,6 +7,7 @@ import { hydrateLastMessageIdFromDexieIfMissing } from '@/services/chat/messageC
 import { mergeServerPageWithPendingOptimistics } from '@/utils/chatMessageSort';
 import { planThreadOpen } from '@/services/chat/threadOpen/planThreadOpen';
 import type { ThreadOpenPlanResult } from '@/services/chat/threadOpen/types';
+import { recoverEmptyMediaMessages } from '@/services/chat/chatMediaReopenRecover';
 
 export type ThreadOpenOutboxContext = {
   userId: string;
@@ -108,6 +109,7 @@ export async function openThread(request: ThreadOpenRequest): Promise<ThreadOpen
   });
 
   if (result.kind === 'painted') {
+    void recoverEmptyMediaMessages(result.plan.messages).catch(() => {});
     return { kind: 'painted', mergedPrev, result };
   }
 

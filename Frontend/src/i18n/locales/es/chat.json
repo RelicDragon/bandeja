@@ -60,6 +60,7 @@
     "transcriptionUnavailable": "La transcripción no está disponible temporalmente. Inténtalo de nuevo más tarde.",
     "transcriptionError": "No se pudo transcribir el mensaje de voz. Inténtalo de nuevo.",
     "transcriptionAudioMissing": "No se pudo cargar el audio de la nota de voz.",
+    "mediaUnavailable": "Foto no disponible",
     "translationUnavailable": "La traducción no está disponible temporalmente. Por favor, inténtalo de nuevo más tarde.",
     "translationRateLimited": "Demasiadas solicitudes de traducción. Inténtalo de nuevo en unos segundos.",
     "translationError": "Error al traducir el mensaje. Por favor, inténtalo de nuevo.",

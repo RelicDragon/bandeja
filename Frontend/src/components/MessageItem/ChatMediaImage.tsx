@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useChatMediaAsset } from '@/hooks/useChatMediaAsset';
+import { ChatMediaUnavailable } from './ChatMediaUnavailable';
 
 type ChatMediaImageProps = {
   src: string;
@@ -19,6 +20,15 @@ export const ChatMediaImage: React.FC<ChatMediaImageProps> = ({
   loading = 'lazy',
 }) => {
   const { asset, recordDimensions } = useChatMediaAsset(src);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    setFailed(false);
+  }, [src]);
+
+  if (!src || failed) {
+    return <ChatMediaUnavailable className={className} style={style} />;
+  }
 
   return (
     <img
@@ -33,6 +43,7 @@ export const ChatMediaImage: React.FC<ChatMediaImageProps> = ({
         const image = event.currentTarget;
         recordDimensions(image.naturalWidth, image.naturalHeight);
       }}
+      onError={() => setFailed(true)}
       loading={loading}
     />
   );

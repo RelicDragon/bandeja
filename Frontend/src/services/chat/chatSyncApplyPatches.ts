@@ -20,6 +20,7 @@ export type ChatSyncPatchApplySideEffects = {
   putMessagesForMedia: ChatMessage[];
   /** Compact MESSAGE_UPDATED with no Dexie row: caller may GET message and persist. */
   patchMessageFallbacks: { messageId: string; syncSeq: number }[];
+  persistedMessages: ChatMessage[];
 };
 
 export async function applyChatSyncPatchesInSlice(
@@ -278,5 +279,9 @@ export async function applyChatSyncPatchesInSlice(
     syncSeq,
   }));
 
-  return { putMessagesForMedia, patchMessageFallbacks };
+  return {
+    putMessagesForMedia,
+    patchMessageFallbacks,
+    persistedMessages: outRows.map((row) => row.payload),
+  };
 }

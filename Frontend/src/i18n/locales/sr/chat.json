@@ -60,6 +60,7 @@
     "transcriptionUnavailable": "Transkripcija je privremeno nedostupna. Pokušajte kasnije.",
     "transcriptionError": "Nije uspela transkripcija glasovne poruke. Pokušajte ponovo.",
     "transcriptionAudioMissing": "Audio glasovne poruke nije učitano.",
+    "mediaUnavailable": "Fotografija nije dostupna",
     "translationUnavailable": "Prevod je privremeno nedostupan. Molimo pokušajte kasnije.",
     "translationRateLimited": "Previše zahteva za prevod. Pokušajte ponovo za nekoliko sekundi.",
     "translationError": "Neuspešno prevođenje poruke. Molimo pokušajte ponovo.",

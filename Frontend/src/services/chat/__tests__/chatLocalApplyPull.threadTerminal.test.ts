@@ -54,6 +54,8 @@ vi.mock('../chatLocalDb', () => ({
 
 vi.mock('../chatLocalApplyCursor', () => ({
   getLocalCursorSeq: vi.fn(async () => 0),
+  BATCH_HEAD_CACHE_MS: 30_000,
+  reconcileCursorWithServerHead: vi.fn(async () => {}),
 }));
 
 vi.mock('../chatLocalApplySyncTimers', () => ({
@@ -62,6 +64,10 @@ vi.mock('../chatLocalApplySyncTimers', () => ({
 
 vi.mock('../chatLocalApplyWrite', () => ({
   persistChatMessagesFromApiDirect: vi.fn(async () => {}),
+}));
+
+vi.mock('../chatLocalApplyPersistMessage', () => ({
+  persistCreatedEventMediaTombstones: vi.fn(async () => {}),
 }));
 
 vi.mock('@/services/chat/chatMediaThumbPrefetch', () => ({
@@ -97,11 +103,17 @@ vi.mock('@/services/chat/chatSyncMetrics', () => ({
 }));
 
 import { pullEventsLoop } from '../chatLocalApplyPull';
+import { chatLocalDb } from '../chatLocalDb';
+import { persistCreatedEventMediaTombstones } from '../chatLocalApplyPersistMessage';
 
 describe('pullEventsLoop thread terminal events', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    applyPatchesMock.mockResolvedValue({ putMessagesForMedia: [], patchMessageFallbacks: [] });
+    applyPatchesMock.mockResolvedValue({
+      putMessagesForMedia: [],
+      patchMessageFallbacks: [],
+      persistedMessages: [],
+    });
   });
 
   it('THREAD_ARCHIVED applies archive terminal without purging messages', async () => {
@@ -157,6 +169,19 @@ describe('pullEventsLoop thread terminal events', () => {
     const { getLocalCursorSeq } = await import('../chatLocalApplyCursor');
     vi.mocked(getLocalCursorSeq).mockResolvedValueOnce(5);
 
+    applyPatchesMock.mockResolvedValue({
+      putMessagesForMedia: [],
+      patchMessageFallbacks: [],
+      persistedMessages: [
+        {
+          id: 'm-new',
+          senderId: 'other-user',
+          chatContextType: 'USER',
+          contextId: 'u1',
+        },
+      ],
+    });
+
     fetchPackMock.mockResolvedValueOnce({
       cursorStale: false,
       events: [
@@ -198,5 +223,113 @@ describe('pullEventsLoop thread terminal events', () => {
     expect(applyThreadTerminalMock).toHaveBeenCalledWith('invalidate', 'GAME', 'g-inv');
     expect(result.threadInvalidated).toBe(true);
     expect(result.threadArchived).toBe(false);
+  });
+
+  it('does not advance cursor past unpersisted MESSAGE_CREATED image', async () => {
+    fetchPackMock.mockResolvedValueOnce({
+      cursorStale: false,
+      events: [
+        {
+          seq: 10,
+          eventType: ChatSyncEventType.MESSAGE_CREATED,
+          payload: {
+            message: {
+              id: 'photo-1',
+              messageType: 'IMAGE',
+              mediaUrls: ['https://cdn.example/a.jpg'],
+              chatContextType: 'USER',
+              contextId: 'u1',
+              senderId: 'other-user',
+            },
+          },
+        },
+      ],
+      hasMore: false,
+    });
+
+    const result = await pullEventsLoop('USER', 'u1');
+
+    expect(result.blockedOnUnapplied).toBe(true);
+    expect(chatLocalDb.chatSyncCursor.put).toHaveBeenCalledWith(
+      expect.objectContaining({ key: 'USER:u1', lastAppliedSeq: 0 })
+    );
+    expect(chatLocalDb.chatSyncCursor.put).not.toHaveBeenCalledWith(
+      expect.objectContaining({ lastAppliedSeq: 10 })
+    );
+  });
+
+  it('advances cursor when MESSAGE_CREATED image is persisted', async () => {
+    applyPatchesMock.mockResolvedValue({
+      putMessagesForMedia: [],
+      patchMessageFallbacks: [],
+      persistedMessages: [
+        {
+          id: 'photo-1',
+          messageType: 'IMAGE',
+          mediaUrls: ['https://cdn.example/a.jpg'],
+          thumbnailUrls: ['https://cdn.example/a.jpg'],
+        },
+      ],
+    });
+    fetchPackMock.mockResolvedValueOnce({
+      cursorStale: false,
+      events: [
+        {
+          seq: 10,
+          eventType: ChatSyncEventType.MESSAGE_CREATED,
+          payload: {
+            message: {
+              id: 'photo-1',
+              messageType: 'IMAGE',
+              mediaUrls: ['https://cdn.example/a.jpg'],
+              thumbnailUrls: ['https://cdn.example/a.jpg'],
+              chatContextType: 'USER',
+              contextId: 'u1',
+              senderId: 'other-user',
+            },
+          },
+        },
+      ],
+      hasMore: false,
+    });
+
+    const result = await pullEventsLoop('USER', 'u1');
+
+    expect(result.blockedOnUnapplied).toBe(false);
+    expect(chatLocalDb.chatSyncCursor.put).toHaveBeenCalledWith(
+      expect.objectContaining({ key: 'USER:u1', lastAppliedSeq: 10 })
+    );
+  });
+
+  it('tombstones created media when slice persist throws and leaves cursor behind', async () => {
+    applyPatchesMock.mockRejectedValue(new Error('dexie write failed'));
+    fetchPackMock.mockResolvedValueOnce({
+      cursorStale: false,
+      events: [
+        {
+          seq: 10,
+          eventType: ChatSyncEventType.MESSAGE_CREATED,
+          payload: {
+            message: {
+              id: 'photo-1',
+              messageType: 'IMAGE',
+              mediaUrls: ['https://cdn.example/a.jpg'],
+              chatContextType: 'USER',
+              contextId: 'u1',
+              senderId: 'other-user',
+            },
+          },
+        },
+      ],
+      hasMore: false,
+    });
+
+    const result = await pullEventsLoop('USER', 'u1');
+
+    expect(result.blockedOnUnapplied).toBe(true);
+    expect(persistCreatedEventMediaTombstones).toHaveBeenCalled();
+    expect(chatLocalDb.chatSyncCursor.put).not.toHaveBeenCalledWith(
+      expect.objectContaining({ lastAppliedSeq: 10 })
+    );
   });
 });
