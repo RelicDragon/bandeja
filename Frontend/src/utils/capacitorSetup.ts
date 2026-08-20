@@ -7,6 +7,7 @@ import pushNotificationService from '@/services/pushNotificationService';
 import { registerPushNotificationActionTypes } from '@/services/push/registerPushNotificationActionTypes';
 import { syncApiBaseUrlToNative } from '@/services/authBridge';
 import { initWatchBridge } from '@/services/watchBridgeInit';
+import { shouldSkipCaretFollowScroll } from '@/components/bugs/selectionPreserve';
 import {
   computeKeyboardInsetPx,
   isInsideKeyboardManagedSurface,
@@ -168,6 +169,7 @@ const scrollInputIntoViewIfAble = (el: HTMLElement | null) => {
   const smooth = !prefersReducedMotion();
   if (isInsideChatComposerFooter(el)) return;
   if (isSelfLiftingKeyboardBottomPanel(el)) return;
+  if (shouldSkipCaretFollowScroll(el)) return;
   if (isInsideKeyboardManagedSurface(el)) {
     // Surface already lifted above the keyboard; local scroll is enough.
     el.scrollIntoView({

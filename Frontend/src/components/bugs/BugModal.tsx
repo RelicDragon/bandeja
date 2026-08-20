@@ -10,6 +10,7 @@ import { BugCreateError } from './BugCreateError';
 import { extractBugCreateErrorMessage } from './bugCreateErrorMessage';
 import { getBugCreatePlatformInfo } from './bugCreatePlatformInfo';
 import { createBugCreateSubmitSession } from './bugCreateSubmitSession';
+import { SelectionPreservingTextarea } from './SelectionPreservingTextarea';
 
 const BUG_TYPE_VALUES: BugType[] = ['BUG', 'CRITICAL', 'SUGGESTION', 'QUESTION', 'TASK'];
 
@@ -128,11 +129,11 @@ export const BugModal = ({ isOpen, onClose, onSuccess }: BugModalProps) => {
               />
             </div>
 
-            <div>
+            <div className="mb-4">
               <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
                 {t('bug.description')}
               </label>
-              <textarea
+              <SelectionPreservingTextarea
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 placeholder={t('bug.descriptionPlaceholder')}
@@ -144,7 +145,6 @@ export const BugModal = ({ isOpen, onClose, onSuccess }: BugModalProps) => {
                 {text.length}/1000
               </div>
             </div>
-          </div>
 
           <div className="sticky bottom-0 z-10 shrink-0 bg-white dark:bg-gray-900">
             <BugCreateError message={submitError} />
