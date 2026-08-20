@@ -92,7 +92,7 @@ export const LevelHistoryAvatarSection = ({
           <PlayerActivityCounts
             gamesPlayed={gamesPlayed ?? gamesPlayedForSport(user, levelSport)}
             trainingAttendanceCount={trainingAttendanceCount}
-            className="mt-2 justify-start text-white/80"
+            className="mt-1.5 text-left text-white/80"
           />
           {showShowcase && (
             <div className="relative z-10 mt-2 flex flex-col gap-2">

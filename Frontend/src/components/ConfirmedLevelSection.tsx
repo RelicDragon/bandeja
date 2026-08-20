@@ -114,7 +114,7 @@ export const ConfirmedLevelSection = ({
         <PlayerActivityCounts
           gamesPlayed={ratedGamesPlayed}
           trainingAttendanceCount={trainingAttendanceCount}
-          className={`text-gray-500 dark:text-gray-400 ${showBadge ? 'mt-2' : ''}`}
+          className={`text-center text-gray-500 dark:text-gray-400 ${showBadge ? 'mt-1.5' : ''}`}
         />
       )}
       {confirmation}

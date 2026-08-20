@@ -1322,6 +1322,7 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PR-84 | Public profile training attendance | Open `/user-profile/:id` for a user who attended TRAINING as PLAYING (not trainer-only, not a future RSVP) | Compact `N games · M trainings` next to that sport’s level; rated gamesPlayed unchanged |
 | PR-85 | Public profile training attendance zero | Open `/user-profile/:id` with 0 TRAINING attendance, or only upcoming TRAINING RSVPs | Shows 0 trainings (quiet empty); no crash |
 | PR-86 | Own Statistics training attendance | Profile → Statistics for a user who attended TRAINING as PLAYING | Same compact games · trainings next to level as public/overlay; upcoming RSVPs excluded |
+| PR-87 | Social tab training sport | Public/overlay Levels → Social after viewing another competitive sport | `N games · M trainings` both use the subject’s primary sport, not the last competitive sport |
 | PR-streak-1 | Own profile play streak chip | Own profile/card after ≥1 qualifying week | Flame + N weeks; tap opens sheet with current/best/deadline |
 | PR-streak-2 | Other profile play streak | Open another user’s card with streak | Current/best visible; no at-risk styling or hours |
 | PR-streak-3 | Same week second game | Second rated finish same week window | Count unchanged; results streak banner absent |
