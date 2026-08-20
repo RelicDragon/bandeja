@@ -6,12 +6,12 @@ Marks the last commit that was shipped to **Google Play** and **App Store**. Use
 
 | | |
 |---|---|
-| **Version** | 0.97.28 |
-| **Build** | 210 |
-| **Commit** | `7fd150494ed4ed775d448cf1c6d175e80437a333` |
-| **Short** | `7fd15049` |
-| **Date** | 2026-08-17 |
-| **Message** | refactor(WatchSessionManager): simplify application context handling |
+| **Version** | 0.97.29 |
+| **Build** | 211 |
+| **Commit** | `8163b227bd693ded585df9b367e53e53a5eb0074` |
+| **Short** | `8163b227` |
+| **Date** | 2026-08-20 |
+| **Message** | Bump app release to 0.97.29 (build 211) |
 
 Canonical commit hash: `docs/app-release-baseline.txt` (one line, full SHA).
 
@@ -68,6 +68,7 @@ Generate **What's new** (LLM summarizes commits since baseline):
 
 | Version | Build | Commit | Date |
 |---------|-------|--------|------|
+| 0.97.29 | 211 | `8163b227` | 2026-08-20 |
 | 0.97.28 | 210 | `7fd15049` | 2026-08-17 |
 | 0.97.27 | 209 | `1a88dcb8` | 2026-08-08 |
 | 0.97.26 | 208 | `61aacfdc` | 2026-08-06 |
