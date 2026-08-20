@@ -24,6 +24,7 @@ import { formatDate } from '@/utils/dateFormat';
 import { XAxis, YAxis, CartesianGrid, ResponsiveContainer, Area, AreaChart } from 'recharts';
 import { useAuthStore } from '@/store/authStore';
 import { PlayerLevelFeedbackAggregateCard } from './PlayerLevelFeedbackAggregateCard';
+import { resolveDisplayedTrainingAttendance } from '@/components/player/trainingAttendanceDisplay';
 
 interface LevelHistoryViewProps {
   stats: UserStats;
@@ -84,13 +85,19 @@ const LevelHistoryViewComponent = ({
   const showSocialLevel = selection.kind === 'social';
   const historySport = selection.kind === 'competitive' ? selection.sport : primarySport;
   const { data: sportScopedStats } = useUserStatsQuery(user.id, historySport, {
-    enabled: !showSocialLevel,
     keepPrevious: true,
   });
-  const alignedSportStats =
-    !showSocialLevel && sportScopedStats?.sport === historySport ? sportScopedStats : undefined;
+  const sportStatsForHistory =
+    sportScopedStats?.sport === historySport ? sportScopedStats : undefined;
+  const alignedSportStats = !showSocialLevel ? sportStatsForHistory : undefined;
   const alignedParentStats =
     !showSocialLevel && stats.sport === historySport ? stats : undefined;
+  const trainingAttendanceCount =
+    resolveDisplayedTrainingAttendance({
+      historySport,
+      parentStats: stats,
+      sportStats: sportStatsForHistory,
+    }) ?? 0;
   const gamesStatsForView = useMemo(() => {
     if (showSocialLevel) {
       return stats.gamesStatsAllSports ?? stats.gamesStats;
@@ -283,6 +290,7 @@ const LevelHistoryViewComponent = ({
             variant={hideUserCard ? 'compact' : 'hero'}
             includeSportsInSelector={includeSportsInSelector}
             competitiveSport={competitiveSport}
+            trainingAttendanceCount={trainingAttendanceCount}
           />
           {!showSocialLevel && (alignedSportStats || alignedParentStats) ? (
             <PlayerLevelFeedbackAggregateCard
