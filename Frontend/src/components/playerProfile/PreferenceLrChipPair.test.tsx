@@ -1,0 +1,61 @@
+// @vitest-environment jsdom
+
+import { renderToStaticMarkup } from 'react-dom/server';
+import { describe, expect, it } from 'vitest';
+import { PreferenceLrChipPair } from './PreferenceLrChipPair';
+
+function renderPair(left: boolean | undefined, right: boolean | undefined) {
+  return renderToStaticMarkup(
+    <PreferenceLrChipPair
+      group="hand"
+      left={left}
+      right={right}
+      leftLabel="L"
+      rightLabel="R"
+      leftTitle="Left"
+      rightTitle="Right"
+    />,
+  );
+}
+
+function selectedAttr(html: string, side: 'left' | 'right'): string | null {
+  const tag = html.match(
+    new RegExp(`<div\\b[^>]*data-testid="preference-chip-hand-${side}"[^>]*>`),
+  );
+  return tag?.[0].match(/data-selected="(true|false)"/)?.[1] ?? null;
+}
+
+describe('PreferenceLrChipPair', () => {
+  it('marks only left selected when only left is set', () => {
+    const html = renderPair(true, false);
+    expect(selectedAttr(html, 'left')).toBe('true');
+    expect(selectedAttr(html, 'right')).toBe('false');
+    expect(html).toContain('border-dashed');
+    expect(html).toContain('bg-blue-500');
+  });
+
+  it('marks omitted flags as unset, not both selected', () => {
+    const html = renderPair(undefined, undefined);
+    expect(selectedAttr(html, 'left')).toBe('false');
+    expect(selectedAttr(html, 'right')).toBe('false');
+    expect(html).not.toContain('bg-blue-500');
+    expect(html).toContain('border-dashed');
+  });
+
+  it('marks only court-side left selected when only left is set', () => {
+    const html = renderToStaticMarkup(
+      <PreferenceLrChipPair
+        group="courtSide"
+        left={true}
+        right={false}
+        leftLabel="L"
+        rightLabel="R"
+        leftTitle="Left"
+        rightTitle="Right"
+      />,
+    );
+    expect(html).toContain('data-testid="preference-chip-courtSide-left"');
+    expect(html).toMatch(/data-testid="preference-chip-courtSide-left"[^>]*data-selected="true"/);
+    expect(html).toMatch(/data-testid="preference-chip-courtSide-right"[^>]*data-selected="false"/);
+  });
+});
