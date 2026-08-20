@@ -3,4 +3,27 @@
   --keyboard-height: 0px;
   --vv-height: 100dvh;
   --vv-offset-top: 0px;
+  --layout-inner-height: 100dvh;
+  --overlay-bottom-inset: var(--keyboard-height, 0px);
+  /* Resting cap: sheets use min(94dvh, this). Tight frame only while keyboard is up
+     so visualViewport scroll/pinch does not resize overlays. */
+  --overlay-pinned-max-height: 100dvh;
+}
+
+body.keyboard-visible {
+  /* Mirrors overlayKeyboardLayout.computeOverlayVisibleFrame */
+  --overlay-derived-bottom: max(
+    0px,
+    calc(var(--layout-inner-height) - var(--vv-height) - var(--vv-offset-top))
+  );
+  --overlay-bottom-inset: max(var(--keyboard-height), var(--overlay-derived-bottom));
+  --overlay-frame-height: min(
+    var(--vv-height),
+    calc(var(--layout-inner-height) - var(--overlay-bottom-inset) - var(--vv-offset-top))
+  );
+  --overlay-safe-top-overlap: max(0px, env(safe-area-inset-top, 0px) - var(--vv-offset-top));
+  --overlay-pinned-max-height: max(
+    0px,
+    calc(var(--overlay-frame-height) - var(--overlay-safe-top-overlap))
+  );
 }
