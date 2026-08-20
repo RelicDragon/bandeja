@@ -127,26 +127,39 @@ export const ClubModal = ({ isOpen, onClose, clubs, selectedId, onSelect }: Club
     <>
       <Dialog open={isOpen} onClose={onClose} modalId="club-modal">
         <DialogContent>
-          <DialogHeader>
-            {panel === 'list' ? (
-              <DialogTitle>{t('createGame.selectClub')}</DialogTitle>
-            ) : (
-              <div className="flex items-center gap-2 min-w-0">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setPanel('list');
-                    setDetailClub(null);
-                  }}
-                  className="p-1.5 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 shrink-0"
-                  aria-label={t('createGame.clubDetailsBack')}
-                >
-                  <ChevronLeft size={22} />
-                </button>
-                <DialogTitle className="truncate min-w-0">{detailClub?.name}</DialogTitle>
+          <div data-overlay-chrome="" className="sticky top-0 z-10 bg-white dark:bg-gray-900">
+            <DialogHeader>
+              {panel === 'list' ? (
+                <DialogTitle>{t('createGame.selectClub')}</DialogTitle>
+              ) : (
+                <div className="flex items-center gap-2 min-w-0">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPanel('list');
+                      setDetailClub(null);
+                    }}
+                    className="p-1.5 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 shrink-0"
+                    aria-label={t('createGame.clubDetailsBack')}
+                  >
+                    <ChevronLeft size={22} />
+                  </button>
+                  <DialogTitle className="truncate min-w-0">{detailClub?.name}</DialogTitle>
+                </div>
+              )}
+            </DialogHeader>
+            {panel === 'list' && clubs.length > 0 ? (
+              <div className="shrink-0 px-4 pb-3">
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder={t('common.search')}
+                  className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                />
               </div>
-            )}
-          </DialogHeader>
+            ) : null}
+          </div>
           <div className="relative flex min-h-0 flex-1 flex-col">
             <div
               ref={scrollBodyRef}
@@ -157,29 +170,18 @@ export const ClubModal = ({ isOpen, onClose, clubs, selectedId, onSelect }: Club
               <div ref={listScrollContentRef} className="space-y-2 min-h-[80px]">
                 {clubs.length === 0 ? (
                   <p className="text-center text-gray-500 dark:text-gray-400 py-8">{t('createGame.noClubsAvailable')}</p>
+                ) : filteredClubs.length === 0 ? (
+                  <p className="text-center text-gray-500 dark:text-gray-400 py-4">{t('common.noResults')}</p>
                 ) : (
-                  <>
-                    <input
-                      type="text"
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                      placeholder={t('common.search')}
-                      className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 mb-2"
+                  filteredClubs.map((club) => (
+                    <ClubSelectorCard
+                      key={club.id}
+                      club={club}
+                      isSelected={selectedId === club.id}
+                      onSelect={() => handleSelect(club.id)}
+                      onInfoClick={(e) => openDetail(club, e)}
                     />
-                    {filteredClubs.length === 0 ? (
-                      <p className="text-center text-gray-500 dark:text-gray-400 py-4">{t('common.noResults')}</p>
-                    ) : (
-                      filteredClubs.map((club) => (
-                        <ClubSelectorCard
-                          key={club.id}
-                          club={club}
-                          isSelected={selectedId === club.id}
-                          onSelect={() => handleSelect(club.id)}
-                          onInfoClick={(e) => openDetail(club, e)}
-                        />
-                      ))
-                    )}
-                  </>
+                  ))
                 )}
               </div>
             ) : detailClub ? (

@@ -1,0 +1,64 @@
+/* Pin overlay chrome (title/close) in the visual viewport.
+   Math: Frontend/src/utils/overlayKeyboardLayout.ts
+   Shrink height to --vv-height; do not translate a full-size overlay. */
+
+.overlay-keyboard-body {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  background-color: inherit;
+}
+
+.overlay-keyboard-body > .dialog-header,
+.overlay-keyboard-body > [data-overlay-chrome] {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: inherit;
+}
+
+[data-overlay-chrome] {
+  z-index: 20;
+  flex-shrink: 0;
+}
+
+html body.keyboard-visible .cap-keyboard-aware-sheet {
+  bottom: var(--keyboard-height, 0px) !important;
+  margin-top: max(0px, env(safe-area-inset-top, 0px) - var(--vv-offset-top, 0px)) !important;
+  max-height: calc(
+    var(--vv-height, 100dvh) - max(0px, env(safe-area-inset-top, 0px) - var(--vv-offset-top, 0px))
+  ) !important;
+  overflow: hidden !important;
+}
+
+html body.keyboard-dialog-shift .dialog-content-animate,
+html body.keyboard-dialog-shift .cap-keyboard-aware-dialog {
+  top: auto !important;
+  right: 0 !important;
+  bottom: calc(var(--keyboard-height, 0px) + max(8px, env(safe-area-inset-bottom, 0px))) !important;
+  left: 0 !important;
+  max-height: calc(
+    var(--vv-height, 100dvh) - max(0px, env(safe-area-inset-top, 0px) - var(--vv-offset-top, 0px)) -
+      16px
+  ) !important;
+  margin-right: auto !important;
+  margin-left: auto !important;
+  overflow: hidden !important;
+  transition:
+    bottom 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    max-height 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  translate: none !important;
+  transform: none !important;
+}
+
+html body.keyboard-dialog-shift .cap-keyboard-aware-dialog > [data-slot='dialog-close'] {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 30;
+}

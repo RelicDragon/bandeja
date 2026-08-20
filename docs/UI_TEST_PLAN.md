@@ -746,6 +746,7 @@ Frontend/e2e/
 |----|------|-------|----------|
 | GD-19 | Edit general info | Edit drawer → general tab | Nearly fullscreen bottom drawer (city-selector style drag handle + close); "Edit details" title; fit-content centered tabs (active tab shows icon+label); avatar and name on one row; name/description updated |
 | GD-116 | Edit game info drawer height | Open edit on mobile viewport | Drawer uses most of viewport (`~94dvh`), not a small centered dialog; footer actions sit above home-indicator safe area |
+| GD-130 | Edit game name above keyboard | `@mobile` Edit details → focus game name with software keyboard (iOS Capacitor visualViewport) | Name field and close stay on-screen and tappable; sheet height shrinks to the visible viewport instead of translating the full overlay off-screen |
 | GD-20 | Edit location & time tab | Edit modal → Location & time | Single tab replaces Where+When; club picker visible; one scheduling panel (date, courts, time grid); no bookings/time segmented switch |
 | GD-20b | Edit opt-out full schedule | BOOKTIME game, integrated court, toggle "Don't book real court" ON (or Don't select court) | Full club time grid; red external cells selectable and saveable; same as create-game opt-out |
 | GD-20a | Edit game change club | Edit modal → Location & time → change club | Club modal opens; new club selected; courts refresh for new club |
@@ -1706,8 +1707,8 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | ID | Test | Steps | Expected |
 |----|------|-------|----------|
 | X-44 | Chat composer above keyboard | Open game chat → focus composer | Composer sits on top of keyboard; message list stays scrolled to latest; no double gap |
-| X-45 | Centered dialog shift | Open any `ui/Dialog` with input (e.g. game note, city search) → focus input | Dialog re-anchors just above keyboard; content scrolls inside dialog; nothing hidden |
-| X-46 | Bottom drawer lift | Open Vaul drawer with input (story comments, market item) → focus input | Whole drawer lifts above keyboard; composer visible while typing |
+| X-45 | Centered dialog shift | Open any `ui/Dialog` with input (e.g. game note, poll) → focus input | Dialog shrinks into the visual viewport above the keyboard; title + close stay pinned; only the body scrolls |
+| X-46 | Bottom drawer keyboard | Open Vaul drawer with input (story comments, market item, edit game) → focus input | Drawer height clamps to visual viewport (`--vv-height` / offsetTop); chrome stays on-screen; body/composer scrolls or sits above keyboard — the full-size sheet is not translated as a unit |
 | X-47 | Poll creation keyboard | Game chat → attach → poll → focus question/options | Poll dialog shifts above keyboard; all fields reachable |
 | X-48 | Club admin sheets keyboard | Schedule → cancel game / block slot / edit hold → focus reason/note | Sheet pushed above keyboard; submit button visible |
 | X-49 | Full-page form input visibility | Create game → focus a bottom field (e.g. comment) | Page scrolls so focused field sits above keyboard with gap |
@@ -1716,6 +1717,8 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | X-52 | Keyboard dismiss restores layout | Any of above → dismiss keyboard | Surfaces return to resting position; no leftover bottom padding or shifted dialogs |
 | X-52a | Sticker/GIF tray above keyboard | Chat → open Stickers & GIFs → focus search (iOS/Android Capacitor + mobile web) | Tray lifts and expands to fill space above keyboard; results not covered; dismiss restores compact sheet |
 | X-55 | Auth login keyboard (Android web) | Mobile Chrome → `/login` → focus phone field | Form sits directly above keyboard; no dark gray scroll gap between card and keyboard |
+| X-70 | Edit-game-title keyboard chrome | `@mobile` Game details → Edit details → focus name (iOS WebView) | Close + name field remain visible/tappable; overlay is not lifted off-screen |
+| X-71 | Club Location search keyboard chrome | `@mobile` Create/edit Location → Select club → focus search | X stays tappable; only the club list (and not the close control) scrolls |
 
 ### 18.11 Home screen Next Game widgets (Capacitor iOS + Android, `@widget` `@manual`)
 
