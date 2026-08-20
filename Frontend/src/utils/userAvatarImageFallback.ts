@@ -1,3 +1,5 @@
+import { useState, type Dispatch, type SetStateAction } from 'react';
+
 export type AvatarImageFallbackState = {
   tinyFailed: boolean;
   fullFailed: boolean;
@@ -7,6 +9,18 @@ export const INITIAL_AVATAR_IMAGE_FALLBACK_STATE: AvatarImageFallbackState = {
   tinyFailed: false,
   fullFailed: false,
 };
+
+export function useAvatarImageFallbackState(
+  resetIdentity: string
+): [AvatarImageFallbackState, Dispatch<SetStateAction<AvatarImageFallbackState>>] {
+  const [identity, setIdentity] = useState(resetIdentity);
+  const [state, setState] = useState(INITIAL_AVATAR_IMAGE_FALLBACK_STATE);
+  if (identity !== resetIdentity) {
+    setIdentity(resetIdentity);
+    setState(INITIAL_AVATAR_IMAGE_FALLBACK_STATE);
+  }
+  return [state, setState];
+}
 
 /** URL to load, or `null` to render initials instead of `<img>`. */
 export function avatarImageSrcToLoad(opts: {
@@ -21,10 +35,19 @@ export function avatarImageSrcToLoad(opts: {
 
 export function avatarImageOnError(
   state: AvatarImageFallbackState,
-  tinyUrl: string | null
+  tinyUrl: string | null,
+  failedSrc: string
 ): AvatarImageFallbackState {
-  if (tinyUrl && !state.tinyFailed) {
+  if (tinyUrl && failedSrc === tinyUrl) {
+    if (state.tinyFailed) return state;
     return { ...state, tinyFailed: true };
   }
+  if (state.fullFailed) return state;
   return { ...state, fullFailed: true };
+}
+
+export function avatarImageElementIsPainted(
+  img: Pick<HTMLImageElement, 'complete' | 'naturalWidth'>
+): boolean {
+  return img.complete && img.naturalWidth > 0;
 }

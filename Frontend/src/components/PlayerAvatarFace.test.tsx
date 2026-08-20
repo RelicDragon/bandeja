@@ -53,12 +53,13 @@ describe('PlayerAvatarFace', () => {
     expect(container.textContent).toBe('AB');
   });
 
-  it('hides the img until load so a 404 cannot paint the iOS “?” glyph', () => {
+  it('keeps initials visible and hides the img until load so a 404 cannot paint the iOS “?” glyph', () => {
     renderFace();
     const img = container.querySelector('img');
     expect(img).not.toBeNull();
     expect(img!.getAttribute('src')).toBe(TINY);
     expect(img!.style.visibility).toBe('hidden');
+    expect(container.textContent).toBe('AB');
 
     act(() => {
       img!.dispatchEvent(new Event('load'));
@@ -77,6 +78,19 @@ describe('PlayerAvatarFace', () => {
     expect(fullImg).not.toBe(tinyImg);
     expect(fullImg!.getAttribute('src')).toBe(FULL);
     expect(fullImg!.style.visibility).toBe('hidden');
+    expect(container.textContent).toBe('AB');
+  });
+
+  it('does not skip the full URL when the tiny img errors twice', () => {
+    renderFace();
+    const tinyImg = container.querySelector('img')!;
+    act(() => {
+      tinyImg.dispatchEvent(new Event('error'));
+      tinyImg.dispatchEvent(new Event('error'));
+    });
+    const fullImg = container.querySelector('img');
+    expect(fullImg).not.toBeNull();
+    expect(fullImg!.getAttribute('src')).toBe(FULL);
   });
 
   it('unmounts the img and shows initials after the full URL fails', () => {
@@ -98,5 +112,18 @@ describe('PlayerAvatarFace', () => {
     });
     expect(container.querySelector('img')).toBeNull();
     expect(container.textContent).toBe('AB');
+  });
+
+  it('retries a new avatar URL after a previous one failed', () => {
+    renderFace({ tinyUrl: null });
+    act(() => {
+      container.querySelector('img')!.dispatchEvent(new Event('error'));
+    });
+    expect(container.querySelector('img')).toBeNull();
+    const next = 'https://cdn.example.com/v_avatar.jpg';
+    renderFace({ avatar: next, tinyUrl: null });
+    const img = container.querySelector('img');
+    expect(img).not.toBeNull();
+    expect(img!.getAttribute('src')).toBe(next);
   });
 });

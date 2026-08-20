@@ -5,9 +5,9 @@ import { getTeamAvatarPair } from '@/utils/teamAvatarPair';
 import { teamNameInitials, userInitialsFromBasicUser } from '@/utils/teamAvatarText';
 import { userAvatarTinyUrlFromStandard } from '@/utils/userAvatarTinyUrl';
 import {
-  INITIAL_AVATAR_IMAGE_FALLBACK_STATE,
   avatarImageOnError,
   avatarImageSrcToLoad,
+  useAvatarImageFallbackState,
 } from '@/utils/userAvatarImageFallback';
 import { TeamAvatarParticipantTipShell } from '@/components/TeamAvatarParticipantTipShell';
 import { UserAvatarFallbackImg } from '@/components/UserAvatarFallbackImg';
@@ -23,30 +23,27 @@ function SoloFace({
 }) {
   const useTiny = tile;
   const tinyUrl = useTiny ? userAvatarTinyUrlFromStandard(user.avatar) : null;
-  const [state, setState] = useState(INITIAL_AVATAR_IMAGE_FALLBACK_STATE);
-  useEffect(() => {
-    setState(INITIAL_AVATAR_IMAGE_FALLBACK_STATE);
-  }, [user.id, user.avatar, useTiny]);
+  const [state, setState] = useAvatarImageFallbackState(`${user.id}:${user.avatar ?? ''}:${useTiny}`);
   const src = avatarImageSrcToLoad({ avatar: user.avatar, tinyUrl, state });
   const textCls = tile ? 'text-sm' : 'text-lg';
-  const initials = (
-    <div
-      className={`flex h-full w-full items-center justify-center bg-primary-600 font-semibold text-white ${textCls}`}
-    >
-      {teamNameInitials(teamName)}
-    </div>
-  );
 
-  if (!src) {
-    return initials;
-  }
   return (
-    <UserAvatarFallbackImg
-      src={src}
-      alt=""
-      className="h-full w-full object-cover"
-      onError={() => setState((current) => avatarImageOnError(current, tinyUrl))}
-    />
+    <>
+      <div
+        aria-hidden={Boolean(src)}
+        className={`flex h-full w-full items-center justify-center bg-primary-600 font-semibold text-white ${textCls}`}
+      >
+        {teamNameInitials(teamName)}
+      </div>
+      {src ? (
+        <UserAvatarFallbackImg
+          src={src}
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover"
+          onError={() => setState((current) => avatarImageOnError(current, tinyUrl, src))}
+        />
+      ) : null}
+    </>
   );
 }
 
@@ -62,10 +59,7 @@ function SplitFaceHalf({
   z: string;
 }) {
   const tinyUrl = tile ? userAvatarTinyUrlFromStandard(user.avatar) : null;
-  const [state, setState] = useState(INITIAL_AVATAR_IMAGE_FALLBACK_STATE);
-  useEffect(() => {
-    setState(INITIAL_AVATAR_IMAGE_FALLBACK_STATE);
-  }, [user.id, user.avatar, tile]);
+  const [state, setState] = useAvatarImageFallbackState(`${user.id}:${user.avatar ?? ''}:${tile}`);
   const src = avatarImageSrcToLoad({ avatar: user.avatar, tinyUrl, state });
   const textCls = tile ? 'text-sm' : 'text-lg';
 
@@ -79,20 +73,20 @@ function SplitFaceHalf({
         transform: 'translateZ(0)',
       }}
     >
+      <div
+        aria-hidden={Boolean(src)}
+        className={`flex h-full w-full items-center justify-center bg-primary-600 font-semibold text-white ${textCls}`}
+      >
+        {userInitialsFromBasicUser(user)}
+      </div>
       {src ? (
         <UserAvatarFallbackImg
           src={src}
           alt=""
-          className="h-full w-full object-cover"
-          onError={() => setState((current) => avatarImageOnError(current, tinyUrl))}
+          className="absolute inset-0 h-full w-full object-cover"
+          onError={() => setState((current) => avatarImageOnError(current, tinyUrl, src))}
         />
-      ) : (
-        <div
-          className={`flex h-full w-full items-center justify-center bg-primary-600 font-semibold text-white ${textCls}`}
-        >
-          {userInitialsFromBasicUser(user)}
-        </div>
-      )}
+      ) : null}
     </div>
   );
 }
