@@ -162,6 +162,8 @@ Frontend/e2e/
 | G-49 | Assistant feature vs game-entity layers | Run `npm run test:deep-link-catalog`; Cap: after My-games sync, “Find games today” / “Open chat for my next game” / “Open [cached title] in Bandeja”; Android long-press static vs `dyn_game_*` | Suite green; Find/next-chat use feature intents; named game uses entity (Siri params refreshed on sync); static shortcuts ≠ dynamic open-game shortcuts |
 | G-50 | App Shortcuts priority cap (iOS) | Inspect Siri / App Shortcuts donated set after install | At most 10 donated shortcuts; Create league + entity chat/live not in donated set (still in Shortcuts library) |
 | G-51 | Environment favicon highlighting | Open local Vite dev, `thisistestfor.bandeja.me`, and production `bandeja.me` | Dev favicon has a red background; test-production favicon has a yellow background; production favicon is unchanged |
+| G-52 | Player overlay training attendance | Open `?player=` for a user who attended TRAINING as PLAYING | Compact games · trainings next to level; rated gamesPlayed unchanged |
+| G-53 | Player overlay training attendance zero | Open `?player=` for a user with 0 TRAINING participation | Shows 0 trainings (quiet empty); no crash |
 
 ### 4.2 Onboarding gates & prompts
 
@@ -1317,6 +1319,8 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PR-81 | Game-open sport hint | Open `?player=` from tennis game; subject has tennis | Card opens on tennis; if subject lacks tennis → viewer primary or subject primary |
 | PR-82 | Partners ranking modes (enough data) | Player card Statistics → Partners when Rating/Games change people vs Formulae | Switch visible; each visible mode changes at least one card person; no two tabs with identical people |
 | PR-83 | Partners sparse data (one game) | Open card with 1 finished doubles game (e.g. Polina) | Ranking switch hidden; only one partner + one opponent card (no best=worst / favorite=nemesis dupes) |
+| PR-84 | Public profile training attendance | Open `/user-profile/:id` for a user who attended TRAINING as PLAYING (not as trainer-only) | Compact games · trainings next to level; rated gamesPlayed unchanged |
+| PR-85 | Public profile training attendance zero | Open `/user-profile/:id` with 0 TRAINING participation | Shows 0 trainings (quiet empty); no crash |
 | PR-streak-1 | Own profile play streak chip | Own profile/card after ≥1 qualifying week | Flame + N weeks; tap opens sheet with current/best/deadline |
 | PR-streak-2 | Other profile play streak | Open another user’s card with streak | Current/best visible; no at-risk styling or hours |
 | PR-streak-3 | Same week second game | Second rated finish same week window | Count unchanged; results streak banner absent |

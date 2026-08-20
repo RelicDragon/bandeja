@@ -283,6 +283,12 @@ const LevelHistoryViewComponent = ({
             variant={hideUserCard ? 'compact' : 'hero'}
             includeSportsInSelector={includeSportsInSelector}
             competitiveSport={competitiveSport}
+            trainingAttendanceCount={
+              alignedSportStats?.trainingAttendanceCount
+              ?? alignedParentStats?.trainingAttendanceCount
+              ?? stats.trainingAttendanceCount
+              ?? 0
+            }
           />
           {!showSocialLevel && (alignedSportStats || alignedParentStats) ? (
             <PlayerLevelFeedbackAggregateCard

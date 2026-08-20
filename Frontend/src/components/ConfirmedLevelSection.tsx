@@ -5,6 +5,7 @@ import { CompetitiveSocialLevelBadge } from '@/components/profile/CompetitiveSoc
 import { formatSmartRelativeTime } from '@/utils/dateFormat';
 import {
   findSportProfile,
+  gamesPlayedForSport,
   getDisplayLevelForSport,
   getSportLevelApprovedWhen,
   getUserPrimarySport,
@@ -12,12 +13,16 @@ import {
 } from '@/utils/profileSports';
 import { formatRatingHint } from '@/utils/sportRating';
 import type { Sport, User } from '@/types';
+import { PlayerActivityCounts } from '@/components/player/PlayerActivityCounts';
 
 export interface ConfirmedLevelSectionProps {
   user: User;
   sport?: Sport;
   embedded?: boolean;
   showBadge?: boolean;
+  gamesPlayed?: number;
+  trainingAttendanceCount?: number;
+  showActivityCounts?: boolean;
 }
 
 export const ConfirmedLevelSection = ({
@@ -25,6 +30,9 @@ export const ConfirmedLevelSection = ({
   sport,
   embedded = false,
   showBadge = true,
+  gamesPlayed,
+  trainingAttendanceCount = 0,
+  showActivityCounts = true,
 }: ConfirmedLevelSectionProps) => {
   const { t } = useTranslation();
   const levelSport = sport ?? getUserPrimarySport(user);
@@ -42,6 +50,7 @@ export const ConfirmedLevelSection = ({
     t,
     profile?.externalRatingHint,
   );
+  const ratedGamesPlayed = gamesPlayed ?? gamesPlayedForSport(user, levelSport);
 
   const confirmation =
     confirmed && approvedBy ? (
@@ -81,7 +90,7 @@ export const ConfirmedLevelSection = ({
       </div>
     ) : null;
 
-  if (!ratingHint && !showBadge && !confirmation) return null;
+  if (!ratingHint && !showBadge && !confirmation && !showActivityCounts) return null;
 
   const content = (
     <>
@@ -100,6 +109,13 @@ export const ConfirmedLevelSection = ({
             className="inline-flex items-center gap-1 rounded-full bg-yellow-500 px-3 py-1.5 text-sm font-bold text-white shadow-md dark:bg-yellow-600"
           />
         </div>
+      )}
+      {showActivityCounts && (
+        <PlayerActivityCounts
+          gamesPlayed={ratedGamesPlayed}
+          trainingAttendanceCount={trainingAttendanceCount}
+          className={`text-gray-500 dark:text-gray-400 ${showBadge ? 'mt-2' : ''}`}
+        />
       )}
       {confirmation}
     </>

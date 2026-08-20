@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import type { Sport, User } from '@/types';
 import {
+  gamesPlayedForSport,
   getDisplayLevelForSport,
   getReliabilityForSport,
   getUserPrimarySport,
@@ -9,12 +10,15 @@ import {
 import { PlayStreakChip } from '@/components/playStreak/PlayStreakChip';
 import { TrophyShowcase } from '@/components/trophies/TrophyShowcase';
 import { useAuthStore } from '@/store/authStore';
+import { PlayerActivityCounts } from '@/components/player/PlayerActivityCounts';
 
 export interface LevelHistoryAvatarSectionProps {
   user: User;
   sport?: Sport;
   showSocialLevel: boolean;
   embedded?: boolean;
+  gamesPlayed?: number;
+  trainingAttendanceCount?: number;
 }
 
 export const LevelHistoryAvatarSection = ({
@@ -22,6 +26,8 @@ export const LevelHistoryAvatarSection = ({
   sport,
   showSocialLevel,
   embedded = false,
+  gamesPlayed,
+  trainingAttendanceCount = 0,
 }: LevelHistoryAvatarSectionProps) => {
   const { t } = useTranslation();
   const authUserId = useAuthStore((s) => s.user?.id);
@@ -83,6 +89,11 @@ export const LevelHistoryAvatarSection = ({
                 ? competitiveLevel.toFixed(2)
                 : '—'}
           </div>
+          <PlayerActivityCounts
+            gamesPlayed={gamesPlayed ?? gamesPlayedForSport(user, levelSport)}
+            trainingAttendanceCount={trainingAttendanceCount}
+            className="mt-2 justify-start text-white/80"
+          />
           {showShowcase && (
             <div className="relative z-10 mt-2 flex flex-col gap-2">
               {showStreak && playStreak && (

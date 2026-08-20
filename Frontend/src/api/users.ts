@@ -112,6 +112,7 @@ export interface UserStats {
   gamesStatsAllSports?: GamesStat[];
   performanceInsights?: UserPerformanceInsights;
   levelFeedback?: PlayerLevelFeedbackAggregate;
+  trainingAttendanceCount?: number;
 }
 
 export type PlayerLevelFeedbackAggregate =
