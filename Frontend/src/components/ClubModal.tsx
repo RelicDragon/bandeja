@@ -165,7 +165,7 @@ export const ClubModal = ({
     <>
       <Dialog open={isOpen} onClose={dismiss} modalId="club-modal">
         <DialogContent
-          className="relative overflow-hidden"
+          className="overflow-hidden"
           showCloseButton={panel !== 'city'}
           onEscapeKeyDown={(event) => {
             if (panel === 'city' || panel === 'detail') {

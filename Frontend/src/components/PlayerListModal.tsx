@@ -790,7 +790,7 @@ export const PlayerListModal = ({
     <SportLevelProvider sport={gameSport}>
     <Dialog open={isOpen} onClose={handleClose} modalId="player-list-modal">
       <DialogContent
-        className="relative h-[min(92vh,720px)] flex flex-col overflow-hidden p-0 gap-0"
+        className="h-[min(92vh,720px)] flex flex-col overflow-hidden p-0 gap-0"
         showCloseButton={!cityPickerOpen}
         onEscapeKeyDown={(event) => {
           if (cityPickerOpen) {

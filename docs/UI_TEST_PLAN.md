@@ -672,6 +672,7 @@ Frontend/e2e/
 | C-59b | Club in another city | Search a club name in another city → pick it | Game city follows `club.cityId`; courts/bookings reset |
 | C-59c | Club city picker in-dialog | Open club picker → tap venue city chip | City list covers the same dialog (tappable); Back/Escape returns to clubs, does not close the club modal |
 | C-59d | Venue city independent of browse | Hop browse city in chat or invite, then open club picker | Club chip is venue/home, not the browse city |
+| C-59e | Club modal card visible | Create/edit → Select Club | Dim overlay and the club dialog card both appear (not overlay-only) |
 | C-60 | Location sub-step value pills | Pick date, court, time in location block (create + edit location tab) | Sub-step headers show current selection as right-aligned pill (Date: “Sat, Jul 12”; Court: name or “2/3” in multi-court; Start time: “18:00–19:30”); pill is green when the sub-step is done |
 | C-61 | Calendar picker dialog | Tap calendar tile in Date row | Calendar opens as modal dialog with title and close button; picking a date applies it and closes; X, outside tap, or hardware back dismiss without changing the date |
 | C-62 | Create game Looking | Set date/time, open invite picker, Looking tab, pick a looking player, create | Looking tab only after date/time; create sends invite with their play intent linked |
@@ -776,6 +777,7 @@ Frontend/e2e/
 | GD-155 | Invite nearby people | Browse city has 0 name hits; nearby city has the person | Grouped Nearby section; View city sets browse city |
 | GD-156 | Invite city picker pins Home | Browse another city → open city chip | “Your city” is profile Home; picking it returns the lens to Home without `switchCity` |
 | GD-157 | Invite city picker back | Open city picker from invite → Back / Escape | Picker closes; invite modal stays open |
+| GD-158 | Invite modal card visible | Owner opens invite picker | Dim overlay and the invite dialog card both appear (not overlay-only) |
 | GD-15a | Invite search Cyrillic→Latin | Open invite list; type Cyrillic prefix of a Latin-named player (e.g. `ив` for Ivan) | Player stays in results after debounce (does not flash then vanish) |
 | GD-15b | Invite search clear | Open invite list; type 2+ chars so results update; clear the search field | List stays mounted (no full-modal spinner); default invitable list restores after debounce |
 | GD-15c | Invite picker omits busy | Open Search invite list for a timed game; city user is PLAYING in another overlapping Bandeja game | Busy user is absent from the list; INVITED-only or non-overlapping PLAYING users still appear |
