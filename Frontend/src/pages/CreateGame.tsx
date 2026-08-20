@@ -10,6 +10,7 @@ import { CreateGameDateSection } from '@/components/createGame/CreateGameDateSec
 import { useAuthStore } from '@/store/authStore';
 import { runWithProfileName } from '@/utils/runWithProfileName';
 import { overlapConfirmBody, runWithOverlapConfirm } from '@/utils/gameSlotOverlapConfirm';
+import { runWithGenderForEvent } from '@/utils/genderJoinGate';
 import { usePlayersStore } from '@/store/playersStore';
 import { useShellNavStore } from '@/store/shellNavStore';
 import { clubsApi, courtsApi, gamesApi, invitesApi } from '@/api';
@@ -1270,7 +1271,6 @@ export const CreateGame = ({
       runWithProfileName(() => void handleCreateGame());
       return;
     }
-
     if (!selectedClub) {
       scrollToAndHighlightError(locationTimeSectionRef);
       return;
@@ -1299,6 +1299,9 @@ export const CreateGame = ({
       scrollToReservationValidationIssue(validation.reason);
       return;
     }
+
+    const creatorJoining = Boolean(user.id && participants.includes(user.id));
+    if (creatorJoining && !runWithGenderForEvent({ genderTeams, entityType }, () => void handleCreateGame())) return;
 
     await handleCreateAttempt(
       async (overrides) => {
@@ -2055,6 +2058,8 @@ export const CreateGame = ({
             onClose={() => setIsInvitePlayersModalOpen(false)}
             multiSelect={true}
             gameSport={selectedSport}
+            genderTeams={genderTeams}
+            entityType={entityType}
             gameTiming={inviteGameTiming}
             onConfirm={async (playerIds, meta) => {
               setInvitedPlayerIds(playerIds);

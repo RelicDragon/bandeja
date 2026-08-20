@@ -45,6 +45,7 @@ import { PullToRefreshShell } from '@/components/PullToRefreshShell';
 import { useDesktop } from '@/hooks/useDesktop';
 import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
 import { runWithProfileName } from '@/utils/runWithProfileName';
+import { recoverGenderUnsetJoin, runWithGenderForEvent } from '@/utils/genderJoinGate';
 import { AnimatedMount } from '@/components/motion/AnimatedMount';
 import { TabContentStack } from '@/components/motion/TabContentStack';
 import { useDeclineInvite } from '@/hooks/useDeclineInvite';
@@ -395,6 +396,8 @@ export const MyTab = () => {
       runWithProfileName(() => void handleAcceptInvite(inviteId));
       return;
     }
+    const inviteGame = invites.find((inv) => inv.id === inviteId)?.game;
+    if (!runWithGenderForEvent(inviteGame, () => void handleAcceptInvite(inviteId))) return;
     // Guard against a rapid double-tap firing two POSTs (the second would 404
     // because the invite is no longer in the INVITED state, surfacing a spurious error toast).
     if (acceptingInviteIdsRef.current.has(inviteId)) return;
@@ -417,6 +420,7 @@ export const MyTab = () => {
       decrementPendingInvite(inviteId);
       void refetchMyGames(false, true);
     } catch (error: any) {
+      if (recoverGenderUnsetJoin(error, () => void handleAcceptInvite(inviteId))) return;
       const errorMessage = error.response?.data?.message || 'errors.generic';
       toast.error(t(errorMessage, { defaultValue: errorMessage }));
     } finally {

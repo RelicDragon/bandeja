@@ -186,6 +186,7 @@ export const USER_SELECT_FIELDS = {
   primarySport: true,
   socialLevel: true,
   gender: true,
+  genderIsSet: true,
   approvedLevel: true,
   isTrainer: true,
   verbalStatus: true,

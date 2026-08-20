@@ -1,6 +1,7 @@
 import { PushNotifications, PushNotificationSchema, ActionPerformed, Token } from '@capacitor/push-notifications';
 import { Capacitor } from '@capacitor/core';
 import api from '@/api/axios';
+import { gamesApi } from '@/api/games';
 import { invitesApi } from '@/api/invites';
 import { userTeamsApi } from '@/api/userTeams';
 import { navigationService } from './navigationService';
@@ -10,6 +11,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useHeaderStore } from '@/store/headerStore';
 import { runWithProfileName } from '@/utils/runWithProfileName';
 import { runWithOverlapConfirm } from '@/utils/gameSlotOverlapConfirm';
+import { recoverGenderUnsetJoin, resolveGameLikeForPushInvite, runWithGenderForEvent } from '@/utils/genderJoinGate';
 import { parsePushChatContext } from '@/services/push/parsePushChatContext';
 import { sendChatReplyFromPush } from '@/services/push/sendChatReplyFromPush';
 import { applyPushUnreadBadgeFromNotification } from '@/services/push/applyPushUnreadBadge';
@@ -34,6 +36,8 @@ interface NotificationData {
   type: string;
   data?: {
     gameId?: string;
+    genderTeams?: string;
+    entityType?: string;
     proposalId?: string;
     playIntentId?: string;
     bugId?: string;
@@ -554,6 +558,13 @@ class PushNotificationService {
       runWithProfileName(() => void this.handleAcceptInvite(data));
       return;
     }
+    if (authUser && authUser.genderIsSet !== true) {
+      const gameLike = await resolveGameLikeForPushInvite(data.data, async (gameId) => {
+        const gameResponse = await gamesApi.getById(gameId);
+        return gameResponse.data;
+      });
+      if (gameLike && !runWithGenderForEvent(gameLike, () => void this.handleAcceptInvite(data))) return;
+    }
 
     try {
       const response = await runWithOverlapConfirm((confirmOverlap) =>
@@ -567,6 +578,7 @@ class PushNotificationService {
         navigationService.navigateToGame(data.data.gameId);
       }
     } catch (error) {
+      if (recoverGenderUnsetJoin(error, () => void this.handleAcceptInvite(data))) return;
       console.error('❌ Failed to accept invite:', error);
     }
   }

@@ -148,6 +148,7 @@ export interface BasicUser {
   /** Soft public state when accrued uncertainty ≥ threshold. */
   ratingSettling?: boolean;
   gender: Gender;
+  genderIsSet?: boolean;
   approvedLevel: boolean;
   isTrainer: boolean;
   allowMessagesFromNonContacts?: boolean;
@@ -241,7 +242,6 @@ export interface User extends BasicUser {
   timeFormat?: 'auto' | '12h' | '24h';
   weekStart?: 'auto' | 'monday' | 'sunday';
   defaultCurrency?: string;
-  genderIsSet?: boolean;
   nameIsSet?: boolean;
   primarySportIsSet?: boolean;
   cityIsSet?: boolean;

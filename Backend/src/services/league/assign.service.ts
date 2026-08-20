@@ -3,7 +3,7 @@ import { ApiError } from '../../utils/ApiError';
 import { ParticipantRole } from '@prisma/client';
 import { hasParentGamePermission } from '../../utils/parentGamePermissions';
 import { fetchGameWithPlayingParticipants } from '../../utils/gameQueries';
-import { validateGameCanAcceptParticipants } from '../../utils/participantValidation';
+import { validateGameCanAcceptParticipants, validateGenderForGame } from '../../utils/participantValidation';
 import { addOrUpdateParticipant } from '../../utils/participantOperations';
 import { performPostJoinOperations } from '../../utils/postJoinOperations';
 import notificationService from '../notification.service';
@@ -80,6 +80,7 @@ export class LeagueAssignService {
       await prisma.$transaction(async (tx: any) => {
         const currentGame = await fetchGameWithPlayingParticipants(tx, gameId);
         validateGameCanAcceptParticipants(currentGame);
+        await validateGenderForGame(currentGame, userId, { targetIsOtherUser: true });
         await addOrUpdateParticipant(tx, gameId, userId, { role: ParticipantRole.PARTICIPANT });
       });
       await performPostJoinOperations(gameId, userId);

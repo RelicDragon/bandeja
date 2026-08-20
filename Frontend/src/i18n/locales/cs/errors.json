@@ -60,7 +60,12 @@
       "alreadyParticipant": "Uživatel je již účastníkem",
       "cannotJoinArchivedOrFinished": "Nelze se připojit k archivovanému nebo ukončenému zápasu",
       "directJoinNotAllowed": "Přímé připojení u tohoto zápasu není povoleno",
-      "cannotDeleteHasChildren": "Zápas s dceřinými zápasy (např. turnaj s koly) nelze smazat. Nejprve smažte nebo odeberte dceřiné zápasy."
+      "cannotDeleteHasChildren": "Zápas s dceřinými zápasy (např. turnaj s koly) nelze smazat. Nejprve smažte nebo odeberte dceřiné zápasy.",
+      "genderUnset": "Nastavte pohlaví, abyste se mohli připojit",
+      "genderUnsetOther": "Tento hráč si ještě nenastavil pohlaví",
+      "genderIncompatibleMen": "Do tohoto zápasu se mohou přidat jen muži",
+      "genderIncompatibleWomen": "Do tohoto zápasu se mohou přidat jen ženy",
+      "genderIncompatibleMix": "Do tohoto zápasu se mohou přidat jen muži nebo ženy"
     },
     "league": {
       "gameNotFound": "Zápas nenalezen",

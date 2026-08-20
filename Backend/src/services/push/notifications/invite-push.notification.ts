@@ -57,6 +57,8 @@ export async function createInvitePushNotification(
     body,
     data: {
       gameId: invite.game.id,
+      genderTeams: invite.game.genderTeams,
+      entityType: invite.game.entityType,
       inviteId: invite.id,
       acceptActionToken: signPushInviteActionToken({
         userId: receiver.id,

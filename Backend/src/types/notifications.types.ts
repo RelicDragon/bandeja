@@ -55,6 +55,8 @@ export interface NotificationData {
   matchId?: string;
   bugId?: string;
   userId?: string;
+  genderTeams?: string;
+  entityType?: string;
   inviteId?: string;
   chatContextType?: string;
   contextId?: string;

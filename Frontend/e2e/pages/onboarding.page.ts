@@ -52,6 +52,28 @@ export class OnboardingPage {
     await expect(this.nameSetModal()).toHaveCount(0, { timeout: 15_000 });
   }
 
+  genderSetModal() {
+    return this.page.getByRole('dialog').filter({
+      has: this.page.getByText('Set your gender', { exact: true }),
+    });
+  }
+
+  async expectGenderGateOpen() {
+    await expect(this.genderSetModal()).toBeVisible({ timeout: 15_000 });
+  }
+
+  async saveGenderMale() {
+    const dialog = this.genderSetModal();
+    await dialog.getByRole('button', { name: /^(male|man)$/i }).click();
+    await dialog.getByRole('button', { name: /^confirm$/i }).click();
+    await expect(this.genderSetModal()).toHaveCount(0, { timeout: 15_000 });
+  }
+
+  async dismissGenderGate() {
+    await this.genderSetModal().getByRole('button', { name: /^close$/i }).click();
+    await expect(this.genderSetModal()).toHaveCount(0, { timeout: 15_000 });
+  }
+
   async expectPrimarySportGate() {
     await expect(this.primarySportModal()).toBeVisible({ timeout: 20_000 });
   }

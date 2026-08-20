@@ -3,7 +3,7 @@ import { ApiError } from '../../utils/ApiError';
 import { SystemMessageType } from '../../utils/systemMessages';
 import { GameService } from './game.service';
 import { ParticipantMessageHelper } from './participantMessageHelper';
-import { validatePlayerCanJoinGame, validateGameCanAcceptParticipants, canUserManageQueue } from '../../utils/participantValidation';
+import { validatePlayerCanJoinGame, validateGameCanAcceptParticipants, canUserManageQueue, validateGenderForGame } from '../../utils/participantValidation';
 import { hasParentGamePermissionWithUserCheck } from '../../utils/parentGamePermissions';
 import { fetchGameWithPlayingParticipants } from '../../utils/gameQueries';
 import { addOrUpdateParticipant } from '../../utils/participantOperations';
@@ -63,7 +63,11 @@ export class ParticipantService {
       if (existingParticipant.status === IN_QUEUE_STATUS) {
         throw new ApiError(400, 'games.alreadyInJoinQueue');
       }
+    }
 
+    await validateGenderForGame(game, userId);
+
+    if (existingParticipant) {
       if (!game.allowDirectJoin) {
         return await this.moveExistingParticipantToQueue(gameId, userId);
       }
@@ -112,7 +116,7 @@ export class ParticipantService {
       return 'games.joinedSuccessfully';
     }
 
-    // Check allowDirectJoin first - if false, go to queue without validation
+    // Check allowDirectJoin first - if false, go to queue after gender check
     if (!game.allowDirectJoin) {
       // NEW: Create non-playing participant instead of joinQueue
       return await this.addToQueueAsParticipant(gameId, userId);
@@ -372,6 +376,8 @@ export class ParticipantService {
         throw new ApiError(404, 'Game not found');
       }
 
+      await validateGenderForGame(game, userId);
+
       if (!game.allowDirectJoin) {
         const isOwnerOrAdmin = participant.role === 'OWNER' || participant.role === 'ADMIN';
         if (!isOwnerOrAdmin) {
@@ -579,7 +585,10 @@ export class ParticipantService {
         throw new ApiError(403, 'games.notAuthorizedToAcceptJoinQueue');
       }
 
-      const joinResult = await validatePlayerCanJoinGame(currentGame, queueUserId, { skipLevelCheck: true });
+      const joinResult = await validatePlayerCanJoinGame(currentGame, queueUserId, {
+        skipLevelCheck: true,
+        targetIsOtherUser: true,
+      });
       if (!joinResult.canJoin) {
         throw new ApiError(400, joinResult.reason || 'errors.games.cannotAddPlayer');
       }
@@ -728,9 +737,10 @@ export class ParticipantService {
   ): Promise<{ participant: any; invite: any }> {
     const game = await prisma.game.findUniqueOrThrow({
       where: { id: gameId },
-      select: { entityType: true, status: true },
+      select: { entityType: true, status: true, genderTeams: true },
     });
     validateGameCanAcceptParticipants(game);
+    await validateGenderForGame(game, receiverId, { targetIsOtherUser: true });
     // Gap A: single policy gate for new invites / revives (admin + Telegram use this path).
     if (game.status === GameStatus.STARTED) {
       throw new ApiError(400, 'errors.invites.cannotSendAfterGameStarted');
