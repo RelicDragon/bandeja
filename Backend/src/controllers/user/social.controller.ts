@@ -13,6 +13,7 @@ import { projectEmbeddedUserByPrimarySport } from '../../services/user/projectEm
 import { BasicUser } from '../../types/user.types';
 import { CommonChatsService } from '../../services/user/commonChats.service';
 import { expandNameSearchTerms } from '../../utils/nameSearchTerms';
+import { findUserIdsBusyInSlot } from '../../services/game/gameSlotOverlap.service';
 
 const INVITE_PICKER_BLOCKING_PARTICIPANT_STATUSES = new Set<ParticipantStatus>([
   ParticipantStatus.PLAYING,
@@ -27,6 +28,18 @@ export const getInvitablePlayers = asyncHandler(async (req: AuthRequest, res: Re
   const searchInput = Array.isArray(req.query.search) ? req.query.search[0] : req.query.search;
   const searchTerm = typeof searchInput === 'string' ? searchInput.trim() : '';
   const searchTerms = searchTerm.split(/\s+/).filter(Boolean).slice(0, 5);
+  const startTimeInput = Array.isArray(req.query.startTime) ? req.query.startTime[0] : req.query.startTime;
+  const endTimeInput = Array.isArray(req.query.endTime) ? req.query.endTime[0] : req.query.endTime;
+  const slotStart = typeof startTimeInput === 'string' ? new Date(startTimeInput) : null;
+  const slotEnd = typeof endTimeInput === 'string' ? new Date(endTimeInput) : null;
+  const querySlot =
+    slotStart &&
+    slotEnd &&
+    Number.isFinite(slotStart.getTime()) &&
+    Number.isFinite(slotEnd.getTime()) &&
+    slotStart < slotEnd
+      ? { startTime: slotStart, endTime: slotEnd }
+      : null;
   const searchWhere: Prisma.UserWhereInput =
     searchTerms.length > 0
       ? {
@@ -48,6 +61,7 @@ export const getInvitablePlayers = asyncHandler(async (req: AuthRequest, res: Re
   let participantIds: string[] = [];
   let cityId = currentUser?.currentCityId;
   let gameSport: Sport | null = null;
+  let busyUserIds: string[] = [];
 
   if (!cityId) {
     throw new ApiError(400, 'User does not have a city');
@@ -60,6 +74,9 @@ export const getInvitablePlayers = asyncHandler(async (req: AuthRequest, res: Re
         id: true,
         sport: true,
         cityId: true,
+        startTime: true,
+        endTime: true,
+        timeIsSet: true,
         participants: {
           select: {
             userId: true,
@@ -88,8 +105,24 @@ export const getInvitablePlayers = asyncHandler(async (req: AuthRequest, res: Re
       .map((p) => p.userId);
     cityId = gameCityId || currentUser?.currentCityId;
     gameSport = game.sport ?? Sport.PADEL;
-  } else if (sportQuery) {
-    gameSport = parseSportParam(sportQuery);
+    busyUserIds = await findUserIdsBusyInSlot({
+      id: game.id,
+      startTime: game.startTime,
+      endTime: game.endTime,
+      timeIsSet: game.timeIsSet,
+    });
+  } else {
+    if (querySlot) {
+      busyUserIds = await findUserIdsBusyInSlot({
+        id: '',
+        startTime: querySlot.startTime,
+        endTime: querySlot.endTime,
+        timeIsSet: true,
+      });
+    }
+    if (sportQuery) {
+      gameSport = parseSportParam(sportQuery);
+    }
   }
 
   const interactions = await prisma.userInteraction.findMany({
@@ -128,7 +161,7 @@ export const getInvitablePlayers = asyncHandler(async (req: AuthRequest, res: Re
     prisma.user.findMany({
       where: {
         id: {
-          notIn: [...participantIds, req.userId!],
+          notIn: [...new Set([...participantIds, ...busyUserIds, req.userId!])],
         },
         isActive: true,
         currentCityId: cityId,
@@ -166,6 +199,7 @@ export const getInvitablePlayers = asyncHandler(async (req: AuthRequest, res: Re
     data: {
       players: usersWithInteractions,
       maxSocialLevel,
+      busyUserIds,
     },
   });
 });

@@ -179,8 +179,10 @@ export const getMyInvites = asyncHandler(async (req: AuthRequest, res: Response)
 
 export const acceptInvite = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
+  const confirmOverlap = req.body?.confirmOverlap === true;
+  const isAdmin = req.user?.isAdmin || false;
 
-  const result = await InviteService.acceptInvite(id, req.userId!, req.user?.isAdmin || false);
+  const result = await InviteService.acceptInvite(id, req.userId!, false, isAdmin, confirmOverlap);
 
   if (!result.success) {
     const statusCode = result.message === 'errors.invites.notFound' ? 404 :

@@ -48,6 +48,7 @@ import { runWithProfileName } from '@/utils/runWithProfileName';
 import { AnimatedMount } from '@/components/motion/AnimatedMount';
 import { TabContentStack } from '@/components/motion/TabContentStack';
 import { useDeclineInvite } from '@/hooks/useDeclineInvite';
+import { runWithOverlapConfirm } from '@/utils/gameSlotOverlapConfirm';
 import { ResizableSplitter } from '@/components/ResizableSplitter';
 import { navigationService } from '@/services/navigationService';
 import { useUserTeamsStore } from '@/store/userTeamsStore';
@@ -400,8 +401,11 @@ export const MyTab = () => {
     acceptingInviteIdsRef.current.add(inviteId);
     try {
       const { invitesApi } = await import('@/api');
-      const response = await invitesApi.accept(inviteId);
-      const message = (response as any).message || 'Invite accepted successfully';
+      const response = await runWithOverlapConfirm((confirmOverlap) =>
+        invitesApi.accept(inviteId, confirmOverlap),
+      );
+      if (!response) return;
+      const message = (response as { message?: string }).message || 'Invite accepted successfully';
 
       if (message === 'games.addedToJoinQueue') {
         toast.success(t('games.addedToJoinQueue', { defaultValue: 'Added to join queue' }));

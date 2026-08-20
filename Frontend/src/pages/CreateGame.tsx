@@ -9,6 +9,7 @@ import { CreateGameCourtSection } from '@/components/createGame/CreateGameCourtS
 import { CreateGameDateSection } from '@/components/createGame/CreateGameDateSection';
 import { useAuthStore } from '@/store/authStore';
 import { runWithProfileName } from '@/utils/runWithProfileName';
+import { overlapConfirmBody, runWithOverlapConfirm } from '@/utils/gameSlotOverlapConfirm';
 import { usePlayersStore } from '@/store/playersStore';
 import { useShellNavStore } from '@/store/shellNavStore';
 import { clubsApi, courtsApi, gamesApi, invitesApi } from '@/api';
@@ -1407,7 +1408,22 @@ export const CreateGame = ({
         gameData.playIntentSource = selectedPlayIntentSource;
       }
 
-      const gameResponse = await gamesApi.create(gameData);
+      const gameResponse = await runWithOverlapConfirm(
+        (confirmOverlap) =>
+          gamesApi.create({
+            ...(gameData as Partial<Game>),
+            ...overlapConfirmBody(confirmOverlap),
+          }),
+        {
+          beforeAsk: () => {
+            if (showCreateOverlay) setCreateOverlayPhase(null);
+          },
+          beforeRetry: () => {
+            if (showCreateOverlay) setCreateOverlayPhase('creating');
+          },
+        },
+      );
+      if (!gameResponse) return;
 
       if ((bookingFields.externalBookingIds?.length ?? 0) > 0) {
         invalidateBooktimeAllUpcomingCache();

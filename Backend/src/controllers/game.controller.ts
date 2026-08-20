@@ -453,7 +453,8 @@ export const deleteGame = asyncHandler(async (req: AuthRequest, res: Response) =
 
 export const joinGame = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
-  const message = await ParticipantService.joinGame(id, req.userId!);
+  const confirmOverlap = req.body?.confirmOverlap === true;
+  const message = await ParticipantService.joinGame(id, req.userId!, confirmOverlap);
 
   res.json({
     success: true,
@@ -493,8 +494,13 @@ export const leaveChat = asyncHandler(async (req: AuthRequest, res: Response) =>
 
 export const togglePlayingStatus = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
-  const { status } = req.body;
-  const message = await ParticipantService.togglePlayingStatus(id, req.userId!, status);
+  const { status, confirmOverlap } = req.body;
+  const message = await ParticipantService.togglePlayingStatus(
+    id,
+    req.userId!,
+    status,
+    confirmOverlap === true,
+  );
 
   res.json({
     success: true,

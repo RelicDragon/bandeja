@@ -117,8 +117,31 @@ describe('playersStore.fetchPlayers', () => {
 
     const result = await usePlayersStore.getState().fetchPlayers(undefined, undefined, 'Maksim S');
 
-    expect(getInvitablePlayers).toHaveBeenCalledWith(undefined, undefined, 'Maksim S');
+    expect(getInvitablePlayers).toHaveBeenCalledWith(undefined, undefined, 'Maksim S', undefined);
     expect(result).toHaveLength(1);
     expect(result[0].id).toBe('u2');
+  });
+
+  it('returns busyUserIds from the same fetch as players', async () => {
+    const free = { ...baseUser(), id: 'free' };
+    getInvitablePlayers.mockResolvedValue({
+      data: { players: [free], maxSocialLevel: 1, busyUserIds: ['busy'] },
+    });
+
+    const result = await usePlayersStore.getState().fetchPlayers(
+      undefined,
+      Sports.PADEL,
+      undefined,
+      { startTime: '2026-08-20T19:00:00.000Z', endTime: '2026-08-20T20:00:00.000Z' },
+    );
+
+    expect(getInvitablePlayers).toHaveBeenCalledWith(
+      undefined,
+      Sports.PADEL,
+      undefined,
+      { startTime: '2026-08-20T19:00:00.000Z', endTime: '2026-08-20T20:00:00.000Z' },
+    );
+    expect(result.map((p) => p.id)).toEqual(['free']);
+    expect(result.busyUserIds).toEqual(['busy']);
   });
 });

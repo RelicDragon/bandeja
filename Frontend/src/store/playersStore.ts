@@ -13,6 +13,17 @@ import {
 } from '@/services/chat/chatThreadIndex';
 import { bridgeBumpChatListDexie } from '@/services/chat/chatLocalApplyStoreBridge';
 
+export type FetchPlayersResult = BasicUser[] & { busyUserIds: string[] };
+
+function withBusyUserIds(players: BasicUser[], busyUserIds: string[]): FetchPlayersResult {
+  Object.defineProperty(players, 'busyUserIds', {
+    value: busyUserIds,
+    enumerable: false,
+    configurable: true,
+  });
+  return players as FetchPlayersResult;
+}
+
 export interface UserMetadata {
   chatId?: string;
   interactionCount: number;
@@ -50,7 +61,12 @@ interface UsersState {
   addChat: (chat: UserChat) => Promise<void>;
   getOrCreateAndAddUserChat: (userId: string) => Promise<UserChat | null>;
 
-  fetchPlayers: (gameId?: string, sport?: string, search?: string) => Promise<BasicUser[]>;
+  fetchPlayers: (
+    gameId?: string,
+    sport?: string,
+    search?: string,
+    slot?: { startTime: string; endTime: string },
+  ) => Promise<FetchPlayersResult>;
   fetchUserChats: () => Promise<void>;
   invalidateUserChatsCache: () => void;
   refresh: () => Promise<void>;
@@ -66,10 +82,15 @@ let readReceiptHandler: ((readReceipt: UserChatReadReceipt) => void) | null = nu
 let unifiedMessageHandler: (() => void) | null = null;
 let unifiedReadReceiptHandler: (() => void) | null = null;
 let cleanupPromise: Promise<void> | null = null;
-const fetchPlayersInflight = new Map<string, Promise<BasicUser[]>>();
+const fetchPlayersInflight = new Map<string, Promise<FetchPlayersResult>>();
 
-function fetchPlayersCacheKey(gameId?: string, sport?: string, search?: string): string {
-  return `${gameId ?? ''}:${sport ?? ''}:${search?.trim() ?? ''}`;
+function fetchPlayersCacheKey(
+  gameId?: string,
+  sport?: string,
+  search?: string,
+  slot?: { startTime: string; endTime: string },
+): string {
+  return `${gameId ?? ''}:${sport ?? ''}:${search?.trim() ?? ''}:${slot?.startTime ?? ''}:${slot?.endTime ?? ''}`;
 }
 
 const createDefaultMetadata = (existing?: Partial<UserMetadata>): UserMetadata => ({
@@ -356,13 +377,18 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
     }
   },
 
-  fetchPlayers: async (gameId?: string, sport?: string, search?: string): Promise<BasicUser[]> => {
+  fetchPlayers: async (
+    gameId?: string,
+    sport?: string,
+    search?: string,
+    slot?: { startTime: string; endTime: string },
+  ): Promise<FetchPlayersResult> => {
     const normalizedSearch = search?.trim();
-    const cacheKey = fetchPlayersCacheKey(gameId, sport, normalizedSearch);
+    const cacheKey = fetchPlayersCacheKey(gameId, sport, normalizedSearch, slot);
     const inflight = fetchPlayersInflight.get(cacheKey);
     if (inflight) return inflight;
 
-    const run = async (): Promise<BasicUser[]> => {
+    const run = async (): Promise<FetchPlayersResult> => {
     const state = get();
     const now = Date.now();
 
@@ -370,18 +396,20 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
       !gameId &&
       !sport &&
       !normalizedSearch &&
+      !slot &&
       state.lastPlayersFetchTime > 0 &&
       now - state.lastPlayersFetchTime < CACHE_DURATION;
     if (cacheValid) {
-      return Object.values(state.users);
+      return withBusyUserIds(Object.values(state.users), []);
     }
 
     set({ loading: true, isFetching: true });
     try {
-      const response = await usersApi.getInvitablePlayers(gameId, sport, normalizedSearch);
+      const response = await usersApi.getInvitablePlayers(gameId, sport, normalizedSearch, slot);
       const payload = response.data;
       const players = payload?.players ?? [];
       const maxSocialLevel = payload?.maxSocialLevel ?? null;
+      const busyUserIds = payload?.busyUserIds ?? [];
 
       set((currentState) => {
         const newUsers: Record<string, BasicUser> = {};
@@ -397,7 +425,7 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
           });
         });
 
-        const isGlobalCacheFetch = !gameId && !sport && !normalizedSearch;
+        const isGlobalCacheFetch = !gameId && !sport && !normalizedSearch && !slot;
 
         return {
           users: { ...currentState.users, ...newUsers },
@@ -409,11 +437,14 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
         };
       });
       const { users: mergedUsers } = get();
-      return players.map((p) => mergedUsers[p.id] ?? p);
+      return withBusyUserIds(
+        players.map((p) => mergedUsers[p.id] ?? p),
+        busyUserIds,
+      );
     } catch (error) {
       console.error('Failed to fetch players:', error);
       set({ loading: false, isFetching: false });
-      return [];
+      return withBusyUserIds([], []);
     }
     };
 

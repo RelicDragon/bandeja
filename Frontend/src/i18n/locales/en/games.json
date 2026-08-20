@@ -26,6 +26,10 @@
     "confirmJoinMessage": "Are you sure you want to join this game?",
     "confirmJoinQueueTitle": "Join the queue?",
     "confirmJoinQueueMessage": "Are you sure you want to join the waiting list?",
+    "overlapConfirmTitle": "Already playing",
+    "overlapConfirmMessage": "This slot overlaps a game you're in.",
+    "overlapConfirmProceed": "Continue",
+    "requiresOverlapConfirm": "This slot overlaps a game you're in.",
     "gameTypes": {
       "CLASSIC": "Classic",
       "AMERICANO": "Americano",

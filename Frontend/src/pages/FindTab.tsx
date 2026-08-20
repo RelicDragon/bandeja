@@ -32,6 +32,7 @@ import {
 import { buildFindStructuralApiParams } from '@/utils/findStructuralApiParams';
 import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
 import { runWithProfileName } from '@/utils/runWithProfileName';
+import { runWithOverlapConfirm } from '@/utils/gameSlotOverlapConfirm';
 import { FindHeaderActions } from '@/components/headerContent/FindHeaderActions';
 import { availableGamesQueryOptions } from '@/queries/games/useAvailableGamesQuery';
 import { availableUpcomingGamesQueryOptions } from '@/queries/games/useAvailableUpcomingGamesQuery';
@@ -401,8 +402,9 @@ export const FindTab = () => {
     }
     try {
       const { gamesApi } = await import('@/api');
-      const response = await gamesApi.join(gameId);
-      const message = (response as any).message || 'Successfully joined the game';
+      const response = await runWithOverlapConfirm((confirmOverlap) => gamesApi.join(gameId, confirmOverlap));
+      if (!response) return;
+      const message = (response as { message?: string }).message || 'Successfully joined the game';
 
       if (message === 'games.addedToJoinQueue') {
         toast.success(t('games.addedToJoinQueue', { defaultValue: 'Added to join queue' }));

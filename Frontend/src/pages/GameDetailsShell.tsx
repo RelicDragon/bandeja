@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import { Trash2, LogOut, Copy, HelpCircle, ChevronRight, Trophy, LayoutDashboard, CalendarDays, LayoutGrid } from 'lucide-react';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { useDeclineInvite } from '@/hooks/useDeclineInvite';
+import { runWithOverlapConfirm } from '@/utils/gameSlotOverlapConfirm';
 import { RefreshIndicator } from '@/components/RefreshIndicator';
 import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
 import { runWithProfileName } from '@/utils/runWithProfileName';
@@ -577,8 +578,9 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
     }
 
     try {
-      const response = await gamesApi.join(id);
-      const message = (response as any).message || 'Successfully joined the game';
+      const response = await runWithOverlapConfirm((confirmOverlap) => gamesApi.join(id, confirmOverlap));
+      if (!response) return;
+      const message = (response as { message?: string }).message || 'Successfully joined the game';
       
       if (message === 'games.addedToJoinQueue') {
         toast.success(t('games.addedToJoinQueue', { defaultValue: 'Added to join queue' }));
@@ -607,10 +609,13 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
     }
 
     try {
-      const result = await gamesApi.togglePlayingStatus(id, 'PLAYING') as { message?: string };
+      const result = await runWithOverlapConfirm((confirmOverlap) =>
+        gamesApi.togglePlayingStatus(id, 'PLAYING', confirmOverlap),
+      );
+      if (!result) return;
       const response = await gamesApi.getById(id);
       setGame(response.data);
-      if (result?.message === 'games.addedToJoinQueue') {
+      if ((result as { message?: string })?.message === 'games.addedToJoinQueue') {
         toast.success(t('games.addedToJoinQueue', { defaultValue: 'Added to join queue' }));
       }
     } catch (error: any) {
@@ -628,8 +633,11 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
     if (acceptingInviteIdsRef.current.has(inviteId)) return;
     acceptingInviteIdsRef.current.add(inviteId);
     try {
-      const response = await invitesApi.accept(inviteId);
-      const message = (response as any).message || 'Invite accepted successfully';
+      const response = await runWithOverlapConfirm((confirmOverlap) =>
+        invitesApi.accept(inviteId, confirmOverlap),
+      );
+      if (!response) return;
+      const message = (response as { message?: string }).message || 'Invite accepted successfully';
       
       if (message === 'games.addedToJoinQueue') {
         toast.success(t('games.addedToJoinQueue', { defaultValue: 'Added to join queue' }));

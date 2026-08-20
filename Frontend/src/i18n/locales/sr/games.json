@@ -26,6 +26,10 @@
     "confirmJoinMessage": "Da li ste sigurni da želite da se pridružite ovoj igri?",
     "confirmJoinQueueTitle": "Pridruži se redu?",
     "confirmJoinQueueMessage": "Da li ste sigurni da želite da se pridružite listi čekanja?",
+    "overlapConfirmTitle": "Već igraš",
+    "overlapConfirmMessage": "Termin se poklapa sa drugom igrom.",
+    "overlapConfirmProceed": "Nastavi",
+    "requiresOverlapConfirm": "Termin se poklapa sa drugom igrom.",
     "gameTypes": {
       "CLASSIC": "Klasična",
       "AMERICANO": "Amerikano",

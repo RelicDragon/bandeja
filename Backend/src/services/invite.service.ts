@@ -20,6 +20,7 @@ import { PlayIntentGameLifecycleService } from './playIntent/playIntentGameLifec
 import { publishCommittedPlayIntentStatusChanges } from './playIntent/playIntentRealtime';
 import { isInviteInboxVisible } from '../utils/gameInviteInbox';
 import { inboxInviteGameSelect, mapInvitedParticipantToInboxInvite } from './invite/pendingInviteShape';
+import { assertSlotOverlapConfirmed } from './game/gameSlotOverlap.service';
 
 export interface InviteActionResult {
   success: boolean;
@@ -180,7 +181,8 @@ export class InviteService {
     participantId: string,
     userId: string,
     _forceUpdate: boolean = false,
-    isAdmin: boolean = false
+    isAdmin: boolean = false,
+    confirmOverlap: boolean = false,
   ): Promise<InviteActionResult> {
     const participant = await prisma.gameParticipant.findUnique({
       where: { id: participantId },
@@ -291,6 +293,17 @@ export class InviteService {
       participant.role === ParticipantRole.ADMIN && gameForJoin.entityType === EntityType.TRAINING
         ? 'NON_PLAYING'
         : 'PLAYING';
+
+    if (isReceiver && acceptedPlayingStatus === 'PLAYING') {
+      const joinPreview = await validatePlayerCanJoinGame(gameForJoin, receiverId, { skipLevelCheck: true });
+      if (joinPreview.canJoin) {
+        await assertSlotOverlapConfirmed({
+          userId: receiverId,
+          targetGame: gameForJoin,
+          confirmOverlap: confirmOverlap || _forceUpdate,
+        });
+      }
+    }
 
     try {
         const acceptance = await prisma.$transaction(async (tx) => {

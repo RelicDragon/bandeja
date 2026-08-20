@@ -27,6 +27,7 @@ import { PlayIntentGameLifecycleService } from '../playIntent/playIntentGameLife
 import { publishCommittedPlayIntentStatusChanges } from '../playIntent/playIntentRealtime';
 import { schedulePendingInviteSlotOpenNotify } from '../invite/pendingInviteSlotOpen.service';
 import { inboxInviteGameSelect, mapInvitedParticipantToInboxInvite } from '../invite/pendingInviteShape';
+import { assertSlotOverlapConfirmed } from './gameSlotOverlap.service';
 
 const PLAYING_STATUS = 'PLAYING' as const;
 const IN_QUEUE_STATUS = 'IN_QUEUE' as const;
@@ -34,7 +35,7 @@ const GUEST_STATUS = 'GUEST' as const;
 const INVITED_STATUS = 'INVITED' as const;
 
 export class ParticipantService {
-  static async joinGame(gameId: string, userId: string) {
+  static async joinGame(gameId: string, userId: string, confirmOverlap = false) {
     const game = await prisma.game.findUnique({
       where: { id: gameId },
       include: {
@@ -74,6 +75,12 @@ export class ParticipantService {
         await this.moveExistingParticipantToQueue(gameId, userId);
         return joinResult.reason || 'games.addedToJoinQueue';
       }
+
+      await assertSlotOverlapConfirmed({
+        userId,
+        targetGame: game,
+        confirmOverlap,
+      });
 
       const changedIntentId = await prisma.$transaction(async (tx) => {
         const gameInTx = await fetchGameWithPlayingParticipants(tx, gameId);
@@ -118,6 +125,12 @@ export class ParticipantService {
       await this.addToQueueAsParticipant(gameId, userId);
       return joinResult.reason || 'games.addedToJoinQueue';
     }
+
+    await assertSlotOverlapConfirmed({
+      userId,
+      targetGame: game,
+      confirmOverlap,
+    });
 
     await prisma.$transaction(async (tx) => {
       const currentGame = await fetchGameWithPlayingParticipants(tx, gameId);
@@ -313,7 +326,12 @@ export class ParticipantService {
     await ParticipantMessageHelper.emitGameUpdate(gameId, userId);
   }
 
-  static async togglePlayingStatus(gameId: string, userId: string, status: 'PLAYING' | 'IN_QUEUE') {
+  static async togglePlayingStatus(
+    gameId: string,
+    userId: string,
+    status: 'PLAYING' | 'IN_QUEUE',
+    confirmOverlap = false,
+  ) {
     const participant = await prisma.gameParticipant.findFirst({
       where: {
         gameId,
@@ -366,6 +384,12 @@ export class ParticipantService {
       if (!joinResult.canJoin) {
         return await this.moveExistingParticipantToQueue(gameId, userId);
       }
+
+      await assertSlotOverlapConfirmed({
+        userId,
+        targetGame: game,
+        confirmOverlap,
+      });
     }
 
     await prisma.$transaction(async (tx) => {

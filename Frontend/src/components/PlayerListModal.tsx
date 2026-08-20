@@ -225,7 +225,14 @@ export const PlayerListModal = ({
       if (!inviteAsTrainerOnly) setCanInviteAsTrainer(false);
       const filterIds = filterPlayerIdsRef.current;
       try {
-        const fetchedPlayers = await usePlayersStore.getState().fetchPlayers(gameId, gameSport, serverSearchQuery);
+        const fetchedPlayers = await usePlayersStore.getState().fetchPlayers(
+          gameId,
+          gameSport,
+          serverSearchQuery,
+          !gameId && gameTiming?.timeIsSet && gameTiming.startTime && gameTiming.endTime
+            ? { startTime: gameTiming.startTime, endTime: gameTiming.endTime }
+            : undefined,
+        );
         const [inviteTeams] = await Promise.all([
           userTeamsApi.getForPlayerInvite({ gameId, sport: gameSport }).catch(() => [] as UserTeam[]),
           useUserTeamsStore.getState().refreshAll(),
@@ -285,8 +292,16 @@ export const PlayerListModal = ({
           }
         }
 
+        const busyUserIds =
+          'busyUserIds' in fetchedPlayers && Array.isArray(fetchedPlayers.busyUserIds)
+            ? fetchedPlayers.busyUserIds
+            : [];
+        const busySet = new Set(busyUserIds);
         const filtered = fetchedPlayers.filter(
-          (player) => !participantIds.has(player.id) && !invitedUserIds.has(player.id),
+          (player) =>
+            !participantIds.has(player.id) &&
+            !invitedUserIds.has(player.id) &&
+            !busySet.has(player.id),
         );
         hasLoadedPlayersRef.current = true;
         setPlayers(filtered);
@@ -294,7 +309,7 @@ export const PlayerListModal = ({
         const invitableTeams = merged.filter(
           (team) =>
             isUserTeamReady(team) &&
-            teamIsFullyInvitable(team, participantIds, invitedUserIds, filterIds),
+            teamIsFullyInvitable(team, participantIds, invitedUserIds, [...filterIds, ...busyUserIds]),
         );
         setReadyTeams(invitableTeams);
       } catch {
@@ -314,7 +329,7 @@ export const PlayerListModal = ({
     return () => {
       cancelled = true;
     };
-  }, [gameId, gameSport, t, inviteAsTrainerOnly, filterPlayerIdsKey, serverSearchQuery]);
+  }, [gameId, gameSport, t, inviteAsTrainerOnly, filterPlayerIdsKey, serverSearchQuery, gameTiming?.timeIsSet, gameTiming?.startTime, gameTiming?.endTime]);
 
   const effectiveGameContext: GameAvailabilityContext | null = gameTiming ?? fetchedGameContext;
   const ctxTimeIsSet = effectiveGameContext?.timeIsSet ?? false;
