@@ -1386,6 +1386,10 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PR-20 | Phone/password change | If exposed in UI | Auth updated |
 | PR-21 | Language selector | Pick language | i18n + profile saved |
 | PR-22 | Theme selector | Light/dark/system | Theme applied |
+| PR-22a | System theme resume (dark) | Theme=System; background the app; OS switches to dark; resume | UI is dark without relaunch (`html.dark` present) |
+| PR-22b | System theme resume (light) | Theme=System; background the app; OS switches to light; resume | UI is light without relaunch (`html.dark` absent) |
+| PR-22c | Manual theme ignores OS on resume | Theme=Light or Dark; background; OS switches to the opposite; resume | UI stays on the manual preference |
+| PR-22d | Resume does not flicker | Theme=System already matching OS; background and resume (twice) | Appearance unchanged; no light/dark flash |
 | PR-23 | Online status toggle | Show/hide online | Preference saved |
 | PR-24 | Notification settings modal | Open + toggle prefs | Saved |
 | PR-63 | Notification cross-channel hint | Push off for a type, Telegram still on → red hint under toggle; tap hint | Switches to Telegram tab; row pulses/highlighted |
