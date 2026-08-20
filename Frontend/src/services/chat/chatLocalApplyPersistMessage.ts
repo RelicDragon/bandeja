@@ -14,22 +14,24 @@ export async function persistLocalMessageDurable(message: ChatMessage): Promise<
   }
 }
 
-export async function persistCreatedEventMediaTombstones(events: readonly ChatSyncEventDTO[]): Promise<void> {
+export async function persistCreatedEventMediaTombstones(
+  events: readonly ChatSyncEventDTO[]
+): Promise<Array<Pick<ChatMessage, 'id'>>> {
+  const tombstones: ChatMessage[] = [];
   const rows = [];
   for (const event of events) {
     if (event.eventType !== ChatSyncEventType.MESSAGE_CREATED) continue;
     const message = (event.payload as { message?: ChatMessage }).message;
     if (!message?.id || !shouldTombstoneMedia(message)) continue;
-    rows.push(
-      rowFromMessage(
-        toMediaTombstone({
-          ...message,
-          syncSeq: message.syncSeq ?? event.seq,
-          serverSyncSeq: message.serverSyncSeq ?? event.seq,
-        })
-      )
-    );
+    const tombstone = toMediaTombstone({
+      ...message,
+      syncSeq: message.syncSeq ?? event.seq,
+      serverSyncSeq: message.serverSyncSeq ?? event.seq,
+    });
+    tombstones.push(tombstone);
+    rows.push(rowFromMessage(tombstone));
   }
-  if (rows.length === 0) return;
+  if (rows.length === 0) return [];
   await putChatLocalRowsWithSearchTokens(rows);
+  return tombstones;
 }

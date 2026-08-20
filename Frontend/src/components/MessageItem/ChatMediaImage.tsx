@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useChatMediaAsset } from '@/hooks/useChatMediaAsset';
 import { ChatMediaUnavailable } from './ChatMediaUnavailable';
 
@@ -20,13 +20,8 @@ export const ChatMediaImage: React.FC<ChatMediaImageProps> = ({
   loading = 'lazy',
 }) => {
   const { asset, recordDimensions } = useChatMediaAsset(src);
-  const [failed, setFailed] = useState(false);
 
-  useEffect(() => {
-    setFailed(false);
-  }, [src]);
-
-  if (!src || failed) {
+  if (!src) {
     return <ChatMediaUnavailable className={className} style={style} />;
   }
 
@@ -43,7 +38,6 @@ export const ChatMediaImage: React.FC<ChatMediaImageProps> = ({
         const image = event.currentTarget;
         recordDimensions(image.naturalWidth, image.naturalHeight);
       }}
-      onError={() => setFailed(true)}
       loading={loading}
     />
   );

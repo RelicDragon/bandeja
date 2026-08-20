@@ -1,7 +1,6 @@
 import { ChatSyncEventType } from '@bandeja/chat-contract';
 import type { ChatMessage } from '@/api/chat';
 import type { SeqApplyDecision } from './chatAppliedSeq';
-import { mediaUrlCount } from './chatMediaPersistTombstone';
 import type { ChatSyncEventDTO } from './chatSyncEventTypes';
 
 function createdMessage(event: ChatSyncEventDTO): ChatMessage | undefined {
@@ -16,10 +15,7 @@ export function isSyncEventApplied(
   if (event.eventType === ChatSyncEventType.MESSAGE_CREATED) {
     const message = createdMessage(event);
     if (!message?.id) return false;
-    const stored = persistedById.get(message.id);
-    if (!stored) return false;
-    if (mediaUrlCount(message) > 0 && mediaUrlCount(stored) === 0) return false;
-    return true;
+    return persistedById.has(message.id);
   }
   return true;
 }
@@ -33,4 +29,19 @@ export function seqApplyDecisionsForEvents(
     seq: event.seq,
     applied: isSyncEventApplied(event, persistedById),
   }));
+}
+
+/** Failed-slice catch path: only media creates that were tombstoned count as applied. */
+export function seqApplyDecisionsForTombstonedCreates(
+  events: readonly ChatSyncEventDTO[],
+  tombstonedMessages: readonly Pick<ChatMessage, 'id'>[]
+): SeqApplyDecision[] {
+  const tombstonedIds = new Set(tombstonedMessages.map((message) => message.id));
+  return events.map((event) => {
+    if (event.eventType !== ChatSyncEventType.MESSAGE_CREATED) {
+      return { seq: event.seq, applied: false };
+    }
+    const message = createdMessage(event);
+    return { seq: event.seq, applied: Boolean(message?.id && tombstonedIds.has(message.id)) };
+  });
 }

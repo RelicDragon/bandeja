@@ -114,7 +114,10 @@ export async function openThread(request: ThreadOpenRequest): Promise<ThreadOpen
   }
 
   const fallback = await planDexieTailFallback(request, mergedPrev);
-  if (fallback) return fallback;
+  if (fallback) {
+    void recoverEmptyMediaMessages(fallback.result.plan.messages).catch(() => {});
+    return fallback;
+  }
 
   return { kind: 'network-fallback', mergedPrev };
 }

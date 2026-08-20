@@ -70,6 +70,12 @@ describe('persistLocalMessageDurable', () => {
     await expect(persistLocalMessageDurable(text)).rejects.toThrow('dexie write failed');
     expect(putLocalMessageDirect).toHaveBeenCalledTimes(1);
   });
+
+  it('rethrows when media tombstone persist also fails', async () => {
+    putLocalMessageDirect.mockRejectedValue(new Error('dexie write failed'));
+    await expect(persistLocalMessageDurable(image())).rejects.toThrow('dexie write failed');
+    expect(putLocalMessageDirect).toHaveBeenCalledTimes(2);
+  });
 });
 
 describe('persistCreatedEventMediaTombstones', () => {
@@ -79,7 +85,7 @@ describe('persistCreatedEventMediaTombstones', () => {
 
   it('persists IMAGE creates as empty media rows', async () => {
     putChatLocalRowsWithSearchTokens.mockResolvedValue(undefined);
-    await persistCreatedEventMediaTombstones([
+    const written = await persistCreatedEventMediaTombstones([
       {
         id: 'ev-10',
         seq: 10,
@@ -88,6 +94,7 @@ describe('persistCreatedEventMediaTombstones', () => {
         payload: { message: image() },
       },
     ]);
+    expect(written).toEqual([expect.objectContaining({ id: 'photo-1', mediaUrls: [], thumbnailUrls: [] })]);
     expect(putChatLocalRowsWithSearchTokens).toHaveBeenCalledWith([
       expect.objectContaining({
         id: 'photo-1',

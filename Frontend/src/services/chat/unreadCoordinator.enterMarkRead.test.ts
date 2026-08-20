@@ -59,7 +59,7 @@ vi.mock('@/services/chat/unreadViewingGuard', () => ({
   shouldSuppressUnreadForOpenContext: () => false,
 }));
 
-import { enterContextAndMarkRead, resetCoordinator } from '@/services/chat/unreadCoordinator';
+import { enterContextAndMarkRead, markContextReadOnUserActivity, resetCoordinator } from '@/services/chat/unreadCoordinator';
 
 describe('enterContextAndMarkRead (#326)', () => {
   beforeEach(() => {
@@ -84,5 +84,35 @@ describe('enterContextAndMarkRead (#326)', () => {
     await vi.runAllTimersAsync();
 
     expect(markContextReadMock).toHaveBeenCalled();
+  });
+
+  it('markContextReadOnUserActivity with forceMarkReadNetwork hits network when unread is 0', async () => {
+    const key = contextKey('USER', 'u1');
+    projection.state = {
+      ...projection.state,
+      markReadConfirmedKeys: new Set([key]),
+    };
+
+    markContextReadOnUserActivity({
+      contextType: 'USER',
+      contextId: 'u1',
+      forceMarkReadNetwork: true,
+    });
+    await vi.runAllTimersAsync();
+
+    expect(markContextReadMock).toHaveBeenCalled();
+  });
+
+  it('markContextReadOnUserActivity without force skips when unread is 0 and confirmed', async () => {
+    const key = contextKey('USER', 'u1');
+    projection.state = {
+      ...projection.state,
+      markReadConfirmedKeys: new Set([key]),
+    };
+
+    markContextReadOnUserActivity({ contextType: 'USER', contextId: 'u1' });
+    await vi.runAllTimersAsync();
+
+    expect(markContextReadMock).not.toHaveBeenCalled();
   });
 });

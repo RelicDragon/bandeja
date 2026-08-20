@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ChatMessage } from '@/api/chat';
 
 const getChatMessageById = vi.fn();
-const persistChatMessagesFromApiDirect = vi.fn();
+const persistChatMessagesFromApi = vi.fn();
 
 vi.mock('@/api/chat', () => ({
   chatApi: {
@@ -11,7 +11,7 @@ vi.mock('@/api/chat', () => ({
 }));
 
 vi.mock('./chatLocalApplyWrite', () => ({
-  persistChatMessagesFromApiDirect: (...args: unknown[]) => persistChatMessagesFromApiDirect(...args),
+  persistChatMessagesFromApi: (...args: unknown[]) => persistChatMessagesFromApi(...args),
 }));
 
 import { recoverEmptyMediaMessages } from './chatMediaReopenRecover';
@@ -40,28 +40,28 @@ function image(urls: string[]): ChatMessage {
 describe('recoverEmptyMediaMessages', () => {
   beforeEach(() => {
     getChatMessageById.mockReset();
-    persistChatMessagesFromApiDirect.mockReset();
+    persistChatMessagesFromApi.mockReset();
   });
 
   it('repersists the photo when reopen GET returns media', async () => {
     const recovered = image(['https://cdn.example/a.jpg']);
     getChatMessageById.mockResolvedValue(recovered);
-    persistChatMessagesFromApiDirect.mockResolvedValue(undefined);
+    persistChatMessagesFromApi.mockResolvedValue(undefined);
 
     await recoverEmptyMediaMessages([image([])]);
 
     expect(getChatMessageById).toHaveBeenCalledWith('photo-1');
-    expect(persistChatMessagesFromApiDirect).toHaveBeenCalledWith([recovered]);
+    expect(persistChatMessagesFromApi).toHaveBeenCalledWith([recovered]);
   });
 
   it('keeps the tombstone when GET is empty or 404', async () => {
     getChatMessageById.mockRejectedValue(Object.assign(new Error('missing'), { status: 404 }));
     await recoverEmptyMediaMessages([image([])]);
-    expect(persistChatMessagesFromApiDirect).not.toHaveBeenCalled();
+    expect(persistChatMessagesFromApi).not.toHaveBeenCalled();
 
     getChatMessageById.mockResolvedValue(image([]));
     await recoverEmptyMediaMessages([image([])]);
-    expect(persistChatMessagesFromApiDirect).not.toHaveBeenCalled();
+    expect(persistChatMessagesFromApi).not.toHaveBeenCalled();
   });
 
   it('skips messages that already have media', async () => {

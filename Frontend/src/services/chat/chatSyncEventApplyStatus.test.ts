@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { ChatSyncEventType } from '@bandeja/chat-contract';
 import type { ChatMessage } from '@/api/chat';
-import { isSyncEventApplied, seqApplyDecisionsForEvents } from './chatSyncEventApplyStatus';
+import {
+  isSyncEventApplied,
+  seqApplyDecisionsForEvents,
+  seqApplyDecisionsForTombstonedCreates,
+} from './chatSyncEventApplyStatus';
 import type { ChatSyncEventDTO } from './chatSyncEventTypes';
 
 function imageMessage(id: string, urls: string[]): ChatMessage {
@@ -47,11 +51,11 @@ describe('isSyncEventApplied', () => {
     expect(isSyncEventApplied(created, new Map())).toBe(false);
   });
 
-  it('skips MESSAGE_CREATED when only a media tombstone was persisted', () => {
+  it('treats a durable media tombstone as applied so pull can catch up', () => {
     const full = imageMessage('photo-1', ['https://cdn.example/a.jpg']);
     const created = event(10, ChatSyncEventType.MESSAGE_CREATED, { message: full });
     const tombstone = imageMessage('photo-1', []);
-    expect(isSyncEventApplied(created, new Map([['photo-1', tombstone]]))).toBe(false);
+    expect(isSyncEventApplied(created, new Map([['photo-1', tombstone]]))).toBe(true);
   });
 
   it('applies MESSAGE_CREATED when the image row was persisted', () => {
@@ -74,5 +78,23 @@ describe('seqApplyDecisionsForEvents', () => {
       []
     );
     expect(decisions).toEqual([{ seq: 10, applied: false }]);
+  });
+});
+
+describe('seqApplyDecisionsForTombstonedCreates', () => {
+  it('applies only tombstoned creates and does not skip deletes', () => {
+    const full = imageMessage('photo-1', ['https://cdn.example/a.jpg']);
+    const tombstone = imageMessage('photo-1', []);
+    const decisions = seqApplyDecisionsForTombstonedCreates(
+      [
+        event(10, ChatSyncEventType.MESSAGE_CREATED, { message: full }),
+        event(11, ChatSyncEventType.MESSAGE_DELETED, { messageId: 'm-del' }),
+      ],
+      [tombstone]
+    );
+    expect(decisions).toEqual([
+      { seq: 10, applied: true },
+      { seq: 11, applied: false },
+    ]);
   });
 });

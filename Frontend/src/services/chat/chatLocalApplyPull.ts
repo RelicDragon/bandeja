@@ -20,7 +20,10 @@ import { withChatLocalBulkApply } from './chatLocalApplyBulk';
 import { persistChatMessagesFromApiDirect } from './chatLocalApplyWrite';
 import { persistCreatedEventMediaTombstones } from './chatLocalApplyPersistMessage';
 import { nextAppliedCursor } from './chatAppliedSeq';
-import { seqApplyDecisionsForEvents } from './chatSyncEventApplyStatus';
+import {
+  seqApplyDecisionsForEvents,
+  seqApplyDecisionsForTombstonedCreates,
+} from './chatSyncEventApplyStatus';
 import { getLocalCursorSeq, reconcileCursorWithServerHead, BATCH_HEAD_CACHE_MS } from './chatLocalApplyCursor';
 import {
   clearPendingSocketSeqReconcileTimer,
@@ -233,8 +236,24 @@ export async function pullEventsLoop(
             }
           }
         } catch {
-          await persistCreatedEventMediaTombstones(slice).catch(() => {});
-          blockedOnUnapplied = true;
+          const tombstones = await persistCreatedEventMediaTombstones(slice).catch(
+            (): Array<Pick<ChatMessage, 'id'>> => []
+          );
+          const sliceDecisions = seqApplyDecisionsForTombstonedCreates(slice, tombstones);
+          const row = await chatLocalDb.chatSyncCursor.get(key);
+          const next = nextAppliedCursor(row?.lastAppliedSeq ?? 0, sliceDecisions);
+          await chatLocalDb.chatSyncCursor.put({
+            key,
+            lastAppliedSeq: next,
+            updatedAt: Date.now(),
+          });
+          for (const decision of sliceDecisions) {
+            if (decision.applied) {
+              appliedSeqs.add(decision.seq);
+              eventsApplied += 1;
+            }
+          }
+          if (sliceDecisions.some((decision) => !decision.applied)) blockedOnUnapplied = true;
         }
         i = j;
       }

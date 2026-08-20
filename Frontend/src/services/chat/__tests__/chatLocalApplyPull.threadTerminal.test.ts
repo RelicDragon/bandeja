@@ -67,7 +67,7 @@ vi.mock('../chatLocalApplyWrite', () => ({
 }));
 
 vi.mock('../chatLocalApplyPersistMessage', () => ({
-  persistCreatedEventMediaTombstones: vi.fn(async () => {}),
+  persistCreatedEventMediaTombstones: vi.fn(async () => []),
 }));
 
 vi.mock('@/services/chat/chatMediaThumbPrefetch', () => ({
@@ -301,8 +301,42 @@ describe('pullEventsLoop thread terminal events', () => {
     );
   });
 
-  it('tombstones created media when slice persist throws and leaves cursor behind', async () => {
+  it('tombstones created media when slice persist throws and advances cursor past the tombstone', async () => {
     applyPatchesMock.mockRejectedValue(new Error('dexie write failed'));
+    vi.mocked(persistCreatedEventMediaTombstones).mockResolvedValueOnce([{ id: 'photo-1' }]);
+    fetchPackMock.mockResolvedValueOnce({
+      cursorStale: false,
+      events: [
+        {
+          seq: 10,
+          eventType: ChatSyncEventType.MESSAGE_CREATED,
+          payload: {
+            message: {
+              id: 'photo-1',
+              messageType: 'IMAGE',
+              mediaUrls: ['https://cdn.example/a.jpg'],
+              chatContextType: 'USER',
+              contextId: 'u1',
+              senderId: 'other-user',
+            },
+          },
+        },
+      ],
+      hasMore: false,
+    });
+
+    const result = await pullEventsLoop('USER', 'u1');
+
+    expect(result.blockedOnUnapplied).toBe(false);
+    expect(persistCreatedEventMediaTombstones).toHaveBeenCalled();
+    expect(chatLocalDb.chatSyncCursor.put).toHaveBeenCalledWith(
+      expect.objectContaining({ key: 'USER:u1', lastAppliedSeq: 10 })
+    );
+  });
+
+  it('does not advance cursor when slice persist and tombstone both fail', async () => {
+    applyPatchesMock.mockRejectedValue(new Error('dexie write failed'));
+    vi.mocked(persistCreatedEventMediaTombstones).mockRejectedValueOnce(new Error('tombstone failed'));
     fetchPackMock.mockResolvedValueOnce({
       cursorStale: false,
       events: [
@@ -327,9 +361,48 @@ describe('pullEventsLoop thread terminal events', () => {
     const result = await pullEventsLoop('USER', 'u1');
 
     expect(result.blockedOnUnapplied).toBe(true);
-    expect(persistCreatedEventMediaTombstones).toHaveBeenCalled();
     expect(chatLocalDb.chatSyncCursor.put).not.toHaveBeenCalledWith(
       expect.objectContaining({ lastAppliedSeq: 10 })
+    );
+  });
+
+  it('does not skip MESSAGE_DELETED when a failed slice only tombstones an image', async () => {
+    applyPatchesMock.mockRejectedValue(new Error('dexie write failed'));
+    vi.mocked(persistCreatedEventMediaTombstones).mockResolvedValueOnce([{ id: 'photo-1' }]);
+    fetchPackMock.mockResolvedValueOnce({
+      cursorStale: false,
+      events: [
+        {
+          seq: 10,
+          eventType: ChatSyncEventType.MESSAGE_CREATED,
+          payload: {
+            message: {
+              id: 'photo-1',
+              messageType: 'IMAGE',
+              mediaUrls: ['https://cdn.example/a.jpg'],
+              chatContextType: 'USER',
+              contextId: 'u1',
+              senderId: 'other-user',
+            },
+          },
+        },
+        {
+          seq: 11,
+          eventType: ChatSyncEventType.MESSAGE_DELETED,
+          payload: { messageId: 'm-del' },
+        },
+      ],
+      hasMore: false,
+    });
+
+    const result = await pullEventsLoop('USER', 'u1');
+
+    expect(result.blockedOnUnapplied).toBe(true);
+    expect(chatLocalDb.chatSyncCursor.put).toHaveBeenCalledWith(
+      expect.objectContaining({ key: 'USER:u1', lastAppliedSeq: 10 })
+    );
+    expect(chatLocalDb.chatSyncCursor.put).not.toHaveBeenCalledWith(
+      expect.objectContaining({ lastAppliedSeq: 11 })
     );
   });
 });
