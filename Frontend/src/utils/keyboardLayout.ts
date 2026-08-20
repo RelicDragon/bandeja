@@ -10,9 +10,9 @@ export const KEYBOARD_LAYOUT_SHRINK_THRESHOLD_PX = 80;
  * - `keyboardState.ts` (`publishKeyboardState`): `--keyboard-height`,
  *   `body.keyboard-visible`, `body.keyboard-dialog-shift` (inset >= 80)
  * - `capacitorSetup.applyVisualViewportCssVars`: `--vv-height`, `--vv-offset-top`,
- *   `--layout-inner-height`
- * CSS (`styles/keyboard/variables.css`) derives `--overlay-frame-height`,
- * `--overlay-bottom-inset`, `--overlay-pinned-max-height` (mirrors overlayKeyboardLayout.ts).
+ *   `--layout-inner-height` (skip identical writes; visualViewport scroll is rAF-coalesced)
+ * CSS (`styles/keyboard/variables.css`): `--overlay-pinned-max-height` is 100dvh at rest;
+ *   `body.keyboard-visible` derives the visual-viewport frame (mirrors overlayKeyboardLayout.ts).
  *
  * CSS adapter: `styles/keyboard/` — surfaces that consume the contract:
  * - `.cap-keyboard-aware-dialog|sheet|overlay|bottom-panel`

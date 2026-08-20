@@ -4,6 +4,13 @@
   --vv-height: 100dvh;
   --vv-offset-top: 0px;
   --layout-inner-height: 100dvh;
+  --overlay-bottom-inset: var(--keyboard-height, 0px);
+  /* Resting cap: sheets use min(94dvh, this). Tight frame only while keyboard is up
+     so visualViewport scroll/pinch does not resize overlays. */
+  --overlay-pinned-max-height: 100dvh;
+}
+
+body.keyboard-visible {
   /* Mirrors overlayKeyboardLayout.computeOverlayVisibleFrame */
   --overlay-derived-bottom: max(
     0px,

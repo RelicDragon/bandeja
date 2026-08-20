@@ -5,9 +5,13 @@ import { describe, expect, it } from 'vitest';
 import {
   computeOverlayVisibleFrame,
   computePinnedOverlayMaxHeightPx,
+  computeVisualViewportCssVarWrites,
+  createFrameCoalescer,
   isOverlayChromeInVisualViewport,
   overlaySafeTopOverlapPx,
   overlaySheetTopPx,
+  pickChangedCssVars,
+  VISUAL_VIEWPORT_CSS_VAR,
 } from './overlayKeyboardLayout';
 
 const PHONE_INNER = 844;
@@ -219,6 +223,12 @@ describe('CSS overlay vars match overlayKeyboardLayout', () => {
       new URL('../styles/keyboard/overlay-chrome.css', import.meta.url),
       'utf8',
     );
+    expect(variables).toContain('body.keyboard-visible');
+    expect(variables).toContain('--overlay-pinned-max-height: 100dvh');
+    const restingVars = variables.split('body.keyboard-visible')[0];
+    expect(restingVars).toContain('--overlay-pinned-max-height: 100dvh');
+    expect(restingVars).not.toContain('--overlay-frame-height');
+    expect(restingVars).not.toContain('--vv-offset-top)');
     expect(variables).toContain('--overlay-frame-height: min(');
     expect(variables).toContain(
       'calc(var(--layout-inner-height) - var(--overlay-bottom-inset) - var(--vv-offset-top))',
@@ -226,6 +236,72 @@ describe('CSS overlay vars match overlayKeyboardLayout', () => {
     expect(chrome).toContain('max-height: var(--overlay-pinned-max-height');
     expect(chrome).toContain('bottom: var(--overlay-bottom-inset');
     expect(chrome).toContain('.overlay-keyboard-body:has([data-overlay-scrollport])');
+    expect(chrome).toContain('transition: bottom 0.25s');
+    expect(chrome).not.toContain('max-height 0.25s');
     expect(chrome).not.toContain('transform: none');
+  });
+});
+
+describe('visualViewport CSS var writes', () => {
+  it('rounds layout and visualViewport metrics to CSS pixels', () => {
+    expect(
+      computeVisualViewportCssVarWrites({
+        innerHeight: 843.6,
+        vvHeight: 507.4,
+        vvOffsetTop: 199.6,
+      }),
+    ).toEqual([
+      [VISUAL_VIEWPORT_CSS_VAR.layoutInnerHeight, '844px'],
+      [VISUAL_VIEWPORT_CSS_VAR.vvHeight, '507px'],
+      [VISUAL_VIEWPORT_CSS_VAR.vvOffsetTop, '200px'],
+    ]);
+  });
+
+  it('omits visualViewport vars when the API is missing', () => {
+    expect(
+      computeVisualViewportCssVarWrites({
+        innerHeight: 844,
+        vvHeight: null,
+        vvOffsetTop: null,
+      }),
+    ).toEqual([[VISUAL_VIEWPORT_CSS_VAR.layoutInnerHeight, '844px']]);
+  });
+
+  it('skips writes when rounded values are unchanged', () => {
+    const last = new Map([
+      [VISUAL_VIEWPORT_CSS_VAR.vvHeight, '508px'],
+      [VISUAL_VIEWPORT_CSS_VAR.vvOffsetTop, '200px'],
+    ]);
+    const next = computeVisualViewportCssVarWrites({
+      innerHeight: 0,
+      vvHeight: 508.2,
+      vvOffsetTop: 199.6,
+    });
+    expect(pickChangedCssVars(last, next)).toEqual([]);
+  });
+
+  it('coalesces multiple visualViewport events to one frame', () => {
+    const queued: FrameRequestCallback[] = [];
+    let runs = 0;
+    const coalescer = createFrameCoalescer(
+      () => {
+        runs += 1;
+      },
+      (cb) => {
+        queued.push(cb);
+        return queued.length;
+      },
+      () => {
+        queued.length = 0;
+      },
+    );
+    coalescer.schedule();
+    coalescer.schedule();
+    coalescer.schedule();
+    expect(queued).toHaveLength(1);
+    queued[0](0);
+    expect(runs).toBe(1);
+    coalescer.schedule();
+    expect(queued).toHaveLength(2);
   });
 });

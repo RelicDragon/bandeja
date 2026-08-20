@@ -1719,6 +1719,7 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | X-55 | Auth login keyboard (Android web) | Mobile Chrome → `/login` → focus phone field | Form sits directly above keyboard; no dark gray scroll gap between card and keyboard |
 | X-72 | Edit-game-title keyboard chrome | `@mobile` Game details → Edit details → focus name (iOS WebView) | Close + name field remain visible/tappable; overlay is not lifted off-screen |
 | X-73 | Club Location search keyboard chrome | `@mobile` Create/edit Location → Select club → focus search | X stays tappable; only the club list (and not the close control) scrolls |
+| X-74 | Overlay height ignores visualViewport without keyboard | Pinch-zoom or visualViewport scroll while no software keyboard | Sheet/dialog height stays at resting cap (`min(94dvh, 960px)` / 75vh); `--overlay-pinned-max-height` remains `100dvh` until `keyboard-visible` |
 
 ### 18.11 Home screen Next Game widgets (Capacitor iOS + Android, `@widget` `@manual`)
 

@@ -7,6 +7,12 @@
  * to this frame so chrome stays at the visual-viewport top.
  */
 
+export const VISUAL_VIEWPORT_CSS_VAR = {
+  layoutInnerHeight: '--layout-inner-height',
+  vvHeight: '--vv-height',
+  vvOffsetTop: '--vv-offset-top',
+} as const;
+
 export type OverlayVisibleFrame = {
   offsetTopPx: number;
   heightPx: number;
@@ -61,4 +67,59 @@ export function isOverlayChromeInVisualViewport(opts: {
 }): boolean {
   const { chromeTopPx, frame } = opts;
   return chromeTopPx + 0.5 >= frame.offsetTopPx && chromeTopPx < frame.offsetTopPx + frame.heightPx;
+}
+
+export type CssVarWrite = readonly [name: string, value: string];
+
+export function computeVisualViewportCssVarWrites(opts: {
+  innerHeight: number;
+  vvHeight: number | null;
+  vvOffsetTop: number | null;
+}): CssVarWrite[] {
+  const writes: CssVarWrite[] = [];
+  const inner = Math.max(0, Math.round(opts.innerHeight));
+  if (inner > 0) {
+    writes.push([VISUAL_VIEWPORT_CSS_VAR.layoutInnerHeight, `${inner}px`]);
+  }
+  if (opts.vvHeight != null) {
+    writes.push([
+      VISUAL_VIEWPORT_CSS_VAR.vvHeight,
+      `${Math.max(0, Math.round(opts.vvHeight))}px`,
+    ]);
+  }
+  if (opts.vvOffsetTop != null) {
+    writes.push([
+      VISUAL_VIEWPORT_CSS_VAR.vvOffsetTop,
+      `${Math.max(0, Math.round(opts.vvOffsetTop))}px`,
+    ]);
+  }
+  return writes;
+}
+
+export function pickChangedCssVars(
+  last: ReadonlyMap<string, string>,
+  next: readonly CssVarWrite[],
+): CssVarWrite[] {
+  return next.filter(([name, value]) => last.get(name) !== value);
+}
+
+export function createFrameCoalescer(
+  run: () => void,
+  raf: (cb: FrameRequestCallback) => number = requestAnimationFrame,
+  caf: (id: number) => void = cancelAnimationFrame,
+): { schedule: () => void; cancel: () => void } {
+  let frame = 0;
+  const schedule = () => {
+    if (frame) return;
+    frame = raf(() => {
+      frame = 0;
+      run();
+    });
+  };
+  const cancel = () => {
+    if (!frame) return;
+    caf(frame);
+    frame = 0;
+  };
+  return { schedule, cancel };
 }

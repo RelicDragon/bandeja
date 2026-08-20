@@ -1,6 +1,6 @@
 /* Pin overlay chrome (title/close) in the visual viewport.
    Math: Frontend/src/utils/overlayKeyboardLayout.ts
-   Shrink height to --overlay-frame-height; do not translate a full-size overlay. */
+   Shrink height to --overlay-pinned-max-height; do not translate a full-size overlay. */
 
 .overlay-keyboard-body {
   display: flex;
@@ -50,9 +50,7 @@ html body.keyboard-dialog-shift .cap-keyboard-aware-dialog {
   margin-right: auto !important;
   margin-left: auto !important;
   overflow: hidden !important;
-  transition:
-    bottom 0.25s cubic-bezier(0.4, 0, 0.2, 1),
-    max-height 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: bottom 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   translate: none !important;
 }
 
