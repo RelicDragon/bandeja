@@ -23,6 +23,13 @@ describe('resolvePreferenceChipSelection', () => {
     });
   });
 
+  it('treats explicit false as unset, not selected', () => {
+    expect(resolvePreferenceChipSelection({ left: false, right: false })).toEqual({
+      leftSelected: false,
+      rightSelected: false,
+    });
+  });
+
   it('keeps both selected when both flags are true', () => {
     expect(resolvePreferenceChipSelection({ left: true, right: true })).toEqual({
       leftSelected: true,

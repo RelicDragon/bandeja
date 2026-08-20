@@ -42,6 +42,21 @@ describe('PreferenceLrChipPair', () => {
     expect(html).toContain('border-dashed');
   });
 
+  it('marks explicit false flags as unset, not both-on fill', () => {
+    const html = renderPair(false, false);
+    expect(selectedAttr(html, 'left')).toBe('false');
+    expect(selectedAttr(html, 'right')).toBe('false');
+    expect(html).not.toContain('bg-blue-500');
+    expect(html).toContain('border-dashed');
+  });
+
+  it('keeps both selected when both flags are true', () => {
+    const html = renderPair(true, true);
+    expect(selectedAttr(html, 'left')).toBe('true');
+    expect(selectedAttr(html, 'right')).toBe('true');
+    expect(html).not.toContain('border-dashed');
+  });
+
   it('marks only court-side left selected when only left is set', () => {
     const html = renderToStaticMarkup(
       <PreferenceLrChipPair
