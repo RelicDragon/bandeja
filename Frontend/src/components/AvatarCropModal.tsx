@@ -1,9 +1,16 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import Cropper from 'react-easy-crop';
 import { Button } from './Button';
 import { Loader2 } from 'lucide-react';
 import { getCircularCroppedImg } from '../utils/cropUtils';
+import {
+  resolveAvatarExportPixelCrop,
+  type CropPoint,
+  type CropSize,
+  type MediaSize,
+  type PixelCrop,
+} from '../utils/avatarCropArea';
 import { FullScreenDialog } from '@/components/ui/FullScreenDialog';
 
 interface AvatarCropModalProps {
@@ -13,6 +20,8 @@ interface AvatarCropModalProps {
   isUploading?: boolean;
 }
 
+const AVATAR_CROP_ASPECT = 1;
+
 export const AvatarCropModal: React.FC<AvatarCropModalProps> = ({
   imageFile,
   onCrop,
@@ -20,18 +29,44 @@ export const AvatarCropModal: React.FC<AvatarCropModalProps> = ({
   isUploading = false,
 }) => {
   const { t } = useTranslation();
-  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [crop, setCrop] = useState<CropPoint>({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [rotation, setRotation] = useState(0);
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState<{
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-  } | null>(null);
+  const [mediaSize, setMediaSize] = useState<MediaSize | null>(null);
+  const [cropSize, setCropSize] = useState<CropSize | null>(null);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<PixelCrop | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [imageUrl, setImageUrl] = useState<string>('');
   const [isOpen, setIsOpen] = useState(true);
+
+  const liveRef = useRef({
+    crop,
+    zoom,
+    rotation,
+    mediaSize,
+    cropSize,
+    lastKnownPixels: croppedAreaPixels,
+  });
+  liveRef.current = {
+    crop,
+    zoom,
+    rotation,
+    mediaSize,
+    cropSize,
+    lastKnownPixels: croppedAreaPixels,
+  };
+
+  const exportPixelCrop = resolveAvatarExportPixelCrop(
+    {
+      crop,
+      zoom,
+      rotation,
+      mediaSize,
+      cropSize,
+      aspect: AVATAR_CROP_ASPECT,
+    },
+    croppedAreaPixels
+  );
 
   const handleClose = () => {
     setIsOpen(false);
@@ -48,13 +83,19 @@ export const AvatarCropModal: React.FC<AvatarCropModalProps> = ({
     };
   }, [imageFile]);
 
-  const onCropComplete = useCallback((_: any, croppedAreaPixels: any) => {
-    setCroppedAreaPixels(croppedAreaPixels);
+  const persistPixelCrop = useCallback((_percentages: PixelCrop, pixels: PixelCrop) => {
+    setCroppedAreaPixels(pixels);
   }, []);
 
   const handleCrop = useCallback(async () => {
-    if (!croppedAreaPixels) {
-      console.error('No crop area selected');
+    const pixelCrop = resolveAvatarExportPixelCrop(
+      {
+        ...liveRef.current,
+        aspect: AVATAR_CROP_ASPECT,
+      },
+      liveRef.current.lastKnownPixels
+    );
+    if (!pixelCrop) {
       return;
     }
 
@@ -63,8 +104,8 @@ export const AvatarCropModal: React.FC<AvatarCropModalProps> = ({
     try {
       const circularCroppedImageUrl = await getCircularCroppedImg(
         imageUrl,
-        croppedAreaPixels,
-        rotation
+        pixelCrop,
+        liveRef.current.rotation
       );
 
       const response = await fetch(circularCroppedImageUrl);
@@ -72,7 +113,7 @@ export const AvatarCropModal: React.FC<AvatarCropModalProps> = ({
 
       const originalImg = new Image();
       originalImg.crossOrigin = 'anonymous';
-      
+
       await new Promise((resolve, reject) => {
         originalImg.onload = resolve;
         originalImg.onerror = reject;
@@ -82,7 +123,7 @@ export const AvatarCropModal: React.FC<AvatarCropModalProps> = ({
       const maxDimension = 1920;
       let originalWidth = originalImg.width;
       let originalHeight = originalImg.height;
-      
+
       if (originalWidth > maxDimension || originalHeight > maxDimension) {
         const aspectRatio = originalWidth / originalHeight;
         if (originalWidth > originalHeight) {
@@ -93,12 +134,12 @@ export const AvatarCropModal: React.FC<AvatarCropModalProps> = ({
           originalWidth = maxDimension * aspectRatio;
         }
       }
-      
+
       const originalCanvas = document.createElement('canvas');
       originalCanvas.width = originalWidth;
       originalCanvas.height = originalHeight;
       const originalCtx = originalCanvas.getContext('2d');
-      
+
       if (!originalCtx) {
         throw new Error('Original canvas context not available');
       }
@@ -129,7 +170,7 @@ export const AvatarCropModal: React.FC<AvatarCropModalProps> = ({
     } finally {
       setIsProcessing(false);
     }
-  }, [croppedAreaPixels, rotation, imageUrl, imageFile.name, onCrop]);
+  }, [imageUrl, imageFile.name, onCrop]);
 
   const closeOnBackdrop = !isProcessing && !isUploading;
 
@@ -143,11 +184,14 @@ export const AvatarCropModal: React.FC<AvatarCropModalProps> = ({
               crop={crop}
               zoom={zoom}
               rotation={rotation}
-              aspect={1}
+              aspect={AVATAR_CROP_ASPECT}
               cropShape="round"
               showGrid={true}
               onCropChange={setCrop}
-              onCropComplete={onCropComplete}
+              onCropComplete={persistPixelCrop}
+              onCropAreaChange={persistPixelCrop}
+              onMediaLoaded={setMediaSize}
+              onCropSizeChange={setCropSize}
               onZoomChange={setZoom}
               onRotationChange={setRotation}
             />
@@ -166,7 +210,7 @@ export const AvatarCropModal: React.FC<AvatarCropModalProps> = ({
               <Button
                 onClick={handleCrop}
                 className="flex-1"
-                disabled={isProcessing || isUploading || !croppedAreaPixels}
+                disabled={isProcessing || isUploading || !exportPixelCrop}
               >
                 {isProcessing ? t('common.processing') : isUploading ? t('common.uploading') : t('common.upload')}
               </Button>
