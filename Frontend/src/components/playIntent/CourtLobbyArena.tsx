@@ -7,7 +7,7 @@ import {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Check, ChevronsRight, Clock, Plus, RotateCw } from 'lucide-react';
+import { Check, Clock, Plus, RotateCw } from 'lucide-react';
 import { CourtLobbyPulseRing } from '@/components/playIntent/CourtLobbyPulseRing';
 import { CourtLobbySportCourt } from '@/components/playIntent/CourtLobbySportCourt';
 import { CourtLobbyThunder } from '@/components/playIntent/CourtLobbyThunder';
@@ -373,6 +373,9 @@ function CourtLobbyArenaComponent({
   const matchingGamesRef = useRef(matchingGames);
   const key = membersKey(members);
   const inMatchCount = members.filter((member) => member.inProposal).length;
+  const hasTappablePlayers = members.some(
+    (member) => !member.inProposal && member.eligibleForProposal,
+  );
 
   const layout = useMemo(() => {
     const n = Math.max(members.length, 1);
@@ -955,16 +958,6 @@ function CourtLobbyArenaComponent({
       <div className="court-lobby-arena__grid" aria-hidden />
       <div className="court-lobby-arena__scan" aria-hidden />
 
-      <div className="court-lobby-arena__guide" aria-hidden>
-        <span className="court-lobby-arena__guide-edge" />
-        <span className="court-lobby-arena__guide-track">
-          <i />
-          <i />
-          <i />
-        </span>
-        <ChevronsRight size={13} strokeWidth={2.4} />
-        <span className="court-lobby-arena__guide-core" />
-      </div>
       <button
         type="button"
         className="court-lobby-arena__shuffle"
@@ -1205,11 +1198,14 @@ function CourtLobbyArenaComponent({
           {t('playIntent.overflow', { count: overflow })}
         </div>
       )}
-      {hasProposal && vacancy > 0 && !rosterLocked && (
-        <div className="court-lobby-arena__chip court-lobby-arena__chip--action absolute bottom-3 left-3">
-          {t('playIntent.tapToAdd', { count: vacancy })}
-        </div>
-      )}
+      {hasProposal &&
+        vacancy > 0 &&
+        !rosterLocked &&
+        hasTappablePlayers && (
+          <div className="court-lobby-arena__chip court-lobby-arena__chip--action absolute bottom-3 left-3">
+            {t('playIntent.tapToAdd', { count: vacancy })}
+          </div>
+        )}
       {(pinnedUserId || closingCard) &&
         (() => {
           const activeId = pinnedUserId;

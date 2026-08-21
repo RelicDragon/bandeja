@@ -161,18 +161,6 @@
   white-space: nowrap;
 }
 
-.court-lobby-arena__guide {
-  position: absolute;
-  z-index: 30;
-  top: 11px;
-  right: 46px;
-  display: flex;
-  height: 18px;
-  align-items: center;
-  gap: 3px;
-  color: rgb(110 231 183 / 0.75);
-}
-
 .court-lobby-arena__shuffle {
   position: absolute;
   z-index: 35;
@@ -218,47 +206,6 @@
 
 .court-lobby-arena__shuffle svg.is-shuffling {
   animation: courtLobbyShuffleSpin 620ms cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-
-.court-lobby-arena__guide-edge,
-.court-lobby-arena__guide-core,
-.court-lobby-arena__guide-track i {
-  display: block;
-  border-radius: 999px;
-}
-
-.court-lobby-arena__guide-edge {
-  width: 4px;
-  height: 4px;
-  background: rgb(125 211 252 / 0.35);
-}
-
-.court-lobby-arena__guide-core {
-  width: 8px;
-  height: 8px;
-  border: 1px solid rgb(167 243 208 / 0.8);
-  background: rgb(52 211 153 / 0.5);
-  box-shadow: 0 0 9px rgb(52 211 153 / 0.8);
-}
-
-.court-lobby-arena__guide-track {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-}
-
-.court-lobby-arena__guide-track i {
-  width: 8px;
-  height: 1px;
-  background: rgb(125 211 252 / 0.22);
-}
-
-.court-lobby-arena__guide-track i:nth-child(2) {
-  background: rgb(94 234 212 / 0.4);
-}
-
-.court-lobby-arena__guide-track i:nth-child(3) {
-  background: rgb(110 231 183 / 0.72);
 }
 
 .court-lobby-arena__zone {
@@ -1009,32 +956,6 @@ html:not(.dark) .court-lobby-arena__hint {
   color: rgb(15 23 42 / 0.7);
 }
 
-html:not(.dark) .court-lobby-arena__guide {
-  color: rgb(5 150 105 / 0.82);
-}
-
-html:not(.dark) .court-lobby-arena__guide-edge {
-  background: rgb(2 132 199 / 0.48);
-}
-
-html:not(.dark) .court-lobby-arena__guide-core {
-  border-color: rgb(5 150 105 / 0.65);
-  background: rgb(16 185 129 / 0.48);
-  box-shadow: 0 0 8px rgb(16 185 129 / 0.42);
-}
-
-html:not(.dark) .court-lobby-arena__guide-track i {
-  background: rgb(2 132 199 / 0.26);
-}
-
-html:not(.dark) .court-lobby-arena__guide-track i:nth-child(2) {
-  background: rgb(13 148 136 / 0.42);
-}
-
-html:not(.dark) .court-lobby-arena__guide-track i:nth-child(3) {
-  background: rgb(5 150 105 / 0.65);
-}
-
 html:not(.dark) .court-lobby-arena__zone--far {
   border-color: rgb(2 132 199 / 0.17);
   box-shadow:
@@ -1279,9 +1200,5 @@ html:not(.dark) .court-lobby-arena__mismatch-tail {
     left: 12px;
     max-width: calc(100% - 24px);
     font-size: 9px;
-  }
-
-  .court-lobby-arena__guide {
-    display: none;
   }
 }

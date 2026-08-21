@@ -677,4 +677,86 @@ describe('CourtLobbyArena refresh stability', () => {
 
     await act(async () => root.unmount());
   });
+
+  it('keeps only the shuffle control in the radar top-right', async () => {
+    const { CourtLobbyArena } = await import('./CourtLobbyArena');
+    const container = document.createElement('div');
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <CourtLobbyArena
+          members={members}
+          overflow={0}
+          busy={false}
+          hasProposal
+          vacancy={1}
+          rosterLocked={false}
+          sport="PADEL"
+          partySize={4}
+          onAvatarClick={vi.fn()}
+        />,
+      );
+    });
+
+    expect(container.querySelector('.court-lobby-arena__guide')).toBeNull();
+    expect(
+      container.querySelector('.court-lobby-arena__shuffle'),
+    ).not.toBeNull();
+
+    await act(async () => root.unmount());
+  });
+
+  it('hides the tap-to-add chip when no free player can be added', async () => {
+    const { CourtLobbyArena } = await import('./CourtLobbyArena');
+    const container = document.createElement('div');
+    const root = createRoot(container);
+    const selectedOnly = members.map((member) => ({
+      ...member,
+      inProposal: true,
+      eligibleForProposal: false,
+    }));
+
+    await act(async () => {
+      root.render(
+        <CourtLobbyArena
+          members={selectedOnly}
+          overflow={0}
+          busy={false}
+          hasProposal
+          vacancy={1}
+          rosterLocked={false}
+          sport="PADEL"
+          partySize={4}
+          onAvatarClick={vi.fn()}
+        />,
+      );
+    });
+
+    expect(
+      container.querySelector('.court-lobby-arena__chip--action'),
+    ).toBeNull();
+
+    await act(async () => {
+      root.render(
+        <CourtLobbyArena
+          members={members}
+          overflow={0}
+          busy={false}
+          hasProposal
+          vacancy={1}
+          rosterLocked={false}
+          sport="PADEL"
+          partySize={4}
+          onAvatarClick={vi.fn()}
+        />,
+      );
+    });
+
+    expect(
+      container.querySelector('.court-lobby-arena__chip--action'),
+    ).not.toBeNull();
+
+    await act(async () => root.unmount());
+  });
 });
