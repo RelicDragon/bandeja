@@ -14,6 +14,7 @@ import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { extractApiErrorMessage } from '@/utils/extractApiErrorMessage';
 import type {
   MatchProposalSummary,
+  MatchingLobbyGame,
   PlayIntent,
   PoolMember,
 } from '@/api/playIntents';
@@ -38,6 +39,7 @@ type Props = {
   clusterProgress: number;
   intent?: PlayIntent | null;
   proposal?: MatchProposalSummary | null;
+  matchingGames?: MatchingLobbyGame[];
   onChanged?: () => void;
 };
 
@@ -56,6 +58,7 @@ export function PlayIntentSheet({
   clusterProgress,
   intent,
   proposal,
+  matchingGames,
   onChanged,
 }: Props) {
   const { t } = useTranslation();
@@ -271,6 +274,7 @@ export function PlayIntentSheet({
                 sport={activeIntent?.sport ?? sport}
                 intent={activeIntent}
                 proposal={proposal}
+                matchingGames={matchingGames}
                 onChanged={onChanged}
               />
             )
@@ -310,6 +314,7 @@ export function PlayIntentSheet({
                     sport={activeIntent?.sport ?? sport}
                     intent={activeIntent}
                     proposal={proposal}
+                    matchingGames={matchingGames}
                     onChanged={onChanged}
                   />
                 )}

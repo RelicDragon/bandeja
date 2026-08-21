@@ -3,7 +3,7 @@
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { PoolMember } from '@/api/playIntents';
+import type { MatchingLobbyGame, PoolMember } from '@/api/playIntents';
 
 const counters = vi.hoisted(() => ({ pulseRenders: 0 }));
 (
@@ -614,6 +614,66 @@ describe('CourtLobbyArena refresh stability', () => {
           avatar.querySelector('.court-lobby-arena__avatar-visual') !== null,
       ),
     ).toBe(true);
+
+    await act(async () => root.unmount());
+  });
+
+  it('keeps matching games as circular nodes outside player physics', async () => {
+    Object.defineProperty(window, 'matchMedia', {
+      configurable: true,
+      value: () => ({
+        matches: true,
+        addEventListener: () => undefined,
+        removeEventListener: () => undefined,
+      }),
+    });
+    const matchingGames: MatchingLobbyGame[] = [
+      {
+        id: 'g1',
+        entityType: 'GAME',
+        allowDirectJoin: true,
+        genderTeams: 'ANY',
+        startTime: '2026-08-21T16:00:00.000Z',
+        timeLabel: '18:00',
+        club: { id: 'c1', name: 'Club' },
+        maxParticipants: 4,
+        playingCount: 2,
+        playingAvatars: [],
+        ownerAvatar: null,
+      },
+    ];
+    const { CourtLobbyArena } = await import('./CourtLobbyArena');
+    const container = document.createElement('div');
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <CourtLobbyArena
+          members={members}
+          matchingGames={matchingGames}
+          overflow={0}
+          busy={false}
+          hasProposal={false}
+          vacancy={0}
+          rosterLocked={false}
+          sport="PADEL"
+          partySize={4}
+          viewerInLobby
+          onAvatarClick={vi.fn()}
+        />,
+      );
+    });
+
+    const gameNode = container.querySelector<HTMLButtonElement>(
+      '[data-testid="matching-lobby-game"]',
+    );
+    const playerNodes = container.querySelectorAll(
+      '.court-lobby-arena__avatar:not(.court-lobby-arena__game)',
+    );
+    expect(gameNode).not.toBeNull();
+    expect(gameNode?.getAttribute('data-join')).toBe('direct');
+    expect(playerNodes).toHaveLength(members.length);
+    expect(gameNode?.classList.contains('court-lobby-arena__game')).toBe(true);
 
     await act(async () => root.unmount());
   });

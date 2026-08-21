@@ -97,7 +97,7 @@
     "rosterFullHint": "Primero quita a alguien del partido",
     "tapToAdd": "Toca un jugador · {{count}} libres",
     "youAreHere": "Estás aquí",
-    "refreshArena": "Cambiar posiciones de los jugadores",
+    "refreshArena": "Cambiar posiciones",
     "friendFallback": "Tu amigo",
     "friendIntentTitle": "{{name}} quiere jugar",
     "friendIntentHint": "Inicia la misma búsqueda. Verás jugadores compatibles en el lobby.",
@@ -119,6 +119,17 @@
     "customEndRequired": "La hora de fin es obligatoria para un horario personalizado",
     "selectAtLeastOneDay": "Selecciona al menos un día (hoy, mañana o pasado mañana)",
     "maxLevelBelowMin": "El nivel máximo debe ser mayor o igual que el mínimo",
-    "anytimeCustomExclusive": "Cualquier hora y horas personalizadas deben seleccionarse por separado"
+    "anytimeCustomExclusive": "Cualquier hora y horas personalizadas deben seleccionarse por separado",
+    "matchingGameJoinTitle": "Puedes unirte ahora",
+    "matchingGameAskTitle": "El anfitrión confirma primero",
+    "matchingGameSlots": "{{open}} de {{max}} plazas libres",
+    "matchingGameJoinHint": "Puedes entrar ahora. Al unirte se acaba tu búsqueda.",
+    "matchingGameAskHint": "El anfitrión confirma primero. Sigues buscando hasta que te acepten.",
+    "matchingGameSee": "Ver partida",
+    "matchingGameJoin": "Unirme",
+    "matchingGameAskCta": "Pedir unirme",
+    "matchingGameTimeClub": "{{time}} · {{club}}",
+    "matchingGameTimeOnly": "{{time}}",
+    "matchingGameNoClub": "Lugar por definir"
   }
 }

@@ -5,6 +5,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type {
   MatchProposalSummary,
+  MatchingLobbyGame,
   PlayIntent,
   PoolMember,
 } from '@/api/playIntents';
@@ -20,6 +21,8 @@ const mocks = vi.hoisted(() => ({
   onOpenChange: vi.fn(),
   t: vi.fn((key: string) => key),
   toastError: vi.fn(),
+  toastSuccess: vi.fn(),
+  joinGame: vi.fn(),
 }));
 
 (
@@ -37,7 +40,7 @@ vi.mock('react-router-dom', () => ({
 }));
 
 vi.mock('react-hot-toast', () => ({
-  default: { error: mocks.toastError },
+  default: { error: mocks.toastError, success: mocks.toastSuccess },
 }));
 
 vi.mock('@/components/ui/Drawer', () => ({
@@ -111,10 +114,14 @@ vi.mock('@/components/playIntent/PlayIntentClusterProgress', () => ({
 vi.mock('@/components/playIntent/CourtLobbyArena', () => ({
   CourtLobbyArena: ({
     members,
+    matchingGames = [],
     onAvatarClick,
+    onJoinGame,
   }: {
     members: PoolMember[];
+    matchingGames?: MatchingLobbyGame[];
     onAvatarClick: (member: PoolMember) => void;
+    onJoinGame?: (game: MatchingLobbyGame) => void;
   }) => (
     <div
       data-testid="court-selection"
@@ -122,6 +129,7 @@ vi.mock('@/components/playIntent/CourtLobbyArena', () => ({
         .filter((member) => member.inProposal)
         .map((member) => member.userId)
         .join(',')}
+      data-matching-game-ids={matchingGames.map((game) => game.id).join(',')}
     >
       {members.map((member) => (
         <button
@@ -131,6 +139,19 @@ vi.mock('@/components/playIntent/CourtLobbyArena', () => ({
           onClick={() => onAvatarClick(member)}
         >
           {member.userId}
+        </button>
+      ))}
+      {matchingGames.map((game) => (
+        <button
+          key={game.id}
+          type="button"
+          data-matching-game={game.id}
+          data-join={game.allowDirectJoin ? 'direct' : 'queue'}
+          onClick={() => {
+            void onJoinGame?.(game);
+          }}
+        >
+          {game.id}
         </button>
       ))}
     </div>
@@ -151,11 +172,15 @@ vi.mock('@/store/favoritesStore', () => ({
   ) => selector({ fetchFavorites: mocks.fetchFavorites }),
 }));
 
-vi.mock('@/store/authStore', () => ({
-  useAuthStore: (
-    selector: (state: { user: { id: string } }) => unknown,
-  ) => selector({ user: { id: 'viewer' } }),
-}));
+vi.mock('@/store/authStore', () => {
+  const state = { user: { id: 'viewer', nameIsSet: true } };
+  return {
+    useAuthStore: Object.assign(
+      (selector: (s: typeof state) => unknown) => selector(state),
+      { getState: () => state },
+    ),
+  };
+});
 
 vi.mock('@/store/playersStore', () => ({
   usePlayersStore: Object.assign(
@@ -178,6 +203,27 @@ vi.mock('@/api/playIntents', () => ({
     declineProposal: mocks.declineProposal,
     discussGroup: mocks.discussGroup,
   },
+}));
+
+vi.mock('@/api', () => ({
+  gamesApi: {
+    join: mocks.joinGame,
+  },
+}));
+
+vi.mock('@/utils/runWithProfileName', () => ({
+  runWithProfileName: (fn: () => void) => fn(),
+}));
+
+vi.mock('@/utils/genderJoinGate', () => ({
+  runWithGenderForEvent: () => true,
+  recoverGenderUnsetJoin: () => false,
+}));
+
+vi.mock('@/utils/gameSlotOverlapConfirm', () => ({
+  runWithOverlapConfirm: async (
+    action: (confirmOverlap: boolean) => Promise<unknown>,
+  ) => action(false),
 }));
 
 const proposal: MatchProposalSummary = {
@@ -213,6 +259,26 @@ const proposal: MatchProposalSummary = {
       level: 3,
     })),
   ],
+};
+
+const matchingGame: MatchingLobbyGame = {
+  id: 'game-open',
+  entityType: 'GAME',
+  allowDirectJoin: true,
+  genderTeams: 'ANY',
+  startTime: '2026-07-30T16:00:00.000Z',
+  timeLabel: '18:00',
+  club: { id: 'club-1', name: 'Club' },
+  maxParticipants: 4,
+  playingCount: 2,
+  playingAvatars: [],
+  ownerAvatar: null,
+};
+
+const queueGame: MatchingLobbyGame = {
+  ...matchingGame,
+  id: 'game-queue',
+  allowDirectJoin: false,
 };
 
 const intent: PlayIntent = {
@@ -666,5 +732,147 @@ describe('CourtLobbySheet proposal dismissal', () => {
 
     expect(container.querySelector('[data-testid="lobby-discuss"]')).toBeNull();
     expect(container.textContent).toContain('playIntent.createGame');
+  });
+
+  it('shows matching games on an otherwise empty looking lobby', async () => {
+    const { CourtLobbyPanel } = await import('./CourtLobbySheet');
+    await act(async () => {
+      root.render(
+        <CourtLobbyPanel
+          open
+          onOpenChange={mocks.onOpenChange}
+          members={[]}
+          overflow={0}
+          partySize={4}
+          availableCount={0}
+          clusterProgress={1}
+          sport="PADEL"
+          intent={intent}
+          matchingGames={[matchingGame]}
+          onChanged={mocks.onChanged}
+        />,
+      );
+    });
+
+    expect(container.querySelector('[data-testid="court-selection"]')).not.toBeNull();
+    expect(
+      container.querySelector('[data-matching-game="game-open"]'),
+    ).not.toBeNull();
+    expect(container.textContent).not.toContain('playIntent.emptyPool');
+  });
+
+  it('hides matching games for spectators and open proposals', async () => {
+    const { CourtLobbyPanel } = await import('./CourtLobbySheet');
+    await act(async () => {
+      root.render(
+        <CourtLobbyPanel
+          open
+          onOpenChange={mocks.onOpenChange}
+          members={freeMembers}
+          overflow={0}
+          partySize={4}
+          availableCount={1}
+          clusterProgress={2}
+          sport="PADEL"
+          matchingGames={[matchingGame]}
+          onChanged={mocks.onChanged}
+        />,
+      );
+    });
+    expect(container.querySelector('[data-matching-game]')).toBeNull();
+
+    await act(async () => {
+      root.render(
+        <CourtLobbyPanel
+          open
+          onOpenChange={mocks.onOpenChange}
+          members={freeMembers}
+          overflow={0}
+          partySize={4}
+          availableCount={1}
+          clusterProgress={2}
+          sport="PADEL"
+          intent={intent}
+          proposal={proposal}
+          matchingGames={[matchingGame]}
+          onChanged={mocks.onChanged}
+        />,
+      );
+    });
+    expect(container.querySelector('[data-matching-game]')).toBeNull();
+  });
+
+  it('joins a direct-match game and closes the lobby', async () => {
+    mocks.joinGame.mockResolvedValueOnce({
+      message: 'games.joinedSuccessfully',
+    });
+    const { CourtLobbyPanel } = await import('./CourtLobbySheet');
+    await act(async () => {
+      root.render(
+        <CourtLobbyPanel
+          open
+          onOpenChange={mocks.onOpenChange}
+          members={[]}
+          overflow={0}
+          partySize={4}
+          availableCount={0}
+          clusterProgress={1}
+          sport="PADEL"
+          intent={intent}
+          matchingGames={[matchingGame]}
+          onChanged={mocks.onChanged}
+        />,
+      );
+    });
+
+    await act(async () => {
+      container
+        .querySelector<HTMLButtonElement>('[data-matching-game="game-open"]')
+        ?.click();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(mocks.joinGame).toHaveBeenCalledWith('game-open', false);
+    expect(mocks.toastSuccess).toHaveBeenCalled();
+    expect(mocks.onOpenChange).toHaveBeenCalledWith(false);
+    expect(mocks.navigate).toHaveBeenCalledWith('/games/game-open');
+  });
+
+  it('keeps looking after asking to join a queue-only game', async () => {
+    mocks.joinGame.mockResolvedValueOnce({
+      message: 'games.addedToJoinQueue',
+    });
+    const { CourtLobbyPanel } = await import('./CourtLobbySheet');
+    await act(async () => {
+      root.render(
+        <CourtLobbyPanel
+          open
+          onOpenChange={mocks.onOpenChange}
+          members={[]}
+          overflow={0}
+          partySize={4}
+          availableCount={0}
+          clusterProgress={1}
+          sport="PADEL"
+          intent={intent}
+          matchingGames={[queueGame]}
+          onChanged={mocks.onChanged}
+        />,
+      );
+    });
+
+    await act(async () => {
+      container
+        .querySelector<HTMLButtonElement>('[data-matching-game="game-queue"]')
+        ?.click();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(mocks.joinGame).toHaveBeenCalledWith('game-queue', false);
+    expect(mocks.toastSuccess).toHaveBeenCalled();
+    expect(mocks.onOpenChange).not.toHaveBeenCalled();
+    expect(mocks.onChanged).toHaveBeenCalled();
   });
 });

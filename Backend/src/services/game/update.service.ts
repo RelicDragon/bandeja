@@ -13,6 +13,7 @@ import { SystemMessageType } from '../../utils/systemMessages';
 import notificationService from '../notification.service';
 import { formatDateInTimezone, getDateLabelInTimezone, getUserTimezoneFromCityId } from '../user-timezone.service';
 import { notifyGameBookingStatusChangeIfNeeded } from './notifyGameBookingStatusChange';
+import { publishMatchingGamesChanged } from '../playIntent/playIntentRealtime';
 import { BarResultsService } from '../barResults.service';
 import { ImageProcessor } from '../../utils/imageProcessor';
 import { validateGameForSport } from '../../utils/validators/validateGameForSport';
@@ -942,6 +943,7 @@ export class GameUpdateService {
           return null;
         })
       : null;
+    publishMatchingGamesChanged(updatedGame);
     return withLegacyGoldenPointField({
       ...updatedGame,
       weatherSummary,

@@ -17,7 +17,8 @@ import { createSystemMessageWithNotification } from '../utils/systemMessageHelpe
 import { GameService } from './game/game.service';
 import { ParticipantMessageHelper } from './game/participantMessageHelper';
 import { PlayIntentGameLifecycleService } from './playIntent/playIntentGameLifecycle.service';
-import { publishCommittedPlayIntentStatusChanges } from './playIntent/playIntentRealtime';
+import { publishCommittedPlayIntentStatusChanges, publishMatchingGamesChangedForGameId } from './playIntent/playIntentRealtime';
+import { consumeLookingIntentOnPlayingJoin } from './playIntent/playIntentPlayingJoin';
 import { isInviteInboxVisible } from '../utils/gameInviteInbox';
 import { inboxInviteGameSelect, mapInvitedParticipantToInboxInvite } from './invite/pendingInviteShape';
 import { assertSlotOverlapConfirmed } from './game/gameSlotOverlap.service';
@@ -400,11 +401,27 @@ export class InviteService {
               inviteClosedAt: null,
             },
           });
+          let lookingIntentId = locked.playIntentId;
+          if (!isTrainerInvite) {
+            const city = await tx.game.findUnique({
+              where: { id: gameId },
+              select: { cityId: true },
+            });
+            if (city) {
+              lookingIntentId =
+                (await consumeLookingIntentOnPlayingJoin(
+                  tx,
+                  receiverId,
+                  city.cityId,
+                  new Date(),
+                )) ?? lookingIntentId;
+            }
+          }
           return {
             queued: false,
             expired: false,
             record: null,
-            playIntentId: locked.playIntentId,
+            playIntentId: lookingIntentId,
           };
         });
         await publishCommittedPlayIntentStatusChanges([
@@ -441,6 +458,7 @@ export class InviteService {
           );
           await GameService.updateGameReadiness(gameId);
           await ParticipantMessageHelper.emitGameUpdate(gameId, receiverId);
+          void publishMatchingGamesChangedForGameId(gameId);
           if ((global as any).socketService) {
             const queueExtras = {
               participantPatch: {
@@ -498,6 +516,7 @@ export class InviteService {
     }
     if (gameId) {
       await ParticipantMessageHelper.emitGameUpdate(gameId, receiverId);
+      void publishMatchingGamesChangedForGameId(gameId);
     }
     return { success: true, message: 'invites.acceptedSuccessfully' };
   }
@@ -569,6 +588,9 @@ export class InviteService {
       if (participant.gameId) {
         await ParticipantMessageHelper.emitGameUpdate(participant.gameId, participant.userId);
       }
+      if (participant.gameId) {
+        void publishMatchingGamesChangedForGameId(participant.gameId);
+      }
       return { success: true, message: 'invites.declinedSuccessfully' };
     }
     const isReceiver = participant.userId === userId;
@@ -619,6 +641,7 @@ export class InviteService {
       removedUserId: participant.userId,
       inviteOutcome,
     });
+    void publishMatchingGamesChangedForGameId(participant.gameId);
     return { success: true, message: 'invites.declinedSuccessfully' };
   }
 
@@ -661,6 +684,9 @@ export class InviteService {
           inviteClosedAt: null,
         },
       });
+      if (participant.gameId) {
+        void publishMatchingGamesChangedForGameId(participant.gameId);
+      }
       return { success: true, message: 'invites.cancelledSuccessfully' };
     }
     if (!participant.gameId) {
@@ -681,6 +707,7 @@ export class InviteService {
       removedUserId: participant.userId,
       inviteOutcome,
     });
+    void publishMatchingGamesChangedForGameId(participant.gameId);
     return { success: true, message: 'invites.cancelledSuccessfully' };
   }
 
@@ -806,6 +833,9 @@ export class InviteService {
           });
         }
       }
+    }
+    for (const gameId of gamesToRefresh.keys()) {
+      void publishMatchingGamesChangedForGameId(gameId);
     }
     return expired;
   }

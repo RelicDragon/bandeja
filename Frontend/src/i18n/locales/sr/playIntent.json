@@ -105,7 +105,7 @@
     "rosterFullHint": "Prvo ukloni nekoga iz meča",
     "tapToAdd": "Dodirni igrača · {{count}} slobodno",
     "youAreHere": "Ti si ovde",
-    "refreshArena": "Promeni pozicije igrača",
+    "refreshArena": "Promeni pozicije",
     "friendFallback": "Tvoj prijatelj",
     "friendIntentTitle": "{{name}} želi da igra",
     "friendIntentHint": "Pokreni istu pretragu. U lobiju ćeš videti odgovarajuće igrače.",
@@ -127,6 +127,17 @@
     "customEndRequired": "Za posebno vreme potrebno je uneti vreme kraja",
     "selectAtLeastOneDay": "Izaberi barem jedan dan (danas, sutra ili prekosutra)",
     "maxLevelBelowMin": "Maksimalni nivo mora biti veći ili jednak minimalnom",
-    "anytimeCustomExclusive": "Bilo kad i posebni sati moraju se birati zasebno"
+    "anytimeCustomExclusive": "Bilo kad i posebni sati moraju se birati zasebno",
+    "matchingGameJoinTitle": "Možeš da uđeš odmah",
+    "matchingGameAskTitle": "Prvo potvrđuje organizator",
+    "matchingGameSlots": "{{open}} od {{max}} mesta slobodno",
+    "matchingGameJoinHint": "Možeš da uđeš odmah. Ulazak završava tvoju pretragu.",
+    "matchingGameAskHint": "Organizator prvo potvrđuje. Ostaješ u pretrazi dok te ne prihvate.",
+    "matchingGameSee": "Otvori igru",
+    "matchingGameJoin": "Uđi",
+    "matchingGameAskCta": "Zatraži ulazak",
+    "matchingGameTimeClub": "{{time}} · {{club}}",
+    "matchingGameTimeOnly": "{{time}}",
+    "matchingGameNoClub": "Mesto još nije izabrano"
   }
 }

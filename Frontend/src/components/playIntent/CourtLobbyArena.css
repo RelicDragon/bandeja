@@ -686,6 +686,199 @@
   box-shadow: 0 0 9px rgb(100 116 139 / 0.6);
 }
 
+.court-lobby-arena__game {
+  z-index: 18;
+}
+
+.court-lobby-arena__game[data-pinned='true'] {
+  z-index: 41;
+}
+
+.court-lobby-arena__game[data-pinned-active='true'] .court-lobby-arena__avatar-image {
+  border-color: rgb(167 243 208 / 0.95);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.18),
+    0 0 0 2px rgb(16 185 129 / 0.55),
+    0 0 22px rgb(52 211 153 / 0.5),
+    0 12px 28px rgb(2 6 23 / 0.5);
+}
+
+.court-lobby-arena__game[data-join='queue'][data-pinned-active='true']
+  .court-lobby-arena__avatar-image {
+  border-color: rgb(165 243 252 / 0.95);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.16),
+    0 0 0 2px rgb(8 145 178 / 0.55),
+    0 0 22px rgb(34 211 238 / 0.42),
+    0 12px 28px rgb(2 6 23 / 0.5);
+}
+
+.court-lobby-arena__game[data-join='direct'] .court-lobby-arena__avatar-halo {
+  opacity: 1;
+  background: rgb(52 211 153 / 0.48);
+  animation: courtLobbyAvatarHalo 2.8s ease-in-out infinite;
+}
+
+.court-lobby-arena__game[data-join='direct'] .court-lobby-arena__avatar-image {
+  border: 2px solid rgb(110 231 183 / 0.92);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.2),
+    0 0 0 3px rgb(16 185 129 / 0.14),
+    0 0 20px rgb(16 185 129 / 0.42),
+    0 8px 18px rgb(2 6 23 / 0.42);
+}
+
+.court-lobby-arena__game[data-join='queue'] .court-lobby-arena__avatar-halo {
+  opacity: 0;
+}
+
+.court-lobby-arena__game[data-join='queue'] .court-lobby-arena__avatar-visual::before {
+  position: absolute;
+  z-index: 2;
+  inset: -6px;
+  border: 1.5px dashed rgb(125 211 252 / 0.78);
+  border-radius: inherit;
+  content: '';
+  pointer-events: none;
+  animation: courtLobbyReAddOrbit 14s linear infinite;
+}
+
+.court-lobby-arena__game[data-join='queue'] .court-lobby-arena__avatar-image {
+  border: 2px solid rgb(103 232 249 / 0.5);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.1),
+    0 7px 16px rgb(2 6 23 / 0.36);
+}
+
+.court-lobby-arena__game[data-entity='TOURNAMENT'] .court-lobby-arena__avatar-visual::after {
+  inset: -4px;
+  border: 1.5px solid rgb(244 63 94 / 0.88);
+  box-shadow: 0 0 12px rgb(244 63 94 / 0.4);
+}
+
+.court-lobby-arena__game-faces {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: inherit;
+  gap: 1px;
+  background: rgb(7 23 19);
+}
+
+.court-lobby-arena__game-faces.is-2 {
+  grid-template-columns: 1fr 1fr;
+}
+
+.court-lobby-arena__game-faces.is-3 {
+  grid-template-columns: 1.12fr 0.88fr;
+  grid-template-rows: 1fr 1fr;
+}
+
+.court-lobby-arena__game-faces.is-3 .court-lobby-arena__game-face:first-child {
+  grid-row: 1 / 3;
+}
+
+.court-lobby-arena__game-face {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: linear-gradient(145deg, #334155, #0f172a);
+}
+
+.court-lobby-arena__game-face .court-lobby-arena__avatar-initials {
+  font-size: 9px;
+}
+
+.court-lobby-arena__game-empty {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  color: rgb(226 232 240 / 0.85);
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.court-lobby-arena__game-pips,
+.court-lobby-arena__game-queue,
+.court-lobby-arena__game-mark {
+  position: absolute;
+  z-index: 4;
+  display: grid;
+  place-items: center;
+  border: 2px solid #071713;
+  border-radius: 999px;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.court-lobby-arena__game-pips,
+.court-lobby-arena__game-queue {
+  left: -3px;
+  bottom: -2px;
+}
+
+.court-lobby-arena__game-pips {
+  min-width: 22px;
+  height: 15px;
+  padding: 0 4px;
+  background: #064e3b;
+  color: #ecfdf5;
+  font-size: 8px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  box-shadow: 0 0 9px rgb(16 185 129 / 0.55);
+}
+
+.court-lobby-arena__game-pips.is-dots {
+  display: flex;
+  min-width: 0;
+  height: 14px;
+  align-items: center;
+  gap: 2px;
+  padding: 0 5px;
+}
+
+.court-lobby-arena__game-pips.is-dots i {
+  width: 4px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgb(167 243 208 / 0.28);
+}
+
+.court-lobby-arena__game-pips.is-dots i.is-filled {
+  background: #ecfdf5;
+  box-shadow: 0 0 5px rgb(167 243 208 / 0.9);
+}
+
+.court-lobby-arena__game-queue {
+  width: 15px;
+  height: 15px;
+  background: #0e7490;
+  color: #ecfeff;
+  box-shadow: 0 0 9px rgb(6 182 212 / 0.5);
+}
+
+.court-lobby-arena__game-mark {
+  top: -2px;
+  right: -2px;
+  width: 16px;
+  height: 16px;
+}
+
+.court-lobby-arena__game[data-entity='TOURNAMENT'] .court-lobby-arena__game-mark {
+  background: #9f1239;
+  color: #ffe4e6;
+  box-shadow: 0 0 9px rgb(244 63 94 / 0.55);
+}
+
+.court-lobby-arena__game[data-entity='BAR'] .court-lobby-arena__game-mark {
+  background: #b45309;
+  color: #fffbeb;
+  box-shadow: 0 0 9px rgb(245 158 11 / 0.55);
+}
+
 .court-lobby-arena__chip {
   z-index: 30;
   border: 1px solid rgb(255 255 255 / 0.1);
@@ -989,6 +1182,25 @@ html:not(.dark) .court-lobby-arena__avatar-in-game {
   box-shadow: 0 0 8px rgb(100 116 139 / 0.4);
 }
 
+html:not(.dark) .court-lobby-arena__game-pips,
+html:not(.dark) .court-lobby-arena__game-queue,
+html:not(.dark) .court-lobby-arena__game-mark {
+  border-color: #f8fafc;
+}
+
+html:not(.dark) .court-lobby-arena__game[data-join='direct'] .court-lobby-arena__avatar-image {
+  border-color: rgb(5 150 105);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.7),
+    0 0 0 1px rgb(16 185 129 / 0.28),
+    0 0 16px rgb(16 185 129 / 0.32),
+    0 8px 16px rgb(15 23 42 / 0.12);
+}
+
+html:not(.dark) .court-lobby-arena__game[data-join='queue'] .court-lobby-arena__avatar-image {
+  border-color: rgb(14 116 144);
+}
+
 html:not(.dark) .court-lobby-arena__chip {
   border-color: rgb(15 118 110 / 0.15);
   background: rgb(255 255 255 / 0.76);
@@ -1035,6 +1247,11 @@ html:not(.dark) .court-lobby-arena__mismatch-tail {
   }
 
   .court-lobby-arena__avatar[data-pinned-active='true'] .court-lobby-arena__avatar-halo {
+    animation: none;
+  }
+
+  .court-lobby-arena__game[data-join='direct'] .court-lobby-arena__avatar-halo,
+  .court-lobby-arena__game[data-join='queue'] .court-lobby-arena__avatar-visual::before {
     animation: none;
   }
 

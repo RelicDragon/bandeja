@@ -13,7 +13,7 @@ import notificationService from '../notification.service';
 import { USER_SELECT_FIELDS, USER_SPORT_PROFILE_SELECT } from '../../utils/constants';
 import { projectUserForSportContext } from '../user/userSportProfile.service';
 import { PlayIntentGameLifecycleService } from '../playIntent/playIntentGameLifecycle.service';
-import { publishCommittedPlayIntentStatusChanges } from '../playIntent/playIntentRealtime';
+import { publishCommittedPlayIntentStatusChanges, publishMatchingGamesChanged } from '../playIntent/playIntentRealtime';
 
 export class GameDeleteService {
   static async deleteGame(id: string, cancelledByUserId: string) {
@@ -27,6 +27,7 @@ export class GameDeleteService {
         cityId: true,
         startTime: true,
         parentId: true,
+        isPublic: true,
         mediaUrls: true,
         status: true,
         resultsStatus: true,
@@ -178,5 +179,6 @@ export class GameDeleteService {
     } catch (err) {
       console.error('Game cancelled: failed to notify participants', err);
     }
+    publishMatchingGamesChanged(game);
   }
 }

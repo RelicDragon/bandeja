@@ -13,8 +13,14 @@ import { CourtLobbySportCourt } from '@/components/playIntent/CourtLobbySportCou
 import { CourtLobbyThunder } from '@/components/playIntent/CourtLobbyThunder';
 import { CourtLobbyMismatchBubbles } from '@/components/playIntent/CourtLobbyMismatchBubbles';
 import { CourtLobbyPlayerFitCard } from '@/components/playIntent/CourtLobbyPlayerFitCard';
+import { CourtLobbyGameFitCard } from '@/components/playIntent/CourtLobbyGameFitCard';
+import { CourtLobbyGameNode } from '@/components/playIntent/CourtLobbyGameNode';
 import { CourtLobbyAvatarImage } from '@/components/playIntent/CourtLobbyAvatarImage';
-import type { PoolMember } from '@/api/playIntents';
+import {
+  matchingGamesKey,
+  matchingGamesOrbitKey,
+} from '@/components/playIntent/matchingLobbyGames';
+import type { MatchingLobbyGame, PoolMember } from '@/api/playIntents';
 import { useAuthStore } from '@/store/authStore';
 import { useFavoritesStore } from '@/store/favoritesStore';
 import type { Sport } from '@/types';
@@ -42,6 +48,13 @@ type Props = {
   onStartChat?: (userId: string) => void;
   /** Closes the fit card (called by the card itself). */
   onPinnedChange?: (userId: string | null) => void;
+  matchingGames?: MatchingLobbyGame[];
+  pinnedGameId?: string | null;
+  joiningGame?: boolean;
+  onGameClick?: (game: MatchingLobbyGame) => void;
+  onPinnedGameChange?: (gameId: string | null) => void;
+  onJoinGame?: (game: MatchingLobbyGame) => void;
+  onOpenGame?: (gameId: string) => void;
 };
 
 type DriftNode = {
@@ -73,10 +86,15 @@ const MATCH_ORBIT_START_ANGLE = -0.32;
 const MATCH_ORBIT_SECONDS = 190;
 const ACTIONABLE_ORBIT_START_ANGLE = Math.PI * 0.82;
 const ACTIONABLE_ORBIT_SECONDS = 225;
+const GAME_ORBIT = 29;
+const GAME_ORBIT_START_ANGLE = Math.PI * 0.18;
+const GAME_ORBIT_SECONDS = 240;
+const GAME_NODE_SIZE = 40;
 const AVATAR_BASE_SIZE = 50;
 const HANDOFF_SECONDS = 0.65;
 const HANDOFF_BLEND_AT_TWENTY_FPS = 0.22;
 const DEFAULT_ARENA_SIZE: ArenaSize = { width: 330, height: 330 };
+const EMPTY_MATCHING_GAMES: MatchingLobbyGame[] = [];
 
 function memberVisual(member: PoolMember, hasProposal: boolean) {
   if (member.inProposal) return { size: 30, opacity: 1 };
@@ -245,6 +263,32 @@ function arenaMembersEqual(previous: PoolMember[], next: PoolMember[]) {
   });
 }
 
+function matchingGamePosition(index: number, count: number, orbitAngle: number) {
+  return polarToXY(
+    orbitAngle + (index / Math.max(count, 1)) * Math.PI * 2,
+    GAME_ORBIT,
+  );
+}
+
+function applyMatchingGamePositions(
+  games: MatchingLobbyGame[],
+  orbitAngle: number,
+  positions: Map<string, { x: number; y: number }>,
+  els: Map<string, HTMLButtonElement>,
+  arenaSize: ArenaSize,
+  snap: boolean,
+) {
+  const next = new Map<string, { x: number; y: number }>();
+  games.forEach((game, index) => {
+    const target = matchingGamePosition(index, games.length, orbitAngle);
+    const current = positions.get(game.id);
+    const pos = snap || !current ? target : current;
+    next.set(game.id, pos);
+    setElementPosition(els.get(game.id), pos.x, pos.y, arenaSize);
+  });
+  return next;
+}
+
 function arenaPropsEqual(previous: Props, next: Props) {
   return (
     previous.overflow === next.overflow &&
@@ -260,6 +304,13 @@ function arenaPropsEqual(previous: Props, next: Props) {
     previous.onOpenProfile === next.onOpenProfile &&
     previous.onStartChat === next.onStartChat &&
     previous.onPinnedChange === next.onPinnedChange &&
+    previous.pinnedGameId === next.pinnedGameId &&
+    previous.joiningGame === next.joiningGame &&
+    previous.onGameClick === next.onGameClick &&
+    previous.onPinnedGameChange === next.onPinnedGameChange &&
+    previous.onJoinGame === next.onJoinGame &&
+    previous.onOpenGame === next.onOpenGame &&
+    matchingGamesKey(previous.matchingGames) === matchingGamesKey(next.matchingGames) &&
     arenaMembersEqual(previous.members, next.members)
   );
 }
@@ -280,12 +331,22 @@ function CourtLobbyArenaComponent({
   onOpenProfile,
   onStartChat,
   onPinnedChange,
+  matchingGames: matchingGamesProp,
+  pinnedGameId = null,
+  joiningGame = false,
+  onGameClick,
+  onPinnedGameChange,
+  onJoinGame,
+  onOpenGame,
 }: Props) {
+  const matchingGames = matchingGamesProp ?? EMPTY_MATCHING_GAMES;
+  const gamesOrbitKey = matchingGamesOrbitKey(matchingGames);
   const { t } = useTranslation();
   const isFavorite = useFavoritesStore((s) => s.isFavorite);
   const viewer = useAuthStore((s) => s.user);
   const [shuffleTick, setShuffleTick] = useState(0);
   const [closingCard, setClosingCard] = useState(false);
+  const [closingGameCard, setClosingGameCard] = useState(false);
   const arenaRef = useRef<HTMLDivElement | null>(null);
   const arenaSizeRef = useRef<ArenaSize>(DEFAULT_ARENA_SIZE);
   const nodesRef = useRef<DriftNode[]>([]);
@@ -300,8 +361,16 @@ function CourtLobbyArenaComponent({
     angle: ACTIONABLE_ORBIT_START_ANGLE,
     speed: -(Math.PI * 2) / ACTIONABLE_ORBIT_SECONDS,
   });
+  const gameOrbitRef = useRef({
+    angle: GAME_ORBIT_START_ANGLE,
+    speed: (Math.PI * 2) / GAME_ORBIT_SECONDS,
+  });
+  const gameEls = useRef(new Map<string, HTMLButtonElement>());
+  const gamePositionsRef = useRef(new Map<string, { x: number; y: number }>());
   const frameRef = useRef<number | null>(null);
   const pinnedUserIdRef = useRef<string | null>(pinnedUserId ?? null);
+  const pinnedGameIdRef = useRef<string | null>(pinnedGameId);
+  const matchingGamesRef = useRef(matchingGames);
   const key = membersKey(members);
   const inMatchCount = members.filter((member) => member.inProposal).length;
 
@@ -393,6 +462,12 @@ function CourtLobbyArenaComponent({
         (Math.random() < 0.5 ? -1 : 1) *
         ((Math.PI * 2) / (180 + Math.random() * 130)),
     };
+    gameOrbitRef.current = {
+      angle: Math.random() * Math.PI * 2,
+      speed:
+        (Math.random() < 0.5 ? -1 : 1) *
+        ((Math.PI * 2) / (200 + Math.random() * 90)),
+    };
 
     const inMatchNodes = nodesRef.current
       .filter((node) => node.member.inProposal)
@@ -478,6 +553,15 @@ function CourtLobbyArenaComponent({
         );
       }
     }
+
+    gamePositionsRef.current = applyMatchingGamePositions(
+      matchingGamesRef.current,
+      gameOrbitRef.current.angle,
+      gamePositionsRef.current,
+      gameEls.current,
+      arenaSizeRef.current,
+      reduceMotion,
+    );
 
     setShuffleTick((current) => current + 1);
   };
@@ -587,7 +671,17 @@ function CourtLobbyArenaComponent({
         selfMarker.style.removeProperty('transform');
       }
     }
-  }, [hasProposal, key, members, partySize]);
+
+    matchingGamesRef.current = matchingGames;
+    gamePositionsRef.current = applyMatchingGamePositions(
+      matchingGames,
+      gameOrbitRef.current.angle,
+      gamePositionsRef.current,
+      gameEls.current,
+      arenaSize,
+      false,
+    );
+  }, [gamesOrbitKey, hasProposal, key, matchingGames, members, partySize]);
 
   useLayoutEffect(() => {
     const syncPositionsToArenaSize = () => {
@@ -598,6 +692,15 @@ function CourtLobbyArenaComponent({
           avatarEls.current.get(node.id),
           node.x,
           node.y,
+          arenaSize,
+        );
+      }
+
+      for (const [gameId, pos] of gamePositionsRef.current) {
+        setElementPosition(
+          gameEls.current.get(gameId),
+          pos.x,
+          pos.y,
           arenaSize,
         );
       }
@@ -639,10 +742,20 @@ function CourtLobbyArenaComponent({
   }, [pinnedUserId]);
 
   useEffect(() => {
+    pinnedGameIdRef.current = pinnedGameId;
+    setClosingGameCard(false);
+  }, [pinnedGameId]);
+
+  useEffect(() => {
+    matchingGamesRef.current = matchingGames;
+  }, [matchingGames]);
+
+  useEffect(() => {
     const reduceMotion =
       typeof window !== 'undefined' &&
       window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    if (reduceMotion || members.length === 0) return;
+    if (reduceMotion) return;
+    if (members.length === 0 && !gamesOrbitKey) return;
 
     let last = 0;
     let inMatchCount = 0;
@@ -671,6 +784,11 @@ function CourtLobbyArenaComponent({
       if (actionableCount > 0) {
         actionableOrbitRef.current.angle +=
           actionableOrbitRef.current.speed * elapsedSeconds;
+      }
+      const liveGames = matchingGamesRef.current;
+      if (liveGames.length > 0) {
+        gameOrbitRef.current.angle +=
+          gameOrbitRef.current.speed * elapsedSeconds;
       }
 
       const matchBlend = frameAdjustedBlend(0.065, elapsedSeconds);
@@ -772,6 +890,32 @@ function CourtLobbyArenaComponent({
         );
       }
 
+      const gameBlend = frameAdjustedBlend(0.05, elapsedSeconds);
+      const nextGamePositions = new Map<string, { x: number; y: number }>();
+      liveGames.forEach((game, index) => {
+        const target = matchingGamePosition(
+          index,
+          liveGames.length,
+          gameOrbitRef.current.angle,
+        );
+        const current = gamePositionsRef.current.get(game.id) ?? target;
+        const frozenGame = pinnedGameIdRef.current === game.id;
+        const next = frozenGame
+          ? current
+          : {
+              x: current.x + (target.x - current.x) * gameBlend,
+              y: current.y + (target.y - current.y) * gameBlend,
+            };
+        nextGamePositions.set(game.id, next);
+        setElementPosition(
+          gameEls.current.get(game.id),
+          next.x,
+          next.y,
+          arenaSize,
+        );
+      });
+      gamePositionsRef.current = nextGamePositions;
+
       const selfMarker = selfMarkerRef.current;
       if (selfMarker) {
         if (inMatchCount > 0) {
@@ -800,7 +944,7 @@ function CourtLobbyArenaComponent({
       if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
       frameRef.current = null;
     };
-  }, [key, members.length, partySize]);
+  }, [gamesOrbitKey, key, members.length, partySize]);
 
   return (
     <div
@@ -825,12 +969,12 @@ function CourtLobbyArenaComponent({
         type="button"
         className="court-lobby-arena__shuffle"
         aria-label={t('playIntent.refreshArena', {
-          defaultValue: 'Shuffle player positions',
+          defaultValue: 'Shuffle positions',
         })}
         title={t('playIntent.refreshArena', {
-          defaultValue: 'Shuffle player positions',
+          defaultValue: 'Shuffle positions',
         })}
-        disabled={members.length === 0}
+        disabled={members.length === 0 && matchingGames.length === 0}
         onClick={shufflePlayers}
       >
         <RotateCw
@@ -1020,6 +1164,42 @@ function CourtLobbyArenaComponent({
           </button>
         );
       })}
+      {matchingGames.map((game, index) => {
+        const pos =
+          gamePositionsRef.current.get(game.id) ??
+          matchingGamePosition(
+            index,
+            matchingGames.length,
+            gameOrbitRef.current.angle,
+          );
+        const frozen = pinnedGameId === game.id;
+        const pinned = frozen && !closingGameCard;
+        return (
+          <CourtLobbyGameNode
+            key={game.id}
+            game={game}
+            busy={busy || joiningGame}
+            frozen={frozen}
+            pinned={pinned}
+            x={pos.x}
+            y={pos.y}
+            size={GAME_NODE_SIZE}
+            arenaSize={arenaSizeRef.current}
+            positionTransform={positionTransform}
+            onNodeRef={(el) => {
+              if (el) gameEls.current.set(game.id, el);
+              else gameEls.current.delete(game.id);
+            }}
+            onClick={() => {
+              if (pinnedGameId === game.id) {
+                setClosingGameCard(true);
+                return;
+              }
+              onGameClick?.(game);
+            }}
+          />
+        );
+      })}
       {overflow > 0 && (
         <div className="court-lobby-arena__chip absolute bottom-3 right-3">
           {t('playIntent.overflow', { count: overflow })}
@@ -1049,6 +1229,29 @@ function CourtLobbyArenaComponent({
               onClose={() => setClosingCard(true)}
               onOpenProfile={(id) => onOpenProfile?.(id)}
               onStartChat={onStartChat ? (id) => onStartChat(id) : undefined}
+            />
+          );
+        })()}
+      {(pinnedGameId || closingGameCard) &&
+        (() => {
+          const activeId = pinnedGameId;
+          if (!activeId) return null;
+          const pinnedGame = matchingGames.find((game) => game.id === activeId);
+          if (!pinnedGame) return null;
+          const anchorEl = gameEls.current.get(activeId) ?? null;
+          return (
+            <CourtLobbyGameFitCard
+              game={pinnedGame}
+              anchorEl={anchorEl}
+              closing={closingGameCard}
+              joining={joiningGame}
+              onExited={() => {
+                setClosingGameCard(false);
+                onPinnedGameChange?.(null);
+              }}
+              onClose={() => setClosingGameCard(true)}
+              onJoin={(game) => onJoinGame?.(game)}
+              onOpenGame={(gameId) => onOpenGame?.(gameId)}
             />
           );
         })()}

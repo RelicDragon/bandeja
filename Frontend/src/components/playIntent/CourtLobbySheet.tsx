@@ -16,14 +16,19 @@ import { openLobbyDiscussion } from '@/components/playIntent/openLobbyDiscussion
 import {
   playIntentsApi,
   type MatchProposalSummary,
+  type MatchingLobbyGame,
   type PlayIntent,
   type PoolMember,
 } from '@/api/playIntents';
+import { visibleMatchingGames } from '@/components/playIntent/matchingLobbyGames';
 import { usePlayerCardModal } from '@/hooks/usePlayerCardModal';
 import { useFavoritesStore } from '@/store/favoritesStore';
 import { useAuthStore } from '@/store/authStore';
 import { usePlayersStore } from '@/store/playersStore';
 import type { GameParticipant, Sport } from '@/types';
+import { recoverGenderUnsetJoin, runWithGenderForEvent } from '@/utils/genderJoinGate';
+import { runWithOverlapConfirm } from '@/utils/gameSlotOverlapConfirm';
+import { runWithProfileName } from '@/utils/runWithProfileName';
 
 type Props = {
   open: boolean;
@@ -36,6 +41,7 @@ type Props = {
   sport: Sport;
   intent?: PlayIntent | null;
   proposal?: MatchProposalSummary | null;
+  matchingGames?: MatchingLobbyGame[];
   onChanged?: () => void;
 };
 
@@ -69,6 +75,7 @@ export function CourtLobbyPanel({
   sport,
   intent,
   proposal,
+  matchingGames,
   onChanged,
 }: Props) {
   const { t } = useTranslation();
@@ -80,6 +87,9 @@ export function CourtLobbyPanel({
   const [busy, setBusy] = useState(false);
   const [waitingHost, setWaitingHost] = useState(false);
   const [pinnedUserId, setPinnedUserId] = useState<string | null>(null);
+  const [pinnedGameId, setPinnedGameId] = useState<string | null>(null);
+  const [joiningGame, setJoiningGame] = useState(false);
+  const joiningGameRef = useRef(false);
   const [discussing, setDiscussing] = useState(false);
   const discussInFlightRef = useRef(false);
 
@@ -105,6 +115,15 @@ export function CourtLobbyPanel({
   );
 
   const hasProposal = !!proposal;
+  const radarGames = useMemo(
+    () =>
+      visibleMatchingGames(matchingGames, {
+        looking: !!intent,
+        hasProposal,
+      }),
+    [hasProposal, intent, matchingGames],
+  );
+  const showArena = members.length > 0 || radarGames.length > 0;
   const rosterLocked = !!(proposal?.hostUserId || proposal?.status === 'ACCEPTED');
   const isHost = !!proposal?.hostUserId && proposal.hostUserId === userId;
   const showWaiting = waitingHost || (rosterLocked && !isHost);
@@ -275,7 +294,19 @@ export function CourtLobbyPanel({
     }
   }, [open, pinnedUserId, members]);
 
+  useEffect(() => {
+    if (!open) {
+      setPinnedGameId(null);
+      return;
+    }
+    if (!pinnedGameId || joiningGame) return;
+    if (!radarGames.some((game) => game.id === pinnedGameId)) {
+      setPinnedGameId(null);
+    }
+  }, [open, pinnedGameId, radarGames, joiningGame]);
+
   const onPoolAvatarClick = useCallback(async (member: PoolMember) => {
+    setPinnedGameId(null);
     if (!proposalId && intent) {
       const compatible = member.affinity !== 'far';
       if (!compatible) {
@@ -482,6 +513,102 @@ export function CourtLobbyPanel({
     setWaitingHost(false);
   };
 
+  const onGameClick = useCallback((game: MatchingLobbyGame) => {
+    setPinnedUserId(null);
+    setPinnedGameId((current) => (current === game.id ? null : game.id));
+  }, []);
+
+  const openMatchingGame = useCallback(
+    (gameId: string) => {
+      if (joiningGameRef.current) return;
+      setPinnedGameId(null);
+      onOpenChange(false);
+      navigate(`/games/${gameId}`);
+    },
+    [navigate, onOpenChange],
+  );
+
+  const joinMatchingGame = useCallback(
+    async (game: MatchingLobbyGame) => {
+      if (joiningGameRef.current) return;
+      joiningGameRef.current = true;
+      const authUser = useAuthStore.getState().user;
+      if (authUser && authUser.nameIsSet !== true) {
+        joiningGameRef.current = false;
+        runWithProfileName(() => void joinMatchingGame(game));
+        return;
+      }
+      if (
+        !runWithGenderForEvent(
+          { genderTeams: game.genderTeams, entityType: game.entityType },
+          () => void joinMatchingGame(game),
+        )
+      ) {
+        joiningGameRef.current = false;
+        return;
+      }
+      setJoiningGame(true);
+      try {
+        const { gamesApi } = await import('@/api');
+        const response = await runWithOverlapConfirm(
+          async (confirmOverlap) => {
+            setJoiningGame(true);
+            return gamesApi.join(game.id, confirmOverlap);
+          },
+          { beforeAsk: () => setJoiningGame(false) },
+        );
+        if (!response) return;
+        const message = (response as { message?: string }).message;
+        if (message === 'games.addedToJoinQueue') {
+          toast.success(
+            t('games.addedToJoinQueue', {
+              defaultValue: 'Added to join queue',
+            }),
+          );
+          setPinnedGameId(null);
+          onChanged?.();
+          return;
+        }
+        if (message === 'games.addedToQueueLevelOutOfRange') {
+          toast.error(
+            t('games.addedToQueueLevelOutOfRange', {
+              defaultValue:
+                'Your level is outside the range set by the owner. You have been added to the queue.',
+            }),
+          );
+          setPinnedGameId(null);
+          onChanged?.();
+          return;
+        }
+        toast.success(
+          t(message || 'games.joinedSuccessfully', {
+            defaultValue: 'You successfully joined the game',
+          }),
+        );
+        setPinnedGameId(null);
+        onOpenChange(false);
+        navigate(`/games/${game.id}`);
+        onChanged?.();
+      } catch (error: unknown) {
+        if (recoverGenderUnsetJoin(error, () => void joinMatchingGame(game))) {
+          return;
+        }
+        const response = (
+          error as { response?: { data?: { message?: string } } }
+        ).response?.data;
+        toast.error(
+          t(response?.message || 'errors.generic', {
+            defaultValue: response?.message || 'Something went wrong',
+          }),
+        );
+      } finally {
+        joiningGameRef.current = false;
+        setJoiningGame(false);
+      }
+    },
+    [navigate, onChanged, onOpenChange, t],
+  );
+
   const createFromLobby = () => {
     if (!intent || !canCreateFromLobby) return;
     const window = directCreateWindow(intent);
@@ -516,7 +643,31 @@ export function CourtLobbyPanel({
   return (
     <>
         <div className="space-y-3 px-4 pb-5 pt-3">
-          {members.length === 0 ? (
+          {showArena ? (
+            <CourtLobbyArena
+              members={arenaMembers}
+              overflow={overflow}
+              busy={actionsLocked || joiningGame}
+              hasProposal={hasProposal || canCreateFromLobby}
+              vacancy={displayedVacancy}
+              rosterLocked={rosterLocked}
+              sport={sport}
+              partySize={partySize}
+              viewerInLobby={!!intent}
+              pinnedUserId={pinnedUserId}
+              onAvatarClick={onPoolAvatarClick}
+              onOpenProfile={openPlayerCard}
+              onStartChat={onStartChat}
+              onPinnedChange={setPinnedUserId}
+              matchingGames={radarGames}
+              pinnedGameId={pinnedGameId}
+              joiningGame={joiningGame}
+              onGameClick={onGameClick}
+              onPinnedGameChange={setPinnedGameId}
+              onJoinGame={joinMatchingGame}
+              onOpenGame={openMatchingGame}
+            />
+          ) : (
             <div className="relative isolate flex min-h-[330px] flex-col items-center justify-center overflow-hidden rounded-[28px] border border-dashed border-gray-300 bg-white px-8 text-center dark:border-white/15 dark:bg-white/[0.035]">
               <div
                 className="absolute left-1/2 top-1/2 -z-10 h-64 w-64 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(16,185,129,0.13),transparent_65%)]"
@@ -533,23 +684,6 @@ export function CourtLobbyPanel({
                 {t('playIntent.looking')}
               </div>
             </div>
-          ) : (
-            <CourtLobbyArena
-              members={arenaMembers}
-              overflow={overflow}
-              busy={actionsLocked}
-              hasProposal={hasProposal || canCreateFromLobby}
-              vacancy={displayedVacancy}
-              rosterLocked={rosterLocked}
-              sport={sport}
-              partySize={partySize}
-              viewerInLobby={!!intent}
-              pinnedUserId={pinnedUserId}
-              onAvatarClick={onPoolAvatarClick}
-              onOpenProfile={openPlayerCard}
-              onStartChat={onStartChat}
-              onPinnedChange={setPinnedUserId}
-            />
           )}
 
           {(proposal || canCreateFromLobby) && (

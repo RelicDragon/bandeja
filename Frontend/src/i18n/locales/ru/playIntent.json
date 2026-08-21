@@ -105,7 +105,7 @@
     "rosterFullHint": "Сначала уберите кого-то из матча",
     "tapToAdd": "Нажмите на игрока · свободно {{count}}",
     "youAreHere": "Вы здесь",
-    "refreshArena": "Перемешать позиции игроков",
+    "refreshArena": "Перемешать позиции",
     "friendFallback": "Ваш друг",
     "friendIntentTitle": "{{name}} хочет поиграть",
     "friendIntentHint": "Начните такой же поиск. В лобби появятся подходящие игроки.",
@@ -127,6 +127,17 @@
     "customEndRequired": "Для своего времени нужно указать время окончания",
     "selectAtLeastOneDay": "Выберите хотя бы один день (сегодня, завтра или послезавтра)",
     "maxLevelBelowMin": "Максимальный уровень должен быть не ниже минимального",
-    "anytimeCustomExclusive": "«В любое время» и «свои часы» выбираются отдельно"
+    "anytimeCustomExclusive": "«В любое время» и «свои часы» выбираются отдельно",
+    "matchingGameJoinTitle": "Можно войти сейчас",
+    "matchingGameAskTitle": "Сначала подтвердит организатор",
+    "matchingGameSlots": "{{open}} из {{max}} мест свободно",
+    "matchingGameJoinHint": "Можно сразу войти. После входа поиск закончится.",
+    "matchingGameAskHint": "Организатор сначала подтвердит. Поиск продолжится, пока вас не примут.",
+    "matchingGameSee": "К игре",
+    "matchingGameJoin": "Войти",
+    "matchingGameAskCta": "Попросить войти",
+    "matchingGameTimeClub": "{{time}} · {{club}}",
+    "matchingGameTimeOnly": "{{time}}",
+    "matchingGameNoClub": "Место ещё не выбрано"
   }
 }

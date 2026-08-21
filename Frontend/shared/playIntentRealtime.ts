@@ -18,7 +18,8 @@ export type PlayIntentInvalidationReason =
   | 'proposal-created'
   | 'proposal-updated'
   | 'proposal-expired'
-  | 'proposal-converted';
+  | 'proposal-converted'
+  | 'matching-games-changed';
 
 export type PlayIntentInvalidation = {
   version: 1;

@@ -97,7 +97,7 @@
     "rosterFullHint": "Remove someone from the match first",
     "tapToAdd": "Tap a player to add · {{count}} open",
     "youAreHere": "You are here",
-    "refreshArena": "Shuffle player positions",
+    "refreshArena": "Shuffle positions",
     "friendFallback": "Your friend",
     "friendIntentTitle": "{{name}} wants to play",
     "friendIntentHint": "Start the same search. You’ll see matching players in the court lobby.",
@@ -119,6 +119,17 @@
     "customEndRequired": "End time is required for a custom window",
     "selectAtLeastOneDay": "Select at least one day (today, tomorrow, or day after)",
     "maxLevelBelowMin": "Max level must be greater than or equal to min level",
-    "anytimeCustomExclusive": "Anytime and custom hours must be selected on their own"
+    "anytimeCustomExclusive": "Anytime and custom hours must be selected on their own",
+    "matchingGameJoinTitle": "Open to join now",
+    "matchingGameAskTitle": "Host confirms first",
+    "matchingGameSlots": "{{open}} of {{max}} spots open",
+    "matchingGameJoinHint": "Walk in now. Joining ends your search.",
+    "matchingGameAskHint": "The host confirms first. You stay looking until they accept.",
+    "matchingGameSee": "See game",
+    "matchingGameJoin": "Join",
+    "matchingGameAskCta": "Ask to join",
+    "matchingGameTimeClub": "{{time}} · {{club}}",
+    "matchingGameTimeOnly": "{{time}}",
+    "matchingGameNoClub": "Place to be set"
   }
 }

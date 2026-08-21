@@ -1585,13 +1585,13 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PI-01 | Want-to-play CTA | Open Find while logged in and not looking | Compact “I want to play” strip is the topmost Find content, above the hero ad; same slot as Looking |
 | PI-02 | Create intent | Tap CTA → pick Today + Anytime → Start looking | The same drawer animates from intent form to radar; idle CTA swaps to Looking status strip |
 | PI-03 | Stop looking | Tap × on status strip → Don’t want to play | Confirm overlay (Cancel / Don’t want to play) animates over strip without layout jump; confirm cancels intent; Cancel restores × |
-| PI-04 | Empty lobby | Looking with no other pool members → tap status strip | Honest empty copy; no fake avatars |
+| PI-04 | Empty lobby | Looking with no other pool members and no matching games → tap status strip | Honest empty copy; no fake avatars |
 | PI-05 | Proposal sheet | Open `/find?proposal=<id>` (or tap ready strip) → tap Not now → reopen lobby | Not now only dismisses the drawer; ready match remains and Create is still available when reopened |
 | PI-19 | Friend ring in lobby | Favorite is in intersecting pool | Avatar has golden favorite ring |
 | PI-20 | Full pool + affinity weight | Looking with mixed-compatible peers | Lobby shows all city peers; near=large+highlighted, mid=smaller, far=smallest/muted outer orbit (not hidden) |
 | PI-21 | Roster edit | Open a match-ready deep link with 5+ intersecting → remove one → tap a pool avatar | Removed returns to pool; tap adds into vacancy; court, roster, and count refresh together to full party; Create enabled |
 | PI-22 | Match roster progress UI | Open a lobby with a partial and then full selected roster | Progress bar is directly above the player carousel; selected/needed count is in the card’s top-right; title and hint change from Not enough players to Match is ready |
-| PI-23 | Direct match editor | Open a lobby with compatible free players → remove one from the roster → add one from the court → tap I’ll create the game inside the editor | Best compatible players start selected around the center court and in the editable roster; available unselected players use a yellow glow and plus only while a vacancy exists; a full roster shows no plus badges; empty slots remain visible below party size; there is no separate footer; Create Game always appears inside the editor and opens with every currently selected player invited |
+| PI-23 | Direct match editor | Open a lobby with compatible free players → remove one from the roster → add one from the court → tap I’ll create the game inside the editor | Best compatible players start selected around the center court and in the editable roster; available unselected players use a yellow glow and plus only while a vacancy exists; a full roster shows no plus badges; empty slots remain visible below party size; there is no separate footer; Create Game always appears inside the editor and opens with every currently selected player invited; matching game nodes stay visible (this is not a real proposal) |
 | PI-06 | Host handoff | Confirm as first confirmer | Navigates to create-game prefilled; invitees preselected |
 | PI-07 | Push deep link | Tap PLAY_INTENT_MATCH notification; also retry after a brief offline/network failure before the proposal loads | Opens Find with proposal sheet; transient failures keep `?proposal=` so a retry can recover the same sheet |
 | PI-08 | Game-fit deep link | Tap GAME_MATCHES_INTENT notification | Opens matching game details |
@@ -1627,6 +1627,18 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PI-43 | Discuss from lobby roster | Open a lobby with me + 1 selected player and tap Discuss in group; repeat with me + 2 or more | One other player opens (or creates) the 1:1 chat; two or more opens an existing group with exactly those people or creates `Discussion for <date> · <time> · <club>` and opens it; Create Game remains available |
 | PI-44 | Discuss after a player left | In a me + 2 lobby, one selected player stops looking, then tap Discuss in group | Toast says they are no longer in the lobby; roster refreshes; chat does not open |
 | PI-45 | Spectator avatar opens player card | Tap I want to play with others looking → tap a compatible court avatar | Player card sheet opens on top of the lobby; focus leaves the court avatar so the lobby is not aria-hidden while still focused |
+| PI-46 | Direct-join game node | Look with a public direct-join GAME that fully fits | Circular composite on the inner ring, solid emerald rim, slot pips; tap opens the game card with Join |
+| PI-47 | Queue-only game node | Same as PI-46 but `allowDirectJoin` is off and a PLAYING slot is free | Dashed cooler circle, clock badge; card CTA is Ask to join |
+| PI-48 | Tournament game node | Public tournament that fully fits a sport intent | Circle + thin red rim + swords; still on the inner ring |
+| PI-49 | BAR intent games | BAR intent near a public BAR that fits | BAR node only; sport games and tournaments absent |
+| PI-50 | Ineligible games hidden | Full / level miss / gender seat taken / private / no time / already in / owner | No game node |
+| PI-51 | Join consumes looking | Join from the card into a free direct-join slot | PLAYING; looking ends; lobby closes or that game is gone |
+| PI-52 | Ask keeps looking | Ask to join a queue-only game | IN_QUEUE toast; looking remains |
+| PI-53 | Hidden modes | Spectator lobby; lobby with a pending proposal | No game nodes |
+| PI-54 | Last slot taken | Another client takes the last PLAYING seat | Node disappears on pool invalidate |
+| PI-55 | Public game appears live | Keep the lobby open; another client creates a fully fitting public GAME or tournament | Node appears after matching-games invalidate, including tournaments |
+| PI-56 | Direct-join toggle | Host turns off allowDirectJoin on a visible radar game | Node switches to dashed / Ask to join without a reload |
+| PI-57 | Slot reopens | A full fitting game loses a PLAYING seat | Node reappears after matching-games invalidate |
 
 ---
 

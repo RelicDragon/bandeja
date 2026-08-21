@@ -25,11 +25,19 @@ import { removeUserFromGameFixedTeams } from './fixedTeamsCleanup';
 import { applyUserTeamToFixedTeamsIfReady } from './userTeamFixedTeams.service';
 import { syncParticipantShowInStoriesSideEffects } from '../story/participantShowInStories.sync';
 import { PlayIntentGameLifecycleService } from '../playIntent/playIntentGameLifecycle.service';
-import { publishCommittedPlayIntentStatusChanges } from '../playIntent/playIntentRealtime';
+import {
+  publishCommittedPlayIntentStatusChanges,
+  publishMatchingGamesChanged,
+  publishMatchingGamesChangedForGameId,
+} from '../playIntent/playIntentRealtime';
 import { schedulePendingInviteSlotOpenNotify } from '../invite/pendingInviteSlotOpen.service';
 import { inboxInviteGameSelect, mapInvitedParticipantToInboxInvite } from '../invite/pendingInviteShape';
 import { assertSlotOverlapConfirmed } from './gameSlotOverlap.service';
-import { invitePlayIntentLinkOutcome, shouldLinkPlayIntent } from '../playIntent/playIntentInviteLink';
+import { consumeLookingIntentOnPlayingJoin } from '../playIntent/playIntentPlayingJoin';
+import {
+  invitePlayIntentLinkOutcome,
+  shouldLinkPlayIntent,
+} from '../playIntent/playIntentInviteLink';
 
 const PLAYING_STATUS = 'PLAYING' as const;
 const IN_QUEUE_STATUS = 'IN_QUEUE' as const;
@@ -110,9 +118,20 @@ export class ParticipantService {
           );
         }
         await addOrUpdateParticipant(tx, gameId, userId);
-        return linkedInvite?.playIntentId ?? null;
+        if (!linkedInvite?.playIntentId) {
+          return (
+            (await consumeLookingIntentOnPlayingJoin(
+              tx,
+              userId,
+              gameInTx.cityId,
+              new Date(),
+            )) ?? null
+          );
+        }
+        return linkedInvite.playIntentId;
       });
       await publishCommittedPlayIntentStatusChanges([changedIntentId]);
+      publishMatchingGamesChanged(game);
 
       await performPostJoinOperations(gameId, userId, { excludeUserId: userId });
       return 'games.joinedSuccessfully';
@@ -138,7 +157,7 @@ export class ParticipantService {
       confirmOverlap,
     });
 
-    await prisma.$transaction(async (tx) => {
+    const changedIntentId = await prisma.$transaction(async (tx) => {
       const currentGame = await fetchGameWithPlayingParticipants(tx, gameId);
       const currentJoinResult = await validatePlayerCanJoinGame(currentGame, userId);
 
@@ -151,7 +170,15 @@ export class ParticipantService {
       }
 
       await addOrUpdateParticipant(tx, gameId, userId);
+      return consumeLookingIntentOnPlayingJoin(
+        tx,
+        userId,
+        currentGame.cityId,
+        new Date(),
+      );
     });
+    await publishCommittedPlayIntentStatusChanges([changedIntentId]);
+    publishMatchingGamesChanged(game);
 
     await performPostJoinOperations(gameId, userId, { excludeUserId: userId });
     return 'games.joinedSuccessfully';
@@ -210,6 +237,7 @@ export class ParticipantService {
         .then(({ PlayIntentMatchService }) => PlayIntentMatchService.onPublicGameSlotsOpened(gameId))
         .catch((err) => console.error('Play intent slot-open match failed:', err));
       schedulePendingInviteSlotOpenNotify(gameId, { openedGender: participant.user?.gender });
+      void publishMatchingGamesChangedForGameId(gameId);
       return 'games.leftSuccessfully';
     }
 
@@ -255,6 +283,7 @@ export class ParticipantService {
     await BetService.cancelBetsWithUserInCondition(gameId, userId).catch(err =>
       console.error('Failed to cancel bets with user in condition:', err)
     );
+    void publishMatchingGamesChangedForGameId(gameId);
     return 'games.leftChatSuccessfully';
   }
 
@@ -400,7 +429,9 @@ export class ParticipantService {
       });
     }
 
-    await prisma.$transaction(async (tx) => {
+    const changedIntentId = await prisma.$transaction(async (tx) => {
+      let consumedIntentId: string | null =
+        participant.status === INVITED_STATUS ? participant.playIntentId : null;
       if (participant.status === INVITED_STATUS && participant.playIntentId) {
         await PlayIntentGameLifecycleService.consume(
           tx,
@@ -421,12 +452,25 @@ export class ParticipantService {
       if (participant.status === PLAYING_STATUS && !isPlaying) {
         await removeUserFromGameFixedTeams(tx, gameId, userId);
       }
+      if (isPlaying && participant.status !== PLAYING_STATUS) {
+        const row = await tx.game.findUnique({
+          where: { id: gameId },
+          select: { cityId: true },
+        });
+        if (row) {
+          consumedIntentId =
+            (await consumeLookingIntentOnPlayingJoin(
+              tx,
+              userId,
+              row.cityId,
+              new Date(),
+            )) ?? consumedIntentId;
+        }
+      }
+      return consumedIntentId;
     });
-    await publishCommittedPlayIntentStatusChanges([
-      participant.status === INVITED_STATUS
-        ? participant.playIntentId
-        : null,
-    ]);
+    await publishCommittedPlayIntentStatusChanges([changedIntentId]);
+    void publishMatchingGamesChangedForGameId(gameId);
 
     if (isPlaying) {
       await InviteService.deleteInvitesForUserInGame(gameId, userId);
@@ -483,6 +527,7 @@ export class ParticipantService {
     );
     await InviteService.deleteInvitesForUserInGame(gameId, userId);
     await ParticipantMessageHelper.emitGameUpdate(gameId, userId);
+    publishMatchingGamesChanged(game);
     return 'games.addedToJoinQueue';
   }
 
@@ -556,6 +601,7 @@ export class ParticipantService {
 
     await InviteService.deleteInvitesForUserInGame(gameId, userId);
     await ParticipantMessageHelper.emitGameUpdate(gameId, userId);
+    publishMatchingGamesChanged(game);
     return 'games.addedToJoinQueue';
   }
 
@@ -574,7 +620,7 @@ export class ParticipantService {
 
     const queueInviteUserTeamId = participant.inviteUserTeamId ?? null;
 
-    await prisma.$transaction(async (tx: any) => {
+    const changedIntentId = await prisma.$transaction(async (tx: any) => {
       const currentGame = await fetchGameWithPlayingParticipants(tx, gameId);
 
       const currentParticipant = await tx.gameParticipant.findFirst({
@@ -616,7 +662,21 @@ export class ParticipantService {
           inviteExpiresAt: null,
         },
       });
+      const row = await tx.game.findUnique({
+        where: { id: gameId },
+        select: { cityId: true },
+      });
+      if (!row) return null;
+      return consumeLookingIntentOnPlayingJoin(
+        tx,
+        queueUserId,
+        row.cityId,
+        new Date(),
+      );
     });
+
+    await publishCommittedPlayIntentStatusChanges([changedIntentId]);
+    void publishMatchingGamesChangedForGameId(gameId);
 
     await ParticipantMessageHelper.sendJoinMessage(gameId, queueUserId);
     await InviteService.deleteInvitesForUserInGame(gameId, queueUserId);
@@ -684,6 +744,7 @@ export class ParticipantService {
 
     await ParticipantMessageHelper.emitGameUpdate(gameId, currentUserId);
     await ParticipantMessageHelper.emitGameUpdateToUser(gameId, queueUserId);
+    void publishMatchingGamesChangedForGameId(gameId);
     return 'games.joinRequestDeclined';
   }
 
@@ -725,6 +786,7 @@ export class ParticipantService {
     );
 
     await ParticipantMessageHelper.emitGameUpdate(gameId, userId);
+    void publishMatchingGamesChangedForGameId(gameId);
     return 'games.joinRequestCanceled';
   }
 
@@ -875,6 +937,7 @@ export class ParticipantService {
     if (linkedIntentId) {
       await publishCommittedPlayIntentStatusChanges([linkedIntentId]);
     }
+    void publishMatchingGamesChangedForGameId(gameId);
     const invite = mapInvitedParticipantToInboxInvite(participant);
     return { participant, invite, intentLinked };
   }

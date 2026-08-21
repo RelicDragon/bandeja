@@ -86,6 +86,10 @@ Only `PLAYING` counts toward `maxParticipants` / slot fill.
 
 **Follow graph:** UI says *follow/unfollow*; API persists user follows under `/favorites/users` (separate from favorite **clubs**).
 
+**Play intent:** a city/sport (or BAR) wish to play. Status `OPEN` → `MATCHED` (in a proposal or reserved by invite) → `CONSUMED` / `EXPIRED` / `CANCELLED`. Only `PLAYING` game joins consume a reachable looking intent. Queue (`IN_QUEUE`) does not.
+
+**Matching lobby game:** a public GAME / TOURNAMENT / BAR that fully fits the viewer’s looking intent and still has a PLAYING slot. Shown as circular nodes on the court lobby radar (`matchingGames[]`), not as pool people.
+
 ### 2.2 Architecture constraints (do not “simplify” without intent)
 
 These are surprising, load-bearing choices still true in code:
@@ -99,6 +103,7 @@ These are surprising, load-bearing choices still true in code:
 | **External booking** | Provider ports in `@shared/booking/` with adapters for **Booktime**, **Padeloo**, and **Klikteren** (`ClubIntegrationType`). Separate persistence per provider (`UserClub*Auth` + `Club*BusySnapshot`). Shared freshness constant `BOOKTIME_SNAPSHOT_FRESH_MS` (60s). |
 | **Open chat thread** | Live projection module (`threadLiveProjection`) — inbox can update while an open thread must still apply inbound + read-receipt paths without requiring refresh. Bootstrap invariants live in `Frontend/src/services/chat/threadOpen/types.ts`. |
 | **Play-intent notifications** | Intent/game matching is transactionally queued. Recipient delivery is persisted per event + user + channel, revalidated before send, retried with backoff, and deduplicated by that key. Do not replace it with post-commit fire-and-forget sends. |
+| **Play-intent radar games ≠ notify** | Court-lobby matching games are a separate `matchingGames[]` on the pool (not `PoolMember`). Sport radar includes public GAME + TOURNAMENT; BAR radar is BAR only. `GAME_MATCHES_INTENT` notify stays GAME/BAR only. Do not stuff games into player physics or tighten notify to `allowDirectJoin`. |
 | **Device refresh sessions are retry-safe** | Access JWTs stay short-lived. Updated clients rotate refresh credentials with a persistent request ID, so a lost-response retry receives the exact committed successor. Pre-update clients use a stable-token compatibility path until the minimum client version is raised. Never rotate without this replay protocol. |
 
 ### 2.3 Shared packages & modules
@@ -379,6 +384,20 @@ Filters persist in local storage across reloads.
 - Gender-restricted game badges (MEN/WOMEN/MIX)
 - Join blocked for wrong gender, out-of-range level, missing name
 - "Booked" badges: manual court booked (blue), external booking linked (green checkmark), partial link (blue)
+
+### 7.6 Play intents (court lobby)
+
+Logged-in Find and My show a **Want to play / Looking** strip (Home city). Compose a sport GAME intent or BAR intent; open the court lobby radar.
+
+- Radar people: other looking players in that city/sport/entity, affinity-weighted orbits.
+- Radar games: up to 4 fully eligible public events as circular face composites on the near orbit (not `PoolMember` physics). Sport intent: GAME + TOURNAMENT. BAR intent: BAR only. Skip TRAINING, leagues, private, full, no time, owner, already PLAYING / INVITED / IN_QUEUE.
+- Direct-join vs queue-only is chrome + CTA only (`Join` / `Ask to join`). A free PLAYING slot is required either way.
+- Hidden for spectators and while a real PENDING/ACCEPTED proposal is open. The direct match editor (no proposal) still shows games.
+- Join that lands PLAYING consumes looking and detaches from any proposal. Ask-to-join / overlap-cancel keep looking.
+- Live: `play-intent:invalidate` (`matching-games-changed` plus intent/proposal reasons). 2 min poll + focus/reconnect as backup.
+- Push game-fit (`GAME_MATCHES_INTENT`) and the Find list stay separate: notify is still GAME/BAR only (PI-40). A fitting tournament can appear on the radar without a game-fit push.
+
+Details: `docs/plans/lobby-radar-matching-games.md`. Invite Search \| Looking is a different surface: `docs/plans/player-invite-looking.md`.
 
 ### 7.5 City
 
@@ -960,7 +979,7 @@ Beyond the Home rail (see §5.1):
 
 ### 24.1 Push (APNs + FCM)
 
-Types: game chat, user chat, group chat, bug chat, invites, new game, game reminder, game results, game cancelled, game system, league round start, league game assigned, bets resolved, transactions, new market item, new bug, auction, match timer cap, user team events.
+Types: game chat, user chat, group chat, bug chat, invites, new game, game reminder, game results, game cancelled, game system, league round start, league game assigned, bets resolved, transactions, new market item, new bug, auction, match timer cap, user team events, play-intent match, game-fit (`GAME_MATCHES_INTENT`), friends looking.
 
 - Register/renew/remove device tokens
 - **Inline reply** to chat from lock screen / notification shade (incl. token-only path when app killed)
@@ -1103,9 +1122,9 @@ Runs at **:00 and :30** every hour (+ once on startup). Uses club city timezone 
 
 ## 32. Real-time events (Socket.IO)
 
-**Client subscriptions:** game rooms, bug rooms, DM rooms, group/channel rooms, marketplace auction rooms, presence.
+**Client subscriptions:** game rooms, bug rooms, DM rooms, group/channel rooms, marketplace auction rooms, presence, play-intent city pool.
 
-**Server events:** chat messages/updates/reactions/read receipts/deletes/polls/translations/transcriptions/pins, unread counts, game updates/results/cancel, match timer, live scoring, game photos, invites, user team events, bets, auction bids, stories, wallet updates, presence, typing indicators, sync handshake.
+**Server events:** chat messages/updates/reactions/read receipts/deletes/polls/translations/transcriptions/pins, unread counts, game updates/results/cancel, match timer, live scoring, game photos, invites, user team events, bets, auction bids, stories, wallet updates, presence, typing indicators, sync handshake, `play-intent:invalidate` (intent/proposal lifecycle and `matching-games-changed`).
 
 ---
 
@@ -1178,6 +1197,7 @@ Each sport in the registry defines:
 | Auth & identity | `/auth`, `/telegram`, `/me` (`/my-tab-data` aggregated home payload) |
 | App | `/app` (`/version-check`, `/location`) |
 | Users & social | `/users`, `/blocked-users`, `/favorites`, `/user-teams`, `/user-game-notes` |
+| Play intents | `/play-intents` (compose, pool + `matchingGames`, proposals, invite-pool, share) |
 | Geography & clubs | `/cities`, `/clubs` (incl. `/map`, reviews, per-club booktime/padeloo auth+snapshot), `/courts`, `/club-admin`, `/booktime`, `/padeloo` |
 | Games | `/games`, `/game-teams`, `/game-courts`, `/game-subscriptions`, `/invites`, `/faqs`, `/training`, `/trainers` |
 | Results & live | `/results` (incl. spectator token, live scoring, match timer, outcome explanation) |

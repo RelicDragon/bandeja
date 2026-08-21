@@ -42,6 +42,8 @@ import {
 import { derivePlayIntentPoolAvailability } from './playIntentPoolAvailability';
 import { rankPlayIntentPoolMembers } from './playIntentPoolRanking';
 import { playIntentDiscoveryDateKeys } from './playIntentDiscoveryWindow';
+import { listMatchingGamesForIntent } from './playIntentMatchingGames.service';
+import { publishMatchingGamesChanged } from './playIntentRealtime';
 
 const REMATCH_COOLDOWN_MS = 12 * 60 * 60 * 1000;
 const PROPOSAL_TTL_MS = 2 * 60 * 60 * 1000;
@@ -128,6 +130,7 @@ export class PlayIntentMatchService {
       },
     });
     if (!game) return;
+    publishMatchingGamesChanged(game);
     if (!game.isPublic || !game.clubId) return;
     if (game.entityType !== EntityType.GAME && game.entityType !== EntityType.BAR) return;
 
@@ -734,6 +737,20 @@ export class PlayIntentMatchService {
 
     const ranked = rankPlayIntentPoolMembers(members, LOBBY_CAP);
 
+    const matchingGames =
+      viewerIntent && viewerCriteria && !pendingProposal
+        ? await listMatchingGamesForIntent({
+            viewerId: userId,
+            cityId,
+            sport,
+            entityType,
+            timezone,
+            now,
+            criteria: viewerCriteria,
+            blockedIds,
+          })
+        : [];
+
     const { availableCount, clusterProgress } =
       derivePlayIntentPoolAvailability({
         members,
@@ -773,6 +790,7 @@ export class PlayIntentMatchService {
       members: ranked.members,
       total: ranked.total,
       overflow: ranked.overflow,
+      matchingGames,
       pendingProposal: pendingProposal
         ? {
             id: pendingProposal.id,
