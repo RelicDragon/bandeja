@@ -24,7 +24,7 @@ export function AnimatedLoadingSwap({
 
   return (
     <div className={className}>
-      <AnimatePresence mode="wait" initial={false}>
+      <AnimatePresence initial={false}>
         {isLoading ? (
           <motion.div
             key="loading"
