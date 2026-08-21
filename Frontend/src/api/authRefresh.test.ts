@@ -128,6 +128,29 @@ describe('handleAxios401MaybeRefresh', () => {
     expect(handleApiUnauthorizedIfNeededMock).toHaveBeenCalledWith({ forceSessionClear: true });
   });
 
+  it('force-clears the session when the refresh cookie is missing', async () => {
+    vi.useFakeTimers();
+    const axios = await import('axios');
+    vi.spyOn(axios.default, 'create').mockReturnValue({
+      interceptors: { request: { use: vi.fn() } },
+      post: vi.fn(() =>
+        Promise.reject({
+          isAxiosError: true,
+          response: { status: 400, data: { code: 'auth.refreshTokenRequired' } },
+        }),
+      ),
+    } as never);
+
+    const { handleAxios401MaybeRefresh } = await import('@/api/authRefresh');
+
+    await expect(handleAxios401MaybeRefresh(make401Error())).rejects.toMatchObject({
+      response: { status: 401 },
+    });
+
+    expect(clearRefreshBundleMock).toHaveBeenCalled();
+    expect(handleApiUnauthorizedIfNeededMock).toHaveBeenCalledWith({ forceSessionClear: true });
+  });
+
   it('does not attempt refresh after explicit logout', async () => {
     hasExplicitLogoutMarkerMock.mockReturnValue(true);
     const postMock = vi.fn();

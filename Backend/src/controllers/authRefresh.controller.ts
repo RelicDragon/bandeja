@@ -53,7 +53,7 @@ export const postRefresh = asyncHandler(async (req, res: Response) => {
     );
     const webCookie = shouldUseCookieForRefreshResponse(req);
     if (webCookie) {
-      setRefreshTokenCookie(res, out.refreshToken, req);
+      setRefreshTokenCookie(res, out.refreshToken);
     }
     const includeJsonRefresh = !webCookie || config.refreshWebHttpOnlyJsonBody;
     recordAndPersistAuthRefreshMetric({

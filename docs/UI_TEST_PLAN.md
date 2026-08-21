@@ -266,6 +266,7 @@ Frontend/e2e/
 | A-26i | Android invite after days | Let Android access JWT expire, then accept/decline from a notification | Scoped action succeeds without opening app; notification closes after definitive response |
 | A-26j | Idle several days then open | Leave app closed 2–7 days (access expired, refresh still valid) | Returns to last screen signed in; no login flash |
 | A-26k | Phone + Watch concurrent refresh | Open Watch and iPhone together after access expiry | Both stay signed in; they share the live successor refresh credential |
+| A-26l | Web refresh cookie missing | Leave a desktop tab open until access JWT expires with no `pp_rt` cookie (`POST /auth/refresh` body `{}` → 400 `auth.refreshTokenRequired`) | Reload sends the user to login; no 401 storm on games / play-intents |
 
 ---
 
