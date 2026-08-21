@@ -149,7 +149,7 @@ describe('PlayerListModal search focus', () => {
     container.remove();
   });
 
-  it('keeps the search field mounted while the first list load is in flight', async () => {
+  it('keeps the same search node focused across the initial list load', async () => {
     let resolveFetch: (value: ReturnType<typeof emptyFetchResult>) => void = () => {};
     fetchPlayers.mockImplementation(
       () =>
@@ -164,10 +164,24 @@ describe('PlayerListModal search focus', () => {
 
     const input = container.querySelector('[data-testid="player-invite-search"]');
     expect(input).toBeInstanceOf(HTMLInputElement);
+    const search = input as HTMLInputElement;
+    expect(container.querySelector('.animate-spin')).not.toBeNull();
+
+    await act(async () => {
+      search.focus();
+      const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
+      setter?.call(search, 'ab');
+      search.dispatchEvent(new Event('input', { bubbles: true }));
+    });
 
     await act(async () => {
       resolveFetch(emptyFetchResult());
     });
+
+    const after = container.querySelector('[data-testid="player-invite-search"]');
+    expect(after).toBe(search);
+    expect(document.activeElement).toBe(search);
+    expect(search.value).toBe('ab');
   });
 
   it('does not remount the search field after each keypress', async () => {
