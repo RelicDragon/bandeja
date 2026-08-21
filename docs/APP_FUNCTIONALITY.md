@@ -385,6 +385,10 @@ Filters persist in local storage across reloads.
 - Join blocked for wrong gender, out-of-range level, missing name
 - "Booked" badges: manual court booked (blue), external booking linked (green checkmark), partial link (blue)
 
+### 7.5 City
+
+Change city from the Find header → `switchCity` (Home). Games refetch for the new Home city. Browse lens (invite/chat) is a different control and does not drive Find.
+
 ### 7.6 Play intents (court lobby)
 
 Logged-in Find and My show a **Want to play / Looking** strip (Home city). Compose a sport GAME intent or BAR intent; open the court lobby radar.
@@ -398,10 +402,6 @@ Logged-in Find and My show a **Want to play / Looking** strip (Home city). Compo
 - Push game-fit (`GAME_MATCHES_INTENT`) and the Find list stay separate: notify is still GAME/BAR only (PI-40). A fitting tournament can appear on the radar without a game-fit push.
 
 Details: `docs/plans/lobby-radar-matching-games.md`. Invite Search \| Looking is a different surface: `docs/plans/player-invite-looking.md`.
-
-### 7.5 City
-
-Change city from the Find header → `switchCity` (Home). Games refetch for the new Home city. Browse lens (invite/chat) is a different control and does not drive Find.
 
 ---
 
