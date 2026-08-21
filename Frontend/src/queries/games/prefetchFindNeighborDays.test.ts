@@ -20,7 +20,6 @@ describe('prefetchFindNeighborDays', () => {
 
     expect(prefetchQuery).toHaveBeenCalledTimes(2);
     for (const [opts] of prefetchQuery.mock.calls) {
-      expect(opts.cancelRefetch).toBe(false);
       expect(opts.networkMode).toBe('always');
     }
 

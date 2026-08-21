@@ -28,9 +28,6 @@ export function prefetchFindNeighborDays(
         monthSeedRange,
       );
     }
-    void queryClient.prefetchQuery({
-      ...availableGamesQueryOptions(dayParams, true),
-      cancelRefetch: false,
-    });
+    void queryClient.prefetchQuery(availableGamesQueryOptions(dayParams, true));
   }
 }

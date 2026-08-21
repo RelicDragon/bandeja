@@ -278,23 +278,17 @@ export const FindTab = () => {
     prefetchKeyRef.current = key;
 
     if (findViewMode === 'calendar') {
-      void queryClient.prefetchQuery({
-        ...availableUpcomingGamesQueryOptions(upcomingQueryParams, true),
-        cancelRefetch: false,
-      });
+      void queryClient.prefetchQuery(availableUpcomingGamesQueryOptions(upcomingQueryParams, true));
     } else {
-      void queryClient.prefetchQuery({
-        ...availableGamesQueryOptions(calendarQueryParams, true),
-        cancelRefetch: false,
-      });
+      void queryClient.prefetchQuery(availableGamesQueryOptions(calendarQueryParams, true));
     }
 
     if (queryDateRange.startDate) {
       const anchor = resolveFindMonthRangeAnchor(findSelectedDay, queryDateRange.startDate);
       for (const delta of [-1, 1]) {
         const adj = computeFindMonthDateRange(addMonths(anchor, delta), displaySettings.weekStart);
-        void queryClient.prefetchQuery({
-          ...availableGamesQueryOptions(
+        void queryClient.prefetchQuery(
+          availableGamesQueryOptions(
             {
               ...calendarQueryParams,
               startDate: adj.startDate,
@@ -303,8 +297,7 @@ export const FindTab = () => {
             },
             true,
           ),
-          cancelRefetch: false,
-        });
+        );
       }
     }
 

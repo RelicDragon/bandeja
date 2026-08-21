@@ -399,15 +399,14 @@ describe('useAvailableGamesQuery', () => {
         indexOnly: false,
       }),
     );
-    const b = client.fetchQuery({
-      ...availableGamesQueryOptions({
+    const b = client.fetchQuery(
+      availableGamesQueryOptions({
         userId: 'user-1',
         startDate: d2,
         endDate: d2,
         indexOnly: false,
       }),
-      cancelRefetch: false,
-    });
+    );
     const [pageA, pageB] = (await Promise.all([a, b])) as AvailableGamesPage[];
     expect(pageA.games[0].id).toBe('g1');
     expect(pageB.games[0].id).toBe('g2');
