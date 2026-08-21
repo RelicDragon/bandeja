@@ -155,4 +155,36 @@ describe('seedDayScopedAvailableCache', () => {
     expect(page.games).toEqual([]);
     expect(page.meta.hasMore).toBe(false);
   });
+
+  it('does not seed indexOnly month days that still need a card fetch', () => {
+    const client = new QueryClient();
+    const monthPage: AvailableGamesPage = {
+      games: [],
+      meta: {
+        take: 0,
+        bound: 300,
+        hasMore: false,
+        nextCursor: null,
+        truncated: false,
+        dayIndex: [indexRow('g1', '2026-06-15T10:00:00.000Z')],
+        dayIndexTruncated: false,
+      },
+    };
+    const day = new Date('2026-06-15T00:00:00');
+    const seeded = seedDayScopedAvailableCache(
+      client,
+      monthPage,
+      { userId: 'u1', startDate: day, endDate: day, sport: 'PADEL', indexOnly: false },
+      null,
+      JUNE,
+    );
+    expect(seeded).toBe(false);
+    const key = availableGamesQueryOptions({
+      userId: 'u1',
+      startDate: day,
+      endDate: day,
+      sport: 'PADEL',
+    }).queryKey;
+    expect(client.getQueryData(key)).toBeUndefined();
+  });
 });

@@ -21,4 +21,8 @@ describe('deriveAvailableGamesLoading', () => {
   it('is false while background refetching after data (incl. empty indexOnly)', () => {
     expect(deriveAvailableGamesLoading(true, false, true, true)).toBe(false);
   });
+
+  it('is false when prefetched day data is already in cache', () => {
+    expect(deriveAvailableGamesLoading(true, false, false, true)).toBe(false);
+  });
 });

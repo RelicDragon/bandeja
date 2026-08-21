@@ -130,10 +130,11 @@ export const gamesApi = {
     enrich?: boolean;
     /** Calendar month: dayIndex only (no card rows). */
     indexOnly?: boolean;
-  }, options?: { timeoutMs?: number }) => {
+  }, options?: { timeoutMs?: number; signal?: AbortSignal }) => {
     const response = await api.get<ApiResponse<Game[]>>('/games/available', {
       params,
       ...(options?.timeoutMs != null ? { timeout: options.timeoutMs } : {}),
+      ...(options?.signal ? { signal: options.signal } : {}),
     });
     return response.data;
   },

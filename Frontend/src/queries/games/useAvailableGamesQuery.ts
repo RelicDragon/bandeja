@@ -108,10 +108,13 @@ export function availableGamesQueryOptions(
 
   return queryOptions({
     queryKey,
-    queryFn: async ({ client }): Promise<AvailableGamesPage> => {
+    queryFn: async ({ client, signal }): Promise<AvailableGamesPage> => {
       const response = await gamesApi.getAvailableGames(
         buildAvailableGamesApiParams(params),
-        dayScoped ? { timeoutMs: AVAILABLE_GAMES_DAY_TIMEOUT_MS } : undefined,
+        {
+          signal,
+          ...(dayScoped ? { timeoutMs: AVAILABLE_GAMES_DAY_TIMEOUT_MS } : {}),
+        },
       );
       const games = sortGamesByStartTimeAsc(response.data || []);
       const meta = parseMeta(response.meta);
@@ -121,6 +124,7 @@ export function availableGamesQueryOptions(
       return { games, meta };
     },
     staleTime: GAMES_LIST_STALE_TIME,
+    networkMode: 'always',
     placeholderData: dayScoped ? undefined : keepPreviousData,
     enabled: isEnabled,
     // Day taps: 4s timeout + one auto-retry → Retry CTA (month keeps defaults).

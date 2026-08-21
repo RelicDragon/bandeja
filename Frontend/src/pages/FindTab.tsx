@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { useQueryClient } from '@tanstack/react-query';
-import { addDays, addMonths, startOfDay, format, parse } from 'date-fns';
+import { addMonths, startOfDay, format, parse } from 'date-fns';
 import { AvailableGamesSection } from '@/components/home';
 import { AdSlot } from '@/components/sponsorSlots';
 import { PlayIntentHomeStrip } from '@/components/playIntent/PlayIntentFindBar';
@@ -42,6 +42,7 @@ import {
   monthSeedRangeFromParams,
   seedDayScopedAvailableCache,
 } from '@/queries/games/seedDayScopedAvailableCache';
+import { prefetchFindNeighborDays } from '@/queries/games/prefetchFindNeighborDays';
 import { sortGamesByStatusAndStartTime } from '@/queries/games/sortGames';
 import type { Game } from '@/types';
 import {
@@ -271,22 +272,29 @@ export const FindTab = () => {
       indexOnly: true,
     });
     const upcomingHash = buildAvailableUpcomingFilterHash(upcomingQueryParams);
-    const key = `${findViewMode}:${calendarHash}:${findSelectedDay ?? ''}:${calendarPage ? 'm1' : 'm0'}:${upcomingHash}`;
+    const selectedDayReady = selectedDayPage != null || selectedDayIsError;
+    const key = `${findViewMode}:${calendarHash}:${findSelectedDay ?? ''}:${calendarPage ? 'm1' : 'm0'}:${selectedDayReady ? 'd1' : 'd0'}:${upcomingHash}`;
     if (prefetchKeyRef.current === key) return;
     prefetchKeyRef.current = key;
 
     if (findViewMode === 'calendar') {
-      void queryClient.prefetchQuery(availableUpcomingGamesQueryOptions(upcomingQueryParams, true));
+      void queryClient.prefetchQuery({
+        ...availableUpcomingGamesQueryOptions(upcomingQueryParams, true),
+        cancelRefetch: false,
+      });
     } else {
-      void queryClient.prefetchQuery(availableGamesQueryOptions(calendarQueryParams, true));
+      void queryClient.prefetchQuery({
+        ...availableGamesQueryOptions(calendarQueryParams, true),
+        cancelRefetch: false,
+      });
     }
 
     if (queryDateRange.startDate) {
       const anchor = resolveFindMonthRangeAnchor(findSelectedDay, queryDateRange.startDate);
       for (const delta of [-1, 1]) {
         const adj = computeFindMonthDateRange(addMonths(anchor, delta), displaySettings.weekStart);
-        void queryClient.prefetchQuery(
-          availableGamesQueryOptions(
+        void queryClient.prefetchQuery({
+          ...availableGamesQueryOptions(
             {
               ...calendarQueryParams,
               startDate: adj.startDate,
@@ -295,25 +303,25 @@ export const FindTab = () => {
             },
             true,
           ),
-        );
+          cancelRefetch: false,
+        });
       }
     }
 
-    if (findViewMode === 'calendar' && selectedDayDate && monthSeedRange) {
-      for (const delta of [-1, 1]) {
-        const adjDay = addDays(selectedDayDate, delta);
-        const dayParams = dayScopedQueryParams(calendarQueryParams, adjDay);
-        if (calendarPage) {
-          seedDayScopedAvailableCache(
-            queryClient,
-            calendarPage,
-            dayParams,
-            cityTimezone,
-            monthSeedRange,
-          );
-        }
-        void queryClient.prefetchQuery(availableGamesQueryOptions(dayParams, true));
-      }
+    if (
+      findViewMode === 'calendar' &&
+      selectedDayDate &&
+      monthSeedRange &&
+      selectedDayReady
+    ) {
+      prefetchFindNeighborDays(
+        queryClient,
+        calendarQueryParams,
+        selectedDayDate,
+        calendarPage,
+        cityTimezone,
+        monthSeedRange,
+      );
     }
   }, [
     queryEnabled,
@@ -330,6 +338,8 @@ export const FindTab = () => {
     calendarPage,
     cityTimezone,
     monthSeedRange,
+    selectedDayPage,
+    selectedDayIsError,
   ]);
 
   const filteredAvailableGames = useMemo(() => {

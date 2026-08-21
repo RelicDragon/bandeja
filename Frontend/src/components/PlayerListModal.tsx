@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
-import { ChevronDown, ChevronUp, RotateCcw, Search, UserPlus } from 'lucide-react';
+import { ChevronDown, ChevronUp, RotateCcw, UserPlus } from 'lucide-react';
 import { useDebounce } from '@/components/CityMap/useDebounce';
 import { BasicUser, UserTeam, GameParticipant } from '@/types';
 import { invitesApi } from '@/api';
@@ -36,6 +36,7 @@ import {
 import { PlayerListItem } from '@/components/PlayerListItem';
 import { TeamListItem } from '@/components/playerInvite/TeamListItem';
 import { PlayerInviteVirtualList } from '@/components/playerInvite/PlayerInviteVirtualList';
+import { PlayerInviteSearchInput } from '@/components/playerInvite/PlayerInviteSearchInput';
 import { SegmentedSwitch, type SegmentedSwitchTab } from '@/components/SegmentedSwitch';
 import {
   InviteFriendToBandejaButton,
@@ -150,6 +151,9 @@ export const PlayerListModal = ({
   const listSegmentUsers = inviteListKind === 'all' || inviteListKind === 'users';
   const listSegmentTeams = inviteListKind === 'all' || inviteListKind === 'teams';
   const hasLoadedPlayersRef = useRef(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const tRef = useRef(t);
+  tRef.current = t;
 
   const showTeams = multiSelect && !inviteAsTrainerOnly;
   const showLooking =
@@ -304,7 +308,7 @@ export const PlayerListModal = ({
       // Keep list mounted for search refinements and clear — only first open shows spinner.
       const backgroundReload = hasLoadedPlayersRef.current;
       if (!backgroundReload) setLoading(true);
-      if (!inviteAsTrainerOnly) setCanInviteAsTrainer(false);
+      if (!backgroundReload && !inviteAsTrainerOnly) setCanInviteAsTrainer(false);
       const filterIds = filterPlayerIdsRef.current;
       try {
         const fetchedPlayers = await usePlayersStore.getState().fetchPlayers(
@@ -412,7 +416,7 @@ export const PlayerListModal = ({
         setReadyTeams([]);
         setInvitePickerOutcomes([]);
         setFetchedGameContext(null);
-        toast.error(t('errors.generic'));
+        toast.error(tRef.current('errors.generic'));
       } finally {
         if (!cancelled && !backgroundReload) setLoading(false);
       }
@@ -422,7 +426,7 @@ export const PlayerListModal = ({
     return () => {
       cancelled = true;
     };
-  }, [browseCity.cityId, gameId, gameSport, t, inviteAsTrainerOnly, filterPlayerIdsKey, serverSearchQuery, gameTiming?.timeIsSet, gameTiming?.startTime, gameTiming?.endTime]);
+  }, [browseCity.cityId, gameId, gameSport, inviteAsTrainerOnly, filterPlayerIdsKey, serverSearchQuery, gameTiming?.timeIsSet, gameTiming?.startTime, gameTiming?.endTime]);
 
   const effectiveGameContext: GameAvailabilityContext | null = gameTiming ?? fetchedGameContext;
   const ctxTimeIsSet = effectiveGameContext?.timeIsSet ?? false;
@@ -792,6 +796,10 @@ export const PlayerListModal = ({
       <DialogContent
         className="h-[min(92vh,720px)] flex flex-col overflow-hidden p-0 gap-0"
         showCloseButton={!cityPickerOpen}
+        onOpenAutoFocus={(event) => {
+          event.preventDefault();
+          searchInputRef.current?.focus();
+        }}
         onEscapeKeyDown={(event) => {
           if (cityPickerOpen) {
             event.preventDefault();
@@ -839,6 +847,15 @@ export const PlayerListModal = ({
             <BrowseCityControl className="flex justify-start" onOpen={() => setCityPickerOpen(true)} />
           ) : null}
         </DialogHeader>
+
+        {invitePane !== 'looking' ? (
+          <PlayerInviteSearchInput
+            ref={searchInputRef}
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder={t('common.search') || 'Search...'}
+          />
+        ) : null}
 
         {showLooking && invitePane === 'looking' ? (
           <>
@@ -898,19 +915,6 @@ export const PlayerListModal = ({
           </div>
         ) : (
           <>
-            <div className="flex-shrink-0 px-2.5 pt-3 pb-2">
-              <div className="relative">
-                <Search className="pointer-events-none absolute left-3.5 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-gray-400 dark:text-gray-500" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder={t('common.search') || 'Search...'}
-                  className="w-full rounded-2xl border border-gray-200/90 bg-gray-50/80 py-3 pl-11 pr-4 text-sm text-gray-900 shadow-inner shadow-gray-900/[0.03] placeholder:text-gray-400 transition focus:border-primary-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-gray-700 dark:bg-gray-800/60 dark:text-white dark:placeholder-gray-500 dark:focus:border-primary-500 dark:focus:bg-gray-900 dark:focus:ring-primary-400/20"
-                />
-              </div>
-            </div>
-
             <div className="relative z-10 flex min-h-0 flex-1 flex-col">
               {!listHasSourceRows ? (
                 nearbyGroups.length > 0 || serverSearchQuery ? (
