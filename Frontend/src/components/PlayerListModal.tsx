@@ -848,14 +848,14 @@ export const PlayerListModal = ({
           ) : null}
         </DialogHeader>
 
-        {invitePane !== 'looking' ? (
+        {invitePane === 'looking' ? null : (
           <PlayerInviteSearchInput
             ref={searchInputRef}
             value={searchQuery}
             onChange={setSearchQuery}
             placeholder={t('common.search') || 'Search...'}
           />
-        ) : null}
+        )}
 
         {showLooking && invitePane === 'looking' ? (
           <>

@@ -1,5 +1,5 @@
 import { Search } from 'lucide-react';
-import { forwardRef } from 'react';
+import { forwardRef, useLayoutEffect, useRef, type MutableRefObject, type Ref } from 'react';
 
 interface PlayerInviteSearchInputProps {
   value: string;
@@ -7,8 +7,34 @@ interface PlayerInviteSearchInputProps {
   placeholder: string;
 }
 
+function setRef<T>(ref: Ref<T> | undefined, value: T | null) {
+  if (typeof ref === 'function') ref(value);
+  else if (ref) (ref as MutableRefObject<T | null>).current = value;
+}
+
 export const PlayerInviteSearchInput = forwardRef<HTMLInputElement, PlayerInviteSearchInputProps>(
-  function PlayerInviteSearchInput({ value, onChange, placeholder }, ref) {
+  function PlayerInviteSearchInput({ value, onChange, placeholder }, forwardedRef) {
+    const inputRef = useRef<HTMLInputElement>(null);
+    const retainFocusRef = useRef(false);
+
+    useLayoutEffect(() => {
+      if (!retainFocusRef.current) return;
+      const el = inputRef.current;
+      if (!el) return;
+      let cancelled = false;
+      const restore = () => {
+        if (cancelled || !retainFocusRef.current) return;
+        if (document.activeElement !== el) el.focus({ preventScroll: true });
+      };
+      restore();
+      queueMicrotask(restore);
+      const frame = requestAnimationFrame(restore);
+      return () => {
+        cancelled = true;
+        cancelAnimationFrame(frame);
+      };
+    }, [value]);
+
     return (
       <div className="flex-shrink-0 px-2.5 pt-3 pb-2">
         <div className="relative">
@@ -17,11 +43,30 @@ export const PlayerInviteSearchInput = forwardRef<HTMLInputElement, PlayerInvite
             aria-hidden
           />
           <input
-            ref={ref}
+            ref={(node) => {
+              inputRef.current = node;
+              setRef(forwardedRef, node);
+            }}
             type="text"
             data-testid="player-invite-search"
             value={value}
-            onChange={(e) => onChange(e.target.value)}
+            onChange={(e) => {
+              retainFocusRef.current = true;
+              onChange(e.target.value);
+            }}
+            onFocus={() => {
+              retainFocusRef.current = true;
+            }}
+            onBlur={() => {
+              requestAnimationFrame(() => {
+                if (document.activeElement !== inputRef.current) {
+                  retainFocusRef.current = false;
+                }
+              });
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Tab') retainFocusRef.current = false;
+            }}
             placeholder={placeholder}
             autoComplete="off"
             autoCorrect="off"

@@ -51,6 +51,11 @@ body.keyboard-dialog-shift .cap-keyboard-aware-dialog {
     translate 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+body.keyboard-dialog-shift .dialog-content-animate:focus-within,
+body.keyboard-dialog-shift .cap-keyboard-aware-dialog:focus-within {
+  transition: none;
+}
+
 body.keyboard-visible .fullscreen-dialog-root .cap-fullscreen-dialog-body {
   padding-bottom: var(--keyboard-height, 0px);
 }
