@@ -6,12 +6,12 @@ Marks the last commit that was shipped to **Google Play** and **App Store**. Use
 
 | | |
 |---|---|
-| **Version** | 0.97.31 |
-| **Build** | 213 |
-| **Commit** | `42b42220dfc5b4dc11fcd9d21f440c0eec698a57` |
-| **Short** | `42b42220` |
+| **Version** | 0.97.33 |
+| **Build** | 215 |
+| **Commit** | `6e0afa88dd5cc5428cd89b3b4e8f8ab4ae0c4695` |
+| **Short** | `6e0afa88` |
 | **Date** | 2026-08-23 |
-| **Message** | Bump app release to 0.97.31 (build 213) |
+| **Message** | Implement store review management for app releases |
 
 Canonical commit hash: `docs/app-release-baseline.txt` (one line, full SHA).
 
@@ -24,8 +24,6 @@ Canonical commit hash: `docs/app-release-baseline.txt` (one line, full SHA).
 ```
 
 Dry-run planner: `APP_RELEASE_DRY_RUN=1 ./scripts/app-release.sh`. Resume after failure: `APP_RELEASE_RESUME=1 ./scripts/app-release.sh`.
-
-For a Google Play production release or an App Store upload submitted for review, the live planner checks whether that store already has a version in review before showing the final summary. Replacing/removing an existing review requires explicit confirmation. When both stores are blocked, you can approve both or narrow the release to Google/Android or Apple/iOS only. Declining leaves the saved session intact and prevents the new review upload. Apple removal is completed before the IPA upload; Google replaces only the exact approved release/artifact set when the new production edit is committed. The stores are checked again immediately before upload to catch state changes during a long build, and Apple is guarded again at final review submission. Dry runs do not contact either store.
 
 See this file for store API credentials, Android signing, and internal-track smoke test steps.
 
@@ -70,6 +68,7 @@ Generate **What's new** (LLM summarizes commits since baseline):
 
 | Version | Build | Commit | Date |
 |---------|-------|--------|------|
+| 0.97.33 | 215 | `6e0afa88` | 2026-08-23 |
 | 0.97.31 | 213 | `42b42220` | 2026-08-23 |
 | 0.97.30 | 212 | `ee0042e1` | 2026-08-21 |
 | 0.97.29 | 211 | `8163b227` | 2026-08-20 |
