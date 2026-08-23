@@ -1,9 +1,9 @@
 import { format } from 'date-fns';
 import { StatusPulseDot } from '@/components/StatusPulseDot';
 import { CalendarDayTypeDots } from '@/components/calendarDayTypeDots';
+import { MonthCalendarWeatherPill } from '@/components/MonthCalendarWeatherPill';
 import type { FindDisplayEntityType } from '@/utils/findFilter';
 import type { CalendarDayWeather } from '@/utils/calendarWeather.util';
-import { formatWeatherTemperature } from '@/utils/weather';
 
 export interface MonthCalendarDayCellProps {
   day: Date;
@@ -41,9 +41,7 @@ export function MonthCalendarDayCell({
   onSelect,
 }: MonthCalendarDayCellProps) {
   const markTypes = showTypePill ? typePillTypes : showParticipantPill ? participantTypes : [];
-  const weatherLabel = showWeatherPill && dayWeather
-    ? formatWeatherTemperature(dayWeather.point, { locale, compact: true })
-    : null;
+  const weather = showWeatherPill ? dayWeather : null;
 
   return (
     <button
@@ -52,7 +50,7 @@ export function MonthCalendarDayCell({
       aria-selected={isSelected}
       aria-current={isTodayDate ? 'date' : undefined}
       className={`
-        relative flex min-h-12 w-full flex-col items-center justify-center gap-1 rounded-md px-0.5 py-1
+        relative flex ${weather ? 'min-h-16' : 'min-h-12'} w-full flex-col items-center justify-center gap-1 rounded-md px-0.5 py-1
         transition-colors duration-300 ease-out
         ${isSelected
           ? 'z-10 bg-primary-500 font-semibold text-white'
@@ -76,8 +74,11 @@ export function MonthCalendarDayCell({
       <span className="text-[13px] font-semibold leading-none tabular-nums">
         {format(day, 'd')}
       </span>
-      {gameCount > 0 || weatherLabel || markTypes.length > 0 ? (
-        <span className="flex max-w-full items-center justify-center gap-0.5 leading-none">
+      {gameCount > 0 || markTypes.length > 0 ? (
+        <span
+          className="flex max-w-full items-center justify-center gap-0.5 leading-none"
+          data-calendar-day-entities
+        >
           {gameCount > 0 ? (
             <span
               className={`text-[9px] font-bold tabular-nums ${
@@ -91,21 +92,23 @@ export function MonthCalendarDayCell({
               {gameCount}
             </span>
           ) : null}
-          {weatherLabel ? (
-            <span
-              className={`text-[9px] font-semibold tabular-nums ${
-                isSelected ? 'text-white/90' : 'text-sky-700 dark:text-sky-300'
-              }`}
-            >
-              {weatherLabel}
-            </span>
-          ) : null}
           {markTypes.length > 0 ? (
             <CalendarDayTypeDots
               types={markTypes}
               inverted={isSelected}
             />
           ) : null}
+        </span>
+      ) : null}
+      {weather ? (
+        <span className="flex min-h-4 items-center justify-center leading-none" data-calendar-day-weather>
+          <MonthCalendarWeatherPill
+            weather={weather}
+            locale={locale}
+            muted={!isCurrentMonth}
+            selected={isSelected}
+            placement="flow"
+          />
         </span>
       ) : null}
     </button>

@@ -3,7 +3,7 @@ import prisma from '../../config/database';
 import { BOOKING_ERROR_KEYS } from '@bandeja/shared/booking/errorKeys';
 import { ApiError } from '../../utils/ApiError';
 import { assertBooktimeIntegrationConfig } from '../../shared/clubIntegration';
-import { decryptToken, encryptToken } from '../../utils/tokenEncryption';
+import { encryptToken, tryDecryptToken } from '../../utils/tokenEncryption';
 
 const SCOUT_INVALID_SKIP_MS = 24 * 60 * 60 * 1000;
 
@@ -131,9 +131,12 @@ export async function getBooktimeSessionTokens(
     },
   });
   if (!row) return null;
+  const accessToken = tryDecryptToken(row.accessToken);
+  const refreshToken = tryDecryptToken(row.refreshToken);
+  if (!accessToken || !refreshToken) return null;
   return {
-    accessToken: decryptToken(row.accessToken),
-    refreshToken: decryptToken(row.refreshToken),
+    accessToken,
+    refreshToken,
     externalUserId: row.externalUserId,
     expiresAt: row.expiresAt,
   };
@@ -167,7 +170,7 @@ export async function getDecryptedAccessTokenForAuth(authId: string): Promise<st
     select: { accessToken: true },
   });
   if (!row) return null;
-  return decryptToken(row.accessToken);
+  return tryDecryptToken(row.accessToken);
 }
 
 export async function markScoutInvalid(authId: string): Promise<void> {
@@ -194,9 +197,12 @@ export async function pickScoutAccessToken(
   const candidates = (await listScoutEligibleAuths(clubId, excludeUserId)).filter(
     (row) => !exclude.has(row.id)
   );
-  for (let i = 0; i < Math.min(maxAttempts, candidates.length); i += 1) {
-    const candidate = candidates[i];
-    const accessToken = decryptToken(candidate.accessToken);
+  let inspected = 0;
+  for (const candidate of candidates) {
+    if (inspected >= maxAttempts) break;
+    inspected += 1;
+    const accessToken = tryDecryptToken(candidate.accessToken);
+    if (!accessToken) continue;
     return { authId: candidate.id, accessToken };
   }
   return null;

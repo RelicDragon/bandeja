@@ -73,6 +73,7 @@ export const MonthCalendarWeatherPill = memo(function MonthCalendarWeatherPill({
         className="shrink-0"
       />
       <span
+        data-calendar-weather-temperature
         className={`${isMd ? 'text-[10px]' : 'text-[9px]'} font-semibold tabular-nums leading-none`}
         style={{ color: muted ? undefined : temperatureColor.textColor }}
       >

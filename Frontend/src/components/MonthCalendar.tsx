@@ -550,7 +550,7 @@ export const MonthCalendar = ({
             dayWeather,
           });
           const showParticipantPill =
-            noEntityFilter && isParticipant && participantTypes.length > 0 && !showTypePill && !showWeatherPill;
+            noEntityFilter && isParticipant && participantTypes.length > 0 && !showTypePill;
 
           return (
             <MonthCalendarDayCell

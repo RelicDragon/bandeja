@@ -11,9 +11,7 @@ export function resolveCalendarDayPillVisibility(params: {
 }): CalendarDayPillVisibility {
   const hasTypePill = params.hasGames && params.typePillCount > 0;
   const showWeatherPill = params.weatherMode && params.dayWeather != null;
-  const showTypePill = hasTypePill && !showWeatherPill && (
-    !params.weatherMode || params.dayWeather == null
-  );
+  const showTypePill = hasTypePill;
 
   return { showWeatherPill, showTypePill };
 }

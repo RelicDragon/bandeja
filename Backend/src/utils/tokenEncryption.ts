@@ -4,6 +4,14 @@ const ALGO = 'aes-256-gcm';
 const IV_LEN = 12;
 const TAG_LEN = 16;
 
+export class TokenDecryptError extends Error {
+  constructor(cause?: unknown) {
+    super('Unable to decrypt stored token');
+    this.name = 'TokenDecryptError';
+    if (cause instanceof Error) this.cause = cause;
+  }
+}
+
 function encryptionKey(): Buffer {
   const raw = process.env.BOOKTIME_TOKEN_ENCRYPTION_KEY ?? process.env.JWT_SECRET;
   if (!raw) {
@@ -21,11 +29,29 @@ export function encryptToken(plain: string): string {
 }
 
 export function decryptToken(encoded: string): string {
-  const buf = Buffer.from(encoded, 'base64url');
-  const iv = buf.subarray(0, IV_LEN);
-  const tag = buf.subarray(IV_LEN, IV_LEN + TAG_LEN);
-  const data = buf.subarray(IV_LEN + TAG_LEN);
-  const decipher = createDecipheriv(ALGO, encryptionKey(), iv);
-  decipher.setAuthTag(tag);
-  return Buffer.concat([decipher.update(data), decipher.final()]).toString('utf8');
+  const key = encryptionKey();
+  try {
+    const buf = Buffer.from(encoded, 'base64url');
+    if (buf.length <= IV_LEN + TAG_LEN) {
+      throw new TokenDecryptError();
+    }
+    const iv = buf.subarray(0, IV_LEN);
+    const tag = buf.subarray(IV_LEN, IV_LEN + TAG_LEN);
+    const data = buf.subarray(IV_LEN + TAG_LEN);
+    const decipher = createDecipheriv(ALGO, key, iv);
+    decipher.setAuthTag(tag);
+    return Buffer.concat([decipher.update(data), decipher.final()]).toString('utf8');
+  } catch (err) {
+    if (err instanceof TokenDecryptError) throw err;
+    throw new TokenDecryptError(err);
+  }
+}
+
+export function tryDecryptToken(encoded: string): string | null {
+  try {
+    return decryptToken(encoded);
+  } catch (err) {
+    if (err instanceof TokenDecryptError) return null;
+    throw err;
+  }
 }
