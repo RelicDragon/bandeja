@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Calendar, List, Users, Swords, Dumbbell, Trophy, Beer } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, List } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, isToday, addMonths, subMonths, getMonth, getYear, startOfDay } from 'date-fns';
 import { enGB, ru, es, sr, cs } from 'date-fns/locale';
 import { calendarDayKey, selectedDayInMonth } from '@/utils/calendarSelectedDayFilter';
@@ -10,7 +10,6 @@ import { Game } from '@/types';
 import { useAuthStore } from '@/store/authStore';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { formatShortWeekday, formatCompactMonthHeader } from '@/utils/dateFormat';
-import { StatusPulseDot } from '@/components/StatusPulseDot';
 import {
   DEFAULT_AVAILABLE_GAME_PANEL_FILTERS,
   type AvailableGamePanelFilterState,
@@ -29,9 +28,10 @@ import {
   type FindDayIndexRow,
 } from '@/utils/findDayIndexCounts';
 import { useMonthCalendarWeather } from '@/hooks/useMonthCalendarWeather';
-import { MonthCalendarWeatherPill } from '@/components/MonthCalendarWeatherPill';
+import { MonthCalendarDayCell } from '@/components/MonthCalendarDayCell';
 import { MonthCalendarWeatherToggle } from '@/components/MonthCalendarWeatherToggle';
 import { resolveCalendarDayPillVisibility } from '@/utils/calendarDayPillVisibility';
+import { visibleCalendarDayMarkTypes } from '@/utils/visibleCalendarDayMarkTypes';
 import { resolveViewerCityTimezone } from '@/utils/cityTimezone';
 import {
   readCalendarWeatherMode,
@@ -41,23 +41,7 @@ import {
 
 type DisplayEntityType = FindDisplayEntityType;
 
-const ENTITY_ICONS: Record<DisplayEntityType, typeof Users> = {
-  GAME: Users,
-  TOURNAMENT: Swords,
-  TRAINING: Dumbbell,
-  LEAGUE: Trophy,
-  BAR: Beer,
-};
-
 const PILL_ENTITY_ORDER: DisplayEntityType[] = ['GAME', 'TOURNAMENT', 'TRAINING', 'LEAGUE', 'BAR'];
-
-const ENTITY_ICON_CLASS: Record<DisplayEntityType, string> = {
-  GAME: 'text-gray-900 dark:text-gray-200',
-  TOURNAMENT: 'text-red-500 dark:text-red-400',
-  TRAINING: 'text-green-500 dark:text-green-400',
-  LEAGUE: 'text-blue-500 dark:text-blue-400',
-  BAR: 'text-yellow-500 dark:text-yellow-400',
-};
 
 export interface MonthCalendarProps {
   selectedDate: Date | null;
@@ -341,8 +325,8 @@ export const MonthCalendar = ({
       transition={headerTransition}
       ref={calendarRef}
       data-calendar="true"
-      className={`mx-auto max-w-md rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800 transition-[padding,margin,box-shadow] duration-300 ease-in-out motion-reduce:transition-none ${
-        isCompactUpcomings ? 'mb-4 px-2 py-0 shadow-sm' : 'mb-4 p-4 shadow-lg'
+      className={`mx-auto w-full max-w-md rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800 transition-[padding,margin,box-shadow] duration-300 ease-in-out motion-reduce:transition-none ${
+        isCompactUpcomings ? 'mb-4 px-1 py-0 shadow-sm' : 'mb-4 px-1 py-2 shadow-lg'
       }`}
     >
       <motion.div
@@ -518,11 +502,11 @@ export const MonthCalendar = ({
             transition={headerTransition}
             className={isCompactUpcomings ? 'overflow-hidden' : 'overflow-visible'}
           >
-          <div className="grid grid-cols-7 gap-1 px-1.5">
+          <div className="grid grid-cols-7 gap-0.5">
             {weekDays.map((day, index) => (
               <div
                 key={index}
-                className="py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400"
+                className="py-1 text-center text-[11px] font-medium text-gray-500 dark:text-gray-400"
               >
                 {day}
               </div>
@@ -538,7 +522,7 @@ export const MonthCalendar = ({
                 exit={{ x: slideDirection * -56 }}
                 transition={{ duration: 0.24, ease: 'easeOut' }}
                 onAnimationComplete={() => setIsSliding(false)}
-                className="grid grid-cols-7 gap-1 px-1.5 pt-1.5 pb-3"
+                className="grid grid-cols-7 gap-0.5 pt-0.5 pb-1"
               >
         {calendarDays.map((day) => {
           const isCurrentMonth = isSameMonth(day, displayedMonth);
@@ -550,8 +534,14 @@ export const MonthCalendar = ({
           const unreadCount = dayData.unreadCount;
           const hasGames = gameCount > 0;
           const isParticipant = dayData.isUserParticipant;
-          const participantTypes = PILL_ENTITY_ORDER.filter(t => dayData.participantEntityTypes.has(t));
-          const typePillTypes = PILL_ENTITY_ORDER.filter(t => dayData.entityTypes.has(t));
+          const participantTypes = visibleCalendarDayMarkTypes(
+            PILL_ENTITY_ORDER.filter(t => dayData.participantEntityTypes.has(t)),
+            leaguesFilter,
+          );
+          const typePillTypes = visibleCalendarDayMarkTypes(
+            PILL_ENTITY_ORDER.filter(t => dayData.entityTypes.has(t)),
+            leaguesFilter,
+          );
           const dayWeather = weatherByDay.get(dateStr) ?? null;
           const { showWeatherPill, showTypePill } = resolveCalendarDayPillVisibility({
             weatherMode,
@@ -559,105 +549,28 @@ export const MonthCalendar = ({
             typePillCount: typePillTypes.length,
             dayWeather,
           });
-          const showParticipantPill = noEntityFilter && isParticipant && participantTypes.length > 0;
+          const showParticipantPill =
+            noEntityFilter && isParticipant && participantTypes.length > 0 && !showTypePill && !showWeatherPill;
 
           return (
-            <button
+            <MonthCalendarDayCell
               key={dateStr}
-              type="button"
-              onClick={() => handleDateClick(day)}
-              aria-selected={isSelected}
-              aria-current={isTodayDate ? 'date' : undefined}
-              className={`
-                relative w-full p-2 rounded-lg text-sm flex flex-col items-center justify-center gap-0.5
-                transition-colors duration-300 ease-out
-                ${isSelected
-                  ? 'bg-primary-500 text-white font-semibold scale-[1.1] z-10'
-                  : !isCurrentMonth
-                  ? `text-gray-400 dark:text-gray-500 ${hasGames ? 'border border-gray-300/50 dark:border-gray-600/50 hover:bg-gray-100 dark:hover:bg-gray-700' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}`
-                  : isTodayDate
-                  ? `bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 font-semibold border ${
-                      hasGames
-                        ? 'border-green-500 dark:border-green-400'
-                        : 'border-primary-300 dark:border-primary-700'
-                    }`
-                  : hasGames
-                  ? 'bg-green-200 dark:bg-green-800/40 text-gray-700 dark:text-gray-300 border border-green-400 dark:border-green-500 hover:bg-green-300 dark:hover:bg-green-800/60'
-                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                }
-              `}
-              style={{
-                aspectRatio: '1 / 1',
-                minHeight: 0,
-              }}
-            >
-              <span>{format(day, 'd')}</span>
-              {unreadCount > 0 && (
-                <StatusPulseDot
-                  className={`absolute -top-0 left-1/2 z-10 -translate-x-1/2 ${!isCurrentMonth ? 'opacity-60' : ''}`}
-                />
-              )}
-              {gameCount > 0 && (
-                <motion.span
-                  initial={{ opacity: 0, scale: 0.6 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ type: 'spring', stiffness: 400, damping: 22 }}
-                  className={`
-                  absolute -top-1 -right-1 flex items-center justify-center
-                  min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-semibold
-                  ${!isCurrentMonth
-                    ? 'bg-gray-400 dark:bg-gray-600 text-gray-300 dark:text-gray-400'
-                    : isSelected
-                    ? 'bg-white text-primary-500 border border-primary-500'
-                    : 'bg-green-500 dark:bg-green-600 text-white'
-                  }
-                `}>
-                  {gameCount}
-                </motion.span>
-              )}
-              {showWeatherPill && dayWeather ? (
-                <MonthCalendarWeatherPill
-                  weather={dayWeather}
-                  locale={displaySettings.locale}
-                  muted={!isCurrentMonth}
-                  selected={isSelected}
-                />
-              ) : null}
-              {showTypePill && (
-                <span className={`
-                  absolute -bottom-1.5 left-1/2 -translate-x-1/2
-                  inline-flex items-center justify-center
-                  gap-0.5 px-1 py-0.5 rounded-full w-fit
-                  border shadow-md
-                  bg-amber-50 dark:bg-gray-800 border-amber-200/60 dark:border-gray-600
-                `}>
-                  {typePillTypes.map((t) => {
-                    const Icon = ENTITY_ICONS[t];
-                    const iconClass = ENTITY_ICON_CLASS[t];
-                    return Icon ? <Icon key={t} size={10} className={`shrink-0 ${iconClass}`} /> : null;
-                  })}
-                </span>
-              )}
-              {showParticipantPill && !showTypePill && !showWeatherPill && (
-                <span className={`
-                  absolute -bottom-1.5 left-1/2 -translate-x-1/2
-                  inline-flex items-center justify-center
-                  gap-0.5 px-0.5 py-0.5 rounded-full w-fit
-                  border shadow-sm
-                  ${!isCurrentMonth
-                    ? 'bg-gray-400/80 dark:bg-gray-600/80 border-gray-500/50 dark:border-gray-500/50'
-                    : isSelected
-                    ? 'bg-white/95 text-primary-600 border-primary-200 dark:border-primary-700'
-                    : 'bg-yellow-500/95 dark:bg-yellow-600/95 text-white border-yellow-600/50 dark:border-yellow-500/50'
-                  }
-                `}>
-                  {participantTypes.map((t) => {
-                    const Icon = ENTITY_ICONS[t];
-                    return Icon ? <Icon key={t} size={10} className="shrink-0" /> : null;
-                  })}
-                </span>
-              )}
-            </button>
+              day={day}
+              isCurrentMonth={isCurrentMonth}
+              isSelected={isSelected}
+              isTodayDate={isTodayDate}
+              gameCount={gameCount}
+              unreadCount={unreadCount}
+              hasGames={hasGames}
+              showWeatherPill={showWeatherPill}
+              showTypePill={showTypePill}
+              showParticipantPill={showParticipantPill}
+              typePillTypes={typePillTypes}
+              participantTypes={participantTypes}
+              dayWeather={dayWeather}
+              locale={displaySettings.locale}
+              onSelect={handleDateClick}
+            />
           );
         })}
               </motion.div>

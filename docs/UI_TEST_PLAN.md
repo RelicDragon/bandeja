@@ -284,6 +284,7 @@ Frontend/e2e/
 | H-41 | Selected date heading | Pick date on My tab calendar | Long localized date (e.g. "Thursday, 11 June") with Today/Tomorrow badge shown below calendar; updates on re-select, localized per language |
 | H-63 | Empty selected date hint | User with upcoming games on other days → pick a day with no games | Localized "No games on this date" below selected date heading; Upcoming games section still shown |
 | H-60 | Calendar weekday headers | My tab or Find calendar with app language set to Russian, then English | Column headers use locale short weekday (ru: 2-letter e.g. пн/вт; en: 3-letter e.g. Mon/Tue), not truncated full names |
+| H-80 | Calendar day cell readability | Open My or Find calendar on a ~320px phone viewport with busy days | Day-of-month is fully visible and centered; game count is a small numeral under the date (not covering it); entity types show as color dots; selected day highlights without overlapping neighbors |
 | H-40 | Overflow month day select | Navigate month → tap gray adjacent-month cell with game badge | Selected day highlights; that day's games in list (not upcoming sections) |
 | H-03 | Empty my games | User with no games | Empty state |
 | H-04 | Stories rail visible | Logged in home | Stories bubbles render |
@@ -422,6 +423,7 @@ Frontend/e2e/
 | ID | Test | Steps | Expected |
 |----|------|-------|----------|
 | F-01 | Calendar view default | Open Find | Calendar + games |
+| F-81 | Find calendar day cell readability | Open Find calendar on a ~320px phone viewport with busy days | Same as H-80: date fully visible; count and type dots sit under the date without covering it |
 | F-02 | List view | Tap List in Find calendar header | Calendar collapses; weather toggle hidden; upcoming games from today grouped by date |
 | F-03 | List → calendar | Tap Calendar in collapsed header | Calendar expands; day-filtered games |
 | F-45 | Find calendar weather toggle | Find calendar expanded → tap cloud/sun icon | Weather pills on forecast days replace entity-type pills; filters and day selection unchanged |
@@ -440,6 +442,7 @@ Frontend/e2e/
 | F-08 | Training filter | Toggle training | Training events |
 | F-09 | Tournament filter | Toggle tournaments | Tournaments only |
 | F-10 | Leagues filter | Toggle leagues | League seasons |
+| F-83 | Entity chip type dots | Open Find filters (Game / Tournament / Training / League chips) | Each chip shows a color dot matching calendar day marks: game gray, tournament red, training green, league blue |
 | F-11 | User-created filter | Toggle user games | Filters creator |
 | F-12 | Combined filters | Multiple toggles | AND behavior correct |
 
@@ -507,6 +510,7 @@ Frontend/e2e/
 | F-67 | Find empty day settles empty | Select a day with no games (dayIndex count 0); or force day-scoped `[]` with `hasMore=false` | List shows empty for that day (month no longer supplies card fallback). If day-scoped `hasMore=true` and empty, keep day authority + Load more |
 | F-68 | Find city-TZ day bucket | Device TZ ≠ city TZ; open Find for a city day that has early-morning UTC games | Day badges and selected-day list include those games (bucketed/filtered in city TZ, same as API bounds) |
 | F-69 | Find calendar type pills from dayIndex | Busy city month: badges/pills driven by dayIndex only | Late-day cells still show entity-type pills (GAME/TRAINING/…), not badge-only empty cells |
+| F-82 | League mark only with league filter | Find calendar on a busy month with league games; league chip off, then on | Off: no league (blue) type mark on day cells; On: league marks appear on days that have leagues |
 | F-72 | Find calendar unread + my-game pills (indexOnly) | User is participant / has unread on a game; open Find calendar | Day cell still shows unread dot and participant-type pill (from dayIndex + unread store), not only when month cards were loaded |
 | F-53 | Find warm view / month + day prefetch | Open calendar, switch to list (and back); flip to prev/next month; tap adjacent day after the selected day has painted; change a filter or receive a socket refresh while the visible month is paging | ±1 selected days warm immediately after visible month/day settle. Inactive view + adjacent months wait for idle and never start while the visible list/month is fetching or the visible month index is continuing. Prefetches must not cancel or delay the selected-day card fetch |
 | F-73 | Find seed empty day from dayIndex | Month indexOnly settled; select in-range day with dayIndex count 0 | Day list settles empty via seed (no sticky false-empty for out-of-range D±1); never seeds from keepPreviousData month placeholder |

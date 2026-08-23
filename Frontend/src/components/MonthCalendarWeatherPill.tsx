@@ -9,6 +9,8 @@ interface MonthCalendarWeatherPillProps {
   locale: string;
   muted?: boolean;
   selected?: boolean;
+  placement?: 'hang' | 'inset' | 'flow';
+  size?: 'sm' | 'md';
 }
 
 function areMonthCalendarWeatherPillPropsEqual(
@@ -18,6 +20,8 @@ function areMonthCalendarWeatherPillPropsEqual(
   return previous.locale === next.locale
     && previous.muted === next.muted
     && previous.selected === next.selected
+    && previous.placement === next.placement
+    && previous.size === next.size
     && previous.weather.point.time === next.weather.point.time
     && previous.weather.point.temperatureC === next.weather.point.temperatureC
     && previous.weather.point.conditionKey === next.weather.point.conditionKey
@@ -30,20 +34,28 @@ export const MonthCalendarWeatherPill = memo(function MonthCalendarWeatherPill({
   locale,
   muted = false,
   selected = false,
+  placement = 'hang',
+  size = 'sm',
 }: MonthCalendarWeatherPillProps) {
   const { t } = useTranslation();
   const { point, stale } = weather;
   const tempLabel = formatWeatherTemperature(point, { locale, compact: true });
   const temperatureColor = getWeatherTemperatureColor(point);
   const conditionLabel = getWeatherConditionLabel(t, point.conditionKey);
+  const isMd = size === 'md';
 
   return (
     <span
       className={`
-        absolute -bottom-1.5 left-1/2 -translate-x-1/2
         inline-flex items-center justify-center
-        gap-0.5 px-1 py-0.5 rounded-full w-fit
+        rounded-full w-fit
         border shadow-md pointer-events-none
+        ${placement === 'flow'
+          ? 'relative'
+          : placement === 'inset'
+          ? 'absolute bottom-1 left-1/2 -translate-x-1/2'
+          : 'absolute -bottom-1.5 left-1/2 -translate-x-1/2'}
+        ${isMd ? 'gap-0.5 px-1.5 py-0.5' : 'gap-0.5 px-1 py-0.5'}
         ${muted
           ? 'bg-gray-400/80 dark:bg-gray-600/80 border-gray-500/50 dark:border-gray-500/50'
           : selected
@@ -57,11 +69,11 @@ export const MonthCalendarWeatherPill = memo(function MonthCalendarWeatherPill({
       <WeatherIcon
         conditionKey={point.conditionKey}
         isDay={point.isDay}
-        size={10}
+        size={isMd ? 13 : 10}
         className="shrink-0"
       />
       <span
-        className="text-[9px] font-semibold tabular-nums leading-none"
+        className={`${isMd ? 'text-[10px]' : 'text-[9px]'} font-semibold tabular-nums leading-none`}
         style={{ color: muted ? undefined : temperatureColor.textColor }}
       >
         {tempLabel}
