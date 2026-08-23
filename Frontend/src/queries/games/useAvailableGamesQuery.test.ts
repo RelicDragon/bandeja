@@ -255,6 +255,83 @@ describe('useAvailableGamesQuery', () => {
     );
   });
 
+  it('returns the first truncated month page without awaiting its continuation', async () => {
+    getAvailableGames
+      .mockResolvedValueOnce({
+        data: [],
+        meta: {
+          take: 0,
+          bound: 300,
+          hasMore: false,
+          nextCursor: null,
+          truncated: false,
+          dayIndex: [{
+            id: 'idx-1',
+            startTime: '2026-06-01T10:00:00.000Z',
+            dateKey: '2026-06-01',
+          }],
+          dayIndexTruncated: true,
+          dayIndexNextCursor: 'index-cur-1',
+        },
+      })
+      .mockImplementationOnce(() => new Promise(() => {}));
+
+    const client = createTestClient();
+    const fetch = client.fetchQuery(
+      availableGamesQueryOptions({
+        userId: 'user-1',
+        startDate: new Date('2026-06-01'),
+        endDate: new Date('2026-06-30'),
+        indexOnly: true,
+      }),
+    );
+    const outcome = await Promise.race([
+      fetch.then((page) => ({ kind: 'page' as const, page })),
+      new Promise<{ kind: 'timeout' }>((resolve) => {
+        setTimeout(() => resolve({ kind: 'timeout' }), 25);
+      }),
+    ]);
+
+    expect(outcome.kind).toBe('page');
+    if (outcome.kind === 'page') {
+      const page = outcome.page as AvailableGamesPage;
+      expect(page.meta.dayIndex?.map((row) => row.id)).toEqual(['idx-1']);
+      expect(page.meta.dayIndexTruncated).toBe(true);
+      expect(page.meta.dayIndexNextCursor).toBe('index-cur-1');
+    }
+    expect(getAvailableGames).toHaveBeenCalledOnce();
+  });
+
+  it('keeps the legacy partial index when an old server has no continuation cursor', async () => {
+    getAvailableGames.mockResolvedValueOnce({
+      data: [],
+      meta: {
+        take: 0,
+        bound: 300,
+        hasMore: false,
+        nextCursor: null,
+        truncated: false,
+        dayIndex: [{ id: 'legacy-idx', startTime: '2026-06-01T10:00:00.000Z' }],
+        dayIndexTruncated: true,
+      },
+    });
+
+    const client = createTestClient();
+    const page = (await client.fetchQuery(
+      availableGamesQueryOptions({
+        userId: 'user-1',
+        startDate: new Date('2026-06-01'),
+        endDate: new Date('2026-06-30'),
+        indexOnly: true,
+      }),
+    )) as AvailableGamesPage;
+
+    expect(getAvailableGames).toHaveBeenCalledOnce();
+    expect(page.meta.dayIndex?.map((row) => row.id)).toEqual(['legacy-idx']);
+    expect(page.meta.dayIndexTruncated).toBe(true);
+    expect(page.meta.dayIndexNextCursor).toBeNull();
+  });
+
   it('loadMore appends games and preserves dayIndex from the first page', async () => {
     const client = createTestClient();
     getAvailableGames

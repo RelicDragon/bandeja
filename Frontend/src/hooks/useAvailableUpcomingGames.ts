@@ -50,6 +50,8 @@ export const useAvailableUpcomingGames = (
     availableGames,
     meta,
     loading,
+    /** Includes placeholder-backed refreshes that `loading` intentionally hides. */
+    isFetching,
     fetchData,
     refetch: fetchData,
     loadMore,

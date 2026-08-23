@@ -36,6 +36,7 @@ import { runWithOverlapConfirm } from '@/utils/gameSlotOverlapConfirm';
 import { recoverGenderUnsetJoin, runWithGenderForEvent } from '@/utils/genderJoinGate';
 import { FindHeaderActions } from '@/components/headerContent/FindHeaderActions';
 import { availableGamesQueryOptions } from '@/queries/games/useAvailableGamesQuery';
+import type { AvailableGamesPage } from '@/queries/games/availableGamesPage';
 import { availableUpcomingGamesQueryOptions } from '@/queries/games/useAvailableUpcomingGamesQuery';
 import {
   dayScopedQueryParams,
@@ -43,6 +44,10 @@ import {
   seedDayScopedAvailableCache,
 } from '@/queries/games/seedDayScopedAvailableCache';
 import { prefetchFindNeighborDays } from '@/queries/games/prefetchFindNeighborDays';
+import {
+  findPrefetchIsReady,
+  scheduleFindPrefetch,
+} from '@/queries/games/scheduleFindPrefetch';
 import { sortGamesByStatusAndStartTime } from '@/queries/games/sortGames';
 import type { Game } from '@/types';
 import {
@@ -50,6 +55,7 @@ import {
   buildAvailableUpcomingFilterHash,
 } from '@/queries/queryKeys';
 import { deriveFindCalendarGamesLoading } from '@/utils/deriveFindCalendarGamesLoading';
+import { isAvailableGamesDayIndexContinuationRunning } from '@/queries/games/availableGamesDayIndexContinuation';
 
 export const FindTab = () => {
   const { t } = useTranslation();
@@ -176,6 +182,7 @@ export const FindTab = () => {
     meta: calendarMeta,
     page: calendarPage,
     loading: loadingCalendarGames,
+    isFetching: fetchingCalendarGames,
     isPlaceholderData: calendarIsPlaceholder,
     refetch: refetchCalendarGames,
     loadMore: loadMoreCalendarGames,
@@ -252,6 +259,7 @@ export const FindTab = () => {
     availableGames: upcomingGames,
     meta: upcomingMeta,
     loading: loadingUpcomingGames,
+    isFetching: fetchingUpcomingGames,
     refetch: refetchUpcomingGames,
     loadMore: loadMoreUpcomingGames,
   } = useAvailableUpcomingGames(
@@ -263,59 +271,119 @@ export const FindTab = () => {
     upcomingStructural,
   );
 
-  // Prefetch inactive view + adjacent days (cards) + adjacent months (indexOnly).
+  // Neighbor cards warm immediately after the visible month/day have settled.
+  const neighborPrefetchKeyRef = useRef<string>('');
+  useEffect(() => {
+    const selectedDayReady = selectedDayPage != null || selectedDayIsError;
+    if (
+      !queryEnabled ||
+      !user?.id ||
+      findViewMode !== 'calendar' ||
+      !calendarPage ||
+      calendarIsPlaceholder ||
+      !selectedDayReady ||
+      !selectedDayDate ||
+      !monthSeedRange
+    ) {
+      return;
+    }
+
+    const calendarHash = buildAvailableGamesFilterHash({
+      ...calendarQueryParams,
+      indexOnly: true,
+    });
+    const key = `${calendarHash}:${findSelectedDay ?? ''}`;
+    if (neighborPrefetchKeyRef.current === key) return;
+    neighborPrefetchKeyRef.current = key;
+
+    prefetchFindNeighborDays(
+      queryClient,
+      calendarQueryParams,
+      selectedDayDate,
+      calendarPage,
+      cityTimezone,
+      monthSeedRange,
+    );
+  }, [
+    queryEnabled,
+    user?.id,
+    findViewMode,
+    calendarPage,
+    calendarIsPlaceholder,
+    selectedDayPage,
+    selectedDayIsError,
+    selectedDayDate,
+    monthSeedRange,
+    calendarQueryParams,
+    findSelectedDay,
+    queryClient,
+    cityTimezone,
+  ]);
+
+  // Less urgent inactive-view and adjacent-month requests wait for browser idle.
+  const calendarIndexContinuing = isAvailableGamesDayIndexContinuationRunning(calendarPage);
   const prefetchKeyRef = useRef<string>('');
   useEffect(() => {
     if (!queryEnabled || !user?.id) return;
+    const selectedDayReady = selectedDayPage != null || selectedDayIsError;
+    const visibleDataReady = findPrefetchIsReady({
+      viewMode: findViewMode,
+      calendarPageReady: calendarPage != null,
+      calendarIsPlaceholder,
+      calendarFetching: fetchingCalendarGames,
+      calendarContinuing: calendarIndexContinuing,
+      selectedDayReady,
+      upcomingLoading: loadingUpcomingGames,
+      upcomingFetching: fetchingUpcomingGames,
+    });
+    if (!visibleDataReady) return;
+
     const calendarHash = buildAvailableGamesFilterHash({
       ...calendarQueryParams,
       indexOnly: true,
     });
     const upcomingHash = buildAvailableUpcomingFilterHash(upcomingQueryParams);
-    const selectedDayReady = selectedDayPage != null || selectedDayIsError;
     const key = `${findViewMode}:${calendarHash}:${findSelectedDay ?? ''}:${calendarPage ? 'm1' : 'm0'}:${selectedDayReady ? 'd1' : 'd0'}:${upcomingHash}`;
     if (prefetchKeyRef.current === key) return;
-    prefetchKeyRef.current = key;
 
-    if (findViewMode === 'calendar') {
-      void queryClient.prefetchQuery(availableUpcomingGamesQueryOptions(upcomingQueryParams, true));
-    } else {
-      void queryClient.prefetchQuery(availableGamesQueryOptions(calendarQueryParams, true));
-    }
-
-    if (queryDateRange.startDate) {
-      const anchor = resolveFindMonthRangeAnchor(findSelectedDay, queryDateRange.startDate);
-      for (const delta of [-1, 1]) {
-        const adj = computeFindMonthDateRange(addMonths(anchor, delta), displaySettings.weekStart);
-        void queryClient.prefetchQuery(
-          availableGamesQueryOptions(
-            {
-              ...calendarQueryParams,
-              startDate: adj.startDate,
-              endDate: adj.endDate,
-              indexOnly: true,
-            },
-            true,
-          ),
-        );
+    return scheduleFindPrefetch(() => {
+      if (prefetchKeyRef.current === key) return;
+      if (findViewMode === 'calendar') {
+        const visibleMonthOptions = availableGamesQueryOptions(calendarQueryParams, true);
+        if (
+          queryClient.isFetching({ queryKey: visibleMonthOptions.queryKey, exact: true }) > 0 ||
+          isAvailableGamesDayIndexContinuationRunning(
+            queryClient.getQueryData<AvailableGamesPage>(visibleMonthOptions.queryKey),
+          )
+        ) {
+          return;
+        }
       }
-    }
+      prefetchKeyRef.current = key;
+      if (findViewMode === 'calendar') {
+        void queryClient.prefetchQuery(availableUpcomingGamesQueryOptions(upcomingQueryParams, true));
+      } else {
+        void queryClient.prefetchQuery(availableGamesQueryOptions(calendarQueryParams, true));
+      }
 
-    if (
-      findViewMode === 'calendar' &&
-      selectedDayDate &&
-      monthSeedRange &&
-      selectedDayReady
-    ) {
-      prefetchFindNeighborDays(
-        queryClient,
-        calendarQueryParams,
-        selectedDayDate,
-        calendarPage,
-        cityTimezone,
-        monthSeedRange,
-      );
-    }
+      if (queryDateRange.startDate) {
+        const anchor = resolveFindMonthRangeAnchor(findSelectedDay, queryDateRange.startDate);
+        for (const delta of [-1, 1]) {
+          const adj = computeFindMonthDateRange(addMonths(anchor, delta), displaySettings.weekStart);
+          void queryClient.prefetchQuery(
+            availableGamesQueryOptions(
+              {
+                ...calendarQueryParams,
+                startDate: adj.startDate,
+                endDate: adj.endDate,
+                indexOnly: true,
+              },
+              true,
+            ),
+          );
+        }
+      }
+    });
   }, [
     queryEnabled,
     user?.id,
@@ -323,16 +391,17 @@ export const FindTab = () => {
     queryClient,
     calendarQueryParams,
     upcomingQueryParams,
-    findSportApiParam,
     queryDateRange.startDate,
     findSelectedDay,
-    selectedDayDate,
     displaySettings.weekStart,
     calendarPage,
-    cityTimezone,
-    monthSeedRange,
+    calendarIsPlaceholder,
+    fetchingCalendarGames,
+    calendarIndexContinuing,
     selectedDayPage,
     selectedDayIsError,
+    loadingUpcomingGames,
+    fetchingUpcomingGames,
   ]);
 
   const filteredAvailableGames = useMemo(() => {

@@ -81,6 +81,26 @@ describe('resolveDaySeedFromMonthPage', () => {
     expect(resolveDaySeedFromMonthPage(page, '2026-06-15', null, JUNE)).toBeNull();
   });
 
+  it('uses the server day key before deciding that a selected day is empty', () => {
+    const page: AvailableGamesPage = {
+      games: [],
+      meta: {
+        take: 0,
+        bound: 300,
+        hasMore: false,
+        nextCursor: null,
+        truncated: false,
+        dayIndex: [{
+          ...indexRow('g1', '2026-06-14T23:30:00.000Z'),
+          dateKey: '2026-06-15',
+        }],
+        dayIndexTruncated: false,
+      },
+    };
+
+    expect(resolveDaySeedFromMonthPage(page, '2026-06-15', 'UTC', JUNE)).toBeNull();
+  });
+
   it('seeds cards when month cards cover all dayIndex ids for the day', () => {
     const g1 = sampleGame('g1', '2026-06-15T10:00:00.000Z');
     const page: AvailableGamesPage = {

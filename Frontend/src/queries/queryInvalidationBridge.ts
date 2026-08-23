@@ -11,9 +11,11 @@ import {
 } from './games/patchGameInGamesCaches';
 import { removeInviteFromMyGamesCache } from './games/removeInviteFromMyGamesCache';
 import { upsertInviteInMyGamesCache } from './games/upsertInviteInMyGamesCache';
+import { cancelFindQueryRevalidations } from './games/findQueryRevalidation';
 
 let initialized = false;
 let unsubscribe: (() => void) | null = null;
+let activeQueryClient: QueryClient | null = null;
 
 function invalidateMyGamesOnly(queryClient: QueryClient, userId: string | undefined): void {
   if (!userId) return;
@@ -67,6 +69,7 @@ function onInviteDeleted(
 export function setupQueryInvalidationBridge(queryClient: QueryClient): void {
   if (initialized) return;
   initialized = true;
+  activeQueryClient = queryClient;
 
   unsubscribe = useSocketEventsStore.subscribe((state, prevState) => {
     if (!useNetworkStore.getState().isOnline) return;
@@ -85,6 +88,8 @@ export function setupQueryInvalidationBridge(queryClient: QueryClient): void {
 
 export function teardownQueryInvalidationBridge(): void {
   unsubscribe?.();
+  if (activeQueryClient) cancelFindQueryRevalidations(activeQueryClient);
   unsubscribe = null;
+  activeQueryClient = null;
   initialized = false;
 }

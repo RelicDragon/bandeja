@@ -13,6 +13,7 @@ import {
   decodeAvailableGamesCursor,
   encodeAvailableGamesCursor,
   resolveAvailablePageAfterFilter,
+  type AvailableGamesCursor,
   type AvailableGamesPageMeta,
 } from './availableGamesBounds';
 import { calendarDateBounds, startOfCalendarDate, endOfCalendarDate, InvalidCalendarDateError } from './calendarDateBounds';
@@ -24,13 +25,16 @@ import {
 } from './availableGamesStructuralWhere';
 import { formatInTimeZone } from 'date-fns-tz';
 import { ApiError } from '../../utils/ApiError';
+import { formatCalendarDayKey } from './calendarDayKey';
 
-/** Light startTimes index for calendar badges — no fat card include. */
-export const AVAILABLE_GAMES_DAY_INDEX_CAP = 5000;
+/** Light calendar-index page — large enough for one request in normal cities. */
+export const AVAILABLE_GAMES_DAY_INDEX_PAGE_SIZE = 5000;
 
 export type AvailableDayIndexRow = {
   id: string;
   startTime: string;
+  /** City-local yyyy-MM-dd, projected once on the server for cheap client bucketing. */
+  dateKey: string;
   sport: string;
   entityType: string;
   minLevel: number | null;
@@ -52,6 +56,8 @@ export type AvailableGamesListResult = {
   meta: AvailableGamesPageMeta & {
     dayIndex?: AvailableDayIndexRow[];
     dayIndexTruncated?: boolean;
+    /** Cursor for the next raw day-index page; absent on legacy servers. */
+    dayIndexNextCursor?: string | null;
   };
 };
 
@@ -77,6 +83,44 @@ export type AvailableGamesFetchOptions = {
 };
 
 type SlimIdRow = { id: string; startTime: Date };
+
+export function resolveCalendarDayIndexPage<
+  T extends { id: string; startTime: Date },
+>(rows: T[]): { rows: T[]; hasMore: boolean; nextCursor: string | null } {
+  const hasMore = rows.length > AVAILABLE_GAMES_DAY_INDEX_PAGE_SIZE;
+  const page = hasMore ? rows.slice(0, AVAILABLE_GAMES_DAY_INDEX_PAGE_SIZE) : rows;
+  const last = page[page.length - 1];
+  return {
+    rows: page,
+    hasMore,
+    nextCursor:
+      hasMore && last
+        ? encodeAvailableGamesCursor({
+            startTime: last.startTime.toISOString(),
+            id: last.id,
+          })
+        : null,
+  };
+}
+
+function whereAfterAvailableCursor(
+  where: Prisma.GameWhereInput,
+  cursor: AvailableGamesCursor | null,
+  order: 'asc' | 'desc',
+): Prisma.GameWhereInput {
+  const result: Prisma.GameWhereInput = { ...where };
+  const cursorWhere = availableGamesCursorWhere(cursor, order);
+  if (!cursorWhere) return result;
+
+  const and = Array.isArray(result.AND)
+    ? [...result.AND]
+    : result.AND
+      ? [result.AND]
+      : [];
+  and.push(cursorWhere as Prisma.GameWhereInput);
+  result.AND = and;
+  return result;
+}
 
 function buildVisibilityOr(
   userId: string,
@@ -115,6 +159,7 @@ async function buildAvailableWhere(
 ): Promise<{
   where: Prisma.GameWhereInput;
   structuralForMode: AvailableStructuralFilters;
+  cityTimezone: string;
 }> {
   const {
     userId,
@@ -198,7 +243,7 @@ async function buildAvailableWhere(
   };
   appendStructuralFiltersToWhere(where, structuralForMode);
 
-  return { where, structuralForMode };
+  return { where, structuralForMode, cityTimezone };
 }
 
 /**
@@ -208,9 +253,20 @@ async function fetchCalendarDayIndex(
   where: Prisma.GameWhereInput,
   availableSlots: boolean | undefined,
   viewerUserId: string,
-): Promise<{ dayIndex: AvailableDayIndexRow[]; dayIndexTruncated: boolean }> {
-  const rows = await prisma.game.findMany({
+  cityTimezone: string,
+  cursor?: string,
+): Promise<{
+  dayIndex: AvailableDayIndexRow[];
+  dayIndexTruncated: boolean;
+  dayIndexNextCursor: string | null;
+}> {
+  const pageWhere = whereAfterAvailableCursor(
     where,
+    decodeAvailableGamesCursor(cursor),
+    'asc',
+  );
+  const rows = await prisma.game.findMany({
+    where: pageWhere,
     select: {
       id: true,
       startTime: true,
@@ -228,12 +284,11 @@ async function fetchCalendarDayIndex(
       court: { select: { clubId: true } },
     },
     orderBy: [{ startTime: 'asc' }, { id: 'asc' }],
-    take: AVAILABLE_GAMES_DAY_INDEX_CAP + 1,
+    take: AVAILABLE_GAMES_DAY_INDEX_PAGE_SIZE + 1,
   });
 
-  let list = rows;
-  const dayIndexTruncated = list.length > AVAILABLE_GAMES_DAY_INDEX_CAP;
-  if (dayIndexTruncated) list = list.slice(0, AVAILABLE_GAMES_DAY_INDEX_CAP);
+  const rawPage = resolveCalendarDayIndexPage(rows);
+  let list = rawPage.rows;
 
   if (availableSlots && list.length > 0) {
     list = await filterOrderedRowsByAvailableSlots(list);
@@ -264,6 +319,7 @@ async function fetchCalendarDayIndex(
   const dayIndex: AvailableDayIndexRow[] = list.map((g) => ({
     id: g.id,
     startTime: g.startTime.toISOString(),
+    dateKey: formatCalendarDayKey(g.startTime, cityTimezone),
     sport: g.sport,
     entityType: g.entityType,
     minLevel: g.minLevel,
@@ -279,7 +335,11 @@ async function fetchCalendarDayIndex(
     viewerIsParticipant: viewerGames.has(g.id),
   }));
 
-  return { dayIndex, dayIndexTruncated };
+  return {
+    dayIndex,
+    dayIndexTruncated: rawPage.hasMore,
+    dayIndexNextCursor: rawPage.nextCursor,
+  };
 }
 
 /** Id-only scan for pagination / open-slots overscan (no card joins). */
@@ -392,7 +452,7 @@ export async function fetchAvailableGamesPage(
 ): Promise<AvailableGamesListResult> {
   const { userId, enrich = false, kind, indexOnly = false } = options;
 
-  const { where, structuralForMode } = await buildAvailableWhere(options);
+  const { where, structuralForMode, cityTimezone } = await buildAvailableWhere(options);
 
   // Month badge path: dayIndex only — selected-day cards come from a separate fetch.
   if (indexOnly && kind === 'calendar') {
@@ -400,6 +460,8 @@ export async function fetchAvailableGamesPage(
       where,
       structuralForMode.availableSlots,
       userId,
+      cityTimezone,
+      options.cursor,
     );
     return {
       games: [],
@@ -411,6 +473,7 @@ export async function fetchAvailableGamesPage(
         nextCursor: null,
         dayIndex: dayIndexResult.dayIndex,
         dayIndexTruncated: dayIndexResult.dayIndexTruncated,
+        dayIndexNextCursor: dayIndexResult.dayIndexNextCursor,
       },
     };
   }
@@ -429,17 +492,7 @@ export async function fetchAvailableGamesPage(
   const order: 'asc' | 'desc' = options.order ?? 'asc';
 
   const cursor = decodeAvailableGamesCursor(options.cursor);
-  const pageWhere: Prisma.GameWhereInput = { ...where };
-  const cursorWhere = availableGamesCursorWhere(cursor, order);
-  if (cursorWhere) {
-    const and = Array.isArray(pageWhere.AND)
-      ? [...pageWhere.AND]
-      : pageWhere.AND
-        ? [pageWhere.AND]
-        : [];
-    and.push(cursorWhere as Prisma.GameWhereInput);
-    pageWhere.AND = and;
-  }
+  const pageWhere = whereAfterAvailableCursor(where, cursor, order);
 
   // Month badges come from indexOnly. Day-scoped card fetches skip dayIndex.
   const wantDayIndex = kind === 'calendar' && !cursor && !singleDay;
@@ -451,7 +504,7 @@ export async function fetchAvailableGamesPage(
   const [idPage, dayIndexResult] = await Promise.all([
     fetchSlimIdPage(pageWhere, order, fetchTake),
     wantDayIndex
-      ? fetchCalendarDayIndex(where, structuralForMode.availableSlots, userId)
+      ? fetchCalendarDayIndex(where, structuralForMode.availableSlots, userId, cityTimezone)
       : Promise.resolve(null),
   ]);
 
@@ -499,6 +552,7 @@ export async function fetchAvailableGamesPage(
   if (dayIndexResult) {
     meta.dayIndex = dayIndexResult.dayIndex;
     meta.dayIndexTruncated = dayIndexResult.dayIndexTruncated;
+    meta.dayIndexNextCursor = dayIndexResult.dayIndexNextCursor;
   }
 
   let games = gamesRaw.map((g) => project(g));

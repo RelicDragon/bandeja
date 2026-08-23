@@ -17,6 +17,18 @@ export function getGamesFromAvailableCache(data: unknown): Game[] | null {
   return null;
 }
 
+export function availableGamesCacheContainsGameId(
+  data: unknown,
+  gameId: string,
+): boolean {
+  const games = getGamesFromAvailableCache(data);
+  if (games?.some((game) => game.id === gameId)) return true;
+  return Boolean(
+    isAvailableGamesPage(data) &&
+    data.meta.dayIndex?.some((row) => row.id === gameId),
+  );
+}
+
 export function withPatchedAvailableGames(
   data: unknown,
   nextGames: Game[],

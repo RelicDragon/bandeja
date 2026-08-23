@@ -46,7 +46,7 @@ export function resolveDaySeedFromMonthPage(
   if (monthPage.meta.dayIndexTruncated) return null;
 
   const indexIdsForDay = dayIndex
-    .filter((row) => gameDayKey(row.startTime, cityTimezone) === dayKey)
+    .filter((row) => (row.dateKey ?? gameDayKey(row.startTime, cityTimezone)) === dayKey)
     .map((row) => row.id);
 
   if (indexIdsForDay.length === 0) return [];

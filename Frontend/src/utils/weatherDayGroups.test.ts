@@ -30,6 +30,21 @@ function point(
 }
 
 describe('weatherDayGroups', () => {
+  it('projects city date keys across DST and degrades invalid zones to UTC', () => {
+    expect(dateKeyInTimezone(
+      new Date('2026-03-28T22:30:00.000Z'),
+      'Europe/Belgrade',
+    )).toBe('2026-03-28');
+    expect(dateKeyInTimezone(
+      new Date('2026-03-28T23:30:00.000Z'),
+      'Europe/Belgrade',
+    )).toBe('2026-03-29');
+    expect(dateKeyInTimezone(
+      new Date('2026-07-01T22:30:00.000Z'),
+      'Invalid/Timezone',
+    )).toBe('2026-07-01');
+  });
+
   it('groups hourly points by city timezone day key', () => {
     const groups = groupWeatherHoursByDay(
       [

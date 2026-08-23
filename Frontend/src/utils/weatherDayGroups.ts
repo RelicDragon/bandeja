@@ -4,6 +4,21 @@ import { shouldUseFahrenheit } from '@/utils/weather';
 
 const HOUR_MS = 60 * 60 * 1000;
 const MAX_TIMEZONE_OFFSET_HOURS = 14;
+const dateKeyFormatters = new Map<string, Intl.DateTimeFormat>();
+
+function dateKeyFormatter(timezone: string): Intl.DateTimeFormat {
+  const key = timezone || 'UTC';
+  const cached = dateKeyFormatters.get(key);
+  if (cached) return cached;
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: key,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  });
+  dateKeyFormatters.set(key, formatter);
+  return formatter;
+}
 
 export function shiftDayKey(dayKey: string, deltaDays: number): string {
   const [year, month, day] = dayKey.split('-').map(Number);
@@ -21,12 +36,7 @@ export function maxForecastDayKey(timezone: string): string {
 
 export function dateKeyInTimezone(date: Date, timezone: string): string {
   try {
-    const formatter = new Intl.DateTimeFormat('en-CA', {
-      timeZone: timezone || 'UTC',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    });
+    const formatter = dateKeyFormatter(timezone);
     const parts = Object.fromEntries(formatter.formatToParts(date).map((part) => [part.type, part.value]));
     return `${parts.year}-${parts.month}-${parts.day}`;
   } catch {
