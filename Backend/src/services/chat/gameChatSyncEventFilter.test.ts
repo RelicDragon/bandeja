@@ -34,6 +34,40 @@ function testCanSeeByChatType(): void {
   assert.equal(canUserSeeGameChatSyncEvent({ messageId: 'm1' }, playingParticipantAccess), true);
 }
 
+const invitedAccess: GameChatSyncAccess = {
+  game: { status: 'SCHEDULED' },
+  participant: { status: 'INVITED', role: 'PLAYER' },
+  isParentGameAdminOrOwner: false,
+};
+
+const guestAccess: GameChatSyncAccess = {
+  game: { status: 'SCHEDULED' },
+  participant: { status: 'GUEST', role: 'PLAYER' },
+  isParentGameAdminOrOwner: false,
+};
+
+function testHidesRosterUpdatesFromInviteOnly(): void {
+  const joinedPayload = {
+    message: {
+      chatType: ChatType.PUBLIC,
+      senderId: null,
+      content: JSON.stringify({
+        type: 'USER_JOINED_GAME',
+        variables: { userName: 'Alex' },
+        text: 'Alex joined the game',
+      }),
+    },
+  };
+  const normalPayload = {
+    message: { chatType: ChatType.PUBLIC, senderId: 'u1', content: 'hello' },
+  };
+  assert.equal(canUserSeeGameChatSyncEvent(joinedPayload, invitedAccess), false);
+  assert.equal(canUserSeeGameChatSyncEvent(joinedPayload, guestAccess), false);
+  assert.equal(canUserSeeGameChatSyncEvent(joinedPayload, playingParticipantAccess), true);
+  assert.equal(canUserSeeGameChatSyncEvent(normalPayload, invitedAccess), true);
+  assert.equal(canUserSeeGameChatSyncEvent(normalPayload, guestAccess), true);
+}
+
 function testFilterEvents(): void {
   const events = [
     { id: '1', seq: 1, payload: { message: { chatType: ChatType.PUBLIC } } },
@@ -50,6 +84,7 @@ function testFilterEvents(): void {
 async function run(): Promise<void> {
   testCanSeeByChatType();
   testFilterEvents();
+  testHidesRosterUpdatesFromInviteOnly();
   console.log('gameChatSyncEventFilter.test.ts: ok');
 }
 

@@ -9,6 +9,10 @@ import {
   chatMessageToGameListPreview,
   isGamePublicListPreviewMessage,
 } from '@/utils/gameChatListPreview';
+import {
+  shouldHideRosterLifecycleForGameViewer,
+  viewerParticipantStatus,
+} from '@/utils/gameChatRosterVisibility';
 
 function groupChannelMatchesBugContext(data: GroupChannel, bugId: string): boolean {
   return data.bug?.id === bugId || data.bugId === bugId;
@@ -130,6 +134,8 @@ export function updateChatMessageInList(
     }
     if (chat.type === 'game' && chatContextType === 'GAME' && chat.data.id === contextId) {
       if (!isGamePublicListPreviewMessage(message)) return chat;
+      const viewerStatus = viewerParticipantStatus(chat.data.participants, userId);
+      if (shouldHideRosterLifecycleForGameViewer(viewerStatus, message)) return chat;
       const updatedAtIso = message.updatedAt ?? message.createdAt;
       const lastMessage = chatMessageToGameListPreview(message);
       const updatedGame: Game = {

@@ -3,6 +3,7 @@ import type { ChatContextType, ChatMessage, ChatType } from '@/api/chat';
 import { chatLocalDb, type ChatLocalRow } from './chatLocalDb';
 import { compareChatMessagesAscending, computeMessageSortKey } from '@/utils/chatMessageSort';
 import { normalizeChatType } from '@/utils/chatType';
+import { shouldDropInviteOnlyRosterSystemMessage } from './dropInviteOnlyRosterSystemMessage';
 
 /** First-paint / Dexie tail window (aligned with open snapshot; L1 may hold more). */
 export const CHAT_OPEN_FIRST_PAINT_SIZE = 50;
@@ -79,6 +80,14 @@ export type LocalThreadBootstrapResult = {
   hasOlderInDexie: boolean;
 };
 
+function filterInviteOnlyRosterRows(
+  contextType: ChatContextType,
+  rows: ChatLocalRow[]
+): ChatLocalRow[] {
+  if (contextType !== 'GAME') return rows;
+  return rows.filter((row) => !shouldDropInviteOnlyRosterSystemMessage(row.payload));
+}
+
 export async function loadLocalThreadBootstrap(
   contextType: ChatContextType,
   contextId: string,
@@ -86,7 +95,10 @@ export async function loadLocalThreadBootstrap(
   onTail?: (tail: ChatMessage[]) => void
 ): Promise<LocalThreadBootstrapResult> {
   const ct = normalizeChatType(chatType);
-  const rows = await loadTailRows(contextType, contextId, ct, CHAT_LOCAL_THREAD_WINDOW_SIZE);
+  const rows = filterInviteOnlyRosterRows(
+    contextType,
+    await loadTailRows(contextType, contextId, ct, CHAT_LOCAL_THREAD_WINDOW_SIZE)
+  );
   const payloads = rows.map((r) => r.payload).sort(compareChatMessagesAscending);
   const completeThread = rows.length < CHAT_LOCAL_THREAD_WINDOW_SIZE;
   const first = rows[0];
@@ -113,7 +125,10 @@ export async function loadLocalMessagesForThread(
   chatType: ChatType
 ): Promise<ChatMessage[]> {
   const ct = normalizeChatType(chatType);
-  const rows = await loadThreadOrderedAscending(contextType, contextId, ct);
+  const rows = filterInviteOnlyRosterRows(
+    contextType,
+    await loadThreadOrderedAscending(contextType, contextId, ct)
+  );
   return rows.map((r) => r.payload).sort(compareChatMessagesAscending);
 }
 
@@ -149,5 +164,5 @@ export async function loadLocalMessagesOlderThan(
     .reverse()
     .limit(limit)
     .toArray();
-  return batch.slice().reverse().map((r) => r.payload);
+  return filterInviteOnlyRosterRows(contextType, batch.slice().reverse()).map((r) => r.payload);
 }

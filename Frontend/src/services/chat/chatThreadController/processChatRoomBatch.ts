@@ -28,6 +28,7 @@ import {
 import { upsertPeerReadCursor } from '@/services/chat/peerReadCursorStore';
 import { parsePeerReadCursor } from '@/services/chat/peerReadCursor';
 import { useAuthStore } from '@/store/authStore';
+import { shouldDropInviteOnlyRosterSystemMessage } from '@/services/chat/dropInviteOnlyRosterSystemMessage';
 
 export type ProcessChatRoomBatchCtx = {
   id: string | undefined;
@@ -63,9 +64,11 @@ function mapBatchToLiveEvents(batch: ChatRoomEvent[]): ThreadLiveEvent[] {
     switch (ev.kind) {
       case 'message': {
         const data = ev.data;
+        const message = { ...data.message, syncSeq: data.message.syncSeq ?? data.syncSeq };
+        if (shouldDropInviteOnlyRosterSystemMessage(message)) break;
         events.push({
           type: 'inboundMessage',
-          message: { ...data.message, syncSeq: data.message.syncSeq ?? data.syncSeq },
+          message,
         } satisfies InboundMessageEvent);
         break;
       }

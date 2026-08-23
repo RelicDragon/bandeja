@@ -17,6 +17,11 @@ import {
   chatMessageToGameListPreview,
   isGamePublicListPreviewMessage,
 } from '@/utils/gameChatListPreview';
+import {
+  shouldHideRosterLifecycleForGameViewer,
+  shouldHideRosterPreviewForGameViewer,
+  viewerParticipantStatus,
+} from '@/utils/gameChatRosterVisibility';
 import { useChatListFeedStore, type ChatsFilterType } from '@/components/chat/chatListFeedStore';
 import { useSocketEventsStore } from '@/store/socketEventsStore';
 
@@ -41,12 +46,15 @@ function mergeGameLatestMessageIntoChats(
   prev: ChatItem[],
   gameId: string,
   latest: ChatMessage,
-  updatedAt: string
+  updatedAt: string,
+  userId: string | undefined
 ): ChatItem[] {
   if (!isGamePublicListPreviewMessage(latest)) return prev;
   const preview = chatMessageToGameListPreview(latest);
   return prev.map((chat) => {
     if (chat.type !== 'game' || chat.data.id !== gameId) return chat;
+    const viewerStatus = viewerParticipantStatus(chat.data.participants, userId);
+    if (shouldHideRosterLifecycleForGameViewer(viewerStatus, latest)) return chat;
     const draft = chat.draft ?? null;
     const lastMessageDate = calculateLastMessageDate(preview, draft, updatedAt);
     return {
@@ -582,6 +590,8 @@ export function useChatInboxSocketEffects(p: SocketEventsParams) {
               const preview = { preview: previewStr, updatedAt };
               next = next.map((chat) => {
                 if (chat.type !== 'game' || chat.data.id !== contextId) return chat;
+                const viewerStatus = viewerParticipantStatus(chat.data.participants, userId);
+                if (shouldHideRosterPreviewForGameViewer(viewerStatus, previewStr)) return chat;
                 const draft = chat.draft ?? null;
                 return {
                   ...chat,
@@ -590,7 +600,7 @@ export function useChatInboxSocketEffects(p: SocketEventsParams) {
                 };
               });
             } else {
-              next = mergeGameLatestMessageIntoChats(next, contextId, lm as ChatMessage, updatedAt);
+              next = mergeGameLatestMessageIntoChats(next, contextId, lm as ChatMessage, updatedAt, userId);
             }
           }
           continue;
@@ -633,6 +643,7 @@ export function useChatInboxSocketEffects(p: SocketEventsParams) {
     selectedChatType,
     chatsFilter,
     listFilter,
+    userId,
     fetchChatsForFilter,
     chatsRef,
     enqueueGroupChannelRowRefresh,

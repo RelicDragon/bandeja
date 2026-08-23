@@ -4,6 +4,7 @@ import { getMyTabData, getMyTabDataFallback } from '@/api/me';
 import { queryKeys } from '../queryKeys';
 import { GAMES_LIST_STALE_TIME } from './constants';
 import { sortGamesByStatusAndStartTime } from './sortGames';
+import { excludePendingInviteOnlyMyGames } from '@/utils/excludePendingInviteOnlyMyGames';
 
 export interface MyGamesData {
   games: Game[];
@@ -24,7 +25,9 @@ async function fetchMyGamesData(userId: string): Promise<MyGamesData> {
       useCache: true,
     });
     return {
-      games: sortGamesByStatusAndStartTime([...(tabData.games || [])]),
+      games: sortGamesByStatusAndStartTime(
+        excludePendingInviteOnlyMyGames([...(tabData.games || [])], userId),
+      ),
       invites: tabData.invites ?? [],
       unreadCounts: tabData.unreadCounts ?? {},
       teams: tabData.teams,
@@ -36,7 +39,9 @@ async function fetchMyGamesData(userId: string): Promise<MyGamesData> {
     console.warn('[useMyGamesQuery] Primary My Tab fetch failed, using fallback', error);
     const fallback = await getMyTabDataFallback(userId);
     return {
-      games: sortGamesByStatusAndStartTime([...(fallback.games || [])]),
+      games: sortGamesByStatusAndStartTime(
+        excludePendingInviteOnlyMyGames([...(fallback.games || [])], userId),
+      ),
       invites: fallback.invites ?? [],
       unreadCounts: fallback.unreadCounts ?? {},
       teams: fallback.teams,

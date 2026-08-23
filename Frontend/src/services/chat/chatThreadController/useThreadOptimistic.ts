@@ -11,6 +11,7 @@ import { sendWithTimeout, cancelSend, resend } from '@/services/chatSendService'
 import { markOutboxResumeSuppressed } from '@/services/chat/chatSendCoordinator';
 import { normalizeChatType } from '@/utils/chatType';
 import { parseSystemMessage } from '@/utils/systemMessages';
+import { shouldDropInviteOnlyRosterSystemMessage } from '@/services/chat/dropInviteOnlyRosterSystemMessage';
 import {
   STORY_DM_OPTIMISTIC_EVENT,
   STORY_DM_OPTIMISTIC_FAILED_EVENT,
@@ -406,6 +407,7 @@ export function useThreadOptimistic({
         normalizedMessageChatType === normalizedCurrentChatType ||
         bypassGameTabFilter;
       if (!matchesChatType) return;
+      if (shouldDropInviteOnlyRosterSystemMessage(message)) return;
 
       if (contextType === 'USER' && id && !message.senderId && message.content) {
         const parsed = parseSystemMessage(message.content);

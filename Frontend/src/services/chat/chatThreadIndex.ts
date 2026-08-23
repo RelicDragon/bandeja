@@ -9,6 +9,7 @@ import {
   chatMessageToGameListPreview,
   isGamePublicListPreviewMessage,
 } from '@/utils/gameChatListPreview';
+import { shouldDropInviteOnlyRosterSystemMessage } from './dropInviteOnlyRosterSystemMessage';
 import { computeListOutboxForContext } from './chatOutboxListOutboxCompute';
 import { scheduleChatListOutboxBump } from './chatListOutboxBumpScheduler';
 import {
@@ -438,6 +439,7 @@ export async function patchThreadIndexFromMessage(
   message: ChatMessage,
   _options?: PatchThreadIndexFromMessageOptions
 ): Promise<void> {
+  if (shouldDropInviteOnlyRosterSystemMessage(message)) return;
   if (!isGamePublicListPreviewMessage(message)) return;
 
   const initialRows = await chatLocalDb.threadIndex

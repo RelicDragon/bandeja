@@ -6,6 +6,7 @@ import { GameChatViewerAccessService } from './gameChatViewerAccess.service';
 import { canParticipantSeeGameChatMessage } from './gameChatVisibility';
 import { extractChatTypeFromEmitPayload } from './gameChatSocketRecipients';
 import { ChatSyncEventService } from './chatSyncEvent.service';
+import { shouldHideRosterLifecycleSystemMessage } from './gameChatRosterVisibility';
 
 export type GameChatSyncAccess = {
   game: { status: string };
@@ -60,8 +61,34 @@ export async function resolveGameChatSyncAccess(
   };
 }
 
+function extractPayloadMessageContent(payload: unknown): { senderId?: string | null; content?: string | null } {
+  if (!payload || typeof payload !== 'object') return {};
+  const record = payload as Record<string, unknown>;
+  const message = record.message;
+  if (message && typeof message === 'object') {
+    const msg = message as Record<string, unknown>;
+    return {
+      senderId: typeof msg.senderId === 'string' || msg.senderId === null ? (msg.senderId as string | null) : undefined,
+      content: typeof msg.content === 'string' ? msg.content : undefined,
+    };
+  }
+  return {
+    content: typeof record.content === 'string' ? record.content : undefined,
+  };
+}
+
 /** Events without embedded chatType are not game-chat scoped (pass through). */
 export function canUserSeeGameChatSyncEvent(payload: unknown, access: GameChatSyncAccess): boolean {
+  const { senderId, content } = extractPayloadMessageContent(payload);
+  if (
+    shouldHideRosterLifecycleSystemMessage({
+      participantStatus: access.participant?.status,
+      senderId,
+      content,
+    })
+  ) {
+    return false;
+  }
   const chatType = extractChatTypeFromEmitPayload(payload);
   if (!chatType) return true;
   return canParticipantSeeGameChatMessage(

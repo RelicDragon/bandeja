@@ -310,7 +310,7 @@ Frontend/e2e/
 | H-15a | Telegram decline with response | Telegram game invite → Decline with response → send reason (or `/skip` / `/skip@Bot`) | Same as H-15 when reason sent; invite declined and Telegram invite message updated; `/skip` declines without chat message; prompt expires after 10m; Accept/Decline clears pending prompt |
 | H-16 | Invite note on game | Save note without accept/decline | Persisted |
 | H-61 | Invite cleared after accept from game | My tab invite → open game → accept invite on game page → back to My tab | Invite card gone immediately; second accept not offered |
-| H-73 | Full roster hides home invite | Seed pending INVITED row on a game whose PLAYING count equals max participants | Home `home-invites-section` omits the card; header invite badge does not count it; `new-invite` is not emitted while hidden; participant row remains INVITED on the game |
+| H-73 | Full roster hides home invite | Seed pending INVITED row on a game whose PLAYING count equals max participants | Home `home-invites-section` omits the card; header invite badge does not count it; `new-invite` is not emitted while hidden; participant row remains INVITED on the game; game is also absent from the My games list (INVITED-only) |
 | H-74 | Leave reopens home invite | From H-73, a PLAYING player leaves so a slot opens | Invite card returns on Home (socket `new-invite` re-adds it to My-tab cache, then refetch); badge increments; invited user receives an invite push |
 | H-75 | Accept while roster is full | Pending invite on a full game (e.g. via game page or stale card) → Accept | Does not join over cap; queued (`games.addedToJoinQueue`) or a game-full error; PLAYING count stays ≤ max participants |
 | H-76 | MIX_PAIRS gender-full hides invite | MIX_PAIRS game, max 4, 2 PLAYING of the invitee's gender and the other gender still open | Home/badge omit that invite; opposite-gender invite still shown; same-gender leave restores it with push |
@@ -325,6 +325,7 @@ Frontend/e2e/
 | H-20 | Create from calendar date | Select date → create | Pre-filled date |
 | H-36 | Selected date shows archived/finished | User with FINISHED and ARCHIVED games on a past calendar day | Select that day on My tab calendar; both FINISHED and ARCHIVED games appear under Finished section |
 | H-64 | Same-day start-time order | Day with ≥2 active My games at different times | Active games earliest-first; finished/archived after active |
+| H-81 | Pending invite not duplicated in list | User is INVITED-only on a game (not PLAYING / queue / guest) | Invite card in `home-invites-section` (when a slot is open); same game is absent from the My games list and calendar |
 
 ### 6.4 Stories
 
@@ -442,7 +443,7 @@ Frontend/e2e/
 | F-08 | Training filter | Toggle training | Training events |
 | F-09 | Tournament filter | Toggle tournaments | Tournaments only |
 | F-10 | Leagues filter | Toggle leagues | League seasons |
-| F-83 | Entity chip type dots | Open Find filters (Game / Tournament / Training / League chips) | Each chip shows a color dot matching calendar day marks: game gray, tournament red, training green, league blue |
+| F-83 | Entity chip type dots | Open Find filters (Game / Tournament / Training / League chips) | Each chip shows a color dot matching calendar day marks: game whitish, tournament red, training green, league blue |
 | F-11 | User-created filter | Toggle user games | Filters creator |
 | F-12 | Combined filters | Multiple toggles | AND behavior correct |
 
@@ -796,6 +797,7 @@ Frontend/e2e/
 | GD-17 | Guest join chat only | Join as guest | Chat access without full join |
 | GD-18 | Carousel vs list participants | Toggle view mode | Layout switches |
 | GD-18a | Invite not in game chat | Owner invites player from participants list | Pending invite on participants panel; no "X invites Y" system message in game chat; other participants get no chat/push notification for the invite |
+| GD-18b | Invitee/guest roster chat | As INVITED or GUEST, others join / decline / accept / leave | No join/decline/accept/leave system messages in game chat, chat list, push, or Telegram; normal user messages still appear |
 | GD-148 | Organizer add unset gender | Owner invites/adds a player with `genderIsSet` false to a gendered event | Player is not added; toast that they haven't set gender (not the wrong-gender copy) |
 | GD-149 | Organizer self-add gender unset | Unset organizer taps add-me / join on their own gendered event | Gender sheet; after set, add/join proceeds |
 | GD-150 | League assign unset gender | Owner assigns an unset player to a gendered league round | Player is not assigned; toast that they haven't set gender (not the wrong-gender copy) |
@@ -1151,6 +1153,7 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | CH-153 | Mark-all advances peer ticks | `@two-user` A sends several messages; B marks context read (or opens near bottom) | All of A’s earlier messages in that chatType show read ticks (monotonic via max peer cursor) |
 | CH-154 | Leave game stops chat sync polls | Join game chat → leave game or leave chat from details/thread | Local game thread purged (socket leave + Dexie); no repeating 403 on `/chat/sync/events` or `/chat/messages/missed` for that game |
 | CH-155 | Non-admin skips PRIVATE/ADMINS probes | Playing participant (not owner/admin) opens game details | No `GET .../messages?chatType=PRIVATE|ADMINS` probes; participants-only chat section stays hidden |
+| CH-156 | Invitee/guest roster updates | Open game chat as INVITED or GUEST while others join, decline, accept, or leave | Thread and chat-list preview stay on normal messages only; no roster system messages, push, or Telegram for those events; a later user message still appears |
 | CH-118 | Tap sticker sends via outbox | Open tray → tap a sticker in Packs | Optimistic sticker appears in thread immediately (fully transparent panel, no bubble chrome); create confirms via sync; no image upload / pending blobs |
 | CH-119 | Sticker send offline retry | Go briefly offline → send sticker from tray → come online | Outbox retries create-only (no media upload); sticker confirms when network returns |
 | CH-119a | Sticker cannot be edited | Own sticker → context menu / ArrowUp | No Edit action; API rejects content update if attempted |

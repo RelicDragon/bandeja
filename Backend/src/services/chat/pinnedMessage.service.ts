@@ -7,6 +7,7 @@ import { GameChatViewerAccessService } from './gameChatViewerAccess.service';
 import { resolveTranslationTargetLanguage } from './resolveTranslationTargetLanguage';
 import { ChatSyncEventService } from './chatSyncEvent.service';
 import { getChatNotifier } from './chatNotifier';
+import { shouldHideRosterLifecycleSystemMessage } from './gameChatRosterVisibility';
 
 export class PinnedMessageService {
   static async getPinnedMessages(
@@ -15,8 +16,10 @@ export class PinnedMessageService {
     chatType: ChatType,
     userId: string
   ) {
+    let inviteOnlyStatus: string | undefined;
     if (chatContextType === 'GAME') {
-      await GameChatViewerAccessService.assertReadable(contextId, userId, chatType);
+      const access = await GameChatViewerAccessService.assertReadable(contextId, userId, chatType);
+      inviteOnlyStatus = access.participant?.status;
     } else if (chatContextType === 'BUG') {
       await MessageService.validateBugAccess(contextId, userId);
     } else if (chatContextType === 'USER') {
@@ -40,7 +43,17 @@ export class PinnedMessageService {
       }
     });
 
-    const messages = pins.map((p) => p.message).filter(Boolean);
+    const messages = pins
+      .map((p) => p.message)
+      .filter(Boolean)
+      .filter(
+        (message) =>
+          !shouldHideRosterLifecycleSystemMessage({
+            participantStatus: inviteOnlyStatus,
+            senderId: message.senderId,
+            content: message.content,
+          })
+      );
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: { language: true, translateToLanguage: true }

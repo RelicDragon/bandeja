@@ -35,7 +35,7 @@ const Chip = ({ icon: Icon, label, active, onClick, entityType }: ChipProps) => 
         : 'bg-gray-100 text-gray-700 ring-transparent hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
     }`}
   >
-    <EntityTypeDot type={entityType} className="h-2 w-2 shrink-0" />
+    <EntityTypeDot type={entityType} surface="chip" className="h-2 w-2 shrink-0" />
     <span className="flex min-w-0 flex-1 items-center justify-center gap-1.5">
       <motion.span
         animate={{ scale: active ? 1.15 : 1, rotate: active ? [0, -10, 10, 0] : 0 }}

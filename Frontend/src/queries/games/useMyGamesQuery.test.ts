@@ -66,6 +66,31 @@ describe('useMyGamesQuery', () => {
     expect(result.invites).toHaveLength(1);
   });
 
+  it('omits games where the viewer is INVITED-only', async () => {
+    getMyTabData.mockResolvedValue({
+      games: [
+        {
+          id: 'invited-only',
+          startTime: '2026-06-03',
+          participants: [{ userId: 'user-1', status: 'INVITED' }],
+        } as Game,
+        {
+          id: 'playing',
+          startTime: '2026-06-04',
+          participants: [{ userId: 'user-1', status: 'PLAYING' }],
+        } as Game,
+      ],
+      invites: [sampleInvite('inv-1')],
+      teams: [],
+      unreadCounts: {},
+    });
+
+    const client = createTestClient();
+    const result = await client.fetchQuery(myGamesQueryOptions('user-1'));
+
+    expect(result.games.map((g) => g.id)).toEqual(['playing']);
+  });
+
   it('passes userId to getMyTabData', async () => {
     const client = createTestClient();
     await client.fetchQuery(myGamesQueryOptions('user-1'));

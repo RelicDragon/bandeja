@@ -1,5 +1,6 @@
 import type { FindDisplayEntityType } from '@/utils/findFilter';
 import {
+  ENTITY_TYPE_CHIP_DOT_CLASS,
   ENTITY_TYPE_DOT_CLASS,
   ENTITY_TYPE_DOT_INVERTED_CLASS,
 } from '@/utils/entityTypeDotClass';
@@ -7,17 +8,23 @@ import {
 export function EntityTypeDot({
   type,
   inverted = false,
+  surface = 'calendar',
   className = 'h-1.5 w-1.5',
 }: {
   type: FindDisplayEntityType;
   inverted?: boolean;
+  surface?: 'calendar' | 'chip';
   className?: string;
 }) {
-  const palette = inverted ? ENTITY_TYPE_DOT_INVERTED_CLASS : ENTITY_TYPE_DOT_CLASS;
+  const palette = inverted
+    ? ENTITY_TYPE_DOT_INVERTED_CLASS
+    : surface === 'chip'
+      ? ENTITY_TYPE_CHIP_DOT_CLASS
+      : ENTITY_TYPE_DOT_CLASS;
   return (
     <span
       aria-hidden
-      className={`shrink-0 rounded-full ${className} ${palette[type]}`}
+      className={`relative shrink-0 overflow-hidden rounded-full shadow-[inset_0_0.5px_0.5px_rgba(255,255,255,0.28),inset_0_-0.5px_0.5px_rgba(0,0,0,0.12)] ${className} ${palette[type]}`}
     />
   );
 }
