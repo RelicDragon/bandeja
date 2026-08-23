@@ -74,9 +74,9 @@ export function MonthCalendarDayCell({
       <span className="text-[13px] font-semibold leading-none tabular-nums">
         {format(day, 'd')}
       </span>
-      {gameCount > 0 || markTypes.length > 0 ? (
+      {gameCount > 0 || markTypes.length > 0 || weather ? (
         <span
-          className="flex max-w-full items-center justify-center gap-0.5 leading-none"
+          className="flex min-h-[9px] max-w-full items-center justify-center gap-0.5 leading-none"
           data-calendar-day-entities
         >
           {gameCount > 0 ? (

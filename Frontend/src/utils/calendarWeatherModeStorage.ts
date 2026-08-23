@@ -21,12 +21,12 @@ export function readCalendarWeatherMode(scope: CalendarWeatherModeScope): boolea
     if (scope === 'timeSlots') return true;
 
     const legacyMode = parseStoredMode(localStorage.getItem(LEGACY_STORAGE_KEY));
-    if (legacyMode === null) return false;
+    if (legacyMode === null) return true;
 
     localStorage.setItem(STORAGE_KEYS[scope], legacyMode ? '1' : '0');
     return legacyMode;
   } catch {
-    return false;
+    return true;
   }
 }
 
