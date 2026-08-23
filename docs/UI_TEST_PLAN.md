@@ -285,6 +285,7 @@ Frontend/e2e/
 | H-63 | Empty selected date hint | User with upcoming games on other days → pick a day with no games | Localized "No games on this date" below selected date heading; Upcoming games section still shown |
 | H-60 | Calendar weekday headers | My tab or Find calendar with app language set to Russian, then English | Column headers use locale short weekday (ru: 2-letter e.g. пн/вт; en: 3-letter e.g. Mon/Tue), not truncated full names |
 | H-80 | Calendar day cell readability | Open My or Find calendar on a ~320px phone viewport with busy days | Day-of-month is fully visible and centered; game count is a small numeral under the date (not covering it); entity types show as color dots; selected day highlights without overlapping neighbors |
+| H-81 | My calendar league type mark | Open My calendar on a day with a league game | That day shows the league (blue) type mark; Find still hides league marks unless the League chip is on (F-82) |
 | H-40 | Overflow month day select | Navigate month → tap gray adjacent-month cell with game badge | Selected day highlights; that day's games in list (not upcoming sections) |
 | H-03 | Empty my games | User with no games | Empty state |
 | H-04 | Stories rail visible | Logged in home | Stories bubbles render |

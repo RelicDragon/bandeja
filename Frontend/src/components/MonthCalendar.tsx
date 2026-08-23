@@ -534,13 +534,14 @@ export const MonthCalendar = ({
           const unreadCount = dayData.unreadCount;
           const hasGames = gameCount > 0;
           const isParticipant = dayData.isUserParticipant;
+          const showLeagueMarks = weatherModeScope === 'my' || leaguesFilter;
           const participantTypes = visibleCalendarDayMarkTypes(
             PILL_ENTITY_ORDER.filter(t => dayData.participantEntityTypes.has(t)),
-            leaguesFilter,
+            showLeagueMarks,
           );
           const typePillTypes = visibleCalendarDayMarkTypes(
             PILL_ENTITY_ORDER.filter(t => dayData.entityTypes.has(t)),
-            leaguesFilter,
+            showLeagueMarks,
           );
           const dayWeather = weatherByDay.get(dateStr) ?? null;
           const { showWeatherPill, showTypePill } = resolveCalendarDayPillVisibility({

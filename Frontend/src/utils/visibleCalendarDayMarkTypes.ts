@@ -2,8 +2,8 @@ import type { FindDisplayEntityType } from '@/utils/findFilter';
 
 export function visibleCalendarDayMarkTypes(
   types: readonly FindDisplayEntityType[],
-  leaguesFilter: boolean,
+  showLeagueMarks: boolean,
 ): FindDisplayEntityType[] {
-  if (leaguesFilter) return [...types];
+  if (showLeagueMarks) return [...types];
   return types.filter((type) => type !== 'LEAGUE');
 }
