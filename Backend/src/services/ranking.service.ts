@@ -2,14 +2,7 @@ import prisma from '../config/database';
 import { Sport, ResultsStatus } from '@prisma/client';
 import { USER_SELECT_FIELDS, USER_SPORT_PROFILE_SELECT } from '../utils/constants';
 import { resolveUserSportSnapshot } from './user/userSportProfile.service';
-import {
-  orderPlayedRatingLeaderboard,
-  orderRatingLeaderboard,
-  qualifiesForRatingRank,
-  ratingLeaderboardActivitySince,
-  recentRatedParticipantWhere,
-  selectRecentRatedUserIds,
-} from './ranking/ratingLeaderboardQualify';
+import { orderPlayedRatingLeaderboard, orderRatingLeaderboard } from './ranking/ratingLeaderboardQualify';
 
 export type LeaderboardTieBreak = 'totalPoints' | 'gamesWon';
 
@@ -76,33 +69,19 @@ type RatingLeaderboardCandidate = {
   reliability: number;
   gamesWon: number;
   gamesPlayed: number;
+  inactive: boolean;
 };
 
 export class RankingService {
-  static async qualifyAndRankRatingLeaderboard<T extends RatingLeaderboardCandidate>(
-    users: T[],
-    sportForUser: (user: T) => Sport,
-  ): Promise<{
-    users: Array<T & { qualifiesForRating: boolean }>;
+  static qualifyAndRankRatingLeaderboard<T extends RatingLeaderboardCandidate>(users: T[]): {
+    users: T[];
     rankMap: Map<string, number>;
-  }> {
-    const recentRatedUserIds = await RankingService.getUserIdsWithRatedGameSinceBySport(
-      users.map((user) => ({ userId: user.id, sport: sportForUser(user) })),
-      ratingLeaderboardActivitySince(),
-    );
-    const ordered = orderRatingLeaderboard(
-      users.map((user) => ({
-        ...user,
-        qualifiesForRating: qualifiesForRatingRank({
-          gamesPlayed: user.gamesPlayed,
-          hasRecentRatedGame: recentRatedUserIds.has(user.id),
-        }),
-      })),
-    );
+  } {
+    const ordered = orderRatingLeaderboard(users);
     return {
       users: ordered,
       rankMap: calculateRanks(
-        ordered.filter((user) => user.qualifiesForRating),
+        ordered.filter((user) => !user.inactive),
         false,
         false,
         'gamesWon',
@@ -143,48 +122,6 @@ export class RankingService {
       false,
       'gamesWon',
     );
-  }
-
-  static async getUserIdsWithRatedGameSince(
-    userIds: string[],
-    sport: Sport,
-    since: Date,
-  ): Promise<Set<string>> {
-    if (userIds.length === 0) return new Set();
-
-    const rows = await prisma.gameParticipant.groupBy({
-      by: ['userId'],
-      where: recentRatedParticipantWhere(sport, since),
-      _count: {
-        userId: true,
-      },
-    });
-
-    return selectRecentRatedUserIds(userIds, rows);
-  }
-
-  static async getUserIdsWithRatedGameSinceBySport(
-    userSports: Array<{ userId: string; sport: Sport }>,
-    since: Date,
-  ): Promise<Set<string>> {
-    const idsBySport = new Map<Sport, string[]>();
-    for (const { userId, sport } of userSports) {
-      const ids = idsBySport.get(sport);
-      if (ids) ids.push(userId);
-      else idsBySport.set(sport, [userId]);
-    }
-
-    const foundSets = await Promise.all(
-      [...idsBySport.entries()].map(([sport, ids]) =>
-        RankingService.getUserIdsWithRatedGameSince(ids, sport, since),
-      ),
-    );
-
-    const recent = new Set<string>();
-    for (const found of foundSets) {
-      for (const id of found) recent.add(id);
-    }
-    return recent;
   }
 
   static async getGamesInLast30Days(

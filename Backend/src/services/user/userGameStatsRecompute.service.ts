@@ -3,6 +3,7 @@ import {
   clampSportProfileGameStats,
   resolveSportStatsDeltasForReconcile,
 } from '../results/outcomeStatsSnapshot';
+import { refreshSportProfilesInactive } from '../ranking/sportProfileInactive.service';
 
 type Tx = Prisma.TransactionClient;
 
@@ -105,4 +106,14 @@ export async function recomputeUserGameStats(tx: Tx, userId: string): Promise<vo
       },
     });
   }
+
+  await refreshSportProfilesInactive(
+    [
+      ...profiles.map((profile) => ({ userId, sport: profile.sport })),
+      ...[...statsBySport.values()]
+        .filter((stats) => !touchedSports.has(stats.sport))
+        .map((stats) => ({ userId, sport: stats.sport })),
+    ],
+    { client: tx },
+  );
 }

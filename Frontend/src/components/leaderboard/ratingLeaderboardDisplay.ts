@@ -2,26 +2,26 @@ export const RATING_LEADERBOARD_MUTED_TEXT = 'text-gray-400 dark:text-gray-500';
 
 export function isRatingLeaderboardGrayed(
   leaderboardType: 'level' | 'social',
-  qualifiesForRating: boolean | undefined,
+  inactive: boolean | undefined,
 ): boolean {
-  return leaderboardType === 'level' && qualifiesForRating === false;
+  return leaderboardType === 'level' && inactive === true;
 }
 
 export function firstInactiveRatingRowId(
   leaderboardType: 'level' | 'social',
-  entries: ReadonlyArray<{ id: string; qualifiesForRating?: boolean }>,
+  entries: ReadonlyArray<{ id: string; inactive?: boolean }>,
 ): string | undefined {
   if (leaderboardType !== 'level') return undefined;
-  return entries.find((entry) => entry.qualifiesForRating === false)?.id;
+  return entries.find((entry) => entry.inactive === true)?.id;
 }
 
 export function ratingLeaderboardRankLabel(
   leaderboardType: 'level' | 'social',
   rank: number | null | undefined,
-  qualifiesForRating: boolean | undefined,
+  inactive: boolean | undefined,
   unrankedLabel: string,
 ): string {
-  if (isRatingLeaderboardGrayed(leaderboardType, qualifiesForRating)) {
+  if (isRatingLeaderboardGrayed(leaderboardType, inactive)) {
     return unrankedLabel;
   }
   return rank == null ? '' : String(rank);

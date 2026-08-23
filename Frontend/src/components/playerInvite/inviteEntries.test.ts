@@ -72,3 +72,86 @@ describe('inviteEntries sport-aware level filtering', () => {
     expect(withLevel).toBe(0);
   });
 });
+
+describe('inviteEntries inactive sort', () => {
+  function player(partial: Partial<BasicUser> & Pick<BasicUser, 'id'>): BasicUser {
+    return {
+      firstName: partial.id,
+      lastName: 'P',
+      level: 3,
+      socialLevel: 2,
+      gender: 'MALE',
+      approvedLevel: false,
+      isTrainer: false,
+      inactive: false,
+      ...partial,
+    };
+  }
+
+  const sortOpts = {
+    searchQuery: '',
+    filterPlayerIds: [] as string[],
+    filters: defaultPlayerInviteFilters(5),
+    inviteAsTrainerOnly: false,
+    isFavorite: () => false,
+    getUserMetadata: () => undefined,
+    showTeams: false,
+  };
+
+  it('sorts inactive players to the bottom by default', () => {
+    const activeLow = player({ id: 'active-low', inactive: false });
+    const inactiveHigh = player({ id: 'inactive-high', inactive: true });
+    const activeHigh = player({ id: 'active-high', inactive: false });
+    const sorted = filterAndSortInviteEntries([inactiveHigh, activeLow, activeHigh], [], {
+      ...sortOpts,
+      getUserMetadata: (id) => ({
+        interactionCount: id === 'active-high' ? 2 : id === 'inactive-high' ? 9 : 1,
+        gamesTogetherCount: 0,
+        lastFetchedAt: 0,
+      }),
+    });
+    expect(sorted.map((entry) => entry.id)).toEqual(['active-high', 'active-low', 'inactive-high']);
+  });
+
+  it('keeps availability ahead of inactive', () => {
+    const inactiveFull = player({ id: 'inactive-full', inactive: true });
+    const activeNone = player({ id: 'active-none', inactive: false });
+    const sorted = filterAndSortInviteEntries([inactiveFull, activeNone], [], {
+      ...sortOpts,
+      getAvailabilityMatch: (entry) => (entry.id === 'inactive-full' ? 'full' : 'none'),
+    });
+    expect(sorted.map((entry) => entry.id)).toEqual(['inactive-full', 'active-none']);
+  });
+
+  it('treats missing inactive as inactive', () => {
+    const unknown = player({ id: 'unknown' });
+    delete (unknown as { inactive?: boolean }).inactive;
+    const active = player({ id: 'active', inactive: false });
+    const sorted = filterAndSortInviteEntries([unknown, active], [], sortOpts);
+    expect(sorted.map((entry) => entry.id)).toEqual(['active', 'unknown']);
+  });
+
+  it('reads sport-profile inactive when the projected flag is omitted', () => {
+    const fromProfile = player({
+      id: 'from-profile',
+      sportProfiles: [
+        {
+          sport: Sports.PADEL,
+          level: 3,
+          reliability: 0.5,
+          gamesPlayed: 10,
+          gamesWon: 5,
+          inactive: true,
+          levelSource: 'DEFAULT',
+        },
+      ],
+    });
+    delete (fromProfile as { inactive?: boolean }).inactive;
+    const active = player({ id: 'active', inactive: false });
+    const sorted = filterAndSortInviteEntries([fromProfile, active], [], {
+      ...sortOpts,
+      gameSport: Sports.PADEL,
+    });
+    expect(sorted.map((entry) => entry.id)).toEqual(['active', 'from-profile']);
+  });
+});

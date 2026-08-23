@@ -115,7 +115,7 @@ const StandardLeaderboard = () => {
     ? ratingLeaderboardRankLabel(
         leaderboardType,
         userEntry.rank,
-        userEntry.qualifiesForRating,
+        userEntry.inactive,
         unrankedPlaceLabel,
       )
     : undefined;

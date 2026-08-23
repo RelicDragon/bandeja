@@ -74,6 +74,7 @@ import { grantOrganizeAchievementsForFinalizedGame } from '../achievements/organ
 import { grantPartnerAchievementsForFinalizedGame } from '../achievements/partnerGrant.service';
 import { grantTieBreakAchievementsForFinalizedGame } from '../achievements/tieBreakGrant.service';
 import { countsAsRatingActivity, countsForPlayStreak } from './ratingActivity';
+import { refreshSportProfilesInactive } from '../ranking/sportProfileInactive.service';
 import {
   type OutcomeRecalculationOptions,
   shouldCascadeBracketOutcomesUndo,
@@ -431,6 +432,13 @@ export async function undoGameOutcomes(
   await tx.gameOutcome.deleteMany({
     where: { gameId },
   });
+
+  if (game.affectsRating) {
+    await refreshSportProfilesInactive(
+      game.outcomes.map((outcome) => ({ userId: outcome.userId, sport: game.sport })),
+      { excludeGameId: gameId, client: tx },
+    );
+  }
 
   for (const userId of playStreakRecomputeUserIds) {
     await recomputePlayStreakForUserSport(userId, game.sport, tx);
@@ -828,6 +836,13 @@ export async function applyGameOutcomes(
       where: { id: gameId },
       data: updateData,
     });
+
+    if (game.affectsRating) {
+      await refreshSportProfilesInactive(
+        finalOutcomes.map((outcome) => ({ userId: outcome.userId, sport: game.sport })),
+        { client: tx },
+      );
+    }
 
     if (updateData.status === 'FINISHED' || updateData.status === 'ARCHIVED') {
       releasedPlayIntentIds =

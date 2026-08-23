@@ -29,11 +29,11 @@ export function StandardLeaderboardRow({
 }: StandardLeaderboardRowProps) {
   const { t } = useTranslation();
   const { openPlayerCard } = usePlayerCardModal();
-  const isGrayed = isRatingLeaderboardGrayed(leaderboardType, entry.qualifiesForRating);
+  const isGrayed = isRatingLeaderboardGrayed(leaderboardType, entry.inactive);
   const rankLabel = ratingLeaderboardRankLabel(
     leaderboardType,
     entry.rank,
-    entry.qualifiesForRating,
+    entry.inactive,
     t('profile.leaderboard.unranked', { defaultValue: '—' }),
   );
   const playerName = [entry.firstName, entry.lastName].filter(Boolean).join(' ');

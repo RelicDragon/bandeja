@@ -78,6 +78,7 @@ const applySportRankingSnapshot = (users: any[], sport: Sport): any[] =>
       reliability: snapshot.reliability,
       gamesPlayed: snapshot.gamesPlayed,
       gamesWon: snapshot.gamesWon,
+      inactive: snapshot.inactive,
     };
   });
 
@@ -102,6 +103,7 @@ const applySocialSportSnapshot = (
       reliability: snapshot.reliability,
       gamesPlayed: snapshot.gamesPlayed,
       gamesWon: snapshot.gamesWon,
+      inactive: snapshot.inactive,
     };
   });
 
@@ -258,9 +260,8 @@ export const getUserLeaderboardContext = asyncHandler(async (req: AuthRequest, r
       select: userSelect,
     });
 
-    const ranked = await RankingService.qualifyAndRankRatingLeaderboard(
+    const ranked = RankingService.qualifyAndRankRatingLeaderboard(
       applyPrimarySportRankingSnapshot(usersRaw).filter((u) => u.gamesPlayed > 0),
-      (u) => (u.primarySport as Sport) ?? Sport.PADEL,
     );
     allUsers = ranked.users;
     rankMap = ranked.rankMap;
@@ -274,7 +275,7 @@ export const getUserLeaderboardContext = asyncHandler(async (req: AuthRequest, r
       },
     });
 
-    const ranked = await RankingService.qualifyAndRankRatingLeaderboard(
+    const ranked = RankingService.qualifyAndRankRatingLeaderboard(
       usersRaw
         .map((u) => {
           const snap = resolveUserSportSnapshot(u, rankingSport);
@@ -284,10 +285,10 @@ export const getUserLeaderboardContext = asyncHandler(async (req: AuthRequest, r
             reliability: snap.reliability,
             gamesPlayed: snap.gamesPlayed,
             gamesWon: snap.gamesWon,
+            inactive: snap.inactive,
           };
         })
         .filter((u) => u.gamesPlayed > 0),
-      () => rankingSport,
     );
     allUsers = ranked.users;
     rankMap = ranked.rankMap;

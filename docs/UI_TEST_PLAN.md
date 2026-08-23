@@ -695,6 +695,7 @@ Frontend/e2e/
 | C-36 | Invite as trainer only | TRAINING + player picker | Only trainers listed |
 | C-37 | Player list level filter | Filter invite list by level | Filtered players |
 | C-38 | Player availability icon | View invite list | Availability indicator on rows |
+| C-38a | Inactive players at bottom | Open invite picker; city has an inactive player (`inactive` on player: <5 rated games or no rated game in 90 days) and an active player | Inactive player is listed below active players by default (same flag as Level leaderboard); availability still ranks first |
 | C-39 | Booking overlap warning | Booked court conflict | Warning before submit |
 
 ---
@@ -784,6 +785,7 @@ Frontend/e2e/
 | GD-15a | Invite search Cyrillic→Latin | Open invite list; type Cyrillic prefix of a Latin-named player (e.g. `ив` for Ivan) | Player stays in results after debounce (does not flash then vanish) |
 | GD-15b | Invite search clear | Open invite list; type 2+ chars so results update; clear the search field | List stays mounted (no full-modal spinner); default invitable list restores after debounce |
 | GD-15c | Invite picker omits busy | Open Search invite list for a timed game; city user is PLAYING in another overlapping Bandeja game | Busy user is absent from the list; INVITED-only or non-overlapping PLAYING users still appear |
+| GD-15e | Invite inactive at bottom | Open invite picker; one player is rating-inactive | Inactive player sorts below active players by default (same `inactive` flag as Level leaderboard) |
 | GD-15d | Invite search keeps focus | Open invite picker → type in Search | Caret stays in the field after each character; search field is not replaced by the list spinner |
 | GD-16 | Cancel invite | Owner cancels pending | Invite removed |
 | GD-16a | Expired invite outcome | Let a pending invite expire → open player list | Player appears under invite responses with “Invite expired”, not “Invite cancelled” |

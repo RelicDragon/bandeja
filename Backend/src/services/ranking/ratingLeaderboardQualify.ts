@@ -19,14 +19,20 @@ export function ratingLeaderboardActivitySince(nowMs = Date.now()): Date {
   return new Date(nowMs - RATING_LEADERBOARD_ACTIVITY_DAYS * 24 * 60 * 60 * 1000);
 }
 
-export function recentRatedParticipantWhere(sport: Sport, since: Date) {
+export function recentRatedParticipantWhere(
+  sport: Sport,
+  since: Date,
+  opts?: { userIds?: readonly string[]; excludeGameId?: string },
+) {
   return {
     status: 'PLAYING' as const,
+    ...(opts?.userIds && opts.userIds.length > 0 ? { userId: { in: [...opts.userIds] } } : {}),
     game: {
       sport,
       resultsStatus: 'FINAL' as const,
       affectsRating: true,
       startTime: { gte: since },
+      ...(opts?.excludeGameId ? { id: { not: opts.excludeGameId } } : {}),
     },
   };
 }
@@ -48,6 +54,33 @@ export function qualifiesForRatingRank(input: RatingLeaderboardQualifyInput): bo
   return input.gamesPlayed >= RATING_LEADERBOARD_MIN_GAMES && input.hasRecentRatedGame;
 }
 
+export function isRatingInactive(input: RatingLeaderboardQualifyInput): boolean {
+  return !qualifiesForRatingRank(input);
+}
+
+export function ratingInactiveAfterRatedFinish(gamesPlayed: number): boolean {
+  return gamesPlayed < RATING_LEADERBOARD_MIN_GAMES;
+}
+
+export function hasRatedGameInActivityWindow(startTime: Date | null | undefined, nowMs = Date.now()): boolean {
+  return startTime != null && startTime.getTime() >= ratingLeaderboardActivitySince(nowMs).getTime();
+}
+
+export function ratingInactiveForRatedGame(
+  gamesPlayed: number,
+  startTime: Date | null | undefined,
+  nowMs = Date.now(),
+): boolean {
+  return isRatingInactive({
+    gamesPlayed,
+    hasRecentRatedGame: hasRatedGameInActivityWindow(startTime, nowMs),
+  });
+}
+
+export function ratingInactiveKey(userId: string, sport: Sport): string {
+  return `${userId}:${sport}`;
+}
+
 export function compareRatingLeaderboardEntries(
   a: RatingLeaderboardSortKey,
   b: RatingLeaderboardSortKey,
@@ -62,10 +95,10 @@ export function orderPlayedRatingLeaderboard<T extends RatingLeaderboardSortKey>
   return [...users].sort(compareRatingLeaderboardEntries);
 }
 
-export function orderRatingLeaderboard<T extends RatingLeaderboardSortKey & { qualifiesForRating: boolean }>(
+export function orderRatingLeaderboard<T extends RatingLeaderboardSortKey & { inactive: boolean }>(
   users: T[],
 ): T[] {
-  const qualifying = users.filter((user) => user.qualifiesForRating).sort(compareRatingLeaderboardEntries);
-  const rest = users.filter((user) => !user.qualifiesForRating).sort(compareRatingLeaderboardEntries);
+  const qualifying = users.filter((user) => !user.inactive).sort(compareRatingLeaderboardEntries);
+  const rest = users.filter((user) => user.inactive).sort(compareRatingLeaderboardEntries);
   return [...qualifying, ...rest];
 }

@@ -164,6 +164,7 @@ export const USER_SPORT_PROFILE_SELECT = {
   reliability: true,
   gamesPlayed: true,
   gamesWon: true,
+  inactive: true,
   playStreakCount: true,
   playStreakBest: true,
   playStreakLastPlayAt: true,

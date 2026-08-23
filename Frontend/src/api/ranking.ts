@@ -13,7 +13,7 @@ export interface LeaderboardEntry extends User {
   gamesWon: number;
   lastGameRatingChange?: number | null;
   gamesCount?: number;
-  qualifiesForRating?: boolean;
+  inactive?: boolean;
 }
 
 export interface UserLeaderboardContext {

@@ -10,6 +10,7 @@ export interface UserSportProfile {
   reliability: number;
   gamesPlayed: number;
   gamesWon: number;
+  inactive?: boolean;
   questionnaireCompletedAt?: string | null;
   questionnaireSkippedAt?: string | null;
   questionnaireVersion?: string | null;
@@ -143,6 +144,8 @@ export interface BasicUser {
   socialLevel: number;
   /** @deprecated Prefer `sportProfiles` for the relevant sport. */
   reliability?: number;
+  /** Rating-inactive for the current sport context: <5 rated games or no rated game in 90 days. */
+  inactive?: boolean;
   /** Admin-only: accrued rating uncertainty (0–150) for current sport context. */
   ratingUncertainty?: number;
   /** Soft public state when accrued uncertainty ≥ threshold. */

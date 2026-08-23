@@ -511,6 +511,11 @@ model UserSportProfile {
   lastRatingActivityAt     DateTime?
   gamesPlayed              Int              @default(0)
   gamesWon                 Int              @default(0)
+  /**
+   * Rating leaderboard + invite sort. True when <5 rated games or no rated game in 90 days.
+   * Written on results invalidate and by the daily rating-inactive scheduler.
+   */
+  inactive                 Boolean          @default(true)
   playStreakCount          Int              @default(0)
   playStreakBest           Int              @default(0)
   playStreakLastPlayAt     DateTime?

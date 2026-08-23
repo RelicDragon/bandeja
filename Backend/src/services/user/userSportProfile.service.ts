@@ -6,6 +6,7 @@ import { getImplementedSports, getSportConfig, resolveSport } from '../../sport/
 import { isQuestionnaireSuggestedForProfile } from '../../sport/questionnaires/suggested';
 import { clampSportProfileGameStats } from '../results/outcomeStatsSnapshot';
 import { attachPlayStreaksToUser } from '../results/playStreak.service';
+import { refreshSportProfilesInactive } from '../ranking/sportProfileInactive.service';
 
 export const MIN_SPORT_LEVEL = 1.0;
 export const MAX_SPORT_LEVEL = 7.0;
@@ -41,6 +42,7 @@ export function enrichProfileUser<
   approvedLevel: boolean;
   approvedById: string | null;
   approvedWhen: Date | string | null;
+  inactive: boolean;
 } {
   const sport = resolveSport(user.primarySport ?? Sport.PADEL);
   const snapshot = resolveUserSportSnapshot(user, sport);
@@ -51,6 +53,7 @@ export function enrichProfileUser<
     reliability: snapshot.reliability,
     gamesPlayed: snapshot.gamesPlayed,
     gamesWon: snapshot.gamesWon,
+    inactive: snapshot.inactive,
     approvedLevel: confirmation.approvedLevel,
     approvedById: confirmation.approvedById,
     approvedWhen: confirmation.approvedWhen,
@@ -72,6 +75,7 @@ type SportProfileSnapshot = {
   reliability: number;
   gamesPlayed: number;
   gamesWon: number;
+  inactive?: boolean;
   approvedLevel?: boolean;
   approvedById?: string | null;
   approvedWhen?: Date | string | null;
@@ -87,6 +91,7 @@ export type SportProjectedUserFields = {
   reliability: number;
   gamesPlayed: number;
   gamesWon: number;
+  inactive: boolean;
   approvedLevel: boolean;
   approvedById: string | null;
   approvedWhen: Date | string | null;
@@ -242,6 +247,9 @@ export async function upsertPadelSportProfileFromUser(
         : {}),
     },
   });
+  if (data.gamesPlayed !== undefined || data.gamesWon !== undefined) {
+    await refreshSportProfilesInactive([{ userId, sport: Sport.PADEL }]);
+  }
 }
 
 const EMPTY_SPORT_SNAPSHOT = {
@@ -251,6 +259,7 @@ const EMPTY_SPORT_SNAPSHOT = {
   lastRatingActivityAt: null as Date | null,
   gamesPlayed: 0,
   gamesWon: 0,
+  inactive: true,
 } as const;
 
 /** Per-sport stats for rating/UI. Missing profile → default new-sport snapshot. */
@@ -261,6 +270,7 @@ export function resolveUserSportSnapshot(user: UserWithSportProfiles, sport: Spo
   lastRatingActivityAt: Date | null;
   gamesPlayed: number;
   gamesWon: number;
+  inactive: boolean;
 } {
   const profile =
     'sportProfiles' in user ? user.sportProfiles?.find((p) => p.sport === sport) : undefined;
@@ -280,6 +290,7 @@ export function resolveUserSportSnapshot(user: UserWithSportProfiles, sport: Spo
             : null,
       gamesPlayed: profile.gamesPlayed,
       gamesWon: profile.gamesWon,
+      inactive: typeof profile.inactive === 'boolean' ? profile.inactive : true,
     };
   }
 
@@ -408,6 +419,7 @@ export function projectUserForSportContext<T extends UserWithSportProfiles | nul
     reliability: snapshot.reliability,
     gamesPlayed: snapshot.gamesPlayed,
     gamesWon: snapshot.gamesWon,
+    inactive: snapshot.inactive,
     approvedLevel: confirmation.approvedLevel,
     approvedById: confirmation.approvedById,
     approvedWhen: confirmation.approvedWhen,
