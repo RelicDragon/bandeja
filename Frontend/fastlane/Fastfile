@@ -78,6 +78,156 @@ def emit_ios_release_state(state)
   UI.message("APP_RELEASE_IOS_STATE_JSON:#{JSON.generate(state.compact)}")
 end
 
+def emit_store_review_state(state)
+  require "json"
+
+  UI.message("APP_RELEASE_REVIEW_STATE_JSON:#{JSON.generate(state.compact)}")
+end
+
+module ::AppReleaseStoreReview
+  IOS_BLOCKING_REVIEW_STATES = [
+    Spaceship::ConnectAPI::ReviewSubmission::ReviewSubmissionState::CANCELING,
+    Spaceship::ConnectAPI::ReviewSubmission::ReviewSubmissionState::WAITING_FOR_REVIEW,
+    Spaceship::ConnectAPI::ReviewSubmission::ReviewSubmissionState::IN_REVIEW,
+    Spaceship::ConnectAPI::ReviewSubmission::ReviewSubmissionState::UNRESOLVED_ISSUES
+  ].freeze
+
+  def self.google_in_review_release(service)
+    parent = "applications/#{ANDROID_PACKAGE}/tracks/production"
+    response = service.list_application_track_releases(parent)
+    Array(response.releases).find do |release|
+      release.release_lifecycle_state == "RELEASE_LIFECYCLE_STATE_IN_REVIEW"
+    end
+  end
+
+  def self.ios_blocking_review_submission(app, platform)
+    app.get_review_submissions(
+      filter: {
+        state: IOS_BLOCKING_REVIEW_STATES.join(","),
+        platform: platform
+      },
+      includes: "appStoreVersionForReview"
+    ).first
+  end
+
+  def self.ios_removal_complete?(submission)
+    submission.nil? || submission.state ==
+      Spaceship::ConnectAPI::ReviewSubmission::ReviewSubmissionState::COMPLETE
+  end
+end
+
+# Supply does not expose Android Publisher's changesInReviewBehavior option yet.
+# Make production commits explicit: fail on an unexpected review, or replace it
+# only after the release CLI has recorded the user's consent.
+def install_explicit_google_review_commit!
+  require "supply/client"
+  return if Supply::Client.method_defined?(:app_release_original_commit_current_edit!)
+
+  Supply::Client.class_eval do
+    alias_method :app_release_original_commit_current_edit!, :commit_current_edit!
+
+    def commit_current_edit!
+      behavior = ENV["APP_RELEASE_GOOGLE_REVIEW_BEHAVIOR"]
+      return app_release_original_commit_current_edit! if behavior.nil? || behavior.empty?
+
+      send(:ensure_active_edit!)
+      if behavior == "CANCEL_IN_REVIEW_AND_SUBMIT"
+        reviewed_release = AppReleaseStoreReview.google_in_review_release(client)
+        expected_version_code = ENV["APP_RELEASE_GOOGLE_EXPECTED_REVIEW_VERSION_CODE"].to_s
+        expected_version_codes = ENV["APP_RELEASE_GOOGLE_EXPECTED_REVIEW_VERSION_CODES"].to_s
+          .split(",").reject(&:empty?).uniq.sort_by(&:to_i)
+        expected_version = ENV["APP_RELEASE_GOOGLE_EXPECTED_REVIEW_VERSION"].to_s
+        actual_version_codes = Array(reviewed_release&.active_artifacts).map do |artifact|
+          artifact.version_code.to_s
+        end.uniq.sort_by(&:to_i)
+        version_matches = expected_version.empty? ||
+          reviewed_release&.release_name.to_s == expected_version
+        identity_matches = if !expected_version_codes.empty?
+                             reviewed_release && version_matches &&
+                               actual_version_codes == expected_version_codes
+                           elsif expected_version_code.empty?
+                             reviewed_release && !expected_version.empty? &&
+                               reviewed_release.release_name.to_s == expected_version
+                           else
+                             reviewed_release && version_matches &&
+                               actual_version_codes.include?(expected_version_code)
+                           end
+
+        if reviewed_release.nil?
+          # The approved review finished while the AAB was uploading. Commit normally,
+          # but retain the atomic guard against a different review appearing now.
+          behavior = "ERROR_IF_IN_REVIEW"
+        elsif !identity_matches
+          conflict_message =
+            "APP_RELEASE_GOOGLE_REVIEW_CONFLICT: The production review changed after approval; " \
+            "expected version=#{expected_version.empty? ? 'unknown' : expected_version}, " \
+            "versionCode=#{expected_version_code.empty? ? 'unknown' : expected_version_code}"
+          abort_current_edit
+          UI.user_error!(
+            conflict_message
+          )
+        end
+      end
+
+      send(:call_google_api) do
+        client.commit_edit(
+          current_package_name,
+          current_edit.id,
+          changes_in_review_behavior: behavior
+        )
+      end
+      self.current_edit = nil
+      self.current_package_name = nil
+    end
+  end
+end
+
+def google_production_review_state
+  require "supply/client"
+
+  Supply.config = play_supply_config("production")
+  supply_client = Supply::Client.make_from_config(params: Supply.config)
+  reviewed_release = AppReleaseStoreReview.google_in_review_release(supply_client.client)
+
+  if reviewed_release
+    version_codes = Array(reviewed_release.active_artifacts).map do |artifact|
+      artifact.version_code.to_s
+    end.uniq.sort_by(&:to_i)
+    {
+      "platform" => "android",
+      "inReview" => true,
+      "state" => reviewed_release.release_lifecycle_state,
+      "version" => reviewed_release.release_name,
+      "versionCode" => version_codes.max_by(&:to_i),
+      "versionCodes" => version_codes
+    }
+  else
+    {
+      "platform" => "android",
+      "inReview" => false
+    }
+  end
+end
+
+def ios_blocking_review_submission
+  asc_api_key
+  app = Spaceship::ConnectAPI::App.find(IOS_APP_IDENTIFIER)
+  UI.user_error!("Could not find App Store Connect app #{IOS_APP_IDENTIFIER}") unless app
+
+  platform = Spaceship::ConnectAPI::Platform.map("ios")
+  AppReleaseStoreReview.ios_blocking_review_submission(app, platform)
+end
+
+def guard_no_ios_blocking_review!(phase)
+  pending_review = ios_blocking_review_submission
+  return unless pending_review
+
+  UI.user_error!(
+    "APP_RELEASE_IOS_REVIEW_CONFLICT:#{pending_review.id} " \
+    "An App Store review submission appeared #{phase}"
+  )
+end
+
 def ios_release_state(app_store_version: nil, build: nil, last_observed_processing_status: nil, metadata_updated_at: nil)
   submission = app_store_version&.app_store_version_submission
   {
@@ -263,6 +413,11 @@ def verify_ios_store_version_metadata!(app_version, build_number, expected_relea
 end
 
 platform :android do
+  desc "Detect whether Google Play already has production changes in review"
+  lane :review_status do
+    emit_store_review_state(google_production_review_state)
+  end
+
   desc "Upload signed AAB to Google Play with en-US What's new"
   lane :upload_release do |options|
     aab = options[:aab]
@@ -273,18 +428,55 @@ platform :android do
     UI.user_error!("metadata_path is required") if metadata_path.nil? || metadata_path.empty?
     UI.user_error!("AAB not found at #{aab}") unless File.exist?(aab)
 
-    upload_to_play_store(
-      package_name: ANDROID_PACKAGE,
-      aab: aab,
-      track: track,
-      json_key: play_json_key_path,
-      skip_upload_apk: true,
-      skip_upload_metadata: true,
-      skip_upload_changelogs: false,
-      skip_upload_images: true,
-      skip_upload_screenshots: true,
-      metadata_path: metadata_path
-    )
+    install_explicit_google_review_commit!
+    previous_behavior = ENV["APP_RELEASE_GOOGLE_REVIEW_BEHAVIOR"]
+    previous_expected_version_code = ENV["APP_RELEASE_GOOGLE_EXPECTED_REVIEW_VERSION_CODE"]
+    previous_expected_version_codes = ENV["APP_RELEASE_GOOGLE_EXPECTED_REVIEW_VERSION_CODES"]
+    previous_expected_version = ENV["APP_RELEASE_GOOGLE_EXPECTED_REVIEW_VERSION"]
+    ENV["APP_RELEASE_GOOGLE_REVIEW_BEHAVIOR"] =
+      options[:replace_existing_review].to_s == "true" ?
+        "CANCEL_IN_REVIEW_AND_SUBMIT" : "ERROR_IF_IN_REVIEW"
+    ENV["APP_RELEASE_GOOGLE_EXPECTED_REVIEW_VERSION_CODE"] =
+      options[:expected_review_version_code].to_s
+    ENV["APP_RELEASE_GOOGLE_EXPECTED_REVIEW_VERSION_CODES"] =
+      options[:expected_review_version_codes].to_s
+    ENV["APP_RELEASE_GOOGLE_EXPECTED_REVIEW_VERSION"] = options[:expected_review_version].to_s
+
+    begin
+      upload_to_play_store(
+        package_name: ANDROID_PACKAGE,
+        aab: aab,
+        track: track,
+        json_key: play_json_key_path,
+        skip_upload_apk: true,
+        skip_upload_metadata: true,
+        skip_upload_changelogs: false,
+        skip_upload_images: true,
+        skip_upload_screenshots: true,
+        metadata_path: metadata_path
+      )
+    ensure
+      if previous_behavior
+        ENV["APP_RELEASE_GOOGLE_REVIEW_BEHAVIOR"] = previous_behavior
+      else
+        ENV.delete("APP_RELEASE_GOOGLE_REVIEW_BEHAVIOR")
+      end
+      if previous_expected_version_code
+        ENV["APP_RELEASE_GOOGLE_EXPECTED_REVIEW_VERSION_CODE"] = previous_expected_version_code
+      else
+        ENV.delete("APP_RELEASE_GOOGLE_EXPECTED_REVIEW_VERSION_CODE")
+      end
+      if previous_expected_version_codes
+        ENV["APP_RELEASE_GOOGLE_EXPECTED_REVIEW_VERSION_CODES"] = previous_expected_version_codes
+      else
+        ENV.delete("APP_RELEASE_GOOGLE_EXPECTED_REVIEW_VERSION_CODES")
+      end
+      if previous_expected_version
+        ENV["APP_RELEASE_GOOGLE_EXPECTED_REVIEW_VERSION"] = previous_expected_version
+      else
+        ENV.delete("APP_RELEASE_GOOGLE_EXPECTED_REVIEW_VERSION")
+      end
+    end
   end
 
   desc "Verify Google Play release after upload"
@@ -302,12 +494,71 @@ platform :android do
 end
 
 platform :ios do
+  desc "Detect whether App Store Connect already has an iOS submission in review"
+  lane :review_status do
+    submission = ios_blocking_review_submission
+    version = submission&.app_store_version_for_review
+    emit_store_review_state(
+      {
+        "platform" => "ios",
+        "inReview" => !submission.nil?,
+        "state" => submission&.state,
+        "version" => version&.version_string,
+        "submissionId" => submission&.id
+      }
+    )
+  end
+
+  desc "Remove an explicitly approved iOS submission from App Review"
+  lane :remove_from_review do |options|
+    requested_submission_id = options[:submission_id].to_s
+    UI.user_error!("submission_id is required") if requested_submission_id.empty?
+
+    submission = ios_blocking_review_submission
+    if submission.nil?
+      UI.success("No App Store review submission remains to remove")
+      next
+    end
+    if submission.id != requested_submission_id
+      UI.user_error!(
+        "App Store review submission changed from #{requested_submission_id} to #{submission.id}; " \
+        "run the release planner again to approve the current submission"
+      )
+    end
+
+    submission.cancel_submission unless submission.state ==
+      Spaceship::ConnectAPI::ReviewSubmission::ReviewSubmissionState::CANCELING
+    interval_seconds = (ENV["APP_RELEASE_IOS_REVIEW_CANCEL_INTERVAL"] || "15").to_i
+    timeout_seconds = (ENV["APP_RELEASE_IOS_REVIEW_CANCEL_TIMEOUT"] || "600").to_i
+    deadline = Time.now + timeout_seconds
+
+    loop do
+      remaining = Spaceship::ConnectAPI::ReviewSubmission.get(
+        review_submission_id: requested_submission_id
+      )
+      break if AppReleaseStoreReview.ios_removal_complete?(remaining)
+      if Time.now >= deadline
+        UI.user_error!(
+          "Timed out waiting for App Store review submission #{requested_submission_id} to be removed"
+        )
+      end
+      UI.message("Waiting for App Store review removal to finish...")
+      sleep(interval_seconds)
+    end
+
+    UI.success("Removed App Store review submission #{requested_submission_id}")
+  end
+
   desc "Upload IPA binary to App Store Connect"
   lane :upload_binary do |options|
     ipa = options[:ipa]
 
     UI.user_error!("ipa path is required") if ipa.nil? || ipa.empty?
     UI.user_error!("IPA not found at #{ipa}") unless File.exist?(ipa)
+
+    if options[:guard_no_review].to_s == "true"
+      guard_no_ios_blocking_review!("before binary upload")
+    end
 
     base_options = {
       api_key: asc_api_key,
@@ -392,6 +643,10 @@ platform :ios do
     UI.user_error!("app_version is required") if app_version.empty?
     UI.user_error!("build_number is required") if build_number.empty?
     UI.user_error!("Release notes file not found at #{release_notes_path}") unless File.exist?(release_notes_path)
+
+    if submit_for_review
+      guard_no_ios_blocking_review!("before final submission")
+    end
 
     assert_exact_ios_build_selectable!(app_version, build_number)
     assert_ios_store_version_accepts_build!(app_version, build_number)

@@ -13,7 +13,9 @@ import {
   buildIosCleanArgs,
   parseJavaMajorVersion,
   resolveIpaOutputPath,
+  runAndroidBundleWithRetry,
   runBuildPreflight,
+  selectBuildLogTail,
   selectJavaHomeForVersion,
   xcodeBuildEnv,
 } from './app-release-build';
@@ -85,6 +87,21 @@ const preflight = runBuildPreflight();
 assert(Array.isArray(preflight.issues), 'preflight returns issues array');
 assert(typeof preflight.ok === 'boolean', 'preflight returns ok boolean');
 
+const gradleFailureTail = selectBuildLogTail(
+  [
+    '* What went wrong:',
+    "Execution failed for task ':app:signReleaseBundle'.",
+    '> A failure occurred while executing FinalizeBundleTask$BundleToolRunnable',
+    ...Array.from({ length: 50 }, (_, index) => `at gradle.frame.${index}`),
+    'Caused by: java.io.IOException: transient signing output failure',
+    'at bundletool.signing.Finalizer.run(Finalizer.java:1)',
+  ].join('\n'),
+);
+assert(
+  gradleFailureTail.includes('transient signing output failure'),
+  'build diagnostics retain a nested Gradle cause beyond the generic task failure',
+);
+
 const tempExportDir = fs.mkdtempSync(path.join(os.tmpdir(), 'app-release-ipa-'));
 const ipaPath = path.join(tempExportDir, 'App.ipa');
 fs.writeFileSync(ipaPath, 'test');
@@ -98,4 +115,41 @@ assert(
 );
 fs.rmSync(tempExportDir, { recursive: true, force: true });
 
-console.log('app-release-build tests: OK');
+void (async () => {
+  const attempts: string[][] = [];
+  await runAndroidBundleWithRetry(async (args) => {
+    attempts.push([...args]);
+    if (attempts.length === 1) {
+      throw new Error('transient bundle finalization failure');
+    }
+  });
+  assert(attempts.length === 2, 'Android bundle retries once after a transient failure');
+  assert(
+    attempts[0].join(' ') === 'bundleRelease',
+    'first Android bundle attempt uses the normal Gradle invocation',
+  );
+  assert(
+    attempts[1].join(' ') === 'bundleRelease --stacktrace --no-daemon',
+    'Android retry isolates Gradle state and captures the nested cause',
+  );
+
+  let failedAttempts = 0;
+  try {
+    await runAndroidBundleWithRetry(async () => {
+      failedAttempts += 1;
+      throw new Error(`persistent failure ${failedAttempts}`);
+    });
+    assert(false, 'persistent Android bundle failure must be reported');
+  } catch (error) {
+    assert(failedAttempts === 2, 'persistent Android bundle failure retries only once');
+    assert(
+      error instanceof Error && error.message.includes('isolated Gradle process'),
+      'persistent Android bundle failure explains that the isolated retry also failed',
+    );
+  }
+
+  console.log('app-release-build tests: OK');
+})().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});

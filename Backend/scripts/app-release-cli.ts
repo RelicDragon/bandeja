@@ -32,15 +32,21 @@ import {
 import {
   ReleaseUploadError,
   isAndroidAlreadyUploadedError,
+  isGoogleReviewConflictError,
+  isIosReviewConflictError,
   resolvePlayTrack,
   runAndroidStoreVerification,
   runAndroidUpload,
   runIosBinaryUpload,
   runIosProcessedBuildWait,
+  runIosPendingReviewRemoval,
   runIosStoreVersionFinalize,
   runIosStoreVersionVerification,
+  runStoreReviewCheck,
+  runStoreReviewCheckPreflight,
   runStoreVerificationPreflight,
   runUploadPreflight,
+  storeReviewCheckPlatforms,
 } from './lib/app-release-upload';
 import {
   cleanReleaseWorkspace,
@@ -53,10 +59,19 @@ import {
   tryLoadSession,
   saveSession,
   type IosAppStoreConnectState,
+  type PendingStoreReview,
   type ReleasePlatform,
   type ReleaseSession,
 } from './lib/app-release-session';
 import { ReleaseProgressTimer, timedListrTask } from './lib/app-release-timer';
+import {
+  approveStoreReviews,
+  androidReviewFingerprint,
+  androidReviewNeedsApproval,
+  iosReviewIsCanceling,
+  iosReviewNeedsApproval,
+  mergeStoreReviewSnapshot,
+} from './lib/app-release-review';
 
 function handleCancel<T>(value: T | symbol): T {
   if (clack.isCancel(value)) {
@@ -467,6 +482,194 @@ async function promptStoreConfig(session: ReleaseSession): Promise<ReleaseSessio
   };
 }
 
+function storeReviewLabel(platform: 'android' | 'ios', review: PendingStoreReview): string {
+  if (platform === 'android') {
+    return `Google Play${review.versionCode ? ` version code ${review.versionCode}` : ''}`;
+  }
+  return `App Store${review.version ? ` version ${review.version}` : ''}`;
+}
+
+function storeReviewDetails(platform: 'android' | 'ios', review: PendingStoreReview): string {
+  const state = review.state ? ` (${review.state})` : '';
+  return `${storeReviewLabel(platform, review)}${state}`;
+}
+
+async function gatherPendingReviewDecisions(
+  session: ReleaseSession,
+  dryRun: boolean,
+): Promise<ReleaseSession> {
+  if (dryRun) {
+    return session;
+  }
+
+  if (storeReviewCheckPlatforms(session).length === 0) {
+    return session;
+  }
+
+  const preflight = runStoreReviewCheckPreflight(session);
+  if (!preflight.ok) {
+    persist(session);
+    clack.note(preflight.issues.join('\n'), 'Store review check');
+    clack.log.error('Store review state must be known before a review upload can continue.');
+    process.exit(1);
+  }
+
+  const spinner = clack.spinner();
+  spinner.start('Checking the stores for versions already in review…');
+  let detected: Awaited<ReturnType<typeof runStoreReviewCheck>>;
+  try {
+    detected = await runStoreReviewCheck(session);
+    spinner.stop('Store review check complete');
+  } catch (error) {
+    spinner.stop('Store review check failed');
+    const uploadError =
+      error instanceof ReleaseUploadError
+        ? error
+        : new ReleaseUploadError(error instanceof Error ? error.message : String(error), '');
+    clack.log.error(uploadError.message);
+    if (uploadError.logTail) {
+      clack.note(uploadError.logTail, 'Last store-check output');
+    }
+    persist(session);
+    process.exit(1);
+  }
+
+  let current = mergeStoreReviewSnapshot(session, detected, new Date().toISOString());
+  persist(current);
+
+  const androidConflict = detected.android?.inReview === true;
+  const iosConflict = detected.ios?.inReview === true;
+  if (!androidConflict && !iosConflict) {
+    return current;
+  }
+
+  const conflictLines = [
+    androidConflict ? storeReviewDetails('android', detected.android!) : null,
+    iosConflict ? storeReviewDetails('ios', detected.ios!) : null,
+  ].filter(Boolean);
+  clack.note(
+    [
+      ...conflictLines,
+      '',
+      iosReviewIsCanceling(detected.ios)
+        ? 'Apple removal is already in progress; the release will wait for it to complete.'
+        : 'A new review upload cannot replace these without explicit approval.',
+    ].join('\n'),
+    'Existing store review detected',
+  );
+
+  const androidNeedsApproval = androidReviewNeedsApproval(current);
+  const iosSubmissionId = detected.ios?.submissionId;
+  const iosNeedsApproval = iosReviewNeedsApproval(current);
+
+  if (androidNeedsApproval && !androidReviewFingerprint(detected.android)) {
+    clack.log.error(
+      'Google Play reported an in-review release without a version code or release name; it cannot be safely replaced.',
+    );
+    process.exit(1);
+  }
+
+  if (iosConflict && !iosSubmissionId) {
+    clack.log.error(
+      'App Store Connect reported an in-progress review without a submission id; it cannot be safely removed.',
+    );
+    process.exit(1);
+  }
+
+  if (!androidNeedsApproval && !iosNeedsApproval) {
+    return current;
+  }
+
+  if (androidNeedsApproval && iosNeedsApproval) {
+    const choice = handleCancel(
+      await clack.select({
+        message: 'Which old review submission(s) should be removed/replaced?',
+        options: [
+          {
+            value: 'both',
+            label: 'Both Google and Apple',
+            hint: 'Continue the requested two-store release',
+          },
+          {
+            value: 'android',
+            label: 'Google only',
+            hint: 'Continue as an Android-only release',
+          },
+          {
+            value: 'ios',
+            label: 'Apple only',
+            hint: 'Continue as an iOS-only release',
+          },
+          { value: 'abort', label: 'Neither — stop release' },
+        ],
+      }),
+    );
+
+    if (choice === 'abort') {
+      clack.cancel('Release stopped — no review submission was removed and nothing was uploaded.');
+      process.exit(0);
+    }
+
+    current = approveStoreReviews(current, choice, { narrowTarget: true });
+  } else {
+    const platform = androidNeedsApproval ? 'android' : 'ios';
+    const review = platform === 'android' ? detected.android! : detected.ios!;
+    const approved = handleCancel(
+      await clack.confirm({
+        message: `Remove/replace ${storeReviewLabel(platform, review)} from review before continuing?`,
+        initialValue: false,
+      }),
+    );
+
+    if (!approved) {
+      clack.cancel(
+        'Release stopped — the existing review was not removed, so no new review upload is allowed.',
+      );
+      process.exit(0);
+    }
+
+    current = approveStoreReviews(current, platform);
+  }
+
+  persist(current);
+  return current;
+}
+
+async function removeApprovedIosReview(session: ReleaseSession): Promise<ReleaseSession> {
+  const review = session.reviewGuard.ios;
+  const approvedId = session.reviewGuard.iosRemovalApprovedSubmissionId;
+  if (
+    !includesIos(session.targetPlatform) ||
+    review?.inReview !== true ||
+    !review.submissionId ||
+    (!iosReviewIsCanceling(review) && approvedId !== review.submissionId)
+  ) {
+    return session;
+  }
+
+  const spinner = clack.spinner();
+  spinner.start(`Removing ${storeReviewLabel('ios', review)} from App Review…`);
+  try {
+    await runIosPendingReviewRemoval(review.submissionId);
+    spinner.stop('Old App Store submission removed from review');
+  } catch (error) {
+    spinner.stop('Could not remove old App Store submission');
+    throw error;
+  }
+
+  const current: ReleaseSession = {
+    ...session,
+    reviewGuard: {
+      ...session.reviewGuard,
+      ios: { ...review, inReview: false, state: 'REMOVED' },
+      iosRemovalCompletedSubmissionId: review.submissionId,
+      iosRemovalCompletedAt: new Date().toISOString(),
+    },
+  };
+  persist(current);
+  return current;
+}
+
 function renderSummary(session: ReleaseSession, dryRun: boolean): string {
   const notes = session.notes;
   if (!notes) {
@@ -489,6 +692,29 @@ function renderSummary(session: ReleaseSession, dryRun: boolean): string {
   }
   if (session.autoCommit !== undefined) {
     storeLines.push(`Auto-commit: ${session.autoCommit ? 'yes' : 'no'}`);
+  }
+  if (dryRun && (session.store.androidTrack === 'production' || session.store.iosSubmitForReview)) {
+    storeLines.push('Existing-review check: deferred to live release');
+  } else {
+    if (
+      includesAndroid(session.targetPlatform) &&
+      session.reviewGuard.android?.inReview &&
+      !androidReviewNeedsApproval(session)
+    ) {
+      storeLines.push(
+        `Review replacement: ${storeReviewLabel('android', session.reviewGuard.android)} approved`,
+      );
+    }
+    if (
+      includesIos(session.targetPlatform) &&
+      session.reviewGuard.ios?.inReview &&
+      session.reviewGuard.iosRemovalApprovedSubmissionId ===
+        session.reviewGuard.ios.submissionId
+    ) {
+      storeLines.push(
+        `Review removal: ${storeReviewLabel('ios', session.reviewGuard.ios)} approved`,
+      );
+    }
   }
   if (
     session.uploads?.android ||
@@ -650,8 +876,26 @@ async function runUploadPhase(
               if (!isAndroidAlreadyUploadedError(uploadError)) {
                 throw uploadError;
               }
+              try {
+                await runAndroidStoreVerification({
+                  ...current,
+                  targetPlatform: 'android',
+                  uploads: { ...current.uploads, android: true },
+                });
+              } catch (verificationError) {
+                const detail =
+                  verificationError instanceof ReleaseUploadError
+                    ? verificationError.logTail || verificationError.message
+                    : verificationError instanceof Error
+                      ? verificationError.message
+                      : String(verificationError);
+                throw new ReleaseUploadError(
+                  'Google Play has already used this version code, but the planned track release could not be verified.',
+                  detail,
+                );
+              }
               clack.log.warn(
-                'Google Play already has this Android version code — marking Android upload complete.',
+                'Google Play already has this Android version code and the exact release was verified — marking Android upload complete.',
               );
             }
             current = {
@@ -755,6 +999,40 @@ async function runUploadPhase(
       clack.log.error(uploadError.message);
       if (uploadError.logTail) {
         clack.note(uploadError.logTail, 'Last upload output');
+      }
+
+      if (
+        isGoogleReviewConflictError(uploadError) &&
+        includesAndroid(current.targetPlatform) &&
+        current.store.androidTrack === 'production'
+      ) {
+        const previousApproval = current.reviewGuard.androidReplacementApprovedFingerprint;
+        const refreshed = await gatherPendingReviewDecisions(current, false);
+        const nextApproval = refreshed.reviewGuard.androidReplacementApprovedFingerprint;
+        if (
+          refreshed.reviewGuard.android?.inReview !== true ||
+          (previousApproval !== undefined && previousApproval === nextApproval)
+        ) {
+          persist(refreshed);
+          clack.outro(
+            'Upload stopped safely — Google Play reports reviewed changes that could not be matched to the approved production release. Inspect Publishing overview, then resume.',
+          );
+          process.exit(1);
+        }
+        current = refreshed;
+        persist(current);
+        continue;
+      }
+
+      if (
+        isIosReviewConflictError(uploadError) &&
+        includesIos(current.targetPlatform) &&
+        current.store.iosSubmitForReview === true
+      ) {
+        current = await gatherPendingReviewDecisions(current, false);
+        current = await removeApprovedIosReview(current);
+        persist(current);
+        continue;
       }
 
       const decision = handleCancel(
@@ -919,7 +1197,9 @@ async function finalizeRelease(session: ReleaseSession): Promise<void> {
 
 async function executeRelease(session: ReleaseSession): Promise<void> {
   const dryRun = isDryRun();
-  const withStore = await promptStoreConfig(session);
+  let withStore = await promptStoreConfig(session);
+  persist(withStore);
+  withStore = await gatherPendingReviewDecisions(withStore, dryRun);
   clack.note(renderSummary(withStore, dryRun), 'Release summary');
 
   const confirmed = handleCancel(
@@ -971,6 +1251,8 @@ async function executeRelease(session: ReleaseSession): Promise<void> {
     clack.log.info(`Build finished in ${releaseTimer.totalElapsedLabel}.`);
   }
 
+  built = await gatherPendingReviewDecisions(built, false);
+  built = await removeApprovedIosReview(built);
   clack.log.step(`Uploading to ${releasePlatformLabel(built.targetPlatform)}…`);
   const uploaded = await runUploadPhase(built, releaseTimer);
   clack.log.info(`Upload finished — release pipeline total ${releaseTimer.totalElapsedLabel}.`);

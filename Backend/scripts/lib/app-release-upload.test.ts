@@ -6,12 +6,17 @@ import {
   PLAY_TRACKS,
   ReleaseUploadError,
   isAndroidAlreadyUploadedError,
+  isGoogleReviewConflictError,
+  isIosReviewConflictError,
   parseIosAppStoreConnectState,
+  parsePendingStoreReview,
   prepareUploadMetadata,
   resolvePlayTrack,
   resolvePlayWhatsNewText,
+  runStoreReviewCheckPreflight,
   runStoreVerificationPreflight,
   runUploadPreflight,
+  storeReviewCheckPlatforms,
   tailUploadLog,
 } from './app-release-upload';
 import type { ReleaseSession } from './app-release-session';
@@ -67,6 +72,7 @@ const baseSession: ReleaseSession = {
   },
   uploads: {},
   iosAppStoreConnect: {},
+  reviewGuard: {},
 };
 
 assert(PLAY_TRACKS.includes('internal'), 'PLAY_TRACKS includes internal');
@@ -83,6 +89,24 @@ assert(
     ),
   ),
   'detects already-uploaded Android version code',
+);
+assert(
+  isGoogleReviewConflictError(
+    new ReleaseUploadError(
+      'Google Api Error: failed precondition',
+      'reason: CHANGES_ALREADY_IN_REVIEW',
+    ),
+  ),
+  'detects a late Google Play review conflict',
+);
+assert(
+  isIosReviewConflictError(
+    new ReleaseUploadError(
+      'App Store upload blocked',
+      'APP_RELEASE_IOS_REVIEW_CONFLICT:submission-new',
+    ),
+  ),
+  'detects a late App Store review conflict',
 );
 const filteredTail = tailUploadLog(
   [
@@ -117,6 +141,25 @@ assert(
   parsedIosState.submissionId === 'submission-1',
   'parses iOS submission id from Fastlane marker',
 );
+const parsedAndroidReview = parsePendingStoreReview(
+  'INFO APP_RELEASE_REVIEW_STATE_JSON:{"platform":"android","inReview":true,"state":"IN_REVIEW","versionCode":"155","versionCodes":["154","155"]}',
+  'android',
+);
+assert(parsedAndroidReview.inReview, 'parses a Google Play review conflict');
+assert(parsedAndroidReview.versionCode === '155', 'parses reviewed Google Play version code');
+assert(
+  parsedAndroidReview.versionCodes?.join(',') === '154,155',
+  'parses the complete reviewed Google Play artifact set',
+);
+const parsedIosReview = parsePendingStoreReview(
+  'APP_RELEASE_REVIEW_STATE_JSON:{"platform":"ios","inReview":true,"state":"WAITING_FOR_REVIEW","version":"0.96.40","submissionId":"submission-old"}',
+  'ios',
+);
+assert(parsedIosReview.version === '0.96.40', 'parses reviewed App Store version');
+assert(
+  parsedIosReview.submissionId === 'submission-old',
+  'parses removable App Store submission id',
+);
 
 const playText = resolvePlayWhatsNewText(baseSession);
 assert(playText === 'Short Play copy', 'resolvePlayWhatsNewText prefers short notes');
@@ -130,6 +173,22 @@ const sessionWithArtifacts = {
   ...baseSession,
   artifacts: { aab: tempAab, ipa: tempIpa },
 };
+
+const productionReviewSession: ReleaseSession = {
+  ...sessionWithArtifacts,
+  store: { androidTrack: 'production', iosSubmitForReview: true },
+};
+assert(
+  storeReviewCheckPlatforms(productionReviewSession).join(',') === 'android,ios',
+  'checks both stores when production and submit-for-review are selected',
+);
+assert(
+  storeReviewCheckPlatforms({
+    ...productionReviewSession,
+    store: { androidTrack: 'internal', iosSubmitForReview: false },
+  }).length === 0,
+  'skips review checks for test track and prepare-without-submit',
+);
 
 const preflightMissing = runUploadPreflight({
   ...sessionWithArtifacts,
@@ -214,6 +273,17 @@ const uploadedPreflight = runUploadPreflight({
 assert(uploadedPreflight.ok, 'upload preflight passes when both uploads are complete');
 
 withoutStoreCredentials(() => {
+  const reviewCheckMissing = runStoreReviewCheckPreflight(productionReviewSession);
+  assert(!reviewCheckMissing.ok, 'review check preflight requires store credentials');
+  assert(
+    reviewCheckMissing.issues.some((issue) => issue.includes('Google Play review state')),
+    'review check preflight mentions Google credentials',
+  );
+  assert(
+    reviewCheckMissing.issues.some((issue) => issue.includes('App Store review state')),
+    'review check preflight mentions App Store credentials',
+  );
+
   const storeVerificationMissing = runStoreVerificationPreflight({
     ...sessionWithArtifacts,
     targetPlatform: 'both',
@@ -230,6 +300,23 @@ withoutStoreCredentials(() => {
     'store verification preflight does not require iOS artifact',
   );
 });
+
+const unapprovedReviewPreflight = runUploadPreflight({
+  ...sessionWithArtifacts,
+  store: { androidTrack: 'production', iosSubmitForReview: true },
+  reviewGuard: {
+    android: { inReview: true },
+    ios: { inReview: true, submissionId: 'submission-old' },
+  },
+});
+assert(
+  unapprovedReviewPreflight.issues.some((issue) => issue.includes('replacement was not approved')),
+  'upload preflight blocks unapproved Google review replacement',
+);
+assert(
+  unapprovedReviewPreflight.issues.some((issue) => issue.includes('removal was not approved')),
+  'upload preflight blocks unapproved App Store review removal',
+);
 
 const storeVerificationComplete = runStoreVerificationPreflight({
   ...sessionWithArtifacts,

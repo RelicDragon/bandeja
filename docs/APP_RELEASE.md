@@ -25,6 +25,8 @@ Canonical commit hash: `docs/app-release-baseline.txt` (one line, full SHA).
 
 Dry-run planner: `APP_RELEASE_DRY_RUN=1 ./scripts/app-release.sh`. Resume after failure: `APP_RELEASE_RESUME=1 ./scripts/app-release.sh`.
 
+For a Google Play production release or an App Store upload submitted for review, the live planner checks whether that store already has a version in review before showing the final summary. Replacing/removing an existing review requires explicit confirmation. When both stores are blocked, you can approve both or narrow the release to Google/Android or Apple/iOS only. Declining leaves the saved session intact and prevents the new review upload. Apple removal is completed before the IPA upload; Google replaces only the exact approved release/artifact set when the new production edit is committed. The stores are checked again immediately before upload to catch state changes during a long build, and Apple is guarded again at final review submission. Dry runs do not contact either store.
+
 See this file for store API credentials, Android signing, and internal-track smoke test steps.
 
 ### Headless scripts

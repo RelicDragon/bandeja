@@ -1159,6 +1159,14 @@ const suites: Suite[] = [
     ],
   },
   {
+    label: 'app release review guard',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'scripts', 'lib', 'app-release-review.test.ts'),
+    ],
+  },
+  {
     label: 'app release build',
     command: process.execPath,
     args: [

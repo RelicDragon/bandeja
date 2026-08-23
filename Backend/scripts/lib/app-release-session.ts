@@ -63,6 +63,27 @@ const iosAppStoreConnectStateSchema = z
   })
   .default({});
 
+const pendingStoreReviewSchema = z.object({
+  inReview: z.boolean(),
+  state: z.string().min(1).optional(),
+  version: z.string().min(1).optional(),
+  versionCode: z.string().min(1).optional(),
+  versionCodes: z.array(z.string().min(1)).min(1).optional(),
+  submissionId: z.string().min(1).optional(),
+});
+
+const storeReviewGuardSchema = z
+  .object({
+    checkedAt: z.string().min(1).optional(),
+    android: pendingStoreReviewSchema.optional(),
+    ios: pendingStoreReviewSchema.optional(),
+    androidReplacementApprovedFingerprint: z.string().min(1).optional(),
+    iosRemovalApprovedSubmissionId: z.string().min(1).optional(),
+    iosRemovalCompletedSubmissionId: z.string().min(1).optional(),
+    iosRemovalCompletedAt: z.string().min(1).optional(),
+  })
+  .default({});
+
 export const releaseSessionSchema = z.object({
   baselineSha: z.string().min(1),
   headSha: z.string().min(1),
@@ -74,6 +95,7 @@ export const releaseSessionSchema = z.object({
   store: storeSchema,
   uploads: uploadStatusSchema,
   iosAppStoreConnect: iosAppStoreConnectStateSchema,
+  reviewGuard: storeReviewGuardSchema,
   autoCommit: z.boolean().optional(),
 });
 
@@ -84,6 +106,8 @@ export type ReleaseArtifacts = z.infer<typeof artifactsSchema>;
 export type ReleaseStoreConfig = z.infer<typeof storeSchema>;
 export type ReleaseUploadStatus = z.infer<typeof uploadStatusSchema>;
 export type IosAppStoreConnectState = z.infer<typeof iosAppStoreConnectStateSchema>;
+export type PendingStoreReview = z.infer<typeof pendingStoreReviewSchema>;
+export type StoreReviewGuard = z.infer<typeof storeReviewGuardSchema>;
 export type ReleaseSession = z.infer<typeof releaseSessionSchema>;
 
 export function includesAndroid(platform: ReleasePlatform | undefined): boolean {

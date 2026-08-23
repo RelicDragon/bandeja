@@ -147,11 +147,25 @@ assert(
 const legacySession = { ...sessionWithNotes };
 delete (legacySession as Partial<typeof legacySession>).uploads;
 delete (legacySession as Partial<typeof legacySession>).iosAppStoreConnect;
+delete (legacySession as Partial<typeof legacySession>).reviewGuard;
 fs.writeFileSync(SESSION_FILE, `${JSON.stringify(legacySession, null, 2)}\n`, 'utf-8');
 assert(loadSession()?.uploads !== undefined, 'legacy session resume defaults uploads');
 assert(
   loadSession()?.iosAppStoreConnect !== undefined,
   'legacy session resume defaults App Store Connect state',
+);
+assert(loadSession()?.reviewGuard !== undefined, 'legacy session resume defaults review guard');
+const unsafeApprovalSession = {
+  ...sessionWithNotes,
+  reviewGuard: {
+    android: { inReview: true, versionCode: '212' },
+    androidReplacementApproved: true,
+  },
+};
+fs.writeFileSync(SESSION_FILE, `${JSON.stringify(unsafeApprovalSession, null, 2)}\n`, 'utf-8');
+assert(
+  loadSession()?.reviewGuard.androidReplacementApprovedFingerprint === undefined,
+  'legacy unscoped Google approval is discarded on resume',
 );
 assert(
   getSessionPhase(sessionWithNotes) === 'ready-to-apply',
