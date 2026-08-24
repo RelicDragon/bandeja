@@ -9,6 +9,8 @@ interface DrawerProps {
   children: React.ReactNode;
   direction?: 'top' | 'bottom' | 'left' | 'right';
   dismissible?: boolean;
+  /** Opt-in. When true, drag-to-dismiss is only from `DrawerHandle`. Default drawers keep content-drag dismiss. */
+  handleOnly?: boolean;
   /** Use Vaul NestedRoot when opening inside another drawer (e.g. player card). */
   nested?: boolean;
 }
@@ -19,6 +21,7 @@ const Drawer = ({
   children,
   direction = 'bottom',
   dismissible = true,
+  handleOnly,
   nested = false,
 }: DrawerProps) => {
   /* repositionInputs off: the app lifts surfaces itself via --keyboard-height
@@ -30,6 +33,7 @@ const Drawer = ({
       onOpenChange={onOpenChange}
       direction={direction}
       dismissible={dismissible}
+      {...(handleOnly ? { handleOnly: true } : {})}
       repositionInputs={false}
       autoFocus
     >
@@ -61,6 +65,8 @@ const DrawerCloseButton = React.forwardRef<
   </VaulDrawer.Close>
 ));
 DrawerCloseButton.displayName = 'DrawerCloseButton';
+
+const DrawerHandle = VaulDrawer.Handle;
 
 const DrawerOverlay = React.forwardRef<
   React.ElementRef<typeof VaulDrawer.Overlay>,
@@ -150,6 +156,7 @@ export {
   DrawerTrigger,
   DrawerClose,
   DrawerCloseButton,
+  DrawerHandle,
   DrawerContent,
   DrawerHeader,
   DrawerFooter,

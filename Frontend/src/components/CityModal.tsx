@@ -7,6 +7,7 @@ import {
   Drawer,
   DrawerCloseButton,
   DrawerContent,
+  DrawerHandle,
 } from '@/components/ui/Drawer';
 import { useCityList } from '@/hooks/useCityList';
 import { CityListContent } from '@/components/CityListContent';
@@ -85,6 +86,7 @@ export const CityModal = ({ isOpen, onClose, selectedId, onSelect, onCityChanged
   return (
     <Drawer
       open={isOpen}
+      handleOnly
       onOpenChange={(open) => {
         if (!open) onClose();
       }}
@@ -93,7 +95,7 @@ export const CityModal = ({ isOpen, onClose, selectedId, onSelect, onCityChanged
         className="!mt-10 !max-h-[min(94dvh,960px)] flex h-[min(94dvh,960px)] flex-col overflow-hidden bg-white dark:bg-gray-900"
         aria-labelledby={`${modalId}-title`}
       >
-        <div className="mx-auto mt-2.5 h-1 w-10 shrink-0 rounded-full bg-gray-300/90 dark:bg-gray-600" aria-hidden />
+        <DrawerHandle className="relative mx-auto mt-2.5 h-1 w-10 shrink-0 rounded-full bg-gray-300/90 dark:bg-gray-600" />
         <div className="flex shrink-0 items-center gap-3 px-4 pb-2 pt-3">
           <h2
             id={`${modalId}-title`}

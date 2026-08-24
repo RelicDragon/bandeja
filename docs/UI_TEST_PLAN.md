@@ -284,8 +284,8 @@ Frontend/e2e/
 | H-41 | Selected date heading | Pick date on My tab calendar | Long localized date (e.g. "Thursday, 11 June") with Today/Tomorrow badge shown below calendar; updates on re-select, localized per language |
 | H-63 | Empty selected date hint | User with upcoming games on other days → pick a day with no games | Localized "No games on this date" below selected date heading; Upcoming games section still shown |
 | H-60 | Calendar weekday headers | My tab or Find calendar with app language set to Russian, then English | Column headers use locale short weekday (ru: 2-letter e.g. пн/вт; en: 3-letter e.g. Mon/Tue), not truncated full names |
-| H-80 | Calendar day cell readability | Open My or Find calendar on a ~320px phone viewport with busy days | Day-of-month is fully visible and centered; game count is a small numeral under the date (not covering it); entity types show as color dots; selected day highlights without overlapping neighbors |
-| H-81 | My calendar league type mark | Open My calendar on a day with a league game | That day shows the league (blue) type mark; Find still hides league marks unless the League chip is on (F-82) |
+| H-80 | Calendar day cell readability | Open My or Find calendar on a ~320px phone viewport with busy days | Day-of-month is fully visible and centered; a tiny hairline sits under the date; game count is a small numeral under the date (not covering it); entity types show as color dots; selected day highlights without overlapping neighbors |
+| H-84 | My calendar league type mark | Open My calendar on a day with a league game | That day shows the league (blue) type mark; Find still hides league marks unless the League chip is on (F-82) |
 | H-40 | Overflow month day select | Navigate month → tap gray adjacent-month cell with game badge | Selected day highlights; that day's games in list (not upcoming sections) |
 | H-03 | Empty my games | User with no games | Empty state |
 | H-04 | Stories rail visible | Logged in home | Stories bubbles render |
@@ -409,7 +409,7 @@ Frontend/e2e/
 | H-58b | My calendar pref per user | User A sets calendar off → logout → User B (fresh) opens My → logout → login A | A restores off; B defaults on (no leak from A); A still off after B session |
 | H-59 | My tab games calendar view | Tap Calendar in panel switcher (first icon) when off | Calendar expands/shown; no List button in calendar header; day selection works as before; desktop uses split view without remounting main content |
 | H-59a | Calendar toggle on My | My tab with zero games, or only FINISHED/ARCHIVED | Calendar switch still available; calendar mounts only when switch is on |
-| H-64 | Calendar weather toggle | My tab calendar expanded → tap cloud/sun icon in header | Icon highlights; day cells show weather pill (icon + temp) instead of entity-type pill where forecast exists; date select/filter unchanged |
+| H-64 | Calendar weather toggle | My tab calendar expanded → tap cloud/sun icon in header | Icon highlights; day cells show a compact weather caption (small icon + muted temp) under date/type marks, not a floating high-contrast badge; date select/filter unchanged |
 | H-65 | Calendar weather toggle off | With weather mode on → tap cloud/sun again | Entity-type pills return; weather pills hidden |
 | H-66 | Calendar weather toggle disabled | User without selected city | Cloud/sun control disabled; no weather requests; entity-type pills unchanged |
 | H-67 | Calendar weather mode persists | Enable weather on My tab → reload | Weather mode still active; pills restored after fetch |
@@ -425,7 +425,7 @@ Frontend/e2e/
 | ID | Test | Steps | Expected |
 |----|------|-------|----------|
 | F-01 | Calendar view default | Open Find | Calendar + games |
-| F-81 | Find calendar day cell readability | Open Find calendar on a ~320px phone viewport with busy days | Same as H-80: date fully visible; count and type dots sit under the date without covering it |
+| F-81 | Find calendar day cell readability | Open Find calendar on a ~320px phone viewport with busy days | Same as H-80: date fully visible with a tiny hairline under it; count and type dots sit under the date without covering it |
 | F-02 | List view | Tap List in Find calendar header | Calendar collapses; weather toggle hidden; upcoming games from today grouped by date |
 | F-03 | List → calendar | Tap Calendar in collapsed header | Calendar expands; day-filtered games |
 | F-45 | Find calendar weather toggle | Find calendar expanded → tap cloud/sun icon | Weather pills on forecast days replace entity-type pills; filters and day selection unchanged |
@@ -483,7 +483,8 @@ Frontend/e2e/
 | F-29 | Empty find results | Filters with no match | Empty state |
 | F-37 | Trainer without slots filters | Training filter → tap trainer chip body (no count badge) | “Trainings by …” banner; list empty with trainer-specific no-slots message |
 | F-38 | Trainer avatar opens profile | Training filter → tap trainer avatar (with or without slots) | Player card opens; trainer filter unchanged |
-| F-30 | Change city from header | Find header city button → `CityModal` | Tall bottom sheet opens (search hero + Near me + Map; no Cities/Clubs switch); dismiss via X / drag / outside (no Cancel footer) |
+| F-30 | Change city from header | Find header city button → `CityModal` | Tall bottom sheet opens (search hero + Near me + Map; no Cities/Clubs switch); dismiss via X / handle drag / outside (no Cancel footer) |
+| F-84 | City selector scroll stays open | Open city selector → scroll the country/city list; pan the map | Sheet stays open; scrolling/panning does not dismiss; only handle drag / X / overlay closes it |
 | F-59 | Change-city no mode switch | Open change-city sheet from Find header | No Cities/Clubs toggle; browse is country → cities only |
 | F-60 | Change-city via club search | Open change-city → search club name → tap club | Commits that club’s city immediately (no Confirm); sheet closes |
 | F-61 | Change-city search hero + Suggested | Open change-city with empty search | Suggested is top of every browse list (countries and cities), then the rows; scrolls away with the list |

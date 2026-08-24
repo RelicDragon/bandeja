@@ -50,7 +50,7 @@ export function MonthCalendarDayCell({
       aria-selected={isSelected}
       aria-current={isTodayDate ? 'date' : undefined}
       className={`
-        relative flex ${weather ? 'min-h-16' : 'min-h-12'} w-full flex-col items-center justify-center gap-1 rounded-md px-0.5 py-1
+        relative flex ${weather ? 'min-h-14' : 'min-h-12'} w-full flex-col items-center justify-center gap-0.5 rounded-md px-0.5 py-1
         transition-colors duration-300 ease-out
         ${isSelected
           ? 'z-10 bg-primary-500 font-semibold text-white'
@@ -74,6 +74,17 @@ export function MonthCalendarDayCell({
       <span className="text-[13px] font-semibold leading-none tabular-nums">
         {format(day, 'd')}
       </span>
+      <span
+        aria-hidden
+        data-calendar-day-rule
+        className={`h-px w-3 shrink-0 rounded-full ${
+          isSelected
+            ? 'bg-white/35'
+            : !isCurrentMonth
+              ? 'bg-gray-300/80 dark:bg-gray-600'
+              : 'bg-black/15 dark:bg-white/20'
+        }`}
+      />
       {gameCount > 0 || markTypes.length > 0 || weather ? (
         <span
           className="flex min-h-[9px] max-w-full items-center justify-center gap-0.5 leading-none"
@@ -101,7 +112,7 @@ export function MonthCalendarDayCell({
         </span>
       ) : null}
       {weather ? (
-        <span className="flex min-h-4 items-center justify-center leading-none" data-calendar-day-weather>
+        <span className="flex items-center justify-center leading-none" data-calendar-day-weather>
           <MonthCalendarWeatherPill
             weather={weather}
             locale={locale}

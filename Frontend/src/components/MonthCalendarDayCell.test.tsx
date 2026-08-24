@@ -42,7 +42,7 @@ describe('MonthCalendarDayCell', () => {
     container.remove();
   });
 
-  it('renders entities and coloured icon weather on separate rows', () => {
+  it('renders entities and quiet weather on separate rows', () => {
     act(() => root.render(
       <MonthCalendarDayCell
         day={new Date(2026, 7, 23)}
@@ -72,7 +72,7 @@ describe('MonthCalendarDayCell', () => {
     expect(weatherRow?.querySelector('svg')).not.toBeNull();
     expect(weatherRow?.textContent).toContain('22');
     expect(weatherRow?.querySelector<HTMLElement>('[data-calendar-weather-temperature]')?.style.color)
-      .toBe('rgb(234, 179, 8)');
+      .toBe('');
     expect(entityRow?.nextElementSibling).toBe(weatherRow);
   });
 
