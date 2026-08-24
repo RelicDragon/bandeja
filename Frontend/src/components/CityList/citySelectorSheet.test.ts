@@ -9,7 +9,7 @@ import {
 } from './citySelectorSheet';
 
 const surfacesCss = readFileSync(
-  join(dirname(fileURLToPath(import.meta.url)), '../../../styles/keyboard/surfaces.css'),
+  join(dirname(fileURLToPath(import.meta.url)), '../../styles/keyboard/surfaces.css'),
   'utf8',
 );
 
