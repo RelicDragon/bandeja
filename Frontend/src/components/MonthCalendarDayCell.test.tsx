@@ -66,6 +66,7 @@ describe('MonthCalendarDayCell', () => {
     const entityRow = container.querySelector('[data-calendar-day-entities]');
     const weatherRow = container.querySelector('[data-calendar-day-weather]');
 
+    expect(container.querySelector('[data-calendar-day-rule]')).not.toBeNull();
     expect(entityRow).not.toBeNull();
     expect(entityRow?.querySelectorAll('.rounded-full')).toHaveLength(2);
     expect(weatherRow).not.toBeNull();
