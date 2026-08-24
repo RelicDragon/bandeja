@@ -71,6 +71,32 @@ body.keyboard-visible .cap-keyboard-aware-sheet {
   max-height: calc(100dvh - var(--keyboard-height, 0px) - env(safe-area-inset-top, 0px) - 24px) !important;
 }
 
+/* City selector is a tall fixed-height sheet; clamp height (not only max-height)
+   so search stays on-screen when the keyboard lifts the drawer. Other drawers
+   keep content-sized height and the generic max-height rule above. */
+.city-selector-sheet {
+  height: min(94dvh, 960px);
+  max-height: min(94dvh, 960px);
+  overscroll-behavior: none;
+}
+
+body.keyboard-visible .cap-keyboard-aware-sheet.city-selector-sheet {
+  height: min(
+    94dvh,
+    960px,
+    calc(100dvh - var(--keyboard-height, 0px) - env(safe-area-inset-top, 0px) - 24px)
+  ) !important;
+  max-height: min(
+    94dvh,
+    960px,
+    calc(100dvh - var(--keyboard-height, 0px) - env(safe-area-inset-top, 0px) - 24px)
+  ) !important;
+}
+
+body.keyboard-visible .city-selector-sheet-body {
+  padding-bottom: 0.75rem;
+}
+
 /* Full-screen overlay wrappers (fixed inset-0 + flex items-end/center):
    padding pushes the inner panel above the keyboard. */
 .cap-keyboard-aware-overlay {

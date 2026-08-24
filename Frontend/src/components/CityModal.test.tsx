@@ -34,7 +34,17 @@ vi.mock('@/components/ui/Drawer', () => ({
     drawerProps.handleOnly = handleOnly;
     return <div data-testid="city-drawer">{children}</div>;
   },
-  DrawerContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  DrawerContent: ({
+    children,
+    className,
+  }: {
+    children: React.ReactNode;
+    className?: string;
+  }) => (
+    <div data-testid="city-drawer-content" className={className}>
+      {children}
+    </div>
+  ),
   DrawerHandle: () => <div data-testid="city-drawer-handle" />,
   DrawerCloseButton: () => <button type="button">close</button>,
 }));
@@ -70,6 +80,10 @@ vi.mock('@/store/authStore', () => ({
 }));
 
 import { CityModal } from './CityModal';
+import {
+  CITY_SELECTOR_SHEET_BODY_CLASS,
+  CITY_SELECTOR_SHEET_CLASS,
+} from '@/components/CityList/citySelectorSheet';
 
 describe('CityModal', () => {
   let root: Root;
@@ -96,5 +110,9 @@ describe('CityModal', () => {
     expect(drawerProps.handleOnly).toBe(true);
     expect(container.querySelector('[data-testid="city-drawer-handle"]')).not.toBeNull();
     expect(container.querySelector('[data-testid="city-list"]')).not.toBeNull();
+    expect(container.querySelector('[data-testid="city-drawer-content"]')?.className).toContain(
+      CITY_SELECTOR_SHEET_CLASS,
+    );
+    expect(container.querySelector(`.${CITY_SELECTOR_SHEET_BODY_CLASS}`)).not.toBeNull();
   });
 });

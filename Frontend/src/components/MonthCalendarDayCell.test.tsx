@@ -104,5 +104,32 @@ describe('MonthCalendarDayCell', () => {
     expect(entityRow).not.toBeNull();
     expect(entityRow?.textContent).toBe('');
     expect(entityRow?.nextElementSibling).toBe(weatherRow);
+    expect(container.querySelector('[data-calendar-day-rule]')).not.toBeNull();
+  });
+
+  it('hides the date hairline when the day has no games and no forecast', () => {
+    act(() => root.render(
+      <MonthCalendarDayCell
+        day={new Date(2026, 7, 3)}
+        isCurrentMonth={false}
+        isSelected={false}
+        isTodayDate={false}
+        gameCount={0}
+        unreadCount={0}
+        hasGames={false}
+        showWeatherPill={false}
+        showTypePill={false}
+        showParticipantPill={false}
+        typePillTypes={[]}
+        participantTypes={[]}
+        dayWeather={null}
+        locale="en-GB"
+        onSelect={vi.fn()}
+      />,
+    ));
+
+    expect(container.querySelector('[data-calendar-day-rule]')).toBeNull();
+    expect(container.querySelector('[data-calendar-day-entities]')).toBeNull();
+    expect(container.querySelector('[data-calendar-day-weather]')).toBeNull();
   });
 });

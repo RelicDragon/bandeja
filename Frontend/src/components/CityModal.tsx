@@ -11,6 +11,10 @@ import {
 } from '@/components/ui/Drawer';
 import { useCityList } from '@/hooks/useCityList';
 import { CityListContent } from '@/components/CityListContent';
+import {
+  CITY_SELECTOR_SHEET_BODY_CLASS,
+  CITY_SELECTOR_SHEET_CLASS,
+} from '@/components/CityList/citySelectorSheet';
 import type { City } from '@/types';
 
 interface CityModalProps {
@@ -92,7 +96,7 @@ export const CityModal = ({ isOpen, onClose, selectedId, onSelect, onCityChanged
       }}
     >
       <DrawerContent
-        className="!mt-10 !max-h-[min(94dvh,960px)] flex h-[min(94dvh,960px)] flex-col overflow-hidden bg-white dark:bg-gray-900"
+        className={`${CITY_SELECTOR_SHEET_CLASS} !mt-10 flex flex-col overflow-hidden bg-white dark:bg-gray-900`}
         aria-labelledby={`${modalId}-title`}
       >
         <DrawerHandle className="relative mx-auto mt-2.5 h-1 w-10 shrink-0 rounded-full bg-gray-300/90 dark:bg-gray-600" />
@@ -106,7 +110,7 @@ export const CityModal = ({ isOpen, onClose, selectedId, onSelect, onCityChanged
           <DrawerCloseButton aria-label={t('common.close')} className="shrink-0" />
         </div>
 
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+        <div className={`${CITY_SELECTOR_SHEET_BODY_CLASS} flex min-h-0 flex-1 flex-col overflow-hidden px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]`}>
           <CityListContent
             view={cityList.view}
             search={cityList.search}

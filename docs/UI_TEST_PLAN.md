@@ -284,7 +284,7 @@ Frontend/e2e/
 | H-41 | Selected date heading | Pick date on My tab calendar | Long localized date (e.g. "Thursday, 11 June") with Today/Tomorrow badge shown below calendar; updates on re-select, localized per language |
 | H-63 | Empty selected date hint | User with upcoming games on other days → pick a day with no games | Localized "No games on this date" below selected date heading; Upcoming games section still shown |
 | H-60 | Calendar weekday headers | My tab or Find calendar with app language set to Russian, then English | Column headers use locale short weekday (ru: 2-letter e.g. пн/вт; en: 3-letter e.g. Mon/Tue), not truncated full names |
-| H-80 | Calendar day cell readability | Open My or Find calendar on a ~320px phone viewport with busy days | Day-of-month is fully visible and centered; a tiny hairline sits under the date; game count is a small numeral under the date (not covering it); entity types show as color dots; selected day highlights without overlapping neighbors |
+| H-80 | Calendar day cell readability | Open My or Find calendar on a ~320px phone viewport with busy days | Day-of-month is fully visible and centered; a tiny hairline sits under the date when the cell has games or weather (hidden on empty days); game count is a small numeral under the date (not covering it); entity types show as color dots; selected day highlights without overlapping neighbors |
 | H-84 | My calendar league type mark | Open My calendar on a day with a league game | That day shows the league (blue) type mark; Find still hides league marks unless the League chip is on (F-82) |
 | H-40 | Overflow month day select | Navigate month → tap gray adjacent-month cell with game badge | Selected day highlights; that day's games in list (not upcoming sections) |
 | H-03 | Empty my games | User with no games | Empty state |
@@ -425,7 +425,7 @@ Frontend/e2e/
 | ID | Test | Steps | Expected |
 |----|------|-------|----------|
 | F-01 | Calendar view default | Open Find | Calendar + games |
-| F-81 | Find calendar day cell readability | Open Find calendar on a ~320px phone viewport with busy days | Same as H-80: date fully visible with a tiny hairline under it; count and type dots sit under the date without covering it |
+| F-81 | Find calendar day cell readability | Open Find calendar on a ~320px phone viewport with busy days | Same as H-80: date fully visible; hairline under the date only when the cell has games or weather; count and type dots sit under the date without covering it |
 | F-02 | List view | Tap List in Find calendar header | Calendar collapses; weather toggle hidden; upcoming games from today grouped by date |
 | F-03 | List → calendar | Tap Calendar in collapsed header | Calendar expands; day-filtered games |
 | F-45 | Find calendar weather toggle | Find calendar expanded → tap cloud/sun icon | Weather pills on forecast days replace entity-type pills; filters and day selection unchanged |
@@ -485,6 +485,7 @@ Frontend/e2e/
 | F-38 | Trainer avatar opens profile | Training filter → tap trainer avatar (with or without slots) | Player card opens; trainer filter unchanged |
 | F-30 | Change city from header | Find header city button → `CityModal` | Tall bottom sheet opens (search hero + Near me + Map; no Cities/Clubs switch); dismiss via X / handle drag / outside (no Cancel footer) |
 | F-84 | City selector scroll stays open | Open city selector → scroll the country/city list; pan the map | Sheet stays open; scrolling/panning does not dismiss; only handle drag / X / overlay closes it |
+| F-85 | City selector keyboard sizing | Open city selector → focus search (Capacitor / mobile web software keyboard) | Sheet shrinks to sit above the keyboard; search, title, and close stay visible; results remain scrollable; dismiss keyboard restores tall sheet |
 | F-59 | Change-city no mode switch | Open change-city sheet from Find header | No Cities/Clubs toggle; browse is country → cities only |
 | F-60 | Change-city via club search | Open change-city → search club name → tap club | Commits that club’s city immediately (no Confirm); sheet closes |
 | F-61 | Change-city search hero + Suggested | Open change-city with empty search | Suggested is top of every browse list (countries and cities), then the rows; scrolls away with the list |
@@ -1817,6 +1818,7 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | X-44 | Chat composer above keyboard | Open game chat → focus composer | Composer sits on top of keyboard; message list stays scrolled to latest; no double gap |
 | X-45 | Centered dialog shift | Open any `ui/Dialog` with input (e.g. game note, city search) → focus input | Dialog re-anchors just above keyboard; content scrolls inside dialog; nothing hidden |
 | X-46 | Bottom drawer lift | Open Vaul drawer with input (story comments, market item) → focus input | Whole drawer lifts above keyboard; composer visible while typing |
+| X-46a | City selector keyboard | Find/profile/browse city sheet → focus search | Tall sheet clamps above keyboard (search not covered / not zoomed off-screen); list still scrolls; other drawers unchanged |
 | X-47 | Poll creation keyboard | Game chat → attach → poll → focus question/options | Poll dialog shifts above keyboard; all fields reachable |
 | X-48 | Club admin sheets keyboard | Schedule → cancel game / block slot / edit hold → focus reason/note | Sheet pushed above keyboard; submit button visible |
 | X-49 | Full-page form input visibility | Create game → focus a bottom field (e.g. comment) | Page scrolls so focused field sits above keyboard with gap |

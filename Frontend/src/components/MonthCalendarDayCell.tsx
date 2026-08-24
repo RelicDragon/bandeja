@@ -42,6 +42,7 @@ export function MonthCalendarDayCell({
 }: MonthCalendarDayCellProps) {
   const markTypes = showTypePill ? typePillTypes : showParticipantPill ? participantTypes : [];
   const weather = showWeatherPill ? dayWeather : null;
+  const hasDayData = gameCount > 0 || markTypes.length > 0 || weather != null;
 
   return (
     <button
@@ -74,18 +75,20 @@ export function MonthCalendarDayCell({
       <span className="text-[13px] font-semibold leading-none tabular-nums">
         {format(day, 'd')}
       </span>
-      <span
-        aria-hidden
-        data-calendar-day-rule
-        className={`h-px w-4 shrink-0 rounded-full ${
-          isSelected
-            ? 'bg-white/45'
-            : !isCurrentMonth
-              ? 'bg-gray-300 dark:bg-gray-600'
-              : 'bg-black/25 dark:bg-white/30'
-        }`}
-      />
-      {gameCount > 0 || markTypes.length > 0 || weather ? (
+      {hasDayData ? (
+        <span
+          aria-hidden
+          data-calendar-day-rule
+          className={`h-px w-4 shrink-0 rounded-full ${
+            isSelected
+              ? 'bg-white/45'
+              : !isCurrentMonth
+                ? 'bg-gray-300 dark:bg-gray-600'
+                : 'bg-black/25 dark:bg-white/30'
+          }`}
+        />
+      ) : null}
+      {hasDayData ? (
         <span
           className="flex min-h-[9px] max-w-full items-center justify-center gap-0.5 leading-none"
           data-calendar-day-entities
