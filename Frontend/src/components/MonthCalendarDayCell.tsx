@@ -77,12 +77,12 @@ export function MonthCalendarDayCell({
       <span
         aria-hidden
         data-calendar-day-rule
-        className={`h-px w-3 shrink-0 rounded-full ${
+        className={`h-px w-4 shrink-0 rounded-full ${
           isSelected
-            ? 'bg-white/35'
+            ? 'bg-white/45'
             : !isCurrentMonth
-              ? 'bg-gray-300/80 dark:bg-gray-600'
-              : 'bg-black/15 dark:bg-white/20'
+              ? 'bg-gray-300 dark:bg-gray-600'
+              : 'bg-black/25 dark:bg-white/30'
         }`}
       />
       {gameCount > 0 || markTypes.length > 0 || weather ? (
