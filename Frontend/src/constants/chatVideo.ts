@@ -12,5 +12,8 @@ export const TARGET_VIDEO_BITRATE = 3_000_000;
 
 export const SEND_VIDEO_UPLOAD_PHASE_MS = 180_000;
 
+/** IndexedDB persist for MP4 + poster can lag on iOS WKWebView. */
+export const OUTBOX_READY_WAIT_VIDEO_MS = 20_000;
+
 /** Client Mediabunny/WebCodecs encode must finish or fail — never hang attach forever. */
 export const SEND_VIDEO_TRANSCODE_PHASE_MS = 180_000;

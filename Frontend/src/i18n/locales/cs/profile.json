@@ -153,6 +153,7 @@
     "telegram": "Telegram",
     "telegramUsername": "Telegram uživatel",
     "linkTelegram": "Propojit Telegram",
+    "openingTelegram": "Otevírám Telegram…",
     "telegramNotLinked": "Nepropojeno",
     "updateFromTelegram": "Aktualizovat jméno z Telegramu",
     "telegramSyncFailed": "Nelze aktualizovat z Telegramu. Nejprve otevřete chat s botem.",

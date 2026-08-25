@@ -6,7 +6,6 @@ import {
   loadOutboxImageBlobs,
   loadOutboxDocumentBlob,
   loadOutboxVideoBlob,
-  loadOutboxVideoPosterBlob,
   loadOutboxVoiceBlob,
 } from './chatOutboxMediaBlobs';
 import { messageQueueStorage } from '@/services/chatMessageQueueStorage';
@@ -22,8 +21,7 @@ export async function outboxRowHasLocalMediaBlobs(row: ChatOutboxRow): Promise<b
   }
   if (row.hasPendingVideoBlob) {
     const vb = await loadOutboxVideoBlob(row.tempId);
-    const pb = await loadOutboxVideoPosterBlob(row.tempId);
-    return !!(vb && pb);
+    return !!vb;
   }
   if (row.hasPendingVoiceBlob) {
     return !!(await loadOutboxVoiceBlob(row.tempId));

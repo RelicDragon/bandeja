@@ -22,6 +22,7 @@ import {
 } from './ui/Drawer';
 import { removeOverlay } from '@/utils/urlSchema';
 import { appendLevelSportQuery } from '@/utils/levelSportQuery';
+import { openExternalUrl } from '@/utils/openExternalUrl';
 import { FullscreenImageViewer } from '@/components/FullscreenImageViewer';
 import { PlayerCardProfileBody, type PlayerCardProfileTab } from '@/components/player/PlayerCardProfileBody';
 import { PlayerCardCommonGroups } from '@/components/player/PlayerCardCommonGroups';
@@ -288,7 +289,7 @@ export const PlayerCardBottomSheet = memo(function PlayerCardBottomSheet({
         ? `tg://user?id=${stats.user.telegramId}`
         : null;
 
-    if (telegramUrl) window.open(telegramUrl, '_blank');
+    if (telegramUrl) void openExternalUrl(telegramUrl);
   }, [isBlocked, stats]);
 
   const handleOpenGame = useCallback(() => {

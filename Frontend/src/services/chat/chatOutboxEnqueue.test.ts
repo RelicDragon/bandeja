@@ -7,7 +7,12 @@ vi.mock('@/services/chatMessageQueueStorage', () => ({
   },
 }));
 
+vi.mock('@/services/chat/chatOutboxMediaBlobs', () => ({
+  loadOutboxVideoBlob: vi.fn(),
+}));
+
 import { messageQueueStorage } from '@/services/chatMessageQueueStorage';
+import { loadOutboxVideoBlob } from '@/services/chat/chatOutboxMediaBlobs';
 
 describe('chatOutboxEnqueue', () => {
   afterEach(() => {
@@ -32,6 +37,25 @@ describe('chatOutboxEnqueue', () => {
     const readyP = waitForOutboxReady('opt-1', 2000);
     resolveAdd();
     await expect(readyP).resolves.toBe(true);
+  });
+
+  it('waitForOutboxReady waits for pending video blob', async () => {
+    registerOutboxEnqueue('opt-v', Promise.resolve());
+    vi.mocked(messageQueueStorage.getByTempId).mockResolvedValue({
+      tempId: 'opt-v',
+      contextType: 'GROUP',
+      contextId: 'g1',
+      status: 'queued',
+      hasPendingVideoBlob: true,
+      payload: { content: '', chatType: 'PUBLIC', messageType: 'VIDEO' },
+      createdAt: new Date().toISOString(),
+    } as never);
+    vi.mocked(loadOutboxVideoBlob)
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValue(new Blob([new Uint8Array([1])], { type: 'video/mp4' }));
+
+    await expect(waitForOutboxReady('opt-v', 500)).resolves.toBe(true);
+    expect(loadOutboxVideoBlob).toHaveBeenCalled();
   });
 
   it('waitForOutboxReady returns false when row never appears', async () => {

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Button } from './Button';
 import { AppVersionService } from '@/services/appVersion.service';
 import { getCapacitorPlatform } from '@/utils/capacitor';
+import { openExternalUrl } from '@/utils/openExternalUrl';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/Dialog';
 
 interface AppVersionModalProps {
@@ -24,7 +25,7 @@ export const AppVersionModal = ({
     if (platform) {
       const storeUrl = AppVersionService.getStoreUrl(platform);
       if (storeUrl) {
-        window.open(storeUrl, '_blank');
+        void openExternalUrl(storeUrl);
       }
     }
   };

@@ -82,6 +82,7 @@
     "telegram": "Telegram",
     "telegramUsername": "Telegram Username",
     "linkTelegram": "Link Telegram",
+    "openingTelegram": "Opening Telegram…",
     "telegramNotLinked": "Not linked",
     "updateFromTelegram": "Update name from Telegram",
     "telegramSyncFailed": "Could not update from Telegram. Open a chat with the bot first.",

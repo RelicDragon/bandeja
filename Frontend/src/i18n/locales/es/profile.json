@@ -152,6 +152,7 @@
     "telegram": "Telegram",
     "telegramUsername": "Usuario de Telegram",
     "linkTelegram": "Vincular Telegram",
+    "openingTelegram": "Abriendo Telegram…",
     "telegramNotLinked": "No vinculado",
     "updateFromTelegram": "Actualizar nombre desde Telegram",
     "telegramSyncFailed": "No se pudo actualizar desde Telegram. Abre un chat con el bot primero.",

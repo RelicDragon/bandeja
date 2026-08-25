@@ -5,10 +5,9 @@ import { messageQueueStorage, type QueuedMessage } from '@/services/chatMessageQ
 import {
   loadOutboxImageBlobs,
   loadOutboxDocumentBlob,
-  loadOutboxVideoBlob,
-  loadOutboxVideoPosterBlob,
   loadOutboxVoiceBlob,
 } from '@/services/chat/chatOutboxMediaBlobs';
+import { loadOutboxVideoPreviewUrls } from '@/services/chat/chatOutboxVideoRehydrate';
 import { logChatOutboxBlobMismatch } from '@/services/chat/chatDiagnostics';
 import { reconcileUnsendableOutboxRow } from '@/services/chat/chatOutboxReconcile';
 import { registerOutboxRehydrateBlobUrls } from '@/services/chat/chatOutboxRehydrateUrls';
@@ -86,9 +85,8 @@ export async function buildOutboxOptimisticsForOpen(params: {
         mediaUrls = blobs.map((b) => URL.createObjectURL(b));
         thumbnailUrls = [...mediaUrls];
       } else if (q.payload.messageType === 'VIDEO' && q.hasPendingVideoBlob) {
-        const vb = await loadOutboxVideoBlob(q.tempId);
-        const pb = await loadOutboxVideoPosterBlob(q.tempId);
-        if (!vb || !pb) {
+        const preview = await loadOutboxVideoPreviewUrls(q.tempId);
+        if (!preview) {
           logChatOutboxBlobMismatch('rehydrate', {
             tempId: q.tempId,
             contextType: q.contextType,
@@ -97,8 +95,8 @@ export async function buildOutboxOptimisticsForOpen(params: {
           });
           return { kind: 'broken', q };
         }
-        mediaUrls = [URL.createObjectURL(vb)];
-        thumbnailUrls = [URL.createObjectURL(pb)];
+        mediaUrls = preview.mediaUrls;
+        thumbnailUrls = preview.thumbnailUrls;
       } else if (q.payload.messageType === 'VOICE' && q.hasPendingVoiceBlob) {
         const vb = await loadOutboxVoiceBlob(q.tempId);
         if (!vb) {

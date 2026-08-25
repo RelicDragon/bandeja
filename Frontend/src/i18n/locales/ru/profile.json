@@ -82,6 +82,7 @@
     "telegram": "Telegram",
     "telegramUsername": "Имя пользователя Telegram",
     "linkTelegram": "Привязать Telegram",
+    "openingTelegram": "Открываем Telegram…",
     "telegramNotLinked": "Не привязан",
     "updateFromTelegram": "Обновить имя из Telegram",
     "telegramSyncFailed": "Не удалось обновить из Telegram. Сначала откройте чат с ботом.",
