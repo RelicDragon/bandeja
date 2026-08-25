@@ -51,6 +51,21 @@ describe('chatListFeedStore filter transitions', () => {
     expect(useChatListFeedStore.getState().pagination.bugs.hasMore).toBe(true);
   });
 
+  it('clears rows and sets loading when switching to an uncached filter', () => {
+    const store = useChatListFeedStore.getState();
+    store.setUserId('user-1');
+    store.setLoading(false);
+    store.commitFilterCache('users', { chats: [userRow('u1')] }, { userId: 'user-1', applyToVisible: false });
+
+    store.setActiveFilter('users');
+    expect(useChatListFeedStore.getState().loading).toBe(false);
+    expect(useChatListFeedStore.getState().rows).toHaveLength(1);
+
+    store.setActiveFilter('channels');
+    expect(useChatListFeedStore.getState().loading).toBe(true);
+    expect(useChatListFeedStore.getState().rows).toHaveLength(0);
+  });
+
   it('keeps inactive filter cache when patching active rows', () => {
     const store = useChatListFeedStore.getState();
     store.setUserId('user-1');
