@@ -6,11 +6,7 @@ import {
   CHAT_LIST_VIRTUAL_THRESHOLD,
 } from '@/utils/chatListConstants';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
-import {
-  CHAT_LIST_HEIGHT_TRANSITION,
-  CHAT_LIST_LAYOUT_SPRING,
-  CHAT_ROW_EXIT_DURATION_S,
-} from './chatListMotion';
+import { CHAT_LIST_LAYOUT_SPRING, CHAT_ROW_EXIT_DURATION_S } from './chatListMotion';
 import { ChatListAnimatedRow } from './ChatListAnimatedRow';
 import { ChatListRowEnterShell } from './ChatListRowEnterShell';
 import { useChatListNewKeys } from './useChatListNewKeys';
@@ -55,12 +51,7 @@ function ChatListVirtualSliceVirtualized<T>({
   const rowStyles = useVirtualRowLayoutTransition(scrollElementRef, rows, !reduceMotion);
 
   return (
-    <motion.div
-      className="relative w-full"
-      initial={false}
-      animate={{ height: totalHeight }}
-      transition={reduceMotion ? { duration: 0 } : CHAT_LIST_HEIGHT_TRANSITION}
-    >
+    <div className="relative w-full" style={{ height: totalHeight }}>
       {rows.map((row) => {
         const itemKey = getItemKey(items[row.index]!, row.index);
         const isNew = newKeys.has(itemKey);
@@ -79,7 +70,7 @@ function ChatListVirtualSliceVirtualized<T>({
           </div>
         );
       })}
-    </motion.div>
+    </div>
   );
 }
 

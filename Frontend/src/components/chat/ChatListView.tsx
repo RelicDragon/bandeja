@@ -11,7 +11,7 @@ import { MarketItemDrawer } from '@/components/marketplace';
 import { CityUserCard } from './CityUserCard';
 import { ChatListDisplayedRows } from './ChatListDisplayedRows';
 import { ChatListMarketGroupChannels } from './ChatListMarketGroupChannels';
-import { ChatListLoadingSkeleton } from '@/components/chat/ChatListLoadingSkeleton';
+import { ChatListSkeletonRows } from '@/components/chat/ChatListLoadingSkeleton';
 import { ChatListEmptyPanel } from '@/components/chat/ChatListEmptyPanel';
 import { NearbyPeopleSection } from '@/components/browseCity/NearbyPeopleSection';
 import { useBrowseCityStore } from '@/store/browseCityStore';
@@ -84,16 +84,11 @@ export function ChatListView({ model }: { model: ChatListViewModel }) {
   const { showBugModal, setShowBugModal, handleBugCreated, bugsFilterPanelOpen, setBugsFilterPanelOpen } = modals;
   const { selectedChatId, selectedChatType } = selection;
 
-  if (loading) {
-    return (
-      <ChatListLoadingSkeleton
-        isDesktop={isDesktop}
-        isRefreshing={isRefreshing}
-        pullDistance={pullDistance}
-        pullProgress={pullProgress}
-      />
-    );
-  }
+  const showListSkeleton =
+    loading &&
+    !isSearchMode &&
+    !(contactsMode && cityUsersLoading) &&
+    displayedChats.length === 0;
 
   const chatListSearchSectionProps: ChatListSearchSectionsSharedProps = {
     scrollElementRef: listBodyScrollRef,
@@ -137,7 +132,7 @@ export function ChatListView({ model }: { model: ChatListViewModel }) {
           transition: pullDistance > 0 && !isRefreshing ? 'none' : `transform ${CHAT_LIST_PULL_TRANSITION_S}s ease-out`,
         }}
       >
-        {(chatsFilter === 'users' || chatsFilter === 'bugs' || chatsFilter === 'channels' || chatsFilter === 'market') && (
+        {(chatsFilter === 'users' || chatsFilter === 'bugs' || chatsFilter === 'channels' || chatsFilter === 'market') && !showListSkeleton && (
           <ChatListSearchBar
             chatsFilter={chatsFilter}
             contactsMode={contactsMode}
@@ -187,7 +182,7 @@ export function ChatListView({ model }: { model: ChatListViewModel }) {
             </motion.div>
           )}
         </AnimatePresence>
-        {chatsFilter === 'market' && (
+        {chatsFilter === 'market' && !showListSkeleton && (
           <div className="flex items-center justify-center mt-2 mb-2">
             <SegmentedSwitch
               tabs={[
@@ -212,7 +207,9 @@ export function ChatListView({ model }: { model: ChatListViewModel }) {
             ...(isDesktop ? { paddingBottom: DESKTOP_CHAT_LIST_SCROLL_BOTTOM_PAD } : {}),
           }}
         >
-          {!isSearchMode && contactsMode && cityUsersLoading ? (
+          {showListSkeleton ? (
+            <ChatListSkeletonRows />
+          ) : !isSearchMode && contactsMode && cityUsersLoading ? (
             <div className="p-4 flex justify-center">
               <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
             </div>

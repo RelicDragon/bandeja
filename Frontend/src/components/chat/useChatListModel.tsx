@@ -204,6 +204,11 @@ export function useChatListModel({
   );
 
   useLayoutEffect(() => {
+    const el = listBodyScrollRef.current;
+    if (el) el.scrollTop = 0;
+  }, [chatsFilter]);
+
+  useLayoutEffect(() => {
     if (!shouldLoadMore || loading) return;
     const el = loadMoreSentinelRef.current;
     if (!el) return;
