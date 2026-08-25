@@ -21,7 +21,7 @@ export const useMyGames = (
   onLoadingRef.current = onLoading;
 
   const games = excludePendingInviteOnlyMyGames(data?.games ?? [], userId);
-  const invites = filterInboxVisibleInvites(data?.invites ?? []);
+  const invites = filterInboxVisibleInvites<Invite>(data?.invites ?? []);
   const unreadCounts = data?.unreadCounts ?? {};
 
   const setInvites = useCallback(

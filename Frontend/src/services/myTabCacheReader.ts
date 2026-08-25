@@ -21,7 +21,7 @@ export function readMyTabCache(
 
 export function countPendingInvites(invites: Invite[] | undefined): number {
   if (!invites?.length) return 0;
-  return filterInboxVisibleInvites(invites.filter((invite) => invite.status === 'PENDING')).length;
+  return filterInboxVisibleInvites<Invite>(invites.filter((invite) => invite.status === 'PENDING')).length;
 }
 
 export function hasMyTabMembershipsSnapshot(
