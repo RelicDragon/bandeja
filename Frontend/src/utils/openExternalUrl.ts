@@ -1,23 +1,30 @@
 import { isCapacitor } from './capacitor';
 
-function ensureHttp(url: string): string {
-  const s = url.trim();
-  if (!s) return s;
-  if (/^https?:\/\//i.test(s)) return s;
-  return `https://${s}`;
+function isHttpUrl(url: string): boolean {
+  return /^https?:\/\//i.test(url);
 }
 
 export async function openExternalUrl(url: string): Promise<void> {
-  const href = ensureHttp(url);
-  if (!href || !href.startsWith('http')) return;
+  const href = url.trim();
+  if (!href) return;
+
   if (isCapacitor()) {
-    try {
-      const { Browser } = await import('@capacitor/browser');
-      await Browser.open({ url: href });
-    } catch {
-      window.open(href, '_blank', 'noopener,noreferrer');
+    if (isHttpUrl(href)) {
+      try {
+        const { Browser } = await import('@capacitor/browser');
+        await Browser.open({ url: href });
+      } catch {
+        window.open(href, '_blank', 'noopener,noreferrer');
+      }
+      return;
     }
-  } else {
-    window.open(href, '_blank', 'noopener,noreferrer');
+    window.location.href = href;
+    return;
   }
+
+  if (isHttpUrl(href)) {
+    window.open(href, '_blank', 'noopener,noreferrer');
+    return;
+  }
+  window.open(href, '_blank', 'noopener,noreferrer');
 }

@@ -7,6 +7,7 @@ import bug from './bug.json';
 import calendar from './calendar.json';
 import chat from './chat.json';
 import chats from './chats.json';
+import browseCity from './browseCity.json';
 import city from './city.json';
 import club from './club.json';
 import clubAdmin from './clubAdmin.json';
@@ -68,6 +69,7 @@ export default {
     ...calendar,
     ...chat,
     ...chats,
+    ...browseCity,
     ...city,
     ...club,
     ...clubAdmin,

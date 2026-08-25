@@ -7,6 +7,8 @@ import {
   type BuildLinkBookingRequestOptions,
 } from '@shared/gameBooking/linkBookingToGame';
 
+export type { BuildLinkBookingRequestOptions, LinkBookingRecord } from '@shared/gameBooking/linkBookingToGame';
+
 export type LinkBookingToGameArgs = {
   gameId: string;
   game: Game;
@@ -37,6 +39,7 @@ export {
   linkedGamesBookingGroupSlotSegments,
   linkedGamesBookingSlotOccupancyPercent,
   linkedGamesBookingSlotSegments,
+  filterBookingsNotFullyLinked,
   linkedGamesFullyCoverBookingSlot,
   resolveBooktimeClubTimezone,
   sortLinkableGames,

@@ -82,6 +82,7 @@
     "telegram": "Telegram",
     "telegramUsername": "Имя пользователя Telegram",
     "linkTelegram": "Привязать Telegram",
+    "openingTelegram": "Открываем Telegram…",
     "telegramNotLinked": "Не привязан",
     "updateFromTelegram": "Обновить имя из Telegram",
     "telegramSyncFailed": "Не удалось обновить из Telegram. Сначала откройте чат с ботом.",
@@ -310,6 +311,7 @@
     "monday": "Понедельник",
     "sunday": "Воскресенье",
     "currency": "Валюта",
+    "currencyAuto": "Определять автоматически",
     "timeFormat12h": "12-часовой",
     "timeFormat24h": "24-часовой",
     "characterGenerator": "Генератор персонажей",
@@ -318,7 +320,10 @@
     "noSharedGames": "No shared finished games yet",
     "noLeaderboardData": "No leaderboard data available",
     "leaderboard": {
-      "sportLabel": "Вид спорта рейтинга"
+      "sportLabel": "Вид спорта рейтинга",
+      "unranked": "—",
+      "inactiveSection": "Вне рейтинга",
+      "inactiveHint": "Нужно 5 игр и рейтинговый матч за 90 дней"
     },
     "sessionsTitle": "Устройства с входом",
     "sessionsSubtitle": "Управляйте тем, где вы остаётесь в системе",

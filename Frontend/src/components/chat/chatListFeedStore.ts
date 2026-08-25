@@ -109,7 +109,14 @@ export const useChatListFeedStore = create<ChatListFeedState>((set, get) => ({
 
   setUserId: (userId) => set({ userId }),
 
-  setActiveFilter: (filter) => set({ activeFilter: filter }),
+  setActiveFilter: (filter) =>
+    set((s) => {
+      const cached = s.filterCache[filter];
+      if (cached) {
+        return { activeFilter: filter, rows: cached.chats, loading: false };
+      }
+      return { activeFilter: filter, rows: [], loading: true };
+    }),
 
   setLoading: (loading) => set({ loading }),
 

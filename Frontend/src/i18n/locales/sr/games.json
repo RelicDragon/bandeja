@@ -26,6 +26,10 @@
     "confirmJoinMessage": "Da li ste sigurni da želite da se pridružite ovoj igri?",
     "confirmJoinQueueTitle": "Pridruži se redu?",
     "confirmJoinQueueMessage": "Da li ste sigurni da želite da se pridružite listi čekanja?",
+    "overlapConfirmTitle": "Već igraš",
+    "overlapConfirmMessage": "Termin se poklapa sa drugom igrom.",
+    "overlapConfirmProceed": "Nastavi",
+    "requiresOverlapConfirm": "Termin se poklapa sa drugom igrom.",
     "gameTypes": {
       "CLASSIC": "Klasična",
       "AMERICANO": "Amerikano",
@@ -83,6 +87,7 @@
     "genderPromptDismissConfirm": "Ne prikazuj više",
     "genderPromptModalTitle": "Podesite svoj pol",
     "genderPromptModalSubtitle": "Ovo pomaže da dobijete bolje preporuke igara i pristup mešovitim događajima.",
+    "genderPromptJoinSubtitle": "Ova igra je ograničena po polu. Izaberite svoj da bismo vas dodali.",
     "cityPromptSubtitle": "Da li je vaš grad {{cityName}}? Ako nije, koristite dugme ispod.",
     "cityPromptSubtitleNoCity": "Postavite grad da bismo prikazali igre u blizini.",
     "cityPromptAction": "Promeni {{cityName}}",

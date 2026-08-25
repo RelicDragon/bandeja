@@ -48,7 +48,9 @@
         "giantKiller": "Giant Killer",
         "dynamicDuo": "Dynamic Duo",
         "openCourt": "Open Court",
-        "leto2026": "Leto 2026"
+        "leto2026": "Leto 2026",
+        "tieBreaker": "Tie-Breaker",
+        "bugShipped": "Bug tracker"
       }
     },
     "leaderboard": {
@@ -82,7 +84,8 @@
         "hostedBars": "{{count}} Bar events",
         "upsets": "{{count}} upsets",
         "partnerWins": "{{count}} partner wins",
-        "partners": "{{count}} partners"
+        "partners": "{{count}} partners",
+        "tieBreaks": "{{count}} tie-breaks"
       }
     },
     "detail": {
@@ -337,6 +340,46 @@
       "leto2026Gold": {
         "title": "Leto 2026 champion",
         "description": "Gold podium of Fix Liga Leto 2026."
+      },
+      "tieBreak1": {
+        "title": "Tie-Breaker",
+        "description": "Win a set on a tie-break — classic 7–6 or a super tie-break."
+      },
+      "tieBreak5": {
+        "title": "Sudden Death",
+        "description": "Win 5 sets on a tie-break (7–6 or super TB)."
+      },
+      "tieBreak12": {
+        "title": "7–6 Club",
+        "description": "Win 12 sets on a tie-break (7–6 or super TB)."
+      },
+      "tieBreak32": {
+        "title": "Nerve of Steel",
+        "description": "Win 32 sets on a tie-break (7–6 or super TB)."
+      },
+      "tieBreak64": {
+        "title": "Lottery Legend",
+        "description": "Win 64 sets on a tie-break (7–6 or super TB)."
+      },
+      "bugShipped1": {
+        "title": "Shipped It",
+        "description": "Ship 1 bug or suggestion through in progress or testing to finished or archived. Questions don't count."
+      },
+      "bugShipped5": {
+        "title": "Patch Notes",
+        "description": "Ship 5 bugs or suggestions through in progress or testing to finished or archived."
+      },
+      "bugShipped10": {
+        "title": "Fix Factory",
+        "description": "Ship 10 bugs or suggestions through in progress or testing to finished or archived."
+      },
+      "bugShipped25": {
+        "title": "Bug Wrangler",
+        "description": "Ship 25 bugs or suggestions through in progress or testing to finished or archived."
+      },
+      "bugShipped50": {
+        "title": "Release Legend",
+        "description": "Ship 50 bugs or suggestions through in progress or testing to finished or archived."
       }
     }
   }

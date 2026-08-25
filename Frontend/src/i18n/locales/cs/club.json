@@ -149,6 +149,8 @@
       "myTabConnectHint": "Připojte účty klubů a uvidíte nadcházející rezervace zde.",
       "myTabConnectCta": "Propojit kluby",
       "myTabUpcomingTitle": "Nadcházející",
+      "myTabUnlinkedTitle": "Rezervované kurty",
+      "myTabUnlinkedHint": "Ještě nejsou propojené s hrou — propojte nebo vytvořte, ať nezapomenete.",
       "seeAllBookings": "Zobrazit vše",
       "noUpcomingAny": "Žádné nadcházející rezervace v propojených klubech.",
       "tabBookings": "Rezervace",

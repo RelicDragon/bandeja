@@ -1,0 +1,21 @@
+{
+  "browseCity": {
+    "chipAriaHome": "Your city, {{city}}. Browse another city.",
+    "chipAriaAway": "Browsing {{city}}. Change city.",
+    "chipAriaVenueHome": "Game city {{city}}. Choose another city.",
+    "chipAriaVenueAway": "Clubs in {{city}}. Change city.",
+    "changeCity": "City",
+    "recent": "Recent",
+    "nearby": "Nearby",
+    "viewCity": "View {{city}}",
+    "nobodyInCity": "No one in {{city}} for “{{query}}”",
+    "nobodyNearby": "No one nearby for “{{query}}”. Try another city.",
+    "noUsersInCity": "No users in {{city}}",
+    "noUsersInCityHint": "Switch city or search a name",
+    "lookingEmptyInCity": "Nobody’s looking in {{city}}",
+    "noClubsInCity": "No clubs in {{city}}",
+    "noClubsMatch": "No clubs match “{{query}}”",
+    "searchClubs": "Search clubs",
+    "km": "{{km}} km"
+  }
+}

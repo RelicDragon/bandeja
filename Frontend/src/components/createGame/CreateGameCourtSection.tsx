@@ -18,6 +18,7 @@ interface CreateGameCourtSectionProps {
   maxParticipants?: number;
   playersPerMatch?: number;
   multiSelectCourts?: boolean;
+  requiredCourtCount?: number;
   selectedDate: Date;
   hasBookedCourt: boolean;
   entityType: EntityType;
@@ -38,6 +39,7 @@ export const CreateGameCourtSection = memo(function CreateGameCourtSection({
   maxParticipants = 4,
   playersPerMatch = 4,
   multiSelectCourts = false,
+  requiredCourtCount: requiredCourtCountProp,
   selectedDate,
   hasBookedCourt,
   entityType,
@@ -69,7 +71,8 @@ export const CreateGameCourtSection = memo(function CreateGameCourtSection({
     !courtHasActiveBookingIntegration(club, court) &&
     !multiSelectCourts;
 
-  const requiredCourtCount = computeRequiredCourtCount(maxParticipants, playersPerMatch);
+  const requiredCourtCount =
+    requiredCourtCountProp ?? computeRequiredCourtCount(maxParticipants, playersPerMatch);
   const courtDone = multiSelectCourts
     ? selectedCourtIds.length >= requiredCourtCount
     : selectedCourt !== 'notBooked';

@@ -116,11 +116,12 @@ describe('achievement leaderboard families', () => {
   it('covers every catalog definition and rejects unknown input', () => {
     for (const definition of ACHIEVEMENT_CATALOG) {
       if (definition.ruleKind === 'EVENT_SEASON') continue;
+      if (definition.ruleKind === 'HABIT_BUG_SHIPPED') continue;
       const family = achievementLeaderboardFamilyForRuleKind(definition.ruleKind);
       expect(family).not.toBeNull();
       expect(isAchievementLeaderboardFamily(family)).toBe(true);
     }
-    expect(ACHIEVEMENT_LEADERBOARD_FAMILIES).toHaveLength(10);
+    expect(ACHIEVEMENT_LEADERBOARD_FAMILIES).toHaveLength(11);
     expect(isAchievementLeaderboardFamily('HABIT_FIRST_WIN')).toBe(false);
     expect(isAchievementLeaderboardFamily('anything')).toBe(false);
   });
@@ -460,6 +461,7 @@ describe('habitUnlocksNewlyCrossed', () => {
         gamesWon: 0,
         organizedGames: 0,
         giantKillerWins: 0,
+        tieBreakSetWins: 0,
       },
       after: {
         streakBest: 0,
@@ -467,6 +469,7 @@ describe('habitUnlocksNewlyCrossed', () => {
         gamesWon: 0,
         organizedGames: 50,
         giantKillerWins: 25,
+        tieBreakSetWins: 64,
       },
       ownedDefinitionIds: new Set(),
     }).map((d) => d.id);
@@ -487,6 +490,24 @@ describe('habitUnlocksDue organize backfill', () => {
     }).map((d) => d.id);
     expect(ids).toContain('habit_org_game_1');
     expect(ids.every((id) => !id.startsWith('habit_games_'))).toBe(true);
+  });
+
+  it('includes tie-break when counters meet threshold', () => {
+    const ids = habitUnlocksDue({
+      counters: {
+        streakBest: 0,
+        gamesFinished: 0,
+        gamesWon: 0,
+        tieBreakSetWins: 32,
+      },
+      ownedDefinitionIds: new Set(),
+    }).map((d) => d.id);
+    expect(ids).toEqual([
+      'habit_tie_break_1',
+      'habit_tie_break_5',
+      'habit_tie_break_12',
+      'habit_tie_break_32',
+    ]);
   });
 });
 

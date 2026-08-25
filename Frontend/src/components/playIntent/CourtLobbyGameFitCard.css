@@ -1,0 +1,140 @@
+.court-lobby-fit-card__avatar-ring.is-join {
+  background: conic-gradient(
+    from 120deg,
+    rgb(52 211 153),
+    rgb(5 150 105),
+    rgb(52 211 153)
+  );
+}
+
+.court-lobby-fit-card__avatar-ring.is-ask {
+  background: conic-gradient(
+    from 120deg,
+    rgb(34 211 238),
+    rgb(8 145 178),
+    rgb(34 211 238)
+  );
+}
+
+.court-lobby-fit-card__summary.tone-ask {
+  color: rgb(14 116 144);
+  background: rgb(207 250 254);
+}
+
+:global(html.dark) .court-lobby-fit-card__summary.tone-ask {
+  color: rgb(165 243 252);
+  background: rgb(21 94 117 / 0.38);
+}
+
+.court-lobby-game-card__entity {
+  flex: 0 0 auto;
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border-radius: 999px;
+  background: rgb(16 185 129 / 0.12);
+  color: rgb(5 150 105);
+}
+
+.court-lobby-game-card__entity[data-entity='TOURNAMENT'] {
+  background: rgb(244 63 94 / 0.12);
+  color: rgb(190 18 60);
+}
+
+.court-lobby-game-card__entity[data-entity='BAR'] {
+  background: rgb(245 158 11 / 0.16);
+  color: rgb(180 83 9);
+}
+
+:global(html.dark) .court-lobby-game-card__entity {
+  background: rgb(16 185 129 / 0.18);
+  color: rgb(167 243 208);
+}
+
+:global(html.dark) .court-lobby-game-card__entity[data-entity='TOURNAMENT'] {
+  background: rgb(244 63 94 / 0.18);
+  color: rgb(254 205 211);
+}
+
+:global(html.dark) .court-lobby-game-card__entity[data-entity='BAR'] {
+  background: rgb(245 158 11 / 0.2);
+  color: rgb(253 230 138);
+}
+
+.court-lobby-game-card__hint {
+  margin: 0 0 12px;
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: rgb(71 85 105);
+}
+
+:global(html.dark) .court-lobby-game-card__hint {
+  color: rgb(148 163 184);
+}
+
+.court-lobby-game-card__actions {
+  display: grid;
+  grid-template-columns: 1fr 1.15fr;
+  gap: 8px;
+}
+
+.court-lobby-game-card__primary,
+.court-lobby-game-card__secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  transition:
+    filter 0.12s ease,
+    transform 0.12s ease,
+    opacity 0.12s ease;
+}
+
+.court-lobby-game-card__primary {
+  border: 0;
+  background: rgb(5 150 105);
+  color: white;
+}
+
+.court-lobby-game-card__primary.is-ask {
+  background: rgb(8 145 178);
+}
+
+.court-lobby-game-card__primary:not(:disabled):hover {
+  filter: brightness(1.07);
+}
+
+.court-lobby-game-card__primary:not(:disabled):active {
+  transform: scale(0.97);
+}
+
+.court-lobby-game-card__primary:disabled,
+.court-lobby-game-card__secondary:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.court-lobby-game-card__secondary {
+  border: 1px solid rgb(203 213 225);
+  background: transparent;
+  color: rgb(30 41 59);
+}
+
+.court-lobby-game-card__secondary:not(:disabled):hover {
+  background: rgb(248 250 252);
+}
+
+:global(html.dark) .court-lobby-game-card__secondary {
+  border-color: rgb(255 255 255 / 0.12);
+  color: rgb(226 232 240);
+}
+
+:global(html.dark) .court-lobby-game-card__secondary:not(:disabled):hover {
+  background: rgb(255 255 255 / 0.06);
+}

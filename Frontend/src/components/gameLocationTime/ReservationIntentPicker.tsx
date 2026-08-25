@@ -41,6 +41,7 @@ type EditActionPickerProps = {
   value: EditReservationAction;
   options: EditReservationActionOption[];
   onChange: (action: EditReservationAction) => void;
+  subtitle?: string;
 };
 
 const INTENT_ORDER: ReservationIntent[] = [
@@ -330,7 +331,12 @@ export function ReservationIntentPicker({
   );
 }
 
-export function EditReservationActionPicker({ value, options, onChange }: EditActionPickerProps) {
+export function EditReservationActionPicker({
+  value,
+  options,
+  onChange,
+  subtitle,
+}: EditActionPickerProps) {
   const { t } = useTranslation();
 
   return (
@@ -340,7 +346,7 @@ export function EditReservationActionPicker({ value, options, onChange }: EditAc
       order={EDIT_ACTION_ORDER}
       testId="edit-reservation-action-picker"
       title={t('gameDetails.locationTime.reservationActionTitle')}
-      subtitle={t('gameDetails.locationTime.reservationActionSubtitle')}
+      subtitle={subtitle ?? t('gameDetails.locationTime.reservationActionSubtitle')}
       titleKeyPrefix="gameDetails.locationTime.reservationAction"
       descriptionKeyPrefix="gameDetails.locationTime.reservationAction"
       chipTitleKeyPrefix="gameDetails.locationTime.reservationAction"

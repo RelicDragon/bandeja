@@ -100,6 +100,61 @@ export type MatchProposalSummary = {
   }[];
 };
 
+export type InviteLookingMember = {
+  userId: string;
+  intentId: string;
+  firstName: string | null;
+  lastName: string | null;
+  avatar: string | null;
+  gender?: string | null;
+  level: number | null;
+  status: PlayIntentStatus;
+  inProposal: boolean;
+  inGame: boolean;
+  matchesGame: boolean;
+  fit: FitCheck[];
+  mismatch: {
+    reason: FitDimension;
+    period?: PlayIntentTimeOfDay;
+    startTime?: string | null;
+    endTime?: string | null;
+  } | null;
+  gamesTogetherCount: number;
+  matchScore: number;
+};
+
+export type InviteLookingPool = {
+  cityId: string;
+  sport: Sport;
+  entityType: string;
+  members: InviteLookingMember[];
+  total: number;
+};
+
+export type MatchingLobbyGame = {
+  id: string;
+  entityType: 'GAME' | 'TOURNAMENT' | 'BAR' | 'TRAINING' | 'LEAGUE' | 'LEAGUE_SEASON';
+  allowDirectJoin: boolean;
+  genderTeams: string | null;
+  startTime: string;
+  timeLabel: string;
+  club: { id: string; name: string } | null;
+  maxParticipants: number;
+  playingCount: number;
+  playingAvatars: {
+    userId: string;
+    firstName: string | null;
+    lastName: string | null;
+    avatar: string | null;
+  }[];
+  ownerAvatar: {
+    userId: string;
+    firstName: string | null;
+    lastName: string | null;
+    avatar: string | null;
+  } | null;
+};
+
 export type PlayIntentPool = {
   todayKey: string;
   cityTimezone: string;
@@ -109,6 +164,7 @@ export type PlayIntentPool = {
   availableCount: number;
   clusterProgress: number;
   members: PoolMember[];
+  matchingGames: MatchingLobbyGame[];
   total: number;
   overflow: number;
   pendingProposal: MatchProposalSummary | null;
@@ -173,6 +229,32 @@ export const playIntentsApi = {
     const { data } = await api.get<{ success: boolean; data: PlayIntentPool }>('/play-intents/pool', {
       params,
     });
+    return {
+      ...data.data,
+      matchingGames: data.data.matchingGames ?? [],
+    };
+  },
+
+  getInvitePool: async (body: {
+    gameId?: string;
+    cityId?: string;
+    draft?: {
+      sport: Sport;
+      entityType?: string;
+      cityId?: string;
+      clubId?: string | null;
+      startTime: string;
+      endTime?: string;
+      timeZone?: string | null;
+      minLevel?: number | null;
+      maxLevel?: number | null;
+      genderTeams?: string | null;
+    };
+  }) => {
+    const { data } = await api.post<{ success: boolean; data: InviteLookingPool }>(
+      '/play-intents/invite-pool',
+      body,
+    );
     return data.data;
   },
 

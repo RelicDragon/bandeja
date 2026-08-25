@@ -14,6 +14,8 @@ import prisma from '../../config/database';
 import { purgeOrphanPinsForUser } from './achievementPin.service';
 import { loadOrganizeHabitCounters } from './organizeGrant.service';
 import { loadPartnerHabitCounters } from './partnerGrant.service';
+import { loadTieBreakHabitCounters } from './tieBreakGrant.service';
+import { loadBugShippedHabitCounters } from './bugShippedGrant.service';
 
 export type TrophyDefinitionView = {
   id: string;
@@ -197,7 +199,15 @@ export async function buildTrophiesPayload(params: {
   const isOwner = Boolean(params.viewerUserId && params.viewerUserId === params.userId);
   const organize = await loadOrganizeHabitCounters(params.userId);
   const partner = await loadPartnerHabitCounters(params.userId);
-  const counters: HabitProgressCounters = { ...params.counters, ...organize, ...partner };
+  const tiebreak = await loadTieBreakHabitCounters(params.userId);
+  const bugShipped = await loadBugShippedHabitCounters(params.userId);
+  const counters: HabitProgressCounters = {
+    ...params.counters,
+    ...organize,
+    ...partner,
+    ...tiebreak,
+    ...bugShipped,
+  };
 
   await purgeOrphanPinsForUser({ userId: params.userId });
 

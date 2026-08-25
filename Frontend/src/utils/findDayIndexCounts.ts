@@ -15,6 +15,8 @@ import { dateKeyInTimezone } from '@/utils/weatherDayGroups';
 export type FindDayIndexRow = {
   id: string;
   startTime: string;
+  /** New servers project this city-local key; optional for rolling compatibility. */
+  dateKey?: string;
   sport?: string;
   entityType: string;
   minLevel: number | null;
@@ -128,9 +130,9 @@ export function aggregateFindDayIndexByDay(
   for (const row of rows) {
     if (!passesDayIndexResidualFilters(row, viewer, state, cityTimezone)) continue;
 
-    const key = cityTimezone
+    const key = row.dateKey ?? (cityTimezone
       ? dateKeyInTimezone(new Date(row.startTime), cityTimezone)
-      : format(startOfDay(new Date(row.startTime)), 'yyyy-MM-dd');
+      : format(startOfDay(new Date(row.startTime)), 'yyyy-MM-dd'));
 
     const existing = byDay.get(key) ?? emptyIndexDayAgg();
     existing.gameCount += 1;

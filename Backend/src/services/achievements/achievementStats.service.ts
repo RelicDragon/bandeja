@@ -32,7 +32,7 @@ export class AchievementStatsRefreshError extends Error {
  */
 export async function lockAchievementStatsWrite(params: {
   userId: string;
-  kind: 'organize' | 'partner';
+  kind: 'organize' | 'partner' | 'tiebreak';
   tx: Prisma.TransactionClient;
 }): Promise<void> {
   const lockKey = `achievement-stats:${params.kind}:${params.userId}`;
@@ -86,6 +86,16 @@ export async function readPartnerAchievementStats(
     dynamicDuoMaxWins: row.dynamicDuoMaxWins,
     openCourtPartners: row.openCourtPartners,
   };
+}
+
+export async function readTieBreakAchievementStats(
+  userId: string,
+  tx?: DbClient,
+): Promise<{ tieBreakSetWins: number } | null> {
+  const db = tx ?? prisma;
+  const row = await db.userAchievementStats.findUnique({ where: { userId } });
+  if (!row?.tiebreakRefreshedAt) return null;
+  return { tieBreakSetWins: row.tieBreakSetWins };
 }
 
 export async function upsertOrganizeAchievementStats(params: {
@@ -186,6 +196,55 @@ export async function commitPartnerAchievementStatsIfUnchanged(params: {
   return result.count === 1;
 }
 
+export async function upsertTieBreakAchievementStats(params: {
+  userId: string;
+  tiebreak: { tieBreakSetWins: number };
+  tx?: DbClient;
+}): Promise<void> {
+  const db = params.tx ?? prisma;
+  const now = new Date();
+  await db.userAchievementStats.upsert({
+    where: { userId: params.userId },
+    create: {
+      userId: params.userId,
+      ...params.tiebreak,
+      revision: 1,
+      tiebreakRefreshedAt: now,
+      tiebreakRepairFailures: 0,
+      tiebreakRepairFailedAt: null,
+    },
+    update: {
+      ...params.tiebreak,
+      revision: { increment: 1 },
+      tiebreakRefreshedAt: now,
+      tiebreakRepairFailures: 0,
+      tiebreakRepairFailedAt: null,
+    },
+  });
+}
+
+export async function commitTieBreakAchievementStatsIfUnchanged(params: {
+  userId: string;
+  startedRevision: number;
+  tiebreak: { tieBreakSetWins: number };
+  tx?: DbClient;
+}): Promise<boolean> {
+  const db = params.tx ?? prisma;
+  const result = await db.userAchievementStats.updateMany({
+    where: {
+      userId: params.userId,
+      revision: params.startedRevision,
+    },
+    data: {
+      ...params.tiebreak,
+      tiebreakRefreshedAt: new Date(),
+      tiebreakRepairFailures: 0,
+      tiebreakRepairFailedAt: null,
+    },
+  });
+  return result.count === 1;
+}
+
 /** Mark cached organize/partner counters stale so cabinet reloads recompute. */
 export async function invalidateAchievementStatsCache(params: {
   userIds: string[];
@@ -205,7 +264,7 @@ export async function invalidateAchievementStatsCache(params: {
   );
   if (ids.length === 0) return;
   const db = params.tx;
-  for (const kind of ['organize', 'partner'] as const) {
+  for (const kind of ['organize', 'partner', 'tiebreak'] as const) {
     for (const userId of ids) {
       await lockAchievementStatsWrite({ userId, kind, tx: db });
     }
@@ -219,18 +278,21 @@ export async function invalidateAchievementStatsCache(params: {
     data: {
       organizeRefreshedAt: null,
       partnerRefreshedAt: null,
+      tiebreakRefreshedAt: null,
       revision: { increment: 1 },
       organizeRepairFailures: 0,
       partnerRepairFailures: 0,
+      tiebreakRepairFailures: 0,
       organizeRepairFailedAt: null,
       partnerRepairFailedAt: null,
+      tiebreakRepairFailedAt: null,
     },
   });
 }
 
 export async function recordAchievementStatsRepairFailure(params: {
   userId: string;
-  kind: 'organize' | 'partner';
+  kind: 'organize' | 'partner' | 'tiebreak';
   startedRevision: number;
   tx?: DbClient;
 }): Promise<boolean> {
@@ -246,10 +308,15 @@ export async function recordAchievementStatsRepairFailure(params: {
             organizeRepairFailures: { increment: 1 },
             organizeRepairFailedAt: new Date(),
           }
-        : {
-            partnerRepairFailures: { increment: 1 },
-            partnerRepairFailedAt: new Date(),
-          },
+        : params.kind === 'partner'
+          ? {
+              partnerRepairFailures: { increment: 1 },
+              partnerRepairFailedAt: new Date(),
+            }
+          : {
+              tiebreakRepairFailures: { increment: 1 },
+              tiebreakRepairFailedAt: new Date(),
+            },
   });
   return result.count === 1;
 }

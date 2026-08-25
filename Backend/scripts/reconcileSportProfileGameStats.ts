@@ -7,6 +7,7 @@ import {
   clampSportProfileGameStats,
   resolveSportStatsDeltasForReconcile,
 } from '../src/services/results/outcomeStatsSnapshot';
+import { refreshSportProfilesInactive } from '../src/services/ranking/sportProfileInactive.service';
 
 type RecomputedStats = {
   userId: string;
@@ -164,6 +165,10 @@ export async function reconcileSportProfileGameStats(options: {
     });
     updated += 1;
   }
+
+  await refreshSportProfilesInactive(
+    patchList.map((patch) => ({ userId: patch.userId, sport: patch.sport })),
+  );
 
   console.log(`Updated ${updated} profile(s).`);
   return { patchCount: patchList.length, updated };

@@ -2,6 +2,7 @@ import prisma from '../config/database';
 import { Sport, ResultsStatus } from '@prisma/client';
 import { USER_SELECT_FIELDS, USER_SPORT_PROFILE_SELECT } from '../utils/constants';
 import { resolveUserSportSnapshot } from './user/userSportProfile.service';
+import { orderPlayedRatingLeaderboard, orderRatingLeaderboard } from './ranking/ratingLeaderboardQualify';
 
 export type LeaderboardTieBreak = 'totalPoints' | 'gamesWon';
 
@@ -62,7 +63,32 @@ export const calculateRanks = (
   return rankMap;
 };
 
+type RatingLeaderboardCandidate = {
+  id: string;
+  level: number;
+  reliability: number;
+  gamesWon: number;
+  gamesPlayed: number;
+  inactive: boolean;
+};
+
 export class RankingService {
+  static qualifyAndRankRatingLeaderboard<T extends RatingLeaderboardCandidate>(users: T[]): {
+    users: T[];
+    rankMap: Map<string, number>;
+  } {
+    const ordered = orderRatingLeaderboard(users);
+    return {
+      users: ordered,
+      rankMap: calculateRanks(
+        ordered.filter((user) => !user.inactive),
+        false,
+        false,
+        'gamesWon',
+      ),
+    };
+  }
+
   static async getCityLeaderboardRanks(cityId: string, sport: Sport): Promise<Map<string, number>> {
     const usersRaw = await prisma.user.findMany({
       where: {
@@ -77,7 +103,7 @@ export class RankingService {
       },
     });
 
-    const allUsers = usersRaw
+    const candidates = usersRaw
       .map((u) => {
         const snap = resolveUserSportSnapshot(u, sport);
         return {
@@ -88,15 +114,14 @@ export class RankingService {
           gamesWon: snap.gamesWon,
         };
       })
-      .filter((u) => u.gamesPlayed > 0)
-      .sort((a, b) => {
-        if (a.level !== b.level) return b.level - a.level;
-        if (a.reliability !== b.reliability) return b.reliability - a.reliability;
-        if (a.gamesWon !== b.gamesWon) return b.gamesWon - a.gamesWon;
-        return a.id.localeCompare(b.id);
-      });
+      .filter((u) => u.gamesPlayed > 0);
 
-    return calculateRanks(allUsers, false, false, 'gamesWon');
+    return calculateRanks(
+      orderPlayedRatingLeaderboard(candidates),
+      false,
+      false,
+      'gamesWon',
+    );
   }
 
   static async getGamesInLast30Days(

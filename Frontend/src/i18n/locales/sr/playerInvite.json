@@ -26,6 +26,18 @@
     "statsSocialRow": "Društveni: {{social}}",
     "teamBadge": "Tim",
     "availabilityPartial": "Delimično dostupan",
-    "availabilityNone": "Nije dostupan u to vreme"
+    "availabilityNone": "Nije dostupan u to vreme",
+    "tabSearch": "Pretraži",
+    "tabLooking": "Žele da igraju",
+    "lookingEmpty": "Niko trenutno ne traži",
+    "lookingEmptyHint": "Koristi karticu Pretraži",
+    "lookingHint": "{{great}} odličan fit · {{total}} traži",
+    "lookingBadgeMatch": "U meču",
+    "lookingBadgeInGame": "U igri",
+    "stoppedLooking": "{{name}} više ne traži",
+    "alreadyInMatch": "Već su u meču",
+    "lookingLoadError": "Lista se nije učitala",
+    "lookingLoadErrorHint": "Koristi Pretraži, ili pokušaj ponovo",
+    "lookingRetry": "Pokušaj ponovo"
   }
 }

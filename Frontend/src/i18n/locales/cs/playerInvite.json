@@ -27,6 +27,18 @@
     "statsSocialRow": "Sociální: {{social}}",
     "teamBadge": "Tým",
     "availabilityPartial": "Částečně dostupný",
-    "availabilityNone": "Není k dispozici v tento čas"
+    "availabilityNone": "Není k dispozici v tento čas",
+    "tabSearch": "Hledat",
+    "tabLooking": "Chtějí hrát",
+    "lookingEmpty": "Nikdo teď nehledá",
+    "lookingEmptyHint": "Použij záložku Hledat",
+    "lookingHint": "{{great}} skvělá shoda · {{total}} hledá",
+    "lookingBadgeMatch": "V zápase",
+    "lookingBadgeInGame": "Ve hře",
+    "stoppedLooking": "{{name}} už nehledá",
+    "alreadyInMatch": "Už je v zápase",
+    "lookingLoadError": "Seznam se nepodařilo načíst",
+    "lookingLoadErrorHint": "Použij Hledat, nebo to zkus znovu",
+    "lookingRetry": "Zkusit znovu"
   }
 }

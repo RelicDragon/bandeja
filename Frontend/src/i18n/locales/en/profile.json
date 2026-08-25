@@ -82,6 +82,7 @@
     "telegram": "Telegram",
     "telegramUsername": "Telegram Username",
     "linkTelegram": "Link Telegram",
+    "openingTelegram": "Opening Telegram…",
     "telegramNotLinked": "Not linked",
     "updateFromTelegram": "Update name from Telegram",
     "telegramSyncFailed": "Could not update from Telegram. Open a chat with the bot first.",
@@ -311,11 +312,15 @@
     "monday": "Monday",
     "sunday": "Sunday",
     "currency": "Currency",
+    "currencyAuto": "Detect automatically",
     "timeFormat12h": "12-hour",
     "timeFormat24h": "24-hour",
     "noLeaderboardData": "No leaderboard data available",
     "leaderboard": {
-      "sportLabel": "Ranking sport"
+      "sportLabel": "Ranking sport",
+      "unranked": "—",
+      "inactiveSection": "Not ranked",
+      "inactiveHint": "Need 5 games and a rated match in 90 days"
     },
     "photoPickFailed": "Failed to pick photo",
     "characterGenerator": "Character Generator",

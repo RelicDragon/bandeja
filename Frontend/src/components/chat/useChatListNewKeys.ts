@@ -1,5 +1,10 @@
 import { useLayoutEffect, useMemo, useReducer, useRef } from 'react';
 import { chatTailEnterMarkSeenMs } from './chatListMotion';
+import {
+  computeVisibleNewKeys,
+  nextSuppressInitialEnter,
+  shouldSeedKeysOnLayout,
+} from './chatListEnterSuppression';
 
 function partitionNewKeys(
   keys: readonly string[],
@@ -42,11 +47,19 @@ function partitionNewKeys(
   return { immediate, deferred };
 }
 
-export function useChatListNewKeys(keys: readonly string[], resetKey?: string): ReadonlySet<string> {
+export function useChatListNewKeys(
+  keys: readonly string[],
+  resetKey?: string,
+  listLoading = false,
+  networkSettled = true
+): ReadonlySet<string> {
   const seenRef = useRef(new Set<string>());
   const prevResetRef = useRef(resetKey);
   const prevKeysRef = useRef<readonly string[]>([]);
   const deferTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const suppressInitialEnterRef = useRef(true);
+  const prevListLoadingRef = useRef(listLoading);
+  const prevNetworkSettledRef = useRef(networkSettled);
   const [seenRevision, bumpSeenRevision] = useReducer((n: number) => n + 1, 0);
 
   if (resetKey !== prevResetRef.current) {
@@ -55,18 +68,34 @@ export function useChatListNewKeys(keys: readonly string[], resetKey?: string): 
     seenRef.current = new Set();
     prevResetRef.current = resetKey;
     prevKeysRef.current = [];
+    suppressInitialEnterRef.current = true;
+  } else {
+    suppressInitialEnterRef.current = nextSuppressInitialEnter({
+      suppressInitialEnter: suppressInitialEnterRef.current,
+      resetKeyChanged: false,
+      prevListLoading: prevListLoadingRef.current,
+      listLoading,
+      prevNetworkSettled: prevNetworkSettledRef.current,
+      networkSettled,
+    });
   }
+  prevListLoadingRef.current = listLoading;
+  prevNetworkSettledRef.current = networkSettled;
 
   const newKeys = useMemo(() => {
     void seenRevision;
-    const next = new Set<string>();
-    for (const key of keys) {
-      if (!seenRef.current.has(key)) next.add(key);
-    }
-    return next;
+    return computeVisibleNewKeys(keys, seenRef.current, suppressInitialEnterRef.current);
   }, [keys, seenRevision]);
 
   useLayoutEffect(() => {
+    if (shouldSeedKeysOnLayout(suppressInitialEnterRef.current, keys.length)) {
+      for (const key of keys) seenRef.current.add(key);
+      suppressInitialEnterRef.current = false;
+      prevKeysRef.current = keys;
+      bumpSeenRevision();
+      return;
+    }
+
     const prev = prevKeysRef.current;
     const { immediate, deferred } = partitionNewKeys(keys, prev, seenRef.current);
 
@@ -91,7 +120,7 @@ export function useChatListNewKeys(keys: readonly string[], resetKey?: string): 
       for (const t of deferTimersRef.current) clearTimeout(t);
       deferTimersRef.current = [];
     };
-  }, [keys]);
+  }, [keys, listLoading, resetKey, networkSettled]);
 
   return newKeys;
 }

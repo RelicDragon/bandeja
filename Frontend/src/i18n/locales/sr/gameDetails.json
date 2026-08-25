@@ -52,6 +52,11 @@
       "unlinkSaveConfirmMessage": "Uklanjate {{count}} vezu(e) rezervacija sa ovom igrom. Stvarne rezervacije terena se automatski ne otkazuju.",
       "reservationActionTitle": "Šta treba da se desi sa terenom?",
       "reservationActionSubtitle": "Izaberi šta se menja pri čuvanju.",
+      "changeGateTitle": "Povezano terena: {{count}}",
+      "changeGateBody": "Prvo ukloni vezu da bi rezervisao drugi klub ili terene.",
+      "changeGateBodyClub": "Prvo ukloni vezu da bi napustio {{club}} i rezervisao na drugom mestu.",
+      "clubLockedBadge": "Povezano",
+      "clubLockedAria": "Klub je zaključan. Ukloni rezervaciju da bi promenio klub.",
       "reservationAction": {
         "keepCurrent": {
           "title": "Zadrži trenutnu rezervaciju",
@@ -76,7 +81,7 @@
         "unlink": {
           "title": "Ukloni vezu rezervacije",
           "chipTitle": "Ukloni",
-          "description": "Ukloni veze rezervacija samo sa ove igre."
+          "description": "Ukloni vezu samo sa ove igre. Rezervacija u klubu ostaje. Posle čuvanja možeš rezervisati drugi klub ili terene."
         },
         "gameOnly": {
           "title": "Samo igra",
@@ -90,7 +95,7 @@
         "changeGameTimeOnly": "Vreme igre se menja; veze rezervacija ostaju.",
         "useExisting": "{{selected}} rezervacija će biti povezano sa ovom igrom.",
         "reserveNew": "Nova stvarna rezervacija terena biće kreirana pri čuvanju.",
-        "unlink": "Veze rezervacija biće uklonjene sa ove igre.",
+        "unlink": "Veze rezervacija biće uklonjene sa ove igre. Posle čuvanja možeš rezervisati drugi klub ili terene.",
         "gameOnly": "Igra ostaje u rasporedu bez veza sa stvarnom rezervacijom.",
         "reserveNewConfirm": "Pregledaćeš stvarnu rezervaciju pre čuvanja.",
         "unlinkNoCancel": "{{count}} stvarna rezervacija kluba ostaje aktivna dok je ne otkažeš u klubu/kod provajdera."

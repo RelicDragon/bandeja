@@ -16,11 +16,13 @@ export interface SuggestedCitiesBlockProps {
   selectedCityId?: string;
   submitting?: boolean;
   onSelect: (cityId: string) => void;
+  headingKey?: string;
 }
 
 function kindLabel(kind: SuggestedCityKind, t: (key: string) => string): string {
   if (kind === 'both') return t('city.suggestedCurrentNearest');
   if (kind === 'nearest') return t('city.suggestedNearest');
+  if (kind === 'recent') return t('browseCity.recent');
   return t('city.suggestedCurrent');
 }
 
@@ -29,6 +31,7 @@ export function SuggestedCitiesBlock({
   selectedCityId,
   submitting = false,
   onSelect,
+  headingKey = 'city.suggested',
 }: SuggestedCitiesBlockProps) {
   const { t, i18n } = useTranslation();
   useGeoReady();
@@ -36,9 +39,9 @@ export function SuggestedCitiesBlock({
   if (entries.length === 0) return null;
 
   return (
-    <section className="mb-2 space-y-1.5 min-w-0" aria-label={t('city.suggested')}>
+    <section className="mb-2 space-y-1.5 min-w-0" aria-label={t(headingKey)}>
       <h3 className="px-1 text-[0.6875rem] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
-        {t('city.suggested')}
+        {t(headingKey)}
       </h3>
       <ul className="m-0 list-none space-y-1 p-0">
         {entries.map(({ city, kind }) => {
@@ -46,7 +49,7 @@ export function SuggestedCitiesBlock({
           const nativeName = getCityNativeName(city.id, city.name, city.country);
           const showNative = nativeName && nativeName !== displayName;
           const isSelected = city.id === selectedCityId;
-          const Icon = kind === 'current' ? MapPin : Navigation;
+          const Icon = kind === 'nearest' ? Navigation : MapPin;
           return (
             <li key={`${kind}:${city.id}`}>
               <button
@@ -73,9 +76,11 @@ export function SuggestedCitiesBlock({
                         </span>
                       )}
                     </span>
-                    <span className="mt-0.5 block truncate text-[0.6875rem] font-medium uppercase tracking-wide text-primary-600/80 dark:text-primary-400/85">
-                      {kindLabel(kind, t)}
-                    </span>
+                    {kind !== 'recent' ? (
+                      <span className="mt-0.5 block truncate text-[0.6875rem] font-medium uppercase tracking-wide text-primary-600/80 dark:text-primary-400/85">
+                        {kindLabel(kind, t)}
+                      </span>
+                    ) : null}
                   </span>
                   {isSelected && (
                     <span className={CITY_SELECTOR_CHECK} aria-hidden>

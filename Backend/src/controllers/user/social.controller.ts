@@ -13,6 +13,8 @@ import { projectEmbeddedUserByPrimarySport } from '../../services/user/projectEm
 import { BasicUser } from '../../types/user.types';
 import { CommonChatsService } from '../../services/user/commonChats.service';
 import { expandNameSearchTerms } from '../../utils/nameSearchTerms';
+import { findUserIdsBusyInSlot } from '../../services/game/gameSlotOverlap.service';
+import { rankNearbyCities } from '../../services/user/nearbyCities';
 
 const INVITE_PICKER_BLOCKING_PARTICIPANT_STATUSES = new Set<ParticipantStatus>([
   ParticipantStatus.PLAYING,
@@ -27,6 +29,25 @@ export const getInvitablePlayers = asyncHandler(async (req: AuthRequest, res: Re
   const searchInput = Array.isArray(req.query.search) ? req.query.search[0] : req.query.search;
   const searchTerm = typeof searchInput === 'string' ? searchInput.trim() : '';
   const searchTerms = searchTerm.split(/\s+/).filter(Boolean).slice(0, 5);
+  const requestedCityIdRaw = Array.isArray(req.query.cityId) ? req.query.cityId[0] : req.query.cityId;
+  const requestedCityId = typeof requestedCityIdRaw === 'string' ? requestedCityIdRaw.trim() : '';
+  const expandNearbyRaw = Array.isArray(req.query.expandNearby)
+    ? req.query.expandNearby[0]
+    : req.query.expandNearby;
+  const expandNearby =
+    expandNearbyRaw === '1' || expandNearbyRaw === 'true';
+  const startTimeInput = Array.isArray(req.query.startTime) ? req.query.startTime[0] : req.query.startTime;
+  const endTimeInput = Array.isArray(req.query.endTime) ? req.query.endTime[0] : req.query.endTime;
+  const slotStart = typeof startTimeInput === 'string' ? new Date(startTimeInput) : null;
+  const slotEnd = typeof endTimeInput === 'string' ? new Date(endTimeInput) : null;
+  const querySlot =
+    slotStart &&
+    slotEnd &&
+    Number.isFinite(slotStart.getTime()) &&
+    Number.isFinite(slotEnd.getTime()) &&
+    slotStart < slotEnd
+      ? { startTime: slotStart, endTime: slotEnd }
+      : null;
   const searchWhere: Prisma.UserWhereInput =
     searchTerms.length > 0
       ? {
@@ -48,9 +69,21 @@ export const getInvitablePlayers = asyncHandler(async (req: AuthRequest, res: Re
   let participantIds: string[] = [];
   let cityId = currentUser?.currentCityId;
   let gameSport: Sport | null = null;
+  let busyUserIds: string[] = [];
 
   if (!cityId) {
     throw new ApiError(400, 'User does not have a city');
+  }
+
+  if (requestedCityId) {
+    const browseCity = await prisma.city.findUnique({
+      where: { id: requestedCityId },
+      select: { id: true, isActive: true },
+    });
+    if (!browseCity?.isActive) {
+      throw new ApiError(400, 'City is required');
+    }
+    cityId = browseCity.id;
   }
 
   if (gameId) {
@@ -60,6 +93,9 @@ export const getInvitablePlayers = asyncHandler(async (req: AuthRequest, res: Re
         id: true,
         sport: true,
         cityId: true,
+        startTime: true,
+        endTime: true,
+        timeIsSet: true,
         participants: {
           select: {
             userId: true,
@@ -79,17 +115,35 @@ export const getInvitablePlayers = asyncHandler(async (req: AuthRequest, res: Re
     }
     const gameCityId = game.club?.cityId ?? game.cityId;
 
-    if (gameCityId !== cityId) {
+    if (!requestedCityId && gameCityId !== cityId) {
       throw new ApiError(400, 'Game is not in your city');
     }
 
     participantIds = game.participants
       .filter((p) => INVITE_PICKER_BLOCKING_PARTICIPANT_STATUSES.has(p.status))
       .map((p) => p.userId);
-    cityId = gameCityId || currentUser?.currentCityId;
+    if (!requestedCityId) {
+      cityId = gameCityId || currentUser?.currentCityId;
+    }
     gameSport = game.sport ?? Sport.PADEL;
-  } else if (sportQuery) {
-    gameSport = parseSportParam(sportQuery);
+    busyUserIds = await findUserIdsBusyInSlot({
+      id: game.id,
+      startTime: game.startTime,
+      endTime: game.endTime,
+      timeIsSet: game.timeIsSet,
+    });
+  } else {
+    if (querySlot) {
+      busyUserIds = await findUserIdsBusyInSlot({
+        id: '',
+        startTime: querySlot.startTime,
+        endTime: querySlot.endTime,
+        timeIsSet: true,
+      });
+    }
+    if (sportQuery) {
+      gameSport = parseSportParam(sportQuery);
+    }
   }
 
   const interactions = await prisma.userInteraction.findMany({
@@ -119,53 +173,115 @@ export const getInvitablePlayers = asyncHandler(async (req: AuthRequest, res: Re
   );
 
   const gamesTogetherMap = new Map(coplayRows.map((r) => [r.userId, r.count]));
+  const excludedIds = [...new Set([...participantIds, ...busyUserIds, req.userId!])];
 
-  const [socialAgg, users] = await Promise.all([
-    prisma.user.aggregate({
-      where: { isActive: true },
-      _max: { socialLevel: true },
-    }),
-    prisma.user.findMany({
+  const loadCityUsers = async (targetCityId: string, take: number) => {
+    const users = await prisma.user.findMany({
       where: {
-        id: {
-          notIn: [...participantIds, req.userId!],
-        },
+        id: { notIn: excludedIds },
         isActive: true,
-        currentCityId: cityId,
+        currentCityId: targetCityId,
         ...searchWhere,
       },
       select: USER_SELECT_WITH_SPORT_PROFILES,
       orderBy: searchTerms.length > 0 ? [{ firstName: 'asc' }, { lastName: 'asc' }] : undefined,
-      take: 1000,
+      take,
+    });
+    const mapped = users.map((user) => {
+      const withMeta = {
+        ...user,
+        interactionCount: interactionMap.get(user.id) || 0,
+        gamesTogetherCount: gamesTogetherMap.get(user.id) || 0,
+      };
+      const projected = gameSport
+        ? projectUserForSportContext(withMeta, gameSport)
+        : projectEmbeddedUserByPrimarySport(withMeta);
+      return {
+        ...projected,
+        sportsEnabled: user.sportsEnabled ?? [Sport.PADEL],
+        interactionCount: withMeta.interactionCount,
+        gamesTogetherCount: withMeta.gamesTogetherCount,
+      } as BasicUser & { interactionCount: number; gamesTogetherCount: number; sportsEnabled: Sport[] };
+    });
+    mapped.sort((a, b) => b.interactionCount - a.interactionCount);
+    return mapped;
+  };
+
+  const [socialAgg, usersWithInteractions] = await Promise.all([
+    prisma.user.aggregate({
+      where: { isActive: true },
+      _max: { socialLevel: true },
     }),
+    loadCityUsers(cityId!, 5000),
   ]);
 
   const maxSocialLevel = Math.max(socialAgg._max.socialLevel ?? 1, 1);
 
-  const usersWithInteractions = users.map((user) => {
-    const withMeta = {
-      ...user,
-      interactionCount: interactionMap.get(user.id) || 0,
-      gamesTogetherCount: gamesTogetherMap.get(user.id) || 0,
-    };
-    const projected = gameSport
-      ? projectUserForSportContext(withMeta, gameSport)
-      : projectEmbeddedUserByPrimarySport(withMeta);
-    return {
-      ...projected,
-      sportsEnabled: user.sportsEnabled ?? [Sport.PADEL],
-      interactionCount: withMeta.interactionCount,
-      gamesTogetherCount: withMeta.gamesTogetherCount,
-    } as BasicUser & { interactionCount: number; gamesTogetherCount: number; sportsEnabled: Sport[] };
-  });
+  const nearby: Array<{
+    cityId: string;
+    name: string;
+    country: string;
+    km: number;
+    players: typeof usersWithInteractions;
+  }> = [];
 
-  usersWithInteractions.sort((a, b) => b.interactionCount - a.interactionCount);
+  if (expandNearby && searchTerms.length > 0 && usersWithInteractions.length === 0 && cityId) {
+    const cities = await prisma.city.findMany({
+      where: { isActive: true, isCorrect: true, latitude: { not: null }, longitude: { not: null } },
+      select: {
+        id: true,
+        name: true,
+        country: true,
+        administrativeArea: true,
+        subAdministrativeArea: true,
+        latitude: true,
+        longitude: true,
+      },
+    });
+    const anchor = cities.find((city) => city.id === cityId);
+    if (anchor?.latitude != null && anchor.longitude != null) {
+      const ranked = rankNearbyCities(
+        {
+          id: anchor.id,
+          name: anchor.name,
+          country: anchor.country,
+          administrativeArea: anchor.administrativeArea,
+          subAdministrativeArea: anchor.subAdministrativeArea,
+          latitude: anchor.latitude,
+          longitude: anchor.longitude,
+        },
+        cities.map((city) => ({
+          id: city.id,
+          name: city.name,
+          country: city.country,
+          administrativeArea: city.administrativeArea,
+          subAdministrativeArea: city.subAdministrativeArea,
+          latitude: city.latitude as number,
+          longitude: city.longitude as number,
+        })),
+      );
+      for (const city of ranked) {
+        const players = await loadCityUsers(city.id, 20);
+        if (players.length === 0) continue;
+        nearby.push({
+          cityId: city.id,
+          name: city.name,
+          country: city.country,
+          km: Math.round(city.km),
+          players,
+        });
+      }
+    }
+  }
 
   res.json({
     success: true,
     data: {
+      cityId,
       players: usersWithInteractions,
+      nearby,
       maxSocialLevel,
+      busyUserIds,
     },
   });
 });

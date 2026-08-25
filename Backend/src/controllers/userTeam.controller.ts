@@ -5,6 +5,7 @@ import { asyncHandler } from '../utils/asyncHandler';
 import { ApiError } from '../utils/ApiError';
 import { AuthRequest } from '../middleware/auth';
 import { UserTeamService } from '../services/userTeam.service';
+import { addUserTeamToGame, listInvitableGamesForUserTeam } from '../services/userTeam/userTeamAddToGame.service';
 import prisma from '../config/database';
 import { parseSportParam } from '../services/user/userSportProfile.service';
 
@@ -22,6 +23,8 @@ export const updateTeamValidators = [
   body('originalAvatar').optional({ nullable: true }).isString(),
   body('cutAngle').optional().isFloat({ min: 0, max: 360 }),
 ];
+
+export const addToGameValidators = [body('gameId').notEmpty().withMessage('gameId required')];
 
 export const inviteMemberValidators = [body('userId').notEmpty().withMessage('userId required')];
 
@@ -97,5 +100,19 @@ export const declineInvite = asyncHandler(async (req: AuthRequest, res: Response
 export const removeMember = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { id, userId } = req.params;
   const data = await UserTeamService.removeMember(id, req.userId!, userId);
+  res.json({ success: true, data });
+});
+
+export const listInvitableGames = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
+  const data = await listInvitableGamesForUserTeam(id, req.userId!, req.user?.isAdmin === true);
+  res.json({ success: true, data });
+});
+
+export const addToGame = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
+  const { gameId } = req.body as { gameId?: string };
+  if (!gameId) throw new ApiError(400, 'errors.invites.mustSpecifyGameId');
+  const data = await addUserTeamToGame(id, req.userId!, req.user?.isAdmin === true, gameId);
   res.json({ success: true, data });
 });

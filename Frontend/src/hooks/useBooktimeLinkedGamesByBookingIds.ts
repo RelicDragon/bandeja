@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
-import { booktimeApi, type BooktimeLinkedGame } from '@/api/booktime';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { fetchLinkedGamesByBookingIds } from '@/api/fetchLinkedGamesByBookingIds';
+import type { BooktimeLinkedGame } from '@/api/booktime';
 
 export function useBooktimeLinkedGamesByBookingIds(
   bookingIds: string[],
@@ -9,29 +10,31 @@ export function useBooktimeLinkedGamesByBookingIds(
     ReadonlyMap<string, BooktimeLinkedGame[]>
   >(new Map());
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
   const idsKey = bookingIds.join('|');
+  const requestIdRef = useRef(0);
 
   const reload = useCallback(async () => {
     const ids = idsKey ? idsKey.split('|') : [];
+    const requestId = ++requestIdRef.current;
     if (!enabled || ids.length === 0) {
+      if (requestId !== requestIdRef.current) return;
       setLinkedGamesByBookingId(new Map());
+      setLoading(false);
+      setError(false);
       return;
     }
     setLoading(true);
+    setError(false);
     try {
-      const entries: [string, BooktimeLinkedGame[]][] = await Promise.all(
-        ids.map(async (bookingId): Promise<[string, BooktimeLinkedGame[]]> => {
-          try {
-            const res = await booktimeApi.getLinkedGames(bookingId);
-            return [bookingId, res.data ?? []];
-          } catch {
-            return [bookingId, []];
-          }
-        }),
-      );
-      setLinkedGamesByBookingId(new Map(entries));
+      const next = await fetchLinkedGamesByBookingIds(ids);
+      if (requestId !== requestIdRef.current) return;
+      setLinkedGamesByBookingId(next);
+    } catch {
+      if (requestId !== requestIdRef.current) return;
+      setError(true);
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) setLoading(false);
     }
   }, [enabled, idsKey]);
 
@@ -39,5 +42,5 @@ export function useBooktimeLinkedGamesByBookingIds(
     void reload();
   }, [reload]);
 
-  return { linkedGamesByBookingId, loading, reload };
+  return { linkedGamesByBookingId, loading, error, reload };
 }

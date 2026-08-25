@@ -4,10 +4,12 @@ import * as path from 'path';
 import { derivePlayShortDescription } from './app-release-notes';
 import { ROOT } from './app-release';
 import { FRONTEND_DIR } from './app-release-build';
+import { androidReviewFingerprint, androidReviewNeedsApproval } from './app-release-review';
 import {
   includesAndroid,
   includesIos,
   type IosAppStoreConnectState,
+  type PendingStoreReview,
   type ReleaseSession,
 } from './app-release-session';
 
@@ -27,6 +29,14 @@ export function resolvePlayTrack(value: string): PlayTrack | null {
 
 const LOG_TAIL_LINES = 40;
 const IOS_STATE_PREFIX = 'APP_RELEASE_IOS_STATE_JSON:';
+const REVIEW_STATE_PREFIX = 'APP_RELEASE_REVIEW_STATE_JSON:';
+
+export type StoreReviewPlatform = 'android' | 'ios';
+
+export interface StoreReviewCheckResult {
+  android?: PendingStoreReview;
+  ios?: PendingStoreReview;
+}
 
 export interface UploadPreflight {
   ok: boolean;
@@ -61,6 +71,18 @@ export function isAndroidAlreadyUploadedError(error: ReleaseUploadError): boolea
   return /version code .*already (?:been )?(?:used|uploaded)|apk specifies a version code that has already been used|aab specifies a version code that has already been used|artifact .*already exists/i.test(
     text,
   );
+}
+
+export function isGoogleReviewConflictError(error: ReleaseUploadError): boolean {
+  const text = `${error.message}\n${error.logTail}\n${error.output}`;
+  return /APP_RELEASE_GOOGLE_REVIEW_CONFLICT|CHANGES_ALREADY_IN_REVIEW|already have changes in review/i.test(
+    text,
+  );
+}
+
+export function isIosReviewConflictError(error: ReleaseUploadError): boolean {
+  const text = `${error.message}\n${error.logTail}\n${error.output}`;
+  return /APP_RELEASE_IOS_REVIEW_CONFLICT/i.test(text);
 }
 
 function commandExists(command: string): boolean {
@@ -145,6 +167,70 @@ export function parseIosAppStoreConnectState(output: string): IosAppStoreConnect
     }
   }
   return state;
+}
+
+export function parsePendingStoreReview(
+  output: string,
+  platform: StoreReviewPlatform,
+): PendingStoreReview {
+  for (const line of output.split(/\r?\n/).reverse()) {
+    const markerIndex = line.indexOf(REVIEW_STATE_PREFIX);
+    if (markerIndex < 0) {
+      continue;
+    }
+
+    const raw = line.slice(markerIndex + REVIEW_STATE_PREFIX.length).trim();
+    try {
+      const parsed = JSON.parse(raw) as Record<string, unknown>;
+      if (parsed.platform !== platform || typeof parsed.inReview !== 'boolean') {
+        continue;
+      }
+      return {
+        inReview: parsed.inReview,
+        state: typeof parsed.state === 'string' ? parsed.state : undefined,
+        version: typeof parsed.version === 'string' ? parsed.version : undefined,
+        versionCode: typeof parsed.versionCode === 'string' ? parsed.versionCode : undefined,
+        versionCodes:
+          Array.isArray(parsed.versionCodes) &&
+          parsed.versionCodes.length > 0 &&
+          parsed.versionCodes.every(
+            (versionCode): versionCode is string =>
+              typeof versionCode === 'string' && versionCode.length > 0,
+          )
+            ? parsed.versionCodes
+            : undefined,
+        submissionId:
+          typeof parsed.submissionId === 'string' ? parsed.submissionId : undefined,
+      };
+    } catch {
+      // Keep looking in case an earlier marker is valid.
+    }
+  }
+
+  throw new ReleaseUploadError(
+    `Could not read ${platform === 'android' ? 'Google Play' : 'App Store'} review state`,
+    tailUploadLog(output),
+  );
+}
+
+export function storeReviewCheckPlatforms(session: ReleaseSession): StoreReviewPlatform[] {
+  const platforms: StoreReviewPlatform[] = [];
+  if (
+    includesAndroid(session.targetPlatform) &&
+    session.store.androidTrack === 'production' &&
+    session.uploads?.android !== true
+  ) {
+    platforms.push('android');
+  }
+  if (
+    includesIos(session.targetPlatform) &&
+    session.store.iosSubmitForReview === true &&
+    session.uploads?.iosStoreVersion !== true &&
+    session.uploads?.ios !== true
+  ) {
+    platforms.push('ios');
+  }
+  return platforms;
 }
 
 function addFastlaneIssue(issues: string[]): void {
@@ -241,6 +327,28 @@ export function runUploadPreflight(session: ReleaseSession): UploadPreflight {
     issues.push('iOS App Store mode is not set (prepare-without-submit or submit-for-review).');
   }
 
+  if (
+    androidPending &&
+    session.store.androidTrack === 'production' &&
+    session.reviewGuard.android?.inReview === true &&
+    androidReviewNeedsApproval(session)
+  ) {
+    issues.push(
+      'Google Play already has changes in review and replacement was not approved in the planner.',
+    );
+  }
+
+  if (
+    iosPending &&
+    session.store.iosSubmitForReview === true &&
+    session.reviewGuard.ios?.inReview === true &&
+    session.reviewGuard.iosRemovalApprovedSubmissionId !== session.reviewGuard.ios.submissionId
+  ) {
+    issues.push(
+      'App Store already has a submission in review and removal was not approved in the planner.',
+    );
+  }
+
   const playKey = androidPending ? resolvePlayJsonKeyPath() : undefined;
   if (androidPending && !playKey) {
     issues.push(
@@ -260,6 +368,36 @@ export function runUploadPreflight(session: ReleaseSession): UploadPreflight {
   }
 
   if (androidPending || iosPending) {
+    addFastlaneIssue(issues);
+  }
+
+  return { ok: issues.length === 0, issues };
+}
+
+export function runStoreReviewCheckPreflight(session: ReleaseSession): UploadPreflight {
+  const issues: string[] = [];
+  const platforms = storeReviewCheckPlatforms(session);
+
+  if (platforms.includes('android') && !resolvePlayJsonKeyPath()) {
+    issues.push(
+      'Set PLAY_STORE_JSON_KEY_PATH or GOOGLE_PLAY_JSON_KEY to inspect Google Play review state.',
+    );
+  }
+
+  if (platforms.includes('ios')) {
+    const ascKeyId = process.env.ASC_KEY_ID?.trim();
+    const ascIssuerId = process.env.ASC_ISSUER_ID?.trim();
+    const ascKeyPath = process.env.ASC_KEY_PATH?.trim();
+    if (!ascKeyId || !ascIssuerId || !ascKeyPath) {
+      issues.push(
+        'Set ASC_KEY_ID, ASC_ISSUER_ID, and ASC_KEY_PATH to inspect App Store review state.',
+      );
+    } else if (!fs.existsSync(path.resolve(ascKeyPath))) {
+      issues.push(`App Store Connect API key not found at ${ascKeyPath}`);
+    }
+  }
+
+  if (platforms.length > 0) {
     addFastlaneIssue(issues);
   }
 
@@ -364,8 +502,10 @@ function resolveUploadInputs(session: ReleaseSession): {
   }
 
   const metadata = prepareUploadMetadata(session);
-  const track = resolvePlayTrack(session.store.androidTrack!);
-  if (!track) {
+  const track = includesAndroid(session.targetPlatform)
+    ? resolvePlayTrack(session.store.androidTrack!)
+    : null;
+  if (includesAndroid(session.targetPlatform) && !track) {
     throw new ReleaseUploadError(
       `Invalid Google Play track: ${session.store.androidTrack}`,
       '',
@@ -375,17 +515,54 @@ function resolveUploadInputs(session: ReleaseSession): {
     metadata,
     aab: session.artifacts?.aab ? path.resolve(session.artifacts.aab) : '',
     ipa: session.artifacts?.ipa ? path.resolve(session.artifacts.ipa) : '',
-    track,
+    track: track ?? '',
     submitForReview: session.store.iosSubmitForReview === true,
   };
 }
 
 export async function runAndroidUpload(session: ReleaseSession): Promise<void> {
   const { metadata, aab, track } = resolveUploadInputs(session);
+  const review = session.reviewGuard.android;
+  const approvedFingerprint = session.reviewGuard.androidReplacementApprovedFingerprint;
+  const replaceExistingReview =
+    review?.inReview === true &&
+    androidReviewFingerprint(review) !== undefined &&
+    approvedFingerprint === androidReviewFingerprint(review);
   await runFastlaneLane('android', 'upload_release', {
     aab,
     track,
     metadata_path: metadata.playMetadataPath,
+    replace_existing_review: String(replaceExistingReview),
+    expected_review_version_code: replaceExistingReview ? (review.versionCode ?? '') : '',
+    expected_review_version_codes: replaceExistingReview
+      ? (review.versionCodes ?? []).join(',')
+      : '',
+    expected_review_version: replaceExistingReview ? (review.version ?? '') : '',
+  });
+}
+
+export async function runStoreReviewCheck(
+  session: ReleaseSession,
+): Promise<StoreReviewCheckResult> {
+  const preflight = runStoreReviewCheckPreflight(session);
+  if (!preflight.ok) {
+    throw new ReleaseUploadError('Store review check preflight failed', preflight.issues.join('\n'));
+  }
+
+  const result: StoreReviewCheckResult = {};
+  for (const platform of storeReviewCheckPlatforms(session)) {
+    const laneResult = await runFastlaneLane(platform, 'review_status', {});
+    result[platform] = parsePendingStoreReview(laneResult.output, platform);
+  }
+  return result;
+}
+
+export async function runIosPendingReviewRemoval(submissionId: string): Promise<void> {
+  if (!submissionId.trim()) {
+    throw new ReleaseUploadError('App Store review submission id is required', '');
+  }
+  await runFastlaneLane('ios', 'remove_from_review', {
+    submission_id: submissionId,
   });
 }
 
@@ -413,6 +590,7 @@ export async function runIosBinaryUpload(session: ReleaseSession): Promise<void>
   const { ipa } = resolveUploadInputs(session);
   await runFastlaneLane('ios', 'upload_binary', {
     ipa,
+    guard_no_review: String(session.store.iosSubmitForReview === true),
   });
 }
 

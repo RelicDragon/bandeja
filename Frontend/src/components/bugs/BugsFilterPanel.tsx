@@ -1,9 +1,8 @@
 import { useTranslation } from 'react-i18next';
 import { useGameDetailsChromeStore } from '@/components/GameDetails/gameDetailsChromeStore';
 import { ALL_BUG_STATUSES } from '@/components/bugs/bugsFilterParams';
+import { ALL_BUG_TYPES } from '@/components/bugs/reviewStars';
 import type { BugStatus, BugType } from '@/types';
-
-const BUG_TYPES: BugType[] = ['BUG', 'CRITICAL', 'SUGGESTION', 'QUESTION', 'TASK'];
 
 export const BugsFilterPanel = () => {
   const { t } = useTranslation();
@@ -92,7 +91,7 @@ export const BugsFilterPanel = () => {
               {t('bug.type', { defaultValue: 'Type' })}
             </p>
             <div className="flex flex-wrap gap-1.5">
-              {BUG_TYPES.map((type) => {
+              {ALL_BUG_TYPES.map((type) => {
                 const active = bugsFilter.type === type;
                 return (
                   <button

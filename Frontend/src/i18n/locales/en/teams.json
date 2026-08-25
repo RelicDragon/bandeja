@@ -36,6 +36,27 @@
     "deleted": "Team deleted",
     "cutAngleDial": "Adjust how the two player photos meet",
     "addTeamPhotoTitle": "Add team photo",
-    "addTeamPhotoHint": "Choose an image, then crop to fit"
+    "addTeamPhotoHint": "Choose an image, then crop to fit",
+    "explainerTitle": "A pair, not a group",
+    "explainerCreate": "You and one partner — not a group.",
+    "explainerBulletCity": "People in your city can invite you two into a game.",
+    "explainerBulletAdd": "Add yourselves from the pair page or a game's invite list.",
+    "explainerBulletFixed": "On fixed-pair games, you sit together.",
+    "explainerPage": "Add this pair to a game here, or from a game's invite list. Others in your city can invite you too.",
+    "explainerPagePending": "Invite your partner to finish the pair. Then you can add to a game.",
+    "createExplainerTitle": "Start a pair",
+    "createPair": "Create pair",
+    "addToGame": "Add to a game",
+    "addToGameCta": "Invite this pair into one of your games",
+    "addToGameHint": "Games you can invite people to.",
+    "addToGamePending": "Waiting for your partner to join — then you can add this pair to a game.",
+    "addToGameEmpty": "No upcoming games you can invite people to. Join or create a game first, then come back.",
+    "addToGameSuccessInvited": "Invited {{name}} as your pair",
+    "addToGameSuccessBothIn": "You're in as a pair",
+    "addToGameSuccessAdded": "Added to {{name}}",
+    "fixedPairsBadge": "Fixed pairs",
+    "partnerAlreadyIn": "Partner's already in",
+    "partnerInvited": "Partner invited",
+    "slots": "{{playing}}/{{max}}"
   }
 }

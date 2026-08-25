@@ -313,6 +313,35 @@ describe('processChatRoomBatch with Thread Live Projection (Phase 2)', () => {
     expect(ctx.onInboundMessage).toHaveBeenCalledWith(expect.objectContaining({ id: 'm1' }));
   });
 
+  it('does not paint or notify UI for inbound from another thread', () => {
+    const keep = inboundMessage('m-keep');
+    const ctx = makeCtx();
+    ctx.messagesRef.current = [{ ...keep }];
+
+    const foreign = inboundMessage('m-foreign');
+    foreign.contextId = 'thread-other';
+
+    processChatRoomBatch(
+      [
+        {
+          kind: 'message',
+          data: {
+            contextType: 'USER',
+            contextId: 'thread-other',
+            message: foreign,
+            messageId: 'm-foreign',
+            syncSeq: 99,
+          },
+        },
+      ],
+      ctx
+    );
+
+    expect(ctx.messagesRef.current.map((m) => m.id)).toEqual(['m-keep']);
+    expect(ctx.onInboundMessage).not.toHaveBeenCalled();
+    expect(persistSocketInboundMessage).not.toHaveBeenCalled();
+  });
+
   it('routes readReceipt with allRead + readCursor (new-client ticks via cursor)', async () => {
     const own = (id: string): ChatMessageWithStatus => ({
       ...inboundMessage(id, 'sender-a'),

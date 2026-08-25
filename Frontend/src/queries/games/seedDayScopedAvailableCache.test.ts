@@ -81,6 +81,26 @@ describe('resolveDaySeedFromMonthPage', () => {
     expect(resolveDaySeedFromMonthPage(page, '2026-06-15', null, JUNE)).toBeNull();
   });
 
+  it('uses the server day key before deciding that a selected day is empty', () => {
+    const page: AvailableGamesPage = {
+      games: [],
+      meta: {
+        take: 0,
+        bound: 300,
+        hasMore: false,
+        nextCursor: null,
+        truncated: false,
+        dayIndex: [{
+          ...indexRow('g1', '2026-06-14T23:30:00.000Z'),
+          dateKey: '2026-06-15',
+        }],
+        dayIndexTruncated: false,
+      },
+    };
+
+    expect(resolveDaySeedFromMonthPage(page, '2026-06-15', 'UTC', JUNE)).toBeNull();
+  });
+
   it('seeds cards when month cards cover all dayIndex ids for the day', () => {
     const g1 = sampleGame('g1', '2026-06-15T10:00:00.000Z');
     const page: AvailableGamesPage = {
@@ -154,5 +174,37 @@ describe('seedDayScopedAvailableCache', () => {
     const page = client.getQueryData(key) as AvailableGamesPage;
     expect(page.games).toEqual([]);
     expect(page.meta.hasMore).toBe(false);
+  });
+
+  it('does not seed indexOnly month days that still need a card fetch', () => {
+    const client = new QueryClient();
+    const monthPage: AvailableGamesPage = {
+      games: [],
+      meta: {
+        take: 0,
+        bound: 300,
+        hasMore: false,
+        nextCursor: null,
+        truncated: false,
+        dayIndex: [indexRow('g1', '2026-06-15T10:00:00.000Z')],
+        dayIndexTruncated: false,
+      },
+    };
+    const day = new Date('2026-06-15T00:00:00');
+    const seeded = seedDayScopedAvailableCache(
+      client,
+      monthPage,
+      { userId: 'u1', startDate: day, endDate: day, sport: 'PADEL', indexOnly: false },
+      null,
+      JUNE,
+    );
+    expect(seeded).toBe(false);
+    const key = availableGamesQueryOptions({
+      userId: 'u1',
+      startDate: day,
+      endDate: day,
+      sport: 'PADEL',
+    }).queryKey;
+    expect(client.getQueryData(key)).toBeUndefined();
   });
 });

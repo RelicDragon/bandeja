@@ -32,6 +32,19 @@ describe('mergeInvitablePlayer', () => {
     expect(merged.interactionCount).toBe(3);
   });
 
+  it('keeps sport-projected inactive when merging cached profiles', () => {
+    const incoming = {
+      ...existing,
+      inactive: true,
+      sportProfiles: undefined,
+      interactionCount: 1,
+      gamesTogetherCount: 0,
+    };
+    const merged = mergeInvitablePlayer({ ...existing, inactive: false }, incoming);
+    expect(merged.inactive).toBe(true);
+    expect(merged.sportProfiles).toHaveLength(2);
+  });
+
   it('keeps sportsEnabled when incoming omits it', () => {
     const withSports: BasicUser = {
       ...existing,

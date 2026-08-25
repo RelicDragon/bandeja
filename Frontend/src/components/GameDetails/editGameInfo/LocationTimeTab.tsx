@@ -16,6 +16,7 @@ import { clubHasBookingIntegration } from '@shared/clubIntegration';
 import { supportsClubBookingFlow } from '@shared/gameBooking/supportsClubBookingFlow';
 import { computePendingBookingUnlinks } from '@/components/gameLocationTime/computePendingBookingUnlinks';
 import { PendingBookingUnlinkHint } from '@/components/gameLocationTime/PendingBookingUnlinkHint';
+import { LinkedBookingChangeGate } from '@/components/gameLocationTime/LinkedBookingChangeGate';
 import {
   resolveEditReservationActionOptions,
   resolveInitialEditReservationAction,
@@ -40,7 +41,9 @@ type LocationTimeTabProps = {
   selectedCourtIds: string[];
   selectedCourt: string;
   hasBookedCourt: boolean;
-  onSelectClub?: (id: string) => void;
+  onSelectClub?: (id: string, club?: Club) => void;
+  onVenueCityChange?: (cityId: string) => void;
+  venueCityId?: string;
   onSelectCourt: (id: string) => void;
   onSelectCourtIds?: (ids: string[]) => void;
   onToggleHasBookedCourt: (value: boolean) => void;
@@ -93,6 +96,8 @@ export function LocationTimeTab({
   selectedCourt,
   hasBookedCourt,
   onSelectClub,
+  onVenueCityChange,
+  venueCityId,
   onSelectCourt,
   onSelectCourtIds,
   onToggleHasBookedCourt,
@@ -357,6 +362,24 @@ export function LocationTimeTab({
       }) ?? authGateSection
     : null;
 
+  const showReservationPicker = editReservationAction === 'useExisting';
+  const hasLinkedBookings = initialLinkedBookingIds.length > 0;
+  const clubChangeLocked =
+    hasLinkedBookings &&
+    (editReservationAction === 'keepCurrent' || editReservationAction === 'changeGameTimeOnly');
+
+  useEffect(() => {
+    if (!clubChangeLocked) return;
+    const initialClubId = game.clubId ?? '';
+    if (selectedClub === initialClubId) return;
+    onSelectClub?.(initialClubId);
+  }, [clubChangeLocked, game.clubId, selectedClub, onSelectClub]);
+
+  const requiredReservationCount = useMemo(
+    () => computeRequiredCourtCount(game.maxParticipants, game.playersPerMatch ?? 4),
+    [game.maxParticipants, game.playersPerMatch],
+  );
+
   const courtSection = (
     <CreateGameCourtSection
       clubs={clubsForSport}
@@ -366,7 +389,12 @@ export function LocationTimeTab({
       selectedCourtIds={selectedCourtIds}
       maxParticipants={game.maxParticipants}
       playersPerMatch={game.playersPerMatch ?? 4}
-      multiSelectCourts={bookingSelectionLimits.min > 1}
+      multiSelectCourts={requiredReservationCount > 1}
+      requiredCourtCount={
+        editReservationAction === 'unlink' || editReservationAction === 'reserveNew'
+          ? bookingSelectionLimits.min
+          : requiredReservationCount
+      }
       selectedDate={selectedDate}
       hasBookedCourt={hasBookedCourt}
       entityType={entityType}
@@ -441,7 +469,12 @@ export function LocationTimeTab({
     <EditReservationActionPicker
       value={editReservationAction}
       options={editActionOptions}
-      onChange={setEditReservationAction}
+      onChange={(action) => {
+        setEditReservationAction(action);
+        if (action === 'keepCurrent' || action === 'changeGameTimeOnly') {
+          setIsClubModalOpen(false);
+        }
+      }}
     />
   );
 
@@ -453,21 +486,17 @@ export function LocationTimeTab({
     editReservationAction === 'gameOnly' ||
     showReserveNewScheduling;
   const showManualCourtControls =
-    editReservationAction === 'changeGameTimeOnly' ||
     editReservationAction === 'unlink' ||
     editReservationAction === 'gameOnly' ||
     showReserveNewScheduling;
 
-  const showReservationPicker = editReservationAction === 'useExisting';
-
-  const requiredReservationCount = useMemo(
-    () => computeRequiredCourtCount(game.maxParticipants, game.playersPerMatch ?? 4),
-    [game.maxParticipants, game.playersPerMatch],
-  );
-
   const multiCourtTimeHint = (
     <MultiCourtTimeHint
-      requiredCourtCount={requiredReservationCount}
+      requiredCourtCount={
+        editReservationAction === 'reserveNew'
+          ? bookingSelectionLimits.min
+          : requiredReservationCount
+      }
       integratedCourtCount={integratedCourtIds.length}
       hasTimeSlots={
         editReservationAction === 'reserveNew' && !needsBooktimeAuth
@@ -526,15 +555,31 @@ export function LocationTimeTab({
       className="space-y-4"
     >
       {pendingUnlinkIds.length > 0 ? <PendingBookingUnlinkHint /> : null}
+      {clubChangeLocked ? (
+        <LinkedBookingChangeGate
+          linkedCount={initialLinkedBookingIds.length}
+          clubName={club?.name}
+          onUnlink={() => setEditReservationAction('unlink')}
+        />
+      ) : null}
       <CreateGameClubSection
         clubs={clubsForSport}
         courts={courts}
         selectedClub={selectedClub}
         selectedCourt={selectedCourt}
         isClubModalOpen={isClubModalOpen}
-        onSelectClub={(id) => onSelectClub?.(id)}
+        onSelectClub={(id, club) => onSelectClub?.(id, club)}
         onOpenClubModal={() => setIsClubModalOpen(true)}
         onCloseClubModal={() => setIsClubModalOpen(false)}
+        venueCityId={venueCityId}
+        onVenueCityChange={onVenueCityChange}
+        entityType={entityType}
+        preferredSport={game.sport}
+        locked={clubChangeLocked}
+        onLockedActivate={() => {
+          setEditReservationAction('unlink');
+          setIsClubModalOpen(true);
+        }}
       />
       <GameLocationTimePanel
         mode="edit"

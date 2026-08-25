@@ -1,9 +1,9 @@
 import { useTranslation } from 'react-i18next';
-import { ChevronRight, MapPin } from 'lucide-react';
+import { ChevronRight, Lock, MapPin } from 'lucide-react';
 import { ClubModal, ClubAvatar } from '@/components';
 import { CourtLocationLinks } from '@/components/CourtLocationLinks';
 import { LocationTimeStepHeader } from '@/components/gameLocationTime/LocationTimeStepHeader';
-import type { Club, Court } from '@/types';
+import type { Club, Court, EntityType, Sport } from '@/types';
 
 interface CreateGameClubSectionProps {
   clubs: Club[];
@@ -11,9 +11,15 @@ interface CreateGameClubSectionProps {
   selectedClub: string;
   selectedCourt: string;
   isClubModalOpen: boolean;
-  onSelectClub: (id: string) => void;
+  onSelectClub: (id: string, club?: Club) => void;
   onOpenClubModal: () => void;
   onCloseClubModal: () => void;
+  locked?: boolean;
+  onLockedActivate?: () => void;
+  venueCityId?: string;
+  onVenueCityChange?: (cityId: string, snapshot?: { name: string; country: string }) => void;
+  entityType?: EntityType;
+  preferredSport?: Sport | null;
 }
 
 export const CreateGameClubSection = ({
@@ -25,6 +31,12 @@ export const CreateGameClubSection = ({
   onSelectClub,
   onOpenClubModal,
   onCloseClubModal,
+  locked = false,
+  onLockedActivate,
+  venueCityId,
+  onVenueCityChange,
+  entityType,
+  preferredSport,
 }: CreateGameClubSectionProps) => {
   const { t } = useTranslation();
   const club = clubs.find((c) => c.id === selectedClub);
@@ -37,16 +49,25 @@ export const CreateGameClubSection = ({
         clubs={clubs}
         selectedId={selectedClub}
         onSelect={onSelectClub}
+        cityId={venueCityId}
+        onVenueCityChange={onVenueCityChange}
+        entityType={entityType}
+        preferredSport={preferredSport}
       />
       <div>
         <LocationTimeStepHeader
           icon={MapPin}
           title={t('createGame.club')}
           done={Boolean(club)}
+          trailing={locked ? t('gameDetails.locationTime.clubLockedBadge') : null}
         />
         <button
           type="button"
-          onClick={onOpenClubModal}
+          onClick={locked ? onLockedActivate : onOpenClubModal}
+          data-testid={locked ? 'edit-club-locked' : undefined}
+          aria-label={
+            locked ? t('gameDetails.locationTime.clubLockedAria') : undefined
+          }
           className={
             club
               ? 'w-full flex items-center gap-3 min-w-0 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2.5 text-left transition-colors hover:border-primary-400 dark:hover:border-primary-600'
@@ -77,7 +98,11 @@ export const CreateGameClubSection = ({
               </span>
             </>
           )}
-          <ChevronRight size={18} className="shrink-0 text-gray-400 dark:text-gray-500" />
+          {locked ? (
+            <Lock size={16} className="shrink-0 text-gray-400 dark:text-gray-500" aria-hidden />
+          ) : (
+            <ChevronRight size={18} className="shrink-0 text-gray-400 dark:text-gray-500" />
+          )}
         </button>
       </div>
       {selectedClub && (

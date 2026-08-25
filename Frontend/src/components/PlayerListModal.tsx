@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
-import { ChevronDown, ChevronUp, RotateCcw, Search, UserPlus } from 'lucide-react';
+import { ChevronDown, ChevronUp, RotateCcw, UserPlus } from 'lucide-react';
+import { useDebounce } from '@/components/CityMap/useDebounce';
 import { BasicUser, UserTeam, GameParticipant } from '@/types';
 import { invitesApi } from '@/api';
 import { userTeamsApi } from '@/api/userTeams';
@@ -9,6 +10,7 @@ import { gamesApi } from '@/api/games';
 import { usersApi } from '@/api/users';
 import { useAuthStore } from '@/store/authStore';
 import { runWithProfileName } from '@/utils/runWithProfileName';
+import { genderAddBlockReason } from '@/utils/genderJoinGate';
 import { Button } from './Button';
 import { useFavoritesStore } from '@/store/favoritesStore';
 import { usePlayersStore } from '@/store/playersStore';
@@ -34,6 +36,7 @@ import {
 import { PlayerListItem } from '@/components/PlayerListItem';
 import { TeamListItem } from '@/components/playerInvite/TeamListItem';
 import { PlayerInviteVirtualList } from '@/components/playerInvite/PlayerInviteVirtualList';
+import { PlayerInviteSearchInput } from '@/components/playerInvite/PlayerInviteSearchInput';
 import { SegmentedSwitch, type SegmentedSwitchTab } from '@/components/SegmentedSwitch';
 import {
   InviteFriendToBandejaButton,
@@ -46,18 +49,31 @@ import {
   type GameAvailabilityMatch,
 } from '@/utils/availability/gameMatch';
 import { participantBlocksInvitePlayerPicker } from '@/utils/gameInviteParticipant';
-import type { GameInviteOutcome, Sport } from '@/types';
+import type { GameInviteOutcome, GenderTeam, Sport } from '@/types';
 import { PlayerInviteSportFilterChips } from '@/components/playerInvite/PlayerInviteSportFilterChips';
 import {
   isInviteSportFilterActive,
   type InviteSportFilterValue,
 } from '@/utils/inviteSportFilter';
 import { listEnabledSports } from '@/utils/profileSports';
+import { PlayerInviteLookingList } from '@/components/playerInvite/PlayerInviteLookingList';
 import { SportLevelProvider } from '@/contexts/SportLevelContext';
-import { useDebounce } from '@/components/CityMap/useDebounce';
+import { BrowseCityControl } from '@/components/browseCity/BrowseCityControl';
+import { CityPickerEmbed } from '@/components/browseCity/CityPickerEmbed';
+import { NearbyPeopleSection } from '@/components/browseCity/NearbyPeopleSection';
+import { useResolvedBrowseCity } from '@/hooks/useResolvedBrowseCity';
+import { useBrowseCityStore } from '@/store/browseCityStore';
+import type { NearbyInvitableCity } from '@/api/users';
+import { useInviteLookingPool } from '@/components/playerInvite/useInviteLookingPool';
+import {
+  lookingMembersForSlot,
+  lookingSelectionAfterPoolChange,
+  type PlayerInviteLookingDraft,
+} from '@/components/playerInvite/lookingTypes';
 
 export interface PlayerListModalConfirmMeta {
   userTeamIdByReceiverId?: Record<string, string>;
+  playIntentIdByReceiverId?: Record<string, string>;
 }
 
 export interface PlayerListModalGameTiming {
@@ -79,8 +95,11 @@ interface PlayerListModalProps {
   title?: string;
   inviteAsTrainerOnly?: boolean;
   gameTiming?: PlayerListModalGameTiming | null;
+  lookingDraft?: PlayerInviteLookingDraft | null;
   /** When set, list defaults to players with this sport enabled; sport chips shown. */
   gameSport?: Sport;
+  genderTeams?: GenderTeam;
+  entityType?: string;
 }
 
 type GameAvailabilityContext = PlayerListModalGameTiming;
@@ -97,35 +116,61 @@ export const PlayerListModal = ({
   title,
   inviteAsTrainerOnly = false,
   gameTiming,
+  lookingDraft,
   gameSport,
+  genderTeams,
+  entityType,
 }: PlayerListModalProps) => {
   const { t } = useTranslation();
   const authUser = useAuthStore((s) => s.user);
+  const browseCity = useResolvedBrowseCity();
+  const browseRecents = useBrowseCityStore((s) => s.recents);
   const isFavorite = useFavoritesStore((state) => state.isFavorite);
   const invitableMaxSocial = usePlayersStore((s) => s.invitableMaxSocialLevel);
   const getUserMetadata = usePlayersStore((s) => s.getUserMetadata);
 
   const [players, setPlayers] = useState<BasicUser[]>([]);
+  const [nearbyGroups, setNearbyGroups] = useState<NearbyInvitableCity[]>([]);
   const [readyTeams, setReadyTeams] = useState<UserTeam[]>([]);
   const [loading, setLoading] = useState(true);
   const [inviting, setInviting] = useState<string | null>(null);
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>(preSelectedIds);
   const [selectedTeamIds, setSelectedTeamIds] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [cityPickerOpen, setCityPickerOpen] = useState(false);
   const [isOpen, setIsOpen] = useState(true);
   const [canInviteAsTrainer, setCanInviteAsTrainer] = useState(inviteAsTrainerOnly);
   const [inviteAsTrainer, setInviteAsTrainer] = useState(inviteAsTrainerOnly);
   const [filters, setFilters] = useState<PlayerInviteFilters>(() => defaultPlayerInviteFilters(1));
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [inviteListKind, setInviteListKind] = useState<'all' | 'users' | 'teams'>('all');
+  const [invitePane, setInvitePane] = useState<'search' | 'looking'>('search');
   const [inviteSportFilter, setInviteSportFilter] = useState<InviteSportFilterValue>('game');
   const [fetchedGameContext, setFetchedGameContext] = useState<GameAvailabilityContext | null>(null);
   const [invitePickerOutcomes, setInvitePickerOutcomes] = useState<GameInviteOutcome[]>([]);
   const listSegmentUsers = inviteListKind === 'all' || inviteListKind === 'users';
   const listSegmentTeams = inviteListKind === 'all' || inviteListKind === 'teams';
   const hasLoadedPlayersRef = useRef(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const tRef = useRef(t);
+  tRef.current = t;
 
   const showTeams = multiSelect && !inviteAsTrainerOnly;
+  const showLooking =
+    !inviteAsTrainerOnly && Boolean(gameSport) && Boolean(gameId || gameTiming?.timeIsSet);
+
+  const lookingPool = useInviteLookingPool({
+    enabled: showLooking,
+    gameId,
+    lookingDraft: gameId ? null : lookingDraft,
+  });
+
+  const lookingMembers = useMemo(
+    () => lookingMembersForSlot(lookingPool.members, filterGender),
+    [filterGender, lookingPool.members],
+  );
+  const lookingCount = lookingMembers.length;
+  const lookingGreatFitCount = lookingMembers.filter((m) => m.matchesGame).length;
 
   const inviteListKindTabs = useMemo<SegmentedSwitchTab[]>(
     () => [
@@ -147,9 +192,46 @@ export const PlayerListModal = ({
     [gameId, gameSport, inviteAsTrainerOnly],
   );
 
+  const invitePaneTabs = useMemo<SegmentedSwitchTab[]>(
+    () => [
+      { id: 'search', label: t('playerInvite.tabSearch') },
+      {
+        id: 'looking',
+        label: t('playerInvite.tabLooking'),
+        badge: lookingPool.isPending || lookingPool.isError ? undefined : lookingCount,
+        showZeroBadge: true,
+      },
+    ],
+    [lookingCount, lookingPool.isError, lookingPool.isPending, t],
+  );
+
   useEffect(() => {
+    setInvitePane('search');
     hasLoadedPlayersRef.current = false;
   }, [inviteSessionKey]);
+
+  const previousLookingMembersRef = useRef(lookingPool.members);
+  const selectedUserIdsRef = useRef(selectedUserIds);
+  selectedUserIdsRef.current = selectedUserIds;
+  useEffect(() => {
+    if (!showLooking || lookingPool.isLoading || lookingPool.isError) return;
+    const previous = previousLookingMembersRef.current;
+    const next = lookingPool.members;
+    previousLookingMembersRef.current = next;
+    if (previous.length === 0) return;
+    const previousIds = new Set(previous.map((m) => m.userId));
+    const nextIds = new Set(next.map((m) => m.userId));
+    const { nextSelected, removedIds } = lookingSelectionAfterPoolChange(
+      selectedUserIdsRef.current,
+      previousIds,
+      nextIds,
+    );
+    if (removedIds.length === 0) return;
+    setSelectedUserIds(nextSelected);
+    const first = previous.find((m) => m.userId === removedIds[0]);
+    const name = [first?.firstName, first?.lastName].filter(Boolean).join(' ') || t('playerInvite.tabLooking');
+    toast(t('playerInvite.stoppedLooking', { name }));
+  }, [lookingPool.isError, lookingPool.isLoading, lookingPool.members, showLooking, t]);
 
   const inviteExtraSports = useMemo(() => {
     if (!gameSport) return [];
@@ -193,6 +275,10 @@ export const PlayerListModal = ({
   }, [preSelectedIdsKey]);
 
   const handleClose = () => {
+    if (cityPickerOpen) {
+      setCityPickerOpen(false);
+      return;
+    }
     setIsOpen(false);
     setInviteAsTrainer(false);
     setCanInviteAsTrainer(false);
@@ -222,10 +308,21 @@ export const PlayerListModal = ({
       // Keep list mounted for search refinements and clear — only first open shows spinner.
       const backgroundReload = hasLoadedPlayersRef.current;
       if (!backgroundReload) setLoading(true);
-      if (!inviteAsTrainerOnly) setCanInviteAsTrainer(false);
+      if (!backgroundReload && !inviteAsTrainerOnly) setCanInviteAsTrainer(false);
       const filterIds = filterPlayerIdsRef.current;
       try {
-        const fetchedPlayers = await usePlayersStore.getState().fetchPlayers(gameId, gameSport, serverSearchQuery);
+        const fetchedPlayers = await usePlayersStore.getState().fetchPlayers(
+          gameId,
+          gameSport,
+          serverSearchQuery,
+          !gameId && gameTiming?.timeIsSet && gameTiming.startTime && gameTiming.endTime
+            ? { startTime: gameTiming.startTime, endTime: gameTiming.endTime }
+            : undefined,
+          {
+            cityId: browseCity.cityId,
+            expandNearby: Boolean(serverSearchQuery),
+          },
+        );
         const [inviteTeams] = await Promise.all([
           userTeamsApi.getForPlayerInvite({ gameId, sport: gameSport }).catch(() => [] as UserTeam[]),
           useUserTeamsStore.getState().refreshAll(),
@@ -285,26 +382,41 @@ export const PlayerListModal = ({
           }
         }
 
-        const filtered = fetchedPlayers.filter(
-          (player) => !participantIds.has(player.id) && !invitedUserIds.has(player.id),
-        );
+        const busyUserIds =
+          'busyUserIds' in fetchedPlayers && Array.isArray(fetchedPlayers.busyUserIds)
+            ? fetchedPlayers.busyUserIds
+            : [];
+        const busySet = new Set(busyUserIds);
+        const blockedIds = new Set([...participantIds, ...invitedUserIds, ...busySet]);
+        const filtered = fetchedPlayers.filter((player) => !blockedIds.has(player.id));
         hasLoadedPlayersRef.current = true;
         setPlayers(filtered);
+        setNearbyGroups(
+          serverSearchQuery && filtered.length === 0
+            ? (fetchedPlayers.nearby ?? [])
+                .map((group) => ({
+                  ...group,
+                  players: group.players.filter((player) => !blockedIds.has(player.id)),
+                }))
+                .filter((group) => group.players.length > 0)
+            : [],
+        );
 
         const invitableTeams = merged.filter(
           (team) =>
             isUserTeamReady(team) &&
-            teamIsFullyInvitable(team, participantIds, invitedUserIds, filterIds),
+            teamIsFullyInvitable(team, participantIds, invitedUserIds, [...filterIds, ...busyUserIds]),
         );
         setReadyTeams(invitableTeams);
       } catch {
         if (cancelled) return;
         hasLoadedPlayersRef.current = true;
         setPlayers([]);
+        setNearbyGroups([]);
         setReadyTeams([]);
         setInvitePickerOutcomes([]);
         setFetchedGameContext(null);
-        toast.error(t('errors.generic'));
+        toast.error(tRef.current('errors.generic'));
       } finally {
         if (!cancelled && !backgroundReload) setLoading(false);
       }
@@ -314,7 +426,7 @@ export const PlayerListModal = ({
     return () => {
       cancelled = true;
     };
-  }, [gameId, gameSport, t, inviteAsTrainerOnly, filterPlayerIdsKey, serverSearchQuery]);
+  }, [browseCity.cityId, gameId, gameSport, inviteAsTrainerOnly, filterPlayerIdsKey, serverSearchQuery, gameTiming?.timeIsSet, gameTiming?.startTime, gameTiming?.endTime]);
 
   const effectiveGameContext: GameAvailabilityContext | null = gameTiming ?? fetchedGameContext;
   const ctxTimeIsSet = effectiveGameContext?.timeIsSet ?? false;
@@ -412,6 +524,38 @@ export const PlayerListModal = ({
     return e;
   }, [baseFilteredEntries, showTeams, listSegmentUsers, listSegmentTeams]);
 
+  const filteredNearbyGroups = useMemo(() => {
+    return nearbyGroups
+      .map((group) => ({
+        ...group,
+        players: filterAndSortInviteEntries(group.players, [], {
+          searchQuery,
+          filterPlayerIds: filterPlayerIdsRef.current,
+          filters,
+          filterGender,
+          inviteAsTrainerOnly,
+          isFavorite,
+          getUserMetadata,
+          showTeams: false,
+          gameSport,
+          inviteSportFilter: gameSport ? inviteSportFilter : undefined,
+        })
+          .filter((entry): entry is Extract<InviteListEntry, { kind: 'user' }> => entry.kind === 'user')
+          .map((entry) => entry.user),
+      }))
+      .filter((group) => group.players.length > 0);
+  }, [
+    nearbyGroups,
+    searchQuery,
+    filters,
+    filterGender,
+    inviteAsTrainerOnly,
+    isFavorite,
+    getUserMetadata,
+    gameSport,
+    inviteSportFilter,
+  ]);
+
   const memberOfSelectedTeam = useCallback(
     (userId: string) =>
       selectedTeamIds.some((tid) => {
@@ -455,8 +599,41 @@ export const PlayerListModal = ({
 
   const selectedUniqueCount = expandedPlayerIds.length;
 
+  const lookingIntentIdByUserId = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const member of lookingPool.members) m.set(member.userId, member.intentId);
+    return m;
+  }, [lookingPool.members]);
+
   const handleConfirm = async () => {
     if (expandedPlayerIds.length === 0) return;
+
+    const gatedEvent = { genderTeams, entityType };
+    const blockedUnset = expandedPlayerIds.some((playerId) => {
+      const player = players.find((p) => p.id === playerId);
+      if (player) return genderAddBlockReason(gatedEvent, player) === 'genderUnset';
+      for (const team of readyTeams) {
+        const member = (team.members ?? []).find(
+          (m) => m.user?.id === playerId || m.userId === playerId,
+        );
+        if (member?.user) return genderAddBlockReason(gatedEvent, member.user) === 'genderUnset';
+      }
+      return genderAddBlockReason(gatedEvent, { genderIsSet: false }) === 'genderUnset';
+    });
+    if (blockedUnset) {
+      toast.error(t('errors.games.genderUnsetOther', {
+        defaultValue: "This player hasn't set their gender yet",
+      }));
+      return;
+    }
+
+    const playIntentIdByReceiverId: Record<string, string> = {};
+    for (const id of expandedPlayerIds) {
+      const intentId = lookingIntentIdByUserId.get(id);
+      if (intentId) playIntentIdByReceiverId[id] = intentId;
+    }
+    const playIntentMeta =
+      Object.keys(playIntentIdByReceiverId).length > 0 ? playIntentIdByReceiverId : undefined;
 
     if (!gameId) {
       setInviting('confirming');
@@ -465,6 +642,7 @@ export const PlayerListModal = ({
           onConfirm?.(expandedPlayerIds, {
             userTeamIdByReceiverId:
               Object.keys(userTeamIdByReceiverId).length > 0 ? userTeamIdByReceiverId : undefined,
+            playIntentIdByReceiverId: playIntentMeta,
           }),
         );
         handleClose();
@@ -486,16 +664,20 @@ export const PlayerListModal = ({
       }
       const asTrainer =
         (canInviteAsTrainer && inviteAsTrainer && expandedPlayerIds.length === 1) || inviteAsTrainerOnly;
+      let unlinked = false;
       for (const playerId of expandedPlayerIds) {
         const userTeamId = userTeamIdByReceiverId[playerId];
-        await invitesApi.send({
+        const sent = await invitesApi.send({
           receiverId: playerId,
           gameId,
           asTrainer: asTrainer && expandedPlayerIds[0] === playerId,
           userTeamId,
+          playIntentId: playIntentIdByReceiverId[playerId],
         });
+        if (sent.intentLinked === false) unlinked = true;
         await usersApi.trackInteraction(playerId);
       }
+      if (unlinked) toast(t('playerInvite.alreadyInMatch'));
 
       setInvitePickerOutcomes((prev) => prev.filter((o) => !expandedPlayerIds.includes(o.userId)));
 
@@ -503,11 +685,13 @@ export const PlayerListModal = ({
       onConfirm?.(expandedPlayerIds, {
         userTeamIdByReceiverId:
           Object.keys(userTeamIdByReceiverId).length > 0 ? userTeamIdByReceiverId : undefined,
+        playIntentIdByReceiverId: playIntentMeta,
       });
       handleClose();
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };
-      toast.error(err.response?.data?.message || t('errors.generic'));
+      const message = err.response?.data?.message || 'errors.generic';
+      toast.error(t(message, { defaultValue: message }));
     } finally {
       setInviting(null);
     }
@@ -609,8 +793,35 @@ export const PlayerListModal = ({
   return (
     <SportLevelProvider sport={gameSport}>
     <Dialog open={isOpen} onClose={handleClose} modalId="player-list-modal">
-      <DialogContent className="h-[min(92vh,720px)] flex flex-col overflow-hidden p-0 gap-0">
-        <DialogHeader className="flex-shrink-0 border-b border-gray-100/80 px-2.5 py-3 dark:border-gray-800/80">
+      <DialogContent
+        className="h-[min(92vh,720px)] flex flex-col overflow-hidden p-0 gap-0"
+        showCloseButton={!cityPickerOpen}
+        onOpenAutoFocus={(event) => {
+          event.preventDefault();
+          searchInputRef.current?.focus();
+        }}
+        onEscapeKeyDown={(event) => {
+          if (cityPickerOpen) {
+            event.preventDefault();
+            setCityPickerOpen(false);
+          }
+        }}
+      >
+        {cityPickerOpen ? (
+          <CityPickerEmbed
+            selectedId={browseCity.cityId}
+            recentCityIds={browseRecents.filter((id) => id !== browseCity.homeCityId)}
+            onClose={() => setCityPickerOpen(false)}
+            onSelect={(id, city) => {
+              useBrowseCityStore.getState().setCityId(
+                id,
+                city ? { name: city.name, country: city.country } : undefined,
+                browseCity.homeCityId,
+              );
+            }}
+          />
+        ) : null}
+        <DialogHeader className="flex flex-col items-stretch justify-start gap-3 border-b border-gray-100/80 px-2.5 py-3 dark:border-gray-800/80">
           <DialogTitle className="text-lg font-bold tracking-tight text-gray-900 dark:text-white">
             {title ||
               (inviteAsTrainerOnly
@@ -619,35 +830,113 @@ export const PlayerListModal = ({
                   ? t('games.invitePlayers')
                   : t('games.invitePlayer'))}
           </DialogTitle>
+          {showLooking ? (
+            <SegmentedSwitch
+              tabs={invitePaneTabs}
+              activeId={invitePane}
+              onChange={(id) => setInvitePane(id as 'search' | 'looking')}
+              showOnlyActiveTabText={false}
+              layoutId="player-invite-pane"
+              fullWidth
+              size="sm"
+              badgeStyle="inline"
+              ariaLabel={`${t('playerInvite.tabSearch')} / ${t('playerInvite.tabLooking')}`}
+            />
+          ) : null}
+          {browseCity.hasCity ? (
+            <BrowseCityControl className="flex justify-start" onOpen={() => setCityPickerOpen(true)} />
+          ) : null}
         </DialogHeader>
 
-        {loading ? (
+        {invitePane === 'looking' ? null : (
+          <PlayerInviteSearchInput
+            ref={searchInputRef}
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder={t('common.search') || 'Search...'}
+          />
+        )}
+
+        {showLooking && invitePane === 'looking' ? (
+          <>
+            <div className="relative z-10 flex min-h-0 flex-1 flex-col">
+              <PlayerInviteLookingList
+                members={lookingMembers}
+                selectedUserIds={selectedUserIds}
+                onSelect={handleUserClick}
+                greatFitCount={lookingGreatFitCount}
+                loading={lookingPool.isLoading}
+                failed={lookingPool.isError}
+                onRetry={() => {
+                  void lookingPool.refetch();
+                }}
+                levelSport={gameSport}
+                listPadClass={showCountHint ? 'pb-28' : 'pb-20'}
+                cityName={browseCity.name}
+              />
+              {showCountHint && (
+                <div className="pointer-events-none absolute inset-x-0 bottom-3 z-20 flex justify-center">
+                  <div className="rounded-full bg-primary-100/95 px-3 py-2 text-center text-sm font-medium text-primary-700 shadow-lg shadow-primary-500/30 backdrop-blur-sm dark:bg-primary-900/70 dark:text-primary-300 dark:shadow-primary-900/50">
+                    {t('games.playersSelected', { count: selectedUniqueCount })}
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="relative z-30 flex-shrink-0 border-t border-gray-100 bg-gray-50/95 px-2.5 py-3 pt-2 backdrop-blur-sm dark:border-gray-800 dark:bg-gray-950/95">
+              <div className="flex gap-3">
+                <Button
+                  onClick={handleClose}
+                  variant="outline"
+                  className="flex-1 rounded-xl font-medium"
+                  disabled={inviting === 'confirming'}
+                >
+                  {t('common.cancel')}
+                </Button>
+                <Button
+                  onClick={handleConfirm}
+                  className="flex-1 rounded-xl font-medium shadow-lg shadow-primary-500/25 dark:shadow-primary-900/30"
+                  disabled={selectedUniqueCount === 0 || inviting === 'confirming'}
+                >
+                  {inviting === 'confirming' ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                      {t('common.sending') || 'Sending...'}
+                    </span>
+                  ) : (
+                    t('common.confirm')
+                  )}
+                </Button>
+              </div>
+            </div>
+          </>
+        ) : loading ? (
           <div className="flex flex-1 items-center justify-center py-20 flex-shrink-0">
             <div className="h-11 w-11 animate-spin rounded-full border-2 border-primary-200 border-t-primary-600 dark:border-primary-800 dark:border-t-primary-400" />
           </div>
         ) : (
           <>
-            <div className="flex-shrink-0 px-2.5 pt-3 pb-2">
-              <div className="relative">
-                <Search className="pointer-events-none absolute left-3.5 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-gray-400 dark:text-gray-500" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder={t('common.search') || 'Search...'}
-                  className="w-full rounded-2xl border border-gray-200/90 bg-gray-50/80 py-3 pl-11 pr-4 text-sm text-gray-900 shadow-inner shadow-gray-900/[0.03] placeholder:text-gray-400 transition focus:border-primary-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-gray-700 dark:bg-gray-800/60 dark:text-white dark:placeholder-gray-500 dark:focus:border-primary-500 dark:focus:bg-gray-900 dark:focus:ring-primary-400/20"
-                />
-              </div>
-            </div>
-
             <div className="relative z-10 flex min-h-0 flex-1 flex-col">
               {!listHasSourceRows ? (
+                nearbyGroups.length > 0 || serverSearchQuery ? (
+                  <NearbyPeopleSection
+                    query={serverSearchQuery ?? searchQuery}
+                    primaryCityName={browseCity.name}
+                    groups={filteredNearbyGroups}
+                    variant="invite"
+                    selectedUserIds={selectedUserIds}
+                    onSelectUser={handleUserClick}
+                    onViewCity={(cityId, snapshot) => {
+                      useBrowseCityStore.getState().setCityId(cityId, snapshot, browseCity.homeCityId);
+                    }}
+                  />
+                ) : (
                 <div className="flex flex-col items-center justify-center py-16 text-center">
                   <div className="mb-3 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-gray-100 to-gray-50 shadow-inner dark:from-gray-800 dark:to-gray-900">
                     <UserPlus className="h-8 w-8 text-gray-400 dark:text-gray-500" />
                   </div>
                   <p className="text-gray-600 dark:text-gray-400">{t('invites.noPlayersAvailable')}</p>
                 </div>
+                )
               ) : (
                 <PlayerInviteVirtualList
                   entries={segmentFilteredEntries}
@@ -666,15 +955,15 @@ export const PlayerListModal = ({
                         />
                       ) : null}
                       {showTeams ? (
-                        <div className="flex justify-center">
-                          <SegmentedSwitch
-                            tabs={inviteListKindTabs}
-                            activeId={inviteListKind}
-                            onChange={(id) => setInviteListKind(id as 'all' | 'users' | 'teams')}
-                            showOnlyActiveTabText={false}
-                            layoutId="player-invite-list-kind"
-                          />
-                        </div>
+                        <SegmentedSwitch
+                          tabs={inviteListKindTabs}
+                          activeId={inviteListKind}
+                          onChange={(id) => setInviteListKind(id as 'all' | 'users' | 'teams')}
+                          showOnlyActiveTabText={false}
+                          layoutId="player-invite-list-kind"
+                          fullWidth
+                          size="sm"
+                        />
                       ) : null}
                       <div>
                         <button
@@ -756,7 +1045,7 @@ export const PlayerListModal = ({
               )}
             </div>
 
-            {canInviteAsTrainer && gameId && !multiSelect && !inviteAsTrainerOnly && segmentFilteredEntries.length > 0 && (
+            {canInviteAsTrainer && gameId && !multiSelect && !inviteAsTrainerOnly && invitePane !== 'looking' && segmentFilteredEntries.length > 0 && (
               <label className="flex-shrink-0 mx-2.5 mb-2 flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
@@ -770,7 +1059,7 @@ export const PlayerListModal = ({
               </label>
             )}
 
-            {listHasSourceRows && (
+            {(listHasSourceRows || showLooking) && invitePane !== 'looking' && (
               <div className="relative z-30 flex-shrink-0 border-t border-gray-100 bg-gray-50/95 px-2.5 py-3 pt-2 backdrop-blur-sm dark:border-gray-800 dark:bg-gray-950/95">
                 <div className="flex gap-3">
                   <Button
@@ -785,7 +1074,6 @@ export const PlayerListModal = ({
                     onClick={handleConfirm}
                     className="flex-1 rounded-xl font-medium shadow-lg shadow-primary-500/25 dark:shadow-primary-900/30"
                     disabled={
-                      segmentFilteredEntries.length === 0 ||
                       selectedUniqueCount === 0 ||
                       inviting === 'confirming'
                     }

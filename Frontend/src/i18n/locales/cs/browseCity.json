@@ -1,0 +1,21 @@
+{
+  "browseCity": {
+    "chipAriaHome": "Vaše město, {{city}}. Prohlédnout jiné.",
+    "chipAriaAway": "Prohlížíte {{city}}. Změnit město.",
+    "chipAriaVenueHome": "Město hry {{city}}. Vybrat jiné.",
+    "chipAriaVenueAway": "Kluby ve městě {{city}}. Změnit město.",
+    "changeCity": "Město",
+    "recent": "Nedávné",
+    "nearby": "Poblíž",
+    "viewCity": "Otevřít {{city}}",
+    "nobodyInCity": "V {{city}} nikdo pro „{{query}}“",
+    "nobodyNearby": "Poblíž nikdo pro „{{query}}“. Zkuste jiné město.",
+    "noUsersInCity": "V {{city}} nejsou žádní hráči",
+    "noUsersInCityHint": "Přepněte město nebo hledejte jméno",
+    "lookingEmptyInCity": "V {{city}} teď nikdo nehledá hru",
+    "noClubsInCity": "Ve městě {{city}} nejsou žádné kluby",
+    "noClubsMatch": "Žádný klub pro „{{query}}“",
+    "searchClubs": "Hledat kluby",
+    "km": "{{km}} km"
+  }
+}

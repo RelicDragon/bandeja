@@ -12,6 +12,7 @@ import {
   extractChatTypeFromEmitPayload,
   resolveGameChatSocketRecipientIds,
 } from './chat/gameChatSocketRecipients';
+import { isRosterLifecycleSystemMessagePayload } from './chat/gameChatRosterVisibility';
 import { GameReadService } from './game/read.service';
 import { ChatContextType, ChatType, Sport } from '@prisma/client';
 import type { UnreadAuthorityEnvelope } from './chat/unreadAuthority/types';
@@ -817,12 +818,25 @@ class SocketService {
     eventName: string,
     payload: Record<string, unknown>
   ): void {
+    const hideFromInviteOnly = isRosterLifecycleSystemMessagePayload(payload);
     if (!chatType || chatType === ChatType.PUBLIC) {
+      if (hideFromInviteOnly) {
+        void resolveGameChatSocketRecipientIds(gameId, ChatType.PUBLIC, {
+          excludeInviteOnlyViewers: true,
+        }).then((recipientIds) => {
+          for (const userId of recipientIds) {
+            this.io.to(`notify-user-${userId}`).emit(eventName, payload);
+          }
+        });
+        return;
+      }
       this.io.to(`game-${gameId}`).emit(eventName, payload);
       return;
     }
 
-    void resolveGameChatSocketRecipientIds(gameId, chatType).then((recipientIds) => {
+    void resolveGameChatSocketRecipientIds(gameId, chatType, {
+      excludeInviteOnlyViewers: hideFromInviteOnly,
+    }).then((recipientIds) => {
       for (const userId of recipientIds) {
         this.io.to(`notify-user-${userId}`).emit(eventName, payload);
       }

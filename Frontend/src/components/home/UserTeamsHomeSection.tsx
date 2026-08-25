@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Loader2, Plus, Users, X } from 'lucide-react';
+import { Plus, Users, X } from 'lucide-react';
 import { ConfirmationModal, TeamAvatar } from '@/components';
 import { useAuthStore } from '@/store/authStore';
 import { useUserTeamsStore } from '@/store/userTeamsStore';
@@ -9,8 +9,9 @@ import { userTeamsApi } from '@/api';
 import type { UserTeam } from '@/types';
 import toast from 'react-hot-toast';
 import { toastApiError } from '@/utils/toastApiError';
-import { findLatestSoloOwnedTeam, isSoloOwnedTeam } from '@/utils/soloOwnedUserTeam';
+import { isSoloOwnedTeam } from '@/utils/soloOwnedUserTeam';
 import { isUserTeamReady } from '@/components/playerInvite/inviteEntries';
+import { CreateUserTeamExplainerSheet } from '@/components/userTeam/CreateUserTeamExplainerSheet';
 
 function teamNameWordRows(name: string): string[] {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -26,8 +27,8 @@ export function UserTeamsHomeSection({ className = '', embedded = false }: UserT
   const { t } = useTranslation();
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
-  const { teams, memberships, refreshAll, isLoading, removeTeamLocal } = useUserTeamsStore();
-  const [creating, setCreating] = useState(false);
+  const { teams, memberships, isLoading, removeTeamLocal } = useUserTeamsStore();
+  const [showExplainer, setShowExplainer] = useState(false);
   const [deleteTeamId, setDeleteTeamId] = useState<string | null>(null);
   const [deletingTeam, setDeletingTeam] = useState(false);
 
@@ -53,30 +54,6 @@ export function UserTeamsHomeSection({ className = '', embedded = false }: UserT
 
   const totalTiles = displayTeams.length + pending.length;
   const showSkeleton = isLoading && displayTeams.length === 0 && pending.length === 0;
-
-  const handleNewTeam = async () => {
-    setCreating(true);
-    try {
-      const refreshed = await refreshAll();
-      if (!refreshed) {
-        toast.error(t('errors.networkError'));
-        return;
-      }
-      const existing = findLatestSoloOwnedTeam(useUserTeamsStore.getState().teams, user?.id);
-      if (existing) {
-        navigate(`/user-team/${existing.id}`);
-        return;
-      }
-      const team = await userTeamsApi.create({});
-      useUserTeamsStore.getState().setTeam(team);
-      await refreshAll();
-      navigate(`/user-team/${team.id}`);
-    } catch (e: unknown) {
-      toastApiError(t, e);
-    } finally {
-      setCreating(false);
-    }
-  };
 
   const handleConfirmDeleteTeam = async () => {
     if (!deleteTeamId) return;
@@ -117,11 +94,10 @@ export function UserTeamsHomeSection({ className = '', embedded = false }: UserT
         <button
           type="button"
           className="group flex min-w-[5.75rem] max-w-[7rem] shrink-0 snap-start flex-col items-center gap-1.5 rounded-2xl border border-dashed border-zinc-300/90 bg-transparent py-2 text-center shadow-none transition-[transform,background-color,border-color] duration-200 hover:border-primary-400/70 hover:bg-primary-500/[0.04] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-600 dark:hover:border-primary-500/50 dark:hover:bg-primary-400/[0.06]"
-          onClick={handleNewTeam}
-          disabled={creating}
+          onClick={() => setShowExplainer(true)}
         >
           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-zinc-900 text-white shadow-md transition group-hover:bg-primary-600 dark:bg-zinc-100 dark:text-zinc-900 dark:group-hover:bg-primary-400 dark:group-hover:text-zinc-950">
-            {creating ? <Loader2 size={20} className="animate-spin" /> : <Plus size={22} strokeWidth={2} />}
+            <Plus size={22} strokeWidth={2} />
           </span>
           <div className="flex w-full flex-col items-center justify-start px-1 pb-px">
             {teamNameWordRows(t('teams.create')).map((word, i) => (
@@ -231,6 +207,8 @@ export function UserTeamsHomeSection({ className = '', embedded = false }: UserT
           onConfirm={() => void handleConfirmDeleteTeam()}
         />
       )}
+
+      <CreateUserTeamExplainerSheet open={showExplainer} onOpenChange={setShowExplainer} />
     </section>
   );
 }

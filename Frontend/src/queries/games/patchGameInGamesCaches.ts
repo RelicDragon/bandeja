@@ -3,12 +3,15 @@ import type { Game } from '@/types';
 import { clearMyTabCache } from '@/api/me';
 import { queryKeys } from '../queryKeys';
 import {
+  availableGamesCacheContainsGameId,
   getGamesFromAvailableCache,
+  isAvailableGamesPage,
   withPatchedAvailableGames,
 } from './availableGamesCache';
 import { mergeFindCardGame } from './mergeFindCardGame';
 import type { MyGamesData } from './useMyGamesQuery';
 import type { PastGamesPage } from './usePastGamesQuery';
+import { scheduleFindQueryRevalidation } from './findQueryRevalidation';
 
 function replaceGameInArray(
   games: Game[],
@@ -102,8 +105,19 @@ export function patchGameInGamesCaches(
     if (keyParts[1] === 'available' || keyParts[1] === 'availableUpcoming') {
       const list = getGamesFromAvailableCache(data);
       if (!list) continue;
-      if (!list.some((g) => g.id === gameId)) continue;
+      const cardContainsGame = list.some((g) => g.id === gameId);
+      const indexContainsGame = Boolean(
+        isAvailableGamesPage(data) &&
+        data.meta.dayIndex?.some((row) => row.id === gameId),
+      );
+      if (!cardContainsGame && !indexContainsGame) continue;
       findContainedGame = true;
+      // Index rows contain derived city-day/filter/participant fields. A socket
+      // card is not authoritative enough to patch those; refetch this month only.
+      if (indexContainsGame) {
+        scheduleFindQueryRevalidation(queryClient, key);
+      }
+      if (!cardContainsGame) continue;
       const nextList = replaceGameInArray(list, nextGame, mergeFindCardGame);
       if (!nextList) continue;
       queryClient.setQueryData(key, withPatchedAvailableGames(data, nextList));
@@ -127,8 +141,7 @@ export function findCachesContainGameId(
     if (!data) continue;
     const keyParts = key as readonly string[];
     if (keyParts[1] !== 'available' && keyParts[1] !== 'availableUpcoming') continue;
-    const list = getGamesFromAvailableCache(data);
-    if (list?.some((g) => g.id === gameId)) return true;
+    if (availableGamesCacheContainsGameId(data, gameId)) return true;
   }
   return false;
 }
@@ -138,13 +151,11 @@ export function invalidateFindQueriesContainingGame(
   queryClient: QueryClient,
   gameId: string,
 ): void {
-  void queryClient.invalidateQueries({
-    predicate: (query) => {
-      const key = query.queryKey as readonly unknown[];
-      if (key[0] !== 'games') return false;
-      if (key[1] !== 'available' && key[1] !== 'availableUpcoming') return false;
-      const list = getGamesFromAvailableCache(query.state.data);
-      return !!list?.some((g) => g.id === gameId);
-    },
-  });
+  const queries = queryClient.getQueriesData({ queryKey: queryKeys.games.all });
+  for (const [key, data] of queries) {
+    const parts = key as readonly unknown[];
+    if (parts[1] !== 'available' && parts[1] !== 'availableUpcoming') continue;
+    if (!availableGamesCacheContainsGameId(data, gameId)) continue;
+    scheduleFindQueryRevalidation(queryClient, key);
+  }
 }

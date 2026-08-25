@@ -106,7 +106,7 @@ describe('useAvailableGamesQuery', () => {
         availableSlots: true,
         indexOnly: true,
       }),
-      undefined,
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
     );
 
     const page = client.getQueryData(
@@ -237,7 +237,7 @@ describe('useAvailableGamesQuery', () => {
     );
     expect(getAvailableGames).toHaveBeenCalledWith(
       expect.not.objectContaining({ indexOnly: true }),
-      { timeoutMs: 4000 },
+      expect.objectContaining({ timeoutMs: 4000, signal: expect.any(AbortSignal) }),
     );
 
     getAvailableGames.mockClear();
@@ -251,8 +251,85 @@ describe('useAvailableGamesQuery', () => {
     );
     expect(getAvailableGames).toHaveBeenCalledWith(
       expect.objectContaining({ indexOnly: true }),
-      undefined,
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
     );
+  });
+
+  it('returns the first truncated month page without awaiting its continuation', async () => {
+    getAvailableGames
+      .mockResolvedValueOnce({
+        data: [],
+        meta: {
+          take: 0,
+          bound: 300,
+          hasMore: false,
+          nextCursor: null,
+          truncated: false,
+          dayIndex: [{
+            id: 'idx-1',
+            startTime: '2026-06-01T10:00:00.000Z',
+            dateKey: '2026-06-01',
+          }],
+          dayIndexTruncated: true,
+          dayIndexNextCursor: 'index-cur-1',
+        },
+      })
+      .mockImplementationOnce(() => new Promise(() => {}));
+
+    const client = createTestClient();
+    const fetch = client.fetchQuery(
+      availableGamesQueryOptions({
+        userId: 'user-1',
+        startDate: new Date('2026-06-01'),
+        endDate: new Date('2026-06-30'),
+        indexOnly: true,
+      }),
+    );
+    const outcome = await Promise.race([
+      fetch.then((page) => ({ kind: 'page' as const, page })),
+      new Promise<{ kind: 'timeout' }>((resolve) => {
+        setTimeout(() => resolve({ kind: 'timeout' }), 25);
+      }),
+    ]);
+
+    expect(outcome.kind).toBe('page');
+    if (outcome.kind === 'page') {
+      const page = outcome.page as AvailableGamesPage;
+      expect(page.meta.dayIndex?.map((row) => row.id)).toEqual(['idx-1']);
+      expect(page.meta.dayIndexTruncated).toBe(true);
+      expect(page.meta.dayIndexNextCursor).toBe('index-cur-1');
+    }
+    expect(getAvailableGames).toHaveBeenCalledOnce();
+  });
+
+  it('keeps the legacy partial index when an old server has no continuation cursor', async () => {
+    getAvailableGames.mockResolvedValueOnce({
+      data: [],
+      meta: {
+        take: 0,
+        bound: 300,
+        hasMore: false,
+        nextCursor: null,
+        truncated: false,
+        dayIndex: [{ id: 'legacy-idx', startTime: '2026-06-01T10:00:00.000Z' }],
+        dayIndexTruncated: true,
+      },
+    });
+
+    const client = createTestClient();
+    const page = (await client.fetchQuery(
+      availableGamesQueryOptions({
+        userId: 'user-1',
+        startDate: new Date('2026-06-01'),
+        endDate: new Date('2026-06-30'),
+        indexOnly: true,
+      }),
+    )) as AvailableGamesPage;
+
+    expect(getAvailableGames).toHaveBeenCalledOnce();
+    expect(page.meta.dayIndex?.map((row) => row.id)).toEqual(['legacy-idx']);
+    expect(page.meta.dayIndexTruncated).toBe(true);
+    expect(page.meta.dayIndexNextCursor).toBeNull();
   });
 
   it('loadMore appends games and preserves dayIndex from the first page', async () => {
@@ -346,6 +423,8 @@ describe('useAvailableGamesQuery', () => {
     expect(dayRetry(1, { response: { status: 500 } })).toBe(false);
     expect(dayRetry(0, { response: { status: 404 } })).toBe(false);
     expect(monthOpts.retry).toBeUndefined();
+    expect(dayOpts.networkMode).toBe('always');
+    expect(monthOpts.networkMode).toBe('always');
   });
 
   it('day-scoped fetch passes 4s timeout to API', async () => {
@@ -364,7 +443,50 @@ describe('useAvailableGamesQuery', () => {
         startDate: '2026-06-15',
         endDate: '2026-06-15',
       }),
-      { timeoutMs: 4000 },
+      expect.objectContaining({ timeoutMs: 4000, signal: expect.any(AbortSignal) }),
     );
+  });
+
+  it('day fetches on different keys both settle (no cancel across days)', async () => {
+    const client = createTestClient();
+    const d1 = new Date('2026-08-22T00:00:00');
+    const d2 = new Date('2026-08-23T00:00:00');
+    getAvailableGames
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            setTimeout(() => {
+              resolve({
+                data: [sampleGame('g1', '2026-08-22')],
+                meta: { take: 100, bound: 300, hasMore: false, nextCursor: null, truncated: false },
+              });
+            }, 20);
+          }),
+      )
+      .mockResolvedValueOnce({
+        data: [sampleGame('g2', '2026-08-23')],
+        meta: { take: 100, bound: 300, hasMore: false, nextCursor: null, truncated: false },
+      });
+
+    const a = client.fetchQuery(
+      availableGamesQueryOptions({
+        userId: 'user-1',
+        startDate: d1,
+        endDate: d1,
+        indexOnly: false,
+      }),
+    );
+    const b = client.fetchQuery(
+      availableGamesQueryOptions({
+        userId: 'user-1',
+        startDate: d2,
+        endDate: d2,
+        indexOnly: false,
+      }),
+    );
+    const [pageA, pageB] = (await Promise.all([a, b])) as AvailableGamesPage[];
+    expect(pageA.games[0].id).toBe('g1');
+    expect(pageB.games[0].id).toBe('g2');
+    expect(getAvailableGames).toHaveBeenCalledTimes(2);
   });
 });

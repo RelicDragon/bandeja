@@ -28,6 +28,7 @@ export type ChatListFeedModel = {
   showChatsEmpty: boolean;
   pinnedCountUsers: number;
   getChatKey: (item: ChatItem) => string;
+  networkSettled: boolean;
 };
 
 export type ChatListSearchModel = {
@@ -44,6 +45,9 @@ export type ChatListSearchModel = {
   toggleUnreadFilter: () => void;
   skipUrlSyncRef: React.MutableRefObject<boolean>;
   setSearchParams: ReturnType<typeof import('react-router-dom').useSearchParams>[1];
+  nearbyGroups: import('@/api/users').NearbyInvitableCity[];
+  nearbyLoading: boolean;
+  browseCityName: string;
 };
 
 export type ChatListSearchRow =

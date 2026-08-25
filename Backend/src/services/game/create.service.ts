@@ -3,7 +3,7 @@ import { ClubIntegrationType, EntityType, Prisma } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
 import { USER_SELECT_WITH_SPORT_PROFILES, SUPPORTED_CURRENCIES } from '../../utils/constants';
 import { GameReadinessService } from './readiness.service';
-import { canAddPlayerToGame } from '../../utils/participantValidation';
+import { canAddPlayerToGame, validateGenderForGame } from '../../utils/participantValidation';
 import notificationService from '../notification.service';
 import { validateGameForSport } from '../../utils/validators/validateGameForSport';
 import { resolvePlayersPerMatch, resolveSport } from '../../sport/sportRegistry';
@@ -38,6 +38,7 @@ import {
 } from '../playIntent/playIntentRealtime';
 import { appendGameLog } from './gameLog.service';
 import { PlayIntentMatchQueueService } from '../playIntent/playIntentMatchQueue.service';
+import { assertSlotOverlapConfirmed } from './gameSlotOverlap.service';
 import { normalizeGameRatingFields } from './normalizeGameRatingFields';
 
 async function runSerializableCreate<T>(
@@ -286,6 +287,7 @@ export class GameCreateService {
         entityType: entityType,
         participants: [],
       };
+      await validateGenderForGame(tempGame, userId);
       const joinResult = await canAddPlayerToGame(tempGame, userId);
       if (!joinResult.canJoin) {
         throw new ApiError(400, joinResult.reason || 'Owner cannot join this game');
@@ -302,6 +304,22 @@ export class GameCreateService {
     const endTime = booktimeTimeZone
       ? parseBooktimeStoredOrNaiveToDate(data.endTime, booktimeTimeZone) ?? new Date(data.endTime)
       : new Date(data.endTime);
+
+    if (
+      entityType !== EntityType.BAR &&
+      !creatorNonPlaying &&
+      ownerIsPlaying &&
+      data.timeIsSet !== false &&
+      Number.isFinite(startTime.getTime()) &&
+      Number.isFinite(endTime.getTime()) &&
+      startTime < endTime
+    ) {
+      await assertSlotOverlapConfirmed({
+        userId,
+        targetGame: { id: '', startTime, endTime, timeIsSet: true },
+        confirmOverlap: data.confirmOverlap === true,
+      });
+    }
     
     const priceType = data.priceType ?? 'NOT_KNOWN';
     const priceTotal = data.priceTotal;

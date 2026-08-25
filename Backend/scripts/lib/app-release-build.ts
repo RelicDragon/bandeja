@@ -271,15 +271,32 @@ function isSimulatorDestinationLine(line: string): boolean {
   return /\{ platform:(iOS|watchOS|tvOS|visionOS) Simulator/.test(line);
 }
 
-function tailLog(output: string, lineCount = LOG_TAIL_LINES): string {
+export function selectBuildLogTail(output: string, lineCount = LOG_TAIL_LINES): string {
   const lines = output.split('\n').filter((line) => line.trim().length > 0);
   const withoutSimulatorNoise = lines.filter((line) => !isSimulatorDestinationLine(line));
 
   const errorPattern =
-    /(?:\berror:|\bfatal error:|\*\* (?:ARCHIVE|EXPORT) FAILED \*\*|The following build commands failed:|rsync error:|rsync\(.*\): error:)/i;
+    /(?:\berror:|\bfatal error:|\* What went wrong:|Execution failed for task|A failure occurred while executing|\*\* (?:ARCHIVE|EXPORT) FAILED \*\*|The following build commands failed:|rsync error:|rsync\(.*\): error:)/i;
   const errorIndexes = withoutSimulatorNoise
     .map((line, index) => (errorPattern.test(line) ? index : -1))
     .filter((index) => index >= 0);
+
+  const causeIndexes = withoutSimulatorNoise
+    .map((line, index) => (/^\s*(?:Caused by:|Suppressed:)/.test(line) ? index : -1))
+    .filter((index) => index >= 0);
+
+  if (errorIndexes.length > 0 && causeIndexes.length > 0) {
+    const firstError = errorIndexes[0];
+    const summary = withoutSimulatorNoise.slice(
+      Math.max(0, firstError - 2),
+      Math.min(withoutSimulatorNoise.length, firstError + 8),
+    );
+    const causeContext = causeIndexes.flatMap((index) =>
+      withoutSimulatorNoise.slice(index, Math.min(withoutSimulatorNoise.length, index + 3)),
+    );
+    const remaining = Math.max(0, lineCount - summary.length);
+    return [...summary, ...causeContext.slice(-remaining)].join('\n');
+  }
 
   if (errorIndexes.length > 0) {
     const firstError = errorIndexes[0];
@@ -312,7 +329,7 @@ function formatExecError(error: unknown): ReleaseBuildError {
       message +=
         ' (Homebrew rsync conflicts with Xcode export — the release CLI uses system PATH for xcodebuild; retry after updating the script)';
     }
-    return new ReleaseBuildError(message, tailLog(combined));
+    return new ReleaseBuildError(message, selectBuildLogTail(combined));
   }
 
   const message = error instanceof Error ? error.message : String(error);
@@ -348,6 +365,28 @@ async function runCommand(
     });
   } catch (error) {
     throw formatExecError(error);
+  }
+}
+
+export type AndroidBundleRunner = (args: string[]) => Promise<void>;
+
+export async function runAndroidBundleWithRetry(runBundle: AndroidBundleRunner): Promise<void> {
+  let firstError: ReleaseBuildError;
+  try {
+    await runBundle(['bundleRelease']);
+    return;
+  } catch (error) {
+    firstError = formatExecError(error);
+  }
+
+  try {
+    await runBundle(['bundleRelease', '--stacktrace', '--no-daemon']);
+  } catch (error) {
+    const retryError = formatExecError(error);
+    throw new ReleaseBuildError(
+      `${retryError.message} (after retrying the Android bundle once in an isolated Gradle process)`,
+      retryError.logTail || firstError.logTail,
+    );
   }
 }
 
@@ -482,9 +521,11 @@ export async function runReleaseBuild(
   if (needsAndroidBuild) {
     releaseTasks.push(
       timedListrTask(timer, 'Android bundleRelease (AAB)', async () => {
-        await runCommand('./gradlew', ['bundleRelease'], {
-          cwd: ANDROID_DIR,
-          env: sharedEnv,
+        await runAndroidBundleWithRetry(async (args) => {
+          await runCommand('./gradlew', args, {
+            cwd: ANDROID_DIR,
+            env: sharedEnv,
+          });
         });
       }),
     );

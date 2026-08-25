@@ -62,6 +62,7 @@ export type CreateGameOptions = {
   name?: string;
   playersPerMatch?: number;
   affectsRating?: boolean;
+  genderTeams?: 'ANY' | 'MEN' | 'WOMEN' | 'MIX_PAIRS';
 };
 
 export async function createGameViaApi(
@@ -99,7 +100,7 @@ export async function createGameViaApi(
       hasFixedTeams: false,
       participants: options.participants ?? [userId],
       name: options.name ?? `[E2E] game ${Date.now()}`,
-      genderTeams: 'ANY',
+      genderTeams: options.genderTeams ?? 'ANY',
       fixedNumberOfSets: 1,
       maxTotalPointsPerSet: 0,
       winnerOfGame: 'BY_MATCHES_WON',
@@ -134,12 +135,17 @@ export async function createNoRatingGameViaApi(
 }
 
 /** Owner NON_PLAYING — user can join via UI CTA. */
-export async function createJoinableGame(token: string, userId: string): Promise<{ id: string }> {
+export async function createJoinableGame(
+  token: string,
+  userId: string,
+  options?: { genderTeams?: 'ANY' | 'MEN' | 'WOMEN' | 'MIX_PAIRS' },
+): Promise<{ id: string }> {
   return createGameViaApi(token, userId, {
     participants: [],
     allowDirectJoin: true,
     maxParticipants: 4,
     isPublic: true,
+    genderTeams: options?.genderTeams,
   });
 }
 

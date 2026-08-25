@@ -17,6 +17,7 @@ export type ComputeGameBookingStatusInput = {
   courtId?: string | null;
   clubId?: string | null;
   timeZone?: string;
+  courtCount?: number;
 };
 
 export function computeGameBookingStatus(input: ComputeGameBookingStatusInput): GameBookingStatus {
@@ -28,6 +29,7 @@ export function computeGameBookingStatus(input: ComputeGameBookingStatusInput): 
         endTime: input.endTime,
         maxParticipants: input.maxParticipants,
         playersPerMatch: input.playersPerMatch,
+        courtCount: input.courtCount,
       },
       { timeZone: input.timeZone },
     );

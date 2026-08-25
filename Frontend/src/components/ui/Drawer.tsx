@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { X } from 'lucide-react';
 import { Drawer as VaulDrawer } from 'vaul';
+import { blurForeignOverlayFocus } from '@/utils/blurForeignOverlayFocus';
 
 interface DrawerProps {
   open?: boolean;
@@ -8,6 +9,8 @@ interface DrawerProps {
   children: React.ReactNode;
   direction?: 'top' | 'bottom' | 'left' | 'right';
   dismissible?: boolean;
+  /** Opt-in. When true, drag-to-dismiss is only from `DrawerHandle`. Default drawers keep content-drag dismiss. */
+  handleOnly?: boolean;
   /** Use Vaul NestedRoot when opening inside another drawer (e.g. player card). */
   nested?: boolean;
 }
@@ -18,6 +21,7 @@ const Drawer = ({
   children,
   direction = 'bottom',
   dismissible = true,
+  handleOnly,
   nested = false,
 }: DrawerProps) => {
   /* repositionInputs off: the app lifts surfaces itself via --keyboard-height
@@ -29,7 +33,9 @@ const Drawer = ({
       onOpenChange={onOpenChange}
       direction={direction}
       dismissible={dismissible}
+      {...(handleOnly ? { handleOnly: true } : {})}
       repositionInputs={false}
+      autoFocus
     >
       {children}
     </Root>
@@ -60,6 +66,8 @@ const DrawerCloseButton = React.forwardRef<
 ));
 DrawerCloseButton.displayName = 'DrawerCloseButton';
 
+const DrawerHandle = VaulDrawer.Handle;
+
 const DrawerOverlay = React.forwardRef<
   React.ElementRef<typeof VaulDrawer.Overlay>,
   React.ComponentPropsWithoutRef<typeof VaulDrawer.Overlay>
@@ -87,11 +95,20 @@ const DrawerContent = React.forwardRef<
       ...props
     }: DrawerContentProps,
     ref,
-  ) => (
+  ) => {
+    const contentRef = React.useRef<HTMLElement | null>(null);
+    React.useLayoutEffect(() => {
+      blurForeignOverlayFocus(contentRef.current);
+    }, []);
+    return (
   <DrawerPortal>
     <DrawerOverlay />
     <VaulDrawer.Content
-      ref={ref}
+      ref={(node) => {
+        contentRef.current = node instanceof HTMLElement ? node : null;
+        if (typeof ref === 'function') ref(node);
+        else if (ref) ref.current = node;
+      }}
       className={`cap-keyboard-aware-sheet fixed bottom-0 left-0 right-0 z-50 mt-24 flex max-h-[75vh] min-h-0 flex-col rounded-t-3xl border border-gray-200 bg-white text-gray-900 dark:border-gray-800 dark:bg-gray-800 dark:text-white max-w-[428px] mx-auto focus:outline-none ${className ?? ''}`}
       aria-labelledby={ariaLabelledBy ?? undefined}
       aria-describedby={ariaDescribedBy ?? undefined}
@@ -103,7 +120,8 @@ const DrawerContent = React.forwardRef<
       {children}
     </VaulDrawer.Content>
   </DrawerPortal>
-  ),
+    );
+  },
 );
 DrawerContent.displayName = 'DrawerContent';
 
@@ -138,6 +156,7 @@ export {
   DrawerTrigger,
   DrawerClose,
   DrawerCloseButton,
+  DrawerHandle,
   DrawerContent,
   DrawerHeader,
   DrawerFooter,

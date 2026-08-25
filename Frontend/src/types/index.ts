@@ -10,6 +10,7 @@ export interface UserSportProfile {
   reliability: number;
   gamesPlayed: number;
   gamesWon: number;
+  inactive?: boolean;
   questionnaireCompletedAt?: string | null;
   questionnaireSkippedAt?: string | null;
   questionnaireVersion?: string | null;
@@ -60,7 +61,7 @@ export type GameStatus = 'ANNOUNCED' | 'STARTED' | 'FINISHED' | 'ARCHIVED';
 export type ResultsStatus = 'NONE' | 'IN_PROGRESS' | 'FINAL';
 export type ChatType = 'PUBLIC' | 'PRIVATE' | 'ADMINS';
 export type BugStatus = 'CREATED' | 'CONFIRMED' | 'IN_PROGRESS' | 'TEST' | 'FINISHED' | 'ARCHIVED';
-export type BugType = 'BUG' | 'CRITICAL' | 'SUGGESTION' | 'QUESTION' | 'TASK';
+export type BugType = 'BUG' | 'CRITICAL' | 'SUGGESTION' | 'QUESTION' | 'TASK' | 'REVIEW';
 export type BugPriority = -2 | -1 | 0 | 1 | 2;
 export type WinnerOfGame = 'BY_MATCHES_WON' | 'BY_POINTS' | 'BY_SCORES_DELTA' | 'BY_SCORES_MADE' | 'PLAYOFF_FINALS';
 export type WinnerOfMatch = 'BY_SETS' | 'BY_SCORES';
@@ -143,11 +144,14 @@ export interface BasicUser {
   socialLevel: number;
   /** @deprecated Prefer `sportProfiles` for the relevant sport. */
   reliability?: number;
+  /** Rating-inactive for the current sport context: <5 rated games or no rated game in 90 days. */
+  inactive?: boolean;
   /** Admin-only: accrued rating uncertainty (0–150) for current sport context. */
   ratingUncertainty?: number;
   /** Soft public state when accrued uncertainty ≥ threshold. */
   ratingSettling?: boolean;
   gender: Gender;
+  genderIsSet?: boolean;
   approvedLevel: boolean;
   isTrainer: boolean;
   allowMessagesFromNonContacts?: boolean;
@@ -241,7 +245,6 @@ export interface User extends BasicUser {
   timeFormat?: 'auto' | '12h' | '24h';
   weekStart?: 'auto' | 'monday' | 'sunday';
   defaultCurrency?: string;
-  genderIsSet?: boolean;
   nameIsSet?: boolean;
   primarySportIsSet?: boolean;
   cityIsSet?: boolean;

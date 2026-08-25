@@ -7,20 +7,27 @@ import {
   Drawer,
   DrawerCloseButton,
   DrawerContent,
+  DrawerHandle,
 } from '@/components/ui/Drawer';
 import { useCityList } from '@/hooks/useCityList';
 import { CityListContent } from '@/components/CityListContent';
+import {
+  CITY_SELECTOR_SHEET_BODY_CLASS,
+  CITY_SELECTOR_SHEET_CLASS,
+} from '@/components/CityList/citySelectorSheet';
+import type { City } from '@/types';
 
 interface CityModalProps {
   isOpen: boolean;
   onClose: () => void;
   selectedId?: string;
-  onSelect?: (id: string) => void;
+  onSelect?: (id: string, city?: City) => void;
   onCityChanged?: () => void;
   showNoCityOption?: boolean;
+  recentCityIds?: string[];
 }
 
-export const CityModal = ({ isOpen, onClose, selectedId, onSelect, onCityChanged, showNoCityOption }: CityModalProps) => {
+export const CityModal = ({ isOpen, onClose, selectedId, onSelect, onCityChanged, showNoCityOption, recentCityIds }: CityModalProps) => {
   const { t } = useTranslation();
   const updateUser = useAuthStore((state) => state.updateUser);
   const user = useAuthStore((state) => state.user);
@@ -29,7 +36,8 @@ export const CityModal = ({ isOpen, onClose, selectedId, onSelect, onCityChanged
   const wasOpenRef = useRef(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const currentCityId = isSelectorMode ? selectedId : (selectedId ?? user?.currentCity?.id);
+  const homeCityId = user?.currentCity?.id;
+  const currentCityId = isSelectorMode ? selectedId : (selectedId ?? homeCityId);
   const cityList = useCityList({
     enabled: isOpen,
     currentCityId,
@@ -50,7 +58,7 @@ export const CityModal = ({ isOpen, onClose, selectedId, onSelect, onCityChanged
 
   const handleSelect = (id: string) => {
     if (onSelect) {
-      onSelect(id);
+      onSelect(id, cityList.cities.find((city) => city.id === id));
       onClose();
     }
   };
@@ -82,15 +90,16 @@ export const CityModal = ({ isOpen, onClose, selectedId, onSelect, onCityChanged
   return (
     <Drawer
       open={isOpen}
+      handleOnly
       onOpenChange={(open) => {
         if (!open) onClose();
       }}
     >
       <DrawerContent
-        className="!mt-10 !max-h-[min(94dvh,960px,var(--overlay-pinned-max-height))] flex h-[min(94dvh,960px,var(--overlay-pinned-max-height))] flex-col overflow-hidden bg-white dark:bg-gray-900"
+        className={`${CITY_SELECTOR_SHEET_CLASS} !mt-10 flex flex-col overflow-hidden bg-white dark:bg-gray-900`}
         aria-labelledby={`${modalId}-title`}
       >
-        <div className="mx-auto mt-2.5 h-1 w-10 shrink-0 rounded-full bg-gray-300/90 dark:bg-gray-600" aria-hidden />
+        <DrawerHandle className="relative mx-auto mt-2.5 h-1 w-10 shrink-0 rounded-full bg-gray-300/90 dark:bg-gray-600" />
         <div data-overlay-chrome="" className="flex shrink-0 items-center gap-3 px-4 pb-2 pt-3">
           <h2
             id={`${modalId}-title`}
@@ -101,7 +110,7 @@ export const CityModal = ({ isOpen, onClose, selectedId, onSelect, onCityChanged
           <DrawerCloseButton aria-label={t('common.close')} className="shrink-0" />
         </div>
 
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+        <div className={`${CITY_SELECTOR_SHEET_BODY_CLASS} flex min-h-0 flex-1 flex-col overflow-hidden px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]`}>
           <CityListContent
             view={cityList.view}
             search={cityList.search}
@@ -114,15 +123,16 @@ export const CityModal = ({ isOpen, onClose, selectedId, onSelect, onCityChanged
             selectedCountry={cityList.selectedCountry}
             selectCountry={cityList.selectCountry}
             backToCountries={cityList.backToCountries}
-            currentCityId={currentCityId}
+            currentCityId={homeCityId ?? currentCityId}
             onCityClick={handleCityClick}
             isSelectorMode={isSelectorMode}
             showNoCityOption={showNoCityOption ?? isSelectorMode}
-            selectedId={selectedId}
+            selectedId={isSelectorMode ? selectedId : homeCityId}
             submitting={submitting}
             showError={true}
             showingLoading={showingLoading}
             citiesCount={cityList.cities.length}
+            recentCityIds={recentCityIds}
           />
         </div>
       </DrawerContent>

@@ -15,6 +15,10 @@ import {
 import { appendTelegramGameScheduleExtras } from '../../shared/notificationSport';
 import { ChatMuteService } from '../../chat/chatMute.service';
 import { canParticipantSeeGameChatMessage } from '../../chat/gameChatVisibility';
+import {
+  isInviteOnlyChatViewerStatus,
+  isRosterLifecycleSystemMessageContent,
+} from '../../chat/gameChatRosterVisibility';
 import { isBenignTelegramRecipientError } from '../telegramRecipientErrors';
 import { guardedTelegramSendMessage } from '../guardedTelegramSend';
 import { translateSystemMessageContent } from '../../../utils/translateSystemMessageContent';
@@ -47,6 +51,13 @@ export async function sendGameSystemMessageNotification(
     // Skip the user whose own action triggered this system message (e.g. a user
     // accepting their own invite should not be notified that they joined the game).
     if (excludeUserId && user.id === excludeUserId) continue;
+    if (participant.status === 'INVITED') continue;
+    if (
+      isInviteOnlyChatViewerStatus(participant.status) &&
+      isRosterLifecycleSystemMessageContent(message.content)
+    ) {
+      continue;
+    }
     const allowed = await NotificationPreferenceService.doesUserAllow(user.id, NotificationChannelType.TELEGRAM, PreferenceKey.SEND_MESSAGES);
     if (!allowed || !user.telegramId) continue;
     const telegramId = user.telegramId;

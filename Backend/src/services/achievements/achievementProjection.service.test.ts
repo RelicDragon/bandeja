@@ -39,6 +39,11 @@ import {
   assert.ok(getAchievementDefinition('habit_wins_50')?.rarity === 'RARE');
   assert.ok(getAchievementDefinition('habit_wins_100')?.threshold === 100);
   assert.ok(getAchievementDefinition('habit_wins_500')?.rarity === 'LEGENDARY');
+  assert.ok(getAchievementDefinition('habit_tie_break_1')?.threshold === 1);
+  assert.ok(getAchievementDefinition('habit_tie_break_5')?.threshold === 5);
+  assert.ok(getAchievementDefinition('habit_tie_break_12')?.rarity === 'RARE');
+  assert.ok(getAchievementDefinition('habit_tie_break_32')?.threshold === 32);
+  assert.ok(getAchievementDefinition('habit_tie_break_64')?.rarity === 'LEGENDARY');
 }
 
 {

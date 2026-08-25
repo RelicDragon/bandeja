@@ -135,6 +135,10 @@ export function stackFamilyLabelKey(ruleKind: string): string {
       return 'trophies.cabinet.family.dynamicDuo';
     case 'HABIT_OPEN_COURT':
       return 'trophies.cabinet.family.openCourt';
+    case 'HABIT_TIE_BREAK':
+      return 'trophies.cabinet.family.tieBreaker';
+    case 'HABIT_BUG_SHIPPED':
+      return 'trophies.cabinet.family.bugShipped';
     case 'PODIUM':
       return 'trophies.cabinet.family.podium';
     default:

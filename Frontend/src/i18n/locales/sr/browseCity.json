@@ -1,0 +1,21 @@
+{
+  "browseCity": {
+    "chipAriaHome": "Vaš grad, {{city}}. Pogledaj drugi.",
+    "chipAriaAway": "Gledate {{city}}. Promeni grad.",
+    "chipAriaVenueHome": "Grad meča {{city}}. Izaberi drugi.",
+    "chipAriaVenueAway": "Klubovi u {{city}}. Promeni grad.",
+    "changeCity": "Grad",
+    "recent": "Nedavni",
+    "nearby": "U blizini",
+    "viewCity": "Otvori {{city}}",
+    "nobodyInCity": "Niko u {{city}} za „{{query}}“",
+    "nobodyNearby": "Niko u blizini za „{{query}}“. Probaj drugi grad.",
+    "noUsersInCity": "Nema korisnika u {{city}}",
+    "noUsersInCityHint": "Promeni grad ili pretraži ime",
+    "lookingEmptyInCity": "Niko trenutno ne traži u {{city}}",
+    "noClubsInCity": "Nema klubova u {{city}}",
+    "noClubsMatch": "Nema kluba za „{{query}}“",
+    "searchClubs": "Pretraži klubove",
+    "km": "{{km}} km"
+  }
+}

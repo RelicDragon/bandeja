@@ -103,6 +103,55 @@ describe('countFindDayIndexByDay', () => {
     expect(counts.get('2026-07-22')).toBeUndefined();
   });
 
+  it('uses the server-projected city date key when present', () => {
+    const counts = countFindDayIndexByDay(
+      [
+        row({
+          id: 'server-bucketed',
+          startTime: '2026-07-01T23:30:00.000Z',
+          dateKey: '2026-07-02',
+        } as Partial<FindDayIndexRow> & Pick<FindDayIndexRow, 'id' | 'startTime'>),
+      ],
+      { id: 'u1' },
+      baseState,
+      'UTC',
+    );
+
+    expect(counts.get('2026-07-02')).toBe(1);
+    expect(counts.get('2026-07-01')).toBeUndefined();
+  });
+
+  it('uses projected keys for a full 5,000-row page without parsing start times', () => {
+    const rows = Array.from({ length: 5_000 }, (_, index) => row({
+      id: `server-bucketed-${index}`,
+      startTime: 'invalid-if-the-fallback-is-touched',
+      dateKey: '2026-07-02',
+    }));
+
+    const counts = countFindDayIndexByDay(rows, { id: 'u1' }, baseState, 'UTC');
+
+    expect(counts.get('2026-07-02')).toBe(5_000);
+  });
+
+  it('keeps the 5,000-row legacy-server fallback inside its CPU budget', () => {
+    const rows = Array.from({ length: 5_000 }, (_, index) => row({
+      id: `legacy-server-${index}`,
+      startTime: new Date(Date.UTC(2026, 6, 1, 0, 0, index)).toISOString(),
+    }));
+    const run = () => countFindDayIndexByDay(rows, { id: 'u1' }, baseState, 'UTC');
+    run(); // Warm the timezone formatter and JIT before measuring.
+
+    const durations = Array.from({ length: 3 }, () => {
+      const startedAt = performance.now();
+      run();
+      return performance.now() - startedAt;
+    }).sort((left, right) => left - right);
+
+    // Cached Intl formatting is normally ~10 ms here; this budget catches the
+    // former formatter-per-row regression while leaving ample CI headroom.
+    expect(durations[1]).toBeLessThan(100);
+  });
+
   it('applies discovery no-rating residual for list/badge parity', () => {
     const counts = countFindDayIndexByDay(
       [

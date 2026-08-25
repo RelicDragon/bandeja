@@ -56,6 +56,7 @@ const getPool = vi.fn(async (_input?: unknown) => ({
   intents: [],
   myIntent: null,
   pendingProposal: null,
+  matchingGames: [],
 }));
 
 vi.mock('@/api/playIntents', () => ({

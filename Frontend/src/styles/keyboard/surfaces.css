@@ -31,12 +31,48 @@ body.capacitor-android.keyboard-visible footer {
 /* Centered dialogs + bottom sheets: overlay-chrome.css
    Pin chrome, shrink to visual viewport, do not overflow-scroll the overlay root. */
 
+body.keyboard-dialog-shift .dialog-content-animate:focus-within,
+body.keyboard-dialog-shift .cap-keyboard-aware-dialog:focus-within {
+  transition: none;
+}
+
 body.keyboard-visible .fullscreen-dialog-root .cap-fullscreen-dialog-body {
   padding-bottom: var(--keyboard-height, 0px);
 }
 
 .cap-keyboard-aware-sheet {
   transition: bottom 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body.keyboard-visible .cap-keyboard-aware-sheet {
+  bottom: var(--keyboard-height, 0px) !important;
+  max-height: calc(100dvh - var(--keyboard-height, 0px) - env(safe-area-inset-top, 0px) - 24px) !important;
+}
+
+/* City selector is a tall fixed-height sheet; clamp height (not only max-height)
+   so search stays on-screen when the keyboard lifts the drawer. Other drawers
+   keep content-sized height and the generic max-height rule above. */
+.city-selector-sheet {
+  height: min(94dvh, 960px);
+  max-height: min(94dvh, 960px);
+  overscroll-behavior: none;
+}
+
+body.keyboard-visible .cap-keyboard-aware-sheet.city-selector-sheet {
+  height: min(
+    94dvh,
+    960px,
+    calc(100dvh - var(--keyboard-height, 0px) - env(safe-area-inset-top, 0px) - 24px)
+  ) !important;
+  max-height: min(
+    94dvh,
+    960px,
+    calc(100dvh - var(--keyboard-height, 0px) - env(safe-area-inset-top, 0px) - 24px)
+  ) !important;
+}
+
+body.keyboard-visible .city-selector-sheet-body {
+  padding-bottom: 0.75rem;
 }
 
 /* Full-screen overlay wrappers (fixed inset-0 + flex items-end/center):

@@ -1,7 +1,5 @@
-import { motion } from 'framer-motion';
 import { Card } from '@/components';
 import { shimmerBlock } from '@/components/motion/shimmerBlock';
-import { STAGGER_CHILDREN, STAGGER_DELAY_CHILDREN, STAGGER_ITEM_TRANSITION } from '@/components/motion/motionTokens';
 
 export const GameCardSkeleton = () => (
   <Card className="overflow-hidden p-4">
@@ -30,34 +28,13 @@ interface GamesLoadingSkeletonProps {
   className?: string;
 }
 
-const skeletonItemVariants = {
-  hidden: { opacity: 0, y: 16, scale: 0.98 },
-  visible: (index: number) => ({
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    transition: {
-      ...STAGGER_ITEM_TRANSITION,
-      delay: STAGGER_DELAY_CHILDREN + index * STAGGER_CHILDREN,
-    },
-  }),
-};
-
 export const GamesLoadingSkeleton = ({
   count = 3,
   className = 'space-y-4 pb-8',
 }: GamesLoadingSkeletonProps) => (
   <div className={className} aria-busy="true">
     {Array.from({ length: count }).map((_, index) => (
-      <motion.div
-        key={index}
-        custom={index}
-        variants={skeletonItemVariants}
-        initial="hidden"
-        animate="visible"
-      >
-        <GameCardSkeleton />
-      </motion.div>
+      <GameCardSkeleton key={index} />
     ))}
   </div>
 );

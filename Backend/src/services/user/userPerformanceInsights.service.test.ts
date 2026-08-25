@@ -30,6 +30,7 @@ const user = (id: string, firstName: string) => ({
   sportProfiles: [],
   socialLevel: 0,
   gender: Gender.PREFER_NOT_TO_SAY,
+  genderIsSet: false,
   approvedLevel: false,
   isTrainer: false,
   verbalStatus: null,

@@ -1,4 +1,5 @@
 import api from './axios';
+import { SEND_VIDEO_UPLOAD_PHASE_MS } from '@/constants/chatVideo';
 import type { ApiResponse, Club } from '@/types';
 
 export interface MediaUploadResponse {
@@ -211,6 +212,7 @@ export const mediaApi = {
       {
         headers: { 'Content-Type': 'multipart/form-data' },
         signal: options?.signal,
+        timeout: SEND_VIDEO_UPLOAD_PHASE_MS,
         onUploadProgress: options?.onUploadProgress
           ? (ev) => {
               const total = ev.total ?? 0;

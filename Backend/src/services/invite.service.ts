@@ -16,9 +16,12 @@ import { ApiError } from '../utils/ApiError';
 import { createSystemMessageWithNotification } from '../utils/systemMessageHelper';
 import { GameService } from './game/game.service';
 import { ParticipantMessageHelper } from './game/participantMessageHelper';
-import { projectUserForSportContext } from './user/userSportProfile.service';
 import { PlayIntentGameLifecycleService } from './playIntent/playIntentGameLifecycle.service';
-import { publishCommittedPlayIntentStatusChanges } from './playIntent/playIntentRealtime';
+import { publishCommittedPlayIntentStatusChanges, publishMatchingGamesChangedForGameId } from './playIntent/playIntentRealtime';
+import { consumeLookingIntentOnPlayingJoin } from './playIntent/playIntentPlayingJoin';
+import { isInviteInboxVisible } from '../utils/gameInviteInbox';
+import { inboxInviteGameSelect, mapInvitedParticipantToInboxInvite } from './invite/pendingInviteShape';
+import { assertSlotOverlapConfirmed } from './game/gameSlotOverlap.service';
 
 export interface InviteActionResult {
   success: boolean;
@@ -115,72 +118,29 @@ export class InviteService {
     const participants = await prisma.gameParticipant.findMany({
       where: { userId, status: 'INVITED' },
       include: {
+        user: { select: USER_SELECT_WITH_SPORT_PROFILES },
         invitedByUser: { select: USER_SELECT_WITH_SPORT_PROFILES },
         game: {
-          select: {
-            id: true,
-            name: true,
-            gameType: true,
-            startTime: true,
-            endTime: true,
-            maxParticipants: true,
-            minParticipants: true,
-            minLevel: true,
-            maxLevel: true,
-            isPublic: true,
-            affectsRating: true,
-            hasBookedCourt: true,
-            afterGameGoToBar: true,
-            hasFixedTeams: true,
-            teamsReady: true,
-            participantsReady: true,
-            status: true,
-            resultsStatus: true,
-            entityType: true,
-            sport: true,
-            court: { select: { id: true, name: true, club: { select: { id: true, name: true, avatar: true } } } },
-            club: { select: { id: true, name: true, avatar: true } },
-            participants: {
-              include: {
-                user: { select: USER_SELECT_WITH_SPORT_PROFILES },
-                invitedByUser: { select: USER_SELECT_WITH_SPORT_PROFILES },
-              },
-            },
-          },
+          select: inboxInviteGameSelect,
         },
       },
       orderBy: { joinedAt: 'desc' },
     });
     const now = new Date();
-    const filtered = participants.filter(
-      (p) => !p.inviteExpiresAt || new Date(p.inviteExpiresAt) > now
-    );
-    return filtered.map((p) => {
-      const sport = p.game.sport;
-      return {
-      id: p.id,
-      receiverId: p.userId,
-      gameId: p.gameId,
-      status: 'PENDING',
-      message: p.inviteMessage,
-      expiresAt: p.inviteExpiresAt,
-      createdAt: p.joinedAt,
-      updatedAt: p.joinedAt,
-      receiver: null,
-      sender: {
-        ...projectUserForSportContext(p.invitedByUser, sport),
-        sportProfiles: p.invitedByUser?.sportProfiles,
-      },
-      game: {
-        ...p.game,
-        participants: p.game.participants.map((participant) => ({
-          ...participant,
-          user: projectUserForSportContext(participant.user, sport),
-          invitedByUser: projectUserForSportContext(participant.invitedByUser, sport),
-        })),
-      },
-    };
-    });
+    return participants
+      .filter((p) =>
+        isInviteInboxVisible(
+          {
+            status: p.status,
+            inviteExpiresAt: p.inviteExpiresAt,
+            receiverId: p.userId,
+            user: p.user,
+            game: p.game,
+          },
+          now,
+        ),
+      )
+      .map((p) => mapInvitedParticipantToInboxInvite(p));
   }
 
   static async deleteInvitesForUserInGame(gameId: string, userId: string): Promise<void> {
@@ -222,7 +182,8 @@ export class InviteService {
     participantId: string,
     userId: string,
     _forceUpdate: boolean = false,
-    isAdmin: boolean = false
+    isAdmin: boolean = false,
+    confirmOverlap: boolean = false,
   ): Promise<InviteActionResult> {
     const participant = await prisma.gameParticipant.findUnique({
       where: { id: participantId },
@@ -334,6 +295,17 @@ export class InviteService {
         ? 'NON_PLAYING'
         : 'PLAYING';
 
+    if (isReceiver && acceptedPlayingStatus === 'PLAYING') {
+      const joinPreview = await validatePlayerCanJoinGame(gameForJoin, receiverId, { skipLevelCheck: true });
+      if (joinPreview.canJoin) {
+        await assertSlotOverlapConfirmed({
+          userId: receiverId,
+          targetGame: gameForJoin,
+          confirmOverlap: confirmOverlap || _forceUpdate,
+        });
+      }
+    }
+
     try {
         const acceptance = await prisma.$transaction(async (tx) => {
           const locked = await tx.gameParticipant.findFirst({
@@ -369,7 +341,10 @@ export class InviteService {
           }
           const currentGame = await fetchGameWithPlayingParticipants(tx, gameId);
           validateGameCanAcceptParticipants(currentGame);
-          const joinResult = await validatePlayerCanJoinGame(currentGame, receiverId, { skipLevelCheck: true });
+          const joinResult = await validatePlayerCanJoinGame(currentGame, receiverId, {
+            skipLevelCheck: true,
+            targetIsOtherUser: !isReceiver,
+          });
           if (!joinResult.canJoin && joinResult.shouldQueue) {
             if (locked.playIntentId) {
               await PlayIntentGameLifecycleService.consume(
@@ -426,11 +401,27 @@ export class InviteService {
               inviteClosedAt: null,
             },
           });
+          let lookingIntentId = locked.playIntentId;
+          if (!isTrainerInvite) {
+            const city = await tx.game.findUnique({
+              where: { id: gameId },
+              select: { cityId: true },
+            });
+            if (city) {
+              lookingIntentId =
+                (await consumeLookingIntentOnPlayingJoin(
+                  tx,
+                  receiverId,
+                  city.cityId,
+                  new Date(),
+                )) ?? lookingIntentId;
+            }
+          }
           return {
             queued: false,
             expired: false,
             record: null,
-            playIntentId: locked.playIntentId,
+            playIntentId: lookingIntentId,
           };
         });
         await publishCommittedPlayIntentStatusChanges([
@@ -467,6 +458,7 @@ export class InviteService {
           );
           await GameService.updateGameReadiness(gameId);
           await ParticipantMessageHelper.emitGameUpdate(gameId, receiverId);
+          void publishMatchingGamesChangedForGameId(gameId);
           if ((global as any).socketService) {
             const queueExtras = {
               participantPatch: {
@@ -524,6 +516,7 @@ export class InviteService {
     }
     if (gameId) {
       await ParticipantMessageHelper.emitGameUpdate(gameId, receiverId);
+      void publishMatchingGamesChangedForGameId(gameId);
     }
     return { success: true, message: 'invites.acceptedSuccessfully' };
   }
@@ -595,6 +588,9 @@ export class InviteService {
       if (participant.gameId) {
         await ParticipantMessageHelper.emitGameUpdate(participant.gameId, participant.userId);
       }
+      if (participant.gameId) {
+        void publishMatchingGamesChangedForGameId(participant.gameId);
+      }
       return { success: true, message: 'invites.declinedSuccessfully' };
     }
     const isReceiver = participant.userId === userId;
@@ -645,6 +641,7 @@ export class InviteService {
       removedUserId: participant.userId,
       inviteOutcome,
     });
+    void publishMatchingGamesChangedForGameId(participant.gameId);
     return { success: true, message: 'invites.declinedSuccessfully' };
   }
 
@@ -687,6 +684,9 @@ export class InviteService {
           inviteClosedAt: null,
         },
       });
+      if (participant.gameId) {
+        void publishMatchingGamesChangedForGameId(participant.gameId);
+      }
       return { success: true, message: 'invites.cancelledSuccessfully' };
     }
     if (!participant.gameId) {
@@ -707,6 +707,7 @@ export class InviteService {
       removedUserId: participant.userId,
       inviteOutcome,
     });
+    void publishMatchingGamesChangedForGameId(participant.gameId);
     return { success: true, message: 'invites.cancelledSuccessfully' };
   }
 
@@ -832,6 +833,9 @@ export class InviteService {
           });
         }
       }
+    }
+    for (const gameId of gamesToRefresh.keys()) {
+      void publishMatchingGamesChangedForGameId(gameId);
     }
     return expired;
   }

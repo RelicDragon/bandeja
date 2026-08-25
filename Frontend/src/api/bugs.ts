@@ -1,11 +1,11 @@
 import api from './axios';
-import { ApiResponse, Bug, BugsResponse, BugType, BugStatus, BugPriority } from '@/types';
+import { ApiResponse, Bug, BugsResponse, BugType, BugStatus } from '@/types';
 import { BUG_CREATE_REQUEST_TIMEOUT_MS } from '@/components/bugs/bugCreateTimeout';
 
 export interface CreateBugData {
   text: string;
   bugType: BugType;
-  priority?: BugPriority;
+  priority?: number;
 }
 
 export interface CreateBugResponse {
@@ -20,7 +20,7 @@ export interface BugWithGroupChannel extends Bug {
 export interface UpdateBugData {
   status?: BugStatus;
   bugType?: BugType;
-  priority?: BugPriority;
+  priority?: number;
 }
 
 export const bugsApi = {

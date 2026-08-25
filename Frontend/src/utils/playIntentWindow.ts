@@ -177,3 +177,32 @@ export function playWindowIsInPast(input: WindowReachabilityInput): boolean {
   }
   return true;
 }
+
+function playIntentPrefillWallClock(input: {
+  timeOfDay: PlayIntentTimeOfDay;
+  startTime: string | null;
+}): string {
+  if (input.startTime) return input.startTime;
+  if (input.timeOfDay === 'MORNING') return '09:00';
+  if (input.timeOfDay === 'AFTERNOON') return '14:00';
+  if (input.timeOfDay === 'CUSTOM') return '00:00';
+  if (input.timeOfDay === 'ANYTIME') return '12:00';
+  return '18:00';
+}
+
+export function playIntentCreatePrefillTimes(input: {
+  dateKeys: string[];
+  timeOfDay: PlayIntentTimeOfDay;
+  startTime: string | null;
+  timezone?: string | null;
+}): { startTime: string; endTime: string } | Record<string, never> {
+  const dateKey = input.dateKeys[0];
+  if (!dateKey || !input.timezone) return {};
+  const startMinutes = timeStringToMinutes(playIntentPrefillWallClock(input));
+  const start = localDayMinuteToInstant(dateKey, startMinutes, input.timezone);
+  if (!start) return {};
+  return {
+    startTime: start.toISOString(),
+    endTime: new Date(start.getTime() + 90 * 60 * 1000).toISOString(),
+  };
+}

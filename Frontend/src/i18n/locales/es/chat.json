@@ -218,6 +218,7 @@
       "BUG_STATUS_CHANGED": "Estado del error cambiado a {{status}}",
       "BUG_TYPE_CHANGED": "Tipo del error cambiado a {{type}}",
       "BUG_PRIORITY_CHANGED": "Prioridad del error cambiada a {{priority}}",
+      "BUG_RATING_CHANGED": "Valoración cambiada a {{rating}}",
       "GAME_CLUB_CHANGED": "Ubicación del juego cambiada a {{clubName}}",
       "GAME_DATE_TIME_CHANGED": "Fecha/hora del juego cambiada a {{dateTime}}",
       "USER_CHAT_REQUEST": "{{requesterName}} solicita chatear contigo",

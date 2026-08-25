@@ -28,6 +28,7 @@ import {
   type GamePhotosViewer,
 } from '../../shared/gamePhotos/permissions';
 import { WeatherForecastService } from '../weatherForecast.service';
+import { myGamesParticipantWhere } from './myGamesParticipantWhere';
 import { getUserTimezoneFromCityId } from '../user-timezone.service';
 import { formatInTimeZone } from 'date-fns-tz';
 import { enrichAvailableGamesSafe } from './availableGamesEnrichment';
@@ -544,11 +545,7 @@ export class GameReadService {
     today.setHours(0, 0, 0, 0);
 
     const where: any = {
-      participants: {
-        some: {
-          userId: userId
-        }
-      },
+      participants: myGamesParticipantWhere(userId),
       OR: [
         { status: { not: 'ARCHIVED' } },
         {

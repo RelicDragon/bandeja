@@ -25,6 +25,7 @@ import {
 } from '../src/services/achievements/habitCrossingDates';
 import { computeOrganizeCrossingDates } from '../src/services/achievements/organizeCrossingDates';
 import { computePartnerCrossingDates } from '../src/services/achievements/partnerCrossingDates';
+import { computeTieBreakCrossingDates } from '../src/services/achievements/tieBreakCrossingDates';
 import { countersFromSportProfiles } from '../src/services/achievements/achievementProjection.service';
 import {
   backfillHabitAchievementsForUser,
@@ -32,6 +33,7 @@ import {
 } from '../src/services/achievements/habitGrant.service';
 import { refreshOrganizeHabitCounters } from '../src/services/achievements/organizeGrant.service';
 import { refreshPartnerHabitCounters } from '../src/services/achievements/partnerGrant.service';
+import { refreshTieBreakHabitCounters } from '../src/services/achievements/tieBreakGrant.service';
 import { resolveSportStatsDeltasForReconcile } from '../src/services/results/outcomeStatsSnapshot';
 import { countsForPlayStreak } from '../src/services/results/ratingActivity';
 import { getUserTimezone } from '../src/services/user-timezone.service';
@@ -56,8 +58,13 @@ async function crossingsForDue(params: {
     userId: params.userId,
     definitionIds: params.dueIds,
   });
+  const tiebreak = await computeTieBreakCrossingDates({
+    userId: params.userId,
+    definitionIds: params.dueIds,
+  });
   for (const [id, crossing] of organize) out.set(id, crossing);
   for (const [id, crossing] of partner) out.set(id, crossing);
+  for (const [id, crossing] of tiebreak) out.set(id, crossing);
   return out;
 }
 
@@ -193,7 +200,13 @@ async function run(apply: boolean, userIdFilter: string | null): Promise<void> {
   for (const [userId, userProfiles] of byUser) {
     const organize = await refreshOrganizeHabitCounters(userId);
     const partner = await refreshPartnerHabitCounters(userId);
-    const counters = { ...countersFromSportProfiles(userProfiles), ...organize, ...partner };
+    const tiebreak = await refreshTieBreakHabitCounters(userId);
+    const counters = {
+      ...countersFromSportProfiles(userProfiles),
+      ...organize,
+      ...partner,
+      ...tiebreak,
+    };
     const due = habitUnlocksDue({
       counters,
       ownedDefinitionIds: ownedByUser.get(userId) ?? new Set(),
@@ -244,7 +257,13 @@ async function run(apply: boolean, userIdFilter: string | null): Promise<void> {
     const userProfiles = byUser.get(plan.userId) ?? [];
     const organize = await refreshOrganizeHabitCounters(plan.userId);
     const partner = await refreshPartnerHabitCounters(plan.userId);
-    const counters = { ...countersFromSportProfiles(userProfiles), ...organize, ...partner };
+    const tiebreak = await refreshTieBreakHabitCounters(plan.userId);
+    const counters = {
+      ...countersFromSportProfiles(userProfiles),
+      ...organize,
+      ...partner,
+      ...tiebreak,
+    };
     const result = await backfillHabitAchievementsForUser({
       userId: plan.userId,
       counters,

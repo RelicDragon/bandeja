@@ -1,9 +1,10 @@
 import assert from 'node:assert/strict';
-import type { Request } from 'express';
+import type { Request, Response } from 'express';
 import {
   parseNamedCookieValues,
   readRefreshTokenCandidatesFromRequest,
   readRefreshTokenFromRequest,
+  setRefreshTokenCookie,
   shouldUseCookieForRefreshResponse,
 } from './refreshWebCookie';
 import { config } from '../config/env';
@@ -48,5 +49,16 @@ assert.deepEqual(readRefreshTokenCandidatesFromRequest(nativeWithBody), [
   'native-refresh',
   'web-cookie',
 ]);
+
+const setCookies: string[] = [];
+const setRes = {
+  append: (_name: string, value: string) => {
+    setCookies.push(value);
+  },
+} as unknown as Response;
+setRefreshTokenCookie(setRes, 'live-refresh-token');
+assert.equal(setCookies.length, 1);
+assert.equal(setCookies.some((value) => value.includes('Max-Age=0')), false);
+assert.equal(setCookies[0]?.includes('live-refresh-token'), true);
 
 console.log('refreshWebCookie.test.ts: ok');

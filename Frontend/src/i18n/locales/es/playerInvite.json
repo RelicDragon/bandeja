@@ -25,6 +25,18 @@
     "statsSocialRow": "Social: {{social}}",
     "teamBadge": "Equipo",
     "availabilityPartial": "Parcialmente disponible",
-    "availabilityNone": "No disponible a esta hora"
+    "availabilityNone": "No disponible a esta hora",
+    "tabSearch": "Buscar",
+    "tabLooking": "Quieren jugar",
+    "lookingEmpty": "Nadie está buscando ahora",
+    "lookingEmptyHint": "Usa la pestaña Buscar",
+    "lookingHint": "{{great}} gran encaje · {{total}} buscando",
+    "lookingBadgeMatch": "En un partido",
+    "lookingBadgeInGame": "En un juego",
+    "stoppedLooking": "{{name}} ya no busca",
+    "alreadyInMatch": "Ya está en un partido",
+    "lookingLoadError": "No se pudo cargar quién busca",
+    "lookingLoadErrorHint": "Usa Buscar, o inténtalo de nuevo",
+    "lookingRetry": "Reintentar"
   }
 }

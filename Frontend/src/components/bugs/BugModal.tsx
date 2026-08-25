@@ -2,17 +2,17 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
 import { Button, Select } from '@/components';
-import { BugType, BugPriority } from '@/types';
+import { BugType } from '@/types';
 import { BugPrioritySelector } from '@/components/chat/BugPrioritySelector';
 import { bugsApi } from '@/api';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/Dialog';
+import { ALL_BUG_TYPES, isReviewBugType, isValidReviewStars } from '@/components/bugs/reviewStars';
+import { BugStarRating } from '@/components/bugs/BugStarRating';
 import { BugCreateError } from './BugCreateError';
 import { extractBugCreateErrorMessage } from './bugCreateErrorMessage';
 import { getBugCreatePlatformInfo } from './bugCreatePlatformInfo';
 import { createBugCreateSubmitSession } from './bugCreateSubmitSession';
 import { SelectionPreservingTextarea } from './SelectionPreservingTextarea';
-
-const BUG_TYPE_VALUES: BugType[] = ['BUG', 'CRITICAL', 'SUGGESTION', 'QUESTION', 'TASK'];
 
 interface BugModalProps {
   isOpen: boolean;
@@ -24,7 +24,7 @@ export const BugModal = ({ isOpen, onClose, onSuccess }: BugModalProps) => {
   const { t } = useTranslation();
   const [text, setText] = useState('');
   const [bugType, setBugType] = useState<BugType>('BUG');
-  const [priority, setPriority] = useState<BugPriority>(0);
+  const [priority, setPriority] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const submitSessionRef = useRef(createBugCreateSubmitSession());
@@ -44,6 +44,11 @@ export const BugModal = ({ isOpen, onClose, onSuccess }: BugModalProps) => {
 
     if (!text.trim()) {
       toast.error(t('bug.textRequired'));
+      return;
+    }
+
+    if (isReviewBugType(bugType) && !isValidReviewStars(priority)) {
+      toast.error(t('bug.starsRequired'));
       return;
     }
 
@@ -112,21 +117,33 @@ export const BugModal = ({ isOpen, onClose, onSuccess }: BugModalProps) => {
                 {t('bug.type')}
               </label>
               <Select
-                options={BUG_TYPE_VALUES.map((type) => ({
+                options={ALL_BUG_TYPES.map((type) => ({
                   value: type,
                   label: t(`bug.types.${type}`)
                 }))}
                 value={bugType}
-                onChange={(value) => setBugType(value as BugType)}
+                onChange={(value) => {
+                  const next = value as BugType;
+                  setBugType(next);
+                  setPriority(0);
+                }}
               />
             </div>
 
             <div className="mb-4">
-              <BugPrioritySelector
-                currentPriority={priority}
-                onPriorityChange={setPriority}
-                disabled={isSubmitting}
-              />
+              {isReviewBugType(bugType) ? (
+                <BugStarRating
+                  value={isValidReviewStars(priority) ? priority : null}
+                  onChange={setPriority}
+                  disabled={isSubmitting}
+                />
+              ) : (
+                <BugPrioritySelector
+                  currentPriority={priority}
+                  onPriorityChange={setPriority}
+                  disabled={isSubmitting}
+                />
+              )}
             </div>
 
             <div className="mb-4">
@@ -156,13 +173,18 @@ export const BugModal = ({ isOpen, onClose, onSuccess }: BugModalProps) => {
                 variant="outline"
                 onClick={handleClose}
                 className="flex-1"
+                disabled={isSubmitting}
               >
                 {t('common.cancel')}
               </Button>
               <Button
                 type="submit"
                 className="flex-1"
-                disabled={isSubmitting || !text.trim()}
+                disabled={
+                  isSubmitting
+                  || !text.trim()
+                  || (isReviewBugType(bugType) && !isValidReviewStars(priority))
+                }
               >
                 {isSubmitting ? t('common.submitting') : t('bug.submit')}
               </Button>

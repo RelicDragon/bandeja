@@ -147,6 +147,8 @@
       "myTabConnectHint": "Connect your club accounts to see upcoming bookings here.",
       "myTabConnectCta": "Connect clubs",
       "myTabUpcomingTitle": "Upcoming",
+      "myTabUnlinkedTitle": "Booked courts",
+      "myTabUnlinkedHint": "Not attached to a game yet — link one or create it so you don't forget.",
       "seeAllBookings": "See all",
       "noUpcomingAny": "No upcoming bookings across your connected clubs.",
       "tabBookings": "Bookings",

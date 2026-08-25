@@ -22,7 +22,7 @@ class HeaderService {
 
     invitesApi.getMyInvites('PENDING')
       .then((res) => {
-        useHeaderStore.getState().setPendingInvitesFromServer(res.data.length);
+        useHeaderStore.getState().setPendingInvitesFromServer(countPendingInvites(res.data));
       })
       .catch((err) => console.error('Failed to fetch header data:', err));
   }

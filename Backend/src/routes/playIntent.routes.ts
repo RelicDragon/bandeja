@@ -8,6 +8,7 @@ import {
   declineMatchProposal,
   getMatchProposal,
   getMyPlayIntent,
+  getPlayIntentInvitePool,
   getPlayIntentPool,
   getSharedPlayIntent,
   joinSharedPlayIntent,
@@ -20,6 +21,7 @@ import {
   addProposalMemberBodySchema,
   discussPlayIntentBodySchema,
   createPlayIntentBodySchema,
+  invitePoolBodySchema,
   playIntentIdParamsSchema,
   playIntentOptionalScopeQuerySchema,
   proposalIdParamsSchema,
@@ -46,6 +48,12 @@ router.get(
   authenticate,
   validateZod({ query: playIntentOptionalScopeQuerySchema }),
   getPlayIntentPool,
+);
+router.post(
+  '/invite-pool',
+  authenticate,
+  validateZod({ body: invitePoolBodySchema }),
+  getPlayIntentInvitePool,
 );
 router.get(
   '/shared/:id',

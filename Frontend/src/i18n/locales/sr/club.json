@@ -149,6 +149,8 @@
       "myTabConnectHint": "Poveži naloge klubova da vidiš predstojeće rezervacije ovde.",
       "myTabConnectCta": "Poveži klubove",
       "myTabUpcomingTitle": "Predstojeće",
+      "myTabUnlinkedTitle": "Rezervisani tereni",
+      "myTabUnlinkedHint": "Još nisu vezani za igru — poveži ili napravi igru da ne zaboraviš.",
       "seeAllBookings": "Vidi sve",
       "noUpcomingAny": "Nema predstojećih rezervacija u povezanim klubovima.",
       "tabBookings": "Rezervacije",

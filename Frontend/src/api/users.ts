@@ -112,6 +112,7 @@ export interface UserStats {
   gamesStatsAllSports?: GamesStat[];
   performanceInsights?: UserPerformanceInsights;
   levelFeedback?: PlayerLevelFeedbackAggregate;
+  trainingAttendanceCount?: number;
 }
 
 export type PlayerLevelFeedbackAggregate =
@@ -206,10 +207,31 @@ export interface InvitablePlayer extends BasicUser {
   gamesTogetherCount: number;
 }
 
-export interface InvitablePlayersPayload {
+export interface NearbyInvitableCity {
+  cityId: string;
+  name: string;
+  country: string;
+  km: number;
   players: InvitablePlayer[];
-  maxSocialLevel: number;
 }
+
+export interface InvitablePlayersPayload {
+  cityId?: string;
+  players: InvitablePlayer[];
+  nearby?: NearbyInvitableCity[];
+  maxSocialLevel: number;
+  busyUserIds?: string[];
+}
+
+export type FetchInvitableOptions = {
+  cityId?: string;
+  expandNearby?: boolean;
+};
+
+export type InvitableSlotWindow = {
+  startTime: string;
+  endTime: string;
+};
 
 export interface GameWorkoutSessionListItem extends GameWorkoutSummary {
   game: {
@@ -398,11 +420,23 @@ export const usersApi = {
     return response.data;
   },
 
-  getInvitablePlayers: async (gameId?: string, sport?: string, search?: string) => {
+  getInvitablePlayers: async (
+    gameId?: string,
+    sport?: string,
+    search?: string,
+    slot?: InvitableSlotWindow,
+    opts?: FetchInvitableOptions,
+  ) => {
     const params: Record<string, string> = {};
     if (gameId) params.gameId = gameId;
     if (sport) params.sport = sport;
     if (search?.trim()) params.search = search.trim();
+    if (!gameId && slot?.startTime && slot?.endTime) {
+      params.startTime = slot.startTime;
+      params.endTime = slot.endTime;
+    }
+    if (opts?.cityId) params.cityId = opts.cityId;
+    if (opts?.expandNearby) params.expandNearby = '1';
     const response = await api.get<ApiResponse<InvitablePlayersPayload>>('/users/invitable-players', {
       params,
     });

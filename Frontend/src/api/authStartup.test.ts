@@ -196,6 +196,21 @@ describe('auth startup verifier', () => {
     expect(deps.clearLocalAuth).toHaveBeenCalledWith('auth.refreshExpired');
   });
 
+  it('clears local auth when web refresh cookie is missing', async () => {
+    const { settleStoredAuthBeforeBootstrap } = await import('@/api/authStartup');
+    const deps = depsFor(jwtWithExp(baseNow - 1000), {
+      refreshAccessToken: async () => null,
+      consumeRefreshClearedCredentials: () => false,
+      consumeRefreshFailureCode: () => 'auth.refreshTokenRequired',
+    });
+
+    const result = await settleStoredAuthBeforeBootstrap({ deps });
+
+    expect(result.status).toBe('cleared');
+    expect(result.reason).toBe('auth.refreshTokenRequired');
+    expect(deps.clearLocalAuth).toHaveBeenCalledWith('auth.refreshTokenRequired');
+  });
+
   it('keeps the session candidate while a stale-token refresh continues after startup timeout', async () => {
     vi.useFakeTimers();
     const { settleStoredAuthBeforeBootstrap } = await import('@/api/authStartup');

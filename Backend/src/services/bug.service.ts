@@ -174,25 +174,37 @@ export class BugService {
   }
 
   static async updateBug(id: string, data: { status?: BugStatus; bugType?: BugType; priority?: number }) {
+    const existing = await prisma.bug.findUnique({
+      where: { id },
+      select: {
+        testingStartedAt: true,
+        inProgressReachedAt: true,
+      },
+    });
+
     const update: {
       status?: BugStatus;
       bugType?: BugType;
       priority?: number;
       finishedAt?: Date | null;
-      testingStartedAt?: Date | null;
+      testingStartedAt?: Date;
+      inProgressReachedAt?: Date;
     } = { ...data };
+
     if (data.status !== undefined) {
       if (data.status === 'FINISHED') {
         update.finishedAt = new Date();
       } else if (data.status !== 'ARCHIVED') {
         update.finishedAt = null;
       }
-      if (data.status === 'TEST') {
+      if (data.status === 'TEST' && !existing?.testingStartedAt) {
         update.testingStartedAt = new Date();
-      } else {
-        update.testingStartedAt = null;
+      }
+      if (data.status === 'IN_PROGRESS' && !existing?.inProgressReachedAt) {
+        update.inProgressReachedAt = new Date();
       }
     }
+
     return await prisma.bug.update({
       where: { id },
       data: update,

@@ -62,7 +62,8 @@ import { AppleIcon } from '@/components/AppleIcon';
 import { getCurrencyOptions, getCurrencySymbol } from '@/utils/currency';
 import { syncNativeAppIconForUser } from '@/services/appIcon.service';
 import type { AppIconId } from '@/config/appIcons';
-import { config as appConfig } from '@/config/media';
+import { openExternalUrl } from '@/utils/openExternalUrl';
+import { buildTelegramBotStartUrl } from '@/utils/telegramBotUrl';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -1137,12 +1138,8 @@ export const ProfileContent = () => {
                         toast.error(t('errors.generic'));
                         return;
                       }
-                      const base = appConfig.telegramBotUrl.replace(/\/$/, '');
-                      const start = `link_${linkToken}`;
-                      const url = base.includes('?')
-                        ? `${base}&start=${encodeURIComponent(start)}`
-                        : `${base}?start=${encodeURIComponent(start)}`;
-                      window.open(url, '_blank');
+                      toast.success(t('profile.openingTelegram'));
+                      await openExternalUrl(buildTelegramBotStartUrl(`link_${linkToken}`));
                     } catch (err: any) {
                       const msg = err.response?.data?.message;
                       toast.error(msg || t('errors.generic'));
@@ -1361,7 +1358,7 @@ export const ProfileContent = () => {
               </label>
               <Select
                 options={[
-                  { value: 'auto', label: t('profile.auto') || 'Auto', icon: <Globe size={16} className="text-gray-900 dark:text-white" /> },
+                  { value: 'auto', label: t('profile.currencyAuto'), icon: <Globe size={16} className="text-gray-900 dark:text-white" /> },
                   ...getCurrencyOptions().map(curr => ({
                     value: curr.value,
                     label: `${curr.value} (${getCurrencySymbol(curr.value)}) - ${curr.label.split(' - ')[1]}`

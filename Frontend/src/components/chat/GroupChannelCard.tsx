@@ -12,6 +12,8 @@ import { ChatListPinIcon } from '@/components/chat/ChatListPinIcon';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
 import { UnreadBadge } from '@/components/UnreadBadge';
 import { BugPriorityBadge } from '@/components/chat/BugPriorityBadge';
+import { BugStarRating } from '@/components/bugs/BugStarRating';
+import { isReviewBugType, isValidReviewStars } from '@/components/bugs/reviewStars';
 import { useAuthStore } from '@/store/authStore';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { memo, useMemo } from 'react';
@@ -116,8 +118,17 @@ const GroupChannelCardInner = ({ groupChannel, listPresenceBatched = false, unre
           <>
             <div className="flex items-center justify-between gap-2 flex-wrap mb-1">
               <div className="flex items-center gap-2 flex-wrap min-w-0">
-                {(groupChannel.bug.priority ?? 0) !== 0 && (
-                  <BugPriorityBadge priority={groupChannel.bug.priority ?? 0} />
+                {isReviewBugType(groupChannel.bug.bugType) ? (
+                  <BugStarRating
+                    value={isValidReviewStars(groupChannel.bug.priority ?? 0) ? groupChannel.bug.priority ?? 0 : null}
+                    readonly
+                    size="sm"
+                    showLabel={false}
+                  />
+                ) : (
+                  (groupChannel.bug.priority ?? 0) !== 0 && (
+                    <BugPriorityBadge priority={groupChannel.bug.priority ?? 0} />
+                  )
                 )}
                 <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-medium uppercase tracking-wide bg-amber-100/80 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300">
                   {t(`bug.types.${groupChannel.bug.bugType}`)}

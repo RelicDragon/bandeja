@@ -29,6 +29,16 @@
     "status": "Status",
     "priority": "Priority",
     "priorityUpdated": "Bug priority updated",
+    "stars": "Stars",
+    "starsRequired": "Choose a rating from 1 to 5 stars",
+    "ratingUpdated": "Rating updated",
+    "starLabels": {
+      "1": "1 star",
+      "2": "2 stars",
+      "3": "3 stars",
+      "4": "4 stars",
+      "5": "5 stars"
+    },
     "changeStatus": "Change Status",
     "changeType": "Change Type",
     "updateFailed": "Failed to update bug",
@@ -52,7 +62,8 @@
       "CRITICAL": "Critical",
       "SUGGESTION": "Suggestion",
       "QUESTION": "Question",
-      "TASK": "Task"
+      "TASK": "Task",
+      "REVIEW": "Review"
     },
     "statuses": {
       "CREATED": "Created",

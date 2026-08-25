@@ -26,6 +26,10 @@
     "confirmJoinMessage": "Are you sure you want to join this game?",
     "confirmJoinQueueTitle": "Join the queue?",
     "confirmJoinQueueMessage": "Are you sure you want to join the waiting list?",
+    "overlapConfirmTitle": "Already playing",
+    "overlapConfirmMessage": "This slot overlaps a game you're in.",
+    "overlapConfirmProceed": "Continue",
+    "requiresOverlapConfirm": "This slot overlaps a game you're in.",
     "gameTypes": {
       "CLASSIC": "Classic",
       "AMERICANO": "Americano",
@@ -83,6 +87,7 @@
     "genderPromptDismissConfirm": "Don't show again",
     "genderPromptModalTitle": "Set your gender",
     "genderPromptModalSubtitle": "This helps us show better game matches and unlock mixed-gender events.",
+    "genderPromptJoinSubtitle": "This game is for a specific gender. Pick yours so we can add you.",
     "cityPromptSubtitle": "Is your city {{cityName}}? If not, use the button below.",
     "cityPromptSubtitleNoCity": "Set your city so we can show the right games near you.",
     "cityPromptAction": "Change {{cityName}}",

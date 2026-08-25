@@ -9,14 +9,10 @@ import { BugStatus, BugType, ChatType, ChatContextType } from '@prisma/client';
 import { createSystemMessage } from './chat.controller';
 import { MessageService } from '../services/chat/message.service';
 import prisma from '../config/database';
+import { isReviewBugType, resolveCreatePriority, resolveUpdatePriority } from '../services/bug/bugPriority';
+import { tryGrantBugShippedAchievementById } from '../services/achievements/bugShippedGrant.service';
 
 const getSocketService = () => (global as any).socketService;
-
-const clampPriority = (v: unknown): number => {
-  const n = typeof v === 'number' ? v : parseInt(String(v), 10);
-  if (Number.isNaN(n)) return 0;
-  return Math.min(2, Math.max(-2, n));
-};
 
 export const createBug = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { text, bugType, priority: rawPriority } = req.body;
@@ -29,8 +25,11 @@ export const createBug = asyncHandler(async (req: AuthRequest, res: Response) =>
     throw new ApiError(400, 'errors.bugs.typeRequired');
   }
 
-  const priority = rawPriority !== undefined ? clampPriority(rawPriority) : 0;
-  const { groupChannel, ...bug } = await BugService.createBug(text, bugType, req.userId!, priority);
+  const resolvedPriority = resolveCreatePriority(bugType, rawPriority);
+  if (!resolvedPriority.ok) {
+    throw new ApiError(400, resolvedPriority.code);
+  }
+  const { groupChannel, ...bug } = await BugService.createBug(text, bugType, req.userId!, resolvedPriority.priority);
 
   getSocketService()?.emitNewBug().catch((err: unknown) =>
     console.error('Failed to emit new bug to developers:', err)
@@ -96,17 +95,8 @@ export const updateBug = asyncHandler(async (req: AuthRequest, res: Response) =>
   const { id } = req.params;
   const { status, bugType, priority: rawPriority } = req.body;
 
-  const priority =
-    rawPriority !== undefined && rawPriority !== null
-      ? clampPriority(rawPriority)
-      : undefined;
   const hasValidStatus = status && Object.values(BugStatus).includes(status as BugStatus);
   const hasValidType = bugType && Object.values(BugType).includes(bugType as BugType);
-  const hasValidPriority = priority !== undefined;
-
-  if (!hasValidStatus && !hasValidType && !hasValidPriority) {
-    throw new ApiError(400, 'errors.bugs.statusOrTypeRequired');
-  }
 
   const existingBug = await BugService.getBugById(id);
 
@@ -118,10 +108,25 @@ export const updateBug = asyncHandler(async (req: AuthRequest, res: Response) =>
     throw new ApiError(403, 'errors.bugs.updateForbidden');
   }
 
+  const nextType = hasValidType ? (bugType as BugType) : existingBug.bugType;
+  const resolvedPriority = resolveUpdatePriority({
+    existingType: existingBug.bugType,
+    nextType,
+    raw: rawPriority,
+  });
+  if (!resolvedPriority.ok) {
+    throw new ApiError(400, resolvedPriority.code);
+  }
+  const hasValidPriority = resolvedPriority.priority !== undefined;
+
+  if (!hasValidStatus && !hasValidType && !hasValidPriority) {
+    throw new ApiError(400, 'errors.bugs.statusOrTypeRequired');
+  }
+
   const updateData: { status?: BugStatus; bugType?: BugType; priority?: number } = {};
   if (hasValidStatus) updateData.status = status;
   if (hasValidType) updateData.bugType = bugType;
-  if (hasValidPriority) updateData.priority = priority;
+  if (hasValidPriority) updateData.priority = resolvedPriority.priority;
   const bug = await BugService.updateBug(id, updateData);
   const groupChannel = await prisma.groupChannel.findUnique({
     where: { bugId: id },
@@ -154,15 +159,33 @@ export const updateBug = asyncHandler(async (req: AuthRequest, res: Response) =>
     );
   }
 
-  if (hasValidPriority && priority !== existingBug.priority) {
-    await createSystemMessage(
-      contextId,
-      {
-        type: SystemMessageType.BUG_PRIORITY_CHANGED,
-        variables: { priority: formatPriorityForMessage(priority) }
-      },
-      ChatType.PUBLIC,
-      chatContextType
+  if (hasValidPriority && resolvedPriority.priority !== existingBug.priority) {
+    const nextPriority = resolvedPriority.priority;
+    if (nextPriority !== undefined) {
+      await createSystemMessage(
+        contextId,
+        isReviewBugType(nextType)
+          ? {
+              type: SystemMessageType.BUG_RATING_CHANGED,
+              variables: { rating: String(nextPriority) },
+            }
+          : {
+              type: SystemMessageType.BUG_PRIORITY_CHANGED,
+              variables: { priority: formatPriorityForMessage(nextPriority) },
+            },
+        ChatType.PUBLIC,
+        chatContextType
+      );
+    }
+  }
+
+  if (
+    status &&
+    status !== existingBug.status &&
+    (status === BugStatus.FINISHED || status === BugStatus.ARCHIVED)
+  ) {
+    await tryGrantBugShippedAchievementById(id).catch((err: unknown) =>
+      console.error('Failed to grant bug-shipped achievement:', err),
     );
   }
 

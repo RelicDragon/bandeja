@@ -2,6 +2,7 @@ import * as cron from 'node-cron';
 import { subDays } from 'date-fns';
 import prisma from '../config/database';
 import { BugStatus } from '@prisma/client';
+import { tryGrantBugShippedAchievementById } from './achievements/bugShippedGrant.service';
 
 const TEST_TO_FINISHED_DAYS = 15;
 const FINISHED_TO_ARCHIVED_DAYS = 3;
@@ -25,16 +26,28 @@ export class BugArchivedScheduler {
         try {
           const now = new Date();
           const testCutoff = subDays(now, TEST_TO_FINISHED_DAYS);
-          const testResult = await prisma.bug.updateMany({
+          const staleTestBugs = await prisma.bug.findMany({
             where: {
               status: BugStatus.TEST,
               testingStartedAt: { not: null, lt: testCutoff },
             },
-            data: { status: BugStatus.FINISHED, finishedAt: now, testingStartedAt: null },
+            select: { id: true },
           });
-          if (testResult.count > 0) {
-            console.log(`🐛 Bug archived scheduler: ${testResult.count} bug(s) TEST→FINISHED (15d)`);
+          for (const row of staleTestBugs) {
+            await prisma.bug.update({
+              where: { id: row.id },
+              data: { status: BugStatus.FINISHED, finishedAt: now },
+            });
+            await tryGrantBugShippedAchievementById(row.id).catch((err: unknown) =>
+              console.error(`Bug shipped grant failed for ${row.id}:`, err),
+            );
           }
+          if (staleTestBugs.length > 0) {
+            console.log(
+              `🐛 Bug archived scheduler: ${staleTestBugs.length} bug(s) TEST→FINISHED (15d)`,
+            );
+          }
+
           const finishedCutoff = subDays(now, FINISHED_TO_ARCHIVED_DAYS);
           const result = await prisma.bug.updateMany({
             where: {

@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import {
   MAX_VIDEO_BYTES_AFTER_ENCODE,
   MAX_VIDEO_DURATION_MS,
-  MAX_VIDEO_HEIGHT,
   MAX_VIDEO_WIDTH,
 } from '@/constants/chatVideo';
 import { effectiveChatVideoDurationMs, resolveEncodedChatVideoDurationMs, shouldTranscodeChatVideo } from './chatVideoTranscode';
@@ -98,12 +97,12 @@ describe('shouldTranscodeChatVideo', () => {
     ).toBe(true);
   });
 
-  it('requires transcode when height exceeds max', () => {
+  it('requires transcode when height exceeds max (portrait screen recording)', () => {
     expect(
-      shouldTranscodeChatVideo(file('video/mp4', 1_000_000), {
-        durationMs: 60_000,
-        width: 640,
-        height: MAX_VIDEO_HEIGHT + 1,
+      shouldTranscodeChatVideo(file('video/mp4', 2_240_680, 'IMG_3091.MP4'), {
+        durationMs: 6183,
+        width: 880,
+        height: 1920,
       })
     ).toBe(true);
   });

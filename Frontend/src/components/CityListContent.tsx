@@ -54,6 +54,7 @@ export interface CityListContentProps {
   citiesCount?: number;
   className?: string;
   contentClassName?: string;
+  recentCityIds?: string[];
 }
 
 const LOCATION_HINT_KEYS: Record<string, string> = {
@@ -86,6 +87,7 @@ export const CityListContent = ({
   citiesCount = 0,
   className = '',
   contentClassName = '',
+  recentCityIds = [],
 }: CityListContentProps) => {
   const { t, i18n } = useTranslation();
   const geoReady = useGeoReady();
@@ -343,9 +345,9 @@ export const CityListContent = ({
     return buildSuggestedCityEntries({
       cities: allCitiesSource,
       nearestCityId: suggestedNearestCityId,
-      currentCityId: selectedCityId,
+      currentCityId: currentCityId ?? selectedCityId,
     });
-  }, [showSuggested, suggestedNearestCityId, selectedCityId, allCitiesSource]);
+  }, [showSuggested, suggestedNearestCityId, currentCityId, selectedCityId, allCitiesSource]);
 
   const useVirtualizedCityList = filteredCitiesForCountry.length >= 40;
   const idxForScrollToCity = scrollToCityId != null ? filteredCitiesForCountry.findIndex((c) => c.id === scrollToCityId) : -1;
@@ -387,14 +389,36 @@ export const CityListContent = ({
     [onCityClick, setSearch]
   );
 
+  const recentEntries = useMemo(() => {
+    if (!showSuggested || recentCityIds.length === 0) return [];
+    const suggestedIds = new Set(suggestedEntries.map((entry) => entry.city.id));
+    return recentCityIds
+      .map((id) => allCitiesSource.find((city) => city.id === id))
+      .filter((city): city is City => city != null && !suggestedIds.has(city.id))
+      .map((city) => ({ city, kind: 'recent' as const }));
+  }, [allCitiesSource, recentCityIds, showSuggested, suggestedEntries]);
+
   const suggestedListHeader =
-    showSuggested && suggestedEntries.length > 0 ? (
-      <SuggestedCitiesBlock
-        entries={suggestedEntries}
-        selectedCityId={selectedCityId}
-        submitting={submitting}
-        onSelect={onCityClickAndClearSearch}
-      />
+    showSuggested && (suggestedEntries.length > 0 || recentEntries.length > 0) ? (
+      <>
+        {suggestedEntries.length > 0 ? (
+          <SuggestedCitiesBlock
+            entries={suggestedEntries}
+            selectedCityId={selectedCityId}
+            submitting={submitting}
+            onSelect={onCityClickAndClearSearch}
+          />
+        ) : null}
+        {recentEntries.length > 0 ? (
+          <SuggestedCitiesBlock
+            headingKey="browseCity.recent"
+            entries={recentEntries}
+            selectedCityId={selectedCityId}
+            submitting={submitting}
+            onSelect={onCityClickAndClearSearch}
+          />
+        ) : null}
+      </>
     ) : null;
 
   const countryBackRow =

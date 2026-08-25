@@ -14,6 +14,13 @@ router.post(
   validate(userTeamController.createTeamValidators),
   userTeamController.createTeam
 );
+router.get('/:id/invitable-games', authenticate, userTeamController.listInvitableGames);
+router.post(
+  '/:id/add-to-game',
+  authenticate,
+  validate(userTeamController.addToGameValidators),
+  userTeamController.addToGame
+);
 router.get('/:id', authenticate, userTeamController.getTeam);
 router.put(
   '/:id',

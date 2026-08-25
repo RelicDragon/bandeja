@@ -48,7 +48,9 @@
         "giantKiller": "Cazagigantes",
         "dynamicDuo": "Dúo dinámico",
         "openCourt": "Cancha abierta",
-        "leto2026": "Leto 2026"
+        "leto2026": "Leto 2026",
+        "tieBreaker": "Tie-break",
+        "bugShipped": "Bug tracker"
       }
     },
     "leaderboard": {
@@ -82,7 +84,8 @@
         "hostedBars": "{{count}} eventos Bar",
         "upsets": "{{count}} sorpresas",
         "partnerWins": "{{count}} victorias en pareja",
-        "partners": "{{count}} parejas"
+        "partners": "{{count}} parejas",
+        "tieBreaks": "{{count}} tie-breaks"
       }
     },
     "detail": {
@@ -337,6 +340,46 @@
       "leto2026Gold": {
         "title": "Campeón Leto 2026",
         "description": "Podio de oro de Fix Liga Leto 2026."
+      },
+      "tieBreak1": {
+        "title": "Tie-Breaker",
+        "description": "Gana un set en tie-break: 7–6 clásico o super tie-break."
+      },
+      "tieBreak5": {
+        "title": "Muerte súbita",
+        "description": "Gana 5 sets en tie-break (7–6 o super TB)."
+      },
+      "tieBreak12": {
+        "title": "Club 7–6",
+        "description": "Gana 12 sets en tie-break (7–6 o super TB)."
+      },
+      "tieBreak32": {
+        "title": "Nervio de acero",
+        "description": "Gana 32 sets en tie-break (7–6 o super TB)."
+      },
+      "tieBreak64": {
+        "title": "Leyenda de la lotería",
+        "description": "Gana 64 sets en tie-break (7–6 o super TB)."
+      },
+      "bugShipped1": {
+        "title": "En producción",
+        "description": "Lleva 1 bug o sugerencia de en curso o pruebas a finalizado o archivado. Las preguntas no cuentan."
+      },
+      "bugShipped5": {
+        "title": "Notas del parche",
+        "description": "Lleva 5 bugs o sugerencias de en curso o pruebas a finalizado o archivado."
+      },
+      "bugShipped10": {
+        "title": "Fábrica de fixes",
+        "description": "Lleva 10 bugs o sugerencias de en curso o pruebas a finalizado o archivado."
+      },
+      "bugShipped25": {
+        "title": "Domador de bugs",
+        "description": "Lleva 25 bugs o sugerencias de en curso o pruebas a finalizado o archivado."
+      },
+      "bugShipped50": {
+        "title": "Leyenda del release",
+        "description": "Lleva 50 bugs o sugerencias de en curso o pruebas a finalizado o archivado."
       }
     }
   }

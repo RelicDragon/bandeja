@@ -5,6 +5,7 @@ import {
   bookingMatchesGameSlot,
   buildCreateGameDeepLinkParams,
   buildLinkBookingRequest,
+  filterBookingsNotFullyLinked,
   filterLinkableGames,
   isRecommendedLinkTarget,
   linkedGamesBookingGroupOccupancyPercent,
@@ -232,6 +233,25 @@ describe('linkedGamesFullyCoverBookingSlot', () => {
   it('returns 100 for a single linked game without usable time fields', () => {
     const booking = normalizeBooking('2026-06-19T09:00:00.000Z', '2026-06-19T10:00:00.000Z');
     expect(linkedGamesFullyCoverBookingSlot(booking, [{ startTime: '', endTime: null }], TZ)).toBe(true);
+  });
+});
+
+describe('filterBookingsNotFullyLinked', () => {
+  it('keeps bookings with no linked games or only partial coverage', () => {
+    const uncovered = { ...normalizeBooking('2026-06-19T09:00:00.000Z', '2026-06-19T10:00:00.000Z'), uuid: 'open' };
+    const partial = { ...normalizeBooking('2026-06-19T10:00:00.000Z', '2026-06-19T12:00:00.000Z'), uuid: 'partial' };
+    const covered = { ...normalizeBooking('2026-06-19T12:00:00.000Z', '2026-06-19T13:00:00.000Z'), uuid: 'full' };
+    const partialStartMs = bookingInstantMs(partial.bookingStart)!;
+    const partialEndMs = bookingInstantMs(partial.bookingEnd)!;
+    const partialMid = new Date(partialStartMs + (partialEndMs - partialStartMs) / 2).toISOString();
+    const linked = new Map([
+      ['partial', [{ timeIsSet: true, startTime: partial.bookingStart, endTime: partialMid }]],
+      ['full', [gameWithSlot('2026-06-19T12:00:00.000Z', '2026-06-19T13:00:00.000Z')]],
+    ]);
+    expect(filterBookingsNotFullyLinked([uncovered, partial, covered], linked, () => TZ).map((b) => b.uuid)).toEqual([
+      'open',
+      'partial',
+    ]);
   });
 });
 

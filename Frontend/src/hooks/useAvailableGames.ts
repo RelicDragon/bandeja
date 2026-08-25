@@ -78,6 +78,7 @@ export const useAvailableGames = (
     loading,
     isError: queryEnabled && isError,
     isPlaceholderData,
+    isFetching,
     fetchData,
     refetch: fetchData,
     loadMore,

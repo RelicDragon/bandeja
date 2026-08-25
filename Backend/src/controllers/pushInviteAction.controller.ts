@@ -26,7 +26,7 @@ export const performPushInviteAction = asyncHandler(async (req: Request, res: Re
 
   const result =
     scope.action === 'accept'
-      ? await InviteService.acceptInvite(scope.targetId, scope.userId, false)
+      ? await InviteService.acceptInvite(scope.targetId, scope.userId, true)
       : await InviteService.declineInvite(scope.targetId, scope.userId, false);
   if (!result.success) throw new ApiError(400, result.message);
   res.json({ success: true, message: result.message });

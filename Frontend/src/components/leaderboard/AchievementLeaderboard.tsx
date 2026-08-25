@@ -57,6 +57,7 @@ const FAMILY_UNIT: Record<AchievementLeaderboardFamily, string> = {
   HABIT_GIANT_KILLER: 'upsets',
   HABIT_DYNAMIC_DUO: 'partnerWins',
   HABIT_OPEN_COURT: 'partners',
+  HABIT_TIE_BREAK: 'tieBreaks',
 };
 
 function buildFamilyCards(

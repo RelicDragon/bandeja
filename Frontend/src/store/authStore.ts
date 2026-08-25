@@ -289,6 +289,9 @@ export const useAuthStore = create<AuthState>((set, get) => {
           resetCoordinator();
           useUnreadStore.getState().reset();
           useChatListFeedStore.getState().resetForTests();
+          void import('@/store/browseCityStore').then(({ useBrowseCityStore }) => {
+            useBrowseCityStore.getState().resetToHome({ clearRecents: true });
+          });
           set({ user: null, token: null, isAuthenticated: false });
           console.info('[auth:logout] local session cleared', {
             lsToken: localStorage.getItem('token'),
@@ -325,6 +328,11 @@ export const useAuthStore = create<AuthState>((set, get) => {
         const prev = get().user;
         localStorage.setItem('user', JSON.stringify(user));
         set({ user });
+        if (prev?.currentCity?.id !== user.currentCity?.id || prev?.currentCityId !== user.currentCityId) {
+          void import('@/store/browseCityStore').then(({ useBrowseCityStore }) => {
+            useBrowseCityStore.getState().resetToHome();
+          });
+        }
         
         if (user.language) {
           const langCode = extractLanguageCode(user.language);

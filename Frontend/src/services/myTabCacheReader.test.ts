@@ -17,6 +17,69 @@ describe('myTabCacheReader', () => {
     expect(countPendingInvites(invites)).toBe(2);
   });
 
+  it('does not count pending invites whose playing roster is full', () => {
+    const invites = [
+      {
+        id: '1',
+        status: 'PENDING',
+        game: {
+          maxParticipants: 4,
+          participants: [
+            { status: 'PLAYING' },
+            { status: 'PLAYING' },
+            { status: 'PLAYING' },
+            { status: 'PLAYING' },
+          ],
+        },
+      },
+      {
+        id: '2',
+        status: 'PENDING',
+        game: {
+          maxParticipants: 4,
+          participants: [{ status: 'PLAYING' }],
+        },
+      },
+    ] as Invite[];
+
+    expect(countPendingInvites(invites)).toBe(1);
+  });
+
+  it('does not count MIX_PAIRS invites whose invitee gender bucket is full', () => {
+    const invites = [
+      {
+        id: '1',
+        status: 'PENDING',
+        receiver: { gender: 'MALE' },
+        game: {
+          maxParticipants: 4,
+          genderTeams: 'MIX_PAIRS',
+          participants: [
+            { status: 'PLAYING', user: { gender: 'MALE' } },
+            { status: 'PLAYING', user: { gender: 'MALE' } },
+            { status: 'PLAYING', user: { gender: 'FEMALE' } },
+          ],
+        },
+      },
+      {
+        id: '2',
+        status: 'PENDING',
+        receiver: { gender: 'FEMALE' },
+        game: {
+          maxParticipants: 4,
+          genderTeams: 'MIX_PAIRS',
+          participants: [
+            { status: 'PLAYING', user: { gender: 'MALE' } },
+            { status: 'PLAYING', user: { gender: 'MALE' } },
+            { status: 'PLAYING', user: { gender: 'FEMALE' } },
+          ],
+        },
+      },
+    ] as Invite[];
+
+    expect(countPendingInvites(invites)).toBe(1);
+  });
+
   it('extracts owned teams from my-tab teams payload', () => {
     const teams = [
       { id: 't1', ownerId: 'user-1' },

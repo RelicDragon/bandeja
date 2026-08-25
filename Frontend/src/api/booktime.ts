@@ -158,4 +158,12 @@ export const booktimeApi = {
     );
     return response.data;
   },
+
+  getLinkedGamesBatch: async (externalBookingIds: string[]) => {
+    const response = await api.post<ApiResponse<Record<string, BooktimeLinkedGame[]>>>(
+      '/booktime/linked-games/batch',
+      { externalBookingIds },
+    );
+    return response.data;
+  },
 };

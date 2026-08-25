@@ -1,6 +1,6 @@
 import type { City } from '@/types';
 
-export type SuggestedCityKind = 'nearest' | 'current' | 'both';
+export type SuggestedCityKind = 'nearest' | 'current' | 'both' | 'recent';
 
 export interface SuggestedCityEntry {
   city: City;

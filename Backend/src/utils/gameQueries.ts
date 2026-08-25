@@ -4,6 +4,7 @@ import { GameStatus, GenderTeam, EntityType, Gender } from '@prisma/client';
 
 export interface GameWithPlayingParticipants {
   id: string;
+  cityId: string;
   status: GameStatus;
   genderTeams: GenderTeam;
   maxParticipants: number;

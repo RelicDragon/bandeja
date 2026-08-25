@@ -147,6 +147,8 @@
       "myTabConnectHint": "Conecta tus cuentas de club para ver tus próximas reservas aquí.",
       "myTabConnectCta": "Conectar clubs",
       "myTabUpcomingTitle": "Próximas",
+      "myTabUnlinkedTitle": "Pistas reservadas",
+      "myTabUnlinkedHint": "Aún no están unidas a un partido — vincula o crea uno para no olvidarlo.",
       "seeAllBookings": "Ver todo",
       "noUpcomingAny": "No hay reservas próximas en tus clubs conectados.",
       "tabBookings": "Reservas",

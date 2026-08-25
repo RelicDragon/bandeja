@@ -13,13 +13,13 @@ describe('resolveCalendarDayPillVisibility', () => {
     })).toEqual({ showWeatherPill: false, showTypePill: true });
   });
 
-  it('shows weather pill instead of entity pill when weather exists', () => {
+  it('keeps the entity pill visible alongside weather when weather exists', () => {
     expect(resolveCalendarDayPillVisibility({
       weatherMode: true,
       hasGames: true,
       typePillCount: 2,
       dayWeather: weather,
-    })).toEqual({ showWeatherPill: true, showTypePill: false });
+    })).toEqual({ showWeatherPill: true, showTypePill: true });
   });
 
   it('keeps entity pill while weather is still unavailable for the day', () => {

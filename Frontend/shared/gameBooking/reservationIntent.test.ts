@@ -81,6 +81,33 @@ describe('reservation intent resolvers', () => {
     expect(withLinks.map((option) => option.id)).toContain('unlink');
   });
 
+  it('hides edit useExisting and reserveNew until linked bookings are fully unlinked', () => {
+    const withLinks = resolveEditReservationActionOptions({
+      hasLinkedBookings: true,
+      clubBookingFlowActive: true,
+      hasBooktimeAuthPath: true,
+      hasReservationsForDate: true,
+    });
+    expect(withLinks.map((option) => option.id)).toEqual([
+      'keepCurrent',
+      'changeGameTimeOnly',
+      'unlink',
+    ]);
+
+    const afterUnlink = resolveEditReservationActionOptions({
+      hasLinkedBookings: false,
+      clubBookingFlowActive: true,
+      hasBooktimeAuthPath: true,
+      hasReservationsForDate: true,
+    });
+    expect(afterUnlink.map((option) => option.id)).toEqual([
+      'changeGameTimeOnly',
+      'useExisting',
+      'reserveNew',
+      'gameOnly',
+    ]);
+  });
+
   it('hides edit reserveNew when the club has no external booking', () => {
     const nonIntegrated = resolveEditReservationActionOptions({
       hasLinkedBookings: false,
@@ -142,6 +169,28 @@ describe('reservation intent resolvers', () => {
         clubBookingFlowActive: false,
       }),
     ).toBe('gameOnly');
+    expect(
+      resolveInitialReservationIntent({
+        hasPreselectedBookings: false,
+        clubBookingFlowActive: true,
+        fromPlayIntent: true,
+      }),
+    ).toBe('gameOnly');
+    expect(
+      resolveInitialReservationIntent({
+        hasPreselectedBookings: false,
+        clubBookingFlowActive: true,
+        hasReservationsForDate: true,
+        fromPlayIntent: true,
+      }),
+    ).toBe('gameOnly');
+    expect(
+      resolveInitialReservationIntent({
+        hasPreselectedBookings: true,
+        clubBookingFlowActive: true,
+        fromPlayIntent: true,
+      }),
+    ).toBe('useExisting');
   });
 
   it('projects create intents to legacy location-time state', () => {
@@ -317,6 +366,37 @@ describe('reservation intent resolvers', () => {
         requiresSchedule: true,
       }),
     ).toEqual({ ok: false, reason: 'timeRequired' });
+
+    expect(
+      resolveEditReservationValidation({
+        action: 'reserveNew',
+        needsBooktimeAuth: false,
+        selectedBookingCount: 0,
+        selectedBookingRecordsCount: 0,
+        selectedCourtCount: 3,
+        integratedCourtCount: 3,
+        bookingSelectionMin: 3,
+        selectedTime: '15:00',
+        duration: 2,
+        requiresSchedule: true,
+      }),
+    ).toEqual({ ok: true });
+
+    expect(
+      resolveEditReservationValidation({
+        action: 'unlink',
+        needsBooktimeAuth: false,
+        selectedBookingCount: 0,
+        selectedBookingRecordsCount: 0,
+        selectedCourtCount: 0,
+        integratedCourtCount: 0,
+        bookingSelectionMin: 1,
+        selectedTime: '15:00',
+        duration: 2,
+        requiresSchedule: true,
+        clubChanged: true,
+      }),
+    ).toEqual({ ok: false, reason: 'courtSelectionRequired' });
   });
 
   it('resolves intent-specific create CTA keys', () => {

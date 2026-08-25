@@ -162,6 +162,8 @@ Frontend/e2e/
 | G-49 | Assistant feature vs game-entity layers | Run `npm run test:deep-link-catalog`; Cap: after My-games sync, “Find games today” / “Open chat for my next game” / “Open [cached title] in Bandeja”; Android long-press static vs `dyn_game_*` | Suite green; Find/next-chat use feature intents; named game uses entity (Siri params refreshed on sync); static shortcuts ≠ dynamic open-game shortcuts |
 | G-50 | App Shortcuts priority cap (iOS) | Inspect Siri / App Shortcuts donated set after install | At most 10 donated shortcuts; Create league + entity chat/live not in donated set (still in Shortcuts library) |
 | G-51 | Environment favicon highlighting | Open local Vite dev, `thisistestfor.bandeja.me`, and production `bandeja.me` | Dev favicon has a red background; test-production favicon has a yellow background; production favicon is unchanged |
+| G-52 | Player overlay training attendance | Open `?player=` for a user who attended TRAINING as PLAYING (past/finished; not a future RSVP). Switch sport. | Compact `N games · M trainings` next to that sport’s level; rated gamesPlayed unchanged; trainings match the selected sport |
+| G-53 | Player overlay training attendance zero | Open `?player=` for a user with 0 TRAINING attendance, or only upcoming TRAINING RSVPs | Shows 0 trainings (quiet empty); no crash |
 
 ### 4.2 Onboarding gates & prompts
 
@@ -177,6 +179,10 @@ Frontend/e2e/
 | OG-08 | Sport questionnaire skip | Dismiss home questionnaire | Padel profile `questionnaireSkippedAt` set; prompt gone |
 | OG-09 | Sport questionnaire | Incomplete per-sport Q | `SportQuestionnairePrompt` on home |
 | OG-10 | Sport questionnaire complete | Finish questionnaire | Prompt removed; levels updated |
+| OG-11 | Gender join gate | `genderIsSet` false user taps join/request on a MEN/WOMEN/MIX event | `GenderSetModal` opens; join/request is not sent until gender is saved |
+| OG-12 | Gender join resume | Set gender in the join gate sheet | Original join/request proceeds |
+| OG-13 | Gender join skipped when set | `genderIsSet` true user joins a gendered event | No extra gender sheet |
+| OG-14 | Gender join cancel | Dismiss the join gender sheet | Join/request is not sent |
 
 ---
 
@@ -215,6 +221,8 @@ Frontend/e2e/
 | A-14 | Gender prefer-not-to-say | Without acknowledgment | Blocked |
 | A-15 | Primary sport selection | Pick sport at register | Saved on profile |
 | A-16 | Optional email invalid | Bad email format | Validation error |
+| A-40 | Serbia city currency | Register (phone/Google/Apple/Telegram) with auto-assigned city in Serbia | `defaultCurrency` is RSD without opening Profile |
+| A-41 | Local city currency | Register with city in a non-euro country (e.g. UK/US/CZ) | Default currency is local (GBP/USD/CZK), not leftover EUR |
 
 ### 5.3 City selection (`/select-city`)
 
@@ -234,6 +242,7 @@ Frontend/e2e/
 | A-38 | RU/SR club count plurals | App language RU (or SR); open country list | Counts ending in 1 but not 11 (e.g. Austria 131, Argentina 1401) show full number (`131 клуб` / `1401 клуб`), not literal `1 клуб` |
 | A-39 | Country name localization | App language RU; open country list; scroll past Andorra/Belgium/Czechia | Primary names localized (Андорра, Бельгия, Чехия), not English keys; native endonym shown when different |
 | A-39 | Map chrome overlay | Tap Map (list or change-city modal) | Map fills content; Near me + List overlay inside map (not above); List returns to search list |
+| A-42 | First city confirm currency | Auto-assigned a non-Serbia city (`cityIsSet` false), pick a Serbia city in CityModal / `/select-city` | `defaultCurrency` becomes RSD; later city changes do not overwrite a Profile pick |
 
 ### 5.4 Logout & sessions
 
@@ -257,6 +266,7 @@ Frontend/e2e/
 | A-26i | Android invite after days | Let Android access JWT expire, then accept/decline from a notification | Scoped action succeeds without opening app; notification closes after definitive response |
 | A-26j | Idle several days then open | Leave app closed 2–7 days (access expired, refresh still valid) | Returns to last screen signed in; no login flash |
 | A-26k | Phone + Watch concurrent refresh | Open Watch and iPhone together after access expiry | Both stay signed in; they share the live successor refresh credential |
+| A-26l | Web refresh cookie missing | Leave a desktop tab open until access JWT expires with no `pp_rt` cookie (`POST /auth/refresh` body `{}` → 400 `auth.refreshTokenRequired`) | Reload sends the user to login; no 401 storm on games / play-intents |
 
 ---
 
@@ -274,6 +284,8 @@ Frontend/e2e/
 | H-41 | Selected date heading | Pick date on My tab calendar | Long localized date (e.g. "Thursday, 11 June") with Today/Tomorrow badge shown below calendar; updates on re-select, localized per language |
 | H-63 | Empty selected date hint | User with upcoming games on other days → pick a day with no games | Localized "No games on this date" below selected date heading; Upcoming games section still shown |
 | H-60 | Calendar weekday headers | My tab or Find calendar with app language set to Russian, then English | Column headers use locale short weekday (ru: 2-letter e.g. пн/вт; en: 3-letter e.g. Mon/Tue), not truncated full names |
+| H-80 | Calendar day cell readability | Open My or Find calendar on a ~320px phone viewport with busy days | Day-of-month is fully visible and centered; a tiny hairline sits under the date when the cell has games or weather (hidden on empty days); game count is a small numeral under the date (not covering it); entity types show as color dots; selected day highlights without overlapping neighbors |
+| H-84 | My calendar league type mark | Open My calendar on a day with a league game | That day shows the league (blue) type mark; Find still hides league marks unless the League chip is on (F-82) |
 | H-40 | Overflow month day select | Navigate month → tap gray adjacent-month cell with game badge | Selected day highlights; that day's games in list (not upcoming sections) |
 | H-03 | Empty my games | User with no games | Empty state |
 | H-04 | Stories rail visible | Logged in home | Stories bubbles render |
@@ -292,11 +304,17 @@ Frontend/e2e/
 |----|------|-------|----------|
 | H-12 | View pending invite | Seed invite | Card shows game info |
 | H-13 | Accept invite | Accept | Joined game, invite gone |
+| H-13a | Accept overlapping PLAYING invite | PLAYING in game A; accept invite to overlapping game B → confirm; repeat and cancel | Confirm: joined B; Cancel: still invited to B, still PLAYING in A |
+| H-13b | Notification Accept overlapping invite | PLAYING in game A; tap Accept on in-app invite notification for overlapping game B | Slot-overlap modal; cancel leaves invite pending; continue accepts |
 | H-14 | Decline invite | Decline → confirm modal | Invite removed |
 | H-15 | Decline with note | Add note in modal | Note posted to game chat (with notifications), then invite declined |
 | H-15a | Telegram decline with response | Telegram game invite → Decline with response → send reason (or `/skip` / `/skip@Bot`) | Same as H-15 when reason sent; invite declined and Telegram invite message updated; `/skip` declines without chat message; prompt expires after 10m; Accept/Decline clears pending prompt |
 | H-16 | Invite note on game | Save note without accept/decline | Persisted |
 | H-61 | Invite cleared after accept from game | My tab invite → open game → accept invite on game page → back to My tab | Invite card gone immediately; second accept not offered |
+| H-73 | Full roster hides home invite | Seed pending INVITED row on a game whose PLAYING count equals max participants | Home `home-invites-section` omits the card; header invite badge does not count it; `new-invite` is not emitted while hidden; participant row remains INVITED on the game; game is also absent from the My games list (INVITED-only) |
+| H-74 | Leave reopens home invite | From H-73, a PLAYING player leaves so a slot opens | Invite card returns on Home (socket `new-invite` re-adds it to My-tab cache, then refetch); badge increments; invited user receives an invite push |
+| H-75 | Accept while roster is full | Pending invite on a full game (e.g. via game page or stale card) → Accept | Does not join over cap; queued (`games.addedToJoinQueue`) or a game-full error; PLAYING count stays ≤ max participants |
+| H-76 | MIX_PAIRS gender-full hides invite | MIX_PAIRS game, max 4, 2 PLAYING of the invitee's gender and the other gender still open | Home/badge omit that invite; opposite-gender invite still shown; same-gender leave restores it with push |
 
 ### 6.3 My games interactions
 
@@ -308,6 +326,7 @@ Frontend/e2e/
 | H-20 | Create from calendar date | Select date → create | Pre-filled date |
 | H-36 | Selected date shows archived/finished | User with FINISHED and ARCHIVED games on a past calendar day | Select that day on My tab calendar; both FINISHED and ARCHIVED games appear under Finished section |
 | H-64 | Same-day start-time order | Day with ≥2 active My games at different times | Active games earliest-first; finished/archived after active |
+| H-81 | Pending invite not duplicated in list | User is INVITED-only on a game (not PLAYING / queue / guest) | Invite card in `home-invites-section` (when a slot is open); same game is absent from the My games list and calendar |
 
 ### 6.4 Stories
 
@@ -383,11 +402,14 @@ Frontend/e2e/
 | H-38k | Grouped booking card actions (My tab) | Connected user with adjacent same-court upcoming slots | Tap grouped card → per-slot rows animate in with link/create/cancel; only one card expanded at a time; tap again collapses |
 | H-38m | Padeloo upcoming (My tab) | User connected to Padeloo club (e.g. Avantura) with upcoming reservation | Bookings switch shows Padeloo booking card with provider label; cancel/link actions work |
 | H-38n | Klikteren upcoming (My tab) | User connected to Klikteren club (Padel Pro NS) with upcoming booking | Bookings switch shows Klikteren booking card with provider label; cancel/link actions work |
+| H-77 | Unlinked booking reminder | Connected user with an upcoming booking that is not fully covered by linked games | Below stories, above Play hero: booked-court cards with link/create/cancel already expanded on the first card; Bookings CTA hidden |
+| H-78 | Fully linked booking not in reminder | Upcoming booking whose linked game(s) fully cover the slot | Reminder section absent; compact Bookings CTA still available |
+| H-79 | Link fetch failure | Upcoming booking, linked-games request fails | Reminder does not appear; Bookings CTA still available |
 | H-58 | My tab list view | My tab → tap Calendar in panel switcher to turn it off | Calendar hidden; UpcomingGamesList sections; preference persists after reload for that user; desktop has no split view; bookings/teams/leagues panel state stays open |
 | H-58b | My calendar pref per user | User A sets calendar off → logout → User B (fresh) opens My → logout → login A | A restores off; B defaults on (no leak from A); A still off after B session |
 | H-59 | My tab games calendar view | Tap Calendar in panel switcher (first icon) when off | Calendar expands/shown; no List button in calendar header; day selection works as before; desktop uses split view without remounting main content |
 | H-59a | Calendar toggle on My | My tab with zero games, or only FINISHED/ARCHIVED | Calendar switch still available; calendar mounts only when switch is on |
-| H-64 | Calendar weather toggle | My tab calendar expanded → tap cloud/sun icon in header | Icon highlights; day cells show weather pill (icon + temp) instead of entity-type pill where forecast exists; date select/filter unchanged |
+| H-64 | Calendar weather toggle | My tab calendar expanded → tap cloud/sun icon in header | Icon highlights; day cells show a compact weather caption (small icon + muted temp) under date/type marks, not a floating high-contrast badge; date select/filter unchanged |
 | H-65 | Calendar weather toggle off | With weather mode on → tap cloud/sun again | Entity-type pills return; weather pills hidden |
 | H-66 | Calendar weather toggle disabled | User without selected city | Cloud/sun control disabled; no weather requests; entity-type pills unchanged |
 | H-67 | Calendar weather mode persists | Enable weather on My tab → reload | Weather mode still active; pills restored after fetch |
@@ -403,6 +425,7 @@ Frontend/e2e/
 | ID | Test | Steps | Expected |
 |----|------|-------|----------|
 | F-01 | Calendar view default | Open Find | Calendar + games |
+| F-81 | Find calendar day cell readability | Open Find calendar on a ~320px phone viewport with busy days | Same as H-80: date fully visible; hairline under the date only when the cell has games or weather; count and type dots sit under the date without covering it |
 | F-02 | List view | Tap List in Find calendar header | Calendar collapses; weather toggle hidden; upcoming games from today grouped by date |
 | F-03 | List → calendar | Tap Calendar in collapsed header | Calendar expands; day-filtered games |
 | F-45 | Find calendar weather toggle | Find calendar expanded → tap cloud/sun icon | Weather pills on forecast days replace entity-type pills; filters and day selection unchanged |
@@ -421,6 +444,7 @@ Frontend/e2e/
 | F-08 | Training filter | Toggle training | Training events |
 | F-09 | Tournament filter | Toggle tournaments | Tournaments only |
 | F-10 | Leagues filter | Toggle leagues | League seasons |
+| F-83 | Entity chip type dots | Open Find filters (Game / Tournament / Training / League chips) | Each chip shows a color dot matching calendar day marks: game whitish, tournament red, training green, league blue |
 | F-11 | User-created filter | Toggle user games | Filters creator |
 | F-12 | Combined filters | Multiple toggles | AND behavior correct |
 
@@ -450,13 +474,18 @@ Frontend/e2e/
 |----|------|-------|----------|
 | F-24 | Open game details | Tap card | Navigate to game |
 | F-25 | Quick join from Find | Join button on card | Joined + toast + navigate |
+| F-76 | Find overlapping join confirm | PLAYING in game A; Find join on overlapping game B (after card confirm) | Slot-overlap modal; continue joins B |
+| F-77 | Find overlapping join cancel | Same as F-76 → Cancel | Stay on Find; not in B |
+| F-78 | Find overlapping queue join | PLAYING in game A; Find join-queue on overlapping full game B | Queue confirm only (no slot-overlap modal); added to B queue; still PLAYING in A |
 | F-26 | Join queue | Full game with queue | Added to queue toast |
 | F-27 | Join blocked no name | `@P5` join attempt | Name gate modal |
 | F-28 | Trainers list section | Training filter on | Trainers carousel visible; hint “tap a trainer to filter” |
 | F-29 | Empty find results | Filters with no match | Empty state |
 | F-37 | Trainer without slots filters | Training filter → tap trainer chip body (no count badge) | “Trainings by …” banner; list empty with trainer-specific no-slots message |
 | F-38 | Trainer avatar opens profile | Training filter → tap trainer avatar (with or without slots) | Player card opens; trainer filter unchanged |
-| F-30 | Change city from header | Find header city button → `CityModal` | Tall bottom sheet opens (search hero + Near me + Map; no Cities/Clubs switch); dismiss via X / drag / outside (no Cancel footer) |
+| F-30 | Change city from header | Find header city button → `CityModal` | Tall bottom sheet opens (search hero + Near me + Map; no Cities/Clubs switch); dismiss via X / handle drag / outside (no Cancel footer) |
+| F-84 | City selector scroll stays open | Open city selector → scroll the country/city list; pan the map | Sheet stays open; scrolling/panning does not dismiss; only handle drag / X / overlay closes it |
+| F-85 | City selector keyboard sizing | Open city selector → focus search (Capacitor / mobile web software keyboard) | Sheet shrinks to sit above the keyboard; search, title, and close stay visible; results remain scrollable; dismiss keyboard restores tall sheet |
 | F-59 | Change-city no mode switch | Open change-city sheet from Find header | No Cities/Clubs toggle; browse is country → cities only |
 | F-60 | Change-city via club search | Open change-city → search club name → tap club | Commits that club’s city immediately (no Confirm); sheet closes |
 | F-61 | Change-city search hero + Suggested | Open change-city with empty search | Suggested is top of every browse list (countries and cities), then the rows; scrolls away with the list |
@@ -464,7 +493,8 @@ Frontend/e2e/
 | F-31 | Filter button active state | Apply any advanced filter | Filter button highlighted |
 | F-32 | Favorite trainer highlight | `@user with favoriteTrainerId` + training filter | Favorite trainer games emphasized on calendar |
 | F-33 | Gender-restricted game card | MEN/WOMEN/MIX game | Gender badge on card |
-| F-34 | Join blocked wrong gender | User gender incompatible | Error toast / join blocked |
+| F-34 | Join blocked wrong gender | User gender incompatible (`genderIsSet` true) | Error toast with men/women/mix copy; join blocked; not the unset prompt |
+| F-76 | Join gated gender unset | `genderIsSet` false user joins a gendered Find card | Gender sheet before join; after save the original join proceeds |
 | F-35 | Level out of range | User level outside game range | Join blocked or warning |
 | F-36 | Confirmed court badge on card | Game with `timeIsSet`, `hasBookedCourt`, club + court, no `externalBookingId` | Blue “Booked” pill (no checkmark) after time on game card |
 | F-39 | Linked booking badge on card | Game with `bookingStatus=EXTERNAL_FULL` (Find tab / available games or game details) | Green “Booked” pill with checkmark after time on game card |
@@ -476,18 +506,21 @@ Frontend/e2e/
 | F-48 | Game card photo beside players | Cards with main photo (with/without players; league-season photo-only) | Square photo sits left of the participants carousel, stretched to the full carousel row height; carousel scrolls independently to the right |
 | F-70 | Find FINAL card standing places | Find (incl. archived/finished) FINAL game with positioned outcomes | Card shows place badges (medal/number) above avatars, sorted by standing |
 | F-71 | Find standings survive incomplete socket patch | FINAL Find card with places; receive socket update that omits outcomes or sends `[]`/`null` while still FINAL | Place badges remain; order unchanged |
-| F-49 | Find load stable under socket noise | Open Find (calendar + list) while unrelated My/game room socket bumps arrive | Calendar day counts and upcoming list do not flash empty or refetch wholesale; games already on Find patch in place when that game updates |
+| F-49 | Find load stable under socket noise | Open Find (calendar + list) while unrelated My/game room socket bumps arrive; then burst-update a game present only in the month index | Calendar day counts and upcoming list do not flash empty or refetch wholesale; cached cards patch in place. Index correctness refreshes are coalesced per month key, wait for any active page/continuation walk, and produce at most one active refresh plus one queued refresh |
 | F-50 | Find filter list/calendar parity | Apply entity + slots + suitable rating (+ optional private/no-rating) toggles | Day badge counts match the filtered games shown for that day; list view applies the same filters |
 | F-51 | Find progressive enrichment | Open Find cold; wait for cards then badges/weather/notes | Cards paint before notes/weather/reactions; enrichment failure leaves list intact |
-| F-52 | Find busy-city ceiling | Busy city month with >300 public games; watch calendar/list | Month fetch is indexOnly (dayIndex badges, no month card dump); selected day loads day-scoped cards; “Load more games” when day `meta.hasMore` |
+| F-52 | Find busy-city progressive index | Busy city month with >300 public games, including a synthetic >5,000-row month; delay/fail page 2, switch months mid-load, and test a very large page chain | Month fetch is indexOnly (dayIndex badges, no month card dump). Page-1 badges paint without awaiting page 2; continuation pages de-duplicate and merge in the background. Retryable page failure keeps page 1/truncated state, retries its cursor, then performs at most one delayed cursor resume (never page 1); permanent 4xx/cursor failures do not auto-resume. Month placeholders never start continuation work. Repeated cursors, unmount/identity changes, 12 continuation pages, or 12s stop safely while still truncated; only the terminal page clears truncation. Selected day remains day-scoped |
 | F-66 | Find calendar keeps archived history | Busy city month with hundreds of ARCHIVED on early days and live games late | Early-day badges still reflect archived city games via dayIndex; selecting today/late day still lists live games via day-scoped fetch (not blank) |
 | F-67 | Find empty day settles empty | Select a day with no games (dayIndex count 0); or force day-scoped `[]` with `hasMore=false` | List shows empty for that day (month no longer supplies card fallback). If day-scoped `hasMore=true` and empty, keep day authority + Load more |
 | F-68 | Find city-TZ day bucket | Device TZ ≠ city TZ; open Find for a city day that has early-morning UTC games | Day badges and selected-day list include those games (bucketed/filtered in city TZ, same as API bounds) |
 | F-69 | Find calendar type pills from dayIndex | Busy city month: badges/pills driven by dayIndex only | Late-day cells still show entity-type pills (GAME/TRAINING/…), not badge-only empty cells |
+| F-82 | League mark only with league filter | Find calendar on a busy month with league games; league chip off, then on | Off: no league (blue) type mark on day cells; On: league marks appear on days that have leagues |
 | F-72 | Find calendar unread + my-game pills (indexOnly) | User is participant / has unread on a game; open Find calendar | Day cell still shows unread dot and participant-type pill (from dayIndex + unread store), not only when month cards were loaded |
-| F-53 | Find warm view / month + day prefetch | Open calendar, switch to list (and back); flip to prev/next month; tap adjacent day within ~30s | Inactive view + adjacent months (indexOnly) + ±1 selected days (cards) often hit warm cache |
+| F-53 | Find warm view / month + day prefetch | Open calendar, switch to list (and back); flip to prev/next month; tap adjacent day after the selected day has painted; change a filter or receive a socket refresh while the visible month is paging | ±1 selected days warm immediately after visible month/day settle. Inactive view + adjacent months wait for idle and never start while the visible list/month is fetching or the visible month index is continuing. Prefetches must not cancel or delay the selected-day card fetch |
 | F-73 | Find seed empty day from dayIndex | Month indexOnly settled; select in-range day with dayIndex count 0 | Day list settles empty via seed (no sticky false-empty for out-of-range D±1); never seeds from keepPreviousData month placeholder |
 | F-74 | Find day list not blocked by month index | Calendar visible; month index still pending or slow; select a day that day-scopes to `[]` (or settles with cards) | Day list shows empty/cards — not endless skeleton; pull-to-refresh still works while a fetch is in flight |
+| F-79 | Find day cards leave skeleton after settle | Open Find so weather + calendar occupancy paint; day `/games/available` 200s in Network | Cards (or empty/retry) replace skeletons as soon as the day page is in cache — list must not stay on skeletons while occupancy is already showing |
+| F-80 | Find adjacent-day prefetch still paints | Open Find (skeletons visible ok); tap another day in the same week, then a day after next week | Same-week days must show cards/empty (not stay on skeletons because ±1 was prefetched). Far day also paints; after that, returning to the first week still paints |
 | F-75 | Find day load error + retry | Calendar; force day-scoped `/games/available` to fail with no cached day page (offline, 5xx, or >~4s) | Within ~4s×2 (one auto-retry), empty shows load-failed + Retry (not “no games”); Retry refetches that day. Settled empty day that later fails a background refetch keeps “no games”, not error |
 | F-54 | Find structural filters server-align | Toggle club / entity / hide BAR / level band / available slots | Results match prior UX; filter changes refetch with new hash (not silent client-only discard of a fat payload) |
 | F-55 | Find selected-day detail under truncate | Busy month; pick a late-month day | Day list comes from day-scoped fetch (complete for that day / load more), not from month cards |
@@ -613,8 +646,8 @@ Frontend/e2e/
 | C-14t | Multi-court shared slot hint | Intent Book a court; 2 courts selected; no intersecting Booktime slots | Amber hint: try different courts, date, or duration |
 | C-14u | Create validation toasts | Submit without court/time/auth per intent | Inline toast + scroll to location section (not silent abort) |
 | C-14v | Edit keep current reservation | Edit game with linked bookings | Default **Keep current reservation**; read-only linked list + consequence summary; no reservation picker |
-| C-14w | Edit reservation actions | Edit integrated game | Actions: keep current, change time only, use existing, reserve new, unlink, game only — unavailable actions hidden (not greyed out); picker only for use existing |
-| C-14x | Edit unlink save | Edit → Unlink reservation → Save | Consequence warns club reservation stays active + policy; confirm before save |
+| C-14w | Edit reservation actions | Edit integrated game | With linked bookings: keep current, change time only, unlink (3 chips, no scroll) — **use existing**, **reserve new**, and **game only** hidden until links are fully removed and saved; change-club gate + lock badge; tapping locked club selects Unlink and opens club picker. Time only does not change courts. After unlink save: use existing / reserve new / game only shown (unavailable actions hidden, not greyed out); picker only for use existing |
+| C-14x | Edit unlink save | Edit → Unlink reservation → Save | Consequence warns club reservation stays active + policy; confirm before save; club picker unlocked so a new club can be chosen on the same unlink save |
 | C-14y | useExisting hidden without reservations | Integrated club; connected; selected date has no club bookings | **I already have a booking** intent not shown (not blank strip / empty-state card) |
 | C-14z | Edit multi-court shared slot hint | Edit integrated game → Reserve new; 2 courts; no intersecting slots | Amber hint: try different courts, date, or duration |
 | C-24 | Date/time | Change start + duration | End time updates |
@@ -628,9 +661,12 @@ Frontend/e2e/
 | C-29 | Price fields | Set price type/currency/total under Miscellaneous | Saved correctly |
 | C-30 | Avatar upload | Upload game image via Name & photo card (avatar left of name input) | Preview shown |
 | C-31 | Invite players | Open player list → select | Invites sent on create |
+| C-31a | Create invite picker omits busy | Date/time/club set; city user is PLAYING in an overlapping Bandeja game | Busy user absent from Search list |
 | C-32 | Participants setup tags | Configure setup | Tags on game |
 | C-33 | Multiple courts | Enable multi-court | Court count selector |
 | C-34 | Submit create | Complete valid form | Game created → details page |
+| C-34a | Create overlapping PLAYING confirm | PLAYING in game A; create game B in overlapping slot with Add me on | Slot-overlap modal; continue creates B with creator PLAYING |
+| C-34b | Create overlapping PLAYING cancel | Same as C-34a → Cancel | Modal closes; no game created; still PLAYING only in A |
 | C-35 | Validation errors | Submit incomplete | Errors shown, no create |
 | C-36 | Floating summary bar | Fill club/time/etc., scroll down past those sections | Animated chip bar appears under header summarizing scrolled-out values (sport, roster, format, club, date·time·duration·court, participants/level, name, price) |
 | C-37 | Summary chip scroll-back | Tap a chip in the summary bar | Page smooth-scrolls back to that section; chip disappears once section is visible |
@@ -643,8 +679,15 @@ Frontend/e2e/
 | C-57 | Location sub-step order | Open create game location block (with and without integrated club) | Order: Club → booking intent → Date → Court → Start time; date/court/time hidden until club selected (dashed “Select club first” hint below club picker) |
 | C-58 | Location sub-step completion ticks | Pick club, then court, then time | Each sub-step header (Club, Date, Court, Start time) flips its icon to a green check as it’s completed; Date is checked by default |
 | C-59 | Club picker states | View club picker before/after selection (create + edit location tab) | Unselected: dashed primary CTA with pin icon + “Select Club”; selected: club avatar, name, address, chevron; tap opens club modal |
+| C-59a | Club modal venue city | Open club picker | Header city chip is venue city (not profile browse); empty search lists that city |
+| C-59b | Club in another city | Search a club name in another city → pick it | Game city follows `club.cityId`; courts/bookings reset |
+| C-59c | Club city picker in-dialog | Open club picker → tap venue city chip | City list covers the same dialog (tappable); Back/Escape returns to clubs, does not close the club modal |
+| C-59d | Venue city independent of browse | Hop browse city in chat or invite, then open club picker | Club chip is venue/home, not the browse city |
+| C-59e | Club modal card visible | Create/edit → Select Club | Dim overlay and the club dialog card both appear (not overlay-only) |
 | C-60 | Location sub-step value pills | Pick date, court, time in location block (create + edit location tab) | Sub-step headers show current selection as right-aligned pill (Date: “Sat, Jul 12”; Court: name or “2/3” in multi-court; Start time: “18:00–19:30”); pill is green when the sub-step is done |
 | C-61 | Calendar picker dialog | Tap calendar tile in Date row | Calendar opens as modal dialog with title and close button; picking a date applies it and closes; X, outside tap, or hardware back dismiss without changing the date |
+| C-62 | Create game Looking | Set date/time, open invite picker, Looking tab, pick a looking player, create | Looking tab only after date/time; create sends invite with their play intent linked |
+| C-63 | No looking chrome | Wallet / team / trainer picker | No Search \| Looking switch |
 
 ### 8.4 Create league (`/create-league`)
 
@@ -660,6 +703,7 @@ Frontend/e2e/
 | C-36 | Invite as trainer only | TRAINING + player picker | Only trainers listed |
 | C-37 | Player list level filter | Filter invite list by level | Filtered players |
 | C-38 | Player availability icon | View invite list | Availability indicator on rows |
+| C-38a | Inactive players at bottom | Open invite picker; city has an inactive player (`inactive` on player: <5 rated games or no rated game in 90 days) and an active player | Inactive player is listed below active players by default (same flag as Level leaderboard); availability still ranks first |
 | C-39 | Booking overlap warning | Booked court conflict | Warning before submit |
 
 ---
@@ -724,6 +768,9 @@ Frontend/e2e/
 | ID | Test | Steps | Expected |
 |----|------|-------|----------|
 | GD-08 | Join open game | Join CTA | Participant added |
+| GD-08a | Overlapping PLAYING join confirm | PLAYING in game A; join game B whose time overlaps A | Confirm modal; confirm proceeds; both memberships kept |
+| GD-08b | Overlapping PLAYING join cancel | Same as GD-08a → Cancel | Modal closes; still not in B; A unchanged |
+| GD-08c | Add-me overlapping PLAYING confirm | Guest/queue on game B that overlaps PLAYING game A; tap Add me | Slot-overlap modal; confirm becomes PLAYING on B; cancel leaves B unchanged |
 | GD-09 | Leave game | Leave → confirm | Removed; local game chat thread purged so background sync does not keep hitting 403 |
 | GD-09a | Leave chat only | Guest/non-playing leave chat from details | Chat access removed; local game chat purged |
 | GD-10 | Decline pending invite | From participants | Invite declined |
@@ -732,16 +779,34 @@ Frontend/e2e/
 | GD-13 | Owner decline queue | Decline queued user | Removed from queue |
 | GD-14 | Cancel own queue request | Cancel queue | Removed |
 | GD-15 | Invite players | Owner opens player list → invite | Pending invites shown |
+| GD-148 | Invite modal tabs | Owner opens invite picker | Search is the default tab; Looking tab shows a live looking-count badge (including 0) |
+| GD-149 | Looking rank + gray | Looking tab with mixed fits | Full matches first; misses dimmed with a mismatch line; still selectable |
+| GD-150 | Looking invite reserves | Invite an OPEN looking player | Pending invite; their intent becomes MATCHED; they drop off Looking live |
+| GD-151 | In-a-match invite | Invite a player badged “In a match” | Invite sends; their lobby match is not stolen; toast that they’re already in a match |
+| GD-152 | Empty Looking | No live play intents in the browse city | Looking tab still visible, badge 0, “Nobody’s looking in {city}”, Search still works |
+| GD-153 | Invite browse city | Open invite picker Search/Looking | City chip shows Home city; lists are that city only |
+| GD-154 | Invite hop city | Tap city chip → pick another city | Search and Looking reload for that city; profile Home city unchanged |
+| GD-155 | Invite nearby people | Browse city has 0 name hits; nearby city has the person | Grouped Nearby section; View city sets browse city |
+| GD-156 | Invite city picker pins Home | Browse another city → open city chip | “Your city” is profile Home; picking it returns the lens to Home without `switchCity` |
+| GD-157 | Invite city picker back | Open city picker from invite → Back / Escape | Picker closes; invite modal stays open |
+| GD-158 | Invite modal card visible | Owner opens invite picker | Dim overlay and the invite dialog card both appear (not overlay-only) |
 | GD-15a | Invite search Cyrillic→Latin | Open invite list; type Cyrillic prefix of a Latin-named player (e.g. `ив` for Ivan) | Player stays in results after debounce (does not flash then vanish) |
 | GD-15b | Invite search clear | Open invite list; type 2+ chars so results update; clear the search field | List stays mounted (no full-modal spinner); default invitable list restores after debounce |
+| GD-15c | Invite picker omits busy | Open Search invite list for a timed game; city user is PLAYING in another overlapping Bandeja game | Busy user is absent from the list; INVITED-only or non-overlapping PLAYING users still appear |
+| GD-15e | Invite inactive at bottom | Open invite picker; one player is rating-inactive | Inactive player sorts below active players by default (same `inactive` flag as Level leaderboard) |
+| GD-15d | Invite search keeps focus | Open invite picker → type in Search | Caret stays in the field after each character; search field is not replaced by the list spinner |
 | GD-16 | Cancel invite | Owner cancels pending | Invite removed |
 | GD-16a | Expired invite outcome | Let a pending invite expire → open player list | Player appears under invite responses with “Invite expired”, not “Invite cancelled” |
 | GD-17 | Guest join chat only | Join as guest | Chat access without full join |
 | GD-18 | Carousel vs list participants | Toggle view mode | Layout switches |
 | GD-18a | Invite not in game chat | Owner invites player from participants list | Pending invite on participants panel; no "X invites Y" system message in game chat; other participants get no chat/push notification for the invite |
-| GD-148 | Broken player avatar on team slot | Game details participants / fixed-team slot whose avatar CDN URL 404s (tiny and/or full) | Initials (or blank initials circle) shown; no broken-image / iOS “?” glyph |
-| GD-149 | Empty participant slot unchanged | Game with an open/guest slot (no user) | Dashed User placeholder or invite plus; no “?” glyph |
-| GD-150 | Valid player avatars still load | Game details team list with working avatar URLs | Photos shown; not forced to initials |
+| GD-18b | Invitee/guest roster chat | As INVITED or GUEST, others join / decline / accept / leave | No join/decline/accept/leave system messages in game chat, chat list, push, or Telegram; normal user messages still appear |
+| GD-148 | Organizer add unset gender | Owner invites/adds a player with `genderIsSet` false to a gendered event | Player is not added; toast that they haven't set gender (not the wrong-gender copy) |
+| GD-149 | Organizer self-add gender unset | Unset organizer taps add-me / join on their own gendered event | Gender sheet; after set, add/join proceeds |
+| GD-150 | League assign unset gender | Owner assigns an unset player to a gendered league round | Player is not assigned; toast that they haven't set gender (not the wrong-gender copy) |
+| GD-152 | Broken player avatar on team slot | Game details participants / fixed-team slot whose avatar CDN URL 404s (tiny and/or full) | Initials (or blank initials circle) shown; no broken-image / iOS "?" glyph |
+| GD-153 | Empty participant slot unchanged | Game with an open/guest slot (no user) | Dashed User placeholder or invite plus; no "?" glyph |
+| GD-154 | Valid player avatars still load | Game details team list with working avatar URLs | Photos shown; not forced to initials |
 
 ### 9.3 Edit game (owner/admin)
 
@@ -759,13 +824,17 @@ Frontend/e2e/
 | GD-20f | Edit prunes incompatible courts | Multi-sport game with padel court saved → club gains sport tags → reopen edit modal | Incompatible court selections cleared when modal opens |
 | GD-20g | Edit sport mismatch rejected | API: update game `clubId` or `courtId` to sport-incompatible venue | 400 with sport mismatch message |
 | GD-20h | Edit settings tab | Edit drawer → Settings (gear) tab | Settings always expanded (no collapse chevron, no gear title icon); hints button only; toggles save in place; footer shows "saved automatically" note + Close only, no Save |
-| GD-21 | Edit with linked bookings | Game with 2 linked courts at BOOKTIME club → edit Location & time | Unified surface: reservations strip + green grid; both links pre-selected; rows show each linked court |
+| GD-21 | Edit with linked bookings | Game with 2 linked courts at BOOKTIME club → edit Location & time | Keep current: read-only linked list; **use existing** / **reserve new** / **game only** hidden; change-club gate visible; club row shows Linked lock |
 | GD-21a | Edit add booking link | Edit game with 0 links → select reservation card | Schedule syncs from selected booking; save links game |
-| GD-21b | Edit partial unlink | Game with 2 linked courts → deselect one card → Save → confirm | Pending unlink hint; only deselected link removed; other link and courts preserved |
+| GD-21b | Edit partial unlink | Game with 2 linked courts | Partial deselect is not offered while links exist; Unlink removes all links, then a later edit can re-link fewer courts |
 | GD-21c | Edit shared reservation | Reservation card shows other linked games | Informational only; user can still link this game |
-| GD-22 | Edit unlink last booking | Deselect last linked reservation card | Pending unlink hint; after save manual time grid available; amber hint that club booking stays active; save asks confirm unlink |
+| GD-22 | Edit unlink last booking | Edit → Unlink reservation | Pending unlink hint; after save manual time grid available; amber hint that club booking stays active; save asks confirm unlink |
 | GD-22a | Edit unlink save confirm | Edit modal → unlink reservation → Save | Confirm modal warns real booking is not cancelled; save unlinks only |
-| GD-22b | Edit switch linked booking | Game linked to booking A → edit location/time → pick booking B or book new court → save | Booking A unlinked from game; only B linked; game no longer shows stale "Fully booked" for A |
+| GD-22b | Edit switch linked booking | Game linked to booking A → edit location/time | Cannot pick booking B or book new while A is still linked; Unlink + save, then edit again to link B / book new; game no longer shows stale "Fully booked" for A |
+| GD-22c | Edit club locked while linked | Game with linked bookings → Keep current or Time only | Club row shows lock (still tappable); tap selects Unlink and opens club picker; Unlink CTA on gate does the same without opening picker |
+| GD-22d | Edit fewer courts after unlink | 16-player tournament previously on 4 linked courts → unlink + save → edit → select 3 courts → link or reserve | Save succeeds with 3 courts; does not demand 4; game shows Fully booked (not partial) |
+| GD-22e | Edit time only keeps courts | Game with 3 linked courts → Time only | Date/time controls shown; court grid hidden so linked courts cannot drift |
+| GD-22f | Edit unlink club change needs courts | Linked game → Unlink → pick a different club → Save without courts | Blocked: must select at least one court |
 | GD-23 | Edit price | Price tab | Price type shown as vertical radio list with icons; amount + currency row appears only for paid types; price fields updated |
 | GD-108 | Edit modal save gating | Open edit modal, change nothing, then edit name | Save disabled with no changes; after edit an "Unsaved changes" hint appears in footer and Save enables |
 | GD-109 | Edit modal discard confirm | Change any field → close via X / swipe dismiss / Cancel | "Discard changes?" confirm shown; Keep editing returns to drawer with edits intact; Discard closes without saving |
@@ -1001,6 +1070,10 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | CH-05 | Search users | Type in search | Matching users/chats |
 | CH-06 | Unread filter toggle | Bugs tab with status filter; tap unread mail icon; open thread; browser back | `?unread=1` in URL; all unread bugs shown; back restores unread filter state |
 | CH-07 | Contacts mode | Toggle contacts | City users list |
+| CH-07a | Users browse city chip | Chats → Users | City chip in the search field; absent on Bugs/Market/Channels |
+| CH-07b | Contacts follow browse | Switch browse city, open contacts | Directory is the browse city; Home city unchanged |
+| CH-07c | Users nearby search | Users search with 0 local hits and nearby matches | Nearby groups + View city hops browse |
+| CH-07d | Users city picker | Tap city chip in Users search → pick Home or another city | Selector drawer; does not `switchCity`; Home stays first in the picker |
 | CH-08 | Start new DM | Pick user → chat | `/user-chat/:id` |
 | CH-09 | Load more pagination | Scroll list end | More threads load |
 | CH-10 | Empty inbox | New user no chats | Empty state |
@@ -1041,6 +1114,7 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | ID | Test | Steps | Expected |
 |----|------|-------|----------|
 | CH-18 | Send text message | Type + send | Optimistic + confirmed |
+| CH-157 | Send then switch thread | Send in chat A, immediately open a different game/DM/group before the send confirms | Message stays only in A; chat B does not show A’s bubble among B’s history |
 | CH-95 | Mention @all | In game/group chat composer type `@` → pick `all` → send | Message shows `@all`; all other participants get mention notification |
 | CH-19 | Send emoji | Emoji picker | Emoji in message |
 | CH-20 | Reply to message | Reply action | Threaded reply |
@@ -1091,6 +1165,7 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | CH-153 | Mark-all advances peer ticks | `@two-user` A sends several messages; B marks context read (or opens near bottom) | All of A’s earlier messages in that chatType show read ticks (monotonic via max peer cursor) |
 | CH-154 | Leave game stops chat sync polls | Join game chat → leave game or leave chat from details/thread | Local game thread purged (socket leave + Dexie); no repeating 403 on `/chat/sync/events` or `/chat/messages/missed` for that game |
 | CH-155 | Non-admin skips PRIVATE/ADMINS probes | Playing participant (not owner/admin) opens game details | No `GET .../messages?chatType=PRIVATE|ADMINS` probes; participants-only chat section stays hidden |
+| CH-156 | Invitee/guest roster updates | Open game chat as INVITED or GUEST while others join, decline, accept, or leave | Thread and chat-list preview stay on normal messages only; no roster system messages, push, or Telegram for those events; a later user message still appears |
 | CH-158 | Inbound photo persist miss | `@two-user` A sends a photo while B has the thread open; leave and reopen after local persist of that image fails | Photo comes back or a durable empty placeholder stays; opening the thread clears unread on the server; no vanished bubble with a stuck badge |
 | CH-118 | Tap sticker sends via outbox | Open tray → tap a sticker in Packs | Optimistic sticker appears in thread immediately (fully transparent panel, no bubble chrome); create confirms via sync; no image upload / pending blobs |
 | CH-119 | Sticker send offline retry | Go briefly offline → send sticker from tray → come online | Outbox retries create-only (no media upload); sticker confirms when network returns |
@@ -1207,12 +1282,14 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | CH-49 | Mobile full-screen thread | `@mobile` select chat | Full screen, no split |
 | CH-50 | Desktop split persist | Select chat → resize splitter | Layout preserved |
 | CH-51 | Back from thread mobile | Back | Returns to list |
-| CH-52 | Create bug report | Bugs filter → add bug → submit | Modal closes; bug thread opens |
-| CH-52a | Failed create shows in-dialog error | Submit bug with API failure (4xx/5xx, timeout, or network) | Modal stays open; `bug-create-error` alert stays visible above submit (not clipped, not toast-only); network/timeout use translated copy; submit re-enables |
-| CH-52b | Hung platform info does not stick submit | `@mobile` Capacitor: `App.getInfo` hangs → submit | Submit does not stay disabled forever; create proceeds with unknown platform or in-dialog error + button re-enabled |
-| CH-52c | Close during in-flight create is ignored | Submit → Cancel or X before response | Modal closes; no late toast/error; reopen is idle (not stuck submitting) |
-| CH-52d | Bug description caret (Android) | `@mobile` Capacitor Android → Bugs → add bug → type in description → drag caret right; dismiss and reopen keyboard | Caret stays where dragged; keyboard open/close does not jump caret to start; typing at end still inserts at end |
-| CH-52e | Bug description caret (iOS) | `@mobile` Capacitor iOS → Bugs → add bug → drag caret, type at end, open/close keyboard | No new caret jump; typing at end still works |
+| CH-52 | Create bug report | Bugs filter → add bug | `BugModal` → bug thread created |
+| CH-52a | Create review with stars | Bugs filter → add → type Review → pick 1–5 stars → submit | Submit disabled until stars picked; thread created as Review; stars shown on list row and context panel |
+| CH-52b | Review stars vs priority | Open a Review thread and a Bug thread | Review shows star rating (not -2…+2 priority); other types show priority selector |
+| CH-52c | Failed create shows in-dialog error | Submit bug with API failure (4xx/5xx, timeout, or network) | Modal stays open; `bug-create-error` alert stays visible above submit (not clipped, not toast-only); network/timeout use translated copy; submit re-enables |
+| CH-52d | Hung platform info does not stick submit | `@mobile` Capacitor: `App.getInfo` hangs → submit | Submit does not stay disabled forever; create proceeds with unknown platform or in-dialog error + button re-enabled |
+| CH-52e | Close during in-flight create is ignored | Submit → Cancel or X before response | Modal closes; no late toast/error; reopen is idle (not stuck submitting) |
+| CH-52f | Bug description caret (Android) | `@mobile` Capacitor Android → Bugs → add bug → type in description → drag caret right; dismiss and reopen keyboard | Caret stays where dragged; keyboard open/close does not jump caret to start; typing at end still inserts at end |
+| CH-52g | Bug description caret (iOS) | `@mobile` Capacitor iOS → Bugs → add bug → drag caret, type at end, open/close keyboard | No new caret jump; typing at end still works |
 | CH-53 | Bugs filter panel | Panel closed by default; non-admin: Created by me on + all statuses; admin: Created by me off + open statuses only | List matches defaults; open panel → multi-select status chips → list updates |
 | CH-54 | Pin chat from list | Pin DM/group | Pinned ordering |
 | CH-55 | Mute chat from list | Mute thread | Mute persisted; notifications suppressed |
@@ -1334,10 +1411,14 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PR-81 | Game-open sport hint | Open `?player=` from tennis game; subject has tennis | Card opens on tennis; if subject lacks tennis → viewer primary or subject primary |
 | PR-82 | Partners ranking modes (enough data) | Player card Statistics → Partners when Rating/Games change people vs Formulae | Switch visible; each visible mode changes at least one card person; no two tabs with identical people |
 | PR-83 | Partners sparse data (one game) | Open card with 1 finished doubles game (e.g. Polina) | Ranking switch hidden; only one partner + one opponent card (no best=worst / favorite=nemesis dupes) |
-| PR-84 | Other player preferred hand | Open `/user-profile/:id` or `?player=` for a user with only left hand set | L chip selected (filled); R unset (dashed muted), not both-on |
-| PR-85 | Other player court side | Same view for a user with only left court side set | L chip selected; R unset |
-| PR-86 | Unset vs selected preference chips | Open another player with neither hand nor court side set | All four chips look unset (dashed muted), visually distinct from selected fill |
-| PR-87 | Own profile prefs save independently | Profile → General → toggle preferred hand L then R (same for court side) | Each flag saves on its own; other flag unchanged |
+| PR-84 | Public profile training attendance | Open `/user-profile/:id` for a user who attended TRAINING as PLAYING (not trainer-only, not a future RSVP) | Compact `N games · M trainings` next to that sport's level; rated gamesPlayed unchanged |
+| PR-85 | Public profile training attendance zero | Open `/user-profile/:id` with 0 TRAINING attendance, or only upcoming TRAINING RSVPs | Shows 0 trainings (quiet empty); no crash |
+| PR-86 | Own Statistics training attendance | Profile → Statistics for a user who attended TRAINING as PLAYING | Same compact games · trainings next to level as public/overlay; upcoming RSVPs excluded |
+| PR-87 | Social tab training sport | Public/overlay Levels → Social after viewing another competitive sport | `N games · M trainings` both use the subject's primary sport, not the last competitive sport |
+| PR-88 | Other player preferred hand | Open `/user-profile/:id` or `?player=` for a user with only left hand set | L chip selected (filled); R unset (dashed muted), not both-on |
+| PR-89 | Other player court side | Same view for a user with only left court side set | L chip selected; R unset |
+| PR-90 | Unset vs selected preference chips | Open another player with neither hand nor court side set | All four chips look unset (dashed muted), visually distinct from selected fill |
+| PR-91 | Own profile prefs save independently | Profile → General → toggle preferred hand L then R (same for court side) | Each flag saves on its own; other flag unchanged |
 | PR-streak-1 | Own profile play streak chip | Own profile/card after ≥1 qualifying week | Flame + N weeks; tap opens sheet with current/best/deadline |
 | PR-streak-2 | Other profile play streak | Open another user’s card with streak | Current/best visible; no at-risk styling or hours |
 | PR-streak-3 | Same week second game | Second rated finish same week window | Count unchanged; results streak banner absent |
@@ -1362,6 +1443,8 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PR-trophy-6f | Giant Killer | Win rated PADEL 2v2 vs team ≥0.5 higher avg; all 4 players reliability >10% (1 / 5 / 10 / 25 / 50) | Matching Giant Killer trophies; non-rated / low reliability / insufficient gap do not count |
 | PR-trophy-6g | Dynamic Duo | Win 10 / 50 / 100 qualifying PADEL matches with same partner | Matching Dynamic Duo trophies; progress shows best partner win count |
 | PR-trophy-6h | Open Court | Complete qualifying PADEL doubles with 10 / 25 / 50 / 100 / 250 distinct partners (ties count; wins not required) | Matching Open Court trophies |
+| PR-trophy-6j | Tie-Breaker | Win official sets on a tie-break: classic 7–6 or flagged super TB (1 / 5 / 12 / 32 / 64); any sport, FINAL results | Matching Tie-Breaker family trophies; 6–4 / Americano points do not count; step 4 (32) is current prod max |
+| PR-trophy-6k | Shipped It ladder (bug tracker) | Report bugs/suggestions (not Question); each must hit In progress or Test then Finished/Archived; tiers 1 / 5 / 10 / 25 / 50 | Matching Bug tracker family stack; progress counts shipped reports; questions and ignored (never worked) reports excluded |
 | PR-trophy-6i | Leto 2026 season medal | User who played Fix Liga Leto 2026 (participant / playoffs / 4th / bronze / silver / gold) | Exactly one exclusive Leto 2026 medal (best tier only); rarity pill shows UNIQUE (above Legendary); fuchsia frame/glow; visitors only see earned; non-participants never see locked slots |
 
 | PR-trophy-6b | Habit unlock wins milestones | Cross 10 / 25 / 50 / 100 / 500 qualifying wins | Matching win trophies grant once; 10–25 Common banner; 50–100 Rare + 500 Legendary celebration |
@@ -1403,7 +1486,7 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PR-trophy-28 | Missed Results celebration | Unlock on Results then leave tab before dismissing sheet | Soft claim released; profile/pending can show until dismiss persists |
 | PR-trophy-29 | Status-patch tournament celebration | Patch TOURNAMENT to FINAL (≥8) without outcome recalc | Podium granted; Results outcomes carry podiumUnlocks for sheet |
 | PR-trophy-30 | Nested card celebration | Own player-card sheet open when pending Rare/Legendary | Celebration nested drawer works; card does not steal dismiss |
-| PR-19 | Change city | City modal | City updated; no Cities/Clubs switch; browse country → cities |
+| PR-19 | Change city | City modal | City updated; no Cities/Clubs switch; browse country → cities; invite/chat browse lens snaps to Home; recent browse cities kept |
 | PR-20 | Phone/password change | If exposed in UI | Auth updated |
 | PR-21 | Language selector | Pick language | i18n + profile saved |
 | PR-22 | Theme selector | Light/dark/system | Theme applied |
@@ -1459,6 +1542,8 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PR-52 | Public profile guest view | `@guest` open `/user-profile/:id` | `PublicGamePrompt` / limited stats |
 | PR-53 | Share user profile | Share button | `ShareModal` with profile URL |
 | PR-54 | Display preferences | 12h/24h, date format toggles | Affects game time display app-wide |
+| PR-84 | Default currency picker | Profile → General → change default currency | Saved; reload keeps the chosen currency |
+| PR-85 | Explicit EUR kept | User in Serbia picks EUR in Profile | Stays EUR after reload; later geo does not overwrite |
 | PR-55 | Competitive vs social badge | User with both levels | Correct badge for sport context |
 | PR-56 | Bookings settings entry | Profile → Bookings | Navigates to `/profile/connected-clubs` |
 | PR-57 | Bookings page tabs | Profile → Bookings | Segmented switch Bookings/Integrations centered; Bookings default |
@@ -1496,6 +1581,11 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | LB-05 | Empty leaderboard | No ranked players | Empty state |
 | LB-06 | Current user highlight | User in list | Highlighted row |
 | LB-07 | Gender filter | Switch All / Men / Women | Rankings refetch for that gender cohort; ranks restart at 1 |
+| LB-08 | Rating qualify | Open Level ranking | Players with ≥5 rated games and a rated game in the last 90 days rank normally at the top |
+| LB-09 | Rating inactive grayed | Same list, players with <5 rated games or last rated game older than 90 days | Still listed at the bottom, muted (not washed-out opacity), rank shown as a dash (does not take qualifier numbers); a single “Not ranked” caption explains 5 games + 90-day rated match; tapping the row still opens the player card |
+| LB-10 | No duplicate activity chips | Open Level ranking | No separate min-games and 90-day filter chips; gender/sport/city filters remain |
+| LB-11 | Achievements ranking unchanged | Open Achievements subtab | Family rankings are unchanged; no rating qualify grayed-at-bottom treatment |
+| LB-12 | Social ranking unchanged | Open Social subtab | Sort/rank by social level as before; rows are not grayed for rating inactivity |
 
 ---
 
@@ -1511,6 +1601,12 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | UT-06 | Full-height mobile layout | `@mobile` | Layout fills screen |
 | UT-07 | Dead custom avatar URL | Team whose `avatar` CDN URL 404/403s | Falls back to member composite / initials (no broken-image icon) |
 | UT-08 | Replace team avatar | Owner replaces existing team photo | New image shows; prior URL may 404 without breaking display |
+| UT-09 | Create-pair explainer | Tap Create team (home or create menu) | Sheet explains pair (not a group), city invites, add-from-page or invite list; confirm creates/opens pair |
+| UT-10 | Team page explainer | Open `/user-team/:id` | Explainer visible without hunting; pending vs ready copy |
+| UT-11 | Add pair to game | Ready pair → Add to a game → pick upcoming game user can invite to | Both accepted members tagged as that user team; partner invited if not already on the game |
+| UT-12 | Add blocked while pending | Incomplete pair (partner not accepted) | Add action unavailable with reason that partner must join first |
+| UT-13 | Invite permission filter | User cannot invite to a game | That game is absent from the picker |
+| UT-14 | Fixed-pairs seating | Add ready pair to a `hasFixedTeams` game; both become PLAYING | They occupy one pair slot, not two unlinked players |
 
 ---
 
@@ -1531,13 +1627,15 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PI-01 | Want-to-play CTA | Open Find while logged in and not looking | Compact “I want to play” strip is the topmost Find content, above the hero ad; same slot as Looking |
 | PI-02 | Create intent | Tap CTA → pick Today + Anytime → Start looking | The same drawer animates from intent form to radar; idle CTA swaps to Looking status strip |
 | PI-03 | Stop looking | Tap × on status strip → Don’t want to play | Confirm overlay (Cancel / Don’t want to play) animates over strip without layout jump; confirm cancels intent; Cancel restores × |
-| PI-04 | Empty lobby | Looking with no other pool members → tap status strip | Honest empty copy; no fake avatars |
+| PI-04 | Empty lobby | Looking with no other pool members and no matching games → tap status strip | Honest empty copy; no fake avatars |
 | PI-05 | Proposal sheet | Open `/find?proposal=<id>` (or tap ready strip) → tap Not now → reopen lobby | Not now only dismisses the drawer; ready match remains and Create is still available when reopened |
 | PI-19 | Friend ring in lobby | Favorite is in intersecting pool | Avatar has golden favorite ring |
 | PI-20 | Full pool + affinity weight | Looking with mixed-compatible peers | Lobby shows all city peers; near=large+highlighted, mid=smaller, far=smallest/muted outer orbit (not hidden) |
 | PI-21 | Roster edit | Open a match-ready deep link with 5+ intersecting → remove one → tap a pool avatar | Removed returns to pool; tap adds into vacancy; court, roster, and count refresh together to full party; Create enabled |
 | PI-22 | Match roster progress UI | Open a lobby with a partial and then full selected roster | Progress bar is directly above the player carousel; selected/needed count is in the card’s top-right; title and hint change from Not enough players to Match is ready |
-| PI-23 | Direct match editor | Open a lobby with compatible free players → remove one from the roster → add one from the court → tap I’ll create the game inside the editor | Best compatible players start selected around the center court and in the editable roster; available unselected players use a yellow glow and plus only while a vacancy exists; a full roster shows no plus badges; empty slots remain visible below party size; there is no separate footer; Create Game always appears inside the editor and opens with every currently selected player invited |
+| PI-23 | Direct match editor | Open a lobby with compatible free players → remove one from the roster → add one from the court → tap I’ll create the game inside the editor | Best compatible players start selected around the center court and in the editable roster; available unselected players use a yellow glow and plus only while a vacancy exists; a full roster shows no plus badges; empty slots remain visible below party size; there is no separate footer; Create Game always appears inside the editor and opens with every currently selected player invited; matching game nodes stay visible (this is not a real proposal) |
+| PI-58 | Radar chrome | Open a looking lobby radar | Top-right shows only the shuffle/refresh button; no orbit-guide dashes, chevrons, or dots |
+| PI-59 | Tap-to-add hint | Open a match-ready lobby with an open slot and a tappable free player; repeat with an open slot but no tappable free players | Bottom-left “Tap a player to add” chip shows only when a free eligible player is on the radar |
 | PI-06 | Host handoff | Confirm as first confirmer | Navigates to create-game prefilled; invitees preselected |
 | PI-07 | Push deep link | Tap PLAY_INTENT_MATCH notification; also retry after a brief offline/network failure before the proposal loads | Opens Find with proposal sheet; transient failures keep `?proposal=` so a retry can recover the same sheet |
 | PI-08 | Game-fit deep link | Tap GAME_MATCHES_INTENT notification | Opens matching game details |
@@ -1558,7 +1656,7 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PI-28 | Intent lifecycle after game creation | User A creates a game from the match editor with users B–D selected | A’s looking state ends only after successful creation; B–D receive game invites and are reserved from other matching while their looking intents remain pending |
 | PI-29 | Intent lifecycle after invite response | From PI-28, B accepts, C declines, and D lets the invite expire | B’s looking intent ends; C’s valid intent returns to the lobby; D’s intent returns only if still valid, otherwise expires; none remain silently reserved |
 | PI-30 | No game-fit for past start times | With an open public game that already started earlier today, start looking for Today / Anytime in that city | No “A game fits your wish” notification for the past game; only games starting later than now are offered (and the owner gets no “Players are looking” ping for it) |
-| PI-40 | Sport intent ignores training/tournament | Start looking with a sport (GAME) intent while a public TRAINING or TOURNAMENT fits the same city/sport/window; also create a BAR intent near a public BAR | Sport intent only game-fits GAME events (not TRAINING/TOURNAMENT); BAR intent only game-fits BAR |
+| PI-40 | Sport intent notify ignores training/tournament | Start looking with a sport (GAME) intent while a public TRAINING or TOURNAMENT fits the same city/sport/window; also create a BAR intent near a public BAR | Push/game-fit notify only GAME (not TRAINING/TOURNAMENT); BAR notify only BAR. Radar still shows a fitting public tournament (PI-48) |
 | PI-31 | Wish expires with its playable window | Start looking for Today / Morning, then cross 12:00 city-local time; refresh Find and try a pending proposal deep link | Looking state disappears, the intent is absent/ineligible in the lobby, stale proposals cannot open or confirm, and no match/game-fit notification is sent |
 | PI-32 | Push opens friend intent prompt | Follow user A in the same city with A’s sport enabled, have A create a GAME intent, then tap the localized push (Find may stay mounted in background) | Bandeja opens on My only, shows localized loading feedback, then a single dialog with A, sport, city/clubs, days, time, and level; “I want to play too” is available; Find does not also open the dialog |
 | PI-33 | Follower notification privacy and spam controls | Block A (either direction), mute Friends looking (social), leave Want to play (match) on, follow from another city / without the sport enabled, edit A’s intent, then cancel/recreate within six hours | Blocked, socially muted, other-city, or sport-disabled followers receive nothing; match mute alone does not suppress friend alerts; edits and rapid recreation do not repeat the follower notification; BAR intents do not send play wording |
@@ -1572,6 +1670,22 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PI-42 | Custom-hours fit popup | From PI-41, tap the far-field avatar | Fit card Time row subtitle is `11:00–13:00`, not “Custom hours” |
 | PI-43 | Discuss from lobby roster | Open a lobby with me + 1 selected player and tap Discuss in group; repeat with me + 2 or more | One other player opens (or creates) the 1:1 chat; two or more opens an existing group with exactly those people or creates `Discussion for <date> · <time> · <club>` and opens it; Create Game remains available |
 | PI-44 | Discuss after a player left | In a me + 2 lobby, one selected player stops looking, then tap Discuss in group | Toast says they are no longer in the lobby; roster refreshes; chat does not open |
+| PI-45 | Spectator avatar opens player card | Tap I want to play with others looking → tap a compatible court avatar | Player card sheet opens on top of the lobby; focus leaves the court avatar so the lobby is not aria-hidden while still focused |
+| PI-46 | Direct-join game node | Look with a public direct-join GAME that fully fits | Circular composite on the inner ring, solid emerald rim, slot pips; tap opens the game card with Join |
+| PI-47 | Queue-only game node | Same as PI-46 but `allowDirectJoin` is off and a PLAYING slot is free | Dashed cooler circle, clock badge; card CTA is Ask to join |
+| PI-48 | Tournament game node | Public tournament that fully fits a sport intent | Circle + thin red rim + swords; still on the inner ring |
+| PI-49 | BAR intent games | BAR intent near a public BAR that fits | BAR node only; sport games and tournaments absent |
+| PI-50 | Ineligible games hidden | Full / level miss / gender seat taken / private / no time / already in / owner | No game node |
+| PI-51 | Join consumes looking | Join from the card into a free direct-join slot | PLAYING; looking ends; lobby closes or that game is gone |
+| PI-52 | Ask keeps looking | Ask to join a queue-only game | IN_QUEUE toast; looking remains |
+| PI-53 | Hidden modes | Spectator lobby; lobby with a pending proposal | No game nodes. Direct match editor without a proposal still shows them (PI-23) |
+| PI-54 | Last slot taken | Another client takes the last PLAYING seat | Node disappears on pool invalidate |
+| PI-55 | Public game appears live | Keep the lobby open; another client creates a fully fitting public GAME or tournament | Node appears after matching-games invalidate, including tournaments |
+| PI-56 | Direct-join toggle | Host turns off allowDirectJoin on a visible radar game | Node switches to dashed / Ask to join without a reload |
+| PI-57 | Slot reopens | A full fitting game loses a PLAYING seat | Node reappears after matching-games invalidate |
+| PI-60 | Create from lobby with MATCH template | Looking any-level with a peer outside host ±0.7 → I’ll create the game → pick Flexible scoring / MATCH → create | Game creates; level band expands to cover the lobby roster (not reset to host ±0.7, not opened to 1–7) |
+| PI-61 | Create from play-intent mismatch toast | From lobby create, switch to link a reservation (or pick a time) outside the looking window, or shrink the level band so a selected player no longer fits → tap create | Create does not succeed silently; a toast explains the mismatch (time / level / club / date) |
+| PI-62 | Play-intent create ignores leftover reservations | Looking at a bookable club that already has a reservation that day → create from lobby | Default CTA is create game (game-only), not “Link reservation”; looking time is used |
 
 ---
 
@@ -1733,6 +1847,7 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | X-44 | Chat composer above keyboard | Open game chat → focus composer | Composer sits on top of keyboard; message list stays scrolled to latest; no double gap |
 | X-45 | Centered dialog shift | Open any `ui/Dialog` with input (e.g. game note, poll) → focus input | Dialog shrinks into the visual viewport above the keyboard; title + close stay pinned; only the body scrolls |
 | X-46 | Bottom drawer keyboard | Open Vaul drawer with input (story comments, market item, edit game) → focus input | Drawer height clamps to `--overlay-pinned-max-height` (`min(--vv-height, layout − keyboard − offsetTop)` minus leftover safe-top); chrome stays on-screen; body/composer scrolls or sits above keyboard — the full-size sheet is not translated as a unit |
+| X-46a | City selector keyboard | Find/profile/browse city sheet → focus search | Tall sheet clamps above keyboard (search not covered / not zoomed off-screen); list still scrolls; other drawers unchanged |
 | X-47 | Poll creation keyboard | Game chat → attach → poll → focus question/options | Poll dialog shifts above keyboard; all fields reachable |
 | X-48 | Club admin sheets keyboard | Schedule → cancel game / block slot / edit hold → focus reason/note | Sheet pushed above keyboard; submit button visible |
 | X-49 | Full-page form input visibility | Create game → focus a bottom field (e.g. comment) | Page scrolls so focused field sits above keyboard with gap |

@@ -1,4 +1,4 @@
-import type { AchievementDefinition } from './types';
+import type { AchievementDefinition, TrophyRuleKind } from './types';
 import { isLifetimeAchievement } from './mechanics';
 
 export const GIANT_KILLER_THRESHOLDS = [1, 5, 10, 25, 50] as const;
@@ -15,7 +15,7 @@ export type PartnerHabitRuleKind =
 
 export function filterThresholdDefinitionsDue(params: {
   definitions: readonly AchievementDefinition[];
-  ruleKind: PartnerHabitRuleKind;
+  ruleKind: TrophyRuleKind;
   before: number;
   after: number;
   ownedDefinitionIds: ReadonlySet<string>;

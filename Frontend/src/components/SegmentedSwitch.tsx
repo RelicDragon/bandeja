@@ -10,6 +10,8 @@ export interface SegmentedSwitchTab {
   label: string;
   icon?: SegmentedSwitchIcon;
   badge?: number;
+  /** Show the inline badge when the count is 0. */
+  showZeroBadge?: boolean;
   ariaLabel?: string;
   disabled?: boolean;
   /** Shown when tab is disabled (native tooltip). */
@@ -32,6 +34,8 @@ interface SegmentedSwitchBaseProps {
   badgeStyle?: 'notification' | 'inline';
   /** Stretch container to full width with equal-width tabs (horizontal only). */
   fullWidth?: boolean;
+  /** `md` default. `sm` is a compact equal-height segmented control. */
+  size?: 'md' | 'sm';
 }
 
 type SegmentedSwitchProps = SegmentedSwitchBaseProps &
@@ -60,11 +64,13 @@ export const SegmentedSwitch = ({
   allowDeselect = false,
   badgeStyle = 'notification',
   fullWidth = false,
+  size = 'md',
   toggleIds,
   activeToggleIds,
   onToggle,
 }: SegmentedSwitchProps) => {
   const isVertical = orientation === 'vertical';
+  const compact = size === 'sm';
   const hasToggles = Boolean(toggleIds?.length);
   const toggleIdSet = hasToggles ? new Set(toggleIds) : null;
   const activeToggleSet = activeToggleIds?.length ? new Set(activeToggleIds) : null;
@@ -87,9 +93,9 @@ export const SegmentedSwitch = ({
     role={hasToggles ? 'group' : 'tablist'}
     aria-label={ariaLabel}
     aria-orientation={hasToggles ? undefined : isVertical ? 'vertical' : 'horizontal'}
-    className={`relative flex max-w-full items-stretch gap-1 overflow-x-auto overflow-y-visible rounded-lg bg-gray-100 p-1 dark:bg-gray-700 ${
-      isVertical ? 'w-full flex-col' : fullWidth ? 'w-full' : 'w-fit'
-    } ${className}`.trim()}
+    className={`relative flex max-w-full items-stretch overflow-x-auto overflow-y-visible bg-gray-100 dark:bg-gray-700 ${
+      compact ? 'gap-0.5 rounded-xl p-0.5' : 'gap-1 rounded-lg p-1'
+    } ${isVertical ? 'w-full flex-col' : fullWidth ? 'w-full' : 'w-fit'} ${className}`.trim()}
   >
     {tabs.map((tab) => {
       const isToggle = toggleIdSet?.has(tab.id) ?? false;
@@ -98,7 +104,7 @@ export const SegmentedSwitch = ({
         : activeId === tab.id;
       const Icon = tab.icon;
       const showLabel = Boolean(tab.label) && (!showOnlyActiveTabText || isActive);
-      const pad = showOnlyActiveTabText && !isActive ? 'px-2' : 'px-3';
+      const pad = showOnlyActiveTabText && !isActive ? 'px-2' : compact ? 'px-2.5' : 'px-3';
       return (
         <motion.button
           key={tab.id}
@@ -109,9 +115,11 @@ export const SegmentedSwitch = ({
           disabled={disabled || tab.disabled}
           title={tab.disabled ? tab.title : undefined}
           onClick={() => handleTabClick(tab.id, tab.disabled)}
-          className={`relative flex min-w-0 items-center rounded-md py-2.5 text-sm font-medium transition-colors duration-200 ${
-            isVertical ? 'w-full justify-start gap-2.5 text-left' : 'justify-center gap-1.5'
-          } ${!isVertical && fullWidth ? 'flex-1' : ''} ${pad} ${
+          className={`relative flex min-w-0 items-center font-medium transition-colors duration-200 ${
+            compact ? 'rounded-[10px] py-1.5 text-[13px] leading-4' : 'rounded-md py-2.5 text-sm'
+          } ${isVertical ? 'w-full justify-start gap-2.5 text-left' : 'justify-center gap-1.5'} ${
+            !isVertical && fullWidth ? 'flex-1' : ''
+          } ${pad} ${
             disabled || tab.disabled
               ? 'cursor-not-allowed opacity-50'
               : isActive
@@ -120,12 +128,14 @@ export const SegmentedSwitch = ({
           }`}
           whileTap={disabled || tab.disabled ? undefined : { scale: 0.95 }}
           transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-          layout
+          layout={showOnlyActiveTabText}
           aria-label={tab.ariaLabel ?? tab.label}
         >
           {isActive && (
             <motion.div
-              className="absolute inset-0 rounded-md bg-primary-500/15 dark:bg-primary-400/15 ring-1 ring-primary-500/30 dark:ring-primary-400/30"
+              className={`absolute inset-0 bg-primary-500/15 dark:bg-primary-400/15 ring-1 ring-primary-500/30 dark:ring-primary-400/30 ${
+                compact ? 'rounded-[10px]' : 'rounded-md'
+              }`}
               layoutId={isToggle ? `${layoutId}-toggle-${tab.id}` : layoutId}
               initial={false}
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
@@ -168,7 +178,7 @@ export const SegmentedSwitch = ({
             ) : (
               <span className={isVertical ? '' : 'truncate whitespace-nowrap'}>{tab.label}</span>
             )}
-            {badgeStyle === 'inline' && tab.badge != null && tab.badge > 0 ? (
+            {badgeStyle === 'inline' && tab.badge != null && (tab.badge > 0 || tab.showZeroBadge) ? (
               <span
                 className={`relative z-[1] inline-flex h-5 min-w-[1.25rem] shrink-0 items-center justify-center rounded-full px-1.5 text-[10px] font-semibold tabular-nums ${
                   isActive

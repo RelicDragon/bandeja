@@ -16,6 +16,7 @@ interface HomeActionGridProps {
   primarySport: Sport;
   /** Panel counts (leagues + bookings) from useMyTabPanelCounts. */
   panelCounts: MyTabPanelCounts;
+  hideBookingsCta?: boolean;
 }
 
 /**
@@ -34,6 +35,7 @@ export function HomeActionGrid({
   gamesUnreadCounts,
   primarySport,
   panelCounts,
+  hideBookingsCta = false,
 }: HomeActionGridProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -82,7 +84,7 @@ export function HomeActionGrid({
       )}
 
       {/* EARNED — Bookings, only when there are bookings. */}
-      {hasBookings && (
+      {hasBookings && !hideBookingsCta && (
         <AnimatedMount className="mb-3">
           <button
             type="button"

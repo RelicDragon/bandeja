@@ -6,13 +6,14 @@ describe('calendarWeatherModeStorage', () => {
     vi.unstubAllGlobals();
   });
 
-  it('defaults to false when storage is empty', () => {
+  it('defaults to true when storage is empty', () => {
     vi.stubGlobal('localStorage', {
       getItem: vi.fn(() => null),
       setItem: vi.fn(),
     });
 
-    expect(readCalendarWeatherMode('my')).toBe(false);
+    expect(readCalendarWeatherMode('my')).toBe(true);
+    expect(readCalendarWeatherMode('find')).toBe(true);
     expect(readCalendarWeatherMode('timeSlots')).toBe(true);
   });
 
@@ -43,7 +44,7 @@ describe('calendarWeatherModeStorage', () => {
 
     writeCalendarWeatherMode('my', true);
     expect(readCalendarWeatherMode('my')).toBe(true);
-    expect(readCalendarWeatherMode('find')).toBe(false);
+    expect(readCalendarWeatherMode('find')).toBe(true);
 
     writeCalendarWeatherMode('find', true);
     writeCalendarWeatherMode('my', false);

@@ -62,6 +62,7 @@ const projectedTennis = projectUserForSportContext(user, Sport.TENNIS);
 assert(projectedTennis.level === 4, 'tennis level projected');
 assert(projectedTennis.approvedLevel === false, 'tennis confirmation projected false');
 assert(projectedTennis.approvedById === null, 'tennis approvedById projected null');
+assert(projectedTennis.inactive === true, 'missing inactive on existing profile is inactive');
 assert(!('sportProfiles' in projectedTennis), 'sportProfiles stripped');
 
 const projectedBadminton = projectUserForSportContext(user, Sport.BADMINTON);
@@ -75,6 +76,25 @@ assert(
 const projectedPadel = projectUserForSportContext(user, Sport.PADEL);
 assert(projectedPadel.approvedLevel === true, 'padel confirmation projected');
 assert(projectedPadel.approvedById === 'padel-trainer', 'padel approver projected');
+assert(projectedPadel.inactive === true, 'missing inactive on 5-game profile is inactive');
+
+const storedActive = projectUserForSportContext(
+  {
+    id: 'u-active',
+    sportProfiles: [
+      {
+        sport: Sport.PADEL,
+        level: 4,
+        reliability: 50,
+        gamesPlayed: 20,
+        gamesWon: 10,
+        inactive: false,
+      },
+    ],
+  },
+  Sport.PADEL,
+);
+assert(storedActive.inactive === false, 'stored inactive false is projected');
 
 const mirrorOnly = projectUserForSportContext(
   {

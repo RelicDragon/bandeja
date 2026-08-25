@@ -8,7 +8,8 @@ import { AppStoreDownloadButtons } from '@/components/AppStoreDownloadButtons';
 import { PhoneSignInCard, LoginPanelFrame } from '@/components/auth';
 import { authApi } from '@/api';
 import { useAuthStore } from '@/store/authStore';
-import { config } from '@/config/media';
+import { openExternalUrl } from '@/utils/openExternalUrl';
+import { buildTelegramBotStartUrl } from '@/utils/telegramBotUrl';
 import { ArrowLeft, Phone, AlertCircle } from 'lucide-react';
 import { signInWithApple } from '@/services/appleAuth.service';
 import {
@@ -223,10 +224,7 @@ export const Login = () => {
   };
 
   const openTelegramLogin = () => {
-    const url = config.telegramBotUrl.includes('?')
-      ? `${config.telegramBotUrl}&start=login`
-      : `${config.telegramBotUrl}?start=login`;
-    window.open(url, '_blank');
+    void openExternalUrl(buildTelegramBotStartUrl('login'));
   };
 
   const handleTelegramClick = () => {

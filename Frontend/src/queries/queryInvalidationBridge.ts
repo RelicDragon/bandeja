@@ -3,16 +3,19 @@ import { useSocketEventsStore } from '@/store/socketEventsStore';
 import { useNetworkStore } from '@/utils/networkStatus';
 import { useAuthStore } from '@/store/authStore';
 import { clearMyTabCache } from '@/api/me';
-import type { Game } from '@/types';
+import type { Game, Invite } from '@/types';
 import { queryKeys } from './queryKeys';
 import {
   invalidateFindQueriesContainingGame,
   patchGameInGamesCaches,
 } from './games/patchGameInGamesCaches';
 import { removeInviteFromMyGamesCache } from './games/removeInviteFromMyGamesCache';
+import { upsertInviteInMyGamesCache } from './games/upsertInviteInMyGamesCache';
+import { cancelFindQueryRevalidations } from './games/findQueryRevalidation';
 
 let initialized = false;
 let unsubscribe: (() => void) | null = null;
+let activeQueryClient: QueryClient | null = null;
 
 function invalidateMyGamesOnly(queryClient: QueryClient, userId: string | undefined): void {
   if (!userId) return;
@@ -39,8 +42,10 @@ function onGameUpdate(queryClient: QueryClient, payload: {
   invalidateFindQueriesContainingGame(queryClient, payload.gameId);
 }
 
-function onNewInvite(queryClient: QueryClient): void {
-  invalidateMyGamesOnly(queryClient, useAuthStore.getState().user?.id);
+function onNewInvite(queryClient: QueryClient, invite: Invite): void {
+  const userId = useAuthStore.getState().user?.id;
+  upsertInviteInMyGamesCache(queryClient, userId, invite);
+  invalidateMyGamesOnly(queryClient, userId);
 }
 
 function onInviteDeleted(
@@ -64,6 +69,7 @@ function onInviteDeleted(
 export function setupQueryInvalidationBridge(queryClient: QueryClient): void {
   if (initialized) return;
   initialized = true;
+  activeQueryClient = queryClient;
 
   unsubscribe = useSocketEventsStore.subscribe((state, prevState) => {
     if (!useNetworkStore.getState().isOnline) return;
@@ -72,7 +78,7 @@ export function setupQueryInvalidationBridge(queryClient: QueryClient): void {
       onGameUpdate(queryClient, state.lastGameUpdate);
     }
     if (state.lastNewInvite !== prevState.lastNewInvite && state.lastNewInvite) {
-      onNewInvite(queryClient);
+      onNewInvite(queryClient, state.lastNewInvite);
     }
     if (state.lastInviteDeleted !== prevState.lastInviteDeleted && state.lastInviteDeleted) {
       onInviteDeleted(queryClient, state.lastInviteDeleted);
@@ -82,6 +88,8 @@ export function setupQueryInvalidationBridge(queryClient: QueryClient): void {
 
 export function teardownQueryInvalidationBridge(): void {
   unsubscribe?.();
+  if (activeQueryClient) cancelFindQueryRevalidations(activeQueryClient);
   unsubscribe = null;
+  activeQueryClient = null;
   initialized = false;
 }

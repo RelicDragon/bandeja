@@ -113,8 +113,7 @@ export function clearRefreshTokenCookie(res: Response, req?: Request): void {
   }
 }
 
-export function setRefreshTokenCookie(res: Response, rawToken: string, req?: Request): void {
-  clearRefreshTokenCookie(res, req);
+export function setRefreshTokenCookie(res: Response, rawToken: string): void {
   const maxAge = expiresInToMaxAgeSeconds(config.refreshTokenExpiresIn);
   res.append('Set-Cookie', buildCookiePair(rawToken, maxAge, config.refreshCookieDomain));
 }
@@ -129,7 +128,7 @@ export function issuedRefreshJsonPayload(
     return {};
   }
   if (shouldUseWebRefreshHttpOnlyCookie(req)) {
-    setRefreshTokenCookie(res, issued.refreshToken, req);
+    setRefreshTokenCookie(res, issued.refreshToken);
     if (config.refreshWebHttpOnlyJsonBody) {
       return {
         refreshToken: issued.refreshToken,

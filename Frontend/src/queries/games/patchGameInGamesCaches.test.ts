@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { QueryClient } from '@tanstack/react-query';
 import type { Game } from '@/types';
 import { queryKeys } from '../queryKeys';
@@ -24,6 +24,10 @@ describe('patchGameInGamesCaches', () => {
 
   beforeEach(() => {
     client = new QueryClient();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('patches My and Find when game id is present', () => {
@@ -58,6 +62,29 @@ describe('patchGameInGamesCaches', () => {
     expect(result.findContainedGame).toBe(false);
     expect(result.patchedFind).toBe(false);
     expect(getGamesFromAvailableCache(client.getQueryData(availKey))?.[0].id).toBe('other');
+  });
+
+  it('debounces revalidation of an index-only month containing an updated game', async () => {
+    vi.useFakeTimers();
+    const availKey = queryKeys.games.available('month-index');
+    const invalidateSpy = vi.spyOn(client, 'invalidateQueries');
+    client.setQueryData<AvailableGamesPage>(availKey, {
+      games: [],
+      meta: {
+        ...EMPTY_AVAILABLE_META,
+        dayIndex: [{ id: 'g1', startTime: '2026-08-01T10:00:00.000Z' } as never],
+      },
+    });
+
+    const result = patchGameInGamesCaches(client, game('g1', 'new'));
+
+    expect(result.findContainedGame).toBe(true);
+    expect(invalidateSpy).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(200);
+    expect(invalidateSpy).toHaveBeenCalledWith(
+      { queryKey: availKey, exact: true },
+      { cancelRefetch: false },
+    );
   });
 
   it('merges socket updates onto cached Find rows without fat detail trees', () => {
@@ -98,7 +125,15 @@ describe('patchGameInGamesCaches', () => {
 
   it('findCachesContainGameId scans available slices only', () => {
     client.setQueryData(queryKeys.games.available('h'), page([game('g1')]));
+    client.setQueryData<AvailableGamesPage>(queryKeys.games.available('index'), {
+      games: [],
+      meta: {
+        ...EMPTY_AVAILABLE_META,
+        dayIndex: [{ id: 'index-g1', startTime: '2026-08-01T10:00:00.000Z' } as never],
+      },
+    });
     expect(findCachesContainGameId(client, 'g1')).toBe(true);
+    expect(findCachesContainGameId(client, 'index-g1')).toBe(true);
     expect(findCachesContainGameId(client, 'missing')).toBe(false);
   });
 
@@ -154,5 +189,37 @@ describe('patchGameInGamesCaches', () => {
       outcomes: null,
     } as unknown as Game);
     expect(client.getQueryData<MyGamesData>(myKey)?.games[0].outcomes).toEqual(outcomes);
+  });
+
+  it('merges socket game onto cached invite.game so a full roster can hide Home', () => {
+    const myKey = queryKeys.games.my('u1');
+    client.setQueryData<MyGamesData>(myKey, {
+      games: [],
+      invites: [
+        {
+          id: 'inv-1',
+          game: {
+            id: 'g1',
+            maxParticipants: 4,
+            participants: [{ status: 'PLAYING' }, { status: 'PLAYING' }, { status: 'PLAYING' }],
+          },
+        } as never,
+      ],
+      unreadCounts: {},
+    });
+
+    patchGameInGamesCaches(client, {
+      id: 'g1',
+      maxParticipants: 4,
+      participants: [
+        { status: 'PLAYING' },
+        { status: 'PLAYING' },
+        { status: 'PLAYING' },
+        { status: 'PLAYING' },
+      ],
+    } as Game);
+
+    const inviteGame = client.getQueryData<MyGamesData>(myKey)?.invites[0].game;
+    expect(inviteGame?.participants).toHaveLength(4);
   });
 });

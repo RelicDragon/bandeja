@@ -21,6 +21,14 @@ export class UserTeamPage {
     return this.page.getByLabel(/^team name$|^name$/i).first();
   }
 
+  explainer(): Locator {
+    return this.page.getByTestId('user-team-explainer');
+  }
+
+  addToGamePending(): Locator {
+    return this.page.getByTestId('user-team-add-to-game-pending');
+  }
+
   ownerAvatar(): Locator {
     return this.page.locator('[class*="PlayerAvatar"], img.rounded-full').first();
   }

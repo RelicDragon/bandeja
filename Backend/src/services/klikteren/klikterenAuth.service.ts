@@ -3,7 +3,7 @@ import prisma from '../../config/database';
 import { BOOKING_ERROR_KEYS } from '@bandeja/shared/booking/errorKeys';
 import { ApiError } from '../../utils/ApiError';
 import { assertKlikterenIntegrationConfig } from '../../shared/clubIntegration';
-import { decryptToken, encryptToken } from '../../utils/tokenEncryption';
+import { encryptToken, tryDecryptToken } from '../../utils/tokenEncryption';
 
 export type KlikterenAuthStatus = {
   connected: boolean;
@@ -124,9 +124,16 @@ export async function getKlikterenSessionTokens(
     },
   });
   if (!row) return null;
+  const accessToken = tryDecryptToken(row.accessToken);
+  if (!accessToken) return null;
+  let refreshToken: string | null = null;
+  if (row.refreshToken) {
+    refreshToken = tryDecryptToken(row.refreshToken);
+    if (!refreshToken) return null;
+  }
   return {
-    accessToken: decryptToken(row.accessToken),
-    refreshToken: row.refreshToken ? decryptToken(row.refreshToken) : null,
+    accessToken,
+    refreshToken,
     externalUserId: row.externalUserId,
   };
 }

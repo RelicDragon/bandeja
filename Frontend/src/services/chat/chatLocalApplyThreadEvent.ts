@@ -20,6 +20,7 @@ import { pullAndApplyChatSyncEventsDirect } from './chatLocalApplyPull';
 import { scheduleReconcileWhenSocketSeqMissing } from './chatLocalApplySyncTimers';
 import { onSocketSyncSeqDirect, persistSocketPatchThenSyncSeqDirect } from './chatLocalApplySocketInbound';
 import { rowFromMessage } from '@/services/chat/chatSyncRowUtils';
+import { shouldDropInviteOnlyRosterSystemMessage } from './dropInviteOnlyRosterSystemMessage';
 
 const revisionByContext = new Map<string, number>();
 const revisionListenersByContext = new Map<string, Set<() => void>>();
@@ -172,6 +173,12 @@ async function finishApply(
 async function applyThreadEventUnqueued(event: ThreadApplyEvent): Promise<number> {
   switch (event.kind) {
     case 'socketMessage': {
+      if (shouldDropInviteOnlyRosterSystemMessage(event.message)) {
+        if (event.syncSeq != null) {
+          await onSocketSyncSeqDirect(event.contextType, event.contextId, event.syncSeq);
+        }
+        return getThreadSnapshotRevision(event.contextType, event.contextId);
+      }
       await persistLocalMessageDurable(
         event.syncSeq != null ? { ...event.message, syncSeq: event.syncSeq } : event.message
       );
@@ -221,9 +228,10 @@ async function applyThreadEventUnqueued(event: ThreadApplyEvent): Promise<number
       return getThreadSnapshotRevision(event.contextType, event.contextId);
     }
     case 'httpMessages': {
-      if (event.messages.length === 0) return 0;
-      const first = event.messages[0]!;
-      await persistChatMessagesFromApiDirect(event.messages);
+      const messages = event.messages.filter((message) => !shouldDropInviteOnlyRosterSystemMessage(message));
+      if (messages.length === 0) return 0;
+      const first = messages[0]!;
+      await persistChatMessagesFromApiDirect(messages);
       await syncLastMessageIdsToStoreFromLocalHeadsForContext(first.chatContextType, first.contextId);
       return finishApply(first.chatContextType, first.contextId);
     }

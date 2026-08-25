@@ -405,6 +405,7 @@ export function PlayIntentProvider({
           clusterProgress={pool?.clusterProgress ?? 1}
           intent={pool?.myIntent}
           proposal={proposal}
+          matchingGames={pool?.matchingGames ?? []}
           onChanged={handleLobbyChanged}
         />
       )}

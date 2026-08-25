@@ -11,8 +11,11 @@ import { MarketItemDrawer } from '@/components/marketplace';
 import { CityUserCard } from './CityUserCard';
 import { ChatListDisplayedRows } from './ChatListDisplayedRows';
 import { ChatListMarketGroupChannels } from './ChatListMarketGroupChannels';
-import { ChatListLoadingSkeleton } from '@/components/chat/ChatListLoadingSkeleton';
+import { ChatListSkeletonRows } from '@/components/chat/ChatListLoadingSkeleton';
+import { ChatListMotionProvider } from '@/components/chat/ChatListMotionProvider';
 import { ChatListEmptyPanel } from '@/components/chat/ChatListEmptyPanel';
+import { NearbyPeopleSection } from '@/components/browseCity/NearbyPeopleSection';
+import { useBrowseCityStore } from '@/store/browseCityStore';
 import { ChatListSearchSections, type ChatListSearchSectionsSharedProps } from './ChatListSearchSections';
 import type { ChatListViewModel } from './chatListViewModel.types';
 import { DESKTOP_CHAT_LIST_SCROLL_BOTTOM_PAD } from '@/utils/chatListConstants';
@@ -22,7 +25,7 @@ export type { ChatListViewModel };
 export function ChatListView({ model }: { model: ChatListViewModel }) {
   const { t, isDesktop, user, feed, pullRefresh, search, market, contacts, sections, actions, modals, selection } =
     model;
-  const { loading, chatsFilter, displayedChats, showChatsEmpty, pinnedCountUsers, loadMoreSentinelRef, listBodyScrollRef, bugsHasMore, usersHasMore, channelsHasMore, marketHasMore, bugsLoadingMore, usersLoadingMore, channelsLoadingMore, marketLoadingMore } = feed;
+  const { loading, chatsFilter, displayedChats, showChatsEmpty, pinnedCountUsers, loadMoreSentinelRef, listBodyScrollRef, networkSettled, bugsHasMore, usersHasMore, channelsHasMore, marketHasMore, bugsLoadingMore, usersLoadingMore, channelsLoadingMore, marketLoadingMore } = feed;
   const { isRefreshing, pullDistance, pullProgress } = pullRefresh;
   const {
     searchInput,
@@ -38,6 +41,9 @@ export function ChatListView({ model }: { model: ChatListViewModel }) {
     toggleUnreadFilter,
     skipUrlSyncRef,
     setSearchParams,
+    nearbyGroups,
+    browseCityName,
+    nearbyLoading,
   } = search;
   const {
     marketChatRole,
@@ -79,16 +85,11 @@ export function ChatListView({ model }: { model: ChatListViewModel }) {
   const { showBugModal, setShowBugModal, handleBugCreated, bugsFilterPanelOpen, setBugsFilterPanelOpen } = modals;
   const { selectedChatId, selectedChatType } = selection;
 
-  if (loading) {
-    return (
-      <ChatListLoadingSkeleton
-        isDesktop={isDesktop}
-        isRefreshing={isRefreshing}
-        pullDistance={pullDistance}
-        pullProgress={pullProgress}
-      />
-    );
-  }
+  const showListSkeleton =
+    loading &&
+    !isSearchMode &&
+    !(contactsMode && cityUsersLoading) &&
+    displayedChats.length === 0;
 
   const chatListSearchSectionProps: ChatListSearchSectionsSharedProps = {
     scrollElementRef: listBodyScrollRef,
@@ -117,6 +118,7 @@ export function ChatListView({ model }: { model: ChatListViewModel }) {
   };
 
   return (
+    <ChatListMotionProvider listLoading={loading} networkSettled={networkSettled}>
     <>
       {!isDesktop && (
         <RefreshIndicator
@@ -126,7 +128,7 @@ export function ChatListView({ model }: { model: ChatListViewModel }) {
         />
       )}
       <div
-        className={isDesktop ? 'flex h-full min-h-0 flex-col overflow-hidden bg-white dark:bg-gray-900' : ''}
+        className={`flex h-full min-h-0 flex-col overflow-hidden ${isDesktop ? 'bg-white dark:bg-gray-900' : ''}`}
         style={{
           transform: isDesktop ? 'none' : `translateY(${pullDistance}px)`,
           transition: pullDistance > 0 && !isRefreshing ? 'none' : `transform ${CHAT_LIST_PULL_TRANSITION_S}s ease-out`,
@@ -137,6 +139,7 @@ export function ChatListView({ model }: { model: ChatListViewModel }) {
             chatsFilter={chatsFilter}
             contactsMode={contactsMode}
             searchInput={searchInput}
+            disabled={showListSkeleton}
             unreadChatsCount={unreadChatsCount}
             unreadFilterActive={unreadFilterActive}
             onUnreadFilterToggle={toggleUnreadFilter}
@@ -163,13 +166,13 @@ export function ChatListView({ model }: { model: ChatListViewModel }) {
             onAddBug={() => setShowBugModal(true)}
             onCreateListing={chatsFilter === 'market' ? handleCreateListing : undefined}
             isDesktop={isDesktop}
-            hasCity={!!user?.currentCity?.id}
+            hasCity={Boolean(browseCityName)}
             bugsFilterPanelOpen={bugsFilterPanelOpen}
             onBugsFilterToggle={() => setBugsFilterPanelOpen((o) => !o)}
           />
         )}
         <AnimatePresence>
-          {chatsFilter === 'bugs' && bugsFilterPanelOpen && (
+          {chatsFilter === 'bugs' && bugsFilterPanelOpen && !showListSkeleton && (
             <motion.div
               key="bugs-filter"
               initial={{ height: 0, opacity: 0 }}
@@ -183,7 +186,10 @@ export function ChatListView({ model }: { model: ChatListViewModel }) {
           )}
         </AnimatePresence>
         {chatsFilter === 'market' && (
-          <div className="flex items-center justify-center mt-2 mb-2">
+          <div
+            className={`flex items-center justify-center mt-2 mb-2 ${showListSkeleton ? 'pointer-events-none opacity-60' : ''}`}
+            aria-busy={showListSkeleton}
+          >
             <SegmentedSwitch
               tabs={[
                 { id: 'buyer', label: t('marketplace.imBuyer', { defaultValue: "I'm buyer" }), icon: ShoppingCart, badge: marketBuyerSellerUnread.buyer },
@@ -194,6 +200,7 @@ export function ChatListView({ model }: { model: ChatListViewModel }) {
               showOnlyActiveTabText={false}
               layoutId="marketRoleSubtab"
               className="mx-2"
+              disabled={showListSkeleton}
             />
           </div>
         )}
@@ -204,10 +211,13 @@ export function ChatListView({ model }: { model: ChatListViewModel }) {
             opacity: listTransition === 'out' ? 0 : 1,
             transform: listTransition === 'out' ? 'scale(0.98)' : 'scale(1)',
             transition: `opacity ${CHAT_LIST_FADE_TRANSITION_S}s ease-out, transform ${CHAT_LIST_FADE_TRANSITION_S}s ease-out`,
+            scrollbarGutter: 'stable',
             ...(isDesktop ? { paddingBottom: DESKTOP_CHAT_LIST_SCROLL_BOTTOM_PAD } : {}),
           }}
         >
-          {!isSearchMode && contactsMode && cityUsersLoading ? (
+          {showListSkeleton ? (
+            <ChatListSkeletonRows />
+          ) : !isSearchMode && contactsMode && cityUsersLoading ? (
             <div className="p-4 flex justify-center">
               <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
             </div>
@@ -265,6 +275,22 @@ export function ChatListView({ model }: { model: ChatListViewModel }) {
                     ) : (
                       <ChatListSearchSections order="active-first" {...chatListSearchSectionProps} />
                     )}
+                    {chatsFilter === 'users' &&
+                    !contactsMode &&
+                    debouncedSearchQuery.trim().length >= 2 &&
+                    displayChats.every((row) => row.type !== 'contact') &&
+                    (!nearbyLoading || nearbyGroups.length > 0) ? (
+                      <NearbyPeopleSection
+                        query={debouncedSearchQuery.trim()}
+                        primaryCityName={browseCityName}
+                        groups={nearbyGroups}
+                        variant="chat"
+                        onSelectUser={handleContactClick}
+                        onViewCity={(id, snapshot) => {
+                          useBrowseCityStore.getState().setCityId(id, snapshot, user?.currentCity?.id);
+                        }}
+                      />
+                    ) : null}
                     <ChatMessageSearchResults
                       scrollElementRef={listBodyScrollRef}
                       query={debouncedSearchQuery}
@@ -293,7 +319,8 @@ export function ChatListView({ model }: { model: ChatListViewModel }) {
                 chatsFilter={chatsFilter}
                 showContactsEmpty={showContactsEmpty}
                 showChatsEmpty={showChatsEmpty}
-                userHasCity={!!user?.currentCity}
+                userHasCity={Boolean(browseCityName)}
+                cityName={browseCityName}
                 debouncedSearchQuery={debouncedSearchQuery}
                 marketChatRole={marketChatRole}
                 t={t}
@@ -347,7 +374,8 @@ export function ChatListView({ model }: { model: ChatListViewModel }) {
               chatsFilter={chatsFilter}
               showContactsEmpty={showContactsEmpty}
               showChatsEmpty={showChatsEmpty}
-              userHasCity={!!user?.currentCity}
+              userHasCity={Boolean(browseCityName)}
+              cityName={browseCityName}
               debouncedSearchQuery={debouncedSearchQuery}
               marketChatRole={marketChatRole}
               t={t}
@@ -442,5 +470,6 @@ export function ChatListView({ model }: { model: ChatListViewModel }) {
         />
       )}
     </>
+    </ChatListMotionProvider>
   );
 }

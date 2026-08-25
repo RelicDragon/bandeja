@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { Loader2, Check, Plus, ImagePlus, X } from 'lucide-react';
+import { Loader2, Check, Plus, ImagePlus, X, CalendarPlus } from 'lucide-react';
 import {
   type AvatarUploadHandle,
   Button,
@@ -21,6 +21,9 @@ import type { UserTeam } from '@/types';
 import { toastApiError } from '@/utils/toastApiError';
 import { runWithProfileName } from '@/utils/runWithProfileName';
 import { getUserPrimarySport, resolveActivePrimarySport } from '@/utils/profileSports';
+import { isUserTeamReady } from '@/components/playerInvite/inviteEntries';
+import { UserTeamExplainer } from '@/components/userTeam/UserTeamExplainer';
+import { AddUserTeamToGameSheet } from '@/components/userTeam/AddUserTeamToGameSheet';
 
 export function UserTeamPage() {
   const { id } = useParams<{ id: string }>();
@@ -38,6 +41,7 @@ export function UserTeamPage() {
   const [editName, setEditName] = useState('');
   const [editVerbalStatus, setEditVerbalStatus] = useState('');
   const [showInvite, setShowInvite] = useState(false);
+  const [showAddToGame, setShowAddToGame] = useState(false);
   const [showDeleteTeam, setShowDeleteTeam] = useState(false);
   const [memberActionModal, setMemberActionModal] = useState<{
     userId: string;
@@ -312,6 +316,12 @@ export function UserTeamPage() {
     const cutAngleDisplay = cutAngleLive ?? team.cutAngle ?? 45;
     const teamForAvatar = { ...team, cutAngle: cutAngleDisplay };
     const showCutDial = isOwner && !team.avatar && !!secondUser;
+    const teamReady = isUserTeamReady(team);
+    const canAddToGame = Boolean(myMembership && myMembership.status === 'ACCEPTED');
+    const partnerName = [teammateAccepted?.user?.firstName, teammateAccepted?.user?.lastName]
+      .filter(Boolean)
+      .join(' ')
+      .trim();
 
     body = (
       <div className="mx-auto max-w-2xl space-y-3 pb-2">
@@ -471,6 +481,42 @@ export function UserTeamPage() {
           </div>
         </div>
 
+        <UserTeamExplainer pending={!teamReady} />
+
+        {canAddToGame ? (
+          teamReady ? (
+            <button
+              type="button"
+              data-testid="user-team-add-to-game"
+              onClick={() => runWithProfileName(() => setShowAddToGame(true))}
+              disabled={busy}
+              className="flex w-full items-center gap-3 rounded-2xl border border-primary-200/80 bg-primary-50/80 px-3.5 py-3 text-left shadow-sm transition-[transform,background-color,border-color] hover:border-primary-300 hover:bg-primary-50 active:scale-[0.99] disabled:opacity-50 dark:border-primary-800/50 dark:bg-primary-950/30 dark:hover:border-primary-700/60"
+            >
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-600 text-white shadow-md shadow-primary-600/25">
+                <CalendarPlus size={20} strokeWidth={2} aria-hidden />
+              </span>
+              <span className="min-w-0">
+                <span className="block text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
+                  {t('teams.addToGame')}
+                </span>
+                <span className="mt-0.5 block text-xs leading-snug text-zinc-500 dark:text-zinc-400">
+                  {t('teams.addToGameCta')}
+                </span>
+              </span>
+            </button>
+          ) : (
+            <div
+              data-testid="user-team-add-to-game-pending"
+              className="flex w-full items-center gap-3 rounded-2xl border border-dashed border-zinc-300/90 bg-white/60 px-3.5 py-3 dark:border-zinc-600 dark:bg-zinc-900/30"
+            >
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-zinc-200 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
+                <CalendarPlus size={20} strokeWidth={2} aria-hidden />
+              </span>
+              <p className="min-w-0 text-sm leading-snug text-zinc-600 dark:text-zinc-400">{t('teams.addToGamePending')}</p>
+            </div>
+          )
+        ) : null}
+
         {isOwner ? (
           <>
             <div className="relative">
@@ -580,6 +626,13 @@ export function UserTeamPage() {
             }}
           />
         )}
+
+        <AddUserTeamToGameSheet
+          open={showAddToGame}
+          onOpenChange={setShowAddToGame}
+          teamId={team.id}
+          partnerName={partnerName || null}
+        />
 
         <ConfirmationModal
           isOpen={showDeleteTeam}

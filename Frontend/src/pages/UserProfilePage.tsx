@@ -20,6 +20,7 @@ import { SportLevelProvider } from '@/contexts/SportLevelContext';
 import { parseLevelSportQuery } from '@/utils/levelSportQuery';
 import { usePlayerProfile } from '@/features/playerProfile';
 import { resolveActivePrimarySport } from '@/utils/profileSports';
+import { openExternalUrl } from '@/utils/openExternalUrl';
 import type { Sport } from '@shared/sport';
 
 export const UserProfilePage = () => {
@@ -250,7 +251,7 @@ export const UserProfilePage = () => {
                       return null;
                     };
                     const telegramUrl = getTelegramUrl();
-                    if (telegramUrl && !isBlocked) window.open(telegramUrl, '_blank');
+                    if (telegramUrl && !isBlocked) void openExternalUrl(telegramUrl);
                   }}
                   onOpenGame={() => {}}
                   onMarketItemClick={user

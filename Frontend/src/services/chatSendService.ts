@@ -18,7 +18,10 @@ import {
   loadOutboxVideoPosterBlob,
   loadOutboxVoiceBlob,
 } from '@/services/chat/chatOutboxMediaBlobs';
-import { SEND_VIDEO_UPLOAD_PHASE_MS } from '@/constants/chatVideo';
+import {
+  OUTBOX_READY_WAIT_VIDEO_MS,
+  SEND_VIDEO_UPLOAD_PHASE_MS,
+} from '@/constants/chatVideo';
 import { logChatOutboxBlobMismatch } from '@/services/chat/chatDiagnostics';
 import { waitForOutboxReady } from '@/services/chat/chatOutboxEnqueue';
 import {
@@ -200,7 +203,9 @@ export function sendWithTimeout(
 
   void (async () => {
     try {
-      const outboxReady = await waitForOutboxReady(tempId, OUTBOX_READY_WAIT_MS);
+      const outboxReadyMs =
+        payload.messageType === 'VIDEO' ? OUTBOX_READY_WAIT_VIDEO_MS : OUTBOX_READY_WAIT_MS;
+      const outboxReady = await waitForOutboxReady(tempId, outboxReadyMs);
       throwIfAborted(signal);
       if (await finishIfSendGenerationStale(tempId, generation, contextType, contextId, onFailed)) return;
       if (!outboxReady) {

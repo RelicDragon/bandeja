@@ -1,4 +1,7 @@
-import { computeBookingSelectionLimits } from './computeBookingSelectionLimits';
+import {
+  computeBookingSelectionLimits,
+  computeEditBookingSelectionLimits,
+} from './computeBookingSelectionLimits';
 import { deriveGameTimeFromBookings } from './deriveGameTimeFromBookings';
 
 export type LinkedBookingCoverageInput = {
@@ -11,6 +14,7 @@ export type GameBookingCoverageInput = {
   endTime: string;
   maxParticipants: number;
   playersPerMatch?: number;
+  courtCount?: number;
 };
 
 export type LinkedBookingCoverageResult = {
@@ -30,10 +34,14 @@ export function evaluateLinkedBookingCoverage(
   options?: EvaluateLinkedBookingCoverageOptions,
 ): LinkedBookingCoverageResult {
   const playersPerMatch = game.playersPerMatch === 2 ? 2 : 4;
-  const { min: requiredBookingCount } = computeBookingSelectionLimits(
-    game.maxParticipants,
-    playersPerMatch,
-  );
+  const requiredBookingCount =
+    game.courtCount != null && game.courtCount > 0
+      ? computeEditBookingSelectionLimits(
+          game.maxParticipants,
+          playersPerMatch,
+          game.courtCount,
+        ).min
+      : computeBookingSelectionLimits(game.maxParticipants, playersPerMatch).min;
 
   const courtCountMet = linkedBookings.length >= requiredBookingCount;
 

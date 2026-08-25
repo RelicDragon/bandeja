@@ -18,17 +18,19 @@ export type RetryChatOutboxOptions = {
 };
 
 export async function enqueueSend(queued: QueuedMessageEnqueue): Promise<void> {
-  let entry = queued;
-  if (queued.pendingImageBlobs?.length) {
-    const pendingImageBlobs = await compressChatOutboxImageBlobs(queued.pendingImageBlobs);
-    entry = { ...queued, pendingImageBlobs };
-  }
-  if (queued.pendingVideoPosterBlob) {
-    const pendingVideoPosterBlob = await compressChatOutboxImageBlob(queued.pendingVideoPosterBlob);
-    entry = { ...entry, pendingVideoPosterBlob };
-  }
-  const ready = messageQueueStorage.add(entry);
-  registerOutboxEnqueue(entry.tempId, ready);
+  const ready = (async () => {
+    let entry = queued;
+    if (queued.pendingImageBlobs?.length) {
+      const pendingImageBlobs = await compressChatOutboxImageBlobs(queued.pendingImageBlobs);
+      entry = { ...queued, pendingImageBlobs };
+    }
+    if (queued.pendingVideoPosterBlob) {
+      const pendingVideoPosterBlob = await compressChatOutboxImageBlob(queued.pendingVideoPosterBlob);
+      entry = { ...entry, pendingVideoPosterBlob };
+    }
+    await messageQueueStorage.add(entry);
+  })();
+  registerOutboxEnqueue(queued.tempId, ready);
   await ready;
 }
 

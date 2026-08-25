@@ -15,6 +15,7 @@ describe('availableGamesPage', () => {
       nextCursor: 'abc',
       truncated: true,
       dayIndexTruncated: true,
+      dayIndexNextCursor: 'index-cursor',
       dayIndex: [
         {
           id: 'g1',
@@ -38,6 +39,7 @@ describe('availableGamesPage', () => {
     expect(meta.nextCursor).toBe('abc');
     expect(meta.dayIndex).toHaveLength(1);
     expect(meta.dayIndexTruncated).toBe(true);
+    expect(meta.dayIndexNextCursor).toBe('index-cursor');
   });
 
   it('merges pages without duplicates or wiping prior rows', () => {

@@ -13,6 +13,7 @@ import { SystemMessageType } from '../../utils/systemMessages';
 import notificationService from '../notification.service';
 import { formatDateInTimezone, getDateLabelInTimezone, getUserTimezoneFromCityId } from '../user-timezone.service';
 import { notifyGameBookingStatusChangeIfNeeded } from './notifyGameBookingStatusChange';
+import { publishMatchingGamesChanged } from '../playIntent/playIntentRealtime';
 import { BarResultsService } from '../barResults.service';
 import { ImageProcessor } from '../../utils/imageProcessor';
 import { validateGameForSport } from '../../utils/validators/validateGameForSport';
@@ -45,6 +46,7 @@ import {
 } from '../achievements/podiumGrant.service';
 import { grantOrganizeAchievementsForFinalizedGame } from '../achievements/organizeGrant.service';
 import { grantPartnerAchievementsForFinalizedGame } from '../achievements/partnerGrant.service';
+import { grantTieBreakAchievementsForFinalizedGame } from '../achievements/tieBreakGrant.service';
 import { invalidateAchievementStatsForGame } from '../achievements/achievementStats.service';
 import { normalizeGameRatingFields } from './normalizeGameRatingFields';
 
@@ -779,10 +781,12 @@ export class GameUpdateService {
         ) {
           await grantOrganizeAchievementsForFinalizedGame({ gameId: id, tx });
           await grantPartnerAchievementsForFinalizedGame({ gameId: id, tx });
+          await grantTieBreakAchievementsForFinalizedGame({ gameId: id, tx });
         }
         if (currentGame?.entityType === EntityType.LEAGUE && currentGame.parentId) {
           await syncParentSeasonPodiumIfFinal({ gameId: id, tx });
           await grantPartnerAchievementsForFinalizedGame({ gameId: id, tx });
+          await grantTieBreakAchievementsForFinalizedGame({ gameId: id, tx });
         }
       }
     });
@@ -939,6 +943,7 @@ export class GameUpdateService {
           return null;
         })
       : null;
+    publishMatchingGamesChanged(updatedGame);
     return withLegacyGoldenPointField({
       ...updatedGame,
       weatherSummary,

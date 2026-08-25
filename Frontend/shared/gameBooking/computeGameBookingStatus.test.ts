@@ -49,4 +49,19 @@ describe('computeGameBookingStatus', () => {
       }),
     ).toBe('NONE');
   });
+
+  it('returns EXTERNAL_FULL when linked bookings match the game court count', () => {
+    expect(
+      computeGameBookingStatus({
+        ...gameWindow,
+        maxParticipants: 16,
+        courtCount: 3,
+        linkedBookings: [
+          { bookingStart: gameWindow.startTime, bookingEnd: gameWindow.endTime },
+          { bookingStart: gameWindow.startTime, bookingEnd: gameWindow.endTime },
+          { bookingStart: gameWindow.startTime, bookingEnd: gameWindow.endTime },
+        ],
+      }),
+    ).toBe('EXTERNAL_FULL');
+  });
 });

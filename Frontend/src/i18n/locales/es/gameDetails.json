@@ -52,6 +52,11 @@
       "unlinkSaveConfirmMessage": "Vas a desvincular {{count}} reserva(s) de este partido. Las reservas reales de pista no se cancelarán automáticamente.",
       "reservationActionTitle": "¿Qué debe pasar con la pista?",
       "reservationActionSubtitle": "Elige qué cambia al guardar.",
+      "changeGateTitle": "Vinculado a {{count}} pista(s)",
+      "changeGateBody": "Desvincula primero para reservar en otro club o pistas.",
+      "changeGateBodyClub": "Desvincula primero para dejar {{club}} y reservar en otro sitio.",
+      "clubLockedBadge": "Vinculado",
+      "clubLockedAria": "El club está bloqueado. Desvincula la reserva para cambiar de club.",
       "reservationAction": {
         "keepCurrent": {
           "title": "Mantener reserva actual",
@@ -76,7 +81,7 @@
         "unlink": {
           "title": "Desvincular reserva",
           "chipTitle": "Desvincular",
-          "description": "Quita los vínculos de reserva solo de este partido."
+          "description": "Quita el vínculo solo de este partido. La reserva del club se mantiene. Tras guardar podrás reservar otro club o pistas."
         },
         "gameOnly": {
           "title": "Solo partido",
@@ -90,7 +95,7 @@
         "changeGameTimeOnly": "Cambia el horario del partido; los vínculos de reserva se mantienen.",
         "useExisting": "Se vincularán {{selected}} reserva(s) a este partido.",
         "reserveNew": "Se creará una nueva reserva real de pista al guardar.",
-        "unlink": "Se quitarán los vínculos de reserva de este partido.",
+        "unlink": "Se quitarán los vínculos de reserva de este partido. Tras guardar podrás reservar otro club o pistas.",
         "gameOnly": "El partido queda programado sin vínculos de reserva real.",
         "reserveNewConfirm": "Revisarás la reserva real antes de guardar.",
         "unlinkNoCancel": "{{count}} reserva(s) real(es) del club seguirán activas salvo que las canceles con el club/proveedor."

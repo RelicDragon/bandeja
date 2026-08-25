@@ -1,0 +1,21 @@
+{
+  "browseCity": {
+    "chipAriaHome": "Ваш город, {{city}}. Смотреть другой.",
+    "chipAriaAway": "Сейчас {{city}}. Сменить город.",
+    "chipAriaVenueHome": "Город игры {{city}}. Выбрать другой.",
+    "chipAriaVenueAway": "Клубы в городе {{city}}. Сменить город.",
+    "changeCity": "Город",
+    "recent": "Недавние",
+    "nearby": "Рядом",
+    "viewCity": "Открыть {{city}}",
+    "nobodyInCity": "В городе {{city}} никого по запросу «{{query}}»",
+    "nobodyNearby": "Рядом никого по запросу «{{query}}». Выберите другой город.",
+    "noUsersInCity": "В городе {{city}} нет игроков",
+    "noUsersInCityHint": "Смените город или найдите по имени",
+    "lookingEmptyInCity": "В городе {{city}} сейчас никто не ищет игру",
+    "noClubsInCity": "В городе {{city}} нет клубов",
+    "noClubsMatch": "Нет клубов по запросу «{{query}}»",
+    "searchClubs": "Искать клубы",
+    "km": "{{km}} км"
+  }
+}

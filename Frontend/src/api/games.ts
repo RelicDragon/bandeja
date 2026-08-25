@@ -5,6 +5,7 @@ import type { LinkBookingToGameBody } from '@shared/gameBooking/contracts';
 import type { ReactionEmojiUsageMutationPayload } from '@/store/reactionEmojiUsageStore';
 import { normalizeGameResultsArtifacts } from '@/utils/gameResultsArtifacts.util';
 import { getGameMainPhotoId } from '@/utils/gameMainPhoto';
+import { overlapConfirmBody } from '@/utils/gameSlotOverlapConfirm';
 
 export function normalizeGameFromApi(game: Game): Game {
   const artifacts = normalizeGameResultsArtifacts(game.resultsArtifacts);
@@ -129,10 +130,11 @@ export const gamesApi = {
     enrich?: boolean;
     /** Calendar month: dayIndex only (no card rows). */
     indexOnly?: boolean;
-  }, options?: { timeoutMs?: number }) => {
+  }, options?: { timeoutMs?: number; signal?: AbortSignal }) => {
     const response = await api.get<ApiResponse<Game[]>>('/games/available', {
       params,
       ...(options?.timeoutMs != null ? { timeout: options.timeoutMs } : {}),
+      ...(options?.signal ? { signal: options.signal } : {}),
     });
     return response.data;
   },
@@ -155,7 +157,7 @@ export const gamesApi = {
     return mapApiGameResponse(response.data);
   },
 
-  create: async (data: Partial<Game>) => {
+  create: async (data: Partial<Game> & { confirmOverlap?: boolean }) => {
     const response = await api.post<ApiResponse<Game>>('/games', data);
     return response.data;
   },
@@ -187,8 +189,11 @@ export const gamesApi = {
     return response.data;
   },
 
-  join: async (id: string) => {
-    const response = await api.post<ApiResponse<Game>>(`/games/${id}/join`);
+  join: async (id: string, confirmOverlap = false) => {
+    const response = await api.post<ApiResponse<Game>>(
+      `/games/${id}/join`,
+      overlapConfirmBody(confirmOverlap),
+    );
     return response.data;
   },
 
@@ -202,8 +207,11 @@ export const gamesApi = {
     return response.data;
   },
 
-  togglePlayingStatus: async (id: string, status: 'PLAYING' | 'IN_QUEUE') => {
-    const response = await api.put<ApiResponse<Game>>(`/games/${id}/toggle-playing-status`, { status });
+  togglePlayingStatus: async (id: string, status: 'PLAYING' | 'IN_QUEUE', confirmOverlap = false) => {
+    const response = await api.put<ApiResponse<Game>>(`/games/${id}/toggle-playing-status`, {
+      status,
+      ...overlapConfirmBody(confirmOverlap),
+    });
     return response.data;
   },
 

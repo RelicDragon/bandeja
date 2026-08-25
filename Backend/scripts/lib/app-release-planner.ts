@@ -75,6 +75,7 @@ export function createReleaseSession(headRef = 'HEAD'): ReleaseSession {
     store: {},
     uploads: {},
     iosAppStoreConnect: {},
+    reviewGuard: {},
     autoCommit: undefined,
   };
 }

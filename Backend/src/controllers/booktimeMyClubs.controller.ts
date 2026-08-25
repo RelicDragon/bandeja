@@ -24,3 +24,17 @@ export const getLinkedGames = asyncHandler(async (req: AuthRequest, res: Respons
   const games = await booktimeGameLinkService.findLinkedGamesForBooking(externalBookingId.trim());
   res.json({ success: true, data: games });
 });
+
+const LINKED_GAMES_BATCH_MAX = 50;
+
+export const getLinkedGamesBatch = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const rawIds = req.body?.externalBookingIds;
+  if (!Array.isArray(rawIds) || rawIds.some((id) => typeof id !== 'string')) {
+    throw new ApiError(400, 'externalBookingIds must be an array of strings');
+  }
+  if (rawIds.length > LINKED_GAMES_BATCH_MAX) {
+    throw new ApiError(400, `externalBookingIds cannot exceed ${LINKED_GAMES_BATCH_MAX}`);
+  }
+  const data = await booktimeGameLinkService.findLinkedGamesForBookings(rawIds);
+  res.json({ success: true, data });
+});

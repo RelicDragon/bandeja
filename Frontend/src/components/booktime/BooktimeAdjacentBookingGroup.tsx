@@ -2,6 +2,7 @@ import { ChevronDown } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { type Variants } from 'framer-motion';
+import type { BooktimeLinkedGame } from '@/api/booktime';
 import type { BookingListClubRow } from '@/hooks/connectedBookingClubs';
 import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
 import { useBooktimeLinkedGamesByBookingIds } from '@/hooks/useBooktimeLinkedGamesByBookingIds';
@@ -40,6 +41,8 @@ type Props = {
   onToggleActions?: () => void;
   entryVariants?: Variants;
   nested?: boolean;
+  linkedGamesByBookingId?: ReadonlyMap<string, BooktimeLinkedGame[]>;
+  onLinkedGamesReload?: () => void;
 };
 
 export function BooktimeAdjacentBookingGroup({
@@ -60,6 +63,8 @@ export function BooktimeAdjacentBookingGroup({
   onToggleActions,
   entryVariants,
   nested = false,
+  linkedGamesByBookingId: linkedGamesOverride,
+  onLinkedGamesReload,
 }: Props) {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
@@ -67,8 +72,11 @@ export function BooktimeAdjacentBookingGroup({
   const [expanded, setExpanded] = useState(false);
   const bookingIds = useMemo(() => bookings.map((booking) => booking.uuid), [bookings]);
   const selectedIdSet = useMemo(() => new Set(selectedBookingIds), [selectedBookingIds]);
-  const { linkedGamesByBookingId, loading: linkedGamesLoading, reload: reloadLinkedGames } =
-    useBooktimeLinkedGamesByBookingIds(bookingIds);
+  const { linkedGamesByBookingId: fetchedLinkedGames, loading: fetchedLoading, reload: reloadFetched } =
+    useBooktimeLinkedGamesByBookingIds(bookingIds, linkedGamesOverride === undefined);
+  const linkedGamesByBookingId = linkedGamesOverride ?? fetchedLinkedGames;
+  const linkedGamesLoading = linkedGamesOverride === undefined ? fetchedLoading : false;
+  const reloadLinkedGames = onLinkedGamesReload ?? (() => void reloadFetched());
   const courtInfo = resolveCourtForBooking(bookings[0]!, club, t('club.booktime.unknownCourt'));
   const currency = useBooktimeClubCurrency(club);
   const priceById = useMemo(

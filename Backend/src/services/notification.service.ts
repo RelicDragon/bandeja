@@ -11,6 +11,10 @@ import { PreferenceKey } from '../types/notifications.types';
 import pushNotificationService from './push/push-notification.service';
 import { ChatMuteService } from './chat/chatMute.service';
 import { canParticipantSeeGameChatMessage, shouldNotifyParentGameAdminForMessage } from './chat/gameChatVisibility';
+import {
+  isInviteOnlyChatViewerStatus,
+  isRosterLifecycleSystemMessageContent,
+} from './chat/gameChatRosterVisibility';
 import { createInvitePushNotification } from './push/notifications/invite-push.notification';
 import { createGameChatPushNotification } from './push/notifications/game-chat-push.notification';
 import { createUserChatPushNotification } from './push/notifications/user-chat-push.notification';
@@ -518,6 +522,12 @@ class NotificationService {
     for (const participant of participants) {
       const user = participant.user;
       if (participant.status === 'INVITED') continue;
+      if (
+        isInviteOnlyChatViewerStatus(participant.status) &&
+        isRosterLifecycleSystemMessageContent(message.content)
+      ) {
+        continue;
+      }
       // Skip the user whose own action triggered this system message (e.g. a user
       // accepting their own invite should not be notified that they joined the game).
       if (excludeUserId && user.id === excludeUserId) continue;

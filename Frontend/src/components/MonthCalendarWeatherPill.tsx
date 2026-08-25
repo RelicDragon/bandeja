@@ -9,6 +9,8 @@ interface MonthCalendarWeatherPillProps {
   locale: string;
   muted?: boolean;
   selected?: boolean;
+  placement?: 'hang' | 'inset' | 'flow';
+  size?: 'sm' | 'md';
 }
 
 function areMonthCalendarWeatherPillPropsEqual(
@@ -18,6 +20,8 @@ function areMonthCalendarWeatherPillPropsEqual(
   return previous.locale === next.locale
     && previous.muted === next.muted
     && previous.selected === next.selected
+    && previous.placement === next.placement
+    && previous.size === next.size
     && previous.weather.point.time === next.weather.point.time
     && previous.weather.point.temperatureC === next.weather.point.temperatureC
     && previous.weather.point.conditionKey === next.weather.point.conditionKey
@@ -30,26 +34,48 @@ export const MonthCalendarWeatherPill = memo(function MonthCalendarWeatherPill({
   locale,
   muted = false,
   selected = false,
+  placement = 'hang',
+  size = 'sm',
 }: MonthCalendarWeatherPillProps) {
   const { t } = useTranslation();
   const { point, stale } = weather;
   const tempLabel = formatWeatherTemperature(point, { locale, compact: true });
   const temperatureColor = getWeatherTemperatureColor(point);
   const conditionLabel = getWeatherConditionLabel(t, point.conditionKey);
+  const isMd = size === 'md';
+  const isFlow = placement === 'flow';
+
+  const positionClass = isFlow
+    ? 'relative'
+    : placement === 'inset'
+      ? 'absolute bottom-1 left-1/2 -translate-x-1/2'
+      : 'absolute -bottom-1.5 left-1/2 -translate-x-1/2';
+
+  const chromeClass = isFlow
+    ? 'border-0 bg-transparent shadow-none'
+    : muted
+      ? 'rounded-full border bg-gray-400/80 shadow-md dark:bg-gray-600/80 border-gray-500/50 dark:border-gray-500/50'
+      : selected
+        ? 'rounded-full border bg-white/95 shadow-md border-primary-200 dark:border-primary-700'
+        : 'rounded-full border bg-sky-50 shadow-md dark:bg-sky-950/80 border-sky-200/70 dark:border-sky-700/70';
+
+  const tempClass = isFlow
+    ? `text-[8px] font-medium tabular-nums leading-none ${
+        muted
+          ? 'text-gray-400 dark:text-gray-500'
+          : selected
+            ? 'text-white/75'
+            : 'text-gray-500 dark:text-gray-400'
+      }`
+    : `${isMd ? 'text-[10px]' : 'text-[9px]'} font-semibold tabular-nums leading-none`;
 
   return (
     <span
       className={`
-        absolute -bottom-1.5 left-1/2 -translate-x-1/2
-        inline-flex items-center justify-center
-        gap-0.5 px-1 py-0.5 rounded-full w-fit
-        border shadow-md pointer-events-none
-        ${muted
-          ? 'bg-gray-400/80 dark:bg-gray-600/80 border-gray-500/50 dark:border-gray-500/50'
-          : selected
-          ? 'bg-white/95 border-primary-200 dark:border-primary-700'
-          : 'bg-sky-50 dark:bg-sky-950/80 border-sky-200/70 dark:border-sky-700/70'
-        }
+        inline-flex items-center justify-center w-fit pointer-events-none
+        ${positionClass}
+        ${isFlow ? 'gap-px px-0 py-0' : isMd ? 'gap-0.5 px-1.5 py-0.5' : 'gap-0.5 px-1 py-0.5'}
+        ${chromeClass}
       `}
       aria-hidden
       title={`${formatWeatherTemperature(point, { locale })} ${conditionLabel}`.trim()}
@@ -57,12 +83,13 @@ export const MonthCalendarWeatherPill = memo(function MonthCalendarWeatherPill({
       <WeatherIcon
         conditionKey={point.conditionKey}
         isDay={point.isDay}
-        size={10}
-        className="shrink-0"
+        size={isFlow ? 9 : isMd ? 13 : 10}
+        className={`shrink-0 ${isFlow ? 'opacity-70' : ''}`}
       />
       <span
-        className="text-[9px] font-semibold tabular-nums leading-none"
-        style={{ color: muted ? undefined : temperatureColor.textColor }}
+        data-calendar-weather-temperature
+        className={tempClass}
+        style={isFlow || muted ? undefined : { color: temperatureColor.textColor }}
       >
         {tempLabel}
       </span>

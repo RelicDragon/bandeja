@@ -1,6 +1,8 @@
 import type { BugsFilterState } from '@/components/GameDetails/gameDetailsChromeStore';
 import type { BugStatus } from '@/types';
 
+export { ALL_BUG_TYPES } from '@/components/bugs/reviewStars';
+
 export const ALL_BUG_STATUSES: BugStatus[] = [
   'CREATED',
   'CONFIRMED',

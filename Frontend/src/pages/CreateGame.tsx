@@ -9,6 +9,8 @@ import { CreateGameCourtSection } from '@/components/createGame/CreateGameCourtS
 import { CreateGameDateSection } from '@/components/createGame/CreateGameDateSection';
 import { useAuthStore } from '@/store/authStore';
 import { runWithProfileName } from '@/utils/runWithProfileName';
+import { overlapConfirmBody, runWithOverlapConfirm } from '@/utils/gameSlotOverlapConfirm';
+import { runWithGenderForEvent } from '@/utils/genderJoinGate';
 import { usePlayersStore } from '@/store/playersStore';
 import { useShellNavStore } from '@/store/shellNavStore';
 import { clubsApi, courtsApi, gamesApi, invitesApi } from '@/api';
@@ -92,6 +94,8 @@ import {
   selectPlayIntentCreateSource,
 } from '@/utils/selectPlayIntentCreateSource';
 import { resolveCreateGameRatingFields } from '@/utils/createGameRatingFields';
+import { toastCreateGameFailure } from '@/utils/createGameFailureToast';
+import { resolvePlayIntentCreateLevelRange } from '@/utils/createGamePlayIntentLevelRange';
 
 interface CreateGameProps {
   entityType: EntityType;
@@ -102,6 +106,7 @@ interface CreateGameProps {
   initialInvitedPlayerIds?: string[];
   matchProposalId?: string;
   playIntentSource?: PlayIntentCreateSource;
+  playIntentRosterLevels?: number[];
   onMatchProposalConverted?: () => void;
 }
 
@@ -124,6 +129,7 @@ export const CreateGame = ({
   initialInvitedPlayerIds = [],
   matchProposalId,
   playIntentSource,
+  playIntentRosterLevels,
   onMatchProposalConverted,
 }: CreateGameProps) => {
   const { t } = useTranslation();
@@ -138,6 +144,9 @@ export const CreateGame = ({
   });
 
   const [clubs, setClubs] = useState<Club[]>([]);
+  const [locationCityId, setLocationCityId] = useState(
+    () => initialGameData?.city?.id || initialGameData?.club?.cityId || user?.currentCity?.id || '',
+  );
   const [courts, setCourts] = useState<Court[]>([]);
   const [allClubCourts, setAllClubCourts] = useState<Court[]>([]);
   const [selectedClub, setSelectedClub] = useState<string>(() => initialGameData?.clubId || '');
@@ -152,10 +161,13 @@ export const CreateGame = ({
     const sport: Sport =
       initialGameData?.sport ?? (resolveCreateGameDefaultSport(user));
     const level = user ? getDisplayLevelForSport(user, sport) : undefined;
-    return [
-      initialGameData?.minLevel ?? getDefaultLevelRange(level)[0],
-      initialGameData?.maxLevel ?? getDefaultLevelRange(level)[1],
-    ];
+    return resolvePlayIntentCreateLevelRange({
+      fromPlayIntent: Boolean(playIntentSource),
+      initialMin: initialGameData?.minLevel,
+      initialMax: initialGameData?.maxLevel,
+      hostDefault: getDefaultLevelRange(level),
+      rosterLevels: playIntentRosterLevels,
+    });
   });
   const [selectedSport, setSelectedSport] = useState<Sport>(() => {
     if (initialGameData?.sport) return initialGameData.sport;
@@ -251,6 +263,10 @@ export const CreateGame = ({
 
   const applyIntentDefaults = useCallback(
     (intent: CreateFlowIntent) => {
+      if (playIntentSource) {
+        setIsRatingGame(intent !== 'social');
+        return;
+      }
       if (intent === 'social') {
         setIsRatingGame(false);
         setPlayerLevelRange(SOCIAL_LEVEL_BAND);
@@ -265,7 +281,7 @@ export const CreateGame = ({
       }
       setIsRatingGame(true);
     },
-    [user, selectedSport],
+    [playIntentSource, user, selectedSport],
   );
 
   const [isFormatWizardOpen, setIsFormatWizardOpen] = useState(false);
@@ -326,6 +342,7 @@ export const CreateGame = ({
   const [isInvitePlayersModalOpen, setIsInvitePlayersModalOpen] = useState(false);
   const [invitedPlayerIds, setInvitedPlayerIds] = useState<string[]>(() => initialInvitedPlayerIds);
   const [inviteUserTeamByReceiverId, setInviteUserTeamByReceiverId] = useState<Record<string, string>>({});
+  const [invitePlayIntentByReceiverId, setInvitePlayIntentByReceiverId] = useState<Record<string, string>>({});
   const [invitedPlayers, setInvitedPlayers] = useState<BasicUser[]>([]);
   const [creatorNonPlaying, setCreatorNonPlaying] = useState<boolean>(false);
 
@@ -345,6 +362,24 @@ export const CreateGame = ({
       cancelled = true;
     };
   }, [initialInvitedPlayerIds, selectedSport]);
+
+  useEffect(() => {
+    if (!playIntentSource) return;
+    const extra = invitedPlayers.map((player) => player.level);
+    if (playIntentRosterLevels?.length) extra.push(...playIntentRosterLevels);
+    if (extra.length === 0) return;
+    setPlayerLevelRange((prev) => {
+      const next = resolvePlayIntentCreateLevelRange({
+        fromPlayIntent: true,
+        initialMin: prev[0],
+        initialMax: prev[1],
+        hostDefault: prev,
+        rosterLevels: extra,
+      });
+      if (next[0] === prev[0] && next[1] === prev[1]) return prev;
+      return next;
+    });
+  }, [playIntentSource, playIntentRosterLevels, invitedPlayers]);
   
   const {
     selectedDate,
@@ -438,6 +473,7 @@ export const CreateGame = ({
     initialBookingIds,
     storedInitialDate,
     hasInitialStartTime: Boolean(initialGameData?.startTime),
+    fromPlayIntent: Boolean(playIntentSource),
     createDateFromSelection,
     baseTimeOptions: {
       generateTimeOptions,
@@ -708,17 +744,50 @@ export const CreateGame = ({
     [],
   );
   useEffect(() => {
-    const fetchClubs = async () => {
-      if (!user?.currentCity) return;
-      try {
-        const response = await clubsApi.getByCityId(user.currentCity.id, entityType);
-        setClubs(response.data);
-      } catch (error) {
+    if (locationCityId) return;
+    const home = user?.currentCity?.id;
+    if (home) setLocationCityId(home);
+  }, [locationCityId, user?.currentCity?.id]);
+
+  const applyVenueCity = useCallback((id: string) => {
+    if (!id || id === locationCityId) return;
+    setLocationCityId(id);
+    setSelectedClub('');
+    setSelectedCourtIds([]);
+  }, [locationCityId, setSelectedCourtIds]);
+
+  const handleSelectClub = useCallback((id: string, club?: Club) => {
+    const picked = club ?? clubs.find((c) => c.id === id);
+    if (picked && !clubs.some((c) => c.id === picked.id)) {
+      setClubs((prev) => [...prev, picked]);
+    }
+    if (picked?.cityId) setLocationCityId(picked.cityId);
+    setSelectedClub(id);
+    setSelectedCourtIds([]);
+    resetOnClubChange();
+  }, [clubs, resetOnClubChange, setSelectedCourtIds]);
+
+  useEffect(() => {
+    if (!locationCityId) return;
+    let cancelled = false;
+    void clubsApi
+      .getByCityId(locationCityId, entityType)
+      .then((response) => {
+        if (cancelled) return;
+        setClubs((prev) => {
+          const next = response.data ?? [];
+          const keep = prev.find((c) => c.id === selectedClub);
+          if (keep && !next.some((c) => c.id === keep.id)) return [keep, ...next];
+          return next;
+        });
+      })
+      .catch((error) => {
         console.error('Failed to fetch clubs:', error);
-      }
+      });
+    return () => {
+      cancelled = true;
     };
-    fetchClubs();
-  }, [user?.currentCity, entityType]);
+  }, [entityType, locationCityId, selectedClub]);
 
   const initialCourtId = initialGameData?.courtId;
   const initialHasBookedCourt = initialGameData?.hasBookedCourt ?? false;
@@ -809,6 +878,10 @@ export const CreateGame = ({
 
 
   useEffect(() => {
+    if (playIntentSource) {
+      prevCreateSportRef.current = selectedSport;
+      return;
+    }
     if (initialGameData?.minLevel !== undefined || initialGameData?.maxLevel !== undefined) {
       prevCreateSportRef.current = selectedSport;
       return;
@@ -819,7 +892,13 @@ export const CreateGame = ({
     prevCreateSportRef.current = sport;
     levelBandWarnedRef.current = null;
     setPlayerLevelRange(getDefaultLevelRange(getDisplayLevelForSport(user, sport)));
-  }, [initialGameData?.maxLevel, initialGameData?.minLevel, selectedSport, user]);
+  }, [
+    playIntentSource,
+    initialGameData?.maxLevel,
+    initialGameData?.minLevel,
+    selectedSport,
+    user,
+  ]);
 
   useEffect(() => {
     if (!user || entityType === 'BAR' || entityType === 'TRAINING') return;
@@ -1269,7 +1348,6 @@ export const CreateGame = ({
       runWithProfileName(() => void handleCreateGame());
       return;
     }
-
     if (!selectedClub) {
       scrollToAndHighlightError(locationTimeSectionRef);
       return;
@@ -1298,6 +1376,9 @@ export const CreateGame = ({
       scrollToReservationValidationIssue(validation.reason);
       return;
     }
+
+    const creatorJoining = Boolean(user.id && participants.includes(user.id));
+    if (creatorJoining && !runWithGenderForEvent({ genderTeams, entityType }, () => void handleCreateGame())) return;
 
     await handleCreateAttempt(
       async (overrides) => {
@@ -1328,6 +1409,7 @@ export const CreateGame = ({
       const gameData: Record<string, unknown> = {
         sport: selectedSport,
         entityType: entityType,
+        cityId: selectedClubData?.cityId || locationCityId || undefined,
         clubId: selectedClub || undefined,
         courtId: bookingFields.courtId,
         courtIds: bookingFields.courtIds,
@@ -1407,7 +1489,22 @@ export const CreateGame = ({
         gameData.playIntentSource = selectedPlayIntentSource;
       }
 
-      const gameResponse = await gamesApi.create(gameData);
+      const gameResponse = await runWithOverlapConfirm(
+        (confirmOverlap) =>
+          gamesApi.create({
+            ...(gameData as Partial<Game>),
+            ...overlapConfirmBody(confirmOverlap),
+          }),
+        {
+          beforeAsk: () => {
+            if (showCreateOverlay) setCreateOverlayPhase(null);
+          },
+          beforeRetry: () => {
+            if (showCreateOverlay) setCreateOverlayPhase('creating');
+          },
+        },
+      );
+      if (!gameResponse) return;
 
       if ((bookingFields.externalBookingIds?.length ?? 0) > 0) {
         invalidateBooktimeAllUpcomingCache();
@@ -1424,14 +1521,18 @@ export const CreateGame = ({
       if (invitedPlayerIds.length > 0 && gameResponse.data.id) {
         try {
           const gid = gameResponse.data.id;
+          let unlinkedLooking = false;
           for (const receiverId of invitedPlayerIds) {
             if (linkedInviteeIds.has(receiverId)) continue;
-            await invitesApi.send({
+            const sent = await invitesApi.send({
               receiverId,
               gameId: gid,
               userTeamId: inviteUserTeamByReceiverId[receiverId],
+              playIntentId: invitePlayIntentByReceiverId[receiverId],
             });
+            if (sent.intentLinked === false) unlinkedLooking = true;
           }
+          if (unlinkedLooking) toast(t('playerInvite.alreadyInMatch'));
         } catch (inviteError) {
           console.error('Failed to send invites:', inviteError);
         }
@@ -1470,6 +1571,9 @@ export const CreateGame = ({
     } catch (error) {
       console.error('Failed to create game:', error);
       if (showCreateOverlay) setCreateOverlayPhase(null);
+      if (!options?.skipNavigate) {
+        toastCreateGameFailure(t, error);
+      }
       if (options?.skipNavigate) throw error;
     } finally {
       setLoading(false);
@@ -1523,6 +1627,11 @@ export const CreateGame = ({
   const handleRemoveInvitedPlayer = (playerId: string) => {
     setInvitedPlayerIds(invitedPlayerIds.filter(id => id !== playerId));
     setInviteUserTeamByReceiverId((prev) => {
+      const next = { ...prev };
+      delete next[playerId];
+      return next;
+    });
+    setInvitePlayIntentByReceiverId((prev) => {
       const next = { ...prev };
       delete next[playerId];
       return next;
@@ -1800,13 +1909,13 @@ export const CreateGame = ({
                       selectedClub={selectedClub}
                       selectedCourt={selectedCourt}
                       isClubModalOpen={isClubModalOpen}
-                      onSelectClub={(id: string) => {
-                        setSelectedClub(id);
-                        setSelectedCourtIds([]);
-                        resetOnClubChange();
-                      }}
+                      onSelectClub={handleSelectClub}
                       onOpenClubModal={() => setIsClubModalOpen(true)}
                       onCloseClubModal={() => setIsClubModalOpen(false)}
+                      venueCityId={locationCityId}
+                      onVenueCityChange={applyVenueCity}
+                      entityType={entityType}
+                      preferredSport={selectedSport}
                     />
                   }
                   courtSection={courtSection}
@@ -1873,12 +1982,11 @@ export const CreateGame = ({
                   courts={courts}
                   preferredSport={selectedSport}
                   isClubModalOpen={isClubModalOpen}
-                  onSelectClub={(id: string) => {
-                    setSelectedClub(id);
-                    setSelectedCourtIds([]);
-                  }}
+                  onSelectClub={handleSelectClub}
                   onOpenClubModal={() => setIsClubModalOpen(true)}
                   onCloseClubModal={() => setIsClubModalOpen(false)}
+                  venueCityId={locationCityId}
+                  onVenueCityChange={applyVenueCity}
                   selectedDate={selectedDate}
                   selectedTime={selectedTime}
                   duration={duration}
@@ -2039,10 +2147,28 @@ export const CreateGame = ({
             onClose={() => setIsInvitePlayersModalOpen(false)}
             multiSelect={true}
             gameSport={selectedSport}
+            genderTeams={genderTeams}
+            entityType={entityType}
             gameTiming={inviteGameTiming}
+            lookingDraft={
+              inviteGameTiming
+                ? {
+                    sport: selectedSport,
+                    entityType,
+                    clubId: selectedClub || null,
+                    startTime: inviteGameTiming.startTime,
+                    endTime: inviteGameTiming.endTime,
+                    timeZone: inviteGameTiming.timeZone,
+                    minLevel: playerLevelRange[0],
+                    maxLevel: playerLevelRange[1],
+                    genderTeams,
+                  }
+                : null
+            }
             onConfirm={async (playerIds, meta) => {
               setInvitedPlayerIds(playerIds);
               setInviteUserTeamByReceiverId(meta?.userTeamIdByReceiverId ?? {});
+              setInvitePlayIntentByReceiverId(meta?.playIntentIdByReceiverId ?? {});
               try {
                 const { fetchPlayers, users } = usePlayersStore.getState();
                 await fetchPlayers(undefined, selectedSport);

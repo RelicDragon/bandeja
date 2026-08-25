@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { QueryClient } from '@tanstack/react-query';
 vi.mock('@/services/socketService', () => ({
   socketService: { on: vi.fn(), off: vi.fn() },
@@ -42,6 +42,10 @@ describe('queryInvalidationBridge', () => {
       lastNewInvite: null,
       lastInviteDeleted: null,
     });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('does not blanket-invalidate all games queries on game update', () => {
@@ -92,6 +96,48 @@ describe('queryInvalidationBridge', () => {
     expect(invalidateSpy).not.toHaveBeenCalledWith({ queryKey: ['games'] });
   });
 
+  it('revalidates only an index-only month containing an updated game', async () => {
+    vi.useFakeTimers();
+    const client = createTestClient();
+    const invalidateSpy = vi.spyOn(client, 'invalidateQueries');
+    const hitKey = queryKeys.games.available('month-hit');
+    const missKey = queryKeys.games.available('month-miss');
+    client.setQueryData<AvailableGamesPage>(hitKey, {
+      games: [],
+      meta: {
+        ...EMPTY_AVAILABLE_META,
+        dayIndex: [{ id: 'g-1', startTime: '2026-08-01T10:00:00.000Z' } as never],
+      },
+    });
+    client.setQueryData<AvailableGamesPage>(missKey, {
+      games: [],
+      meta: {
+        ...EMPTY_AVAILABLE_META,
+        dayIndex: [{ id: 'other', startTime: '2026-08-01T11:00:00.000Z' } as never],
+      },
+    });
+
+    setupQueryInvalidationBridge(client);
+    useSocketEventsStore.setState({
+      lastGameUpdate: {
+        gameId: 'g-1',
+        senderId: 'user-2',
+        game: { id: 'g-1', name: 'fresh' } as Game,
+      },
+    });
+
+    await vi.advanceTimersByTimeAsync(200);
+    expect(invalidateSpy).toHaveBeenCalledWith(
+      { queryKey: hitKey, exact: true },
+      { cancelRefetch: false },
+    );
+    expect(invalidateSpy).not.toHaveBeenCalledWith(
+      { queryKey: missKey, exact: true },
+      expect.anything(),
+    );
+    expect(invalidateSpy).not.toHaveBeenCalledWith({ queryKey: ['games'] });
+  });
+
   it('skips invalidation when offline', () => {
     const client = createTestClient();
     const invalidateSpy = vi.spyOn(client, 'invalidateQueries');
@@ -126,23 +172,32 @@ describe('queryInvalidationBridge', () => {
     expect(client.getQueryData(availKey)).toEqual(cached);
   });
 
-  it('new invite only scopes to My games', () => {
+  it('new invite upserts into My games cache then invalidates My only', () => {
     const client = createTestClient();
     const invalidateSpy = vi.spyOn(client, 'invalidateQueries');
+    client.setQueryData<MyGamesData>(queryKeys.games.my('u1'), {
+      games: [],
+      invites: [],
+      unreadCounts: {},
+    });
 
     setupQueryInvalidationBridge(client);
 
     useSocketEventsStore.setState({
-      lastNewInvite: { id: 'inv-2' } as never,
+      lastNewInvite: { id: 'inv-2', status: 'PENDING' } as never,
     });
 
+    expect(client.getQueryData<MyGamesData>(queryKeys.games.my('u1'))?.invites.map((invite) => invite.id)).toEqual([
+      'inv-2',
+    ]);
     expect(invalidateSpy).toHaveBeenCalledWith({
       queryKey: queryKeys.games.my('u1'),
     });
     expect(invalidateSpy).not.toHaveBeenCalledWith({ queryKey: ['games'] });
   });
 
-  it('malformed game update only invalidates Find queries that contain the game', () => {
+  it('malformed game update only revalidates Find queries that contain the game', async () => {
+    vi.useFakeTimers();
     const client = createTestClient();
     const invalidateSpy = vi.spyOn(client, 'invalidateQueries');
     const hitKey = queryKeys.games.available('hit');
@@ -163,30 +218,15 @@ describe('queryInvalidationBridge', () => {
     expect(invalidateSpy).toHaveBeenCalledWith({
       queryKey: queryKeys.games.my('u1'),
     });
+    await vi.advanceTimersByTimeAsync(200);
     expect(invalidateSpy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        predicate: expect.any(Function),
-      }),
+      { queryKey: hitKey, exact: true },
+      { cancelRefetch: false },
+    );
+    expect(invalidateSpy).not.toHaveBeenCalledWith(
+      { queryKey: missKey, exact: true },
+      expect.anything(),
     );
     expect(invalidateSpy).not.toHaveBeenCalledWith({ queryKey: ['games'] });
-
-    const predicateCall = invalidateSpy.mock.calls.find(
-      (call) => typeof (call[0] as { predicate?: unknown })?.predicate === 'function',
-    );
-    const predicate = (predicateCall?.[0] as {
-      predicate: (q: { queryKey: unknown; state: { data: unknown } }) => boolean;
-    }).predicate;
-    expect(
-      predicate({
-        queryKey: hitKey,
-        state: { data: client.getQueryData(hitKey) },
-      }),
-    ).toBe(true);
-    expect(
-      predicate({
-        queryKey: missKey,
-        state: { data: client.getQueryData(missKey) },
-      }),
-    ).toBe(false);
   });
 });

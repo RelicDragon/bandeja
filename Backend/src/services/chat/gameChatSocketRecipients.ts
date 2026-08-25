@@ -1,6 +1,7 @@
-import { ChatType } from '@prisma/client';
+import { ChatType, ParticipantStatus } from '@prisma/client';
 import prisma from '../../config/database';
 import { canParticipantSeeGameChatMessage } from './gameChatVisibility';
+import { INVITE_ONLY_CHAT_VIEWER_STATUSES } from '../../shared/systemMessages/rosterLifecycle';
 
 const EXCLUDED_PARTICIPANT_STATUSES = ['INVITED', 'INVITE_DECLINED', 'INVITE_CANCELLED'] as const;
 
@@ -23,7 +24,8 @@ export function extractChatTypeFromEmitPayload(data: unknown): ChatType | undefi
 
 export async function resolveGameChatSocketRecipientIds(
   gameId: string,
-  chatType: ChatType
+  chatType: ChatType,
+  options?: { excludeInviteOnlyViewers?: boolean }
 ): Promise<string[]> {
   const game = await prisma.game.findUnique({
     where: { id: gameId },
@@ -31,10 +33,14 @@ export async function resolveGameChatSocketRecipientIds(
   });
   if (!game) return [];
 
+  const excludedStatuses: ParticipantStatus[] = options?.excludeInviteOnlyViewers
+    ? [...INVITE_ONLY_CHAT_VIEWER_STATUSES]
+    : [...EXCLUDED_PARTICIPANT_STATUSES];
+
   const participants = await prisma.gameParticipant.findMany({
     where: {
       gameId,
-      status: { notIn: [...EXCLUDED_PARTICIPANT_STATUSES] },
+      status: { notIn: excludedStatuses },
     },
     select: { userId: true, status: true, role: true },
   });
@@ -45,7 +51,7 @@ export async function resolveGameChatSocketRecipientIds(
       where: {
         gameId: game.parentId,
         role: { in: ['OWNER', 'ADMIN'] },
-        status: { notIn: [...EXCLUDED_PARTICIPANT_STATUSES] },
+        status: { notIn: excludedStatuses },
       },
       select: { userId: true },
     });

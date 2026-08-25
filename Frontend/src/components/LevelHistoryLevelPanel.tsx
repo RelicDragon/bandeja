@@ -1,9 +1,10 @@
 import type { Sport, User } from '@/types';
-import { getUserPrimarySport } from '@/utils/profileSports';
+import { gamesPlayedForSport, getUserPrimarySport } from '@/utils/profileSports';
 import { LevelHistoryLevelSelector, type LevelHistorySelection } from './LevelHistoryLevelSelector';
 import { LevelHistoryAvatarSection } from './LevelHistoryAvatarSection';
 import { ConfirmedLevelSection } from './ConfirmedLevelSection';
 import { SocialLevelRating } from '@/components/profile/SocialLevelRating';
+import { PlayerActivityCounts } from '@/components/player/PlayerActivityCounts';
 
 export type { LevelHistorySelection };
 
@@ -18,6 +19,7 @@ type LevelHistoryLevelPanelProps = {
   includeSportsInSelector?: boolean;
   includeSocialInSelector?: boolean;
   competitiveSport?: Sport;
+  trainingAttendanceCount?: number;
 };
 
 export function LevelHistoryLevelPanel({
@@ -29,10 +31,12 @@ export function LevelHistoryLevelPanel({
   includeSportsInSelector = true,
   includeSocialInSelector = true,
   competitiveSport,
+  trainingAttendanceCount = 0,
 }: LevelHistoryLevelPanelProps) {
   const showSocialLevel = selection.kind === 'social';
   const historySport =
     selection.kind === 'competitive' ? selection.sport : getUserPrimarySport(user);
+  const gamesPlayed = gamesPlayedForSport(user, historySport);
   const showSelector =
     (includeSportsInSelector && sports.length > 0) || includeSocialInSelector;
   const selectorTone = variant === 'hero' ? 'onGradient' : 'neutral';
@@ -62,10 +66,20 @@ export function LevelHistoryLevelPanel({
             sport={historySport}
             showSocialLevel={showSocialLevel}
             embedded
+            gamesPlayed={gamesPlayed}
+            trainingAttendanceCount={trainingAttendanceCount}
           />
         </div>
         {!showSocialLevel && (
-          <ConfirmedLevelSection user={user} sport={historySport} embedded showBadge={false} />
+          <ConfirmedLevelSection
+            user={user}
+            sport={historySport}
+            embedded
+            showBadge={false}
+            gamesPlayed={gamesPlayed}
+            trainingAttendanceCount={trainingAttendanceCount}
+            showActivityCounts={false}
+          />
         )}
       </div>
     );
@@ -88,9 +102,20 @@ export function LevelHistoryLevelPanel({
       {showSocialLevel ? (
         <div className="px-3 py-2.5">
           <SocialLevelRating user={user} />
+          <PlayerActivityCounts
+            gamesPlayed={gamesPlayed}
+            trainingAttendanceCount={trainingAttendanceCount}
+            className="mt-1.5 text-center text-gray-500 dark:text-gray-400"
+          />
         </div>
       ) : (
-        <ConfirmedLevelSection user={user} sport={historySport} embedded />
+        <ConfirmedLevelSection
+          user={user}
+          sport={historySport}
+          embedded
+          gamesPlayed={gamesPlayed}
+          trainingAttendanceCount={trainingAttendanceCount}
+        />
       )}
     </div>
   );

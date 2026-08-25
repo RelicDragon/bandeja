@@ -52,7 +52,9 @@
       "memberNotFound": "Player not on team",
       "cannotRemoveOwner": "Cannot remove the owner",
       "userIdRequired": "Player is required",
-      "nameTooShort": "Team name must be at least 3 characters"
+      "nameTooShort": "Team name must be at least 3 characters",
+      "notReady": "Invite your partner first — this pair is not complete yet",
+      "notAcceptedMember": "Join the pair before adding it to a game"
     },
     "games": {
       "cannotJoin": "Cannot join game",
@@ -60,7 +62,12 @@
       "alreadyParticipant": "User is already a participant",
       "cannotJoinArchivedOrFinished": "Cannot join archived or finished game",
       "directJoinNotAllowed": "Direct join is not allowed for this game",
-      "cannotDeleteHasChildren": "Cannot delete a game that has child games (e.g. tournament with rounds). Delete or remove child games first."
+      "cannotDeleteHasChildren": "Cannot delete a game that has child games (e.g. tournament with rounds). Delete or remove child games first.",
+      "genderUnset": "Set your gender to join this game",
+      "genderUnsetOther": "This player hasn't set their gender yet",
+      "genderIncompatibleMen": "Only men can join this game",
+      "genderIncompatibleWomen": "Only women can join this game",
+      "genderIncompatibleMix": "Only men or women can join this game"
     },
     "league": {
       "gameNotFound": "Game not found",
@@ -75,7 +82,9 @@
       "updateForbidden": "Only the bug creator or an admin can update this bug",
       "textRequired": "Bug text is required",
       "typeRequired": "Valid bug type is required",
-      "statusOrTypeRequired": "Valid status or bugType is required"
+      "statusOrTypeRequired": "Valid status or bugType is required",
+      "ratingRequired": "A 1–5 star rating is required for reviews",
+      "ratingInvalid": "Review rating must be between 1 and 5 stars"
     },
     "favorites": {
       "userIdRequired": "User ID is required",

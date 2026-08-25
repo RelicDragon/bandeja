@@ -47,6 +47,7 @@ jobs:
       - run: npm run lint
       - run: npm run test:user-stats-select
       - run: npm run test:available-games
+      - run: npm run test:invite-inbox
       - run: npm run test:play-intent
       - run: npm run test:auth-refresh
       - run: npm run test:auth-refresh-integration

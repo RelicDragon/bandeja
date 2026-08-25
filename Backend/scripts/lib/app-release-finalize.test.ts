@@ -20,6 +20,7 @@ const baseSession: ReleaseSession = {
   store: {},
   uploads: {},
   iosAppStoreConnect: {},
+  reviewGuard: {},
 };
 
 assert(getSessionPhase(baseSession) === 'planning', 'planning without notes');

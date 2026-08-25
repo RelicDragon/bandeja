@@ -42,6 +42,24 @@ function memberReliability(u: BasicUser, lookup?: Map<string, BasicUser>, sport?
   return Number.isFinite(rel) ? rel : undefined;
 }
 
+export function isPlayerInactive(user: BasicUser, lookup?: Map<string, BasicUser>, sport?: Sport): boolean {
+  const src = lookup?.get(user.id) ?? user;
+  if (typeof src.inactive === 'boolean') return src.inactive;
+  const resolvedSport = sport ?? getUserPrimarySport(src);
+  const profile = src.sportProfiles?.find((p) => p.sport === resolvedSport);
+  if (typeof profile?.inactive === 'boolean') return profile.inactive;
+  return true;
+}
+
+function entryIsInactive(
+  entry: InviteListEntry,
+  lookup: Map<string, BasicUser> | undefined,
+  sport?: Sport,
+): boolean {
+  if (entry.kind === 'user') return isPlayerInactive(entry.user, lookup, sport);
+  return entry.members.length > 0 && entry.members.every((m) => isPlayerInactive(m, lookup, sport));
+}
+
 export function teamInteractionScore(
   team: UserTeam,
   getUserMetadata: (userId: string) => UserMetadata | undefined
@@ -226,12 +244,17 @@ export function filterAndSortInviteEntries(
   const availabilityRank = (match: GameAvailabilityMatch): number =>
     match === 'full' ? 0 : match === 'partial' ? 1 : 2;
 
+  const inactiveLookup = projectedUserLookup(users);
+
   return combined.sort((a, b) => {
     if (opts.getAvailabilityMatch) {
       const aA = availabilityRank(opts.getAvailabilityMatch(a));
       const bA = availabilityRank(opts.getAvailabilityMatch(b));
       if (aA !== bA) return aA - bA;
     }
+    const aInactive = entryIsInactive(a, inactiveLookup, opts.gameSport);
+    const bInactive = entryIsInactive(b, inactiveLookup, opts.gameSport);
+    if (aInactive !== bInactive) return aInactive ? 1 : -1;
     const aFav =
       a.kind === 'user' ? opts.isFavorite(a.user.id) : a.members.some((m) => opts.isFavorite(m.id));
     const bFav =

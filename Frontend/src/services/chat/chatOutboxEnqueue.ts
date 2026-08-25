@@ -1,4 +1,5 @@
 import { messageQueueStorage } from '@/services/chatMessageQueueStorage';
+import { loadOutboxVideoBlob } from '@/services/chat/chatOutboxMediaBlobs';
 
 const pendingAdds = new Map<string, Promise<void>>();
 
@@ -7,6 +8,15 @@ export function registerOutboxEnqueue(tempId: string, ready: Promise<void>): voi
     pendingAdds.delete(tempId);
   });
   pendingAdds.set(tempId, tracked);
+}
+
+async function outboxRowReady(tempId: string): Promise<boolean> {
+  const row = await messageQueueStorage.getByTempId(tempId);
+  if (!row) return false;
+  if (row.hasPendingVideoBlob) {
+    return !!(await loadOutboxVideoBlob(tempId));
+  }
+  return true;
 }
 
 export async function waitForOutboxReady(tempId: string, timeoutMs = 4_000): Promise<boolean> {
@@ -19,9 +29,8 @@ export async function waitForOutboxReady(tempId: string, timeoutMs = 4_000): Pro
   }
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
-    const row = await messageQueueStorage.getByTempId(tempId);
-    if (row) return true;
+    if (await outboxRowReady(tempId)) return true;
     await new Promise((r) => setTimeout(r, 40));
   }
-  return !!(await messageQueueStorage.getByTempId(tempId));
+  return outboxRowReady(tempId);
 }

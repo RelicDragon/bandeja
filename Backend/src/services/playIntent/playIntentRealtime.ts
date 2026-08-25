@@ -1,4 +1,5 @@
 import type { PlayIntentInvalidation } from '@bandeja/shared/playIntentRealtime';
+import type { EntityType, Sport } from '@prisma/client';
 import prisma from '../../config/database';
 
 export {
@@ -92,6 +93,43 @@ export function publishCommittedPlayIntentTargetChanges(
       error: error instanceof Error ? error.message : String(error),
     });
   }
+}
+
+export function publishMatchingGamesChanged(game: {
+  cityId: string;
+  sport: Sport;
+  entityType: EntityType;
+  isPublic?: boolean;
+}): void {
+  if (game.isPublic === false) return;
+  if (
+    game.entityType !== 'GAME' &&
+    game.entityType !== 'TOURNAMENT' &&
+    game.entityType !== 'BAR'
+  ) {
+    return;
+  }
+  publishPlayIntentInvalidation({
+    reason: 'matching-games-changed',
+    cityId: game.cityId,
+    sport: game.sport,
+    entityType: game.entityType,
+  });
+}
+
+export async function publishMatchingGamesChangedForGameId(
+  gameId: string,
+): Promise<void> {
+  const game = await prisma.game.findUnique({
+    where: { id: gameId },
+    select: {
+      cityId: true,
+      sport: true,
+      entityType: true,
+      isPublic: true,
+    },
+  });
+  if (game) publishMatchingGamesChanged(game);
 }
 
 /**

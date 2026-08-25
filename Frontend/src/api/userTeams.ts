@@ -1,5 +1,29 @@
 import api from './axios';
-import type { ApiResponse, UserTeam, UserTeamMembership } from '@/types';
+import type { ApiResponse, EntityType, Sport, UserTeam, UserTeamMembership } from '@/types';
+
+export type UserTeamInvitableGame = {
+  id: string;
+  name: string | null;
+  sport: Sport;
+  entityType: EntityType;
+  startTime: string;
+  endTime: string;
+  timeIsSet: boolean;
+  avatar: string | null;
+  hasFixedTeams: boolean;
+  maxParticipants: number;
+  playingCount: number;
+  club: { id: string; name: string; avatar: string | null } | null;
+  city: { id: string; name: string; timezone: string } | null;
+  partnerOnGame: 'none' | 'invited' | 'playing' | 'queued' | 'other';
+};
+
+export type AddUserTeamToGameResult = {
+  gameId: string;
+  invitedUserIds: string[];
+  taggedUserIds: string[];
+  pairSeated: boolean;
+};
 
 export const userTeamsApi = {
   getMine: async (): Promise<UserTeam[]> => {
@@ -70,6 +94,16 @@ export const userTeamsApi = {
 
   removeMember: async (teamId: string, userId: string): Promise<UserTeam | null> => {
     const res = await api.delete<ApiResponse<UserTeam | null>>(`/user-teams/${teamId}/members/${userId}`);
+    return res.data.data;
+  },
+
+  getInvitableGames: async (teamId: string): Promise<UserTeamInvitableGame[]> => {
+    const res = await api.get<ApiResponse<UserTeamInvitableGame[]>>(`/user-teams/${teamId}/invitable-games`);
+    return res.data.data;
+  },
+
+  addToGame: async (teamId: string, gameId: string): Promise<AddUserTeamToGameResult> => {
+    const res = await api.post<ApiResponse<AddUserTeamToGameResult>>(`/user-teams/${teamId}/add-to-game`, { gameId });
     return res.data.data;
   },
 };

@@ -31,6 +31,8 @@ import {
   stashPendingThreadReadReceipt,
   takePendingThreadReadReceipts,
 } from './pendingThreadReadReceipts';
+import { liveMessageBelongsToThread } from './liveMessageBelongsToThread';
+export { liveMessageBelongsToThread };
 
 /**
  * Configuration for a live thread projection.
@@ -402,6 +404,8 @@ function reduceInboundMessage(
   event: InboundMessageEvent,
   config: ThreadLiveConfig
 ): void {
+  if (!liveMessageBelongsToThread(event.message, config)) return;
+
   // Filter by chatType for GAME chats if configured
   if (config.contextType === 'GAME' && config.gameChatTypeFilter) {
     if (event.message.chatType !== config.gameChatTypeFilter) {
@@ -680,6 +684,7 @@ function reduceOptimisticSend(
   config: ThreadLiveConfig
 ): void {
   const message = { ...event.message, _status: 'SENDING' as const };
+  if (!liveMessageBelongsToThread(message, config)) return;
   // Filter by chatType for GAME chats if configured
   if (config.contextType === 'GAME' && config.gameChatTypeFilter) {
     if (message.chatType !== config.gameChatTypeFilter) {
@@ -714,6 +719,7 @@ function reduceMessageAck(
   event: MessageAckEvent,
   config: ThreadLiveConfig
 ): void {
+  if (!liveMessageBelongsToThread(event.message, config)) return;
   const prevMessages = state.messages;
   let matchedTempId: string | undefined;
   const acked = attachPendingReadReceipts(
@@ -765,12 +771,14 @@ function reduceHydrateSnapshot(
   event: HydrateSnapshotEvent,
   config: ThreadLiveConfig
 ): void {
-  const currentMessages = state.messages;
-  const hydratedMessages = event.messages.map((m) => attachPendingReadReceipts(m, config));
+  const currentMessages = state.messages.filter((m) => liveMessageBelongsToThread(m, config));
+  const hydratedMessages = event.messages
+    .filter((m) => liveMessageBelongsToThread(m, config))
+    .map((m) => attachPendingReadReceipts(m, config));
 
   const merged = mergeHydratedSnapshot(currentMessages, hydratedMessages);
 
-  if (!projectionMessagesEqual(currentMessages, merged)) {
+  if (!projectionMessagesEqual(state.messages, merged)) {
     state.messages = merged;
     state.changed = true;
     // No persist effect here - hydration comes FROM persistence

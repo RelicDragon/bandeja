@@ -36,6 +36,27 @@
     "deleted": "Equipo eliminado",
     "cutAngleDial": "Ajustar cómo se dividen las fotos de los jugadores",
     "addTeamPhotoTitle": "Añadir foto del equipo",
-    "addTeamPhotoHint": "Elige una imagen y recórtala"
+    "addTeamPhotoHint": "Elige una imagen y recórtala",
+    "explainerTitle": "Una pareja, no un grupo",
+    "explainerCreate": "Tú y un compañero: una pareja, no un grupo.",
+    "explainerBulletCity": "La gente de tu ciudad puede invitaros juntos a un partido.",
+    "explainerBulletAdd": "Añadíos desde la página de la pareja o desde la lista de invitaciones.",
+    "explainerBulletFixed": "En partidos con parejas fijas, jugáis juntos.",
+    "explainerPage": "Añade esta pareja a un partido aquí, o desde la lista de invitaciones. Otros en tu ciudad también pueden invitaros.",
+    "explainerPagePending": "Invita a tu compañero para completar la pareja. Luego podréis añadirla a un partido.",
+    "createExplainerTitle": "Crear una pareja",
+    "createPair": "Crear pareja",
+    "addToGame": "Añadir a un partido",
+    "addToGameCta": "Invita a esta pareja a uno de tus partidos",
+    "addToGameHint": "Partidos a los que puedes invitar.",
+    "addToGamePending": "Esperando a que tu compañero se una: después podrás añadir esta pareja a un partido.",
+    "addToGameEmpty": "No hay partidos próximos a los que puedas invitar. Entra o crea un partido y vuelve.",
+    "addToGameSuccessInvited": "Has invitado a {{name}} como tu pareja",
+    "addToGameSuccessBothIn": "Estáis dentro como pareja",
+    "addToGameSuccessAdded": "Añadidos a {{name}}",
+    "fixedPairsBadge": "Parejas fijas",
+    "partnerAlreadyIn": "Tu compañero ya está",
+    "partnerInvited": "Compañero invitado",
+    "slots": "{{playing}}/{{max}}"
   }
 }

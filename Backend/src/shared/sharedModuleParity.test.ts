@@ -89,12 +89,23 @@ function testGamePhotosSharedParity(): void {
   );
 }
 
+function testRosterLifecycleSharedParity(): void {
+  const feSrc = readFileSync(join(feSharedRoot, 'systemMessages/rosterLifecycle.ts'), 'utf8');
+  const beSrc = readFileSync(join(__dirname, 'systemMessages/rosterLifecycle.ts'), 'utf8');
+  assert.equal(
+    normalizeSharedSource(feSrc),
+    normalizeSharedSource(beSrc),
+    'systemMessages/rosterLifecycle.ts FE/BE source parity',
+  );
+}
+
 function run(): void {
   testDeriveBallsInGamesSourceParity();
   testDeriveBallsInGamesBehavior();
   testGameFormatUpdateKeysParity();
   testGameBookingSharedParity();
   testGamePhotosSharedParity();
+  testRosterLifecycleSharedParity();
   testBookingSharedParity();
   console.log('sharedModuleParity.test.ts: all passed');
 }

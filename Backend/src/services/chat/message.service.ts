@@ -15,6 +15,11 @@ import {
 } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
 import { GameChatViewerAccessService } from './gameChatViewerAccess.service';
+import {
+  isInviteOnlyChatViewerStatus,
+  isRosterLifecycleSystemPreview,
+  withInviteOnlyRosterMessageFilter,
+} from './gameChatRosterVisibility';
 import { USER_SELECT_FIELDS, USER_SELECT_WITH_SPORT_PROFILES } from '../../utils/constants';
 import { resolveChatMessageSport } from '../user/userSportProfile.service';
 import { projectMessageEmbeddedUsers, projectMessagesEmbeddedUsers } from '../user/projectEmbeddedBasicUsers';
@@ -1558,13 +1563,15 @@ export class MessageService {
     }
   ) {
     const { page = 1, limit = 50, chatType = ChatType.PUBLIC, beforeMessageId } = options;
+    let inviteOnlyStatus: string | undefined;
 
     if (chatContextType === 'GAME') {
-      await GameChatViewerAccessService.assertReadable(
+      const access = await GameChatViewerAccessService.assertReadable(
         contextId,
         userId,
         chatType ?? undefined
       );
+      inviteOnlyStatus = access.participant?.status;
     } else if (chatContextType === 'BUG') {
       await this.validateBugAccess(contextId, userId);
     } else if (chatContextType === 'USER') {
@@ -1594,13 +1601,16 @@ export class MessageService {
         return [];
       }
       const messages = await prisma.chatMessage.findMany({
-        where: {
-          chatContextType,
-          contextId,
-          chatType: chatType as ChatType,
-          deletedAt: null,
-          createdAt: { lt: beforeMessage.createdAt }
-        },
+        where: withInviteOnlyRosterMessageFilter(
+          {
+            chatContextType,
+            contextId,
+            chatType: chatType as ChatType,
+            deletedAt: null,
+            createdAt: { lt: beforeMessage.createdAt }
+          },
+          inviteOnlyStatus
+        ),
         include: this.getMessageInclude(),
         orderBy: { createdAt: 'desc' },
         take: Number(limit)
@@ -1617,12 +1627,15 @@ export class MessageService {
 
     const skip = (Number(page) - 1) * Number(limit);
     const messages = await prisma.chatMessage.findMany({
-      where: {
-        chatContextType,
-        contextId,
-        chatType: chatType as ChatType,
-        deletedAt: null,
-      },
+      where: withInviteOnlyRosterMessageFilter(
+        {
+          chatContextType,
+          contextId,
+          chatType: chatType as ChatType,
+          deletedAt: null,
+        },
+        inviteOnlyStatus
+      ),
       include: this.getMessageInclude(),
       orderBy: { createdAt: 'desc' },
       skip,
@@ -1702,12 +1715,14 @@ export class MessageService {
     messages: Awaited<ReturnType<typeof MessageService.enrichMessagesWithTranslations>>;
     threadInvalidated?: boolean;
   }> {
+    let inviteOnlyStatus: string | undefined;
     if (chatContextType === 'GAME') {
-      await GameChatViewerAccessService.assertReadable(
+      const access = await GameChatViewerAccessService.assertReadable(
         contextId,
         userId,
         gameChatType ?? undefined
       );
+      inviteOnlyStatus = access.participant?.status;
     } else if (chatContextType === 'BUG') {
       await this.validateBugAccess(contextId, userId);
     } else if (chatContextType === 'USER') {
@@ -1716,14 +1731,15 @@ export class MessageService {
       await this.validateGroupChannelAccess(contextId, userId);
     }
 
-    const baseWhere: Prisma.ChatMessageWhereInput = {
-      chatContextType,
-      contextId,
-      deletedAt: null,
-    };
-    if (chatContextType === 'GAME' && gameChatType != null) {
-      baseWhere.chatType = gameChatType;
-    }
+    const baseWhere: Prisma.ChatMessageWhereInput = withInviteOnlyRosterMessageFilter(
+      {
+        chatContextType,
+        contextId,
+        deletedAt: null,
+        ...(chatContextType === 'GAME' && gameChatType != null ? { chatType: gameChatType } : {}),
+      },
+      inviteOnlyStatus
+    );
 
     const PAGE = 500;
     const MAX_PAGES = 40;
@@ -2480,11 +2496,19 @@ export class MessageService {
       }
     });
 
-    return games.map((game) => ({
-      ...game,
-      lastMessage: game.lastMessagePreview
-        ? { preview: game.lastMessagePreview, updatedAt: game.updatedAt }
-        : null
-    }));
+    return games.map((game) => {
+      const viewer = game.participants.find((participant) => participant.userId === userId);
+      const preview =
+        isInviteOnlyChatViewerStatus(viewer?.status) &&
+        isRosterLifecycleSystemPreview(game.lastMessagePreview)
+          ? null
+          : game.lastMessagePreview;
+      return {
+        ...game,
+        lastMessage: preview
+          ? { preview, updatedAt: game.updatedAt }
+          : null
+      };
+    });
   }
 }

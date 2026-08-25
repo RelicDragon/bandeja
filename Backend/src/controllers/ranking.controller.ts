@@ -7,7 +7,7 @@ import prisma from '../config/database';
 import { getLevelName } from '../utils/playerLevels';
 import { USER_SELECT_WITH_SPORT_PROFILES } from '../utils/constants';
 import { ResultsStatus } from '@prisma/client';
-import { calculateRanks } from '../services/ranking.service';
+import { RankingService, calculateRanks } from '../services/ranking.service';
 import {
   resolveLeaderboardSportMode,
   resolveUserSportSnapshot,
@@ -78,6 +78,7 @@ const applySportRankingSnapshot = (users: any[], sport: Sport): any[] =>
       reliability: snapshot.reliability,
       gamesPlayed: snapshot.gamesPlayed,
       gamesWon: snapshot.gamesWon,
+      inactive: snapshot.inactive,
     };
   });
 
@@ -102,13 +103,14 @@ const applySocialSportSnapshot = (
       reliability: snapshot.reliability,
       gamesPlayed: snapshot.gamesPlayed,
       gamesWon: snapshot.gamesWon,
+      inactive: snapshot.inactive,
     };
   });
 
 const mapToLeaderboard = (users: any[], rankMap: Map<string, number>, lastGameRatingChanges: Record<string, number | null>): any[] => {
   return users.map((u: any) => ({
-    rank: rankMap.get(u.id),
     ...u,
+    rank: rankMap.get(u.id) ?? null,
     levelName: getLevelName(u.level),
     winRate: u.gamesPlayed > 0 ? ((u.gamesWon / u.gamesPlayed) * 100).toFixed(2) : '0.00',
     lastGameRatingChange: lastGameRatingChanges[u.id] ?? null,
@@ -258,16 +260,11 @@ export const getUserLeaderboardContext = asyncHandler(async (req: AuthRequest, r
       select: userSelect,
     });
 
-    allUsers = applyPrimarySportRankingSnapshot(usersRaw)
-      .filter((u) => u.gamesPlayed > 0)
-      .sort((a, b) => {
-        if (a.level !== b.level) return b.level - a.level;
-        if (a.reliability !== b.reliability) return b.reliability - a.reliability;
-        if (a.gamesWon !== b.gamesWon) return b.gamesWon - a.gamesWon;
-        return a.id.localeCompare(b.id);
-      });
-
-    rankMap = calculateRanks(allUsers, false, false, 'gamesWon');
+    const ranked = RankingService.qualifyAndRankRatingLeaderboard(
+      applyPrimarySportRankingSnapshot(usersRaw).filter((u) => u.gamesPlayed > 0),
+    );
+    allUsers = ranked.users;
+    rankMap = ranked.rankMap;
   } else if (usePerSportLevel && rankingSport) {
     const usersRaw = await prisma.user.findMany({
       where: baseWhere,
@@ -278,26 +275,23 @@ export const getUserLeaderboardContext = asyncHandler(async (req: AuthRequest, r
       },
     });
 
-    allUsers = usersRaw
-      .map((u) => {
-        const snap = resolveUserSportSnapshot(u, rankingSport);
-        return {
-          ...u,
-          level: snap.level,
-          reliability: snap.reliability,
-          gamesPlayed: snap.gamesPlayed,
-          gamesWon: snap.gamesWon,
-        };
-      })
-      .filter((u) => u.gamesPlayed > 0)
-      .sort((a, b) => {
-        if (a.level !== b.level) return b.level - a.level;
-        if (a.reliability !== b.reliability) return b.reliability - a.reliability;
-        if (a.gamesWon !== b.gamesWon) return b.gamesWon - a.gamesWon;
-        return a.id.localeCompare(b.id);
-      });
-
-    rankMap = calculateRanks(allUsers, false, false, 'gamesWon');
+    const ranked = RankingService.qualifyAndRankRatingLeaderboard(
+      usersRaw
+        .map((u) => {
+          const snap = resolveUserSportSnapshot(u, rankingSport);
+          return {
+            ...u,
+            level: snap.level,
+            reliability: snap.reliability,
+            gamesPlayed: snap.gamesPlayed,
+            gamesWon: snap.gamesWon,
+            inactive: snap.inactive,
+          };
+        })
+        .filter((u) => u.gamesPlayed > 0),
+    );
+    allUsers = ranked.users;
+    rankMap = ranked.rankMap;
   } else if (isSocial) {
     const usersRaw = await prisma.user.findMany({
       where: baseWhere,
@@ -328,8 +322,8 @@ export const getUserLeaderboardContext = asyncHandler(async (req: AuthRequest, r
   const leaderboard = mapToLeaderboard(allUsers, rankMap, lastGameRatingChanges);
 
   const currentUserIndex = allUsers.findIndex((u: any) => u.id === currentUser.id);
-  const userRank = currentUserIndex >= 0 
-    ? (rankMap.get(currentUser.id) || 0)
+  const userRank = currentUserIndex >= 0
+    ? (rankMap.get(currentUser.id) ?? null)
     : allUsers.length + 1;
 
   res.json({

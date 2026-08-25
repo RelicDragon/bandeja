@@ -152,6 +152,7 @@
     "telegram": "Telegram",
     "telegramUsername": "Usuario de Telegram",
     "linkTelegram": "Vincular Telegram",
+    "openingTelegram": "Abriendo Telegram…",
     "telegramNotLinked": "No vinculado",
     "updateFromTelegram": "Actualizar nombre desde Telegram",
     "telegramSyncFailed": "No se pudo actualizar desde Telegram. Abre un chat con el bot primero.",
@@ -305,6 +306,7 @@
     "monday": "Lunes",
     "sunday": "Domingo",
     "currency": "Moneda",
+    "currencyAuto": "Detectar automáticamente",
     "timeFormat12h": "12 horas",
     "timeFormat24h": "24 horas",
     "characterGenerator": "Generador de Personajes",
@@ -313,7 +315,10 @@
     "noSharedGames": "No shared finished games yet",
     "noLeaderboardData": "No leaderboard data available",
     "leaderboard": {
-      "sportLabel": "Deporte del ranking"
+      "sportLabel": "Deporte del ranking",
+      "unranked": "—",
+      "inactiveSection": "Sin ranking",
+      "inactiveHint": "Necesitas 5 partidos y uno valorado en 90 días"
     },
     "verbalStatus": "Status",
     "verbalStatusPlaceholder": "What's on your mind?",

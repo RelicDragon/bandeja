@@ -5,9 +5,11 @@ import toast from 'react-hot-toast';
 import { Trash2, LogOut, Copy, HelpCircle, ChevronRight, Trophy, LayoutDashboard, CalendarDays, LayoutGrid } from 'lucide-react';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { useDeclineInvite } from '@/hooks/useDeclineInvite';
+import { runWithOverlapConfirm } from '@/utils/gameSlotOverlapConfirm';
 import { RefreshIndicator } from '@/components/RefreshIndicator';
 import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
 import { runWithProfileName } from '@/utils/runWithProfileName';
+import { recoverGenderUnsetJoin, runWithGenderForEvent } from '@/utils/genderJoinGate';
 import { buildDuplicateGameInitialData } from '@/utils/buildDuplicateGameInitialData';
 import { gameHasLinkedExternalBooking } from '@/utils/gameHasConfirmedClubBooking';
 import {
@@ -523,18 +525,18 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
 
   useEffect(() => {
     const fetchClubs = async () => {
-      if (!user?.currentCity) return;
-      
+      const venueCityId = game?.city?.id || game?.club?.cityId || user?.currentCity?.id;
+      if (!venueCityId) return;
       try {
-        const response = await clubsApi.getByCityId(user.currentCity.id, game?.entityType || 'GAME');
+        const response = await clubsApi.getByCityId(venueCityId, game?.entityType || 'GAME');
         setClubs(response.data);
       } catch (error) {
         console.error('Failed to fetch clubs:', error);
       }
     };
 
-    fetchClubs();
-  }, [user?.currentCity, game?.entityType]);
+    void fetchClubs();
+  }, [game?.city?.id, game?.club?.cityId, game?.entityType, user?.currentCity?.id]);
 
   useEffect(() => {
     let cancelled = false;
@@ -575,10 +577,12 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
       runWithProfileName(() => void handleJoin());
       return;
     }
+    if (!runWithGenderForEvent(game, () => void handleJoin())) return;
 
     try {
-      const response = await gamesApi.join(id);
-      const message = (response as any).message || 'Successfully joined the game';
+      const response = await runWithOverlapConfirm((confirmOverlap) => gamesApi.join(id, confirmOverlap));
+      if (!response) return;
+      const message = (response as { message?: string }).message || 'Successfully joined the game';
       
       if (message === 'games.addedToJoinQueue') {
         toast.success(t('games.addedToJoinQueue', { defaultValue: 'Added to join queue' }));
@@ -592,6 +596,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
       setGame(gameResponse.data);
     } catch (error: any) {
       console.error('Failed to join game:', error);
+      if (recoverGenderUnsetJoin(error, () => void handleJoin())) return;
       const errorMessage = error.response?.data?.message || 'errors.generic';
       toast.error(t(errorMessage, { defaultValue: errorMessage }));
     }
@@ -605,15 +610,20 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
       runWithProfileName(() => void handleAddToGame());
       return;
     }
+    if (!runWithGenderForEvent(game, () => void handleAddToGame())) return;
 
     try {
-      const result = await gamesApi.togglePlayingStatus(id, 'PLAYING') as { message?: string };
+      const result = await runWithOverlapConfirm((confirmOverlap) =>
+        gamesApi.togglePlayingStatus(id, 'PLAYING', confirmOverlap),
+      );
+      if (!result) return;
       const response = await gamesApi.getById(id);
       setGame(response.data);
-      if (result?.message === 'games.addedToJoinQueue') {
+      if ((result as { message?: string })?.message === 'games.addedToJoinQueue') {
         toast.success(t('games.addedToJoinQueue', { defaultValue: 'Added to join queue' }));
       }
     } catch (error: any) {
+      if (recoverGenderUnsetJoin(error, () => void handleAddToGame())) return;
       const errorMessage = error.response?.data?.message || 'errors.generic';
       toast.error(t(errorMessage, { defaultValue: errorMessage }));
     }
@@ -625,11 +635,15 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
       runWithProfileName(() => void handleAcceptInvite(inviteId));
       return;
     }
+    if (!runWithGenderForEvent(game, () => void handleAcceptInvite(inviteId))) return;
     if (acceptingInviteIdsRef.current.has(inviteId)) return;
     acceptingInviteIdsRef.current.add(inviteId);
     try {
-      const response = await invitesApi.accept(inviteId);
-      const message = (response as any).message || 'Invite accepted successfully';
+      const response = await runWithOverlapConfirm((confirmOverlap) =>
+        invitesApi.accept(inviteId, confirmOverlap),
+      );
+      if (!response) return;
+      const message = (response as { message?: string }).message || 'Invite accepted successfully';
       
       if (message === 'games.addedToJoinQueue') {
         toast.success(t('games.addedToJoinQueue', { defaultValue: 'Added to join queue' }));
@@ -648,6 +662,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
         }
       }
     } catch (error: any) {
+      if (recoverGenderUnsetJoin(error, () => void handleAcceptInvite(inviteId))) return;
       const errorMessage = error.response?.data?.message || 'errors.generic';
       toast.error(t(errorMessage, { defaultValue: errorMessage }));
     } finally {
@@ -1800,6 +1815,8 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
         <PlayerListModal
           gameId={id}
           gameSport={parseGameSport(game?.sport)}
+          genderTeams={game?.genderTeams}
+          entityType={game?.entityType}
           onClose={() => {
             setShowPlayerList(false);
             setPlayerListMode('players');
@@ -1853,6 +1870,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
           canEditSettings={canViewSettings}
           onGameUpdate={setGame}
           onCourtsChange={handleCourtsChange}
+          onClubsChange={setClubs}
         />
       )}
 

@@ -1,5 +1,6 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { motion, type Variants } from 'framer-motion';
+import type { BooktimeLinkedGame } from '@/api/booktime';
 import type { BookingListClubRow } from '@/hooks/connectedBookingClubs';
 import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
 import { BooktimeAdjacentBookingGroup } from './BooktimeAdjacentBookingGroup';
@@ -36,6 +37,9 @@ type Props = {
   onCanceled?: (bookingId: string) => void;
   onRefreshSnapshot?: (options?: { force?: boolean }) => Promise<boolean>;
   animateEntries?: boolean;
+  linkedGamesByBookingId?: ReadonlyMap<string, BooktimeLinkedGame[]>;
+  onLinkedGamesReload?: () => void;
+  expandFirst?: boolean;
 };
 
 export function BooktimeUpcomingBookingsList({
@@ -51,13 +55,15 @@ export function BooktimeUpcomingBookingsList({
   onCanceled,
   onRefreshSnapshot,
   animateEntries = false,
+  linkedGamesByBookingId,
+  onLinkedGamesReload,
+  expandFirst = false,
 }: Props) {
   const reduceMotion = usePrefersReducedMotion();
   const shouldAnimateEntries = animateEntries && !reduceMotion;
   const entryVariants: Variants | undefined = shouldAnimateEntries
     ? BOOKING_LIST_ITEM_VARIANTS
     : undefined;
-  const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
   const resolveAllowedHours = (clubId: string | undefined) =>
     resolveBooktimeCancelHoursForClub(clubId, allowedHoursToCancelByClubId, allowedHoursToCancel);
   const resolveClubTimezone = useCallback(
@@ -77,7 +83,19 @@ export function BooktimeUpcomingBookingsList({
     [bookings, clubById, clubIdOf, clubTimezone, resolveClubTimezone],
   );
   const visibleEntries = limit != null ? entries.slice(0, limit) : entries;
-
+  const firstEntryId =
+    visibleEntries[0]?.kind === 'group'
+      ? visibleEntries[0].bookings.map((booking) => booking.uuid).join('-')
+      : visibleEntries[0]?.kind === 'single'
+        ? visibleEntries[0].booking.uuid
+        : null;
+  const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
+  const [didExpandFirst, setDidExpandFirst] = useState(false);
+  useEffect(() => {
+    if (!expandFirst || didExpandFirst || !firstEntryId) return;
+    setSelectedBookingId(firstEntryId);
+    setDidExpandFirst(true);
+  }, [didExpandFirst, expandFirst, firstEntryId]);
   const listClassName = 'space-y-2';
   const listContent = visibleEntries.map((entry) => {
         if (entry.kind === 'group') {
@@ -107,6 +125,8 @@ export function BooktimeUpcomingBookingsList({
                 onCanceled?.(bookingId);
               }}
               entryVariants={entryVariants}
+              linkedGamesByBookingId={linkedGamesByBookingId}
+              onLinkedGamesReload={onLinkedGamesReload}
             />
           );
         }
@@ -135,6 +155,8 @@ export function BooktimeUpcomingBookingsList({
               onCanceled?.(bookingId);
             }}
             entryVariants={entryVariants}
+            linkedGames={linkedGamesByBookingId?.get(bookingId)}
+            onLinkedGamesReload={onLinkedGamesReload}
           />
         );
       });

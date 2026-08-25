@@ -7,6 +7,8 @@ import {
   type MyGamesData,
 } from '@/queries/games/useMyGamesQuery';
 import { queryKeys } from '@/queries/queryKeys';
+import { filterInboxVisibleInvites } from '@/utils/gameInviteInbox';
+import { excludePendingInviteOnlyMyGames } from '@/utils/excludePendingInviteOnlyMyGames';
 
 export const useMyGames = (
   user: { id?: string } | null | undefined,
@@ -18,8 +20,8 @@ export const useMyGames = (
   const onLoadingRef = useRef(onLoading);
   onLoadingRef.current = onLoading;
 
-  const games = data?.games ?? [];
-  const invites = data?.invites ?? [];
+  const games = excludePendingInviteOnlyMyGames(data?.games ?? [], userId);
+  const invites = filterInboxVisibleInvites<Invite>(data?.invites ?? []);
   const unreadCounts = data?.unreadCounts ?? {};
 
   const setInvites = useCallback(

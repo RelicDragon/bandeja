@@ -309,6 +309,7 @@ async function syncGameBookingState(
       bookingEnd: true,
     },
   });
+  const gameCourtCount = await tx.gameCourt.count({ where: { gameId } });
 
   const timeZone = await resolveBooktimeTimezoneForGame(gameId);
   const effectiveHasBookedCourt =
@@ -332,6 +333,7 @@ async function syncGameBookingState(
     courtId: game.courtId,
     clubId: game.clubId,
     timeZone,
+    courtCount: gameCourtCount,
   }) as GameBookingStatus;
 
   const patch: Prisma.GameUncheckedUpdateInput = {

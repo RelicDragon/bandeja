@@ -86,6 +86,10 @@ Only `PLAYING` counts toward `maxParticipants` / slot fill.
 
 **Follow graph:** UI says *follow/unfollow*; API persists user follows under `/favorites/users` (separate from favorite **clubs**).
 
+**Play intent:** a city/sport (or BAR) wish to play. Status `OPEN` → `MATCHED` (in a proposal or reserved by invite) → `CONSUMED` / `EXPIRED` / `CANCELLED`. Only `PLAYING` game joins consume a reachable looking intent. Queue (`IN_QUEUE`) does not.
+
+**Matching lobby game:** a public GAME / TOURNAMENT / BAR that fully fits the viewer’s looking intent and still has a PLAYING slot. Shown as circular nodes on the court lobby radar (`matchingGames[]`), not as pool people.
+
 ### 2.2 Architecture constraints (do not “simplify” without intent)
 
 These are surprising, load-bearing choices still true in code:
@@ -96,9 +100,11 @@ These are surprising, load-bearing choices still true in code:
 | **Template matrix source of truth** | FE + `@shared/createTemplates` define templates; FE/BE parity via `createTemplates.parity.test.ts` / sport flow verify tests. Do not maintain a separate matrix markdown. |
 | **Sport level confirmation** | Per-sport on `UserSportProfile.approved*`. Legacy `User.approved*` is a **PADEL-only** denormalized mirror for older clients — not a primary-sport projection. Non-padel confirmation lives only on the sport profile. |
 | **Court occupancy** | FE owns external snapshot refresh; BE returns merged occupancy blocks (app games + admin holds + external busy). Snapshot freshness: `BOOKTIME_SNAPSHOT_FRESH_MS` (60s) — shared constant used for Booktime/Padeloo/Klikteren snapshot staleness. |
+| **Find month index is progressive** | Busy-city page 1 must commit before lightweight cursor continuation. Continuation is a cancellable per-query-key job with cursor-local retry, one bounded delayed resume for retryable failure, and page/time budgets; partial indexes remain `dayIndexTruncated` and cannot seed an empty day. Keep-previous-data placeholders never start jobs. Socket-derived index refreshes are coalesced and wait for active month work. Do not move continuation back into the main query promise. |
 | **External booking** | Provider ports in `@shared/booking/` with adapters for **Booktime**, **Padeloo**, and **Klikteren** (`ClubIntegrationType`). Separate persistence per provider (`UserClub*Auth` + `Club*BusySnapshot`). Shared freshness constant `BOOKTIME_SNAPSHOT_FRESH_MS` (60s). |
 | **Open chat thread** | Live projection module (`threadLiveProjection`) — inbox can update while an open thread must still apply inbound + read-receipt paths without requiring refresh. Bootstrap invariants live in `Frontend/src/services/chat/threadOpen/types.ts`. |
 | **Play-intent notifications** | Intent/game matching is transactionally queued. Recipient delivery is persisted per event + user + channel, revalidated before send, retried with backoff, and deduplicated by that key. Do not replace it with post-commit fire-and-forget sends. |
+| **Play-intent radar games ≠ notify** | Court-lobby matching games are a separate `matchingGames[]` on the pool (not `PoolMember`). Sport radar includes public GAME + TOURNAMENT; BAR radar is BAR only. `GAME_MATCHES_INTENT` notify stays GAME/BAR only. Do not stuff games into player physics or tighten notify to `allowDirectJoin`. |
 | **Device refresh sessions are retry-safe** | Access JWTs stay short-lived. Updated clients rotate refresh credentials with a persistent request ID, so a lost-response retry receives the exact committed successor. Pre-update clients use a stable-token compatibility path until the minimum client version is raised. Never rotate without this replay protocol. |
 
 ### 2.3 Shared packages & modules
@@ -256,11 +262,15 @@ Instagram-style ephemeral content at top of Home:
 Three optional panels — Bookings, Teams, Leagues — with counts:
 
 **Bookings** (Booktime / Padeloo / Klikteren):
-- Upcoming club booking cards (up to 3 + "See all")
+- Upcoming club bookings that are not fully linked to a game appear below stories (before Play / games) so they are not forgotten
+- Confirmed via one batch linked-games lookup; a failed lookup does not pretend the booking is unlinked
+- Fully linked upcoming bookings (including those already linked on My games) stay behind the compact Bookings CTA
+- Per-slot actions: link to game, create game, cancel booking
+- "See all" opens connected clubs
+- Fully linked upcoming bookings stay behind the compact Bookings CTA (when any remain)
 - Adjacent same-court slot grouping
 - Linked game chips, occupancy % pills
-- Per-slot actions: link to game, create game, cancel booking
-- Connect-club banner for unconnected integrated clubs
+- Connect-club banner for unconnected integrated clubs (connected-clubs page)
 - Gear shortcut → connected clubs integrations
 
 **Teams:**
@@ -296,6 +306,16 @@ Three optional panels — Bookings, Teams, Leagues — with counts:
 ## 6. Cities & club discovery
 
 Not a top-level route — embedded in city picker, Find header, and create-game club flows.
+
+Three city roles (do not collapse):
+
+| Role | Source | Drives |
+|------|--------|--------|
+| **Home** | `user.currentCity` via Profile / Find header `switchCity` | Find, My, weather, city group chats, play-intent lobby |
+| **Browse** | Session lens (`useBrowseCityStore`, `sessionStorage` `bandeja.browseCity`) | Invite Search/Looking, chat contacts, chat Users search |
+| **Venue** | Club pick (`locationCityId` / `club.cityId`) | Create-game and edit-location club list; Looking **fit** |
+
+Browse never calls `switchCity`. Default is Home. Profile city change snaps browse back to Home (recents kept). Logout clears recents. See `docs/plans/browse-city.md`.
 
 ### 6.1 City selection
 
@@ -368,7 +388,21 @@ Filters persist in local storage across reloads.
 
 ### 7.5 City
 
-Change city from header → games refetch for new city.
+Change city from the Find header → `switchCity` (Home). Games refetch for the new Home city. Browse lens (invite/chat) is a different control and does not drive Find.
+
+### 7.6 Play intents (court lobby)
+
+Logged-in Find and My show a **Want to play / Looking** strip (Home city). Compose a sport GAME intent or BAR intent; open the court lobby radar.
+
+- Radar people: other looking players in that city/sport/entity, affinity-weighted orbits.
+- Radar games: up to 4 fully eligible public events as circular face composites on the near orbit (not `PoolMember` physics). Sport intent: GAME + TOURNAMENT. BAR intent: BAR only. Skip TRAINING, leagues, private, full, no time, owner, already PLAYING / INVITED / IN_QUEUE.
+- Direct-join vs queue-only is chrome + CTA only (`Join` / `Ask to join`). A free PLAYING slot is required either way.
+- Hidden for spectators and while a real PENDING/ACCEPTED proposal is open. The direct match editor (no proposal) still shows games.
+- Join that lands PLAYING consumes looking and detaches from any proposal. Ask-to-join / overlap-cancel keep looking.
+- Live: `play-intent:invalidate` (`matching-games-changed` plus intent/proposal reasons). 2 min poll + focus/reconnect as backup.
+- Push game-fit (`GAME_MATCHES_INTENT`) and the Find list stay separate: notify is still GAME/BAR only (PI-40). A fitting tournament can appear on the radar without a game-fit push.
+
+Details: `docs/plans/lobby-radar-matching-games.md`. Invite Search \| Looking is a different surface: `docs/plans/player-invite-looking.md`.
 
 ---
 
@@ -408,7 +442,7 @@ Multi-step wizard for scheduling events. Entity types:
 
 ### 8.2 Scheduling
 
-- Club picker (filtered by sport)
+- Club picker (filtered by sport). Header **venue** city chip (independent of browse); typed club search can find venues in other cities; pick sets game city from `club.cityId` and clears courts/bookings
 - Court grid with occupancy rings per date
 - Multi-court selection (auto-calculated from participant count)
 - Date, duration, time grid
@@ -416,7 +450,7 @@ Multi-step wizard for scheduling events. Entity types:
 - Max participants, gender restriction (MEN/WOMEN/MIX)
 - Game name, description, avatar upload
 - Price section (type, currency, total)
-- Invite players from list (level filter, availability icons)
+- Invite players from list (Search \| Looking when date/time is set; browse-city chip; level filter, availability icons; named miss can show Nearby people)
 - Floating summary chip bar when scrolling past filled sections
 
 ### 8.3 External booking (Booktime / Padeloo / Klikteren)
@@ -490,7 +524,7 @@ Central hub for any scheduled event. Layout adapts by `entityType`.
 **Participation:**
 - Join, leave, join queue, cancel queue
 - Accept/decline invites (with note)
-- Owner: accept/decline queue, invite players, cancel invites, kick, **transfer ownership**, manage users modal (roles)
+- Owner: accept/decline queue, invite players (Search \| Looking, browse-city chip), cancel invites, kick, **transfer ownership**, manage users modal (roles)
 - Guest join (chat-only access without full roster join)
 - Participant carousel vs list toggle
 - Fixed teams management
@@ -609,7 +643,7 @@ Offline-first real-time messaging system.
 
 | Filter | Route / param |
 |--------|---------------|
-| Users | Default — DMs + group chats |
+| Users | Default — DMs + group chats. Browse-city chip in the search field (contacts + user search). Bugs / market / channels have no chip |
 | Market | `/chats/marketplace` |
 | Channels | `?filter=channels` |
 | Bugs | `/bugs`, `/bugs/:id` |
@@ -742,7 +776,7 @@ Peer-to-peer listings within the app.
 - Weekly availability grid
 
 **Preferences:**
-- City
+- City (Home — Profile `switchCity`; invite/chat browse is a session lens and is not this control)
 - Language, time format, week start
 - Default currency
 - Theme (light/dark/system)
@@ -789,7 +823,7 @@ Peer-to-peer listings within the app.
 - **Follow / unfollow** users (API: `/favorites/users`; also used to highlight trainers in Find)
 - **Favorite clubs** (shortcut in Find filters; separate API from user follows)
 - **Block / unblock** (restricts chat and follow)
-- **User teams** (`/user-team/:id`): create, edit name/status/avatar, invite members, remove, delete team
+- **User teams** (`/user-team/:id`): create (pair explainer), edit name/status/avatar, invite partner, add the ready pair to an upcoming game the member can invite to (same invite-as-user-team path; fixed-pairs games seat them as one pair), remove, delete team
 - **Player card overlay** (`?player=`) from anywhere — avatar/stats, follow, block, start DM, invite to game, **send coins**, **common group chats** list (`/users/:id/common-groups`)
 - **Invite friend** share link from Home
 
@@ -875,8 +909,10 @@ For users with `clubAdminClubs` permission. FAB entry point.
 In-app issue reporting via chat threads.
 
 - Create bug from + menu → opens bug channel
+- Types: Bug, Critical, Suggestion, Question, Task, Review
+- Review stores 1–5 stars in `priority`; other types keep -2…+2 priority
 - Bugs inbox filter (`/bugs`)
-- Priority selector and badge
+- Priority selector and badge (star rating when type is Review)
 - Bug context panel in chat thread
 - Lifecycle: TEST → FINISHED (15d) → ARCHIVED (3d) via scheduler
 - Developer room socket notification (`new-bug`)
@@ -944,7 +980,7 @@ Beyond the Home rail (see §5.1):
 
 ### 24.1 Push (APNs + FCM)
 
-Types: game chat, user chat, group chat, bug chat, invites, new game, game reminder, game results, game cancelled, game system, league round start, league game assigned, bets resolved, transactions, new market item, new bug, auction, match timer cap, user team events.
+Types: game chat, user chat, group chat, bug chat, invites, new game, game reminder, game results, game cancelled, game system, league round start, league game assigned, bets resolved, transactions, new market item, new bug, auction, match timer cap, user team events, play-intent match, game-fit (`GAME_MATCHES_INTENT`), friends looking.
 
 - Register/renew/remove device tokens
 - **Inline reply** to chat from lock screen / notification shade (incl. token-only path when app killed)
@@ -1087,9 +1123,9 @@ Runs at **:00 and :30** every hour (+ once on startup). Uses club city timezone 
 
 ## 32. Real-time events (Socket.IO)
 
-**Client subscriptions:** game rooms, bug rooms, DM rooms, group/channel rooms, marketplace auction rooms, presence.
+**Client subscriptions:** game rooms, bug rooms, DM rooms, group/channel rooms, marketplace auction rooms, presence, play-intent city pool.
 
-**Server events:** chat messages/updates/reactions/read receipts/deletes/polls/translations/transcriptions/pins, unread counts, game updates/results/cancel, match timer, live scoring, game photos, invites, user team events, bets, auction bids, stories, wallet updates, presence, typing indicators, sync handshake.
+**Server events:** chat messages/updates/reactions/read receipts/deletes/polls/translations/transcriptions/pins, unread counts, game updates/results/cancel, match timer, live scoring, game photos, invites, user team events, bets, auction bids, stories, wallet updates, presence, typing indicators, sync handshake, `play-intent:invalidate` (intent/proposal lifecycle and `matching-games-changed`).
 
 ---
 
@@ -1162,6 +1198,7 @@ Each sport in the registry defines:
 | Auth & identity | `/auth`, `/telegram`, `/me` (`/my-tab-data` aggregated home payload) |
 | App | `/app` (`/version-check`, `/location`) |
 | Users & social | `/users`, `/blocked-users`, `/favorites`, `/user-teams`, `/user-game-notes` |
+| Play intents | `/play-intents` (compose, pool + `matchingGames`, proposals, invite-pool, share) |
 | Geography & clubs | `/cities`, `/clubs` (incl. `/map`, reviews, per-club booktime/padeloo auth+snapshot), `/courts`, `/club-admin`, `/booktime`, `/padeloo` |
 | Games | `/games`, `/game-teams`, `/game-courts`, `/game-subscriptions`, `/invites`, `/faqs`, `/training`, `/trainers` |
 | Results & live | `/results` (incl. spectator token, live scoring, match timer, outcome explanation) |

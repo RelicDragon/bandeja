@@ -75,9 +75,11 @@ interface GameStartSectionProps {
   courts?: Court[];
   preferredSport?: Sport | null;
   isClubModalOpen?: boolean;
-  onSelectClub?: (id: string) => void;
+  onSelectClub?: (id: string, club?: Club) => void;
   onOpenClubModal?: () => void;
   onCloseClubModal?: () => void;
+  venueCityId?: string;
+  onVenueCityChange?: (cityId: string, snapshot?: { name: string; country: string }) => void;
 }
 
 export const GameStartSection = ({
@@ -129,6 +131,8 @@ export const GameStartSection = ({
   onSelectClub,
   onOpenClubModal,
   onCloseClubModal,
+  venueCityId,
+  onVenueCityChange,
 }: GameStartSectionProps) => {
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
@@ -380,14 +384,18 @@ export const GameStartSection = ({
 
   const clubPickerSection = showClubPicker ? (
     <CreateGameClubSection
-      clubs={clubs}
-      courts={courts}
+      clubs={clubs ?? []}
+      courts={courts ?? []}
       selectedClub={selectedClub}
       selectedCourt={selectedCourt ?? 'notBooked'}
       isClubModalOpen={isClubModalOpen}
-      onSelectClub={onSelectClub}
-      onOpenClubModal={onOpenClubModal}
-      onCloseClubModal={onCloseClubModal}
+      onSelectClub={onSelectClub!}
+      onOpenClubModal={onOpenClubModal!}
+      onCloseClubModal={onCloseClubModal!}
+      venueCityId={venueCityId}
+      onVenueCityChange={onVenueCityChange}
+      entityType={entityType}
+      preferredSport={preferredSport}
     />
   ) : null;
 

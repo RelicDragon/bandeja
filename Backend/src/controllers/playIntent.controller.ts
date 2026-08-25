@@ -13,12 +13,14 @@ import { getValidatedRequestPart } from '../middleware/validateZod';
 import type {
   ValidatedAddProposalMemberInput,
   ValidatedCreatePlayIntentInput,
+  ValidatedInvitePoolInput,
   ValidatedPlayIntentIdParams,
   ValidatedPlayIntentScopeQuery,
   ValidatedProposalIdParams,
   ValidatedRemoveProposalMemberInput,
   ValidatedDiscussPlayIntentInput,
 } from '../services/playIntent/playIntent.schemas';
+import { PlayIntentInvitePoolService } from '../services/playIntent/playIntentInvitePool.service';
 
 export const getMyPlayIntent = asyncHandler(async (req: AuthRequest, res: Response) => {
   if (!req.userId) throw new Error('User ID not found');
@@ -178,4 +180,14 @@ export const addMatchProposalMember = asyncHandler(async (req: AuthRequest, res:
     body,
   );
   res.json({ success: true, data: result });
+});
+
+export const getPlayIntentInvitePool = asyncHandler(async (req: AuthRequest, res: Response) => {
+  if (!req.userId) throw new Error('User ID not found');
+  const body = getValidatedRequestPart<ValidatedInvitePoolInput>(req, 'body');
+  const isAdmin = req.user?.isAdmin === true;
+  const pool = body.gameId
+    ? await PlayIntentInvitePoolService.forGame(req.userId, body.gameId, isAdmin, body.cityId)
+    : await PlayIntentInvitePoolService.forDraft(req.userId, body.draft!);
+  res.json({ success: true, data: pool });
 });

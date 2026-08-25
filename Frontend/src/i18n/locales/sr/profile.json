@@ -152,6 +152,7 @@
     "telegram": "Telegram",
     "telegramUsername": "Korisničko ime na Telegramu",
     "linkTelegram": "Poveži Telegram",
+    "openingTelegram": "Otvaram Telegram…",
     "telegramNotLinked": "Nije povezan",
     "updateFromTelegram": "Ažuriraj ime iz Telegrama",
     "telegramSyncFailed": "Nije moguće ažurirati iz Telegrama. Prvo otvori razgovor sa botom.",
@@ -310,6 +311,7 @@
     "monday": "Ponedeljak",
     "sunday": "Nedelja",
     "currency": "Valuta",
+    "currencyAuto": "Otkrij automatski",
     "timeFormat12h": "12-časovni",
     "timeFormat24h": "24-časovni",
     "characterGenerator": "Generator karaktera",
@@ -318,7 +320,10 @@
     "noSharedGames": "No shared finished games yet",
     "noLeaderboardData": "No leaderboard data available",
     "leaderboard": {
-      "sportLabel": "Sport na rang listi"
+      "sportLabel": "Sport na rang listi",
+      "unranked": "—",
+      "inactiveSection": "Van rangiranja",
+      "inactiveHint": "Potrebno 5 mečeva i ocenjeni meč u 90 dana"
     },
     "sessionsTitle": "Uređaji sa prijavom",
     "sessionsSubtitle": "Upravljajte gde ostajete prijavljeni",

@@ -317,6 +317,15 @@ const suites: Suite[] = [
     ],
   },
   {
+    label: 'game slot overlap',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      '--transpile-only',
+      path.join(backendRoot, 'src', 'services', 'game', 'gameSlotOverlap.test.ts'),
+    ],
+  },
+  {
     label: 'multisport deferred product',
     command: process.execPath,
     args: [
@@ -376,6 +385,24 @@ const suites: Suite[] = [
     args: [
       path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
       path.join(backendRoot, 'src', 'utils', 'sportRating.test.ts'),
+    ],
+  },
+  {
+    label: 'city currency from country',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      '--transpile-only',
+      path.join(backendRoot, 'src', 'utils', 'currencyFromCountry.test.ts'),
+    ],
+  },
+  {
+    label: 'initial currency assignment',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      '--transpile-only',
+      path.join(backendRoot, 'src', 'services', 'user', 'initialCurrencyAssignment.test.ts'),
     ],
   },
   {
@@ -1132,6 +1159,14 @@ const suites: Suite[] = [
     ],
   },
   {
+    label: 'app release review guard',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'scripts', 'lib', 'app-release-review.test.ts'),
+    ],
+  },
+  {
     label: 'app release build',
     command: process.execPath,
     args: [
@@ -1162,6 +1197,11 @@ const suites: Suite[] = [
       path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
       path.join(backendRoot, 'scripts', 'lib', 'app-release-finalize.test.ts'),
     ],
+  },
+  {
+    label: 'rating leaderboard qualify',
+    command: 'npm',
+    args: ['run', 'test:rating-leaderboard'],
   },
   {
     label: 'play intent',

@@ -24,6 +24,6 @@
     }
   },
   "include": ["src", "shared"],
-  "exclude": ["android", "ios", "dist", "node_modules", "**/*.test.ts", "**/__tests__/**"]
+  "exclude": ["android", "ios", "dist", "node_modules", "**/*.test.ts", "**/*.test.tsx", "**/__tests__/**"]
 }
 

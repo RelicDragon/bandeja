@@ -48,7 +48,9 @@
         "giantKiller": "Lovec obrů",
         "dynamicDuo": "Dynamické duo",
         "openCourt": "Otevřený kurt",
-        "leto2026": "Leto 2026"
+        "leto2026": "Leto 2026",
+        "tieBreaker": "Tie-break",
+        "bugShipped": "Bug tracker"
       }
     },
     "leaderboard": {
@@ -82,7 +84,8 @@
         "hostedBars": "{{count}} Bar událostí",
         "upsets": "{{count}} překvapení",
         "partnerWins": "{{count}} výher s partnerem",
-        "partners": "{{count}} partnerů"
+        "partners": "{{count}} partnerů",
+        "tieBreaks": "{{count}} tie-breaků"
       }
     },
     "detail": {
@@ -337,6 +340,46 @@
       "leto2026Gold": {
         "title": "Šampion Leto 2026",
         "description": "Zlaté pódium Fix Liga Leto 2026."
+      },
+      "tieBreak1": {
+        "title": "Tie-Breaker",
+        "description": "Vyhraj set na tie-break — klasických 7:6 nebo super tie-break."
+      },
+      "tieBreak5": {
+        "title": "Náhlá smrt",
+        "description": "Vyhraj 5 setů na tie-break (7:6 nebo super TB)."
+      },
+      "tieBreak12": {
+        "title": "Klub 7:6",
+        "description": "Vyhraj 12 setů na tie-break (7:6 nebo super TB)."
+      },
+      "tieBreak32": {
+        "title": "Ocelové nervy",
+        "description": "Vyhraj 32 setů na tie-break (7:6 nebo super TB)."
+      },
+      "tieBreak64": {
+        "title": "Loterijní legenda",
+        "description": "Vyhraj 64 setů na tie-break (7:6 nebo super TB)."
+      },
+      "bugShipped1": {
+        "title": "Dodáno",
+        "description": "Doveď 1 bug nebo návrh přes rozpracování nebo test do hotovo/archiv. Otázky se nepočítají."
+      },
+      "bugShipped5": {
+        "title": "Poznámky k patchi",
+        "description": "Doveď 5 bugů nebo návrhů přes rozpracování nebo test do hotovo/archiv."
+      },
+      "bugShipped10": {
+        "title": "Továrna na fixy",
+        "description": "Doveď 10 bugů nebo návrhů přes rozpracování nebo test do hotovo/archiv."
+      },
+      "bugShipped25": {
+        "title": "Krotitel bugů",
+        "description": "Doveď 25 bugů nebo návrhů přes rozpracování nebo test do hotovo/archiv."
+      },
+      "bugShipped50": {
+        "title": "Legenda releasu",
+        "description": "Doveď 50 bugů nebo návrhů přes rozpracování nebo test do hotovo/archiv."
       }
     }
   }

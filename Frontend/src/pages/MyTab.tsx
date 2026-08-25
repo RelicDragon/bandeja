@@ -17,6 +17,7 @@ import { StoriesRail } from '@/components/stories/StoriesRail';
 import { HomeActionGrid } from '@/components/home/HomeActionGrid';
 import { HomeTodayHeading } from '@/components/home/HomeTodayHeading';
 import { AdSlot } from '@/components/sponsorSlots';
+import { MyTabUnlinkedBookingsSection } from '@/components/booktime/MyTabUnlinkedBookingsSection';
 import { AD_PLACEMENTS } from '@/shared/adPlacements';
 import { useRegisterAdSportContext } from '@/hooks/useAdPlacements';
 import { getViewerPrimarySport } from '@/utils/profileSports';
@@ -28,6 +29,7 @@ import { useShellNavStore } from '@/store/shellNavStore';
 import { useHeaderStore } from '@/store/headerStore';
 import { useMyGames } from '@/hooks/useMyGames';
 import { useMyTabClubBookings } from '@/hooks/useMyTabClubBookings';
+import { useMyTabUnlinkedBookings } from '@/hooks/useMyTabUnlinkedBookings';
 import { useUserTeamsBootstrap } from '@/hooks/useUserTeamsBootstrap';
 import { useMyTabPanelCounts } from '@/hooks/useMyTabPanelCounts';
 import { CalendarSection } from '@/components/home/CalendarSection';
@@ -45,9 +47,11 @@ import { PullToRefreshShell } from '@/components/PullToRefreshShell';
 import { useDesktop } from '@/hooks/useDesktop';
 import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
 import { runWithProfileName } from '@/utils/runWithProfileName';
+import { recoverGenderUnsetJoin, runWithGenderForEvent } from '@/utils/genderJoinGate';
 import { AnimatedMount } from '@/components/motion/AnimatedMount';
 import { TabContentStack } from '@/components/motion/TabContentStack';
 import { useDeclineInvite } from '@/hooks/useDeclineInvite';
+import { runWithOverlapConfirm } from '@/utils/gameSlotOverlapConfirm';
 import { ResizableSplitter } from '@/components/ResizableSplitter';
 import { navigationService } from '@/services/navigationService';
 import { useUserTeamsStore } from '@/store/userTeamsStore';
@@ -113,6 +117,7 @@ export const MyTab = () => {
   // counts drive the action grid's earned surfaces and the bottom Teams section).
   useUserTeamsBootstrap();
   const booktime = useMyTabClubBookings();
+  const { reloadMyClubs, reloadBookings } = booktime;
 
   const [myGamesViewMode, setMyGamesViewMode] = useState<MyGamesViewMode>(() =>
     readMyGamesViewMode(user?.id),
@@ -134,6 +139,8 @@ export const MyTab = () => {
     unreadCounts,
     refetch: refetchMyGames,
   } = useMyGames(user, setLoading);
+  const unlinkedBookings = useMyTabUnlinkedBookings(booktime, games);
+  const { reloadLinkedGames } = unlinkedBookings;
   const panelCounts = useMyTabPanelCounts(games, booktime);
 
   useEffect(() => {
@@ -394,14 +401,19 @@ export const MyTab = () => {
       runWithProfileName(() => void handleAcceptInvite(inviteId));
       return;
     }
+    const inviteGame = invites.find((inv) => inv.id === inviteId)?.game;
+    if (!runWithGenderForEvent(inviteGame, () => void handleAcceptInvite(inviteId))) return;
     // Guard against a rapid double-tap firing two POSTs (the second would 404
     // because the invite is no longer in the INVITED state, surfacing a spurious error toast).
     if (acceptingInviteIdsRef.current.has(inviteId)) return;
     acceptingInviteIdsRef.current.add(inviteId);
     try {
       const { invitesApi } = await import('@/api');
-      const response = await invitesApi.accept(inviteId);
-      const message = (response as any).message || 'Invite accepted successfully';
+      const response = await runWithOverlapConfirm((confirmOverlap) =>
+        invitesApi.accept(inviteId, confirmOverlap),
+      );
+      if (!response) return;
+      const message = (response as { message?: string }).message || 'Invite accepted successfully';
 
       if (message === 'games.addedToJoinQueue') {
         toast.success(t('games.addedToJoinQueue', { defaultValue: 'Added to join queue' }));
@@ -413,6 +425,7 @@ export const MyTab = () => {
       decrementPendingInvite(inviteId);
       void refetchMyGames(false, true);
     } catch (error: any) {
+      if (recoverGenderUnsetJoin(error, () => void handleAcceptInvite(inviteId))) return;
       const errorMessage = error.response?.data?.message || 'errors.generic';
       toast.error(t(errorMessage, { defaultValue: errorMessage }));
     } finally {
@@ -443,8 +456,13 @@ export const MyTab = () => {
       refetchMyGames(),
       loadPastGames?.(),
       useUserTeamsStore.getState().refreshAll({ force: true }),
+      (async () => {
+        await reloadMyClubs();
+        await reloadBookings();
+        await reloadLinkedGames();
+      })(),
     ]);
-  }, [refetchMyGames, loadPastGames]);
+  }, [reloadMyClubs, reloadBookings, reloadLinkedGames, refetchMyGames, loadPastGames]);
 
   const scrollBottomPadding = 'calc(5rem + env(safe-area-inset-bottom, 0px))';
   const renderPastGamesContent = (footerLoading: boolean) => (
@@ -471,6 +489,9 @@ export const MyTab = () => {
               <StoriesRail />
             </AnimatedMount>
           )}
+          {user && (
+            <MyTabUnlinkedBookingsSection booktime={booktime} unlinked={unlinkedBookings} />
+          )}
           {user && user.cityIsSet === true && (
             <AdSlot placement={AD_PLACEMENTS.HOME_HERO} />
           )}
@@ -481,6 +502,7 @@ export const MyTab = () => {
               gamesUnreadCounts={calendarMergedUnreadCounts}
               primarySport={primarySport}
               panelCounts={panelCounts}
+              hideBookingsCta={unlinkedBookings.visible || unlinkedBookings.pending}
             />
           )}
           {!loading && (
@@ -567,6 +589,9 @@ export const MyTab = () => {
               <StoriesRail />
             </AnimatedMount>
           )}
+          {user && (
+            <MyTabUnlinkedBookingsSection booktime={booktime} unlinked={unlinkedBookings} />
+          )}
           {user && user.cityIsSet === true && (
             <AdSlot placement={AD_PLACEMENTS.HOME_HERO} />
           )}
@@ -577,6 +602,7 @@ export const MyTab = () => {
               gamesUnreadCounts={calendarMergedUnreadCounts}
               primarySport={primarySport}
               panelCounts={panelCounts}
+              hideBookingsCta={unlinkedBookings.visible || unlinkedBookings.pending}
             />
           )}
           {!loading && (

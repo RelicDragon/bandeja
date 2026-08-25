@@ -62,6 +62,11 @@
       "unlinkSaveConfirmMessage": "You are unlinking {{count}} reservation(s) from this game. The real court bookings will not be cancelled automatically.",
       "reservationActionTitle": "What should happen to the court?",
       "reservationActionSubtitle": "Choose what changes when you save.",
+      "changeGateTitle": "Linked to {{count}} court(s)",
+      "changeGateBody": "Unlink first to book a different club or courts.",
+      "changeGateBodyClub": "Unlink first to leave {{club}} and book somewhere else.",
+      "clubLockedBadge": "Linked",
+      "clubLockedAria": "Club is locked. Unlink the reservation to change club.",
       "reservationAction": {
         "keepCurrent": {
           "title": "Keep current reservation",
@@ -86,7 +91,7 @@
         "unlink": {
           "title": "Unlink reservation",
           "chipTitle": "Unlink",
-          "description": "Remove reservation links from this game only."
+          "description": "Remove the link from this game. The club booking stays. After save, you can book a different club or courts."
         },
         "gameOnly": {
           "title": "Game only",
@@ -100,7 +105,7 @@
         "changeGameTimeOnly": "Game time changes; existing reservation links stay attached.",
         "useExisting": "{{selected}} reservation(s) will be linked to this game.",
         "reserveNew": "A new real court reservation will be created on save.",
-        "unlink": "Reservation links will be removed from this game.",
+        "unlink": "Reservation links will be removed from this game. After save you can book a different club or courts.",
         "gameOnly": "The game remains scheduled without real reservation links.",
         "reserveNewConfirm": "You will review the real reservation before saving.",
         "unlinkNoCancel": "{{count}} real club reservation(s) will remain active unless you cancel them with the club/provider."

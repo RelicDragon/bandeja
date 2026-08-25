@@ -52,7 +52,9 @@
       "memberNotFound": "Hráč není v týmu",
       "cannotRemoveOwner": "Vlastníka nelze odebrat",
       "userIdRequired": "Vyberte hráče",
-      "nameTooShort": "Název týmu musí mít alespoň 3 znaky"
+      "nameTooShort": "Název týmu musí mít alespoň 3 znaky",
+      "notReady": "Nejdřív pozvěte parťáka — dvojice ještě není kompletní",
+      "notAcceptedMember": "Nejdřív se k dvojici přidejte, pak ji můžete dát do zápasu"
     },
     "games": {
       "cannotJoin": "Nelze se připojit k zápasu",
@@ -60,7 +62,12 @@
       "alreadyParticipant": "Uživatel je již účastníkem",
       "cannotJoinArchivedOrFinished": "Nelze se připojit k archivovanému nebo ukončenému zápasu",
       "directJoinNotAllowed": "Přímé připojení u tohoto zápasu není povoleno",
-      "cannotDeleteHasChildren": "Zápas s dceřinými zápasy (např. turnaj s koly) nelze smazat. Nejprve smažte nebo odeberte dceřiné zápasy."
+      "cannotDeleteHasChildren": "Zápas s dceřinými zápasy (např. turnaj s koly) nelze smazat. Nejprve smažte nebo odeberte dceřiné zápasy.",
+      "genderUnset": "Nastavte pohlaví, abyste se mohli připojit",
+      "genderUnsetOther": "Tento hráč si ještě nenastavil pohlaví",
+      "genderIncompatibleMen": "Do tohoto zápasu se mohou přidat jen muži",
+      "genderIncompatibleWomen": "Do tohoto zápasu se mohou přidat jen ženy",
+      "genderIncompatibleMix": "Do tohoto zápasu se mohou přidat jen muži nebo ženy"
     },
     "league": {
       "gameNotFound": "Zápas nenalezen",
@@ -75,7 +82,9 @@
       "updateForbidden": "Tuto chybu může upravit jen její autor nebo admin",
       "textRequired": "Text chyby je povinný",
       "typeRequired": "Je vyžadován platný typ chyby",
-      "statusOrTypeRequired": "Je vyžadován platný stav nebo typ chyby"
+      "statusOrTypeRequired": "Je vyžadován platný stav nebo typ chyby",
+      "ratingRequired": "Recenze vyžaduje hodnocení od 1 do 5 hvězd",
+      "ratingInvalid": "Hodnocení recenze musí být od 1 do 5 hvězd"
     },
     "favorites": {
       "userIdRequired": "Je vyžadováno ID uživatele",

@@ -459,6 +459,17 @@ export function linkedGamesFullyCoverBookingSlot(
   return linkedGamesBookingSlotOccupancyPercent(booking, linkedGames, timeZone) >= 100;
 }
 
+export function filterBookingsNotFullyLinked<T extends LinkBookingRecord>(
+  bookings: T[],
+  linkedGamesByBookingId: { get(bookingId: string): LinkedGameTimeRef[] | undefined },
+  timeZoneOf?: (booking: T) => string | null | undefined,
+): T[] {
+  return bookings.filter((booking) => {
+    const linked = linkedGamesByBookingId.get(booking.uuid) ?? [];
+    return !linkedGamesFullyCoverBookingSlot(booking, linked, timeZoneOf?.(booking));
+  });
+}
+
 export function isRecommendedLinkTarget(
   game: LinkBookingGameRef,
   booking: LinkBookingRecord,

@@ -53,6 +53,10 @@ vi.mock('@/services/push/chatViewingBridge', () => ({
   cleanupNativeChatViewingSync: vi.fn(),
   initNativeChatViewingSync: vi.fn(),
 }));
+vi.mock('@/services/chat/chatHotThreadPrefetch', () => ({
+  scheduleChatHotThreadPrefetchFromIdle: vi.fn(),
+  runHotThreadPrefetchNow: vi.fn(),
+}));
 
 describe('foreground auth barrier', () => {
   beforeEach(() => {

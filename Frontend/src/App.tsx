@@ -83,6 +83,8 @@ import { usePresenceSubscriptionManager } from './hooks/usePresenceSubscriptionM
 import { ReactionEmojiUsageBootstrap } from './components/ReactionEmojiUsageBootstrap';
 import { AdPlacementsBootstrap } from './components/sponsorSlots/AdPlacementsBootstrap';
 import { ProfileNameGateHost } from './components/home/ProfileNameGateHost';
+import { GameSlotOverlapConfirmHost } from './components/gameSlotOverlap/GameSlotOverlapConfirmHost';
+import { GenderJoinGateHost } from './components/home/GenderJoinGateHost';
 import { PrimarySportGateHost } from './components/home/PrimarySportGateHost';
 import { CityPickerRedirectHost } from './components/home/CityPickerRedirectHost';
 import { needsPrimarySportSelection } from './utils/needsPrimarySportSelection';
@@ -515,6 +517,8 @@ function AppContent() {
       <GeoProvider>
         <ToastProvider>
           <ProfileNameGateHost />
+          <GameSlotOverlapConfirmHost />
+          <GenderJoinGateHost />
           <PrimarySportGateHost />
           <CityPickerRedirectHost />
           <PermissionModalProvider />

@@ -10,6 +10,32 @@ export type AvailableGamesPageMeta = {
   truncated: boolean;
   dayIndex?: FindDayIndexRow[];
   dayIndexTruncated?: boolean;
+  /** Cursor for another lightweight index page; absent on legacy servers. */
+  dayIndexNextCursor?: string | null;
+  /** Client-owned progress for a lightweight month-index continuation. */
+  dayIndexContinuation?: AvailableGamesDayIndexContinuation;
+};
+
+export type AvailableGamesDayIndexContinuationStatus =
+  | 'pending'
+  | 'loading'
+  | 'complete'
+  | 'failed'
+  | 'budget-exhausted'
+  | 'cancelled';
+
+export type AvailableGamesDayIndexContinuation = {
+  generation: number;
+  status: AvailableGamesDayIndexContinuationStatus;
+  /** Includes the first page returned by the main query. */
+  pagesLoaded: number;
+  elapsedMs: number;
+  mergeMs: number;
+  /** Number of bounded automatic resumes after terminal network failure. */
+  resumeAttempts: number;
+  /** True only for retryable transport/server failure, never cursor/budget failure. */
+  resumeEligible?: boolean;
+  failedCursor?: string;
 };
 
 export type AvailableGamesPage = {
@@ -57,5 +83,7 @@ export function parseAvailableGamesMeta(raw: unknown): AvailableGamesPageMeta {
     truncated: Boolean(m.truncated ?? m.hasMore),
     dayIndex,
     dayIndexTruncated: Boolean(m.dayIndexTruncated),
+    dayIndexNextCursor:
+      typeof m.dayIndexNextCursor === 'string' ? m.dayIndexNextCursor : null,
   };
 }
