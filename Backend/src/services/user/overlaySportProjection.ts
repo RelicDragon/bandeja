@@ -3,6 +3,7 @@ export type SportOverlayFields = {
   reliability: number;
   gamesPlayed: number;
   gamesWon: number;
+  inactive: boolean;
   approvedLevel: boolean;
   approvedById: string | null;
   approvedWhen: Date | string | null;

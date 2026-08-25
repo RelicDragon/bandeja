@@ -66,6 +66,7 @@ const projected = overlaySportProjection(
     reliability: 10,
     gamesPlayed: 3,
     gamesWon: 1,
+    inactive: false,
     approvedLevel: false,
     approvedById: null,
     approvedWhen: null,

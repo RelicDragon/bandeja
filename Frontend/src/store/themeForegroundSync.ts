@@ -5,12 +5,12 @@ import { isCapacitor } from '@/utils/capacitor';
 export const THEME_FOREGROUND_RETRY_DELAYS_MS = [50, 300] as const;
 
 export function startThemeForegroundSync(onForeground: () => void): () => void {
-  const retryTimers: Array<ReturnType<typeof window.setTimeout>> = [];
+  const retryTimers: Array<ReturnType<typeof setTimeout>> = [];
   let cleaned = false;
   let coalesced = false;
 
   const clearRetries = () => {
-    for (const id of retryTimers) window.clearTimeout(id);
+    for (const id of retryTimers) clearTimeout(id);
     retryTimers.length = 0;
   };
 
@@ -27,7 +27,7 @@ export function startThemeForegroundSync(onForeground: () => void): () => void {
     if (cleaned) return;
     clearRetries();
     for (const delay of THEME_FOREGROUND_RETRY_DELAYS_MS) {
-      retryTimers.push(window.setTimeout(run, delay));
+      retryTimers.push(setTimeout(run, delay));
     }
   };
 
