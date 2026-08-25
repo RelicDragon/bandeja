@@ -132,11 +132,12 @@ export function ChatListView({ model }: { model: ChatListViewModel }) {
           transition: pullDistance > 0 && !isRefreshing ? 'none' : `transform ${CHAT_LIST_PULL_TRANSITION_S}s ease-out`,
         }}
       >
-        {(chatsFilter === 'users' || chatsFilter === 'bugs' || chatsFilter === 'channels' || chatsFilter === 'market') && !showListSkeleton && (
+        {(chatsFilter === 'users' || chatsFilter === 'bugs' || chatsFilter === 'channels' || chatsFilter === 'market') && (
           <ChatListSearchBar
             chatsFilter={chatsFilter}
             contactsMode={contactsMode}
             searchInput={searchInput}
+            disabled={showListSkeleton}
             unreadChatsCount={unreadChatsCount}
             unreadFilterActive={unreadFilterActive}
             onUnreadFilterToggle={toggleUnreadFilter}
@@ -169,7 +170,7 @@ export function ChatListView({ model }: { model: ChatListViewModel }) {
           />
         )}
         <AnimatePresence>
-          {chatsFilter === 'bugs' && bugsFilterPanelOpen && (
+          {chatsFilter === 'bugs' && bugsFilterPanelOpen && !showListSkeleton && (
             <motion.div
               key="bugs-filter"
               initial={{ height: 0, opacity: 0 }}
@@ -182,8 +183,11 @@ export function ChatListView({ model }: { model: ChatListViewModel }) {
             </motion.div>
           )}
         </AnimatePresence>
-        {chatsFilter === 'market' && !showListSkeleton && (
-          <div className="flex items-center justify-center mt-2 mb-2">
+        {chatsFilter === 'market' && (
+          <div
+            className={`flex items-center justify-center mt-2 mb-2 ${showListSkeleton ? 'pointer-events-none opacity-60' : ''}`}
+            aria-busy={showListSkeleton}
+          >
             <SegmentedSwitch
               tabs={[
                 { id: 'buyer', label: t('marketplace.imBuyer', { defaultValue: "I'm buyer" }), icon: ShoppingCart, badge: marketBuyerSellerUnread.buyer },
@@ -194,6 +198,7 @@ export function ChatListView({ model }: { model: ChatListViewModel }) {
               showOnlyActiveTabText={false}
               layoutId="marketRoleSubtab"
               className="mx-2"
+              disabled={showListSkeleton}
             />
           </div>
         )}

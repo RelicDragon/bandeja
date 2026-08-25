@@ -25,6 +25,7 @@ interface ChatListSearchBarProps {
   onUnreadFilterToggle?: () => void;
   bugsFilterPanelOpen?: boolean;
   onBugsFilterToggle?: () => void;
+  disabled?: boolean;
 }
 
 export const ChatListSearchBar = ({
@@ -43,6 +44,7 @@ export const ChatListSearchBar = ({
   onUnreadFilterToggle,
   bugsFilterPanelOpen = false,
   onBugsFilterToggle,
+  disabled = false,
 }: ChatListSearchBarProps) => {
   const { t } = useTranslation();
 
@@ -61,8 +63,11 @@ export const ChatListSearchBar = ({
   const showUnreadFilter = shouldShowChatListUnreadFilter(unreadChatsCount);
 
   return (
-    <div className={`px-2 pb-4 border-b border-gray-200 dark:border-gray-700 ${isDesktop ? 'pt-4' : ''}`}>
-      <motion.div layout className="flex items-center">
+    <div
+      className={`px-2 pb-4 border-b border-gray-200 dark:border-gray-700 ${isDesktop ? 'pt-4' : ''} ${disabled ? 'pointer-events-none opacity-60' : ''}`}
+      aria-busy={disabled}
+    >
+      <motion.div layout={!disabled} className="flex items-center">
         {showUnreadFilter && (
           <motion.div layout className="shrink-0 overflow-visible mr-2">
             <button
@@ -139,7 +144,11 @@ export const ChatListSearchBar = ({
             placeholder={placeholder}
             value={searchInput}
             onChange={(e) => onSearchChange(e.target.value)}
-            className={`w-full pl-9 ${chatsFilter === 'users' ? (searchInput ? 'pr-[7.25rem]' : 'pr-[6.5rem]') : 'pr-9'} py-2 rounded-full border border-gray-300 dark:border-gray-600 bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400`}
+            disabled={disabled}
+            readOnly={disabled}
+            tabIndex={disabled ? -1 : undefined}
+            aria-disabled={disabled}
+            className={`w-full pl-9 ${chatsFilter === 'users' ? (searchInput ? 'pr-[7.25rem]' : 'pr-[6.5rem]') : 'pr-9'} py-2 rounded-full border border-gray-300 dark:border-gray-600 bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 disabled:cursor-default`}
           />
           {searchInput && (
             <button

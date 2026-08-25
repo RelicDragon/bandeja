@@ -32,4 +32,12 @@ describe('ChatListSearchBar', () => {
     expect(html).toMatch(/overflow-visible/);
     expect(html).toMatch(/>3</);
   });
+
+  it('renders disabled chrome while list is loading', () => {
+    const html = renderToStaticMarkup(<ChatListSearchBar {...baseProps} disabled />);
+    expect(html).toMatch(/pointer-events-none/);
+    expect(html).toMatch(/opacity-60/);
+    expect(html).toMatch(/disabled/);
+    expect(html).toMatch(/aria-busy="true"/);
+  });
 });
