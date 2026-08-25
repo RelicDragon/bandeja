@@ -28,6 +28,7 @@ export type ChatListFeedModel = {
   showChatsEmpty: boolean;
   pinnedCountUsers: number;
   getChatKey: (item: ChatItem) => string;
+  networkSettled: boolean;
 };
 
 export type ChatListSearchModel = {

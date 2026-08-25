@@ -12,6 +12,7 @@ import { CityUserCard } from './CityUserCard';
 import { ChatListDisplayedRows } from './ChatListDisplayedRows';
 import { ChatListMarketGroupChannels } from './ChatListMarketGroupChannels';
 import { ChatListSkeletonRows } from '@/components/chat/ChatListLoadingSkeleton';
+import { ChatListMotionProvider } from '@/components/chat/ChatListMotionProvider';
 import { ChatListEmptyPanel } from '@/components/chat/ChatListEmptyPanel';
 import { NearbyPeopleSection } from '@/components/browseCity/NearbyPeopleSection';
 import { useBrowseCityStore } from '@/store/browseCityStore';
@@ -24,7 +25,7 @@ export type { ChatListViewModel };
 export function ChatListView({ model }: { model: ChatListViewModel }) {
   const { t, isDesktop, user, feed, pullRefresh, search, market, contacts, sections, actions, modals, selection } =
     model;
-  const { loading, chatsFilter, displayedChats, showChatsEmpty, pinnedCountUsers, loadMoreSentinelRef, listBodyScrollRef, bugsHasMore, usersHasMore, channelsHasMore, marketHasMore, bugsLoadingMore, usersLoadingMore, channelsLoadingMore, marketLoadingMore } = feed;
+  const { loading, chatsFilter, displayedChats, showChatsEmpty, pinnedCountUsers, loadMoreSentinelRef, listBodyScrollRef, networkSettled, bugsHasMore, usersHasMore, channelsHasMore, marketHasMore, bugsLoadingMore, usersLoadingMore, channelsLoadingMore, marketLoadingMore } = feed;
   const { isRefreshing, pullDistance, pullProgress } = pullRefresh;
   const {
     searchInput,
@@ -117,6 +118,7 @@ export function ChatListView({ model }: { model: ChatListViewModel }) {
   };
 
   return (
+    <ChatListMotionProvider listLoading={loading} networkSettled={networkSettled}>
     <>
       {!isDesktop && (
         <RefreshIndicator
@@ -126,7 +128,7 @@ export function ChatListView({ model }: { model: ChatListViewModel }) {
         />
       )}
       <div
-        className={isDesktop ? 'flex h-full min-h-0 flex-col overflow-hidden bg-white dark:bg-gray-900' : ''}
+        className={`flex h-full min-h-0 flex-col overflow-hidden ${isDesktop ? 'bg-white dark:bg-gray-900' : ''}`}
         style={{
           transform: isDesktop ? 'none' : `translateY(${pullDistance}px)`,
           transition: pullDistance > 0 && !isRefreshing ? 'none' : `transform ${CHAT_LIST_PULL_TRANSITION_S}s ease-out`,
@@ -209,6 +211,7 @@ export function ChatListView({ model }: { model: ChatListViewModel }) {
             opacity: listTransition === 'out' ? 0 : 1,
             transform: listTransition === 'out' ? 'scale(0.98)' : 'scale(1)',
             transition: `opacity ${CHAT_LIST_FADE_TRANSITION_S}s ease-out, transform ${CHAT_LIST_FADE_TRANSITION_S}s ease-out`,
+            scrollbarGutter: 'stable',
             ...(isDesktop ? { paddingBottom: DESKTOP_CHAT_LIST_SCROLL_BOTTOM_PAD } : {}),
           }}
         >
@@ -467,5 +470,6 @@ export function ChatListView({ model }: { model: ChatListViewModel }) {
         />
       )}
     </>
+    </ChatListMotionProvider>
   );
 }

@@ -7,8 +7,8 @@ import {
 } from '@/utils/chatListConstants';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { CHAT_LIST_LAYOUT_SPRING, CHAT_ROW_EXIT_DURATION_S } from './chatListMotion';
+import { useChatListMotion } from './useChatListMotion';
 import { ChatListAnimatedRow } from './ChatListAnimatedRow';
-import { ChatListRowEnterShell } from './ChatListRowEnterShell';
 import { useChatListNewKeys } from './useChatListNewKeys';
 import { useVirtualRowLayoutTransition } from './useVirtualRowLayoutTransition';
 
@@ -25,7 +25,7 @@ export type ChatListVirtualSliceProps<T> = {
 
 type VirtualizedBodyProps<T> = Omit<ChatListVirtualSliceProps<T>, 'threshold'> & {
   newKeys: ReadonlySet<string>;
-  reduceMotion: boolean;
+  allowListMotion: boolean;
 };
 
 function ChatListVirtualSliceVirtualized<T>({
@@ -36,7 +36,7 @@ function ChatListVirtualSliceVirtualized<T>({
   overscan = CHAT_LIST_VIRTUAL_OVERSCAN,
   renderItem,
   newKeys,
-  reduceMotion,
+  allowListMotion,
 }: VirtualizedBodyProps<T>) {
   const n = items.length;
   const virtualizer = useVirtualizer({
@@ -48,7 +48,7 @@ function ChatListVirtualSliceVirtualized<T>({
   });
   const rows = virtualizer.getVirtualItems();
   const totalHeight = virtualizer.getTotalSize();
-  const rowStyles = useVirtualRowLayoutTransition(scrollElementRef, rows, !reduceMotion);
+  const rowStyles = useVirtualRowLayoutTransition(scrollElementRef, rows, allowListMotion);
 
   return (
     <div className="relative w-full" style={{ height: totalHeight }}>
@@ -78,46 +78,50 @@ function ChatListVirtualSliceStatic<T>({
   items,
   getItemKey,
   renderItem,
-  reduceMotion,
+  allowListMotion,
   layoutGroupId,
+  newKeys,
 }: {
   items: readonly T[];
   getItemKey: (item: T, index: number) => string;
   renderItem: (item: T, index: number) => ReactNode;
-  reduceMotion: boolean;
+  allowListMotion: boolean;
   layoutGroupId: string;
+  newKeys: ReadonlySet<string>;
 }) {
-  if (reduceMotion) {
-    return (
-      <>
-        {items.map((item, index) => (
-          <div key={getItemKey(item, index)}>{renderItem(item, index)}</div>
-        ))}
-      </>
+  const rows = items.map((item, index) => {
+    const itemKey = getItemKey(item, index);
+    const body = (
+      <ChatListAnimatedRow isNew={newKeys.has(itemKey)} staggerIndex={index}>
+        {renderItem(item, index)}
+      </ChatListAnimatedRow>
     );
+
+    if (!allowListMotion) {
+      return <div key={itemKey}>{body}</div>;
+    }
+
+    return (
+      <motion.div
+        key={itemKey}
+        layout
+        layoutScroll
+        className="overflow-hidden"
+        exit={{ opacity: 0, scale: 0.96, transition: { duration: CHAT_ROW_EXIT_DURATION_S } }}
+        transition={{ layout: CHAT_LIST_LAYOUT_SPRING }}
+      >
+        {body}
+      </motion.div>
+    );
+  });
+
+  if (!allowListMotion) {
+    return <>{rows}</>;
   }
 
   return (
     <LayoutGroup id={layoutGroupId}>
-      <AnimatePresence mode="popLayout">
-        {items.map((item, index) => {
-          const itemKey = getItemKey(item, index);
-          return (
-            <motion.div
-              key={itemKey}
-              layout
-              layoutScroll
-              className="overflow-hidden"
-              exit={{ opacity: 0, scale: 0.96, transition: { duration: CHAT_ROW_EXIT_DURATION_S } }}
-              transition={{ layout: CHAT_LIST_LAYOUT_SPRING }}
-            >
-              <ChatListRowEnterShell staggerIndex={index}>
-                {renderItem(item, index)}
-              </ChatListRowEnterShell>
-            </motion.div>
-          );
-        })}
-      </AnimatePresence>
+      <AnimatePresence mode="popLayout">{rows}</AnimatePresence>
     </LayoutGroup>
   );
 }
@@ -133,13 +137,15 @@ export function ChatListVirtualSlice<T>({
   renderItem,
 }: ChatListVirtualSliceProps<T>) {
   const reduceMotion = usePrefersReducedMotion();
+  const { listLoading, motionEnabled, networkSettled } = useChatListMotion();
+  const allowListMotion = motionEnabled && !reduceMotion;
   const getItemKeyRef = useRef(getItemKey);
   getItemKeyRef.current = getItemKey;
   const itemKeys = useMemo(
     () => items.map((item, index) => getItemKeyRef.current(item, index)),
     [items]
   );
-  const newKeys = useChatListNewKeys(itemKeys, animationResetKey);
+  const newKeys = useChatListNewKeys(itemKeys, animationResetKey, listLoading, networkSettled);
   const layoutGroupId = `chat-list-${animationResetKey ?? 'default'}`;
   const n = items.length;
 
@@ -149,8 +155,9 @@ export function ChatListVirtualSlice<T>({
         items={items}
         getItemKey={getItemKey}
         renderItem={renderItem}
-        reduceMotion={reduceMotion}
+        allowListMotion={allowListMotion}
         layoutGroupId={layoutGroupId}
+        newKeys={newKeys}
       />
     );
   }
@@ -164,7 +171,7 @@ export function ChatListVirtualSlice<T>({
       overscan={overscan}
       renderItem={renderItem}
       newKeys={newKeys}
-      reduceMotion={reduceMotion}
+      allowListMotion={allowListMotion}
     />
   );
 }

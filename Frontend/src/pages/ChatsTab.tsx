@@ -230,7 +230,7 @@ export const ChatsTab = () => {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="flex min-h-0 flex-1 flex-col">
       <ChatList onChatSelect={handleChatSelect} isDesktop={false} />
     </div>
   );

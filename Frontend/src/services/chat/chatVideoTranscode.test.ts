@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import {
   MAX_VIDEO_BYTES_AFTER_ENCODE,
   MAX_VIDEO_DURATION_MS,
-  MAX_VIDEO_HEIGHT,
   MAX_VIDEO_WIDTH,
 } from '@/constants/chatVideo';
 import { effectiveChatVideoDurationMs, resolveEncodedChatVideoDurationMs, shouldTranscodeChatVideo } from './chatVideoTranscode';

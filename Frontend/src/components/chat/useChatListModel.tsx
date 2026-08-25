@@ -15,7 +15,7 @@ import {
   collectChatListPresenceUserIds,
   collectSearchRowsPresenceUserIds,
 } from '@/utils/chatListPresenceIds';
-import type { ChatsFilterType } from '@/components/chat/chatListModuleCache';
+import { useChatListFeedStore, type ChatsFilterType } from '@/components/chat/chatListFeedStore';
 import type { ChatListViewModel } from '@/components/chat/chatListViewModel.types';
 import { useChatInbox } from '@/services/chat/inbox/useChatInbox';
 import { useChatListSearchUrlSync } from '@/components/chat/useChatListSearchUrlSync';
@@ -62,6 +62,7 @@ export function useChatListModel({
   const [bugsFilterPanelOpen, setBugsFilterPanelOpen] = useState(false);
   const loadMoreSentinelRef = useRef<HTMLDivElement>(null);
   const listBodyScrollRef = useRef<HTMLDivElement>(null);
+  const networkSettled = useChatListFeedStore((s) => s.networkSettledByFilter[chatsFilter]);
 
   const { contactsMode, listTransition, handleContactsToggle: toggleContacts } =
     useChatListContactsMode(chatsFilter);
@@ -276,6 +277,7 @@ export function useChatListModel({
       showChatsEmpty,
       pinnedCountUsers: readModel.pinnedCountUsers,
       getChatKey,
+      networkSettled,
     },
     pullRefresh: { isRefreshing, pullDistance, pullProgress },
     search: {
