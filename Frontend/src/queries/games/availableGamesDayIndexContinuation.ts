@@ -137,7 +137,7 @@ function updateContinuation(
   generation: number,
   update: (page: AvailableGamesPage) => AvailableGamesPage,
 ): void {
-  queryClient.setQueryData<AvailableGamesPage>(queryKey, (current) => {
+  queryClient.setQueryData<AvailableGamesPage>(queryKey, (current: AvailableGamesPage | undefined) => {
     if (!current || current.meta.dayIndexContinuation?.generation !== generation) {
       return current;
     }

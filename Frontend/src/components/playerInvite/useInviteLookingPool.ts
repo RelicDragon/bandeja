@@ -54,7 +54,7 @@ export function useInviteLookingPool(input: {
     [cityId, draftFingerprint, gameId],
   );
 
-  const query = useQuery({
+  const query = useQuery<InviteLookingPool>({
     queryKey: key,
     queryFn: () => {
       if (gameId) return playIntentsApi.getInvitePool({ gameId, cityId });
@@ -112,7 +112,7 @@ export function useInviteLookingPool(input: {
     };
   }, [enabled, entityType, key, poolCityId, queryClient, sport]);
 
-  const members = query.data?.members ?? EMPTY_MEMBERS;
+  const members: InviteLookingMember[] = query.data?.members ?? EMPTY_MEMBERS;
   const loadFailed = query.isError && !query.data;
 
   return {

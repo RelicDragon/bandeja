@@ -30,6 +30,8 @@ import {
   stashPendingThreadReadReceipt,
   takePendingThreadReadReceipts,
 } from './pendingThreadReadReceipts';
+import { liveMessageBelongsToThread } from './liveMessageBelongsToThread';
+export { liveMessageBelongsToThread };
 
 /**
  * Configuration for a live thread projection.
@@ -387,15 +389,6 @@ function attachPendingReadReceipts(
       pendingReceiptsToMessageReadReceipts(message.id, pending)
     ),
   };
-}
-
-export function liveMessageBelongsToThread(
-  message: Pick<ChatMessage, 'chatContextType' | 'contextId'>,
-  config: Pick<ThreadLiveConfig, 'contextType' | 'contextId'>
-): boolean {
-  if (message.chatContextType && message.chatContextType !== config.contextType) return false;
-  if (message.contextId && message.contextId !== config.contextId) return false;
-  return true;
 }
 
 /**

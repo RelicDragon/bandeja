@@ -1,3 +1,5 @@
+import type { Invite } from '@/types';
+
 export const PLAYING_SLOT_STATUS = 'PLAYING' as const;
 export const MIX_PAIRS_GENDER_TEAMS = 'MIX_PAIRS' as const;
 
@@ -129,6 +131,11 @@ export function isInviteInboxVisible(
   return !isInvitePlaySlotFull(invite);
 }
 
+export function filterInboxVisibleInvites(invites: Invite[], now?: Date): Invite[];
+export function filterInboxVisibleInvites<T extends InboxInviteLike>(
+  invites: T[],
+  now?: Date,
+): T[];
 export function filterInboxVisibleInvites<T extends InboxInviteLike>(
   invites: T[],
   now: Date = new Date(),

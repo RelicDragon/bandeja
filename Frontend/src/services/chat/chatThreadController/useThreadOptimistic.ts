@@ -267,13 +267,14 @@ export function useThreadOptimistic({
   const handleReplaceOptimisticWithServerMessage = useCallback(
     (optimisticId: string, serverMessage: ChatMessage) => {
       const open = openThreadRef.current;
-      const belongsHere =
-        !!open.id &&
+      const openId = open.id;
+      if (
+        openId &&
         liveMessageBelongsToThread(serverMessage, {
           contextType: open.contextType,
-          contextId: open.id,
-        });
-      if (belongsHere) {
+          contextId: openId,
+        })
+      ) {
         const matched = findOptimisticMatch(messagesRef.current, serverMessage, optimisticId);
         const clientId = matched?._optimisticId ?? matched?._clientMutationId ?? optimisticId;
         const result = applyLiveEvent({
@@ -285,7 +286,7 @@ export function useThreadOptimistic({
           revokeReconciledOptimisticBlobs(result.previous, [matched?._optimisticId ?? matched?.id ?? optimisticId], []);
         }
         if (open.contextType === 'GAME' || open.contextType === 'USER' || open.contextType === 'GROUP') {
-          markReadAfterSend(open.contextType, open.id);
+          markReadAfterSend(open.contextType, openId);
         }
       }
       void applyThreadEvent({ kind: 'sendSuccess', message: serverMessage }).catch(() => {});

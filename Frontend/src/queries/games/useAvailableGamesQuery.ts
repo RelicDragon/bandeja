@@ -248,7 +248,8 @@ export function useAvailableGamesQuery(
       const current = page?.meta.dayIndexContinuation;
       if (
         !page?.meta.dayIndexNextCursor ||
-        current?.generation !== expectedGeneration ||
+        !current ||
+        current.generation !== expectedGeneration ||
         current.status !== 'failed' ||
         !current.resumeEligible ||
         current.resumeAttempts >= AVAILABLE_GAMES_INDEX_MAX_AUTO_RESUMES
@@ -282,7 +283,7 @@ export function useAvailableGamesQuery(
     const incoming = sortGamesByStartTimeAsc(response.data || []);
     const meta = parseMeta(response.meta);
     // Preserve dayIndex from the first page — later pages do not re-fetch it.
-    queryClient.setQueryData<AvailableGamesPage>(queryKey, (latest) => ({
+    queryClient.setQueryData<AvailableGamesPage>(queryKey, (latest: AvailableGamesPage | undefined) => ({
       games: mergeAvailableGamesPages(latest?.games ?? current.games, incoming),
       meta: {
         ...meta,

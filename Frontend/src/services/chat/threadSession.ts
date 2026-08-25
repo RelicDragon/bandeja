@@ -5,7 +5,7 @@ import { chatSyncTailKey } from '@/utils/chatSyncScope';
 import { peekChatFreshOpenNonce } from '@/services/chat/chatOpenEntry';
 import type { ThreadInitialScroll } from '@/services/chat/chatOpenScrollPolicy';
 import { mergeChatMessagesAscending } from '@/utils/chatMessageSort';
-import { liveMessageBelongsToThread } from '@/services/chat/threadLiveProjection';
+import { liveMessageBelongsToThread } from '@/services/chat/liveMessageBelongsToThread';
 
 export type ThreadSessionKey = string;
 

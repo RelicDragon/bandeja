@@ -411,7 +411,7 @@ export const FindTab = () => {
 
   // undefined = day not ready (skeleton); [] = settled empty; non-empty = cards.
   // Must stay aligned with AvailableGamesSection initialGamesLoading (null check).
-  const sortedSelectedDayGames = useMemo(() => {
+  const sortedSelectedDayGames = useMemo((): Game[] | undefined => {
     if (!dayScopedEnabled) return undefined;
     if (selectedDayGames.length > 0) {
       return sortGamesByStatusAndStartTime(selectedDayGames);

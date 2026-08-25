@@ -16,6 +16,14 @@ export type PlayerInviteLookingDraft = {
 
 export type { InviteLookingMember, InviteLookingPool };
 
+export function lookingMembersForSlot(
+  members: InviteLookingMember[],
+  filterGender?: 'MALE' | 'FEMALE',
+): InviteLookingMember[];
+export function lookingMembersForSlot<T extends { gender?: string | null }>(
+  members: T[],
+  filterGender?: 'MALE' | 'FEMALE',
+): T[];
 export function lookingMembersForSlot<T extends { gender?: string | null }>(
   members: T[],
   filterGender?: 'MALE' | 'FEMALE',
