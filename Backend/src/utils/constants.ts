@@ -219,6 +219,10 @@ export const BET_WITH_EMBEDDED_USERS_INCLUDE = {
 /** Public-safe fields for GET /users/:userId/stats (no phone, email, wallet, notification prefs, etc.) */
 export const USER_STATS_TARGET_SELECT = {
   ...USER_SELECT_FIELDS,
+  preferredHandLeft: true,
+  preferredHandRight: true,
+  preferredCourtSideLeft: true,
+  preferredCourtSideRight: true,
   sportsEnabled: true,
   sportProfiles: {
     select: {

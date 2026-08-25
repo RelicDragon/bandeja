@@ -82,7 +82,7 @@ export const PollCreationModal: React.FC<PollCreationModalProps> = ({ isOpen, on
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
-                    <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-4">
+                    <div data-overlay-scrollport="" className="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 {t('chat.poll.question', 'Question')}

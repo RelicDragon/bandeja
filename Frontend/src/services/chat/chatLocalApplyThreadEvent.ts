@@ -14,11 +14,8 @@ import {
 } from './chatLocalApplyStoreBridge';
 import { syncLastMessageIdsToStoreFromLocalHeadsForContext } from './messageContextHead';
 import { enqueueChatLocalContextApply } from './chatLocalApplyQueue';
-import {
-  putLocalMessageDirect,
-  persistChatMessagesFromApiDirect,
-  putChatLocalRowsWithSearchTokens,
-} from './chatLocalApplyWrite';
+import { persistChatMessagesFromApiDirect, putChatLocalRowsWithSearchTokens, putLocalMessageDirect } from './chatLocalApplyWrite';
+import { persistLocalMessageDurable } from './chatLocalApplyPersistMessage';
 import { pullAndApplyChatSyncEventsDirect } from './chatLocalApplyPull';
 import { scheduleReconcileWhenSocketSeqMissing } from './chatLocalApplySyncTimers';
 import { onSocketSyncSeqDirect, persistSocketPatchThenSyncSeqDirect } from './chatLocalApplySocketInbound';
@@ -182,7 +179,9 @@ async function applyThreadEventUnqueued(event: ThreadApplyEvent): Promise<number
         }
         return getThreadSnapshotRevision(event.contextType, event.contextId);
       }
-      await putLocalMessageDirect(event.syncSeq != null ? { ...event.message, syncSeq: event.syncSeq } : event.message);
+      await persistLocalMessageDurable(
+        event.syncSeq != null ? { ...event.message, syncSeq: event.syncSeq } : event.message
+      );
       if (event.syncSeq != null) {
         await onSocketSyncSeqDirect(event.contextType, event.contextId, event.syncSeq);
       } else {

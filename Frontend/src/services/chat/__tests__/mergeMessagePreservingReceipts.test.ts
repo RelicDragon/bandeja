@@ -37,6 +37,20 @@ describe('mergeMessagePreservingReceipts', () => {
     expect(out.readReceipts[0]?.userId).toBe('u2');
   });
 
+  it('keeps an existing delete tombstone when incoming omits deletedAt', () => {
+    const existing = { ...msg('m1'), deletedAt: '2026-01-01T03:00:00.000Z' };
+    const incoming = msg('m1', []);
+    const out = mergeMessagePreservingReceipts(existing, incoming);
+    expect(out.deletedAt).toBe('2026-01-01T03:00:00.000Z');
+  });
+
+  it('keeps an existing delete tombstone when incoming is null', () => {
+    const existing = { ...msg('m1'), deletedAt: '2026-01-01T03:00:00.000Z' };
+    const incoming = { ...msg('m1', []), deletedAt: null };
+    const out = mergeMessagePreservingReceipts(existing, incoming);
+    expect(out.deletedAt).toBe('2026-01-01T03:00:00.000Z');
+  });
+
   it('merges receipts from both sides', () => {
     const existing = msg('m1', [
       { id: 'r1', messageId: 'm1', userId: 'u2', readAt: '2026-01-01T01:00:00.000Z' },

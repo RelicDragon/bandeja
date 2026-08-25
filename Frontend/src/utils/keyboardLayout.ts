@@ -6,14 +6,17 @@ export const KEYBOARD_LAYOUT_SHRINK_THRESHOLD_PX = 80;
 /**
  * Keyboard layout module — JS/CSS contract
  *
- * DOM writer: `keyboardState.ts` (`publishKeyboardState`) sets:
- * - `--keyboard-height` on `document.documentElement` (px inset)
- * - `--vv-height`, `--vv-offset-top` on `:root` (visual viewport; set elsewhere)
- * - `body.keyboard-visible` when keyboard is open
- * - `body.keyboard-dialog-shift` when inset >= KEYBOARD_DIALOG_SHIFT_THRESHOLD_PX (80)
+ * DOM writers:
+ * - `keyboardState.ts` (`publishKeyboardState`): `--keyboard-height`,
+ *   `body.keyboard-visible`, `body.keyboard-dialog-shift` (inset >= 80)
+ * - `capacitorSetup.applyVisualViewportCssVars`: `--vv-height`, `--vv-offset-top`,
+ *   `--layout-inner-height` (skip identical writes; visualViewport scroll is rAF-coalesced)
+ * CSS (`styles/keyboard/variables.css`): `--overlay-pinned-max-height` is 100dvh at rest;
+ *   `body.keyboard-visible` derives the visual-viewport frame (mirrors overlayKeyboardLayout.ts).
  *
  * CSS adapter: `styles/keyboard/` — surfaces that consume the contract:
  * - `.cap-keyboard-aware-dialog|sheet|overlay|bottom-panel`
+ * - overlay chrome pin + visualViewport frame (`overlay-chrome.css`, `overlayKeyboardLayout.ts`)
  * - `.city-selector-sheet` (tall CityModal; clamps height when keyboard is visible)
  * - `.chat-sticker-tray-overlay` (flush keyboard padding; React owns expand height)
  * - `.dialog-content-animate` under `keyboard-dialog-shift`

@@ -12,6 +12,7 @@ import { Dialog, DialogContent } from '@/components/ui/Dialog';
 import { PublicGamePrompt } from './GameDetails/PublicGamePrompt';
 import { getLevelColor } from '@/utils/levelColor';
 import { userAvatarTinyUrlFromStandard } from '@/utils/userAvatarTinyUrl';
+import { PlayerAvatarFace } from './PlayerAvatarFace';
 import { useSportLevelContext } from '@/contexts/useSportLevelContext';
 import { getDisplayLevelForSport, getUserPrimarySport, formatSportLevelBadgeDisplay, isLevelConfirmedForSport } from '@/utils/profileSports';
 import type { Sport } from '@shared/sport';
@@ -79,12 +80,6 @@ export const PlayerAvatar = ({ player, subscribePresence = true, isCurrentUser, 
   const useTinyWhenAvailable = superTiny || extrasmall || smallLayout || inlineFace;
   const tinyAvatarUrl =
     useTinyWhenAvailable ? userAvatarTinyUrlFromStandard(player?.avatar) : null;
-  const [tinyLoadFailed, setTinyLoadFailed] = useState(false);
-  useEffect(() => {
-    setTinyLoadFailed(false);
-  }, [player?.id, player?.avatar, extrasmall, smallLayout, superTiny, inlineFace, inlineFaceSize]);
-  const avatarImgSrc =
-    tinyAvatarUrl && !tinyLoadFailed ? tinyAvatarUrl : player?.avatar ?? '';
   useEffect(() => {
     const observer = new MutationObserver(() => {
       setIsDark(document.documentElement.classList.contains('dark'));
@@ -207,29 +202,21 @@ export const PlayerAvatar = ({ player, subscribePresence = true, isCurrentUser, 
   const onlineDotClass = player && isOnline ? 'avatar-online-dot' : '';
 
   const faceOnlyLayout = superTiny || inlineFace;
+  const avatarAlt = `${player.firstName || ''} ${player.lastName || ''}`.trim() || 'Player';
+  const avatarFace = (
+    <PlayerAvatarFace
+      avatar={player.avatar}
+      tinyUrl={tinyAvatarUrl}
+      initials={initials}
+      alt={avatarAlt}
+      textClassName={sizeClasses.text}
+      resetKey={player.id}
+    />
+  );
 
   const renderAvatarContent = () => {
     if (faceOnlyLayout) {
-      return (
-        <>
-          {player.avatar ? (
-            <div className="absolute inset-0 w-full h-full rounded-full overflow-hidden [&>div]:w-full [&>div]:h-full">
-              <img
-                src={avatarImgSrc}
-                alt={`${player.firstName || ''} ${player.lastName || ''}`.trim() || 'Player'}
-                className="w-full h-full object-cover"
-                onError={() => {
-                  if (tinyAvatarUrl && !tinyLoadFailed) setTinyLoadFailed(true);
-                }}
-              />
-            </div>
-          ) : (
-            <div className={`absolute inset-0 w-full h-full rounded-full bg-primary-600 dark:bg-primary-700 flex items-center justify-center text-white font-semibold ${sizeClasses.text}`}>
-              {initials}
-            </div>
-          )}
-        </>
-      );
+      return avatarFace;
     }
     return (
     <>
@@ -242,22 +229,7 @@ export const PlayerAvatar = ({ player, subscribePresence = true, isCurrentUser, 
           }}
         />
       )}
-      {player.avatar ? (
-        <div className="absolute inset-0 w-full h-full rounded-full overflow-hidden [&>div]:w-full [&>div]:h-full">
-          <img
-            src={avatarImgSrc}
-            alt={`${player.firstName || ''} ${player.lastName || ''}`.trim() || 'Player'}
-            className="w-full h-full object-cover"
-            onError={() => {
-              if (tinyAvatarUrl && !tinyLoadFailed) setTinyLoadFailed(true);
-            }}
-          />
-        </div>
-      ) : (
-        <div className={`absolute inset-0 w-full h-full rounded-full bg-primary-600 dark:bg-primary-700 flex items-center justify-center text-white font-semibold ${sizeClasses.text}`}>
-          {initials}
-        </div>
-      )}
+      {avatarFace}
       {role === 'OWNER' && (
         <div className={`absolute -top-1 -left-1 ${sizeClasses.crown} rounded-full bg-yellow-500 dark:bg-yellow-600 flex items-center justify-center border-2 border-white dark:border-gray-900`}>
           <Crown size={sizeClasses.crownIcon} className="text-white" />

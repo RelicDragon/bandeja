@@ -6,6 +6,7 @@ import { getImplementedSports, getSportConfig, resolveSport } from '../../sport/
 import { isQuestionnaireSuggestedForProfile } from '../../sport/questionnaires/suggested';
 import { clampSportProfileGameStats } from '../results/outcomeStatsSnapshot';
 import { attachPlayStreaksToUser } from '../results/playStreak.service';
+import { overlaySportProjection } from './overlaySportProjection';
 import { refreshSportProfilesInactive } from '../ranking/sportProfileInactive.service';
 
 export const MIN_SPORT_LEVEL = 1.0;
@@ -411,10 +412,7 @@ export function projectUserForSportContext<T extends UserWithSportProfiles | nul
       : ({ ...(user as UserWithSportProfiles), sportProfiles: [] } as UserWithSportProfiles);
   const snapshot = resolveUserSportSnapshot(userForSnapshot, sport);
   const confirmation = resolveSportLevelConfirmation(userForSnapshot, sport);
-  const rest = { ...(user as UserWithSportProfiles) };
-  delete (rest as Record<string, unknown>).sportProfiles;
-  return {
-    ...rest,
+  return overlaySportProjection(user as UserWithSportProfiles & Record<string, unknown>, {
     level: snapshot.level,
     reliability: snapshot.reliability,
     gamesPlayed: snapshot.gamesPlayed,
@@ -423,7 +421,7 @@ export function projectUserForSportContext<T extends UserWithSportProfiles | nul
     approvedLevel: confirmation.approvedLevel,
     approvedById: confirmation.approvedById,
     approvedWhen: confirmation.approvedWhen,
-  } as ProjectedUser<T>;
+  }) as ProjectedUser<T>;
 }
 
 export async function loadProfileUser(userId: string) {

@@ -25,6 +25,12 @@ describe('chatOpenMessagesSnapshotEqual', () => {
     expect(chatOpenMessagesSnapshotEqual(a, b)).toBe(false);
   });
 
+  it('detects deletedAt changes with same ids and updatedAt', () => {
+    const a = [{ id: '1', updatedAt: '2020-01-01', deletedAt: null }] as const;
+    const b = [{ id: '1', updatedAt: '2020-01-01', deletedAt: '2020-01-02' }] as const;
+    expect(chatOpenMessagesSnapshotEqual(a, b)).toBe(false);
+  });
+
   it('detects read-receipt-only changes with same ids and updatedAt', () => {
     const receipt = {
       id: 'rr1',

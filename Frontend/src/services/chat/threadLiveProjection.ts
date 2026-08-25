@@ -20,6 +20,7 @@ import type {
 import type { ChatType } from '@/types';
 import { mergeChatMessagesAscending } from '@/utils/chatMessageSort';
 import { mergeReadReceipts } from './mergeReadReceipts';
+import { preferDeletedAt } from './chatLocalMessageTombstone';
 import { readReceiptsFingerprint } from './readReceiptsFingerprint';
 import {
   applyAllReadToOwnVisibleMessages,
@@ -256,6 +257,7 @@ export interface L1PutEffect {
   readonly type: 'l1Put';
   /** Messages to cache */
   readonly messages: ChatMessage[];
+  readonly immediate?: boolean;
 }
 
 /**
@@ -641,7 +643,7 @@ function reduceMessageDeleted(
   state.messages = next;
   state.changed = true;
   state.effects.push({ type: 'persist', event });
-  state.effects.push({ type: 'l1Put', messages: next });
+  state.effects.push({ type: 'l1Put', messages: next, immediate: true });
 }
 
 function reduceReaction(
@@ -814,8 +816,18 @@ function mergeHydratedSnapshot(
     byId.set(
       hydrated.id,
       hydrateIsNewer
-        ? { ...current, ...hydrated, readReceipts }
-        : { ...hydrated, ...current, readReceipts }
+        ? {
+            ...current,
+            ...hydrated,
+            deletedAt: preferDeletedAt(current.deletedAt, hydrated.deletedAt),
+            readReceipts,
+          }
+        : {
+            ...hydrated,
+            ...current,
+            deletedAt: preferDeletedAt(current.deletedAt, hydrated.deletedAt),
+            readReceipts,
+          }
     );
   }
 

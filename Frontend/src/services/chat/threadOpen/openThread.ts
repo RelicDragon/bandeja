@@ -6,7 +6,9 @@ import { buildOutboxOptimisticsForOpen } from '@/services/chat/chatOutboxOpenSna
 import { hydrateLastMessageIdFromDexieIfMissing } from '@/services/chat/messageContextHead';
 import { mergeServerPageWithPendingOptimistics } from '@/utils/chatMessageSort';
 import { planThreadOpen } from '@/services/chat/threadOpen/planThreadOpen';
+import { dropTombstonedChatMessages, loadTombstonedMessageIds } from '@/services/chat/chatLocalMessageTombstone';
 import type { ThreadOpenPlanResult } from '@/services/chat/threadOpen/types';
+import { recoverEmptyMediaMessages } from '@/services/chat/chatMediaReopenRecover';
 
 export type ThreadOpenOutboxContext = {
   userId: string;
@@ -65,6 +67,7 @@ async function planDexieTailFallback(
     peekL1: () => [],
     peekPrev: request.peekPrev ?? (() => mergedPrev),
     loadBootstrap: async () => ({ messages: dexieTail }),
+    loadTombstonedIds: (ids) => loadTombstonedMessageIds(ids),
     forceFreshOpen: request.forceFreshOpen,
     openAnchorMessageId: request.openAnchorMessageId,
   });
@@ -85,6 +88,7 @@ export async function openThread(request: ThreadOpenRequest): Promise<ThreadOpen
   if (prefetched.length > 0) {
     mergedPrev = mergeServerPageWithPendingOptimistics(mergedPrev, prefetched);
   }
+  mergedPrev = await dropTombstonedChatMessages(mergedPrev);
 
   const readPrev = request.peekPrev ?? (() => mergedPrev);
   const result = await planThreadOpen(request.threadKey, {
@@ -92,6 +96,7 @@ export async function openThread(request: ThreadOpenRequest): Promise<ThreadOpen
     peekPrev: readPrev,
     loadBootstrap: () =>
       loadLocalThreadBootstrap(request.contextType, request.contextId, request.chatType),
+    loadTombstonedIds: (ids) => loadTombstonedMessageIds(ids),
     loadOutboxOptimistics: request.outbox
       ? () =>
           buildOutboxOptimisticsForOpen({
@@ -108,11 +113,15 @@ export async function openThread(request: ThreadOpenRequest): Promise<ThreadOpen
   });
 
   if (result.kind === 'painted') {
+    void recoverEmptyMediaMessages(result.plan.messages).catch(() => {});
     return { kind: 'painted', mergedPrev, result };
   }
 
   const fallback = await planDexieTailFallback(request, mergedPrev);
-  if (fallback) return fallback;
+  if (fallback) {
+    void recoverEmptyMediaMessages(fallback.result.plan.messages).catch(() => {});
+    return fallback;
+  }
 
   return { kind: 'network-fallback', mergedPrev };
 }

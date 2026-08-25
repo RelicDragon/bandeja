@@ -5,7 +5,12 @@ import { chatApi, type ChatMessage, type ChatMessageWithStatus, type ChatContext
 import { usePlayersStore } from '@/store/playersStore';
 import { shouldQueueChatMutation, isRetryableMutationError } from '@/services/chat/chatMutationNetwork';
 import { OfflineIntent } from '@/services/chat/offlineIntent';
-import { putLocalMessage } from '@/services/chat/chatLocalApply';
+import {
+  putLocalMessage,
+  markLocalMessageDeleted,
+  restoreLocalMessageAfterFailedDelete,
+  applyThreadL1Put,
+} from '@/services/chat/chatLocalApply';
 import { useReactionEmojiUsageStore } from '@/store/reactionEmojiUsageStore';
 import {
   reduceThreadLiveSnapshot,
@@ -227,6 +232,21 @@ export function useThreadReactions({
     [setMessages, messagesRef]
   );
 
+  const flushThreadL1 = useCallback(
+    (rows: ChatMessageWithStatus[]) => {
+      if (!id) return;
+      void applyThreadL1Put({
+        contextType,
+        contextId: id,
+        gameChatType: contextType === 'GAME' ? effectiveChatType : undefined,
+        readRows: () => rows,
+        verify: () => true,
+        immediate: true,
+      });
+    },
+    [contextType, effectiveChatType, id]
+  );
+
   const handleDeleteMessage = useCallback(
     async (messageId: string) => {
       if (isQueuedSendMessageId(messageId)) {
@@ -235,6 +255,7 @@ export function useThreadReactions({
           messageId,
           deletedAt: new Date().toISOString(),
         });
+        flushThreadL1([...messagesRef.current]);
         return;
       }
       const removedSnapshot = messagesRef.current.find((m) => m.id === messageId);
@@ -244,12 +265,21 @@ export function useThreadReactions({
           type: 'hydrateSnapshot',
           messages: [removedSnapshot as ChatMessageWithStatus],
         });
+        void restoreLocalMessageAfterFailedDelete(removedSnapshot);
+        flushThreadL1([...messagesRef.current]);
       };
+      const deletedAt = new Date().toISOString();
       applyLiveEvent({
         type: 'messageDeleted',
         messageId,
-        deletedAt: new Date().toISOString(),
+        deletedAt,
       });
+      flushThreadL1([...messagesRef.current]);
+      await markLocalMessageDeleted(
+        messageId,
+        deletedAt,
+        id ? { contextType, contextId: id } : undefined
+      ).catch(() => {});
       if (shouldQueueChatMutation() && id) {
         try {
           await OfflineIntent.enqueue({ kind: 'delete', contextType, contextId: id, messageId });
@@ -272,10 +302,12 @@ export function useThreadReactions({
             console.error('enqueue delete', e);
             restoreRemoved();
           }
+          return;
         }
+        restoreRemoved();
       }
     },
-    [id, contextType, messagesRef, applyLiveEvent]
+    [id, contextType, messagesRef, applyLiveEvent, flushThreadL1]
   );
 
   const handleReplyMessage = useCallback((message: ChatMessage) => setReplyTo(message), []);
@@ -332,14 +364,21 @@ export function useThreadReactions({
 
   const handleMessageDeleted = useCallback(
     (data: { messageId: string }) => {
+      const deletedAt = new Date().toISOString();
       applyLiveEvent({
         type: 'messageDeleted',
         messageId: data.messageId,
-        deletedAt: new Date().toISOString(),
+        deletedAt,
       });
+      flushThreadL1([...messagesRef.current]);
+      void markLocalMessageDeleted(
+        data.messageId,
+        deletedAt,
+        id ? { contextType, contextId: id } : undefined
+      );
       setEditingMessage((prev) => (prev?.id === data.messageId ? null : prev));
     },
-    [applyLiveEvent]
+    [applyLiveEvent, contextType, flushThreadL1, id, messagesRef]
   );
 
   const handleChatRequestRespond = useCallback(

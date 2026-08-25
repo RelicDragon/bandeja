@@ -1,6 +1,7 @@
 import type { ChatMessage, ChatMessageWithStatus } from '@/api/chat';
 import { readReceiptsFingerprint } from '@/services/chat/readReceiptsFingerprint';
 import { mergeReadReceipts } from '@/services/chat/mergeReadReceipts';
+import { preferDeletedAt } from '@/services/chat/chatLocalMessageTombstone';
 import { stripPendingOptimisticsMatchedByServer } from '@/services/chat/optimisticReconcile';
 import { compareChatMessagesAscending } from '@/utils/chatMessageCompare';
 
@@ -24,11 +25,20 @@ export function mergeChatMessagesAscending(
     if (!cur) map.set(m.id, m as ChatMessageWithStatus);
     else if (shouldPreferIncomingMessage(cur, m)) {
       const readReceipts = mergeReadReceipts(cur.readReceipts ?? [], m.readReceipts ?? []);
-      map.set(m.id, { ...cur, ...m, readReceipts } as ChatMessageWithStatus);
+      map.set(m.id, {
+        ...cur,
+        ...m,
+        deletedAt: preferDeletedAt(cur.deletedAt, m.deletedAt),
+        readReceipts,
+      } as ChatMessageWithStatus);
     } else {
       const readReceipts = mergeReadReceipts(cur.readReceipts ?? [], m.readReceipts ?? []);
-      if (readReceiptsFingerprint(readReceipts) !== readReceiptsFingerprint(cur.readReceipts)) {
-        map.set(m.id, { ...cur, readReceipts } as ChatMessageWithStatus);
+      const deletedAt = preferDeletedAt(cur.deletedAt, m.deletedAt);
+      if (
+        readReceiptsFingerprint(readReceipts) !== readReceiptsFingerprint(cur.readReceipts) ||
+        deletedAt !== cur.deletedAt
+      ) {
+        map.set(m.id, { ...cur, deletedAt, readReceipts } as ChatMessageWithStatus);
       }
     }
   }

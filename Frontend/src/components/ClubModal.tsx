@@ -195,6 +195,7 @@ export const ClubModal = ({
             aria-hidden={panel === 'city'}
             inert={panel === 'city' ? true : undefined}
           >
+          <div data-overlay-chrome="" className="sticky top-0 z-10 shrink-0 bg-white dark:bg-gray-900">
           <DialogHeader>
             {panel === 'detail' ? (
               <div className="flex min-w-0 items-center gap-2">
@@ -222,9 +223,28 @@ export const ClubModal = ({
               </div>
             )}
           </DialogHeader>
+          {panel === 'list' ? (
+            <div className="shrink-0 px-4 pb-2">
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="search"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder={t('browseCity.searchClubs')}
+                  className="w-full rounded-2xl border border-gray-200/90 bg-gray-50/80 py-2.5 pl-10 pr-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-primary-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-gray-700 dark:bg-gray-800/60 dark:text-white dark:placeholder-gray-500 dark:focus:border-primary-500 dark:focus:bg-gray-900"
+                />
+              </div>
+            </div>
+          ) : null}
+          </div>
           <div className="relative flex min-h-0 flex-1 flex-col">
             {panel === 'detail' && detailClub ? (
-              <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain p-4">
+              <div
+                ref={scrollBodyRef}
+                data-overlay-scrollport=""
+                className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain p-4"
+              >
                 <ClubDetailPanel
                   club={detailClub}
                   onOpenFullscreenPhoto={(url) => setFullscreenUrl(url)}
@@ -233,20 +253,9 @@ export const ClubModal = ({
               </div>
             ) : (
               <>
-                <div className="shrink-0 px-4 pb-2">
-                  <div className="relative">
-                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                    <input
-                      type="search"
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                      placeholder={t('browseCity.searchClubs')}
-                      className="w-full rounded-2xl border border-gray-200/90 bg-gray-50/80 py-2.5 pl-10 pr-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-primary-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-gray-700 dark:bg-gray-800/60 dark:text-white dark:placeholder-gray-500 dark:focus:border-primary-500 dark:focus:bg-gray-900"
-                    />
-                  </div>
-                </div>
                 <div
                   ref={scrollBodyRef}
+                  data-overlay-scrollport=""
                   onScroll={updateListBottomFade}
                   className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-4 pb-4"
                 >

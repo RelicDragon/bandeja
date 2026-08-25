@@ -1,6 +1,18 @@
-import type { ChatMessage, MessageReaction } from '@/api/chat';
+import type { ChatContextType, ChatMessage, MessageReaction } from '@/api/chat';
 import { chatLocalDb, type ChatLocalRow } from './chatLocalDb';
+import {
+  beginLocalDeleteApply,
+  clearChatMessageTombstone,
+  forgetLocalMessageTombstone,
+  isCurrentLocalDeleteApply,
+  noteMessageDeletedForCaughtUpPull,
+  rememberLocalMessageTombstone,
+  tombstoneChatMessage,
+} from './chatLocalMessageTombstone';
+import { deleteChatThreadMemory } from './chatThreadMemoryCache';
+import { chatSyncTailKey } from '@/utils/chatSyncScope';
 import { patchThreadIndexAfterMessageDeleted, patchThreadIndexFromMessage } from './chatThreadIndex';
+import { mergeReadReceipts } from './mergeReadReceipts';
 import {
   bumpMessageContextHead,
   refreshMessageContextHeadAfterDelete,
@@ -72,11 +84,17 @@ export async function persistChatMessagesFromApi(messages: ChatMessage[]): Promi
   return applyThreadEvent({ kind: 'httpMessages', messages });
 }
 
+export type MarkLocalMessageDeletedOptions = {
+  syncSeq?: number;
+  contextType?: ChatContextType;
+  contextId?: string;
+};
+
 async function markLocalMessageDeletedDirect(messageId: string, deletedAtIso?: string): Promise<void> {
   const row = await chatLocalDb.messages.get(messageId);
   if (!row) return;
   const iso = deletedAtIso ?? new Date().toISOString();
-  await putChatLocalRowsWithSearchTokens([rowFromMessage({ ...row.payload, deletedAt: iso })]);
+  await putChatLocalRowsWithSearchTokens([rowFromMessage(tombstoneChatMessage(row.payload, iso))]);
   if (!isChatLocalIndexingSuppressed()) {
     void refreshMessageContextHeadAfterDelete(row.contextType, row.contextId, messageId, row.chatType).catch(
       () => {}
@@ -85,12 +103,47 @@ async function markLocalMessageDeletedDirect(messageId: string, deletedAtIso?: s
   }
 }
 
-export async function markLocalMessageDeleted(messageId: string, deletedAtIso?: string): Promise<void> {
+export async function markLocalMessageDeleted(
+  messageId: string,
+  deletedAtIso?: string,
+  options?: MarkLocalMessageDeletedOptions
+): Promise<void> {
+  rememberLocalMessageTombstone(messageId);
+  const gen = beginLocalDeleteApply(messageId);
   const peek = await chatLocalDb.messages.get(messageId);
+  if (!isCurrentLocalDeleteApply(messageId, gen)) return;
+  const contextType = options?.contextType ?? peek?.contextType;
+  const contextId = options?.contextId ?? peek?.contextId;
+  if (contextType && contextId) {
+    noteMessageDeletedForCaughtUpPull(contextType, contextId, options?.syncSeq);
+  }
   if (!peek) return;
-  return enqueueChatLocalContextApply(peek.contextType, peek.contextId, () =>
-    markLocalMessageDeletedDirect(messageId, deletedAtIso)
+  return enqueueChatLocalContextApply(peek.contextType, peek.contextId, async () => {
+    if (!isCurrentLocalDeleteApply(messageId, gen)) return;
+    await markLocalMessageDeletedDirect(messageId, deletedAtIso);
+  });
+}
+
+export async function restoreLocalMessageAfterFailedDelete(message: ChatMessage): Promise<void> {
+  forgetLocalMessageTombstone(message.id);
+  const gen = beginLocalDeleteApply(message.id);
+  deleteChatThreadMemory(
+    chatSyncTailKey(message.chatContextType, message.contextId, message.chatType)
   );
+  return enqueueChatLocalContextApply(message.chatContextType, message.contextId, async () => {
+    if (!isCurrentLocalDeleteApply(message.id, gen)) return;
+    const existing = await chatLocalDb.messages.get(message.id);
+    const restored = clearChatMessageTombstone(message);
+    const readReceipts = existing
+      ? mergeReadReceipts(existing.payload.readReceipts ?? [], restored.readReceipts ?? [])
+      : restored.readReceipts ?? [];
+    const row = rowFromMessage({ ...restored, readReceipts });
+    await putChatLocalRowsWithSearchTokens([row]);
+    if (!isChatLocalIndexingSuppressed()) {
+      void bumpMessageContextHead(row).catch(() => {});
+      void patchThreadIndexFromMessage(row.payload).catch(() => {});
+    }
+  });
 }
 
 export async function applyLocalMessageEditOptimistic(

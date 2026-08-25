@@ -162,6 +162,7 @@ export function chatOpenMessagesSnapshotEqual(
   if (!chatOpenMessageIdsEqual(a, b)) return false;
   for (let i = 0; i < a.length; i++) {
     if (a[i]!.updatedAt !== b[i]!.updatedAt) return false;
+    if (a[i]!.deletedAt !== b[i]!.deletedAt) return false;
     if (readReceiptsFingerprint(a[i]!.readReceipts) !== readReceiptsFingerprint(b[i]!.readReceipts)) {
       return false;
     }

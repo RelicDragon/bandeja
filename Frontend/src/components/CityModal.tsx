@@ -100,7 +100,7 @@ export const CityModal = ({ isOpen, onClose, selectedId, onSelect, onCityChanged
         aria-labelledby={`${modalId}-title`}
       >
         <DrawerHandle className="relative mx-auto mt-2.5 h-1 w-10 shrink-0 rounded-full bg-gray-300/90 dark:bg-gray-600" />
-        <div className="flex shrink-0 items-center gap-3 px-4 pb-2 pt-3">
+        <div data-overlay-chrome="" className="flex shrink-0 items-center gap-3 px-4 pb-2 pt-3">
           <h2
             id={`${modalId}-title`}
             className="min-w-0 flex-1 text-left text-lg font-semibold tracking-tight text-gray-900 dark:text-white"
