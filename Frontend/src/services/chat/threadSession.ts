@@ -5,6 +5,7 @@ import { chatSyncTailKey } from '@/utils/chatSyncScope';
 import { peekChatFreshOpenNonce } from '@/services/chat/chatOpenEntry';
 import type { ThreadInitialScroll } from '@/services/chat/chatOpenScrollPolicy';
 import { mergeChatMessagesAscending } from '@/utils/chatMessageSort';
+import { liveMessageBelongsToThread } from '@/services/chat/threadLiveProjection';
 
 export type ThreadSessionKey = string;
 
@@ -260,21 +261,28 @@ export function mergeChatTypeSwitchPaint(
   return mergeChatMessagesAscending(pending, [...local]) as ChatMessageWithStatus[];
 }
 
-export function messagesBelongToThreadKey(
+export function filterMessagesBelongingToThreadKey(
   messages: readonly ChatMessageWithStatus[],
   threadKey: ThreadSessionKey
-): boolean {
-  if (messages.length === 0) return true;
+): ChatMessageWithStatus[] {
   const parts = threadKey.split(':');
   const contextType = parts[0] as ChatContextType;
   const contextId = parts[1];
-  if (!contextId) return false;
+  if (!contextId) return [];
   const gameChatType = parts[2] as ChatType | undefined;
-  return messages.every((m) => {
-    if (m.contextId !== contextId || m.chatContextType !== contextType) return false;
+  return messages.filter((m) => {
+    if (!liveMessageBelongsToThread(m, { contextType, contextId })) return false;
     if (contextType === 'GAME' && gameChatType) {
       return normalizeChatType((m.chatType ?? 'PUBLIC') as ChatType) === normalizeChatType(gameChatType);
     }
     return true;
   });
+}
+
+export function messagesBelongToThreadKey(
+  messages: readonly ChatMessageWithStatus[],
+  threadKey: ThreadSessionKey
+): boolean {
+  if (messages.length === 0) return true;
+  return filterMessagesBelongingToThreadKey(messages, threadKey).length === messages.length;
 }

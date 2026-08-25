@@ -53,10 +53,10 @@ const GAME_CONFIG: ThreadLiveConfig = {
   gameChatTypeFilter: 'PUBLIC',
 };
 
-/** Test fixture: config for a USER DM thread */
+/** Same GAME thread as createMessage, without a chatType filter */
 const USER_CONFIG: ThreadLiveConfig = {
-  contextType: 'USER',
-  contextId: 'user-2',
+  contextType: 'GAME',
+  contextId: 'game-1',
   viewerUserId: 'viewer-1',
 };
 
@@ -158,6 +158,80 @@ describe('reduceThreadLiveSnapshot', () => {
       // Only PUBLIC message should be included
       expect(result.next).toHaveLength(1);
       expect(result.next[0]?.id).toBe('msg-1');
+    });
+
+    it('drops inbound messages from another thread', () => {
+      const prev: ChatMessageWithStatus[] = [
+        createMessage({ id: 'msg-keep', senderId: 'other-user' }),
+      ];
+      const foreign = createMessage({
+        id: 'msg-foreign',
+        contextId: 'game-evening',
+        content: 'Tomorrow evening',
+        senderId: 'viewer-1',
+      });
+      const result = reduceThreadLiveSnapshot(
+        prev,
+        [{ type: 'inboundMessage', message: foreign }],
+        GAME_CONFIG
+      );
+
+      expect(result.changed).toBe(false);
+      expect(result.next.map((m) => m.id)).toEqual(['msg-keep']);
+    });
+
+    it('does not ack a send into a different open thread', () => {
+      const prev: ChatMessageWithStatus[] = [
+        createMessage({ id: 'msg-keep', senderId: 'other-user' }),
+      ];
+      const events: MessageAckEvent[] = [
+        {
+          type: 'messageAck',
+          clientId: 'opt-1',
+          message: createMessage({
+            id: 'msg-foreign',
+            contextId: 'game-evening',
+            clientMutationId: 'opt-1',
+            senderId: 'viewer-1',
+            content: 'Tomorrow evening',
+          }),
+        },
+      ];
+      const result = reduceThreadLiveSnapshot(prev, events, GAME_CONFIG);
+
+      expect(result.changed).toBe(false);
+      expect(result.next.map((m) => m.id)).toEqual(['msg-keep']);
+    });
+
+    it('does not paint a send for thread A into thread B history', () => {
+      const morningJoin = createMessage({
+        id: 'join-1',
+        contextId: 'game-morning',
+        senderId: 'system',
+        content: 'joined',
+      });
+      const eveningSend = createMessage({
+        id: 'msg-evening',
+        contextId: 'game-evening',
+        senderId: 'viewer-1',
+        content: 'Tomorrow evening',
+        clientMutationId: 'opt-1',
+      });
+      const openMorning: ThreadLiveConfig = {
+        contextType: 'GAME',
+        contextId: 'game-morning',
+        viewerUserId: 'viewer-1',
+        gameChatTypeFilter: 'PUBLIC',
+      };
+      const result = reduceThreadLiveSnapshot(
+        [morningJoin],
+        [{ type: 'messageAck', clientId: 'opt-1', message: eveningSend }],
+        openMorning
+      );
+
+      expect(result.changed).toBe(false);
+      expect(result.next.map((m) => m.id)).toEqual(['join-1']);
+      expect(result.effects).toEqual([]);
     });
 
     it('does not emit clearUnread for own messages', () => {
@@ -627,7 +701,7 @@ describe('reduceThreadLiveSnapshot', () => {
       const result = reduceThreadLiveSnapshot(
         prev,
         [{ type: 'messageAck', clientId: 'c1', message: serverMsg }],
-        USER_CONFIG
+        GAME_CONFIG
       );
 
       expect(result.next).toHaveLength(1);
@@ -643,7 +717,7 @@ describe('reduceThreadLiveSnapshot', () => {
       const result = reduceThreadLiveSnapshot(
         prev,
         [{ type: 'messageAck', clientId: 'missing', message: serverMsg }],
-        USER_CONFIG
+        GAME_CONFIG
       );
 
       expect(result.next).toHaveLength(1);
@@ -764,6 +838,30 @@ describe('reduceThreadLiveSnapshot', () => {
       );
 
       expect(result.changed).toBe(false);
+    });
+
+    it('hydrateSnapshot drops messages from another thread', () => {
+      const keep = createMessage({ id: 'msg-keep' });
+      const prev = [
+        keep,
+        createMessage({ id: 'msg-stale', contextId: 'game-evening', content: 'Evening' }),
+      ];
+      const result = reduceThreadLiveSnapshot(
+        prev,
+        [
+          {
+            type: 'hydrateSnapshot',
+            messages: [
+              keep,
+              createMessage({ id: 'msg-foreign', contextId: 'game-evening' }),
+            ],
+          },
+        ],
+        GAME_CONFIG
+      );
+
+      expect(result.next.map((m) => m.id)).toEqual(['msg-keep']);
+      expect(result.changed).toBe(true);
     });
   });
 });

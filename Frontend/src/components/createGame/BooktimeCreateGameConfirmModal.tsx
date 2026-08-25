@@ -27,6 +27,7 @@ import {
   bookingErrorMessage,
   isBookingAuthExpiredMessage,
 } from '@/utils/bookingErrorMessage.util';
+import { createGameOrBookingErrorMessage } from '@/utils/createGameFailureToast';
 import { getBooktimeClient, hydrateBooktimeSession } from '@/integrations/booktime/session';
 import { resolveBooktimeMyClubTimezone } from '@/components/booktime/booktimeBookingUtils';
 import { formatClubDateKey } from '@/integrations/booktime/slots';
@@ -343,7 +344,12 @@ export function BooktimeCreateGameConfirmModal({
       await new Promise((r) => window.setTimeout(r, 800));
       onSuccess();
     } catch (err) {
-      const detail = bookingErrorMessage(err, t, 'createGame.booktime.createFailedAfterBook');
+      const detail = createGameOrBookingErrorMessage(
+        err,
+        t,
+        'createGame.booktime.createFailedAfterBook',
+        bookingErrorMessage,
+      );
       setErrorDetail(detail || null);
 
       if (isBookingAuthExpiredMessage(formatBooktimeErrorMessage(err))) {

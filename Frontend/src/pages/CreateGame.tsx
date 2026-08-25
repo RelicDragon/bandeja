@@ -94,6 +94,8 @@ import {
   selectPlayIntentCreateSource,
 } from '@/utils/selectPlayIntentCreateSource';
 import { resolveCreateGameRatingFields } from '@/utils/createGameRatingFields';
+import { toastCreateGameFailure } from '@/utils/createGameFailureToast';
+import { resolvePlayIntentCreateLevelRange } from '@/utils/createGamePlayIntentLevelRange';
 
 interface CreateGameProps {
   entityType: EntityType;
@@ -104,6 +106,7 @@ interface CreateGameProps {
   initialInvitedPlayerIds?: string[];
   matchProposalId?: string;
   playIntentSource?: PlayIntentCreateSource;
+  playIntentRosterLevels?: number[];
   onMatchProposalConverted?: () => void;
 }
 
@@ -126,6 +129,7 @@ export const CreateGame = ({
   initialInvitedPlayerIds = [],
   matchProposalId,
   playIntentSource,
+  playIntentRosterLevels,
   onMatchProposalConverted,
 }: CreateGameProps) => {
   const { t } = useTranslation();
@@ -157,10 +161,13 @@ export const CreateGame = ({
     const sport: Sport =
       initialGameData?.sport ?? (resolveCreateGameDefaultSport(user));
     const level = user ? getDisplayLevelForSport(user, sport) : undefined;
-    return [
-      initialGameData?.minLevel ?? getDefaultLevelRange(level)[0],
-      initialGameData?.maxLevel ?? getDefaultLevelRange(level)[1],
-    ];
+    return resolvePlayIntentCreateLevelRange({
+      fromPlayIntent: Boolean(playIntentSource),
+      initialMin: initialGameData?.minLevel,
+      initialMax: initialGameData?.maxLevel,
+      hostDefault: getDefaultLevelRange(level),
+      rosterLevels: playIntentRosterLevels,
+    });
   });
   const [selectedSport, setSelectedSport] = useState<Sport>(() => {
     if (initialGameData?.sport) return initialGameData.sport;
@@ -256,6 +263,10 @@ export const CreateGame = ({
 
   const applyIntentDefaults = useCallback(
     (intent: CreateFlowIntent) => {
+      if (playIntentSource) {
+        setIsRatingGame(intent !== 'social');
+        return;
+      }
       if (intent === 'social') {
         setIsRatingGame(false);
         setPlayerLevelRange(SOCIAL_LEVEL_BAND);
@@ -270,7 +281,7 @@ export const CreateGame = ({
       }
       setIsRatingGame(true);
     },
-    [user, selectedSport],
+    [playIntentSource, user, selectedSport],
   );
 
   const [isFormatWizardOpen, setIsFormatWizardOpen] = useState(false);
@@ -351,6 +362,24 @@ export const CreateGame = ({
       cancelled = true;
     };
   }, [initialInvitedPlayerIds, selectedSport]);
+
+  useEffect(() => {
+    if (!playIntentSource) return;
+    const extra = invitedPlayers.map((player) => player.level);
+    if (playIntentRosterLevels?.length) extra.push(...playIntentRosterLevels);
+    if (extra.length === 0) return;
+    setPlayerLevelRange((prev) => {
+      const next = resolvePlayIntentCreateLevelRange({
+        fromPlayIntent: true,
+        initialMin: prev[0],
+        initialMax: prev[1],
+        hostDefault: prev,
+        rosterLevels: extra,
+      });
+      if (next[0] === prev[0] && next[1] === prev[1]) return prev;
+      return next;
+    });
+  }, [playIntentSource, playIntentRosterLevels, invitedPlayers]);
   
   const {
     selectedDate,
@@ -444,6 +473,7 @@ export const CreateGame = ({
     initialBookingIds,
     storedInitialDate,
     hasInitialStartTime: Boolean(initialGameData?.startTime),
+    fromPlayIntent: Boolean(playIntentSource),
     createDateFromSelection,
     baseTimeOptions: {
       generateTimeOptions,
@@ -848,6 +878,10 @@ export const CreateGame = ({
 
 
   useEffect(() => {
+    if (playIntentSource) {
+      prevCreateSportRef.current = selectedSport;
+      return;
+    }
     if (initialGameData?.minLevel !== undefined || initialGameData?.maxLevel !== undefined) {
       prevCreateSportRef.current = selectedSport;
       return;
@@ -858,7 +892,13 @@ export const CreateGame = ({
     prevCreateSportRef.current = sport;
     levelBandWarnedRef.current = null;
     setPlayerLevelRange(getDefaultLevelRange(getDisplayLevelForSport(user, sport)));
-  }, [initialGameData?.maxLevel, initialGameData?.minLevel, selectedSport, user]);
+  }, [
+    playIntentSource,
+    initialGameData?.maxLevel,
+    initialGameData?.minLevel,
+    selectedSport,
+    user,
+  ]);
 
   useEffect(() => {
     if (!user || entityType === 'BAR' || entityType === 'TRAINING') return;
@@ -1531,6 +1571,9 @@ export const CreateGame = ({
     } catch (error) {
       console.error('Failed to create game:', error);
       if (showCreateOverlay) setCreateOverlayPhase(null);
+      if (!options?.skipNavigate) {
+        toastCreateGameFailure(t, error);
+      }
       if (options?.skipNavigate) throw error;
     } finally {
       setLoading(false);

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { PlayIntentTimeOfDay } from '@/api/playIntents';
 import {
   localDayMinuteToInstant,
+  playIntentCreatePrefillTimes,
   playWindowIsInPast,
   resolveTimeWindowEndMinutes,
   shiftDateKey,
@@ -282,5 +283,27 @@ describe('playWindowIsInPast', () => {
         now: NOW_SUMMER_09_LOCAL,
       }),
     ).toBe(false);
+  });
+});
+
+describe('playIntentCreatePrefillTimes', () => {
+  it('builds the start instant in the city timezone, not the device zone', () => {
+    const prefill = playIntentCreatePrefillTimes({
+      dateKeys: [SUMMER_TODAY_KEY],
+      timeOfDay: 'EVENING',
+      startTime: null,
+      timezone: PRAGUE,
+    });
+    expect(prefill.startTime).toBe('2026-08-04T16:00:00.000Z');
+  });
+
+  it('returns empty when timezone is missing', () => {
+    expect(
+      playIntentCreatePrefillTimes({
+        dateKeys: [SUMMER_TODAY_KEY],
+        timeOfDay: 'EVENING',
+        startTime: null,
+      }),
+    ).toEqual({});
   });
 });

@@ -52,8 +52,13 @@ export function resolveInitialReservationIntent(input: {
   clubBookingFlowActive: boolean;
   initialHasBookedCourt?: boolean;
   hasReservationsForDate?: boolean;
+  fromPlayIntent?: boolean;
 }): ReservationIntent {
   if (input.hasPreselectedBookings) return 'useExisting';
+  if (input.fromPlayIntent) {
+    if (input.initialHasBookedCourt && !input.clubBookingFlowActive) return 'manualBooked';
+    return 'gameOnly';
+  }
   if (input.clubBookingFlowActive && input.hasReservationsForDate) return 'useExisting';
   if (input.clubBookingFlowActive) return 'reserveNow';
   if (input.initialHasBookedCourt) return 'manualBooked';

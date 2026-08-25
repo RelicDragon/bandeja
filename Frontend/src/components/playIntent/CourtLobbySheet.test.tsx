@@ -173,7 +173,13 @@ vi.mock('@/store/favoritesStore', () => ({
 }));
 
 vi.mock('@/store/authStore', () => {
-  const state = { user: { id: 'viewer', nameIsSet: true } };
+  const state = {
+    user: {
+      id: 'viewer',
+      nameIsSet: true,
+      currentCity: { timezone: 'Europe/Prague' },
+    },
+  };
   return {
     useAuthStore: Object.assign(
       (selector: (s: typeof state) => unknown) => selector(state),
@@ -463,6 +469,7 @@ describe('CourtLobbySheet proposal dismissal', () => {
               { userId: 'four', intentId: 'intent-four' },
             ],
           },
+          playIntentRosterLevels: [3, 3, 3],
         }),
       }),
     );

@@ -3,6 +3,7 @@ import type { ChatMessageWithStatus } from '@/api/chat';
 import {
   mergeChatTypeSwitchPaint,
   messagesBelongToThreadKey,
+  filterMessagesBelongingToThreadKey,
   pendingOptimisticsForChatTypeSwitch,
   planChatTypeSwitch,
   planLayoutSeed,
@@ -148,6 +149,17 @@ describe('planChatTypeSwitch — explicit teardown', () => {
     expect(messagesBelongToThreadKey(merged, 'GAME:g1:PRIVATE')).toBe(true);
     expect(messagesBelongToThreadKey(publicSent, 'GAME:g1:PUBLIC')).toBe(true);
     expect(messagesBelongToThreadKey(publicSent, 'GAME:g1:PRIVATE')).toBe(false);
+  });
+
+  it('strips foreign-thread rows from L1 flush/warm snapshots', () => {
+    const rows = [
+      msg('g1-keep'),
+      msg('g2-leak', 'PUBLIC', { contextId: 'g2' }),
+    ];
+    expect(filterMessagesBelongingToThreadKey(rows, 'GAME:g1:PUBLIC').map((m) => m.id)).toEqual([
+      'g1-keep',
+    ]);
+    expect(messagesBelongToThreadKey(rows, 'GAME:g1:PUBLIC')).toBe(false);
   });
 
   it('keeps pending optimistics for target chat type only', () => {

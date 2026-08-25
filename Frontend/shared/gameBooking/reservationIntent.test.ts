@@ -169,6 +169,28 @@ describe('reservation intent resolvers', () => {
         clubBookingFlowActive: false,
       }),
     ).toBe('gameOnly');
+    expect(
+      resolveInitialReservationIntent({
+        hasPreselectedBookings: false,
+        clubBookingFlowActive: true,
+        fromPlayIntent: true,
+      }),
+    ).toBe('gameOnly');
+    expect(
+      resolveInitialReservationIntent({
+        hasPreselectedBookings: false,
+        clubBookingFlowActive: true,
+        hasReservationsForDate: true,
+        fromPlayIntent: true,
+      }),
+    ).toBe('gameOnly');
+    expect(
+      resolveInitialReservationIntent({
+        hasPreselectedBookings: true,
+        clubBookingFlowActive: true,
+        fromPlayIntent: true,
+      }),
+    ).toBe('useExisting');
   });
 
   it('projects create intents to legacy location-time state', () => {

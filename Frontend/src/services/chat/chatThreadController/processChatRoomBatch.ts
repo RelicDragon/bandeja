@@ -17,6 +17,7 @@ import { pullAndApplyChatSyncEventsDirect } from '@/services/chat/chatLocalApply
 import type { ChatRoomEvent } from '@/store/socketEventsStore';
 import type { ChatType } from '@/types';
 import {
+  liveMessageBelongsToThread,
   reduceThreadLiveSnapshot,
   type AllReadEvent,
   type InboundMessageEvent,
@@ -209,15 +210,24 @@ function executeThreadLiveEffects(
         const event = effect.event;
         if (event.type === 'inboundMessage') {
           const message = event.message;
-          const syncSeq = message.syncSeq;
+          const persistContextType = message.chatContextType ?? contextType;
+          const persistContextId = message.contextId ?? contextId;
+          persistInboundMessageWithRecovery(
+            persistContextType,
+            persistContextId,
+            message,
+            message.syncSeq
+          );
 
-          persistInboundMessageWithRecovery(contextType, contextId, message, syncSeq);
-
-          if (message.senderId !== viewerUserId && message.id) {
+          const viewingThisThread = liveMessageBelongsToThread(message, {
+            contextType,
+            contextId,
+          });
+          if (viewingThisThread && message.senderId !== viewerUserId && message.id) {
             socketService.acknowledgeMessage(
               message.id,
-              contextType as 'GAME' | 'BUG' | 'USER' | 'GROUP',
-              contextId
+              persistContextType as 'GAME' | 'BUG' | 'USER' | 'GROUP',
+              persistContextId
             );
             socketService.confirmMessageReceipt(message.id, 'socket');
           }
@@ -286,7 +296,10 @@ function executeThreadLiveEffects(
           contextType,
           contextId,
           gameChatType,
-          readRows: () => effect.messages,
+          readRows: () =>
+            effect.messages.filter((m) =>
+              liveMessageBelongsToThread(m, { contextType, contextId })
+            ),
           verify: () => true,
         }).catch(() => {});
         break;
@@ -337,7 +350,12 @@ export function processChatRoomBatch(batch: ChatRoomEvent[], ctx: ProcessChatRoo
     }
 
     for (const event of liveEvents) {
-      if (event.type === 'inboundMessage') onInboundMessage?.(event.message);
+      if (
+        event.type === 'inboundMessage' &&
+        liveMessageBelongsToThread(event.message, threadLiveConfig)
+      ) {
+        onInboundMessage?.(event.message);
+      }
     }
 
     executeThreadLiveEffects(
@@ -354,7 +372,8 @@ export function processChatRoomBatch(batch: ChatRoomEvent[], ctx: ProcessChatRoo
     contextType,
     contextId: id,
     gameChatType: contextType === 'GAME' ? effectiveChatType : undefined,
-    readRows: () => messagesRef.current,
+    readRows: () =>
+      messagesRef.current.filter((m) => liveMessageBelongsToThread(m, threadLiveConfig)),
     verify: () => true,
   });
 }

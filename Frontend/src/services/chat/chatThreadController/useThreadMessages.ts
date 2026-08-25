@@ -47,6 +47,7 @@ import {
   type ThreadInitialScroll,
 } from '@/services/chat/chatOpenCoordinator';
 import {
+  filterMessagesBelongingToThreadKey,
   planLayoutSeed,
   planThreadTeardown,
   resolveThreadKey,
@@ -349,7 +350,7 @@ export function useThreadMessages({
       return;
     }
 
-    let warmRef = seedPlan.warmRefMessages;
+    let warmRef = filterMessagesBelongingToThreadKey(seedPlan.warmRefMessages, key);
     if (seedPlan.deleteWarmCache) {
       deleteChatThreadMemory(key);
       warmRef = [];
@@ -369,10 +370,10 @@ export function useThreadMessages({
     setPage(1);
     setHasMoreMessages(false);
 
-    const flushKey = seedPlan.flushOnUnmountKey ?? key;
     return () => {
       if (seededThreadKeyRef.current === key) {
-        flushChatThreadL1DebouncedPut(flushKey, () => messagesRef.current, () => true);
+        const snapshot = filterMessagesBelongingToThreadKey(messagesRef.current, key);
+        flushChatThreadL1DebouncedPut(key, () => snapshot, () => true);
         seededThreadKeyRef.current = null;
       }
     };

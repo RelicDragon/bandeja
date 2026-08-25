@@ -637,4 +637,43 @@ assert.deepEqual(
   assert.equal(gameMismatch(intent, game)?.reason, 'dates');
 }
 
+{
+  const invitee = base({
+    userLevel: 6.2,
+    minLevel: null,
+    maxLevel: null,
+    timeOfDay: 'ANYTIME',
+  });
+  const matchDefaultBandGame = {
+    entityType: 'GAME' as const,
+    dateKey: '2026-07-28',
+    clubId: null,
+    startTime: new Date('2026-07-28T18:00:00Z'),
+    startTimeMinutes: 18 * 60,
+    minLevel: 4.3,
+    maxLevel: 5.7,
+    genderTeams: 'ANY',
+  };
+  const now = new Date('2026-07-28T12:00:00Z');
+  assert.equal(intentMatchesGame(invitee, matchDefaultBandGame, now), false);
+  assert.equal(gameMismatch(invitee, matchDefaultBandGame)?.reason, 'level');
+}
+
+{
+  const eveningIntent = base({ timeOfDay: 'EVENING' });
+  const morningReservationGame = {
+    entityType: 'GAME' as const,
+    dateKey: '2026-07-28',
+    clubId: null,
+    startTime: new Date('2026-07-28T10:00:00Z'),
+    startTimeMinutes: 10 * 60,
+    minLevel: null,
+    maxLevel: null,
+    genderTeams: 'ANY',
+  };
+  const now = new Date('2026-07-28T08:00:00Z');
+  assert.equal(intentMatchesGame(eveningIntent, morningReservationGame, now), false);
+  assert.equal(gameMismatch(eveningIntent, morningReservationGame)?.reason, 'time');
+}
+
 console.log('playIntentCriteria.test.ts: ok');

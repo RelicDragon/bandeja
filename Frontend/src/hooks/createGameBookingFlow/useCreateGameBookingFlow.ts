@@ -80,6 +80,7 @@ export type UseCreateGameBookingFlowArgs = {
   initialBookingIds?: string[];
   storedInitialDate: Date;
   hasInitialStartTime?: boolean;
+  fromPlayIntent?: boolean;
   createDateFromSelection: () => { startTime: string; endTime: string };
   baseTimeOptions: TimeOptionHelpers;
   onNavigateAfterCreate: (gameStartTime: string) => void;
@@ -110,6 +111,7 @@ export function useCreateGameBookingFlow({
   initialBookingIds = [],
   storedInitialDate,
   hasInitialStartTime = false,
+  fromPlayIntent = false,
   createDateFromSelection,
   baseTimeOptions,
   onNavigateAfterCreate,
@@ -121,6 +123,7 @@ export function useCreateGameBookingFlow({
       hasPreselectedBookings: preselectedBookings,
       clubBookingFlowActive: clubHasBookingIntegration(selectedClubData) && supportsClubBookingFlow(entityType, 'create'),
       initialHasBookedCourt,
+      fromPlayIntent,
     }),
   );
   const [reservationIntentTouched, setReservationIntentTouched] = useState(false);
@@ -349,9 +352,10 @@ export function useCreateGameBookingFlow({
         clubBookingFlowActive,
         initialHasBookedCourt: false,
         hasReservationsForDate: false,
+        fromPlayIntent,
       }),
     );
-  }, [selectedClub, clubBookingFlowActive]);
+  }, [selectedClub, clubBookingFlowActive, fromPlayIntent]);
 
   useEffect(() => {
     if (reservationIntentTouched || !selectedClub) return;
@@ -361,6 +365,7 @@ export function useCreateGameBookingFlow({
         clubBookingFlowActive,
         initialHasBookedCourt,
         hasReservationsForDate,
+        fromPlayIntent,
       }),
     );
   }, [
@@ -370,6 +375,7 @@ export function useCreateGameBookingFlow({
     clubBookingFlowActive,
     initialHasBookedCourt,
     hasReservationsForDate,
+    fromPlayIntent,
   ]);
 
   useEffect(() => {
@@ -381,6 +387,7 @@ export function useCreateGameBookingFlow({
         clubBookingFlowActive,
         initialHasBookedCourt,
         hasReservationsForDate,
+        fromPlayIntent,
       }),
     );
   }, [
@@ -390,6 +397,7 @@ export function useCreateGameBookingFlow({
     clubBookingFlowActive,
     initialHasBookedCourt,
     hasReservationsForDate,
+    fromPlayIntent,
   ]);
 
   useEffect(() => {
@@ -401,6 +409,7 @@ export function useCreateGameBookingFlow({
         hasPreselectedBookings: false,
         clubBookingFlowActive,
         initialHasBookedCourt: false,
+        fromPlayIntent,
       }),
     );
   }, [
@@ -409,6 +418,7 @@ export function useCreateGameBookingFlow({
     clubDateReservations.bookingsLoaded,
     preselectedBookings,
     clubBookingFlowActive,
+    fromPlayIntent,
   ]);
 
   useEffect(() => {

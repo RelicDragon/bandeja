@@ -29,6 +29,7 @@ import type { GameParticipant, Sport } from '@/types';
 import { recoverGenderUnsetJoin, runWithGenderForEvent } from '@/utils/genderJoinGate';
 import { runWithOverlapConfirm } from '@/utils/gameSlotOverlapConfirm';
 import { runWithProfileName } from '@/utils/runWithProfileName';
+import { playIntentCreatePrefillTimes } from '@/utils/playIntentWindow';
 
 type Props = {
   open: boolean;
@@ -45,25 +46,10 @@ type Props = {
   onChanged?: () => void;
 };
 
-function directCreateWindow(intent: PlayIntent) {
-  const dateKey = intent.dateKeys[0];
-  if (!dateKey) return {};
-
-  const fallbackTime =
-    intent.timeOfDay === 'MORNING'
-      ? '09:00'
-      : intent.timeOfDay === 'AFTERNOON'
-        ? '14:00'
-        : '18:00';
-  const [year, month, day] = dateKey.split('-').map(Number);
-  const [hour, minute] = (intent.startTime || fallbackTime).split(':').map(Number);
-  const start = new Date(year, month - 1, day, hour, minute);
-  if (Number.isNaN(start.getTime())) return {};
-
-  return {
-    startTime: start.toISOString(),
-    endTime: new Date(start.getTime() + 90 * 60 * 1000).toISOString(),
-  };
+function playIntentRosterLevelsFrom(
+  levels: Array<number | null | undefined>,
+): number[] {
+  return levels.filter((level): level is number => typeof level === 'number' && !Number.isNaN(level));
 }
 
 export function CourtLobbyPanel({
@@ -496,6 +482,11 @@ export function CourtLobbyPanel({
               proposalId: prefill.proposalId,
               inviteeIds: prefill.inviteeIds,
             },
+            playIntentRosterLevels: playIntentRosterLevelsFrom(
+              proposal.members
+                .filter((member) => member.userId !== userId)
+                .map((member) => member.level),
+            ),
           },
         });
         return;
@@ -611,7 +602,12 @@ export function CourtLobbyPanel({
 
   const createFromLobby = () => {
     if (!intent || !canCreateFromLobby) return;
-    const window = directCreateWindow(intent);
+    const window = playIntentCreatePrefillTimes({
+      dateKeys: intent.dateKeys,
+      timeOfDay: intent.timeOfDay,
+      startTime: intent.startTime,
+      timezone: user?.currentCity?.timezone,
+    });
     onOpenChange(false);
     navigate('/create-game', {
       state: {
@@ -636,6 +632,9 @@ export function CourtLobbyPanel({
             intentId: member.intentId,
           })),
         },
+        playIntentRosterLevels: playIntentRosterLevelsFrom(
+          directMembers.map((member) => member.level),
+        ),
       },
     });
   };

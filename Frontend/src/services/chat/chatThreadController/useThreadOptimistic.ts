@@ -32,6 +32,7 @@ import { OfflineIntent } from '@/services/chat/offlineIntent';
 import type { PendingGiphyOutboxMedia } from '@/services/chat/chatLocalDb';
 import { shouldApplyGameChatMessageDespiteTabMismatch } from '@/pages/GameChat/chatOptimisticMatch';
 import {
+  liveMessageBelongsToThread,
   reduceThreadLiveSnapshot,
   type ThreadLiveConfig,
   type ThreadLiveEvent,
@@ -88,32 +89,37 @@ export function useThreadOptimistic({
   setUserChat,
 }: UseThreadOptimisticParams) {
   const handleNewMessageRef = useRef<(message: ChatMessage) => string | void>(() => {});
-
-  const buildLiveConfig = useCallback(
-    (gameChatTypeFilter?: ChatType): ThreadLiveConfig | null => {
-      if (!id) return null;
-      return {
-        contextType,
-        contextId: id,
-        viewerUserId: user?.id ?? '',
-        gameChatTypeFilter:
-          contextType === 'GAME'
-            ? gameChatTypeFilter ?? normalizeChatType(currentChatType)
-            : undefined,
-      };
-    },
-    [contextType, currentChatType, id, user?.id]
-  );
+  const openThreadRef = useRef({
+    id,
+    contextType,
+    currentChatType,
+    viewerUserId: user?.id ?? '',
+  });
+  openThreadRef.current = {
+    id,
+    contextType,
+    currentChatType,
+    viewerUserId: user?.id ?? '',
+  };
 
   const applyLiveEvent = useCallback(
     (
       event: ThreadLiveEvent,
       options: { gameChatTypeFilter?: ChatType } = {}
     ): { changed: boolean; previous: ChatMessageWithStatus[]; next: ChatMessageWithStatus[] } => {
-      const config = buildLiveConfig(options.gameChatTypeFilter);
-      if (!config) {
+      const open = openThreadRef.current;
+      if (!open.id) {
         return { changed: false, previous: messagesRef.current, next: messagesRef.current };
       }
+      const config: ThreadLiveConfig = {
+        contextType: open.contextType,
+        contextId: open.id,
+        viewerUserId: open.viewerUserId,
+        gameChatTypeFilter:
+          open.contextType === 'GAME'
+            ? options.gameChatTypeFilter ?? normalizeChatType(open.currentChatType)
+            : undefined,
+      };
       let previousSnapshot = messagesRef.current;
       let nextSnapshot = messagesRef.current;
       let changed = false;
@@ -131,7 +137,7 @@ export function useThreadOptimistic({
       });
       return { changed, previous: previousSnapshot, next: nextSnapshot };
     },
-    [buildLiveConfig, messagesRef, setMessages]
+    [messagesRef, setMessages]
   );
 
   const handleAddOptimisticMessage = useCallback(
@@ -260,32 +266,51 @@ export function useThreadOptimistic({
 
   const handleReplaceOptimisticWithServerMessage = useCallback(
     (optimisticId: string, serverMessage: ChatMessage) => {
-      const matched = findOptimisticMatch(messagesRef.current, serverMessage, optimisticId);
-      const clientId = matched?._optimisticId ?? matched?._clientMutationId ?? optimisticId;
-      const result = applyLiveEvent({
-        type: 'messageAck',
-        clientId,
-        message: serverMessage,
-      });
-      if (result.changed) {
-        revokeReconciledOptimisticBlobs(result.previous, [matched?._optimisticId ?? matched?.id ?? optimisticId], []);
+      const open = openThreadRef.current;
+      const belongsHere =
+        !!open.id &&
+        liveMessageBelongsToThread(serverMessage, {
+          contextType: open.contextType,
+          contextId: open.id,
+        });
+      if (belongsHere) {
+        const matched = findOptimisticMatch(messagesRef.current, serverMessage, optimisticId);
+        const clientId = matched?._optimisticId ?? matched?._clientMutationId ?? optimisticId;
+        const result = applyLiveEvent({
+          type: 'messageAck',
+          clientId,
+          message: serverMessage,
+        });
+        if (result.changed) {
+          revokeReconciledOptimisticBlobs(result.previous, [matched?._optimisticId ?? matched?.id ?? optimisticId], []);
+        }
+        if (open.contextType === 'GAME' || open.contextType === 'USER' || open.contextType === 'GROUP') {
+          markReadAfterSend(open.contextType, open.id);
+        }
       }
       void applyThreadEvent({ kind: 'sendSuccess', message: serverMessage }).catch(() => {});
       donateOutgoingChatIntent(serverMessage);
-      if (id) {
-        messageQueueStorage.remove(optimisticId, contextType, id).catch((err) => console.error('[messageQueue] remove', err));
-        if (contextType === 'GAME' || contextType === 'USER' || contextType === 'GROUP') {
-          markReadAfterSend(contextType, id);
-        }
-      }
+      messageQueueStorage
+        .remove(optimisticId, serverMessage.chatContextType, serverMessage.contextId)
+        .catch((err) => console.error('[messageQueue] remove', err));
       cancelSend(optimisticId);
     },
-    [contextType, id, applyLiveEvent, messagesRef]
+    [applyLiveEvent, messagesRef]
   );
 
   const finishQueuedSendSuccess = useCallback(
     (tempId: string, created: ChatMessage) => {
       handleReplaceOptimisticWithServerMessage(tempId, created);
+      const open = openThreadRef.current;
+      if (
+        !open.id ||
+        !liveMessageBelongsToThread(created, {
+          contextType: open.contextType,
+          contextId: open.id,
+        })
+      ) {
+        return;
+      }
       handleNewMessageRef.current?.(created);
       requestAnimationFrame(() => scrollToBottom());
     },
@@ -304,26 +329,28 @@ export function useThreadOptimistic({
       const { tempId } = params;
       void (async () => {
         const row = await messageQueueStorage.getByTempId(tempId);
-        const contextType = row?.contextType ?? params.contextType;
-        const contextId = row?.contextId ?? params.contextId;
-        const appliesToOpenThread = contextId === id;
+        const sendContextType = row?.contextType ?? params.contextType;
+        const sendContextId = row?.contextId ?? params.contextId;
         sendWithTimeout(
           {
             ...params,
-            contextType,
-            contextId,
+            contextType: sendContextType,
+            contextId: sendContextId,
             clientMutationId: row?.clientMutationId,
           },
           {
-            onFailed: appliesToOpenThread ? handleMarkFailed : () => {},
-            onSuccess: appliesToOpenThread
-              ? (created) => finishQueuedSendSuccess(tempId, created)
-              : undefined,
+            onFailed: () => {
+              const open = openThreadRef.current;
+              if (open.id === sendContextId && open.contextType === sendContextType) {
+                handleMarkFailed(tempId);
+              }
+            },
+            onSuccess: (created) => finishQueuedSendSuccess(tempId, created),
           }
         );
       })();
     },
-    [id, handleMarkFailed, finishQueuedSendSuccess]
+    [handleMarkFailed, finishQueuedSendSuccess]
   );
 
   const handleResendQueued = useCallback(
@@ -391,30 +418,41 @@ export function useThreadOptimistic({
 
   const handleNewMessage = useCallback(
     (message: ChatMessage): string | void => {
-      const normalizedCurrentChatType = normalizeChatType(currentChatType);
+      const open = openThreadRef.current;
+      if (
+        !open.id ||
+        !liveMessageBelongsToThread(message, {
+          contextType: open.contextType,
+          contextId: open.id,
+        })
+      ) {
+        return;
+      }
+      const normalizedCurrentChatType = normalizeChatType(open.currentChatType);
       const normalizedMessageChatType = normalizeChatType(message.chatType);
       const bypassGameTabFilter =
-        contextType === 'GAME' &&
+        open.contextType === 'GAME' &&
         shouldApplyGameChatMessageDespiteTabMismatch(
           message,
-          user?.id,
-          currentChatType,
+          open.viewerUserId,
+          open.currentChatType,
           messagesRef.current
         );
       const matchesChatType =
-        contextType === 'USER' ||
-        contextType === 'BUG' ||
+        open.contextType === 'USER' ||
+        open.contextType === 'BUG' ||
         normalizedMessageChatType === normalizedCurrentChatType ||
         bypassGameTabFilter;
       if (!matchesChatType) return;
       if (shouldDropInviteOnlyRosterSystemMessage(message)) return;
 
-      if (contextType === 'USER' && id && !message.senderId && message.content) {
+      if (open.contextType === 'USER' && !message.senderId && message.content) {
+        const acceptedId = open.id;
         const parsed = parseSystemMessage(message.content);
         if (parsed?.type === 'USER_CHAT_ACCEPTED') {
           const { fetchUserChats, getChatById } = usePlayersStore.getState();
           fetchUserChats().then(() => {
-            const updated = getChatById(id!);
+            const updated = getChatById(acceptedId);
             if (updated) setUserChat(updated);
           });
         }
@@ -447,13 +485,13 @@ export function useThreadOptimistic({
         effectPack = { replacedOptimisticId, lastMessageId: message.id };
       }
 
-      if (shortCircuitDuplicateId && id && message.senderId === user?.id) {
+      if (shortCircuitDuplicateId && message.senderId === open.viewerUserId) {
         const cid = message.clientMutationId?.trim();
         if (cid) {
-          void messageQueueStorage.getByContext(contextType, id).then((rows) => {
+          void messageQueueStorage.getByContext(open.contextType, open.id).then((rows) => {
             const hit = rows.find((r) => (r.clientMutationId ?? '').trim() === cid);
             if (hit) {
-              void messageQueueStorage.remove(hit.tempId, contextType, id).catch((err) =>
+              void messageQueueStorage.remove(hit.tempId, open.contextType, open.id).catch((err) =>
                 console.error('[messageQueue] remove duplicate message id', err)
               );
               cancelSend(hit.tempId);
@@ -462,24 +500,24 @@ export function useThreadOptimistic({
         }
       }
 
-      if (effectPack && id) {
+      if (effectPack) {
         void applyThreadEvent({
           kind: 'uiTailAdvance',
-          contextType,
-          contextId: id,
+          contextType: open.contextType,
+          contextId: open.id,
           messageId: effectPack.lastMessageId,
-          gameChatType: contextType === 'GAME' ? normalizedCurrentChatType : undefined,
+          gameChatType: open.contextType === 'GAME' ? normalizedCurrentChatType : undefined,
         });
       }
-      if (effectPack?.replacedOptimisticId && id) {
+      if (effectPack?.replacedOptimisticId) {
         messageQueueStorage
-          .remove(effectPack.replacedOptimisticId, contextType, id)
+          .remove(effectPack.replacedOptimisticId, open.contextType, open.id)
           .catch((err) => console.error('[messageQueue] remove', err));
         cancelSend(effectPack.replacedOptimisticId);
         return effectPack.replacedOptimisticId;
       }
     },
-    [contextType, currentChatType, id, user?.id, setUserChat, messagesRef, applyLiveEvent]
+    [setUserChat, messagesRef, applyLiveEvent]
   );
   handleNewMessageRef.current = handleNewMessage;
 
@@ -487,7 +525,7 @@ export function useThreadOptimistic({
     const onSuccess = (ev: Event) => {
       const d = (ev as CustomEvent<{ tempId?: string; message?: ChatMessage; contextType?: string; contextId?: string }>)
         .detail;
-      if (!d?.tempId || !d.message || d.contextType !== contextType || d.contextId !== id) return;
+      if (!d?.tempId || !d.message) return;
       handleReplaceOptimisticWithServerMessage(d.tempId, d.message);
     };
     const onFail = (ev: Event) => {

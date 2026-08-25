@@ -14,6 +14,7 @@ import { buildPadelooEndTime } from '@/integrations/padeloo/bookFlow';
 import { createHydratedClubBookingProvider } from '@/integrations/booking/createClubBookingProvider';
 import type { BookSlotContext } from '@/integrations/booking/ClubBookingProvider';
 import { bookingErrorMessage } from '@/utils/bookingErrorMessage.util';
+import { createGameOrBookingErrorMessage } from '@/utils/createGameFailureToast';
 import { formatClubDateKey } from '@/integrations/padeloo/slots';
 import toast from 'react-hot-toast';
 
@@ -148,7 +149,12 @@ export function PadelooCreateGameConfirmModal({
       });
       onSuccess();
     } catch (err) {
-      const detail = bookingErrorMessage(err, t, 'createGame.booktime.bookFailed');
+      const detail = createGameOrBookingErrorMessage(
+        err,
+        t,
+        'createGame.booktime.bookFailed',
+        bookingErrorMessage,
+      );
       setErrorDetail(detail);
       if (isProviderBookingError(err) && err.code === 'SlotTaken') {
         onSlotTaken();

@@ -1108,6 +1108,7 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | ID | Test | Steps | Expected |
 |----|------|-------|----------|
 | CH-18 | Send text message | Type + send | Optimistic + confirmed |
+| CH-157 | Send then switch thread | Send in chat A, immediately open a different game/DM/group before the send confirms | Message stays only in A; chat B does not show A’s bubble among B’s history |
 | CH-95 | Mention @all | In game/group chat composer type `@` → pick `all` → send | Message shows `@all`; all other participants get mention notification |
 | CH-19 | Send emoji | Emoji picker | Emoji in message |
 | CH-20 | Reply to message | Reply action | Threaded reply |
@@ -1657,6 +1658,9 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PI-55 | Public game appears live | Keep the lobby open; another client creates a fully fitting public GAME or tournament | Node appears after matching-games invalidate, including tournaments |
 | PI-56 | Direct-join toggle | Host turns off allowDirectJoin on a visible radar game | Node switches to dashed / Ask to join without a reload |
 | PI-57 | Slot reopens | A full fitting game loses a PLAYING seat | Node reappears after matching-games invalidate |
+| PI-60 | Create from lobby with MATCH template | Looking any-level with a peer outside host ±0.7 → I’ll create the game → pick Flexible scoring / MATCH → create | Game creates; level band expands to cover the lobby roster (not reset to host ±0.7, not opened to 1–7) |
+| PI-61 | Create from play-intent mismatch toast | From lobby create, switch to link a reservation (or pick a time) outside the looking window, or shrink the level band so a selected player no longer fits → tap create | Create does not succeed silently; a toast explains the mismatch (time / level / club / date) |
+| PI-62 | Play-intent create ignores leftover reservations | Looking at a bookable club that already has a reservation that day → create from lobby | Default CTA is create game (game-only), not “Link reservation”; looking time is used |
 
 ---
 

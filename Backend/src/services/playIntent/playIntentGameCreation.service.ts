@@ -12,7 +12,7 @@ import {
 } from '@prisma/client';
 import { formatInTimeZone } from 'date-fns-tz';
 import { ApiError } from '../../utils/ApiError';
-import { intentMatchesGame, timeStringToMinutes } from './playIntentCriteria';
+import { gameMismatch, intentMatchesGame, timeStringToMinutes } from './playIntentCriteria';
 import { PlayIntentService } from './playIntent.service';
 import { PlayIntentGameLifecycleService } from './playIntentGameLifecycle.service';
 import { lockMatchProposal } from './matchProposalLock';
@@ -230,14 +230,15 @@ export class PlayIntentGameCreationService {
       });
     }
     for (const intent of linkedIntents) {
-      if (
-        intent.cityId !== context.cityId ||
-        intent.sport !== context.sport ||
-        intent.entityType !== context.entityType ||
-        !intentMatchesGame(PlayIntentService.toCriteria(intent), gameCriteria, now)
-      ) {
+      const criteria = PlayIntentService.toCriteria(intent);
+      const sameWorld =
+        intent.cityId === context.cityId &&
+        intent.sport === context.sport &&
+        intent.entityType === context.entityType;
+      if (!sameWorld || !intentMatchesGame(criteria, gameCriteria, now)) {
         throw new ApiError(409, 'Game no longer matches the play intent', true, {
           code: 'playIntent.gameMismatch',
+          reason: sameWorld ? gameMismatch(criteria, gameCriteria)?.reason : undefined,
           userId: intent.userId,
         });
       }
