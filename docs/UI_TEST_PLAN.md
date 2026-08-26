@@ -281,7 +281,8 @@ Frontend/e2e/
 | H-55 | My tab panel single select | Tap Bookings then Teams | Bookings panel animates out; Teams panel animates in; only Teams highlighted |
 | H-57 | My tab panel switcher counts | User with bookings, teams, and leagues | Bookings / Teams / Leagues buttons show matching counts; hidden when zero |
 | H-02 | Calendar date select | Pick date on calendar | Games for that day |
-| H-41 | Selected date heading | Pick date on My tab calendar | Long localized date (e.g. "Thursday, 11 June") with Today/Tomorrow badge shown below calendar; updates on re-select, localized per language |
+| H-41 | Selected date weather card | Pick date on My tab calendar | One card under calendar: eyebrow Today/Tomorrow/Yesterday OR weekday (not both) + day/month left; large temp + weather icon right; single meta line (condition · range · precip>0 · wind>0); tap opens forecast; no second “Today” title under the card |
+| H-85 | Day list section title | Pick today, then a non-today date; calendar on then off | Calendar on: day+weather only in `SelectedDateWeatherCard` (no second title under it); List control in calendar header. Calendar off: section title is Today / Tomorrow / Yesterday / short date + calendar expand control |
 | H-63 | Empty selected date hint | User with upcoming games on other days → pick a day with no games | Localized "No games on this date" below selected date heading; Upcoming games section still shown |
 | H-60 | Calendar weekday headers | My tab or Find calendar with app language set to Russian, then English | Column headers use locale short weekday (ru: 2-letter e.g. пн/вт; en: 3-letter e.g. Mon/Tue), not truncated full names |
 | H-80 | Calendar day cell readability | Open My or Find calendar on a ~320px phone viewport with busy days | Day-of-month is fully visible and centered; a tiny hairline sits under the date when the cell has games or weather (hidden on empty days); game count is a small numeral under the date (not covering it); entity types show as color dots; selected day highlights without overlapping neighbors |
@@ -413,7 +414,7 @@ Frontend/e2e/
 | H-65 | Calendar weather toggle off | With weather mode on → tap cloud/sun again | Entity-type pills return; weather pills hidden |
 | H-66 | Calendar weather toggle disabled | User without selected city | Cloud/sun control disabled; no weather requests; entity-type pills unchanged |
 | H-67 | Calendar weather mode persists | Enable weather on My tab → reload | Weather mode still active; pills restored after fetch |
-| H-68 | Selected date weather row | My tab calendar with city → pick date | Full-width weather row below date heading shows current temp, day range pill, precip and wind; tap opens day forecast modal without game window; past dates show mm precipitation and archived hourly data |
+| H-68 | Selected date weather card | My tab calendar with city → pick date | Unified date+weather card shows temp tile, condition, day range, precip and wind; tap opens day forecast modal without game window; past dates show mm precipitation and archived hourly data |
 | H-39 | My tab bookings refresh | Switch away from My tab and back | Upcoming bookings refetched from club booking system |
 
 ---
@@ -429,12 +430,12 @@ Frontend/e2e/
 | F-02 | List view | Tap List in Find calendar header | Calendar collapses; weather toggle hidden; upcoming games from today grouped by date |
 | F-03 | List → calendar | Tap Calendar in collapsed header | Calendar expands; day-filtered games |
 | F-45 | Find calendar weather toggle | Find calendar expanded → tap cloud/sun icon | Weather pills on forecast days replace entity-type pills; filters and day selection unchanged |
-| F-46 | Find selected date weather row | Find calendar → pick date | Weather row below date heading shows day range pill; tap opens day forecast modal |
+| F-46 | Find selected date weather card | Find calendar → pick date | Unified date+weather card shows day range; tap opens day forecast modal |
 | F-04 | Month calendar expand | Open month picker | Range changes |
 | F-05 | Go to today | Header action | Jumps to current date |
 | F-06 | Desktop calendar split | `@desktop` | Split layout |
 | F-37 | Overflow month day select | Navigate month → tap gray adjacent-month cell with game count badge | Games for that day appear in list |
-| F-38 | Selected date heading | Select date on Find calendar (mobile + `@desktop` split) | Long localized date with Today/Tomorrow badge below calendar; updates when another date selected |
+| F-38 | Selected date weather card | Select date on Find calendar (mobile + `@desktop` split) | Unified date+weather card with Today/Tomorrow/Yesterday + weather; updates when another date selected |
 
 ### 7.2 Category filters (chips)
 

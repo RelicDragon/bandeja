@@ -387,6 +387,11 @@ export const MyTab = () => {
     onDateRangeChange: handleCalendarDateRangeChange,
     weatherModeScope: 'my' as const,
     selectedDateEmptyHint,
+    upcomingsToggle: {
+      active: false,
+      onClick: () => handleCalendarVisibleChange(false),
+      label: t('games.list'),
+    },
   };
   const filteredPastGames = useMemo(() => {
     const list = pastGames.filter((g) => g.entityType !== 'LEAGUE_SEASON');
@@ -516,10 +521,12 @@ export const MyTab = () => {
               />
             </div>
           )}
-          <HomeTodayHeading
-            calendarVisible={calendarVisible}
-            onToggleCalendar={() => handleCalendarVisibleChange(!calendarVisible)}
-          />
+          {!calendarVisible ? (
+            <HomeTodayHeading
+              selectedDate={myGamesSelectedDate}
+              onShowCalendar={() => handleCalendarVisibleChange(true)}
+            />
+          ) : null}
           <AnimatedMount>
             <MyGamesSection
               games={gamesSectionGames}
@@ -622,10 +629,12 @@ export const MyTab = () => {
               <CalendarSection {...myTabCalendarProps} />
             </AnimatedMount>
           ) : null}
-          <HomeTodayHeading
-            calendarVisible={calendarVisible}
-            onToggleCalendar={() => handleCalendarVisibleChange(!calendarVisible)}
-          />
+          {!calendarVisible ? (
+            <HomeTodayHeading
+              selectedDate={myGamesSelectedDate}
+              onShowCalendar={() => handleCalendarVisibleChange(true)}
+            />
+          ) : null}
           <AnimatedMount>
             <MyGamesSection
               games={gamesSectionGames}

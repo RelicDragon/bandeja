@@ -7,4 +7,5 @@ export { UserTeamsHomeSection } from './UserTeamsHomeSection';
 export { YourLeaguesHomeSection } from './YourLeaguesHomeSection';
 export { HomeActionGrid } from './HomeActionGrid';
 export { HomeTodayHeading } from './HomeTodayHeading';
+export { SelectedDateWeatherCard } from './SelectedDateWeatherCard';
 
