@@ -28,15 +28,23 @@ export function filterMessagesBelongingToThread<T extends Pick<ChatMessage, 'cha
   return messages.filter((m) => liveMessageBelongsToThread(m, config));
 }
 
-/** Fill missing thread scope from the socket/room envelope (inbox + room paths). */
+/** Fill missing thread scope from envelope. Never overwrites an existing contextId. */
 export function stampMessageThreadContext<T extends Pick<ChatMessage, 'chatContextType' | 'contextId'>>(
   message: T,
   contextType: ChatContextType,
   contextId: string
 ): T {
+  const existingId = message.contextId;
+  if (existingId != null && existingId !== '' && existingId !== contextId) {
+    // Keep foreign scope; caller must not live-project into this room.
+    return {
+      ...message,
+      chatContextType: message.chatContextType ?? contextType,
+    };
+  }
   return {
     ...message,
     chatContextType: message.chatContextType ?? contextType,
-    contextId: message.contextId ?? contextId,
+    contextId: existingId != null && existingId !== '' ? existingId : contextId,
   };
 }

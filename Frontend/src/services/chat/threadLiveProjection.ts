@@ -311,14 +311,22 @@ export function reduceThreadLiveSnapshot(
   events: readonly ThreadLiveEvent[],
   config: ThreadLiveConfig
 ): ThreadLiveProjectionResult {
+  // Hard invariant: never carry foreign/orphan rows into the open-thread projection.
+  const scopedPrev = filterMessagesInOpenThreadScope(prev, config);
   const state: ReductionState = {
-    messages: [...prev],
+    messages: scopedPrev,
     effects: [],
-    changed: false,
+    changed: scopedPrev.length !== prev.length,
   };
 
   for (const event of events) {
     reduceSingleEvent(state, event, config);
+  }
+
+  const next = filterMessagesInOpenThreadScope(state.messages, config);
+  if (next.length !== state.messages.length) {
+    state.messages = next;
+    state.changed = true;
   }
 
   return {
@@ -326,6 +334,20 @@ export function reduceThreadLiveSnapshot(
     effects: state.effects,
     changed: state.changed,
   };
+}
+
+/** Open-thread UI scope: belonging + optional GAME chatType filter. */
+export function filterMessagesInOpenThreadScope(
+  messages: readonly ChatMessageWithStatus[],
+  config: ThreadLiveConfig
+): ChatMessageWithStatus[] {
+  return messages.filter((m) => {
+    if (!liveMessageBelongsToThread(m, config)) return false;
+    if (config.contextType === 'GAME' && config.gameChatTypeFilter) {
+      if (m.chatType !== config.gameChatTypeFilter) return false;
+    }
+    return true;
+  });
 }
 
 /**

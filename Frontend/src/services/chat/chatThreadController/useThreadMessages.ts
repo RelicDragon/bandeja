@@ -880,15 +880,19 @@ export function useThreadMessages({
         ),
         [liveAnchor]
       );
+      if (currentIdRef.current !== id) return false;
       messagesRef.current = acc;
       void persistChatMessagesFromApi([anchor]).catch(() => {});
 
       let cursor = messageId;
       for (let i = 0; i < 20; i++) {
+        if (currentIdRef.current !== id) return false;
         const batch = await chatApi.getMessages(contextType, id, 1, PAGE_SIZE, effectiveChatType, cursor);
+        if (currentIdRef.current !== id) return false;
         if (batch.length === 0) break;
         void persistChatMessagesFromApi(batch).catch(() => {});
         const liveBatch = await dropTombstonedChatMessages(batch);
+        if (currentIdRef.current !== id) return false;
         const scopedBatch = liveBatch.filter((m) =>
           liveMessageBelongsToThread(m, { contextType, contextId: id })
         );
@@ -898,7 +902,7 @@ export function useThreadMessages({
         cursor = batch[0].id;
       }
 
-      if (currentIdRef.current !== id) return acc.some((m) => m.id === messageId);
+      if (currentIdRef.current !== id) return false;
 
       setMessagesTagged('anchor-load', acc);
 

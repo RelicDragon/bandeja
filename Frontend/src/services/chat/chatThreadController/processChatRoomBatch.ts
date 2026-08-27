@@ -30,6 +30,7 @@ import { parsePeerReadCursor } from '@/services/chat/peerReadCursor';
 import { useAuthStore } from '@/store/authStore';
 import { shouldDropInviteOnlyRosterSystemMessage } from '@/services/chat/dropInviteOnlyRosterSystemMessage';
 import { stampMessageThreadContext } from '@/services/chat/liveMessageBelongsToThread';
+import { messageHasExplicitThreadScope } from '@/services/chat/messageThreadScopeSeal';
 
 export type ProcessChatRoomBatchCtx = {
   id: string | undefined;
@@ -66,8 +67,34 @@ function mapBatchToLiveEvents(batch: ChatRoomEvent[]): ThreadLiveEvent[] {
       case 'message': {
         const data = ev.data;
         const raw = data.message;
+        const envelopeContextId = data.contextId;
+        const envelopeType = data.contextType as ChatContextType;
+        const payloadContextId =
+          typeof raw.contextId === 'string' && raw.contextId !== '' ? raw.contextId : undefined;
+        // Payload scoped to another thread: persist under payload, never live-project here.
+        if (payloadContextId && payloadContextId !== envelopeContextId) {
+          const persistType = (raw.chatContextType ?? envelopeType) as ChatContextType;
+          persistInboundMessageWithRecovery(
+            persistType,
+            payloadContextId,
+            stampMessageThreadContext(raw, persistType, payloadContextId),
+            raw.syncSeq ?? data.syncSeq
+          );
+          break;
+        }
+        // Missing contextId: stamp+persist under envelope for Dexie, but do not live-paint
+        // (stamp-then-belong was the H2 rewrite hole for wrong-room delivery).
+        if (!messageHasExplicitThreadScope(raw, envelopeContextId)) {
+          persistInboundMessageWithRecovery(
+            envelopeType,
+            envelopeContextId,
+            stampMessageThreadContext(raw, envelopeType, envelopeContextId),
+            raw.syncSeq ?? data.syncSeq
+          );
+          break;
+        }
         const message = {
-          ...stampMessageThreadContext(raw, data.contextType as ChatContextType, data.contextId),
+          ...stampMessageThreadContext(raw, envelopeType, envelopeContextId),
           syncSeq: raw.syncSeq ?? data.syncSeq,
         };
         if (shouldDropInviteOnlyRosterSystemMessage(message)) break;
@@ -152,11 +179,30 @@ function mapBatchToLiveEvents(batch: ChatRoomEvent[]): ThreadLiveEvent[] {
       case 'messageUpdated': {
         const raw = ev.data.message;
         if (!raw) break;
-        const message = stampMessageThreadContext(
-          raw,
-          ev.data.contextType as ChatContextType,
-          ev.data.contextId
-        );
+        const envelopeContextId = ev.data.contextId;
+        const envelopeType = ev.data.contextType as ChatContextType;
+        const payloadContextId =
+          typeof raw.contextId === 'string' && raw.contextId !== '' ? raw.contextId : undefined;
+        if (payloadContextId && payloadContextId !== envelopeContextId) {
+          const persistType = (raw.chatContextType ?? envelopeType) as ChatContextType;
+          persistInboundMessageWithRecovery(
+            persistType,
+            payloadContextId,
+            stampMessageThreadContext(raw, persistType, payloadContextId),
+            ev.data.syncSeq
+          );
+          break;
+        }
+        if (!messageHasExplicitThreadScope(raw, envelopeContextId)) {
+          persistInboundMessageWithRecovery(
+            envelopeType,
+            envelopeContextId,
+            stampMessageThreadContext(raw, envelopeType, envelopeContextId),
+            ev.data.syncSeq
+          );
+          break;
+        }
+        const message = stampMessageThreadContext(raw, envelopeType, envelopeContextId);
         events.push({
           type: 'messageUpdated',
           messageId: message.id,

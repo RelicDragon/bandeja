@@ -410,12 +410,11 @@ export function useChatInboxSocketEffects(p: SocketEventsParams) {
         (chatsFilter === 'market' && contextType === 'GROUP');
       if (!shouldUpdate) continue;
       const raw = message as ChatMessage;
-      const normalized = stampMessageThreadContext(
-        raw,
-        contextType as ChatContextType,
-        contextId
-      );
-      work.push({ contextType, contextId, message: raw, normalized });
+      const persistType = (raw.chatContextType ?? contextType) as ChatContextType;
+      const persistId =
+        typeof raw.contextId === 'string' && raw.contextId !== '' ? raw.contextId : contextId;
+      const normalized = stampMessageThreadContext(raw, persistType, persistId);
+      work.push({ contextType: persistType, contextId: persistId, message: raw, normalized });
     }
     if (work.length === 0) return;
 

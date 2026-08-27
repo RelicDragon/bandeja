@@ -5,6 +5,7 @@ import { normalizeChatType } from '@/utils/chatType';
 import { messageQueueStorage, QueuedMessage } from '@/services/chatMessageQueueStorage';
 import { sendWithTimeout, isSending } from '@/services/chatSendService';
 import { reconcileOptimisticMessages } from '@/services/chat/optimisticReconcile';
+import { liveMessageBelongsToThread } from '@/services/chat/liveMessageBelongsToThread';
 import {
   loadOutboxImageBlobs,
   loadOutboxDocumentBlob,
@@ -225,11 +226,15 @@ export async function applyQueuedMessagesToState(params: {
 
   if (paintState) {
     setMessages((prev) => {
+      const belonging = { contextType, contextId };
+      const scopedPrev = prev.filter((m) => liveMessageBelongsToThread(m, belonging));
       const toAdd = optimisticList.filter(
-        (msg) => !prev.some((m) => (m as ChatMessageWithStatus)._optimisticId === msg._optimisticId)
+        (msg) =>
+          liveMessageBelongsToThread(msg, belonging) &&
+          !scopedPrev.some((m) => (m as ChatMessageWithStatus)._optimisticId === msg._optimisticId)
       );
-      const combined = [...prev, ...toAdd];
-      const serverMessages = prev.filter(
+      const combined = [...scopedPrev, ...toAdd];
+      const serverMessages = scopedPrev.filter(
         (m) => !(m as ChatMessageWithStatus)._optimisticId
       ) as ChatMessage[];
       const { messages: next } = reconcileOptimisticMessages({
@@ -237,8 +242,9 @@ export async function applyQueuedMessagesToState(params: {
         incoming: serverMessages,
         userId,
       });
-      messagesRef.current = next;
-      return next;
+      const scopedNext = next.filter((m) => liveMessageBelongsToThread(m, belonging));
+      messagesRef.current = scopedNext;
+      return scopedNext;
     });
   }
 

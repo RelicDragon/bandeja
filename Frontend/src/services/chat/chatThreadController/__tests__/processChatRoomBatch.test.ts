@@ -109,7 +109,7 @@ describe('processChatRoomBatch inbound message', () => {
     persistSocketInboundMessage.mockResolvedValue(1);
   });
 
-  it('stamps envelope contextId onto inbound message missing contextId', () => {
+  it('stamps envelope contextId for persist but does not live-paint when payload contextId is missing', () => {
     const ctx = makeCtx();
     const raw = inboundMessage('m-orphan');
     delete (raw as { contextId?: string }).contextId;
@@ -130,7 +130,8 @@ describe('processChatRoomBatch inbound message', () => {
       ctx
     );
 
-    expect(ctx.messagesRef.current.some((m) => m.id === 'm-orphan')).toBe(true);
+    expect(ctx.messagesRef.current.some((m) => m.id === 'm-orphan')).toBe(false);
+    expect(ctx.onInboundMessage).not.toHaveBeenCalled();
     expect(persistSocketInboundMessage).toHaveBeenCalledWith(
       'USER',
       'thread-1',
@@ -370,6 +371,54 @@ describe('processChatRoomBatch with Thread Live Projection (Phase 2)', () => {
     expect(ctx.messagesRef.current.map((m) => m.id)).toEqual(['m-keep']);
     expect(ctx.onInboundMessage).not.toHaveBeenCalled();
     expect(persistSocketInboundMessage).not.toHaveBeenCalled();
+  });
+
+  it('envelope≠payload contextId: persist under payload, never paint into open room', () => {
+    const keep = inboundMessage('m-keep');
+    const ctx = makeCtx({
+      id: 'male-game',
+      contextType: 'GAME',
+      effectiveChatType: 'PUBLIC',
+      threadLiveConfig: {
+        contextType: 'GAME',
+        contextId: 'male-game',
+        viewerUserId: 'viewer-user',
+        gameChatTypeFilter: 'PUBLIC',
+      },
+    });
+    ctx.messagesRef.current = [{ ...keep, chatContextType: 'GAME', contextId: 'male-game' }];
+
+    const womenMsg = inboundMessage('women-msg');
+    womenMsg.chatContextType = 'GAME';
+    womenMsg.contextId = 'women-game';
+    womenMsg.content = 'Извините, девочки';
+    womenMsg.chatType = 'PUBLIC';
+
+    processChatRoomBatch(
+      [
+        {
+          kind: 'message',
+          data: {
+            contextType: 'GAME',
+            contextId: 'male-game',
+            message: womenMsg,
+            messageId: 'women-msg',
+            syncSeq: 100,
+          },
+        },
+      ],
+      ctx
+    );
+
+    expect(ctx.messagesRef.current.map((m) => m.id)).toEqual(['m-keep']);
+    expect(ctx.messagesRef.current.some((m) => m.content?.includes('девочки'))).toBe(false);
+    expect(ctx.onInboundMessage).not.toHaveBeenCalled();
+    expect(persistSocketInboundMessage).toHaveBeenCalledWith(
+      'GAME',
+      'women-game',
+      expect.objectContaining({ id: 'women-msg', contextId: 'women-game' }),
+      100
+    );
   });
 
   it('routes readReceipt with allRead + readCursor (new-client ticks via cursor)', async () => {

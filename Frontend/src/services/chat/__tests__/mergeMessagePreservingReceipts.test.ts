@@ -66,4 +66,12 @@ describe('mergeMessagePreservingReceipts', () => {
     const incoming = msg('m1', []);
     expect(mergeMessagePreservingReceipts(undefined, incoming)).toBe(incoming);
   });
+
+  it('never reseals contextId once stored', () => {
+    const existing = { ...msg('m1'), contextId: 'thread-a' };
+    const incoming = { ...msg('m1'), contextId: 'thread-b', content: 'edited' };
+    const out = mergeMessagePreservingReceipts(existing, incoming);
+    expect(out.contextId).toBe('thread-a');
+    expect(out.content).toBe('edited');
+  });
 });

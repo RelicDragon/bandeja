@@ -4,7 +4,8 @@
  */
 import { describe, expect, it, beforeEach } from 'vitest';
 import type { ChatMessageWithStatus } from '@/api/chat';
-import { liveMessageBelongsToThread } from '@/services/chat/liveMessageBelongsToThread';
+import { liveMessageBelongsToThread, stampMessageThreadContext } from '@/services/chat/liveMessageBelongsToThread';
+import { mergeMessagePreservingReceipts } from '@/services/chat/mergeMessagePreservingReceipts';
 import {
   filterMessagesBelongingToThreadKey,
   planLayoutSeed,
@@ -97,16 +98,35 @@ describe('cross-thread chat leak regression', () => {
     });
   });
 
-  describe('H2: rewritten contextId cannot be healed by belonging alone', () => {
-    it('keeps foreign content when payload.contextId was rewritten to male id', () => {
+  describe('H2: contextId seal + no stamp-into-live', () => {
+    it('stamp never rewrites an existing foreign contextId', () => {
+      const women = msg('women-msg', WOMEN, 'Извините, девочки');
+      const stamped = stampMessageThreadContext(women, 'GAME', MALE);
+      expect(stamped.contextId).toBe(WOMEN);
+      expect(
+        liveMessageBelongsToThread(stamped, { contextType: 'GAME', contextId: MALE })
+      ).toBe(false);
+    });
+
+    it('Dexie merge seal keeps first thread scope when rewrite attempted', () => {
+      const women = msg('women-msg', WOMEN, 'Извините, девочки');
       const rewritten = msg('women-msg', MALE, 'Извините, девочки');
+      const sealed = mergeMessagePreservingReceipts(women, rewritten);
+      expect(sealed.contextId).toBe(WOMEN);
+      expect(
+        liveMessageBelongsToThread(sealed, { contextType: 'GAME', contextId: MALE })
+      ).toBe(false);
+    });
+
+    it('hydrate of sealed-foreign row still drops via belonging after scrub', () => {
+      const foreignKeptWomenId = msg('women-msg', WOMEN, 'Извините, девочки');
       const result = reduceThreadLiveSnapshot(
+        [foreignKeptWomenId, msg('m1', MALE, 'ivan')],
         [],
-        [{ type: 'hydrateSnapshot', messages: [rewritten] }],
         maleCfg
       );
-      expect(result.next).toHaveLength(1);
-      expect(result.next[0]?.content).toContain('девочки');
+      expect(result.next.map((m) => m.id)).toEqual(['m1']);
+      expect(result.next.some((m) => m.content.includes('девочки'))).toBe(false);
     });
   });
 
@@ -162,6 +182,17 @@ describe('cross-thread chat leak regression', () => {
   });
 
   describe('reconcile / merge', () => {
+    it('every live reduce scrubs foreign rows already in prev', () => {
+      const pollutedPrev = [
+        msg('w1', WOMEN, 'Извините, девочки'),
+        msg('m1', MALE, 'ivan joined'),
+      ];
+      const result = reduceThreadLiveSnapshot(pollutedPrev, [], maleCfg);
+      expect(result.changed).toBe(true);
+      expect(result.next.map((m) => m.id)).toEqual(['m1']);
+      expect(result.next.some((m) => m.content.includes('девочки'))).toBe(false);
+    });
+
     it('hydrateSnapshot strips foreign contextIds', () => {
       const polluted = [
         msg('w1', WOMEN, 'Извините, девочки'),

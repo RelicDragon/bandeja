@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { chatApi, type ChatMessage, type ChatMessageWithStatus, type ChatContextType, type Poll } from '@/api/chat';
@@ -45,6 +45,8 @@ export function useThreadReactions({
   const { t } = useTranslation();
   const [replyTo, setReplyTo] = useState<ChatMessage | null>(null);
   const [editingMessage, setEditingMessage] = useState<ChatMessage | null>(null);
+  const currentIdRef = useRef(id);
+  currentIdRef.current = id;
 
   const applyLiveEvent = useCallback(
     (event: ThreadLiveEvent): void => {
@@ -386,10 +388,14 @@ export function useThreadReactions({
   const handleChatRequestRespond = useCallback(
     async (messageId: string, accepted: boolean) => {
       if (!id) return;
+      const requestId = id;
       try {
-        const result = await chatApi.respondToChatRequest(id, messageId, accepted);
+        const result = await chatApi.respondToChatRequest(requestId, messageId, accepted);
+        if (currentIdRef.current !== requestId) return;
+        const belonging = { contextType, contextId: requestId };
         setMessages((prev) => {
-          const next = prev.map((m) => {
+          const scopedPrev = prev.filter((m) => liveMessageBelongsToThread(m, belonging));
+          const next = scopedPrev.map((m) => {
             if (m.id === messageId && m.content) {
               try {
                 const parsed = JSON.parse(m.content);
@@ -400,9 +406,12 @@ export function useThreadReactions({
             }
             return m;
           });
-          const exists = next.some((m) => m.id === result.message.id);
-          if (!exists) {
-            const withNew = [...next, result.message as ChatMessageWithStatus];
+          const incoming = result.message as ChatMessageWithStatus;
+          if (
+            liveMessageBelongsToThread(incoming, belonging) &&
+            !next.some((m) => m.id === incoming.id)
+          ) {
+            const withNew = [...next, incoming];
             messagesRef.current = withNew;
             return withNew;
           }
@@ -422,7 +431,7 @@ export function useThreadReactions({
         console.error('Respond to chat request failed:', err);
       }
     },
-    [id, setUserChat, setMessages, messagesRef]
+    [id, contextType, setUserChat, setMessages, messagesRef]
   );
 
   return {
