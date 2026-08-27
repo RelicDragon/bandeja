@@ -98,7 +98,7 @@ export const GameFormatCard = ({
           aria-label={expanded ? t('common.hideDetails') : t('common.showDetails')}
           whileTap={isTraining ? undefined : { scale: 0.985 }}
           transition={{ type: 'spring', stiffness: 520, damping: 28 }}
-          className="grid min-w-0 flex-1 grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1 items-start text-left hover:opacity-90 active:opacity-80 transition-opacity disabled:cursor-default rounded-lg -m-1 p-1"
+          className="grid min-w-0 flex-1 grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1 items-start text-start hover:opacity-90 active:opacity-80 transition-opacity disabled:cursor-default rounded-lg -m-1 p-1"
         >
           <GameFormatRacketIcon size={15} className="row-start-1 shrink-0 text-primary-600 dark:text-primary-400 mt-0.5" />
           <div className="row-start-1 flex min-w-0 items-center gap-1.5">

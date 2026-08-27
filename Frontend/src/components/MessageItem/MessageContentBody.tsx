@@ -77,7 +77,7 @@ export const MessageContentBody: React.FC<MessageContentBodyProps> = ({
   threadSearchHighlightQuery = null,
   hiddenUrl = null,
 }) => {
-  const paragraphClass = 'text-sm whitespace-pre-wrap break-words break-all overflow-visible';
+  const paragraphClass = 'text-sm whitespace-pre-wrap break-words break-all overflow-visible [unicode-bidi:plaintext]';
   const style = { wordBreak: 'break-word' as const, overflowWrap: 'break-word' as const };
 
   return (

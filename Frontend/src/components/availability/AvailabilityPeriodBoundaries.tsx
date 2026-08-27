@@ -87,7 +87,7 @@ export const AvailabilityPeriodBoundaries = ({
                 aria-expanded={open}
                 aria-haspopup="listbox"
                 onClick={() => setOpenBucket(open ? null : key)}
-                className="flex w-full min-w-0 items-center gap-2 px-2.5 py-2 text-left transition-colors hover:bg-gray-100/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:hover:bg-gray-700/40"
+                className="flex w-full min-w-0 items-center gap-2 px-2.5 py-2 text-start transition-colors hover:bg-gray-100/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:hover:bg-gray-700/40"
                 aria-label={`${t(meta.labelKey)} — ${describeBucket(key)}`}
               >
                 <meta.Icon

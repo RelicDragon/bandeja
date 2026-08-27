@@ -119,7 +119,7 @@ export const LiveServeSetupCard = ({
     return (
       <button
         type="button"
-        className={`w-full rounded-xl border px-3 py-2.5 text-left ${
+        className={`w-full rounded-xl border px-3 py-2.5 text-start ${
           sel ? 'border-primary-600 bg-primary-50 dark:bg-primary-950/40' : 'border-gray-300 dark:border-gray-700'
         }`}
         onClick={() => setRotation(value)}

@@ -2,7 +2,7 @@ const ICON_CHIP_PX = 36;
 const ITEM_GAP_PX = 12;
 const ROW_GAP_PX = 16;
 
-/** Matches `pr-20` reserved for absolutely positioned action buttons in GameInfo. */
+/** Matches `pe-20` reserved for absolutely positioned action buttons in GameInfo. */
 export const GAME_INFO_DATETIME_ACTION_RESERVE_PX = 80;
 
 export function gameInfoDateTimeRowMinWidth(

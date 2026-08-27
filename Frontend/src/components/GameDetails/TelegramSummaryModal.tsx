@@ -130,7 +130,7 @@ export const TelegramSummaryModal = ({
         </button>
 
         <div className="flex flex-col h-full max-h-[85vh] p-6">
-          <header className="mb-4 flex flex-col items-start pr-8">
+          <header className="mb-4 flex flex-col items-start pe-8">
             <h2 id="telegram-summary-title" className="overlay-title">
               {t('gameResults.editTelegramText') || 'Edit Telegram Text'}
             </h2>

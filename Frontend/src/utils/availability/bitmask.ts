@@ -3,6 +3,7 @@ import type { WeeklyAvailability, WeekdayKey } from '@/types';
 export const WEEKDAYS: WeekdayKey[] = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
 export const WEEKDAYS_ISO_ORDER: WeekdayKey[] = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
 export const WEEKDAYS_SUNDAY_FIRST: WeekdayKey[] = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+export const WEEKDAYS_SATURDAY_FIRST: WeekdayKey[] = ['sat', 'sun', 'mon', 'tue', 'wed', 'thu', 'fri'];
 export const WEEKEND_DAYS: WeekdayKey[] = ['sat', 'sun'];
 export const WORKDAYS: WeekdayKey[] = ['mon', 'tue', 'wed', 'thu', 'fri'];
 

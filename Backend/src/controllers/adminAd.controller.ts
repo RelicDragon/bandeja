@@ -24,8 +24,8 @@ const upload = multer({
 });
 
 export const adCreativeUpload = upload.fields([
-  { name: 'image', maxCount: 1 },
-  { name: 'imageDark', maxCount: 1 },
+  { name: 'image', maxCount: 8 },
+  { name: 'imageDark', maxCount: 8 },
 ]);
 
 export const listAdSponsors = asyncHandler(async (_req: AuthRequest, res: Response) => {
@@ -85,8 +85,8 @@ export const uploadAdCreative = asyncHandler(async (req: AuthRequest, res: Respo
     req.params.id,
     req.body,
     {
-      image: files?.image?.[0],
-      imageDark: files?.imageDark?.[0],
+      images: files?.image,
+      imagesDark: files?.imageDark,
     }
   );
   res.status(201).json({ success: true, data: creative });

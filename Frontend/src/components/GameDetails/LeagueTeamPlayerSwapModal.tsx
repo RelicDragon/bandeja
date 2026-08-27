@@ -148,7 +148,7 @@ export function LeagueTeamPlayerSwapModal({
                   key={tp.userId}
                   type="button"
                   onClick={() => void handleSelectOut(tp.userId)}
-                  className="flex w-full items-center gap-3 rounded-xl border border-gray-200 bg-gray-50/80 px-3 py-2.5 text-left transition hover:border-primary-300 hover:bg-primary-50/60 dark:border-gray-700 dark:bg-gray-800/50 dark:hover:border-primary-600 dark:hover:bg-primary-900/20"
+                  className="flex w-full items-center gap-3 rounded-xl border border-gray-200 bg-gray-50/80 px-3 py-2.5 text-start transition hover:border-primary-300 hover:bg-primary-50/60 dark:border-gray-700 dark:bg-gray-800/50 dark:hover:border-primary-600 dark:hover:bg-primary-900/20"
                 >
                   <PlayerAvatar player={tp.user} showName={false} fullHideName extrasmall />
                   <span className="min-w-0 flex-1 text-sm font-medium text-gray-900 dark:text-white">
@@ -186,7 +186,7 @@ export function LeagueTeamPlayerSwapModal({
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder={t('common.search')}
-                  className="w-full rounded-lg border border-gray-200 bg-gray-50 py-2 pl-9 pr-3 text-sm text-gray-900 placeholder-gray-400 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                  className="w-full rounded-lg border border-gray-200 bg-gray-50 py-2 ps-9 pe-3 text-sm text-gray-900 placeholder-gray-400 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                 />
               </div>
 
@@ -208,7 +208,7 @@ export function LeagueTeamPlayerSwapModal({
                         setInUser(user);
                         setStep('confirm');
                       }}
-                      className="flex w-full items-center gap-3 rounded-xl border border-transparent px-2.5 py-2 text-left transition hover:border-gray-200 hover:bg-gray-50 dark:hover:border-gray-700 dark:hover:bg-gray-800/60"
+                      className="flex w-full items-center gap-3 rounded-xl border border-transparent px-2.5 py-2 text-start transition hover:border-gray-200 hover:bg-gray-50 dark:hover:border-gray-700 dark:hover:bg-gray-800/60"
                     >
                       <PlayerAvatar player={user} showName={false} fullHideName extrasmall />
                       <span className="min-w-0 flex-1 text-sm font-medium text-gray-900 dark:text-white">
@@ -247,7 +247,7 @@ export function LeagueTeamPlayerSwapModal({
                     </p>
                   </div>
                   <ArrowLeftRight size={16} className="shrink-0 text-primary-500" />
-                  <div className="min-w-0 flex-1 text-right">
+                  <div className="min-w-0 flex-1 text-end">
                     <p className="text-[10px] uppercase tracking-wide text-gray-400">
                       {t('gameDetails.swapPlayerIn')}
                     </p>

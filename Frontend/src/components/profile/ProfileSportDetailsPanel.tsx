@@ -112,7 +112,7 @@ export function ProfileSportDetailsPanel({
           >
             {t('profile.sports.editLevel')}
           </button>
-          <SportProfileLevelMeta user={user} sport={sport} level={displayLevel} className="items-start text-left" />
+          <SportProfileLevelMeta user={user} sport={sport} level={displayLevel} className="items-start text-start" />
           <SportProfileExternalRating
             user={user}
             sport={sport}

@@ -76,14 +76,14 @@ export function GameResultStoryStatsRow({ result }: GameResultStoryStatsRowProps
 
   return (
     <div className="grid grid-cols-2 gap-2">
-      <div className="rounded-2xl border border-white/25 bg-white/12 px-3 py-2.5 text-left backdrop-blur-md">
+      <div className="rounded-2xl border border-white/25 bg-white/12 px-3 py-2.5 text-start backdrop-blur-md">
         <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/55">
           {t('stories.statsRecord')}
         </p>
         <p className="mt-1 text-sm font-bold tabular-nums text-white">{record}</p>
       </div>
 
-      <div className="rounded-2xl border border-white/25 bg-white/12 px-3 py-2.5 text-left backdrop-blur-md">
+      <div className="rounded-2xl border border-white/25 bg-white/12 px-3 py-2.5 text-start backdrop-blur-md">
         <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/55">
           {secondaryLabel}
         </p>
@@ -104,7 +104,7 @@ export function GameResultStoryStatsRow({ result }: GameResultStoryStatsRowProps
       </div>
 
       {showPointsTile ? (
-        <div className="rounded-2xl border border-emerald-300/25 bg-emerald-500/10 px-3 py-2.5 text-left backdrop-blur-sm">
+        <div className="rounded-2xl border border-emerald-300/25 bg-emerald-500/10 px-3 py-2.5 text-start backdrop-blur-sm">
           <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-100/70">
             {t('stories.statsPoints')}
           </p>
@@ -115,7 +115,7 @@ export function GameResultStoryStatsRow({ result }: GameResultStoryStatsRowProps
       ) : null}
 
       {hasLevelChange ? (
-        <div className="rounded-2xl border border-sky-300/25 bg-sky-500/10 px-3 py-2.5 text-left backdrop-blur-sm">
+        <div className="rounded-2xl border border-sky-300/25 bg-sky-500/10 px-3 py-2.5 text-start backdrop-blur-sm">
           <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-100/70">
             {t('stories.statsLevel')}
           </p>

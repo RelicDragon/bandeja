@@ -263,7 +263,7 @@ export const FiltersPanel = ({
         ) : sortedVenueClubs.length === 0 ? (
           <p className="text-sm text-gray-500 dark:text-gray-400">{t('gameSubscriptions.noClubs')}</p>
         ) : (
-          <div className="flex flex-wrap gap-2 max-h-36 overflow-y-auto py-0.5 pr-0.5">
+          <div className="flex flex-wrap gap-2 max-h-36 overflow-y-auto py-0.5 pe-0.5">
             <button type="button" onClick={clearVenueClubSelection} className={chipClass(!anyVenueClubSelected)}>
               {t('gameSubscriptions.allClubs')}
             </button>
@@ -277,7 +277,7 @@ export const FiltersPanel = ({
                   onClick={() => onVenueChipClick(club.id)}
                   className={chipClass(selected)}
                 >
-                  {fav && <Star size={12} className="inline mr-1 text-amber-500 fill-amber-500" aria-hidden />}
+                  {fav && <Star size={12} className="inline me-1 text-amber-500 fill-amber-500" aria-hidden />}
                   {club.name}
                 </button>
               );
@@ -291,7 +291,7 @@ export const FiltersPanel = ({
           <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
             {t('games.bars')}
           </p>
-          <div className="flex flex-wrap gap-2 max-h-36 overflow-y-auto py-0.5 pr-0.5">
+          <div className="flex flex-wrap gap-2 max-h-36 overflow-y-auto py-0.5 pe-0.5">
             <button type="button" onClick={clearBarSelection} className={chipClass(!anyBarSelected)}>
               {t('common.all')}
             </button>
@@ -305,7 +305,7 @@ export const FiltersPanel = ({
                   onClick={() => onBarChipClick(club.id)}
                   className={chipClass(selected)}
                 >
-                  {fav && <Star size={12} className="inline mr-1 text-amber-500 fill-amber-500" aria-hidden />}
+                  {fav && <Star size={12} className="inline me-1 text-amber-500 fill-amber-500" aria-hidden />}
                   {club.name}
                 </button>
               );

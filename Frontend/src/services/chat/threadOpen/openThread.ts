@@ -4,6 +4,7 @@ import { bridgeGetLastMessageId, loadLocalThreadBootstrap } from '@/services/cha
 import { prefetchOpenThreadLocal } from '@/services/chat/chatOpenPrefetch';
 import { buildOutboxOptimisticsForOpen } from '@/services/chat/chatOutboxOpenSnapshot';
 import { hydrateLastMessageIdFromDexieIfMissing } from '@/services/chat/messageContextHead';
+import { filterMessagesBelongingToThread } from '@/services/chat/liveMessageBelongsToThread';
 import { mergeServerPageWithPendingOptimistics } from '@/utils/chatMessageSort';
 import { planThreadOpen } from '@/services/chat/threadOpen/planThreadOpen';
 import { dropTombstonedChatMessages, loadTombstonedMessageIds } from '@/services/chat/chatLocalMessageTombstone';
@@ -65,7 +66,17 @@ async function planDexieTailFallback(
 
   const result = await planThreadOpen(request.threadKey, {
     peekL1: () => [],
-    peekPrev: request.peekPrev ?? (() => mergedPrev),
+    peekPrev: request.peekPrev
+      ? () =>
+          filterMessagesBelongingToThread([...request.peekPrev!()], {
+            contextType: request.contextType,
+            contextId: request.contextId,
+          })
+      : () =>
+          filterMessagesBelongingToThread([...mergedPrev], {
+            contextType: request.contextType,
+            contextId: request.contextId,
+          }),
     loadBootstrap: async () => ({ messages: dexieTail }),
     loadTombstonedIds: (ids) => loadTombstonedMessageIds(ids),
     forceFreshOpen: request.forceFreshOpen,
@@ -73,12 +84,23 @@ async function planDexieTailFallback(
   });
   if (result.kind !== 'painted') return null;
 
-  return { kind: 'painted', mergedPrev, result };
+  return {
+    kind: 'painted',
+    mergedPrev: filterMessagesBelongingToThread([...mergedPrev], {
+      contextType: request.contextType,
+      contextId: request.contextId,
+    }),
+    result,
+  };
 }
 
 /** Full thread-open bootstrap: prefetch, L1/Dexie/outbox merge, empty-tail fallback. */
 export async function openThread(request: ThreadOpenRequest): Promise<ThreadOpenOutcome> {
-  let mergedPrev = [...request.prev];
+  const belonging = {
+    contextType: request.contextType,
+    contextId: request.contextId,
+  };
+  let mergedPrev = filterMessagesBelongingToThread([...request.prev], belonging);
 
   const prefetched = await prefetchOpenThreadLocal(
     request.contextType,
@@ -88,9 +110,16 @@ export async function openThread(request: ThreadOpenRequest): Promise<ThreadOpen
   if (prefetched.length > 0) {
     mergedPrev = mergeServerPageWithPendingOptimistics(mergedPrev, prefetched);
   }
-  mergedPrev = await dropTombstonedChatMessages(mergedPrev);
+  mergedPrev = filterMessagesBelongingToThread(
+    await dropTombstonedChatMessages(mergedPrev),
+    belonging
+  );
 
-  const readPrev = request.peekPrev ?? (() => mergedPrev);
+  const readPrev = () =>
+    filterMessagesBelongingToThread(
+      [...(request.peekPrev ? request.peekPrev() : mergedPrev)],
+      belonging
+    );
   const result = await planThreadOpen(request.threadKey, {
     peekL1: request.peekL1,
     peekPrev: readPrev,

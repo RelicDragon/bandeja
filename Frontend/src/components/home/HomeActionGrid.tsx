@@ -58,7 +58,7 @@ export function HomeActionGrid({
           type="button"
           onClick={() => navigationService.navigateToFind()}
           data-testid="play-browse-games"
-          className="flex w-full items-center gap-3 rounded-2xl border border-border/70 bg-card px-4 py-2.5 text-left shadow-sm transition-all hover:border-border hover:bg-muted/40 active:scale-[0.99] dark:bg-gray-900"
+          className="flex w-full items-center gap-3 rounded-2xl border border-border/70 bg-card px-4 py-2.5 text-start shadow-sm transition-all hover:border-border hover:bg-muted/40 active:scale-[0.99] dark:bg-gray-900"
         >
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground">
             <Search className="h-5 w-5" strokeWidth={2.5} aria-hidden />
@@ -90,7 +90,7 @@ export function HomeActionGrid({
             type="button"
             onClick={() => navigate('/profile/connected-clubs')}
             data-testid="play-bookings"
-            className="flex w-full items-center gap-3 rounded-2xl border border-border/70 bg-card px-4 py-2.5 text-left shadow-sm transition-all hover:border-border hover:bg-muted/40 active:scale-[0.99] dark:bg-gray-900"
+            className="flex w-full items-center gap-3 rounded-2xl border border-border/70 bg-card px-4 py-2.5 text-start shadow-sm transition-all hover:border-border hover:bg-muted/40 active:scale-[0.99] dark:bg-gray-900"
           >
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground">
               <Ticket className="h-5 w-5" strokeWidth={2.5} aria-hidden />

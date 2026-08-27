@@ -24,7 +24,7 @@ const LAYOUTS: Record<MatchCardDensity, Omit<MatchCardDensityLayout, 'density'>>
     playerRowClass:
       'relative flex min-h-[40px] w-full min-w-0 flex-row items-center gap-2 px-2 py-0.5',
     playerNameClass:
-      'min-w-0 flex-1 truncate text-left text-xs font-medium text-gray-800 dark:text-gray-200',
+      'min-w-0 flex-1 truncate text-start text-xs font-medium text-gray-800 dark:text-gray-200',
     placeholderGapClass: 'gap-2',
     placeholderTextClass: 'text-xs text-gray-400 dark:text-gray-500',
     scoreCellClass: 'flex h-full min-h-[40px] items-center justify-center p-0.5',
@@ -38,7 +38,7 @@ const LAYOUTS: Record<MatchCardDensity, Omit<MatchCardDensityLayout, 'density'>>
     playerRowClass:
       'relative flex min-h-[30px] w-full min-w-0 flex-row items-center gap-1 px-1 py-0',
     playerNameClass:
-      'min-w-0 flex-1 truncate text-left text-[10px] font-medium leading-tight text-gray-800 dark:text-gray-200',
+      'min-w-0 flex-1 truncate text-start text-[10px] font-medium leading-tight text-gray-800 dark:text-gray-200',
     placeholderGapClass: 'gap-1',
     placeholderTextClass: 'text-[10px] text-gray-400 dark:text-gray-500',
     scoreCellClass: 'flex h-full min-h-[32px] items-center justify-center p-px',
@@ -52,7 +52,7 @@ const LAYOUTS: Record<MatchCardDensity, Omit<MatchCardDensityLayout, 'density'>>
     playerRowClass:
       'relative flex min-h-[26px] w-full min-w-0 flex-row items-center gap-0.5 px-0.5 py-0',
     playerNameClass:
-      'min-w-0 flex-1 truncate text-left text-[9px] font-medium leading-tight text-gray-800 dark:text-gray-200',
+      'min-w-0 flex-1 truncate text-start text-[9px] font-medium leading-tight text-gray-800 dark:text-gray-200',
     placeholderGapClass: 'gap-0.5',
     placeholderTextClass: 'text-[9px] text-gray-400 dark:text-gray-500',
     scoreCellClass: 'flex h-full min-h-[28px] items-center justify-center p-0',

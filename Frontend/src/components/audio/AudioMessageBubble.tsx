@@ -125,7 +125,7 @@ export const AudioMessageBubble: React.FC<AudioMessageBubbleProps> = ({
               aria-pressed={isActive && isPlaying}
               aria-label={t('chat.voice.playPause', { defaultValue: 'Play or pause voice message' })}
             >
-              {isActive && isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 pl-0.5" />}
+              {isActive && isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ps-0.5" />}
             </button>
           </div>
         </div>
@@ -218,7 +218,7 @@ export const AudioMessageBubble: React.FC<AudioMessageBubbleProps> = ({
         </div>
       </div>
       {showTranscribeBtn && (
-        <div className="flex justify-end pr-0.5">
+        <div className="flex justify-end pe-0.5">
           <button
             type="button"
             disabled={isTranscribing}

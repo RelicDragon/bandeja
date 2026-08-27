@@ -80,7 +80,7 @@ export function PlayerInviteLookingRow({ member, isSelected, onSelect, levelSpor
             {name || '—'}
             {gender !== 'PREFER_NOT_TO_SAY' && (
               <i
-                className={`bi ml-1.5 text-[11px] ${
+                className={`bi ms-1.5 text-[11px] ${
                   gender === 'MALE' ? 'bi-gender-male text-sky-500' : 'bi-gender-female text-rose-400'
                 }`}
               />

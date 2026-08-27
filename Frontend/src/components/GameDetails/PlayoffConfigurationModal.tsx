@@ -1218,12 +1218,12 @@ export const PlayoffConfigurationModal = ({
                       <thead>
                         <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
                           <th className="w-10 px-2 py-2" />
-                          <th className="w-10 px-1 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">
+                          <th className="w-10 px-1 py-2 text-start font-semibold text-gray-700 dark:text-gray-300">
                             {isBracket
                               ? t('gameDetails.bracketSeed', { defaultValue: 'Seed' })
                               : '#'}
                           </th>
-                          <th className="text-left py-2 pr-2 font-semibold text-gray-700 dark:text-gray-300">
+                          <th className="text-start py-2 pe-2 font-semibold text-gray-700 dark:text-gray-300">
                             {hasFixedTeams ? t('gameDetails.team') : t('gameDetails.player')}
                           </th>
                           {standingsColumns.showPoints && (
@@ -1306,7 +1306,7 @@ export const PlayoffConfigurationModal = ({
                               <td className="px-1 py-2 text-gray-600 dark:text-gray-400">
                                 {isSelected || !isBracket ? seedDisplay : '—'}
                               </td>
-                              <td className="py-2 pr-2">
+                              <td className="py-2 pe-2">
                                 {hasFixedTeams && standing.leagueTeam ? (
                                   <div className="flex items-center gap-2">
                                     <div className="flex -space-x-2">
@@ -1665,7 +1665,7 @@ export const PlayoffConfigurationModal = ({
                             customByeSeedRanks={
                               crossCustomByeEnabled ? crossCustomByeRanks : undefined
                             }
-                            className="text-left text-xs"
+                            className="text-start text-xs"
                           />
                         </div>
                       )}
@@ -1678,7 +1678,7 @@ export const PlayoffConfigurationModal = ({
                         customPlayInEnabled={crossCustomPlayInEnabled}
                         playInSeedPairs={crossPlayInPairs}
                       />
-                      <ul className="list-disc list-inside space-y-0.5 mt-2 text-gray-600 dark:text-gray-400 ml-1">
+                      <ul className="list-disc list-inside space-y-0.5 mt-2 text-gray-600 dark:text-gray-400 ms-1">
                         {(crossPreviewOrderedIds ?? crossDerived.globalParticipantIds).map((id, idx) => {
                           const s = standingsById.get(id);
                           const gId = s?.currentGroupId ?? s?.currentGroup?.id;
@@ -1739,7 +1739,7 @@ export const PlayoffConfigurationModal = ({
                                     ? customByeRanksByGroup[g.id]
                                     : undefined
                                 }
-                                className="text-left text-xs"
+                                className="text-start text-xs"
                               />
                             </div>
                           )}
@@ -1760,7 +1760,7 @@ export const PlayoffConfigurationModal = ({
                               playInSeedPairs={playInPairsByGroup[g.id]}
                             />
                           )}
-                          <ul className="list-disc list-inside space-y-0.5 mt-1 text-gray-600 dark:text-gray-400 ml-1">
+                          <ul className="list-disc list-inside space-y-0.5 mt-1 text-gray-600 dark:text-gray-400 ms-1">
                             {groupStandings.map((s, idx) => (
                               <li key={s.id}>
                                 {getStandingDisplayName(s)} ({idx + 1})

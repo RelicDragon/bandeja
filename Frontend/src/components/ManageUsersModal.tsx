@@ -224,10 +224,10 @@ export const ManageUsersModal = ({ game, onClose, onUserAction }: ManageUsersMod
                         disabled={actionLoading === action.id}
                         className="w-full flex items-center justify-start gap-2 pb-3 pt-3"
                       >
-                        <action.icon size={16} className="mr-2 flex-shrink-0" />
+                        <action.icon size={16} className="me-2 flex-shrink-0" />
                         <span className="flex-1">{action.label}</span>
                         {actionLoading === action.id && (
-                          <div className="ml-auto w-4 h-4 border-2 border-gray-300 border-t-transparent rounded-full animate-spin flex-shrink-0" />
+                          <div className="ms-auto w-4 h-4 border-2 border-gray-300 border-t-transparent rounded-full animate-spin flex-shrink-0" />
                         )}
                       </Button>
                     ))}

@@ -291,7 +291,7 @@ export const CreateMenuModal = ({
                 }}
               >
                 {isGame && showSportPicker && multiSportCreate ? (
-                  <div className="absolute right-full top-0 z-20 mr-2 min-w-[10rem]">
+                  <div className="absolute right-full top-0 z-20 me-2 min-w-[10rem]">
                     <CreateGameSportPicker
                       sports={pickableSports}
                       onPick={(sport) => handleSelectGameType('GAME', sport)}

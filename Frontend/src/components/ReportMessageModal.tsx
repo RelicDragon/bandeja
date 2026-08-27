@@ -89,7 +89,7 @@ export const ReportMessageModal: React.FC<ReportMessageModalProps> = ({
                     setDescription('');
                   }
                 }}
-                className={`w-full text-left px-4 py-3 rounded-lg border-2 transition-colors ${
+                className={`w-full text-start px-4 py-3 rounded-lg border-2 transition-colors ${
                   selectedReason === reason.value
                     ? 'border-red-500 bg-red-50 dark:bg-red-900/20'
                     : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'

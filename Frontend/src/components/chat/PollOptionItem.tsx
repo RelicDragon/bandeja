@@ -33,7 +33,7 @@ export const PollOptionItem: React.FC<PollOptionItemProps> = ({
     const disabled = isVoting || isQuizLocked;
 
     const getContainerClasses = () => {
-        const base = 'relative w-full text-left rounded-xl overflow-hidden transition-all duration-[400ms]';
+        const base = 'relative w-full text-start rounded-xl overflow-hidden transition-all duration-[400ms]';
         const cursor = disabled ? 'cursor-default' : 'cursor-pointer active:scale-[0.98]';
         const opacity = isVoting && !isThisOptionVoting ? 'opacity-60' : '';
 

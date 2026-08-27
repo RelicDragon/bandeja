@@ -528,7 +528,7 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
             className={`flex ${isChannel ? 'w-full max-w-full' : currentMessage.poll ? 'w-[85%] min-w-[85%] flex-shrink-0' : 'max-w-[85%]'} ${isChannel ? 'flex-row' : isOwnMessage ? 'flex-row-reverse' : 'flex-row'} overflow-visible`}
           >
             {!isChannel && !isOwnMessage && (
-              <div className="flex-shrink-0 mr-3 self-end pb-0.5">
+              <div className="flex-shrink-0 me-3 self-end pb-0.5">
                 {isLastInGroup ? (
                   <button
                     type="button"
@@ -666,7 +666,7 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
                     {canReact && (
                       <div
                         className={`pointer-events-none absolute top-1/2 z-10 flex -translate-y-1/2 items-center ${
-                          isOwnMessage && !isChannel ? 'right-full flex-row-reverse pr-2' : 'left-full flex-row pl-2'
+                          isOwnMessage && !isChannel ? 'right-full flex-row-reverse pe-2' : 'left-full flex-row ps-2'
                         }`}
                       >
                         <div className="pointer-events-auto">

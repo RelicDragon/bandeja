@@ -188,7 +188,7 @@ export const BracketPlayoffGameSetupStep = ({
         <Button onClick={handleConfirm} disabled={submitting} className="flex-1">
           {submitting ? (
             <>
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              <Loader2 className="h-4 w-4 animate-spin me-2" />
               {t('common.loading')}
             </>
           ) : (

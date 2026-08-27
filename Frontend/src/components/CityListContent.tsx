@@ -431,7 +431,7 @@ export const CityListContent = ({
         <span className="min-w-0 truncate">
           ← {displaySelectedCountry}
           {showSelectedCountryNative && (
-            <span className="ml-1 text-xs font-normal text-gray-500 dark:text-gray-400">
+            <span className="ms-1 text-xs font-normal text-gray-500 dark:text-gray-400">
               {selectedCountryNative}
             </span>
           )}
@@ -499,7 +499,7 @@ export const CityListContent = ({
                       items={unifiedSearchRows}
                       getItemKey={unifiedItemKey}
                       estimateSize={56}
-                      className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pr-1"
+                      className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pe-1"
                       contentClassName={`space-y-1.5 p-1 ${contentClassName}`}
                       renderItem={(row) => {
                         if (row.kind === 'section') {
@@ -549,7 +549,7 @@ export const CityListContent = ({
                   >
                     <div className="w-1/2 min-w-0 shrink-0 min-h-0 overflow-hidden flex flex-col">
                       {filteredCountries.length === 0 ? (
-                        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pr-1 space-y-1.5">
+                        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pe-1 space-y-1.5">
                           {suggestedListHeader}
                           <p className="text-center text-gray-500 dark:text-gray-400 py-6 text-sm">
                             {citiesCount === 0 ? t('createLeague.noCitiesAvailable') : t('common.noResults')}
@@ -559,7 +559,7 @@ export const CityListContent = ({
                         <VirtualizedList
                           items={filteredCountries}
                           getItemKey={(item) => item.country}
-                          className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pr-1"
+                          className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pe-1"
                           contentClassName={`space-y-1.5 ${contentClassName}`}
                           header={suggestedListHeader}
                           renderItem={(item) => (
@@ -593,7 +593,7 @@ export const CityListContent = ({
                         </button>
                       )}
                       {filteredCitiesForCountry.length === 0 ? (
-                        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pr-1 space-y-1.5 p-1">
+                        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pe-1 space-y-1.5 p-1">
                           {cityListHeader}
                           <p className="text-center text-gray-500 dark:text-gray-400 py-6 text-sm">{t('common.noResults')}</p>
                         </div>
@@ -604,7 +604,7 @@ export const CityListContent = ({
                           estimateSize={52}
                           scrollToIndex={cityScrollToIndex >= 0 ? cityScrollToIndex : null}
                           onScrolledToIndex={handleScrolledToCityIndex}
-                          className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pr-1"
+                          className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pe-1"
                           contentClassName={`space-y-1.5 p-1 ${contentClassName}`}
                           header={cityListHeader}
                           renderItem={(city) => (
@@ -622,7 +622,7 @@ export const CityListContent = ({
                           )}
                         />
                       ) : (
-                        <div className={`flex-1 min-h-0 overflow-y-auto overflow-x-hidden pr-1 space-y-1.5 p-1 ${contentClassName}`}>
+                        <div className={`flex-1 min-h-0 overflow-y-auto overflow-x-hidden pe-1 space-y-1.5 p-1 ${contentClassName}`}>
                           {cityListHeader}
                           {filteredCitiesForCountry.map((city) => (
                             <CityListItem

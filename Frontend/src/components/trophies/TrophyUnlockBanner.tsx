@@ -118,7 +118,7 @@ export function TrophyUnlockBanner({ gameId, outcomes }: TrophyUnlockBannerProps
               <p className="truncate text-sm font-bold leading-tight">
                 {t(unlock.titleKey)}
                 {extraCount > 0 ? (
-                  <span className="ml-1 font-semibold text-emerald-100">
+                  <span className="ms-1 font-semibold text-emerald-100">
                     {t('trophies.banner.andMore', { count: extraCount })}
                   </span>
                 ) : null}

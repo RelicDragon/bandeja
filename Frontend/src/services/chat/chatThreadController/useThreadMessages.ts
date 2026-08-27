@@ -31,6 +31,7 @@ import type { ChatType } from '@/types';
 import type { RefObject } from 'react';
 import type React from 'react';
 import { chatSyncTailKey } from '@/utils/chatSyncScope';
+import { liveMessageBelongsToThread } from '@/services/chat/liveMessageBelongsToThread';
 import {
   deleteChatThreadMemory,
   flushChatThreadL1DebouncedPut,
@@ -158,7 +159,18 @@ export function useThreadMessages({
       scrollOverride?: Pick<OpenThreadPlan, 'scroll' | 'scrollRow'>
     ) => {
       const scrollPlan = scrollOverride ?? plan;
-      const paintMessages = mergeOpenPaintWithLivePending(messagesRef.current, plan.messages);
+      const belonging =
+        id != null && id !== ''
+          ? { contextType, contextId: id }
+          : undefined;
+      const scopedSnapshot = belonging
+        ? plan.messages.filter((m) => liveMessageBelongsToThread(m, belonging))
+        : plan.messages;
+      const paintMessages = mergeOpenPaintWithLivePending(
+        messagesRef.current,
+        scopedSnapshot,
+        belonging
+      );
       const sameThreadAlreadyPainted =
         openPaintCommittedRef.current && openScrollThreadKeyRef.current === threadKey;
       const duplicatePaint =
@@ -177,7 +189,10 @@ export function useThreadMessages({
             contextType,
             contextId: id,
             gameChatType: contextType === 'GAME' ? effectiveChatType : undefined,
-            readRows: () => messagesRef.current,
+            readRows: () =>
+              messagesRef.current.filter((m) =>
+                liveMessageBelongsToThread(m, { contextType, contextId: id })
+              ),
             verify: () => currentIdRef.current === id,
             immediate: true,
           });
@@ -202,7 +217,10 @@ export function useThreadMessages({
           contextType,
           contextId: id,
           gameChatType: contextType === 'GAME' ? effectiveChatType : undefined,
-          readRows: () => messagesRef.current,
+          readRows: () =>
+            messagesRef.current.filter((m) =>
+              liveMessageBelongsToThread(m, { contextType, contextId: id })
+            ),
           verify: () => currentIdRef.current === id,
           immediate: true,
         });
@@ -210,7 +228,10 @@ export function useThreadMessages({
           contextType,
           contextId: id,
           gameChatType: contextType === 'GAME' ? effectiveChatType : undefined,
-          readRows: () => messagesRef.current,
+          readRows: () =>
+            messagesRef.current.filter((m) =>
+              liveMessageBelongsToThread(m, { contextType, contextId: id })
+            ),
           verify: () => currentIdRef.current === id,
           debounceMs: 800,
         });
@@ -588,7 +609,13 @@ export function useThreadMessages({
         if (currentIdRef.current !== requestId) return false;
         if (append) {
           setMessagesTagged('network-append', (prev) => {
-            const newMessages = mergeChatMessagesAscending(response, prev);
+            const scopedPrev = prev.filter((m) =>
+              liveMessageBelongsToThread(m, { contextType, contextId: requestId })
+            );
+            const scopedResponse = response.filter((m) =>
+              liveMessageBelongsToThread(m, { contextType, contextId: requestId })
+            );
+            const newMessages = mergeChatMessagesAscending(scopedResponse, scopedPrev);
             messagesRef.current = newMessages;
             return newMessages;
           });
@@ -597,7 +624,10 @@ export function useThreadMessages({
               contextType,
               contextId: requestId,
               gameChatType: contextType === 'GAME' ? effectiveType : undefined,
-              readRows: () => messagesRef.current,
+              readRows: () =>
+                messagesRef.current.filter((m) =>
+                  liveMessageBelongsToThread(m, { contextType, contextId: requestId })
+                ),
               verify: () => currentIdRef.current === requestId,
             });
           }
@@ -621,7 +651,12 @@ export function useThreadMessages({
             requestId,
             contextType === 'GAME' ? effectiveType : undefined
           );
-          const merged = mergeServerPageWithPendingOptimistics(messagesRef.current, response);
+          const belonging = { contextType, contextId: requestId };
+          const scopedLive = messagesRef.current.filter((m) =>
+            liveMessageBelongsToThread(m, belonging)
+          );
+          const scopedResponse = response.filter((m) => liveMessageBelongsToThread(m, belonging));
+          const merged = mergeServerPageWithPendingOptimistics(scopedLive, scopedResponse);
           const scrollRow = await loadOpenScrollState(memKeyNet);
           if (currentIdRef.current !== requestId) return false;
           const scrollPlan = paintScrollFor(merged, scrollRow);
@@ -755,7 +790,10 @@ export function useThreadMessages({
       if (olderLocal.length > 0) {
         void persistChatMessagesFromApi(olderLocal).catch(() => {});
         setMessagesTagged('load-more-local', (prev) => {
-          const merged = mergeChatMessagesAscending(olderLocal, prev);
+          const belonging = { contextType, contextId: id };
+          const scopedPrev = prev.filter((m) => liveMessageBelongsToThread(m, belonging));
+          const scopedOlder = olderLocal.filter((m) => liveMessageBelongsToThread(m, belonging));
+          const merged = mergeChatMessagesAscending(scopedOlder, scopedPrev);
           if (chatOpenMessageIdsEqual(prev, merged)) return prev;
           messagesRef.current = merged;
           return merged;
@@ -765,7 +803,10 @@ export function useThreadMessages({
           contextType,
           contextId: id,
           gameChatType: contextType === 'GAME' ? effectiveChatType : undefined,
-          readRows: () => messagesRef.current,
+          readRows: () =>
+            messagesRef.current.filter((m) =>
+              liveMessageBelongsToThread(m, { contextType, contextId: id })
+            ),
           verify: () => currentIdRef.current === id,
         });
         return;
@@ -785,7 +826,10 @@ export function useThreadMessages({
       }
       void persistChatMessagesFromApi(response).catch(() => {});
       setMessagesTagged('load-more-network', (prev) => {
-        const merged = mergeChatMessagesAscending(response, prev);
+        const belonging = { contextType, contextId: id };
+        const scopedPrev = prev.filter((m) => liveMessageBelongsToThread(m, belonging));
+        const scopedResponse = response.filter((m) => liveMessageBelongsToThread(m, belonging));
+        const merged = mergeChatMessagesAscending(scopedResponse, scopedPrev);
         if (chatOpenMessageIdsEqual(prev, merged)) return prev;
         messagesRef.current = merged;
         return merged;
@@ -795,7 +839,10 @@ export function useThreadMessages({
         contextType,
         contextId: id,
         gameChatType: contextType === 'GAME' ? effectiveChatType : undefined,
-        readRows: () => messagesRef.current,
+        readRows: () =>
+          messagesRef.current.filter((m) =>
+            liveMessageBelongsToThread(m, { contextType, contextId: id })
+          ),
         verify: () => currentIdRef.current === id,
       });
     } catch (error) {
@@ -827,7 +874,12 @@ export function useThreadMessages({
         return false;
       }
 
-      let acc = mergeChatMessagesAscending(messagesRef.current, [liveAnchor]);
+      let acc = mergeChatMessagesAscending(
+        messagesRef.current.filter((m) =>
+          liveMessageBelongsToThread(m, { contextType, contextId: id })
+        ),
+        [liveAnchor]
+      );
       messagesRef.current = acc;
       void persistChatMessagesFromApi([anchor]).catch(() => {});
 
@@ -837,7 +889,10 @@ export function useThreadMessages({
         if (batch.length === 0) break;
         void persistChatMessagesFromApi(batch).catch(() => {});
         const liveBatch = await dropTombstonedChatMessages(batch);
-        acc = mergeChatMessagesAscending(acc, liveBatch);
+        const scopedBatch = liveBatch.filter((m) =>
+          liveMessageBelongsToThread(m, { contextType, contextId: id })
+        );
+        acc = mergeChatMessagesAscending(acc, scopedBatch);
         messagesRef.current = acc;
         if (batch.length < PAGE_SIZE) break;
         cursor = batch[0].id;
@@ -865,7 +920,10 @@ export function useThreadMessages({
           contextType,
           contextId: id,
           gameChatType: contextType === 'GAME' ? effectiveChatType : undefined,
-          readRows: () => messagesRef.current,
+          readRows: () =>
+            messagesRef.current.filter((m) =>
+              liveMessageBelongsToThread(m, { contextType, contextId: id })
+            ),
           verify: () => currentIdRef.current === id,
         });
       }

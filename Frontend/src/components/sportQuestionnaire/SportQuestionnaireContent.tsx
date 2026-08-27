@@ -369,7 +369,7 @@ function QuestionnaireFormFooter({
           type="button"
           onClick={onLater}
           disabled={submitting}
-          className="text-sm text-left text-primary-600 dark:text-primary-400 hover:underline focus:outline-none disabled:opacity-50 shrink-0"
+          className="text-sm text-start text-primary-600 dark:text-primary-400 hover:underline focus:outline-none disabled:opacity-50 shrink-0"
         >
           {t('sportQuestionnaire.common.fillItLater')}
         </button>

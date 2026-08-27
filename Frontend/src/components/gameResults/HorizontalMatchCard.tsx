@@ -198,7 +198,7 @@ export const HorizontalMatchCard = ({
             return (
               <div
                 key={playerId}
-                className={`flex items-center gap-1.5 min-w-0 max-w-full ${isTeamA ? '' : 'flex-row-reverse text-right'}`}
+                className={`flex items-center gap-1.5 min-w-0 max-w-full ${isTeamA ? '' : 'flex-row-reverse text-end'}`}
               >
                 <div className="shrink-0">
                   <PlayerAvatar
@@ -209,7 +209,7 @@ export const HorizontalMatchCard = ({
                     extrasmall={true}
                   />
                 </div>
-                <span className={`truncate text-xs font-semibold text-gray-800 dark:text-gray-100 leading-tight ${isTeamA ? 'text-left' : 'text-right'}`}>
+                <span className={`truncate text-xs font-semibold text-gray-800 dark:text-gray-100 leading-tight ${isTeamA ? 'text-start' : 'text-end'}`}>
                   {playerName}
                 </span>
                 {isEditing && canEditResults && (
@@ -219,7 +219,7 @@ export const HorizontalMatchCard = ({
                       e.stopPropagation();
                       onRemovePlayer(team, playerId);
                     }}
-                    className={`${isTeamA ? 'ml-0.5' : 'mr-0.5'} shrink-0 h-5 w-5 rounded-full bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 flex items-center justify-center transition-colors border border-white dark:border-gray-900`}
+                    className={`${isTeamA ? 'ms-0.5' : 'me-0.5'} shrink-0 h-5 w-5 rounded-full bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 flex items-center justify-center transition-colors border border-white dark:border-gray-900`}
                   >
                     <Trash2 size={10} className="text-white" />
                   </button>
@@ -235,7 +235,7 @@ export const HorizontalMatchCard = ({
                     onPlayerPlaceholderClick(team);
                   }
                 }}
-                className={`flex items-center gap-1.5 min-w-0 max-w-full ${isTeamA ? '' : 'flex-row-reverse text-right'} ${
+                className={`flex items-center gap-1.5 min-w-0 max-w-full ${isTeamA ? '' : 'flex-row-reverse text-end'} ${
                   isEditing && canEditResults ? 'cursor-pointer hover:opacity-80' : 'cursor-default'
                 }`}
               >
@@ -247,7 +247,7 @@ export const HorizontalMatchCard = ({
                     extrasmall={true}
                   />
                 </div>
-                <span className={`truncate text-xs text-gray-400 dark:text-gray-500 italic ${isTeamA ? 'text-left' : 'text-right'}`}>
+                <span className={`truncate text-xs text-gray-400 dark:text-gray-500 italic ${isTeamA ? 'text-start' : 'text-end'}`}>
                   {t('gameResults.selectPlayer', 'Player')}
                 </span>
               </div>
@@ -272,7 +272,7 @@ export const HorizontalMatchCard = ({
       data-match-container
     >
       <div
-        className={`mb-1 flex min-h-[1rem] flex-wrap items-center gap-x-1.5 gap-y-0.5 px-1 ${showHeaderEditButton || showDeleteButton ? 'pr-14' : ''}`}
+        className={`mb-1 flex min-h-[1rem] flex-wrap items-center gap-x-1.5 gap-y-0.5 px-1 ${showHeaderEditButton || showDeleteButton ? 'pe-14' : ''}`}
       >
         <span className="inline-flex items-center rounded-md bg-gray-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide tabular-nums leading-none text-gray-500 dark:bg-gray-700/70 dark:text-gray-300">
           {t('gameResults.match', { number: matchIndex + 1 })}

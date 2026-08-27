@@ -235,6 +235,15 @@
     "waitingForPlayers": "Waiting for All Players",
     "allPlayersMustJoin": "All invited players must join the game before setting up fixed pairs",
     "male": "Men",
-    "female": "Women"
+    "female": "Women",
+    "confirmJoinMessage_female": "Are you sure you want to join this game?",
+    "confirmJoinQueueMessage_female": "Are you sure you want to join the waiting list?",
+    "overlapConfirmMessage_female": "This slot overlaps a game you're in.",
+    "requiresOverlapConfirm_female": "This slot overlaps a game you're in.",
+    "inQueue_female": "You are in the waiting list. Waiting for approval...",
+    "inQueueOwnerHint_female": "You are the owner. To play in your game, accept yourself from the join queue list below.",
+    "chatParticipantHintJoinGame_female": "You are a chat participant. Join the game below.",
+    "chatParticipantHintJoinQueue_female": "You are a chat participant. Join the queue below.",
+    "alreadyInJoinQueue_female": "Already in join queue"
   }
 }

@@ -64,7 +64,7 @@ function Phase4Toggle({
       <div className="flex items-center justify-between mb-1">
         <label
           htmlFor={switchId}
-          className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2 cursor-pointer"
+          className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pe-2 cursor-pointer"
         >
           {label}
         </label>

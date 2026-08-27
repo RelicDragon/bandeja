@@ -32,7 +32,7 @@ export function MyTabConnectBanner() {
   };
 
   return (
-    <section className="relative mb-3 rounded-xl border border-primary-200 dark:border-primary-800 bg-primary-50/80 dark:bg-primary-950/30 p-3 pr-10">
+    <section className="relative mb-3 rounded-xl border border-primary-200 dark:border-primary-800 bg-primary-50/80 dark:bg-primary-950/30 p-3 pe-10">
       <button
         type="button"
         onClick={() => void handleDismiss()}

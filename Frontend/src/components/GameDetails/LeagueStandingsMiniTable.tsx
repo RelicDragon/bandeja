@@ -135,7 +135,7 @@ export function LeagueStandingsMiniTable({
           <thead>
             <tr className="border-b border-gray-100 dark:border-gray-800">
               <th className="w-9 px-2 py-2.5 text-center text-[10px] font-semibold uppercase tracking-wide text-gray-400" />
-              <th className="px-2 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+              <th className="px-2 py-2.5 text-start text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
                 {hasFixedTeams ? t('gameDetails.team') : t('gameDetails.player')}
               </th>
               <th

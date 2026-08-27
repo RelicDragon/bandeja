@@ -47,7 +47,7 @@ export function ClubAdminReservationRow({ item, onClick }: ClubAdminReservationR
     <button
       type="button"
       onClick={onClick}
-      className="group flex w-full items-center gap-3 rounded-2xl border border-border bg-white p-3 text-left transition-all active:scale-[0.98] hover:border-primary/20 dark:bg-gray-900"
+      className="group flex w-full items-center gap-3 rounded-2xl border border-border bg-white p-3 text-start transition-all active:scale-[0.98] hover:border-primary/20 dark:bg-gray-900"
     >
       <div className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-xl bg-muted text-center">
         <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">

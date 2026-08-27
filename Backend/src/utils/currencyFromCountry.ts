@@ -37,6 +37,11 @@ const ISO2_TO_CURRENCY: Record<string, string> = {
   EC: 'USD',
   LI: 'CHF',
   GG: 'GBP',
+  AE: 'AED',
+  SA: 'SAR',
+  QA: 'QAR',
+  KW: 'KWD',
+  OM: 'OMR',
 };
 
 const COUNTRY_NAME_TO_ISO2: Record<string, string> = {
@@ -109,6 +114,16 @@ const COUNTRY_NAME_TO_ISO2: Record<string, string> = {
   malaysia: 'MY',
   indonesia: 'ID',
   philippines: 'PH',
+  'united arab emirates': 'AE',
+  uae: 'AE',
+  emirates: 'AE',
+  'saudi arabia': 'SA',
+  saudi: 'SA',
+  ksa: 'SA',
+  qatar: 'QA',
+  kuwait: 'KW',
+  oman: 'OM',
+  bahrain: 'BH',
 };
 
 export function normalizeCurrencyCode(raw: string | undefined): string {

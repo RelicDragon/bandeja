@@ -63,7 +63,7 @@ export function BracketPlayInPairEditor({
   return (
     <div className="space-y-2 rounded-lg border border-gray-200 dark:border-gray-700 p-3">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
+        <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pe-2">
           {t('gameDetails.bracketCustomPlayInLabel')}
         </span>
         <div className="flex-shrink-0">

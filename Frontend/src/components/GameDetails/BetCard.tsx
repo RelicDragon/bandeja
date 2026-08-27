@@ -206,7 +206,7 @@ export const BetCard = ({ bet, game, onBetUpdate }: BetCardProps) => {
             ? 'border-red-200 dark:border-red-900/60 bg-gradient-to-br from-red-50/80 to-red-100/50 dark:from-red-950/50 dark:to-red-900/30'
             : 'border-gray-100 dark:border-gray-800 bg-gradient-to-br from-gray-50 to-white dark:from-gray-900/60 dark:to-gray-900/30'
         }`}>
-          <div className="flex flex-wrap items-baseline justify-start gap-x-2 gap-y-1 text-left">
+          <div className="flex flex-wrap items-baseline justify-start gap-x-2 gap-y-1 text-start">
             {betCreator && (
               <>
                 <BetParticipantCard
@@ -257,8 +257,8 @@ export const BetCard = ({ bet, game, onBetUpdate }: BetCardProps) => {
         <div className={`grid gap-2 ${isPool && bet.stakeType === 'COINS' ? 'grid-cols-2' : isPool ? 'grid-cols-1' : 'grid-cols-2'}`}>
           <div className={`rounded-2xl border shadow-sm px-1.5 py-1.5 ${
             isCancelled
-              ? 'border-red-200 dark:border-red-900/60 bg-red-50/60 dark:bg-red-950/40 border-l-2 border-l-red-400/60 dark:border-l-red-500/50'
-              : 'border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900/40 border-l-2 border-l-amber-400/50 dark:border-l-amber-500/40'
+              ? 'border-red-200 dark:border-red-900/60 bg-red-50/60 dark:bg-red-950/40 border-s-2 border-s-red-400/60 dark:border-s-red-500/50'
+              : 'border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900/40 border-s-2 border-s-amber-400/50 dark:border-s-amber-500/40'
           }`}>
             <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-gray-400 dark:text-gray-500 font-medium">
               <CircleDollarSign size={14} className="text-amber-500 dark:text-amber-400 shrink-0" />
@@ -278,8 +278,8 @@ export const BetCard = ({ bet, game, onBetUpdate }: BetCardProps) => {
           {isPool && bet.stakeType === 'COINS' && (
             <div className={`rounded-2xl border shadow-sm px-1.5 py-1.5 ${
               isCancelled
-                ? 'border-red-200 dark:border-red-900/60 bg-red-50/60 dark:bg-red-950/40 border-l-2 border-l-red-400/60 dark:border-l-red-500/50'
-                : 'border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900/40 border-l-2 border-l-emerald-400/50 dark:border-l-emerald-500/40'
+                ? 'border-red-200 dark:border-red-900/60 bg-red-50/60 dark:bg-red-950/40 border-s-2 border-s-red-400/60 dark:border-s-red-500/50'
+                : 'border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900/40 border-s-2 border-s-emerald-400/50 dark:border-s-emerald-500/40'
             }`}>
               <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-gray-400 dark:text-gray-500 font-medium">
                 <CircleDollarSign size={14} className="text-amber-500 dark:text-amber-400 shrink-0" />
@@ -294,8 +294,8 @@ export const BetCard = ({ bet, game, onBetUpdate }: BetCardProps) => {
           {!isPool && (
           <div className={`rounded-2xl border shadow-sm px-1.5 py-1.5 ${
             isCancelled
-              ? 'border-red-200 dark:border-red-900/60 bg-red-50/60 dark:bg-red-950/40 border-l-2 border-l-red-400/60 dark:border-l-red-500/50'
-              : 'border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900/40 border-l-2 border-l-amber-400/50 dark:border-l-amber-500/40'
+              ? 'border-red-200 dark:border-red-900/60 bg-red-50/60 dark:bg-red-950/40 border-s-2 border-s-red-400/60 dark:border-s-red-500/50'
+              : 'border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900/40 border-s-2 border-s-amber-400/50 dark:border-s-amber-500/40'
           }`}>
             <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-gray-400 dark:text-gray-500 font-medium">
               <CircleDollarSign size={14} className="text-amber-500 dark:text-amber-400 shrink-0" />
@@ -318,8 +318,8 @@ export const BetCard = ({ bet, game, onBetUpdate }: BetCardProps) => {
           <div className="grid grid-cols-2 gap-2">
             <div className={`rounded-2xl border shadow-sm px-1.5 py-1.5 ${
               isCancelled
-                ? 'border-red-200 dark:border-red-900/60 bg-red-50/60 dark:bg-red-950/40 border-l-2 border-l-red-400/60 dark:border-l-red-500/50'
-                : 'border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900/40 border-l-2 border-l-green-400/40 dark:border-l-green-500/30'
+                ? 'border-red-200 dark:border-red-900/60 bg-red-50/60 dark:bg-red-950/40 border-s-2 border-s-red-400/60 dark:border-s-red-500/50'
+                : 'border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900/40 border-s-2 border-s-green-400/40 dark:border-s-green-500/30'
             }`}>
               <div className="text-[10px] uppercase tracking-wide text-gray-400 dark:text-gray-500 mb-1 font-medium">
                 {t('bets.support', { defaultValue: 'Support' })}
@@ -338,8 +338,8 @@ export const BetCard = ({ bet, game, onBetUpdate }: BetCardProps) => {
             </div>
             <div className={`rounded-2xl border shadow-sm px-1.5 py-1.5 ${
               isCancelled
-                ? 'border-red-200 dark:border-red-900/60 bg-red-50/60 dark:bg-red-950/40 border-l-2 border-l-red-400/60 dark:border-l-red-500/50'
-                : 'border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900/40 border-l-2 border-l-amber-400/40 dark:border-l-amber-500/30'
+                ? 'border-red-200 dark:border-red-900/60 bg-red-50/60 dark:bg-red-950/40 border-s-2 border-s-red-400/60 dark:border-s-red-500/50'
+                : 'border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900/40 border-s-2 border-s-amber-400/40 dark:border-s-amber-500/30'
             }`}>
               <div className="text-[10px] uppercase tracking-wide text-gray-400 dark:text-gray-500 mb-1 font-medium">
                 {t('bets.against', { defaultValue: 'Against' })}

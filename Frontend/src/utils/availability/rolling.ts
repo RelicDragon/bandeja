@@ -37,8 +37,13 @@ function isoDow(ymd: string): number {
   return dow === 0 ? 7 : dow;
 }
 
-function weekStartContainingDate(ymd: string, startsOn: 'monday' | 'sunday'): string {
-  const dow = isoDow(ymd);
+function weekStartContainingDate(ymd: string, startsOn: 'monday' | 'sunday' | 'saturday' | 'saturday'): string {
+  const dow = isoDow(ymd); // 1=Mon … 7=Sun
+  if (startsOn === 'saturday') {
+    // Saturday=6 in JS getUTCDay; isoDow Sat=6
+    const daysBack = dow === 6 ? 0 : dow === 7 ? 1 : dow + 1;
+    return addDaysToYmd(ymd, -daysBack);
+  }
   const daysBack = startsOn === 'monday' ? dow - 1 : dow === 7 ? 0 : dow;
   return addDaysToYmd(ymd, -daysBack);
 }
@@ -96,7 +101,7 @@ export function effectiveSlotMask(
 /** Normalize: advance anchor to current week, shifting/dropping stale slots. */
 export function normalizeRollingDoc(
   doc: RollingWeeklyAvailabilityV2,
-  startsOn: 'monday' | 'sunday',
+  startsOn: 'monday' | 'sunday' | 'saturday',
   todayYmd: string = localTodayYmd()
 ): RollingWeeklyAvailabilityV2 {
   const targetAnchor = weekStartContainingDate(todayYmd, startsOn);
@@ -119,7 +124,7 @@ export function normalizeRollingDoc(
 /** Migrate a v1 (or null) weeklyAvailability to a rolling doc anchored to today. */
 export function migrateToRolling(
   raw: WeeklyAvailability | null | undefined,
-  startsOn: 'monday' | 'sunday',
+  startsOn: 'monday' | 'sunday' | 'saturday',
   todayYmd: string = localTodayYmd()
 ): RollingWeeklyAvailabilityV2 {
   const anchor = weekStartContainingDate(todayYmd, startsOn);
@@ -134,7 +139,7 @@ export function migrateToRolling(
  */
 export function ensureNormalizedRollingDoc(
   raw: WeeklyAvailabilityDoc | null | undefined,
-  startsOn: 'monday' | 'sunday',
+  startsOn: 'monday' | 'sunday' | 'saturday',
   todayYmd: string = localTodayYmd()
 ): RollingWeeklyAvailabilityV2 {
   if (raw == null) return migrateToRolling(null, startsOn, todayYmd);

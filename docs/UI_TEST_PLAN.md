@@ -1168,6 +1168,7 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | CH-155 | Non-admin skips PRIVATE/ADMINS probes | Playing participant (not owner/admin) opens game details | No `GET .../messages?chatType=PRIVATE|ADMINS` probes; participants-only chat section stays hidden |
 | CH-156 | Invitee/guest roster updates | Open game chat as INVITED or GUEST while others join, decline, accept, or leave | Thread and chat-list preview stay on normal messages only; no roster system messages, push, or Telegram for those events; a later user message still appears |
 | CH-158 | Inbound photo persist miss | `@two-user` A sends a photo while B has the thread open; leave and reopen after local persist of that image fails | Photo comes back or a durable empty placeholder stays; opening the thread clears unread on the server; no vanished bubble with a stuck badge |
+| CH-159 | Cross-thread history leak (regression) | Browse game B (and/or C) chat, then open game A chat (embedded or `/games/:id/chat`); also reopen A after a polluted warm L1 | Only A’s messages; no B/C bodies (e.g. other games’ system lines or “девочки”-style text); leave/reopen A stays clean |
 | CH-118 | Tap sticker sends via outbox | Open tray → tap a sticker in Packs | Optimistic sticker appears in thread immediately (fully transparent panel, no bubble chrome); create confirms via sync; no image upload / pending blobs |
 | CH-119 | Sticker send offline retry | Go briefly offline → send sticker from tray → come online | Outbox retries create-only (no media upload); sticker confirms when network returns |
 | CH-119a | Sticker cannot be edited | Own sticker → context menu / ArrowUp | No Edit action; API rejects content update if attempted |
@@ -1489,7 +1490,13 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PR-trophy-30 | Nested card celebration | Own player-card sheet open when pending Rare/Legendary | Celebration nested drawer works; card does not steal dismiss |
 | PR-19 | Change city | City modal | City updated; no Cities/Clubs switch; browse country → cities; invite/chat browse lens snaps to Home; recent browse cities kept |
 | PR-20 | Phone/password change | If exposed in UI | Auth updated |
-| PR-21 | Language selector | Pick language | i18n + profile saved |
+| PR-21 | Language selector | Pick language (incl. العربية) | i18n + profile saved; for ar, `document.documentElement.dir` is `rtl` |
+| PR-21a | Arabic RTL shell | Set language to العربية | UI strings Arabic; page `dir=rtl`; Cairo font; EULA opens Arabic |
+| PR-21b | Gulf week start auto | Language العربية (or device ar-*); week start Auto | Calendars start on Saturday |
+| PR-21c | Gulf currency default | New user / city in AE or SA (or currency Auto with Gulf city) | Default currency AED or SAR (not stuck on EUR) |
+| PR-21d | Arabic plurals | Language العربية; open city list / chat header with counts | Counts use Arabic plural forms (not English fallback for 0/2/3–10) |
+| PR-21e | Arabic gendered join copy | Female profile gender; join / queue confirm | Confirmation copy uses feminine أنتِ forms |
+| PR-21f | Arabic RTL smoke (automated) | Guest: `localStorage.language=ar` → `/login` | `html[dir=rtl]`, Cairo font; Playwright `smoke/arabic-rtl.spec.ts` |
 | PR-22 | Theme selector | Light/dark/system | Theme applied |
 | PR-22a | System theme resume (dark) | Theme=System; background the app; OS switches to dark; resume | UI is dark without relaunch (`html.dark` present) |
 | PR-22b | System theme resume (light) | Theme=System; background the app; OS switches to light; resume | UI is light without relaunch (`html.dark` absent) |
@@ -1909,7 +1916,7 @@ Use these for structured regression sweeps — not every cell needs automation d
 
 ### 19.3 Locale smoke
 
-Run P0 smoke in each locale: **en**, **ru**, **es**, **sr**, **cs** — verify no layout overflow on login, Find filters, game card, chat input.
+Run P0 smoke in each locale: **en**, **ru**, **es**, **sr**, **cs**, **ar** — verify no layout overflow on login, Find filters, game card, chat input. For **ar**, also verify `html[dir=rtl]`, Arabic font, and mirrored chrome.
 
 ### 19.4 Viewport matrix
 

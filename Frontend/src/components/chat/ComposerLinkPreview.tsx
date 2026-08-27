@@ -53,7 +53,7 @@ export function ComposerLinkPreview({
         </span>
       ) : null}
       {urls.length > 1 ? (
-        <div className="mb-1.5 flex min-h-11 items-center pr-12">
+        <div className="mb-1.5 flex min-h-11 items-center pe-12">
           <select
             value={selectedUrl}
             onChange={(event) => onSelect(event.target.value)}
@@ -88,7 +88,7 @@ export function ComposerLinkPreview({
           reserveControlSpace={urls.length === 1}
         />
       ) : (
-        <div className={urls.length === 1 ? 'pr-10' : undefined}>
+        <div className={urls.length === 1 ? 'pe-10' : undefined}>
           <LinkPreviewChip
             url={selectedUrl}
             host={host(selectedUrl)}

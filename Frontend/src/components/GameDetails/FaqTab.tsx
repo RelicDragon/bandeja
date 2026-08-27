@@ -89,7 +89,7 @@ export const FaqTab = ({ gameId, includeFixedTeamStandingsFaq = false }: FaqTabP
             <button
               type="button"
               onClick={() => toggleExpand(faq.id)}
-              className="w-full flex items-start gap-3 p-4 text-left hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              className="w-full flex items-start gap-3 p-4 text-start hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
             >
               <div className="flex-shrink-0 mt-1">
                 {isExpanded ? (

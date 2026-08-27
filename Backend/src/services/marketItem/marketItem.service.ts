@@ -18,6 +18,7 @@ import {
 } from '../social-graph/socialGraph.block';
 import { t } from '../../utils/translations';
 import notificationService from '../notification.service';
+import CurrencyService from '../currency.service';
 
 export interface CreateMarketItemData {
   sellerId: string;
@@ -577,7 +578,7 @@ export class MarketItemService {
     }
     if (oldItem.priceCents !== newItem.priceCents || oldItem.currency !== newItem.currency) {
       if (newItem.priceCents != null) {
-        changes.push(`• ${t('marketplace.update.price', lang)}: ${(newItem.priceCents / 100).toFixed(2)} ${newItem.currency}`);
+        changes.push(`• ${t('marketplace.update.price', lang)}: ${CurrencyService.formatPrice(newItem.priceCents, newItem.currency)}`);
       } else {
         changes.push(`• ${t('marketplace.update.priceRemoved', lang)}`);
       }

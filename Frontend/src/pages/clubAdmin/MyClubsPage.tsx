@@ -67,7 +67,7 @@ export function MyClubsPage() {
               <button
                 key={c.id}
                 type="button"
-                className="flex w-full items-center gap-3 rounded-xl border border-gray-200 bg-white p-3 text-left transition-colors hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:hover:bg-gray-800"
+                className="flex w-full items-center gap-3 rounded-xl border border-gray-200 bg-white p-3 text-start transition-colors hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:hover:bg-gray-800"
                 onClick={() => navigate(`${c.id}`)}
               >
                 <ClubAvatar club={{ id: c.id, name: c.name, avatar: c.avatar }} variant="card" className="h-12 w-12 shrink-0" />

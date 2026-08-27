@@ -68,7 +68,7 @@ export function ClubBookingConnectInline({
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -6 }}
           transition={{ duration: 0.2 }}
-          className="w-full rounded-xl border border-primary-100 dark:border-primary-900/40 bg-primary-50/50 dark:bg-primary-950/20 px-4 py-3 text-left flex items-center gap-3 text-sm font-medium text-gray-900 dark:text-white"
+          className="w-full rounded-xl border border-primary-100 dark:border-primary-900/40 bg-primary-50/50 dark:bg-primary-950/20 px-4 py-3 text-start flex items-center gap-3 text-sm font-medium text-gray-900 dark:text-white"
         >
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-primary-600 shadow-sm dark:bg-gray-900 dark:text-primary-300">
             <KeyRound size={18} />

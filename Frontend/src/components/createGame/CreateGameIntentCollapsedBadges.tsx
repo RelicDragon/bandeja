@@ -8,7 +8,7 @@ export function GenderTeamIconBadge({ genderTeams }: { genderTeams: GenderTeam }
     return (
       <span className="inline-flex h-5 items-center justify-center gap-0.5 rounded-full bg-gradient-to-r from-blue-500 to-pink-500 px-1.5 dark:from-blue-600 dark:to-pink-600">
         <i className="bi bi-gender-male text-[9px] text-white" aria-hidden />
-        <i className="bi bi-gender-female -ml-0.5 text-[9px] text-white" aria-hidden />
+        <i className="bi bi-gender-female -ms-0.5 text-[9px] text-white" aria-hidden />
       </span>
     );
   }

@@ -306,7 +306,7 @@ export function WeatherDayChart({
         ref={chartButtonRef}
         type="button"
         onClick={handleChartClick}
-        className="relative block h-32 w-full cursor-pointer touch-manipulation text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-sky-500/70 dark:focus-visible:ring-offset-gray-950"
+        className="relative block h-32 w-full cursor-pointer touch-manipulation text-start focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-sky-500/70 dark:focus-visible:ring-offset-gray-950"
         aria-label={t('weather.selectHourFromChart', {
           defaultValue: 'Select an hour from the weather chart',
         })}
@@ -420,7 +420,7 @@ export function WeatherDayChart({
             <ChevronRight size={11} strokeWidth={2.25} aria-hidden />
           </button>
         ) : null}
-        <div className="ml-auto flex items-center justify-end gap-3 text-[9px] font-medium uppercase tracking-tight text-gray-400 dark:text-gray-500">
+        <div className="ms-auto flex items-center justify-end gap-3 text-[9px] font-medium uppercase tracking-tight text-gray-400 dark:text-gray-500">
         <span className="inline-flex items-center gap-1">
           <span className="h-1 w-3.5 rounded-full bg-gradient-to-r from-blue-500 via-emerald-500 to-rose-500" />
           {t('weather.temperatureShort', { defaultValue: 'Temp' })}

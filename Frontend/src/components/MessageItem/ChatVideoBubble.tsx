@@ -110,7 +110,7 @@ export const ChatVideoBubble: React.FC<ChatVideoBubbleProps> = ({
     <div ref={containerRef} className="relative max-w-[280px] w-full overflow-hidden rounded-xl">
       <button
         type="button"
-        className="relative block w-full text-left"
+        className="relative block w-full text-start"
         onClick={handleOpenFullscreen}
         disabled={!canPlay || !onOpenFullscreen}
       >

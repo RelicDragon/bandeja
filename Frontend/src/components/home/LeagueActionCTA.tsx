@@ -43,7 +43,7 @@ export function LeagueActionCTA({ games, gamesUnreadCounts, leagueCount }: Leagu
           aria-expanded={expanded}
           aria-controls="my-tab-leagues-panel"
           data-testid="play-leagues-cta"
-          className="group relative flex w-full items-center gap-3 overflow-hidden rounded-2xl border border-amber-500/40 bg-gradient-to-br from-amber-500/15 to-amber-500/5 px-4 py-3 text-left shadow-sm transition-all hover:border-amber-500/70 hover:shadow-md active:scale-[0.99] dark:border-amber-500/30 dark:from-amber-500/15 dark:to-amber-500/5"
+          className="group relative flex w-full items-center gap-3 overflow-hidden rounded-2xl border border-amber-500/40 bg-gradient-to-br from-amber-500/15 to-amber-500/5 px-4 py-3 text-start shadow-sm transition-all hover:border-amber-500/70 hover:shadow-md active:scale-[0.99] dark:border-amber-500/30 dark:from-amber-500/15 dark:to-amber-500/5"
         >
           <span className="relative inline-flex h-9 w-9 shrink-0 items-center justify-center text-amber-600 dark:text-amber-400">
             {!expanded && !reduceMotion && (

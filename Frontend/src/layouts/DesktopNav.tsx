@@ -14,7 +14,7 @@ export const DesktopNav = () => {
   ];
 
   return (
-    <aside className="hidden md:flex flex-col w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 h-screen fixed left-0 top-0">
+    <aside className="hidden md:flex flex-col w-64 bg-white dark:bg-gray-800 border-e border-gray-200 dark:border-gray-700 h-screen fixed left-0 top-0">
       <div className="p-6 border-b border-gray-200 dark:border-gray-700">
         <h1 className="text-2xl font-bold text-primary-600 dark:text-primary-400">
           {t('app.title')}

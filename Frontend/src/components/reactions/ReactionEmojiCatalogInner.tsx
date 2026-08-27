@@ -38,7 +38,7 @@ function injectEmojiMartCatalogShadowStyles(host: HTMLElement) {
   sr.appendChild(style);
 }
 
-const SUPPORTED_LOCALES = new Set(['en', 'es', 'cs', 'ru', 'sr']);
+const SUPPORTED_LOCALES = new Set(['en', 'es', 'cs', 'ru', 'sr', 'ar']);
 
 /** No `frequent` — recents come only from `EmojiQuickStrip` (usage store), not emoji-mart localStorage. */
 const CATALOG_CATEGORIES = ['people', 'nature', 'foods', 'activity', 'places', 'objects', 'symbols', 'flags'] as const;

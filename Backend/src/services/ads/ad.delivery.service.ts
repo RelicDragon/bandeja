@@ -34,6 +34,8 @@ export type ResolvedAdCard = {
   sponsorName: string;
   imageUrl: string;
   imageUrlDark: string | null;
+  imageUrls: string[];
+  imageUrlsDark: string[];
   title: string | null;
   subtitle: string | null;
   ctaLabel: string | null;
@@ -45,6 +47,22 @@ export type ResolvedAdCard = {
   disclosureLabel: string | null;
   hideDisclosure: boolean;
 };
+
+export function resolveAdImageSets(creative: {
+  imageUrl: string;
+  imageUrlDark: string | null;
+  imageUrls?: string[];
+  imageUrlsDark?: string[];
+}): { imageUrls: string[]; imageUrlsDark: string[] } {
+  return {
+    imageUrls: creative.imageUrls?.length ? creative.imageUrls : [creative.imageUrl],
+    imageUrlsDark: creative.imageUrlsDark?.length
+      ? creative.imageUrlsDark
+      : creative.imageUrlDark
+        ? [creative.imageUrlDark]
+        : [],
+  };
+}
 
 export class AdDeliveryService {
   static filterCampaigns(
@@ -146,6 +164,8 @@ export class AdDeliveryService {
       }
     }
 
+    const imageSets = resolveAdImageSets(creative);
+
     return {
       placement,
       campaignId: campaign.id,
@@ -154,6 +174,7 @@ export class AdDeliveryService {
       sponsorName: campaign.sponsor.name,
       imageUrl: creative.imageUrl,
       imageUrlDark: creative.imageUrlDark,
+      ...imageSets,
       title: creative.title,
       subtitle: creative.subtitle,
       ctaLabel: creative.ctaLabel,

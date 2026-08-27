@@ -109,7 +109,7 @@ export function MessageInputSearchToggle({ disabled = false, onExpandedChange }:
             animate={{ opacity: 1 }}
             transition={{ duration: reduceMotion ? 0 : 0.22, delay: reduceMotion ? 0 : 0.1 }}
             placeholder={t('chat.searchInConversation', { defaultValue: 'Search in conversation' })}
-            className={`h-full w-full rounded-full border-0 bg-transparent pl-9 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-gray-100 dark:placeholder-gray-400 dark:focus:ring-blue-400 ${showCount || showLoadingIndicator ? 'pr-[4.75rem]' : 'pr-10'}`}
+            className={`h-full w-full rounded-full border-0 bg-transparent ps-9 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-gray-100 dark:placeholder-gray-400 dark:focus:ring-blue-400 ${showCount || showLoadingIndicator ? 'pe-[4.75rem]' : 'pe-10'}`}
             aria-label={t('chat.searchInConversation', { defaultValue: 'Search in conversation' })}
           />
           {showLoadingIndicator ? (

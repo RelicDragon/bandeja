@@ -50,6 +50,8 @@
  * @property {string} variantKey
  * @property {string} imageUrl
  * @property {string|null} imageUrlDark
+ * @property {string[]} [imageUrls]
+ * @property {string[]} [imageUrlsDark]
  * @property {string|null} title
  * @property {string|null} subtitle
  * @property {string|null} ctaLabel
@@ -119,6 +121,7 @@ const AD_LOCALES = [
     { code: 'es', label: 'Spanish' },
     { code: 'sr', label: 'Serbian' },
     { code: 'cs', label: 'Czech' },
+    { code: 'ar', label: 'Arabic' },
 ];
 
 const AD_CAMPAIGN_STATUSES = ['DRAFT', 'SCHEDULED', 'ACTIVE', 'PAUSED', 'ENDED'];

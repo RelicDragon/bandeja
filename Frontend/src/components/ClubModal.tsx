@@ -210,7 +210,7 @@ export const ClubModal = ({
                 <DialogTitle className="min-w-0 truncate">{detailClub?.name}</DialogTitle>
               </div>
             ) : (
-              <div className="flex min-w-0 items-center justify-between gap-3 pr-8">
+              <div className="flex min-w-0 items-center justify-between gap-3 pe-8">
                 <DialogTitle className="min-w-0 truncate">{t('createGame.selectClub')}</DialogTitle>
                 <BrowseCityChip
                   cityName={venue.cityName}
@@ -232,7 +232,7 @@ export const ClubModal = ({
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder={t('browseCity.searchClubs')}
-                  className="w-full rounded-2xl border border-gray-200/90 bg-gray-50/80 py-2.5 pl-10 pr-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-primary-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-gray-700 dark:bg-gray-800/60 dark:text-white dark:placeholder-gray-500 dark:focus:border-primary-500 dark:focus:bg-gray-900"
+                  className="w-full rounded-2xl border border-gray-200/90 bg-gray-50/80 py-2.5 ps-10 pe-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-primary-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-gray-700 dark:bg-gray-800/60 dark:text-white dark:placeholder-gray-500 dark:focus:border-primary-500 dark:focus:bg-gray-900"
                 />
               </div>
             </div>

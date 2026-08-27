@@ -134,7 +134,7 @@ export function BooktimeAdjacentBookingGroup({
     <div className="pointer-events-none absolute top-0 right-0 flex flex-col items-end gap-0.5">
       <BooktimeBookingPriceLabel
         quote={totalPrice}
-        className="text-right text-xs font-semibold tabular-nums text-gray-700 dark:text-gray-200"
+        className="text-end text-xs font-semibold tabular-nums text-gray-700 dark:text-gray-200"
       />
       <BooktimeBookingOccupancyPill segments={groupSlotSegments} />
       {showChevron ? (
@@ -151,7 +151,7 @@ export function BooktimeAdjacentBookingGroup({
   );
 
   const headerContent = (
-    <div className="min-w-0 flex-1 pr-14">
+    <div className="min-w-0 flex-1 pe-14">
       {showClubName ? (
         <p className="text-xs font-medium text-gray-500 dark:text-gray-400 truncate">{club.clubName}</p>
       ) : null}
@@ -214,7 +214,7 @@ export function BooktimeAdjacentBookingGroup({
 
   if (selectable && onToggleBooking) {
     const selectableGroup = (
-      <div className={`relative w-full text-left ${shellClassName} flex flex-col gap-3`}>
+      <div className={`relative w-full text-start ${shellClassName} flex flex-col gap-3`}>
         <div className="relative flex w-full items-start">
           {cornerStack}
           {headerContent}
@@ -246,7 +246,7 @@ export function BooktimeAdjacentBookingGroup({
         data-testid={expandableActions ? 'booktime-booking-group-toggle' : undefined}
         aria-expanded={showChildren}
         onClick={handleHeaderClick}
-        className="relative w-full text-left outline-none focus-visible:ring-2 focus-visible:ring-primary-500 rounded-md"
+        className="relative w-full text-start outline-none focus-visible:ring-2 focus-visible:ring-primary-500 rounded-md"
       >
         {cornerStack}
         {headerContent}

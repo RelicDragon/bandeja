@@ -11,7 +11,7 @@ export const AuthBackHeader = ({ title, onBack, backLabel }: AuthBackHeaderProps
     <button
       type="button"
       onClick={onBack}
-      className="flex items-center justify-center w-10 h-10 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700/60 text-slate-600 dark:text-slate-400 transition-all -ml-1 active:scale-95"
+      className="flex items-center justify-center w-10 h-10 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700/60 text-slate-600 dark:text-slate-400 transition-all -ms-1 active:scale-95"
       aria-label={backLabel ?? 'Back'}
     >
       <ArrowLeft size={20} />

@@ -70,7 +70,7 @@ function SettingToggleRow({
         >
           {title}
         </span>
-        <div className="relative col-start-2 row-start-1 flex-shrink-0 self-center pr-1">
+        <div className="relative col-start-2 row-start-1 flex-shrink-0 self-center pe-1">
           <ToggleSwitch checked={checked} onChange={onChange} disabled={disabled} />
           <AnimatePresence>
             {showSuccess ? (

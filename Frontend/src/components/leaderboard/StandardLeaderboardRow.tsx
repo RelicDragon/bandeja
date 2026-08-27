@@ -84,12 +84,12 @@ export function StandardLeaderboardRow({
           : ''
       }`}
     >
-      <td className="px-0 py-2.5 text-left align-middle">
+      <td className="px-0 py-2.5 text-start align-middle">
         <span className={`text-xs font-medium tabular-nums ${rankClass}`}>
           {rankLabel}
         </span>
       </td>
-      <td className="min-w-0 py-2.5 pl-0 pr-2 align-middle">
+      <td className="min-w-0 py-2.5 ps-0 pe-2 align-middle">
         <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center">
             <PlayerAvatar
@@ -104,7 +104,7 @@ export function StandardLeaderboardRow({
             <div className={`line-clamp-2 min-w-0 break-words text-xs ${nameClass}`}>
               {playerName}
               {isCurrentUser && (
-                <span className={`ml-1.5 text-[10px] ${
+                <span className={`ms-1.5 text-[10px] ${
                   isGrayed
                     ? RATING_LEADERBOARD_MUTED_TEXT
                     : 'text-primary-600 dark:text-primary-400'
@@ -127,7 +127,7 @@ export function StandardLeaderboardRow({
           </div>
         </div>
       </td>
-      <td className="whitespace-nowrap py-2.5 pl-2 pr-0 text-right align-middle">
+      <td className="whitespace-nowrap py-2.5 ps-2 pe-0 text-end align-middle">
         <div className="flex items-center justify-end gap-1">
           {entry.lastGameRatingChange !== null &&
             entry.lastGameRatingChange !== undefined && (

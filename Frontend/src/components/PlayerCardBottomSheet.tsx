@@ -364,7 +364,7 @@ export const PlayerCardBottomSheet = memo(function PlayerCardBottomSheet({
       <Drawer open={!!playerId} dismissible={!avatarViewerUrl} onOpenChange={handleDrawerOpenChange}>
           <DrawerContent data-testid="player-card-sheet">
             {showReviewsView && playerId ? (
-              <div className="flex shrink-0 items-center justify-between w-full p-2 pl-6">
+              <div className="flex shrink-0 items-center justify-between w-full p-2 ps-6">
                 <div className="flex items-center gap-4">
                   <button type="button" onClick={handleReviewsBack} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                     <ArrowLeft size={20} className="text-gray-700 dark:text-gray-300" />
@@ -400,7 +400,7 @@ export const PlayerCardBottomSheet = memo(function PlayerCardBottomSheet({
                   )}
                 />
               ) : stats ? (
-                <div className="flex shrink-0 gap-2 items-center w-full p-2 pl-6">
+                <div className="flex shrink-0 gap-2 items-center w-full p-2 ps-6">
                   {!isBlocked && (
                     <button
                       type="button"
@@ -424,13 +424,13 @@ export const PlayerCardBottomSheet = memo(function PlayerCardBottomSheet({
                     </button>
                   )}
                   <DrawerClose asChild>
-                    <button type="button" className="p-2.5 ml-auto rounded-full bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800 transition-all duration-200 shadow-sm hover:shadow-md border border-gray-200/50 dark:border-gray-700/50">
+                    <button type="button" className="p-2.5 ms-auto rounded-full bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800 transition-all duration-200 shadow-sm hover:shadow-md border border-gray-200/50 dark:border-gray-700/50">
                       <X size={20} className="text-gray-600 dark:text-gray-300" />
                     </button>
                   </DrawerClose>
                 </div>
               ) : (
-                <div className="flex shrink-0 gap-2 items-center w-full p-2 pl-6 justify-end">
+                <div className="flex shrink-0 gap-2 items-center w-full p-2 ps-6 justify-end">
                   <DrawerClose asChild>
                     <button type="button" className="p-2.5 rounded-full bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800 transition-all duration-200 shadow-sm hover:shadow-md border border-gray-200/50 dark:border-gray-700/50">
                       <X size={20} className="text-gray-600 dark:text-gray-300" />

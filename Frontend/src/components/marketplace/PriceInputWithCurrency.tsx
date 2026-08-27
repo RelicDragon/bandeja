@@ -49,13 +49,13 @@ export const PriceInputWithCurrency = ({
         onChange={(e) => onChange(validatePriceInput(e.target.value, currency))}
         onKeyDown={(e) => ['e', 'E', '+', '-'].includes(e.key) && e.preventDefault()}
         placeholder={placeholder}
-        className="flex-1 min-w-0 bg-transparent px-3 py-2 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none border-0 rounded-l-lg"
+        className="flex-1 min-w-0 bg-transparent px-3 py-2 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none border-0 rounded-s-lg"
       />
-      <div className="border-l border-slate-200 dark:border-slate-600">
+      <div className="border-s border-slate-200 dark:border-slate-600">
         <button
           type="button"
           onClick={() => setCurrencyModalOpen(true)}
-          className="flex items-center gap-1 px-3 py-2 text-slate-800 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-600/50 rounded-r-lg"
+          className="flex items-center gap-1 px-3 py-2 text-slate-800 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-600/50 rounded-e-lg"
         >
           <span>{currency}</span>
           <ChevronDown size={14} className="text-slate-500" />

@@ -37,7 +37,7 @@ export function StoryViewerCaptionStrip({
             e.stopPropagation();
             onOwnerClick();
           }}
-          className="mr-1 font-semibold text-white hover:underline"
+          className="me-1 font-semibold text-white hover:underline"
         >
           {ownerLabel}
         </button>

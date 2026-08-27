@@ -98,7 +98,7 @@ export function TeamAvatarCutDial({
         >
           <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-600">
             <div
-              className="absolute left-0 top-0 h-full rounded-l-full bg-primary-500 dark:bg-primary-400"
+              className="absolute left-0 top-0 h-full rounded-s-full bg-primary-500 dark:bg-primary-400"
               style={{
                 width: `${Number.isFinite(pct) ? Math.max(0, Math.min(100, pct)) : 0}%`,
               }}

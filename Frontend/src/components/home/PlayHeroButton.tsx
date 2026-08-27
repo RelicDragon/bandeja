@@ -85,7 +85,7 @@ export function PlayHeroButton() {
           type="button"
           onClick={handleTap}
           data-testid="play-hero-button"
-          className="group flex w-full items-center gap-3 rounded-2xl border border-emerald-500/40 bg-gradient-to-br from-emerald-500/15 to-emerald-500/5 px-4 py-3.5 text-left shadow-sm transition-all hover:border-emerald-500/70 hover:shadow-md active:scale-[0.99] dark:border-emerald-500/30 dark:from-emerald-500/15 dark:to-emerald-500/5"
+          className="group flex w-full items-center gap-3 rounded-2xl border border-emerald-500/40 bg-gradient-to-br from-emerald-500/15 to-emerald-500/5 px-4 py-3.5 text-start shadow-sm transition-all hover:border-emerald-500/70 hover:shadow-md active:scale-[0.99] dark:border-emerald-500/30 dark:from-emerald-500/15 dark:to-emerald-500/5"
         >
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500 text-white shadow-sm transition-transform group-hover:scale-105 dark:bg-emerald-600">
             <Zap className="h-5 w-5" strokeWidth={2.5} aria-hidden />

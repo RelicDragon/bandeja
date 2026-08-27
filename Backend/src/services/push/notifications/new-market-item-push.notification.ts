@@ -1,5 +1,7 @@
+import { PriceCurrency } from '@prisma/client';
 import { NotificationPayload, NotificationType } from '../../../types/notifications.types';
 import { t } from '../../../utils/translations';
+import CurrencyService from '../../currency.service';
 
 export function createNewMarketItemPushNotification(
   marketItem: { id: string; title: string; priceCents: number | null; currency: string },
@@ -10,7 +12,7 @@ export function createNewMarketItemPushNotification(
 
   let body = marketItem.title;
   if (marketItem.priceCents != null) {
-    const price = `${(marketItem.priceCents / 100).toFixed(2)} ${marketItem.currency}`;
+    const price = CurrencyService.formatPrice(marketItem.priceCents, marketItem.currency as PriceCurrency);
     body = (t('marketplace.newListingBody', lang) || '{title} — {price}')
       .replace('{title}', marketItem.title)
       .replace('{price}', price);

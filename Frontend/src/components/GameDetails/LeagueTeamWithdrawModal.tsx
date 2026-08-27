@@ -55,7 +55,7 @@ export function LeagueTeamWithdrawModal({
         </DialogHeader>
         <div className="space-y-4 text-sm text-gray-700 dark:text-gray-300">
           <p>{t('gameDetails.withdrawTeamBody', { team: teamLabel })}</p>
-          <ul className="list-disc space-y-1 pl-5 text-xs text-gray-600 dark:text-gray-400">
+          <ul className="list-disc space-y-1 ps-5 text-xs text-gray-600 dark:text-gray-400">
             <li>{t('gameDetails.withdrawTeamBulletTechnical')}</li>
             <li>{t('gameDetails.withdrawTeamBulletStandings')}</li>
             <li>{t('gameDetails.withdrawTeamBulletIrreversible')}</li>

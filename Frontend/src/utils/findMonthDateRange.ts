@@ -1,6 +1,6 @@
 import { endOfMonth, endOfWeek, parse, startOfDay, startOfMonth, startOfWeek } from 'date-fns';
 
-export type WeekStartsOn = 0 | 1;
+export type WeekStartsOn = 0 | 1 | 6;
 
 export function resolveFindMonthRangeAnchor(
   selectedDayKey: string | null | undefined,

@@ -197,7 +197,7 @@ export const EditLevelModal = ({
             <Button onClick={handleSave} variant="primary" disabled={saving} size="md">
               {saving ? (
                 <>
-                  <Loader2 size={16} className="animate-spin mr-2" />
+                  <Loader2 size={16} className="animate-spin me-2" />
                   {t('common.saving')}
                 </>
               ) : (

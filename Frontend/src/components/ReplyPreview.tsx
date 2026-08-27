@@ -41,7 +41,7 @@ export const ReplyPreview: React.FC<ReplyPreviewProps> = ({
   const displayContent = getReplyPreviewDisplayContent(replyTo, t);
 
   return (
-    <div className={`bg-gray-50 dark:bg-gray-700 border-l-4 border-green-500 p-2 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors ${className}`}>
+    <div className={`bg-gray-50 dark:bg-gray-700 border-s-4 border-green-500 p-2 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors ${className}`}>
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0 flex items-start gap-2" onClick={handleClick}>
           <ReplyPreviewThumb replyTo={replyTo} />

@@ -246,7 +246,7 @@ export function ChatStickerTray({
                           defaultValue: 'Search stickers',
                         })
                   }
-                  className="w-full rounded-2xl border border-gray-200 bg-gray-100/80 py-2.5 pl-9 pr-3 text-sm text-gray-900 outline-none ring-blue-500 transition focus:bg-white focus:ring-2 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:focus:bg-gray-850"
+                  className="w-full rounded-2xl border border-gray-200 bg-gray-100/80 py-2.5 ps-9 pe-3 text-sm text-gray-900 outline-none ring-blue-500 transition focus:bg-white focus:ring-2 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:focus:bg-gray-850"
                   data-testid="chat-media-search"
                   aria-label={
                     tray.tab === 'gifs'

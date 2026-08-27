@@ -130,7 +130,7 @@ export function StoryViewerOwnerMenu({ onDelete }: StoryViewerOwnerMenuProps) {
                   <button
                     type="button"
                     disabled={busy}
-                    className="flex w-full items-center gap-3 rounded-2xl px-3.5 py-3.5 text-left text-[15px] font-medium text-red-400 transition-colors hover:bg-white/[0.07] active:bg-white/[0.11] disabled:opacity-50"
+                    className="flex w-full items-center gap-3 rounded-2xl px-3.5 py-3.5 text-start text-[15px] font-medium text-red-400 transition-colors hover:bg-white/[0.07] active:bg-white/[0.11] disabled:opacity-50"
                     onClick={() => {
                       lightHaptic();
                       setStep('confirm');

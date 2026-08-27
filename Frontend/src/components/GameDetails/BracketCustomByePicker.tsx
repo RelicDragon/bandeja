@@ -37,7 +37,7 @@ export function BracketCustomByePicker({
   return (
     <div className="space-y-2 rounded-lg border border-gray-200 bg-gray-50/80 px-3 py-2 dark:border-gray-700 dark:bg-gray-800/40">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
+        <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pe-2">
           {t('gameDetails.bracketCustomByesLabel')}
         </span>
         <div className="flex-shrink-0">

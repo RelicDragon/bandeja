@@ -140,7 +140,7 @@ export const CourtModal = ({
                     e.stopPropagation();
                     handleSelect('notBooked');
                   }}
-                  className={`w-full text-left px-4 py-3 rounded-lg transition-all ${
+                  className={`w-full text-start px-4 py-3 rounded-lg transition-all ${
                     selectedId === 'notBooked'
                       ? 'bg-primary-500 text-white'
                       : 'bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700'
@@ -158,7 +158,7 @@ export const CourtModal = ({
                     e.stopPropagation();
                     handleSelect(court.id);
                   }}
-                  className={`w-full text-left px-4 py-3 rounded-lg transition-all ${
+                  className={`w-full text-start px-4 py-3 rounded-lg transition-all ${
                     selectedId === court.id
                       ? 'bg-primary-500 text-white'
                       : 'bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700'

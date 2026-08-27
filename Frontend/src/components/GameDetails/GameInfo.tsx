@@ -273,13 +273,13 @@ export const GameInfo = ({
   const getEntityGradient = () => {
     switch (game.entityType) {
       case 'TOURNAMENT':
-        return 'bg-gradient-to-br from-red-50/60 via-orange-50/40 to-red-50/60 dark:from-red-950/25 dark:via-orange-950/15 dark:to-red-950/25 border-l-2 border-red-300 dark:border-red-800 shadow-[0_0_8px_rgba(239,68,68,0.15)] dark:shadow-[0_0_8px_rgba(239,68,68,0.2)]';
+        return 'bg-gradient-to-br from-red-50/60 via-orange-50/40 to-red-50/60 dark:from-red-950/25 dark:via-orange-950/15 dark:to-red-950/25 border-s-2 border-red-300 dark:border-red-800 shadow-[0_0_8px_rgba(239,68,68,0.15)] dark:shadow-[0_0_8px_rgba(239,68,68,0.2)]';
       case 'LEAGUE':
-        return 'bg-gradient-to-br from-blue-50/60 via-purple-50/40 to-blue-50/60 dark:from-blue-950/25 dark:via-purple-950/15 dark:to-blue-950/25 border-l-2 border-blue-300 dark:border-blue-800 shadow-[0_0_8px_rgba(59,130,246,0.15)] dark:shadow-[0_0_8px_rgba(59,130,246,0.2)]';
+        return 'bg-gradient-to-br from-blue-50/60 via-purple-50/40 to-blue-50/60 dark:from-blue-950/25 dark:via-purple-950/15 dark:to-blue-950/25 border-s-2 border-blue-300 dark:border-blue-800 shadow-[0_0_8px_rgba(59,130,246,0.15)] dark:shadow-[0_0_8px_rgba(59,130,246,0.2)]';
       case 'TRAINING':
-        return 'bg-gradient-to-br from-green-50/60 via-teal-50/40 to-green-50/60 dark:from-green-950/25 dark:via-teal-950/15 dark:to-green-950/25 border-l-2 border-green-300 dark:border-green-800 shadow-[0_0_8px_rgba(34,197,94,0.15)] dark:shadow-[0_0_8px_rgba(34,197,94,0.2)]';
+        return 'bg-gradient-to-br from-green-50/60 via-teal-50/40 to-green-50/60 dark:from-green-950/25 dark:via-teal-950/15 dark:to-green-950/25 border-s-2 border-green-300 dark:border-green-800 shadow-[0_0_8px_rgba(34,197,94,0.15)] dark:shadow-[0_0_8px_rgba(34,197,94,0.2)]';
       case 'BAR':
-        return 'bg-gradient-to-br from-yellow-50/60 via-amber-50/40 to-yellow-50/60 dark:from-yellow-950/25 dark:via-amber-950/15 dark:to-yellow-950/25 border-l-2 border-yellow-300 dark:border-yellow-800 shadow-[0_0_8px_rgba(234,179,8,0.15)] dark:shadow-[0_0_8px_rgba(234,179,8,0.2)]';
+        return 'bg-gradient-to-br from-yellow-50/60 via-amber-50/40 to-yellow-50/60 dark:from-yellow-950/25 dark:via-amber-950/15 dark:to-yellow-950/25 border-s-2 border-yellow-300 dark:border-yellow-800 shadow-[0_0_8px_rgba(234,179,8,0.15)] dark:shadow-[0_0_8px_rgba(234,179,8,0.2)]';
       default:
         return '';
     }
@@ -337,7 +337,7 @@ export const GameInfo = ({
 
   const renderName = () => {
     const titleClass = isCollapsed 
-      ? 'text-xs font-semibold text-gray-900 dark:text-white mb-2 pr-20'
+      ? 'text-xs font-semibold text-gray-900 dark:text-white mb-2 pe-20'
       : 'text-lg font-bold text-gray-900 dark:text-white mb-2';
     const leagueNameClass = isCollapsed
       ? 'text-blue-600 dark:text-blue-400'
@@ -350,7 +350,7 @@ export const GameInfo = ({
       ? 'mt-1 flex items-center gap-2 flex-wrap'
       : 'text-sm font-medium mb-2 flex items-center gap-2 flex-wrap';
     const gameTypeClass = isCollapsed
-      ? 'ml-2 text-xs text-gray-500 dark:text-gray-400'
+      ? 'ms-2 text-xs text-gray-500 dark:text-gray-400'
       : '';
 
     const TitleTag = isCollapsed ? 'h3' : 'h1';
@@ -418,7 +418,7 @@ export const GameInfo = ({
     const iconSize = isCollapsed ? 12 : 14;
     const gapClass = isCollapsed ? 'gap-2' : 'gap-2';
     const mbClass = isCollapsed ? 'mb-1' : 'mb-2';
-    const prClass = isCollapsed ? 'pr-10' : '';
+    const prClass = isCollapsed ? 'pe-10' : '';
 
     return (
       <div className={`flex items-center ${gapClass} ${mbClass} ${prClass} flex-wrap`}>
@@ -436,7 +436,7 @@ export const GameInfo = ({
             {game.genderTeams === 'MIX_PAIRS' ? (
               <div className="h-6 px-2 rounded-full bg-gradient-to-r from-blue-500 to-pink-500 dark:from-blue-600 dark:to-pink-600 flex items-center justify-center gap-1">
                 <i className="bi bi-gender-male text-white text-[10px]"></i>
-                <i className="bi bi-gender-female -ml-1 text-white text-[10px]"></i>
+                <i className="bi bi-gender-female -ms-1 text-white text-[10px]"></i>
               </div>
             ) : (
               <div className={`w-4 h-4 rounded-full flex items-center justify-center ${
@@ -807,7 +807,7 @@ export const GameInfo = ({
           </div>
         )}
         <div className="flex items-start justify-between mb-4">
-          <div className="pr-20 flex-1 min-w-0">
+          <div className="pe-20 flex-1 min-w-0">
             {renderName()}
             {renderTags()}
           </div>
@@ -831,7 +831,7 @@ export const GameInfo = ({
               )}
             </div>
           ) : shouldShowTiming ? (
-            <div className="pr-20 min-w-0">
+            <div className="pe-20 min-w-0">
               <div className="flex flex-row flex-wrap items-center gap-x-4 gap-y-3 w-full max-w-full text-sm text-gray-700 dark:text-gray-300">
                 <div className="flex items-center gap-3">
                   <InfoIconChip>
@@ -841,7 +841,7 @@ export const GameInfo = ({
                     {canEdit && canShowEdit ? (
                       <button
                         onClick={() => onOpenEditGameInfo?.('locationTime')}
-                        className="flex flex-col text-left font-medium hover:text-primary-600 dark:hover:text-primary-400 transition-colors cursor-pointer"
+                        className="flex flex-col text-start font-medium hover:text-primary-600 dark:hover:text-primary-400 transition-colors cursor-pointer"
                       >
                         <span>{weekdayLabel}</span>
                         <span>{longDateDisplay.primaryText}</span>
@@ -898,7 +898,7 @@ export const GameInfo = ({
                 {canEdit && canShowEdit ? (
                   <button
                     onClick={() => onOpenEditGameInfo?.('locationTime')}
-                    className="flex flex-col text-left font-medium hover:text-primary-600 dark:hover:text-primary-400 transition-colors cursor-pointer"
+                    className="flex flex-col text-start font-medium hover:text-primary-600 dark:hover:text-primary-400 transition-colors cursor-pointer"
                   >
                     <span>{weekdayLabel}</span>
                     <span>{longDateDisplay.primaryText}</span>
@@ -1088,14 +1088,14 @@ export const GameInfo = ({
                       <button
                         type="button"
                         onClick={onInviteTrainer}
-                        className="text-xs font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 text-left"
+                        className="text-xs font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 text-start"
                       >
                         {t('games.trainerSlotEmpty', { defaultValue: 'No trainer' })}
                       </button>
                       <button
                         type="button"
                         onClick={onInviteTrainer}
-                        className="text-xs font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 text-left"
+                        className="text-xs font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 text-start"
                       >
                         {t('games.inviteTrainer', { defaultValue: 'Invite trainer' })}
                       </button>
@@ -1150,7 +1150,7 @@ export const GameInfo = ({
               </InfoIconChip>
               <button
                 onClick={() => canEdit && canShowEdit && onOpenEditGameInfo?.('general')}
-                className={`text-xs text-gray-600 dark:text-gray-400 text-left whitespace-pre-line ${
+                className={`text-xs text-gray-600 dark:text-gray-400 text-start whitespace-pre-line ${
                   canEdit && canShowEdit ? 'hover:text-primary-600 dark:hover:text-primary-400 cursor-pointer transition-colors' : ''
                 }`}
               >

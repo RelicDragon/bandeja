@@ -29,7 +29,7 @@ export function PlayIntentIdleCtaCard({
       type="button"
       onClick={onClick}
       data-testid="play-intent-cta"
-      className="flex w-full items-center gap-2.5 rounded-xl border border-border/70 bg-white px-2.5 py-2 text-left transition-colors hover:border-emerald-500/40 hover:bg-emerald-500/5 dark:bg-gray-900"
+      className="flex w-full items-center gap-2.5 rounded-xl border border-border/70 bg-white px-2.5 py-2 text-start transition-colors hover:border-emerald-500/40 hover:bg-emerald-500/5 dark:bg-gray-900"
     >
       <SportPublicIcon sport={sport} className="h-5 w-5 shrink-0 object-contain" />
       <div className="min-w-0 flex-1">

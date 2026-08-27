@@ -279,7 +279,7 @@ export const PlayerAvatar = ({ player, subscribePresence = true, isCurrentUser, 
             const levelColor = getLevelColor(lvl, isDark);
             return levelConfirmed ? (
               <div
-                className={`relative ${extrasmall ? 'h-3.5 px-1' : smallLayout ? 'h-4 px-1.5 -mr-1' : 'h-5 px-1.5'} rounded-full flex items-center justify-center gap-1`}
+                className={`relative ${extrasmall ? 'h-3.5 px-1' : smallLayout ? 'h-4 px-1.5 -me-1' : 'h-5 px-1.5'} rounded-full flex items-center justify-center gap-1`}
                 style={{ ...levelColor, ...levelBadgeStyle }}
               >
                 <span className={`text-white font-bold leading-none ${extrasmall ? 'text-[8px]' : smallLayout ? 'text-[10px]' : 'text-xs'}`}>

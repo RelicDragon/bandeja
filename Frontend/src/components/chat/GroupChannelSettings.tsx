@@ -425,7 +425,7 @@ export const GroupChannelSettings = ({
                   placeholder={t('chat.searchParticipants', { defaultValue: 'Search participants...' })}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full ps-10 pe-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
                 />
               </div>
             </div>
@@ -479,7 +479,7 @@ export const GroupChannelSettings = ({
                             <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                               {participant.user.firstName} {participant.user.lastName}
                               {isCurrentUser && (
-                                <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
+                                <span className="ms-2 text-xs text-gray-500 dark:text-gray-400">
                                   ({t('chat.you', { defaultValue: 'You' })})
                                 </span>
                               )}
@@ -522,10 +522,10 @@ export const GroupChannelSettings = ({
                                   disabled={actionLoading === action.id}
                                   className="w-full flex items-center justify-start gap-2 pb-3 pt-3"
                                 >
-                                  <action.icon size={16} className="mr-2 flex-shrink-0" />
+                                  <action.icon size={16} className="me-2 flex-shrink-0" />
                                   <span className="flex-1">{action.label}</span>
                                   {actionLoading === action.id && (
-                                    <div className="ml-auto w-4 h-4 border-2 border-gray-300 border-t-transparent rounded-full animate-spin flex-shrink-0" />
+                                    <div className="ms-auto w-4 h-4 border-2 border-gray-300 border-t-transparent rounded-full animate-spin flex-shrink-0" />
                                   )}
                                 </Button>
                               ))}

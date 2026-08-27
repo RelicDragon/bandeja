@@ -2,7 +2,12 @@ import type { ChatMessageWithStatus } from '@/api/chat';
 import { getThreadScrollState, type ThreadScrollRow } from '@/services/chat/chatThreadScroll';
 import { planOpenBootstrapPaints } from '@/services/chat/chatOpenSnapshot';
 import { excludeTombstonedChatMessages } from '@/services/chat/chatLocalMessageTombstone';
-import { resolvePaintScrollPlan } from '@/services/chat/threadSession';
+import {
+  belongingFromThreadKey,
+  filterMessagesBelongingToThreadKey,
+  resolvePaintScrollPlan,
+} from '@/services/chat/threadSession';
+import { filterMessagesBelongingToThread } from '@/services/chat/liveMessageBelongsToThread';
 import type {
   ThreadOpenKey,
   ThreadOpenInputs,
@@ -17,20 +22,33 @@ import type {
  * Enforces ≤1 pre-paint commit via `planOpenBootstrapPaints({ coalesceBootstrap: true })`.
  */
 export function mergeThreadOpenRows(input: ThreadOpenMergeInput): ThreadOpenMergeResult {
+  const belonging =
+    input.belonging ?? (input.threadKey ? belongingFromThreadKey(input.threadKey) ?? undefined : undefined);
+  const scopeRows = <T extends ChatMessageWithStatus>(rows: readonly T[]): T[] => {
+    if (input.threadKey) return filterMessagesBelongingToThreadKey(rows, input.threadKey) as T[];
+    if (belonging) return filterMessagesBelongingToThread(rows, belonging);
+    return [...rows];
+  };
+  const l1 = scopeRows(input.l1);
+  const dexieTail = scopeRows(input.dexieTail as ChatMessageWithStatus[]);
+  const outbox = scopeRows(input.outbox);
+  const prev = scopeRows(input.prev);
+  const l1Fresh = input.l1Fresh && l1.length > 0;
   const { snapshot, paintCount } = planOpenBootstrapPaints({
-    l1: input.l1,
-    dexieTail: input.dexieTail,
-    outbox: input.outbox,
-    l1Fresh: input.l1Fresh,
-    prev: input.prev,
+    l1,
+    dexieTail,
+    outbox,
+    l1Fresh,
+    prev,
     coalesceBootstrap: true,
     includeL1Optimistics: false,
+    belonging,
   });
   const paintGeneration = paintCount > 0 ? 1 : 0;
   const paintSource =
-    input.l1Fresh && input.l1.length > 0
+    l1Fresh
       ? 'l1'
-      : input.dexieTail.length > 0
+      : dexieTail.length > 0
         ? 'dexie-tail'
         : 'network';
   return { rows: snapshot, paintGeneration, paintSource };
@@ -79,7 +97,14 @@ export async function planThreadOpen(
   const l1 = excludeTombstonedChatMessages(l1Raw, extraTombstoned);
   const prev = excludeTombstonedChatMessages(prevRaw, extraTombstoned);
   const l1Fresh = l1.length > 0;
-  const merged = mergeThreadOpenRows({ l1, dexieTail, outbox, prev, l1Fresh });
+  const merged = mergeThreadOpenRows({
+    l1,
+    dexieTail,
+    outbox,
+    prev,
+    l1Fresh,
+    threadKey,
+  });
 
   if (merged.paintGeneration === 0 && merged.rows.length === 0) {
     return { kind: 'empty', paintGeneration: 0 };

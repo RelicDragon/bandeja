@@ -20,7 +20,7 @@ export const PollVotersModal: React.FC<PollVotersModalProps> = ({ open, onClose,
   return (
     <Dialog open={open} onClose={onClose} modalId="poll-voters-modal">
       <DialogContent className="max-w-sm max-h-[80vh] overflow-hidden flex flex-col" showCloseButton>
-        <div className="flex items-center gap-2.5 pr-8 mb-1">
+        <div className="flex items-center gap-2.5 pe-8 mb-1">
           <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-500/15 flex items-center justify-center shrink-0">
             <Users size={14} className="text-emerald-600 dark:text-emerald-400" />
           </div>

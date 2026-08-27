@@ -62,7 +62,7 @@ export function PlayIntentMoreOptionsCard({
         type="button"
         onClick={() => onOpenChange(!open)}
         aria-expanded={open}
-        className="flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left text-sm font-medium text-foreground/90"
+        className="flex w-full items-center justify-between gap-2 px-3 py-2.5 text-start text-sm font-medium text-foreground/90"
       >
         <span>{t('playIntent.moreOptions')}</span>
         <motion.span
@@ -117,7 +117,7 @@ export function PlayIntentMoreOptionsCard({
                           key={club.id}
                           type="button"
                           onClick={() => onToggleClub(club.id)}
-                          className={`w-full rounded-lg px-3 py-2 text-left text-sm transition-colors ${
+                          className={`w-full rounded-lg px-3 py-2 text-start text-sm transition-colors ${
                             active
                               ? 'bg-emerald-600 text-white'
                               : 'bg-background text-foreground/90 hover:bg-muted'
@@ -137,7 +137,7 @@ export function PlayIntentMoreOptionsCard({
                     type="button"
                     aria-pressed={levelEnabled}
                     onClick={() => onLevelEnabledChange(!levelEnabled)}
-                    className={`flex w-full items-center justify-between gap-3 rounded-lg border px-3 py-2.5 text-left text-sm font-medium transition-colors ${
+                    className={`flex w-full items-center justify-between gap-3 rounded-lg border px-3 py-2.5 text-start text-sm font-medium transition-colors ${
                       levelEnabled
                         ? 'border-emerald-500/50 bg-emerald-500/15 text-foreground'
                         : 'border-border/80 bg-background text-foreground/90 hover:bg-muted'

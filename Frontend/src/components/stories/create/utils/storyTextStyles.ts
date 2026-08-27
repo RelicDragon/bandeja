@@ -20,7 +20,7 @@ export function getTextStyleRender(
   fontSizePx?: number
 ): TextStyleRender {
   const alignClass =
-    align === 'left' ? 'text-left' : align === 'right' ? 'text-right' : 'text-center';
+    align === 'left' ? 'text-start' : align === 'right' ? 'text-end' : 'text-center';
   const sizeClass = fontSizePx == null ? 'text-xl' : '';
   const fontStyle: CSSProperties | undefined =
     fontSizePx != null ? { fontSize: fontSizePx } : undefined;

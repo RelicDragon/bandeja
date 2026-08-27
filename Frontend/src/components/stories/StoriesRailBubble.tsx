@@ -34,7 +34,7 @@ export function StoriesRailBubble({
   return (
     <button type="button" onClick={onClick} className="flex flex-col items-center gap-1.5 shrink-0 min-w-[4.5rem]">
       {isCreate ? (
-        <div className="relative pr-1 pb-1">
+        <div className="relative pe-1 pb-1">
           <div className={`rounded-full overflow-hidden ${ringClass}`}>{face}</div>
           <span
             className="absolute bottom-0 right-0 z-10 flex h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-green-500 text-white dark:border-gray-900"

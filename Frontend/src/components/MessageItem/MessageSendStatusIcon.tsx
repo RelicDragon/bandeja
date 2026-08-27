@@ -126,7 +126,7 @@ export const MessageSendStatusIcon: React.FC<MessageSendStatusIconProps> = ({
                         setShowFailedMenu(false);
                         onResendQueued(optimisticId);
                       }}
-                      className="px-3 py-1.5 text-left text-sm text-white hover:bg-gray-700 dark:hover:bg-gray-600"
+                      className="px-3 py-1.5 text-start text-sm text-white hover:bg-gray-700 dark:hover:bg-gray-600"
                     >
                       {t('chat.resend', { defaultValue: 'Resend' })}
                     </button>
@@ -139,7 +139,7 @@ export const MessageSendStatusIcon: React.FC<MessageSendStatusIconProps> = ({
                         setShowFailedMenu(false);
                         onRemoveFromQueue(optimisticId);
                       }}
-                      className="px-3 py-1.5 text-left text-sm text-red-300 hover:bg-gray-700 dark:hover:bg-gray-600"
+                      className="px-3 py-1.5 text-start text-sm text-red-300 hover:bg-gray-700 dark:hover:bg-gray-600"
                     >
                       {t('chat.contextMenu.delete', { defaultValue: 'Delete' })}
                     </button>

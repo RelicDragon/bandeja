@@ -491,16 +491,30 @@ function setCreativeFieldValues(prefix, creative) {
     set('clickAction', creative.clickAction || 'OPEN_URL');
     set('variantWeight', creativeVariantWeight(creative));
     set('overrideEnabled', creative.placement != null);
-    const preview = document.getElementById(`${prefix}_imagePreview`);
-    const previewDark = document.getElementById(`${prefix}_imageDarkPreview`);
-    if (preview) {
-        preview.src = creative.imageUrl || '';
-        preview.style.display = creative.imageUrl ? 'block' : 'none';
-    }
-    if (previewDark) {
-        previewDark.src = creative.imageUrlDark || '';
-        previewDark.style.display = creative.imageUrlDark ? 'block' : 'none';
-    }
+    const lightUrls = creative.imageUrls?.length ? creative.imageUrls : (creative.imageUrl ? [creative.imageUrl] : []);
+    const darkUrls = creative.imageUrlsDark?.length ? creative.imageUrlsDark : (creative.imageUrlDark ? [creative.imageUrlDark] : []);
+    renderAdsCreativeImagePreviews(`${prefix}_imagePreview`, lightUrls, false);
+    renderAdsCreativeImagePreviews(`${prefix}_imageDarkPreview`, darkUrls, true);
+}
+
+function renderAdsCreativeImagePreviews(containerId, urls, dark, objectUrls = false) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    container.querySelectorAll('[data-object-url]').forEach((img) => URL.revokeObjectURL(img.dataset.objectUrl));
+    container.replaceChildren();
+    container.style.display = urls.length ? 'grid' : 'none';
+    urls.forEach((url, index) => {
+        const frame = document.createElement('div');
+        frame.className = `ads-creative-preview-frame${dark ? ' ads-creative-preview-dark' : ''}`;
+        const img = document.createElement('img');
+        img.src = url;
+        img.alt = `Frame ${index + 1}`;
+        if (objectUrls) img.dataset.objectUrl = url;
+        const label = document.createElement('span');
+        label.textContent = index === 0 ? '1 - static fallback' : String(index + 1);
+        frame.append(img, label);
+        container.append(frame);
+    });
 }
 
 function renderAdsCreativeMatrix(campaign) {
@@ -529,7 +543,7 @@ function renderAdsVariantMatrix(creatives) {
             <td>${escapeHtml(placement)}</td>
             <td><span class="badge badge-info">${escapeHtml(cr.variantKey || 'A')}</span></td>
             <td>${weight}</td>
-            <td>${cr.imageUrl ? '✓' : '—'}</td>
+            <td>${cr.imageUrl ? `${cr.imageUrls?.length || 1} frame${(cr.imageUrls?.length || 1) === 1 ? '' : 's'}` : '—'}</td>
             <td>${escapeHtml(cr.title || '—')}</td>
         </tr>`;
     }).join('');
@@ -589,14 +603,16 @@ function renderAdsCreativeFormForLocale(locale, variantKey) {
                 </div>
                 <div class="form-row ads-upload-row">
                     <div class="form-group">
-                        <label>Light image</label>
-                        <input type="file" accept="image/*" id="${prefix}_imageFile" onchange="previewAdsCreativeImage('${prefix}', 'light')">
-                        <img id="${prefix}_imagePreview" class="ads-creative-preview" alt="">
+                        <label>Light images (up to 8)</label>
+                        <input type="file" accept="image/*" multiple id="${prefix}_imageFile" onchange="previewAdsCreativeImages('${prefix}', 'light')">
+                        <small>Frame 1 is the static fallback for older clients. Selected order is slideshow order.</small>
+                        <div id="${prefix}_imagePreview" class="ads-creative-previews"></div>
                     </div>
                     <div class="form-group">
-                        <label>Dark image (optional)</label>
-                        <input type="file" accept="image/*" id="${prefix}_imageDarkFile" onchange="previewAdsCreativeImage('${prefix}', 'dark')">
-                        <img id="${prefix}_imageDarkPreview" class="ads-creative-preview ads-creative-preview-dark" alt="">
+                        <label>Dark images (optional, up to 8)</label>
+                        <input type="file" accept="image/*" multiple id="${prefix}_imageDarkFile" onchange="previewAdsCreativeImages('${prefix}', 'dark')">
+                        <small>Dark frames match light frames by position. Missing frames use the light image.</small>
+                        <div id="${prefix}_imageDarkPreview" class="ads-creative-previews"></div>
                     </div>
                 </div>
                 ${!isOverride
@@ -615,13 +631,16 @@ function renderAdsCreativeFormForLocale(locale, variantKey) {
     container.innerHTML = html;
 }
 
-function previewAdsCreativeImage(prefix, variant) {
+function previewAdsCreativeImages(prefix, variant) {
     const input = document.getElementById(`${prefix}_${variant === 'dark' ? 'imageDarkFile' : 'imageFile'}`);
-    const preview = document.getElementById(`${prefix}_${variant === 'dark' ? 'imageDarkPreview' : 'imagePreview'}`);
-    const file = input?.files?.[0];
-    if (!file || !preview) return;
-    preview.src = URL.createObjectURL(file);
-    preview.style.display = 'block';
+    const files = Array.from(input?.files || []);
+    const urls = files.map((file) => URL.createObjectURL(file));
+    renderAdsCreativeImagePreviews(
+        `${prefix}_${variant === 'dark' ? 'imageDarkPreview' : 'imagePreview'}`,
+        urls,
+        variant === 'dark',
+        true
+    );
 }
 
 async function uploadAdsCreative(locale, placement, variantKey) {
@@ -641,17 +660,25 @@ async function uploadAdsCreative(locale, placement, variantKey) {
         toast('Click URL is required', 'error');
         return;
     }
-    const lightFile = document.getElementById(`${prefix}_imageFile`)?.files?.[0];
-    if (!lightFile) {
-        toast('Light image is required', 'error');
+    const lightFiles = Array.from(document.getElementById(`${prefix}_imageFile`)?.files || []);
+    if (!lightFiles.length) {
+        toast('At least one light image is required', 'error');
+        return;
+    }
+    if (lightFiles.length > 8) {
+        toast('Select no more than 8 light images', 'error');
+        return;
+    }
+    const darkFiles = Array.from(document.getElementById(`${prefix}_imageDarkFile`)?.files || []);
+    if (darkFiles.length > lightFiles.length) {
+        toast('Dark images cannot outnumber light images', 'error');
         return;
     }
     const fd = new FormData();
     fd.append('locale', locale);
     if (placement) fd.append('placement', placement);
-    fd.append('image', lightFile);
-    const darkFile = document.getElementById(`${prefix}_imageDarkFile`)?.files?.[0];
-    if (darkFile) fd.append('imageDark', darkFile);
+    lightFiles.forEach((file) => fd.append('image', file));
+    darkFiles.forEach((file) => fd.append('imageDark', file));
     fd.append('title', document.getElementById(`${prefix}_title`)?.value || '');
     fd.append('subtitle', document.getElementById(`${prefix}_subtitle`)?.value || '');
     fd.append('ctaLabel', document.getElementById(`${prefix}_ctaLabel`)?.value || '');
@@ -754,7 +781,7 @@ window.onAdsLevelBandSportChange = onAdsLevelBandSportChange;
 window.syncAdsLevelBandsFromUI = syncAdsLevelBandsFromUI;
 window.onAdsRolloutSliderInput = onAdsRolloutSliderInput;
 window.onAdsRolloutInputChange = onAdsRolloutInputChange;
-window.previewAdsCreativeImage = previewAdsCreativeImage;
+window.previewAdsCreativeImages = previewAdsCreativeImages;
 window.uploadAdsCreative = uploadAdsCreative;
 window.saveAdsPlacementsOnly = saveAdsPlacementsOnly;
 window.runAdsPreview = runAdsPreview;

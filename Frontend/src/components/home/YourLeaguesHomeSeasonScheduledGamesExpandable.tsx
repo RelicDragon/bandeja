@@ -27,7 +27,7 @@ export function YourLeaguesHomeSeasonScheduledGamesExpandable({
     <div className="overflow-hidden rounded-lg border border-gray-200/70 bg-gray-50/70 dark:border-gray-700/70 dark:bg-gray-800/40">
       <button
         type="button"
-        className={`flex w-full items-center gap-2 px-2.5 py-2 text-left transition-colors hover:bg-gray-100/80 dark:hover:bg-gray-800/60 ${
+        className={`flex w-full items-center gap-2 px-2.5 py-2 text-start transition-colors hover:bg-gray-100/80 dark:hover:bg-gray-800/60 ${
           open ? 'border-b border-gray-200/60 bg-gray-100/50 dark:border-gray-700/60 dark:bg-gray-800/60' : ''
         }`}
         aria-expanded={open}

@@ -38,7 +38,7 @@ export function ClubPastBookingsSection({
     <section className="rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/60 dark:bg-gray-800/40 p-3">
       <button
         type="button"
-        className="flex w-full items-center justify-between gap-2 text-left rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+        className="flex w-full items-center justify-between gap-2 text-start rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
         aria-expanded={expanded}
         onClick={() => {
           setExpanded((v) => {

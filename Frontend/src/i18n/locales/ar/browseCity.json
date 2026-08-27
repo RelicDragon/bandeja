@@ -1,0 +1,21 @@
+{
+  "browseCity": {
+    "chipAriaHome": "مدينتك، {{city}}. تصفح مدينة أخرى.",
+    "chipAriaAway": "تصفح {{city}}. غيّر المدينة.",
+    "chipAriaVenueHome": "مدينة المباراة {{city}}. اختر مدينة أخرى.",
+    "chipAriaVenueAway": "أندية في {{city}}. غيّر المدينة.",
+    "changeCity": "المدينة",
+    "recent": "الأخيرة",
+    "nearby": "بالقرب",
+    "viewCity": "عرض {{city}}",
+    "nobodyInCity": "لا أحد في {{city}} لـ «{{query}}»",
+    "nobodyNearby": "لا أحد بالقرب لـ «{{query}}». جرّب مدينة أخرى.",
+    "noUsersInCity": "لا مستخدمين في {{city}}",
+    "noUsersInCityHint": "بدّل المدينة أو ابحث عن اسم",
+    "lookingEmptyInCity": "لا أحد يبحث في {{city}}",
+    "noClubsInCity": "لا أندية في {{city}}",
+    "noClubsMatch": "لا أندية تطابق «{{query}}»",
+    "searchClubs": "بحث عن أندية",
+    "km": "{{km}} كم"
+  }
+}

@@ -14,7 +14,7 @@ interface AvailabilityDayHeaderProps {
   weekdayLabel: string;
   dayOfMonth: number;
   weekStartYmd: string;
-  weekStart: 'monday' | 'sunday';
+  weekStart: 'monday' | 'sunday' | 'saturday';
   isWeekend: boolean;
   isToday?: boolean;
   isPast?: boolean;

@@ -97,7 +97,7 @@ export function BooktimeAdjacentHourPicker({
               disabled={dimmed}
               whileTap={dimmed ? undefined : { scale: 0.985 }}
               onClick={() => onToggleBooking(option.booking.uuid)}
-              className={`relative min-h-[4.75rem] px-2.5 py-2.5 text-left outline-none transition-[opacity,colors] duration-200 focus-visible:z-20 focus-visible:ring-2 focus-visible:ring-primary-500 ${
+              className={`relative min-h-[4.75rem] px-2.5 py-2.5 text-start outline-none transition-[opacity,colors] duration-200 focus-visible:z-20 focus-visible:ring-2 focus-visible:ring-primary-500 ${
                 selected
                   ? 'bg-primary-50 dark:bg-primary-950/50'
                   : 'bg-white dark:bg-gray-900'

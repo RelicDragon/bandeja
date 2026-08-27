@@ -117,7 +117,7 @@ export const SegmentedSwitch = ({
           onClick={() => handleTabClick(tab.id, tab.disabled)}
           className={`relative flex min-w-0 items-center font-medium transition-colors duration-200 ${
             compact ? 'rounded-[10px] py-1.5 text-[13px] leading-4' : 'rounded-md py-2.5 text-sm'
-          } ${isVertical ? 'w-full justify-start gap-2.5 text-left' : 'justify-center gap-1.5'} ${
+          } ${isVertical ? 'w-full justify-start gap-2.5 text-start' : 'justify-center gap-1.5'} ${
             !isVertical && fullWidth ? 'flex-1' : ''
           } ${pad} ${
             disabled || tab.disabled

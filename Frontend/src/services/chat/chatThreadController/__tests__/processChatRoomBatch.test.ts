@@ -109,6 +109,36 @@ describe('processChatRoomBatch inbound message', () => {
     persistSocketInboundMessage.mockResolvedValue(1);
   });
 
+  it('stamps envelope contextId onto inbound message missing contextId', () => {
+    const ctx = makeCtx();
+    const raw = inboundMessage('m-orphan');
+    delete (raw as { contextId?: string }).contextId;
+
+    processChatRoomBatch(
+      [
+        {
+          kind: 'message',
+          data: {
+            contextType: 'USER',
+            contextId: 'thread-1',
+            message: raw,
+            messageId: 'm-orphan',
+            syncSeq: 7,
+          },
+        },
+      ],
+      ctx
+    );
+
+    expect(ctx.messagesRef.current.some((m) => m.id === 'm-orphan')).toBe(true);
+    expect(persistSocketInboundMessage).toHaveBeenCalledWith(
+      'USER',
+      'thread-1',
+      expect.objectContaining({ id: 'm-orphan', contextId: 'thread-1' }),
+      7
+    );
+  });
+
   it('applies inbound message to thread state before Dexie persistence completes', async () => {
     let resolvePersist!: (value: number) => void;
     const persistPromise = new Promise<number>((resolve) => {

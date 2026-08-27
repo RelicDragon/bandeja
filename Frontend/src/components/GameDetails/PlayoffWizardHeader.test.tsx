@@ -18,7 +18,7 @@ describe('PlayoffWizardHeader', () => {
 
     expect(html).toContain('>3/4<');
     expect(html).toContain('Game Setup');
-    expect(html).toContain('!pr-0 text-center');
+    expect(html).toContain('!pe-0 text-center');
     expect(html).toContain('role="progressbar"');
     expect(html).toContain('aria-valuenow="3"');
     expect(html).toContain('width:75%');

@@ -557,6 +557,7 @@ COUNTRIES = {
             "السعودية",
         ),
         "key": "saudi",
+        "default_city": "Riyadh",
         "slug_city": {
             "riyadh": "Riyadh",
             "jeddah": "Jeddah",
@@ -606,6 +607,7 @@ COUNTRIES = {
         "region_name": "Oman",
         "country_aliases": ("Oman", "Omán", "Omàn", "عمان"),
         "key": "oman",
+        "default_city": "Muscat",
         "slug_city": {
             "mascate": "Muscat",
             "muscat": "Muscat",
@@ -622,6 +624,95 @@ COUNTRIES = {
             "al-farfarah": "Al Farfarah",
             "almabbela": "Al Mawaleh",
             "al-mawaleh": "Al Mawaleh",
+        },
+    },
+    "uae": {
+        "europa_id": 6317,
+        "tax": "otros-paises",
+        "region_slug": "emiratos-arabes",
+        "region_name": "United Arab Emirates",
+        "country_aliases": (
+            "United Arab Emirates",
+            "UAE",
+            "U.A.E.",
+            "Emiratos Árabes",
+            "Emiratos Arabes",
+            "Emiratos Árabes Unidos",
+            "Emiratos Arabes Unidos",
+            "الإمارات",
+        ),
+        "key": "uae",
+        "default_city": "Dubai",
+        "slug_city": {
+            "dubai": "Dubai",
+            "abu-dhabi": "Abu Dhabi",
+            "sharjah": "Sharjah",
+            "ajman": "Ajman",
+            "ras-al-khaimah": "Ras Al Khaimah",
+            "fujairah": "Fujairah",
+            "al-ain": "Al Ain",
+            "umm-al-quwain": "Umm Al Quwain",
+            "khor-fakkan": "Khor Fakkan",
+            "kalba": "Kalba",
+        },
+    },
+    "kuwait": {
+        "europa_id": 6335,
+        "tax": "otros-paises",
+        "region_slug": "kuwait",
+        "region_name": "Kuwait",
+        "country_aliases": ("Kuwait", "Kuwait City", "الكويت"),
+        "key": "kuwait",
+        "default_city": "Kuwait City",
+        "slug_city": {
+            "kuwait": "Kuwait City",
+            "kuwait-city": "Kuwait City",
+            "hawalli": "Hawalli",
+            "salmiya": "Salmiya",
+            "salmiyah": "Salmiya",
+            "jahra": "Al Jahra",
+            "al-jahra": "Al Jahra",
+            "farwaniya": "Al Farwaniyah",
+            "al-farwaniyah": "Al Farwaniyah",
+            "fahaheel": "Fahaheel",
+            "mahboula": "Mahboula",
+            "mangaf": "Mangaf",
+            "abu-halifa": "Abu Halifa",
+            "sabah-al-salem": "Sabah Al Salem",
+            "jabriya": "Jabriya",
+            "surra": "Surra",
+            "bayan": "Bayan",
+            "shaab": "Shaab",
+            "al-khairan": "Al Khairan",
+            "khairan": "Al Khairan",
+            "al-wafrah": "Al Wafrah",
+            "wafrah": "Al Wafrah",
+            "abdali": "Abdali",
+            "ahmadi": "Ahmadi",
+        },
+    },
+    "qatar": {
+        "europa_id": 6351,
+        "tax": "otros-paises",
+        "region_slug": "qatar",
+        "region_name": "Qatar",
+        "country_aliases": ("Qatar", "Catar", "قطر"),
+        "key": "qatar",
+        "default_city": "Doha",
+        "slug_city": {
+            "doha": "Doha",
+            "lusail": "Lusail",
+            "al-wakrah": "Al Wakrah",
+            "wakrah": "Al Wakrah",
+            "al-khor": "Al Khor",
+            "khor": "Al Khor",
+            "al-rayyan": "Al Rayyan",
+            "rayyan": "Al Rayyan",
+            "education-city": "Education City",
+            "west-bay": "Doha",
+            "the-pearl": "Doha",
+            "pearl": "Doha",
+            "mesaieed": "Mesaieed",
         },
     },
 }
@@ -955,6 +1046,7 @@ def run(cfg: dict) -> None:
 
     out: dict[int, dict] = {}
     slug_city = cfg.get("slug_city") or {}
+    default_city = (cfg.get("default_city") or "").strip() or None
     if SKIP_DETAIL:
         log(f"[detail] skipped; assembling {len(index)} from index+locality+slug")
         for club in index:
@@ -963,6 +1055,7 @@ def run(cfg: dict) -> None:
                 city_by_id.get(cid)
                 or club.get("cityFromDesc")
                 or city_from_slug(club.get("slug"), slug_city)
+                or default_city
             )
             if not city:
                 continue
@@ -986,6 +1079,7 @@ def run(cfg: dict) -> None:
                     or club.get("cityRaw")
                     or club.get("cityFromDesc")
                     or city_from_slug(club.get("slug"), slug_city)
+                    or default_city
                 )
                 if not city or club.get("error"):
                     log(f"[detail] skip id={cid} city={city} err={club.get('error')}")

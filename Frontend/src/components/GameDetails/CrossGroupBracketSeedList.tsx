@@ -89,7 +89,7 @@ export function CrossGroupBracketSeedList({
                   type="button"
                   disabled={readOnly}
                   onClick={() => handleRowClick(index)}
-                  className={`flex flex-1 min-w-0 items-center gap-2 text-left rounded-md px-1 py-1 ${
+                  className={`flex flex-1 min-w-0 items-center gap-2 text-start rounded-md px-1 py-1 ${
                     readOnly ? 'cursor-default' : 'hover:bg-gray-50 dark:hover:bg-gray-800/60'
                   }`}
                 >

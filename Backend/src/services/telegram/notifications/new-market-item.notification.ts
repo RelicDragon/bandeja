@@ -1,6 +1,8 @@
 import { Api } from 'grammy';
+import { PriceCurrency } from '@prisma/client';
 import { config } from '../../../config/env';
 import { t } from '../../../utils/translations';
+import CurrencyService from '../../currency.service';
 import { escapeMarkdown, getUserLanguageFromTelegramId, trimTextForTelegram } from '../utils';
 import { buildMessageWithButtons } from '../shared/message-builder';
 import { isBenignTelegramRecipientError } from '../telegramRecipientErrors';
@@ -20,7 +22,7 @@ export async function sendNewMarketItemNotification(
 
     let priceText = '';
     if (marketItem.priceCents != null) {
-      priceText = `${(marketItem.priceCents / 100).toFixed(2)} ${marketItem.currency}`;
+      priceText = CurrencyService.formatPrice(marketItem.priceCents, marketItem.currency as PriceCurrency);
     }
 
     let message = `🛒 ${escapeMarkdown(title)}\n\n${escapeMarkdown(marketItem.title)}`;

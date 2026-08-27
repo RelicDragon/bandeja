@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
-import { enGB, ru, es, sr, cs, Locale } from 'date-fns/locale';
+import { enGB, ru, es, sr, cs, arSA, Locale } from 'date-fns/locale';
 import { Calendar, X, Star } from 'lucide-react';
 import { Button, Card, Select, CalendarComponent, PlayerLevelSection } from '@/components';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
@@ -52,6 +52,7 @@ const localeMap: Record<string, Locale> = {
   es: es,
   sr: sr,
   cs: cs,
+  ar: arSA,
 };
 
 export const GameSubscriptionForm = ({
@@ -67,9 +68,12 @@ export const GameSubscriptionForm = ({
   const locale = useMemo(() => localeMap[i18n.language as keyof typeof localeMap] || enGB, [i18n.language]);
   
   const daysOfWeek = useMemo(() => {
-    const baseDays = displaySettings.weekStart === 1
-      ? [...ALL_DAYS_OF_WEEK.slice(1), ALL_DAYS_OF_WEEK[0]]
-      : ALL_DAYS_OF_WEEK;
+    const baseDays =
+      displaySettings.weekStart === 1
+        ? [...ALL_DAYS_OF_WEEK.slice(1), ALL_DAYS_OF_WEEK[0]]
+        : displaySettings.weekStart === 6
+          ? [...ALL_DAYS_OF_WEEK.slice(6), ...ALL_DAYS_OF_WEEK.slice(0, 6)]
+          : ALL_DAYS_OF_WEEK;
     
     return baseDays.map(day => {
       const date = new Date(2024, 0, 7 + day.value);
@@ -275,7 +279,7 @@ export const GameSubscriptionForm = ({
                     key={club.id}
                     type="button"
                     onClick={() => toggleClub(club.id)}
-                    className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all duration-200 text-left ${
+                    className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all duration-200 text-start ${
                       clubIds.includes(club.id)
                         ? 'bg-gradient-to-br from-primary-500 to-primary-600 text-white shadow-xl shadow-primary-500/40 ring-2 ring-primary-400 ring-offset-1 scale-[1.02]'
                         : 'bg-white dark:bg-slate-700/50 border-2 border-slate-200 dark:border-slate-700 hover:border-primary-300 dark:hover:border-primary-600 hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-700 dark:text-slate-300'
@@ -300,7 +304,7 @@ export const GameSubscriptionForm = ({
             )}
           </div>
           {clubIds.length === 0 && (
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 ml-1">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 ms-1">
               {t('gameSubscriptions.allClubs')}
             </p>
           )}
@@ -329,7 +333,7 @@ export const GameSubscriptionForm = ({
             ))}
           </div>
           {entityTypes.length === 0 && (
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 ml-1">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 ms-1">
               {t('gameSubscriptions.allEntityTypes')}
             </p>
           )}
@@ -358,7 +362,7 @@ export const GameSubscriptionForm = ({
             ))}
           </div>
           {dayOfWeek.length === 0 && (
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 ml-1">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 ms-1">
               {t('gameSubscriptions.allDays')}
             </p>
           )}
@@ -426,7 +430,7 @@ export const GameSubscriptionForm = ({
             </div>
           </div>
           {dateHint && (
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 ml-1">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 ms-1">
               {dateHint}
             </p>
           )}
@@ -442,7 +446,7 @@ export const GameSubscriptionForm = ({
             hour12={displaySettings.hour12}
           />
           {(timeRange[0] !== '00:00' || timeRange[1] !== '24:00') && (
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 ml-1">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 ms-1">
               {t('gameSubscriptions.timeRangeHint')}
             </p>
           )}
@@ -520,7 +524,7 @@ export const GameSubscriptionForm = ({
             {t('common.cancel')}
           </Button>
           {!cityId && (
-            <p className="text-xs text-amber-600 dark:text-amber-400 text-center sm:text-left flex-1 flex items-center">
+            <p className="text-xs text-amber-600 dark:text-amber-400 text-center sm:text-start flex-1 flex items-center">
               {t('gameSubscriptions.cityRequired')}
             </p>
           )}

@@ -15,7 +15,7 @@ export { useMarketItemExpressInterest } from './useMarketItemExpressInterest';
 export { TradeTypeCheckboxes } from './TradeTypeCheckboxes';
 export { PriceInput } from './PriceInput';
 export { PriceInputWithCurrency } from './PriceInputWithCurrency';
-export { priceToCents, centsToPrice } from './utils';
+export { priceToCents, centsToPrice, currencyInputStep } from './utils';
 export { formatPriceDisplay } from './utils';
 export { Badge } from './Badge';
 export { FormField } from './FormField';

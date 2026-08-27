@@ -23,7 +23,7 @@ export function PlayoffWizardHeader({
         </span>
       </div>
 
-      <DialogTitle className="!pr-0 text-center text-xl font-bold tracking-tight">
+      <DialogTitle className="!pe-0 text-center text-xl font-bold tracking-tight">
         {title}
       </DialogTitle>
 

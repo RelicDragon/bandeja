@@ -1,4 +1,9 @@
 import type { ChatMessage, ChatMessageWithStatus } from '@/api/chat';
+import {
+  filterMessagesBelongingToThread,
+  liveMessageBelongsToThread,
+  type ThreadBelongingConfig,
+} from '@/services/chat/liveMessageBelongsToThread';
 import { readReceiptsFingerprint } from '@/services/chat/readReceiptsFingerprint';
 import {
   mergeChatMessagesAscending,
@@ -23,6 +28,8 @@ export type OpenSnapshotSources = {
   /** When false, L1 rows with optimistic / SENDING / FAILED are stripped before pick (A2.4). */
   includeL1Optimistics?: boolean;
   prev?: readonly ChatMessageWithStatus[];
+  /** When set, drop rows that are not explicitly scoped to this thread. */
+  belonging?: ThreadBelongingConfig;
 };
 
 export type OpenBootstrapInput = OpenSnapshotSources & {
@@ -46,13 +53,29 @@ function filterL1ForOpen(rows: readonly ChatMessageWithStatus[], includeOptimist
   return rows.filter((m) => !isExcludedFromL1(m));
 }
 
+function scopeOpenRows<T extends Pick<ChatMessage, 'chatContextType' | 'contextId'>>(
+  rows: readonly T[],
+  belonging: ThreadBelongingConfig | undefined
+): T[] {
+  if (!belonging) return [...rows];
+  return filterMessagesBelongingToThread(rows, belonging);
+}
+
 /** Pick base rows for first paint: fresh L1 → else Dexie tail → else empty. */
-export function pickOpenBaseMessages(sources: Pick<OpenSnapshotSources, 'l1' | 'dexieTail' | 'l1Fresh' | 'includeL1Optimistics'>): ChatMessageWithStatus[] {
+export function pickOpenBaseMessages(
+  sources: Pick<
+    OpenSnapshotSources,
+    'l1' | 'dexieTail' | 'l1Fresh' | 'includeL1Optimistics' | 'belonging'
+  >
+): ChatMessageWithStatus[] {
   const includeOptimistics = sources.includeL1Optimistics === true;
-  const l1 = filterL1ForOpen(sources.l1, includeOptimistics);
+  const l1 = scopeOpenRows(filterL1ForOpen(sources.l1, includeOptimistics), sources.belonging);
   if (sources.l1Fresh && l1.length > 0) return l1;
   if (sources.dexieTail.length > 0) {
-    return sources.dexieTail.map((m) => ({ ...m })) as ChatMessageWithStatus[];
+    return scopeOpenRows(
+      sources.dexieTail.map((m) => ({ ...m })) as ChatMessageWithStatus[],
+      sources.belonging
+    );
   }
   return [];
 }
@@ -60,21 +83,25 @@ export function pickOpenBaseMessages(sources: Pick<OpenSnapshotSources, 'l1' | '
 /** Single pre-paint snapshot: one source + outbox merged ascending (A2.1). */
 export function buildOpenSnapshot(sources: OpenSnapshotSources): ChatMessageWithStatus[] {
   const base = pickOpenBaseMessages(sources);
-  const prev = sources.prev ?? [];
+  const prev = scopeOpenRows(sources.prev ?? [], sources.belonging);
   const withPrev =
     prev.length > 0 ? mergeServerPageWithPendingOptimistics([...prev], base) : base;
-  if (sources.outbox.length === 0) return withPrev;
-  return mergeServerPageWithPendingOptimistics(withPrev, sources.outbox as ChatMessage[]);
+  const outbox = scopeOpenRows(sources.outbox, sources.belonging);
+  if (outbox.length === 0) return withPrev;
+  return mergeServerPageWithPendingOptimistics(withPrev, outbox as ChatMessage[]);
 }
 
 /** Keep in-flight optimistics when an open paint commits over a live thread. */
 export function mergeOpenPaintWithLivePending(
   live: readonly ChatMessageWithStatus[],
-  snapshot: readonly ChatMessageWithStatus[]
+  snapshot: readonly ChatMessageWithStatus[],
+  belonging?: ThreadBelongingConfig
 ): ChatMessageWithStatus[] {
   const pending = live.filter((m) => {
     if (!m._optimisticId) return false;
-    return m._status === 'SENDING' || m._status === 'FAILED';
+    if (m._status !== 'SENDING' && m._status !== 'FAILED') return false;
+    if (belonging && !liveMessageBelongsToThread(m, belonging)) return false;
+    return true;
   });
   if (pending.length === 0) return [...snapshot];
   return mergeServerPageWithPendingOptimistics(pending, [...snapshot]);
@@ -85,12 +112,16 @@ export function mergeOpenSnapshot(
   prev: readonly ChatMessageWithStatus[],
   tail: readonly ChatMessage[],
   outbox: readonly ChatMessageWithStatus[],
-  _scroll?: ThreadScrollSnapshot
+  _scroll?: ThreadScrollSnapshot,
+  belonging?: ThreadBelongingConfig
 ): ChatMessageWithStatus[] {
   void _scroll;
-  const merged = mergeChatMessagesAscending([...prev], [...tail]);
-  if (outbox.length === 0) return merged;
-  return mergeServerPageWithPendingOptimistics(merged, outbox as ChatMessage[]);
+  const scopedPrev = scopeOpenRows(prev, belonging);
+  const scopedTail = scopeOpenRows(tail, belonging);
+  const scopedOutbox = scopeOpenRows(outbox, belonging);
+  const merged = mergeChatMessagesAscending([...scopedPrev], [...scopedTail]);
+  if (scopedOutbox.length === 0) return merged;
+  return mergeServerPageWithPendingOptimistics(merged, scopedOutbox as ChatMessage[]);
 }
 
 /** Scroll pin policy for open reconcile (A3.4): no pin when anchor or prepend growth. */
@@ -118,25 +149,34 @@ export function planOpenBootstrapPaints(input: OpenBootstrapInput): OpenBootstra
     const snapshot = buildOpenSnapshot(input);
     const hasData =
       snapshot.length > 0 ||
-      input.outbox.length > 0 ||
-      (input.l1Fresh && filterL1ForOpen(input.l1, input.includeL1Optimistics === true).length > 0) ||
-      input.dexieTail.length > 0;
+      scopeOpenRows(input.outbox, input.belonging).length > 0 ||
+      (input.l1Fresh &&
+        scopeOpenRows(
+          filterL1ForOpen(input.l1, input.includeL1Optimistics === true),
+          input.belonging
+        ).length > 0) ||
+      scopeOpenRows(input.dexieTail, input.belonging).length > 0;
     return { paintCount: hasData ? 1 : 0, snapshot };
   }
 
   let paintCount = 0;
   let messages: ChatMessageWithStatus[] = [];
-  const l1 = filterL1ForOpen(input.l1, input.includeL1Optimistics === true);
+  const l1 = scopeOpenRows(
+    filterL1ForOpen(input.l1, input.includeL1Optimistics === true),
+    input.belonging
+  );
   if (input.l1Fresh && l1.length > 0) {
     messages = [...l1];
     paintCount += 1;
   }
-  if (input.dexieTail.length > 0) {
-    messages = mergeServerPageWithPendingOptimistics(messages, [...input.dexieTail]);
+  const dexieTail = scopeOpenRows(input.dexieTail, input.belonging);
+  if (dexieTail.length > 0) {
+    messages = mergeServerPageWithPendingOptimistics(messages, [...dexieTail]);
     paintCount += 1;
   }
-  if (input.outbox.length > 0) {
-    messages = mergeServerPageWithPendingOptimistics(messages, input.outbox as ChatMessage[]);
+  const outbox = scopeOpenRows(input.outbox, input.belonging);
+  if (outbox.length > 0) {
+    messages = mergeServerPageWithPendingOptimistics(messages, outbox as ChatMessage[]);
     paintCount += 1;
   }
   return { paintCount, snapshot: messages };

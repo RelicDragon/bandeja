@@ -216,7 +216,7 @@ export function ClubSettingsPage() {
                   <img src={ph.thumbnailUrl} alt="" className="h-full w-full object-cover" />
                   <button
                     type="button"
-                    className="absolute right-0 top-0 rounded-bl bg-black/60 px-1 text-xs text-white"
+                    className="absolute right-0 top-0 rounded-es bg-black/60 px-1 text-xs text-white"
                     onClick={() => void removePhoto(i)}
                   >
                     ×

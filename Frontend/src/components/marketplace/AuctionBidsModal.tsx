@@ -4,7 +4,8 @@ import toast from 'react-hot-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 import { Button, Input } from '@/components';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
-import { formatPrice } from '@/utils/currency';
+import { formatPrice, parsePriceInput } from '@/utils/currency';
+import { centsToPrice, currencyInputStep } from '@/components/marketplace/utils';
 import { marketplaceApi } from '@/api/marketplace';
 import { useAuthStore } from '@/store/authStore';
 import { socketService } from '@/services/socketService';
@@ -88,7 +89,7 @@ export const AuctionBidsModal = ({
     e.preventDefault();
     setBidValidationMin(null);
     setBidApiError('');
-    const cents = Math.round(parseFloat(bidAmount || '0') * 100);
+    const cents = parsePriceInput(bidAmount || '0', currency) ?? NaN;
     if (!Number.isFinite(cents) || cents < minCents) {
       setBidValidationMin(formatPrice(minCents, currency));
       return;
@@ -133,11 +134,11 @@ export const AuctionBidsModal = ({
                       <div className="flex-1 space-y-0.5 min-w-0">
                         <Input
                           type="number"
-                          step="0.01"
+                          step={currencyInputStep(currency)}
                           value={bidAmount}
                           onKeyDown={(e) => { if (e.key === 'e' || e.key === 'E') e.preventDefault(); }}
                           onChange={(e) => { setBidAmount(e.target.value); setBidValidationMin(null); setBidApiError(''); }}
-                          placeholder={(suggested / 100).toFixed(2)}
+                          placeholder={centsToPrice(suggested, currency)}
                           className={`w-full ${hasBidError ? 'border-red-500 dark:border-red-400 focus-visible:ring-red-500' : ''}`}
                         />
                         {bidValidationMin && (

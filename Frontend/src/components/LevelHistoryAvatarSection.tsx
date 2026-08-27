@@ -78,7 +78,7 @@ export const LevelHistoryAvatarSection = ({
           </div>
         )}
 
-        <div className="flex min-h-24 min-w-0 flex-1 flex-col text-left">
+        <div className="flex min-h-24 min-w-0 flex-1 flex-col text-start">
           <div className="text-sm text-white">
             {showSocialLevel ? t('rating.socialLevel') : t('playerCard.currentLevel')}
           </div>
@@ -92,7 +92,7 @@ export const LevelHistoryAvatarSection = ({
           <PlayerActivityCounts
             gamesPlayed={gamesPlayed ?? gamesPlayedForSport(user, levelSport)}
             trainingAttendanceCount={trainingAttendanceCount}
-            className="mt-1.5 text-left text-white/80"
+            className="mt-1.5 text-start text-white/80"
           />
           {showShowcase && (
             <div className="relative z-10 mt-2 flex flex-col gap-2">
@@ -110,7 +110,7 @@ export const LevelHistoryAvatarSection = ({
             </div>
           )}
           {showReliability && (
-            <div className="mt-auto pt-2 text-right text-xs text-white/80">
+            <div className="mt-auto pt-2 text-end text-xs text-white/80">
               {t('rating.reliability')}: {reliability.toFixed(0)}%
             </div>
           )}

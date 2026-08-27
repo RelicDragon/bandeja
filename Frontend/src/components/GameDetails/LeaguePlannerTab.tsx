@@ -107,7 +107,7 @@ export const LeaguePlannerTab = ({ leagueSeasonId, hasFixedTeams, isVisible = tr
   const updateUser = useAuthStore((s) => s.updateUser);
 
   const display = useMemo(() => resolveDisplaySettings(user), [user]);
-  const weekStartsOn = display.weekStart === 0 ? 0 : 1;
+  const weekStartsOn = display.weekStart;
 
   const [weekOffset, setWeekOffset] = useState(0);
   const [selectedGroupId, setSelectedGroupId] = useState<string>(ALL_GROUP_ID);
@@ -407,7 +407,7 @@ export const LeaguePlannerTab = ({ leagueSeasonId, hasFixedTeams, isVisible = tr
           disabled={weekOffset <= 0}
           onClick={() => setWeekOffset((o) => Math.max(0, o - 1))}
           className={[
-            'flex shrink-0 items-center justify-center border-r border-gray-200 px-2 py-1.5 transition dark:border-gray-600',
+            'flex shrink-0 items-center justify-center border-e border-gray-200 px-2 py-1.5 transition dark:border-gray-600',
             weekOffset <= 0
               ? 'cursor-not-allowed opacity-40'
               : 'hover:bg-gray-50 dark:hover:bg-gray-700',
@@ -426,7 +426,7 @@ export const LeaguePlannerTab = ({ leagueSeasonId, hasFixedTeams, isVisible = tr
         <button
           type="button"
           onClick={() => setWeekOffset((o) => o + 1)}
-          className="flex shrink-0 items-center justify-center border-l border-gray-200 px-2 py-1.5 transition hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
+          className="flex shrink-0 items-center justify-center border-s border-gray-200 px-2 py-1.5 transition hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
           aria-label={t('gameDetails.planner.nextWeek')}
         >
           <ChevronRight className="h-4 w-4 text-gray-700 dark:text-gray-200" />

@@ -93,7 +93,7 @@ export const ProfileContent = () => {
   const [preferredCourtSideRight, setPreferredCourtSideRight] = useState(user?.preferredCourtSideRight || false);
   const [language, setLanguage] = useState(normalizeLanguageForProfile(user?.language) || 'auto');
   const [timeFormat, setTimeFormat] = useState<'auto' | '12h' | '24h'>(user?.timeFormat || 'auto');
-  const [weekStart, setWeekStart] = useState<'auto' | 'monday' | 'sunday'>(user?.weekStart || 'auto');
+  const [weekStart, setWeekStart] = useState<'auto' | 'monday' | 'sunday' | 'saturday'>(user?.weekStart || 'auto');
   const [defaultCurrency, setDefaultCurrency] = useState<string>(user?.defaultCurrency || 'auto');
   const [appIcon, setAppIcon] = useState<AppIconId>((user?.appIcon as AppIconId) || 'tiger');
   const [verbalStatus, setVerbalStatus] = useState(user?.verbalStatus || '');
@@ -368,7 +368,7 @@ export const ProfileContent = () => {
     updateProfile({ timeFormat: format });
   };
 
-  const handleChangeWeekStart = (start: 'auto' | 'monday' | 'sunday') => {
+  const handleChangeWeekStart = (start: 'auto' | 'monday' | 'sunday' | 'saturday') => {
     setWeekStart(start);
     updateProfile({ weekStart: start });
   };
@@ -910,7 +910,7 @@ export const ProfileContent = () => {
                       onChange={(e) => handlePreferNotToSayAcknowledged(e.target.checked)}
                       className="mt-1 h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
                     />
-                    <label htmlFor="prefer-not-to-say-ack" className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                    <label htmlFor="prefer-not-to-say-ack" className="ms-2 text-sm text-gray-700 dark:text-gray-300">
                       {t('profile.preferNotToSayAcknowledgment')}
                     </label>
                   </div>
@@ -939,7 +939,7 @@ export const ProfileContent = () => {
                       onChange={(e) => handlePreferNotToSayAcknowledged(e.target.checked)}
                       className="mt-1 h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
                     />
-                    <label htmlFor="prefer-not-to-say-ack-set" className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                    <label htmlFor="prefer-not-to-say-ack-set" className="ms-2 text-sm text-gray-700 dark:text-gray-300">
                       {t('profile.preferNotToSayAcknowledgment')}
                     </label>
                   </div>
@@ -1312,6 +1312,7 @@ export const ProfileContent = () => {
                   { value: 'auto', label: t('profile.auto') || 'Auto', icon: <Globe size={16} className="text-gray-900 dark:text-white" /> },
                   { value: 'en-GB', label: 'English (UK)', icon: <span className="text-sm leading-none">{getCountryFlag('United Kingdom')}</span> },
                   { value: 'en-US', label: 'English (US)', icon: <span className="text-sm leading-none">{getCountryFlag('United States')}</span> },
+                  { value: 'ar-SA', label: 'العربية', icon: <span className="text-sm leading-none">{getLanguageFlag('ar')}</span> },
                   { value: 'ru-RU', label: 'Русский', icon: <span className="text-sm leading-none">{getLanguageFlag('ru')}</span> },
                   { value: 'sr-RS', label: 'Srpski', icon: <span className="text-sm leading-none">{getLanguageFlag('sr')}</span> },
                   { value: 'es-ES', label: 'Español', icon: <span className="text-sm leading-none">{getLanguageFlag('es')}</span> },
@@ -1345,10 +1346,11 @@ export const ProfileContent = () => {
                 options={[
                   { value: 'auto', label: t('profile.auto') || 'Auto' },
                   { value: 'monday', label: t('profile.monday') || 'Monday' },
+                  { value: 'saturday', label: t('profile.saturday') || 'Saturday' },
                   { value: 'sunday', label: t('profile.sunday') || 'Sunday' },
                 ]}
                 value={weekStart}
-                onChange={(value) => handleChangeWeekStart(value as 'auto' | 'monday' | 'sunday')}
+                onChange={(value) => handleChangeWeekStart(value as 'auto' | 'monday' | 'sunday' | 'saturday')}
               />
             </div>
 

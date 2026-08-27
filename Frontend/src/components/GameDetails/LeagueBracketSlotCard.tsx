@@ -186,7 +186,7 @@ export function LeagueBracketSlotCard({
 
   return (
     <div
-      className={`bracket-tree-card relative ${BRACKET_TREE_CARD_CLASS} rounded-lg border bg-white text-left shadow-sm transition dark:bg-gray-900 ${
+      className={`bracket-tree-card relative ${BRACKET_TREE_CARD_CLASS} rounded-lg border bg-white text-start shadow-sm transition dark:bg-gray-900 ${
         onChampionPath && !deEmphasize
           ? 'border-amber-400/90 ring-1 ring-amber-300/70 dark:border-amber-600/70 dark:ring-amber-600/50'
           : 'border-gray-200 dark:border-gray-700'
@@ -196,7 +196,7 @@ export function LeagueBracketSlotCard({
         type="button"
         disabled={!clickable}
         onClick={() => fullGame && onOpenGame?.(fullGame)}
-        className={`w-full text-left ${clickable ? 'hover:opacity-95' : 'cursor-default'}`}
+        className={`w-full text-start ${clickable ? 'hover:opacity-95' : 'cursor-default'}`}
       >
         <div className="mb-1.5 flex items-center justify-between gap-1">
           <StatusBadge badgeClass={matchStatusBadgeClass} i18nKey={matchStatusI18nKey} />

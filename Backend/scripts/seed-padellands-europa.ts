@@ -252,6 +252,7 @@ const CONFIGS: Record<string, CountryCfg> = {
       kalba: 'Kalba',
       'garhoud dubai': 'Dubai',
       'al salamah': 'Al Ain',
+      'abu dhani': 'Abu Dhabi',
     },
   },
   kazakhstan: {
@@ -456,8 +457,64 @@ const CONFIGS: Record<string, CountryCfg> = {
       'al azaiba': 'Al Azaiba',
       almabbela: 'Al Mawaleh',
       'al mawaleh': 'Al Mawaleh',
+      'al farfarah': 'Al Farfarah',
     },
-  }
+  },
+  kuwait: {
+    key: 'kuwait',
+    country: 'Kuwait',
+    countryCode: 'KW',
+    timezone: 'Asia/Kuwait',
+    cityAliases: {
+      kuwait: 'Kuwait City',
+      'kuwait city': 'Kuwait City',
+      hawalli: 'Hawalli',
+      salmiya: 'Salmiya',
+      salmiyah: 'Salmiya',
+      jahra: 'Al Jahra',
+      'al jahra': 'Al Jahra',
+      farwaniya: 'Al Farwaniyah',
+      'al farwaniyah': 'Al Farwaniyah',
+      fahaheel: 'Fahaheel',
+      mahboula: 'Mahboula',
+      mangaf: 'Mangaf',
+      'abu halifa': 'Abu Halifa',
+      'sabah al salem': 'Sabah Al Salem',
+      jabriya: 'Jabriya',
+      surra: 'Surra',
+      bayan: 'Bayan',
+      shaab: 'Shaab',
+      'al khairan': 'Al Khairan',
+      khairan: 'Al Khairan',
+      'al wafrah': 'Al Wafrah',
+      wafrah: 'Al Wafrah',
+      abdali: 'Abdali',
+      ahmadi: 'Ahmadi',
+      'al abdaliyah': 'Al Abdaliyah',
+    },
+  },
+  qatar: {
+    key: 'qatar',
+    country: 'Qatar',
+    countryCode: 'QA',
+    timezone: 'Asia/Qatar',
+    cityAliases: {
+      doha: 'Doha',
+      lusail: 'Lusail',
+      'al wakrah': 'Al Wakrah',
+      wakrah: 'Al Wakrah',
+      'al khor': 'Al Khor',
+      khor: 'Al Khor',
+      'al rayyan': 'Al Rayyan',
+      rayyan: 'Al Rayyan',
+      'ar rayyan': 'Al Rayyan',
+      'education city': 'Education City',
+      'west bay': 'Doha',
+      'the pearl': 'Doha',
+      pearl: 'Doha',
+      mesaieed: 'Mesaieed',
+    },
+  },
 };
 
 const DRY_RUN = process.env.DRY_RUN === '1';
@@ -555,19 +612,25 @@ async function seedCountry(cfg: CountryCfg): Promise<void> {
       id: true,
       normalizedName: true,
       cityId: true,
+      avatar: true,
+      phone: true,
+      website: true,
+      courtsNumber: true,
+      ptMeta: true,
       city: { select: { name: true } },
     },
   });
-  const byCityNorm = new Set(existing.map((c) => `${c.cityId}|${c.normalizedName}`));
-  const byCityNameNorm = new Set(
-    existing.map((c) => `${c.city.name.toLowerCase()}|${c.normalizedName}`)
+  const byCityNorm = new Map(existing.map((c) => [`${c.cityId}|${c.normalizedName}`, c]));
+  const byCityNameNorm = new Map(
+    existing.map((c) => [`${c.city.name.toLowerCase()}|${c.normalizedName}`, c])
   );
   console.log(`[${cfg.key}-pl] existing ${cfg.country} clubs ${existing.length}`);
 
   const cityCache = new Map<string, { id: string; lat: number | null; lon: number | null }>();
   let citiesCreated = 0;
   let clubsCreated = 0;
-  let skippedDupe = 0;
+  let clubsUpdated = 0;
+  let skippedSame = 0;
   let skippedBad = 0;
 
   for (const pl of clubs) {
@@ -592,10 +655,7 @@ async function seedCountry(cfg: CountryCfg): Promise<void> {
     );
     const keyId = `${city.id}|${normalized}`;
     const keyName = `${resolvedCity.toLowerCase()}|${normalized}`;
-    if (byCityNorm.has(keyId) || byCityNameNorm.has(keyName)) {
-      skippedDupe++;
-      continue;
-    }
+    const hit = byCityNorm.get(keyId) || byCityNameNorm.get(keyName);
 
     const address = (pl.address || cityRaw).trim() || cityRaw;
     const lat =
@@ -610,22 +670,70 @@ async function seedCountry(cfg: CountryCfg): Promise<void> {
         ? Math.max(0, Math.floor(pl.courtsNumber))
         : 0;
 
-    const meta = {
+    const metaFields = {
       source: 'padellands',
       padellandsId: pl.id,
       slug: pl.slug,
       sourceUrl: pl.sourceUrl,
       description: pl.description,
-    } as Prisma.InputJsonValue;
+    };
 
-    if (DRY_RUN) {
-      clubsCreated++;
-      byCityNorm.add(keyId);
-      byCityNameNorm.add(keyName);
+    if (hit) {
+      const needsAvatar = Boolean(avatar && !hit.avatar);
+      const needsPhone = Boolean(phone && !hit.phone);
+      const needsWebsite = Boolean(website && !hit.website);
+      const needsCourts = courtsNumber > 0 && (!hit.courtsNumber || hit.courtsNumber < courtsNumber);
+      const prevMeta =
+        hit.ptMeta && typeof hit.ptMeta === 'object' && !Array.isArray(hit.ptMeta)
+          ? (hit.ptMeta as Record<string, unknown>)
+          : {};
+      const needsMeta = prevMeta.source !== 'padellands' || prevMeta.padellandsId !== pl.id;
+      if (!needsAvatar && !needsPhone && !needsWebsite && !needsCourts && !needsMeta) {
+        skippedSame++;
+        continue;
+      }
+      if (DRY_RUN) {
+        clubsUpdated++;
+        continue;
+      }
+      const mergedMeta = {
+        ...prevMeta,
+        ...metaFields,
+        ...(prevMeta.tenant_id ? { tenant_id: prevMeta.tenant_id } : {}),
+      };
+      await prisma.club.update({
+        where: { id: hit.id },
+        data: {
+          ...(needsAvatar ? { avatar } : {}),
+          ...(needsPhone ? { phone } : {}),
+          ...(needsWebsite ? { website } : {}),
+          ...(needsCourts ? { courtsNumber } : {}),
+          ...(needsMeta ? { ptMeta: mergedMeta as Prisma.InputJsonValue } : {}),
+          ...(lat != null && lon != null ? { latitude: lat, longitude: lon } : {}),
+        } as Prisma.ClubUncheckedUpdateInput,
+      });
+      clubsUpdated++;
       continue;
     }
 
-    await prisma.club.create({
+    if (DRY_RUN) {
+      clubsCreated++;
+      byCityNorm.set(keyId, {
+        id: `dry-${keyId}`,
+        normalizedName: normalized,
+        cityId: city.id,
+        avatar,
+        phone,
+        website,
+        courtsNumber,
+        ptMeta: metaFields as Prisma.JsonValue,
+        city: { name: resolvedCity },
+      });
+      byCityNameNorm.set(keyName, byCityNorm.get(keyId)!);
+      continue;
+    }
+
+    const created = await prisma.club.create({
       data: {
         name,
         normalizedName: normalized,
@@ -638,12 +746,23 @@ async function seedCountry(cfg: CountryCfg): Promise<void> {
         longitude: lon,
         courtsNumber,
         sports: ['PADEL'],
-        ptMeta: meta,
+        ptMeta: metaFields as Prisma.InputJsonValue,
       } as Prisma.ClubUncheckedCreateInput,
+      select: {
+        id: true,
+        normalizedName: true,
+        cityId: true,
+        avatar: true,
+        phone: true,
+        website: true,
+        courtsNumber: true,
+        ptMeta: true,
+      },
     });
+    const row = { ...created, city: { name: resolvedCity } };
+    byCityNorm.set(keyId, row);
+    byCityNameNorm.set(keyName, row);
     clubsCreated++;
-    byCityNorm.add(keyId);
-    byCityNameNorm.add(keyName);
   }
 
   let citiesRefreshed = 0;
@@ -654,7 +773,7 @@ async function seedCountry(cfg: CountryCfg): Promise<void> {
   }
 
   console.log(
-    `[${cfg.key}-pl] done created=${clubsCreated} citiesCreated=${citiesCreated} skippedDupe=${skippedDupe} skippedBad=${skippedBad} citiesRefreshed=${citiesRefreshed}`
+    `[${cfg.key}-pl] done created=${clubsCreated} updated=${clubsUpdated} citiesCreated=${citiesCreated} skippedSame=${skippedSame} skippedBad=${skippedBad} citiesRefreshed=${citiesRefreshed}`
   );
 }
 

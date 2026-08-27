@@ -31,7 +31,7 @@ export function BracketPlayoffConfirmOptions({
   if (!showPhase4 && !showByes && !showPlayIn) return null;
 
   return (
-    <ul className={`list-disc list-inside ml-1 ${className}`}>
+    <ul className={`list-disc list-inside ms-1 ${className}`}>
       {includeThirdPlace && (
         <li>{t('gameDetails.bracketThirdPlaceMatch', { defaultValue: 'Third-place match' })}</li>
       )}

@@ -150,7 +150,7 @@ export const LiveTvToolbar = ({
                 <div className="font-semibold">{t('gameDetails.liveTvScoreOnPhone')}</div>
                 <button
                   type="button"
-                  className="mt-1 text-left text-primary-600 underline"
+                  className="mt-1 text-start text-primary-600 underline"
                   onClick={(e) => {
                     e.stopPropagation();
                     void copyLink();
@@ -170,7 +170,7 @@ export const LiveTvToolbar = ({
                 <div className="font-semibold">{t('gameDetails.liveTvBroadcastHint')}</div>
                 <button
                   type="button"
-                  className="mt-1 text-left text-primary-600 underline"
+                  className="mt-1 text-start text-primary-600 underline"
                   onClick={(e) => {
                     e.stopPropagation();
                     void copyBroadcastLink();
@@ -194,7 +194,7 @@ export const LiveTvToolbar = ({
                 <div className="font-semibold">{t('gameDetails.liveTvSpectatorHint')}</div>
                 <button
                   type="button"
-                  className="mt-1 text-left text-primary-600 underline"
+                  className="mt-1 text-start text-primary-600 underline"
                   onClick={(e) => {
                     e.stopPropagation();
                     void copySpectatorLink();

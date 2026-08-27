@@ -24,6 +24,7 @@ import {
 } from '@/utils/gameChatRosterVisibility';
 import { useChatListFeedStore, type ChatsFilterType } from '@/components/chat/chatListFeedStore';
 import { useSocketEventsStore } from '@/store/socketEventsStore';
+import { stampMessageThreadContext } from '@/services/chat/liveMessageBelongsToThread';
 
 function mergeGroupChannelSnapshotIntoChats(prev: ChatItem[], channelId: string, fresh: GroupChannel): ChatItem[] {
   return prev.map((chat) => {
@@ -409,11 +410,11 @@ export function useChatInboxSocketEffects(p: SocketEventsParams) {
         (chatsFilter === 'market' && contextType === 'GROUP');
       if (!shouldUpdate) continue;
       const raw = message as ChatMessage;
-      const normalized: ChatMessage = {
-        ...raw,
-        chatContextType: (raw.chatContextType ?? contextType) as ChatContextType,
-        contextId: raw.contextId ?? contextId,
-      };
+      const normalized = stampMessageThreadContext(
+        raw,
+        contextType as ChatContextType,
+        contextId
+      );
       work.push({ contextType, contextId, message: raw, normalized });
     }
     if (work.length === 0) return;

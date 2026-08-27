@@ -54,7 +54,7 @@ export const LeagueGroupParticipantRow = ({
       }`}
     >
       <div
-        className="flex w-9 shrink-0 items-center justify-center border-r border-gray-200/90 bg-emerald-500/10 dark:border-gray-700/70 dark:bg-emerald-500/15"
+        className="flex w-9 shrink-0 items-center justify-center border-e border-gray-200/90 bg-emerald-500/10 dark:border-gray-700/70 dark:bg-emerald-500/15"
         aria-hidden
       >
         <span className="text-xs font-bold tabular-nums text-emerald-700 dark:text-emerald-400">
@@ -70,7 +70,7 @@ export const LeagueGroupParticipantRow = ({
         ) : null}
       </div>
 
-      <div className="flex shrink-0 items-center gap-0.5 border-l border-gray-200/90 px-1.5 dark:border-gray-700/70">
+      <div className="flex shrink-0 items-center gap-0.5 border-s border-gray-200/90 px-1.5 dark:border-gray-700/70">
         {showWithdraw ? (
           <button
             type="button"

@@ -43,7 +43,7 @@ export const LinkPreviewChip: React.FC<LinkPreviewChipProps> = ({
       onClick={handleClick}
       aria-label={`${aria}: ${label}`}
       data-testid="chat-link-preview-chip"
-      className={`mt-1.5 flex min-h-[68px] items-center gap-2 rounded-xl border px-2.5 py-1.5 text-left text-xs max-w-full min-w-0 transition-colors active:scale-[0.99] motion-reduce:transform-none motion-reduce:transition-none ${linkPreviewSurfaceClass(variant)} ${loading ? 'opacity-90' : ''}`}
+      className={`mt-1.5 flex min-h-[68px] items-center gap-2 rounded-xl border px-2.5 py-1.5 text-start text-xs max-w-full min-w-0 transition-colors active:scale-[0.99] motion-reduce:transform-none motion-reduce:transition-none ${linkPreviewSurfaceClass(variant)} ${loading ? 'opacity-90' : ''}`}
     >
       <span
         className={`relative flex h-5 w-5 flex-shrink-0 items-center justify-center overflow-hidden rounded-md ${loading ? 'animate-pulse motion-reduce:animate-none' : ''}`}
@@ -63,7 +63,7 @@ export const LinkPreviewChip: React.FC<LinkPreviewChipProps> = ({
       </span>
       <span className="truncate min-w-0 font-medium tracking-tight">{label}</span>
       {!isApp ? (
-        <ExternalLink className={`ml-auto h-3.5 w-3.5 flex-shrink-0 opacity-60 ${muted}`} aria-hidden />
+        <ExternalLink className={`ms-auto h-3.5 w-3.5 flex-shrink-0 opacity-60 ${muted}`} aria-hidden />
       ) : null}
     </a>
   );

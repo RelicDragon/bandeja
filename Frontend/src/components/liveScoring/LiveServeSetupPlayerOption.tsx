@@ -19,7 +19,7 @@ export function LiveServeSetupPlayerOption({ player, selected, onSelect }: LiveS
       aria-pressed={selected}
       aria-label={lineName(player)}
       onClick={onSelect}
-      className={`flex w-full min-w-0 items-center gap-2 overflow-hidden rounded-xl border px-2 py-1.5 text-left transition-all active:scale-[0.99] ${
+      className={`flex w-full min-w-0 items-center gap-2 overflow-hidden rounded-xl border px-2 py-1.5 text-start transition-all active:scale-[0.99] ${
         selected ? SERVE_SETUP_SELECTED : SERVE_SETUP_UNSELECTED
       }`}
     >

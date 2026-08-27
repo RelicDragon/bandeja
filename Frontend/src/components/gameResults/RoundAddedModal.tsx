@@ -179,7 +179,7 @@ function TeamAvatars({
 }) {
   return (
     <div className="flex w-full min-[490px]:flex-1 overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-600 dark:bg-gray-900/50">
-      <span className="flex w-6 shrink-0 items-center justify-center border-r border-gray-200/80 bg-gray-50/90 dark:border-gray-700/80 dark:bg-gray-800/50">
+      <span className="flex w-6 shrink-0 items-center justify-center border-e border-gray-200/80 bg-gray-50/90 dark:border-gray-700/80 dark:bg-gray-800/50">
         <span className="select-none whitespace-nowrap text-[9px] font-bold uppercase tracking-[0.18em] text-gray-500 [writing-mode:vertical-lr] rotate-180 dark:text-gray-400">
           {label}
         </span>

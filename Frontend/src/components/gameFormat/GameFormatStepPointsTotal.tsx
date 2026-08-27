@@ -188,7 +188,7 @@ export const GameFormatStepPointsTotal = ({
 
       <div className="p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
         <div className="flex items-center justify-between">
-          <div className="min-w-0 pr-3">
+          <div className="min-w-0 pe-3">
             <div className="text-sm font-medium text-gray-900 dark:text-white">{t('gameFormat.timedMatch.title')}</div>
             <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{t('gameFormat.timedMatch.description')}</div>
           </div>

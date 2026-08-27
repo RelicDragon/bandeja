@@ -37,13 +37,13 @@ export function LiveServeSetupTeamCard({
       aria-pressed={selected}
       aria-label={displayLabel}
       onClick={onSelect}
-      className={`group flex w-full min-w-0 overflow-hidden rounded-2xl border text-left shadow-sm transition-all active:scale-[0.99] ${
+      className={`group flex w-full min-w-0 overflow-hidden rounded-2xl border text-start shadow-sm transition-all active:scale-[0.99] ${
         selected ? SERVE_SETUP_SELECTED : `${SERVE_SETUP_UNSELECTED} hover:shadow-md`
       }`}
     >
       {!solo ? (
         <span
-          className={`flex w-7 shrink-0 items-center justify-center border-r ${
+          className={`flex w-7 shrink-0 items-center justify-center border-e ${
             selected
               ? 'border-amber-200/80 bg-amber-100/70 dark:border-amber-800/60 dark:bg-amber-950/60'
               : 'border-gray-200/80 bg-gray-50/90 dark:border-gray-700/80 dark:bg-gray-800/50'

@@ -1,8 +1,9 @@
 import { formatInTimeZone } from 'date-fns-tz';
 import prisma from '../../config/database';
-import { MarketItemStatus, ParticipantStatus, Sport } from '@prisma/client';
+import { MarketItemStatus, ParticipantStatus, PriceCurrency, Sport } from '@prisma/client';
 import { appLinkCopyKey, type ParsedBandejaLink } from './parseBandejaLink';
 import type { LinkPreviewBadgeKey, LinkPreviewCopyKey, LinkPreviewResult } from './linkPreview.types';
+import CurrencyService from '../currency.service';
 
 function displayName(user: { firstName?: string | null; lastName?: string | null } | null | undefined): string | null {
   if (!user) return null;
@@ -384,7 +385,7 @@ async function previewMarketItem(id: string, href: string): Promise<LinkPreviewR
 
   const price =
     item.priceCents != null
-      ? `${(item.priceCents / 100).toFixed(item.priceCents % 100 === 0 ? 0 : 2)} ${item.currency}`
+      ? CurrencyService.formatPrice(item.priceCents, item.currency as PriceCurrency)
       : null;
   const bits = [item.category?.name, item.city?.name, price].filter(Boolean) as string[];
 

@@ -7,9 +7,12 @@ import {
   DialogTitle,
 } from '@/components/ui/Dialog';
 import { useGameSlotOverlapConfirmStore } from '@/store/gameSlotOverlapConfirmStore';
+import { useAuthStore } from '@/store/authStore';
+import { genderI18nContext } from '@/utils/i18nGender';
 
 export function GameSlotOverlapConfirmHost() {
   const { t } = useTranslation();
+  const genderCtx = genderI18nContext(useAuthStore((s) => s.user?.gender));
   const open = useGameSlotOverlapConfirmStore((s) => s.open);
   const settle = useGameSlotOverlapConfirmStore((s) => s.settle);
 
@@ -20,11 +23,11 @@ export function GameSlotOverlapConfirmHost() {
         className="w-[min(90vw,19rem)] max-w-[19rem] overflow-hidden p-0 shadow-xl"
       >
         <div className="px-5 pt-5 pb-4">
-          <DialogTitle className="pr-0 text-base font-semibold leading-snug tracking-tight">
+          <DialogTitle className="pe-0 text-base font-semibold leading-snug tracking-tight">
             {t('games.overlapConfirmTitle')}
           </DialogTitle>
           <DialogDescription className="mt-1.5 text-sm leading-snug text-gray-600 dark:text-gray-400">
-            {t('games.overlapConfirmMessage')}
+            {t('games.overlapConfirmMessage', { context: genderCtx })}
           </DialogDescription>
         </div>
         <div className="flex gap-2 px-5 pb-5">

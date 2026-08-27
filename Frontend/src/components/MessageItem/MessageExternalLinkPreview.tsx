@@ -79,7 +79,7 @@ export const MessageExternalLinkPreview: React.FC<MessageExternalLinkPreviewProp
             setDismissing(true);
             void Promise.resolve(onDismiss?.()).finally(() => setDismissing(false));
           }}
-          className="group absolute right-0 top-0 z-10 flex h-11 w-11 items-start justify-end rounded-full pr-1 pt-1 text-white disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+          className="group absolute right-0 top-0 z-10 flex h-11 w-11 items-start justify-end rounded-full pe-1 pt-1 text-white disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
           aria-label={t('chat.linkPreview.remove', { defaultValue: 'Remove link preview' })}
           title={t('chat.linkPreview.remove', { defaultValue: 'Remove link preview' })}
         >
@@ -101,7 +101,7 @@ export const MessageExternalLinkPreview: React.FC<MessageExternalLinkPreviewProp
             event.preventDefault();
             handleClick(event, gameUrls.chatUrl);
           }}
-          className={`group absolute right-0 z-10 flex h-11 w-11 items-start justify-end rounded-full pr-1 pt-1 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white ${
+          className={`group absolute right-0 z-10 flex h-11 w-11 items-start justify-end rounded-full pe-1 pt-1 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white ${
             canDismiss ? 'top-10' : 'top-0'
           }`}
           aria-label={t('chat.openChat', { defaultValue: 'Open Chat' })}

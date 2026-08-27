@@ -89,7 +89,7 @@ export function LeagueScheduleMyFilterSelect({
         onClick={() => setIsOpen(!isOpen)}
         className="w-full flex items-center justify-between gap-2 px-4 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:border-primary-500 dark:hover:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all duration-200"
       >
-        <span className="min-w-0 truncate text-left text-sm font-medium text-gray-900 dark:text-white">
+        <span className="min-w-0 truncate text-start text-sm font-medium text-gray-900 dark:text-white">
           {selectedLabel}
         </span>
         <ChevronDown
@@ -119,7 +119,7 @@ export function LeagueScheduleMyFilterSelect({
                       key={option.value}
                       type="button"
                       onClick={() => handleSelect(option.value)}
-                      className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors duration-150 ${
+                      className={`w-full flex items-center gap-3 px-4 py-3 text-start transition-colors duration-150 ${
                         isSelected
                           ? 'bg-primary-50 dark:bg-primary-900/20'
                           : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'

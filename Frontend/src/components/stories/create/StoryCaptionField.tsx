@@ -28,7 +28,7 @@ export function StoryCaptionField({ value, onChange, disabled }: StoryCaptionFie
         data-story-interactive
       />
       {showCounter ? (
-        <p className="mt-1 text-right text-[10px] tabular-nums text-white/50">
+        <p className="mt-1 text-end text-[10px] tabular-nums text-white/50">
           {value.length}/{STORY_CAPTION_MAX_CHARS}
         </p>
       ) : null}

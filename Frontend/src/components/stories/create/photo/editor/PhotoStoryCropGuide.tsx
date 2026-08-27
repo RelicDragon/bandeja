@@ -21,10 +21,10 @@ export function PhotoStoryCropGuide({ visible }: PhotoStoryCropGuideProps) {
       <div className="absolute left-0 top-2/3 h-px w-full bg-white/30" />
 
       {/* Corner brackets */}
-      <span className="absolute left-2 top-2 h-5 w-5 border-l-2 border-t-2 border-white/85" />
-      <span className="absolute right-2 top-2 h-5 w-5 border-r-2 border-t-2 border-white/85" />
-      <span className="absolute bottom-2 left-2 h-5 w-5 border-b-2 border-l-2 border-white/85" />
-      <span className="absolute bottom-2 right-2 h-5 w-5 border-b-2 border-r-2 border-white/85" />
+      <span className="absolute left-2 top-2 h-5 w-5 border-s-2 border-t-2 border-white/85" />
+      <span className="absolute right-2 top-2 h-5 w-5 border-e-2 border-t-2 border-white/85" />
+      <span className="absolute bottom-2 left-2 h-5 w-5 border-b-2 border-s-2 border-white/85" />
+      <span className="absolute bottom-2 right-2 h-5 w-5 border-b-2 border-e-2 border-white/85" />
     </div>
   );
 }

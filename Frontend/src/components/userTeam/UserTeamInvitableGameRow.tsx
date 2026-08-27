@@ -35,7 +35,7 @@ export function UserTeamInvitableGameRow({ game, disabled, submitting, onSelect 
       disabled={disabled}
       aria-busy={submitting || undefined}
       onClick={() => onSelect(game.id)}
-      className="flex w-full items-center gap-3 rounded-2xl border border-zinc-200/90 bg-white px-3 py-2.5 text-left shadow-xs transition-[border-color,box-shadow,transform] hover:border-primary-300/80 hover:shadow-sm active:scale-[0.99] disabled:pointer-events-none disabled:opacity-50 dark:border-zinc-700/80 dark:bg-zinc-900/80 dark:hover:border-primary-500/40"
+      className="flex w-full items-center gap-3 rounded-2xl border border-zinc-200/90 bg-white px-3 py-2.5 text-start shadow-xs transition-[border-color,box-shadow,transform] hover:border-primary-300/80 hover:shadow-sm active:scale-[0.99] disabled:pointer-events-none disabled:opacity-50 dark:border-zinc-700/80 dark:bg-zinc-900/80 dark:hover:border-primary-500/40"
     >
       {thumb ? (
         <img src={thumb} alt="" className="h-10 w-10 shrink-0 rounded-xl object-cover" />

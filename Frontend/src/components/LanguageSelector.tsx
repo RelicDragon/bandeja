@@ -12,6 +12,7 @@ export const LanguageSelector = () => {
 
   const languages = [
     { value: 'en', label: 'EN', fullLabel: 'English', flag: '🇬🇧' },
+    { value: 'ar', label: 'AR', fullLabel: 'العربية', flag: '🇸🇦' },
     { value: 'ru', label: 'RU', fullLabel: 'Русский', flag: '🇷🇺' },
     { value: 'sr', label: 'SR', fullLabel: 'Srpski', flag: '🇷🇸' },
     { value: 'es', label: 'ES', fullLabel: 'Español', flag: '🇪🇸' },
@@ -23,9 +24,14 @@ export const LanguageSelector = () => {
   const updateDropdownPosition = useCallback(() => {
     if (!buttonRef.current) return;
     const rect = buttonRef.current.getBoundingClientRect();
+    const menuWidth = 160;
+    const isRtl = document.documentElement.dir === 'rtl';
+    const left = isRtl
+      ? Math.max(8, rect.left)
+      : Math.min(window.innerWidth - menuWidth - 8, rect.right - menuWidth);
     setDropdownPosition({
       top: rect.bottom + 8,
-      left: rect.right - 160,
+      left,
     });
   }, []);
 
@@ -85,7 +91,7 @@ export const LanguageSelector = () => {
       {isOpen && dropdownPosition && typeof document !== 'undefined' && createPortal(
         <div
           ref={menuRef}
-          className="fixed bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg shadow-slate-200/50 dark:shadow-slate-900/50 z-[10000] min-w-[160px] overflow-hidden origin-top-right transition-all duration-200 opacity-100 scale-100 translate-y-0"
+          className="fixed bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg shadow-slate-200/50 dark:shadow-slate-900/50 z-[10000] min-w-[160px] overflow-hidden origin-top-end transition-all duration-200 opacity-100 scale-100 translate-y-0"
           style={{
             top: dropdownPosition.top,
             left: dropdownPosition.left,
@@ -98,7 +104,7 @@ export const LanguageSelector = () => {
               key={lang.value}
               type="button"
               onClick={() => handleChangeLanguage(lang.value)}
-              className={`w-full px-3 py-2.5 text-left hover:bg-slate-50 dark:hover:bg-slate-700/50 flex items-center gap-2.5 transition-all duration-200 ${
+              className={`w-full px-3 py-2.5 text-start hover:bg-slate-50 dark:hover:bg-slate-700/50 flex items-center gap-2.5 transition-all duration-200 ${
                 lang.value === i18n.language 
                   ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400' 
                   : 'text-slate-700 dark:text-slate-200'

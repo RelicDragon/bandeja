@@ -21,6 +21,7 @@ import { scheduleReconcileWhenSocketSeqMissing } from './chatLocalApplySyncTimer
 import { onSocketSyncSeqDirect, persistSocketPatchThenSyncSeqDirect } from './chatLocalApplySocketInbound';
 import { rowFromMessage } from '@/services/chat/chatSyncRowUtils';
 import { shouldDropInviteOnlyRosterSystemMessage } from './dropInviteOnlyRosterSystemMessage';
+import { stampMessageThreadContext } from './liveMessageBelongsToThread';
 
 const revisionByContext = new Map<string, number>();
 const revisionListenersByContext = new Map<string, Set<() => void>>();
@@ -173,14 +174,15 @@ async function finishApply(
 async function applyThreadEventUnqueued(event: ThreadApplyEvent): Promise<number> {
   switch (event.kind) {
     case 'socketMessage': {
-      if (shouldDropInviteOnlyRosterSystemMessage(event.message)) {
+      const stamped = stampMessageThreadContext(event.message, event.contextType, event.contextId);
+      if (shouldDropInviteOnlyRosterSystemMessage(stamped)) {
         if (event.syncSeq != null) {
           await onSocketSyncSeqDirect(event.contextType, event.contextId, event.syncSeq);
         }
         return getThreadSnapshotRevision(event.contextType, event.contextId);
       }
       await persistLocalMessageDurable(
-        event.syncSeq != null ? { ...event.message, syncSeq: event.syncSeq } : event.message
+        event.syncSeq != null ? { ...stamped, syncSeq: event.syncSeq } : stamped
       );
       if (event.syncSeq != null) {
         await onSocketSyncSeqDirect(event.contextType, event.contextId, event.syncSeq);
@@ -346,12 +348,13 @@ export function applyThreadL1Put(params: {
   return applyThreadEvent({ kind: 'l1Put', ...params });
 }
 
-/** Socket inbound entry — delegates to applyThreadEvent. */
+/** Socket inbound entry — stamps envelope scope, then delegates to applyThreadEvent. */
 export function persistSocketInboundMessage(
   contextType: ChatContextType,
   contextId: string,
   message: ChatMessage,
   syncSeq: number | undefined
 ): Promise<number> {
-  return applyThreadEvent({ kind: 'socketMessage', contextType, contextId, message, syncSeq });
+  const stamped = stampMessageThreadContext(message, contextType, contextId);
+  return applyThreadEvent({ kind: 'socketMessage', contextType, contextId, message: stamped, syncSeq });
 }

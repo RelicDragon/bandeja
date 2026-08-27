@@ -1,7 +1,7 @@
 import { AdClickAction, AdCampaignStatus, AdPlacementKey, Sport } from '@prisma/client';
 import { getVariantWeight, resolveCreative } from './ad.creative.resolve';
 import { pickHighestPriorityTier, weightedPick } from './ad.pick.util';
-import { AdDeliveryService } from './ad.delivery.service';
+import { AdDeliveryService, resolveAdImageSets } from './ad.delivery.service';
 import {
   matchesExtendedTargeting,
   matchesLanguageFilter,
@@ -53,6 +53,8 @@ function makeCampaign(overrides: Partial<CachedAdCampaign> & { id: string }): Ca
         variantKey: 'A',
         imageUrl: 'https://example.com/a.webp',
         imageUrlDark: null,
+        imageUrls: ['https://example.com/a.webp'],
+        imageUrlsDark: [],
         title: 'T',
         subtitle: null,
         ctaLabel: null,
@@ -66,6 +68,24 @@ function makeCampaign(overrides: Partial<CachedAdCampaign> & { id: string }): Ca
     placements: [{ campaignId: overrides.id, placement: AdPlacementKey.home_hero }],
     ...overrides,
   } as CachedAdCampaign;
+}
+
+// New clients receive ordered sets, while old cached creatives still resolve safely.
+{
+  const legacy = resolveAdImageSets({
+    imageUrl: 'light.webp',
+    imageUrlDark: 'dark.webp',
+  });
+  assert(legacy.imageUrls.join(',') === 'light.webp', 'legacy light image becomes frame zero');
+  assert(legacy.imageUrlsDark.join(',') === 'dark.webp', 'legacy dark image becomes frame zero');
+
+  const slideshow = resolveAdImageSets({
+    imageUrl: 'light-1.webp',
+    imageUrlDark: null,
+    imageUrls: ['light-1.webp', 'light-2.webp'],
+    imageUrlsDark: [],
+  });
+  assert(slideshow.imageUrls.length === 2, 'ordered slideshow frames are preserved');
 }
 
 // targeting filter
@@ -147,6 +167,8 @@ function makeCampaign(overrides: Partial<CachedAdCampaign> & { id: string }): Ca
       variantKey: 'A',
       imageUrl: 'ru-pl.webp',
       imageUrlDark: null,
+      imageUrls: ['ru-pl.webp'],
+      imageUrlsDark: [],
       title: null,
       subtitle: null,
       ctaLabel: null,
@@ -164,6 +186,8 @@ function makeCampaign(overrides: Partial<CachedAdCampaign> & { id: string }): Ca
       variantKey: 'A',
       imageUrl: 'en.webp',
       imageUrlDark: null,
+      imageUrls: ['en.webp'],
+      imageUrlsDark: [],
       title: null,
       subtitle: null,
       ctaLabel: null,
@@ -368,6 +392,8 @@ function makeCampaign(overrides: Partial<CachedAdCampaign> & { id: string }): Ca
     placement: null as AdPlacementKey | null,
     locale: 'en',
     imageUrlDark: null,
+    imageUrls: [] as string[],
+    imageUrlsDark: [] as string[],
     title: null,
     subtitle: null,
     ctaLabel: null,

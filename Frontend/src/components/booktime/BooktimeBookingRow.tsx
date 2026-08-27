@@ -206,7 +206,7 @@ export function BooktimeBookingRow({
   ) : null;
 
   const rowContent = (
-    <div className={`min-w-0 flex-1 ${priceQuote ? 'pr-14' : 'pr-12'}`}>
+    <div className={`min-w-0 flex-1 ${priceQuote ? 'pe-14' : 'pe-12'}`}>
       {showClubName && !nested ? (
         <p className="text-xs font-medium text-gray-500 dark:text-gray-400 truncate">
           {club.clubName}
@@ -244,7 +244,7 @@ export function BooktimeBookingRow({
       {priceQuote ? (
         <BooktimeBookingPriceLabel
           quote={priceQuote}
-          className="text-right text-xs font-medium text-gray-700 dark:text-gray-300"
+          className="text-end text-xs font-medium text-gray-700 dark:text-gray-300"
         />
       ) : null}
       <BooktimeBookingOccupancyPill segments={slotSegments} />
@@ -274,7 +274,7 @@ export function BooktimeBookingRow({
         whileTap={dimmed || (selected && disableDeselect) ? undefined : { scale: 0.98 }}
         disabled={dimmed || (selected && disableDeselect)}
         onClick={onToggleSelect}
-        className={`relative w-full rounded-lg border px-3 py-2.5 flex items-center gap-3 text-left transition-opacity ${
+        className={`relative w-full rounded-lg border px-3 py-2.5 flex items-center gap-3 text-start transition-opacity ${
           selected
             ? 'border-primary-400 dark:border-primary-600 bg-primary-50/50 dark:bg-primary-950/30'
             : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800'
@@ -352,7 +352,7 @@ export function BooktimeBookingRow({
           data-testid="booktime-booking-card-toggle"
           aria-expanded={actionsExpanded}
           onClick={onToggleActions}
-          className="w-full text-left outline-none focus-visible:ring-2 focus-visible:ring-primary-500 rounded-md"
+          className="w-full text-start outline-none focus-visible:ring-2 focus-visible:ring-primary-500 rounded-md"
         >
           {rowContent}
         </button>

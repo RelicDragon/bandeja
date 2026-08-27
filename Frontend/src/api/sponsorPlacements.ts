@@ -12,6 +12,8 @@ export type AdPlacementPayload = {
   placement: AdPlacementKey;
   imageUrl: string;
   imageUrlDark?: string | null;
+  imageUrls?: string[];
+  imageUrlsDark?: string[];
   title?: string | null;
   subtitle?: string | null;
   ctaLabel?: string | null;

@@ -70,7 +70,7 @@ export function PlayerListItem({
         <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
           {player.firstName} {player.lastName}
           {player.gender && player.gender !== 'PREFER_NOT_TO_SAY' && (
-            <i className={`bi ml-1.5 text-[11px] ${player.gender === 'MALE' ? 'bi-gender-male text-sky-500' : 'bi-gender-female text-rose-400'}`} />
+            <i className={`bi ms-1.5 text-[11px] ${player.gender === 'MALE' ? 'bi-gender-male text-sky-500' : 'bi-gender-female text-rose-400'}`} />
           )}
         </p>
         {player.verbalStatus && <p className="verbal-status mt-0.5">{player.verbalStatus}</p>}

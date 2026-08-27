@@ -29,7 +29,7 @@ export function GameResultStoryPlayerChip({ player, highlighted }: GameResultSto
     <span
       className={`inline-flex min-w-0 max-w-full items-center gap-1.5 ${
         highlighted
-          ? 'rounded-lg bg-white/20 py-0.5 pl-0.5 pr-2 ring-1 ring-white/35 shadow-[0_0_12px_rgba(255,255,255,0.2)]'
+          ? 'rounded-lg bg-white/20 py-0.5 ps-0.5 pe-2 ring-1 ring-white/35 shadow-[0_0_12px_rgba(255,255,255,0.2)]'
           : ''
       }`}
     >

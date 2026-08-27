@@ -77,7 +77,7 @@ export function LiveMatchPageChrome({
       ) : null}
       {!showTvChrome && gameTitle.trim() ? (
         <div
-          className={`pointer-events-none absolute left-0 right-0 top-0 z-20 flex justify-center px-3 pr-[min(12rem,calc(100%-1rem))] pt-[max(0.5rem,env(safe-area-inset-top))]`}
+          className={`pointer-events-none absolute left-0 right-0 top-0 z-20 flex justify-center px-3 pe-[min(12rem,calc(100%-1rem))] pt-[max(0.5rem,env(safe-area-inset-top))]`}
         >
           <div
             className={`min-w-0 max-w-full truncate text-center text-sm font-semibold sm:text-base ${

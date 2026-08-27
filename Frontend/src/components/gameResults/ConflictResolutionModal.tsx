@@ -77,7 +77,7 @@ export const ConflictResolutionModal = ({
                       </span>
                     </div>
                     {conflict.clientPatch.map((patch, pIdx) => (
-                      <div key={pIdx} className="ml-6 text-xs space-y-1">
+                      <div key={pIdx} className="ms-6 text-xs space-y-1">
                         <div className="text-gray-600 dark:text-gray-400">
                           <span className="font-medium">Path:</span> {formatPath(patch.path)}
                         </div>
@@ -106,7 +106,7 @@ export const ConflictResolutionModal = ({
                       </span>
                     </div>
                     {conflict.serverPatch.map((patch, pIdx) => (
-                      <div key={pIdx} className="ml-6 text-xs space-y-1">
+                      <div key={pIdx} className="ms-6 text-xs space-y-1">
                         <div className="text-gray-600 dark:text-gray-400">
                           <span className="font-medium">Path:</span> {formatPath(patch.path)}
                         </div>

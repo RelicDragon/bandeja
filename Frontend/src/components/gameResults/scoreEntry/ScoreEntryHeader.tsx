@@ -86,7 +86,7 @@ export const ScoreEntryHeader = ({
           exit={{ opacity: 0 }}
           transition={{ duration: 0.15 }}
         >
-          <div className="flex items-start justify-between gap-2 pr-8">
+          <div className="flex items-start justify-between gap-2 pe-8">
             <DialogTitle className="mb-0 text-base font-semibold text-gray-900 dark:text-white">
               {mainTitle}
             </DialogTitle>

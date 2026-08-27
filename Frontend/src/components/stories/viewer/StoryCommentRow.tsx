@@ -110,7 +110,7 @@ export function StoryCommentRow({
   }, [comment.id, comment.previewReplies?.length, comment.replyCount, onViewReplies, replies?.length]);
 
   return (
-    <div className={isReplyRow ? 'ml-8 mt-3' : 'mt-4'}>
+    <div className={isReplyRow ? 'ms-8 mt-3' : 'mt-4'}>
       <div
         className="flex gap-2.5"
         onPointerDown={onPointerDown}
@@ -229,7 +229,7 @@ export function StoryCommentRow({
       </div>
 
       {depth === 0 && comment.replyCount > 0 && onViewReplies ? (
-        <div className="ml-10 mt-2">
+        <div className="ms-10 mt-2">
           {visibleReplies.map((reply) => (
             <StoryCommentRow
               key={reply.id}

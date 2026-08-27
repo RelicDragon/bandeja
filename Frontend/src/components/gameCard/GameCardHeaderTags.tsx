@@ -77,7 +77,7 @@ export const GameCardHeaderTags = ({
           {game.genderTeams === 'MIX_PAIRS' ? (
             <span className="flex h-5 items-center justify-center gap-1 rounded-full bg-gradient-to-r from-blue-500 to-pink-500 px-2 dark:from-blue-600 dark:to-pink-600">
               <i className="bi bi-gender-male text-[10px] text-white"></i>
-              <i className="bi bi-gender-female -ml-1 text-[10px] text-white"></i>
+              <i className="bi bi-gender-female -ms-1 text-[10px] text-white"></i>
             </span>
           ) : (
             <span
@@ -108,7 +108,7 @@ export const GameCardHeaderTags = ({
         >
           <span className="flex items-center">
             <Users size={12} />
-            <Users size={12} className="-ml-1" />
+            <Users size={12} className="-ms-1" />
           </span>
           <span className="hidden sm:inline">{t('games.fixedTeams')}</span>
         </span>

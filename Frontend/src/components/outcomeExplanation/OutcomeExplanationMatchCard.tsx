@@ -94,17 +94,17 @@ export const OutcomeExplanationMatchCard = memo(function OutcomeExplanationMatch
                 >
                   {set.userScore}-{set.opponentScore}
                   {scoreKind === 'SUPER_TIEBREAK' && (
-                    <span className="ml-1 text-[10px] font-bold text-primary-600 dark:text-primary-400">
+                    <span className="ms-1 text-[10px] font-bold text-primary-600 dark:text-primary-400">
                       {t('gameResults.explanationSetSuperTiebreak')}
                     </span>
                   )}
                   {scoreKind === 'AMERICANO_POINTS' && (
-                    <span className="ml-1 text-[10px] font-medium text-gray-500 dark:text-gray-400">
+                    <span className="ms-1 text-[10px] font-medium text-gray-500 dark:text-gray-400">
                       {t('gameResults.explanationSetAmericanoPoints')}
                     </span>
                   )}
                   {set.isTieBreak && scoreKind !== 'SUPER_TIEBREAK' && (
-                    <span className="ml-1 text-[10px] font-bold text-primary-600 dark:text-primary-400">TB</span>
+                    <span className="ms-1 text-[10px] font-bold text-primary-600 dark:text-primary-400">TB</span>
                   )}
                 </span>
               );
@@ -122,24 +122,24 @@ export const OutcomeExplanationMatchCard = memo(function OutcomeExplanationMatch
         {match.teammates.length > 0 && (
           <div>
             <span className="text-gray-600 dark:text-gray-400">{t('gameResults.teammates')}:</span>
-            <span className="ml-1">{renderPlayerNames(match.teammates, levelBefore)}</span>
+            <span className="ms-1">{renderPlayerNames(match.teammates, levelBefore)}</span>
           </div>
         )}
         <div>
           <span className="text-gray-600 dark:text-gray-400">{t('gameResults.opponents')}:</span>
-          <span className="ml-1">{renderPlayerNames(match.opponents, levelBefore)}</span>
+          <span className="ms-1">{renderPlayerNames(match.opponents, levelBefore)}</span>
         </div>
         <div>
           <span className="text-gray-600 dark:text-gray-400">{t('gameResults.opponentLevel')}:</span>
-          <span className="ml-1">{formatNumber(match.opponentLevel)}</span>
-          <span className={`ml-2 ${getLevelChangeColor(match.levelDifference)}`}>
+          <span className="ms-1">{formatNumber(match.opponentLevel)}</span>
+          <span className={`ms-2 ${getLevelChangeColor(match.levelDifference)}`}>
             ({formatChange(match.levelDifference)})
           </span>
         </div>
         {match.scoreDelta !== undefined && (
           <div>
             <span className="text-gray-600 dark:text-gray-400">{t('gameResults.scoreDelta')}:</span>
-            <span className={`ml-1 font-semibold ${getLevelChangeColor(match.scoreDelta)}`}>
+            <span className={`ms-1 font-semibold ${getLevelChangeColor(match.scoreDelta)}`}>
               {match.scoreDelta > 0 ? '+' : ''}
               {match.scoreDelta}
             </span>
@@ -148,7 +148,7 @@ export const OutcomeExplanationMatchCard = memo(function OutcomeExplanationMatch
         {match.totalPointDifferential !== undefined && (
           <div>
             <span className="text-gray-600 dark:text-gray-400">{t('gameResults.pointDifferential')}:</span>
-            <span className={`ml-1 font-semibold ${getLevelChangeColor(match.totalPointDifferential)}`}>
+            <span className={`ms-1 font-semibold ${getLevelChangeColor(match.totalPointDifferential)}`}>
               {match.totalPointDifferential > 0 ? '+' : ''}
               {match.totalPointDifferential}
             </span>
@@ -157,10 +157,10 @@ export const OutcomeExplanationMatchCard = memo(function OutcomeExplanationMatch
         {match.multiplier !== undefined && (
           <div>
             <span className="text-gray-600 dark:text-gray-400">{t('gameResults.multiplier')}:</span>
-            <span className="ml-1 font-semibold text-purple-600 dark:text-purple-400">
+            <span className="ms-1 font-semibold text-purple-600 dark:text-purple-400">
               {formatNumber(match.multiplier)}x
             </span>
-            <span className="ml-1 text-gray-500 dark:text-gray-400 text-[10px]">
+            <span className="ms-1 text-gray-500 dark:text-gray-400 text-[10px]">
               (
               {match.multiplier < 0.6
                 ? t('gameResults.veryClose')
@@ -176,7 +176,7 @@ export const OutcomeExplanationMatchCard = memo(function OutcomeExplanationMatch
         {match.enduranceCoefficient !== undefined && (
           <div>
             <span className="text-gray-600 dark:text-gray-400">{t('gameResults.endurance')}:</span>
-            <span className="ml-1 font-semibold text-orange-600 dark:text-orange-400">
+            <span className="ms-1 font-semibold text-orange-600 dark:text-orange-400">
               {formatNumber(match.enduranceCoefficient)}x
             </span>
           </div>
@@ -196,7 +196,7 @@ export const OutcomeExplanationMatchCard = memo(function OutcomeExplanationMatch
                     >
                       {set.userScore} - {set.opponentScore}
                       {set.isTieBreak && (
-                        <span className="ml-1 text-[10px] font-bold text-primary-600 dark:text-primary-400">TB</span>
+                        <span className="ms-1 text-[10px] font-bold text-primary-600 dark:text-primary-400">TB</span>
                       )}
                     </span>
                   </div>

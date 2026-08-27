@@ -176,7 +176,7 @@ export const TrainingResultsSection = ({
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-200 dark:border-gray-700">
-                <th className="text-left py-3 pl-4 pr-2 text-xs font-semibold text-gray-700 dark:text-gray-300">
+                <th className="text-start py-3 ps-4 pe-2 text-xs font-semibold text-gray-700 dark:text-gray-300">
                   {t('gameDetails.player')}
                 </th>
                 <th className="text-center py-3 px-2 text-xs font-semibold text-gray-700 dark:text-gray-300">
@@ -203,7 +203,7 @@ export const TrainingResultsSection = ({
                     key={participant.userId}
                     className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50"
                   >
-                    <td className="py-3 pl-4 pr-2">
+                    <td className="py-3 ps-4 pe-2">
                       <div className="flex items-center gap-3">
                         <PlayerAvatar
                           player={participant.user}
@@ -275,12 +275,12 @@ export const TrainingResultsSection = ({
             >
               {undoing ? (
                 <>
-                  <Loader2 size={18} className="animate-spin mr-2" />
+                  <Loader2 size={18} className="animate-spin me-2" />
                   {t('common.loading')}
                 </>
               ) : (
                 <>
-                  <Undo2 size={18} className="mr-2" />
+                  <Undo2 size={18} className="me-2" />
                   {t('training.undoTraining')}
                 </>
               )}
@@ -324,7 +324,7 @@ export const TrainingResultsSection = ({
                   variant="ghost"
                   size="sm"
                   onClick={startEditReview}
-                  className="self-start inline-flex items-center gap-2 rounded-xl px-3 py-2 -ml-1 text-primary-600 hover:text-primary-700 hover:bg-primary-50 dark:text-primary-400 dark:hover:text-primary-300 dark:hover:bg-primary-900/20 focus:ring-2 focus:ring-primary-500/30"
+                  className="self-start inline-flex items-center gap-2 rounded-xl px-3 py-2 -ms-1 text-primary-600 hover:text-primary-700 hover:bg-primary-50 dark:text-primary-400 dark:hover:text-primary-300 dark:hover:bg-primary-900/20 focus:ring-2 focus:ring-primary-500/30"
                 >
                   <Edit2 size={16} className="shrink-0" />
                   {t('training.editReview', { defaultValue: 'Edit review' })}
@@ -376,7 +376,7 @@ export const TrainingResultsSection = ({
                   >
                     {submittingReview ? (
                       <>
-                        <Loader2 size={18} className="animate-spin shrink-0 mr-2" />
+                        <Loader2 size={18} className="animate-spin shrink-0 me-2" />
                         {t('common.loading')}
                       </>
                     ) : myReview != null ? (

@@ -384,6 +384,7 @@ body.dark .footer a:hover {
 <script>
 const languages = {
     'en': { flag: '🇬🇧', label: 'EN', fullLabel: 'English' },
+    'ar': { flag: '🇸🇦', label: 'AR', fullLabel: 'العربية' },
     'ru': { flag: '🇷🇺', label: 'RU', fullLabel: 'Русский' },
     'sr': { flag: '🇷🇸', label: 'SR', fullLabel: 'Srpski' },
     'es': { flag: '🇪🇸', label: 'ES', fullLabel: 'Español' }
@@ -409,6 +410,7 @@ function toggleLangMenu(event) {
 function switchLang(lang, item) {
     currentLang = lang;
     document.documentElement.lang = lang;
+    document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
     const langData = languages[lang];
     
     const container = document.getElementById('eula-content-container');
@@ -452,13 +454,14 @@ document.addEventListener('click', (e) => {
 
 window.addEventListener('DOMContentLoaded', () => {
     initTheme();
-    const inApp = new URLSearchParams(window.location.search).get('inapp') === '1';
+    const params = new URLSearchParams(window.location.search);
+    const inApp = params.get('inapp') === '1';
     const backBtn = document.getElementById('eula-back-btn');
     if (backBtn && inApp) {
         backBtn.classList.add('visible');
         backBtn.addEventListener('click', function() { window.history.back(); });
     }
-    const savedLang = localStorage.getItem('language') || 'en';
+    const savedLang = params.get('lang') || localStorage.getItem('language') || 'en';
     if (languages[savedLang]) {
         const items = document.querySelectorAll('.lang-selector-item');
         let targetItem = null;
@@ -511,6 +514,10 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e =
                 <span class="flag">🇬🇧</span>
                 <span class="full-label">English</span>
             </button>
+            <button class="lang-selector-item" onclick="switchLang('ar', this)">
+                <span class="flag">🇸🇦</span>
+                <span class="full-label">العربية</span>
+            </button>
             <button class="lang-selector-item" onclick="switchLang('ru', this)">
                 <span class="flag">🇷🇺</span>
                 <span class="full-label">Русский</span>
@@ -531,6 +538,7 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e =
 <div id="eula-content-container"></div>
 
 <script src="eula-content-en.js"></script>
+<script src="eula-content-ar.js"></script>
 <script src="eula-content-ru.js"></script>
 <script src="eula-content-sr.js"></script>
 <script src="eula-content-es.js"></script>

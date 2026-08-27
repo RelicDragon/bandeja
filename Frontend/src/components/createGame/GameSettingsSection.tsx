@@ -79,7 +79,7 @@ export const GameSettingsSection = ({
         {entityType !== 'BAR' && entityType !== 'TRAINING' && !hideRatingGame && (
           <div data-settings-row className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
+              <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pe-2">
                 {t('createGame.ratingGame.title')}
               </span>
               <div className="flex-shrink-0">
@@ -100,7 +100,7 @@ export const GameSettingsSection = ({
 
         <div data-settings-row className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
           <div className="flex items-center justify-between mb-1">
-            <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
+            <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pe-2">
               {entityType === 'TRAINING'
                 ? t('createGame.publicGame.titleTraining')
                 : t('createGame.publicGame.title')}
@@ -123,7 +123,7 @@ export const GameSettingsSection = ({
         </div>
         <div data-settings-row className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
           <div className="flex items-center justify-between mb-1">
-            <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
+            <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pe-2">
               {entityType === 'TRAINING'
                 ? t('createGame.anyoneCanInvite.titleTraining')
                 : t('createGame.anyoneCanInvite.title')}
@@ -147,7 +147,7 @@ export const GameSettingsSection = ({
         {entityType !== 'TOURNAMENT' && entityType !== 'TRAINING' && (
           <div data-settings-row className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
+              <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pe-2">
                 {t('createGame.resultsByAnyone.title')}
               </span>
               <div className="flex-shrink-0">
@@ -165,7 +165,7 @@ export const GameSettingsSection = ({
         )}
         <div data-settings-row className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
           <div className="flex items-center justify-between mb-1">
-            <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
+            <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pe-2">
               {entityType === 'TRAINING'
                 ? t('createGame.allowDirectJoin.titleTraining')
                 : t('createGame.allowDirectJoin.title')}
@@ -189,7 +189,7 @@ export const GameSettingsSection = ({
         {entityType !== 'BAR' && (
           <div data-settings-row className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
+              <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pe-2">
                 {entityType === 'TRAINING'
                   ? t('createGame.afterGameGoToBar.titleTraining')
                   : t('createGame.afterGameGoToBar.title')}
@@ -214,7 +214,7 @@ export const GameSettingsSection = ({
         {entityType !== 'BAR' && entityType !== 'TRAINING' && (
           <div data-settings-row className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
+              <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pe-2">
                 {t('createGame.participantsOnlyChat.title')}
               </span>
               <div className="flex-shrink-0">

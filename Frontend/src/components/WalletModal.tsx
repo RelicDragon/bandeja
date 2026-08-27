@@ -144,7 +144,7 @@ export const WalletModal = ({ onClose }: WalletModalProps) => {
             <>
               <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex-shrink-0">
                 <div className="flex items-center justify-between mb-0">
-                  <div className="pl-2">
+                  <div className="ps-2">
                     <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
                       {t('wallet.balance') || 'Balance'}
                     </p>

@@ -18,8 +18,8 @@ import {
 export const TEXT_EDIT_MAX_WIDTH_EM = PHOTO_TEXT_MAX_WIDTH_PX / PHOTO_TEXT_FONT_PX;
 
 function textAlignClass(align: TextAlignment): string {
-  if (align === 'left') return 'text-left';
-  if (align === 'right') return 'text-right';
+  if (align === 'left') return 'text-start';
+  if (align === 'right') return 'text-end';
   return 'text-center';
 }
 

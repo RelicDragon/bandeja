@@ -20,7 +20,7 @@ interface AvailabilityCopyMenuProps {
   weekdayLabel: string;
   dayOfMonth: number;
   weekStartYmd: string;
-  weekStart: 'monday' | 'sunday';
+  weekStart: 'monday' | 'sunday' | 'saturday';
   allOn: boolean;
   onToggleDay: () => void;
   onClose: () => void;
@@ -28,7 +28,7 @@ interface AvailabilityCopyMenuProps {
 }
 
 const itemBase =
-  'flex w-full items-center gap-2.5 rounded-md px-3.5 py-2 text-left text-[13px] leading-snug transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50';
+  'flex w-full items-center gap-2.5 rounded-md px-3.5 py-2 text-start text-[13px] leading-snug transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50';
 
 function MenuSectionLabel({ children }: { children: React.ReactNode }) {
   return (

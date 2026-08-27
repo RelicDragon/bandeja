@@ -38,7 +38,7 @@ export const AudioSkip10Button: React.FC<Props> = ({
       className={`flex-shrink-0 inline-flex items-center justify-center gap-0.5 min-w-[2.25rem] h-9 px-1.5 rounded-full border backdrop-blur-md shadow-[0_1px_2px_rgba(0,0,0,0.06)] dark:shadow-[0_1px_2px_rgba(0,0,0,0.25)] transition-[transform,opacity,background-color] active:scale-[0.94] disabled:opacity-30 disabled:pointer-events-none disabled:active:scale-100 ${variantClasses[variant]} ${className}`}
     >
       <Icon className="w-[14px] h-[14px] shrink-0" strokeWidth={2.5} aria-hidden />
-      <span className="text-[10px] font-semibold tabular-nums leading-none pr-px">10</span>
+      <span className="text-[10px] font-semibold tabular-nums leading-none pe-px">10</span>
     </button>
   );
 };

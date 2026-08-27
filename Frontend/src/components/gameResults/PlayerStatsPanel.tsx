@@ -138,7 +138,7 @@ export const PlayerStatsPanel = ({ game, rounds }: PlayerStatsPanelProps) => {
     {
       key: 'player',
       header: t('gameResults.player') || 'Player',
-      className: 'pl-4'
+      className: 'ps-4'
     },
     {
       key: 'winsTiesLosses',
@@ -150,7 +150,7 @@ export const PlayerStatsPanel = ({ game, rounds }: PlayerStatsPanelProps) => {
       header: isScoresMadeBased
         ? (t('gameResults.byScoresMade') || 'By Balls Won')
         : (t('gameResults.scores') || 'Scores'),
-      className: 'text-right'
+      className: 'text-end'
     },
     ...(isPointsBased ? [{
       key: 'points',
@@ -212,7 +212,7 @@ export const PlayerStatsPanel = ({ game, rounds }: PlayerStatsPanelProps) => {
                     <div className="self-center flex justify-center -mx-0.5">
                       <PlayerAvatar player={standing.user} extrasmall showName={false} fullHideName={true} />
                     </div>
-                    <div className="min-w-0 pl-2 leading-tight py-0.5">
+                    <div className="min-w-0 ps-2 leading-tight py-0.5">
                       <div className="text-xs text-gray-900 dark:text-gray-100 truncate leading-none">
                         {standing.user.firstName?.trim() || '\u00A0'}
                       </div>
@@ -233,7 +233,7 @@ export const PlayerStatsPanel = ({ game, rounds }: PlayerStatsPanelProps) => {
                         {standing.wins + standing.ties + standing.losses}
                       </div>
                     </div>
-                    <div className="text-right leading-tight tabular-nums py-0.5">
+                    <div className="text-end leading-tight tabular-nums py-0.5">
                       <div className="text-xs font-medium text-gray-900 dark:text-gray-100 leading-none">
                         {isScoresMadeBased ? (
                           <>

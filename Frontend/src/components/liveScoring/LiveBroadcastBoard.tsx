@@ -62,7 +62,7 @@ const BroadcastTeamRoster = memo(function BroadcastTeamRoster({
 
   return (
     <div
-      className={`flex min-w-0 flex-col items-stretch text-left ${
+      className={`flex min-w-0 flex-col items-stretch text-start ${
         overlay ? 'min-w-[12.5rem] gap-2 sm:min-w-[15rem] sm:gap-2.5' : 'gap-1.5 sm:gap-2'
       } ${nameClass}`}
     >
@@ -337,7 +337,7 @@ export function LiveBroadcastBoard({
 
       return (
         <div
-          className={`flex min-w-[2.6rem] items-center justify-center border-l ${compactDivider} ${activeClass}`}
+          className={`flex min-w-[2.6rem] items-center justify-center border-s ${compactDivider} ${activeClass}`}
         >
           <span className="text-lg font-bold tabular-nums tracking-[-0.035em]">
             <AnimatedLiveBoardValue value={value} intensity={col.impact ? 'impact' : 'normal'} />
@@ -371,7 +371,7 @@ export function LiveBroadcastBoard({
             </div>
             {broadcastTimer ? (
               <div
-                className={`self-stretch border-l px-2.5 flex items-center font-mono text-[10px] font-bold tabular-nums ${compactDivider}`}
+                className={`self-stretch border-s px-2.5 flex items-center font-mono text-[10px] font-bold tabular-nums ${compactDivider}`}
               >
                 {broadcastTimer}
               </div>
@@ -384,7 +384,7 @@ export function LiveBroadcastBoard({
           {scoreColumns.map((col) => (
             <div
               key={`compact-header-${col.key}`}
-              className={`flex h-5 items-center justify-center border-b border-l text-[8px] font-bold uppercase tracking-[0.08em] ${compactDivider} ${
+              className={`flex h-5 items-center justify-center border-b border-s text-[8px] font-bold uppercase tracking-[0.08em] ${compactDivider} ${
                 col.impact ? (isLight ? 'text-primary-700' : 'text-primary-300') : compactMuted
               }`}
             >
@@ -520,7 +520,7 @@ export function LiveBroadcastBoard({
               type="button"
               disabled={disabled}
               onClick={() => onScore('teamA')}
-              className="w-full rounded-lg text-left outline-none transition-transform enabled:active:scale-[0.99] enabled:focus-visible:ring-2 enabled:focus-visible:ring-primary-500/45 disabled:opacity-45"
+              className="w-full rounded-lg text-start outline-none transition-transform enabled:active:scale-[0.99] enabled:focus-visible:ring-2 enabled:focus-visible:ring-primary-500/45 disabled:opacity-45"
             >
               {rosterBlock('teamA')}
             </button>
@@ -553,7 +553,7 @@ export function LiveBroadcastBoard({
               type="button"
               disabled={disabled}
               onClick={() => onScore('teamB')}
-              className="w-full rounded-lg text-left outline-none transition-transform enabled:active:scale-[0.99] enabled:focus-visible:ring-2 enabled:focus-visible:ring-primary-500/45 disabled:opacity-45"
+              className="w-full rounded-lg text-start outline-none transition-transform enabled:active:scale-[0.99] enabled:focus-visible:ring-2 enabled:focus-visible:ring-primary-500/45 disabled:opacity-45"
             >
               {rosterBlock('teamB')}
             </button>

@@ -14,7 +14,7 @@ export const LevelHistoryProfileStatsSection = ({ user, followersCount, followin
   return (
     <div className="rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-700/50 border border-gray-200/60 dark:border-gray-600/50">
       <div className="flex items-center gap-0 border-b border-gray-200/60 dark:border-gray-600/50">
-        <div className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-2 border-r border-gray-200/60 dark:border-gray-600/50">
+        <div className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-2 border-e border-gray-200/60 dark:border-gray-600/50">
           <span className="text-xs text-gray-500 dark:text-gray-400">{t('playerCard.followers') || 'Followers'}</span>
           <span className="text-base font-semibold tabular-nums text-gray-900 dark:text-white">{followersCount}</span>
         </div>
@@ -24,7 +24,7 @@ export const LevelHistoryProfileStatsSection = ({ user, followersCount, followin
         </div>
       </div>
       <div className="flex items-center gap-0">
-        <div className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-2 border-r border-gray-200/60 dark:border-gray-600/50">
+        <div className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-2 border-e border-gray-200/60 dark:border-gray-600/50">
           <span className="text-xs text-gray-500 dark:text-gray-400">{t('profile.preferredHand')}</span>
           <PreferenceLrChipPair
             group="hand"

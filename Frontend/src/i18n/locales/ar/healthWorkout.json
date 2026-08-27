@@ -1,0 +1,19 @@
+{
+  "healthWorkout": {
+    "title": "تمارين البادل",
+    "subtitle": "محفوظة من Apple Watch أثناء التسجيل",
+    "yourSession": "تمرينك",
+    "kcal": "سعرة",
+    "avgBpm": "متوسط نبض",
+    "maxBpm": "أقصى نبض",
+    "loading": "جارٍ التحميل…",
+    "loadError": "تعذّر تحميل التمرين",
+    "loadErrorHint": "حدث خطأ ما. تحقق من اتصالك وحاول مرة أخرى.",
+    "loadErrorProfile": "تعذّر تحميل التمارين",
+    "loadErrorProfileHint": "حدث خطأ ما. تحقق من اتصالك وحاول مرة أخرى.",
+    "emptyGameTitle": "لم يُسجَّل تمرين",
+    "emptyGameHint": "في المرة القادمة، ابدأ تمريناً على Apple Watch أثناء التسجيل في Bandeja — ستظهر السعرات ومعدل النبض هنا.",
+    "emptyProfileTitle": "لا تمارين بعد",
+    "emptyProfileHint": "سجّل تمريناً على Apple Watch أثناء تسجيل مباراة في Bandeja لتتبع السعرات ومعدل النبض."
+  }
+}

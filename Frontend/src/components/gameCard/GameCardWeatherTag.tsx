@@ -29,7 +29,7 @@ export function GameCardWeatherTag({ entityType, summary, locale, onClick }: Gam
       onClick={onClick}
       onPointerDown={(e) => e.stopPropagation()}
       onMouseDown={(e) => e.stopPropagation()}
-      className={`flex items-center gap-1 rounded-lg pl-1 pr-1.5 py-0 min-h-[28px] pointer-events-auto ${theme.panel} ${theme.actionHover} transition-colors duration-200`}
+      className={`flex items-center gap-1 rounded-lg ps-1 pe-1.5 py-0 min-h-[28px] pointer-events-auto ${theme.panel} ${theme.actionHover} transition-colors duration-200`}
       aria-label={t('weather.openForecast', {
         condition: conditionLabel,
         temperature: tempLabel,

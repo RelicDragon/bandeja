@@ -65,7 +65,7 @@ export function ProfileSportCard({
   };
 
   return (
-    <div className="relative flex h-full w-full min-w-0 flex-col pt-1 pr-1">
+    <div className="relative flex h-full w-full min-w-0 flex-col pt-1 pe-1">
       {enabled && (
         <button
           type="button"

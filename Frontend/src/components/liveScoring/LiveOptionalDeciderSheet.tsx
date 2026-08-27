@@ -30,7 +30,7 @@ export function LiveOptionalDeciderSheet({ open, onChoose, recordMode, disabled 
           <button
             type="button"
             disabled={disabled}
-            className="rounded-xl border border-gray-300 bg-gray-50 px-4 py-3 text-left text-sm font-medium text-gray-900 hover:bg-gray-100 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
+            className="rounded-xl border border-gray-300 bg-gray-50 px-4 py-3 text-start text-sm font-medium text-gray-900 hover:bg-gray-100 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
             onClick={() => onChoose('REGULAR_SET')}
           >
             {regularCta}
@@ -38,7 +38,7 @@ export function LiveOptionalDeciderSheet({ open, onChoose, recordMode, disabled 
           <button
             type="button"
             disabled={disabled}
-            className="rounded-xl border border-primary-500/40 bg-primary-500/10 px-4 py-3 text-left text-sm font-medium text-primary-950 hover:bg-primary-500/15 disabled:opacity-50 dark:text-primary-50"
+            className="rounded-xl border border-primary-500/40 bg-primary-500/10 px-4 py-3 text-start text-sm font-medium text-primary-950 hover:bg-primary-500/15 disabled:opacity-50 dark:text-primary-50"
             onClick={() => onChoose('SUPER_TIEBREAK')}
           >
             {t('gameDetails.liveScoring.deciderSuperTbCta')}

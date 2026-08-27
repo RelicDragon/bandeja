@@ -56,12 +56,12 @@ export function ClubSelectorCard({
           onClick={onSelect}
           aria-pressed={isSelected}
           aria-label={isNearest ? `${club.name}, ${t('city.nearestToYou')}` : undefined}
-          className="flex-1 min-w-0 text-left flex items-stretch rounded-2xl"
+          className="flex-1 min-w-0 text-start flex items-stretch rounded-2xl"
         >
           <div className="relative w-[4.125rem] shrink-0 self-stretch bg-gray-200/80 dark:bg-gray-700/80">
             <ClubAvatar club={club} variant="tile" />
           </div>
-          <div className="min-w-0 flex-1 py-3 pr-3 pl-3 flex flex-col justify-center">
+          <div className="min-w-0 flex-1 py-3 pe-3 ps-3 flex flex-col justify-center">
             <div className="flex items-center gap-2 min-w-0">
               {isNearest && (
                 <span
@@ -75,7 +75,7 @@ export function ClubSelectorCard({
                 {club.name}
               </div>
               {isSelected && (
-                <span className={`${CITY_SELECTOR_CHECK} ml-auto`} aria-hidden>
+                <span className={`${CITY_SELECTOR_CHECK} ms-auto`} aria-hidden>
                   ✓
                 </span>
               )}
@@ -89,7 +89,7 @@ export function ClubSelectorCard({
           <button
             type="button"
             onClick={onInfoClick}
-            className="shrink-0 px-3 flex items-center justify-center rounded-r-2xl border-l border-gray-200/80 dark:border-gray-700/80 text-gray-500 dark:text-gray-400 hover:bg-gray-100/80 dark:hover:bg-gray-700/50"
+            className="shrink-0 px-3 flex items-center justify-center rounded-e-2xl border-s border-gray-200/80 dark:border-gray-700/80 text-gray-500 dark:text-gray-400 hover:bg-gray-100/80 dark:hover:bg-gray-700/50"
             aria-label={t('createGame.clubInfo')}
           >
             <Info size={20} />
@@ -111,7 +111,7 @@ export function ClubSelectorCard({
         type="button"
         onClick={onSelect}
         aria-label={isNearest ? `${club.name}, ${t('city.nearestToYou')}` : undefined}
-        className={`flex-1 min-w-0 text-left flex items-stretch rounded-lg ${
+        className={`flex-1 min-w-0 text-start flex items-stretch rounded-lg ${
           isSelected ? '' : 'hover:bg-gray-100 dark:hover:bg-gray-700/80'
         }`}
       >
@@ -126,7 +126,7 @@ export function ClubSelectorCard({
             className={isSelected ? 'ring-2 ring-inset ring-white/40' : ''}
           />
         </div>
-        <div className="min-w-0 flex-1 py-3 pr-3 pl-3 flex flex-col justify-center">
+        <div className="min-w-0 flex-1 py-3 pe-3 ps-3 flex flex-col justify-center">
           <div className="flex items-center gap-2 min-w-0">
             {isNearest && (
               <span
@@ -153,7 +153,7 @@ export function ClubSelectorCard({
         <button
           type="button"
           onClick={onInfoClick}
-          className={`shrink-0 px-3 flex items-center justify-center rounded-r-lg border-l ${
+          className={`shrink-0 px-3 flex items-center justify-center rounded-e-lg border-s ${
             isSelected
               ? 'border-white/20 text-white hover:bg-white/10'
               : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'

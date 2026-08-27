@@ -30,7 +30,7 @@ export const FormatOptionCard = ({
       onClick={onClick}
       disabled={disabled}
       whileTap={{ scale: disabled ? 1 : 0.98 }}
-      className={`flex w-full flex-col items-stretch text-left rounded-xl border-2 p-4 transition-all duration-200 overflow-hidden ${
+      className={`flex w-full flex-col items-stretch text-start rounded-xl border-2 p-4 transition-all duration-200 overflow-hidden ${
         selected
           ? 'border-primary-500 bg-gradient-to-br from-primary-50 to-white dark:from-primary-500/10 dark:to-gray-900 shadow-lg shadow-primary-500/20'
           : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 hover:border-primary-300 dark:hover:border-primary-700'
@@ -46,7 +46,7 @@ export const FormatOptionCard = ({
         >
           <Icon size={22} />
         </div>
-        <h3 className="min-w-0 flex-1 text-sm font-semibold text-gray-900 dark:text-white text-left truncate">
+        <h3 className="min-w-0 flex-1 text-sm font-semibold text-gray-900 dark:text-white text-start truncate">
           {title}
         </h3>
         {selected && (

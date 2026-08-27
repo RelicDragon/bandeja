@@ -153,7 +153,7 @@ export function CourtScheduleGrid({
             <div className="sticky left-0 z-10 flex items-center bg-background p-1 text-xs text-muted-foreground">
               {time}
               {rowIndex === nowRowIndex && (
-                <span className="ml-1 inline-block h-1.5 w-1.5 rounded-full bg-primary-500" aria-hidden />
+                <span className="ms-1 inline-block h-1.5 w-1.5 rounded-full bg-primary-500" aria-hidden />
               )}
             </div>
             {columns.map((court) => {

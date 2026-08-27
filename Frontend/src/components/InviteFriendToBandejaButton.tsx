@@ -49,7 +49,7 @@ export function InviteFriendToBandejaButton({ className = '' }: InviteFriendToBa
           <UserPlus className="h-[18px] w-[18px] text-white drop-shadow-sm" strokeWidth={2.25} />
         </span>
       )}
-      <span className="relative text-left drop-shadow-sm">{t('invites.inviteFriendToBandeja')}</span>
+      <span className="relative text-start drop-shadow-sm">{t('invites.inviteFriendToBandeja')}</span>
     </button>
   );
 }

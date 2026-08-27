@@ -13,7 +13,7 @@ export function ChatListDraftPreview({ content }: Props) {
     <>
       <span className="text-red-500 dark:text-red-400">Draft:</span>
       {displayContent && (
-        <span className="text-gray-500 dark:text-gray-400 italic ml-1">
+        <span className="text-gray-500 dark:text-gray-400 italic ms-1">
           <ChatListPreviewText text={displayContent} />
         </span>
       )}

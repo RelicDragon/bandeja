@@ -1,4 +1,4 @@
-export type GeoLocale = 'en' | 'es' | 'ru' | 'sr' | 'cs';
+export type GeoLocale = 'en' | 'es' | 'ru' | 'sr' | 'cs' | 'ar';
 
 interface CountryTranslation {
   en: string;
@@ -30,7 +30,7 @@ async function loadGeoData(): Promise<void> {
   loadPromise = (async () => {
     try {
       const [countriesRes, citiesRes] = await Promise.all([
-        fetch('/geo/countries.json?v=2'),
+        fetch('/geo/countries.json?v=3'),
         fetch('/geo/cities.json'),
       ]);
       if (countriesRes.ok) countriesData = await countriesRes.json();
@@ -53,17 +53,31 @@ export function ensureGeoDataLoaded(): Promise<void> {
 
 function toGeoLocale(locale: string): GeoLocale {
   const code = locale.split('-')[0].toLowerCase();
-  if (code === 'en' || code === 'es' || code === 'ru' || code === 'sr' || code === 'cs') return code;
+  if (code === 'en' || code === 'es' || code === 'ru' || code === 'sr' || code === 'cs' || code === 'ar') {
+    return code;
+  }
   return 'en';
 }
 
-const LOCALE_KEYS: GeoLocale[] = ['en', 'es', 'ru', 'sr', 'cs'];
+const LOCALE_KEYS: Array<'en' | 'es' | 'ru' | 'sr' | 'cs'> = ['en', 'es', 'ru', 'sr', 'cs'];
 
 export function getCountryDisplayName(countryKey: string, locale: string): string {
   if (!countryKey) return '';
   const geo = toGeoLocale(locale);
   const c = countriesData?.[countryKey];
-  const name = c && LOCALE_KEYS.includes(geo) ? (c as Record<GeoLocale, string | undefined>)[geo] : undefined;
+  if (!c) return countryKey;
+  if (geo === 'ar') {
+    return c.native || c.en || countryKey;
+  }
+  const name = LOCALE_KEYS.includes(geo)
+    ? ({
+        en: c.en,
+        es: c.es,
+        ru: c.ru,
+        sr: c.sr,
+        cs: c.cs,
+      } as Record<(typeof LOCALE_KEYS)[number], string | undefined>)[geo]
+    : undefined;
   if (name) return name;
   return countryKey;
 }
@@ -83,6 +97,10 @@ export function getCityDisplayName(
   const rec = citiesData?.[cityId];
   if (!rec) return cityName;
   const geo = toGeoLocale(locale);
+  if (geo === 'ar') {
+    if (rec.native && rec.native.trim()) return rec.native;
+    return rec.en || cityName;
+  }
   const key: CityLocaleKey = geo === 'cs' ? 'en' : geo;
   const name = rec[key];
   return (name && name.trim()) ? name : rec.en;

@@ -179,7 +179,7 @@ const StandardLeaderboard = () => {
   const hasLeaderboardData = leaderboard.length > 0;
 
   const renderTable = () => (
-    <div className="-ml-1 w-[calc(100%+1rem)] min-w-0 max-w-[calc(100%+1rem)] overflow-x-hidden">
+    <div className="-ms-1 w-[calc(100%+1rem)] min-w-0 max-w-[calc(100%+1rem)] overflow-x-hidden">
       <table className="w-full min-w-0 table-fixed">
         <colgroup>
           <col className="w-9" />
@@ -188,11 +188,11 @@ const StandardLeaderboard = () => {
         </colgroup>
         <thead className="sticky top-0 bg-white dark:bg-gray-900 z-10">
           <tr className="border-b border-gray-200 dark:border-gray-700">
-            <th className="px-0 py-2 text-left text-xs font-semibold text-gray-700 dark:text-gray-300" />
-            <th className="min-w-0 py-2 pl-0 pr-2 text-left text-xs font-semibold text-gray-700 dark:text-gray-300">
+            <th className="px-0 py-2 text-start text-xs font-semibold text-gray-700 dark:text-gray-300" />
+            <th className="min-w-0 py-2 ps-0 pe-2 text-start text-xs font-semibold text-gray-700 dark:text-gray-300">
               {t('gameDetails.player') || 'Player'}
             </th>
-            <th className="whitespace-nowrap py-2 pl-2 pr-0 text-right text-xs font-semibold text-gray-700 dark:text-gray-300">
+            <th className="whitespace-nowrap py-2 ps-2 pe-0 text-end text-xs font-semibold text-gray-700 dark:text-gray-300">
               {leaderboardType === 'social'
                 ? (t('profile.social') || 'Social')
                 : (t('profile.level') || 'Level')}
@@ -276,7 +276,7 @@ const StandardLeaderboard = () => {
               pointerEvents: isSearchFocused ? 'none' : 'auto',
             }}
           >
-            <span className="min-w-0 flex-1 truncate text-left text-xs font-medium text-primary-700 dark:text-primary-300">
+            <span className="min-w-0 flex-1 truncate text-start text-xs font-medium text-primary-700 dark:text-primary-300">
               {t('profile.myPlace', { rank: userRankLabel, defaultValue: 'My place: {{rank}}' })}
             </span>
             <ChevronDown size={14} className="shrink-0 text-primary-600 dark:text-primary-400" />
@@ -301,7 +301,7 @@ const StandardLeaderboard = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
               onFocus={handleSearchFocus}
               onBlur={handleSearchBlur}
-              className="w-full min-w-0 rounded-full border border-gray-300 bg-white py-1.5 pl-8 pr-8 text-xs text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-400 dark:focus:ring-blue-400"
+              className="w-full min-w-0 rounded-full border border-gray-300 bg-white py-1.5 ps-8 pe-8 text-xs text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-400 dark:focus:ring-blue-400"
             />
             {searchQuery && (
               <button

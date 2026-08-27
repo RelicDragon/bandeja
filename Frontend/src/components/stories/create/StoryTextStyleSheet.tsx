@@ -49,7 +49,7 @@ export function StoryTextStyleSheet({ layer, onStyleChange }: StoryTextStyleShee
         })}
       </div>
       <div className="flex items-center justify-center gap-2">
-        <span className="text-xs text-white/60 mr-1">{t('stories.alignment')}</span>
+        <span className="text-xs text-white/60 me-1">{t('stories.alignment')}</span>
         {alignments.map((align) => {
           const Icon = align === 'left' ? AlignLeft : align === 'right' ? AlignRight : AlignCenter;
           const active = layer.style.align === align;

@@ -471,7 +471,7 @@ export const Login = () => {
                   type="button"
                   onClick={handleTelegramCancel}
                   disabled={loading}
-                  className="inline-flex items-center gap-1 rounded-full py-1.5 pr-3 text-sm font-semibold text-slate-500 transition-colors hover:text-slate-800 disabled:cursor-not-allowed disabled:opacity-50 dark:text-slate-400 dark:hover:text-white"
+                  className="inline-flex items-center gap-1 rounded-full py-1.5 pe-3 text-sm font-semibold text-slate-500 transition-colors hover:text-slate-800 disabled:cursor-not-allowed disabled:opacity-50 dark:text-slate-400 dark:hover:text-white"
                 >
                   <ArrowLeft size={16} />
                   {t('common.back')}

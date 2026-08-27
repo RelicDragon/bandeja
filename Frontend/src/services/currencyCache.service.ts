@@ -1,5 +1,6 @@
 import { getExchangeRates, ExchangeRatesResponse } from '@/api/currency';
 import { PriceCurrency } from '@/types';
+import { getCurrencyMinorFactor } from '@/utils/currency';
 
 /**
  * Currency cache service
@@ -84,7 +85,8 @@ class CurrencyCacheService {
       return amountCents;
     }
 
-    return Math.round(amountCents * rate);
+    const fromMajor = amountCents / getCurrencyMinorFactor(fromCurrency);
+    return Math.round(fromMajor * rate * getCurrencyMinorFactor(toCurrency));
   }
 
   /**

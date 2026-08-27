@@ -130,8 +130,11 @@ describe('planThreadOpen / openThreadBootstrap peekPrev', () => {
   });
 
   it('drops L1 rows that are locally tombstoned', async () => {
-    const l1 = [msg('keep', '2026-01-03T10:00:00Z'), msg('gone', '2026-01-03T10:01:00Z')];
-    const dexieTail = [msg('keep', '2026-01-03T10:00:00Z')];
+    const l1 = [
+      msg('keep', '2026-01-03T10:00:00Z', { chatType: 'PRIVATE' }),
+      msg('gone', '2026-01-03T10:01:00Z', { chatType: 'PRIVATE' }),
+    ];
+    const dexieTail = [msg('keep', '2026-01-03T10:00:00Z', { chatType: 'PRIVATE' })];
     const result = await planThreadOpen('GAME:g1:PRIVATE', {
       peekL1: () => l1,
       peekPrev: () => l1,

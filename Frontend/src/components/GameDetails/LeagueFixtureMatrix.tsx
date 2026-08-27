@@ -166,7 +166,7 @@ export const LeagueFixtureMatrix = ({
               <tr>
                 <th
                   scope="col"
-                  className={`sticky left-0 top-0 z-[35] border-b border-r border-gray-200/80 bg-gradient-to-b from-gray-50/98 to-gray-100/95 px-2 py-2 text-left align-middle backdrop-blur-md dark:border-gray-700/80 dark:from-gray-900/98 dark:to-gray-950/95 ${stickyTeamShadow}`}
+                  className={`sticky left-0 top-0 z-[35] border-b border-e border-gray-200/80 bg-gradient-to-b from-gray-50/98 to-gray-100/95 px-2 py-2 text-start align-middle backdrop-blur-md dark:border-gray-700/80 dark:from-gray-900/98 dark:to-gray-950/95 ${stickyTeamShadow}`}
                 >
                   <span className="text-[9px] font-bold uppercase tracking-[0.14em] text-gray-400 dark:text-gray-500">
                     {t('gameDetails.team')}
@@ -204,7 +204,7 @@ export const LeagueFixtureMatrix = ({
                 >
                   <th
                     scope="row"
-                    className={`sticky left-0 z-[25] border-b border-r border-gray-200/50 bg-white/92 px-2 py-1.5 text-left align-middle backdrop-blur-md dark:border-gray-800/60 dark:bg-gray-950/92 ${stickyTeamShadow}`}
+                    className={`sticky left-0 z-[25] border-b border-e border-gray-200/50 bg-white/92 px-2 py-1.5 text-start align-middle backdrop-blur-md dark:border-gray-800/60 dark:bg-gray-950/92 ${stickyTeamShadow}`}
                   >
                     <div className="flex min-h-[40px] flex-col justify-center gap-0.5">
                       {row.players.map((p) => (

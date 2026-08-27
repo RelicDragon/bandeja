@@ -95,7 +95,7 @@ const UserChatCardInner = ({ chat, listPresenceBatched = false, unreadCount = 0,
               </p>
             )}
           </div>
-          <div className="flex items-center gap-1 ml-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center gap-1 ms-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
             {(chat.lastMessage || draft) && (
               <span className="text-xs text-gray-500 dark:text-gray-400">
                 {formatChatTime(
@@ -167,10 +167,10 @@ const UserChatCardInner = ({ chat, listPresenceBatched = false, unreadCount = 0,
               : '';
             return (
               <div className="flex items-center justify-between">
-                <p className="text-sm line-clamp-2 pr-2">
+                <p className="text-sm line-clamp-2 pe-2">
                   <span className="text-red-500 dark:text-red-400">Draft:</span>
                   {displayContent && (
-                    <span className="text-gray-500 dark:text-gray-400 italic ml-1">{displayContent}</span>
+                    <span className="text-gray-500 dark:text-gray-400 italic ms-1">{displayContent}</span>
                   )}
                 </p>
                 <UnreadBadge count={unreadCount ?? 0} className="shrink-0" />
@@ -220,7 +220,7 @@ const UserChatCardInner = ({ chat, listPresenceBatched = false, unreadCount = 0,
 
             return (
               <div className="flex items-center justify-between">
-                <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 pr-2">
+                <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 pe-2">
                   {previewOnly ? (
                     lm.preview?.trim() ? (
                       <ChatListPreviewContent preview={lm.preview} t={t} />

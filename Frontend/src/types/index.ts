@@ -125,7 +125,8 @@ export type PriceCurrency =
   | 'EUR' | 'USD' | 'GBP' | 'JPY' | 'CNY' | 'CHF' | 'CAD' | 'AUD' | 'NZD'
   | 'SEK' | 'NOK' | 'DKK' | 'PLN' | 'CZK' | 'HUF' | 'RON' | 'BGN'
   | 'RUB' | 'RSD' | 'TRY' | 'INR' | 'BRL' | 'MXN'
-  | 'SGD' | 'HKD' | 'KRW' | 'THB' | 'MYR' | 'IDR' | 'PHP';
+  | 'SGD' | 'HKD' | 'KRW' | 'THB' | 'MYR' | 'IDR' | 'PHP'
+  | 'AED' | 'SAR' | 'QAR' | 'KWD' | 'OMR';
 
 import type { Round } from './gameResults';
 
@@ -243,7 +244,7 @@ export interface User extends BasicUser {
   language?: string; // Full locale (e.g., "en-GB", "ru-RU") or "auto"
   translateToLanguage?: string | null;
   timeFormat?: 'auto' | '12h' | '24h';
-  weekStart?: 'auto' | 'monday' | 'sunday';
+  weekStart?: 'auto' | 'monday' | 'sunday' | 'saturday';
   defaultCurrency?: string;
   nameIsSet?: boolean;
   primarySportIsSet?: boolean;

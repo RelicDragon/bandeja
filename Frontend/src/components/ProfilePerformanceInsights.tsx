@@ -246,7 +246,7 @@ const ProfilePerformanceInsightsComponent = ({
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{t('playerCard.streaks')}</h3>
             <p className="text-xs text-gray-500 dark:text-gray-400">{t('playerCard.currentStreak')}</p>
           </div>
-          <div className="text-right text-sm font-semibold text-gray-900 dark:text-white">
+          <div className="text-end text-sm font-semibold text-gray-900 dark:text-white">
             {currentStreak}
           </div>
         </div>
@@ -375,7 +375,7 @@ const ProfilePerformanceInsightsComponent = ({
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.2, ease: 'easeOut' }}
-                      className="group flex w-full items-center gap-3 rounded-xl border border-gray-200/70 bg-white/85 px-3 py-2.5 text-left shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary-200 hover:bg-primary-50/70 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:border-gray-700/70 dark:bg-gray-800/70 dark:hover:border-primary-800 dark:hover:bg-primary-950/25"
+                      className="group flex w-full items-center gap-3 rounded-xl border border-gray-200/70 bg-white/85 px-3 py-2.5 text-start shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary-200 hover:bg-primary-50/70 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:border-gray-700/70 dark:bg-gray-800/70 dark:hover:border-primary-800 dark:hover:bg-primary-950/25"
                       onClick={() => openRelationshipGame(game)}
                     >
                       <div className="flex h-11 w-14 shrink-0 flex-col items-center justify-center rounded-lg bg-gray-100 text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:bg-gray-700/80 dark:text-gray-300">
@@ -469,7 +469,7 @@ const ProfilePerformanceInsightsComponent = ({
                       <button
                         key={key}
                         type="button"
-                        className="rounded-lg bg-white/70 p-3 text-left shadow-sm ring-1 ring-transparent transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/90 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:bg-gray-800/40 dark:hover:bg-gray-800/65 dark:focus-visible:ring-offset-gray-800"
+                        className="rounded-lg bg-white/70 p-3 text-start shadow-sm ring-1 ring-transparent transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/90 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:bg-gray-800/40 dark:hover:bg-gray-800/65 dark:focus-visible:ring-offset-gray-800"
                         onClick={() => setSelectedRelationshipKey(key)}
                       >
                         <div className="mb-2 flex items-center justify-between gap-2">

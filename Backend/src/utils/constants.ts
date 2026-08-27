@@ -119,7 +119,8 @@ export const SUPPORTED_CURRENCIES = [
   'EUR', 'USD', 'GBP', 'JPY', 'CNY', 'CHF', 'CAD', 'AUD', 'NZD',
   'SEK', 'NOK', 'DKK', 'PLN', 'CZK', 'HUF', 'RON', 'BGN',
   'RUB', 'RSD', 'TRY', 'INR', 'BRL', 'MXN',
-  'SGD', 'HKD', 'KRW', 'THB', 'MYR', 'IDR', 'PHP'
+  'SGD', 'HKD', 'KRW', 'THB', 'MYR', 'IDR', 'PHP',
+  'AED', 'SAR', 'QAR', 'KWD', 'OMR',
 ] as const;
 
 export const DEFAULT_CURRENCY = 'EUR';
@@ -156,6 +157,11 @@ export const CURRENCY_NAMES: Record<string, string> = {
   MYR: 'Malaysian Ringgit',
   IDR: 'Indonesian Rupiah',
   PHP: 'Philippine Peso',
+  AED: 'UAE Dirham',
+  SAR: 'Saudi Riyal',
+  QAR: 'Qatari Riyal',
+  KWD: 'Kuwaiti Dinar',
+  OMR: 'Omani Rial',
 };
 
 export const USER_SPORT_PROFILE_SELECT = {

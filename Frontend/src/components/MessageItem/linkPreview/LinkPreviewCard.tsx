@@ -220,7 +220,7 @@ export const LinkPreviewCard: React.FC<LinkPreviewCardProps> = ({
   const gameDescriptionLines = isGame ? (visibleDescription ?? '').split('\n') : [];
   const gameClub = gameDescriptionLines[0]?.trim() || null;
   const gameDateTime = gameDescriptionLines.slice(1).join(' ').trim() || null;
-  const cardClassName = `${standalone ? '' : 'mt-1.5'} flex min-h-[68px] max-w-full min-w-0 overflow-hidden rounded-xl border text-left transition-[transform,opacity] active:scale-[0.99] motion-reduce:transform-none motion-reduce:transition-none ${linkPreviewSurfaceClass(variant, standalone)}`;
+  const cardClassName = `${standalone ? '' : 'mt-1.5'} flex min-h-[68px] max-w-full min-w-0 overflow-hidden rounded-xl border text-start transition-[transform,opacity] active:scale-[0.99] motion-reduce:transform-none motion-reduce:transition-none ${linkPreviewSurfaceClass(variant, standalone)}`;
   const cardBody = (
     <>
       <span
@@ -228,7 +228,7 @@ export const LinkPreviewCard: React.FC<LinkPreviewCardProps> = ({
         aria-hidden
       />
       {isGame ? (
-        <span className="min-w-0 flex-1 px-2.5 py-2 pr-8">
+        <span className="min-w-0 flex-1 px-2.5 py-2 pe-8">
           <span className="flex min-w-0 items-start gap-2.5">
             <span className="flex-shrink-0">
               <MediaThumb url={url} preview={preview} isBandeja={isBandeja} />
@@ -268,8 +268,8 @@ export const LinkPreviewCard: React.FC<LinkPreviewCardProps> = ({
         </span>
       ) : (
         <span
-          className={`flex min-w-0 flex-1 gap-2.5 py-2 pl-2.5 ${
-            reserveControlSpace ? 'pr-8' : 'pr-2.5'
+          className={`flex min-w-0 flex-1 gap-2.5 py-2 ps-2.5 ${
+            reserveControlSpace ? 'pe-8' : 'pe-2.5'
           }`}
         >
           <span className="flex-shrink-0 self-center">
@@ -288,7 +288,7 @@ export const LinkPreviewCard: React.FC<LinkPreviewCardProps> = ({
                   <span className={`truncate text-[11px] font-medium ${muted}`}>{siteLabel}</span>
                 )}
                 {!isAppNav ? (
-                  <ExternalLink className={`ml-auto h-3 w-3 flex-shrink-0 opacity-50 ${muted}`} aria-hidden />
+                  <ExternalLink className={`ms-auto h-3 w-3 flex-shrink-0 opacity-50 ${muted}`} aria-hidden />
                 ) : null}
               </span>
             ) : null}

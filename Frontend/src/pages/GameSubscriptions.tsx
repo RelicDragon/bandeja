@@ -212,7 +212,7 @@ export const GameSubscriptionsContent = () => {
 
             return (
               <Card key={subscription.id} className="space-y-3">
-                <div className="relative pr-2">
+                <div className="relative pe-2">
                   <div className="absolute top-0 right-0 flex gap-2">
                     <button
                       onClick={() => setEditingId(subscription.id)}

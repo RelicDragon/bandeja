@@ -128,7 +128,7 @@ export const DateSelector = ({
         </button>
       )}
 
-      <div ref={scrollContainerRef} className={`flex gap-1.5 overflow-x-auto flex-1 scrollbar-hide py-0.5 pr-12 ${isAtLeft ? 'pl-0' : 'pl-12'}`}>
+      <div ref={scrollContainerRef} className={`flex gap-1.5 overflow-x-auto flex-1 scrollbar-hide py-0.5 pe-12 ${isAtLeft ? 'ps-0' : 'ps-12'}`}>
         {fixedDates.map((date, index) => {
           const isSelected = format(selectedDate, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd');
           const emphasized = isDateEmphasized(date);

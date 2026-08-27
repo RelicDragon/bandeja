@@ -39,5 +39,8 @@ export async function prefetchOpenThreadLocal(
   const missed = mergeMissedIntoWarmRef(missedNetwork, missedBuffer);
 
   const { messages: dexieTail } = await loadLocalThreadBootstrap(contextType, contextId, gameChatType);
-  return mergeOpenSnapshot([], dexieTail, missed as ChatMessageWithStatus[]);
+  return mergeOpenSnapshot([], dexieTail, missed as ChatMessageWithStatus[], undefined, {
+    contextType,
+    contextId,
+  });
 }

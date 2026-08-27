@@ -40,7 +40,7 @@ export const ScoreValidationHint = ({
         </p>
       </div>
       {suggestions.length > 0 ? (
-        <div className="mt-2 flex flex-wrap gap-1.5 pl-5">
+        <div className="mt-2 flex flex-wrap gap-1.5 ps-5">
           {suggestions.map((s, i) => (
             <button
               key={i}

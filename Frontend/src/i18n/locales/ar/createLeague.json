@@ -1,0 +1,25 @@
+{
+  "createLeague": {
+    "name": "اسم الدوري",
+    "namePlaceholder": "أدخل اسم الدوري",
+    "description": "الوصف",
+    "descriptionPlaceholder": "أدخل وصف الدوري (اختياري)",
+    "location": "الموقع",
+    "selectCity": "اختر المدينة",
+    "noCitiesAvailable": "لا توجد مدن متاحة",
+    "noCity": "بدون مدينة",
+    "season": "الموسم",
+    "seasonAvatar": "صورة الموسم",
+    "seasonName": "اسم الموسم",
+    "seasonNamePlaceholder": "أدخل اسم الموسم",
+    "playerLevel": "مستوى اللاعب",
+    "maxParticipants": "الحد الأقصى للمشاركين",
+    "maxParticipantsPlaceholder": "أدخل الحد الأقصى للمشاركين (4-999)",
+    "startDate": "تاريخ البدء",
+    "gameSetupSeason": "إعداد المباراة (الموسم)",
+    "gameSetupPlayoff": "إعداد المباراة (التصفيات)",
+    "editGameSetup": "تعديل إعداد المباراة",
+    "configureGameSetup": "تكوين إعداد المباراة",
+    "createButton": "إنشاء الدوري"
+  }
+}

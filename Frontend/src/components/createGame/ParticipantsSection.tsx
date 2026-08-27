@@ -303,7 +303,7 @@ export const ParticipantsSection = ({
             size="sm"
             className="w-full flex items-center justify-center"
           >
-            <UserPlus size={16} className="mr-2" />
+            <UserPlus size={16} className="me-2" />
             {t('createGame.addMeToGame')}
           </Button>
         )}
@@ -321,7 +321,7 @@ export const ParticipantsSection = ({
               {invitedPlayers.map((player) => (
                 <div
                   key={player.id}
-                  className="relative flex items-center gap-3 rounded-xl border border-transparent bg-white/80 p-2.5 pr-10 transition-colors hover:border-blue-200 hover:bg-white dark:bg-gray-800/70 dark:hover:border-blue-800 dark:hover:bg-gray-800"
+                  className="relative flex items-center gap-3 rounded-xl border border-transparent bg-white/80 p-2.5 pe-10 transition-colors hover:border-blue-200 hover:bg-white dark:bg-gray-800/70 dark:hover:border-blue-800 dark:hover:bg-gray-800"
                 >
                   <PlayerAvatar
                     player={player}
@@ -358,7 +358,7 @@ export const ParticipantsSection = ({
           size="sm"
           className="w-full flex items-center justify-center"
         >
-          <Users2 size={16} className="mr-2" />
+          <Users2 size={16} className="me-2" />
           {invitedPlayerIds.length > 0 
             ? t('createGame.manageInvites', { count: invitedPlayerIds.length })
             : t('games.invitePlayers')

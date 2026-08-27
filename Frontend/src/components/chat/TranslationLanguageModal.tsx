@@ -87,7 +87,7 @@ export const TranslationLanguageModal: React.FC<TranslationLanguageModalProps> =
                   <button
                     type="button"
                     onClick={handleRemove}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left font-medium bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/60 text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/30 hover:border-red-300 dark:hover:border-red-700 transition-colors"
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-start font-medium bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/60 text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/30 hover:border-red-300 dark:hover:border-red-700 transition-colors"
                   >
                     <X size={20} className="flex-shrink-0" />
                     <span>{t('chat.dontUseTranslationInThisChat', { defaultValue: "Don't use translation in this chat" })}</span>
@@ -101,7 +101,7 @@ export const TranslationLanguageModal: React.FC<TranslationLanguageModalProps> =
                     <button
                       type="button"
                       onClick={() => handleSelect(code)}
-                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors ${
+                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-start transition-colors ${
                         isSelected
                           ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
                           : 'text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800'

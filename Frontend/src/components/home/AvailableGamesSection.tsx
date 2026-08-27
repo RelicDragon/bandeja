@@ -783,7 +783,7 @@ export const AvailableGamesSection = ({
           minLeftWidth={300}
           maxLeftWidth={500}
           leftPanel={
-            <div className="flex-1 min-h-0 overflow-y-auto bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700">
+            <div className="flex-1 min-h-0 overflow-y-auto bg-white dark:bg-gray-900 border-e border-gray-200 dark:border-gray-700">
               <div className="p-4" style={{ paddingBottom: scrollBottomPadding }}>
                 <TabContentStack id="find-split-left">
                   {filterBlock}

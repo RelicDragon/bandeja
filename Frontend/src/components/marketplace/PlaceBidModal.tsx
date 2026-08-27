@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, Input } from '@/components';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
-import { formatPrice } from '@/utils/currency';
+import { formatPrice, parsePriceInput } from '@/utils/currency';
 import type { PriceCurrency } from '@/types';
+import { centsToPrice, currencyInputStep } from '@/components/marketplace/utils';
 
 interface PlaceBidModalProps {
   isOpen: boolean;
@@ -34,7 +35,7 @@ export const PlaceBidModal = ({
     e.preventDefault();
     setValidationMin(null);
     setApiError('');
-    const cents = Math.round(parseFloat(amount || '0') * 100);
+    const cents = parsePriceInput(amount || '0', currency) ?? 0;
     if (cents < minCents) {
       setValidationMin(formatPrice(minCents, currency));
       return;
@@ -74,11 +75,11 @@ export const PlaceBidModal = ({
           <div className="space-y-0.5">
             <Input
               type="number"
-              step="0.01"
+              step={currencyInputStep(currency)}
               value={amount}
               onKeyDown={(e) => { if (e.key === 'e' || e.key === 'E') e.preventDefault(); }}
               onChange={(e) => { setAmount(e.target.value); setValidationMin(null); setApiError(''); }}
-              placeholder={(suggested / 100).toFixed(2)}
+              placeholder={centsToPrice(suggested, currency)}
               className={`w-full ${hasError ? 'border-red-500 dark:border-red-400 focus-visible:ring-red-500' : ''}`}
             />
             {validationMin && (

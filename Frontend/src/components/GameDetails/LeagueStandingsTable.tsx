@@ -44,17 +44,17 @@ export function LeagueStandingsTable({
         <thead>
           <tr className="border-b border-gray-200 dark:border-gray-700">
             <th className="w-14" />
-            <th className="py-2 pl-0 pr-0 text-left text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+            <th className="py-2 ps-0 pe-0 text-start text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
               <div className="-translate-x-2">
                 {hasFixedTeams ? t('gameDetails.team') : t('gameDetails.player')}
               </div>
             </th>
             {columns.showPoints && (
-              <th className="py-2 pl-0 pr-2 text-center text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+              <th className="py-2 ps-0 pe-2 text-center text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
                 {t('gameDetails.points')}
               </th>
             )}
-            <th className="whitespace-nowrap py-2 pl-4 pr-2 text-center text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+            <th className="whitespace-nowrap py-2 ps-4 pe-2 text-center text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
               {t('gameResults.winsTiesLosses')}
             </th>
             {columns.showGames && (
@@ -85,16 +85,16 @@ export function LeagueStandingsTable({
                   withdrawn
                     ? 'opacity-55 grayscale'
                     : inTie
-                      ? 'border-l-[3px] border-l-teal-500 bg-teal-50/60 dark:border-l-teal-400 dark:bg-teal-950/25'
+                      ? 'border-s-[3px] border-s-teal-500 bg-teal-50/60 dark:border-s-teal-400 dark:bg-teal-950/25'
                       : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'
                 }`}
               >
-                <td className="py-2 pl-0 pr-0">
+                <td className="py-2 ps-0 pe-0">
                   <div className="flex items-center justify-center -translate-x-2">
                     <LeagueStandingsPlaceCell index={activePlaceIndex} withdrawn={withdrawn} />
                   </div>
                 </td>
-                <td className="py-2 pl-0 pr-0">
+                <td className="py-2 ps-0 pe-0">
                   {hasFixedTeams ? (
                     standing.leagueTeam ? (
                       <div className="-translate-x-2">
@@ -127,14 +127,14 @@ export function LeagueStandingsTable({
                   ) : null}
                 </td>
                 {columns.showPoints && (
-                  <td className="py-2 pl-0 pr-2 text-center text-xs font-semibold text-gray-900 dark:text-white">
+                  <td className="py-2 ps-0 pe-2 text-center text-xs font-semibold text-gray-900 dark:text-white">
                     {standing.points}
                   </td>
                 )}
-                <td className="whitespace-nowrap py-2 pl-4 pr-2 text-center text-xs text-gray-700 dark:text-gray-300">
+                <td className="whitespace-nowrap py-2 ps-4 pe-2 text-center text-xs text-gray-700 dark:text-gray-300">
                   <span>
                     {standing.wins}-{standing.ties}-{standing.losses}
-                    <span className="ml-0.5 text-[8px] text-gray-500 dark:text-gray-400">
+                    <span className="ms-0.5 text-[8px] text-gray-500 dark:text-gray-400">
                       {standing.wins + standing.ties + standing.losses}
                     </span>
                   </span>
@@ -150,7 +150,7 @@ export function LeagueStandingsTable({
                   </td>
                 )}
                 {tieParticipantIds && tieParticipantIds.size > 0 && (
-                  <td className="py-2 pr-1 text-right">
+                  <td className="py-2 pe-1 text-end">
                     {inTie ? (
                       <button
                         type="button"

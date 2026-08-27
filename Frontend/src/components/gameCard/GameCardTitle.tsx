@@ -63,7 +63,7 @@ export function GameCardTitle({ game }: { game: Game }) {
       <span className="min-w-0">
         {game.name}
         {gameTypeLabel && (
-          <span className="ml-1.5 text-xs font-normal text-gray-500 dark:text-gray-400">
+          <span className="ms-1.5 text-xs font-normal text-gray-500 dark:text-gray-400">
             ({gameTypeLabel})
           </span>
         )}

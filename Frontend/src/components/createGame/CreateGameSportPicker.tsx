@@ -27,7 +27,7 @@ export function CreateGameSportPicker({ sports, onPick, onCancel }: Props) {
             <button
               key={sport}
               type="button"
-              className="flex items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-semibold text-gray-900 hover:bg-primary-50 dark:text-gray-100 dark:hover:bg-primary-900/30"
+              className="flex items-center gap-2 rounded-lg px-3 py-2 text-start text-sm font-semibold text-gray-900 hover:bg-primary-50 dark:text-gray-100 dark:hover:bg-primary-900/30"
               onClick={() => onPick(sport)}
             >
               <SportPublicIcon sport={sport} className="h-6 w-6 shrink-0 object-contain" />

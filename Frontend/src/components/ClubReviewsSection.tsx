@@ -318,7 +318,7 @@ export function ClubReviewsSection({ clubId, initialSummary, onClubRefresh, onOp
                   setDraftPhotos([]);
                 }}
                 disabled={loadingGames || eligibleGames.length === 0}
-                className="w-full appearance-none rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800/90 text-sm text-gray-900 dark:text-white pl-3 pr-10 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary-500/35 disabled:opacity-60"
+                className="w-full appearance-none rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800/90 text-sm text-gray-900 dark:text-white ps-3 pe-10 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary-500/35 disabled:opacity-60"
               >
                 <option value="">{loadingGames ? t('common.loading') : t('club.reviews.pickVisit')}</option>
                 {eligibleGames.map((g) => (
@@ -381,7 +381,7 @@ export function ClubReviewsSection({ clubId, initialSummary, onClubRefresh, onOp
                     variant="ghost"
                     size="sm"
                     onClick={() => setEditingReview(true)}
-                    className="self-start -ml-1 text-primary-600 dark:text-primary-400"
+                    className="self-start -ms-1 text-primary-600 dark:text-primary-400"
                   >
                     {t('training.editReview', { defaultValue: 'Edit review' })}
                   </Button>

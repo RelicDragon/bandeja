@@ -576,7 +576,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
                   <motion.div className="py-1" variants={CHAT_MESSAGE_MENU_SECTION} transition={instantTransition}>
              <button
                onClick={handleShowDetails}
-               className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-between"
+               className="w-full px-4 py-2 text-start text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-between"
              >
                <div className="flex items-center space-x-3">
                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -592,7 +592,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
             {showReply && onReply && (
               <button
                 onClick={handleReply}
-                className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-3"
+                className="w-full px-4 py-2 text-start text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-3"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
@@ -603,7 +603,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
             {isOwnMessage && onEdit && !isSystemMessage && message.content != null && !message.poll && !message.forwardedFromMessageId && message.messageType !== 'VOICE' && message.messageType !== 'VIDEO' && message.messageType !== 'STICKER' && message.messageType !== 'DOCUMENT' && (
               <button
                 onClick={() => { onEdit(message); closeMenu(); }}
-                className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-3"
+                className="w-full px-4 py-2 text-start text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-3"
               >
                 <Pencil className="w-4 h-4" />
                 <span>{t('chat.contextMenu.edit', { defaultValue: 'Edit' })}</span>
@@ -611,7 +611,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
             )}
             <button
               onClick={handleCopy}
-              className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-3"
+              className="w-full px-4 py-2 text-start text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-3"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -622,7 +622,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
               <button
                 type="button"
                 onClick={handleForward}
-                className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-3"
+                className="w-full px-4 py-2 text-start text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-3"
               >
                 <Forward className="w-4 h-4" />
                 <span>{t('chat.contextMenu.forward', { defaultValue: 'Forward' })}</span>
@@ -633,7 +633,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
                 type="button"
                 onClick={() => void handleSaveAsSticker()}
                 disabled={isSavingSticker}
-                className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-4 py-2 text-start text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-3 disabled:opacity-50 disabled:cursor-not-allowed"
                 data-testid="chat-save-as-sticker"
               >
                 <Sticker className="w-4 h-4" />
@@ -649,7 +649,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
                 type="button"
                 onClick={handleToggleFavorite}
                 disabled={favoriteBusy}
-                className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-4 py-2 text-start text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-3 disabled:opacity-50 disabled:cursor-not-allowed"
                 data-testid="chat-toggle-sticker-favorite"
               >
                 <Star className={`w-4 h-4 ${isStickerFavorite ? 'fill-current' : ''}`} />
@@ -665,7 +665,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
             {onPin && !isPinned && !isSystemMessage && (
               <button
                 onClick={() => { onPin(message); closeMenu(); }}
-                className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-3"
+                className="w-full px-4 py-2 text-start text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-3"
               >
                 <Pin className="w-4 h-4" />
                 <span>{t('chat.contextMenu.pin')}</span>
@@ -674,7 +674,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
             {onUnpin && isPinned && !isSystemMessage && (
               <button
                 onClick={() => { onUnpin(message.id); closeMenu(); }}
-                className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-3"
+                className="w-full px-4 py-2 text-start text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-3"
               >
                 <PinOff className="w-4 h-4" />
                 <span>{t('chat.contextMenu.unpin')}</span>
@@ -688,7 +688,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
                 <button
                   onClick={() => void handleTranscribe()}
                   disabled={isTranscribing}
-                  className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full px-4 py-2 text-start text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-3 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <FileText className="w-4 h-4" />
                   <span>
@@ -702,7 +702,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
               <button
                 onClick={handleTranslate}
                 disabled={isTranslating}
-                className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-4 py-2 text-start text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-3 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Languages className="w-4 h-4" />
                 <span>
@@ -719,7 +719,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
             {!isOwnMessage && onReport && !isSystemMessage && (
               <button
                 onClick={handleReport}
-                className="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center space-x-3"
+                className="w-full px-4 py-2 text-start text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center space-x-3"
               >
                 <Flag className="w-4 h-4" />
                 <span>{t('chat.contextMenu.report')}</span>
@@ -729,7 +729,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
             {isOwnMessage && onDelete && !isSystemMessage && (
               <button
                 onClick={handleDelete}
-                className="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center space-x-3"
+                className="w-full px-4 py-2 text-start text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center space-x-3"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

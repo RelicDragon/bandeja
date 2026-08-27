@@ -35,7 +35,7 @@ export function PlayStreakSheet({ streak, open, onOpenChange, isOwn = false }: P
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent className="mx-auto max-w-lg px-4 pb-8">
-        <DrawerHeader className="text-left">
+        <DrawerHeader className="text-start">
           <DrawerTitle>{t('playStreak.sheetTitle')}</DrawerTitle>
           <DrawerDescription>{t('playStreak.rules')}</DrawerDescription>
         </DrawerHeader>

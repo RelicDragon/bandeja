@@ -53,7 +53,7 @@ export function CitySelectorSearchChrome({
           autoCapitalize="off"
           spellCheck={false}
           enterKeyHint="search"
-          className="w-full min-w-0 rounded-2xl border border-gray-200/90 bg-white py-3 pl-10 pr-3.5 text-[16px] leading-snug text-gray-900 shadow-sm shadow-gray-900/5 outline-none transition-[box-shadow,border-color] placeholder:text-gray-400 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/25 disabled:opacity-60 dark:border-gray-600/80 dark:bg-gray-800/90 dark:text-white dark:shadow-black/20 dark:placeholder:text-gray-500"
+          className="w-full min-w-0 rounded-2xl border border-gray-200/90 bg-white py-3 ps-10 pe-3.5 text-[16px] leading-snug text-gray-900 shadow-sm shadow-gray-900/5 outline-none transition-[box-shadow,border-color] placeholder:text-gray-400 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/25 disabled:opacity-60 dark:border-gray-600/80 dark:bg-gray-800/90 dark:text-white dark:shadow-black/20 dark:placeholder:text-gray-500"
         />
       </label>
 

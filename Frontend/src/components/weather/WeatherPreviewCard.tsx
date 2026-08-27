@@ -95,8 +95,8 @@ function WeatherPreviewCardInner({
   const iconPalette = summary ? getWeatherIconPalette(summary.conditionKey, summary.isDay) : null;
   const canOpen = Boolean(forecast && !isForecastPending);
   const cardClassName = compact
-    ? 'w-fit max-w-full rounded-lg border border-sky-200/70 bg-sky-50/80 px-2.5 py-2 text-left shadow-sm transition-colors duration-200 dark:border-sky-800/40 dark:bg-sky-950/30'
-    : 'w-full rounded-xl border border-sky-200/80 bg-gradient-to-br from-sky-50 via-white to-emerald-50 p-3 text-left shadow-sm transition-all duration-200 dark:border-sky-800/50 dark:from-sky-950/40 dark:via-gray-950 dark:to-emerald-950/30';
+    ? 'w-fit max-w-full rounded-lg border border-sky-200/70 bg-sky-50/80 px-2.5 py-2 text-start shadow-sm transition-colors duration-200 dark:border-sky-800/40 dark:bg-sky-950/30'
+    : 'w-full rounded-xl border border-sky-200/80 bg-gradient-to-br from-sky-50 via-white to-emerald-50 p-3 text-start shadow-sm transition-all duration-200 dark:border-sky-800/50 dark:from-sky-950/40 dark:via-gray-950 dark:to-emerald-950/30';
   const content = (
     <>
       {isForecastPending ? (

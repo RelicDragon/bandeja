@@ -72,7 +72,7 @@ export function ChatListGameCardTags({ game, userId }: Props) {
           {game.genderTeams === 'MIX_PAIRS' ? (
             <span className="h-4 px-1 rounded-full bg-gradient-to-r from-blue-500 to-pink-500 flex items-center gap-0.5">
               <i className="bi bi-gender-male text-white text-[8px]" />
-              <i className="bi bi-gender-female text-white text-[8px] -ml-0.5" />
+              <i className="bi bi-gender-female text-white text-[8px] -ms-0.5" />
             </span>
           ) : (
             <span
@@ -142,7 +142,7 @@ export function ChatListGameCardTags({ game, userId }: Props) {
       {game.hasFixedTeams && (
         <span className={`${tagClass} bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400`}>
           <Users size={10} />
-          <Users size={10} className="-ml-1" />
+          <Users size={10} className="-ms-1" />
         </span>
       )}
       {(game.status === 'STARTED' || game.status === 'FINISHED') &&

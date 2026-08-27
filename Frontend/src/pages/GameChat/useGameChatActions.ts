@@ -22,6 +22,7 @@ import { chatSyncTailKey } from '@/utils/chatSyncScope';
 import { normalizeChatType } from '@/utils/chatType';
 import { mergeServerPageWithPendingOptimistics } from '@/utils/chatMessageSort';
 import { mergeChatTypeSwitchPaint, planChatTypeSwitch } from '@/services/chat/threadSession';
+import { liveMessageBelongsToThread } from '@/services/chat/liveMessageBelongsToThread';
 import type { ChatContextType } from '@/api/chat';
 import type { ChatType } from '@/types';
 import type { Game } from '@/types';
@@ -294,7 +295,8 @@ export function useGameChatActions(params: UseGameChatActionsParams) {
           pendingBeforeTeardown,
           local,
           contextType,
-          normalizedChatType
+          normalizedChatType,
+          id
         );
         commitChatTypeSwitchPaint(merged, normalizedChatType);
         return merged;
@@ -352,8 +354,16 @@ export function useGameChatActions(params: UseGameChatActionsParams) {
           if (currentIdRef.current !== requestId) return;
           void persistChatMessagesFromApi(response).catch(() => {});
           const merged = mergeServerPageWithPendingOptimistics(
-            mergeChatTypeSwitchPaint(pendingBeforeTeardown, [], contextType, normalizedChatType),
-            response
+            mergeChatTypeSwitchPaint(
+              pendingBeforeTeardown,
+              [],
+              contextType,
+              normalizedChatType,
+              id
+            ),
+            response.filter((m) =>
+              liveMessageBelongsToThread(m, { contextType, contextId: id! })
+            )
           );
           commitChatTypeSwitchPaint(merged, normalizedChatType);
           setHasMoreMessages(response.length === 50);
@@ -420,7 +430,10 @@ export function useGameChatActions(params: UseGameChatActionsParams) {
             contextType,
             contextId: id,
             gameChatType: contextType === 'GAME' ? normalizedChatType : undefined,
-            readRows: () => messagesRef.current,
+            readRows: () =>
+              messagesRef.current.filter((m) =>
+                liveMessageBelongsToThread(m, { contextType, contextId: id })
+              ),
             verify: () => currentIdRef.current === id,
             immediate: true,
           });

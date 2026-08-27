@@ -105,7 +105,7 @@ export function MessageInputImagePreviewStrip({
 
     if (reduceMotion) {
       return (
-        <div key={item.key} className="relative flex-shrink-0 pt-1 pr-1">
+        <div key={item.key} className="relative flex-shrink-0 pt-1 pe-1">
           {content}
         </div>
       );
@@ -119,7 +119,7 @@ export function MessageInputImagePreviewStrip({
         initial="hidden"
         animate="visible"
         exit="hidden"
-        className="relative flex-shrink-0 pt-1 pr-1"
+        className="relative flex-shrink-0 pt-1 pe-1"
       >
         {content}
       </motion.div>

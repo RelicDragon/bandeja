@@ -138,7 +138,7 @@ export function ThreadSearchResultsPanel({
                           onClick={() => handleResultClick(message.id)}
                           disabled={showRefreshing}
                           aria-current={isSelected ? 'true' : undefined}
-                          className={`flex w-full min-w-0 flex-col gap-0.5 border-b border-gray-100 px-2 py-1 text-left last:border-b-0 disabled:pointer-events-none dark:border-gray-800 ${
+                          className={`flex w-full min-w-0 flex-col gap-0.5 border-b border-gray-100 px-2 py-1 text-start last:border-b-0 disabled:pointer-events-none dark:border-gray-800 ${
                             isSelected
                               ? SELECTED_RESULT_CLASS
                               : 'hover:bg-gray-50 dark:hover:bg-gray-800/60'

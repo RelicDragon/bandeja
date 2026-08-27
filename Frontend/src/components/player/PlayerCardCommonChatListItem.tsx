@@ -149,7 +149,7 @@ export const PlayerCardCommonChatListItem = ({ item, onClick }: PlayerCardCommon
     <button
       type="button"
       onClick={onClick}
-      className="flex w-full items-center gap-3 border-b border-gray-200 px-1 py-3 text-left transition-colors last:border-b-0 hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800"
+      className="flex w-full items-center gap-3 border-b border-gray-200 px-1 py-3 text-start transition-colors last:border-b-0 hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800"
     >
       {avatar}
       <div className="min-w-0 flex-1">

@@ -17,7 +17,7 @@ export const GameCardSkeleton = () => (
         {[0, 1, 2, 3].map((i) => (
           <div key={i} className={`h-9 w-9 rounded-full ${shimmerBlock}`} />
         ))}
-        <div className={`ml-auto h-8 w-20 rounded-lg ${shimmerBlock}`} />
+        <div className={`ms-auto h-8 w-20 rounded-lg ${shimmerBlock}`} />
       </div>
     </div>
   </Card>

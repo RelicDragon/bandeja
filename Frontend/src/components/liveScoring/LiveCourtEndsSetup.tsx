@@ -92,7 +92,7 @@ export function LiveCourtEndsSetup({
             <LiveCourtEndsFlipRail
               side="left"
               onFlip={() => void flipEnds()}
-              className={`${flipRailClass} right-full mr-2`}
+              className={`${flipRailClass} right-full me-2`}
             />
             <motion.div animate={courtAnim} className="w-full origin-center [transform-style:preserve-3d]">
               {courtAspect ? (
@@ -133,7 +133,7 @@ export function LiveCourtEndsSetup({
             <LiveCourtEndsFlipRail
               side="right"
               onFlip={() => void flipEnds()}
-              className={`${flipRailClass} left-full ml-2`}
+              className={`${flipRailClass} left-full ms-2`}
             />
           </div>
         ) : null}

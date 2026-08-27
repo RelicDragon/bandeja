@@ -43,8 +43,10 @@ type SlotIndex = 0 | 1 | 2;
 
 const SLOT_INDICES: SlotIndex[] = [0, 1, 2];
 
-function resolveWeekStartPref(pref: string | null | undefined): 'monday' | 'sunday' {
-  return pref === 'sunday' ? 'sunday' : 'monday';
+function resolveWeekStartPref(pref: string | null | undefined): 'monday' | 'sunday' | 'saturday' {
+  if (pref === 'sunday') return 'sunday';
+  if (pref === 'saturday') return 'saturday';
+  return 'monday';
 }
 
 export function WeeklyAvailabilityPanel({

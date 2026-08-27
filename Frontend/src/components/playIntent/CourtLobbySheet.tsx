@@ -700,7 +700,7 @@ export function CourtLobbyPanel({
                   /{partySize}
                 </span>
               </span>
-              <div className="mb-4 pr-12">
+              <div className="mb-4 pe-12">
                 <div className="min-w-0">
                   <h2 className="text-[15px] font-bold tracking-[-0.01em] text-gray-950 dark:text-white">
                     {t(

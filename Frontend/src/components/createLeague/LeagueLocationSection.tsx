@@ -64,7 +64,7 @@ export const LeagueLocationSection = ({
           <div>
             <button
               onClick={onOpenCityModal}
-              className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm text-left hover:border-primary-500 transition-colors"
+              className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm text-start hover:border-primary-500 transition-colors"
             >
               {selectedCity
                 ? selectedCity.name
@@ -75,7 +75,7 @@ export const LeagueLocationSection = ({
             <div>
               <button
                 onClick={onOpenClubModal}
-                className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm text-left hover:border-primary-500 transition-colors flex items-center gap-3 min-w-0"
+                className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm text-start hover:border-primary-500 transition-colors flex items-center gap-3 min-w-0"
               >
                 {selectedClubId ? (
                   (() => {

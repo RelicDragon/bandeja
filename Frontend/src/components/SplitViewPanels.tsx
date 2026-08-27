@@ -7,7 +7,7 @@ interface SplitViewLeftPanelProps {
 }
 
 export const SplitViewLeftPanel = ({ children, bottomTabsVisible }: SplitViewLeftPanelProps) => (
-  <div className="relative h-full min-h-0 border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+  <div className="relative h-full min-h-0 border-e border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
     <div className="absolute inset-0 z-0 flex min-h-0 flex-col overflow-hidden">
       {children}
     </div>

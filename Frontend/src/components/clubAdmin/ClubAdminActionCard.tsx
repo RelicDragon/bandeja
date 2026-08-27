@@ -21,7 +21,7 @@ export function ClubAdminActionCard({
     <button
       type="button"
       onClick={onClick}
-      className={`group flex w-full items-center gap-3 rounded-2xl border p-4 text-left transition-all active:scale-[0.98] ${
+      className={`group flex w-full items-center gap-3 rounded-2xl border p-4 text-start transition-all active:scale-[0.98] ${
         isPrimary
           ? 'border-primary/20 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent shadow-sm hover:border-primary/30 hover:shadow-md dark:from-primary/20 dark:via-primary/10'
           : 'border-border bg-white hover:border-primary/20 hover:bg-muted/50 dark:bg-gray-900'

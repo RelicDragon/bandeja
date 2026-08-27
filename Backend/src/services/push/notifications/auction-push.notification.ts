@@ -1,5 +1,7 @@
+import { PriceCurrency } from '@prisma/client';
 import { NotificationPayload, NotificationType } from '../../../types/notifications.types';
 import { t } from '../../../utils/translations';
+import CurrencyService from '../../currency.service';
 
 export function createAuctionOutbidPushNotification(
   marketItem: { id: string; title: string },
@@ -7,7 +9,7 @@ export function createAuctionOutbidPushNotification(
   currency: string,
   lang: string
 ): NotificationPayload {
-  const price = `${(newHighCents / 100).toFixed(2)} ${currency}`;
+  const price = CurrencyService.formatPrice(newHighCents, currency as PriceCurrency);
   const title = t('marketplace.auctionOutbidTitle', lang) || 'You were outbid';
   const body = (t('marketplace.auctionOutbidBody', lang) || 'Your bid on "{title}" was exceeded. Current bid: {price}')
     .replace('{title}', marketItem.title)
@@ -27,7 +29,7 @@ export function createAuctionNewBidPushNotification(
   currency: string,
   lang: string
 ): NotificationPayload {
-  const price = `${(amountCents / 100).toFixed(2)} ${currency}`;
+  const price = CurrencyService.formatPrice(amountCents, currency as PriceCurrency);
   const title = t('marketplace.auctionNewBidTitle', lang) || 'New bid on your item';
   const body = (t('marketplace.auctionNewBidBody', lang) || '"{title}" — new bid: {price}')
     .replace('{title}', marketItem.title)

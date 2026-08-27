@@ -1,7 +1,7 @@
 export const APP_STORE_URL = 'https://apps.apple.com/app/bandeja/id6756632318';
 export const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.funified.bandeja';
 
-type StoreBadgeLang = 'en' | 'ru' | 'sr' | 'es' | 'cs';
+type StoreBadgeLang = 'en' | 'ru' | 'sr' | 'es' | 'cs' | 'ar';
 
 const STORE_BADGES: Record<StoreBadgeLang, { ios: string; android: string }> = {
   en: {
@@ -23,6 +23,10 @@ const STORE_BADGES: Record<StoreBadgeLang, { ios: string; android: string }> = {
   cs: {
     ios: 'https://tools.applemediaservices.com/api/badges/download-on-the-app-store/black/cs-cz?size=250x83&releaseDate=1704067200',
     android: 'https://play.google.com/intl/cs/badges/static/images/badges/cs_badge_web_generic.png',
+  },
+  ar: {
+    ios: 'https://tools.applemediaservices.com/api/badges/download-on-the-app-store/black/ar-sa?size=250x83&releaseDate=1704067200',
+    android: 'https://play.google.com/intl/ar/badges/static/images/badges/ar_badge_web_generic.png',
   },
 };
 

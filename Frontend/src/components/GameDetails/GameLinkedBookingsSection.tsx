@@ -38,7 +38,7 @@ export function GameLinkedBookingsSection({ game, courts, clubs, onGameUpdate }:
         type="button"
         onClick={() => setIsExpanded((prev) => !prev)}
         aria-expanded={isExpanded}
-        className="w-full flex items-center justify-between gap-3 px-3 py-2.5 text-left hover:bg-gray-50 dark:hover:bg-gray-800/60 transition-colors"
+        className="w-full flex items-center justify-between gap-3 px-3 py-2.5 text-start hover:bg-gray-50 dark:hover:bg-gray-800/60 transition-colors"
       >
         <div className="flex flex-wrap items-center gap-2 min-w-0">
           <span className="flex items-center gap-2 min-w-0">

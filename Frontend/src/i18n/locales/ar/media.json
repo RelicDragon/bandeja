@@ -1,0 +1,14 @@
+{
+  "media": {
+    "viewerTitle": "عارض الوسائط",
+    "fullscreenItemLabel": "وسائط {{current}} من {{total}}",
+    "resetView": "إعادة العرض",
+    "download": "تنزيل",
+    "copyImage": "نسخ الصورة",
+    "imageCopied": "تم نسخ الصورة",
+    "imageDownloaded": "تم تنزيل الصورة",
+    "imageShareOpened": "اختر نسخ أو حفظ من قائمة المشاركة",
+    "copyImageFailed": "تعذّر نسخ الصورة",
+    "downloadImageFailed": "تعذّر تنزيل الصورة"
+  }
+}

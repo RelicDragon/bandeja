@@ -1,0 +1,31 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="notification_channel_messages">الرسائل</string>
+    <string name="notification_channel_messages_desc">إشعارات رسائل المحادثة</string>
+    <string name="push_reply_hint">رد</string>
+    <string name="push_reply_failed">تعذّر الإرسال</string>
+    <string name="push_reply_self">أنت</string>
+    <string name="invite_accept">قبول</string>
+    <string name="invite_decline">رفض</string>
+    <string name="play_intent_play_too">أريد اللعب أيضًا</string>
+    <string name="shortcut_find_games_short">ابحث عن مباريات</string>
+    <string name="shortcut_find_games_long">تصفّح المباريات المتاحة</string>
+    <string name="shortcut_my_games_short">مبارياتي</string>
+    <string name="shortcut_my_games_long">عرض مبارياتك القادمة</string>
+    <string name="shortcut_create_game_short">إنشاء مباراة</string>
+    <string name="shortcut_create_game_long">ابدأ إنشاء مباراة جديدة</string>
+    <string name="shortcut_next_game_short">المباراة التالية</string>
+    <string name="shortcut_next_game_long">افتح مباراتك القادمة</string>
+    <string name="shortcut_find_tomorrow_short">مباريات الغد</string>
+    <string name="shortcut_find_tomorrow_long">تصفّح مباريات الغد</string>
+    <string name="shortcut_create_league_short">إنشاء دوري</string>
+    <string name="shortcut_create_league_long">ابدأ إنشاء دوري جديد</string>
+    <string name="shortcut_game_chat_short">دردشة المباراة</string>
+    <string name="shortcut_game_chat_long">افتح دردشة مباراتك القادمة</string>
+    <string name="shortcut_live_scoring_short">تسجيل مباشر</string>
+    <string name="shortcut_live_scoring_long">افتح التسجيل المباشر لمباراتك القادمة</string>
+    <string name="shortcut_chats_short">المحادثات</string>
+    <string name="shortcut_chats_long">افتح صندوق المحادثات</string>
+    <string name="shortcut_invites_short">الدعوات</string>
+    <string name="shortcut_invites_long">عرض دعوات المباريات</string>
+</resources>

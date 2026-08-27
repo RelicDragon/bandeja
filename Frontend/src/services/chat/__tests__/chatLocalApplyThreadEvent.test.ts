@@ -190,6 +190,22 @@ describe('applyThreadEvent', () => {
     expect(rev).toBe(1);
   });
 
+  it('socketMessage stamps missing contextId from envelope before persist', async () => {
+    const { putLocalMessageDirect } = await import('../chatLocalApplyWrite');
+    const orphan = msg('m-orphan');
+    delete (orphan as { contextId?: string }).contextId;
+    await applyThreadEvent({
+      kind: 'socketMessage',
+      contextType: 'USER',
+      contextId: 'u1',
+      message: orphan,
+      syncSeq: 6,
+    });
+    expect(putLocalMessageDirect).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'm-orphan', contextId: 'u1', chatContextType: 'USER' })
+    );
+  });
+
   it('missedBuffer adds to store bridge and bumps revision', async () => {
     const { bridgeAddMissedMessages } = await import('../chatLocalApplyStoreBridge');
     const rev = await applyThreadEvent({

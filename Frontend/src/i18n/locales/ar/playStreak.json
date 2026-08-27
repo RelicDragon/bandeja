@@ -1,0 +1,25 @@
+{
+  "playStreak": {
+    "chipWeeks_one": "أسبوع واحد ({{count}})",
+    "chipWeeks_other": "{{count}} أسابيع",
+    "chipBroken": "— · أفضل {{best}}",
+    "sheetTitle": "سلسلة اللعب",
+    "rules": "العب مباراة مُقيَّمة واحدة على الأقل كل 7 أيام للحفاظ على سلسلتك. المباريات الإضافية في نفس الأسبوع لا تضيف أسابيع.",
+    "current": "الحالية",
+    "best": "الأفضل",
+    "none": "—",
+    "weeks_one": "أسبوع واحد ({{count}})",
+    "weeks_other": "{{count}} أسابيع",
+    "playBy": "العب قبل {{date}} للحفاظ على سلسلتك",
+    "bannerStarted": "بدأت السلسلة!",
+    "bannerContinue": "سلسلة · {{count}} أسابيع",
+    "chipWeeks_zero": "0 أسابيع",
+    "chipWeeks_two": "{{count}} أسابيع",
+    "chipWeeks_few": "{{count}} أسابيع",
+    "chipWeeks_many": "{{count}} أسابيع",
+    "weeks_zero": "0 أسابيع",
+    "weeks_two": "{{count}} أسابيع",
+    "weeks_few": "{{count}} أسابيع",
+    "weeks_many": "{{count}} أسابيع"
+  }
+}

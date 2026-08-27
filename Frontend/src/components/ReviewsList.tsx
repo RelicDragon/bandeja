@@ -124,7 +124,7 @@ export const ReviewsList = ({
   const listContent = (
     <div className={compact ? 'space-y-3' : 'space-y-4'}>
       {reviews.map((r) => {
-        const rowClassName = `w-full text-left rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700/80 transition-colors ${compact ? 'p-2' : 'p-3'}`;
+        const rowClassName = `w-full text-start rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700/80 transition-colors ${compact ? 'p-2' : 'p-3'}`;
         const goToGame = onReviewClick ? () => onReviewClick(r.gameId) : undefined;
         return (
         <div

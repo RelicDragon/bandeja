@@ -133,7 +133,7 @@ export const GameFormatStepRanking = ({
               <button
                 key={key}
                 type="button"
-                className={`w-full text-left flex items-center justify-between gap-2 ${pill(selected)}`}
+                className={`w-full text-start flex items-center justify-between gap-2 ${pill(selected)}`}
                 onClick={() => {
                   if (key === 'BY_POINTS') selectByPoints();
                   else onChange({ winnerOfGame: key });
@@ -156,10 +156,10 @@ export const GameFormatStepRanking = ({
             </div>
             <div className="text-sm font-semibold text-gray-900 dark:text-white">{t('gameFormat.points.title')}</div>
           </div>
-          <p className="text-[11px] text-gray-500 dark:text-gray-400 pl-1 -mt-1">
+          <p className="text-[11px] text-gray-500 dark:text-gray-400 ps-1 -mt-1">
             {t('gameFormat.standingPointsHint')}
           </p>
-          <div className="space-y-2 pl-1">
+          <div className="space-y-2 ps-1">
             <Stepper label={t('gameResults.win')} value={pointsPerWin} onChange={(n) => onChange({ pointsPerWin: n })} />
             <Stepper label={t('gameResults.tie')} value={pointsPerTie} onChange={(n) => onChange({ pointsPerTie: n })} />
             <Stepper label={t('gameResults.loose')} value={pointsPerLoose} onChange={(n) => onChange({ pointsPerLoose: n })} />

@@ -232,7 +232,7 @@ export function ClubAdminCourtForm({ open, onClose, court, clubSports, onSubmit 
           >
             {saving ? (
               <>
-                <Loader2 size={16} className="mr-2 animate-spin" />
+                <Loader2 size={16} className="me-2 animate-spin" />
                 {t('common.saving')}
               </>
             ) : (

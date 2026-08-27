@@ -57,7 +57,7 @@ export function CollapsibleSettingsShell({
       {showHeader ? (
         <div
           className={`relative flex items-center gap-2 ${isCollapsed ? '' : 'mb-3'} ${
-            title && hintsButton ? 'pr-11' : ''
+            title && hintsButton ? 'pe-11' : ''
           }`}
         >
           {(Icon || title) ? (
@@ -72,7 +72,7 @@ export function CollapsibleSettingsShell({
               className={
                 title
                   ? 'absolute right-0 top-1/2 -translate-y-1/2 shrink-0'
-                  : 'ml-auto shrink-0'
+                  : 'ms-auto shrink-0'
               }
             >
               <AnimatePresence initial={false}>

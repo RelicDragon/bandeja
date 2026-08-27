@@ -17,6 +17,7 @@ import {
   type ThreadLiveConfig,
   type ThreadLiveEvent,
 } from '@/services/chat/threadLiveProjection';
+import { liveMessageBelongsToThread } from '@/services/chat/liveMessageBelongsToThread';
 
 export interface UseThreadReactionsParams {
   id: string | undefined;
@@ -239,7 +240,8 @@ export function useThreadReactions({
         contextType,
         contextId: id,
         gameChatType: contextType === 'GAME' ? effectiveChatType : undefined,
-        readRows: () => rows,
+        readRows: () =>
+          rows.filter((m) => liveMessageBelongsToThread(m, { contextType, contextId: id })),
         verify: () => true,
         immediate: true,
       });

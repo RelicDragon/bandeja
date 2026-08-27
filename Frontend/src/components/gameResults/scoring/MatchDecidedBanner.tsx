@@ -17,7 +17,7 @@ export const MatchDecidedBanner = ({ teamAWins, teamBWins, scoreline }: MatchDec
       <span className="font-semibold text-green-800 dark:text-green-200">
         {t('gameResults.matchDecided', { score: scoreline })}
       </span>
-      <span className="ml-auto font-mono text-green-700 dark:text-green-300">
+      <span className="ms-auto font-mono text-green-700 dark:text-green-300">
         {aWon ? `${teamAWins}-${teamBWins}` : `${teamAWins}-${teamBWins}`}
       </span>
     </div>

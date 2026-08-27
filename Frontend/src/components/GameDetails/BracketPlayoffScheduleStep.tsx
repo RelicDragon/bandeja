@@ -338,7 +338,7 @@ export function BracketPlayoffScheduleStep({
           ) : null}
 
           <Button type="button" className="w-full" onClick={() => generate()} disabled={!clubId || selectedCourts.length === 0}>
-            <WandSparkles className="mr-2 h-4 w-4" />
+            <WandSparkles className="me-2 h-4 w-4" />
             {planned.length
               ? t('gameDetails.bracketRegenerateSchedule', { defaultValue: 'Rebuild schedule' })
               : t('gameDetails.bracketGenerateSchedule', { defaultValue: 'Build compact schedule' })}
@@ -348,7 +348,7 @@ export function BracketPlayoffScheduleStep({
             <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
               <table className="min-w-full text-xs">
                 <thead className="bg-gray-50 text-gray-500 dark:bg-gray-800/80 dark:text-gray-300">
-                  <tr><th className="px-2 py-2 text-left">{t('gameDetails.bracketWave', { defaultValue: 'Wave / time' })}</th>{selectedCourts.map((court) => <th key={court.id} className="min-w-32 px-2 py-2 text-left">{court.name}</th>)}</tr>
+                  <tr><th className="px-2 py-2 text-start">{t('gameDetails.bracketWave', { defaultValue: 'Wave / time' })}</th>{selectedCourts.map((court) => <th key={court.id} className="min-w-32 px-2 py-2 text-start">{court.name}</th>)}</tr>
                 </thead>
                 <tbody>
                   {waves.map(([waveStart, rows], waveIndex) => (

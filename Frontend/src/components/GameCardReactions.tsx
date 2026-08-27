@@ -164,7 +164,7 @@ export function GameCardReactions({
   }
 
   const stripPanel = !canReact ? (
-    <div className={`flex items-center gap-0.5 rounded-lg pl-0.5 pr-0.5 py-0 min-h-[28px] ${theme.panel}`}>
+    <div className={`flex items-center gap-0.5 rounded-lg ps-0.5 pe-0.5 py-0 min-h-[28px] ${theme.panel}`}>
       {readOnlyEntries.map(([emoji, count]) => (
         <div key={emoji} className="flex flex-col items-center justify-center px-0.5 min-w-[22px]">
           <span className="text-sm leading-none">{emoji}</span>
@@ -175,7 +175,7 @@ export function GameCardReactions({
       ))}
     </div>
   ) : (
-    <div className={`flex items-center gap-0 rounded-lg pl-0.5 pr-0.5 py-0 min-h-[28px] ${theme.panel}`}>
+    <div className={`flex items-center gap-0 rounded-lg ps-0.5 pe-0.5 py-0 min-h-[28px] ${theme.panel}`}>
       <button
         type="button"
         data-reaction-button="true"
@@ -198,7 +198,7 @@ export function GameCardReactions({
       </button>
 
       {otherReactionEntries.length > 0 && (
-        <div className={`flex gap-0.5 items-center pl-0.5 border-l ${theme.divider}`}>
+        <div className={`flex gap-0.5 items-center ps-0.5 border-s ${theme.divider}`}>
           {otherReactionEntries.map(([emoji, count]) => (
             <div key={emoji} className="flex flex-col items-center justify-center px-0.5 min-w-[22px]">
               <span className="text-sm leading-none">{emoji}</span>

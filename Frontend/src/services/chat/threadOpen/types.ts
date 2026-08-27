@@ -1,6 +1,7 @@
 import type { ChatMessage, ChatMessageWithStatus } from '@/api/chat';
 import type { ThreadScrollPosition } from '@/services/chat/chatThreadScroll';
 import type { ChatOpenSetMessagesSource } from '@/services/chat/chatOpenTrace';
+import type { ThreadBelongingConfig } from '@/services/chat/liveMessageBelongsToThread';
 
 /**
  * ThreadOpen bootstrap invariants:
@@ -66,6 +67,9 @@ export type ThreadOpenMergeInput = {
   outbox: readonly ChatMessageWithStatus[];
   prev: readonly ChatMessageWithStatus[];
   l1Fresh: boolean;
+  /** Prefer threadKey; belonging is derived when omitted. */
+  threadKey?: ThreadOpenKey;
+  belonging?: ThreadBelongingConfig;
 };
 
 export type ThreadOpenMergeResult = {

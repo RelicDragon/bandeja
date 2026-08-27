@@ -83,7 +83,7 @@ export const GameBroadcastMatchPage = () => {
       <div className="relative flex min-h-[100dvh] w-full max-w-none flex-col">
         <div className="pointer-events-none absolute left-0 right-0 top-0 z-20 flex w-full max-w-none items-start justify-between gap-3 px-3 pt-3 sm:px-4 sm:pt-4">
           <LiveBandejaRotatingLogo variant="broadcast" alt="Bandeja" />
-          <div className="ml-auto flex shrink-0 flex-col items-end gap-1">
+          <div className="ms-auto flex shrink-0 flex-col items-end gap-1">
             {showPill ? (
               <div className={`pointer-events-auto ${pillCls}`}>
                 {isOnline ? t('gameDetails.liveTvPillLive') : t('gameDetails.liveTvPillOffline')}

@@ -305,7 +305,7 @@ export function RatingExplanationLlmSection({ gameId, userId }: RatingExplanatio
         className="pointer-events-none absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-emerald-400 via-teal-500 to-emerald-600/80"
         aria-hidden
       />
-      <div className="pl-4 sm:pl-5">
+      <div className="ps-4 sm:ps-5">
         <div className="px-4 pt-4 pb-1 sm:px-5 sm:pt-5 flex items-start justify-between gap-3">
           <div className="min-w-0">
             <h3 className="text-[15px] font-semibold tracking-tight text-slate-900 dark:text-slate-50">

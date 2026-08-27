@@ -24,7 +24,7 @@ const DetailRow = ({ label, value, note }: DetailRowProps) => (
         {label}
       </span>
       {value ? (
-        <span className="text-xs font-semibold text-gray-900 dark:text-white text-right">
+        <span className="text-xs font-semibold text-gray-900 dark:text-white text-end">
           {value}
         </span>
       ) : null}

@@ -222,14 +222,15 @@ export async function reconcileAfterPaint(
     if (currentIdRef.current === contextId && isActiveOpenReconcile(generation) && !stalePaint) {
       // Re-read live rows: send-success / socket may have updated the thread while we pulled.
       let next = messagesRef.current;
+      const belonging = { contextType, contextId };
       if (missedBuffer.length > 0) {
-        next = mergeOpenSnapshot(next, missedBuffer, []);
+        next = mergeOpenSnapshot(next, missedBuffer, [], undefined, belonging);
       }
       if (missedNetwork.length > 0) {
-        next = mergeOpenSnapshot(next, missedNetwork, []);
+        next = mergeOpenSnapshot(next, missedNetwork, [], undefined, belonging);
       }
       if (dexieTail.length > 0) {
-        next = mergeOpenSnapshot(next, dexieTail, []);
+        next = mergeOpenSnapshot(next, dexieTail, [], undefined, belonging);
       }
       const projected = reduceThreadLiveSnapshot(
         messagesRef.current,

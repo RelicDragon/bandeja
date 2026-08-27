@@ -55,11 +55,11 @@ export const ComparisonPlayerStatsPanel = ({ current, other }: ComparisonPlayerS
   }) => (
     <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl px-6 py-3">
       <div className="grid grid-cols-3 gap-4 items-center">
-        <div className="text-right">
+        <div className="text-end">
           <div className={`text-2xl font-bold ${numClass(left, right, higherBetter)}`}>{left}</div>
         </div>
         <div className="text-center text-sm font-semibold text-gray-600 dark:text-gray-400">{label}</div>
-        <div className="text-left">
+        <div className="text-start">
           <div className={`text-2xl font-bold ${numClass(right, left, higherBetter)}`}>{right}</div>
         </div>
       </div>
@@ -69,11 +69,11 @@ export const ComparisonPlayerStatsPanel = ({ current, other }: ComparisonPlayerS
   const RowStr = ({ label, left, right }: { label: string; left: string; right: string }) => (
     <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl px-6 py-3">
       <div className="grid grid-cols-3 gap-4 items-center">
-        <div className="text-right">
+        <div className="text-end">
           <div className={`text-2xl font-bold ${strWinRateClass(left, right)}`}>{left}%</div>
         </div>
         <div className="text-center text-sm font-semibold text-gray-600 dark:text-gray-400">{label}</div>
-        <div className="text-left">
+        <div className="text-start">
           <div className={`text-2xl font-bold ${strWinRateClass(right, left)}`}>{right}%</div>
         </div>
       </div>

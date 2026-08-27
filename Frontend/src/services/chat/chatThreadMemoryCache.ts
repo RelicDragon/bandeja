@@ -5,6 +5,10 @@ import {
   seedMessageRowHeights,
 } from '@/services/chat/chatMessageHeights';
 import { estimateMessageRowHeightPx } from '@/services/chat/chatMessageRowEstimate';
+import {
+  belongingFromThreadKey,
+  filterMessagesBelongingToThreadKey,
+} from '@/services/chat/threadSession';
 
 const MAX_THREADS = 120;
 const MAX_MESSAGES_PER_THREAD = 400;
@@ -37,6 +41,15 @@ function isExcludedFromL1(m: ChatMessageWithStatus): boolean {
   return false;
 }
 
+/** Drop foreign/orphan rows when the L1 key encodes a parseable thread scope. */
+function scopeRowsForThreadKey(
+  key: string,
+  rows: readonly ChatMessageWithStatus[]
+): ChatMessageWithStatus[] {
+  if (!belongingFromThreadKey(key)) return [...rows];
+  return filterMessagesBelongingToThreadKey(rows, key);
+}
+
 function cloneTailForStorage(rows: readonly ChatMessageWithStatus[]): ChatMessageWithStatus[] {
   const filtered = rows.filter((m) => !isExcludedFromL1(m));
   const tail = filtered.slice(-MAX_MESSAGES_PER_THREAD);
@@ -66,13 +79,25 @@ export function peekChatThreadMemory(key: string): ChatMessageWithStatus[] {
     map.delete(key);
     return [];
   }
+  const messages = scopeRowsForThreadKey(key, entry.messages);
+  if (messages.length === 0) {
+    map.delete(key);
+    return [];
+  }
+  if (messages.length !== entry.messages.length) {
+    map.set(key, {
+      messages: messages.map((m) => ({ ...m })),
+      rowHeights: collectRowHeightsForStorage(messages),
+      savedAt: entry.savedAt,
+    });
+  }
   seedMessageRowHeights(entry.rowHeights ?? {});
-  for (const m of entry.messages) {
+  for (const m of messages) {
     if (m.id) {
       seedEphemeralMessageRowHeight(m.id, entry.rowHeights?.[m.id] ?? estimateMessageRowHeightPx(m));
     }
   }
-  return entry.messages.map((m) => ({ ...m }));
+  return messages.map((m) => ({ ...m }));
 }
 
 export function putChatThreadMemory(
@@ -81,7 +106,7 @@ export function putChatThreadMemory(
   verify?: () => boolean
 ): void {
   if (verify && !verify()) return;
-  const messages = cloneTailForStorage(rows);
+  const messages = cloneTailForStorage(scopeRowsForThreadKey(key, rows));
   if (messages.length === 0) {
     map.delete(key);
     return;

@@ -1,0 +1,37 @@
+{
+  "invites": {
+    "title": "الدعوات",
+    "pending": "الدعوات المعلقة",
+    "noInvites": "لا توجد دعوات معلقة",
+    "accept": "قبول",
+    "decline": "رفض",
+    "from": "من",
+    "to": "إلى",
+    "message": "رسالة",
+    "accepted": "قُبلت الدعوة",
+    "acceptedSuccessfully": "قُبلت الدعوة بنجاح",
+    "declined": "رُفضت الدعوة",
+    "declinedSuccessfully": "رُفضت الدعوة بنجاح",
+    "cancelledSuccessfully": "أُلغيت الدعوة بنجاح",
+    "selectPlayer": "اختر لاعباً",
+    "selectPlayers": "اختر لاعبين",
+    "noPlayersAvailable": "لا يوجد لاعبون متاحون للدعوة",
+    "inviteFriendToBandeja": "ادعُ صديقاً إلى Bandeja",
+    "shareAppBody": "انضم إليّ على Bandeja: {{url}}",
+    "pendingInvites": "الدعوات المعلقة",
+    "badgeDeclined": "مرفوضة",
+    "badgeExpired": "انتهت صلاحية الدعوة",
+    "badgeInviteCancelled": "أُلغيت الدعوة",
+    "sectionTerminalInvites": "ردود الدعوات",
+    "inviteAgainHint": "يمكنك إرسال دعوة جديدة.",
+    "inviteSent": "أُرسلت الدعوة",
+    "invitedYou": "دعوة إلى",
+    "declineModal": {
+      "title": "رفض الدعوة؟",
+      "description": "يمكنك اختيارياً إخبار المنظم بسبب عدم انضمامك.",
+      "reasonLabel": "السبب (اختياري)",
+      "reasonPlaceholder": "مثال: تعارض في الموعد، إصابة…",
+      "confirm": "رفض"
+    }
+  }
+}

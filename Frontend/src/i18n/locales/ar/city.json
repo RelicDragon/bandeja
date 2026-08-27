@@ -1,0 +1,33 @@
+{
+  "city": {
+    "clubsCount_zero": "لا أندية",
+    "clubsCount_one": "نادي واحد ({{count}})",
+    "clubsCount_other": "{{count}} أندية",
+    "searchCityOrClub": "ابحث عن مدينة أو نادٍ…",
+    "searchSectionCities": "المدن",
+    "searchSectionClubs": "الأندية",
+    "searchSectionCountries": "الدول",
+    "map": "الخريطة",
+    "list": "القائمة",
+    "selectCity": "اختيار",
+    "selectCityName": "استخدم {{name}}",
+    "nearMe": "بالقرب مني",
+    "whereAmI": "أين أنا؟",
+    "nearestToYou": "الأقرب إليك",
+    "yourLocation": "موقعك",
+    "approximateLocation": "موقع تقريبي",
+    "suggested": "مقترحة",
+    "suggestedNearest": "الأقرب",
+    "suggestedCurrent": "الحالية",
+    "suggestedCurrentNearest": "مدينتك · الأقرب",
+    "locatingNearby": "جارٍ البحث عن مدينة بالقرب منك…",
+    "locationHintDenied": "الوصول للموقع متوقف — يمكنك البحث أو استخدام الخريطة.",
+    "locationHintUnavailable": "تعذّر الحصول على موقعك — جرّب البحث أو الخريطة.",
+    "locationHintTimeout": "استغرق الموقع وقتاً طويلاً — حاول مرة أخرى أو ابحث.",
+    "locationHintUnsupported": "الموقع غير متاح هنا — جرّب البحث أو الخريطة.",
+    "locationHintNoCity": "لم يُعثر على مدينة بالقرب — جرّب البحث أو الخريطة.",
+    "clubsCount_two": "{{count}} أندية",
+    "clubsCount_few": "{{count}} أندية",
+    "clubsCount_many": "{{count}} أندية"
+  }
+}

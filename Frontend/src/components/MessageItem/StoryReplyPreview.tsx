@@ -56,7 +56,7 @@ export const StoryReplyPreview: React.FC<StoryReplyPreviewProps> = ({
       <button
         type="button"
         onClick={handleClick}
-        className={`block rounded-xl overflow-hidden border-l-2 border-gray-300 dark:border-gray-600 ${isInteractive ? 'cursor-pointer' : 'cursor-default'}`}
+        className={`block rounded-xl overflow-hidden border-s-2 border-gray-300 dark:border-gray-600 ${isInteractive ? 'cursor-pointer' : 'cursor-default'}`}
         aria-label={label}
       >
         {thumbnail ? (
@@ -65,10 +65,10 @@ export const StoryReplyPreview: React.FC<StoryReplyPreviewProps> = ({
             alt=""
             loading="lazy"
             draggable={false}
-            className="w-14 h-20 object-cover rounded-lg ml-1.5 select-none"
+            className="w-14 h-20 object-cover rounded-lg ms-1.5 select-none"
           />
         ) : (
-          <div className="w-14 h-20 ml-1.5 rounded-lg bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+          <div className="w-14 h-20 ms-1.5 rounded-lg bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
             <CircleDashed className="w-5 h-5 text-gray-400 dark:text-gray-500" />
           </div>
         )}

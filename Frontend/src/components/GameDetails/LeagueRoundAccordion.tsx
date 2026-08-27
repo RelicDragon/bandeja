@@ -99,7 +99,7 @@ export const LeagueRoundAccordion = ({
         onClick={onToggle}
         className="w-full flex items-center justify-between px-4 py-3 gap-4"
       >
-        <div className="flex items-center gap-3 text-left">
+        <div className="flex items-center gap-3 text-start">
           <p className="section-title">
             {t('gameDetails.round')} {round.orderIndex + 1}
           </p>
@@ -276,7 +276,7 @@ export const LeagueRoundAccordion = ({
                           <span className="h-2 w-2 rounded-full bg-indigo-500" />
                           {t('gameDetails.bracketSeasonPlayoff')}
                         </div>
-                        <div className="space-y-3 pl-2 border-l-2 border-indigo-300/40 dark:border-indigo-700/40">
+                        <div className="space-y-3 ps-2 border-s-2 border-indigo-300/40 dark:border-indigo-700/40">
                           {seasonPlayoffGames.map((game) => (
                             <LeagueGameCard
                               key={game.id}
@@ -313,7 +313,7 @@ export const LeagueRoundAccordion = ({
                           <span className="w-2 h-2 rounded-full bg-gray-400 dark:bg-gray-500" />
                           {t('gameDetails.noGroup')}
                         </div>
-                        <div className="space-y-3 pl-2 border-l-2 border-gray-300/40 dark:border-gray-600/40">
+                        <div className="space-y-3 ps-2 border-s-2 border-gray-300/40 dark:border-gray-600/40">
                           {seasonPlayoffGames.map((game) => (
                             <LeagueGameCard
                               key={game.id}

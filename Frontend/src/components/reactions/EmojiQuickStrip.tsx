@@ -229,7 +229,7 @@ export function EmojiQuickStrip({ frequentEmojis, currentEmoji, onPick, disabled
                 </button>
               </DialogPrimitive.Close>
               <div className="flex min-w-0 flex-1 items-center gap-2">
-                <DialogPrimitive.Title className="min-w-0 flex-1 truncate text-left text-base font-semibold text-gray-900 dark:text-white">
+                <DialogPrimitive.Title className="min-w-0 flex-1 truncate text-start text-base font-semibold text-gray-900 dark:text-white">
                   {t('chat.reactions.chooseReaction')}
                 </DialogPrimitive.Title>
                 {normCurrent && isValidReactionEmoji(normCurrent) ? (

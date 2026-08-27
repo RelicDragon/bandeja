@@ -55,7 +55,7 @@ export function CitySelectorField({
   return (
     <div className="w-full">
       <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-        <MapPin size={14} className="inline mr-1" />
+        <MapPin size={14} className="inline me-1" />
         {t('marketplace.citiesVisibilityLabel')}
       </label>
 
@@ -63,7 +63,7 @@ export function CitySelectorField({
         {/* Primary city chip (non-removable) */}
         <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary-500 text-white text-sm font-medium">
           {primaryCityName}
-          <span className="text-xs opacity-80 ml-0.5">{t('marketplace.primaryCity')}</span>
+          <span className="text-xs opacity-80 ms-0.5">{t('marketplace.primaryCity')}</span>
         </div>
 
         {/* Additional city chips (removable) */}
@@ -81,7 +81,7 @@ export function CitySelectorField({
                 type="button"
                 onClick={() => onRemoveCity(cityId)}
                 disabled={disabled}
-                className="ml-1 hover:bg-slate-300 dark:hover:bg-slate-600 rounded-full p-0.5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="ms-1 hover:bg-slate-300 dark:hover:bg-slate-600 rounded-full p-0.5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 aria-label={`Remove ${translateCity(city.id, city.name, city.country)}`}
               >
                 <X size={14} />
@@ -111,7 +111,7 @@ export function CitySelectorField({
                     key={city.id}
                     type="button"
                     onClick={() => handleCitySelect(city.id)}
-                    className="w-full text-left px-4 py-2 text-sm text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors first:rounded-t-lg last:rounded-b-lg"
+                    className="w-full text-start px-4 py-2 text-sm text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors first:rounded-t-lg last:rounded-b-lg"
                   >
                     {translateCity(city.id, city.name, city.country)}
                   </button>

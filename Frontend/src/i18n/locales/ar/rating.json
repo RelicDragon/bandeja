@@ -1,0 +1,14 @@
+{
+  "rating": {
+    "title": "تقييمي",
+    "level": "المستوى",
+    "socialLevel": "اجتماعي",
+    "points": "إجمالي النقاط",
+    "gamesPlayed": "الألعاب الملعوبة",
+    "gamesWon": "الألعاب الفائزة",
+    "winRate": "نسبة الفوز",
+    "reliability": "الموثوقية",
+    "uncertainty": "عدم اليقين",
+    "settling": "استقرار التقييم"
+  }
+}

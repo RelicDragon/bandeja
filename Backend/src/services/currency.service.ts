@@ -24,8 +24,21 @@ class CurrencyService {
     'EUR', 'USD', 'GBP', 'JPY', 'CNY', 'CHF', 'CAD', 'AUD', 'NZD',
     'SEK', 'NOK', 'DKK', 'PLN', 'CZK', 'HUF', 'RON', 'BGN',
     'RUB', 'RSD', 'TRY', 'INR', 'BRL', 'MXN',
-    'SGD', 'HKD', 'KRW', 'THB', 'MYR', 'IDR', 'PHP'
+    'SGD', 'HKD', 'KRW', 'THB', 'MYR', 'IDR', 'PHP',
+    'AED', 'SAR', 'QAR', 'KWD', 'OMR',
   ];
+
+  private static minorFactor(currency: PriceCurrency): number {
+    if (currency === 'JPY' || currency === 'KRW' || currency === 'IDR') return 1;
+    if (currency === 'KWD' || currency === 'OMR') return 1000;
+    return 100;
+  }
+
+  private static displayDecimals(currency: PriceCurrency): number {
+    if (currency === 'JPY' || currency === 'KRW' || currency === 'IDR') return 0;
+    if (currency === 'KWD' || currency === 'OMR') return 3;
+    return 2;
+  }
 
   /**
    * Fetch latest exchange rates from ExchangeRate-API
@@ -269,7 +282,8 @@ class CurrencyService {
     if (fromCurrency === toCurrency) return amountCents;
 
     const rate = await this.getExchangeRate(fromCurrency, toCurrency);
-    return Math.round(amountCents * rate);
+    const fromMajor = amountCents / this.minorFactor(fromCurrency);
+    return Math.round(fromMajor * rate * this.minorFactor(toCurrency));
   }
 
   /**
@@ -331,6 +345,11 @@ class CurrencyService {
       MYR: { symbol: 'RM', position: 'before' },
       IDR: { symbol: 'Rp', position: 'before' },
       PHP: { symbol: '₱', position: 'before' },
+      AED: { symbol: 'د.إ', position: 'after' },
+      SAR: { symbol: 'ر.س', position: 'after' },
+      QAR: { symbol: 'ر.ق', position: 'after' },
+      KWD: { symbol: 'د.ك', position: 'after' },
+      OMR: { symbol: 'ر.ع.', position: 'after' },
     };
 
     return symbols[currency] || { symbol: currency, position: 'after' };
@@ -345,11 +364,8 @@ class CurrencyService {
   static formatPrice(priceCents: number | null, currency: PriceCurrency): string {
     if (priceCents === null) return 'N/A';
 
-    const amount = priceCents / 100;
-
-    // Special formatting for currencies that don't use decimal places
-    const noDecimalCurrencies: PriceCurrency[] = ['JPY', 'KRW', 'IDR'];
-    const decimals = noDecimalCurrencies.includes(currency) ? 0 : 2;
+    const amount = priceCents / this.minorFactor(currency);
+    const decimals = this.displayDecimals(currency);
 
     const formatted = amount.toLocaleString('en-GB', {
       minimumFractionDigits: decimals,

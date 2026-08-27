@@ -58,8 +58,8 @@ export const LiveTeamPanel = ({
       className={
         tv
           ? boardTheme === 'light'
-            ? 'flex min-h-0 flex-1 flex-col items-stretch justify-center rounded-[2rem] border border-gray-200 bg-gray-100/70 p-4 text-left md:p-5'
-            : 'flex min-h-0 flex-1 flex-col items-stretch justify-center rounded-[2rem] border border-white/10 bg-white/5 p-4 text-left md:p-5'
+            ? 'flex min-h-0 flex-1 flex-col items-stretch justify-center rounded-[2rem] border border-gray-200 bg-gray-100/70 p-4 text-start md:p-5'
+            : 'flex min-h-0 flex-1 flex-col items-stretch justify-center rounded-[2rem] border border-white/10 bg-white/5 p-4 text-start md:p-5'
           : 'flex min-h-[12rem] flex-col rounded-3xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900'
       }
     >

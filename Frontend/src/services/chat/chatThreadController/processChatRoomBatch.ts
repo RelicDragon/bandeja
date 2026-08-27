@@ -29,6 +29,7 @@ import { upsertPeerReadCursor } from '@/services/chat/peerReadCursorStore';
 import { parsePeerReadCursor } from '@/services/chat/peerReadCursor';
 import { useAuthStore } from '@/store/authStore';
 import { shouldDropInviteOnlyRosterSystemMessage } from '@/services/chat/dropInviteOnlyRosterSystemMessage';
+import { stampMessageThreadContext } from '@/services/chat/liveMessageBelongsToThread';
 
 export type ProcessChatRoomBatchCtx = {
   id: string | undefined;
@@ -64,7 +65,11 @@ function mapBatchToLiveEvents(batch: ChatRoomEvent[]): ThreadLiveEvent[] {
     switch (ev.kind) {
       case 'message': {
         const data = ev.data;
-        const message = { ...data.message, syncSeq: data.message.syncSeq ?? data.syncSeq };
+        const raw = data.message;
+        const message = {
+          ...stampMessageThreadContext(raw, data.contextType as ChatContextType, data.contextId),
+          syncSeq: raw.syncSeq ?? data.syncSeq,
+        };
         if (shouldDropInviteOnlyRosterSystemMessage(message)) break;
         events.push({
           type: 'inboundMessage',
@@ -145,8 +150,13 @@ function mapBatchToLiveEvents(batch: ChatRoomEvent[]): ThreadLiveEvent[] {
         break;
       }
       case 'messageUpdated': {
-        const message = ev.data.message;
-        if (!message) break;
+        const raw = ev.data.message;
+        if (!raw) break;
+        const message = stampMessageThreadContext(
+          raw,
+          ev.data.contextType as ChatContextType,
+          ev.data.contextId
+        );
         events.push({
           type: 'messageUpdated',
           messageId: message.id,

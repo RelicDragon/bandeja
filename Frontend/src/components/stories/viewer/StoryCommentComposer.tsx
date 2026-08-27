@@ -87,7 +87,7 @@ export function StoryCommentComposer({
         </button>
       </div>
       {showCounter ? (
-        <p className="mt-1 text-right text-[10px] tabular-nums text-gray-400 dark:text-gray-500">
+        <p className="mt-1 text-end text-[10px] tabular-nums text-gray-400 dark:text-gray-500">
           {text.length}/{STORY_COMMENT_MAX_CHARS}
         </p>
       ) : null}

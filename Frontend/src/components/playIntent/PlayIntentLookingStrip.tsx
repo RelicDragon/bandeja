@@ -72,7 +72,7 @@ export function PlayIntentLookingStrip({
         )}
         <button
           type="button"
-          className="flex min-w-0 flex-1 items-start gap-2.5 text-left"
+          className="flex min-w-0 flex-1 items-start gap-2.5 text-start"
           onClick={() => {
             if (confirmStop) return;
             if (proposal) onOpenProposal();

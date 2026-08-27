@@ -10,10 +10,12 @@ export async function processAdCreativeImage(
   imageBuffer: Buffer,
   campaignId: string,
   creativeId: string,
-  variant: 'light' | 'dark'
+  variant: 'light' | 'dark',
+  frameIndex = 0
 ): Promise<string> {
   const suffix = variant === 'dark' ? '_dark' : '';
-  const s3Key = `uploads/ads/${campaignId}/${creativeId}${suffix}.webp`;
+  const frameSuffix = frameIndex === 0 ? '' : `_${frameIndex + 1}`;
+  const s3Key = `uploads/ads/${campaignId}/${creativeId}${suffix}${frameSuffix}.webp`;
 
   const processed = await sharp(imageBuffer)
     .rotate()

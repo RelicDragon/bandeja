@@ -590,7 +590,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({ disabled: disabledPr
   const translationBlockStackClassName = [
     'flex min-w-0 flex-row flex-wrap items-end gap-2',
     translationBlockButtonCount > 1
-      ? ' -mb-2 -ml-1 rounded-2xl border border-white/50 bg-white/55 p-2 shadow-[0_4px_24px_rgba(0,0,0,0.08),inset_0_1px_0_0_rgba(255,255,255,0.85)] backdrop-blur-xl backdrop-saturate-150 dark:border-white/10 dark:bg-gray-950/45 dark:shadow-[0_4px_24px_rgba(0,0,0,0.35),inset_0_1px_0_0_rgba(255,255,255,0.06)]'
+      ? ' -mb-2 -ms-1 rounded-2xl border border-white/50 bg-white/55 p-2 shadow-[0_4px_24px_rgba(0,0,0,0.08),inset_0_1px_0_0_rgba(255,255,255,0.85)] backdrop-blur-xl backdrop-saturate-150 dark:border-white/10 dark:bg-gray-950/45 dark:shadow-[0_4px_24px_rgba(0,0,0,0.35),inset_0_1px_0_0_rgba(255,255,255,0.06)]'
       : '',
     translateToLanguage ? 'relative overflow-visible' : '',
   ]

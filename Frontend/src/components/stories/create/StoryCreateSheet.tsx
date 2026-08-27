@@ -106,7 +106,7 @@ export function StoryCreateSheet({ open, onClose, onFilesSelected, disabled }: S
       >
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary-500/[0.07] via-transparent to-violet-500/[0.06]" />
         <DialogHeader className="relative border-0 pb-2">
-          <DialogTitle className="pr-8">{t('stories.addStory')}</DialogTitle>
+          <DialogTitle className="pe-8">{t('stories.addStory')}</DialogTitle>
           <DialogDescription>{t('stories.addStoryHint')}</DialogDescription>
         </DialogHeader>
 

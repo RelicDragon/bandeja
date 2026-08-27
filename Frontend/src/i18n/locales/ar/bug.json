@@ -1,0 +1,77 @@
+{
+  "bug": {
+    "bug": "خطأ",
+    "bugTracker": "متتبع الأخطاء",
+    "addBug": "إضافة خطأ",
+    "addSuggestion": "إضافة اقتراح",
+    "addQuestion": "إضافة سؤال",
+    "addProblem": "إضافة مشكلة",
+    "addTask": "إضافة مهمة",
+    "description": "أبلغ عن الأخطاء والاقتراحات والأسئلة للمساعدة في تحسين التطبيق",
+    "type": "النوع",
+    "descriptionPlaceholder": "صف الخطأ أو الاقتراح أو السؤال...",
+    "submit": "إرسال",
+    "created": "أُرسل تقرير الخطأ بنجاح",
+    "createError": "فشل إرسال تقرير الخطأ",
+    "textRequired": "وصف الخطأ مطلوب",
+    "loadError": "فشل تحميل الأخطاء",
+    "noBugs": "لا توجد أخطاء مُبلَّغ عنها بعد",
+    "allTypes": "كل الأنواع",
+    "allActive": "كل النشطة",
+    "statusUpdated": "تم تحديث حالة الخطأ",
+    "statusUpdateError": "فشل تحديث حالة الخطأ",
+    "typeUpdated": "تم تحديث نوع الخطأ",
+    "typeUpdateError": "فشل تحديث نوع الخطأ",
+    "deleted": "حُذف الخطأ",
+    "deleteError": "فشل حذف الخطأ",
+    "openChat": "فتح المحادثة",
+    "actions": "إجراءات الخطأ",
+    "status": "الحالة",
+    "priority": "الأولوية",
+    "priorityUpdated": "تم تحديث أولوية الخطأ",
+    "stars": "النجوم",
+    "starsRequired": "اختر تقييماً من 1 إلى 5 نجوم",
+    "ratingUpdated": "تم تحديث التقييم",
+    "starLabels": {
+      "1": "نجمة واحدة",
+      "2": "نجمتان",
+      "3": "3 نجوم",
+      "4": "4 نجوم",
+      "5": "5 نجوم"
+    },
+    "changeStatus": "تغيير الحالة",
+    "changeType": "تغيير النوع",
+    "updateFailed": "فشل تحديث الخطأ",
+    "myBugsOnly": "أنشأتها أنا",
+    "priorities": {
+      "0": "0",
+      "1": "+1",
+      "2": "+2",
+      "-2": "−2",
+      "-1": "−1"
+    },
+    "priorityLabels": {
+      "0": "عادي",
+      "1": "مرتفع",
+      "2": "مرتفع جداً",
+      "-2": "منخفض جداً",
+      "-1": "منخفض"
+    },
+    "types": {
+      "BUG": "خطأ",
+      "CRITICAL": "حرج",
+      "SUGGESTION": "اقتراح",
+      "QUESTION": "سؤال",
+      "TASK": "مهمة",
+      "REVIEW": "مراجعة"
+    },
+    "statuses": {
+      "CREATED": "أُنشئ",
+      "CONFIRMED": "مؤكد",
+      "IN_PROGRESS": "قيد التنفيذ",
+      "TEST": "اختبار",
+      "FINISHED": "منتهٍ",
+      "ARCHIVED": "مؤرشف"
+    }
+  }
+}

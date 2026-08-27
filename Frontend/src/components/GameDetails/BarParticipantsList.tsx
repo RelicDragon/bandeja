@@ -98,10 +98,10 @@ export const BarParticipantsList = ({ gameId, participants }: BarParticipantsLis
         <table className="w-full">
           <thead>
             <tr className="border-b border-gray-200 dark:border-gray-700">
-              <th className="text-left py-2 pl-4 pr-0 text-xs font-semibold text-gray-700 dark:text-gray-300">
+              <th className="text-start py-2 ps-4 pe-0 text-xs font-semibold text-gray-700 dark:text-gray-300">
                 {t('gameDetails.player')}
               </th>
-              <th className="text-center py-2 pl-0 pr-2 text-xs font-semibold text-gray-700 dark:text-gray-300">
+              <th className="text-center py-2 ps-0 pe-2 text-xs font-semibold text-gray-700 dark:text-gray-300">
                 {t('gameResults.socialLevel')}
               </th>
             </tr>
@@ -113,7 +113,7 @@ export const BarParticipantsList = ({ gameId, participants }: BarParticipantsLis
                   key={participant.userId}
                   className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50"
                 >
-                  <td className="py-2 pl-4 pr-0">
+                  <td className="py-2 ps-4 pe-0">
                     {participant.user ? (
                       <div className="flex items-center gap-3">
                         <PlayerAvatar
@@ -135,7 +135,7 @@ export const BarParticipantsList = ({ gameId, participants }: BarParticipantsLis
                       </div>
                     ) : null}
                   </td>
-                  <td className="py-2 pl-0 pr-2 text-center">
+                  <td className="py-2 ps-0 pe-2 text-center">
                     {participant.levelChange ? (
                       <div className="flex flex-col items-center gap-1">
                         <div className="flex items-center gap-1.5">

@@ -151,7 +151,7 @@ export function RatingExplanationTranslateControl({
                     e.stopPropagation();
                     handleSelect(lang.code);
                   }}
-                  className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-left text-sm transition-colors first:rounded-t-2xl last:rounded-b-2xl ${
+                  className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-start text-sm transition-colors first:rounded-t-2xl last:rounded-b-2xl ${
                     selected
                       ? 'bg-emerald-50 dark:bg-emerald-950/45 text-slate-900 dark:text-slate-50'
                       : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/80'

@@ -22,10 +22,10 @@ export function ForwardedFromHeader({
         e.stopPropagation();
         navigateToForwardedFromChat(forwardedFrom);
       }}
-      className={`relative z-20 mb-1 max-w-full text-left rounded-md overflow-hidden cursor-pointer transition-colors hover:bg-sky-50/80 dark:hover:bg-sky-950/40 active:bg-sky-100/80 dark:active:bg-sky-900/40 ${className}`}
+      className={`relative z-20 mb-1 max-w-full text-start rounded-md overflow-hidden cursor-pointer transition-colors hover:bg-sky-50/80 dark:hover:bg-sky-950/40 active:bg-sky-100/80 dark:active:bg-sky-900/40 ${className}`}
       aria-label={`${label} ${forwardedFrom.title}`}
     >
-      <span className="flex items-stretch gap-0 border-l-[3px] border-sky-500 dark:border-sky-400 pl-2 py-0.5">
+      <span className="flex items-stretch gap-0 border-s-[3px] border-sky-500 dark:border-sky-400 ps-2 py-0.5">
         <span className="min-w-0 flex flex-col">
           <span className="text-[11px] font-semibold leading-tight text-sky-600 dark:text-sky-400">
             {label}

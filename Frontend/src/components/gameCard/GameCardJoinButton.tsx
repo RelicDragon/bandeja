@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { UserPlus, Clock } from 'lucide-react';
 import { Button } from '@/components';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
+import { useAuthStore } from '@/store/authStore';
+import { genderI18nContext } from '@/utils/i18nGender';
 
 interface GameCardJoinButtonProps {
   gameId: string;
@@ -13,6 +15,7 @@ interface GameCardJoinButtonProps {
 /** Join / queue CTA with a confirmation step. */
 export function GameCardJoinButton({ gameId, hasFreeSlots, onJoin }: GameCardJoinButtonProps) {
   const { t } = useTranslation();
+  const genderCtx = genderI18nContext(useAuthStore((s) => s.user?.gender));
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   const handleConfirm = () => {
@@ -46,7 +49,11 @@ export function GameCardJoinButton({ gameId, hasFreeSlots, onJoin }: GameCardJoi
           onClose={() => setConfirmOpen(false)}
           onConfirm={handleConfirm}
           title={hasFreeSlots ? t('games.confirmJoinTitle') : t('games.confirmJoinQueueTitle')}
-          message={hasFreeSlots ? t('games.confirmJoinMessage') : t('games.confirmJoinQueueMessage')}
+          message={
+            hasFreeSlots
+              ? t('games.confirmJoinMessage', { context: genderCtx })
+              : t('games.confirmJoinQueueMessage', { context: genderCtx })
+          }
         />
       )}
     </>

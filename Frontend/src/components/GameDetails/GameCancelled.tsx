@@ -68,7 +68,7 @@ export function GameCancelled({
         {cancellerPlayer && (
           <div className="mt-4 flex items-center justify-center gap-3">
             <PlayerAvatar player={cancellerPlayer} extrasmall showName={false} fullHideName />
-            <div className="min-w-0 text-left">
+            <div className="min-w-0 text-start">
               <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                 {[cancellerPlayer.firstName, cancellerPlayer.lastName].filter(Boolean).join(' ') || '-'}
               </p>

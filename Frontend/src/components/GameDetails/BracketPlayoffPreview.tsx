@@ -209,11 +209,11 @@ function SeedChip({
 
   const trashStripRoundClass =
     inMatch && matchRow === 'first'
-      ? 'rounded-tr-lg'
+      ? 'rounded-se-lg'
       : inMatch && matchRow === 'last'
-        ? 'rounded-br-lg'
+        ? 'rounded-ee-lg'
         : !inMatch
-          ? 'rounded-r-md'
+          ? 'rounded-e-md'
           : '';
 
   const trashOverlay = showTrash ? (
@@ -231,7 +231,7 @@ function SeedChip({
           onRemove?.();
         }
       }}
-      className={`absolute inset-y-0 right-0 z-20 flex w-10 shrink-0 cursor-pointer items-center justify-center border-l border-red-200/70 bg-red-50 text-red-600 transition hover:bg-red-100 dark:border-red-900/50 dark:bg-red-950/70 dark:text-red-400 dark:hover:bg-red-950 ${trashStripRoundClass}`}
+      className={`absolute inset-y-0 right-0 z-20 flex w-10 shrink-0 cursor-pointer items-center justify-center border-s border-red-200/70 bg-red-50 text-red-600 transition hover:bg-red-100 dark:border-red-900/50 dark:bg-red-950/70 dark:text-red-400 dark:hover:bg-red-950 ${trashStripRoundClass}`}
       aria-label={t('common.remove', { defaultValue: 'Remove' })}
     >
       <Trash2 size={16} strokeWidth={2.25} />
@@ -256,7 +256,7 @@ function SeedChip({
     <button
       type="button"
       onClick={onSelect}
-      className={`${chipShellClass} text-left transition ${
+      className={`${chipShellClass} text-start transition ${
         inMatch
           ? highlighted
             ? 'bg-primary-50 ring-1 ring-inset ring-primary-400/80 dark:bg-primary-500/25 dark:ring-primary-400/50'
@@ -518,7 +518,7 @@ export const BracketPlayoffPreview = ({
           })}
         </p>
       )}
-      <div className="flex gap-4 overflow-x-auto py-1 pl-2 pr-10 pb-2 snap-x snap-mandatory">
+      <div className="flex gap-4 overflow-x-auto py-1 ps-2 pe-10 pb-2 snap-x snap-mandatory">
         {displayPlan.playInGameCount > 0 && (
           <section className="snap-start shrink-0 flex flex-col gap-2 min-w-[8.5rem] overflow-visible">
             <h4 className="text-xs font-semibold text-center text-gray-600 dark:text-gray-400 uppercase tracking-wide">

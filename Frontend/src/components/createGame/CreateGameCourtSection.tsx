@@ -114,7 +114,7 @@ export const CreateGameCourtSection = memo(function CreateGameCourtSection({
       )}
       {showHasBookedSwitch && (
         <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-          <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
+          <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pe-2">
             {entityType === 'BAR' ? t('createGame.hasBookedHall') : t('createGame.hasBookedCourt')}
           </span>
           <div className="flex-shrink-0">

@@ -69,6 +69,8 @@ const COUNTRY_TO_FLAG: Record<string, string> = {
   Guyana: '🇬🇾',
   Suriname: '🇸🇷',
   Oman: '🇴🇲',
+  Kuwait: '🇰🇼',
+  Bahrain: '🇧🇭',
   Montenegro: '🇲🇪',
   'North Macedonia': '🇲🇰',
   Macedonia: '🇲🇰',

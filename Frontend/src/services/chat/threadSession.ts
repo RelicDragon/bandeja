@@ -238,41 +238,58 @@ export function resolvePaintScrollPlan(input: {
 export function pendingOptimisticsForChatTypeSwitch(
   prev: readonly ChatMessageWithStatus[],
   contextType: ChatContextType,
-  targetChatType: ChatType
+  targetChatType: ChatType,
+  contextId?: string
 ): ChatMessageWithStatus[] {
   const normalized = normalizeChatType(targetChatType);
-  if (contextType === 'GAME') {
-    return prev.filter(
-      (m) =>
-        Boolean(m._optimisticId) &&
-        normalizeChatType((m as ChatMessage).chatType as ChatType) === normalized
-    );
-  }
-  return prev.filter((m) => Boolean(m._optimisticId));
+  return prev.filter((m) => {
+    if (!m._optimisticId) return false;
+    if (contextId != null && contextId !== '' && !liveMessageBelongsToThread(m, { contextType, contextId })) {
+      return false;
+    }
+    if (contextType === 'GAME') {
+      return normalizeChatType((m as ChatMessage).chatType as ChatType) === normalized;
+    }
+    return true;
+  });
 }
 
 export function mergeChatTypeSwitchPaint(
   prev: readonly ChatMessageWithStatus[],
   local: readonly ChatMessage[],
   contextType: ChatContextType,
-  targetChatType: ChatType
+  targetChatType: ChatType,
+  contextId?: string
 ): ChatMessageWithStatus[] {
-  const pending = pendingOptimisticsForChatTypeSwitch(prev, contextType, targetChatType);
-  return mergeChatMessagesAscending(pending, [...local]) as ChatMessageWithStatus[];
+  const pending = pendingOptimisticsForChatTypeSwitch(prev, contextType, targetChatType, contextId);
+  const scopedLocal =
+    contextId != null && contextId !== ''
+      ? local.filter((m) => liveMessageBelongsToThread(m, { contextType, contextId }))
+      : [...local];
+  return mergeChatMessagesAscending(pending, scopedLocal) as ChatMessageWithStatus[];
+}
+
+export function belongingFromThreadKey(
+  threadKey: ThreadSessionKey
+): { contextType: ChatContextType; contextId: string } | null {
+  const parts = threadKey.split(':');
+  const contextType = parts[0] as ChatContextType;
+  const contextId = parts[1];
+  if (!contextId) return null;
+  return { contextType, contextId };
 }
 
 export function filterMessagesBelongingToThreadKey(
   messages: readonly ChatMessageWithStatus[],
   threadKey: ThreadSessionKey
 ): ChatMessageWithStatus[] {
+  const belonging = belongingFromThreadKey(threadKey);
+  if (!belonging) return [];
   const parts = threadKey.split(':');
-  const contextType = parts[0] as ChatContextType;
-  const contextId = parts[1];
-  if (!contextId) return [];
   const gameChatType = parts[2] as ChatType | undefined;
   return messages.filter((m) => {
-    if (!liveMessageBelongsToThread(m, { contextType, contextId })) return false;
-    if (contextType === 'GAME' && gameChatType) {
+    if (!liveMessageBelongsToThread(m, belonging)) return false;
+    if (belonging.contextType === 'GAME' && gameChatType) {
       return normalizeChatType((m.chatType ?? 'PUBLIC') as ChatType) === normalizeChatType(gameChatType);
     }
     return true;

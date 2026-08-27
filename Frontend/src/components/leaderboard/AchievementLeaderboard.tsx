@@ -169,7 +169,7 @@ export function AchievementLeaderboard() {
             type="button"
             onClick={() => setSelectedFamily(null)}
             data-testid="achievement-family-back"
-            className="inline-flex min-h-10 items-center gap-2 rounded-full px-1.5 pr-3 text-sm font-semibold text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-950 dark:text-gray-300 dark:hover:bg-white/10 dark:hover:text-white"
+            className="inline-flex min-h-10 items-center gap-2 rounded-full px-1.5 pe-3 text-sm font-semibold text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-950 dark:text-gray-300 dark:hover:bg-white/10 dark:hover:text-white"
           >
             <span className="flex h-7 w-7 items-center justify-center rounded-full bg-gray-100 dark:bg-white/10">
               <ArrowLeft size={15} />
@@ -279,7 +279,7 @@ export function AchievementLeaderboard() {
                 initial={reduceMotion ? false : { opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: reduceMotion ? 0 : Math.min(index * 0.035, 0.25) }}
-                className="group relative min-h-48 overflow-hidden rounded-3xl border border-gray-200/90 bg-gradient-to-b from-white to-gray-50 p-3 text-left shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-amber-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 dark:border-white/10 dark:from-gray-900 dark:to-gray-950 dark:hover:border-amber-500/50 dark:focus-visible:ring-offset-gray-950"
+                className="group relative min-h-48 overflow-hidden rounded-3xl border border-gray-200/90 bg-gradient-to-b from-white to-gray-50 p-3 text-start shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-amber-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 dark:border-white/10 dark:from-gray-900 dark:to-gray-950 dark:hover:border-amber-500/50 dark:focus-visible:ring-offset-gray-950"
               >
                 <div
                   aria-hidden
@@ -591,7 +591,7 @@ function AchievementRankingContent({
                   <p className="truncate text-xs font-bold text-gray-950 dark:text-white">
                     {playerName(entry, playerFallback)}
                     {isCurrentUser && (
-                      <span className="ml-1 font-semibold text-primary-600 dark:text-primary-300">
+                      <span className="ms-1 font-semibold text-primary-600 dark:text-primary-300">
                         ({t('profile.you')})
                       </span>
                     )}

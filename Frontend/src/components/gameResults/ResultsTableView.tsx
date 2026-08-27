@@ -200,7 +200,7 @@ export const ResultsTableView = ({ game, rounds, players, isEditing, onAddRound,
             <tr className="bg-gray-50 dark:bg-gray-800">
               <th className="sticky top-0 left-0 z-20 bg-gray-50 dark:bg-gray-800 px-1 py-2 w-6" aria-hidden="true" />
               <th
-                className="sticky top-0 left-4 z-20 bg-gray-50 dark:bg-gray-800 px-1 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400"
+                className="sticky top-0 left-4 z-20 bg-gray-50 dark:bg-gray-800 px-1 py-2 text-start text-xs font-semibold text-gray-500 dark:text-gray-400"
                 style={nameColStyle}
               >
                 <div className="flex items-center">
@@ -237,7 +237,7 @@ export const ResultsTableView = ({ game, rounds, players, isEditing, onAddRound,
               <th className="sticky top-0 z-10 bg-gray-50 dark:bg-gray-800 px-1 py-2 text-center text-xs font-bold text-gray-700 dark:text-gray-200 min-w-[40px]" title={t('gameResults.scoreDelta', { defaultValue: 'Score difference' })}>
                 Δ
               </th>
-              <th className="sticky top-0 z-10 bg-gray-50 dark:bg-gray-800 px-1 py-2 text-center text-xs font-bold text-gray-700 dark:text-gray-200 min-w-[40px] rounded-tr-lg">
+              <th className="sticky top-0 z-10 bg-gray-50 dark:bg-gray-800 px-1 py-2 text-center text-xs font-bold text-gray-700 dark:text-gray-200 min-w-[40px] rounded-se-lg">
                 {t('gameResults.win', { defaultValue: 'Win' })}
               </th>
             </tr>

@@ -43,11 +43,21 @@ export const CURRENCY_INFO: Record<PriceCurrency, CurrencyInfo> = {
   MYR: { code: 'MYR', name: 'Malaysian Ringgit', symbol: 'RM', position: 'before', decimals: 2 },
   IDR: { code: 'IDR', name: 'Indonesian Rupiah', symbol: 'Rp', position: 'before', decimals: 0 },
   PHP: { code: 'PHP', name: 'Philippine Peso', symbol: '₱', position: 'before', decimals: 2 },
+  AED: { code: 'AED', name: 'UAE Dirham', symbol: 'د.إ', position: 'after', decimals: 2 },
+  SAR: { code: 'SAR', name: 'Saudi Riyal', symbol: 'ر.س', position: 'after', decimals: 2 },
+  QAR: { code: 'QAR', name: 'Qatari Riyal', symbol: 'ر.ق', position: 'after', decimals: 2 },
+  KWD: { code: 'KWD', name: 'Kuwaiti Dinar', symbol: 'د.ك', position: 'after', decimals: 3 },
+  OMR: { code: 'OMR', name: 'Omani Rial', symbol: 'ر.ع.', position: 'after', decimals: 3 },
 };
 
 export const SUPPORTED_CURRENCIES: PriceCurrency[] = Object.keys(CURRENCY_INFO) as PriceCurrency[];
 
-export const PRIORITY_CURRENCIES: PriceCurrency[] = ['EUR', 'USD', 'RSD'];
+export const PRIORITY_CURRENCIES: PriceCurrency[] = ['EUR', 'USD', 'AED', 'SAR', 'RSD'];
+
+export function getCurrencyMinorFactor(currency: PriceCurrency): number {
+  const decimals = CURRENCY_INFO[currency]?.decimals ?? 2;
+  return decimals === 0 ? 1 : 10 ** decimals;
+}
 
 export function getCurrenciesForModal(): PriceCurrency[] {
   const priority = PRIORITY_CURRENCIES.filter((c) => SUPPORTED_CURRENCIES.includes(c));
@@ -66,7 +76,7 @@ export function resolveUserCurrency(userCurrency?: string | null): PriceCurrency
 
 /**
  * Format price with currency symbol
- * @param priceCents Price in cents
+ * @param priceCents Price in minor units (cents / fils)
  * @param currency Currency code
  * @returns Formatted price string
  */
@@ -74,7 +84,7 @@ export function formatPrice(priceCents: number | null | undefined, currency: Pri
   if (priceCents === null || priceCents === undefined) return 'N/A';
 
   const info = CURRENCY_INFO[currency];
-  const amount = priceCents / 100;
+  const amount = priceCents / getCurrencyMinorFactor(currency);
 
   const formatted = amount.toLocaleString('en-GB', {
     minimumFractionDigits: info.decimals,
@@ -116,10 +126,10 @@ export function getCurrencyOptions(): Array<{ value: PriceCurrency; label: strin
 }
 
 /**
- * Parse price input and convert to cents
+ * Parse price input and convert to minor units
  * @param input User input string
  * @param currency Currency code
- * @returns Price in cents
+ * @returns Price in minor units
  */
 export function parsePriceInput(input: string, currency: PriceCurrency): number | null {
   const cleaned = input.replace(/[^\d.]/g, '');
@@ -127,15 +137,14 @@ export function parsePriceInput(input: string, currency: PriceCurrency): number 
 
   if (isNaN(num)) return null;
 
-  const info = CURRENCY_INFO[currency];
-  return Math.round(num * (info.decimals === 0 ? 1 : 100));
+  return Math.round(num * getCurrencyMinorFactor(currency));
 }
 
 /**
  * Convert price and return both original and converted formatted strings
- * @param priceCents Original price in cents
+ * @param priceCents Original price in minor units
  * @param originalCurrency Original currency
- * @param convertedCents Converted price in cents
+ * @param convertedCents Converted price in minor units
  * @param userCurrency User's currency
  * @returns Object with formatted prices
  */

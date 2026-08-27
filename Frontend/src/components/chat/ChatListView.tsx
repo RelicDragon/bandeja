@@ -390,7 +390,7 @@ export function ChatListView({ model }: { model: ChatListViewModel }) {
                       tabIndex={0}
                       onClick={() => handleMarketItemGroupClick(group)}
                       onKeyDown={(e) => e.key === 'Enter' && handleMarketItemGroupClick(group)}
-                      className="rounded-t-xl px-3 py-2.5 bg-gray-100 dark:bg-gray-800 border-l-4 border-primary-500 dark:border-primary-400 flex items-center gap-2 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700/80 active:bg-gray-300 dark:active:bg-gray-700 transition-colors"
+                      className="rounded-t-xl px-3 py-2.5 bg-gray-100 dark:bg-gray-800 border-s-4 border-primary-500 dark:border-primary-400 flex items-center gap-2 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700/80 active:bg-gray-300 dark:active:bg-gray-700 transition-colors"
                     >
                       {group.thumb ? (
                         <img src={group.thumb} alt="" className="w-8 h-8 rounded object-cover" />
@@ -400,11 +400,11 @@ export function ChatListView({ model }: { model: ChatListViewModel }) {
                         </div>
                       )}
                       <span className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">{group.title || t('marketplace.listing', { defaultValue: 'Listing' })}</span>
-                      <span className="text-xs text-gray-500 dark:text-gray-400 ml-auto">
+                      <span className="text-xs text-gray-500 dark:text-gray-400 ms-auto">
                         {t('marketplace.chatCount', { count: group.channels.length })}
                       </span>
                     </div>
-                    <div className="rounded-b-xl bg-gray-50/80 dark:bg-gray-900/40 border-l-4 border-primary-200 dark:border-primary-800/60">
+                    <div className="rounded-b-xl bg-gray-50/80 dark:bg-gray-900/40 border-s-4 border-primary-200 dark:border-primary-800/60">
                       <ChatListMarketGroupChannels
                         scrollElementRef={listBodyScrollRef}
                         channels={group.channels}

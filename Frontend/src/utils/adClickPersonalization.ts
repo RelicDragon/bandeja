@@ -1,6 +1,6 @@
 /** Keep in sync with Backend/src/services/ads/ad.clickUrl.util.ts locale/theme resolution. */
 
-export const AD_CLICK_SUPPORTED_LOCALES = ['en', 'ru', 'sr', 'es', 'cs'] as const;
+export const AD_CLICK_SUPPORTED_LOCALES = ['en', 'ru', 'sr', 'es', 'cs', 'ar'] as const;
 export type AdClickSupportedLocale = (typeof AD_CLICK_SUPPORTED_LOCALES)[number];
 
 const AD_CLICK_LOCALE_ALIASES: Record<string, AdClickSupportedLocale> = {

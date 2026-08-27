@@ -5,6 +5,7 @@ import type { AvailabilityBucketBoundaries, WeekdayKey } from '@/types';
 import {
   WEEKDAYS,
   WEEKDAYS_SUNDAY_FIRST,
+  WEEKDAYS_SATURDAY_FIRST,
   WEEKEND_DAYS,
   getShortDayLabelWithDate,
   isWeekdayTodayInWeek,
@@ -31,7 +32,7 @@ interface AvailabilityMobileGridProps {
   editor: UseAvailabilityEditorReturn;
   boundaries: AvailabilityBucketBoundaries;
   weekStartYmd: string;
-  weekStart: 'monday' | 'sunday';
+  weekStart: 'monday' | 'sunday' | 'saturday';
 }
 
 /** Fluid bucket columns (shrink on narrow screens); day column capped. `min-w-0` avoids grid overflow. */
@@ -48,7 +49,12 @@ export const AvailabilityMobileGrid = ({
   const user = useAuthStore((s) => s.user);
 
   const order: WeekdayKey[] = useMemo(
-    () => (user?.weekStart === 'sunday' ? WEEKDAYS_SUNDAY_FIRST : WEEKDAYS),
+    () =>
+      user?.weekStart === 'sunday'
+        ? WEEKDAYS_SUNDAY_FIRST
+        : user?.weekStart === 'saturday'
+          ? WEEKDAYS_SATURDAY_FIRST
+          : WEEKDAYS,
     [user?.weekStart]
   );
 

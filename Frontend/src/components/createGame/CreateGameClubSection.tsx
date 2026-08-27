@@ -70,8 +70,8 @@ export const CreateGameClubSection = ({
           }
           className={
             club
-              ? 'w-full flex items-center gap-3 min-w-0 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2.5 text-left transition-colors hover:border-primary-400 dark:hover:border-primary-600'
-              : 'w-full flex items-center gap-3 rounded-xl border-2 border-dashed border-primary-300 dark:border-primary-700 bg-primary-50/50 dark:bg-primary-950/20 px-3 py-3 text-left transition-colors hover:border-primary-500 hover:bg-primary-50 dark:hover:bg-primary-950/40'
+              ? 'w-full flex items-center gap-3 min-w-0 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2.5 text-start transition-colors hover:border-primary-400 dark:hover:border-primary-600'
+              : 'w-full flex items-center gap-3 rounded-xl border-2 border-dashed border-primary-300 dark:border-primary-700 bg-primary-50/50 dark:bg-primary-950/20 px-3 py-3 text-start transition-colors hover:border-primary-500 hover:bg-primary-50 dark:hover:bg-primary-950/40'
           }
         >
           {club ? (

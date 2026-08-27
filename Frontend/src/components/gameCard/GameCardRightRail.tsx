@@ -103,7 +103,7 @@ function GameCardRightRailInner({
             </button>
           )}
           {showNoteBookmark && showChat && (
-            <span className={`h-4 w-px border-l ${theme.divider}`} aria-hidden />
+            <span className={`h-4 w-px border-s ${theme.divider}`} aria-hidden />
           )}
           {showChat && (
             <button

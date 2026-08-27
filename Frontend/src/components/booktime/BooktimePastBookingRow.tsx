@@ -65,7 +65,7 @@ export function BooktimePastBookingRow({
       {priceQuote ? (
         <BooktimeBookingPriceLabel
           quote={priceQuote}
-          className="text-right text-xs font-medium text-gray-700 dark:text-gray-300"
+          className="text-end text-xs font-medium text-gray-700 dark:text-gray-300"
         />
       ) : null}
       <BooktimeBookingOccupancyPill segments={slotSegments} />
@@ -73,7 +73,7 @@ export function BooktimePastBookingRow({
   );
 
   const rowContent = (
-    <div className={`min-w-0 ${priceQuote ? 'pr-14' : 'pr-12'}`}>
+    <div className={`min-w-0 ${priceQuote ? 'pe-14' : 'pe-12'}`}>
       {showClubName ? (
         <p className="text-xs font-medium text-gray-500 dark:text-gray-400 truncate mb-0.5">
           {booking.clubName}
@@ -123,7 +123,7 @@ export function BooktimePastBookingRow({
           data-testid="booktime-past-booking-card-toggle"
           aria-expanded={actionsExpanded}
           onClick={onToggleActions}
-          className="w-full text-left outline-none focus-visible:ring-2 focus-visible:ring-primary-500 rounded-md"
+          className="w-full text-start outline-none focus-visible:ring-2 focus-visible:ring-primary-500 rounded-md"
         >
           {rowContent}
         </button>

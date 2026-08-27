@@ -260,7 +260,7 @@ export const NotificationSettingsModal = ({
                 key={channel}
                 type="button"
                 onClick={() => focusCrossChannelSetting(channel, toggleKey)}
-                className="block text-left text-[11px] leading-snug text-red-600 dark:text-red-400 hover:underline"
+                className="block text-start text-[11px] leading-snug text-red-600 dark:text-red-400 hover:underline"
               >
                 {enabled
                   ? t('profile.notificationStillOnInChannel', { channel: getChannelLabel(channel) })

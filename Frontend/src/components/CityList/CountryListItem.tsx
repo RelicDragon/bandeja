@@ -34,7 +34,7 @@ function CountryListItemInner({ item, isSelected, onSelect, className = '' }: Co
         <span className="truncate">
           {displayCountry}
           {showNative && (
-            <span className="text-gray-500 dark:text-gray-400 font-normal ml-1 text-xs">{nativeName}</span>
+            <span className="text-gray-500 dark:text-gray-400 font-normal ms-1 text-xs">{nativeName}</span>
           )}
         </span>
       </span>

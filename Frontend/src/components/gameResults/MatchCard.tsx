@@ -227,7 +227,7 @@ export const MatchCard = ({
               removable={false}
             />
             <span
-              className={`${playerNameClass} ${showPlayerRemoveButton ? 'pr-10' : ''}`}
+              className={`${playerNameClass} ${showPlayerRemoveButton ? 'pe-10' : ''}`}
             >
               {[player.firstName, player.lastName].filter(Boolean).join(' ') || '—'}
             </span>
@@ -446,7 +446,7 @@ export const MatchCard = ({
     >
       {(!hideMatchIndex || matchInProgressHeader || matchFinished || resultsFinal) && (
         <div
-          className={`mb-1 flex min-h-[1rem] flex-wrap items-center gap-x-1.5 gap-y-0.5 ${showHeaderEditButton || showDeleteButton ? 'pr-14' : ''}`}
+          className={`mb-1 flex min-h-[1rem] flex-wrap items-center gap-x-1.5 gap-y-0.5 ${showHeaderEditButton || showDeleteButton ? 'pe-14' : ''}`}
         >
           {!hideMatchIndex ? (
             <span className="inline-flex items-center rounded-md bg-gray-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide tabular-nums leading-none text-gray-500 dark:bg-gray-700/70 dark:text-gray-300">

@@ -5,8 +5,8 @@ import { marketplaceApi, citiesApi, mediaApi } from '@/api';
 import { useAuthStore } from '@/store/authStore';
 import { MarketItem, MarketItemCategory, City, PriceCurrency, MarketItemTradeType, AuctionType } from '@/types';
 import { Button, Input, Card, ToggleSwitch } from '@/components';
-import { FormField, MediaGalleryField, TradeTypeCheckboxes, PriceInputWithCurrency, priceToCents, centsToPrice, AuctionDurationSelector, CategorySelector, INPUT_CLASS, PRICING_SECTION_LABEL, PRICING_SECTION_LABEL_INLINE } from '@/components/marketplace';
-import { formatPrice } from '@/utils/currency';
+import { FormField, MediaGalleryField, TradeTypeCheckboxes, PriceInputWithCurrency, priceToCents, centsToPrice, currencyInputStep, AuctionDurationSelector, CategorySelector, INPUT_CLASS, PRICING_SECTION_LABEL, PRICING_SECTION_LABEL_INLINE } from '@/components/marketplace';
+import { formatPrice, getCurrencyMinorFactor } from '@/utils/currency';
 import { SegmentedSwitch } from '@/components/SegmentedSwitch';
 import { MapPin } from 'lucide-react';
 import { useTranslatedGeo } from '@/hooks/useTranslatedGeo';
@@ -44,14 +44,15 @@ export const MarketItemEditForm = ({ item, onSave, onCancel }: MarketItemEditFor
     tradeTypes: item.tradeTypes?.length ? [item.tradeTypes[0]] : ['BUY_IT_NOW'] as MarketItemTradeType[],
     negotiationAcceptable: item.negotiationAcceptable ?? false,
     priceCents: centsToPrice(
-      item.tradeTypes?.includes('AUCTION') ? (item.startingPriceCents ?? item.priceCents) : (item.priceCents ?? item.startingPriceCents)
+      item.tradeTypes?.includes('AUCTION') ? (item.startingPriceCents ?? item.priceCents) : (item.priceCents ?? item.startingPriceCents),
+      (item.currency || 'EUR') as PriceCurrency,
     ),
     currency: (item.currency || 'EUR') as PriceCurrency,
     auctionEndsAt: item.auctionEndsAt ? new Date(item.auctionEndsAt).toISOString() : '',
     auctionType: (item.auctionType || 'RISING') as AuctionType,
-    reservePriceCents: centsToPrice(item.reservePriceCents),
-    buyItNowPriceCents: centsToPrice(item.buyItNowPriceCents),
-    hollandDecrement: item.hollandDecrementCents != null ? centsToPrice(item.hollandDecrementCents) : '',
+    reservePriceCents: centsToPrice(item.reservePriceCents, (item.currency || 'EUR') as PriceCurrency),
+    buyItNowPriceCents: centsToPrice(item.buyItNowPriceCents, (item.currency || 'EUR') as PriceCurrency),
+    hollandDecrement: item.hollandDecrementCents != null ? centsToPrice(item.hollandDecrementCents, (item.currency || 'EUR') as PriceCurrency) : '',
     hollandIntervalMinutes: item.hollandIntervalMinutes ?? '',
   });
 
@@ -107,9 +108,9 @@ export const MarketItemEditForm = ({ item, onSave, onCancel }: MarketItemEditFor
       return;
     }
     const isFree = form.tradeTypes.includes('FREE');
-    const priceCentsVal = isFree ? undefined : priceToCents(form.priceCents);
-    const reserveCentsVal = form.tradeTypes.includes('AUCTION') && form.reservePriceCents !== '' ? priceToCents(form.reservePriceCents) : undefined;
-    const buyItNowCentsVal = form.tradeTypes.includes('AUCTION') && form.buyItNowPriceCents !== '' ? priceToCents(form.buyItNowPriceCents) : undefined;
+    const priceCentsVal = isFree ? undefined : priceToCents(form.priceCents, form.currency);
+    const reserveCentsVal = form.tradeTypes.includes('AUCTION') && form.reservePriceCents !== '' ? priceToCents(form.reservePriceCents, form.currency) : undefined;
+    const buyItNowCentsVal = form.tradeTypes.includes('AUCTION') && form.buyItNowPriceCents !== '' ? priceToCents(form.buyItNowPriceCents, form.currency) : undefined;
 
     if (!isFree) {
       if (form.tradeTypes.includes('BUY_IT_NOW') && !form.tradeTypes.includes('AUCTION') && (priceCentsVal == null || priceCentsVal < 1)) {
@@ -138,7 +139,7 @@ export const MarketItemEditForm = ({ item, onSave, onCancel }: MarketItemEditFor
           return;
         }
         if (form.auctionType === 'HOLLAND') {
-          const decCents = form.hollandDecrement !== '' ? priceToCents(form.hollandDecrement) : undefined;
+          const decCents = form.hollandDecrement !== '' ? priceToCents(form.hollandDecrement, form.currency) : undefined;
           if (decCents == null || decCents < 1) {
             toast.error(t('marketplace.hollandPriceDropMin', { defaultValue: 'Price drop must be at least 0.01' }));
             return;
@@ -167,7 +168,7 @@ export const MarketItemEditForm = ({ item, onSave, onCancel }: MarketItemEditFor
         startingPriceCents: form.tradeTypes.includes('AUCTION') ? priceCentsVal : undefined,
         reservePriceCents: reserveCentsVal,
         buyItNowPriceCents: buyItNowCentsVal,
-        hollandDecrementCents: form.auctionType === 'HOLLAND' && form.hollandDecrement !== '' ? priceToCents(form.hollandDecrement) : undefined,
+        hollandDecrementCents: form.auctionType === 'HOLLAND' && form.hollandDecrement !== '' ? priceToCents(form.hollandDecrement, form.currency) : undefined,
         hollandIntervalMinutes: form.auctionType === 'HOLLAND' && form.hollandIntervalMinutes !== '' ? Number(form.hollandIntervalMinutes) : undefined,
       });
       toast.success(t('marketplace.updated', { defaultValue: 'Listing updated' }));
@@ -265,7 +266,7 @@ export const MarketItemEditForm = ({ item, onSave, onCancel }: MarketItemEditFor
           </FormField>
 
           {!form.tradeTypes.includes('FREE') && (form.tradeTypes.includes('BUY_IT_NOW') || form.tradeTypes.includes('AUCTION')) && (() => {
-            const cents = priceToCents(form.priceCents);
+            const cents = priceToCents(form.priceCents, form.currency);
             const priceSet = cents != null;
             const priceDisplay = priceSet ? formatPrice(cents, form.currency) : '';
             return (
@@ -354,12 +355,12 @@ export const MarketItemEditForm = ({ item, onSave, onCancel }: MarketItemEditFor
                     </label>
                     <Input
                       type="number"
-                      step={0.01}
-                      min={0.01}
+                      step={currencyInputStep(form.currency)}
+                      min={currencyInputStep(form.currency)}
                       value={form.hollandDecrement}
                       onKeyDown={(e) => { if (e.key === 'e' || e.key === 'E') e.preventDefault(); }}
                       onChange={(e) => setForm((f) => ({ ...f, hollandDecrement: e.target.value }))}
-                      placeholder="0.50"
+                      placeholder={centsToPrice(getCurrencyMinorFactor(form.currency) / 2, form.currency)}
                       className={INPUT_CLASS}
                     />
                     <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t('marketplace.hollandDecrementHint', { defaultValue: 'Amount the displayed price decreases each interval. Min 0.01.' })}</p>
@@ -405,7 +406,7 @@ export const MarketItemEditForm = ({ item, onSave, onCancel }: MarketItemEditFor
                 <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t('marketplace.auctionEndsHint', { defaultValue: 'Bidding closes at this time. For rising auctions, highest bid wins if it meets the reserve.' })}</p>
               </FormField>
               {(() => {
-                const startCents = priceToCents(form.priceCents);
+                const startCents = priceToCents(form.priceCents, form.currency);
                 const hasStart = startCents != null;
                 const hasEnd = !!form.auctionEndsAt;
                 const hollandComplete =
@@ -413,8 +414,8 @@ export const MarketItemEditForm = ({ item, onSave, onCancel }: MarketItemEditFor
                   (form.hollandDecrement !== '' && form.hollandIntervalMinutes !== '');
                 const notSet = t('marketplace.summaryNotSet', { defaultValue: 'not set' });
                 const startingPrice = hasStart ? formatPrice(startCents!, form.currency) : notSet;
-                const reserveCents = priceToCents(form.reservePriceCents);
-                const binCents = priceToCents(form.buyItNowPriceCents);
+                const reserveCents = priceToCents(form.reservePriceCents, form.currency);
+                const binCents = priceToCents(form.buyItNowPriceCents, form.currency);
                 const reservePrice = reserveCents != null ? formatPrice(reserveCents, form.currency) : '';
                 const buyItNowPrice = binCents != null ? formatPrice(binCents, form.currency) : '';
                 const endsAt = hasEnd ? new Date(form.auctionEndsAt!).toLocaleString(i18n.language, { dateStyle: 'medium', timeStyle: 'short' }) : notSet;
@@ -428,7 +429,7 @@ export const MarketItemEditForm = ({ item, onSave, onCancel }: MarketItemEditFor
                     parts.push(t('marketplace.auctionSummaryBuyItNowClause', { defaultValue: 'You will sell immediately if someone pays {{buyItNowPrice}}.', buyItNowPrice }));
                   }
                 } else {
-                  const decrementStr = form.hollandDecrement !== '' ? formatPrice(priceToCents(form.hollandDecrement) ?? 0, form.currency) : notSet;
+                  const decrementStr = form.hollandDecrement !== '' ? formatPrice(priceToCents(form.hollandDecrement, form.currency) ?? 0, form.currency) : notSet;
                   const intervalStr = form.hollandIntervalMinutes !== '' ? `${form.hollandIntervalMinutes} ${t('marketplace.minutesUnit', { defaultValue: 'min' })}` : notSet;
                   parts.push(t('marketplace.auctionSummaryHollandIntro', {
                     defaultValue: 'Price starts at {{startingPrice}} and drops by {{decrement}} every {{interval}} until someone buys at the current price.',

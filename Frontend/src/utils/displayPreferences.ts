@@ -1,13 +1,13 @@
 export interface DisplayPreferences {
   language?: string; // Full locale (e.g., "en-GB", "ru-RU") or "auto"
   timeFormat?: 'auto' | '12h' | '24h';
-  weekStart?: 'auto' | 'monday' | 'sunday';
+  weekStart?: 'auto' | 'monday' | 'sunday' | 'saturday';
 }
 
 export interface ResolvedDisplaySettings {
   locale: string;
   hour12: boolean;
-  weekStart: 0 | 1;
+  weekStart: 0 | 1 | 6;
 }
 
 export function extractLanguageCode(locale: string): string {
@@ -17,9 +17,24 @@ export function extractLanguageCode(locale: string): string {
   return locale.split('-')[0].toLowerCase();
 }
 
-export function getWeekStartFromLocale(locale: string): 0 | 1 {
-  const sundayLocales = ['en-US', 'en-CA', 'en-PH', 'en-AU'];
-  return sundayLocales.includes(locale) ? 0 : 1;
+const GULF_SATURDAY_LOCALES = new Set([
+  'ar',
+  'ar-sa',
+  'ar-ae',
+  'ar-qa',
+  'ar-kw',
+  'ar-om',
+  'ar-bh',
+]);
+
+export function getWeekStartFromLocale(locale: string): 0 | 1 | 6 {
+  const normalized = locale.toLowerCase();
+  const base = normalized.split('-')[0];
+  if (GULF_SATURDAY_LOCALES.has(normalized) || base === 'ar') {
+    return 6;
+  }
+  const sundayLocales = ['en-us', 'en-ca', 'en-ph', 'en-au'];
+  return sundayLocales.includes(normalized) ? 0 : 1;
 }
 
 export function detectTimeFormat(locale: string): '12h' | '24h' {
@@ -32,9 +47,11 @@ export function detectTimeFormat(locale: string): '12h' | '24h' {
   }
 }
 
-export function detectWeekStart(locale: string): 'sunday' | 'monday' {
+export function detectWeekStart(locale: string): 'sunday' | 'monday' | 'saturday' {
   const detected = getWeekStartFromLocale(locale);
-  return detected === 0 ? 'sunday' : 'monday';
+  if (detected === 0) return 'sunday';
+  if (detected === 6) return 'saturday';
+  return 'monday';
 }
 
 export function resolveDisplaySettings(
@@ -72,6 +89,8 @@ export function resolveDisplaySettings(
       ? 0
       : prefs.weekStart === 'monday'
       ? 1
+      : prefs.weekStart === 'saturday'
+      ? 6
       : getWeekStartFromLocale(locale);
 
   return { locale, hour12, weekStart };
@@ -104,6 +123,7 @@ const APP_LANGUAGE_TO_LOCALE: Record<string, string> = {
   sr: 'sr-RS',
   es: 'es-ES',
   cs: 'cs-CZ',
+  ar: 'ar-SA',
 };
 
 /** BCP-47 locale for Intl formatting from i18n language or profile language. */
@@ -134,13 +154,14 @@ export function normalizeLanguageForProfile(locale: string | null | undefined): 
     'sr': 'sr-RS',
     'es': 'es-ES',
     'cs': 'cs-CZ',
+    'ar': 'ar-SA',
   };
   
   if (languageMap[langCode]) {
     return languageMap[langCode];
   }
   
-  const validLocales = ['en-GB', 'en-US', 'ru-RU', 'sr-RS', 'es-ES', 'cs-CZ', 'auto'];
+  const validLocales = ['en-GB', 'en-US', 'ru-RU', 'sr-RS', 'es-ES', 'cs-CZ', 'ar-SA', 'auto'];
   if (validLocales.includes(locale)) {
     return locale;
   }

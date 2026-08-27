@@ -41,7 +41,7 @@ describe('chatThreadMemory rowHeights', () => {
   });
 
   it('stores measured heights on put and restores on peek', () => {
-    const key = 'GROUP:gc1:PUBLIC';
+    const key = 'GROUP:gc1';
     const image = row('img', {
       messageType: 'IMAGE',
       mediaUrls: ['https://x/y.jpg'],
@@ -55,7 +55,7 @@ describe('chatThreadMemory rowHeights', () => {
   });
 
   it('stores image placeholder estimate when not measured', () => {
-    const key = 'GROUP:gc1:PUBLIC';
+    const key = 'GROUP:gc1';
     const image = row('img2', {
       messageType: 'IMAGE',
       mediaUrls: ['https://x/y.jpg'],
@@ -65,5 +65,24 @@ describe('chatThreadMemory rowHeights', () => {
 
     peekChatThreadMemory(key);
     expect(getCachedMessageRowHeight('img2')).toBe(ROW_ESTIMATE_IMAGE_PX);
+  });
+
+  it('put and peek drop foreign contextId rows for the thread key', () => {
+    const key = 'GAME:g-male:PUBLIC';
+    putChatThreadMemory(key, [
+      row('foreign', {
+        chatContextType: 'GAME',
+        contextId: 'g-women',
+        content: 'девочки',
+        chatType: 'PUBLIC',
+      }),
+      row('ok', {
+        chatContextType: 'GAME',
+        contextId: 'g-male',
+        content: 'ivan',
+        chatType: 'PUBLIC',
+      }),
+    ]);
+    expect(peekChatThreadMemory(key).map((m) => m.id)).toEqual(['ok']);
   });
 });

@@ -36,7 +36,7 @@ export function CityPickerEmbed({
         >
           <ChevronLeft size={22} />
         </button>
-        <h2 className="min-w-0 flex-1 text-left text-[15px] font-semibold tracking-tight text-gray-900 dark:text-white">
+        <h2 className="min-w-0 flex-1 text-start text-[15px] font-semibold tracking-tight text-gray-900 dark:text-white">
           {t('browseCity.changeCity')}
         </h2>
       </div>

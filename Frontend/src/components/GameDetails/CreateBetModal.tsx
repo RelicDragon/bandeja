@@ -429,7 +429,7 @@ const CreateBetModalInner = ({ isOpen, game, onClose, onBetCreated, onBetUpdated
                             <button
                               type="button"
                               onClick={() => setEntityId(o.value)}
-                              className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${isActive ? 'bg-primary-100 dark:bg-primary-500/25 text-primary-700 dark:text-primary-300' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/60'}`}
+                              className={`w-full text-start px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${isActive ? 'bg-primary-100 dark:bg-primary-500/25 text-primary-700 dark:text-primary-300' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/60'}`}
                             >
                               {o.icon}
                               <span>{o.label}</span>
@@ -448,7 +448,7 @@ const CreateBetModalInner = ({ isOpen, game, onClose, onBetCreated, onBetUpdated
                             <button
                               type="button"
                               onClick={() => onConditionChange(value)}
-                              className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isActive ? 'bg-primary-100 dark:bg-primary-500/25 text-primary-700 dark:text-primary-300' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/60'}`}
+                              className={`w-full text-start px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isActive ? 'bg-primary-100 dark:bg-primary-500/25 text-primary-700 dark:text-primary-300' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/60'}`}
                             >
                               {opt.label}
                             </button>

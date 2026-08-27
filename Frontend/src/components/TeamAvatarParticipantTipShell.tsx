@@ -163,7 +163,7 @@ const ParticipantTipPopover = forwardRef<
             <li key={u.id} className="list-none">
               <button
                 type="button"
-                className="flex w-full min-w-0 cursor-pointer items-start gap-2.5 rounded-xl px-2 py-1.5 text-left transition-colors duration-150 hover:bg-slate-50/90 dark:hover:bg-white/[0.06]"
+                className="flex w-full min-w-0 cursor-pointer items-start gap-2.5 rounded-xl px-2 py-1.5 text-start transition-colors duration-150 hover:bg-slate-50/90 dark:hover:bg-white/[0.06]"
                 onClick={(e) => {
                   e.stopPropagation();
                   onActivatePlayer(u.id);

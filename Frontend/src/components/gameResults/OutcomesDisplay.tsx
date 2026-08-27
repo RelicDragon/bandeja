@@ -177,7 +177,7 @@ export const OutcomesDisplay = ({ outcomes, affectsRating, gameId, onExplanation
                     handleExplanationClick(outcome);
                   }
                 }}
-                className={`w-full relative bg-white dark:bg-gray-800 rounded-lg shadow-md p-2.5 transition-all hover:shadow-lg active:scale-[1.02] text-left cursor-pointer ${
+                className={`w-full relative bg-white dark:bg-gray-800 rounded-lg shadow-md p-2.5 transition-all hover:shadow-lg active:scale-[1.02] text-start cursor-pointer ${
                   loadingUserId === outcome.userId ? 'opacity-70 cursor-wait' : ''
                 } ${getRingClass()}`}
               >
@@ -189,7 +189,7 @@ export const OutcomesDisplay = ({ outcomes, affectsRating, gameId, onExplanation
                   )}
                 </div>
 
-                <div className="flex items-center gap-1 pr-7">
+                <div className="flex items-center gap-1 pe-7">
                   <div className="flex-shrink-0 w-10 h-10 flex items-center justify-center">
                     {(() => {
                       const icon = getPositionIcon(group.place, outcome.isWinner);
@@ -221,7 +221,7 @@ export const OutcomesDisplay = ({ outcomes, affectsRating, gameId, onExplanation
                     })()}
                   </div>
 
-                  <div className="flex-shrink-0 pr-2">
+                  <div className="flex-shrink-0 pe-2">
                     <PlayerAvatar
                       player={outcome.user}
                       smallLayout={true}
@@ -275,7 +275,7 @@ export const OutcomesDisplay = ({ outcomes, affectsRating, gameId, onExplanation
                             <div className="flex items-center gap-2 text-sm flex-wrap">
                               <span className="text-gray-600 dark:text-gray-400">
                                 {t('gameResults.games')}: {outcome.wins}-{outcome.ties}-{outcome.losses}
-                                <span className="text-[10px] text-gray-400 dark:text-gray-500 ml-1">
+                                <span className="text-[10px] text-gray-400 dark:text-gray-500 ms-1">
                                   {outcome.wins + outcome.ties + outcome.losses}
                                 </span>
                               </span>

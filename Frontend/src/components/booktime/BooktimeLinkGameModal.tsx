@@ -123,7 +123,7 @@ export function BooktimeLinkGameModal({ booking, club, open, onOpenChange, onLin
                         type="button"
                         disabled={linkBusy}
                         onClick={() => handleSelectGame(game)}
-                        className={`w-full rounded-lg border px-3 py-2.5 text-left transition-colors disabled:opacity-50 ${
+                        className={`w-full rounded-lg border px-3 py-2.5 text-start transition-colors disabled:opacity-50 ${
                           recommended
                             ? 'border-primary-300 bg-primary-50/80 hover:bg-primary-100/80 dark:border-primary-700 dark:bg-primary-950/30 dark:hover:bg-primary-950/50'
                             : 'border-gray-200 bg-white hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:hover:bg-gray-700/50'

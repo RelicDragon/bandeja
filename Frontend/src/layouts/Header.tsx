@@ -185,7 +185,7 @@ export const Header = ({ animateEntry = false }: HeaderProps) => {
             ) : null}
 
             {isUserProfileShell && userProfileHeaderActions && (
-              <div className="min-w-0 flex-1 flex items-center min-h-0 pl-1">
+              <div className="min-w-0 flex-1 flex items-center min-h-0 ps-1">
                 <div className="w-full min-w-0 overflow-visible">{userProfileHeaderActions}</div>
               </div>
             )}

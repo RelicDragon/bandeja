@@ -74,10 +74,10 @@ export function GameResultStorySlide({
         <GameResultStoryStatsRow result={result} />
 
         {matches.length > 0 || resultSummaryText ? (
-          <div className="space-y-3 pr-0.5">
+          <div className="space-y-3 pe-0.5">
             {matches.length > 0 ? (
               <div>
-                <p className="mb-2 text-left text-[10px] font-semibold uppercase tracking-[0.16em] text-white/55">
+                <p className="mb-2 text-start text-[10px] font-semibold uppercase tracking-[0.16em] text-white/55">
                   {t('stories.matchBreakdown')}
                 </p>
                 <div className="space-y-2 pb-1">

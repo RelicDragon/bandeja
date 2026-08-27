@@ -477,7 +477,7 @@ export function BooktimeCreateGameConfirmModal({
                   return (
                     <div
                       key={entry.court.id}
-                      className="rounded-xl border-l-4 border-l-primary-500 border border-gray-200 dark:border-gray-700 bg-primary-50/40 dark:bg-primary-950/20 p-4 space-y-2"
+                      className="rounded-xl border-s-4 border-s-primary-500 border border-gray-200 dark:border-gray-700 bg-primary-50/40 dark:bg-primary-950/20 p-4 space-y-2"
                     >
                       <div className="flex items-start gap-2">
                         <CalendarCheck size={18} className="text-primary-600 dark:text-primary-400 mt-0.5 shrink-0" />

@@ -14,7 +14,7 @@ export function LeagueGroupBookmarkTag({ name, color }: LeagueGroupBookmarkTagPr
       aria-hidden
     >
       <div
-        className="truncate py-1.5 pl-2.5 pr-3 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm"
+        className="truncate py-1.5 ps-2.5 pe-3 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm"
         style={{
           backgroundColor: groupColor,
           borderTopRightRadius: '0.375rem',

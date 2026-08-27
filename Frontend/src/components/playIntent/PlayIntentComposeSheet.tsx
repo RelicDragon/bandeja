@@ -257,7 +257,7 @@ export function PlayIntentComposePanel({
 
   return (
     <>
-      <DrawerHeader className="shrink-0 pr-16">
+      <DrawerHeader className="shrink-0 pe-16">
         <h2 className="text-lg font-semibold leading-none tracking-tight">
           {t('playIntent.composeTitle')}
         </h2>
@@ -325,7 +325,7 @@ export function PlayIntentComposePanel({
                     type="button"
                     onClick={() => toggleTime(opt.value)}
                     aria-pressed={active}
-                    className={`flex min-h-14 items-center gap-2.5 rounded-2xl border px-3 py-2 text-left transition-all ${opt.value === 'CUSTOM' ? 'col-span-2' : ''} ${
+                    className={`flex min-h-14 items-center gap-2.5 rounded-2xl border px-3 py-2 text-start transition-all ${opt.value === 'CUSTOM' ? 'col-span-2' : ''} ${
                       active
                         ? 'border-sky-500/60 bg-sky-500 text-white shadow-md shadow-sky-500/15'
                         : 'border-transparent bg-background/80 text-foreground/80 hover:border-sky-500/25 hover:bg-background'
@@ -401,7 +401,7 @@ export function PlayIntentComposePanel({
           >
             {create.isPending ? (
               <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                <Loader2 className="w-4 h-4 me-2 animate-spin" />
                 {t('playIntent.saving')}
               </>
             ) : (

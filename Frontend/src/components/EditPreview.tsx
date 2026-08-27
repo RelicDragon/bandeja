@@ -20,7 +20,7 @@ export const EditPreview: React.FC<EditPreviewProps> = ({
   const truncated = displayContent.length > 120 ? `${displayContent.slice(0, 120)}…` : displayContent;
 
   return (
-    <div className={`bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-500 dark:border-amber-500 p-2 rounded-lg flex items-start justify-between gap-2 ${className}`}>
+    <div className={`bg-amber-50 dark:bg-amber-900/20 border-s-4 border-amber-500 dark:border-amber-500 p-2 rounded-lg flex items-start justify-between gap-2 ${className}`}>
       <div className="flex items-start gap-2 min-w-0 flex-1">
         <Pencil size={14} className="text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
         <div className="min-w-0 flex-1 flex flex-col">

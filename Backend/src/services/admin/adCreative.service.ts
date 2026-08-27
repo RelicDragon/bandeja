@@ -35,7 +35,7 @@ export class AdminAdCreativeService {
   static async upload(
     campaignId: string,
     body: unknown,
-    files: { image?: Express.Multer.File; imageDark?: Express.Multer.File }
+    files: { images?: Express.Multer.File[]; imagesDark?: Express.Multer.File[] }
   ) {
     const campaign = await prisma.adCampaign.findUnique({ where: { id: campaignId } });
     if (!campaign) throw new ApiError(404, 'Campaign not found');
@@ -44,27 +44,28 @@ export class AdminAdCreativeService {
     const parsed = adCreativeWriteSchema.safeParse(normalized);
     if (!parsed.success) throw new ApiError(400, parsed.error.message);
 
-    if (!files.image) {
-      throw new ApiError(400, 'image file is required');
+    if (!files.images?.length) {
+      throw new ApiError(400, 'At least one image file is required');
+    }
+    if ((files.imagesDark?.length ?? 0) > files.images.length) {
+      throw new ApiError(400, 'Dark images cannot outnumber light images');
     }
 
     const creativeId = newCreativeId();
-    const imageUrl = await processAdCreativeImage(
-      files.image.buffer,
-      campaignId,
-      creativeId,
-      'light'
+    const imageUrls = await Promise.all(
+      files.images.map((file, index) =>
+        processAdCreativeImage(file.buffer, campaignId, creativeId, 'light', index)
+      )
+    );
+    const imageUrlsDark = await Promise.all(
+      (files.imagesDark ?? []).map((file, index) =>
+        processAdCreativeImage(file.buffer, campaignId, creativeId, 'dark', index)
+      )
     );
 
-    let imageUrlDark: string | null = null;
-    if (files.imageDark) {
-      imageUrlDark = await processAdCreativeImage(
-        files.imageDark.buffer,
-        campaignId,
-        creativeId,
-        'dark'
-      );
-    }
+    // The first frame remains the legacy static image contract for older clients.
+    const imageUrl = imageUrls[0];
+    const imageUrlDark = imageUrlsDark[0] ?? null;
 
     const placement = parsed.data.placement as AdPlacementKey | null | undefined;
 
@@ -95,6 +96,8 @@ export class AdminAdCreativeService {
         variantKey: parsed.data.variantKey ?? 'A',
         imageUrl,
         imageUrlDark,
+        imageUrls,
+        imageUrlsDark,
         title: parsed.data.title ?? null,
         subtitle: parsed.data.subtitle ?? null,
         ctaLabel: parsed.data.ctaLabel ?? null,
@@ -105,6 +108,8 @@ export class AdminAdCreativeService {
       update: {
         imageUrl,
         imageUrlDark,
+        imageUrls,
+        imageUrlsDark,
         title: parsed.data.title ?? null,
         subtitle: parsed.data.subtitle ?? null,
         ctaLabel: parsed.data.ctaLabel ?? null,

@@ -37,7 +37,7 @@ export function ScoreKeypadTeamContent({
 }: ScoreKeypadTeamContentProps) {
   return (
     <>
-      <div className="mb-2 flex min-w-0 items-center gap-2 pr-9">
+      <div className="mb-2 flex min-w-0 items-center gap-2 pe-9">
         <div className="flex shrink-0 -space-x-2">
           {players.map((player) => (
             <PlayerAvatar

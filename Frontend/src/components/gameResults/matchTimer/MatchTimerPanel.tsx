@@ -96,7 +96,7 @@ export function MatchTimerPanel({
       >
         {formatMatchTimerMs(elapsed)}
         {capMs > 0 ? (
-          <span className="ml-1 font-normal text-zinc-500 dark:text-zinc-400">
+          <span className="ms-1 font-normal text-zinc-500 dark:text-zinc-400">
             / {formatMatchTimerMs(capMs)}
           </span>
         ) : null}

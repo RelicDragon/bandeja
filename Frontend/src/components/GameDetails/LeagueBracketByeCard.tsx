@@ -33,7 +33,7 @@ export function LeagueBracketByeCard({
       aria-label={t('gameDetails.bracketByeAria', { seed: seed ?? '—', name: name || t('gameDetails.bracketTbd') })}
     >
       <div
-        className="absolute left-0 top-0 bottom-0 w-1 rounded-l-lg opacity-60"
+        className="absolute left-0 top-0 bottom-0 w-1 rounded-s-lg opacity-60"
         style={{ backgroundColor: color }}
       />
       <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">

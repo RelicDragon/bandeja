@@ -206,7 +206,7 @@ export const UpcomingGamesList = ({
         <Card className="py-4 border-2 border-amber-500 dark:border-amber-500 bg-amber-50/90 dark:bg-amber-950/35 shadow-lg shadow-amber-500/20 dark:shadow-amber-900/40 ring-1 ring-amber-400/60 dark:ring-amber-600/50">
           <button
             type="button"
-            className="flex w-full gap-2 items-start text-left px-1 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-amber-600 focus-visible:ring-offset-2 focus-visible:ring-offset-amber-50 dark:focus-visible:ring-offset-amber-950"
+            className="flex w-full gap-2 items-start text-start px-1 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-amber-600 focus-visible:ring-offset-2 focus-visible:ring-offset-amber-50 dark:focus-visible:ring-offset-amber-950"
             aria-expanded={staleSectionOpen}
             onClick={(e) => {
               e.stopPropagation();

@@ -63,7 +63,7 @@ export function SportQuestionnairePrompt({ sport }: SportQuestionnairePromptProp
             <X className="h-4 w-4" strokeWidth={2} aria-hidden />
           </button>
           <div className="relative flex flex-col gap-4 p-5 pb-2 pt-10 sm:flex-row sm:items-center sm:gap-5 sm:p-6 sm:pb-2 sm:pt-10">
-            <div className="min-w-0 flex-1 text-center sm:text-left">
+            <div className="min-w-0 flex-1 text-center sm:text-start">
               <p className="text-[1.05rem] font-semibold leading-snug text-slate-900 dark:text-white sm:text-lg">
                 {usePadelHomeCopy
                   ? t('home.questionnaireCtaTitle')

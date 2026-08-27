@@ -192,7 +192,7 @@ export const LeagueGameCard = ({
   return (
     <div
       className={`relative border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden ${
-        showSideAccent ? 'pl-3.5 pt-1.5 pb-2 pr-2.5' : 'pl-2.5 pt-1.5 pb-2 pr-2.5'
+        showSideAccent ? 'ps-3.5 pt-1.5 pb-2 pe-2.5' : 'ps-2.5 pt-1.5 pb-2 pe-2.5'
       }`}
     >
       {showSideAccent && (

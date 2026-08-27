@@ -28,7 +28,7 @@ export function SharedPlayIntentProgressDialog({ mode }: Props) {
             <Loader2 className="h-6 w-6 animate-spin" aria-hidden />
           </div>
           <div className="min-w-0">
-            <DialogTitle className="pr-0">
+            <DialogTitle className="pe-0">
               {t(
                 joining
                   ? 'playIntent.sharedJoiningTitle'

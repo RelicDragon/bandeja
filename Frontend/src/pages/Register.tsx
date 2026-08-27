@@ -230,7 +230,7 @@ export const Register = () => {
         <div>
           <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
             {t('profile.sports.primarySport')}
-            <span className="ml-1 font-normal text-gray-500 dark:text-gray-400">
+            <span className="ms-1 font-normal text-gray-500 dark:text-gray-400">
               ({t('common.optional', { defaultValue: 'optional' })})
             </span>
           </label>
@@ -275,7 +275,7 @@ export const Register = () => {
                 onBlur={() => setTouched(prev => ({ ...prev, gender: true }))}
                 className="mt-1 h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
               />
-              <label htmlFor="gender-ack-checkbox" className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+              <label htmlFor="gender-ack-checkbox" className="ms-2 text-sm text-gray-700 dark:text-gray-300">
                 {t('profile.preferNotToSayAcknowledgment')}
               </label>
             </div>
@@ -355,7 +355,7 @@ export const Register = () => {
             className="mt-1 h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
             required
           />
-          <label htmlFor="eula-checkbox" className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+          <label htmlFor="eula-checkbox" className="ms-2 text-sm text-gray-700 dark:text-gray-300">
             {t('auth.acceptEula') || 'I agree to the'}{' '}
             <a
               href="/eula/world/eula.html"

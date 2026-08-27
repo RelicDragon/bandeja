@@ -167,7 +167,7 @@ export function CrossGroupBracketConfigStep({
                   <span className="text-sm font-semibold text-gray-800 dark:text-gray-100">
                     {g.color && (
                       <span
-                        className="inline-block w-2 h-2 rounded-full mr-1.5"
+                        className="inline-block w-2 h-2 rounded-full me-1.5"
                         style={{ backgroundColor: accent }}
                       />
                     )}

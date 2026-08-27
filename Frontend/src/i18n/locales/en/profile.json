@@ -310,6 +310,7 @@
     "auto": "Auto",
     "weekStart": "Week Start",
     "monday": "Monday",
+    "saturday": "Saturday",
     "sunday": "Sunday",
     "currency": "Currency",
     "currencyAuto": "Detect automatically",

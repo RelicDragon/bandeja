@@ -120,7 +120,7 @@ export function SelectedDateWeatherCard({ date, hint }: SelectedDateWeatherCardP
 
       {weather.canLoad ? (
         <div
-          className="flex shrink-0 items-center gap-1.5 pl-1"
+          className="flex shrink-0 items-center gap-1.5 ps-1"
           aria-hidden={Boolean(summary && !weather.pending)}
         >
           {weather.pending ? (
@@ -146,7 +146,7 @@ export function SelectedDateWeatherCard({ date, hint }: SelectedDateWeatherCardP
   );
 
   const shellClass =
-    'w-full rounded-2xl border bg-white/95 px-3.5 py-3 text-left shadow-sm dark:bg-gray-900/85';
+    'w-full rounded-2xl border bg-white/95 px-3.5 py-3 text-start shadow-sm dark:bg-gray-900/85';
 
   return (
     <AnimatePresence mode="popLayout" initial={false}>

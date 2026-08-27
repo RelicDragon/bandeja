@@ -1,8 +1,9 @@
-import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
 import { useResolvedAppAppearance } from '@/store/themeStore';
 import type { AdPlacementPayload } from '@/api/sponsorPlacements';
+import { AdImageSlideshow } from './AdImageSlideshow';
+import { resolveAdImageFrames } from './adImageFrames';
 
 type AdCardProps = {
   payload: AdPlacementPayload;
@@ -15,10 +16,7 @@ export function AdCard({ payload, onClick, onDismiss }: AdCardProps) {
   const appearance = useResolvedAppAppearance();
   const isDark = appearance === 'dark';
 
-  const imageUrl = useMemo(() => {
-    if (isDark && payload.imageUrlDark) return payload.imageUrlDark;
-    return payload.imageUrl;
-  }, [isDark, payload.imageUrl, payload.imageUrlDark]);
+  const imageFrames = resolveAdImageFrames(payload, isDark);
 
   const disclosureText =
     payload.disclosureLabel?.trim() || t('ads.sponsored', { defaultValue: 'Sponsored' });
@@ -48,16 +46,10 @@ export function AdCard({ payload, onClick, onDismiss }: AdCardProps) {
       <button
         type="button"
         onClick={onClick}
-        className="group block w-full min-w-0 overflow-hidden rounded-2xl border border-gray-200/90 bg-white text-left shadow-sm transition hover:border-primary-200 hover:shadow-md dark:border-gray-700 dark:bg-gray-900 dark:hover:border-primary-700"
+        className="group block w-full min-w-0 overflow-hidden rounded-2xl border border-gray-200/90 bg-white text-start shadow-sm transition hover:border-primary-200 hover:shadow-md dark:border-gray-700 dark:bg-gray-900 dark:hover:border-primary-700"
       >
         <div className="relative aspect-[3/1] w-full overflow-hidden bg-gray-100 dark:bg-gray-800">
-          <img
-            src={imageUrl}
-            alt={payload.title ?? disclosureText}
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
-            loading="lazy"
-            decoding="async"
-          />
+          <AdImageSlideshow frames={imageFrames} alt={payload.title ?? disclosureText} />
         </div>
         {hasText && (
           <div className="space-y-1 px-4 py-3">

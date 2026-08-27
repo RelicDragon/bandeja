@@ -74,7 +74,7 @@ export function AchievementFamilyLeaders({
                 <button
                   key={leader.id}
                   type="button"
-                  className={`group relative flex min-h-12 max-w-48 items-center gap-2 overflow-hidden rounded-2xl border px-2.5 py-2 text-left shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800 ${LEADER_CLASS[leader.rank] ?? 'border-gray-200 bg-white dark:border-white/10 dark:bg-white/[0.05]'}`}
+                  className={`group relative flex min-h-12 max-w-48 items-center gap-2 overflow-hidden rounded-2xl border px-2.5 py-2 text-start shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800 ${LEADER_CLASS[leader.rank] ?? 'border-gray-200 bg-white dark:border-white/10 dark:bg-white/[0.05]'}`}
                   aria-label={`${leader.rank}. ${fullName}`}
                   onClick={() => openPlayerCard(leader.id)}
                 >

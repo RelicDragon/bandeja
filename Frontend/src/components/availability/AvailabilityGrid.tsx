@@ -5,6 +5,7 @@ import type { WeekdayKey } from '@/types';
 import {
   WEEKDAYS,
   WEEKDAYS_SUNDAY_FIRST,
+  WEEKDAYS_SATURDAY_FIRST,
   WEEKEND_DAYS,
   getHour,
   dayIsFull,
@@ -30,7 +31,7 @@ const DAY_HEADER_SPACER_CLASS = 'h-12 shrink-0';
 interface AvailabilityGridProps {
   editor: UseAvailabilityEditorReturn;
   weekStartYmd: string;
-  weekStart: 'monday' | 'sunday';
+  weekStart: 'monday' | 'sunday' | 'saturday';
 }
 
 export const AvailabilityGrid = ({ editor, weekStartYmd, weekStart }: AvailabilityGridProps) => {
@@ -38,7 +39,12 @@ export const AvailabilityGrid = ({ editor, weekStartYmd, weekStart }: Availabili
   const user = useAuthStore((s) => s.user);
 
   const order: WeekdayKey[] = useMemo(
-    () => (user?.weekStart === 'sunday' ? WEEKDAYS_SUNDAY_FIRST : WEEKDAYS),
+    () =>
+      user?.weekStart === 'sunday'
+        ? WEEKDAYS_SUNDAY_FIRST
+        : user?.weekStart === 'saturday'
+          ? WEEKDAYS_SATURDAY_FIRST
+          : WEEKDAYS,
     [user?.weekStart]
   );
 

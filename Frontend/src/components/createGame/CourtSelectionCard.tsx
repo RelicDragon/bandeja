@@ -45,7 +45,7 @@ export const CourtSelectionCard = memo(function CourtSelectionCard({
       type="button"
       disabled={disabled}
       onClick={() => onSelectCourt(selectId)}
-      className={`flex items-center gap-2 p-2 rounded-lg border text-left transition-colors min-w-0 ${
+      className={`flex items-center gap-2 p-2 rounded-lg border text-start transition-colors min-w-0 ${
         disabled
           ? 'opacity-50 cursor-not-allowed border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/60'
           : selected

@@ -300,7 +300,7 @@ function WeatherWindowDialogInner({
         </DialogTitle>
 
         {(metadata || open) ? (
-          <div className="border-b border-gray-100 px-4 py-3 pr-12 text-xs font-medium text-gray-500 dark:border-gray-800 dark:text-gray-400">
+          <div className="border-b border-gray-100 px-4 py-3 pe-12 text-xs font-medium text-gray-500 dark:border-gray-800 dark:text-gray-400">
             <span className="block truncate">
               {metadata?.cityName ? (
                 <>
@@ -363,7 +363,7 @@ function WeatherWindowDialogInner({
                   />
                 </div>
 
-                <div ref={hourlyScrollRef} className="min-h-0 flex-1 overflow-y-auto pr-1">
+                <div ref={hourlyScrollRef} className="min-h-0 flex-1 overflow-y-auto pe-1">
                   {isDayLoading ? (
                     <WeatherDayRowsSkeleton />
                   ) : !hasRows ? (

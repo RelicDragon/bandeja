@@ -23,7 +23,7 @@ function TeamLine({
   highlightPlayerId: string;
 }) {
   return (
-    <div className="flex items-start gap-2 text-left">
+    <div className="flex items-start gap-2 text-start">
       <span className="mt-1.5 w-4 shrink-0 text-[11px] font-bold tabular-nums text-white/55">{label}</span>
       <div className="flex min-w-0 flex-1 flex-wrap gap-1.5">
         {players.map((player) => (

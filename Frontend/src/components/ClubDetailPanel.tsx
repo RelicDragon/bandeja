@@ -306,7 +306,7 @@ export function ClubDetailPanel({ club, onOpenFullscreenPhoto, onClubRefresh, sn
             <button
               type="button"
               onClick={() => openExternalUrl(website)}
-              className="flex items-center gap-2 text-sm text-primary-600 dark:text-primary-400 hover:underline min-w-0 text-left w-full"
+              className="flex items-center gap-2 text-sm text-primary-600 dark:text-primary-400 hover:underline min-w-0 text-start w-full"
             >
               <Globe size={16} className="shrink-0" />
               <span className="truncate">{websiteDisplayHost(website)}</span>

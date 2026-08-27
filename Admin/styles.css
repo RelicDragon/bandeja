@@ -1431,13 +1431,36 @@ select:focus {
     margin-top: 1.5rem;
 }
 
-.ads-creative-preview {
+.ads-creative-previews {
     display: none;
-    max-width: 100%;
-    max-height: 120px;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 0.5rem;
     margin-top: 0.5rem;
+}
+
+.ads-creative-preview-frame {
+    position: relative;
+    overflow: hidden;
     border-radius: 6px;
     border: 1px solid var(--border-color);
+}
+
+.ads-creative-preview-frame img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 3 / 1;
+    object-fit: cover;
+}
+
+.ads-creative-preview-frame span {
+    position: absolute;
+    left: 0.3rem;
+    bottom: 0.3rem;
+    padding: 0.15rem 0.35rem;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    font-size: 0.65rem;
 }
 
 .ads-creative-preview-dark {
@@ -1674,4 +1697,3 @@ select:focus {
 .modal-content-wide {
     max-width: 720px;
 }
-

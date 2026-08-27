@@ -1,0 +1,608 @@
+{
+  "createGame": {
+    "title": "إنشاء مباراة",
+    "identity": {
+      "label": "الاسم والصورة",
+      "optional": "اختياري"
+    },
+    "steps": {
+      "setup": "إعداد المباراة",
+      "location": "الموقع والوقت",
+      "players": "اللاعبون",
+      "details": "الإعدادات والتفاصيل"
+    },
+    "footer": {
+      "selectClubHint": "اختر نادياً للمتابعة"
+    },
+    "locationSteps": {
+      "date": "التاريخ",
+      "time": "وقت البدء"
+    },
+    "pickSport": "اختر الرياضة",
+    "createBar": "إنشاء فعالية بار",
+    "createTraining": "إنشاء جلسة تدريب",
+    "createTournament": "إنشاء بطولة",
+    "createLeague": "إنشاء دوري",
+    "selectType": "اختر النوع",
+    "location": "الموقع",
+    "locationTournament": "موقع البطولة",
+    "locationLeague": "موقع الدوري",
+    "club": "النادي",
+    "selectClub": "اختر النادي",
+    "court": "الملعب",
+    "hall": "القاعة",
+    "notBookedYet": "المباراة فقط",
+    "dontSelectCourt": "بدون ملعب بعد",
+    "dontSelectHall": "بدون قاعة بعد",
+    "courtNotSelected": "لم يتم اختيار ملعب",
+    "hallNotSelected": "لم يتم اختيار قاعة",
+    "multiCourtHint": "اختر حتى {{count}} ملاعب لـ {{participants}} لاعبين (تم اختيار {{selected}})",
+    "multiCourtNeedSharedSlots": "اختر {{count}} ملاعب متاحة في الوقت نفسه.",
+    "multiCourtNoSharedSlots": "لا توجد فترة زمنية متاحة على جميع الملاعب الـ {{count}} المختارة. جرّب ملاعب أخرى أو تاريخاً أو مدة مختلفة.",
+    "webCameraHint": "هذا الملعب مرتبط بكاميرا ويب",
+    "webCameraHintsTitle": "كاميرات الويب المرتبطة",
+    "webCameraHintNamed": "{{court}} مرتبط بكاميرا ويب",
+    "webCameraHintAction": "اضغط للمشاهدة مباشرة",
+    "hasBookedCourt": "لقد حجزت هذا الملعب",
+    "hasBookedHall": "لقد حجزت طاولة",
+    "selectCourt": "اختر الملعب",
+    "selectHall": "اختر القاعة",
+    "selectClubFirst": "اختر النادي أولاً",
+    "selectCourtFirst": "اختر ملعباً أولاً",
+    "clubCancellationNotice": "إشعار الإلغاء: قبل {{hours}} ساعة على الأقل من موعدك.",
+    "clubPolicyTitle": "سياسات النادي",
+    "noClubsAvailable": "لا توجد أندية متاحة",
+    "clubDetailsBack": "العودة إلى الأندية",
+    "clubInfo": "تفاصيل النادي",
+    "clubPhotos": "الصور",
+    "noCourtsAvailable": "لا توجد ملاعب متاحة",
+    "noHallsAvailable": "لا توجد قاعات متاحة",
+    "playerLevel": "مستوى اللاعب",
+    "playerLevelTournament": "مستوى لاعبي البطولة",
+    "playerLevelLeague": "مستوى لاعبي الدوري",
+    "minLevel": "الحد الأدنى للمستوى",
+    "maxLevel": "الحد الأقصى للمستوى",
+    "participants": "المشاركون",
+    "participantsTournament": "مشاركو البطولة",
+    "participantsLeague": "مشاركو الدوري",
+    "teamFormat": "صيغة الفرق",
+    "numberOfParticipants": "عدد المشاركين",
+    "numberOfParticipantsTournament": "عدد مشاركي البطولة",
+    "numberOfParticipantsLeague": "عدد مشاركي الدوري",
+    "addMeToGame": "انضم إلى المباراة",
+    "iWantToPlay": "أريد اللعب",
+    "iWillPlay": "سألعب أيضاً",
+    "settings": "الإعدادات",
+    "settingsTournament": "إعدادات البطولة",
+    "settingsLeague": "إعدادات الدوري",
+    "settingsTraining": "إعدادات التدريب",
+    "priceRequired": "يجب أن يكون السعر أكبر من 0 لهذا النوع من التسعير",
+    "gameType": "نوع المباراة",
+    "gameTypeLeague": "نوع الدوري",
+    "gameTypeNote": "يمكنك تغيير إعدادات المباراة التفصيلية في قسم إعداد المباراة.",
+    "gameTypeNoteLeague": "يمكنك تغيير إعدادات الدوري التفصيلية في قسم إعداد الدوري.",
+    "anyoneCanInvite": {
+      "title": "يمكن لأي شخص دعوة لاعبين آخرين",
+      "titleTraining": "يمكن لأي شخص دعوة مشاركين آخرين",
+      "note": {
+        "false": "المنظمون فقط يمكنهم دعوة اللاعبين.",
+        "true": "أي مشارك يمكنه دعوة لاعبين آخرين."
+      },
+      "noteTraining": {
+        "false": "المنظمون فقط يمكنهم دعوة المشاركين.",
+        "true": "أي مشارك يمكنه دعوة مشاركين آخرين."
+      }
+    },
+    "publicGame": {
+      "title": "مباراة عامة",
+      "titleTraining": "تدريب عام",
+      "note": {
+        "false": "ستكون خاصة ومرئية فقط للمشاركين المدعوين.",
+        "true": "ستكون مرئية لجميع اللاعبين ويمكن العثور عليها في البحث."
+      },
+      "noteTraining": {
+        "false": "ستكون خاصة ومرئية فقط للمشاركين المدعوين.",
+        "true": "ستكون مرئية لجميع اللاعبين ويمكن العثور عليها في البحث."
+      }
+    },
+    "resultsByAnyone": {
+      "title": "النتائج لأي شخص",
+      "note": {
+        "false": "المنظمون فقط يمكنهم إدخال وتعديل النتائج وصيغة المباراة.",
+        "true": "أي مشارك يلعب يمكنه إدخال النتائج وتغيير صيغة المباراة."
+      }
+    },
+    "allowDirectJoin": {
+      "title": "الدخول دون تأكيد",
+      "titleTraining": "الانضمام دون تأكيد",
+      "note": {
+        "false": "يحتاج اللاعبون إلى موافقة المنظمين قبل الانضمام.",
+        "true": "يمكن للاعبين الانضمام مباشرة دون انتظار الموافقة."
+      },
+      "noteTraining": {
+        "false": "يحتاج المشاركون إلى موافقة المنظمين قبل الانضمام.",
+        "true": "يمكن للمشاركين الانضمام مباشرة دون انتظار الموافقة."
+      }
+    },
+    "afterGameGoToBar": {
+      "title": "البقاء في البار بعد المباراة",
+      "titleTraining": "البقاء في البار بعد التدريب",
+      "note": {
+        "false": "لا تتضمن تجمعاً اجتماعياً بعد المباراة.",
+        "true": "تتضمن تجمعاً اجتماعياً بعد المباراة."
+      },
+      "noteTraining": {
+        "false": "لا تتضمن تجمعاً اجتماعياً بعد التدريب.",
+        "true": "تتضمن تجمعاً اجتماعياً بعد التدريب."
+      }
+    },
+    "participantsOnlyChat": {
+      "title": "محادثة للمشاركين فقط",
+      "note": {
+        "false": "ستكون المحادثة العامة فقط متاحة بعد الإنشاء.",
+        "true": "سيتم إنشاء محادثات المشاركين والمنظمين عند إنشاء المباراة."
+      }
+    },
+    "hasFixedTeams": {
+      "note": {
+        "false": "لوحة النتائج فردية. سيلعب اللاعبون مع أي شخص وفق القواعد.",
+        "true": "لوحة النتائج حسب الزوج. يمكنك تثبيت اللاعبين في أزواج تتنافس ضد بعضها. لا يمكن تغيير تشكيلات الأزواج بعد بدء المباراة."
+      }
+    },
+    "ratingGame": {
+      "title": "مباراة تقييم",
+      "note": {
+        "false": "لن تؤثر النتائج على مستويات المشاركين.",
+        "true": "ستؤثر النتائج على مستويات المشاركين."
+      }
+    },
+    "tournament": "بطولة",
+    "genderTeams": {
+      "label": "الجنس",
+      "any": "أي",
+      "men": "رجال",
+      "women": "نساء",
+      "mixPairs": "مختلط",
+      "note": {
+        "any": "يُرحَّب بأي جنس",
+        "men": "يُسمح للرجال فقط",
+        "women": "يُسمح للنساء فقط",
+        "mixPairs": "للعب الجماعي فقط؛ يتكون كل فريق من رجل واحد وامرأة واحدة، ويُسمح بعدد متساوٍ من الرجال والنساء بالانضمام."
+      }
+    },
+    "fixedTeams": {
+      "optionOff": "تناوب",
+      "GAME": {
+        "descriptionOn": "الاحتفاظ بنفس الشريك في كل مباراة ضمن هذه الفعالية.",
+        "descriptionOff": "يمكن أن يتغيّر الشركاء من جولة إلى أخرى."
+      },
+      "TOURNAMENT": {
+        "descriptionOn": "يبقى الشركاء معاً طوال البطولة.",
+        "descriptionOff": "قد تتغيّر الأزواج بين جولات البطولة."
+      },
+      "LEAGUE": {
+        "descriptionOn": "أزواج ثابتة طوال الدوري.",
+        "descriptionOff": "قد تتغيّر الأزواج من جولة إلى أخرى في الدوري."
+      }
+    },
+    "allowUserInMultipleTeams": {
+      "title": "نفس اللاعب في عدة فرق ثابتة",
+      "helper": "يسمح باختيار شخص واحد في أكثر من زوج. قد يحسب التناوب وبعض منطق الدوري أو الترتيب ذلك بطرق غير معتادة؛ أوقف الفرق الثابتة لإعادة ضبط هذا الخيار.",
+      "editInSettingsHint": "أنت تعدّل الإعدادات في البطاقة أدناه. استخدم المفتاح هناك لهذا الخيار ثم اضغط حفظ. عند مغادرة وضع التعديل يمكنك تغييره مجدداً من إعداد المباراة أعلاه.",
+      "tapEditHint": "اضغط تعديل على هذه البطاقة، ثم فعّل المفتاح واضغط حفظ.",
+      "saveAfterChangeHint": "فعّل المفتاح ثم اضغط حفظ (أعلى أو أسفل هذه البطاقة). تظهر بطاقة إعداد المباراة هذا الخيار مجدداً بعد إنهاء التعديل.",
+      "note": {
+        "false": "يمكن لكل لاعب أن يكون في زوج ثابت واحد فقط.",
+        "true": "قد يظهر اللاعب في عدة أزواج ثابتة في آن واحد."
+      }
+    },
+    "gameName": "اسم المباراة",
+    "gameNameTournament": "اسم البطولة",
+    "gameNameLeague": "اسم الدوري",
+    "gameNameTraining": "اسم التدريب",
+    "gameNamePlaceholder": "سمِّ مباراتك",
+    "gameNamePlaceholderTournament": "سمِّ بطولتك",
+    "gameNamePlaceholderLeague": "سمِّ دوريك",
+    "gameNamePlaceholderTraining": "سمِّ جلستك",
+    "miscellaneous": "متفرقات",
+    "description": "الوصف",
+    "descriptionPlaceholder": "وصف للاعبين…",
+    "descriptionPlaceholderTournament": "وصف للاعبين…",
+    "descriptionPlaceholderLeague": "وصف للاعبين…",
+    "descriptionPlaceholderTraining": "وصف للاعبين…",
+    "price": "السعر",
+    "priceType": "نوع السعر",
+    "priceTypeNotKnown": "غير معروف",
+    "priceTypePerPerson": "لكل شخص",
+    "priceTypePerTeam": "لكل فريق",
+    "priceTypeTotal": "الإجمالي",
+    "priceTypeFree": "مجاني",
+    "priceTotal": "مبلغ السعر",
+    "priceTotalPlaceholder": "أدخل مبلغ السعر",
+    "priceCurrency": "العملة",
+    "priceNotSet": "السعر غير محدد",
+    "gameStart": "بدء المباراة",
+    "gameStartTournament": "بدء البطولة",
+    "gameStartLeague": "بدء الدوري",
+    "gameStartTraining": "بدء التدريب",
+    "selectDate": "اختر التاريخ",
+    "date": "التاريخ",
+    "startTime": "وقت البدء",
+    "endTime": "وقت الانتهاء",
+    "duration": "المدة",
+    "noTimeSlotsForDate": "لا توجد أوقات متاحة لهذا التاريخ. جرّب يوماً آخر.",
+    "noTimeSlotsForDuration": "لا توجد أوقات متاحة لهذه المدة. جرّب مدة أو تاريخاً آخر.",
+    "clubTime": "توقيت النادي",
+    "timeSlot": "الفترة المختارة",
+    "loadingExternalSlots": "جارٍ تحميل الفترات الخارجية",
+    "bookedWithoutCourt": "بدون ملعب",
+    "notConfirmed": "غير مؤكد",
+    "multipleCourts": "عدة ملاعب",
+    "noCourtsSelected": "لم يتم اختيار ملاعب",
+    "addCourt": "إضافة ملعب",
+    "createButton": "إنشاء مباراة",
+    "createButtonTournament": "إنشاء بطولة",
+    "createButtonLeague": "إنشاء دوري",
+    "createButtonBar": "إنشاء فعالية بار",
+    "createButtonTraining": "إنشاء جلسة تدريب",
+    "today": "اليوم",
+    "tomorrow": "غداً",
+    "yesterday": "أمس",
+    "selectFromCalendar": "اختر من التقويم",
+    "hours": "{{count}}س",
+    "hoursMinutes": "{{hours}}س {{minutes}}د",
+    "durationHours_one": "ساعة {{count}}",
+    "durationHours_other": "{{count}} ساعات",
+    "durationHoursAndHalf": "{{hours}}.5 ساعات",
+    "durationHoursMinutes": "{{hours}} س {{minutes}} د",
+    "you": "أنت",
+    "invite": "دعوة",
+    "remove": "إزالة",
+    "manageInvites": "إدارة الدعوات ({{count}})",
+    "invitesWillBeSent_one": "ستُرسل دعوة للاعب بعد إنشاء المباراة",
+    "invitesWillBeSent_other": "ستُرسل دعوات لـ {{count}} لاعبين بعد إنشاء المباراة",
+    "overlapHardSave": "هذا الوقت يتداخل مع ملعب غير متاح (نظام النادي أو محظور). اختر فترة أخرى.",
+    "overlapSoftTitle": "مباراة أخرى مخططة هنا",
+    "overlapSoftMessage": "لدى لاعب آخر مباراة على هذا الملعب في هذا الوقت لكنه لم يؤكد الحجز بعد. يمكنك المتابعة رغم ذلك.",
+    "overlapSoftProceed": "المتابعة على أي حال",
+    "markCourtBookedTitle": "تعليم الملعب كمحجوز؟",
+    "markCourtBookedMessage": "اخترت ملعباً لكنك لم تعلّمه كمحجوز. أكّد عندما تحجزه لدى النادي.",
+    "markCourtBookedYes": "نعم، لقد حجزته",
+    "markCourtBookedSkip": "ليس بعد",
+    "locationTime": {
+      "skipRealCourtToggle": "المباراة فقط",
+      "realCourtBookingHint": "سيتم حجز {{courts}} في {{club}} عند إنشاء المباراة.",
+      "realCourtBookingHintEdit": "سيتم حجز {{courts}} في {{club}} عند الحفظ.",
+      "skipRealCourtHint": "ستُجدول المباراة في Bandeja فقط.",
+      "skipRealCourtHintEdit": "ستُحدَّث المباراة في Bandeja فقط.",
+      "summaryFromBookings": "من حجوزاتك الـ {{count}}",
+      "summaryWindow": "{{start}} – {{end}}",
+      "summaryCrossDate": "{{startDate}} {{start}} – {{endDate}} {{end}}",
+      "selectionCounter": "اختر {{min}}–{{max}} حجوزات ({{players}})",
+      "selectionProgress": "اختر حتى {{max}} ملاعب ({{players}})",
+      "selectionCompleteOne": "تم ربط ملعب واحد",
+      "selectionCompleteMany": "تم ربط {{count}} ملاعب",
+      "selectionAtMax": "تم بلوغ الحد الأقصى لهذه الصيغة ({{players}}) — الحجوزات الأخرى غير متاحة",
+      "emptyBookingsOnDate": "لا توجد حجوزات في هذا التاريخ",
+      "emptyBookingsHint": "جرّب تاريخاً آخر، أو احجز ملعباً جديداً، أو أنشئ المباراة دون ربط حجز.",
+      "emptyBookingsReserveNow": "احجز ملعباً الآن",
+      "emptyBookingsGameOnly": "إنشاء المباراة فقط",
+      "gridLegend": "أخضر = حجزك · أحمر/أصفر = محجوز · الأساسي = الوقت المحدد",
+      "alsoUsedIn": "مستخدم أيضاً في: {{games}}",
+      "pickAdjacentHour": "اختر ساعة واحدة",
+      "linkHintTitle": "ستُربط المباراة بحجوزاتك",
+      "linkHintBody": "ستُربط حجوزات الملاعب هذه عند إنشاء المباراة.",
+      "linkHintLine": "{{court}} · {{window}}",
+      "overrideToggle": "تعديل وقت المباراة",
+      "overrideHint": "يمكن أن يكون وقت المباراة أقصر من حجزك",
+      "overrideResetToast": "أُعيد ضبط الوقت وفق الحجوزات",
+      "preselectedBanner": "تم اختيار الحجز مسبقاً",
+      "linkedOnlyLabel": "من حجوزاتك",
+      "unlinkConfirm": "إزالة رابط هذا الحجز؟",
+      "unlinkLastConfirm": "إزالة آخر حجز ستفتح تعديل الوقت.",
+      "unlinkNoCancelNote": "يبقى حجز الملعب لدى النادي نشطاً — تُزال فقط الرابطة بهذه المباراة.",
+      "syncInactiveCreate": "المزامنة غير نشطة حالياً — تعذّر جلب الفترات أو إجراء الحجوزات هنا. يمكنك إنشاء المباراة في هذا الوقت رغم ذلك.",
+      "syncInactiveEdit": "المزامنة غير نشطة حالياً — تعذّر جلب الفترات أو إجراء الحجوزات هنا. يمكنك تعديل المباراة في هذا الوقت رغم ذلك."
+    },
+    "reservationIntent": {
+      "title": "كيف ستحصل على الملعب؟",
+      "otherOptions": "خيارات أخرى",
+      "recommended": "موصى به",
+      "recommendedShort": "موصى",
+      "validation": {
+        "selectCourt": "اختر {{count}} ملعب/ملاعب أولاً.",
+        "selectBookableCourt": "اختر {{count}} ملعب/ملاعب قابلة للحجز عبر الإنترنت أولاً.",
+        "selectTime": "اختر وقتاً متاحاً أولاً.",
+        "selectDuration": "اختر مدة أولاً.",
+        "selectReservations": "اختر {{count}} حجز/حجوزات من حسابك.",
+        "bookingRecordsLoading": "لا تزال تفاصيل حجوزاتك قيد التحميل — حاول مجدداً بعد لحظات."
+      },
+      "reserveNow": {
+        "title": "احجز ملعباً",
+        "chipTitle": "حجز ملعب",
+        "description": "اختر وقتاً — سنحجزه لك."
+      },
+      "useExisting": {
+        "title": "لدي حجز بالفعل",
+        "chipTitle": "حجزي",
+        "description": "اربط حجزاً من حساب ناديك.",
+        "contextAvailable": "{{count}} متاحة في هذا التاريخ"
+      },
+      "gameOnly": {
+        "title": "تخطي حجز الملعب",
+        "chipTitle": "المباراة فقط",
+        "description": "أنشئ المباراة فقط — دون حجز ملعب."
+      },
+      "manualBooked": {
+        "title": "محجوز يدوياً مسبقاً",
+        "chipTitle": "محجوز",
+        "description": "علّمه كمحجوز دون حجز عبر الإنترنت."
+      },
+      "summary": {
+        "reserveNow": {
+          "title": "سيتم إجراء حجز ملعب حقيقي",
+          "body": "اختر {{count}} ملعب/ملاعب والمدة والوقت. سيُحجز ذلك الجدول بالضبط."
+        },
+        "useExisting": {
+          "title": "ستُربط المباراة بحجزك/حجوزاتك",
+          "body": "تم اختيار {{selected}} من أصل {{count}} حجز/حجوزات مطلوبة."
+        },
+        "gameOnly": {
+          "title": "لن يتم حجز ملعب حقيقي",
+          "body": "ستُجدول المباراة في Bandeja فقط."
+        },
+        "manualBooked": {
+          "title": "ستُعلَّم المباراة كمحجوزة",
+          "body": "لن يُنشأ حجز عبر الإنترنت."
+        }
+      },
+      "cta": {
+        "reserveOne": "احجز الملعب وأنشئ المباراة",
+        "reserveMany": "احجز {{count}} ملاعب وأنشئ المباراة",
+        "linkOne": "اربط الحجز وأنشئ المباراة",
+        "linkMany": "اربط {{count}} حجوزات وأنشئ المباراة",
+        "gameOnly": "إنشاء المباراة فقط",
+        "manualBooked": "إنشاء المباراة"
+      }
+    },
+    "booktime": {
+      "switchLabel": "احجز الملعب عند إنشاء المباراة",
+      "switchHint": "سنحجز {{court}} في {{club}} عند إنشاء المباراة.",
+      "authTitle": "سجّل الدخول لعرض الأوقات المتاحة",
+      "authHint": "سجّل الدخول إلى {{club}} لاختيار وقت لمباراتك.",
+      "authOptOut": "سأحجز الملعب بنفسي",
+      "authorizeInClub": "التفويض في {{club}}",
+      "dateHint": "يمكنك الحجز حتى {{days}} يوماً مسبقاً في هذا النادي.",
+      "connectedChip": "تم تسجيل الدخول · {{phone}}",
+      "createCta": "إنشاء المباراة وحجز الملعب",
+      "signInToContinue": "سجّل الدخول للمتابعة",
+      "confirmTitle": "جاهز للإنشاء؟",
+      "confirmPrimary": "احجز وأنشئ",
+      "activityTitle": "جارٍ إنشاء مباراتك…",
+      "activityStep1": "جارٍ حجز ملعبك…",
+      "activityStepBookCourt": "جارٍ حجز {{court}} ({{current}} من {{total}})…",
+      "activityStep2": "جارٍ إنشاء مباراتك…",
+      "multiBookFailed": "تعذّر حجز {{court}}. تم إلغاء الحجوزات السابقة.",
+      "reviewTotal": "الإجمالي",
+      "successTitle": "أنت جاهز!",
+      "successBody": "تم حجز الملعب · تم إنشاء المباراة",
+      "successGameOnly": "تم إنشاء المباراة",
+      "errorTitle": "حدث خطأ ما",
+      "slotTaken": "أُخذت هذه الفترة للتو — اختر وقتاً آخر.",
+      "pickAnotherTime": "اختر وقتاً آخر",
+      "tryAgain": "حاول مجدداً",
+      "sessionExpired": "انتهت صلاحية تسجيل دخولك. سجّل الدخول مجدداً وحاول مرة أخرى.",
+      "createFailedAfterBook": "تعذّر إنشاء المباراة. أُلغي حجز الملعب — حاول مجدداً.",
+      "createFailedRollback": "تعذّر إنشاء المباراة. لم نتمكن من تأكيد إلغاء حجز الملعب — تحقق مع النادي.",
+      "bookFailed": "تعذّر حجز الملعب. حاول مجدداً.",
+      "reservedAs": "محجوز باسم: {{identity}}",
+      "cancelPolicy": "إلغاء مجاني حتى {{hours}} ساعة قبل البدء.",
+      "yourGame": "مباراتك",
+      "snapshotBlocked": "التوفر المباشر غير متزامن بعد. انتظر المزامنة أو اختر يوماً آخر.",
+      "alreadyReserved": "الملعب محجوز مسبقاً لهذه المباراة.",
+      "liveApiUnavailable": "حجز الملعب غير متاح حالياً — يُستخدم الجدولة العادية."
+    },
+    "padeloo": {
+      "authTitle": "اربط حساب Padeloo",
+      "authHint": "سجّل الدخول ببريد Padeloo لاختيار وقت في {{club}}.",
+      "authorizeInClub": "التفويض في {{club}}"
+    },
+    "klikteren": {
+      "authTitle": "اربط حساب Klikteren",
+      "authHint": "سجّل الدخول ببريد وكلمة مرور Klikteren لاختيار وقت في {{club}}.",
+      "authorizeInClub": "التفويض في {{club}}"
+    },
+    "intent": {
+      "title": "ما نوع المباراة؟",
+      "noTemplatesForSetup": "لا توجد قالب يناسب هذا الإعداد — استخدم المتقدم لاختيار الصيغة يدوياً.",
+      "customizeFormat": "تخصيص الصيغة",
+      "social": {
+        "title": "اجتماعية",
+        "description": "ليلة نادي، تناوب، بلا ضغط تقييم"
+      },
+      "match": {
+        "title": "مباراة",
+        "description": "قواعد قياسية، تُحتسب ضمن مستواك"
+      },
+      "advanced": {
+        "title": "متقدم",
+        "description": "معالج الصيغة الكامل، كل القوالب"
+      }
+    },
+    "templates": {
+      "title": "قوالب سريعة",
+      "empty": "لا توجد قوالب لهذه الرياضة بعد — استخدم تخصيص الصيغة.",
+      "durationApprox2h": "~2س",
+      "durationApprox90m": "~90 د",
+      "PADEL_AUTOMATIC": {
+        "title": "تسجيل مرن",
+        "description": "مباراة ودية، تسجيل مجموعات أو نقاط مرن، أنت تقرر."
+      },
+      "PADEL_BEST_OF_3": {
+        "title": "أفضل من 3",
+        "description": "مباراة قياسية من ثلاث مجموعات",
+        "badge": "رسمي"
+      },
+      "PADEL_SUPER_TIEBREAK": {
+        "title": "سوبر تاي بريك",
+        "description": "مجموعتان + سوبر تاي بريك عند 1–1"
+      },
+      "PADEL_SINGLE_SET": {
+        "title": "مجموعة واحدة",
+        "description": "مجموعة واحدة لحسم المباراة"
+      },
+      "PADEL_AMERICANO": {
+        "title": "تسجيل أمريكانو",
+        "description": "صيغة تناوب — اللعب حتى إجمالي النقاط"
+      },
+      "PADEL_TIMED": {
+        "title": "موقوتة",
+        "description": "مجموعة واحدة مع مؤقت للمباراة"
+      },
+      "PADEL_SINGLES_BO3": {
+        "title": "أفضل من 3",
+        "description": "فردي — صيغة قياسية من ثلاث مجموعات",
+        "badge": "رسمي"
+      },
+      "PADEL_SINGLES_AUTOMATIC": {
+        "title": "تلقائي",
+        "description": "فردي ودي — تسجيل مجموعات مرن، اقتران تلقائي"
+      },
+      "PADEL_SINGLES_SINGLE_SET": {
+        "title": "مجموعة واحدة",
+        "description": "فردي — مجموعة واحدة لحسم المباراة"
+      },
+      "PADEL_SINGLES_AMERICANO_24": {
+        "title": "أمريكانو فردي (24 نقطة)",
+        "description": "تناوب 1 ضد 1 — اللعب ضد الجميع حتى 24 نقطة · جولات 15 د"
+      },
+      "PADEL_AMERICANO_10": {
+        "title": "أمريكانو · 10 د",
+        "description": "جولات موقوتة (10 د)، ألعاب بـ 24 كرة، أزواج عشوائية"
+      },
+      "PADEL_AMERICANO_24": {
+        "title": "أمريكانو (24 نقطة)",
+        "description": "أزواج عشوائية، اللعب حتى 24 نقطة · جولات 15 د"
+      },
+      "PADEL_AMERICANO_20": {
+        "title": "أمريكانو · 20 د",
+        "description": "جولات موقوتة (20 د)، ألعاب بـ 24 كرة، أزواج عشوائية"
+      },
+      "PADEL_MEXICANO_24": {
+        "title": "ميكسيكانو (24 نقطة)",
+        "description": "أزواج متوازنة حسب المستوى، ألعاب حتى 24 نقطة"
+      },
+      "PADEL_CHALLENGER_POOL": {
+        "title": "مجموعة المتحدين",
+        "description": "ملعب الملك + قائمة انتظار: فائزو الملعب 1 يدافعون، والآخرون يتناوبون من المجموعة"
+      },
+      "PADEL_KOTC_11": {
+        "title": "ملك الملعب",
+        "description": "ألعاب قصيرة حتى 11؛ الملوك على الملعب 1، ومجموعة متحدين للباقي"
+      },
+      "PICKLEBALL_SOCIAL_21": {
+        "title": "لعب مفتوح (21 نقطة)",
+        "description": "أمريكانو زوجي، ألعاب بـ 21 كرة"
+      },
+      "PICKLEBALL_MATCH_BO3_11": {
+        "title": "أفضل من 3 حتى 11",
+        "description": "تسجيل رالي، أسلوب رسمي"
+      },
+      "PICKLEBALL_KOTC_11": {
+        "title": "ملك الملعب",
+        "description": "ألعاب قصيرة بـ 11 كرة؛ ملعب الملك + مجموعة متحدين"
+      },
+      "BADMINTON_AMERICANO_21": {
+        "title": "ليلة النادي (21 كرة)",
+        "description": "أمريكانو زوجي — ألعاب تناوب بـ 21 كرة، وليس أفضل من 3"
+      },
+      "BADMINTON_CLUB_3X21": {
+        "title": "نادي أفضل من 3 × 21",
+        "description": "أفضل من 3 ألعاب حتى 21 — فردي/زوجي ودي"
+      },
+      "BADMINTON_CLUB_3X15": {
+        "title": "نادي أفضل من 3 × 15",
+        "description": "أفضل من 3 ألعاب حتى 15 — صيغة نادي BWF"
+      },
+      "BADMINTON_MATCH_3X21": {
+        "title": "مباراة أفضل من 3 × 21",
+        "description": "مباراة رسمية مقيّمة — أفضل من 3 ألعاب حتى 21"
+      },
+      "TT_OPEN_PLAY_11": {
+        "title": "لعبة سريعة حتى 11",
+        "description": "فردي أو زوجي — مباراة قصيرة واحدة (2–4 لاعبين)"
+      },
+      "TT_CLUB_RR_11": {
+        "title": "دوري نادي دائري",
+        "description": "6–8 لاعبين، فردي — الجميع يلعب الجميع، لعبة حتى 11"
+      },
+      "TT_LEGACY_SINGLE_21": {
+        "title": "لعبة كلاسيكية حتى 21 نقطة",
+        "description": "لعبة واحدة حتى 21 نقطة، الفوز بفارق نقطتين (أسلوب ما قبل 2001)"
+      },
+      "TT_SWISS_BOX": {
+        "title": "صندوق سويسري",
+        "description": "دوري صناديق حسب المهارة (محرك سلم)، أفضل من 3 حتى 11"
+      },
+      "TT_BOX_BO3_11": {
+        "title": "دوري صناديق أفضل من 3×11",
+        "description": "8–12 لاعباً، مجموعات صناديق — الترقّي بين الملاعب بين الجولات"
+      },
+      "TT_MATCH_BO3_11": {
+        "title": "مباراة أفضل من 3×11",
+        "description": "فردي/زوجي مقيّم، أفضل من 3 ألعاب حتى 11"
+      },
+      "TT_MATCH_BO5_11": {
+        "title": "مباراة أفضل من 5×11",
+        "description": "مباراة مقيّمة، أفضل من 5 ألعاب حتى 11"
+      },
+      "TENNIS_FAST4_SOCIAL": {
+        "title": "شخص FAST4",
+        "description": "مجموعات قصيرة، تسجيل بدون أدفانتج"
+      },
+      "TENNIS_CLASSIC_BO3": {
+        "title": "أفضل من 3 مجموعات",
+        "description": "مباراة تنس كلاسيكية"
+      },
+      "SQUASH_QUICK_BO3_11": {
+        "title": "سريع أفضل من 3×11",
+        "description": "أفضل من 3 ألعاب حتى 11"
+      }
+    },
+    "presetTier": {
+      "social": "اجتماعي",
+      "match": "مباراة"
+    },
+    "presetMeta": {
+      "POINTS_11": "اللعب حتى 11 (تناوب)",
+      "SINGLE_GAME_21": "لعبة كلاسيكية حتى 21",
+      "POINTS_16": "اللعب حتى 16 (تناوب)",
+      "POINTS_21": "ميزانية 21 كرة",
+      "POINTS_24": "أمريكانو بـ 24 كرة",
+      "POINTS_32": "اللعب حتى 32 (تناوب)",
+      "CLASSIC_AUTOMATIC": "تلقائي (ودي)",
+      "CLASSIC_BEST_OF_3": "أفضل من 3 مجموعات",
+      "CLASSIC_BEST_OF_5": "أفضل من 5 مجموعات",
+      "CLASSIC_PRO_SET": "مجموعة برو",
+      "CLASSIC_SHORT_SET": "مجموعات قصيرة",
+      "CLASSIC_SINGLE_SET": "مجموعة واحدة",
+      "CLASSIC_SUPER_TIEBREAK": "سوبر تاي بريك",
+      "CLASSIC_TIMED": "مجموعات موقوتة",
+      "BEST_OF_3_11": "أفضل من 3 حتى 11",
+      "BEST_OF_3_15": "أفضل من 3 · ألعاب حتى 15",
+      "BEST_OF_3_21": "أفضل من 3 · ألعاب حتى 21",
+      "BEST_OF_5_11": "أفضل من 5 حتى 11",
+      "POINTS_15": "ميزانية 15 كرة",
+      "TIMED": "موقوت",
+      "CUSTOM": "مخصص"
+    },
+    "durationHours_zero": "0 ساعات",
+    "durationHours_two": "{{count}} ساعات",
+    "durationHours_few": "{{count}} ساعات",
+    "durationHours_many": "{{count}} ساعات",
+    "invitesWillBeSent_zero": "ستُرسل دعوات لـ 0 لاعبين بعد إنشاء المباراة",
+    "invitesWillBeSent_two": "ستُرسل دعوات لـ {{count}} لاعبين بعد إنشاء المباراة",
+    "invitesWillBeSent_few": "ستُرسل دعوات لـ {{count}} لاعبين بعد إنشاء المباراة",
+    "invitesWillBeSent_many": "ستُرسل دعوات لـ {{count}} لاعبين بعد إنشاء المباراة"
+  }
+}

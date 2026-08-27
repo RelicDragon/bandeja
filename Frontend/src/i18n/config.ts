@@ -5,11 +5,14 @@ import ru from './locales/ru';
 import sr from './locales/sr';
 import es from './locales/es';
 import cs from './locales/cs';
+import ar from './locales/ar';
 import { extractLanguageCode } from '@/utils/displayPreferences';
+
+const RTL_LANGUAGES = new Set(['ar', 'he', 'fa', 'ur']);
 
 const getSystemLanguage = () => {
   const systemLang = navigator.language.split('-')[0];
-  const supportedLanguages = ['en', 'ru', 'sr', 'es', 'cs'];
+  const supportedLanguages = ['en', 'ru', 'sr', 'es', 'cs', 'ar'];
   return supportedLanguages.includes(systemLang) ? systemLang : 'en';
 };
 
@@ -51,6 +54,7 @@ i18n.use(initReactI18next).init({
     sr: { translation: sr },
     es: { translation: es },
     cs: { translation: cs },
+    ar: { translation: ar },
   },
   lng: getUserLanguage(),
   fallbackLng: 'en',
@@ -61,15 +65,15 @@ i18n.use(initReactI18next).init({
   contextSeparator: '_',
 });
 
-function applyHtmlLang(lng: string) {
+function applyHtmlLangDir(lng: string) {
   const code = lng ? extractLanguageCode(lng) : 'en';
   if (typeof document !== 'undefined' && document.documentElement) {
     document.documentElement.lang = code;
+    document.documentElement.dir = RTL_LANGUAGES.has(code) ? 'rtl' : 'ltr';
   }
 }
 
-i18n.on('languageChanged', (lng) => applyHtmlLang(lng));
-applyHtmlLang(i18n.language);
+i18n.on('languageChanged', (lng) => applyHtmlLangDir(lng));
+applyHtmlLangDir(i18n.language);
 
 export default i18n;
-

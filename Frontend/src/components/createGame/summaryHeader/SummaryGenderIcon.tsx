@@ -7,7 +7,7 @@ export function SummaryGenderIcon({ genderTeams }: { genderTeams: GenderTeam }) 
     return (
       <span className={`inline-flex items-center gap-0.5 ${className}`}>
         <i className="bi bi-gender-male text-[10px]" aria-hidden />
-        <i className="bi bi-gender-female -ml-0.5 text-[10px]" aria-hidden />
+        <i className="bi bi-gender-female -ms-0.5 text-[10px]" aria-hidden />
       </span>
     );
   }

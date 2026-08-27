@@ -27,7 +27,7 @@ export const LocationTimeStepHeader = ({
     <span className="text-sm font-semibold text-gray-900 dark:text-white">{title}</span>
     {trailing ? (
       <span
-        className={`ml-auto max-w-[45%] truncate rounded-full px-2 py-0.5 text-[11px] font-semibold tabular-nums ${
+        className={`ms-auto max-w-[45%] truncate rounded-full px-2 py-0.5 text-[11px] font-semibold tabular-nums ${
           done
             ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
             : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300'

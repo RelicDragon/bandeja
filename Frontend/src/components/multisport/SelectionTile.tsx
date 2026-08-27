@@ -172,7 +172,7 @@ export function SelectionTile({
           onClick={onClick}
           whileTap={disabled || reduceMotion ? undefined : { scale: 0.985 }}
           transition={springTransition}
-          className="w-full p-3.5 text-left transition-opacity hover:opacity-95 active:opacity-90 disabled:hover:opacity-100"
+          className="w-full p-3.5 text-start transition-opacity hover:opacity-95 active:opacity-90 disabled:hover:opacity-100"
           {...radioProps}
         >
           <SelectionTileHeader {...headerProps} />
@@ -203,7 +203,7 @@ export function SelectionTile({
       layout={reduceMotion ? false : 'position'}
       whileTap={disabled || reduceMotion ? undefined : { scale: 0.985 }}
       transition={springTransition}
-      className={`w-full rounded-xl border-2 p-3.5 text-left ${borderClass} ${className}`}
+      className={`w-full rounded-xl border-2 p-3.5 text-start ${borderClass} ${className}`}
       {...radioProps}
     >
       <SelectionTileHeader {...headerProps} />

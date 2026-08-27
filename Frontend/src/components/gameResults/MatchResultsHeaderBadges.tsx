@@ -17,7 +17,7 @@ export function MatchResultsHeaderBadges({
   if (!showLivePulse && !showCompletedCheck) return null;
   const notFinishedLabel = t('gameResults.matchNotFinishedBadge', { defaultValue: 'Not Finished' });
   return (
-    <span className="ml-0.5 inline-flex items-center gap-1">
+    <span className="ms-0.5 inline-flex items-center gap-1">
       {showLivePulse ? (
         gameResultsFinal ? (
           <span

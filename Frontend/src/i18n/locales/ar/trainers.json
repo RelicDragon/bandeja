@@ -1,0 +1,9 @@
+{
+  "trainers": {
+    "ourTrainers": "مدربونا",
+    "selectToFilterHint": "اضغط مدرباً لتصفية التدريبات حسبه",
+    "trainingsBy": "تدريبات بواسطة",
+    "clearTrainerFilter": "مسح فلتر المدرب",
+    "noTrainingsByTrainer": "لا توجد تدريبات بواسطة {{name}}"
+  }
+}

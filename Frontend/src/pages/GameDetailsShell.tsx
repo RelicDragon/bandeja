@@ -1380,7 +1380,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
               <button
                 type="button"
                 onClick={() => navigate(`/games/${game.parentId}`)}
-                className="group mb-3 flex w-full items-center justify-between gap-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-left text-gray-900 dark:text-white shadow-xs transition-all duration-200 hover:border-primary-300 dark:hover:border-primary-700 hover:bg-primary-50/50 dark:hover:bg-primary-950/30 hover:shadow-md active:scale-[0.99]"
+                className="group mb-3 flex w-full items-center justify-between gap-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-start text-gray-900 dark:text-white shadow-xs transition-all duration-200 hover:border-primary-300 dark:hover:border-primary-700 hover:bg-primary-50/50 dark:hover:bg-primary-950/30 hover:shadow-md active:scale-[0.99]"
               >
                 <span className="flex items-center gap-3 font-normal">
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-500 dark:bg-blue-950/40 dark:text-blue-400 transition-transform duration-200 group-hover:scale-105">

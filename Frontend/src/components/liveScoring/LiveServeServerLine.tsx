@@ -82,7 +82,7 @@ export function LiveServeServerLine({ snapshot, teamAPlayers, teamBPlayers, atta
             }}
           />
           {slot ? (
-            <span className="ml-1 inline-flex align-middle rounded bg-zinc-200/90 px-1 py-px text-[9px] font-bold uppercase tracking-wide text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300">
+            <span className="ms-1 inline-flex align-middle rounded bg-zinc-200/90 px-1 py-px text-[9px] font-bold uppercase tracking-wide text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300">
               {slot}
             </span>
           ) : null}

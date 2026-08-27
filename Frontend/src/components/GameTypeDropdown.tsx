@@ -107,8 +107,8 @@ export const GameTypeDropdown = ({ isOpen, onClose, onSelectType }: GameTypeDrop
       <div className={`fixed inset-0 bg-black/20 z-60 ${isAnimatingOut || isExiting ? 'animate-blur-out' : 'animate-blur-in'}`} />
       
       {/* Dropdown buttons */}
-      <div ref={containerRef} className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 pr-8 z-70">
-        <div className="flex flex-col pr-8 gap-2">
+      <div ref={containerRef} className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 pe-8 z-70">
+        <div className="flex flex-col pe-8 gap-2">
           {entityTypes.map((type, index) => (
             <button
               key={type}

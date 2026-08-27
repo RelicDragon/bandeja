@@ -63,13 +63,13 @@ const OutcomeExplanationModalInner = ({
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div className="col-span-2">
                 <span className="text-gray-600 dark:text-gray-400">{t('gameResults.level')}:</span>
-                <span className="ml-2 font-semibold text-gray-900 dark:text-gray-100">
+                <span className="ms-2 font-semibold text-gray-900 dark:text-gray-100">
                   {levelBefore.toFixed(2)} → {formatNumber(levelBefore + explanation.levelChange)}
                 </span>
               </div>
               <div className="col-span-2">
                 <span className="text-gray-600 dark:text-gray-400">{t('gameResults.winsLosses')}:</span>
-                <span className="ml-2 font-semibold text-green-600 dark:text-green-400">
+                <span className="ms-2 font-semibold text-green-600 dark:text-green-400">
                   {explanation.summary.wins}W
                 </span>
                 <span className="mx-1">/</span>
@@ -85,13 +85,13 @@ const OutcomeExplanationModalInner = ({
               </div>
               <div className="col-span-2">
                 <span className="text-gray-600 dark:text-gray-400">{t('gameResults.avgOpponentLevel')}:</span>
-                <span className="ml-2 font-semibold text-gray-900 dark:text-gray-100">
+                <span className="ms-2 font-semibold text-gray-900 dark:text-gray-100">
                   {formatNumber(explanation.summary.averageOpponentLevel)}
                 </span>
               </div>
               <div className="col-span-2 mt-2 pt-2 border-t border-gray-300 dark:border-gray-600">
                 <span className="text-gray-600 dark:text-gray-400">{t('gameResults.totalLevelChange')}:</span>
-                <span className={`ml-2 font-bold text-lg ${getLevelChangeColor(explanation.levelChange)}`}>
+                <span className={`ms-2 font-bold text-lg ${getLevelChangeColor(explanation.levelChange)}`}>
                   {formatChange(explanation.levelChange)}
                 </span>
               </div>
@@ -113,21 +113,21 @@ const OutcomeExplanationModalInner = ({
             <div className="space-y-2 text-xs">
               <div>
                 <span className="text-gray-600 dark:text-gray-400">{t('gameResults.reliability')}:</span>
-                <span className="ml-1.5 font-semibold text-gray-900 dark:text-gray-100">
+                <span className="ms-1.5 font-semibold text-gray-900 dark:text-gray-100">
                   {formatNumber(explanation.userReliability)} →{' '}
                   {formatNumber(explanation.userReliability + explanation.reliabilityChange)}
                 </span>
-                <span className={`ml-1.5 font-semibold ${getLevelChangeColor(explanation.reliabilityChange)}`}>
+                <span className={`ms-1.5 font-semibold ${getLevelChangeColor(explanation.reliabilityChange)}`}>
                   ({formatChange(explanation.reliabilityChange)})
                 </span>
               </div>
               <div>
                 <span className="text-gray-600 dark:text-gray-400">{t('gameResults.reliabilityCoefficient')}:</span>
-                <span className="ml-1.5 font-semibold text-purple-600 dark:text-purple-400">
+                <span className="ms-1.5 font-semibold text-purple-600 dark:text-purple-400">
                   {formatNumber(explanation.reliabilityCoefficient)}x
                 </span>
                 {explanation.ratingSettling && (
-                  <span className="ml-2 inline-flex items-center rounded-md bg-amber-100 dark:bg-amber-900/40 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 dark:text-amber-200">
+                  <span className="ms-2 inline-flex items-center rounded-md bg-amber-100 dark:bg-amber-900/40 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 dark:text-amber-200">
                     {t('gameResults.ratingSettling')}
                   </span>
                 )}
@@ -135,7 +135,7 @@ const OutcomeExplanationModalInner = ({
               {isAdmin && explanation.ratingUncertainty != null && explanation.ratingUncertainty > 0 && (
                 <div>
                   <span className="text-gray-600 dark:text-gray-400">{t('gameResults.ratingUncertainty')}:</span>
-                  <span className="ml-1.5 font-semibold text-amber-700 dark:text-amber-300">
+                  <span className="ms-1.5 font-semibold text-amber-700 dark:text-amber-300">
                     {formatNumber(explanation.ratingUncertainty)} (
                     {formatNumber(ratingUncertaintyScale(explanation.ratingUncertainty))}x)
                   </span>
@@ -181,12 +181,12 @@ const OutcomeExplanationModalInner = ({
                 <div className="space-y-3 text-sm">
                   <div>
                     <span className="text-amber-800 dark:text-amber-200">{t('gameResults.socialLevelBefore')}:</span>
-                    <span className="ml-2 font-semibold text-amber-900 dark:text-amber-100">
+                    <span className="ms-2 font-semibold text-amber-900 dark:text-amber-100">
                       {formatNumber(explanation.socialLevelChange.levelBefore)} →{' '}
                       {formatNumber(explanation.socialLevelChange.levelAfter)}
                     </span>
                     <span
-                      className={`ml-2 font-bold text-lg ${getLevelChangeColor(explanation.socialLevelChange.levelChange)}`}
+                      className={`ms-2 font-bold text-lg ${getLevelChangeColor(explanation.socialLevelChange.levelChange)}`}
                     >
                       {formatChange(explanation.socialLevelChange.levelChange)}
                     </span>
@@ -195,27 +195,27 @@ const OutcomeExplanationModalInner = ({
                   <div className="pt-2 border-t border-amber-300 dark:border-amber-700">
                     <div className="mb-2">
                       <span className="text-amber-800 dark:text-amber-200">{t('gameResults.baseBoost')}:</span>
-                      <span className="ml-2 font-semibold text-amber-900 dark:text-amber-100">
+                      <span className="ms-2 font-semibold text-amber-900 dark:text-amber-100">
                         {formatChange(explanation.socialLevelChange.baseBoost)}
                       </span>
                     </div>
                     <div className="mb-2">
                       <span className="text-amber-800 dark:text-amber-200">{t('gameResults.roleMultiplier')}:</span>
-                      <span className="ml-2 font-semibold text-purple-600 dark:text-purple-400">
+                      <span className="ms-2 font-semibold text-purple-600 dark:text-purple-400">
                         {formatNumber(explanation.socialLevelChange.roleMultiplier)}x
                       </span>
-                      <span className="ml-2 text-xs text-amber-700 dark:text-amber-300">
+                      <span className="ms-2 text-xs text-amber-700 dark:text-amber-300">
                         ({explanation.socialLevelChange.roleName})
                       </span>
                     </div>
                     <div className="mb-2">
                       <span className="text-amber-800 dark:text-amber-200">{t('gameResults.totalSocialLevelChange')}:</span>
                       <span
-                        className={`ml-2 font-bold text-lg ${getLevelChangeColor(explanation.socialLevelChange.levelChange)}`}
+                        className={`ms-2 font-bold text-lg ${getLevelChangeColor(explanation.socialLevelChange.levelChange)}`}
                       >
                         {formatChange(explanation.socialLevelChange.levelChange)}
                       </span>
-                      <span className="ml-2 text-xs text-amber-700 dark:text-amber-300">
+                      <span className="ms-2 text-xs text-amber-700 dark:text-amber-300">
                         ({formatChange(explanation.socialLevelChange.baseBoost)} ×{' '}
                         {formatNumber(explanation.socialLevelChange.roleMultiplier)})
                       </span>

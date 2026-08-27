@@ -156,7 +156,7 @@ export const GroupFilterDropdown = ({
             <>
               <button
                 onClick={() => handleSelect(allGroupId)}
-                className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors duration-150 ${
+                className={`w-full flex items-center gap-3 px-4 py-3 text-start transition-colors duration-150 ${
                   selectedGroupId === allGroupId
                     ? 'bg-primary-50 dark:bg-primary-900/20'
                     : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'
@@ -193,7 +193,7 @@ export const GroupFilterDropdown = ({
               <button
                 key={group.id}
                 onClick={() => handleSelect(group.id)}
-                className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors duration-150 hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                className="w-full flex items-center gap-3 px-4 py-3 text-start transition-colors duration-150 hover:bg-gray-50 dark:hover:bg-gray-700/50"
                 style={isSelected ? { backgroundColor: soft } : undefined}
               >
                 <div className="flex min-w-0 flex-1 items-center gap-2">
@@ -236,7 +236,7 @@ export const GroupFilterDropdown = ({
         onClick={() => setIsOpen(!isOpen)}
         className="w-full flex items-center justify-between gap-2 px-4 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:border-primary-500 dark:hover:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all duration-200"
       >
-        <div className="flex min-w-0 flex-1 items-center gap-2 text-left">
+        <div className="flex min-w-0 flex-1 items-center gap-2 text-start">
           {selectedGroup?.color && (
             <span
               className="h-3 w-3 shrink-0 rounded-full border-2"

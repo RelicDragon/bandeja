@@ -50,7 +50,7 @@ export const PreferredTranslationLanguageSection: React.FC<PreferredTranslationL
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center gap-3 px-4 py-3 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800/60 text-left hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+        className="w-full flex items-center gap-3 px-4 py-3 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800/60 text-start hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
         aria-expanded={open}
       >
         <span className="text-2xl leading-none" aria-hidden>
@@ -76,7 +76,7 @@ export const PreferredTranslationLanguageSection: React.FC<PreferredTranslationL
             <button
               type="button"
               onClick={() => void handleSelect(null)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-sm transition-colors ${
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-start text-sm transition-colors ${
                 isUsingAppDefault
                   ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
                   : 'text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800'
@@ -103,7 +103,7 @@ export const PreferredTranslationLanguageSection: React.FC<PreferredTranslationL
                 <button
                   type="button"
                   onClick={() => void handleSelect(code)}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-sm transition-colors ${
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-start text-sm transition-colors ${
                     isSelected
                       ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
                       : 'text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800'

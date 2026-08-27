@@ -29,7 +29,7 @@ export const PinnedMessagesBar: React.FC<PinnedMessagesBarProps> = ({
         type="button"
         onClick={() => onItemClick(msg.id)}
         disabled={loadingScrollTargetId === msg.id}
-        className="w-full text-left px-4 py-2 flex items-center gap-1 min-w-0 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors disabled:opacity-60"
+        className="w-full text-start px-4 py-2 flex items-center gap-1 min-w-0 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors disabled:opacity-60"
       >
         {totalCount > 1 && (
           <span className="text-xs tabular-nums text-gray-500 dark:text-gray-400 flex-shrink-0">

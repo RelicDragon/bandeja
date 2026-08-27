@@ -69,7 +69,7 @@ export const ChatListSearchBar = ({
     >
       <motion.div layout={!disabled} className="flex items-center">
         {showUnreadFilter && (
-          <motion.div layout className="shrink-0 overflow-visible mr-2">
+          <motion.div layout className="shrink-0 overflow-visible me-2">
             <button
               type="button"
               onClick={onUnreadFilterToggle}
@@ -148,7 +148,7 @@ export const ChatListSearchBar = ({
             readOnly={disabled}
             tabIndex={disabled ? -1 : undefined}
             aria-disabled={disabled}
-            className={`w-full pl-9 ${chatsFilter === 'users' ? (searchInput ? 'pr-[7.25rem]' : 'pr-[6.5rem]') : 'pr-9'} py-2 rounded-full border border-gray-300 dark:border-gray-600 bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 disabled:cursor-default`}
+            className={`w-full ps-9 ${chatsFilter === 'users' ? (searchInput ? 'pe-[7.25rem]' : 'pe-[6.5rem]') : 'pe-9'} py-2 rounded-full border border-gray-300 dark:border-gray-600 bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 disabled:cursor-default`}
           />
           {searchInput && (
             <button
@@ -169,7 +169,7 @@ export const ChatListSearchBar = ({
           <button
             type="button"
             onClick={onBugsFilterToggle}
-            className={`shrink-0 w-10 h-10 rounded-full flex items-center justify-center border transition-all ml-1.5 ${
+            className={`shrink-0 w-10 h-10 rounded-full flex items-center justify-center border transition-all ms-1.5 ${
               bugsFilterPanelOpen
                 ? 'bg-blue-500 text-white border-blue-500 dark:bg-blue-600 dark:border-blue-600'
                 : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'

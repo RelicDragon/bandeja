@@ -116,7 +116,7 @@ export function TrophyDetailSheet({
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent className="mx-auto max-w-lg">
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-4 pb-4">
-          <DrawerHeader className="text-left">
+          <DrawerHeader className="text-start">
             <div className="mb-4 flex justify-center">
               <TrophyRarityFrame
                 rarity={displayRarity}

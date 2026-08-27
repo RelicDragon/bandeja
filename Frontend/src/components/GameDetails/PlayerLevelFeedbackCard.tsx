@@ -200,7 +200,7 @@ export function PlayerLevelFeedbackCard({ gameId }: Props) {
           type="button"
           onClick={openFlow}
           disabled={!data.canEdit}
-          className="flex w-full items-center gap-3 p-4 text-left transition-colors enabled:hover:bg-white/45 disabled:cursor-default dark:enabled:hover:bg-white/[0.035]"
+          className="flex w-full items-center gap-3 p-4 text-start transition-colors enabled:hover:bg-white/45 disabled:cursor-default dark:enabled:hover:bg-white/[0.035]"
           aria-label={t(data.canEdit
             ? 'gameResults.levelFeedback.open'
             : 'gameResults.levelFeedback.sentTitle')}
@@ -242,7 +242,7 @@ export function PlayerLevelFeedbackCard({ gameId }: Props) {
           <div className="mx-auto mt-2.5 h-1 w-10 rounded-full bg-slate-300 dark:bg-white/20" aria-hidden />
           <DrawerCloseButton className="absolute right-4 top-3.5 z-10" aria-label={t('common.close')} />
 
-          <DrawerHeader className="px-5 pb-2 pt-5 text-left">
+          <DrawerHeader className="px-5 pb-2 pt-5 text-start">
             <DrawerTitle className="text-xl font-black tracking-tight text-slate-950 dark:text-white">
               {t('gameResults.levelFeedback.sheetTitle')}
             </DrawerTitle>

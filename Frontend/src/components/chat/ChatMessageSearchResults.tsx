@@ -137,7 +137,7 @@ function ResultItem({ r, onResultClick, t }: { r: SearchMessageResult; onResultC
   return (
     <button
       type="button"
-      className="w-full text-left px-4 py-3 border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50 flex flex-col gap-1"
+      className="w-full text-start px-4 py-3 border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50 flex flex-col gap-1"
       onClick={() => onResultClick(r.message.contextId, chatType, r.message.chatContextType === 'GAME' ? { initialChatType: r.message.chatType } : undefined)}
     >
       <div className="flex text-xs text-gray-500 dark:text-gray-400">

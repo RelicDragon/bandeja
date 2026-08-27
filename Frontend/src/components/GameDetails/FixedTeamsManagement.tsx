@@ -428,7 +428,7 @@ export const FixedTeamsManagement = ({ game, onGameUpdate, embedded = false }: F
         return (
           <div key={team.id} className="flex items-stretch overflow-hidden rounded-xl border border-gray-200/90 bg-gray-50/90 dark:border-gray-700/70 dark:bg-gray-800/45">
             <div
-              className="flex w-9 shrink-0 items-center justify-center border-r border-gray-200/90 bg-emerald-500/10 dark:border-gray-700/70 dark:bg-emerald-500/15"
+              className="flex w-9 shrink-0 items-center justify-center border-e border-gray-200/90 bg-emerald-500/10 dark:border-gray-700/70 dark:bg-emerald-500/15"
               aria-hidden
             >
               <span className="text-xs font-bold tabular-nums text-emerald-700 dark:text-emerald-400">

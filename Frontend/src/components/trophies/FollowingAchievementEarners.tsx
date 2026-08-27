@@ -81,7 +81,7 @@ export function FollowingAchievementEarners({
               <button
                 key={user.id}
                 type="button"
-                className="flex min-h-11 max-w-40 items-center gap-1.5 rounded-xl px-1 text-left transition-colors hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:hover:bg-white/[0.06]"
+                className="flex min-h-11 max-w-40 items-center gap-1.5 rounded-xl px-1 text-start transition-colors hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:hover:bg-white/[0.06]"
                 aria-label={fullName}
                 onClick={() => openPlayerCard(user.id)}
               >

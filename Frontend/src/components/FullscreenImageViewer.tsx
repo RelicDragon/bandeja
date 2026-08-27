@@ -961,7 +961,7 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
                 data-testid="fullscreen-media-counter"
               >
                 {isLoadingMoreItems && !previousItem ? (
-                  <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+                  <Loader2 className="me-1.5 h-3.5 w-3.5 animate-spin" aria-hidden="true" />
                 ) : null}
                 {activeIndex + 1} / {galleryItems.length}
               </div>

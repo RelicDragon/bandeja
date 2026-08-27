@@ -53,9 +53,9 @@ export function ChatListOutboxLine({ listOutbox, onRetry, onDismiss }: Props) {
         <span className={`min-w-0 flex-1 line-clamp-2 ${showProgress ? 'animate-pulse' : ''}`}>
           {label}
           {listOutbox.preview?.trim() ? (
-            <span className="font-normal text-gray-600 dark:text-gray-400 ml-1">· {listOutbox.preview.trim()}</span>
+            <span className="font-normal text-gray-600 dark:text-gray-400 ms-1">· {listOutbox.preview.trim()}</span>
           ) : kindHint ? (
-            <span className="font-normal text-gray-600 dark:text-gray-400 ml-1">· {kindHint}</span>
+            <span className="font-normal text-gray-600 dark:text-gray-400 ms-1">· {kindHint}</span>
           ) : null}
         </span>
       </p>

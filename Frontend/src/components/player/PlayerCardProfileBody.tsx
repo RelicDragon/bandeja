@@ -232,7 +232,7 @@ const PlayerCardProfileBodyComponent = ({
             {t('playerCard.online')}
           </span>
         )}
-        <div className="relative z-0 flex items-start gap-5 px-4 py-4 pr-12 sm:items-center sm:gap-6">
+        <div className="relative z-0 flex items-start gap-5 px-4 py-4 pe-12 sm:items-center sm:gap-6">
           <div className="relative shrink-0">
             {user.originalAvatar ? (
               <button type="button" onClick={onAvatarClick} className="cursor-pointer hover:opacity-90 transition-opacity">
@@ -248,7 +248,7 @@ const PlayerCardProfileBodyComponent = ({
               <div className={`w-32 h-32 shrink-0 rounded-full bg-white dark:bg-gray-700 flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-5xl border-4 border-white dark:border-gray-800 shadow-xl ${isFavorite ? 'ring-[3px] ring-yellow-600 dark:ring-yellow-400' : ''}`}>{initials}</div>
             )}
           </div>
-          <div className="min-w-0 flex-1 text-left text-white">
+          <div className="min-w-0 flex-1 text-start text-white">
             {(user.isTrainer || user.gender) && (
               <div className="mb-2 flex items-center gap-2">
                 {user.isTrainer && (
@@ -262,7 +262,7 @@ const PlayerCardProfileBodyComponent = ({
             )}
             <h2 className="text-2xl font-bold break-words">
               {user.firstName}
-              {isBlocked && <span className="ml-2 text-lg font-semibold opacity-90">({t('playerCard.blocked') || 'Blocked'})</span>}
+              {isBlocked && <span className="ms-2 text-lg font-semibold opacity-90">({t('playerCard.blocked') || 'Blocked'})</span>}
             </h2>
             {user.lastName && <h3 className="text-xl font-semibold break-words">{user.lastName}</h3>}
             {user.verbalStatus && (

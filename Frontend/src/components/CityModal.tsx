@@ -103,7 +103,7 @@ export const CityModal = ({ isOpen, onClose, selectedId, onSelect, onCityChanged
         <div data-overlay-chrome="" className="flex shrink-0 items-center gap-3 px-4 pb-2 pt-3">
           <h2
             id={`${modalId}-title`}
-            className="min-w-0 flex-1 text-left text-lg font-semibold tracking-tight text-gray-900 dark:text-white"
+            className="min-w-0 flex-1 text-start text-lg font-semibold tracking-tight text-gray-900 dark:text-white"
           >
             {title}
           </h2>

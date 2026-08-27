@@ -480,7 +480,7 @@ export const LeagueGroupEditorModal = ({
                             setOpenDropdown(openDropdown === group.id ? null : group.id);
                           }
                         }}
-                        className="w-full flex items-center justify-between gap-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white pl-4 pr-3 py-2.5 text-sm font-medium shadow-sm transition-all duration-200 hover:border-primary-300 dark:hover:border-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent cursor-pointer"
+                        className="w-full flex items-center justify-between gap-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white ps-4 pe-3 py-2.5 text-sm font-medium shadow-sm transition-all duration-200 hover:border-primary-300 dark:hover:border-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent cursor-pointer"
                       >
                         <div className="flex items-center gap-2 flex-1 min-w-0">
                           {participantSelections[group.id] ? (
@@ -638,7 +638,7 @@ export const LeagueGroupEditorModal = ({
                         </div>
 
                         {(index === 0 || index === data.groups.length - 1) && (
-                          <div className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-500 dark:text-gray-400 pointer-events-none text-right max-w-20 leading-tight break-words">
+                          <div className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-500 dark:text-gray-400 pointer-events-none text-end max-w-20 leading-tight break-words">
                             {index === 0 ? t('gameDetails.bestGroup') : t('gameDetails.worstGroup')}
                           </div>
                         )}

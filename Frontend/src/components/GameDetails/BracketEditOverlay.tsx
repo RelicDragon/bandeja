@@ -52,7 +52,7 @@ function PositionRow({
       type="button"
       disabled={disabled}
       onClick={onSelect}
-      className={`flex w-full items-center gap-2 rounded-lg border px-3 py-2 text-left transition ${
+      className={`flex w-full items-center gap-2 rounded-lg border px-3 py-2 text-start transition ${
         selected
           ? 'border-primary-500 bg-primary-50 ring-1 ring-primary-400 dark:border-primary-500 dark:bg-primary-950/40'
           : 'border-gray-200 bg-white hover:border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:hover:border-gray-600'
@@ -231,7 +231,7 @@ export function BracketEditOverlay({
               </p>
             )}
 
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1">
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pe-1">
               <p className="mb-2 text-xs text-center text-gray-500 dark:text-gray-400">
                 {t('gameDetails.bracketPreviewHint', { defaultValue: 'Play-in ? byes ? knockout' })}
               </p>

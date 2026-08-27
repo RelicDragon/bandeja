@@ -51,7 +51,7 @@ export const PlayerProfileActionBar = ({
   const wrapClass =
     variant === 'header'
       ? 'flex w-full min-w-0 max-w-full shrink-0 items-stretch justify-end gap-1.5 py-0.5'
-      : 'flex shrink-0 gap-2 items-center w-full p-2 pl-6';
+      : 'flex shrink-0 gap-2 items-center w-full p-2 ps-6';
 
   const mainButtons = (
     <>
@@ -118,7 +118,7 @@ export const PlayerProfileActionBar = ({
   );
 
   const trailing = (closeSlot || (!isCurrentUser && onOpenFullProfile)) ? (
-    <div className={`flex shrink-0 items-center gap-2 pl-1${variant === 'default' ? ' ml-auto' : ''}`}>
+    <div className={`flex shrink-0 items-center gap-2 ps-1${variant === 'default' ? ' ms-auto' : ''}`}>
       {!isCurrentUser && onOpenFullProfile && (
         <button
           type="button"

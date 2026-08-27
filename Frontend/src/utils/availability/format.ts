@@ -23,6 +23,19 @@ const WEEKDAY_OFFSET_SUNDAY: Record<WeekdayKey, number> = {
   sat: 6,
 };
 
+const WEEKDAY_OFFSET_SATURDAY: Record<WeekdayKey, number> = {
+  sat: 0,
+  sun: 1,
+  mon: 2,
+  tue: 3,
+  wed: 4,
+  thu: 5,
+  fri: 6,
+};
+
+export type AvailabilityWeekStart = 'monday' | 'sunday' | 'saturday';
+export type AvailabilityWeekStartPref = 'auto' | AvailabilityWeekStart;
+
 export interface HourRange {
   start: number;
   end: number;
@@ -82,30 +95,35 @@ export const getShortDayLabel = (t: TFunction, day: WeekdayKey): string =>
 export const ymdForWeekdayInWeek = (
   weekStartYmd: string,
   day: WeekdayKey,
-  weekStart: 'monday' | 'sunday'
+  weekStart: AvailabilityWeekStart
 ): string => {
-  const offset = weekStart === 'sunday' ? WEEKDAY_OFFSET_SUNDAY[day] : WEEKDAY_OFFSET_MONDAY[day];
+  const offset =
+    weekStart === 'sunday'
+      ? WEEKDAY_OFFSET_SUNDAY[day]
+      : weekStart === 'saturday'
+        ? WEEKDAY_OFFSET_SATURDAY[day]
+        : WEEKDAY_OFFSET_MONDAY[day];
   return addDaysToYmd(weekStartYmd, offset);
 };
 
 export const isWeekdayTodayInWeek = (
   day: WeekdayKey,
   weekStartYmd: string,
-  weekStart: 'monday' | 'sunday',
+  weekStart: AvailabilityWeekStart,
   todayYmd: string = localTodayYmd()
 ): boolean => ymdForWeekdayInWeek(weekStartYmd, day, weekStart) === todayYmd;
 
 export const isWeekdayPastInWeek = (
   day: WeekdayKey,
   weekStartYmd: string,
-  weekStart: 'monday' | 'sunday',
+  weekStart: AvailabilityWeekStart,
   todayYmd: string = localTodayYmd()
 ): boolean => ymdForWeekdayInWeek(weekStartYmd, day, weekStart) < todayYmd;
 
 export const getDayOfMonthInWeek = (
   weekStartYmd: string,
   day: WeekdayKey,
-  weekStart: 'monday' | 'sunday'
+  weekStart: AvailabilityWeekStart
 ): number => parseInt(ymdForWeekdayInWeek(weekStartYmd, day, weekStart).slice(8, 10), 10);
 
 /** e.g. "Mon, 3" / "Пн, 3" using locale short day names from i18n. */
@@ -113,16 +131,17 @@ export const getShortDayLabelWithDate = (
   t: TFunction,
   day: WeekdayKey,
   weekStartYmd: string,
-  weekStart: 'monday' | 'sunday'
+  weekStart: AvailabilityWeekStart
 ): string => {
   const ymd = ymdForWeekdayInWeek(weekStartYmd, day, weekStart);
   const dayOfMonth = parseInt(ymd.slice(8, 10), 10);
   return `${getShortDayLabel(t, day)}, ${dayOfMonth}`;
 };
 
-const orderFor = (weekStart: 'auto' | 'monday' | 'sunday' | undefined): WeekdayKey[] => {
+const orderFor = (weekStart: AvailabilityWeekStartPref | undefined): WeekdayKey[] => {
   const s = weekStart ?? 'auto';
   if (s === 'sunday') return ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+  if (s === 'saturday') return ['sat', 'sun', 'mon', 'tue', 'wed', 'thu', 'fri'];
   return ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
 };
 
@@ -138,7 +157,7 @@ export const summarizeWeek = (
   wa: WeeklyAvailability | null | undefined,
   opts: {
     timeFormat?: 'auto' | '12h' | '24h';
-    weekStart?: 'auto' | 'monday' | 'sunday';
+    weekStart?: AvailabilityWeekStartPref;
   } = {}
 ): WeeklySummaryLine[] => {
   if (!wa)

@@ -161,7 +161,7 @@ export const LeaguePlannerGrid = memo(function LeaguePlannerGrid({
         </div>
         {hasGamesPanel ? (
           <div
-            className="flex w-[22px] shrink-0 flex-col items-center justify-center self-stretch border-l border-emerald-300/80 bg-emerald-100/95 text-[9px] font-bold leading-none tabular-nums text-emerald-800 dark:border-emerald-700/80 dark:bg-emerald-900/70 dark:text-emerald-100"
+            className="flex w-[22px] shrink-0 flex-col items-center justify-center self-stretch border-s border-emerald-300/80 bg-emerald-100/95 text-[9px] font-bold leading-none tabular-nums text-emerald-800 dark:border-emerald-700/80 dark:bg-emerald-900/70 dark:text-emerald-100"
             aria-label={t('gameDetails.planner.matchesPossible', { count: gameCount })}
           >
             {gameLabel}
@@ -197,7 +197,7 @@ export const LeaguePlannerGrid = memo(function LeaguePlannerGrid({
             <React.Fragment key={hour}>
               <span
                 className={[
-                  'select-none pr-1.5 text-right text-[10px] leading-5 tabular-nums',
+                  'select-none pe-1.5 text-end text-[10px] leading-5 tabular-nums',
                   hour % 3 === 0
                     ? 'font-medium text-gray-600 dark:text-gray-300'
                     : 'text-gray-400 dark:text-gray-500',
@@ -214,7 +214,7 @@ export const LeaguePlannerGrid = memo(function LeaguePlannerGrid({
                     disabled={day.isPast}
                     onClick={() => onCellActivate(day, slot)}
                     className={[
-                      'relative w-full min-h-[2.25rem] touch-manipulation overflow-hidden rounded-lg border p-0 text-left transition',
+                      'relative w-full min-h-[2.25rem] touch-manipulation overflow-hidden rounded-lg border p-0 text-start transition',
                       day.isPast
                         ? 'cursor-not-allowed border-gray-100 bg-gray-100/60 opacity-60 dark:border-gray-800 dark:bg-gray-900/40'
                         : 'border-gray-200 bg-white hover:border-primary-300 hover:shadow-md dark:border-gray-700 dark:bg-gray-800/80 dark:hover:border-primary-700',

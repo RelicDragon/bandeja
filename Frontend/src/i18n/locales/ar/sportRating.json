@@ -1,0 +1,43 @@
+{
+  "sportRating": {
+    "band": {
+      "beginner": "مبتدئ",
+      "improver": "متطور",
+      "intermediate": "متوسط",
+      "advanced": "متقدم",
+      "expert": "خبير",
+      "elite": "نخبة"
+    },
+    "display": {
+      "playtomic": "≈ {{value}} بلايتوميك",
+      "ntrp": "≈ {{value}} NTRP",
+      "dupr": "≈ {{value}} دوبر",
+      "utr": "≈ {{value}} UTR",
+      "usatt": "≈ {{value}} الولايات المتحدة الأمريكية",
+      "squashlevels": "≈ {{value}} مستويات الاسكواش"
+    },
+    "padel": {
+      "band1": "تعلّم التبادلات والموقع الأساسي في الملعب",
+      "band2": "تبادلات مستقرة؛ بداية اللعب عند الشبكة",
+      "band3": "أساسيات زوجي متينة؛ لعب اجتماعي تنافسي",
+      "band4": "لاعب نادٍ قوي؛ تكتيك جيد",
+      "band5": "مستوى نادٍ متقدم / إقليمي",
+      "band6": "أداء عالٍ / مستوى البطولات"
+    },
+    "tennis": {
+      "bandHint": "مستوى نادٍ تقريبي بأسلوب NTRP"
+    },
+    "pickleball": {
+      "bandHint": "مستوى ترفيهي تقريبي بأسلوب DUPR"
+    },
+    "badminton": {
+      "bandHint": "شريحة مهارة النادي (ليست ترتيب BWF)"
+    },
+    "tableTennis": {
+      "bandHint": "مستوى النادي؛ تلميح بأسلوب USATT اختياري"
+    },
+    "squash": {
+      "bandHint": "مستوى توضيحي بأسلوب SquashLevels"
+    }
+  }
+}

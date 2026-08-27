@@ -351,7 +351,7 @@ export function UserTeamPage() {
                         type="button"
                         disabled={busy}
                         onClick={() => void teamAvatarUploadRef.current?.openPicker()}
-                        className="group w-full rounded-2xl border border-zinc-200/90 bg-white/90 px-3.5 py-3 text-left shadow-sm outline-none ring-primary-500/0 transition-[border-color,box-shadow,transform,background-color] hover:border-primary-400/45 hover:bg-primary-50/40 hover:shadow-md focus-visible:ring-2 focus-visible:ring-primary-500/30 active:scale-[0.99] disabled:pointer-events-none disabled:opacity-45 dark:border-zinc-700/90 dark:bg-zinc-900/55 dark:hover:border-primary-500/35 dark:hover:bg-primary-950/25"
+                        className="group w-full rounded-2xl border border-zinc-200/90 bg-white/90 px-3.5 py-3 text-start shadow-sm outline-none ring-primary-500/0 transition-[border-color,box-shadow,transform,background-color] hover:border-primary-400/45 hover:bg-primary-50/40 hover:shadow-md focus-visible:ring-2 focus-visible:ring-primary-500/30 active:scale-[0.99] disabled:pointer-events-none disabled:opacity-45 dark:border-zinc-700/90 dark:bg-zinc-900/55 dark:hover:border-primary-500/35 dark:hover:bg-primary-950/25"
                       >
                         <span className="flex items-center gap-3">
                           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 text-white shadow-md shadow-primary-600/25 ring-1 ring-black/5 dark:shadow-primary-900/40 dark:ring-white/10">
@@ -387,7 +387,7 @@ export function UserTeamPage() {
                 <TeamAvatar team={team} size="hero" />
               )}
             </div>
-            <div className="min-w-0 flex-1 text-center sm:pt-1 sm:text-left">
+            <div className="min-w-0 flex-1 text-center sm:pt-1 sm:text-start">
               {!isOwner ? (
                 <div className="mb-4">
                   <h2 className="text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50 sm:text-2xl">
@@ -490,7 +490,7 @@ export function UserTeamPage() {
               data-testid="user-team-add-to-game"
               onClick={() => runWithProfileName(() => setShowAddToGame(true))}
               disabled={busy}
-              className="flex w-full items-center gap-3 rounded-2xl border border-primary-200/80 bg-primary-50/80 px-3.5 py-3 text-left shadow-sm transition-[transform,background-color,border-color] hover:border-primary-300 hover:bg-primary-50 active:scale-[0.99] disabled:opacity-50 dark:border-primary-800/50 dark:bg-primary-950/30 dark:hover:border-primary-700/60"
+              className="flex w-full items-center gap-3 rounded-2xl border border-primary-200/80 bg-primary-50/80 px-3.5 py-3 text-start shadow-sm transition-[transform,background-color,border-color] hover:border-primary-300 hover:bg-primary-50 active:scale-[0.99] disabled:opacity-50 dark:border-primary-800/50 dark:bg-primary-950/30 dark:hover:border-primary-700/60"
             >
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-600 text-white shadow-md shadow-primary-600/25">
                 <CalendarPlus size={20} strokeWidth={2} aria-hidden />

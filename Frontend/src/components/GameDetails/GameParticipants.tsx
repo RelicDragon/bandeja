@@ -12,6 +12,7 @@ import { ParticipantsSectionHeader } from './ParticipantsSectionHeader';
 import { ParticipantsActionBar } from './ParticipantsActionBar';
 import { useAuthStore } from '@/store/authStore';
 import { entitySupportsParticipantSetup } from '@/components/gameFormat/gameFormatTeamsVisibility';
+import { genderI18nContext } from '@/utils/i18nGender';
 
 interface GameParticipantsProps {
   game: Game;
@@ -68,6 +69,7 @@ export const GameParticipants = ({
 }: GameParticipantsProps) => {
   const { t } = useTranslation();
   const currentUser = useAuthStore((state) => state.user);
+  const genderCtx = genderI18nContext(currentUser?.gender);
   const [viewMode, setViewMode] = useState<'carousel' | 'list'>('carousel');
   const isUnauthorized = !userId;
   const isNonPlaying = !isUnauthorized && game.participants.find(p => p.userId === userId)?.status === 'NON_PLAYING';
@@ -164,8 +166,8 @@ export const GameParticipants = ({
           <div className="p-4 bg-gradient-to-br from-yellow-50 to-amber-50/70 dark:from-yellow-900/25 dark:to-amber-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl shadow-sm shadow-yellow-500/5">
             <p className="text-sm text-gray-700 dark:text-gray-300">
               {game.allowDirectJoin && (hasUnoccupiedSlots || game.entityType === 'BAR')
-                ? t('games.chatParticipantHintJoinGame', { defaultValue: 'You are a chat participant. Join the game below.' })
-                : t('games.chatParticipantHintJoinQueue', { defaultValue: 'You are a chat participant. Join the queue below.' })}
+                ? t('games.chatParticipantHintJoinGame', { context: genderCtx, defaultValue: 'You are a chat participant. Join the game below.' })
+                : t('games.chatParticipantHintJoinQueue', { context: genderCtx, defaultValue: 'You are a chat participant. Join the queue below.' })}
             </p>
           </div>
         )}
@@ -183,7 +185,7 @@ export const GameParticipants = ({
             size="lg"
             className="w-full flex items-center justify-center"
           >
-            <UserPlus size={20} className="mr-2" />
+            <UserPlus size={20} className="me-2" />
             {t('createGame.addMeToGame')}
           </Button>
         )}
@@ -193,7 +195,7 @@ export const GameParticipants = ({
             size="lg"
             className="w-full flex items-center justify-center"
           >
-            <UserPlus size={20} className="mr-2" />
+            <UserPlus size={20} className="me-2" />
             {t('games.joinTheQueue')}
           </Button>
         )}
@@ -201,8 +203,8 @@ export const GameParticipants = ({
           <div className="p-4 bg-gradient-to-br from-yellow-50 to-amber-50/70 dark:from-yellow-900/25 dark:to-amber-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl shadow-sm shadow-yellow-500/5">
             <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">
               {isOwner
-                ? t('games.inQueueOwnerHint', { defaultValue: 'You are the owner. To play in your game, accept yourself from the join queue list below.' })
-                : t('games.inQueue', { defaultValue: 'You are in the waiting list. Waiting for approval...' })}
+                ? t('games.inQueueOwnerHint', { context: genderCtx, defaultValue: 'You are the owner. To play in your game, accept yourself from the join queue list below.' })
+                : t('games.inQueue', { context: genderCtx, defaultValue: 'You are in the waiting list. Waiting for approval...' })}
             </p>
             {onCancelJoinQueue && (
               <Button
@@ -223,7 +225,7 @@ export const GameParticipants = ({
             size="lg"
             className="w-full flex items-center justify-center"
           >
-            <UserPlus size={20} className="mr-2" />
+            <UserPlus size={20} className="me-2" />
             {t('createGame.addMeToGame')}
           </Button>
         )}
@@ -233,13 +235,13 @@ export const GameParticipants = ({
             size="lg"
             className="w-full flex items-center justify-center"
           >
-            <UserPlus size={20} className="mr-2" />
+            <UserPlus size={20} className="me-2" />
             {t('createGame.addMeToGame')}
           </Button>
         )}
         {isNonPlaying && game.status !== 'FINISHED' && game.status !== 'ARCHIVED' && (
           <Button onClick={onAddToGame} size="lg" className="w-full flex items-center justify-center">
-            <UserPlus size={20} className="mr-2" />
+            <UserPlus size={20} className="me-2" />
             {hasUnoccupiedSlots
               ? t('games.playInGame', { defaultValue: 'Play in a game' })
               : t('games.joinQueue', { defaultValue: 'Join queue' })}
