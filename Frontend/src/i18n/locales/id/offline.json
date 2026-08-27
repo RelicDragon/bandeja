@@ -1,0 +1,7 @@
+{
+  "offline": {
+    "working_offline": "Mode Offline - Beberapa fitur mungkin terbatas",
+    "noInternetConnection": "Tidak Ada Koneksi Internet",
+    "offlineEditingMessage": "Anda dapat terus mengedit hasil secara offline, dan saat kembali online, tekan tombol Sinkronkan ke Server untuk menyinkronkan hasil dengan server"
+  }
+}

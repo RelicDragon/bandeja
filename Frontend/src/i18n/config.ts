@@ -6,14 +6,20 @@ import sr from './locales/sr';
 import es from './locales/es';
 import cs from './locales/cs';
 import ar from './locales/ar';
+import zh from './locales/zh';
+import id from './locales/id';
+import hi from './locales/hi';
+import th from './locales/th';
+import ja from './locales/ja';
 import { extractLanguageCode } from '@/utils/displayPreferences';
 
 const RTL_LANGUAGES = new Set(['ar', 'he', 'fa', 'ur']);
 
+export const APP_UI_LANGUAGES = ['en', 'ru', 'sr', 'es', 'cs', 'ar', 'zh', 'id', 'hi', 'th', 'ja'] as const;
+
 const getSystemLanguage = () => {
   const systemLang = navigator.language.split('-')[0];
-  const supportedLanguages = ['en', 'ru', 'sr', 'es', 'cs', 'ar'];
-  return supportedLanguages.includes(systemLang) ? systemLang : 'en';
+  return (APP_UI_LANGUAGES as readonly string[]).includes(systemLang) ? systemLang : 'en';
 };
 
 const getUserLanguage = (): string => {
@@ -55,6 +61,11 @@ i18n.use(initReactI18next).init({
     es: { translation: es },
     cs: { translation: cs },
     ar: { translation: ar },
+    zh: { translation: zh },
+    id: { translation: id },
+    hi: { translation: hi },
+    th: { translation: th },
+    ja: { translation: ja },
   },
   lng: getUserLanguage(),
   fallbackLng: 'en',

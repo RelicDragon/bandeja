@@ -1,0 +1,386 @@
+{
+  "trophies": {
+    "rarity": {
+      "common": "Umum",
+      "rare": "Langka",
+      "legendary": "Legendaris",
+      "unique": "Unik"
+    },
+    "showcase": {
+      "hint": "Menangkan liga & terus bermain untuk mengisi etalase Anda",
+      "pinHint": "Sematkan favorit dari kabinet — hingga 3",
+      "emptySlot": "Slot etalase kosong"
+    },
+    "banner": {
+      "unlocked": "Piala terbuka",
+      "andMore": "+{{count}} lainnya",
+      "dismiss": "Membubarkan"
+    },
+    "celebration": {
+      "unlocked": "Piala terbuka",
+      "subtitle": "Trofi baru bergabung dengan kabinet Anda",
+      "pin": "Sematkan untuk dipamerkan",
+      "pinning": "Menyematkan…",
+      "pinned": "Disematkan untuk dipamerkan",
+      "viewCabinet": "Lihat lemari piala",
+      "dismiss": "Bagus!",
+      "pinError": "Saat ini tidak dapat memasang pin — coba lagi dari kabinet Anda.",
+      "pinsFull": "Etalase sudah penuh — lepas sematan yang pertama (maks 3)."
+    },
+    "cabinet": {
+      "title": "Prestasi",
+      "count": "{{count}} diperoleh",
+      "ownEmpty": "Kejar podium, rekor beruntun, dan pencapaian — piala terkunci menunjukkan tujuan Anda selanjutnya.",
+      "visitorEmpty": "Belum ada piala.",
+      "pinHint": "Ketuk piala untuk menyematkannya ke etalase Anda (maksimal 3).",
+      "collapseStack": "Ciutkan tumpukan piala",
+      "collapse": "Runtuh",
+      "family": {
+        "games": "Pertandingan",
+        "streak": "Garis",
+        "wins": "Menang",
+        "podium": "Mimbar",
+        "debut": "Debut",
+        "rallyStarter": "Reli Forge",
+        "tournamentHost": "Tuan rumah turnamen",
+        "soulOfTheParty": "Jiwa pesta",
+        "generic": "Piala",
+        "giantKiller": "Pembunuh Raksasa",
+        "dynamicDuo": "Duo Dinamis",
+        "openCourt": "Open Court",
+        "leto2026": "Leto 2026",
+        "tieBreaker": "Pemutus Ikatan",
+        "bugShipped": "Pelacak bug"
+      }
+    },
+    "leaderboard": {
+      "title": "Pemimpin yang berprestasi",
+      "choose": "Pilih pencapaian untuk mengetahui siapa yang membuat kemajuan paling besar.",
+      "allAchievements": "Semua pencapaian",
+      "leaders": "Pemimpin",
+      "scopeCity": "Teratas di {{city}}",
+      "scopeGlobal": "Pemimpin global",
+      "viewLeaders": "Lihat pemimpin",
+      "yourStanding": "Posisi Anda",
+      "topPlayers": "Pemain top",
+      "rankedCount": "{{count}} pemain peringkat",
+      "playerFallback": "Pemain",
+      "loading": "Memuat pemimpin yang berprestasi",
+      "loadError": "Tidak dapat memuat para pemimpin ini.",
+      "refreshingStats": "Peringkat prestasi semakin meningkat. Ini biasanya hanya memakan waktu sebentar.",
+      "statsMaintenance": "Peringkat ini perlu dipertahankan. Silakan coba lagi nanti.",
+      "statsMaintenanceRetryAt": "Mencoba ulang secara otomatis pada {{time}}",
+      "emptyTitle": "Bagian atasnya terbuka",
+      "emptyHint": "Belum ada kemajuan dalam pencapaian ini.",
+      "topLimitHint": "Menampilkan {{count}} dari {{total}} pemain. Kemajuan yang sama berbagi peringkat yang sama; seri pada batas waktu hanya dapat ditampilkan sebagian.",
+      "yourStandingAbove": "Posisi Anda muncul di atas.",
+      "units": {
+        "games": "{{count}} permainan",
+        "wins": "{{count}} menang",
+        "weeks": "{{count}} minggu",
+        "podiums": "{{count}} podium",
+        "hostedGames": "{{count}} game yang dihosting",
+        "hostedTournaments": "{{count}} turnamen",
+        "hostedBars": "{{count}} Acara bar",
+        "upsets": "{{count}} mengganggu",
+        "partnerWins": "{{count}} mitra menang",
+        "partners": "{{count}} mitra",
+        "tieBreaks": "{{count}} tie-break"
+      }
+    },
+    "detail": {
+      "progress": "Kemajuan {{current}} / {{target}}",
+      "lockedHint": "Teruslah bermain untuk membuka trofi ini.",
+      "earnedOn": "Mendapatkan {{date}}",
+      "sport": "{{sport}}",
+      "timesEarned": "Menghasilkan {{count}} kali",
+      "openEvent": "Acara terbuka",
+      "pin": "Sematkan untuk dipamerkan",
+      "pinning": "Menyematkan…",
+      "unpin": "Lepas sematan dari etalase",
+      "unpinning": "Melepas pin…",
+      "pinnedBadge": "Disematkan",
+      "followingEarners": "Orang yang Anda ikuti yang juga mendapatkan ini",
+      "followingEarnersError": "Tidak dapat memuat pemain yang diikuti — ketuk untuk mencoba lagi",
+      "familyLeaders": "3 teratas dalam grup prestasi ini",
+      "pinWhich": "Pilih mana yang akan disematkan",
+      "pinHint": "Piala yang dipasangi pin akan tetap ada di etalase Anda meskipun piala yang lebih baru telah dibuka.",
+      "pinsFull": "Etalase sudah penuh — lepas sematan yang pertama (maks 3).",
+      "pinError": "Tidak dapat memperbarui pin — coba lagi."
+    },
+    "defs": {
+      "podiumGold": {
+        "title": "Podium emas",
+        "description": "Selesaikan posisi pertama di liga atau turnamen dengan setidaknya 8 pemain."
+      },
+      "podiumSilver": {
+        "title": "Podium perak",
+        "description": "Selesaikan posisi ke-2 di liga atau turnamen dengan setidaknya 8 pemain."
+      },
+      "podiumBronze": {
+        "title": "Podium perunggu",
+        "description": "Selesaikan posisi ke-3 dalam liga atau turnamen dengan setidaknya 8 pemain."
+      },
+      "firstWin": {
+        "title": "Kemenangan pertama",
+        "description": "Menangkan pertandingan kualifikasi pertama Anda."
+      },
+      "firstPadelGame": {
+        "title": "Padel debut",
+        "description": "Selesaikan game padel kualifikasi pertama Anda."
+      },
+      "wins10": {
+        "title": "Dua digit",
+        "description": "Menangkan 10 pertandingan kualifikasi."
+      },
+      "wins25": {
+        "title": "Seperempat abad",
+        "description": "Menangkan 25 pertandingan kualifikasi."
+      },
+      "wins50": {
+        "title": "Setengah abad",
+        "description": "Menangkan 50 pertandingan kualifikasi."
+      },
+      "wins100": {
+        "title": "Abad kemenangan",
+        "description": "Menangkan 100 pertandingan kualifikasi."
+      },
+      "wins500": {
+        "title": "Menangkan mesin",
+        "description": "Menangkan 500 pertandingan kualifikasi."
+      },
+      "games10": {
+        "title": "Memulai",
+        "description": "Selesaikan 10 pertandingan kualifikasi."
+      },
+      "games50": {
+        "title": "Biasa",
+        "description": "Selesaikan 50 pertandingan kualifikasi."
+      },
+      "games100": {
+        "title": "Perwira",
+        "description": "Selesaikan 100 pertandingan kualifikasi."
+      },
+      "games500": {
+        "title": "Klub lima ratus",
+        "description": "Selesaikan 500 pertandingan kualifikasi."
+      },
+      "games1000": {
+        "title": "Klub seribu",
+        "description": "Selesaikan 1000 pertandingan kualifikasi."
+      },
+      "streak4": {
+        "title": "Bulan bergerak",
+        "description": "Pertahankan rekor permainan selama 4 minggu."
+      },
+      "streak8": {
+        "title": "Kuat dua bulan",
+        "description": "Pertahankan rekor permainan selama 8 minggu."
+      },
+      "streak12": {
+        "title": "Musim kebakaran",
+        "description": "Pertahankan rekor permainan selama 12 minggu."
+      },
+      "streak16": {
+        "title": "Empat bulan terbakar",
+        "description": "Pertahankan rekor permainan selama 16 minggu."
+      },
+      "streak32": {
+        "title": "Kebakaran setengah tahun",
+        "description": "Pertahankan rekor permainan selama 32 minggu."
+      },
+      "streak64": {
+        "title": "Tahun kebakaran",
+        "description": "Pertahankan rekor permainan selama 64 minggu."
+      },
+      "orgGame1": {
+        "title": "Pemula Reli",
+        "description": "Atur game padel peringkat pertama Anda melalui hasil akhir."
+      },
+      "orgGame10": {
+        "title": "Pembangun Reli",
+        "description": "Atur 10 game berperingkat padel melalui hasil akhir."
+      },
+      "orgGame25": {
+        "title": "Arsitek Reli",
+        "description": "Atur 25 game berperingkat padel melalui hasil akhir."
+      },
+      "orgGame50": {
+        "title": "Reli Maestro",
+        "description": "Atur 50 game berperingkat padel melalui hasil akhir."
+      },
+      "orgGame100": {
+        "title": "Legenda Reli",
+        "description": "Atur 100 game berperingkat padel melalui hasil akhir."
+      },
+      "orgGame500": {
+        "title": "Reli Abadi",
+        "description": "Atur 500 game berperingkat padel melalui hasil akhir."
+      },
+      "orgTournament1": {
+        "title": "Pembuka braket",
+        "description": "Atur turnamen padel peringkat pertama Anda melalui hasil akhir."
+      },
+      "orgTournament5": {
+        "title": "Pembuka braket ×5",
+        "description": "Atur 5 turnamen berperingkat padel melalui hasil akhir."
+      },
+      "orgTournament10": {
+        "title": "Pembuka braket ×10",
+        "description": "Atur 10 turnamen berperingkat padel melalui hasil akhir."
+      },
+      "orgTournament25": {
+        "title": "Pembuka braket ×25",
+        "description": "Atur 25 turnamen berperingkat padel melalui hasil akhir."
+      },
+      "orgTournament50": {
+        "title": "Pembuka braket ×50",
+        "description": "Atur 50 turnamen berperingkat padel melalui hasil akhir."
+      },
+      "orgTournament100": {
+        "title": "Pembuka braket ×100",
+        "description": "Atur 100 turnamen berperingkat padel melalui hasil akhir."
+      },
+      "orgBar1": {
+        "title": "Jiwa pesta",
+        "description": "Selenggarakan acara Bar pertama Anda melalui hasil akhir."
+      },
+      "orgBar5": {
+        "title": "Jiwa pesta ×5",
+        "description": "Selenggarakan acara 5 Bar melalui hasil akhir."
+      },
+      "orgBar10": {
+        "title": "Jiwa pesta ×10",
+        "description": "Selenggarakan acara 10 Bar melalui hasil akhir."
+      },
+      "orgBar25": {
+        "title": "Jiwa pesta ×25",
+        "description": "Selenggarakan 25 acara Bar melalui hasil akhir."
+      },
+      "orgBar50": {
+        "title": "Jiwa pesta ×50",
+        "description": "Selenggarakan acara 50 Bar melalui hasil akhir."
+      },
+      "orgBar100": {
+        "title": "Jiwa pesta ×100",
+        "description": "Selenggarakan acara 100 Bar melalui hasil akhir."
+      },
+      "giantKiller1": {
+        "title": "Pembunuh Raksasa",
+        "description": "Menangkan pertandingan 2v2 padel dengan rating melawan tim yang memiliki rata-rata setidaknya 0,5 lebih tinggi di awal acara, dengan keandalan semua pemain di atas 10%."
+      },
+      "giantKiller5": {
+        "title": "Pemburu Raksasa",
+        "description": "Menangkan 5 dengan rating 2v2 padel gangguan (rata-rata ≥0,5 lebih tinggi, semua pemain memiliki keandalan di atas 10%)."
+      },
+      "giantKiller10": {
+        "title": "Pembunuh Raksasa",
+        "description": "Menangkan 10 dengan rating 2v2 padel gangguan (rata-rata ≥0,5 lebih tinggi, semua pemain memiliki keandalan di atas 10%)."
+      },
+      "giantKiller25": {
+        "title": "Titan Bane",
+        "description": "Menangkan 25 dengan rating 2v2 padel gangguan (rata-rata ≥0,5 lebih tinggi, semua pemain memiliki keandalan di atas 10%)."
+      },
+      "giantKiller50": {
+        "title": "Pemecah Raksasa",
+        "description": "Menangkan 50 dengan rating 2v2 padel gangguan (rata-rata ≥0,5 lebih tinggi, semua pemain memiliki keandalan di atas 10%)."
+      },
+      "dynamicDuo10": {
+        "title": "Duo Dinamis",
+        "description": "Menangkan 10 pertandingan kualifikasi padel dengan partner yang sama."
+      },
+      "dynamicDuo50": {
+        "title": "Duo Dinamis ×50",
+        "description": "Menangkan 50 pertandingan kualifikasi padel dengan partner yang sama."
+      },
+      "dynamicDuo100": {
+        "title": "Duo Dinamis ×100",
+        "description": "Menangkan 100 pertandingan kualifikasi padel dengan partner yang sama."
+      },
+      "openCourt10": {
+        "title": "Open Court",
+        "description": "Selesaikan pertandingan kualifikasi padel dengan 10 mitra berbeda."
+      },
+      "openCourt25": {
+        "title": "Penghubung lapangan",
+        "description": "Selesaikan pertandingan kualifikasi padel dengan 25 mitra berbeda."
+      },
+      "openCourt50": {
+        "title": "Magnet Mitra",
+        "description": "Selesaikan pertandingan kualifikasi padel dengan 50 mitra berbeda."
+      },
+      "openCourt100": {
+        "title": "Pilar Komunitas",
+        "description": "Selesaikan pertandingan kualifikasi padel dengan 100 mitra berbeda."
+      },
+      "openCourt250": {
+        "title": "Legenda Jaringan",
+        "description": "Selesaikan pertandingan kualifikasi padel dengan 250 mitra berbeda."
+      },
+      "leto2026Participant": {
+        "title": "Kru Leto 2026",
+        "description": "Dimainkan di Fix Liga — Leto musim 2026."
+      },
+      "leto2026Playoffs": {
+        "title": "Playoff Leto 2026",
+        "description": "Mencapai braket playoff Fix Liga Leto 2026."
+      },
+      "leto2026Place4": {
+        "title": "Leto 2026 keempat",
+        "description": "Finis ke-4 di Fix Liga Leto 2026."
+      },
+      "leto2026Bronze": {
+        "title": "Perunggu Leto 2026",
+        "description": "Podium perunggu Fix Liga Leto 2026."
+      },
+      "leto2026Silver": {
+        "title": "Leto 2026 perak",
+        "description": "Podium perak Fix Liga Leto 2026."
+      },
+      "leto2026Gold": {
+        "title": "Juara Leto 2026",
+        "description": "Podium emas Fix Liga Leto 2026."
+      },
+      "tieBreak1": {
+        "title": "Pemutus Ikatan",
+        "description": "Menangkan satu set melalui tie-break — klasik 7–6 atau super tie-break."
+      },
+      "tieBreak5": {
+        "title": "Kematian Mendadak",
+        "description": "Menangkan 5 set pada tie-break (7–6 atau super TB)."
+      },
+      "tieBreak12": {
+        "title": "Klub 7–6",
+        "description": "Menangkan 12 set melalui tie-break (7–6 atau super TB)."
+      },
+      "tieBreak32": {
+        "title": "Saraf Baja",
+        "description": "Menangkan 32 set melalui tie-break (7–6 atau super TB)."
+      },
+      "tieBreak64": {
+        "title": "Legenda Lotere",
+        "description": "Menangkan 64 set melalui tie-break (7–6 atau super TB)."
+      },
+      "bugShipped1": {
+        "title": "Mengirimkannya",
+        "description": "Kirimkan 1 bug atau saran yang sedang dalam proses atau pengujian hingga selesai atau diarsipkan. Pertanyaan tidak dihitung."
+      },
+      "bugShipped5": {
+        "title": "Catatan Tambalan",
+        "description": "Kirimkan 5 bug atau saran yang sedang dalam proses atau pengujian hingga selesai atau diarsipkan."
+      },
+      "bugShipped10": {
+        "title": "Perbaiki Pabrik",
+        "description": "Kirimkan 10 bug atau saran yang sedang dalam proses atau pengujian hingga selesai atau diarsipkan."
+      },
+      "bugShipped25": {
+        "title": "Pengatur Serangga",
+        "description": "Kirimkan 25 bug atau saran yang sedang dalam proses atau pengujian hingga selesai atau diarsipkan."
+      },
+      "bugShipped50": {
+        "title": "Rilis Legenda",
+        "description": "Kirimkan 50 bug atau saran yang sedang dalam proses atau pengujian hingga selesai atau diarsipkan."
+      }
+    }
+  }
+}

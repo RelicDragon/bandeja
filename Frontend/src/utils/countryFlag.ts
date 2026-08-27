@@ -139,6 +139,9 @@ const LANGUAGE_CODE_TO_COUNTRY: Record<string, string> = {
   tr: 'Turkey',
   ar: 'Saudi Arabia',
   zh: 'China',
+  id: 'Indonesia',
+  hi: 'India',
+  th: 'Thailand',
   ja: 'Japan',
   ko: 'South Korea',
 };

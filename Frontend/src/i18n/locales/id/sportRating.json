@@ -1,0 +1,43 @@
+{
+  "sportRating": {
+    "band": {
+      "beginner": "Pemula",
+      "improver": "Berkembang",
+      "intermediate": "Menengah",
+      "advanced": "Lanjutan",
+      "expert": "Ahli",
+      "elite": "Elite"
+    },
+    "display": {
+      "playtomic": "≈ {{value}} Playtomic",
+      "ntrp": "≈ {{value}} NTRP",
+      "dupr": "≈ {{value}} DUPR",
+      "utr": "≈ {{value}} UTR",
+      "usatt": "≈ {{value}} USATT",
+      "squashlevels": "≈ {{value}} SquashLevels"
+    },
+    "padel": {
+      "band1": "Belajar rally dan posisi dasar di lapangan",
+      "band2": "Rally konsisten; mulai bermain di net",
+      "band3": "Dasar ganda yang solid; permainan sosial kompetitif",
+      "band4": "Pemain klub yang kuat; taktik bagus",
+      "band5": "Level klub lanjutan / regional",
+      "band6": "Performa tinggi / level turnamen"
+    },
+    "tennis": {
+      "bandHint": "Perkiraan level klub gaya NTRP"
+    },
+    "pickleball": {
+      "bandHint": "Perkiraan tingkat rekreasi gaya DUPR"
+    },
+    "badminton": {
+      "bandHint": "Band skill klub (bukan ranking BWF)"
+    },
+    "tableTennis": {
+      "bandHint": "Level klub; petunjuk gaya USATT opsional"
+    },
+    "squash": {
+      "bandHint": "Level ilustratif gaya SquashLevels"
+    }
+  }
+}

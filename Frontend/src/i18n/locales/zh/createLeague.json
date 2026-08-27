@@ -1,0 +1,25 @@
+{
+  "createLeague": {
+    "name": "联赛名称",
+    "namePlaceholder": "输入联赛名称",
+    "description": "简介",
+    "descriptionPlaceholder": "输入联赛简介（可选）",
+    "location": "地点",
+    "selectCity": "选择城市",
+    "noCitiesAvailable": "暂无可用城市",
+    "noCity": "无城市",
+    "season": "赛季",
+    "seasonAvatar": "赛季头像",
+    "seasonName": "赛季名称",
+    "seasonNamePlaceholder": "输入赛季名称",
+    "playerLevel": "球员等级",
+    "maxParticipants": "人数上限",
+    "maxParticipantsPlaceholder": "输入人数上限（4–999）",
+    "startDate": "开始日期",
+    "gameSetupSeason": "比赛设置（赛季）",
+    "gameSetupPlayoff": "比赛设置（季后赛）",
+    "editGameSetup": "编辑比赛设置",
+    "configureGameSetup": "配置比赛设置",
+    "createButton": "创建联赛"
+  }
+}

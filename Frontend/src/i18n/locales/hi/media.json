@@ -1,0 +1,14 @@
+{
+  "media": {
+    "viewerTitle": "मीडिया व्यूअर",
+    "fullscreenItemLabel": "मीडिया {{current}} / {{total}}",
+    "resetView": "व्यू रीसेट करें",
+    "download": "डाउनलोड",
+    "copyImage": "छवि कॉपी करें",
+    "imageCopied": "छवि कॉपी हो गई",
+    "imageDownloaded": "छवि डाउनलोड हो गई",
+    "imageShareOpened": "शेयर मेनू से कॉपी या सेव चुनें",
+    "copyImageFailed": "छवि कॉपी नहीं हो सकी",
+    "downloadImageFailed": "छवि डाउनलोड नहीं हो सकी"
+  }
+}

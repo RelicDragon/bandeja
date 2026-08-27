@@ -23,7 +23,13 @@ vi.mock('@/utils/geoTranslations', () => ({
     es: key,
     ru: key,
     sr: key,
-    native: key,
+    cs: key,
+    zh: key === 'China' ? '中国' : key,
+    id: key === 'Indonesia' ? 'Indonesia' : key,
+    hi: key === 'India' ? 'भारत' : key,
+    th: key === 'Thailand' ? 'ประเทศไทย' : key,
+    ja: key === 'Japan' ? '日本' : key,
+    native: key === 'China' ? '中国' : key,
   }),
 }));
 
@@ -117,6 +123,13 @@ describe('matchCountryForListSearch', () => {
   it('matches country key without geo', () => {
     expect(matchCountryForListSearch('Spain', 'spa', false)).toBe(true);
     expect(matchCountryForListSearch('Spain', 'zzz', false)).toBe(false);
+  });
+
+  it('matches Asia localized country labels when geo is enabled', () => {
+    expect(matchCountryForListSearch('China', '中国', true)).toBe(true);
+    expect(matchCountryForListSearch('India', 'भारत', true)).toBe(true);
+    expect(matchCountryForListSearch('Japan', '日本', true)).toBe(true);
+    expect(matchCountryForListSearch('Thailand', 'ประเทศไทย', true)).toBe(true);
   });
 });
 

@@ -175,6 +175,12 @@
 		F14800182F7443E0002D7100 /* cs */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = cs; path = cs.lproj/Localizable.strings; sourceTree = "<group>"; };
 		F14800192F7443E0002D7100 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/Localizable.strings; sourceTree = "<group>"; };
 		F148001A2F7443E0002D7100 /* sr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = sr; path = sr.lproj/Localizable.strings; sourceTree = "<group>"; };
+		F148001B2F7443E0002D7100 /* ar */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ar; path = ar.lproj/Localizable.strings; sourceTree = "<group>"; };
+		F148001C2F7443E0002D7100 /* zh */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = zh; path = zh.lproj/Localizable.strings; sourceTree = "<group>"; };
+		F148001D2F7443E0002D7100 /* id */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = id; path = id.lproj/Localizable.strings; sourceTree = "<group>"; };
+		F148001E2F7443E0002D7100 /* hi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = hi; path = hi.lproj/Localizable.strings; sourceTree = "<group>"; };
+		F148001F2F7443E0002D7100 /* th */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = th; path = th.lproj/Localizable.strings; sourceTree = "<group>"; };
+		F14800202F7443E0002D7100 /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/Localizable.strings; sourceTree = "<group>"; };
 		F26900012F8A0000000D7100 /* BandejaHomeWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = BandejaHomeWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		FC68EB0AF532CFC21C3344DD /* Pods-App.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-App.debug.xcconfig"; path = "Pods/Target Support Files/Pods-App/Pods-App.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -574,6 +580,12 @@
 				cs,
 				ru,
 				sr,
+				ar,
+				zh,
+				id,
+				hi,
+				th,
+				ja,
 			);
 			mainGroup = 504EC2FB1FED79650016851F;
 			packageReferences = (
@@ -805,6 +817,12 @@
 				F14800182F7443E0002D7100 /* cs */,
 				F14800192F7443E0002D7100 /* ru */,
 				F148001A2F7443E0002D7100 /* sr */,
+				F148001B2F7443E0002D7100 /* ar */,
+				F148001C2F7443E0002D7100 /* zh */,
+				F148001D2F7443E0002D7100 /* id */,
+				F148001E2F7443E0002D7100 /* hi */,
+				F148001F2F7443E0002D7100 /* th */,
+				F14800202F7443E0002D7100 /* ja */,
 			);
 			name = Localizable.strings;
 			sourceTree = "<group>";

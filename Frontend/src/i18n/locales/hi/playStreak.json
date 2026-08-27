@@ -1,0 +1,17 @@
+{
+  "playStreak": {
+    "chipWeeks_one": "{{count}} सप्ताह",
+    "chipWeeks_other": "{{count}} सप्ताह",
+    "chipBroken": "— · सर्वश्रेष्ठ {{best}}",
+    "sheetTitle": "खेल स्ट्रीक",
+    "rules": "स्ट्रीक बनाए रखने के लिए हर 7 दिनों में कम से कम एक रेटेड मैच खेलें। उसी सप्ताह में अतिरिक्त मैच से सप्ताह नहीं बढ़ते।",
+    "current": "वर्तमान",
+    "best": "सर्वश्रेष्ठ",
+    "none": "—",
+    "weeks_one": "{{count}} सप्ताह",
+    "weeks_other": "{{count}} सप्ताह",
+    "playBy": "स्ट्रीक बनाए रखने के लिए {{date}} तक खेलें",
+    "bannerStarted": "स्ट्रीक शुरू हो गई!",
+    "bannerContinue": "स्ट्रीक · {{count}} सप्ताह"
+  }
+}

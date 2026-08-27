@@ -1,0 +1,14 @@
+{
+  "media": {
+    "viewerTitle": "メディアビューア",
+    "fullscreenItemLabel": "メディア {{current}} / {{total}}",
+    "resetView": "表示をリセット",
+    "download": "ダウンロード",
+    "copyImage": "画像をコピー",
+    "imageCopied": "画像をコピーしました",
+    "imageDownloaded": "画像をダウンロードしました",
+    "imageShareOpened": "共有メニューから「コピー」または「保存」を選んでください",
+    "copyImageFailed": "画像をコピーできませんでした",
+    "downloadImageFailed": "画像をダウンロードできませんでした"
+  }
+}

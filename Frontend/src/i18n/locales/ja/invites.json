@@ -1,0 +1,37 @@
+{
+  "invites": {
+    "title": "招待",
+    "pending": "保留中の招待",
+    "noInvites": "保留中の招待はありません",
+    "accept": "承諾",
+    "decline": "辞退",
+    "from": "差出人",
+    "to": "宛先",
+    "message": "メッセージ",
+    "accepted": "招待を承諾しました",
+    "acceptedSuccessfully": "招待を承諾しました",
+    "declined": "招待を辞退しました",
+    "declinedSuccessfully": "招待を辞退しました",
+    "cancelledSuccessfully": "招待をキャンセルしました",
+    "selectPlayer": "プレイヤーを選択",
+    "selectPlayers": "プレイヤーを選択",
+    "noPlayersAvailable": "招待できるプレイヤーがいません",
+    "inviteFriendToBandeja": "友達をBandejaに招待",
+    "shareAppBody": "Bandejaで一緒にプレイしよう：{{url}}",
+    "pendingInvites": "保留中の招待",
+    "badgeDeclined": "辞退済み",
+    "badgeExpired": "招待の期限切れ",
+    "badgeInviteCancelled": "招待キャンセル済み",
+    "sectionTerminalInvites": "招待への回答",
+    "inviteAgainHint": "新しい招待を送れます。",
+    "inviteSent": "招待を送信しました",
+    "invitedYou": "招待先",
+    "declineModal": {
+      "title": "招待を辞退しますか？",
+      "description": "参加できない理由を主催者に伝えられます（任意）。",
+      "reasonLabel": "理由（任意）",
+      "reasonPlaceholder": "例：予定が合わない、ケガ…",
+      "confirm": "辞退"
+    }
+  }
+}

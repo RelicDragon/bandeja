@@ -1,0 +1,11 @@
+{
+  "favorites": {
+    "addToFavorites": "Tambahkan ke favorit",
+    "removeFromFavorites": "Hapus dari favorit",
+    "addedToFavorites": "Ditambahkan ke favorit",
+    "removedFromFavorites": "Dihapus dari favorit",
+    "isFavorite": "Favorit",
+    "userAddedToFavorites": "Pemain ditambahkan ke favorit",
+    "userRemovedFromFavorites": "Pemain dihapus dari favorit"
+  }
+}

@@ -13,6 +13,11 @@ export const LanguageSelector = () => {
   const languages = [
     { value: 'en', label: 'EN', fullLabel: 'English', flag: '🇬🇧' },
     { value: 'ar', label: 'AR', fullLabel: 'العربية', flag: '🇸🇦' },
+    { value: 'zh', label: 'ZH', fullLabel: '中文', flag: '🇨🇳' },
+    { value: 'id', label: 'ID', fullLabel: 'Bahasa Indonesia', flag: '🇮🇩' },
+    { value: 'hi', label: 'HI', fullLabel: 'हिन्दी', flag: '🇮🇳' },
+    { value: 'th', label: 'TH', fullLabel: 'ไทย', flag: '🇹🇭' },
+    { value: 'ja', label: 'JA', fullLabel: '日本語', flag: '🇯🇵' },
     { value: 'ru', label: 'RU', fullLabel: 'Русский', flag: '🇷🇺' },
     { value: 'sr', label: 'SR', fullLabel: 'Srpski', flag: '🇷🇸' },
     { value: 'es', label: 'ES', fullLabel: 'Español', flag: '🇪🇸' },

@@ -1,0 +1,14 @@
+{
+  "media": {
+    "viewerTitle": "媒体查看器",
+    "fullscreenItemLabel": "第 {{current}} / {{total}} 项",
+    "resetView": "重置视图",
+    "download": "下载",
+    "copyImage": "复制图片",
+    "imageCopied": "图片已复制",
+    "imageDownloaded": "图片已下载",
+    "imageShareOpened": "请在分享菜单中选择复制或保存",
+    "copyImageFailed": "无法复制图片",
+    "downloadImageFailed": "无法下载图片"
+  }
+}

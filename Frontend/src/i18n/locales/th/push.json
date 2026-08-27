@@ -1,0 +1,7 @@
+{
+  "push": {
+    "reply": "ตอบ",
+    "replyPlaceholder": "ตอบกลับ…",
+    "replyFailed": "ไม่สามารถส่งคำตอบของคุณได้"
+  }
+}

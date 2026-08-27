@@ -1,0 +1,43 @@
+{
+  "sportRating": {
+    "band": {
+      "beginner": "शुरुआती",
+      "improver": "सुधार कर रहे",
+      "intermediate": "मध्यम",
+      "advanced": "उन्नत",
+      "expert": "विशेषज्ञ",
+      "elite": "एलीट"
+    },
+    "display": {
+      "playtomic": "≈ {{value}} Playtomic",
+      "ntrp": "≈ {{value}} NTRP",
+      "dupr": "≈ {{value}} DUPR",
+      "utr": "≈ {{value}} UTR",
+      "usatt": "≈ {{value}} USATT",
+      "squashlevels": "≈ {{value}} SquashLevels"
+    },
+    "padel": {
+      "band1": "रैली और बुनियादी कोर्ट पोज़िशन सीख रहे हैं",
+      "band2": "स्थिर रैली; नेट प्ले शुरू",
+      "band3": "मज़बूत डबल बुनियाद; प्रतिस्पर्धी सोशल प्ले",
+      "band4": "मज़बूत क्लब खिलाड़ी; अच्छी रणनीति",
+      "band5": "उन्नत क्लब / क्षेत्रीय स्तर",
+      "band6": "उच्च प्रदर्शन / टूर्नामेंट स्तर"
+    },
+    "tennis": {
+      "bandHint": "अनुमानित NTRP-शैली क्लब लेवल"
+    },
+    "pickleball": {
+      "bandHint": "अनुमानित DUPR-शैली मनोरंजक स्तर"
+    },
+    "badminton": {
+      "bandHint": "क्लब कौशल बैंड (BWF रैंकिंग नहीं)"
+    },
+    "tableTennis": {
+      "bandHint": "क्लब लेवल; USATT-शैली संकेत वैकल्पिक"
+    },
+    "squash": {
+      "bandHint": "उदाहरण SquashLevels-शैली लेवल"
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "createLeague": {
+    "name": "लीग का नाम",
+    "namePlaceholder": "लीग का नाम दर्ज करें",
+    "description": "विवरण",
+    "descriptionPlaceholder": "लीग का विवरण दर्ज करें (वैकल्पिक)",
+    "location": "स्थान",
+    "selectCity": "शहर चुनें",
+    "noCitiesAvailable": "कोई शहर उपलब्ध नहीं",
+    "noCity": "कोई शहर नहीं",
+    "season": "सीज़न",
+    "seasonAvatar": "सीज़न अवतार",
+    "seasonName": "सीज़न का नाम",
+    "seasonNamePlaceholder": "सीज़न का नाम दर्ज करें",
+    "playerLevel": "खिलाड़ी लेवल",
+    "maxParticipants": "अधिकतम प्रतिभागी",
+    "maxParticipantsPlaceholder": "अधिकतम प्रतिभागी दर्ज करें (4-999)",
+    "startDate": "शुरुआती तारीख",
+    "gameSetupSeason": "गेम सेटअप (सीज़न)",
+    "gameSetupPlayoff": "गेम सेटअप (प्लेऑफ़)",
+    "editGameSetup": "गेम सेटअप संपादित करें",
+    "configureGameSetup": "गेम सेटअप कॉन्फ़िगर करें",
+    "createButton": "लीग बनाएँ"
+  }
+}

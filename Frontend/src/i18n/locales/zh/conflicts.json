@@ -1,0 +1,16 @@
+{
+  "conflicts": {
+    "title": "检测到冲突",
+    "subtitle": "其他已用户做出更改",
+    "description": "您在编辑时，其他用户也有比赛结果。请选择如何解决此冲突。",
+    "conflictCount": "检测到{{count}}处冲突",
+    "yourChanges": "你的改变",
+    "serverChanges": "服务器更改",
+    "acceptServer": "使用服务器版本",
+    "forceClient": "使用我的更改",
+    "warning": "警告",
+    "warningMessage": "此操作无法撤销。请确认您要保留哪些更改。",
+    "serverAccepted": "已成功采用服务器更改",
+    "clientForced": "已成功应用您的更改"
+  }
+}

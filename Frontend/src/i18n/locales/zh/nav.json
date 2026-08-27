@@ -1,0 +1,9 @@
+{
+  "nav": {
+    "home": "首页",
+    "findGames": "找比赛",
+    "myRating": "我的等级",
+    "profile": "个人资料",
+    "chat": "聊天"
+  }
+}

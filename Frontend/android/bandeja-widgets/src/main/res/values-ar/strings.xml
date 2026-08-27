@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="next_game_widget_title">المباراة التالية</string>
+    <string name="next_game_widget_description">يعرض مباراتك التالية في Bandeja.</string>
+    <string name="next_game_widget_loading">Bandeja</string>
+    <string name="next_game_widget_preview_title">بادل صباحي</string>
+    <string name="next_game_widget_preview_time">خلال ساعتين</string>
+</resources>

@@ -1,0 +1,14 @@
+{
+  "rating": {
+    "title": "คะแนนของฉัน",
+    "level": "ระดับ",
+    "socialLevel": "ทางสังคม",
+    "points": "คะแนนรวม",
+    "gamesPlayed": "เกมส์ที่เล่น",
+    "gamesWon": "เกมส์ที่ชนะ",
+    "winRate": "อัตราการชนะ",
+    "reliability": "ความน่าเชื่อถือ",
+    "uncertainty": "ความไม่แน่นอน",
+    "settling": "เรตติ้งคงตัว."
+  }
+}

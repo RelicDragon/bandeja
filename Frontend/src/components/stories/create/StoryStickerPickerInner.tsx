@@ -30,7 +30,7 @@ function injectPickerShadowStyles(host: HTMLElement) {
   sr.appendChild(style);
 }
 
-const SUPPORTED_LOCALES = new Set(['en', 'es', 'cs', 'ru', 'sr', 'ar']);
+const SUPPORTED_LOCALES = new Set(['en', 'es', 'cs', 'ru', 'sr', 'ar', 'zh', 'id', 'hi', 'th', 'ja']);
 
 type Props = {
   onSelect: (emoji: string) => void;

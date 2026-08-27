@@ -1,0 +1,30 @@
+{
+  "city": {
+    "clubsCount_zero": "クラブなし",
+    "clubsCount_one": "{{count}}クラブ",
+    "clubsCount_other": "{{count}}クラブ",
+    "searchCityOrClub": "都市またはクラブを検索…",
+    "searchSectionCities": "都市",
+    "searchSectionClubs": "クラブ",
+    "searchSectionCountries": "国",
+    "map": "地図",
+    "list": "リスト",
+    "selectCity": "選択",
+    "selectCityName": "{{name}}を使う",
+    "nearMe": "近く",
+    "whereAmI": "現在地は？",
+    "nearestToYou": "あなたに最も近い",
+    "yourLocation": "現在地",
+    "approximateLocation": "おおよその位置",
+    "suggested": "おすすめ",
+    "suggestedNearest": "最寄り",
+    "suggestedCurrent": "現在",
+    "suggestedCurrentNearest": "あなたの都市 · 最寄り",
+    "locatingNearby": "近くの都市を探しています…",
+    "locationHintDenied": "位置情報へのアクセスがオフです — 検索または地図は利用できます。",
+    "locationHintUnavailable": "位置情報を取得できませんでした — 検索または地図をお試しください。",
+    "locationHintTimeout": "位置情報の取得に時間がかかりすぎました — 再試行するか、検索してください。",
+    "locationHintUnsupported": "ここでは位置情報が利用できません — 検索または地図をお試しください。",
+    "locationHintNoCity": "近くに都市が見つかりませんでした — 検索または地図をお試しください。"
+  }
+}

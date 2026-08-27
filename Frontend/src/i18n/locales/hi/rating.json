@@ -1,0 +1,14 @@
+{
+  "rating": {
+    "title": "मेरी रेटिंग",
+    "level": "लेवल",
+    "socialLevel": "सोशल",
+    "points": "कुल अंक",
+    "gamesPlayed": "खेले गए मैच",
+    "gamesWon": "जीते गए मैच",
+    "winRate": "जीत दर",
+    "reliability": "विश्वसनीयता",
+    "uncertainty": "अनिश्चितता",
+    "settling": "रेटिंग स्थिर हो रही है"
+  }
+}

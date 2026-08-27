@@ -1,0 +1,30 @@
+{
+  "city": {
+    "clubsCount_zero": "Tidak ada klub",
+    "clubsCount_one": "{{count}} klub",
+    "clubsCount_other": "{{count}} klub",
+    "searchCityOrClub": "Cari kota atau klub…",
+    "searchSectionCities": "Kota",
+    "searchSectionClubs": "Klub",
+    "searchSectionCountries": "Negara",
+    "map": "Peta",
+    "list": "Daftar",
+    "selectCity": "Pilih",
+    "selectCityName": "Gunakan {{name}}",
+    "nearMe": "Dekat saya",
+    "whereAmI": "Di mana saya?",
+    "nearestToYou": "Terdekat dari Anda",
+    "yourLocation": "Lokasi Anda",
+    "approximateLocation": "Lokasi perkiraan",
+    "suggested": "Disarankan",
+    "suggestedNearest": "Terdekat",
+    "suggestedCurrent": "Saat ini",
+    "suggestedCurrentNearest": "Kota Anda · terdekat",
+    "locatingNearby": "Mencari kota di dekat Anda…",
+    "locationHintDenied": "Akses lokasi nonaktif — Anda masih dapat mencari atau menggunakan peta.",
+    "locationHintUnavailable": "Tidak dapat mendapatkan lokasi Anda — coba pencarian atau peta.",
+    "locationHintTimeout": "Lokasi memakan waktu terlalu lama — coba lagi, atau cari.",
+    "locationHintUnsupported": "Lokasi tidak tersedia di sini — coba pencarian atau peta.",
+    "locationHintNoCity": "Tidak ada kota ditemukan di dekat sini — coba pencarian atau peta."
+  }
+}

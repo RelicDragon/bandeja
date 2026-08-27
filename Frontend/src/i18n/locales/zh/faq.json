@@ -1,0 +1,27 @@
+{
+  "faq": {
+    "noFaqs": "暂无问题",
+    "fetchError": "获取问题失败",
+    "fieldsRequired": "问题和答案为必填项",
+    "created": "问题创建成功",
+    "updated": "问题更新成功",
+    "saveError": "保存问题失败",
+    "deleted": "问题删除成功",
+    "deleteError": "删除问题失败",
+    "reorderError": "调整问题顺序失败",
+    "add": "添加问题",
+    "question": "问题",
+    "answer": "答案",
+    "questionPlaceholder": "输入问题...",
+    "answerPlaceholder": "输入答案...",
+    "deleteTitle": "删除问题",
+    "deleteConfirm": "确定要删除此问题吗？",
+    "moveUp": "上移",
+    "moveDown": "下移",
+    "automaticLabel": "自动",
+    "fixedTeamStandings": {
+      "question": "小组积分榜如何排名？",
+      "answer": "常规赛中，各组积分榜按胜场数排序（不是按得分）。\n\n若球员或队伍胜场数相同：\n1. 两人/两队并列 — 看相互对战结果\n2. 三人/三队及以上并列 — 仅统计彼此之间的比赛，按以下顺序：\n   • 迷你积分榜胜场数\n   • 盘差\n   • 局差\n3. 迷你积分榜后仍有两人/两队并列 — 看相互对战结果\n\n适用于固定搭档联赛和 1v1 联赛。季后赛不计入小组积分榜。"
+    }
+  }
+}

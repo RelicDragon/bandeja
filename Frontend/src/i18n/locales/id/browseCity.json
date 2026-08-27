@@ -1,0 +1,21 @@
+{
+  "browseCity": {
+    "chipAriaHome": "Kota Anda, {{city}}. Jelajahi kota lain.",
+    "chipAriaAway": "Menjelajahi {{city}}. Ganti kota.",
+    "chipAriaVenueHome": "Kota pertandingan {{city}}. Pilih kota lain.",
+    "chipAriaVenueAway": "Klub di {{city}}. Ganti kota.",
+    "changeCity": "Kota",
+    "recent": "Terbaru",
+    "nearby": "Terdekat",
+    "viewCity": "Lihat {{city}}",
+    "nobodyInCity": "Tidak ada orang di {{city}} untuk “{{query}}”",
+    "nobodyNearby": "Tidak ada orang di sekitar untuk “{{query}}”. Coba kota lain.",
+    "noUsersInCity": "Tidak ada pengguna di {{city}}",
+    "noUsersInCityHint": "Ganti kota atau cari nama",
+    "lookingEmptyInCity": "Tidak ada yang sedang mencari di {{city}}",
+    "noClubsInCity": "Tidak ada klub di {{city}}",
+    "noClubsMatch": "Tidak ada klub yang cocok dengan “{{query}}”",
+    "searchClubs": "Cari klub",
+    "km": "{{km}} km"
+  }
+}

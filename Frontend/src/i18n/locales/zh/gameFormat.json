@@ -1,0 +1,491 @@
+{
+  "gameFormat": {
+    "title": "比赛赛制",
+    "resultsByAnyoneEditHint": "已开启「任何人可录入成绩」— 每位上场参赛者都可修改赛制并录入成绩。",
+    "trainingTitle": "训练",
+    "recommended": "推荐",
+    "popular": "热门",
+    "popularFormats": "热门赛制",
+    "moreFormats": "更多赛制",
+    "moreOptions": "更多选项",
+    "lessOptions": "收起选项",
+    "minPlayers_one": "{{count}}+ 人",
+    "minPlayers_other": "{{count}}+ 人",
+    "minCourts_one": "{{count}}+ 片场地",
+    "minCourts_other": "{{count}}+ 片场地",
+    "stepScoringModeHint": "每场如何计分？",
+    "stepSetStructureHint": "选择每场的盘制结构。",
+    "stepPointsTotalHint": "每盘双方合计打多少分？",
+    "stepPointsTotalHintBySport": {
+      "TABLE_TENNIS": "选择每局封顶分数，或采用每局11分的多局制。",
+      "BADMINTON": "选择比赛长度 — 通常为三局两胜、每局21分。",
+      "SQUASH": "五局三胜 — 每局11分，净胜2分。",
+      "PICKLEBALL": "每局打多少分？"
+    },
+    "stepGenerationHint": "每轮如何安排对阵？",
+    "stepRankingHint": "设置如何确定总冠军。",
+    "standingPointsHint": "积分榜按比赛结果计分（与场内得分分开）。",
+    "classicWithRotationWarning": "局/盘计分配合轮转赛制可用，但每轮会比纯点数计分更久。",
+    "rallyMatch": {
+      "sectionTitle": "多局制比赛"
+    },
+    "ballBudget": {
+      "sectionTitle": "球数预算（轮转）"
+    },
+    "steps": {
+      "scoringMode": "计分",
+      "setStructure": "盘制",
+      "pointsTotal": "分数",
+      "generation": "对阵",
+      "ranking": "排名"
+    },
+    "scoringMode": {
+      "CLASSIC": {
+        "title": "局 / 盘",
+        "subtitle": "网球式小分（15/30/40…），再计局与盘 — 经典板式网球。",
+        "hint": "例如一局内 15 / 30 / 40 → 盘分 6–4",
+        "sport": {
+          "TENNIS": {
+            "subtitle": "网球式小分（15/30/40…），再计局与盘。",
+            "hint": "例如一局内 15 / 30 / 40 → 盘分 6–4"
+          }
+        }
+      },
+      "POINTS": {
+        "title": "简单点数",
+        "subtitle": "每盘双方合计打到固定总分。结束时分高者赢盘 — 不是 15/30/40 小分。",
+        "hint": "例如 21 分封顶时 11–10 — 双方合计须达到封顶分",
+        "sport": {
+          "TABLE_TENNIS": {
+            "title": "每球得分",
+            "subtitle": "打到目标分且净胜2分 — 不是 15/30/40 小分。",
+            "hint": "例如一局 11–9，或三局两胜打到 11 分"
+          },
+          "BADMINTON": {
+            "title": "每球得分",
+            "subtitle": "每局 21 分（净胜 2 分），或单局 21 分。",
+            "hint": "例如一局 21–19，或三局两胜"
+          },
+          "SQUASH": {
+            "title": "每球得分",
+            "subtitle": "PAR 计分至 11（净胜 2 分），或每局 11 分的多局制。",
+            "hint": "例如五局三胜中每局 11–8"
+          },
+          "PICKLEBALL": {
+            "title": "每球得分",
+            "subtitle": "每局打到固定封顶分 — 下方为常见匹克球长度。",
+            "hint": "例如本地常见的每球或侧出计分打到 11–9"
+          }
+        }
+      }
+    },
+    "generation": {
+      "Handmade": {
+        "title": "手动",
+        "subtitle": "空对阵 — 每轮自行安排球员"
+      },
+      "Automatic": {
+        "title": "自动",
+        "subtitle": {
+          "two": "每轮一场 1v1，两人对打。",
+          "four": "每轮三场 2v2 — 所有可能配对各打一次。",
+          "fourFixedTeams": "每轮一场 2v2 — 两组固定搭档对打。",
+          "fallback": "每轮一场（2 人），或 4 人时打满所有配对。"
+        }
+      },
+      "Fixed": {
+        "title": "固定",
+        "subtitle": "后续轮次重复第一轮的配对"
+      },
+      "Random": {
+        "title": "Americano",
+        "subtitle": "每轮随机搭档"
+      },
+      "Rating": {
+        "title": "Mexicano",
+        "subtitle": "按当前积分榜匹配搭档"
+      },
+      "RoundRobin": {
+        "title": "循环赛",
+        "subtitle": "每队与其他各队都交手"
+      },
+      "WinnersCourt": {
+        "title": "球场之王",
+        "subtitle": "胜者升场，负者轮转下移"
+      },
+      "Escalera": {
+        "title": "天梯",
+        "subtitle": "位置天梯 — 胜者攀升场地"
+      },
+      "KingOfCourt": {
+        "title": "球场之王",
+        "subtitle": "1 号场卫冕；负者进入挑战者队列"
+      }
+    },
+    "generationHint": {
+      "Handmade": "无预设阵容 — 自行把球员拖入对阵",
+      "Automatic": {
+        "two": "每轮单场一对一对决。",
+        "four": "每轮三场，使每队与其他各队各遇一次。",
+        "fourFixedTeams": "每轮一场，两组锁定搭档对打。",
+        "fallback": "将最大人数设为 2 或 4 以查看具体赛程。"
+      },
+      "Fixed": "设定第一轮后，其他轮次将复制第一轮。",
+      "Random": "经典 Americano 轮转",
+      "Rating": "第一轮随机，之后按积分榜",
+      "RoundRobin": "最公平 — 人人互打",
+      "WinnersCourt": "至少需要 2 片场地",
+      "Escalera": "至少需要 2 片场地",
+      "KingOfCourt": "多场轮转；人多时设挑战者池"
+    },
+    "formatDescription": {
+      "CLASSIC": "一场比赛，固定搭档",
+      "AMERICANO": "每轮随机搭档",
+      "MEXICANO": "按积分榜轮换搭档",
+      "ROUND_ROBIN": "人人互打",
+      "WINNER_COURT": "胜者升场",
+      "LADDER": "攀升场地排名",
+      "KOTC": "王座场 + 挑战者池",
+      "CUSTOM": "完全手动控制"
+    },
+    "formatHint": {
+      "CLASSIC": "传统板式网球 — 2 对 2。",
+      "AMERICANO": "轮转赛，每轮随机搭档。",
+      "MEXICANO": "按当前积分榜配对搭档。",
+      "ROUND_ROBIN": "每组搭档与其他各组都交手。",
+      "WINNER_COURT": "胜者升到更高场地，负者下降。",
+      "LADDER": "按水平排位；胜者升，负者降。",
+      "KOTC": "胜者留在 1 号场；其他场从挑战者队列补人。",
+      "CUSTOM": "从零设计自己的规则。"
+    },
+    "formatDetail": {
+      "CLASSIC": "两组固定搭档打一场。适合和朋友轻松打一场 2 对 2 板式网球。",
+      "AMERICANO": "社交轮转赛 — 每轮随机配对，人人搭档又互为对手。个人得分累计决出冠军。",
+      "MEXICANO": "第一轮随机；之后按积分榜配对（#1 配 #3 对 #2 配 #4）。强手遇强手 — 适合竞技局。",
+      "ROUND_ROBIN": "每队与其他各队都交手。时间够打满所有对阵时，是最公平的决胜方式。",
+      "WINNER_COURT": "球场之王：胜者升场，负者降场。每轮换搭档。至少需要两片场地。",
+      "LADDER": "Escalera：按水平初始分场。胜者升场，负者降场。每轮重组队伍 — 适合水平混搭。",
+      "KOTC": "带挑战者池的球场之王：1 号场胜者迎战队列下一组；其他场从池中轮转四人。多余球员等候上场。",
+      "CUSTOM": "从空白开始，用高级选项控制每条规则。"
+    },
+    "scoring": {
+      "CLASSIC_AUTOMATIC": {
+        "title": "自动",
+        "subtitle": "最多 3 盘 — 局分、Americano 点数或超级抢七",
+        "hint": "休闲板式网球 — 任意录入比分；仅作提示",
+        "sport": {
+          "PADEL": {
+            "title": "自动",
+            "subtitle": "休闲三盘两胜 — 灵活计分",
+            "hint": "局分、Americano 点数，或盘数打平时用超级抢七"
+          }
+        }
+      },
+      "CLASSIC_BEST_OF_3": {
+        "title": "三盘两胜",
+        "subtitle": "先赢两盘者获胜",
+        "hint": "网球式盘制，含局分"
+      },
+      "CLASSIC_BEST_OF_5": {
+        "title": "五盘三胜",
+        "subtitle": "先赢三盘者获胜",
+        "hint": "长赛制，适合决赛"
+      },
+      "CLASSIC_PRO_SET": {
+        "title": "职业长盘",
+        "subtitle": "一盘长盘决胜",
+        "hint": "单盘含局分"
+      },
+      "CLASSIC_SINGLE_SET": {
+        "title": "单盘",
+        "subtitle": "标准盘至 6（抢七时可至 7）",
+        "hint": "一盘含局分；下一步可选比赛计时"
+      },
+      "CLASSIC_SHORT_SET": {
+        "title": "短盘",
+        "subtitle": "4 局短盘，三盘两胜",
+        "hint": "更快的经典赛制"
+      },
+      "CLASSIC_FAST4": {
+        "title": "FAST4",
+        "subtitle": "4 局盘、无占先、3–3 抢七至 5",
+        "hint": "澳大利亚网球协会 FAST4 赛制",
+        "sport": {
+          "TENNIS": {
+            "title": "FAST4 网球",
+            "subtitle": "三盘两胜 · 4 局 · 无占先 · 3–3 抢七至 5",
+            "hint": "适合社交与联赛的短网球"
+          }
+        }
+      },
+      "CLASSIC_SUPER_TIEBREAK": {
+        "title": "超级抢七",
+        "subtitle": "两盘 + 1–1 时超级抢七",
+        "hint": "紧凑赛制，保留经典手感"
+      },
+      "CLASSIC_TIMED": {
+        "title": "局/盘 · 限时",
+        "subtitle": "一盘含局分与 15/30/40…；时间到即停",
+        "hint": "Americano 式轮转仍可用网球小分"
+      },
+      "POINTS_12": {
+        "title": "12 分",
+        "subtitle": "盘内双方合计 12 分；分高者赢",
+        "hint": "闪电 Americano — 快速轮转",
+        "sport": {
+          "PADEL": {
+            "title": "12 球",
+            "subtitle": "盘内双方合计 12 球；分高者赢",
+            "hint": "短板式网球 Americano 轮转"
+          }
+        }
+      },
+      "POINTS_15": {
+        "title": "15 分",
+        "subtitle": "盘内双方合计 15 分；分高者赢",
+        "hint": "快速轮转赛制",
+        "sport": {
+          "BADMINTON": {
+            "title": "15 球",
+            "subtitle": "盘内双方合计 15 球；分高者赢",
+            "hint": "社交羽毛球轮转 — 不是三局打到 15"
+          }
+        }
+      },
+      "POINTS_16": {
+        "title": "16 分",
+        "subtitle": "盘内双方合计 16 分；分高者赢",
+        "hint": "快速盘 — Americano 风格",
+        "sport": {
+          "PICKLEBALL": {
+            "title": "16 球预算",
+            "subtitle": "每场双方合计 16 球；分高者赢",
+            "hint": "社交轮转 — 不是打到 16 净胜 2 分"
+          }
+        }
+      },
+      "SINGLE_GAME_21": {
+        "title": "21 分",
+        "subtitle": "单局 21 分，净胜 2 分",
+        "hint": "2001 年前休闲乒乓球",
+        "sport": {
+          "TABLE_TENNIS": {
+            "title": "经典 21 分局",
+            "subtitle": "一局 21 分（净胜 2 分）",
+            "hint": "改用 11 分制前的传统 21 分局"
+          }
+        }
+      },
+      "POINTS_11": {
+        "title": "11 分",
+        "subtitle": "单局 11 分，净胜 2 分",
+        "hint": "快速对打",
+        "sport": {
+          "TABLE_TENNIS": {
+            "title": "11 分局",
+            "subtitle": "一局 11 分（净胜 2 分）",
+            "hint": "例如 11–9 — 平分后净胜 2 分"
+          },
+          "PICKLEBALL": {
+            "title": "11 分局",
+            "subtitle": "单局每球得分至 11，净胜 2 分",
+            "hint": "常见休闲匹克球长度"
+          }
+        }
+      },
+      "POINTS_21": {
+        "title": "21 分",
+        "subtitle": "盘内双方合计 21 分；分高者赢",
+        "hint": "常见 Americano 长度",
+        "sport": {
+          "BADMINTON": {
+            "title": "21 分局",
+            "subtitle": "一局 21 分，净胜 2 分",
+            "hint": "较短羽毛球局"
+          },
+          "PICKLEBALL": {
+            "title": "21 球预算",
+            "subtitle": "每场双方合计 21 球；分高者赢",
+            "hint": "Americano / 开放场 — 不是打到 21 的对打赛"
+          }
+        }
+      },
+      "BEST_OF_3_11": {
+        "title": "三局两胜 · 至 11",
+        "subtitle": "三局每局 11 分、净胜 2；先赢两局者胜",
+        "hint": "标准乒乓球赛",
+        "sport": {
+          "TABLE_TENNIS": {
+            "title": "三局两胜至 11",
+            "subtitle": "三局每局 11（净胜 2）；先赢两局者胜场",
+            "hint": "正式乒乓球赛制长度"
+          },
+          "SQUASH": {
+            "title": "三局两胜至 11",
+            "subtitle": "三局每局 11（净胜 2）；先赢两局者胜",
+            "hint": "较短壁球赛"
+          },
+          "PICKLEBALL": {
+            "title": "三局两胜至 11",
+            "subtitle": "三局每球得分至 11（净胜 2）；先赢两局者胜",
+            "hint": "正式风格匹克球赛"
+          }
+        }
+      },
+      "BEST_OF_3_15": {
+        "title": "三局两胜 · 至 15",
+        "subtitle": "三局每局 15 分、净胜 2；先赢两局者胜",
+        "hint": "俱乐部羽毛球赛",
+        "sport": {
+          "BADMINTON": {
+            "title": "三局两胜至 15",
+            "subtitle": "三局每局 15（净胜 2）；先赢两局者胜场",
+            "hint": "BWF 2027 俱乐部赛制 — 不是球数预算"
+          }
+        }
+      },
+      "BEST_OF_5_11": {
+        "title": "五局三胜 · 至 11",
+        "subtitle": "五局每局 11；先赢三局者胜场",
+        "hint": "更长的对打赛",
+        "sport": {
+          "SQUASH": {
+            "title": "五局三胜至 11",
+            "subtitle": "五局每局 11（净胜 2）；先赢三局者胜",
+            "hint": "标准壁球赛制长度"
+          }
+        }
+      },
+      "PAR_11": {
+        "title": "PAR 至 11",
+        "subtitle": "每球得分至 11，净胜 2 分",
+        "hint": "壁球 PAR 计分",
+        "sport": {
+          "SQUASH": {
+            "title": "PAR 至 11",
+            "subtitle": "正式壁球 PAR — 每球得分，局至 11（净胜 2）",
+            "hint": "标准竞技壁球"
+          }
+        }
+      },
+      "BEST_OF_3_21": {
+        "title": "三局两胜至 21",
+        "subtitle": "三局每局 21 分、净胜 2；先赢两局者胜场",
+        "hint": "标准羽毛球赛制长度"
+      },
+      "POINTS_24": {
+        "title": "24 分",
+        "subtitle": "盘内双方合计 24 分；分高者赢",
+        "hint": "稍长的盘",
+        "sport": {
+          "PICKLEBALL": {
+            "title": "24 球预算",
+            "subtitle": "每场双方合计 24 球；分高者赢",
+            "hint": "社交轮转封顶"
+          }
+        }
+      },
+      "POINTS_32": {
+        "title": "32 分",
+        "subtitle": "盘内双方合计 32 分；分高者赢",
+        "hint": "每轮更长的盘",
+        "sport": {
+          "PICKLEBALL": {
+            "title": "32 球预算",
+            "subtitle": "每场双方合计 32 球；分高者赢",
+            "hint": "更长的社交轮转"
+          }
+        }
+      },
+      "TIMED": {
+        "title": "限时比赛",
+        "subtitle": "打到时间结束",
+        "hint": "无分数上限，尽情打"
+      },
+      "CUSTOM": {
+        "title": "自定义",
+        "subtitle": "精细调整每条规则",
+        "hint": "使用高级选项"
+      }
+    },
+    "scoringShort": {
+      "CLASSIC_AUTOMATIC": "自动",
+      "CLASSIC_BEST_OF_3": "三盘两胜",
+      "CLASSIC_BEST_OF_5": "五盘三胜",
+      "CLASSIC_PRO_SET": "职业长盘",
+      "CLASSIC_SINGLE_SET": "单盘",
+      "CLASSIC_SHORT_SET": "短盘",
+      "CLASSIC_FAST4": "FAST4",
+      "CLASSIC_SUPER_TIEBREAK": "超级抢七",
+      "CLASSIC_TIMED": "局/盘 · 限时",
+      "POINTS_11": "至 11",
+      "POINTS_12": "至 12",
+      "POINTS_15": "至 15",
+      "POINTS_16": "至 16",
+      "POINTS_21": "至 21",
+      "POINTS_21BySport": {
+        "PICKLEBALL": "21 球"
+      },
+      "POINTS_16BySport": {
+        "PICKLEBALL": "16 球"
+      },
+      "POINTS_24BySport": {
+        "PICKLEBALL": "24 球"
+      },
+      "POINTS_32BySport": {
+        "PICKLEBALL": "32 球"
+      },
+      "SINGLE_GAME_21": "至 21",
+      "BEST_OF_3_11": "Bo3 · 至 11",
+      "BEST_OF_3_15": "Bo3 · 至 15",
+      "BEST_OF_3_21": "Bo3 · 至 21",
+      "BEST_OF_5_11": "Bo5 · 至 11",
+      "PAR_11": "PAR · 11",
+      "POINTS_24": "至 24",
+      "POINTS_32": "至 32",
+      "TIMED": "限时",
+      "CUSTOM": "自定义"
+    },
+    "goldenPointShort": "金分",
+    "goldenPoint": {
+      "title": "金分",
+      "titleAdvantage": "占先计分",
+      "pickerHint": "多少次平分后，下一次 40–40 即为生死分。",
+      "optionOff": "关闭",
+      "optionImmediate": "40–40 时",
+      "optionAfterDeuces": "{{count}} 次后",
+      "afterDeucesShort": "{{count}} 次平分后金分",
+      "afterDeucesShort_plural": "{{count}} 次平分后金分",
+      "descriptionImmediate": "40–40（平分）时，下一分直接赢局 — 无占先。",
+      "descriptionAfterDeuces": "从占先回到平分 {{count}} 次后，下一次 40–40 即为生死分。",
+      "description": "40–40（平分）时，下一分直接赢局 — 无占先。",
+      "descriptionOff": "标准占先：一方先占先，再赢下一分；否则回到 40–40 — 直到一方净胜两分。"
+    },
+    "timedMatch": {
+      "title": "限时比赛",
+      "description": "打到时间结束。分高者获胜。",
+      "descriptionClassic": "一盘网球式计分（局、15/30/40…）。时间到即停。",
+      "durationTitle": "每场时长",
+      "customDuration": "自定义（1–60 分钟）",
+      "minutesLabel": "{{minutes}} 分钟",
+      "presetMinutes": "{{minutes}} 分钟"
+    },
+    "bestOfMatch": {
+      "label": "多局制比赛（局）",
+      "labelBySport": {
+        "TABLE_TENNIS": "多局制比赛",
+        "BADMINTON": "多局制比赛",
+        "SQUASH": "多局制比赛"
+      },
+      "optionTo": "{{sets}} 局制 · 至 {{cap}}"
+    },
+    "customPoints": {
+      "label": "自定义总分",
+      "placeholder": "例如 27",
+      "short": "至 {{count}}"
+    },
+    "points": {
+      "title": "按结果计分"
+    }
+  }
+}

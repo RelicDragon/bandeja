@@ -1,0 +1,162 @@
+[
+  {
+    "id": "asia_id_jakarta",
+    "name": "Jakarta",
+    "country": "Indonesia",
+    "timezone": "Asia/Jakarta",
+    "native": "Jakarta",
+    "latitude": -6.2088,
+    "longitude": 106.8456,
+    "telegramPinnedLanguage": "id"
+  },
+  {
+    "id": "asia_id_denpasar",
+    "name": "Denpasar",
+    "country": "Indonesia",
+    "timezone": "Asia/Jakarta",
+    "native": "Denpasar",
+    "latitude": -8.6705,
+    "longitude": 115.2126,
+    "telegramPinnedLanguage": "id"
+  },
+  {
+    "id": "asia_id_surabaya",
+    "name": "Surabaya",
+    "country": "Indonesia",
+    "timezone": "Asia/Jakarta",
+    "native": "Surabaya",
+    "latitude": -7.2575,
+    "longitude": 112.7521,
+    "telegramPinnedLanguage": "id"
+  },
+  {
+    "id": "asia_jp_tokyo",
+    "name": "Tokyo",
+    "country": "Japan",
+    "timezone": "Asia/Tokyo",
+    "native": "東京",
+    "latitude": 35.6762,
+    "longitude": 139.6503,
+    "telegramPinnedLanguage": "ja"
+  },
+  {
+    "id": "asia_jp_osaka",
+    "name": "Osaka",
+    "country": "Japan",
+    "timezone": "Asia/Tokyo",
+    "native": "大阪",
+    "latitude": 34.6937,
+    "longitude": 135.5023,
+    "telegramPinnedLanguage": "ja"
+  },
+  {
+    "id": "asia_jp_nagoya",
+    "name": "Nagoya",
+    "country": "Japan",
+    "timezone": "Asia/Tokyo",
+    "native": "名古屋",
+    "latitude": 35.1815,
+    "longitude": 136.9066,
+    "telegramPinnedLanguage": "ja"
+  },
+  {
+    "id": "asia_th_bangkok",
+    "name": "Bangkok",
+    "country": "Thailand",
+    "timezone": "Asia/Bangkok",
+    "native": "กรุงเทพมหานคร",
+    "latitude": 13.7563,
+    "longitude": 100.5018,
+    "telegramPinnedLanguage": "th"
+  },
+  {
+    "id": "asia_in_mumbai",
+    "name": "Mumbai",
+    "country": "India",
+    "timezone": "Asia/Kolkata",
+    "native": "मुंबई",
+    "latitude": 19.076,
+    "longitude": 72.8777,
+    "telegramPinnedLanguage": "en-GB"
+  },
+  {
+    "id": "asia_in_delhi",
+    "name": "Delhi",
+    "country": "India",
+    "timezone": "Asia/Kolkata",
+    "native": "दिल्ली",
+    "latitude": 28.6139,
+    "longitude": 77.209,
+    "telegramPinnedLanguage": "en-GB"
+  },
+  {
+    "id": "asia_in_bengaluru",
+    "name": "Bengaluru",
+    "country": "India",
+    "timezone": "Asia/Kolkata",
+    "native": "ಬೆಂಗಳೂರು",
+    "latitude": 12.9716,
+    "longitude": 77.5946,
+    "telegramPinnedLanguage": "en-GB"
+  },
+  {
+    "id": "asia_in_hyderabad",
+    "name": "Hyderabad",
+    "country": "India",
+    "timezone": "Asia/Kolkata",
+    "native": "حیدرآباد",
+    "latitude": 17.385,
+    "longitude": 78.4867,
+    "telegramPinnedLanguage": "en-GB"
+  },
+  {
+    "id": "asia_cn_shanghai",
+    "name": "Shanghai",
+    "country": "China",
+    "timezone": "Asia/Shanghai",
+    "native": "上海",
+    "latitude": 31.2304,
+    "longitude": 121.4737,
+    "telegramPinnedLanguage": "zh"
+  },
+  {
+    "id": "asia_cn_shenzhen",
+    "name": "Shenzhen",
+    "country": "China",
+    "timezone": "Asia/Shanghai",
+    "native": "深圳",
+    "latitude": 22.5431,
+    "longitude": 114.0579,
+    "telegramPinnedLanguage": "zh"
+  },
+  {
+    "id": "asia_cn_chengdu",
+    "name": "Chengdu",
+    "country": "China",
+    "timezone": "Asia/Shanghai",
+    "native": "成都",
+    "latitude": 30.5728,
+    "longitude": 104.0668,
+    "telegramPinnedLanguage": "zh"
+  },
+  {
+    "id": "asia_cn_hangzhou",
+    "name": "Hangzhou",
+    "country": "China",
+    "timezone": "Asia/Shanghai",
+    "native": "杭州",
+    "latitude": 30.2741,
+    "longitude": 120.1551,
+    "telegramPinnedLanguage": "zh"
+  },
+  {
+    "id": "asia_cn_beijing",
+    "name": "Beijing",
+    "country": "China",
+    "timezone": "Asia/Shanghai",
+    "native": "北京",
+    "latitude": 39.9042,
+    "longitude": 116.4074,
+    "telegramPinnedLanguage": "zh"
+  }
+]

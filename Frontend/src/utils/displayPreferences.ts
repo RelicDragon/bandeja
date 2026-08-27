@@ -124,6 +124,11 @@ const APP_LANGUAGE_TO_LOCALE: Record<string, string> = {
   es: 'es-ES',
   cs: 'cs-CZ',
   ar: 'ar-SA',
+  zh: 'zh-CN',
+  id: 'id-ID',
+  hi: 'hi-IN',
+  th: 'th-TH',
+  ja: 'ja-JP',
 };
 
 /** BCP-47 locale for Intl formatting from i18n language or profile language. */
@@ -155,13 +160,21 @@ export function normalizeLanguageForProfile(locale: string | null | undefined): 
     'es': 'es-ES',
     'cs': 'cs-CZ',
     'ar': 'ar-SA',
+    'zh': 'zh-CN',
+    'id': 'id-ID',
+    'hi': 'hi-IN',
+    'th': 'th-TH',
+    'ja': 'ja-JP',
   };
   
   if (languageMap[langCode]) {
     return languageMap[langCode];
   }
   
-  const validLocales = ['en-GB', 'en-US', 'ru-RU', 'sr-RS', 'es-ES', 'cs-CZ', 'ar-SA', 'auto'];
+  const validLocales = [
+    'en-GB', 'en-US', 'ru-RU', 'sr-RS', 'es-ES', 'cs-CZ', 'ar-SA',
+    'zh-CN', 'id-ID', 'hi-IN', 'th-TH', 'ja-JP', 'auto',
+  ];
   if (validLocales.includes(locale)) {
     return locale;
   }

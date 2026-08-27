@@ -1,0 +1,37 @@
+{
+  "invites": {
+    "title": "Undangan",
+    "pending": "Undangan Tertunda",
+    "noInvites": "Tidak ada undangan tertunda",
+    "accept": "Terima",
+    "decline": "Tolak",
+    "from": "Dari",
+    "to": "Ke",
+    "message": "Pesan",
+    "accepted": "Undangan diterima",
+    "acceptedSuccessfully": "Undangan berhasil diterima",
+    "declined": "Undangan ditolak",
+    "declinedSuccessfully": "Undangan berhasil ditolak",
+    "cancelledSuccessfully": "Undangan berhasil dibatalkan",
+    "selectPlayer": "Pilih Pemain",
+    "selectPlayers": "Pilih Pemain",
+    "noPlayersAvailable": "Tidak ada pemain yang tersedia untuk diundang",
+    "inviteFriendToBandeja": "Undang teman ke Bandeja",
+    "shareAppBody": "Bergabunglah dengan saya di Bandeja: {{url}}",
+    "pendingInvites": "Undangan Tertunda",
+    "badgeDeclined": "Ditolak",
+    "badgeExpired": "Undangan kedaluwarsa",
+    "badgeInviteCancelled": "Undangan dibatalkan",
+    "sectionTerminalInvites": "Respons undangan",
+    "inviteAgainHint": "Anda dapat mengirim undangan baru.",
+    "inviteSent": "Undangan terkirim",
+    "invitedYou": "Undangan ke",
+    "declineModal": {
+      "title": "Tolak undangan?",
+      "description": "Anda dapat memberi tahu penyelenggara mengapa Anda tidak bisa bergabung (opsional).",
+      "reasonLabel": "Alasan (opsional)",
+      "reasonPlaceholder": "mis. konflik jadwal, cedera…",
+      "confirm": "Tolak"
+    }
+  }
+}

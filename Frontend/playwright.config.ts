@@ -32,7 +32,13 @@ export default defineConfig({
   projects: [
     {
       name: 'guest',
-      testMatch: [/smoke\/guest\.spec\.ts$/, /smoke\/arabic-rtl\.spec\.ts$/, /shell\/.*\.spec\.ts$/, /cross-cutting\/.*\.spec\.ts$/],
+      testMatch: [
+        /smoke\/guest\.spec\.ts$/,
+        /smoke\/arabic-rtl\.spec\.ts$/,
+        /smoke\/asia-locales\.spec\.ts$/,
+        /shell\/.*\.spec\.ts$/,
+        /cross-cutting\/.*\.spec\.ts$/,
+      ],
       grepInvert: /@auth|@desktop/,
       use: { ...devices['Pixel 5'] },
     },

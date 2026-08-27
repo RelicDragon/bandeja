@@ -1,0 +1,9 @@
+{
+  "trainers": {
+    "ourTrainers": "Pelatih kami",
+    "selectToFilterHint": "Ketuk pelatih untuk memfilter latihan berdasarkan mereka",
+    "trainingsBy": "Latihan oleh",
+    "clearTrainerFilter": "Hapus filter pelatih",
+    "noTrainingsByTrainer": "Tidak ada latihan oleh {{name}}"
+  }
+}

@@ -1,0 +1,31 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="notification_channel_messages">メッセージ</string>
+    <string name="notification_channel_messages_desc">チャットメッセージの通知</string>
+    <string name="push_reply_hint">返信</string>
+    <string name="push_reply_failed">送信できませんでした</string>
+    <string name="push_reply_self">あなた</string>
+    <string name="invite_accept">承諾</string>
+    <string name="invite_decline">辞退</string>
+    <string name="play_intent_play_too">私もプレイしたい</string>
+    <string name="shortcut_find_games_short">試合を探す</string>
+    <string name="shortcut_find_games_long">参加できる試合を見る</string>
+    <string name="shortcut_my_games_short">マイ試合</string>
+    <string name="shortcut_my_games_long">今後の試合を表示</string>
+    <string name="shortcut_create_game_short">試合を作成</string>
+    <string name="shortcut_create_game_long">新しい試合の作成を開始</string>
+    <string name="shortcut_next_game_short">次の試合</string>
+    <string name="shortcut_next_game_long">次の試合を開く</string>
+    <string name="shortcut_find_tomorrow_short">明日の試合</string>
+    <string name="shortcut_find_tomorrow_long">明日の試合を見る</string>
+    <string name="shortcut_create_league_short">リーグ作成</string>
+    <string name="shortcut_create_league_long">新しいリーグの作成を開始</string>
+    <string name="shortcut_game_chat_short">試合チャット</string>
+    <string name="shortcut_game_chat_long">次の試合のチャットを開く</string>
+    <string name="shortcut_live_scoring_short">ライブスコア</string>
+    <string name="shortcut_live_scoring_long">次の試合のライブスコアを開く</string>
+    <string name="shortcut_chats_short">チャット</string>
+    <string name="shortcut_chats_long">チャット受信箱を開く</string>
+    <string name="shortcut_invites_short">招待</string>
+    <string name="shortcut_invites_long">試合の招待を表示</string>
+</resources>

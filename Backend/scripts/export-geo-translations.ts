@@ -45,6 +45,12 @@ interface CountryTranslation {
   es: string;
   ru: string;
   sr: string;
+  cs?: string;
+  zh?: string;
+  id?: string;
+  hi?: string;
+  th?: string;
+  ja?: string;
   native: string;
   iso2: string;
 }
@@ -156,8 +162,22 @@ async function main() {
   }
 
   const countriesData: Record<string, CountryTranslation> = {};
+  const existingCountriesPath = path.join(FRONTEND_PUBLIC_GEO, 'countries.json');
+  let existingCountries: Record<string, CountryTranslation> = {};
+  if (fs.existsSync(existingCountriesPath)) {
+    try {
+      existingCountries = JSON.parse(fs.readFileSync(existingCountriesPath, 'utf-8')) as Record<
+        string,
+        CountryTranslation
+      >;
+    } catch {
+      existingCountries = {};
+    }
+  }
+
   for (const countryName of distinctCountries) {
     const dr5hn = dr5hnByName.get(countryName) ?? dr5hnCountries.find((c) => normalizeCountryName(c.name) === countryName);
+    const prev = existingCountries[countryName];
     if (dr5hn) {
       const t = dr5hn.translations || {};
       countriesData[countryName] = {
@@ -177,6 +197,15 @@ async function main() {
         native: countryName,
         iso2: nameToIso2.get(countryName) ?? '',
       };
+    }
+    // Preserve hand-curated UI locale labels (cs + Asia) so regen does not wipe them.
+    if (prev) {
+      for (const key of ['cs', 'zh', 'id', 'hi', 'th', 'ja'] as const) {
+        const value = prev[key];
+        if (value && value.trim()) {
+          countriesData[countryName][key] = value;
+        }
+      }
     }
   }
 

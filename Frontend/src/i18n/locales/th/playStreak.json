@@ -1,0 +1,17 @@
+{
+  "playStreak": {
+    "chipWeeks_one": "{{count}} สัปดาห์",
+    "chipWeeks_other": "{{count}} สัปดาห์",
+    "chipBroken": "— · ดีที่สุด {{best}}",
+    "sheetTitle": "เล่นแนว",
+    "rules": "เล่นเกมจัดอันดับอย่างน้อยหนึ่งเกมทุกๆ 7 วันเพื่อรักษาสถิติของคุณ เกมพิเศษในสัปดาห์เดียวกันจะไม่บวกสัปดาห์",
+    "current": "ปัจจุบัน",
+    "best": "ดีที่สุด",
+    "none": "—",
+    "weeks_one": "{{count}} สัปดาห์",
+    "weeks_other": "{{count}} สัปดาห์",
+    "playBy": "เล่นตาม {{date}} เพื่อรักษาสตรีคของคุณ",
+    "bannerStarted": "สตรีคเริ่มแล้ว!",
+    "bannerContinue": "สตรีค · {{count}} สัปดาห์"
+  }
+}

@@ -20,8 +20,11 @@ export const TRANSLATION_LANGUAGES: { code: string; label: string }[] = [
   { code: 'el', label: 'Greek' },
   { code: 'tr', label: 'Turkish' },
   { code: 'ar', label: 'Arabic' },
-  { code: 'zh', label: 'Chinese' },
-  { code: 'ja', label: 'Japanese' },
+  { code: 'zh', label: '中文' },
+  { code: 'id', label: 'Bahasa Indonesia' },
+  { code: 'hi', label: 'हिन्दी' },
+  { code: 'th', label: 'ไทย' },
+  { code: 'ja', label: '日本語' },
   { code: 'ko', label: 'Korean' },
 ];
 

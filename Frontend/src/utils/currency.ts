@@ -52,7 +52,9 @@ export const CURRENCY_INFO: Record<PriceCurrency, CurrencyInfo> = {
 
 export const SUPPORTED_CURRENCIES: PriceCurrency[] = Object.keys(CURRENCY_INFO) as PriceCurrency[];
 
-export const PRIORITY_CURRENCIES: PriceCurrency[] = ['EUR', 'USD', 'AED', 'SAR', 'RSD'];
+export const PRIORITY_CURRENCIES: PriceCurrency[] = [
+  'EUR', 'USD', 'AED', 'SAR', 'RSD', 'IDR', 'JPY', 'THB', 'INR', 'CNY',
+];
 
 export function getCurrencyMinorFactor(currency: PriceCurrency): number {
   const decimals = CURRENCY_INFO[currency]?.decimals ?? 2;

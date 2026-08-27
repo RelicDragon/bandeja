@@ -1,4 +1,15 @@
-export type GeoLocale = 'en' | 'es' | 'ru' | 'sr' | 'cs' | 'ar';
+export type GeoLocale =
+  | 'en'
+  | 'es'
+  | 'ru'
+  | 'sr'
+  | 'cs'
+  | 'ar'
+  | 'zh'
+  | 'id'
+  | 'hi'
+  | 'th'
+  | 'ja';
 
 interface CountryTranslation {
   en: string;
@@ -6,6 +17,11 @@ interface CountryTranslation {
   ru: string;
   sr: string;
   cs?: string;
+  zh?: string;
+  id?: string;
+  hi?: string;
+  th?: string;
+  ja?: string;
   native: string;
   iso2: string;
 }
@@ -30,8 +46,8 @@ async function loadGeoData(): Promise<void> {
   loadPromise = (async () => {
     try {
       const [countriesRes, citiesRes] = await Promise.all([
-        fetch('/geo/countries.json?v=3'),
-        fetch('/geo/cities.json'),
+        fetch('/geo/countries.json?v=4'),
+        fetch('/geo/cities.json?v=4'),
       ]);
       if (countriesRes.ok) countriesData = await countriesRes.json();
       if (citiesRes.ok) citiesData = await citiesRes.json();
@@ -53,13 +69,36 @@ export function ensureGeoDataLoaded(): Promise<void> {
 
 function toGeoLocale(locale: string): GeoLocale {
   const code = locale.split('-')[0].toLowerCase();
-  if (code === 'en' || code === 'es' || code === 'ru' || code === 'sr' || code === 'cs' || code === 'ar') {
+  if (
+    code === 'en' ||
+    code === 'es' ||
+    code === 'ru' ||
+    code === 'sr' ||
+    code === 'cs' ||
+    code === 'ar' ||
+    code === 'zh' ||
+    code === 'id' ||
+    code === 'hi' ||
+    code === 'th' ||
+    code === 'ja'
+  ) {
     return code;
   }
   return 'en';
 }
 
-const LOCALE_KEYS: Array<'en' | 'es' | 'ru' | 'sr' | 'cs'> = ['en', 'es', 'ru', 'sr', 'cs'];
+const LOCALE_KEYS: Array<'en' | 'es' | 'ru' | 'sr' | 'cs' | 'zh' | 'id' | 'hi' | 'th' | 'ja'> = [
+  'en',
+  'es',
+  'ru',
+  'sr',
+  'cs',
+  'zh',
+  'id',
+  'hi',
+  'th',
+  'ja',
+];
 
 export function getCountryDisplayName(countryKey: string, locale: string): string {
   if (!countryKey) return '';
@@ -76,10 +115,15 @@ export function getCountryDisplayName(countryKey: string, locale: string): strin
         ru: c.ru,
         sr: c.sr,
         cs: c.cs,
+        zh: c.zh,
+        id: c.id,
+        hi: c.hi,
+        th: c.th,
+        ja: c.ja,
       } as Record<(typeof LOCALE_KEYS)[number], string | undefined>)[geo]
     : undefined;
   if (name) return name;
-  return countryKey;
+  return c.native || c.en || countryKey;
 }
 
 export function getCountryNativeName(countryKey: string): string | null {
@@ -97,13 +141,13 @@ export function getCityDisplayName(
   const rec = citiesData?.[cityId];
   if (!rec) return cityName;
   const geo = toGeoLocale(locale);
-  if (geo === 'ar') {
+  if (geo === 'ar' || geo === 'zh' || geo === 'ja' || geo === 'th' || geo === 'hi' || geo === 'id') {
     if (rec.native && rec.native.trim()) return rec.native;
     return rec.en || cityName;
   }
-  const key: CityLocaleKey = geo === 'cs' ? 'en' : geo;
+  const key: CityLocaleKey = geo === 'cs' ? 'en' : (geo as CityLocaleKey);
   const name = rec[key];
-  return (name && name.trim()) ? name : rec.en;
+  return name && name.trim() ? name : rec.en;
 }
 
 export function getCityNativeName(
@@ -116,7 +160,11 @@ export function getCityNativeName(
   return null;
 }
 
-export function getCitySearchNames(cityId: string, cityName: string, _countryKey: string): {
+export function getCitySearchNames(
+  cityId: string,
+  cityName: string,
+  _countryKey: string
+): {
   en: string;
   es: string;
   ru: string;
@@ -124,8 +172,7 @@ export function getCitySearchNames(cityId: string, cityName: string, _countryKey
   native: string;
 } {
   const rec = citiesData?.[cityId];
-  if (!rec)
-    return { en: cityName, es: cityName, ru: cityName, sr: cityName, native: cityName };
+  if (!rec) return { en: cityName, es: cityName, ru: cityName, sr: cityName, native: cityName };
   return {
     en: rec.en,
     es: rec.es,
@@ -141,6 +188,11 @@ export function getCountrySearchNames(countryKey: string): {
   ru: string;
   sr: string;
   cs: string;
+  zh: string;
+  id: string;
+  hi: string;
+  th: string;
+  ja: string;
   native: string;
 } {
   const c = countriesData?.[countryKey];
@@ -151,6 +203,11 @@ export function getCountrySearchNames(countryKey: string): {
       ru: c.ru,
       sr: c.sr,
       cs: c.cs ?? c.en,
+      zh: c.zh ?? c.native ?? c.en,
+      id: c.id ?? c.en,
+      hi: c.hi ?? c.native ?? c.en,
+      th: c.th ?? c.native ?? c.en,
+      ja: c.ja ?? c.native ?? c.en,
       native: c.native,
     };
   return {
@@ -159,6 +216,11 @@ export function getCountrySearchNames(countryKey: string): {
     ru: countryKey,
     sr: countryKey,
     cs: countryKey,
+    zh: countryKey,
+    id: countryKey,
+    hi: countryKey,
+    th: countryKey,
+    ja: countryKey,
     native: countryKey,
   };
 }

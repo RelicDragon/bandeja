@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "openSettings": "打开设置",
+    "photos": {
+      "title": "需要照片权限",
+      "description": "添加照片需要访问你的相册。",
+      "denied": "照片权限已被拒绝。请在设备设置中开启，以便添加照片。"
+    },
+    "camera": {
+      "title": "需要相机权限",
+      "description": "拍照需要访问你的相机。",
+      "denied": "相机权限已被拒绝。请在设备设置中开启，以便拍照。"
+    }
+  }
+}

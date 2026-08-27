@@ -1,0 +1,9 @@
+{
+  "trainers": {
+    "ourTrainers": "ผู้ฝึกสอนของเรา",
+    "selectToFilterHint": "แตะผู้ฝึกสอนเพื่อกรองการฝึกตามพวกเขา",
+    "trainingsBy": "การอบรมโดย",
+    "clearTrainerFilter": "ล้างตัวกรองเทรนเนอร์",
+    "noTrainingsByTrainer": "ไม่มีการฝึกอบรมภายใน {{name}}"
+  }
+}

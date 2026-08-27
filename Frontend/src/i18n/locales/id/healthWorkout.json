@@ -1,0 +1,19 @@
+{
+  "healthWorkout": {
+    "title": "Latihan Padel",
+    "subtitle": "Disimpan dari Apple Watch saat pencatatan skor",
+    "yourSession": "Latihan Anda",
+    "kcal": "kkal",
+    "avgBpm": "rata-rata bpm",
+    "maxBpm": "maks bpm",
+    "loading": "Memuat…",
+    "loadError": "Tidak dapat memuat latihan",
+    "loadErrorHint": "Terjadi kesalahan. Periksa koneksi Anda dan coba lagi.",
+    "loadErrorProfile": "Tidak dapat memuat latihan",
+    "loadErrorProfileHint": "Terjadi kesalahan. Periksa koneksi Anda dan coba lagi.",
+    "emptyGameTitle": "Tidak ada latihan yang dicatat",
+    "emptyGameHint": "Lain kali, mulai latihan di Apple Watch saat Anda mencatat skor di Bandeja — kalori dan detak jantung akan muncul di sini.",
+    "emptyProfileTitle": "Belum ada latihan",
+    "emptyProfileHint": "Catat latihan di Apple Watch saat Anda mencatat skor pertandingan di Bandeja untuk melacak kalori dan detak jantung."
+  }
+}

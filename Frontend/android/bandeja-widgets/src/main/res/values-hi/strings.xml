@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="next_game_widget_title">अगला गेम</string>
+    <string name="next_game_widget_description">आपका अगला Bandeja गेम दिखाता है।</string>
+    <string name="next_game_widget_loading">Bandeja</string>
+    <string name="next_game_widget_preview_title">सुबह का पैडेल</string>
+    <string name="next_game_widget_preview_time">2 घंटे में</string>
+</resources>

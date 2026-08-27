@@ -1,0 +1,11 @@
+{
+  "favorites": {
+    "addToFavorites": "เพิ่มในรายการโปรด",
+    "removeFromFavorites": "ลบออกจากรายการโปรด",
+    "addedToFavorites": "เพิ่มในรายการโปรดแล้ว",
+    "removedFromFavorites": "ลบออกจากรายการโปรดแล้ว",
+    "isFavorite": "ที่ชื่นชอบ",
+    "userAddedToFavorites": "เพิ่มผู้เล่นในรายการโปรด",
+    "userRemovedFromFavorites": "ผู้เล่นถูกลบออกจากรายการโปรด"
+  }
+}

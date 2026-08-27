@@ -1,0 +1,600 @@
+{
+  "createGame": {
+    "title": "创建比赛",
+    "identity": {
+      "label": "名称与照片",
+      "optional": "可选"
+    },
+    "steps": {
+      "setup": "比赛设置",
+      "location": "地点与时间",
+      "players": "球员",
+      "details": "设置与详情"
+    },
+    "footer": {
+      "selectClubHint": "选择俱乐部以继续"
+    },
+    "locationSteps": {
+      "date": "日期",
+      "time": "开始时间"
+    },
+    "pickSport": "选择运动",
+    "createBar": "创建酒吧活动",
+    "createTraining": "创建训练课",
+    "createTournament": "创建锦标赛",
+    "createLeague": "创建联赛",
+    "selectType": "选择类型",
+    "location": "地点",
+    "locationTournament": "锦标赛地点",
+    "locationLeague": "联赛地点",
+    "club": "俱乐部",
+    "selectClub": "选择俱乐部",
+    "court": "场地",
+    "hall": "球馆",
+    "notBookedYet": "仅比赛",
+    "dontSelectCourt": "暂不选场地",
+    "dontSelectHall": "暂不选球馆",
+    "courtNotSelected": "未选择场地",
+    "hallNotSelected": "未选择球馆",
+    "multiCourtHint": "为 {{participants}} 名球员最多可选 {{count}} 片场地（已选 {{selected}}）",
+    "multiCourtNeedSharedSlots": "请选择 {{count}} 片在同一时间空闲的场地。",
+    "multiCourtNoSharedSlots": "所选 {{count}} 片场地没有共同空闲时段。请换场地、日期或时长。",
+    "webCameraHint": "此场地已关联网络摄像头",
+    "webCameraHintsTitle": "已关联的网络摄像头",
+    "webCameraHintNamed": "{{court}} 已关联网络摄像头",
+    "webCameraHintAction": "点击观看直播",
+    "hasBookedCourt": "我已预订此场地",
+    "hasBookedHall": "我已预订球台",
+    "selectCourt": "选择场地",
+    "selectHall": "选择球馆",
+    "selectClubFirst": "请先选择俱乐部",
+    "selectCourtFirst": "请先选择场地",
+    "clubCancellationNotice": "取消须知：至少提前 {{hours}} 小时。",
+    "clubPolicyTitle": "俱乐部政策",
+    "noClubsAvailable": "暂无可用俱乐部",
+    "clubDetailsBack": "返回俱乐部列表",
+    "clubInfo": "俱乐部详情",
+    "clubPhotos": "照片",
+    "noCourtsAvailable": "暂无可用场地",
+    "noHallsAvailable": "暂无可用球馆",
+    "playerLevel": "球员水平",
+    "playerLevelTournament": "锦标赛球员水平",
+    "playerLevelLeague": "联赛球员水平",
+    "minLevel": "最低水平",
+    "maxLevel": "最高水平",
+    "participants": "参赛者",
+    "participantsTournament": "锦标赛参赛者",
+    "participantsLeague": "联赛参赛者",
+    "teamFormat": "队伍形式",
+    "numberOfParticipants": "参赛人数",
+    "numberOfParticipantsTournament": "锦标赛参赛人数",
+    "numberOfParticipantsLeague": "联赛参赛人数",
+    "addMeToGame": "加入比赛",
+    "iWantToPlay": "我想上场",
+    "iWillPlay": "我也会上场",
+    "settings": "设置",
+    "settingsTournament": "锦标赛设置",
+    "settingsLeague": "联赛设置",
+    "settingsTraining": "训练设置",
+    "priceRequired": "此价格类型的金额必须大于 0",
+    "gameType": "比赛类型",
+    "gameTypeLeague": "联赛类型",
+    "gameTypeNote": "可在「比赛设置」中修改详细规则。",
+    "gameTypeNoteLeague": "可在「联赛设置」中修改详细规则。",
+    "anyoneCanInvite": {
+      "title": "任何人可邀请其他球员",
+      "titleTraining": "任何人可邀请其他参与者",
+      "note": {
+        "false": "仅组织者可邀请球员。",
+        "true": "任何参赛者都可邀请其他球员。"
+      },
+      "noteTraining": {
+        "false": "仅组织者可邀请参与者。",
+        "true": "任何参与者都可邀请其他人。"
+      }
+    },
+    "publicGame": {
+      "title": "公开比赛",
+      "titleTraining": "公开训练",
+      "note": {
+        "false": "将设为私密，仅受邀者可见。",
+        "true": "所有球员可见，可在搜索中找到。"
+      },
+      "noteTraining": {
+        "false": "将设为私密，仅受邀者可见。",
+        "true": "所有球员可见，可在搜索中找到。"
+      }
+    },
+    "resultsByAnyone": {
+      "title": "任何人可录入成绩",
+      "note": {
+        "false": "仅组织者可录入、修改成绩与赛制。",
+        "true": "任何上场参赛者都可录入成绩并修改赛制。"
+      }
+    },
+    "allowDirectJoin": {
+      "title": "无需确认即可加入",
+      "titleTraining": "无需确认即可加入",
+      "note": {
+        "false": "球员加入前需组织者批准。",
+        "true": "球员可直接加入，无需等待批准。"
+      },
+      "noteTraining": {
+        "false": "参与者加入前需组织者批准。",
+        "true": "参与者可直接加入，无需等待批准。"
+      }
+    },
+    "afterGameGoToBar": {
+      "title": "赛后留下酒吧",
+      "titleTraining": "训练后留下酒吧",
+      "note": {
+        "false": "不含赛后社交聚会。",
+        "true": "含赛后社交聚会。"
+      },
+      "noteTraining": {
+        "false": "不含训练后社交聚会。",
+        "true": "含训练后社交聚会。"
+      }
+    },
+    "participantsOnlyChat": {
+      "title": "仅参赛者聊天",
+      "note": {
+        "false": "创建后仅有群聊。",
+        "true": "创建比赛时将生成参赛者与组织者聊天。"
+      }
+    },
+    "hasFixedTeams": {
+      "note": {
+        "false": "积分榜按个人计。球员按规则与任何人搭档。",
+        "true": "积分榜按搭档计。可将球员锁定为固定搭档互相比赛。开赛后不可更改搭档阵容。"
+      }
+    },
+    "ratingGame": {
+      "title": "计分比赛",
+      "note": {
+        "false": "成绩不影响参赛者水平。",
+        "true": "成绩将影响参赛者水平。"
+      }
+    },
+    "tournament": "锦标赛",
+    "genderTeams": {
+      "label": "性别",
+      "any": "不限",
+      "men": "男子",
+      "women": "女子",
+      "mixPairs": "混双",
+      "note": {
+        "any": "欢迎任何性别",
+        "men": "仅限男子",
+        "women": "仅限女子",
+        "mixPairs": "仅限组队参赛，每队 1 男 1 女，男女人数须相等方可加入。"
+      }
+    },
+    "fixedTeams": {
+      "optionOff": "轮转",
+      "GAME": {
+        "descriptionOn": "本场所有比赛保持同一搭档。",
+        "descriptionOff": "搭档可每轮更换。"
+      },
+      "TOURNAMENT": {
+        "descriptionOn": "整个锦标赛搭档固定不变。",
+        "descriptionOff": "锦标赛各轮之间可更换搭档。"
+      },
+      "LEAGUE": {
+        "descriptionOn": "整个联赛固定搭档。",
+        "descriptionOff": "联赛中搭档可每轮更换。"
+      }
+    },
+    "allowUserInMultipleTeams": {
+      "title": "同一球员可入多组固定搭档",
+      "helper": "允许一人出现在多组搭档中。轮转及部分联赛/积分逻辑可能异常计入；关闭固定搭档可重置。",
+      "editInSettingsHint": "你正在编辑下方卡片中的设置。请在该处开关此选项后点保存。退出编辑后，可再次从上方比赛设置修改。",
+      "tapEditHint": "点此卡片的「编辑」，打开开关后点「保存」。",
+      "saveAfterChangeHint": "打开开关后点「保存」（卡片顶部或底部）。编辑结束后，比赛设置卡片会再次显示此选项。",
+      "note": {
+        "false": "每位球员只能在一组固定搭档中。",
+        "true": "一名球员可同时出现在多组固定搭档中。"
+      }
+    },
+    "gameName": "比赛名称",
+    "gameNameTournament": "锦标赛名称",
+    "gameNameLeague": "联赛名称",
+    "gameNameTraining": "训练名称",
+    "gameNamePlaceholder": "为比赛命名",
+    "gameNamePlaceholderTournament": "为锦标赛命名",
+    "gameNamePlaceholderLeague": "为联赛命名",
+    "gameNamePlaceholderTraining": "为训练课命名",
+    "miscellaneous": "其他",
+    "description": "描述",
+    "descriptionPlaceholder": "给球员的说明…",
+    "descriptionPlaceholderTournament": "给球员的说明…",
+    "descriptionPlaceholderLeague": "给球员的说明…",
+    "descriptionPlaceholderTraining": "给球员的说明…",
+    "price": "价格",
+    "priceType": "价格类型",
+    "priceTypeNotKnown": "未知",
+    "priceTypePerPerson": "每人",
+    "priceTypePerTeam": "每队",
+    "priceTypeTotal": "总价",
+    "priceTypeFree": "免费",
+    "priceTotal": "金额",
+    "priceTotalPlaceholder": "输入金额",
+    "priceCurrency": "货币",
+    "priceNotSet": "未设置价格",
+    "gameStart": "比赛开始",
+    "gameStartTournament": "锦标赛开始",
+    "gameStartLeague": "联赛开始",
+    "gameStartTraining": "训练开始",
+    "selectDate": "选择日期",
+    "date": "日期",
+    "startTime": "开始时间",
+    "endTime": "结束时间",
+    "duration": "时长",
+    "noTimeSlotsForDate": "此日期无可用时段。请换一天。",
+    "noTimeSlotsForDuration": "此时长无可用时段。请换时长或日期。",
+    "clubTime": "俱乐部时间",
+    "timeSlot": "已选时段",
+    "loadingExternalSlots": "正在加载外部时段",
+    "bookedWithoutCourt": "无场地",
+    "notConfirmed": "未确认",
+    "multipleCourts": "多片场地",
+    "noCourtsSelected": "未选择场地",
+    "addCourt": "添加场地",
+    "createButton": "创建比赛",
+    "createButtonTournament": "创建锦标赛",
+    "createButtonLeague": "创建联赛",
+    "createButtonBar": "创建酒吧活动",
+    "createButtonTraining": "创建训练课",
+    "today": "今天",
+    "tomorrow": "明天",
+    "yesterday": "昨天",
+    "selectFromCalendar": "从日历选择",
+    "hours": "{{count}}小时",
+    "hoursMinutes": "{{hours}}小时 {{minutes}}分",
+    "durationHours_one": "{{count}} 小时",
+    "durationHours_other": "{{count}} 小时",
+    "durationHoursAndHalf": "{{hours}}.5 小时",
+    "durationHoursMinutes": "{{hours}} 小时 {{minutes}} 分钟",
+    "you": "你",
+    "invite": "邀请",
+    "remove": "移除",
+    "manageInvites": "管理邀请（{{count}}）",
+    "invitesWillBeSent_one": "创建比赛后将邀请该球员",
+    "invitesWillBeSent_other": "创建比赛后将邀请 {{count}} 名球员",
+    "overlapHardSave": "此时段与不可用场地冲突（俱乐部系统或已封锁）。请另选时段。",
+    "overlapSoftTitle": "此处已有其他比赛安排",
+    "overlapSoftMessage": "另一名球员在此时段预订了此场地，但尚未确认预订。你仍可继续。",
+    "overlapSoftProceed": "仍要继续",
+    "markCourtBookedTitle": "标记场地为已预订？",
+    "markCourtBookedMessage": "你已选择场地但尚未标记为已预订。与俱乐部确认预订后请确认。",
+    "markCourtBookedYes": "是的，我已预订",
+    "markCourtBookedSkip": "还没有",
+    "locationTime": {
+      "skipRealCourtToggle": "仅比赛",
+      "realCourtBookingHint": "创建比赛时将预订 {{club}} 的 {{courts}}。",
+      "realCourtBookingHintEdit": "保存时将预订 {{club}} 的 {{courts}}。",
+      "skipRealCourtHint": "比赛仅在 Bandeja 中安排。",
+      "skipRealCourtHintEdit": "比赛仅在 Bandeja 中更新。",
+      "summaryFromBookings": "来自你的 {{count}} 个预订",
+      "summaryWindow": "{{start}} – {{end}}",
+      "summaryCrossDate": "{{startDate}} {{start}} – {{endDate}} {{end}}",
+      "selectionCounter": "选择 {{min}}–{{max}} 个预订（{{players}}）",
+      "selectionProgress": "最多选择 {{max}} 片场地（{{players}}）",
+      "selectionCompleteOne": "已关联 1 片场地",
+      "selectionCompleteMany": "已关联 {{count}} 片场地",
+      "selectionAtMax": "此赛制已达上限（{{players}}）— 其他预订不可用",
+      "emptyBookingsOnDate": "此日期无预订",
+      "emptyBookingsHint": "换日期、新订场地，或不关联预订直接创建比赛。",
+      "emptyBookingsReserveNow": "立即预订场地",
+      "emptyBookingsGameOnly": "仅创建比赛",
+      "gridLegend": "绿色 = 你的预订 · 红/黄 = 已被占用 · 主色 = 已选时间",
+      "alsoUsedIn": "也用于：{{games}}",
+      "pickAdjacentHour": "选择一小时",
+      "linkHintTitle": "比赛将关联你的预订",
+      "linkHintBody": "创建比赛时将关联这些场地预订。",
+      "linkHintLine": "{{court}} · {{window}}",
+      "overrideToggle": "调整比赛时间",
+      "overrideHint": "比赛时间可以短于你的预订",
+      "overrideResetToast": "时间已重置为预订时段",
+      "preselectedBanner": "已预选预订",
+      "linkedOnlyLabel": "来自你的预订",
+      "unlinkConfirm": "移除此外预订关联？",
+      "unlinkLastConfirm": "移除最后一个预订将解锁时间编辑。",
+      "unlinkNoCancelNote": "俱乐部的场地预订仍然有效 — 仅移除与本场比赛的关联。",
+      "syncInactiveCreate": "同步暂不可用 — 无法在此获取时段或下单。你仍可按此时段创建比赛。",
+      "syncInactiveEdit": "同步暂不可用 — 无法在此获取时段或下单。你仍可按此时段编辑比赛。"
+    },
+    "reservationIntent": {
+      "title": "你如何获得场地？",
+      "otherOptions": "其他选项",
+      "recommended": "推荐",
+      "recommendedShort": "荐",
+      "validation": {
+        "selectCourt": "请先选择 {{count}} 片场地。",
+        "selectBookableCourt": "请先选择 {{count}} 片可在线预订的场地。",
+        "selectTime": "请先选择可用时间。",
+        "selectDuration": "请先选择时长。",
+        "selectReservations": "请从账户中选择 {{count}} 个预订。",
+        "bookingRecordsLoading": "仍在加载你的预订详情 — 请稍后再试。"
+      },
+      "reserveNow": {
+        "title": "预订场地",
+        "chipTitle": "订场地",
+        "description": "选择时间 — 我们帮你预订。"
+      },
+      "useExisting": {
+        "title": "我已有预订",
+        "chipTitle": "我的预订",
+        "description": "关联俱乐部账户中的预订。",
+        "contextAvailable": "此日期有 {{count}} 个可用"
+      },
+      "gameOnly": {
+        "title": "跳过场地预订",
+        "chipTitle": "仅比赛",
+        "description": "只创建比赛 — 不预订场地。"
+      },
+      "manualBooked": {
+        "title": "已手动预订",
+        "chipTitle": "已预订",
+        "description": "标记为已预订，不通过在线预订。"
+      },
+      "summary": {
+        "reserveNow": {
+          "title": "将实际预订场地",
+          "body": "选择 {{count}} 片场地、时长与时间。将按该时段预订。"
+        },
+        "useExisting": {
+          "title": "比赛将关联你的预订",
+          "body": "已选 {{selected}} / {{count}} 个所需预订。"
+        },
+        "gameOnly": {
+          "title": "不会实际预订场地",
+          "body": "比赛仅在 Bandeja 中安排。"
+        },
+        "manualBooked": {
+          "title": "比赛将标记为已预订",
+          "body": "不会创建在线预订。"
+        }
+      },
+      "cta": {
+        "reserveOne": "预订场地并创建比赛",
+        "reserveMany": "预订 {{count}} 片场地并创建比赛",
+        "linkOne": "关联预订并创建比赛",
+        "linkMany": "关联 {{count}} 个预订并创建比赛",
+        "gameOnly": "仅创建比赛",
+        "manualBooked": "创建比赛"
+      }
+    },
+    "booktime": {
+      "switchLabel": "创建比赛时预订场地",
+      "switchHint": "创建比赛时我们将预订 {{club}} 的 {{court}}。",
+      "authTitle": "登录以查看可用时间",
+      "authHint": "登录 {{club}} 以选择比赛时间。",
+      "authOptOut": "我自己预订场地",
+      "authorizeInClub": "在 {{club}} 授权",
+      "dateHint": "此俱乐部最多可提前 {{days}} 天预订。",
+      "connectedChip": "已登录 · {{phone}}",
+      "createCta": "创建比赛并预订场地",
+      "signInToContinue": "登录以继续",
+      "confirmTitle": "准备创建？",
+      "confirmPrimary": "预订并创建",
+      "activityTitle": "正在创建你的比赛…",
+      "activityStep1": "正在预订场地…",
+      "activityStepBookCourt": "正在预订 {{court}}（{{current}} / {{total}}）…",
+      "activityStep2": "正在创建比赛…",
+      "multiBookFailed": "无法预订 {{court}}。此前预订已释放。",
+      "reviewTotal": "合计",
+      "successTitle": "全部完成！",
+      "successBody": "场地已预订 · 比赛已创建",
+      "successGameOnly": "比赛已创建",
+      "errorTitle": "出了点问题",
+      "slotTaken": "此时段刚被占用 — 请另选时间。",
+      "pickAnotherTime": "另选时间",
+      "tryAgain": "重试",
+      "sessionExpired": "登录已过期。请重新登录后再试。",
+      "createFailedAfterBook": "无法创建比赛。场地预订已取消 — 请重试。",
+      "createFailedRollback": "无法创建比赛。无法确认场地预订是否已取消 — 请与俱乐部核实。",
+      "bookFailed": "无法预订场地。请重试。",
+      "reservedAs": "预订身份：{{identity}}",
+      "cancelPolicy": "开始前 {{hours}} 小时内可免费取消。",
+      "yourGame": "你的比赛",
+      "snapshotBlocked": "实时空档尚未同步。请等待同步或换一天。",
+      "alreadyReserved": "本场比赛场地已预订。",
+      "liveApiUnavailable": "场地预订暂不可用 — 使用普通排程。"
+    },
+    "padeloo": {
+      "authTitle": "连接你的 Padeloo 账户",
+      "authHint": "用 Padeloo 邮箱登录，以便在 {{club}} 选择时间。",
+      "authorizeInClub": "在 {{club}} 授权"
+    },
+    "klikteren": {
+      "authTitle": "连接你的 Klikteren 账户",
+      "authHint": "用 Klikteren 邮箱和密码登录，以便在 {{club}} 选择时间。",
+      "authorizeInClub": "在 {{club}} 授权"
+    },
+    "intent": {
+      "title": "什么类型的比赛？",
+      "noTemplatesForSetup": "没有匹配此设置的预设 — 用「高级」手动选择赛制。",
+      "customizeFormat": "自定义赛制",
+      "social": {
+        "title": "社交",
+        "description": "俱乐部之夜、轮转，无等级压力"
+      },
+      "match": {
+        "title": "正式赛",
+        "description": "标准规则，计入你的水平"
+      },
+      "advanced": {
+        "title": "高级",
+        "description": "完整赛制向导，全部预设"
+      }
+    },
+    "templates": {
+      "title": "快捷模板",
+      "empty": "此运动暂无模板 — 请使用「自定义赛制」。",
+      "durationApprox2h": "约 2 小时",
+      "durationApprox90m": "约 90 分钟",
+      "PADEL_AUTOMATIC": {
+        "title": "灵活计分",
+        "description": "休闲赛，灵活盘制或点数计分，由你决定。"
+      },
+      "PADEL_BEST_OF_3": {
+        "title": "三盘两胜",
+        "description": "标准三盘制比赛",
+        "badge": "正式"
+      },
+      "PADEL_SUPER_TIEBREAK": {
+        "title": "超级抢七",
+        "description": "两盘 + 1–1 时超级抢七"
+      },
+      "PADEL_SINGLE_SET": {
+        "title": "单盘",
+        "description": "一盘决胜"
+      },
+      "PADEL_AMERICANO": {
+        "title": "Americano 计分",
+        "description": "轮转赛制 — 打到总分"
+      },
+      "PADEL_TIMED": {
+        "title": "限时",
+        "description": "一盘带比赛计时"
+      },
+      "PADEL_SINGLES_BO3": {
+        "title": "三盘两胜",
+        "description": "单打 — 标准三盘制",
+        "badge": "正式"
+      },
+      "PADEL_SINGLES_AUTOMATIC": {
+        "title": "自动",
+        "description": "休闲单打 — 灵活盘分，自动配对"
+      },
+      "PADEL_SINGLES_SINGLE_SET": {
+        "title": "单盘",
+        "description": "单打 — 一盘决胜"
+      },
+      "PADEL_SINGLES_AMERICANO_24": {
+        "title": "单打 Americano（24 分）",
+        "description": "1v1 轮转 — 人人互打至 24 分 · 每轮 15 分钟"
+      },
+      "PADEL_AMERICANO_10": {
+        "title": "Americano · 10 分钟",
+        "description": "限时轮次（10 分钟），24 球局，随机搭档"
+      },
+      "PADEL_AMERICANO_24": {
+        "title": "Americano（24 分）",
+        "description": "随机搭档，打到 24 分 · 每轮 15 分钟"
+      },
+      "PADEL_AMERICANO_20": {
+        "title": "Americano · 20 分钟",
+        "description": "限时轮次（20 分钟），24 球局，随机搭档"
+      },
+      "PADEL_MEXICANO_24": {
+        "title": "Mexicano（24 分）",
+        "description": "按水平均衡搭档，24 分局"
+      },
+      "PADEL_CHALLENGER_POOL": {
+        "title": "挑战者池",
+        "description": "王座场 + 队列：1 号场胜者卫冕，其他人从池中轮转"
+      },
+      "PADEL_KOTC_11": {
+        "title": "球场之王",
+        "description": "短局至 11；1 号场卫冕，其余进挑战者池"
+      },
+      "PICKLEBALL_SOCIAL_21": {
+        "title": "开放场（21 分）",
+        "description": "双打 Americano，21 球局"
+      },
+      "PICKLEBALL_MATCH_BO3_11": {
+        "title": "三局两胜至 11",
+        "description": "每球得分，正式风格"
+      },
+      "PICKLEBALL_KOTC_11": {
+        "title": "球场之王",
+        "description": "短 11 球局；王座场 + 挑战者池"
+      },
+      "BADMINTON_AMERICANO_21": {
+        "title": "俱乐部之夜（21 球）",
+        "description": "双打 Americano — 21 球轮转局，非三局两胜"
+      },
+      "BADMINTON_CLUB_3X21": {
+        "title": "俱乐部 Bo3 × 21",
+        "description": "三局两胜至 21 — 休闲单/双打"
+      },
+      "BADMINTON_CLUB_3X15": {
+        "title": "俱乐部 Bo3 × 15",
+        "description": "三局两胜至 15 — BWF 俱乐部赛制"
+      },
+      "BADMINTON_MATCH_3X21": {
+        "title": "正式赛 Bo3 × 21",
+        "description": "计分正式赛 — 三局两胜至 21"
+      },
+      "TT_OPEN_PLAY_11": {
+        "title": "快速 11 分局",
+        "description": "单打或双打 — 一场短赛（2–4 人）"
+      },
+      "TT_CLUB_RR_11": {
+        "title": "俱乐部循环赛",
+        "description": "6–8 人单打 — 人人互打，局至 11"
+      },
+      "TT_LEGACY_SINGLE_21": {
+        "title": "经典 21 分单局",
+        "description": "一局 21 分，净胜 2 分（2001 年前风格）"
+      },
+      "TT_SWISS_BOX": {
+        "title": "瑞士箱",
+        "description": "按水平配对的箱式联赛（天梯引擎），Bo3 至 11"
+      },
+      "TT_BOX_BO3_11": {
+        "title": "箱式联赛 Bo3×11",
+        "description": "8–12 人分箱组 — 轮间攀升场地"
+      },
+      "TT_MATCH_BO3_11": {
+        "title": "正式赛 Bo3×11",
+        "description": "计分单/双打，三局两胜至 11"
+      },
+      "TT_MATCH_BO5_11": {
+        "title": "正式赛 Bo5×11",
+        "description": "计分赛，五局三胜至 11"
+      },
+      "TENNIS_FAST4_SOCIAL": {
+        "title": "FAST4 社交",
+        "description": "短盘，无占先计分"
+      },
+      "TENNIS_CLASSIC_BO3": {
+        "title": "三盘两胜",
+        "description": "经典网球赛"
+      },
+      "SQUASH_QUICK_BO3_11": {
+        "title": "快速 Bo3×11",
+        "description": "三局两胜至 11"
+      }
+    },
+    "presetMeta": {
+      "POINTS_11": "打到 11（轮转）",
+      "SINGLE_GAME_21": "经典 21 分局",
+      "POINTS_16": "打到 16（轮转）",
+      "POINTS_21": "21 球预算",
+      "POINTS_24": "24 球 Americano",
+      "POINTS_32": "打到 32（轮转）",
+      "CLASSIC_AUTOMATIC": "自动（休闲）",
+      "CLASSIC_BEST_OF_3": "三盘两胜",
+      "CLASSIC_BEST_OF_5": "五盘三胜",
+      "CLASSIC_PRO_SET": "职业长盘",
+      "CLASSIC_SHORT_SET": "短盘",
+      "CLASSIC_SINGLE_SET": "单盘",
+      "CLASSIC_SUPER_TIEBREAK": "超级抢七",
+      "CLASSIC_TIMED": "限时盘",
+      "BEST_OF_3_11": "三局两胜至 11",
+      "BEST_OF_3_15": "Bo3 · 局至 15",
+      "BEST_OF_3_21": "Bo3 · 局至 21",
+      "BEST_OF_5_11": "五局三胜至 11",
+      "POINTS_15": "15 球预算",
+      "TIMED": "限时",
+      "CUSTOM": "自定义"
+    },
+    "presetTier": {
+      "social": "社交",
+      "match": "正式赛"
+    }
+  }
+}

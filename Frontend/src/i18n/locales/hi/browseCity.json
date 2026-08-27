@@ -1,0 +1,21 @@
+{
+  "browseCity": {
+    "chipAriaHome": "आपका शहर, {{city}}। दूसरा शहर देखें।",
+    "chipAriaAway": "{{city}} देख रहे हैं। शहर बदलें।",
+    "chipAriaVenueHome": "गेम शहर {{city}}। दूसरा शहर चुनें।",
+    "chipAriaVenueAway": "{{city}} में क्लब। शहर बदलें।",
+    "changeCity": "शहर",
+    "recent": "हालिया",
+    "nearby": "पास में",
+    "viewCity": "{{city}} देखें",
+    "nobodyInCity": "{{city}} में “{{query}}” के लिए कोई नहीं",
+    "nobodyNearby": "पास में “{{query}}” के लिए कोई नहीं। दूसरा शहर आज़माएँ।",
+    "noUsersInCity": "{{city}} में कोई उपयोगकर्ता नहीं",
+    "noUsersInCityHint": "शहर बदलें या नाम खोजें",
+    "lookingEmptyInCity": "{{city}} में अभी कोई नहीं खोज रहा",
+    "noClubsInCity": "{{city}} में कोई क्लब नहीं",
+    "noClubsMatch": "“{{query}}” से कोई क्लब मेल नहीं खाता",
+    "searchClubs": "क्लब खोजें",
+    "km": "{{km}} किमी"
+  }
+}

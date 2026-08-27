@@ -1,0 +1,14 @@
+{
+  "rating": {
+    "title": "Rating Saya",
+    "level": "Level",
+    "socialLevel": "Sosial",
+    "points": "Total Poin",
+    "gamesPlayed": "Pertandingan Dimainkan",
+    "gamesWon": "Pertandingan Dimenangkan",
+    "winRate": "Persentase Menang",
+    "reliability": "Keandalan",
+    "uncertainty": "Ketidakpastian",
+    "settling": "Rating sedang menetap"
+  }
+}

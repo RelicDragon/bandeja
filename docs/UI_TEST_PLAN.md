@@ -1497,6 +1497,15 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PR-21d | Arabic plurals | Language العربية; open city list / chat header with counts | Counts use Arabic plural forms (not English fallback for 0/2/3–10) |
 | PR-21e | Arabic gendered join copy | Female profile gender; join / queue confirm | Confirmation copy uses feminine أنتِ forms |
 | PR-21f | Arabic RTL smoke (automated) | Guest: `localStorage.language=ar` → `/login` | `html[dir=rtl]`, Cairo font; Playwright `smoke/arabic-rtl.spec.ts` |
+| PR-21g | Asia language selector | Pick 中文 / Bahasa Indonesia / हिन्दी / ไทย / 日本語 | i18n + profile BCP-47 saved (`zh-CN`/`id-ID`/`hi-IN`/`th-TH`/`ja-JP`); `dir=ltr` |
+| PR-21h | Chinese smoke | `localStorage.language=zh` → login | `lang=zh`; Simplified Chinese UI; padel=板式网球; table tennis=乒乓球; Noto Sans SC |
+| PR-21i | Indonesian smoke | `localStorage.language=id` → login | Bahasa UI; Tenis meja for table tennis |
+| PR-21j | Hindi smoke | `localStorage.language=hi` → login | Hindi UI; Devanagari glyphs |
+| PR-21k | Thai smoke | `localStorage.language=th` → login | Thai UI; ปาเดล / เทเบิลเทนนิส |
+| PR-21l | Japanese smoke | `localStorage.language=ja` → login | Japanese UI; パデル / 卓球 |
+| PR-21m | Asia zero-decimal money | Marketplace with JPY or IDR | 0 fraction digits |
+| PR-21n | Asia dual-sport create | Lang zh or id; create padel + table tennis | Correct sport labels; questionnaires localized |
+| PR-21o | Asia locales smoke (automated) | Guest each of zh/id/hi/th/ja → `/login`; font stacks for zh/ja/th/hi; zh→en switch | `html[lang=…]`, `dir=ltr`; guest project runs `smoke/asia-locales.spec.ts` |
 | PR-22 | Theme selector | Light/dark/system | Theme applied |
 | PR-22a | System theme resume (dark) | Theme=System; background the app; OS switches to dark; resume | UI is dark without relaunch (`html.dark` present) |
 | PR-22b | System theme resume (light) | Theme=System; background the app; OS switches to light; resume | UI is light without relaunch (`html.dark` absent) |
@@ -1916,7 +1925,7 @@ Use these for structured regression sweeps — not every cell needs automation d
 
 ### 19.3 Locale smoke
 
-Run P0 smoke in each locale: **en**, **ru**, **es**, **sr**, **cs**, **ar** — verify no layout overflow on login, Find filters, game card, chat input. For **ar**, also verify `html[dir=rtl]`, Arabic font, and mirrored chrome.
+Run P0 smoke in each locale: **en**, **ru**, **es**, **sr**, **cs**, **ar**, **zh**, **id**, **hi**, **th**, **ja** — verify no layout overflow on login, Find filters, game card, chat input. For **ar**, also verify `html[dir=rtl]`, Arabic font, and mirrored chrome. For **zh/ja/th/hi**, verify glyphs render (no tofu) and sport labels use locked padel / table-tennis terminology (never “ping-pong”).
 
 ### 19.4 Viewport matrix
 

@@ -1,0 +1,14 @@
+{
+  "rating": {
+    "title": "我的等级",
+    "level": "等级",
+    "socialLevel": "社交",
+    "points": "总积分",
+    "gamesPlayed": "已打场次",
+    "gamesWon": "胜场",
+    "winRate": "胜率",
+    "reliability": "可信度",
+    "uncertainty": "不确定度",
+    "settling": "等级校准中"
+  }
+}

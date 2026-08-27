@@ -1,0 +1,27 @@
+{
+  "faq": {
+    "noFaqs": "Tidak ada pertanyaan tersedia",
+    "fetchError": "Gagal mengambil pertanyaan",
+    "fieldsRequired": "Pertanyaan dan jawaban wajib diisi",
+    "created": "Pertanyaan berhasil dibuat",
+    "updated": "Pertanyaan berhasil diperbarui",
+    "saveError": "Gagal menyimpan pertanyaan",
+    "deleted": "Pertanyaan berhasil dihapus",
+    "deleteError": "Gagal menghapus pertanyaan",
+    "reorderError": "Gagal mengurutkan ulang pertanyaan",
+    "add": "Tambah Pertanyaan",
+    "question": "Pertanyaan",
+    "answer": "Jawaban",
+    "questionPlaceholder": "Masukkan pertanyaan...",
+    "answerPlaceholder": "Masukkan jawaban...",
+    "deleteTitle": "Hapus Pertanyaan",
+    "deleteConfirm": "Apakah Anda yakin ingin menghapus pertanyaan ini?",
+    "moveUp": "Pindah ke atas",
+    "moveDown": "Pindah ke bawah",
+    "automaticLabel": "Otomatis",
+    "fixedTeamStandings": {
+      "question": "Bagaimana klasemen grup ditentukan?",
+      "answer": "Di musim reguler, tabel setiap grup diurutkan berdasarkan kemenangan pertandingan (bukan berdasarkan poin).\n\nJika pemain atau tim memiliki jumlah kemenangan yang sama:\n1. Dua seri — hasil head-to-head mereka yang menentukan\n2. Tiga atau lebih seri — tabel mini dari pertandingan hanya di antara mereka, ditentukan oleh:\n   • kemenangan pertandingan di tabel mini\n   • selisih set\n   • selisih game\n3. Jika dua masih imbang setelah tabel mini — hasil head-to-head mereka\n\nBerlaku untuk liga tim tetap dan liga 1v1. Pertandingan playoff tidak dihitung dalam klasemen grup."
+    }
+  }
+}

@@ -1,0 +1,31 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="notification_channel_messages">消息</string>
+    <string name="notification_channel_messages_desc">聊天消息通知</string>
+    <string name="push_reply_hint">回复</string>
+    <string name="push_reply_failed">发送失败</string>
+    <string name="push_reply_self">你</string>
+    <string name="invite_accept">接受</string>
+    <string name="invite_decline">拒绝</string>
+    <string name="play_intent_play_too">我也想打</string>
+    <string name="shortcut_find_games_short">找比赛</string>
+    <string name="shortcut_find_games_long">浏览可加入的比赛</string>
+    <string name="shortcut_my_games_short">我的比赛</string>
+    <string name="shortcut_my_games_long">查看即将到来的比赛</string>
+    <string name="shortcut_create_game_short">创建比赛</string>
+    <string name="shortcut_create_game_long">开始创建新比赛</string>
+    <string name="shortcut_next_game_short">下一场</string>
+    <string name="shortcut_next_game_long">打开你的下一场比赛</string>
+    <string name="shortcut_find_tomorrow_short">明天的比赛</string>
+    <string name="shortcut_find_tomorrow_long">浏览明天的比赛</string>
+    <string name="shortcut_create_league_short">创建联赛</string>
+    <string name="shortcut_create_league_long">开始创建新联赛</string>
+    <string name="shortcut_game_chat_short">比赛聊天</string>
+    <string name="shortcut_game_chat_long">打开下一场比赛的聊天</string>
+    <string name="shortcut_live_scoring_short">实时记分</string>
+    <string name="shortcut_live_scoring_long">打开下一场比赛的实时记分</string>
+    <string name="shortcut_chats_short">聊天</string>
+    <string name="shortcut_chats_long">打开聊天收件箱</string>
+    <string name="shortcut_invites_short">邀请</string>
+    <string name="shortcut_invites_long">查看比赛邀请</string>
+</resources>

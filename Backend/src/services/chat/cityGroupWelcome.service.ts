@@ -23,6 +23,12 @@ export const CITY_GROUP_WELCOME_TRANSLATIONS: Record<string, string> = {
   ru: '👋 Добро пожаловать в чат вашего города!\n\nЭто автоматическая общая группа для всех местных игроков. Смело пишите сюда, если ищете с кем поиграть, или делитесь ссылкой на свою игру.\n\n🌍 Подсказка: используйте автоматический перевод, чтобы легко общаться со всеми!',
   sr: '👋 Dobrodošli u chat vašeg grada!\n\nOvo je automatska opšta grupa za sve lokalne igrače. Slobodno pišite ovde ako tražite nekoga za igru ili želite da podelite link do svoje igre.\n\n🌍 Savet: Možete koristiti automatski prevod da biste se lako dopisivali sa svima!',
   cs: '👋 Vítejte v chatu vašeho města!\n\nToto je automatická obecná skupina pro všechny místní hráče. Neváhejte sem napsat, pokud hledáte někoho na hraní, nebo sdílet odkaz na svou hru.\n\n🌍 Tip: Můžete využít automatické překlady a snadno tak komunikovat se všemi!',
+  ar: '👋 مرحبًا بك في دردشة مدينتك!\n\nهذه مجموعة عامة تلقائية لجميع اللاعبين المحليين. لا تتردد في النشر هنا عندما تبحث عن شخص تلعب معه أو لمشاركة رابط مباراتك.\n\n🌍 نصيحة: يمكنك استخدام الترجمة التلقائية للدردشة مع الجميع بسهولة!',
+  zh: '👋 欢迎加入你所在城市的聊天！\n\n这是面向所有本地球员的自动综合群组。想找人打球或分享比赛链接时，随时可以在这里发帖。\n\n🌍 提示：你可以使用自动翻译，轻松与大家聊天！',
+  id: '👋 Selamat datang di chat kota Anda!\n\nIni adalah grup umum otomatis untuk semua pemain lokal. Silakan posting di sini kapan saja jika Anda mencari teman bermain atau ingin membagikan tautan permainan.\n\n🌍 Tip: Anda dapat menggunakan terjemahan otomatis agar mudah mengobrol dengan semua orang!',
+  hi: '👋 अपने शहर की चैट में आपका स्वागत है!\n\nयह सभी स्थानीय खिलाड़ियों के लिए एक स्वचालित सामान्य ग्रुप है। खेलने के लिए किसी को खोजते समय या अपने खेल का लिंक साझा करते समय यहाँ बेझिझक पोस्ट करें।\n\n🌍 सुझाव: आप स्वचालित अनुवाद का उपयोग करके आसानी से सभी से चैट कर सकते हैं!',
+  th: '👋 ยินดีต้อนรับสู่แชทของเมืองคุณ!\n\nนี่คือกลุ่มทั่วไปอัตโนมัติสำหรับผู้เล่นในท้องถิ่นทุกคน โพสต์ได้ทุกเมื่อเมื่อคุณกำลังมองหาคู่เล่น หรือแชร์ลิงก์เกมของคุณ\n\n🌍 เคล็ดลับ: คุณสามารถใช้การแปลอัตโนมัติเพื่อแชทกับทุกคนได้ง่ายขึ้น!',
+  ja: '👋 あなたの都市のチャットへようこそ！\n\nこれは地元のプレイヤー全員向けの自動総合グループです。一緒にプレイする相手を探したり、試合のリンクを共有したいときは、気軽に投稿してください。\n\n🌍 ヒント：自動翻訳を使えば、みんなと簡単にチャットできます！',
 };
 
 export async function createCityGroupWelcomeMessage(

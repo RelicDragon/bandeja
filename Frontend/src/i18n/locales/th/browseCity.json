@@ -1,0 +1,21 @@
+{
+  "browseCity": {
+    "chipAriaHome": "เมืองของคุณ {{city}} เรียกดูเมืองอื่น",
+    "chipAriaAway": "กำลังเปิดดู {{city}}. เปลี่ยนเมือง.",
+    "chipAriaVenueHome": "เมืองแห่งเกม {{city}} เลือกเมืองอื่น",
+    "chipAriaVenueAway": "สโมสรใน {{city}} เปลี่ยนเมือง.",
+    "changeCity": "เมือง",
+    "recent": "ล่าสุด",
+    "nearby": "ใกล้เคียง",
+    "viewCity": "ดู {{city}}",
+    "nobodyInCity": "ไม่มีใครใน {{city}} สำหรับ “{{query}}”",
+    "nobodyNearby": "ไม่มีใครอยู่ใกล้ๆ สำหรับ “{{query}}” ลองเมืองอื่น",
+    "noUsersInCity": "ไม่มีผู้ใช้ใน {{city}}",
+    "noUsersInCityHint": "สลับเมืองหรือค้นหาชื่อ",
+    "lookingEmptyInCity": "ไม่มีใครกำลังดู {{city}}",
+    "noClubsInCity": "ไม่มีไม้กอล์ฟใน {{city}}",
+    "noClubsMatch": "ไม่มีไม้กอล์ฟที่ตรงกับ “{{query}}”",
+    "searchClubs": "ค้นหาสโมสร",
+    "km": "{{km}} กม"
+  }
+}

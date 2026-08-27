@@ -7,7 +7,9 @@ export const AD_CLICK_URL_LOCALE_PARAM = 'locale';
 export const AD_CLICK_URL_THEME_PARAM = 'theme';
 export const AD_CLICK_URL_USER_NAME_MAX_LEN = 80;
 
-export const AD_CLICK_SUPPORTED_LOCALES = ['en', 'ru', 'sr', 'es', 'cs', 'ar'] as const;
+export const AD_CLICK_SUPPORTED_LOCALES = [
+  'en', 'ru', 'sr', 'es', 'cs', 'ar', 'zh', 'id', 'hi', 'th', 'ja',
+] as const;
 export type AdClickSupportedLocale = (typeof AD_CLICK_SUPPORTED_LOCALES)[number];
 
 const AD_CLICK_LOCALE_ALIASES: Record<string, AdClickSupportedLocale> = {

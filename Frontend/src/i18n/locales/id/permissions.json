@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "openSettings": "Buka Pengaturan",
+    "photos": {
+      "title": "Akses Foto Diperlukan",
+      "description": "Untuk melampirkan foto, kami memerlukan akses ke pustaka foto Anda.",
+      "denied": "Akses foto saat ini ditolak. Harap aktifkan di pengaturan perangkat Anda untuk melampirkan foto."
+    },
+    "camera": {
+      "title": "Akses Kamera Diperlukan",
+      "description": "Untuk mengambil foto, kami memerlukan akses ke kamera Anda.",
+      "denied": "Akses kamera saat ini ditolak. Harap aktifkan di pengaturan perangkat Anda untuk mengambil foto."
+    }
+  }
+}

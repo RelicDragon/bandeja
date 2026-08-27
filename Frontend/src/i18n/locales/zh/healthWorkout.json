@@ -1,0 +1,19 @@
+{
+  "healthWorkout": {
+    "title": "板式网球运动",
+    "subtitle": "记分时由 Apple Watch 保存",
+    "yourSession": "你的训练",
+    "kcal": "千卡",
+    "avgBpm": "平均 bpm",
+    "maxBpm": "最高 bpm",
+    "loading": "加载中…",
+    "loadError": "无法加载运动记录",
+    "loadErrorHint": "出了点问题。请检查网络后重试。",
+    "loadErrorProfile": "无法加载运动记录",
+    "loadErrorProfileHint": "出了点问题。请检查网络后重试。",
+    "emptyGameTitle": "暂无运动记录",
+    "emptyGameHint": "下次在 Bandeja 记分时，请在 Apple Watch 上开始锻炼 — 卡路里和心率会显示在这里。",
+    "emptyProfileTitle": "暂无运动记录",
+    "emptyProfileHint": "在 Bandeja 记分比赛时用 Apple Watch 记录锻炼，即可追踪卡路里和心率。"
+  }
+}

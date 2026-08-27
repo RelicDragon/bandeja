@@ -5,7 +5,7 @@ export function getLanguageCode(telegramLanguageCode: string | undefined): strin
   if (!telegramLanguageCode) return 'en';
   
   const code = telegramLanguageCode.toLowerCase().split('-')[0];
-  const supportedLanguages = ['en', 'ru', 'sr', 'es', 'cs', 'ar'];
+  const supportedLanguages = ['en', 'ru', 'sr', 'es', 'cs', 'ar', 'zh', 'id', 'hi', 'th', 'ja'];
   
   return supportedLanguages.includes(code) ? code : 'en';
 }
@@ -13,7 +13,7 @@ export function getLanguageCode(telegramLanguageCode: string | undefined): strin
 export function getUserLanguage(userLanguage: string | null | undefined, telegramLanguageCode: string | undefined): string {
   if (userLanguage && userLanguage !== 'auto') {
     const code = userLanguage.toLowerCase().split('-')[0];
-    const supportedLanguages = ['en', 'ru', 'sr', 'es', 'cs', 'ar'];
+    const supportedLanguages = ['en', 'ru', 'sr', 'es', 'cs', 'ar', 'zh', 'id', 'hi', 'th', 'ja'];
     if (supportedLanguages.includes(code)) {
       return code;
     }

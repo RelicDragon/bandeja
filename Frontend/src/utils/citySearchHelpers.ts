@@ -16,8 +16,32 @@ export function levenshtein(a: string, b: string): number {
   return prevRow[bn];
 }
 
-export function citySearchValues(searchNames: { en: string; es: string; ru: string; sr: string; native: string }): string[] {
+export function citySearchValues(searchNames: {
+  en: string;
+  es: string;
+  ru: string;
+  sr: string;
+  native: string;
+}): string[] {
   return [searchNames.en, searchNames.es, searchNames.ru, searchNames.sr, searchNames.native]
+    .filter(Boolean)
+    .map((s) => s.toLowerCase());
+}
+
+function countrySearchValues(names: ReturnType<typeof getCountrySearchNames>): string[] {
+  return [
+    names.en,
+    names.es,
+    names.ru,
+    names.sr,
+    names.cs,
+    names.zh,
+    names.id,
+    names.hi,
+    names.th,
+    names.ja,
+    names.native,
+  ]
     .filter(Boolean)
     .map((s) => s.toLowerCase());
 }
@@ -42,10 +66,7 @@ export function citySearchRelevancyScore(
 export function matchCountryForListSearch(countryKey: string, searchLower: string, useGeo: boolean): boolean {
   if (useGeo) {
     const names = getCountrySearchNames(countryKey);
-    const values = [names.en, names.es, names.ru, names.sr, names.native]
-      .filter(Boolean)
-      .map((s) => s.toLowerCase());
-    if (values.some((v) => v.includes(searchLower))) return true;
+    if (countrySearchValues(names).some((v) => v.includes(searchLower))) return true;
   }
   return countryKey.toLowerCase().includes(searchLower);
 }

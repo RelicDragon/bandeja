@@ -1,0 +1,37 @@
+{
+  "invites": {
+    "title": "निमंत्रण",
+    "pending": "लंबित निमंत्रण",
+    "noInvites": "कोई लंबित निमंत्रण नहीं",
+    "accept": "स्वीकार करें",
+    "decline": "अस्वीकार करें",
+    "from": "से",
+    "to": "को",
+    "message": "संदेश",
+    "accepted": "निमंत्रण स्वीकार किया गया",
+    "acceptedSuccessfully": "निमंत्रण सफलतापूर्वक स्वीकार किया गया",
+    "declined": "निमंत्रण अस्वीकार किया गया",
+    "declinedSuccessfully": "निमंत्रण सफलतापूर्वक अस्वीकार किया गया",
+    "cancelledSuccessfully": "निमंत्रण सफलतापूर्वक रद्द किया गया",
+    "selectPlayer": "खिलाड़ी चुनें",
+    "selectPlayers": "खिलाड़ी चुनें",
+    "noPlayersAvailable": "निमंत्रित करने के लिए कोई खिलाड़ी उपलब्ध नहीं",
+    "inviteFriendToBandeja": "Bandeja पर दोस्त को निमंत्रित करें",
+    "shareAppBody": "Bandeja पर मेरे साथ जुड़ें: {{url}}",
+    "pendingInvites": "लंबित निमंत्रण",
+    "badgeDeclined": "अस्वीकृत",
+    "badgeExpired": "निमंत्रण समाप्त",
+    "badgeInviteCancelled": "निमंत्रण रद्द",
+    "sectionTerminalInvites": "निमंत्रण जवाब",
+    "inviteAgainHint": "आप नया निमंत्रण भेज सकते हैं।",
+    "inviteSent": "निमंत्रण भेजा गया",
+    "invitedYou": "निमंत्रण",
+    "declineModal": {
+      "title": "निमंत्रण अस्वीकार करें?",
+      "description": "वैकल्पिक रूप से आयोजक को बता सकते हैं कि आप क्यों नहीं जुड़ सकते।",
+      "reasonLabel": "कारण (वैकल्पिक)",
+      "reasonPlaceholder": "जैसे समय की टक्कर, चोट…",
+      "confirm": "अस्वीकार करें"
+    }
+  }
+}

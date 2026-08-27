@@ -1,0 +1,14 @@
+{
+  "rating": {
+    "title": "マイレーティング",
+    "level": "レベル",
+    "socialLevel": "ソーシャル",
+    "points": "合計ポイント",
+    "gamesPlayed": "試合数",
+    "gamesWon": "勝利数",
+    "winRate": "勝率",
+    "reliability": "信頼性",
+    "uncertainty": "不確実性",
+    "settling": "レーティング調整中"
+  }
+}

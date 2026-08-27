@@ -1,0 +1,9 @@
+{
+  "nav": {
+    "home": "Beranda",
+    "findGames": "Cari Pertandingan",
+    "myRating": "Rating Saya",
+    "profile": "Profil",
+    "chat": "Obrolan"
+  }
+}

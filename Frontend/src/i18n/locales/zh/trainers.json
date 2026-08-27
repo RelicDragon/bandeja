@@ -1,0 +1,9 @@
+{
+  "trainers": {
+    "ourTrainers": "我们的教练",
+    "selectToFilterHint": "点选教练可筛选其培训课",
+    "trainingsBy": "教练课程",
+    "clearTrainerFilter": "清除教练筛选",
+    "noTrainingsByTrainer": "{{name}} 暂无培训课"
+  }
+}

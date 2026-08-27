@@ -58,6 +58,7 @@
     "audit:court-club-sports": "ts-node scripts/audit-court-club-sports.ts",
     "backfill:court-club-sports": "ts-node scripts/backfill-court-club-sports.ts",
     "seed:padeloo-avantura": "ts-node -r dotenv/config scripts/seed-padeloo-avantura.ts",
+    "seed:asia-cities": "ts-node --transpile-only -r dotenv/config scripts/seed-asia-cities.ts",
     "generate:sticker-assets": "ts-node --transpile-only scripts/generate-sticker-assets.ts",
     "seed:sticker-packs": "ts-node --transpile-only -r dotenv/config scripts/seed-sticker-packs.ts",
     "test:jwt-auth-config": "ts-node --transpile-only src/config/jwtAuthConfig.test.ts",

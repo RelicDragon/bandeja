@@ -1,0 +1,25 @@
+{
+  "createLeague": {
+    "name": "ชื่อลีก",
+    "namePlaceholder": "กรอกชื่อลีก",
+    "description": "คำอธิบาย",
+    "descriptionPlaceholder": "ป้อนคำอธิบายลีก (ไม่บังคับ)",
+    "location": "ที่ตั้ง",
+    "selectCity": "เลือกเมือง",
+    "noCitiesAvailable": "ไม่มีเมืองที่ใช้ได้",
+    "noCity": "ไม่มีเมือง",
+    "season": "ฤดูกาล",
+    "seasonAvatar": "อวาตาร์ประจำฤดูกาล",
+    "seasonName": "ชื่อซีซั่น",
+    "seasonNamePlaceholder": "ป้อนชื่อซีซัน",
+    "playerLevel": "ระดับผู้เล่น",
+    "maxParticipants": "ผู้เข้าร่วมสูงสุด",
+    "maxParticipantsPlaceholder": "ป้อนผู้เข้าร่วมสูงสุด (4-999)",
+    "startDate": "วันที่เริ่มต้น",
+    "gameSetupSeason": "การตั้งค่าเกม (ฤดูกาล)",
+    "gameSetupPlayoff": "การตั้งค่าเกม (เพลย์ออฟ)",
+    "editGameSetup": "แก้ไขการตั้งค่าเกม",
+    "configureGameSetup": "กำหนดค่าการตั้งค่าเกม",
+    "createButton": "สร้างลีก"
+  }
+}

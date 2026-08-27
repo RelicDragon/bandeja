@@ -22,7 +22,9 @@ import {
   registrationSportExplicitlyChosen,
   registrationSportUserFields,
 } from './registrationSport.service';
-const SUPPORTED_LANGS = ['en', 'ru', 'sr', 'es', 'cs', 'ar', 'auto'];
+const SUPPORTED_LANGS = [
+  'en', 'ru', 'sr', 'es', 'cs', 'ar', 'zh', 'id', 'hi', 'th', 'ja', 'auto',
+];
 
 type GoogleTokenPayload = Awaited<ReturnType<typeof verifyGoogleIdToken>>;
 type AppleTokenDecoded = Awaited<ReturnType<typeof verifyAppleIdentityToken>>;

@@ -1,0 +1,16 @@
+{
+  "conflicts": {
+    "title": "Konflik Terdeteksi",
+    "subtitle": "Perubahan telah dibuat oleh pengguna lain",
+    "description": "Hasil pertandingan telah diubah oleh pengguna lain saat Anda membuat perubahan. Silakan pilih cara menyelesaikan konflik ini.",
+    "conflictCount": "{{count}} konflik terdeteksi",
+    "yourChanges": "Perubahan Anda",
+    "serverChanges": "Perubahan Server",
+    "acceptServer": "Gunakan Versi Server",
+    "forceClient": "Gunakan Perubahan Saya",
+    "warning": "Peringatan",
+    "warningMessage": "Tindakan ini tidak dapat dibatalkan. Pastikan Anda memahami perubahan mana yang akan dipertahankan.",
+    "serverAccepted": "Perubahan server berhasil diterima",
+    "clientForced": "Perubahan Anda berhasil diterapkan"
+  }
+}

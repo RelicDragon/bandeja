@@ -1,0 +1,43 @@
+{
+  "sportRating": {
+    "band": {
+      "beginner": "初心者",
+      "improver": "上達中",
+      "intermediate": "中級",
+      "advanced": "上級",
+      "expert": "エキスパート",
+      "elite": "エリート"
+    },
+    "display": {
+      "playtomic": "≈ {{value}} Playtomic",
+      "ntrp": "≈ {{value}} NTRP",
+      "dupr": "≈ {{value}} DUPR",
+      "utr": "≈ {{value}} UTR",
+      "usatt": "≈ {{value}} USATT",
+      "squashlevels": "≈ {{value}} SquashLevels"
+    },
+    "padel": {
+      "band1": "ラリーと基本ポジションを学習中",
+      "band2": "安定したラリー；ネットプレーを開始",
+      "band3": "ダブルスの基本が固まっている；競技的なソーシャルプレー",
+      "band4": "強いクラブリーグプレイヤー；戦術が上手い",
+      "band5": "上級クラブ／地域レベル",
+      "band6": "ハイパフォーマンス／トーナメントレベル"
+    },
+    "tennis": {
+      "bandHint": "おおよそのNTRP式クラブリーグレベル"
+    },
+    "pickleball": {
+      "bandHint": "おおよそのDUPR式レクリエーション帯"
+    },
+    "badminton": {
+      "bandHint": "クラブのスキル帯（BWFランキングではない）"
+    },
+    "tableTennis": {
+      "bandHint": "クラブリーグレベル；USATT式ヒントは任意"
+    },
+    "squash": {
+      "bandHint": "SquashLevels式の目安レベル"
+    }
+  }
+}

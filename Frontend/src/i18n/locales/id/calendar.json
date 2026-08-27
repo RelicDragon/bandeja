@@ -1,0 +1,13 @@
+{
+  "calendar": {
+    "days": {
+      "su": "Min",
+      "mo": "Sen",
+      "tu": "Sel",
+      "we": "Rab",
+      "th": "Kam",
+      "fr": "Jum",
+      "sa": "Sab"
+    }
+  }
+}

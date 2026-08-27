@@ -1,0 +1,9 @@
+{
+  "ads": {
+    "sponsored": "スポンサー",
+    "dismiss": "広告を閉じる",
+    "leavingBandejaTitle": "Bandejaを離れます",
+    "leavingBandejaMessage": "外部ウェブサイトを開こうとしています。続行しますか？",
+    "leavingBandejaConfirm": "続行"
+  }
+}

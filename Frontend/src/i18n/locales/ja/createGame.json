@@ -1,0 +1,600 @@
+{
+  "createGame": {
+    "title": "ゲームの作成",
+    "identity": {
+      "label": "名前と写真",
+      "optional": "オプション"
+    },
+    "steps": {
+      "setup": "ゲームのセットアップ",
+      "location": "場所と時間",
+      "players": "選手",
+      "details": "設定と詳細"
+    },
+    "footer": {
+      "selectClubHint": "続けるクラブを選択してください"
+    },
+    "locationSteps": {
+      "date": "日付",
+      "time": "開始時間"
+    },
+    "pickSport": "スポーツを選ぶ",
+    "createBar": "バーイベントの作成",
+    "createTraining": "トレーニングセッションの作成",
+    "createTournament": "トーナメントの作成",
+    "createLeague": "リーグの作成",
+    "selectType": "タイプの選択",
+    "location": "位置",
+    "locationTournament": "トーナメント会場",
+    "locationLeague": "リーグの場所",
+    "club": "クラブ",
+    "selectClub": "クラブを選択してください",
+    "court": "裁判所",
+    "hall": "ホール",
+    "notBookedYet": "ゲームのみ",
+    "dontSelectCourt": "まだ裁判所はありません",
+    "dontSelectHall": "まだホールはありません",
+    "courtNotSelected": "裁判所が選択されていません",
+    "hallNotSelected": "ホールが選択されていません",
+    "multiCourtHint": "{{participants}} プレーヤー用に最大 {{count}} のコートを選択 ({{selected}} を選択)",
+    "multiCourtNeedSharedSlots": "同時に空いている{{count}} コートを選択してください。",
+    "multiCourtNoSharedSlots": "{{count}} 選択されたすべてのコートで空いているタイムスロットはありません。別のコート、別の日付、または期間を試してください。",
+    "webCameraHint": "この法廷には Web カメラがリンクされています",
+    "webCameraHintsTitle": "リンクされたWebカメラ",
+    "webCameraHintNamed": "{{court}} には Web カメラがリンクされています",
+    "webCameraHintAction": "タップしてライブを視聴する",
+    "hasBookedCourt": "この法廷を予約しました",
+    "hasBookedHall": "テーブルを予約しました",
+    "selectCourt": "セレクトコート",
+    "selectHall": "セレクトホール",
+    "selectClubFirst": "最初にクラブを選択してください",
+    "selectCourtFirst": "まず裁判所を選択してください",
+    "clubCancellationNotice": "キャンセル通知: 少なくともスロット時間の{{hours}} 時間前までに。",
+    "clubPolicyTitle": "クラブポリシー",
+    "noClubsAvailable": "利用可能なクラブがありません",
+    "clubDetailsBack": "クラブに戻る",
+    "clubInfo": "クラブ詳細",
+    "clubPhotos": "写真",
+    "noCourtsAvailable": "利用できる裁判所はありません",
+    "noHallsAvailable": "利用可能なホールがありません",
+    "playerLevel": "プレイヤーレベル",
+    "playerLevelTournament": "トーナメントプレイヤーレベル",
+    "playerLevelLeague": "リーグプレイヤーレベル",
+    "minLevel": "最低レベル",
+    "maxLevel": "最大レベル",
+    "participants": "参加者",
+    "participantsTournament": "トーナメント参加者",
+    "participantsLeague": "リーグ参加者",
+    "teamFormat": "チーム形式",
+    "numberOfParticipants": "参加者数",
+    "numberOfParticipantsTournament": "トーナメント参加者数",
+    "numberOfParticipantsLeague": "リーグ参加者数",
+    "addMeToGame": "ゲームに参加する",
+    "iWantToPlay": "遊びたい",
+    "iWillPlay": "私も遊びます",
+    "settings": "設定",
+    "settingsTournament": "トーナメントの設定",
+    "settingsLeague": "リーグ設定",
+    "settingsTraining": "トレーニング設定",
+    "priceRequired": "この価格タイプの価格は 0 より大きくなければなりません",
+    "gameType": "ゲームの種類",
+    "gameTypeLeague": "リーグタイプ",
+    "gameTypeNote": "ゲーム設定セクションでは詳細なゲーム設定を変更できます。",
+    "gameTypeNoteLeague": "「リーグ設定」セクションで詳細なリーグ設定を変更できます。",
+    "anyoneCanInvite": {
+      "title": "誰でも他のプレイヤーを招待できます",
+      "titleTraining": "誰でも他の参加者を招待できます",
+      "note": {
+        "false": "主催者のみがプレイヤーを招待できます。",
+        "true": "参加者は誰でも他のプレイヤーを招待できます。"
+      },
+      "noteTraining": {
+        "false": "主催者のみが参加者を招待できます。",
+        "true": "どの参加者も他の参加者を招待できます。"
+      }
+    },
+    "publicGame": {
+      "title": "パブリックゲーム",
+      "titleTraining": "公開研修",
+      "note": {
+        "false": "非公開となり、招待された参加者のみに表示されます。",
+        "true": "すべてのプレイヤーに表示され、検索で見つけることができます。"
+      },
+      "noteTraining": {
+        "false": "非公開となり、招待された参加者のみに表示されます。",
+        "true": "すべてのプレイヤーに表示され、検索で見つけることができます。"
+      }
+    },
+    "resultsByAnyone": {
+      "title": "誰でも結果を出せる",
+      "note": {
+        "false": "結果や試合形式を入力・変更できるのは主催者のみです。",
+        "true": "プレイ中の参加者は誰でも結果を入力し、ゲーム形式を変更できます。"
+      }
+    },
+    "allowDirectJoin": {
+      "title": "確認せずに入力してください",
+      "titleTraining": "確認なしで参加する",
+      "note": {
+        "false": "プレイヤーは参加する前に主催者の承認が必要です。",
+        "true": "プレイヤーは承認を待たずに直接参加できます。"
+      },
+      "noteTraining": {
+        "false": "参加者は参加する前に主催者の承認が必要です。",
+        "true": "参加者は承認を待たずに直接参加できます。"
+      }
+    },
+    "afterGameGoToBar": {
+      "title": "試合後はバーに滞在",
+      "titleTraining": "トレーニング後はバーに滞在",
+      "note": {
+        "false": "試合後の懇親会は含まれません。",
+        "true": "試合後の懇親会も含まれます。"
+      },
+      "noteTraining": {
+        "false": "研修後の懇親会は含まれておりません。",
+        "true": "研修後には懇親会もございます。"
+      }
+    },
+    "participantsOnlyChat": {
+      "title": "参加者限定チャット",
+      "note": {
+        "false": "作成後は一般チャットのみ利用可能になります。",
+        "true": "参加者と主催者のチャットは、ゲームの作成時に作成されます。"
+      }
+    },
+    "hasFixedTeams": {
+      "note": {
+        "false": "スコアボードは個別です。プレイヤーはルールに基づいて誰とでもプレイします。",
+        "true": "スコアボードはペアごとです。プレーヤーを互いに競争するペアにロックできます。試合開始後のペアラインナップの変更はできません。"
+      }
+    },
+    "ratingGame": {
+      "title": "レーティングゲーム",
+      "note": {
+        "false": "結果は参加者のレベルには影響しません。",
+        "true": "結果は参加者のレベルに影響します。"
+      }
+    },
+    "tournament": "トーナメント",
+    "genderTeams": {
+      "label": "性別",
+      "any": "どれでも",
+      "men": "男性",
+      "women": "女性",
+      "mixPairs": "ミックス",
+      "note": {
+        "any": "性別問わず大歓迎です",
+        "men": "男性のみ可",
+        "women": "女性のみが許可されています",
+        "mixPairs": "チームプレーの場合のみ、各チームは男性 1 人、女性 1 人で構成され、男性/女性同数の参加が許可されます。"
+      }
+    },
+    "fixedTeams": {
+      "optionOff": "回転中",
+      "GAME": {
+        "descriptionOn": "このゲームでは、すべての試合で同じパートナーを維持します。",
+        "descriptionOff": "パートナーはラウンドごとに変更できます。"
+      },
+      "TOURNAMENT": {
+        "descriptionOn": "パートナーはトーナメント全体を通じて一緒にいます。",
+        "descriptionOff": "ペアはトーナメントラウンド間で変更される場合があります。"
+      },
+      "LEAGUE": {
+        "descriptionOn": "リーグ全体の固定ペア。",
+        "descriptionOff": "ペアはリーグのラウンドごとに変更される場合があります。"
+      }
+    },
+    "allowUserInMultipleTeams": {
+      "title": "複数の固定チームの同じプレーヤー",
+      "helper": "複数のペアで 1 人を選択できます。ローテーションおよび一部のリーグまたは順位ロジックでは、通常とは異なる方法でカウントされる場合があります。これをリセットするには、固定チームをオフにします。",
+      "editInSettingsHint": "以下のカードの設定を編集しています。このオプションのスイッチを使用して、「保存」をタップします。編集モードを終了すると、上のゲーム設定から再度変更できます。",
+      "tapEditHint": "このカードの [編集] をタップし、スイッチをオンにして [保存] をタップします。",
+      "saveAfterChangeHint": "スイッチをオンにして、「保存」(このカードの上部または下部) をタップします。編集が完了すると、ゲーム セットアップ カードにこのオプションが再度表示されます。",
+      "note": {
+        "false": "各プレイヤーは 1 つの固定ペアにのみ参加できます。",
+        "true": "プレイヤーは一度に複数の固定ペアに登場する場合があります。"
+      }
+    },
+    "gameName": "ゲーム名",
+    "gameNameTournament": "大会名",
+    "gameNameLeague": "リーグ名",
+    "gameNameTraining": "研修名",
+    "gameNamePlaceholder": "ゲームに名前を付けます",
+    "gameNamePlaceholderTournament": "トーナメントに名前を付けます",
+    "gameNamePlaceholderLeague": "リーグに名前を付けます",
+    "gameNamePlaceholderTraining": "セッションに名前を付けます",
+    "miscellaneous": "その他",
+    "description": "説明",
+    "descriptionPlaceholder": "プレイヤー向けの説明…",
+    "descriptionPlaceholderTournament": "プレイヤー向けの説明…",
+    "descriptionPlaceholderLeague": "プレイヤー向けの説明…",
+    "descriptionPlaceholderTraining": "プレイヤー向けの説明…",
+    "price": "価格",
+    "priceType": "価格タイプ",
+    "priceTypeNotKnown": "不明",
+    "priceTypePerPerson": "お一人様あたり",
+    "priceTypePerTeam": "チームごと",
+    "priceTypeTotal": "合計",
+    "priceTypeFree": "無料",
+    "priceTotal": "価格金額",
+    "priceTotalPlaceholder": "価格金額を入力してください",
+    "priceCurrency": "通貨",
+    "priceNotSet": "価格は設定されていません",
+    "gameStart": "ゲームスタート",
+    "gameStartTournament": "トーナメント開始",
+    "gameStartLeague": "リーグ開始",
+    "gameStartTraining": "トレーニングの開始",
+    "selectDate": "日付を選択してください",
+    "date": "日付",
+    "startTime": "開始時間",
+    "endTime": "終了時間",
+    "duration": "間隔",
+    "noTimeSlotsForDate": "この日付には利用可能な時間がありません。別の日に試してください。",
+    "noTimeSlotsForDuration": "この期間中は利用可能な時間がありません。別の期間または日付を試してください。",
+    "clubTime": "クラブタイム",
+    "timeSlot": "選択したスロット",
+    "loadingExternalSlots": "外部スロットのロード",
+    "bookedWithoutCourt": "法廷なしで",
+    "notConfirmed": "未確認",
+    "multipleCourts": "複数の法廷",
+    "noCourtsSelected": "裁判所が選択されていません",
+    "addCourt": "コートを追加する",
+    "createButton": "ゲームの作成",
+    "createButtonTournament": "トーナメントの作成",
+    "createButtonLeague": "リーグの作成",
+    "createButtonBar": "バーイベントの作成",
+    "createButtonTraining": "トレーニングセッションの作成",
+    "today": "今日",
+    "tomorrow": "明日",
+    "yesterday": "昨日",
+    "selectFromCalendar": "カレンダーから選択",
+    "hours": "{{count}}h",
+    "hoursMinutes": "{{hours}}時{{minutes}}分",
+    "durationHours_one": "{{count}}時間",
+    "durationHours_other": "{{count}}時間",
+    "durationHoursAndHalf": "{{hours}}.5時間",
+    "durationHoursMinutes": "{{hours}}時間{{minutes}}分",
+    "you": "あなた",
+    "invite": "招待する",
+    "remove": "取り除く",
+    "manageInvites": "招待の管理 ({{count}})",
+    "invitesWillBeSent_one": "ゲーム作成後にプレイヤーが招待されます",
+    "invitesWillBeSent_other": "{{count}} プレイヤーはゲーム作成後に招待されます",
+    "overlapHardSave": "この時間は、使用できないコート (クラブ システムまたはブロックされている) と重なっています。別のスロットを選択してください。",
+    "overlapSoftTitle": "ここで別のゲームが計画されています",
+    "overlapSoftMessage": "現時点では別のプレーヤーがこのコートで試合を行っていますが、まだ予約を確認していません。まだ続けることができます。",
+    "overlapSoftProceed": "とにかく続けてください",
+    "markCourtBookedTitle": "法廷を予約済みとしてマークしますか?",
+    "markCourtBookedMessage": "裁判所を選択しましたが、予約済みとしてマークされていません。クラブにご予約いただいた時点でご確認ください。",
+    "markCourtBookedYes": "はい、予約しました",
+    "markCourtBookedSkip": "まだ",
+    "locationTime": {
+      "skipRealCourtToggle": "ゲームのみ",
+      "realCourtBookingHint": "{{club}}の{{courts}}はゲーム作成時に予約されます。",
+      "realCourtBookingHintEdit": "{{club}}の{{courts}}は保存時に予約されます。",
+      "skipRealCourtHint": "試合はBandejaのみに予定されています。",
+      "skipRealCourtHintEdit": "ゲームはBandejaでのみ更新されます。",
+      "summaryFromBookings": "{{count}} のご予約から",
+      "summaryWindow": "{{start}} – {{end}}",
+      "summaryCrossDate": "{{startDate}} {{start}} – {{endDate}} {{end}}",
+      "selectionCounter": "{{min}}–{{max}} 予約 ({{players}}) を選択します",
+      "selectionProgress": "最大 {{max}} コート ({{players}}) を選択します",
+      "selectionCompleteOne": "1つのコートがリンクされています",
+      "selectionCompleteMany": "{{count}} 裁判所がリンクされています",
+      "selectionAtMax": "この形式で選択された最大値 ({{players}}) — 他の予約は使用できません",
+      "emptyBookingsOnDate": "この日は予約がありません",
+      "emptyBookingsHint": "別の日付を試すか、新しいコートを予約するか、予約をリンクせずにゲームを作成してください。",
+      "emptyBookingsReserveNow": "今すぐコートを予約する",
+      "emptyBookingsGameOnly": "ゲームのみを作成する",
+      "gridLegend": "緑 = 予約 · 赤/黄 = 予約済み · プライマリ = 選択した時間",
+      "alsoUsedIn": "以下でも使用されます: {{games}}",
+      "pickAdjacentHour": "1 時間を選択してください",
+      "linkHintTitle": "ゲームが予約にリンクします",
+      "linkHintBody": "これらのコート予約は、ゲームの作成時にリンクされます。",
+      "linkHintLine": "{{court}} · {{window}}",
+      "overrideToggle": "ゲーム時間を調整する",
+      "overrideHint": "試合時間は予約時間より短くなる場合があります",
+      "overrideResetToast": "時間が予約にリセットされました",
+      "preselectedBanner": "予約は事前に選択されています",
+      "linkedOnlyLabel": "ご予約から",
+      "unlinkConfirm": "この予約リンクを削除しますか?",
+      "unlinkLastConfirm": "最後の予約を削除すると、時間編集のロックが解除されます。",
+      "unlinkNoCancelNote": "クラブのコート予約はアクティブのままで、このゲームへのリンクのみが削除されます。",
+      "syncInactiveCreate": "現在、同期はアクティブではありません。ここではスロットを取得したり、予約をしたりできません。現時点ではまだゲームを作成できます。",
+      "syncInactiveEdit": "現在、同期はアクティブではありません。ここではスロットを取得したり、予約をしたりできません。現時点ではまだゲームを編集できます。"
+    },
+    "reservationIntent": {
+      "title": "どうやって裁判受けてるの？",
+      "otherOptions": "その他のオプション",
+      "recommended": "推奨",
+      "recommendedShort": "録音",
+      "validation": {
+        "selectCourt": "最初に{{count}} コートを選択します。",
+        "selectBookableCourt": "まず、{{count}} オンライン予約可能なコートを選択してください。",
+        "selectTime": "最初に利用可能な時間を選択します。",
+        "selectDuration": "最初に期間を選択します。",
+        "selectReservations": "アカウントから {{count}} 予約を選択します。",
+        "bookingRecordsLoading": "予約の詳細を読み込み中です。しばらくしてからもう一度お試しください。"
+      },
+      "reserveNow": {
+        "title": "裁判所を予約する",
+        "chipTitle": "ブックコート",
+        "description": "時間を選択してください - 予約いたします。"
+      },
+      "useExisting": {
+        "title": "すでに予約があります",
+        "chipTitle": "私の予約",
+        "description": "クラブアカウントから予約を接続します。",
+        "contextAvailable": "{{count}} この日付で利用可能"
+      },
+      "gameOnly": {
+        "title": "コートの予約をスキップする",
+        "chipTitle": "ゲームのみ",
+        "description": "ゲームを作成するだけです。コートは用意されていません。"
+      },
+      "manualBooked": {
+        "title": "すでに手動で予約されています",
+        "chipTitle": "予約済み",
+        "description": "オンライン予約なしで予約済みとしてマークします。"
+      },
+      "summary": {
+        "reserveNow": {
+          "title": "実際の法廷予約が行われます",
+          "body": "{{count}} コート、期間、時間を選択します。その正確なスケジュールは予約されます。"
+        },
+        "useExisting": {
+          "title": "ゲームは予約にリンクされます",
+          "body": "{{count}}中{{selected}}の必須予約が選択されました。"
+        },
+        "gameOnly": {
+          "title": "実際の法廷予約は行われません",
+          "body": "試合はBandejaのみに予定されています。"
+        },
+        "manualBooked": {
+          "title": "ゲームは予約済みとしてマークされます",
+          "body": "オンライン予約は作成されません。"
+        }
+      },
+      "cta": {
+        "reserveOne": "コートを予約してゲームを作成する",
+        "reserveMany": "{{count}} コートを予約してゲームを作成",
+        "linkOne": "予約をリンクしてゲームを作成する",
+        "linkMany": "{{count}} 予約をリンクし、ゲームを作成します",
+        "gameOnly": "ゲームのみを作成する",
+        "manualBooked": "ゲームを作成する"
+      }
+    },
+    "booktime": {
+      "switchLabel": "ゲームを作成するときにコートを予約します",
+      "switchHint": "ゲーム作成時に{{court}}を{{club}}に予約します。",
+      "authTitle": "サインインして利用可能な時間を確認してください",
+      "authHint": "{{club}} にサインインして、ゲームの時間を選択してください。",
+      "authOptOut": "自分で裁判所を予約します",
+      "authorizeInClub": "{{club}} で承認",
+      "dateHint": "このクラブでは、{{days}} 日前までにご予約いただけます。",
+      "connectedChip": "サインイン · {{phone}}",
+      "createCta": "ゲームとリザーブコートの作成",
+      "signInToContinue": "続行するにはサインインしてください",
+      "confirmTitle": "作成する準備はできましたか?",
+      "confirmPrimary": "予約＆作成",
+      "activityTitle": "ゲームを作成中…",
+      "activityStep1": "コートを予約しています…",
+      "activityStepBookCourt": "{{court}} ({{total}} の {{current}}) を予約しています…",
+      "activityStep2": "ゲームを作成中…",
+      "multiBookFailed": "{{court}} を予約できませんでした。過去の予約を公開しました。",
+      "reviewTotal": "合計",
+      "successTitle": "準備は完了です!",
+      "successBody": "裁判所が予約済み · ゲームが作成されました",
+      "successGameOnly": "ゲームを作成しました",
+      "errorTitle": "何か問題が発生しました",
+      "slotTaken": "このスロットはちょうど採用されたばかりです。別の機会に選んでください。",
+      "pickAnotherTime": "別の時間を選んでください",
+      "tryAgain": "もう一度やり直してください",
+      "sessionExpired": "サインインの有効期限が切れました。再度サインインして再試行してください。",
+      "createFailedAfterBook": "ゲームを作成できませんでした。裁判所の予約がキャンセルされました。もう一度お試しください。",
+      "createFailedRollback": "ゲームを作成できませんでした。コートの予約がキャンセルされたかどうかは確認できませんでした。クラブに確認してください。",
+      "bookFailed": "コートを予約できませんでした。もう一度やり直してください。",
+      "reservedAs": "として予約: {{identity}}",
+      "cancelPolicy": "開始{{hours}}時間前まではキャンセル無料。",
+      "yourGame": "あなたのゲーム",
+      "snapshotBlocked": "ライブの空き状況はまだ同期されていません。同期を待つか、別の日を選択してください。",
+      "alreadyReserved": "この試合のためにコートはすでに予約されています。",
+      "liveApiUnavailable": "現在、コートの予約は利用できません。通常のスケジュールを使用しています。"
+    },
+    "padeloo": {
+      "authTitle": "パデルoo アカウントを接続する",
+      "authHint": "パデルoo のメールアドレスでサインインして、{{club}} の時間を選択してください。",
+      "authorizeInClub": "{{club}} で承認"
+    },
+    "klikteren": {
+      "authTitle": "Klikteren アカウントを接続する",
+      "authHint": "Klikteren のメールアドレスとパスワードを使用してサインインし、{{club}} の時間を選択します。",
+      "authorizeInClub": "{{club}} で承認"
+    },
+    "intent": {
+      "title": "どんなゲームですか？",
+      "noTemplatesForSetup": "この設定に適合するプリセットはありません。[詳細設定] を使用して形式を手動で選択してください。",
+      "customizeFormat": "フォーマットのカスタマイズ",
+      "social": {
+        "title": "社交",
+        "description": "クラブナイト、ローテーション、評価プレッシャーなし"
+      },
+      "match": {
+        "title": "マッチ",
+        "description": "標準ルール、あなたのレベルにカウントされます"
+      },
+      "advanced": {
+        "title": "高度な",
+        "description": "フルフォーマットウィザード、すべてのプリセット"
+      }
+    },
+    "templates": {
+      "title": "クイックテンプレート",
+      "empty": "このスポーツにはまだテンプレートがありません。カスタマイズ形式を使用してください。",
+      "durationApprox2h": "～2時間",
+      "durationApprox90m": "～90分",
+      "PADEL_AUTOMATIC": {
+        "title": "柔軟なスコアリング",
+        "description": "カジュアルマッチ、柔軟なセット、またはポイントスコアリングを決めるのはあなたです。"
+      },
+      "PADEL_BEST_OF_3": {
+        "title": "Best-of-3",
+        "description": "通常の3セットマッチ",
+        "badge": "正式"
+      },
+      "PADEL_SUPER_TIEBREAK": {
+        "title": "スーパータイブレーク",
+        "description": "1-1で2セット+スーパータイブレーク"
+      },
+      "PADEL_SINGLE_SET": {
+        "title": "シングルセット",
+        "description": "勝負を決める1セット"
+      },
+      "PADEL_AMERICANO": {
+        "title": "Americano 得点",
+        "description": "ローテーション形式 - 合計ポイントまでプレイ"
+      },
+      "PADEL_TIMED": {
+        "title": "時限式",
+        "description": "マッチタイマー付き1セット"
+      },
+      "PADEL_SINGLES_BO3": {
+        "title": "ベストオブ3",
+        "description": "シングルマッチ — 標準的な 3 セット形式",
+        "badge": "正式"
+      },
+      "PADEL_SINGLES_AUTOMATIC": {
+        "title": "自動",
+        "description": "カジュアル シングル — 柔軟なセットスコアリング、自動ペアリング"
+      },
+      "PADEL_SINGLES_SINGLE_SET": {
+        "title": "シングルセット",
+        "description": "シングルス — 1 セットで試合が決まります"
+      },
+      "PADEL_SINGLES_AMERICANO_24": {
+        "title": "シングル Americano (24 ポイント)",
+        "description": "1 対 1 ローテーション — 全員で 24 ポイント・15 分のラウンドをプレイします"
+      },
+      "PADEL_AMERICANO_10": {
+        "title": "Americano · 10 分",
+        "description": "時間制限ラウンド (10 分)、24 ボール ゲーム、ランダム ペア"
+      },
+      "PADEL_AMERICANO_24": {
+        "title": "Americano (24 ポイント)",
+        "description": "ランダムなペア、24 ポイントまでプレイ · 15 分のラウンド"
+      },
+      "PADEL_AMERICANO_20": {
+        "title": "Americano · 20 分",
+        "description": "時間制限ラウンド (20 分)、24 ボール ゲーム、ランダム ペア"
+      },
+      "PADEL_MEXICANO_24": {
+        "title": "Mexicano (24 ポイント)",
+        "description": "レベルバランスのとれたペア、24 ポイント ゲーム"
+      },
+      "PADEL_CHALLENGER_POOL": {
+        "title": "チャレンジャープール",
+        "description": "キングコート + キュー: コート 1 の勝者が防御し、他の勝者はプールからローテーションします"
+      },
+      "PADEL_KOTC_11": {
+        "title": "宮廷の王様",
+        "description": "11までのショートゲーム。コート1にキングス、残りはチャレンジャープール"
+      },
+      "PICKLEBALL_SOCIAL_21": {
+        "title": "オープンプレー (21 ポイント)",
+        "description": "ダブルス Americano、21 球ゲーム"
+      },
+      "PICKLEBALL_MATCH_BO3_11": {
+        "title": "ベストオブ3～11",
+        "description": "ラリーの採点、公式スタイル"
+      },
+      "PICKLEBALL_KOTC_11": {
+        "title": "宮廷の王様",
+        "description": "短い 11 ボール ゲーム。キングコート + チャレンジャープール"
+      },
+      "BADMINTON_AMERICANO_21": {
+        "title": "クラブナイト (21 ボール)",
+        "description": "ダブルス Americano — Bo3 ではなく、21 ボールローテーションゲーム"
+      },
+      "BADMINTON_CLUB_3X21": {
+        "title": "クラブBo3×21",
+        "description": "3 試合から 21 試合まで — カジュアル シングル/ダブルス"
+      },
+      "BADMINTON_CLUB_3X15": {
+        "title": "クラブBo3×15",
+        "description": "3 試合から 15 試合まで — BWF クラブ形式"
+      },
+      "BADMINTON_MATCH_3X21": {
+        "title": "マッチ Bo3 × 21",
+        "description": "レーティングされた公式試合 — 3 試合先取、21 試合先取"
+      },
+      "TT_OPEN_PLAY_11": {
+        "title": "11までのクイックゲーム",
+        "description": "シングルスまたはダブルス — 1 つのショートマッチ (2 ～ 4 人のプレーヤー)"
+      },
+      "TT_CLUB_RR_11": {
+        "title": "クラブ総当たり戦",
+        "description": "6 ～ 8 人のプレーヤー、シングルス — 全員が全員でプレイ、ゲームは 11 まで"
+      },
+      "TT_LEGACY_SINGLE_21": {
+        "title": "昔ながらの 21 ポイントのシングル ゲーム",
+        "description": "1 試合で 21 ポイント、2 点差で勝利 (2001 年以前のスタイル)"
+      },
+      "TT_SWISS_BOX": {
+        "title": "スイスボックス",
+        "description": "スキルペアボックスリーグ（ラダーエンジン）、Bo3～11"
+      },
+      "TT_BOX_BO3_11": {
+        "title": "ボックスリーグ Bo3×11",
+        "description": "8 ～ 12 人のプレーヤー、ボックス グループ — ラウンドの合間にコートに登る"
+      },
+      "TT_MATCH_BO3_11": {
+        "title": "マッチBo3×11",
+        "description": "シングルス/ダブルスのレーティング、3 試合から 11 試合までのベスト"
+      },
+      "TT_MATCH_BO5_11": {
+        "title": "マッチBo5×11",
+        "description": "レーティングマッチ、5 試合対 11 試合のベストマッチ"
+      },
+      "TENNIS_FAST4_SOCIAL": {
+        "title": "FAST4 ソーシャル",
+        "description": "ショートセット、広告なしのスコアリング"
+      },
+      "TENNIS_CLASSIC_BO3": {
+        "title": "ベストオブ3セット",
+        "description": "クラシックなテニスの試合"
+      },
+      "SQUASH_QUICK_BO3_11": {
+        "title": "クイックBo3×11",
+        "description": "3 試合先取で 11 試合先まで"
+      }
+    },
+    "presetTier": {
+      "social": "社交",
+      "match": "マッチ"
+    },
+    "presetMeta": {
+      "POINTS_11": "11までプレイ（ローテーション）",
+      "SINGLE_GAME_21": "21歳までの昔ながらのゲーム",
+      "POINTS_16": "16 までプレイ (ローテーション)",
+      "POINTS_21": "21 ボールの予算",
+      "POINTS_24": "24 ボール Americano",
+      "POINTS_32": "32までプレイ（ローテーション）",
+      "CLASSIC_AUTOMATIC": "自動（カジュアル）",
+      "CLASSIC_BEST_OF_3": "ベストオブ3セット",
+      "CLASSIC_BEST_OF_5": "ベストオブ5セット",
+      "CLASSIC_PRO_SET": "プロセット",
+      "CLASSIC_SHORT_SET": "ショートセット",
+      "CLASSIC_SINGLE_SET": "シングルセット",
+      "CLASSIC_SUPER_TIEBREAK": "スーパータイブレーク",
+      "CLASSIC_TIMED": "時間指定セット",
+      "BEST_OF_3_11": "ベストオブ3～11",
+      "BEST_OF_3_15": "Bo3・15試合まで",
+      "BEST_OF_3_21": "Bo3・21試合まで",
+      "BEST_OF_5_11": "5対11のベスト",
+      "POINTS_15": "15 ボールの予算",
+      "TIMED": "時限式",
+      "CUSTOM": "カスタム"
+    }
+  }
+}

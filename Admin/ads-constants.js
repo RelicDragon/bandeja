@@ -122,6 +122,11 @@ const AD_LOCALES = [
     { code: 'sr', label: 'Serbian' },
     { code: 'cs', label: 'Czech' },
     { code: 'ar', label: 'Arabic' },
+    { code: 'zh', label: '中文' },
+    { code: 'id', label: 'Bahasa Indonesia' },
+    { code: 'hi', label: 'हिन्दी' },
+    { code: 'th', label: 'ไทย' },
+    { code: 'ja', label: '日本語' },
 ];
 
 const AD_CAMPAIGN_STATUSES = ['DRAFT', 'SCHEDULED', 'ACTIVE', 'PAUSED', 'ENDED'];

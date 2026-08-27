@@ -1,0 +1,77 @@
+{
+  "bug": {
+    "bug": "Bug",
+    "bugTracker": "Pelacak Bug",
+    "addBug": "Tambah Bug",
+    "addSuggestion": "Tambah Saran",
+    "addQuestion": "Tambah Pertanyaan",
+    "addProblem": "Tambah Masalah",
+    "addTask": "Tambah Tugas",
+    "description": "Laporkan bug, saran, dan pertanyaan untuk membantu meningkatkan aplikasi",
+    "type": "Jenis",
+    "descriptionPlaceholder": "Jelaskan bug, saran, atau pertanyaan...",
+    "submit": "Kirim",
+    "created": "Laporan bug berhasil dikirim",
+    "createError": "Gagal mengirim laporan bug",
+    "textRequired": "Deskripsi bug wajib diisi",
+    "loadError": "Gagal memuat bug",
+    "noBugs": "Belum ada bug yang dilaporkan",
+    "allTypes": "Semua Jenis",
+    "allActive": "Semua aktif",
+    "statusUpdated": "Status bug diperbarui",
+    "statusUpdateError": "Gagal memperbarui status bug",
+    "typeUpdated": "Jenis bug diperbarui",
+    "typeUpdateError": "Gagal memperbarui jenis bug",
+    "deleted": "Bug dihapus",
+    "deleteError": "Gagal menghapus bug",
+    "openChat": "Buka obrolan",
+    "actions": "Tindakan Bug",
+    "status": "Status",
+    "priority": "Prioritas",
+    "priorityUpdated": "Prioritas bug diperbarui",
+    "stars": "Bintang",
+    "starsRequired": "Pilih rating dari 1 hingga 5 bintang",
+    "ratingUpdated": "Rating diperbarui",
+    "starLabels": {
+      "1": "1 bintang",
+      "2": "2 bintang",
+      "3": "3 bintang",
+      "4": "4 bintang",
+      "5": "5 bintang"
+    },
+    "changeStatus": "Ubah Status",
+    "changeType": "Ubah Jenis",
+    "updateFailed": "Gagal memperbarui bug",
+    "myBugsOnly": "Dibuat oleh saya",
+    "priorities": {
+      "0": "0",
+      "1": "+1",
+      "2": "+2",
+      "-2": "−2",
+      "-1": "−1"
+    },
+    "priorityLabels": {
+      "0": "Normal",
+      "1": "Tinggi",
+      "2": "Sangat tinggi",
+      "-2": "Sangat rendah",
+      "-1": "Rendah"
+    },
+    "types": {
+      "BUG": "Bug",
+      "CRITICAL": "Kritis",
+      "SUGGESTION": "Saran",
+      "QUESTION": "Pertanyaan",
+      "TASK": "Tugas",
+      "REVIEW": "Ulasan"
+    },
+    "statuses": {
+      "CREATED": "Dibuat",
+      "CONFIRMED": "Dikonfirmasi",
+      "IN_PROGRESS": "Sedang Dikerjakan",
+      "TEST": "Pengujian",
+      "FINISHED": "Selesai",
+      "ARCHIVED": "Diarsipkan"
+    }
+  }
+}

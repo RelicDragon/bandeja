@@ -1,0 +1,25 @@
+{
+  "createLeague": {
+    "name": "Nama Liga",
+    "namePlaceholder": "Masukkan nama liga",
+    "description": "Deskripsi",
+    "descriptionPlaceholder": "Masukkan deskripsi liga (opsional)",
+    "location": "Lokasi",
+    "selectCity": "Pilih Kota",
+    "noCitiesAvailable": "Tidak ada kota tersedia",
+    "noCity": "Tanpa Kota",
+    "season": "Musim",
+    "seasonAvatar": "Avatar Musim",
+    "seasonName": "Nama Musim",
+    "seasonNamePlaceholder": "Masukkan nama musim",
+    "playerLevel": "Level Pemain",
+    "maxParticipants": "Peserta Maksimal",
+    "maxParticipantsPlaceholder": "Masukkan peserta maksimal (4-999)",
+    "startDate": "Tanggal Mulai",
+    "gameSetupSeason": "Pengaturan Pertandingan (Musim)",
+    "gameSetupPlayoff": "Pengaturan Pertandingan (Playoff)",
+    "editGameSetup": "Edit Pengaturan Pertandingan",
+    "configureGameSetup": "Konfigurasi Pengaturan Pertandingan",
+    "createButton": "Buat Liga"
+  }
+}

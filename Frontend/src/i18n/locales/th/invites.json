@@ -1,0 +1,37 @@
+{
+  "invites": {
+    "title": "คำเชิญ",
+    "pending": "คำเชิญที่รอดำเนินการ",
+    "noInvites": "ไม่มีคำเชิญที่รอดำเนินการ",
+    "accept": "ยอมรับ",
+    "decline": "ปฏิเสธ",
+    "from": "จาก",
+    "to": "ถึง",
+    "message": "ข้อความ",
+    "accepted": "ตอบรับคำเชิญแล้ว",
+    "acceptedSuccessfully": "ตอบรับคำเชิญเรียบร้อยแล้ว",
+    "declined": "คำเชิญถูกปฏิเสธ",
+    "declinedSuccessfully": "คำเชิญปฏิเสธเรียบร้อยแล้ว",
+    "cancelledSuccessfully": "ยกเลิกคำเชิญเรียบร้อยแล้ว",
+    "selectPlayer": "เลือกผู้เล่น",
+    "selectPlayers": "เลือก ผู้เล่น",
+    "noPlayersAvailable": "ไม่มีผู้เล่นที่สามารถเชิญได้",
+    "inviteFriendToBandeja": "ชวนเพื่อนมาที่ Bandeja",
+    "shareAppBody": "เข้าร่วมกับฉันที่ Bandeja: {{url}}",
+    "pendingInvites": "คำเชิญที่รอดำเนินการ",
+    "badgeDeclined": "ปฏิเสธ",
+    "badgeExpired": "คำเชิญหมดอายุแล้ว",
+    "badgeInviteCancelled": "ยกเลิกคำเชิญแล้ว",
+    "sectionTerminalInvites": "เชิญตอบ",
+    "inviteAgainHint": "คุณสามารถส่งคำเชิญใหม่ได้",
+    "inviteSent": "ส่งคำเชิญแล้ว",
+    "invitedYou": "เชิญไป",
+    "declineModal": {
+      "title": "ปฏิเสธคำเชิญใช่ไหม",
+      "description": "คุณสามารถเลือกที่จะบอกผู้จัดงานว่าทำไมคุณจึงไม่สามารถเข้าร่วมได้",
+      "reasonLabel": "เหตุผล (ไม่บังคับ)",
+      "reasonPlaceholder": "เช่น ตารางการแข่งขันที่ขัดแย้ง, การบาดเจ็บ...",
+      "confirm": "ปฏิเสธ"
+    }
+  }
+}

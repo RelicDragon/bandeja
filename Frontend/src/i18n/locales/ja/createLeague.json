@@ -1,0 +1,25 @@
+{
+  "createLeague": {
+    "name": "リーグ名",
+    "namePlaceholder": "リーグ名を入力",
+    "description": "説明",
+    "descriptionPlaceholder": "リーグの説明を入力（任意）",
+    "location": "場所",
+    "selectCity": "都市を選択",
+    "noCitiesAvailable": "利用可能な都市がありません",
+    "noCity": "都市なし",
+    "season": "シーズン",
+    "seasonAvatar": "シーズンアバター",
+    "seasonName": "シーズン名",
+    "seasonNamePlaceholder": "シーズン名を入力",
+    "playerLevel": "プレイヤーレベル",
+    "maxParticipants": "最大参加者数",
+    "maxParticipantsPlaceholder": "最大参加者数を入力（4〜999）",
+    "startDate": "開始日",
+    "gameSetupSeason": "試合設定（シーズン）",
+    "gameSetupPlayoff": "試合設定（プレーオフ）",
+    "editGameSetup": "試合設定を編集",
+    "configureGameSetup": "試合設定を構成",
+    "createButton": "リーグを作成"
+  }
+}

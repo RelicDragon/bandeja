@@ -1,0 +1,11 @@
+{
+  "favorites": {
+    "addToFavorites": "加入收藏",
+    "removeFromFavorites": "取消收藏",
+    "addedToFavorites": "已加入收藏",
+    "removedFromFavorites": "已取消收藏",
+    "isFavorite": "已收藏",
+    "userAddedToFavorites": "已收藏该球员",
+    "userRemovedFromFavorites": "已取消收藏该球员"
+  }
+}

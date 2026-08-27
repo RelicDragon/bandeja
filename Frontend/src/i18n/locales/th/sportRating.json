@@ -1,0 +1,43 @@
+{
+  "sportRating": {
+    "band": {
+      "beginner": "ระดับเริ่มต้น",
+      "improver": "สารปรับปรุง",
+      "intermediate": "ระดับกลาง",
+      "advanced": "ขั้นสูง",
+      "expert": "ผู้เชี่ยวชาญ",
+      "elite": "ผู้ลากมากดี"
+    },
+    "display": {
+      "playtomic": "➤ {{value}} Playtomic",
+      "ntrp": "➤ {{value}} NTRP",
+      "dupr": "➤ {{value}} DUPR",
+      "utr": "➤ {{value}} UTR",
+      "usatt": "➤ {{value}} USATT",
+      "squashlevels": "➤ {{value}} SquashLevels"
+    },
+    "padel": {
+      "band1": "การเรียนรู้การชุมนุมและตำแหน่งศาลขั้นพื้นฐาน",
+      "band2": "การชุมนุมอย่างต่อเนื่อง เริ่มเล่นเน็ต",
+      "band3": "พื้นฐานคู่ที่มั่นคง; การเล่นทางสังคมแบบแข่งขัน",
+      "band4": "ผู้เล่นสโมสรที่แข็งแกร่ง กลยุทธ์ที่ดี",
+      "band5": "สโมสรขั้นสูง/ระดับภูมิภาค",
+      "band6": "ประสิทธิภาพสูง / ระดับการแข่งขัน"
+    },
+    "tennis": {
+      "bandHint": "ระดับไม้กอล์ฟสไตล์หยาบ NTRP"
+    },
+    "pickleball": {
+      "bandHint": "ระดับสันทนาการสไตล์หยาบ DUPR"
+    },
+    "badminton": {
+      "bandHint": "วงดนตรีทักษะคลับ (ไม่ใช่อันดับ BWF)"
+    },
+    "tableTennis": {
+      "bandHint": "ระดับสโมสร; USATT-คำแนะนำสไตล์เป็นตัวเลือก"
+    },
+    "squash": {
+      "bandHint": "ภาพประกอบระดับสไตล์ SquashLevels"
+    }
+  }
+}

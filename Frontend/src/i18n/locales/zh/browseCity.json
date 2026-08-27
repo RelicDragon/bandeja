@@ -1,0 +1,21 @@
+{
+  "browseCity": {
+    "chipAriaHome": "您的城市：{{city}}。浏览其他城市。",
+    "chipAriaAway": "正在浏览 {{city}}。更换城市。",
+    "chipAriaVenueHome": "比赛城市{{city}}。选择其他城市。",
+    "chipAriaVenueAway": "{{city}} 的俱乐部。更换城市。",
+    "changeCity": "城市",
+    "recent": "最近",
+    "nearby": "附近",
+    "viewCity": "查看{{city}}",
+    "nobodyInCity": "在{{city}}未找到「{{query}}」相关用户",
+    "nobodyNearby": "附近未找到「{{query}}」。尝试其他城市。",
+    "noUsersInCity": "{{city}} 暂无用户",
+    "noUsersInCityHint": "切换城市或搜索名称",
+    "lookingEmptyInCity": "{{city}} 暂时无人在找搭档",
+    "noClubsInCity": "{{city}}暂无俱乐部",
+    "noClubsMatch": "没有匹配「{{query}}」的俱乐部",
+    "searchClubs": "搜索俱乐部",
+    "km": "{{km}}公里"
+  }
+}

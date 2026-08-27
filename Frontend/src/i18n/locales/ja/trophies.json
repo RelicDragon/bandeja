@@ -1,0 +1,386 @@
+{
+  "trophies": {
+    "rarity": {
+      "common": "コモン",
+      "rare": "レア",
+      "legendary": "レジェンダリー",
+      "unique": "ユニーク"
+    },
+    "showcase": {
+      "hint": "リーグで勝ち、プレイを続けてショーケースを埋めよう",
+      "pinHint": "キャビネットからお気に入りをピン留め — 最大3つ",
+      "emptySlot": "空のショーケース枠"
+    },
+    "banner": {
+      "unlocked": "トロフィー解除",
+      "andMore": "+あと{{count}}件",
+      "dismiss": "閉じる"
+    },
+    "celebration": {
+      "unlocked": "トロフィー解除",
+      "subtitle": "新しいトロフィーがキャビネットに加わりました",
+      "pin": "ショーケースにピン留め",
+      "pinning": "ピン留め中…",
+      "pinned": "ショーケースにピン留めしました",
+      "viewCabinet": "トロフィーキャビネットを見る",
+      "dismiss": "いいね！",
+      "pinError": "今はピン留めできません — キャビネットからもう一度試してください。",
+      "pinsFull": "ショーケースがいっぱいです — 先に1つ外してください（最大3）。"
+    },
+    "cabinet": {
+      "title": "実績",
+      "count": "{{count}}個獲得",
+      "ownEmpty": "表彰台、連続プレイ、マイルストーンを狙おう — ロック中のトロフィーが次の目標です。",
+      "visitorEmpty": "まだトロフィーがありません。",
+      "pinHint": "トロフィーをタップしてショーケースにピン留め（最大3）。",
+      "collapseStack": "トロフィーの山を折りたたむ",
+      "collapse": "折りたたむ",
+      "family": {
+        "games": "試合",
+        "streak": "連続",
+        "wins": "勝利",
+        "podium": "表彰台",
+        "debut": "デビュー",
+        "rallyStarter": "ラリー鍛造",
+        "tournamentHost": "トーナメント主催",
+        "soulOfTheParty": "パーティの主役",
+        "generic": "トロフィー",
+        "giantKiller": "ジャイアントキラー",
+        "dynamicDuo": "ダイナミックデュオ",
+        "openCourt": "オープンコート",
+        "leto2026": "Leto 2026",
+        "tieBreaker": "タイブレーカー",
+        "bugShipped": "バグトラッカー"
+      }
+    },
+    "leaderboard": {
+      "title": "実績リーダー",
+      "choose": "実績を選んで、誰が最も進んでいるか見てみましょう。",
+      "allAchievements": "すべての実績",
+      "leaders": "リーダー",
+      "scopeCity": "{{city}}のトップ",
+      "scopeGlobal": "グローバルリーダー",
+      "viewLeaders": "リーダーを見る",
+      "yourStanding": "あなたの順位",
+      "topPlayers": "トッププレイヤー",
+      "rankedCount": "{{count}}人がランクイン",
+      "playerFallback": "プレイヤー",
+      "loading": "実績リーダーを読み込み中",
+      "loadError": "リーダーを読み込めませんでした。",
+      "refreshingStats": "実績ランキングを更新中です。通常はすぐ終わります。",
+      "statsMaintenance": "このランキングはメンテナンス中です。しばらくしてからもう一度お試しください。",
+      "statsMaintenanceRetryAt": "{{time}}に自動で再試行します",
+      "emptyTitle": "トップはまだ空席",
+      "emptyHint": "この実績ではまだ誰も進捗がありません。",
+      "topLimitHint": "{{total}}人中{{count}}人を表示。同じ進捗は同じ順位です。カットオフ付近の同点は一部のみ表示されることがあります。",
+      "yourStandingAbove": "あなたの順位は上に表示されています。",
+      "units": {
+        "games": "{{count}}試合",
+        "wins": "{{count}}勝",
+        "weeks": "{{count}}週",
+        "podiums": "{{count}}回の表彰台",
+        "hostedGames": "{{count}}回主催",
+        "hostedTournaments": "{{count}}トーナメント",
+        "hostedBars": "{{count}}回のBarイベント",
+        "upsets": "{{count}}回の番狂わせ",
+        "partnerWins": "{{count}}回のパートナー勝利",
+        "partners": "{{count}}人のパートナー",
+        "tieBreaks": "{{count}}回のタイブレーク"
+      }
+    },
+    "detail": {
+      "progress": "進捗 {{current}} / {{target}}",
+      "lockedHint": "プレイを続けてこのトロフィーを解除しよう。",
+      "earnedOn": "{{date}}に獲得",
+      "sport": "{{sport}}",
+      "timesEarned": "{{count}}回獲得",
+      "openEvent": "イベントを開く",
+      "pin": "ショーケースにピン留め",
+      "pinning": "ピン留め中…",
+      "unpin": "ショーケースから外す",
+      "unpinning": "外しています…",
+      "pinnedBadge": "ピン留め中",
+      "followingEarners": "フォロー中でこのトロフィーを獲得した人",
+      "followingEarnersError": "フォロー中のプレイヤーを読み込めません — タップで再試行",
+      "familyLeaders": "この実績グループのトップ3",
+      "pinWhich": "ピン留めするトロフィーを選ぶ",
+      "pinHint": "ピン留めしたトロフィーは、新しいものが解除されてもショーケースに残ります。",
+      "pinsFull": "ショーケースがいっぱいです — 先に1つ外してください（最大3）。",
+      "pinError": "ピン留めを更新できませんでした — もう一度お試しください。"
+    },
+    "defs": {
+      "podiumGold": {
+        "title": "金の表彰台",
+        "description": "8人以上のリーグまたはトーナメントで1位になる。"
+      },
+      "podiumSilver": {
+        "title": "銀の表彰台",
+        "description": "8人以上のリーグまたはトーナメントで2位になる。"
+      },
+      "podiumBronze": {
+        "title": "銅の表彰台",
+        "description": "8人以上のリーグまたはトーナメントで3位になる。"
+      },
+      "firstWin": {
+        "title": "初勝利",
+        "description": "初めての対象試合で勝利する。"
+      },
+      "firstPadelGame": {
+        "title": "パデルデビュー",
+        "description": "初めての対象パデル試合を完了する。"
+      },
+      "wins10": {
+        "title": "二桁の勝利",
+        "description": "対象試合で10勝する。"
+      },
+      "wins25": {
+        "title": "四半世紀",
+        "description": "対象試合で25勝する。"
+      },
+      "wins50": {
+        "title": "半世紀",
+        "description": "対象試合で50勝する。"
+      },
+      "wins100": {
+        "title": "百勝の世紀",
+        "description": "対象試合で100勝する。"
+      },
+      "wins500": {
+        "title": "勝利マシン",
+        "description": "対象試合で500勝する。"
+      },
+      "games10": {
+        "title": "はじめの一歩",
+        "description": "対象試合を10試合完了する。"
+      },
+      "games50": {
+        "title": "常連",
+        "description": "対象試合を50試合完了する。"
+      },
+      "games100": {
+        "title": "センチュリオン",
+        "description": "対象試合を100試合完了する。"
+      },
+      "games500": {
+        "title": "500クラブ",
+        "description": "対象試合を500試合完了する。"
+      },
+      "games1000": {
+        "title": "1000クラブ",
+        "description": "対象試合を1000試合完了する。"
+      },
+      "streak4": {
+        "title": "動き出す1か月",
+        "description": "4週間のプレイ連続を維持する。"
+      },
+      "streak8": {
+        "title": "2か月の強さ",
+        "description": "8週間のプレイ連続を維持する。"
+      },
+      "streak12": {
+        "title": "炎のシーズン",
+        "description": "12週間のプレイ連続を維持する。"
+      },
+      "streak16": {
+        "title": "燃える4か月",
+        "description": "16週間のプレイ連続を維持する。"
+      },
+      "streak32": {
+        "title": "半年の炎",
+        "description": "32週間のプレイ連続を維持する。"
+      },
+      "streak64": {
+        "title": "炎の1年",
+        "description": "64週間のプレイ連続を維持する。"
+      },
+      "orgGame1": {
+        "title": "ラリースターター",
+        "description": "レーティング対象のパデル試合を初めて最終結果まで主催する。"
+      },
+      "orgGame10": {
+        "title": "ラリービルダー",
+        "description": "レーティング対象のパデル試合を10回、最終結果まで主催する。"
+      },
+      "orgGame25": {
+        "title": "ラリーアーキテクト",
+        "description": "レーティング対象のパデル試合を25回、最終結果まで主催する。"
+      },
+      "orgGame50": {
+        "title": "ラリーマエストロ",
+        "description": "レーティング対象のパデル試合を50回、最終結果まで主催する。"
+      },
+      "orgGame100": {
+        "title": "ラリーレジェンド",
+        "description": "レーティング対象のパデル試合を100回、最終結果まで主催する。"
+      },
+      "orgGame500": {
+        "title": "ラリーイモータル",
+        "description": "レーティング対象のパデル試合を500回、最終結果まで主催する。"
+      },
+      "orgTournament1": {
+        "title": "ブラケットオープナー",
+        "description": "レーティング対象のパデルトーナメントを初めて最終結果まで主催する。"
+      },
+      "orgTournament5": {
+        "title": "ブラケットオープナー ×5",
+        "description": "レーティング対象のパデルトーナメントを5回、最終結果まで主催する。"
+      },
+      "orgTournament10": {
+        "title": "ブラケットオープナー ×10",
+        "description": "レーティング対象のパデルトーナメントを10回、最終結果まで主催する。"
+      },
+      "orgTournament25": {
+        "title": "ブラケットオープナー ×25",
+        "description": "レーティング対象のパデルトーナメントを25回、最終結果まで主催する。"
+      },
+      "orgTournament50": {
+        "title": "ブラケットオープナー ×50",
+        "description": "レーティング対象のパデルトーナメントを50回、最終結果まで主催する。"
+      },
+      "orgTournament100": {
+        "title": "ブラケットオープナー ×100",
+        "description": "レーティング対象のパデルトーナメントを100回、最終結果まで主催する。"
+      },
+      "orgBar1": {
+        "title": "パーティの主役",
+        "description": "Barイベントを初めて最終結果まで主催する。"
+      },
+      "orgBar5": {
+        "title": "パーティの主役 ×5",
+        "description": "Barイベントを5回、最終結果まで主催する。"
+      },
+      "orgBar10": {
+        "title": "パーティの主役 ×10",
+        "description": "Barイベントを10回、最終結果まで主催する。"
+      },
+      "orgBar25": {
+        "title": "パーティの主役 ×25",
+        "description": "Barイベントを25回、最終結果まで主催する。"
+      },
+      "orgBar50": {
+        "title": "パーティの主役 ×50",
+        "description": "Barイベントを50回、最終結果まで主催する。"
+      },
+      "orgBar100": {
+        "title": "パーティの主役 ×100",
+        "description": "Barイベントを100回、最終結果まで主催する。"
+      },
+      "giantKiller1": {
+        "title": "ジャイアントキラー",
+        "description": "イベント開始時の平均レベルが0.5以上高いチームに対して、レーティング対象の2v2パデルマッチで勝利する（全員の信頼度が10%超）。"
+      },
+      "giantKiller5": {
+        "title": "ジャイアントハンター",
+        "description": "レーティング対象の2v2パデルで番狂わせを5回（平均0.5以上高い相手、全員の信頼度が10%超）。"
+      },
+      "giantKiller10": {
+        "title": "ジャイアントスレイヤー",
+        "description": "レーティング対象の2v2パデルで番狂わせを10回（平均0.5以上高い相手、全員の信頼度が10%超）。"
+      },
+      "giantKiller25": {
+        "title": "タイタンベイン",
+        "description": "レーティング対象の2v2パデルで番狂わせを25回（平均0.5以上高い相手、全員の信頼度が10%超）。"
+      },
+      "giantKiller50": {
+        "title": "コロッサスブレイカー",
+        "description": "レーティング対象の2v2パデルで番狂わせを50回（平均0.5以上高い相手、全員の信頼度が10%超）。"
+      },
+      "dynamicDuo10": {
+        "title": "ダイナミックデュオ",
+        "description": "同じパートナーと対象パデルマッチで10勝する。"
+      },
+      "dynamicDuo50": {
+        "title": "ダイナミックデュオ ×50",
+        "description": "同じパートナーと対象パデルマッチで50勝する。"
+      },
+      "dynamicDuo100": {
+        "title": "ダイナミックデュオ ×100",
+        "description": "同じパートナーと対象パデルマッチで100勝する。"
+      },
+      "openCourt10": {
+        "title": "オープンコート",
+        "description": "異なるパートナー10人と対象パデルマッチを完了する。"
+      },
+      "openCourt25": {
+        "title": "コートコネクター",
+        "description": "異なるパートナー25人と対象パデルマッチを完了する。"
+      },
+      "openCourt50": {
+        "title": "パートナーマグネット",
+        "description": "異なるパートナー50人と対象パデルマッチを完了する。"
+      },
+      "openCourt100": {
+        "title": "コミュニティの柱",
+        "description": "異なるパートナー100人と対象パデルマッチを完了する。"
+      },
+      "openCourt250": {
+        "title": "ネットワークレジェンド",
+        "description": "異なるパートナー250人と対象パデルマッチを完了する。"
+      },
+      "leto2026Participant": {
+        "title": "Leto 2026クルー",
+        "description": "Fix Liga — Leto 2026シーズンに参加した。"
+      },
+      "leto2026Playoffs": {
+        "title": "Leto 2026プレーオフ",
+        "description": "Fix Liga Leto 2026のプレーオフブラケットに進出した。"
+      },
+      "leto2026Place4": {
+        "title": "Leto 2026 4位",
+        "description": "Fix Liga Leto 2026で4位になった。"
+      },
+      "leto2026Bronze": {
+        "title": "Leto 2026銅",
+        "description": "Fix Liga Leto 2026の銅メダル。"
+      },
+      "leto2026Silver": {
+        "title": "Leto 2026銀",
+        "description": "Fix Liga Leto 2026の銀メダル。"
+      },
+      "leto2026Gold": {
+        "title": "Leto 2026チャンピオン",
+        "description": "Fix Liga Leto 2026の金メダル。"
+      },
+      "tieBreak1": {
+        "title": "タイブレーカー",
+        "description": "タイブレークでセットを取る — クラシック7–6またはスーパー・タイブレーク。"
+      },
+      "tieBreak5": {
+        "title": "サドンデス",
+        "description": "タイブレークでセットを5回取る（7–6またはスーパーTB）。"
+      },
+      "tieBreak12": {
+        "title": "7–6クラブ",
+        "description": "タイブレークでセットを12回取る（7–6またはスーパーTB）。"
+      },
+      "tieBreak32": {
+        "title": "鋼鉄の神経",
+        "description": "タイブレークでセットを32回取る（7–6またはスーパーTB）。"
+      },
+      "tieBreak64": {
+        "title": "くじ運レジェンド",
+        "description": "タイブレークでセットを64回取る（7–6またはスーパーTB）。"
+      },
+      "bugShipped1": {
+        "title": "出荷完了",
+        "description": "バグまたは提案を1件、進行中またはテストから完了またはアーカイブまで進める。質問は対象外。"
+      },
+      "bugShipped5": {
+        "title": "パッチノート",
+        "description": "バグまたは提案を5件、進行中またはテストから完了またはアーカイブまで進める。"
+      },
+      "bugShipped10": {
+        "title": "フィックス工場",
+        "description": "バグまたは提案を10件、進行中またはテストから完了またはアーカイブまで進める。"
+      },
+      "bugShipped25": {
+        "title": "バグランチャー",
+        "description": "バグまたは提案を25件、進行中またはテストから完了またはアーカイブまで進める。"
+      },
+      "bugShipped50": {
+        "title": "リリースレジェンド",
+        "description": "バグまたは提案を50件、進行中またはテストから完了またはアーカイブまで進める。"
+      }
+    }
+  }
+}

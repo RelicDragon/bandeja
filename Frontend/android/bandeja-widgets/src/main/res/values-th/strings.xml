@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="next_game_widget_title">แมตช์ถัดไป</string>
+    <string name="next_game_widget_description">แสดงแมตช์ Bandeja ถัดไปของคุณ</string>
+    <string name="next_game_widget_loading">Bandeja</string>
+    <string name="next_game_widget_preview_title">ปาเดลตอนเช้า</string>
+    <string name="next_game_widget_preview_time">ใน 2 ชั่วโมง</string>
+</resources>

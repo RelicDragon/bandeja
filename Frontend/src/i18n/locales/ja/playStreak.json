@@ -1,0 +1,17 @@
+{
+  "playStreak": {
+    "chipWeeks_one": "{{count}}週間",
+    "chipWeeks_other": "{{count}}週間",
+    "chipBroken": "— · 最高 {{best}}",
+    "sheetTitle": "プレイストリーク",
+    "rules": "7日ごとにレーティング対象の試合を1試合以上行うと、ストリークが続きます。同じ週に試合を増やしても週数は増えません。",
+    "current": "現在",
+    "best": "最高",
+    "none": "—",
+    "weeks_one": "{{count}}週間",
+    "weeks_other": "{{count}}週間",
+    "playBy": "{{date}}までにプレイしてストリークを維持",
+    "bannerStarted": "ストリーク開始！",
+    "bannerContinue": "ストリーク · {{count}}週間"
+  }
+}

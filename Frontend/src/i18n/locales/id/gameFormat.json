@@ -1,0 +1,491 @@
+{
+  "gameFormat": {
+    "title": "Format Permainan",
+    "resultsByAnyoneEditHint": "Hasil oleh siapa pun aktif — setiap peserta yang bermain dapat mengedit format dan memasukkan hasil.",
+    "trainingTitle": "Pelatihan",
+    "recommended": "Direkomendasikan",
+    "popular": "Populer",
+    "popularFormats": "Format populer",
+    "moreFormats": "Lebih banyak format",
+    "moreOptions": "Opsi lainnya",
+    "lessOptions": "Lebih sedikit pilihan",
+    "minPlayers_one": "{{count}}+ pemain",
+    "minPlayers_other": "{{count}}+ pemain",
+    "minCourts_one": "{{count}}+ lapangan",
+    "minCourts_other": "{{count}}+ lapangan",
+    "stepScoringModeHint": "Bagaimana Anda ingin mencetak gol di setiap pertandingan?",
+    "stepSetStructureHint": "Pilih struktur set untuk setiap pertandingan.",
+    "stepPointsTotalHint": "Berapa banyak poin yang dimainkan di setiap set (gabungan kedua tim)?",
+    "stepPointsTotalHintBySport": {
+      "TABLE_TENNIS": "Pilih batas poin per game, atau pertandingan terbaik (game ke 11).",
+      "BADMINTON": "Pilih durasi pertandingan — biasanya yang terbaik dari 3 game hingga 21.",
+      "SQUASH": "Pertandingan best-of-5 — game ke 11, menang 2.",
+      "PICKLEBALL": "Berapa banyak poin yang dimainkan di setiap pertandingan?"
+    },
+    "stepGenerationHint": "Bagaimana pertarungan ditentukan di setiap ronde?",
+    "stepRankingHint": "Konfigurasikan bagaimana pemenang keseluruhan ditentukan.",
+    "standingPointsHint": "Poin per hasil pertandingan untuk tabel klasemen (terpisah dari poin yang dicetak dalam pertandingan).",
+    "classicWithRotationWarning": "Penilaian permainan/set dengan format rotasi dapat dilakukan, tetapi putarannya membutuhkan waktu lebih lama dibandingkan penilaian berbasis poin.",
+    "rallyMatch": {
+      "sectionTitle": "Pertandingan terbaik"
+    },
+    "ballBudget": {
+      "sectionTitle": "Anggaran bola (rotasi)"
+    },
+    "steps": {
+      "scoringMode": "Mencetak gol",
+      "setStructure": "Set",
+      "pointsTotal": "Poin",
+      "generation": "Pertandingan",
+      "ranking": "Peringkat"
+    },
+    "scoringMode": {
+      "CLASSIC": {
+        "title": "Permainan / Set",
+        "subtitle": "Penghitungan poin gaya tenis (15/30/40…), lalu permainan dan set — klasik padel.",
+        "hint": "misalnya 15/30/40 dalam satu pertandingan → tetapkan skor 6–4",
+        "sport": {
+          "TENNIS": {
+            "subtitle": "Penghitungan poin gaya tenis (15/30/40…), lalu permainan dan set.",
+            "hint": "misalnya 15/30/40 dalam satu pertandingan → tetapkan skor 6–4"
+          }
+        }
+      },
+      "POINTS": {
+        "title": "Poin Sederhana",
+        "subtitle": "Setiap set berjalan dengan total poin tetap (kedua tim ditambahkan). Siapa pun yang memiliki lebih banyak pada akhirnya akan memenangkan set tersebut — bukan game 15/30/40.",
+        "hint": "misalnya 11–10 dalam set 21 poin — total gabungan harus sesuai dengan batas",
+        "sport": {
+          "TABLE_TENNIS": {
+            "title": "Skor reli",
+            "subtitle": "Game dengan target poin dengan kemenangan 2 — tidak ada skor game 15/30/40.",
+            "hint": "misalnya permainan 11–9 atau pertandingan best-of-3 berbanding 11"
+          },
+          "BADMINTON": {
+            "title": "Skor reli",
+            "subtitle": "Game hingga 21 poin (menang 2) atau satu game hingga 21.",
+            "hint": "misalnya 21–19 dalam satu pertandingan, atau memenangkan 2 dari 3 pertandingan"
+          },
+          "SQUASH": {
+            "title": "Skor reli",
+            "subtitle": "Skor PAR menjadi 11 (menang 2), atau pertandingan terbaik menjadi 11.",
+            "hint": "misalnya 11–8 per game dalam pertandingan best-of-5"
+          },
+          "PICKLEBALL": {
+            "title": "Skor reli",
+            "subtitle": "Menunjukkan batas tetap per game — panjang Pickerball umum di bawah.",
+            "hint": "misalnya 11–9 dengan skor reli atau side-out Anda bermain secara lokal"
+          }
+        }
+      }
+    },
+    "generation": {
+      "Handmade": {
+        "title": "petunjuk",
+        "subtitle": "Pertandingan kosong — Anda menempatkan pemain di setiap putaran"
+      },
+      "Automatic": {
+        "title": "Otomatis",
+        "subtitle": {
+          "two": "Satu pertandingan 1v1 setiap putaran antara dua pemain.",
+          "four": "Tiga pertandingan 2v2 setiap putaran — setiap kemungkinan pasangan satu kali.",
+          "fourFixedTeams": "Satu pertandingan 2v2 setiap putaran — dua pasangan tetap bermain satu sama lain.",
+          "fallback": "Satu pertandingan per putaran dengan 2 pemain, atau semua berpasangan dengan 4 pemain."
+        }
+      },
+      "Fixed": {
+        "title": "Tetap",
+        "subtitle": "Putaran selanjutnya mengulangi pasangan putaran pertama"
+      },
+      "Random": {
+        "title": "Amerika",
+        "subtitle": "Mitra acak setiap putaran"
+      },
+      "Rating": {
+        "title": "orang meksiko",
+        "subtitle": "Mitra dicocokkan dengan klasemen saat ini"
+      },
+      "RoundRobin": {
+        "title": "Usul",
+        "subtitle": "Setiap tim bermain melawan tim lainnya"
+      },
+      "WinnersCourt": {
+        "title": "King of the Court",
+        "subtitle": "Yang menang naik, yang kalah turun"
+      },
+      "Escalera": {
+        "title": "Tangga",
+        "subtitle": "Tangga posisi — pemenang menaiki lapangan"
+      },
+      "KingOfCourt": {
+        "title": "King of the Court",
+        "subtitle": "Lapangan 1 raja menginap; yang kalah bergabung dalam antrian penantang"
+      }
+    },
+    "generationHint": {
+      "Handmade": "Tidak ada susunan pemain yang telah ditentukan sebelumnya — tarik sendiri pemain ke dalam pertandingan",
+      "Automatic": {
+        "two": "Pertandingan head-to-head tunggal setiap putaran.",
+        "four": "Tiga pertandingan per putaran sehingga masing-masing tim saling berhadapan satu kali.",
+        "fourFixedTeams": "Satu pertandingan per putaran antara dua pasangan terkunci Anda.",
+        "fallback": "Tetapkan maksimal peserta menjadi 2 atau 4 untuk melihat jadwal pastinya."
+      },
+      "Fixed": "Setelah Anda mengatur putaran pertama, putaran lainnya akan menjadi salinan putaran pertama.",
+      "Random": "Rotasi Americano klasik",
+      "Rating": "Putaran pertama acak, lalu berdasarkan papan peringkat",
+      "RoundRobin": "Paling adil — semua orang memainkan semua orang",
+      "WinnersCourt": "Membutuhkan minimal 2 lapangan",
+      "Escalera": "Membutuhkan minimal 2 lapangan",
+      "KingOfCourt": "Rotasi multi-lapangan dengan kumpulan penantang saat pemain memenuhi lapangan"
+    },
+    "formatDescription": {
+      "CLASSIC": "Satu pertandingan, pasangan tetap",
+      "AMERICANO": "Mitra acak setiap putaran",
+      "MEXICANO": "Mitra dirotasi berdasarkan klasemen",
+      "ROUND_ROBIN": "Semua orang memainkan semua orang",
+      "WINNER_COURT": "Pemenang naik ke lapangan",
+      "LADDER": "Naik peringkat lapangan",
+      "KOTC": "Lapangan raja + kolam penantang",
+      "CUSTOM": "Kontrol manual penuh"
+    },
+    "formatHint": {
+      "CLASSIC": "Pertandingan tradisional padel — 2 vs 2.",
+      "AMERICANO": "Turnamen rotasi dengan mitra acak setiap putaran.",
+      "MEXICANO": "Mitra berpasangan berdasarkan klasemen saat ini.",
+      "ROUND_ROBIN": "Setiap pasangan bermain melawan setiap pasangan lainnya.",
+      "WINNER_COURT": "Pemenang naik ke tingkat yang lebih tinggi, yang kalah terjatuh.",
+      "LADDER": "Pemain diurutkan berdasarkan level; pemenang mendaki, pecundang terjatuh.",
+      "KOTC": "Pemenang menginap di lapangan 1; lapangan isi ulang lainnya dari antrian penantang.",
+      "CUSTOM": "Rancang aturan Anda sendiri dari awal."
+    },
+    "formatDetail": {
+      "CLASSIC": "Satu pertandingan antara dua pasangan tetap. Sempurna untuk permainan santai 2 vs 2 padel bersama teman.",
+      "AMERICANO": "Format turnamen sosial — setiap putaran, pemain dipasangkan secara acak sehingga semua orang bermain dengan (dan melawan) semua orang. Poin individu dijumlahkan untuk menemukan pemenang.",
+      "MEXICANO": "Putaran pertama bersifat acak; setelah itu, pemasangan didasarkan pada papan peringkat saat ini (#1 dengan #3 vs #2 dengan #4). Pemain kuat bertemu lawan yang lebih kuat — bagus untuk sesi kompetitif.",
+      "ROUND_ROBIN": "Setiap tim bermain melawan tim lainnya. Cara paling adil untuk menentukan pemenang ketika Anda punya waktu untuk semua pertarungan.",
+      "WINNER_COURT": "Raja Lapangan: pemenang naik lapangan, yang kalah turun ke bawah. Mitra berganti setiap putaran. Membutuhkan setidaknya dua lapangan.",
+      "LADDER": "Escalera: pemain awalnya diunggulkan berdasarkan level di seluruh lapangan. Pemenang naik ke lapangan berikutnya, pecundang turun. Tim baru terbentuk di setiap babak — ideal untuk grup tingkat campuran.",
+      "KOTC": "Raja Lapangan dengan kolam penantang: pemenang lapangan 1 bertahan melawan pasangan berikutnya dari antrian; lapangan lainnya memutar empat pemain dari kolam. Pemain tambahan menunggu giliran mereka.",
+      "CUSTOM": "Mulai dari awal dan kendalikan setiap aturan menggunakan opsi lanjutan."
+    },
+    "scoring": {
+      "CLASSIC_AUTOMATIC": {
+        "title": "Otomatis",
+        "subtitle": "Hingga 3 set — game, poin Americano, atau super tiebreak",
+        "hint": "Santai padel — masukkan skor apa pun; petunjuk saja",
+        "sport": {
+          "PADEL": {
+            "title": "Otomatis",
+            "subtitle": "Casual best-of-3 — penilaian fleksibel",
+            "hint": "Game, poin Americano, atau tiebreak super saat set seri"
+          }
+        }
+      },
+      "CLASSIC_BEST_OF_3": {
+        "title": "Terbaik dari 3 set",
+        "subtitle": "Set pertama hingga 2 memenangkan pertandingan",
+        "hint": "Set bergaya tenis dengan permainan"
+      },
+      "CLASSIC_BEST_OF_5": {
+        "title": "Terbaik dari 5 set",
+        "subtitle": "Set pertama hingga 3 memenangkan pertandingan",
+        "hint": "Format panjang, ideal untuk final"
+      },
+      "CLASSIC_PRO_SET": {
+        "title": "Perangkat profesional",
+        "subtitle": "Satu set panjang menentukan pertandingan",
+        "hint": "Satu set dengan permainan"
+      },
+      "CLASSIC_SINGLE_SET": {
+        "title": "Satu set",
+        "subtitle": "Standar ditetapkan ke 6 (atau 7 dalam tie-break)",
+        "hint": "Satu set dengan permainan; pengatur waktu pertandingan opsional di langkah berikutnya"
+      },
+      "CLASSIC_SHORT_SET": {
+        "title": "Set pendek",
+        "subtitle": "4 set permainan pendek, terbaik dari 3 set",
+        "hint": "Format klasik lebih cepat"
+      },
+      "CLASSIC_FAST4": {
+        "title": "CEPAT4",
+        "subtitle": "4 set game, tanpa iklan, tie-break dengan skor 3–3 berbanding 5",
+        "hint": "Format FAST4 Tenis Australia",
+        "sport": {
+          "TENNIS": {
+            "title": "tenis FAST4",
+            "subtitle": "Terbaik dari 3 set · 4 pertandingan · tanpa iklan · TB pada 3–3 hingga 5",
+            "hint": "Social and league-friendly short tennis"
+          }
+        }
+      },
+      "CLASSIC_SUPER_TIEBREAK": {
+        "title": "Tie-break yang super",
+        "subtitle": "2 set + tie-break super pada kedudukan 1-1",
+        "hint": "Pertandingan kompak dengan nuansa klasik"
+      },
+      "CLASSIC_TIMED": {
+        "title": "Permainan/set · waktunya",
+        "subtitle": "Satu set dengan permainan dan 15/30/40…; pertandingan berhenti ketika jam berakhir",
+        "hint": "Rotasi ala Americano tetap bisa menggunakan poin tenis per pertandingan"
+      },
+      "POINTS_12": {
+        "title": "12 poin",
+        "subtitle": "Total 12 poin di set (kedua tim); poin terbanyak menang",
+        "hint": "Lightning Americano — rotasi cepat",
+        "sport": {
+          "PADEL": {
+            "title": "12 bola",
+            "subtitle": "Total 12 bola dalam set (kedua tim); poin terbanyak menang",
+            "hint": "Rotasi Americano pendek padel"
+          }
+        }
+      },
+      "POINTS_15": {
+        "title": "15 poin",
+        "subtitle": "Total 15 poin di set (kedua tim); poin terbanyak menang",
+        "hint": "Format rotasi cepat",
+        "sport": {
+          "BADMINTON": {
+            "title": "15 bola",
+            "subtitle": "Total 15 bola dalam set (kedua tim); poin terbanyak menang",
+            "hint": "Rotasi bulu tangkis sosial — bukan tiga pertandingan berbanding 15"
+          }
+        }
+      },
+      "POINTS_16": {
+        "title": "16 poin",
+        "subtitle": "Total 16 poin di set (kedua tim); poin terbanyak menang",
+        "hint": "Set cepat — gaya Americano",
+        "sport": {
+          "PICKLEBALL": {
+            "title": "Anggaran 16 bola",
+            "subtitle": "Total 16 bola per pertandingan (kedua tim); poin terbanyak menang",
+            "hint": "Rotasi sosial — bukan permainan ke 16 menang-kali-2"
+          }
+        }
+      },
+      "SINGLE_GAME_21": {
+        "title": "21 poin",
+        "subtitle": "Permainan tunggal menjadi 21 poin, menang dengan 2",
+        "hint": "Tenis meja kasual pra-2001",
+        "sport": {
+          "TABLE_TENNIS": {
+            "title": "Game jadul ke 21",
+            "subtitle": "Satu pertandingan hingga 21 poin (menang 2)",
+            "hint": "Format 21 poin lama sebelum permainan 11 poin"
+          }
+        }
+      },
+      "POINTS_11": {
+        "title": "11 poin",
+        "subtitle": "Permainan tunggal hingga 11 poin, menang dengan 2",
+        "hint": "Permainan reli cepat",
+        "sport": {
+          "TABLE_TENNIS": {
+            "title": "Permainan ke 11",
+            "subtitle": "Satu pertandingan hingga 11 poin (menang 2)",
+            "hint": "misalnya 11–9 — menang 2 saat deuce"
+          },
+          "PICKLEBALL": {
+            "title": "Permainan ke 11",
+            "subtitle": "Satu permainan reli untuk mendapatkan 11 poin, menang dengan 2",
+            "hint": "Panjang bola acar rekreasi yang umum"
+          }
+        }
+      },
+      "POINTS_21": {
+        "title": "21 poin",
+        "subtitle": "Total 21 poin di set (kedua tim); poin terbanyak menang",
+        "hint": "Panjang Americano yang umum",
+        "sport": {
+          "BADMINTON": {
+            "title": "Pertandingan ke 21",
+            "subtitle": "Satu pertandingan untuk 21 poin, menang dengan 2",
+            "hint": "Permainan bulu tangkis yang lebih pendek"
+          },
+          "PICKLEBALL": {
+            "title": "anggaran 21 bola",
+            "subtitle": "Total 21 bola per pertandingan (kedua tim); poin terbanyak menang",
+            "hint": "Americano / permainan terbuka — bukan pertandingan reli ke 21"
+          }
+        }
+      },
+      "BEST_OF_3_11": {
+        "title": "Terbaik dari 3 · hingga 11",
+        "subtitle": "Tiga pertandingan masing-masing 11 poin, menang 2; kemenangan pertama hingga 2 pertandingan",
+        "hint": "Pertandingan tenis meja standar",
+        "sport": {
+          "TABLE_TENNIS": {
+            "title": "Terbaik dari 3 pertandingan berbanding 11",
+            "subtitle": "Tiga pertandingan berbanding 11 (menang 2); pertama hingga 2 pertandingan memenangkan pertandingan",
+            "hint": "Durasi pertandingan tenis meja resmi"
+          },
+          "SQUASH": {
+            "title": "Terbaik dari 3 pertandingan berbanding 11",
+            "subtitle": "Tiga pertandingan berbanding 11 (menang 2); kemenangan pertama hingga 2 pertandingan",
+            "hint": "Pertandingan squash yang lebih pendek"
+          },
+          "PICKLEBALL": {
+            "title": "Terbaik dari 3 pertandingan berbanding 11",
+            "subtitle": "Tiga game reli berbanding 11 (menang 2); kemenangan pertama hingga 2 pertandingan",
+            "hint": "Pertandingan Pickleball gaya resmi"
+          }
+        }
+      },
+      "BEST_OF_3_15": {
+        "title": "Terbaik dari 3 · hingga 15",
+        "subtitle": "Tiga pertandingan masing-masing 15 poin, menang dengan 2; kemenangan pertama hingga 2 pertandingan",
+        "hint": "Pertandingan bulutangkis klub",
+        "sport": {
+          "BADMINTON": {
+            "title": "Terbaik dari 3 pertandingan berbanding 15",
+            "subtitle": "Tiga pertandingan berbanding 15 (menang 2); pertama hingga 2 pertandingan memenangkan pertandingan",
+            "hint": "BWF Format klub 2027 — bukan anggaran bola"
+          }
+        }
+      },
+      "BEST_OF_5_11": {
+        "title": "Terbaik dari 5 · hingga 11",
+        "subtitle": "Lima pertandingan berbanding 11; pertama hingga 3 pertandingan memenangkan pertandingan",
+        "hint": "Pertandingan reli yang lebih panjang",
+        "sport": {
+          "SQUASH": {
+            "title": "Terbaik dari 5 pertandingan berbanding 11",
+            "subtitle": "Lima pertandingan berbanding 11 (menang 2); kemenangan pertama hingga 3 pertandingan",
+            "hint": "Panjang pertandingan squash standar"
+          }
+        }
+      },
+      "PAR_11": {
+        "title": "PAR sampai 11",
+        "subtitle": "Poin-a-reli ke 11, menang dengan 2",
+        "hint": "Penilaian squash PAR",
+        "sport": {
+          "SQUASH": {
+            "title": "PAR sampai 11",
+            "subtitle": "Squash PAR resmi — setiap reli mendapat skor, game ke 11 (menang 2)",
+            "hint": "Labu kompetitif standar"
+          }
+        }
+      },
+      "BEST_OF_3_21": {
+        "title": "Terbaik dari 3 pertandingan berbanding 21",
+        "subtitle": "Tiga pertandingan masing-masing 21 poin, menang 2; pertama hingga 2 pertandingan memenangkan pertandingan",
+        "hint": "Panjang pertandingan bulutangkis standar"
+      },
+      "POINTS_24": {
+        "title": "24 poin",
+        "subtitle": "Total 24 poin di set (kedua tim); poin terbanyak menang",
+        "hint": "Set sedikit lebih lama",
+        "sport": {
+          "PICKLEBALL": {
+            "title": "anggaran 24 bola",
+            "subtitle": "Total 24 bola per pertandingan (kedua tim); poin terbanyak menang",
+            "hint": "Batas rotasi sosial"
+          }
+        }
+      },
+      "POINTS_32": {
+        "title": "32 poin",
+        "subtitle": "Total 32 poin di set (kedua tim); poin terbanyak menang",
+        "hint": "Set yang lebih panjang per putaran",
+        "sport": {
+          "PICKLEBALL": {
+            "title": "anggaran 32 bola",
+            "subtitle": "Total 32 bola per pertandingan (kedua tim); poin terbanyak menang",
+            "hint": "Rotasi sosial yang lebih lama"
+          }
+        }
+      },
+      "TIMED": {
+        "title": "Pertandingan waktunya",
+        "subtitle": "Mainkan sampai jam berhenti",
+        "hint": "Tidak ada batasan poin, mainkan saja"
+      },
+      "CUSTOM": {
+        "title": "Kebiasaan",
+        "subtitle": "Sempurnakan setiap aturan",
+        "hint": "Gunakan opsi lanjutan"
+      }
+    },
+    "scoringShort": {
+      "CLASSIC_AUTOMATIC": "Otomatis",
+      "CLASSIC_BEST_OF_3": "Terbaik dari 3",
+      "CLASSIC_BEST_OF_5": "Terbaik dari 5",
+      "CLASSIC_PRO_SET": "Perangkat profesional",
+      "CLASSIC_SINGLE_SET": "Satu set",
+      "CLASSIC_SHORT_SET": "Set pendek",
+      "CLASSIC_FAST4": "CEPAT4",
+      "CLASSIC_SUPER_TIEBREAK": "Tie-break yang super",
+      "CLASSIC_TIMED": "Permainan/set · waktunya",
+      "POINTS_11": "Ke 11",
+      "POINTS_12": "Ke 12",
+      "POINTS_15": "Sampai 15",
+      "POINTS_16": "Ke 16",
+      "POINTS_21": "Ke 21",
+      "POINTS_21BySport": {
+        "PICKLEBALL": "21 bola"
+      },
+      "POINTS_16BySport": {
+        "PICKLEBALL": "16 bola"
+      },
+      "POINTS_24BySport": {
+        "PICKLEBALL": "24 bola"
+      },
+      "POINTS_32BySport": {
+        "PICKLEBALL": "32 bola"
+      },
+      "SINGLE_GAME_21": "Ke 21",
+      "BEST_OF_3_11": "Bo3 · sampai 11",
+      "BEST_OF_3_15": "Bo3 · sampai 15",
+      "BEST_OF_3_21": "Bo3 · sampai 21",
+      "BEST_OF_5_11": "Bo5 · sampai 11",
+      "PAR_11": "PAR · 11",
+      "POINTS_24": "Ke 24",
+      "POINTS_32": "Ke 32",
+      "TIMED": "waktunya",
+      "CUSTOM": "Kebiasaan"
+    },
+    "goldenPointShort": "Poin Emas",
+    "goldenPoint": {
+      "title": "Poin Emas",
+      "titleAdvantage": "Penilaian keuntungan",
+      "pickerHint": "Berapa deuce sebelum 40-40 berikutnya adalah kematian mendadak.",
+      "optionOff": "Mati",
+      "optionImmediate": "Pada usia 40–40",
+      "optionAfterDeuces": "Setelah {{count}}",
+      "afterDeucesShort": "GP setelah {{count}} deuce",
+      "afterDeucesShort_plural": "GP setelah deuces {{count}}",
+      "descriptionImmediate": "Pada skor 40–40 (deuce), poin berikutnya memenangkan permainan—tidak ada skor keuntungan.",
+      "descriptionAfterDeuces": "Setelah {{count}} kembali ke deuce dari keunggulan, 40–40 berikutnya adalah kematian mendadak.",
+      "description": "Pada skor 40–40 (deuce), poin berikutnya memenangkan permainan—tidak ada skor keuntungan.",
+      "descriptionOff": "Penilaian keunggulan standar pada deuce: satu pihak mengambil keuntungan, kemudian harus memenangkan poin berikutnya; jika tidak, kembali ke 40–40—sampai satu pihak unggul dua."
+    },
+    "timedMatch": {
+      "title": "Pertandingan waktunya",
+      "description": "Mainkan sampai jam habis. Pemenangnya adalah siapa pun yang memiliki poin terbanyak.",
+      "descriptionClassic": "Satu set dengan penilaian tenis (permainan, 15/30/40…). Pertandingan berhenti ketika jam berakhir.",
+      "durationTitle": "Waktu per pertandingan",
+      "customDuration": "Kustom (1–60 menit)",
+      "minutesLabel": "{{minutes}} mnt",
+      "presetMinutes": "{{minutes}} mnt"
+    },
+    "bestOfMatch": {
+      "label": "Pertandingan terbaik (permainan)",
+      "labelBySport": {
+        "TABLE_TENNIS": "Pertandingan terbaik",
+        "BADMINTON": "Pertandingan terbaik",
+        "SQUASH": "Pertandingan terbaik"
+      },
+      "optionTo": "Yang terbaik dari {{sets}} · hingga {{cap}}"
+    },
+    "customPoints": {
+      "label": "Jumlah khusus",
+      "placeholder": "misalnya 27",
+      "short": "Ke {{count}}"
+    },
+    "points": {
+      "title": "Poin per hasil"
+    }
+  }
+}

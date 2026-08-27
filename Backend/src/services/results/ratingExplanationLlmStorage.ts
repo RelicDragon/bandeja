@@ -8,7 +8,9 @@ import type {
 export const LLM_RATING_EXPLANATION_KEY = 'llmRatingExplanation';
 
 /** Languages used when generating the original insight (app locales). */
-export const SOURCE_LLM_RATING_LANGS = ['en', 'ru', 'sr', 'es', 'cs', 'ar'] as const;
+export const SOURCE_LLM_RATING_LANGS = [
+  'en', 'ru', 'sr', 'es', 'cs', 'ar', 'zh', 'id', 'hi', 'th', 'ja',
+] as const;
 
 /** Mirrors TranslationService.TRANSLATE_TO_LANGUAGE_CODES (keep in sync). */
 export const TRANSLATION_TARGET_LANGS = [
@@ -32,6 +34,9 @@ export const TRANSLATION_TARGET_LANGS = [
   'tr',
   'ar',
   'zh',
+  'id',
+  'hi',
+  'th',
   'ja',
   'ko',
 ] as const;

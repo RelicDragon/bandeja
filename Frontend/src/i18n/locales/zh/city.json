@@ -1,0 +1,30 @@
+{
+  "city": {
+    "clubsCount_zero": "暂无俱乐部",
+    "clubsCount_one": "{{count}}个俱乐部",
+    "clubsCount_other": "{{count}}个俱乐部",
+    "searchCityOrClub": "搜索城市或俱乐部...",
+    "searchSectionCities": "城市",
+    "searchSectionClubs": "俱乐部",
+    "searchSectionCountries": "国家/地区",
+    "map": "地图",
+    "list": "列表",
+    "selectCity": "选择",
+    "selectCityName": "使用{{name}}",
+    "nearMe": "靠近我",
+    "whereAmI": "我在哪？",
+    "nearestToYou": "最近离开你",
+    "yourLocation": "你的位置",
+    "approximateLocation": "大致位置",
+    "suggested": "推荐",
+    "suggestedNearest": "最近",
+    "suggestedCurrent": "当前",
+    "suggestedCurrentNearest": "你最近的城市",
+    "locatingNearby": "正在找到附近城市...",
+    "locationHintDenied": "定位权限已关闭 — 您仍可搜索或使用地图。",
+    "locationHintUnavailable": "无法获取您的位置 — 请尝试搜索或地图。",
+    "locationHintTimeout": "定位超时 — 请重试，或使用搜索。",
+    "locationHintUnsupported": "这里不支持定位 — 请尝试搜索或地图。",
+    "locationHintNoCity": "附近未找到城市 — 请尝试搜索或地图。"
+  }
+}

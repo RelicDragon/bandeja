@@ -387,7 +387,12 @@ const languages = {
     'ar': { flag: '🇸🇦', label: 'AR', fullLabel: 'العربية' },
     'ru': { flag: '🇷🇺', label: 'RU', fullLabel: 'Русский' },
     'sr': { flag: '🇷🇸', label: 'SR', fullLabel: 'Srpski' },
-    'es': { flag: '🇪🇸', label: 'ES', fullLabel: 'Español' }
+    'es': { flag: '🇪🇸', label: 'ES', fullLabel: 'Español' },
+    'zh': { flag: '🇨🇳', label: 'ZH', fullLabel: '中文' },
+    'id': { flag: '🇮🇩', label: 'ID', fullLabel: 'Bahasa Indonesia' },
+    'hi': { flag: '🇮🇳', label: 'HI', fullLabel: 'हिन्दी' },
+    'th': { flag: '🇹🇭', label: 'TH', fullLabel: 'ไทย' },
+    'ja': { flag: '🇯🇵', label: 'JA', fullLabel: '日本語' }
 };
 
 let currentLang = 'en';
@@ -530,6 +535,26 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e =
                 <span class="flag">🇪🇸</span>
                 <span class="full-label">Español</span>
             </button>
+            <button class="lang-selector-item" onclick="switchLang('zh', this)">
+                <span class="flag">🇨🇳</span>
+                <span class="full-label">中文</span>
+            </button>
+            <button class="lang-selector-item" onclick="switchLang('id', this)">
+                <span class="flag">🇮🇩</span>
+                <span class="full-label">Bahasa Indonesia</span>
+            </button>
+            <button class="lang-selector-item" onclick="switchLang('hi', this)">
+                <span class="flag">🇮🇳</span>
+                <span class="full-label">हिन्दी</span>
+            </button>
+            <button class="lang-selector-item" onclick="switchLang('th', this)">
+                <span class="flag">🇹🇭</span>
+                <span class="full-label">ไทย</span>
+            </button>
+            <button class="lang-selector-item" onclick="switchLang('ja', this)">
+                <span class="flag">🇯🇵</span>
+                <span class="full-label">日本語</span>
+            </button>
         </div>
     </div>
 </div>
@@ -542,6 +567,11 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e =
 <script src="eula-content-ru.js"></script>
 <script src="eula-content-sr.js"></script>
 <script src="eula-content-es.js"></script>
+<script src="eula-content-zh.js"></script>
+<script src="eula-content-id.js"></script>
+<script src="eula-content-hi.js"></script>
+<script src="eula-content-th.js"></script>
+<script src="eula-content-ja.js"></script>
 
 </div>
 </body>

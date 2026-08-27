@@ -1,0 +1,9 @@
+{
+  "trainers": {
+    "ourTrainers": "トレーナー一覧",
+    "selectToFilterHint": "トレーナーをタップすると、その人のトレーニングに絞り込めます",
+    "trainingsBy": "トレーニング：",
+    "clearTrainerFilter": "トレーナーフィルターを解除",
+    "noTrainingsByTrainer": "{{name}}のトレーニングはありません"
+  }
+}

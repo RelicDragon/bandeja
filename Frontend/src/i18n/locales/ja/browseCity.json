@@ -1,0 +1,21 @@
+{
+  "browseCity": {
+    "chipAriaHome": "あなたの都市、{{city}}。別の都市を見る。",
+    "chipAriaAway": "{{city}}を閲覧中。都市を変更。",
+    "chipAriaVenueHome": "試合の都市 {{city}}。別の都市を選ぶ。",
+    "chipAriaVenueAway": "{{city}}のクラブ。都市を変更。",
+    "changeCity": "都市",
+    "recent": "最近",
+    "nearby": "近く",
+    "viewCity": "{{city}}を見る",
+    "nobodyInCity": "{{city}}に「{{query}}」に該当する人はいません",
+    "nobodyNearby": "近くに「{{query}}」に該当する人はいません。別の都市を試してください。",
+    "noUsersInCity": "{{city}}にユーザーがいません",
+    "noUsersInCityHint": "都市を切り替えるか、名前で検索",
+    "lookingEmptyInCity": "{{city}}で探している人はいません",
+    "noClubsInCity": "{{city}}にクラブはありません",
+    "noClubsMatch": "「{{query}}」に一致するクラブはありません",
+    "searchClubs": "クラブを検索",
+    "km": "{{km}} km"
+  }
+}

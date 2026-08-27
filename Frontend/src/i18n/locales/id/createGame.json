@@ -1,0 +1,600 @@
+{
+  "createGame": {
+    "title": "Buat Permainan",
+    "identity": {
+      "label": "Nama & foto",
+      "optional": "Opsional"
+    },
+    "steps": {
+      "setup": "Pengaturan permainan",
+      "location": "Lokasi & waktu",
+      "players": "Pemain",
+      "details": "Pengaturan & detail"
+    },
+    "footer": {
+      "selectClubHint": "Pilih klub untuk melanjutkan"
+    },
+    "locationSteps": {
+      "date": "Tanggal",
+      "time": "Waktu mulai"
+    },
+    "pickSport": "Pilih olahraga",
+    "createBar": "Buat Acara Bar",
+    "createTraining": "Buat Sesi Pelatihan",
+    "createTournament": "Buat Turnamen",
+    "createLeague": "Buat Liga",
+    "selectType": "Pilih Jenis",
+    "location": "Lokasi",
+    "locationTournament": "Lokasi Turnamen",
+    "locationLeague": "Lokasi Liga",
+    "club": "Klub",
+    "selectClub": "Pilih Klub",
+    "court": "Lapangan",
+    "hall": "Aula",
+    "notBookedYet": "Hanya permainan",
+    "dontSelectCourt": "Belum ada lapangan",
+    "dontSelectHall": "Belum ada aula",
+    "courtNotSelected": "Lapangan belum dipilih",
+    "hallNotSelected": "Hall tidak dipilih",
+    "multiCourtHint": "Pilih hingga {{count}} lapangan untuk {{participants}} pemain ({{selected}} dipilih)",
+    "multiCourtNeedSharedSlots": "Pilih {{count}} lapangan yang gratis secara bersamaan.",
+    "multiCourtNoSharedSlots": "Tidak ada slot waktu gratis di semua {{count}} lapangan yang dipilih. Cobalah lapangan lain, tanggal lain, atau durasi.",
+    "webCameraHint": "Lapangan ini memiliki kamera web yang terhubung",
+    "webCameraHintsTitle": "Kamera web tertaut",
+    "webCameraHintNamed": "{{court}} memiliki kamera web yang tertaut",
+    "webCameraHintAction": "Ketuk untuk menonton langsung",
+    "hasBookedCourt": "Saya sudah memesan lapangan ini",
+    "hasBookedHall": "Saya sudah memesan meja",
+    "selectCourt": "Pilih lapangan",
+    "selectHall": "Pilih Aula",
+    "selectClubFirst": "Pilih klub terlebih dahulu",
+    "selectCourtFirst": "Pilih lapangan terlebih dahulu",
+    "clubCancellationNotice": "Pemberitahuan pembatalan: setidaknya {{hours}} jam sebelum slot Anda.",
+    "clubPolicyTitle": "Kebijakan klub",
+    "noClubsAvailable": "Tidak ada klub yang tersedia",
+    "clubDetailsBack": "Kembali ke klub",
+    "clubInfo": "Detail klub",
+    "clubPhotos": "Foto",
+    "noCourtsAvailable": "Tidak ada lapangan yang tersedia",
+    "noHallsAvailable": "Tidak ada aula yang tersedia",
+    "playerLevel": "Tingkat Pemain",
+    "playerLevelTournament": "Level Pemain Turnamen",
+    "playerLevelLeague": "Tingkat Pemain Liga",
+    "minLevel": "Tingkat Minimal",
+    "maxLevel": "Tingkat Maksimum",
+    "participants": "Peserta",
+    "participantsTournament": "Peserta Turnamen",
+    "participantsLeague": "Peserta Liga",
+    "teamFormat": "Format tim",
+    "numberOfParticipants": "Jumlah Peserta",
+    "numberOfParticipantsTournament": "Jumlah Peserta Turnamen",
+    "numberOfParticipantsLeague": "Jumlah Peserta Liga",
+    "addMeToGame": "Bergabunglah dengan permainan",
+    "iWantToPlay": "Saya ingin bermain",
+    "iWillPlay": "Saya akan bermain juga",
+    "settings": "Pengaturan",
+    "settingsTournament": "Pengaturan Turnamen",
+    "settingsLeague": "Pengaturan Liga",
+    "settingsTraining": "Pengaturan Pelatihan",
+    "priceRequired": "Harga harus lebih besar dari 0 untuk jenis harga ini",
+    "gameType": "Jenis Permainan",
+    "gameTypeLeague": "Tipe Liga",
+    "gameTypeNote": "Anda dapat mengubah detail pengaturan game di bagian Game Setup.",
+    "gameTypeNoteLeague": "Anda dapat mengubah pengaturan liga secara detail di bagian Pengaturan Liga.",
+    "anyoneCanInvite": {
+      "title": "Siapa pun dapat mengundang pemain lain",
+      "titleTraining": "Siapa pun dapat mengundang peserta lain",
+      "note": {
+        "false": "Hanya penyelenggara yang dapat mengundang pemain.",
+        "true": "Setiap peserta dapat mengundang pemain lain."
+      },
+      "noteTraining": {
+        "false": "Hanya penyelenggara yang dapat mengundang peserta.",
+        "true": "Setiap peserta dapat mengundang peserta lainnya."
+      }
+    },
+    "publicGame": {
+      "title": "Permainan publik",
+      "titleTraining": "Pelatihan publik",
+      "note": {
+        "false": "Akan bersifat pribadi dan hanya dapat dilihat oleh peserta yang diundang.",
+        "true": "Akan terlihat oleh semua pemain dan dapat ditemukan dalam pencarian."
+      },
+      "noteTraining": {
+        "false": "Akan bersifat pribadi dan hanya dapat dilihat oleh peserta yang diundang.",
+        "true": "Akan terlihat oleh semua pemain dan dapat ditemukan dalam pencarian."
+      }
+    },
+    "resultsByAnyone": {
+      "title": "Hasil oleh siapa pun",
+      "note": {
+        "false": "Hanya penyelenggara yang dapat memasukkan dan mengubah hasil dan format permainan.",
+        "true": "Setiap peserta yang bermain dapat memasukkan hasil dan mengubah format permainan."
+      }
+    },
+    "allowDirectJoin": {
+      "title": "Masuk tanpa konfirmasi",
+      "titleTraining": "Bergabung tanpa konfirmasi",
+      "note": {
+        "false": "Pemain memerlukan persetujuan dari penyelenggara sebelum bergabung.",
+        "true": "Pemain dapat langsung bergabung tanpa menunggu persetujuan."
+      },
+      "noteTraining": {
+        "false": "Peserta memerlukan persetujuan dari penyelenggara sebelum bergabung.",
+        "true": "Peserta dapat langsung bergabung tanpa menunggu persetujuan."
+      }
+    },
+    "afterGameGoToBar": {
+      "title": "Tetaplah di bar setelah pertandingan",
+      "titleTraining": "Tetaplah di bar setelah pelatihan",
+      "note": {
+        "false": "Tidak termasuk arisan setelah pertandingan.",
+        "true": "Termasuk arisan usai pertandingan."
+      },
+      "noteTraining": {
+        "false": "Tidak termasuk arisan setelah pelatihan.",
+        "true": "Termasuk arisan setelah pelatihan."
+      }
+    },
+    "participantsOnlyChat": {
+      "title": "Obrolan khusus peserta",
+      "note": {
+        "false": "Hanya obrolan umum yang akan tersedia setelah pembuatan.",
+        "true": "Obrolan peserta dan penyelenggara akan dibuat saat game dibuat."
+      }
+    },
+    "hasFixedTeams": {
+      "note": {
+        "false": "Papan skor bersifat individual. Pemain akan bermain dengan siapa pun berdasarkan aturan.",
+        "true": "Papan skor dilakukan secara berpasangan. Anda dapat mengunci pemain menjadi pasangan yang bersaing satu sama lain. Susunan pemain tidak dapat diubah setelah pertandingan dimulai."
+      }
+    },
+    "ratingGame": {
+      "title": "Permainan peringkat",
+      "note": {
+        "false": "Hasil tidak akan mempengaruhi level peserta.",
+        "true": "Hasil akan mempengaruhi level peserta."
+      }
+    },
+    "tournament": "Turnamen",
+    "genderTeams": {
+      "label": "Jenis kelamin",
+      "any": "Setiap",
+      "men": "Laki-laki",
+      "women": "Wanita",
+      "mixPairs": "Mencampur",
+      "note": {
+        "any": "Jenis kelamin apa pun diperbolehkan",
+        "men": "Hanya laki-laki yang diperbolehkan",
+        "women": "Hanya wanita yang diperbolehkan",
+        "mixPairs": "Hanya untuk permainan tim, setiap tim akan terdiri dari 1 pria, 1 wanita, jumlah pria/wanita yang sama diperbolehkan untuk bergabung."
+      }
+    },
+    "fixedTeams": {
+      "optionOff": "Berputar",
+      "GAME": {
+        "descriptionOn": "Pertahankan partner yang sama untuk setiap pertandingan di game ini.",
+        "descriptionOff": "Mitra dapat berubah dari satu putaran ke putaran lainnya."
+      },
+      "TOURNAMENT": {
+        "descriptionOn": "Mitra tetap bersama sepanjang turnamen.",
+        "descriptionOff": "Pasangan dapat berubah di antara putaran turnamen."
+      },
+      "LEAGUE": {
+        "descriptionOn": "Memperbaiki pasangan untuk seluruh liga.",
+        "descriptionOff": "Pasangan dapat berubah dari putaran ke putaran di liga."
+      }
+    },
+    "allowUserInMultipleTeams": {
+      "title": "Pemain yang sama di beberapa tim tetap",
+      "helper": "Memungkinkan satu orang untuk dipilih pada lebih dari satu pasangan. Rotasi dan logika liga atau klasemen mungkin menghitungnya dengan cara yang tidak biasa; matikan tim tetap untuk mengatur ulang ini.",
+      "editInSettingsHint": "Anda sedang mengedit Pengaturan pada kartu di bawah. Gunakan tombol di sana untuk opsi ini, lalu ketuk Simpan. Saat Anda keluar dari mode edit, Anda dapat mengubahnya lagi dari Pengaturan game di atas.",
+      "tapEditHint": "Ketuk Edit pada kartu ini, lalu putar tombolnya dan ketuk Simpan.",
+      "saveAfterChangeHint": "Putar tombolnya, lalu ketuk Simpan (atas atau bawah kartu ini). Kartu pengaturan Game Anda menampilkan opsi ini lagi setelah Anda selesai mengedit.",
+      "note": {
+        "false": "Setiap pemain hanya dapat berada pada satu pasangan tetap.",
+        "true": "Seorang pemain dapat muncul di beberapa pasangan tetap sekaligus."
+      }
+    },
+    "gameName": "Nama Permainan",
+    "gameNameTournament": "Nama Turnamen",
+    "gameNameLeague": "Nama Liga",
+    "gameNameTraining": "Nama pelatihan",
+    "gameNamePlaceholder": "Beri nama permainan Anda",
+    "gameNamePlaceholderTournament": "Beri nama turnamen Anda",
+    "gameNamePlaceholderLeague": "Beri nama liga Anda",
+    "gameNamePlaceholderTraining": "Beri nama sesi Anda",
+    "miscellaneous": "Aneka ragam",
+    "description": "Keterangan",
+    "descriptionPlaceholder": "Deskripsi untuk pemain…",
+    "descriptionPlaceholderTournament": "Deskripsi untuk pemain…",
+    "descriptionPlaceholderLeague": "Deskripsi untuk pemain…",
+    "descriptionPlaceholderTraining": "Deskripsi untuk pemain…",
+    "price": "Harga",
+    "priceType": "Jenis Harga",
+    "priceTypeNotKnown": "Tidak Diketahui",
+    "priceTypePerPerson": "Per Orang",
+    "priceTypePerTeam": "Per Tim",
+    "priceTypeTotal": "Total",
+    "priceTypeFree": "Bebas",
+    "priceTotal": "Jumlah Harga",
+    "priceTotalPlaceholder": "Masukkan jumlah harga",
+    "priceCurrency": "Mata uang",
+    "priceNotSet": "Harga belum ditentukan",
+    "gameStart": "Permainan dimulai",
+    "gameStartTournament": "Turnamen dimulai",
+    "gameStartLeague": "Liga dimulai",
+    "gameStartTraining": "Mulai dari pelatihan",
+    "selectDate": "Pilih Tanggal",
+    "date": "Tanggal",
+    "startTime": "Waktu Mulai",
+    "endTime": "Akhir Waktu",
+    "duration": "Lamanya",
+    "noTimeSlotsForDate": "Tidak ada waktu yang tersedia untuk tanggal ini. Coba hari lain.",
+    "noTimeSlotsForDuration": "Tidak ada waktu yang tersedia untuk durasi ini. Coba durasi atau tanggal lain.",
+    "clubTime": "waktu klub",
+    "timeSlot": "Slot yang dipilih",
+    "loadingExternalSlots": "Memuat slot eksternal",
+    "bookedWithoutCourt": "Tanpa lapangan",
+    "notConfirmed": "tidak dikonfirmasi",
+    "multipleCourts": "Beberapa Lapangan",
+    "noCourtsSelected": "Tidak ada lapangan yang dipilih",
+    "addCourt": "Tambah lapangan",
+    "createButton": "Buat Permainan",
+    "createButtonTournament": "Buat Turnamen",
+    "createButtonLeague": "Buat Liga",
+    "createButtonBar": "Buat Acara Bar",
+    "createButtonTraining": "Buat Sesi Pelatihan",
+    "today": "Hari ini",
+    "tomorrow": "Besok",
+    "yesterday": "Kemarin",
+    "selectFromCalendar": "Pilih dari kalender",
+    "hours": "{{count}}h",
+    "hoursMinutes": "{{hours}}h {{minutes}}m",
+    "durationHours_one": "{{count}} jam",
+    "durationHours_other": "{{count}} jam",
+    "durationHoursAndHalf": "{{hours}}.5 jam",
+    "durationHoursMinutes": "{{hours}} jam {{minutes}} mnt",
+    "you": "Anda",
+    "invite": "Mengundang",
+    "remove": "Menghapus",
+    "manageInvites": "Kelola Undangan ({{count}})",
+    "invitesWillBeSent_one": "Pemain akan diundang setelah pembuatan game",
+    "invitesWillBeSent_other": "{{count}} pemain akan diundang setelah pembuatan game",
+    "overlapHardSave": "Kali ini tumpang tindih dengan lapangan yang tidak tersedia (sistem klub atau diblokir). Pilih slot lain.",
+    "overlapSoftTitle": "Pertandingan lain direncanakan di sini",
+    "overlapSoftMessage": "Pemain lain sedang bermain di lapangan ini saat ini tetapi belum mengonfirmasi pemesanannya. Anda masih bisa melanjutkan.",
+    "overlapSoftProceed": "Lanjutkan saja",
+    "markCourtBookedTitle": "Tandai lapangan sudah dipesan?",
+    "markCourtBookedMessage": "Anda memilih lapangan tetapi belum menandainya sebagai dipesan. Konfirmasikan ketika Anda telah memesannya dengan klub.",
+    "markCourtBookedYes": "Ya, saya sudah memesannya",
+    "markCourtBookedSkip": "Belum",
+    "locationTime": {
+      "skipRealCourtToggle": "Hanya permainan",
+      "realCourtBookingHint": "{{courts}} di {{club}} akan dicadangkan saat Anda membuat game.",
+      "realCourtBookingHintEdit": "{{courts}} di {{club}} akan dipesan saat Anda menyimpan.",
+      "skipRealCourtHint": "Pertandingan hanya akan dijadwalkan di Bandeja.",
+      "skipRealCourtHintEdit": "Game ini hanya akan diperbarui di Bandeja.",
+      "summaryFromBookings": "Dari reservasi {{count}} Anda",
+      "summaryWindow": "{{start}} – {{end}}",
+      "summaryCrossDate": "{{startDate}} {{start}} – {{endDate}} {{end}}",
+      "selectionCounter": "Pilih reservasi {{min}}–{{max}} ({{players}})",
+      "selectionProgress": "Pilih hingga {{max}} lapangan ({{players}})",
+      "selectionCompleteOne": "1 lapangan terhubung",
+      "selectionCompleteMany": "{{count}} lapangan terhubung",
+      "selectionAtMax": "Maksimum yang dipilih untuk format ini ({{players}}) — reservasi lainnya tidak tersedia",
+      "emptyBookingsOnDate": "Tidak ada reservasi pada tanggal ini",
+      "emptyBookingsHint": "Coba tanggal lain, pesan lapangan baru, atau buat permainan tanpa menghubungkan reservasi.",
+      "emptyBookingsReserveNow": "Pesan lapangan sekarang",
+      "emptyBookingsGameOnly": "Buat game saja",
+      "gridLegend": "Hijau = reservasi Anda · Merah/kuning = sudah diambil · Utama = waktu yang dipilih",
+      "alsoUsedIn": "Juga digunakan di: {{games}}",
+      "pickAdjacentHour": "Pilih satu jam",
+      "linkHintTitle": "Game akan ditautkan ke reservasi Anda",
+      "linkHintBody": "Pemesanan lapangan ini akan ditautkan saat Anda membuat game.",
+      "linkHintLine": "{{court}} · {{window}}",
+      "overrideToggle": "Sesuaikan waktu permainan",
+      "overrideHint": "Waktu permainan bisa lebih singkat dari reservasi Anda",
+      "overrideResetToast": "Waktu disetel ulang ke reservasi",
+      "preselectedBanner": "Reservasi telah dipilih sebelumnya",
+      "linkedOnlyLabel": "Dari reservasi Anda",
+      "unlinkConfirm": "Hapus link reservasi ini?",
+      "unlinkLastConfirm": "Menghapus reservasi terakhir akan membuka kunci pengeditan waktu.",
+      "unlinkNoCancelNote": "Reservasi lapangan di klub tetap aktif — hanya tautan ke permainan ini yang dihapus.",
+      "syncInactiveCreate": "Sinkronisasi tidak aktif saat ini — kami tidak dapat mengambil slot atau melakukan pemesanan di sini. Anda masih dapat membuat game saat ini.",
+      "syncInactiveEdit": "Sinkronisasi tidak aktif saat ini — kami tidak dapat mengambil slot atau melakukan pemesanan di sini. Anda masih dapat mengedit game saat ini."
+    },
+    "reservationIntent": {
+      "title": "Bagaimana cara mendapatkan lapangannya?",
+      "otherOptions": "Pilihan lain",
+      "recommended": "Direkomendasikan",
+      "recommendedShort": "Rek",
+      "validation": {
+        "selectCourt": "Pilih lapangan {{count}} terlebih dahulu.",
+        "selectBookableCourt": "Pilih {{count}} lapangan yang dapat dipesan secara online terlebih dahulu.",
+        "selectTime": "Pilih waktu yang tersedia terlebih dahulu.",
+        "selectDuration": "Pilih durasi terlebih dahulu.",
+        "selectReservations": "Pilih {{count}} reservasi dari akun Anda.",
+        "bookingRecordsLoading": "Masih memuat detail reservasi Anda — coba lagi sebentar lagi."
+      },
+      "reserveNow": {
+        "title": "Pesan lapangan",
+        "chipTitle": "Pesan lapangan",
+        "description": "Pilih waktu — kami akan memesankannya untuk Anda."
+      },
+      "useExisting": {
+        "title": "Saya sudah melakukan pemesanan",
+        "chipTitle": "Pemesanan saya",
+        "description": "Hubungkan reservasi dari akun klub Anda.",
+        "contextAvailable": "{{count}} tersedia pada tanggal ini"
+      },
+      "gameOnly": {
+        "title": "Lewati pemesanan lapangan",
+        "chipTitle": "Hanya permainan",
+        "description": "Cukup buat gamenya — tidak ada lapangan yang dicadangkan."
+      },
+      "manualBooked": {
+        "title": "Sudah dipesan secara manual",
+        "chipTitle": "Dipesan",
+        "description": "Tandai sebagai dipesan tanpa reservasi online."
+      },
+      "summary": {
+        "reserveNow": {
+          "title": "Reservasi lapangan nyata akan dilakukan",
+          "body": "Pilih {{count}} lapangan, durasi, dan waktu. Jadwal persisnya akan dicadangkan."
+        },
+        "useExisting": {
+          "title": "Game akan ditautkan ke reservasi Anda",
+          "body": "{{selected}} dari {{count}} reservasi wajib dipilih."
+        },
+        "gameOnly": {
+          "title": "Tidak ada reservasi lapangan nyata yang akan dilakukan",
+          "body": "Pertandingan hanya akan dijadwalkan di Bandeja."
+        },
+        "manualBooked": {
+          "title": "Permainan akan ditandai sebagai dipesan",
+          "body": "Tidak ada reservasi online yang akan dibuat."
+        }
+      },
+      "cta": {
+        "reserveOne": "Cadangan lapangan dan buat permainan",
+        "reserveMany": "Cadangan lapangan {{count}} dan buat permainan",
+        "linkOne": "Tautkan reservasi dan buat game",
+        "linkMany": "Tautkan reservasi {{count}} dan buat game",
+        "gameOnly": "Buat game saja",
+        "manualBooked": "Buat permainan"
+      }
+    },
+    "booktime": {
+      "switchLabel": "Cadangan lapangan saat saya membuat permainan",
+      "switchHint": "Kami akan memesan {{court}} di {{club}} saat Anda membuat game.",
+      "authTitle": "Masuk untuk melihat waktu yang tersedia",
+      "authHint": "Masuk ke {{club}} untuk memilih waktu permainan Anda.",
+      "authOptOut": "Saya sendiri yang akan memesan lapangannya",
+      "authorizeInClub": "Otorisasi di {{club}}",
+      "dateHint": "Anda dapat memesan hingga {{days}} hari ke depan di klub ini.",
+      "connectedChip": "Masuk · {{phone}}",
+      "createCta": "Buat lapangan permainan & cadangan",
+      "signInToContinue": "Masuk untuk melanjutkan",
+      "confirmTitle": "Siap untuk berkreasi?",
+      "confirmPrimary": "Pesan & buat",
+      "activityTitle": "Membuat permainan Anda…",
+      "activityStep1": "Memesan lapangan Anda…",
+      "activityStepBookCourt": "Memesan {{court}} ({{current}} dari {{total}})…",
+      "activityStep2": "Membuat permainan Anda…",
+      "multiBookFailed": "Tidak dapat memesan {{court}}. Reservasi sebelumnya telah dilepaskan.",
+      "reviewTotal": "Total",
+      "successTitle": "Anda sudah siap!",
+      "successBody": "Lapangan dipesan · Pertandingan dibuat",
+      "successGameOnly": "Permainan dibuat",
+      "errorTitle": "Ada yang tidak beres",
+      "slotTaken": "Slot ini baru saja diambil—pilih waktu lain.",
+      "pickAnotherTime": "Pilih waktu lain",
+      "tryAgain": "Coba lagi",
+      "sessionExpired": "Masa masuk Anda sudah habis. Silakan masuk lagi dan coba lagi.",
+      "createFailedAfterBook": "Kami tidak dapat membuat game Anda. Reservasi lapangan dibatalkan—coba lagi.",
+      "createFailedRollback": "Kami tidak dapat membuat game Anda. Kami tidak dapat mengonfirmasi bahwa reservasi lapangan telah dibatalkan—tanyakan kepada pihak klub.",
+      "bookFailed": "Tidak dapat memesan lapangan. Coba lagi.",
+      "reservedAs": "Dicadangkan sebagai: {{identity}}",
+      "cancelPolicy": "Pembatalan gratis hingga {{hours}} jam sebelum dimulai.",
+      "yourGame": "permainanmu",
+      "snapshotBlocked": "Ketersediaan langsung belum disinkronkan. Tunggu sinkronisasi atau pilih hari lain.",
+      "alreadyReserved": "Lapangan sudah disediakan untuk pertandingan ini.",
+      "liveApiUnavailable": "Reservasi sidang tidak tersedia saat ini — menggunakan penjadwalan normal."
+    },
+    "padeloo": {
+      "authTitle": "Hubungkan akun Padeloo Anda",
+      "authHint": "Masuk dengan email Padeloo Anda untuk memilih waktu di {{club}}.",
+      "authorizeInClub": "Otorisasi di {{club}}"
+    },
+    "klikteren": {
+      "authTitle": "Hubungkan akun Klikteren Anda",
+      "authHint": "Masuk dengan email Klikteren dan kata sandi Anda untuk memilih waktu di {{club}}.",
+      "authorizeInClub": "Otorisasi di {{club}}"
+    },
+    "intent": {
+      "title": "Permainan apa?",
+      "noTemplatesForSetup": "Tidak ada preset yang cocok dengan pengaturan ini — gunakan Lanjutan untuk memilih format secara manual.",
+      "customizeFormat": "Sesuaikan format",
+      "social": {
+        "title": "Sosial",
+        "description": "Klub malam, rotasi, tidak ada tekanan peringkat"
+      },
+      "match": {
+        "title": "Cocok",
+        "description": "Aturan standar, diperhitungkan dalam level Anda"
+      },
+      "advanced": {
+        "title": "Canggih",
+        "description": "Wizard format penuh, semua preset"
+      }
+    },
+    "templates": {
+      "title": "Templat cepat",
+      "empty": "Belum ada templat untuk olahraga ini — gunakan format Sesuaikan.",
+      "durationApprox2h": "~2 jam",
+      "durationApprox90m": "~90 menit",
+      "PADEL_AUTOMATIC": {
+        "title": "Penilaian yang fleksibel",
+        "description": "Pertandingan santai, set fleksibel atau penilaian poin, Anda yang memutuskan."
+      },
+      "PADEL_BEST_OF_3": {
+        "title": "Terbaik dari 3",
+        "description": "Pertandingan tiga set standar",
+        "badge": "Resmi"
+      },
+      "PADEL_SUPER_TIEBREAK": {
+        "title": "Tie-break yang super",
+        "description": "Dua set + tie-break super pada kedudukan 1–1"
+      },
+      "PADEL_SINGLE_SET": {
+        "title": "Satu set",
+        "description": "Satu set menjadi penentu pertandingan"
+      },
+      "PADEL_AMERICANO": {
+        "title": "Skor Americano",
+        "description": "Format rotasi — mainkan dengan total poin"
+      },
+      "PADEL_TIMED": {
+        "title": "waktunya",
+        "description": "Satu set dengan pengatur waktu pertandingan"
+      },
+      "PADEL_SINGLES_BO3": {
+        "title": "Terbaik dari 3",
+        "description": "Pertandingan tunggal — format tiga set standar",
+        "badge": "Resmi"
+      },
+      "PADEL_SINGLES_AUTOMATIC": {
+        "title": "Otomatis",
+        "description": "Single kasual — penilaian set yang fleksibel, pemasangan otomatis"
+      },
+      "PADEL_SINGLES_SINGLE_SET": {
+        "title": "Satu set",
+        "description": "Tunggal — satu set untuk menentukan pertandingan"
+      },
+      "PADEL_SINGLES_AMERICANO_24": {
+        "title": "Single Americano (24 poin)",
+        "description": "Rotasi 1v1 — mainkan semua orang hingga 24 poin · putaran 15 menit"
+      },
+      "PADEL_AMERICANO_10": {
+        "title": "Amerika · 10 menit",
+        "description": "Putaran waktunya (10 menit), permainan 24 bola, pasangan acak"
+      },
+      "PADEL_AMERICANO_24": {
+        "title": "Americano (24 poin)",
+        "description": "Pasangan acak, mainkan hingga 24 poin · putaran 15 menit"
+      },
+      "PADEL_AMERICANO_20": {
+        "title": "Amerika · 20 menit",
+        "description": "Putaran waktunya (20 menit), permainan 24 bola, pasangan acak"
+      },
+      "PADEL_MEXICANO_24": {
+        "title": "Meksiko (24 poin)",
+        "description": "Pasangan tingkat seimbang, permainan 24 poin"
+      },
+      "PADEL_CHALLENGER_POOL": {
+        "title": "Kolam penantang",
+        "description": "Lapangan raja + antrian: pemenang lapangan 1 bertahan, yang lain memutar dari pool"
+      },
+      "PADEL_KOTC_11": {
+        "title": "King of the Court",
+        "description": "Permainan pendek ke 11; raja di lapangan 1, kelompok penantang untuk sisanya"
+      },
+      "PICKLEBALL_SOCIAL_21": {
+        "title": "Permainan terbuka (21 poin)",
+        "description": "Ganda Americano, permainan 21 bola"
+      },
+      "PICKLEBALL_MATCH_BO3_11": {
+        "title": "Terbaik dari 3 hingga 11",
+        "description": "Skor reli, gaya resmi"
+      },
+      "PICKLEBALL_KOTC_11": {
+        "title": "King of the Court",
+        "description": "Permainan pendek 11 bola; lapangan raja + kolam penantang"
+      },
+      "BADMINTON_AMERICANO_21": {
+        "title": "Klub malam (21 bola)",
+        "description": "Doubles Americano — Permainan rotasi 21 bola, bukan Bo3"
+      },
+      "BADMINTON_CLUB_3X21": {
+        "title": "Klub Bo3 × 21",
+        "description": "Terbaik dari 3 pertandingan hingga 21 — tunggal/ganda kasual"
+      },
+      "BADMINTON_CLUB_3X15": {
+        "title": "Klub Bo3 × 15",
+        "description": "Terbaik dari 3 pertandingan hingga 15 — format klub BWF"
+      },
+      "BADMINTON_MATCH_3X21": {
+        "title": "Cocokkan Bo3 × 21",
+        "description": "Nilai pertandingan resmi — terbaik dari 3 pertandingan berbanding 21"
+      },
+      "TT_OPEN_PLAY_11": {
+        "title": "Permainan cepat ke 11",
+        "description": "Tunggal atau ganda — satu pertandingan singkat (2–4 pemain)"
+      },
+      "TT_CLUB_RR_11": {
+        "title": "Klub round robin",
+        "description": "6–8 pemain, lajang — semua orang memainkan semua orang, permainan ke 11"
+      },
+      "TT_LEGACY_SINGLE_21": {
+        "title": "Permainan tunggal 21 poin jadul",
+        "description": "Satu pertandingan untuk 21 poin, menang 2 (gaya pra-2001)"
+      },
+      "TT_SWISS_BOX": {
+        "title": "kotak Swiss",
+        "description": "Liga kotak pasangan keterampilan (mesin tangga), Bo3 hingga 11"
+      },
+      "TT_BOX_BO3_11": {
+        "title": "Liga kotak Bo3×11",
+        "description": "8–12 pemain, grup kotak — memanjat lapangan di antara ronde"
+      },
+      "TT_MATCH_BO3_11": {
+        "title": "Cocokkan Bo3×11",
+        "description": "Dinilai tunggal/ganda, terbaik dari 3 pertandingan berbanding 11"
+      },
+      "TT_MATCH_BO5_11": {
+        "title": "Cocokkan Bo5×11",
+        "description": "Nilai pertandingan, terbaik dari 5 pertandingan berbanding 11"
+      },
+      "TENNIS_FAST4_SOCIAL": {
+        "title": "sosial FAST4",
+        "description": "Set pendek, penilaian tanpa iklan"
+      },
+      "TENNIS_CLASSIC_BO3": {
+        "title": "Terbaik dari 3 set",
+        "description": "Pertandingan tenis klasik"
+      },
+      "SQUASH_QUICK_BO3_11": {
+        "title": "Bo3×11 Cepat",
+        "description": "Terbaik dari 3 pertandingan berbanding 11"
+      }
+    },
+    "presetTier": {
+      "social": "Sosial",
+      "match": "Cocok"
+    },
+    "presetMeta": {
+      "POINTS_11": "Mainkan ke 11 (rotasi)",
+      "SINGLE_GAME_21": "Game jadul ke 21",
+      "POINTS_16": "Mainkan ke 16 (rotasi)",
+      "POINTS_21": "anggaran 21 bola",
+      "POINTS_24": "Americano 24 bola",
+      "POINTS_32": "Putar ke 32 (rotasi)",
+      "CLASSIC_AUTOMATIC": "Otomatis (biasa)",
+      "CLASSIC_BEST_OF_3": "Terbaik dari 3 set",
+      "CLASSIC_BEST_OF_5": "Terbaik dari 5 set",
+      "CLASSIC_PRO_SET": "Perangkat profesional",
+      "CLASSIC_SHORT_SET": "Set pendek",
+      "CLASSIC_SINGLE_SET": "Satu set",
+      "CLASSIC_SUPER_TIEBREAK": "Tie-break yang super",
+      "CLASSIC_TIMED": "Set waktunya",
+      "BEST_OF_3_11": "Terbaik dari 3 hingga 11",
+      "BEST_OF_3_15": "Bo3 · pertandingan ke 15",
+      "BEST_OF_3_21": "Bo3 · pertandingan ke 21",
+      "BEST_OF_5_11": "Terbaik dari 5 hingga 11",
+      "POINTS_15": "anggaran 15 bola",
+      "TIMED": "waktunya",
+      "CUSTOM": "Kebiasaan"
+    }
+  }
+}

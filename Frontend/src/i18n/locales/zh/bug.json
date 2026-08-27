@@ -1,0 +1,77 @@
+{
+  "bug": {
+    "bug": "缺陷",
+    "bugTracker": "问题追踪",
+    "addBug": "添加缺陷",
+    "addSuggestion": "添加建议",
+    "addQuestion": "添加问题",
+    "addProblem": "添加问题",
+    "addTask": "添加任务",
+    "description": "反馈缺陷、建议和问题，帮助改进应用",
+    "type": "类型",
+    "descriptionPlaceholder": "描述缺陷、建议或问题...",
+    "submit": "提交",
+    "created": "反馈提交成功",
+    "createError": "提交提交失败",
+    "textRequired": "请填写问题描述",
+    "loadError": "加载问题失败",
+    "noBugs": "暂无反馈",
+    "allTypes": "全部类型",
+    "allActive": "全部进行中",
+    "statusUpdated": "状态已更新",
+    "statusUpdateError": "更新状态失败",
+    "typeUpdated": "类型已更新",
+    "typeUpdateError": "更新类型失败",
+    "deleted": "已删除",
+    "deleteError": "删除失败",
+    "openChat": "开放聊天",
+    "actions": "问题操作",
+    "status": "状态",
+    "priority": "优先级",
+    "priorityUpdated": "优先级已更新",
+    "stars": "明星",
+    "starsRequired": "请选择 1 至 5 星评分",
+    "ratingUpdated": "评分已更新",
+    "starLabels": {
+      "1": "1 星",
+      "2": "2 星",
+      "3": "3 星",
+      "4": "4 星",
+      "5": "5星"
+    },
+    "changeStatus": "更改状态",
+    "changeType": "更改类型",
+    "updateFailed": "更新失败",
+    "myBugsOnly": "我创造的",
+    "priorities": {
+      "0": "0",
+      "1": "+1",
+      "2": "+2",
+      "-2": "−2",
+      "-1": "−1"
+    },
+    "priorityLabels": {
+      "0": "普通",
+      "1": "高",
+      "2": "很高兴",
+      "-2": "庸",
+      "-1": "低"
+    },
+    "types": {
+      "BUG": "缺陷",
+      "CRITICAL": "严重",
+      "SUGGESTION": "建议",
+      "QUESTION": "问题",
+      "TASK": "任务",
+      "REVIEW": "评价"
+    },
+    "statuses": {
+      "CREATED": "已创建",
+      "CONFIRMED": "已确认",
+      "IN_PROGRESS": "进行中",
+      "TEST": "测试中",
+      "FINISHED": "已完成",
+      "ARCHIVED": "已归档"
+    }
+  }
+}

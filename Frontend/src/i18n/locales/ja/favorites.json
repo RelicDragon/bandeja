@@ -1,0 +1,11 @@
+{
+  "favorites": {
+    "addToFavorites": "お気に入りに追加",
+    "removeFromFavorites": "お気に入りから削除",
+    "addedToFavorites": "お気に入りに追加しました",
+    "removedFromFavorites": "お気に入りから削除しました",
+    "isFavorite": "お気に入り",
+    "userAddedToFavorites": "プレイヤーをお気に入りに追加しました",
+    "userRemovedFromFavorites": "プレイヤーをお気に入りから削除しました"
+  }
+}

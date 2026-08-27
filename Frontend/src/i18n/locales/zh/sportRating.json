@@ -1,0 +1,43 @@
+{
+  "sportRating": {
+    "band": {
+      "beginner": "初学者",
+      "improver": "进阶中",
+      "intermediate": "中级",
+      "advanced": "高级",
+      "expert": "专家",
+      "elite": "精英"
+    },
+    "display": {
+      "playtomic": "≈ {{value}} Playtomic",
+      "ntrp": "≈ {{value}} NTRP",
+      "dupr": "≈ {{value}} DUPR",
+      "utr": "≈ {{value}} UTR",
+      "usatt": "≈ {{value}} USATT",
+      "squashlevels": "≈ {{value}} SquashLevels"
+    },
+    "padel": {
+      "band1": "学习对拉与基本站位",
+      "band2": "对拉稳定；开始网前",
+      "band3": "双打基础扎实；社交竞技",
+      "band4": "俱乐部强手；战术较好",
+      "band5": "高级俱乐部 / 地区级",
+      "band6": "高水平 / 锦标赛级"
+    },
+    "tennis": {
+      "bandHint": "大致对应 NTRP 俱乐部水平"
+    },
+    "pickleball": {
+      "bandHint": "大致对应 DUPR 休闲层级"
+    },
+    "badminton": {
+      "bandHint": "俱乐部水平段（非 BWF 排名）"
+    },
+    "tableTennis": {
+      "bandHint": "俱乐部水平；可选 USATT 参考"
+    },
+    "squash": {
+      "bandHint": "示意性 SquashLevels 风格等级"
+    }
+  }
+}

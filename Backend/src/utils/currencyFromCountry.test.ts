@@ -36,6 +36,19 @@ function testEurozoneAndLocals(): void {
   assert.equal(currencyFromCityCountry('Montenegro'), 'EUR');
 }
 
+function testAsiaMarketsMapToLocalCurrency(): void {
+  assert.equal(currencyFromCityCountry('China'), 'CNY');
+  assert.equal(currencyFromCountryIso2('CN'), 'CNY');
+  assert.equal(currencyFromCityCountry('Indonesia'), 'IDR');
+  assert.equal(currencyFromCountryIso2('ID'), 'IDR');
+  assert.equal(currencyFromCityCountry('India'), 'INR');
+  assert.equal(currencyFromCountryIso2('IN'), 'INR');
+  assert.equal(currencyFromCityCountry('Thailand'), 'THB');
+  assert.equal(currencyFromCountryIso2('TH'), 'THB');
+  assert.equal(currencyFromCityCountry('Japan'), 'JPY');
+  assert.equal(currencyFromCountryIso2('JP'), 'JPY');
+}
+
 function testUnknownCountryLeavesMappingOpen(): void {
   assert.equal(currencyFromCityCountry('Atlantis'), undefined);
   assert.equal(currencyFromCityCountry(''), undefined);
@@ -68,6 +81,7 @@ function testOngoingGeoDoesNotOverwriteChosenOrAssignedCurrency(): void {
 
 testSerbiaMapsToRsd();
 testEurozoneAndLocals();
+testAsiaMarketsMapToLocalCurrency();
 testUnknownCountryLeavesMappingOpen();
 testNormalizeCurrencyCode();
 testEurDoesNotBlockInitialAssignment();

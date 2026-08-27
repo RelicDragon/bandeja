@@ -5,6 +5,11 @@ import { sr } from 'date-fns/locale/sr';
 import { es } from 'date-fns/locale/es';
 import { cs } from 'date-fns/locale/cs';
 import { arSA } from 'date-fns/locale/ar-SA';
+import { zhCN } from 'date-fns/locale/zh-CN';
+import { id } from 'date-fns/locale/id';
+import { hi } from 'date-fns/locale/hi';
+import { th } from 'date-fns/locale/th';
+import { ja } from 'date-fns/locale/ja';
 import i18n from '@/i18n/config';
 import { extractLanguageCode, resolveAppLocale } from '@/utils/displayPreferences';
 
@@ -15,6 +20,11 @@ const localeMap: Record<string, Locale> = {
   es: es,
   cs: cs,
   ar: arSA,
+  zh: zhCN,
+  id: id,
+  hi: hi,
+  th: th,
+  ja: ja,
 };
 
 export function getAppDateFnsLocale(lang?: string): Locale {

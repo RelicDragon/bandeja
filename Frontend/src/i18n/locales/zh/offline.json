@@ -1,0 +1,7 @@
+{
+  "offline": {
+    "working_offline": "离线模式 — 部分功能可能受限",
+    "noInternetConnection": "无网络连接",
+    "offlineEditingMessage": "你可以继续离线编辑比分，恢复联网后请点击「同步到服务器」将结果同步到服务器"
+  }
+}

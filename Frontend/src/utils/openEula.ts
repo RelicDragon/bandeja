@@ -4,7 +4,7 @@ import { extractLanguageCode } from '@/utils/displayPreferences';
 
 const EULA_PATH = '/eula/world/eula.html';
 
-const EULA_LANGS = new Set(['en', 'ru', 'sr', 'es', 'ar']);
+const EULA_LANGS = new Set(['en', 'ru', 'sr', 'es', 'ar', 'zh', 'id', 'hi', 'th', 'ja']);
 
 export const openEula = () => {
   const code = extractLanguageCode(i18n.language || 'en');

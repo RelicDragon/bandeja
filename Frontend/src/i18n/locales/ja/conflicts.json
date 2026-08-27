@@ -1,0 +1,16 @@
+{
+  "conflicts": {
+    "title": "競合が検出されました",
+    "subtitle": "他のユーザーが変更を加えました",
+    "description": "編集中に、別のユーザーが試合結果を変更しました。この競合の解決方法を選んでください。",
+    "conflictCount": "{{count}}件の競合が検出されました",
+    "yourChanges": "あなたの変更",
+    "serverChanges": "サーバーの変更",
+    "acceptServer": "サーバー版を使う",
+    "forceClient": "自分の変更を使う",
+    "warning": "警告",
+    "warningMessage": "この操作は元に戻せません。どの変更を残すか、よく確認してください。",
+    "serverAccepted": "サーバーの変更を採用しました",
+    "clientForced": "あなたの変更を適用しました"
+  }
+}

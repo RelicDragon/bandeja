@@ -1,0 +1,77 @@
+{
+  "bug": {
+    "bug": "バグ",
+    "bugTracker": "バグトラッカー",
+    "addBug": "バグを追加",
+    "addSuggestion": "提案を追加",
+    "addQuestion": "質問を追加",
+    "addProblem": "問題を追加",
+    "addTask": "タスクを追加",
+    "description": "バグ・提案・質問を報告して、アプリ改善にご協力ください",
+    "type": "種類",
+    "descriptionPlaceholder": "バグ、提案、質問の内容を書いてください…",
+    "submit": "送信",
+    "created": "バグ報告を送信しました",
+    "createError": "バグ報告の送信に失敗しました",
+    "textRequired": "バグの説明は必須です",
+    "loadError": "バグの読み込みに失敗しました",
+    "noBugs": "まだバグ報告はありません",
+    "allTypes": "すべての種類",
+    "allActive": "有効なものすべて",
+    "statusUpdated": "バグのステータスを更新しました",
+    "statusUpdateError": "バグのステータス更新に失敗しました",
+    "typeUpdated": "バグの種類を更新しました",
+    "typeUpdateError": "バグの種類更新に失敗しました",
+    "deleted": "バグを削除しました",
+    "deleteError": "バグの削除に失敗しました",
+    "openChat": "チャットを開く",
+    "actions": "バグの操作",
+    "status": "ステータス",
+    "priority": "優先度",
+    "priorityUpdated": "バグの優先度を更新しました",
+    "stars": "星",
+    "starsRequired": "1〜5星で評価してください",
+    "ratingUpdated": "評価を更新しました",
+    "starLabels": {
+      "1": "1星",
+      "2": "2星",
+      "3": "3星",
+      "4": "4星",
+      "5": "5星"
+    },
+    "changeStatus": "ステータスを変更",
+    "changeType": "種類を変更",
+    "updateFailed": "バグの更新に失敗しました",
+    "myBugsOnly": "自分が作成",
+    "priorities": {
+      "0": "0",
+      "1": "+1",
+      "2": "+2",
+      "-2": "−2",
+      "-1": "−1"
+    },
+    "priorityLabels": {
+      "0": "普通",
+      "1": "高い",
+      "2": "とても高い",
+      "-2": "とても低い",
+      "-1": "低い"
+    },
+    "types": {
+      "BUG": "バグ",
+      "CRITICAL": "重大",
+      "SUGGESTION": "提案",
+      "QUESTION": "質問",
+      "TASK": "タスク",
+      "REVIEW": "レビュー"
+    },
+    "statuses": {
+      "CREATED": "作成済み",
+      "CONFIRMED": "確認済み",
+      "IN_PROGRESS": "対応中",
+      "TEST": "テスト中",
+      "FINISHED": "完了",
+      "ARCHIVED": "アーカイブ"
+    }
+  }
+}

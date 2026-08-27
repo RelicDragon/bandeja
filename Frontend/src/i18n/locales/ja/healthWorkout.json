@@ -1,0 +1,19 @@
+{
+  "healthWorkout": {
+    "title": "パデルワークアウト",
+    "subtitle": "スコア記録中にApple Watchから保存",
+    "yourSession": "あなたのワークアウト",
+    "kcal": "kcal",
+    "avgBpm": "平均 bpm",
+    "maxBpm": "最大 bpm",
+    "loading": "読み込み中…",
+    "loadError": "ワークアウトを読み込めませんでした",
+    "loadErrorHint": "問題が発生しました。接続を確認して、もう一度お試しください。",
+    "loadErrorProfile": "ワークアウトを読み込めませんでした",
+    "loadErrorProfileHint": "問題が発生しました。接続を確認して、もう一度お試しください。",
+    "emptyGameTitle": "ワークアウトが記録されていません",
+    "emptyGameHint": "次回は、Bandejaでスコアを記録しながらApple Watchでワークアウトを開始すると、カロリーと心拍数がここに表示されます。",
+    "emptyProfileTitle": "ワークアウトはまだありません",
+    "emptyProfileHint": "Bandejaで試合のスコアを記録しながらApple Watchでワークアウトを記録すると、カロリーと心拍数を追跡できます。"
+  }
+}

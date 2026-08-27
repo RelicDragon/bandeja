@@ -7,6 +7,8 @@ const RE_ARABIC =
 const RE_GREEK = /[\u0370-\u03FF\u1F00-\u1FFF]/gu;
 const RE_CJK =
   /[\u3040-\u30FF\u31F0-\u31FF\u3400-\u4DBF\u4E00-\u9FFF\uAC00-\uD7AF]/gu;
+const RE_DEVANAGARI = /[\u0900-\u097F]/gu;
+const RE_THAI = /[\u0E00-\u0E7F]/gu;
 
 export const OBVIOUS_SHORT_MAX_LEN = 8;
 const OBVIOUS_SHORT_MAX_TARGET_SCRIPT = 0.12;
@@ -20,6 +22,8 @@ const SCRIPT_FALLBACK_TARGETS = new Set([
   'zh',
   'ja',
   'ko',
+  'hi',
+  'th',
 ]);
 
 function countMatches(re: RegExp, text: string): number {
@@ -38,11 +42,22 @@ export function targetScriptRatios(sample: string): {
   arabic: number;
   greek: number;
   cjk: number;
+  devanagari: number;
+  thai: number;
   letters: number;
 } {
   const letters = letterCount(sample);
   if (letters === 0) {
-    return { latin: 0, cyrillic: 0, arabic: 0, greek: 0, cjk: 0, letters: 0 };
+    return {
+      latin: 0,
+      cyrillic: 0,
+      arabic: 0,
+      greek: 0,
+      cjk: 0,
+      devanagari: 0,
+      thai: 0,
+      letters: 0,
+    };
   }
   return {
     latin: countMatches(RE_LATIN, sample) / letters,
@@ -50,6 +65,8 @@ export function targetScriptRatios(sample: string): {
     arabic: countMatches(RE_ARABIC, sample) / letters,
     greek: countMatches(RE_GREEK, sample) / letters,
     cjk: countMatches(RE_CJK, sample) / letters,
+    devanagari: countMatches(RE_DEVANAGARI, sample) / letters,
+    thai: countMatches(RE_THAI, sample) / letters,
     letters,
   };
 }
@@ -87,6 +104,12 @@ export function targetScriptRatioForLocale(sample: string, targetLanguage: strin
     case 'ja':
     case 'ko':
       return r.cjk;
+    case 'hi':
+      return r.devanagari;
+    case 'th':
+      return r.thai;
+    case 'id':
+      return r.latin;
     default:
       return r.latin;
   }
@@ -107,7 +130,15 @@ export function shouldSkipObviousShortNoTargetScript(
   if (targetRatio >= OBVIOUS_SHORT_MAX_TARGET_SCRIPT) {
     return false;
   }
-  const maxScript = Math.max(r.latin, r.cyrillic, r.arabic, r.greek, r.cjk);
+  const maxScript = Math.max(
+    r.latin,
+    r.cyrillic,
+    r.arabic,
+    r.greek,
+    r.cjk,
+    r.devanagari,
+    r.thai
+  );
   return maxScript < 0.15;
 }
 
@@ -117,6 +148,8 @@ export function useLowFrancMinLength(sample: string, targetLanguage: string): bo
   if (r.arabic >= SCRIPT_FRANC_MIN_RATIO) return true;
   if (r.cyrillic >= SCRIPT_FRANC_MIN_RATIO) return true;
   if (r.greek >= SCRIPT_FRANC_MIN_RATIO) return true;
+  if (r.devanagari >= SCRIPT_FRANC_MIN_RATIO) return true;
+  if (r.thai >= SCRIPT_FRANC_MIN_RATIO) return true;
   if (targetScriptRatioForLocale(sample, targetLanguage) >= 0.22) {
     return true;
   }

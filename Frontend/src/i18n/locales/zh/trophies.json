@@ -1,0 +1,386 @@
+{
+  "trophies": {
+    "rarity": {
+      "common": "普通",
+      "rare": "稀有",
+      "legendary": "传说",
+      "unique": "独特"
+    },
+    "showcase": {
+      "hint": "赢联赛、持续打球，填满你的展柜",
+      "pinHint": "从奖柜固定收藏 — 最多 3 个",
+      "emptySlot": "空展位"
+    },
+    "banner": {
+      "unlocked": "已解锁奖杯",
+      "andMore": "另有 {{count}} 个",
+      "dismiss": "关闭"
+    },
+    "celebration": {
+      "unlocked": "已解锁奖杯",
+      "subtitle": "新奖杯加入你的奖柜",
+      "pin": "固定到展柜",
+      "pinning": "固定中…",
+      "pinned": "已固定到展柜",
+      "viewCabinet": "查看奖柜",
+      "dismiss": "太棒了！",
+      "pinError": "暂时无法固定 — 请从奖柜重试。",
+      "pinsFull": "展柜已满 — 请先取消一个（最多 3 个）。"
+    },
+    "cabinet": {
+      "title": "成就",
+      "count": "已获得 {{count}} 个",
+      "ownEmpty": "冲击领奖台、连胜与里程碑 — 锁定奖杯会显示下一步目标。",
+      "visitorEmpty": "暂无奖杯。",
+      "pinHint": "点按奖杯固定到展柜（最多 3 个）。",
+      "collapseStack": "收起奖杯堆叠",
+      "collapse": "收起",
+      "family": {
+        "games": "比赛",
+        "streak": "连续",
+        "wins": "胜场",
+        "podium": "领奖台",
+        "debut": "首秀",
+        "rallyStarter": "对拉锻造",
+        "tournamentHost": "锦标赛主办",
+        "soulOfTheParty": "派对灵魂",
+        "generic": "奖杯",
+        "giantKiller": "巨人杀手",
+        "dynamicDuo": "黄金搭档",
+        "openCourt": "开放球场",
+        "leto2026": "Leto 2026",
+        "tieBreaker": "抢七达人",
+        "bugShipped": "缺陷跟踪"
+      }
+    },
+    "leaderboard": {
+      "title": "成就排行",
+      "choose": "选择一项成就，看看谁进展最多。",
+      "allAchievements": "全部成就",
+      "leaders": "排行榜",
+      "scopeCity": "{{city}} 前列",
+      "scopeGlobal": "全球排行",
+      "viewLeaders": "查看排行",
+      "yourStanding": "你的名次",
+      "topPlayers": "顶尖球员",
+      "rankedCount": "{{count}} 名上榜球员",
+      "playerFallback": "球员",
+      "loading": "正在加载成就排行",
+      "loadError": "无法加载这些排行。",
+      "refreshingStats": "成就排名正在更新，通常很快完成。",
+      "statsMaintenance": "这些排名需要维护，请稍后再试。",
+      "statsMaintenanceRetryAt": "将于 {{time}} 自动重试",
+      "emptyTitle": "榜首虚位以待",
+      "emptyHint": "尚无人在此成就上有进度。",
+      "topLimitHint": "显示 {{count}} / {{total}} 名球员。进度相同则同分同名；截止线同分可能只显示部分。",
+      "yourStandingAbove": "你的名次见上方。",
+      "units": {
+        "games": "{{count}} 场",
+        "wins": "{{count}} 胜",
+        "weeks": "{{count}} 周",
+        "podiums": "{{count}} 次领奖台",
+        "hostedGames": "{{count}} 场主办比赛",
+        "hostedTournaments": "{{count}} 场锦标赛",
+        "hostedBars": "{{count}} 场活动",
+        "upsets": "{{count}} 次爆冷",
+        "partnerWins": "{{count}} 次搭档胜场",
+        "partners": "{{count}} 位搭档",
+        "tieBreaks": "{{count}} 次抢七"
+      }
+    },
+    "detail": {
+      "progress": "进度 {{current}} / {{target}}",
+      "lockedHint": "继续打球以解锁此奖杯。",
+      "earnedOn": "获得于 {{date}}",
+      "sport": "{{sport}}",
+      "timesEarned": "已获得 {{count}} 次",
+      "openEvent": "打开活动",
+      "pin": "固定到展柜",
+      "pinning": "固定中…",
+      "unpin": "从展柜取消固定",
+      "unpinning": "取消固定中…",
+      "pinnedBadge": "已固定",
+      "followingEarners": "你关注的人也获得了此奖杯",
+      "followingEarnersError": "无法加载关注的球员 — 点按重试",
+      "familyLeaders": "此成就组前三名",
+      "pinWhich": "选择要固定的",
+      "pinHint": "已固定奖杯会留在展柜，即使有更新的解锁。",
+      "pinsFull": "展柜已满 — 请先取消一个（最多 3 个）。",
+      "pinError": "无法更新固定 — 请重试。"
+    },
+    "defs": {
+      "podiumGold": {
+        "title": "金牌领奖台",
+        "description": "在至少 8 人的联赛或锦标赛中获得第 1 名。"
+      },
+      "podiumSilver": {
+        "title": "银牌领奖台",
+        "description": "在至少 8 人的联赛或锦标赛中获得第 2 名。"
+      },
+      "podiumBronze": {
+        "title": "铜牌领奖台",
+        "description": "在至少 8 人的联赛或锦标赛中获得第 3 名。"
+      },
+      "firstWin": {
+        "title": "初胜",
+        "description": "赢下第一场符合条件的比赛。"
+      },
+      "firstPadelGame": {
+        "title": "板式网球首秀",
+        "description": "完成第一场符合条件的板式网球比赛。"
+      },
+      "wins10": {
+        "title": "两位数",
+        "description": "赢下 10 场符合条件的比赛。"
+      },
+      "wins25": {
+        "title": "四分之一世纪",
+        "description": "赢下 25 场符合条件的比赛。"
+      },
+      "wins50": {
+        "title": "半百胜场",
+        "description": "赢下 50 场符合条件的比赛。"
+      },
+      "wins100": {
+        "title": "百胜",
+        "description": "赢下 100 场符合条件的比赛。"
+      },
+      "wins500": {
+        "title": "胜利机器",
+        "description": "赢下 500 场符合条件的比赛。"
+      },
+      "games10": {
+        "title": "起步",
+        "description": "完成 10 场符合条件的比赛。"
+      },
+      "games50": {
+        "title": "常客",
+        "description": "完成 50 场符合条件的比赛。"
+      },
+      "games100": {
+        "title": "百夫长",
+        "description": "完成 100 场符合条件的比赛。"
+      },
+      "games500": {
+        "title": "五百俱乐部",
+        "description": "完成 500 场符合条件的比赛。"
+      },
+      "games1000": {
+        "title": "千场俱乐部",
+        "description": "完成 1000 场符合条件的比赛。"
+      },
+      "streak4": {
+        "title": "动起来的一个月",
+        "description": "保持 4 周连续打球。"
+      },
+      "streak8": {
+        "title": "两月不息",
+        "description": "保持 8 周连续打球。"
+      },
+      "streak12": {
+        "title": "火热赛季",
+        "description": "保持 12 周连续打球。"
+      },
+      "streak16": {
+        "title": "四月燃烧",
+        "description": "保持 16 周连续打球。"
+      },
+      "streak32": {
+        "title": "半年烈焰",
+        "description": "保持 32 周连续打球。"
+      },
+      "streak64": {
+        "title": "燃烧的一年",
+        "description": "保持 64 周连续打球。"
+      },
+      "orgGame1": {
+        "title": "对拉发起者",
+        "description": "组织第一场计入评级的板式网球比赛并完成最终结果。"
+      },
+      "orgGame10": {
+        "title": "对拉搭建者",
+        "description": "组织 10 场计入评级的板式网球比赛并完成最终结果。"
+      },
+      "orgGame25": {
+        "title": "对拉建筑师",
+        "description": "组织 25 场计入评级的板式网球比赛并完成最终结果。"
+      },
+      "orgGame50": {
+        "title": "对拉大师",
+        "description": "组织 50 场计入评级的板式网球比赛并完成最终结果。"
+      },
+      "orgGame100": {
+        "title": "对拉传奇",
+        "description": "组织 100 场计入评级的板式网球比赛并完成最终结果。"
+      },
+      "orgGame500": {
+        "title": "对拉不朽",
+        "description": "组织 500 场计入评级的板式网球比赛并完成最终结果。"
+      },
+      "orgTournament1": {
+        "title": "签表开启者",
+        "description": "组织第一场计入评级的板式网球锦标赛并完成最终结果。"
+      },
+      "orgTournament5": {
+        "title": "签表开启者 ×5",
+        "description": "组织 5 场计入评级的板式网球锦标赛并完成最终结果。"
+      },
+      "orgTournament10": {
+        "title": "签表开启者 ×10",
+        "description": "组织 10 场计入评级的板式网球锦标赛并完成最终结果。"
+      },
+      "orgTournament25": {
+        "title": "签表开启者 ×25",
+        "description": "组织 25 场计入评级的板式网球锦标赛并完成最终结果。"
+      },
+      "orgTournament50": {
+        "title": "签表开启者 ×50",
+        "description": "组织 50 场计入评级的板式网球锦标赛并完成最终结果。"
+      },
+      "orgTournament100": {
+        "title": "签表开启者 ×100",
+        "description": "组织 100 场计入评级的板式网球锦标赛并完成最终结果。"
+      },
+      "orgBar1": {
+        "title": "派对灵魂",
+        "description": "主办第一场活动并完成最终结果。"
+      },
+      "orgBar5": {
+        "title": "派对灵魂 ×5",
+        "description": "主办 5 场活动并完成最终结果。"
+      },
+      "orgBar10": {
+        "title": "派对灵魂 ×10",
+        "description": "主办 10 场活动并完成最终结果。"
+      },
+      "orgBar25": {
+        "title": "派对灵魂 ×25",
+        "description": "主办 25 场活动并完成最终结果。"
+      },
+      "orgBar50": {
+        "title": "派对灵魂 ×50",
+        "description": "主办 50 场活动并完成最终结果。"
+      },
+      "orgBar100": {
+        "title": "派对灵魂 ×100",
+        "description": "主办 100 场活动并完成最终结果。"
+      },
+      "giantKiller1": {
+        "title": "巨人杀手",
+        "description": "在计入评级的 2v2 板式网球中，击败活动开始时平均等级至少高 0.5、且所有球员可靠度均高于 10% 的队伍。"
+      },
+      "giantKiller5": {
+        "title": "巨人猎人",
+        "description": "赢下 5 场计入评级的 2v2 板式网球爆冷（平均高 ≥0.5，所有球员可靠度 >10%）。"
+      },
+      "giantKiller10": {
+        "title": "巨人屠戮者",
+        "description": "赢下 10 场计入评级的 2v2 板式网球爆冷（平均高 ≥0.5，所有球员可靠度 >10%）。"
+      },
+      "giantKiller25": {
+        "title": "泰坦克星",
+        "description": "赢下 25 场计入评级的 2v2 板式网球爆冷（平均高 ≥0.5，所有球员可靠度 >10%）。"
+      },
+      "giantKiller50": {
+        "title": "巨像粉碎者",
+        "description": "赢下 50 场计入评级的 2v2 板式网球爆冷（平均高 ≥0.5，所有球员可靠度 >10%）。"
+      },
+      "dynamicDuo10": {
+        "title": "黄金搭档",
+        "description": "与同一搭档赢下 10 场符合条件的板式网球。"
+      },
+      "dynamicDuo50": {
+        "title": "黄金搭档 ×50",
+        "description": "与同一搭档赢下 50 场符合条件的板式网球。"
+      },
+      "dynamicDuo100": {
+        "title": "黄金搭档 ×100",
+        "description": "与同一搭档赢下 100 场符合条件的板式网球。"
+      },
+      "openCourt10": {
+        "title": "开放球场",
+        "description": "与 10 位不同搭档完成符合条件的板式网球。"
+      },
+      "openCourt25": {
+        "title": "球场连接者",
+        "description": "与 25 位不同搭档完成符合条件的板式网球。"
+      },
+      "openCourt50": {
+        "title": "搭档磁铁",
+        "description": "与 50 位不同搭档完成符合条件的板式网球。"
+      },
+      "openCourt100": {
+        "title": "社区支柱",
+        "description": "与 100 位不同搭档完成符合条件的板式网球。"
+      },
+      "openCourt250": {
+        "title": "人脉传奇",
+        "description": "与 250 位不同搭档完成符合条件的板式网球。"
+      },
+      "leto2026Participant": {
+        "title": "Leto 2026 队员",
+        "description": "参加过 Fix Liga — Leto 2026 赛季。"
+      },
+      "leto2026Playoffs": {
+        "title": "Leto 2026 季后赛",
+        "description": "进入 Fix Liga Leto 2026 季后赛签表。"
+      },
+      "leto2026Place4": {
+        "title": "Leto 2026 第四名",
+        "description": "在 Fix Liga Leto 2026 获得第 4 名。"
+      },
+      "leto2026Bronze": {
+        "title": "Leto 2026 铜牌",
+        "description": "Fix Liga Leto 2026 铜牌领奖台。"
+      },
+      "leto2026Silver": {
+        "title": "Leto 2026 银牌",
+        "description": "Fix Liga Leto 2026 银牌领奖台。"
+      },
+      "leto2026Gold": {
+        "title": "Leto 2026 冠军",
+        "description": "Fix Liga Leto 2026 金牌领奖台。"
+      },
+      "tieBreak1": {
+        "title": "抢七达人",
+        "description": "通过抢七赢下一盘 — 经典 7–6 或超级抢七。"
+      },
+      "tieBreak5": {
+        "title": "生死局",
+        "description": "通过抢七赢下 5 盘（7–6 或超级 TB）。"
+      },
+      "tieBreak12": {
+        "title": "7–6 俱乐部",
+        "description": "通过抢七赢下 12 盘（7–6 或超级 TB）。"
+      },
+      "tieBreak32": {
+        "title": "钢铁神经",
+        "description": "通过抢七赢下 32 盘（7–6 或超级 TB）。"
+      },
+      "tieBreak64": {
+        "title": "抽签传奇",
+        "description": "通过抢七赢下 64 盘（7–6 或超级 TB）。"
+      },
+      "bugShipped1": {
+        "title": "交付成功",
+        "description": "将 1 个缺陷或建议从进行中或测试推进到已完成或已归档。提问不计。"
+      },
+      "bugShipped5": {
+        "title": "更新说明",
+        "description": "将 5 个缺陷或建议从进行中或测试推进到已完成或已归档。"
+      },
+      "bugShipped10": {
+        "title": "修复工厂",
+        "description": "将 10 个缺陷或建议从进行中或测试推进到已完成或已归档。"
+      },
+      "bugShipped25": {
+        "title": "缺陷驯服者",
+        "description": "将 25 个缺陷或建议从进行中或测试推进到已完成或已归档。"
+      },
+      "bugShipped50": {
+        "title": "发布传奇",
+        "description": "将 50 个缺陷或建议从进行中或测试推进到已完成或已归档。"
+      }
+    }
+  }
+}

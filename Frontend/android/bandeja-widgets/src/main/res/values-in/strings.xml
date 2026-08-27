@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="next_game_widget_title">Game berikutnya</string>
+    <string name="next_game_widget_description">Menampilkan game Bandeja berikutnya.</string>
+    <string name="next_game_widget_loading">Bandeja</string>
+    <string name="next_game_widget_preview_title">Padel pagi</string>
+    <string name="next_game_widget_preview_time">dalam 2 jam</string>
+</resources>

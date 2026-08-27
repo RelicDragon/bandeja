@@ -19,6 +19,9 @@ export const TRANSLATION_LANGUAGE_NAMES: Record<string, string> = {
   tr: 'Turkish',
   ar: 'Arabic',
   zh: 'Chinese',
+  id: 'Indonesian',
+  hi: 'Hindi',
+  th: 'Thai',
   ja: 'Japanese',
   ko: 'Korean',
 };

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="next_game_widget_title">次の試合</string>
+    <string name="next_game_widget_description">次のBandeja試合を表示します。</string>
+    <string name="next_game_widget_loading">Bandeja</string>
+    <string name="next_game_widget_preview_title">朝のパデル</string>
+    <string name="next_game_widget_preview_time">2時間後</string>
+</resources>

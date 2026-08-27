@@ -1,0 +1,30 @@
+{
+  "city": {
+    "clubsCount_zero": "ไม่มีสโมสร",
+    "clubsCount_one": "{{count}} คลับ",
+    "clubsCount_other": "{{count}} คลับ",
+    "searchCityOrClub": "ค้นหาเมืองหรือสโมสร...",
+    "searchSectionCities": "เมือง",
+    "searchSectionClubs": "สโมสร",
+    "searchSectionCountries": "ประเทศ",
+    "map": "แผนที่",
+    "list": "รายการ",
+    "selectCity": "เลือก",
+    "selectCityName": "ใช้ {{name}}",
+    "nearMe": "ใกล้ฉัน",
+    "whereAmI": "ฉันอยู่ที่ไหน?",
+    "nearestToYou": "ใกล้ตัวคุณที่สุด",
+    "yourLocation": "ตำแหน่งของคุณ",
+    "approximateLocation": "ตำแหน่งโดยประมาณ",
+    "suggested": "แนะนำ",
+    "suggestedNearest": "ใกล้ที่สุด",
+    "suggestedCurrent": "ปัจจุบัน",
+    "suggestedCurrentNearest": "เมืองของคุณ · ใกล้ที่สุด",
+    "locatingNearby": "ค้นหาเมืองใกล้คุณ…",
+    "locationHintDenied": "การเข้าถึงตำแหน่งปิดอยู่ คุณยังคงค้นหาหรือใช้แผนที่ได้",
+    "locationHintUnavailable": "ไม่สามารถรับตำแหน่งของคุณ - ลองค้นหาหรือแผนที่",
+    "locationHintTimeout": "ตำแหน่งใช้เวลานานเกินไป โปรดลองอีกครั้งหรือค้นหา",
+    "locationHintUnsupported": "ไม่มีตำแหน่งที่นี่ - ลองค้นหาหรือแผนที่",
+    "locationHintNoCity": "ไม่พบเมืองใกล้เคียง — ลองค้นหาหรือแผนที่"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "trainers": {
+    "ourTrainers": "हमारे ट्रेनर",
+    "selectToFilterHint": "उनके ट्रेनिंग फ़िल्टर करने के लिए ट्रेनर पर टैप करें",
+    "trainingsBy": "ट्रेनिंग द्वारा",
+    "clearTrainerFilter": "ट्रेनर फ़िल्टर हटाएँ",
+    "noTrainingsByTrainer": "{{name}} की कोई ट्रेनिंग नहीं"
+  }
+}

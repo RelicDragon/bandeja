@@ -1,0 +1,14 @@
+{
+  "media": {
+    "viewerTitle": "Penampil media",
+    "fullscreenItemLabel": "Media {{current}} dari {{total}}",
+    "resetView": "Atur Ulang Tampilan",
+    "download": "Unduh",
+    "copyImage": "Salin gambar",
+    "imageCopied": "Gambar disalin",
+    "imageDownloaded": "Gambar diunduh",
+    "imageShareOpened": "Pilih Salin atau Simpan dari menu bagikan",
+    "copyImageFailed": "Tidak dapat menyalin gambar",
+    "downloadImageFailed": "Tidak dapat mengunduh gambar"
+  }
+}

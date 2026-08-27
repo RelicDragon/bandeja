@@ -1,0 +1,14 @@
+{
+  "media": {
+    "viewerTitle": "โปรแกรมดูสื่อ",
+    "fullscreenItemLabel": "สื่อ {{current}} จาก {{total}}",
+    "resetView": "รีเซ็ตมุมมอง",
+    "download": "ดาวน์โหลด",
+    "copyImage": "คัดลอกรูปภาพ",
+    "imageCopied": "คัดลอกรูปภาพแล้ว",
+    "imageDownloaded": "ดาวน์โหลดรูปภาพแล้ว",
+    "imageShareOpened": "เลือกคัดลอกหรือบันทึกจากเมนูแชร์",
+    "copyImageFailed": "ไม่สามารถคัดลอกรูปภาพได้",
+    "downloadImageFailed": "ไม่สามารถดาวน์โหลดภาพได้"
+  }
+}

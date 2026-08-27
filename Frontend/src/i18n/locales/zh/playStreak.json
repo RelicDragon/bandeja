@@ -1,0 +1,17 @@
+{
+  "playStreak": {
+    "chipWeeks_one": "{{count}} 周",
+    "chipWeeks_other": "{{count}} 周",
+    "chipBroken": "— · 最佳 {{best}}",
+    "sheetTitle": "连续参赛",
+    "rules": "每 7 天至少打一场计分比赛即可保持连续。同一周内多打场次不会额外增加周数。",
+    "current": "当前",
+    "best": "最佳",
+    "none": "—",
+    "weeks_one": "{{count}} 周",
+    "weeks_other": "{{count}} 周",
+    "playBy": "请在 {{date}} 前参赛以保持连续",
+    "bannerStarted": "连续参赛已开始！",
+    "bannerContinue": "连续 · {{count}} 周"
+  }
+}

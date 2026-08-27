@@ -1,7 +1,7 @@
 export const APP_STORE_URL = 'https://apps.apple.com/app/bandeja/id6756632318';
 export const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.funified.bandeja';
 
-type StoreBadgeLang = 'en' | 'ru' | 'sr' | 'es' | 'cs' | 'ar';
+type StoreBadgeLang = 'en' | 'ru' | 'sr' | 'es' | 'cs' | 'ar' | 'zh' | 'id' | 'hi' | 'th' | 'ja';
 
 const STORE_BADGES: Record<StoreBadgeLang, { ios: string; android: string }> = {
   en: {
@@ -27,6 +27,26 @@ const STORE_BADGES: Record<StoreBadgeLang, { ios: string; android: string }> = {
   ar: {
     ios: 'https://tools.applemediaservices.com/api/badges/download-on-the-app-store/black/ar-sa?size=250x83&releaseDate=1704067200',
     android: 'https://play.google.com/intl/ar/badges/static/images/badges/ar_badge_web_generic.png',
+  },
+  zh: {
+    ios: 'https://tools.applemediaservices.com/api/badges/download-on-the-app-store/black/zh-cn?size=250x83&releaseDate=1704067200',
+    android: 'https://play.google.com/intl/zh-CN/badges/static/images/badges/zh-cn_badge_web_generic.png',
+  },
+  id: {
+    ios: 'https://tools.applemediaservices.com/api/badges/download-on-the-app-store/black/id-id?size=250x83&releaseDate=1704067200',
+    android: 'https://play.google.com/intl/id/badges/static/images/badges/id_badge_web_generic.png',
+  },
+  hi: {
+    ios: 'https://tools.applemediaservices.com/api/badges/download-on-the-app-store/black/hi-in?size=250x83&releaseDate=1704067200',
+    android: 'https://play.google.com/intl/hi/badges/static/images/badges/hi_badge_web_generic.png',
+  },
+  th: {
+    ios: 'https://tools.applemediaservices.com/api/badges/download-on-the-app-store/black/th-th?size=250x83&releaseDate=1704067200',
+    android: 'https://play.google.com/intl/th/badges/static/images/badges/th_badge_web_generic.png',
+  },
+  ja: {
+    ios: 'https://tools.applemediaservices.com/api/badges/download-on-the-app-store/black/ja-jp?size=250x83&releaseDate=1704067200',
+    android: 'https://play.google.com/intl/ja/badges/static/images/badges/ja_badge_web_generic.png',
   },
 };
 

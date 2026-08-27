@@ -1,0 +1,30 @@
+{
+  "city": {
+    "clubsCount_zero": "कोई क्लब नहीं",
+    "clubsCount_one": "{{count}} क्लब",
+    "clubsCount_other": "{{count}} क्लब",
+    "searchCityOrClub": "शहर या क्लब खोजें…",
+    "searchSectionCities": "शहर",
+    "searchSectionClubs": "क्लब",
+    "searchSectionCountries": "देश",
+    "map": "मानचित्र",
+    "list": "सूची",
+    "selectCity": "चुनें",
+    "selectCityName": "{{name}} उपयोग करें",
+    "nearMe": "मेरे पास",
+    "whereAmI": "मैं कहाँ हूँ?",
+    "nearestToYou": "आपके सबसे नज़दीक",
+    "yourLocation": "आपका स्थान",
+    "approximateLocation": "अनुमानित स्थान",
+    "suggested": "सुझाए गए",
+    "suggestedNearest": "सबसे नज़दीक",
+    "suggestedCurrent": "वर्तमान",
+    "suggestedCurrentNearest": "आपका शहर · नज़दीक",
+    "locatingNearby": "आपके पास का शहर खोज रहे हैं…",
+    "locationHintDenied": "स्थान एक्सेस बंद है — आप फिर भी खोज या मानचित्र उपयोग कर सकते हैं।",
+    "locationHintUnavailable": "आपका स्थान नहीं मिला — खोज या मानचित्र आज़माएँ।",
+    "locationHintTimeout": "स्थान मिलने में देर हो गई — फिर कोशिश करें, या खोजें।",
+    "locationHintUnsupported": "यहाँ स्थान उपलब्ध नहीं — खोज या मानचित्र आज़माएँ।",
+    "locationHintNoCity": "पास कोई शहर नहीं मिला — खोज या मानचित्र आज़माएँ।"
+  }
+}

@@ -22,6 +22,28 @@ html[dir='rtl'] body {
   line-height: 1.6;
 }
 
+html[lang='zh'] body,
+html[lang^='zh-'] body {
+  font-family: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', sans-serif;
+}
+
+html[lang='ja'] body,
+html[lang^='ja-'] body {
+  font-family: 'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', 'Meiryo', sans-serif;
+}
+
+html[lang='th'] body,
+html[lang^='th-'] body {
+  font-family: 'Noto Sans Thai', 'Thonburi', 'Leelawadee UI', sans-serif;
+  line-height: 1.65;
+}
+
+html[lang='hi'] body,
+html[lang^='hi-'] body {
+  font-family: 'Noto Sans Devanagari', 'Kohinoor Devanagari', 'Mangal', sans-serif;
+  line-height: 1.6;
+}
+
 html[dir='rtl'] {
   text-align: start;
 }

@@ -1,0 +1,600 @@
+{
+  "createGame": {
+    "title": "गेम बनाएँ",
+    "identity": {
+      "label": "नाम और फ़ोटो",
+      "optional": "वैकल्पिक"
+    },
+    "steps": {
+      "setup": "गेम सेटअप",
+      "location": "स्थान और समय",
+      "players": "खिलाड़ी",
+      "details": "सेटिंग्स और विवरण"
+    },
+    "footer": {
+      "selectClubHint": "जारी रखने के लिए क्लब चुनें"
+    },
+    "locationSteps": {
+      "date": "तारीख",
+      "time": "शुरुआत का समय"
+    },
+    "pickSport": "खेल चुनें",
+    "createBar": "बार इवेंट बनाएँ",
+    "createTraining": "ट्रेनिंग सेशन बनाएँ",
+    "createTournament": "टूर्नामेंट बनाएँ",
+    "createLeague": "लीग बनाएँ",
+    "selectType": "प्रकार चुनें",
+    "location": "स्थान",
+    "locationTournament": "टूर्नामेंट स्थान",
+    "locationLeague": "लीग स्थान",
+    "club": "क्लब",
+    "selectClub": "क्लब चुनें",
+    "court": "कोर्ट",
+    "hall": "हॉल",
+    "notBookedYet": "केवल गेम",
+    "dontSelectCourt": "अभी कोई कोर्ट नहीं",
+    "dontSelectHall": "अभी कोई हॉल नहीं",
+    "courtNotSelected": "कोर्ट चुना नहीं गया",
+    "hallNotSelected": "हॉल चुना नहीं गया",
+    "multiCourtHint": "{{participants}} खिलाड़ियों के लिए अधिकतम {{count}} कोर्ट चुनें ({{selected}} चुने)",
+    "multiCourtNeedSharedSlots": "{{count}} कोर्ट चुनें जो एक ही समय पर खाली हों।",
+    "multiCourtNoSharedSlots": "सभी {{count}} चुने गए कोर्ट पर कोई समय स्लॉट खाली नहीं। दूसरे कोर्ट, तारीख या अवधि आज़माएँ।",
+    "webCameraHint": "इस कोर्ट पर लिंक की गई वेब कैमरा है",
+    "webCameraHintsTitle": "लिंक की गई वेब कैमरा",
+    "webCameraHintNamed": "{{court}} पर लिंक की गई वेब कैमरा है",
+    "webCameraHintAction": "लाइव देखने के लिए टैप करें",
+    "hasBookedCourt": "मैंने यह कोर्ट बुक कर लिया है",
+    "hasBookedHall": "मैंने टेबल बुक कर ली है",
+    "selectCourt": "कोर्ट चुनें",
+    "selectHall": "हॉल चुनें",
+    "selectClubFirst": "पहले क्लब चुनें",
+    "selectCourtFirst": "पहले कोर्ट चुनें",
+    "clubCancellationNotice": "रद्दीकरण सूचना: आपके स्लॉट से कम से कम {{hours}} घंटे पहले।",
+    "clubPolicyTitle": "क्लब नीतियाँ",
+    "noClubsAvailable": "कोई क्लब उपलब्ध नहीं",
+    "clubDetailsBack": "क्लब पर वापस",
+    "clubInfo": "क्लब विवरण",
+    "clubPhotos": "फ़ोटो",
+    "noCourtsAvailable": "कोई कोर्ट उपलब्ध नहीं",
+    "noHallsAvailable": "कोई हॉल उपलब्ध नहीं",
+    "playerLevel": "खिलाड़ी लेवल",
+    "playerLevelTournament": "टूर्नामेंट खिलाड़ी लेवल",
+    "playerLevelLeague": "लीग खिलाड़ी लेवल",
+    "minLevel": "न्यूनतम लेवल",
+    "maxLevel": "अधिकतम लेवल",
+    "participants": "प्रतिभागी",
+    "participantsTournament": "टूर्नामेंट प्रतिभागी",
+    "participantsLeague": "लीग प्रतिभागी",
+    "teamFormat": "टीम प्रारूप",
+    "numberOfParticipants": "प्रतिभागियों की संख्या",
+    "numberOfParticipantsTournament": "टूर्नामेंट प्रतिभागियों की संख्या",
+    "numberOfParticipantsLeague": "लीग प्रतिभागियों की संख्या",
+    "addMeToGame": "गेम में शामिल हों",
+    "iWantToPlay": "मैं खेलना चाहता/चाहती हूँ",
+    "iWillPlay": "मैं भी खेलूँगा/खेलूँगी",
+    "settings": "सेटिंग्स",
+    "settingsTournament": "टूर्नामेंट सेटिंग्स",
+    "settingsLeague": "लीग सेटिंग्स",
+    "settingsTraining": "ट्रेनिंग सेटिंग्स",
+    "priceRequired": "इस मूल्य प्रकार के लिए मूल्य 0 से अधिक होना चाहिए",
+    "gameType": "गेम प्रकार",
+    "gameTypeLeague": "लीग प्रकार",
+    "gameTypeNote": "विस्तृत गेम सेटिंग्स गेम सेटअप अनुभाग में बदल सकते हैं।",
+    "gameTypeNoteLeague": "विस्तृत लीग सेटिंग्स लीग सेटअप अनुभाग में बदल सकते हैं।",
+    "anyoneCanInvite": {
+      "title": "कोई भी अन्य खिलाड़ियों को आमंत्रित कर सकता है",
+      "titleTraining": "कोई भी अन्य प्रतिभागियों को आमंत्रित कर सकता है",
+      "note": {
+        "false": "केवल आयोजक खिलाड़ियों को आमंत्रित कर सकते हैं।",
+        "true": "कोई भी प्रतिभागी अन्य खिलाड़ियों को आमंत्रित कर सकता है।"
+      },
+      "noteTraining": {
+        "false": "केवल आयोजक प्रतिभागियों को आमंत्रित कर सकते हैं।",
+        "true": "कोई भी प्रतिभागी अन्य प्रतिभागियों को आमंत्रित कर सकता है।"
+      }
+    },
+    "publicGame": {
+      "title": "सार्वजनिक गेम",
+      "titleTraining": "सार्वजनिक ट्रेनिंग",
+      "note": {
+        "false": "निजी रहेगा और केवल आमंत्रित प्रतिभागियों को दिखेगा।",
+        "true": "सभी खिलाड़ियों को दिखेगा और खोज में मिल सकता है।"
+      },
+      "noteTraining": {
+        "false": "निजी रहेगा और केवल आमंत्रित प्रतिभागियों को दिखेगा।",
+        "true": "सभी खिलाड़ियों को दिखेगा और खोज में मिल सकता है।"
+      }
+    },
+    "resultsByAnyone": {
+      "title": "कोई भी परिणाम दर्ज कर सकता है",
+      "note": {
+        "false": "केवल आयोजक परिणाम और गेम प्रारूप दर्ज/बदल सकते हैं।",
+        "true": "कोई भी खेलने वाला प्रतिभागी परिणाम दर्ज और गेम प्रारूप बदल सकता है।"
+      }
+    },
+    "allowDirectJoin": {
+      "title": "पुष्टि के बिना शामिल हों",
+      "titleTraining": "पुष्टि के बिना शामिल हों",
+      "note": {
+        "false": "शामिल होने से पहले खिलाड़ियों को आयोजकों की मंज़ूरी चाहिए।",
+        "true": "खिलाड़ी मंज़ूरी का इंतज़ार किए बिना सीधे शामिल हो सकते हैं।"
+      },
+      "noteTraining": {
+        "false": "शामिल होने से पहले प्रतिभागियों को आयोजकों की मंज़ूरी चाहिए।",
+        "true": "प्रतिभागी मंज़ूरी का इंतज़ार किए बिना सीधे शामिल हो सकते हैं।"
+      }
+    },
+    "afterGameGoToBar": {
+      "title": "गेम के बाद बार पर रुकें",
+      "titleTraining": "ट्रेनिंग के बाद बार पर रुकें",
+      "note": {
+        "false": "मैच के बाद सोशल जमावड़ा शामिल नहीं।",
+        "true": "मैच के बाद सोशल जमावड़ा शामिल है।"
+      },
+      "noteTraining": {
+        "false": "ट्रेनिंग के बाद सोशल जमावड़ा शामिल नहीं।",
+        "true": "ट्रेनिंग के बाद सोशल जमावड़ा शामिल है।"
+      }
+    },
+    "participantsOnlyChat": {
+      "title": "केवल प्रतिभागी चैट",
+      "note": {
+        "false": "बनाने के बाद केवल सामान्य चैट उपलब्ध होगी।",
+        "true": "गेम बनने पर प्रतिभागी और आयोजक चैट बनाई जाएँगी।"
+      }
+    },
+    "hasFixedTeams": {
+      "note": {
+        "false": "स्कोरबोर्ड व्यक्तिगत है। खिलाड़ी नियमों के अनुसार किसी के भी साथ खेलेंगे।",
+        "true": "स्कोरबोर्ड जोड़ी अनुसार है। आप खिलाड़ियों को जोड़े में लॉक कर सकते हैं जो एक-दूसरे से प्रतिस्पर्धा करते हैं। गेम शुरू होने के बाद जोड़ी लाइनअप नहीं बदली जा सकती।"
+      }
+    },
+    "ratingGame": {
+      "title": "रेटिंग गेम",
+      "note": {
+        "false": "परिणाम प्रतिभागियों के लेवल प्रभावित नहीं करेंगे।",
+        "true": "परिणाम प्रतिभागियों के लेवल प्रभावित करेंगे।"
+      }
+    },
+    "tournament": "टूर्नामेंट",
+    "genderTeams": {
+      "label": "लिंग",
+      "any": "कोई भी",
+      "men": "पुरुष",
+      "women": "महिलाएँ",
+      "mixPairs": "मिक्स",
+      "note": {
+        "any": "किसी भी लिंग का स्वागत है",
+        "men": "केवल पुरुषों की अनुमति",
+        "women": "केवल महिलाओं की अनुमति",
+        "mixPairs": "केवल टीम खेल के लिए, हर टीम में 1 पुरुष, 1 महिला; समान संख्या पुरुष/महिला शामिल हो सकते हैं।"
+      }
+    },
+    "fixedTeams": {
+      "optionOff": "रोटेटिंग",
+      "GAME": {
+        "descriptionOn": "इस गेम के हर मैच में वही पार्टनर रखें।",
+        "descriptionOff": "पार्टनर राउंड दर राउंड बदल सकते हैं।"
+      },
+      "TOURNAMENT": {
+        "descriptionOn": "पार्टनर पूरे टूर्नामेंट साथ रहते हैं।",
+        "descriptionOff": "टूर्नामेंट राउंड के बीच जोड़ियाँ बदल सकती हैं।"
+      },
+      "LEAGUE": {
+        "descriptionOn": "पूरी लीग के लिए फिक्स्ड जोड़ियाँ।",
+        "descriptionOff": "लीग में जोड़ियाँ राउंड दर राउंड बदल सकती हैं।"
+      }
+    },
+    "allowUserInMultipleTeams": {
+      "title": "एक खिलाड़ी कई फिक्स्ड टीमों पर",
+      "helper": "एक व्यक्ति एक से अधिक जोड़ी पर चुना जा सकता है। रोटेशन और कुछ लीग/स्टैंडिंग लॉजिक उन्हें असामान्य तरीके से गिन सकते हैं; रीसेट के लिए फिक्स्ड टीमें बंद करें।",
+      "editInSettingsHint": "आप नीचे कार्ड में सेटिंग्स संपादित कर रहे हैं। इस विकल्प के लिए वहाँ स्विच उपयोग करें, फिर सेव टैप करें। एडिट मोड छोड़ने पर आप ऊपर गेम सेटअप से फिर बदल सकते हैं।",
+      "tapEditHint": "इस कार्ड पर संपादित करें टैप करें, फिर स्विच चालू करें और सेव टैप करें।",
+      "saveAfterChangeHint": "स्विच चालू करें, फिर सेव टैप करें (इस कार्ड के ऊपर या नीचे)। संपादन खत्म करने के बाद आपका गेम सेटअप कार्ड यह विकल्प फिर दिखाता है।",
+      "note": {
+        "false": "हर खिलाड़ी केवल एक फिक्स्ड जोड़ी पर हो सकता है।",
+        "true": "एक खिलाड़ी एक साथ कई फिक्स्ड जोड़ियों पर हो सकता है।"
+      }
+    },
+    "gameName": "गेम का नाम",
+    "gameNameTournament": "टूर्नामेंट का नाम",
+    "gameNameLeague": "लीग का नाम",
+    "gameNameTraining": "ट्रेनिंग का नाम",
+    "gameNamePlaceholder": "अपने गेम का नाम दें",
+    "gameNamePlaceholderTournament": "अपने टूर्नामेंट का नाम दें",
+    "gameNamePlaceholderLeague": "अपनी लीग का नाम दें",
+    "gameNamePlaceholderTraining": "अपने सेशन का नाम दें",
+    "miscellaneous": "विविध",
+    "description": "विवरण",
+    "descriptionPlaceholder": "खिलाड़ियों के लिए विवरण…",
+    "descriptionPlaceholderTournament": "खिलाड़ियों के लिए विवरण…",
+    "descriptionPlaceholderLeague": "खिलाड़ियों के लिए विवरण…",
+    "descriptionPlaceholderTraining": "खिलाड़ियों के लिए विवरण…",
+    "price": "मूल्य",
+    "priceType": "मूल्य प्रकार",
+    "priceTypeNotKnown": "ज्ञात नहीं",
+    "priceTypePerPerson": "प्रति व्यक्ति",
+    "priceTypePerTeam": "प्रति टीम",
+    "priceTypeTotal": "कुल",
+    "priceTypeFree": "मुफ़्त",
+    "priceTotal": "मूल्य राशि",
+    "priceTotalPlaceholder": "मूल्य राशि दर्ज करें",
+    "priceCurrency": "मुद्रा",
+    "priceNotSet": "मूल्य सेट नहीं",
+    "gameStart": "गेम शुरू",
+    "gameStartTournament": "टूर्नामेंट शुरू",
+    "gameStartLeague": "लीग शुरू",
+    "gameStartTraining": "ट्रेनिंग शुरू",
+    "selectDate": "तारीख चुनें",
+    "date": "तारीख",
+    "startTime": "शुरुआत का समय",
+    "endTime": "समाप्ति समय",
+    "duration": "अवधि",
+    "noTimeSlotsForDate": "इस तारीख के लिए कोई उपलब्ध समय नहीं। दूसरा दिन आज़माएँ।",
+    "noTimeSlotsForDuration": "इस अवधि के लिए कोई उपलब्ध समय नहीं। दूसरी अवधि या तारीख आज़माएँ।",
+    "clubTime": "क्लब समय",
+    "timeSlot": "चुना स्लॉट",
+    "loadingExternalSlots": "बाहरी स्लॉट लोड हो रहे हैं",
+    "bookedWithoutCourt": "कोर्ट के बिना",
+    "notConfirmed": "पुष्टि नहीं",
+    "multipleCourts": "कई कोर्ट",
+    "noCourtsSelected": "कोई कोर्ट नहीं चुना",
+    "addCourt": "कोर्ट जोड़ें",
+    "createButton": "गेम बनाएँ",
+    "createButtonTournament": "टूर्नामेंट बनाएँ",
+    "createButtonLeague": "लीग बनाएँ",
+    "createButtonBar": "बार इवेंट बनाएँ",
+    "createButtonTraining": "ट्रेनिंग सेशन बनाएँ",
+    "today": "आज",
+    "tomorrow": "कल",
+    "yesterday": "कल (बीता)",
+    "selectFromCalendar": "कैलेंडर से चुनें",
+    "hours": "{{count}}घं",
+    "hoursMinutes": "{{hours}}घं {{minutes}}मि",
+    "durationHours_one": "{{count}} घंटा",
+    "durationHours_other": "{{count}} घंटे",
+    "durationHoursAndHalf": "{{hours}}.5 घंटे",
+    "durationHoursMinutes": "{{hours}} घं {{minutes}} मि",
+    "you": "आप",
+    "invite": "आमंत्रित करें",
+    "remove": "हटाएँ",
+    "manageInvites": "आमंत्रण प्रबंधित करें ({{count}})",
+    "invitesWillBeSent_one": "गेम बनने के बाद खिलाड़ी को आमंत्रित किया जाएगा",
+    "invitesWillBeSent_other": "गेम बनने के बाद {{count}} खिलाड़ियों को आमंत्रित किया जाएगा",
+    "overlapHardSave": "यह समय अनुपलब्ध कोर्ट से ओवरलैप होता है (क्लब सिस्टम या ब्लॉक)। दूसरा स्लॉट चुनें।",
+    "overlapSoftTitle": "यहाँ एक और गेम निर्धारित है",
+    "overlapSoftMessage": "दूसरे खिलाड़ी का इस कोर्ट पर इस समय गेम है लेकिन बुकिंग अभी पुष्टि नहीं हुई। आप फिर भी जारी रख सकते हैं।",
+    "overlapSoftProceed": "फिर भी जारी रखें",
+    "markCourtBookedTitle": "कोर्ट को बुक के रूप में चिह्नित करें?",
+    "markCourtBookedMessage": "आपने कोर्ट चुना लेकिन बुक के रूप में चिह्नित नहीं किया। क्लब के साथ आरक्षित होने पर पुष्टि करें।",
+    "markCourtBookedYes": "हाँ, मैंने बुक कर लिया",
+    "markCourtBookedSkip": "अभी नहीं",
+    "locationTime": {
+      "skipRealCourtToggle": "केवल गेम",
+      "realCourtBookingHint": "गेम बनाते समय {{club}} पर {{courts}} आरक्षित होंगे।",
+      "realCourtBookingHintEdit": "सेव करते समय {{club}} पर {{courts}} आरक्षित होंगे।",
+      "skipRealCourtHint": "गेम केवल Bandeja में शेड्यूल होगा।",
+      "skipRealCourtHintEdit": "गेम केवल Bandeja में अपडेट होगा।",
+      "summaryFromBookings": "आपकी {{count}} आरक्षणों से",
+      "summaryWindow": "{{start}} – {{end}}",
+      "summaryCrossDate": "{{startDate}} {{start}} – {{endDate}} {{end}}",
+      "selectionCounter": "{{min}}–{{max}} आरक्षण चुनें ({{players}})",
+      "selectionProgress": "अधिकतम {{max}} कोर्ट चुनें ({{players}})",
+      "selectionCompleteOne": "1 कोर्ट लिंक",
+      "selectionCompleteMany": "{{count}} कोर्ट लिंक",
+      "selectionAtMax": "इस प्रारूप के लिए अधिकतम चुने ({{players}}) — अन्य आरक्षण अनुपलब्ध",
+      "emptyBookingsOnDate": "इस तारीख पर कोई आरक्षण नहीं",
+      "emptyBookingsHint": "दूसरी तारीख आज़माएँ, नया कोर्ट आरक्षित करें, या आरक्षण लिंक किए बिना गेम बनाएँ।",
+      "emptyBookingsReserveNow": "अभी कोर्ट आरक्षित करें",
+      "emptyBookingsGameOnly": "केवल गेम बनाएँ",
+      "gridLegend": "हरा = आपका आरक्षण · लाल/पीला = लिया गया · प्राथमिक = चुना समय",
+      "alsoUsedIn": "इनमें भी उपयोग: {{games}}",
+      "pickAdjacentHour": "एक घंटा चुनें",
+      "linkHintTitle": "गेम आपके आरक्षणों से लिंक होगा",
+      "linkHintBody": "गेम बनाते समय ये कोर्ट बुकिंग लिंक होंगी।",
+      "linkHintLine": "{{court}} · {{window}}",
+      "overrideToggle": "गेम समय समायोजित करें",
+      "overrideHint": "गेम समय आपके आरक्षण से छोटा हो सकता है",
+      "overrideResetToast": "समय आरक्षण पर रीसेट",
+      "preselectedBanner": "आरक्षण पहले से चुना",
+      "linkedOnlyLabel": "आपके आरक्षणों से",
+      "unlinkConfirm": "यह आरक्षण लिंक हटाएँ?",
+      "unlinkLastConfirm": "अंतिम आरक्षण हटाने से समय संपादन अनलॉक होगा।",
+      "unlinkNoCancelNote": "क्लब पर कोर्ट आरक्षण सक्रिय रहता है — केवल इस गेम का लिंक हटता है।",
+      "syncInactiveCreate": "सिंक अभी सक्रिय नहीं — हम यहाँ स्लॉट या बुकिंग नहीं ला सके। आप फिर भी इस समय गेम बना सकते हैं।",
+      "syncInactiveEdit": "सिंक अभी सक्रिय नहीं — हम यहाँ स्लॉट या बुकिंग नहीं ला सके। आप फिर भी इस समय गेम संपादित कर सकते हैं।"
+    },
+    "reservationIntent": {
+      "title": "आप कोर्ट कैसे ले रहे हैं?",
+      "otherOptions": "अन्य विकल्प",
+      "recommended": "अनुशंसित",
+      "recommendedShort": "अनु.",
+      "validation": {
+        "selectCourt": "पहले {{count}} कोर्ट चुनें।",
+        "selectBookableCourt": "पहले {{count}} ऑनलाइन-बुक करने योग्य कोर्ट चुनें।",
+        "selectTime": "पहले उपलब्ध समय चुनें।",
+        "selectDuration": "पहले अवधि चुनें।",
+        "selectReservations": "अपने खाते से {{count}} आरक्षण चुनें।",
+        "bookingRecordsLoading": "आपके आरक्षण विवरण अभी लोड हो रहे हैं — थोड़ी देर बाद फिर कोशिश करें।"
+      },
+      "reserveNow": {
+        "title": "कोर्ट बुक करें",
+        "chipTitle": "कोर्ट बुक",
+        "description": "समय चुनें — हम आपके लिए बुक करेंगे।"
+      },
+      "useExisting": {
+        "title": "मेरे पास पहले से बुकिंग है",
+        "chipTitle": "मेरी बुकिंग",
+        "description": "अपने क्लब खाते से आरक्षण जोड़ें।",
+        "contextAvailable": "इस तारीख पर {{count}} उपलब्ध"
+      },
+      "gameOnly": {
+        "title": "कोर्ट बुकिंग छोड़ें",
+        "chipTitle": "केवल गेम",
+        "description": "केवल गेम बनाएँ — कोई कोर्ट आरक्षित नहीं।"
+      },
+      "manualBooked": {
+        "title": "मैन्युअल रूप से पहले से बुक",
+        "chipTitle": "बुक",
+        "description": "ऑनलाइन आरक्षण के बिना बुक चिह्नित करें।"
+      },
+      "summary": {
+        "reserveNow": {
+          "title": "वास्तविक कोर्ट आरक्षण बनाया जाएगा",
+          "body": "{{count}} कोर्ट, अवधि और समय चुनें। वही शेड्यूल आरक्षित होगा।"
+        },
+        "useExisting": {
+          "title": "गेम आपके आरक्षण से लिंक होगा",
+          "body": "आवश्यक {{count}} में से {{selected}} आरक्षण चुने।"
+        },
+        "gameOnly": {
+          "title": "कोई वास्तविक कोर्ट आरक्षण नहीं होगा",
+          "body": "गेम केवल Bandeja में शेड्यूल होगा।"
+        },
+        "manualBooked": {
+          "title": "गेम बुक के रूप में चिह्नित होगा",
+          "body": "कोई ऑनलाइन आरक्षण नहीं बनेगा।"
+        }
+      },
+      "cta": {
+        "reserveOne": "कोर्ट आरक्षित करें और गेम बनाएँ",
+        "reserveMany": "{{count}} कोर्ट आरक्षित करें और गेम बनाएँ",
+        "linkOne": "आरक्षण लिंक करें और गेम बनाएँ",
+        "linkMany": "{{count}} आरक्षण लिंक करें और गेम बनाएँ",
+        "gameOnly": "केवल गेम बनाएँ",
+        "manualBooked": "गेम बनाएँ"
+      }
+    },
+    "booktime": {
+      "switchLabel": "गेम बनाते समय कोर्ट आरक्षित करें",
+      "switchHint": "गेम बनाते समय हम {{club}} पर {{court}} आरक्षित करेंगे।",
+      "authTitle": "उपलब्ध समय देखने के लिए साइन इन करें",
+      "authHint": "अपने गेम के लिए समय चुनने हेतु {{club}} में साइन इन करें।",
+      "authOptOut": "मैं खुद कोर्ट बुक करूँगा/करूँगी",
+      "authorizeInClub": "{{club}} में अधिकृत करें",
+      "dateHint": "इस क्लब पर आप {{days}} दिन आगे तक बुक कर सकते हैं।",
+      "connectedChip": "साइन इन · {{phone}}",
+      "createCta": "गेम बनाएँ और कोर्ट आरक्षित करें",
+      "signInToContinue": "जारी रखने के लिए साइन इन करें",
+      "confirmTitle": "बनाने के लिए तैयार?",
+      "confirmPrimary": "आरक्षित करें और बनाएँ",
+      "activityTitle": "आपका गेम बन रहा है…",
+      "activityStep1": "आपका कोर्ट आरक्षित हो रहा है…",
+      "activityStepBookCourt": "{{court}} आरक्षित हो रहा है ({{current}} / {{total}})…",
+      "activityStep2": "आपका गेम बन रहा है…",
+      "multiBookFailed": "{{court}} आरक्षित नहीं हो सका। पिछले आरक्षण जारी कर दिए गए।",
+      "reviewTotal": "कुल",
+      "successTitle": "सब तैयार!",
+      "successBody": "कोर्ट आरक्षित · गेम बना",
+      "successGameOnly": "गेम बना",
+      "errorTitle": "कुछ गलत हो गया",
+      "slotTaken": "यह स्लॉट अभी लिया गया—दूसरा समय चुनें।",
+      "pickAnotherTime": "दूसरा समय चुनें",
+      "tryAgain": "फिर कोशिश करें",
+      "sessionExpired": "आपका साइन-इन समाप्त हो गया। कृपया फिर साइन इन करें और पुनः प्रयास करें।",
+      "createFailedAfterBook": "हम आपका गेम नहीं बना सके। कोर्ट आरक्षण रद्द हो गया—फिर कोशिश करें।",
+      "createFailedRollback": "हम आपका गेम नहीं बना सके। कोर्ट आरक्षण रद्द होने की पुष्टि नहीं हो सकी—क्लब से जाँच करें।",
+      "bookFailed": "कोर्ट आरक्षित नहीं हो सका। फिर कोशिश करें।",
+      "reservedAs": "इस रूप में आरक्षित: {{identity}}",
+      "cancelPolicy": "शुरुआत से {{hours}} घंटे पहले तक मुफ़्त रद्दीकरण।",
+      "yourGame": "आपका गेम",
+      "snapshotBlocked": "लाइव उपलब्धता अभी सिंक नहीं। सिंक का इंतज़ार करें या दूसरा दिन चुनें।",
+      "alreadyReserved": "इस गेम के लिए कोर्ट पहले से आरक्षित।",
+      "liveApiUnavailable": "कोर्ट आरक्षण अभी उपलब्ध नहीं — सामान्य शेड्यूलिंग उपयोग हो रही है।"
+    },
+    "padeloo": {
+      "authTitle": "अपना Padeloo खाता जोड़ें",
+      "authHint": "{{club}} पर समय चुनने के लिए अपने Padeloo ईमेल से साइन इन करें।",
+      "authorizeInClub": "{{club}} में अधिकृत करें"
+    },
+    "klikteren": {
+      "authTitle": "अपना Klikteren खाता जोड़ें",
+      "authHint": "{{club}} पर समय चुनने के लिए अपने Klikteren ईमेल और पासवर्ड से साइन इन करें।",
+      "authorizeInClub": "{{club}} में अधिकृत करें"
+    },
+    "intent": {
+      "title": "किस तरह का गेम?",
+      "noTemplatesForSetup": "इस सेटअप के लिए कोई प्रीसेट नहीं — मैन्युअल प्रारूप चुनने के लिए उन्नत उपयोग करें।",
+      "customizeFormat": "प्रारूप अनुकूलित करें",
+      "social": {
+        "title": "सोशल",
+        "description": "क्लब नाइट, रोटेशन, बिना रेटिंग दबाव"
+      },
+      "match": {
+        "title": "मैच",
+        "description": "मानक नियम, आपके लेवल में गिना जाता है"
+      },
+      "advanced": {
+        "title": "उन्नत",
+        "description": "पूरा प्रारूप विज़ार्ड, सभी प्रीसेट"
+      }
+    },
+    "templates": {
+      "title": "त्वरित टेम्प्लेट",
+      "empty": "इस खेल के लिए अभी कोई टेम्प्लेट नहीं — प्रारूप अनुकूलित करें उपयोग करें।",
+      "durationApprox2h": "~2घं",
+      "durationApprox90m": "~90 मि",
+      "PADEL_AUTOMATIC": {
+        "title": "लचीली स्कोरिंग",
+        "description": "आकस्मिक मैच, लचीला सेट या पॉइंट स्कोरिंग, आप तय करते हैं।"
+      },
+      "PADEL_BEST_OF_3": {
+        "title": "बेस्ट-ऑफ़-3",
+        "description": "मानक तीन-सेट मैच",
+        "badge": "आधिकारिक"
+      },
+      "PADEL_SUPER_TIEBREAK": {
+        "title": "सुपर टाईब्रेक",
+        "description": "दो सेट + 1–1 पर सुपर टाईब्रेक"
+      },
+      "PADEL_SINGLE_SET": {
+        "title": "एकल सेट",
+        "description": "मैच तय करने के लिए एक सेट"
+      },
+      "PADEL_AMERICANO": {
+        "title": "अमेरिकानो स्कोरिंग",
+        "description": "रोटेशन प्रारूप — कुल पॉइंट तक खेलें"
+      },
+      "PADEL_TIMED": {
+        "title": "टाइम्ड",
+        "description": "मैच टाइमर वाला एक सेट"
+      },
+      "PADEL_SINGLES_BO3": {
+        "title": "बेस्ट-ऑफ़-3",
+        "description": "सिंगल्स मैच — मानक तीन-सेट प्रारूप",
+        "badge": "आधिकारिक"
+      },
+      "PADEL_SINGLES_AUTOMATIC": {
+        "title": "स्वचालित",
+        "description": "आकस्मिक सिंगल्स — लचीली सेट स्कोरिंग, ऑटो-पेयरिंग"
+      },
+      "PADEL_SINGLES_SINGLE_SET": {
+        "title": "एकल सेट",
+        "description": "सिंगल्स — मैच तय करने के लिए एक सेट"
+      },
+      "PADEL_SINGLES_AMERICANO_24": {
+        "title": "सिंगल्स अमेरिकानो (24 पॉ)",
+        "description": "1v1 रोटेशन — सबके साथ 24 पॉइंट तक · 15 मि राउंड"
+      },
+      "PADEL_AMERICANO_10": {
+        "title": "अमेरिकानो · 10 मि",
+        "description": "टाइम्ड राउंड (10 मि), 24-बॉल गेम, रैंडम जोड़े"
+      },
+      "PADEL_AMERICANO_24": {
+        "title": "अमेरिकानो (24 पॉ)",
+        "description": "रैंडम जोड़े, 24 पॉइंट तक · 15 मि राउंड"
+      },
+      "PADEL_AMERICANO_20": {
+        "title": "अमेरिकानो · 20 मि",
+        "description": "टाइम्ड राउंड (20 मि), 24-बॉल गेम, रैंडम जोड़े"
+      },
+      "PADEL_MEXICANO_24": {
+        "title": "मेक्सिकानो (24 पॉ)",
+        "description": "लेवल-संतुलित जोड़े, 24-पॉइंट गेम"
+      },
+      "PADEL_CHALLENGER_POOL": {
+        "title": "चैलेंजर पूल",
+        "description": "किंग कोर्ट + कतार: कोर्ट 1 विजेता बचाव, अन्य पूल से घूमते हैं"
+      },
+      "PADEL_KOTC_11": {
+        "title": "किंग ऑफ़ द कोर्ट",
+        "description": "11 तक छोटे गेम; कोर्ट 1 पर राजा, बाकी के लिए चैलेंजर पूल"
+      },
+      "PICKLEBALL_SOCIAL_21": {
+        "title": "ओपन प्ले (21 पॉ)",
+        "description": "डबल्स अमेरिकानो, 21-बॉल गेम"
+      },
+      "PICKLEBALL_MATCH_BO3_11": {
+        "title": "11 तक बेस्ट ऑफ़ 3",
+        "description": "रैली स्कोरिंग, आधिकारिक स्टाइल"
+      },
+      "PICKLEBALL_KOTC_11": {
+        "title": "किंग ऑफ़ द कोर्ट",
+        "description": "छोटे 11-बॉल गेम; किंग कोर्ट + चैलेंजर पूल"
+      },
+      "BADMINTON_AMERICANO_21": {
+        "title": "क्लब नाइट (21 बॉल)",
+        "description": "डबल्स अमेरिकानो — 21-बॉल रोटेशन गेम, Bo3 नहीं"
+      },
+      "BADMINTON_CLUB_3X21": {
+        "title": "क्लब Bo3 × 21",
+        "description": "21 तक बेस्ट ऑफ़ 3 गेम — आकस्मिक सिंगल्स/डबल्स"
+      },
+      "BADMINTON_CLUB_3X15": {
+        "title": "क्लब Bo3 × 15",
+        "description": "15 तक बेस्ट ऑफ़ 3 गेम — BWF क्लब प्रारूप"
+      },
+      "BADMINTON_MATCH_3X21": {
+        "title": "मैच Bo3 × 21",
+        "description": "रेटेड आधिकारिक मैच — 21 तक बेस्ट ऑफ़ 3 गेम"
+      },
+      "TT_OPEN_PLAY_11": {
+        "title": "11 तक तेज़ गेम",
+        "description": "सिंगल्स या डबल — एक छोटा मैच (2–4 खिलाड़ी)"
+      },
+      "TT_CLUB_RR_11": {
+        "title": "क्लब राउंड रॉबिन",
+        "description": "6–8 खिलाड़ी, सिंगल्स — हर कोई हर किसी से, 11 तक गेम"
+      },
+      "TT_LEGACY_SINGLE_21": {
+        "title": "पुराना 21-पॉइंट एकल गेम",
+        "description": "21 पॉइंट तक एक गेम, 2 से जीत (2001 से पहले का स्टाइल)"
+      },
+      "TT_SWISS_BOX": {
+        "title": "स्विस बॉक्स",
+        "description": "स्किल-पेयरिंग बॉक्स लीग (लैडर इंजन), 11 तक Bo3"
+      },
+      "TT_BOX_BO3_11": {
+        "title": "बॉक्स लीग Bo3×11",
+        "description": "8–12 खिलाड़ी, बॉक्स समूह — राउंड के बीच कोर्ट चढ़ें"
+      },
+      "TT_MATCH_BO3_11": {
+        "title": "मैच Bo3×11",
+        "description": "रेटेड सिंगल्स/डबल्स, 11 तक बेस्ट ऑफ़ 3 गेम"
+      },
+      "TT_MATCH_BO5_11": {
+        "title": "मैच Bo5×11",
+        "description": "रेटेड मैच, 11 तक बेस्ट ऑफ़ 5 गेम"
+      },
+      "TENNIS_FAST4_SOCIAL": {
+        "title": "FAST4 सोशल",
+        "description": "शॉर्ट सेट, नो-एड स्कोरिंग"
+      },
+      "TENNIS_CLASSIC_BO3": {
+        "title": "बेस्ट ऑफ़ 3 सेट",
+        "description": "क्लासिक टेनिस मैच"
+      },
+      "SQUASH_QUICK_BO3_11": {
+        "title": "तेज़ Bo3×11",
+        "description": "11 तक बेस्ट ऑफ़ 3 गेम"
+      }
+    },
+    "presetTier": {
+      "social": "सोशल",
+      "match": "मैच"
+    },
+    "presetMeta": {
+      "POINTS_11": "11 तक खेलें (रोटेशन)",
+      "SINGLE_GAME_21": "पुराना गेम 21 तक",
+      "POINTS_16": "16 तक खेलें (रोटेशन)",
+      "POINTS_21": "21-बॉल बजट",
+      "POINTS_24": "24-बॉल अमेरिकानो",
+      "POINTS_32": "32 तक खेलें (रोटेशन)",
+      "CLASSIC_AUTOMATIC": "स्वचालित (आकस्मिक)",
+      "CLASSIC_BEST_OF_3": "बेस्ट ऑफ़ 3 सेट",
+      "CLASSIC_BEST_OF_5": "बेस्ट ऑफ़ 5 सेट",
+      "CLASSIC_PRO_SET": "प्रो सेट",
+      "CLASSIC_SHORT_SET": "शॉर्ट सेट",
+      "CLASSIC_SINGLE_SET": "एकल सेट",
+      "CLASSIC_SUPER_TIEBREAK": "सुपर टाईब्रेक",
+      "CLASSIC_TIMED": "टाइम्ड सेट",
+      "BEST_OF_3_11": "11 तक बेस्ट ऑफ़ 3",
+      "BEST_OF_3_15": "Bo3 · 15 तक गेम",
+      "BEST_OF_3_21": "Bo3 · 21 तक गेम",
+      "BEST_OF_5_11": "11 तक बेस्ट ऑफ़ 5",
+      "POINTS_15": "15-बॉल बजट",
+      "TIMED": "टाइम्ड",
+      "CUSTOM": "कस्टम"
+    }
+  }
+}

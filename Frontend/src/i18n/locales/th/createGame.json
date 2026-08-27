@@ -1,0 +1,600 @@
+{
+  "createGame": {
+    "title": "สร้างเกม",
+    "identity": {
+      "label": "ชื่อและรูปถ่าย",
+      "optional": "ไม่จำเป็น"
+    },
+    "steps": {
+      "setup": "การตั้งค่าเกม",
+      "location": "สถานที่และเวลา",
+      "players": "ผู้เล่น",
+      "details": "การตั้งค่าและรายละเอียด"
+    },
+    "footer": {
+      "selectClubHint": "เลือกสโมสรเพื่อดำเนินการต่อ"
+    },
+    "locationSteps": {
+      "date": "วันที่",
+      "time": "เวลาเริ่มต้น"
+    },
+    "pickSport": "เลือกกีฬา",
+    "createBar": "สร้างกิจกรรมบาร์",
+    "createTraining": "สร้างเซสชันการฝึกอบรม",
+    "createTournament": "สร้างทัวร์นาเมนต์",
+    "createLeague": "สร้างลีก",
+    "selectType": "เลือกประเภท",
+    "location": "ที่ตั้ง",
+    "locationTournament": "สถานที่แข่งขัน",
+    "locationLeague": "ที่ตั้งลีก",
+    "club": "สโมสร",
+    "selectClub": "เลือกคลับ",
+    "court": "ศาล",
+    "hall": "ห้องโถง",
+    "notBookedYet": "เกมเท่านั้น",
+    "dontSelectCourt": "ยังไม่มีศาล",
+    "dontSelectHall": "ยังไม่มีห้องโถง",
+    "courtNotSelected": "ศาลไม่ได้เลือก",
+    "hallNotSelected": "ฮอลล์ไม่ได้ถูกเลือก",
+    "multiCourtHint": "เลือกสนามได้สูงสุด {{count}} สำหรับผู้เล่น {{participants}} (เลือก{{selected}})",
+    "multiCourtNeedSharedSlots": "เลือกสนาม {{count}} ที่ว่างในเวลาเดียวกัน",
+    "multiCourtNoSharedSlots": "ไม่มีช่วงเวลาว่างในสนามที่เลือกทั้งหมด {{count}} ลองสนามอื่น วันอื่น หรือระยะเวลาอื่น",
+    "webCameraHint": "ศาลนี้มีกล้องเว็บที่เชื่อมโยง",
+    "webCameraHintsTitle": "กล้องเว็บที่เชื่อมโยง",
+    "webCameraHintNamed": "{{court}} มีกล้องเว็บที่เชื่อมโยง",
+    "webCameraHintAction": "แตะเพื่อดูถ่ายทอดสด",
+    "hasBookedCourt": "ฉันจองศาลนี้แล้ว",
+    "hasBookedHall": "ฉันจองโต๊ะแล้ว",
+    "selectCourt": "เลือกศาล",
+    "selectHall": "เลือก ฮอลล์",
+    "selectClubFirst": "เลือกสโมสรก่อน",
+    "selectCourtFirst": "เลือกศาลก่อน",
+    "clubCancellationNotice": "ประกาศยกเลิก: อย่างน้อย {{hours}} ชั่วโมงก่อนช่วงเวลาของคุณ",
+    "clubPolicyTitle": "นโยบายของสโมสร",
+    "noClubsAvailable": "ไม่มีคลับว่าง",
+    "clubDetailsBack": "กลับไปที่สโมสร",
+    "clubInfo": "รายละเอียดสโมสร",
+    "clubPhotos": "ภาพถ่าย",
+    "noCourtsAvailable": "ไม่มีศาล",
+    "noHallsAvailable": "ไม่มีห้องโถงว่าง",
+    "playerLevel": "ระดับผู้เล่น",
+    "playerLevelTournament": "ระดับผู้เล่นทัวร์นาเมนต์",
+    "playerLevelLeague": "ระดับผู้เล่นลีก",
+    "minLevel": "ระดับต่ำสุด",
+    "maxLevel": "ระดับสูงสุด",
+    "participants": "ผู้เข้าร่วม",
+    "participantsTournament": "ผู้เข้าร่วมการแข่งขัน",
+    "participantsLeague": "ผู้เข้าร่วมลีก",
+    "teamFormat": "รูปแบบทีม",
+    "numberOfParticipants": "จำนวนผู้เข้าร่วม",
+    "numberOfParticipantsTournament": "จำนวนผู้เข้าร่วมการแข่งขัน",
+    "numberOfParticipantsLeague": "จำนวนผู้เข้าร่วมลีก",
+    "addMeToGame": "เข้าร่วมเกม",
+    "iWantToPlay": "ฉันต้องการที่จะเล่น",
+    "iWillPlay": "ฉันจะเล่นด้วย",
+    "settings": "การตั้งค่า",
+    "settingsTournament": "การตั้งค่าการแข่งขัน",
+    "settingsLeague": "การตั้งค่าลีก",
+    "settingsTraining": "การตั้งค่าการฝึกอบรม",
+    "priceRequired": "ราคาต้องมากกว่า 0 สำหรับประเภทราคานี้",
+    "gameType": "ประเภทเกม",
+    "gameTypeLeague": "ประเภทลีก",
+    "gameTypeNote": "คุณสามารถเปลี่ยนการตั้งค่าเกมโดยละเอียดได้ในส่วนการตั้งค่าเกม",
+    "gameTypeNoteLeague": "คุณสามารถเปลี่ยนการตั้งค่าลีกโดยละเอียดได้ในส่วนการตั้งค่าลีก",
+    "anyoneCanInvite": {
+      "title": "ใครๆ ก็สามารถเชิญผู้เล่นคนอื่นได้",
+      "titleTraining": "ใครๆ ก็สามารถเชิญผู้เข้าร่วมคนอื่นๆ ได้",
+      "note": {
+        "false": "มีเพียงผู้จัดงานเท่านั้นที่สามารถเชิญผู้เล่นได้",
+        "true": "ผู้เข้าร่วมทุกคนสามารถเชิญผู้เล่นคนอื่นได้"
+      },
+      "noteTraining": {
+        "false": "มีเพียงผู้จัดงานเท่านั้นที่สามารถเชิญผู้เข้าร่วมได้",
+        "true": "ผู้เข้าร่วมทุกคนสามารถเชิญผู้เข้าร่วมรายอื่นได้"
+      }
+    },
+    "publicGame": {
+      "title": "เกมสาธารณะ",
+      "titleTraining": "การฝึกอบรมสาธารณะ",
+      "note": {
+        "false": "จะเป็นส่วนตัวและปรากฏเฉพาะผู้เข้าร่วมที่ได้รับเชิญเท่านั้น",
+        "true": "จะปรากฏแก่ผู้เล่นทุกคนและสามารถพบได้ในการค้นหา"
+      },
+      "noteTraining": {
+        "false": "จะเป็นส่วนตัวและปรากฏเฉพาะผู้เข้าร่วมที่ได้รับเชิญเท่านั้น",
+        "true": "จะปรากฏแก่ผู้เล่นทุกคนและสามารถพบได้ในการค้นหา"
+      }
+    },
+    "resultsByAnyone": {
+      "title": "ผลลัพธ์จากใครก็ตาม",
+      "note": {
+        "false": "มีเพียงผู้จัดงานเท่านั้นที่สามารถเข้าและแก้ไขผลลัพธ์และรูปแบบเกมได้",
+        "true": "ผู้เข้าร่วมที่เล่นสามารถป้อนผลลัพธ์และเปลี่ยนรูปแบบเกมได้"
+      }
+    },
+    "allowDirectJoin": {
+      "title": "เข้าโดยไม่ต้องยืนยัน",
+      "titleTraining": "เข้าร่วมโดยไม่ต้องยืนยัน",
+      "note": {
+        "false": "ผู้เล่นต้องได้รับการอนุมัติจากผู้จัดงานก่อนเข้าร่วม",
+        "true": "ผู้เล่นสามารถเข้าร่วมได้โดยตรงโดยไม่ต้องรอการอนุมัติ"
+      },
+      "noteTraining": {
+        "false": "ผู้เข้าร่วมต้องได้รับการอนุมัติจากผู้จัดงานก่อนเข้าร่วม",
+        "true": "ผู้เข้าร่วมสามารถเข้าร่วมได้โดยตรงโดยไม่ต้องรอการอนุมัติ"
+      }
+    },
+    "afterGameGoToBar": {
+      "title": "อยู่ที่บาร์หลังจบเกม",
+      "titleTraining": "อยู่ที่บาร์หลังการฝึกซ้อม",
+      "note": {
+        "false": "ไม่รวมการรวมตัวทางสังคมหลังการแข่งขัน",
+        "true": "รวมถึงการรวมตัวทางสังคมหลังการแข่งขัน"
+      },
+      "noteTraining": {
+        "false": "ไม่รวมการรวมตัวทางสังคมหลังการฝึกอบรม",
+        "true": "รวมถึงการรวมตัวทางสังคมหลังการฝึกอบรม"
+      }
+    },
+    "participantsOnlyChat": {
+      "title": "แชทเฉพาะผู้เข้าร่วมเท่านั้น",
+      "note": {
+        "false": "เฉพาะการแชททั่วไปเท่านั้นที่จะสามารถใช้ได้หลังการสร้าง",
+        "true": "การสนทนาของผู้เข้าร่วมและผู้จัดงานจะถูกสร้างขึ้นเมื่อมีการสร้างเกม"
+      }
+    },
+    "hasFixedTeams": {
+      "note": {
+        "false": "ป้ายบอกคะแนนเป็นรายบุคคล ผู้เล่นจะเล่นกับใครก็ได้ตามกฎ",
+        "true": "ป้ายบอกคะแนนเป็นแบบคู่ คุณสามารถล็อคผู้เล่นเป็นคู่ที่แข่งขันกันเองได้ ไม่สามารถเปลี่ยนแปลงรายชื่อคู่ได้หลังจากเริ่มเกมแล้ว"
+      }
+    },
+    "ratingGame": {
+      "title": "เกมจัดอันดับ",
+      "note": {
+        "false": "ผลลัพธ์จะไม่ส่งผลต่อระดับของผู้เข้าร่วม",
+        "true": "ผลลัพธ์จะส่งผลต่อระดับของผู้เข้าร่วม"
+      }
+    },
+    "tournament": "ทัวร์นาเมนต์",
+    "genderTeams": {
+      "label": "เพศ",
+      "any": "ใดๆ",
+      "men": "ผู้ชาย",
+      "women": "ผู้หญิง",
+      "mixPairs": "ผสม",
+      "note": {
+        "any": "ยินดีต้อนรับทุกเพศ",
+        "men": "อนุญาตให้เฉพาะผู้ชายเท่านั้น",
+        "women": "อนุญาตให้เฉพาะผู้หญิงเท่านั้น",
+        "mixPairs": "เฉพาะการเล่นเป็นทีมเท่านั้น แต่ละทีมจะประกอบด้วยชาย 1 คน หญิง 1 คน โดยอนุญาตให้ชาย/หญิงเข้าร่วมได้จำนวนเท่ากัน"
+      }
+    },
+    "fixedTeams": {
+      "optionOff": "กำลังหมุน",
+      "GAME": {
+        "descriptionOn": "รักษาคู่หูคนเดิมไว้ทุกนัดในเกมนี้",
+        "descriptionOff": "พันธมิตรสามารถเปลี่ยนจากรอบเป็นรอบ"
+      },
+      "TOURNAMENT": {
+        "descriptionOn": "พันธมิตรจะอยู่ด้วยกันตลอดทัวร์นาเมนต์",
+        "descriptionOff": "คู่อาจมีการเปลี่ยนแปลงระหว่างรอบทัวร์นาเมนต์"
+      },
+      "LEAGUE": {
+        "descriptionOn": "แก้ไขคู่สำหรับทั้งลีก",
+        "descriptionOff": "คู่อาจเปลี่ยนจากรอบหนึ่งไปอีกรอบในลีก"
+      }
+    },
+    "allowUserInMultipleTeams": {
+      "title": "ผู้เล่นคนเดียวกันในหลายทีม",
+      "helper": "อนุญาตให้บุคคลหนึ่งคนสามารถเลือกได้มากกว่าหนึ่งคู่ การหมุนและตรรกะของลีกหรืออันดับอาจนับด้วยวิธีที่ผิดปกติ ปิดทีมที่แก้ไขแล้วเพื่อรีเซ็ตสิ่งนี้",
+      "editInSettingsHint": "คุณกำลังแก้ไขการตั้งค่าในการ์ดด้านล่าง ใช้สวิตช์ที่นั่นสำหรับตัวเลือกนี้ จากนั้นแตะบันทึก เมื่อคุณออกจากโหมดแก้ไข คุณสามารถเปลี่ยนได้อีกครั้งจากการตั้งค่าเกมด้านบน",
+      "tapEditHint": "แตะแก้ไขบนการ์ดนี้ จากนั้นหมุนสวิตช์แล้วแตะบันทึก",
+      "saveAfterChangeHint": "หมุนสวิตช์ จากนั้นแตะบันทึก (ด้านบนหรือด้านล่างของการ์ดใบนี้) การ์ดการตั้งค่าเกมของคุณจะแสดงตัวเลือกนี้อีกครั้งหลังจากที่คุณแก้ไขเสร็จแล้ว",
+      "note": {
+        "false": "ผู้เล่นแต่ละคนสามารถอยู่ในคู่คงที่ได้เพียงคู่เดียวเท่านั้น",
+        "true": "ผู้เล่นอาจปรากฏบนคู่คงที่หลายคู่พร้อมกัน"
+      }
+    },
+    "gameName": "ชื่อเกม",
+    "gameNameTournament": "ชื่อทัวร์นาเมนท์",
+    "gameNameLeague": "ชื่อลีก",
+    "gameNameTraining": "ชื่อการอบรม",
+    "gameNamePlaceholder": "ตั้งชื่อเกมของคุณ",
+    "gameNamePlaceholderTournament": "ตั้งชื่อการแข่งขันของคุณ",
+    "gameNamePlaceholderLeague": "ตั้งชื่อลีกของคุณ",
+    "gameNamePlaceholderTraining": "ตั้งชื่อเซสชันของคุณ",
+    "miscellaneous": "เบ็ดเตล็ด",
+    "description": "คำอธิบาย",
+    "descriptionPlaceholder": "คำอธิบายสำหรับผู้เล่น...",
+    "descriptionPlaceholderTournament": "คำอธิบายสำหรับผู้เล่น...",
+    "descriptionPlaceholderLeague": "คำอธิบายสำหรับผู้เล่น...",
+    "descriptionPlaceholderTraining": "คำอธิบายสำหรับผู้เล่น...",
+    "price": "ราคา",
+    "priceType": "ประเภทราคา",
+    "priceTypeNotKnown": "ไม่เป็นที่รู้จัก",
+    "priceTypePerPerson": "ต่อคน",
+    "priceTypePerTeam": "ต่อทีม",
+    "priceTypeTotal": "ทั้งหมด",
+    "priceTypeFree": "ฟรี",
+    "priceTotal": "ราคา จำนวน",
+    "priceTotalPlaceholder": "ป้อนจำนวนราคา",
+    "priceCurrency": "สกุลเงิน",
+    "priceNotSet": "ไม่ได้กำหนดราคา",
+    "gameStart": "เริ่มเกม",
+    "gameStartTournament": "การแข่งขันเริ่มต้นขึ้น",
+    "gameStartLeague": "เริ่มลีก",
+    "gameStartTraining": "เริ่มการฝึก",
+    "selectDate": "เลือกวันที่",
+    "date": "วันที่",
+    "startTime": "เวลาเริ่มต้น",
+    "endTime": "เวลาสิ้นสุด",
+    "duration": "ระยะเวลา",
+    "noTimeSlotsForDate": "ไม่มีเวลาว่างสำหรับวันนี้ ลองวันอื่น",
+    "noTimeSlotsForDuration": "ไม่มีเวลาว่างในช่วงเวลานี้ ลองระยะเวลาหรือวันที่อื่น",
+    "clubTime": "เวลาสโมสร",
+    "timeSlot": "ช่องที่เลือก",
+    "loadingExternalSlots": "กำลังโหลดช่องภายนอก",
+    "bookedWithoutCourt": "โดยไม่ต้องมีศาล",
+    "notConfirmed": "ไม่ได้รับการยืนยัน",
+    "multipleCourts": "หลายศาล",
+    "noCourtsSelected": "ไม่มีศาลเลือก",
+    "addCourt": "เพิ่มศาล",
+    "createButton": "สร้างเกม",
+    "createButtonTournament": "สร้างทัวร์นาเมนต์",
+    "createButtonLeague": "สร้างลีก",
+    "createButtonBar": "สร้างกิจกรรมบาร์",
+    "createButtonTraining": "สร้างเซสชันการฝึกอบรม",
+    "today": "วันนี้",
+    "tomorrow": "พรุ่งนี้",
+    "yesterday": "เมื่อวาน",
+    "selectFromCalendar": "เลือกจากปฏิทิน",
+    "hours": "{{count}}ชม",
+    "hoursMinutes": "{{hours}}h {{minutes}}ม",
+    "durationHours_one": "{{count}} ชั่วโมง",
+    "durationHours_other": "{{count}} ชั่วโมง",
+    "durationHoursAndHalf": "{{hours}}.5 ชม",
+    "durationHoursMinutes": "{{hours}} ชม. {{minutes}} นาที",
+    "you": "คุณ",
+    "invite": "เชิญ",
+    "remove": "ลบ",
+    "manageInvites": "จัดการคำเชิญ ({{count}})",
+    "invitesWillBeSent_one": "ผู้เล่นจะได้รับเชิญหลังจากสร้างเกม",
+    "invitesWillBeSent_other": "ผู้เล่น {{count}} จะได้รับเชิญหลังจากสร้างเกม",
+    "overlapHardSave": "คราวนี้ทับซ้อนกับคอร์ทที่ไม่สามารถใช้งานได้ (ระบบคลับ หรือถูกบล็อค) เลือกช่องอื่น",
+    "overlapSoftTitle": "มีการวางแผนเกมอื่นที่นี่",
+    "overlapSoftMessage": "ผู้เล่นอีกคนมีเกมในสนามนี้ในเวลานี้แต่ยังไม่ได้ยืนยันการจอง คุณยังสามารถดำเนินการต่อได้",
+    "overlapSoftProceed": "ดำเนินการต่อต่อไป",
+    "markCourtBookedTitle": "ทำเครื่องหมายศาลว่าจองแล้วใช่ไหม?",
+    "markCourtBookedMessage": "คุณเลือกศาลแต่ไม่ได้ทำเครื่องหมายว่าจองแล้ว ยืนยันเมื่อได้จองกับสโมสรแล้ว",
+    "markCourtBookedYes": "ใช่ ฉันจองไว้แล้ว",
+    "markCourtBookedSkip": "ยัง",
+    "locationTime": {
+      "skipRealCourtToggle": "เกมเท่านั้น",
+      "realCourtBookingHint": "{{courts}} ที่ {{club}} จะถูกสงวนไว้เมื่อคุณสร้างเกม",
+      "realCourtBookingHintEdit": "{{courts}} ที่ {{club}} จะถูกสงวนไว้เมื่อคุณบันทึก",
+      "skipRealCourtHint": "เกมจะมีกำหนดใน Bandeja เท่านั้น",
+      "skipRealCourtHintEdit": "เกมดังกล่าวจะได้รับการอัพเดตใน Bandeja เท่านั้น",
+      "summaryFromBookings": "จากการจอง {{count}} ของคุณ",
+      "summaryWindow": "{{start}} – {{end}}",
+      "summaryCrossDate": "{{startDate}} {{start}} – {{endDate}} {{end}}",
+      "selectionCounter": "เลือกการจอง {{min}}–{{max}} ({{players}})",
+      "selectionProgress": "เลือกสนามได้สูงสุด {{max}} ({{players}})",
+      "selectionCompleteOne": "เชื่อมโยง 1 ศาลแล้ว",
+      "selectionCompleteMany": "{{count}} เชื่อมโยงศาลแล้ว",
+      "selectionAtMax": "จำนวนสูงสุดที่เลือกสำหรับรูปแบบนี้ ({{players}}) — การจองอื่นๆ ไม่พร้อมใช้งาน",
+      "emptyBookingsOnDate": "ไม่มีการจองในวันที่นี้",
+      "emptyBookingsHint": "ลองวันอื่น จองสนามใหม่ หรือสร้างเกมโดยไม่ต้องเชื่อมโยงการจอง",
+      "emptyBookingsReserveNow": "จองศาลได้เลย",
+      "emptyBookingsGameOnly": "สร้างเกมเท่านั้น",
+      "gridLegend": "สีเขียว = การจองของคุณ · แดง/เหลือง = ถ่ายแล้ว · หลัก = เวลาที่เลือก",
+      "alsoUsedIn": "ใช้ใน: {{games}} ด้วย",
+      "pickAdjacentHour": "เลือกหนึ่งชั่วโมง",
+      "linkHintTitle": "เกมจะเชื่อมโยงไปยังการจองของคุณ",
+      "linkHintBody": "การจองศาลเหล่านี้จะเชื่อมโยงเมื่อคุณสร้างเกม",
+      "linkHintLine": "{{court}} · {{window}}",
+      "overrideToggle": "ปรับเวลาเล่นเกม",
+      "overrideHint": "เวลาเล่นเกมอาจสั้นกว่าที่คุณจองไว้",
+      "overrideResetToast": "รีเซ็ตเวลาเป็นการจอง",
+      "preselectedBanner": "การจองที่เลือกไว้ล่วงหน้า",
+      "linkedOnlyLabel": "จากการจองของคุณ",
+      "unlinkConfirm": "ลบลิงก์การจองนี้ใช่ไหม",
+      "unlinkLastConfirm": "การลบการจองครั้งล่าสุดจะปลดล็อกการแก้ไขเวลา",
+      "unlinkNoCancelNote": "การจองสนามที่สโมสรยังคงมีผลอยู่ — มีเพียงลิงก์ไปยังเกมนี้เท่านั้นที่ถูกลบออก",
+      "syncInactiveCreate": "การซิงค์ใช้งานไม่ได้ในขณะนี้ เราไม่สามารถเรียกดูช่องหรือจองที่นี่ได้ คุณยังสามารถสร้างเกมได้ในขณะนี้",
+      "syncInactiveEdit": "การซิงค์ใช้งานไม่ได้ในขณะนี้ เราไม่สามารถเรียกดูช่องหรือจองที่นี่ได้ คุณยังคงสามารถแก้ไขเกมได้ในขณะนี้"
+    },
+    "reservationIntent": {
+      "title": "ขึ้นศาลยังไงล่ะ?",
+      "otherOptions": "ตัวเลือกอื่นๆ",
+      "recommended": "ที่แนะนำ",
+      "recommendedShort": "รับ",
+      "validation": {
+        "selectCourt": "เลือก {{count}} ศาล ก่อน",
+        "selectBookableCourt": "เลือก {{count}} ศาลที่จองออนไลน์ได้ก่อน",
+        "selectTime": "เลือกเวลาที่ว่างก่อน",
+        "selectDuration": "เลือกระยะเวลาก่อน",
+        "selectReservations": "เลือกการจอง {{count}} จากบัญชีของคุณ",
+        "bookingRecordsLoading": "กำลังโหลดรายละเอียดการจองของคุณอยู่ โปรดลองอีกครั้งในอีกสักครู่"
+      },
+      "reserveNow": {
+        "title": "จองศาล",
+        "chipTitle": "ศาลหนังสือ",
+        "description": "เลือกเวลา — เราจะจองให้คุณ"
+      },
+      "useExisting": {
+        "title": "ฉันมีการจองแล้ว",
+        "chipTitle": "การจองของฉัน",
+        "description": "เชื่อมต่อการจองจากบัญชีสโมสรของคุณ",
+        "contextAvailable": "{{count}} วางจำหน่ายในวันที่นี้"
+      },
+      "gameOnly": {
+        "title": "ข้ามการจองศาล",
+        "chipTitle": "เกมเท่านั้น",
+        "description": "เพียงแค่สร้างเกม — ไม่สงวนศาล"
+      },
+      "manualBooked": {
+        "title": "จองด้วยตนเองแล้ว",
+        "chipTitle": "จองแล้ว",
+        "description": "ทำเครื่องหมายว่าจองแล้วโดยไม่ต้องจองออนไลน์"
+      },
+      "summary": {
+        "reserveNow": {
+          "title": "จะทำการจองศาลจริง",
+          "body": "เลือก {{count}} ศาล ระยะเวลา และเวลา กำหนดการที่แน่นอนนั้นจะถูกจองไว้"
+        },
+        "useExisting": {
+          "title": "เกมจะเชื่อมโยงกับการจองของคุณ",
+          "body": "เลือก {{selected}} จาก {{count}} ที่ต้องจอง"
+        },
+        "gameOnly": {
+          "title": "จะไม่มีการจองศาลจริง",
+          "body": "เกมจะมีกำหนดใน Bandeja เท่านั้น"
+        },
+        "manualBooked": {
+          "title": "เกมจะถูกทำเครื่องหมายว่าจองแล้ว",
+          "body": "จะไม่มีการสร้างการจองออนไลน์"
+        }
+      },
+      "cta": {
+        "reserveOne": "สำรองสนามและสร้างเกม",
+        "reserveMany": "สำรองสนาม {{count}} และสร้างเกม",
+        "linkOne": "เชื่อมโยงการจองและสร้างเกม",
+        "linkMany": "ลิงก์ {{count}} การจองและสร้างเกม",
+        "gameOnly": "สร้างเกมเท่านั้น",
+        "manualBooked": "สร้างเกม"
+      }
+    },
+    "booktime": {
+      "switchLabel": "ศาลสำรองเมื่อฉันสร้างเกม",
+      "switchHint": "เราจะจอง {{court}} ที่ {{club}} เมื่อคุณสร้างเกม",
+      "authTitle": "ลงชื่อเข้าใช้เพื่อดูเวลาที่ว่าง",
+      "authHint": "ลงชื่อเข้าใช้ {{club}} เพื่อเลือกเวลาสำหรับเกมของคุณ",
+      "authOptOut": "ฉันจะจองสนามเอง",
+      "authorizeInClub": "อนุญาตใน {{club}}",
+      "dateHint": "คุณสามารถจองล่วงหน้าได้สูงสุด {{days}} ที่คลับนี้",
+      "connectedChip": "ลงชื่อเข้าใช้แล้ว · {{phone}}",
+      "createCta": "สร้างเกมและสนามสำรอง",
+      "signInToContinue": "ลงชื่อเข้าใช้เพื่อดำเนินการต่อ",
+      "confirmTitle": "พร้อมที่จะสร้างหรือยัง?",
+      "confirmPrimary": "จองและสร้าง",
+      "activityTitle": "กำลังสร้างเกมของคุณ...",
+      "activityStep1": "สำรองศาลของคุณ...",
+      "activityStepBookCourt": "กำลังจอง {{court}} ({{current}} จาก {{total}})…",
+      "activityStep2": "กำลังสร้างเกมของคุณ...",
+      "multiBookFailed": "ไม่สามารถจอง {{court}} ได้ การจองก่อนหน้านี้ได้รับการปล่อยตัว",
+      "reviewTotal": "ทั้งหมด",
+      "successTitle": "คุณพร้อมแล้ว!",
+      "successBody": "สงวนลิขสิทธิ์ · สร้างเกมแล้ว",
+      "successGameOnly": "สร้างเกมแล้ว",
+      "errorTitle": "มีบางอย่างผิดพลาด",
+      "slotTaken": "ช่องนี้เพิ่งถูกยึดไป โปรดเลือกเวลาอื่น",
+      "pickAnotherTime": "เลือกเวลาอื่น",
+      "tryAgain": "ลองอีกครั้ง",
+      "sessionExpired": "การลงชื่อเข้าใช้ของคุณหมดอายุแล้ว โปรดลงชื่อเข้าใช้อีกครั้งและลองอีกครั้ง",
+      "createFailedAfterBook": "เราไม่สามารถสร้างเกมของคุณได้ การจองศาลถูกยกเลิก โปรดลองอีกครั้ง",
+      "createFailedRollback": "เราไม่สามารถสร้างเกมของคุณได้ เราไม่สามารถยืนยันได้ว่าการจองสนามถูกยกเลิก โปรดตรวจสอบกับสโมสร",
+      "bookFailed": "ไม่สามารถจองศาลได้ ลองอีกครั้ง",
+      "reservedAs": "สงวนไว้เป็น: {{identity}}",
+      "cancelPolicy": "ยกเลิกฟรีสูงสุด {{hours}} ชั่วโมงก่อนเริ่ม",
+      "yourGame": "เกมของคุณ",
+      "snapshotBlocked": "ความพร้อมใช้งานสดยังไม่ถูกซิงค์ รอการซิงค์หรือเลือกวันอื่น",
+      "alreadyReserved": "คอร์ตสงวนไว้สำหรับเกมนี้แล้ว",
+      "liveApiUnavailable": "ไม่สามารถจองศาลได้ในขณะนี้ — โดยใช้การกำหนดเวลาปกติ"
+    },
+    "padeloo": {
+      "authTitle": "เชื่อมต่อบัญชี Padeloo ของคุณ",
+      "authHint": "ลงชื่อเข้าใช้ด้วยอีเมล Padeloo ของคุณเพื่อเลือกเวลาที่ {{club}}",
+      "authorizeInClub": "อนุญาตใน {{club}}"
+    },
+    "klikteren": {
+      "authTitle": "เชื่อมต่อบัญชี Klikteren ของคุณ",
+      "authHint": "ลงชื่อเข้าใช้ด้วยอีเมลและรหัสผ่าน Klikteren ของคุณเพื่อเลือกเวลาที่ {{club}}",
+      "authorizeInClub": "อนุญาตใน {{club}}"
+    },
+    "intent": {
+      "title": "เกมประเภทไหน?",
+      "noTemplatesForSetup": "ไม่มีการตั้งค่าล่วงหน้าที่เหมาะกับการตั้งค่านี้ — ใช้ขั้นสูงเพื่อเลือกรูปแบบด้วยตนเอง",
+      "customizeFormat": "ปรับแต่งรูปแบบ",
+      "social": {
+        "title": "ทางสังคม",
+        "description": "คลับไนท์ หมุนเวียน ไม่กดดันเรตติ้ง"
+      },
+      "match": {
+        "title": "จับคู่",
+        "description": "กฎมาตรฐาน นับตามระดับของคุณ"
+      },
+      "advanced": {
+        "title": "ขั้นสูง",
+        "description": "วิซาร์ดรูปแบบเต็ม ค่าที่ตั้งล่วงหน้าทั้งหมด"
+      }
+    },
+    "templates": {
+      "title": "เทมเพลตด่วน",
+      "empty": "ยังไม่มีเทมเพลตสำหรับกีฬาประเภทนี้ — ใช้กำหนดรูปแบบเอง",
+      "durationApprox2h": "~2 ชม",
+      "durationApprox90m": "~90 นาที",
+      "PADEL_AUTOMATIC": {
+        "title": "การให้คะแนนที่ยืดหยุ่น",
+        "description": "การแข่งขันแบบสบาย ๆ เซ็ตที่ยืดหยุ่นหรือการให้คะแนน คุณเป็นผู้ตัดสินใจ"
+      },
+      "PADEL_BEST_OF_3": {
+        "title": "ดีที่สุดใน 3",
+        "description": "การแข่งขันสามเซตมาตรฐาน",
+        "badge": "เป็นทางการ"
+      },
+      "PADEL_SUPER_TIEBREAK": {
+        "title": "ซุปเปอร์ไทเบรก",
+        "description": "สองเซต + ซูเปอร์ไทเบรกที่ 1–1"
+      },
+      "PADEL_SINGLE_SET": {
+        "title": "ชุดเดียว",
+        "description": "หนึ่งชุดในการตัดสินการแข่งขัน"
+      },
+      "PADEL_AMERICANO": {
+        "title": "การให้คะแนนอเมริกาโน่",
+        "description": "รูปแบบการหมุน — เล่นจนถึงคะแนนรวม"
+      },
+      "PADEL_TIMED": {
+        "title": "หมดเวลา",
+        "description": "หนึ่งชุดพร้อมตัวจับเวลาการแข่งขัน"
+      },
+      "PADEL_SINGLES_BO3": {
+        "title": "ดีที่สุดใน 3",
+        "description": "การแข่งขันเดี่ยว — รูปแบบสามชุดมาตรฐาน",
+        "badge": "เป็นทางการ"
+      },
+      "PADEL_SINGLES_AUTOMATIC": {
+        "title": "อัตโนมัติ",
+        "description": "ซิงเกิลสบายๆ — การให้คะแนนชุดที่ยืดหยุ่น การจับคู่อัตโนมัติ"
+      },
+      "PADEL_SINGLES_SINGLE_SET": {
+        "title": "ชุดเดียว",
+        "description": "Singles — หนึ่งชุดในการตัดสินการแข่งขัน"
+      },
+      "PADEL_SINGLES_AMERICANO_24": {
+        "title": "อเมริกาโน่คนโสด (24 แต้ม)",
+        "description": "การหมุน 1ต่อ1 — เล่นทุกคนให้ได้ 24 แต้ม · รอบ 15 นาที"
+      },
+      "PADEL_AMERICANO_10": {
+        "title": "อเมริกาโน่ · 10 นาที",
+        "description": "รอบจับเวลา (10 นาที) เกม 24 ลูก สุ่มคู่"
+      },
+      "PADEL_AMERICANO_24": {
+        "title": "อเมริกาโน่ (24 คะแนน)",
+        "description": "สุ่มคู่เล่นถึง 24 แต้ม · รอบละ 15 นาที"
+      },
+      "PADEL_AMERICANO_20": {
+        "title": "อเมริกาโน่ · 20 นาที",
+        "description": "รอบจับเวลา (20 นาที) เกม 24 ลูก สุ่มคู่"
+      },
+      "PADEL_MEXICANO_24": {
+        "title": "เม็กซิกาโน่ (24 แต้ม)",
+        "description": "คู่ที่สมดุลระดับเกม 24 แต้ม"
+      },
+      "PADEL_CHALLENGER_POOL": {
+        "title": "สระว่ายน้ำชาเลนเจอร์",
+        "description": "คิงคอร์ต + คิว: คอร์ต 1 ผู้ชนะป้องกัน คนอื่นๆ หมุนเวียนจากพูล"
+      },
+      "PADEL_KOTC_11": {
+        "title": "กษัตริย์แห่งศาล",
+        "description": "เกมสั้นถึง 11; ราชาบนสนามที่ 1 สระผู้ท้าชิงที่เหลือ"
+      },
+      "PICKLEBALL_SOCIAL_21": {
+        "title": "เปิดเล่น (21 แต้ม)",
+        "description": "อเมริกาโน่ดับเบิ้ล เกม 21 ลูก"
+      },
+      "PICKLEBALL_MATCH_BO3_11": {
+        "title": "ดีที่สุดจาก 3 ถึง 11",
+        "description": "การให้คะแนนแรลลี่สไตล์อย่างเป็นทางการ"
+      },
+      "PICKLEBALL_KOTC_11": {
+        "title": "กษัตริย์แห่งศาล",
+        "description": "เกมสั้น 11 ลูก; คิงคอร์ต + สระน้ำชาเลนเจอร์"
+      },
+      "BADMINTON_AMERICANO_21": {
+        "title": "คลับไนท์ (21 ลูก)",
+        "description": "Doubles Americano – เกมหมุนเวียน 21 ลูก ไม่ใช่ Bo3"
+      },
+      "BADMINTON_CLUB_3X21": {
+        "title": "คลับ โบ3 × 21",
+        "description": "ดีที่สุดใน 3 เกมถึง 21 เกม — ซิงเกิล/คู่ทั่วไป"
+      },
+      "BADMINTON_CLUB_3X15": {
+        "title": "คลับ โบ3 × 15",
+        "description": "ดีที่สุดใน 3 เกมถึง 15 เกม — BWF รูปแบบสโมสร"
+      },
+      "BADMINTON_MATCH_3X21": {
+        "title": "แมตช์ Bo3 × 21",
+        "description": "จัดอันดับการแข่งขันอย่างเป็นทางการ — ดีที่สุดใน 3 เกมต่อ 21 เกม"
+      },
+      "TT_OPEN_PLAY_11": {
+        "title": "เกมด่วนถึง 11",
+        "description": "เดี่ยวหรือคู่ – นัดสั้นหนึ่งนัด (ผู้เล่น 2–4 คน)"
+      },
+      "TT_CLUB_RR_11": {
+        "title": "โรบินรอบคลับ",
+        "description": "ผู้เล่น 6–8 คน เดี่ยว — ทุกคนเล่นได้ทุกคน เกมถึง 11 คน"
+      },
+      "TT_LEGACY_SINGLE_21": {
+        "title": "เกมเดี่ยว 21 แต้มแบบเก่า",
+        "description": "เกมเดียวมี 21 แต้ม ชนะ 2 (แบบก่อนปี 2544)"
+      },
+      "TT_SWISS_BOX": {
+        "title": "กล่องสวิส",
+        "description": "ลีกกล่องจับคู่ทักษะ (เครื่องยนต์แลดเดอร์), Bo3 ถึง 11"
+      },
+      "TT_BOX_BO3_11": {
+        "title": "บ็อกซ์ลีก Bo3×11",
+        "description": "ผู้เล่น 8–12 คน แบบบ็อกซ์กรุ๊ป — ปีนสนามระหว่างรอบ"
+      },
+      "TT_MATCH_BO3_11": {
+        "title": "แมตช์ Bo3×11",
+        "description": "จัดอันดับประเภทเดี่ยว/คู่ ดีที่สุดใน 3 เกมถึง 11 เกม"
+      },
+      "TT_MATCH_BO5_11": {
+        "title": "แมตช์ Bo5×11",
+        "description": "เรตแมตช์ ดีที่สุดจาก 5 เกมต่อ 11 เกม"
+      },
+      "TENNIS_FAST4_SOCIAL": {
+        "title": "โซเชียล FAST4",
+        "description": "ชุดสั้นไม่มีการให้คะแนนโฆษณา"
+      },
+      "TENNIS_CLASSIC_BO3": {
+        "title": "สุดคุ้ม 3 ชุด",
+        "description": "การแข่งขันเทนนิสคลาสสิก"
+      },
+      "SQUASH_QUICK_BO3_11": {
+        "title": "ด่วน Bo3×11",
+        "description": "ดีที่สุดใน 3 เกมถึง 11 เกม"
+      }
+    },
+    "presetTier": {
+      "social": "ทางสังคม",
+      "match": "จับคู่"
+    },
+    "presetMeta": {
+      "POINTS_11": "เล่นถึง 11 (หมุน)",
+      "SINGLE_GAME_21": "เกมโรงเรียนเก่าถึง 21",
+      "POINTS_16": "เล่นถึง 16 (หมุน)",
+      "POINTS_21": "งบประมาณ 21 ลูก",
+      "POINTS_24": "อเมริกาโน่ 24 ลูก",
+      "POINTS_32": "เล่นถึง 32 (หมุน)",
+      "CLASSIC_AUTOMATIC": "อัตโนมัติ (ลำลอง)",
+      "CLASSIC_BEST_OF_3": "สุดคุ้ม 3 ชุด",
+      "CLASSIC_BEST_OF_5": "ดีที่สุด 5 ชุด",
+      "CLASSIC_PRO_SET": "ชุดโปร",
+      "CLASSIC_SHORT_SET": "ชุดสั้น",
+      "CLASSIC_SINGLE_SET": "ชุดเดียว",
+      "CLASSIC_SUPER_TIEBREAK": "ซุปเปอร์ไทเบรก",
+      "CLASSIC_TIMED": "ชุดตั้งเวลา",
+      "BEST_OF_3_11": "ดีที่สุดจาก 3 ถึง 11",
+      "BEST_OF_3_15": "Bo3 · เกมถึง 15",
+      "BEST_OF_3_21": "Bo3 · เกมถึง 21",
+      "BEST_OF_5_11": "ดีที่สุดจาก 5 ถึง 11",
+      "POINTS_15": "งบประมาณ 15 ลูก",
+      "TIMED": "หมดเวลา",
+      "CUSTOM": "กำหนดเอง"
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "healthWorkout": {
+    "title": "पैडेल वर्कआउट",
+    "subtitle": "स्कोरिंग के दौरान Apple Watch से सेव किए गए",
+    "yourSession": "आपका वर्कआउट",
+    "kcal": "kcal",
+    "avgBpm": "औसत bpm",
+    "maxBpm": "अधिकतम bpm",
+    "loading": "लोड हो रहा है…",
+    "loadError": "वर्कआउट लोड नहीं हो सका",
+    "loadErrorHint": "कुछ गलत हो गया। कनेक्शन जाँचें और फिर कोशिश करें।",
+    "loadErrorProfile": "वर्कआउट लोड नहीं हो सके",
+    "loadErrorProfileHint": "कुछ गलत हो गया। कनेक्शन जाँचें और फिर कोशिश करें।",
+    "emptyGameTitle": "कोई वर्कआउट रिकॉर्ड नहीं",
+    "emptyGameHint": "अगली बार Bandeja में स्कोर करते समय Apple Watch पर वर्कआउट शुरू करें — कैलोरी और हृदय गति यहाँ दिखेंगी।",
+    "emptyProfileTitle": "अभी कोई वर्कआउट नहीं",
+    "emptyProfileHint": "Bandeja में गेम स्कोर करते समय Apple Watch पर वर्कआउट रिकॉर्ड करें ताकि कैलोरी और हृदय गति ट्रैक हों।"
+  }
+}

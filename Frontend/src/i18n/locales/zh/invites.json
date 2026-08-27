@@ -1,0 +1,37 @@
+{
+  "invites": {
+    "title": "邀请",
+    "pending": "待处理邀请",
+    "noInvites": "暂无待处理邀请",
+    "accept": "接受",
+    "decline": "拒绝",
+    "from": "来自",
+    "to": "发给",
+    "message": "留言",
+    "accepted": "已接受邀请",
+    "acceptedSuccessfully": "邀请已成功接受",
+    "declined": "已拒绝邀请",
+    "declinedSuccessfully": "邀请已成功拒绝",
+    "cancelledSuccessfully": "邀请已成功取消",
+    "selectPlayer": "选择球员",
+    "selectPlayers": "选择球员",
+    "noPlayersAvailable": "暂无可邀请的球员",
+    "inviteFriendToBandeja": "邀请好友加入 Bandeja",
+    "shareAppBody": "和我一起加入 Bandeja：{{url}}",
+    "pendingInvites": "待处理邀请",
+    "badgeDeclined": "已拒绝",
+    "badgeExpired": "邀请已过期",
+    "badgeInviteCancelled": "邀请已取消",
+    "sectionTerminalInvites": "邀请回复",
+    "inviteAgainHint": "你可以发送新的邀请。",
+    "inviteSent": "邀请已发送",
+    "invitedYou": "邀请参加",
+    "declineModal": {
+      "title": "拒绝邀请？",
+      "description": "你可以选择告诉组织者无法参加的原因。",
+      "reasonLabel": "原因（可选）",
+      "reasonPlaceholder": "例如：时间冲突、受伤…",
+      "confirm": "拒绝"
+    }
+  }
+}

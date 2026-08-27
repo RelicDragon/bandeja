@@ -1,0 +1,17 @@
+{
+  "playStreak": {
+    "chipWeeks_one": "{{count}} minggu",
+    "chipWeeks_other": "{{count}} minggu",
+    "chipBroken": "— · terbaik {{best}}",
+    "sheetTitle": "Streak bermain",
+    "rules": "Mainkan setidaknya satu pertandingan berating setiap 7 hari untuk menjaga streak Anda. Pertandingan tambahan di minggu yang sama tidak menambah minggu.",
+    "current": "Saat ini",
+    "best": "Terbaik",
+    "none": "—",
+    "weeks_one": "{{count}} minggu",
+    "weeks_other": "{{count}} minggu",
+    "playBy": "Main sebelum {{date}} untuk menjaga streak Anda",
+    "bannerStarted": "Streak dimulai!",
+    "bannerContinue": "Streak · {{count}} minggu"
+  }
+}
