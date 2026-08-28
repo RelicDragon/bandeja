@@ -11,6 +11,7 @@ import {
 } from '@/services/refreshTokenPersistence';
 import { extractLanguageCode, detectTimeFormat, detectWeekStart, normalizeLanguageForProfile } from '@/utils/displayPreferences';
 import { usersApi, authApi, pushApi } from '@/api';
+import pushNotificationService from '@/services/pushNotificationService';
 import { clearProactiveAccessRefresh, scheduleProactiveAccessRefresh } from '@/api/authRefresh';
 import { clearAllProactiveBooktimeRefresh } from '@/integrations/booktime/proactiveRefresh';
 import { clearChatLocalStores } from '@/services/chat/chatThreadIndex';
@@ -218,6 +219,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
         } catch (e) {
           console.warn('[auth:logout] push removeAllTokens failed', e);
         }
+        pushNotificationService.resetForLogout();
         try {
           const rt = await getRefreshTokenForRequest();
           const httpOnly = isWebHttpOnlyRefreshCookie();

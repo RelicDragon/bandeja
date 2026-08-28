@@ -7,19 +7,23 @@ import { Game, Bug } from '@/types';
 import type { GameParticipant } from '@/types';
 import type { GroupChannelParticipant } from '@/api/chat';
 import { PlayerAvatar } from './PlayerAvatar';
-import { matchesSearch } from '@/utils/transliteration';
 import {
   buildBugMentionableUsers,
   buildGameMentionableUsers,
   buildGroupMentionableUsers,
   type MentionableUser,
 } from '@/utils/mentionableUsers';
+import { buildMentionSuggestionItems } from '@/utils/mentionSuggestionItems';
+import {
+  resolveGameMentionParticipants,
+  resolveGroupMentionParticipants,
+  nudgeMentionSuggestionQuery,
+} from '@/utils/resolveMentionParticipants';
+import { shouldRefreshMentionsOnRosterLoad } from '@/utils/mentionRosterRefresh';
 import {
   ALL_MENTION_DISPLAY,
-  ALL_MENTION_ID,
   expandMentionIds,
   isAllMentionId,
-  matchesAllMentionQuery,
 } from '@/utils/mentionAll';
 import { getClipboardTextForPaste } from '@/utils/clipboardText';
 import { useAuthStore } from '@/store/authStore';
@@ -58,9 +62,13 @@ export const MentionInput: React.FC<MentionInputProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const pasteCleanupRef = useRef<(() => void) | null>(null);
+  const mentionableUsersRef = useRef<MentionableUser[]>([]);
+  const hadMentionableUsersRef = useRef(false);
   const currentUserId = useAuthStore((s) => s.user?.id);
   const [suggestionsWidth, setSuggestionsWidth] = useState(300);
-  const [suggestionsPortalHost, setSuggestionsPortalHost] = useState<HTMLElement | null>(null);
+  const [suggestionsPortalHost] = useState<HTMLElement | null>(() =>
+    typeof document === 'undefined' ? null : document.body
+  );
   const [gameParticipants, setGameParticipants] = useState<GameParticipant[] | null>(null);
   const [groupParticipants, setGroupParticipants] = useState<GroupChannelParticipant[] | null>(null);
 
@@ -77,10 +85,6 @@ export const MentionInput: React.FC<MentionInputProps> = ({
       (control as HTMLElement).style.height = `${h}px`;
     }
   };
-
-  useEffect(() => {
-    setSuggestionsPortalHost(document.body);
-  }, []);
 
   useEffect(() => {
     const updateWidth = () => {
@@ -172,7 +176,7 @@ export const MentionInput: React.FC<MentionInputProps> = ({
 
   const mentionableUsers = useMemo((): MentionableUser[] => {
     if (contextType === 'GAME' && game) {
-      const participants = gameParticipants ?? game.participants ?? [];
+      const participants = resolveGameMentionParticipants(game, gameParticipants);
       return buildGameMentionableUsers(
         participants,
         game.parent?.participants,
@@ -183,7 +187,7 @@ export const MentionInput: React.FC<MentionInputProps> = ({
       return buildBugMentionableUsers(bug);
     }
     if (contextType === 'GROUP' && groupChannel) {
-      const participants = groupParticipants ?? groupChannel.participants ?? [];
+      const participants = resolveGroupMentionParticipants(groupChannel, groupParticipants);
       return buildGroupMentionableUsers(participants);
     }
     return [];
@@ -197,10 +201,34 @@ export const MentionInput: React.FC<MentionInputProps> = ({
     groupParticipants,
   ]);
 
+  mentionableUsersRef.current = mentionableUsers;
+
   const mentionableUserIds = useMemo(
     () => mentionableUsers.map((u) => u.id),
     [mentionableUsers]
   );
+
+  useEffect(() => {
+    if (mentionableUsers.length === 0) {
+      hadMentionableUsersRef.current = false;
+      return;
+    }
+
+    const rosterJustLoaded = shouldRefreshMentionsOnRosterLoad(
+      hadMentionableUsersRef.current,
+      mentionableUsers.length,
+      value || inputRef.current?.value || ''
+    );
+    hadMentionableUsersRef.current = true;
+    if (!rosterJustLoaded) return;
+
+    const el = inputRef.current;
+    if (!el) return;
+
+    requestAnimationFrame(() =>
+      nudgeMentionSuggestionQuery(el, { requireFocus: false })
+    );
+  }, [mentionableUsers, value]);
 
   const handleChange = (_e: unknown, newValue: string, _newPlainTextValue: string, mentions: MentionData[]) => {
     const ids = expandMentionIds(
@@ -209,39 +237,22 @@ export const MentionInput: React.FC<MentionInputProps> = ({
       currentUserId
     );
     onChange(newValue, ids);
+    requestAnimationFrame(() => nudgeMentionSuggestionQuery(inputRef.current));
   };
 
-  const searchUsers = useCallback(
-    (query: string, callback: (items: SuggestionDataItem[]) => void) => {
-      const trimmed = query?.trim() ?? '';
-      const filtered = trimmed
-        ? mentionableUsers.filter((user) => {
-            const display = user.display;
-            const firstName = user.firstName || '';
-            const lastName = user.lastName || '';
-            return (
-              matchesSearch(trimmed, display) ||
-              matchesSearch(trimmed, firstName) ||
-              matchesSearch(trimmed, lastName)
-            );
-          })
-        : mentionableUsers;
-
-      const items: SuggestionDataItem[] = [];
-      if (mentionableUsers.length > 0 && matchesAllMentionQuery(trimmed)) {
-        items.push({ id: ALL_MENTION_ID, display: ALL_MENTION_DISPLAY });
-      }
-      for (const user of filtered) {
-        items.push({
-          id: user.id,
-          display: user.display,
-          user,
-        } as SuggestionDataItem & { user: MentionableUser });
-      }
-      callback(items);
+  const handleKeyDownWrapped = useCallback(
+    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      onKeyDown?.(e);
+      requestAnimationFrame(() => nudgeMentionSuggestionQuery(inputRef.current));
     },
-    [mentionableUsers]
+    [onKeyDown]
   );
+
+  const searchUsers = useCallback((query: string, callback: (items: SuggestionDataItem[]) => void) => {
+    const items = buildMentionSuggestionItems(query, mentionableUsersRef.current);
+    callback(items);
+    return items;
+  }, []);
 
   const customSuggestionsContainer = useCallback(
     (children: React.ReactNode) => <MentionSuggestionsContainer>{children}</MentionSuggestionsContainer>,
@@ -273,7 +284,9 @@ export const MentionInput: React.FC<MentionInputProps> = ({
     );
   };
 
-  const customStyle = {
+  const inputStyleOverride = useMemo(() => style ?? {}, [style]);
+
+  const customStyle = useMemo(() => ({
     control: {
       backgroundColor: 'transparent',
       fontSize: 14,
@@ -318,7 +331,7 @@ export const MentionInput: React.FC<MentionInputProps> = ({
         resize: 'none' as const,
         wordBreak: 'break-word' as const,
         overflowWrap: 'break-word' as const,
-        ...(style || {}),
+        ...inputStyleOverride,
       },
     },
     suggestions: {
@@ -346,41 +359,42 @@ export const MentionInput: React.FC<MentionInputProps> = ({
         },
       },
     },
-  };
-
-  const darkStyle = {
-    ...customStyle,
-    '&multiLine': {
-      ...customStyle['&multiLine'],
-      input: {
-        ...customStyle['&multiLine'].input,
-        backgroundColor: 'transparent',
-        border: 'none',
-        color: '#f3f4f6',
-      },
-    },
-    suggestions: {
-      container: {
-        backgroundColor: 'transparent',
-        zIndex: 99999,
-      },
-      list: {
-        ...customStyle.suggestions.list,
-        color: '#f3f4f6',
-        width: `${suggestionsWidth}px`,
-      },
-      item: {
-        ...customStyle.suggestions.item,
-        borderBottomColor: '#4b5563',
-        '&focused': {
-          backgroundColor: '#4b5563',
-        },
-      },
-    },
-  };
+  }), [inputStyleOverride, suggestionsWidth]);
 
   const isDark = document.documentElement.classList.contains('dark');
-  const finalStyle = isDark ? darkStyle : customStyle;
+  const finalStyle = useMemo(() => {
+    if (!isDark) return customStyle;
+    return {
+      ...customStyle,
+      '&multiLine': {
+        ...customStyle['&multiLine'],
+        input: {
+          ...customStyle['&multiLine'].input,
+          backgroundColor: 'transparent',
+          border: 'none',
+          color: '#f3f4f6',
+        },
+      },
+      suggestions: {
+        container: {
+          backgroundColor: 'transparent',
+          zIndex: 99999,
+        },
+        list: {
+          ...customStyle.suggestions.list,
+          color: '#f3f4f6',
+          width: `${suggestionsWidth}px`,
+        },
+        item: {
+          ...customStyle.suggestions.item,
+          borderBottomColor: '#4b5563',
+          '&focused': {
+            backgroundColor: '#4b5563',
+          },
+        },
+      },
+    };
+  }, [customStyle, isDark, suggestionsWidth]);
 
   const setInputRef = (el: HTMLTextAreaElement | null) => {
     (inputRef as React.MutableRefObject<HTMLTextAreaElement | null>).current = el;
@@ -397,7 +411,7 @@ export const MentionInput: React.FC<MentionInputProps> = ({
       <MentionsInput
         value={value}
         onChange={handleChange}
-        onKeyDown={onKeyDown}
+        onKeyDown={handleKeyDownWrapped}
         placeholder={placeholder}
         disabled={disabled}
         style={finalStyle}

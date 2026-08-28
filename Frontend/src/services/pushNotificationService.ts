@@ -27,10 +27,12 @@ import { chatApi } from '@/api/chat';
 import { restoreAuthIfNeeded } from '@/utils/authPersistence';
 import { getTokenNative } from '@/services/authBridge';
 import { setPushReplyJsReadyNative } from '@/services/push/pushDelegateBridge';
+import { registerPushNotificationActionTypes } from '@/services/push/registerPushNotificationActionTypes';
 import { hasExplicitLogoutMarker } from '@/utils/authExplicitLogout';
 import { queryClient } from '@/queries/queryClient';
 import { playIntentKeys } from '@/hooks/usePlayIntent';
 import { isPlayIntentPushType } from '@/services/push/isPlayIntentPushType';
+import { decodeJwtExpMs } from '@/api/authRefresh';
 
 interface NotificationData {
   type: string;
@@ -60,38 +62,115 @@ interface NotificationData {
 }
 
 class PushNotificationService {
-  private isInitialized = false;
+  private listenersRegistered = false;
+  private registrationComplete = false;
+  private notificationsAllowed = false;
+  private earlyInitInFlight: Promise<void> | null = null;
+  private registrationInFlight: Promise<void> | null = null;
   private lastReceivedToken: string | null = null;
   private lastTokenSentToBackend: string | null = null;
   private pendingNotificationTap: { data: NotificationData; rawData: unknown } | null = null;
   private pendingTapRetryTimer: ReturnType<typeof setTimeout> | null = null;
 
+  /** Early init: iOS action categories + event listeners. No permission prompt. */
+  async initializeEarly() {
+    if (!Capacitor.isNativePlatform() || this.listenersRegistered) {
+      return;
+    }
+    if (this.earlyInitInFlight) {
+      await this.earlyInitInFlight;
+      return;
+    }
+
+    this.earlyInitInFlight = this.runInitializeEarly();
+    try {
+      await this.earlyInitInFlight;
+    } finally {
+      this.earlyInitInFlight = null;
+    }
+  }
+
+  private async runInitializeEarly() {
+    try {
+      if (Capacitor.getPlatform() === 'ios') {
+        try {
+          await registerPushNotificationActionTypes();
+        } catch (error) {
+          console.warn('Failed to register push notification action types:', error);
+        }
+      }
+
+      await this.registerListeners();
+      this.listenersRegistered = true;
+      console.log('✅ Push notification listeners ready');
+    } catch (error) {
+      console.error('❌ Failed to initialize push listeners:', error);
+      try {
+        await PushNotifications.removeAllListeners();
+      } catch {
+        /* ignore cleanup failure */
+      }
+    }
+  }
+
+  /** Post-auth: permission check/request + APNs/FCM register. Requires initializeEarly(). */
   async initialize() {
-    if (!Capacitor.isNativePlatform() || this.isInitialized) {
+    if (!Capacitor.isNativePlatform()) {
+      return;
+    }
+    if (this.registrationInFlight) {
+      await this.registrationInFlight;
+      return;
+    }
+
+    this.registrationInFlight = this.runInitialize();
+    try {
+      await this.registrationInFlight;
+    } finally {
+      this.registrationInFlight = null;
+    }
+  }
+
+  private async runInitialize() {
+    await this.initializeEarly();
+    if (!this.listenersRegistered || this.registrationComplete) {
       return;
     }
 
     try {
-      await this.requestPermissions();
-      await this.registerListeners();
-      await this.register();
-      this.isInitialized = true;
-      console.log('✅ Push notifications initialized');
+      this.notificationsAllowed = await this.resolvePushPermission(true);
+      if (this.notificationsAllowed) {
+        await this.register();
+      }
+      this.registrationComplete = true;
+      console.log('✅ Push notifications registered');
     } catch (error) {
-      console.error('❌ Failed to initialize push notifications:', error);
+      console.error('❌ Failed to register push notifications:', error);
+      this.registrationComplete = true;
     }
   }
 
-  private async requestPermissions() {
-    const result = await PushNotifications.requestPermissions();
-    
-    if (result.receive === 'granted') {
-      console.log('✅ Push notification permission granted');
+  private async resolvePushPermission(allowRequest: boolean): Promise<boolean> {
+    const checked = await PushNotifications.checkPermissions();
+    if (checked.receive === 'granted') {
+      console.log('✅ Push notification permission already granted');
       return true;
-    } else {
+    }
+    if (checked.receive === 'denied') {
       console.log('❌ Push notification permission denied');
       return false;
     }
+    if (!allowRequest) {
+      return false;
+    }
+
+    const result = await PushNotifications.requestPermissions();
+    if (result.receive === 'granted') {
+      console.log('✅ Push notification permission granted');
+      return true;
+    }
+    console.log('❌ Push notification permission denied');
+    return false;
   }
 
   private async register() {
@@ -131,28 +210,83 @@ class PushNotificationService {
     await this.handleNotificationTap(pending.data, pending.rawData);
   }
 
-  async ensureTokenSentToBackend() {
+  private canSyncPushTokenToBackend(): boolean {
+    const auth = useAuthStore.getState();
+    if (!auth.isAuthenticated || !auth.token || auth.isInitializing) {
+      return false;
+    }
+    const expMs = decodeJwtExpMs(auth.token);
+    if (!expMs) {
+      return false;
+    }
+    return expMs > Date.now();
+  }
+
+  private async syncKnownTokenToBackend(): Promise<boolean> {
+    if (!this.lastReceivedToken || !this.canSyncPushTokenToBackend()) {
+      return false;
+    }
+    if (this.lastTokenSentToBackend === this.lastReceivedToken) {
+      return true;
+    }
+    await this.registerTokenWithBackend(this.lastReceivedToken);
+    return this.lastTokenSentToBackend === this.lastReceivedToken;
+  }
+
+  async ensureTokenSentToBackend(opts?: { requestPermission?: boolean }) {
     if (!Capacitor.isNativePlatform()) {
       return;
     }
-    if (!this.isInitialized) {
-      await this.initialize();
+    if (this.registrationInFlight) {
+      await this.registrationInFlight;
+      await this.syncKnownTokenToBackend();
+      // Registration/login fire a no-prompt sync first; App requests permission after shell paint.
+      if (!opts?.requestPermission) {
+        return;
+      }
     }
-    if (!this.isInitialized) {
-      return;
-    }
-    if (this.lastReceivedToken) {
-      await this.registerTokenWithBackend(this.lastReceivedToken);
-    } else {
-      await this.register();
+
+    this.registrationInFlight = this.runEnsureTokenSentToBackend(opts);
+    try {
+      await this.registrationInFlight;
+    } finally {
+      this.registrationInFlight = null;
     }
   }
 
+  private async runEnsureTokenSentToBackend(opts?: { requestPermission?: boolean }) {
+    await this.initializeEarly();
+    if (!this.listenersRegistered || !this.canSyncPushTokenToBackend()) {
+      return;
+    }
+
+    if (await this.syncKnownTokenToBackend()) {
+      return;
+    }
+
+    const allowRequest = opts?.requestPermission ?? false;
+    const allowed = await this.resolvePushPermission(allowRequest);
+    this.notificationsAllowed = allowed;
+    if (!allowed) {
+      return;
+    }
+
+    await this.register();
+    this.registrationComplete = true;
+    await this.syncKnownTokenToBackend();
+  }
+
   private async registerListeners() {
+    if (this.listenersRegistered) {
+      return;
+    }
+
     await PushNotifications.addListener('registration', async (token: Token) => {
       console.log('Push registration success, token:', token.value);
       this.lastReceivedToken = token.value;
-      await this.registerTokenWithBackend(token.value);
+      if (this.canSyncPushTokenToBackend()) {
+        await this.registerTokenWithBackend(token.value);
+      }
     });
 
     await PushNotifications.addListener('registrationError', (error: any) => {
@@ -193,6 +327,13 @@ class PushNotificationService {
   }
 
   private async registerTokenWithBackend(token: string) {
+    if (!this.canSyncPushTokenToBackend()) {
+      return;
+    }
+    if (this.lastTokenSentToBackend === token) {
+      return;
+    }
+
     const platform = Capacitor.getPlatform() === 'ios' ? 'IOS' : 'ANDROID';
     const deviceId = await this.getDeviceId();
     const appInfo = await getAppInfo();
@@ -643,9 +784,22 @@ class PushNotificationService {
     }
   }
 
+  resetForLogout() {
+    this.clearPendingTapRetry();
+    this.pendingNotificationTap = null;
+    // FCM/APNs device token is unchanged; drop only backend sync state for the next user.
+    this.lastTokenSentToBackend = null;
+    this.registrationComplete = false;
+  }
+
   async removeToken() {
+    this.resetForLogout();
+    if (!this.listenersRegistered) {
+      return;
+    }
     try {
       await PushNotifications.removeAllListeners();
+      this.listenersRegistered = false;
       console.log('✅ Push notification listeners removed');
     } catch (error) {
       console.error('❌ Failed to remove push notification listeners:', error);

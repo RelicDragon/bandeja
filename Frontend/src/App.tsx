@@ -150,6 +150,7 @@ function AppContent() {
   const isOnline = useNetworkStore((state) => state.isOnline);
   const [showOptionalUpdateModal, setShowOptionalUpdateModal] = useState(false);
   const [dismissedOptionalUpdate, setDismissedOptionalUpdate] = useState<string | null>(null);
+  const pushPermissionRequestedRef = useRef(false);
   const isAuthRouteForBootstraps =
     location.pathname === '/login' ||
     location.pathname === '/register' ||
@@ -276,8 +277,8 @@ function AppContent() {
       finishInitializing();
       syncNativeAppIconForUser(useAuthStore.getState().user);
       const authState = useAuthStore.getState();
-      if (isCapacitor() && authState.isAuthenticated && !authState.isInitializing) {
-        void pushNotificationService.ensureTokenSentToBackend();
+      if (isCapacitor() && authState.isAuthenticated) {
+        void pushNotificationService.ensureTokenSentToBackend({ requestPermission: false });
       }
     });
 
@@ -427,6 +428,29 @@ function AppContent() {
     dismissHtmlBootSplash();
     notifyShellPainted();
   }, [holdShellForBootstrap]);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      pushPermissionRequestedRef.current = false;
+    }
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (
+      holdShellForBootstrap ||
+      !isCapacitor() ||
+      !isAuthenticated ||
+      isInitializing ||
+      isAuthRouteForBootstraps
+    ) {
+      return;
+    }
+    const requestPermission = !pushPermissionRequestedRef.current;
+    if (requestPermission) {
+      pushPermissionRequestedRef.current = true;
+    }
+    void pushNotificationService.ensureTokenSentToBackend({ requestPermission });
+  }, [holdShellForBootstrap, isAuthenticated, isInitializing, isAuthRouteForBootstraps]);
 
   if (holdShellForBootstrap) {
     return <AppLoadingScreen isInitializing />;

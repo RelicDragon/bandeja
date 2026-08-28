@@ -118,7 +118,7 @@ export const Login = () => {
       refreshToken: response.data.refreshToken,
       currentSessionId: response.data.currentSessionId,
     });
-    await pushNotificationService.ensureTokenSentToBackend();
+    void pushNotificationService.ensureTokenSentToBackend({ requestPermission: false }).catch(() => {});
     finishLogin(true);
   }, [finishLogin, setAuth]);
 
@@ -181,7 +181,7 @@ export const Login = () => {
             refreshToken: response.data.refreshToken,
             currentSessionId: response.data.currentSessionId,
           });
-          await pushNotificationService.ensureTokenSentToBackend();
+          void pushNotificationService.ensureTokenSentToBackend({ requestPermission: false }).catch(() => {});
           finishLogin();
         })
         .catch((err: any) => {
@@ -214,7 +214,7 @@ export const Login = () => {
         refreshToken: response.data.refreshToken,
         currentSessionId: response.data.currentSessionId,
       });
-      await pushNotificationService.ensureTokenSentToBackend();
+      void pushNotificationService.ensureTokenSentToBackend({ requestPermission: false }).catch(() => {});
       finishLogin();
     } catch (err: any) {
       setError(extractApiErrorMessage(err, t));
@@ -269,7 +269,7 @@ export const Login = () => {
         refreshToken: response.data.refreshToken,
         currentSessionId: response.data.currentSessionId,
       });
-      await pushNotificationService.ensureTokenSentToBackend();
+      void pushNotificationService.ensureTokenSentToBackend({ requestPermission: false }).catch(() => {});
       finishLogin(true);
     } catch (err: any) {
       setError(extractApiErrorMessage(err, t));
@@ -306,7 +306,7 @@ export const Login = () => {
         refreshToken: response.data.refreshToken,
         currentSessionId: response.data.currentSessionId,
       });
-      await pushNotificationService.ensureTokenSentToBackend();
+      void pushNotificationService.ensureTokenSentToBackend({ requestPermission: false }).catch(() => {});
       finishLogin();
     } catch (err: any) {
       if (!isCancelError(err)) setError(extractApiErrorMessage(err, t));

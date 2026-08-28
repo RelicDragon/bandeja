@@ -49,6 +49,8 @@
 	<string>We need it to help you find games and clubs around you.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>We use your location only when you tap to find cities and clubs near you. We never access location in the background.</string>
+	<key>NSUserNotificationsUsageDescription</key>
+	<string>Bandeja sends alerts for game invites, chat messages, and match updates.</string>
 	<key>NSUserActivityTypes</key>
 	<array>
 		<string>INSendMessageIntent</string>

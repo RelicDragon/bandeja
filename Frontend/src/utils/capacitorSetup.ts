@@ -3,9 +3,8 @@ import { StatusBar, Style } from '@capacitor/status-bar';
 import { Keyboard, KeyboardResize } from '@capacitor/keyboard';
 import { isCapacitor, isIOS, isAndroid } from './capacitor';
 import { setupCapacitorNetwork } from './capacitorNetwork';
-import pushNotificationService from '@/services/pushNotificationService';
-import { registerPushNotificationActionTypes } from '@/services/push/registerPushNotificationActionTypes';
 import { syncApiBaseUrlToNative } from '@/services/authBridge';
+import pushNotificationService from '@/services/pushNotificationService';
 import { initWatchBridge } from '@/services/watchBridgeInit';
 import { shouldSkipCaretFollowScroll } from '@/components/bugs/selectionPreserve';
 import {
@@ -221,9 +220,8 @@ export const setupCapacitor = async () => {
     // FCM handling in ChatReplyMessagingService (FCM notification payloads ignore actions[]).
     await syncApiBaseUrlToNative();
     void initWatchBridge();
-    await registerPushNotificationActionTypes();
-    await pushNotificationService.initialize();
-    
+    await pushNotificationService.initializeEarly();
+
     // Show status bar first
     try {
       await StatusBar.show();

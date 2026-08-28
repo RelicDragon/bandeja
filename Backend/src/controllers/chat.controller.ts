@@ -24,6 +24,7 @@ import { MESSAGE_TRANSCRIPTION_PENDING, normalizeClientMutationId } from '@bande
 import { DraftService } from '../services/chat/draft.service';
 import { assertDraftDeleteAccess, assertDraftWriteAccess } from '../services/chat/draftWriteAccess.service';
 import { GameReadService } from '../services/game/read.service';
+import { resolveGameMentionParticipantsFromGame } from '../services/chat/gameMentionParticipants.service';
 import { GameChatViewerAccessService } from '../services/chat/gameChatViewerAccess.service';
 import { PollService } from '../services/chat/poll.service';
 import { MessageSearchService } from '../services/chat/messageSearch.service';
@@ -902,11 +903,8 @@ export const getGameParticipants = asyncHandler(async (req: AuthRequest, res: Re
     throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
   }
 
-  const game = await GameReadService.getGameById(gameId, userId, true) as any;
-  const participants = (game.participants ?? []).map((p: any) => ({
-    ...p,
-    isPlaying: p.status === 'PLAYING',
-  }));
+  const game = await GameReadService.getGameById(gameId, userId, true);
+  const participants = resolveGameMentionParticipantsFromGame(game);
 
   res.json({
     success: true,

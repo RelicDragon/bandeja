@@ -1117,6 +1117,7 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | CH-18 | Send text message | Type + send | Optimistic + confirmed |
 | CH-157 | Send then switch thread | Send in chat A, immediately open a different game/DM/group before the send confirms | Message stays only in A; chat B does not show A’s bubble among B’s history |
 | CH-95 | Mention @all | In game/group chat composer type `@` → pick `all` → send | Message shows `@all`; all other participants get mention notification |
+| CH-160 | Mention suggestions responsive | In large league/game chat type `@` | Suggestions appear within ~1s (max 20 users + `@all`); composer stays responsive while list is open; filter by typing narrows list |
 | CH-19 | Send emoji | Emoji picker | Emoji in message |
 | CH-20 | Reply to message | Reply action | Threaded reply |
 | CH-21 | Edit message | Edit own message | Updated content |
@@ -1822,7 +1823,10 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | X-39 | Tap bug chat push (Android) | Bug thread message push → tap | Routes to `/bugs/:groupChannelId` |
 | X-35 | Tap bracket schedule push | Routes to league schedule/bracket tab |
 | X-36 | Tap DM push | Routes to `/user-chat/:id` |
-| X-37 | Permission prompt | First launch push permission | `@manual` |
+| X-37 | Permission prompt | Fresh install → login → land on home | No prompt on cold start or login screen; single prompt after leaving auth routes |
+| X-37a | Cold start from push (logged in) | Kill app → tap push notification | Routes to correct screen |
+| X-37b | iOS actions before home paints | Cold start → invite push on lock screen | Accept/Decline actions visible |
+| X-37c | Logout → login as different user | User B logs in after User A logout | User B receives pushes; single navigation per tap |
 | PN-R1 | iOS inline chat reply (background) | DM push → expand → reply | Message sent with `replyToId`; no app open |
 | PN-R2 | iOS inline reply (killed, token-only) | Force-quit → reply from lock screen without JWT | Reply via `POST /chat/push-reply` succeeds |
 | PN-R3 | Android inline chat reply (killed) | Shade reply with app killed | Message sent via native `replyToken` path |

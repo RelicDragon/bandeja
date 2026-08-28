@@ -8,6 +8,8 @@ import * as authRefreshController from '../controllers/authRefresh.controller';
 import * as googleOAuthController from '../controllers/googleOAuthRedirect.controller';
 import { rateLimitKeyFromRequest } from '../utils/rateLimitClientKey';
 import { requireTrustedRefreshOrigin } from '../middleware/refreshOrigin';
+import { isE2eTestHeader } from '../utils/e2eRequestContext';
+import { config } from '../config/env';
 
 const router = Router();
 
@@ -52,11 +54,12 @@ const phoneAuthLimiter = rateLimit({
 
 const phoneRegisterLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
-  max: 10,
+  max: 20,
   message: { success: false, message: 'Too many registration attempts' },
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req) => rateLimitKeyFromRequest(req),
+  skip: (req) => config.nodeEnv !== 'production' && isE2eTestHeader(req),
 });
 
 const oauthAuthLimiter = rateLimit({

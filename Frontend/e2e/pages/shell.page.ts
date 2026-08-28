@@ -35,8 +35,15 @@ export class ShellPage {
   async dismissBlockingDialogs() {
     const sportsDialog = this.page.getByRole('dialog').filter({ hasText: /your sports/i });
     if (await sportsDialog.isVisible({ timeout: 5_000 }).catch(() => false)) {
+      const confirmResponse = this.page
+        .waitForResponse(
+          (res) => res.url().includes('/users/primary-sport/confirm') && res.ok(),
+          { timeout: 20_000 },
+        )
+        .catch(() => undefined);
       await sportsDialog.getByRole('button', { name: /^confirm$/i }).click();
-      await sportsDialog.waitFor({ state: 'hidden', timeout: 15_000 });
+      await confirmResponse;
+      await sportsDialog.waitFor({ state: 'hidden', timeout: 20_000 });
     }
   }
 

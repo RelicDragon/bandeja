@@ -97,6 +97,8 @@ async function clearLocalAuthCandidate(reason: string): Promise<void> {
   await clearRefreshBundle();
   removeLocalAuthStorage();
   useAuthStore.setState({ user: null, token: null, isAuthenticated: false });
+  const { default: pushNotificationService } = await import('@/services/pushNotificationService');
+  pushNotificationService.resetForLogout();
   syncLogoutToNative();
   try {
     const { clearWidgetNextGamesCache } = await import('@/services/widgetNextGamesSync');

@@ -44,7 +44,7 @@ export async function runAuthenticatedForegroundSync(): Promise<void> {
     const auth = useAuthStore.getState();
     if (!auth.isAuthenticated || !auth.token) return;
     await runForegroundSync();
-    void pushNotificationService.ensureTokenSentToBackend();
+    void pushNotificationService.ensureTokenSentToBackend({ requestPermission: false });
   })().finally(() => {
     foregroundAuthSync = null;
   });

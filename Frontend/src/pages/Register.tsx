@@ -156,7 +156,7 @@ export const Register = () => {
         refreshToken: response.data.refreshToken,
         currentSessionId: response.data.currentSessionId,
       });
-      await pushNotificationService.ensureTokenSentToBackend();
+      void pushNotificationService.ensureTokenSentToBackend({ requestPermission: false }).catch(() => {});
       navigate(consumePostLoginPath(), { replace: true });
     } catch (err: any) {
       const requestUrl = err?.config?.url ? `${err.config.baseURL || ''}${err.config.url}` : 'unknown';

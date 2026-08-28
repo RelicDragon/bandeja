@@ -98,7 +98,7 @@ export const TelegramAutoLogin = () => {
 
         setDone(true);
         navigate('/', { replace: true });
-        void pushNotificationService.ensureTokenSentToBackend().catch(() => {});
+        void pushNotificationService.ensureTokenSentToBackend({ requestPermission: false }).catch(() => {});
       } catch (err: unknown) {
         if (cancelled) return;
         startedKeyRef.current = null;
@@ -147,7 +147,7 @@ export const TelegramAutoLogin = () => {
       setDone(true);
       setMergeKey(null);
       navigate('/', { replace: true });
-      void pushNotificationService.ensureTokenSentToBackend().catch(() => {});
+      void pushNotificationService.ensureTokenSentToBackend({ requestPermission: false }).catch(() => {});
     } catch (err: unknown) {
       toast.error(extractApiErrorMessage(err, tRef.current));
     } finally {
