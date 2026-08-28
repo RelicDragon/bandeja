@@ -1,3 +1,3 @@
-body.keyboard-visible > div[style*="position: fixed"]:has(.mention-suggestions-shell) {
-  z-index: 100000 !important;
+body.keyboard-visible .mention-input-wrapper div[style*="position: absolute"]:has(.mention-suggestions-shell) {
+  z-index: 100001 !important;
 }

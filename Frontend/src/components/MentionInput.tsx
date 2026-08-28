@@ -64,9 +64,6 @@ export const MentionInput: React.FC<MentionInputProps> = ({
   const hadMentionableUsersRef = useRef(false);
   const currentUserId = useAuthStore((s) => s.user?.id);
   const [suggestionsWidth, setSuggestionsWidth] = useState(300);
-  const [suggestionsPortalHost] = useState<HTMLElement | null>(() =>
-    typeof document === 'undefined' ? null : document.body
-  );
   const [gameParticipants, setGameParticipants] = useState<GameParticipant[] | null>(null);
   const [groupParticipants, setGroupParticipants] = useState<GroupChannelParticipant[] | null>(null);
 
@@ -90,6 +87,26 @@ export const MentionInput: React.FC<MentionInputProps> = ({
   }, []);
 
   useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+
+    const refreshOpenMention = () => {
+      const el = inputRef.current;
+      if (!el) return;
+      const caret = el.selectionStart ?? el.value.length;
+      if (!isActiveMentionQuery(el.value, caret)) return;
+      nudgeMentionSuggestionQuery(el);
+    };
+
+    vv.addEventListener('resize', refreshOpenMention);
+    vv.addEventListener('scroll', refreshOpenMention);
+    return () => {
+      vv.removeEventListener('resize', refreshOpenMention);
+      vv.removeEventListener('scroll', refreshOpenMention);
+    };
+  }, []);
+
+  useEffect(() => {
     syncInputHeight();
   }, [value, syncInputHeight]);
 
@@ -98,9 +115,11 @@ export const MentionInput: React.FC<MentionInputProps> = ({
 
     const refreshIfNeeded = () => {
       requestAnimationFrame(() => {
-        const caret = textarea.selectionStart ?? textarea.value.length;
-        if (!isActiveMentionQuery(textarea.value, caret)) return;
-        nudgeMentionSuggestionQuery(textarea);
+        requestAnimationFrame(() => {
+          const caret = textarea.selectionStart ?? textarea.value.length;
+          if (!isActiveMentionQuery(textarea.value, caret)) return;
+          nudgeMentionSuggestionQuery(textarea);
+        });
       });
     };
 
@@ -391,8 +410,6 @@ export const MentionInput: React.FC<MentionInputProps> = ({
         disabled={disabled}
         style={finalStyle}
         allowSuggestionsAboveCursor
-        forceSuggestionsAboveCursor
-        suggestionsPortalHost={suggestionsPortalHost ?? undefined}
         customSuggestionsContainer={customSuggestionsContainer}
         inputRef={setInputRef}
       >
