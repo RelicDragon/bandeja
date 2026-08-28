@@ -7,6 +7,14 @@ export class GameDetailsPage {
   constructor(private readonly page: Page) {}
 
   async goto(gameId: string, query = '') {
+    if (!this.page.url().match(/\/(find|chats|marketplace|leaderboard)?\/?$/)) {
+      await this.page.goto('/');
+      await this.page
+        .getByRole('button', { name: /\b(find|chats|market|my)\b/i })
+        .first()
+        .waitFor({ state: 'visible', timeout: 45_000 })
+        .catch(() => undefined);
+    }
     await this.page.goto(`/games/${gameId}${query}`);
     if (await this.page.getByText(/something went wrong/i).isVisible({ timeout: 3_000 }).catch(() => false)) {
       await this.page.reload();

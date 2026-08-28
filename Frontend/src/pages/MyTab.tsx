@@ -12,7 +12,9 @@ import {
   MyGamesSection,
   PastGamesSection,
   UserTeamsHomeSection,
+  CityPromptBanner,
 } from '@/components/home';
+import { SportQuestionnairePrompt } from '@/components/sportQuestionnaire';
 import { StoriesRail } from '@/components/stories/StoriesRail';
 import { HomeActionGrid } from '@/components/home/HomeActionGrid';
 import { HomeTodayHeading } from '@/components/home/HomeTodayHeading';
@@ -495,6 +497,16 @@ export const MyTab = () => {
             </AnimatedMount>
           )}
           {user && (
+            <AnimatedMount layout>
+              <CityPromptBanner />
+            </AnimatedMount>
+          )}
+          {user && (
+            <AnimatedMount layout>
+              <SportQuestionnairePrompt sport={primarySport} />
+            </AnimatedMount>
+          )}
+          {user && (
             <MyTabUnlinkedBookingsSection booktime={booktime} unlinked={unlinkedBookings} />
           )}
           {user && user.cityIsSet === true && (
@@ -594,6 +606,16 @@ export const MyTab = () => {
           {user && (
             <AnimatedMount layout>
               <StoriesRail />
+            </AnimatedMount>
+          )}
+          {user && (
+            <AnimatedMount layout>
+              <CityPromptBanner />
+            </AnimatedMount>
+          )}
+          {user && (
+            <AnimatedMount layout>
+              <SportQuestionnairePrompt sport={primarySport} />
             </AnimatedMount>
           )}
           {user && (

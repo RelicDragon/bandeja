@@ -50,6 +50,7 @@ const phoneAuthLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req) => rateLimitKeyFromRequest(req),
+  skip: (req) => config.nodeEnv !== 'production' && isE2eTestHeader(req),
 });
 
 const phoneRegisterLimiter = rateLimit({

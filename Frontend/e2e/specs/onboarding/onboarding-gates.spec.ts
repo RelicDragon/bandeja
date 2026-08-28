@@ -8,9 +8,9 @@ import {
   createNameGateUser,
   createNoSportsUser,
   createPrimarySportGateUser,
+  createSportQuestionnairePromptUser,
   createWelcomePromptUser,
   registerTestUser,
-  updateTestProfile,
 } from '../../fixtures/persona.fixture';
 import { createJoinableGame, deleteGameViaApi } from '../../fixtures/games.fixture';
 import { CreateGamePage } from '../../pages/create-game.page';
@@ -178,25 +178,30 @@ test.describe('onboarding gates', () => {
   });
 
   test('OG-09 sport questionnaire prompt', async ({ page }) => {
-    const { token, user } = await registerTestUser();
-    const updated = await updateTestProfile(token, { cityIsSet: true });
-    await seedAuthInBrowser(page, token, { ...user, ...updated, cityIsSet: true });
+    const { token, user } = await createSportQuestionnairePromptUser();
+    await seedAuthInBrowser(page, token, user);
     await page.goto('/');
     await new ShellPage(page).waitForShellReady();
     await expect(new OnboardingPage(page).sportQuestionnairePrompt()).toBeVisible({ timeout: 25_000 });
   });
 
   test('OG-10 sport questionnaire complete', async ({ page }) => {
-    const { token, user } = await registerTestUser();
-    const updated = await updateTestProfile(token, { cityIsSet: true });
-    await seedAuthInBrowser(page, token, { ...user, ...updated, cityIsSet: true });
+    const { token, user } = await createSportQuestionnairePromptUser();
+    await seedAuthInBrowser(page, token, user);
     await page.goto('/');
     await new ShellPage(page).waitForShellReady();
     const prompt = new OnboardingPage(page).sportQuestionnairePrompt();
     await prompt.waitFor({ state: 'visible', timeout: 25_000 });
-    await page.getByRole('button', { name: /fill out the questionnaire|start|estimate|questionnaire/i }).first().click();
-    await page.getByRole('button', { name: /^skip$|not now|later/i }).first().click();
-    await page.getByRole('button', { name: /^confirm$|^skip$|yes, hide it/i }).click();
+    await prompt.click();
+    const dialog = page.getByRole('dialog');
+    await dialog.waitFor({ state: 'visible', timeout: 15_000 });
+    await dialog.getByRole('button', { name: /^next$/i }).click();
+    for (let i = 0; i < 5; i += 1) {
+      await dialog.locator('input[type="radio"]').first().check();
+      await page.waitForTimeout(400);
+    }
+    await dialog.getByRole('button', { name: /^continue$/i }).click();
+    await dialog.getByRole('button', { name: /^done$/i }).click();
     await expect(prompt).toHaveCount(0, { timeout: 20_000 });
   });
 });

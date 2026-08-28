@@ -21,9 +21,11 @@ body > div[style*="position: fixed"]:has(.mention-suggestions-shell) {
 
 .mention-suggestions-shell {
   background: transparent !important;
+  pointer-events: none;
 }
 
 .mention-suggestions-list {
+  pointer-events: auto;
   background-color: #ffffff !important;
   border: 1px solid rgba(0, 0, 0, 0.12) !important;
   box-shadow:

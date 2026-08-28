@@ -17,6 +17,8 @@ export async function seedAuthInBrowser(
   await page.goto('/login');
   await page.evaluate(
     ({ authToken, authUser: seededUser }) => {
+      localStorage.removeItem('cityPromptDismissed');
+      localStorage.removeItem('genderPromptDismissed');
       localStorage.setItem('token', authToken);
       localStorage.setItem('user', JSON.stringify(seededUser));
     },

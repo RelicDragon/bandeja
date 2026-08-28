@@ -1,4 +1,4 @@
-import { e2eApi, type E2eUser } from './api-client';
+import { e2eApi, e2eGetProfile, type E2eUser } from './api-client';
 import { e2eApiHeaders } from '../test-user';
 
 const apiURL = () => process.env.E2E_API_URL ?? 'http://localhost:3000/api';
@@ -31,6 +31,7 @@ export async function registerTestUser(options: {
   gender?: string;
   genderIsSet?: boolean;
   primarySport?: string;
+  skipSportConfirm?: boolean;
 } = {}): Promise<{ token: string; user: E2eUser & Record<string, unknown>; phone: string; password: string }> {
   const phone = options.phone ?? generateE2ePhone();
   const password = options.password ?? 'E2eTest1!';
@@ -57,7 +58,10 @@ export async function registerTestUser(options: {
   if (!token || !user?.id) {
     throw new Error('[e2e] register response missing token or user');
   }
-  return { token, user, phone, password };
+  const confirmed = options.skipSportConfirm
+    ? user
+    : await confirmPrimarySportForUser(token, user);
+  return { token, user: confirmed, phone, password };
 }
 
 export async function updateTestProfile(
@@ -70,13 +74,41 @@ export async function updateTestProfile(
   });
 }
 
+export async function confirmPrimarySportForUser(
+  token: string,
+  user: E2eUser & Record<string, unknown>,
+): Promise<E2eUser & Record<string, unknown>> {
+  if (user.primarySportIsSet === true) {
+    return user;
+  }
+  const sports =
+    Array.isArray(user.sportsEnabled) && user.sportsEnabled.length > 0
+      ? (user.sportsEnabled as string[])
+      : ['PADEL'];
+  const primarySport = typeof user.primarySport === 'string' ? user.primarySport : sports[0]!;
+  try {
+    return await e2eApi<E2eUser & Record<string, unknown>>(token, '/users/primary-sport/confirm', {
+      method: 'POST',
+      body: JSON.stringify({ sports, primarySport }),
+    });
+  } catch (err) {
+    if (err instanceof Error && err.message.includes('Primary sport already set')) {
+      return e2eGetProfile(token);
+    }
+    throw err;
+  }
+}
+
 export async function createNameGateUser(): Promise<{
   token: string;
   user: E2eUser & Record<string, unknown>;
 }> {
   const { token, user } = await registerTestUser({ firstName: 'No', lastName: 'Name' });
   const updated = await updateTestProfile(token, { nameIsSet: false });
-  return { token, user: { ...user, ...updated, nameIsSet: false } };
+  return {
+    token,
+    user: { ...user, ...updated, nameIsSet: false, primarySportIsSet: true },
+  };
 }
 
 export async function createGenderPromptUser(): Promise<{
@@ -89,7 +121,10 @@ export async function createGenderPromptUser(): Promise<{
     genderIsSet: false,
     cityIsSet: true,
   });
-  return { token, user: { ...user, ...updated, genderIsSet: false, cityIsSet: true } };
+  return {
+    token,
+    user: { ...user, ...updated, genderIsSet: false, cityIsSet: true, primarySportIsSet: true },
+  };
 }
 
 /** Fresh user after auto-assign: sport confirmed, has currentCity, cityIsSet false → CityPromptBanner on home. */
@@ -98,18 +133,10 @@ export async function createCityPromptUser(): Promise<{
   user: E2eUser & Record<string, unknown>;
 }> {
   const { token, user } = await registerTestUser();
-  const sports = Array.isArray(user.sportsEnabled) && user.sportsEnabled.length > 0
-    ? (user.sportsEnabled as string[])
-    : ['PADEL'];
-  const primarySport = typeof user.primarySport === 'string' ? user.primarySport : sports[0]!;
-  const confirmed = await e2eApi<E2eUser & Record<string, unknown>>(token, '/users/primary-sport/confirm', {
-    method: 'POST',
-    body: JSON.stringify({ sports, primarySport }),
-  });
   const updated = await updateTestProfile(token, { cityIsSet: false });
   return {
     token,
-    user: { ...user, ...confirmed, ...updated, cityIsSet: false, primarySportIsSet: true },
+    user: { ...user, ...updated, cityIsSet: false, primarySportIsSet: true },
   };
 }
 
@@ -121,7 +148,25 @@ export async function createWelcomePromptUser(): Promise<{
   const updated = await updateTestProfile(token, { cityIsSet: true, welcomeScreenPassed: false });
   return {
     token,
-    user: { ...user, ...updated, welcomeScreenPassed: false, cityIsSet: true },
+    user: {
+      ...user,
+      ...updated,
+      welcomeScreenPassed: false,
+      cityIsSet: true,
+      primarySportIsSet: true,
+    },
+  };
+}
+
+export async function createSportQuestionnairePromptUser(): Promise<{
+  token: string;
+  user: E2eUser & Record<string, unknown>;
+}> {
+  const { token, user } = await registerTestUser();
+  const updated = await updateTestProfile(token, { cityIsSet: true });
+  return {
+    token,
+    user: { ...user, ...updated, cityIsSet: true, primarySportIsSet: true },
   };
 }
 
@@ -129,7 +174,7 @@ export async function createPrimarySportGateUser(): Promise<{
   token: string;
   user: E2eUser & Record<string, unknown>;
 }> {
-  const { token, user } = await registerTestUser();
+  const { token, user } = await registerTestUser({ skipSportConfirm: true });
   const updated = await updateTestProfile(token, { primarySportIsSet: false, nameIsSet: true });
   return { token, user: { ...user, ...updated, primarySportIsSet: false, nameIsSet: true } };
 }
@@ -147,7 +192,7 @@ export async function createNoCityUser(): Promise<{
   });
   return {
     token,
-    user: { ...user, ...profile, currentCity: null, cityIsSet: false },
+    user: { ...user, ...profile, currentCity: null, cityIsSet: false, primarySportIsSet: true },
   };
 }
 

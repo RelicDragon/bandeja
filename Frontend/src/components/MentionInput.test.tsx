@@ -25,9 +25,9 @@ vi.mock('@/api/chat', () => ({
   },
 }));
 
-vi.mock('@/components/PlayerAvatar', () => ({
-  PlayerAvatar: ({ player }: { player?: { display?: string; firstName?: string; lastName?: string } }) => (
-    <span data-testid="mention-avatar">{player?.firstName}</span>
+vi.mock('@/components/MentionSuggestionAvatar', () => ({
+  MentionSuggestionAvatar: ({ user }: { user?: { firstName?: string } }) => (
+    <span data-testid="mention-avatar">{user?.firstName}</span>
   ),
 }));
 

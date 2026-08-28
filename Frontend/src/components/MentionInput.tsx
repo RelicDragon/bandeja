@@ -2,11 +2,7 @@ import React, { useRef, useEffect, useState, useMemo, useCallback } from 'react'
 import { MentionsInput, Mention, SuggestionDataItem, MentionData } from 'react-mentions';
 import { Users } from 'lucide-react';
 import { MentionSuggestionsContainer } from './MentionSuggestionsContainer';
-import { chatApi, ChatContextType, GroupChannel } from '@/api/chat';
-import { Game, Bug } from '@/types';
-import type { GameParticipant } from '@/types';
-import type { GroupChannelParticipant } from '@/api/chat';
-import { PlayerAvatar } from './PlayerAvatar';
+import { MentionSuggestionAvatar } from './MentionSuggestionAvatar';
 import {
   buildBugMentionableUsers,
   buildGameMentionableUsers,
@@ -20,6 +16,11 @@ import {
   nudgeMentionSuggestionQuery,
 } from '@/utils/resolveMentionParticipants';
 import { shouldRefreshMentionsOnRosterLoad } from '@/utils/mentionRosterRefresh';
+import { isActiveMentionQuery } from '@/utils/mentionQueryActive';
+import { chatApi, ChatContextType, GroupChannel } from '@/api/chat';
+import { Game, Bug } from '@/types';
+import type { GameParticipant } from '@/types';
+import type { GroupChannelParticipant } from '@/api/chat';
 import {
   ALL_MENTION_DISPLAY,
   expandMentionIds,
@@ -214,10 +215,12 @@ export const MentionInput: React.FC<MentionInputProps> = ({
       return;
     }
 
+    const text = value || inputRef.current?.value || '';
+    const caret = inputRef.current?.selectionStart ?? text.length;
     const rosterJustLoaded = shouldRefreshMentionsOnRosterLoad(
       hadMentionableUsersRef.current,
       mentionableUsers.length,
-      value || inputRef.current?.value || ''
+      isActiveMentionQuery(text, caret) ? '@' : ''
     );
     hadMentionableUsersRef.current = true;
     if (!rosterJustLoaded) return;
@@ -230,20 +233,26 @@ export const MentionInput: React.FC<MentionInputProps> = ({
     );
   }, [mentionableUsers, value]);
 
-  const handleChange = (_e: unknown, newValue: string, _newPlainTextValue: string, mentions: MentionData[]) => {
+  const handleChange = (
+    _e: unknown,
+    newValue: string,
+    newPlainTextValue: string,
+    mentions: MentionData[]
+  ) => {
     const ids = expandMentionIds(
       mentions.map((m) => m.id),
       mentionableUserIds,
       currentUserId
     );
     onChange(newValue, ids);
+    const caret = inputRef.current?.selectionStart ?? newPlainTextValue.length;
+    if (!isActiveMentionQuery(newPlainTextValue, caret)) return;
     requestAnimationFrame(() => nudgeMentionSuggestionQuery(inputRef.current));
   };
 
   const handleKeyDownWrapped = useCallback(
     (e: React.KeyboardEvent<Element>) => {
       onKeyDown?.(e);
-      requestAnimationFrame(() => nudgeMentionSuggestionQuery(inputRef.current));
     },
     [onKeyDown]
   );
@@ -278,7 +287,7 @@ export const MentionInput: React.FC<MentionInputProps> = ({
 
     return (
       <div className="flex items-center gap-2">
-        <PlayerAvatar player={user} extrasmall={true} fullHideName={true} />
+        <MentionSuggestionAvatar user={user} />
         <span>{entry.display}</span>
       </div>
     );

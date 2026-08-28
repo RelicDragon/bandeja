@@ -10,7 +10,7 @@ const ENTITY_HEADING: Record<CreateEntityType, RegExp> = {
 };
 
 const SUBMIT_LABEL: Record<CreateEntityType, RegExp> = {
-  GAME: /^create game$/i,
+  GAME: /^(create game only|create game)$/i,
   BAR: /^create bar event$/i,
   TRAINING: /^create training session$/i,
   TOURNAMENT: /^create tournament$/i,
