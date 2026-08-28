@@ -197,12 +197,9 @@ test.describe('onboarding gates', () => {
     await dialog.getByRole('button', { name: /^next$/i }).click();
     for (let i = 0; i < 5; i += 1) {
       await dialog.locator('fieldset label').first().click();
-      if (i < 4) {
-        await dialog.getByRole('button', { name: /^next$/i }).click();
-      } else {
-        await dialog.getByRole('button', { name: /^continue$/i }).click();
-      }
+      await page.waitForTimeout(400);
     }
+    await dialog.getByRole('button', { name: /^continue$/i }).click();
     await dialog.getByRole('button', { name: /^done$/i }).click();
     await expect(prompt).toHaveCount(0, { timeout: 20_000 });
   });

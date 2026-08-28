@@ -5,6 +5,10 @@ export class LoginPage {
 
   async goto() {
     await this.page.goto('/login');
+    await this.page
+      .getByRole('button', { name: /login with telegram|sign in with phone/i })
+      .first()
+      .waitFor({ state: 'visible', timeout: 45_000 });
   }
 
   async openPhoneSignIn() {

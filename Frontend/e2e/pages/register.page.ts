@@ -5,6 +5,7 @@ export class RegisterPage {
 
   async goto() {
     await this.page.goto('/register');
+    await this.firstNameInput().waitFor({ state: 'visible', timeout: 45_000 });
   }
 
   async expectLoaded() {

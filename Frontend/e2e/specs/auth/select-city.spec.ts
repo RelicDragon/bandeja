@@ -140,7 +140,11 @@ test.describe('auth select city', () => {
     await selectCity.searchInput().fill(anchor.country!);
     await page.getByRole('button').filter({ hasText: new RegExp(escapeRegExp(anchor.country!), 'i') }).first().click();
     await expect(selectCity.searchInput()).toHaveValue('');
-    await page.getByRole('button', { name: new RegExp(escapeRegExp(anchor.name), 'i') }).first().click();
+    await page
+      .getByRole('button', { name: new RegExp(`^${escapeRegExp(anchor.name)}`, 'i') })
+      .filter({ hasNot: page.getByText(/nearest to you/i) })
+      .first()
+      .click();
     await expect(selectCity.confirmButton()).toBeEnabled({ timeout: 10_000 });
   });
 
