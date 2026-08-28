@@ -1251,10 +1251,25 @@ async function executeRelease(session: ReleaseSession): Promise<void> {
   const refreshSpinner = clack.spinner();
   refreshSpinner.start('Re-checking latest store versions before release…');
   try {
-    withStore = await refreshStoreVersionsKeepingPlanned(withStore);
-    refreshSpinner.stop(
-      `Store floor confirmed: ${withStore.current.version} (${withStore.current.build}) → planned ${withStore.planned.version} (${withStore.planned.build})`,
-    );
+    const refreshed = await refreshStoreVersionsKeepingPlanned(withStore);
+    const { versionSource, versionSourceNote, ...sessionOnly } = refreshed;
+    withStore = sessionOnly;
+    if (versionSource === 'store') {
+      refreshSpinner.stop(
+        `Store floor confirmed: ${withStore.current.version} (${withStore.current.build}) → planned ${withStore.planned.version} (${withStore.planned.build})`,
+      );
+    } else {
+      refreshSpinner.stop('Store credentials still missing — keeping local version floor');
+      clack.log.warn(
+        [
+          'Could not re-check live store versions. Proceeding with the local/native floor.',
+          'Put Play/ASC keys in Backend/.env before upload, or set them in this shell.',
+          versionSourceNote ? `\n${versionSourceNote}` : '',
+        ]
+          .filter(Boolean)
+          .join('\n'),
+      );
+    }
   } catch (error) {
     refreshSpinner.stop('Store version re-check failed');
     const uploadError =
@@ -1518,8 +1533,24 @@ async function main(): Promise<void> {
       `Reading latest uploaded versions from ${releasePlatformLabel(current.targetPlatform)}…`,
     );
     try {
-      current = await hydrateReleaseSessionFromStores(current, current.targetPlatform);
-      spinner.stop('Store versions loaded');
+      const hydrated = await hydrateReleaseSessionFromStores(current, current.targetPlatform);
+      const { versionSource, versionSourceNote, ...sessionOnly } = hydrated;
+      current = sessionOnly;
+      if (versionSource === 'store') {
+        spinner.stop('Store versions loaded');
+      } else {
+        spinner.stop('Store credentials missing — using local native versions');
+        clack.log.warn(
+          [
+            'Live store version lookup was skipped because Play/ASC credentials are not loaded in Backend/.env.',
+            'Proposed version/build comes from local Gradle/Xcode files (same as before).',
+            'Upload/review steps still need those credentials later.',
+            versionSourceNote ? `\n${versionSourceNote}` : '',
+          ]
+            .filter(Boolean)
+            .join('\n'),
+        );
+      }
     } catch (error) {
       spinner.stop('Could not read store versions');
       const uploadError =

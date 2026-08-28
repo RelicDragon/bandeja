@@ -23,6 +23,14 @@ For _fastlane_ installation instructions, see [Installing _fastlane_](https://do
 
 Detect whether Google Play already has production changes in review
 
+### android latest_version
+
+```sh
+[bundle exec] fastlane android latest_version
+```
+
+Read the latest uploaded Google Play version/build
+
 ### android upload_release
 
 ```sh
@@ -51,6 +59,14 @@ Verify Google Play release after upload
 ```
 
 Detect whether App Store Connect already has an iOS submission in review
+
+### ios latest_version
+
+```sh
+[bundle exec] fastlane ios latest_version
+```
+
+Read the latest uploaded App Store Connect version/build
 
 ### ios remove_from_review
 

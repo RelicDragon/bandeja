@@ -109,6 +109,18 @@ export function resolvePlayJsonKeyPath(): string | undefined {
   return fs.existsSync(absolute) ? absolute : undefined;
 }
 
+export function describeMissingPlayJsonKey(): string | null {
+  const candidate = process.env.PLAY_STORE_JSON_KEY_PATH ?? process.env.GOOGLE_PLAY_JSON_KEY;
+  if (!candidate?.trim()) {
+    return 'PLAY_STORE_JSON_KEY_PATH / GOOGLE_PLAY_JSON_KEY is unset in the environment (Backend/.env).';
+  }
+  const absolute = path.resolve(candidate);
+  if (!fs.existsSync(absolute)) {
+    return `Play JSON key path is set but file not found: ${absolute}`;
+  }
+  return null;
+}
+
 function resolveFastlaneInvocation(): { command: string; prefix: string[] } {
   const gemfile = path.join(FRONTEND_DIR, 'Gemfile');
   if (fs.existsSync(gemfile)) {
@@ -264,10 +276,11 @@ export function runStoreVersionPreflight(platform: ReleasePlatform): StoreVersio
   const needsAndroid = includesAndroid(platform) && !readEnvStoreVersion('android');
   const needsIos = includesIos(platform) && !readEnvStoreVersion('ios');
 
-  if (needsAndroid && !resolvePlayJsonKeyPath()) {
-    issues.push(
-      'Set PLAY_STORE_JSON_KEY_PATH or GOOGLE_PLAY_JSON_KEY to read the latest Google Play version.',
-    );
+  if (needsAndroid) {
+    const playIssue = describeMissingPlayJsonKey();
+    if (playIssue) {
+      issues.push(playIssue);
+    }
   }
 
   if (needsIos) {
@@ -276,10 +289,10 @@ export function runStoreVersionPreflight(platform: ReleasePlatform): StoreVersio
     const ascKeyPath = process.env.ASC_KEY_PATH?.trim();
     if (!ascKeyId || !ascIssuerId || !ascKeyPath) {
       issues.push(
-        'Set ASC_KEY_ID, ASC_ISSUER_ID, and ASC_KEY_PATH to read the latest App Store Connect version.',
+        'ASC_KEY_ID / ASC_ISSUER_ID / ASC_KEY_PATH unset in the environment (Backend/.env).',
       );
     } else if (!fs.existsSync(path.resolve(ascKeyPath))) {
-      issues.push(`App Store Connect API key not found at ${ascKeyPath}`);
+      issues.push(`App Store Connect API key not found at ${path.resolve(ascKeyPath)}`);
     }
   }
 

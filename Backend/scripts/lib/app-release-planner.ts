@@ -88,12 +88,12 @@ export function createReleaseSession(headRef = 'HEAD'): ReleaseSession {
   };
 }
 
+export type VersionSource = 'store' | 'local';
+
 export async function hydrateReleaseSessionFromStores(
   session: ReleaseSession,
   platform: ReleasePlatform = session.targetPlatform,
-): Promise<ReleaseSession> {
-  const storeVersions = await fetchLatestStoreVersions(platform);
-  const { current, planned } = hydrateVersionsFromStores(storeVersions, platform);
+): Promise<ReleaseSession & { versionSource: VersionSource; versionSourceNote?: string }> {
   let localNative = session.localNative;
   try {
     localNative = readLocalNativeVersions();
@@ -101,14 +101,58 @@ export async function hydrateReleaseSessionFromStores(
     // Keep previous local snapshot when native files are temporarily unreadable.
   }
 
-  return {
-    ...session,
-    targetPlatform: platform,
-    storeVersions,
-    localNative,
-    current,
-    planned,
-  };
+  try {
+    const storeVersions = await fetchLatestStoreVersions(platform);
+    const { current, planned } = hydrateVersionsFromStores(storeVersions, platform);
+    return {
+      ...session,
+      targetPlatform: platform,
+      storeVersions,
+      localNative,
+      current,
+      planned,
+      versionSource: 'store',
+    };
+  } catch (error) {
+    if (!localNative) {
+      throw error;
+    }
+
+    const floorVersions = storeVersionsForPlatform(
+      {
+        android: includesAndroid(platform) ? localNative.android : undefined,
+        ios: includesIos(platform) ? localNative.ios : undefined,
+      },
+      platform,
+    );
+    const { current, planned } = hydrateVersionsFromStores(
+      {
+        android: includesAndroid(platform) ? localNative.android : undefined,
+        ios: includesIos(platform) ? localNative.ios : undefined,
+      },
+      platform,
+    );
+    const detail =
+      error instanceof ReleaseUploadError
+        ? error.logTail || error.message
+        : error instanceof Error
+          ? error.message
+          : String(error);
+
+    return {
+      ...session,
+      targetPlatform: platform,
+      storeVersions: {
+        android: includesAndroid(platform) ? localNative.android : undefined,
+        ios: includesIos(platform) ? localNative.ios : undefined,
+      },
+      localNative,
+      current: floorVersions.length > 0 ? mergeStoreVersionFloor(floorVersions) : current,
+      planned,
+      versionSource: 'local',
+      versionSourceNote: detail,
+    };
+  }
 }
 
 /**
@@ -118,24 +162,7 @@ export async function hydrateReleaseSessionFromStores(
  */
 export async function refreshStoreVersionsKeepingPlanned(
   session: ReleaseSession,
-): Promise<ReleaseSession> {
-  const storeVersions = await fetchLatestStoreVersions(session.targetPlatform);
-  const versions = storeVersionsForPlatform(storeVersions, session.targetPlatform);
-  if (versions.length === 0) {
-    throw new Error('No store versions available for the selected release target.');
-  }
-  const current = mergeStoreVersionFloor(versions);
-  const validationError = validatePlannedAgainstStores(
-    session.planned,
-    storeVersions,
-    session.targetPlatform,
-  );
-  if (validationError) {
-    throw new Error(
-      `${validationError} Re-run with a fresh session (or raise version/build) before uploading.`,
-    );
-  }
-
+): Promise<ReleaseSession & { versionSource: VersionSource; versionSourceNote?: string }> {
   let localNative = session.localNative;
   try {
     localNative = readLocalNativeVersions();
@@ -143,12 +170,70 @@ export async function refreshStoreVersionsKeepingPlanned(
     // Keep previous local snapshot when native files are temporarily unreadable.
   }
 
-  return {
-    ...session,
-    storeVersions,
-    localNative,
-    current,
-  };
+  try {
+    const storeVersions = await fetchLatestStoreVersions(session.targetPlatform);
+    const versions = storeVersionsForPlatform(storeVersions, session.targetPlatform);
+    if (versions.length === 0) {
+      throw new Error('No store versions available for the selected release target.');
+    }
+    const current = mergeStoreVersionFloor(versions);
+    const validationError = validatePlannedAgainstStores(
+      session.planned,
+      storeVersions,
+      session.targetPlatform,
+    );
+    if (validationError) {
+      throw new Error(
+        `${validationError} Re-run with a fresh session (or raise version/build) before uploading.`,
+      );
+    }
+
+    return {
+      ...session,
+      storeVersions,
+      localNative,
+      current,
+      versionSource: 'store',
+    };
+  } catch (error) {
+    const detail =
+      error instanceof ReleaseUploadError
+        ? error.logTail || error.message
+        : error instanceof Error
+          ? error.message
+          : String(error);
+    const looksLikeMissingCreds =
+      /unset in the environment|file not found|API key not found|preflight failed/i.test(detail);
+
+    if (!looksLikeMissingCreds || !localNative) {
+      throw error;
+    }
+
+    const storeVersions = {
+      android: includesAndroid(session.targetPlatform) ? localNative.android : undefined,
+      ios: includesIos(session.targetPlatform) ? localNative.ios : undefined,
+    };
+    const versions = storeVersionsForPlatform(storeVersions, session.targetPlatform);
+    const current =
+      versions.length > 0 ? mergeStoreVersionFloor(versions) : session.current;
+    const validationError = validatePlannedAgainstStores(
+      session.planned,
+      storeVersions,
+      session.targetPlatform,
+    );
+    if (validationError) {
+      throw new Error(validationError);
+    }
+
+    return {
+      ...session,
+      storeVersions,
+      localNative,
+      current,
+      versionSource: 'local',
+      versionSourceNote: detail,
+    };
+  }
 }
 
 export function runPreflight(session: ReleaseSession): PreflightInfo {

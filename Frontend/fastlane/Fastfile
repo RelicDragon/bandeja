@@ -101,6 +101,18 @@ def compare_dot_versions(left, right)
   0
 end
 
+def play_release_display_name(release)
+  if release.respond_to?(:release_name)
+    value = release.release_name
+    return value.to_s.strip unless value.to_s.strip.empty?
+  end
+  if release.respond_to?(:name)
+    value = release.name
+    return value.to_s.strip unless value.to_s.strip.empty?
+  end
+  ""
+end
+
 def android_latest_store_version
   require "supply/client"
   require "supply/reader"
@@ -117,10 +129,11 @@ def android_latest_store_version
     Array(track_meta&.releases).each do |release|
       codes = Array(release.version_codes).map(&:to_i)
       version_codes.concat(codes)
-      next if release.release_name.to_s.strip.empty? || codes.empty?
+      release_name = play_release_display_name(release)
+      next if release_name.empty? || codes.empty?
 
       named_releases << {
-        version: release.release_name.to_s.strip,
+        version: release_name,
         build: codes.max
       }
     end
@@ -175,8 +188,14 @@ def android_latest_store_version
                end
 
   version = best_named&.dig(:version).to_s.strip
+  # Play release "name" is often free-form; if missing, fall back to local versionName.
+  if version.empty?
+    gradle_path = File.expand_path("../android/app/build.gradle", __dir__)
+    gradle = File.read(gradle_path)
+    version = gradle[/versionName\s+"([^"]+)"/, 1].to_s.strip
+  end
   UI.user_error!(
-    "Google Play has build #{max_build} but no release name; set the planned version manually"
+    "Google Play has build #{max_build} but no release name; set APP_RELEASE_VERSION manually"
   ) if version.empty?
 
   {
