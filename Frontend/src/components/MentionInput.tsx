@@ -241,7 +241,7 @@ export const MentionInput: React.FC<MentionInputProps> = ({
   };
 
   const handleKeyDownWrapped = useCallback(
-    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    (e: React.KeyboardEvent<Element>) => {
       onKeyDown?.(e);
       requestAnimationFrame(() => nudgeMentionSuggestionQuery(inputRef.current));
     },
