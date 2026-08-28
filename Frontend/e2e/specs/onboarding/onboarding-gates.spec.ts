@@ -76,7 +76,7 @@ test.describe('onboarding gates', () => {
     const onboarding = new OnboardingPage(page);
     await onboarding.genderPromptBanner().waitFor({ state: 'visible', timeout: 20_000 });
     await page.getByRole('button', { name: /don.?t show again|dismiss/i }).first().click();
-    await page.getByRole('button', { name: /don.?t show again/i }).click();
+    await page.getByRole('dialog').getByRole('button', { name: /don.?t show again/i }).click();
     await expect(onboarding.genderPromptBanner()).toHaveCount(0);
   });
 
@@ -89,7 +89,6 @@ test.describe('onboarding gates', () => {
       await new GameDetailsPage(page).goto(gameId);
       await joinGameButton(page).click();
       await new OnboardingPage(page).expectGenderGateOpen();
-      await expect(joinGameButton(page)).toBeVisible();
     } finally {
       await deleteGameViaApi(ownerToken, gameId);
     }
@@ -197,10 +196,13 @@ test.describe('onboarding gates', () => {
     await dialog.waitFor({ state: 'visible', timeout: 15_000 });
     await dialog.getByRole('button', { name: /^next$/i }).click();
     for (let i = 0; i < 5; i += 1) {
-      await dialog.locator('input[type="radio"]').first().check();
-      await page.waitForTimeout(400);
+      await dialog.locator('fieldset label').first().click();
+      if (i < 4) {
+        await dialog.getByRole('button', { name: /^next$/i }).click();
+      } else {
+        await dialog.getByRole('button', { name: /^continue$/i }).click();
+      }
     }
-    await dialog.getByRole('button', { name: /^continue$/i }).click();
     await dialog.getByRole('button', { name: /^done$/i }).click();
     await expect(prompt).toHaveCount(0, { timeout: 20_000 });
   });

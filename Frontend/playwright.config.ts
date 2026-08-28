@@ -50,6 +50,7 @@ export default defineConfig({
         /onboarding\/.*\.spec\.ts$/,
       ],
       grepInvert: /@auth|@desktop/,
+      workers: 1,
       use: { ...devices['Pixel 5'] },
     },
     {

@@ -34,7 +34,7 @@ export class SelectCityPage {
   }
 
   suggestedSection() {
-    return this.page.getByRole('region', { name: /suggested/i }).or(this.page.getByLabel(/suggested/i));
+    return this.page.getByRole('region', { name: /suggested/i }).first();
   }
 
   confirmButton() {
