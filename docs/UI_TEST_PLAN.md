@@ -1549,6 +1549,7 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PR-44 | Unblock user | Blocked users section | User unblocked |
 | PR-63 | Following list primary-sport level | Multi-sport user (tennis primary, padel global level higher) on another user's followers/following list | Level badge shows tennis profile level, not padel `User.level` |
 | PR-45 | Send money from card | Player card → send money | `SendMoneyToUserModal` transfer |
+| PR-45a | Open Telegram from player card | Card/profile Telegram with username; then ID-only with Telegram installed (desktop + mobile); then ID-only without Telegram | Username → `t.me`. ID desktop → `tg://user?id=`; ID mobile → `tg://openmessage?user_id=`. If the app does not take focus, Telegram Web |
 | PR-46 | Wallet transaction history | Open wallet modal | Balance + history visible |
 | PR-47 | Level history panel | Statistics → level history | Per-sport history chart |
 | PR-47a | Level feedback privacy threshold | Levels tab with 4 distinct evaluators, then 5 evaluators across 3 games | Own profile shows neutral pending state below threshold; other profile hides card; at threshold both show anonymous donut and percentages total exactly 100% |

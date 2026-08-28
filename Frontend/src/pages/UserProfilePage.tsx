@@ -20,7 +20,7 @@ import { SportLevelProvider } from '@/contexts/SportLevelContext';
 import { parseLevelSportQuery } from '@/utils/levelSportQuery';
 import { usePlayerProfile } from '@/features/playerProfile';
 import { resolveActivePrimarySport } from '@/utils/profileSports';
-import { openExternalUrl } from '@/utils/openExternalUrl';
+import { openTelegramUser } from '@/utils/openTelegramUser';
 import type { Sport } from '@shared/sport';
 
 export const UserProfilePage = () => {
@@ -245,13 +245,12 @@ export const UserProfilePage = () => {
                   }}
                   onRatingClick={user && stats.user.isTrainer && (stats.user.trainerReviewCount ?? 0) > 0 ? () => setShowReviewsView(true) : undefined}
                   onTelegramClick={() => {
-                    const getTelegramUrl = () => {
-                      if (stats.user.telegramUsername) return `https://t.me/${stats.user.telegramUsername.replace('@', '')}`;
-                      if (stats.user.telegramId) return `tg://user?id=${stats.user.telegramId}`;
-                      return null;
-                    };
-                    const telegramUrl = getTelegramUrl();
-                    if (telegramUrl && !isBlocked) void openExternalUrl(telegramUrl);
+                    if (!isBlocked) {
+                      void openTelegramUser({
+                        telegramId: stats.user.telegramId,
+                        telegramUsername: stats.user.telegramUsername,
+                      });
+                    }
                   }}
                   onOpenGame={() => {}}
                   onMarketItemClick={user

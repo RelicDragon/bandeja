@@ -163,6 +163,11 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
     document.body.style.overflow = 'hidden';
     document.body.style.pointerEvents = 'none';
     openTimeRef.current = Date.now();
+    window.getSelection()?.removeAllRanges();
+
+    const preventSelectStart = (event: Event) => {
+      event.preventDefault();
+    };
 
     const shouldIgnore = () => Date.now() - openTimeRef.current < 400;
 
@@ -197,12 +202,14 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
     document.addEventListener('click', handleClickOutside);
     document.addEventListener('touchstart', handleTouchStart, { passive: false });
     document.addEventListener('touchend', handleTouchEnd, { passive: false });
+    document.addEventListener('selectstart', preventSelectStart);
 
     return () => {
       document.removeEventListener('click', handleClickOutside);
       document.removeEventListener('keydown', handleEscape);
       document.removeEventListener('touchstart', handleTouchStart);
       document.removeEventListener('touchend', handleTouchEnd);
+      document.removeEventListener('selectstart', preventSelectStart);
       document.body.style.overflow = '';
       document.body.style.pointerEvents = '';
     };
@@ -480,6 +487,8 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
     duplicate.style.maxWidth = 'none';
     duplicate.style.overflow = 'hidden';
     duplicate.style.pointerEvents = 'none';
+    duplicate.style.userSelect = 'none';
+    duplicate.style.webkitUserSelect = 'none';
 
     const messageContent = duplicate.querySelector('p');
     if (messageContent) {
@@ -503,7 +512,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
       {visible ? (
         <motion.div
           key="unified-message-menu"
-          className="fixed inset-0 z-[9998] pointer-events-none"
+          className="fixed inset-0 z-[9998] pointer-events-none select-none"
           initial="hidden"
           animate="visible"
           exit="hidden"
@@ -511,14 +520,14 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
           transition={instantTransition}
         >
           <motion.div
-            className="fixed inset-0 bg-black/30 backdrop-blur-md pointer-events-auto"
+            className="fixed inset-0 bg-black/30 backdrop-blur-md pointer-events-auto select-none"
             variants={CHAT_MESSAGE_MENU_BACKDROP}
             transition={instantTransition}
             onClick={handleBackdropClick}
           />
 
           <motion.div
-            className="pointer-events-none fixed left-1/2 z-[9999]"
+            className="pointer-events-none fixed left-1/2 z-[9999] select-none"
             variants={CHAT_MESSAGE_MENU_PREVIEW}
             transition={instantTransition}
             style={{
@@ -532,7 +541,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
 
           <motion.div
             ref={menuRef}
-            className="fixed bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-2xl shadow-lg min-w-[200px] max-w-[90vw] overflow-hidden pointer-events-auto"
+            className="fixed bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-2xl shadow-lg min-w-[200px] max-w-[90vw] overflow-hidden pointer-events-auto select-none"
             variants={CHAT_MESSAGE_MENU_SHELL}
             transition={instantTransition}
             style={{

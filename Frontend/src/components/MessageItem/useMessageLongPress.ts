@@ -38,11 +38,27 @@ export function useMessageLongPress({
     let menuWasOpened = false;
     const scrollThreshold = 10;
 
+    const clearTextSelection = () => {
+      window.getSelection()?.removeAllRanges();
+    };
+
+    const preventSelectStart = (e: Event) => {
+      e.preventDefault();
+    };
+
     const clearTimer = () => {
       if (longPressTimer.current) {
         clearTimeout(longPressTimer.current);
         longPressTimer.current = null;
       }
+    };
+
+    const stopPressSelectionGuard = () => {
+      document.removeEventListener('selectstart', preventSelectStart);
+    };
+
+    const startPressSelectionGuard = () => {
+      document.addEventListener('selectstart', preventSelectStart);
     };
 
     const stopEventIfMenuOpened = (e: Event) => {
@@ -53,29 +69,39 @@ export function useMessageLongPress({
       }
     };
 
+    const openContextMenuAt = (clientX: number, clientY: number) => {
+      clearTextSelection();
+      onOpenContextMenu(messageId, { x: clientX, y: clientY });
+    };
+
     const preventContextMenu = (e: Event) => {
       e.preventDefault();
       e.stopPropagation();
       const me = e as MouseEvent;
       if (me.button === 2 && !isOffline) {
-        onOpenContextMenu(messageId, { x: me.clientX, y: me.clientY });
+        openContextMenuAt(me.clientX, me.clientY);
       }
     };
 
     const handleMouseDown = (e: MouseEvent) => {
       menuWasOpened = false;
+      startPressSelectionGuard();
       const clientX = e.clientX;
       const clientY = e.clientY;
 
       longPressTimer.current = setTimeout(() => {
         if (isOffline) return;
         menuWasOpened = true;
-        onOpenContextMenu(messageId, { x: clientX, y: clientY });
+        openContextMenuAt(clientX, clientY);
       }, 300);
     };
 
     const handleMouseUp = (e: MouseEvent) => {
       clearTimer();
+      stopPressSelectionGuard();
+      if (menuWasOpened) {
+        clearTextSelection();
+      }
       stopEventIfMenuOpened(e);
     };
 
@@ -88,10 +114,12 @@ export function useMessageLongPress({
 
     const handleMouseLeave = () => {
       clearTimer();
+      stopPressSelectionGuard();
     };
 
     const handleTouchStart = (e: TouchEvent) => {
       menuWasOpened = false;
+      startPressSelectionGuard();
       touchStartX = e.touches[0].clientX;
       touchStartY = e.touches[0].clientY;
       const clientX = e.touches[0].clientX;
@@ -100,7 +128,7 @@ export function useMessageLongPress({
       longPressTimer.current = setTimeout(() => {
         if (isOffline) return;
         menuWasOpened = true;
-        onOpenContextMenu(messageId, { x: clientX, y: clientY });
+        openContextMenuAt(clientX, clientY);
       }, 300);
     };
 
@@ -117,11 +145,16 @@ export function useMessageLongPress({
 
     const handleTouchEnd = (e: TouchEvent) => {
       clearTimer();
+      stopPressSelectionGuard();
+      if (menuWasOpened) {
+        clearTextSelection();
+      }
       stopEventIfMenuOpened(e);
     };
 
     const handleTouchCancel = () => {
       clearTimer();
+      stopPressSelectionGuard();
     };
 
     const eventConfigs = [
@@ -154,6 +187,7 @@ export function useMessageLongPress({
     }
 
     return () => {
+      stopPressSelectionGuard();
       messageElement.removeEventListener('contextmenu', preventContextMenu);
       detachListeners(messageBubble);
       if (reactionButton) {
