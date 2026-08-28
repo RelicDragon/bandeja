@@ -10,6 +10,8 @@ body > div[style*="position: absolute"]:has(.mention-suggestions-shell) {
   border: none !important;
   box-shadow: none !important;
   z-index: 9999 !important;
+  pointer-events: none !important;
+  overscroll-behavior: none !important;
 }
 
 .mention-input-wrapper div[style*="position: fixed"],
@@ -22,17 +24,22 @@ body > div[style*="position: fixed"]:has(.mention-suggestions-shell) {
 .mention-suggestions-shell {
   background: transparent !important;
   pointer-events: none;
+  overscroll-behavior: contain;
 }
 
 .mention-suggestions-list {
   pointer-events: auto;
+  touch-action: pan-y;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
   background-color: #ffffff !important;
   border: 1px solid rgba(0, 0, 0, 0.12) !important;
   box-shadow:
     0 4px 6px -1px rgba(0, 0, 0, 0.12),
     0 12px 28px -4px rgba(0, 0, 0, 0.18),
     0 20px 40px -8px rgba(0, 0, 0, 0.14) !important;
-  overflow: hidden;
 }
 
 .dark .mention-suggestions-list {
