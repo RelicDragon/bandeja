@@ -1,8 +1,6 @@
 import React, { useRef, useEffect, useState, useMemo, useCallback } from 'react';
 import { MentionsInput, Mention, SuggestionDataItem, MentionData } from 'react-mentions';
-import { Users } from 'lucide-react';
 import { MentionSuggestionsContainer } from './MentionSuggestionsContainer';
-import { MentionSuggestionAvatar } from './MentionSuggestionAvatar';
 import {
   buildBugMentionableUsers,
   buildGameMentionableUsers,
@@ -15,16 +13,14 @@ import {
   resolveGroupMentionParticipants,
   nudgeMentionSuggestionQuery,
 } from '@/utils/resolveMentionParticipants';
-import { shouldRefreshMentionsOnRosterLoad } from '@/utils/mentionRosterRefresh';
 import { isActiveMentionQuery } from '@/utils/mentionQueryActive';
+import { renderMentionSuggestionEntry, syncMentionTextareaHeight } from '@/utils/mentionInputDom';
 import { chatApi, ChatContextType, GroupChannel } from '@/api/chat';
 import { Game, Bug } from '@/types';
 import type { GameParticipant } from '@/types';
 import type { GroupChannelParticipant } from '@/api/chat';
 import {
-  ALL_MENTION_DISPLAY,
   expandMentionIds,
-  isAllMentionId,
 } from '@/utils/mentionAll';
 import { getClipboardTextForPaste } from '@/utils/clipboardText';
 import { useAuthStore } from '@/store/authStore';
@@ -63,52 +59,51 @@ export const MentionInput: React.FC<MentionInputProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const pasteCleanupRef = useRef<(() => void) | null>(null);
+  const mentionQueryCleanupRef = useRef<(() => void) | null>(null);
   const mentionableUsersRef = useRef<MentionableUser[]>([]);
   const hadMentionableUsersRef = useRef(false);
   const currentUserId = useAuthStore((s) => s.user?.id);
   const [suggestionsWidth, setSuggestionsWidth] = useState(300);
-  const [suggestionsPortalHost] = useState<HTMLElement | null>(() =>
-    typeof document === 'undefined' ? null : document.body
-  );
   const [gameParticipants, setGameParticipants] = useState<GameParticipant[] | null>(null);
   const [groupParticipants, setGroupParticipants] = useState<GroupChannelParticipant[] | null>(null);
 
-  const syncInputHeight = () => {
-    const textarea = inputRef.current;
-    if (!textarea) return;
-    const minH = 48;
-    const maxH = 120;
-    textarea.style.height = '0';
-    const h = Math.min(maxH, Math.max(minH, textarea.scrollHeight));
-    textarea.style.height = `${h}px`;
-    const control = textarea.parentElement;
-    if (control) {
-      (control as HTMLElement).style.height = `${h}px`;
-    }
-  };
+  const syncInputHeight = useCallback(() => {
+    syncMentionTextareaHeight(inputRef.current);
+  }, []);
 
   useEffect(() => {
     const updateWidth = () => {
-      if (containerRef.current) {
-        const inputWidth = containerRef.current.offsetWidth;
-        setSuggestionsWidth(Math.min(300, inputWidth * 0.9));
-      }
-      requestAnimationFrame(() => syncInputHeight());
+      const inputWidth = containerRef.current?.offsetWidth;
+      if (!inputWidth) return;
+      const next = Math.min(300, Math.round(inputWidth * 0.9));
+      setSuggestionsWidth((prev) => (prev === next ? prev : next));
     };
 
     updateWidth();
     const observer = new ResizeObserver(updateWidth);
-    if (containerRef.current) {
-      observer.observe(containerRef.current);
-    }
-
+    const node = containerRef.current;
+    if (node) observer.observe(node);
     return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
-    const id = requestAnimationFrame(() => syncInputHeight());
-    return () => cancelAnimationFrame(id);
-  }, [value]);
+    syncInputHeight();
+  }, [value, syncInputHeight]);
+
+  const attachMentionQueryListener = useCallback((textarea: HTMLTextAreaElement) => {
+    mentionQueryCleanupRef.current?.();
+
+    const refreshIfNeeded = () => {
+      const caret = textarea.selectionStart ?? textarea.value.length;
+      if (!isActiveMentionQuery(textarea.value, caret)) return;
+      nudgeMentionSuggestionQuery(textarea);
+    };
+
+    textarea.addEventListener('input', refreshIfNeeded);
+    mentionQueryCleanupRef.current = () => {
+      textarea.removeEventListener('input', refreshIfNeeded);
+    };
+  }, []);
 
   const attachPasteHandler = useCallback((textarea: HTMLTextAreaElement) => {
     pasteCleanupRef.current?.();
@@ -133,7 +128,10 @@ export const MentionInput: React.FC<MentionInputProps> = ({
     pasteCleanupRef.current = () => textarea.removeEventListener('paste', handlePasteCapture, true);
   }, []);
 
-  useEffect(() => () => pasteCleanupRef.current?.(), []);
+  useEffect(() => () => {
+    pasteCleanupRef.current?.();
+    mentionQueryCleanupRef.current?.();
+  }, []);
 
   const gameId = game?.id;
   useEffect(() => {
@@ -210,33 +208,21 @@ export const MentionInput: React.FC<MentionInputProps> = ({
   );
 
   useEffect(() => {
-    if (mentionableUsers.length === 0) {
-      hadMentionableUsersRef.current = false;
-      return;
-    }
-
-    const text = value || inputRef.current?.value || '';
-    const caret = inputRef.current?.selectionStart ?? text.length;
-    const rosterJustLoaded = shouldRefreshMentionsOnRosterLoad(
-      hadMentionableUsersRef.current,
-      mentionableUsers.length,
-      isActiveMentionQuery(text, caret) ? '@' : ''
-    );
-    hadMentionableUsersRef.current = true;
-    if (!rosterJustLoaded) return;
+    const hadUsers = hadMentionableUsersRef.current;
+    hadMentionableUsersRef.current = mentionableUsers.length > 0;
+    if (hadUsers || mentionableUsers.length === 0) return;
 
     const el = inputRef.current;
     if (!el) return;
-
-    requestAnimationFrame(() =>
-      nudgeMentionSuggestionQuery(el, { requireFocus: false })
-    );
+    const caret = el.selectionStart ?? value.length;
+    if (!isActiveMentionQuery(value || el.value, caret)) return;
+    nudgeMentionSuggestionQuery(el, { requireFocus: false });
   }, [mentionableUsers, value]);
 
   const handleChange = (
     _e: unknown,
     newValue: string,
-    newPlainTextValue: string,
+    _newPlainTextValue: string,
     mentions: MentionData[]
   ) => {
     const ids = expandMentionIds(
@@ -245,9 +231,6 @@ export const MentionInput: React.FC<MentionInputProps> = ({
       currentUserId
     );
     onChange(newValue, ids);
-    const caret = inputRef.current?.selectionStart ?? newPlainTextValue.length;
-    if (!isActiveMentionQuery(newPlainTextValue, caret)) return;
-    requestAnimationFrame(() => nudgeMentionSuggestionQuery(inputRef.current));
   };
 
   const handleKeyDownWrapped = useCallback(
@@ -268,30 +251,10 @@ export const MentionInput: React.FC<MentionInputProps> = ({
     []
   );
 
-  const renderSuggestion = (entry: SuggestionDataItem) => {
-    if (isAllMentionId(String(entry.id))) {
-      return (
-        <div className="flex items-center gap-2">
-          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-300">
-            <Users size={14} />
-          </div>
-          <span>{ALL_MENTION_DISPLAY}</span>
-        </div>
-      );
-    }
-
-    const user =
-      (entry as SuggestionDataItem & { user?: MentionableUser }).user ||
-      mentionableUsers.find((u) => u.id === entry.id);
-    if (!user) return <span>{entry.display}</span>;
-
-    return (
-      <div className="flex items-center gap-2">
-        <MentionSuggestionAvatar user={user} />
-        <span>{entry.display}</span>
-      </div>
-    );
-  };
+  const renderSuggestion = useCallback(
+    (entry: SuggestionDataItem) => renderMentionSuggestionEntry(entry, mentionableUsers),
+    [mentionableUsers]
+  );
 
   const inputStyleOverride = useMemo(() => style ?? {}, [style]);
 
@@ -344,10 +307,6 @@ export const MentionInput: React.FC<MentionInputProps> = ({
       },
     },
     suggestions: {
-      container: {
-        backgroundColor: 'transparent',
-        zIndex: 99999,
-      },
       list: {
         backgroundColor: 'transparent',
         border: 'none',
@@ -362,7 +321,7 @@ export const MentionInput: React.FC<MentionInputProps> = ({
       },
       item: {
         padding: '8px 12px',
-        borderBottom: '1px solid rgba(0,0,0,0.15)',
+        borderBottom: '1px solid rgba(0, 0, 0, 0.15)',
         '&focused': {
           backgroundColor: '#e3f2fd',
         },
@@ -385,14 +344,10 @@ export const MentionInput: React.FC<MentionInputProps> = ({
         },
       },
       suggestions: {
-        container: {
-          backgroundColor: 'transparent',
-          zIndex: 99999,
-        },
+        ...customStyle.suggestions,
         list: {
           ...customStyle.suggestions.list,
           color: '#f3f4f6',
-          width: `${suggestionsWidth}px`,
         },
         item: {
           ...customStyle.suggestions.item,
@@ -403,15 +358,18 @@ export const MentionInput: React.FC<MentionInputProps> = ({
         },
       },
     };
-  }, [customStyle, isDark, suggestionsWidth]);
+  }, [customStyle, isDark]);
 
   const setInputRef = (el: HTMLTextAreaElement | null) => {
     (inputRef as React.MutableRefObject<HTMLTextAreaElement | null>).current = el;
     pasteCleanupRef.current?.();
     pasteCleanupRef.current = null;
+    mentionQueryCleanupRef.current?.();
+    mentionQueryCleanupRef.current = null;
     if (el) {
       syncInputHeight();
       attachPasteHandler(el);
+      attachMentionQueryListener(el);
     }
   };
 
@@ -425,8 +383,6 @@ export const MentionInput: React.FC<MentionInputProps> = ({
         disabled={disabled}
         style={finalStyle}
         allowSuggestionsAboveCursor
-        forceSuggestionsAboveCursor
-        suggestionsPortalHost={suggestionsPortalHost ?? undefined}
         customSuggestionsContainer={customSuggestionsContainer}
         inputRef={setInputRef}
       >
