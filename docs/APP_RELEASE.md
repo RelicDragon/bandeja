@@ -6,12 +6,12 @@ Marks the last commit that was shipped to **Google Play** and **App Store**. Use
 
 | | |
 |---|---|
-| **Version** | 0.97.35 |
-| **Build** | 217 |
-| **Commit** | `ec9754495bf42aabbbb7389bfc0b5f56321368b9` |
-| **Short** | `ec975449` |
-| **Date** | 2026-08-26 |
-| **Message** | Bump app release to 0.97.35 (build 217) |
+| **Version** | 0.97.36 |
+| **Build** | 218 |
+| **Commit** | `78d9a0ea7f7267c0b8282add0d28999660b16277` |
+| **Short** | `78d9a0ea7` |
+| **Date** | 2026-08-28 |
+| **Message** | Bump app release to 0.97.36 (build 218) |
 
 Canonical commit hash: `docs/app-release-baseline.txt` (one line, full SHA).
 
@@ -25,7 +25,7 @@ Canonical commit hash: `docs/app-release-baseline.txt` (one line, full SHA).
 
 Dry-run planner: `APP_RELEASE_DRY_RUN=1 ./scripts/app-release.sh`. Resume after failure: `APP_RELEASE_RESUME=1 ./scripts/app-release.sh`.
 
-Version/build are proposed from the latest uploaded Google Play and App Store Connect builds (not from git). Override interactively, or set `APP_RELEASE_VERSION` + `APP_RELEASE_BUILD`.
+Version/build are proposed from the latest uploaded Google Play and App Store Connect builds (not from git). Override interactively, or set `APP_RELEASE_VERSION` + `APP_RELEASE_BUILD`. Store lookup overrides: `APP_RELEASE_ANDROID_STORE_VERSION`/`_BUILD`, `APP_RELEASE_IOS_STORE_VERSION`/`_BUILD`.
 
 See this file for store API credentials, Android signing, and internal-track smoke test steps.
 
@@ -70,6 +70,7 @@ Generate **What's new** (LLM summarizes commits since baseline):
 
 | Version | Build | Commit | Date |
 |---------|-------|--------|------|
+| 0.97.36 | 218 | `78d9a0ea7` | 2026-08-28 |
 | 0.97.35 | 217 | `ec975449` | 2026-08-26 |
 | 0.97.34 | 216 | `fa0dd738` | 2026-08-24 |
 | 0.97.33 | 215 | `6e0afa88` | 2026-08-23 |
