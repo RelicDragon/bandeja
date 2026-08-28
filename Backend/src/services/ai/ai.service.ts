@@ -34,11 +34,22 @@ export function getAiService(): IAiService {
       const model =
         options.model ??
         (provider === 'deepseek' ? DEEPSEEK_DEFAULT_MODEL : OPENAI_DEFAULT_MODEL);
+      const tokenLimit = options.max_tokens;
+      // gpt-5* OpenAI models reject max_tokens and non-default temperature.
+      const usesMaxCompletionTokens = provider === 'openai' && /^gpt-5/i.test(model);
       const response = await c.chat.completions.create({
         model,
         messages: options.messages,
-        temperature: options.temperature,
-        max_tokens: options.max_tokens,
+        ...(usesMaxCompletionTokens
+          ? {}
+          : options.temperature === undefined
+            ? {}
+            : { temperature: options.temperature }),
+        ...(tokenLimit === undefined
+          ? {}
+          : usesMaxCompletionTokens
+            ? { max_completion_tokens: tokenLimit }
+            : { max_tokens: tokenLimit }),
         ...(provider === 'deepseek' ? { thinking: { type: 'disabled' } } : {}),
       } as OpenAI.Chat.ChatCompletionCreateParamsNonStreaming);
       const message = response.choices[0]?.message;
