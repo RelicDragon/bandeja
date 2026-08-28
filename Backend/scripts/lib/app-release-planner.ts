@@ -20,7 +20,7 @@ import {
   validatePlannedAgainstStores,
   type StoreVersionSnapshot,
 } from './app-release-store-version';
-import { fetchLatestStoreVersions } from './app-release-upload';
+import { fetchLatestStoreVersions, ReleaseUploadError } from './app-release-upload';
 import {
   includesAndroid,
   includesIos,
