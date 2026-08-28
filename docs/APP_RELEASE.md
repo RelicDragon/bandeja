@@ -1,6 +1,6 @@
 # App store release baseline
 
-Marks the last commit that was shipped to **Google Play** and **App Store**. Use it to draft the next **What's new** section from everything merged after that point.
+Marks the last commit that was shipped to **Google Play** and **App Store**. Use it to draft the next **What's new** section from everything merged after that point. Release version/build numbers are read from the stores at release time, not from this baseline.
 
 ## Current baseline
 
@@ -24,6 +24,8 @@ Canonical commit hash: `docs/app-release-baseline.txt` (one line, full SHA).
 ```
 
 Dry-run planner: `APP_RELEASE_DRY_RUN=1 ./scripts/app-release.sh`. Resume after failure: `APP_RELEASE_RESUME=1 ./scripts/app-release.sh`.
+
+Version/build are proposed from the latest uploaded Google Play and App Store Connect builds (not from git). Override interactively, or set `APP_RELEASE_VERSION` + `APP_RELEASE_BUILD`.
 
 See this file for store API credentials, Android signing, and internal-track smoke test steps.
 

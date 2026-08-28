@@ -19,6 +19,7 @@ import {
   storeReviewCheckPlatforms,
   tailUploadLog,
 } from './app-release-upload';
+import { parseStoreVersionOutput } from './app-release-store-version';
 import type { ReleaseSession } from './app-release-session';
 
 function assert(cond: boolean, msg: string): void {
@@ -61,6 +62,10 @@ const baseSession: ReleaseSession = {
   targetPlatform: 'both',
   current: { version: '0.96.40', build: 154 },
   planned: { version: '0.96.41', build: 155 },
+  storeVersions: {
+    android: { version: '0.96.40', build: 154 },
+    ios: { version: '0.96.40', build: 154 },
+  },
   notes: buildReleaseNotes('• One improvement', 'custom', 'Short Play copy'),
   artifacts: {
     aab: path.join(os.tmpdir(), 'missing-aab.aab'),
@@ -159,6 +164,15 @@ assert(parsedIosReview.version === '0.96.40', 'parses reviewed App Store version
 assert(
   parsedIosReview.submissionId === 'submission-old',
   'parses removable App Store submission id',
+);
+
+const parsedStoreVersion = parseStoreVersionOutput(
+  'INFO APP_RELEASE_STORE_VERSION_JSON:{"platform":"ios","version":"0.97.35","build":217}',
+  'ios',
+);
+assert(
+  parsedStoreVersion.version === '0.97.35' && parsedStoreVersion.build === 217,
+  'parses latest App Store version marker',
 );
 
 const playText = resolvePlayWhatsNewText(baseSession);

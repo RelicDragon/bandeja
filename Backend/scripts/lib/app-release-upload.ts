@@ -10,8 +10,14 @@ import {
   includesIos,
   type IosAppStoreConnectState,
   type PendingStoreReview,
+  type ReleasePlatform,
   type ReleaseSession,
 } from './app-release-session';
+import {
+  parseStoreVersionOutput,
+  readEnvStoreVersion,
+  type StoreVersionSnapshot,
+} from './app-release-store-version';
 
 export const UPLOAD_DIR = path.join(ROOT, '.app-release/upload');
 export const PLAY_METADATA_DIR = path.join(UPLOAD_DIR, 'android');
@@ -94,7 +100,7 @@ function commandExists(command: string): boolean {
   }
 }
 
-function resolvePlayJsonKeyPath(): string | undefined {
+export function resolvePlayJsonKeyPath(): string | undefined {
   const candidate = process.env.PLAY_STORE_JSON_KEY_PATH ?? process.env.GOOGLE_PLAY_JSON_KEY;
   if (!candidate?.trim()) {
     return undefined;
@@ -233,7 +239,7 @@ export function storeReviewCheckPlatforms(session: ReleaseSession): StoreReviewP
   return platforms;
 }
 
-function addFastlaneIssue(issues: string[]): void {
+export function addFastlaneIssue(issues: string[]): void {
   const fastlane = resolveFastlaneInvocation();
   if (fastlane.command === 'bundle' && !commandExists('bundle')) {
     issues.push(
@@ -246,6 +252,94 @@ function addFastlaneIssue(issues: string[]): void {
         : 'Fastlane is not installed — run: cd Frontend && bundle install, or brew install fastlane',
     );
   }
+}
+
+export interface StoreVersionPreflight {
+  ok: boolean;
+  issues: string[];
+}
+
+export function runStoreVersionPreflight(platform: ReleasePlatform): StoreVersionPreflight {
+  const issues: string[] = [];
+  const needsAndroid = includesAndroid(platform) && !readEnvStoreVersion('android');
+  const needsIos = includesIos(platform) && !readEnvStoreVersion('ios');
+
+  if (needsAndroid && !resolvePlayJsonKeyPath()) {
+    issues.push(
+      'Set PLAY_STORE_JSON_KEY_PATH or GOOGLE_PLAY_JSON_KEY to read the latest Google Play version.',
+    );
+  }
+
+  if (needsIos) {
+    const ascKeyId = process.env.ASC_KEY_ID?.trim();
+    const ascIssuerId = process.env.ASC_ISSUER_ID?.trim();
+    const ascKeyPath = process.env.ASC_KEY_PATH?.trim();
+    if (!ascKeyId || !ascIssuerId || !ascKeyPath) {
+      issues.push(
+        'Set ASC_KEY_ID, ASC_ISSUER_ID, and ASC_KEY_PATH to read the latest App Store Connect version.',
+      );
+    } else if (!fs.existsSync(path.resolve(ascKeyPath))) {
+      issues.push(`App Store Connect API key not found at ${ascKeyPath}`);
+    }
+  }
+
+  if (needsAndroid || needsIos) {
+    addFastlaneIssue(issues);
+  }
+
+  return { ok: issues.length === 0, issues };
+}
+
+export async function fetchLatestStoreVersions(
+  platform: ReleasePlatform,
+): Promise<StoreVersionSnapshot> {
+  const preflight = runStoreVersionPreflight(platform);
+  if (!preflight.ok) {
+    throw new ReleaseUploadError(
+      'Store version lookup preflight failed',
+      preflight.issues.join('\n'),
+    );
+  }
+
+  const snapshot: StoreVersionSnapshot = {};
+
+  if (includesAndroid(platform)) {
+    const fromEnv = readEnvStoreVersion('android');
+    if (fromEnv) {
+      snapshot.android = fromEnv;
+    } else {
+      const result = await runFastlaneLane('android', 'latest_version', {});
+      try {
+        snapshot.android = parseStoreVersionOutput(result.output, 'android');
+      } catch (error) {
+        throw new ReleaseUploadError(
+          error instanceof Error ? error.message : String(error),
+          tailUploadLog(result.output),
+          { output: result.output },
+        );
+      }
+    }
+  }
+
+  if (includesIos(platform)) {
+    const fromEnv = readEnvStoreVersion('ios');
+    if (fromEnv) {
+      snapshot.ios = fromEnv;
+    } else {
+      const result = await runFastlaneLane('ios', 'latest_version', {});
+      try {
+        snapshot.ios = parseStoreVersionOutput(result.output, 'ios');
+      } catch (error) {
+        throw new ReleaseUploadError(
+          error instanceof Error ? error.message : String(error),
+          tailUploadLog(result.output),
+          { output: result.output },
+        );
+      }
+    }
+  }
+
+  return snapshot;
 }
 
 function formatExecError(error: unknown): ReleaseUploadError {

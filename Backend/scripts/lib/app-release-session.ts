@@ -84,12 +84,28 @@ const storeReviewGuardSchema = z
   })
   .default({});
 
+const storeVersionsSchema = z
+  .object({
+    android: nativeVersionSchema.optional(),
+    ios: nativeVersionSchema.optional(),
+  })
+  .default({});
+
+const localNativeSchema = z
+  .object({
+    android: nativeVersionSchema,
+    ios: nativeVersionSchema,
+  })
+  .optional();
+
 export const releaseSessionSchema = z.object({
   baselineSha: z.string().min(1),
   headSha: z.string().min(1),
   targetPlatform: releasePlatformSchema.default('both'),
   current: nativeVersionSchema,
   planned: nativeVersionSchema,
+  storeVersions: storeVersionsSchema,
+  localNative: localNativeSchema,
   notes: releaseNotesSchema.nullable(),
   artifacts: artifactsSchema,
   store: storeSchema,

@@ -185,7 +185,7 @@ Web deploy (CI / `upd.sh`) does **not** ship Android or iOS. Native apps are bui
 ./scripts/app-release.sh
 ```
 
-Interactive flow: choose target (**Both** by default, **Android**, or **iOS**), propose version/build, draft What's new (AI, custom, or template), build the selected signed artifact(s), upload to the selected store(s), verify store state, then update baseline. Non-interactive target: `./scripts/app-release.sh --platform android|ios|both`. Before a production/review upload, the live planner detects an existing Google Play or App Store review and requires explicit approval to replace/remove it; a two-store conflict can be approved for both or narrowed to one platform. Apple removal finishes before IPA upload, while Google replacement is atomic and bound to the approved production artifact set. The stores are rechecked before upload, and Apple is guarded again at final review submission. The iOS upload waits for App Store Connect processing before it writes What's New metadata and optionally submits for review; if Apple is still processing, resume later with `APP_RELEASE_RESUME=1`. Planner-only rehearsal: `APP_RELEASE_DRY_RUN=1` (no store review lookup).
+Interactive flow: choose target (**Both** by default, **Android**, or **iOS**), read the latest uploaded version/build from Google Play and/or App Store Connect (override manually if needed), draft What's new (AI, custom, or template), build the selected signed artifact(s), upload to the selected store(s), verify store state, then update the What's-new baseline commit. Non-interactive target: `./scripts/app-release.sh --platform android|ios|both`. Before a production/review upload, the live planner detects an existing Google Play or App Store review and requires explicit approval to replace/remove it; a two-store conflict can be approved for both or narrowed to one platform. Apple removal finishes before IPA upload, while Google replacement is atomic and bound to the approved production artifact set. The stores are rechecked before upload, and Apple is guarded again at final review submission. The iOS upload waits for App Store Connect processing before it writes What's New metadata and optionally submits for review; if Apple is still processing, resume later with `APP_RELEASE_RESUME=1`. Planner-only rehearsal: `APP_RELEASE_DRY_RUN=1` (still reads live store versions unless overridden via env).
 
 Store credentials (`Backend/.env` or shell): `PLAY_STORE_JSON_KEY_PATH` (or `GOOGLE_PLAY_JSON_KEY`), `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_KEY_PATH`. Fastlane: `cd Frontend && bundle install`.
 
@@ -193,7 +193,7 @@ Full reference, signing setup, and internal-track smoke test: **`docs/APP_RELEAS
 
 ### Baseline marker
 
-After each store release, the baseline is updated automatically from native version files + `HEAD` (by the CLI after store verification, or manually via mark-shipped):
+After each store release, the What's-new baseline commit is updated from native version files + `HEAD` (by the CLI after store verification, or manually via mark-shipped). Version numbers for the next release are always proposed from live store state, not from this baseline.
 
 | File | Purpose |
 |------|---------|

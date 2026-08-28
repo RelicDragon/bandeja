@@ -1,6 +1,5 @@
 import { execSync } from 'child_process';
 import * as fs from 'fs';
-import { z } from 'zod';
 import { getAiService } from '../../src/services/ai/ai.service';
 import {
   ANDROID_GRADLE,
@@ -8,12 +7,20 @@ import {
   ROOT,
   commitCountSince,
   getHeadCommit,
-  proposeNextRelease,
   readBaseline,
   readNativeVersions,
   writeNativeVersions,
   type NativeVersion,
 } from './app-release';
+import {
+  hydrateVersionsFromStores,
+  mergeStoreVersionFloor,
+  readLocalNativeVersions,
+  storeVersionsForPlatform,
+  validatePlannedAgainstStores,
+  type StoreVersionSnapshot,
+} from './app-release-store-version';
+import { fetchLatestStoreVersions } from './app-release-upload';
 import {
   includesAndroid,
   includesIos,
@@ -28,19 +35,10 @@ export interface PreflightInfo {
   commitCount: number;
   current: NativeVersion;
   planned: NativeVersion;
+  storeVersions: StoreVersionSnapshot;
+  localNative?: { android: NativeVersion; ios: NativeVersion };
   aiConfigured: boolean;
 }
-
-const versionInputSchema = z
-  .string()
-  .trim()
-  .min(1)
-  .refine((value) => {
-    const parts = value.split('.');
-    return parts.length > 0 && parts.every((part) => part !== '' && /^\d+$/.test(part));
-  }, 'Use dot-separated numeric segments, e.g. 0.96.41');
-
-const buildInputSchema = z.coerce.number().int().nonnegative();
 
 export function isDryRun(): boolean {
   return process.env.APP_RELEASE_DRY_RUN === '1';
@@ -58,18 +56,28 @@ export function shouldCleanBuildArtifacts(): boolean {
   return process.env.APP_RELEASE_CLEAN === '1';
 }
 
+function placeholderVersion(): NativeVersion {
+  return { version: '0.0.0', build: 0 };
+}
+
 export function createReleaseSession(headRef = 'HEAD'): ReleaseSession {
   const baselineSha = readBaseline();
   const headSha = getHeadCommit(headRef).sha;
-  const current = readNativeVersions();
-  const planned = proposeNextRelease(current);
+  let localNative: { android: NativeVersion; ios: NativeVersion } | undefined;
+  try {
+    localNative = readLocalNativeVersions();
+  } catch {
+    localNative = undefined;
+  }
 
   return {
     baselineSha,
     headSha,
     targetPlatform: 'both',
-    current,
-    planned,
+    current: placeholderVersion(),
+    planned: placeholderVersion(),
+    storeVersions: {},
+    localNative,
     notes: null,
     artifacts: {},
     store: {},
@@ -80,24 +88,100 @@ export function createReleaseSession(headRef = 'HEAD'): ReleaseSession {
   };
 }
 
+export async function hydrateReleaseSessionFromStores(
+  session: ReleaseSession,
+  platform: ReleasePlatform = session.targetPlatform,
+): Promise<ReleaseSession> {
+  const storeVersions = await fetchLatestStoreVersions(platform);
+  const { current, planned } = hydrateVersionsFromStores(storeVersions, platform);
+  let localNative = session.localNative;
+  try {
+    localNative = readLocalNativeVersions();
+  } catch {
+    // Keep previous local snapshot when native files are temporarily unreadable.
+  }
+
+  return {
+    ...session,
+    targetPlatform: platform,
+    storeVersions,
+    localNative,
+    current,
+    planned,
+  };
+}
+
+/**
+ * Re-read live store versions and keep the existing planned release only if it still
+ * clears the store floor. Used right before bump/upload so a resumed session cannot
+ * reuse a version that landed on the stores while the planner was idle.
+ */
+export async function refreshStoreVersionsKeepingPlanned(
+  session: ReleaseSession,
+): Promise<ReleaseSession> {
+  const storeVersions = await fetchLatestStoreVersions(session.targetPlatform);
+  const versions = storeVersionsForPlatform(storeVersions, session.targetPlatform);
+  if (versions.length === 0) {
+    throw new Error('No store versions available for the selected release target.');
+  }
+  const current = mergeStoreVersionFloor(versions);
+  const validationError = validatePlannedAgainstStores(
+    session.planned,
+    storeVersions,
+    session.targetPlatform,
+  );
+  if (validationError) {
+    throw new Error(
+      `${validationError} Re-run with a fresh session (or raise version/build) before uploading.`,
+    );
+  }
+
+  let localNative = session.localNative;
+  try {
+    localNative = readLocalNativeVersions();
+  } catch {
+    // Keep previous local snapshot when native files are temporarily unreadable.
+  }
+
+  return {
+    ...session,
+    storeVersions,
+    localNative,
+    current,
+  };
+}
+
 export function runPreflight(session: ReleaseSession): PreflightInfo {
-  const current = readNativeVersions();
   return {
     baselineSha: session.baselineSha,
     headSha: session.headSha,
     commitCount: commitCountSince(session.baselineSha, session.headSha),
-    current,
+    current: session.current,
     planned: session.planned,
+    storeVersions: session.storeVersions ?? {},
+    localNative: session.localNative,
     aiConfigured: getAiService().isConfigured(),
   };
 }
 
 export function parseVersionInput(value: string): string {
-  return versionInputSchema.parse(value);
+  const trimmed = value.trim();
+  if (!trimmed) {
+    throw new Error('Version is empty');
+  }
+  const parts = trimmed.split('.');
+  if (parts.length === 0 || parts.some((part) => part === '' || !/^\d+$/.test(part))) {
+    throw new Error('Use dot-separated numeric segments, e.g. 0.96.41');
+  }
+  return trimmed;
 }
 
 export function parseBuildInput(value: string): number {
-  return buildInputSchema.parse(value);
+  const build = Number.parseInt(String(value).trim(), 10);
+  if (!Number.isInteger(build) || build < 0 || String(build) !== String(value).trim()) {
+    throw new Error('Enter a non-negative integer build number');
+  }
+  return build;
 }
 
 export function applyPlannedVersions(
@@ -107,6 +191,14 @@ export function applyPlannedVersions(
   const dryRun = options?.dryRun ?? isDryRun();
   if (dryRun) {
     return;
+  }
+  const validationError = validatePlannedAgainstStores(
+    session.planned,
+    session.storeVersions ?? {},
+    session.targetPlatform,
+  );
+  if (validationError) {
+    throw new Error(validationError);
   }
   writeNativeVersions(session.planned);
 }
@@ -183,4 +275,15 @@ export function formatCommitPreview(baselineSha: string, headSha: string, limit 
   }
   const hidden = lines.length - limit;
   return `${lines.slice(0, limit).join('\n')}\n… and ${hidden} more`;
+}
+
+export function sessionHasStoreVersions(session: ReleaseSession): boolean {
+  const snapshot = session.storeVersions ?? {};
+  if (includesAndroid(session.targetPlatform) && !snapshot.android) {
+    return false;
+  }
+  if (includesIos(session.targetPlatform) && !snapshot.ios) {
+    return false;
+  }
+  return true;
 }

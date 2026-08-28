@@ -15,6 +15,10 @@ const baseSession: ReleaseSession = {
   targetPlatform: 'both',
   current: { version: '0.96.40', build: 154 },
   planned: { version: '0.96.41', build: 155 },
+  storeVersions: {
+    android: { version: '0.96.40', build: 154 },
+    ios: { version: '0.96.40', build: 154 },
+  },
   notes: null,
   artifacts: {},
   store: {},

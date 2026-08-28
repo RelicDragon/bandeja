@@ -60,8 +60,8 @@ See **`docs/PRODUCTION.md`**: CI deploys on push to `master` (no local `./upd.sh
 
 Separate from web deploy — native builds are submitted manually to Google Play and App Store.
 
-- **Unified CLI:** `./scripts/app-release.sh` (bump → build → upload → baseline; resume with `APP_RELEASE_RESUME=1`)
-- Baseline marker: **`docs/APP_RELEASE.md`** + **`docs/app-release-baseline.txt`** (last shipped commit)
+- **Unified CLI:** `./scripts/app-release.sh` (store versions → bump → build → upload → baseline; resume with `APP_RELEASE_RESUME=1`)
+- Baseline marker: **`docs/APP_RELEASE.md`** + **`docs/app-release-baseline.txt`** (last shipped commit for What's new; version numbers come from the stores)
 - Draft **What's new**: `./scripts/app-release-whats-new.sh` (LLM from commits since baseline; raw list: `./scripts/app-release-changes.sh`)
 - Headless mark-shipped: `./scripts/app-release-mark-shipped.sh --commit`
 

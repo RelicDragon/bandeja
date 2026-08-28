@@ -7,7 +7,7 @@ import {
   snapshotNativeProjectFiles,
   storeConfigComplete,
 } from './app-release-planner';
-import { proposeNextRelease, readNativeVersions } from './app-release';
+import { hydrateVersionsFromStores } from './app-release-store-version';
 import {
   buildReleaseNotes,
   parseReleaseNotesOutput,
@@ -51,13 +51,25 @@ const truncated = derivePlayShortDescription(longMain);
 assert(Boolean(truncated && truncated.length <= 500), 'derivePlayShortDescription truncates');
 
 const session = createReleaseSession();
-const expected = proposeNextRelease(session.current);
-assert(
-  session.planned.version === expected.version && session.planned.build === expected.build,
-  'createReleaseSession proposes next release',
-);
 assert(session.headSha.length === 40, 'createReleaseSession freezes full head sha');
 assert(session.baselineSha.length === 40, 'createReleaseSession reads baseline sha');
+assert(session.planned.version === '0.0.0', 'createReleaseSession waits for store hydration');
+
+const storeSnapshot = {
+  android: { version: '0.97.35', build: 217 },
+  ios: { version: '0.97.35', build: 217 },
+};
+const hydratedVersions = hydrateVersionsFromStores(storeSnapshot, 'both');
+const hydratedSession = {
+  ...session,
+  storeVersions: storeSnapshot,
+  current: hydratedVersions.current,
+  planned: hydratedVersions.planned,
+};
+assert(
+  hydratedSession.planned.version === '0.97.36' && hydratedSession.planned.build === 218,
+  'store hydration proposes next release',
+);
 
 const before = snapshotNativeProjectFiles();
 const dryRunWas = process.env.APP_RELEASE_DRY_RUN;
@@ -65,7 +77,7 @@ process.env.APP_RELEASE_DRY_RUN = '1';
 assert(isDryRun(), 'isDryRun reads env');
 
 const notesSession = {
-  ...session,
+  ...hydratedSession,
   notes: buildReleaseNotes('• Test notes', 'template', 'Short test notes'),
 };
 applyPlannedVersions(notesSession, { dryRun: true });
@@ -75,7 +87,7 @@ assert(nativeProjectFilesMatch(before, afterDry), 'dry-run leaves native files u
 process.env.APP_RELEASE_DRY_RUN = dryRunWas;
 
 const sessionWithNotes = {
-  ...session,
+  ...hydratedSession,
   notes: buildReleaseNotes('• Saved notes', 'custom'),
   artifacts: {},
   store: {},
@@ -104,9 +116,10 @@ saveSession(sessionWithNotes);
 const resumed = loadSession();
 assert(resumed?.headSha === session.headSha, 'session resume preserves frozen headSha');
 assert(
-  resumed?.planned.version === session.planned.version,
+  resumed?.planned.version === hydratedSession.planned.version,
   'session resume preserves planned version',
 );
+assert(resumed?.storeVersions?.android?.build === 217, 'session resume preserves android store version');
 assert(resumed?.notes?.main === '• Saved notes', 'session resume preserves notes');
 assert(resumed?.artifacts !== undefined, 'session resume includes artifacts');
 assert(resumed?.store !== undefined, 'session resume includes store');
@@ -148,6 +161,7 @@ const legacySession = { ...sessionWithNotes };
 delete (legacySession as Partial<typeof legacySession>).uploads;
 delete (legacySession as Partial<typeof legacySession>).iosAppStoreConnect;
 delete (legacySession as Partial<typeof legacySession>).reviewGuard;
+delete (legacySession as Partial<typeof legacySession>).storeVersions;
 fs.writeFileSync(SESSION_FILE, `${JSON.stringify(legacySession, null, 2)}\n`, 'utf-8');
 assert(loadSession()?.uploads !== undefined, 'legacy session resume defaults uploads');
 assert(
@@ -155,6 +169,7 @@ assert(
   'legacy session resume defaults App Store Connect state',
 );
 assert(loadSession()?.reviewGuard !== undefined, 'legacy session resume defaults review guard');
+assert(loadSession()?.storeVersions !== undefined, 'legacy session resume defaults storeVersions');
 const unsafeApprovalSession = {
   ...sessionWithNotes,
   reviewGuard: {
@@ -172,11 +187,10 @@ assert(
   'session with notes is ready-to-apply',
 );
 
-const nativeVersions = readNativeVersions();
 const staleArtifactSession = {
   ...sessionWithNotes,
-  current: nativeVersions,
-  planned: nativeVersions,
+  current: hydratedSession.current,
+  planned: hydratedSession.current,
   artifacts: {
     aab: path.join(SESSION_DIR, 'missing.aab'),
     ipa: path.join(SESSION_DIR, 'missing.ipa'),

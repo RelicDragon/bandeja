@@ -14,10 +14,13 @@ import {
   createReleaseSession,
   formatCommitPreview,
   getSessionPhase,
+  hydrateReleaseSessionFromStores,
   isDryRun,
   parseBuildInput,
   parseVersionInput,
+  refreshStoreVersionsKeepingPlanned,
   runPreflight,
+  sessionHasStoreVersions,
   shouldResumeSession,
   shouldStartFreshSession,
   shouldCleanBuildArtifacts,
@@ -48,6 +51,7 @@ import {
   runUploadPreflight,
   storeReviewCheckPlatforms,
 } from './lib/app-release-upload';
+import { validatePlannedAgainstStores } from './lib/app-release-store-version';
 import {
   cleanReleaseWorkspace,
   clearSession,
@@ -226,12 +230,23 @@ async function promptVersionOverride(session: ReleaseSession): Promise<ReleaseSe
     }),
   );
 
+  const planned = {
+    version: parseVersionInput(version),
+    build: parseBuildInput(build),
+  };
+  const validationError = validatePlannedAgainstStores(
+    planned,
+    session.storeVersions ?? {},
+    session.targetPlatform,
+  );
+  if (validationError) {
+    clack.log.error(validationError);
+    return session;
+  }
+
   return {
     ...session,
-    planned: {
-      version: parseVersionInput(version),
-      build: parseBuildInput(build),
-    },
+    planned,
   };
 }
 
@@ -758,9 +773,18 @@ function renderSummary(session: ReleaseSession, dryRun: boolean): string {
   }
 
   return [
-    `Current: ${session.current.version} (${session.current.build})`,
+    `Store floor: ${session.current.version} (${session.current.build})`,
     `Planned: ${session.planned.version} (${session.planned.build})`,
-    `Baseline: ${session.baselineSha.slice(0, 7)}`,
+    ...(includesAndroid(session.targetPlatform) && session.storeVersions?.android
+      ? [
+          `Google Play latest: ${session.storeVersions.android.version} (${session.storeVersions.android.build})`,
+        ]
+      : []),
+    ...(includesIos(session.targetPlatform) && session.storeVersions?.ios
+      ? [
+          `App Store latest: ${session.storeVersions.ios.version} (${session.storeVersions.ios.build})`,
+        ]
+      : []),
     `What's new range: ${session.baselineSha.slice(0, 7)}..${session.headSha.slice(0, 7)} (frozen at session start)`,
     `Notes source: ${notes.source}`,
     ...storeLines,
@@ -1224,6 +1248,28 @@ async function executeRelease(session: ReleaseSession): Promise<void> {
     return;
   }
 
+  const refreshSpinner = clack.spinner();
+  refreshSpinner.start('Re-checking latest store versions before release…');
+  try {
+    withStore = await refreshStoreVersionsKeepingPlanned(withStore);
+    refreshSpinner.stop(
+      `Store floor confirmed: ${withStore.current.version} (${withStore.current.build}) → planned ${withStore.planned.version} (${withStore.planned.build})`,
+    );
+  } catch (error) {
+    refreshSpinner.stop('Store version re-check failed');
+    const uploadError =
+      error instanceof ReleaseUploadError
+        ? error
+        : new ReleaseUploadError(error instanceof Error ? error.message : String(error), '');
+    clack.log.error(uploadError.message);
+    if (uploadError.logTail) {
+      clack.note(uploadError.logTail, 'Store version lookup output');
+    }
+    persist(withStore);
+    process.exit(1);
+  }
+  persist(withStore);
+
   const releaseTimer = new ReleaseProgressTimer();
   const phase = getSessionPhase(withStore);
 
@@ -1264,20 +1310,37 @@ async function executeRelease(session: ReleaseSession): Promise<void> {
 }
 
 function renderPreflight(preflight: ReturnType<typeof runPreflight>): void {
-  const parity = 'Android/iOS versions match';
   const aiStatus = preflight.aiConfigured ? 'AI configured' : 'AI not configured';
   const commitPreview = formatCommitPreview(preflight.baselineSha, preflight.headSha);
+  const storeLines: string[] = [];
+  if (preflight.storeVersions.android) {
+    storeLines.push(
+      `Google Play latest: ${preflight.storeVersions.android.version} (${preflight.storeVersions.android.build})`,
+    );
+  }
+  if (preflight.storeVersions.ios) {
+    storeLines.push(
+      `App Store latest: ${preflight.storeVersions.ios.version} (${preflight.storeVersions.ios.build})`,
+    );
+  }
+  if (preflight.localNative) {
+    storeLines.push(
+      `Local Android: ${preflight.localNative.android.version} (${preflight.localNative.android.build})`,
+    );
+    storeLines.push(
+      `Local iOS: ${preflight.localNative.ios.version} (${preflight.localNative.ios.build})`,
+    );
+  }
 
   clack.note(
     [
-      `Current version: ${preflight.current.version}`,
-      `Current build: ${preflight.current.build}`,
+      `Store floor: ${preflight.current.version} (${preflight.current.build})`,
       `Proposed version: ${preflight.planned.version}`,
       `Proposed build: ${preflight.planned.build}`,
-      `Baseline: ${preflight.baselineSha.slice(0, 7)}`,
+      ...storeLines,
+      `What's new baseline: ${preflight.baselineSha.slice(0, 7)}`,
       `Frozen HEAD: ${preflight.headSha.slice(0, 7)}`,
       `Commits since baseline: ${preflight.commitCount}`,
-      parity,
       aiStatus,
       '',
       'Recent commits:',
@@ -1445,14 +1508,34 @@ async function main(): Promise<void> {
     clack.log.info(`Release target: ${releasePlatformLabel(requestedPlatform)}`);
   }
 
-  const preflight = runPreflight(current);
-  renderPreflight(preflight);
-
-  current = { ...current, current: preflight.current };
-
   if (!resume && !requestedPlatform) {
     current = await promptReleasePlatform(current);
   }
+
+  if (!resume || !sessionHasStoreVersions(current)) {
+    const spinner = clack.spinner();
+    spinner.start(
+      `Reading latest uploaded versions from ${releasePlatformLabel(current.targetPlatform)}…`,
+    );
+    try {
+      current = await hydrateReleaseSessionFromStores(current, current.targetPlatform);
+      spinner.stop('Store versions loaded');
+    } catch (error) {
+      spinner.stop('Could not read store versions');
+      const uploadError =
+        error instanceof ReleaseUploadError
+          ? error
+          : new ReleaseUploadError(error instanceof Error ? error.message : String(error), '');
+      clack.log.error(uploadError.message);
+      if (uploadError.logTail) {
+        clack.note(uploadError.logTail, 'Store version lookup output');
+      }
+      process.exit(1);
+    }
+  }
+
+  const preflight = runPreflight(current);
+  renderPreflight(preflight);
 
   persist(current);
 

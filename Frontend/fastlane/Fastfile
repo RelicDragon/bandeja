@@ -84,6 +84,165 @@ def emit_store_review_state(state)
   UI.message("APP_RELEASE_REVIEW_STATE_JSON:#{JSON.generate(state.compact)}")
 end
 
+def emit_store_version_state(state)
+  require "json"
+
+  UI.message("APP_RELEASE_STORE_VERSION_JSON:#{JSON.generate(state.compact)}")
+end
+
+def compare_dot_versions(left, right)
+  left_parts = left.to_s.split(".").map(&:to_i)
+  right_parts = right.to_s.split(".").map(&:to_i)
+  length = [left_parts.length, right_parts.length].max
+  length.times do |index|
+    delta = (left_parts[index] || 0) <=> (right_parts[index] || 0)
+    return delta unless delta.zero?
+  end
+  0
+end
+
+def android_latest_store_version
+  require "supply/client"
+  require "supply/reader"
+
+  version_codes = []
+  named_releases = []
+
+  %w[internal alpha beta production].each do |track|
+    Supply.config = play_supply_config(track)
+    reader = Supply::Reader.new
+    Array(reader.track_version_codes).each { |code| version_codes << code.to_i }
+
+    track_meta = reader.track_meta
+    Array(track_meta&.releases).each do |release|
+      codes = Array(release.version_codes).map(&:to_i)
+      version_codes.concat(codes)
+      next if release.release_name.to_s.strip.empty? || codes.empty?
+
+      named_releases << {
+        version: release.release_name.to_s.strip,
+        build: codes.max
+      }
+    end
+  rescue StandardError => error
+    UI.message("Skipping Google Play track #{track} while reading latest version: #{error.message}")
+  end
+
+  edit_id = nil
+  begin
+    Supply.config = play_supply_config("production")
+    supply_client = Supply::Client.make_from_config(params: Supply.config)
+    edit = supply_client.client.insert_edit(ANDROID_PACKAGE)
+    edit_id = edit.id
+    bundles = supply_client.client.list_edit_bundles(ANDROID_PACKAGE, edit_id)
+    Array(bundles.bundles).each { |bundle| version_codes << bundle.version_code.to_i }
+    begin
+      apks = supply_client.client.list_edit_apks(ANDROID_PACKAGE, edit_id)
+      Array(apks.apks).each { |apk| version_codes << apk.version_code.to_i }
+    rescue StandardError
+      # APK listing is optional; AAB list covers current uploads.
+    end
+  rescue StandardError => error
+    UI.message(
+      "Could not list all uploaded Play artifacts (#{error.message}); " \
+      "falling back to track version codes only"
+    )
+  ensure
+    if edit_id
+      begin
+        Supply.config = play_supply_config("production")
+        supply_client = Supply::Client.make_from_config(params: Supply.config)
+        supply_client.client.delete_edit(ANDROID_PACKAGE, edit_id)
+      rescue StandardError
+        # Best-effort cleanup of the temporary Play edit.
+      end
+    end
+  end
+
+  max_build = version_codes.reject(&:negative?).max
+  UI.user_error!("Google Play has no uploaded version codes for #{ANDROID_PACKAGE}") if max_build.nil?
+
+  matching = named_releases.select { |entry| entry[:build] == max_build }
+  best_named = if matching.empty?
+                 named_releases.max do |left, right|
+                   version_cmp = compare_dot_versions(left[:version], right[:version])
+                   version_cmp.zero? ? left[:build] <=> right[:build] : version_cmp
+                 end
+               else
+                 matching.max do |left, right|
+                   compare_dot_versions(left[:version], right[:version])
+                 end
+               end
+
+  version = best_named&.dig(:version).to_s.strip
+  UI.user_error!(
+    "Google Play has build #{max_build} but no release name; set the planned version manually"
+  ) if version.empty?
+
+  {
+    "platform" => "android",
+    "version" => version,
+    "build" => max_build
+  }
+end
+
+def ios_latest_store_version
+  asc_api_key
+  app = Spaceship::ConnectAPI::App.find(IOS_APP_IDENTIFIER)
+  UI.user_error!("Could not find App Store Connect app #{IOS_APP_IDENTIFIER}") unless app
+
+  builds = Array(
+    Spaceship::ConnectAPI::Build.all(
+      app_id: app.id,
+      sort: "-uploadedDate",
+      limit: 200
+    )
+  )
+  begin
+    builds.concat(
+      Array(
+        Spaceship::ConnectAPI::Build.all(
+          app_id: app.id,
+          sort: "-version",
+          limit: 50
+        )
+      )
+    )
+  rescue StandardError => error
+    UI.message("Could not list App Store builds by version (#{error.message}); using upload-date list only")
+  end
+  builds = builds.uniq(&:id)
+  UI.user_error!("App Store Connect has no uploaded builds for #{IOS_APP_IDENTIFIER}") if builds.empty?
+
+  max_build = builds.map { |build| build.version.to_i }.max
+  UI.user_error!("App Store Connect builds are missing numeric CFBundleVersion values") if max_build.nil? || max_build < 0
+
+  best_build = builds
+    .select { |build| build.version.to_i == max_build }
+    .max { |left, right| compare_dot_versions(left.app_version.to_s, right.app_version.to_s) }
+
+  version = best_build&.app_version.to_s.strip
+  if version.empty?
+    platform = Spaceship::ConnectAPI::Platform.map("ios")
+    store_versions = app.get_app_store_versions(filter: { platform: platform })
+    version = Array(store_versions)
+      .map { |entry| entry.version_string.to_s.strip }
+      .reject(&:empty?)
+      .max { |left, right| compare_dot_versions(left, right) }
+      .to_s
+  end
+
+  UI.user_error!(
+    "App Store Connect has build #{max_build} but no marketing version; set the planned version manually"
+  ) if version.empty?
+
+  {
+    "platform" => "ios",
+    "version" => version,
+    "build" => max_build
+  }
+end
+
 module ::AppReleaseStoreReview
   IOS_BLOCKING_REVIEW_STATES = [
     Spaceship::ConnectAPI::ReviewSubmission::ReviewSubmissionState::CANCELING,
@@ -418,6 +577,11 @@ platform :android do
     emit_store_review_state(google_production_review_state)
   end
 
+  desc "Read the latest uploaded Google Play version/build"
+  lane :latest_version do
+    emit_store_version_state(android_latest_store_version)
+  end
+
   desc "Upload signed AAB to Google Play with en-US What's new"
   lane :upload_release do |options|
     aab = options[:aab]
@@ -507,6 +671,11 @@ platform :ios do
         "submissionId" => submission&.id
       }
     )
+  end
+
+  desc "Read the latest uploaded App Store Connect version/build"
+  lane :latest_version do
+    emit_store_version_state(ios_latest_store_version)
   end
 
   desc "Remove an explicitly approved iOS submission from App Review"

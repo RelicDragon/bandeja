@@ -20,6 +20,7 @@ const baseSession: ReleaseSession = {
   targetPlatform: 'android',
   current: { version: '0.97.31', build: 213 },
   planned: { version: '0.97.32', build: 214 },
+  storeVersions: { android: { version: '0.97.31', build: 213 } },
   notes: buildReleaseNotes('Reliable review replacement', 'custom'),
   artifacts: {},
   store: { androidTrack: 'production' },
