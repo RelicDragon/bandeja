@@ -27,12 +27,14 @@ import { chatApi } from '@/api/chat';
 import { restoreAuthIfNeeded } from '@/utils/authPersistence';
 import { getTokenNative } from '@/services/authBridge';
 import { setPushReplyJsReadyNative } from '@/services/push/pushDelegateBridge';
+import { consumePendingPushTapNative, addPendingPushTapListener } from '@/services/push/pushTapBridge';
 import { registerPushNotificationActionTypes } from '@/services/push/registerPushNotificationActionTypes';
 import { hasExplicitLogoutMarker } from '@/utils/authExplicitLogout';
 import { queryClient } from '@/queries/queryClient';
 import { playIntentKeys } from '@/hooks/usePlayIntent';
 import { isPlayIntentPushType } from '@/services/push/isPlayIntentPushType';
 import { decodeJwtExpMs } from '@/api/authRefresh';
+import { blockAndroidLauncherIconChangesForNativeUi } from '@/services/androidLauncherIconScheduler';
 
 interface NotificationData {
   type: string;
@@ -63,10 +65,11 @@ interface NotificationData {
 
 class PushNotificationService {
   private listenersRegistered = false;
-  private registrationComplete = false;
-  private notificationsAllowed = false;
   private earlyInitInFlight: Promise<void> | null = null;
   private registrationInFlight: Promise<void> | null = null;
+  private permissionRequestQueued = false;
+  private permissionPromptAttempted = false;
+  private nativeRegistrationComplete = false;
   private lastReceivedToken: string | null = null;
   private lastTokenSentToBackend: string | null = null;
   private pendingNotificationTap: { data: NotificationData; rawData: unknown } | null = null;
@@ -115,39 +118,7 @@ class PushNotificationService {
 
   /** Post-auth: permission check/request + APNs/FCM register. Requires initializeEarly(). */
   async initialize() {
-    if (!Capacitor.isNativePlatform()) {
-      return;
-    }
-    if (this.registrationInFlight) {
-      await this.registrationInFlight;
-      return;
-    }
-
-    this.registrationInFlight = this.runInitialize();
-    try {
-      await this.registrationInFlight;
-    } finally {
-      this.registrationInFlight = null;
-    }
-  }
-
-  private async runInitialize() {
-    await this.initializeEarly();
-    if (!this.listenersRegistered || this.registrationComplete) {
-      return;
-    }
-
-    try {
-      this.notificationsAllowed = await this.resolvePushPermission(true);
-      if (this.notificationsAllowed) {
-        await this.register();
-      }
-      this.registrationComplete = true;
-      console.log('✅ Push notifications registered');
-    } catch (error) {
-      console.error('❌ Failed to register push notifications:', error);
-      this.registrationComplete = true;
-    }
+    await this.ensureTokenSentToBackend({ requestPermission: true });
   }
 
   private async resolvePushPermission(allowRequest: boolean): Promise<boolean> {
@@ -160,11 +131,23 @@ class PushNotificationService {
       console.log('❌ Push notification permission denied');
       return false;
     }
-    if (!allowRequest) {
+    if (!allowRequest || this.permissionPromptAttempted) {
       return false;
     }
 
-    const result = await PushNotifications.requestPermissions();
+    // An automatic post-login prompt is attempted at most once per process. React remounts,
+    // foreground sync, and overlapping login completions must not stack native permission calls.
+    this.permissionPromptAttempted = true;
+    const releaseLauncherIconBlock =
+      Capacitor.getPlatform() === 'android'
+        ? blockAndroidLauncherIconChangesForNativeUi()
+        : () => undefined;
+    let result;
+    try {
+      result = await PushNotifications.requestPermissions();
+    } finally {
+      releaseLauncherIconBlock();
+    }
     if (result.receive === 'granted') {
       console.log('✅ Push notification permission granted');
       return true;
@@ -174,7 +157,14 @@ class PushNotificationService {
   }
 
   private async register() {
-    await PushNotifications.register();
+    if (this.nativeRegistrationComplete) return;
+    try {
+      await PushNotifications.register();
+      this.nativeRegistrationComplete = true;
+    } catch (error) {
+      this.nativeRegistrationComplete = false;
+      throw error;
+    }
   }
 
   flushPendingNotificationTap() {
@@ -237,24 +227,49 @@ class PushNotificationService {
     if (!Capacitor.isNativePlatform()) {
       return;
     }
-    if (this.registrationInFlight) {
-      await this.registrationInFlight;
-      await this.syncKnownTokenToBackend();
-      // Registration/login fire a no-prompt sync first; App requests permission after shell paint.
-      if (!opts?.requestPermission) {
-        return;
-      }
+    if (opts?.requestPermission) {
+      this.permissionRequestQueued = true;
     }
 
-    this.registrationInFlight = this.runEnsureTokenSentToBackend(opts);
-    try {
-      await this.registrationInFlight;
-    } finally {
-      this.registrationInFlight = null;
+    // A permission-requesting call can arrive while login's silent token sync is running. Keep
+    // draining until this caller sees its request consumed; a single mutable promise alone loses
+    // or duplicates work when several prompting callers overlap.
+    while (true) {
+      const inFlight = this.registrationInFlight ?? this.startRegistrationDrain();
+      await inFlight;
+      if (!this.permissionRequestQueued) return;
     }
   }
 
-  private async runEnsureTokenSentToBackend(opts?: { requestPermission?: boolean }) {
+  private startRegistrationDrain(): Promise<void> {
+    const task = this.drainRegistrationRequests();
+    this.registrationInFlight = task;
+    void task.then(
+      () => {
+        if (this.registrationInFlight === task) this.registrationInFlight = null;
+      },
+      () => {
+        if (this.registrationInFlight === task) this.registrationInFlight = null;
+      },
+    );
+    return task;
+  }
+
+  private async drainRegistrationRequests(): Promise<void> {
+    do {
+      const requestPermission = this.permissionRequestQueued;
+      this.permissionRequestQueued = false;
+      try {
+        await this.runEnsureTokenSentToBackend(requestPermission);
+      } catch (error) {
+        // Push setup is auxiliary to authentication. Native bridge, FCM, or backend failures are
+        // retried by the next foreground sync and must never become an unhandled login rejection.
+        console.error('❌ Failed to sync push registration:', error);
+      }
+    } while (this.permissionRequestQueued);
+  }
+
+  private async runEnsureTokenSentToBackend(requestPermission: boolean) {
     await this.initializeEarly();
     if (!this.listenersRegistered || !this.canSyncPushTokenToBackend()) {
       return;
@@ -264,15 +279,12 @@ class PushNotificationService {
       return;
     }
 
-    const allowRequest = opts?.requestPermission ?? false;
-    const allowed = await this.resolvePushPermission(allowRequest);
-    this.notificationsAllowed = allowed;
+    const allowed = await this.resolvePushPermission(requestPermission);
     if (!allowed) {
       return;
     }
 
     await this.register();
-    this.registrationComplete = true;
     await this.syncKnownTokenToBackend();
   }
 
@@ -282,10 +294,14 @@ class PushNotificationService {
     }
 
     await PushNotifications.addListener('registration', async (token: Token) => {
-      console.log('Push registration success, token:', token.value);
-      this.lastReceivedToken = token.value;
-      if (this.canSyncPushTokenToBackend()) {
-        await this.registerTokenWithBackend(token.value);
+      try {
+        console.log('Push registration success, token:', token.value);
+        this.lastReceivedToken = token.value;
+        if (this.canSyncPushTokenToBackend()) {
+          await this.registerTokenWithBackend(token.value);
+        }
+      } catch (error) {
+        console.error('Push registration token sync failed:', error);
       }
     });
 
@@ -296,33 +312,82 @@ class PushNotificationService {
     await PushNotifications.addListener(
       'pushNotificationReceived',
       async (notification: PushNotificationSchema) => {
-        console.log('Push notification received:', notification);
-        await applyPushUnreadBadgeFromNotification(notification);
-        const auth = useAuthStore.getState();
-        if (auth.isAuthenticated && !auth.isInitializing) {
-          void useUnreadStore.getState().refreshAll();
+        try {
+          console.log('Push notification received:', notification);
+          await applyPushUnreadBadgeFromNotification(notification);
+          const auth = useAuthStore.getState();
+          if (auth.isAuthenticated && !auth.isInitializing) {
+            void useUnreadStore.getState().refreshAll();
+          }
+          const normalized = this.normalizeNotificationData(notification.data);
+          if (isPlayIntentPushType(normalized?.type)) {
+            void queryClient.invalidateQueries({ queryKey: playIntentKeys.all });
+          }
+          if (Capacitor.getPlatform() === 'android' && parsePushChatContext(notification.data)) {
+            return;
+          }
+          await this.confirmPushMessageReceipt(notification.data);
+        } catch (error) {
+          console.error('pushNotificationReceived handler failed:', error);
         }
-        const normalized = this.normalizeNotificationData(notification.data);
-        if (isPlayIntentPushType(normalized?.type)) {
-          void queryClient.invalidateQueries({ queryKey: playIntentKeys.all });
-        }
-        if (Capacitor.getPlatform() === 'android' && parsePushChatContext(notification.data)) {
-          return;
-        }
-        await this.confirmPushMessageReceipt(notification.data);
       }
     );
 
     await PushNotifications.addListener(
       'pushNotificationActionPerformed',
       async (action: ActionPerformed) => {
-        console.log('Push notification action performed:', action);
-        await this.handleNotificationAction(action);
+        try {
+          console.log('Push notification action performed:', action);
+          await this.handleNotificationAction(action);
+        } catch (error) {
+          console.error('pushNotificationActionPerformed handler failed:', error);
+        }
       }
     );
 
+    if (Capacitor.getPlatform() === 'android') {
+      await addPendingPushTapListener((action) => {
+        void this.handleNativePendingPushTap(action);
+      });
+      await this.consumeNativePendingPushTap();
+    }
+
     if (Capacitor.getPlatform() === 'ios') {
       await setPushReplyJsReadyNative(true);
+    }
+  }
+
+  private async handleNativePendingPushTap(action: {
+    pending?: boolean;
+    actionId?: string;
+    notification?: { id?: string; data?: Record<string, unknown> };
+  }) {
+    try {
+      if (!action?.pending || !action.notification) {
+        return;
+      }
+      await this.handleNotificationAction({
+        actionId: action.actionId || 'tap',
+        notification: {
+          id: action.notification.id || 'bandeja-push-tap',
+          data: action.notification.data || {},
+        },
+      } as ActionPerformed);
+    } catch (error) {
+      console.error('pendingPushTap handler failed:', error);
+    }
+  }
+
+  /** Drain store if publish raced before the bridge plugin handle was ready. */
+  private async consumeNativePendingPushTap() {
+    try {
+      const pending = await consumePendingPushTapNative();
+      if (!pending) {
+        return;
+      }
+      await this.handleNativePendingPushTap(pending);
+    } catch (error) {
+      console.error('consumeNativePendingPushTap failed:', error);
     }
   }
 
@@ -789,7 +854,7 @@ class PushNotificationService {
     this.pendingNotificationTap = null;
     // FCM/APNs device token is unchanged; drop only backend sync state for the next user.
     this.lastTokenSentToBackend = null;
-    this.registrationComplete = false;
+    this.permissionRequestQueued = false;
   }
 
   async removeToken() {

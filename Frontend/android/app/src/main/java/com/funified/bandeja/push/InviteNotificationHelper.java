@@ -29,9 +29,9 @@ public final class InviteNotificationHelper {
             return;
         }
 
-        int flags = PendingIntent.FLAG_UPDATE_CURRENT;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            flags |= PendingIntent.FLAG_MUTABLE;
+        int actionFlags = PendingIntent.FLAG_UPDATE_CURRENT;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            actionFlags |= PendingIntent.FLAG_IMMUTABLE;
         }
 
         Intent acceptIntent = new Intent(context, InviteActionReceiver.class);
@@ -69,23 +69,17 @@ public final class InviteNotificationHelper {
             context,
             invite.notificationId(),
             acceptIntent,
-            flags
+            actionFlags
         );
         PendingIntent declinePending = PendingIntent.getBroadcast(
             context,
             invite.notificationId() + 1,
             declineIntent,
-            flags
+            actionFlags
         );
 
         Bundle tapExtras = new Bundle();
         tapExtras.putString("type", invite.type);
-        if (invite.title != null) {
-            tapExtras.putString("title", invite.title);
-        }
-        if (invite.body != null) {
-            tapExtras.putString("body", invite.body);
-        }
         if (invite.inviteId != null) {
             tapExtras.putString("inviteId", invite.inviteId);
         }
@@ -100,7 +94,7 @@ public final class InviteNotificationHelper {
             context,
             invite.notificationId() + 2,
             tapIntent,
-            flags
+            actionFlags
         );
 
         String acceptLabel = invite.acceptActionTitle != null

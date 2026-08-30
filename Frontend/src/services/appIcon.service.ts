@@ -7,7 +7,7 @@ import {
   resolveNativeAppIconName,
 } from '@/config/appIcons';
 import { syncBrandingLogoToNative } from '@/services/authBridge';
-import { isCapacitor, isIOS } from '@/utils/capacitor';
+import { isAndroid, isCapacitor, isIOS } from '@/utils/capacitor';
 import { getUserPrimarySport, resolveActivePrimarySport } from '@/utils/profileSports';
 import type { User } from '@/types';
 
@@ -66,11 +66,26 @@ export async function setNativeAppIcon(
 ): Promise<void> {
   if (!isCapacitor()) return;
   try {
+    const targetName = resolveNativeAppIconName(appIconId, primarySport);
+    if (isAndroid()) {
+      const { getAndroidLauncherIconName } = await import(
+        '@/services/androidLauncherIconBridge'
+      );
+      const { value: currentName } = await getAndroidLauncherIconName();
+      if (nativeAppIconMatchesTarget(targetName, currentName)) return;
+      const { scheduleAndroidLauncherIconChange } = await import(
+        '@/services/androidLauncherIconScheduler'
+      );
+      await scheduleAndroidLauncherIconChange({
+        name: targetName,
+        disable: disableNamesForTarget(targetName),
+      });
+      return;
+    }
+
     const { AppIcon } = await import('@capacitor-community/app-icon');
     const supported = await AppIcon.isSupported();
-    if (!supported?.value && isIOS()) return;
-
-    const targetName = resolveNativeAppIconName(appIconId, primarySport);
+    if (!supported?.value) return;
     const { value: currentName } = await AppIcon.getName();
     if (nativeAppIconMatchesTarget(targetName, currentName)) return;
 

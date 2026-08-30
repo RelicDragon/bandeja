@@ -72,6 +72,7 @@ export function PlayerInviteLookingRow({ member, isSelected, onSelect, levelSpor
         smallLayout={false}
         extrasmall
         levelSport={levelSport}
+        asDiv
       />
 
       <div className="min-w-0 flex-1">

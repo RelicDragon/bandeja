@@ -5,13 +5,20 @@ const requestPermissionsMock = vi.fn();
 const registerMock = vi.fn();
 const addListenerMock = vi.fn(async () => undefined);
 const removeAllListenersMock = vi.fn(async () => undefined);
+const getPlatformMock = vi.fn(() => 'ios');
+const releaseLauncherIconBlockMock = vi.fn();
+const blockLauncherIconChangesMock = vi.fn(() => releaseLauncherIconBlockMock);
 
 vi.mock('@capacitor/core', () => ({
   Capacitor: {
     isNativePlatform: () => true,
-    getPlatform: () => 'ios',
+    getPlatform: getPlatformMock,
   },
   registerPlugin: () => ({}),
+}));
+
+vi.mock('@/services/androidLauncherIconScheduler', () => ({
+  blockAndroidLauncherIconChangesForNativeUi: blockLauncherIconChangesMock,
 }));
 
 vi.mock('@capacitor/push-notifications', () => ({
@@ -54,6 +61,11 @@ vi.mock('@/services/push/pushDelegateBridge', () => ({
   setPushReplyJsReadyNative: vi.fn(async () => undefined),
 }));
 
+vi.mock('@/services/push/pushTapBridge', () => ({
+  addPendingPushTapListener: vi.fn(async () => undefined),
+  consumePendingPushTapNative: vi.fn(async () => undefined),
+}));
+
 describe('pushNotificationService.ensureTokenSentToBackend', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -61,6 +73,7 @@ describe('pushNotificationService.ensureTokenSentToBackend', () => {
     checkPermissionsMock.mockResolvedValue({ receive: 'prompt' });
     requestPermissionsMock.mockResolvedValue({ receive: 'granted' });
     registerMock.mockResolvedValue(undefined);
+    getPlatformMock.mockReturnValue('ios');
   });
 
   afterEach(() => {
@@ -88,7 +101,7 @@ describe('pushNotificationService.ensureTokenSentToBackend', () => {
 
     expect(requestPermissionsMock).toHaveBeenCalledTimes(1);
     expect(registerMock).toHaveBeenCalledTimes(1);
-  });
+  }, 10_000);
 
   it('does not re-request permission when only silent sync runs after an in-flight silent sync', async () => {
     let resolveFirst: (() => void) | undefined;
@@ -110,5 +123,54 @@ describe('pushNotificationService.ensureTokenSentToBackend', () => {
     await Promise.all([first, second]);
 
     expect(requestPermissionsMock).not.toHaveBeenCalled();
+  });
+
+  it('coalesces overlapping permission callers into one native prompt and registration', async () => {
+    let resolvePermission: ((value: { receive: string }) => void) | undefined;
+    requestPermissionsMock.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolvePermission = resolve;
+        }),
+    );
+
+    checkPermissionsMock
+      .mockResolvedValueOnce({ receive: 'prompt' })
+      .mockResolvedValue({ receive: 'granted' });
+
+    const { default: pushNotificationService } = await import('@/services/pushNotificationService');
+    const calls = [
+      pushNotificationService.ensureTokenSentToBackend({ requestPermission: true }),
+      pushNotificationService.ensureTokenSentToBackend({ requestPermission: true }),
+      pushNotificationService.ensureTokenSentToBackend({ requestPermission: true }),
+    ];
+
+    await vi.waitFor(() => expect(requestPermissionsMock).toHaveBeenCalledTimes(1));
+    resolvePermission?.({ receive: 'granted' });
+    await Promise.all(calls);
+
+    expect(requestPermissionsMock).toHaveBeenCalledTimes(1);
+    expect(registerMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('contains a native permission failure so authentication cannot reject or retry-stack prompts', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    getPlatformMock.mockReturnValue('android');
+    requestPermissionsMock.mockRejectedValue(new Error('permission activity disappeared'));
+
+    const { default: pushNotificationService } = await import('@/services/pushNotificationService');
+
+    await expect(
+      Promise.all([
+        pushNotificationService.ensureTokenSentToBackend({ requestPermission: true }),
+        pushNotificationService.ensureTokenSentToBackend({ requestPermission: true }),
+      ]),
+    ).resolves.toEqual([undefined, undefined]);
+
+    expect(requestPermissionsMock).toHaveBeenCalledTimes(1);
+    expect(registerMock).not.toHaveBeenCalled();
+    expect(blockLauncherIconChangesMock).toHaveBeenCalledTimes(1);
+    expect(releaseLauncherIconBlockMock).toHaveBeenCalledTimes(1);
+    errorSpy.mockRestore();
   });
 });

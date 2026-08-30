@@ -174,6 +174,37 @@ public final class ChatNotificationHelper {
         return extras;
     }
 
+    /** Routing-only extras for content tap — no JWTs / large fields on the activity Intent. */
+    public static Bundle tapExtras(ChatPushData pushData) {
+        Bundle extras = new Bundle();
+        extras.putString("type", pushData.type);
+        extras.putString("chatContextType", pushData.chatContextType);
+        extras.putString("contextId", pushData.contextId);
+        extras.putString("messageId", pushData.messageId);
+        if (pushData.chatType != null) {
+            extras.putString("chatType", pushData.chatType);
+        }
+        if (pushData.threadId != null) {
+            extras.putString("threadId", pushData.threadId);
+        }
+        if (pushData.userChatId != null) {
+            extras.putString("userChatId", pushData.userChatId);
+        }
+        if (pushData.gameId != null) {
+            extras.putString("gameId", pushData.gameId);
+        }
+        if (pushData.groupChannelId != null) {
+            extras.putString("groupChannelId", pushData.groupChannelId);
+        }
+        if (pushData.bugId != null) {
+            extras.putString("bugId", pushData.bugId);
+        }
+        if (pushData.marketItemId != null) {
+            extras.putString("marketItemId", pushData.marketItemId);
+        }
+        return extras;
+    }
+
     private static android.app.Notification buildNotification(
         Context context,
         ChatPushData pushData,
@@ -206,16 +237,16 @@ public final class ChatNotificationHelper {
         replyIntent.setAction(ACTION_REPLY);
         replyIntent.putExtras(replyExtras(pushData));
 
-        int flags = PendingIntent.FLAG_UPDATE_CURRENT;
+        int replyFlags = PendingIntent.FLAG_UPDATE_CURRENT;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            flags |= PendingIntent.FLAG_MUTABLE;
+            replyFlags |= PendingIntent.FLAG_MUTABLE;
         }
 
         PendingIntent replyPendingIntent = PendingIntent.getBroadcast(
             context,
             pushData.notificationId(),
             replyIntent,
-            flags
+            replyFlags
         );
 
         NotificationCompat.Action replyAction = new NotificationCompat.Action.Builder(
@@ -229,15 +260,20 @@ public final class ChatNotificationHelper {
 
         android.content.Intent tapIntent = PushTapIntentFactory.build(
             context,
-            replyExtras(pushData),
+            tapExtras(pushData),
             pushData.messageId
         );
+
+        int tapFlags = PendingIntent.FLAG_UPDATE_CURRENT;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            tapFlags |= PendingIntent.FLAG_IMMUTABLE;
+        }
 
         PendingIntent contentIntent = PendingIntent.getActivity(
             context,
             pushData.notificationId() + 1,
             tapIntent,
-            flags
+            tapFlags
         );
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_MESSAGES)

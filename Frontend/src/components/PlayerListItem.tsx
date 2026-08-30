@@ -64,7 +64,7 @@ export function PlayerListItem({
           : 'hover:bg-gray-100 dark:hover:bg-white/5'
       } ${dim && !isSelected ? 'opacity-60' : ''}`}
     >
-      <PlayerAvatar player={player} showName={false} fullHideName smallLayout={false} extrasmall levelSport={sport} />
+      <PlayerAvatar player={player} showName={false} fullHideName smallLayout={false} extrasmall levelSport={sport} asDiv />
 
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">

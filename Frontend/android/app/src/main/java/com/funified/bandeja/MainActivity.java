@@ -16,11 +16,15 @@ import com.getcapacitor.BridgeActivity;
 import com.getcapacitor.PluginHandle;
 import com.funified.bandeja.auth.AuthBridgePlugin;
 import com.funified.bandeja.auth.BrandingLogoStorage;
+import com.funified.bandeja.branding.LauncherIconPlugin;
 import com.funified.bandeja.widgets.NextGameDeepLink;
 import com.funified.bandeja.widgets.NextGamesEnvelopeStorage;
 import com.funified.bandeja.widgets.WidgetBridgePlugin;
 import com.funified.bandeja.push.ChatNotificationHelper;
 import com.funified.bandeja.push.ChatViewingBridgePlugin;
+import com.funified.bandeja.push.PushIntentSanitizer;
+import com.funified.bandeja.push.PushTapBridgePlugin;
+import com.funified.bandeja.push.PushTapStore;
 import ee.forgr.capacitor.social.login.GoogleProvider;
 import ee.forgr.capacitor.social.login.ModifiedMainActivityForSocialLoginPlugin;
 import ee.forgr.capacitor.social.login.SocialLoginPlugin;
@@ -42,15 +46,26 @@ public class MainActivity extends BridgeActivity implements ModifiedMainActivity
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        rewriteNextGameLaunchIntent(getIntent());
-        setIntent(getIntent());
+        Intent launchIntent = getIntent();
+        // Strip legacy MAIN/LAUNCHER + google.message_id / JWT poison before Cap
+        // BridgeActivity.load() re-delivers getIntent() as a notification tap.
+        PushIntentSanitizer.stripPoisonedLauncherExtras(launchIntent);
+        rewriteNextGameLaunchIntent(launchIntent);
+        setIntent(launchIntent);
         registerPlugin(AuthBridgePlugin.class);
         registerPlugin(WidgetBridgePlugin.class);
         registerPlugin(ChatViewingBridgePlugin.class);
+        registerPlugin(PushTapBridgePlugin.class);
+        registerPlugin(LauncherIconPlugin.class);
         applyBrandingLaunchTheme();
         SplashScreen splashScreen = SplashScreen.installSplashScreen(this);
         splashScreen.setKeepOnScreenCondition(() -> !AuthBridgePlugin.isAppShellReady());
         super.onCreate(savedInstanceState);
+        // Clear any push markers Cap may have read; task root stays clean for relaunches.
+        if (PushIntentSanitizer.clearPushMarkers(getIntent())) {
+            setIntent(getIntent());
+        }
+        publishPendingPushTap();
         ChatNotificationHelper.ensureChannel(this);
         
         // Enable edge-to-edge display for safe area insets
@@ -125,10 +140,25 @@ public class MainActivity extends BridgeActivity implements ModifiedMainActivity
 
     @Override
     protected void onNewIntent(Intent intent) {
+        PushIntentSanitizer.stripPoisonedLauncherExtras(intent);
         rewriteNextGameLaunchIntent(intent);
         setIntent(intent);
         // Cap Bridge captures launch URI at create + AppPlugin fires appUrlOpen from this intent.
         super.onNewIntent(intent);
+        if (PushIntentSanitizer.clearPushMarkers(getIntent())) {
+            setIntent(getIntent());
+        }
+        publishPendingPushTap();
+    }
+
+    private void publishPendingPushTap() {
+        if (getBridge() == null || !PushTapStore.hasPending(this)) {
+            return;
+        }
+        PluginHandle handle = getBridge().getPlugin("PushTapBridge");
+        if (handle != null && handle.getInstance() instanceof PushTapBridgePlugin) {
+            ((PushTapBridgePlugin) handle.getInstance()).publishPendingTapIfAny();
+        }
     }
 
     /**

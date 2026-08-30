@@ -35,12 +35,6 @@ public final class PlayIntentNotificationHelper {
         Bundle extras = new Bundle();
         extras.putString("type", intent.type);
         extras.putString("playIntentId", intent.playIntentId);
-        if (intent.title != null) {
-            extras.putString("title", intent.title);
-        }
-        if (intent.body != null) {
-            extras.putString("body", intent.body);
-        }
 
         Intent tapIntent =
             PushTapIntentFactory.build(context, extras, intent.messageId());
