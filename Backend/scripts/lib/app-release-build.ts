@@ -165,7 +165,7 @@ function resolveGoogleServicesSource(env: NodeJS.ProcessEnv = process.env): stri
   return configured ? path.resolve(configured) : GOOGLE_SERVICES_DESTINATION;
 }
 
-function provisionGoogleServicesConfig(env: NodeJS.ProcessEnv = process.env): void {
+export function provisionGoogleServicesConfig(env: NodeJS.ProcessEnv = process.env): void {
   const source = resolveGoogleServicesSource(env);
   const issues = validateGoogleServicesConfig(source);
   if (issues.length > 0) {
