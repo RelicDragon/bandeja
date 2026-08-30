@@ -30,4 +30,31 @@ describe('Android launcher icon task topology', () => {
     expect(plugin).not.toMatch(/new ComponentName\([^\n]+MainActivity/);
     expect(plugin).not.toMatch(/packageName \+ "\.MainActivity"/);
   });
+
+  it('repairs entry activities before the trampoline launches MainActivity', () => {
+    const launcher = androidFile('java/com/funified/bandeja/LauncherActivity.java');
+    const application = androidFile('java/com/funified/bandeja/BandejaApp.java');
+    const repair = androidFile(
+      'java/com/funified/bandeja/branding/LauncherComponentRepair.java',
+    );
+
+    expect(launcher.indexOf('LauncherComponentRepair.repair(this)')).toBeLessThan(
+      launcher.indexOf('startActivity(destination)'),
+    );
+    expect(application).toContain('LauncherComponentRepair.repair(this)');
+    expect(repair).toContain('MainActivity.class');
+    expect(repair).toContain('LauncherActivity.class');
+    expect(repair).toContain('COMPONENT_ENABLED_STATE_ENABLED');
+  });
+
+  it('repairs persisted component overrides after an app update', () => {
+    const manifest = androidFile('AndroidManifest.xml');
+    const receiver = androidFile(
+      'java/com/funified/bandeja/branding/LauncherComponentRepairReceiver.java',
+    );
+
+    expect(manifest).toContain('.branding.LauncherComponentRepairReceiver');
+    expect(manifest).toContain('android.intent.action.MY_PACKAGE_REPLACED');
+    expect(receiver).toContain('LauncherComponentRepair.repair(context)');
+  });
 });

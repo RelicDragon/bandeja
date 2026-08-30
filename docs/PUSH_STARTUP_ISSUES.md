@@ -313,8 +313,13 @@ Unrelated to push crash reports. Failures are caught and logged. No change recom
 **Behavior**  
 Custom `ChatReplyMessagingService` extends `FirebaseMessagingService`, forwards to `PushNotificationsPlugin` when not handled natively.
 
-**Risk**  
-Low if `google-services.json` is present in release builds (gitignored; applied in CI). Without it, push registration fails gracefully (`registrationError` listener) rather than typical install crash.
+**Risk and confirmed production failure (build 222)**
+`google-services.json` was absent from the Android release. Capacitor's stock
+`PushNotifications.register()` synchronously called `FirebaseMessaging.getInstance()`, which threw
+before the JavaScript promise could reject. Android then terminated the entire app process after
+the user tapped **Allow**. The fixed flow validates and provisions the production Firebase file,
+fails release builds and AAB validation when its resources are absent, and registers through a
+native crash boundary so push failure can never become an authentication or process failure.
 
 ---
 

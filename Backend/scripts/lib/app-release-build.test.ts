@@ -9,6 +9,7 @@ import {
   IOS_ARCHIVE_PATH,
   PRODUCTION_VITE_ENV,
   XCODE_PATH_PREFIX,
+  androidResourceTableHasFirebaseConfig,
   buildIosArchiveArgs,
   buildIosCleanArgs,
   parseJavaMajorVersion,
@@ -17,6 +18,7 @@ import {
   runBuildPreflight,
   selectBuildLogTail,
   selectJavaHomeForVersion,
+  validateGoogleServicesConfig,
   xcodeBuildEnv,
 } from './app-release-build';
 
@@ -49,6 +51,48 @@ assert(AAB_OUTPUT.endsWith('app-release.aab'), 'AAB output filename');
 
 assert(fs.existsSync(FRONTEND_DIR), 'Frontend directory exists');
 assert(fs.existsSync(EXPORT_OPTIONS_PLIST), 'iOS export plist exists');
+
+const googleServicesDir = fs.mkdtempSync(path.join(os.tmpdir(), 'app-release-google-services-'));
+const validGoogleServices = path.join(googleServicesDir, 'google-services.json');
+fs.writeFileSync(
+  validGoogleServices,
+  JSON.stringify({
+    project_info: { project_id: 'bandeja-padel' },
+    client: [
+      {
+        client_info: {
+          mobilesdk_app_id: '1:123:android:abc',
+          android_client_info: { package_name: 'com.funified.bandeja' },
+        },
+      },
+    ],
+  }),
+);
+assert(
+  validateGoogleServicesConfig(validGoogleServices, 'com.funified.bandeja').length === 0,
+  'accepts matching Android Firebase configuration',
+);
+assert(
+  validateGoogleServicesConfig(validGoogleServices, 'com.example.wrong').some((issue) =>
+    issue.includes('com.example.wrong'),
+  ),
+  'rejects Firebase configuration for another Android package',
+);
+assert(
+  validateGoogleServicesConfig(path.join(googleServicesDir, 'missing.json')).some((issue) =>
+    issue.includes('Missing Android Firebase configuration'),
+  ),
+  'rejects a missing Android Firebase configuration',
+);
+assert(
+  androidResourceTableHasFirebaseConfig('google_app_id\u0000gcm_defaultSenderId'),
+  'accepts an AAB resource table containing Firebase app and sender resources',
+);
+assert(
+  !androidResourceTableHasFirebaseConfig('ordinary_android_resources'),
+  'rejects an AAB resource table without Firebase configuration',
+);
+fs.rmSync(googleServicesDir, { recursive: true, force: true });
 
 const androidStyles = fs.readFileSync(
   path.join(FRONTEND_DIR, 'android/app/src/main/res/values/styles.xml'),

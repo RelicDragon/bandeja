@@ -186,6 +186,14 @@
             android:name=".push.InviteActionReceiver"
             android:exported="false" />
 
+        <receiver
+            android:name=".branding.LauncherComponentRepairReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
         <service
             android:name="com.capacitorjs.plugins.pushnotifications.MessagingService"
             tools:node="remove" />

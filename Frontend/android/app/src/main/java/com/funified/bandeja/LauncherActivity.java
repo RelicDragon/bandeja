@@ -3,6 +3,7 @@ package com.funified.bandeja;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import com.funified.bandeja.branding.LauncherComponentRepair;
 
 /**
  * Stable launcher trampoline for alternate app-icon aliases.
@@ -15,6 +16,7 @@ public final class LauncherActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        LauncherComponentRepair.repair(this);
 
         Intent source = getIntent();
         Intent destination = new Intent(this, MainActivity.class);

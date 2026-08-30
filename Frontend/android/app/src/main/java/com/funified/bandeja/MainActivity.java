@@ -25,6 +25,7 @@ import com.funified.bandeja.push.ChatViewingBridgePlugin;
 import com.funified.bandeja.push.PushIntentSanitizer;
 import com.funified.bandeja.push.PushTapBridgePlugin;
 import com.funified.bandeja.push.PushTapStore;
+import com.funified.bandeja.push.SafePushRegistrationPlugin;
 import ee.forgr.capacitor.social.login.GoogleProvider;
 import ee.forgr.capacitor.social.login.ModifiedMainActivityForSocialLoginPlugin;
 import ee.forgr.capacitor.social.login.SocialLoginPlugin;
@@ -56,6 +57,7 @@ public class MainActivity extends BridgeActivity implements ModifiedMainActivity
         registerPlugin(WidgetBridgePlugin.class);
         registerPlugin(ChatViewingBridgePlugin.class);
         registerPlugin(PushTapBridgePlugin.class);
+        registerPlugin(SafePushRegistrationPlugin.class);
         registerPlugin(LauncherIconPlugin.class);
         applyBrandingLaunchTheme();
         SplashScreen splashScreen = SplashScreen.installSplashScreen(this);

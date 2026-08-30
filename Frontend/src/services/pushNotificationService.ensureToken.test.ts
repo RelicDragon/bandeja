@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const checkPermissionsMock = vi.fn();
 const requestPermissionsMock = vi.fn();
 const registerMock = vi.fn();
+const registerAndroidPushSafelyMock = vi.fn();
 const addListenerMock = vi.fn(async () => undefined);
 const removeAllListenersMock = vi.fn(async () => undefined);
 const getPlatformMock = vi.fn(() => 'ios');
@@ -19,6 +20,10 @@ vi.mock('@capacitor/core', () => ({
 
 vi.mock('@/services/androidLauncherIconScheduler', () => ({
   blockAndroidLauncherIconChangesForNativeUi: blockLauncherIconChangesMock,
+}));
+
+vi.mock('@/services/push/safePushRegistrationBridge', () => ({
+  registerAndroidPushSafely: registerAndroidPushSafelyMock,
 }));
 
 vi.mock('@capacitor/push-notifications', () => ({
@@ -73,6 +78,7 @@ describe('pushNotificationService.ensureTokenSentToBackend', () => {
     checkPermissionsMock.mockResolvedValue({ receive: 'prompt' });
     requestPermissionsMock.mockResolvedValue({ receive: 'granted' });
     registerMock.mockResolvedValue(undefined);
+    registerAndroidPushSafelyMock.mockResolvedValue(undefined);
     getPlatformMock.mockReturnValue('ios');
   });
 
@@ -171,6 +177,35 @@ describe('pushNotificationService.ensureTokenSentToBackend', () => {
     expect(registerMock).not.toHaveBeenCalled();
     expect(blockLauncherIconChangesMock).toHaveBeenCalledTimes(1);
     expect(releaseLauncherIconBlockMock).toHaveBeenCalledTimes(1);
+    errorSpy.mockRestore();
+  });
+
+  it('uses the guarded native registration path on Android', async () => {
+    getPlatformMock.mockReturnValue('android');
+    checkPermissionsMock.mockResolvedValue({ receive: 'granted' });
+
+    const { default: pushNotificationService } = await import('@/services/pushNotificationService');
+    await pushNotificationService.ensureTokenSentToBackend({ requestPermission: true });
+
+    expect(registerAndroidPushSafelyMock).toHaveBeenCalledTimes(1);
+    expect(registerMock).not.toHaveBeenCalled();
+  });
+
+  it('contains a missing Firebase configuration without killing or rejecting authentication', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    getPlatformMock.mockReturnValue('android');
+    checkPermissionsMock.mockResolvedValue({ receive: 'granted' });
+    registerAndroidPushSafelyMock.mockRejectedValue(
+      new Error('Firebase push configuration is unavailable'),
+    );
+
+    const { default: pushNotificationService } = await import('@/services/pushNotificationService');
+
+    await expect(
+      pushNotificationService.ensureTokenSentToBackend({ requestPermission: true }),
+    ).resolves.toBeUndefined();
+    expect(registerAndroidPushSafelyMock).toHaveBeenCalledTimes(1);
+    expect(registerMock).not.toHaveBeenCalled();
     errorSpy.mockRestore();
   });
 });

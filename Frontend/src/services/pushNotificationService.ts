@@ -35,6 +35,7 @@ import { playIntentKeys } from '@/hooks/usePlayIntent';
 import { isPlayIntentPushType } from '@/services/push/isPlayIntentPushType';
 import { decodeJwtExpMs } from '@/api/authRefresh';
 import { blockAndroidLauncherIconChangesForNativeUi } from '@/services/androidLauncherIconScheduler';
+import { registerAndroidPushSafely } from '@/services/push/safePushRegistrationBridge';
 
 interface NotificationData {
   type: string;
@@ -159,7 +160,11 @@ class PushNotificationService {
   private async register() {
     if (this.nativeRegistrationComplete) return;
     try {
-      await PushNotifications.register();
+      if (Capacitor.getPlatform() === 'android') {
+        await registerAndroidPushSafely();
+      } else {
+        await PushNotifications.register();
+      }
       this.nativeRegistrationComplete = true;
     } catch (error) {
       this.nativeRegistrationComplete = false;

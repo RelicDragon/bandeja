@@ -133,11 +133,20 @@ dependencies {
 
 apply from: 'capacitor.build.gradle'
 
-try {
-    def servicesJSON = file('google-services.json')
-    if (servicesJSON.text) {
-        apply plugin: 'com.google.gms.google-services'
+def servicesJSON = file('google-services.json')
+if (servicesJSON.exists() && servicesJSON.length() > 0) {
+    apply plugin: 'com.google.gms.google-services'
+} else {
+    logger.warn('google-services.json not found; debug builds will run without Firebase push.')
+    gradle.taskGraph.whenReady { graph ->
+        def includesReleaseTask = graph.allTasks.any { task ->
+            task.project == project && task.name.toLowerCase().contains('release')
+        }
+        if (includesReleaseTask) {
+            throw new GradleException(
+                'google-services.json is required for Android release builds. ' +
+                'Run scripts/app-release.sh with GOOGLE_SERVICES_JSON_PATH configured.'
+            )
+        }
     }
-} catch(Exception e) {
-    logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
 }

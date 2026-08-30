@@ -22,6 +22,11 @@ export const AAB_OUTPUT = path.join(
   ANDROID_DIR,
   'app/build/outputs/bundle/release/app-release.aab',
 );
+export const GOOGLE_SERVICES_DESTINATION = path.join(
+  ANDROID_DIR,
+  'app/google-services.json',
+);
+export const ANDROID_APPLICATION_ID = 'com.funified.bandeja';
 export const RELEASE_BUILD_DIR = path.join(ROOT, '.app-release');
 export const IOS_ARCHIVE_PATH = path.join(RELEASE_BUILD_DIR, 'ios/App.xcarchive');
 export const IOS_EXPORT_DIR = path.join(RELEASE_BUILD_DIR, 'ios/export');
@@ -88,6 +93,89 @@ export interface BuildArtifacts {
 export interface BuildPreflight {
   ok: boolean;
   issues: string[];
+}
+
+interface GoogleServicesFile {
+  client?: Array<{
+    client_info?: {
+      mobilesdk_app_id?: string;
+      android_client_info?: { package_name?: string };
+    };
+  }>;
+}
+
+export function validateGoogleServicesConfig(
+  filePath: string,
+  expectedPackage = ANDROID_APPLICATION_ID,
+): string[] {
+  if (!fs.existsSync(filePath)) {
+    return [
+      `Missing Android Firebase configuration at ${filePath}. ` +
+        'Set GOOGLE_SERVICES_JSON_PATH in Backend/.env to the production google-services.json.',
+    ];
+  }
+
+  let config: GoogleServicesFile;
+  try {
+    config = JSON.parse(fs.readFileSync(filePath, 'utf8')) as GoogleServicesFile;
+  } catch {
+    return [`Android Firebase configuration is not valid JSON: ${filePath}`];
+  }
+
+  const matchingClient = config.client?.find(
+    (client) => client.client_info?.android_client_info?.package_name === expectedPackage,
+  );
+  if (!matchingClient) {
+    return [
+      `Android Firebase configuration ${filePath} has no client for ${expectedPackage}.`,
+    ];
+  }
+  if (!matchingClient.client_info?.mobilesdk_app_id?.trim()) {
+    return [
+      `Android Firebase configuration ${filePath} has no mobilesdk_app_id for ${expectedPackage}.`,
+    ];
+  }
+  return [];
+}
+
+export function androidResourceTableHasFirebaseConfig(resourceTable: string): boolean {
+  return resourceTable.includes('google_app_id') && resourceTable.includes('gcm_defaultSenderId');
+}
+
+export function validateAndroidBundleFirebaseConfig(filePath: string): string[] {
+  if (!fs.existsSync(filePath)) {
+    return [`Missing Android AAB at ${filePath}.`];
+  }
+  try {
+    const resources = execaSync('unzip', ['-p', filePath, 'base/resources.pb']).stdout;
+    if (androidResourceTableHasFirebaseConfig(resources)) {
+      return [];
+    }
+  } catch {
+    return [`Unable to inspect Firebase resources in Android AAB: ${filePath}`];
+  }
+  return [
+    `Android AAB is missing Firebase resources: ${filePath}. ` +
+      'Discard this artifact and rebuild with GOOGLE_SERVICES_JSON_PATH configured.',
+  ];
+}
+
+function resolveGoogleServicesSource(env: NodeJS.ProcessEnv = process.env): string {
+  const configured = env.GOOGLE_SERVICES_JSON_PATH?.trim();
+  return configured ? path.resolve(configured) : GOOGLE_SERVICES_DESTINATION;
+}
+
+function provisionGoogleServicesConfig(env: NodeJS.ProcessEnv = process.env): void {
+  const source = resolveGoogleServicesSource(env);
+  const issues = validateGoogleServicesConfig(source);
+  if (issues.length > 0) {
+    throw new ReleaseBuildError('Android Firebase configuration failed validation', issues.join('\n'));
+  }
+  if (path.resolve(source) === path.resolve(GOOGLE_SERVICES_DESTINATION)) {
+    return;
+  }
+  fs.mkdirSync(path.dirname(GOOGLE_SERVICES_DESTINATION), { recursive: true });
+  fs.copyFileSync(source, GOOGLE_SERVICES_DESTINATION);
 }
 
 export class ReleaseBuildError extends Error {
@@ -244,6 +332,10 @@ export function runBuildPreflight(platform: ReleasePlatform = 'both'): BuildPref
       'Android release signing is not configured. Copy Frontend/android/keystore.properties.example ' +
         'to keystore.properties or set ANDROID_KEYSTORE_* env vars.',
     );
+  }
+
+  if (needsAndroid) {
+    issues.push(...validateGoogleServicesConfig(resolveGoogleServicesSource()));
   }
 
   if (needsIos && !fs.existsSync(IOS_WORKSPACE)) {
@@ -452,6 +544,17 @@ export async function runReleaseBuild(
   const needsIosBuild = needsIos && !onDisk.ipa;
 
   if (!needsAndroidBuild && !needsIosBuild) {
+    if (onDisk.aab) {
+      const firebaseIssues = validateAndroidBundleFirebaseConfig(
+        path.resolve(session.artifacts!.aab!),
+      );
+      if (firebaseIssues.length > 0) {
+        throw new ReleaseBuildError(
+          'Existing Android release artifact failed validation',
+          firebaseIssues.join('\n'),
+        );
+      }
+    }
     return {
       ...(onDisk.aab ? { aab: path.resolve(session.artifacts!.aab!) } : {}),
       ...(onDisk.ipa ? { ipa: path.resolve(session.artifacts!.ipa!) } : {}),
@@ -461,6 +564,10 @@ export async function runReleaseBuild(
   const preflight = runBuildPreflight(session.targetPlatform);
   if (!preflight.ok) {
     throw new ReleaseBuildError('Build preflight failed', preflight.issues.join('\n'));
+  }
+
+  if (needsAndroidBuild) {
+    provisionGoogleServicesConfig();
   }
 
   ensureReleaseBuildDirs();
@@ -574,6 +681,13 @@ export async function runReleaseBuild(
     artifacts.aab = needsAndroidBuild
       ? assertArtifactExists(AAB_OUTPUT, 'Android AAB')
       : path.resolve(session.artifacts!.aab!);
+    const firebaseIssues = validateAndroidBundleFirebaseConfig(artifacts.aab);
+    if (firebaseIssues.length > 0) {
+      throw new ReleaseBuildError(
+        'Android release artifact failed validation',
+        firebaseIssues.join('\n'),
+      );
+    }
   }
   if (needsIos) {
     artifacts.ipa = needsIosBuild
