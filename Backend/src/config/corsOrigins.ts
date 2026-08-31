@@ -7,6 +7,7 @@ export const PROD_CORS_ORIGINS = [
   'https://bandeja.me',
   'https://www.bandeja.me',
   'https://travel.bandeja.me',
+  'https://montenegro2026.bandeja.me',
   /** Capacitor Android (`androidScheme: https`, hostname `localhost`) */
   'https://localhost',
   /** Capacitor iOS — `iosScheme: https` is invalid for WKWebView; falls back to `capacitor` */

@@ -120,4 +120,28 @@ describe('executeAdClick OPEN_URL static pages', () => {
     expect(assign).not.toHaveBeenCalled();
     expect(navigate).not.toHaveBeenCalled();
   });
+
+  it('opens the Montenegro landing externally without changing its ad token', async () => {
+    vi.mocked(isCapacitor).mockReturnValue(false);
+    const assign = vi.fn();
+    vi.stubGlobal('window', {
+      location: {
+        assign,
+        origin: 'https://bandeja.me',
+        href: 'https://bandeja.me/',
+      },
+    });
+    const navigate = vi.fn();
+    const clickUrl =
+      'https://montenegro2026.bandeja.me/?ad_token=opaque-registration-token';
+
+    await executeAdClick(
+      payload({ clickAction: 'OPEN_URL', clickUrl }),
+      navigate as never,
+    );
+
+    expect(openExternalUrl).toHaveBeenCalledWith(clickUrl);
+    expect(assign).not.toHaveBeenCalled();
+    expect(navigate).not.toHaveBeenCalled();
+  });
 });

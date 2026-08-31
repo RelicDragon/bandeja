@@ -40,6 +40,10 @@ assert(withExtra.includes('http://evil.example'), 'extra origin trailing slash s
 
 assert(isCorsOriginAllowed('https://bandeja.me', prod), 'bandeja.me allowed');
 assert(isCorsOriginAllowed('https://travel.bandeja.me', prod), 'travel.bandeja.me SSO allowed');
+assert(
+  isCorsOriginAllowed('https://montenegro2026.bandeja.me', prod),
+  'Montenegro 2026 landing allowed'
+);
 assert(isCorsOriginAllowed('https://localhost', prod), 'Capacitor Android allowed');
 assert(isCorsOriginAllowed('capacitor://localhost', prod), 'Capacitor iOS allowed');
 assert(!isCorsOriginAllowed('null', prod), 'Origin null rejected');
@@ -56,6 +60,10 @@ function decide(origin: string | undefined): boolean {
 }
 assert(decide(undefined) === true, 'no Origin → allow (non-browser / same-origin)');
 assert(decide('https://bandeja.me') === true, 'delegate allows bandeja.me');
+assert(
+  decide('https://montenegro2026.bandeja.me') === true,
+  'delegate allows Montenegro 2026 landing'
+);
 assert(decide('null') === false, 'delegate rejects Origin null');
 assert(decide('https://attacker.test') === false, 'delegate rejects unknown');
 
