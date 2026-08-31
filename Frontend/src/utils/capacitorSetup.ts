@@ -1,5 +1,5 @@
 import { App } from '@capacitor/app';
-import { StatusBar, Style } from '@capacitor/status-bar';
+import { SystemBars, SystemBarsStyle } from '@capacitor/core';
 import { Keyboard, KeyboardResize } from '@capacitor/keyboard';
 import { isCapacitor, isIOS, isAndroid } from './capacitor';
 import { setupCapacitorNetwork } from './capacitorNetwork';
@@ -113,17 +113,12 @@ export const updateStatusBarStyle = async () => {
     // Capacitor naming is counterintuitive:
     // Style.Light = dark/black text (for LIGHT backgrounds)
     // Style.Dark = light/white text (for DARK backgrounds)
-    const style = isDarkMode ? Style.Dark : Style.Light;
-    
+    const style = isDarkMode ? SystemBarsStyle.Dark : SystemBarsStyle.Light;
+
     console.log('Setting status bar style to:', style, isDarkMode ? '(white text for dark bg)' : '(black text for light bg)');
-    
-    await StatusBar.setStyle({ style });
-    
-    if (isAndroid()) {
-      const bgColor = isDarkMode ? '#111827' : '#f9fafb'; // gray-900 : gray-50
-      await StatusBar.setBackgroundColor({ color: bgColor });
-    }
-    
+
+    await SystemBars.setStyle({ style });
+
     console.log('Status bar style updated successfully');
   } catch (error) {
     console.error('Error updating status bar style:', error);
@@ -222,30 +217,16 @@ export const setupCapacitor = async () => {
     void initWatchBridge();
     await pushNotificationService.initializeEarly();
 
-    // Show status bar first
     try {
-      await StatusBar.show();
+      await SystemBars.show();
       console.log('StatusBar shown');
     } catch (e) {
       console.log('StatusBar.show() not available or failed:', e);
     }
-    
-    // Initial setup
-    if (isIOS() || isAndroid()) {
-      await StatusBar.setOverlaysWebView({ overlay: true });
-      console.log('StatusBar overlay enabled');
-    }
 
-    // Set initial status bar style - Style.Light = black text for light backgrounds
-    if (isIOS()) {
-      await StatusBar.setStyle({ style: Style.Light });
-      console.log('iOS StatusBar set to Light style (black text)');
-    }
-    
-    if (isAndroid()) {
-      await StatusBar.setStyle({ style: Style.Light });
-      await StatusBar.setBackgroundColor({ color: '#f9fafb' });
-      console.log('Android StatusBar set to Light style with light background');
+    if (isIOS() || isAndroid()) {
+      await SystemBars.setStyle({ style: SystemBarsStyle.Light });
+      console.log('System bars set to Light style (black text)');
     }
 
     // Then update based on actual theme with a delay

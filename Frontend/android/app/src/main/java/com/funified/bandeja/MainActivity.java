@@ -9,6 +9,8 @@ import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowInsetsController;
+import android.view.WindowManager;
+import androidx.activity.EdgeToEdge;
 import androidx.core.splashscreen.SplashScreen;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
@@ -62,6 +64,7 @@ public class MainActivity extends BridgeActivity implements ModifiedMainActivity
         applyBrandingLaunchTheme();
         SplashScreen splashScreen = SplashScreen.installSplashScreen(this);
         splashScreen.setKeepOnScreenCondition(() -> !AuthBridgePlugin.isAppShellReady());
+        EdgeToEdge.enable(this);
         super.onCreate(savedInstanceState);
         // Clear any push markers Cap may have read; task root stays clean for relaunches.
         if (PushIntentSanitizer.clearPushMarkers(getIntent())) {
@@ -69,13 +72,11 @@ public class MainActivity extends BridgeActivity implements ModifiedMainActivity
         }
         publishPendingPushTap();
         ChatNotificationHelper.ensureChannel(this);
-        
-        // Enable edge-to-edge display for safe area insets
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
-        
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            // Android 11+ (API 30+)
-            getWindow().setDecorFitsSystemWindows(false);
+            WindowManager.LayoutParams attrs = getWindow().getAttributes();
+            attrs.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
+            getWindow().setAttributes(attrs);
             WindowInsetsController insetsController = getWindow().getInsetsController();
             if (insetsController != null) {
                 insetsController.setSystemBarsAppearance(
@@ -83,15 +84,6 @@ public class MainActivity extends BridgeActivity implements ModifiedMainActivity
                     WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
                 );
             }
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            // Android 5.0+ (API 21+)
-            getWindow().getDecorView().setSystemUiVisibility(
-                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-            );
-            getWindow().setStatusBarColor(android.graphics.Color.TRANSPARENT);
-            getWindow().setNavigationBarColor(android.graphics.Color.TRANSPARENT);
         }
     }
 

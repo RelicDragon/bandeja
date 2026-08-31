@@ -26,11 +26,8 @@ const config: CapacitorConfig = {
       presentationOptions: ['badge', 'sound', 'alert']
     },
     SystemBars: {
-      insetsHandling: 'css'
-    },
-    StatusBar: {
-      style: 'light',
-      overlaysWebView: true
+      insetsHandling: 'css',
+      style: 'LIGHT'
     },
     Keyboard: {
       resize: 'none',

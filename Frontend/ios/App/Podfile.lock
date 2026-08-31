@@ -44,8 +44,6 @@ PODS:
     - Capacitor
   - CapacitorShare (8.0.0):
     - Capacitor
-  - CapacitorStatusBar (8.0.0):
-    - Capacitor
   - CapgoCapacitorSocialLogin (8.2.16):
     - Alamofire (~> 5.10.2)
     - Capacitor
@@ -102,7 +100,6 @@ DEPENDENCIES:
   - "CapacitorNetwork (from `../../node_modules/@capacitor/network`)"
   - "CapacitorPushNotifications (from `../../node_modules/@capacitor/push-notifications`)"
   - "CapacitorShare (from `../../node_modules/@capacitor/share`)"
-  - "CapacitorStatusBar (from `../../node_modules/@capacitor/status-bar`)"
   - "CapgoCapacitorSocialLogin (from `../../node_modules/@capgo/capacitor-social-login`)"
   - "EbarooniCapacitorCalendar (from `../../node_modules/@ebarooni/capacitor-calendar`)"
 
@@ -157,8 +154,6 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/@capacitor/push-notifications"
   CapacitorShare:
     :path: "../../node_modules/@capacitor/share"
-  CapacitorStatusBar:
-    :path: "../../node_modules/@capacitor/status-bar"
   CapgoCapacitorSocialLogin:
     :path: "../../node_modules/@capgo/capacitor-social-login"
   EbarooniCapacitorCalendar:
@@ -184,7 +179,6 @@ SPEC CHECKSUMS:
   CapacitorNetwork: 156f8096cbbce5337eb1769fcc0d6adc4b85d3f3
   CapacitorPushNotifications: 722c1528eabbefd355f47e373a4c6235d01e85e9
   CapacitorShare: 12f1d192170cbcf9f108fd675ac8e343761a4638
-  CapacitorStatusBar: 312e2e67928dfe9514c4a8916a1fd610552f5f35
   CapgoCapacitorSocialLogin: 251e1ab19a15a4f5d5ae017f15acd34ca76c7114
   EbarooniCapacitorCalendar: c028d8beba204fb145ee52a6697ac50998b5bec7
   FBAEMKit: e34530df538b8eb8aeb53c35867715ba6c63ef0c
@@ -200,6 +194,6 @@ SPEC CHECKSUMS:
   IONGeolocationLib: a5e40b54edc2ee9902036eda5aaa41ddf07bb68d
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
 
-PODFILE CHECKSUM: 69c7264b2d33b2444c7cea5d5088e781a6fb2d40
+PODFILE CHECKSUM: 8c13196134e1affb455b80933f0ffccd27fbd3eb
 
 COCOAPODS: 1.16.2

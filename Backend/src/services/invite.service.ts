@@ -661,7 +661,17 @@ export class InviteService {
     if (!participant || participant.status !== 'INVITED') {
       return { success: false, message: 'errors.invites.notFound' };
     }
-    if (participant.invitedByUserId !== cancellerUserId) {
+    const isSender = participant.invitedByUserId === cancellerUserId;
+    const isGameOwner =
+      !isSender && participant.gameId
+        ? await hasParentGamePermission(
+            participant.gameId,
+            cancellerUserId,
+            [ParticipantRole.OWNER, ParticipantRole.ADMIN],
+            false,
+          )
+        : false;
+    if (!isSender && !isGameOwner) {
       return { success: false, message: 'errors.invites.onlySenderCanCancel' };
     }
     if (participant.role === ParticipantRole.OWNER) {
