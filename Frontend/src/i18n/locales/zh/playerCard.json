@@ -90,16 +90,16 @@
     "last10Games": "最近 10 场",
     "currentStreak": "当前连续",
     "streakInfo": {
-      "button": "连胜或连败统计如何判定胜负",
-      "title": "如何判定胜负",
-      "intro": "每场比赛按照设置中选择的结果规则来判定。连胜或连败统计中的“胜”按以下方式计算：",
+      "button": "连胜或连败记录怎么判？",
+      "title": "什么结果算“胜”？",
+      "intro": "不同比赛的排名方式不一样。它们会这样影响你的连胜或连败记录：",
       "deltaTitle": "球分差",
-      "deltaDescription": "得球数减失球数：结果大于或等于 0 记为胜，小于 0 记为负。",
+      "deltaDescription": "得球数减去失球数。结果为 0 或以上算胜，低于 0 算负。",
       "matchesTitle": "胜场数",
-      "matchesDescription": "胜场数减负场数：结果大于或等于 0 记为胜，小于 0 记为负。季后赛决赛也使用此规则。",
+      "matchesDescription": "胜场数减去负场数。结果为 0 或以上算胜，低于 0 算负。季后赛决赛也一样。",
       "leaderboardTitle": "积分或得球数",
-      "leaderboardDescription": "排在比赛排行榜的上半区记为胜。参赛人数为奇数时，中间名次也计入上半区；其余较低名次记为负。",
-      "example": "因此，32 人中排名第 4 也记为胜。"
+      "leaderboardDescription": "进入排行榜上半区就算胜。人数为奇数时，中间名次也算；其余名次算负。",
+      "example": "表现不错！32 人中第 4 名也算胜。"
     },
     "currentStreakWin_one": "连胜 {{count}} 场",
     "currentStreakWin_other": "连胜 {{count}} 场",

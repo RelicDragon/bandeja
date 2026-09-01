@@ -90,16 +90,16 @@
     "last10Games": "Poslednjih 10 igara",
     "currentStreak": "Trenutni niz",
     "streakInfo": {
-      "button": "Kako određujemo pobedu ili poraz u nizu",
-      "title": "Kako određujemo pobedu ili poraz",
-      "intro": "Svaka igra koristi način obračuna rezultata iz svojih podešavanja. Za niz se pobedom smatra:",
+      "button": "Šta se računa kao pobeda u nizu?",
+      "title": "Šta se računa kao pobeda?",
+      "intro": "Igre mogu da rangiraju rezultate na različite načine. Evo kako svaki od njih utiče na niz:",
       "deltaTitle": "Razlika u lopticama",
-      "deltaDescription": "Osvojene minus izgubljene loptice: 0 ili više je pobeda, a ispod 0 je poraz.",
+      "deltaDescription": "Od osvojenih loptica oduzmemo izgubljene. Nula ili više = pobeda, manje od nule = poraz.",
       "matchesTitle": "Osvojeni mečevi",
-      "matchesDescription": "Osvojeni minus izgubljeni mečevi: 0 ili više je pobeda, a ispod 0 je poraz. Isto pravilo važi i za plej-of finale.",
+      "matchesDescription": "Od osvojenih mečeva oduzmemo izgubljene. Nula ili više = pobeda, manje od nule = poraz. Plej-of finale radi isto.",
       "leaderboardTitle": "Poeni ili osvojene loptice",
-      "leaderboardDescription": "Plasman u gornjoj polovini tabele je pobeda. Ako je broj igrača neparan, srednje mesto ulazi u gornju polovinu; niža mesta su poraz.",
-      "example": "Zato se 4. mesto od 32 igrača računa kao pobeda."
+      "leaderboardDescription": "Plasman u gornjoj polovini tabele = pobeda. Ako je broj igrača neparan, računa se i srednje mesto; ostala mesta su poraz.",
+      "example": "Odličan rezultat! 4. mesto od 32 igrača računa se kao pobeda."
     },
     "currentStreakWin_one": "{{count}} pobeda zaredom",
     "currentStreakWin_other": "{{count}} pobeda zaredom",

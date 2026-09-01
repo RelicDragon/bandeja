@@ -86,16 +86,16 @@
     "last10Games": "Últimos 10 juegos",
     "currentStreak": "Racha actual",
     "streakInfo": {
-      "button": "Cómo se deciden las victorias y derrotas de la racha",
-      "title": "Cómo decidimos si es victoria o derrota",
-      "intro": "Cada juego usa el criterio de resultado elegido en su configuración. Para la racha, cuenta como victoria cuando:",
+      "button": "¿Qué cuenta como victoria en la racha?",
+      "title": "¿Qué cuenta como victoria?",
+      "intro": "Los juegos pueden ordenar los resultados de distintas formas. Así afecta cada una a la racha:",
       "deltaTitle": "Diferencia de bolas",
-      "deltaDescription": "Bolas ganadas menos bolas perdidas: 0 o más es victoria; menos de 0 es derrota.",
+      "deltaDescription": "Resta las bolas perdidas de las ganadas. Cero o más = victoria; menos de cero = derrota.",
       "matchesTitle": "Partidos ganados",
-      "matchesDescription": "Partidos ganados menos partidos perdidos: 0 o más es victoria; menos de 0 es derrota. Las finales de playoff usan la misma regla.",
+      "matchesDescription": "Resta los partidos perdidos de los ganados. Cero o más = victoria; menos de cero = derrota. Las finales de playoff funcionan igual.",
       "leaderboardTitle": "Puntos o bolas ganadas",
-      "leaderboardDescription": "Terminar en la mitad superior de la clasificación es victoria. Si hay un número impar de jugadores, la posición central se incluye; las posiciones inferiores son derrotas.",
-      "example": "Por eso, quedar 4.º entre 32 jugadores cuenta como victoria."
+      "leaderboardDescription": "Acabar en la mitad superior = victoria. Si hay un número impar de jugadores, la posición central también cuenta; el resto son derrotas.",
+      "example": "¡Buen resultado! Quedar 4.º de 32 cuenta como victoria."
     },
     "currentStreakWin_one": "{{count}} victoria seguida",
     "currentStreakWin_other": "{{count}} victorias seguidas",

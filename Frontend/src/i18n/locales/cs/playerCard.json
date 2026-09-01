@@ -90,16 +90,16 @@
     "last10Games": "Posledních 10 her",
     "currentStreak": "Aktuální série",
     "streakInfo": {
-      "button": "Jak se určují výhry a prohry v sérii",
-      "title": "Jak určujeme výhru nebo prohru",
-      "intro": "Každá hra používá způsob vyhodnocení zvolený v jejím nastavení. Do série se jako výhra počítá:",
+      "button": "Co se počítá jako výhra do série?",
+      "title": "Co se počítá jako výhra?",
+      "intro": "Hry mohou výsledky řadit různě. Takhle každý způsob ovlivní sérii:",
       "deltaTitle": "Rozdíl míčů",
-      "deltaDescription": "Vyhrané míče minus prohrané míče: 0 nebo více znamená výhru, hodnota pod 0 prohru.",
+      "deltaDescription": "Vyhrané míče minus prohrané. Nula nebo více = výhra, méně než nula = prohra.",
       "matchesTitle": "Vyhrané zápasy",
-      "matchesDescription": "Vyhrané zápasy minus prohrané zápasy: 0 nebo více znamená výhru, hodnota pod 0 prohru. Finále play-off používá stejné pravidlo.",
+      "matchesDescription": "Vyhrané zápasy minus prohrané. Nula nebo více = výhra, méně než nula = prohra. Finále play-off funguje stejně.",
       "leaderboardTitle": "Body nebo vyhrané míče",
-      "leaderboardDescription": "Umístění v horní polovině žebříčku znamená výhru. Při lichém počtu hráčů se počítá i prostřední místo; nižší umístění jsou prohrou.",
-      "example": "Proto se 4. místo z 32 hráčů počítá jako výhra."
+      "leaderboardDescription": "Umístění v horní polovině = výhra. Při lichém počtu hráčů se počítá i prostřední místo; ostatní místa jsou prohrou.",
+      "example": "Pěkný výsledek! 4. místo z 32 se počítá jako výhra."
     },
     "currentStreakWin_one": "{{count}} výhra v řadě",
     "currentStreakWin_other": "{{count}} výher v řadě",
