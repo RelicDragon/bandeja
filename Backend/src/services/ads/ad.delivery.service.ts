@@ -25,6 +25,7 @@ import {
 import { personalizeClickUrl, resolveAdClickUserName } from './ad.clickUrl.util';
 import type { AdClickUrlPersonalizationValues } from './ad.clickUrl.util';
 import { mintAdClickToken } from './ad.token.util';
+import { resolveAdDisclosureLabel } from './ad.disclosure.util';
 
 export type ResolvedAdCard = {
   placement: AdPlacementKey;
@@ -192,7 +193,7 @@ export class AdDeliveryService {
       dismissible: campaign.dismissible,
       dismissSnoozeDays: campaign.dismissSnoozeDays,
       clickUrlTrusted: campaign.clickUrlTrusted,
-      disclosureLabel: campaign.disclosureLabel,
+      disclosureLabel: resolveAdDisclosureLabel(campaign.disclosureLabel, creative.metadata),
       hideDisclosure: campaign.hideDisclosure,
     };
   }
