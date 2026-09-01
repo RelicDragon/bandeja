@@ -89,6 +89,18 @@
     "streaks": "Nizovi",
     "last10Games": "Poslednjih 10 igara",
     "currentStreak": "Trenutni niz",
+    "streakInfo": {
+      "button": "Kako određujemo pobedu ili poraz u nizu",
+      "title": "Kako određujemo pobedu ili poraz",
+      "intro": "Svaka igra koristi način obračuna rezultata iz svojih podešavanja. Za niz se pobedom smatra:",
+      "deltaTitle": "Razlika u lopticama",
+      "deltaDescription": "Osvojene minus izgubljene loptice: 0 ili više je pobeda, a ispod 0 je poraz.",
+      "matchesTitle": "Osvojeni mečevi",
+      "matchesDescription": "Osvojeni minus izgubljeni mečevi: 0 ili više je pobeda, a ispod 0 je poraz. Isto pravilo važi i za plej-of finale.",
+      "leaderboardTitle": "Poeni ili osvojene loptice",
+      "leaderboardDescription": "Plasman u gornjoj polovini tabele je pobeda. Ako je broj igrača neparan, srednje mesto ulazi u gornju polovinu; niža mesta su poraz.",
+      "example": "Zato se 4. mesto od 32 igrača računa kao pobeda."
+    },
     "currentStreakWin_one": "{{count}} pobeda zaredom",
     "currentStreakWin_other": "{{count}} pobeda zaredom",
     "currentStreakLoss_one": "{{count}} poraz zaredom",

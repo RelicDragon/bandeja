@@ -85,6 +85,18 @@
     "streaks": "Streaks",
     "last10Games": "Last 10 games",
     "currentStreak": "Current streak",
+    "streakInfo": {
+      "button": "How streak wins and losses are decided",
+      "title": "How we decide a win or loss",
+      "intro": "Each game uses the outcome method chosen in its settings. For streaks, a result counts as a win when:",
+      "deltaTitle": "Balls difference",
+      "deltaDescription": "Balls won minus balls lost: 0 or more is a win; below 0 is a loss.",
+      "matchesTitle": "Matches won",
+      "matchesDescription": "Matches won minus matches lost: 0 or more is a win; below 0 is a loss. Playoff finals use this rule too.",
+      "leaderboardTitle": "Points or balls won",
+      "leaderboardDescription": "Finish in the top half of the leaderboard. With an odd number of players, the middle place is included; lower places are losses.",
+      "example": "So 4th place out of 32 players counts as a win."
+    },
     "currentStreakWin_one": "{{count}} win in a row",
     "currentStreakWin_other": "{{count}} wins in a row",
     "currentStreakLoss_one": "{{count}} loss in a row",

@@ -89,6 +89,18 @@
     "streaks": "連続記録",
     "last10Games": "直近10試合",
     "currentStreak": "現在の連続",
+    "streakInfo": {
+      "button": "連勝・連敗記録の勝敗の決め方",
+      "title": "勝敗の決め方",
+      "intro": "各ゲームでは、設定された結果判定方式を使います。連勝・連敗記録では、次の条件を勝ちとして数えます。",
+      "deltaTitle": "得失ボール差",
+      "deltaDescription": "獲得ボール数から失ったボール数を引いた値が0以上なら勝ち、0未満なら負けです。",
+      "matchesTitle": "勝利マッチ数",
+      "matchesDescription": "勝ったマッチ数から負けたマッチ数を引いた値が0以上なら勝ち、0未満なら負けです。プレーオフ決勝も同じルールです。",
+      "leaderboardTitle": "ポイントまたは獲得ボール数",
+      "leaderboardDescription": "ゲームの順位表で上位半分に入れば勝ちです。人数が奇数の場合は中央の順位も上位半分に含み、それより下は負けです。",
+      "example": "そのため、32人中4位は勝ちとして数えます。"
+    },
     "currentStreakWin_one": "{{count}} 連勝",
     "currentStreakWin_other": "{{count}} 連勝",
     "currentStreakLoss_one": "{{count}} 連敗",

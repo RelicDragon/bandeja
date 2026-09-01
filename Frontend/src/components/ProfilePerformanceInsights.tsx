@@ -1,5 +1,5 @@
-import { memo, useEffect, useRef, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { memo, useEffect, useId, useRef, useState } from 'react';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { ArrowLeft, ArrowUpRight, CalendarDays, Crosshair, Handshake, HelpCircle, MapPin, ShieldAlert, TrendingDown, Trophy } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -97,6 +97,9 @@ const ProfilePerformanceInsightsComponent = ({
 }: ProfilePerformanceInsightsProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const streakInfoId = useId();
+  const reduceMotion = useReducedMotion();
+  const [showStreakInfo, setShowStreakInfo] = useState(false);
   const [showRelationshipInfo, setShowRelationshipInfo] = useState(false);
   const [relationshipRankingMode, setRelationshipRankingMode] =
     useState<RelationshipRankingMode>('formulae');
@@ -243,13 +246,93 @@ const ProfilePerformanceInsightsComponent = ({
       <section className={`rounded-xl bg-gray-100 ${darkBgClass} border border-gray-200/60 dark:border-gray-600/50 p-4`}>
         <div className="mb-3 flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{t('playerCard.streaks')}</h3>
+            <div className="flex items-center gap-1.5">
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{t('playerCard.streaks')}</h3>
+              <button
+                type="button"
+                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border shadow-sm transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800 ${
+                  showStreakInfo
+                    ? 'border-primary-200 bg-primary-50 text-primary-600 dark:border-primary-800 dark:bg-primary-950/50 dark:text-primary-300'
+                    : 'border-gray-200/80 bg-white/75 text-gray-500 hover:border-primary-300 hover:bg-primary-50 hover:text-primary-600 dark:border-gray-600/70 dark:bg-gray-800/70 dark:text-gray-300 dark:hover:border-primary-700 dark:hover:bg-primary-950/40 dark:hover:text-primary-300'
+                }`}
+                aria-label={t('playerCard.streakInfo.button')}
+                aria-expanded={showStreakInfo}
+                aria-controls={streakInfoId}
+                onClick={() => setShowStreakInfo((value) => !value)}
+              >
+                <motion.span
+                  animate={reduceMotion ? undefined : { rotate: showStreakInfo ? 12 : 0, scale: showStreakInfo ? 1.06 : 1 }}
+                  transition={{ duration: reduceMotion ? 0.01 : 0.2, ease: 'easeOut' }}
+                  className="flex"
+                >
+                  <HelpCircle size={15} aria-hidden />
+                </motion.span>
+              </button>
+            </div>
             <p className="text-xs text-gray-500 dark:text-gray-400">{t('playerCard.currentStreak')}</p>
           </div>
           <div className="text-end text-sm font-semibold text-gray-900 dark:text-white">
             {currentStreak}
           </div>
         </div>
+
+        <AnimatePresence initial={false}>
+          {showStreakInfo && (
+            <motion.div
+              id={streakInfoId}
+              initial={reduceMotion ? { opacity: 0 } : { height: 0, opacity: 0, y: -6 }}
+              animate={reduceMotion ? { opacity: 1 } : { height: 'auto', opacity: 1, y: 0 }}
+              exit={reduceMotion ? { opacity: 0 } : { height: 0, opacity: 0, y: -6 }}
+              transition={{ duration: reduceMotion ? 0.01 : 0.28, ease: [0.22, 1, 0.36, 1] }}
+              className="overflow-hidden"
+            >
+              <div className="mb-4 rounded-xl border border-primary-100 bg-white/80 p-3 shadow-sm dark:border-primary-900/60 dark:bg-gray-800/65">
+                <div className="flex items-start gap-2.5">
+                  <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary-100 text-primary-700 dark:bg-primary-900/60 dark:text-primary-200">
+                    <HelpCircle size={15} aria-hidden />
+                  </span>
+                  <div className="min-w-0">
+                    <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
+                      {t('playerCard.streakInfo.title')}
+                    </h4>
+                    <p className="mt-0.5 text-xs leading-5 text-gray-600 dark:text-gray-300">
+                      {t('playerCard.streakInfo.intro')}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-3 space-y-2">
+                  {([
+                    ['delta', 'Δ'],
+                    ['matches', 'M'],
+                    ['leaderboard', '#'],
+                  ] as const).map(([rule, mark]) => (
+                    <div
+                      key={rule}
+                      className="flex items-start gap-2.5 rounded-lg bg-gray-50/90 px-2.5 py-2 dark:bg-gray-900/35"
+                    >
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-white text-[11px] font-bold text-primary-700 shadow-sm ring-1 ring-gray-200/70 dark:bg-gray-800 dark:text-primary-300 dark:ring-gray-700">
+                        {mark}
+                      </span>
+                      <div className="min-w-0">
+                        <div className="text-xs font-semibold text-gray-800 dark:text-gray-100">
+                          {t(`playerCard.streakInfo.${rule}Title`)}
+                        </div>
+                        <p className="mt-0.5 text-xs leading-[1.125rem] text-gray-600 dark:text-gray-300">
+                          {t(`playerCard.streakInfo.${rule}Description`)}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <p className="mt-3 rounded-lg bg-amber-50 px-2.5 py-2 text-xs font-medium leading-[1.125rem] text-amber-900 ring-1 ring-amber-100 dark:bg-amber-950/30 dark:text-amber-200 dark:ring-amber-900/50">
+                  {t('playerCard.streakInfo.example')}
+                </p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {hasStreakData ? (
           <>

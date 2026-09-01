@@ -89,6 +89,18 @@
     "streaks": "coretan",
     "last10Games": "10 pertandingan terakhir",
     "currentStreak": "Pukulan saat ini",
+    "streakInfo": {
+      "button": "Cara menentukan menang dan kalah dalam rentetan",
+      "title": "Cara kami menentukan menang atau kalah",
+      "intro": "Setiap permainan memakai cara penentuan hasil yang dipilih di pengaturannya. Untuk rentetan, hasil dianggap menang jika:",
+      "deltaTitle": "Selisih bola",
+      "deltaDescription": "Jumlah bola yang dimenangkan dikurangi bola yang hilang: 0 atau lebih adalah menang; di bawah 0 adalah kalah.",
+      "matchesTitle": "Pertandingan yang dimenangkan",
+      "matchesDescription": "Jumlah pertandingan menang dikurangi pertandingan kalah: 0 atau lebih adalah menang; di bawah 0 adalah kalah. Final playoff memakai aturan yang sama.",
+      "leaderboardTitle": "Poin atau bola yang dimenangkan",
+      "leaderboardDescription": "Berada di separuh teratas papan peringkat adalah menang. Jika jumlah pemain ganjil, posisi tengah termasuk separuh teratas; posisi di bawahnya adalah kalah.",
+      "example": "Jadi, peringkat ke-4 dari 32 pemain dihitung sebagai menang."
+    },
     "currentStreakWin_one": "{{count}} menang berturut-turut",
     "currentStreakWin_other": "{{count}} menang berturut-turut",
     "currentStreakLoss_one": "{{count}} kerugian berturut-turut",
