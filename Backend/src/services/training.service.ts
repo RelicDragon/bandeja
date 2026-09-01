@@ -236,6 +236,7 @@ export async function updateParticipantLevel(
         reliabilityChange: actualReliabilityChange,
         pointsEarned: 0,
         isWinner: false,
+        isWinForStreak: true,
         wins: 0,
         ties: 0,
         losses: 0,
@@ -250,6 +251,7 @@ export async function updateParticipantLevel(
         reliabilityBefore,
         reliabilityAfter,
         reliabilityChange: actualReliabilityChange,
+        isWinForStreak: true,
         metadata: activityMeta,
       },
     });

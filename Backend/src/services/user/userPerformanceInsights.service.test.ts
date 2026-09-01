@@ -1,13 +1,100 @@
 import assert from 'node:assert/strict';
-import { EntityType, GameStatus, GameType, Gender, ResultsStatus, Sport } from '@prisma/client';
+import {
+  EntityType,
+  GameStatus,
+  GameType,
+  Gender,
+  ResultsStatus,
+  Sport,
+  WinnerOfGame,
+} from '@prisma/client';
 import {
   buildPerformanceRelationships,
   buildPerformanceStreaks,
   isRelationshipInsightMatch,
+  resolveStreakResult,
   type PerformanceRelationshipGame,
   type RelationshipMatchInput,
   type StreakOutcomeInput,
 } from './userPerformanceInsights.service';
+
+const configuredOutcome = (input: {
+  winnerOfGame: WinnerOfGame;
+  isWinner?: boolean;
+  wins?: number;
+  losses?: number;
+  scoresMade?: number;
+  scoresLost?: number;
+  position?: number | null;
+  leaderboardLastPlace?: number;
+}): StreakOutcomeInput => ({
+  isWinner: input.isWinner ?? false,
+  wins: input.wins ?? 0,
+  ties: 0,
+  losses: input.losses ?? 0,
+  scoresMade: input.scoresMade ?? 0,
+  scoresLost: input.scoresLost ?? 0,
+  position: input.position ?? null,
+  leaderboardLastPlace: input.leaderboardLastPlace ?? null,
+  winnerOfGame: input.winnerOfGame,
+  createdAt: new Date(Date.UTC(2026, 0, 1)),
+});
+
+(() => {
+  assert.equal(resolveStreakResult(configuredOutcome({
+    winnerOfGame: WinnerOfGame.BY_SCORES_DELTA,
+    scoresMade: 20,
+    scoresLost: 20,
+  })), 'win', 'zero ball delta counts as a streak win');
+  assert.equal(resolveStreakResult(configuredOutcome({
+    winnerOfGame: WinnerOfGame.BY_SCORES_DELTA,
+    scoresMade: 19,
+    scoresLost: 20,
+  })), 'loss', 'negative ball delta counts as a streak loss');
+  assert.equal(resolveStreakResult(configuredOutcome({
+    winnerOfGame: WinnerOfGame.BY_MATCHES_WON,
+    wins: 2,
+    losses: 2,
+  })), 'win', 'zero match-win delta counts as a streak win');
+  assert.equal(resolveStreakResult(configuredOutcome({
+    winnerOfGame: WinnerOfGame.BY_MATCHES_WON,
+    wins: 1,
+    losses: 2,
+  })), 'loss', 'negative match-win delta counts as a streak loss');
+  assert.equal(resolveStreakResult(configuredOutcome({
+    winnerOfGame: WinnerOfGame.BY_POINTS,
+    position: 4,
+    leaderboardLastPlace: 32,
+  })), 'win', 'fourth place in a 32-place leaderboard counts as a streak win');
+  assert.equal(resolveStreakResult(configuredOutcome({
+    winnerOfGame: WinnerOfGame.BY_POINTS,
+    position: 17,
+    leaderboardLastPlace: 32,
+  })), 'loss', 'bottom-half placement counts as a streak loss');
+  assert.equal(resolveStreakResult(configuredOutcome({
+    winnerOfGame: WinnerOfGame.BY_POINTS,
+    position: 3,
+    leaderboardLastPlace: 5,
+  })), 'win', 'the middle place of an odd-sized leaderboard is in the inclusive top half');
+  assert.equal(resolveStreakResult(configuredOutcome({
+    winnerOfGame: WinnerOfGame.BY_SCORES_MADE,
+    position: 2,
+    leaderboardLastPlace: 2,
+  })), 'loss', 'balls-won ranking follows leaderboard half instead of making every nonnegative total a win');
+  assert.equal(resolveStreakResult(configuredOutcome({
+    winnerOfGame: WinnerOfGame.PLAYOFF_FINALS,
+    wins: 1,
+    losses: 1,
+  })), 'win', 'playoff match delta follows match-won semantics');
+  assert.equal(resolveStreakResult({
+    ...configuredOutcome({
+      winnerOfGame: WinnerOfGame.BY_SCORES_DELTA,
+      scoresMade: 0,
+      scoresLost: 10,
+    }),
+    isWinForStreak: true,
+  }), 'win', 'persisted classification is the historical authority');
+})();
 
 const outcome = (
   result: 'win' | 'loss' | 'tie',

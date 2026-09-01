@@ -376,6 +376,7 @@ export class BracketSlotWalkoverService {
             losses: isWinner ? 0 : 1,
             ties: 0,
             isWinner,
+            isWinForStreak: isWinner,
             pointsEarned: 0,
             levelBefore: 0,
             levelAfter: 0,
@@ -388,6 +389,7 @@ export class BracketSlotWalkoverService {
             wins: isWinner ? 1 : 0,
             losses: isWinner ? 0 : 1,
             isWinner,
+            isWinForStreak: isWinner,
             position,
           },
         });

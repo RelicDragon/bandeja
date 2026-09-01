@@ -113,6 +113,7 @@ export async function finalizeNeutralTechnicalFixture(
           losses: isWinner ? 0 : 1,
           ties: 0,
           isWinner,
+          isWinForStreak: isWinner,
           scoresMade: 0,
           scoresLost: 0,
           pointsEarned: 0,

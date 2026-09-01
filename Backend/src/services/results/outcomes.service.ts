@@ -80,6 +80,10 @@ import {
   shouldCascadeBracketOutcomesUndo,
   shouldRebuildLeagueStandingsForGame,
 } from './outcomeRecalculationPolicy';
+import {
+  computeIsWinForStreak,
+  findLeaderboardLastPlace,
+} from './winLossStreakResult';
 
 async function rebuildLeagueSeasonStandingsIfNeeded(
   gameId: string,
@@ -511,6 +515,7 @@ export async function applyGameOutcomes(
   }
 
   const playAtForStreak = game.finishedDate ?? game.endTime ?? game.startTime ?? new Date();
+  const leaderboardLastPlace = findLeaderboardLastPlace(finalOutcomes);
 
   const uncappedLevelByUser = new Map<string, number>();
 
@@ -576,6 +581,15 @@ export async function applyGameOutcomes(
     const actualReliabilityChange = reliabilityAfter - reliabilityBefore;
     const storedPosition = outcome.position ?? null;
     const isWinner = outcome.isWinner ?? false;
+    const isWinForStreak = computeIsWinForStreak({
+      winnerOfGame: game.winnerOfGame,
+      wins: outcome.wins ?? 0,
+      losses: outcome.losses ?? 0,
+      scoresMade: outcome.scoresMade ?? 0,
+      scoresLost: outcome.scoresLost ?? 0,
+      position: storedPosition,
+      leaderboardLastPlace,
+    }) ?? isWinner;
 
     const sportStatsDeltas = computeSportStatsDeltas(ratingStatsApplied, isWinner);
     let mergedMetadata = mergeSportStatsDeltasMetadata(
@@ -723,6 +737,7 @@ export async function applyGameOutcomes(
         pointsEarned: outcome.pointsEarned,
         position: storedPosition ?? undefined,
         isWinner,
+        isWinForStreak,
         wins: outcome.wins || 0,
         ties: outcome.ties || 0,
         losses: outcome.losses || 0,
@@ -738,7 +753,9 @@ export async function applyGameOutcomes(
         reliabilityAfter,
         reliabilityChange: actualReliabilityChange,
         pointsEarned: outcome.pointsEarned,
+        position: storedPosition,
         isWinner,
+        isWinForStreak,
         wins: outcome.wins || 0,
         ties: outcome.ties || 0,
         losses: outcome.losses || 0,

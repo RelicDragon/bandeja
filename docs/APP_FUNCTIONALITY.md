@@ -804,6 +804,7 @@ Peer-to-peer listings within the app.
 
 **Statistics tab extras:**
 - **Performance insights** (win rate, streaks, form — sport-scoped)
+- **Win/loss streak result** — separate from event champion: balls-delta games use `scoresMade - scoresLost >= 0`; matches-won games use `wins - losses >= 0`; points/balls-won leaderboards count places in the inclusive top half (using the highest persisted place); playoff finals use match delta
 - **Play streak** — consecutive weeks with a finished game per sport (current / best / at-risk); shown on own profile
 - **Reliability** — per-sport reliability score (see §29); shown with stats / results deltas
 - **Level history** chart (competitive vs social level over time)

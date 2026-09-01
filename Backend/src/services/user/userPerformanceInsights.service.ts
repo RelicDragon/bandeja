@@ -1,4 +1,4 @@
-import { EntityType, GameStatus, GameType, MatchSetRole, ParticipantStatus, ResultsStatus, Sport } from '@prisma/client';
+import { EntityType, GameStatus, GameType, MatchSetRole, ParticipantStatus, ResultsStatus, Sport, WinnerOfGame } from '@prisma/client';
 import type { Prisma } from '@prisma/client';
 import prisma from '../../config/database';
 import {
@@ -7,6 +7,7 @@ import {
 } from '../../utils/constants';
 import { projectUserForSportContext } from './userSportProfile.service';
 import { isOfficialMatchSetRole } from '../results/matchSetRole';
+import { computeIsWinForStreak } from '../results/winLossStreakResult';
 
 const INSIGHT_USER_SELECT = {
   ...USER_SELECT_FIELDS,
@@ -26,9 +27,15 @@ export type StreakResult = 'win' | 'loss' | 'tie';
 
 export interface StreakOutcomeInput {
   isWinner: boolean;
+  isWinForStreak?: boolean | null;
   wins: number;
   ties: number;
   losses: number;
+  scoresMade?: number;
+  scoresLost?: number;
+  position?: number | null;
+  leaderboardLastPlace?: number | null;
+  winnerOfGame?: WinnerOfGame;
   createdAt: Date | string;
 }
 
@@ -181,7 +188,22 @@ function toRelationshipEntry(
   };
 }
 
-export function resolveStreakResult(outcome: Pick<StreakOutcomeInput, 'isWinner' | 'wins' | 'ties' | 'losses'>): StreakResult {
+export function resolveStreakResult(outcome: StreakOutcomeInput): StreakResult {
+  if (outcome.isWinForStreak != null) {
+    return outcome.isWinForStreak ? 'win' : 'loss';
+  }
+  if (outcome.winnerOfGame != null) {
+    const computed = computeIsWinForStreak({
+      winnerOfGame: outcome.winnerOfGame,
+      wins: outcome.wins,
+      losses: outcome.losses,
+      scoresMade: outcome.scoresMade ?? 0,
+      scoresLost: outcome.scoresLost ?? 0,
+      position: outcome.position ?? null,
+      leaderboardLastPlace: outcome.leaderboardLastPlace ?? null,
+    });
+    if (computed != null) return computed ? 'win' : 'loss';
+  }
   if (outcome.isWinner) return 'win';
   if (outcome.ties > outcome.wins && outcome.ties >= outcome.losses) return 'tie';
   return 'loss';
@@ -470,11 +492,16 @@ export async function getUserPerformanceInsights(
       select: {
         gameId: true,
         isWinner: true,
+        isWinForStreak: true,
         wins: true,
         ties: true,
         losses: true,
+        scoresMade: true,
+        scoresLost: true,
+        position: true,
         levelChange: true,
         createdAt: true,
+        game: { select: { winnerOfGame: true } },
       },
     }),
     prisma.gameParticipant.findMany({
@@ -526,6 +553,33 @@ export async function getUserPerformanceInsights(
     }),
   ]);
 
+  const leaderboardGameIds = outcomes
+    .filter((outcome) =>
+      outcome.isWinForStreak == null &&
+      (outcome.game.winnerOfGame === WinnerOfGame.BY_POINTS ||
+        outcome.game.winnerOfGame === WinnerOfGame.BY_SCORES_MADE),
+    )
+    .map((outcome) => outcome.gameId);
+  const leaderboardLastPlaceByGameId = new Map<string, number>();
+  if (leaderboardGameIds.length > 0) {
+    const leaderboardRows = await prisma.gameOutcome.groupBy({
+      by: ['gameId'],
+      where: { gameId: { in: [...new Set(leaderboardGameIds)] } },
+      _max: { position: true },
+    });
+    for (const row of leaderboardRows) {
+      if (row._max.position != null) {
+        leaderboardLastPlaceByGameId.set(row.gameId, row._max.position);
+      }
+    }
+  }
+
+  const streakOutcomes: StreakOutcomeInput[] = outcomes.map((outcome) => ({
+    ...outcome,
+    winnerOfGame: outcome.game.winnerOfGame,
+    leaderboardLastPlace: leaderboardLastPlaceByGameId.get(outcome.gameId) ?? null,
+  }));
+
   const relationshipMatches: RelationshipMatchInput[] = [];
   const userOutcomeByGameId = new Map(
     outcomes.map((outcome) => [outcome.gameId, outcome]),
@@ -568,7 +622,7 @@ export async function getUserPerformanceInsights(
   }
 
   return {
-    streaks: buildPerformanceStreaks(outcomes),
+    streaks: buildPerformanceStreaks(streakOutcomes),
     relationships: buildPerformanceRelationships(userId, relationshipMatches, sport),
   };
 }

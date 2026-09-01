@@ -1291,6 +1291,8 @@ model GameOutcome {
   pointsEarned      Int      @default(0)
   position          Int?
   isWinner          Boolean  @default(false)
+  /// Separate from event champion: profile win/loss streak classification.
+  isWinForStreak    Boolean?
   wins              Int      @default(0)
   ties              Int      @default(0)
   losses            Int      @default(0)

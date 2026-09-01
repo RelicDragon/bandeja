@@ -46,6 +46,7 @@ jobs:
       - run: npx prisma migrate deploy
       - run: npm run lint
       - run: npm run test:user-stats-select
+      - run: npm run test:user-performance-insights
       - run: npm run test:available-games
       - run: npm run test:invite-inbox
       - run: npm run test:play-intent
