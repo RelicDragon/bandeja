@@ -96,7 +96,7 @@
       "deltaTitle": "Rozdíl míčů",
       "deltaDescription": "Vyhrané míče minus prohrané. Nula nebo více = výhra, méně než nula = prohra.",
       "matchesTitle": "Vyhrané zápasy",
-      "matchesDescription": "Vyhrané zápasy minus prohrané. Nula nebo více = výhra, méně než nula = prohra. Finále play-off funguje stejně.",
+      "matchesDescription": "Vyhrané zápasy minus prohrané. Nula nebo více = výhra, méně než nula = prohra. Jedna výhra v zápase pořád nestačí, pokud jich víc prohraješ. Finále play-off funguje stejně.",
       "leaderboardTitle": "Body nebo vyhrané míče",
       "leaderboardDescription": "Umístění v horní polovině = výhra. Při lichém počtu hráčů se počítá i prostřední místo; ostatní místa jsou prohrou.",
       "example": "Pěkný výsledek! 4. místo z 32 se počítá jako výhra."

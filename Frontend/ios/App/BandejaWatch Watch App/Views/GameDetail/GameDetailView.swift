@@ -251,6 +251,7 @@ struct GameDetailView: View {
         }
         .buttonStyle(.borderedProminent)
         .tint(.orange)
+        .disabled(session.isEnteringScoring)
     }
 
     private func outcomesNavButton(_ title: String, icon: String, color: Color) -> some View {

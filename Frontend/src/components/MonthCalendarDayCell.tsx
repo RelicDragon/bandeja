@@ -4,6 +4,7 @@ import { CalendarDayTypeDots } from '@/components/calendarDayTypeDots';
 import { MonthCalendarWeatherPill } from '@/components/MonthCalendarWeatherPill';
 import type { FindDisplayEntityType } from '@/utils/findFilter';
 import type { CalendarDayWeather } from '@/utils/calendarWeather.util';
+import type { CalendarDayAdTag } from '@/hooks/useAdCalendarTags';
 
 export interface MonthCalendarDayCellProps {
   day: Date;
@@ -20,6 +21,7 @@ export interface MonthCalendarDayCellProps {
   participantTypes: FindDisplayEntityType[];
   dayWeather: CalendarDayWeather | null;
   locale: string;
+  calendarTags?: CalendarDayAdTag[];
   onSelect: (day: Date) => void;
 }
 
@@ -38,6 +40,7 @@ export function MonthCalendarDayCell({
   participantTypes,
   dayWeather,
   locale,
+  calendarTags = [],
   onSelect,
 }: MonthCalendarDayCellProps) {
   const markTypes = showTypePill ? typePillTypes : showParticipantPill ? participantTypes : [];
@@ -51,7 +54,7 @@ export function MonthCalendarDayCell({
       aria-selected={isSelected}
       aria-current={isTodayDate ? 'date' : undefined}
       className={`
-        relative flex ${weather ? 'min-h-14' : 'min-h-12'} w-full flex-col items-center justify-center gap-0.5 rounded-md px-0.5 py-1
+        relative flex ${weather ? 'min-h-14' : 'min-h-12'} w-full flex-col items-center justify-center gap-0.5 rounded-md px-0.5 pb-3 pt-1
         transition-colors duration-300 ease-out
         ${isSelected
           ? 'z-10 bg-primary-500 font-semibold text-white'
@@ -123,6 +126,20 @@ export function MonthCalendarDayCell({
             selected={isSelected}
             placement="flow"
           />
+        </span>
+      ) : null}
+      {calendarTags.length > 0 ? (
+        <span
+          data-calendar-day-ad-tags
+          title={calendarTags.map((tag) => tag.label).join(' · ')}
+          className="absolute inset-x-0.5 bottom-1 truncate text-center text-[7px] font-bold uppercase leading-none tracking-wide"
+        >
+          {calendarTags.map((tag, index) => (
+            <span key={tag.campaignId}>
+              {index > 0 ? <span aria-hidden> · </span> : null}
+              <span data-calendar-day-ad-tag style={{ color: tag.color }}>{tag.label}</span>
+            </span>
+          ))}
         </span>
       ) : null}
     </button>

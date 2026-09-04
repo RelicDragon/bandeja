@@ -28,6 +28,7 @@ import {
   type FindDayIndexRow,
 } from '@/utils/findDayIndexCounts';
 import { useMonthCalendarWeather } from '@/hooks/useMonthCalendarWeather';
+import { useAdCalendarTags } from '@/hooks/useAdCalendarTags';
 import { MonthCalendarDayCell } from '@/components/MonthCalendarDayCell';
 import { MonthCalendarWeatherToggle } from '@/components/MonthCalendarWeatherToggle';
 import { resolveCalendarDayPillVisibility } from '@/utils/calendarDayPillVisibility';
@@ -298,6 +299,7 @@ export const MonthCalendar = ({
     weatherFetchEnabled,
     userCityTimezone,
   );
+  const { getTagsForDay } = useAdCalendarTags();
 
   useEffect(() => {
     if (weatherToggleDisabled && weatherMode) {
@@ -552,6 +554,7 @@ export const MonthCalendar = ({
           });
           const showParticipantPill =
             noEntityFilter && isParticipant && participantTypes.length > 0 && !showTypePill;
+          const calendarTags = getTagsForDay(dateStr);
 
           return (
             <MonthCalendarDayCell
@@ -570,6 +573,7 @@ export const MonthCalendar = ({
               participantTypes={participantTypes}
               dayWeather={dayWeather}
               locale={displaySettings.locale}
+              calendarTags={calendarTags}
               onSelect={handleDateClick}
             />
           );

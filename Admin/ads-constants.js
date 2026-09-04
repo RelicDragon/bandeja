@@ -2,6 +2,8 @@
 /** @typedef {'DRAFT'|'SCHEDULED'|'ACTIVE'|'PAUSED'|'ENDED'} AdCampaignStatus */
 /** @typedef {'OPEN_URL'|'IN_APP_ROUTE'|'CLUB_PAGE'|'MARKET_ITEM'} AdClickAction */
 
+const AD_DEFAULT_CALENDAR_TAG_COLOR = '#7C3AED';
+
 /** @typedef {Object} AdFrequencyCap
  * @property {number} maxImpressions
  * @property {number} windowDays
@@ -79,6 +81,12 @@
  * @property {boolean} [appendAdTokenToClickUrl]
  * @property {string|null} disclosureLabel
  * @property {boolean} hideDisclosure
+ * @property {boolean} calendarTagEnabled
+ * @property {string|null} calendarTagLabel
+ * @property {string|null} calendarTagColor
+ * @property {Object<string, string>} [calendarTagMessages]
+ * @property {string|null} calendarTagStartsAt
+ * @property {string|null} calendarTagEndsAt
  * @property {AdTargeting} targeting
  * @property {string[]} testUserIds
  * @property {AdPlacementKey[]} placements
@@ -250,6 +258,19 @@ function fromDatetimeLocalValue(value) {
     if (!value) return null;
     const d = new Date(value);
     return Number.isNaN(d.getTime()) ? null : d.toISOString();
+}
+
+function toDateInputValue(iso) {
+    if (!iso) return '';
+    const match = /^(\d{4}-\d{2}-\d{2})(?:T|$)/.exec(String(iso));
+    return match ? match[1] : '';
+}
+
+function fromDateInputValue(value) {
+    if (!value) return null;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+    const d = new Date(`${value}T00:00:00.000Z`);
+    return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === value ? value : null;
 }
 
 function parseUserIdList(raw) {

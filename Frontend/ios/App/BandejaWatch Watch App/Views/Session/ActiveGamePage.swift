@@ -177,6 +177,8 @@ struct ActiveGamePage: View {
 
     private func matchRow(vm: ScoringViewModel, roundNumber: Int, match: WatchMatch, lang: String) -> some View {
         let showStart = vm.canEditMatch(match) && !vm.isMatchCompleted(match) && !vm.isFinal
+        // Single start path: the overlay play button below. The card itself is
+        // inert so one tap can never enqueue two `startMatch` calls.
         return ZStack {
             MatchResultCard(
                 roundNumber: roundNumber,
@@ -185,25 +187,28 @@ struct ActiveGamePage: View {
                 isFinal: vm.isFinal,
                 levelSport: vm.game?.resolvedSport,
                 maxPlayersPerTeam: WatchMatchFormat.maxPlayersPerTeam(for: vm.game)
-            ) {
-                if showStart {
-                    Task { await session.startMatch(matchId: match.id) }
-                }
-            }
-            .disabled(showStart)
+            ) {}
+            .disabled(true)
 
             if showStart {
                 Color.black.opacity(0.2)
                 Button {
                     Task { await session.startMatch(matchId: match.id) }
                 } label: {
-                    Image(systemName: "play.fill")
-                        .font(.title2)
-                        .foregroundStyle(.white)
-                        .frame(width: 44, height: 44)
-                        .background(Circle().fill(Color.green.opacity(0.92)))
+                    if session.isStartingMatch {
+                        ProgressView()
+                            .frame(width: 44, height: 44)
+                            .background(Circle().fill(Color.green.opacity(0.92)))
+                    } else {
+                        Image(systemName: "play.fill")
+                            .font(.title2)
+                            .foregroundStyle(.white)
+                            .frame(width: 44, height: 44)
+                            .background(Circle().fill(Color.green.opacity(0.92)))
+                    }
                 }
                 .buttonStyle(.plain)
+                .disabled(session.isStartingMatch)
             }
         }
         .listRowInsets(EdgeInsets(top: 4, leading: 8, bottom: 4, trailing: 8))

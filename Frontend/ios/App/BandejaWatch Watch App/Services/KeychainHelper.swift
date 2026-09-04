@@ -76,6 +76,15 @@ nonisolated final class KeychainHelper: @unchecked Sendable {
         SecItemDelete(query as CFDictionary)
     }
 
+    func deleteRefreshToken(accessGroup: String = KeychainHelper.accessGroup) {
+        let query: [CFString: Any] = [
+            kSecClass: kSecClassGenericPassword,
+            kSecAttrService: refreshService,
+            kSecAttrAccessGroup: accessGroup
+        ]
+        SecItemDelete(query as CFDictionary)
+    }
+
     // MARK: - Current User ID (decoded from the JWT payload — no extra Keychain item needed)
 
     func readUserId() -> String? {

@@ -1,5 +1,6 @@
 import { MonthCalendar, type MonthCalendarProps } from '@/components/MonthCalendar';
 import { SelectedDateWeatherCard } from '@/components/home/SelectedDateWeatherCard';
+import { SelectedDateAdMessages } from '@/components/home/SelectedDateAdMessages';
 
 export function CalendarSection({
   selectedDate,
@@ -17,7 +18,10 @@ export function CalendarSection({
         {...calendarProps}
       />
       {!collapsed ? (
-        <SelectedDateWeatherCard date={selectedDate} hint={selectedDateEmptyHint} />
+        <>
+          <SelectedDateWeatherCard date={selectedDate} hint={selectedDateEmptyHint} />
+          <SelectedDateAdMessages date={selectedDate} />
+        </>
       ) : null}
     </>
   );

@@ -66,6 +66,7 @@ public class AuthBridgePlugin: CAPPlugin, CAPBridgedPlugin {
         guard KeychainHelper.shared.writeRefreshToken(token: token, accessGroup: "group.com.funified.bandeja") else {
             return call.reject("Secure token storage unavailable")
         }
+        WatchSessionManager.shared.sendRefreshToken(token)
         call.resolve()
     }
 
@@ -82,6 +83,7 @@ public class AuthBridgePlugin: CAPPlugin, CAPBridgedPlugin {
         guard KeychainHelper.shared.deleteRefreshToken(accessGroup: "group.com.funified.bandeja") else {
             return call.reject("Secure token storage unavailable")
         }
+        WatchSessionManager.shared.deleteWatchRefreshToken()
         call.resolve()
     }
 

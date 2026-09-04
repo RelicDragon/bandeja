@@ -20,7 +20,7 @@ function projectPollUsers<
   },
 >(poll: T, sport: Parameters<typeof projectUserForSportContext>[1]): T {
   const project = (u: PollUser | null | undefined) =>
-    u ? projectUserForSportContext(u, sport) : u;
+    u ? projectUserForSportContext(u, sport, { keepSportProfiles: true }) : u;
   return {
     ...poll,
     options: poll.options.map((o) => ({

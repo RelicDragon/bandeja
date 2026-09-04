@@ -214,7 +214,7 @@ Context-sensitive header per screen. The **+ create menu** (Home header) opens:
 - **Offline gate:** `NoInternetScreen` blocks most routes offline
 - **Offline exceptions:** game details, live/broadcast, league fullscreen, user profiles, auth routes, **all chat routes** (IndexedDB cache + outbox)
 - **App version check:** `GET /api/app/version-check` via `useAppVersionCheck` — **blocking** (force) or **optional** update modal from Admin App Versions (min / force build per platform). E2E can stub via `window.__E2E_VERSION_CHECK__`
-- **Ads:** sponsor placements on Home, Find, Leaderboard
+- **Ads:** sponsor placements on Home, Find, Leaderboard; eligible campaigns can add a short date-ranged tag at the bottom of My/Find calendar cells
 - **Deep links:** games, chats, marketplace, profiles, teams, Telegram login, **`/next-game`** (widget / Siri / shortcuts)
 - **Desktop layouts:** split views for Home calendar, Find calendar, Chats inbox+thread, Game details+chat
 - **Home-screen widgets (native):** Next Game timeline synced via `widgetNextGamesSync` + App Group / Android widget bridge — see §39.3
@@ -1008,6 +1008,7 @@ Per-channel toggles (Telegram vs Push). Respects chat mute state.
 ## 25. Ads
 
 - Sponsor placements on Home, Find, Leaderboard
+- Optional Admin-configured calendar tag: required short label, selectable font color, inclusive start/end dates, and optional selected-day messages for every supported language; shown at the bottom of My/Find calendar cells only for viewers eligible for a deliverable campaign placement (dismissal/frequency-cap history does not hide the tag). Selecting a tagged date shows its viewer-localized message directly below the date/weather summary, falling back to the campaign default locale.
 - Campaign scheduling (activate/end every 10 min)
 - Analytics rollup (daily 03:00)
 - Event tracking API

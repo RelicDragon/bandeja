@@ -1416,6 +1416,22 @@ select:focus {
     font-weight: 600;
 }
 
+.ads-calendar-message-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 10px 14px;
+    margin: 10px 0 12px;
+}
+
+.ads-calendar-message-grid .form-group {
+    margin-bottom: 0;
+}
+
+.ads-calendar-message-grid textarea {
+    min-height: 64px;
+    resize: vertical;
+}
+
 .ads-campaign-form {
     max-width: 960px;
 }

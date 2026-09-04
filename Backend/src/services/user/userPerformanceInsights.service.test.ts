@@ -58,9 +58,14 @@ const configuredOutcome = (input: {
   })), 'win', 'zero match-win delta counts as a streak win');
   assert.equal(resolveStreakResult(configuredOutcome({
     winnerOfGame: WinnerOfGame.BY_MATCHES_WON,
+    wins: 0,
+    losses: 0,
+  })), 'win', '0-0 match record is a streak win, not “must win at least one match”');
+  assert.equal(resolveStreakResult(configuredOutcome({
+    winnerOfGame: WinnerOfGame.BY_MATCHES_WON,
     wins: 1,
     losses: 2,
-  })), 'loss', 'negative match-win delta counts as a streak loss');
+  })), 'loss', 'negative match-win delta counts as a streak loss even with one match won');
   assert.equal(resolveStreakResult(configuredOutcome({
     winnerOfGame: WinnerOfGame.BY_POINTS,
     position: 4,

@@ -15,6 +15,7 @@ import { BugPriorityBadge } from '@/components/chat/BugPriorityBadge';
 import { BugStarRating } from '@/components/bugs/BugStarRating';
 import { isReviewBugType, isValidReviewStars } from '@/components/bugs/reviewStars';
 import { useAuthStore } from '@/store/authStore';
+import { useViewerLevelSport } from '@/hooks/useViewerLevelSport';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -57,6 +58,7 @@ interface GroupChannelCardProps {
 const GroupChannelCardInner = ({ groupChannel, listPresenceBatched = false, unreadCount = 0, onClick, isSelected, draft, listOutbox, onOutboxRetry, onOutboxDismiss, displayTitle, displaySubtitle, sellerGroupedByItem, isPinned = false, onPinToggle, canPin = true, isPinning = false, isMuted = false, onMuteToggle, isTogglingMute = false }: GroupChannelCardProps) => {
   const { t } = useTranslation();
   const { user } = useAuthStore();
+  const viewerLevelSport = useViewerLevelSport();
   const { translateCity } = useTranslatedGeo();
   const displaySettings = useMemo(() => resolveDisplaySettings(user), [user]);
   const displayName = useMemo(() => {
@@ -82,7 +84,7 @@ const GroupChannelCardInner = ({ groupChannel, listPresenceBatched = false, unre
       {!groupChannel.bugId && (
         <div className="relative flex-shrink-0">
           {groupChannel.marketItem && sellerGroupedByItem && groupChannel.buyer ? (
-            <PlayerAvatar player={groupChannel.buyer} subscribePresence={!listPresenceBatched} extrasmall fullHideName showName={false} asDiv />
+            <PlayerAvatar player={groupChannel.buyer} subscribePresence={!listPresenceBatched} extrasmall fullHideName showName={false} asDiv levelSport={viewerLevelSport} />
           ) : groupChannel.marketItem ? (
             groupChannel.marketItem.mediaUrls?.length ? (
               <img
@@ -190,7 +192,7 @@ const GroupChannelCardInner = ({ groupChannel, listPresenceBatched = false, unre
             </h3>
             {groupChannel.bug.sender && (
               <div className="flex items-center gap-1.5 mt-0.5">
-                <PlayerAvatar player={groupChannel.bug.sender} subscribePresence={!listPresenceBatched} extrasmall fullHideName showName={false} asDiv />
+                <PlayerAvatar player={groupChannel.bug.sender} subscribePresence={!listPresenceBatched} extrasmall fullHideName showName={false} asDiv levelSport={viewerLevelSport} />
                 <span className="text-xs text-gray-500 dark:text-gray-400 truncate">
                   {groupChannel.bug.sender.firstName} {groupChannel.bug.sender.lastName}
                 </span>

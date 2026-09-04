@@ -86,6 +86,7 @@ final class BandejaWatchSharedTests: XCTestCase {
     func testWatchAuthSyncPayloadEncodeDecode() {
         let payload = WatchAuthSyncPayload(
             token: "jwt-token",
+            refreshToken: "refresh-token",
             language: "es",
             weekStart: "monday",
             defaultCurrency: "EUR",
@@ -95,8 +96,17 @@ final class BandejaWatchSharedTests: XCTestCase {
         let encoded = payload.encode()
         let decoded = WatchAuthSyncPayload(decode: encoded)
         XCTAssertEqual(decoded?.token, "jwt-token")
+        XCTAssertEqual(decoded?.refreshToken, "refresh-token")
         XCTAssertEqual(decoded?.language, "es")
         XCTAssertEqual(decoded?.defaultCurrency, "EUR")
+    }
+
+    func testWatchAuthSyncPayloadRefreshOnlyDecode() {
+        let payload = WatchAuthSyncPayload(refreshToken: "refresh-token")
+        let encoded = payload.encode()
+        let decoded = WatchAuthSyncPayload(decode: encoded)
+        XCTAssertEqual(decoded?.refreshToken, "refresh-token")
+        XCTAssertNil(decoded?.token)
     }
 
     func testWatchAuthSyncLogoutPayload() {

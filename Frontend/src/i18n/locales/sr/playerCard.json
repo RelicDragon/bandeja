@@ -96,7 +96,7 @@
       "deltaTitle": "Razlika u lopticama",
       "deltaDescription": "Od osvojenih loptica oduzmemo izgubljene. Nula ili više = pobeda, manje od nule = poraz.",
       "matchesTitle": "Osvojeni mečevi",
-      "matchesDescription": "Od osvojenih mečeva oduzmemo izgubljene. Nula ili više = pobeda, manje od nule = poraz. Plej-of finale radi isto.",
+      "matchesDescription": "Od osvojenih mečeva oduzmemo izgubljene. Nula ili više = pobeda, manje od nule = poraz. Jedan dobijen meč i dalje je poraz ako si izgubio više. Plej-of finale radi isto.",
       "leaderboardTitle": "Poeni ili osvojene loptice",
       "leaderboardDescription": "Plasman u gornjoj polovini tabele = pobeda. Ako je broj igrača neparan, računa se i srednje mesto; ostala mesta su poraz.",
       "example": "Odličan rezultat! 4. mesto od 32 igrača računa se kao pobeda."

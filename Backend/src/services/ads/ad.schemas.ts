@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { AdCampaignStatus, AdClickAction, AdEventType, AdPlacementKey, Sport } from '@prisma/client';
+import { AD_CLICK_SUPPORTED_LOCALES } from './ad.clickUrl.util';
 
 export const DEFAULT_FREQUENCY_CAP = { maxImpressions: 3, windowDays: 7 } as const;
 
@@ -62,7 +63,23 @@ export const frequencyCapSchema = z
 
 export const adPlacementKeySchema = z.nativeEnum(AdPlacementKey);
 
-export const adCampaignWriteSchema = z.object({
+const supportedCalendarMessageLocales = new Set<string>(AD_CLICK_SUPPORTED_LOCALES);
+
+export const adCalendarTagMessagesSchema = z
+  .record(z.string(), z.string().trim().min(1).max(500))
+  .superRefine((messages, ctx) => {
+    for (const locale of Object.keys(messages)) {
+      if (!supportedCalendarMessageLocales.has(locale)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Unsupported calendar tag message locale: ${locale}`,
+          path: [locale],
+        });
+      }
+    }
+  });
+
+export const adCampaignWriteBaseSchema = z.object({
   sponsorId: z.string().min(1),
   name: z.string().min(1).max(200),
   status: z.nativeEnum(AdCampaignStatus).optional(),
@@ -81,12 +98,94 @@ export const adCampaignWriteSchema = z.object({
   appendAdTokenToClickUrl: z.boolean().optional(),
   disclosureLabel: z.string().max(100).nullable().optional(),
   hideDisclosure: z.boolean().optional(),
+  calendarTagEnabled: z.boolean().optional(),
+  calendarTagLabel: z.string().max(20).nullable().optional(),
+  calendarTagColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/).nullable().optional(),
+  calendarTagMessages: adCalendarTagMessagesSchema.optional(),
+  calendarTagStartsAt: z.coerce.date().nullable().optional(),
+  calendarTagEndsAt: z.coerce.date().nullable().optional(),
   targeting: adTargetingSchema,
   testUserIds: z.array(z.string()).optional(),
   placements: z.array(adPlacementKeySchema).min(1),
 });
 
-export const adCampaignPatchSchema = adCampaignWriteSchema.partial().omit({ sponsorId: true });
+type AdCalendarTagConfiguration = {
+  calendarTagEnabled?: boolean;
+  calendarTagLabel?: string | null;
+  calendarTagColor?: string | null;
+  calendarTagStartsAt?: Date | null;
+  calendarTagEndsAt?: Date | null;
+};
+
+function validateEnabledCalendarTag(
+  data: AdCalendarTagConfiguration,
+  ctx: z.RefinementCtx,
+): void {
+  if (!data.calendarTagEnabled) return;
+
+  if (!(data.calendarTagLabel ?? '').trim()) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Calendar tag label is required when calendar tag is enabled',
+      path: ['calendarTagLabel'],
+    });
+  }
+  if (!data.calendarTagStartsAt) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Calendar tag start date is required when calendar tag is enabled',
+      path: ['calendarTagStartsAt'],
+    });
+  }
+  if (!data.calendarTagEndsAt) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Calendar tag end date is required when calendar tag is enabled',
+      path: ['calendarTagEndsAt'],
+    });
+  }
+  if (
+    data.calendarTagStartsAt &&
+    data.calendarTagEndsAt &&
+    data.calendarTagEndsAt < data.calendarTagStartsAt
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Calendar tag end date must be on or after start date',
+      path: ['calendarTagEndsAt'],
+    });
+  }
+}
+
+export const adCampaignWriteSchema = adCampaignWriteBaseSchema.superRefine(
+  validateEnabledCalendarTag,
+);
+
+export const adCampaignPatchSchema = adCampaignWriteBaseSchema.partial().omit({ sponsorId: true }).superRefine((data, ctx) => {
+  const calendarTagKeys = [
+    'calendarTagEnabled',
+    'calendarTagLabel',
+    'calendarTagColor',
+    'calendarTagMessages',
+    'calendarTagStartsAt',
+    'calendarTagEndsAt',
+  ] as const;
+  const touchesCalendarTag = calendarTagKeys.some((key) =>
+    Object.prototype.hasOwnProperty.call(data, key),
+  );
+  if (!touchesCalendarTag) return;
+
+  if (data.calendarTagEnabled === undefined) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Calendar tag updates must include the complete configuration',
+      path: ['calendarTagEnabled'],
+    });
+    return;
+  }
+
+  validateEnabledCalendarTag(data, ctx);
+});
 
 export const adSponsorWriteSchema = z.object({
   name: z.string().min(1).max(200),

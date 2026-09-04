@@ -40,6 +40,9 @@ final class WorkoutManager: NSObject, HKWorkoutSessionDelegate, HKLiveWorkoutBui
     private var builder: HKLiveWorkoutBuilder?
     private(set) var activeGameId: String?
     private var workoutStartDate: Date?
+    /// Guards against concurrent `startIfNeeded` calls (e.g. double-tap on a match
+    /// row) creating two HKWorkoutSessions and corrupting session/builder state.
+    private var isStartingWorkout = false
 
     private static let isoEncoder: ISO8601DateFormatter = {
         let f = ISO8601DateFormatter()
@@ -86,6 +89,7 @@ final class WorkoutManager: NSObject, HKWorkoutSessionDelegate, HKLiveWorkoutBui
 
     func startIfNeeded(gameId: String, isIndoor: Bool) async {
         guard HKHealthStore.isHealthDataAvailable() else { return }
+        guard !isStartingWorkout else { return }
         if isActive, activeGameId == gameId {
             if let s = session { sessionState = s.state }
             if let b = builder { elapsedSeconds = b.elapsedTime }
@@ -94,6 +98,8 @@ final class WorkoutManager: NSObject, HKWorkoutSessionDelegate, HKLiveWorkoutBui
         if isActive, activeGameId != gameId {
             await discardWorkout()
         }
+        isStartingWorkout = true
+        defer { isStartingWorkout = false }
 
         do {
             try await HealthKitPermissions.requestAuthorization(store: healthStore)

@@ -10,6 +10,7 @@ final class WatchSessionManager: NSObject {
 
     private let session = WCSession.default
     private var lastToken: String?
+    private var lastRefreshToken: String?
 
     private override init() {
         super.init()
@@ -24,9 +25,27 @@ final class WatchSessionManager: NSObject {
         flushSyncPayloadIfPossible()
     }
 
+    /// Forwards the long-lived refresh credential so the watch can mint fresh
+    /// access tokens on its own (e.g. mid-game, while the iPhone app is suspended).
+    func sendRefreshToken(_ token: String) {
+        lastRefreshToken = token
+        flushSyncPayloadIfPossible()
+    }
+
+    func deleteWatchRefreshToken() {
+        lastRefreshToken = nil
+        KeychainHelper.shared.deleteRefreshToken(accessGroup: AppGroupStorage.suiteName)
+        flushSyncPayloadIfPossible()
+    }
+
     func resyncTokenFromKeychainToWatch() {
-        guard let token = KeychainHelper.shared.readToken(accessGroup: AppGroupStorage.suiteName) else { return }
-        sendToken(token)
+        if let token = KeychainHelper.shared.readToken(accessGroup: AppGroupStorage.suiteName) {
+            lastToken = token
+        }
+        if let refresh = KeychainHelper.shared.readRefreshToken(accessGroup: AppGroupStorage.suiteName) {
+            lastRefreshToken = refresh
+        }
+        flushSyncPayloadIfPossible()
     }
 
     func setWatchPreferences(
@@ -54,6 +73,7 @@ final class WatchSessionManager: NSObject {
 
     func sendLogout() {
         lastToken = nil
+        lastRefreshToken = nil
         UserDefaults.standard.removeObject(forKey: Self.prefsStorageKey)
         guard session.activationState == .activated else { return }
         guard shouldAttemptWatchSync else { return }
@@ -76,10 +96,16 @@ final class WatchSessionManager: NSObject {
         return KeychainHelper.shared.readToken(accessGroup: AppGroupStorage.suiteName)
     }
 
+    private func currentRefreshTokenForSync() -> String? {
+        if let t = lastRefreshToken, !t.isEmpty { return t }
+        return KeychainHelper.shared.readRefreshToken(accessGroup: AppGroupStorage.suiteName)
+    }
+
     private func buildSyncDictionary() -> [String: Any] {
         let fields = UserDefaults.standard.dictionary(forKey: Self.prefsStorageKey) ?? [:]
         let payload = WatchAuthSyncPayload(
             token: currentTokenForSync(),
+            refreshToken: currentRefreshTokenForSync(),
             language: fields["language"] as? String,
             weekStart: fields["weekStart"] as? String,
             defaultCurrency: fields["defaultCurrency"] as? String,
@@ -94,7 +120,7 @@ final class WatchSessionManager: NSObject {
         guard session.activationState == .activated else { return }
         guard shouldAttemptWatchSync else { return }
         let payload = buildSyncDictionary()
-        if payload["token"] == nil {
+        if payload["token"] == nil, payload["refreshToken"] == nil {
             let hasPrefs = payload["language"] != nil || payload["weekStart"] != nil
                 || payload["defaultCurrency"] != nil || payload["timeFormat"] != nil
             if !hasPrefs { return }

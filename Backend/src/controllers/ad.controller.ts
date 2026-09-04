@@ -107,6 +107,19 @@ export const getAdPlacements = asyncHandler(async (req: AuthRequest, res: Respon
   res.json({ success: true, data: { placements } });
 });
 
+export const getAdCalendarTags = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const context = parseContext(req);
+
+  const tags = await AdDeliveryService.resolveCalendarTags(
+    req.userId!,
+    context,
+    resolveUserLocale(req, context.locale),
+    req.user?.primarySport,
+  );
+
+  res.json({ success: true, data: { tags } });
+});
+
 export const postAdEvents = asyncHandler(async (req: AuthRequest, res: Response) => {
   const result = await AdEventService.recordBatch(req.userId, req.body, {
     cityId: req.user?.currentCityId ?? undefined,

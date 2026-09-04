@@ -8,6 +8,7 @@ import { marketplaceApi } from '@/api/marketplace';
 import { currencyCacheService } from '@/services/currencyCache.service';
 import { formatConvertedPrice, formatPrice } from '@/utils/currency';
 import { useAuthStore } from '@/store/authStore';
+import { useViewerLevelSport } from '@/hooks/useViewerLevelSport';
 import { PlayerAvatar } from '@/components';
 import { ShareModal } from '@/components/ShareModal';
 import { ConfirmRemoveMarketItemModal } from '@/components/marketplace/ConfirmRemoveMarketItemModal';
@@ -40,6 +41,7 @@ export const MarketItemContextPanel = ({
   const { t } = useTranslation();
   const navigate = useNavigate();
   const currentUser = useAuthStore((state) => state.user);
+  const viewerLevelSport = useViewerLevelSport();
   const [isRemoving, setIsRemoving] = useState(false);
   const [showRemoveModal, setShowRemoveModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
@@ -155,7 +157,7 @@ export const MarketItemContextPanel = ({
       <div className="flex items-center justify-between gap-2 flex-wrap">
         {marketItem.seller && (
           <div className="flex items-center gap-2">
-            <PlayerAvatar player={marketItem.seller} extrasmall fullHideName />
+            <PlayerAvatar player={marketItem.seller} extrasmall fullHideName levelSport={viewerLevelSport} />
             <span className="text-sm text-gray-600 dark:text-gray-400">
               {marketItem.seller.firstName} {marketItem.seller.lastName}
             </span>

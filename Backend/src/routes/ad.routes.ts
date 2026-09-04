@@ -7,6 +7,7 @@ const router = Router();
 router.use(authenticate);
 
 router.get('/placements', adController.getAdPlacements);
+router.get('/calendar-tags', adController.getAdCalendarTags);
 router.post('/events', adController.postAdEvents);
 
 export default router;

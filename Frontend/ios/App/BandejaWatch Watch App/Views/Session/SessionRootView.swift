@@ -53,6 +53,13 @@ struct SessionRootView: View {
                 }
             }
         }
+        .onChange(of: WatchSessionManager.shared.tokenDidArrive) { _, _ in
+            // A fresh credential just landed from the phone (e.g. after an expiry
+            // drove the UI into a logged-out/error state): retry session recovery.
+            Task {
+                await session.recoverIfNeeded()
+            }
+        }
     }
 
     private func handleDeepLink(gameId: String) async {

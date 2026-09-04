@@ -298,12 +298,20 @@ export function resolveUserSportSnapshot(user: UserWithSportProfiles, sport: Spo
   return { ...EMPTY_SPORT_SNAPSHOT };
 }
 
+/**
+ * Chat surfaces keep per-sport profiles in the payload so clients can badge
+ * any viewer's sport (gray "-" when the user lacks it) instead of only the
+ * subject's primary-sport level.
+ */
+export type SportUserProjectionOptions = { keepSportProfiles?: boolean };
+
 /** Project `BasicUser` fields using the user's own primary sport (DM / non-game surfaces). */
 export function projectUserByPrimarySport<T extends UserWithSportProfiles & { primarySport?: Sport | string | null }>(
   user: T,
+  opts?: SportUserProjectionOptions,
 ): ProjectedUser<T> {
   const sport = resolveSport(user.primarySport ?? Sport.PADEL);
-  return projectUserForSportContext(user, sport);
+  return projectUserForSportContext(user, sport, opts);
 }
 
 export async function resolveChatMessageSport(
@@ -404,6 +412,7 @@ export async function ensureSportInEnabled(
 export function projectUserForSportContext<T extends UserWithSportProfiles | null | undefined>(
   user: T,
   sport: Sport,
+  opts?: SportUserProjectionOptions,
 ): ProjectedUser<T> {
   if (!user) return user as ProjectedUser<T>;
   const userForSnapshot =
@@ -412,7 +421,7 @@ export function projectUserForSportContext<T extends UserWithSportProfiles | nul
       : ({ ...(user as UserWithSportProfiles), sportProfiles: [] } as UserWithSportProfiles);
   const snapshot = resolveUserSportSnapshot(userForSnapshot, sport);
   const confirmation = resolveSportLevelConfirmation(userForSnapshot, sport);
-  return overlaySportProjection(user as UserWithSportProfiles & Record<string, unknown>, {
+  const projected = overlaySportProjection(user as UserWithSportProfiles & Record<string, unknown>, {
     level: snapshot.level,
     reliability: snapshot.reliability,
     gamesPlayed: snapshot.gamesPlayed,
@@ -422,6 +431,13 @@ export function projectUserForSportContext<T extends UserWithSportProfiles | nul
     approvedById: confirmation.approvedById,
     approvedWhen: confirmation.approvedWhen,
   }) as ProjectedUser<T>;
+  if (opts?.keepSportProfiles && user) {
+    return {
+      ...projected,
+      sportProfiles: userForSnapshot.sportProfiles,
+    } as ProjectedUser<T>;
+  }
+  return projected;
 }
 
 export async function loadProfileUser(userId: string) {

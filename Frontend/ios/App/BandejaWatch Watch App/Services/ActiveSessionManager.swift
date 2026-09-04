@@ -23,6 +23,10 @@ final class ActiveSessionManager {
 
     private(set) var phase: Phase = .idle
     private(set) var workoutStartedForGame = false
+    /// True while `enterScoringSession` is loading (drives button disabled state; blocks re-entry).
+    private(set) var isEnteringScoring = false
+    /// True while `startMatch` is running (drives button disabled state; blocks double-tap).
+    private(set) var isStartingMatch = false
     var scoringViewModel: ScoringViewModel?
     var finishMatchSignal = 0
 
@@ -52,6 +56,9 @@ final class ActiveSessionManager {
     }
 
     func enterScoringSession(gameId: String) async {
+        guard !isEnteringScoring else { return }
+        isEnteringScoring = true
+        defer { isEnteringScoring = false }
         scoringViewModel?.stopPolling()
         phase = .gameActive(gameId: gameId)
         let svm = ScoringViewModel(gameId: gameId)
@@ -61,7 +68,10 @@ final class ActiveSessionManager {
     }
 
     func startMatch(matchId: String) async {
+        guard !isStartingMatch else { return }
         guard case .gameActive(let gid) = phase else { return }
+        isStartingMatch = true
+        defer { isStartingMatch = false }
         scoringViewModel?.stopPolling()
         phase = .matchActive(gameId: gid, matchId: matchId)
         await ensureWorkoutRunning(gameId: gid)
@@ -127,6 +137,17 @@ final class ActiveSessionManager {
         await WorkoutManager.shared.reclaimOrDiscardOrphan()
         let gid = activeGameId
         await syncMySessionWithRetries(gameId: gid, activeMatchId: nil)
+        scoringViewModel?.stopPolling()
+        scoringViewModel = nil
+        workoutStartedForGame = false
+        phase = .idle
+        clearLocalPersistence()
+    }
+
+    /// Phone logout arrived: drop the in-memory session and its persisted footprint
+    /// without touching HealthKit (no active workout belongs to a logged-out user).
+    /// Network sync is skipped — there is no credential to sync with.
+    func handleLogout() {
         scoringViewModel?.stopPolling()
         scoringViewModel = nil
         workoutStartedForGame = false
@@ -271,8 +292,13 @@ final class ActiveSessionManager {
         if let api = error as? APIError {
             switch api {
             case .httpError(let code):
-                return code == 408 || code == 429 || (500...599).contains(code)
-            case .decodingError, .noToken, .liveScoringRevisionMismatch:
+                // 401/noToken mean the access token expired and the phone has not
+                // re-synced yet. Keep the persisted session so recovery retries once
+                // a fresh token arrives instead of bouncing back to the game list.
+                return code == 401 || code == 408 || code == 429 || (500...599).contains(code)
+            case .noToken:
+                return true
+            case .decodingError, .liveScoringRevisionMismatch:
                 return false
             }
         }

@@ -1,6 +1,6 @@
 import { Sport } from '@prisma/client';
 import { projectUserByPrimarySport, projectUserForSportContext } from './userSportProfile.service';
-import type { SportProjectedUserFields } from './userSportProfile.service';
+import type { SportProjectedUserFields, SportUserProjectionOptions } from './userSportProfile.service';
 
 type UserWithProfiles = Parameters<typeof projectUserByPrimarySport>[0];
 
@@ -10,9 +10,10 @@ type ProjectedUser<T> = T extends null | undefined
 
 export function projectEmbeddedUserByPrimarySport<T extends UserWithProfiles | null | undefined>(
   user: T,
+  opts?: SportUserProjectionOptions,
 ): ProjectedUser<T> {
   if (!user) return user as ProjectedUser<T>;
-  return projectUserByPrimarySport(user);
+  return projectUserByPrimarySport(user, opts);
 }
 
 export function projectBetEmbeddedUsers<
@@ -71,14 +72,14 @@ export function projectMarketItemEmbeddedUsers<
     buyer?: UserWithProfiles | null;
     participants?: Array<{ user: UserWithProfiles }> | null;
   },
->(item: T): T {
+>(item: T, opts?: SportUserProjectionOptions): T {
   return {
     ...item,
-    seller: projectEmbeddedUserByPrimarySport(item.seller),
-    buyer: projectEmbeddedUserByPrimarySport(item.buyer),
+    seller: projectEmbeddedUserByPrimarySport(item.seller, opts),
+    buyer: projectEmbeddedUserByPrimarySport(item.buyer, opts),
     participants: item.participants?.map((p) => ({
       ...p,
-      user: projectEmbeddedUserByPrimarySport(p.user),
+      user: projectEmbeddedUserByPrimarySport(p.user, opts),
     })),
   };
 }
@@ -171,9 +172,13 @@ type GroupChannelWithEmbeddedUsers = {
   [key: string]: unknown;
 };
 
-/** Legacy clients read top-level `user.level` on bug/market/group channel embeds. */
+/**
+ * Legacy clients read top-level `user.level` on bug/market/group channel embeds.
+ * Chat clients badge the viewer's sport, so per-sport profiles stay attached.
+ */
 export function projectGroupChannelEmbeddedUsers<T extends Record<string, unknown>>(channel: T): T {
-  const project = projectEmbeddedUserByPrimarySport;
+  const project = (user: UserWithProfiles | null | undefined) =>
+    projectEmbeddedUserByPrimarySport(user, { keepSportProfiles: true });
   const bug = channel.bug as GroupChannelWithEmbeddedUsers['bug'];
   const marketItem = channel.marketItem as GroupChannelWithEmbeddedUsers['marketItem'];
   const lastMessage = channel.lastMessage as GroupChannelWithEmbeddedUsers['lastMessage'];

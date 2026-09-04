@@ -33,6 +33,23 @@ export type AdPlacementsResponse = {
 
 export type AdSportsByPlacement = Partial<Record<AdPlacementKey, Sport>>;
 
+export type AdCalendarTag = {
+  campaignId: string;
+  label: string;
+  /** Six-digit hex font color (`#RRGGBB`). */
+  color: string;
+  /** Message localized by the backend for the current viewer. */
+  message: string | null;
+  /** Inclusive date-only boundary (`YYYY-MM-DD`). */
+  startsAt: string;
+  /** Inclusive date-only boundary (`YYYY-MM-DD`). */
+  endsAt: string;
+};
+
+export type AdCalendarTagsResponse = {
+  tags: AdCalendarTag[];
+};
+
 export type AdPlacementsRequestContext = {
   cityId?: string;
   sportsByPlacement?: AdSportsByPlacement;
@@ -94,5 +111,26 @@ export const adsApi = {
   postEvents: async (payload: AdEventsRequest): Promise<void> => {
     if (payload.events.length === 0) return;
     await api.post('/ads/events', payload);
+  },
+
+  getCalendarTags: async (
+    context?: AdPlacementsRequestContext,
+  ): Promise<AdCalendarTagsResponse> => {
+    const response = await api.get<ApiResponse<AdCalendarTagsResponse>>('/ads/calendar-tags', {
+      params: {
+        ...(context?.cityId ? { cityId: context.cityId } : {}),
+        ...(context?.cityId || context?.sportsByPlacement || context?.locale || context?.theme
+          ? {
+              context: JSON.stringify({
+                ...(context.cityId ? { cityId: context.cityId } : {}),
+                ...(context.sportsByPlacement ? { sportsByPlacement: context.sportsByPlacement } : {}),
+                ...(context.locale ? { locale: context.locale } : {}),
+                ...(context.theme ? { theme: context.theme } : {}),
+              }),
+            }
+          : {}),
+      },
+    });
+    return response.data.data;
   },
 };

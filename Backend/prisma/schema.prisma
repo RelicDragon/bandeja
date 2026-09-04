@@ -3433,6 +3433,12 @@ model AdCampaign {
   appendAdTokenToClickUrl  Boolean                @default(false)
   disclosureLabel          String?
   hideDisclosure           Boolean                @default(false)
+  calendarTagEnabled       Boolean                @default(false)
+  calendarTagLabel         String?
+  calendarTagColor         String?                @db.VarChar(7)
+  calendarTagMessages      Json?
+  calendarTagStartsAt      DateTime?
+  calendarTagEndsAt        DateTime?
   targeting                Json
   testUserIds              String[]               @default([])
   createdAt                DateTime               @default(now())

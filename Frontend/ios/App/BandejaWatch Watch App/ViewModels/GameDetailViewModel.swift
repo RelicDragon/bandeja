@@ -14,14 +14,16 @@ final class GameDetailViewModel {
     var isStartingResultsEntry = false
 
     private let gameId: String
-    private let currentUserId: String?
+    /// Read live from the Keychain on every access: the token can arrive (or rotate)
+    /// via WatchConnectivity after this VM was created, and caching it at init
+    /// would permanently hide actions the user is entitled to.
+    private var currentUserId: String? { KeychainHelper.shared.readUserId() }
     private let api = APIClient()
     @ObservationIgnored
     nonisolated(unsafe) private var pollingTask: Task<Void, Never>?
 
     init(gameId: String) {
         self.gameId = gameId
-        self.currentUserId = KeychainHelper.shared.readUserId()
     }
 
     deinit {

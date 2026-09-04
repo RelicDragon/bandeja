@@ -96,7 +96,7 @@
       "deltaTitle": "球分差",
       "deltaDescription": "得球数减去失球数。结果为 0 或以上算胜，低于 0 算负。",
       "matchesTitle": "胜场数",
-      "matchesDescription": "胜场数减去负场数。结果为 0 或以上算胜，低于 0 算负。季后赛决赛也一样。",
+      "matchesDescription": "胜场数减去负场数。结果为 0 或以上算胜，低于 0 算负。只赢一场、输得更多仍算负。季后赛决赛也一样。",
       "leaderboardTitle": "积分或得球数",
       "leaderboardDescription": "进入排行榜上半区就算胜。人数为奇数时，中间名次也算；其余名次算负。",
       "example": "表现不错！32 人中第 4 名也算胜。"

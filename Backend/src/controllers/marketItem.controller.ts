@@ -317,7 +317,7 @@ export const getBuyerChat = asyncHandler(async (req: AuthRequest, res: Response)
 
   res.status(200).json({
     success: true,
-    data: chat ? projectMarketItemEmbeddedUsers(chat) : null,
+    data: chat ? projectMarketItemEmbeddedUsers(chat, { keepSportProfiles: true }) : null,
   });
 });
 

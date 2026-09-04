@@ -222,6 +222,16 @@ export function useRegisterAdSportContext(placement: AdPlacementKey, sport: Spor
   }, [placement, sport, setSportForPlacement]);
 }
 
+export function useEffectiveAdSportsByPlacement(): AdSportsByPlacement {
+  const user = useAuthStore((s) => s.user);
+  const sportsByPlacement = useAdPlacementsStore((s) => s.sportsByPlacement);
+  const primarySport = getViewerPrimarySport(user);
+  return useMemo(
+    () => buildEffectiveSportsByPlacement(sportsByPlacement, primarySport),
+    [sportsByPlacement, primarySport],
+  );
+}
+
 export function useAdPlacementEventMeta(placement: AdPlacementKey) {
   const { i18n } = useTranslation();
   const cityId = useAdPlacementsStore((s) => s.cityId);

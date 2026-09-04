@@ -165,6 +165,7 @@ public struct ScoreUpdatedPayload: Sendable {
 
 public struct WatchAuthSyncPayload: Sendable {
     public let token: String?
+    public let refreshToken: String?
     public let isLogout: Bool
     public let language: String?
     public let weekStart: String?
@@ -179,6 +180,7 @@ public struct WatchAuthSyncPayload: Sendable {
 
     public init(
         token: String? = nil,
+        refreshToken: String? = nil,
         isLogout: Bool = false,
         language: String? = nil,
         weekStart: String? = nil,
@@ -187,6 +189,7 @@ public struct WatchAuthSyncPayload: Sendable {
         prefsVersion: Double? = nil
     ) {
         self.token = token
+        self.refreshToken = refreshToken
         self.isLogout = isLogout
         self.language = language
         self.weekStart = weekStart
@@ -198,6 +201,7 @@ public struct WatchAuthSyncPayload: Sendable {
     public init?(decode dictionary: [String: Any]) {
         isLogout = dictionary["event"] as? String == WatchConnectivityEvent.logout
         token = dictionary["token"] as? String
+        refreshToken = dictionary["refreshToken"] as? String
         language = dictionary["language"] as? String
         weekStart = dictionary["weekStart"] as? String
         defaultCurrency = dictionary["defaultCurrency"] as? String
@@ -209,7 +213,7 @@ public struct WatchAuthSyncPayload: Sendable {
         } else {
             prefsVersion = nil
         }
-        if !isLogout && token == nil && !hasPreferences {
+        if !isLogout && token == nil && refreshToken == nil && !hasPreferences {
             return nil
         }
     }
@@ -221,6 +225,9 @@ public struct WatchAuthSyncPayload: Sendable {
         var payload: [String: Any] = [:]
         if let token, !token.isEmpty {
             payload["token"] = token
+        }
+        if let refreshToken, !refreshToken.isEmpty {
+            payload["refreshToken"] = refreshToken
         }
         if let language, !language.isEmpty { payload["language"] = language }
         if let weekStart, !weekStart.isEmpty { payload["weekStart"] = weekStart }

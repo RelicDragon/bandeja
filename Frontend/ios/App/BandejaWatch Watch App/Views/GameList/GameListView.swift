@@ -4,6 +4,7 @@ struct GameListView: View {
     @Environment(GameListViewModel.self) private var vm
     @Environment(Router.self) private var router
     @Environment(WatchPreferencesStore.self) private var prefs
+    @Environment(ActiveSessionManager.self) private var session
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
@@ -33,6 +34,7 @@ struct GameListView: View {
             Task { await vm.loadGames() }
         }
         .onChange(of: WatchSessionManager.shared.logoutDidArrive) { _, _ in
+            session.handleLogout()
             vm.handleLogout()
         }
         .onChange(of: prefs.prefsRevision) { _, _ in

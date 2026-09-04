@@ -92,7 +92,7 @@
       "deltaTitle": "Diferencia de bolas",
       "deltaDescription": "Resta las bolas perdidas de las ganadas. Cero o más = victoria; menos de cero = derrota.",
       "matchesTitle": "Partidos ganados",
-      "matchesDescription": "Resta los partidos perdidos de los ganados. Cero o más = victoria; menos de cero = derrota. Las finales de playoff funcionan igual.",
+      "matchesDescription": "Resta los partidos perdidos de los ganados. Cero o más = victoria; menos de cero = derrota. Ganar un partido sigue siendo derrota si perdiste más. Las finales de playoff funcionan igual.",
       "leaderboardTitle": "Puntos o bolas ganadas",
       "leaderboardDescription": "Acabar en la mitad superior = victoria. Si hay un número impar de jugadores, la posición central también cuenta; el resto son derrotas.",
       "example": "¡Buen resultado! Quedar 4.º de 32 cuenta como victoria."

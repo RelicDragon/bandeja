@@ -701,6 +701,39 @@
                                     </div>
                                 </fieldset>
                                 <fieldset class="ads-fieldset">
+                                    <legend>Calendar tag</legend>
+                                    <label class="ads-check-item">
+                                        <input type="checkbox" id="adCampaignCalendarTagEnabled" onchange="syncAdsCalendarTagFields()">
+                                        Show calendar tag
+                                    </label>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="adCampaignCalendarTagLabel">Tag title (max 20 chars, e.g. CAMP)</label>
+                                            <input type="text" id="adCampaignCalendarTagLabel" maxlength="20" placeholder="CAMP">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="adCampaignCalendarTagColor">Font color</label>
+                                            <input type="color" id="adCampaignCalendarTagColor" value="#7C3AED">
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="adCampaignCalendarTagStartsAt">Tag start date</label>
+                                            <input type="date" id="adCampaignCalendarTagStartsAt">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="adCampaignCalendarTagEndsAt">Tag end date</label>
+                                            <input type="date" id="adCampaignCalendarTagEndsAt">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Selected-day message translations</label>
+                                        <span class="text-muted">Optional. The viewer’s language is used first, then the campaign default language. Maximum 500 characters per language.</span>
+                                    </div>
+                                    <div id="adCampaignCalendarTagMessages" class="ads-calendar-message-grid"></div>
+                                    <span class="text-muted">Shown in the selected font color as ultra-small text at the bottom of each calendar cell within the date range for users eligible for this campaign — even if they dismissed the ad.</span>
+                                </fieldset>
+                                <fieldset class="ads-fieldset">
                                     <legend>Dismiss &amp; disclosure</legend>
                                     <label class="ads-check-item">
                                         <input type="checkbox" id="adCampaignDismissible" checked>
@@ -1716,4 +1749,3 @@
     </script>
 </body>
 </html>
-

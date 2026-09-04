@@ -1,4 +1,5 @@
 import { PlayerAvatar } from '@/components/PlayerAvatar';
+import { useViewerLevelSport } from '@/hooks/useViewerLevelSport';
 import { BasicUser } from '@/types';
 
 interface CityUserCardProps {
@@ -7,6 +8,7 @@ interface CityUserCardProps {
 }
 
 export const CityUserCard = ({ user, onClick }: CityUserCardProps) => {
+  const viewerLevelSport = useViewerLevelSport();
   const name = [user.firstName, user.lastName].filter(Boolean).join(' ') || 'Unknown';
 
   return (
@@ -15,7 +17,7 @@ export const CityUserCard = ({ user, onClick }: CityUserCardProps) => {
       className="flex items-center gap-3 p-3 cursor-pointer transition-colors border-b border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800"
     >
       <div className="flex-shrink-0">
-        <PlayerAvatar player={user} smallLayout showName={false} fullHideName />
+        <PlayerAvatar player={user} smallLayout showName={false} fullHideName levelSport={viewerLevelSport} />
       </div>
       <div className="flex-1 min-w-0">
         <h3 className="text-sm font-bold text-gray-900 dark:text-white truncate">{name}</h3>

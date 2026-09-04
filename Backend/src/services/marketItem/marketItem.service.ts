@@ -294,7 +294,7 @@ export class MarketItemService {
       : paginatedItems;
 
     return {
-      data: data.map(projectMarketItemEmbeddedUsers),
+      data: data.map((item) => projectMarketItemEmbeddedUsers(item)),
       pagination: {
         page,
         limit,
@@ -895,6 +895,6 @@ export class MarketItemService {
       },
     });
 
-    return chats.map(projectMarketItemEmbeddedUsers);
+    return chats.map((chat) => projectMarketItemEmbeddedUsers(chat));
   }
 }

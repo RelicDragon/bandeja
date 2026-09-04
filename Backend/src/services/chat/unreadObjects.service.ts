@@ -141,8 +141,8 @@ async function getUserChatsWithUnread(userId: string): Promise<UnreadObjectsResu
     return {
       chat: {
         ...chat,
-        user1: projectUserByPrimarySport(chat.user1),
-        user2: projectUserByPrimarySport(chat.user2),
+        user1: projectUserByPrimarySport(chat.user1, { keepSportProfiles: true }),
+        user2: projectUserByPrimarySport(chat.user2, { keepSportProfiles: true }),
       },
       unreadCount: unreadMap[id] ?? 0,
     };
@@ -197,7 +197,7 @@ async function getBugsWithUnread(userId: string): Promise<UnreadObjectsResult['b
           ...channel.bug,
           groupChannelId: channel.id,
           sender: channel.bug.sender
-            ? projectUserByPrimarySport(channel.bug.sender)
+            ? projectUserByPrimarySport(channel.bug.sender, { keepSportProfiles: true })
             : channel.bug.sender,
         }
       : null;
@@ -257,7 +257,7 @@ async function getGroupChannelsWithUnread(
         ...channel,
         participants: (channel.participants as any[]).map((p: any) => ({
           ...p,
-          user: p.user ? projectUserByPrimarySport(p.user) : p.user,
+          user: p.user ? projectUserByPrimarySport(p.user, { keepSportProfiles: true }) : p.user,
         })),
         isParticipant: !!userParticipant,
         isOwner: userParticipant?.role === ParticipantRole.OWNER,

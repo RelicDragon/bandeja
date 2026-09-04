@@ -81,11 +81,12 @@ export const ChatParticipantsModal = ({ game: initialGame, onClose, currentChatT
                   className={`flex items-center gap-2 p-2 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg ${!isVisibleForChat ? 'opacity-50' : ''}`}
                 >
                   <div className={`flex-shrink-0 ${!isVisibleForChat ? 'grayscale' : ''}`}>
-                    <PlayerAvatar 
+                    <PlayerAvatar
                       player={participant}
                       smallLayout={true}
                       showName={false}
                       fullHideName={true}
+                      levelSport={initialGame.sport}
                     />
                   </div>
 

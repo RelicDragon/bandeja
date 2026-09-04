@@ -92,7 +92,7 @@
       "deltaTitle": "Ball difference",
       "deltaDescription": "Subtract balls lost from balls won. Zero or more = win; below zero = loss.",
       "matchesTitle": "Matches won",
-      "matchesDescription": "Subtract matches lost from matches won. Zero or more = win; below zero = loss. Playoff finals work the same way.",
+      "matchesDescription": "Subtract matches lost from matches won. Zero or more = win; below zero = loss. Winning one match is still a loss if you lost more. Playoff finals work the same way.",
       "leaderboardTitle": "Points or balls won",
       "leaderboardDescription": "A top-half finish = win. With an odd number of players, the middle spot counts too; the rest are losses.",
       "example": "Nice finish! 4th out of 32 players counts as a win."

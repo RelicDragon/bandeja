@@ -99,6 +99,7 @@ async function openAdsCampaignEditor(campaignId) {
     setAdsUserIdLists('', '');
     renderAdsPlacementCheckboxes([]);
     renderAdsLocaleTabs();
+    renderAdsCalendarTagMessageFields({});
     clearAdsCreativeForms();
     renderAdsVariantMatrix([]);
     applyVariantWeightsToForm(undefined);
@@ -131,6 +132,12 @@ async function openAdsCampaignEditor(campaignId) {
         document.getElementById('adCampaignAppendThemeToClickUrl').checked = false;
         document.getElementById('adCampaignAppendAdTokenToClickUrl').checked = false;
         document.getElementById('adCampaignHideDisclosure').checked = false;
+        document.getElementById('adCampaignCalendarTagEnabled').checked = false;
+        document.getElementById('adCampaignCalendarTagLabel').value = '';
+        document.getElementById('adCampaignCalendarTagColor').value = AD_DEFAULT_CALENDAR_TAG_COLOR;
+        document.getElementById('adCampaignCalendarTagStartsAt').value = '';
+        document.getElementById('adCampaignCalendarTagEndsAt').value = '';
+        syncAdsCalendarTagFields();
         document.getElementById('adCampaignFreqCapEnabled').checked = true;
         document.getElementById('adCampaignFreqMax').value = String(AD_DEFAULT_FREQUENCY_CAP.maxImpressions);
         document.getElementById('adCampaignFreqDays').value = String(AD_DEFAULT_FREQUENCY_CAP.windowDays);
@@ -347,6 +354,13 @@ function populateAdsCampaignForm(campaign) {
     document.getElementById('adCampaignAppendAdTokenToClickUrl').checked = !!campaign.appendAdTokenToClickUrl;
     document.getElementById('adCampaignDisclosureLabel').value = campaign.disclosureLabel || '';
     document.getElementById('adCampaignHideDisclosure').checked = !!campaign.hideDisclosure;
+    document.getElementById('adCampaignCalendarTagEnabled').checked = !!campaign.calendarTagEnabled;
+    document.getElementById('adCampaignCalendarTagLabel').value = campaign.calendarTagLabel || '';
+    document.getElementById('adCampaignCalendarTagColor').value = campaign.calendarTagColor || AD_DEFAULT_CALENDAR_TAG_COLOR;
+    renderAdsCalendarTagMessageFields(campaign.calendarTagMessages || {});
+    document.getElementById('adCampaignCalendarTagStartsAt').value = toDateInputValue(campaign.calendarTagStartsAt);
+    document.getElementById('adCampaignCalendarTagEndsAt').value = toDateInputValue(campaign.calendarTagEndsAt);
+    syncAdsCalendarTagFields();
     document.getElementById('adCampaignTestUserIds').value = formatTestUserIds(campaign.testUserIds);
 
     const cap = campaign.frequencyCap;
@@ -390,10 +404,49 @@ function collectAdsCampaignPayload() {
         appendAdTokenToClickUrl: document.getElementById('adCampaignAppendAdTokenToClickUrl').checked,
         disclosureLabel: optionalTrimToNull(document.getElementById('adCampaignDisclosureLabel').value),
         hideDisclosure: document.getElementById('adCampaignHideDisclosure').checked,
+        calendarTagEnabled: document.getElementById('adCampaignCalendarTagEnabled').checked,
+        calendarTagLabel: optionalTrimToNull(document.getElementById('adCampaignCalendarTagLabel').value),
+        calendarTagColor: document.getElementById('adCampaignCalendarTagColor').value,
+        calendarTagMessages: collectAdsCalendarTagMessages(),
+        calendarTagStartsAt: fromDateInputValue(document.getElementById('adCampaignCalendarTagStartsAt').value),
+        calendarTagEndsAt: fromDateInputValue(document.getElementById('adCampaignCalendarTagEndsAt').value),
         targeting: collectAdsExtendedTargeting(),
         testUserIds: parseTestUserIds(document.getElementById('adCampaignTestUserIds').value),
         placements,
     };
+}
+
+function renderAdsCalendarTagMessageFields(messages) {
+    const container = document.getElementById('adCampaignCalendarTagMessages');
+    if (!container) return;
+    container.innerHTML = AD_LOCALES.map((locale) => `
+        <div class="form-group">
+            <label for="adCampaignCalendarTagMessage_${locale.code}">${escapeHtml(locale.label)}</label>
+            <textarea id="adCampaignCalendarTagMessage_${locale.code}"
+                data-ad-calendar-message-locale="${locale.code}"
+                maxlength="500" rows="2" dir="auto"
+                placeholder="Message shown after selecting the tagged date">${escapeHtml(messages[locale.code] || '')}</textarea>
+        </div>
+    `).join('');
+}
+
+function collectAdsCalendarTagMessages() {
+    const messages = {};
+    document.querySelectorAll('[data-ad-calendar-message-locale]').forEach((input) => {
+        const locale = input.dataset.adCalendarMessageLocale;
+        const message = input.value.trim();
+        if (locale && message) messages[locale] = message;
+    });
+    return messages;
+}
+
+function syncAdsCalendarTagFields() {
+    const enabled = document.getElementById('adCampaignCalendarTagEnabled')?.checked === true;
+    ['adCampaignCalendarTagLabel', 'adCampaignCalendarTagColor', 'adCampaignCalendarTagStartsAt', 'adCampaignCalendarTagEndsAt']
+        .forEach((id) => {
+            const input = document.getElementById(id);
+            if (input) input.required = enabled;
+        });
 }
 
 async function saveAdsCampaignSettings(e) {
@@ -402,6 +455,20 @@ async function saveAdsCampaignSettings(e) {
     if (!payload.sponsorId || !payload.name) {
         toast('Sponsor and name are required', 'error');
         return;
+    }
+    if (payload.calendarTagEnabled) {
+        if (!payload.calendarTagLabel || !payload.calendarTagColor || !payload.calendarTagStartsAt || !payload.calendarTagEndsAt) {
+            toast('Calendar tag title, font color, start date, and end date are required', 'error');
+            return;
+        }
+        if (!/^#[0-9A-Fa-f]{6}$/.test(payload.calendarTagColor)) {
+            toast('Calendar tag font color must be a six-digit hex color', 'error');
+            return;
+        }
+        if (payload.calendarTagEndsAt < payload.calendarTagStartsAt) {
+            toast('Calendar tag end date must be on or after start date', 'error');
+            return;
+        }
     }
     try {
         if (adsEditingCampaignId) {
@@ -774,6 +841,7 @@ function initAdsCampaignEditorTabs() {
 window.openAdsCampaignEditor = openAdsCampaignEditor;
 window.showAdsCampaignList = showAdsCampaignList;
 window.saveAdsCampaignSettings = saveAdsCampaignSettings;
+window.syncAdsCalendarTagFields = syncAdsCalendarTagFields;
 window.deleteAdsCampaignRow = deleteAdsCampaignRow;
 window.selectAdsCreativeLocale = selectAdsCreativeLocale;
 window.selectAdsCreativeVariant = selectAdsCreativeVariant;

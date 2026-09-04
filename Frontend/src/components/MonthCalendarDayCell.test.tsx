@@ -131,5 +131,36 @@ describe('MonthCalendarDayCell', () => {
     expect(container.querySelector('[data-calendar-day-rule]')).toBeNull();
     expect(container.querySelector('[data-calendar-day-entities]')).toBeNull();
     expect(container.querySelector('[data-calendar-day-weather]')).toBeNull();
+    expect(container.querySelector('[data-calendar-day-ad-tags]')).toBeNull();
+  });
+
+  it('renders the ultra-small ad tag row at the bottom of the cell', () => {
+    act(() => root.render(
+      <MonthCalendarDayCell
+        day={new Date(2026, 7, 3)}
+        isCurrentMonth
+        isSelected={false}
+        isTodayDate={false}
+        gameCount={0}
+        unreadCount={0}
+        hasGames={false}
+        showWeatherPill={false}
+        showTypePill={false}
+        showParticipantPill={false}
+        typePillTypes={[]}
+        participantTypes={[]}
+        dayWeather={null}
+        locale="en-GB"
+        calendarTags={[{ campaignId: 'campaign-a', label: 'CAMP', color: '#7C3AED' }]}
+        onSelect={vi.fn()}
+      />,
+    ));
+
+    const tag = container.querySelector('[data-calendar-day-ad-tag]');
+    expect(tag).not.toBeNull();
+    expect(tag?.textContent).toBe('CAMP');
+    expect((tag as HTMLElement).style.color).toBe('rgb(124, 58, 237)');
+    expect(tag?.parentElement?.parentElement?.classList.contains('absolute')).toBe(true);
+    expect(tag?.parentElement?.parentElement?.classList.contains('bottom-1')).toBe(true);
   });
 });

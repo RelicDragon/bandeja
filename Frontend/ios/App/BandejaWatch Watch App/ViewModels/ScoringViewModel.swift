@@ -14,13 +14,13 @@ final class ScoringViewModel {
     var postFinalizeHint: ScoringPostFinalizeHint = .none
 
     private let api = APIClient()
-    private let currentUserId: String?
+    /// Read live: the credential can arrive via WatchConnectivity after init.
+    private var currentUserId: String? { KeychainHelper.shared.readUserId() }
     @ObservationIgnored
     nonisolated(unsafe) private var pollingTask: Task<Void, Never>?
 
     init(gameId: String) {
         self.gameId = gameId
-        self.currentUserId = KeychainHelper.shared.readUserId()
     }
 
     deinit {

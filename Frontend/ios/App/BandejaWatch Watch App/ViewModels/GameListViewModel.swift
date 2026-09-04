@@ -17,6 +17,12 @@ final class GameListViewModel {
 
     private let api = APIClient()
 
+    init() {
+        // Seed from the Keychain so a cold start with a valid token does not
+        // flash the "not signed in" screen before the first `loadGames` finishes.
+        refreshAuthState()
+    }
+
     func refreshAuthState() {
         isAuthenticated = KeychainHelper.shared.readToken() != nil
         currentUserId = KeychainHelper.shared.readUserId()

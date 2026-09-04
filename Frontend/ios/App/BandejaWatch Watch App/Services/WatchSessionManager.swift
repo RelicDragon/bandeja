@@ -39,9 +39,13 @@ private enum WatchConnectivityPayload {
                    let latestToken = latest.token,
                    !latestToken.isEmpty {
                     KeychainHelper.shared.write(token: latestToken)
+                    if let latestRefresh = latest.refreshToken, !latestRefresh.isEmpty {
+                        KeychainHelper.shared.writeRefreshToken(token: latestRefresh)
+                    }
                     return
                 }
                 KeychainHelper.shared.deleteToken()
+                KeychainHelper.shared.deleteRefreshToken()
                 WatchPreferencesStore.shared.clear()
                 NetworkDeliveryOutbox.shared.clear()
                 WatchSessionManager.shared.logoutDidArrive.toggle()
@@ -49,6 +53,9 @@ private enum WatchConnectivityPayload {
             }
             if let token = auth.token, !token.isEmpty {
                 KeychainHelper.shared.write(token: token)
+                if let refreshToken = auth.refreshToken, !refreshToken.isEmpty {
+                    KeychainHelper.shared.writeRefreshToken(token: refreshToken)
+                }
                 if auth.hasPreferences {
                     WatchPreferencesStore.shared.applyFromPhone(
                         language: auth.language,
@@ -58,6 +65,10 @@ private enum WatchConnectivityPayload {
                         prefsVersion: auth.prefsVersion
                     )
                 }
+                WatchSessionManager.shared.tokenDidArrive.toggle()
+            } else if let refreshToken = auth.refreshToken, !refreshToken.isEmpty {
+                // Refresh-only re-sync (access token still valid): store for later auto-refresh.
+                KeychainHelper.shared.writeRefreshToken(token: refreshToken)
                 WatchSessionManager.shared.tokenDidArrive.toggle()
             } else if auth.hasPreferences {
                 WatchPreferencesStore.shared.applyFromPhone(

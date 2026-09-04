@@ -96,7 +96,7 @@
       "deltaTitle": "Selisih bola",
       "deltaDescription": "Bola menang dikurangi bola kalah. Hasil 0 atau lebih = menang; di bawah 0 = kalah.",
       "matchesTitle": "Pertandingan menang",
-      "matchesDescription": "Jumlah pertandingan menang dikurangi pertandingan kalah. Hasil 0 atau lebih = menang; di bawah 0 = kalah. Final playoff juga sama.",
+      "matchesDescription": "Jumlah pertandingan menang dikurangi pertandingan kalah. Hasil 0 atau lebih = menang; di bawah 0 = kalah. Menang satu pertandingan tetap kalah jika kamu kalah lebih banyak. Final playoff juga sama.",
       "leaderboardTitle": "Poin atau bola menang",
       "leaderboardDescription": "Finis di separuh atas klasemen = menang. Jika jumlah pemain ganjil, posisi tengah juga dihitung; sisanya kalah.",
       "example": "Bagus! Peringkat ke-4 dari 32 pemain tetap dihitung menang."

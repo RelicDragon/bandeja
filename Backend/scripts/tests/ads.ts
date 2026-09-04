@@ -80,6 +80,15 @@ async function main() {
       targeting: { cityIds: [city.id], sports: ['PADEL'] },
       frequencyCap: { maxImpressions: 3, windowDays: 7 },
       dismissSnoozeDays: 2,
+      calendarTagEnabled: true,
+      calendarTagLabel: 'CAMP',
+      calendarTagColor: '#7C3AED',
+      calendarTagMessages: {
+        en: 'English camp details',
+        ru: 'Описание кэмпа',
+      },
+      calendarTagStartsAt: new Date('2026-09-05T00:00:00.000Z'),
+      calendarTagEndsAt: new Date('2026-09-07T00:00:00.000Z'),
       placements: { create: [{ placement: AdPlacementKey.home_hero }] },
     },
   });
@@ -109,6 +118,19 @@ async function main() {
   assert(!!resolved.home_hero, 'resolves active campaign');
   assert(resolved.home_hero!.campaignId === campaign.id, 'correct campaign');
   assert(!resolved.home_hero!.clickUrl.includes('user_name'), 'default clickUrl has no user_name');
+
+  const calendarTags = await AdDeliveryService.resolveCalendarTags(
+    user.id,
+    { cityId: city.id, sportsByPlacement: { home_hero: Sport.PADEL } },
+    'en',
+    Sport.PADEL,
+  );
+  const calendarTag = calendarTags.find((tag) => tag.campaignId === campaign.id);
+  assert(calendarTag?.label === 'CAMP', 'eligible campaign resolves calendar tag');
+  assert(calendarTag?.color === '#7C3AED', 'calendar tag resolves its configured font color');
+  assert(calendarTag?.message === 'English camp details', 'calendar tag resolves localized selected-day text');
+  assert(calendarTag?.startsAt === '2026-09-05', 'calendar tag start is date-only');
+  assert(calendarTag?.endsAt === '2026-09-07', 'calendar tag end is date-only');
 
   await prisma.adCampaign.update({
     where: { id: campaign.id },
@@ -175,7 +197,10 @@ async function main() {
     'en',
     Sport.PADEL
   );
-  assert(!again.home_hero, 'tennis filter excludes padel-only campaign');
+  assert(
+    again.home_hero?.campaignId !== campaign.id,
+    'tennis filter excludes the padel-only fixture campaign',
+  );
 
   const eventId = randomUUID();
   const batch1 = await AdEventService.recordBatch(user.id, {
@@ -226,6 +251,16 @@ async function main() {
     where: { userId_campaignId: { userId: user.id, campaignId: campaign.id } },
   });
   assert(!!snoozed?.snoozedUntil && snoozed.snoozedUntil > new Date(), 'dismiss sets snooze');
+  const tagsAfterDismiss = await AdDeliveryService.resolveCalendarTags(
+    user.id,
+    { cityId: city.id, sportsByPlacement: { home_hero: Sport.PADEL } },
+    'en',
+    Sport.PADEL,
+  );
+  assert(
+    tagsAfterDismiss.some((tag) => tag.campaignId === campaign.id),
+    'dismissed campaign keeps its calendar tag',
+  );
 
   // DRAFT + testUserIds preview
   const draftCampaign = await prisma.adCampaign.create({
@@ -319,7 +354,10 @@ async function main() {
     'en',
     Sport.PADEL,
   );
-  assert(!sportFiltered.find_top, 'sport context change excludes padel-only campaign on find_top');
+  assert(
+    sportFiltered.find_top?.campaignId !== multiCampaign.id,
+    'sport context change excludes the padel-only fixture campaign on find_top',
+  );
 
   await prisma.adEvent.deleteMany({ where: { campaignId: multiCampaign.id } });
   await prisma.adSessionPick.deleteMany({ where: { campaignId: multiCampaign.id } });

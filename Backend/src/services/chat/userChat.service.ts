@@ -23,8 +23,8 @@ function projectUserChatUsers<T extends { user1: Parameters<typeof projectUserBy
 ): T {
   return {
     ...chat,
-    user1: projectUserByPrimarySport(chat.user1),
-    user2: projectUserByPrimarySport(chat.user2),
+    user1: projectUserByPrimarySport(chat.user1, { keepSportProfiles: true }),
+    user2: projectUserByPrimarySport(chat.user2, { keepSportProfiles: true }),
   };
 }
 

@@ -7,6 +7,7 @@ import { GroupChannel, GroupChannelParticipant } from '@/api/chat';
 import { chatApi } from '@/api/chat';
 import { mediaApi } from '@/api/media';
 import { useAuthStore } from '@/store/authStore';
+import { useViewerLevelSport } from '@/hooks/useViewerLevelSport';
 import { matchesSearch } from '@/utils/transliteration';
 import { GroupChannelInvitesModal } from '@/components/chat/GroupChannelInvitesModal';
 
@@ -23,6 +24,7 @@ export const GroupChannelSettings = ({
 }: GroupChannelSettingsProps) => {
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
+  const viewerLevelSport = useViewerLevelSport();
   const [participants, setParticipants] = useState<GroupChannelParticipant[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
@@ -394,6 +396,7 @@ export const GroupChannelSettings = ({
                             extrasmall={true}
                             fullHideName={true}
                             role={participant.role as 'OWNER' | 'ADMIN' | 'PLAYER'}
+                            levelSport={viewerLevelSport}
                           />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">

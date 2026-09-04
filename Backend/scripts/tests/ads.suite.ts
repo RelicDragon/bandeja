@@ -36,6 +36,7 @@ async function main() {
     'targeting + priority pick + cap + locale + Phase B filters + variant pick',
     'src/services/ads/ad.delivery.test.ts'
   );
+  run('calendar tag dates + eligibility + validation', 'src/services/ads/ad.calendarTags.test.ts');
   run('event idempotency + impression increments + targeting filter', 'scripts/tests/ads.ts', true);
 
   console.log('ads.suite: all checks passed');

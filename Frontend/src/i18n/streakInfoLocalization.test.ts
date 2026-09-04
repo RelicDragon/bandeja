@@ -46,6 +46,7 @@ describe('streak result explanation localization', () => {
     expect(english.deltaDescription).toContain('below zero = loss');
     expect(english.matchesDescription).toContain('Zero or more = win');
     expect(english.matchesDescription).toContain('below zero = loss');
+    expect(english.matchesDescription).toContain('Winning one match is still a loss if you lost more');
     expect(english.matchesDescription).toContain('Playoff finals');
     expect(english.leaderboardDescription).toContain('top-half');
     expect(english.leaderboardDescription).toContain('middle spot');

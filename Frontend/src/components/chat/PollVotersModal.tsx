@@ -1,6 +1,7 @@
 import React from 'react';
 import { Poll } from '@/api/chat';
 import { useAuthStore } from '@/store/authStore';
+import { useViewerLevelSport } from '@/hooks/useViewerLevelSport';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
 import { Dialog, DialogContent } from '@/components/ui/Dialog';
 import { BasicUser } from '@/types';
@@ -14,6 +15,7 @@ interface PollVotersModalProps {
 
 export const PollVotersModal: React.FC<PollVotersModalProps> = ({ open, onClose, poll }) => {
   const { user } = useAuthStore();
+  const viewerLevelSport = useViewerLevelSport();
   const userVotes = poll.votes.filter(v => v.userId === user?.id).map(v => v.optionId);
   const isQuiz = poll.type === 'QUIZ';
 
@@ -83,7 +85,7 @@ export const PollVotersModal: React.FC<PollVotersModalProps> = ({ open, onClose,
                             : ''
                         }`}
                       >
-                        <PlayerAvatar player={voter} extrasmall fullHideName showName={false} asDiv />
+                        <PlayerAvatar player={voter} extrasmall fullHideName showName={false} asDiv levelSport={viewerLevelSport} />
                         <span className="text-[11px] text-gray-600 dark:text-gray-400 truncate max-w-[90px] font-medium">
                           {[voter.firstName, voter.lastName].filter(Boolean).join(' ') || '-'}
                         </span>

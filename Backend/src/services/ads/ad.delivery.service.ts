@@ -22,10 +22,56 @@ import {
   loadUserStates,
   parseFrequencyCap,
 } from './ad.userState.service';
-import { personalizeClickUrl, resolveAdClickUserName } from './ad.clickUrl.util';
+import {
+  AD_CLICK_SUPPORTED_LOCALES,
+  normalizeAdClickLocale,
+  personalizeClickUrl,
+  resolveAdClickUserName,
+} from './ad.clickUrl.util';
 import type { AdClickUrlPersonalizationValues } from './ad.clickUrl.util';
 import { mintAdClickToken } from './ad.token.util';
 import { resolveAdDisclosureLabel } from './ad.disclosure.util';
+
+export type ResolvedCalendarTag = {
+  campaignId: string;
+  label: string;
+  color: string;
+  message: string | null;
+  startsAt: string;
+  endsAt: string;
+};
+
+const DEFAULT_CALENDAR_TAG_COLOR = '#7C3AED';
+
+function resolveCalendarTagColor(value: unknown): string {
+  return typeof value === 'string' && /^#[0-9A-Fa-f]{6}$/.test(value)
+    ? value.toUpperCase()
+    : DEFAULT_CALENDAR_TAG_COLOR;
+}
+
+function resolveCalendarTagMessage(
+  value: unknown,
+  userLocale: string,
+  defaultLocale: string,
+): string | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const messages = value as Record<string, unknown>;
+  const candidates = [
+    normalizeAdClickLocale(userLocale),
+    normalizeAdClickLocale(defaultLocale),
+    'en',
+    ...AD_CLICK_SUPPORTED_LOCALES,
+  ];
+  const visited = new Set<string>();
+  for (const locale of candidates) {
+    if (!locale || visited.has(locale)) continue;
+    visited.add(locale);
+    const message = messages[locale];
+    if (typeof message !== 'string' || !message.trim()) continue;
+    return message.trim().slice(0, 500);
+  }
+  return null;
+}
 
 export type ResolvedAdCard = {
   placement: AdPlacementKey;
@@ -78,6 +124,7 @@ export class AdDeliveryService {
       userStates: Map<string, { impressions: number; capWindowStart: Date | null; snoozedUntil: Date | null }>;
       previewCampaignId?: string;
       allowDraft?: boolean;
+      ignoreSnoozeAndCap?: boolean;
     }
   ): CachedAdCampaign[] {
     const now = new Date();
@@ -124,10 +171,12 @@ export class AdDeliveryService {
       }
 
       const state = opts.userStates.get(c.id);
-      if (isSnoozed(state, now)) return false;
+      if (!opts.ignoreSnoozeAndCap) {
+        if (isSnoozed(state, now)) return false;
 
-      const cap = parseFrequencyCap(c.frequencyCap);
-      if (isFrequencyCapExceeded(state, cap, now)) return false;
+        const cap = parseFrequencyCap(c.frequencyCap);
+        if (isFrequencyCapExceeded(state, cap, now)) return false;
+      }
 
       return true;
     });
@@ -336,6 +385,101 @@ export class AdDeliveryService {
     return result;
   }
 
+  static async resolveCalendarTags(
+    userId: string,
+    context: AdDeliveryContext,
+    userLocale: string,
+    primarySport: Sport | undefined,
+  ): Promise<ResolvedCalendarTag[]> {
+    const campaigns = await AdCampaignCache.getCampaigns();
+    const tagCandidates = campaigns.filter(
+      (c) =>
+        Boolean((c as { calendarTagEnabled?: boolean }).calendarTagEnabled) &&
+        typeof (c as { calendarTagLabel?: unknown }).calendarTagLabel === 'string' &&
+        ((c as { calendarTagLabel?: string }).calendarTagLabel ?? '').trim().length > 0,
+    );
+    if (tagCandidates.length === 0) return [];
+
+    // A calendar tag follows the same placement, creative, city, sport, language,
+    // level and rollout eligibility as an ad. Delivery history is intentionally
+    // ignored so dismissing or frequency-capping the card does not remove the tag.
+    const userLevelBySport = new Map<Sport, number | undefined>();
+    const eligibleIds = new Set<string>();
+    const emptyStates = new Map<string, { impressions: number; capWindowStart: Date | null; snoozedUntil: Date | null }>();
+
+    for (const placement of Object.values(AdPlacementKey)) {
+      const sport = resolveSportForPlacement(placement, context.sportsByPlacement, primarySport);
+      let userLevel: number | undefined;
+      const needsUserLevel = sport && tagCandidates.some((campaign) => {
+        if (!campaign.placements.some((configured) => configured.placement === placement)) {
+          return false;
+        }
+        const parsed = adTargetingSchema.safeParse(campaign.targeting);
+        return parsed.success && Boolean(parsed.data.levelBands?.length);
+      });
+      if (needsUserLevel && sport) {
+        if (userLevelBySport.has(sport)) {
+          userLevel = userLevelBySport.get(sport);
+        } else {
+          userLevel = await resolveUserLevelForSport(userId, sport);
+          userLevelBySport.set(sport, userLevel);
+        }
+      }
+
+      const eligible = this.filterCampaigns(tagCandidates, {
+        placement,
+        userId,
+        cityId: context.cityId,
+        sport,
+        userLocale,
+        userLevel,
+        userStates: emptyStates,
+        ignoreSnoozeAndCap: true,
+      });
+      for (const campaign of eligible) {
+        const targeting = campaign.targeting as AdTargeting;
+        const creative = resolveCreative(
+          campaign.creatives,
+          placement,
+          userLocale,
+          campaign.defaultLocale,
+          {
+            variantSeed: `calendar-tag:${userId}:${placement}:${campaign.id}`,
+            variantWeights: targeting.variantWeights,
+          },
+        );
+        if (creative) eligibleIds.add(campaign.id);
+      }
+    }
+
+    const out: ResolvedCalendarTag[] = [];
+    for (const campaign of tagCandidates) {
+      if (!eligibleIds.has(campaign.id)) continue;
+      const c = campaign as typeof campaign & {
+        calendarTagLabel: string | null;
+        calendarTagColor: string | null;
+        calendarTagMessages: unknown;
+        calendarTagStartsAt: Date | string | null;
+        calendarTagEndsAt: Date | string | null;
+      };
+      const label = (c.calendarTagLabel ?? '').trim().toUpperCase().slice(0, 20);
+      const startsAt = toCalendarDayKey(c.calendarTagStartsAt);
+      const endsAt = toCalendarDayKey(c.calendarTagEndsAt);
+      if (!label || !startsAt || !endsAt || endsAt < startsAt) continue;
+      out.push({
+        campaignId: campaign.id,
+        label,
+        color: resolveCalendarTagColor(c.calendarTagColor),
+        message: resolveCalendarTagMessage(c.calendarTagMessages, userLocale, campaign.defaultLocale),
+        startsAt,
+        endsAt,
+      });
+    }
+
+    out.sort((a, b) => a.label.localeCompare(b.label));
+    return out;
+  }
+
   static async preview(
     campaignId: string,
     userId: string,
@@ -404,4 +548,11 @@ export class AdDeliveryService {
       theme: context.theme ?? null,
     }, userId);
   }
+}
+
+function toCalendarDayKey(value: Date | string | null): string | null {
+  if (!value) return null;
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toISOString().slice(0, 10);
 }

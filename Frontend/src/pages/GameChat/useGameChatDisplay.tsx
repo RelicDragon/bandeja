@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MapPin, Bug as BugIcon, Users, Hash, Package } from 'lucide-react';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
+import { useViewerLevelSport } from '@/hooks/useViewerLevelSport';
 import { formatDate } from '@/utils/dateFormat';
 import {
   getGameHeaderTitle,
@@ -53,6 +54,7 @@ export function useGameChatDisplay({
   archivedGameMeta = null,
 }: UseGameChatDisplayParams) {
   const { t } = useTranslation();
+  const viewerLevelSport = useViewerLevelSport();
   const groupOnlineCount = useGroupChannelOnlineCount(
     groupChannel,
     contextType === 'GROUP' && !!groupChannel,
@@ -127,7 +129,7 @@ export function useGameChatDisplay({
     }
     if (contextType === 'USER' && userChat) {
       const otherUser = userChat.user1Id === userId ? userChat.user2 : userChat.user1;
-      return <PlayerAvatar player={otherUser} extrasmall fullHideName asDiv />;
+      return <PlayerAvatar player={otherUser} extrasmall fullHideName asDiv levelSport={viewerLevelSport} />;
     }
     if (contextType === 'GROUP' && groupChannel) {
       const handleClick = () => {
@@ -178,6 +180,7 @@ export function useGameChatDisplay({
     isItemChat,
     onOpenItemPage,
     onOpenParticipantsPage,
+    viewerLevelSport,
   ]);
 
   return { title, titleContent, titleMetaRow, subtitle, icon };

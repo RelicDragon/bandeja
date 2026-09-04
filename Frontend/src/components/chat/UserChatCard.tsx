@@ -11,6 +11,7 @@ import {
   isLastMessagePreview,
 } from '@/api/chat';
 import { useAuthStore } from '@/store/authStore';
+import { useViewerLevelSport } from '@/hooks/useViewerLevelSport';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { memo, useMemo } from 'react';
 import { convertMentionsToPlaintext } from '@/utils/parseMentions';
@@ -52,6 +53,7 @@ const UserChatCardInner = ({ chat, listPresenceBatched = false, unreadCount = 0,
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const viewerLevelSport = useViewerLevelSport();
   const displaySettings = useMemo(() => resolveDisplaySettings(user), [user]);
 
   const otherUser = chat.user1Id === user?.id ? chat.user2 : chat.user1;
@@ -80,6 +82,7 @@ const UserChatCardInner = ({ chat, listPresenceBatched = false, unreadCount = 0,
           smallLayout
           showName={false}
           fullHideName={true}
+          levelSport={viewerLevelSport}
         />
       </div>
 

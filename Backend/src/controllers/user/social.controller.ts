@@ -194,8 +194,8 @@ export const getInvitablePlayers = asyncHandler(async (req: AuthRequest, res: Re
         gamesTogetherCount: gamesTogetherMap.get(user.id) || 0,
       };
       const projected = gameSport
-        ? projectUserForSportContext(withMeta, gameSport)
-        : projectEmbeddedUserByPrimarySport(withMeta);
+        ? projectUserForSportContext(withMeta, gameSport, { keepSportProfiles: true })
+        : projectEmbeddedUserByPrimarySport(withMeta, { keepSportProfiles: true });
       return {
         ...projected,
         sportsEnabled: user.sportsEnabled ?? [Sport.PADEL],

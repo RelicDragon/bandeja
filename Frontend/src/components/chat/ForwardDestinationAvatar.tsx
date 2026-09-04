@@ -1,11 +1,13 @@
 import { Hash, Package, Users } from 'lucide-react';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
 import { useAuthStore } from '@/store/authStore';
+import { useViewerLevelSport } from '@/hooks/useViewerLevelSport';
 import { getGameChatListEntityVisual } from '@/utils/chatListGameCardDisplay';
 import type { ForwardDestination } from '@/services/chat/forwardDestinations';
 
 export function ForwardDestinationAvatar({ dest }: { dest: ForwardDestination }) {
   const userId = useAuthStore((s) => s.user?.id);
+  const viewerLevelSport = useViewerLevelSport();
   const item = dest.item;
 
   if (item.type === 'user') {
@@ -21,6 +23,7 @@ export function ForwardDestinationAvatar({ dest }: { dest: ForwardDestination })
           showName={false}
           fullHideName
           asDiv
+          levelSport={viewerLevelSport}
         />
       </div>
     );
