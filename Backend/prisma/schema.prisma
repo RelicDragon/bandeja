@@ -166,6 +166,7 @@ model User {
   booktimeClubAuths             UserClubBooktimeAuth[]
   padelooClubAuths              UserClubPadelooAuth[]
   klikterenClubAuths            UserClubKlikterenAuth[]
+  nspadelClubAuths              UserClubNspadelAuth[]
   sportProfiles                 UserSportProfile[]
   gamePhotosUploaded            GamePhoto[]                      @relation("GamePhotoUploader")
   stories                       UserStory[]                      @relation("UserStoryOwner")
@@ -371,6 +372,8 @@ model Club {
   padelooBusySnapshots    ClubPadelooBusySnapshot[]
   klikterenAuths          UserClubKlikterenAuth[]
   klikterenBusySnapshots  ClubKlikterenBusySnapshot[]
+  nspadelAuths            UserClubNspadelAuth[]
+  nspadelBusySnapshots    ClubNspadelBusySnapshot[]
 
   @@index([cityId])
   @@index([isActive])
@@ -382,6 +385,7 @@ enum ClubIntegrationType {
   BOOKTIME
   PADELOO
   KLIKTEREN
+  NSPADELSUPABASE
 }
 
 model UserClubBooktimeAuth {
@@ -498,6 +502,44 @@ model ClubKlikterenBusySnapshot {
   @@index([clubId, date])
 }
 
+model UserClubNspadelAuth {
+  id             String    @id @default(cuid())
+  userId         String
+  clubId         String
+  externalUserId String
+  email          String?
+  firstName      String?
+  lastName       String?
+  accessToken    String
+  refreshToken   String?
+  scoutOptIn     Boolean   @default(true)
+  scoutInvalidAt DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  club Club @relation(fields: [clubId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, clubId])
+  @@index([clubId])
+}
+
+model ClubNspadelBusySnapshot {
+  id                String   @id @default(cuid())
+  clubId            String
+  courtId           String?
+  externalCourtId   String?
+  externalCourtName String?
+  date              String
+  busySlots         Json
+  fetchedAt         DateTime
+  club              Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  court             Court?   @relation(fields: [courtId], references: [id], onDelete: SetNull)
+
+  @@unique([clubId, courtId, date])
+  @@index([clubId, date])
+}
+
 model UserSportProfile {
   id                       String           @id @default(cuid())
   userId                   String
@@ -571,6 +613,7 @@ model Court {
   booktimeBusySnapshots  ClubBooktimeBusySnapshot[]
   padelooBusySnapshots   ClubPadelooBusySnapshot[]
   klikterenBusySnapshots ClubKlikterenBusySnapshot[]
+  nspadelBusySnapshots   ClubNspadelBusySnapshot[]
   gameExternalBookings   GameExternalBooking[]
   scheduledBracketSlots  LeagueBracketSlot[]         @relation("BracketScheduledCourt")
 

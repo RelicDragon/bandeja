@@ -17,6 +17,10 @@ export interface KlikterenIntegrationConfig {
   venueId: string;
 }
 
+export interface NspadelIntegrationConfig {
+  supabaseUrl: string;
+}
+
 export function parseBooktimeIntegrationConfig(raw: unknown): BooktimeIntegrationConfig | null {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
   const companyId = (raw as Record<string, unknown>).companyId;
@@ -105,12 +109,48 @@ export function assertKlikterenIntegrationConfig(
   return config;
 }
 
+export function parseNspadelIntegrationConfig(raw: unknown): NspadelIntegrationConfig | null {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const supabaseUrl = (raw as Record<string, unknown>).supabaseUrl;
+  if (typeof supabaseUrl !== 'string' || !supabaseUrl.trim()) return null;
+  const trimmed = supabaseUrl.trim().replace(/\/+$/, '');
+  let parsed: URL;
+  try {
+    parsed = new URL(trimmed);
+  } catch {
+    return null;
+  }
+  if (parsed.protocol !== 'https:') return null;
+  if (!/\.supabase\.co$/i.test(parsed.hostname)) return null;
+  return { supabaseUrl: trimmed };
+}
+
+export function assertNspadelIntegrationConfig(
+  integrationType: ClubIntegrationType | null | undefined,
+  integrationConfig: unknown
+): NspadelIntegrationConfig | null {
+  if (!integrationType) return null;
+  if (integrationType !== ClubIntegrationType.NSPADELSUPABASE) {
+    throw new ApiError(400, 'Unsupported integration type');
+  }
+  const config = parseNspadelIntegrationConfig(integrationConfig);
+  if (!config) {
+    throw new ApiError(400, BOOKING_ERROR_KEYS.nspadelSupabaseUrlRequired);
+  }
+  return config;
+}
+
 export function buildIntegrationConfigPayload(
   integrationType: ClubIntegrationType | null,
   integrationConfig: unknown
 ): {
   integrationType: ClubIntegrationType | null;
-  integrationConfig: BooktimeIntegrationConfig | PadelooIntegrationConfig | KlikterenIntegrationConfig | null;
+  integrationConfig:
+    | BooktimeIntegrationConfig
+    | PadelooIntegrationConfig
+    | KlikterenIntegrationConfig
+    | NspadelIntegrationConfig
+    | null;
 } {
   if (!integrationType) {
     return { integrationType: null, integrationConfig: null };
@@ -125,6 +165,10 @@ export function buildIntegrationConfigPayload(
   }
   if (integrationType === ClubIntegrationType.KLIKTEREN) {
     const config = assertKlikterenIntegrationConfig(integrationType, integrationConfig);
+    return { integrationType, integrationConfig: config };
+  }
+  if (integrationType === ClubIntegrationType.NSPADELSUPABASE) {
+    const config = assertNspadelIntegrationConfig(integrationType, integrationConfig);
     return { integrationType, integrationConfig: config };
   }
   throw new ApiError(400, 'Unsupported integration type');

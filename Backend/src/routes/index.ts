@@ -45,6 +45,7 @@ import adLandingRoutes from './adLanding.routes';
 import booktimeRoutes from './booktime.routes';
 import padelooRoutes from './padeloo.routes';
 import klikterenRoutes from './klikteren.routes';
+import nspadelRoutes from './nspadel.routes';
 import weatherRoutes from './weather.routes';
 import meRoutes from './me.routes';
 import { optionalAuth, type AuthRequest } from '../middleware/auth';
@@ -121,6 +122,7 @@ router.use('/public/landings', adLandingRoutes);
 router.use('/booktime', booktimeRoutes);
 router.use('/padeloo', padelooRoutes);
 router.use('/klikteren', klikterenRoutes);
+router.use('/nspadel', nspadelRoutes);
 router.use('/weather', weatherRoutes);
 
 export default router;
