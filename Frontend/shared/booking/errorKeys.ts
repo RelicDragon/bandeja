@@ -20,6 +20,8 @@ export const BOOKING_ERROR_KEYS = {
   padelooClubIdRequired: 'errors.booking.padelooClubIdRequired',
   klikterenVenueIdRequired: 'errors.booking.klikterenVenueIdRequired',
   nspadelSupabaseUrlRequired: 'errors.booking.nspadelSupabaseUrlRequired',
+  nspadelProfileContactRequired: 'errors.booking.nspadelProfileContactRequired',
+  nspadelCancelViaClub: 'errors.booking.nspadelCancelViaClub',
   externalProviderUnsupported: 'errors.booking.externalProviderUnsupported',
   integrationTypeMustBeOnlineBooking: 'errors.booking.integrationTypeMustBeOnlineBooking',
   rollbackFailed: 'errors.booking.rollbackFailed',

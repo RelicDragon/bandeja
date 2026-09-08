@@ -55,29 +55,14 @@ export class NspadelClubBookingProvider implements ClubBookingProvider {
   }
 
   async listUpcoming() {
-    try {
-      const bookings = await this.client.getMyBookings();
-      const now = Date.now();
-      return bookings
-        .filter((row) => {
-          const start = new Date(`${row.date}T${row.startTime}`);
-          return !Number.isNaN(start.getTime()) && start.getTime() >= now;
-        })
-        .map((row) => ({
-          externalBookingId: String(row.id),
-          bookingStart: `${row.date}T${row.startTime}`,
-          bookingEnd: `${row.date}T${row.endTime}`,
-          price: row.price,
-        }));
-    } catch (err) {
-      if (isNspadelClubNotConfiguredError(err)) return [];
-      throw err;
-    }
+    // No upstream per-user listing; bookings made through Bandeja are linked
+    // to games via snapshots at book time.
+    return [];
   }
 
   async fetchSnapshotCourts(_selectedDate: Date, dateKey: string) {
     try {
-      const availability = await this.client.getAvailability(dateKey);
+      const availability = await this.client.getAvailability(dateKey, this.durationMinutes);
       return mapNspadelAvailabilityToSnapshotCourts(this.club, availability, this.durationMinutes);
     } catch (err) {
       if (isNspadelClubNotConfiguredError(err)) {

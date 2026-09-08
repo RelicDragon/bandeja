@@ -97,14 +97,8 @@ export function parseNspadelIntegrationConfig(raw: unknown): NspadelIntegrationC
   const supabaseUrl = (raw as Record<string, unknown>).supabaseUrl;
   if (typeof supabaseUrl !== 'string' || !supabaseUrl.trim()) return null;
   const trimmed = supabaseUrl.trim().replace(/\/+$/, '');
-  let parsed: URL;
-  try {
-    parsed = new URL(trimmed);
-  } catch {
-    return null;
-  }
-  if (parsed.protocol !== 'https:') return null;
-  if (!/\.supabase\.co$/i.test(parsed.hostname)) return null;
+  // No `URL` global: this shared package builds without DOM/Node libs.
+  if (!/^https:\/\/([A-Za-z0-9-]+\.)+supabase\.co$/i.test(trimmed)) return null;
   return { supabaseUrl: trimmed };
 }
 

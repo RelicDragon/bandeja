@@ -122,6 +122,9 @@
       "bookingNotLinked": "Rezervacija {{externalBookingId}} nije povezana sa ovim mečem.",
       "legacyExternalBookingIdRejected": "Zastarelo polje za rezervaciju je uklonjeno. Koristi externalBookingIds i PATCH /games/:id/bookings.",
       "companyIdRequired": "Integracija rezervacija kluba zahteva company ID.",
+      "nspadelSupabaseUrlRequired": "Online rezervacije za NS Padel Centar još nisu podešene.",
+      "nspadelProfileContactRequired": "Dodaj ime i broj telefona u svoj profil da bi rezervisao u NS Padel Centru.",
+      "nspadelCancelViaClub": "Rezervacije u NS Padel Centru mogu se otkazati samo direktnim kontaktom sa klubom (+381 65 368 1911).",
       "integrationTypeMustBeOnlineBooking": "Integracija kluba mora biti online rezervacija.",
       "rollbackFailed": "Nismo mogli da potvrdimo da je rezervacija otkazana."
     }

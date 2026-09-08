@@ -7,12 +7,15 @@
  * Instagram instagram.com/nspadelcentar, widget params (Singles 1v1 /
  * Doubles 2v2; 60/90/120 min).
  *
- * NOT verified and therefore NOT hardcoded: the club Supabase project URL,
- * RPC/function names, and the court list. Provide them via env:
+ * Upstream integration verified live 2026-09-08 against the club's public
+ * Supabase PostgREST API: project URL below, `courts` rows (Singles teren +
+ * Doubles teren, 08:00–23:00, 30-min grid, 60/90/120 min), the
+ * `get_occupied_slots` RPC, and public `reservations` insert. These are the
+ * seed defaults and can still be overridden via env:
  *   NS_PADEL_SUPABASE_URL=https://xyzcompany.supabase.co
- *   NS_PADEL_COURTS_JSON='[{"externalCourtId":"1","name":"Teren 1"}]'
- * Until NS_PADEL_SUPABASE_URL is set, the upstream proxy answers with the
- * nspadelSupabaseUrlRequired error key. Courts/pricing are never invented.
+ *   NS_PADEL_COURTS_JSON='[{"externalCourtId":"<uuid>","name":"Teren 1"}]'
+ * Until a Supabase URL is configured, booking answers with the
+ * nspadelSupabaseUrlRequired error key.
  *
  * This seed is idempotent and deploy-safe (missing city ⇒ skip with exit 0),
  * and runs from scripts/deploy-backend.sh so fresh dev/prod deploys get the
@@ -99,7 +102,10 @@ async function main(): Promise<void> {
     return;
   }
 
-  const supabaseUrl = process.env.NS_PADEL_SUPABASE_URL?.trim().replace(/\/+$/, '');
+  const supabaseUrl = (
+    process.env.NS_PADEL_SUPABASE_URL?.trim().replace(/\/+$/, '') ||
+    'https://dkqbjxftvbijvkwoqaea.supabase.co'
+  );
   // Never wipe a previously configured URL: only overwrite integrationConfig
   // when the env var is provided, otherwise keep the stored value.
   const integrationConfig = (
@@ -143,7 +149,25 @@ async function main(): Promise<void> {
       });
   console.log(`${existing ? 'Updated' : 'Created'} club ${club.name} (${club.id})`);
 
-  const courtSpecs = parseCourtsEnv(process.env.NS_PADEL_COURTS_JSON);
+  const courtSpecs = parseCourtsEnv(
+    process.env.NS_PADEL_COURTS_JSON ??
+      JSON.stringify([
+        {
+          externalCourtId: 'a91de04e-7a01-46bb-96c2-f686f570f417',
+          name: 'Singles teren',
+          integrationCourtName: 'Singles teren',
+          courtType: 'singles',
+          isIndoor: false,
+        },
+        {
+          externalCourtId: '304f56ee-cfca-48e4-9c95-0ff68fb4c19a',
+          name: 'Doubles teren',
+          integrationCourtName: 'Doubles teren',
+          courtType: 'doubles',
+          isIndoor: false,
+        },
+      ]),
+  );
   if (courtSpecs.length > 0) {
     for (const courtSpec of courtSpecs) {
       const found = await prisma.court.findFirst({
@@ -203,11 +227,8 @@ async function main(): Promise<void> {
     console.log(`No logo at ${LOGO_PATH}; skip upload`);
   }
 
-  if (!supabaseUrl) {
-    console.log(
-      'NOTE: NS_PADEL_SUPABASE_URL not set — club seeded without integrationConfig. ' +
-        'Upstream proxy answers nspadelSupabaseUrlRequired until the URL is observed and set.',
-    );
+  if (!process.env.NS_PADEL_SUPABASE_URL?.trim()) {
+    console.log(`Using verified default Supabase URL ${supabaseUrl} (override with NS_PADEL_SUPABASE_URL).`);
   }
   console.log('NS Padel Centar seed complete.');
 }

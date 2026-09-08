@@ -1,8 +1,13 @@
 import { resolveAbsoluteApiBaseUrlForFetch } from '@/api/apiBaseUrl';
 
-/** NS Padel Centar (Novi Sad) — booked via the Bandeja backend Supabase proxy. */
+/** NS Padel Centar (Novi Sad) — booked via real Bandeja backend endpoints. */
 export function getNspadelApiUrl(): string {
-  return `${resolveAbsoluteApiBaseUrlForFetch().replace(/\/$/, '')}/nspadel/upstream`;
+  return `${resolveAbsoluteApiBaseUrlForFetch().replace(/\/$/, '')}/nspadel`;
+}
+
+/** Raw Supabase pass-through (kept for diagnostics; booking uses /availability + /bookings). */
+export function getNspadelUpstreamUrl(): string {
+  return `${getNspadelApiUrl()}/upstream`;
 }
 
 /** Booking widget durations (Singles 1v1 / Doubles 2v2): 60/90/120 min. */

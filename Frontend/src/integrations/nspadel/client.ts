@@ -1,15 +1,16 @@
 import { getNspadelApiUrl } from './config';
 
 /**
- * NS Padel Centar client. All traffic goes through the Bandeja backend
- * (`/nspadel/upstream/*?clubId=…`), which proxies to the club's Supabase
- * project server-side. Nothing here hardcodes the Supabase URL or table/RPC
- * names: those live in the club's `integrationConfig` and are resolved
- * server-side per club.
+ * NS Padel Centar client. Availability and booking go through real Bandeja
+ * backend endpoints (`GET /nspadel/availability`, `POST /nspadel/bookings`),
+ * which call the club's Supabase project server-side. Nothing here hardcodes
+ * the Supabase URL or anon key: those live in backend env / the club's
+ * `integrationConfig` and are resolved server-side per club.
  *
- * Upstream table/RPC identifiers were NOT observed (static site only), so the
- * typed helpers below use small relative paths that the backend allowlist
- * accepts. When the club is not configured yet the backend answers 400 with
+ * The club upstream exposes no per-user bookings listing or cancellation API,
+ * so `getMyBookings` returns [] and `cancelBooking` throws the
+ * `nspadelCancelViaClub` key (cancel by contacting the club directly).
+ * When the club is not configured yet the backend answers 400 with
  * `errors.booking.nspadelSupabaseUrlRequired` — callers treat that as "no
  * data" so the club page still renders.
  */
@@ -182,8 +183,9 @@ export class NspadelClient {
     return data as T;
   }
 
-  async getAvailability(dateKey: string): Promise<NspadelAvailabilityResponse> {
+  async getAvailability(dateKey: string, durationMinutes?: number): Promise<NspadelAvailabilityResponse> {
     const params = new URLSearchParams({ date: dateKey });
+    if (durationMinutes) params.set('durationMinutes', String(durationMinutes));
     const data = await this.request<unknown>(`/availability?${params.toString()}`);
     const root = asRecord(data);
     const rows = Array.isArray(data)
@@ -199,16 +201,10 @@ export class NspadelClient {
   }
 
   async getMyBookings(): Promise<NspadelBooking[]> {
-    const data = await this.request<unknown>('/bookings', { auth: true });
-    const root = asRecord(data);
-    const rows = Array.isArray(data)
-      ? data
-      : Array.isArray(root?.bookings)
-        ? root!.bookings
-        : Array.isArray(root?.data)
-          ? root!.data
-          : [];
-    return rows.map(normalizeBooking).filter((b): b is NspadelBooking => b != null);
+    // The club upstream has no per-user bookings listing (its own site has no
+    // such feature either); bookings made through Bandeja are linked to games
+    // via snapshots instead.
+    return [];
   }
 
   async createBooking(body: {
@@ -233,10 +229,9 @@ export class NspadelClient {
     return booking;
   }
 
-  cancelBooking(bookingId: string): Promise<void> {
-    return this.request<void>(`/bookings/${encodeURIComponent(bookingId)}`, {
-      method: 'DELETE',
-      auth: true,
-    });
+  async cancelBooking(_bookingId: string): Promise<void> {
+    // The club upstream exposes no cancellation API; cancellations go through
+    // the club directly (phone on the club page).
+    throw Object.assign(new Error('errors.booking.nspadelCancelViaClub'), { status: 400 });
   }
 }
