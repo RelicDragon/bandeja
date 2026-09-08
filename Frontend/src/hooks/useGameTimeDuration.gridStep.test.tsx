@@ -48,7 +48,7 @@ describe('useGameTimeDuration grid step', () => {
     const seen: string[] = [];
 
     function Grid() {
-      const tomorrow = React.useMemo(() => new Date(2026, 8, 9, 12, 0, 0), []);
+      const tomorrow = React.useMemo(() => new Date(2030, 4, 6, 12, 0, 0), []);
       const {
         selectedTime,
         setSelectedTime,
@@ -102,5 +102,51 @@ describe('useGameTimeDuration grid step', () => {
 
   it('keeps 30-minute club grids working unchanged', async () => {
     expect(await tapTime(makeClub(30), '16:30')).toEqual(['16:30']);
+  });
+
+  it('mirrors booktime duration-fit semantics on both grid steps', async () => {
+    const { useGameTimeDuration } = await import('@/hooks/useGameTimeDuration');
+    const React = await import('react');
+
+    async function apiFor(club: Club) {
+      let api: ReturnType<typeof useGameTimeDuration> | null = null;
+      function Probe() {
+        const hook = useGameTimeDuration({
+          clubs: [club],
+          selectedClub: club.id,
+          initialDate: new Date(2030, 4, 6, 12, 0, 0),
+        });
+        api = hook;
+        return null;
+      }
+      await act(async () => {
+        root.render(React.createElement(Probe));
+      });
+      if (api === null) throw new Error('hook api missing');
+      return api;
+    }
+
+    const hourly = await apiFor(makeClub(60));
+    // Whole-hour durations fit from any visible start inside the grid.
+    expect(hourly.canAccommodateDuration('16:00', 2)).toBe(true);
+    expect(hourly.canAccommodateDuration('16:00', 1)).toBe(true);
+    // Half-hour durations (1.5h) fit as well.
+    expect(hourly.canAccommodateDuration('16:00', 1.5)).toBe(true);
+    // Nothing fits past closing (23:00).
+    expect(hourly.canAccommodateDuration('22:00', 2)).toBe(false);
+    expect(hourly.canAccommodateDuration('22:00', 1)).toBe(true);
+    // Range-filtered slots never invent sub-steps.
+    expect(hourly.getTimeSlotsForDuration('16:00', 2)).toEqual(['16:00', '17:00']);
+    expect(hourly.getTimeSlotsForDuration('16:00', 1.5)).toEqual(['16:00', '17:00']);
+    // Adjusted start is the latest fitting start covering the tap.
+    expect(hourly.getAdjustedStartTime('16:00', 2)).toBe('16:00');
+    expect(hourly.getAdjustedStartTime('16:00', 1.5)).toBe('16:00');
+
+    const halfHour = await apiFor(makeClub(30));
+    expect(halfHour.canAccommodateDuration('16:30', 2)).toBe(true);
+    expect(halfHour.canAccommodateDuration('21:00', 2)).toBe(true);
+    expect(halfHour.canAccommodateDuration('22:00', 2)).toBe(false);
+    expect(halfHour.getTimeSlotsForDuration('16:30', 1)).toEqual(['16:30', '17:00']);
+    expect(halfHour.getAdjustedStartTime('16:30', 2)).toBe('16:30');
   });
 });

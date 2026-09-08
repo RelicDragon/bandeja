@@ -48,6 +48,12 @@ const isSameDateInTimezone = (date1: Date, date2: Date, timezone: string): boole
   return formatter.format(date1) === formatter.format(date2);
 };
 
+const toMinutes = (time: string): number | null => {
+  const [h, m] = time.split(':').map(Number);
+  if (!Number.isFinite(h) || !Number.isFinite(m)) return null;
+  return h * 60 + m;
+};
+
 export const createDateFromClubTime = (date: Date, time: string, club: Club | undefined): Date => {
   const clubTimezone = getClubTimezone(club);
   const [hours, minutes] = time.split(':').map(Number);
@@ -160,15 +166,21 @@ export const useGameTimeDuration = ({
   const [selectedTime, setSelectedTime] = useState<string>('');
   const [duration, setDuration] = useState<number>(2);
 
-  // Grid step of the selected club (30/60 min). Duration math must step by the
-  // same granularity as the visible grid: with a hardcoded 30-minute step a
-  // 60-minute club grid could never accommodate any whole-hour duration, so
-  // every tap silently died (no selection, or a stuck one).
-  const slotStepMinutes = useMemo(() => {
+  // End of the visible grid in minutes, derived from the same closing time as
+  // generateTimeOptionsForDate. Duration fit is checked against it Booktime
+  // style: a start fits when start + duration stays inside the grid, with no
+  // step synthesis anywhere downstream.
+  const gridEndMinutes = useMemo(() => {
     const selectedCenter = clubs.find((pc) => pc.id === selectedClub);
-    return resolveSlotMinutes(
-      (selectedCenter as Club & { defaultSlotMinutes?: number | null })?.defaultSlotMinutes,
-    );
+    if (selectedCenter?.openingTime && selectedCenter?.closingTime) {
+      const closingParts = selectedCenter.closingTime.split(':');
+      let endHour = parseInt(closingParts[0]);
+      if (parseInt(closingParts[1]) > 0) {
+        endHour += 1;
+      }
+      return endHour * 60;
+    }
+    return 24 * 60;
   }, [clubs, selectedClub]);
 
   const generateTimeOptionsForDate = useCallback((date: Date) => {
@@ -219,46 +231,45 @@ export const useGameTimeDuration = ({
     return generateTimeOptionsForDate(selectedDate);
   }, [generateTimeOptionsForDate, selectedDate]);
 
+  // Same contract as the Booktime time options: the visible option list is the
+  // source of truth, worked purely by time ranges, never by synthesizing
+  // sub-steps. Booktime pre-filters fitting starts per duration; the base grid
+  // covers fit explicitly via gridEndMinutes instead.
   const getTimeSlotsForDuration = useCallback((startTime: string, duration: number) => {
-    const slots = [];
-    const [startHour, startMinute] = startTime.split(':').map(Number);
-    const totalMinutes = duration * 60;
+    const options = generateTimeOptions();
+    const startMin = toMinutes(startTime);
+    if (startMin == null) return [];
+    const endMin = startMin + Math.round(duration * 60);
+    return options.filter((time) => {
+      const t = toMinutes(time);
+      return t != null && t >= startMin && t < endMin;
+    });
+  }, [generateTimeOptions]);
 
-    for (let i = 0; i < totalMinutes; i += slotStepMinutes) {
-      const currentMinutes = startMinute + i;
-      const hour = startHour + Math.floor(currentMinutes / 60);
-      const minute = currentMinutes % 60;
-      const timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-      slots.push(timeStr);
-    }
+  const canAccommodateDuration = useCallback((startTime: string, durHours: number) => {
+    const options = generateTimeOptions();
+    const startMin = toMinutes(startTime);
+    if (startMin == null) return false;
+    return options.includes(startTime) && startMin + Math.round(durHours * 60) <= gridEndMinutes;
+  }, [generateTimeOptions, gridEndMinutes]);
 
-    return slots;
-  }, [slotStepMinutes]);
-
-  const canAccommodateDuration = useCallback((startTime: string, duration: number) => {
-    const allTimeSlots = generateTimeOptions();
-    const requiredSlots = getTimeSlotsForDuration(startTime, duration);
-    
-    return requiredSlots.every(slot => allTimeSlots.includes(slot));
-  }, [generateTimeOptions, getTimeSlotsForDuration]);
-
-  const getAdjustedStartTime = useCallback((clickedTime: string, duration: number) => {
-    const allTimeSlots = generateTimeOptions();
-    
-    for (let i = allTimeSlots.length - 1; i >= 0; i--) {
-      const potentialStartTime = allTimeSlots[i];
-      const requiredSlots = getTimeSlotsForDuration(potentialStartTime, duration);
-      
-      const lastRequiredSlot = requiredSlots[requiredSlots.length - 1];
-      if (lastRequiredSlot && allTimeSlots.includes(lastRequiredSlot)) {
-        if (requiredSlots.includes(clickedTime)) {
-          return potentialStartTime;
-        }
-      }
-    }
-    
-    return null;
-  }, [generateTimeOptions, getTimeSlotsForDuration]);
+  const getAdjustedStartTime = useCallback((clickedTime: string, durHours: number) => {
+    const options = generateTimeOptions();
+    const clickedMin = toMinutes(clickedTime);
+    if (clickedMin == null) return null;
+    const spanMinutes = Math.round(durHours * 60);
+    const matches = options.filter((start) => {
+      const startMin = toMinutes(start);
+      return (
+        startMin != null &&
+        startMin <= clickedMin &&
+        clickedMin < startMin + spanMinutes &&
+        startMin + spanMinutes <= gridEndMinutes
+      );
+    });
+    const last = matches[matches.length - 1];
+    return last !== undefined ? last : null;
+  }, [generateTimeOptions, gridEndMinutes]);
 
   const isSlotHighlighted = useCallback((time: string) => {
     if (!selectedTime) return false;
