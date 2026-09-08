@@ -51,6 +51,7 @@
     "selectCourtFirst": "اختر ملعباً أولاً",
     "clubCancellationNotice": "إشعار الإلغاء: قبل {{hours}} ساعة على الأقل من موعدك.",
     "clubPolicyTitle": "سياسات النادي",
+    "nspadelProfileBookingNotice": "تُحجز مواعيد NS Padel Centar باسم ورقم هاتف ملفك الشخصي في Bandeja.",
     "noClubsAvailable": "لا توجد أندية متاحة",
     "clubDetailsBack": "العودة إلى الأندية",
     "clubInfo": "تفاصيل النادي",

@@ -51,6 +51,7 @@
     "selectCourtFirst": "まず裁判所を選択してください",
     "clubCancellationNotice": "キャンセル通知: 少なくともスロット時間の{{hours}} 時間前までに。",
     "clubPolicyTitle": "クラブポリシー",
+    "nspadelProfileBookingNotice": "NS Padel Centarの予約は、Bandejaプロフィールのお名前と電話番号で行われます。",
     "noClubsAvailable": "利用可能なクラブがありません",
     "clubDetailsBack": "クラブに戻る",
     "clubInfo": "クラブ詳細",

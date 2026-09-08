@@ -51,6 +51,7 @@
     "selectCourtFirst": "เลือกศาลก่อน",
     "clubCancellationNotice": "ประกาศยกเลิก: อย่างน้อย {{hours}} ชั่วโมงก่อนช่วงเวลาของคุณ",
     "clubPolicyTitle": "นโยบายของสโมสร",
+    "nspadelProfileBookingNotice": "การจอง NS Padel Centar จะใช้ชื่อและหมายเลขโทรศัพท์จากโปรไฟล์ Bandeja ของคุณ",
     "noClubsAvailable": "ไม่มีคลับว่าง",
     "clubDetailsBack": "กลับไปที่สโมสร",
     "clubInfo": "รายละเอียดสโมสร",

@@ -50,6 +50,7 @@
     "selectCourtFirst": "Selecciona una cancha primero",
     "clubCancellationNotice": "Aviso de cancelación: al menos {{hours}} horas antes de tu franja.",
     "clubPolicyTitle": "Normas del club",
+    "nspadelProfileBookingNotice": "Las reservas de NS Padel Centar se hacen con el nombre y el número de teléfono de tu perfil de Bandeja.",
     "noClubsAvailable": "No hay clubs disponibles",
     "clubDetailsBack": "Volver a clubes",
     "clubInfo": "Detalles del club",

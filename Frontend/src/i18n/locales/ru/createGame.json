@@ -50,6 +50,7 @@
     "selectCourtFirst": "Сначала выберите корт",
     "clubCancellationNotice": "Уведомление об отмене: не менее чем за {{hours}} ч до слота.",
     "clubPolicyTitle": "Правила клуба",
+    "nspadelProfileBookingNotice": "Бронирования в NS Padel Centar оформляются на имя и номер телефона из вашего профиля Bandeja.",
     "noClubsAvailable": "Нет доступных клубов",
     "clubDetailsBack": "К списку клубов",
     "clubInfo": "О клубе",
