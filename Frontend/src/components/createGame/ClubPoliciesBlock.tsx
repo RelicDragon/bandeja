@@ -11,8 +11,9 @@ export function ClubPoliciesBlock({ club, entityType }: ClubPoliciesBlockProps) 
   const { t } = useTranslation();
 
   if (entityType === 'BAR') return null;
+  if (!club) return null;
   const showProfileBookingNotice = isNspadelClub(club);
-  if (!club?.policyText?.trim() && !club?.cancellationNoticeHours && !showProfileBookingNotice) {
+  if (!club.policyText?.trim() && !club.cancellationNoticeHours && !showProfileBookingNotice) {
     return null;
   }
 
