@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { Club } from '@/types';
 import { resolveSlotMinutes } from '@/utils/clubSchedule/timeSlots';
 
@@ -160,6 +160,17 @@ export const useGameTimeDuration = ({
   const [selectedTime, setSelectedTime] = useState<string>('');
   const [duration, setDuration] = useState<number>(2);
 
+  // Grid step of the selected club (30/60 min). Duration math must step by the
+  // same granularity as the visible grid: with a hardcoded 30-minute step a
+  // 60-minute club grid could never accommodate any whole-hour duration, so
+  // every tap silently died (no selection, or a stuck one).
+  const slotStepMinutes = useMemo(() => {
+    const selectedCenter = clubs.find((pc) => pc.id === selectedClub);
+    return resolveSlotMinutes(
+      (selectedCenter as Club & { defaultSlotMinutes?: number | null })?.defaultSlotMinutes,
+    );
+  }, [clubs, selectedClub]);
+
   const generateTimeOptionsForDate = useCallback((date: Date) => {
     const times = [];
     const selectedCenter = clubs.find(pc => pc.id === selectedClub);
@@ -212,17 +223,17 @@ export const useGameTimeDuration = ({
     const slots = [];
     const [startHour, startMinute] = startTime.split(':').map(Number);
     const totalMinutes = duration * 60;
-    
-    for (let i = 0; i < totalMinutes; i += 30) {
+
+    for (let i = 0; i < totalMinutes; i += slotStepMinutes) {
       const currentMinutes = startMinute + i;
       const hour = startHour + Math.floor(currentMinutes / 60);
       const minute = currentMinutes % 60;
       const timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
       slots.push(timeStr);
     }
-    
+
     return slots;
-  }, []);
+  }, [slotStepMinutes]);
 
   const canAccommodateDuration = useCallback((startTime: string, duration: number) => {
     const allTimeSlots = generateTimeOptions();
