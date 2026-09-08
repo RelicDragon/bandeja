@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { isNspadelClub } from '@shared/clubIntegration';
 import type { Club, EntityType } from '@/types';
 
 type ClubPoliciesBlockProps = {
@@ -10,10 +11,16 @@ export function ClubPoliciesBlock({ club, entityType }: ClubPoliciesBlockProps) 
   const { t } = useTranslation();
 
   if (entityType === 'BAR') return null;
-  if (!club?.policyText?.trim() && !club?.cancellationNoticeHours) return null;
+  const showProfileBookingNotice = isNspadelClub(club);
+  if (!club?.policyText?.trim() && !club?.cancellationNoticeHours && !showProfileBookingNotice) {
+    return null;
+  }
 
   return (
     <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-600 dark:border-gray-700 dark:bg-gray-800/50 dark:text-gray-400">
+      {showProfileBookingNotice ? (
+        <p className="mb-1">{t('createGame.nspadelProfileBookingNotice')}</p>
+      ) : null}
       {club.cancellationNoticeHours != null && club.cancellationNoticeHours > 0 ? (
         <p className="mb-1">
           {t('createGame.clubCancellationNotice', { hours: club.cancellationNoticeHours })}
