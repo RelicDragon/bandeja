@@ -20,10 +20,14 @@ const club = {
   ],
 } as unknown as Club;
 
+export const fetchCalls: string[] = [];
+
 function mockAvailabilityFetch(): void {
+  fetchCalls.length = 0;
   vi.stubGlobal(
     'fetch',
     vi.fn(async (url: unknown) => {
+      fetchCalls.push(String(url));
       const href = String(url);
       if (!href.includes('/nspadel/availability')) {
         throw new Error(`unexpected fetch: ${href}`);

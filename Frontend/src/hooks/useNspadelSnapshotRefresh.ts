@@ -28,6 +28,9 @@ export function useNspadelSnapshotRefresh(
   const [lastFetchedAt, setLastFetchedAt] = useState<string | null>(null);
   const inFlightRef = useRef<Promise<boolean> | null>(null);
   const refreshEpochRef = useRef(0);
+  // Last confirmed fetch. A ref, not state: refreshSnapshot must keep a
+  // stable identity or the auto-refresh effect below re-fires forever.
+  const lastOkRef = useRef<string | null>(null);
 
   const dateKey = club ? formatClubDateKey(selectedDate, club) : null;
 
@@ -47,13 +50,15 @@ export function useNspadelSnapshotRefresh(
           const provider = createScoutNspadelClubBookingProvider(club, durationMinutes);
           await provider.fetchSnapshotCourts(selectedDate, formatClubDateKey(selectedDate, club));
           if (isStale()) return false;
-          setLastFetchedAt(new Date().toISOString());
+          const fetchedAt = new Date().toISOString();
+          lastOkRef.current = fetchedAt;
+          setLastFetchedAt(fetchedAt);
           setBanner(null);
           return true;
         } catch (err) {
           if (isStale()) return false;
           console.error('NS Padel snapshot refresh failed:', err);
-          setBanner(lastFetchedAt ? null : 'noSyncToday');
+          setBanner(lastOkRef.current ? null : 'noSyncToday');
           return false;
         } finally {
           if (!isStale()) {
@@ -66,12 +71,13 @@ export function useNspadelSnapshotRefresh(
       inFlightRef.current = run;
       return run;
     },
-    [club, durationMinutes, enabled, lastFetchedAt, selectedDate],
+    [club, durationMinutes, enabled, selectedDate],
   );
 
   useEffect(() => {
     setBanner(null);
     setLastFetchedAt(null);
+    lastOkRef.current = null;
     inFlightRef.current = null;
     refreshEpochRef.current += 1;
   }, [club?.id, dateKey, enabled]);
