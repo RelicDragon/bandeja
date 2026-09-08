@@ -284,6 +284,10 @@ describe('shouldUseBooktimeTimeOptions', () => {
       }),
     ).toBe(false);
   });
+
+  it('never uses booktime options for NS Padel even when connected', () => {
+    expect(shouldUseBooktimeTimeOptions({ ...base, isNspadelClub: true })).toBe(false);
+  });
 });
 
 describe('slot-taken handler', () => {

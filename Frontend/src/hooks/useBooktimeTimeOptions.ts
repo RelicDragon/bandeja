@@ -12,7 +12,7 @@ import {
 } from '@/integrations/booktime/availability';
 import { formatClubDateKey } from '@/integrations/booktime/slots';
 import { useBooktimeLiveApiEnabled } from '@/hooks/useBooktimeLiveApiEnabled';
-import { getBooktimeCompanyId } from '@shared/clubIntegration';
+import { getBooktimeCompanyId, isBooktimeClub } from '@shared/clubIntegration';
 
 export function buildBooktimeOptionsCacheKey(
   dateKey: string,
@@ -54,7 +54,12 @@ export function useBooktimeTimeOptions({
   const [loadingTick, setLoadingTick] = useState(0);
   const inFlightKeysRef = useRef(new Set<string>());
   const requestVersionsRef = useRef(new Map<string, number>());
-  const { apiEnabled: liveApiEnabled } = useBooktimeLiveApiEnabled(club?.id, enabled);
+  // Non-Booktime clubs (Padeloo/Klikteren/NS Padel) must never hit the
+  // Booktime auth/scout endpoints even if a caller passes enabled=true.
+  const { apiEnabled: liveApiEnabled } = useBooktimeLiveApiEnabled(
+    club?.id,
+    enabled && isBooktimeClub(club),
+  );
 
   const durationMinutes = Math.round(durationHours * 60);
   const companyId = getBooktimeCompanyId(club);

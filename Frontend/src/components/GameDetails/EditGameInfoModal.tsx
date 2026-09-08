@@ -41,6 +41,7 @@ import {
   getKlikterenVenueId,
   getPadelooClubId,
   isKlikterenClub,
+  isNspadelClub,
   isPadelooClub,
   parseBooktimeIntegrationConfig,
 } from '@shared/clubIntegration';
@@ -491,6 +492,7 @@ export const EditGameInfoModal = ({
       booktimeConnected: Boolean(clubBookingAuth?.connected),
       isPadelooClub: isPadelooClub(selectedClubData),
       isKlikterenClub: isKlikterenClub(selectedClubData),
+      isNspadelClub: isNspadelClub(selectedClubData),
     }) && isOpen,
   });
   const resolvedGenerateTimeOptions = booktimeTimeOptions.active

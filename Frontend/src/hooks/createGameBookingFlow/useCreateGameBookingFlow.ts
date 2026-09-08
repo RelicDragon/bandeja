@@ -150,7 +150,10 @@ export function useCreateGameBookingFlow({
     Boolean(selectedClub);
   const { apiEnabled: booktimeLiveApiEnabled } = useBooktimeLiveApiEnabled(
     selectedClub || undefined,
-    clubBookingFlowActive && !isPadelooClub(selectedClubData) && !isKlikterenClub(selectedClubData),
+    clubBookingFlowActive &&
+      !isPadelooClub(selectedClubData) &&
+      !isKlikterenClub(selectedClubData) &&
+      !isNspadelClub(selectedClubData),
   );
   const liveApiEnabled =
     isPadelooClub(selectedClubData) || isKlikterenClub(selectedClubData)
@@ -244,6 +247,7 @@ export function useCreateGameBookingFlow({
       booktimeConnected: Boolean(clubBookingAuth?.connected),
       isPadelooClub: isPadelooClub(selectedClubData),
       isKlikterenClub: isKlikterenClub(selectedClubData),
+      isNspadelClub: isNspadelClub(selectedClubData),
     }),
   });
 
