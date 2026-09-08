@@ -9,10 +9,12 @@ import {
 } from '@/integrations/booktime/durations';
 import { PADELOO_BOOKING_DURATIONS } from '@/integrations/padeloo/config';
 import { KLIKTEREN_BOOKING_DURATIONS } from '@/integrations/klikteren/config';
+import { NSPADEL_BOOKING_DURATIONS } from '@/integrations/nspadel/config';
 import {
   getBooktimeCompanyId,
   shouldUseBooktimeCompanyDurations,
   shouldUseKlikterenDurations,
+  shouldUseNspadelDurations,
   shouldUsePadelooDurations,
 } from '@shared/clubIntegration';
 
@@ -45,9 +47,16 @@ export function useClubIntegrationDurations(
     () => shouldUseKlikterenDurations(club, selectedCourtId, courts),
     [club, selectedCourtId, courts],
   );
+  const useNspadelDurations = useMemo(
+    () => shouldUseNspadelDurations(club, selectedCourtId, courts),
+    [club, selectedCourtId, courts],
+  );
 
   const useIntegrationDurations =
-    useBooktimeCompanyDurations || usePadelooDurations || useKlikterenDurations;
+    useBooktimeCompanyDurations ||
+    usePadelooDurations ||
+    useKlikterenDurations ||
+    useNspadelDurations;
 
   useEffect(() => {
     if (!useBooktimeCompanyDurations || !companyId) {
@@ -84,6 +93,9 @@ export function useClubIntegrationDurations(
     if (useKlikterenDurations) {
       return KLIKTEREN_BOOKING_DURATIONS.map(minutesToDurationHours);
     }
+    if (useNspadelDurations) {
+      return NSPADEL_BOOKING_DURATIONS.map(minutesToDurationHours);
+    }
     if (usePadelooDurations) {
       return PADELOO_BOOKING_DURATIONS.map(minutesToDurationHours);
     }
@@ -95,6 +107,7 @@ export function useClubIntegrationDurations(
     booktimeDurationsHours,
     useBooktimeCompanyDurations,
     useKlikterenDurations,
+    useNspadelDurations,
     usePadelooDurations,
   ]);
 
@@ -111,6 +124,7 @@ export function useClubIntegrationDurations(
   const usesIntegrationDurations =
     useIntegrationDurations &&
     (useKlikterenDurations ||
+      useNspadelDurations ||
       usePadelooDurations ||
       loading ||
       booktimeDurationsHours !== null);

@@ -9,17 +9,22 @@ import { PadelooClubBookingProvider } from './providers/PadelooClubBookingProvid
 import { KlikterenClient } from '@/integrations/klikteren/client';
 import { getKlikterenClient, hydrateKlikterenSession } from '@/integrations/klikteren/session';
 import { KlikterenClubBookingProvider } from './providers/KlikterenClubBookingProvider';
+import { NspadelClient } from '@/integrations/nspadel/client';
+import { NspadelClubBookingProvider } from './providers/NspadelClubBookingProvider';
 import {
   getBooktimeCompanyId,
   getKlikterenVenueId,
+  getNspadelSupabaseUrl,
   getPadelooClubId,
   isBooktimeClub,
   isKlikterenClub,
+  isNspadelClub,
   isPadelooClub,
 } from '@shared/clubIntegration';
 import type { ClubBookingProvider } from './ClubBookingProvider';
 import { PADELOO_BOOKING_DURATIONS } from '@/integrations/padeloo/config';
 import { KLIKTEREN_BOOKING_DURATIONS } from '@/integrations/klikteren/config';
+import { NSPADEL_BOOKING_DURATIONS } from '@/integrations/nspadel/config';
 
 export async function createHydratedBooktimeClubBookingProvider(club: Club, companyId: string) {
   const clubTimeZone = resolveBooktimeMyClubTimezone(club);
@@ -74,6 +79,14 @@ export function createScoutKlikterenClubBookingProvider(
   return new KlikterenClubBookingProvider(club, klikterenVenueId, client, durationMinutes);
 }
 
+export function createScoutNspadelClubBookingProvider(
+  club: Club,
+  durationMinutes: number = NSPADEL_BOOKING_DURATIONS[0],
+) {
+  const client = new NspadelClient({ clubId: club.id });
+  return new NspadelClubBookingProvider(club, client, durationMinutes);
+}
+
 export function createClubBookingProvider(
   club: Club,
   mode: 'hydrated' | 'scout',
@@ -99,6 +112,12 @@ export function createClubBookingProvider(
     if (!klikterenVenueId) return null;
     const durationMinutes = options?.durationMinutes ?? KLIKTEREN_BOOKING_DURATIONS[0];
     return createScoutKlikterenClubBookingProvider(club, klikterenVenueId, durationMinutes);
+  }
+
+  if (isNspadelClub(club)) {
+    if (!getNspadelSupabaseUrl(club)) return null;
+    const durationMinutes = options?.durationMinutes ?? NSPADEL_BOOKING_DURATIONS[0];
+    return createScoutNspadelClubBookingProvider(club, durationMinutes);
   }
 
   return null;
@@ -132,6 +151,11 @@ export async function createHydratedClubBookingProvider(
       klikterenVenueId,
       options?.durationMinutes,
     );
+  }
+
+  if (isNspadelClub(club)) {
+    if (!getNspadelSupabaseUrl(club)) return null;
+    return createScoutNspadelClubBookingProvider(club, options?.durationMinutes);
   }
 
   return null;

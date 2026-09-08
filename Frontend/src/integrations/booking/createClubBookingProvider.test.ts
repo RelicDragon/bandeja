@@ -7,6 +7,7 @@ import {
 import { BooktimeClubBookingProvider } from './providers/BooktimeClubBookingProvider';
 import { PadelooClubBookingProvider } from './providers/PadelooClubBookingProvider';
 import { KlikterenClubBookingProvider } from './providers/KlikterenClubBookingProvider';
+import { NspadelClubBookingProvider } from './providers/NspadelClubBookingProvider';
 
 const booktimeClub: Club = {
   id: 'club-bt',
@@ -35,6 +36,16 @@ const klikterenClub: Club = {
   cityId: 'city-1',
   integrationType: 'KLIKTEREN',
   integrationConfig: { venueId: '05cdc4d3-03fd-4f2c-af65-9b2018b5a53e' },
+  courts: [],
+};
+
+const nspadelClub: Club = {
+  id: 'club-ns',
+  name: 'NS PADEL CENTAR Novi Sad',
+  address: 'Novosadski put 138, Novi Sad',
+  cityId: 'city-1',
+  integrationType: 'NSPADELSUPABASE',
+  integrationConfig: { supabaseUrl: 'https://xyzcompany.supabase.co' },
   courts: [],
 };
 
@@ -67,6 +78,16 @@ describe('createClubBookingProvider', () => {
     const broken: Club = { ...klikterenClub, integrationConfig: null };
     expect(createClubBookingProvider(broken, 'scout')).toBeNull();
   });
+
+  it('returns scout Nspadel provider for nspadel clubs', () => {
+    const provider = createClubBookingProvider(nspadelClub, 'scout');
+    expect(provider).toBeInstanceOf(NspadelClubBookingProvider);
+  });
+
+  it('returns null when nspadel supabaseUrl is missing', () => {
+    const broken: Club = { ...nspadelClub, integrationConfig: null };
+    expect(createClubBookingProvider(broken, 'scout')).toBeNull();
+  });
 });
 
 describe('createHydratedClubBookingProvider', () => {
@@ -89,6 +110,19 @@ describe('createHydratedClubBookingProvider', () => {
   it('returns null for klikteren club without venueId', async () => {
     const provider = await createHydratedClubBookingProvider({
       ...klikterenClub,
+      integrationConfig: null,
+    });
+    expect(provider).toBeNull();
+  });
+
+  it('returns hydrated Nspadel provider without extra login', async () => {
+    const provider = await createHydratedClubBookingProvider(nspadelClub);
+    expect(provider).toBeInstanceOf(NspadelClubBookingProvider);
+  });
+
+  it('returns null for nspadel club without supabaseUrl', async () => {
+    const provider = await createHydratedClubBookingProvider({
+      ...nspadelClub,
       integrationConfig: null,
     });
     expect(provider).toBeNull();

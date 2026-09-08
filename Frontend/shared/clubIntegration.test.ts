@@ -4,15 +4,19 @@ import {
   courtHasActiveBookingIntegration,
   getBooktimeCompanyId,
   getKlikterenVenueId,
+  getNspadelSupabaseUrl,
   getPadelooClubId,
   isBooktimeClub,
   isKlikterenClub,
+  isNspadelClub,
   isPadelooClub,
   parseBooktimeIntegrationConfig,
   parseKlikterenIntegrationConfig,
+  parseNspadelIntegrationConfig,
   parsePadelooIntegrationConfig,
   shouldUseBooktimeCompanyDurations,
   shouldUseKlikterenDurations,
+  shouldUseNspadelDurations,
 } from './clubIntegration';
 
 describe('parsePadelooIntegrationConfig', () => {
@@ -181,6 +185,45 @@ describe('shouldUseBooktimeCompanyDurations', () => {
       shouldUseBooktimeCompanyDurations(
         { integrationType: 'BOOKTIME', integrationConfig: { companyId: ' ' } },
         'court-1',
+        [mappedCourt],
+      ),
+    ).toBe(false);
+  });
+});
+
+describe('nspadel club integration', () => {
+  const integratedClub = {
+    integrationType: 'NSPADELSUPABASE' as const,
+    integrationConfig: { supabaseUrl: 'https://xyzcompany.supabase.co/' },
+  };
+
+  it('parses supabase https url and trims trailing slash', () => {
+    expect(parseNspadelIntegrationConfig({ supabaseUrl: 'https://xyzcompany.supabase.co/' })).toEqual({
+      supabaseUrl: 'https://xyzcompany.supabase.co',
+    });
+    expect(parseNspadelIntegrationConfig({ supabaseUrl: 'http://xyz.supabase.co' })).toBeNull();
+    expect(parseNspadelIntegrationConfig({ supabaseUrl: 'https://example.com' })).toBeNull();
+    expect(parseNspadelIntegrationConfig(null)).toBeNull();
+  });
+
+  it('detects nspadel club, url, and booking integration', () => {
+    expect(isNspadelClub(integratedClub)).toBe(true);
+    expect(getNspadelSupabaseUrl(integratedClub)).toBe('https://xyzcompany.supabase.co');
+    expect(clubHasBookingIntegration(integratedClub)).toBe(true);
+    expect(
+      courtHasActiveBookingIntegration(integratedClub, { externalCourtId: 'court-1' }),
+    ).toBe(true);
+  });
+
+  it('uses nspadel durations for mapped courts', () => {
+    const mappedCourt = { id: 'court-1', externalCourtId: 'ext-1' };
+    expect(shouldUseNspadelDurations(integratedClub, null, [mappedCourt])).toBe(true);
+    expect(shouldUseNspadelDurations(integratedClub, 'notBooked', [mappedCourt])).toBe(false);
+    expect(shouldUseNspadelDurations(undefined, null, [mappedCourt])).toBe(false);
+    expect(
+      shouldUseNspadelDurations(
+        { integrationType: 'NSPADELSUPABASE', integrationConfig: null },
+        null,
         [mappedCourt],
       ),
     ).toBe(false);

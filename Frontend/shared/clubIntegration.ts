@@ -1,6 +1,6 @@
 /** Keep in sync with Backend/src/shared/clubIntegration.ts */
 
-export type ClubIntegrationType = 'BOOKTIME' | 'PADELOO' | 'KLIKTEREN';
+export type ClubIntegrationType = 'BOOKTIME' | 'PADELOO' | 'KLIKTEREN' | 'NSPADELSUPABASE';
 
 export interface BooktimeIntegrationConfig {
   companyId: string;
@@ -17,10 +17,15 @@ export interface KlikterenIntegrationConfig {
   venueId: string;
 }
 
+export interface NspadelIntegrationConfig {
+  supabaseUrl: string;
+}
+
 export type ClubIntegrationConfig =
   | BooktimeIntegrationConfig
   | PadelooIntegrationConfig
-  | KlikterenIntegrationConfig;
+  | KlikterenIntegrationConfig
+  | NspadelIntegrationConfig;
 
 export type ClubIntegrationRef = {
   integrationType?: ClubIntegrationType | null;
@@ -87,6 +92,31 @@ export function isKlikterenClub(club: ClubIntegrationRef | undefined): boolean {
   return club?.integrationType === 'KLIKTEREN';
 }
 
+export function parseNspadelIntegrationConfig(raw: unknown): NspadelIntegrationConfig | null {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const supabaseUrl = (raw as Record<string, unknown>).supabaseUrl;
+  if (typeof supabaseUrl !== 'string' || !supabaseUrl.trim()) return null;
+  const trimmed = supabaseUrl.trim().replace(/\/+$/, '');
+  let parsed: URL;
+  try {
+    parsed = new URL(trimmed);
+  } catch {
+    return null;
+  }
+  if (parsed.protocol !== 'https:') return null;
+  if (!/\.supabase\.co$/i.test(parsed.hostname)) return null;
+  return { supabaseUrl: trimmed };
+}
+
+export function isNspadelClub(club: ClubIntegrationRef | undefined): boolean {
+  return club?.integrationType === 'NSPADELSUPABASE';
+}
+
+export function getNspadelSupabaseUrl(club: ClubIntegrationRef | undefined): string | null {
+  if (!isNspadelClub(club)) return null;
+  return parseNspadelIntegrationConfig(club?.integrationConfig)?.supabaseUrl ?? null;
+}
+
 export function getBooktimeCompanyId(club: ClubIntegrationRef | undefined): string | null {
   if (!isBooktimeClub(club)) return null;
   return parseBooktimeIntegrationConfig(club?.integrationConfig)?.companyId ?? null;
@@ -107,6 +137,8 @@ export function getExternalVenueId(club: ClubIntegrationRef | undefined): string
   if (booktimeId) return booktimeId;
   const klikterenId = getKlikterenVenueId(club);
   if (klikterenId) return klikterenId;
+  const nspadelUrl = getNspadelSupabaseUrl(club);
+  if (nspadelUrl) return nspadelUrl;
   const padelooId = getPadelooClubId(club);
   return padelooId != null ? String(padelooId) : null;
 }
@@ -116,6 +148,7 @@ export function clubHasBookingIntegration(club: ClubIntegrationRef | undefined):
   if (isBooktimeClub(club)) return getBooktimeCompanyId(club) !== null;
   if (isPadelooClub(club)) return getPadelooClubId(club) !== null;
   if (isKlikterenClub(club)) return getKlikterenVenueId(club) !== null;
+  if (isNspadelClub(club)) return getNspadelSupabaseUrl(club) !== null;
   return false;
 }
 
@@ -162,6 +195,20 @@ export function shouldUseKlikterenDurations(
   courts: CourtIntegrationRef[] | undefined,
 ): boolean {
   if (!isKlikterenClub(club) || !clubHasBookingIntegration(club)) return false;
+  if (selectedCourtId === 'notBooked') return false;
+  if (selectedCourtId) {
+    const court = courts?.find((c) => c.id === selectedCourtId);
+    return courtHasActiveBookingIntegration(club, court);
+  }
+  return true;
+}
+
+export function shouldUseNspadelDurations(
+  club: ClubIntegrationRef | undefined,
+  selectedCourtId: string | null | undefined,
+  courts: CourtIntegrationRef[] | undefined,
+): boolean {
+  if (!isNspadelClub(club) || !clubHasBookingIntegration(club)) return false;
   if (selectedCourtId === 'notBooked') return false;
   if (selectedCourtId) {
     const court = courts?.find((c) => c.id === selectedCourtId);
