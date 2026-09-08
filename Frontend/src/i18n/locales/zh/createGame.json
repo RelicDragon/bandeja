@@ -51,7 +51,7 @@
     "selectCourtFirst": "请先选择场地",
     "clubCancellationNotice": "取消须知：至少提前 {{hours}} 小时。",
     "clubPolicyTitle": "俱乐部政策",
-    "nspadelProfileBookingNotice": "NS Padel Centar 的预订将使用您的 Bandeja 个人资料姓名和电话号码。",
+    "nspadelProfileBookingNotice": "NS Padel Centar 的预订将使用你的 Bandeja 个人资料中的姓名和电话号码。",
     "noClubsAvailable": "暂无可用俱乐部",
     "clubDetailsBack": "返回俱乐部列表",
     "clubInfo": "俱乐部详情",
