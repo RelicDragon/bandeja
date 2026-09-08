@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Club } from '@/types';
 import {
+  clubIsoUtcOffset,
   computeNspadelCourtAvailabilityRows,
   computeNspadelFreeSlotsForCourt,
   mappedNspadelCourts,
@@ -43,6 +44,26 @@ describe('nspadel availability rows', () => {
     expect(slots).not.toContain('18:30');
     expect(slots).toContain('19:00');
     expect(slots[slots.length - 1]).toBe('22:00');
+  });
+
+  it('resolves ISO UTC offsets per date (DST-aware)', () => {
+    expect(clubIsoUtcOffset('Europe/Belgrade', new Date('2026-01-15T12:00:00Z'))).toBe('+01:00');
+    expect(clubIsoUtcOffset('Europe/Belgrade', new Date('2026-09-09T12:00:00Z'))).toBe('+02:00');
+    expect(clubIsoUtcOffset('America/Sao_Paulo', new Date('2026-09-09T12:00:00Z'))).toBe('-03:00');
+  });
+
+  it('pins tapped wall time across device timezones', () => {
+    // The sheet links 16:00 Belgrade wall time with an explicit offset; any
+    // device must parse the same instant and read back 16:00 in Belgrade.
+    const instant = new Date('2026-09-09T16:00+02:00');
+    expect(instant.toISOString()).toBe('2026-09-09T14:00:00.000Z');
+    const back = new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Europe/Belgrade',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    }).format(instant);
+    expect(back).toBe('16:00');
   });
 
   it('builds one row per mapped court from snapshot busy data', () => {

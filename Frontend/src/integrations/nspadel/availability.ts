@@ -104,6 +104,45 @@ export function computeNspadelCourtAvailabilityRows(params: {
   });
 }
 
+/**
+ * ISO UTC offset (`+02:00`) of a timezone at a given instant. Booking links
+ * carry club wall-times (`2026-09-09T16:00`); without an explicit offset the
+ * create-game screen reinterprets them in the *device* timezone and a device
+ * outside the club's zone lands on the wrong slot. Resolved per date so DST
+ * transitions stay correct.
+ */
+export function clubIsoUtcOffset(timeZone: string, at: Date): string | null {
+  try {
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone,
+      hour12: false,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    });
+    const parts = Object.fromEntries(
+      formatter.formatToParts(at).map((part) => [part.type, part.value]),
+    );
+    const asUtcMs = Date.UTC(
+      Number(parts.year),
+      Number(parts.month) - 1,
+      Number(parts.day),
+      Number(parts.hour) % 24,
+      Number(parts.minute),
+      Number(parts.second),
+    );
+    const diffMinutes = Math.round((asUtcMs - at.getTime()) / 60000);
+    const sign = diffMinutes >= 0 ? '+' : '-';
+    const abs = Math.abs(diffMinutes);
+    return `${sign}${String(Math.floor(abs / 60)).padStart(2, '0')}:${String(abs % 60).padStart(2, '0')}`;
+  } catch {
+    return null;
+  }
+}
+
 /** The club site sells a 14-day strip; mirror it for prev/next-day bounds. */
 export function resolveNspadelDateBounds(club: Club, bookableDays = 14): { minDateKey: string; maxDateKey: string } {
   const todayKey = clubLocalDateString(club);

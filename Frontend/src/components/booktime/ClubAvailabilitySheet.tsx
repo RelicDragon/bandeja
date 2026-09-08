@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import type { Club } from '@/types';
 import { isNspadelClub } from '@shared/clubIntegration';
+import { clubIsoUtcOffset } from '@/integrations/nspadel/availability';
 import { useClubAvailability } from '@/hooks/useClubAvailability';
 import { formatClubDateKey } from '@/integrations/booktime/slots';
 import { getClubTimezone } from '@/hooks/useGameTimeDuration';
@@ -75,7 +76,17 @@ export function ClubAvailabilitySheet({
   }, [lastFetchedAt, t]);
 
   const openCreateGameForSlot = (courtId: string, startTime: string) => {
-    const { bookingStart, bookingEnd } = buildBookingIsoRange(dateKey, startTime, durationMinutes);
+    // NS Padel links carry the club's UTC offset so the tapped wall time
+    // survives devices outside the club's timezone (other clubs unchanged).
+    const timeZoneOffset = isNspadelClub(club)
+      ? clubIsoUtcOffset(getClubTimezone(club), selectedDate)
+      : null;
+    const { bookingStart, bookingEnd } = buildBookingIsoRange(
+      dateKey,
+      startTime,
+      durationMinutes,
+      timeZoneOffset,
+    );
     const params = new URLSearchParams({
       clubId: club.id,
       courtId,

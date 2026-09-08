@@ -66,7 +66,8 @@ export function resolveServiceUuid(
 export function buildBookingIsoRange(
   dateKey: string,
   startTime: string,
-  durationMinutes: number
+  durationMinutes: number,
+  timeZoneOffset: string | null = null
 ): BooktimeBookingRange {
   const [h, m] = startTime.split(':').map(Number);
   const startMinutes = h * 60 + m;
@@ -74,9 +75,13 @@ export function buildBookingIsoRange(
   const endH = Math.floor(endMinutes / 60);
   const endM = endMinutes % 60;
   const pad = (n: number) => String(n).padStart(2, '0');
+  // An explicit offset (+02:00) pins the wall time to the club's zone; without
+  // it the receiver reinterprets the time in the device zone. Defaults to the
+  // legacy offset-less shape so other providers are byte-identical.
+  const suffix = timeZoneOffset ?? '';
   return {
-    bookingStart: `${dateKey}T${pad(h)}:${pad(m)}`,
-    bookingEnd: `${dateKey}T${pad(endH)}:${pad(endM)}`,
+    bookingStart: `${dateKey}T${pad(h)}:${pad(m)}${suffix}`,
+    bookingEnd: `${dateKey}T${pad(endH)}:${pad(endM)}${suffix}`,
   };
 }
 
