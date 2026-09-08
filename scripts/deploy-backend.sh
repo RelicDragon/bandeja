@@ -22,5 +22,9 @@ npx prisma generate
 # Official sticker packs (idempotent upsert + S3 when AWS configured).
 # Without this, tray stays empty after STICKER migrations.
 npm run seed:sticker-packs
+# NS Padel Centar club row (idempotent upsert, deploy-safe skip when city
+# missing). Without this, fresh dev/prod deploys get no club for the
+# NSPADELSUPABASE integration.
+npm run seed:nspadel-centar
 npm run build
 pm2 restart backend

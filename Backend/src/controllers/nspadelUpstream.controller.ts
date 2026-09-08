@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { asyncHandler } from '../utils/asyncHandler';
 import { ApiError } from '../utils/ApiError';
+import { BOOKING_ERROR_KEYS } from '@bandeja/shared/booking/errorKeys';
 import { ClubIntegrationType } from '@prisma/client';
 import prisma from '../config/database';
 import { parseNspadelIntegrationConfig } from '../shared/clubIntegration';
@@ -42,7 +43,7 @@ export const proxyNspadelUpstream = asyncHandler(async (req: Request, res: Respo
   }
   const config = parseNspadelIntegrationConfig(club.integrationConfig);
   if (!config) {
-    throw new ApiError(400, 'Club not configured');
+    throw new ApiError(400, BOOKING_ERROR_KEYS.nspadelSupabaseUrlRequired);
   }
 
   const method = req.method.toUpperCase();

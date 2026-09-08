@@ -31,7 +31,8 @@ async function resolveGameClubBookingProvider(gameId: string, tx: Tx): Promise<C
   if (
     integrationType === ClubIntegrationType.BOOKTIME ||
     integrationType === ClubIntegrationType.PADELOO ||
-    integrationType === ClubIntegrationType.KLIKTEREN
+    integrationType === ClubIntegrationType.KLIKTEREN ||
+    integrationType === ClubIntegrationType.NSPADELSUPABASE
   ) {
     return integrationType;
   }

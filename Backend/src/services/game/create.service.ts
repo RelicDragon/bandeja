@@ -113,6 +113,7 @@ export class GameCreateService {
         ClubIntegrationType.BOOKTIME,
         ClubIntegrationType.PADELOO,
         ClubIntegrationType.KLIKTEREN,
+        ClubIntegrationType.NSPADELSUPABASE,
       ];
       if (provider !== undefined && !allowedProviders.includes(provider)) {
         throw new ApiError(400, BOOKING_ERROR_KEYS.externalProviderUnsupported);
