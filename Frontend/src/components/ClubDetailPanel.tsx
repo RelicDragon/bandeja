@@ -31,6 +31,7 @@ import {
   getPadelooClubId,
   isBooktimeClub,
   isKlikterenClub,
+  isNspadelClub,
   isPadelooClub,
   parseBooktimeIntegrationConfig,
 } from '@shared/clubIntegration';
@@ -234,7 +235,7 @@ export function ClubDetailPanel({ club, onOpenFullscreenPhoto, onClubRefresh, sn
           selectedDate={scheduleDate}
           onDateChange={setAvailabilityDate}
           lastFetchedAt={lastFetchedAt}
-          connected={!!clubAuth?.connected && !showReauthBanner}
+          connected={isNspadelClub(club) || (!!clubAuth?.connected && !showReauthBanner)}
           onConnectRequest={() => setConnectOpen(true)}
           onRefreshSnapshot={refreshSnapshot}
           onBooked={() => setBookingsRefreshKey((k) => k + 1)}

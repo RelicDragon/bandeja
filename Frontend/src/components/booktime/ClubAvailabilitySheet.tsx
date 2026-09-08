@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import type { Club } from '@/types';
+import { isNspadelClub } from '@shared/clubIntegration';
 import { useClubAvailability } from '@/hooks/useClubAvailability';
 import { formatClubDateKey } from '@/integrations/booktime/slots';
 import { getClubTimezone } from '@/hooks/useGameTimeDuration';
@@ -85,7 +86,9 @@ export function ClubAvailabilitySheet({
   };
 
   const handleSlotTap = (courtId: string, startTime: string) => {
-    if (!connected) {
+    // NS Padel Centar has no connect flow (bookings go under the Bandeja
+    // profile), so its slots must never route to the connect sheet.
+    if (!connected && !isNspadelClub(club)) {
       onConnectRequest();
       return;
     }
