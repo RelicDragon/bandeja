@@ -188,13 +188,17 @@ export class NspadelClient {
     if (durationMinutes) params.set('durationMinutes', String(durationMinutes));
     const data = await this.request<unknown>(`/availability?${params.toString()}`);
     const root = asRecord(data);
+    // The backend wraps payloads as { success, data }; accept bare arrays too.
+    const envelope = asRecord(root?.data);
     const rows = Array.isArray(data)
       ? data
       : Array.isArray(root?.slots)
         ? root!.slots
         : Array.isArray(root?.data)
           ? root!.data
-          : [];
+          : Array.isArray(envelope?.slots)
+            ? envelope!.slots
+            : [];
     return {
       slots: rows.map(normalizeSlot).filter((s): s is NspadelAvailabilitySlot => s != null),
     };

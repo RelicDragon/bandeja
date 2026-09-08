@@ -29,7 +29,7 @@ import {
   type ReservationIntent,
 } from '@shared/gameBooking/reservationIntent';
 import { mapCreateAbortReasonToValidationReason } from './resolveCreateGameBookingAction';
-import { clubHasBookingIntegration, isKlikterenClub, isPadelooClub, parseBooktimeIntegrationConfig, parseKlikterenIntegrationConfig, parsePadelooIntegrationConfig } from '@shared/clubIntegration';
+import { clubHasBookingIntegration, isKlikterenClub, isNspadelClub, isPadelooClub, parseBooktimeIntegrationConfig, parseKlikterenIntegrationConfig, parsePadelooIntegrationConfig } from '@shared/clubIntegration';
 import { checkBookingOverlap, fetchBookedCourtsForDay } from '@/utils/bookedCourts/overlapCheck';
 import { courtHasActiveBookingIntegration } from '@/utils/clubBookingIntegration';
 import { usePreselectedBookingHydration } from './usePreselectedBookingHydration';
@@ -795,6 +795,13 @@ export function useCreateGameBookingFlow({
           email: clubBookingAuth?.email ?? null,
           firstName: clubBookingAuth?.firstName ?? null,
           lastName: clubBookingAuth?.lastName ?? null,
+          ...sharedTail,
+        };
+      }
+
+      if (isNspadelClub(selectedClubData)) {
+        return {
+          provider: 'NSPADELSUPABASE' as const,
           ...sharedTail,
         };
       }

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { booktimeApi, type BooktimeAuthStatus } from '@/api/booktime';
 import { padelooApi, type PadelooAuthStatus } from '@/api/padeloo';
 import { klikterenApi, type KlikterenAuthStatus } from '@/api/klikteren';
-import { isBooktimeClub, isKlikterenClub, isPadelooClub, type ClubIntegrationRef } from '@shared/clubIntegration';
+import { isBooktimeClub, isKlikterenClub, isNspadelClub, isPadelooClub, type ClubIntegrationRef } from '@shared/clubIntegration';
 import { onBookingAuthInvalidated } from '@/integrations/booking/bookingAuthInvalidation';
 
 export type ClubBookingAuthStatus = {
@@ -94,6 +94,14 @@ export function useClubBookingAuth(club: (ClubIntegrationRef & { id: string }) |
             scoutOptIn: true,
           },
         );
+        setStatus(next);
+        return next;
+      }
+
+      // NS Padel Centar needs no external account: bookings are made under
+      // the player's Bandeja profile contact details, so it is always connected.
+      if (isNspadelClub(club)) {
+        const next: ClubBookingAuthStatus = { connected: true };
         setStatus(next);
         return next;
       }
