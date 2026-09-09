@@ -40,6 +40,7 @@ assert(withExtra.includes('http://evil.example'), 'extra origin trailing slash s
 
 assert(isCorsOriginAllowed('https://bandeja.me', prod), 'bandeja.me allowed');
 assert(isCorsOriginAllowed('https://travel.bandeja.me', prod), 'travel.bandeja.me SSO allowed');
+assert(isCorsOriginAllowed('https://arena.bandeja.me', prod), 'arena.bandeja.me SSO allowed');
 assert(
   isCorsOriginAllowed('https://montenegro2026.bandeja.me', prod),
   'Montenegro 2026 landing allowed'
@@ -60,6 +61,7 @@ function decide(origin: string | undefined): boolean {
 }
 assert(decide(undefined) === true, 'no Origin → allow (non-browser / same-origin)');
 assert(decide('https://bandeja.me') === true, 'delegate allows bandeja.me');
+assert(decide('https://arena.bandeja.me') === true, 'delegate allows arena.bandeja.me');
 assert(
   decide('https://montenegro2026.bandeja.me') === true,
   'delegate allows Montenegro 2026 landing'

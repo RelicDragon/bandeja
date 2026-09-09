@@ -47,6 +47,7 @@ const ALLOWED_REDIRECT_ORIGINS = new Set([
   'https://bandeja.me',
   'https://www.bandeja.me',
   'https://travel.bandeja.me',
+  'https://arena.bandeja.me',
   'http://localhost:3001',
   'http://localhost:3000',
   'http://localhost:5173',
