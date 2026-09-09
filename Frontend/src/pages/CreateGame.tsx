@@ -1,3 +1,4 @@
+import type { ClubScheduleSelection } from '@/components/clubPicker/clubScheduleSelection';
 import { useState, useEffect, useMemo, useRef, useCallback, createRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -337,6 +338,7 @@ export const CreateGame = ({
   const [loading, setLoading] = useState(false);
   const [createOverlayPhase, setCreateOverlayPhase] = useState<CreateGameProgressPhase | null>(null);
   const [isClubModalOpen, setIsClubModalOpen] = useState(false);
+  const [pendingClubSchedule, setPendingClubSchedule] = useState<ClubScheduleSelection | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [isInvitePlayersModalOpen, setIsInvitePlayersModalOpen] = useState(false);
@@ -758,8 +760,10 @@ export const CreateGame = ({
 
   const handleSelectClub = useCallback((id: string, club?: Club) => {
     const picked = club ?? clubs.find((c) => c.id === id);
-    if (picked && !clubs.some((c) => c.id === picked.id)) {
-      setClubs((prev) => [...prev, picked]);
+    if (picked) {
+      setClubs((prev) => prev.some((c) => c.id === picked.id)
+        ? prev.map((c) => c.id === picked.id ? picked : c)
+        : [...prev, picked]);
     }
     if (picked?.cityId) setLocationCityId(picked.cityId);
     setSelectedClub(id);
@@ -794,6 +798,7 @@ export const CreateGame = ({
   const courtsClubRef = useRef<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
     const fetchCourts = async () => {
       if (!selectedClub) {
         setCourts([]);
@@ -813,6 +818,7 @@ export const CreateGame = ({
           courtsApi.getByClubId(selectedClub, courtSportQuery),
           courtsApi.getByClubId(selectedClub),
         ]);
+        if (cancelled) return;
         const sportCourts = sportFilteredRes.data;
         const clubCourts = allCourtsRes.data;
         setCourts(sportCourts);
@@ -837,7 +843,25 @@ export const CreateGame = ({
       }
     };
     void fetchCourts();
+    return () => { cancelled = true; };
   }, [selectedClub, selectedSport, entityType, initialCourtId, initialHasBookedCourt, setHasBookedCourt]);
+
+  const { applyClubScheduleSelection } = bookingFlow;
+  useEffect(() => {
+    if (!pendingClubSchedule || selectedClub !== pendingClubSchedule.club.id) return;
+    if (courtsClubRef.current !== selectedClub || !courts.some((court) => court.id === pendingClubSchedule.courtId)) return;
+    applyClubScheduleSelection(pendingClubSchedule);
+    setPendingClubSchedule(null);
+  }, [pendingClubSchedule, selectedClub, courts, applyClubScheduleSelection]);
+
+  const clubSchedulePicker = {
+    selectedDate,
+    allowBookingLink: entityType === 'GAME' || entityType === 'TRAINING' || entityType === 'TOURNAMENT',
+    onSelect: (selection: ClubScheduleSelection) => {
+      handleSelectClub(selection.club.id, selection.club);
+      setPendingClubSchedule(selection);
+    },
+  };
 
   useEffect(() => {
     if (selectedCourt === 'notBooked') return;
@@ -1868,6 +1892,7 @@ export const CreateGame = ({
                   bookingMatchCourts={allClubCourts.length > 0 ? allClubCourts : courts}
                   selectedDate={selectedDate}
                   selectedBookingIds={selectedBookingIds}
+                  fallbackSelectedBookings={selectedBookingRecords}
                   onSelectedBookingIdsChange={onSelectedBookingIdsChange}
                   bookingSelectionLimits={bookingSelectionLimits}
                   companyId={booktimeIntegrationConfig?.companyId}
@@ -1910,6 +1935,7 @@ export const CreateGame = ({
                       selectedCourt={selectedCourt}
                       isClubModalOpen={isClubModalOpen}
                       onSelectClub={handleSelectClub}
+                      schedulePicker={clubSchedulePicker}
                       onOpenClubModal={() => setIsClubModalOpen(true)}
                       onCloseClubModal={() => setIsClubModalOpen(false)}
                       venueCityId={locationCityId}
@@ -1983,6 +2009,7 @@ export const CreateGame = ({
                   preferredSport={selectedSport}
                   isClubModalOpen={isClubModalOpen}
                   onSelectClub={handleSelectClub}
+                  schedulePicker={clubSchedulePicker}
                   onOpenClubModal={() => setIsClubModalOpen(true)}
                   onCloseClubModal={() => setIsClubModalOpen(false)}
                   venueCityId={locationCityId}

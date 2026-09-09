@@ -1,3 +1,4 @@
+import { ClubBookingBadge } from '@/components/ClubBookingBadge';
 import { MapPin } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { CityModal, ClubModal, ClubAvatar } from '@/components';
@@ -83,7 +84,10 @@ export const LeagueLocationSection = ({
                     return c ? (
                       <>
                         <ClubAvatar club={c} className="h-10 w-[3.75rem] shrink-0" />
-                        <span className="truncate min-w-0">{c.name}</span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate">{c.name}</span>
+                          <ClubBookingBadge club={c} className="mt-1.5" />
+                        </span>
                       </>
                     ) : (
                       t('createGame.selectClub')

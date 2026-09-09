@@ -1,3 +1,4 @@
+import { ClubBookingBadge } from '@/components/ClubBookingBadge';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
 import { useCallback, useRef } from 'react';
@@ -123,7 +124,10 @@ export function PlayIntentMoreOptionsCard({
                               : 'bg-background text-foreground/90 hover:bg-muted'
                           }`}
                         >
-                          {club.name}
+                          <span className="flex min-w-0 flex-col items-start gap-1.5">
+                            <span>{club.name}</span>
+                            <ClubBookingBadge club={club} onColor={active} />
+                          </span>
                         </button>
                       );
                     })

@@ -311,6 +311,8 @@ export interface ClubReview {
 }
 
 export interface Club {
+  /** Booking capability supplied by lightweight map/search results. */
+  canBookInApp?: boolean;
   id: string;
   name: string;
   normalizedName?: string;

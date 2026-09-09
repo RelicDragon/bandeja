@@ -1,11 +1,14 @@
+import type { ClubSchedulePicker } from '@/components/clubPicker/clubScheduleSelection';
 import { useTranslation } from 'react-i18next';
 import { ChevronRight, Lock, MapPin } from 'lucide-react';
 import { ClubModal, ClubAvatar } from '@/components';
+import { ClubBookingBadge } from '@/components/ClubBookingBadge';
 import { CourtLocationLinks } from '@/components/CourtLocationLinks';
 import { LocationTimeStepHeader } from '@/components/gameLocationTime/LocationTimeStepHeader';
 import type { Club, Court, EntityType, Sport } from '@/types';
 
 interface CreateGameClubSectionProps {
+  schedulePicker?: ClubSchedulePicker;
   clubs: Club[];
   courts: Court[];
   selectedClub: string;
@@ -27,6 +30,7 @@ export const CreateGameClubSection = ({
   courts,
   selectedClub,
   selectedCourt,
+  schedulePicker,
   isClubModalOpen,
   onSelectClub,
   onOpenClubModal,
@@ -44,6 +48,7 @@ export const CreateGameClubSection = ({
   return (
     <>
       <ClubModal
+        schedulePicker={schedulePicker}
         isOpen={isClubModalOpen}
         onClose={onCloseClubModal}
         clubs={clubs}
@@ -86,6 +91,7 @@ export const CreateGameClubSection = ({
                     {club.address}
                   </span>
                 ) : null}
+                <ClubBookingBadge club={club} className="mt-1.5" />
               </span>
             </>
           ) : (

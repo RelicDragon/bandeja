@@ -33,5 +33,8 @@ export interface ClubBookingProvider {
 
   listUpcoming(index?: number, size?: number): Promise<ExternalBookingResult[]>;
 
+  /** Live account lookup. Errors must propagate, never count as a missing booking. */
+  verifyBooking?(externalBookingId: string): Promise<boolean>;
+
   fetchSnapshotCourts(selectedDate: Date, dateKey: string): Promise<BusySnapshotCourt[]>;
 }

@@ -138,6 +138,7 @@ export function useEditGameLocationTimeBookingSync({
 
     const syncKey = [
       selectedBookingIds.join(','),
+      schedule.selectedDate.toDateString(),
       schedule.selectedTime,
       schedule.durationHours,
       schedule.courtIds.join(','),

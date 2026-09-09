@@ -1,5 +1,6 @@
 import type { Club } from '@/types';
 import type { KlikterenClient } from '@/integrations/klikteren/client';
+import { isCancelledBooking } from '../verifyBooktimeBooking';
 import {
   confirmKlikterenBooking,
   cancelKlikterenBooking,
@@ -85,6 +86,15 @@ export class KlikterenClubBookingProvider implements ClubBookingProvider {
         bookingEnd: `${row.date}T${row.endTime}`,
         price: row.price,
       }));
+  }
+
+  async verifyBooking(externalBookingId: string) {
+    if (!this.client.isAuthenticated) throw new Error(BOOKING_ERROR_KEYS.sessionExpired);
+    const bookings = await this.client.getMyBookings();
+    return bookings.some((row) =>
+      (!row.venueId || row.venueId === this.klikterenVenueId) &&
+      String(row.id) === externalBookingId && !isCancelledBooking(row.status),
+    );
   }
 
   async fetchSnapshotCourts(_selectedDate: Date, dateKey: string) {

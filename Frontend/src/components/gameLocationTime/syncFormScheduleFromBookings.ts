@@ -2,6 +2,7 @@ import type { Club, Court } from '@/types';
 import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
 import { buildBookingSnapshots } from '@shared/gameBooking/buildBookingSnapshots';
 import { deriveGameTimeFromBookings } from '@shared/gameBooking/deriveGameTimeFromBookings';
+import { formatClubDateKey } from '@/integrations/booktime/slots';
 import { formatTimeInClubTimezone } from '@/hooks/useGameTimeDuration';
 
 export type FormScheduleFromBookings = {
@@ -46,8 +47,9 @@ export function syncFormScheduleFromBookings(input: {
     ...new Set(snapshots.map((s) => s.courtId).filter((id): id is string => Boolean(id))),
   ];
 
+  const [year, month, day] = formatClubDateKey(startDate, input.club).split('-').map(Number);
   return {
-    selectedDate: startDate,
+    selectedDate: new Date(year, month - 1, day, 12),
     selectedTime: formatTimeInClubTimezone(startDate, input.club),
     durationHours,
     courtIds,

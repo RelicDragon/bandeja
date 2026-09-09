@@ -1,5 +1,6 @@
 import type { Club } from '@/types';
 import type { BooktimeClient } from '@/integrations/booktime/client';
+import { verifyBooktimeBooking } from '../verifyBooktimeBooking';
 import {
   confirmBooktimeBooking,
   cancelBooktimeBooking,
@@ -81,6 +82,15 @@ export class BooktimeClubBookingProvider implements ClubBookingProvider {
       bookingStart: booking.bookingStart,
       bookingEnd: booking.bookingEnd,
     }));
+  }
+
+  async verifyBooking(externalBookingId: string) {
+    if (!this.client.isAuthenticated) throw new Error(BOOKING_ERROR_KEYS.sessionExpired);
+    return verifyBooktimeBooking(
+      externalBookingId,
+      (index, size) => this.client.getUpcomingBookings(index, size, { fresh: true }),
+      (index, size) => this.client.getPreviousBookings(index, size),
+    );
   }
 
   async fetchSnapshotCourts(selectedDate: Date, dateKey: string) {

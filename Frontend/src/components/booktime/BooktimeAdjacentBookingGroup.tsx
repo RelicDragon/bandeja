@@ -24,6 +24,7 @@ import {
 } from './booktimeBookingUtils';
 
 type Props = {
+  onLinkToCurrentGame?: (booking: BooktimeBookingRecord) => void;
   bookings: BooktimeBookingRecord[];
   club: BookingListClubRow;
   showClubName?: boolean;
@@ -53,6 +54,7 @@ export function BooktimeAdjacentBookingGroup({
   compact = false,
   clubTimezone,
   onCanceled,
+  onLinkToCurrentGame,
   onRefreshSnapshot,
   selectable = false,
   selectedBookingIds = [],
@@ -192,6 +194,7 @@ export function BooktimeAdjacentBookingGroup({
           onLinkedGamesReload={() => void reloadLinkedGames()}
           priceQuote={priceById.get(booking.uuid) ?? null}
           onRefreshSnapshot={onRefreshSnapshot}
+          onLinkToCurrentGame={onLinkToCurrentGame}
           onCanceled={() => onCanceled?.(booking.uuid)}
         />
       ))}

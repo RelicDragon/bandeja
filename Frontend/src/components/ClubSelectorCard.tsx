@@ -1,13 +1,15 @@
 import { Navigation, Info } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { ClubAvatar } from '@/components/ClubAvatar';
+import { ClubBookingBadge } from '@/components/ClubBookingBadge';
+import type { Club } from '@/types';
 import {
   CITY_SELECTOR_CHECK,
   CITY_SELECTOR_ROW_IDLE,
   CITY_SELECTOR_ROW_SELECTED,
 } from '@/components/CityList/citySelectorRowStyles';
 
-export interface ClubSelectorCardClub {
+export interface ClubSelectorCardClub extends Pick<Club, 'integrationType' | 'integrationConfig' | 'canBookInApp'> {
   id: string;
   name: string;
   avatar?: string | null;
@@ -55,7 +57,6 @@ export function ClubSelectorCard({
           type="button"
           onClick={onSelect}
           aria-pressed={isSelected}
-          aria-label={isNearest ? `${club.name}, ${t('city.nearestToYou')}` : undefined}
           className="flex-1 min-w-0 text-start flex items-stretch rounded-2xl"
         >
           <div className="relative w-[4.125rem] shrink-0 self-stretch bg-gray-200/80 dark:bg-gray-700/80">
@@ -69,6 +70,7 @@ export function ClubSelectorCard({
                   title={t('city.nearestToYou')}
                 >
                   <Navigation className="w-3.5 h-3.5" strokeWidth={2.5} aria-hidden />
+                  <span className="sr-only">{t('city.nearestToYou')}</span>
                 </span>
               )}
               <div className="font-medium text-sm text-gray-900 dark:text-white truncate min-w-0">
@@ -83,6 +85,7 @@ export function ClubSelectorCard({
             {secondaryLine ? (
               <div className="text-sm mt-0.5 truncate text-gray-600 dark:text-gray-400">{secondaryLine}</div>
             ) : null}
+            <ClubBookingBadge club={club} className="mt-1.5 self-start" />
           </div>
         </button>
         {showInfoButton && onInfoClick ? (
@@ -110,7 +113,6 @@ export function ClubSelectorCard({
       <button
         type="button"
         onClick={onSelect}
-        aria-label={isNearest ? `${club.name}, ${t('city.nearestToYou')}` : undefined}
         className={`flex-1 min-w-0 text-start flex items-stretch rounded-lg ${
           isSelected ? '' : 'hover:bg-gray-100 dark:hover:bg-gray-700/80'
         }`}
@@ -138,6 +140,7 @@ export function ClubSelectorCard({
                 title={t('city.nearestToYou')}
               >
                 <Navigation className="w-3.5 h-3.5" strokeWidth={2.5} aria-hidden />
+                <span className="sr-only">{t('city.nearestToYou')}</span>
               </span>
             )}
             <div className="font-medium truncate min-w-0">{club.name}</div>
@@ -147,6 +150,7 @@ export function ClubSelectorCard({
               {secondaryLine}
             </div>
           ) : null}
+          <ClubBookingBadge club={club} onColor={isSelected} className="mt-1.5 self-start" />
         </div>
       </button>
       {showInfoButton && onInfoClick ? (

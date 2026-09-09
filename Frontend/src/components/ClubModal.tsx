@@ -1,3 +1,4 @@
+import type { ClubSchedulePicker } from '@/components/clubPicker/clubScheduleSelection';
 import { useState, useEffect, useRef, useCallback, useLayoutEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, Search } from 'lucide-react';
@@ -13,6 +14,7 @@ import { useClubVenuePicker } from '@/hooks/useClubVenuePicker';
 import { useBrowseCityStore } from '@/store/browseCityStore';
 
 interface ClubModalProps {
+  schedulePicker?: ClubSchedulePicker;
   isOpen: boolean;
   onClose: () => void;
   clubs: Club[];
@@ -27,6 +29,7 @@ interface ClubModalProps {
 type Panel = 'list' | 'detail' | 'city';
 
 export const ClubModal = ({
+  schedulePicker,
   isOpen,
   onClose,
   clubs,
@@ -42,6 +45,7 @@ export const ClubModal = ({
   const [search, setSearch] = useState('');
   const [panel, setPanel] = useState<Panel>('list');
   const [detailClub, setDetailClub] = useState<Club | null>(null);
+  const detailRequestRef = useRef(0);
   const [fullscreenUrl, setFullscreenUrl] = useState<string | null>(null);
 
   const selectedClub = clubs.find((c) => c.id === selectedId);
@@ -60,6 +64,7 @@ export const ClubModal = ({
 
   useEffect(() => {
     if (!isOpen) {
+      detailRequestRef.current += 1;
       setSearch('');
       setPanel('list');
       setDetailClub(null);
@@ -124,11 +129,12 @@ export const ClubModal = ({
   const openDetail = async (club: Club, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    const request = ++detailRequestRef.current;
     setDetailClub(club);
     setPanel('detail');
     try {
       const res = await clubsApi.getById(club.id);
-      if (res.success && res.data) setDetailClub(res.data);
+      if (request === detailRequestRef.current && res.success && res.data) setDetailClub(res.data);
     } catch {
       /* keep list payload */
     }
@@ -146,6 +152,7 @@ export const ClubModal = ({
 
   const closeCityPicker = () => setPanel('list');
   const closeDetail = () => {
+    detailRequestRef.current += 1;
     setPanel('list');
     setDetailClub(null);
   };
@@ -246,7 +253,16 @@ export const ClubModal = ({
                 className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain p-4"
               >
                 <ClubDetailPanel
+                  key={detailClub.id}
                   club={detailClub}
+                  preferredSport={preferredSport}
+                  schedulePicker={schedulePicker ? {
+                    ...schedulePicker,
+                    onSelect: (selection) => {
+                      schedulePicker.onSelect(selection);
+                      onClose();
+                    },
+                  } : undefined}
                   onOpenFullscreenPhoto={(url) => setFullscreenUrl(url)}
                   onClubRefresh={refreshDetailClub}
                 />

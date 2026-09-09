@@ -1,3 +1,4 @@
+import type { ClubSchedulePicker } from '@/components/clubPicker/clubScheduleSelection';
 import { ArrowUp, Clock } from 'lucide-react';
 import { LocationTimeStepHeader } from '@/components/gameLocationTime/LocationTimeStepHeader';
 import { useTranslation } from 'react-i18next';
@@ -29,6 +30,7 @@ import {
 } from '@/utils/calendarWeatherModeStorage';
 
 interface GameStartSectionProps {
+  schedulePicker?: ClubSchedulePicker;
   selectedDate: Date;
   selectedTime: string;
   duration: number;
@@ -127,6 +129,7 @@ export const GameStartSection = ({
   clubs,
   courts,
   preferredSport,
+  schedulePicker,
   isClubModalOpen = false,
   onSelectClub,
   onOpenClubModal,
@@ -384,6 +387,7 @@ export const GameStartSection = ({
 
   const clubPickerSection = showClubPicker ? (
     <CreateGameClubSection
+        schedulePicker={schedulePicker}
       clubs={clubs ?? []}
       courts={courts ?? []}
       selectedClub={selectedClub}

@@ -1,3 +1,5 @@
+import { buildCreateGameDeepLinkParams } from '@/services/gameBooking/linkBookingToGame';
+import { resolveCourtForBooking, resolveBooktimeMyClubTimezone } from './booktimeBookingUtils';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Club } from '@/types';
@@ -13,6 +15,8 @@ import { KLIKTEREN_DEFAULT_CANCEL_HOURS } from '@/integrations/klikteren/config'
 import { isBooktimeClub, isKlikterenClub, isPadelooClub, getKlikterenVenueId } from '@shared/clubIntegration';
 
 type Props = {
+  onSelectBooking?: (selection: import('@/components/clubPicker/clubScheduleSelection').ClubScheduleSelection) => void;
+  preferredSport?: import('@/types').Sport | null;
   club: Club;
   connected: boolean;
   enabled: boolean;
@@ -69,6 +73,8 @@ export function ClubUpcomingBookings({
   enabled,
   onRefreshSnapshot,
   refreshKey = 0,
+  onSelectBooking,
+  preferredSport,
 }: Props) {
   const { t } = useTranslation();
   const connectedRow = useMemo(() => clubToConnectedRow(club, connected), [club, connected]);
@@ -111,7 +117,17 @@ export function ClubUpcomingBookings({
         <p className="text-sm text-gray-500 dark:text-gray-400">{t('club.booktime.noUpcomingAny')}</p>
       ) : (
         <BooktimeUpcomingBookingsList
-          bookings={bookings}
+          bookings={onSelectBooking ? bookings.filter((booking) => {
+            const courtId = resolveCourtForBooking(booking, clubRow, '').courtId;
+            const court = club.courts?.find((c) => c.id === courtId);
+            return court && (!preferredSport || !court.sport || court.sport === preferredSport);
+          }) : bookings}
+          onLinkToCurrentGame={onSelectBooking ? (booking) => {
+            const courtId = resolveCourtForBooking(booking, clubRow, '').courtId;
+            if (!courtId) return;
+            const range = buildCreateGameDeepLinkParams(club.id, booking, courtId, resolveBooktimeMyClubTimezone(clubRow));
+            onSelectBooking({ club, courtId, startTime: range.startTime, endTime: range.endTime, booking });
+          } : undefined}
           clubById={clubById}
           allowedHoursToCancelByClubId={cancelHoursByClubId}
           onRefreshSnapshot={onRefreshSnapshot}

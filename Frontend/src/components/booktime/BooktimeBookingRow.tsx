@@ -2,7 +2,7 @@ import { useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { AlertTriangle, Check, ExternalLink, Plus, Trash2 } from 'lucide-react';
+import { AlertTriangle, Check, ExternalLink, Link2, Plus, Trash2 } from 'lucide-react';
 import { motion, type Variants } from 'framer-motion';
 import type { BooktimeLinkedGame } from '@/api/booktime';
 import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
@@ -30,6 +30,7 @@ import {
   linkedGamesFullyCoverBookingSlot,
 } from '@/services/gameBooking/linkBookingToGame';
 import { BooktimeBookingActionButton } from './BooktimeBookingActionButton';
+import { VerifyBookingButton } from './VerifyBookingButton';
 import { BooktimeBookingOccupancyPill } from './BooktimeBookingOccupancyPill';
 import { BooktimeLinkedGameLink } from './BooktimeLinkedGameLink';
 import { BooktimeLinkGameButton } from './BooktimeLinkGameModal';
@@ -39,6 +40,7 @@ import { bookingPriceQuote } from './booktimeBookingPrices';
 import { useBooktimeClubCurrency } from './useBooktimeClubCurrency';
 
 type Props = {
+  onLinkToCurrentGame?: (booking: BooktimeBookingRecord) => void;
   booking: BooktimeBookingRecord;
   club: BookingListClubRow;
   showClubName?: boolean;
@@ -88,6 +90,7 @@ export function BooktimeBookingRow({
   allowedHoursToCancel = 12,
   onCanceled,
   onCreateGame,
+  onLinkToCurrentGame,
   onRefreshSnapshot,
   compact = false,
   clubTimezone,
@@ -112,7 +115,7 @@ export function BooktimeBookingRow({
   const user = useAuthStore((s) => s.user);
   const displaySettings = useMemo(() => resolveDisplaySettings(user), [user]);
   const navigate = useNavigate();
-  const [cancelOpen, setCancelOpen] = useState(false);
+  const [cancelStep, setCancelStep] = useState<'policyWarning' | 'confirm' | null>(null);
   const [cancelBusy, setCancelBusy] = useState(false);
   const { linkedGame, linkedGames: fetchedLinkedGames, reload: reloadLinkedGame } = useBooktimeLinkedGame(
     booking.uuid,
@@ -154,16 +157,17 @@ export function BooktimeBookingRow({
   };
 
   const handleConfirmCancel = async () => {
-    const clubEntity = bookingListClubRowToClub(club);
-    const provider = await createHydratedClubBookingProvider(clubEntity);
-    if (!provider) return;
+    if (cancelBusy) return;
     setCancelBusy(true);
     try {
+      const clubEntity = bookingListClubRowToClub(club);
+      const provider = await createHydratedClubBookingProvider(clubEntity);
+      if (!provider) throw new Error('Booking cancellation unavailable');
       await provider.cancelBooking(
         booking.uuid,
         onRefreshSnapshot ?? (async () => true),
       );
-      setCancelOpen(false);
+      setCancelStep(null);
       toast.success(t('club.booktime.cancelSuccess'));
       if (linkedGame) {
         setCancelDoneBanner(linkedGame);
@@ -189,10 +193,15 @@ export function BooktimeBookingRow({
       visible ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0 pointer-events-none'
     }`;
 
-  const cancelButton = hasCancel && cancellable ? (
+  const cancelButton = hasCancel ? (
     <BooktimeBookingActionButton
       variant="danger"
-      onClick={() => setCancelOpen(true)}
+      disabled={cancelBusy}
+      onClick={() => setCancelStep(
+        canCancelByPolicy(booking.bookingStart, allowedHoursToCancel, clubTimezone)
+          ? 'confirm'
+          : 'policyWarning',
+      )}
     >
       <Trash2 size={12} aria-hidden />
       {t('club.booktime.cancelBooking')}
@@ -320,19 +329,25 @@ export function BooktimeBookingRow({
     <div className="flex flex-wrap items-center gap-2">
       {!slotFullyLinked ? (
         <>
-          <BooktimeLinkGameButton
+          {onLinkToCurrentGame ? (
+            <BooktimeBookingActionButton onClick={() => onLinkToCurrentGame(booking)}>
+              <Link2 size={12} aria-hidden />
+              {t('club.booktime.linkToThisGame')}
+            </BooktimeBookingActionButton>
+          ) : <BooktimeLinkGameButton
             booking={booking}
             club={club}
             hasLinkedGame={linkedGames.length > 0}
             onLinked={handleLinkedGame}
-          />
-          <BooktimeBookingActionButton onClick={openCreateGame}>
+          />}
+          {!onLinkToCurrentGame && <BooktimeBookingActionButton onClick={openCreateGame}>
             <Plus size={12} aria-hidden />
             {t('club.booktime.createGameHere')}
-          </BooktimeBookingActionButton>
+          </BooktimeBookingActionButton>}
         </>
       ) : null}
-      {hasCancel && cancellable ? cancelButton : null}
+      {cancelButton}
+      <VerifyBookingButton bookingId={booking.uuid} club={club} disabled={cancelBusy} onRemoved={onCanceled} />
     </div>
   ) : null;
 
@@ -388,18 +403,30 @@ export function BooktimeBookingRow({
       )}
 
       <ConfirmationModal
-        isOpen={cancelOpen}
-        onClose={() => !cancelBusy && setCancelOpen(false)}
-        title={t('club.booktime.cancelConfirmTitle')}
+        isOpen={cancelStep !== null}
+        onClose={() => !cancelBusy && setCancelStep(null)}
+        title={t(cancelStep === 'policyWarning'
+          ? 'club.booktime.cancelOutsidePolicyTitle'
+          : 'club.booktime.cancelConfirmTitle')}
         message={
-          linkedGames.length > 0
-            ? t('club.booktime.cancelConfirmLinkedBody', { hours: allowedHoursToCancel })
-            : t('club.booktime.cancelConfirmBody', { hours: allowedHoursToCancel })
+          cancelStep === 'policyWarning'
+            ? t('club.booktime.cancelOutsidePolicyBody', { hours: allowedHoursToCancel, count: allowedHoursToCancel })
+            : linkedGames.length > 0
+              ? t('club.booktime.cancelConfirmLinkedBody', { hours: allowedHoursToCancel, count: allowedHoursToCancel })
+              : t('club.booktime.cancelConfirmBody', { hours: allowedHoursToCancel, count: allowedHoursToCancel })
         }
-        confirmText={t('club.booktime.cancelConfirmCta')}
+        confirmText={t(cancelStep === 'policyWarning' ? 'common.continue' : 'club.booktime.cancelConfirmCta')}
         confirmVariant="danger"
         isLoading={cancelBusy}
-        onConfirm={() => void handleConfirmCancel()}
+        loadingText={t('club.booktime.cancelingBooking')}
+        closeOnConfirm={false}
+        onConfirm={() => {
+          if (cancelStep === 'policyWarning') {
+            setCancelStep('confirm');
+          } else {
+            void handleConfirmCancel();
+          }
+        }}
       />
     </>
   );

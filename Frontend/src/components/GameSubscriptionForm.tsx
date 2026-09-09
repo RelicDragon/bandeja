@@ -1,3 +1,4 @@
+import { ClubBookingBadge } from '@/components/ClubBookingBadge';
 import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
@@ -285,8 +286,9 @@ export const GameSubscriptionForm = ({
                         : 'bg-white dark:bg-slate-700/50 border-2 border-slate-200 dark:border-slate-700 hover:border-primary-300 dark:hover:border-primary-600 hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-700 dark:text-slate-300'
                     }`}
                   >
-                    <span className="text-sm font-medium flex-1">
-                      {club.name}
+                    <span className="text-sm font-medium flex-1 min-w-0 flex flex-col items-start gap-1.5">
+                      <span>{club.name}</span>
+                      <ClubBookingBadge club={club} onColor={clubIds.includes(club.id)} />
                     </span>
                     {isFavorite && (
                       <Star

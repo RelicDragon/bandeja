@@ -1,3 +1,6 @@
+import { buildEditLocationTimeSaveDraft, saveLocationTime } from '@/components/gameLocationTime/useSaveGameLocationTime';
+import { scheduleSelectionToForm, type ClubScheduleSelection } from '@/components/clubPicker/clubScheduleSelection';
+import { ClubBookingBadge } from '@/components/ClubBookingBadge';
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Trash2, RefreshCw, UserPlus, Check, Plane } from 'lucide-react';
@@ -65,6 +68,8 @@ export const EditLeagueGameTeamsModal = ({
   const [selectedCourtId, setSelectedCourtId] = useState<string>('');
   const [hasBookedCourt, setHasBookedCourt] = useState(false);
   const [isClubModalOpen, setIsClubModalOpen] = useState(false);
+  const [clubScheduleDraft, setClubScheduleDraft] = useState<ClubScheduleSelection | null>(null);
+  const [confirmScheduleUnlink, setConfirmScheduleUnlink] = useState(false);
   const [isCourtModalOpen, setIsCourtModalOpen] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [activeTab, setActiveTab] = useState<'teams' | 'place' | 'time'>('teams');
@@ -214,17 +219,18 @@ export const EditLeagueGameTeamsModal = ({
       if (shouldInitialize) {
         gameIdRef.current = game.id;
         setActiveTab('teams');
+        setClubScheduleDraft(null);
         setIsEditingTime(false);
+        setTimeManuallySelected(false);
         initializeGameData();
         fetchClubs().then(() => {
           if (game.clubId) {
             fetchCourts();
           }
         });
+        fetchStandings();
+        initializeTeams();
       }
-      fetchStandings();
-      initializeTeams();
-      setTimeManuallySelected(false);
     } else {
       if (!isOpen && gameIdRef.current === game.id) {
         gameIdRef.current = null;
@@ -296,7 +302,7 @@ export const EditLeagueGameTeamsModal = ({
       onUpdate(response.data);
       handleClose();
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'errors.generic';
+      const errorMessage = error.response?.data?.message || error.message || 'errors.generic';
       toast.error(t(errorMessage, { defaultValue: errorMessage }));
     } finally {
       setIsSaving(false);
@@ -388,10 +394,10 @@ export const EditLeagueGameTeamsModal = ({
     }
   };
 
-  const handleSave = async () => {
+  const handleSave = async (unlinkConfirmed = false) => {
     const authUser = useAuthStore.getState().user;
     if (authUser && authUser.nameIsSet !== true) {
-      runWithProfileName(() => void handleSave());
+      runWithProfileName(() => void handleSave(unlinkConfirmed));
       return;
     }
 
@@ -423,6 +429,21 @@ export const EditLeagueGameTeamsModal = ({
       return;
     }
 
+    if (clubScheduleDraft?.booking) {
+      const selected = scheduleSelectionToForm(clubScheduleDraft);
+      if (selectedClubId !== clubScheduleDraft.club.id || selectedCourtId !== clubScheduleDraft.courtId ||
+          selectedDate.toDateString() !== selected.selectedDate.toDateString() ||
+          selectedTime !== selected.selectedTime || duration !== selected.durationHours) {
+        toast.error(t('club.booktime.selectedBookingChanged'));
+        return;
+      }
+    }
+    if (clubScheduleDraft && !unlinkConfirmed && (game.linkedBookings ?? []).some(
+      (booking) => booking.externalBookingId !== clubScheduleDraft.booking?.uuid,
+    )) {
+      setConfirmScheduleUnlink(true);
+      return;
+    }
     setIsSaving(true);
     try {
       const currentParticipantIds = game.participants
@@ -517,7 +538,24 @@ export const EditLeagueGameTeamsModal = ({
         hasChanges = true;
       }
 
-      if (hasChanges) {
+      if (clubScheduleDraft) {
+        const booking = clubScheduleDraft.booking;
+        await saveLocationTime(game.id, buildEditLocationTimeSaveDraft({
+          game, clubId: selectedClubId, courtId: selectedCourtId,
+          selectedCourtIds: selectedCourtId ? [selectedCourtId] : [],
+          whenSelectedDate: selectedDate, whenSelectedTime: selectedTime, whenDuration: duration,
+          hasBookedCourt: Boolean(booking), club: clubScheduleDraft.club,
+          courts: clubScheduleDraft.club.courts ?? courts,
+          pendingRemoveBookingIds: [],
+          locationTimeDraft: {
+            locationTimeMode: booking ? 'bookings' : 'timeSlots',
+            selectedBookingIds: booking ? [booking.uuid] : [],
+            selectedBookingRecords: booking ? [booking] : [],
+            timeOverride: false, willBookOnCreate: false, integratedCourtIds: [],
+            editReservationAction: booking ? 'useExisting' : 'gameOnly',
+          },
+        }));
+      } else if (hasChanges) {
         await gamesApi.update(game.id, updateData);
       }
 
@@ -549,7 +587,7 @@ export const EditLeagueGameTeamsModal = ({
       onUpdate(finalResponse.data);
       handleClose();
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'errors.generic';
+      const errorMessage = error.response?.data?.message || error.message || 'errors.generic';
       toast.error(t(errorMessage, { defaultValue: errorMessage }));
     } finally {
       setIsSaving(false);
@@ -766,6 +804,11 @@ export const EditLeagueGameTeamsModal = ({
                   </div>
                 ) : activeTab === 'place' ? (
                   <div className="space-y-4">
+                    {clubScheduleDraft?.booking ? (
+                      <p className="rounded-lg bg-primary-50 dark:bg-primary-950/30 p-3 text-sm text-primary-700 dark:text-primary-300">
+                        {t('createGame.locationTime.preselectedBanner')}
+                      </p>
+                    ) : null}
                     {/* Club Selector */}
                     <div>
                       <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
@@ -783,7 +826,10 @@ export const EditLeagueGameTeamsModal = ({
                             return c ? (
                               <>
                                 <ClubAvatar club={c} className="h-9 w-12 shrink-0" />
-                                <span className="truncate min-w-0">{c.name}</span>
+                                <span className="min-w-0 flex-1">
+                                  <span className="block truncate">{c.name}</span>
+                                  <ClubBookingBadge club={c} className="mt-1.5" />
+                                </span>
                               </>
                             ) : (
                               t('createGame.selectClub')
@@ -906,7 +952,7 @@ export const EditLeagueGameTeamsModal = ({
               {t('common.cancel')}
             </button>
             <button
-              onClick={handleSave}
+              onClick={() => void handleSave()}
               disabled={isSaving}
               className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -915,6 +961,13 @@ export const EditLeagueGameTeamsModal = ({
           </div>
         )}
 
+      <ConfirmationModal
+        isOpen={confirmScheduleUnlink}
+        onClose={() => setConfirmScheduleUnlink(false)}
+        title={t('gameDetails.locationTime.unlinkSaveConfirmTitle')}
+        message={t('gameDetails.locationTime.unlinkSaveConfirmMessage', { count: (game.linkedBookings ?? []).filter((booking) => booking.externalBookingId !== clubScheduleDraft?.booking?.uuid).length })}
+        onConfirm={() => { setConfirmScheduleUnlink(false); void handleSave(true); }}
+      />
       {isClubModalOpen && (
         <ClubModal
           isOpen={isClubModalOpen}
@@ -923,8 +976,28 @@ export const EditLeagueGameTeamsModal = ({
           selectedId={selectedClubId}
           cityId={game.club?.cityId || game.city?.id}
           preferredSport={game.sport}
+          schedulePicker={{
+            selectedDate,
+            allowBookingLink: true,
+            onSelect: (selection) => {
+              const schedule = scheduleSelectionToForm(selection);
+              gameCourtIdRef.current = undefined;
+              setClubs((prev) => [...prev.filter((club) => club.id !== selection.club.id), selection.club]);
+              setCourts(selection.club.courts ?? []);
+              setSelectedClubId(selection.club.id);
+              setSelectedCourtId(selection.courtId);
+              setSelectedDate(schedule.selectedDate);
+              setSelectedTime(schedule.selectedTime);
+              setDuration(schedule.durationHours);
+              setTimeManuallySelected(true);
+              setIsEditingTime(true);
+              setHasBookedCourt(Boolean(selection.booking));
+              setClubScheduleDraft(selection);
+            },
+          }}
           entityType={game.entityType}
           onSelect={(clubId, club) => {
+            setClubScheduleDraft(null);
             setSelectedClubId(clubId);
             setSelectedCourtId('');
             setIsClubModalOpen(false);

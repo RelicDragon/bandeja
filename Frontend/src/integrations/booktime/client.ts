@@ -470,13 +470,14 @@ export class BooktimeClient {
     };
   }
 
-  async getUpcomingBookings(index = 0, size = 20) {
-    if (this.upcomingInFlight) return this.upcomingInFlight;
+  async getUpcomingBookings(index = 0, size = 20, options?: { fresh?: boolean }) {
+    if (!options?.fresh && this.upcomingInFlight) return this.upcomingInFlight;
     const run = this.request<BooktimeBookingsPage>('/booking/get-upcoming', {
       method: 'POST',
       auth: true,
       body: { index, size },
     }).then((page) => this.normalizeBookingsPage(page));
+    if (options?.fresh) return run;
     this.upcomingInFlight = run.finally(() => {
       this.upcomingInFlight = null;
     });

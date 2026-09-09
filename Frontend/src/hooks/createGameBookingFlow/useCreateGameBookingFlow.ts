@@ -1,3 +1,4 @@
+import { scheduleSelectionToForm, type ClubScheduleSelection } from '@/components/clubPicker/clubScheduleSelection';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { format } from 'date-fns';
 import type { TFunction } from 'i18next';
@@ -304,7 +305,7 @@ export function useCreateGameBookingFlow({
   });
 
   const hasReservationsForDate =
-    preselectedBookings ||
+    preselectedBookings || selectedBookingRecords.length > 0 ||
     (clubDateReservations.bookingsLoaded && clubDateReservations.dateBookings.length > 0);
 
   const snapshotBlocked =
@@ -909,6 +910,7 @@ export function useCreateGameBookingFlow({
 
     const syncKey = [
       selectedBookingIds.join(','),
+      schedule.selectedDate.toDateString(),
       schedule.selectedTime,
       schedule.durationHours,
       schedule.courtIds.join(','),
@@ -972,7 +974,24 @@ export function useCreateGameBookingFlow({
     return `${startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} – ${endDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
   }, [panelDerivedSummary.startTime, panelDerivedSummary.endTime]);
 
+  const applyClubScheduleSelection = useCallback((selection: ClubScheduleSelection) => {
+    const schedule = scheduleSelectionToForm(selection);
+    const intent = selection.booking ? 'useExisting' : clubBookingFlowActive ? 'reserveNow' : 'gameOnly';
+    // The draft follows the usual confirmation flow; selection itself never books.
+    prevSelectedClubRef.current = selection.club.id;
+    prevReservationIntentRef.current = intent;
+    initialDateSetForClubRef.current = selection.club.id;
+    setReservationIntent(intent);
+    setTimeOverride(false);
+    handleSelectedBookingIdsChange(selection.booking ? [selection.booking.uuid] : [], selection.booking ? [selection.booking] : []);
+    setSelectedDate(schedule.selectedDate);
+    setSelectedTime(schedule.selectedTime);
+    setDuration(schedule.durationHours);
+    setSelectedCourtIds(schedule.courtIds);
+  }, [clubBookingFlowActive, setReservationIntent, setTimeOverride, handleSelectedBookingIdsChange, setSelectedDate, setSelectedTime, setDuration, setSelectedCourtIds]);
+
   return {
+    applyClubScheduleSelection,
     clubBookingFlowActive,
     hasBookedCourt,
     setHasBookedCourt,

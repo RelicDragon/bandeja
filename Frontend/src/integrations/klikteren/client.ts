@@ -405,8 +405,13 @@ export class KlikterenClient {
         ? root!.bookings
         : Array.isArray(root?.data)
           ? root!.data
-          : [];
-    return rows.map(normalizeBooking).filter((row) => row.id && row.date && row.startTime);
+          : null;
+    if (!rows) throw new Error('Invalid booking list response');
+    const bookings = rows.map(normalizeBooking);
+    if (bookings.some((row) => !row.id || !row.date || !row.startTime)) {
+      throw new Error('Incomplete booking list response');
+    }
+    return bookings;
   }
 
   async createBooking(body: {

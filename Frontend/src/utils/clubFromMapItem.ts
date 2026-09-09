@@ -4,6 +4,7 @@ import type { Club } from '@/types';
 export function clubFromMapItem(item: ClubMapItem): Club {
   return {
     id: item.id,
+    canBookInApp: item.canBookInApp,
     name: item.name,
     avatar: item.avatar,
     address: item.address ?? '',

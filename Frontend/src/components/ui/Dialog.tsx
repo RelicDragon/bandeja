@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useTranslation } from 'react-i18next';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { useLayoutEffect, useRef } from 'react';
 import { X } from 'lucide-react';
@@ -62,6 +63,7 @@ const DialogContent = React.forwardRef<
     ignoreOutsideClickSelector?: string;
   }
 >(({ className, showCloseButton = true, closeOnInteractOutside = true, ignoreOutsideClickSelector, children, ...props }, ref) => {
+  const { t } = useTranslation();
   const contentRef = React.useRef<HTMLElement | null>(null);
   useLayoutEffect(() => {
     blurForeignOverlayFocus(contentRef.current);
@@ -106,7 +108,7 @@ const DialogContent = React.forwardRef<
             className="absolute right-4 top-4 z-30 rounded-md text-gray-900 opacity-70 ring-offset-white transition-opacity hover:opacity-100 hover:bg-gray-100 focus:outline-none focus:ring-0 disabled:pointer-events-none dark:text-gray-200 dark:opacity-70 dark:hover:opacity-100 dark:hover:bg-gray-800 [&>svg]:size-5"
           >
             <X />
-            <span className="sr-only">Close</span>
+            <span className="sr-only">{t('common.close')}</span>
           </DialogPrimitive.Close>
         )}
         <OverlayKeyboardBody>{children}</OverlayKeyboardBody>

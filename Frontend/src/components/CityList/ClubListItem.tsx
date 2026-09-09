@@ -1,6 +1,7 @@
 import { memo } from 'react';
 import { Navigation } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { ClubBookingBadge } from '@/components/ClubBookingBadge';
 import { useGeoReady } from '@/hooks/useGeoReady';
 import { useTranslatedGeo } from '@/hooks/useTranslatedGeo';
 import type { ClubMapItem } from '@/api/clubs';
@@ -61,7 +62,6 @@ function ClubListItemInner({
         type="button"
         onClick={() => onSelect(club.cityId)}
         aria-pressed={isSelected}
-        aria-label={isNearest ? `${club.name}, ${t('city.nearestToYou')}` : `${club.name}, ${subtitle}`}
         className={citySelectorRowClassName(isSelected, CITY_SELECTOR_ROW_PAD)}
       >
         <div className="flex min-w-0 items-center gap-2.5">
@@ -74,11 +74,13 @@ function ClubListItemInner({
                   title={t('city.nearestToYou')}
                 >
                   <Navigation className="h-3 w-3" strokeWidth={2.5} aria-hidden />
+                  <span className="sr-only">{t('city.nearestToYou')}</span>
                 </span>
               )}
               <span className="truncate text-sm font-medium text-gray-900 dark:text-white">{club.name}</span>
             </span>
             <span className="mt-0.5 block truncate text-xs text-gray-500 dark:text-gray-400">{subtitle}</span>
+            <ClubBookingBadge club={club} className="mt-1.5" />
           </span>
           {isSelected && (
             <span className={CITY_SELECTOR_CHECK} aria-hidden>
@@ -98,6 +100,7 @@ export const ClubListItem = memo(ClubListItemInner, (prev, next) =>
   prev.club.cityId === next.club.cityId &&
   prev.club.cityName === next.club.cityName &&
   prev.club.country === next.club.country &&
+  prev.club.canBookInApp === next.club.canBookInApp &&
   prev.isSelected === next.isSelected &&
   prev.isNearest === next.isNearest &&
   prev.onSelect === next.onSelect &&

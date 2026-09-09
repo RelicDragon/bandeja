@@ -61,7 +61,7 @@ async function runSaveStep(
 
 async function applyLinkBookingAdds(context: LinkBookingSaveContext): Promise<void> {
   let currentGame = context.game;
-  const timeZone = resolveBooktimeClubTimezone({ club: context.club, game: currentGame });
+  const timeZone = context.club.cityTimezone ?? resolveBooktimeClubTimezone({ club: context.club, game: currentGame });
   for (const add of context.adds) {
     await linkBookingToGame({
       gameId: currentGame.id!,

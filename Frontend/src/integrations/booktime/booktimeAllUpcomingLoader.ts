@@ -179,6 +179,20 @@ export function invalidateBooktimeAllUpcomingCache(): void {
   notifyBooktimeAllUpcomingCacheInvalidation();
 }
 
+export async function removeBooktimeBookingFromCache(bookingId: string): Promise<void> {
+  await ensurePersistenceHydrated();
+  if (cached) {
+    cached = { ...cached, bookings: cached.bookings.filter((booking) => booking.uuid !== bookingId) };
+  }
+  for (const [companyId, entry] of companyUpcomingCache) {
+    companyUpcomingCache.set(companyId, {
+      ...entry,
+      bookings: entry.bookings.filter((booking) => booking.uuid !== bookingId),
+    });
+  }
+  await writeBooktimeUpcomingPersistedCache(snapshotPersistedCache());
+}
+
 export function setBooktimeAllUpcomingDisplayCache(
   clubs: BooktimeMyClubRow[],
   bookings: AggregatedBooktimeBooking[],

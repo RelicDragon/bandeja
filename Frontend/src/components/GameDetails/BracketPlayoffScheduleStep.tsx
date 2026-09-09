@@ -1,3 +1,4 @@
+import { clubHasBookingIntegration } from '@shared/clubIntegration';
 import { useEffect, useMemo, useState } from 'react';
 import { ArrowDown, ArrowUp, CalendarClock, WandSparkles } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -286,7 +287,11 @@ export function BracketPlayoffScheduleStep({
               {t('gameDetails.location', { defaultValue: 'Club' })}
               <select value={clubId} onChange={(e) => setClubId(e.target.value)} className={controlClass}>
                 <option value="">{t('common.select', { defaultValue: 'Select' })}</option>
-                {clubs.map((club) => <option key={club.id} value={club.id}>{club.name}</option>)}
+                {clubs.map((club) => (
+                  <option key={club.id} value={club.id}>
+                    {club.name}{clubHasBookingIntegration(club) ? ` · ${t('club.bookInApp')}` : ''}
+                  </option>
+                ))}
               </select>
             </label>
             <label className="space-y-1 text-xs font-medium text-gray-600 dark:text-gray-300">

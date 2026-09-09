@@ -1,5 +1,6 @@
 import type { Club } from '@/types';
 import type { PadelooClient } from '@/integrations/padeloo/client';
+import { isCancelledBooking } from '../verifyBooktimeBooking';
 import {
   confirmPadelooBooking,
   cancelPadelooBooking,
@@ -85,6 +86,14 @@ export class PadelooClubBookingProvider implements ClubBookingProvider {
         bookingEnd: `${row.date}T${row.endTime}`,
         price: row.price,
       }));
+  }
+
+  async verifyBooking(externalBookingId: string) {
+    if (!this.client.isAuthenticated) throw new Error(BOOKING_ERROR_KEYS.sessionExpired);
+    const reservations = await this.client.getMyReservations();
+    return reservations.some((row) =>
+      row.clubId === this.padelooClubId && String(row.id) === externalBookingId && !isCancelledBooking(row.status),
+    );
   }
 
   async fetchSnapshotCourts(_selectedDate: Date, dateKey: string) {

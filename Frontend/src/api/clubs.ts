@@ -2,6 +2,7 @@ import api from './axios';
 import { ApiResponse, Club, ClubReview, ClubReviewSummary, EntityType, Game } from '@/types';
 
 export interface ClubMapItem {
+  canBookInApp?: boolean;
   id: string;
   name: string;
   avatar?: string | null;

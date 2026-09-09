@@ -25,6 +25,7 @@ function resolveClub(
 }
 
 type Props = {
+  onLinkToCurrentGame?: (booking: BooktimeBookingRecord) => void;
   bookings: UpcomingBooking[];
   clubById: Map<string, BookingListClubRow>;
   showClubName?: boolean;
@@ -53,6 +54,7 @@ export function BooktimeUpcomingBookingsList({
   clubTimezone,
   clubIdOf = (booking) => booking.clubId,
   onCanceled,
+  onLinkToCurrentGame,
   onRefreshSnapshot,
   animateEntries = false,
   linkedGamesByBookingId,
@@ -113,6 +115,7 @@ export function BooktimeUpcomingBookingsList({
               compact={compact}
               clubTimezone={resolveClubTimezone(club)}
               onRefreshSnapshot={onRefreshSnapshot}
+          onLinkToCurrentGame={onLinkToCurrentGame}
               expandableActions
               actionsExpanded={selectedBookingId === groupId}
               onToggleActions={() =>
@@ -145,6 +148,7 @@ export function BooktimeUpcomingBookingsList({
             compact={compact}
             clubTimezone={resolveClubTimezone(club)}
             onRefreshSnapshot={onRefreshSnapshot}
+          onLinkToCurrentGame={onLinkToCurrentGame}
             expandableActions
             actionsExpanded={selectedBookingId === bookingId}
             onToggleActions={() =>

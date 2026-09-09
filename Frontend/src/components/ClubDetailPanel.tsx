@@ -49,6 +49,8 @@ type ClubDetailPanelProps = {
   onOpenFullscreenPhoto: (url: string) => void;
   onClubRefresh?: () => Promise<void>;
   snapshotDate?: Date;
+  schedulePicker?: import('@/components/clubPicker/clubScheduleSelection').ClubSchedulePicker;
+  preferredSport?: import('@/types').Sport | null;
 };
 
 function parseBooktimeConfig(raw: unknown): BooktimeIntegrationConfig | null {
@@ -65,7 +67,7 @@ function amenityEntries(amenities: Record<string, unknown> | undefined | null): 
   return out;
 }
 
-export function ClubDetailPanel({ club, onOpenFullscreenPhoto, onClubRefresh, snapshotDate }: ClubDetailPanelProps) {
+export function ClubDetailPanel({ club, onOpenFullscreenPhoto, onClubRefresh, snapshotDate, schedulePicker, preferredSport }: ClubDetailPanelProps) {
   const { t } = useTranslation();
   const { translateCity, translateCountry } = useTranslatedGeo();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
@@ -86,7 +88,7 @@ export function ClubDetailPanel({ club, onOpenFullscreenPhoto, onClubRefresh, sn
   const needsReauth = useBookingAuthNeedsReauth(isAuthenticated ? club.id : undefined);
   const showReauthBanner = needsReauth || reconnectRequired;
   const [connectOpen, setConnectOpen] = useState(false);
-  const [availabilityDate, setAvailabilityDate] = useState(() => snapshotDate ?? new Date());
+  const [availabilityDate, setAvailabilityDate] = useState(() => schedulePicker?.selectedDate ?? snapshotDate ?? new Date());
   const [bookingsRefreshKey, setBookingsRefreshKey] = useState(0);
   const scheduleDate = useMemo(
     () => (snapshotDate != null ? snapshotDate : availabilityDate),
@@ -233,6 +235,8 @@ export function ClubDetailPanel({ club, onOpenFullscreenPhoto, onClubRefresh, sn
         <ClubAvailabilitySheet
           club={club}
           selectedDate={scheduleDate}
+          onSelectSlot={schedulePicker?.onSelect}
+          preferredSport={preferredSport}
           onDateChange={setAvailabilityDate}
           lastFetchedAt={lastFetchedAt}
           connected={isNspadelClub(club) || (!!clubAuth?.connected && !showReauthBanner)}
@@ -250,6 +254,8 @@ export function ClubDetailPanel({ club, onOpenFullscreenPhoto, onClubRefresh, sn
           enabled
           onRefreshSnapshot={refreshSnapshot}
           refreshKey={bookingsRefreshKey}
+          onSelectBooking={schedulePicker?.allowBookingLink ? schedulePicker.onSelect : undefined}
+          preferredSport={preferredSport}
         />
       ) : null}
 

@@ -1,5 +1,6 @@
 {
   "club": {
+    "bookInApp": "アプリで予約",
     "courtsCount_zero": "コートなし",
     "courtsCount_one": "{{count}} コート",
     "courtsCount_other": "{{count}} コート",
@@ -33,6 +34,9 @@
       "retry": "再試行"
     },
     "booktime": {
+    "linkToThisGame": "このゲームにリンク",
+    "selectSlotForGameHint": "空き枠を選択して、このゲームのクラブ、コート、日時を設定します。",
+    "selectedBookingChanged": "選択した予約がゲームと一致しなくなりました。予約を選び直してください。",
       "connectTitle": "{{club}} に接続",
       "connectHint": "電話番号でサインインして、このクラブのコートを予約します。",
       "connectBannerTitle": "このクラブでコートを予約",
@@ -102,8 +106,21 @@
       "upcomingLoadFailed": "予約を読み込めませんでした。",
       "noUpcoming": "このクラブに予定の予約はありません。",
       "unknownCourt": "コート",
+      "verifyBooking": "確認",
+      "verifyingBooking": "確認中…",
+      "stillBookedTitle": "予約は有効です",
+      "stillBookedBody": "クラブでの予約は引き続き確定しています。",
+      "verifyFailed": "予約を確認できませんでした。クラブへの接続を確認して、もう一度お試しください。",
+      "removeMissingTitle": "見つからない予約を削除しますか？",
+      "removeMissingBody": "クラブのアカウントにこの予約が見つかりませんでした。Bandejaから削除し、試合との連携を解除しますか？試合はカレンダーに残ります。",
+      "removeMissingConfirm": "Bandejaから削除",
+      "removeMissingSuccess": "Bandejaから予約を削除しました",
+      "removeMissingFailed": "予約と試合の連携をすべて解除できませんでした。もう一度お試しください。",
+      "cancelingBooking": "キャンセル中…",
       "cancelBooking": "キャンセル",
       "cancelTooLate": "開始の少なくとも {{hours}} 時間前までにキャンセル",
+      "cancelOutsidePolicyTitle": "クラブのキャンセル期限を過ぎています",
+      "cancelOutsidePolicyBody": "クラブでは予約開始の{{hours}}時間前までにキャンセルする必要があります。今回のキャンセルは許可された期限を過ぎています。続行しますか？",
       "cancelConfirmTitle": "予約をキャンセルしますか？",
       "cancelConfirmBody": "枠の {{hours}} 時間前まで無料キャンセルできます。この操作は取り消せません。",
       "cancelConfirmLinkedBody": "枠の {{hours}} 時間前まで無料キャンセルできます。連携した試合はカレンダーに残ります。",

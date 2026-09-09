@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { Sport } from '@prisma/client';
+import { clubHasBookingIntegration } from '@bandeja/shared/clubIntegration';
 import { asyncHandler } from '../utils/asyncHandler';
 import { ApiError } from '../utils/ApiError';
 import prisma from '../config/database';
@@ -57,6 +58,8 @@ export const getClubsForMap = asyncHandler(async (req: Request, res: Response) =
       latitude: true,
       longitude: true,
       courtsNumber: true,
+      integrationType: true,
+      integrationConfig: true,
       website: true,
       phone: true,
       city: { select: { id: true, name: true, country: true } },
@@ -73,6 +76,7 @@ export const getClubsForMap = asyncHandler(async (req: Request, res: Response) =
     cityName: c.city.name,
     country: c.city.country,
     courtsCount: c.courtsNumber,
+    canBookInApp: clubHasBookingIntegration(c),
     website: c.website ?? undefined,
     phone: c.phone ?? undefined,
   }));
@@ -263,5 +267,4 @@ export const updateClub = asyncHandler(async (req: Request<{ id: string }>, res:
     data: club,
   });
 });
-
 

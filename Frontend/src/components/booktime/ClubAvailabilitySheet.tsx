@@ -10,10 +10,13 @@ import { formatClubDateKey } from '@/integrations/booktime/slots';
 import { getClubTimezone } from '@/hooks/useGameTimeDuration';
 import { buildBookingIsoRange } from '@/integrations/booktime/bookFlow';
 import { formatRelativeTime } from '@/utils/dateFormat';
+import { booktimeLocalIsoToDate } from '@shared/booktime/localTime';
 import { CourtDisplayName } from '@/components/CourtDisplayName';
 
 type ClubAvailabilitySheetProps = {
   club: Club;
+  onSelectSlot?: (selection: import('@/components/clubPicker/clubScheduleSelection').ClubScheduleSelection) => void;
+  preferredSport?: import('@/types').Sport | null;
   selectedDate: Date;
   onDateChange: (date: Date) => void;
   lastFetchedAt: string | null;
@@ -47,6 +50,8 @@ export function ClubAvailabilitySheet({
   connected,
   onConnectRequest,
   enabled,
+  onSelectSlot,
+  preferredSport,
 }: ClubAvailabilitySheetProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -87,6 +92,16 @@ export function ClubAvailabilitySheet({
       durationMinutes,
       timeZoneOffset,
     );
+    if (onSelectSlot) {
+      const start = booktimeLocalIsoToDate(`${dateKey}T${startTime}`, getClubTimezone(club));
+      if (!start) return;
+      onSelectSlot({
+        club, courtId,
+        startTime: start.toISOString(),
+        endTime: new Date(start.getTime() + durationMinutes * 60_000).toISOString(),
+      });
+      return;
+    }
     const params = new URLSearchParams({
       clubId: club.id,
       courtId,
@@ -99,7 +114,7 @@ export function ClubAvailabilitySheet({
   const handleSlotTap = (courtId: string, startTime: string) => {
     // NS Padel Centar has no connect flow (bookings go under the Bandeja
     // profile), so its slots must never route to the connect sheet.
-    if (!connected && !isNspadelClub(club)) {
+    if (!onSelectSlot && !connected && !isNspadelClub(club)) {
       onConnectRequest();
       return;
     }
@@ -168,7 +183,7 @@ export function ClubAvailabilitySheet({
         <p className="text-sm text-gray-500 dark:text-gray-400 py-2">{t('club.booktime.noMappedCourts')}</p>
       ) : (
         <div className="space-y-4">
-          {courtRows.map((row) => (
+          {courtRows.filter((row) => !preferredSport || !row.court.sport || row.court.sport === preferredSport).map((row) => (
             <div key={row.court.id}>
               <div className="mb-2">
                 <CourtDisplayName
@@ -200,7 +215,7 @@ export function ClubAvailabilitySheet({
       )}
 
       <p className="text-xs text-gray-500 dark:text-gray-400">
-        {connected ? t('club.booktime.browseSlotHint') : t('club.booktime.bookRequiresConnect')}
+        {onSelectSlot ? t('club.booktime.selectSlotForGameHint') : connected ? t('club.booktime.browseSlotHint') : t('club.booktime.bookRequiresConnect')}
       </p>
     </section>
   );

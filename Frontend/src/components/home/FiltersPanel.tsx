@@ -1,3 +1,4 @@
+import { ClubBookingBadge } from '@/components/ClubBookingBadge';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { RotateCcw, Star } from 'lucide-react';
@@ -279,6 +280,7 @@ export const FiltersPanel = ({
                 >
                   {fav && <Star size={12} className="inline me-1 text-amber-500 fill-amber-500" aria-hidden />}
                   {club.name}
+                  <ClubBookingBadge club={club} />
                 </button>
               );
             })}
@@ -307,6 +309,7 @@ export const FiltersPanel = ({
                 >
                   {fav && <Star size={12} className="inline me-1 text-amber-500 fill-amber-500" aria-hidden />}
                   {club.name}
+                  <ClubBookingBadge club={club} />
                 </button>
               );
             })}

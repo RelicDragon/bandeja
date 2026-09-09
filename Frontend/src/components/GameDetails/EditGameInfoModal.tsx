@@ -980,8 +980,10 @@ export const EditGameInfoModal = ({
                 selectedCourt={where.courtId || selectedCourtIds[0] || 'notBooked'}
                 hasBookedCourt={where.hasBookedCourt}
                 onSelectClub={(id, club) => {
-                  if (club && !clubs.some((c) => c.id === club.id)) {
-                    onClubsChange?.([...clubs, club]);
+                  if (club) {
+                    onClubsChange?.(clubs.some((c) => c.id === club.id)
+                      ? clubs.map((c) => c.id === club.id ? club : c)
+                      : [...clubs, club]);
                   }
                   if (club?.cityId) setVenueCityId(club.cityId);
                   setWhere((s) => ({ ...s, clubId: id, courtId: '' }));

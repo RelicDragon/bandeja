@@ -8,11 +8,12 @@ import { ClubDetailPanel } from '@/components/ClubDetailPanel';
 import { FullscreenImageViewer } from '@/components/FullscreenImageViewer';
 
 interface ClubInfoDialogProps {
+  schedulePicker?: import('@/components/clubPicker/clubScheduleSelection').ClubSchedulePicker;
   club: Club | null;
   onClose: () => void;
 }
 
-export function ClubInfoDialog({ club, onClose }: ClubInfoDialogProps) {
+export function ClubInfoDialog({ club, onClose, schedulePicker }: ClubInfoDialogProps) {
   const { t } = useTranslation();
   const [detailClub, setDetailClub] = useState<Club | null>(club);
   const [fullscreenUrl, setFullscreenUrl] = useState<string | null>(null);
@@ -64,6 +65,7 @@ export function ClubInfoDialog({ club, onClose }: ClubInfoDialogProps) {
             {detailClub ? (
               <ClubDetailPanel
                 club={detailClub}
+                schedulePicker={schedulePicker ? { ...schedulePicker, onSelect: (selection) => { schedulePicker.onSelect(selection); onClose(); } } : undefined}
                 onOpenFullscreenPhoto={(url) => setFullscreenUrl(url)}
                 onClubRefresh={refreshDetailClub}
               />

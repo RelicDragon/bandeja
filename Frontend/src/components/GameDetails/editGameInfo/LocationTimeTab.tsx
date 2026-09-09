@@ -1,3 +1,4 @@
+import { scheduleSelectionToForm, type ClubScheduleSelection } from '@/components/clubPicker/clubScheduleSelection';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Club, Court, EntityType, Game } from '@/types';
@@ -149,6 +150,7 @@ export function LocationTimeTab({
     supportsClubBookingFlow(entityType, 'edit') && clubHasBookingIntegration(club),
   );
   const [isClubModalOpen, setIsClubModalOpen] = useState(false);
+  const [pendingClubSchedule, setPendingClubSchedule] = useState<ClubScheduleSelection | null>(null);
 
   const initialLinkedBookingRecords = useMemo(
     () => (game.linkedBookings ?? []).map(linkedBookingToRecord),
@@ -414,7 +416,7 @@ export function LocationTimeTab({
   });
 
   const hasReservationsForDate =
-    clubDateReservations.bookingsLoaded && clubDateReservations.dateBookings.length > 0;
+    selectedBookingRecords.length > 0 || (clubDateReservations.bookingsLoaded && clubDateReservations.dateBookings.length > 0);
 
   const editActionOptions = useMemo(
     () =>
@@ -464,6 +466,21 @@ export function LocationTimeTab({
     clubBookingFlowActive,
     hasBookedCourt,
   ]);
+
+  useEffect(() => {
+    if (!pendingClubSchedule || selectedClub !== pendingClubSchedule.club.id) return;
+    if (!courts.some((court) => court.id === pendingClubSchedule.courtId)) return;
+    const action = pendingClubSchedule.booking ? 'useExisting' : clubBookingFlowActive ? 'reserveNew' : initialLinkedBookingIds.length > 0 ? 'unlink' : 'gameOnly';
+    previousEditActionRef.current = action;
+    setEditReservationAction(action);
+    setTimeOverride(false);
+    handleSelectedBookingIdsChange(
+      pendingClubSchedule.booking ? [pendingClubSchedule.booking.uuid] : [],
+      pendingClubSchedule.booking ? [pendingClubSchedule.booking] : [],
+    );
+    handleScheduleSync(scheduleSelectionToForm(pendingClubSchedule));
+    setPendingClubSchedule(null);
+  }, [pendingClubSchedule, selectedClub, courts, clubBookingFlowActive, initialLinkedBookingIds.length, setTimeOverride, handleSelectedBookingIdsChange, handleScheduleSync]);
 
   const actionPickerSection = (
     <EditReservationActionPicker
@@ -568,6 +585,14 @@ export function LocationTimeTab({
         selectedClub={selectedClub}
         selectedCourt={selectedCourt}
         isClubModalOpen={isClubModalOpen}
+        schedulePicker={{
+          selectedDate,
+          allowBookingLink: supportsClubBookingFlow(entityType, 'edit'),
+          onSelect: (selection) => {
+            onSelectClub?.(selection.club.id, selection.club);
+            setPendingClubSchedule(selection);
+          },
+        }}
         onSelectClub={(id, club) => onSelectClub?.(id, club)}
         onOpenClubModal={() => setIsClubModalOpen(true)}
         onCloseClubModal={() => setIsClubModalOpen(false)}

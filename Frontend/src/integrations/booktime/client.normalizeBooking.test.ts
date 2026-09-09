@@ -6,6 +6,27 @@ describe('BooktimeClient wire ingest timezone', () => {
     vi.unstubAllGlobals();
   });
 
+  it('fresh verification bypasses an in-flight upcoming list request', async () => {
+    const response = (uuid: string) => ({
+      ok: true, status: 200, statusText: 'OK',
+      text: async () => JSON.stringify({ bookings: [{
+        uuid, bookingStart: '2026-06-14T18:00:00.000Z', bookingEnd: '2026-06-14T19:00:00.000Z',
+      }] }),
+    });
+    let resolveOld!: (value: ReturnType<typeof response>) => void;
+    const fetchMock = vi.fn()
+      .mockImplementationOnce(() => new Promise<ReturnType<typeof response>>((resolve) => { resolveOld = resolve; }))
+      .mockResolvedValueOnce(response('fresh'));
+    vi.stubGlobal('fetch', fetchMock);
+    const client = new BooktimeClient({ companyId: 'co-1', accessToken: 'tok' });
+    const olderRequest = client.getUpcomingBookings(0, 20);
+    const fresh = await client.getUpcomingBookings(1, 50, { fresh: true });
+    expect(fresh.bookings[0].uuid).toBe('fresh');
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    resolveOld(response('old'));
+    expect((await olderRequest).bookings[0].uuid).toBe('old');
+  });
+
   it('normalizes afternoon fake-Z using clubTimeZone not Belgrade default', async () => {
     vi.stubGlobal(
       'fetch',
