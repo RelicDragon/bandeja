@@ -1,6 +1,7 @@
 import type { Game, GameSetupParams, MatchGenerationType, ScoringPreset } from '@/types';
 import type { Sport } from '@shared/sport';
 import {
+  DEFAULT_PRESET_BY_MODE,
   detectScoringMode,
   detectScoringPreset,
 } from '@/utils/gameFormat';
@@ -48,9 +49,12 @@ export function bracketPlayoffFormatInitialFromSeason(
 export function bracketPlayoffFormatSnapshot(
   format: Partial<Game>,
 ): GameFormatTemplateSnapshot {
-  const scoringPreset = detectScoringPreset(format) ?? 'CLASSIC_BEST_OF_3';
+  const scoringMode = detectScoringMode(format);
+  const scoringPreset =
+    detectScoringPreset(format) ??
+    (scoringMode === 'POINTS' ? DEFAULT_PRESET_BY_MODE.POINTS : 'CLASSIC_BEST_OF_3');
   return {
-    scoringMode: detectScoringMode(format),
+    scoringMode,
     scoringPreset,
     generationType: (format.matchGenerationType as MatchGenerationType) ?? 'AUTOMATIC',
     matchTimerEnabled: Boolean(format.matchTimerEnabled),

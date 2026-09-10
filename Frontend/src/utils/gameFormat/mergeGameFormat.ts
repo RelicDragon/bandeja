@@ -33,8 +33,17 @@ export const buildSetupFromFormat = (state: GameFormatState): GameSetupParams =>
   const gameType: GameType = deriveGameType(state.scoringMode, state.generationType);
   const template = getGameTypeTemplate(gameType);
 
-  const useCustomPoints = state.scoringMode === 'POINTS' && state.customPointsTotal != null;
-  const scoring = getScoringPresetConfig(state.scoringPreset);
+  // Timed POINTS matches end at the buzzer with arbitrary totals: no points target
+  // can be enforced at finalize, so the payload always carries the timed shape here
+  // (total 0, no preset) regardless of any suspended UI selection.
+  const timedNoTarget = state.scoringMode === 'POINTS' && state.matchTimerEnabled;
+  const useCustomPoints =
+    !timedNoTarget && state.scoringMode === 'POINTS' && state.customPointsTotal != null;
+  // A suspended cap/rally preset (e.g. a legacy timer+target row) must not leak its
+  // structural fields into a timed save — derive them from the POINTS default.
+  const scoring = getScoringPresetConfig(
+    timedNoTarget ? DEFAULT_PRESET_BY_MODE.POINTS : state.scoringPreset,
+  );
   const capMinutes = state.matchTimerEnabled
     ? Math.min(60, Math.max(1, state.matchTimedCapMinutes || 15))
     : 0;
@@ -50,14 +59,18 @@ export const buildSetupFromFormat = (state: GameFormatState): GameSetupParams =>
     winnerOfGame: state.winnerOfGame ?? template.winnerOfGame,
     matchGenerationType: state.generationType ?? template.matchGenerationType,
     fixedNumberOfSets: scoring.fixedNumberOfSets ?? template.fixedNumberOfSets ?? 0,
-    maxTotalPointsPerSet: useCustomPoints ? state.customPointsTotal! : (scoring.maxTotalPointsPerSet ?? 0),
+    maxTotalPointsPerSet: timedNoTarget
+      ? 0
+      : useCustomPoints
+        ? state.customPointsTotal!
+        : (scoring.maxTotalPointsPerSet ?? 0),
     matchTimedCapMinutes: capMinutes,
     matchTimerEnabled: state.matchTimerEnabled,
     maxPointsPerTeam: 0,
     pointsPerWin: state.pointsPerWin ?? template.pointsPerWin ?? 0,
     pointsPerLoose: state.pointsPerLoose ?? template.pointsPerLoose ?? 0,
     pointsPerTie: state.pointsPerTie ?? template.pointsPerTie ?? 0,
-    scoringPreset: useCustomPoints ? null : state.scoringPreset,
+    scoringPreset: timedNoTarget || useCustomPoints ? null : state.scoringPreset,
     deucesBeforeGoldenPoint: effectiveGolden,
   };
 
@@ -67,7 +80,7 @@ export const buildSetupFromFormat = (state: GameFormatState): GameSetupParams =>
   const merged: Omit<GameSetupParams, 'ballsInGames'> = {
     ...base,
     ...restOverrides,
-    scoringPreset: useCustomPoints ? null : state.scoringPreset,
+    scoringPreset: timedNoTarget || useCustomPoints ? null : state.scoringPreset,
     deucesBeforeGoldenPoint: effectiveGolden,
     matchTimerEnabled: state.matchTimerEnabled,
     matchTimedCapMinutes: capMinutes,

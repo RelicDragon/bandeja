@@ -30,6 +30,7 @@ export const LeaderboardSportPicker = ({ sports, value, onChange }: LeaderboardS
             key={sport}
             type="button"
             onClick={() => onChange(sport)}
+            aria-pressed={active}
             className={`flex min-w-[4.5rem] flex-1 items-center justify-center gap-1.5 px-3 py-2 rounded-lg font-semibold text-sm transition-all duration-300 ease-in-out ${
               active
                 ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'

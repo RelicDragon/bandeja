@@ -82,8 +82,12 @@ function defaultScoringPresetForNewGame(
 export const useGameFormat = (initial?: Partial<Game>, options?: UseGameFormatOptions): UseGameFormatResult => {
   const skipGenerationParticipantDefaults = options?.skipGenerationParticipantDefaults === true;
   const preserveInitialGeneration = options?.preserveInitialGeneration === true;
-  const initialPreset = detectScoringPreset(initial) ?? defaultScoringPresetForNewGame(initial, options);
   const initialMode: ScoringMode = detectScoringMode(initial);
+  const initialPreset =
+    detectScoringPreset(initial) ??
+    (initialMode === 'POINTS'
+      ? DEFAULT_PRESET_BY_MODE.POINTS
+      : defaultScoringPresetForNewGame(initial, options));
   const maxParticipants = initial?.maxParticipants;
 
   const initialGameType = (initial?.gameType as GameType) || 'CLASSIC';
@@ -199,9 +203,17 @@ export const useGameFormat = (initial?: Partial<Game>, options?: UseGameFormatOp
     setMatchTimerEnabledState(v);
     if (v) {
       setMatchTimedCapMinutesState((prev) => (prev >= 1 && prev <= 60 ? prev : 15));
+      if (scoringMode === 'POINTS') {
+        // Timed POINTS matches end at the buzzer with arbitrary totals, so a points
+        // target could never be satisfied at finalize — drop it when the timer goes
+        // on, and reset a suspended cap/rally preset: structural fields must stay in
+        // the POINTS family on save.
+        setCustomPointsTotalState(null);
+        setScoringPresetState(DEFAULT_PRESET_BY_MODE.POINTS);
+      }
     }
     setOverridesState({});
-  }, []);
+  }, [scoringMode]);
 
   const setMatchTimedCapMinutes = useCallback((n: number) => {
     if (!Number.isFinite(n)) return;

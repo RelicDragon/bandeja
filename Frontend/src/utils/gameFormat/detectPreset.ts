@@ -29,7 +29,16 @@ export const detectScoringPreset = (game?: Partial<Game> | null): ScoringPreset 
   }
   if (pts === 24) return 'POINTS_24';
   if (pts === 32) return 'POINTS_32';
-  if (winnerOfMatch === 'BY_SCORES' && sets === 1 && pts === 0) return 'POINTS_21';
+  if (winnerOfMatch === 'BY_SCORES' && pts === 0) {
+    // Timed, no target: no preset describes this shape (a stored target preset would
+    // be wrong — saving must keep total 0). Callers fall back to the mode default,
+    // which stays suspended while the timer is on.
+    if (game.matchTimerEnabled) return null;
+    // Untimed with no stored target (only reachable for legacy/DB rows — the UI
+    // never emits this shape): surface it as open-ended Custom so the wizard forces
+    // an explicit choice instead of silently upconverting total 0 to a cap preset.
+    return 'CUSTOM';
+  }
   return null;
 };
 
@@ -41,6 +50,10 @@ export const detectScoringMode = (game?: Partial<Game> | null): ScoringMode => {
   if (preset) return scoringModeFromPreset(preset);
   if (game.ballsInGames) return 'CLASSIC';
   if ((game.maxTotalPointsPerSet ?? 0) > 0) return 'POINTS';
+  // Modeless legacy row with no preset and no points total: winnerOfMatch is the
+  // only scoring-family signal left (a BY_SCORES row must not load as CLASSIC —
+  // re-saving would convert it to classic shape).
+  if (game.winnerOfMatch === 'BY_SCORES') return 'POINTS';
   return 'CLASSIC';
 };
 

@@ -1,14 +1,16 @@
 import { useTranslation } from 'react-i18next';
 import { Medal } from 'lucide-react';
-import { ScoringPreset } from '@/types';
+import { ScoringMode, ScoringPreset } from '@/types';
 import { tGameFormatStepHint, tScoringPresetField } from '@/utils/gameFormat';
 import { isPointsPreset, isRallyMatchPreset, listRallyMatchPresets } from '@/utils/gameFormat/scoringCompatibility';
+import { isPointsTargetSuspended } from '@/utils/gameFormat/gameFormatWizardValidation';
 import { GameFormatTimedDuration } from './GameFormatTimedDuration';
 import { FormatOptionCard } from './FormatOptionCard';
 import { ToggleSwitch } from '@/components/ToggleSwitch';
 import { presetTierBadgeClass, presetTierBadgeLabel, resolvePresetTierForSport } from '@/utils/presetTierUi';
 
 interface GameFormatStepPointsTotalProps {
+  scoringMode: ScoringMode;
   scoringPreset: ScoringPreset;
   allowedPresets?: ScoringPreset[];
   sport?: string | null;
@@ -34,6 +36,7 @@ const POINT_CAP_PRESETS: { cap: number; preset: ScoringPreset; recommended?: boo
 const RALLY_MATCH_RECOMMENDED = new Set<ScoringPreset>(['BEST_OF_3_21', 'BEST_OF_3_11']);
 
 export const GameFormatStepPointsTotal = ({
+  scoringMode,
   scoringPreset,
   allowedPresets,
   sport,
@@ -68,6 +71,9 @@ export const GameFormatStepPointsTotal = ({
 
   const customActive = customPointsTotal != null;
   const rallySelected = isRallyMatchPreset(scoringPreset);
+  // A timed match ends at the buzzer with arbitrary totals, so a points target can
+  // never be satisfied at finalize — target selection is suspended while timed.
+  const targetSuspended = isPointsTargetSuspended(scoringMode, matchTimerEnabled);
 
   return (
     <div className="space-y-3">
@@ -79,7 +85,23 @@ export const GameFormatStepPointsTotal = ({
           </p>
         </div>
 
-        {visibleRally.length > 0 ? (
+        {targetSuspended ? (
+          <div className="rounded-lg border border-primary-500/40 bg-primary-50/80 dark:bg-primary-500/10 p-2.5">
+            <div className="text-xs font-semibold text-gray-900 dark:text-white">
+              {t('gameFormat.scoring.TIMED.title')}
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 m-0 leading-snug">
+              {t('gameFormat.scoring.TIMED.hint')}
+            </p>
+            {customPointsTotal != null ? (
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 m-0 leading-snug">
+                {t('gameResults.maxTotalPointsPerSet')}: {customPointsTotal} → 0
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+
+        {visibleRally.length > 0 && !targetSuspended ? (
           <div className="space-y-2">
             <div className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 px-0.5">
               {t('gameFormat.rallyMatch.sectionTitle')}
@@ -124,7 +146,7 @@ export const GameFormatStepPointsTotal = ({
           </div>
         ) : null}
 
-        {visiblePointCaps.length > 0 ? (
+        {visiblePointCaps.length > 0 && !targetSuspended ? (
           <div className="space-y-2">
             <div className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 px-0.5">
               {t('gameFormat.ballBudget.sectionTitle')}

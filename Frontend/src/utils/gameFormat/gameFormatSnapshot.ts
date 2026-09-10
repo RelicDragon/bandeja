@@ -2,6 +2,7 @@ import type { UseGameFormatResult } from '@/hooks/useGameFormat';
 import type { Game, MatchGenerationType } from '@/types';
 import {
   clampMatchGenerationType,
+  DEFAULT_PRESET_BY_MODE,
   detectScoringMode,
   detectScoringPreset,
   effectiveMatchGeneration,
@@ -33,8 +34,10 @@ export function gameFormatSnapshotFromFormat(format: UseGameFormatResult): GameF
 }
 
 export function gameFormatSnapshotFromGame(game: Partial<Game>): GameFormatTemplateSnapshot {
-  const scoringPreset = detectScoringPreset(game) ?? 'CLASSIC_BEST_OF_3';
   const scoringMode = detectScoringMode(game);
+  const scoringPreset =
+    detectScoringPreset(game) ??
+    (scoringMode === 'POINTS' ? DEFAULT_PRESET_BY_MODE.POINTS : 'CLASSIC_BEST_OF_3');
   const rawGeneration = (game.matchGenerationType ?? 'ROUND_ROBIN') as MatchGenerationType;
   const generationType = clampMatchGenerationType(
     effectiveMatchGeneration(scoringMode, rawGeneration, game.maxParticipants),

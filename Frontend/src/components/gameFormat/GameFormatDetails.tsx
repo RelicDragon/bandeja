@@ -64,12 +64,19 @@ export const GameFormatDetails = ({
     setupPayload,
   } = format;
 
-  const scoringTitle =
-    customPointsTotal != null
+  // Timed match without a points target: the preset selection is suspended, so show
+  // the timed shape instead of a target that isn't enforced.
+  const timedNoTarget = matchTimerEnabled && scoringMode === 'POINTS' && customPointsTotal == null;
+  const scoringTitle = timedNoTarget
+    ? t('gameFormat.scoring.TIMED.title')
+    : customPointsTotal != null
       ? t('gameFormat.customPoints.short', { count: customPointsTotal })
       : tScoringPresetField(t, scoringPreset, 'title', sport);
-  const scoringSubtitle =
-    customPointsTotal != null ? '' : tScoringPresetField(t, scoringPreset, 'subtitle', sport);
+  const scoringSubtitle = timedNoTarget
+    ? t('gameFormat.scoring.TIMED.subtitle')
+    : customPointsTotal != null
+      ? ''
+      : tScoringPresetField(t, scoringPreset, 'subtitle', sport);
 
   const genLabel = t(`gameFormat.generation.${genKey(generationType)}.title`);
   const automaticCopyKey = automaticGenerationCopyKey(generationSlotCount, hasFixedTeams);

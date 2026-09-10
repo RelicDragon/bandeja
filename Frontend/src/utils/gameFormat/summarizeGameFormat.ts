@@ -56,7 +56,11 @@ export const summarizeGameFormat = (
   sport?: string | null,
 ): string => {
   let scoring: string;
-  if (args.customPointsTotal != null) {
+  if (args.matchTimerEnabled && args.scoringMode === 'POINTS' && args.customPointsTotal == null) {
+    // Timed match without a points target: the preset selection is suspended, so
+    // label the timed shape instead of a target that isn't enforced.
+    scoring = tScoringShort(t, 'TIMED', sport);
+  } else if (args.customPointsTotal != null) {
     scoring = t('gameFormat.customPoints.short', { count: args.customPointsTotal });
   } else {
     scoring = tScoringShort(t, args.scoringPreset, sport);

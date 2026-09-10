@@ -32,6 +32,8 @@ interface LevelHistoryViewProps {
   tabDarkBgClass?: string;
   hideUserCard?: boolean;
   content?: 'all' | 'statistics' | 'levels';
+  /** When true, the sport selector + level panel is rendered by the parent (above shared tabs). */
+  hideLevelPanel?: boolean;
   onOpenGame?: () => void;
   showItemsToSell?: boolean;
   onMarketItemClick?: (item: MarketItem) => void;
@@ -51,6 +53,7 @@ const LevelHistoryViewComponent = ({
   tabDarkBgClass,
   hideUserCard = false,
   content = 'all',
+  hideLevelPanel = false,
   onOpenGame,
   showItemsToSell = false,
   onMarketItemClick,
@@ -276,30 +279,28 @@ const LevelHistoryViewComponent = ({
 
   return (
     <div className={`${padding} space-y-3`}>
-      {showLevelsContent && (
-        <>
-          <LevelHistoryLevelPanel
-            user={
-              alignedSportStats?.user
-                ? { ...user, ...alignedSportStats.user, sportProfiles: user.sportProfiles ?? alignedSportStats.user.sportProfiles }
-                : user
-            }
-            sports={selectorSports}
-            selection={selection}
-            onChange={setSelection}
-            variant={hideUserCard ? 'compact' : 'hero'}
-            includeSportsInSelector={includeSportsInSelector}
-            competitiveSport={competitiveSport}
-            trainingAttendanceCount={trainingAttendanceCount}
-          />
-          {!showSocialLevel && (alignedSportStats || alignedParentStats) ? (
-            <PlayerLevelFeedbackAggregateCard
-              aggregate={alignedSportStats?.levelFeedback ?? alignedParentStats?.levelFeedback}
-              isOwnProfile={isOwnProfile}
-            />
-          ) : null}
-        </>
+      {showLevelsContent && !hideLevelPanel && (
+        <LevelHistoryLevelPanel
+          user={
+            alignedSportStats?.user
+              ? { ...user, ...alignedSportStats.user, sportProfiles: user.sportProfiles ?? alignedSportStats.user.sportProfiles }
+              : user
+          }
+          sports={selectorSports}
+          selection={selection}
+          onChange={setSelection}
+          variant={hideUserCard ? 'compact' : 'hero'}
+          includeSportsInSelector={includeSportsInSelector}
+          competitiveSport={competitiveSport}
+          trainingAttendanceCount={trainingAttendanceCount}
+        />
       )}
+      {showLevelsContent && !showSocialLevel && (alignedSportStats || alignedParentStats) ? (
+        <PlayerLevelFeedbackAggregateCard
+          aggregate={alignedSportStats?.levelFeedback ?? alignedParentStats?.levelFeedback}
+          isOwnProfile={isOwnProfile}
+        />
+      ) : null}
 
       {!hideUserCard && showStatisticsContent && (
         <TrophyCabinet

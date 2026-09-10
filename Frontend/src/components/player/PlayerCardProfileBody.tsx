@@ -1,10 +1,13 @@
 import type { ReactNode } from 'react';
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Send, Dumbbell, BarChart3, Users } from 'lucide-react';
+import { Send, Dumbbell, Hash, ChartLine, Users } from 'lucide-react';
 import type { TFunction } from 'i18next';
 import { UserStats } from '@/api/users';
 import { LevelHistoryView } from '@/components/LevelHistoryView';
+import { LevelHistoryLevelPanel } from '@/components/LevelHistoryLevelPanel';
+import { useUserStatsQuery } from '@/queries/useUserStatsQuery';
+import { resolveDisplayedTrainingAttendance } from '@/components/player/trainingAttendanceDisplay';
 import type { LevelHistorySelection } from '@/components/LevelHistoryLevelSelector';
 import { GenderIndicator } from '@/components/GenderIndicator';
 import { TrainerRatingBadge } from '@/components/TrainerRatingBadge';
@@ -20,11 +23,12 @@ import { useAuthStore } from '@/store/authStore';
 import { MarketItem } from '@/types';
 import type { Sport } from '@/types';
 import {
+  getUserPrimarySport,
   listEnabledSports,
   resolveProfileCardSport,
 } from '@/utils/profileSports';
 
-export type PlayerCardProfileTab = 'statistics' | 'levels' | 'groups';
+export type PlayerCardProfileTab = 'statistics' | 'chart' | 'groups';
 
 export interface PlayerCardProfileBodyProps {
   stats: UserStats;
@@ -173,8 +177,8 @@ const PlayerCardProfileBodyComponent = ({
     const tabs: SegmentedSwitchTab[] = [];
     if (hasCompetitiveSports) {
       tabs.push(
-        { id: 'statistics', label: t('playerCard.statistics'), icon: BarChart3 },
-        { id: 'levels', label: t('playerCard.levels'), icon: Dumbbell },
+        { id: 'statistics', label: t('playerCard.statistics'), icon: Hash },
+        { id: 'chart', label: t('playerCard.chart'), icon: ChartLine },
       );
     }
     if (showGroupsTab) {
@@ -197,17 +201,25 @@ const PlayerCardProfileBodyComponent = ({
       ? selection.sport
       : (lastCompetitiveSport ?? preferredSport);
 
-  useEffect(() => {
-    if (!showSportLevelTabs) return;
-    if (safeActiveProfileTab === 'levels') return;
-    if (selection.kind !== 'social') return;
-    if (!lastCompetitiveSport) return;
-    setSelection((prev) =>
-      prev.kind === 'competitive' && prev.sport === lastCompetitiveSport
-        ? prev
-        : { kind: 'competitive', sport: lastCompetitiveSport },
-    );
-  }, [lastCompetitiveSport, safeActiveProfileTab, selection.kind, showSportLevelTabs]);
+  const panelHistorySport =
+    selection.kind === 'competitive' ? selection.sport : getUserPrimarySport(user);
+  const { data: panelSportStats } = useUserStatsQuery(user.id, panelHistorySport, {
+    keepPrevious: true,
+    enabled: showSportLevelTabs,
+  });
+  const panelSportStatsForHistory =
+    panelSportStats?.sport === panelHistorySport ? panelSportStats : undefined;
+  const panelShowSocialLevel = selection.kind === 'social';
+  const panelAlignedSportStats = !panelShowSocialLevel ? panelSportStatsForHistory : undefined;
+  const panelUser = panelAlignedSportStats?.user
+    ? { ...user, ...panelAlignedSportStats.user, sportProfiles: user.sportProfiles ?? panelAlignedSportStats.user.sportProfiles }
+    : user;
+  const panelTrainingAttendanceCount =
+    resolveDisplayedTrainingAttendance({
+      historySport: panelHistorySport,
+      parentStats: stats,
+      sportStats: panelSportStatsForHistory,
+    }) ?? 0;
 
   const handleSelectionChange = (next: LevelHistorySelection) => {
     selectionTouchedRef.current = true;
@@ -300,6 +312,7 @@ const PlayerCardProfileBodyComponent = ({
             onMouseEnter={(e) => { if (!isBlocked) e.currentTarget.style.backgroundColor = '#1E8BC3'; }}
             onMouseLeave={(e) => { if (!isBlocked) e.currentTarget.style.backgroundColor = '#229ED9'; }}
             title={isBlocked ? t('playerCard.userBlockedCannotChat') : t('playerCard.openTelegramChat')}
+            aria-label={isBlocked ? t('playerCard.userBlockedCannotChat') : t('playerCard.openTelegramChat')}
           >
             <Send size={12} className="text-white flex-shrink-0" />
           </button>
@@ -338,6 +351,21 @@ const PlayerCardProfileBodyComponent = ({
         </motion.div>
       )}
 
+      {showSportLevelTabs && (
+        <motion.div variants={itemVariants}>
+          <LevelHistoryLevelPanel
+            user={panelUser}
+            sports={enabledSports}
+            selection={selection}
+            onChange={handleSelectionChange}
+            variant="compact"
+            includeSportsInSelector={!showExternalSportPicker}
+            competitiveSport={lastCompetitiveSport}
+            trainingAttendanceCount={panelTrainingAttendanceCount}
+          />
+        </motion.div>
+      )}
+
       {showSportLevelTabs && onProfileTabChange && (
         <motion.div variants={itemVariants} className="flex justify-center">
           <SegmentedSwitch
@@ -347,6 +375,7 @@ const PlayerCardProfileBodyComponent = ({
             showOnlyActiveTabText={false}
             layoutId="player-card-profile-tabs"
             className="w-fit"
+            ariaLabel={t('playerCard.profileTabs')}
           />
         </motion.div>
       )}
@@ -362,7 +391,9 @@ const PlayerCardProfileBodyComponent = ({
             padding="p-0"
             tabDarkBgClass="dark:bg-gray-700/50"
             hideUserCard
-            content={showProfileTabs && safeActiveProfileTab === 'levels' ? 'levels' : showProfileTabs ? 'statistics' : 'all'}
+            // NOTE: tab id 'chart' maps to content 'levels' on purpose: 'levels' is LevelHistoryView's internal content name, not a tab id.
+            content={showProfileTabs && safeActiveProfileTab === 'chart' ? 'levels' : showProfileTabs ? 'statistics' : 'all'}
+            hideLevelPanel={showSportLevelTabs}
             selection={showProfileTabs ? selection : undefined}
             onSelectionChange={showProfileTabs ? handleSelectionChange : undefined}
             includeSportsInSelector={!showExternalSportPicker}

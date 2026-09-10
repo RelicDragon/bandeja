@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/Dialog';
 import { OVERLAY_CONTROL_GLASS_STABLE } from '@/components/ui/overlayControlGlass';
 import { EntityType, ScoringMode, ScoringPreset } from '@/types';
-import { isPointsPreset, isRallyMatchPreset } from '@/utils/gameFormat/scoringCompatibility';
+import { isPointsTotalStepValid, isSetStructureStepValid } from '@/utils/gameFormat/gameFormatWizardValidation';
 import {
   defaultMatchGenerationForParticipants,
   listWizardSelectableGenerations,
@@ -49,38 +49,6 @@ interface GameFormatWizardProps {
   allowedScoringPresets?: ScoringPreset[];
   playersPerMatch?: number;
   sport?: string | null;
-}
-
-const CLASSIC_STRUCTURE_PRESETS: ScoringPreset[] = [
-  'CLASSIC_BEST_OF_3',
-  'CLASSIC_SUPER_TIEBREAK',
-  'CLASSIC_BEST_OF_5',
-  'CLASSIC_SHORT_SET',
-  'CLASSIC_PRO_SET',
-  'CLASSIC_SINGLE_SET',
-  'CLASSIC_TIMED',
-];
-
-
-function isSetStructureStepValid(f: UseGameFormatResult): boolean {
-  if (f.scoringMode !== 'CLASSIC') return true;
-  const structureOk = CLASSIC_STRUCTURE_PRESETS.includes(f.scoringPreset);
-  if (f.matchTimerEnabled) {
-    return structureOk && f.matchTimedCapMinutes >= 1 && f.matchTimedCapMinutes <= 60;
-  }
-  return structureOk;
-}
-
-function isPointsTotalStepValid(f: UseGameFormatResult): boolean {
-  if (f.scoringMode !== 'POINTS') return true;
-  const targetOk =
-    f.customPointsTotal != null
-      ? f.customPointsTotal > 0 && f.customPointsTotal <= 999
-      : isPointsPreset(f.scoringPreset) || isRallyMatchPreset(f.scoringPreset);
-  if (f.matchTimerEnabled) {
-    return targetOk && f.matchTimedCapMinutes >= 1 && f.matchTimedCapMinutes <= 60;
-  }
-  return targetOk;
 }
 
 function isRankingStepValid(f: UseGameFormatResult, allowByPointsInRanking: boolean): boolean {
@@ -352,6 +320,7 @@ export const GameFormatWizard = ({
               )}
               {safeCurrentStep === 'pointsTotal' && (
                 <GameFormatStepPointsTotal
+                  scoringMode={format.scoringMode}
                   scoringPreset={format.scoringPreset}
                   allowedPresets={allowedScoringPresets}
                   sport={sport}
