@@ -317,6 +317,14 @@ const suites: Suite[] = [
     ],
   },
   {
+    label: 'name search terms',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'src', 'utils', 'nameSearchTerms.test.ts'),
+    ],
+  },
+  {
     label: 'game slot overlap',
     command: process.execPath,
     args: [

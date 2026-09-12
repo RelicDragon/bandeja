@@ -74,6 +74,16 @@ describe('shared module FE/BE parity', () => {
     expect(normalize(feSrc)).toEqual(normalize(beSrc));
   });
 
+  it('nameSearch matches backend export', () => {
+    const feSrc = readFileSync(join(__dirname, 'nameSearch.ts'), 'utf8');
+    const beSrc = readFileSync(
+      join(__dirname, '../../Backend/src/shared/nameSearch.ts'),
+      'utf8',
+    );
+    const normalize = (src: string) => src.replace(/\s+/g, '').trim();
+    expect(normalize(feSrc)).toEqual(normalize(beSrc));
+  });
+
   it('bookingProviderError matches @bandeja/shared export', () => {
     expect(feBookingProviderError('SlotTaken', 'taken')).toEqual(
       pkgBookingProviderError('SlotTaken', 'taken'),

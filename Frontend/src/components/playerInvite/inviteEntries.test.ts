@@ -27,6 +27,25 @@ describe('inviteEntries sport-aware level filtering', () => {
     socialRange: [0, 5] as [number, number],
   };
 
+  it('keeps Serbian Latin names when searching Russian Cyrillic', () => {
+    const andjela: BasicUser = {
+      ...padelPlayer,
+      id: 'andjela',
+      firstName: 'Andjela',
+      lastName: 'Djermanovic',
+    };
+    const hits = filterAndSortInviteEntries([andjela], [], {
+      searchQuery: 'Анджела Дьерманович',
+      filterPlayerIds: [],
+      filters: defaultPlayerInviteFilters(5),
+      inviteAsTrainerOnly: false,
+      isFavorite: () => false,
+      getUserMetadata: () => undefined,
+      showTeams: false,
+    });
+    expect(hits.map((entry) => entry.id)).toEqual(['andjela']);
+  });
+
   it('filterAndSortInviteEntries uses game sport for level band', () => {
     const tennis = filterAndSortInviteEntries([padelPlayer], [], {
       searchQuery: '',

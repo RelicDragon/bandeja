@@ -1,7 +1,7 @@
 import type { BasicUser, UserTeam, UserTeamMembership } from '@/types';
 import type { Sport } from '@/sport/sportRegistry';
 import type { UserMetadata } from '@/store/playersStore';
-import { matchesSearch } from '@/utils/transliteration';
+import { matchesPersonSearch, matchesSearch } from '@/utils/transliteration';
 import type { PlayerInviteFilters } from '@/components/playerInvite/playerInviteFilters';
 import type { GameAvailabilityMatch } from '@/utils/availability/gameMatch';
 import {
@@ -187,7 +187,7 @@ export function filterAndSortInviteEntries(
   }
 
   if (opts.searchQuery.trim()) {
-    uList = uList.filter((player) => matchesSearch(opts.searchQuery, `${player.firstName || ''} ${player.lastName || ''}`));
+    uList = uList.filter((player) => matchesPersonSearch(opts.searchQuery, player));
   }
 
   const [lMin, lMax] = opts.filters.levelRange;

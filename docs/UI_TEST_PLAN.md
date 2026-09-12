@@ -794,6 +794,7 @@ Frontend/e2e/
 | GD-157 | Invite city picker back | Open city picker from invite → Back / Escape | Picker closes; invite modal stays open |
 | GD-158 | Invite modal card visible | Owner opens invite picker | Dim overlay and the invite dialog card both appear (not overlay-only) |
 | GD-15a | Invite search Cyrillic→Latin | Open invite list; type Cyrillic prefix of a Latin-named player (e.g. `ив` for Ivan) | Player stays in results after debounce (does not flash then vanish) |
+| GD-15f | Invite search Serbian Latin via Russian Cyrillic | Open invite list; type `Анджела` or `Дьерманович` for Andjela Djermanovic (or `Спринцхунас` for Polina Sprinzhunas) | Player remains in results after debounce; same person is still visible in the unfiltered city player list |
 | GD-15b | Invite search clear | Open invite list; type 2+ chars so results update; clear the search field | List stays mounted (no full-modal spinner); default invitable list restores after debounce |
 | GD-15c | Invite picker omits busy | Open Search invite list for a timed game; city user is PLAYING in another overlapping Bandeja game | Busy user is absent from the list; INVITED-only or non-overlapping PLAYING users still appear |
 | GD-15e | Invite inactive at bottom | Open invite picker; one player is rating-inactive | Inactive player sorts below active players by default (same `inactive` flag as Level leaderboard) |

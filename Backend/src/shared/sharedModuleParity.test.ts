@@ -99,6 +99,16 @@ function testRosterLifecycleSharedParity(): void {
   );
 }
 
+function testNameSearchSharedParity(): void {
+  const feSrc = readFileSync(join(feSharedRoot, 'nameSearch.ts'), 'utf8');
+  const beSrc = readFileSync(join(__dirname, 'nameSearch.ts'), 'utf8');
+  assert.equal(
+    normalizeSharedSource(feSrc),
+    normalizeSharedSource(beSrc),
+    'nameSearch.ts FE/BE source parity',
+  );
+}
+
 function run(): void {
   testDeriveBallsInGamesSourceParity();
   testDeriveBallsInGamesBehavior();
@@ -106,6 +116,7 @@ function run(): void {
   testGameBookingSharedParity();
   testGamePhotosSharedParity();
   testRosterLifecycleSharedParity();
+  testNameSearchSharedParity();
   testBookingSharedParity();
   console.log('sharedModuleParity.test.ts: all passed');
 }

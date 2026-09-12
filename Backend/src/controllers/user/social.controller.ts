@@ -12,7 +12,7 @@ import {
 import { projectEmbeddedUserByPrimarySport } from '../../services/user/projectEmbeddedBasicUsers';
 import { BasicUser } from '../../types/user.types';
 import { CommonChatsService } from '../../services/user/commonChats.service';
-import { expandNameSearchTerms } from '../../utils/nameSearchTerms';
+import { expandNameSearchTerms, matchesPersonSearch } from '../../utils/nameSearchTerms';
 import { findUserIdsBusyInSlot } from '../../services/game/gameSlotOverlap.service';
 import { rankNearbyCities } from '../../services/user/nearbyCities';
 
@@ -175,16 +175,16 @@ export const getInvitablePlayers = asyncHandler(async (req: AuthRequest, res: Re
   const gamesTogetherMap = new Map(coplayRows.map((r) => [r.userId, r.count]));
   const excludedIds = [...new Set([...participantIds, ...busyUserIds, req.userId!])];
 
-  const loadCityUsers = async (targetCityId: string, take: number) => {
+  const loadCityUsers = async (targetCityId: string, take: number, applySqlNameSearch: boolean) => {
     const users = await prisma.user.findMany({
       where: {
         id: { notIn: excludedIds },
         isActive: true,
         currentCityId: targetCityId,
-        ...searchWhere,
+        ...(applySqlNameSearch ? searchWhere : {}),
       },
       select: USER_SELECT_WITH_SPORT_PROFILES,
-      orderBy: searchTerms.length > 0 ? [{ firstName: 'asc' }, { lastName: 'asc' }] : undefined,
+      orderBy: applySqlNameSearch ? [{ firstName: 'asc' }, { lastName: 'asc' }] : undefined,
       take,
     });
     const mapped = users.map((user) => {
@@ -207,13 +207,24 @@ export const getInvitablePlayers = asyncHandler(async (req: AuthRequest, res: Re
     return mapped;
   };
 
-  const [socialAgg, usersWithInteractions] = await Promise.all([
+  const filterByName = <
+    T extends { firstName?: string | null; lastName?: string | null; telegramUsername?: string | null },
+  >(
+    users: T[],
+  ): T[] => (searchTerm ? users.filter((user) => matchesPersonSearch(searchTerm, user)) : users);
+
+  const [socialAgg, loadedCityUsers, sqlNameHits] = await Promise.all([
     prisma.user.aggregate({
       where: { isActive: true },
       _max: { socialLevel: true },
     }),
-    loadCityUsers(cityId!, 5000),
+    loadCityUsers(cityId!, 5000, false),
+    searchTerms.length > 0 ? loadCityUsers(cityId!, 5000, true) : Promise.resolve([]),
   ]);
+  const mergedById = new Map(loadedCityUsers.map((user) => [user.id, user]));
+  for (const user of sqlNameHits) mergedById.set(user.id, user);
+  const usersWithInteractions = filterByName([...mergedById.values()]);
+  usersWithInteractions.sort((a, b) => b.interactionCount - a.interactionCount);
 
   const maxSocialLevel = Math.max(socialAgg._max.socialLevel ?? 1, 1);
 
@@ -261,7 +272,7 @@ export const getInvitablePlayers = asyncHandler(async (req: AuthRequest, res: Re
         })),
       );
       for (const city of ranked) {
-        const players = await loadCityUsers(city.id, 20);
+        const players = filterByName(await loadCityUsers(city.id, 20, true));
         if (players.length === 0) continue;
         nearby.push({
           cityId: city.id,
