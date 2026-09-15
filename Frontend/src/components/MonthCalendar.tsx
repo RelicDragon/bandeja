@@ -541,7 +541,7 @@ export const MonthCalendar = ({
           const hasGames = gameCount > 0;
           const isParticipant = dayData.isUserParticipant;
           const showLeagueMarks = weatherModeScope === 'my' || leaguesFilter;
-          const showEventMarks = weatherModeScope === 'my' || eventsFilter;
+          const showEventMarks = weatherModeScope === 'my' || eventsFilter || noEntityFilter;
           const participantTypes = visibleCalendarDayMarkTypes(
             PILL_ENTITY_ORDER.filter(t => dayData.participantEntityTypes.has(t)),
             showLeagueMarks,

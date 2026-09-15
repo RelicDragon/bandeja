@@ -112,6 +112,41 @@ describe('findFilter', () => {
     ).toEqual(['event', 'game']);
   });
 
+  it('includes EVENT on the idle calendar and keeps it out of the idle list', () => {
+    const day = startOfDay(new Date());
+    day.setDate(day.getDate() + 2);
+    day.setHours(10, 0, 0, 0);
+    const event = baseGame({
+      id: 'event',
+      entityType: 'EVENT',
+      startTime: day.toISOString(),
+    });
+    const game = baseGame({
+      id: 'game',
+      entityType: 'GAME',
+      startTime: day.toISOString(),
+    });
+    const viewer = baseViewer();
+    const state = baseState();
+
+    expect(passesFindFilter(event, viewer, state, { mode: 'list' })).toBe(false);
+    expect(passesFindFilter(event, viewer, state, { mode: 'calendar' })).toBe(true);
+    expect(
+      filterFindGames([event, game], viewer, state, { mode: 'list' }).map((g) => g.id),
+    ).toEqual(['game']);
+    expect(
+      filterFindGames([event, game], viewer, state, {
+        mode: 'calendar',
+        selectedDay: day,
+      }).map((g) => g.id),
+    ).toEqual(['event', 'game']);
+    expect(
+      aggregateFindGamesByDay([event, game], viewer, state).get(format(day, 'yyyy-MM-dd'))?.entityTypes.has(
+        'EVENT',
+      ),
+    ).toBe(true);
+  });
+
   it('does not hide EVENT when available-slots filter is on', () => {
     const event = baseGame({
       id: 'event',

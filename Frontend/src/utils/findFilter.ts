@@ -169,6 +169,7 @@ export function passesFindListingFilter(
   game: Game,
   viewer: FindFilterViewer,
   state: FindFilterState,
+  options?: Pick<FindFilterOptions, 'mode'>,
 ): boolean {
   if (state.filterAvailableSlots && !passesFindAvailableSlotsFilter(game, viewer as User | null)) {
     return false;
@@ -178,7 +179,13 @@ export function passesFindListingFilter(
     return false;
   }
 
-  if (!gameMatchesFindEntityChips(game.entityType, state)) return false;
+  if (
+    !gameMatchesFindEntityChips(game.entityType, state, {
+      idleIncludesEvent: (options?.mode ?? 'list') === 'calendar',
+    })
+  ) {
+    return false;
+  }
 
   if (state.trainingFilter && game.entityType === 'TRAINING') {
     const favoriteTrainerId = resolveFavoriteTrainerId(viewer, state);
@@ -204,7 +211,7 @@ export function passesFindFilter(
   const phase = options?.phase ?? 'full';
   if (!passesFindVisibilityFilter(game, viewer, state, options)) return false;
   if (phase === 'visibility') return true;
-  return passesFindListingFilter(game, viewer, state);
+  return passesFindListingFilter(game, viewer, state, options);
 }
 
 export interface FilterFindGamesOptions extends FindFilterOptions {

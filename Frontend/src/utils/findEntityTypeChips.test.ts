@@ -23,6 +23,11 @@ describe('findEntityTypeChips', () => {
     expect(resolveFindEntityTypesParam(none)).toBeUndefined();
   });
 
+  it('includes EVENT when no chip is on and calendar idle includes events', () => {
+    expect(gameMatchesFindEntityChips('EVENT', none, { idleIncludesEvent: true })).toBe(true);
+    expect(gameMatchesFindEntityChips('GAME', none, { idleIncludesEvent: true })).toBe(true);
+  });
+
   it('includes EVENT when events chip is on', () => {
     const state = { ...none, eventsFilter: true };
     expect(gameMatchesFindEntityChips('EVENT', state)).toBe(true);

@@ -8,7 +8,9 @@ import type { EntityType, Prisma } from '@prisma/client';
  * | Param            | Meaning                                      | Client residual |
  * |------------------|----------------------------------------------|-----------------|
  * | clubIds          | comma-separated club UUIDs                   | time-of-day     |
- * | entityTypes      | GAME,TRAINING,TOURNAMENT,LEAGUE,BAR          | favorite trainer|
+ * | entityTypes      | GAME,TRAINING,TOURNAMENT,LEAGUE,BAR,EVENT    | favorite trainer|
+ * | (idle upcoming)  | omit EVENT from list river                   | —               |
+ * | (idle calendar)  | include EVENT on day cells                   | —               |
  * | hideBar          | true → exclude BAR                           | —               |
  * | levelMin/levelMax| inclusive band overlap on min/maxLevel       | suitable rating |
  * | requireTimeSet   | calendar: timeIsSet must be true             | —               |
@@ -144,7 +146,7 @@ export function appendStructuralFiltersToWhere(
     and.push({
       entityType: { in: filters.entityTypes as EntityType[] },
     });
-  } else {
+  } else if (!filters.requireTimeSet) {
     and.push({ entityType: { not: 'EVENT' } });
   }
 

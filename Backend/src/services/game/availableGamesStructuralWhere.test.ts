@@ -91,6 +91,16 @@ import {
 }
 
 {
+  const calendarIdle = appendStructuralFiltersToWhere({}, { requireTimeSet: true });
+  assert.ok(Array.isArray(calendarIdle.AND));
+  assert.ok(
+    !(calendarIdle.AND as Array<Record<string, unknown>>).some(
+      (clause) => clause.entityType && (clause.entityType as { not?: string }).not === 'EVENT',
+    ),
+  );
+}
+
+{
   const included = appendStructuralFiltersToWhere({}, { entityTypes: ['EVENT'] });
   assert.ok(Array.isArray(included.AND));
   assert.deepEqual(

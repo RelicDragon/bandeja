@@ -363,7 +363,7 @@ Discover and join games in the user's city.
 
 ### 7.2 Category chips
 
-Filter by: Games, Training, Tournaments, Leagues, Events (multi-select OR). Advanced panel filters combine with chips (AND). Empty chip selection shows all types **except** `EVENT` (Events chip off by default). Compact **Events** poster rail (2–3 upcoming city cards) sits **below the calendar** (desktop: games column), not above it and not titled as a week. **See all** turns the Events chip on. The rail hides when the Events chip is on. `ON_APPROVE` Events are omitted for everyone except the owner and `isAdmin`.
+Filter by: Games, Training, Tournaments, Leagues, Events (multi-select OR). Advanced panel filters combine with chips (AND). Empty chip selection: list river shows all types **except** `EVENT`; calendar days and the selected-day list include `EVENT` (Events chip off by default). Compact **Events** poster rail (2–3 upcoming city cards) sits **below the calendar** (desktop: games column), not above it and not titled as a week. **See all** turns the Events chip on. The rail hides when the Events chip is on. `ON_APPROVE` Events are omitted for everyone except the owner and `isAdmin`.
 
 ### 7.3 Advanced filters
 

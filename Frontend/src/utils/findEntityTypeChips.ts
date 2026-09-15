@@ -41,8 +41,11 @@ export function hasActiveFindEntityChip(filters: FindEntityChipFilters): boolean
 export function gameMatchesFindEntityChips(
   entityType: Game['entityType'] | string,
   filters: FindEntityChipFilters,
+  options?: { idleIncludesEvent?: boolean },
 ): boolean {
-  if (!hasActiveFindEntityChip(filters)) return entityType !== 'EVENT';
+  if (!hasActiveFindEntityChip(filters)) {
+    return options?.idleIncludesEvent === true || entityType !== 'EVENT';
+  }
   if (filters.gameFilter && entityType === 'GAME') return true;
   if (filters.trainingFilter && entityType === 'TRAINING') return true;
   if (filters.tournamentFilter && entityType === 'TOURNAMENT') return true;
