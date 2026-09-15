@@ -4,7 +4,6 @@ import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import { PROFILE_SELECT_FIELDS } from '../../utils/constants';
 import {
-  assertLoginIssuanceAllowed,
   issueLoginTokens,
   jwtPayloadFromAuthUser,
 } from './authIssuance.service';
@@ -22,6 +21,7 @@ import {
   registrationSportExplicitlyChosen,
   registrationSportUserFields,
 } from './registrationSport.service';
+import { applyAuthAttributionSafely } from '../linkToApp/linkToApp.service';
 const SUPPORTED_LANGS = [
   'en', 'ru', 'sr', 'es', 'cs', 'ar', 'zh', 'id', 'hi', 'th', 'ja', 'auto',
 ];
@@ -279,8 +279,8 @@ export async function finalizeGoogleLogin(
   isNewUser: boolean,
   req: Request
 ): Promise<OAuthResult> {
-  assertLoginIssuanceAllowed(req);
   const user = await ensureUserCityAssigned(userId, req);
+  await applyAuthAttributionSafely(req, user.id, isNewUser ? 'register' : 'login');
   const issued = await issueLoginTokens(jwtPayloadFromAuthUser(user), req);
   return {
     user,
@@ -317,9 +317,11 @@ function targetIncludes(target: unknown, field: string): boolean {
 
 async function finalizeAppleUser(
   userId: string,
-  req: Request
+  req: Request,
+  authKind: 'register' | 'login' = 'login'
 ): Promise<{ user: ProfileUser; token: string; refreshToken?: string; currentSessionId?: string }> {
   const user = await ensureUserCityAssigned(userId, req);
+  await applyAuthAttributionSafely(req, user.id, authKind);
   const issued = await issueLoginTokens(jwtPayloadFromAuthUser(user), req);
   return { user, token: issued.token, refreshToken: issued.refreshToken, currentSessionId: issued.currentSessionId };
 }
@@ -413,7 +415,6 @@ export async function loginOrRegisterWithApple(req: Request): Promise<OAuthResul
   }
 
   const appleToken = await verifyAppleIdentityToken(identityToken, nonce);
-  assertLoginIssuanceAllowed(req);
   const appleSub = appleToken.sub;
 
   let user = await prisma.user.findUnique({
@@ -546,6 +547,10 @@ export async function loginOrRegisterWithApple(req: Request): Promise<OAuthResul
     throw createError;
   }
 
-  const { user: out, token, refreshToken, currentSessionId } = await finalizeAppleUser(user.id, req);
+  const { user: out, token, refreshToken, currentSessionId } = await finalizeAppleUser(
+    user.id,
+    req,
+    'register'
+  );
   return { user: out, token, refreshToken, currentSessionId, statusCode: 201 };
 }

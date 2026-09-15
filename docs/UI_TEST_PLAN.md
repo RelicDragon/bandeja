@@ -267,6 +267,8 @@ Frontend/e2e/
 | A-26j | Idle several days then open | Leave app closed 2–7 days (access expired, refresh still valid) | Returns to last screen signed in; no login flash |
 | A-26k | Phone + Watch concurrent refresh | Open Watch and iPhone together after access expiry | Both stay signed in; they share the live successor refresh credential |
 | A-26l | Web refresh cookie missing | Leave a desktop tab open until access JWT expires with no `pp_rt` cookie (`POST /auth/refresh` body `{}` → 400 `auth.refreshTokenRequired`) | Reload sends the user to login; no 401 storm on games / play-intents |
+| A-26m | Refresh requires request id | Call `POST /auth/refresh` with a valid cookie/body credential and no `X-Refresh-Request-Id` | 400 `auth.refreshRequestIdRequired`; session is not rotated onto a stable token |
+| A-26n | Leftover long JWT rejected | Present a non-`typ=access` JWT after login | 401; user must sign in again (force-update still via Admin App Versions) |
 
 ---
 
@@ -450,7 +452,7 @@ Frontend/e2e/
 | F-10 | Leagues filter | Toggle leagues | League seasons |
 | F-86 | Entity chips multi-select | Toggle Games then Tournaments | Both chips stay on (`aria-pressed=true`); list/calendar show games OR tournaments; Training/Leagues/Other Events remain off; tapping Games again leaves Tournaments on |
 | F-83 | Entity chip type dots | Open Find filters (Game / Tournament, League / Training, full-row Other Events) | Two-column rows then a full-width Other Events chip; each chip shows a color dot matching calendar day marks: game whitish, tournament red, league blue, training green, events indigo |
-| F-87 | Events out of default list river | Open Find list with Other Events chip off and city has upcoming EVENTs | List river does not include EVENT rows; **Events** poster rail is below the calendar (desktop: games column), titled Events not “this week” (2–3 upcoming city cards) |
+| F-87 | Events out of default list river | Open Find list with Other Events chip off and city has upcoming EVENTs | List river does not include EVENT rows; **Events** poster rail is below the calendar (desktop: games column), titled Events not “this week”; one EVENT is a full-width poster row, two or three use a horizontal carousel |
 | F-91 | Events on idle calendar | Open Find calendar with all entity chips off and a day has an EVENT | That day shows an indigo EVENT mark; selected-day list includes the EVENT poster |
 | F-88 | Events chip on | Toggle Other Events chip | Chip `aria-pressed=true`; river shows **APPROVED** EVENTs as full-width poster cards (large image, sport, level band, price, going/looking, no type glyph, no 3/4 slots); poster rail hides; occupancy/slots filter does not hide events; suitable rating / level still apply |
 | F-89 | Pending events hidden | City has an `ON_APPROVE` EVENT | Non-owner non-admin Find (rail + Other Events chip) does not show it; owner and `isAdmin` can see it with a pending badge |
@@ -1201,7 +1203,7 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | CH-148 | Send document file | Attach → File → pick PDF/DOC/DOCX/TXT (desktop, mobile browser, Capacitor) | Optimistic file bubble with name/size; CDN upload; confirmed DOCUMENT; tap opens/downloads (native Share uses unique file URI; web blob download); chat list + push show File/name (not Photo); Copy copies `[file] name` (not image toast); re-open thread while pending still shows file bubble |
 | CH-149 | Own ticks backfill on reply/react | `@two-user` A sends image then text; B reacts to or replies after only the later message is marked read | A’s earlier image also shows read (double) ticks — not left as single-tick while the later message is read |
 | CH-150 | Own ticks when read arrives before media ack | `@two-user` A sends slow image; B marks thread read (or replies) before A’s upload confirms | After image confirms, A’s image shows read ticks (peer cursor / buffered receipt until message id was in thread) |
-| CH-151 | Late media seq-honest unread | `@two-user` A starts image upload; B reads then leaves; image finishes with earlier createdAt but newer serverSyncSeq (`CHAT_READ_RECEIPT_DUAL_WRITE=0` so late-insert receipt backfill is off) | A’s image stays sent (not ✓✓) until B opens/marks again |
+| CH-151 | Late media seq-honest unread | `@two-user` A starts image upload; B reads then leaves; image finishes with earlier createdAt but newer serverSyncSeq | A’s image stays sent (not ✓✓) until B opens/marks again |
 | CH-152 | Peer cursor own-message ticks | `@two-user` A sends DM; B opens thread (marks read) while A’s chat stays open | A’s message flips to read ticks from peer `READ_CURSOR_UPDATE` / hydrate `maxPeerCursor` without requiring receipt rows |
 | CH-153 | Mark-all advances peer ticks | `@two-user` A sends several messages; B marks context read (or opens near bottom) | All of A’s earlier messages in that chatType show read ticks (monotonic via max peer cursor) |
 | CH-154 | Leave game stops chat sync polls | Join game chat → leave game or leave chat from details/thread | Local game thread purged (socket leave + Dexie); no repeating 403 on `/chat/sync/events` or `/chat/messages/missed` for that game |
@@ -1848,6 +1850,12 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | X-26l | Calendar tag Admin validation and refresh | Enable a tag with a missing title/date or end before start, then save a valid range and change it while an eligible client calendar remains open | Invalid configuration is blocked; valid configuration saves; the client reflects campaign changes within one minute or on window focus/reconnect |
 | X-26m | Localized selected-day ad message | Configure different calendar-tag messages for English and Russian; select an in-range tagged date using each app language, then select an untagged date | A dedicated message block appears directly below the selected date/weather summary with the matching translation and tag color; it disappears outside the configured range |
 | X-26n | Multiple campaign calendar tags | Two eligible campaigns tag the same calendar day | Each tag is on its own row at the bottom of the cell; labels are not joined on one line |
+| X-26o | App QR landing with UTM | Open `/link-to-app?utm_source=qr&utm_medium=offline&utm_campaign=test` | Static landing loads (not SPA); records a `view` hit with those UTM fields and an `aid`; sets `bandeja_aid` cookie |
+| X-26p | App QR store choice | From that landing tap App Store, Play, or Web | Redirects via `/api/public/link-to-app/go/{ios\|android\|web}` keeping UTM + `aid`; Admin → App QR shows the choice |
+| X-26q | App QR unmarked URL | Open `/link-to-app` with no query | Landing still works; events store empty UTM (campaign shows as —) |
+| X-26r | QR first-touch register | Scan marked landing → choose Web → register (phone/Google/Apple/Telegram) | User row stores first-touch UTM/`aid`; Admin → App QR shows Registered + attributed user; later campaigns do not overwrite |
+| X-26s | QR scan without register | Scan marked landing, do not sign in | Admin → App QR shows view/choice counts; Attributed users stays empty for that `aid` |
+| X-26u | App QR campaign visual name | Admin → App QR: save UUID code + visual name (before or after a scan) | Funnel/user/recent tables show the visual name; QR URL still uses the UUID; deleting the mapping falls back to the code |
 
 ### 18.7 Navigation shell
 

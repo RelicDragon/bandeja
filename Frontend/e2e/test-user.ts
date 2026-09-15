@@ -6,7 +6,7 @@ export const E2E_DEFAULT_PASSWORD = 'Metal4me';
 export const E2E_USER_B_PHONE = '+79672820000';
 export const E2E_USER_B_PASSWORD = 'Metal4me';
 
-/** Must be >= Backend MIN_CLIENT_VERSION_FOR_REFRESH (default 0.94.1). */
+/** E2E client version header (must be a valid semver). */
 export const E2E_CLIENT_VERSION = '1.0.0';
 
 export type E2eUserRole = 'A' | 'B';

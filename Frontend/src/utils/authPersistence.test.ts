@@ -20,6 +20,14 @@ vi.mock('@/store/authStore', () => ({
   },
 }));
 
+function accessJwt(expMs = Date.now() + 30 * 60 * 1000): string {
+  const payload = btoa(JSON.stringify({ typ: 'access', exp: Math.floor(expMs / 1000) }))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+  return `hdr.${payload}.sig`;
+}
+
 describe('auth persistence explicit logout handling', () => {
   const storage = new Map<string, string>();
 
@@ -54,7 +62,7 @@ describe('auth persistence explicit logout handling', () => {
     storage.set(
       'auth_backup',
       JSON.stringify({
-        token: 'backup-token',
+        token: accessJwt(),
         user: JSON.stringify({ id: 'user-1' }),
         timestamp: Date.now(),
       }),
@@ -84,12 +92,13 @@ describe('auth persistence explicit logout handling', () => {
     expect(storage.get('auth_backup')).toBeUndefined();
   });
 
-  it('still restores a valid backup when logout was not explicit', async () => {
+  it('still restores a valid access JWT backup when logout was not explicit', async () => {
+    const token = accessJwt();
     const { restoreAuthIfNeeded } = await import('@/utils/authPersistence');
     storage.set(
       'auth_backup',
       JSON.stringify({
-        token: 'backup-token',
+        token,
         user: JSON.stringify({ id: 'user-1' }),
         timestamp: Date.now(),
       }),
@@ -97,14 +106,32 @@ describe('auth persistence explicit logout handling', () => {
 
     restoreAuthIfNeeded();
 
-    expect(storage.get('token')).toBe('backup-token');
+    expect(storage.get('token')).toBe(token);
     expect(storage.get('user')).toBe(JSON.stringify({ id: 'user-1' }));
     expect(authStoreSetStateMock).toHaveBeenCalledWith({
       user: { id: 'user-1' },
-      token: 'backup-token',
+      token,
       isAuthenticated: true,
     });
-    expect(syncTokenToNativeMock).toHaveBeenCalledWith('backup-token');
-    expect(scheduleProactiveAccessRefreshMock).toHaveBeenCalledWith('backup-token');
+    expect(syncTokenToNativeMock).toHaveBeenCalledWith(token);
+    expect(scheduleProactiveAccessRefreshMock).toHaveBeenCalledWith(token);
+  });
+
+  it('does not restore a legacy long-lived JWT backup', async () => {
+    const { restoreAuthIfNeeded } = await import('@/utils/authPersistence');
+    storage.set(
+      'auth_backup',
+      JSON.stringify({
+        token: 'legacy-long-lived-token',
+        user: JSON.stringify({ id: 'user-1' }),
+        timestamp: Date.now(),
+      }),
+    );
+
+    restoreAuthIfNeeded();
+
+    expect(storage.get('token')).toBeUndefined();
+    expect(storage.get('auth_backup')).toBeUndefined();
+    expect(authStoreSetStateMock).not.toHaveBeenCalled();
   });
 });

@@ -3,7 +3,6 @@ import { asyncHandler } from '../utils/asyncHandler';
 import { ApiError } from '../utils/ApiError';
 import prisma from '../config/database';
 import {
-  assertLoginIssuanceAllowed,
   issueLoginTokens,
   jwtPayloadFromAuthUser,
 } from '../services/auth/authIssuance.service';
@@ -22,6 +21,7 @@ import {
   registrationSportExplicitlyChosen,
   registrationSportUserFields,
 } from '../services/auth/registrationSport.service';
+import { applyAuthAttributionSafely } from '../services/linkToApp/linkToApp.service';
 
 export const registerWithPhone = asyncHandler(async (req: Request, res: Response) => {
   const { phone, password, firstName, lastName, email, language, gender, genderIsSet, preferredHandLeft, preferredHandRight, preferredCourtSideLeft, preferredCourtSideRight, primarySport: primarySportRaw } = req.body;
@@ -44,8 +44,6 @@ export const registerWithPhone = asyncHandler(async (req: Request, res: Response
       throw new ApiError(400, 'User with this email already exists');
     }
   }
-
-  assertLoginIssuanceAllowed(req);
 
   const passwordHash = await hashPassword(password);
 
@@ -78,6 +76,7 @@ export const registerWithPhone = asyncHandler(async (req: Request, res: Response
   }
 
   user = await ensureUserCityAssigned(user.id, req);
+  await applyAuthAttributionSafely(req, user.id, 'register');
   const issued = await issueLoginTokens(jwtPayloadFromAuthUser(user), req);
 
   res.status(201).json({
@@ -130,6 +129,7 @@ export const loginWithPhone = asyncHandler(async (req: Request, res: Response) =
   }
 
   const user = await ensureUserCityAssigned(userWithPassword.id, req);
+  await applyAuthAttributionSafely(req, user.id, 'login');
   const issued = await issueLoginTokens(jwtPayloadFromAuthUser(user), req);
 
   res.json({

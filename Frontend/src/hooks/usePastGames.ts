@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import type { InfiniteData } from '@tanstack/react-query';
 import { useQueryClient } from '@tanstack/react-query';
 import { gamesApi } from '@/api';
@@ -26,7 +26,7 @@ export const usePastGames = (
     fetchNextPage,
   } = usePastGamesQuery(userId, { enabled: shouldLoad });
 
-  const pastGames = flattenPastGamesPages(data?.pages);
+  const pastGames = useMemo(() => flattenPastGamesPages(data?.pages), [data?.pages]);
   const loadingPastGames = isPending || isFetchingNextPage || (isFetching && pastGames.length === 0);
   const hasMorePastGames = hasNextPage ?? false;
 

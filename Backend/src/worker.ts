@@ -17,7 +17,6 @@ const run = async () => {
       refreshTokenEnabled: config.refreshTokenEnabled,
       refreshWebHttpOnlyCookie: config.refreshWebHttpOnlyCookie,
       refreshWebHttpOnlyJsonBody: config.refreshWebHttpOnlyJsonBody,
-      legacyJwtIssuanceEndAt: config.legacyJwtIssuanceEndAt,
     });
     await connectWorkersDatabase();
     console.log('✅ Database connected (worker process)');

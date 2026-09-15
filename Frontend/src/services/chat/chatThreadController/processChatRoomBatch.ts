@@ -125,7 +125,7 @@ function mapBatchToLiveEvents(batch: ChatRoomEvent[]): ThreadLiveEvent[] {
               ? rr.readAt
               : new Date(rr.readAt as string | number | Date).toISOString();
 
-        // Still apply receipt/allRead for dual-write / old-path local rows + syncPull.
+        // Still apply receipt/allRead for residual local rows + historic sync events.
         // New-client ✓✓ ignores receipts (resolveOwnMessageTicks is cursor-only).
         if (rr?.allRead && rr.userId && readAt) {
           events.push({

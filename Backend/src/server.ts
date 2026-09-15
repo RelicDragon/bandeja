@@ -47,7 +47,6 @@ const startServer = async () => {
       refreshTokenEnabled: config.refreshTokenEnabled,
       refreshWebHttpOnlyCookie: config.refreshWebHttpOnlyCookie,
       refreshWebHttpOnlyJsonBody: config.refreshWebHttpOnlyJsonBody,
-      legacyJwtIssuanceEndAt: config.legacyJwtIssuanceEndAt,
     });
 
     initializeLogManager();

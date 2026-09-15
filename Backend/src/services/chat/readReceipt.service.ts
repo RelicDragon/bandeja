@@ -3,27 +3,14 @@ import { ApiError } from '../../utils/ApiError';
 import { MessageService } from './message.service';
 import { GameChatViewerAccessService } from './gameChatViewerAccess.service';
 import { hasParentGamePermissionWithUserCheck } from '../../utils/parentGamePermissions';
-import { ChatSyncEventType } from '@bandeja/chat-contract';
 import { ChatContextType, ChatType, ParticipantRole, Prisma } from '@prisma/client';
 import { UnreadCountBatchService } from './unreadCountBatch.service';
-import { ChatSyncEventService } from './chatSyncEvent.service';
 import { ChatReadCursorService } from './chatReadCursor.service';
 import {
-  sqlMessageAtOrBeforeCursor,
-  sqlMessageMissingReceiptByUser,
-  sqlMessageNotCoveredByCursor,
   sqlMessageNotReadByUser,
   sqlMessageNotReadByViewerColumn,
 } from './chatReadUnreadSql';
-import { isLateInsertRelativeToReadCursor } from './lateInsertReadReceipt';
 import { appendReadCursorUpdatesInTransaction } from './readCursorSync';
-import { config } from '../../config/env';
-
-const READ_SYNC_CHUNK = 400;
-
-function dualWriteReceipts(): boolean {
-  return config.chatReadReceiptDualWrite;
-}
 
 type UnreadMessageRow = {
   id: string;
@@ -44,75 +31,28 @@ type MessageForReadReceipt = {
   senderId: string | null;
 };
 
+async function mergeUnreadMessages(
+  userId: string,
+  unreadMessages: UnreadMessageRow[]
+): Promise<{ count: number; syncSeq: number | undefined }> {
+  if (unreadMessages.length === 0) {
+    return { count: 0, syncSeq: undefined };
+  }
+  return prisma.$transaction(async (tx) => {
+    const mergeResults = await ChatReadCursorService.mergeFromMessages(tx, userId, unreadMessages);
+    const syncSeq = await appendReadCursorUpdatesInTransaction(tx, mergeResults);
+    return { count: unreadMessages.length, syncSeq };
+  });
+}
+
 export class ReadReceiptService {
   static async markMessageAsReadInTransaction(
     tx: Prisma.TransactionClient,
     message: MessageForReadReceipt,
-    userId: string,
-    readAt: Date
+    userId: string
   ): Promise<number | undefined> {
     if (!message.senderId || message.senderId === userId) {
       return undefined;
-    }
-
-    const writeReceipts = dualWriteReceipts();
-    const seq = message.serverSyncSeq ?? -1;
-    let missing: Array<{ id: string }> = [];
-
-    if (writeReceipts) {
-      // Include target by id: createdAt equality can miss PG sub-ms precision vs JS Date.
-      missing = await tx.$queryRaw<Array<{ id: string }>>(
-        Prisma.sql`
-          SELECT m.id
-          FROM "ChatMessage" m
-          WHERE m."chatContextType" = ${message.chatContextType}::"ChatContextType"
-            AND m."contextId" = ${message.contextId}
-            AND m."chatType" = ${message.chatType}::"ChatType"
-            AND m."deletedAt" IS NULL
-            AND m."senderId" IS NOT NULL
-            AND m."senderId" <> ${userId}
-            AND ${sqlMessageMissingReceiptByUser(userId)}
-            AND (
-              m.id = ${message.id}
-              OR ${sqlMessageAtOrBeforeCursor({
-                serverSyncSeq: seq,
-                createdAt: message.createdAt,
-                messageId: message.id,
-              })}
-            )
-          ORDER BY m.id ASC
-        `
-      );
-
-      if (missing.length > 0) {
-        await tx.messageReadReceipt.createMany({
-          data: missing.map((r) => ({
-            messageId: r.id,
-            userId,
-            readAt,
-          })),
-          skipDuplicates: true,
-        });
-      }
-
-      // Always upsert the target so react/mark-one still refreshes readAt when already receipted,
-      // and so target is never dropped when at-or-before cursor matching fails on timestamps.
-      await tx.messageReadReceipt.upsert({
-        where: {
-          messageId_userId: {
-            messageId: message.id,
-            userId,
-          },
-        },
-        update: {
-          readAt,
-        },
-        create: {
-          messageId: message.id,
-          userId,
-          readAt,
-        },
-      });
     }
 
     const mergeSlices: Array<{
@@ -170,184 +110,7 @@ export class ReadReceiptService {
     }
 
     const mergeResults = await ChatReadCursorService.mergeFromMessages(tx, userId, mergeSlices);
-    let syncSeq = await appendReadCursorUpdatesInTransaction(tx, mergeResults);
-
-    if (writeReceipts) {
-      const messageIds = [...new Set([message.id, ...missing.map((r) => r.id)])];
-      const readAtIso = readAt.toISOString();
-      for (let i = 0; i < messageIds.length; i += READ_SYNC_CHUNK) {
-        syncSeq = await ChatSyncEventService.appendEventInTransaction(
-          tx,
-          message.chatContextType,
-          message.contextId,
-          ChatSyncEventType.MESSAGES_READ_BATCH,
-          {
-            userId,
-            readAt: readAtIso,
-            messageIds: messageIds.slice(i, i + READ_SYNC_CHUNK),
-          }
-        );
-      }
-    }
-    return syncSeq;
-  }
-
-  /** True if any other-user message in context lacks a receipt (ignores ChatReadCursor). */
-  static async hasMissingReceiptsForContext(
-    contextType: 'GAME' | 'USER' | 'GROUP',
-    contextId: string,
-    userId: string,
-    gameChatTypes: string[] = []
-  ): Promise<boolean> {
-    if (contextType === 'GAME') {
-      const access = await GameChatViewerAccessService.assertWritable(contextId, userId);
-      if (access.lifecycle !== 'active') return false;
-      const { participant, game } = access;
-      const isParentGameAdminOrOwner = await hasParentGamePermissionWithUserCheck(
-        contextId,
-        userId,
-        [ParticipantRole.OWNER, ParticipantRole.ADMIN]
-      );
-      let chatTypeFilter: string[];
-      if (gameChatTypes.length > 0) {
-        chatTypeFilter = [...gameChatTypes];
-        const canAccessPrivate =
-          participant &&
-          (participant.status === 'PLAYING' || participant.status === 'NON_PLAYING');
-        if (!canAccessPrivate && chatTypeFilter.includes('PRIVATE')) {
-          chatTypeFilter = chatTypeFilter.filter((t) => t !== 'PRIVATE');
-        }
-        const canAccessAdmins =
-          (participant && (participant.role === 'OWNER' || participant.role === 'ADMIN')) ||
-          isParentGameAdminOrOwner;
-        if (!canAccessAdmins && chatTypeFilter.includes('ADMINS')) {
-          chatTypeFilter = chatTypeFilter.filter((t) => t !== 'ADMINS');
-        }
-      } else {
-        chatTypeFilter = UnreadCountBatchService.buildGameChatTypeFilter(
-          participant,
-          game.status,
-          isParentGameAdminOrOwner
-        );
-      }
-      if (chatTypeFilter.length === 0) return false;
-
-      const rows = await prisma.$queryRaw<Array<{ ok: boolean }>>(
-        Prisma.sql`
-          SELECT EXISTS (
-            SELECT 1
-            FROM "ChatMessage" m
-            WHERE m."chatContextType" = 'GAME'::"ChatContextType"
-              AND m."contextId" = ${contextId}
-              AND m."chatType"::text IN (${Prisma.join(chatTypeFilter)})
-              AND m."deletedAt" IS NULL
-              AND m."senderId" IS NOT NULL
-              AND m."senderId" <> ${userId}
-              AND ${sqlMessageMissingReceiptByUser(userId)}
-          ) AS ok
-        `
-      );
-      return Boolean(rows[0]?.ok);
-    }
-
-    const rows = await prisma.$queryRaw<Array<{ ok: boolean }>>(
-      Prisma.sql`
-        SELECT EXISTS (
-          SELECT 1
-          FROM "ChatMessage" m
-          WHERE m."chatContextType" = ${contextType}::"ChatContextType"
-            AND m."contextId" = ${contextId}
-            AND m."deletedAt" IS NULL
-            AND m."senderId" IS NOT NULL
-            AND m."senderId" <> ${userId}
-            AND ${sqlMessageMissingReceiptByUser(userId)}
-        ) AS ok
-      `
-    );
-    return Boolean(rows[0]?.ok);
-  }
-
-  /**
-   * Late-persisted messages (e.g. slow media upload) get a new serverSyncSeq but an older
-   * createdAt. Readers who already advanced past that createdAt should get a receipt so
-   * sender ticks / unread stay consistent even if they left before the row appeared.
-   */
-  static async createReceiptsForLateInsertReaders(
-    message: MessageForReadReceipt
-  ): Promise<number | undefined> {
-    if (!dualWriteReceipts()) return undefined;
-    if (!message.senderId || message.serverSyncSeq == null) return undefined;
-
-    const candidates = await prisma.$queryRaw<
-      Array<{
-        userId: string;
-        readMaxServerSyncSeq: number;
-        readMaxCreatedAt: Date;
-      }>
-    >(
-      Prisma.sql`
-        SELECT
-          c."userId",
-          c."readMaxServerSyncSeq",
-          c."readMaxCreatedAt"
-        FROM "ChatReadCursor" c
-        WHERE c."chatContextType" = ${message.chatContextType}::"ChatContextType"
-          AND c."contextId" = ${message.contextId}
-          AND c."chatType" = ${message.chatType}::"ChatType"
-          AND c."userId" <> ${message.senderId}
-          AND c."readMaxCreatedAt" >= ${message.createdAt}
-          AND c."readMaxServerSyncSeq" < ${message.serverSyncSeq}
-          AND NOT EXISTS (
-            SELECT 1 FROM "MessageReadReceipt" r
-            WHERE r."messageId" = ${message.id} AND r."userId" = c."userId"
-          )
-      `
-    );
-
-    const readers = candidates.filter((c) =>
-      isLateInsertRelativeToReadCursor({
-        messageServerSyncSeq: message.serverSyncSeq,
-        messageCreatedAt: message.createdAt,
-        cursorReadMaxServerSyncSeq: c.readMaxServerSyncSeq,
-        cursorReadMaxCreatedAt: c.readMaxCreatedAt,
-      })
-    );
-    if (readers.length === 0) return undefined;
-
-    const readAt = new Date();
-    const readAtIso = readAt.toISOString();
-    return prisma.$transaction(async (tx) => {
-      await tx.messageReadReceipt.createMany({
-        data: readers.map((r) => ({
-          messageId: message.id,
-          userId: r.userId,
-          readAt,
-        })),
-        skipDuplicates: true,
-      });
-
-      let syncSeq: number | undefined;
-      for (const reader of readers) {
-        syncSeq = await ChatSyncEventService.appendEventInTransaction(
-          tx,
-          message.chatContextType,
-          message.contextId,
-          ChatSyncEventType.MESSAGES_READ_BATCH,
-          {
-            userId: reader.userId,
-            readAt: readAtIso,
-            messageIds: [message.id],
-          }
-        );
-      }
-      return syncSeq;
-    });
-  }
-
-  static scheduleReceiptsForLateInsertReaders(message: MessageForReadReceipt): void {
-    void ReadReceiptService.createReceiptsForLateInsertReaders(message).catch((err) => {
-      console.error('[ReadReceiptService] createReceiptsForLateInsertReaders failed', err);
-    });
+    return appendReadCursorUpdatesInTransaction(tx, mergeResults);
   }
 
   static async markMessageAsRead(messageId: string, userId: string) {
@@ -372,7 +135,7 @@ export class ReadReceiptService {
     const readAt = new Date();
 
     const { syncSeq, readCursor } = await prisma.$transaction(async (tx) => {
-      const seq = await ReadReceiptService.markMessageAsReadInTransaction(tx, message, userId, readAt);
+      const seq = await ReadReceiptService.markMessageAsReadInTransaction(tx, message, userId);
       const cursorRow = await tx.chatReadCursor.findUnique({
         where: {
           userId_chatContextType_contextId_chatType: {
@@ -672,11 +435,6 @@ export class ReadReceiptService {
       return { count: 0, syncSeq: undefined as number | undefined };
     }
 
-    const writeReceipts = dualWriteReceipts();
-    const unreadFilter = writeReceipts
-      ? sqlMessageMissingReceiptByUser(userId)
-      : sqlMessageNotCoveredByCursor(userId);
-
     const unreadMessages = await prisma.$queryRaw<UnreadMessageRow[]>(
       Prisma.sql`
         SELECT
@@ -693,81 +451,15 @@ export class ReadReceiptService {
           AND m."deletedAt" IS NULL
           AND m."senderId" IS NOT NULL
           AND m."senderId" <> ${userId}
-          AND ${unreadFilter}
+          AND ${sqlMessageNotReadByUser(userId)}
       `
     );
 
-    if (unreadMessages.length === 0) {
-      if (!writeReceipts) {
-        return { count: 0, syncSeq: undefined as number | undefined };
-      }
-      const catchUp = await prisma.$queryRaw<UnreadMessageRow[]>(
-        Prisma.sql`
-          SELECT
-            m.id,
-            m."chatContextType",
-            m."contextId",
-            m."chatType",
-            m."serverSyncSeq",
-            m."createdAt"
-          FROM "ChatMessage" m
-          WHERE m."chatContextType" = 'GAME'::"ChatContextType"
-            AND m."contextId" = ${gameId}
-            AND m."chatType"::text IN (${Prisma.join(chatTypeFilter)})
-            AND m."deletedAt" IS NULL
-            AND m."senderId" IS NOT NULL
-            AND m."senderId" <> ${userId}
-            AND ${sqlMessageNotCoveredByCursor(userId)}
-        `
-      );
-      if (catchUp.length === 0) {
-        return { count: 0, syncSeq: undefined as number | undefined };
-      }
-      return prisma.$transaction(async (tx) => {
-        const mergeResults = await ChatReadCursorService.mergeFromMessages(tx, userId, catchUp);
-        const syncSeq = await appendReadCursorUpdatesInTransaction(tx, mergeResults);
-        return { count: 0, syncSeq };
-      });
-    }
-
-    const readAt = new Date();
-    const readAtIso = readAt.toISOString();
-    return prisma.$transaction(async (tx) => {
-      if (writeReceipts) {
-        await tx.messageReadReceipt.createMany({
-          data: unreadMessages.map((message) => ({
-            messageId: message.id,
-            userId,
-            readAt,
-          })),
-          skipDuplicates: true,
-        });
-      }
-      const mergeResults = await ChatReadCursorService.mergeFromMessages(tx, userId, unreadMessages);
-      let syncSeq = await appendReadCursorUpdatesInTransaction(tx, mergeResults);
-      if (writeReceipts) {
-        const ids = unreadMessages.map((m) => m.id);
-        for (let i = 0; i < ids.length; i += READ_SYNC_CHUNK) {
-          syncSeq = await ChatSyncEventService.appendEventInTransaction(
-            tx,
-            'GAME',
-            gameId,
-            ChatSyncEventType.MESSAGES_READ_BATCH,
-            { userId, readAt: readAtIso, messageIds: ids.slice(i, i + READ_SYNC_CHUNK) }
-          );
-        }
-      }
-      return { count: unreadMessages.length, syncSeq };
-    });
+    return mergeUnreadMessages(userId, unreadMessages);
   }
 
   static async markUserChatAsRead(chatId: string, userId: string) {
     await MessageService.validateUserChatAccess(chatId, userId);
-
-    const writeReceipts = dualWriteReceipts();
-    const unreadFilter = writeReceipts
-      ? sqlMessageMissingReceiptByUser(userId)
-      : sqlMessageNotCoveredByCursor(userId);
 
     const unreadMessages = await prisma.$queryRaw<UnreadMessageRow[]>(
       Prisma.sql`
@@ -784,76 +476,13 @@ export class ReadReceiptService {
           AND m."deletedAt" IS NULL
           AND m."senderId" IS NOT NULL
           AND m."senderId" <> ${userId}
-          AND ${unreadFilter}
+          AND ${sqlMessageNotReadByUser(userId)}
       `
     );
 
-    if (unreadMessages.length === 0) {
-      if (!writeReceipts) {
-        return { count: 0, syncSeq: undefined as number | undefined };
-      }
-      const catchUp = await prisma.$queryRaw<UnreadMessageRow[]>(
-        Prisma.sql`
-          SELECT
-            m.id,
-            m."chatContextType",
-            m."contextId",
-            m."chatType",
-            m."serverSyncSeq",
-            m."createdAt"
-          FROM "ChatMessage" m
-          WHERE m."chatContextType" = 'USER'::"ChatContextType"
-            AND m."contextId" = ${chatId}
-            AND m."deletedAt" IS NULL
-            AND m."senderId" IS NOT NULL
-            AND m."senderId" <> ${userId}
-            AND ${sqlMessageNotCoveredByCursor(userId)}
-        `
-      );
-      if (catchUp.length === 0) {
-        return { count: 0, syncSeq: undefined as number | undefined };
-      }
-      return prisma.$transaction(async (tx) => {
-        const mergeResults = await ChatReadCursorService.mergeFromMessages(tx, userId, catchUp);
-        const syncSeq = await appendReadCursorUpdatesInTransaction(tx, mergeResults);
-        return { count: 0, syncSeq };
-      });
-    }
-
-    const readAt = new Date();
-    const readAtIso = readAt.toISOString();
-    return prisma.$transaction(async (tx) => {
-      if (writeReceipts) {
-        await tx.messageReadReceipt.createMany({
-          data: unreadMessages.map((message) => ({
-            messageId: message.id,
-            userId,
-            readAt,
-          })),
-          skipDuplicates: true,
-        });
-      }
-      const mergeResults = await ChatReadCursorService.mergeFromMessages(tx, userId, unreadMessages);
-      let syncSeq = await appendReadCursorUpdatesInTransaction(tx, mergeResults);
-      if (writeReceipts) {
-        const ids = unreadMessages.map((m) => m.id);
-        for (let i = 0; i < ids.length; i += READ_SYNC_CHUNK) {
-          syncSeq = await ChatSyncEventService.appendEventInTransaction(
-            tx,
-            'USER',
-            chatId,
-            ChatSyncEventType.MESSAGES_READ_BATCH,
-            { userId, readAt: readAtIso, messageIds: ids.slice(i, i + READ_SYNC_CHUNK) }
-          );
-        }
-      }
-      return { count: unreadMessages.length, syncSeq };
-    });
+    return mergeUnreadMessages(userId, unreadMessages);
   }
 
-  /**
-   * Unified method to get unread count for any chat context type
-   */
   static async getUnreadCountForContext(
     contextType: ChatContextType,
     contextId: string,
@@ -962,31 +591,9 @@ export class ReadReceiptService {
       return await this.markUserChatAsRead(contextId, userId);
     } else if (contextType === 'GROUP') {
       await MessageService.validateGroupChannelAccess(contextId, userId);
-      const readAt = new Date();
-      const readAtIso = readAt.toISOString();
-      const writeReceipts = dualWriteReceipts();
 
       return prisma.$transaction(
         async (tx) => {
-          let total = 0;
-          if (writeReceipts) {
-            const inserted = await tx.$executeRaw(
-              Prisma.sql`
-                INSERT INTO "MessageReadReceipt" ("id", "messageId", "userId", "readAt")
-                SELECT gen_random_uuid()::text, m.id, ${userId}, ${readAt}
-                FROM "ChatMessage" m
-                WHERE m."chatContextType" = 'GROUP'::"ChatContextType"
-                  AND m."contextId" = ${contextId}
-                  AND m."deletedAt" IS NULL
-                  AND m."senderId" IS NOT NULL
-                  AND m."senderId" <> ${userId}
-                  AND ${sqlMessageMissingReceiptByUser(userId)}
-                ON CONFLICT ("messageId", "userId") DO NOTHING
-              `
-            );
-            total = Number(inserted);
-          }
-
           const winners = await tx.$queryRaw<
             Array<{
               id: string;
@@ -997,55 +604,30 @@ export class ReadReceiptService {
               createdAt: Date;
             }>
           >(
-            writeReceipts
-              ? Prisma.sql`
-                  SELECT DISTINCT ON (m."chatType")
-                    m.id,
-                    m."chatContextType"::text AS "chatContextType",
-                    m."contextId",
-                    m."chatType"::text AS "chatType",
-                    m."serverSyncSeq",
-                    m."createdAt"
-                  FROM "ChatMessage" m
-                  WHERE m."chatContextType" = 'GROUP'::"ChatContextType"
-                    AND m."contextId" = ${contextId}
-                    AND m."deletedAt" IS NULL
-                    AND m."senderId" IS NOT NULL
-                    AND m."senderId" <> ${userId}
-                    AND EXISTS (
-                      SELECT 1 FROM "MessageReadReceipt" r
-                      WHERE r."messageId" = m.id AND r."userId" = ${userId}
-                    )
-                  ORDER BY
-                    m."chatType",
-                    COALESCE(m."serverSyncSeq", -1) DESC,
-                    m."createdAt" DESC,
-                    m.id DESC
-                `
-              : Prisma.sql`
-                  SELECT DISTINCT ON (m."chatType")
-                    m.id,
-                    m."chatContextType"::text AS "chatContextType",
-                    m."contextId",
-                    m."chatType"::text AS "chatType",
-                    m."serverSyncSeq",
-                    m."createdAt"
-                  FROM "ChatMessage" m
-                  WHERE m."chatContextType" = 'GROUP'::"ChatContextType"
-                    AND m."contextId" = ${contextId}
-                    AND m."deletedAt" IS NULL
-                    AND m."senderId" IS NOT NULL
-                    AND m."senderId" <> ${userId}
-                    AND ${sqlMessageNotCoveredByCursor(userId)}
-                  ORDER BY
-                    m."chatType",
-                    COALESCE(m."serverSyncSeq", -1) DESC,
-                    m."createdAt" DESC,
-                    m.id DESC
-                `
+            Prisma.sql`
+              SELECT DISTINCT ON (m."chatType")
+                m.id,
+                m."chatContextType"::text AS "chatContextType",
+                m."contextId",
+                m."chatType"::text AS "chatType",
+                m."serverSyncSeq",
+                m."createdAt"
+              FROM "ChatMessage" m
+              WHERE m."chatContextType" = 'GROUP'::"ChatContextType"
+                AND m."contextId" = ${contextId}
+                AND m."deletedAt" IS NULL
+                AND m."senderId" IS NOT NULL
+                AND m."senderId" <> ${userId}
+                AND ${sqlMessageNotReadByUser(userId)}
+              ORDER BY
+                m."chatType",
+                COALESCE(m."serverSyncSeq", -1) DESC,
+                m."createdAt" DESC,
+                m.id DESC
+            `
           );
 
-          if (winners.length === 0 && total === 0) {
+          if (winners.length === 0) {
             return { count: 0, syncSeq: undefined as number | undefined };
           }
 
@@ -1083,75 +665,13 @@ export class ReadReceiptService {
             mergeSlices
           );
 
-          let syncSeq = await appendReadCursorUpdatesInTransaction(tx, mergeResults);
-
-          if (writeReceipts && total > 0) {
-            let lastId = '';
-            while (true) {
-              const chunk =
-                lastId === ''
-                  ? await tx.$queryRaw<Array<{ id: string }>>(
-                      Prisma.sql`
-                        SELECT m.id
-                        FROM "ChatMessage" m
-                        INNER JOIN "MessageReadReceipt" r
-                          ON r."messageId" = m.id
-                          AND r."userId" = ${userId}
-                          AND r."readAt" = ${readAt}
-                        WHERE m."chatContextType" = 'GROUP'::"ChatContextType"
-                          AND m."contextId" = ${contextId}
-                          AND m."deletedAt" IS NULL
-                          AND m."senderId" IS NOT NULL
-                          AND m."senderId" <> ${userId}
-                        ORDER BY m.id ASC
-                        LIMIT ${READ_SYNC_CHUNK}
-                      `
-                    )
-                  : await tx.$queryRaw<Array<{ id: string }>>(
-                      Prisma.sql`
-                        SELECT m.id
-                        FROM "ChatMessage" m
-                        INNER JOIN "MessageReadReceipt" r
-                          ON r."messageId" = m.id
-                          AND r."userId" = ${userId}
-                          AND r."readAt" = ${readAt}
-                        WHERE m."chatContextType" = 'GROUP'::"ChatContextType"
-                          AND m."contextId" = ${contextId}
-                          AND m."deletedAt" IS NULL
-                          AND m."senderId" IS NOT NULL
-                          AND m."senderId" <> ${userId}
-                          AND m.id > ${lastId}
-                        ORDER BY m.id ASC
-                        LIMIT ${READ_SYNC_CHUNK}
-                      `
-                    );
-
-              if (chunk.length === 0) {
-                break;
-              }
-              const messageIds = chunk.map((c) => c.id);
-              lastId = messageIds[messageIds.length - 1]!;
-              syncSeq = await ChatSyncEventService.appendEventInTransaction(
-                tx,
-                'GROUP',
-                contextId,
-                ChatSyncEventType.MESSAGES_READ_BATCH,
-                { userId, readAt: readAtIso, messageIds }
-              );
-            }
-          }
-
-          return { count: writeReceipts ? total : winners.length, syncSeq };
+          const syncSeq = await appendReadCursorUpdatesInTransaction(tx, mergeResults);
+          return { count: winners.length, syncSeq };
         },
         { timeout: 120_000 }
       );
     } else if (contextType === 'BUG') {
       await MessageService.validateBugAccess(contextId, userId);
-
-      const writeReceipts = dualWriteReceipts();
-      const unreadFilter = writeReceipts
-        ? sqlMessageMissingReceiptByUser(userId)
-        : sqlMessageNotCoveredByCursor(userId);
 
       const unreadMessages = await prisma.$queryRaw<UnreadMessageRow[]>(
         Prisma.sql`
@@ -1168,71 +688,11 @@ export class ReadReceiptService {
             AND m."deletedAt" IS NULL
             AND m."senderId" IS NOT NULL
             AND m."senderId" <> ${userId}
-            AND ${unreadFilter}
+            AND ${sqlMessageNotReadByUser(userId)}
         `
       );
 
-      if (unreadMessages.length === 0) {
-        if (!writeReceipts) {
-          return { count: 0, syncSeq: undefined as number | undefined };
-        }
-        const catchUp = await prisma.$queryRaw<UnreadMessageRow[]>(
-          Prisma.sql`
-            SELECT
-              m.id,
-              m."chatContextType",
-              m."contextId",
-              m."chatType",
-              m."serverSyncSeq",
-              m."createdAt"
-            FROM "ChatMessage" m
-            WHERE m."chatContextType" = 'BUG'::"ChatContextType"
-              AND m."contextId" = ${contextId}
-              AND m."deletedAt" IS NULL
-              AND m."senderId" IS NOT NULL
-              AND m."senderId" <> ${userId}
-              AND ${sqlMessageNotCoveredByCursor(userId)}
-          `
-        );
-        if (catchUp.length === 0) {
-          return { count: 0, syncSeq: undefined as number | undefined };
-        }
-        return prisma.$transaction(async (tx) => {
-          const mergeResults = await ChatReadCursorService.mergeFromMessages(tx, userId, catchUp);
-          const syncSeq = await appendReadCursorUpdatesInTransaction(tx, mergeResults);
-          return { count: 0, syncSeq };
-        });
-      }
-
-      const readAt = new Date();
-      const readAtIso = readAt.toISOString();
-      return prisma.$transaction(async (tx) => {
-        if (writeReceipts) {
-          await tx.messageReadReceipt.createMany({
-            data: unreadMessages.map((message) => ({
-              messageId: message.id,
-              userId,
-              readAt,
-            })),
-            skipDuplicates: true,
-          });
-        }
-        const mergeResults = await ChatReadCursorService.mergeFromMessages(tx, userId, unreadMessages);
-        let syncSeq = await appendReadCursorUpdatesInTransaction(tx, mergeResults);
-        if (writeReceipts) {
-          const ids = unreadMessages.map((m) => m.id);
-          for (let i = 0; i < ids.length; i += READ_SYNC_CHUNK) {
-            syncSeq = await ChatSyncEventService.appendEventInTransaction(
-              tx,
-              'BUG',
-              contextId,
-              ChatSyncEventType.MESSAGES_READ_BATCH,
-              { userId, readAt: readAtIso, messageIds: ids.slice(i, i + READ_SYNC_CHUNK) }
-            );
-          }
-        }
-        return { count: unreadMessages.length, syncSeq };
-      });
+      return mergeUnreadMessages(userId, unreadMessages);
     }
     return { count: 0, syncSeq: undefined as number | undefined };
   }

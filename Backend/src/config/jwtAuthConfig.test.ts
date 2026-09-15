@@ -2,7 +2,6 @@ import assert from 'node:assert/strict';
 import {
   DEFAULT_DEV_JWT_SECRET,
   DEFAULT_JWT_ACCESS_EXPIRES_IN,
-  DEFAULT_JWT_LEGACY_EXPIRES_IN,
   DEFAULT_REFRESH_TOKEN_EXPIRES_IN,
   MIN_PRODUCTION_JWT_SECRET_LENGTH,
   SAMPLE_JWT_SECRET,
@@ -13,7 +12,6 @@ import {
   normalizeNodeEnv,
   parseExpiresInToMs,
   resolveJwtAccessExpiresIn,
-  resolveJwtLegacyExpiresIn,
   resolveJwtSecret,
   resolveRefreshTokenExpiresIn,
 } from './jwtAuthConfig';
@@ -27,7 +25,6 @@ const PROD_OK = {
   refreshTokenEnabled: true,
   refreshWebHttpOnlyCookie: true,
   refreshWebHttpOnlyJsonBody: false,
-  legacyJwtIssuanceEndAt: new Date('2026-05-15T00:00:00.000Z'),
 } as const;
 
 function run() {
@@ -91,7 +88,6 @@ function run() {
   assert.throws(() => resolveJwtAccessExpiresIn('nope', 'development'), /Unsupported expires/);
   assert.equal(DEFAULT_JWT_ACCESS_EXPIRES_IN, '30m');
 
-  assert.equal(resolveJwtLegacyExpiresIn(undefined), DEFAULT_JWT_LEGACY_EXPIRES_IN);
   assert.equal(resolveRefreshTokenExpiresIn(undefined), DEFAULT_REFRESH_TOKEN_EXPIRES_IN);
   assert.equal(resolveRefreshTokenExpiresIn('60d', 'production'), '60d');
   assert.throws(
@@ -113,7 +109,6 @@ function run() {
       refreshTokenEnabled: false,
       refreshWebHttpOnlyCookie: false,
       refreshWebHttpOnlyJsonBody: true,
-      legacyJwtIssuanceEndAt: null,
     })
   );
   assert.throws(
@@ -127,10 +122,6 @@ function run() {
   assert.throws(
     () => assertProductionJwtAuthConfig({ ...PROD_OK, refreshWebHttpOnlyJsonBody: true }),
     /REFRESH_WEB_HTTPONLY_JSON_BODY/
-  );
-  assert.throws(
-    () => assertProductionJwtAuthConfig({ ...PROD_OK, legacyJwtIssuanceEndAt: null }),
-    /LEGACY_JWT_ISSUANCE_END_AT/
   );
   assert.throws(
     () => assertProductionJwtSecret({ nodeEnv: 'production', jwtSecret: 'short' }),

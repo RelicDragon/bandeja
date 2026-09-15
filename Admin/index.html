@@ -60,6 +60,7 @@
                 <li><a href="#" data-page="mass-notifications" class="nav-link">📢 Mass Notifications</a></li>
                 <li><a href="#" data-page="sponsor-ads" class="nav-link">📣 Sponsor Ads</a></li>
                 <li><a href="#" data-page="translation-queue" class="nav-link">🌐 Translation Queue</a></li>
+                <li><a href="#" data-page="link-to-app" class="nav-link">📱 App QR</a></li>
                 <li><a href="#" data-page="logs" class="nav-link">📋 Logs</a></li>
             </ul>
             <button id="logoutBtn" class="btn-logout">Logout</button>
@@ -175,6 +176,149 @@
                             </tr>
                         </thead>
                         <tbody id="translationQueueFailedBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="linkToAppPage" class="content-page">
+                <div class="page-header">
+                    <h1>App QR / link-to-app</h1>
+                    <div class="online-users-controls">
+                        <label>
+                            Days
+                            <select id="linkToAppDays" onchange="loadLinkToAppStats()">
+                                <option value="7">7</option>
+                                <option value="30" selected>30</option>
+                                <option value="90">90</option>
+                                <option value="365">365</option>
+                            </select>
+                        </label>
+                        <button type="button" class="btn-secondary" onclick="loadLinkToAppStats()">Refresh</button>
+                    </div>
+                </div>
+                <p class="translation-queue-worker">
+                    QR URL uses the campaign <strong>code</strong> (UUID is fine). Map a visual name below — Admin shows the name when set, otherwise the code. Users never see the name.
+                </p>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">👀</div>
+                        <div class="stat-info">
+                            <p class="stat-label">Scans / views</p>
+                            <p class="stat-value" id="ltaView">-</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🍎</div>
+                        <div class="stat-info">
+                            <p class="stat-label">App Store</p>
+                            <p class="stat-value" id="ltaIos">-</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🤖</div>
+                        <div class="stat-info">
+                            <p class="stat-label">Google Play</p>
+                            <p class="stat-value" id="ltaAndroid">-</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🌐</div>
+                        <div class="stat-info">
+                            <p class="stat-label">Web</p>
+                            <p class="stat-value" id="ltaWeb">-</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">✅</div>
+                        <div class="stat-info">
+                            <p class="stat-label">Registered</p>
+                            <p class="stat-value" id="ltaRegister">-</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🔑</div>
+                        <div class="stat-info">
+                            <p class="stat-label">Logged in</p>
+                            <p class="stat-value" id="ltaLogin">-</p>
+                        </div>
+                    </div>
+                </div>
+                <h2 class="section-subtitle">Campaign names</h2>
+                <form id="linkToAppLabelForm" class="translation-queue-worker" onsubmit="return saveLinkToAppCampaignLabel(event)">
+                    <div class="form-group" style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:flex-end">
+                        <div>
+                            <label for="ltaCampaignCode">Code in QR (`utm_campaign`)</label>
+                            <input id="ltaCampaignCode" type="text" autocomplete="off" maxlength="80" placeholder="550e8400-e29b-41d4-a716-446655440000" required>
+                        </div>
+                        <div>
+                            <label for="ltaCampaignLabel">Visual name (Admin only)</label>
+                            <input id="ltaCampaignLabel" type="text" autocomplete="off" maxlength="80" placeholder="NS club poster May" required>
+                        </div>
+                        <button type="button" class="btn-secondary" onclick="fillLinkToAppCampaignUuid()">New UUID</button>
+                        <button type="submit" class="btn-primary">Save mapping</button>
+                    </div>
+                    <p id="ltaCampaignUrl" class="text-muted" style="margin-top:0.5rem"></p>
+                </form>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Visual name</th>
+                                <th>Code</th>
+                                <th>QR URL</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="linkToAppLabelBody"></tbody>
+                    </table>
+                </div>
+                <h2 class="section-subtitle">By campaign</h2>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Campaign</th>
+                                <th>Source</th>
+                                <th>Medium</th>
+                                <th>Views</th>
+                                <th>iOS</th>
+                                <th>Android</th>
+                                <th>Web</th>
+                                <th>Registered</th>
+                                <th>Logged in</th>
+                            </tr>
+                        </thead>
+                        <tbody id="linkToAppCampaignBody"></tbody>
+                    </table>
+                </div>
+                <h2 class="section-subtitle">Attributed users</h2>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>When</th>
+                                <th>User</th>
+                                <th>Kind</th>
+                                <th>Campaign</th>
+                                <th>Choice</th>
+                            </tr>
+                        </thead>
+                        <tbody id="linkToAppUsersBody"></tbody>
+                    </table>
+                </div>
+                <h2 class="section-subtitle">Recent</h2>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>When</th>
+                                <th>Kind</th>
+                                <th>Campaign</th>
+                                <th>Source</th>
+                                <th>Platform</th>
+                            </tr>
+                        </thead>
+                        <tbody id="linkToAppRecentBody"></tbody>
                     </table>
                 </div>
             </div>
@@ -1728,6 +1872,7 @@
           'ads-presets.js',
           'ads-analytics.js',
           'ads.js',
+          'link-to-app.js',
           'merge-users.js',
         ];
         for (const src of scripts) {

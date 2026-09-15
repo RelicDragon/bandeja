@@ -74,6 +74,7 @@
     "test:sticker-prefs": "ts-node --transpile-only src/services/stickers/stickerPrefsNormalize.test.ts",
     "test:gender-eligibility": "ts-node --transpile-only src/utils/genderGameEligibility.test.ts",
     "test:sticker-pack-sort": "ts-node --transpile-only src/services/stickers/stickerPackSort.test.ts",
+    "test:link-to-app": "../scripts/run-heavy bash -c 'ts-node --transpile-only src/services/linkToApp/linkToApp.urls.test.ts && ts-node -r dotenv/config --transpile-only src/services/linkToApp/linkToApp.attribution.integration.test.ts'",
     "test:court-club-sports-reconcile": "ts-node scripts/lib/courtClubSportsReconcile.test.ts",
     "sunset:user-rating-columns": "ts-node scripts/sunsetUserRatingColumns.ts",
     "backfill:non-rating-game-level-events": "ts-node scripts/backfillNonRatingGameLevelEvents.ts",

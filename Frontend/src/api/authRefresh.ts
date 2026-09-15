@@ -232,7 +232,7 @@ async function postRefresh(refreshToken: string): Promise<{
       success: boolean;
       data: { token: string; refreshToken?: string; user?: unknown; currentSessionId?: string };
     }>('/auth/refresh', body, {
-      ...(refreshRequestId ? { headers: { 'X-Refresh-Request-Id': refreshRequestId } } : {}),
+      headers: { 'X-Refresh-Request-Id': refreshRequestId },
     });
     if (!data?.success || !data.data?.token) {
       // Malformed success body is transient (proxy/CDN), not a dead refresh session.

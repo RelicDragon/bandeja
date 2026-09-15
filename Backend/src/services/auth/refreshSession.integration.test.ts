@@ -115,12 +115,6 @@ void (async () => {
       'auth.refreshInvalid'
     );
 
-    // Pre-force-update clients without an idempotency header stay on the stable compatibility path.
-    const legacy = await createUserRefreshSession(user.id, req);
-    const legacyRefresh = await refreshActiveSession(legacy.refreshToken, req);
-    assert.equal(legacyRefresh.refreshToken, legacy.refreshToken);
-    assert.equal(legacyRefresh.currentSessionId, legacy.sessionId);
-
     // Session creation enforces a bounded active-device set instead of growing forever.
     for (let i = 0; i < config.authMaxActiveSessionsPerUser + 2; i += 1) {
       await createUserRefreshSession(user.id, req);

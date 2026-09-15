@@ -9,6 +9,9 @@ import {
   type CalendarDayWeather,
 } from '@/utils/calendarWeather.util';
 
+// useQueries returns a fresh results array; combine preserves unchanged data.
+const combinePastWeather = (results: { data?: WeatherDay }[]) => results.map((result) => result.data);
+
 export interface MonthCalendarWeatherState {
   weatherByDay: Map<string, CalendarDayWeather>;
 }
@@ -46,14 +49,15 @@ export function useMonthCalendarWeather(
     [dayKeys, resolvedTimezone],
   );
 
-  const pastQueries = useQueries({
+  const pastDays = useQueries({
     queries: pastDayKeys.map((date) => weatherDayQueryOptions(resolvedCityId, date, shouldFetch)),
+    combine: combinePastWeather,
   });
 
   const weatherByDay = useMemo(() => {
     const pastDaysByKey = new Map<string, WeatherDay | undefined>();
     pastDayKeys.forEach((date, index) => {
-      pastDaysByKey.set(date, pastQueries[index]?.data);
+      pastDaysByKey.set(date, pastDays[index]);
     });
 
     return buildCalendarWeatherByDay({
@@ -61,7 +65,7 @@ export function useMonthCalendarWeather(
       forecastWindow: forecastQuery.data,
       pastDaysByKey,
     });
-  }, [dayKeys, pastDayKeys, forecastQuery.data, pastQueries]);
+  }, [dayKeys, pastDayKeys, forecastQuery.data, pastDays]);
 
   return { weatherByDay };
 }

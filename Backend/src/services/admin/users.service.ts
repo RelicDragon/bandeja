@@ -17,6 +17,7 @@ import {
   setUserPrimarySport,
 } from '../user/userSportProfile.service';
 import { preparePersonalStickersForUserHardDelete } from '../stickers';
+import { campaignLabelMap, displayCampaignName } from '../linkToApp/linkToApp.campaignLabel';
 
 const USERS_PAGE_SIZE = 50;
 
@@ -65,12 +66,26 @@ export class AdminUsersService {
       where.sportsEnabled = { has: parseSportParam(hasSport) };
     }
     if (search && search.trim()) {
+      const trimmed = search.trim();
+      const labeled = await prisma.linkToAppCampaignLabel.findMany({
+        where: {
+          OR: [
+            { label: { contains: trimmed, mode: 'insensitive' } },
+            { utmCampaign: { contains: trimmed, mode: 'insensitive' } },
+          ],
+        },
+        select: { utmCampaign: true },
+      });
+      const labeledCampaigns = labeled.map((row) => row.utmCampaign);
       where.OR = [
-        { firstName: { contains: search.trim(), mode: 'insensitive' } },
-        { lastName: { contains: search.trim(), mode: 'insensitive' } },
-        { phone: { contains: search.trim(), mode: 'insensitive' } },
-        { email: { contains: search.trim(), mode: 'insensitive' } },
-        { telegramUsername: { contains: search.trim(), mode: 'insensitive' } },
+        { firstName: { contains: trimmed, mode: 'insensitive' } },
+        { lastName: { contains: trimmed, mode: 'insensitive' } },
+        { phone: { contains: trimmed, mode: 'insensitive' } },
+        { email: { contains: trimmed, mode: 'insensitive' } },
+        { telegramUsername: { contains: trimmed, mode: 'insensitive' } },
+        { utmCampaign: { contains: trimmed, mode: 'insensitive' } },
+        { utmSource: { contains: trimmed, mode: 'insensitive' } },
+        ...(labeledCampaigns.length ? [{ utmCampaign: { in: labeledCampaigns } }] : []),
       ];
     }
 
@@ -80,6 +95,13 @@ export class AdminUsersService {
         select: {
           ...PROFILE_SELECT_FIELDS,
           totalPoints: true,
+          attributionId: true,
+          utmSource: true,
+          utmMedium: true,
+          utmCampaign: true,
+          attributedAt: true,
+          attributionChoice: true,
+          attributionAuthKind: true,
         },
         orderBy: { createdAt: 'desc' },
         skip,
@@ -88,7 +110,20 @@ export class AdminUsersService {
       prisma.user.count({ where }),
     ]);
 
-    return { users, total, page, pageSize: USERS_PAGE_SIZE };
+    const labelMap = await campaignLabelMap(users.map((user) => user.utmCampaign));
+    return {
+      users: users.map((user) => ({
+        ...user,
+        utmCampaignLabel: user.utmCampaign ? labelMap.get(user.utmCampaign) ?? null : null,
+        utmCampaignDisplay: displayCampaignName(
+          user.utmCampaign,
+          user.utmCampaign ? labelMap.get(user.utmCampaign) : null
+        ),
+      })),
+      total,
+      page,
+      pageSize: USERS_PAGE_SIZE,
+    };
   }
 
   static async getUsersByIds(ids: string[]) {

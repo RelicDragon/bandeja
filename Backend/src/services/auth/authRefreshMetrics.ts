@@ -23,6 +23,7 @@ const CODE_TO_OUTCOME: Record<string, AuthRefreshOutcome> = {
   'auth.refreshReused': 'refreshReused',
   'auth.refreshBusy': 'refreshBusy',
   'auth.refreshRequestIdInvalid': 'refreshRequestIdInvalid',
+  'auth.refreshRequestIdRequired': 'refreshRequestIdInvalid',
   'auth.userInactive': 'error',
   'auth.userNotFound': 'error',
 };

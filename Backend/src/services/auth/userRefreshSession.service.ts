@@ -218,7 +218,7 @@ export async function resolvePresentedRefreshToken(candidates: string[]): Promis
 export async function refreshActiveSessionFromCandidates(
   candidates: string[],
   req: Request,
-  refreshRequestId?: string | null
+  refreshRequestId: string
 ): Promise<IssuedRefreshCredentials> {
   const unique = [...new Set(candidates.map((token) => token.trim()).filter(Boolean))];
   if (unique.length === 0) {
@@ -266,7 +266,7 @@ export async function refreshActiveSessionFromCandidates(
 export async function refreshActiveSession(
   refreshTokenRaw: string,
   req: Request,
-  refreshRequestId?: string | null
+  refreshRequestId: string
 ): Promise<IssuedRefreshCredentials> {
   const hash = hashRefreshToken(refreshTokenRaw.trim());
   const metadata = await readRefreshClientMetadata(req);
@@ -283,10 +283,6 @@ export async function refreshActiveSession(
         const now = new Date();
         const expiresAt = expiresInToDate(config.refreshTokenExpiresIn);
         const presentedToken = refreshTokenRaw.trim();
-
-        if (!refreshRequestId) {
-          return touchActiveSession(tx, row.id, user, presentedToken, now, expiresAt, metadata);
-        }
 
         const predecessorForSameRequest = await tx.userRefreshSession.findFirst({
           where: {

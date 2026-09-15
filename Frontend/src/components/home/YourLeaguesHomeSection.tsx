@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Trophy } from 'lucide-react';
 import type { Game } from '@/types';
+import { useGameUnreadCountsForIds } from '@/hooks/useUnreadBridge';
 import { useAuthStore } from '@/store/authStore';
 import { leagueSeasonHubsFromGames } from '@/utils/leagueSeasonHubsFromGames';
 import {
@@ -24,7 +25,7 @@ interface YourLeaguesHomeSectionProps {
 
 export function YourLeaguesHomeSection({
   games,
-  gamesUnreadCounts = {},
+  gamesUnreadCounts: unreadFallback = {},
   className = '',
   embedded = false,
 }: YourLeaguesHomeSectionProps) {
@@ -39,6 +40,13 @@ export function YourLeaguesHomeSection({
     () => leagueSeasonUnscheduledGamesFromGames(games, user?.id),
     [games, user?.id]
   );
+
+  const unreadGameIds = useMemo(() => [
+    ...hubs.map((hub) => hub.hubId),
+    ...Object.values(scheduledGamesByHub).flat().map((game) => game.id),
+    ...Object.values(unscheduledGamesByHub).flat().map((game) => game.id),
+  ], [hubs, scheduledGamesByHub, unscheduledGamesByHub]);
+  const gamesUnreadCounts = useGameUnreadCountsForIds(unreadGameIds, unreadFallback);
 
   if (hubs.length === 0) {
     if (embedded) {

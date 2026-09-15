@@ -50,17 +50,12 @@ async function deterministicNativeRefreshRequestId(refreshToken: string): Promis
   }
 }
 
-export async function getOrCreateRefreshRequestId(refreshToken?: string): Promise<string | null> {
+export async function getOrCreateRefreshRequestId(refreshToken?: string): Promise<string> {
   if (Capacitor.isNativePlatform() && refreshToken) {
     const deterministic = await deterministicNativeRefreshRequestId(refreshToken);
     if (deterministic) return deterministic;
   }
-  // Web HttpOnly cookie: never send a request id. A leftover LS token must not rotate the
-  // cookie session — that is what created the dual host-only + Domain pp_rt pair.
-  if (!Capacitor.isNativePlatform() && isWebHttpOnlyRefreshCookie()) {
-    return null;
-  }
-  const readOrCreate = (): string | null => {
+  const readOrCreate = (): string => {
     try {
       const existing = localStorage.getItem(LS_REFRESH_REQUEST_ID)?.trim() ?? '';
       if (REFRESH_REQUEST_ID_PATTERN.test(existing)) return existing;
@@ -69,9 +64,11 @@ export async function getOrCreateRefreshRequestId(refreshToken?: string): Promis
           ? crypto.randomUUID()
           : `refresh-${Date.now()}-${Math.random().toString(36).slice(2, 14)}`;
       localStorage.setItem(LS_REFRESH_REQUEST_ID, generated);
-      return localStorage.getItem(LS_REFRESH_REQUEST_ID) === generated ? generated : null;
+      return generated;
     } catch {
-      return null;
+      return typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+        ? crypto.randomUUID()
+        : `refresh-${Date.now()}-${Math.random().toString(36).slice(2, 14)}`;
     }
   };
   if (typeof navigator !== 'undefined' && typeof navigator.locks?.request === 'function') {
@@ -111,9 +108,7 @@ export async function getRefreshTokenForRequest(): Promise<string | null> {
   }
   const ls = getStoredRefreshTokenSync()?.trim() ?? '';
   if (isWebHttpOnlyRefreshCookie()) {
-    // Cookie is authoritative once set. Until then, keep legacy LS as a one-time body fallback
-    // so a deploy reload cannot delete the only refresh credential before refresh runs.
-    return ls || null;
+    return null;
   }
   return ls || null;
 }

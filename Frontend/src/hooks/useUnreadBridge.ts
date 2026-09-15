@@ -83,6 +83,34 @@ export function useGameUnreadCountsForIds(
   return warm ? fromStore : propFallback;
 }
 
+/** Sorting depends on unread presence, not the number shown on each badge. */
+export function useGameUnreadPresenceForIds(
+  gameIds: readonly string[],
+  propFallback: Record<string, number>,
+): Record<string, number> {
+  return useUnreadStore(useShallow((s) => {
+    const warm = isUnreadStoreWarm(s);
+    const presence: Record<string, number> = {};
+    for (const id of gameIds) {
+      const count = warm ? selectContextUnread('GAME', id, s) : (propFallback[id] ?? 0);
+      if (count > 0) presence[id] = 1;
+    }
+    return presence;
+  }));
+}
+
+export function useGameUnreadTotalForIds(
+  gameIds: readonly string[],
+  propFallback: Record<string, number>,
+): number {
+  return useUnreadStore((s) => {
+    const warm = isUnreadStoreWarm(s);
+    return gameIds.reduce((total, id) => total + (
+      warm ? selectContextUnread('GAME', id, s) : (propFallback[id] ?? 0)
+    ), 0);
+  });
+}
+
 export function useMyGamesSubtabUnreadBadges(): {
   myGames: TabUnreadBadge;
   pastGames: TabUnreadBadge;

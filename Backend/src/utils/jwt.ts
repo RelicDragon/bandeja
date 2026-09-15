@@ -4,13 +4,7 @@ import { config } from '../config/env';
 
 const ACCESS_VER = 1;
 
-function legacyJwtVerifyCutoffActive(): boolean {
-  const end = config.legacyJwtIssuanceEndAt;
-  if (!end) return false;
-  return Date.now() >= end.getTime();
-}
-
-/** Thrown when a legacy (non-access) JWT is no longer accepted after `LEGACY_JWT_ISSUANCE_END_AT`. */
+/** Thrown when a legacy (non-access) JWT is presented. */
 export class LegacyJwtVerifyRejectedError extends Error {
   constructor() {
     super('LegacyJwtVerifyRejected');
@@ -42,16 +36,6 @@ function signJwt(body: Record<string, unknown>, expiresIn: string): string {
   });
 }
 
-export function generateLegacyAccessToken(
-  payload: Omit<JwtPayload, 'typ' | 'jti' | 'iss' | 'aud' | 'ver'>
-): string {
-  if (config.nodeEnv === 'production') {
-    throw new Error('Legacy JWT issuance is disabled in production');
-  }
-  const body: Record<string, unknown> = { ...payload };
-  return signJwt(body, config.jwtExpiresIn);
-}
-
 export function generateShortAccessToken(
   payload: Omit<JwtPayload, 'typ' | 'jti' | 'iss' | 'aud' | 'ver'>
 ): string {
@@ -66,27 +50,12 @@ export function generateShortAccessToken(
   return signJwt(body, config.jwtAccessExpiresIn);
 }
 
-export const generateToken = (
-  payload: Omit<JwtPayload, 'typ' | 'jti' | 'iss' | 'aud' | 'ver'>
-): string => {
-  if (config.nodeEnv === 'production') {
-    throw new Error('generateToken is disabled in production; use issueLoginTokens');
-  }
-  return generateLegacyAccessToken(payload);
-};
-
 export function verifyToken(token: string): JwtPayload {
   const decoded = jwt.verify(token, config.jwtSecret, {
     algorithms: [JWT_ALG],
   }) as jwt.JwtPayload & JwtPayload;
   if (decoded.typ !== 'access') {
-    // Production never accepts legacy long-lived JWTs (#315).
-    if (
-      config.nodeEnv === 'production' ||
-      (config.refreshTokenEnabled && legacyJwtVerifyCutoffActive())
-    ) {
-      throw new LegacyJwtVerifyRejectedError();
-    }
+    throw new LegacyJwtVerifyRejectedError();
   }
   if (decoded.typ === 'access') {
     if (decoded.aud !== config.jwtAudience) {

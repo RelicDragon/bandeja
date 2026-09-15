@@ -28,7 +28,6 @@ export class ReactionService {
     const normalizedEmoji = assertValidReactionEmoji(emoji);
 
     return prisma.$transaction(async (tx) => {
-      const readAt = new Date();
       const existing = await tx.messageReaction.findUnique({
         where: {
           messageId_userId: {
@@ -74,7 +73,7 @@ export class ReactionService {
         previousEmoji,
       });
 
-      await ReadReceiptService.markMessageAsReadInTransaction(tx, message, userId, readAt);
+      await ReadReceiptService.markMessageAsReadInTransaction(tx, message, userId);
 
       const syncSeq = await ChatSyncEventService.appendEventInTransaction(
         tx,

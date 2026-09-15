@@ -90,7 +90,6 @@ export const AvailableGamesSection = ({
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [loadingMore, setLoadingMore] = useState(false);
-  const players = usePlayersStore((state) => state.users);
   const findViewMode = useShellNavStore((s) => s.findViewMode);
   const requestFindGoToCurrent = useShellNavStore((s) => s.requestFindGoToCurrent);
   const setIsAnimating = useShellNavStore((s) => s.setIsAnimating);
@@ -655,12 +654,12 @@ export const AvailableGamesSection = ({
     </>
   );
 
-  const favoriteTrainerName = useMemo(() => {
+  const favoriteTrainerName = usePlayersStore((state) => {
     if (!trainingFilterVal || !user?.favoriteTrainerId) return null;
-    const trainer = players[user.favoriteTrainerId];
+    const trainer = state.users[user.favoriteTrainerId];
     if (!trainer) return null;
     return formatTrainerDisplayName(trainer.firstName, trainer.lastName);
-  }, [trainingFilterVal, user?.favoriteTrainerId, players]);
+  });
 
   const emptyMessage = useMemo(
     () =>

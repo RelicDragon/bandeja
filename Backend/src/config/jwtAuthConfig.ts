@@ -3,9 +3,6 @@
 export const DEFAULT_DEV_JWT_SECRET = 'your-secret-key';
 export const SAMPLE_JWT_SECRET = 'your-secret-key-change-in-production';
 
-/** Long-lived legacy JWT TTL (non-production / pre-refresh only). */
-export const DEFAULT_JWT_LEGACY_EXPIRES_IN = '90d';
-
 /** Short-lived access JWT (`typ=access`) — HITL #315. */
 export const DEFAULT_JWT_ACCESS_EXPIRES_IN = '30m';
 
@@ -124,13 +121,6 @@ export function resolveJwtAccessExpiresIn(
   return value;
 }
 
-export function resolveJwtLegacyExpiresIn(envValue?: string | null): string {
-  const raw = (envValue ?? '').trim();
-  const value = raw || DEFAULT_JWT_LEGACY_EXPIRES_IN;
-  parseExpiresInToMs(value);
-  return value;
-}
-
 export function resolveRefreshTokenExpiresIn(
   envValue?: string | null,
   nodeEnv?: string
@@ -156,13 +146,11 @@ export type JwtAuthRuntimeConfig = {
   refreshTokenEnabled: boolean;
   refreshWebHttpOnlyCookie: boolean;
   refreshWebHttpOnlyJsonBody: boolean;
-  /** null = sunset calendar disabled (`LEGACY_JWT_ISSUANCE_END_AT=off`). */
-  legacyJwtIssuanceEndAt: Date | null;
 };
 
 /**
  * Fail closed for production auth posture: strong secret, short access TTL,
- * refresh required, legacy issuance calendar must remain on.
+ * refresh required.
  */
 export function assertProductionJwtAuthConfig(input: JwtAuthRuntimeConfig): void {
   if (!isProductionNodeEnv(input.nodeEnv)) return;
@@ -184,15 +172,6 @@ export function assertProductionJwtAuthConfig(input: JwtAuthRuntimeConfig): void
     throw new Error(
       'REFRESH_WEB_HTTPONLY_JSON_BODY must be false in production (web refresh credentials must not enter JavaScript storage)'
     );
-  }
-
-  if (input.legacyJwtIssuanceEndAt == null) {
-    throw new Error(
-      'LEGACY_JWT_ISSUANCE_END_AT cannot be disabled in production (legacy long-lived JWTs must stay sunset)'
-    );
-  }
-  if (Number.isNaN(input.legacyJwtIssuanceEndAt.getTime())) {
-    throw new Error('LEGACY_JWT_ISSUANCE_END_AT must be a valid date in production');
   }
 
   const accessMs = parseExpiresInToMs(input.jwtAccessExpiresIn);

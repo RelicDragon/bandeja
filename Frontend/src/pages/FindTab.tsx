@@ -466,11 +466,11 @@ export const FindTab = () => {
     setCalendarRangeReady(true);
   }, []);
 
-  const handleJoinGame = async (gameId: string, e: React.MouseEvent) => {
+  const handleJoinGame = useCallback(async function joinWithGates(gameId: string, e: React.MouseEvent) {
     e.stopPropagation();
     const authUser = useAuthStore.getState().user;
     if (authUser && authUser.nameIsSet !== true) {
-      runWithProfileName(() => void handleJoinGame(gameId, e));
+      runWithProfileName(() => void joinWithGates(gameId, e));
       return;
     }
     const joinGame =
@@ -478,7 +478,7 @@ export const FindTab = () => {
       ?? upcomingGames.find((g) => g.id === gameId)
       ?? filteredAvailableGames.find((g) => g.id === gameId)
       ?? calendarMeta.dayIndex?.find((g) => g.id === gameId);
-    if (!runWithGenderForEvent(joinGame, () => void handleJoinGame(gameId, e))) return;
+    if (!runWithGenderForEvent(joinGame, () => void joinWithGates(gameId, e))) return;
     try {
       const { gamesApi } = await import('@/api');
       const response = await runWithOverlapConfirm((confirmOverlap) => gamesApi.join(gameId, confirmOverlap));
@@ -493,11 +493,11 @@ export const FindTab = () => {
       refetchAvailableGames();
       navigate(`/games/${gameId}`);
     } catch (error: any) {
-      if (recoverGenderUnsetJoin(error, () => void handleJoinGame(gameId, e))) return;
+      if (recoverGenderUnsetJoin(error, () => void joinWithGates(gameId, e))) return;
       const errorMessage = error.response?.data?.message || 'errors.generic';
       toast.error(t(errorMessage, { defaultValue: errorMessage }));
     }
-  };
+  }, [sortedSelectedDayGames, upcomingGames, filteredAvailableGames, calendarMeta.dayIndex, refetchAvailableGames, navigate, t]);
 
   const handleRefresh = useCallback(async () => {
     await clearCachesExceptUnsyncedResults();
@@ -536,7 +536,7 @@ export const FindTab = () => {
     onFilterChange: (key: Parameters<typeof updateFilter>[0], value: Parameters<typeof updateFilter>[1]) =>
       updateFilter(key, value),
     onFiltersChange: (updates: Parameters<typeof updateFilters>[0]) => updateFilters(updates),
-    onNoteSaved: () => refetchAvailableGames(),
+    onNoteSaved: refetchAvailableGames,
     hasMoreAvailable: pageMeta.hasMore,
     onLoadMoreAvailable,
     availableBound: pageMeta.bound,

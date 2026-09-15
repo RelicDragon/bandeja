@@ -19,11 +19,11 @@ assert.deepEqual(update, {
   userAgent: 'Bandeja/0.97.27',
   ip: '203.0.113.7',
 });
-assert.equal('revokedAt' in update, false, 'compatibility refresh must only touch the active session');
+assert.equal('revokedAt' in update, false, 'replay/touch must only update the live session');
 assert.equal(
   'replacedBySessionId' in update,
   false,
-  'compatibility refresh must not create an unrecoverable one-time rotation chain',
+  'replay/touch must not create a rotation chain',
 );
 
 console.log('refresh session mutation tests passed');

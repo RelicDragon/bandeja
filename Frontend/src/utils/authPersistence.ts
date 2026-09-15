@@ -8,7 +8,7 @@ import {
   clearLocalAuthStorageForExplicitLogout,
   hasExplicitLogoutMarker,
 } from '@/utils/authExplicitLogout';
-import type { User } from '@/types';
+import { isRestorableAccessJwt } from '@/utils/jwtPayload';
 
 interface AuthBackup {
   token: string;
@@ -56,15 +56,12 @@ export const restoreAuthIfNeeded = (): void => {
       
       if (backupStr) {
         const backup: AuthBackup = JSON.parse(backupStr);
-        const hoursSinceBackup = (Date.now() - backup.timestamp) / (1000 * 60 * 60);
-        
-        if (hoursSinceBackup < 90 * 24) {
+        if (isRestorableAccessJwt(backup.token)) {
           localStorage.setItem('token', backup.token);
           localStorage.setItem('user', backup.user);
           console.log('Auth restored from backup');
         } else {
           localStorage.removeItem(AUTH_BACKUP_KEY);
-          console.log('Auth backup expired');
         }
       }
     }

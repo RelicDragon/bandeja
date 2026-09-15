@@ -297,24 +297,101 @@
       const isAndroid = /Android/i.test(ua);
       const isIPadOS = navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
       const isIOS = /iPhone|iPad|iPod/i.test(ua) || isIPadOS;
-      
-      const iosUrl = document.getElementById("ios").href;
-      const androidUrl = document.getElementById("android").href;
-      const webUrl = document.getElementById("web").href;
+
+      const qs = window.location.search || '';
+      const params = new URLSearchParams(qs);
+      function readCookie(name) {
+        const parts = document.cookie.split(';');
+        for (let i = 0; i < parts.length; i += 1) {
+          const bit = parts[i].trim();
+          if (bit.indexOf(name + '=') === 0) return bit.slice(name.length + 1);
+        }
+        return '';
+      }
+      function makeAid() {
+        const alphabet = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        const bytes = new Uint8Array(16);
+        crypto.getRandomValues(bytes);
+        let out = '';
+        for (let i = 0; i < 16; i += 1) out += alphabet[bytes[i] % alphabet.length];
+        return out;
+      }
+      var aid = params.get('aid') || readCookie('bandeja_aid') || makeAid();
+      if (!/^[a-zA-Z0-9]{8,32}$/.test(aid)) aid = makeAid();
+      var stored = null;
+      try { stored = JSON.parse(localStorage.getItem('bandeja.attribution') || 'null'); } catch (_e) { stored = null; }
+      if (stored && stored.aid && /^[a-zA-Z0-9]{8,32}$/.test(stored.aid)) aid = stored.aid;
+      else if (readCookie('bandeja_aid') && /^[a-zA-Z0-9]{8,32}$/.test(readCookie('bandeja_aid'))) aid = readCookie('bandeja_aid');
+      params.set('aid', aid);
+      document.cookie = 'bandeja_aid=' + aid + '; Path=/; Max-Age=31536000; SameSite=Lax';
+      function firstUtm(key, paramName) {
+        var prev = stored && stored[key];
+        if (prev) return prev;
+        return params.get(paramName);
+      }
+      try { localStorage.setItem('bandeja.attribution', JSON.stringify({
+        aid: aid,
+        utmSource: firstUtm('utmSource', 'utm_source'),
+        utmMedium: firstUtm('utmMedium', 'utm_medium'),
+        utmCampaign: firstUtm('utmCampaign', 'utm_campaign'),
+        utmContent: firstUtm('utmContent', 'utm_content'),
+        utmTerm: firstUtm('utmTerm', 'utm_term'),
+        choice: (stored && stored.choice) || null
+      })); } catch (_e) {}
+      const markedQs = '?' + params.toString();
+      const iosEl = document.getElementById('ios');
+      const androidEl = document.getElementById('android');
+      const webEl = document.getElementById('web');
+      iosEl.href = '/api/public/link-to-app/go/ios' + markedQs;
+      androidEl.href = '/api/public/link-to-app/go/android' + markedQs;
+      webEl.href = '/api/public/link-to-app/go/web' + markedQs;
+
+      function persistChoice(choice) {
+        try {
+          var raw = JSON.parse(localStorage.getItem('bandeja.attribution') || '{}');
+          raw.aid = aid;
+          raw.choice = choice;
+          localStorage.setItem('bandeja.attribution', JSON.stringify(raw));
+        } catch (_e) {}
+      }
+      function copyAid() {
+        const text = 'bandeja-aid:' + aid;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          return navigator.clipboard.writeText(text).catch(function () {});
+        }
+        return Promise.resolve();
+      }
+      iosEl.addEventListener('click', function () { persistChoice('ios'); copyAid(); });
+      androidEl.addEventListener('click', function () { persistChoice('android'); copyAid(); });
+      webEl.addEventListener('click', function () { persistChoice('web'); copyAid(); });
+
+      (function trackView() {
+        const viewParams = new URLSearchParams(params);
+        viewParams.set('kind', 'view');
+        const url = '/api/public/link-to-app/hit?' + viewParams.toString();
+        try {
+          fetch(url, { keepalive: true, credentials: 'include', cache: 'no-store', mode: 'same-origin' });
+        } catch (_err) {
+          new Image().src = url;
+        }
+      })();
       
       let redirected = false;
       
       function redirect() {
         if (redirected) return;
         redirected = true;
-        
-        const target = isIOS ? iosUrl : (isAndroid ? androidUrl : webUrl);
+        var choice = isIOS ? 'ios' : (isAndroid ? 'android' : 'web');
+        persistChoice(choice);
+        const target = isIOS ? iosEl.href : (isAndroid ? androidEl.href : webEl.href);
         document.getElementById('loading').style.display = 'block';
         document.getElementById('subtitle').style.display = 'none';
-        
-        setTimeout(() => {
+        copyAid().then(function () {
           window.location.replace(target);
-        }, 300);
+        });
+        setTimeout(function () {
+          window.location.replace(target);
+        }, 600);
       }
       
       if (isIOS) {

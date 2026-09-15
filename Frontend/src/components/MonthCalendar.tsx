@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Calendar, List } from 'lucide-react';
@@ -108,7 +108,7 @@ export const MonthCalendar = ({
   weatherModeScope,
   upcomingsToggle,
 }: MonthCalendarProps) => {
-  const { user } = useAuthStore();
+  const user = useAuthStore((state) => state.user);
   const { t, i18n } = useTranslation();
   const reduceMotion = useReducedMotion();
   const headerTransition = reduceMotion
@@ -202,7 +202,7 @@ export const MonthCalendar = ({
       availableGames,
       findFilterViewer,
       findFilterState,
-      gamesUnreadCounts,
+      undefined,
       cityTimezone,
     );
     if (!dayIndex || dayIndex.length === 0) return fromCards;
@@ -213,14 +213,14 @@ export const MonthCalendar = ({
       findFilterState,
       cityTimezone,
     );
-    return mergeFindDayIndexIntoCardDays(fromCards, indexByDay, gamesUnreadCounts);
-  }, [availableGames, dayIndex, findFilterViewer, findFilterState, gamesUnreadCounts, user?.currentCity?.timezone]);
+    return mergeFindDayIndexIntoCardDays(fromCards, indexByDay);
+  }, [availableGames, dayIndex, findFilterViewer, findFilterState, user?.currentCity?.timezone]);
 
-  const notifyMonthChange = (month: Date) => {
+  const notifyMonthChange = useCallback((month: Date) => {
     if (onMonthChange) {
       onMonthChange(getMonth(month) + 1, getYear(month));
     }
-  };
+  }, [onMonthChange]);
 
   const handlePreviousMonth = () => {
     const anchor = selectedDate ?? new Date();
@@ -242,7 +242,7 @@ export const MonthCalendar = ({
     notifyMonthChange(newMonth);
   };
 
-  const handleDateClick = (day: Date) => {
+  const handleDateClick = useCallback((day: Date) => {
     const dayMonth = startOfMonth(day);
     if (!isSameMonth(dayMonth, viewMonth)) {
       setSlideDirection(dayMonth > viewMonth ? 1 : -1);
@@ -264,7 +264,7 @@ export const MonthCalendar = ({
         });
       }
     }
-  };
+  }, [viewMonth, onDateSelect, notifyMonthChange]);
 
   const lastRangeRef = useRef<{ start: Date; end: Date } | null>(null);
 
@@ -304,6 +304,47 @@ export const MonthCalendar = ({
     userCityTimezone,
   );
   const { getTagsForDay } = useAdCalendarTags();
+
+  // Selection and unread updates reuse these structural props, including arrays.
+  const dayCells = useMemo(() => calendarDays.map((day) => {
+    const isCurrentMonth = isSameMonth(day, displayedMonth);
+    const dateStr = format(startOfDay(day), 'yyyy-MM-dd');
+    const dayData = dateCellData.get(dateStr);
+    const gameCount = dayData?.gameCount ?? 0;
+    const hasGames = gameCount > 0;
+    const isParticipant = dayData?.isUserParticipant ?? false;
+    const showLeagueMarks = weatherModeScope === 'my' || leaguesFilter;
+    const showEventMarks = weatherModeScope === 'my' || eventsFilter || noEntityFilter;
+    const participantTypes = visibleCalendarDayMarkTypes(
+      PILL_ENTITY_ORDER.filter(t => dayData?.participantEntityTypes.has(t)),
+      showLeagueMarks,
+      showEventMarks,
+    );
+    const typePillTypes = visibleCalendarDayMarkTypes(
+      PILL_ENTITY_ORDER.filter(t => dayData?.entityTypes.has(t)),
+      showLeagueMarks,
+      showEventMarks,
+    );
+    const dayWeather = weatherByDay.get(dateStr) ?? null;
+    const { showWeatherPill, showTypePill } = resolveCalendarDayPillVisibility({
+      weatherMode,
+      hasGames,
+      typePillCount: typePillTypes.length,
+      dayWeather,
+    });
+    const showParticipantPill =
+      noEntityFilter && isParticipant && participantTypes.length > 0 && !showTypePill;
+    const calendarTags = getTagsForDay(dateStr);
+
+    return {
+      dateStr,
+      props: {
+        day, isCurrentMonth, gameCount, hasGames, showWeatherPill, showTypePill,
+        showParticipantPill, typePillTypes, participantTypes, dayWeather, calendarTags,
+      },
+    };
+  }), [calendarDays, displayedMonth, dateCellData, weatherModeScope, leaguesFilter,
+    eventsFilter, noEntityFilter, weatherByDay, weatherMode, getTagsForDay]);
 
   useEffect(() => {
     if (weatherToggleDisabled && weatherMode) {
@@ -530,61 +571,19 @@ export const MonthCalendar = ({
                 onAnimationComplete={() => setIsSliding(false)}
                 className="grid grid-cols-7 gap-0.5 pt-0.5 pb-1"
               >
-        {calendarDays.map((day) => {
-          const isCurrentMonth = isSameMonth(day, displayedMonth);
-          const dateStr = format(startOfDay(day), 'yyyy-MM-dd');
-          const isSelected = selectedDayKey != null && dateStr === selectedDayKey;
-          const isTodayDate = isToday(day);
-          const dayData = dateCellData.get(dateStr) || { gameCount: 0, unreadCount: 0, hasLeagueTournament: false, isUserParticipant: false, hasTraining: false, participantEntityTypes: new Set<DisplayEntityType>(), entityTypes: new Set<DisplayEntityType>() };
-          const gameCount = dayData.gameCount;
-          const unreadCount = dayData.unreadCount;
-          const hasGames = gameCount > 0;
-          const isParticipant = dayData.isUserParticipant;
-          const showLeagueMarks = weatherModeScope === 'my' || leaguesFilter;
-          const showEventMarks = weatherModeScope === 'my' || eventsFilter || noEntityFilter;
-          const participantTypes = visibleCalendarDayMarkTypes(
-            PILL_ENTITY_ORDER.filter(t => dayData.participantEntityTypes.has(t)),
-            showLeagueMarks,
-            showEventMarks,
-          );
-          const typePillTypes = visibleCalendarDayMarkTypes(
-            PILL_ENTITY_ORDER.filter(t => dayData.entityTypes.has(t)),
-            showLeagueMarks,
-            showEventMarks,
-          );
-          const dayWeather = weatherByDay.get(dateStr) ?? null;
-          const { showWeatherPill, showTypePill } = resolveCalendarDayPillVisibility({
-            weatherMode,
-            hasGames,
-            typePillCount: typePillTypes.length,
-            dayWeather,
-          });
-          const showParticipantPill =
-            noEntityFilter && isParticipant && participantTypes.length > 0 && !showTypePill;
-          const calendarTags = getTagsForDay(dateStr);
-
-          return (
-            <MonthCalendarDayCell
-              key={dateStr}
-              day={day}
-              isCurrentMonth={isCurrentMonth}
-              isSelected={isSelected}
-              isTodayDate={isTodayDate}
-              gameCount={gameCount}
-              unreadCount={unreadCount}
-              hasGames={hasGames}
-              showWeatherPill={showWeatherPill}
-              showTypePill={showTypePill}
-              showParticipantPill={showParticipantPill}
-              typePillTypes={typePillTypes}
-              participantTypes={participantTypes}
-              dayWeather={dayWeather}
-              locale={displaySettings.locale}
-              calendarTags={calendarTags}
-              onSelect={handleDateClick}
-            />
-          );
-        })}
+        {dayCells.map(({ dateStr, props }) => (
+          <MonthCalendarDayCell
+            key={dateStr}
+            {...props}
+            isSelected={selectedDayKey === dateStr}
+            isTodayDate={isToday(props.day)}
+            unreadCount={(dateCellData.get(dateStr)?.gameIds ?? []).reduce(
+              (sum, id) => sum + (gamesUnreadCounts[id] || 0), 0,
+            )}
+            locale={displaySettings.locale}
+            onSelect={handleDateClick}
+          />
+        ))}
               </motion.div>
             </AnimatePresence>
           </div>

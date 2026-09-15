@@ -26,9 +26,13 @@ import {
 
 const REFRESH_REQUEST_ID_PATTERN = /^[A-Za-z0-9._:-]{16,128}$/;
 
-export function readRefreshRequestId(req: Request): string | null {
+export function readRefreshRequestId(req: Request): string {
   const raw = req.headers['x-refresh-request-id'];
-  if (typeof raw !== 'string') return null;
+  if (typeof raw !== 'string' || !raw.trim()) {
+    throw new ApiError(400, 'auth.refreshRequestIdRequired', true, {
+      code: 'auth.refreshRequestIdRequired',
+    });
+  }
   const normalized = raw.trim();
   if (!REFRESH_REQUEST_ID_PATTERN.test(normalized)) {
     throw new ApiError(400, 'auth.refreshRequestIdInvalid', true, {

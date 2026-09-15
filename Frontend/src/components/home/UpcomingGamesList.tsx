@@ -9,7 +9,7 @@ import { AnimatedMount } from '@/components/motion/AnimatedMount';
 import { GamesDateGroupHeading } from '@/components/home/GamesDateGroupHeading';
 import { Game } from '@/types';
 import { useAuthStore } from '@/store/authStore';
-import { useContextUnread } from '@/hooks/useUnreadBridge';
+import { useContextUnread, useGameUnreadTotalForIds } from '@/hooks/useUnreadBridge';
 import { useTranslatedGeo } from '@/hooks/useTranslatedGeo';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { getGameTimeDisplay, getClubTimezone, getDateLabelInClubTz } from '@/utils/gameTimeDisplay';
@@ -68,9 +68,7 @@ export const UpcomingGamesList = ({
   const authUser = useAuthStore((s) => s.user);
   const effectiveUser = viewerUser ?? authUser;
   const { translateCity } = useTranslatedGeo();
-  const displaySettings = effectiveUser
-    ? resolveDisplaySettings(effectiveUser)
-    : resolveDisplaySettings(null);
+  const displaySettings = useMemo(() => resolveDisplaySettings(effectiveUser ?? null), [effectiveUser]);
   const userCityId = effectiveUser?.currentCity?.id || effectiveUser?.currentCityId;
 
   const gamesWithoutLeagueSeasonHub = useMemo(
@@ -113,10 +111,7 @@ export const UpcomingGamesList = ({
 
   const [staleSectionOpen, setStaleSectionOpen] = useState(false);
   const staleCount = staleGames.length;
-  const staleSectionUnread = useMemo(
-    () => staleGames.reduce((sum, g) => sum + (gamesUnreadCounts[g.id] || 0), 0),
-    [staleGames, gamesUnreadCounts],
-  );
+  const staleGameIds = useMemo(() => staleGames.map((game) => game.id), [staleGames]);
 
   if (staleGrouped.length === 0 && upcomingGrouped.length === 0 && finishedGrouped.length === 0) {
     return null;
@@ -224,7 +219,7 @@ export const UpcomingGamesList = ({
               <span className="inline-flex shrink-0 items-center rounded-md border border-amber-700/50 dark:border-amber-500/60 bg-amber-200/90 dark:bg-amber-800/80 px-2 py-0.5 text-xs font-bold text-amber-950 dark:text-amber-50">
                 {t('home.staleGamesCount', { count: staleCount })}
               </span>
-              <UnreadBadge count={staleSectionUnread} size="sm" showIcon className="shrink-0" />
+              <StaleGamesUnreadBadge gameIds={staleGameIds} fallback={gamesUnreadCounts} />
             </div>
             <ChevronDown
               size={22}
@@ -251,6 +246,14 @@ export const UpcomingGamesList = ({
     </AnimatedMount>
   );
 };
+
+function StaleGamesUnreadBadge({ gameIds, fallback }: {
+  gameIds: string[];
+  fallback: Record<string, number>;
+}) {
+  const count = useGameUnreadTotalForIds(gameIds, fallback);
+  return <UnreadBadge count={count} size="sm" showIcon className="shrink-0" />;
+}
 
 interface StaleScheduledGameRowProps {
   game: Game;

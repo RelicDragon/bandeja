@@ -1,0 +1,19 @@
+---
+description: Docs-first — read docs/README.md before exploring or changing behavior
+alwaysApply: true
+---
+
+# Docs first
+
+Do not infer product behavior or architecture from `CLAUDE.md` or by grepping at random.
+
+Mandatory contract: **`docs/agents/RULES.md`**. Map: **`docs/README.md`**. Skills/CONTEXT: **`CONTEXT-MAP.md`**.
+
+1. Vocabulary: `docs/product/glossary.md`
+2. Invariants: `docs/product/constraints.md` (also `docs/APP_FUNCTIONALITY.md` §2.2)
+3. Code locations: `docs/architecture/code-map.md`
+4. Feature: `docs/domains/<area>.md`
+
+`Game.status` is `ANNOUNCED|STARTED|FINISHED|ARCHIVED`. Only `PLAYING` fills slots. Trainer is `Game.trainerId`. Product Event is `EntityType.EVENT` only. Socket rooms are `game-{id}` / `notify-user-{id}`. Chat sync events are `MESSAGE_CREATED` (not `MESSAGE_CREATE`). Backend shared code is `@bandeja/shared`, not `@shared` tsconfig paths.
+
+Do not create `docs/adr/`. New invariants go in `docs/product/constraints.md`. UI changes update `docs/UI_TEST_PLAN.md`.

@@ -4,7 +4,6 @@ import {
   assertProductionJwtAuthConfig,
   normalizeNodeEnv,
   resolveJwtAccessExpiresIn,
-  resolveJwtLegacyExpiresIn,
   resolveJwtSecret,
   resolveRefreshTokenExpiresIn,
 } from './jwtAuthConfig';
@@ -47,9 +46,6 @@ export const config = {
     nodeEnv,
     jwtSecretEnv: process.env.JWT_SECRET,
   }),
-  /** Legacy long-lived JWT (non-production / pre-refresh clients only). */
-  jwtExpiresIn: resolveJwtLegacyExpiresIn(process.env.JWT_EXPIRES_IN),
-  /** Short access JWT (`typ=access`); production capped at 30m (#315). */
   jwtAccessExpiresIn: resolveJwtAccessExpiresIn(process.env.JWT_ACCESS_EXPIRES_IN, nodeEnv),
   jwtIssuer: process.env.JWT_ISS || 'padelpulse',
   jwtAudience: process.env.JWT_AUD || 'padelpulse-app',
@@ -104,23 +100,11 @@ export const config = {
   refreshCookieSecure:
     process.env.REFRESH_COOKIE_SECURE === 'true' ||
     (nodeEnv === 'production' && process.env.REFRESH_COOKIE_SECURE !== 'false'),
-  minClientVersionForRefresh: process.env.MIN_CLIENT_VERSION_FOR_REFRESH || '0.94.1',
-  /**
-   * After this instant (UTC), with refresh enabled, clients below min version cannot receive new long-lived JWTs.
-   * Default `2026-05-15T00:00:00.000Z` when unset. Set `LEGACY_JWT_ISSUANCE_END_AT=off` (or `false` / `none` / `disabled`) to disable the calendar check.
-   * Invalid ISO → null (no sunset). Production refuses null (#315).
-   */
-  legacyJwtIssuanceEndAt: (() => {
-    const raw = (process.env.LEGACY_JWT_ISSUANCE_END_AT || '').trim();
-    const defaultEnd = new Date('2026-05-15T00:00:00.000Z');
-    if (!raw) return defaultEnd;
-    if (/^(off|false|none|disabled)$/i.test(raw)) return null as Date | null;
-    const d = new Date(raw);
-    return Number.isNaN(d.getTime()) ? null : d;
-  })(),
   accessRefreshLeewaySeconds: parseInt(process.env.ACCESS_REFRESH_LEEWAY_SECONDS || '120', 10),
   telegramBotToken: process.env.TELEGRAM_BOT_TOKEN || '',
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3001',
+  /** App Store Connect campaign provider token (`pt`) for /link-to-app store URLs. */
+  appStoreCampaignProviderToken: (process.env.APP_STORE_CAMPAIGN_PROVIDER_TOKEN || '').trim(),
   /** Comma-separated extra CORS Origins (HTTP + Socket.IO). See #310. */
   corsAllowedOrigins: (process.env.CORS_ALLOWED_ORIGINS || '').trim(),
   apns: {
@@ -175,17 +159,6 @@ export const config = {
   cityGroupRefinedSystemMessages: process.env.CITY_GROUP_REFINED_SYSTEM_MESSAGES === 'true',
   /** JSON lines to stderr for /api/chat/sync/* errors (log drain / external APM). */
   chatSyncHttpErrorLog: process.env.CHAT_SYNC_HTTP_ERROR_LOG === 'true' || process.env.CHAT_SYNC_HTTP_ERROR_LOG === '1',
-  /**
-   * ADR 0002: dual-write MessageReadReceipt + MESSAGES_READ_BATCH for old clients.
-   * Default ON until sunset; set CHAT_READ_RECEIPT_DUAL_WRITE=0|false to stop (Phase D prep).
-   * New clients ignore receipts for ticks and use peer read cursors.
-   */
-  chatReadReceiptDualWrite: (() => {
-    const v = process.env.CHAT_READ_RECEIPT_DUAL_WRITE;
-    if (v === '0' || v === 'false') return false;
-    if (v === '1' || v === 'true') return true;
-    return true;
-  })(),
   translationQueue: {
     concurrency: parseInt(process.env.TRANSLATION_QUEUE_CONCURRENCY || '3', 10),
     minIntervalMs: parseInt(process.env.TRANSLATION_QUEUE_MIN_INTERVAL_MS || '300', 10),
@@ -252,5 +225,4 @@ assertProductionJwtAuthConfig({
   refreshTokenEnabled: config.refreshTokenEnabled,
   refreshWebHttpOnlyCookie: config.refreshWebHttpOnlyCookie,
   refreshWebHttpOnlyJsonBody: config.refreshWebHttpOnlyJsonBody,
-  legacyJwtIssuanceEndAt: config.legacyJwtIssuanceEndAt,
 });

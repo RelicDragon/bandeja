@@ -1,5 +1,12 @@
 ---
+description: Named Prisma migrations only; never db push
 alwaysApply: true
 ---
 
-Avoid (if it's possible) creating custom migration files - use 'npx run migrate dev' to auto-create it.
+# Prisma migrations
+
+- Never `npx prisma db push`.
+- Prefer `cd Backend && npm run prisma:migrate` (serialized / `scripts/run-heavy`). Do not hand-write migration SQL when `migrate dev` can generate it.
+- Commit `Backend/prisma/migrations/<timestamp>_<name>/migration.sql` with the schema change.
+- PostgreSQL `ALTER TYPE ... ADD VALUE` cannot share a transaction with first use of the value — split migrations.
+- Details: `docs/ops/development.md`, `docs/architecture/database.md`.

@@ -2,7 +2,6 @@ import { Request } from 'express';
 import jwt from 'jsonwebtoken';
 import { Prisma } from '@prisma/client';
 import { LegacyJwtVerifyRejectedError, verifyToken } from '../utils/jwt';
-import { config } from '../config/env';
 import { ApiError } from '../utils/ApiError';
 import prisma from '../config/database';
 import { USER_SELECT_FIELDS } from '../utils/constants';
@@ -50,11 +49,8 @@ export function mapJwtError(error: unknown): ApiError {
     return error;
   }
   if (error instanceof LegacyJwtVerifyRejectedError) {
-    const endedAt = config.legacyJwtIssuanceEndAt;
     return new ApiError(401, 'auth.clientUpgradeRequired', true, {
       code: 'auth.clientUpgradeRequired',
-      minClientVersion: config.minClientVersionForRefresh,
-      ...(endedAt && { legacyJwtIssuanceEndedAt: endedAt.toISOString() }),
     });
   }
   if (error instanceof jwt.TokenExpiredError) {

@@ -4,6 +4,8 @@ import type { Game } from '@/types';
 import type { FindStructuralApiParams } from '@/utils/findStructuralApiParams';
 import { EMPTY_AVAILABLE_META } from '@/queries/games/availableGamesPage';
 
+const EMPTY_GAMES: Game[] = [];
+
 export function deriveAvailableGamesLoading(
   queryEnabled: boolean,
   isPending: boolean,
@@ -52,7 +54,7 @@ export const useAvailableGames = (
     );
 
   const hidePlaceholder = rejectPlaceholderData && isPlaceholderData;
-  const games: Game[] = hidePlaceholder ? [] : (data?.games ?? []);
+  const games: Game[] = hidePlaceholder ? EMPTY_GAMES : (data?.games ?? EMPTY_GAMES);
   const meta = hidePlaceholder ? EMPTY_AVAILABLE_META : (data?.meta ?? EMPTY_AVAILABLE_META);
   const hasData = !hidePlaceholder && data != null;
 

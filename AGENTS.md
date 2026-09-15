@@ -1,29 +1,44 @@
 # AGENTS.md
 
-## Cursor Cloud specific instructions
+**Must follow [`docs/agents/RULES.md`](docs/agents/RULES.md).** That file is the contract for Cursor, Claude Code, Codex, Copilot, Gemini, and Cloud.
+
+Map: [`docs/README.md`](docs/README.md). Skills looking for CONTEXT/ADRs: [`CONTEXT-MAP.md`](CONTEXT-MAP.md) (do not treat root `CONTEXT.md` as the product glossary; do not create `docs/adr/`).
+
+- Glossary: `docs/product/glossary.md`
+- Constraints: `docs/product/constraints.md`
+- Code map: `docs/architecture/code-map.md`
+- Investigate: `docs/agents/how-to-investigate.md`
+
+`Game.status` is `ANNOUNCED|STARTED|FINISHED|ARCHIVED`. Only `PLAYING` fills slots. Trainer is `Game.trainerId`. Chat events: `MESSAGE_CREATED`. Socket rooms: `game-{id}`, `notify-user-{id}`.
+
+## Cursor Cloud
 
 ### Architecture
-- **Backend**: Node.js/Express + Socket.IO + Prisma ORM on port 3000 (`Backend/`)
+
+- **Backend**: Node.js/Express + Socket.IO + Prisma on port 3000 (`Backend/`)
 - **Frontend**: React 19 + Vite + TailwindCSS on port 3001 (`Frontend/`)
-- **Database**: PostgreSQL with schema `padelpulse`, database `padelpulse_dev`
+- **Database**: PostgreSQL schema `padelpulse`, database `padelpulse_dev`
 
 ### Starting services
-1. Start PostgreSQL: `sudo pg_ctlcluster 16 main start`
-2. Backend: `cd Backend && npm run dev` (nodemon with ts-node, port 3000)
-3. Frontend: `cd Frontend && npm run dev` (Vite dev server, port 3001)
 
-Frontend proxies `/api` and `/socket.io/` to backend port 3000 (configured in `vite.config.ts`).
+1. Start PostgreSQL: `sudo pg_ctlcluster 16 main start`
+2. Backend: `cd Backend && npm run dev` (port 3000)
+3. Frontend: `cd Frontend && npm run dev` (port 3001)
+
+Frontend proxies `/api` and `/socket.io/` to backend port 3000 (`vite.config.ts`).
 
 ### Heavy command serialization
+
 - Builds, tests, type checks, Prisma generation, and Playwright must never run concurrently within the same frontend or backend lane.
 - One frontend and one backend heavy command may run simultaneously because they use separate locks.
-- Use the existing npm scripts when they are serialized.
-- For any direct or otherwise unwrapped heavy command, run it through `scripts/run-heavy`, for example `./scripts/run-heavy npm --prefix Backend run test:play-intent`.
+- Use serialized npm scripts, or `./scripts/run-heavy …` for unwrapped commands.
 - Never invoke `tsc`, `vite build`, Vitest, Playwright, backend test runners, or Prisma generation directly.
 - Lint may run without the heavy-task lock.
 
 ### Database setup (first time only)
+
 After PostgreSQL is running:
+
 ```
 sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'postgres';"
 sudo -u postgres createdb padelpulse_dev
@@ -31,52 +46,40 @@ sudo -u postgres psql -d padelpulse_dev -c "CREATE SCHEMA IF NOT EXISTS padelpul
 cd Backend && cp env.sample .env
 npx prisma migrate dev
 ```
-Set `FALLBACK_CITY_ID` in `Backend/.env` and seed at least one City row for registration to work.
+
+Set `FALLBACK_CITY_ID` in `Backend/.env` and seed at least one City row for registration.
 
 ### Prisma migrations
-- Never use `npx prisma db push` for schema changes.
-- Always create a named migration with `cd Backend && npx prisma migrate dev --name <descriptive_name>`.
-- Commit the generated `Backend/prisma/migrations/.../migration.sql` with the Prisma schema change so production `npx prisma migrate deploy` can apply it.
+
+- Never `npx prisma db push`.
+- Named migration: `cd Backend && npm run prisma:migrate` (or `npx prisma migrate dev --name <name>` via the heavy lock).
+- Commit `Backend/prisma/migrations/.../migration.sql` with the schema change so production `npx prisma migrate deploy` can apply it.
 
 ### Key gotchas
-- Registration requires a City row in the database and `FALLBACK_CITY_ID` in `.env` pointing to it
-- `pg_hba.conf` defaults to `peer` auth on Ubuntu; must change to `md5` for the `postgres` user and reload: `sudo pg_ctlcluster 16 main reload`
-- Backend `.env` is gitignored; copy from `env.sample`. Most optional services (Telegram, APNs, FCM, S3, AI) work gracefully when tokens are empty
-- Prisma schema is at `Backend/prisma/schema.prisma`; schema changes must be paired with a named migration
-- The `test:automated` script (`Backend/scripts/tests/run-all.ts`) runs several QA suites; some require seeded data (e.g. 4+ users for match live scoring)
-- Frontend env vars have defaults in `vite.config.ts` so no `.env` file is needed for the frontend
 
-### Lint & test commands
+- Registration requires a City row and `FALLBACK_CITY_ID`
+- Ubuntu `pg_hba.conf` may need `md5` for `postgres` then `sudo pg_ctlcluster 16 main reload`
+- Backend `.env` is gitignored; copy `env.sample`. Optional services degrade when tokens are empty
+- Frontend env defaults live in `vite.config.ts`
+- `test:automated` needs seeded data for some suites (e.g. 4+ users for live scoring)
+
+### Lint and test
+
 - Backend lint: `cd Backend && npm run lint`
 - Frontend lint: `cd Frontend && npm run lint`
-- Frontend tests: `cd Frontend && npm run test:live-scoring`
-- Backend automated tests: `cd Backend && npm run test:automated`
+- Frontend tests: `cd Frontend && npm run test:live-scoring` (and other `test:*` scripts)
+- Backend: `cd Backend && npm run test:automated`
 
-### Production (deploy, SSH tunnels, prod DB)
+### Production
 
-See **`docs/PRODUCTION.md`**: CI deploys on push to `master` (no local `./upd.sh` needed); manual `./upd.sh` only as fallback. Also: `Admin/run-ssh.sh` (ports 15432 / 9000), `Admin/serve.sh` → `http://127.0.0.1:9010/` (Admin UI), MCP `bandeja-prod-pg`, `sync-db-from-prod.sh`.
+**`docs/PRODUCTION.md`**: CI deploys on push to `master`; `./upd.sh` only as fallback. `Admin/run-ssh.sh` (15432 / 9000), `Admin/serve.sh` → `http://127.0.0.1:9010/`, MCP `bandeja-prod-pg`, `sync-db-from-prod.sh`.
 
-### Mobile app store releases (Android / iOS)
+### Mobile store releases
 
-Separate from web deploy — native builds are submitted manually to Google Play and App Store.
-
-- **Unified CLI:** `./scripts/app-release.sh` (store versions → bump → build → upload → baseline; resume with `APP_RELEASE_RESUME=1`)
-- Baseline marker: **`docs/APP_RELEASE.md`** + **`docs/app-release-baseline.txt`** (last shipped commit for What's new; version numbers come from the stores)
-- Draft **What's new**: `./scripts/app-release-whats-new.sh` (LLM from commits since baseline; raw list: `./scripts/app-release-changes.sh`)
-- Headless mark-shipped: `./scripts/app-release-mark-shipped.sh --commit`
-
-Full workflow: **`docs/PRODUCTION.md`** → *Mobile app store releases*.
+Web deploy does not ship stores. `./scripts/app-release.sh`. Baseline: `docs/APP_RELEASE.md` + `docs/app-release-baseline.txt`. See `docs/PRODUCTION.md` → *Mobile app store releases*.
 
 ## Agent skills
 
-### Issue tracker
-
-GitHub Issues on `RelicDragon/bandeja`. See `docs/agents/issue-tracker.md`.
-
-### Triage labels
-
-Canonical triage labels (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
-
-### Domain docs
-
-Multi-context — see `docs/agents/domain.md` and `docs/README.md`.
+- Issues: GitHub `RelicDragon/bandeja` — `docs/agents/issue-tracker.md`
+- Triage labels: `docs/agents/triage-labels.md`
+- How skills consume docs: `docs/agents/domain.md`

@@ -4,6 +4,7 @@ import rateLimit from 'express-rate-limit';
 import { validate } from '../middleware/validate';
 import { authenticate } from '../middleware/auth';
 import * as authController from '../controllers/auth.controller';
+import { postAuthAttribution } from '../controllers/linkToApp.controller';
 import * as authRefreshController from '../controllers/authRefresh.controller';
 import * as googleOAuthController from '../controllers/googleOAuthRedirect.controller';
 import { rateLimitKeyFromRequest } from '../utils/rateLimitClientKey';
@@ -38,6 +39,8 @@ router.post(
 );
 
 router.post('/logout-all', authenticate, authRefreshController.postLogoutAll);
+
+router.post('/attribution', authenticate, postAuthAttribution);
 
 router.get('/sessions', authenticate, authRefreshController.getSessions);
 

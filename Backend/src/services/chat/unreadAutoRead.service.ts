@@ -1,11 +1,8 @@
 import prisma from '../../config/database';
-import { ChatSyncEventType } from '@bandeja/chat-contract';
 import { ChatContextType } from '@prisma/client';
 import { subMonths } from 'date-fns';
-import { ChatSyncEventService } from './chatSyncEvent.service';
 import { ChatReadCursorService, type ReadCursorMessageSlice } from './chatReadCursor.service';
 import { appendReadCursorUpdatesInTransaction } from './readCursorSync';
-import { config } from '../../config/env';
 import {
   type AutoReadAffectedContext,
   dedupeAutoReadAffected,
@@ -13,23 +10,18 @@ import {
 
 const CUTOFF_MONTHS = 1;
 const MESSAGE_BATCH = 500;
-const RECEIPT_BATCH = 1000;
-const EXISTING_OR_BATCH = 400;
-const READ_SYNC_CHUNK = 400;
 
 function cutoffDate(): Date {
   return subMonths(new Date(), CUTOFF_MONTHS);
 }
 
 export type MarkOldUnreadAsReadResult = {
-  totalCreated: number;
   affected: AutoReadAffectedContext[];
 };
 
 export class UnreadAutoReadService {
   static async markOldUnreadAsRead(): Promise<MarkOldUnreadAsReadResult> {
     const cutoff = cutoffDate();
-    let totalCreated = 0;
     const affected: AutoReadAffectedContext[] = [];
 
     const trackAffected = (
@@ -76,58 +68,10 @@ export class UnreadAutoReadService {
           contextIds
         );
 
-        const messageIdToContextId = new Map<string, string>();
-        for (const m of messages) {
-          messageIdToContextId.set(m.id, m.contextId);
-        }
-
-        const toCreate: { messageId: string; userId: string }[] = [];
         for (const msg of messages) {
           const recipients = recipientByContext.get(msg.contextId);
           if (!recipients) continue;
           trackAffected(chatContextType, msg.contextId, recipients, msg.senderId);
-          const senderId = msg.senderId!;
-          for (const uid of recipients) {
-            if (uid !== senderId) toCreate.push({ messageId: msg.id, userId: uid });
-          }
-        }
-
-        if (toCreate.length > 0 && config.chatReadReceiptDualWrite) {
-          const existingSet = new Set<string>();
-          for (let o = 0; o < toCreate.length; o += EXISTING_OR_BATCH) {
-            const slice = toCreate.slice(o, o + EXISTING_OR_BATCH);
-            const existing = await prisma.messageReadReceipt.findMany({
-              where: {
-                OR: slice.map(({ messageId, userId }) => ({ messageId, userId })),
-              },
-              select: { messageId: true, userId: true },
-            });
-            for (const r of existing) existingSet.add(`${r.messageId}:${r.userId}`);
-          }
-          const filtered = toCreate.filter(
-            (p) => !existingSet.has(`${p.messageId}:${p.userId}`)
-          );
-
-          const readAtIso = cutoff.toISOString();
-          for (let i = 0; i < filtered.length; i += RECEIPT_BATCH) {
-            const batch = filtered.slice(i, i + RECEIPT_BATCH);
-            const readAt = cutoff;
-            await prisma.messageReadReceipt.createMany({
-              data: batch.map(({ messageId, userId }) => ({
-                messageId,
-                userId,
-                readAt,
-              })),
-              skipDuplicates: true,
-            });
-            totalCreated += batch.length;
-            await this.appendReadBatchSyncEvents(
-              chatContextType,
-              batch,
-              messageIdToContextId,
-              readAtIso
-            );
-          }
         }
 
         await this.mergeReadCursorsForOldMessages(
@@ -141,7 +85,6 @@ export class UnreadAutoReadService {
     }
 
     return {
-      totalCreated,
       affected: dedupeAutoReadAffected(affected),
     };
   }
@@ -262,37 +205,5 @@ export class UnreadAutoReadService {
       },
       { timeout: 120_000 }
     );
-  }
-
-  private static async appendReadBatchSyncEvents(
-    chatContextType: ChatContextType,
-    batch: { messageId: string; userId: string }[],
-    messageIdToContextId: Map<string, string>,
-    readAtIso: string
-  ): Promise<void> {
-    if (!config.chatReadReceiptDualWrite) return;
-    const byKey = new Map<string, { contextId: string; userId: string; messageIds: string[] }>();
-    for (const { messageId, userId } of batch) {
-      const contextId = messageIdToContextId.get(messageId);
-      if (!contextId) continue;
-      const key = `${contextId}\0${userId}`;
-      let g = byKey.get(key);
-      if (!g) {
-        g = { contextId, userId, messageIds: [] };
-        byKey.set(key, g);
-      }
-      g.messageIds.push(messageId);
-    }
-    for (const g of byKey.values()) {
-      for (let j = 0; j < g.messageIds.length; j += READ_SYNC_CHUNK) {
-        const slice = g.messageIds.slice(j, j + READ_SYNC_CHUNK);
-        await ChatSyncEventService.appendEvent(
-          chatContextType,
-          g.contextId,
-          ChatSyncEventType.MESSAGES_READ_BATCH,
-          { userId: g.userId, readAt: readAtIso, messageIds: slice }
-        );
-      }
-    }
   }
 }

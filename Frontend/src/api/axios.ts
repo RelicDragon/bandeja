@@ -6,6 +6,7 @@ import { Capacitor } from '@capacitor/core';
 import { handleAxios401MaybeRefresh } from '@/api/authRefresh';
 import { stampApiAuthCredentialGeneration } from '@/api/apiAuthCredentialGeneration';
 import { api } from '@/api/httpClient';
+import { getAttributionForAuth, isAuthAttributionRequestUrl } from '@/utils/appAttribution';
 
 function clientPlatformHeader(): string {
   if (!isCapacitor()) return 'web';
@@ -31,6 +32,18 @@ api.interceptors.request.use(
       config.headers['Pragma'] = 'no-cache';
       config.headers['Expires'] = '0';
       config.params = { ...config.params, _t: Date.now() };
+    }
+
+    const url = `${config.baseURL ?? ''}${config.url ?? ''}`;
+    if (isAuthAttributionRequestUrl(url) && !(config.data instanceof FormData)) {
+      const attribution = getAttributionForAuth();
+      if (attribution) {
+        const data =
+          config.data && typeof config.data === 'object' ? (config.data as Record<string, unknown>) : {};
+        if (!('attribution' in data)) {
+          config.data = { ...data, attribution };
+        }
+      }
     }
 
     return config;

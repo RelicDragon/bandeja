@@ -1,8 +1,11 @@
+import type { Game } from '@/types';
 import { useCallback } from 'react';
 import { useAvailableUpcomingGamesQuery } from '@/queries/games/useAvailableUpcomingGamesQuery';
 import { deriveAvailableGamesLoading } from '@/hooks/useAvailableGames';
 import type { FindStructuralApiParams } from '@/utils/findStructuralApiParams';
 import { EMPTY_AVAILABLE_META } from '@/queries/games/availableGamesPage';
+
+const EMPTY_GAMES: Game[] = [];
 
 export const useAvailableUpcomingGames = (
   user: {
@@ -30,7 +33,7 @@ export const useAvailableUpcomingGames = (
     { enabled: queryEnabled },
   );
 
-  const availableGames = data?.games ?? [];
+  const availableGames = data?.games ?? EMPTY_GAMES;
   const meta = data?.meta ?? EMPTY_AVAILABLE_META;
   const loading = deriveAvailableGamesLoading(
     queryEnabled,

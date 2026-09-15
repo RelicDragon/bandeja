@@ -11,6 +11,8 @@ export const REFRESH_HARD_REJECT_CODES = new Set([
   'auth.refreshExpired',
   'auth.refreshReused',
   'auth.refreshTokenRequired',
+  'auth.refreshRequestIdRequired',
+  'auth.refreshRequestIdInvalid',
   'auth.userInactive',
   'auth.userNotFound',
   'auth.clientUpgradeRequired',

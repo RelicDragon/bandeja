@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { format } from 'date-fns';
 import { StatusPulseDot } from '@/components/StatusPulseDot';
 import { CalendarDayTypeDots } from '@/components/calendarDayTypeDots';
@@ -27,7 +28,7 @@ export interface MonthCalendarDayCellProps {
   onSelect: (day: Date) => void;
 }
 
-export function MonthCalendarDayCell({
+export const MonthCalendarDayCell = memo(function MonthCalendarDayCell({
   day,
   isCurrentMonth,
   isSelected,
@@ -155,4 +156,4 @@ export function MonthCalendarDayCell({
       ) : null}
     </button>
   );
-}
+});

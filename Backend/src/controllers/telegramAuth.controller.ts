@@ -3,7 +3,6 @@ import { asyncHandler } from '../utils/asyncHandler';
 import { ApiError } from '../utils/ApiError';
 import prisma from '../config/database';
 import {
-  assertLoginIssuanceAllowed,
   issueLoginTokens,
   jwtPayloadFromAuthUser,
 } from '../services/auth/authIssuance.service';
@@ -31,6 +30,7 @@ import {
   registrationSportUserFields,
 } from '../services/auth/registrationSport.service';
 import { UserMergeService } from '../services/user/userMerge.service';
+import { applyAuthAttributionSafely } from '../services/linkToApp/linkToApp.service';
 
 const MERGE_REQUIRED_CODE = 'auth.oauthLinkMergeRequired';
 
@@ -51,7 +51,6 @@ async function completeTelegramAuth(
   language: string | undefined,
   primarySportRaw: unknown
 ): Promise<{ user: any; token: string; refreshToken?: string; currentSessionId?: string }> {
-  assertLoginIssuanceAllowed(req);
   const actualTelegramId = otp.telegramId;
   let user = await prisma.user.findUnique({
     where: { telegramId: actualTelegramId },
@@ -89,6 +88,7 @@ async function completeTelegramAuth(
       });
     }
     user = await ensureUserCityAssigned(user.id, req);
+    await applyAuthAttributionSafely(req, user.id, 'login');
     const issued = await issueLoginTokens(jwtPayloadFromAuthUser(user), req);
     await NotificationPreferenceService.ensurePreferenceForChannel(user.id, NotificationChannelType.TELEGRAM);
     return {
@@ -116,6 +116,7 @@ async function completeTelegramAuth(
     select: PROFILE_SELECT_FIELDS,
   });
   user = await ensureUserCityAssigned(user.id, req);
+  await applyAuthAttributionSafely(req, user.id, 'register');
   const issued = await issueLoginTokens(jwtPayloadFromAuthUser(user), req);
   await NotificationPreferenceService.ensurePreferenceForChannel(user.id, NotificationChannelType.TELEGRAM);
   return {
@@ -174,6 +175,7 @@ async function mergeTelegramIntoUser(
     }
 
     merged = await ensureUserCityAssigned(merged.id, req);
+    await applyAuthAttributionSafely(req, merged.id, 'login');
     const issued = await issueLoginTokens(jwtPayloadFromAuthUser(merged), req);
     await NotificationPreferenceService.ensurePreferenceForChannel(merged.id, NotificationChannelType.TELEGRAM);
     return {
@@ -221,6 +223,7 @@ async function mergeTelegramIntoUser(
     select: PROFILE_SELECT_FIELDS,
   });
   user = await ensureUserCityAssigned(user.id, req);
+  await applyAuthAttributionSafely(req, user.id, 'login');
   const issued = await issueLoginTokens(jwtPayloadFromAuthUser(user), req);
   await NotificationPreferenceService.ensurePreferenceForChannel(user.id, NotificationChannelType.TELEGRAM);
   return {

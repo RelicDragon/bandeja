@@ -56,6 +56,7 @@ import { refreshChatOfflineBanner } from '@/services/chat/chatOfflineBanner';
 import { restoreAuthIfNeeded, monitorAuthPersistence } from './utils/authPersistence';
 import { stripStaleSessionForAndroidGoogleLoginRecovery } from '@/services/googleAuth.service';
 import { useDeepLink } from './hooks/useDeepLink';
+import { bootstrapAppAttribution, reportStoredAttributionIfAuthed } from './utils/appAttributionBootstrap';
 import { useDeepLinkStore } from './store/deepLinkStore';
 import { extractLanguageCode } from './utils/displayPreferences';
 import { syncWatchPreferencesToNative } from './services/authBridge';
@@ -155,6 +156,7 @@ function AppContent() {
   const isAuthRouteForBootstraps =
     location.pathname === '/login' ||
     location.pathname === '/register' ||
+    location.pathname === '/link-to-app' ||
     isTelegramAutoLoginPath(location.pathname);
   const isPastGamesHomeTab =
     location.pathname === '/' && new URLSearchParams(location.search).get('tab') === 'past-games';
@@ -162,6 +164,13 @@ function AppContent() {
   const { versionCheck, isChecking: isCheckingVersion } = useAppVersionCheck();
   
   useDeepLink();
+  useEffect(() => {
+    void bootstrapAppAttribution({ search: location.search, pathname: location.pathname });
+  }, [location.pathname, location.search]);
+  useEffect(() => {
+    if (!isAuthenticated || !token || isInitializing) return;
+    void reportStoredAttributionIfAuthed(token);
+  }, [isAuthenticated, token, isInitializing]);
   useUrlStoreSync();
   useMyTabPrefetch({
     enabled: !isAuthRouteForBootstraps,
@@ -924,6 +933,12 @@ function AppContent() {
                 <ClubManagementApp />
               </Suspense>
             </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/link-to-app"
+          element={
+            <Navigate to={`${isAuthenticated ? '/' : '/login'}${location.search}`} replace />
           }
         />
         <Route path="*" element={<Navigate to="/" replace />} />

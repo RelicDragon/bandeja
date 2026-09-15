@@ -63,6 +63,12 @@ import {
   setReplicatePhotoModel,
 } from '../controllers/admin.controller';
 import * as adminAdController from '../controllers/adminAd.controller';
+import {
+  deleteAdminLinkToAppCampaignLabel,
+  getAdminLinkToAppCampaignLabels,
+  getAdminLinkToAppStats,
+  putAdminLinkToAppCampaignLabel,
+} from '../controllers/linkToApp.controller';
 
 const router = Router();
 
@@ -221,5 +227,13 @@ router.delete(
 
 router.get('/ads/preview', requireAdmin, adminAdController.previewAd);
 router.get('/ads/stats', requireAdmin, adminAdController.getAdOverviewStats);
+router.get('/link-to-app/stats', requireAdmin, getAdminLinkToAppStats);
+router.get('/link-to-app/campaign-labels', requireAdmin, getAdminLinkToAppCampaignLabels);
+router.put('/link-to-app/campaign-labels', requireAdmin, putAdminLinkToAppCampaignLabel);
+router.delete(
+  '/link-to-app/campaign-labels/:utmCampaign',
+  requireAdmin,
+  deleteAdminLinkToAppCampaignLabel
+);
 
 export default router;

@@ -3,6 +3,7 @@ let authToken = null;
 /** Refresh token for admin session (short access JWT after legacy sunset). */
 let adminRefreshToken = null;
 const ADMIN_CLIENT_VERSION = '99.0.0';
+const ADMIN_REFRESH_REQUEST_ID_KEY = 'adminRefreshRequestId';
 
 function isFileProtocol() {
     return typeof location !== 'undefined' && location.protocol === 'file:';
@@ -45,10 +46,31 @@ function normalizeStoredApiUrl(saved) {
 
 API_URL = preferredApiUrlForPage();
 
-function adminClientHeaders() {
+function adminRefreshRequestId() {
+    let id = '';
+    try {
+        id = (localStorage.getItem(ADMIN_REFRESH_REQUEST_ID_KEY) || '').trim();
+    } catch {
+        id = '';
+    }
+    if (id.length < 16) {
+        id = (typeof crypto !== 'undefined' && crypto.randomUUID)
+            ? crypto.randomUUID()
+            : `admin-refresh-${Date.now()}-${Math.random().toString(36).slice(2, 14)}`;
+        try {
+            localStorage.setItem(ADMIN_REFRESH_REQUEST_ID_KEY, id);
+        } catch {
+            /* keep in-memory id for this request */
+        }
+    }
+    return id;
+}
+
+function adminClientHeaders(extra) {
     return {
         'X-Client-Version': ADMIN_CLIENT_VERSION,
         'X-Client-Platform': 'web',
+        ...(extra || {}),
     };
 }
 
@@ -60,7 +82,7 @@ async function refreshAdminAccess() {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                ...adminClientHeaders(),
+                ...adminClientHeaders({ 'X-Refresh-Request-Id': adminRefreshRequestId() }),
             },
             credentials: 'include',
             body: JSON.stringify({ refreshToken: rt }),
@@ -72,6 +94,11 @@ async function refreshAdminAccess() {
         if (data.data.refreshToken) {
             adminRefreshToken = data.data.refreshToken;
             localStorage.setItem('adminRefreshToken', data.data.refreshToken);
+        }
+        try {
+            localStorage.removeItem(ADMIN_REFRESH_REQUEST_ID_KEY);
+        } catch {
+            /* next refresh generates a new id */
         }
         return true;
     } catch (e) {
@@ -496,6 +523,9 @@ async function loadPageData(page) {
             loadTranslationQueueStats();
             startTranslationQueuePoll();
             break;
+        case 'link-to-app':
+            loadLinkToAppStats();
+            break;
         case 'logs':
             if (!isStreamActive) {
                 if (logsData.length === 0) {
@@ -550,12 +580,13 @@ function initUsersDataTable() {
             { key: 'questionnaire', label: 'Questionnaire', accessor: (u) => formatQuestionnaireSummary(u) },
             { key: 'games', label: 'Games', accessor: (u) => formatUserGamesSummary(u) },
             { key: 'wallet', label: 'Wallet', accessor: (u) => u.wallet ?? 0 },
+            { key: 'utm', label: 'QR / UTM', accessor: (u) => u.utmCampaignDisplay || u.utmCampaign || u.utmSource || '' },
             { key: 'status', label: 'Status', accessor: (u) => u.isActive ? 'Active' : 'Inactive' },
             { key: 'roles', label: 'Roles', sortable: false },
             { key: 'actions', label: 'Actions', sortable: false },
         ],
         filters: [
-            { id: 'usersSearch', type: 'search', param: 'search', placeholder: 'Search name, phone, email...' },
+            { id: 'usersSearch', type: 'search', param: 'search', placeholder: 'Search name, phone, email, campaign...' },
             { id: 'usersPrimarySportFilter', type: 'select', param: 'primarySport', placeholder: 'Primary sport', options:
                 ALL_SPORTS.map((s) => ({ value: s, label: sportLabel(s) })) },
             { id: 'usersHasSportFilter', type: 'select', param: 'hasSport', placeholder: 'Has sport enabled', options:
@@ -599,6 +630,7 @@ function initUsersDataTable() {
                 <td>${escapeHtml(formatQuestionnaireSummary(user))}</td>
                 <td>${escapeHtml(formatUserGamesSummary(user))}</td>
                 <td>${user.wallet ?? 0}</td>
+                <td>${escapeHtml(user.utmCampaignDisplay || user.utmCampaign || user.utmSource || '—')}</td>
                 <td><span class="badge ${user.isActive ? 'badge-success' : 'badge-danger'}">${user.isActive ? 'Active' : 'Inactive'}</span></td>
                 <td>${escapeHtml(rolesStr || '')}</td>
                 <td>
@@ -667,6 +699,7 @@ function renderUserDetailHtml(user) {
             ${user.lastCreatedSport ? `<div class="form-group"><label>Last created sport</label><div class="form-readonly">${sportLabel(user.lastCreatedSport)}</div></div>` : ''}
             <div class="form-group"><label>Wallet</label><div class="form-readonly">${user.wallet ?? 0}</div></div>
             <div class="form-group"><label>Created</label><div class="form-readonly">${formatDate(user.createdAt)}</div></div>
+            <div class="form-group"><label>QR / UTM</label><div class="form-readonly">${escapeHtml([user.utmCampaignDisplay || user.utmCampaign, user.utmCampaignLabel ? user.utmCampaign : null, user.utmSource, user.utmMedium, user.attributionChoice, user.attributionAuthKind].filter(Boolean).join(' · ') || '—')}</div></div>
         </div>
         <h3 style="margin-top:1rem">Sport profiles</h3>
         <div class="table-container">

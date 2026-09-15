@@ -86,12 +86,12 @@ describe('native refresh-token persistence', () => {
     expect(setRefreshTokenNativeMock).not.toHaveBeenCalled();
   });
 
-  it('keeps legacy web refresh in LS until cookie auth replaces it', async () => {
+  it('does not use leftover LS refresh in cookie-only web mode', async () => {
     nativePlatform = false;
     storage.set('padelpulse_refresh_token', 'legacy-web-token');
     const { getRefreshTokenForRequest } = await import('@/services/refreshTokenPersistence');
 
-    await expect(getRefreshTokenForRequest()).resolves.toBe('legacy-web-token');
+    await expect(getRefreshTokenForRequest()).resolves.toBeNull();
     expect(storage.has('padelpulse_refresh_token')).toBe(true);
   });
 
@@ -124,22 +124,25 @@ describe('native refresh-token persistence', () => {
     expect(afterLocalStateLoss).toBe(first);
   });
 
-  it('omits a refresh request id in cookie-only web mode so the server does not rotate', async () => {
+  it('persists a refresh request id in cookie-only web mode', async () => {
     nativePlatform = false;
     storage.set('padelpulse_current_session_id', 'session-row-abc123');
     const { getOrCreateRefreshRequestId } = await import('@/services/refreshTokenPersistence');
 
-    await expect(getOrCreateRefreshRequestId()).resolves.toBeNull();
-    expect(storage.has('padelpulse_refresh_request_id')).toBe(false);
+    const id = await getOrCreateRefreshRequestId();
+    expect(id).toMatch(/^[A-Za-z0-9._:-]{16,128}$/);
+    expect(storage.get('padelpulse_refresh_request_id')).toBe(id);
   });
 
-  it('omits a refresh request id on web even when a leftover LS refresh token exists', async () => {
+  it('reuses the same web request id when a leftover LS refresh token exists', async () => {
     nativePlatform = false;
     storage.set('padelpulse_refresh_token', 'legacy-web-token');
     const { getOrCreateRefreshRequestId } = await import('@/services/refreshTokenPersistence');
 
-    await expect(getOrCreateRefreshRequestId('legacy-web-token')).resolves.toBeNull();
-    expect(storage.has('padelpulse_refresh_request_id')).toBe(false);
+    const first = await getOrCreateRefreshRequestId('legacy-web-token');
+    const replay = await getOrCreateRefreshRequestId('legacy-web-token');
+    expect(first).toMatch(/^[A-Za-z0-9._:-]{16,128}$/);
+    expect(replay).toBe(first);
   });
 
   it('clears pending refresh replay state during logout cleanup', async () => {

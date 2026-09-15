@@ -141,7 +141,7 @@ Migrations run as part of every backend deploy. Sticker seed upserts catalog row
 
 ### Auth refresh rollout
 
-The hardened refresh flow is backward-compatible, so deploy the backend and database migration before forcing mobile clients to update. Clients that send `X-Refresh-Request-Id` get one-time rotation with idempotent lost-response replay; older clients temporarily keep a stable per-device credential. After the updated iOS/Android builds are available, set a blocking `AppVersionRequirement` for each platform in Admin (`minBuildNumber` = the new build). That is the user-facing force-update control; `MIN_CLIENT_VERSION_FOR_REFRESH` is the separate legacy-JWT issuance floor.
+The refresh flow uses one-time rotation with idempotent lost-response replay. Every client must send `X-Refresh-Request-Id`. User-facing force-update is a blocking `AppVersionRequirement` per platform in Admin (`minBuildNumber`).
 
 Production startup now refuses an unsafe web-token configuration. Keep these values in `Backend/.env`:
 

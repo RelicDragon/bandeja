@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import type { Invite } from '@/types';
 import { clearMyTabCache } from '@/api/me';
@@ -11,6 +11,8 @@ import { filterInboxVisibleInvites } from '@/utils/gameInviteInbox';
 import { excludePendingInviteOnlyMyGames } from '@/utils/excludePendingInviteOnlyMyGames';
 import { excludeUnoptedEventsFromMyGames } from '@/utils/eventMyTabMembership';
 
+const EMPTY_UNREAD_COUNTS: Record<string, number> = {};
+
 export const useMyGames = (
   user: { id?: string } | null | undefined,
   onLoading: (loading: boolean) => void,
@@ -21,12 +23,15 @@ export const useMyGames = (
   const onLoadingRef = useRef(onLoading);
   onLoadingRef.current = onLoading;
 
-  const games = excludeUnoptedEventsFromMyGames(
-    excludePendingInviteOnlyMyGames(data?.games ?? [], userId),
-    userId,
+  const games = useMemo(
+    () => excludeUnoptedEventsFromMyGames(
+      excludePendingInviteOnlyMyGames(data?.games ?? [], userId),
+      userId,
+    ),
+    [data?.games, userId],
   );
   const invites = filterInboxVisibleInvites<Invite>(data?.invites ?? []);
-  const unreadCounts = data?.unreadCounts ?? {};
+  const unreadCounts = data?.unreadCounts ?? EMPTY_UNREAD_COUNTS;
 
   const setInvites = useCallback(
     (newInvites: Invite[] | ((prev: Invite[]) => Invite[])) => {

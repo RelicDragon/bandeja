@@ -1,0 +1,172 @@
+export const APP_ATTRIBUTION_STORAGE_KEY = 'bandeja.attribution';
+export const APP_ATTRIBUTION_COOKIE = 'bandeja_aid';
+export const APP_ATTRIBUTION_CLIPBOARD_PREFIX = 'bandeja-aid:';
+export const APP_ATTRIBUTION_AID_RE = /^[a-zA-Z0-9]{8,32}$/;
+
+export type AppAttributionChoice = 'ios' | 'android' | 'web';
+
+export type AppAttributionSnapshot = {
+  aid: string;
+  utmSource: string | null;
+  utmMedium: string | null;
+  utmCampaign: string | null;
+  utmContent: string | null;
+  utmTerm: string | null;
+  choice: AppAttributionChoice | null;
+};
+
+const UTM_RE = /^[a-zA-Z0-9._-]+$/;
+const UTM_MAX = 80;
+const CHOICES: AppAttributionChoice[] = ['ios', 'android', 'web'];
+
+export function isAppAttributionAid(value: string): boolean {
+  return APP_ATTRIBUTION_AID_RE.test(value);
+}
+
+export function createAppAttributionAid(): string {
+  const alphabet = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (b) => alphabet[b % alphabet.length]).join('');
+}
+
+export function sanitizeAppUtmValue(raw: string | null | undefined): string | null {
+  const value = raw?.trim() ?? '';
+  if (!value || value.length > UTM_MAX || !UTM_RE.test(value)) return null;
+  return value;
+}
+
+export function parseAidFromClipboard(text: string | null | undefined): string | null {
+  const trimmed = text?.trim() ?? '';
+  if (!trimmed.startsWith(APP_ATTRIBUTION_CLIPBOARD_PREFIX)) return null;
+  const aid = trimmed.slice(APP_ATTRIBUTION_CLIPBOARD_PREFIX.length).trim();
+  return isAppAttributionAid(aid) ? aid : null;
+}
+
+export function clipboardTextForAid(aid: string): string {
+  return `${APP_ATTRIBUTION_CLIPBOARD_PREFIX}${aid}`;
+}
+
+function readCookie(name: string): string | null {
+  if (typeof document === 'undefined') return null;
+  const parts = document.cookie.split(';');
+  for (const part of parts) {
+    const [rawName, ...rest] = part.trim().split('=');
+    if (rawName !== name) continue;
+    const value = rest.join('=').trim();
+    return value || null;
+  }
+  return null;
+}
+
+function writeAidCookie(aid: string): void {
+  if (typeof document === 'undefined') return;
+  document.cookie = `${APP_ATTRIBUTION_COOKIE}=${aid}; Path=/; Max-Age=31536000; SameSite=Lax`;
+}
+
+function emptyUtm(): Pick<
+  AppAttributionSnapshot,
+  'utmSource' | 'utmMedium' | 'utmCampaign' | 'utmContent' | 'utmTerm'
+> {
+  return {
+    utmSource: null,
+    utmMedium: null,
+    utmCampaign: null,
+    utmContent: null,
+    utmTerm: null,
+  };
+}
+
+export function parseAttributionFromSearch(search: string): Partial<AppAttributionSnapshot> {
+  const params = new URLSearchParams(search.startsWith('?') ? search.slice(1) : search);
+  const aidRaw = params.get('aid');
+  const choiceRaw = params.get('choice');
+  return {
+    aid: aidRaw && isAppAttributionAid(aidRaw) ? aidRaw : undefined,
+    utmSource: sanitizeAppUtmValue(params.get('utm_source')),
+    utmMedium: sanitizeAppUtmValue(params.get('utm_medium')),
+    utmCampaign: sanitizeAppUtmValue(params.get('utm_campaign')),
+    utmContent: sanitizeAppUtmValue(params.get('utm_content')),
+    utmTerm: sanitizeAppUtmValue(params.get('utm_term')),
+    choice: CHOICES.includes(choiceRaw as AppAttributionChoice)
+      ? (choiceRaw as AppAttributionChoice)
+      : null,
+  };
+}
+
+export function readStoredAttribution(): AppAttributionSnapshot | null {
+  if (typeof localStorage === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem(APP_ATTRIBUTION_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<AppAttributionSnapshot>;
+    if (!parsed.aid || !isAppAttributionAid(parsed.aid)) return null;
+    return {
+      aid: parsed.aid,
+      utmSource: sanitizeAppUtmValue(parsed.utmSource),
+      utmMedium: sanitizeAppUtmValue(parsed.utmMedium),
+      utmCampaign: sanitizeAppUtmValue(parsed.utmCampaign),
+      utmContent: sanitizeAppUtmValue(parsed.utmContent),
+      utmTerm: sanitizeAppUtmValue(parsed.utmTerm),
+      choice: CHOICES.includes(parsed.choice as AppAttributionChoice)
+        ? (parsed.choice as AppAttributionChoice)
+        : null,
+    };
+  } catch {
+    return null;
+  }
+}
+
+export function mergeAttributionFirstTouch(
+  current: AppAttributionSnapshot | null,
+  incoming: Partial<AppAttributionSnapshot>
+): AppAttributionSnapshot | null {
+  const cookieAid = readCookie(APP_ATTRIBUTION_COOKIE);
+  const aid =
+    current?.aid ||
+    (incoming.aid && isAppAttributionAid(incoming.aid) ? incoming.aid : null) ||
+    (cookieAid && isAppAttributionAid(cookieAid) ? cookieAid : null);
+  const hasUtm = Boolean(
+    incoming.utmSource || incoming.utmMedium || incoming.utmCampaign || incoming.utmContent || incoming.utmTerm
+  );
+  if (!aid && !hasUtm && !incoming.choice) return current;
+  const nextAid = aid ?? createAppAttributionAid();
+  const base = current ?? { aid: nextAid, ...emptyUtm(), choice: null };
+  return {
+    aid: base.aid || nextAid,
+    utmSource: base.utmSource ?? incoming.utmSource ?? null,
+    utmMedium: base.utmMedium ?? incoming.utmMedium ?? null,
+    utmCampaign: base.utmCampaign ?? incoming.utmCampaign ?? null,
+    utmContent: base.utmContent ?? incoming.utmContent ?? null,
+    utmTerm: base.utmTerm ?? incoming.utmTerm ?? null,
+    choice: base.choice ?? incoming.choice ?? null,
+  };
+}
+
+export function persistAttribution(snapshot: AppAttributionSnapshot): void {
+  if (typeof localStorage !== 'undefined') {
+    localStorage.setItem(APP_ATTRIBUTION_STORAGE_KEY, JSON.stringify(snapshot));
+  }
+  writeAidCookie(snapshot.aid);
+}
+
+export function captureAppAttributionFromLocation(location: {
+  search: string;
+  pathname?: string;
+}): AppAttributionSnapshot | null {
+  const incoming = parseAttributionFromSearch(location.search);
+  const merged = mergeAttributionFirstTouch(readStoredAttribution(), incoming);
+  if (merged) persistAttribution(merged);
+  return merged;
+}
+
+export function getAttributionForAuth(): AppAttributionSnapshot | null {
+  return readStoredAttribution();
+}
+
+export function isAuthAttributionRequestUrl(url: string | undefined): boolean {
+  const path = (url ?? '').split('?')[0];
+  return /\/(auth\/register\/phone|auth\/login\/phone|auth\/login\/apple|auth\/login\/google|auth\/google\/exchange|auth\/attribution|telegram\/verify-otp|telegram\/verify-link-key)$/.test(
+    path
+  );
+}

@@ -25,7 +25,7 @@ import { useRegisterAdSportContext } from '@/hooks/useAdPlacements';
 import { getViewerPrimarySport } from '@/utils/profileSports';
 import { MainTabFooter } from '@/components';
 import { gamesApi } from '@/api';
-import { useGameUnreadCountsForIds } from '@/hooks/useUnreadBridge';
+import { useGameUnreadPresenceForIds } from '@/hooks/useUnreadBridge';
 import { useAuthStore } from '@/store/authStore';
 import { useShellNavStore } from '@/store/shellNavStore';
 import { useHeaderStore } from '@/store/headerStore';
@@ -181,10 +181,11 @@ export const MyTab = () => {
     const ids = new Set<string>();
     for (const g of games) ids.add(g.id);
     for (const g of pastGamesInRange) ids.add(g.id);
+    for (const g of pastGames) ids.add(g.id);
     return [...ids];
-  }, [games, pastGamesInRange]);
+  }, [games, pastGamesInRange, pastGames]);
 
-  const gameUnreadForSort = useGameUnreadCountsForIds(gameIdsForUnread, unreadCounts);
+  const gameUnreadForSort = useGameUnreadPresenceForIds(gameIdsForUnread, unreadCounts);
 
   const mergedUnreadCounts = gameUnreadForSort;
 
@@ -229,7 +230,7 @@ export const MyTab = () => {
     const fromPast = pastGamesInRange.filter((g) => !ids.has(g.id) && g.entityType !== 'LEAGUE_SEASON');
     return [...filteredMyGames.filter(noSeason), ...fromPast];
   }, [filteredMyGames, pastGamesInRange]);
-  const calendarMergedUnreadCounts = gameUnreadForSort;
+  const calendarMergedUnreadCounts = unreadCounts;
   const myGamesForSelectedDate = useMemo(() => {
     if (!myGamesSelectedDate) return [];
     const cityTimezone = resolveViewerCityTimezone(user?.currentCity?.timezone);
@@ -239,9 +240,9 @@ export const MyTab = () => {
         myGamesSelectedDate,
         cityTimezone,
       ),
-      calendarMergedUnreadCounts,
+      gameUnreadForSort,
     );
-  }, [myGamesSelectedDate, calendarMergedGames, calendarMergedUnreadCounts, user?.currentCity?.timezone]);
+  }, [myGamesSelectedDate, calendarMergedGames, gameUnreadForSort, user?.currentCity?.timezone]);
 
   const upcomingGamesUndated = useMemo(() => {
     const base = calendarMergedGames.filter((g) => {
@@ -471,6 +472,13 @@ export const MyTab = () => {
     ]);
   }, [reloadMyClubs, reloadBookings, reloadLinkedGames, refetchMyGames, loadPastGames]);
 
+  const handleNoteSaved = useCallback(() => {
+    void refetchMyGames();
+  }, [refetchMyGames]);
+  const handlePastNoteSaved = useCallback((gameId: string) => {
+    void refetchGame(gameId);
+  }, [refetchGame]);
+
   const scrollBottomPadding = 'calc(5rem + env(safe-area-inset-bottom, 0px))';
   const renderPastGamesContent = (footerLoading: boolean) => (
     <>
@@ -479,9 +487,9 @@ export const MyTab = () => {
         loadingPastGames={loadingPastGames}
         hasMorePastGames={hasMorePastGames}
         user={user}
-        pastGamesUnreadCounts={gameUnreadForSort}
+        pastGamesUnreadCounts={unreadCounts}
         onLoadMore={loadPastGames}
-        onNoteSaved={(gameId) => refetchGame(gameId)}
+        onNoteSaved={handlePastNoteSaved}
       />
       <UserTeamsHomeSection embedded />
       <MainTabFooter isLoading={footerLoading} />
@@ -529,7 +537,7 @@ export const MyTab = () => {
                 onAccept={handleAcceptInvite}
                 onDecline={handleDeclineInvite}
                 decliningInviteIds={decliningInviteIds}
-                onNoteSaved={() => refetchMyGames()}
+                onNoteSaved={handleNoteSaved}
               />
             </div>
           )}
@@ -545,7 +553,7 @@ export const MyTab = () => {
               user={user}
               loading={gamesSectionLoading}
               gamesUnreadCounts={calendarMergedUnreadCounts}
-              onNoteSaved={() => refetchMyGames()}
+              onNoteSaved={handleNoteSaved}
               upcomingGames={gamesSectionUpcoming}
               onSwitchToSearch={!hasUpcomingGames ? () => navigationService.navigateToFind() : undefined}
             />
@@ -641,7 +649,7 @@ export const MyTab = () => {
                 onAccept={handleAcceptInvite}
                 onDecline={handleDeclineInvite}
                 decliningInviteIds={decliningInviteIds}
-                onNoteSaved={() => refetchMyGames()}
+                onNoteSaved={handleNoteSaved}
               />
             </div>
           )}
@@ -663,7 +671,7 @@ export const MyTab = () => {
               user={user}
               loading={gamesSectionLoading}
               gamesUnreadCounts={calendarMergedUnreadCounts}
-              onNoteSaved={() => refetchMyGames()}
+              onNoteSaved={handleNoteSaved}
               upcomingGames={gamesSectionUpcoming}
               onSwitchToSearch={!hasUpcomingGames ? () => navigationService.navigateToFind() : undefined}
             />

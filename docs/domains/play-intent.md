@@ -1,0 +1,49 @@
+# Play intent
+
+A city/sport (or BAR) wish to play. One OPEN/MATCHED intent per user+city (partial unique index). Home city only for lobby; Browse city for invite Looking population.
+
+## Lifecycle
+
+`PlayIntentStatus`: `OPEN` → `MATCHED` (proposal member or reserved by linked invite) → `CONSUMED` / `EXPIRED` / `CANCELLED`.
+
+Only a **PLAYING** join consumes a reachable looking intent (`playIntentPlayingJoin.ts`). `IN_QUEUE` does not. Consume detaches from a PENDING/ACCEPTED proposal. Ask-to-join / overlap-cancel keep looking.
+
+Compose: sport GAME intent or BAR intent from Find/My strip (`PlayIntentFindBar` / `PlayHeroButton`). Hidden for spectators and while a real PENDING/ACCEPTED proposal is open. Direct-match editor (no proposal) still shows games.
+
+## Court lobby radar ≠ PoolMember
+
+`GET /play-intents/pool` returns people (`PoolMember` physics) **and** `matchingGames[]` (circular nodes, not stuffed into members). Missing array → `[]`. Cap 4 (`MATCHING_GAMES_VISIBLE_CAP`).
+
+`listMatchingGamesForIntent` / `playIntentMatchingGames.ts`:
+
+| Intent | Radar entity types |
+|--------|-------------------|
+| Sport (not BAR, not EVENT) | `GAME` + `TOURNAMENT` |
+| BAR | `BAR` only |
+| EVENT | none |
+
+Skip: TRAINING, leagues, EVENT, private, no `timeIsSet`, full (no PLAYING slot), owner, already PLAYING / INVITED / IN_QUEUE. MIX_PAIRS: viewer gender seat must be free.
+
+Rank: direct join first, soonest start, more open slots, `gameMatchScore`, `id`.
+
+`allowDirectJoin` is chrome + CTA only (`Join` / `Ask to join`). A free PLAYING slot is required either way. Queue-only games stay on radar when a slot is free.
+
+Visual/live: `docs/plans/lobby-radar-matching-games.md`.
+
+## Notify ≠ radar
+
+`GAME_MATCHES_INTENT` (`matchIntentToGames`) is **GAME/BAR only** (not TOURNAMENT/TRAINING/EVENT). A fitting tournament can appear on the radar without a game-fit push. Delivery is transactional per event+user+channel, revalidated, backoff, deduped — not fire-and-forget.
+
+## Live
+
+Socket `play-intent:invalidate` (`PLAY_INTENT_INVALIDATE_EVENT`). Reasons include intent/proposal lifecycle and `matching-games-changed` (public GAME/TOURNAMENT/BAR create, roster, invite, update, cancel). 2 min poll + focus/reconnect backup on lobby; invite Looking uses 30s refetch.
+
+## Invite Search \| Looking
+
+Different surface from Find radar. `PlayerListModal` tabs. Population = Browse city + sport + entity (`POST /play-intents/invite-pool`). Fit = Venue/game (5-dot strip, not arena). OPEN+not-in-proposal → reserve + `playIntentId` on invite. MATCHED/in-proposal → unlinked invite, no steal.
+
+`docs/plans/player-invite-looking.md`.
+
+## Code
+
+BE: `Backend/src/services/playIntent/*`, routes `/play-intents`. FE: `api/playIntents.ts`, `components/playIntent/*`, `components/playerInvite/*`.

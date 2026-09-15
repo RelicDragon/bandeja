@@ -1,30 +1,45 @@
 # Domain Docs
 
-How engineering skills should consume this repo's domain documentation.
+How skills and agents consume this repo's documentation.
 
 ## Before exploring, read these
 
-- **`docs/APP_FUNCTIONALITY.md`** — product behavior, glossary (§2.1), architecture constraints (§2.2), shared packages (§2.3)
-- **`docs/README.md`** — index of all current docs
+1. **`docs/agents/RULES.md`** — mandatory contract (also loaded via `AGENTS.md` / `CLAUDE.md` / Cursor rule `docs-first`).
+2. **`CONTEXT-MAP.md`** — where language lives. Do **not** start at root `CONTEXT.md` (league withdrawal only) or `docs/adr/` (unused).
+3. **`docs/README.md`** — map. Pick the file for the task.
+4. **`docs/product/glossary.md`** — vocabulary.
+5. **`docs/product/constraints.md`** — load-bearing invariants. Same table at `docs/APP_FUNCTIONALITY.md` §2.2.
+6. **`docs/architecture/code-map.md`** — where code lives.
 
-If a referenced file doesn't exist, **proceed silently**. Don't flag absence; don't suggest creating docs upfront. The producer skill (`/grill-with-docs`) creates `CONTEXT.md` / ADRs lazily only when a hard-to-reverse trade-off needs recording — prefer updating §2.2 in `APP_FUNCTIONALITY.md` for ongoing constraints.
+Then open the matching `docs/domains/<area>.md`. Investigate flow: `docs/agents/how-to-investigate.md`.
+
+If a referenced file does not exist, proceed from schema + sibling domain files. Prefer updating `docs/product/constraints.md` (and the §2.2 copy) over creating an ADR.
 
 ## Optional CONTEXT.md layout
 
-Skills that look for per-area glossaries may use this layout when files exist:
-
 ```
 /
-├── Backend/CONTEXT.md
-├── Frontend/CONTEXT.md
-├── Admin/CONTEXT.md
-└── Frontend/ios/.../BandejaWatch/.../CONTEXT.md
+├── CONTEXT-MAP.md                     this map
+├── CONTEXT.md                         league withdrawal only
+├── docs/product/glossary.md           product language
+├── docs/product/constraints.md        do-not-simplify
+└── Frontend/src/services/chat/CONTEXT.md
 ```
 
-## Use the glossary's vocabulary
+Do not add `Backend/CONTEXT.md` / `Frontend/CONTEXT.md` unless a new bounded language exists. Do not create `docs/adr/`.
 
-When output names a domain concept, use the term as defined in `docs/APP_FUNCTIONALITY.md` §2.1 (or a local `CONTEXT.md` if present).
+## Use the glossary
+
+When output names a domain concept, use `docs/product/glossary.md` (or the local CONTEXT file for that slice). Do not use `CLAUDE.md` as a spec.
+
+Overloads:
+
+- Product **Event** is only `EntityType.EVENT`. A `Game` row is not “an Event”.
+- `Game.status` is `ANNOUNCED | STARTED | FINISHED | ARCHIVED`. League fixture UI labels `READY` / `SCHEDULED` are not this enum.
+- **Home / Browse / Venue** are three city roles. Browse never calls `switchCity`.
+- Only `ParticipantStatus.PLAYING` fills slots.
+- Trainer is `Game.trainerId`, not a participant flag.
 
 ## Flag constraint conflicts
 
-If your output contradicts §2.2, surface it explicitly rather than silently overriding.
+If output would contradict `docs/product/constraints.md`, say so instead of silently overriding.

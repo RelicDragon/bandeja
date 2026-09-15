@@ -95,6 +95,9 @@ model User {
   adClickTokens                 AdClickToken[]
   adLandingWishes               AdLandingWish[]
   adLandingRegistrations        AdLandingRegistration[]
+  attribution                   LinkToAppAttribution?            @relation("UserFirstTouchAttribution", fields: [attributionId], references: [id], onDelete: SetNull)
+  convertedAttributions         LinkToAppAttribution[]           @relation("AttributionConvertedUser")
+  linkToAppEvents               LinkToAppEvent[]
   favoriteUsers                 UserFavoriteUser[]               @relation("UserFavorites")
   favoritedBy                   UserFavoriteUser[]               @relation("UserFavoritedBy")
   interactionsFrom              UserInteraction[]                @relation("InteractionFromUser")
@@ -118,6 +121,15 @@ model User {
   shareGameCreationsToFollowers Boolean                          @default(true)
   shareGameResultsToFollowers   Boolean                          @default(true)
   appIcon                       String?                          @default("tiger")
+  attributionId                 String?
+  utmSource                     String?
+  utmMedium                     String?
+  utmCampaign                   String?
+  utmContent                    String?
+  utmTerm                       String?
+  attributedAt                  DateTime?
+  attributionChoice             String?
+  attributionAuthKind           String?
   trainerRating                 Float?
   trainerReviewCount            Int                              @default(0)
   pushTokens                    PushToken[]
@@ -191,6 +203,8 @@ model User {
   @@index([currentCityId])
   @@index([totalPoints])
   @@index([approvedById])
+  @@index([attributionId])
+  @@index([utmCampaign])
 }
 
 model UserRefreshSession {
@@ -3708,4 +3722,56 @@ model AdTargetingPreset {
   targeting   Json
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model LinkToAppCampaignLabel {
+  utmCampaign String   @id
+  label       String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model LinkToAppAttribution {
+  id                 String          @id
+  utmSource          String?
+  utmMedium          String?
+  utmCampaign        String?
+  utmContent         String?
+  utmTerm            String?
+  lastChoice         String?
+  createdAt          DateTime        @default(now())
+  lastSeenAt         DateTime        @default(now())
+  convertedUserId    String?         @unique
+  convertedAt        DateTime?
+  convertedAuthKind  String?
+  convertedUser      User?           @relation("AttributionConvertedUser", fields: [convertedUserId], references: [id], onDelete: SetNull)
+  firstTouchUsers    User[]          @relation("UserFirstTouchAttribution")
+  events             LinkToAppEvent[]
+
+  @@index([utmCampaign, createdAt])
+  @@index([convertedAt])
+}
+
+model LinkToAppEvent {
+  id             String               @id @default(cuid())
+  kind           String
+  attributionId  String?
+  userId         String?
+  utmSource      String?
+  utmMedium      String?
+  utmCampaign    String?
+  utmContent     String?
+  utmTerm        String?
+  userAgent      String?
+  referer        String?
+  platform       String?
+  createdAt      DateTime             @default(now())
+  attribution    LinkToAppAttribution? @relation(fields: [attributionId], references: [id], onDelete: SetNull)
+  user           User?                @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([kind, createdAt])
+  @@index([utmCampaign, kind, createdAt])
+  @@index([attributionId, createdAt])
+  @@index([userId, createdAt])
 }

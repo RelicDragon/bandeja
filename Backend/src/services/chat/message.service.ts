@@ -595,8 +595,8 @@ export class MessageService {
     }
 
     try {
-      // Always advance cursor (and dual-write receipts when enabled). Do not skip when
-      // receipts are already complete — cursor may still lag (late-insert / race).
+      // Always advance cursor. Do not skip when the viewer already looks caught up —
+      // cursor may still lag under late-insert / race.
       await UnreadSnapshotService.markContextRead(senderId, {
         contextType: markContextType,
         contextId: markContextId,
@@ -1297,20 +1297,6 @@ export class MessageService {
     );
 
     if (!(message as { _deduped?: boolean })._deduped) {
-      const { ReadReceiptService } = await import('./readReceipt.service');
-      ReadReceiptService.scheduleReceiptsForLateInsertReaders({
-        id: message.id,
-        chatContextType: message.chatContextType,
-        contextId: message.contextId,
-        chatType: message.chatType,
-        serverSyncSeq:
-          (message as { serverSyncSeq?: number | null }).serverSyncSeq ??
-          (message as { syncSeq?: number | null }).syncSeq ??
-          null,
-        createdAt: new Date(message.createdAt),
-        senderId: message.senderId,
-      });
-
       const { ChatAutoTranslateEnqueueService } = await import('./chatAutoTranslateEnqueue.service');
       void ChatAutoTranslateEnqueueService.enqueueForMessage(message.id).catch((err) => {
         console.error('[auto-translate] enqueue failed', { messageId: message.id, err });

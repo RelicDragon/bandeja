@@ -39,6 +39,7 @@ const ensureWellKnown = () => {
 
 // Match nginx: serve public landing index.html for clean URLs (Vite SPA otherwise swallows them).
 const STATIC_LANDING_PATHS: Record<string, string> = {
+  '/link-to-app': 'link-to-app/index.html',
   '/ad-test': 'ad-test/index.html',
   '/LizaBirthday2026': 'LizaBirthday2026/index.html',
   '/LizaBirthday2026Wishes': 'LizaBirthday2026Wishes/index.html',

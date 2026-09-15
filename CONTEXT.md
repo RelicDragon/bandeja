@@ -1,6 +1,8 @@
 # PadelPulse
 
-Multisport game scheduling and league competition.
+Product glossary: **`docs/product/glossary.md`**. Constraints: **`docs/product/constraints.md`**. Map: **`CONTEXT-MAP.md`**. Agent contract: **`docs/agents/RULES.md`**.
+
+This file is **league-season team withdrawal** language only.
 
 ## Language
 

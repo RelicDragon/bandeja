@@ -19,9 +19,9 @@ export class UnreadAutoReadScheduler {
     try {
       for (let attempt = 1; attempt <= maxAttempts; attempt++) {
         try {
-          const { totalCreated, affected } = await UnreadAutoReadService.markOldUnreadAsRead();
-          if (totalCreated > 0) {
-            console.log(`📬 Unread auto-read: marked ${totalCreated} receipt(s) for messages older than 1 month`);
+          const { affected } = await UnreadAutoReadService.markOldUnreadAsRead();
+          if (affected.length > 0) {
+            console.log(`📬 Unread auto-read: advanced cursors for messages older than 1 month`);
           }
           await UnreadAutoReadNotifyService.notifyOnlineUsers(affected);
           return;
