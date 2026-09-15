@@ -54,7 +54,7 @@ export function GameCardTitle({ game }: { game: Game }) {
   }
 
   const gameTypeLabel =
-    game.entityType !== 'TRAINING' && game.gameType !== 'CLASSIC'
+    game.entityType !== 'TRAINING' && game.entityType !== 'EVENT' && game.gameType !== 'CLASSIC'
       ? t(`games.gameTypes.${game.gameType}`)
       : null;
 

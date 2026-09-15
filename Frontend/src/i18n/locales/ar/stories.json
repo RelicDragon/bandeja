@@ -27,6 +27,7 @@
     "newGame": "مباراة جديدة",
     "unnamedGame": "مباراة",
     "viewGame": "عرض المباراة",
+    "viewEvent": "عرض الفعالية/الإعلان",
     "gameResult": "النتيجة",
     "winnerBadge": "الفائز",
     "record": "{{wins}}ف · {{losses}}خ · {{ties}}ت",

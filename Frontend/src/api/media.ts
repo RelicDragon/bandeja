@@ -106,6 +106,15 @@ export const mediaApi = {
     return response.data.data;
   },
 
+  uploadEventHero: async (imageFile: File): Promise<ChatImageUploadResponse> => {
+    const formData = new FormData();
+    formData.append('image', imageFile);
+    const response = await api.post<ApiResponse<ChatImageUploadResponse>>('/media/upload/event/hero', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data.data;
+  },
+
   uploadMarketItemImage: async (imageFile: File): Promise<ChatImageUploadResponse> => {
     const formData = new FormData();
     formData.append('image', imageFile);

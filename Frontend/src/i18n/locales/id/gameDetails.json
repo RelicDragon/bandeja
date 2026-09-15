@@ -282,6 +282,7 @@
       "messageLeagueSeason": "Menghapus musim liga ini tidak akan membatalkan reservasi lapangan klub Anda yang tercantum di bawah. Mereka akan tetap ada di akun klub Anda — batalkan di sana jika Anda tidak lagi membutuhkannya.",
       "messageBar": "Menghapus bilah ini tidak akan membatalkan reservasi klub lapangan Anda yang tercantum di bawah. Mereka akan tetap ada di akun klub Anda — batalkan di sana jika Anda tidak lagi membutuhkannya.",
       "messageTraining": "Menghapus pelatihan ini tidak akan membatalkan reservasi klub lapangan Anda yang tercantum di bawah. Mereka akan tetap ada di akun klub Anda — batalkan di sana jika Anda tidak lagi membutuhkannya.",
+      "messageEvent": "Menghapus acara ini tidak akan membatalkan reservasi klub lapangan Anda yang tercantum di bawah. Mereka akan tetap ada di akun klub Anda — batalkan di sana jika Anda tidak lagi membutuhkannya.",
       "bookingsHeading": "Reservasi tertaut",
       "confirm": "Hapus saja"
     },
@@ -306,6 +307,7 @@
     "leaveGameConfirmationBar": "Apakah Anda yakin ingin keluar dari bar ini?",
     "leaveGameConfirmationTraining": "Apakah Anda yakin ingin keluar dari pelatihan ini?",
     "leaveGameConfirmationLeagueSeason": "Apakah Anda yakin ingin meninggalkan liga musim ini?",
+    "leaveGameConfirmationEvent": "Apakah Anda yakin ingin keluar dari acara ini?",
     "notPlayingHint": "Anda tidak bermain, tetapi Anda masih menjadi peserta obrolan. Anda dapat keluar dari obrolan.",
     "notPlayingHintGame": "• Anda adalah peserta obrolan.\n• Anda dapat bergabung kembali dalam permainan, namun Anda tidak dapat diundang lagi sampai Anda keluar dari obrolan juga.\n• Jika Anda keluar dari obrolan, permainan akan dihapus dari bagian 'permainan saya' dan Anda memerlukan undangan atau menunggu dalam antrean untuk bergabung kembali dalam permainan.",
     "notPlayingHintTournament": "• Anda adalah peserta obrolan.\n• Anda dapat bergabung kembali dalam turnamen, namun Anda tidak dapat diundang lagi sampai Anda keluar dari chat juga.\n• Jika Anda keluar dari obrolan, turnamen akan dihapus dari bagian 'Permainan Saya' dan Anda memerlukan undangan atau menunggu dalam antrean untuk bergabung kembali dengan turnamen.",

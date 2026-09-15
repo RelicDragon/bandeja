@@ -1,5 +1,7 @@
 import { format } from 'date-fns';
 import { useAdCalendarTags } from '@/hooks/useAdCalendarTags';
+import { useResolvedAppAppearance } from '@/store/themeStore';
+import { calendarTagReadableColor } from '@/utils/calendarTagReadableColor';
 
 interface SelectedDateAdMessagesProps {
   date: Date | null;
@@ -7,6 +9,7 @@ interface SelectedDateAdMessagesProps {
 
 /** Localized campaign details shown only after selecting a tagged calendar day. */
 export function SelectedDateAdMessages({ date }: SelectedDateAdMessagesProps) {
+  const appearance = useResolvedAppAppearance();
   const { getTagsForDay } = useAdCalendarTags();
   if (!date) return null;
 
@@ -24,12 +27,12 @@ export function SelectedDateAdMessages({ date }: SelectedDateAdMessagesProps) {
           key={tag.campaignId}
           role="note"
           className="rounded-2xl border border-gray-200/80 border-s-2 bg-white/95 px-3.5 py-3 shadow-sm dark:border-gray-700/80 dark:bg-gray-900/85"
-          style={{ borderInlineStartColor: tag.color }}
+          style={{ borderInlineStartColor: calendarTagReadableColor(tag.color, appearance) }}
         >
           <p
             data-selected-date-ad-label
             className="text-[10px] font-bold uppercase leading-none tracking-[0.16em]"
-            style={{ color: tag.color }}
+            style={{ color: calendarTagReadableColor(tag.color, appearance) }}
           >
             {tag.label}
           </p>

@@ -46,12 +46,23 @@
       "TRAINING": "Pelatihan",
       "TOURNAMENT": "Turnamen",
       "LEAGUE": "Liga",
-      "LEAGUE_SEASON": "Musim Liga"
+      "LEAGUE_SEASON": "Musim Liga",
+      "EVENT": "Acara/Iklan"
     },
     "noGamesFound": "Tidak ada permainan yang ditemukan",
     "noTrainingFound": "Tidak ada pelatihan yang ditemukan",
     "noTournamentFound": "Tidak ada turnamen yang ditemukan",
     "noLeaguesFound": "Tidak ada liga yang ditemukan",
+    "eventKinds": {
+      "TOURNAMENT": "Turnamen eksternal",
+      "LEAGUE": "Liga eksternal",
+      "CAMP": "Kamp"
+    },
+    "upcomingEvents": "Acara",
+    "otherEvents": "Acara lainnya",
+    "seeAllEvents": "Lihat semua",
+    "goingNeedPartner": "{{going}} pergi · {{looking}} cari partner",
+    "noEventsFound": "Tidak ada acara yang ditemukan",
     "suitableGamesForMe": "Game yang cocok untuk saya",
     "haveAvailableSlots": "Memiliki slot yang tersedia",
     "haveAvailableSlotsHint": "Sembunyikan game lengkap yang tidak dapat Anda ikuti",

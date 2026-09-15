@@ -1,8 +1,27 @@
-export function myGamesParticipantWhere(userId: string) {
+import { EntityType, type Prisma } from '@prisma/client';
+
+export function myGamesMembershipWhere(userId: string): Prisma.GameWhereInput {
   return {
-    some: {
-      userId,
-      status: { not: 'INVITED' as const },
-    },
+    OR: [
+      {
+        entityType: { not: EntityType.EVENT },
+        participants: {
+          some: {
+            userId,
+            status: { not: 'INVITED' },
+          },
+        },
+      },
+      {
+        entityType: EntityType.EVENT,
+        participants: {
+          some: {
+            userId,
+            status: { not: 'INVITED' },
+            OR: [{ role: 'OWNER' }, { status: 'PLAYING' }, { lookingForPartner: true }],
+          },
+        },
+      },
+    ],
   };
 }

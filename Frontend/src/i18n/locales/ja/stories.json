@@ -27,6 +27,7 @@
     "newGame": "新しい試合",
     "unnamedGame": "試合",
     "viewGame": "試合を見る",
+    "viewEvent": "イベント/告知を見る",
     "gameResult": "結果",
     "winnerBadge": "勝者",
     "record": "{{wins}}勝 · {{losses}}負 · {{ties}}分",

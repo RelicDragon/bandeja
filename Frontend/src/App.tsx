@@ -19,6 +19,7 @@ const SelectCity = lazy(() => import('./pages/SelectCity').then(module => ({ def
 const MainPage = lazy(() => import('./pages/MainPage').then(module => ({ default: module.MainPage })));
 const CreateGameWrapper = lazy(() => import('./pages/CreateGameWrapper').then(module => ({ default: module.CreateGameWrapper })));
 const CreateLeague = lazy(() => import('./pages/CreateLeague').then(module => ({ default: module.CreateLeague })));
+const CreateEventWrapper = lazy(() => import('./pages/CreateEventWrapper').then(module => ({ default: module.CreateEventWrapper })));
 // const Rating = lazy(() => import('./pages/Rating').then(module => ({ default: module.Rating })));
 const GameLiveRoute = lazy(() => import('./pages/GameLiveRoute').then((m) => ({ default: m.GameLiveRoute })));
 const GameLiveTvRedirect = lazy(() =>
@@ -780,6 +781,16 @@ function AppContent() {
             <ProtectedRoute>
               <Suspense fallback={routeLoadingFallback}>
                 <CreateLeague />
+              </Suspense>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/create-event"
+          element={
+            <ProtectedRoute>
+              <Suspense fallback={routeLoadingFallback}>
+                <CreateEventWrapper />
               </Suspense>
             </ProtectedRoute>
           }

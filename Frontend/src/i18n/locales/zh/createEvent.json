@@ -1,0 +1,38 @@
+{
+    "createEvent": {
+        "title": "创建活动/广告",
+        "organizing": "我来组织",
+        "looking": "我想去 / 需要搭档",
+        "organizerHint": "你不必是主办方。",
+        "kinds": {
+            "TOURNAMENT": "外部锦标赛",
+            "LEAGUE": "外部联赛",
+            "CAMP": "训练营"
+        },
+        "kindLabel": "这是什么？",
+        "heroes": "照片",
+        "heroesHint": "添加海报照片，会以幻灯片展示。",
+        "venue": "地点",
+        "venueText": "地址或地点名称",
+        "venueOrClub": "俱乐部（可选）",
+        "selectClub": "选择俱乐部",
+        "selectCity": "城市",
+        "clearClub": "改用文字",
+        "dateRange": "日期",
+        "start": "开始",
+        "end": "结束",
+        "registerUrl": "报名链接（可选）",
+        "playerLevel": "球员水平",
+        "name": "名称",
+        "namePlaceholder": "活动名称",
+        "description": "简介",
+        "descriptionPlaceholder": "会发生什么？",
+        "priceAmount": "金额",
+        "save": "保存",
+        "nameRequired": "名称为必填",
+        "datesInvalid": "结束时间必须晚于开始时间",
+        "urlInvalid": "请使用 http(s) 链接",
+        "create": "发布活动/广告",
+        "pendingSubmitted": "已提交审核。通过前只有你和管理员能看到。"
+    }
+}

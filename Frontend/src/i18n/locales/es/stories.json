@@ -24,6 +24,7 @@
     "newGame": "Nuevo juego",
     "unnamedGame": "Juego",
     "viewGame": "Ver juego",
+    "viewEvent": "Ver Evento/Anuncio",
     "gameResult": "Resultado",
     "winnerBadge": "Ganador",
     "record": "{{wins}}V · {{losses}}D · {{ties}}E",

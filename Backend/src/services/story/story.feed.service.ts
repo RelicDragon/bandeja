@@ -62,6 +62,7 @@ export type GameStorySummary = {
   clubName?: string | null;
   participantCount?: number;
   telegramResultsSummary?: string | null;
+  eventHeroes?: Array<{ thumbnailUrl: string; originalUrl?: string }>;
 };
 
 export type ResultSummary = {
@@ -180,6 +181,7 @@ const GAME_STORY_GAME_SELECT = {
   endTime: true,
   status: true,
   isPublic: true,
+  eventApprovalStatus: true,
   cityId: true,
   clubId: true,
   avatar: true,
@@ -201,6 +203,11 @@ const GAME_STORY_GAME_SELECT = {
       participants: { where: { status: 'PLAYING' } },
     },
   },
+  eventHeroes: {
+    select: { thumbnailUrl: true, originalUrl: true, sortOrder: true },
+    orderBy: { sortOrder: 'asc' as const },
+    take: 1,
+  },
   mainPhoto: MAIN_PHOTO_RELATION_SELECT,
   participants: { select: { userId: true, role: true } },
   parent: {
@@ -220,6 +227,7 @@ type GameStoryGameRow = {
   endTime: Date;
   status: string;
   isPublic: boolean;
+  eventApprovalStatus?: string | null;
   cityId: string;
   clubId: string | null;
   avatar: string | null;
@@ -240,6 +248,7 @@ type GameStoryGameRow = {
   participants?: Array<{ userId: string; role: string }>;
   parent?: { participants?: Array<{ userId: string; role: string }> } | null;
   mainPhoto?: { id: string; thumbnailUrl: string; originalUrl: string } | null;
+  eventHeroes?: Array<{ thumbnailUrl: string; originalUrl: string; sortOrder: number }>;
 };
 
 /** Story bubble preview / activity slide backdrop: main photo when viewer may see it, else game avatar. */
@@ -247,6 +256,10 @@ export function storyGameBackdropUrl(
   game: GameStoryGameRow,
   viewer?: GamePhotosViewer | null,
 ): string | null {
+  if (game.entityType === 'EVENT') {
+    const hero = game.eventHeroes?.[0];
+    return hero?.thumbnailUrl || hero?.originalUrl || null;
+  }
   if (game.mainPhoto && canViewGamePhotos(game, viewer)) {
     return game.mainPhoto.thumbnailUrl;
   }
@@ -324,6 +337,7 @@ export function toGameSummary(game: GameStoryGameRow, viewer?: GamePhotosViewer 
     clubName,
     participantCount: game._count?.participants,
     telegramResultsSummary: telegramSummary,
+    eventHeroes: game.entityType === 'EVENT' ? game.eventHeroes ?? [] : undefined,
   };
 }
 
@@ -542,6 +556,10 @@ export class StoryFeedService {
             status: 'ANNOUNCED',
             entityType: { not: 'LEAGUE_SEASON' },
             createdAt: { gte: activitySince },
+            OR: [
+              { entityType: { not: 'EVENT' } },
+              { entityType: 'EVENT', eventApprovalStatus: 'APPROVED' },
+            ],
           },
         },
         include: {

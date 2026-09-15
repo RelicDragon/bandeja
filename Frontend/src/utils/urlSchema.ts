@@ -16,6 +16,7 @@ export type Place =
   | 'channelChat'
   | 'createGame'
   | 'createLeague'
+  | 'createEvent'
   | 'createMarketItem'
   | 'editMarketItem'
   | 'marketplaceItem'
@@ -73,6 +74,7 @@ const PLACE_DEFS: PlaceDefinition[] = [
   { pattern: /^\/channel-chat\/([^/]+)$/, place: 'channelChat', extractParams: (m) => ({ id: m[1] }) },
   { pattern: /^\/create-game\/?$/, place: 'createGame' },
   { pattern: /^\/create-league\/?$/, place: 'createLeague' },
+  { pattern: /^\/create-event\/?$/, place: 'createEvent' },
   { pattern: /^\/select-city\/?$/, place: 'selectCity' },
   { pattern: /^\/login\/([a-zA-Z0-9_-]{20,})$/, place: 'telegramAutoLogin', extractParams: (m) => ({ telegramKey: m[1] }) },
   { pattern: /^\/login\/phone$/, place: 'loginPhone' },
@@ -125,6 +127,7 @@ export function buildUrl(place: Place, params?: PlaceParams, overlay?: Overlay):
     case 'channelChat': path = `/channel-chat/${params?.id ?? ''}`; break;
     case 'createGame': path = '/create-game'; break;
     case 'createLeague': path = '/create-league'; break;
+    case 'createEvent': path = '/create-event'; break;
     case 'createMarketItem': path = '/marketplace/create'; break;
     case 'editMarketItem': path = `/marketplace/${params?.id ?? ''}/edit`; break;
     case 'marketplaceItem': path = `/marketplace/${params?.id ?? ''}`; break;
@@ -209,7 +212,7 @@ export function isMarketplaceShellPlace(place: Place): boolean {
 }
 
 const APP_PATH_RE =
-  /^\/(find|chats|profile|leaderboard|games|user-profile|create-game|create-league|rating|bugs|game-subscriptions|marketplace|user-team|user-chat|group-chat|channel-chat|select-city|login|register)(\/.*)?$/;
+  /^\/(find|chats|profile|leaderboard|games|user-profile|create-game|create-league|create-event|rating|bugs|game-subscriptions|marketplace|user-team|user-chat|group-chat|channel-chat|select-city|login|register)(\/.*)?$/;
 
 export function isAppPath(pathname: string): boolean {
   return pathname === '/' || APP_PATH_RE.test(pathname);

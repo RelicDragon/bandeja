@@ -24,6 +24,7 @@
     "newGame": "Nova igra",
     "unnamedGame": "Igra",
     "viewGame": "Pogledaj igru",
+    "viewEvent": "Pogledaj Događaj/Oglas",
     "gameResult": "Rezultat",
     "winnerBadge": "Pobednik",
     "record": "{{wins}}P · {{losses}}I · {{ties}}N",

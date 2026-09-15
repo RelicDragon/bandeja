@@ -27,6 +27,7 @@ const invited = { status: 'INVITED' as const };
   assert.equal(isPlayingRosterFull(full), true);
   assert.equal(isPlayingRosterFull(open), false);
   assert.equal(isPlayingRosterFull({ entityType: 'BAR', maxParticipants: 4, participants: playing(4) }), false);
+  assert.equal(isPlayingRosterFull({ entityType: 'EVENT', maxParticipants: 999, participants: playing(999) }), false);
   assert.equal(isPlayingRosterFull({ maxParticipants: 0, participants: playing(1) }), false);
 }
 

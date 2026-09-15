@@ -1,4 +1,4 @@
-import { Swords, Trophy, Dumbbell, Beer } from 'lucide-react';
+import { Swords, Trophy, Dumbbell, Beer, CalendarDays } from 'lucide-react';
 import type { Game } from '@/types';
 
 export function getEntityIcon(entityType: Game['entityType']) {
@@ -12,6 +12,8 @@ export function getEntityIcon(entityType: Game['entityType']) {
       return <Dumbbell size={12} />;
     case 'BAR':
       return <Beer size={12} />;
+    case 'EVENT':
+      return <CalendarDays size={12} />;
     default:
       return null;
   }
@@ -28,6 +30,8 @@ export function getEntityTagClasses(entityType: Game['entityType']): string {
       return 'text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/30 border-green-300 dark:border-green-800';
     case 'BAR':
       return 'text-yellow-700 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/30 border-yellow-300 dark:border-yellow-800';
+    case 'EVENT':
+      return 'text-indigo-700 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 border-indigo-300 dark:border-indigo-800';
     default:
       return 'text-primary-700 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30 border-primary-200 dark:border-primary-800';
   }

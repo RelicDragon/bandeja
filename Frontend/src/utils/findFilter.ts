@@ -15,8 +15,15 @@ import {
   gameCalendarDayKey,
 } from '@/utils/calendarSelectedDayFilter';
 import { dateKeyInTimezone } from '@/utils/weatherDayGroups';
+import { gameMatchesFindEntityChips } from '@/utils/findEntityTypeChips';
 
-export type FindDisplayEntityType = 'GAME' | 'TOURNAMENT' | 'TRAINING' | 'LEAGUE' | 'BAR';
+export type FindDisplayEntityType =
+  | 'GAME'
+  | 'TOURNAMENT'
+  | 'TRAINING'
+  | 'LEAGUE'
+  | 'BAR'
+  | 'EVENT';
 
 export type FindFilterViewer = Pick<
   User,
@@ -53,6 +60,7 @@ export interface FindFilterState {
   trainingFilter: boolean;
   tournamentFilter: boolean;
   leaguesFilter: boolean;
+  eventsFilter: boolean;
   showPrivateGames: boolean;
   findDiscoveryEnabled: boolean;
   filterNoRating: boolean;
@@ -76,7 +84,8 @@ export interface FindFilterOptions {
 }
 
 export function toFindDisplayEntityType(entityType: Game['entityType']): FindDisplayEntityType {
-  return entityType === 'LEAGUE_SEASON' ? 'LEAGUE' : entityType;
+  if (entityType === 'LEAGUE_SEASON') return 'LEAGUE';
+  return entityType;
 }
 
 function resolveFavoriteTrainerId(
@@ -169,11 +178,9 @@ export function passesFindListingFilter(
     return false;
   }
 
-  if (state.gameFilter && game.entityType !== 'GAME') return false;
+  if (!gameMatchesFindEntityChips(game.entityType, state)) return false;
 
-  if (state.trainingFilter && game.entityType !== 'TRAINING') return false;
-
-  if (state.trainingFilter) {
+  if (state.trainingFilter && game.entityType === 'TRAINING') {
     const favoriteTrainerId = resolveFavoriteTrainerId(viewer, state);
     if (favoriteTrainerId) {
       const trainer =
@@ -183,10 +190,6 @@ export function passesFindListingFilter(
       if (!trainer) return false;
     }
   }
-
-  if (state.tournamentFilter && game.entityType !== 'TOURNAMENT') return false;
-
-  if (state.leaguesFilter && !isLeagueEntity(game)) return false;
 
   return true;
 }

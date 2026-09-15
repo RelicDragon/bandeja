@@ -75,7 +75,7 @@ export function countPlayingParticipantsOfGender(
 }
 
 export function isPlayingRosterFull(game: RosterFullGame): boolean {
-  if (game.entityType === 'BAR') return false;
+  if (game.entityType === 'BAR' || game.entityType === 'EVENT') return false;
   const max = game.maxParticipants;
   if (max == null || max <= 0) return false;
   return countPlayingParticipants(game.participants) >= max;
@@ -98,7 +98,7 @@ export function didPlayingSlotOpen(input: {
   playingCountBefore: number;
   playingCountAfter: number;
 }): boolean {
-  if (input.entityType === 'BAR') return false;
+  if (input.entityType === 'BAR' || input.entityType === 'EVENT') return false;
   const max = input.maxParticipants;
   if (max == null || max <= 0) return false;
   return input.playingCountBefore >= max && input.playingCountAfter < max;

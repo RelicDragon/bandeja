@@ -2,9 +2,11 @@ import { format } from 'date-fns';
 import { StatusPulseDot } from '@/components/StatusPulseDot';
 import { CalendarDayTypeDots } from '@/components/calendarDayTypeDots';
 import { MonthCalendarWeatherPill } from '@/components/MonthCalendarWeatherPill';
+import { useResolvedAppAppearance } from '@/store/themeStore';
 import type { FindDisplayEntityType } from '@/utils/findFilter';
 import type { CalendarDayWeather } from '@/utils/calendarWeather.util';
 import type { CalendarDayAdTag } from '@/hooks/useAdCalendarTags';
+import { calendarTagReadableColor } from '@/utils/calendarTagReadableColor';
 
 export interface MonthCalendarDayCellProps {
   day: Date;
@@ -43,9 +45,13 @@ export function MonthCalendarDayCell({
   calendarTags = [],
   onSelect,
 }: MonthCalendarDayCellProps) {
+  const appearance = useResolvedAppAppearance();
   const markTypes = showTypePill ? typePillTypes : showParticipantPill ? participantTypes : [];
   const weather = showWeatherPill ? dayWeather : null;
   const hasDayData = gameCount > 0 || markTypes.length > 0 || weather != null;
+  const extraTagRows = Math.max(0, calendarTags.length - 1);
+  const paddingBottomPx = extraTagRows > 0 ? 12 + extraTagRows * 9 : undefined;
+  const tagSurface = isSelected ? 'selected' : appearance;
 
   return (
     <button
@@ -53,6 +59,7 @@ export function MonthCalendarDayCell({
       onClick={() => onSelect(day)}
       aria-selected={isSelected}
       aria-current={isTodayDate ? 'date' : undefined}
+      style={paddingBottomPx != null ? { paddingBottom: paddingBottomPx } : undefined}
       className={`
         relative flex ${weather ? 'min-h-14' : 'min-h-12'} w-full flex-col items-center justify-center gap-0.5 rounded-md px-0.5 pb-3 pt-1
         transition-colors duration-300 ease-out
@@ -131,13 +138,17 @@ export function MonthCalendarDayCell({
       {calendarTags.length > 0 ? (
         <span
           data-calendar-day-ad-tags
-          title={calendarTags.map((tag) => tag.label).join(' · ')}
-          className="absolute inset-x-0.5 bottom-1 truncate text-center text-[7px] font-bold uppercase leading-none tracking-wide"
+          title={calendarTags.map((tag) => tag.label).join('\n')}
+          className="absolute inset-x-0.5 bottom-1 flex flex-col items-center gap-px text-center text-[7px] font-bold uppercase leading-none tracking-wide"
         >
-          {calendarTags.map((tag, index) => (
-            <span key={tag.campaignId}>
-              {index > 0 ? <span aria-hidden> · </span> : null}
-              <span data-calendar-day-ad-tag style={{ color: tag.color }}>{tag.label}</span>
+          {calendarTags.map((tag) => (
+            <span
+              key={tag.campaignId}
+              data-calendar-day-ad-tag
+              className="max-w-full truncate"
+              style={{ color: calendarTagReadableColor(tag.color, tagSurface) }}
+            >
+              {tag.label}
             </span>
           ))}
         </span>

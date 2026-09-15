@@ -9,6 +9,7 @@ import {
 import { queryKeys } from '@/queries/queryKeys';
 import { filterInboxVisibleInvites } from '@/utils/gameInviteInbox';
 import { excludePendingInviteOnlyMyGames } from '@/utils/excludePendingInviteOnlyMyGames';
+import { excludeUnoptedEventsFromMyGames } from '@/utils/eventMyTabMembership';
 
 export const useMyGames = (
   user: { id?: string } | null | undefined,
@@ -20,7 +21,10 @@ export const useMyGames = (
   const onLoadingRef = useRef(onLoading);
   onLoadingRef.current = onLoading;
 
-  const games = excludePendingInviteOnlyMyGames(data?.games ?? [], userId);
+  const games = excludeUnoptedEventsFromMyGames(
+    excludePendingInviteOnlyMyGames(data?.games ?? [], userId),
+    userId,
+  );
   const invites = filterInboxVisibleInvites<Invite>(data?.invites ?? []);
   const unreadCounts = data?.unreadCounts ?? {};
 

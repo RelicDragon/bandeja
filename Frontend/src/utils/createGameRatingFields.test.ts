@@ -17,4 +17,12 @@ describe('resolveCreateGameRatingFields', () => {
       affectsRating: true,
     });
   });
+
+  it('keeps EVENT level band and never affects rating', () => {
+    expect(resolveCreateGameRatingFields('EVENT', [2.5, 4.5], true)).toEqual({
+      minLevel: 2.5,
+      maxLevel: 4.5,
+      affectsRating: false,
+    });
+  });
 });

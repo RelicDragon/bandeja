@@ -47,7 +47,13 @@ export const handleMyGamesCommand: Middleware<BotContext> = async (ctx) => {
     });
 
     const myGames = allGames.filter((game: any) =>
-      game.participants.some((p: any) => p.userId === user.id)
+      game.participants.some((p: any) => {
+        if (p.userId !== user.id) return false;
+        if (game.entityType === 'EVENT') {
+          return p.role === 'OWNER' || p.status === 'PLAYING' || p.lookingForPartner === true;
+        }
+        return true;
+      }),
     );
 
     if (myGames.length === 0) {

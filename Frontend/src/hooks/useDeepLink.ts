@@ -187,6 +187,7 @@ export const useDeepLink = () => {
           '/game-subscriptions': '/game-subscriptions',
           [deepLinkActionPath('createGame')]: deepLinkActionPath('createGame'),
           [deepLinkActionPath('createLeague')]: deepLinkActionPath('createLeague'),
+          [deepLinkActionPath('createEvent')]: deepLinkActionPath('createEvent'),
           [deepLinkActionPath('login')]: deepLinkActionPath('login'),
           '/register': '/register',
           '/select-city': '/select-city',

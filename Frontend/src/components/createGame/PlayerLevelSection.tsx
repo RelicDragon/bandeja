@@ -23,6 +23,7 @@ export const PlayerLevelSection = ({
         <h2 className="section-title">
           {entityType === 'TOURNAMENT' ? t('createGame.playerLevelTournament') :
            entityType === 'LEAGUE' ? t('createGame.playerLevelLeague') :
+           entityType === 'EVENT' ? t('createEvent.playerLevel') :
            t('createGame.playerLevel')}
         </h2>
       </div>

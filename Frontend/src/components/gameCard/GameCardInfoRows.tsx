@@ -4,6 +4,11 @@ import { MapPin, Users, Plane, Check, CalendarOff } from 'lucide-react';
 import type { Game } from '@/types';
 import { GameCardDateTile } from '@/components/gameCard/GameCardDateTile';
 import { gameShowsLevelBand } from '@/utils/gameRatingSemantics';
+import {
+  countEventGoingLooking,
+  eventVenueLabel,
+  formatEventDateRange,
+} from '@/utils/eventListingDisplay';
 
 interface GameCardInfoRowsProps {
   game: Game;
@@ -29,12 +34,17 @@ export const GameCardInfoRows = memo(function GameCardInfoRows({
 }: GameCardInfoRowsProps) {
   const { t } = useTranslation();
   const hasLevels = gameShowsLevelBand(game);
+  const isEvent = game.entityType === 'EVENT';
+  const { going, looking } = isEvent ? countEventGoingLooking(game) : { going: playingCount, looking: 0 };
   const fillRatio = game.maxParticipants
     ? Math.min(playingCount / game.maxParticipants, 1)
     : 0;
   const isFull = fillRatio >= 1;
   const timeNotSet = game.timeIsSet === false;
-  const clubName = game.court?.club?.name || game.club?.name;
+  const clubName = eventVenueLabel(game);
+  const eventDateRange = isEvent
+    ? formatEventDateRange(game.startTime, game.endTime, timezone, locale)
+    : null;
 
   return (
     <div className={className}>
@@ -67,9 +77,9 @@ export const GameCardInfoRows = memo(function GameCardInfoRows({
                   {dayLabel}
                 </span>
               )}
-              {timeText && (
+              {(isEvent ? eventDateRange : timeText) && (
                 <span className="whitespace-nowrap text-[15px] font-semibold tabular-nums text-gray-900 dark:text-white">
-                  {timeText}
+                  {isEvent ? eventDateRange : timeText}
                 </span>
               )}
             </div>
@@ -85,7 +95,7 @@ export const GameCardInfoRows = memo(function GameCardInfoRows({
               <MapPin size={13} className="shrink-0 text-gray-400 dark:text-gray-500" />
               <span className="truncate">
                 {clubName}
-                {game.court?.name && ` • ${game.court.name}`}
+                {!isEvent && game.court?.name && ` • ${game.court.name}`}
               </span>
             </span>
           )}
@@ -96,7 +106,15 @@ export const GameCardInfoRows = memo(function GameCardInfoRows({
       <div className="mt-2 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-sm text-gray-600 dark:text-gray-400">
         <span className="flex items-center gap-1.5">
           <Users size={14} className="shrink-0 text-gray-400 dark:text-gray-500" />
-          {game.entityType === 'BAR' ? (
+          {isEvent ? (
+            <span className="tabular-nums">
+              {t('games.goingNeedPartner', {
+                going,
+                looking,
+                defaultValue: '{{going}} going · {{looking}} need partner',
+              })}
+            </span>
+          ) : game.entityType === 'BAR' ? (
             <span className="tabular-nums">{playingCount}</span>
           ) : (
             <>

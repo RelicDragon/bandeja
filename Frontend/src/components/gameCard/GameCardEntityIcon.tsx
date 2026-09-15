@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { Beer, Dumbbell, Swords, Trophy } from 'lucide-react';
+import { Beer, CalendarDays, Dumbbell, Swords, Trophy } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { EntityType } from '@/types';
 
@@ -23,6 +23,10 @@ const ENTITY_ICONS: Partial<Record<EntityType, { Icon: LucideIcon; className: st
   BAR: {
     Icon: Beer,
     className: 'bg-amber-100/80 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400',
+  },
+  EVENT: {
+    Icon: CalendarDays,
+    className: 'bg-indigo-100/80 text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-400',
   },
 };
 

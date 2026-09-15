@@ -24,6 +24,7 @@
     "newGame": "Nový zápas",
     "unnamedGame": "Zápas",
     "viewGame": "Zobrazit zápas",
+    "viewEvent": "Zobrazit událost/inzerát",
     "gameResult": "Výsledek",
     "winnerBadge": "Vítěz",
     "record": "{{wins}}V · {{losses}}P · {{ties}}R",

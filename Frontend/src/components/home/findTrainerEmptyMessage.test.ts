@@ -16,6 +16,7 @@ describe('resolveFindEmptyMessage', () => {
         trainingFilterVal: true,
         tournamentFilterVal: false,
         leaguesFilterVal: false,
+        eventsFilterVal: false,
         favoriteTrainerName: 'Anna Smith',
         t,
       }),
@@ -29,10 +30,38 @@ describe('resolveFindEmptyMessage', () => {
         trainingFilterVal: true,
         tournamentFilterVal: false,
         leaguesFilterVal: false,
+        eventsFilterVal: false,
         favoriteTrainerName: null,
         t,
       }),
     ).toBe('No training found');
+  });
+
+  it('uses generic empty copy when more than one entity chip is on', () => {
+    expect(
+      resolveFindEmptyMessage({
+        gameFilterVal: true,
+        trainingFilterVal: true,
+        tournamentFilterVal: false,
+        leaguesFilterVal: false,
+        eventsFilterVal: false,
+        favoriteTrainerName: 'Anna Smith',
+        t,
+      }),
+    ).toBe('No games found');
+  });
+
+  it('uses events empty copy when only the events chip is on', () => {
+    expect(
+      resolveFindEmptyMessage({
+        gameFilterVal: false,
+        trainingFilterVal: false,
+        tournamentFilterVal: false,
+        leaguesFilterVal: false,
+        eventsFilterVal: true,
+        t,
+      }),
+    ).toBe('No events found');
   });
 });
 

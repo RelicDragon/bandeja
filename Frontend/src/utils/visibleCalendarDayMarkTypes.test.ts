@@ -15,4 +15,9 @@ describe('visibleCalendarDayMarkTypes', () => {
   it('leaves a league-only day with no marks when league marks are hidden', () => {
     expect(visibleCalendarDayMarkTypes(['LEAGUE'], false)).toEqual([]);
   });
+
+  it('hides EVENT marks unless event marks are enabled', () => {
+    expect(visibleCalendarDayMarkTypes(['GAME', 'EVENT'], false, false)).toEqual(['GAME']);
+    expect(visibleCalendarDayMarkTypes(['GAME', 'EVENT'], false, true)).toEqual(['GAME', 'EVENT']);
+  });
 });

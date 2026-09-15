@@ -168,6 +168,15 @@ export const gameBaseInclude = {
     },
   },
   mainPhoto: MAIN_PHOTO_RELATION_SELECT,
+  eventHeroes: {
+    orderBy: { sortOrder: 'asc' as const },
+    select: {
+      id: true,
+      originalUrl: true,
+      thumbnailUrl: true,
+      sortOrder: true,
+    },
+  },
   resultsArtifactJob: {
     select: {
       status: true,
@@ -300,6 +309,8 @@ export const gameMyTabListInclude = {
       inviteMessage: true,
       inviteExpiresAt: true,
       showInStories: true,
+      lookingForPartner: true,
+      lookingNote: true,
       user: {
         select: myTabListUserSelect,
       },
@@ -324,6 +335,7 @@ export const gameMyTabListInclude = {
   leagueRound: gameBaseInclude.leagueRound,
   bracketSlot: gameBaseInclude.bracketSlot,
   mainPhoto: MAIN_PHOTO_RELATION_SELECT,
+  eventHeroes: gameBaseInclude.eventHeroes,
   ...gameDetailExternalBookingsInclude,
   gameCourts: gameCourtInclude,
   outcomes: {

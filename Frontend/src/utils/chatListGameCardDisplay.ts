@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
-import { Beer, Dumbbell, Gamepad2, Swords, Trophy } from 'lucide-react';
+import { Beer, CalendarDays, Dumbbell, Gamepad2, Swords, Trophy } from 'lucide-react';
 import type { TFunction } from 'i18next';
 import type { EntityType, Game } from '@/types';
 import type { ResolvedDisplaySettings } from '@/utils/displayPreferences';
@@ -42,6 +42,13 @@ export function getGameChatListEntityVisual(entityType: EntityType): GameChatLis
         iconClass: 'text-amber-700 dark:text-amber-400',
         ringClass: 'border-amber-400/80 dark:border-amber-500/70',
         badgeClass: 'bg-amber-100/90 text-amber-900 dark:bg-amber-900/40 dark:text-amber-300',
+      };
+    case 'EVENT':
+      return {
+        Icon: CalendarDays,
+        iconClass: 'text-indigo-600 dark:text-indigo-400',
+        ringClass: 'border-indigo-400/80 dark:border-indigo-500/70',
+        badgeClass: 'bg-indigo-100/90 text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-300',
       };
     default:
       return {
@@ -102,7 +109,7 @@ export function getGameChatListDateTimeBlock(
     game,
     displaySettings,
     startTime: game.startTime,
-    endTime: game.entityType !== 'BAR' ? game.endTime : undefined,
+    endTime: game.entityType !== 'BAR' && game.entityType !== 'EVENT' ? game.endTime : undefined,
     kind: 'time',
     t,
   }).primaryText;
@@ -113,8 +120,9 @@ export function getGameChatListDateTimeBlock(
 
 export function getGameChatListLocationLine(game: Game, t: TFunction): string {
   const clubName = game.court?.club?.name || game.club?.name;
-  const courtSuffix = game.court?.name && clubName ? ` · ${game.court.name}` : '';
+  const courtSuffix = game.court?.name && clubName && game.entityType !== 'EVENT' ? ` · ${game.court.name}` : '';
   if (clubName) return `${clubName}${courtSuffix}`;
+  if (game.venueText?.trim()) return game.venueText.trim();
   if (game.city?.name) return game.city.name;
   return t('gameDetails.clubNotSet');
 }

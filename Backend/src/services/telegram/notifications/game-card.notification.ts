@@ -108,7 +108,11 @@ export async function sendGameCard(
     header += `🏷️ ${escapeMarkdown(t(`games.entityTypes.${game.entityType}`, userLang))}\n`;
   }
 
-  if (game.gameType !== 'CLASSIC') {
+  if (game.entityType === 'EVENT' && game.eventKind) {
+    header += `📌 ${escapeMarkdown(t(`games.eventKinds.${game.eventKind}`, userLang))}\n`;
+  }
+
+  if (game.gameType !== 'CLASSIC' && game.entityType !== 'EVENT') {
     header += `🎮 ${escapeMarkdown(t(`games.gameTypes.${game.gameType}`, userLang))}\n`;
   }
 
@@ -133,26 +137,31 @@ export async function sendGameCard(
       ? `🏅 ${escapeMarkdown(scheduleExtras.join(' · '))}\n`
       : '';
   const scheduleText = formatGameScheduleLine(gameInfo, {
-    includeDuration: game.entityType !== 'BAR',
+    includeDuration: game.entityType !== 'BAR' && game.entityType !== 'EVENT',
   });
   const timeLine = `📅 ${escapeMarkdown(scheduleText)}`;
 
   const club = game.court?.club || game.club;
-  const clubName = resolveGameClubPlace(game, userLang);
+  const clubName =
+    game.entityType === 'EVENT' && game.venueText
+      ? game.venueText
+      : resolveGameClubPlace(game, userLang);
   let locationLine = `📍 ${escapeMarkdown(clubName)}`;
   
-  if (game.court && !(game.entityType === 'BAR')) {
+  if (game.court && game.entityType !== 'BAR' && game.entityType !== 'EVENT') {
     locationLine += `\n   ${escapeMarkdown(game.court.name)}`;
   }
 
-  if (game.court) {
-    locationLine += `\n   ${escapeMarkdown(formatGameBookingStatusLabel(game, userLang))}`;
-  } else if (game.club) {
-    locationLine += `\n   ${escapeMarkdown(formatGameBookingStatusLabel(game, userLang))}`;
+  if (game.entityType !== 'EVENT') {
+    if (game.court) {
+      locationLine += `\n   ${escapeMarkdown(formatGameBookingStatusLabel(game, userLang))}`;
+    } else if (game.club) {
+      locationLine += `\n   ${escapeMarkdown(formatGameBookingStatusLabel(game, userLang))}`;
+    }
   }
 
   let participantsLine = '';
-  if (game.entityType === 'BAR') {
+  if (game.entityType === 'BAR' || game.entityType === 'EVENT') {
     participantsLine = `👥 ${escapeMarkdown(t('games.participants', userLang))}: ${playingParticipants.length}`;
   } else {
     participantsLine = `👥 ${escapeMarkdown(t('games.participants', userLang))}: ${playingParticipants.length}/${game.maxParticipants}`;

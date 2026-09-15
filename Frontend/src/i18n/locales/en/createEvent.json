@@ -1,0 +1,38 @@
+{
+    "createEvent": {
+        "title": "Create Event/Ad",
+        "organizing": "I'm organizing",
+        "looking": "I want to go / need a partner",
+        "organizerHint": "You don't need to be the organizer.",
+        "kinds": {
+            "TOURNAMENT": "External tournament",
+            "LEAGUE": "External league",
+            "CAMP": "Camp"
+        },
+        "kindLabel": "What is it?",
+        "heroes": "Photos",
+        "heroesHint": "Add poster photos. People see these as a slideshow.",
+        "venue": "Venue",
+        "venueText": "Address or place name",
+        "venueOrClub": "Club (optional)",
+        "selectClub": "Select club",
+        "selectCity": "City",
+        "clearClub": "Use text instead",
+        "dateRange": "Dates",
+        "start": "Starts",
+        "end": "Ends",
+        "registerUrl": "Registration link (optional)",
+        "playerLevel": "Player level",
+        "name": "Name",
+        "namePlaceholder": "Event name",
+        "description": "Description",
+        "descriptionPlaceholder": "What's happening?",
+        "priceAmount": "Amount",
+        "save": "Save",
+        "nameRequired": "Name is required",
+        "datesInvalid": "End must be after start",
+        "urlInvalid": "Use an http(s) link",
+        "create": "Post Event/Ad",
+        "pendingSubmitted": "Submitted for approval. Only you and admins can see it until it is approved."
+    }
+}

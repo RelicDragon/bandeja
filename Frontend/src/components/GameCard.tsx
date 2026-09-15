@@ -16,6 +16,7 @@ import { GameCardPlayersPhoto } from '@/components/gameCard/GameCardPlayersPhoto
 import { gameIsNonRating } from '@/utils/gameRatingSemantics';
 import { GameCardUserNote } from '@/components/gameCard/GameCardUserNote';
 import { GameCardJoinButton } from '@/components/gameCard/GameCardJoinButton';
+import { EventPosterCard } from '@/components/home/EventPosterCard';
 import { Game } from '@/types';
 import { getGameParticipationState } from '@/utils/gameParticipationState';
 import { getGameCardMyParticipationBadge } from '@/utils/gameCardMyParticipationBadge';
@@ -74,7 +75,7 @@ interface GameCardProps {
   findFilterSport?: FindSportFilterValue;
 }
 
-export const GameCard = memo(function GameCard({
+const GameCardMatch = memo(function GameCardMatch({
   game,
   user,
   onClick,
@@ -173,7 +174,8 @@ export const GameCard = memo(function GameCard({
     ownerIsPremium &&
     game.status === 'ANNOUNCED' &&
     ((['GAME', 'TOURNAMENT', 'TRAINING', 'LEAGUE_SEASON'].includes(game.entityType) && hasUnoccupiedSlots) ||
-      game.entityType === 'BAR');
+      game.entityType === 'BAR' ||
+      game.entityType === 'EVENT');
   const showStatusIcon = game.status !== 'ANNOUNCED';
   const hasMyInvites = participation.hasPendingInvite;
   const isInJoinQueue = participation.isInJoinQueue;
@@ -195,7 +197,7 @@ export const GameCard = memo(function GameCard({
       game,
       displaySettings,
       startTime: game.startTime,
-      endTime: game.entityType !== 'BAR' ? game.endTime : undefined,
+      endTime: game.entityType !== 'BAR' && game.entityType !== 'EVENT' ? game.endTime : undefined,
       kind,
       t,
     });
@@ -257,7 +259,9 @@ export const GameCard = memo(function GameCard({
   const playersPerMatch = playersPerMatchOf(game);
   const hasGameSportTags =
     showSportTag ||
-    (game.entityType !== 'TRAINING' && matchFormatSummaryPart(t, playersPerMatch, game.sport) != null);
+    (game.entityType !== 'TRAINING' &&
+      game.entityType !== 'EVENT' &&
+      matchFormatSummaryPart(t, playersPerMatch, game.sport) != null);
   const gameSportTags = useMemo(() => {
     if (!hasGameSportTags) return null;
     return (
@@ -265,7 +269,7 @@ export const GameCard = memo(function GameCard({
         sport={gameSport}
         showSport={showSportTag}
         playersPerMatch={playersPerMatch}
-        showMatchFormat={game.entityType !== 'TRAINING'}
+        showMatchFormat={game.entityType !== 'TRAINING' && game.entityType !== 'EVENT'}
         className="shrink-0"
       />
     );
@@ -278,6 +282,7 @@ export const GameCard = memo(function GameCard({
     game.status !== 'FINISHED' &&
     game.resultsStatus === 'NONE' &&
     game.entityType !== 'LEAGUE' &&
+    game.entityType !== 'EVENT' &&
     !isParticipant &&
     !hasMyInvites &&
     !isInJoinQueue;
@@ -289,6 +294,7 @@ export const GameCard = memo(function GameCard({
 
   const hasTagRow =
     hasGameSportTags ||
+    game.entityType === 'EVENT' ||
     myParticipationBadge != null ||
     !game.isPublic ||
     (game.genderTeams != null && game.genderTeams !== 'ANY') ||
@@ -460,4 +466,11 @@ export const GameCard = memo(function GameCard({
       ) : null}
     </SportLevelProvider>
   );
+}, gameCardPropsEqual);
+
+export const GameCard = memo(function GameCard(props: GameCardProps) {
+  if (props.game.entityType === 'EVENT') {
+    return <EventPosterCard game={props.game} variant="list" onClick={props.onClick} />;
+  }
+  return <GameCardMatch {...props} />;
 }, gameCardPropsEqual);

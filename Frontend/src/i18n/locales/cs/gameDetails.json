@@ -269,6 +269,7 @@
       "messageLeagueSeason": "Smazáním této sezóny ligy se nezruší níže uvedené rezervace kurtů u klubu. Zůstanou ve vašem klubovém účtu — zrušte je tam, pokud je už nepotřebujete.",
       "messageBar": "Smazáním tohoto baru se nezruší níže uvedené rezervace kurtů u klubu. Zůstanou ve vašem klubovém účtu — zrušte je tam, pokud je už nepotřebujete.",
       "messageTraining": "Smazáním tohoto tréninku se nezruší níže uvedené rezervace kurtů u klubu. Zůstanou ve vašem klubovém účtu — zrušte je tam, pokud je už nepotřebujete.",
+      "messageEvent": "Smazáním této události se nezruší níže uvedené rezervace kurtů u klubu. Zůstanou ve vašem klubovém účtu — zrušte je tam, pokud je už nepotřebujete.",
       "bookingsHeading": "Propojené rezervace",
       "confirm": "Přesto smazat"
     },
@@ -292,6 +293,7 @@
     "leaveGameConfirmationBar": "Opravdu chcete opustit tento bar?",
     "leaveGameConfirmationTraining": "Opravdu chcete opustit tento trénink?",
     "leaveGameConfirmationLeagueSeason": "Opravdu chcete opustit tuto sezónu ligy?",
+    "leaveGameConfirmationEvent": "Opravdu chcete opustit tuto událost?",
     "notPlayingHint": "Nehrajete, ale jste účastníkem chatu. Můžete místo toho opustit chat.",
     "notPlayingHintGame": "• Jste účastníkem chatu.\n• Můžete se znovu připojit k zápasu, ale nebudete moci být znovu pozváni, dokud neopustíte chat.\n• Opustíte-li chat, zápas zmizí z „moje zápasy“ a budete potřebovat pozvánku nebo čekat ve frontě.",
     "notPlayingHintTournament": "• Jste účastníkem chatu.\n• Můžete se znovu připojit k turnaji, ale nebudete moci být znovu pozváni, dokud neopustíte chat.\n• Opustíte-li chat, turnaj zmizí z „moje zápasy“ a budete potřebovat pozvánku nebo čekat ve frontě.",

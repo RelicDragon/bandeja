@@ -10,6 +10,7 @@ import {
   canAccessGame,
   canAccessGameIncludingArchived,
   requireGamePermission,
+  requireAdmin,
   AuthRequest,
 } from '../middleware/auth';
 import { ParticipantRole } from '@prisma/client';
@@ -135,6 +136,35 @@ router.put('/:id/booking-snapshots', authenticate, canEditGame, gameController.p
 router.patch('/:id/my-session', authenticate, canAccessGame, gameController.patchMyWatchSessionHandler);
 
 router.delete('/:id', authenticate, requireGamePermission([ParticipantRole.OWNER]), gameController.deleteGame);
+
+router.post(
+  '/:id/event-rsvp',
+  authenticate,
+  validate([body('intent').isIn(['going', 'looking']).withMessage('intent must be going or looking')]),
+  gameController.eventRsvp,
+);
+
+router.delete('/:id/event-rsvp', authenticate, gameController.eventRsvpLeave);
+
+router.patch(
+  '/:id/event-looking-note',
+  authenticate,
+  gameController.eventLookingNote,
+);
+
+router.post(
+  '/:id/event-approval',
+  requireAdmin,
+  validate([body('decision').isIn(['APPROVE', 'DECLINE']).withMessage('decision must be APPROVE or DECLINE')]),
+  gameController.eventApproval,
+);
+
+router.put(
+  '/:id/event-heroes',
+  authenticate,
+  canEditGame,
+  gameController.putEventHeroes,
+);
 
 router.post('/:id/join', authenticate, gameController.joinGame);
 

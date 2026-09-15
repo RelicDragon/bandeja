@@ -4,7 +4,7 @@ import { chatApi, SearchMessageResult, ChatMessage, getLastMessageText } from '@
 import { getSystemMessageText } from '@/utils/systemMessages';
 import { formatStickerPreviewText } from '@/utils/stickerPreview';
 import { formatSearchResultDate, formatDate } from '@/utils/dateFormat';
-import { MessageCircle, Gamepad2, Swords, Trophy, Dumbbell, Beer, Bug, User, ShoppingBag, Hash } from 'lucide-react';
+import { MessageCircle, Gamepad2, Swords, Trophy, Dumbbell, Beer, Bug, User, ShoppingBag, Hash, CalendarDays } from 'lucide-react';
 import { CollapsibleSection } from './CollapsibleSection';
 import { useNetworkStore } from '@/utils/networkStatus';
 import {
@@ -92,6 +92,7 @@ function getChatIcon(chatContextType: string, result: SearchMessageResult) {
     if (et === 'LEAGUE' || et === 'LEAGUE_SEASON') return Trophy;
     if (et === 'TRAINING') return Dumbbell;
     if (et === 'BAR') return Beer;
+    if (et === 'EVENT') return CalendarDays;
     return Gamepad2;
   }
   if (chatContextType === 'BUG') return Bug;

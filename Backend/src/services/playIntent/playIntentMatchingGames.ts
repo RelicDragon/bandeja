@@ -4,6 +4,7 @@ export const MATCHING_GAMES_VISIBLE_CAP = 4;
 
 export function radarEntityTypes(intentEntityType: EntityType): EntityType[] {
   if (intentEntityType === EntityType.BAR) return [EntityType.BAR];
+  if (intentEntityType === EntityType.EVENT) return [];
   return [EntityType.GAME, EntityType.TOURNAMENT];
 }
 

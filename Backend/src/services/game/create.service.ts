@@ -40,6 +40,13 @@ import { appendGameLog } from './gameLog.service';
 import { PlayIntentMatchQueueService } from '../playIntent/playIntentMatchQueue.service';
 import { assertSlotOverlapConfirmed } from './gameSlotOverlap.service';
 import { normalizeGameRatingFields } from './normalizeGameRatingFields';
+import {
+  applyEventUpdateInvariants,
+  assertEventCreatePayload,
+  eventCreateDefaults,
+  eventHeroCreates,
+} from './eventCreateDefaults';
+import { getEntityCapabilities, EVENT_UNBOUNDED_ROSTER } from '@bandeja/shared/entityCapabilities';
 
 async function runSerializableCreate<T>(
   operation: (tx: Prisma.TransactionClient) => Promise<T>,
@@ -159,9 +166,21 @@ export class GameCreateService {
     }
 
     const entityType = data.entityType || EntityType.GAME;
-    let maxParticipants = entityType === EntityType.BAR ? 999 : (data.maxParticipants || 4);
+    const isEventEntity = entityType === EntityType.EVENT;
+    const entityCaps = getEntityCapabilities(entityType);
+    if (isEventEntity) {
+      assertEventCreatePayload(data);
+      applyEventUpdateInvariants({
+        ...data,
+        hasBookedCourt: data.hasBookedCourt === true || booking.hasBookedCourtCreate,
+      });
+      if (booking.externalBookingIds.length > 0 || booking.hasBookedCourtCreate) {
+        throw new ApiError(400, 'EVENT listings cannot book courts');
+      }
+    }
+    let maxParticipants = entityCaps.unboundedRoster ? EVENT_UNBOUNDED_ROSTER : (data.maxParticipants || 4);
 
-    if (entityType !== EntityType.BAR) {
+    if (!entityCaps.unboundedRoster) {
       const actor = await prisma.user.findUnique({
         where: { id: userId },
         select: { canCreateTournament: true, maxParticipantsInGame: true },
@@ -187,12 +206,20 @@ export class GameCreateService {
             ),
           )
         : null);
-    const { primaryCourtId, gameCourtIds } = await resolveCreateCourts(
-      data.clubId,
-      data.courtId,
-      snapshotCourtIds?.length ? snapshotCourtIds : null,
-    );
-    data.courtId = primaryCourtId;
+    let primaryCourtId: string | undefined;
+    let gameCourtIds: string[] | null | undefined;
+    if (isEventEntity) {
+      data.courtId = null;
+    } else {
+      const resolvedCourts = await resolveCreateCourts(
+        data.clubId,
+        data.courtId,
+        snapshotCourtIds?.length ? snapshotCourtIds : null,
+      );
+      primaryCourtId = resolvedCourts.primaryCourtId;
+      gameCourtIds = resolvedCourts.gameCourtIds;
+      data.courtId = primaryCourtId;
+    }
 
     if (data.cityId) {
       cityId = data.cityId;
@@ -210,8 +237,12 @@ export class GameCreateService {
         throw new ApiError(400, 'This club is not available for bar events');
       }
 
-      if (entityType !== EntityType.BAR && !club.isForPlaying) {
+      if (entityType !== EntityType.BAR && entityType !== EntityType.EVENT && !club.isForPlaying) {
         throw new ApiError(400, 'This club is not available for playing games');
+      }
+
+      if (entityType === EntityType.EVENT && (club.isBar || !club.isForPlaying)) {
+        throw new ApiError(400, 'This club is not available for events');
       }
 
       cityId = club.cityId;
@@ -252,14 +283,14 @@ export class GameCreateService {
     
     const isTraining = entityType === EntityType.TRAINING;
     const sportEarly = resolveSport(data.sport);
-    let playersPerMatchEarly = isTraining
+    let playersPerMatchEarly = isTraining || isEventEntity
       ? resolvePlayersPerMatch(sportEarly, undefined)
       : resolvePlayersPerMatch(sportEarly, data.playersPerMatch);
-    if (!isTraining && data.playersPerMatch == null && maxParticipants === 2) {
+    if (!isTraining && !isEventEntity && data.playersPerMatch == null && maxParticipants === 2) {
       playersPerMatchEarly = 2;
     }
     const singlesEvent = maxParticipants === 2 || playersPerMatchEarly === 2;
-    const hasFixedTeams = singlesEvent ? false : (data.hasFixedTeams || false);
+    const hasFixedTeams = isEventEntity ? false : singlesEvent ? false : (data.hasFixedTeams || false);
     const allowUserInMultipleTeams = singlesEvent ? false : Boolean(data.allowUserInMultipleTeams);
     const genderTeams = data.genderTeams || 'ANY';
     
@@ -308,6 +339,7 @@ export class GameCreateService {
 
     if (
       entityType !== EntityType.BAR &&
+      entityType !== EntityType.EVENT &&
       !creatorNonPlaying &&
       ownerIsPlaying &&
       data.timeIsSet !== false &&
@@ -335,7 +367,7 @@ export class GameCreateService {
       }
     }
     
-    const gameType = isTraining ? 'CLASSIC' : data.gameType;
+    const gameType = isTraining || isEventEntity ? 'CLASSIC' : data.gameType;
 
     let trainerId: string | null = null;
     if (entityType === EntityType.TRAINING) {
@@ -352,7 +384,7 @@ export class GameCreateService {
       }
     }
 
-    const minParticipantsCreate = isTraining ? 1 : (data.minParticipants || 2);
+    const minParticipantsCreate = isTraining || isEventEntity ? 1 : (data.minParticipants || 2);
 
     const sport = validateGameForSport({
       sport: data.sport,
@@ -361,8 +393,8 @@ export class GameCreateService {
       matchGenerationType: data.matchGenerationType,
       maxParticipants,
       minParticipants: minParticipantsCreate,
-      playersPerMatch: isTraining ? undefined : playersPerMatchEarly,
-      scoringPreset: isTraining ? undefined : data.scoringPreset,
+      playersPerMatch: isTraining || isEventEntity ? undefined : playersPerMatchEarly,
+      scoringPreset: isTraining || isEventEntity ? undefined : data.scoringPreset,
     });
     const playersPerMatch = playersPerMatchEarly;
 
@@ -392,7 +424,7 @@ export class GameCreateService {
       }
     }
 
-    const formatNorm = isTraining
+    const formatNorm = isTraining || isEventEntity
       ? {}
       : normalizeGameFormatPatch({
           existingGame: {
@@ -406,7 +438,7 @@ export class GameCreateService {
           patch: data,
           entityType,
         });
-    const scoringPreset = isTraining ? null : (formatNorm.scoringPreset as typeof data.scoringPreset) ?? null;
+    const scoringPreset = isTraining || isEventEntity ? null : (formatNorm.scoringPreset as typeof data.scoringPreset) ?? null;
     const winnerOfMatchCreate = (formatNorm.winnerOfMatch as string | undefined) ?? data.winnerOfMatch ?? 'BY_SCORES';
     const maxTotalPointsCreate =
       (formatNorm.maxTotalPointsPerSet as number | undefined) ?? data.maxTotalPointsPerSet ?? 0;
@@ -421,10 +453,34 @@ export class GameCreateService {
       maxLevel: data.maxLevel,
       affectsRating: data.affectsRating,
     });
+    const eventDefaults = isEventEntity
+      ? eventCreateDefaults({
+          eventKind: data.eventKind,
+          venueText: data.venueText,
+          externalUrl: data.externalUrl,
+          eventHeroes: data.eventHeroes,
+          eventCreatorIntent: data.eventCreatorIntent,
+          name: data.name,
+          description: data.description,
+          avatar: data.avatar,
+          originalAvatar: data.originalAvatar,
+          minLevel: ratingFields.minLevel,
+          maxLevel: ratingFields.maxLevel,
+          cityId: cityId as string,
+          clubId: data.clubId ?? null,
+          startTime,
+          endTime,
+          sport,
+          priceTotal: data.priceTotal,
+          priceType,
+          priceCurrency: data.priceCurrency ?? null,
+        })
+      : null;
 
     const createResult = await runSerializableCreate(async (tx) => {
       const lifecycleNow = new Date();
       if (
+        !isEventEntity &&
         data.playIntentSource &&
         (creatorNonPlaying || !ownerIsPlaying)
       ) {
@@ -435,7 +491,9 @@ export class GameCreateService {
           { code: 'playIntent.creatorMustPlay' },
         );
       }
-      const playIntentSource = await PlayIntentGameCreationService.prepare(
+      const playIntentSource = isEventEntity
+        ? null
+        : await PlayIntentGameCreationService.prepare(
         tx,
         data.playIntentSource,
         userId,
@@ -473,11 +531,11 @@ export class GameCreateService {
         minParticipants: minParticipantsCreate,
         minLevel: ratingFields.minLevel,
         maxLevel: ratingFields.maxLevel,
-        isPublic: data.isPublic !== undefined ? data.isPublic : true,
+        isPublic: isEventEntity ? true : (data.isPublic !== undefined ? data.isPublic : true),
         affectsRating: ratingFields.affectsRating,
         anyoneCanInvite: data.anyoneCanInvite || false,
-        resultsByAnyone: entityType === EntityType.TOURNAMENT ? false : (data.resultsByAnyone || false),
-        allowDirectJoin: data.allowDirectJoin || false,
+        resultsByAnyone: entityType === EntityType.TOURNAMENT || isEventEntity ? false : (data.resultsByAnyone || false),
+        allowDirectJoin: isEventEntity ? true : (data.allowDirectJoin || false),
         hasBookedCourt: booking.hasBookedCourtCreate,
         timeOverride: booking.timeOverride,
         afterGameGoToBar: data.afterGameGoToBar || false,
@@ -517,15 +575,41 @@ export class GameCreateService {
         priceType: priceType,
         priceCurrency: (priceType === 'NOT_KNOWN' || priceType === 'FREE') ? null : data.priceCurrency,
         metadata: data.metadata,
-        timeIsSet: data.timeIsSet ?? false,
+        timeIsSet: isEventEntity ? true : (data.timeIsSet ?? false),
         status: 'ANNOUNCED',
+        ...(isEventEntity && eventDefaults
+          ? {
+              eventKind: eventDefaults.gameData.eventKind,
+              eventApprovalStatus: eventDefaults.gameData.eventApprovalStatus,
+              venueText: eventDefaults.gameData.venueText,
+              externalUrl: eventDefaults.gameData.externalUrl,
+              maxParticipants: eventDefaults.gameData.maxParticipants,
+              isPublic: eventDefaults.gameData.isPublic,
+              allowDirectJoin: eventDefaults.gameData.allowDirectJoin,
+              resultsByAnyone: eventDefaults.gameData.resultsByAnyone,
+              anyoneCanInvite: eventDefaults.gameData.anyoneCanInvite,
+              hasBookedCourt: eventDefaults.gameData.hasBookedCourt,
+              hasFixedTeams: false,
+              timeIsSet: eventDefaults.gameData.timeIsSet,
+              affectsRating: eventDefaults.gameData.affectsRating,
+              courtId: null,
+              eventHeroes: {
+                create: eventHeroCreates(eventDefaults.heroes),
+              },
+            }
+          : {}),
         ...(trainerId && { trainerId }),
         participants: {
           create:
             linkedParticipants ?? {
               userId,
               role: 'OWNER',
-              status: creatorNonPlaying || !ownerIsPlaying ? 'NON_PLAYING' : 'PLAYING',
+              status: isEventEntity
+                ? 'NON_PLAYING'
+                : creatorNonPlaying || !ownerIsPlaying
+                  ? 'NON_PLAYING'
+                  : 'PLAYING',
+              lookingForPartner: Boolean(eventDefaults?.ownerLooking),
             },
         },
       },
@@ -576,7 +660,7 @@ export class GameCreateService {
         lifecycleNow,
       );
 
-      if (booking.externalBookingIds.length > 0 && booking.externalBookingProvider) {
+      if (!isEventEntity && booking.externalBookingIds.length > 0 && booking.externalBookingProvider) {
         const snapshotCourtIds = Array.from(
           new Set(
             [
@@ -605,7 +689,8 @@ export class GameCreateService {
       if (
         game.isPublic &&
         game.entityType !== EntityType.LEAGUE &&
-        game.entityType !== EntityType.LEAGUE_SEASON
+        game.entityType !== EntityType.LEAGUE_SEASON &&
+        game.entityType !== EntityType.EVENT
       ) {
         await PlayIntentMatchQueueService.enqueuePublicGameCreated(
           tx,
@@ -649,7 +734,7 @@ export class GameCreateService {
       });
     }
 
-    if (gameCourtIds?.length) {
+    if (!isEventEntity && gameCourtIds?.length) {
       await GameCourtService.setGameCourts(createdGame.id, gameCourtIds);
     }
 
@@ -712,7 +797,13 @@ export class GameCreateService {
       },
     });
 
-    if (finalGame && finalGame.isPublic && finalGame.entityType !== EntityType.LEAGUE && finalGame.entityType !== EntityType.LEAGUE_SEASON) {
+    if (
+      finalGame &&
+      finalGame.isPublic &&
+      finalGame.entityType !== EntityType.LEAGUE &&
+      finalGame.entityType !== EntityType.LEAGUE_SEASON &&
+      finalGame.entityType !== EntityType.EVENT
+    ) {
       notificationService.sendNewGameNotification(finalGame, cityId, userId).catch((error) => {
         console.error('Failed to send new game notifications:', error);
       });

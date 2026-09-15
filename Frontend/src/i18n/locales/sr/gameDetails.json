@@ -263,6 +263,7 @@
       "messageLeagueSeason": "Brisanje ove sezone lige neće otkazati rezervacije terena u klubu navedene ispod. Ostaće na vašem klubskom nalogu — otkažite ih tamo ako vam više nisu potrebne.",
       "messageBar": "Brisanje ovog bara neće otkazati rezervacije terena u klubu navedene ispod. Ostaće na vašem klubskom nalogu — otkažite ih tamo ako vam više nisu potrebne.",
       "messageTraining": "Brisanje ovog treninga neće otkazati rezervacije terena u klubu navedene ispod. Ostaće na vašem klubskom nalogu — otkažite ih tamo ako vam više nisu potrebne.",
+      "messageEvent": "Brisanje ovog događaja neće otkazati rezervacije terena u klubu navedene ispod. Ostaće na vašem klubskom nalogu — otkažite ih tamo ako vam više nisu potrebne.",
       "bookingsHeading": "Povezane rezervacije",
       "confirm": "Ipak obriši"
     },
@@ -280,6 +281,7 @@
     "leaveGameConfirmationBar": "Da li ste sigurni da želite da napustite bar?",
     "leaveGameConfirmationTraining": "Da li ste sigurni da želite da napustite trening?",
     "leaveGameConfirmationLeagueSeason": "Da li ste sigurni da želite da napustite sezonu lige?",
+    "leaveGameConfirmationEvent": "Da li ste sigurni da želite da napustite događaj?",
     "notPlayingHint": "Ne igrate, ali ste i dalje učesnik u čatu. Možete napustiti čat umesto toga.",
     "notPlayingHintGame": "• Vi ste učesnik u čatu.\n• Možete ponovo da se pridružite igri, ali vas ne mogu ponovo pozvati dok ne napustite čat.\n• Ako napustite čat, igra će biti uklonjena iz sekcije 'moje igre' i biće vam potrebna pozivnica ili ćete morati da sačekate u redu da biste se ponovo pridružili igri.",
     "notPlayingHintTournament": "• Vi ste učesnik u čatu.\n• Možete ponovo da se pridružite turniru, ali vas ne mogu ponovo pozvati dok ne napustite čat.\n• Ako napustite čat, turnir će biti uklonjen iz sekcije 'moje igre' i biće vam potrebna pozivnica ili ćete morati da sačekate u redu da biste se ponovo pridružili turniru.",

@@ -742,6 +742,10 @@ model Game {
   timeOverride              Boolean                 @default(false)
   metadata                  Json?
   lastMessagePreview        String?                 @db.VarChar(500)
+  eventKind                 EventKind?
+  eventApprovalStatus       EventApprovalStatus?
+  venueText                 String?
+  externalUrl               String?
   createdAt                 DateTime                @default(now())
   updatedAt                 DateTime                @updatedAt
   club                      Club?                   @relation(fields: [clubId], references: [id])
@@ -770,6 +774,7 @@ model Game {
   workoutSummaries          GameWorkoutSummary[]
   reactions                 GameReaction[]          @relation("GameReactions")
   photos                    GamePhoto[]
+  eventHeroes               GameEventHero[]
   mainPhoto                 GamePhoto?              @relation("GameMainPhoto", fields: [mainPhotoId], references: [id], onDelete: SetNull)
   resultsArtifactJob        GameResultsArtifactJob?
   externalBookings          GameExternalBooking[]
@@ -782,6 +787,8 @@ model Game {
   @@index([startTime])
   @@index([status])
   @@index([entityType])
+  @@index([eventKind])
+  @@index([eventApprovalStatus])
   @@index([parentId])
   @@index([trainerId])
   @@index([leagueRoundId])
@@ -839,6 +846,18 @@ model GamePhoto {
   @@unique([uploaderId, clientUploadId])
   @@index([gameId, deletedAt, createdAt])
   @@index([uploaderId])
+}
+
+model GameEventHero {
+  id            String   @id @default(cuid())
+  gameId        String
+  originalUrl   String
+  thumbnailUrl  String
+  sortOrder     Int      @default(0)
+  createdAt     DateTime @default(now())
+  game          Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  @@index([gameId, sortOrder])
 }
 
 model GameReaction {
@@ -1098,7 +1117,9 @@ model GameParticipant {
   /// Watch / client: match the user is currently scoring (cleared on finalize).
   activeMatchId    String?
   /// When false, this participant's result/champion story for this game is hidden from followers' feeds.
-  showInStories    Boolean           @default(true)
+  showInStories     Boolean           @default(true)
+  lookingForPartner Boolean           @default(false)
+  lookingNote       String?
   game             Game              @relation(fields: [gameId], references: [id], onDelete: Cascade)
   user             User              @relation("ParticipantUser", fields: [userId], references: [id], onDelete: Cascade)
   invitedByUser    User?             @relation("ParticipantInvitedBy", fields: [invitedByUserId], references: [id], onDelete: SetNull)
@@ -2114,6 +2135,19 @@ enum EntityType {
   LEAGUE_SEASON
   BAR
   TRAINING
+  EVENT
+}
+
+enum EventKind {
+  TOURNAMENT
+  LEAGUE
+  CAMP
+}
+
+enum EventApprovalStatus {
+  ON_APPROVE
+  APPROVED
+  DECLINED
 }
 
 enum GenderTeam {

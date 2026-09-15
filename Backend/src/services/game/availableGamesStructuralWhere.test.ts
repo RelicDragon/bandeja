@@ -25,6 +25,14 @@ import {
 }
 
 {
+  const multi = parseStructuralFiltersFromQuery({
+    entityTypes: 'GAME,TOURNAMENT',
+    mode: 'upcoming',
+  });
+  assert.deepEqual(multi.entityTypes, ['GAME', 'TOURNAMENT']);
+}
+
+{
   const upcoming = parseStructuralFiltersFromQuery({ mode: 'upcoming' });
   assert.equal(upcoming.requireTimeSet, false);
   assert.equal(upcoming.allowUnsetTimeLeagueSeason, true);
@@ -70,6 +78,27 @@ import {
   });
   assert.equal(defaults.levelMin, undefined);
   assert.equal(defaults.levelMax, undefined);
+}
+
+{
+  const excluded = appendStructuralFiltersToWhere({}, {});
+  assert.ok(Array.isArray(excluded.AND));
+  assert.ok(
+    (excluded.AND as Array<Record<string, unknown>>).some(
+      (clause) => clause.entityType && (clause.entityType as { not?: string }).not === 'EVENT',
+    ),
+  );
+}
+
+{
+  const included = appendStructuralFiltersToWhere({}, { entityTypes: ['EVENT'] });
+  assert.ok(Array.isArray(included.AND));
+  assert.deepEqual(
+    (included.AND as Array<Record<string, unknown>>).find(
+      (clause) => clause.entityType && (clause.entityType as { in?: string[] }).in,
+    ),
+    { entityType: { in: ['EVENT'] } },
+  );
 }
 
 console.log('availableGamesStructuralWhere.test.ts: ok');

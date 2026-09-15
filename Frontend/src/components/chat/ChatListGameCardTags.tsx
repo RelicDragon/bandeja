@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Award, Ban, Beer, Camera, Dumbbell, Lock, Swords, Trophy, Users } from 'lucide-react';
+import { Award, Ban, Beer, CalendarDays, Camera, Dumbbell, Lock, Swords, Trophy, Users } from 'lucide-react';
 import { AnnouncedFireIcon } from '@/components/AnnouncedFireIcon';
 import { GameStatusIcon } from '@/components/GameStatusIcon';
 import type { Game } from '@/types';
@@ -38,7 +38,8 @@ export function ChatListGameCardTags({ game, userId }: Props) {
     game.status === 'ANNOUNCED' &&
     ((['GAME', 'TOURNAMENT', 'TRAINING', 'LEAGUE_SEASON'].includes(game.entityType) &&
       !participation.isFull) ||
-      game.entityType === 'BAR');
+      game.entityType === 'BAR' ||
+      game.entityType === 'EVENT');
 
   return (
     <div className="flex items-center gap-1 flex-wrap min-w-0">
@@ -130,6 +131,7 @@ export function ChatListGameCardTags({ game, userId }: Props) {
           {(game.entityType === 'LEAGUE' || game.entityType === 'LEAGUE_SEASON') && <Trophy size={10} />}
           {game.entityType === 'TRAINING' && <Dumbbell size={10} />}
           {game.entityType === 'BAR' && <Beer size={10} />}
+          {game.entityType === 'EVENT' && <CalendarDays size={10} />}
           {t(`games.entityTypes.${game.entityType}`)}
         </span>
       )}
@@ -155,6 +157,7 @@ export function ChatListGameCardTags({ game, userId }: Props) {
       {game.entityType !== 'LEAGUE' &&
         game.entityType !== 'LEAGUE_SEASON' &&
         game.entityType !== 'TRAINING' &&
+        game.entityType !== 'EVENT' &&
         game.name &&
         game.gameType !== 'CLASSIC' && (
           <span className={`${tagClass} bg-gray-100 text-gray-600 dark:bg-gray-800/50 dark:text-gray-400`}>

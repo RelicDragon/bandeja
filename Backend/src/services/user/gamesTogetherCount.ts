@@ -19,7 +19,7 @@ export async function countGamesTogetherWith(
         AND gp2.status = 'PLAYING'::"ParticipantStatus"
         AND gp2."userId" IN (${Prisma.join(unique)})
         AND g."resultsStatus" = 'FINAL'::"ResultsStatus"
-        AND g."entityType" NOT IN ('BAR'::"EntityType", 'LEAGUE_SEASON'::"EntityType")
+        AND g."entityType" NOT IN ('BAR'::"EntityType", 'LEAGUE_SEASON'::"EntityType", 'EVENT'::"EntityType")
       GROUP BY gp2."userId"
     `,
   );

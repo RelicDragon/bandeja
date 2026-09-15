@@ -1,0 +1,38 @@
+{
+    "createEvent": {
+        "title": "Buat Acara/Iklan",
+        "organizing": "Saya yang menyelenggarakan",
+        "looking": "Saya ingin ikut / butuh partner",
+        "organizerHint": "Anda tidak harus menjadi penyelenggara.",
+        "kinds": {
+            "TOURNAMENT": "Turnamen eksternal",
+            "LEAGUE": "Liga eksternal",
+            "CAMP": "Kamp"
+        },
+        "kindLabel": "Ini apa?",
+        "heroes": "Foto",
+        "heroesHint": "Tambahkan foto poster. Ditampilkan sebagai slideshow.",
+        "venue": "Lokasi",
+        "venueText": "Alamat atau nama tempat",
+        "venueOrClub": "Klub (opsional)",
+        "selectClub": "Pilih Klub",
+        "selectCity": "Kota",
+        "clearClub": "Pakai teks",
+        "dateRange": "Tanggal",
+        "start": "Mulai",
+        "end": "Selesai",
+        "registerUrl": "Tautan pendaftaran (opsional)",
+        "playerLevel": "Tingkat Pemain",
+        "name": "Nama",
+        "namePlaceholder": "Nama acara",
+        "description": "Deskripsi",
+        "descriptionPlaceholder": "Apa yang akan terjadi?",
+        "priceAmount": "Jumlah",
+        "save": "Simpan",
+        "nameRequired": "Nama wajib diisi",
+        "datesInvalid": "Waktu selesai harus setelah mulai",
+        "urlInvalid": "Gunakan tautan http(s)",
+        "create": "Publikasikan Acara/Iklan",
+        "pendingSubmitted": "Dikirim untuk persetujuan. Sampai disetujui, hanya Anda dan admin yang melihatnya."
+    }
+}

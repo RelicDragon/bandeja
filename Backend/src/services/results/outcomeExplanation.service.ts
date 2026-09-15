@@ -776,7 +776,7 @@ export async function getOutcomeExplanation(
   );
 
   let socialLevelChangeData = undefined;
-  if (game.entityType !== EntityType.BAR && game.entityType !== EntityType.LEAGUE_SEASON) {
+  if (game.entityType !== EntityType.BAR && game.entityType !== EntityType.LEAGUE_SEASON && game.entityType !== EntityType.EVENT) {
     const socialLevelEvent = await prisma.levelChangeEvent.findFirst({
       where: {
         gameId,
@@ -884,7 +884,7 @@ async function countCoPlayedGames(
     where: {
       id: { not: currentGameId },
       startTime: { lt: currentGameStartTime },
-      entityType: { notIn: [EntityType.BAR, EntityType.LEAGUE_SEASON] },
+      entityType: { notIn: [EntityType.BAR, EntityType.LEAGUE_SEASON, EntityType.EVENT] },
       AND: [
         { participants: { some: { userId: userId1, status: 'PLAYING' } } },
         { participants: { some: { userId: userId2, status: 'PLAYING' } } },

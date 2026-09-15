@@ -11,14 +11,11 @@ export const SplitViewLeftPanel = ({ children, bottomTabsVisible }: SplitViewLef
     <div className="absolute inset-0 z-0 flex min-h-0 flex-col overflow-hidden">
       {children}
     </div>
-    <div
-      className={`absolute inset-x-0 bottom-0 z-50 flex justify-center transition-opacity duration-150 ${
-        bottomTabsVisible ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'
-      }`}
-      aria-hidden={!bottomTabsVisible}
-    >
-      <BottomTabBar containerPosition={true} />
-    </div>
+    {bottomTabsVisible ? (
+      <div className="absolute inset-x-0 bottom-0 z-50 flex justify-center">
+        <BottomTabBar containerPosition={true} />
+      </div>
+    ) : null}
   </div>
 );
 

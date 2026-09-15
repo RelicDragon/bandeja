@@ -8,6 +8,7 @@ enum BandejaDeepLink {
     static let login = URL(string: "https://bandeja.me/login")!
     static let createGame = URL(string: "https://bandeja.me/create-game")!
     static let createLeague = URL(string: "https://bandeja.me/create-league")!
+    static let createEvent = URL(string: "https://bandeja.me/create-event")!
     static let nextGame = URL(string: "https://bandeja.me/next-game")!
     static let chats = URL(string: "https://bandeja.me/chats")!
     static let invites = URL(string: "https://bandeja.me/?focus=invites")!

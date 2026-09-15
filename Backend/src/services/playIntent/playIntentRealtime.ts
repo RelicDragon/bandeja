@@ -1,4 +1,7 @@
-import type { PlayIntentInvalidation } from '@bandeja/shared/playIntentRealtime';
+import type {
+  PlayIntentEntityType,
+  PlayIntentInvalidation,
+} from '@bandeja/shared/playIntentRealtime';
 import type { EntityType, Sport } from '@prisma/client';
 import prisma from '../../config/database';
 
@@ -8,10 +11,27 @@ export {
   type PlayIntentInvalidationReason,
 } from '@bandeja/shared/playIntentRealtime';
 
+function toPlayIntentEntityType(
+  entityType: EntityType,
+): PlayIntentEntityType | null {
+  switch (entityType) {
+    case 'GAME':
+    case 'TOURNAMENT':
+    case 'TRAINING':
+    case 'BAR':
+    case 'LEAGUE':
+    case 'LEAGUE_SEASON':
+      return entityType;
+    default:
+      return null;
+  }
+}
+
 export type PublishPlayIntentInvalidation = Omit<
   PlayIntentInvalidation,
-  'version' | 'occurredAt'
+  'version' | 'occurredAt' | 'entityType'
 > & {
+  entityType: EntityType;
   userIds?: string[];
 };
 
@@ -43,12 +63,15 @@ export function publishPlayIntentInvalidation(
 ): void {
   const emitter = socketEmitter();
   if (!emitter) return;
-  const { userIds = [], ...rest } = input;
+  const { userIds = [], entityType: rawEntityType, ...rest } = input;
+  const entityType = toPlayIntentEntityType(rawEntityType);
+  if (!entityType) return;
   emitter.emitPlayIntentInvalidation(
     {
       version: 1,
       occurredAt: new Date().toISOString(),
       ...rest,
+      entityType,
     },
     [...new Set(userIds.filter(Boolean))],
   );

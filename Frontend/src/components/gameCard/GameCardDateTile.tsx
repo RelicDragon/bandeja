@@ -8,6 +8,7 @@ const TILE_ACCENTS: Record<string, string> = {
   LEAGUE_SEASON: 'bg-blue-100/80 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
   TRAINING: 'bg-green-100/80 text-green-700 dark:bg-green-900/40 dark:text-green-300',
   BAR: 'bg-amber-100/80 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
+  EVENT: 'bg-indigo-100/80 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300',
 };
 
 interface GameCardDateTileProps {

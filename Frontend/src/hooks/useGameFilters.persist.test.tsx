@@ -154,6 +154,7 @@ describe('useGameFilters persistence', () => {
         trainingFilter: false,
         tournamentFilter: false,
         leaguesFilter: false,
+        eventsFilter: false,
         filtersPanelOpen: false,
         filterClubIds: [],
         filterTimeStart: '00:00',
@@ -322,5 +323,48 @@ describe('useGameFilters persistence', () => {
     expect(stored.trainingFilter).toBe(true);
     expect(stored.filterAvailableSlots).toBe(true);
     expect(stored.hideBarGames).toBe(true);
+  });
+
+  it('keeps multiple entity chips on remount', async () => {
+    const saved: GameFilters = {
+      filterAvailableSlots: false,
+      filterSuitableRating: false,
+      hideBarGames: false,
+      gameFilter: true,
+      trainingFilter: true,
+      tournamentFilter: true,
+      leaguesFilter: false,
+      activeTab: 'calendar',
+      filtersPanelOpen: false,
+      filterClubIds: [],
+      filterTimeStart: '00:00',
+      filterTimeEnd: '24:00',
+      filterLevelMin: 1,
+      filterLevelMax: 7,
+      filterSport: 'primary',
+      filterNoRating: false,
+      showPrivateGames: false,
+    };
+    await setGameFilters(saved);
+
+    await mountHook();
+    expect(latest?.filters.gameFilter).toBe(true);
+    expect(latest?.filters.trainingFilter).toBe(true);
+    expect(latest?.filters.tournamentFilter).toBe(true);
+
+    act(() => {
+      root.unmount();
+    });
+    root = createRoot(container);
+    await mountHook();
+    expect(latest?.filters.gameFilter).toBe(true);
+    expect(latest?.filters.trainingFilter).toBe(true);
+    expect(latest?.filters.tournamentFilter).toBe(true);
+    await expect(getGameFilters()).resolves.toMatchObject({
+      gameFilter: true,
+      trainingFilter: true,
+      tournamentFilter: true,
+      leaguesFilter: false,
+    });
   });
 });

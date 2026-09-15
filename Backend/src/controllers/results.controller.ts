@@ -14,9 +14,11 @@ import * as matchLiveScoringService from '../services/results/matchLiveScoring.s
 import { LIVE_SCORING_REASON_CODE } from '../services/results/liveScoringEngine/liveScoringRejectReasons';
 import { liveSpectatorQueryTokenMaxBytes, signLiveSpectatorToken, verifyLiveSpectatorToken } from '../utils/jwt';
 import { assertMatchBelongsToGame } from '../services/results/liveSpectator.service';
+import { assertEventForbidsResults } from '../services/game/assertEventForbidsResults';
 
 export const recalculateOutcomes = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { gameId } = req.params;
+  await assertEventForbidsResults(gameId);
   
   console.log(`[RECALCULATE CONTROLLER] Endpoint hit for game ${gameId} by user ${req.userId}`);
 
@@ -71,6 +73,7 @@ export const getMatchResults = asyncHandler(async (req: AuthRequest, res: Respon
 
 export const deleteGameResults = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { gameId } = req.params;
+  await assertEventForbidsResults(gameId);
 
   await resultsService.deleteGameResults(gameId);
 
@@ -82,6 +85,7 @@ export const deleteGameResults = asyncHandler(async (req: AuthRequest, res: Resp
 
 export const resetGameResults = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { gameId } = req.params;
+  await assertEventForbidsResults(gameId);
   
   console.log(`[RESET GAME RESULTS CONTROLLER] Endpoint hit for game ${gameId} by user ${req.userId}`);
 
@@ -102,6 +106,7 @@ export const resetGameResults = asyncHandler(async (req: AuthRequest, res: Respo
 
 export const editGameResults = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { gameId } = req.params;
+  await assertEventForbidsResults(gameId);
   
   console.log(`[EDIT GAME RESULTS CONTROLLER] Endpoint hit for game ${gameId} by user ${req.userId}`);
 
@@ -123,6 +128,7 @@ export const editGameResults = asyncHandler(async (req: AuthRequest, res: Respon
 
 export const syncResults = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { gameId } = req.params;
+  await assertEventForbidsResults(gameId);
   const { rounds } = req.body;
 
   await resultsService.syncResults(gameId, rounds || []);
@@ -140,6 +146,7 @@ export const syncResults = asyncHandler(async (req: AuthRequest, res: Response) 
 
 export const generateRound = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { gameId } = req.params;
+  await assertEventForbidsResults(gameId);
 
   const { roundId } = await roundGenerationService.generateAndCreateRound(gameId);
   const round = await roundGenerationService.fetchRoundApiPayload(roundId);
@@ -157,6 +164,7 @@ export const generateRound = asyncHandler(async (req: AuthRequest, res: Response
 
 export const startResultsEntryWithGeneratedRound = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { gameId } = req.params;
+  await assertEventForbidsResults(gameId);
 
   const { roundId, alreadyHadRounds } = await roundGenerationService.startResultsEntryWithGeneratedRound(gameId);
 
@@ -177,6 +185,7 @@ export const startResultsEntryWithGeneratedRound = asyncHandler(async (req: Auth
 
 export const createRound = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { gameId } = req.params;
+  await assertEventForbidsResults(gameId);
   const { id } = req.body;
 
   await resultsService.createRound(gameId, id);
@@ -189,6 +198,7 @@ export const createRound = asyncHandler(async (req: AuthRequest, res: Response) 
 
 export const deleteRound = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { gameId, roundId } = req.params;
+  await assertEventForbidsResults(gameId);
 
   await resultsService.deleteRound(gameId, roundId);
 
@@ -200,6 +210,7 @@ export const deleteRound = asyncHandler(async (req: AuthRequest, res: Response) 
 
 export const createMatch = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { gameId, roundId } = req.params;
+  await assertEventForbidsResults(gameId);
   const { id } = req.body;
 
   await resultsService.createMatch(gameId, roundId, id);
@@ -212,6 +223,7 @@ export const createMatch = asyncHandler(async (req: AuthRequest, res: Response) 
 
 export const deleteMatch = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { gameId, matchId } = req.params;
+  await assertEventForbidsResults(gameId);
 
   await resultsService.deleteMatch(gameId, matchId);
 
@@ -223,6 +235,7 @@ export const deleteMatch = asyncHandler(async (req: AuthRequest, res: Response) 
 
 export const updateMatch = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { gameId, matchId } = req.params;
+  await assertEventForbidsResults(gameId);
   const matchData = req.body;
 
   const { liveScoringCleared } = await resultsService.updateMatch(gameId, matchId, matchData, {
@@ -246,6 +259,7 @@ export const updateMatch = asyncHandler(async (req: AuthRequest, res: Response) 
 
 export const patchMatchMetadata = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { gameId, matchId } = req.params;
+  await assertEventForbidsResults(gameId);
   const patch = req.body?.patch;
   if (!patch || typeof patch !== 'object' || Array.isArray(patch)) {
     throw new ApiError(400, 'patch must be a non-array object');
@@ -274,6 +288,7 @@ export const patchMatchMetadata = asyncHandler(async (req: AuthRequest, res: Res
 
 export const patchMatchLiveScoring = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { gameId, matchId } = req.params;
+  await assertEventForbidsResults(gameId);
   if (!Object.prototype.hasOwnProperty.call(req.body, 'state')) {
     throw new ApiError(400, 'state is required (object or null)', true, {
       reasonCode: LIVE_SCORING_REASON_CODE.MISSING_STATE,

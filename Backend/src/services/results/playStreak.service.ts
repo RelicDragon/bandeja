@@ -91,7 +91,7 @@ export async function loadQualifyingPlayAts(
       game: {
         sport,
         affectsRating: true,
-        entityType: { notIn: [EntityType.BAR, EntityType.LEAGUE_SEASON] },
+        entityType: { notIn: [EntityType.BAR, EntityType.LEAGUE_SEASON, EntityType.EVENT] },
       },
       ...(options?.excludeGameId ? { gameId: { not: options.excludeGameId } } : {}),
     },

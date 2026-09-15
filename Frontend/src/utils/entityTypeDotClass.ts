@@ -6,6 +6,7 @@ export const ENTITY_TYPE_DOT_CLASS: Record<FindDisplayEntityType, string> = {
   TRAINING: 'bg-green-500',
   LEAGUE: 'bg-blue-500',
   BAR: 'bg-yellow-400',
+  EVENT: 'bg-indigo-500',
 };
 
 export const ENTITY_TYPE_CHIP_DOT_CLASS: Record<FindDisplayEntityType, string> = {
@@ -14,6 +15,7 @@ export const ENTITY_TYPE_CHIP_DOT_CLASS: Record<FindDisplayEntityType, string> =
   TRAINING: 'bg-green-500',
   LEAGUE: 'bg-blue-500',
   BAR: 'bg-yellow-400',
+  EVENT: 'bg-indigo-500',
 };
 
 export const ENTITY_TYPE_DOT_INVERTED_CLASS: Record<FindDisplayEntityType, string> = {
@@ -22,4 +24,5 @@ export const ENTITY_TYPE_DOT_INVERTED_CLASS: Record<FindDisplayEntityType, strin
   TRAINING: 'bg-green-300',
   LEAGUE: 'bg-blue-200',
   BAR: 'bg-yellow-300',
+  EVENT: 'bg-indigo-300',
 };

@@ -1,0 +1,38 @@
+{
+    "createEvent": {
+        "title": "इवेंट/विज्ञापन बनाएँ",
+        "organizing": "मैं आयोजन कर रहा/रही हूँ",
+        "looking": "मैं जाना चाहता/चाहती हूँ / पार्टनर चाहिए",
+        "organizerHint": "आपको आयोजक होना ज़रूरी नहीं है।",
+        "kinds": {
+            "TOURNAMENT": "बाहरी टूर्नामेंट",
+            "LEAGUE": "बाहरी लीग",
+            "CAMP": "कैंप"
+        },
+        "kindLabel": "यह क्या है?",
+        "heroes": "फ़ोटो",
+        "heroesHint": "पोस्टर फ़ोटो जोड़ें। ये स्लाइडशो में दिखेंगी।",
+        "venue": "स्थान",
+        "venueText": "पता या जगह का नाम",
+        "venueOrClub": "क्लब (वैकल्पिक)",
+        "selectClub": "क्लब चुनें",
+        "selectCity": "शहर",
+        "clearClub": "टेक्स्ट इस्तेमाल करें",
+        "dateRange": "तारीखें",
+        "start": "शुरू",
+        "end": "समाप्त",
+        "registerUrl": "रजिस्ट्रेशन लिंक (वैकल्पिक)",
+        "playerLevel": "खिलाड़ी लेवल",
+        "name": "नाम",
+        "namePlaceholder": "इवेंट का नाम",
+        "description": "विवरण",
+        "descriptionPlaceholder": "क्या होने वाला है?",
+        "priceAmount": "राशि",
+        "save": "सेव करें",
+        "nameRequired": "नाम ज़रूरी है",
+        "datesInvalid": "समाप्ति शुरू के बाद होनी चाहिए",
+        "urlInvalid": "http(s) लिंक इस्तेमाल करें",
+        "create": "इवेंट/विज्ञापन पोस्ट करें",
+        "pendingSubmitted": "अप्रूवल के लिए भेजा गया। अप्रूव होने तक सिर्फ़ आप और एडमिन देखेंगे।"
+    }
+}

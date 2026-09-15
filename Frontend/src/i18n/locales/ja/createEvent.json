@@ -1,0 +1,38 @@
+{
+    "createEvent": {
+        "title": "イベント/告知を作成",
+        "organizing": "主催する",
+        "looking": "行きたい / パートナーが必要",
+        "organizerHint": "主催者である必要はありません。",
+        "kinds": {
+            "TOURNAMENT": "外部トーナメント",
+            "LEAGUE": "外部リーグ",
+            "CAMP": "キャンプ"
+        },
+        "kindLabel": "これは何ですか？",
+        "heroes": "写真",
+        "heroesHint": "ポスター写真を追加してください。スライドショーで表示されます。",
+        "venue": "会場",
+        "venueText": "住所または場所の名前",
+        "venueOrClub": "クラブ（任意）",
+        "selectClub": "クラブを選択してください",
+        "selectCity": "都市",
+        "clearClub": "テキストで指定",
+        "dateRange": "日程",
+        "start": "開始",
+        "end": "終了",
+        "registerUrl": "申込リンク（任意）",
+        "playerLevel": "プレイヤーレベル",
+        "name": "名前",
+        "namePlaceholder": "イベント名",
+        "description": "説明",
+        "descriptionPlaceholder": "どんな内容ですか？",
+        "priceAmount": "金額",
+        "save": "保存",
+        "nameRequired": "名前は必須です",
+        "datesInvalid": "終了は開始より後にしてください",
+        "urlInvalid": "http(s)のリンクを使ってください",
+        "create": "イベント/告知を投稿",
+        "pendingSubmitted": "承認待ちで送信しました。承認されるまであなたと管理者だけが見られます。"
+    }
+}

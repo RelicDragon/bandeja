@@ -46,12 +46,23 @@
       "TRAINING": "Trénink",
       "TOURNAMENT": "Turnaj",
       "LEAGUE": "Liga",
-      "LEAGUE_SEASON": "Sezóna ligy"
+      "LEAGUE_SEASON": "Sezóna ligy",
+      "EVENT": "Událost/Inzerát"
     },
     "noGamesFound": "Žádné zápasy nenalezeny",
     "noTrainingFound": "Žádný trénink nenalezen",
     "noTournamentFound": "Žádný turnaj nenalezen",
     "noLeaguesFound": "Žádné ligy nenalezeny",
+    "eventKinds": {
+      "TOURNAMENT": "Externí turnaj",
+      "LEAGUE": "Externí liga",
+      "CAMP": "Kemp"
+    },
+    "upcomingEvents": "Události",
+    "otherEvents": "Ostatní události",
+    "seeAllEvents": "Zobrazit vše",
+    "goingNeedPartner": "{{going}} jde · {{looking}} hledá partnera",
+    "noEventsFound": "Žádné události nenalezeny",
     "suitableGamesForMe": "Vhodné zápasy pro mě",
     "haveAvailableSlots": "S volnými místy",
     "haveAvailableSlotsHint": "Skrýt plné hry, ke kterým se nemůžete připojit",

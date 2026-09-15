@@ -29,6 +29,7 @@ export const LeaveGameConfirmationModal = ({
       'LEAGUE_SEASON': 'gameDetails.leaveGameConfirmationLeagueSeason',
       'BAR': 'gameDetails.leaveGameConfirmationBar',
       'TRAINING': 'gameDetails.leaveGameConfirmationTraining',
+      'EVENT': 'gameDetails.leaveGameConfirmationEvent',
     };
     const key = keyMap[entityType] || 'gameDetails.leaveGameConfirmation';
     return t(key);

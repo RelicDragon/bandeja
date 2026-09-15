@@ -112,6 +112,53 @@ test.describe('find category filters @auth', () => {
     }
   });
 
+  test('F-86 entity chips multi-select', async ({ page }) => {
+    const { token, user } = await e2eLogin();
+    const gameLabel = `[E2E] F-86 game ${Date.now()}`;
+    const tourneyLabel = `[E2E] F-86 tourney ${Date.now()}`;
+    const { id: gameId } = await createGameViaApi(token, user.id, {
+      entityType: 'GAME',
+      participants: [],
+      isPublic: true,
+      name: gameLabel,
+    });
+    let tourneyId = '';
+    try {
+      const created = await createGameViaApi(token, user.id, {
+        entityType: 'TOURNAMENT',
+        participants: [user.id],
+        isPublic: true,
+        name: tourneyLabel,
+      });
+      tourneyId = created.id;
+
+      const find = new FindPage(page);
+      await find.goto();
+      const afterGame = find.waitForAvailableGamesLoaded();
+      await find.toggleEntityFilter('game');
+      await afterGame;
+      await find.expectEntityFilterActive('game', true);
+      const afterTourney = find.waitForAvailableGamesLoaded();
+      await find.toggleEntityFilter('tournament');
+      await afterTourney;
+      await find.expectEntityFilterActive('game', true);
+      await find.expectEntityFilterActive('tournament', true);
+      await find.expectEntityFilterActive('training', false);
+      await find.expectEntityFilterActive('leagues', false);
+      await find.expectEntityFilterActive('events', false);
+      await expect(find.gameCards().filter({ hasText: gameLabel })).toBeVisible({ timeout: 20_000 });
+      await expect(find.gameCards().filter({ hasText: tourneyLabel }).first()).toBeVisible({
+        timeout: 20_000,
+      });
+      await find.toggleEntityFilter('game');
+      await find.expectEntityFilterActive('game', false);
+      await find.expectEntityFilterActive('tournament', true);
+    } finally {
+      await deleteGameViaApi(token, gameId);
+      if (tourneyId) await deleteGameViaApi(token, tourneyId);
+    }
+  });
+
   test('F-12 combined filters', async ({ page }) => {
     const { token, user } = await e2eLogin();
     const label = `[E2E] F-12 ${Date.now()}`;

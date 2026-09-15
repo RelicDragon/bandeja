@@ -1,0 +1,38 @@
+{
+    "createEvent": {
+        "title": "إنشاء فعالية/إعلان",
+        "organizing": "أنا أنظّمها",
+        "looking": "أريد الذهاب / أحتاج شريكًا",
+        "organizerHint": "لا يلزم أن تكون المنظم.",
+        "kinds": {
+            "TOURNAMENT": "بطولة خارجية",
+            "LEAGUE": "دوري خارجي",
+            "CAMP": "معسكر"
+        },
+        "kindLabel": "ما هذا؟",
+        "heroes": "صور",
+        "heroesHint": "أضف صور الملصق. تظهر كعرض شرائح.",
+        "venue": "المكان",
+        "venueText": "العنوان أو اسم المكان",
+        "venueOrClub": "النادي (اختياري)",
+        "selectClub": "اختر النادي",
+        "selectCity": "المدينة",
+        "clearClub": "استخدم نصًا",
+        "dateRange": "التواريخ",
+        "start": "يبدأ",
+        "end": "ينتهي",
+        "registerUrl": "رابط التسجيل (اختياري)",
+        "playerLevel": "مستوى اللاعب",
+        "name": "الاسم",
+        "namePlaceholder": "اسم الفعالية",
+        "description": "الوصف",
+        "descriptionPlaceholder": "ماذا سيحدث؟",
+        "priceAmount": "المبلغ",
+        "save": "حفظ",
+        "nameRequired": "الاسم مطلوب",
+        "datesInvalid": "يجب أن يكون الانتهاء بعد البداية",
+        "urlInvalid": "استخدم رابط http(s)",
+        "create": "نشر الفعالية/الإعلان",
+        "pendingSubmitted": "أُرسل للموافقة. أنت والمشرفون فقط ترونه حتى يُوافق عليه."
+    }
+}

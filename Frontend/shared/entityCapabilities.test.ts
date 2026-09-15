@@ -1,0 +1,46 @@
+import { describe, expect, it } from 'vitest';
+import {
+  EVENT_UNBOUNDED_ROSTER,
+  getEntityCapabilities,
+  isEventEntity,
+} from './entityCapabilities';
+
+describe('entityCapabilities', () => {
+  it('EVENT is a listing with partner board and no rating/results/radar', () => {
+    const event = getEntityCapabilities('EVENT');
+    expect(event.hasResults).toBe(false);
+    expect(event.hasRating).toBe(false);
+    expect(event.hasBooking).toBe(false);
+    expect(event.hasLevelGate).toBe(false);
+    expect(event.hasLevelBand).toBe(true);
+    expect(event.hasOccupancy).toBe(false);
+    expect(event.hasPlayIntentRadar).toBe(false);
+    expect(event.hasPartnerBoard).toBe(true);
+    expect(event.archiveByTime).toBe(true);
+    expect(event.unboundedRoster).toBe(true);
+    expect(event.alwaysPublic).toBe(true);
+    expect(event.alwaysDirectJoin).toBe(true);
+    expect(event.excludeFromCompetitiveStats).toBe(true);
+    expect(event.skipPlayIntentNotify).toBe(true);
+    expect(EVENT_UNBOUNDED_ROSTER).toBe(999);
+    expect(isEventEntity('EVENT')).toBe(true);
+  });
+
+  it('keeps BAR radar and GAME results occupancy', () => {
+    const bar = getEntityCapabilities('BAR');
+    expect(bar.hasLevelBand).toBe(false);
+    expect(bar.hasPlayIntentRadar).toBe(true);
+    expect(bar.archiveByTime).toBe(true);
+    expect(bar.excludeFromCompetitiveStats).toBe(true);
+    expect(bar.hasPartnerBoard).toBe(false);
+
+    const game = getEntityCapabilities('GAME');
+    expect(game.hasResults).toBe(true);
+    expect(game.hasOccupancy).toBe(true);
+    expect(game.archiveByTime).toBe(false);
+
+    const training = getEntityCapabilities('TRAINING');
+    expect(training.hasPlayIntentRadar).toBe(false);
+    expect(training.skipPlayIntentNotify).toBe(true);
+  });
+});

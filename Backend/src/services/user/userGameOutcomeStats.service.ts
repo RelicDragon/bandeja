@@ -1,4 +1,4 @@
-import { Sport } from '@prisma/client';
+import { EntityType, Sport } from '@prisma/client';
 import prisma from '../../config/database';
 
 export type GamesStatBucket = {
@@ -13,7 +13,10 @@ function outcomeWhere(userId: string, sport?: Sport, createdAtGte?: Date) {
   return {
     userId,
     ...(createdAtGte ? { createdAt: { gte: createdAtGte } } : {}),
-    ...(sport ? { game: { sport } } : {}),
+    game: {
+      entityType: { notIn: [EntityType.BAR, EntityType.LEAGUE_SEASON, EntityType.EVENT] },
+      ...(sport ? { sport } : {}),
+    },
   };
 }
 

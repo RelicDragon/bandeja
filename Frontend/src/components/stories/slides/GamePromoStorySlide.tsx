@@ -24,7 +24,9 @@ export function GamePromoStorySlide({ segment, onOpenGame }: GamePromoStorySlide
         </div>
 
         <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/85">
-          {t('stories.newGame')}
+          {game.entityType === 'EVENT'
+            ? t('games.entityTypes.EVENT', { defaultValue: 'Event/Ad' })
+            : t('stories.newGame')}
         </p>
 
         <h2 className="text-xl font-bold leading-snug text-white drop-shadow-sm">
@@ -42,7 +44,7 @@ export function GamePromoStorySlide({ segment, onOpenGame }: GamePromoStorySlide
               {[game.clubName, game.cityName].filter(Boolean).join(', ')}
             </p>
           )}
-          {(game.entityType === 'BAR' || game.maxParticipants != null) && (
+          {(game.entityType === 'BAR' || (game.entityType !== 'EVENT' && game.maxParticipants != null)) && (
             <p className="flex items-center justify-center gap-2">
               <Users size={16} className="shrink-0 text-white/75" />
               {game.entityType === 'BAR'
@@ -63,7 +65,9 @@ export function GamePromoStorySlide({ segment, onOpenGame }: GamePromoStorySlide
             onOpenGame(game.id);
           }}
         >
-          {t('stories.viewGame')}
+          {game.entityType === 'EVENT'
+            ? t('stories.viewEvent', { defaultValue: 'View Event/Ad' })
+            : t('stories.viewGame')}
         </Button>
       </div>
     </StoryActivitySlideShell>

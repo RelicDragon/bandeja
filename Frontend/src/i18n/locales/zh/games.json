@@ -46,12 +46,23 @@
       "TRAINING": "训练",
       "TOURNAMENT": "锦标赛",
       "LEAGUE": "联赛",
-      "LEAGUE_SEASON": "联赛赛季"
+      "LEAGUE_SEASON": "联赛赛季",
+      "EVENT": "活动/广告"
     },
     "noGamesFound": "未找到比赛",
     "noTrainingFound": "未找到训练",
     "noTournamentFound": "未找到锦标赛",
     "noLeaguesFound": "未找到联赛",
+    "eventKinds": {
+      "TOURNAMENT": "外部锦标赛",
+      "LEAGUE": "外部联赛",
+      "CAMP": "训练营"
+    },
+    "upcomingEvents": "活动",
+    "otherEvents": "其他活动",
+    "seeAllEvents": "全部",
+    "goingNeedPartner": "{{going}} 人参加 · {{looking}} 人找搭档",
+    "noEventsFound": "未找到活动",
     "suitableGamesForMe": "适合我的比赛",
     "haveAvailableSlots": "有空位",
     "haveAvailableSlotsHint": "隐藏你无法加入的已满比赛",

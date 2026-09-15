@@ -46,12 +46,23 @@
       "TRAINING": "การฝึกอบรม",
       "TOURNAMENT": "ทัวร์นาเมนต์",
       "LEAGUE": "ลีก",
-      "LEAGUE_SEASON": "ฤดูกาลลีก"
+      "LEAGUE_SEASON": "ฤดูกาลลีก",
+      "EVENT": "อีเวนต์/ประกาศ"
     },
     "noGamesFound": "ไม่พบเกม",
     "noTrainingFound": "ไม่พบการฝึกอบรม",
     "noTournamentFound": "ไม่พบการแข่งขัน",
     "noLeaguesFound": "ไม่พบลีก",
+    "eventKinds": {
+      "TOURNAMENT": "ทัวร์นาเมนต์ภายนอก",
+      "LEAGUE": "ลีกภายนอก",
+      "CAMP": "แคมป์"
+    },
+    "upcomingEvents": "อีเวนต์",
+    "otherEvents": "อีเวนต์อื่น ๆ",
+    "seeAllEvents": "ดูทั้งหมด",
+    "goingNeedPartner": "{{going}} จะไป · {{looking}} หาคู่",
+    "noEventsFound": "ไม่พบอีเวนต์",
     "suitableGamesForMe": "เกมที่เหมาะกับฉัน",
     "haveAvailableSlots": "มีช่องว่าง",
     "haveAvailableSlotsHint": "ซ่อนเกมเต็มรูปแบบที่คุณไม่สามารถเข้าร่วมได้",

@@ -49,6 +49,7 @@ import { grantPartnerAchievementsForFinalizedGame } from '../achievements/partne
 import { grantTieBreakAchievementsForFinalizedGame } from '../achievements/tieBreakGrant.service';
 import { invalidateAchievementStatsForGame } from '../achievements/achievementStats.service';
 import { normalizeGameRatingFields } from './normalizeGameRatingFields';
+import { applyEventUpdateInvariants } from './eventCreateDefaults';
 
 /** Only scalar fields — nested writes / API echo keys force Prisma onto GameUpdateInput where courtId/clubId are invalid. */
 const GAME_UNCHECKED_SCALAR_KEYS = new Set<string>([
@@ -111,6 +112,9 @@ const GAME_UNCHECKED_SCALAR_KEYS = new Set<string>([
   'priceTotal',
   'priceType',
   'priceCurrency',
+  'eventKind',
+  'venueText',
+  'externalUrl',
   'metadata',
   'lastMessagePreview',
   'sport',
@@ -186,10 +190,24 @@ export class GameUpdateService {
       throw new ApiError(404, 'Game not found');
     }
 
-    if (game.entityType === EntityType.TRAINING) {
+    if (game.entityType === EntityType.TRAINING || game.entityType === EntityType.EVENT) {
       for (const key of TRAINING_STRIPPED_FORMAT_KEYS) {
         delete data[key];
       }
+    }
+
+    if (data.entityType !== undefined && data.entityType !== game.entityType) {
+      throw new ApiError(400, 'entityType cannot be changed');
+    }
+    delete data.entityType;
+    if (game.entityType === EntityType.EVENT) {
+      delete data.maxParticipants;
+      delete data.resultsStatus;
+      delete data.anyoneCanInvite;
+      delete data.timeIsSet;
+      delete data.courtId;
+      delete data.courtIds;
+      delete data.hasBookedCourt;
     }
 
     const maxParticipants = data.maxParticipants !== undefined ? data.maxParticipants : game.maxParticipants;
@@ -212,15 +230,18 @@ export class GameUpdateService {
         ? resolvePlayersPerMatch(sportForValidation, data.playersPerMatch)
         : game.playersPerMatch;
 
-    const formatNormalized = normalizeGameFormatPatch({
-      existingGame: {
-        ...game,
-        sport: sportForValidation,
-        maxParticipants,
-      },
-      patch: data,
-      entityType: game.entityType,
-    });
+    const formatNormalized =
+      game.entityType === EntityType.EVENT
+        ? {}
+        : normalizeGameFormatPatch({
+            existingGame: {
+              ...game,
+              sport: sportForValidation,
+              maxParticipants,
+            },
+            patch: data,
+            entityType: game.entityType,
+          });
 
     const updateData: any = { ...data, ...formatNormalized };
 
@@ -234,6 +255,28 @@ export class GameUpdateService {
         updateData,
         normalizeGameRatingFields({ entityType: EntityType.BAR }),
       );
+    }
+    if (game.entityType === EntityType.EVENT) {
+      applyEventUpdateInvariants(data);
+      applyEventUpdateInvariants(updateData);
+      updateData.isPublic = true;
+      updateData.allowDirectJoin = true;
+      updateData.resultsByAnyone = false;
+      updateData.hasBookedCourt = false;
+      updateData.affectsRating = false;
+      updateData.anyoneCanInvite = false;
+      updateData.timeIsSet = true;
+      updateData.courtId = null;
+      Object.assign(
+        updateData,
+        normalizeGameRatingFields({
+          entityType: EntityType.EVENT,
+          minLevel: data.minLevel !== undefined ? data.minLevel : undefined,
+          maxLevel: data.maxLevel !== undefined ? data.maxLevel : undefined,
+        }),
+      );
+      if (data.minLevel === undefined) delete updateData.minLevel;
+      if (data.maxLevel === undefined) delete updateData.maxLevel;
     }
     validateGameForSport({
       sport: sportForValidation,

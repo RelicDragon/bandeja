@@ -46,12 +46,23 @@
       "TRAINING": "Entrenamiento",
       "TOURNAMENT": "Torneo",
       "LEAGUE": "Liga",
-      "LEAGUE_SEASON": "Temporada de Liga"
+      "LEAGUE_SEASON": "Temporada de Liga",
+      "EVENT": "Evento/Anuncio"
     },
     "noGamesFound": "No se encontraron juegos",
     "noTrainingFound": "No se encontraron entrenamientos",
     "noTournamentFound": "No se encontró torneo",
     "noLeaguesFound": "No se encontraron ligas",
+    "eventKinds": {
+      "TOURNAMENT": "Torneo externo",
+      "LEAGUE": "Liga externa",
+      "CAMP": "Campamento"
+    },
+    "upcomingEvents": "Eventos",
+    "otherEvents": "Otros eventos",
+    "seeAllEvents": "Ver todos",
+    "goingNeedPartner": "{{going}} van · {{looking}} buscan pareja",
+    "noEventsFound": "No se encontraron eventos",
     "suitableGamesForMe": "Juegos adecuados para mí",
     "haveAvailableSlots": "Con plazas disponibles",
     "haveAvailableSlotsHint": "Ocultar partidos llenos a los que no puedes unirte",

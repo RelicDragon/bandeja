@@ -58,6 +58,9 @@ export const FIND_CARD_GAME_SELECT = {
   hasFixedTeams: true,
   genderTeams: true,
   status: true,
+  eventKind: true,
+  eventApprovalStatus: true,
+  venueText: true,
   resultsStatus: true,
   photosCount: true,
   forbidOthersPhotosView: true,
@@ -111,6 +114,7 @@ const findCardParticipantSelect = {
   gameId: true,
   role: true,
   status: true,
+  lookingForPartner: true,
   user: {
     select: FIND_CARD_USER_SELECT,
   },
@@ -123,6 +127,7 @@ function findCardParticipantsWhere(viewerUserId?: string): Prisma.GameParticipan
   const or: Prisma.GameParticipantWhereInput[] = [
     { status: { in: [...FIND_CARD_PARTICIPANT_STATUSES] } },
     { role: { in: ['OWNER', 'ADMIN'] } },
+    { lookingForPartner: true },
   ];
   if (viewerUserId) {
     or.push({ userId: viewerUserId });
@@ -187,6 +192,15 @@ const findCardRelationSelect = {
     },
   },
   mainPhoto: MAIN_PHOTO_RELATION_SELECT,
+  eventHeroes: {
+    orderBy: { sortOrder: 'asc' as const },
+    select: {
+      id: true,
+      originalUrl: true,
+      thumbnailUrl: true,
+      sortOrder: true,
+    },
+  },
 } as const;
 
 export type AvailableGamesCardSelectOptions = {

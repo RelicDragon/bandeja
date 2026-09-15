@@ -1,6 +1,6 @@
-type EntityType = 'BAR' | 'TRAINING' | 'TOURNAMENT' | 'LEAGUE' | 'LEAGUE_SEASON';
+type EntityType = 'BAR' | 'TRAINING' | 'TOURNAMENT' | 'LEAGUE' | 'LEAGUE_SEASON' | 'EVENT';
 
-const ENTITY_TYPES: EntityType[] = ['BAR', 'TRAINING', 'TOURNAMENT', 'LEAGUE', 'LEAGUE_SEASON'];
+const ENTITY_TYPES: EntityType[] = ['BAR', 'TRAINING', 'TOURNAMENT', 'LEAGUE', 'LEAGUE_SEASON', 'EVENT'];
 
 const ENTITY_MESSAGE_TYPES = [
   'USER_JOINED_GAME',
@@ -304,6 +304,18 @@ const ENTITY_OVERRIDES: Record<string, Record<EntityType, EntityMessageSet>> = {
       GAME_DATE_TIME_CHANGED: 'League season date/time changed to {{dateTime}}',
       GAME_BOOKING_STATUS_CHANGED: 'Court booking status changed to {{bookingStatus}}',
     },
+    EVENT: {
+      USER_JOINED_GAME: '{{userName}} is going to the event',
+      USER_LEFT_GAME: '{{userName}} is no longer going to the event',
+      USER_ACCEPTED_INVITE: '{{userName}} is going to the event',
+      USER_JOINED_JOIN_QUEUE: '{{userName}} requested to join the event',
+      USER_ACCEPTED_JOIN_QUEUE: '{{userName}} is going to the event',
+      USER_KICKED: '{{userName}} was removed from the event',
+      OWNERSHIP_TRANSFERRED: '{{newOwnerName}} is now the owner of the event',
+      GAME_CLUB_CHANGED: 'Event location changed to {{clubName}}',
+      GAME_DATE_TIME_CHANGED: 'Event date/time changed to {{dateTime}}',
+      GAME_BOOKING_STATUS_CHANGED: 'Event venue changed to {{bookingStatus}}',
+    },
   },
   ru: {
     BAR: {
@@ -365,6 +377,18 @@ const ENTITY_OVERRIDES: Record<string, Record<EntityType, EntityMessageSet>> = {
       GAME_CLUB_CHANGED: 'Место сезона лиги изменено на {{clubName}}',
       GAME_DATE_TIME_CHANGED: 'Дата/время сезона лиги изменено на {{dateTime}}',
       GAME_BOOKING_STATUS_CHANGED: 'Статус бронирования корта изменён на {{bookingStatus}}',
+    },
+    EVENT: {
+      USER_JOINED_GAME: '{{userName}} идёт на событие',
+      USER_LEFT_GAME: '{{userName}} больше не идёт на событие',
+      USER_ACCEPTED_INVITE: '{{userName}} идёт на событие',
+      USER_JOINED_JOIN_QUEUE: '{{userName}} запросил участие в событии',
+      USER_ACCEPTED_JOIN_QUEUE: '{{userName}} идёт на событие',
+      USER_KICKED: '{{userName}} был удалён из события',
+      OWNERSHIP_TRANSFERRED: '{{newOwnerName}} теперь владелец события',
+      GAME_CLUB_CHANGED: 'Место события изменено на {{clubName}}',
+      GAME_DATE_TIME_CHANGED: 'Дата/время события изменено на {{dateTime}}',
+      GAME_BOOKING_STATUS_CHANGED: 'Место события изменено на {{bookingStatus}}',
     },
   },
   sr: {
@@ -428,6 +452,18 @@ const ENTITY_OVERRIDES: Record<string, Record<EntityType, EntityMessageSet>> = {
       GAME_DATE_TIME_CHANGED: 'Datum/vreme sezone lige promenjeno na {{dateTime}}',
       GAME_BOOKING_STATUS_CHANGED: 'Status rezervacije terena promenjen na {{bookingStatus}}',
     },
+    EVENT: {
+      USER_JOINED_GAME: '{{userName}} ide na događaj',
+      USER_LEFT_GAME: '{{userName}} više ne ide na događaj',
+      USER_ACCEPTED_INVITE: '{{userName}} ide na događaj',
+      USER_JOINED_JOIN_QUEUE: '{{userName}} je zatražio da se pridruži događaju',
+      USER_ACCEPTED_JOIN_QUEUE: '{{userName}} ide na događaj',
+      USER_KICKED: '{{userName}} je uklonjen sa događaja',
+      OWNERSHIP_TRANSFERRED: '{{newOwnerName}} je sada vlasnik događaja',
+      GAME_CLUB_CHANGED: 'Lokacija događaja promenjena na {{clubName}}',
+      GAME_DATE_TIME_CHANGED: 'Datum/vreme događaja promenjeno na {{dateTime}}',
+      GAME_BOOKING_STATUS_CHANGED: 'Mesto događaja promenjeno na {{bookingStatus}}',
+    },
   },
   es: {
     BAR: {
@@ -489,6 +525,18 @@ const ENTITY_OVERRIDES: Record<string, Record<EntityType, EntityMessageSet>> = {
       GAME_CLUB_CHANGED: 'Ubicación de la temporada de liga cambiada a {{clubName}}',
       GAME_DATE_TIME_CHANGED: 'Fecha/hora de la temporada de liga cambiada a {{dateTime}}',
       GAME_BOOKING_STATUS_CHANGED: 'Estado de reserva de pista cambiado a {{bookingStatus}}',
+    },
+    EVENT: {
+      USER_JOINED_GAME: '{{userName}} va al evento',
+      USER_LEFT_GAME: '{{userName}} ya no va al evento',
+      USER_ACCEPTED_INVITE: '{{userName}} va al evento',
+      USER_JOINED_JOIN_QUEUE: '{{userName}} solicitó unirse al evento',
+      USER_ACCEPTED_JOIN_QUEUE: '{{userName}} va al evento',
+      USER_KICKED: '{{userName}} fue eliminado del evento',
+      OWNERSHIP_TRANSFERRED: '{{newOwnerName}} es ahora el dueño del evento',
+      GAME_CLUB_CHANGED: 'Ubicación del evento cambiada a {{clubName}}',
+      GAME_DATE_TIME_CHANGED: 'Fecha/hora del evento cambiada a {{dateTime}}',
+      GAME_BOOKING_STATUS_CHANGED: 'Lugar del evento cambiado a {{bookingStatus}}',
     },
   },
   cs: {
@@ -552,6 +600,18 @@ const ENTITY_OVERRIDES: Record<string, Record<EntityType, EntityMessageSet>> = {
       GAME_DATE_TIME_CHANGED: 'Datum/čas sezóny ligy změněn na {{dateTime}}',
       GAME_BOOKING_STATUS_CHANGED: 'Stav rezervace kurtu změněn na {{bookingStatus}}',
     },
+    EVENT: {
+      USER_JOINED_GAME: '{{userName}} jde na událost',
+      USER_LEFT_GAME: '{{userName}} už na událost nejde',
+      USER_ACCEPTED_INVITE: '{{userName}} jde na událost',
+      USER_JOINED_JOIN_QUEUE: '{{userName}} požádal o účast na události',
+      USER_ACCEPTED_JOIN_QUEUE: '{{userName}} jde na událost',
+      USER_KICKED: '{{userName}} byl z události odstraněn',
+      OWNERSHIP_TRANSFERRED: '{{newOwnerName}} je nyní vlastníkem události',
+      GAME_CLUB_CHANGED: 'Místo události změněno na {{clubName}}',
+      GAME_DATE_TIME_CHANGED: 'Datum/čas události změněn na {{dateTime}}',
+      GAME_BOOKING_STATUS_CHANGED: 'Místo události změněno na {{bookingStatus}}',
+    },
   },
   ar: {
     BAR: {
@@ -613,6 +673,18 @@ const ENTITY_OVERRIDES: Record<string, Record<EntityType, EntityMessageSet>> = {
       GAME_CLUB_CHANGED: 'تم تغيير موقع موسم الدوري إلى {{clubName}}',
       GAME_DATE_TIME_CHANGED: 'تم تغيير تاريخ/وقت موسم الدوري إلى {{dateTime}}',
       GAME_BOOKING_STATUS_CHANGED: 'تم تغيير حالة حجز الملعب إلى {{bookingStatus}}',
+    },
+    EVENT: {
+      USER_JOINED_GAME: '{{userName}} سيذهب إلى الفعالية',
+      USER_LEFT_GAME: '{{userName}} لم يعد ذاهباً إلى الفعالية',
+      USER_ACCEPTED_INVITE: '{{userName}} سيذهب إلى الفعالية',
+      USER_JOINED_JOIN_QUEUE: '{{userName}} طلب الانضمام إلى الفعالية',
+      USER_ACCEPTED_JOIN_QUEUE: '{{userName}} سيذهب إلى الفعالية',
+      USER_KICKED: '{{userName}} أُزيل من الفعالية',
+      OWNERSHIP_TRANSFERRED: '{{newOwnerName}} أصبح مالك الفعالية',
+      GAME_CLUB_CHANGED: 'تم تغيير موقع الفعالية إلى {{clubName}}',
+      GAME_DATE_TIME_CHANGED: 'تم تغيير تاريخ/وقت الفعالية إلى {{dateTime}}',
+      GAME_BOOKING_STATUS_CHANGED: 'تم تغيير مكان الفعالية إلى {{bookingStatus}}',
     },
   },
   zh: {
@@ -676,6 +748,18 @@ const ENTITY_OVERRIDES: Record<string, Record<EntityType, EntityMessageSet>> = {
       GAME_DATE_TIME_CHANGED: '联赛赛季日期/时间已更改为 {{dateTime}}',
       GAME_BOOKING_STATUS_CHANGED: '场地预订状态已更改为 {{bookingStatus}}',
     },
+    EVENT: {
+      USER_JOINED_GAME: '{{userName}}将参加活动',
+      USER_LEFT_GAME: '{{userName}}不再参加活动',
+      USER_ACCEPTED_INVITE: '{{userName}}将参加活动',
+      USER_JOINED_JOIN_QUEUE: '{{userName}}申请参加活动',
+      USER_ACCEPTED_JOIN_QUEUE: '{{userName}}将参加活动',
+      USER_KICKED: '{{userName}}已从活动中移除',
+      OWNERSHIP_TRANSFERRED: '{{newOwnerName}}现在是活动所有者',
+      GAME_CLUB_CHANGED: '活动地点已更改为{{clubName}}',
+      GAME_DATE_TIME_CHANGED: '活动日期/时间已更改为{{dateTime}}',
+      GAME_BOOKING_STATUS_CHANGED: '活动场地已更改为{{bookingStatus}}',
+    },
   },
   id: {
     BAR: {
@@ -737,6 +821,18 @@ const ENTITY_OVERRIDES: Record<string, Record<EntityType, EntityMessageSet>> = {
       GAME_CLUB_CHANGED: 'Lokasi musim liga diubah ke {{clubName}}',
       GAME_DATE_TIME_CHANGED: 'Tanggal/waktu musim liga diubah ke {{dateTime}}',
       GAME_BOOKING_STATUS_CHANGED: 'Status pemesanan lapangan diubah ke {{bookingStatus}}',
+    },
+    EVENT: {
+      USER_JOINED_GAME: '{{userName}} akan ke acara',
+      USER_LEFT_GAME: '{{userName}} tidak jadi ke acara',
+      USER_ACCEPTED_INVITE: '{{userName}} akan ke acara',
+      USER_JOINED_JOIN_QUEUE: '{{userName}} meminta bergabung ke acara',
+      USER_ACCEPTED_JOIN_QUEUE: '{{userName}} akan ke acara',
+      USER_KICKED: '{{userName}} dikeluarkan dari acara',
+      OWNERSHIP_TRANSFERRED: '{{newOwnerName}} sekarang pemilik acara',
+      GAME_CLUB_CHANGED: 'Lokasi acara diubah ke {{clubName}}',
+      GAME_DATE_TIME_CHANGED: 'Tanggal/waktu acara diubah ke {{dateTime}}',
+      GAME_BOOKING_STATUS_CHANGED: 'Tempat acara diubah ke {{bookingStatus}}',
     },
   },
   hi: {
@@ -800,6 +896,18 @@ const ENTITY_OVERRIDES: Record<string, Record<EntityType, EntityMessageSet>> = {
       GAME_DATE_TIME_CHANGED: 'लीग सीज़न तिथि/समय {{dateTime}} में बदला गया',
       GAME_BOOKING_STATUS_CHANGED: 'कोर्ट बुकिंग स्थिति {{bookingStatus}} में बदली गई',
     },
+    EVENT: {
+      USER_JOINED_GAME: '{{userName}} इवेंट में जा रहे हैं',
+      USER_LEFT_GAME: '{{userName}} अब इवेंट में नहीं जा रहे',
+      USER_ACCEPTED_INVITE: '{{userName}} इवेंट में जा रहे हैं',
+      USER_JOINED_JOIN_QUEUE: '{{userName}} ने इवेंट में शामिल होने का अनुरोध किया',
+      USER_ACCEPTED_JOIN_QUEUE: '{{userName}} इवेंट में जा रहे हैं',
+      USER_KICKED: '{{userName}} को इवेंट से हटाया गया',
+      OWNERSHIP_TRANSFERRED: '{{newOwnerName}} अब इवेंट के मालिक हैं',
+      GAME_CLUB_CHANGED: 'इवेंट स्थान {{clubName}} में बदला गया',
+      GAME_DATE_TIME_CHANGED: 'इवेंट दिनांक/समय {{dateTime}} में बदला गया',
+      GAME_BOOKING_STATUS_CHANGED: 'इवेंट स्थल {{bookingStatus}} में बदला गया',
+    },
   },
   th: {
     BAR: {
@@ -862,6 +970,18 @@ const ENTITY_OVERRIDES: Record<string, Record<EntityType, EntityMessageSet>> = {
       GAME_DATE_TIME_CHANGED: 'เปลี่ยนวัน/เวลาฤดูกาลลีกเป็น {{dateTime}}',
       GAME_BOOKING_STATUS_CHANGED: 'เปลี่ยนสถานะการจองคอร์ทเป็น {{bookingStatus}}',
     },
+    EVENT: {
+      USER_JOINED_GAME: '{{userName}} จะไปงานอีเวนต์',
+      USER_LEFT_GAME: '{{userName}} จะไม่ไปงานอีเวนต์แล้ว',
+      USER_ACCEPTED_INVITE: '{{userName}} จะไปงานอีเวนต์',
+      USER_JOINED_JOIN_QUEUE: '{{userName}} ขอเข้าร่วมงานอีเวนต์',
+      USER_ACCEPTED_JOIN_QUEUE: '{{userName}} จะไปงานอีเวนต์',
+      USER_KICKED: '{{userName}} ถูกนำออกจากงานอีเวนต์',
+      OWNERSHIP_TRANSFERRED: '{{newOwnerName}} เป็นเจ้าของงานอีเวนต์แล้ว',
+      GAME_CLUB_CHANGED: 'สถานที่อีเวนต์เปลี่ยนเป็น {{clubName}}',
+      GAME_DATE_TIME_CHANGED: 'วัน/เวลาอีเวนต์เปลี่ยนเป็น {{dateTime}}',
+      GAME_BOOKING_STATUS_CHANGED: 'สถานที่อีเวนต์เปลี่ยนเป็น {{bookingStatus}}',
+    },
   },
   ja: {
     BAR: {
@@ -923,6 +1043,18 @@ const ENTITY_OVERRIDES: Record<string, Record<EntityType, EntityMessageSet>> = {
       GAME_CLUB_CHANGED: 'リーグシーズン会場が{{clubName}}に変更されました',
       GAME_DATE_TIME_CHANGED: 'リーグシーズン日時が{{dateTime}}に変更されました',
       GAME_BOOKING_STATUS_CHANGED: 'コート予約ステータスが{{bookingStatus}}に変更されました',
+    },
+    EVENT: {
+      USER_JOINED_GAME: '{{userName}}がイベントに参加します',
+      USER_LEFT_GAME: '{{userName}}はイベントに参加しなくなりました',
+      USER_ACCEPTED_INVITE: '{{userName}}がイベントに参加します',
+      USER_JOINED_JOIN_QUEUE: '{{userName}}がイベントへの参加をリクエストしました',
+      USER_ACCEPTED_JOIN_QUEUE: '{{userName}}がイベントに参加します',
+      USER_KICKED: '{{userName}}がイベントから削除されました',
+      OWNERSHIP_TRANSFERRED: '{{newOwnerName}}がイベントのオーナーになりました',
+      GAME_CLUB_CHANGED: 'イベント会場が{{clubName}}に変更されました',
+      GAME_DATE_TIME_CHANGED: 'イベント日時が{{dateTime}}に変更されました',
+      GAME_BOOKING_STATUS_CHANGED: 'イベント会場が{{bookingStatus}}に変更されました',
     },
   },
 };

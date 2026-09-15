@@ -1,0 +1,38 @@
+{
+    "createEvent": {
+        "title": "สร้างอีเวนต์/ประกาศ",
+        "organizing": "ฉันเป็นผู้จัด",
+        "looking": "อยากไป / ต้องการคู่",
+        "organizerHint": "ไม่จำเป็นต้องเป็นผู้จัด",
+        "kinds": {
+            "TOURNAMENT": "ทัวร์นาเมนต์ภายนอก",
+            "LEAGUE": "ลีกภายนอก",
+            "CAMP": "แคมป์"
+        },
+        "kindLabel": "นี่คืออะไร?",
+        "heroes": "รูปภาพ",
+        "heroesHint": "เพิ่มรูปโปสเตอร์ จะแสดงเป็นสไลด์โชว์",
+        "venue": "สถานที่",
+        "venueText": "ที่อยู่หรือชื่อสถานที่",
+        "venueOrClub": "คลับ (ไม่บังคับ)",
+        "selectClub": "เลือกคลับ",
+        "selectCity": "เมือง",
+        "clearClub": "ใช้ข้อความแทน",
+        "dateRange": "วันที่",
+        "start": "เริ่ม",
+        "end": "สิ้นสุด",
+        "registerUrl": "ลิงก์สมัคร (ไม่บังคับ)",
+        "playerLevel": "ระดับผู้เล่น",
+        "name": "ชื่อ",
+        "namePlaceholder": "ชื่ออีเวนต์",
+        "description": "คำอธิบาย",
+        "descriptionPlaceholder": "จะเกิดอะไรขึ้น?",
+        "priceAmount": "จำนวนเงิน",
+        "save": "บันทึก",
+        "nameRequired": "ต้องระบุชื่อ",
+        "datesInvalid": "เวลาสิ้นสุดต้องอยู่หลังเวลาเริ่ม",
+        "urlInvalid": "ใช้ลิงก์ http(s)",
+        "create": "โพสต์อีเวนต์/ประกาศ",
+        "pendingSubmitted": "ส่งเพื่อรออนุมัติ จนกว่าจะอนุมัติ มีแค่คุณกับแอดมินที่เห็น"
+    }
+}

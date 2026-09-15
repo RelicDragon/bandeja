@@ -24,6 +24,7 @@
     "newGame": "Новая игра",
     "unnamedGame": "Игра",
     "viewGame": "Открыть игру",
+    "viewEvent": "Открыть событие/объявление",
     "gameResult": "Результат",
     "winnerBadge": "Победитель",
     "record": "{{wins}}В · {{losses}}П · {{ties}}Н",

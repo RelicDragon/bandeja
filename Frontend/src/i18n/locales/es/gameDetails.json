@@ -263,6 +263,7 @@
       "messageLeagueSeason": "Eliminar esta temporada de liga no cancelará las reservas de pista del club que aparecen abajo. Seguirán en tu cuenta del club — cancélalas allí si ya no las necesitas.",
       "messageBar": "Eliminar este bar no cancelará las reservas de pista del club que aparecen abajo. Seguirán en tu cuenta del club — cancélalas allí si ya no las necesitas.",
       "messageTraining": "Eliminar este entrenamiento no cancelará las reservas de pista del club que aparecen abajo. Seguirán en tu cuenta del club — cancélalas allí si ya no las necesitas.",
+      "messageEvent": "Eliminar este evento no cancelará las reservas de pista del club que aparecen abajo. Seguirán en tu cuenta del club — cancélalas allí si ya no las necesitas.",
       "bookingsHeading": "Reservas vinculadas",
       "confirm": "Eliminar de todos modos"
     },
@@ -280,6 +281,7 @@
     "leaveGameConfirmationBar": "¿Estás seguro de que quieres dejar este bar?",
     "leaveGameConfirmationTraining": "¿Estás seguro de que quieres dejar este entrenamiento?",
     "leaveGameConfirmationLeagueSeason": "¿Estás seguro de que quieres dejar esta temporada de liga?",
+    "leaveGameConfirmationEvent": "¿Estás seguro de que quieres dejar este evento?",
     "notPlayingHint": "No estás jugando, pero sigues siendo participante en el chat. Puedes dejar el chat en su lugar.",
     "notPlayingHintGame": "• Eres participante en el chat.\n• Puedes volver a unirte al juego, pero no podrás ser invitado nuevamente hasta que también dejes el chat.\n• Si dejas el chat, el juego será eliminado de la sección 'mis juegos' y necesitarás una invitación o esperar en la cola para volver a unirte al juego.",
     "notPlayingHintTournament": "• Eres participante en el chat.\n• Puedes volver a unirte al torneo, pero no podrás ser invitado nuevamente hasta que también dejes el chat.\n• Si dejas el chat, el torneo será eliminado de la sección 'mis juegos' y necesitarás una invitación o esperar en la cola para volver a unirte al torneo.",

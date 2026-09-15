@@ -30,9 +30,13 @@ import { GameReactionService } from '../services/game/gameReaction.service';
 import { patchMyWatchSession } from '../services/game/watchSession.service';
 import { WorkoutSessionSource } from '@prisma/client';
 import { ParticipantChatsService } from '../services/game/participantChats.service';
-import { parseStructuralFiltersFromQuery } from '../services/game/availableGamesStructuralWhere';
+import { EventRsvpService } from '../services/game/eventRsvp.service';
+import { EventApprovalService } from '../services/game/eventApproval.service';
+import { replaceEventHeroes } from '../services/game/eventHeroes.service';
+import { EntityType } from '@prisma/client';
 import { enrichAvailableGamesByIds } from '../services/game/availableGamesEnrichment';
 import { resolveAvailableEnrich } from '../services/game/availableGamesProtocol';
+import { parseStructuralFiltersFromQuery } from '../services/game/availableGamesStructuralWhere';
 
 export const createGame = asyncHandler(async (req: AuthRequest, res: Response) => {
   const game = await GameService.createGame(req.body, req.userId!, req.user?.isAdmin || false);
@@ -453,6 +457,15 @@ export const deleteGame = asyncHandler(async (req: AuthRequest, res: Response) =
 
 export const joinGame = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
+  const existing = await prisma.game.findUnique({
+    where: { id },
+    select: { entityType: true },
+  });
+  if (existing?.entityType === EntityType.EVENT) {
+    const game = await EventRsvpService.setIntent(id, req.userId!, 'going');
+    res.json({ success: true, data: game });
+    return;
+  }
   const confirmOverlap = req.body?.confirmOverlap === true;
   const message = await ParticipantService.joinGame(id, req.userId!, confirmOverlap);
 
@@ -462,8 +475,53 @@ export const joinGame = asyncHandler(async (req: AuthRequest, res: Response) => 
   });
 });
 
+export const eventRsvp = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
+  const game = await EventRsvpService.setIntent(
+    id,
+    req.userId!,
+    req.body?.intent,
+    req.body?.lookingNote,
+  );
+  res.json({ success: true, data: game });
+});
+
+export const eventRsvpLeave = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
+  const game = await EventRsvpService.leave(id, req.userId!);
+  res.json({ success: true, data: game });
+});
+
+export const eventApproval = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
+  const game = await EventApprovalService.decide(id, req.userId!, req.body?.decision);
+  res.json({ success: true, data: game });
+});
+
+export const eventLookingNote = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
+  const game = await EventRsvpService.setLookingNote(id, req.userId!, req.body?.lookingNote);
+  res.json({ success: true, data: game });
+});
+
+export const putEventHeroes = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
+  const heroes = Array.isArray(req.body?.eventHeroes) ? req.body.eventHeroes : [];
+  const game = await replaceEventHeroes(id, heroes);
+  res.json({ success: true, data: game });
+});
+
 export const leaveGame = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
+  const existing = await prisma.game.findUnique({
+    where: { id },
+    select: { entityType: true },
+  });
+  if (existing?.entityType === EntityType.EVENT) {
+    const game = await EventRsvpService.leave(id, req.userId!);
+    res.json({ success: true, data: game });
+    return;
+  }
   const message = await ParticipantService.leaveGame(id, req.userId!);
 
   res.json({
@@ -474,6 +532,13 @@ export const leaveGame = asyncHandler(async (req: AuthRequest, res: Response) =>
 
 export const joinAsGuest = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
+  const existing = await prisma.game.findUnique({
+    where: { id },
+    select: { entityType: true },
+  });
+  if (existing?.entityType === EntityType.EVENT) {
+    throw new ApiError(400, 'Events use going or looking, not guest join');
+  }
   const message = await ParticipantService.joinAsGuest(id, req.userId!);
 
   res.json({

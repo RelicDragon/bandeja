@@ -46,12 +46,23 @@
       "TRAINING": "Training",
       "TOURNAMENT": "Tournament",
       "LEAGUE": "League",
-      "LEAGUE_SEASON": "League Season"
+      "LEAGUE_SEASON": "League Season",
+      "EVENT": "Event/Ad"
     },
+    "eventKinds": {
+      "TOURNAMENT": "External tournament",
+      "LEAGUE": "External league",
+      "CAMP": "Camp"
+    },
+    "upcomingEvents": "Events",
+    "otherEvents": "Other Events",
+    "seeAllEvents": "See all",
+    "goingNeedPartner": "{{going}} going · {{looking}} need partner",
     "noGamesFound": "No games found",
     "noTrainingFound": "No training found",
     "noTournamentFound": "No tournament found",
     "noLeaguesFound": "No leagues found",
+    "noEventsFound": "No events found",
     "suitableGamesForMe": "Suitable games for me",
     "haveAvailableSlots": "Have available slots",
     "haveAvailableSlotsHint": "Hide full games you cannot join",

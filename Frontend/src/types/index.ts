@@ -34,7 +34,9 @@ export type GameType =
   | 'LADDER'
   | 'KOTC'
   | 'CUSTOM';
-export type EntityType = 'GAME' | 'TOURNAMENT' | 'LEAGUE' | 'LEAGUE_SEASON' | 'BAR' | 'TRAINING';
+export type EntityType = 'GAME' | 'TOURNAMENT' | 'LEAGUE' | 'LEAGUE_SEASON' | 'BAR' | 'TRAINING' | 'EVENT';
+export type EventKind = 'TOURNAMENT' | 'LEAGUE' | 'CAMP';
+export type EventApprovalStatus = 'ON_APPROVE' | 'APPROVED' | 'DECLINED';
 export type GenderTeam = 'ANY' | 'MEN' | 'WOMEN' | 'MIX_PAIRS';
 export type ParticipantRole = 'OWNER' | 'ADMIN' | 'PARTICIPANT' | 'GUEST';
 export type ParticipantStatus =
@@ -399,6 +401,8 @@ export interface GameParticipant {
   activeMatchId?: string | null;
   /** When false, this participant's result is hidden from followers' story feeds. Default true. */
   showInStories?: boolean;
+  lookingForPartner?: boolean;
+  lookingNote?: string | null;
 }
 
 export interface GameTeamPlayer {
@@ -561,9 +565,21 @@ export interface WeatherDay {
   unavailableReason?: 'missing_city_coordinates' | 'out_of_range';
 }
 
+export interface GameEventHero {
+  id: string;
+  originalUrl: string;
+  thumbnailUrl: string;
+  sortOrder: number;
+}
+
 export interface Game {
   id: string;
   entityType: EntityType;
+  eventKind?: EventKind | null;
+  eventApprovalStatus?: EventApprovalStatus | null;
+  venueText?: string | null;
+  externalUrl?: string | null;
+  eventHeroes?: GameEventHero[];
   sport?: Sport;
   gameType: GameType;
   name?: string | null;

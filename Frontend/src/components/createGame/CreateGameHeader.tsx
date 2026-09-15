@@ -1,4 +1,4 @@
-import { ArrowLeft, Gamepad2, Trophy, Swords, Dumbbell, Beer } from 'lucide-react';
+import { ArrowLeft, CalendarDays, Gamepad2, Trophy, Swords, Dumbbell, Beer } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { EntityType } from '@/types';
 
@@ -23,6 +23,8 @@ export const CreateGameHeader = ({ onBack, entityType }: CreateGameHeaderProps) 
         return <Dumbbell size={20} className="text-gray-700 dark:text-gray-300" />;
       case 'BAR':
         return <Beer size={20} className="text-gray-700 dark:text-gray-300" />;
+      case 'EVENT':
+        return <CalendarDays size={20} className="text-gray-700 dark:text-gray-300" />;
       default:
         return null;
     }
@@ -42,6 +44,7 @@ export const CreateGameHeader = ({ onBack, entityType }: CreateGameHeaderProps) 
            entityType === 'TRAINING' ? t('createGame.createTraining') :
            entityType === 'TOURNAMENT' ? t('createGame.createTournament') :
            entityType === 'LEAGUE' ? t('createGame.createLeague') :
+           entityType === 'EVENT' ? t('createEvent.title') :
            t('createGame.title')}
           {getEntityIcon()}
         </h1>

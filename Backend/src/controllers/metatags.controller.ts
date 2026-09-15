@@ -50,7 +50,15 @@ const generateGameMetaTags = (game: any): string => {
                    game.entityType === 'LEAGUE' ? 'League' : 
                    game.entityType === 'LEAGUE_SEASON' ? 'League Season' : 
                    game.entityType === 'BAR' ? 'Bar Event' : 
-                   'Game';
+                   game.entityType === 'EVENT'
+                     ? (game.eventKind === 'TOURNAMENT'
+                       ? 'External tournament'
+                       : game.eventKind === 'LEAGUE'
+                         ? 'External league'
+                         : game.eventKind === 'CAMP'
+                           ? 'Camp'
+                           : 'Event')
+                   : 'Game';
   
   const organizer = game.entityType === 'TRAINING'
     ? ((game as any).trainerId ? game.participants?.find((p: any) => p.userId === (game as any).trainerId) : null) || game.participants?.find((p: any) => p.role === 'OWNER')
@@ -70,16 +78,32 @@ const generateGameMetaTags = (game: any): string => {
   }
   
   const details = [];
-  details.push(location);
+  const eventVenue =
+    game.entityType === 'EVENT' ? (game.venueText || location) : location;
+  details.push(eventVenue);
   details.push(datetime);
   if (levelInfo.length > 0) details.push(levelInfo.join(' '));
-  if (game.maxParticipants) details.push(`${game.maxParticipants} players`);
+  if (game.entityType !== 'EVENT' && game.maxParticipants) details.push(`${game.maxParticipants} players`);
   if (creatorName) details.push(`by ${creatorName}`);
   
-  const title = game.name || `Join the ${gameType}!`;
+  const title =
+    game.entityType === 'EVENT'
+      ? [game.name || 'Event', gameType].filter(Boolean).join(' · ')
+      : game.name || `Join the ${gameType}!`;
   const description = details.join(', ');
   
   const pageUrl = `${config.frontendUrl}/games/${game.id}`;
+  const heroes = Array.isArray(game.eventHeroes) ? [...game.eventHeroes] : [];
+  heroes.sort((a: { sortOrder?: number }, b: { sortOrder?: number }) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+  const ogImage =
+    game.entityType === 'EVENT'
+      ? heroes[0]?.originalUrl || null
+      : game.avatar || null;
+  const ogImageTags = ogImage
+    ? `
+    <meta property="og:image" content="${ogImage}">
+    <meta name="twitter:image" content="${ogImage}" />`
+    : '';
   
   return `<!doctype html>
 <html lang="en">
@@ -100,9 +124,9 @@ const generateGameMetaTags = (game: any): string => {
     <meta property="og:url" content="${pageUrl}">
     <meta property="og:locale" content="en_GB">
     <meta property="og:title" content="${title}">
-    <meta property="og:description" content="${description}">
+    <meta property="og:description" content="${description}">${ogImageTags}
     
-    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:card" content="${ogImage ? 'summary_large_image' : 'summary'}" />
     <meta name="twitter:title" content="${title}" />
     <meta name="twitter:description" content="${description}" />
     

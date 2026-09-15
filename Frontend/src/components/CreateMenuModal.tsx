@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { Gamepad2, Trophy, Swords, Dumbbell, Beer, Users, Hash, Bug, X, ShoppingBag, UsersRound, CirclePlay } from 'lucide-react';
+import { Gamepad2, Trophy, Swords, Dumbbell, Beer, Users, Hash, Bug, X, ShoppingBag, UsersRound, CirclePlay, CalendarDays } from 'lucide-react';
 import type { EntityType, Sport } from '@/types';
 import { useAuthStore } from '@/store/authStore';
 import { CreateGameSportPicker } from '@/components/createGame/CreateGameSportPicker';
@@ -71,6 +71,7 @@ export const CreateMenuModal = ({
     }
     
     types.push('BAR');
+    types.push('EVENT');
     
     return types;
   };
@@ -221,8 +222,27 @@ export const CreateMenuModal = ({
         return <Dumbbell size={18} />;
       case 'BAR':
         return <Beer size={18} />;
+      case 'EVENT':
+        return <CalendarDays size={18} />;
       default:
         return null;
+    }
+  };
+
+  const getButtonTone = (type: EntityType) => {
+    switch (type) {
+      case 'TOURNAMENT':
+        return 'bg-red-600 hover:bg-red-700';
+      case 'LEAGUE':
+        return 'bg-blue-600 hover:bg-blue-700';
+      case 'TRAINING':
+        return 'bg-green-600 hover:bg-green-700';
+      case 'BAR':
+        return 'bg-amber-500 hover:bg-amber-600';
+      case 'EVENT':
+        return 'bg-indigo-600 hover:bg-indigo-700';
+      default:
+        return 'bg-primary-600 hover:bg-primary-700';
     }
   };
 
@@ -282,7 +302,7 @@ export const CreateMenuModal = ({
                 onPointerUp={endGameLongPress}
                 onPointerLeave={endGameLongPress}
                 onPointerCancel={endGameLongPress}
-                className={`game-type-button px-6 py-3 rounded-lg font-semibold text-white shadow-2xl bg-primary-600 hover:bg-primary-700 flex items-center gap-2 ${
+                className={`game-type-button px-6 py-3 rounded-lg font-semibold text-white shadow-2xl ${getButtonTone(type)} flex items-center gap-2 ${
                   isGame ? 'relative' : ''
                 } ${isExiting ? 'animate-bounce-out-button' : 'animate-bounce-in-button'}`}
                 style={{

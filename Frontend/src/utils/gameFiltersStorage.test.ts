@@ -25,6 +25,7 @@ const base = (overrides: Partial<GameFilters> = {}): GameFilters => ({
   trainingFilter: false,
   tournamentFilter: false,
   leaguesFilter: false,
+  eventsFilter: false,
   activeTab: 'calendar',
   filtersPanelOpen: false,
   filterClubIds: [],

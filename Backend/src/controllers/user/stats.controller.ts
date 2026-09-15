@@ -203,7 +203,13 @@ export const getUserStats = asyncHandler(async (req: AuthRequest, res: Response)
   }
 
   const levelHistory = await prisma.gameOutcome.findMany({
-    where: { userId, game: { sport } },
+    where: {
+      userId,
+      game: {
+        sport,
+        entityType: { notIn: [EntityType.BAR, EntityType.LEAGUE_SEASON, EntityType.EVENT] },
+      },
+    },
     orderBy: { createdAt: 'desc' },
     take: 10,
     select: {
@@ -364,7 +370,7 @@ export const getPlayerComparison = asyncHandler(async (req: AuthRequest, res: Re
       game: {
         sport,
         resultsStatus: 'FINAL',
-        entityType: { notIn: [EntityType.BAR, EntityType.LEAGUE_SEASON] },
+        entityType: { notIn: [EntityType.BAR, EntityType.LEAGUE_SEASON, EntityType.EVENT] },
         participants: {
           some: {
             userId: otherUserId,

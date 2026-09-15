@@ -11,6 +11,8 @@ export function getGameCardEntityGradientClasses(entityType: EntityType): string
       return 'bg-gradient-to-br from-green-50/60 via-teal-50/40 to-green-50/60 dark:from-green-950/25 dark:via-teal-950/15 dark:to-green-950/25 border-s-2 border-green-300 dark:border-green-800 shadow-[0_0_8px_rgba(34,197,94,0.15)] dark:shadow-[0_0_8px_rgba(34,197,94,0.2)]';
     case 'BAR':
       return 'bg-gradient-to-br from-yellow-50/60 via-amber-50/40 to-yellow-50/60 dark:from-yellow-950/25 dark:via-amber-950/15 dark:to-yellow-950/25 border-s-2 border-yellow-300 dark:border-yellow-800 shadow-[0_0_8px_rgba(234,179,8,0.15)] dark:shadow-[0_0_8px_rgba(234,179,8,0.2)]';
+    case 'EVENT':
+      return 'bg-gradient-to-br from-indigo-50/60 via-violet-50/40 to-indigo-50/60 dark:from-indigo-950/25 dark:via-violet-950/15 dark:to-indigo-950/25 border-s-2 border-indigo-300 dark:border-indigo-800 shadow-[0_0_8px_rgba(99,102,241,0.15)] dark:shadow-[0_0_8px_rgba(99,102,241,0.2)]';
     default:
       return '';
   }
@@ -67,6 +69,16 @@ export function getGameCardReactionTheme(entityType: EntityType): GameCardReacti
         pickerHover: 'hover:bg-amber-100/55 dark:hover:bg-amber-950/28',
         spinner: 'border-yellow-500 border-t-transparent dark:border-yellow-400',
         muted: 'text-yellow-900/60 dark:text-yellow-300/65',
+      };
+    case 'EVENT':
+      return {
+        panel:
+          'bg-gradient-to-br from-indigo-50/90 via-violet-50/75 to-indigo-50/90 dark:from-indigo-950/30 dark:via-violet-950/18 dark:to-indigo-950/30 border border-indigo-200/85 dark:border-indigo-800/50 backdrop-blur-sm shadow-[0_0_8px_rgba(99,102,241,0.12)] dark:shadow-[0_0_8px_rgba(99,102,241,0.18)]',
+        divider: 'border-indigo-200/65 dark:border-indigo-800/45',
+        actionHover: 'hover:bg-indigo-100/65 dark:hover:bg-indigo-950/35',
+        pickerHover: 'hover:bg-violet-100/55 dark:hover:bg-violet-950/28',
+        spinner: 'border-indigo-400 border-t-transparent dark:border-indigo-500',
+        muted: 'text-indigo-900/55 dark:text-indigo-300/65',
       };
     default:
       return {

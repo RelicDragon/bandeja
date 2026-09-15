@@ -511,7 +511,7 @@ export async function getUserPerformanceInsights(
         game: {
           sport,
           resultsStatus: 'FINAL',
-          entityType: { notIn: [EntityType.BAR, EntityType.LEAGUE_SEASON] },
+          entityType: { notIn: [EntityType.BAR, EntityType.LEAGUE_SEASON, EntityType.EVENT] },
         },
       },
       include: {

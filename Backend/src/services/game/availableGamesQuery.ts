@@ -23,6 +23,7 @@ import {
   appendStructuralFiltersToWhere,
   type AvailableStructuralFilters,
 } from './availableGamesStructuralWhere';
+import { appendEventDiscoveryVisibility } from './eventApprovalVisibility';
 import { formatInTimeZone } from 'date-fns-tz';
 import { ApiError } from '../../utils/ApiError';
 import { formatCalendarDayKey } from './calendarDayKey';
@@ -242,6 +243,7 @@ async function buildAvailableWhere(
       kind === 'upcoming' ? true : structural.allowUnsetTimeLeagueSeason,
   };
   appendStructuralFiltersToWhere(where, structuralForMode);
+  appendEventDiscoveryVisibility(where, { userId, isAdmin });
 
   return { where, structuralForMode, cityTimezone };
 }

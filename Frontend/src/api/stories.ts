@@ -26,6 +26,7 @@ export type GameStorySummary = {
   cityName?: string | null;
   avatar?: string | null;
   mainPhoto?: { thumbnailUrl: string; originalUrl?: string } | null;
+  eventHeroes?: Array<{ thumbnailUrl: string; originalUrl?: string }>;
   sport?: Sport;
   status?: string;
   participantCount?: number;

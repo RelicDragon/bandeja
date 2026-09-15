@@ -154,7 +154,7 @@ export class GameStatusScheduler {
         where: {
           status: 'ANNOUNCED',
           entityType: {
-            in: [EntityType.GAME, EntityType.TOURNAMENT, EntityType.BAR, EntityType.TRAINING, EntityType.LEAGUE],
+            in: [EntityType.GAME, EntityType.TOURNAMENT, EntityType.BAR, EntityType.TRAINING, EntityType.LEAGUE, EntityType.EVENT],
           },
           timeIsSet: true,
           startTime: {
@@ -172,7 +172,7 @@ export class GameStatusScheduler {
         where: {
           status: 'ANNOUNCED',
           entityType: {
-            in: [EntityType.GAME, EntityType.TOURNAMENT, EntityType.BAR, EntityType.TRAINING, EntityType.LEAGUE],
+            in: [EntityType.GAME, EntityType.TOURNAMENT, EntityType.BAR, EntityType.TRAINING, EntityType.LEAGUE, EntityType.EVENT],
           },
           timeIsSet: true,
           startTime: {
@@ -242,7 +242,7 @@ export class GameStatusScheduler {
     const participants = await prisma.gameParticipant.findMany({
       where: {
         gameId,
-        status: 'PLAYING',
+        OR: [{ status: 'PLAYING' }, { lookingForPartner: true }],
       },
       include: {
         user: {

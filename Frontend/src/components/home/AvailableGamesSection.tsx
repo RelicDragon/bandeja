@@ -24,11 +24,12 @@ import { TabContentStack } from '@/components/motion/TabContentStack';
 import { EmptyStateCard } from './EmptyStateCard';
 import { FindDayLoadErrorEmpty } from './FindDayLoadErrorEmpty';
 import { GamesLoadingSkeleton } from './GameCardSkeleton';
-import { EntityFilterChips } from './EntityFilterChips';
+import { EntityFilterChips, type EntityFilterType } from './EntityFilterChips';
+import { FindCityEventsRail } from './FindCityEventsRail';
 import { SubscriptionsNudgeButton } from './SubscriptionsNudgeButton';
 import { GamesByDateList } from './GamesByDateList';
 import { navigationService } from '@/services/navigationService';
-import { getViewerPrimarySport, resolveFindLevelFilterSport } from '@/utils/findSportFilter';
+import { getViewerPrimarySport, resolveFindLevelFilterSport, findSportFilterToApiParam } from '@/utils/findSportFilter';
 import { SportLevelProvider } from '@/contexts/SportLevelContext';
 import { listEnabledSports } from '@/utils/profileSports';
 import type { FindSportFilterValue } from '@/utils/gameFiltersStorage';
@@ -37,9 +38,11 @@ import { getSportConfig } from '@/sport/sportRegistry';
 import { SportPublicIcon } from '@/components/sport/SportPublicIcon';
 import { isFindDiscoveryEnabled } from '@/utils/findDiscovery';
 import { filterFindGames, resolveFindFilterViewer, type FindFilterState } from '@/utils/findFilter';
+import { toggleFindEntityChip } from '@/utils/findEntityTypeChips';
 import type { FindDayIndexRow } from '@/utils/findDayIndexCounts';
 import { usePlayersStore } from '@/store/playersStore';
 import { formatTrainerDisplayName, resolveFindEmptyMessage } from './findTrainerEmptyMessage';
+import { useUpcomingCityEvents } from '@/hooks/useUpcomingCityEvents';
 
 interface AvailableGamesSectionProps {
   availableGames: Game[];
@@ -110,6 +113,7 @@ export const AvailableGamesSection = ({
   const [trainingFilter, setTrainingFilter] = useState(false);
   const [tournamentFilter, setTournamentFilter] = useState(false);
   const [leaguesFilter, setLeaguesFilter] = useState(false);
+  const [eventsFilter, setEventsFilter] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
   const [filtersPanelOpen, setFiltersPanelOpen] = useState(false);
   const [filterClubIds, setFilterClubIds] = useState<string[]>([]);
@@ -128,6 +132,7 @@ export const AvailableGamesSection = ({
   const trainingFilterVal = externalFilters?.trainingFilter ?? trainingFilter;
   const tournamentFilterVal = externalFilters?.tournamentFilter ?? tournamentFilter;
   const leaguesFilterVal = externalFilters?.leaguesFilter ?? leaguesFilter;
+  const eventsFilterVal = externalFilters?.eventsFilter ?? eventsFilter;
   const filtersPanelOpenVal = externalFilters?.filtersPanelOpen ?? filtersPanelOpen;
   const filterClubIdsVal = externalFilters?.filterClubIds ?? filterClubIds;
   const filterTimeStartVal = externalFilters?.filterTimeStart ?? filterTimeStart;
@@ -143,6 +148,15 @@ export const AvailableGamesSection = ({
   const findLevelSport = useMemo(
     () => resolveFindLevelFilterSport(filterSportVal, viewerPrimarySport),
     [filterSportVal, viewerPrimarySport],
+  );
+  const findSportApiParam = findSportFilterToApiParam(filterSportVal, viewerPrimarySport);
+  const { data: cityEventsData } = useUpcomingCityEvents({
+    enabled: Boolean(user?.id),
+    sport: findSportApiParam,
+  });
+  const upcomingCityEvents = useMemo(
+    () => (cityEventsData?.games ?? []).filter((game) => game.entityType === 'EVENT'),
+    [cityEventsData?.games],
   );
 
   const displaySettings = useMemo(() => resolveDisplaySettings(user), [user]);
@@ -246,27 +260,36 @@ export const AvailableGamesSection = ({
     }
   };
 
-  const setEntityFilters = (game: boolean, training: boolean, tournament: boolean, leagues: boolean) => {
+  const setEntityFilters = (next: {
+    gameFilter: boolean;
+    trainingFilter: boolean;
+    tournamentFilter: boolean;
+    leaguesFilter: boolean;
+    eventsFilter: boolean;
+  }) => {
     if (onFiltersChange) {
-      onFiltersChange({ gameFilter: game, trainingFilter: training, tournamentFilter: tournament, leaguesFilter: leagues });
+      onFiltersChange(next);
     } else {
-      setGameFilter(game);
-      setTrainingFilter(training);
-      setTournamentFilter(tournament);
-      setLeaguesFilter(leagues);
+      setGameFilter(next.gameFilter);
+      setTrainingFilter(next.trainingFilter);
+      setTournamentFilter(next.tournamentFilter);
+      setLeaguesFilter(next.leaguesFilter);
+      setEventsFilter(next.eventsFilter);
     }
   };
 
-  const handleEntityFilterClick = (type: 'game' | 'training' | 'tournament' | 'leagues') => {
-    if (type === 'game') {
-      setEntityFilters(!gameFilterVal, false, false, false);
-    } else if (type === 'training') {
-      setEntityFilters(false, !trainingFilterVal, false, false);
-    } else if (type === 'tournament') {
-      setEntityFilters(false, false, !tournamentFilterVal, false);
-    } else {
-      setEntityFilters(false, false, false, !leaguesFilterVal);
-    }
+  const handleEntityFilterClick = (type: EntityFilterType) => {
+    const next = toggleFindEntityChip(
+      {
+        gameFilter: gameFilterVal,
+        trainingFilter: trainingFilterVal,
+        tournamentFilter: tournamentFilterVal,
+        leaguesFilter: leaguesFilterVal,
+        eventsFilter: eventsFilterVal,
+      },
+      type,
+    );
+    setEntityFilters(next);
   };
   const hydratedViewPeriodFromStorageRef = useRef(false);
 
@@ -286,6 +309,7 @@ export const AvailableGamesSection = ({
         setTrainingFilter(filters.trainingFilter);
         setTournamentFilter(filters.tournamentFilter ?? false);
         setLeaguesFilter(filters.leaguesFilter ?? false);
+        setEventsFilter(filters.eventsFilter ?? false);
         setFiltersPanelOpen(filters.filtersPanelOpen ?? false);
         setFilterClubIds(filters.filterClubIds ?? []);
         setFilterTimeStart(filters.filterTimeStart ?? '00:00');
@@ -327,6 +351,7 @@ export const AvailableGamesSection = ({
         trainingFilter: trainingFilterVal,
         tournamentFilter: tournamentFilterVal,
         leaguesFilter: leaguesFilterVal,
+        eventsFilter: eventsFilterVal,
         activeTab: findViewMode,
         listViewStartDate: undefined,
         calendarSelectedDate: findViewMode === 'calendar' ? selectedDate.toISOString() : undefined,
@@ -352,6 +377,7 @@ export const AvailableGamesSection = ({
     trainingFilterVal,
     tournamentFilterVal,
     leaguesFilterVal,
+    eventsFilterVal,
     findViewMode,
     selectedDate,
     filtersPanelOpenVal,
@@ -417,6 +443,7 @@ export const AvailableGamesSection = ({
       trainingFilter: trainingFilterVal,
       tournamentFilter: tournamentFilterVal,
       leaguesFilter: leaguesFilterVal,
+      eventsFilter: eventsFilterVal,
       showPrivateGames: showPrivateGamesVal,
       findDiscoveryEnabled,
       filterNoRating: filterNoRatingVal,
@@ -430,6 +457,7 @@ export const AvailableGamesSection = ({
       trainingFilterVal,
       tournamentFilterVal,
       leaguesFilterVal,
+      eventsFilterVal,
       showPrivateGamesVal,
       findDiscoveryEnabled,
       filterNoRatingVal,
@@ -620,6 +648,7 @@ export const AvailableGamesSection = ({
         tournamentActive={tournamentFilterVal}
         trainingActive={trainingFilterVal}
         leaguesActive={leaguesFilterVal}
+        eventsActive={eventsFilterVal}
         onToggle={handleEntityFilterClick}
       />
       </div>
@@ -640,10 +669,11 @@ export const AvailableGamesSection = ({
         trainingFilterVal,
         tournamentFilterVal,
         leaguesFilterVal,
+        eventsFilterVal,
         favoriteTrainerName,
         t,
       }),
-    [gameFilterVal, trainingFilterVal, tournamentFilterVal, leaguesFilterVal, favoriteTrainerName, t],
+    [gameFilterVal, trainingFilterVal, tournamentFilterVal, leaguesFilterVal, eventsFilterVal, favoriteTrainerName, t],
   );
 
   const gamesList = (
@@ -690,6 +720,7 @@ export const AvailableGamesSection = ({
     trainingFilter: trainingFilterVal,
     tournamentFilter: tournamentFilterVal,
     leaguesFilter: leaguesFilterVal,
+    eventsFilter: eventsFilterVal,
     favoriteTrainerId: user?.favoriteTrainerId,
     onMonthChange,
     onDateRangeChange,
@@ -738,6 +769,15 @@ export const AvailableGamesSection = ({
         </button>
       </div>
     ) : null;
+
+  const cityEventsRail = (
+    <AnimatedMount layout show={!eventsFilterVal && upcomingCityEvents.length > 0}>
+      <FindCityEventsRail
+        events={upcomingCityEvents}
+        onSeeAll={() => handleEntityFilterClick('events')}
+      />
+    </AnimatedMount>
+  );
 
   const gamesContent = (
     <AnimatedLoadingSwap
@@ -801,6 +841,7 @@ export const AvailableGamesSection = ({
             <div className="flex-1 min-h-0 overflow-y-auto bg-gray-50 dark:bg-gray-900">
               <div className="p-4" style={{ paddingBottom: scrollBottomPadding }}>
                 <TabContentStack id="find-split-right">
+                  {cityEventsRail}
                   <AnimatedMount>{gamesContent}</AnimatedMount>
                   <AnimatedMount>
                     <SubscriptionsNudgeButton onClick={handleSubscriptionsClick} />
@@ -826,6 +867,8 @@ export const AvailableGamesSection = ({
       <AnimatedMount layout>
         <CalendarSection {...calendarSectionProps} />
       </AnimatedMount>
+
+      {cityEventsRail}
 
       <AnimatedMount>{gamesContent}</AnimatedMount>
 

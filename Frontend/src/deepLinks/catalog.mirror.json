@@ -25,6 +25,10 @@
       "path": "/create-league",
       "url": "https://bandeja.me/create-league"
     },
+    "createEvent": {
+      "path": "/create-event",
+      "url": "https://bandeja.me/create-event"
+    },
     "nextGame": {
       "path": "/next-game",
       "url": "https://bandeja.me/next-game"

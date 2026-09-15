@@ -64,7 +64,7 @@ export function validateGameForSport(input: GameSportValidationInput): Sport {
   }
 
   const entityType = input.entityType ?? EntityType.GAME;
-  if (entityType === EntityType.BAR || entityType === EntityType.TRAINING) {
+  if (entityType === EntityType.BAR || entityType === EntityType.TRAINING || entityType === EntityType.EVENT) {
     const maxParticipants = input.maxParticipants;
     const minParticipants = input.minParticipants;
     if (minParticipants != null && maxParticipants != null && minParticipants > maxParticipants) {

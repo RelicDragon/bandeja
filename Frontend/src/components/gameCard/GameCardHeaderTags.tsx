@@ -4,6 +4,7 @@ import type { Game } from '@/types';
 import type { GameCardMyParticipationBadge } from '@/utils/gameCardMyParticipationBadge';
 import { genderTeamsSummaryLabelKey } from '@/utils/genderTeamsSummaryLabel';
 import { gameIsNonRating } from '@/utils/gameRatingSemantics';
+import { eventKindI18nKey } from '@/utils/eventListingDisplay';
 
 interface GameCardHeaderTagsProps {
   game: Game;
@@ -52,6 +53,13 @@ export const GameCardHeaderTags = ({
   return (
     <>
       {sportTags}
+      {game.entityType === 'EVENT' && (
+        <span
+          className={`${PILL} bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300`}
+        >
+          {t(eventKindI18nKey(game.eventKind), { defaultValue: 'Event' })}
+        </span>
+      )}
       {myParticipationBadge && (
         <span
           className={`${PILL} whitespace-nowrap ${PARTICIPATION_PILL_CLASSES[myParticipationBadge]}`}
@@ -94,7 +102,7 @@ export const GameCardHeaderTags = ({
           )}
         </span>
       )}
-      {gameIsNonRating(game) && (
+      {gameIsNonRating(game) && game.entityType !== 'EVENT' && (
         <span
           className={`${PILL} bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400`}
         >

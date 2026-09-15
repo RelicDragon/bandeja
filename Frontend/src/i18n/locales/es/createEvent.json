@@ -1,0 +1,38 @@
+{
+    "createEvent": {
+        "title": "Crear Evento/Anuncio",
+        "organizing": "Yo lo organizo",
+        "looking": "Quiero ir / busco pareja",
+        "organizerHint": "No hace falta que seas el organizador.",
+        "kinds": {
+            "TOURNAMENT": "Torneo externo",
+            "LEAGUE": "Liga externa",
+            "CAMP": "Campamento"
+        },
+        "kindLabel": "¿Qué es?",
+        "heroes": "Fotos",
+        "heroesHint": "Añade fotos del cartel. Se ven como una presentación.",
+        "venue": "Lugar",
+        "venueText": "Dirección o nombre del sitio",
+        "venueOrClub": "Club (opcional)",
+        "selectClub": "Selecciona club",
+        "selectCity": "Ciudad",
+        "clearClub": "Usar texto",
+        "dateRange": "Fechas",
+        "start": "Empieza",
+        "end": "Termina",
+        "registerUrl": "Enlace de inscripción (opcional)",
+        "playerLevel": "Nivel de jugador",
+        "name": "Nombre",
+        "namePlaceholder": "Nombre del evento",
+        "description": "Descripción",
+        "descriptionPlaceholder": "¿Qué va a pasar?",
+        "priceAmount": "Importe",
+        "save": "Guardar",
+        "nameRequired": "El nombre es obligatorio",
+        "datesInvalid": "El fin debe ser posterior al inicio",
+        "urlInvalid": "Usa un enlace http(s)",
+        "create": "Publicar Evento/Anuncio",
+        "pendingSubmitted": "Enviado para aprobación. Solo tú y los admins lo veis hasta que se apruebe."
+    }
+}

@@ -2,7 +2,7 @@ import { expect, type Locator, type Page } from '@playwright/test';
 
 const GAME_FILTERS_KEY = 'padelpulse-game-filters';
 
-type EntityFilter = 'game' | 'training' | 'tournament' | 'leagues';
+type EntityFilter = 'game' | 'training' | 'tournament' | 'leagues' | 'events';
 
 type GameFilterSeed = {
   activeTab?: 'calendar' | 'list';
@@ -15,6 +15,7 @@ type GameFilterSeed = {
   trainingFilter?: boolean;
   tournamentFilter?: boolean;
   leaguesFilter?: boolean;
+  eventsFilter?: boolean;
   filtersPanelOpen?: boolean;
   filterClubIds?: string[];
   filterTimeStart?: string;
@@ -78,6 +79,7 @@ const ENTITY_LABEL: Record<EntityFilter, RegExp> = {
   training: /^training$/i,
   tournament: /^tournament$/i,
   leagues: /^leagues$/i,
+  events: /^other events$/i,
 };
 
 export class FindPage {
@@ -139,7 +141,7 @@ export class FindPage {
 
   emptyStateMessage(): Locator {
     return this.page.getByText(
-      /no games found|no training found|no tournament found|no leagues found/i,
+      /no games found|no training found|no tournament found|no leagues found|no events found/i,
     );
   }
 
@@ -217,11 +219,7 @@ export class FindPage {
 
   async expectEntityFilterActive(name: EntityFilter, active: boolean) {
     const chip = this.entityFilter(name);
-    if (active) {
-      await expect(chip).toHaveClass(/primary/);
-    } else {
-      await expect(chip).not.toHaveClass(/primary-100/);
-    }
+    await expect(chip).toHaveAttribute('aria-pressed', active ? 'true' : 'false');
   }
 
   async setAvailabilityFilters(options: { availableSlots?: boolean; suitableRating?: boolean }) {
@@ -301,6 +299,7 @@ export class FindPage {
       trainingFilter: false,
       tournamentFilter: false,
       leaguesFilter: false,
+      eventsFilter: false,
       activeTab: 'calendar',
       filtersPanelOpen: false,
       filterClubIds: [],

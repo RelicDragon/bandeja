@@ -154,7 +154,6 @@ export const MainPage = () => {
     return (
       <MainLayout>
         <GameDetailsPage />
-        {bottomTabBarSlot(bottomTabsVisible)}
       </MainLayout>
     );
   }
@@ -178,7 +177,7 @@ export const MainPage = () => {
         className={`relative px-2 ${
           !scrollablePage && !isTeamsPage && !isGameDetailsMobileScroll ? 'min-h-0 overflow-hidden' : ''
         } ${isTeamsPage ? 'flex min-h-0 min-w-0 flex-1 flex-col' : ''}`}
-        style={{ paddingBottom: bottomTabsVisible && !isTeamsPage ? '5rem' : '0' }}
+        style={{ paddingBottom: bottomTabsVisible && !isTeamsPage && !isGameDetailsMobileScroll ? '5rem' : '0' }}
       >
         <div
           className={`transition-all duration-300 ease-in-out transform translate-x-0 opacity-100 ${
@@ -188,7 +187,7 @@ export const MainPage = () => {
           {renderContent}
         </div>
       </div>
-      {bottomTabBarSlot(bottomTabsVisible)}
+      {isGameDetailsMobileScroll ? null : bottomTabBarSlot(bottomTabsVisible)}
     </MainLayout>
   );
 };

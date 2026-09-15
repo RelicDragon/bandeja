@@ -42,7 +42,7 @@ import {
 
 type DisplayEntityType = FindDisplayEntityType;
 
-const PILL_ENTITY_ORDER: DisplayEntityType[] = ['GAME', 'TOURNAMENT', 'TRAINING', 'LEAGUE', 'BAR'];
+const PILL_ENTITY_ORDER: DisplayEntityType[] = ['GAME', 'TOURNAMENT', 'TRAINING', 'LEAGUE', 'BAR', 'EVENT'];
 
 export interface MonthCalendarProps {
   selectedDate: Date | null;
@@ -57,6 +57,7 @@ export interface MonthCalendarProps {
   trainingFilter?: boolean;
   tournamentFilter?: boolean;
   leaguesFilter?: boolean;
+  eventsFilter?: boolean;
   favoriteTrainerId?: string | null;
   onMonthChange?: (month: number, year: number) => void;
   onDateRangeChange?: (startDate: Date, endDate: Date) => void;
@@ -94,6 +95,7 @@ export const MonthCalendar = ({
   trainingFilter = false,
   tournamentFilter = false,
   leaguesFilter = false,
+  eventsFilter = false,
   favoriteTrainerId,
   onMonthChange,
   onDateRangeChange,
@@ -154,7 +156,7 @@ export const MonthCalendar = ({
   const startDate = useMemo(() => startOfWeek(monthStart, { locale, weekStartsOn }), [monthStart, locale, weekStartsOn]);
   const endDate = useMemo(() => endOfWeek(monthEnd, { locale, weekStartsOn }), [monthEnd, locale, weekStartsOn]);
 
-  const noEntityFilter = !gameFilter && !trainingFilter && !tournamentFilter && !leaguesFilter;
+  const noEntityFilter = !gameFilter && !trainingFilter && !tournamentFilter && !leaguesFilter && !eventsFilter;
 
   const findFilterState = useMemo<FindFilterState>(
     () => ({
@@ -165,6 +167,7 @@ export const MonthCalendar = ({
       trainingFilter,
       tournamentFilter,
       leaguesFilter,
+      eventsFilter,
       showPrivateGames,
       findDiscoveryEnabled,
       filterNoRating,
@@ -179,6 +182,7 @@ export const MonthCalendar = ({
       trainingFilter,
       tournamentFilter,
       leaguesFilter,
+      eventsFilter,
       showPrivateGames,
       findDiscoveryEnabled,
       filterNoRating,
@@ -537,13 +541,16 @@ export const MonthCalendar = ({
           const hasGames = gameCount > 0;
           const isParticipant = dayData.isUserParticipant;
           const showLeagueMarks = weatherModeScope === 'my' || leaguesFilter;
+          const showEventMarks = weatherModeScope === 'my' || eventsFilter;
           const participantTypes = visibleCalendarDayMarkTypes(
             PILL_ENTITY_ORDER.filter(t => dayData.participantEntityTypes.has(t)),
             showLeagueMarks,
+            showEventMarks,
           );
           const typePillTypes = visibleCalendarDayMarkTypes(
             PILL_ENTITY_ORDER.filter(t => dayData.entityTypes.has(t)),
             showLeagueMarks,
+            showEventMarks,
           );
           const dayWeather = weatherByDay.get(dateStr) ?? null;
           const { showWeatherPill, showTypePill } = resolveCalendarDayPillVisibility({

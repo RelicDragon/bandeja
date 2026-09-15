@@ -27,6 +27,7 @@
     "newGame": "เกมใหม่",
     "unnamedGame": "เกม",
     "viewGame": "ดูเกม",
+    "viewEvent": "ดูอีเวนต์/ประกาศ",
     "gameResult": "ผลลัพธ์",
     "winnerBadge": "ผู้ชนะ",
     "record": "{{wins}}W · {{losses}}L · {{ties}}T",

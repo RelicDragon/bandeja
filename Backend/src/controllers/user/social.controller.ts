@@ -167,7 +167,7 @@ export const getInvitablePlayers = asyncHandler(async (req: AuthRequest, res: Re
         AND gp2.status = 'PLAYING'::"ParticipantStatus"
         AND gp2."userId" <> gp1."userId"
         AND g."resultsStatus" = 'FINAL'::"ResultsStatus"
-        AND g."entityType" NOT IN ('BAR'::"EntityType", 'LEAGUE_SEASON'::"EntityType")
+        AND g."entityType" NOT IN ('BAR'::"EntityType", 'LEAGUE_SEASON'::"EntityType", 'EVENT'::"EntityType")
       GROUP BY gp2."userId"
     `
   );

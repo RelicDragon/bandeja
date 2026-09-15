@@ -17,6 +17,7 @@ const DEFAULT_FILTERS: GameFilters = {
   trainingFilter: false,
   tournamentFilter: false,
   leaguesFilter: false,
+  eventsFilter: false,
   activeTab: 'calendar',
   filtersPanelOpen: false,
   filterClubIds: [],
@@ -33,11 +34,6 @@ const dayKeyToIso = (day: string) => startOfDay(parse(day, 'yyyy-MM-dd', new Dat
 
 function sanitizeLoadedFilters(f: GameFilters): GameFilters {
   const merged = { ...DEFAULT_FILTERS, ...f };
-  const activeCount = [merged.trainingFilter, merged.tournamentFilter, merged.leaguesFilter].filter(Boolean).length;
-  if (activeCount > 1) {
-    if (merged.trainingFilter) merged.tournamentFilter = merged.leaguesFilter = false;
-    else if (merged.tournamentFilter) merged.leaguesFilter = false;
-  }
   if (!hasFindPanelFiltersApplied(merged)) {
     merged.filtersPanelOpen = false;
   }

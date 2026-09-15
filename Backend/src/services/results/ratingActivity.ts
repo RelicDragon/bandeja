@@ -5,7 +5,7 @@ export function countsAsRatingActivity(game: {
   affectsRating: boolean;
   entityType: EntityType;
 }): boolean {
-  if (game.entityType === EntityType.BAR || game.entityType === EntityType.LEAGUE_SEASON) {
+  if (game.entityType === EntityType.BAR || game.entityType === EntityType.LEAGUE_SEASON || game.entityType === EntityType.EVENT) {
     return false;
   }
   return game.affectsRating || game.entityType === EntityType.TRAINING;
@@ -16,7 +16,7 @@ export function countsForPlayStreak(game: {
   affectsRating: boolean;
   entityType: EntityType;
 }): boolean {
-  if (game.entityType === EntityType.BAR || game.entityType === EntityType.LEAGUE_SEASON) {
+  if (game.entityType === EntityType.BAR || game.entityType === EntityType.LEAGUE_SEASON || game.entityType === EntityType.EVENT) {
     return false;
   }
   return game.affectsRating === true;

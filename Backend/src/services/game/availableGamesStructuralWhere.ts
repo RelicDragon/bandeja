@@ -26,7 +26,8 @@ export type AvailableEntityTypeParam =
   | 'TOURNAMENT'
   | 'LEAGUE'
   | 'LEAGUE_SEASON'
-  | 'BAR';
+  | 'BAR'
+  | 'EVENT';
 
 export type AvailableStructuralFilters = {
   clubIds?: string[];
@@ -55,6 +56,7 @@ const ENTITY_TYPE_SET = new Set<string>([
   'LEAGUE',
   'LEAGUE_SEASON',
   'BAR',
+  'EVENT',
 ]);
 
 export function parseClubIdsParam(raw: unknown): string[] | undefined {
@@ -142,6 +144,8 @@ export function appendStructuralFiltersToWhere(
     and.push({
       entityType: { in: filters.entityTypes as EntityType[] },
     });
+  } else {
+    and.push({ entityType: { not: 'EVENT' } });
   }
 
   if (filters.hideBar) {

@@ -1,4 +1,4 @@
-import { canSeePhotoInStories, canSeeResultInStories } from './story.permissions';
+import { canSeeCreatedGameInStories, canSeePhotoInStories, canSeeResultInStories } from './story.permissions';
 
 function assert(cond: boolean, msg: string): void {
   if (!cond) {
@@ -81,6 +81,24 @@ function run(): void {
       participant: { showInStories: false },
     }),
     'result story denied when participant hides stories',
+  );
+
+  assert(
+    canSeeCreatedGameInStories({
+      viewerFollows: true,
+      game: { isPublic: true, status: 'ANNOUNCED', entityType: 'EVENT', eventApprovalStatus: 'APPROVED' },
+      owner: { shareGameCreationsToFollowers: true },
+    }),
+    'approved EVENT creation stories are public',
+  );
+
+  assert(
+    !canSeeCreatedGameInStories({
+      viewerFollows: true,
+      game: { isPublic: true, status: 'ANNOUNCED', entityType: 'EVENT', eventApprovalStatus: 'ON_APPROVE' },
+      owner: { shareGameCreationsToFollowers: true },
+    }),
+    'pending EVENT creation stories stay hidden',
   );
 
   console.log('story.permissions.test.ts: all passed');

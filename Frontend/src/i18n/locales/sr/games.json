@@ -46,12 +46,23 @@
       "TRAINING": "Trening",
       "TOURNAMENT": "Turnir",
       "LEAGUE": "Liga",
-      "LEAGUE_SEASON": "Sezona Lige"
+      "LEAGUE_SEASON": "Sezona Lige",
+      "EVENT": "Događaj/Oglas"
     },
     "noGamesFound": "Igre nisu pronađene",
     "noTrainingFound": "Treninzi nisu pronađeni",
     "noTournamentFound": "Turnir nije pronađen",
     "noLeaguesFound": "Lige nisu pronađene",
+    "eventKinds": {
+      "TOURNAMENT": "Spoljni turnir",
+      "LEAGUE": "Spoljna liga",
+      "CAMP": "Kamp"
+    },
+    "upcomingEvents": "Događaji",
+    "otherEvents": "Ostali događaji",
+    "seeAllEvents": "Prikaži sve",
+    "goingNeedPartner": "{{going}} ide · {{looking}} traži partnera",
+    "noEventsFound": "Događaji nisu pronađeni",
     "suitableGamesForMe": "Pogodne igre za mene",
     "haveAvailableSlots": "Sa slobodnim mestom",
     "haveAvailableSlotsHint": "Sakrij popunjene igre kojima se ne možete pridružiti",

@@ -14,6 +14,7 @@ import { USER_SELECT_WITH_SPORT_PROFILES } from '../../utils/constants';
 import { createSystemMessageWithNotification } from '../../utils/systemMessageHelper';
 import {
   ChatType,
+  EntityType,
   GameInviteOutcomeType,
   GameStatus,
   MatchProposalStatus,
@@ -381,6 +382,14 @@ export class ParticipantService {
 
     if (!participant) {
       throw new ApiError(404, 'Not a participant of this game');
+    }
+
+    const eventGame = await prisma.game.findUnique({
+      where: { id: gameId },
+      select: { entityType: true },
+    });
+    if (eventGame?.entityType === EntityType.EVENT) {
+      throw new ApiError(400, 'Events use going or looking, not playing status');
     }
 
     const isPlaying = status === PLAYING_STATUS;
@@ -805,6 +814,9 @@ export class ParticipantService {
       select: { id: true, entityType: true, status: true, genderTeams: true, maxParticipants: true },
     });
     validateGameCanAcceptParticipants(game);
+    if (game.entityType === EntityType.EVENT) {
+      throw new ApiError(400, 'Events cannot be invited to; use going or looking');
+    }
     await validateGenderForGame(game, receiverId, { targetIsOtherUser: true });
     // Gap A: single policy gate for new invites / revives (admin + Telegram use this path).
     if (game.status === GameStatus.STARTED) {

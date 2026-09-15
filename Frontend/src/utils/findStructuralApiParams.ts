@@ -1,4 +1,7 @@
 import type { GameFilters } from '@/utils/gameFiltersStorage';
+import { resolveFindEntityTypesParam } from '@/utils/findEntityTypeChips';
+
+export { resolveFindEntityTypesParam };
 
 /** API params for Find structural SQL filters (must match filter hash). */
 export type FindStructuralApiParams = {
@@ -12,19 +15,6 @@ export type FindStructuralApiParams = {
 };
 
 const LEVEL_EPS = 1e-6;
-
-export function resolveFindEntityTypesParam(filters: {
-  gameFilter?: boolean;
-  trainingFilter?: boolean;
-  tournamentFilter?: boolean;
-  leaguesFilter?: boolean;
-}): string | undefined {
-  if (filters.gameFilter) return 'GAME';
-  if (filters.trainingFilter) return 'TRAINING';
-  if (filters.tournamentFilter) return 'TOURNAMENT';
-  if (filters.leaguesFilter) return 'LEAGUE';
-  return undefined;
-}
 
 /**
  * Map Find UI filters → API structural query params.
@@ -42,6 +32,7 @@ export function buildFindStructuralApiParams(
     | 'trainingFilter'
     | 'tournamentFilter'
     | 'leaguesFilter'
+    | 'eventsFilter'
   >,
   mode: 'calendar' | 'upcoming',
 ): FindStructuralApiParams {

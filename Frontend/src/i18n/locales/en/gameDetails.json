@@ -282,6 +282,7 @@
       "messageLeagueSeason": "Deleting this league season won't cancel your club court reservations listed below. They'll remain in your club account — cancel them there if you no longer need them.",
       "messageBar": "Deleting this bar won't cancel your club court reservations listed below. They'll remain in your club account — cancel them there if you no longer need them.",
       "messageTraining": "Deleting this training won't cancel your club court reservations listed below. They'll remain in your club account — cancel them there if you no longer need them.",
+      "messageEvent": "Deleting this event won't cancel your club court reservations listed below. They'll remain in your club account — cancel them there if you no longer need them.",
       "bookingsHeading": "Linked reservations",
       "confirm": "Delete anyway"
     },
@@ -306,6 +307,7 @@
     "leaveGameConfirmationBar": "Are you sure you want to leave this bar?",
     "leaveGameConfirmationTraining": "Are you sure you want to leave this training?",
     "leaveGameConfirmationLeagueSeason": "Are you sure you want to leave this league season?",
+    "leaveGameConfirmationEvent": "Are you sure you want to leave this event?",
     "notPlayingHint": "You are not playing, but you are still a participant in the chat. You can leave the chat instead.",
     "notPlayingHintGame": "• You are a participant in the chat.\n• You can rejoin the game, but you can't be invited again until you leave the chat too.\n• If you leave the chat, the game will be removed from 'my games' section and you will need an invitation or wait in queue to rejoin the game.",
     "notPlayingHintTournament": "• You are a participant in the chat.\n• You can rejoin the tournament, but you can't be invited again until you leave the chat too.\n• If you leave the chat, the tournament will be removed from 'my games' section and you will need an invitation or wait in queue to rejoin the tournament.",

@@ -282,6 +282,7 @@
       "messageLeagueSeason": "删除此联赛赛季不会取消下方列出的俱乐部场地预订。它们仍保留在你的俱乐部账户中 — 若不需要请在那里取消。",
       "messageBar": "删除此酒吧局不会取消下方列出的俱乐部场地预订。它们仍保留在你的俱乐部账户中 — 若不需要请在那里取消。",
       "messageTraining": "删除此训练不会取消下方列出的俱乐部场地预订。它们仍保留在你的俱乐部账户中 — 若不需要请在那里取消。",
+      "messageEvent": "删除此活动不会取消下方列出的俱乐部场地预订。它们仍保留在你的俱乐部账户中 — 若不需要请在那里取消。",
       "bookingsHeading": "已关联预订",
       "confirm": "仍要删除"
     },
@@ -306,6 +307,7 @@
     "leaveGameConfirmationBar": "确定要离开此酒吧局吗？",
     "leaveGameConfirmationTraining": "确定要离开此训练吗？",
     "leaveGameConfirmationLeagueSeason": "确定要离开此联赛赛季吗？",
+    "leaveGameConfirmationEvent": "确定要离开此活动吗？",
     "notPlayingHint": "你不上场，但仍是聊天参与者。也可以选择离开聊天。",
     "notPlayingHintGame": "• 你是聊天参与者。\n• 你可以重新加入比赛，但在也离开聊天之前无法再次被邀请。\n• 若离开聊天，此比赛将从「我的比赛」中移除，需获邀请或排队才能重新加入。",
     "notPlayingHintTournament": "• 你是聊天参与者。\n• 你可以重新加入锦标赛，但在也离开聊天之前无法再次被邀请。\n• 若离开聊天，此锦标赛将从「我的比赛」中移除，需获邀请或排队才能重新加入。",

@@ -328,6 +328,7 @@ Frontend/e2e/
 | H-36 | Selected date shows archived/finished | User with FINISHED and ARCHIVED games on a past calendar day | Select that day on My tab calendar; both FINISHED and ARCHIVED games appear under Finished section |
 | H-64 | Same-day start-time order | Day with ≥2 active My games at different times | Active games earliest-first; finished/archived after active |
 | H-81 | Pending invite not duplicated in list | User is INVITED-only on a game (not PLAYING / queue / guest) | Invite card in `home-invites-section` (when a slot is open); same game is absent from the My games list and calendar |
+| H-86 | Organizer Event/Ad on My | Post Event/Ad as I’m organizing; do not tap I’m going or Need a partner | Listing is on My list and My calendar; organizer is not Going; someone else’s listing without RSVP is absent |
 
 ### 6.4 Stories
 
@@ -443,13 +444,19 @@ Frontend/e2e/
 
 | ID | Test | Steps | Expected |
 |----|------|-------|----------|
-| F-07 | Games filter | Toggle games | Only games shown |
+| F-07 | Games filter | Toggle games | Only games shown; other entity chips stay off |
 | F-08 | Training filter | Toggle training | Training events |
 | F-09 | Tournament filter | Toggle tournaments | Tournaments only |
 | F-10 | Leagues filter | Toggle leagues | League seasons |
-| F-83 | Entity chip type dots | Open Find filters (Game / Tournament / Training / League chips) | Each chip shows a color dot matching calendar day marks: game whitish, tournament red, training green, league blue |
+| F-86 | Entity chips multi-select | Toggle Games then Tournaments | Both chips stay on (`aria-pressed=true`); list/calendar show games OR tournaments; Training/Leagues/Other Events remain off; tapping Games again leaves Tournaments on |
+| F-83 | Entity chip type dots | Open Find filters (Game / Tournament, League / Training, full-row Other Events) | Two-column rows then a full-width Other Events chip; each chip shows a color dot matching calendar day marks: game whitish, tournament red, league blue, training green, events indigo |
+| F-87 | Events out of default river | Open Find with Other Events chip off and city has upcoming EVENTs | Game list/calendar river does not include EVENT rows; **Events** poster rail is below the calendar (desktop: games column), titled Events not “this week” (2–3 upcoming city cards) |
+| F-88 | Events chip on | Toggle Other Events chip | Chip `aria-pressed=true`; river shows **APPROVED** EVENTs as full-width poster cards (large image, sport, level band, price, going/looking, no type glyph, no 3/4 slots); poster rail hides; occupancy/slots filter does not hide events; suitable rating / level still apply |
+| F-89 | Pending events hidden | City has an `ON_APPROVE` EVENT | Non-owner non-admin Find (rail + Other Events chip) does not show it; owner and `isAdmin` can see it with a pending badge |
+| F-89 | Events chip empty | Other Events chip on alone with no matching events | Empty copy “No events found”; event cards are posters (no Join to play / n/max slots) when events exist |
+| F-90 | Events rail See all | Open Find with Other Events chip off and upcoming EVENTs | Tap **See all** on the Events rail; Other Events chip turns on (`aria-pressed=true`); rail hides; river shows event posters |
 | F-11 | User-created filter | Toggle user games | Filters creator |
-| F-12 | Combined filters | Multiple toggles | AND behavior correct |
+| F-12 | Combined filters | Entity chips + panel toggles | Entity chips OR each other; panel filters AND with that union |
 
 ### 7.3 Advanced filters panel
 
@@ -708,6 +715,17 @@ Frontend/e2e/
 | C-38 | Player availability icon | View invite list | Availability indicator on rows |
 | C-38a | Inactive players at bottom | Open invite picker; city has an inactive player (`inactive` on player: <5 rated games or no rated game in 90 days) and an active player | Inactive player is listed below active players by default (same flag as Level leaderboard); availability still ranks first |
 | C-39 | Booking overlap warning | Booked court conflict | Warning before submit |
+
+### 8.5 Create event (`/create-event`)
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| C-64 | Create Event/Ad entry | Header create menu → Event/Ad | Opens `/create-event`; bottom tabs hidden |
+| C-66 | Event poster form | Open `/create-event` | Intent chips, kind chips (External tournament / External league / Camp), optional sport if multi-sport, player level, required name (no circular avatar), required hero photos immediately after name, description, city, optional club XOR venue text, date range, price + note, optional registration URL. No public/results/rating/court/template/gender blocks |
+| C-67 | Event create required fields | Submit without intent, kind, city, name, or photos | Footer hint; event not created |
+| C-68 | Event create success | Fill required fields → Post event | Navigates to `/games/:id`; listing is `ON_APPROVE` (not public); owner sees pending banner; Find/Events strip does not show it to other users |
+| C-69 | Event guest blocked | Logged-out open `/create-event` | Redirect to login |
+| C-70 | Event organizing vs looking | `/create-event` with kind, level, heroes → Post as Organizing vs Need a partner | Organizing: creator is listing owner only (`NON_PLAYING`, not looking) and the listing **is** on My/calendar. Looking: creator on partner board (`NON_PLAYING` + lookingForPartner); also on My; both land on `/games/:id` |
 
 ---
 
@@ -991,6 +1009,23 @@ Frontend/e2e/
 | GD-72 | Training level/reliability edit | Trainer edits participant levels | `EditLevelModal` saves |
 | GD-74 | Training confirms sport only | `@trainer` set level on tennis TRAINING | Tennis profile confirmed; padel confirmation unchanged; avatar checkmark in tennis game only |
 | GD-73 | Empty trainer invite links | TRAINING, no trainer, owner/admin | "No trainer" row + "Invite trainer" row below; both open invite picker |
+
+### 9.8 Event listings (`entityType=EVENT`)
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| GD-159 | Event details landing | Open `/games/:id` for an EVENT | Poster landing (`EventDetailsContent`), not `GameDetailsShell`; full-width hero slideshow from `eventHeroes` only (no circular-avatar fallback); 32px tappable dots; fullscreen swipe gallery; kind + sport + level, name, organizer, dates, venue, price, description; no results, live, bets, courts, trainer, Game Settings, slot 3/4, or “Join to play”; bottom Find/Chats tabs hidden |
+| GD-160 | Event going | Logged-in tap I’m going | Viewer is Going (`PLAYING`); sticky CTA selected; tap Going again does not leave; Going row with level badges (not 3/4 slots); appears on My/calendar while OWNER, Going, or Looking |
+| GD-161 | Event looking / partner board | Tap Need a partner; optional note; another user opens the event | Looking XOR Going (switching allowed); partner board above Going with avatar, name, Bandeja level for `game.sport`, Message (DM); composer on Need partner; save via looking note |
+| GD-162 | Empty partner board | EVENT with nobody looking | Copy: “Need a partner for this? Post here. People will see your Bandeja level.” |
+| GD-163 | Event register URL | EVENT with `externalUrl` | Sticky Register opens the external URL (new tab / Capacitor Browser) |
+| GD-164 | Event no results | EVENT past endTime | No results entry, live scoring, or FINAL photos-after-results; time-archives after end |
+| GD-165 | Event kind chip copy | Camp / external tournament / external league EVENT | Chip is Camp / External tournament / External league — never bare Tournament or League |
+| GD-166 | Event share | Share sticky CTA | Same share-link pattern as game details (native share or copy) |
+| GD-167 | Event owner edit/delete | Owner opens EVENT → edit listing / cancel | Edit modal has kind, sport, level, name, then ≥1 hero, description, city, venue, dates, PriceSection + note, url; cancel/delete confirm uses `gamesApi.delete` |
+| GD-168 | Event desktop chat split | `@desktop` open EVENT as Going or Looking | Listing left, existing game chat right; non-RSVP viewers get listing only (no empty chat pane); `/games/:id/chat` works; no new chat type |
+| GD-169 | Event pending visibility | Create EVENT as non-admin; open Find as another user; open `/games/:id` as owner and as other user | New listing is `ON_APPROVE`; owner (and `isAdmin`) can open details with pending banner; other users get not-found; Events rail / Events chip do not show it |
+| GD-170 | Event admin approve / decline | `isAdmin` opens pending EVENT | Approve and Decline buttons; each opens a confirmation modal; Approve → `APPROVED` and listing appears in Find for everyone; Decline → `DECLINED`, still only owner/admin can open it |
 
 ---
 
@@ -1805,10 +1840,11 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | X-26g | Birthday wish return on web/dev | From `bandeja.me` or `localhost:3001`, tap the Liza ad → submit → tap Back to Bandeja | Landing uses the current tab and Back restores the exact originating Bandeja screen |
 | X-26h | Birthday wish return fallback | Prevent Back to Bandeja from navigating, or tap it twice | A localized animated hint appears below the button after the failed first attempt or immediately after the second tap, asking the user to close the page manually |
 | X-26i | Birthday donation excludes user from ad | Open `/LizaBirthday2026?ad_token=…`; submit with Donate RSD/RUB | Wish saved; user id appended to that campaign’s `targeting.excludeUserIds`; ad no longer served to that user |
-| X-26j | Eligible campaign calendar tag | Configure an active campaign with creative, placement, targeting, purple `CAMP` text, and a three-day calendar-tag range; open My and Find calendars as an eligible user | Ultra-small `CAMP` text uses the selected purple font color and is anchored at the bottom of each cell for all three dates, including both boundary dates, and nowhere outside the range |
+| X-26j | Eligible campaign calendar tag | Configure an active campaign with creative, placement, targeting, purple `CAMP` text, and a three-day calendar-tag range; open My and Find calendars as an eligible user | Ultra-small `CAMP` text uses the selected purple font color on light cells and a lifted readable tint of that color on dark and selected cells; it is anchored at the bottom of each cell for all three dates, including both boundary dates, and nowhere outside the range |
 | X-26k | Calendar tag targeting isolation | Use two accounts in the same city where only one matches include/exclude, rollout, language, level, or placement sport targeting; switch accounts without reloading | Only the eligible account sees the tag; the second account never flashes or retains the first account’s tag |
 | X-26l | Calendar tag Admin validation and refresh | Enable a tag with a missing title/date or end before start, then save a valid range and change it while an eligible client calendar remains open | Invalid configuration is blocked; valid configuration saves; the client reflects campaign changes within one minute or on window focus/reconnect |
 | X-26m | Localized selected-day ad message | Configure different calendar-tag messages for English and Russian; select an in-range tagged date using each app language, then select an untagged date | A dedicated message block appears directly below the selected date/weather summary with the matching translation and tag color; it disappears outside the configured range |
+| X-26n | Multiple campaign calendar tags | Two eligible campaigns tag the same calendar day | Each tag is on its own row at the bottom of the cell; labels are not joined on one line |
 
 ### 18.7 Navigation shell
 
@@ -1818,7 +1854,7 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | X-28 | Back button (Capacitor) | Hardware back handled | `@manual` |
 | X-29 | Player card history | Open overlay → back | Overlay closes, no orphan state |
 | X-30 | Resizable splitter | Drag chat/game split | Width persists session |
-| X-31 | Bottom tabs hidden on create | `/create-game` | Tab bar hidden |
+| X-31 | Bottom tabs hidden on create | `/create-game`, `/create-event` | Tab bar hidden |
 | X-32 | Game details hides tabs mobile | Mobile game details | Tabs hidden for immersion |
 
 ### 18.8 Push notifications (manual / device)
@@ -1923,6 +1959,7 @@ Use these for structured regression sweeps — not every cell needs automation d
 | TRAINING | C-04 | GD-71/72 | Trainer flow | Level edit | CH-13 |
 | TOURNAMENT | C-05 | Bracket UI | GD-08/09 | GD-28–31 | CH-13 |
 | LEAGUE (season) | C-29–32 | GD-43–51 | Season join | Standings | CH-13 |
+| EVENT | create-event | GD-159–170 | Going / looking RSVP | Never | CH-13 (Going+Looking) |
 
 ### 19.2 Multisport smoke (sample one deep + spot-check others)
 

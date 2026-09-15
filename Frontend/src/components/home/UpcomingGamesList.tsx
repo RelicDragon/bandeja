@@ -17,6 +17,7 @@ import { formatDate } from '@/utils/dateFormat';
 import type { TFunction } from 'i18next';
 import { isStalePastScheduledGame } from '@/utils/homeStaleScheduledGame';
 import { getEntityIcon, getEntityTagClasses } from '@/components/home/HomeGameRowEntityTags';
+import { countEventGoingLooking } from '@/utils/eventListingDisplay';
 
 interface UpcomingGamesListProps {
   games: Game[];
@@ -274,6 +275,7 @@ const StaleScheduledGameRow = ({
   const isDifferentCity = Boolean(gameCityId && userCityId && gameCityId !== userCityId);
   const clubName = game.court?.club?.name || game.club?.name;
   const playingCount = (game.participants ?? []).filter((p) => p.status === 'PLAYING').length;
+  const eventCounts = game.entityType === 'EVENT' ? countEventGoingLooking(game) : null;
   const showEntityType = game.entityType !== 'GAME';
   const showTime = !(game.entityType === 'LEAGUE_SEASON' && game.timeIsSet === false);
 
@@ -338,7 +340,13 @@ const StaleScheduledGameRow = ({
         <UnreadBadge count={displayUnread} size="sm" showIcon />
         <div className="flex items-center gap-1 text-xs text-amber-900 dark:text-amber-200">
           <Users size={12} />
-          <span>{game.entityType === 'BAR' ? playingCount : `${playingCount}/${game.maxParticipants}`}</span>
+          <span>
+            {eventCounts
+              ? t('eventDetails.goingCount', { going: eventCounts.going, looking: eventCounts.looking })
+              : game.entityType === 'BAR'
+                ? playingCount
+                : `${playingCount}/${game.maxParticipants}`}
+          </span>
         </div>
       </div>
     </div>

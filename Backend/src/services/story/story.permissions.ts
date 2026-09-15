@@ -23,7 +23,7 @@ export function canSeePhotoInStories(opts: {
 
 export function canSeeCreatedGameInStories(opts: {
   viewerFollows: boolean;
-  game: { isPublic: boolean; status: string; entityType: string };
+  game: { isPublic: boolean; status: string; entityType: string; eventApprovalStatus?: string | null };
   owner: { shareGameCreationsToFollowers: boolean };
 }): boolean {
   if (!opts.viewerFollows) return false;
@@ -31,6 +31,7 @@ export function canSeeCreatedGameInStories(opts: {
   if (!opts.game.isPublic) return false;
   if (opts.game.status !== 'ANNOUNCED') return false;
   if (opts.game.entityType === 'LEAGUE_SEASON') return false;
+  if (opts.game.entityType === 'EVENT' && opts.game.eventApprovalStatus !== 'APPROVED') return false;
   return true;
 }
 

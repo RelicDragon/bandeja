@@ -33,6 +33,7 @@ const baseState: FindFilterState = {
   trainingFilter: false,
   tournamentFilter: false,
   leaguesFilter: false,
+  eventsFilter: false,
   showPrivateGames: false,
   findDiscoveryEnabled: false,
   filterNoRating: false,
@@ -201,16 +202,46 @@ describe('aggregateFindDayIndexByDay', () => {
         row({ id: 'g', startTime: '2026-07-23T10:00:00.000Z', entityType: 'GAME' }),
         row({ id: 't', startTime: '2026-07-23T12:00:00.000Z', entityType: 'TRAINING' }),
         row({ id: 'l', startTime: '2026-07-23T14:00:00.000Z', entityType: 'LEAGUE_SEASON' }),
+        row({ id: 'e', startTime: '2026-07-23T16:00:00.000Z', entityType: 'EVENT' }),
       ],
       { id: 'u1' },
       baseState,
       'UTC',
     );
     const day = byDay.get('2026-07-23');
-    expect(day?.gameCount).toBe(3);
-    expect([...day!.entityTypes].sort()).toEqual(['GAME', 'LEAGUE', 'TRAINING']);
+    expect(day?.gameCount).toBe(4);
+    expect([...day!.entityTypes].sort()).toEqual(['EVENT', 'GAME', 'LEAGUE', 'TRAINING']);
     expect(day?.hasTraining).toBe(true);
     expect(day?.hasLeagueTournament).toBe(true);
+  });
+
+  it('favorite trainer residual only drops other trainings, not games', () => {
+    const byDay = aggregateFindDayIndexByDay(
+      [
+        row({
+          id: 'game',
+          startTime: '2026-07-23T10:00:00.000Z',
+          entityType: 'GAME',
+        }),
+        row({
+          id: 'fav',
+          startTime: '2026-07-23T11:00:00.000Z',
+          entityType: 'TRAINING',
+          trainerId: 'trainer-1',
+        }),
+        row({
+          id: 'other',
+          startTime: '2026-07-23T12:00:00.000Z',
+          entityType: 'TRAINING',
+          trainerId: 'trainer-2',
+        }),
+      ],
+      { id: 'u1', favoriteTrainerId: 'trainer-1' },
+      { ...baseState, gameFilter: true, trainingFilter: true },
+      'UTC',
+    );
+    const day = byDay.get('2026-07-23');
+    expect(day?.gameIds.sort()).toEqual(['fav', 'game']);
   });
 });
 

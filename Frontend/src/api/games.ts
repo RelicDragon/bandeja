@@ -157,7 +157,16 @@ export const gamesApi = {
     return mapApiGameResponse(response.data);
   },
 
-  create: async (data: Partial<Game> & { confirmOverlap?: boolean }) => {
+  create: async (
+    data: Omit<Partial<Game>, 'eventHeroes' | 'eventKind'> & {
+      confirmOverlap?: boolean;
+      eventKind?: string | null;
+      venueText?: string | null;
+      externalUrl?: string | null;
+      eventCreatorIntent?: 'organizing' | 'looking';
+      eventHeroes?: Array<{ originalUrl: string; thumbnailUrl: string }>;
+    },
+  ) => {
     const response = await api.post<ApiResponse<Game>>('/games', data);
     return response.data;
   },
@@ -194,7 +203,40 @@ export const gamesApi = {
       `/games/${id}/join`,
       overlapConfirmBody(confirmOverlap),
     );
-    return response.data;
+    return mapApiGameResponse(response.data);
+  },
+
+  eventRsvp: async (id: string, intent: 'going' | 'looking', lookingNote?: string) => {
+    const response = await api.post<ApiResponse<Game>>(`/games/${id}/event-rsvp`, {
+      intent,
+      lookingNote,
+    });
+    return mapApiGameResponse(response.data);
+  },
+
+  eventRsvpLeave: async (id: string) => {
+    const response = await api.delete<ApiResponse<Game>>(`/games/${id}/event-rsvp`);
+    return mapApiGameResponse(response.data);
+  },
+
+  eventLookingNote: async (id: string, lookingNote: string | null) => {
+    const response = await api.patch<ApiResponse<Game>>(`/games/${id}/event-looking-note`, {
+      lookingNote,
+    });
+    return mapApiGameResponse(response.data);
+  },
+
+  eventApproval: async (id: string, decision: 'APPROVE' | 'DECLINE') => {
+    const response = await api.post<ApiResponse<Game>>(`/games/${id}/event-approval`, { decision });
+    return mapApiGameResponse(response.data);
+  },
+
+  putEventHeroes: async (
+    id: string,
+    eventHeroes: Array<{ originalUrl: string; thumbnailUrl: string }>,
+  ) => {
+    const response = await api.put<ApiResponse<Game>>(`/games/${id}/event-heroes`, { eventHeroes });
+    return mapApiGameResponse(response.data);
   },
 
   joinAsGuest: async (id: string) => {

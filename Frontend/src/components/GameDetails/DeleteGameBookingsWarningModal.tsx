@@ -43,6 +43,7 @@ function getDeleteWithBookingsMessageKey(entityType: EntityType): string {
     LEAGUE_SEASON: 'gameDetails.deleteWithBookings.messageLeagueSeason',
     BAR: 'gameDetails.deleteWithBookings.messageBar',
     TRAINING: 'gameDetails.deleteWithBookings.messageTraining',
+    EVENT: 'gameDetails.deleteWithBookings.messageEvent',
   };
   return keyMap[entityType] ?? 'gameDetails.deleteWithBookings.messageGame';
 }

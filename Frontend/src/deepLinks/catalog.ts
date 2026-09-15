@@ -52,6 +52,7 @@ export const DEEP_LINK_ACTIONS = {
   findTomorrow: { id: 'findTomorrow', path: FIND_TOMORROW_PATH },
   createGame: { id: 'createGame', path: '/create-game' },
   createLeague: { id: 'createLeague', path: '/create-league' },
+  createEvent: { id: 'createEvent', path: '/create-event' },
   nextGame: { id: 'nextGame', path: '/next-game' },
   nextGameChat: { id: 'nextGameChat', path: '/next-game?open=chat' },
   nextGameLive: { id: 'nextGameLive', path: '/next-game?open=live' },

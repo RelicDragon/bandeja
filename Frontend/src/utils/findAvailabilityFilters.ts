@@ -6,6 +6,7 @@ import type { FindSportFilterValue } from '@/utils/gameFiltersStorage';
 import { normalizeFindSportFilter } from '@/utils/findSportFilter';
 
 export function passesFindAvailableSlotsFilter(game: Game, user: User | null | undefined): boolean {
+  if (game.entityType === 'EVENT') return true;
   const participants = game.participants ?? [];
   const slotCount = participants.filter((p) => p.status === 'PLAYING').length;
   if (slotCount >= game.maxParticipants) {

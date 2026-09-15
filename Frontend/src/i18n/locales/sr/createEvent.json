@@ -1,0 +1,38 @@
+{
+    "createEvent": {
+        "title": "Kreiraj Događaj/Oglas",
+        "organizing": "Ja organizujem",
+        "looking": "Hoću da idem / trebam partnera",
+        "organizerHint": "Ne moraš biti organizator.",
+        "kinds": {
+            "TOURNAMENT": "Spoljni turnir",
+            "LEAGUE": "Spoljna liga",
+            "CAMP": "Kamp"
+        },
+        "kindLabel": "Šta je ovo?",
+        "heroes": "Fotografije",
+        "heroesHint": "Dodaj fotografije plakata. Vide se kao slajdšou.",
+        "venue": "Mesto",
+        "venueText": "Adresa ili naziv mesta",
+        "venueOrClub": "Klub (opciono)",
+        "selectClub": "Izaberi klub",
+        "selectCity": "Grad",
+        "clearClub": "Unesi tekst",
+        "dateRange": "Datumi",
+        "start": "Počinje",
+        "end": "Završava se",
+        "registerUrl": "Link za prijavu (opciono)",
+        "playerLevel": "Nivo igrača",
+        "name": "Naziv",
+        "namePlaceholder": "Naziv događaja",
+        "description": "Opis",
+        "descriptionPlaceholder": "Šta se dešava?",
+        "priceAmount": "Iznos",
+        "save": "Sačuvaj",
+        "nameRequired": "Naziv je obavezan",
+        "datesInvalid": "Kraj mora biti posle početka",
+        "urlInvalid": "Koristi http(s) link",
+        "create": "Objavi Događaj/Oglas",
+        "pendingSubmitted": "Poslato na odobrenje. Do odobrenja vidiš ga samo ti i admini."
+    }
+}

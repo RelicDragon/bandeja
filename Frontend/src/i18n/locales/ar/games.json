@@ -46,12 +46,23 @@
       "TRAINING": "تدريب",
       "TOURNAMENT": "بطولة",
       "LEAGUE": "دوري",
-      "LEAGUE_SEASON": "موسم الدوري"
+      "LEAGUE_SEASON": "موسم الدوري",
+      "EVENT": "فعالية/إعلان"
     },
     "noGamesFound": "لا توجد مباريات",
     "noTrainingFound": "لا يوجد تدريب",
     "noTournamentFound": "لا توجد بطولة",
     "noLeaguesFound": "لا توجد دوريات",
+    "eventKinds": {
+      "TOURNAMENT": "بطولة خارجية",
+      "LEAGUE": "دوري خارجي",
+      "CAMP": "معسكر"
+    },
+    "upcomingEvents": "فعاليات",
+    "otherEvents": "فعاليات أخرى",
+    "seeAllEvents": "عرض الكل",
+    "goingNeedPartner": "{{going}} ذاهبون · {{looking}} يبحثون عن شريك",
+    "noEventsFound": "لا توجد فعاليات",
     "suitableGamesForMe": "مباريات مناسبة لي",
     "haveAvailableSlots": "فيها أماكن متاحة",
     "haveAvailableSlotsHint": "إخفاء المباريات الممتلئة التي لا يمكنك الانضمام إليها",

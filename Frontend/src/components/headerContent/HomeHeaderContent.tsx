@@ -59,6 +59,10 @@ export const HomeHeaderContent = () => {
     setCreateGameInitialDate(null);
     if (entityType === 'LEAGUE') {
       navigate('/create-league');
+    } else if (entityType === 'EVENT') {
+      navigate('/create-event', {
+        state: { initialGameData: hasInitial ? initialGameData : undefined },
+      });
     } else {
       navigate('/create-game', {
         state: { entityType, initialGameData: hasInitial ? initialGameData : undefined },

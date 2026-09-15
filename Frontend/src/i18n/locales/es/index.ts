@@ -15,6 +15,8 @@ import conflicts from './conflicts.json';
 import contacts from './contacts.json';
 import createGame from './createGame.json';
 import createLeague from './createLeague.json';
+import createEvent from './createEvent.json';
+import eventDetails from './eventDetails.json';
 import errors from './errors.json';
 import faq from './faq.json';
 import favorites from './favorites.json';
@@ -76,6 +78,8 @@ export default {
     ...contacts,
     ...createGame,
     ...createLeague,
+    ...createEvent,
+    ...eventDetails,
     ...errors,
     ...faq,
     ...favorites,

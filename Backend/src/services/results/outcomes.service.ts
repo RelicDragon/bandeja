@@ -921,7 +921,7 @@ export async function applyGameOutcomes(
     // Fixture under an already-FINAL season: re-sync season podium to corrected standings (X1).
     await syncParentSeasonPodiumIfFinal({ gameId, tx });
 
-    if (game.entityType !== EntityType.BAR && game.entityType !== EntityType.LEAGUE_SEASON) {
+    if (game.entityType !== EntityType.BAR && game.entityType !== EntityType.LEAGUE_SEASON && game.entityType !== EntityType.EVENT) {
       await SocialParticipantLevelService.applySocialParticipantLevelChanges(gameId, tx);
     }
     

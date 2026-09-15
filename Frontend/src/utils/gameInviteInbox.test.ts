@@ -28,9 +28,12 @@ describe('gameInviteInbox', () => {
     ).toBe(true);
   });
 
-  it('does not treat BAR occupancy as full', () => {
+  it('does not treat BAR or EVENT occupancy as full', () => {
     expect(
       isPlayingRosterFull({ entityType: 'BAR', maxParticipants: 4, participants: playing(4) }),
+    ).toBe(false);
+    expect(
+      isPlayingRosterFull({ entityType: 'EVENT', maxParticipants: 999, participants: playing(999) }),
     ).toBe(false);
   });
 

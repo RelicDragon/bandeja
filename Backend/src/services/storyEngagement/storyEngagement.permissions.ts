@@ -60,6 +60,7 @@ const GAME_CAPTION_SELECT = {
   entityType: true,
   status: true,
   isPublic: true,
+  eventApprovalStatus: true,
   resultsStatus: true,
   resultsArtifactsReadyAt: true,
   createdAt: true,
@@ -164,6 +165,10 @@ export async function resolveVisibleSegment(
             status: 'ANNOUNCED',
             entityType: { not: 'LEAGUE_SEASON' },
             createdAt: { gte: activitySince },
+            OR: [
+              { entityType: { not: 'EVENT' } },
+              { entityType: 'EVENT', eventApprovalStatus: 'APPROVED' },
+            ],
           },
         },
         include: {

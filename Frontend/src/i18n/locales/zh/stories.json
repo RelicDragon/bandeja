@@ -27,6 +27,7 @@
     "newGame": "新比赛",
     "unnamedGame": "比赛",
     "viewGame": "查看比赛",
+    "viewEvent": "查看活动/广告",
     "gameResult": "结果",
     "winnerBadge": "胜者",
     "record": "{{wins}}胜 · {{losses}}负 · {{ties}}平",

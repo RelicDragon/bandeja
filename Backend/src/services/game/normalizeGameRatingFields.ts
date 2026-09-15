@@ -16,6 +16,14 @@ export function normalizeGameRatingFields(input: GameRatingFieldsInput) {
     };
   }
 
+  if (input.entityType === EntityType.EVENT) {
+    return {
+      minLevel: input.minLevel ?? null,
+      maxLevel: input.maxLevel ?? null,
+      affectsRating: false,
+    };
+  }
+
   return {
     minLevel: input.minLevel ?? null,
     maxLevel: input.maxLevel ?? null,

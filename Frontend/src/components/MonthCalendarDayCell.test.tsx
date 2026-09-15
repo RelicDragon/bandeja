@@ -3,7 +3,31 @@
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+vi.hoisted(() => {
+  Object.defineProperty(window, 'matchMedia', {
+    configurable: true,
+    writable: true,
+    value: (query: string) => ({
+      matches: false,
+      media: query,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      addListener: () => {},
+      removeListener: () => {},
+      dispatchEvent: () => false,
+      onchange: null,
+    }),
+  });
+});
+import { useThemeStore } from '@/store/themeStore';
+import { calendarTagReadableColor } from '@/utils/calendarTagReadableColor';
 import { MonthCalendarDayCell } from './MonthCalendarDayCell';
+
+function hexToRgb(hex: string): string {
+  const n = Number.parseInt(hex.slice(1), 16);
+  return `rgb(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255})`;
+}
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
@@ -40,6 +64,7 @@ describe('MonthCalendarDayCell', () => {
   afterEach(() => {
     act(() => root.unmount());
     container.remove();
+    useThemeStore.getState().setTheme('light');
   });
 
   it('renders entities and quiet weather on separate rows', () => {
@@ -160,7 +185,70 @@ describe('MonthCalendarDayCell', () => {
     expect(tag).not.toBeNull();
     expect(tag?.textContent).toBe('CAMP');
     expect((tag as HTMLElement).style.color).toBe('rgb(124, 58, 237)');
-    expect(tag?.parentElement?.parentElement?.classList.contains('absolute')).toBe(true);
-    expect(tag?.parentElement?.parentElement?.classList.contains('bottom-1')).toBe(true);
+    expect(tag?.parentElement?.classList.contains('absolute')).toBe(true);
+    expect(tag?.parentElement?.classList.contains('bottom-1')).toBe(true);
+    expect(tag?.parentElement?.classList.contains('flex-col')).toBe(true);
+  });
+
+  it('stacks two or more ad tags on separate rows', () => {
+    act(() => root.render(
+      <MonthCalendarDayCell
+        day={new Date(2026, 9, 5)}
+        isCurrentMonth
+        isSelected={false}
+        isTodayDate={false}
+        gameCount={0}
+        unreadCount={0}
+        hasGames={false}
+        showWeatherPill={false}
+        showTypePill={false}
+        showParticipantPill={false}
+        typePillTypes={[]}
+        participantTypes={[]}
+        dayWeather={null}
+        locale="en-GB"
+        calendarTags={[
+          { campaignId: 'campaign-a', label: 'CAMP', color: '#7C3AED' },
+          { campaignId: 'campaign-b', label: 'LIGA', color: '#2563EB' },
+        ]}
+        onSelect={vi.fn()}
+      />,
+    ));
+
+    const tags = container.querySelector('[data-calendar-day-ad-tags]');
+    const labels = [...container.querySelectorAll('[data-calendar-day-ad-tag]')];
+    expect(labels.map((el) => el.textContent)).toEqual(['CAMP', 'LIGA']);
+    expect(tags?.textContent).not.toContain('·');
+    expect(labels.every((el) => el.parentElement === tags)).toBe(true);
+    expect(tags?.classList.contains('flex-col')).toBe(true);
+    expect(container.querySelector('button')?.style.paddingBottom).toBe('21px');
+  });
+
+  it('lifts CAMP purple so it stays readable on dark cells', () => {
+    useThemeStore.getState().setTheme('dark');
+    act(() => root.render(
+      <MonthCalendarDayCell
+        day={new Date(2026, 9, 1)}
+        isCurrentMonth
+        isSelected={false}
+        isTodayDate={false}
+        gameCount={0}
+        unreadCount={0}
+        hasGames={false}
+        showWeatherPill={false}
+        showTypePill={false}
+        showParticipantPill={false}
+        typePillTypes={[]}
+        participantTypes={[]}
+        dayWeather={null}
+        locale="en-GB"
+        calendarTags={[{ campaignId: 'campaign-a', label: 'CAMP', color: '#7C3AED' }]}
+        onSelect={vi.fn()}
+      />,
+    ));
+
+    const tag = container.querySelector('[data-calendar-day-ad-tag]') as HTMLElement | null;
+    expect(tag?.style.color).toBe(hexToRgb(calendarTagReadableColor('#7C3AED', 'dark')));
+    expect(tag?.style.color).not.toBe('rgb(124, 58, 237)');
   });
 });

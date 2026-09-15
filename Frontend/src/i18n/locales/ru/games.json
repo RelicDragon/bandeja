@@ -46,12 +46,23 @@
       "TRAINING": "Тренировка",
       "TOURNAMENT": "Турнир",
       "LEAGUE": "Лига",
-      "LEAGUE_SEASON": "Сезон Лиги"
+      "LEAGUE_SEASON": "Сезон Лиги",
+      "EVENT": "Событие/Объявление"
     },
+    "eventKinds": {
+      "TOURNAMENT": "Внешний турнир",
+      "LEAGUE": "Внешняя лига",
+      "CAMP": "Кэмп"
+    },
+    "upcomingEvents": "События",
+    "otherEvents": "Другие события",
+    "seeAllEvents": "Все",
+    "goingNeedPartner": "{{going}} идут · {{looking}} ищут пару",
     "noGamesFound": "Игры не найдены",
     "noTrainingFound": "Тренировки не найдены",
     "noTournamentFound": "Турнир не найден",
     "noLeaguesFound": "Лиги не найдены",
+    "noEventsFound": "События не найдены",
     "suitableGamesForMe": "Подходящие игры для меня",
     "haveAvailableSlots": "С доступными местами",
     "haveAvailableSlotsHint": "Скрыть заполненные игры, к которым нельзя присоединиться",

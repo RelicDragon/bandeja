@@ -1,5 +1,5 @@
 import prisma from '../../config/database';
-import { Sport } from '@prisma/client';
+import { EntityType, EventApprovalStatus, Sport } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
 import { USER_SELECT_WITH_SPORT_PROFILES } from '../../utils/constants';
 import { getUserGameNote, getUserNotesForGames } from '../userGameNote.service';
@@ -28,10 +28,11 @@ import {
   type GamePhotosViewer,
 } from '../../shared/gamePhotos/permissions';
 import { WeatherForecastService } from '../weatherForecast.service';
-import { myGamesParticipantWhere } from './myGamesParticipantWhere';
+import { myGamesMembershipWhere } from './myGamesParticipantWhere';
 import { getUserTimezoneFromCityId } from '../user-timezone.service';
 import { formatInTimeZone } from 'date-fns-tz';
 import { enrichAvailableGamesSafe } from './availableGamesEnrichment';
+import { appendEventDiscoveryVisibility } from './eventApprovalVisibility';
 
 export { MAIN_PHOTO_RELATION_SELECT };
 export { getAvailableGamesCardInclude, getAvailableGamesCardSelect } from './availableGamesCard.projection';
@@ -392,6 +393,18 @@ export class GameReadService {
       viewerIsAdmin = user?.isAdmin ?? false;
     }
 
+    if (
+      game.entityType === EntityType.EVENT &&
+      game.eventApprovalStatus !== EventApprovalStatus.APPROVED
+    ) {
+      const isOwner = game.participants.some(
+        (participant) => participant.role === 'OWNER' && participant.userId === userId,
+      );
+      if (skipRestrictions || !userId || (!viewerIsAdmin && !isOwner)) {
+        throw new ApiError(404, 'Game not found');
+      }
+    }
+
     let isClubFavorite = false;
     let userNote: string | null = null;
     if (userId) {
@@ -481,18 +494,22 @@ export class GameReadService {
 
     let listViewerIsAdmin = false;
     const cityIdToFilter = filters.cityId || userCityId;
-    if (cityIdToFilter) {
-      where.cityId = cityIdToFilter;
-    } else if (userId) {
+    if (userId) {
       const user = await prisma.user.findUnique({
         where: { id: userId },
         select: { currentCityId: true, isAdmin: true }
       });
       listViewerIsAdmin = user?.isAdmin ?? false;
-      if (user && user.currentCityId && !user.isAdmin) {
+      if (cityIdToFilter) {
+        where.cityId = cityIdToFilter;
+      } else if (user && user.currentCityId && !user.isAdmin) {
         where.cityId = user.currentCityId;
       }
+    } else if (cityIdToFilter) {
+      where.cityId = cityIdToFilter;
     }
+
+    appendEventDiscoveryVisibility(where, { userId, isAdmin: listViewerIsAdmin });
 
     const limit = filters.limit ? parseInt(filters.limit) : undefined;
     const offset = filters.offset ? parseInt(filters.offset) : undefined;
@@ -545,12 +562,16 @@ export class GameReadService {
     today.setHours(0, 0, 0, 0);
 
     const where: any = {
-      participants: myGamesParticipantWhere(userId),
-      OR: [
-        { status: { not: 'ARCHIVED' } },
+      AND: [
+        myGamesMembershipWhere(userId),
         {
-          status: 'ARCHIVED',
-          startTime: { gte: today }
+          OR: [
+            { status: { not: 'ARCHIVED' } },
+            {
+              status: 'ARCHIVED',
+              startTime: { gte: today }
+            }
+          ]
         }
       ]
     };
@@ -639,16 +660,32 @@ export class GameReadService {
     }
 
     const where: any = {
-      participants: {
-        some: {
-          userId: userId
-        }
-      },
       status: 'ARCHIVED',
       startTime: startTimeFilter,
-      OR: [
-        { entityType: { not: 'LEAGUE_SEASON' } },
-        { entityType: 'LEAGUE_SEASON', resultsStatus: 'FINAL' },
+      AND: [
+        {
+          OR: [
+            {
+              entityType: { not: EntityType.EVENT },
+              participants: { some: { userId } },
+            },
+            {
+              entityType: EntityType.EVENT,
+              participants: {
+                some: {
+                  userId,
+                  OR: [{ role: 'OWNER' }, { status: 'PLAYING' }, { lookingForPartner: true }],
+                },
+              },
+            },
+          ],
+        },
+        {
+          OR: [
+            { entityType: { not: 'LEAGUE_SEASON' } },
+            { entityType: 'LEAGUE_SEASON', resultsStatus: 'FINAL' },
+          ],
+        },
       ],
     };
     const photoViewer = buildPhotoViewer(userId, pastUser?.isAdmin ?? false);

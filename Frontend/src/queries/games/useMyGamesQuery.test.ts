@@ -91,6 +91,50 @@ describe('useMyGamesQuery', () => {
     expect(result.games.map((g) => g.id)).toEqual(['playing']);
   });
 
+  it('keeps EVENT listings the user organizes or RSVPs to', async () => {
+    getMyTabData.mockResolvedValue({
+      games: [
+        {
+          id: 'event-other',
+          entityType: 'EVENT',
+          startTime: '2026-06-05',
+          participants: [
+            {
+              userId: 'user-1',
+              role: 'PARTICIPANT',
+              status: 'NON_PLAYING',
+              lookingForPartner: false,
+            },
+          ],
+        } as Game,
+        {
+          id: 'event-owner',
+          entityType: 'EVENT',
+          startTime: '2026-06-06',
+          participants: [
+            { userId: 'user-1', role: 'OWNER', status: 'NON_PLAYING', lookingForPartner: false },
+          ],
+        } as Game,
+        {
+          id: 'event-going',
+          entityType: 'EVENT',
+          startTime: '2026-06-07',
+          participants: [
+            { userId: 'user-1', role: 'PARTICIPANT', status: 'PLAYING', lookingForPartner: false },
+          ],
+        } as Game,
+      ],
+      invites: [],
+      teams: [],
+      unreadCounts: {},
+    });
+
+    const client = createTestClient();
+    const result = await client.fetchQuery(myGamesQueryOptions('user-1'));
+
+    expect(result.games.map((g) => g.id)).toEqual(['event-going', 'event-owner']);
+  });
+
   it('passes userId to getMyTabData', async () => {
     const client = createTestClient();
     await client.fetchQuery(myGamesQueryOptions('user-1'));

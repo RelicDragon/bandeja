@@ -34,7 +34,7 @@ export function assertMaxParticipantsWithinUserCap(params: {
   maxParticipants: number;
   entityType: EntityType;
 }): void {
-  if (params.entityType === EntityType.BAR) return;
+  if (params.entityType === EntityType.BAR || params.entityType === EntityType.EVENT) return;
   if (params.entityType === EntityType.TRAINING) {
     validateTrainingMaxParticipants(params.maxParticipants);
     return;

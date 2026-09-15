@@ -17,6 +17,8 @@ import { EntityType } from '@prisma/client';
     radarEntityTypes(EntityType.GAME).includes(EntityType.TRAINING),
     false,
   );
+  assert.deepEqual(radarEntityTypes(EntityType.EVENT), []);
+  assert.equal(radarEntityTypes(EntityType.GAME).includes(EntityType.EVENT), false);
 }
 
 {

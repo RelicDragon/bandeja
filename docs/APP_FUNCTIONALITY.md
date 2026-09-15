@@ -58,6 +58,9 @@ Most authenticated UX lives in a single **MainPage shell** with five bottom tabs
 | `BAR` | Bar meetup (simplified social) |
 | `LEAGUE` | Fixture sub-game under a season (`parentId` → season) |
 | `LEAGUE_SEASON` | Season hub (schedule, planner, standings tabs) |
+| `EVENT` | External camp / tournament / league listing (no rating or results; partner board). Product name **Event**; enum `EVENT`. Kind is `eventKind` (`TOURNAMENT` / `LEAGUE` / `CAMP`), not extra entity types. Created as `eventApprovalStatus=ON_APPROVE` (owner + `isAdmin` only); public Find/details only after `APPROVED`. |
+
+This document also uses “event” for any `Game` row. Product **Event** is only `EntityType.EVENT`.
 
 **Game status** (`Game.status` — stored on every game; **not** the same as league fixture UI labels `READY` / `SCHEDULED`):
 
@@ -183,6 +186,7 @@ Context-sensitive header per screen. The **+ create menu** (Home header) opens:
 - League
 - Training session
 - Tournament
+- Event/Ad
 - Bar event
 - Group chat / Channel
 - Story
@@ -300,6 +304,7 @@ Three optional panels — Bookings, Teams, Leagues — with counts:
 - Unread chat badge on card
 - Create game from calendar date (pre-filled)
 - Create from + menu
+- **Event** listings appear here only after I’m going or Need a partner
 
 ---
 
@@ -358,7 +363,7 @@ Discover and join games in the user's city.
 
 ### 7.2 Category chips
 
-Filter by: Games, Training, Tournaments, Leagues, User-created games (combinable AND logic).
+Filter by: Games, Training, Tournaments, Leagues, Events (multi-select OR). Advanced panel filters combine with chips (AND). Empty chip selection shows all types **except** `EVENT` (Events chip off by default). Compact **Events** poster rail (2–3 upcoming city cards) sits **below the calendar** (desktop: games column), not above it and not titled as a week. **See all** turns the Events chip on. The rail hides when the Events chip is on. `ON_APPROVE` Events are omitted for everyone except the owner and `isAdmin`.
 
 ### 7.3 Advanced filters
 
@@ -395,7 +400,7 @@ Change city from the Find header → `switchCity` (Home). Games refetch for the 
 Logged-in Find and My show a **Want to play / Looking** strip (Home city). Compose a sport GAME intent or BAR intent; open the court lobby radar.
 
 - Radar people: other looking players in that city/sport/entity, affinity-weighted orbits.
-- Radar games: up to 4 fully eligible public events as circular face composites on the near orbit (not `PoolMember` physics). Sport intent: GAME + TOURNAMENT. BAR intent: BAR only. Skip TRAINING, leagues, private, full, no time, owner, already PLAYING / INVITED / IN_QUEUE.
+- Radar games: up to 4 fully eligible public events as circular face composites on the near orbit (not `PoolMember` physics). Sport intent: GAME + TOURNAMENT. BAR intent: BAR only. Skip TRAINING, leagues, EVENT, private, full, no time, owner, already PLAYING / INVITED / IN_QUEUE.
 - Direct-join vs queue-only is chrome + CTA only (`Join` / `Ask to join`). A free PLAYING slot is required either way.
 - Hidden for spectators and while a real PENDING/ACCEPTED proposal is open. The direct match editor (no proposal) still shows games.
 - Join that lands PLAYING consumes looking and detaches from any proposal. Ask-to-join / overlap-cancel keep looking.
@@ -416,6 +421,8 @@ Multi-step wizard for scheduling events. Entity types:
 | **BAR** | Social bar meetup (simplified) |
 | **TRAINING** | Coach-led session; trainer role, creator may be non-playing |
 | **TOURNAMENT** | Bracket-oriented defaults, roster setup |
+
+Dedicated **Event** poster (`/create-event`) is not this wizard: camp or **external** tournament/league listing; no courts, rating, results, or templates. Name and at least one hero photo are required. Submit creates `ON_APPROVE` (not posted to the city until an admin approves).
 
 ### 8.1 Format wizard
 
@@ -505,6 +512,7 @@ Central hub for any scheduled event. Layout adapts by `entityType`.
 | BAR | Bar participants list, simplified social |
 | LEAGUE | Link to parent league season |
 | LEAGUE_SEASON | Multi-tab: General, Schedule, Planner, Standings, FAQ |
+| EVENT | Poster landing: kind, heroes slideshow, Register URL, Going / Need a partner, partner board; no results, live, bets, courts, or Game Settings. My/calendar if OWNER, Going, or Looking (organizing is not auto-Going). Create lands in `ON_APPROVE` (owner + `isAdmin` only, pending banner; admin Approve/Decline with confirm). Public RSVP and Find only after `APPROVED`. |
 
 ### 10.2 General tab (all types)
 
@@ -1119,7 +1127,7 @@ Runs at **:00 and :30** every hour (+ once on startup). Uses club city timezone 
 - **BAR** → `FINISHED`: auto-set bar results (`BarResultsService`)
 - **FINISHED / ARCHIVED**: clean up invite participant rows
 - **LEAGUE** fixture with `resultsStatus === FINAL` → recalculate parent season standings
-- **Reminders**: 24h and 2h before start (±10 min window) to `PLAYING` participants — entity types GAME, TOURNAMENT, BAR, TRAINING, LEAGUE; only while status `ANNOUNCED` and `timeIsSet`
+- **Reminders**: 24h and 2h before start (±10 min window) to Going (`PLAYING`) and Event looking (`lookingForPartner`) — entity types GAME, TOURNAMENT, BAR, TRAINING, LEAGUE, EVENT; only while status `ANNOUNCED` and `timeIsSet`
 
 ---
 

@@ -17,7 +17,9 @@ export const GameNameInput = ({ value, onChange, entityType }: GameNameInputProp
         ? t('createGame.gameNamePlaceholderLeague')
         : entityType === 'TRAINING'
           ? t('createGame.gameNamePlaceholderTraining')
-          : t('createGame.gameNamePlaceholder');
+          : entityType === 'EVENT'
+            ? t('createEvent.namePlaceholder')
+            : t('createGame.gameNamePlaceholder');
 
   return (
     <input

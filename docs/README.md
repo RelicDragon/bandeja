@@ -11,6 +11,7 @@ Current-state docs primarily. ADRs under `adr/` for hard-to-reverse trade-offs. 
 | [plans/browse-city.md](./plans/browse-city.md) | Browse / Home / Venue city lens (invite, chat Users, club pick) |
 | [plans/player-invite-looking.md](./plans/player-invite-looking.md) | Invite Search \| Looking |
 | [plans/lobby-radar-matching-games.md](./plans/lobby-radar-matching-games.md) | Court lobby radar: matching public games |
+| [plans/event-entity.md](./plans/event-entity.md) | Event entity: external tournament / league / camp listings + partner board |
 | [UI_TEST_PLAN_TWO_USER.md](./UI_TEST_PLAN_TWO_USER.md) | Two-user / Socket cases |
 | [adr/](./adr/) | Hard-to-reverse decisions (e.g. chat read cursor authority) |
 | [agents/](./agents/) | Skill config (issues, triage, domain) |

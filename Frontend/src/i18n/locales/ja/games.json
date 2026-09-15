@@ -46,12 +46,23 @@
       "TRAINING": "トレーニング",
       "TOURNAMENT": "トーナメント",
       "LEAGUE": "リーグ",
-      "LEAGUE_SEASON": "リーグシーズン"
+      "LEAGUE_SEASON": "リーグシーズン",
+      "EVENT": "イベント/告知"
     },
     "noGamesFound": "試合が見つかりません",
     "noTrainingFound": "トレーニングが見つかりません",
     "noTournamentFound": "トーナメントが見つかりません",
     "noLeaguesFound": "リーグが見つかりません",
+    "eventKinds": {
+      "TOURNAMENT": "外部トーナメント",
+      "LEAGUE": "外部リーグ",
+      "CAMP": "キャンプ"
+    },
+    "upcomingEvents": "イベント",
+    "otherEvents": "その他のイベント",
+    "seeAllEvents": "すべて",
+    "goingNeedPartner": "{{going}}人参加 · {{looking}}人がパートナー募集",
+    "noEventsFound": "イベントが見つかりません",
     "suitableGamesForMe": "自分に合う試合",
     "haveAvailableSlots": "空き枠あり",
     "haveAvailableSlotsHint": "参加できない満員の試合を隠す",

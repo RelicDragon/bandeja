@@ -13,6 +13,14 @@ export function resolveCreateGameRatingFields(
     };
   }
 
+  if (entityType === 'EVENT') {
+    return {
+      minLevel: levelRange[0],
+      maxLevel: levelRange[1],
+      affectsRating: false,
+    };
+  }
+
   return {
     minLevel: levelRange[0],
     maxLevel: levelRange[1],

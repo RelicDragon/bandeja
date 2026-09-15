@@ -17,6 +17,7 @@ export interface GameFilters {
   trainingFilter: boolean;
   tournamentFilter: boolean;
   leaguesFilter: boolean;
+  eventsFilter?: boolean;
   activeTab: 'calendar' | 'list';
   listViewStartDate?: string;
   calendarSelectedDate?: string;
@@ -42,6 +43,7 @@ const DEFAULT_FILTERS: GameFilters = {
   trainingFilter: false,
   tournamentFilter: false,
   leaguesFilter: false,
+  eventsFilter: false,
   activeTab: 'calendar',
   filtersPanelOpen: false,
   filterClubIds: [],

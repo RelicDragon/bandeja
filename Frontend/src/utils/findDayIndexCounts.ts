@@ -77,7 +77,7 @@ function passesDayIndexResidualFilters(
     }
   }
 
-  if (state.trainingFilter) {
+  if (state.trainingFilter && row.entityType === 'TRAINING') {
     const favoriteTrainerId =
       state.favoriteTrainerId !== undefined
         ? state.favoriteTrainerId

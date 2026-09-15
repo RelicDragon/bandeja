@@ -65,6 +65,7 @@ function baseState(overrides: Partial<FindFilterState> = {}): FindFilterState {
     trainingFilter: false,
     tournamentFilter: false,
     leaguesFilter: false,
+    eventsFilter: false,
     showPrivateGames: false,
     findDiscoveryEnabled: false,
     filterNoRating: false,
@@ -93,6 +94,56 @@ describe('findFilter', () => {
     expect(list.map((g) => g.id)).toEqual(['game']);
     expect(aggregates.get(dayKey)?.gameCount).toBe(1);
     expect(aggregates.get(dayKey)?.gameIds).toEqual(['game']);
+  });
+
+  it('keeps EVENT out of the default river and includes it when the events chip is on', () => {
+    const event = baseGame({ id: 'event', entityType: 'EVENT' });
+    const game = baseGame({ id: 'game', entityType: 'GAME' });
+    const viewer = baseViewer();
+
+    expect(passesFindFilter(event, viewer, baseState())).toBe(false);
+    expect(passesFindFilter(game, viewer, baseState())).toBe(true);
+    expect(passesFindFilter(event, viewer, baseState({ eventsFilter: true }))).toBe(true);
+    expect(passesFindFilter(game, viewer, baseState({ eventsFilter: true }))).toBe(false);
+    expect(
+      filterFindGames([event, game], viewer, baseState({ eventsFilter: true, gameFilter: true })).map(
+        (g) => g.id,
+      ),
+    ).toEqual(['event', 'game']);
+  });
+
+  it('does not hide EVENT when available-slots filter is on', () => {
+    const event = baseGame({
+      id: 'event',
+      entityType: 'EVENT',
+      maxParticipants: 999,
+      participants: Array.from({ length: 12 }, (_, i) => ({
+        userId: `p${i}`,
+        role: i === 0 ? 'OWNER' : 'PLAYER',
+        status: 'PLAYING',
+        user: { id: `p${i}`, gender: 'MALE' },
+      })) as Game['participants'],
+    });
+    const viewer = baseViewer();
+    const state = baseState({ eventsFilter: true, filterAvailableSlots: true });
+    expect(passesFindFilter(event, viewer, state)).toBe(true);
+  });
+
+  it('applies suitable rating filter to EVENT', () => {
+    const event = baseGame({
+      id: 'event',
+      entityType: 'EVENT',
+      minLevel: 5,
+      maxLevel: 7,
+    });
+    const viewer = baseViewer({
+      level: 3,
+      sportProfiles: undefined,
+    } as Partial<User>);
+    expect(passesFindFilter(event, viewer, baseState({ eventsFilter: true }))).toBe(true);
+    expect(
+      passesFindFilter(event, viewer, baseState({ eventsFilter: true, filterSuitableRating: true })),
+    ).toBe(false);
   });
 
   it('hides full games when available-slots filter is on', () => {
@@ -272,6 +323,75 @@ describe('findFilter', () => {
     expect(list.map((g) => g.id)).toEqual(['fav']);
     expect(aggregates.get(dayKey)?.gameCount).toBe(1);
     expect(aggregates.get(dayKey)?.gameIds).toEqual(['fav']);
+  });
+
+  it('ORs entity chips so games and tournaments can both pass', () => {
+    const day = startOfDay(new Date());
+    day.setDate(day.getDate() + 2);
+    day.setHours(10, 0, 0, 0);
+    const games = [
+      baseGame({ id: 'game', entityType: 'GAME', startTime: day.toISOString() }),
+      baseGame({ id: 'train', entityType: 'TRAINING', startTime: day.toISOString() }),
+      baseGame({ id: 'tourney', entityType: 'TOURNAMENT', startTime: day.toISOString() }),
+      baseGame({ id: 'league', entityType: 'LEAGUE', startTime: day.toISOString() }),
+    ];
+    const viewer = baseViewer();
+    const state = baseState({ gameFilter: true, tournamentFilter: true });
+
+    const list = filterFindGames(games, viewer, state, { mode: 'list' });
+    const aggregates = aggregateFindGamesByDay(games, viewer, state);
+    const dayKey = format(day, 'yyyy-MM-dd');
+
+    expect(list.map((g) => g.id).sort()).toEqual(['game', 'tourney']);
+    expect(aggregates.get(dayKey)?.gameCount).toBe(2);
+    expect([...(aggregates.get(dayKey)?.gameIds ?? [])].sort()).toEqual(['game', 'tourney']);
+
+    const dayList = filterFindGames(games, viewer, state, {
+      mode: 'calendar',
+      selectedDay: day,
+    });
+    expect(dayList.map((g) => g.id).sort()).toEqual(['game', 'tourney']);
+    expect(aggregates.get(dayKey)?.gameCount).toBe(dayList.length);
+  });
+
+  it('keeps non-training matches when favorite trainer is set with training plus another chip', () => {
+    const day = startOfDay(new Date());
+    day.setDate(day.getDate() + 2);
+    day.setHours(10, 0, 0, 0);
+    const favorite = baseGame({
+      id: 'fav',
+      entityType: 'TRAINING',
+      trainerId: 'trainer-1',
+      startTime: day.toISOString(),
+      participants: [
+        {
+          userId: 'trainer-1',
+          role: 'OWNER',
+          status: 'PLAYING',
+          user: { id: 'trainer-1', gender: 'MALE' },
+        },
+      ] as Game['participants'],
+    });
+    const otherTraining = baseGame({
+      id: 'other-train',
+      entityType: 'TRAINING',
+      trainerId: 'trainer-2',
+      startTime: day.toISOString(),
+      participants: [
+        {
+          userId: 'trainer-2',
+          role: 'OWNER',
+          status: 'PLAYING',
+          user: { id: 'trainer-2', gender: 'MALE' },
+        },
+      ] as Game['participants'],
+    });
+    const game = baseGame({ id: 'game', startTime: day.toISOString() });
+    const viewer = baseViewer({ favoriteTrainerId: 'trainer-1' });
+    const state = baseState({ gameFilter: true, trainingFilter: true });
+
+    const list = filterFindGames([favorite, otherTraining, game], viewer, state, { mode: 'list' });
+    expect(list.map((g) => g.id).sort()).toEqual(['fav', 'game']);
   });
 
   it('records participant pills before slots filter excludes the game from counts', () => {

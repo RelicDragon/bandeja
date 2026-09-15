@@ -121,6 +121,12 @@ router.post(
 );
 
 router.post(
+  '/upload/event/hero',
+  upload.single('image'),
+  uploadMarketItemImage
+);
+
+router.post(
   '/upload/game/media',
   upload.single('image'),
   validate([

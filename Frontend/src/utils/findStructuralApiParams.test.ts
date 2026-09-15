@@ -16,6 +16,7 @@ const base = {
   trainingFilter: false,
   tournamentFilter: false,
   leaguesFilter: false,
+  eventsFilter: false,
 } as Pick<
   GameFilters,
   | 'filterClubIds'
@@ -27,12 +28,20 @@ const base = {
   | 'trainingFilter'
   | 'tournamentFilter'
   | 'leaguesFilter'
+  | 'eventsFilter'
 >;
 
 describe('findStructuralApiParams', () => {
   it('maps entity chips', () => {
     expect(resolveFindEntityTypesParam({ gameFilter: true })).toBe('GAME');
     expect(resolveFindEntityTypesParam({ leaguesFilter: true })).toBe('LEAGUE');
+    expect(resolveFindEntityTypesParam({ gameFilter: true, tournamentFilter: true })).toBe(
+      'GAME,TOURNAMENT',
+    );
+    expect(resolveFindEntityTypesParam({ eventsFilter: true })).toBe('EVENT');
+    expect(resolveFindEntityTypesParam({ gameFilter: true, eventsFilter: true })).toBe(
+      'GAME,EVENT',
+    );
     expect(resolveFindEntityTypesParam({})).toBeUndefined();
   });
 

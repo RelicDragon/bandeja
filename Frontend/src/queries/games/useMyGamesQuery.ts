@@ -5,6 +5,7 @@ import { queryKeys } from '../queryKeys';
 import { GAMES_LIST_STALE_TIME } from './constants';
 import { sortGamesByStatusAndStartTime } from './sortGames';
 import { excludePendingInviteOnlyMyGames } from '@/utils/excludePendingInviteOnlyMyGames';
+import { excludeUnoptedEventsFromMyGames } from '@/utils/eventMyTabMembership';
 
 export interface MyGamesData {
   games: Game[];
@@ -26,7 +27,10 @@ async function fetchMyGamesData(userId: string): Promise<MyGamesData> {
     });
     return {
       games: sortGamesByStatusAndStartTime(
-        excludePendingInviteOnlyMyGames([...(tabData.games || [])], userId),
+        excludeUnoptedEventsFromMyGames(
+          excludePendingInviteOnlyMyGames([...(tabData.games || [])], userId),
+          userId,
+        ),
       ),
       invites: tabData.invites ?? [],
       unreadCounts: tabData.unreadCounts ?? {},
@@ -40,7 +44,10 @@ async function fetchMyGamesData(userId: string): Promise<MyGamesData> {
     const fallback = await getMyTabDataFallback(userId);
     return {
       games: sortGamesByStatusAndStartTime(
-        excludePendingInviteOnlyMyGames([...(fallback.games || [])], userId),
+        excludeUnoptedEventsFromMyGames(
+          excludePendingInviteOnlyMyGames([...(fallback.games || [])], userId),
+          userId,
+        ),
       ),
       invites: fallback.invites ?? [],
       unreadCounts: fallback.unreadCounts ?? {},

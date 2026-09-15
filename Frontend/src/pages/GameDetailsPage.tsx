@@ -16,6 +16,7 @@ import {
 import type { Game } from '@/types';
 import { GameDetailsContent } from './GameDetails';
 import { LeagueDetailsContent } from './LeagueDetails';
+import { EventDetailsContent } from './EventDetails';
 import { GameChat } from './GameChat';
 import { useTranslation } from 'react-i18next';
 import { AnimatedPresencePanel } from '@/components/motion/AnimatedPresencePanel';
@@ -23,7 +24,7 @@ import { ScrollEdgeHints } from '@/components/GameDetails/ScrollEdgeHints';
 
 type EntityRouteState =
   | { status: 'loading' }
-  | { status: 'ready'; variant: 'league' | 'game'; initialGame: Game }
+  | { status: 'ready'; variant: 'league' | 'game' | 'event'; initialGame: Game }
   | { status: 'error' }
   | { status: 'cancelled' };
 
@@ -33,6 +34,9 @@ export const GameDetailsPage = () => {
   const { t } = useTranslation();
   const isDesktop = useDesktop();
   const isLandscape = useIsLandscape();
+  const gameDetailsCanAccessChat = useGameDetailsChromeStore((s) => s.gameDetailsCanAccessChat);
+  const setGameDetailsCanAccessChat = useGameDetailsChromeStore((s) => s.setGameDetailsCanAccessChat);
+  const setGameDetailsSportTag = useGameDetailsChromeStore((s) => s.setGameDetailsSportTag);
   const gameDetailsTableViewOverride = useGameDetailsChromeStore((s) => s.gameDetailsTableViewOverride);
   const setGameDetailsTableViewOverride = useGameDetailsChromeStore((s) => s.setGameDetailsTableViewOverride);
   const setGameDetailsCanShowTableView = useGameDetailsChromeStore((s) => s.setGameDetailsCanShowTableView);
@@ -90,7 +94,9 @@ export const GameDetailsPage = () => {
     setLayoutCancelledInfo(null);
     setSelectedGameChatId(null);
     setEntityRoute({ status: 'loading' });
-  }, [id, setGameDetailsTableViewOverride, setGameDetailsCanShowTableView, setGameDetailsOccludesSideChat]);
+    setGameDetailsCanAccessChat(false);
+    setGameDetailsSportTag(null);
+  }, [id, setGameDetailsTableViewOverride, setGameDetailsCanShowTableView, setGameDetailsOccludesSideChat, setGameDetailsCanAccessChat, setGameDetailsSportTag]);
 
   useLayoutEffect(() => {
     if (entityRoute.status !== 'ready' && entityRoute.status !== 'cancelled') return;
@@ -114,7 +120,8 @@ export const GameDetailsPage = () => {
         const data = res.data;
         setLayoutTableAvailable(canShowTournamentTableView(data));
         const et = data.entityType;
-        const variant = et === 'LEAGUE' || et === 'LEAGUE_SEASON' ? 'league' : 'game';
+        const variant =
+          et === 'LEAGUE' || et === 'LEAGUE_SEASON' ? 'league' : et === 'EVENT' ? 'event' : 'game';
         setEntityRoute({ status: 'ready', variant, initialGame: data });
       })
       .catch((err: { response?: { status?: number; data?: unknown } }) => {
@@ -138,6 +145,9 @@ export const GameDetailsPage = () => {
 
   const effectiveChatId = selectedGameChatId ?? id;
   const canShowSplitLayout = isDesktop || isLandscape;
+  const isEventLayout =
+    (entityRoute.status === 'ready' && entityRoute.variant === 'event') ||
+    (entityRoute.status === 'cancelled' && layoutCancelledInfo?.entityType === 'EVENT');
 
   const handleChatGameSelect = (gameId: string) => {
     setSelectedGameChatId((prev) => (prev === gameId ? null : gameId));
@@ -174,7 +184,18 @@ export const GameDetailsPage = () => {
       );
     }
     if (entityRoute.status === 'cancelled') {
+      if (layoutCancelledInfo?.entityType === 'EVENT') {
+        return <EventDetailsContent layoutCancelledInfo={layoutCancelledInfo} />;
+      }
       return <GameDetailsContent {...detailsCommon} />;
+    }
+    if (entityRoute.variant === 'event') {
+      return (
+        <EventDetailsContent
+          layoutCancelledInfo={layoutCancelledInfo}
+          initialGame={entityRoute.initialGame}
+        />
+      );
     }
     if (entityRoute.variant === 'league') {
       return <LeagueDetailsContent {...detailsCommon} initialGame={entityRoute.initialGame} />;
@@ -186,7 +207,7 @@ export const GameDetailsPage = () => {
     const leftPanel = (
       <SplitViewLeftPanel bottomTabsVisible={false}>
         <div className="relative flex h-full min-h-0 flex-col">
-          <div ref={scrollContainerRef} className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden scrollbar-auto p-3">
+          <div ref={scrollContainerRef} className={`min-h-0 flex-1 overflow-y-auto overflow-x-hidden scrollbar-auto ${isEventLayout ? '' : 'p-3'}`}>
             {renderEntityDetails()}
           </div>
           <ScrollEdgeHints scrollRef={scrollContainerRef} enabled={showScrollMoreHint} />
@@ -207,6 +228,10 @@ export const GameDetailsPage = () => {
       );
     }
 
+    const hideSideChat =
+      entityRoute.status === 'loading' ||
+      entityRoute.status === 'error' ||
+      (isEventLayout && !gameDetailsCanAccessChat);
     const rightPanel = (
       <SplitViewRightPanel
         selectedId={`game-${effectiveChatId}`}
@@ -216,6 +241,14 @@ export const GameDetailsPage = () => {
         <GameChat key={`game-${effectiveChatId}`} isEmbedded={true} chatId={effectiveChatId} chatType="game" />
       </SplitViewRightPanel>
     );
+
+    if (hideSideChat) {
+      return (
+        <div className="fixed inset-0 top-[calc(4rem+env(safe-area-inset-top))] overflow-hidden">
+          {leftPanel}
+        </div>
+      );
+    }
 
     return (
       <div className="fixed inset-0 top-[calc(4rem+env(safe-area-inset-top))] overflow-hidden">

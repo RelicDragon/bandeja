@@ -31,7 +31,7 @@ export class SocialParticipantLevelService {
       return;
     }
 
-    if (game.entityType === EntityType.BAR || game.entityType === EntityType.LEAGUE_SEASON) {
+    if (game.entityType === EntityType.BAR || game.entityType === EntityType.LEAGUE_SEASON || game.entityType === EntityType.EVENT) {
       return;
     }
 
@@ -186,7 +186,7 @@ export class SocialParticipantLevelService {
         id: { not: currentGameId },
         startTime: { lt: currentGameStartTime },
         resultsStatus: 'FINAL',
-        entityType: { notIn: [EntityType.BAR, EntityType.LEAGUE_SEASON] },
+        entityType: { notIn: [EntityType.BAR, EntityType.LEAGUE_SEASON, EntityType.EVENT] },
         AND: [
           { participants: { some: { userId: userId1, status: 'PLAYING' } } },
           { participants: { some: { userId: userId2, status: 'PLAYING' } } },

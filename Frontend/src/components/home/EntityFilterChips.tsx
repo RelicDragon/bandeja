@@ -1,16 +1,17 @@
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
-import { Users, Swords, Dumbbell, Trophy, type LucideIcon } from 'lucide-react';
+import { Users, Swords, Dumbbell, Trophy, CalendarDays, type LucideIcon } from 'lucide-react';
 import { EntityTypeDot } from '@/components/calendarDayTypeDots';
 import type { FindDisplayEntityType } from '@/utils/findFilter';
 
-export type EntityFilterType = 'game' | 'tournament' | 'training' | 'leagues';
+export type EntityFilterType = 'game' | 'tournament' | 'training' | 'leagues' | 'events';
 
 interface EntityFilterChipsProps {
   gameActive: boolean;
   tournamentActive: boolean;
   trainingActive: boolean;
   leaguesActive: boolean;
+  eventsActive: boolean;
   onToggle: (type: EntityFilterType) => void;
 }
 
@@ -20,20 +21,21 @@ interface ChipProps {
   active: boolean;
   onClick: () => void;
   entityType: FindDisplayEntityType;
+  className?: string;
 }
 
-const Chip = ({ icon: Icon, label, active, onClick, entityType }: ChipProps) => (
+const Chip = ({ icon: Icon, label, active, onClick, entityType, className }: ChipProps) => (
   <motion.button
     type="button"
     onClick={onClick}
     whileTap={{ scale: 0.95 }}
     transition={{ type: 'spring', stiffness: 400, damping: 17 }}
     aria-pressed={active}
-    className={`relative flex items-center gap-1.5 overflow-hidden rounded-xl px-2.5 py-3 text-[13px] font-medium ring-1 ring-inset transition-colors duration-200 ${
+    className={`relative flex w-full items-center gap-1.5 overflow-hidden rounded-xl px-2 py-2.5 text-[12px] font-medium ring-1 ring-inset transition-colors duration-200 ${
       active
         ? 'bg-gradient-to-br from-primary-500/15 to-primary-600/10 text-primary-700 shadow-sm shadow-primary-500/10 ring-primary-500/40 dark:from-primary-400/20 dark:to-primary-500/10 dark:text-primary-300 dark:ring-primary-400/40'
         : 'bg-gray-100 text-gray-700 ring-transparent hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
-    }`}
+    }${className ? ` ${className}` : ''}`}
   >
     <EntityTypeDot type={entityType} surface="chip" className="h-2 w-2 shrink-0" />
     <span className="flex min-w-0 flex-1 items-center justify-center gap-1.5">
@@ -48,9 +50,15 @@ const Chip = ({ icon: Icon, label, active, onClick, entityType }: ChipProps) => 
         className="flex shrink-0 items-center justify-center"
       >
         <Icon
-          size={16}
+          size={15}
           fill={active ? 'currentColor' : 'none'}
-          className={active ? 'text-primary-600 dark:text-primary-400' : 'text-gray-600 dark:text-gray-400'}
+          className={
+            active
+              ? 'text-primary-600 dark:text-primary-400'
+              : entityType === 'EVENT'
+                ? 'text-indigo-500 dark:text-indigo-400'
+                : 'text-gray-600 dark:text-gray-400'
+          }
         />
       </motion.span>
       <span className="truncate">{label}</span>
@@ -64,12 +72,17 @@ export const EntityFilterChips = ({
   tournamentActive,
   trainingActive,
   leaguesActive,
+  eventsActive,
   onToggle,
 }: EntityFilterChipsProps) => {
   const { t } = useTranslation();
 
   return (
-    <div className="mx-auto mb-3 grid max-w-md grid-cols-2 gap-2">
+    <div
+      role="group"
+      aria-label={t('games.entityTypeFilters', { defaultValue: 'Event types' })}
+      className="mx-auto mb-3 grid max-w-md grid-cols-2 gap-2"
+    >
       <Chip
         icon={Users}
         label={t('games.entityTypes.GAME', { defaultValue: 'Games' })}
@@ -85,6 +98,13 @@ export const EntityFilterChips = ({
         onClick={() => onToggle('tournament')}
       />
       <Chip
+        icon={Trophy}
+        label={t('games.entityTypes.LEAGUE', { defaultValue: 'Leagues' })}
+        active={leaguesActive}
+        entityType="LEAGUE"
+        onClick={() => onToggle('leagues')}
+      />
+      <Chip
         icon={Dumbbell}
         label={t('games.training', { defaultValue: 'Training' })}
         active={trainingActive}
@@ -92,11 +112,12 @@ export const EntityFilterChips = ({
         onClick={() => onToggle('training')}
       />
       <Chip
-        icon={Trophy}
-        label={t('games.entityTypes.LEAGUE', { defaultValue: 'Leagues' })}
-        active={leaguesActive}
-        entityType="LEAGUE"
-        onClick={() => onToggle('leagues')}
+        icon={CalendarDays}
+        label={t('games.otherEvents', { defaultValue: 'Other Events' })}
+        active={eventsActive}
+        entityType="EVENT"
+        className="col-span-2"
+        onClick={() => onToggle('events')}
       />
     </div>
   );

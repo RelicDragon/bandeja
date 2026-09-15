@@ -90,4 +90,16 @@ try {
   throw e;
 }
 
+try {
+  assertMaxParticipantsWithinUserCap({
+    jwtIsAdmin: false,
+    actor,
+    maxParticipants: 999,
+    entityType: EntityType.EVENT,
+  });
+} catch (e) {
+  console.error('FAIL: EVENT 999 should skip cap', e);
+  process.exit(1);
+}
+
 console.log('ok: userMaxParticipantsCap');

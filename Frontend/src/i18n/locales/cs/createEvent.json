@@ -1,0 +1,38 @@
+{
+    "createEvent": {
+        "title": "Vytvořit událost/inzerát",
+        "organizing": "Organizuji to",
+        "looking": "Chci jít / hledám partnera",
+        "organizerHint": "Nemusíte být organizátorem.",
+        "kinds": {
+            "TOURNAMENT": "Externí turnaj",
+            "LEAGUE": "Externí liga",
+            "CAMP": "Kemp"
+        },
+        "kindLabel": "Co to je?",
+        "heroes": "Fotky",
+        "heroesHint": "Přidejte fotky plakátu. Zobrazí se jako slideshow.",
+        "venue": "Místo",
+        "venueText": "Adresa nebo název místa",
+        "venueOrClub": "Klub (volitelné)",
+        "selectClub": "Vybrat klub",
+        "selectCity": "Město",
+        "clearClub": "Zadat textem",
+        "dateRange": "Termín",
+        "start": "Začátek",
+        "end": "Konec",
+        "registerUrl": "Odkaz na registraci (volitelné)",
+        "playerLevel": "Úroveň hráče",
+        "name": "Název",
+        "namePlaceholder": "Název události",
+        "description": "Popis",
+        "descriptionPlaceholder": "Co se bude dít?",
+        "priceAmount": "Částka",
+        "save": "Uložit",
+        "nameRequired": "Název je povinný",
+        "datesInvalid": "Konec musí být po začátku",
+        "urlInvalid": "Použijte odkaz http(s)",
+        "create": "Zveřejnit událost/inzerát",
+        "pendingSubmitted": "Odesláno ke schválení. Do schválení ji vidíte jen vy a admini."
+    }
+}
