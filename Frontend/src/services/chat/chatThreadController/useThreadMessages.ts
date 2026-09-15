@@ -144,11 +144,7 @@ export function useThreadMessages({
     openScrollThreadKeyRef.current = threadKey;
     openScrollReadyKeyRef.current = threadKey;
     openScrollRef.current = plan.scrollRow;
-    setInitialScroll(
-      'anchorMessageId' in plan.scroll
-        ? { anchorMessageId: plan.scroll.anchorMessageId }
-        : { atBottom: true }
-    );
+    setInitialScroll(plan.scroll);
   }, []);
 
   const commitOpenThreadPaint = useCallback(

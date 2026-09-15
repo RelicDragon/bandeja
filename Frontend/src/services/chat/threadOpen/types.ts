@@ -22,7 +22,7 @@ export type OpenThreadPaintSource = 'l1' | 'dexie-tail' | 'network';
 
 export type OpenThreadScroll =
   | { atBottom: true }
-  | { anchorMessageId: string };
+  | { anchorMessageId: string; anchorOffsetPx?: number };
 
 export type OpenThreadPlan = {
   threadKey: string;

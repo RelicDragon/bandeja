@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { ChatMessageWithStatus } from '@/api/chat';
 import { CHAT_LOCAL_THREAD_WINDOW_SIZE } from '@/services/chat/chatLocalApplyThreadLoad';
 import { openThreadBootstrap } from '../chatOpenCoordinator';
-import { mergeThreadOpenRows, planThreadOpen } from '../threadOpen/planThreadOpen';
+import { mergeThreadOpenRows, planThreadOpen, resolveThreadOpenScrollPlan } from '../threadOpen/planThreadOpen';
 
 function msg(id: string, createdAt: string, extra?: Partial<ChatMessageWithStatus>): ChatMessageWithStatus {
   return {
@@ -154,5 +154,26 @@ describe('planThreadOpen / openThreadBootstrap peekPrev', () => {
       loadBootstrap: async () => ({ messages: [] }),
     });
     expect(result).toEqual({ kind: 'empty', paintGeneration: 0 });
+  });
+});
+
+
+describe('history scroll plan geometry', () => {
+  const messages = [msg('m1', '2026-01-03T10:00:00Z')];
+  const storedScroll = { key: 'GAME:g1:PUBLIC', anchorMessageId: 'm1', anchorOffsetPx: -37, atBottom: false, updatedAt: 1 };
+
+  it('carries the saved pixel offset through the open planner', () => {
+    expect(resolveThreadOpenScrollPlan({ messages, storedScroll, forceFreshOpen: false }).scroll)
+      .toEqual({ anchorMessageId: 'm1', anchorOffsetPx: -37 });
+  });
+
+  it('starts explicit message links at the target instead of its saved offset', () => {
+    expect(resolveThreadOpenScrollPlan({ messages, storedScroll, forceFreshOpen: false, openAnchorMessageId: 'm1' }).scroll)
+      .toEqual({ anchorMessageId: 'm1' });
+  });
+
+  it('keeps fresh-open navigation at the bottom', () => {
+    expect(resolveThreadOpenScrollPlan({ messages, storedScroll, forceFreshOpen: true }).scroll)
+      .toEqual({ atBottom: true });
   });
 });

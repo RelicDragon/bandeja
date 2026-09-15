@@ -190,12 +190,16 @@ export function planChatTypeSwitch(input: {
 
 export function resolveSessionScroll(input: {
   storedAnchorMessageId?: string;
+  storedAnchorOffsetPx?: number;
   openAnchorMessageId?: string;
   forceFreshOpen: boolean;
 }): ThreadSessionScroll | undefined {
   if (input.forceFreshOpen) return { atBottom: true };
   const anchor = input.openAnchorMessageId ?? input.storedAnchorMessageId;
-  if (anchor) return { anchorMessageId: anchor };
+  if (anchor) {
+    const offset = !input.openAnchorMessageId ? input.storedAnchorOffsetPx : undefined;
+    return { anchorMessageId: anchor, ...(offset != null ? { anchorOffsetPx: offset } : {}) };
+  }
   return { atBottom: true };
 }
 
@@ -211,6 +215,7 @@ export function resolveSessionScrollFromSnapshot(
 
 export type StoredThreadScroll = {
   anchorMessageId?: string | null;
+  anchorOffsetPx?: number;
   atBottom?: boolean | null;
 };
 
@@ -228,6 +233,7 @@ export function resolvePaintScrollPlan(input: {
   return (
     resolveSessionScroll({
       storedAnchorMessageId: input.storedScroll?.anchorMessageId ?? undefined,
+      storedAnchorOffsetPx: input.storedScroll?.anchorOffsetPx,
       openAnchorMessageId: openAnchorInSnapshot,
       forceFreshOpen: input.forceFreshOpen,
     }) ?? { atBottom: true }

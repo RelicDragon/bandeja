@@ -4,11 +4,11 @@ export type ReconcileScrollDelta = 'none' | 'prepend' | 'append';
 
 export type ThreadInitialScroll =
   | { atBottom: true }
-  | { anchorMessageId: string };
+  | { anchorMessageId: string; anchorOffsetPx?: number };
 
 export function toInitialScrollProp(scroll: ThreadScrollRow | undefined): ThreadInitialScroll {
   if (scroll?.anchorMessageId) {
-    return { anchorMessageId: scroll.anchorMessageId };
+    return { anchorMessageId: scroll.anchorMessageId, ...(scroll.anchorOffsetPx != null ? { anchorOffsetPx: scroll.anchorOffsetPx } : {}) };
   }
   return { atBottom: true };
 }

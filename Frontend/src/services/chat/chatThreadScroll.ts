@@ -2,7 +2,7 @@ import { chatLocalDb, type ThreadScrollRow } from '@/services/chat/chatLocalDb';
 
 export type { ThreadScrollRow };
 
-export type ThreadScrollPosition = Pick<ThreadScrollRow, 'atBottom' | 'anchorMessageId'>;
+export type ThreadScrollPosition = Pick<ThreadScrollRow, 'atBottom' | 'anchorMessageId' | 'anchorOffsetPx'>;
 
 const SAVE_DEBOUNCE_MS = 380;
 const debounceTimers = new Map<string, ReturnType<typeof setTimeout>>();
@@ -31,13 +31,15 @@ export function scheduleThreadScrollSave(key: string, partial: Omit<ThreadScroll
   const next: ThreadScrollRow = {
     key,
     anchorMessageId: partial.anchorMessageId,
+    anchorOffsetPx: partial.anchorOffsetPx,
     atBottom: partial.atBottom,
     updatedAt: Date.now(),
   };
   if (
     prev &&
     prev.atBottom === next.atBottom &&
-    prev.anchorMessageId === next.anchorMessageId
+    prev.anchorMessageId === next.anchorMessageId &&
+    prev.anchorOffsetPx === next.anchorOffsetPx
   ) {
     return;
   }

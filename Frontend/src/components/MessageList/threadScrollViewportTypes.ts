@@ -27,14 +27,14 @@ import type { MessageListSettlingRefs } from './messageListSettlingContext';
  *
  * ## When to compensate prepend
  * - Load-more completion, prepend reconcile, or older-page merge (`prepend-compensate`).
- * - Single snapshot + one layout-pass `scrollTop` delta; epoch bumps skip scroll-anchor.
+ * - Single snapshot + one layout-pass `scrollTop` delta.
  *
- * ## When to preserve anchor (scroll-anchor hook)
- * - Row height remeasure above viewport while mid-history.
- * - Skipped during load-more and immediately after prepend compensation.
+ * ## When to preserve anchor
+ * - TanStack alone compensates measured row resizes above the viewport.
+ * - Do not add a second measurement-delta scroll writer.
  *
  * ## Scroll persistence
- * - Saved on container scroll via multiplexer; flushed on unmount.
+ * - Save the first visible row and its pixel offset, excluding overscan; flush on unmount.
  * - Skipped while settling and visually near bottom (tail pin owns position).
  */
 export type ThreadScrollViewportInput = {

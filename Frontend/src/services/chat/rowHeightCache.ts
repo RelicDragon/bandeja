@@ -38,8 +38,6 @@ export interface RowHeightPreloadParams {
   shouldApply?: () => boolean;
 }
 
-const MATERIAL_DELTA_PX = 4;
-
 let bumpCallback: (() => void) | null = null;
 
 /** MessageList registers a bump when cache reports material estimate changes. */
@@ -90,11 +88,11 @@ export async function rowHeightCachePreloadTail(params: RowHeightPreloadParams):
   const tail = params.messages.slice(-limit);
   const ids = tail.map((m) => m.id).filter(Boolean) as string[];
   if (ids.length === 0) return false;
-  await preloadMessageRowHeights(ids);
+  const restored = await preloadMessageRowHeights(ids, params.shouldApply);
   if (params.shouldApply && !params.shouldApply()) return false;
   const seeded = rowHeightCacheSeedTailHeuristics(tail, limit);
-  maybeBump(seeded);
-  return seeded;
+  maybeBump(restored || seeded);
+  return restored || seeded;
 }
 
 export function rowHeightCacheGet(messageId: string | undefined): number | undefined {
@@ -107,11 +105,4 @@ export function rowHeightCacheStripSeparator(rawHeightPx: number, hasDateSeparat
 
 export function rowHeightCacheHasDateSeparator(messages: ChatMessage[], index: number): boolean {
   return getChatDateSeparatorLabel(messages, index) != null;
-}
-
-export function rowHeightCacheMeasuredChanged(messageId: string, rawHeightPx: number, hasDateSeparator: boolean): boolean {
-  const body = stripDateSeparatorFromMeasuredRowHeight(rawHeightPx, hasDateSeparator);
-  const prev = getCachedMessageRowHeight(messageId);
-  if (prev == null) return true;
-  return Math.abs(prev - body) >= MATERIAL_DELTA_PX;
 }

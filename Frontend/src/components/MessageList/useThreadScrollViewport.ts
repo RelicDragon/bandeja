@@ -6,7 +6,7 @@ import {
   useReducer,
   useRef,
 } from 'react';
-import { useVirtualizer } from '@tanstack/react-virtual';
+import { measureElement as measureVirtualElement, useVirtualizer } from '@tanstack/react-virtual';
 import type { ChatMessage } from '@/api/chat';
 import type { ThreadInitialScroll } from '@/services/chat/chatOpenScrollPolicy';
 import {
@@ -18,7 +18,6 @@ import {
   registerRowHeightBump,
   rowHeightCacheEstimate,
   rowHeightCacheHasDateSeparator,
-  rowHeightCacheMeasuredChanged,
   rowHeightCacheRecordMeasured,
 } from '@/services/chat/rowHeightCache';
 import { decideOpenScrollApply, decideSettlingPinApply } from '@/services/chat/threadScrollPolicy';
@@ -42,7 +41,6 @@ import {
 } from './messageListOpenBottomIntent';
 import { useMessageListNearBottom } from './useMessageListNearBottom';
 import { useMessageListPrependCompensation } from './useMessageListPrependCompensation';
-import { useMessageListScrollAnchor } from './useMessageListScrollAnchor';
 import { useMessageListScrollTarget } from './useMessageListScrollTarget';
 import { useMessageListTailHeightPreload } from './useMessageListTailHeightPreload';
 import { useThreadScrollContainerEvents } from './useThreadScrollContainerEvents';
@@ -88,6 +86,8 @@ export function useThreadScrollViewport({
   const wasAtBottomBeforeGrowRef = useRef(true);
   const programmaticScrollRef = useRef(false);
   const programmaticScrollHoldRef = useRef(0);
+  const programmaticReleaseRafRef = useRef<number | null>(null);
+  const cancelBottomPinRef = useRef<(() => void) | null>(null);
   const isLoadingMoreRef = useRef(false);
   const loadMoreCooldownRef = useRef(0);
   const layoutSettlingRef = useRef(threadLayoutSettling);
@@ -97,22 +97,45 @@ export function useThreadScrollViewport({
     programmaticScrollRef.current = true;
     programmaticScrollHoldRef.current = Math.max(programmaticScrollHoldRef.current, holdFrames);
     fn();
+    if (programmaticReleaseRafRef.current != null) cancelAnimationFrame(programmaticReleaseRafRef.current);
     const release = () => {
+      programmaticReleaseRafRef.current = null;
       programmaticScrollHoldRef.current = Math.max(0, programmaticScrollHoldRef.current - 1);
       if (programmaticScrollHoldRef.current <= 0) {
         programmaticScrollRef.current = false;
         return;
       }
-      requestAnimationFrame(release);
+      programmaticReleaseRafRef.current = requestAnimationFrame(release);
     };
-    requestAnimationFrame(release);
+    programmaticReleaseRafRef.current = requestAnimationFrame(release);
+  }, []);
+
+  const cancelProgrammaticScroll = useCallback(() => {
+    cancelBottomPinRef.current?.();
+    cancelBottomPinRef.current = null;
+    if (programmaticReleaseRafRef.current != null) cancelAnimationFrame(programmaticReleaseRafRef.current);
+    programmaticReleaseRafRef.current = null;
+    programmaticScrollHoldRef.current = 0;
+    programmaticScrollRef.current = false;
+  }, []);
+
+  useLayoutEffect(() => cancelProgrammaticScroll, [threadScrollKey, cancelProgrammaticScroll]);
+
+  const pinBottomAfterLayout = useCallback(() => {
+    cancelBottomPinRef.current?.();
+    const container = messagesContainerRef.current;
+    cancelBottomPinRef.current = pinMessageListContainerToBottomAfterLayout(
+      () => messagesContainerRef.current === container ? container : null,
+      PROGRAMMATIC_SCROLL_HOLD_FRAMES
+    );
   }, []);
 
   const releaseBottomIntent = useCallback(() => {
+    cancelProgrammaticScroll();
     openScrollAtBottomRef.current = false;
     userReleasedBottomIntentRef.current = true;
     wasAtBottomBeforeGrowRef.current = false;
-  }, []);
+  }, [cancelProgrammaticScroll]);
   const isInitialLoadRef = useRef(isInitialLoad);
   isInitialLoadRef.current = isInitialLoad;
   const settlingRefs = useMemo(
@@ -128,6 +151,10 @@ export function useThreadScrollViewport({
     return () => registerRowHeightBump(null);
   }, []);
 
+  const getItemKey = useCallback((index: number) =>
+    index === rowCount - 1 ? '__end__' : (messages[index] ? getMessageRowKey(messages[index]) : `i-${index}`),
+  [messages, rowCount]);
+
   const virtualizer = useVirtualizer({
     count: rowCount,
     getScrollElement: () => messagesContainerRef.current,
@@ -136,8 +163,20 @@ export function useThreadScrollViewport({
       return rowHeightCacheEstimate({ message: messages[index], index, messages });
     },
     overscan: VIRTUAL_OVERSCAN,
-    getItemKey: (index) =>
-      index === rowCount - 1 ? '__end__' : (messages[index] ? getMessageRowKey(messages[index]) : `i-${index}`),
+    getItemKey,
+    measureElement: (element, entry, instance) => {
+      const height = measureVirtualElement(element, entry, instance);
+      const index = instance.indexFromElement(element);
+      const message = messages[index];
+      if (message?.id && height > 2) {
+        rowHeightCacheRecordMeasured({
+          messageId: message.id,
+          rawHeightPx: height,
+          hasDateSeparator: rowHeightCacheHasDateSeparator(messages, index),
+        });
+      }
+      return height;
+    },
   });
 
   const virtualizerRef = useRef(virtualizer);
@@ -149,6 +188,23 @@ export function useThreadScrollViewport({
 
   const containerActive = messages.length > 0;
   const containerEvents = useThreadScrollContainerEvents(messagesContainerRef, containerActive);
+
+  useEffect(() => {
+    const el = messagesContainerRef.current;
+    if (!el) return;
+    const onWheel = (event: WheelEvent) => {
+      cancelProgrammaticScroll();
+      if (event.deltaY < 0) releaseBottomIntent();
+    };
+    el.addEventListener('wheel', onWheel, { passive: true });
+    el.addEventListener('touchstart', cancelProgrammaticScroll, { passive: true });
+    el.addEventListener('pointerdown', cancelProgrammaticScroll, { passive: true });
+    return () => {
+      el.removeEventListener('wheel', onWheel);
+      el.removeEventListener('touchstart', cancelProgrammaticScroll);
+      el.removeEventListener('pointerdown', cancelProgrammaticScroll);
+    };
+  }, [containerActive, cancelProgrammaticScroll, releaseBottomIntent]);
 
   const virtualItemsSnapshot = virtualizer.getVirtualItems();
   const virtualMeasureKey = virtualItemsSnapshot
@@ -214,27 +270,6 @@ export function useThreadScrollViewport({
     }
   }, [threadScrollKey, initialScroll]);
 
-  useLayoutEffect(() => {
-    const items = virtualizerRef.current.getVirtualItems();
-    const msgs = messagesMeasureRef.current;
-    let materialChange = false;
-    for (const vi of items) {
-      if (vi.index === rowCount - 1) continue;
-      const m = msgs[vi.index];
-      if (!m?.id || vi.size <= 2) continue;
-      const hasDateSeparator = rowHeightCacheHasDateSeparator(msgs, vi.index);
-      if (rowHeightCacheMeasuredChanged(m.id, vi.size, hasDateSeparator)) {
-        materialChange = true;
-      }
-      rowHeightCacheRecordMeasured({
-        messageId: m.id,
-        rawHeightPx: vi.size,
-        hasDateSeparator,
-      });
-    }
-    if (materialChange) bumpHeightEstimates();
-  }, [virtualMeasureKey, rowCount]);
-
   const { isNearBottomRef } = useMessageListNearBottom(messagesContainerRef, {
     threadScrollKey,
     onChange: onChatScrollNearBottomChange,
@@ -253,7 +288,7 @@ export function useThreadScrollViewport({
     });
   };
 
-  const { justLoadedOlderMessagesRef, prependCompensationEpochRef } = useMessageListPrependCompensation({
+  const { justLoadedOlderMessagesRef } = useMessageListPrependCompensation({
     containerRef: messagesContainerRef,
     messages,
     isLoadingMore,
@@ -265,15 +300,8 @@ export function useThreadScrollViewport({
     scrollTargetLockId,
   });
 
-  useMessageListScrollAnchor({
-    containerRef: messagesContainerRef,
-    virtualizer,
-    isLoadingMoreRef,
-    justLoadedOlderMessagesRef,
-    prependCompensationEpochRef,
-    threadScrollKey,
-    measurementKey: virtualMeasureKey,
-  });
+  // TanStack owns row-size compensation. A second measurement-delta scroll here
+  // applies the same correction twice and moves the message the user is reading.
 
   useMessageListScrollTarget({
     scrollTargetMessageId,
@@ -322,16 +350,18 @@ export function useThreadScrollViewport({
       if (!messagesContainerRef.current) return;
       if ('atBottom' in decision && decision.atBottom) {
         runProgrammaticScroll(() => {
-          pinMessageListContainerToBottomAfterLayout(() => messagesContainerRef.current, 3);
+          pinBottomAfterLayout();
         }, PROGRAMMATIC_SCROLL_HOLD_FRAMES);
         return;
       }
       const anchorId = 'anchorMessageId' in decision ? decision.anchorMessageId : undefined;
       if (!anchorId) return;
+      const savedOffset = 'anchorOffsetPx' in decision ? decision.anchorOffsetPx : undefined;
+      const anchorOffsetPx = savedOffset != null && Number.isFinite(savedOffset) ? savedOffset : 0;
       const idx = snapshot.findIndex((m) => m.id === anchorId);
       if (idx < 0) {
         runProgrammaticScroll(() => {
-          pinMessageListContainerToBottomAfterLayout(() => messagesContainerRef.current, 3);
+          pinBottomAfterLayout();
         }, PROGRAMMATIC_SCROLL_HOLD_FRAMES);
         return;
       }
@@ -351,20 +381,22 @@ export function useThreadScrollViewport({
       ) as HTMLElement | null;
       if (anchorEl) {
         runProgrammaticScroll(() => {
-          anchorEl.scrollIntoView({ block: 'start', behavior: 'auto' });
+          const container = messagesContainerRef.current!;
+          container.scrollTop += anchorEl.getBoundingClientRect().top - container.getBoundingClientRect().top - container.clientTop - anchorOffsetPx;
         });
         requestAnimationFrame(highlightIfDeepLink);
         return;
       }
       runProgrammaticScroll(() => {
-        scrollVirtualizerToIndex(virtualizerRef.current, idx, {
-          align: 'start',
-          behavior: 'auto',
+        const item = virtualizerRef.current.measurementsCache[idx];
+        if (!item) return;
+        virtualizerRef.current.scrollToOffset(item.start + (innerListRef.current?.offsetTop ?? 0) - anchorOffsetPx, {
+          align: 'start', behavior: 'auto',
         });
       });
       requestAnimationFrame(highlightIfDeepLink);
     },
-    [highlightAnchorMessageId, reduceMotion, runProgrammaticScroll]
+    [highlightAnchorMessageId, reduceMotion, runProgrammaticScroll, pinBottomAfterLayout]
   );
 
   useLayoutEffect(() => {
@@ -414,9 +446,9 @@ export function useThreadScrollViewport({
 
   const scrollToBottomAlign = useCallback(() => {
     runProgrammaticScroll(() => {
-      pinMessageListContainerToBottomAfterLayout(() => messagesContainerRef.current, 3);
+      pinBottomAfterLayout();
     }, PROGRAMMATIC_SCROLL_HOLD_FRAMES);
-  }, [runProgrammaticScroll]);
+  }, [runProgrammaticScroll, pinBottomAfterLayout]);
 
   const scrollToBottomSmooth = useCallback(() => {
     runProgrammaticScroll(() => {
@@ -540,17 +572,21 @@ export function useThreadScrollViewport({
       const nearBottom = isMessageListNearBottom(el, MESSAGE_LIST_NEAR_BOTTOM_PX);
       const items = virtualizerRef.current.getVirtualItems();
       let anchorMessageId: string | null = null;
+      let anchorOffsetPx: number | undefined;
+      const listTop = innerListRef.current?.offsetTop ?? 0;
       for (const vi of items) {
-        if (vi.index >= messagesForScrollRef.current.length) continue;
+        if (vi.index >= messagesForScrollRef.current.length || vi.end + listTop <= el.scrollTop) continue;
         const m = messagesForScrollRef.current[vi.index];
         if (m) {
           anchorMessageId = m.id;
+          anchorOffsetPx = vi.start + listTop - el.scrollTop;
           break;
         }
       }
       scheduleThreadScrollSave(threadScrollKey, {
         atBottom: nearBottom,
         anchorMessageId: nearBottom ? null : anchorMessageId,
+        ...(nearBottom ? {} : { anchorOffsetPx }),
       });
     };
 

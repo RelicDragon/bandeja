@@ -1,6 +1,8 @@
 import { chatLocalDb } from './chatLocalDb';
 
 const mem = new Map<string, number>();
+const heuristicIds = new Set<string>();
+let cacheGeneration = 0;
 const MEM_CAP = 4000;
 const pending = new Map<string, number>();
 let flushTimer: ReturnType<typeof setTimeout> | null = null;
@@ -13,10 +15,13 @@ function trimMemIfNeeded(): void {
     const first = mem.keys().next().value as string | undefined;
     if (first === undefined) break;
     mem.delete(first);
+    heuristicIds.delete(first);
   }
 }
 
-function memSet(id: string, heightPx: number): void {
+function memSet(id: string, heightPx: number, heuristic = false): void {
+  if (heuristic) heuristicIds.add(id);
+  else heuristicIds.delete(id);
   if (mem.has(id)) mem.delete(id);
   mem.set(id, heightPx);
   trimMemIfNeeded();
@@ -60,7 +65,7 @@ export function seedEphemeralMessageRowHeight(messageId: string | undefined, hei
   const rounded = Math.round(heightPx);
   if (rounded < MIN_PX || rounded > MAX_PX) return;
   if (mem.get(messageId) != null) return;
-  memSet(messageId, rounded);
+  memSet(messageId, rounded, true);
 }
 
 /** Restore heights captured in L1; does not overwrite fresher in-memory measures. */
@@ -75,20 +80,31 @@ export function seedMessageRowHeights(heights: Record<string, number> | undefine
   }
 }
 
-export async function preloadMessageRowHeights(messageIds: string[]): Promise<void> {
-  const ids = [...new Set(messageIds)].filter(Boolean);
-  if (ids.length === 0) return;
+/** Disk geometry may replace estimates, but never a newer L1/DOM measurement. */
+export async function preloadMessageRowHeights(
+  messageIds: string[],
+  shouldApply?: () => boolean
+): Promise<boolean> {
+  const needsHeight = (id: string) => !mem.has(id) || heuristicIds.has(id);
+  const ids = [...new Set(messageIds)].filter((id) => id && needsHeight(id));
+  if (ids.length === 0) return false;
+  const generation = cacheGeneration;
   try {
     const rows = await chatLocalDb.messageRowHeights.bulkGet(ids);
+    if (generation !== cacheGeneration || (shouldApply && !shouldApply())) return false;
+    let changed = false;
     for (let i = 0; i < ids.length; i++) {
       const row = rows[i];
       const id = ids[i];
-      if (id && row?.heightPx && row.heightPx >= MIN_PX && row.heightPx <= MAX_PX) {
+      // A row may have been measured while IndexedDB was reading.
+      if (id && needsHeight(id) && row?.heightPx && row.heightPx >= MIN_PX && row.heightPx <= MAX_PX) {
+        changed ||= mem.get(id) !== row.heightPx;
         memSet(id, row.heightPx);
       }
     }
+    return changed;
   } catch {
-    /* ignore */
+    return false;
   }
 }
 
@@ -97,7 +113,7 @@ export function rememberMeasuredMessageHeight(messageId: string | undefined, hei
   const rounded = Math.round(heightPx);
   if (rounded < MIN_PX || rounded > MAX_PX) return;
   const prev = mem.get(messageId);
-  if (prev != null && Math.abs(prev - rounded) < 4) return;
+  if (prev != null && !heuristicIds.has(messageId) && Math.abs(prev - rounded) < 4) return;
   memSet(messageId, rounded);
   pending.set(messageId, rounded);
   scheduleFlush();
@@ -105,4 +121,6 @@ export function rememberMeasuredMessageHeight(messageId: string | undefined, hei
 
 export function clearMessageHeightMemoryCache(): void {
   mem.clear();
+  heuristicIds.clear();
+  cacheGeneration += 1;
 }

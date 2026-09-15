@@ -4,7 +4,6 @@ import { decideNewMessagesScrollApply } from '@/services/chat/threadScrollPolicy
 import { pinMessageListContainerToBottom } from '@/utils/messageListScroll';
 import {
   applyPrependScrollCompensation,
-  applyPrependScrollHeightGrowth,
   capturePrependScrollSnapshot,
   detectPrependReconcile,
   type PrependScrollSnapshot,
@@ -24,7 +23,6 @@ type UseMessageListPrependCompensationParams = {
 
 type UseMessageListPrependCompensationResult = {
   justLoadedOlderMessagesRef: RefObject<boolean>;
-  prependCompensationEpochRef: RefObject<number>;
 };
 
 /**
@@ -46,7 +44,6 @@ export function useMessageListPrependCompensation({
   const previousFirstMessageIdRef = useRef<string | undefined>(undefined);
   const prependSnapshotRef = useRef<PrependScrollSnapshot | null>(null);
   const justLoadedOlderMessagesRef = useRef(false);
-  const prependCompensationEpochRef = useRef(0);
 
   useLayoutEffect(() => {
     previousMessageCountRef.current = 0;
@@ -119,16 +116,9 @@ export function useMessageListPrependCompensation({
         const snapshot =
           prependSnapshotRef.current ?? capturePrependScrollSnapshot(container);
         applyPrependScrollCompensation(container, snapshot);
-        prependCompensationEpochRef.current += 1;
         prependSnapshotRef.current = capturePrependScrollSnapshot(container);
-        const heightAfter = container.scrollHeight;
-        // Virtualizer/estimates may settle one frame later — grow from *current* scrollTop.
-        requestAnimationFrame(() => {
-          const el = containerRef.current;
-          if (!el) return;
-          applyPrependScrollHeightGrowth(el, heightAfter);
-          prependSnapshotRef.current = capturePrependScrollSnapshot(el);
-        });
+        // Later row measurements are compensated by TanStack. Adding scrollHeight
+        // growth again on the next frame would apply those corrections twice.
       }
     } else if (
       scrollDecision.kind === 'append-pin-if-at-bottom' &&
@@ -162,5 +152,5 @@ export function useMessageListPrependCompensation({
     scrollTargetLockId,
   ]);
 
-  return { justLoadedOlderMessagesRef, prependCompensationEpochRef };
+  return { justLoadedOlderMessagesRef };
 }

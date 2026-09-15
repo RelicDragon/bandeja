@@ -21,17 +21,25 @@ export function pinMessageListContainerToBottom(
   return true;
 }
 
-/** Re-pin over a few frames while row heights settle (e.g. after VIDEO bubble mount). */
+/** Align before paint, then re-pin while layout settles. The caller owns cancellation. */
 export function pinMessageListContainerToBottomAfterLayout(
   getContainer: () => HTMLElement | null,
   framesLeft = 3
-): void {
-  requestAnimationFrame(() => {
-    pinMessageListContainerToBottom(getContainer());
-    if (framesLeft > 1) {
-      pinMessageListContainerToBottomAfterLayout(getContainer, framesLeft - 1);
-    }
-  });
+): () => void {
+  let frame: number | null = null;
+  let cancelled = false;
+  const pin = () => {
+    if (cancelled) return;
+    const container = getContainer();
+    if (!container) return;
+    pinMessageListContainerToBottom(container);
+    if (framesLeft-- > 0) frame = requestAnimationFrame(pin);
+  };
+  pin();
+  return () => {
+    cancelled = true;
+    if (frame != null) cancelAnimationFrame(frame);
+  };
 }
 
 export function isMessageListNearBottom(

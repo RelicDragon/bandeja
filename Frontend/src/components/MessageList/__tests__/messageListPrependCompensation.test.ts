@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
   applyPrependScrollCompensation,
-  applyPrependScrollHeightGrowth,
   capturePrependScrollSnapshot,
   detectPrependReconcile,
 } from '../messageListPrependCompensation';
@@ -38,12 +37,6 @@ describe('messageListPrependCompensation', () => {
     const snapshot = { scrollTop: 400, scrollHeight: 1200 };
     expect(applyPrependScrollCompensation(container, snapshot)).toBe(0);
     expect(container.scrollTop).toBe(400);
-  });
-
-  it('applyPrependScrollHeightGrowth preserves current scrollTop and adds delta', () => {
-    const container = mockContainer(1600, 200);
-    expect(applyPrependScrollHeightGrowth(container, 1500)).toBe(100);
-    expect(container.scrollTop).toBe(300);
   });
 
   it('detectPrependReconcile identifies socket merge prepend', () => {

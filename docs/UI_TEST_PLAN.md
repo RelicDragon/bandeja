@@ -1290,6 +1290,12 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | CH-41c | Thread switch after scroll-up | In chat A scroll into history → open chat B (expected at bottom) | Chat B lands at latest; open settling does not leave B stuck mid-list |
 | CH-41d | Chat-type switch late reconcile | Game chat → switch PUBLIC/PRIVATE → scroll up quickly while switch finishes | Stays in history; late reconcile does not yank to bottom after leave-tail |
 | CH-41e | Scroll up during open settling | Open long thread → immediately scroll into history while open settling/hydrate still running | Settling pins stop; viewport stays in history (no fight back to bottom) |
+| CH-41f | Resize compensation occurs once | Read mid-history; allow a media/preview row above the viewport to grow or shrink | The visible message keeps its pixel position; no overshoot from duplicate corrections |
+| CH-41g | Delayed cached height restoration | Reopen a media-heavy thread; delay IndexedDB height reads until after rows are measured | Old persisted sizes do not replace fresh DOM/L1 heights; estimates are never persisted as measured geometry |
+| CH-41h | Rapid switch during bottom restore | Open chat A at latest, then immediately switch to a saved history position in chat B | B stays at its restored position through the next animation frames; A's pending pins are cancelled |
+| CH-41i | Exact history position | Stop partway through a visible message, leave and reopen with history restoration enabled | Same message and pixel offset restore; buffered offscreen rows are never chosen as the anchor; explicit message links still align to their target |
+| CH-41j | First paint at latest | Open a long cached thread at bottom while row layout is settling | First visible frame is at latest; no top/history flash before the bottom alignment; wheel/touch scrolling takes control immediately |
+
 | CH-42 | Jump to pinned | Tap pinned bar | Scrolls to message |
 | CH-61 | Message grouping | Send 3+ messages within 4 min from one sender | Tight spacing; avatar bottom-aligned on last only; sender name on first only; asymmetric bubble corners (small radius between grouped bubbles) |
 | CH-62 | Group break | Same sender after >4 min gap or different sender/day | New group: full corners, avatar + name shown again |

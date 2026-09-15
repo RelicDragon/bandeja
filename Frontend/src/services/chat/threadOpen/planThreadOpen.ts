@@ -70,7 +70,7 @@ export function resolveThreadOpenScrollPlan(input: {
   return {
     scroll:
       'anchorMessageId' in scroll
-        ? { anchorMessageId: scroll.anchorMessageId }
+        ? { anchorMessageId: scroll.anchorMessageId, ...(scroll.anchorOffsetPx != null ? { anchorOffsetPx: scroll.anchorOffsetPx } : {}) }
         : { atBottom: true },
     scrollRow: clearedRow,
   };

@@ -108,6 +108,8 @@ export type MessageContextHeadRow = {
 export type ThreadScrollRow = {
   key: string;
   anchorMessageId: string | null;
+  /** Row top relative to the viewport top; negative for a partially visible row. */
+  anchorOffsetPx?: number;
   atBottom: boolean;
   updatedAt: number;
 };

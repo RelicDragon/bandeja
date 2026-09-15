@@ -110,6 +110,12 @@ From `Frontend/src/services/chat/CONTEXT.md`:
 
 Socket → adapter → projection events, then persist via effects / `applyThreadEvent`. Do not add window events or module queues as bridges. Bootstrap invariants: `threadOpen/types.ts` (paintGeneration 0|1, L1 → Dexie tail → outbox). Constraint: APP_FUNCTIONALITY §2.2 **Open chat thread**.
 
+## Message viewport stability
+
+`ThreadScrollViewport` owns thread scrolling. TanStack compensates measured row height changes; do not apply an additional measurement-delta correction. Only DOM measurements are persisted as measured row heights. Disk heights can replace heuristic estimates, but cannot overwrite newer in-memory/L1 measurements, including when a disk read completes after measurement.
+
+Open-at-bottom alignment runs before paint. Follow-up frame pins are cancelled on thread change/unmount or user scroll interaction. History positions store the first **visible** message (excluding virtual overscan) and its pixel offset. Older saved positions without an offset still restore to the message start; explicit message links take precedence over saved offsets. Ordinary scroll renders reuse the virtualizer's measurement table and shared event subscription object.
+
 ## Unread
 
 Package: `@bandeja/unread-contract` — snapshot merge, clocks, optimistic inbound bumps, `computeTotals`. Context keys: `GAME:{id}` \| `USER:{id}` \| `GROUP:{id}` only. Bugs/market/channels classified via `groupChannelMeta` (`bugId`, `marketItemId`, `isChannel`). Muted **group** ids excluded from GROUP totals.

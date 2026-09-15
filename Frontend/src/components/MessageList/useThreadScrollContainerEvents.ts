@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, type RefObject } from 'react';
+import { useCallback, useEffect, useMemo, useRef, type RefObject } from 'react';
 
 export type ContainerEventUnsubscribe = () => void;
 
@@ -48,5 +48,5 @@ export function useThreadScrollContainerEvents(
     };
   }, [containerRef, active]);
 
-  return { subscribe, tick };
+  return useMemo(() => ({ subscribe, tick }), [subscribe, tick]);
 }
