@@ -4,10 +4,18 @@ vi.mock('@/store/authStore', () => ({
   useAuthStore: {
     getState: vi.fn(() => ({
       token: null,
+      user: null,
       setToken: vi.fn(),
     })),
     setState: vi.fn(),
   },
+}));
+
+vi.mock('@/api/sharedSessionSettlement', () => ({
+  settleSharedSession: vi.fn(async () => ({ type: 'continue' })),
+  defaultLoadCurrentUser: vi.fn(async () => null),
+  defaultSharedSessionAccountSwitch: vi.fn(async () => {}),
+  defaultApplySharedSessionUser: vi.fn(async () => {}),
 }));
 
 function jwtWithExp(expMs: number): string {
@@ -48,7 +56,9 @@ describe('auth startup verifier', () => {
 
   it('continues anonymously when no token is stored', async () => {
     const { settleStoredAuthBeforeBootstrap } = await import('@/api/authStartup');
-    const deps = depsFor(null);
+    const deps = depsFor(null, {
+      hasRefreshCredential: async () => false,
+    });
 
     const result = await settleStoredAuthBeforeBootstrap({ deps });
 
@@ -56,6 +66,21 @@ describe('auth startup verifier', () => {
     expect(result.tokenState).toBe('missing');
     expect(deps.refreshAccessToken).not.toHaveBeenCalled();
     expect(deps.clearLocalAuth).not.toHaveBeenCalled();
+  });
+
+  it('checks shared refresh credentials before classifying a fresh install as anonymous', async () => {
+    const { settleStoredAuthBeforeBootstrap } = await import('@/api/authStartup');
+    const freshToken = jwtWithExp(baseNow + 10 * 60 * 1000);
+    const deps = depsFor(null, {
+      hasRefreshCredential: async () => true,
+      refreshAccessToken: async () => freshToken,
+    });
+
+    const result = await settleStoredAuthBeforeBootstrap({ deps });
+
+    expect(result.status).toBe('refreshed');
+    expect(deps.hasRefreshCredential).toHaveBeenCalled();
+    expect(deps.refreshAccessToken).toHaveBeenCalledTimes(1);
   });
 
   it('refreshes a missing access token when a saved user and refresh session exist', async () => {

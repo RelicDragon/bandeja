@@ -38,6 +38,17 @@ public class PushIntentSanitizerTest {
     }
 
     @Test
+    public void capturesNewGameLauncherTapKeys() {
+        assertTrue(
+            PushIntentSanitizer.shouldCapturePushTapKeys(
+                keys("type", "gameId", "title", "body")
+            )
+        );
+        assertFalse(PushIntentSanitizer.shouldCapturePushTapKeys(keys("unrelated")));
+        assertFalse(PushIntentSanitizer.shouldCapturePushTapKeys(keys("google.message_id")));
+    }
+
+    @Test
     public void ignoresCleanOrUnrelatedKeys() {
         assertFalse(PushIntentSanitizer.hasPushPoisonKeys(Collections.emptySet()));
         assertFalse(PushIntentSanitizer.hasPushPoisonKeys(keys("unrelated")));

@@ -50,8 +50,9 @@ public class MainActivity extends BridgeActivity implements ModifiedMainActivity
     @Override
     public void onCreate(Bundle savedInstanceState) {
         Intent launchIntent = getIntent();
-        // Strip legacy MAIN/LAUNCHER + google.message_id / JWT poison before Cap
-        // BridgeActivity.load() re-delivers getIntent() as a notification tap.
+        // Persist FCM tray-tap extras, then strip them so Cap BridgeActivity.load()
+        // cannot re-deliver google.message_id as a notification tap forever.
+        PushIntentSanitizer.capturePushTapIfPresent(this, launchIntent);
         PushIntentSanitizer.stripPoisonedLauncherExtras(launchIntent);
         rewriteNextGameLaunchIntent(launchIntent);
         setIntent(launchIntent);
@@ -134,6 +135,7 @@ public class MainActivity extends BridgeActivity implements ModifiedMainActivity
 
     @Override
     protected void onNewIntent(Intent intent) {
+        PushIntentSanitizer.capturePushTapIfPresent(this, intent);
         PushIntentSanitizer.stripPoisonedLauncherExtras(intent);
         rewriteNextGameLaunchIntent(intent);
         setIntent(intent);

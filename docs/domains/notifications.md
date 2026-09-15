@@ -24,6 +24,8 @@ Lock screen / shade → `POST /chat/push-reply` `{ replyToken, content, clientMu
 
 Tap targets: games, chats, bugs, marketplace, teams, league schedule. Same routes as `useDeepLink.ts`. Widget/Siri typically `/next-game`. Chat pushes carry `chatContextType`, `contextId`, `messageId`, `conversationKey`, `replyToken`.
 
+Android `NEW_GAME` (and other game-open types) are FCM data-only and shown by `DataPushNotificationHelper` so the content tap goes through `NotificationOpenActivity` → `PushTapStore`. FCM tray taps that still carry extras are captured in `PushIntentSanitizer.capturePushTapIfPresent` before launcher extras are stripped. JS normalizes iOS nested `{ type, data: { gameId } }` and Android flattened maps in `normalizePushNotificationData.ts`.
+
 Rich: image/video/story-reply thumbs; iOS Communication Notifications when entitled; Android MessagingStyle.
 
 ## Telegram

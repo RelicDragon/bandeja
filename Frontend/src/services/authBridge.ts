@@ -27,6 +27,11 @@ interface AuthBridgePlugin {
 
 const AuthBridge = registerPlugin<AuthBridgePlugin>('AuthBridge');
 
+export type RefreshCredentialRead =
+  | { status: 'found'; token: string }
+  | { status: 'missing' }
+  | { status: 'unavailable' };
+
 export async function syncApiBaseUrlToNative(): Promise<void> {
   if (!Capacitor.isNativePlatform()) return;
   try {
@@ -84,15 +89,26 @@ export async function setRefreshTokenNative(token: string): Promise<void> {
   }
 }
 
-export async function getRefreshTokenNative(): Promise<string | null> {
-  if (!Capacitor.isNativePlatform()) return null;
+export async function getRefreshCredentialNative(): Promise<RefreshCredentialRead> {
+  if (!Capacitor.isNativePlatform()) return { status: 'missing' };
   try {
     const r = await AuthBridge.getRefreshToken();
-    return r?.token ?? null;
+    const token = r?.token?.trim() ?? '';
+    if (token) return { status: 'found', token };
+    return { status: 'missing' };
   } catch (error) {
     console.warn('AuthBridge: failed to read native refresh token', error);
-    throw error;
+    return { status: 'unavailable' };
   }
+}
+
+export async function getRefreshTokenNative(): Promise<string | null> {
+  const credential = await getRefreshCredentialNative();
+  if (credential.status === 'found') return credential.token;
+  if (credential.status === 'unavailable') {
+    throw new Error('Secure token storage unavailable');
+  }
+  return null;
 }
 
 export async function clearRefreshTokenNative(): Promise<void> {

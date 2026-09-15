@@ -15,6 +15,7 @@ import { recoverGenderUnsetJoin, resolveGameLikeForPushInvite, runWithGenderForE
 import { parsePushChatContext } from '@/services/push/parsePushChatContext';
 import { sendChatReplyFromPush } from '@/services/push/sendChatReplyFromPush';
 import { applyPushUnreadBadgeFromNotification } from '@/services/push/applyPushUnreadBadge';
+import { normalizePushNotificationData } from '@/services/push/normalizePushNotificationData';
 import { useUnreadStore } from '@/store/unreadStore';
 import {
   PUSH_ACTION_ACCEPT,
@@ -464,29 +465,15 @@ class PushNotificationService {
     }
   }
 
-  private normalizeNotificationData(rawData: any): NotificationData | null {
-    if (!rawData || typeof rawData !== 'object') {
+  private normalizeNotificationData(rawData: unknown): NotificationData | null {
+    const normalized = normalizePushNotificationData(rawData);
+    if (!normalized) {
       return null;
     }
-
-    // Handle iOS structure: { type: "GAME_CHAT", data: { gameId: "123" } }
-    if (rawData.type && rawData.data && typeof rawData.data === 'object') {
-      return {
-        type: rawData.type,
-        data: rawData.data
-      };
-    }
-
-    // Handle Android flattened structure: { type: "GAME_CHAT", gameId: "123", ... }
-    if (rawData.type) {
-      const { type, ...rest } = rawData;
-      return {
-        type,
-        data: rest
-      };
-    }
-
-    return null;
+    return {
+      type: normalized.type,
+      data: normalized.data as NotificationData['data'],
+    };
   }
 
   private tryNavigateToBracketSchedule(payload: NotificationData['data']): boolean {

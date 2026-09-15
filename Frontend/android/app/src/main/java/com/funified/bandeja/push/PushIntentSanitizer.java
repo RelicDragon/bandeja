@@ -1,5 +1,6 @@
 package com.funified.bandeja.push;
 
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -64,6 +65,49 @@ public final class PushIntentSanitizer {
             || keys.contains("teamId");
     }
 
+    public static boolean shouldCapturePushTapKeys(Set<String> keys) {
+        return hasPushPoisonKeys(keys) && keys != null && keys.contains("type");
+    }
+
+    /**
+     * FCM display-notification taps land on the launcher with extras. Persist them
+     * before stripping so JS can route — NotificationOpenActivity is not on that path.
+     */
+    public static boolean capturePushTapIfPresent(Context context, Intent intent) {
+        if (context == null || intent == null || !hasPushPoison(intent)) {
+            return false;
+        }
+        Bundle extras = intent.getExtras();
+        if (extras == null || extras.isEmpty()) {
+            return false;
+        }
+        if (!shouldCapturePushTapKeys(extras.keySet())) {
+            return false;
+        }
+        String type = stringExtra(extras, "type");
+        if (type == null) {
+            return false;
+        }
+        String messageId = stringExtra(extras, PushTapIntentFactory.EXTRA_GOOGLE_MESSAGE_ID);
+        Bundle lean = new Bundle();
+        for (String key : extras.keySet()) {
+            if (key == null
+                || PushTapIntentFactory.EXTRA_GOOGLE_MESSAGE_ID.equals(key)
+                || PushTapStore.EXTRA_PUSH_TAP_ID.equals(key)) {
+                continue;
+            }
+            String value = stringExtra(extras, key);
+            if (value != null) {
+                lean.putString(key, value);
+            }
+        }
+        if (lean.isEmpty()) {
+            return false;
+        }
+        PushTapStore.save(context, lean, messageId);
+        return true;
+    }
+
     /**
      * Drops all extras on poisoned launcher intents while preserving deep-link data.
      * Returns true when extras were cleared.
@@ -99,5 +143,14 @@ public final class PushIntentSanitizer {
             intent.setData(data);
         }
         return true;
+    }
+
+    private static String stringExtra(Bundle extras, String key) {
+        Object value = extras.get(key);
+        if (value == null) {
+            return null;
+        }
+        String text = String.valueOf(value).trim();
+        return text.isEmpty() ? null : text;
     }
 }

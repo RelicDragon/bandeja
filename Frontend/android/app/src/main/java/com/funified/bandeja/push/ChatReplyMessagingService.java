@@ -35,6 +35,11 @@ public class ChatReplyMessagingService extends FirebaseMessagingService {
             return;
         }
 
+        if (remoteMessage.getNotification() == null && DataPushNotificationHelper.canShow(data)) {
+            DataPushNotificationHelper.show(getApplicationContext(), data);
+            return;
+        }
+
         PushNotificationsPlugin.sendRemoteMessage(remoteMessage);
     }
 

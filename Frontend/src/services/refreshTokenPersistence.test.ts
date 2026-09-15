@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const getRefreshTokenNativeMock = vi.fn<() => Promise<string | null>>();
+const getRefreshCredentialNativeMock = vi.fn<
+  () => Promise<{ status: 'found' | 'missing' | 'unavailable'; token?: string }>
+>();
 const setRefreshTokenNativeMock = vi.fn<(token: string) => Promise<void>>();
 const clearRefreshTokenNativeMock = vi.fn<() => Promise<void>>();
 let nativePlatform = true;
@@ -10,7 +12,15 @@ vi.mock('@capacitor/core', () => ({
 }));
 
 vi.mock('@/services/authBridge', () => ({
-  getRefreshTokenNative: getRefreshTokenNativeMock,
+  getRefreshCredentialNative: getRefreshCredentialNativeMock,
+  getRefreshTokenNative: async () => {
+    const credential = await getRefreshCredentialNativeMock();
+    if (credential.status === 'found') return credential.token ?? null;
+    if (credential.status === 'unavailable') {
+      throw new Error('Secure token storage unavailable');
+    }
+    return null;
+  },
   setRefreshTokenNative: setRefreshTokenNativeMock,
   clearRefreshTokenNative: clearRefreshTokenNativeMock,
 }));
@@ -22,7 +32,7 @@ describe('native refresh-token persistence', () => {
     storage.clear();
     nativePlatform = true;
     vi.clearAllMocks();
-    getRefreshTokenNativeMock.mockResolvedValue(null);
+    getRefreshCredentialNativeMock.mockResolvedValue({ status: 'missing' });
     setRefreshTokenNativeMock.mockResolvedValue();
     clearRefreshTokenNativeMock.mockResolvedValue();
     vi.stubGlobal('localStorage', {
@@ -38,7 +48,7 @@ describe('native refresh-token persistence', () => {
 
   it('uses secure storage instead of a stale WebView copy', async () => {
     storage.set('padelpulse_refresh_token', 'stale-webview-token');
-    getRefreshTokenNativeMock.mockResolvedValue('secure-token');
+    getRefreshCredentialNativeMock.mockResolvedValue({ status: 'found', token: 'secure-token' });
     const { getRefreshTokenForRequest } = await import('@/services/refreshTokenPersistence');
 
     await expect(getRefreshTokenForRequest()).resolves.toBe('secure-token');
@@ -47,9 +57,9 @@ describe('native refresh-token persistence', () => {
 
   it('migrates a legacy WebView credential once when secure storage is empty', async () => {
     storage.set('padelpulse_refresh_token', 'legacy-token');
-    getRefreshTokenNativeMock
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce('legacy-token');
+    getRefreshCredentialNativeMock
+      .mockResolvedValueOnce({ status: 'missing' })
+      .mockResolvedValueOnce({ status: 'found', token: 'legacy-token' });
     const { getRefreshTokenForRequest } = await import('@/services/refreshTokenPersistence');
 
     await expect(getRefreshTokenForRequest()).resolves.toBe('legacy-token');
@@ -59,7 +69,7 @@ describe('native refresh-token persistence', () => {
 
   it('keeps the legacy WebView credential when native migrate verify fails', async () => {
     storage.set('padelpulse_refresh_token', 'legacy-token');
-    getRefreshTokenNativeMock.mockResolvedValue(null);
+    getRefreshCredentialNativeMock.mockResolvedValue({ status: 'missing' });
     const { getRefreshTokenForRequest } = await import('@/services/refreshTokenPersistence');
 
     await expect(getRefreshTokenForRequest()).resolves.toBe('legacy-token');
@@ -79,10 +89,10 @@ describe('native refresh-token persistence', () => {
   });
 
   it('reports secure-storage outages instead of claiming the credential is missing', async () => {
-    getRefreshTokenNativeMock.mockRejectedValue(new Error('keystore temporarily unavailable'));
+    getRefreshCredentialNativeMock.mockResolvedValue({ status: 'unavailable' });
     const { getRefreshTokenForRequest } = await import('@/services/refreshTokenPersistence');
 
-    await expect(getRefreshTokenForRequest()).rejects.toThrow('keystore temporarily unavailable');
+    await expect(getRefreshTokenForRequest()).rejects.toThrow('Secure token storage unavailable');
     expect(setRefreshTokenNativeMock).not.toHaveBeenCalled();
   });
 

@@ -74,6 +74,23 @@ function testFcmCollapsesOutboxRetries(): void {
   assert.equal(message.notification, undefined);
 }
 
+function testFcmSendsNewGameDataOnly(): void {
+  const message = buildFcmMessage('token-5', {
+    type: NotificationType.NEW_GAME,
+    title: 'New game created',
+    body: 'Tue 18:00 Court 1',
+    data: {
+      gameId: 'game-1',
+      shortDayOfWeek: 'Tue',
+    },
+  });
+
+  assert.equal(message.notification, undefined);
+  assert.equal(message.data?.type, 'NEW_GAME');
+  assert.equal(message.data?.gameId, 'game-1');
+  assert.equal(message.data?.title, 'New game created');
+}
+
 function testFcmBuildsOneMulticastMessage(): void {
   const message = buildFcmMulticastMessage(['token-1', 'token-2'], {
     type: NotificationType.FOLLOWED_USER_PLAY_INTENT,
@@ -95,6 +112,7 @@ void (async () => {
   testFcmOmitsAndroidImageWithoutPreview();
   testFcmIncludesUnreadBadgeInData();
   testFcmCollapsesOutboxRetries();
+  testFcmSendsNewGameDataOnly();
   testFcmBuildsOneMulticastMessage();
   console.log('fcm.service.test.ts: ok');
 })();

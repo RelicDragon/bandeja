@@ -49,7 +49,15 @@ vi.mock('@/services/refreshTokenPersistence', () => ({
   persistSessionIdOnly: vi.fn(),
 }));
 vi.mock('@/store/authStore', () => ({
-  useAuthStore: { getState: vi.fn(() => ({ token: null })), setState: vi.fn() },
+  useAuthStore: {
+    getState: vi.fn(() => ({ token: null, user: null, setToken: vi.fn() })),
+    setState: vi.fn(),
+  },
+}));
+vi.mock('@/api/sharedSessionSettlement', () => ({
+  settleSharedSession: vi.fn(async () => ({ type: 'continue' })),
+  defaultLoadCurrentUser: vi.fn(async () => null),
+  defaultSharedSessionAccountSwitch: vi.fn(async () => {}),
 }));
 
 function jwtWithExp(expMs: number): string {

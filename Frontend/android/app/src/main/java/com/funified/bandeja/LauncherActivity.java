@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import com.funified.bandeja.branding.LauncherComponentRepair;
+import com.funified.bandeja.push.PushIntentSanitizer;
 
 /**
  * Stable launcher trampoline for alternate app-icon aliases.
@@ -24,7 +25,8 @@ public final class LauncherActivity extends Activity {
             destination.setAction(source.getAction());
             destination.setData(source.getData());
             destination.setClipData(source.getClipData());
-            if (source.getExtras() != null) {
+            boolean capturedPushTap = PushIntentSanitizer.capturePushTapIfPresent(this, source);
+            if (!capturedPushTap && source.getExtras() != null) {
                 destination.putExtras(source.getExtras());
             }
         }

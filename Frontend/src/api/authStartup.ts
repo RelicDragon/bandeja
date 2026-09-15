@@ -18,6 +18,12 @@ import { syncLogoutToNative } from '@/services/authBridge';
 import { useAuthStore } from '@/store/authStore';
 import { hasExplicitLogoutMarker } from '@/utils/authExplicitLogout';
 import { runForegroundAuthSettle } from '@/api/authForegroundSettle';
+import {
+  defaultApplySharedSessionUser,
+  defaultLoadCurrentUser,
+  defaultSharedSessionAccountSwitch,
+  settleSharedSession,
+} from '@/api/sharedSessionSettlement';
 
 export type StoredAccessTokenState =
   | 'missing'
@@ -222,6 +228,7 @@ async function recoverPersistedSession(
 export async function settleStoredAuthBeforeBootstrap(opts?: {
   timeoutMs?: number;
   deps?: Partial<AuthStartupDeps>;
+  mode?: 'cold_start' | 'foreground';
 }): Promise<AuthStartupResult> {
   const deps = { ...defaultDeps, ...opts?.deps };
   const timeoutMs = opts?.timeoutMs ?? AUTH_STARTUP_DEFAULT_TIMEOUT_MS;
@@ -242,13 +249,42 @@ export async function settleStoredAuthBeforeBootstrap(opts?: {
   };
 
   try {
-    const token = deps.getAccessToken();
-    const tokenState = classifyStoredAccessToken(token, deps.now());
-
     if (deps.hasExplicitLogoutMarker()) {
+      const tokenState = classifyStoredAccessToken(deps.getAccessToken(), deps.now());
       await deps.clearLocalAuth('explicit_logout');
       return result('cleared', tokenState, 'explicit_logout');
     }
+
+    const sharedSession = await settleSharedSession({
+      mode: opts?.mode ?? 'cold_start',
+      getAccessToken: deps.getAccessToken,
+      getPreviousUser: () => useAuthStore.getState().user,
+      hasStoredUserCandidate: deps.hasStoredUserCandidate,
+      adoptAccessToken: (nextToken) => {
+        useAuthStore.getState().setToken(nextToken);
+      },
+      clearLocalAuth: deps.clearLocalAuth,
+      loadCurrentUser: defaultLoadCurrentUser,
+      onAccountSwitch: defaultSharedSessionAccountSwitch,
+      applyCurrentUser: defaultApplySharedSessionUser,
+    });
+    if (sharedSession.type === 'degraded') {
+      return result(
+        'degraded',
+        classifyStoredAccessToken(deps.getAccessToken(), deps.now()),
+        sharedSession.reason,
+      );
+    }
+    if (sharedSession.type === 'cleared') {
+      return result(
+        'cleared',
+        classifyStoredAccessToken(deps.getAccessToken(), deps.now()),
+        sharedSession.reason,
+      );
+    }
+
+    const token = deps.getAccessToken();
+    const tokenState = classifyStoredAccessToken(token, deps.now());
 
     if (tokenState === 'valid' && token) {
       // LS may have a usable JWT while the store token was cleared (e.g. mid-link reload).
@@ -260,6 +296,9 @@ export async function settleStoredAuthBeforeBootstrap(opts?: {
     }
 
     if (tokenState === 'missing' && !deps.hasStoredUserCandidate()) {
+      if (await deps.hasRefreshCredential()) {
+        return recoverPersistedSession(deps, tokenState, timeoutMs, result);
+      }
       return result('anonymous', tokenState);
     }
 
@@ -271,5 +310,7 @@ export async function settleStoredAuthBeforeBootstrap(opts?: {
 }
 
 export function settleStoredAuthOnForeground(): Promise<AuthStartupResult> {
-  return runForegroundAuthSettle(() => settleStoredAuthBeforeBootstrap());
+  return runForegroundAuthSettle(() =>
+    settleStoredAuthBeforeBootstrap({ mode: 'foreground' }),
+  );
 }

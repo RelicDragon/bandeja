@@ -16,6 +16,15 @@ const DATA_ONLY_ANDROID_TYPES = new Set<NotificationType>([
   NotificationType.INVITE,
   NotificationType.TEAM_INVITE,
   NotificationType.FOLLOWED_USER_PLAY_INTENT,
+  NotificationType.NEW_GAME,
+  NotificationType.GAME_SYSTEM_MESSAGE,
+  NotificationType.GAME_REMINDER,
+  NotificationType.GAME_RESULTS,
+  NotificationType.GAME_CANCELLED,
+  NotificationType.MATCH_TIMER_CAP,
+  NotificationType.GAME_MATCHES_INTENT,
+  NotificationType.INTENT_PLAYERS_FOR_GAME,
+  NotificationType.PLAY_INTENT_MATCH,
 ]);
 
 function isValidHttpsPreviewUrl(url: string | undefined): url is string {

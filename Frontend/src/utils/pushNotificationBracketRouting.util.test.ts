@@ -36,4 +36,11 @@ describe('pushNotificationBracketRouting.util (UX-C3)', () => {
       gameId: 'game-9',
     });
   });
+
+  it('routes NEW_GAME to the created game', () => {
+    expect(resolveNotificationTapRoute('NEW_GAME', { gameId: 'game-new' })).toEqual({
+      kind: 'game',
+      gameId: 'game-new',
+    });
+  });
 });

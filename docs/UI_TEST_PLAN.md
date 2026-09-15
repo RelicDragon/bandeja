@@ -1886,6 +1886,8 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | X-36 | Tap DM push | Routes to `/user-chat/:id` |
 | X-37 | Permission prompt | Fresh install → login → land on home | No prompt on cold start or login screen; single prompt after leaving auth routes |
 | X-37a | Cold start from push (logged in) | Kill app → tap push notification | Routes to correct screen |
+| PN-N1 | New game created push tap (Android) | App backgrounded or killed → tap NEW_GAME | Opens `/games/:id` for that game, not only the last tab |
+| PN-N2 | New game created push tap (iOS) | App backgrounded or killed → tap NEW_GAME | Opens `/games/:id` for that game |
 | X-37b | iOS actions before home paints | Cold start → invite push on lock screen | Accept/Decline actions visible |
 | X-37c | Logout → login as different user | User B logs in after User A logout | User B receives pushes; single navigation per tap |
 | PN-R1 | iOS inline chat reply (background) | DM push → expand → reply | Message sent with `replyToId`; no app open |
