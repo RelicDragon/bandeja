@@ -151,6 +151,36 @@ const match = (
   teams,
 });
 
+const firstRank = <T,>(ranks: T[]): T | undefined => ranks[0];
+
+const rankIds = (ranks: Array<{ user: { id: string } }>): string[] => ranks.map((rank) => rank.user.id);
+
+const winsWith = (
+  current: ReturnType<typeof user>,
+  partner: ReturnType<typeof user>,
+  opponents: [ReturnType<typeof user>, ReturnType<typeof user>],
+  count: number,
+  prefix: string,
+): RelationshipMatchInput<ReturnType<typeof user>>[] => Array.from({ length: count }, (_, index) => (
+  match(`${prefix}-us-${index}`, [
+    team(`${prefix}-us-${index}`, [current, partner]),
+    team(`${prefix}-them-${index}`, opponents),
+  ])
+));
+
+const lossesWith = (
+  current: ReturnType<typeof user>,
+  partner: ReturnType<typeof user>,
+  opponents: [ReturnType<typeof user>, ReturnType<typeof user>],
+  count: number,
+  prefix: string,
+): RelationshipMatchInput<ReturnType<typeof user>>[] => Array.from({ length: count }, (_, index) => (
+  match(`${prefix}-them-${index}`, [
+    team(`${prefix}-us-${index}`, [current, partner]),
+    team(`${prefix}-them-${index}`, opponents),
+  ])
+));
+
 const relationshipGame = (
   id: string,
   day: number,
@@ -278,18 +308,18 @@ const relationshipGame = (
     Sport.PADEL,
   );
 
-  assert.ok(relationships.bestPartner);
-  assert.equal(relationships.bestPartner.user.id, highWinPartner.id);
-  assert.equal(relationships.bestPartner.ratingNetChange, 0.02);
-  assert.ok(relationships.worstPartner);
-  assert.equal(relationships.worstPartner.user.id, highLossPartner.id);
-  assert.equal(relationships.worstPartner.ratingNetChange, -0.02);
-  assert.ok(relationships.bestPartnerByRating);
-  assert.equal(relationships.bestPartnerByRating.user.id, netBestPartner.id);
-  assert.equal(relationships.bestPartnerByRating.ratingNetChange, 0.08);
-  assert.ok(relationships.worstPartnerByRating);
-  assert.equal(relationships.worstPartnerByRating.user.id, netWorstPartner.id);
-  assert.equal(relationships.worstPartnerByRating.ratingNetChange, -0.08);
+  assert.ok(firstRank(relationships.bestPartner));
+  assert.equal(firstRank(relationships.bestPartner)?.user.id, highWinPartner.id);
+  assert.equal(firstRank(relationships.bestPartner)?.ratingNetChange, 0.02);
+  assert.ok(firstRank(relationships.worstPartner));
+  assert.equal(firstRank(relationships.worstPartner)?.user.id, highLossPartner.id);
+  assert.equal(firstRank(relationships.worstPartner)?.ratingNetChange, -0.02);
+  assert.ok(firstRank(relationships.bestPartnerByRating));
+  assert.equal(firstRank(relationships.bestPartnerByRating)?.user.id, netBestPartner.id);
+  assert.equal(firstRank(relationships.bestPartnerByRating)?.ratingNetChange, 0.08);
+  assert.ok(firstRank(relationships.worstPartnerByRating));
+  assert.equal(firstRank(relationships.worstPartnerByRating)?.user.id, netWorstPartner.id);
+  assert.equal(firstRank(relationships.worstPartnerByRating)?.ratingNetChange, -0.08);
 })();
 
 (() => {
@@ -349,34 +379,34 @@ const relationshipGame = (
     Sport.PADEL,
   );
 
-  assert.ok(relationships.bestPartner);
-  assert.equal(relationships.bestPartner.user.id, strongPartner.id);
-  assert.equal(relationships.bestPartner?.wins, 2);
-  assert.equal(relationships.bestPartner?.losses, 0);
-  assert.ok(relationships.worstPartner);
-  assert.equal(relationships.worstPartner.user.id, volumePartner.id);
-  assert.equal(relationships.worstPartner?.wins, 1);
-  assert.equal(relationships.worstPartner?.losses, 3);
-  assert.equal(relationships.worstPartner?.ties, 0);
-  assert.ok(relationships.bestPartnerByCount);
-  assert.equal(relationships.bestPartnerByCount.user.id, strongPartner.id);
-  assert.ok(relationships.worstPartnerByCount);
-  assert.equal(relationships.worstPartnerByCount.user.id, volumePartner.id);
+  assert.ok(firstRank(relationships.bestPartner));
+  assert.equal(firstRank(relationships.bestPartner)?.user.id, strongPartner.id);
+  assert.equal(firstRank(relationships.bestPartner)?.wins, 2);
+  assert.equal(firstRank(relationships.bestPartner)?.losses, 0);
+  assert.ok(firstRank(relationships.worstPartner));
+  assert.equal(firstRank(relationships.worstPartner)?.user.id, volumePartner.id);
+  assert.equal(firstRank(relationships.worstPartner)?.wins, 1);
+  assert.equal(firstRank(relationships.worstPartner)?.losses, 3);
+  assert.equal(firstRank(relationships.worstPartner)?.ties, 0);
+  assert.ok(firstRank(relationships.bestPartnerByCount));
+  assert.equal(firstRank(relationships.bestPartnerByCount)?.user.id, strongPartner.id);
+  assert.ok(firstRank(relationships.worstPartnerByCount));
+  assert.equal(firstRank(relationships.worstPartnerByCount)?.user.id, volumePartner.id);
 
-  assert.ok(relationships.favoriteTarget);
-  assert.equal(relationships.favoriteTarget.user.id, favoriteTarget.id);
-  assert.equal(relationships.favoriteTarget?.wins, 3);
-  assert.equal(relationships.favoriteTarget?.losses, 2);
-  assert.equal(relationships.favoriteTarget?.ties, 1);
-  assert.ok(relationships.nemesis);
-  assert.equal(relationships.nemesis.user.id, nemesis.id);
-  assert.equal(relationships.nemesis?.losses, 4);
-  assert.equal(relationships.nemesis?.wins, 1);
-  assert.equal(relationships.nemesis?.ties, 0);
-  assert.ok(relationships.favoriteTargetByCount);
-  assert.equal(relationships.favoriteTargetByCount.user.id, favoriteTarget.id);
-  assert.ok(relationships.nemesisByCount);
-  assert.equal(relationships.nemesisByCount.user.id, nemesis.id);
+  assert.ok(firstRank(relationships.favoriteTarget));
+  assert.equal(firstRank(relationships.favoriteTarget)?.user.id, favoriteTarget.id);
+  assert.equal(firstRank(relationships.favoriteTarget)?.wins, 3);
+  assert.equal(firstRank(relationships.favoriteTarget)?.losses, 2);
+  assert.equal(firstRank(relationships.favoriteTarget)?.ties, 1);
+  assert.ok(firstRank(relationships.nemesis));
+  assert.equal(firstRank(relationships.nemesis)?.user.id, nemesis.id);
+  assert.equal(firstRank(relationships.nemesis)?.losses, 4);
+  assert.equal(firstRank(relationships.nemesis)?.wins, 1);
+  assert.equal(firstRank(relationships.nemesis)?.ties, 0);
+  assert.ok(firstRank(relationships.favoriteTargetByCount));
+  assert.equal(firstRank(relationships.favoriteTargetByCount)?.user.id, favoriteTarget.id);
+  assert.ok(firstRank(relationships.nemesisByCount));
+  assert.equal(firstRank(relationships.nemesisByCount)?.user.id, nemesis.id);
 })();
 
 (() => {
@@ -415,14 +445,14 @@ const relationshipGame = (
     Sport.PADEL,
   );
 
-  assert.ok(relationships.favoriteTarget);
-  assert.equal(relationships.favoriteTarget.user.id, frequentWinOpponent.id);
-  assert.equal(relationships.favoriteTarget.wins, 3);
-  assert.equal(relationships.favoriteTarget.losses, 0);
-  assert.ok(relationships.nemesis);
-  assert.equal(relationships.nemesis.user.id, frequentLossOpponent.id);
-  assert.equal(relationships.nemesis.wins, 0);
-  assert.equal(relationships.nemesis.losses, 3);
+  assert.ok(firstRank(relationships.favoriteTarget));
+  assert.equal(firstRank(relationships.favoriteTarget)?.user.id, frequentWinOpponent.id);
+  assert.equal(firstRank(relationships.favoriteTarget)?.wins, 3);
+  assert.equal(firstRank(relationships.favoriteTarget)?.losses, 0);
+  assert.ok(firstRank(relationships.nemesis));
+  assert.equal(firstRank(relationships.nemesis)?.user.id, frequentLossOpponent.id);
+  assert.equal(firstRank(relationships.nemesis)?.wins, 0);
+  assert.equal(firstRank(relationships.nemesis)?.losses, 3);
 })();
 
 (() => {
@@ -474,21 +504,21 @@ const relationshipGame = (
     Sport.PADEL,
   );
 
-  assert.ok(relationships.bestPartner);
-  assert.equal(relationships.bestPartner.user.id, partner.id);
+  assert.ok(firstRank(relationships.bestPartner));
+  assert.equal(firstRank(relationships.bestPartner)?.user.id, partner.id);
   assert.deepEqual(
-    relationships.bestPartner.games.map((game) => game.id),
+    firstRank(relationships.bestPartner)?.games.map((game) => game.id),
     [newPartnerGame.id, oldPartnerGame.id],
   );
 
-  assert.ok(relationships.favoriteTarget);
-  assert.equal(relationships.favoriteTarget.user.id, singlesTarget.id);
+  assert.ok(firstRank(relationships.favoriteTarget));
+  assert.equal(firstRank(relationships.favoriteTarget)?.user.id, singlesTarget.id);
   assert.deepEqual(
-    relationships.favoriteTarget.games.map((game) => game.id),
+    firstRank(relationships.favoriteTarget)?.games.map((game) => game.id),
     [singlesGameD.id, singlesGameC.id, singlesGameB.id, singlesGameA.id],
   );
   assert.equal(
-    relationships.bestPartner.games.some((game) => game.id === singlesGameA.id),
+    firstRank(relationships.bestPartner)?.games.some((game) => game.id === singlesGameA.id),
     false,
   );
 })();
@@ -539,20 +569,20 @@ const relationshipGame = (
     Sport.PADEL,
   );
 
-  assert.ok(relationships.favoriteTarget);
-  assert.equal(relationships.favoriteTarget.user.id, highImpactTarget.id);
-  assert.equal(relationships.favoriteTarget.ratingNetChange, 0.16);
-  assert.ok(relationships.favoriteTargetByRating);
-  assert.equal(relationships.favoriteTargetByRating.user.id, highImpactTarget.id);
-  assert.ok(relationships.favoriteTargetByCount);
-  assert.equal(relationships.favoriteTargetByCount.user.id, steadyTarget.id);
-  assert.ok(relationships.nemesis);
-  assert.equal(relationships.nemesis.user.id, highImpactNemesis.id);
-  assert.equal(relationships.nemesis.ratingNetChange, -0.16);
-  assert.ok(relationships.nemesisByRating);
-  assert.equal(relationships.nemesisByRating.user.id, highImpactNemesis.id);
-  assert.ok(relationships.nemesisByCount);
-  assert.equal(relationships.nemesisByCount.user.id, steadyNemesis.id);
+  assert.ok(firstRank(relationships.favoriteTarget));
+  assert.equal(firstRank(relationships.favoriteTarget)?.user.id, highImpactTarget.id);
+  assert.equal(firstRank(relationships.favoriteTarget)?.ratingNetChange, 0.16);
+  assert.ok(firstRank(relationships.favoriteTargetByRating));
+  assert.equal(firstRank(relationships.favoriteTargetByRating)?.user.id, highImpactTarget.id);
+  assert.ok(firstRank(relationships.favoriteTargetByCount));
+  assert.equal(firstRank(relationships.favoriteTargetByCount)?.user.id, steadyTarget.id);
+  assert.ok(firstRank(relationships.nemesis));
+  assert.equal(firstRank(relationships.nemesis)?.user.id, highImpactNemesis.id);
+  assert.equal(firstRank(relationships.nemesis)?.ratingNetChange, -0.16);
+  assert.ok(firstRank(relationships.nemesisByRating));
+  assert.equal(firstRank(relationships.nemesisByRating)?.user.id, highImpactNemesis.id);
+  assert.ok(firstRank(relationships.nemesisByCount));
+  assert.equal(firstRank(relationships.nemesisByCount)?.user.id, steadyNemesis.id);
 })();
 
 (() => {
@@ -570,8 +600,108 @@ const relationshipGame = (
     Sport.PADEL,
   );
 
-  assert.equal(relationships.favoriteTarget, null);
-  assert.equal(relationships.nemesis, null);
+  assert.deepEqual(relationships.favoriteTarget, []);
+  assert.deepEqual(relationships.nemesis, []);
+})();
+
+(() => {
+  const current = user('u-current', 'Current');
+  const twelveWin = user('u-twelve', 'Twelve');
+  const elevenWin = user('u-eleven', 'Eleven');
+  const tenWin = user('u-ten', 'Ten');
+  const eightLoss = user('u-eight-loss', 'EightLoss');
+  const fiveLoss = user('u-five-loss', 'FiveLoss');
+  const threeLoss = user('u-three-loss', 'ThreeLoss');
+  const extraPartner = user('u-extra', 'Extra');
+  const oppA = user('u-opp-a', 'OppA');
+  const oppB = user('u-opp-b', 'OppB');
+  const opponents: [ReturnType<typeof user>, ReturnType<typeof user>] = [oppA, oppB];
+
+  const relationships = buildPerformanceRelationships(
+    current.id,
+    [
+      ...winsWith(current, twelveWin, opponents, 12, 'twelve'),
+      ...winsWith(current, elevenWin, opponents, 11, 'eleven'),
+      ...winsWith(current, tenWin, opponents, 10, 'ten'),
+      ...winsWith(current, extraPartner, opponents, 4, 'extra'),
+      ...lossesWith(current, eightLoss, opponents, 8, 'eight'),
+      ...lossesWith(current, fiveLoss, opponents, 5, 'five'),
+      ...lossesWith(current, threeLoss, opponents, 3, 'three'),
+    ],
+    Sport.PADEL,
+  );
+
+  assert.deepEqual(rankIds(relationships.bestPartnerByCount), [twelveWin.id, elevenWin.id, tenWin.id]);
+  assert.equal(relationships.bestPartnerByCount[0]?.wins, 12);
+  assert.equal(relationships.bestPartnerByCount[1]?.wins, 11);
+  assert.equal(relationships.bestPartnerByCount[2]?.wins, 10);
+  assert.deepEqual(rankIds(relationships.worstPartnerByCount), [eightLoss.id, fiveLoss.id, threeLoss.id]);
+  assert.equal(relationships.worstPartnerByCount[0]?.losses, 8);
+  assert.equal(relationships.worstPartnerByCount[1]?.losses, 5);
+  assert.equal(relationships.worstPartnerByCount[2]?.losses, 3);
+})();
+
+(() => {
+  const current = user('u-current', 'Current');
+  const targetTwelve = user('u-target-twelve', 'TargetTwelve');
+  const targetEleven = user('u-target-eleven', 'TargetEleven');
+  const targetTen = user('u-target-ten', 'TargetTen');
+  const nemesisEight = user('u-nemesis-eight', 'NemesisEight');
+  const nemesisFive = user('u-nemesis-five', 'NemesisFive');
+  const nemesisThree = user('u-nemesis-three', 'NemesisThree');
+
+  const singles = (
+    opponent: ReturnType<typeof user>,
+    count: number,
+    prefix: string,
+    userWins: boolean,
+  ) => Array.from({ length: count }, (_, index) => match(
+    userWins ? `${prefix}-us-${index}` : `${prefix}-them-${index}`,
+    [
+      team(`${prefix}-us-${index}`, [current]),
+      team(`${prefix}-them-${index}`, [opponent]),
+    ],
+  ));
+
+  const relationships = buildPerformanceRelationships(
+    current.id,
+    [
+      ...singles(targetTwelve, 12, 't12', true),
+      ...singles(targetEleven, 11, 't11', true),
+      ...singles(targetTen, 10, 't10', true),
+      ...singles(nemesisEight, 8, 'n8', false),
+      ...singles(nemesisFive, 5, 'n5', false),
+      ...singles(nemesisThree, 3, 'n3', false),
+    ],
+    Sport.PADEL,
+  );
+
+  assert.deepEqual(rankIds(relationships.favoriteTargetByCount), [targetTwelve.id, targetEleven.id, targetTen.id]);
+  assert.deepEqual(rankIds(relationships.nemesisByCount), [nemesisEight.id, nemesisFive.id, nemesisThree.id]);
+})();
+
+(() => {
+  const current = user('u-current', 'Current');
+  const confident = user('u-confident', 'Confident');
+  const oneOffB = user('u-one-off-b', 'OneOffB');
+  const oneOffC = user('u-one-off-c', 'OneOffC');
+  const oppA = user('u-opp-a', 'OppA');
+  const oppB = user('u-opp-b', 'OppB');
+  const opponents: [ReturnType<typeof user>, ReturnType<typeof user>] = [oppA, oppB];
+
+  const relationships = buildPerformanceRelationships(
+    current.id,
+    [
+      ...winsWith(current, confident, opponents, 2, 'confident'),
+      ...winsWith(current, oneOffB, opponents, 1, 'one-b'),
+      ...winsWith(current, oneOffC, opponents, 1, 'one-c'),
+    ],
+    Sport.PADEL,
+  );
+
+  assert.equal(firstRank(relationships.bestPartner)?.user.id, confident.id);
+  assert.equal(relationships.bestPartner.length, 3);
+  assert.deepEqual(new Set(rankIds(relationships.bestPartner)), new Set([confident.id, oneOffB.id, oneOffC.id]));
 })();
 
 console.log('userPerformanceInsights.service tests passed');

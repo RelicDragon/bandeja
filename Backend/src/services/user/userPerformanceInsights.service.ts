@@ -81,19 +81,21 @@ export interface PerformanceRelationshipGame {
   } | null;
 }
 
+export type PerformanceRelationshipRanks = PerformanceRelationshipEntry[];
+
 export interface PerformanceRelationships {
-  bestPartner: PerformanceRelationshipEntry | null;
-  worstPartner: PerformanceRelationshipEntry | null;
-  bestPartnerByRating: PerformanceRelationshipEntry | null;
-  worstPartnerByRating: PerformanceRelationshipEntry | null;
-  bestPartnerByCount: PerformanceRelationshipEntry | null;
-  worstPartnerByCount: PerformanceRelationshipEntry | null;
-  favoriteTarget: PerformanceRelationshipEntry | null;
-  nemesis: PerformanceRelationshipEntry | null;
-  favoriteTargetByRating: PerformanceRelationshipEntry | null;
-  nemesisByRating: PerformanceRelationshipEntry | null;
-  favoriteTargetByCount: PerformanceRelationshipEntry | null;
-  nemesisByCount: PerformanceRelationshipEntry | null;
+  bestPartner: PerformanceRelationshipRanks;
+  worstPartner: PerformanceRelationshipRanks;
+  bestPartnerByRating: PerformanceRelationshipRanks;
+  worstPartnerByRating: PerformanceRelationshipRanks;
+  bestPartnerByCount: PerformanceRelationshipRanks;
+  worstPartnerByCount: PerformanceRelationshipRanks;
+  favoriteTarget: PerformanceRelationshipRanks;
+  nemesis: PerformanceRelationshipRanks;
+  favoriteTargetByRating: PerformanceRelationshipRanks;
+  nemesisByRating: PerformanceRelationshipRanks;
+  favoriteTargetByCount: PerformanceRelationshipRanks;
+  nemesisByCount: PerformanceRelationshipRanks;
 }
 
 export interface UserPerformanceInsights {
@@ -117,6 +119,7 @@ const RELATIONSHIP_RATING_SCALE = 0.1;
 const RELATIONSHIP_RATING_WEIGHT = 0.6;
 const RELATIONSHIP_RECORD_WEIGHT = 0.4;
 const RELATIONSHIP_MIN_CONFIDENT_MATCHES = 2;
+const RELATIONSHIP_RANK_LIMIT = 3;
 
 export interface RelationshipMatchInput<TUser = InsightUser> {
   winnerTeamId: string | null;
@@ -168,10 +171,9 @@ function relationshipScore(entry: RelationshipCounter): number {
 }
 
 function toRelationshipEntry(
-  entry: RelationshipCounter | null,
+  entry: RelationshipCounter,
   sport: Sport,
 ): PerformanceRelationshipEntry | null {
-  if (!entry) return null;
   const totalMatches = entry.wins + entry.losses + entry.ties;
   if (totalMatches === 0) return null;
   return {
@@ -186,6 +188,19 @@ function toRelationshipEntry(
       (a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime(),
     ),
   };
+}
+
+function toRelationshipRanks(
+  entries: RelationshipCounter[],
+  sport: Sport,
+): PerformanceRelationshipRanks {
+  const ranks: PerformanceRelationshipEntry[] = [];
+  for (const entry of entries) {
+    const converted = toRelationshipEntry(entry, sport);
+    if (converted) ranks.push(converted);
+    if (ranks.length >= RELATIONSHIP_RANK_LIMIT) break;
+  }
+  return ranks;
 }
 
 export function resolveStreakResult(outcome: StreakOutcomeInput): StreakResult {
@@ -265,20 +280,18 @@ function incrementCounter(
   map.set(user.id, entry);
 }
 
-function pickPartner(
+function rankEntries(
   entries: RelationshipCounter[],
-  direction: 'best' | 'worst',
-): RelationshipCounter | null {
-  if (entries.length === 0) return null;
-  return pickByRelationshipScore(entries, direction);
+  compare: (a: RelationshipCounter, b: RelationshipCounter) => number,
+): RelationshipCounter[] {
+  if (entries.length === 0) return [];
+  return [...entries].sort(compare).slice(0, RELATIONSHIP_RANK_LIMIT);
 }
 
-function pickByRating(
-  entries: RelationshipCounter[],
+function compareByRating(
   direction: 'best' | 'worst',
-): RelationshipCounter | null {
-  if (entries.length === 0) return null;
-  return [...entries].sort((a, b) => {
+): (a: RelationshipCounter, b: RelationshipCounter) => number {
+  return (a, b) => {
     const ratingDiff = direction === 'best'
       ? b.ratingNetChange - a.ratingNetChange
       : a.ratingNetChange - b.ratingNetChange;
@@ -290,15 +303,13 @@ function pickByRating(
     const totalDiff = relationshipTotal(b) - relationshipTotal(a);
     if (totalDiff !== 0) return totalDiff;
     return compareName(a.user, b.user);
-  })[0] ?? null;
+  };
 }
 
-function pickPartnerByCount(
-  entries: RelationshipCounter[],
+function comparePartnerByCount(
   direction: 'best' | 'worst',
-): RelationshipCounter | null {
-  if (entries.length === 0) return null;
-  return [...entries].sort((a, b) => {
+): (a: RelationshipCounter, b: RelationshipCounter) => number {
+  return (a, b) => {
     const primaryDiff = direction === 'best' ? b.wins - a.wins : b.losses - a.losses;
     if (primaryDiff !== 0) return primaryDiff;
     const rateDiff = direction === 'best' ? winRate(b) - winRate(a) : winRate(a) - winRate(b);
@@ -306,54 +317,33 @@ function pickPartnerByCount(
     const totalDiff = (b.wins + b.losses + b.ties) - (a.wins + a.losses + a.ties);
     if (totalDiff !== 0) return totalDiff;
     return compareName(a.user, b.user);
-  })[0] ?? null;
+  };
 }
 
-function pickTarget(entries: RelationshipCounter[]): RelationshipCounter | null {
-  if (entries.length === 0) return null;
-  return pickByRelationshipScore(entries, 'best');
+function compareTargetByCount(a: RelationshipCounter, b: RelationshipCounter): number {
+  const winsDiff = b.wins - a.wins;
+  if (winsDiff !== 0) return winsDiff;
+  const rateDiff = winRate(b) - winRate(a);
+  if (rateDiff !== 0) return rateDiff;
+  const totalDiff = relationshipTotal(b) - relationshipTotal(a);
+  if (totalDiff !== 0) return totalDiff;
+  return compareName(a.user, b.user);
 }
 
-function pickNemesis(entries: RelationshipCounter[]): RelationshipCounter | null {
-  if (entries.length === 0) return null;
-  return pickByRelationshipScore(entries, 'worst');
+function compareNemesisByCount(a: RelationshipCounter, b: RelationshipCounter): number {
+  const lossesDiff = b.losses - a.losses;
+  if (lossesDiff !== 0) return lossesDiff;
+  const rateDiff = winRate(a) - winRate(b);
+  if (rateDiff !== 0) return rateDiff;
+  const totalDiff = relationshipTotal(b) - relationshipTotal(a);
+  if (totalDiff !== 0) return totalDiff;
+  return compareName(a.user, b.user);
 }
 
-function pickTargetByCount(entries: RelationshipCounter[]): RelationshipCounter | null {
-  if (entries.length === 0) return null;
-  return [...entries].sort((a, b) => {
-    const winsDiff = b.wins - a.wins;
-    if (winsDiff !== 0) return winsDiff;
-    const rateDiff = winRate(b) - winRate(a);
-    if (rateDiff !== 0) return rateDiff;
-    const totalDiff = relationshipTotal(b) - relationshipTotal(a);
-    if (totalDiff !== 0) return totalDiff;
-    return compareName(a.user, b.user);
-  })[0] ?? null;
-}
-
-function pickNemesisByCount(entries: RelationshipCounter[]): RelationshipCounter | null {
-  if (entries.length === 0) return null;
-  return [...entries].sort((a, b) => {
-    const lossesDiff = b.losses - a.losses;
-    if (lossesDiff !== 0) return lossesDiff;
-    const rateDiff = winRate(a) - winRate(b);
-    if (rateDiff !== 0) return rateDiff;
-    const totalDiff = relationshipTotal(b) - relationshipTotal(a);
-    if (totalDiff !== 0) return totalDiff;
-    return compareName(a.user, b.user);
-  })[0] ?? null;
-}
-
-function pickByRelationshipScore(
-  entries: RelationshipCounter[],
+function compareByRelationshipScore(
   direction: 'best' | 'worst',
-): RelationshipCounter | null {
-  const confidentEntries = entries.filter(
-    (entry) => relationshipTotal(entry) >= RELATIONSHIP_MIN_CONFIDENT_MATCHES,
-  );
-  const candidates = confidentEntries.length > 0 ? confidentEntries : entries;
-  return [...candidates].sort((a, b) => {
+): (a: RelationshipCounter, b: RelationshipCounter) => number {
+  return (a, b) => {
     const scoreDiff = direction === 'best'
       ? relationshipScore(b) - relationshipScore(a)
       : relationshipScore(a) - relationshipScore(b);
@@ -369,7 +359,26 @@ function pickByRelationshipScore(
     const totalDiff = relationshipTotal(b) - relationshipTotal(a);
     if (totalDiff !== 0) return totalDiff;
     return compareName(a.user, b.user);
-  })[0] ?? null;
+  };
+}
+
+function rankByRelationshipScore(
+  entries: RelationshipCounter[],
+  direction: 'best' | 'worst',
+): RelationshipCounter[] {
+  if (entries.length === 0) return [];
+  const compare = compareByRelationshipScore(direction);
+  const confidentEntries = entries.filter(
+    (entry) => relationshipTotal(entry) >= RELATIONSHIP_MIN_CONFIDENT_MATCHES,
+  );
+  const primary = confidentEntries.length > 0 ? confidentEntries : entries;
+  const orderedPrimary = [...primary].sort(compare);
+  if (orderedPrimary.length >= RELATIONSHIP_RANK_LIMIT) {
+    return orderedPrimary.slice(0, RELATIONSHIP_RANK_LIMIT);
+  }
+  const takenIds = new Set(orderedPrimary.map((entry) => entry.user.id));
+  const fillers = [...entries].filter((entry) => !takenIds.has(entry.user.id)).sort(compare);
+  return [...orderedPrimary, ...fillers].slice(0, RELATIONSHIP_RANK_LIMIT);
 }
 
 export function buildPerformanceRelationships(
@@ -410,18 +419,18 @@ export function buildPerformanceRelationships(
   const partnerEntries = [...partners.values()];
   const opponentEntries = [...opponents.values()];
   return {
-    bestPartner: toRelationshipEntry(pickPartner(partnerEntries, 'best'), sport),
-    worstPartner: toRelationshipEntry(pickPartner(partnerEntries, 'worst'), sport),
-    bestPartnerByRating: toRelationshipEntry(pickByRating(partnerEntries, 'best'), sport),
-    worstPartnerByRating: toRelationshipEntry(pickByRating(partnerEntries, 'worst'), sport),
-    bestPartnerByCount: toRelationshipEntry(pickPartnerByCount(partnerEntries, 'best'), sport),
-    worstPartnerByCount: toRelationshipEntry(pickPartnerByCount(partnerEntries, 'worst'), sport),
-    favoriteTarget: toRelationshipEntry(pickTarget(opponentEntries), sport),
-    nemesis: toRelationshipEntry(pickNemesis(opponentEntries), sport),
-    favoriteTargetByRating: toRelationshipEntry(pickByRating(opponentEntries, 'best'), sport),
-    nemesisByRating: toRelationshipEntry(pickByRating(opponentEntries, 'worst'), sport),
-    favoriteTargetByCount: toRelationshipEntry(pickTargetByCount(opponentEntries), sport),
-    nemesisByCount: toRelationshipEntry(pickNemesisByCount(opponentEntries), sport),
+    bestPartner: toRelationshipRanks(rankByRelationshipScore(partnerEntries, 'best'), sport),
+    worstPartner: toRelationshipRanks(rankByRelationshipScore(partnerEntries, 'worst'), sport),
+    bestPartnerByRating: toRelationshipRanks(rankEntries(partnerEntries, compareByRating('best')), sport),
+    worstPartnerByRating: toRelationshipRanks(rankEntries(partnerEntries, compareByRating('worst')), sport),
+    bestPartnerByCount: toRelationshipRanks(rankEntries(partnerEntries, comparePartnerByCount('best')), sport),
+    worstPartnerByCount: toRelationshipRanks(rankEntries(partnerEntries, comparePartnerByCount('worst')), sport),
+    favoriteTarget: toRelationshipRanks(rankByRelationshipScore(opponentEntries, 'best'), sport),
+    nemesis: toRelationshipRanks(rankByRelationshipScore(opponentEntries, 'worst'), sport),
+    favoriteTargetByRating: toRelationshipRanks(rankEntries(opponentEntries, compareByRating('best')), sport),
+    nemesisByRating: toRelationshipRanks(rankEntries(opponentEntries, compareByRating('worst')), sport),
+    favoriteTargetByCount: toRelationshipRanks(rankEntries(opponentEntries, compareTargetByCount), sport),
+    nemesisByCount: toRelationshipRanks(rankEntries(opponentEntries, compareNemesisByCount), sport),
   };
 }
 

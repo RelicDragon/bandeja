@@ -84,18 +84,18 @@ export interface UserPerformanceInsights {
     longestLoss: number;
   };
   relationships: {
-    bestPartner: PerformanceRelationshipEntry | null;
-    worstPartner: PerformanceRelationshipEntry | null;
-    bestPartnerByRating?: PerformanceRelationshipEntry | null;
-    worstPartnerByRating?: PerformanceRelationshipEntry | null;
-    bestPartnerByCount?: PerformanceRelationshipEntry | null;
-    worstPartnerByCount?: PerformanceRelationshipEntry | null;
-    favoriteTarget: PerformanceRelationshipEntry | null;
-    nemesis: PerformanceRelationshipEntry | null;
-    favoriteTargetByRating?: PerformanceRelationshipEntry | null;
-    nemesisByRating?: PerformanceRelationshipEntry | null;
-    favoriteTargetByCount?: PerformanceRelationshipEntry | null;
-    nemesisByCount?: PerformanceRelationshipEntry | null;
+    bestPartner: PerformanceRelationshipEntry[];
+    worstPartner: PerformanceRelationshipEntry[];
+    bestPartnerByRating: PerformanceRelationshipEntry[];
+    worstPartnerByRating: PerformanceRelationshipEntry[];
+    bestPartnerByCount: PerformanceRelationshipEntry[];
+    worstPartnerByCount: PerformanceRelationshipEntry[];
+    favoriteTarget: PerformanceRelationshipEntry[];
+    nemesis: PerformanceRelationshipEntry[];
+    favoriteTargetByRating: PerformanceRelationshipEntry[];
+    nemesisByRating: PerformanceRelationshipEntry[];
+    favoriteTargetByCount: PerformanceRelationshipEntry[];
+    nemesisByCount: PerformanceRelationshipEntry[];
   };
 }
 

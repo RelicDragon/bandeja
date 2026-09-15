@@ -1452,6 +1452,8 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PR-81 | Game-open sport hint | Open `?player=` from tennis game; subject has tennis | Card opens on tennis; if subject lacks tennis → viewer primary or subject primary |
 | PR-82 | Partners ranking modes (enough data) | Player card Statistics → Partners when Rating/Games change people vs Formulae | Switch visible; each visible mode changes at least one card person; no two tabs with identical people |
 | PR-83 | Partners sparse data (one game) | Open card with 1 finished doubles game (e.g. Polina) | Ranking switch hidden; only one partner + one opponent card (no best=worst / favorite=nemesis dupes) |
+| PR-92 | Partner place ranks | Statistics → Partners → open Best partner (or other card) when ≥3 people exist for that ranking | Method (Formulae/Rating/Games) under the title; 1st/2nd/3rd switch; 1st default; 2nd/3rd show the next people by that method (e.g. Games: 12W then 11W then 10W) |
+| PR-93 | Partner place ranks sparse | Open a partner/target card with only one person in that ranking | Place switch hidden; method still shown |
 | PR-84 | Public profile training attendance | Open `/user-profile/:id` for a user who attended TRAINING as PLAYING (not trainer-only, not a future RSVP) | Compact `N games · M trainings` next to that sport's level; rated gamesPlayed unchanged |
 | PR-85 | Public profile training attendance zero | Open `/user-profile/:id` with 0 TRAINING attendance, or only upcoming TRAINING RSVPs | Shows 0 trainings (quiet empty); no crash |
 | PR-86 | Own Statistics training attendance | Profile → Statistics for a user who attended TRAINING as PLAYING | Same compact games · trainings next to level as public/overlay; upcoming RSVPs excluded |

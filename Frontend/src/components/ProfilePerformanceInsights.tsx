@@ -1,23 +1,29 @@
 import { memo, useEffect, useId, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { ArrowLeft, ArrowUpRight, CalendarDays, Crosshair, Handshake, HelpCircle, MapPin, ShieldAlert, TrendingDown, Trophy } from 'lucide-react';
+import { ArrowUpRight, Crosshair, Handshake, HelpCircle, ShieldAlert, TrendingDown, Trophy } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
 import type {
-  PerformanceRelationshipEntry,
-  PerformanceRelationshipGame,
   StreakResult,
   UserPerformanceInsights,
 } from '@/api/users';
-import { formatDate } from '@/utils/dateFormat';
+import { RelationshipRankDetail } from '@/components/profileInsights/RelationshipRankDetail';
 import {
+  formatRatingNetChange,
+  getInitials,
+  getPlayerName,
+  getPlayerNameLines,
+  getRatingNetChangeClass,
+} from '@/components/profileInsights/relationshipDisplay';
+import {
+  clampRelationshipPlaceIndex,
   dedupeRelationshipCards,
   distinctRelationshipRankingModes,
+  firstRankedEntry,
   resolveRelationshipsForMode,
   type RelationshipCardKey,
+  type RelationshipPlaceIndex,
   type RelationshipRankingMode,
 } from '@/utils/profileRelationshipRankings';
-import { buildUrl } from '@/utils/urlSchema';
 
 interface ProfilePerformanceInsightsProps {
   insights?: UserPerformanceInsights;
@@ -51,52 +57,12 @@ const currentStreakKey: Record<StreakResult, string> = {
   tie: 'playerCard.currentStreakTie',
 };
 
-function getPlayerName(entry: PerformanceRelationshipEntry, fallback: string) {
-  const name = `${entry.user.firstName ?? ''} ${entry.user.lastName ?? ''}`.trim();
-  return name || fallback;
-}
-
-function getPlayerNameLines(entry: PerformanceRelationshipEntry, fallback: string) {
-  const firstName = entry.user.firstName?.trim();
-  const lastName = entry.user.lastName?.trim();
-
-  if (firstName && lastName) return [firstName, lastName];
-
-  const name = `${firstName ?? ''} ${lastName ?? ''}`.trim();
-  return [name || fallback];
-}
-
-function getInitials(entry: PerformanceRelationshipEntry) {
-  const initials = `${entry.user.firstName?.[0] ?? ''}${entry.user.lastName?.[0] ?? ''}`.toUpperCase();
-  return initials || '?';
-}
-
-function formatRatingNetChange(change: number) {
-  return `${change >= 0 ? '+' : ''}${change.toFixed(2)}`;
-}
-
-function getRatingNetChangeClass(change: number) {
-  if (change > 0) {
-    return 'bg-green-50 text-green-700 ring-green-200 dark:bg-green-950/30 dark:text-green-300 dark:ring-green-900/60';
-  }
-  if (change < 0) {
-    return 'bg-red-50 text-red-700 ring-red-200 dark:bg-red-950/30 dark:text-red-300 dark:ring-red-900/60';
-  }
-  return 'bg-gray-50 text-gray-600 ring-gray-200 dark:bg-gray-900/30 dark:text-gray-300 dark:ring-gray-700';
-}
-
-function getGameLocation(game: PerformanceRelationshipGame) {
-  const parts = [game.court?.name, game.club?.name].filter(Boolean);
-  return [...new Set(parts)].join(' · ');
-}
-
 const ProfilePerformanceInsightsComponent = ({
   insights,
   darkBgClass = 'dark:bg-gray-700/50',
   onOpenGame,
 }: ProfilePerformanceInsightsProps) => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const streakInfoId = useId();
   const reduceMotion = useReducedMotion();
   const [showStreakInfo, setShowStreakInfo] = useState(false);
@@ -107,6 +73,7 @@ const ProfilePerformanceInsightsComponent = ({
     useState<RelationshipRankingMode>('formulae');
   const [relationshipCardsVisible, setRelationshipCardsVisible] = useState(true);
   const [selectedRelationshipKey, setSelectedRelationshipKey] = useState<RelationshipCardKey | null>(null);
+  const [relationshipPlaceIndex, setRelationshipPlaceIndex] = useState<RelationshipPlaceIndex>(0);
   const relationshipHideTimeoutRef = useRef<number | null>(null);
   const relationshipRevealTimeoutRef = useRef<number | null>(null);
 
@@ -143,7 +110,24 @@ const ProfilePerformanceInsightsComponent = ({
     setDisplayedRelationshipRankingMode('formulae');
     setRelationshipCardsVisible(true);
     setSelectedRelationshipKey(null);
+    setRelationshipPlaceIndex(0);
   }, [availableRankingModesKey, relationshipRankingMode]);
+
+  useEffect(() => {
+    if (!insights || !selectedRelationshipKey) return;
+    const resolvedNow = resolveRelationshipsForMode(
+      insights.relationships,
+      displayedRelationshipRankingMode,
+    );
+    const ranks = resolvedNow[selectedRelationshipKey];
+    if (!firstRankedEntry(ranks)) {
+      setSelectedRelationshipKey(null);
+      setRelationshipPlaceIndex(0);
+      return;
+    }
+    const clamped = clampRelationshipPlaceIndex(ranks, relationshipPlaceIndex);
+    if (clamped !== relationshipPlaceIndex) setRelationshipPlaceIndex(clamped);
+  }, [displayedRelationshipRankingMode, insights, relationshipPlaceIndex, selectedRelationshipKey]);
 
   if (!insights) return null;
 
@@ -161,28 +145,32 @@ const ProfilePerformanceInsightsComponent = ({
       key: 'bestPartner' as const,
       label: t('playerCard.bestPartner'),
       icon: Trophy,
-      entry: resolved.bestPartner,
+      entry: firstRankedEntry(resolved.bestPartner),
+      ranks: resolved.bestPartner,
       tone: 'text-green-600 dark:text-green-400',
     },
     {
       key: 'worstPartner' as const,
       label: t('playerCard.worstPartner'),
       icon: TrendingDown,
-      entry: resolved.worstPartner,
+      entry: firstRankedEntry(resolved.worstPartner),
+      ranks: resolved.worstPartner,
       tone: 'text-red-600 dark:text-red-400',
     },
     {
       key: 'favoriteTarget' as const,
       label: t('playerCard.favoriteTarget'),
       icon: Crosshair,
-      entry: resolved.favoriteTarget,
+      entry: firstRankedEntry(resolved.favoriteTarget),
+      ranks: resolved.favoriteTarget,
       tone: 'text-blue-600 dark:text-blue-400',
     },
     {
       key: 'nemesis' as const,
       label: t('playerCard.nemesis'),
       icon: ShieldAlert,
-      entry: resolved.nemesis,
+      entry: firstRankedEntry(resolved.nemesis),
+      ranks: resolved.nemesis,
       tone: 'text-purple-600 dark:text-purple-400',
     },
   ]);
@@ -195,9 +183,8 @@ const ProfilePerformanceInsightsComponent = ({
   const selectedRelationship = selectedRelationshipKey
     ? relationships.find((relationship) => relationship.key === selectedRelationshipKey) ?? null
     : null;
-  if (selectedRelationshipKey && !selectedRelationship) {
-    setSelectedRelationshipKey(null);
-  }
+  const selectedRanks = selectedRelationship?.ranks ?? [];
+  const selectedPlaceIndex = clampRelationshipPlaceIndex(selectedRanks, relationshipPlaceIndex);
   const relationshipFormulaLines = [
     t('playerCard.relationshipFormulaMatches'),
     t('playerCard.relationshipFormulaRate'),
@@ -221,6 +208,7 @@ const ProfilePerformanceInsightsComponent = ({
     clearRelationshipTransitionTimers();
     setRelationshipCardsVisible(false);
     setSelectedRelationshipKey(null);
+    setRelationshipPlaceIndex(0);
     relationshipHideTimeoutRef.current = window.setTimeout(() => {
       setDisplayedRelationshipRankingMode(mode);
       relationshipRevealTimeoutRef.current = window.setTimeout(() => {
@@ -229,16 +217,9 @@ const ProfilePerformanceInsightsComponent = ({
     }, 150);
   };
 
-  const openRelationshipGame = (game: PerformanceRelationshipGame) => {
-    onOpenGame?.();
-    navigate(buildUrl('game', { id: game.id }));
-  };
-
-  const getRelationshipGameTitle = (game: PerformanceRelationshipGame) => {
-    if (game.name?.trim()) return game.name.trim();
-    const gameType = t(`games.gameTypes.${game.gameType}`, { defaultValue: game.gameType });
-    const entityType = t(`games.entityTypes.${game.entityType}`, { defaultValue: game.entityType });
-    return game.gameType === 'CLASSIC' ? entityType : gameType;
+  const openRelationship = (key: RelationshipCardKey) => {
+    setSelectedRelationshipKey(key);
+    setRelationshipPlaceIndex(0);
   };
 
   return (
@@ -382,120 +363,21 @@ const ProfilePerformanceInsightsComponent = ({
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 28 }}
               transition={{ duration: 0.24, ease: 'easeOut' }}
-              className="space-y-3"
             >
-              <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-gray-200/80 bg-white/80 text-gray-600 shadow-sm transition-all duration-200 hover:border-primary-300 hover:bg-primary-50 hover:text-primary-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:border-gray-600/70 dark:bg-gray-800/70 dark:text-gray-300 dark:hover:border-primary-700 dark:hover:bg-primary-950/40 dark:hover:text-primary-300 dark:focus-visible:ring-offset-gray-800"
-                  aria-label={t('common.back', { defaultValue: 'Back' })}
-                  onClick={() => setSelectedRelationshipKey(null)}
-                >
-                  <ArrowLeft size={18} aria-hidden />
-                </button>
-                <div className="min-w-0 flex-1">
-                  <div className="flex min-w-0 items-center gap-2">
-                    <selectedRelationship.icon size={15} className={selectedRelationship.tone} />
-                    <h3 className="truncate text-sm font-semibold text-gray-900 dark:text-white">
-                      {selectedRelationship.label}
-                    </h3>
-                  </div>
-                  <p className="truncate text-xs text-gray-500 dark:text-gray-400">
-                    {getPlayerName(selectedRelationship.entry, t('playerCard.shareProfileFallbackName'))}
-                  </p>
-                </div>
-              </div>
-
-              <div className="rounded-xl border border-gray-200/70 bg-white/70 p-3 shadow-sm dark:border-gray-700/70 dark:bg-gray-800/45">
-                <div className="flex min-w-0 items-center gap-3">
-                  {selectedRelationship.entry.user.avatar ? (
-                    <img
-                      src={selectedRelationship.entry.user.avatar}
-                      alt={getPlayerName(selectedRelationship.entry, t('playerCard.shareProfileFallbackName'))}
-                      className="h-10 w-10 shrink-0 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-100 text-sm font-semibold text-primary-700 dark:bg-primary-900/40 dark:text-primary-200">
-                      {getInitials(selectedRelationship.entry)}
-                    </div>
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-semibold text-gray-900 dark:text-white">
-                      {getPlayerName(selectedRelationship.entry, t('playerCard.shareProfileFallbackName'))}
-                    </div>
-                    <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs tabular-nums text-gray-500 dark:text-gray-400">
-                      <span className="font-semibold text-green-600 dark:text-green-400">
-                        {selectedRelationship.entry.wins}{t('playerCard.winsShort')}
-                      </span>
-                      <span className="font-semibold text-red-600 dark:text-red-400">
-                        {selectedRelationship.entry.losses}{t('playerCard.lossesShort')}
-                      </span>
-                      <span className="font-semibold text-yellow-600 dark:text-yellow-400">
-                        {selectedRelationship.entry.ties}{t('playerCard.tiesShort')}
-                      </span>
-                      <span className="text-gray-400 dark:text-gray-500">·</span>
-                      <span>{selectedRelationship.entry.winRate}%</span>
-                      <span className="text-gray-400 dark:text-gray-500">·</span>
-                      <span
-                        className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[11px] font-semibold leading-none ring-1 ${getRatingNetChangeClass(selectedRelationship.entry.ratingNetChange)}`}
-                        title={t('playerCard.relationshipRatingNetChange', { change: formatRatingNetChange(selectedRelationship.entry.ratingNetChange) })}
-                        aria-label={t('playerCard.relationshipRatingNetChange', { change: formatRatingNetChange(selectedRelationship.entry.ratingNetChange) })}
-                      >
-                        Δ {formatRatingNetChange(selectedRelationship.entry.ratingNetChange)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                {(selectedRelationship.entry.games ?? []).length > 0 ? selectedRelationship.entry.games.map((game) => {
-                  const location = getGameLocation(game);
-                  return (
-                    <motion.button
-                      key={game.id}
-                      type="button"
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.2, ease: 'easeOut' }}
-                      className="group flex w-full items-center gap-3 rounded-xl border border-gray-200/70 bg-white/85 px-3 py-2.5 text-start shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary-200 hover:bg-primary-50/70 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:border-gray-700/70 dark:bg-gray-800/70 dark:hover:border-primary-800 dark:hover:bg-primary-950/25"
-                      onClick={() => openRelationshipGame(game)}
-                    >
-                      <div className="flex h-11 w-14 shrink-0 flex-col items-center justify-center rounded-lg bg-gray-100 text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:bg-gray-700/80 dark:text-gray-300">
-                        <CalendarDays size={14} className="mb-0.5" aria-hidden />
-                        <span>{formatDate(game.startTime, 'MMM d')}</span>
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="truncate text-sm font-semibold text-gray-900 dark:text-white">
-                          {getRelationshipGameTitle(game)}
-                        </div>
-                        <div className="mt-0.5 flex min-w-0 items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
-                          <MapPin size={12} className="shrink-0" aria-hidden />
-                          <span className="truncate">{location || t(`games.entityTypes.${game.entityType}`, { defaultValue: game.entityType })}</span>
-                        </div>
-                        <div className="mt-1 flex flex-wrap gap-1">
-                          <span className="rounded-full bg-blue-50 px-1.5 py-0.5 text-[10px] font-semibold text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">
-                            {t('games.resultsAvailable')}
-                          </span>
-                          <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
-                            game.affectsRating
-                              ? 'bg-green-50 text-green-700 dark:bg-green-950/40 dark:text-green-300'
-                              : 'bg-gray-100 text-gray-600 dark:bg-gray-700/70 dark:text-gray-300'
-                          }`}
-                          >
-                            {game.affectsRating ? t('games.Rating') : t('games.noRating')}
-                          </span>
-                        </div>
-                      </div>
-                      <ArrowUpRight size={17} className="shrink-0 text-gray-400 transition-colors group-hover:text-primary-600 dark:group-hover:text-primary-300" aria-hidden />
-                    </motion.button>
-                  );
-                }) : (
-                  <div className="rounded-lg bg-white/70 px-3 py-4 text-center text-sm text-gray-500 dark:bg-gray-800/40 dark:text-gray-400">
-                    {t('profile.noSharedGames', { defaultValue: 'No shared finished games yet' })}
-                  </div>
-                )}
-              </div>
+              <RelationshipRankDetail
+                icon={selectedRelationship.icon}
+                label={selectedRelationship.label}
+                tone={selectedRelationship.tone}
+                ranks={selectedRanks}
+                placeIndex={selectedPlaceIndex}
+                rankingMode={displayedRelationshipRankingMode}
+                onPlaceIndexChange={setRelationshipPlaceIndex}
+                onBack={() => {
+                  setSelectedRelationshipKey(null);
+                  setRelationshipPlaceIndex(0);
+                }}
+                onOpenGame={onOpenGame}
+              />
             </motion.div>
           ) : (
             <motion.div
@@ -553,7 +435,7 @@ const ProfilePerformanceInsightsComponent = ({
                         key={key}
                         type="button"
                         className="rounded-lg bg-white/70 p-3 text-start shadow-sm ring-1 ring-transparent transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/90 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:bg-gray-800/40 dark:hover:bg-gray-800/65 dark:focus-visible:ring-offset-gray-800"
-                        onClick={() => setSelectedRelationshipKey(key)}
+                        onClick={() => openRelationship(key)}
                       >
                         <div className="mb-2 flex items-center justify-between gap-2">
                           <div className="flex min-w-0 items-center gap-2">
