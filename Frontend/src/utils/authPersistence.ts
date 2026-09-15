@@ -1,6 +1,7 @@
 const AUTH_BACKUP_KEY = 'auth_backup';
 const LAST_CHECK_KEY = 'auth_last_check';
 
+import type { User } from '@/types';
 import { useAuthStore } from '@/store/authStore';
 import { scheduleProactiveAccessRefresh } from '@/api/authRefresh';
 import { syncTokenToNative } from '@/services/authBridge';

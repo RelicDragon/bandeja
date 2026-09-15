@@ -52,7 +52,7 @@ export const hitLinkToApp = asyncHandler(async (req: Request, res: Response) => 
 });
 
 export const goLinkToApp = asyncHandler(async (req: Request, res: Response) => {
-  const choice = req.params.choice;
+  const choice = typeof req.params.choice === 'string' ? req.params.choice : '';
   if (!isLinkToAppChoice(choice)) {
     throw new ApiError(404, 'Unknown destination', true, { code: 'linkToApp.unknownChoice' });
   }
