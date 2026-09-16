@@ -1,6 +1,6 @@
 # Shared packages
 
-Three shareable units. Backend `tsconfig.json` has **no** `paths`. Frontend aliases `@shared` / `@bandeja/shared` / `@bandeja/chat-contract` / `@bandeja/unread-contract` in `Frontend/vite.config.ts` and (partially) `Frontend/tsconfig.json`.
+Four shareable units. Backend `tsconfig.json` has **no** `paths`. Frontend aliases `@shared` / `@bandeja/shared` / `@bandeja/chat-contract` / `@bandeja/unread-contract` / `@bandeja/app-locale` in `Frontend/vite.config.ts` and (partially) `Frontend/tsconfig.json`.
 
 ## `@bandeja/chat-contract` — `packages/chat-contract`
 
@@ -36,6 +36,14 @@ Exports (`src/index.ts`):
 - Optimistic receive: `applyInboundMessageBump`, `reconcileOptimisticBumpOnEnvelope`, …
 
 `SnapshotContextType` is **not** the full Prisma `ChatContextType` (no `BUG` in the snapshot union; bugs fold via group-channel meta `bugId`).
+
+## `@bandeja/app-locale` — `packages/app-locale`
+
+Shared UI locale registry. `package.json` name `@bandeja/app-locale`. Built to `dist/` (`npm run build` via `scripts/run-heavy`). Backend `prebuild` and Frontend `prebuild` both build it. Seed/ts-node loads `env.ts`, which imports this package’s `dist/`.
+
+Exports (`src/index.ts`): `APP_UI_LANGUAGES`, `normalizeAppUiLanguage`, `GAME_TEXT_TRANSLATION_POLICY_VERSION`, `GAME_TEXT_LOCALIZATION_GENERATION_ENABLED` (package default; Backend env can override).
+
+FE Vite points at `packages/app-locale/src/index.ts` (source). Backend resolves `main: dist/index.js`.
 
 ## `@bandeja/shared` — `Frontend/shared`
 
@@ -111,4 +119,4 @@ Do not put selection logic in `policy.ts`. Do not fork a second JS picker.
 
 ## Build order
 
-Backend `prebuild`: chat-contract → unread-contract → `Frontend/shared` (`tsc` in that package). Frontend `prebuild`: both contracts. Import `@bandeja/shared` from Backend **after** shared `dist/` exists, or use source via tests’ `@backend` alias.
+Backend `prebuild`: chat-contract → unread-contract → app-locale → `Frontend/shared` (`tsc` in that package). Frontend `prebuild`: both contracts + app-locale. Import `@bandeja/shared` from Backend **after** shared `dist/` exists, or use source via tests’ `@backend` alias. Deploy (`scripts/deploy-backend.sh`) runs `prebuild` before `seed:sticker-packs` so `@bandeja/app-locale` `dist/` exists for ts-node.

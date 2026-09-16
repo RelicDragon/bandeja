@@ -132,6 +132,7 @@ cd Backend
 npm ci
 npx prisma migrate deploy
 npx prisma generate
+npm run prebuild             # chat-contract, unread-contract, app-locale, shared
 npm run seed:sticker-packs   # official reactions + padel packs (idempotent)
 npm run build
 pm2 restart backend
@@ -164,7 +165,7 @@ The migration adds idempotency state and durable, token-free refresh telemetry. 
 
 On `front.bandeja.com`:
 
-- Builds in a temp dir (includes `packages/chat-contract`)
+- Builds in a temp dir (includes `packages/chat-contract`, `unread-contract`, `app-locale`)
 - Sources `Frontend/build-env.sh` for prod Vite env (`VITE_API_BASE_URL=https://bandeja.me/api`, etc.)
 - Moves build to `Frontend/releases/<timestamp>`
 - Rotates symlinks: `dist` → new release, previous → `minus1` / `minus2`

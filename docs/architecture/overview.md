@@ -13,8 +13,8 @@ Do not copy `CLAUDE.md` enums or file counts. Schema: `Backend/prisma/schema.pri
 | `Admin/` | Plain JS dashboard (no bundler). Serve via `./Admin/serve.sh`, never `file://`. |
 | `packages/chat-contract` | `@bandeja/chat-contract` — chat sync event types + sentinels. |
 | `packages/unread-contract` | `@bandeja/unread-contract` — unread totals, merge, optimistic bump. |
+| `packages/app-locale` | `@bandeja/app-locale` — shared UI locale registry + game-text translation policy. |
 | `Frontend/shared` | npm package `@bandeja/shared`. FE Vite alias `@shared`. BE imports `@bandeja/shared/...`. Duplicate copies also live in `Backend/src/shared/` (parity tests). |
-| `packages/` | Only those two packages. No other workspace packages. |
 
 `Backend/tsconfig.json` has **no** `paths` / `@shared` aliases. Backend resolves shared code through `package.json` `"@bandeja/shared": "file:../Frontend/shared"` and local `Backend/src/shared/*`.
 
@@ -28,6 +28,7 @@ Frontend aliases (`Frontend/vite.config.ts` + `Frontend/tsconfig.json`):
 | `@backend` | `Backend/src` |
 | `@bandeja/chat-contract` | `packages/chat-contract/src/index.ts` |
 | `@bandeja/unread-contract` | `packages/unread-contract/src/index.ts` |
+| `@bandeja/app-locale` | `packages/app-locale/src/index.ts` |
 
 ## Ports
 

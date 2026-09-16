@@ -19,6 +19,8 @@ npm ci
 npx prisma migrate deploy
 # Client must exist before seed (ts-node typechecks / uses Prisma models).
 npx prisma generate
+# ts-node seed loads env.ts → @bandeja/app-locale (and other workspace packages).
+npm run prebuild
 # Official sticker packs (idempotent upsert + S3 when AWS configured).
 # Without this, tray stays empty after STICKER migrations.
 npm run seed:sticker-packs

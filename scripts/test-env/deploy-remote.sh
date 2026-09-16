@@ -160,6 +160,7 @@ install_dependencies() {
 
 install_dependencies chat-contract "$SOURCE/packages/chat-contract" ci
 install_dependencies unread-contract "$SOURCE/packages/unread-contract" install
+install_dependencies app-locale "$SOURCE/packages/app-locale" install
 install_dependencies shared "$SOURCE/Frontend/shared" ci
 install_dependencies backend "$BACKEND" ci
 install_dependencies frontend "$FRONTEND" ci
@@ -174,6 +175,7 @@ echo "→ generating Prisma client and applying test-database migrations"
 echo "→ building shared packages"
 npm run build --prefix "$SOURCE/packages/chat-contract"
 npm run build --prefix "$SOURCE/packages/unread-contract"
+npm run build --prefix "$SOURCE/packages/app-locale"
 npm run build --prefix "$SOURCE/Frontend/shared"
 
 build_backend() {

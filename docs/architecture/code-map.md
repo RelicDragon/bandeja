@@ -141,6 +141,7 @@ See [shared-packages.md](./shared-packages.md).
 |------|-----------------|
 | `packages/chat-contract` | `@bandeja/chat-contract` |
 | `packages/unread-contract` | `@bandeja/unread-contract` |
+| `packages/app-locale` | `@bandeja/app-locale` |
 | `Frontend/shared` | `@bandeja/shared` (BE npm), `@shared/*` (FE Vite) |
 
 `Frontend/shared` modules: `createTemplates.ts`, `sport.ts`, `booking/`, `gameBooking/`, `booktime/`, `clubIntegration.ts`, `gameFormat/`, `nextGame/policy.ts`, `achievements/`, `entityCapabilities.ts`, `eventApproval.ts`, `officiatingLevel.ts`, `officiatingEnforcement.ts`, `rotationFormats.ts`, `strictValidation.ts`, `timedCustomPresets.ts`, `playIntentRealtime.ts`, `playIntentCreateSource.ts`, `systemMessages/`, `gamePhotos/`, `gameSlotOverlap.ts`, `nameSearch.ts`, `matchFormat.ts`, `isPresetLegal.ts`.

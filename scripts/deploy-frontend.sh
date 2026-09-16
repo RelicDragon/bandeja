@@ -16,6 +16,7 @@ npm -v
 RELEASES="$FRONTEND/releases"
 CONTRACT="$REPO_ROOT/packages/chat-contract"
 UNREAD_CONTRACT="$REPO_ROOT/packages/unread-contract"
+APP_LOCALE="$REPO_ROOT/packages/app-locale"
 RUN_HEAVY="$REPO_ROOT/scripts/run-heavy"
 
 if [[ ! -f "$CONTRACT/package.json" ]]; then
@@ -25,6 +26,11 @@ fi
 
 if [[ ! -f "$UNREAD_CONTRACT/package.json" ]]; then
   echo "error: packages/unread-contract missing — deploy the full repo, not Frontend/ alone." >&2
+  exit 1
+fi
+
+if [[ ! -f "$APP_LOCALE/package.json" ]]; then
+  echo "error: packages/app-locale missing — deploy the full repo, not Frontend/ alone." >&2
   exit 1
 fi
 
@@ -56,6 +62,7 @@ rsync -a \
 
 rsync -a "$CONTRACT/" "$WORKDIR/packages/chat-contract/"
 rsync -a "$UNREAD_CONTRACT/" "$WORKDIR/packages/unread-contract/"
+rsync -a "$APP_LOCALE/" "$WORKDIR/packages/app-locale/"
 install -m 755 "$RUN_HEAVY" "$WORKDIR/scripts/run-heavy"
 
 cd "$WORKDIR/packages/chat-contract"
