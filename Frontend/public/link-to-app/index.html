@@ -2,38 +2,83 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Bandeja</title>
   <meta name="robots" content="noindex,nofollow" />
+  <meta name="theme-color" content="#e0f2fe" />
+  <link rel="icon" type="image/png" href="/favicon/favicon-96x96.png" sizes="96x96" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800&display=swap" rel="stylesheet" />
   <style>
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
     }
-    
+
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      min-height: 100vh;
+      background: linear-gradient(180deg, #ffe8b8 0%, #fff1d0 14%, #f0f9ff 36%, #e0f2fe 62%, #7dd3fc 100%);
+      min-height: 100dvh;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 24px;
-      color: #333;
+      padding: max(1.25rem, env(safe-area-inset-top)) max(1.25rem, env(safe-area-inset-right))
+        max(1.25rem, env(safe-area-inset-bottom)) max(1.25rem, env(safe-area-inset-left));
+      color: #0f172a;
     }
-    
+
+    .glow {
+      position: fixed;
+      border-radius: 9999px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .glow--a {
+      right: -6%;
+      bottom: 22%;
+      width: 22rem;
+      height: 22rem;
+      background: radial-gradient(circle, rgb(14 165 233 / 0.28) 0%, transparent 70%);
+    }
+
+    .glow--b {
+      left: -12%;
+      bottom: 12%;
+      width: 30rem;
+      height: 30rem;
+      background: radial-gradient(circle, rgb(6 182 212 / 0.32) 0%, transparent 70%);
+    }
+
     .container {
-      background: white;
-      border-radius: 24px;
-      padding: 48px 32px;
-      max-width: 480px;
+      position: relative;
+      z-index: 1;
+      isolation: isolate;
+      overflow: clip;
+      border-radius: 1.75rem;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      background: rgba(255, 255, 255, 0.55);
+      box-shadow:
+        0 8px 32px rgba(15, 23, 42, 0.1),
+        0 1px 0 rgba(255, 255, 255, 0.65) inset,
+        0 0 20px rgba(14, 165, 233, 0.1);
+      padding: 2rem 1.75rem 1.75rem;
+      max-width: 26rem;
       width: 100%;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
       text-align: center;
       animation: fadeIn 0.5s ease-in;
     }
-    
+
+    @supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+      .container {
+        background: rgba(255, 255, 255, 0.28);
+        backdrop-filter: blur(10px) saturate(150%);
+        -webkit-backdrop-filter: blur(10px) saturate(150%);
+      }
+    }
+
     @keyframes fadeIn {
       from {
         opacity: 0;
@@ -44,42 +89,40 @@
         transform: translateY(0);
       }
     }
-    
+
     .logo {
-      width: 80px;
-      height: 80px;
-      margin: 0 auto 24px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      border-radius: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 36px;
-      font-weight: bold;
-      color: white;
+      display: block;
+      margin: 0 auto 1.25rem;
+      width: 13rem;
+      max-width: 80%;
+      height: auto;
+      border-radius: 0.75rem;
+      background: #abdee3;
+      padding: 0.25rem;
     }
-    
+
     h1 {
-      font-size: 32px;
-      font-weight: 700;
-      margin-bottom: 12px;
-      color: #1a1a1a;
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      margin-bottom: 10px;
+      color: #0c4a6e;
     }
-    
+
     .subtitle {
-      font-size: 16px;
-      color: #666;
-      margin-bottom: 32px;
+      font-size: 15px;
+      color: #475569;
+      margin-bottom: 26px;
       line-height: 1.5;
     }
-    
+
     .buttons {
       display: flex;
       flex-direction: column;
-      gap: 16px;
-      margin-bottom: 24px;
+      gap: 14px;
     }
-    
+
     .store-button {
       display: block;
       text-decoration: none;
@@ -87,80 +130,131 @@
       border-radius: 12px;
       overflow: hidden;
     }
-    
+
     .store-button:hover {
       transform: scale(1.02);
       opacity: 0.9;
     }
-    
+
     .store-button:active {
       transform: scale(0.98);
     }
-    
+
     .store-button img {
       width: 100%;
       height: auto;
       display: block;
       border-radius: 12px;
     }
-    
+
     .web-button {
       display: block;
-      padding: 16px 24px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
+      padding: 15px 24px;
+      background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%);
+      color: #fff;
       text-decoration: none;
-      border-radius: 12px;
+      border-radius: 14px;
       font-weight: 600;
       font-size: 16px;
+      box-shadow: 0 10px 24px rgba(14, 165, 233, 0.35);
       transition: transform 0.2s, opacity 0.2s;
     }
-    
+
     .web-button:hover {
       transform: scale(1.02);
-      opacity: 0.9;
+      opacity: 0.92;
     }
-    
+
     .web-button:active {
       transform: scale(0.98);
     }
-    
+
     .tip {
-      color: #888;
-      font-size: 14px;
+      color: #64748b;
+      font-size: 13px;
       line-height: 1.5;
-      margin-top: 24px;
-      padding-top: 24px;
-      border-top: 1px solid #eee;
+      margin-top: 20px;
+      padding-top: 18px;
+      border-top: 1px solid rgba(15, 23, 42, 0.1);
     }
-    
+
     .loading {
       display: none;
       font-size: 14px;
-      color: #666;
+      color: #475569;
       margin-bottom: 24px;
     }
-    
+
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: linear-gradient(165deg, #020617 0%, #0b2740 38%, #0c4a6e 68%, #020617 100%);
+        color: #e2e8f0;
+      }
+
+      .container {
+        border-color: rgba(148, 163, 184, 0.12);
+        background: rgba(15, 23, 42, 0.45);
+        box-shadow:
+          0 12px 40px rgba(0, 0, 0, 0.45),
+          0 1px 0 rgba(255, 255, 255, 0.08) inset,
+          0 0 22px rgba(56, 189, 248, 0.1);
+      }
+
+      @supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+        .container {
+          background: rgba(15, 23, 42, 0.3);
+        }
+      }
+
+      .logo {
+        background: transparent;
+        filter: invert(1);
+      }
+
+      h1 {
+        color: #f0f9ff;
+      }
+
+      .subtitle {
+        color: #cbd5e1;
+      }
+
+      .tip {
+        color: #94a3b8;
+        border-top-color: rgba(148, 163, 184, 0.2);
+      }
+
+      .loading {
+        color: #cbd5e1;
+      }
+    }
+
     @media (max-width: 480px) {
       .container {
-        padding: 32px 24px;
+        padding: 1.75rem 1.25rem 1.5rem;
       }
-      
+
       h1 {
-        font-size: 28px;
+        font-size: 24px;
       }
-      
+
       .logo {
-        width: 64px;
-        height: 64px;
-        font-size: 28px;
+        width: 11rem;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .container {
+        animation: none;
       }
     }
   </style>
 </head>
 <body>
+  <div class="glow glow--a"></div>
+  <div class="glow glow--b"></div>
   <div class="container">
-    <div class="logo">B</div>
+    <img class="logo" src="/bandeja2-white-tr.png" alt="Bandeja" />
     <h1 id="title">Opening…</h1>
     <p class="subtitle" id="subtitle">If nothing happens, choose your platform:</p>
     <div class="loading" id="loading">Redirecting...</div>
