@@ -1,3 +1,5 @@
+import { Prisma } from '@prisma/client';
+
 /**
  * Production Backend writers of Game.name / Game.description.
  *
@@ -26,14 +28,14 @@ export type GameTextNameProvenance = typeof GAME_TEXT_NAME_PROVENANCE_GENERATED_
 export function gameTextMetadataWithNameProvenance(
   existing: unknown,
   nameProvenance: GameTextNameProvenance,
-): Record<string, unknown> {
-  const base =
+): Prisma.InputJsonObject {
+  const base: Prisma.InputJsonObject =
     existing && typeof existing === 'object' && !Array.isArray(existing)
-      ? { ...(existing as Record<string, unknown>) }
+      ? { ...(existing as Prisma.InputJsonObject) }
       : {};
   const prevGameText =
     base.gameText && typeof base.gameText === 'object' && !Array.isArray(base.gameText)
-      ? { ...(base.gameText as Record<string, unknown>) }
+      ? { ...(base.gameText as Prisma.InputJsonObject) }
       : {};
   return {
     ...base,

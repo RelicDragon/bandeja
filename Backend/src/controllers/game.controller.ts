@@ -39,6 +39,7 @@ import { resolveAvailableEnrich } from '../services/game/availableGamesProtocol'
 import { parseStructuralFiltersFromQuery } from '../services/game/availableGamesStructuralWhere';
 import {
   attachLocalizedTextToGame,
+  attachLocalizedTextToGameCards,
   attachLocalizedTextToGames,
 } from '../services/gameText/gameTextLocalizedText.batch';
 import { resolveRequestAppUiLocale } from '../services/gameText/gameTextRequestLocale';
@@ -341,7 +342,7 @@ export const getAvailableUpcomingGames = asyncHandler(async (req: AuthRequest, r
     enrich,
   );
 
-  const data = await attachLocalizedTextToGames(games, locale, {
+  const data = await attachLocalizedTextToGameCards(games, locale, {
     includeDescription: false,
   });
 
@@ -393,7 +394,7 @@ export const getAvailableGames = asyncHandler(async (req: AuthRequest, res: Resp
     indexOnly,
   );
 
-  const data = await attachLocalizedTextToGames(games, locale, {
+  const data = await attachLocalizedTextToGameCards(games, locale, {
     includeDescription: false,
   });
 

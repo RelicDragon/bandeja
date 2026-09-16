@@ -191,6 +191,22 @@ export async function attachLocalizedTextToGames<T extends GameLikeForIds & Text
   return games;
 }
 
+/**
+ * Same attach for card payload lists that upstream projections type as `unknown[]`
+ * (Find / My pages). Returns the same array instances, mutated in place.
+ */
+export async function attachLocalizedTextToGameCards(
+  games: unknown[],
+  localeInput: string | null | undefined,
+  options?: AttachLocalizedTextOptions,
+): Promise<unknown[]> {
+  return attachLocalizedTextToGames(
+    games as (GameLikeForIds & TextHost)[],
+    localeInput,
+    options,
+  );
+}
+
 export async function attachLocalizedTextToGame<T extends GameLikeForIds & TextHost>(
   game: T,
   localeInput: string | null | undefined,

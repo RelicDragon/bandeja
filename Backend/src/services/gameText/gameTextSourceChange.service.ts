@@ -36,6 +36,8 @@ export type ApplyGameTextSourceChangeInput = {
   nameProvenance?: GameTextNameProvenance;
   now?: Date;
   debounceMs?: number;
+  /** Defaults to every app locale; narrow it for scoped backfills and tests. */
+  locales?: readonly string[];
 };
 
 export type ApplyGameTextSourceChangeResult = GameTextSourceChangePlan & {
@@ -91,6 +93,7 @@ export async function applyGameTextSourceChangeInTransaction(
       existingMeta?.descriptionSourceRevision ?? 0,
     keepOriginalNameInAllLocales,
     enqueueJobs,
+    locales: input.locales,
   });
 
   if (!plan.shouldUpsertMeta && !plan.shouldEnqueueJobs) {
