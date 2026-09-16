@@ -17,10 +17,17 @@ import { parsePositiveIntEnv } from './chatSyncEnv';
 
 const MAX_CONCURRENT = 2;
 const LEASE_MS = 2200;
-/** Consecutive pulls that leave the cursor where it was before the thread is cooled down. */
+/** Repeated attempts against the same unresolved gap, within one cooldown window. */
 const MAX_NO_PROGRESS_PULLS = 3;
 const NO_PROGRESS_COOLDOWN_MS = 30_000;
-const noProgressPulls = new Map<string, number>();
+type StalledPull = {
+  cursor: number;
+  head: number;
+  attempts: number;
+  lastAttemptAt: number;
+  retryAt?: number;
+};
+const noProgressPulls = new Map<string, StalledPull>();
 const LOW_PRI_WINDOW_MS = parsePositiveIntEnv(
   import.meta.env.VITE_CHAT_SYNC_LOW_PRI_WINDOW_MS,
   28_000
@@ -51,16 +58,45 @@ type Job = {
   forcePull?: boolean;
 };
 const pending = new Map<string, Job>();
+const deferredUntil = new Map<string, number>();
+const active = new Set<string>();
 let running = 0;
+let generation = 0;
+let wakeTimer: ReturnType<typeof setTimeout> | undefined;
 
-async function tryLease(key: string, priority: number): Promise<boolean> {
-  if (priority >= SYNC_PRIORITY_GAP) return true;
+type PullStart = { cursor: number; head: number; wait: number };
+
+function mergeJobs(previous: Job | undefined, incoming: Job): Job {
+  if (!previous) return incoming;
+  const head = Math.max(previous.expectedServerMaxSeq ?? -1, incoming.expectedServerMaxSeq ?? -1);
+  return {
+    ...incoming,
+    priority: Math.max(previous.priority, incoming.priority),
+    ...(head >= 0 ? { expectedServerMaxSeq: head } : {}),
+    ...(previous.forcePull || incoming.forcePull ? { forcePull: true } : {}),
+  };
+}
+
+/** Failure backoff is unconditional; stalled-gap cooldowns expire when evidence changes. */
+async function readPullStart(key: string, job: Job): Promise<PullStart> {
   const row = await chatLocalDb.chatThreads.get(key);
-  const retry = row?.nextRetryAt;
-  if (retry != null && Date.now() < retry) return false;
-  const t = row?.lastPullStartedAt ?? 0;
-  if (Date.now() - t < LEASE_MS) return false;
-  return true;
+  const cursor = await getLocalCursorSeq(job.contextType, job.contextId);
+  const head = job.expectedServerMaxSeq ?? row?.serverMaxSeq ?? 0;
+  const now = Date.now();
+  let stalled = noProgressPulls.get(key);
+  if (stalled && (
+    cursor !== stalled.cursor || head !== stalled.head ||
+    now - (stalled.retryAt ?? stalled.lastAttemptAt) > NO_PROGRESS_COOLDOWN_MS
+  )) {
+    noProgressPulls.delete(key);
+    stalled = undefined;
+  }
+  const failureWait = Math.max(0, (row?.nextRetryAt ?? 0) - now);
+  const stalledWait = Math.max(0, (stalled?.retryAt ?? 0) - now);
+  const leaseWait = job.priority >= SYNC_PRIORITY_GAP
+    ? 0
+    : Math.max(0, LEASE_MS - (now - (row?.lastPullStartedAt ?? 0)));
+  return { cursor, head, wait: Math.max(failureWait, stalledWait, leaseWait) };
 }
 
 async function markPullStart(key: string): Promise<void> {
@@ -76,13 +112,30 @@ async function markPullStart(key: string): Promise<void> {
   });
 }
 
-async function markPullEnd(key: string): Promise<void> {
+async function markPullEnd(key: string, start: PullStart, cursor: number): Promise<void> {
+  const now = Date.now();
+  // A caught-up check is healthy, even if it did not fetch or move the cursor.
+  if (cursor > start.cursor || cursor >= start.head) {
+    noProgressPulls.delete(key);
+  } else {
+    const previous = noProgressPulls.get(key);
+    const attempts = (previous?.cursor === cursor && previous.head === start.head
+      ? previous.attempts
+      : 0) + 1;
+    noProgressPulls.set(key, {
+      cursor,
+      head: start.head,
+      attempts,
+      lastAttemptAt: now,
+      ...(attempts >= MAX_NO_PROGRESS_PULLS ? { retryAt: now + NO_PROGRESS_COOLDOWN_MS } : {}),
+    });
+  }
   const row = await chatLocalDb.chatThreads.get(key);
   if (!row) return;
   await chatLocalDb.chatThreads.put({
     ...row,
-    updatedAt: Date.now(),
-    lastSuccessfulPullAt: Date.now(),
+    updatedAt: now,
+    lastSuccessfulPullAt: now,
     lastPullStartedAt: undefined,
     pullErrorAt: undefined,
     nextRetryAt: undefined,
@@ -90,6 +143,7 @@ async function markPullEnd(key: string): Promise<void> {
 }
 
 async function markPullFailed(key: string): Promise<void> {
+  noProgressPulls.delete(key);
   const row = await chatLocalDb.chatThreads.get(key);
   const now = Date.now();
   const base = row ?? { key, serverMaxSeq: 0, updatedAt: now };
@@ -105,71 +159,100 @@ async function markPullFailed(key: string): Promise<void> {
   });
 }
 
+function deferJob(key: string, job: Job, wait: number): void {
+  const newer = pending.get(key);
+  pending.set(key, mergeJobs(job, newer ?? job));
+  // Recheck a signal received during the asynchronous lease read before sleeping.
+  deferredUntil.set(key, newer ? 0 : Date.now() + wait);
+}
+
+function scheduleWake(): void {
+  if (wakeTimer != null) clearTimeout(wakeTimer);
+  wakeTimer = undefined;
+  let earliest = Infinity;
+  for (const key of pending.keys()) {
+    if (active.has(key)) continue;
+    const due = deferredUntil.get(key);
+    if (due != null && due > Date.now()) earliest = Math.min(earliest, due);
+  }
+  if (earliest !== Infinity) {
+    wakeTimer = setTimeout(() => {
+      wakeTimer = undefined;
+      pump();
+    }, Math.max(0, earliest - Date.now()));
+  }
+}
+
+async function runJob(key: string, job: Job, startedGeneration: number): Promise<void> {
+  let bannerStarted = false;
+  try {
+    const start = await readPullStart(key, job);
+    if (startedGeneration !== generation) return;
+    if (start.wait > 0) {
+      deferJob(key, job, start.wait);
+      return;
+    }
+    if (job.priority < SYNC_PRIORITY_GAP && shouldDeferLowPriorityChatSyncPull()) {
+      deferJob(key, job, 1500);
+      return;
+    }
+    if (job.priority <= SYNC_PRIORITY_COOP) {
+      const now = Date.now();
+      if (now - lowPriWindowStart > LOW_PRI_WINDOW_MS) {
+        lowPriWindowStart = now;
+        lowPriStartsInWindow = 0;
+      }
+      if (lowPriStartsInWindow >= LOW_PRI_MAX_STARTS_PER_WINDOW) {
+        deferJob(key, job, 1400);
+        return;
+      }
+      lowPriStartsInWindow += 1;
+    }
+    chatSyncPullStarted();
+    bannerStarted = true;
+    await markPullStart(key);
+    await pullAndApplyChatSyncEvents(job.contextType, job.contextId, {
+      ...(job.expectedServerMaxSeq != null ? { expectedServerMaxSeq: job.expectedServerMaxSeq } : {}),
+      ...(job.forcePull ? { forcePull: true } : {}),
+    });
+    if (startedGeneration !== generation) return;
+    const cursor = await getLocalCursorSeq(job.contextType, job.contextId);
+    await markPullEnd(key, start, cursor);
+  } catch (error) {
+    if (startedGeneration !== generation) return;
+    if (job.contextType === 'GAME' && isGameChatContextGoneHttpError(error)) {
+      await purgeGameChatLocal(job.contextId);
+      cancelChatSyncPull(job.contextType, job.contextId);
+    } else {
+      recordChatSyncPullFailure();
+      await markPullFailed(key);
+    }
+  } finally {
+    if (bannerStarted && startedGeneration === generation) chatSyncPullEnded();
+    active.delete(key);
+    running--;
+    pump();
+  }
+}
+
 function pump(): void {
-  while (running < MAX_CONCURRENT && pending.size > 0) {
-    const sorted = [...pending.values()].sort((a, b) => b.priority - a.priority);
-    const job = sorted[0];
+  while (running < MAX_CONCURRENT) {
+    const now = Date.now();
+    const job = [...pending.values()]
+      .filter((candidate) => {
+        const key = chatCursorKey(candidate.contextType, candidate.contextId);
+        return !active.has(key) && (deferredUntil.get(key) ?? 0) <= now;
+      })
+      .sort((a, b) => b.priority - a.priority)[0];
     if (!job) break;
     const key = chatCursorKey(job.contextType, job.contextId);
     pending.delete(key);
+    deferredUntil.delete(key);
+    active.add(key);
     running++;
-    void (async () => {
-      const leased = await tryLease(key, job.priority);
-      if (!leased) {
-        running--;
-        pending.set(key, job);
-        setTimeout(pump, LEASE_MS);
-        return;
-      }
-      if (job.priority < SYNC_PRIORITY_GAP && shouldDeferLowPriorityChatSyncPull()) {
-        running--;
-        pending.set(key, job);
-        setTimeout(pump, 1500);
-        return;
-      }
-      if (job.priority <= SYNC_PRIORITY_COOP) {
-        const now = Date.now();
-        if (now - lowPriWindowStart > LOW_PRI_WINDOW_MS) {
-          lowPriWindowStart = now;
-          lowPriStartsInWindow = 0;
-        }
-        if (lowPriStartsInWindow >= LOW_PRI_MAX_STARTS_PER_WINDOW) {
-          running--;
-          pending.set(key, job);
-          setTimeout(pump, 1400);
-          return;
-        }
-        lowPriStartsInWindow += 1;
-      }
-      chatSyncPullStarted();
-      try {
-        await markPullStart(key);
-        await pullAndApplyChatSyncEvents(
-          job.contextType,
-          job.contextId,
-          {
-            ...(job.expectedServerMaxSeq != null
-              ? { expectedServerMaxSeq: job.expectedServerMaxSeq }
-              : {}),
-            ...(job.forcePull ? { forcePull: true } : {}),
-          }
-        );
-        await markPullEnd(key);
-      } catch (error) {
-        if (job.contextType === 'GAME' && isGameChatContextGoneHttpError(error)) {
-          await purgeGameChatLocal(job.contextId);
-          cancelChatSyncPull(job.contextType, job.contextId);
-        } else {
-          recordChatSyncPullFailure();
-          await markPullFailed(key);
-        }
-      } finally {
-        chatSyncPullEnded();
-        running--;
-        pump();
-      }
-    })();
+    void runJob(key, job, generation);
   }
+  scheduleWake();
 }
 
 export function enqueueChatSyncPull(
@@ -179,29 +262,10 @@ export function enqueueChatSyncPull(
   options?: { expectedServerMaxSeq?: number; forcePull?: boolean }
 ): void {
   const key = chatCursorKey(contextType, contextId);
-  const prev = pending.get(key);
-  if (!prev || priority >= prev.priority) {
-    const next: Job = {
-      contextType,
-      contextId,
-      priority,
-    };
-    const expectedServerMaxSeq = options?.expectedServerMaxSeq ?? prev?.expectedServerMaxSeq;
-    if (expectedServerMaxSeq != null) next.expectedServerMaxSeq = expectedServerMaxSeq;
-    if (options?.forcePull || prev?.forcePull) next.forcePull = true;
-    pending.set(key, next);
-  } else if (
-    options?.expectedServerMaxSeq != null &&
-    (prev.expectedServerMaxSeq == null || options.expectedServerMaxSeq > prev.expectedServerMaxSeq)
-  ) {
-    pending.set(key, {
-      ...prev,
-      expectedServerMaxSeq: options.expectedServerMaxSeq,
-      ...(options.forcePull || prev.forcePull ? { forcePull: true } : {}),
-    });
-  } else if (options?.forcePull && !prev.forcePull) {
-    pending.set(key, { ...prev, forcePull: true });
-  }
+  pending.set(key, mergeJobs(pending.get(key), { contextType, contextId, priority, ...options }));
+  // A new signal may reflect cursor/head progress. Recheck it; readPullStart still
+  // enforces real failure backoff at every priority.
+  deferredUntil.delete(key);
   if (import.meta.env.DEV && pending.size > 40) {
     console.warn('[chatSync] pull queue depth', pending.size);
   }
@@ -209,7 +273,12 @@ export function enqueueChatSyncPull(
 }
 
 export function clearChatSyncScheduler(): void {
+  generation += 1;
   pending.clear();
+  deferredUntil.clear();
+  if (wakeTimer != null) clearTimeout(wakeTimer);
+  wakeTimer = undefined;
+  noProgressPulls.clear();
   resetLowPriorityChatSyncPullBudget();
   resetChatSyncMetrics();
   resetChatSyncPullDepth();
@@ -217,5 +286,9 @@ export function clearChatSyncScheduler(): void {
 
 /** Drop a queued pull so a just-purged thread is not immediately re-fetched. */
 export function cancelChatSyncPull(contextType: ChatContextType, contextId: string): void {
-  pending.delete(chatCursorKey(contextType, contextId));
+  const key = chatCursorKey(contextType, contextId);
+  pending.delete(key);
+  deferredUntil.delete(key);
+  noProgressPulls.delete(key);
+  scheduleWake();
 }

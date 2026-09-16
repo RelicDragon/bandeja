@@ -45,7 +45,6 @@ export class PushTokenService {
         }
       });
       await NotificationPreferenceService.ensurePreferenceForChannel(userId, NotificationChannelType.PUSH);
-      console.log(`[PushTokenService] ✅ Token upserted successfully`);
       return result;
     } catch (error) {
       console.error(`[PushTokenService] ❌ Error registering token:`, error);
@@ -89,25 +88,12 @@ export class PushTokenService {
       where.platform = platform;
     }
 
-    console.log(`[PushTokenService] Getting tokens for user ${userId}, platform: ${platform || 'ALL'}`);
-    
     try {
       const tokens = await prisma.pushToken.findMany({
         where,
         orderBy: { updatedAt: 'desc' }
       });
-      
-      console.log(`[PushTokenService] Found ${tokens.length} token(s):`, 
-        tokens.map(t => ({ 
-          platform: t.platform, 
-          deviceId: t.deviceId,
-          appVersion: t.appVersion,
-          appBuild: t.appBuild,
-          tokenPreview: t.token.substring(0, 20) + '...',
-          updatedAt: t.updatedAt
-        }))
-      );
-      
+
       return tokens;
     } catch (error) {
       console.error(`[PushTokenService] ❌ Error fetching tokens for user ${userId}:`, error);

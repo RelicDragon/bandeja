@@ -128,10 +128,8 @@ class NotificationService {
 
     if (shouldSendPush) {
       try {
-        console.log(`[NotificationService] Sending push notification to user ${userId}, type: ${type}`);
         const sent = await pushNotificationService.sendNotificationToUser(userId, payload);
         results.push = sent > 0;
-        console.log(`[NotificationService] Push notification result: ${sent} device(s) notified`);
       } catch (error) {
         console.error('[NotificationService] ❌ Failed to send push notification:', error);
         console.error('[NotificationService] Error details:', {

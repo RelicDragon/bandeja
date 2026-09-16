@@ -1,5 +1,6 @@
 import { createHash } from 'crypto';
 import prisma from '../../config/database';
+import { SLOW_REQUEST_LOG_MS } from '../../config/httpLogFilter';
 import { ApiError } from '../../utils/ApiError';
 import { USER_SELECT_WITH_SPORT_PROFILES } from '../../utils/constants';
 import { GameReadService } from '../game/read.service';
@@ -117,15 +118,17 @@ export class MyTabDataService {
         },
       };
 
-      // Performance logging
+      // Performance logging: only the slow cases are worth a log line.
       const duration = Date.now() - startTime;
-      console.info('[MyTabDataService] Success', {
-        userId,
-        duration: `${duration}ms`,
-        gamesCount: data.games.length,
-        invitesCount: data.invites.length,
-        teamsCount: data.teams.length,
-      });
+      if (duration >= SLOW_REQUEST_LOG_MS) {
+        console.info('[MyTabDataService] Slow', {
+          userId,
+          duration: `${duration}ms`,
+          gamesCount: data.games.length,
+          invitesCount: data.invites.length,
+          teamsCount: data.teams.length,
+        });
+      }
 
       return data;
     } catch (error) {

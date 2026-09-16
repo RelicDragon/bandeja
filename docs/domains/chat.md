@@ -88,6 +88,8 @@ Log: `ChatSyncEvent` + `ConversationSyncState.maxSeq`. Append: `chatSyncEvent.se
 
 Event pages include `nextAfterSeq`, the last sequence scanned, including events hidden by game-chat permissions. It never passes a visible event omitted by the page limit. Clients advance to it only after all returned events are durably applied, and follow `hasMore` only while the cursor advances. Empty filtered pages can therefore continue at the scan cursor. An exhausted or stalled pull must not requeue itself against the global head: filtered/pruned history can leave that head ahead indefinitely. New socket, foreground, and batch-head signals can still start a later pull. Older responses without `nextAfterSeq` use the applied-event cursor and stop on empty/no-progress pages.
 
+`chatSyncScheduler.ts` backstops this. Retry backoff (`chatThreads.nextRetryAt`) binds every priority, including `SYNC_PRIORITY_GAP` and above; only the in-flight lease yields to gap work. After 3 consecutive pulls that leave the cursor unchanged, the thread is cooled down for 30s. Progress resets the counter.
+
 `MESSAGE_READ_RECEIPT` / `MESSAGES_READ_BATCH` remain in the contract for historic rows. New-client ticks ignore receipts.
 
 ## IndexedDB (Dexie)

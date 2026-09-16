@@ -183,8 +183,6 @@ class PushNotificationService {
       return 0;
     }
     
-    console.log(`[APNS] Found ${tokens.length} iOS token(s) for user ${userId}`);
-    
     if (tokens.length === 0) {
       return 0;
     }
@@ -205,8 +203,6 @@ class PushNotificationService {
   }
 
   async sendAndroidNotificationToUser(userId: string, payload: NotificationPayload): Promise<number> {
-    console.log(`[FCM] Getting Android tokens for user: ${userId}`);
-    
     let tokens;
     try {
       tokens = await PushTokenService.getUserTokens(userId, PushPlatform.ANDROID);
@@ -214,8 +210,6 @@ class PushNotificationService {
       console.error(`[FCM] ❌ Failed to get Android tokens for user ${userId}:`, error);
       return 0;
     }
-    
-    console.log(`[FCM] Found ${tokens.length} Android token(s) for user ${userId}`);
     
     if (tokens.length === 0) {
       return 0;
@@ -255,8 +249,11 @@ class PushNotificationService {
     }
     
     const total = iosCount + androidCount;
-    console.log(`[PUSH] Total sent: ${total} (iOS: ${iosCount}, Android: ${androidCount})`);
-    
+    if (total > 0) {
+      console.log(`[PUSH] Total sent: ${total} (iOS: ${iosCount}, Android: ${androidCount})`);
+    }
+
+
     return total;
   }
 

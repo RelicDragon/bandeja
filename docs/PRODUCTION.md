@@ -337,6 +337,16 @@ Per-IP limiter on `/api/` (`RATE_LIMIT_WINDOW_MS`, `RATE_LIMIT_MAX`, `RATE_LIMIT
 
 **Do not:** run E2E against prod, `prisma migrate dev` on prod, or truncate prod tables.
 
+## Logs
+
+Both hosts run the `pm2-logrotate` module: rotate at **50M** or daily, keep **10**, compress. Settings live in `~/.pm2/module_conf.json` and survive restarts; re-apply with `pm2 set pm2-logrotate:<key> <value>`. Check it is running with `pm2 ls | grep logrotate`.
+
+Backend request logging skips fast successful polls (`Backend/src/config/httpLogFilter.ts`). Every 4xx/5xx and anything slower than 1s is always logged, so rate limiting and slow routes stay visible. Add a new hot polling endpoint to `HOT_POLL_PATH_PREFIXES` rather than silencing it elsewhere.
+
+Unbounded growth is an incident, not routine: before Sep 2026 `backend-out.log` reached 1.9 GB. If logs balloon again, check what is looping (`grep -c` a normalized sample) instead of only truncating.
+
+`/var/log/journal` on `front.bandeja.com` is uncapped and needs a sudo session: `journalctl --vacuum-size=200M` plus `SystemMaxUse=200M` in `/etc/systemd/journald.conf`.
+
 ## Agent checklist
 
 | Task | Steps |

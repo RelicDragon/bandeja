@@ -7,6 +7,7 @@ import rateLimit from 'express-rate-limit';
 import routes from './routes';
 import replicateWebhookRoutes from './routes/replicateWebhook.routes';
 import { rateLimitKeyFromRequest } from './utils/rateLimitClientKey';
+import { markHttpLogStart, shouldSkipHttpLog } from './config/httpLogFilter';
 import { errorHandler, notFoundHandler, reflectCorsOrigin } from './middleware/errorHandler';
 import { recordPresenceActivity } from './middleware/recordPresenceActivity';
 import { e2eTestContextMiddleware } from './middleware/e2eTestContext';
@@ -121,9 +122,11 @@ if (config.nodeEnv === 'development') {
   app.use(morgan('dev'));
 } else {
   // combined + response-time for prod slow-route analysis
+  app.use(markHttpLogStart);
   app.use(
     morgan(
       ':remote-addr - :remote-user [:date[clf]] ":method :url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent" :response-time ms',
+      { skip: shouldSkipHttpLog },
     ),
   );
 }

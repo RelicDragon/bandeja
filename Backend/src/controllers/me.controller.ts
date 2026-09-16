@@ -99,14 +99,6 @@ export class MeController {
       res.set('ETag', etag);
       res.set('Cache-Control', 'private, no-cache, must-revalidate');
 
-      const duration = Date.now() - startTime;
-      console.info('[MeController] getMyTabData success', {
-        userId,
-        duration: `${duration}ms`,
-        gamesCount: data.games.length,
-        invitesCount: data.invites.length,
-      });
-
       res.json({
         success: true,
         data,

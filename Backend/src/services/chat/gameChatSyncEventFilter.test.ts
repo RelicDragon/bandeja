@@ -2,7 +2,6 @@ import assert from 'node:assert/strict';
 import { ChatType } from '@prisma/client';
 import {
   canUserSeeGameChatSyncEvent,
-  filterGameChatSyncEvents,
   type GameChatSyncAccess,
 } from './gameChatSyncEventFilter';
 
@@ -74,7 +73,9 @@ function testFilterEvents(): void {
     { id: '2', seq: 2, payload: { message: { chatType: ChatType.ADMINS } } },
     { id: '3', seq: 3, payload: { chatType: ChatType.PRIVATE } },
   ];
-  const filtered = filterGameChatSyncEvents(events, playingParticipantAccess);
+  const filtered = events.filter((e) =>
+    canUserSeeGameChatSyncEvent(e.payload, playingParticipantAccess)
+  );
   assert.deepEqual(
     filtered.map((e) => e.seq),
     [1, 3]

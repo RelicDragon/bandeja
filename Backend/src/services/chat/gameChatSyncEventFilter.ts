@@ -99,13 +99,6 @@ export function canUserSeeGameChatSyncEvent(payload: unknown, access: GameChatSy
   );
 }
 
-export function filterGameChatSyncEvents<T extends { payload: unknown }>(
-  events: T[],
-  access: GameChatSyncAccess
-): T[] {
-  return events.filter((event) => canUserSeeGameChatSyncEvent(event.payload, access));
-}
-
 const MAX_FILTER_SCAN_PAGES = 12;
 
 /**
