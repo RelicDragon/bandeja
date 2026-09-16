@@ -24,7 +24,7 @@ import {
   seqApplyDecisionsForEvents,
   seqApplyDecisionsForTombstonedCreates,
 } from './chatSyncEventApplyStatus';
-import { getLocalCursorSeq, reconcileCursorWithServerHead } from './chatLocalApplyCursor';
+import { getLocalCursorSeq } from './chatLocalApplyCursor';
 import {
   clearPendingSocketSeqReconcileTimer,
   markChatPullCompleted,
@@ -134,7 +134,6 @@ export async function pullEventsLoop(
       clearPendingSocketSeqReconcileTimer(contextType, contextId);
       continue;
     }
-    if (!pack.events.length) break;
     const appliedSeqs = new Set<number>();
     await withChatLocalBulkApply(async () => {
       let i = 0;
@@ -248,9 +247,27 @@ export async function pullEventsLoop(
         i = j;
       }
     });
+    // The server can scan events hidden by game-chat permissions. Only consume that
+    // range after every visible event was saved; never skip an unapplied message.
+    if (
+      !blockedOnUnapplied &&
+      pack.nextAfterSeq != null &&
+      Number.isSafeInteger(pack.nextAfterSeq) &&
+      pack.nextAfterSeq > after
+    ) {
+      const scannedThrough = pack.nextAfterSeq;
+      await chatLocalDb.transaction('rw', [chatLocalDb.chatSyncCursor], async () => {
+        const row = await chatLocalDb.chatSyncCursor.get(key);
+        await chatLocalDb.chatSyncCursor.put({
+          key,
+          lastAppliedSeq: Math.max(row?.lastAppliedSeq ?? 0, scannedThrough),
+          updatedAt: Date.now(),
+        });
+      });
+    }
     const nextAfter = await getLocalCursorSeq(contextType, contextId);
     schedulePullPageIndexHooks(pack.events, { bumpUnreadForNewMessages, appliedSeqs });
-    broadcastChatPullHint(key);
+    if (pack.events.length > 0 || nextAfter > after) broadcastChatPullHint(key);
     if (blockedOnUnapplied || !pack.hasMore || nextAfter <= after) break;
     after = nextAfter;
   }
@@ -269,17 +286,12 @@ export async function pullAndApplyChatSyncEventsDirect(
   }
   const result = await pullEventsLoop(contextType, contextId);
   clearMessageDeletedCaughtUpBypass(contextType, contextId);
-  const { repairedStaleCursor, threadInvalidated, blockedOnUnapplied } = result;
+  const { repairedStaleCursor, threadInvalidated } = result;
   markChatPullCompleted(contextType, contextId);
-  if (!blockedOnUnapplied) {
-    await reconcileCursorWithServerHead(
-      contextType,
-      contextId,
-      options?.expectedServerMaxSeq != null
-        ? { expectedServerMaxSeq: options.expectedServerMaxSeq }
-        : undefined
-    );
-  }
+  // The page loop already follows hasMore. A global head can remain ahead when
+  // events are filtered or pruned (including on older servers). Requeueing here
+  // would turn an exhausted/no-progress page into an immediate infinite retry.
+  // New socket, foreground, and batch-head signals still trigger future pulls.
   clearPendingSocketSeqReconcileTimer(contextType, contextId);
   if (repairedStaleCursor || threadInvalidated) {
     const { persistLatestTailPagesAfterStaleCursor } = await import('./chatTailRecover');

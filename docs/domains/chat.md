@@ -86,6 +86,8 @@ CHAT_AUTO_TRANSLATE_CONFIG_UPDATED
 
 Log: `ChatSyncEvent` + `ConversationSyncState.maxSeq`. Append: `chatSyncEvent.service.ts`. Pull: `GET /chat/sync/events?contextType&contextId&afterSeq`. Access: `chatSyncAccess.service.ts`. Apply: `chatLocalApplyPull.ts` → patches / terminals.
 
+Event pages include `nextAfterSeq`, the last sequence scanned, including events hidden by game-chat permissions. It never passes a visible event omitted by the page limit. Clients advance to it only after all returned events are durably applied, and follow `hasMore` only while the cursor advances. Empty filtered pages can therefore continue at the scan cursor. An exhausted or stalled pull must not requeue itself against the global head: filtered/pruned history can leave that head ahead indefinitely. New socket, foreground, and batch-head signals can still start a later pull. Older responses without `nextAfterSeq` use the applied-event cursor and stop on empty/no-progress pages.
+
 `MESSAGE_READ_RECEIPT` / `MESSAGES_READ_BATCH` remain in the contract for historic rows. New-client ticks ignore receipts.
 
 ## IndexedDB (Dexie)

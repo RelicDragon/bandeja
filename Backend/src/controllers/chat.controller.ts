@@ -1742,19 +1742,23 @@ export const getChatSyncEvents = asyncHandler(async (req: AuthRequest, res: Resp
     after > 0 && oldestRetainedSeq != null && after < oldestRetainedSeq - 1;
   let events: Awaited<ReturnType<typeof ChatSyncEventService.getEventsAfter>>;
   let hasMore: boolean;
+  let nextAfterSeq: number;
   if (ct === 'GAME') {
     const filtered = await getFilteredGameSyncEventsAfter(contextId, after, lim, userId);
     events = filtered.events;
     hasMore = filtered.hasMore;
+    nextAfterSeq = filtered.nextAfterSeq;
   } else {
     events = await ChatSyncEventService.getEventsAfter(ct, contextId, after, lim);
     hasMore = events.length === lim;
+    nextAfterSeq = events.at(-1)?.seq ?? after;
   }
   res.json({
     success: true,
     data: {
       events,
       hasMore,
+      nextAfterSeq,
       oldestRetainedSeq,
       cursorStale,
     },

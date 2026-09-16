@@ -1203,6 +1203,7 @@ export const chatApi = {
   ): Promise<{
     events: Array<{ id: string; seq: number; eventType: string; payload: unknown; createdAt: string }>;
     hasMore: boolean;
+    nextAfterSeq?: number;
     oldestRetainedSeq?: number | null;
     cursorStale?: boolean;
   }> => {
@@ -1214,6 +1215,7 @@ export const chatApi = {
             ApiResponse<{
               events: Array<{ id: string; seq: number; eventType: string; payload: unknown; createdAt: string }>;
               hasMore: boolean;
+              nextAfterSeq?: number;
               oldestRetainedSeq?: number | null;
               cursorStale?: boolean;
             }>

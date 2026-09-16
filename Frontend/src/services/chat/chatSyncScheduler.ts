@@ -12,10 +12,15 @@ import {
 } from '@/services/chat/purgeGameChatLocal';
 import { chatCursorKey, chatLocalDb } from './chatLocalDb';
 import { pullAndApplyChatSyncEvents } from './chatLocalApply';
+import { getLocalCursorSeq } from './chatLocalApplyCursor';
 import { parsePositiveIntEnv } from './chatSyncEnv';
 
 const MAX_CONCURRENT = 2;
 const LEASE_MS = 2200;
+/** Consecutive pulls that leave the cursor where it was before the thread is cooled down. */
+const MAX_NO_PROGRESS_PULLS = 3;
+const NO_PROGRESS_COOLDOWN_MS = 30_000;
+const noProgressPulls = new Map<string, number>();
 const LOW_PRI_WINDOW_MS = parsePositiveIntEnv(
   import.meta.env.VITE_CHAT_SYNC_LOW_PRI_WINDOW_MS,
   28_000

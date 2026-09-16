@@ -16,6 +16,8 @@ import { processDeletedUsers } from '@/utils/deletedUserHandler';
 export type ChatSyncEventsPack = {
   events: Array<{ id: string; seq: number; eventType: string; payload: unknown; createdAt: string }>;
   hasMore: boolean;
+  /** Last sequence scanned, including events hidden by game-chat permissions. */
+  nextAfterSeq?: number;
   oldestRetainedSeq?: number | null;
   cursorStale?: boolean;
 };

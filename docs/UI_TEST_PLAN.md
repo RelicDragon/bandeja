@@ -1234,6 +1234,9 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 |----|------|-------|----------|
 | CH-12 | User DM | Send text | Message appears |
 | CH-13 | Game chat | Open from game | Game context header |
+| CH-13a | Filtered game-chat sync does not loop | As a non-admin participant, open a game whose sync history contains only ADMINS events; repeat with several filtered pages followed by a PUBLIC event | Hidden messages stay hidden; request cursors advance through scanned pages; later visible message arrives; requests stop at the end instead of repeating `afterSeq=0` |
+| CH-13b | Empty/pruned sync history | Open a thread whose event log is empty but server head is nonzero; also test a response without `nextAfterSeq` | No immediate self-retry loop and no cursor jump to the global head; a later socket/reconnect trigger still syncs new messages |
+| CH-13c | Failed local sync persistence | Fail saving a visible message in a page with a later `nextAfterSeq`, then restore storage and trigger sync again | Cursor does not jump past the unsaved message; next sync can replay it |
 | CH-161 | Game chat header localized title | Game with ready `localizedText.name` (and LEAGUE fixture with localized parent season); open `/games/:id/chat` | Thread header title uses `getGameHeaderTitle` / resolved display name (pending → original); nested season name localized when present; not raw authored-only when translation is ready |
 | CH-69 | Game chat type tab switch | Game with multiple channels (PUBLIC/PHOTOS/etc.) → switch tabs | Message pane slides/fades to new channel; thin loading pulse during fetch; each tab restores its scroll; re-tapping active tab does not animate |
 | CH-14 | Group chat | Open group | Member list accessible |

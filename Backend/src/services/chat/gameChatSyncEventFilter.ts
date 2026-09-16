@@ -110,16 +110,21 @@ const MAX_FILTER_SCAN_PAGES = 12;
 
 /**
  * Returns events the user may apply locally. Inaccessible events are dropped but their seq
- * values are still consumed while paging so client cursors never stall on filtered pages.
+ * values are returned as nextAfterSeq so clients can consume filtered pages too.
+ * The cursor must never pass a visible event omitted by the response limit.
  */
 export async function getFilteredGameSyncEventsAfter(
   contextId: string,
   afterSeq: number,
   limit: number,
   userId: string
-): Promise<{ events: Awaited<ReturnType<typeof ChatSyncEventService.getEventsAfter>>; hasMore: boolean }> {
+): Promise<{
+  events: Awaited<ReturnType<typeof ChatSyncEventService.getEventsAfter>>;
+  hasMore: boolean;
+  nextAfterSeq: number;
+}> {
   const access = await resolveGameChatSyncAccess(contextId, userId);
-  if (!access) return { events: [], hasMore: false };
+  if (!access) return { events: [], hasMore: false, nextAfterSeq: afterSeq };
 
   const visible: Awaited<ReturnType<typeof ChatSyncEventService.getEventsAfter>> = [];
   let cursor = afterSeq;
@@ -137,12 +142,22 @@ export async function getFilteredGameSyncEventsAfter(
       hasMore = false;
       break;
     }
-    visible.push(...filterGameChatSyncEvents(batch, access));
-    cursor = batch[batch.length - 1]!.seq;
+    for (let i = 0; i < batch.length; i += 1) {
+      const event = batch[i]!;
+      cursor = event.seq;
+      if (canUserSeeGameChatSyncEvent(event.payload, access)) visible.push(event);
+      if (visible.length === limit) {
+        return {
+          events: visible,
+          hasMore: i < batch.length - 1 || batch.length === limit,
+          nextAfterSeq: cursor,
+        };
+      }
+    }
     hasMore = batch.length === limit;
     pages += 1;
     if (!hasMore) break;
   }
 
-  return { events: visible.slice(0, limit), hasMore };
+  return { events: visible, hasMore, nextAfterSeq: cursor };
 }
