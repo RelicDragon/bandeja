@@ -1,5 +1,10 @@
 package com.funified.bandeja.auth;
 
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.content.res.Configuration;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
@@ -8,6 +13,33 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 
 @CapacitorPlugin(name = "AuthBridge")
 public class AuthBridgePlugin extends Plugin {
+    public static int appBackgroundColor(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences("appAppearance", Context.MODE_PRIVATE);
+        String preference = prefs.getString("appearance", "light");
+        boolean premium = prefs.getBoolean("premium", false);
+        boolean systemDark = (context.getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
+        boolean dark = "dark".equals(preference) || ("system".equals(preference) && systemDark);
+        return Color.parseColor(premium ? (dark ? "#141411" : "#faf9f6") : (dark ? "#111827" : "#f9fafb"));
+    }
+
+    @PluginMethod
+    public void setAppAppearance(PluginCall call) {
+        String appearance = call.getString("appearance");
+        if (!"light".equals(appearance) && !"dark".equals(appearance) && !"system".equals(appearance)) {
+            call.reject("Invalid appearance");
+            return;
+        }
+        boolean premium = Boolean.TRUE.equals(call.getBoolean("premium", false));
+        getActivity().runOnUiThread(() -> {
+            getContext().getSharedPreferences("appAppearance", Context.MODE_PRIVATE).edit()
+                .putString("appearance", appearance).putBoolean("premium", premium).apply();
+            int color = appBackgroundColor(getContext());
+            getBridge().getWebView().setBackgroundColor(color);
+            getActivity().getWindow().setBackgroundDrawable(new ColorDrawable(color));
+            call.resolve();
+        });
+    }
+
     private static volatile boolean appShellReady = false;
 
     public static boolean isAppShellReady() {

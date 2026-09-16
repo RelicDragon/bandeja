@@ -30,7 +30,7 @@ export function UnreadBadge({ count, size = 'md', showIcon = false, className = 
   if (count <= 0) return null;
 
   const label = count > 99 ? '99+' : count;
-  const classes = `inline-flex items-center justify-center gap-0.5 rounded-full bg-red-500 font-semibold text-white tabular-nums ${SIZE_CLASSES[size]}${className ? ` ${className}` : ''}`;
+  const classes = `unread-badge inline-flex items-center justify-center gap-0.5 rounded-full bg-red-500 font-semibold text-white tabular-nums ${SIZE_CLASSES[size]}${className ? ` ${className}` : ''}`;
   const icon = showIcon ? <MessageCircle size={10} strokeWidth={2.5} /> : null;
 
   if (reduceMotion) {

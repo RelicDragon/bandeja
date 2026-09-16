@@ -201,6 +201,7 @@ junit.xml
 *.spec.js
 
 # Screenshots and recordings (development artifacts)
+/output/
 screenshots/
 recordings/
 *.mp4

@@ -273,6 +273,16 @@ export interface SportQuestionnaireStatus {
 }
 
 export const usersApi = {
+  getPremiumOnboarding: async () => {
+    const response = await api.get<ApiResponse<Pick<User, 'isPremium' | 'premiumOnboardingCompletedAt'>>>('/users/me/premium-onboarding');
+    return response.data;
+  },
+
+  completePremiumOnboarding: async () => {
+    const response = await api.post<ApiResponse<Pick<User, 'isPremium' | 'premiumOnboardingCompletedAt' | 'mainTheme'>>>('/users/me/premium-onboarding/complete');
+    return response.data;
+  },
+
   getProfile: async () => {
     const response = await api.get<ApiResponse<User>>('/users/profile');
     return response.data;

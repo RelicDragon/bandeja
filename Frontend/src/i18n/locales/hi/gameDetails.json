@@ -865,6 +865,19 @@
           "ja": "जापानी"
         }
       }
-    }
+    },
+    "resultsRosterTitle": "कोर्ट पर खिलाड़ी",
+    "resultsRosterHint": "परिणाम दर्ज किए जा रहे हैं, इसलिए सूची लॉक है। घायल खिलाड़ी को अब भी बदला जा सकता है।",
+    "substitutePlayerAction": "बदलें",
+    "substitutePlayerTitle": "खिलाड़ी बदलें",
+    "substitutePlayerReplacing": "बदला जा रहा है",
+    "substitutePlayerNoCandidates": "बदलने के लिए कोई खिलाड़ी उपलब्ध नहीं",
+    "substitutePlayerOut": "बाहर",
+    "substitutePlayerIn": "अंदर",
+    "substitutePlayerInheritsResults": "{{name}} यह स्थान और उसके सभी दर्ज परिणाम ले लेंगे",
+    "substitutePlayerOutLosesResults": "{{name}} को इस गेम की रेटिंग या स्थान नहीं मिलेगा",
+    "substitutePlayerKeepsTeamSlot": "टीम स्थान, कोर्ट और खिलाड़ियों की संख्या वही रहेगी",
+    "substitutePlayerConfirm": "खिलाड़ी बदलें",
+    "substitutePlayerSuccess": "खिलाड़ी बदल दिया गया"
   }
 }

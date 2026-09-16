@@ -64,6 +64,7 @@ export class LeagueAssignService {
       select: {
         id: true,
         status: true,
+        resultsStatus: true,
         maxParticipants: true,
         court: { select: { id: true, name: true, club: { select: { id: true, name: true, avatar: true } } } },
         club: { select: { id: true, name: true, avatar: true } },

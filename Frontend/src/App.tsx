@@ -100,6 +100,7 @@ import {
   shouldConsumePendingTelegramAuthPath,
 } from '@/utils/telegramAutoLoginPath';
 import { dismissHtmlBootSplash, markAppReady, notifyShellPainted } from '@/utils/bootSplash';
+import { PremiumWelcome } from '@/components/premium/PremiumWelcome';
 import { recoverFromChunkLoadError } from '@/utils/chunkLoadRecovery';
 
 const ROUTE_LAZY_RECOVERY_MS = 8000;
@@ -550,6 +551,7 @@ function AppContent() {
       )}
       <GeoProvider>
         <ToastProvider>
+          {!isAuthPage && <PremiumWelcome online={isOnline} />}
           <ProfileNameGateHost />
           <GameSlotOverlapConfirmHost />
           <GenderJoinGateHost />

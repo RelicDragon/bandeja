@@ -1,4 +1,5 @@
 import { Game, User } from '@/types';
+import { isGameArchived } from '@shared/gameMutationLock';
 import { GroupChannel } from '@/api/chat';
 import { getRules, isPointsRules, isRallyGameRules, isRallyPointsRules } from '@/utils/scoring/rulebook';
 import { isLegalSetScore } from '@/utils/scoring/validateSet';
@@ -85,7 +86,7 @@ export const isUserPlayingParticipant = (game: Game, userId: string): boolean =>
  * Mirrors backend canModifyResults for format-only game updates.
  */
 export const canUserEditGameFormat = (game: Game, user: GameResultsViewer): boolean => {
-  if (!game || !user || game.status === 'ARCHIVED') return false;
+  if (!game || !user || isGameArchived(game)) return false;
   if (!canUserSeeGame(game, user)) return false;
   if (user.isAdmin || isUserGameAdminOrOwner(game, user.id)) return true;
   if (game.resultsByAnyone && isUserPlayingParticipant(game, user.id)) return true;
@@ -130,7 +131,7 @@ export const getGameResultStatus = (game: Game, user: GameResultsViewer): { mess
   }
 
   // Check if game is archived
-  if (game.status === 'ARCHIVED') {
+  if (isGameArchived(game)) {
     // For archived games, allow viewing if results exist, but never allow editing
     if (game.resultsStatus !== 'NONE') {
       return {

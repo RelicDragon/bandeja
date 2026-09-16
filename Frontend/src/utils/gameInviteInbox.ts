@@ -14,6 +14,7 @@ export type RosterFullGame = {
   maxParticipants?: number | null;
   participants?: ReadonlyArray<RosterParticipant> | null;
   status?: string | null;
+  resultsStatus?: string | null;
 };
 
 export type InboxInviteLike = {
@@ -112,8 +113,16 @@ export function isInviteExpiryActive(
   return new Date(expiresAt).getTime() > now.getTime();
 }
 
-export function isEndedGameStatus(status: string | null | undefined): boolean {
-  return status === 'FINISHED' || status === 'ARCHIVED';
+/**
+ * A pending invite stops being actionable once results start or the game is archived.
+ * Not `status === 'FINISHED'`: that is derived from the clock, so an unscored game whose
+ * slot merely ended is still joinable. See `docs/product/constraints.md`.
+ */
+export function isInviteRosterClosed(
+  game: Pick<RosterFullGame, 'status' | 'resultsStatus'>,
+): boolean {
+  if (game.status === 'ARCHIVED') return true;
+  return game.resultsStatus != null && game.resultsStatus !== 'NONE';
 }
 
 export function isInviteInboxVisible(
@@ -125,7 +134,7 @@ export function isInviteInboxVisible(
   const expiresAt = invite.expiresAt ?? invite.inviteExpiresAt;
   if (!isInviteExpiryActive(expiresAt, now)) return false;
   if (!invite.game) return true;
-  if (isEndedGameStatus(invite.game.status)) return false;
+  if (isInviteRosterClosed(invite.game)) return false;
   return !isInvitePlaySlotFull(invite);
 }
 

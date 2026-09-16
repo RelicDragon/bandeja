@@ -865,6 +865,19 @@
           "ja": "Japanese"
         }
       }
-    }
+    },
+    "resultsRosterTitle": "Players on court",
+    "resultsRosterHint": "Results are in progress, so the roster is frozen. You can still substitute an injured player.",
+    "substitutePlayerAction": "Substitute",
+    "substitutePlayerTitle": "Substitute player",
+    "substitutePlayerReplacing": "Replacing",
+    "substitutePlayerNoCandidates": "No players available to substitute in",
+    "substitutePlayerOut": "Out",
+    "substitutePlayerIn": "In",
+    "substitutePlayerInheritsResults": "{{name}} takes over the seat and all results already recorded for it",
+    "substitutePlayerOutLosesResults": "{{name}} keeps no rating or standing for this game",
+    "substitutePlayerKeepsTeamSlot": "The team slot, court and roster size stay the same",
+    "substitutePlayerConfirm": "Substitute player",
+    "substitutePlayerSuccess": "Player substituted"
   }
 }

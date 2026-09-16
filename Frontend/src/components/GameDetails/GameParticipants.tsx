@@ -12,6 +12,7 @@ import { ParticipantsSectionHeader } from './ParticipantsSectionHeader';
 import { ParticipantsActionBar } from './ParticipantsActionBar';
 import { useAuthStore } from '@/store/authStore';
 import { entitySupportsParticipantSetup } from '@/components/gameFormat/gameFormatTeamsVisibility';
+import { canMutateGameRoster } from '@shared/gameMutationLock';
 import { genderI18nContext } from '@/utils/i18nGender';
 
 interface GameParticipantsProps {
@@ -107,6 +108,7 @@ export const GameParticipants = ({
   const shouldShowCrowns = playingOwnersAndAdmins.length > 1;
   
   const hasUnoccupiedSlots = game.entityType === 'BAR' || !isFull;
+  const canJoinOrInvite = canMutateGameRoster(game);
   const canEditParticipantsSetup =
     canViewSettings && entitySupportsParticipantSetup(game.entityType) && !!onEditMaxParticipants;
   const playingCount = game.participants.filter((p) => p.status === 'PLAYING').length;
@@ -162,7 +164,7 @@ export const GameParticipants = ({
             ))}
           </div>
         )}
-        {!isUnauthorized && isGuest && game.status !== 'FINISHED' && game.status !== 'ARCHIVED' && (
+        {!isUnauthorized && isGuest && canJoinOrInvite && (
           <div className="p-4 bg-gradient-to-br from-yellow-50 to-amber-50/70 dark:from-yellow-900/25 dark:to-amber-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl shadow-sm shadow-yellow-500/5">
             <p className="text-sm text-gray-700 dark:text-gray-300">
               {game.allowDirectJoin && (hasUnoccupiedSlots || game.entityType === 'BAR')
@@ -174,12 +176,11 @@ export const GameParticipants = ({
         {!isUnauthorized &&
           !isUserPlaying &&
           myInvites.length === 0 &&
-          game.status !== 'FINISHED' &&
-          game.status !== 'ARCHIVED' &&
+          canJoinOrInvite &&
           game.sport && (
             <SportQuestionnaireInviteNudge gameSport={parseGameSport(game.sport)} />
           )}
-        {!isUnauthorized && !isNonPlaying && !isUserPlaying && !isInJoinQueue && myInvites.length === 0 && game.status !== 'FINISHED' && game.status !== 'ARCHIVED' && game.allowDirectJoin && (hasUnoccupiedSlots || game.entityType === 'BAR') && (
+        {!isUnauthorized && !isNonPlaying && !isUserPlaying && !isInJoinQueue && myInvites.length === 0 && canJoinOrInvite && game.allowDirectJoin && (hasUnoccupiedSlots || game.entityType === 'BAR') && (
           <Button
             onClick={onJoin}
             size="lg"
@@ -189,7 +190,7 @@ export const GameParticipants = ({
             {t('createGame.addMeToGame')}
           </Button>
         )}
-        {!isUnauthorized && !isNonPlaying && !isUserPlaying && !isInJoinQueue && myInvites.length === 0 && game.status !== 'FINISHED' && game.status !== 'ARCHIVED' && (!game.allowDirectJoin || (!hasUnoccupiedSlots && game.entityType !== 'BAR')) && (
+        {!isUnauthorized && !isNonPlaying && !isUserPlaying && !isInJoinQueue && myInvites.length === 0 && canJoinOrInvite && (!game.allowDirectJoin || (!hasUnoccupiedSlots && game.entityType !== 'BAR')) && (
           <Button
             onClick={onJoin}
             size="lg"
@@ -239,7 +240,7 @@ export const GameParticipants = ({
             {t('createGame.addMeToGame')}
           </Button>
         )}
-        {isNonPlaying && game.status !== 'FINISHED' && game.status !== 'ARCHIVED' && (
+        {isNonPlaying && canJoinOrInvite && (
           <Button onClick={onAddToGame} size="lg" className="w-full flex items-center justify-center">
             <UserPlus size={20} className="me-2" />
             {hasUnoccupiedSlots

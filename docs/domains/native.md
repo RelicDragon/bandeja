@@ -6,6 +6,10 @@ Capacitor 8 shell. `appId` `com.funified.bandeja`, `webDir` `dist`. iOS/Android 
 
 Camera, photos, geolocation, filesystem, keyboard, network, app lifecycle, share, local/push notifications, secure token storage (Keychain/Keystore refresh credentials). Hardware back. App icon badge = unread. Alternate app icons + sport mascot (`appIcons.ts`, `appIcon.service.ts`). Splash uses primary sport + selected icon.
 
+## Appearance
+
+`AuthBridge.setAppAppearance` saves Light/Dark/System plus the effective Classic/Premium choice and updates the native window/WebView backing to match the document background. iOS uses a dynamic UIColor for System; Android refreshes on configuration changes. The web theme store also re-sends the preferences on foreground. Native backing changes require a new native build; existing builds still receive the web/CSS backgrounds.
+
 ## Deep links
 
 `Frontend/src/hooks/useDeepLink.ts` — Capacitor `App.getLaunchUrl` + `appUrlOpen`. Hosts: `isBandejaDeepLinkHost`. Attribution ingest on open (`appAttribution`). `/link-to-app` → `/login` + query.

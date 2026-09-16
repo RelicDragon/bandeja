@@ -67,6 +67,7 @@ public class MainActivity extends BridgeActivity implements ModifiedMainActivity
         splashScreen.setKeepOnScreenCondition(() -> !AuthBridgePlugin.isAppShellReady());
         EdgeToEdge.enable(this);
         super.onCreate(savedInstanceState);
+        refreshAppBackground();
         // Clear any push markers Cap may have read; task root stays clean for relaunches.
         if (PushIntentSanitizer.clearPushMarkers(getIntent())) {
             setIntent(getIntent());
@@ -86,6 +87,20 @@ public class MainActivity extends BridgeActivity implements ModifiedMainActivity
                 );
             }
         }
+    }
+
+    private void refreshAppBackground() {
+        int color = AuthBridgePlugin.appBackgroundColor(this);
+        getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(color));
+        if (getBridge() != null && getBridge().getWebView() != null) {
+            getBridge().getWebView().setBackgroundColor(color);
+        }
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        refreshAppBackground();
     }
 
     private void resetContentChildToMatchParent() {
@@ -178,6 +193,12 @@ public class MainActivity extends BridgeActivity implements ModifiedMainActivity
     }
 
     private void applyBrandingLaunchTheme() {
+        if (getSharedPreferences("appAppearance", Context.MODE_PRIVATE).getBoolean("premium", false)) {
+            setTheme(AuthBridgePlugin.appBackgroundColor(this) == android.graphics.Color.parseColor("#faf9f6")
+                ? R.style.AppTheme_NoActionBarLaunch_PremiumLight
+                : R.style.AppTheme_NoActionBarLaunch_Premium);
+            return;
+        }
         switch (BrandingLogoStorage.getLogoKey(this)) {
             case "tennis":
                 setTheme(R.style.AppTheme_NoActionBarLaunch_Tennis);

@@ -10,6 +10,7 @@ import { syncBrandingLogoToNative } from '@/services/authBridge';
 import { isAndroid, isCapacitor, isIOS } from '@/utils/capacitor';
 import { getUserPrimarySport, resolveActivePrimarySport } from '@/utils/profileSports';
 import type { User } from '@/types';
+import { usesPremiumTheme } from '@/utils/mainTheme';
 
 const ANDROID_LAUNCHER_ALIASES = ['tiger', ...NATIVE_ALTERNATE_ICON_NAMES] as const;
 
@@ -46,6 +47,7 @@ export function resolveAppIconId(user: User | null | undefined): AppIconId {
 }
 
 export function getBrandingFooterIconUrl(user: User | null | undefined): string {
+  if (usesPremiumTheme(user)) return '/premium/bandeja-gold-crest.webp';
   return getFooterIconUrl(resolveAppIconId(user), user ? resolveAppIconSport(user) : DEFAULT_SPORT);
 }
 

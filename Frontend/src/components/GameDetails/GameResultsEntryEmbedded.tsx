@@ -49,6 +49,7 @@ import { ResultsRoundsBoard } from './resultsEntry/ResultsRoundsBoard';
 import { useResultsArtifactsTelegram } from './resultsEntry/useResultsArtifactsTelegram';
 import { useSetEntryOperations } from './resultsEntry/useSetEntryOperations';
 import { useResultsLifecycle } from './resultsEntry/useResultsLifecycle';
+import { isGameArchived } from '@shared/gameMutationLock';
 import { PlayerLevelFeedbackCard } from './PlayerLevelFeedbackCard';
 import { isPlayerLevelFeedbackEnabled } from '@/features/player-level-feedback/player-level-feedback';
 
@@ -211,7 +212,7 @@ export const GameResultsEntryEmbedded = ({
     !isEditingResults &&
     isFinalStatus &&
     isResultsEntryMode &&
-    currentGame?.status !== 'ARCHIVED' &&
+    !(currentGame && isGameArchived(currentGame)) &&
     !(
       currentGame?.metadata &&
       typeof currentGame.metadata === 'object' &&

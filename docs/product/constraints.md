@@ -29,6 +29,47 @@ Per-sport flags live on `UserSportProfile.approved*`. Legacy `User.approved*` is
 - `Backend/src/services/user/userMerge.service.ts`
 - `Backend/src/services/training.service.ts`
 
+## `Game.status` is derived — never gate mutations on it
+
+`calculateGameStatus` computes `status` from the clock plus `resultsStatus`: `STARTED` also means "now is inside `[startTime, endTime)`", and `FINISHED` also means "the slot ended while `resultsStatus` was still `NONE`". Gating invites, joins, participant management or settings on `status` therefore froze games nobody had scored, purely because their court time passed.
+
+**`resultsStatus !== 'NONE'` is the mutation lock.** `ARCHIVED` stays a separate hard stop as a retention boundary. Both live in one shared predicate — do not reintroduce `status === 'STARTED'` or `status === 'FINISHED'` checks in permission code.
+
+- Shared predicates: `Frontend/shared/gameMutationLock.ts` (`canMutateGameRoster`, `isGameResultsLocked`, `isGameArchived`); backend imports `@bandeja/shared/gameMutationLock`
+- Derivation: `Backend/src/utils/gameStatus.ts` `calculateGameStatus`; recomputed by `Backend/src/services/gameStatusScheduler.service.ts`
+
+A clock-derived `FINISHED` is **never persisted** for results-based entity types (`GAME`, `LEAGUE`, `TOURNAMENT`, `TRAINING`) while `resultsStatus` is `NONE` — `isUnscoredClockFinished` / `calculatePersistableGameStatus` in `gameStatus.ts`. Every writer of `Game.status` must go through `calculatePersistableGameStatus` (the scheduler skips the write instead). Storing that value would cancel the game's pending invites through `cleanupInviteParticipantsForEndedGame`, which fires on the `FINISHED`/`ARCHIVED` transition. Unscored games are still bounded: `GAME`/`TOURNAMENT` archive 7 days after `startTime`, `TRAINING` 2 days after `endTime`.
+
+- Writers: `Backend/src/services/gameStatusScheduler.service.ts`, `Backend/src/services/game/update.service.ts`, `Backend/src/services/results.service.ts` (results reset). Clients cannot set `status` — `update.service.ts` ignores `data.status`
+- Invite cleanup trigger: `Backend/src/utils/gameInviteCleanup.ts`
+- Roster/join guard: `Backend/src/utils/participantValidation.ts` `validateGameCanAcceptParticipants`
+- Roster-management routes (kick, add/revoke admin, trainer, ownership, join queue, participant chats): `canManageGameRoster` / `canManageGameRosterAsOwner` (`requireRosterMutable` in `Backend/src/middleware/auth.ts`). Plain `canEditGame` only blocks `ARCHIVED` — do not use it for roster mutations
+- Settings guard + frozen field list: `Backend/src/services/game/gameResultsLockedFields.ts`, applied in `Backend/src/services/game/update.service.ts`
+- FE gates: `Frontend/src/pages/GameDetailsShell.tsx` (`canMutateRoster`, `canViewSettings`, `canInvitePlayers`), `Frontend/src/components/GameDetails/GameParticipants.tsx` (`canJoinOrInvite`), `Frontend/src/components/ManageUsersModal.tsx`
+
+`status` remains fine for display (`GameStatusIcon`) and for "active now" list scoping (`sortGames.ts`, `MyTab.tsx`, `homeStaleScheduledGame.ts`, `courtOccupancy.service.ts`).
+
+### Substitution is the one roster change allowed while results run
+
+An injured player must be replaceable mid-game, so `POST /games/:id/substitute-participant` is deliberately gated by `canEditGame` (owner/admin, blocks `ARCHIVED`) rather than `canManageGameRoster`. The lifecycle window lives in the service: `resultsStatus` must be `IN_PROGRESS` — `NONE` uses the normal invite/kick flow, `FINAL` must be undone first.
+
+It is a **seat handoff, never a roster expansion**: the outgoing player is demoted to `NON_PLAYING` and the substitute becomes `PLAYING` in the same seat, so `maxParticipants` stays in `GAME_RESULTS_LOCKED_FIELDS` and this path can never grow the roster past it.
+
+The substitute **inherits** the seat: every `TeamPlayer` row for the game is rewritten, including matches already scored, so results read as if they had played throughout and the outgoing player keeps no rating or standing. This is why the fixed-team update is in place (`gameTeamPlayer.update`) — `setGameTeams` recreates `GameTeam` ids and would orphan the `Team.metadata.gameTeamId` back-references that match sides rely on. Rating attribution needs no special casing because `generateGameOutcomes` builds its player set from `status: 'PLAYING'` participants.
+
+**League games are excluded** (`LEAGUE`, `LEAGUE_SEASON` → `errors.games.substituteNotSupportedForLeague`). League standings resolve a fixture to a `LeagueParticipant` by roster key plus `LeagueTeamRosterAlias` (`leagueGroupStandingsFixtures.ts`), so rewriting a fixture roster here would leave it matching no team and silently drop it from the standings. League roster changes go through `LeagueTeamPlayerSwapService`, which registers the alias and refuses to touch scored or in-progress fixtures.
+
+Because the rewrite changes results data, the service emits **`game-results-updated`** as well as the game update — the results engine only reloads rounds on the former (`useGameResultsEngine`), so viewers would otherwise keep seeing the replaced player.
+
+- Service: `Backend/src/services/game/participantSubstitution.service.ts`
+- Gender rules are evaluated with the outgoing player excluded, otherwise a like-for-like swap reads as full
+- The trainer holds a role, not a seat, so they are changed through game settings and are not offered as substitutable
+- FE: `Frontend/src/components/GameDetails/ResultsRosterCard.tsx` + `Frontend/src/components/GameDetails/substitute/`
+
+### Leaving a playing seat is blocked once results run
+
+`leaveGame` rejects a `PLAYING` participant while `resultsStatus !== 'NONE'` (`errors.games.cannotLeaveResultsStarted`). A non-owner leave **deletes** the `GameParticipant` row and clears their fixed-team slots, while their `TeamPlayer` rows in scored matches survive — and `generateGameOutcomes` seeds its player set from `PLAYING` participants only, so those matches would lose their rating snapshot. This matches kick, which `canManageGameRoster` already blocks. The sanctioned mid-results roster change is substitution; resetting results to `NONE` reopens leaving. Guest and `NON_PLAYING` chat leaves are unaffected.
+
 ## Court occupancy
 
 FE owns external snapshot refresh (`useClubSnapshotRefresh`). BE `CourtOccupancyService` merges app games + admin holds + **Booktime/Padeloo/Klikteren** busy snapshots (`queryExternalBlocks` — those three `ClubIntegrationType`s only). **NSPADELSUPABASE is not in that merge**; availability is `/api/nspadel/*`. Snapshot freshness: `BOOKTIME_SNAPSHOT_FRESH_MS` = 60s (`Frontend/shared/gameBooking/booktimeSnapshotFreshness.ts`) for Booktime/Padeloo/Klikteren (and nspadel slot UI staleness where that constant is imported).

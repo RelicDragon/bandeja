@@ -1,5 +1,6 @@
 import prisma from '../config/database';
-import { Gender, GenderTeam, EntityType, GameStatus, Sport } from '@prisma/client';
+import { Gender, GenderTeam, EntityType, GameStatus, ResultsStatus, Sport } from '@prisma/client';
+import { canMutateGameRoster, isGameArchived } from '@bandeja/shared/gameMutationLock';
 import { ApiError } from './ApiError';
 import { fetchGameWithPlayingParticipants } from './gameQueries';
 import { USER_SELECT_FIELDS, USER_SPORT_PROFILE_SELECT } from './constants';
@@ -7,7 +8,7 @@ import { resolveUserSportSnapshot } from '../services/user/userSportProfile.serv
 import { isPlayingRosterFull } from './gameInviteInbox';
 import { evaluateGenderForGame } from './genderGameEligibility';
 
-interface GameWithParticipants {
+export interface GameWithParticipants {
   id: string;
   genderTeams: GenderTeam;
   maxParticipants: number;
@@ -23,6 +24,7 @@ interface GameWithParticipants {
 
 export interface GameWithStatus extends GameWithParticipants {
   status: GameStatus;
+  resultsStatus: ResultsStatus;
   sport?: Sport;
   allowDirectJoin?: boolean;
   anyoneCanInvite?: boolean;
@@ -41,10 +43,15 @@ export interface ValidatePlayerJoinOptions {
   targetIsOtherUser?: boolean;
 }
 
-export function validateGameCanAcceptParticipants(game: { status: GameStatus }): void {
-  if (game.status === GameStatus.ARCHIVED || game.status === GameStatus.FINISHED) {
-    throw new ApiError(400, 'errors.games.cannotJoinArchivedOrFinished');
-  }
+export function validateGameCanAcceptParticipants(game: {
+  status: GameStatus;
+  resultsStatus: ResultsStatus;
+}): void {
+  if (canMutateGameRoster(game)) return;
+  throw new ApiError(
+    400,
+    isGameArchived(game) ? 'errors.games.cannotJoinArchived' : 'errors.games.cannotJoinResultsStarted',
+  );
 }
 
 export async function validateGenderForGame(

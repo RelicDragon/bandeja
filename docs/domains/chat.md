@@ -21,6 +21,10 @@ Bug entity vs thread: `GET/PUT /api/bugs/:id` is **Bug.id**. Inbox and `/bugs/:i
 
 City groups: `cityGroup.service.ts` — city-scoped `GroupChannel` (`isCityGroup`).
 
+## Premium appearance
+
+The viewer's `user.isPremium` enables the scoped `premium-chat` palette on the inbox and thread root, including standalone mobile routes. It uses warm light/dark surfaces, gold accents and unread badges, and a dark metal thread header. Message geometry, list measurements, composer positioning and media transparency stay shared with standard users. Sender membership does not control bubble appearance. Standalone visible Premium headers share status-bar ownership with shell headers; system chrome restores when the last Premium header leaves.
+
 ## Inbox filters
 
 `ChatsListFilter`: `users` \| `bugs` \| `channels` \| `market`. URL:

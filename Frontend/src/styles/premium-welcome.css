@@ -1,0 +1,332 @@
+.premium-welcome-backdrop {
+  position: fixed;
+  inset: 0;
+  /* Welcome sits above the app's portalled mention suggestions. */
+  z-index: 100000;
+  background: #080705;
+  animation: premium-welcome-fade-in 500ms cubic-bezier(.22, 1, .36, 1) both;
+}
+.premium-welcome.fullscreen-dialog-root {
+  z-index: 100001;
+  color: #eed99f;
+  --welcome-action-space: 64px;
+  --welcome-settle: cubic-bezier(.22, 1, .36, 1);
+  --welcome-drift: cubic-bezier(.45, .05, .25, 1);
+}
+.premium-welcome .premium-welcome-body {
+  padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px)
+    env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+  overflow: hidden;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(ellipse at 50% 62%, #21180d 0%, #080705 65%);
+}
+.premium-welcome-stage {
+  position: relative;
+  width: min(100%, calc((100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - var(--welcome-action-space)) * 941 / 1672));
+  aspect-ratio: 941 / 1672;
+  flex: none;
+  isolation: isolate;
+  overflow: hidden;
+}
+.premium-welcome-frame {
+  position: absolute;
+  inset: 0;
+  padding: 1px;
+  background: #d3af6524;
+  opacity: 0;
+}
+.is-ready .premium-welcome-frame {
+  animation: premium-welcome-fade-in 1200ms 650ms var(--welcome-settle) both;
+}
+.premium-welcome-scene {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #080705;
+  box-shadow: inset 0 0 0 1px #fff1b912;
+}
+.premium-welcome-art {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.is-ready .premium-welcome-art {
+  animation: premium-welcome-dolly 7800ms 650ms var(--welcome-settle) both;
+}
+.premium-welcome-atmosphere,
+.premium-welcome-entrance {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.premium-welcome-light {
+  position: absolute;
+  width: 42%;
+  height: 30%;
+  top: 34%;
+  background: radial-gradient(ellipse, #efb85635, #cc7b1410 36%, transparent 68%);
+  mix-blend-mode: screen;
+  opacity: 0;
+  animation: premium-welcome-lamplight 6800ms 2900ms var(--welcome-drift) infinite alternate;
+}
+.premium-welcome-light-left { left: -13%; transform-origin: 50% 45%; }
+.premium-welcome-light-right { right: -13%; animation-delay: 3800ms; }
+.premium-welcome-gilding {
+  position: absolute;
+  inset: -20% -80%;
+  background: linear-gradient(112deg, transparent 44%, #ffe2a709 48%, #ffeac722 50%, #ffe2a709 52%, transparent 56%);
+  mix-blend-mode: screen;
+  opacity: 0;
+  animation: premium-welcome-gilding 4600ms 2200ms var(--welcome-drift) both;
+}
+.premium-welcome-particles {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  mask-image: linear-gradient(to bottom, transparent 38%, #000 55%, #000 97.72%, transparent);
+}
+.premium-welcome-mote {
+  position: absolute;
+  left: var(--mote-x);
+  /* Preserve the origins from the former bottom 38% layer. */
+  top: calc(62% + var(--mote-y) * .38);
+  width: var(--mote-size);
+  height: var(--mote-size);
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff8df 15%, #ffdc87 55%, #dca84e 100%);
+  box-shadow: 0 0 6px #ffda8a99, 0 0 13px #edb74d44;
+  opacity: 0;
+  animation: premium-welcome-mote var(--mote-duration) var(--mote-delay) var(--welcome-drift) infinite;
+}
+/* Two solid panels make the reveal feel like crossing a threshold. */
+.premium-welcome-door {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50.2%;
+  background: linear-gradient(90deg, #080705, #12100c 90%, #261d10);
+  box-shadow: inset -1px 0 #c7a56b35;
+}
+.premium-welcome-door::after {
+  content: '';
+  position: absolute;
+  inset: 3% 8%;
+  border: 1px solid #d3b57c13;
+  box-shadow: inset 0 0 0 5px #080705, inset 0 0 0 6px #d3b57c08;
+}
+.premium-welcome-door-left { left: 0; }
+.premium-welcome-door-right {
+  right: 0;
+  background: linear-gradient(270deg, #080705, #12100c 90%, #261d10);
+  box-shadow: inset 1px 0 #c7a56b35;
+}
+.is-ready .premium-welcome-door-left {
+  animation: premium-welcome-open-left 3400ms 1100ms cubic-bezier(.65, 0, .2, 1) both;
+}
+.is-ready .premium-welcome-door-right {
+  animation: premium-welcome-open-right 3400ms 1100ms cubic-bezier(.65, 0, .2, 1) both;
+}
+.premium-welcome-threshold {
+  position: absolute;
+  inset: 5% calc(50% - 1px);
+  background: linear-gradient(0deg, transparent, #be863d 20%, #fff0c9 50%, #be863d 80%, transparent);
+  box-shadow: 0 0 18px 2px #eac47755, 0 0 64px 6px #ce9b3126;
+  opacity: 0;
+  transform: scaleY(0);
+}
+.is-ready .premium-welcome-threshold {
+  animation: premium-welcome-threshold 2600ms 100ms var(--welcome-settle) both;
+}
+.premium-welcome-seal {
+  position: absolute;
+  top: 43%;
+  left: calc(50% - 44px);
+  width: 88px;
+  height: 88px;
+  padding: 5px;
+  border-radius: 50%;
+  background: #16120c;
+  box-shadow: 0 0 0 1px #c6a26055, 0 0 50px #d8a94e0d;
+}
+.premium-welcome-seal-core {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  background: radial-gradient(circle at 38% 25%, #302515, #100d09 75%);
+  box-shadow: inset 0 1px 0 #f6d69a40, 0 0 0 1px #d6b37420;
+}
+.premium-welcome-seal img { width: 62px; height: 62px; object-fit: contain; }
+.is-ready .premium-welcome-seal {
+  animation: premium-welcome-seal 1700ms var(--welcome-settle) both;
+}
+.premium-welcome-actions {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 100%;
+  height: var(--welcome-action-space);
+  padding: 8px 24px 12px;
+}
+.premium-welcome-action-reveal {
+  width: min(100%, 208px);
+  animation: premium-welcome-action-enter 1000ms var(--welcome-settle) both;
+}
+.premium-welcome-accept {
+  width: 100%;
+  min-height: 44px;
+  padding: 3px;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(145deg, #95723b, #302212 45%, #70502a);
+  box-shadow: inset 0 1px 0 #e9c88366, inset 0 -1px 0 #bc8d4029;
+  color: #e5c98e;
+  cursor: pointer;
+  transition: transform 350ms var(--welcome-settle);
+  -webkit-tap-highlight-color: transparent;
+}
+.premium-welcome-accept-core {
+  display: flex;
+  align-items: center;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  justify-content: center;
+  min-height: 38px;
+  padding: 4px 16px;
+  border-radius: inherit;
+  background:
+    radial-gradient(ellipse at 26% 0%, #73502255, transparent 65%),
+    linear-gradient(115deg, #110c06, #281d0f 48%, #0e0a06);
+  box-shadow: inset 0 1px 0 #d9bc8529, inset 0 -1px 0 #08070566;
+}
+/* The stone moves beneath the centered, fixed label. */
+.premium-welcome-accept-core::before {
+  content: '';
+  position: absolute;
+  inset: -25% -8%;
+  pointer-events: none;
+  /* Dedicated high-resolution stone stays sharp without enlarging a poster crop. */
+  background-image: linear-gradient(#08060418, #08060418), var(--welcome-stone);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: .9;
+  animation: premium-welcome-obsidian-veins 12s cubic-bezier(.33, .33, .67, .67) infinite;
+}
+.premium-welcome-accept-core::after {
+  content: '';
+  position: absolute;
+  inset: -50% -60%;
+  pointer-events: none;
+  background: linear-gradient(115deg, transparent 43%, #e3b65a1c 49%, #ffe0a030 50%, #e3b65a1c 51%, transparent 57%);
+  opacity: 0;
+  animation: premium-welcome-obsidian-light 9s 1500ms var(--welcome-drift) infinite;
+}
+.premium-welcome-accept-label {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  font-family: 'Outfit', ui-sans-serif, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: .035em;
+  text-align: center;
+  overflow-wrap: anywhere;
+  text-shadow: 0 1px 3px #080604;
+}
+/* A feathered pocket of dark stone quiets the veins only beneath the lettering. */
+.premium-welcome-accept-label::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: -10px -14px;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, #090704ed 0%, #090704c4 35%, #09070460 60%, transparent 80%);
+}
+@media (hover: hover) {
+  .premium-welcome-accept:hover { transform: translateY(-2px); }
+}
+.premium-welcome-accept:active { transform: scale(.98); }
+.premium-welcome-accept:focus-visible { outline: 2px solid #f4dfa6; outline-offset: 4px; }
+@keyframes premium-welcome-action-enter {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes premium-welcome-obsidian-veins {
+  /* Counter-rotation keeps the stone upright as it follows a seamless circle. */
+  from { transform: rotate(0deg) translateX(8px) rotate(0deg) scale(1.12); }
+  to { transform: rotate(360deg) translateX(8px) rotate(-360deg) scale(1.12); }
+}
+@keyframes premium-welcome-obsidian-light {
+  0%, 20% { opacity: 0; transform: translateX(-45%); }
+  38% { opacity: .35; }
+  60%, 100% { opacity: 0; transform: translateX(45%); }
+}
+.premium-welcome-fallback {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  font: 28px Georgia, serif;
+}
+.has-failed .premium-welcome-frame { opacity: 1; animation: none; }
+.has-failed .premium-welcome-art { visibility: hidden; }
+.premium-welcome[data-state=closed], .premium-welcome-backdrop[data-state=closed] {
+  animation: premium-welcome-leave 350ms cubic-bezier(.4, 0, 1, 1) both;
+}
+@keyframes premium-welcome-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes premium-welcome-leave { from { opacity: 1; } to { opacity: 0; } }
+@keyframes premium-welcome-dolly {
+  from { transform: scale(1.3); }
+  to { transform: scale(1); }
+}
+@keyframes premium-welcome-open-left { to { transform: translateX(-100%); } }
+@keyframes premium-welcome-open-right { to { transform: translateX(100%); } }
+@keyframes premium-welcome-threshold {
+  0% { opacity: 0; transform: scaleY(.04); }
+  30%, 48% { opacity: .95; transform: scaleY(1); }
+  100% { opacity: 0; transform: scaleY(1.1) scaleX(10); }
+}
+@keyframes premium-welcome-seal {
+  0% { opacity: 0; transform: translateY(8px) scale(.92); }
+  30%, 58% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(0) scale(1.06); }
+}
+@keyframes premium-welcome-gilding {
+  0% { opacity: 0; transform: translateX(-40%); }
+  35%, 65% { opacity: .65; }
+  100% { opacity: 0; transform: translateX(40%); }
+}
+@keyframes premium-welcome-lamplight {
+  0% { opacity: .15; transform: scale(.92) translateY(1%); }
+  60% { opacity: .6; }
+  100% { opacity: .35; transform: scale(1.12) translateY(-2%); }
+}
+@keyframes premium-welcome-mote {
+  0% { opacity: 0; transform: translate3d(0, 18px, 0) scale(.65); }
+  18% { opacity: .75; }
+  42% { opacity: .85; }
+  72% { opacity: .55; }
+  100% { opacity: 0; transform: translate3d(var(--mote-drift), calc(-1 * var(--mote-rise)), 0) scale(1.15); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .premium-welcome-backdrop,
+  .premium-welcome.fullscreen-dialog-root,
+  .premium-welcome-frame,
+  .premium-welcome-art,
+  .premium-welcome-action-reveal,
+  .premium-welcome-accept-core::before,
+  .premium-welcome-accept-core::after { animation: none !important; }
+  .is-ready .premium-welcome-frame { opacity: 1; }
+  .premium-welcome-entrance,
+  .premium-welcome-atmosphere { display: none; }
+  .premium-welcome-accept { transition: none; transform: none !important; }
+}

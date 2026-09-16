@@ -98,6 +98,7 @@ export default defineConfig(({ command, mode }) => {
       '@backend': path.resolve(__dirname, '../Backend/src'),
       '@bandeja/chat-contract': path.resolve(__dirname, '../packages/chat-contract/src/index.ts'),
       '@bandeja/unread-contract': path.resolve(__dirname, '../packages/unread-contract/src/index.ts'),
+      '@bandeja/app-locale': path.resolve(__dirname, '../packages/app-locale/src/index.ts'),
     },
   },
   test: {

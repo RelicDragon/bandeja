@@ -27,7 +27,7 @@ npm run test:e2e:report
 
 ## Vitest (Frontend)
 
-Targeted scripts (not a full-repo vitest): `test:auth`, `test:theme`, `test:deep-link-catalog`, `test:next-game`, `test:play-intent`, `test:live-scoring`, `test:game-invite`, `test:invites`, `test:find`, `test:home-render`, `test:queries`, `test:group-channel`, `test:chat-inbox-feed`, `test:chat-drafts`, `test:chat-open`, `test:chat-outbox`, `test:chat-stickers`, `test:unread`, `test:stories`, `test:achievements`, `test:keyboard-layout`, `test:gender-join`, `test:user-team`, `test:bugs`, `test:avatar-crop`, `test:game-slot-overlap`, `test:training-attendance`, `test:leaderboard`, `test:game-results-share`, `test:ios-shared-packages`.
+Targeted scripts (not a full-repo vitest): `test:auth`, `test:theme`, `test:premium-navigation`, `test:premium-header-scroll` (Chrome scroll rasterization and animation continuity), `test:deep-link-catalog`, `test:next-game`, `test:play-intent`, `test:live-scoring`, `test:game-invite`, `test:invites`, `test:find`, `test:home-render`, `test:queries`, `test:group-channel`, `test:chat-inbox-feed`, `test:chat-drafts`, `test:chat-open`, `test:chat-outbox`, `test:chat-stickers`, `test:unread`, `test:stories`, `test:achievements`, `test:keyboard-layout`, `test:gender-join`, `test:user-team`, `test:bugs`, `test:avatar-crop`, `test:game-slot-overlap`, `test:training-attendance`, `test:leaderboard`, `test:game-results-share`, `test:ios-shared-packages`.
 
 ## Backend
 

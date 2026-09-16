@@ -236,7 +236,7 @@ const MessageListInner = forwardRef<MessageListHandle, MessageListProps>(functio
   );
 
   return (
-    <div className="relative flex-1 min-h-0 bg-gray-50 dark:bg-gray-800">
+    <div className="chat-thread-messages relative flex-1 min-h-0 bg-gray-50 dark:bg-gray-800">
       {showMessages ? (
         <ThreadScrollViewport
           ref={ref}

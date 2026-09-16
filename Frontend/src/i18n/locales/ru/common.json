@@ -1,5 +1,6 @@
 {
   "common": {
+    "premiumWelcomeAccept": "Принимаю",
     "yes": "Да",
     "no": "Нет",
     "showDetails": "Показать детали",

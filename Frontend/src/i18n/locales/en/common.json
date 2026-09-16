@@ -1,5 +1,6 @@
 {
   "common": {
+    "premiumWelcomeAccept": "I accept",
     "yes": "Yes",
     "no": "No",
     "showDetails": "Show Details",

@@ -1,4 +1,5 @@
 import { randomBytes } from 'crypto';
+import { validateMainThemeUpdate } from '../../services/user/mainTheme';
 import { Response } from 'express';
 import { asyncHandler } from '../../utils/asyncHandler';
 import { ApiError } from '../../utils/ApiError';
@@ -114,7 +115,7 @@ export const getIpLocation = asyncHandler(async (req: AuthRequest, res: Response
 });
 
 export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { firstName, lastName, email, avatar, originalAvatar, language, translateToLanguage, timeFormat, weekStart, defaultCurrency, gender, genderIsSet, nameIsSet, cityIsSet, preferredHandLeft, preferredHandRight, preferredCourtSideLeft, preferredCourtSideRight, allowMessagesFromNonContacts, showOnlineStatus, alwaysShowUserNames, shareGamePhotosToFollowers, shareGameCreationsToFollowers, shareGameResultsToFollowers, favoriteTrainerId, appIcon, verbalStatus, bio, weeklyAvailability, availabilityBucketBoundaries } = req.body;
+  const { firstName, lastName, email, avatar, originalAvatar, language, translateToLanguage, timeFormat, weekStart, defaultCurrency, gender, genderIsSet, nameIsSet, cityIsSet, preferredHandLeft, preferredHandRight, preferredCourtSideLeft, preferredCourtSideRight, allowMessagesFromNonContacts, showOnlineStatus, alwaysShowUserNames, shareGamePhotosToFollowers, shareGameCreationsToFollowers, shareGameResultsToFollowers, favoriteTrainerId, appIcon, mainTheme, verbalStatus, bio, weeklyAvailability, availabilityBucketBoundaries } = req.body;
 
   let normalizedWeeklyAvailability =
     weeklyAvailability === undefined ? undefined : validateWeeklyAvailability(weeklyAvailability);
@@ -191,8 +192,10 @@ export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response
 
   const currentUser = await prisma.user.findUnique({
     where: { id: req.userId },
-    select: { avatar: true, originalAvatar: true, firstName: true, lastName: true }
+    select: { avatar: true, originalAvatar: true, firstName: true, lastName: true, isPremium: true }
   });
+
+  const validatedMainTheme = validateMainThemeUpdate(mainTheme, currentUser?.isPremium === true);
 
   const resolvedNames =
     firstName !== undefined || lastName !== undefined
@@ -278,6 +281,7 @@ export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response
         ...(normalizedShareResults !== undefined && { shareGameResultsToFollowers: normalizedShareResults }),
         ...(favoriteTrainerId !== undefined && { favoriteTrainerId: favoriteTrainerId || null }),
         ...(appIcon !== undefined && { appIcon: appIcon ?? null }),
+        ...(validatedMainTheme !== undefined && { mainTheme: validatedMainTheme }),
         ...(verbalStatus !== undefined && { verbalStatus }),
         ...(bio !== undefined && { bio }),
         ...(normalizedWeeklyAvailability !== undefined && { weeklyAvailability: normalizedWeeklyAvailability as any }),

@@ -14,8 +14,7 @@ import {
   type CancelledGameParticipantSnapshot,
 } from '@/utils/cancelledGameChatStub';
 import type { Game } from '@/types';
-import { GameDetailsContent } from './GameDetails';
-import { LeagueDetailsContent } from './LeagueDetails';
+import { GameDetailsShell } from './GameDetailsShell';
 import { EventDetailsContent } from './EventDetails';
 import { GameChat } from './GameChat';
 import { useTranslation } from 'react-i18next';
@@ -187,7 +186,7 @@ export const GameDetailsPage = () => {
       if (layoutCancelledInfo?.entityType === 'EVENT') {
         return <EventDetailsContent layoutCancelledInfo={layoutCancelledInfo} />;
       }
-      return <GameDetailsContent {...detailsCommon} />;
+      return <GameDetailsShell variant="game" {...detailsCommon} />;
     }
     if (entityRoute.variant === 'event') {
       return (
@@ -198,9 +197,9 @@ export const GameDetailsPage = () => {
       );
     }
     if (entityRoute.variant === 'league') {
-      return <LeagueDetailsContent {...detailsCommon} initialGame={entityRoute.initialGame} />;
+      return <GameDetailsShell variant="league" {...detailsCommon} initialGame={entityRoute.initialGame} />;
     }
-    return <GameDetailsContent {...detailsCommon} initialGame={entityRoute.initialGame} />;
+    return <GameDetailsShell variant="game" {...detailsCommon} initialGame={entityRoute.initialGame} />;
   };
 
   if (canShowSplitLayout) {
@@ -217,7 +216,7 @@ export const GameDetailsPage = () => {
 
     if (useTableViewLayout) {
       return (
-        <div className="fixed inset-0 top-[calc(4rem+env(safe-area-inset-top))] overflow-hidden">
+        <div className="fixed inset-0 top-[calc(var(--app-header-height,4rem)+env(safe-area-inset-top))] overflow-hidden">
           <div className="relative flex h-full min-h-0 flex-col">
             <div ref={scrollContainerRef} className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden scrollbar-auto">
               {renderEntityDetails()}
@@ -244,14 +243,14 @@ export const GameDetailsPage = () => {
 
     if (hideSideChat) {
       return (
-        <div className="fixed inset-0 top-[calc(4rem+env(safe-area-inset-top))] overflow-hidden">
+        <div className="fixed inset-0 top-[calc(var(--app-header-height,4rem)+env(safe-area-inset-top))] overflow-hidden">
           {leftPanel}
         </div>
       );
     }
 
     return (
-      <div className="fixed inset-0 top-[calc(4rem+env(safe-area-inset-top))] overflow-hidden">
+      <div className="fixed inset-0 top-[calc(var(--app-header-height,4rem)+env(safe-area-inset-top))] overflow-hidden">
         <ResizableSplitter
           defaultLeftWidth={45}
           minLeftWidth={320}

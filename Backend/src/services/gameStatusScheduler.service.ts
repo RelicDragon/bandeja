@@ -1,6 +1,6 @@
 import * as cron from 'node-cron';
 import prisma from '../config/database';
-import { calculateGameStatus, isResultsBasedEntityType } from '../utils/gameStatus';
+import { calculateGameStatus, isUnscoredClockFinished } from '../utils/gameStatus';
 import { cleanupInviteParticipantsForEndedGame } from '../utils/gameInviteCleanup';
 import { EntityType, ResultsStatus } from '@prisma/client';
 import { getUserTimezoneFromCityId } from './user-timezone.service';
@@ -78,10 +78,7 @@ export class GameStatusScheduler {
         const newStatus = calculateGameStatus(game, cityTimezone);
         
         if (newStatus !== game.status) {
-          if (
-            isResultsBasedEntityType(game.entityType) &&
-            newStatus === 'FINISHED'
-          ) {
+          if (isUnscoredClockFinished(game.entityType, newStatus, game.resultsStatus)) {
             continue;
           }
 

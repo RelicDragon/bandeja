@@ -18,7 +18,6 @@ interface ChatListSearchBarProps {
   onContactsToggle: () => void;
   onAddBug: () => void;
   onCreateListing?: () => void;
-  isDesktop?: boolean;
   hasCity?: boolean;
   unreadChatsCount?: number;
   unreadFilterActive?: boolean;
@@ -37,7 +36,6 @@ export const ChatListSearchBar = ({
   onContactsToggle,
   onAddBug,
   onCreateListing,
-  isDesktop = false,
   hasCity = false,
   unreadChatsCount = 0,
   unreadFilterActive = false,
@@ -64,7 +62,7 @@ export const ChatListSearchBar = ({
 
   return (
     <div
-      className={`px-2 pb-4 border-b border-gray-200 dark:border-gray-700 ${isDesktop ? 'pt-4' : ''} ${disabled ? 'pointer-events-none opacity-60' : ''}`}
+      className={`px-2 pb-4 pt-4 border-b border-gray-200 dark:border-gray-700 ${disabled ? 'pointer-events-none opacity-60' : ''}`}
       aria-busy={disabled}
     >
       <motion.div layout={!disabled} className="flex items-center">

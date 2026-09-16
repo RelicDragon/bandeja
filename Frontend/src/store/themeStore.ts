@@ -1,3 +1,5 @@
+import { syncWebThemeColor } from '@/utils/mainTheme';
+import { syncNativeAppBackground } from '@/services/nativeAppBackground';
 import { useSyncExternalStore } from 'react';
 import { create } from 'zustand';
 import {
@@ -49,8 +51,6 @@ function getSystemThemeSnapshot() {
   return getSystemTheme();
 }
 
-const PAGE_BG = { light: '#f9fafb', dark: '#111827' } as const;
-
 function writeResolvedTheme(
   preference: ThemePreference,
   actualTheme: ResolvedTheme,
@@ -68,11 +68,8 @@ function writeResolvedTheme(
   if (root.style.colorScheme !== colorScheme) {
     root.style.colorScheme = colorScheme;
   }
-  const themeColor = document.querySelector('meta[name="theme-color"]');
-  const nextColor = PAGE_BG[actualTheme];
-  if (themeColor && themeColor.getAttribute('content') !== nextColor) {
-    themeColor.setAttribute('content', nextColor);
-  }
+  syncWebThemeColor();
+  void syncNativeAppBackground(preference, root.classList.contains('premium-theme'));
 }
 
 const applyTheme = (theme: ThemePreference) => {
@@ -161,4 +158,11 @@ export function useResolvedAppAppearance(): ResolvedTheme {
   );
   if (theme === 'system') return systemScheme;
   return theme;
+}
+
+/** Account theme is independent of the device's light/dark/system preference. */
+export function setPremiumAppTheme(premium: boolean): void {
+  const root = document.documentElement;
+  root.classList.toggle('premium-theme', premium);
+  applyTheme(useThemeStore.getState().theme);
 }

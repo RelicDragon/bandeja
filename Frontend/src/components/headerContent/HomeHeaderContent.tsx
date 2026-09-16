@@ -127,7 +127,8 @@ export const HomeHeaderContent = () => {
     <div className="relative flex flex-shrink-0 items-center gap-4">
       <button
         onClick={handleProfileClick}
-        className={`shrink-0 w-8 h-8 rounded-full overflow-hidden ring-2 transition-all flex items-center justify-center shadow-[0_0_20px_rgba(14,165,233,0.7),0_0_35px_rgba(14,165,233,0.4)] dark:shadow-[0_0_20px_rgba(56,189,248,0.7),0_0_35px_rgba(56,189,248,0.4)] ${
+        aria-label={t('profile.title')}
+        className={`header-profile-button shrink-0 w-8 h-8 rounded-full overflow-hidden ring-2 transition-all flex items-center justify-center shadow-[0_0_20px_rgba(14,165,233,0.7),0_0_35px_rgba(14,165,233,0.4)] dark:shadow-[0_0_20px_rgba(56,189,248,0.7),0_0_35px_rgba(56,189,248,0.4)] ${
           parsed.place === 'profile'
             ? 'ring-primary-500/50 dark:ring-primary-400/50'
             : 'ring-transparent hover:ring-primary-500/30 dark:hover:ring-primary-400/30'
@@ -142,7 +143,7 @@ export const HomeHeaderContent = () => {
       <div ref={buttonContainerRef} className="shrink-0">
         <button
           onClick={handleCreateClick}
-          className="shrink-0 w-9 h-9 p-0 rounded-lg bg-primary-600 dark:bg-primary-500 text-white hover:bg-primary-700 dark:hover:bg-primary-600 transition-colors relative z-10 flex items-center justify-center"
+          className="header-create-button shrink-0 w-9 h-9 p-0 rounded-lg bg-primary-600 dark:bg-primary-500 text-white hover:bg-primary-700 dark:hover:bg-primary-600 transition-colors relative z-10 flex items-center justify-center"
           aria-label={t('games.create')}
         >
           <Plus size={20} />

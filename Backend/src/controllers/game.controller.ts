@@ -7,6 +7,7 @@ import { serializeLinkedBooking } from '../services/game/gameExternalBooking.ser
 import { ParticipantService } from '../services/game/participant.service';
 import { AdminService } from '../services/game/admin.service';
 import { OwnershipService } from '../services/game/ownership.service';
+import { GameParticipantSubstitutionService } from '../services/game/participantSubstitution.service';
 import { BookedCourtsService } from '../services/game/bookedCourts.service';
 import { LeagueAssignService } from '../services/league/assign.service';
 import { ResultsTelegramService } from '../services/telegram/results-telegram.service';
@@ -648,6 +649,22 @@ export const kickUser = asyncHandler(async (req: AuthRequest, res: Response) => 
   res.json({
     success: true,
     message,
+  });
+});
+
+export const substituteParticipant = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
+  const { outUserId, inUserId } = req.body;
+  await GameParticipantSubstitutionService.substitute({
+    gameId: id,
+    outUserId,
+    inUserId,
+    actorUserId: req.userId!,
+  });
+
+  res.json({
+    success: true,
+    message: 'games.substitutePlayerSuccess',
   });
 });
 

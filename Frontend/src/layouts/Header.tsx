@@ -1,3 +1,4 @@
+import { usesPremiumTheme } from '@/utils/mainTheme';
 import { useTranslation } from 'react-i18next';
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
@@ -26,6 +27,9 @@ import { MarketplaceCreateHeaderContent } from '@/components/headerContent/Marke
 import { MarketplaceTabController } from '@/components/headerContent/MarketplaceTabController';
 import { ChatsTabController } from '@/components/headerContent/ChatsTabController';
 import { FindTabController } from '@/components/headerContent/FindTabController';
+import { PremiumBrand } from '@/components/navigation/PremiumBrand';
+import { usePremiumNavigationAppearance } from '@/hooks/usePremiumNavigationAppearance';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 
 interface HeaderProps {
   animateEntry?: boolean;
@@ -36,6 +40,9 @@ export const Header = ({ animateEntry = false }: HeaderProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const user = useAuthStore((state) => state.user);
+  const isPremiumTheme = usesPremiumTheme(user);
+  usePremiumNavigationAppearance(isPremiumTheme);
+  const reduceMotion = usePrefersReducedMotion();
   const { pendingInvites, isNewInviteAnimating } = useHeaderStore();
   const { setBounceNotifications, profileActiveTab, setProfileActiveTab, userProfileHeaderActions, findHeaderActions } = useShellNavStore();
   const { gameDetailsCanAccessChat, gameDetailsOccludesSideChat, gameDetailsSportTag } = useGameDetailsChromeStore();
@@ -154,21 +161,28 @@ export const Header = ({ animateEntry = false }: HeaderProps) => {
   return (
     <>
       <motion.header
-        className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 fixed top-0 right-0 left-0 z-40 shadow-lg transition-all duration-300"
-        style={{ paddingTop: 'env(safe-area-inset-top)', height: `calc(4rem + env(safe-area-inset-top))` }}
-        initial={animateEntry ? { y: '-100%' } : false}
+        className={`bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 fixed top-0 right-0 left-0 z-40 shadow-lg transition-all duration-300 ${isPremiumTheme ? 'premium-header' : ''}`}
+        style={{ paddingTop: 'env(safe-area-inset-top)', height: `calc(var(--app-header-height, 4rem) + env(safe-area-inset-top))` }}
+        initial={animateEntry && !reduceMotion ? { y: '-100%' } : false}
         animate={{ y: 0 }}
-        transition={animateEntry ? { duration: 0.4, ease: [0.25, 0.1, 0.25, 1] } : { duration: 0 }}
+        transition={animateEntry && !reduceMotion ? { duration: 0.4, ease: [0.25, 0.1, 0.25, 1] } : { duration: 0 }}
       >
+        {isPremiumTheme && (
+          <div className="premium-header-stone" aria-hidden="true">
+            <div className="premium-header-stone-edges" />
+          </div>
+        )}
+        {isPremiumTheme && <PremiumBrand />}
         <div
           ref={headerRowRef}
-          className={`h-16 px-4 flex items-center ${isGameDetailsShell ? 'gap-2' : 'gap-4'}`}
+          className={`app-header-controls h-16 px-4 flex items-center ${isGameDetailsShell ? 'gap-2' : 'gap-4'}`}
           style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}
         >
           <div className={`flex-1 min-w-0 flex items-center ${isGameDetailsShell ? 'gap-2' : 'gap-3'}`}>
             {(isHomeShell || isFindShell || isChatsShell || isProfileShell || isLeaderboardShell || (isMarketplaceShell && isMarketplaceList)) ? null : (
               <button
                 onClick={handleBackClick}
+                aria-label={t('common.back')}
                 className={`flex items-center rounded-lg font-medium transition-all duration-200 hover:scale-105 active:scale-110 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 border-0 outline-none focus:border-0 focus:outline-none focus:ring-0 focus:shadow-none focus:bg-transparent focus:text-current focus:transform focus:box-border active:border-0 active:outline-none active:ring-0 active:shadow-none active:bg-transparent active:text-current shrink-0 ${
                   showBackLabel ? 'gap-2 px-3 py-1.5 text-sm' : 'p-2'
                 }`}
@@ -200,6 +214,7 @@ export const Header = ({ animateEntry = false }: HeaderProps) => {
             {pendingInvites > 0 && (
               <button
                 onClick={handleNotificationsClick}
+                aria-label={t('home.invites', { defaultValue: 'Invitations' })}
                 className={`relative p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 hover:scale-105 active:scale-110 border-0 outline-none focus:border-0 focus:outline-none focus:ring-0 focus:shadow-none focus:bg-transparent focus:text-current focus:transform focus:box-border active:border-0 active:outline-none active:ring-0 active:shadow-none active:bg-transparent active:text-current ${
                   isNewInviteAnimating ? 'animate-pulse animate-bounce' : ''
                 }`}
@@ -236,7 +251,7 @@ export const Header = ({ animateEntry = false }: HeaderProps) => {
 
           <div
             ref={gameDetailsRightRef}
-            className={`flex-shrink-0 flex items-center justify-end gap-4 ${hasRightHeaderSlot ? 'min-w-28' : 'min-w-0'}`}
+            className={`flex-shrink-0 flex items-center justify-end gap-4 ${hasRightHeaderSlot ? 'min-w-28' : 'min-w-0'} ${isPremiumTheme && showHomeHeaderRight ? 'premium-header-home-actions' : ''}`}
           >
             {showHomeHeaderRight && (
               <HomeHeaderContent />

@@ -3,6 +3,26 @@ import WebKit
 import Capacitor
 
 final class MainViewController: CAPBridgeViewController, UIGestureRecognizerDelegate {
+    static func appBackgroundColor() -> UIColor {
+        let preference = UserDefaults.standard.string(forKey: "appAppearance") ?? "light"
+        let premium = UserDefaults.standard.bool(forKey: "appPremiumTheme")
+        return UIColor { traits in
+            let dark = preference == "dark" || (preference == "system" && traits.userInterfaceStyle == .dark)
+            let hex = premium ? (dark ? 0x141411 : 0xfaf9f6) : (dark ? 0x111827 : 0xf9fafb)
+            return UIColor(red: CGFloat((hex >> 16) & 255) / 255,
+                           green: CGFloat((hex >> 8) & 255) / 255,
+                           blue: CGFloat(hex & 255) / 255, alpha: 1)
+        }
+    }
+
+    func refreshAppBackground() {
+        let color = Self.appBackgroundColor()
+        view.backgroundColor = color
+        webView?.backgroundColor = color
+        webView?.scrollView.backgroundColor = color
+        splashOverlay?.backgroundColor = color
+    }
+
     static let brandingSplashLogoKey = "brandingSplashLogoKey"
 
     override public func capacitorDidLoad() {
@@ -66,7 +86,7 @@ final class MainViewController: CAPBridgeViewController, UIGestureRecognizerDele
 
         let overlay = UIView()
         overlay.translatesAutoresizingMaskIntoConstraints = false
-        overlay.backgroundColor = UIColor(red: 171/255, green: 222/255, blue: 227/255, alpha: 1)
+        overlay.backgroundColor = Self.appBackgroundColor()
 
         let logo = UIImageView(image: Self.resolveSplashLogoImage())
         logo.translatesAutoresizingMaskIntoConstraints = false
@@ -133,10 +153,8 @@ final class MainViewController: CAPBridgeViewController, UIGestureRecognizerDele
             }
         }
 
-        let splashBg = UIColor(red: 171/255, green: 222/255, blue: 227/255, alpha: 1)
         webView.isOpaque = true
-        webView.backgroundColor = splashBg
-        webView.scrollView.backgroundColor = splashBg
+        refreshAppBackground()
     }
 
     private func scheduleFallbackDismiss() {
@@ -150,6 +168,11 @@ final class MainViewController: CAPBridgeViewController, UIGestureRecognizerDele
     }
 
     private static func resolveSplashLogoImage() -> UIImage? {
+        if UserDefaults.standard.bool(forKey: "appPremiumTheme"),
+           let url = Bundle.main.url(forResource: "bandeja-gold-crest", withExtension: "png", subdirectory: "public/premium"),
+           let image = UIImage(contentsOfFile: url.path) {
+            return image
+        }
         let logoKey = UserDefaults.standard.string(forKey: brandingSplashLogoKey) ?? "padel"
         let candidates: [String]
         switch logoKey {
@@ -247,4 +270,3 @@ final class MainViewController: CAPBridgeViewController, UIGestureRecognizerDele
         }
     }
 }
-

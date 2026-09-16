@@ -35,6 +35,8 @@ import { GameActionCard } from '@/components/GameDetails/GameActionCard';
 import { PhotosSection } from '@/components/GameDetails/PhotosSection';
 import { GameWebCamerasSection } from '@/components/GameDetails/GameWebCamerasSection';
 import { canViewGamePhotos } from '@shared/gamePhotos/permissions';
+import { canMutateGameRoster } from '@shared/gameMutationLock';
+import { ResultsRosterCard } from '@/components/GameDetails/ResultsRosterCard';
 import { BarParticipantsList } from '@/components/GameDetails/BarParticipantsList';
 import { LeagueFixedTeamsSection } from '@/components/GameDetails/LeagueFixedTeamsSection';
 import { FixedTeamsManagement } from '@/components/GameDetails/FixedTeamsManagement';
@@ -767,7 +769,8 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
   const canAccessChat = true;
   const canEdit = isOwner || user?.isAdmin || false;
   const canEditGameFormat = game ? canUserEditGameFormat(game, user) : false;
-  const canViewSettings = game?.resultsStatus === 'NONE' && canEdit && game.status !== 'ARCHIVED';
+  const canMutateRoster = game ? canMutateGameRoster(game) : false;
+  const canViewSettings = canMutateRoster && canEdit;
 
   useEffect(() => {
     setGameDetailsCanAccessChat(canAccessChat);
@@ -796,7 +799,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
     ? gameInvites.find(inv => inv.receiverId === pendingTrainerParticipant.userId && inv.status === 'PENDING')
     : undefined;
 
-  const canInvitePlayers = Boolean((isOwner || (game?.anyoneCanInvite && isParticipant)) && isRealParticipant && !isFull && game?.status !== 'FINISHED' && game?.status !== 'ARCHIVED');
+  const canInvitePlayers = Boolean((isOwner || (game?.anyoneCanInvite && isParticipant)) && isRealParticipant && !isFull && canMutateRoster);
   const canManageJoinQueue = Boolean(
     isOwner ||
     participation.userParticipant?.role === 'ADMIN' ||
@@ -1013,6 +1016,12 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
       throw error;
     }
   };
+
+  const refreshGame = useCallback(async () => {
+    if (!id) return;
+    const response = await gamesApi.getById(id);
+    setGame(response.data);
+  }, [id]);
 
   const handleToggleFavorite = async () => {
     if (!game) return;
@@ -1494,6 +1503,12 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
             </div>
           ) : null}
 
+          {!isLeagueSeason && game.entityType !== 'BAR' ? (
+            <div key="results-roster" className="contents">
+              <ResultsRosterCard game={game} canEdit={canEdit} onGameUpdate={() => void refreshGame()} />
+            </div>
+          ) : null}
+
           {user && isLeagueSeason ? (
             <div key="show-in-stories" className="contents">
               <GameResultsShowInStoriesSwitch game={game} onGameUpdate={setGame} />
@@ -1543,8 +1558,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
           ) : null}
 
           {user &&
-            game.status !== 'ARCHIVED' &&
-            game.resultsStatus === 'NONE' &&
+            canMutateRoster &&
             game.entityType !== 'BAR' &&
             game.entityType !== 'TRAINING' ? (
             <div key="game-format" className="contents">
@@ -1664,8 +1678,8 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
                 ? { tone: 'danger' as const, buttonLabel: t('gameDetails.dontPlayInGame'), onClick: () => setShowLeaveConfirmation(true), hint: undefined }
                 : {
                     tone: 'success' as const,
-                    buttonLabel: game.status !== 'ARCHIVED' && !isFull ? t('games.playInGame') : undefined,
-                    onClick: game.status !== 'ARCHIVED' && !isFull ? handleAddToGame : undefined,
+                    buttonLabel: canMutateRoster && !isFull ? t('games.playInGame') : undefined,
+                    onClick: canMutateRoster && !isFull ? handleAddToGame : undefined,
                     hint: t(getOwnerCannotLeaveText(game.entityType)),
                   };
             return (

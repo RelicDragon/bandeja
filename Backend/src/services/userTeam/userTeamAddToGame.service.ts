@@ -216,6 +216,7 @@ export async function addUserTeamToGame(
       id: true,
       anyoneCanInvite: true,
       status: true,
+      resultsStatus: true,
       entityType: true,
       genderTeams: true,
       maxParticipants: true,
@@ -230,9 +231,6 @@ export async function addUserTeamToGame(
   });
   if (!game) throw new ApiError(404, 'errors.invites.gameNotFound');
   validateGameCanAcceptParticipants(game);
-  if (game.status === GameStatus.STARTED) {
-    throw new ApiError(400, 'errors.invites.cannotSendAfterGameStarted');
-  }
 
   const [hasRealStatus, isOwnerOrAdmin] = await Promise.all([
     hasRealParticipantStatus(gameId, viewerId),

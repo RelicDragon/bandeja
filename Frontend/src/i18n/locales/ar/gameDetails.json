@@ -889,6 +889,19 @@
           "ja": "اليابانية"
         }
       }
-    }
+    },
+    "resultsRosterTitle": "اللاعبون في الملعب",
+    "resultsRosterHint": "إدخال النتائج جارٍ، لذا القائمة مغلقة. لا يزال بإمكانك تبديل لاعب مصاب.",
+    "substitutePlayerAction": "تبديل",
+    "substitutePlayerTitle": "تبديل لاعب",
+    "substitutePlayerReplacing": "يتم استبدال",
+    "substitutePlayerNoCandidates": "لا يوجد لاعبون متاحون للتبديل",
+    "substitutePlayerOut": "خارج",
+    "substitutePlayerIn": "داخل",
+    "substitutePlayerInheritsResults": "{{name}} يأخذ المكان وجميع النتائج المسجلة له",
+    "substitutePlayerOutLosesResults": "{{name}} لن يحتفظ بأي تقييم أو ترتيب في هذه المباراة",
+    "substitutePlayerKeepsTeamSlot": "مكان الفريق والملعب وعدد اللاعبين تبقى كما هي",
+    "substitutePlayerConfirm": "تبديل اللاعب",
+    "substitutePlayerSuccess": "تم تبديل اللاعب"
   }
 }

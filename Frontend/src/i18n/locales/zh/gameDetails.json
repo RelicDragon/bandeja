@@ -865,6 +865,19 @@
           "ja": "日语"
         }
       }
-    }
+    },
+    "resultsRosterTitle": "场上球员",
+    "resultsRosterHint": "正在录入成绩，名单已锁定。仍可替换受伤球员。",
+    "substitutePlayerAction": "替换",
+    "substitutePlayerTitle": "替换球员",
+    "substitutePlayerReplacing": "被替换",
+    "substitutePlayerNoCandidates": "没有可替换的球员",
+    "substitutePlayerOut": "下场",
+    "substitutePlayerIn": "上场",
+    "substitutePlayerInheritsResults": "{{name}} 将接替该位置及已记录的全部成绩",
+    "substitutePlayerOutLosesResults": "{{name}} 在本场比赛中不保留评分和排名",
+    "substitutePlayerKeepsTeamSlot": "队内位置、球场和名单人数保持不变",
+    "substitutePlayerConfirm": "替换球员",
+    "substitutePlayerSuccess": "已替换球员"
   }
 }

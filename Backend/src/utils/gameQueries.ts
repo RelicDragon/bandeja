@@ -1,11 +1,12 @@
 import prisma from '../config/database';
 import { ApiError } from './ApiError';
-import { GameStatus, GenderTeam, EntityType, Gender } from '@prisma/client';
+import { GameStatus, GenderTeam, EntityType, Gender, ResultsStatus } from '@prisma/client';
 
 export interface GameWithPlayingParticipants {
   id: string;
   cityId: string;
   status: GameStatus;
+  resultsStatus: ResultsStatus;
   genderTeams: GenderTeam;
   maxParticipants: number;
   entityType: EntityType;

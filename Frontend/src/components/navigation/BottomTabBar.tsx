@@ -1,3 +1,4 @@
+import { usesPremiumTheme } from '@/utils/mainTheme';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Home, Calendar, MessageCircle, Trophy, ShoppingBag } from 'lucide-react';
@@ -12,6 +13,7 @@ import { resolveBottomTabActiveId, type BottomTabId } from '@/utils/bottomTabAct
 import { hasEnabledSports } from '@/utils/profileSports';
 import { ClubAdminFab } from '@/components/clubAdmin/ClubAdminFab';
 import { UnreadBadge } from '@/components/UnreadBadge';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 
 interface BottomTabBarProps {
   containerPosition?: boolean;
@@ -26,6 +28,8 @@ const BottomTabBarInner = ({ containerPosition = false, tabOverride, previousPat
   const location = useLocation();
   const { setRequestFindGoToCurrent } = useShellNavStore();
   const user = useAuthStore((s) => s.user);
+  const isPremiumTheme = usesPremiumTheme(user);
+  const reduceMotion = usePrefersReducedMotion();
   const showGameTabs = hasEnabledSports(user);
   const tabBadges = useBottomTabUnreadBadges();
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
@@ -108,7 +112,7 @@ const BottomTabBarInner = ({ containerPosition = false, tabOverride, previousPat
   const pillShellClass =
     'relative w-fit max-w-[calc(100vw-2rem)] rounded-2xl border border-gray-300/60 shadow-[0_-12px_48px_rgba(0,0,0,0.22),0_-4px_24px_rgba(0,0,0,0.14),-20px_0_40px_rgba(0,0,0,0.18),20px_0_40px_rgba(0,0,0,0.18)] dark:border-gray-600/60 dark:shadow-[0_0_12px_rgba(218,165,32,0.26),0_0_24px_rgba(255,215,0,0.07),0_-6px_20px_rgba(0,0,0,0.14)]';
   const iconClass = (isActive: boolean) =>
-    `transition-colors duration-300 ${
+    `bottom-tab-icon transition-colors duration-300 ${
       isActive
         ? 'text-primary-600 dark:text-primary-400'
         : 'text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-200'
@@ -118,10 +122,10 @@ const BottomTabBarInner = ({ containerPosition = false, tabOverride, previousPat
     <>
       <ClubAdminFab />
       <div className="flex justify-center">
-        <div className={pillShellClass}>
+        <div className={`${pillShellClass} ${isPremiumTheme ? 'premium-tab-bar' : ''}`} role="navigation" aria-label={t('common.navigation', { defaultValue: 'Main navigation' })}>
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-0 rounded-2xl bg-white/95 dark:bg-gray-900/95"
+            className={`pointer-events-none absolute inset-0 rounded-2xl bg-white/95 dark:bg-gray-900/95 ${isPremiumTheme ? 'premium-tab-backplate' : ''}`}
           />
           <div className="relative isolate z-[1] px-1 flex items-center justify-center h-16">
           {tabs.map((tab, index) => {
@@ -130,7 +134,7 @@ const BottomTabBarInner = ({ containerPosition = false, tabOverride, previousPat
             const currentDay = new Date().getDate();
             const isCalendarTab = tab.id === 'find';
             const tabButtonClass =
-              'flex flex-col items-center justify-center px-3 h-full relative group';
+              `flex flex-col items-center justify-center px-3 h-full relative group ${isPremiumTheme ? 'premium-tab' : ''}`;
 
             if (!useRichTabMotion) {
               return (
@@ -139,10 +143,12 @@ const BottomTabBarInner = ({ containerPosition = false, tabOverride, previousPat
                   type="button"
                   ref={(el) => { tabRefs.current[index] = el; }}
                   onClick={() => handleTabClick(tab.id, tab.path)}
+                  aria-label={tab.label}
+                  aria-current={isActive ? 'page' : undefined}
                   className={tabButtonClass}
                 >
                   {isActive ? (
-                    <div className="absolute inset-[5%] rounded-2xl bg-primary-500/10 dark:bg-primary-400/10" />
+                    <div className="bottom-tab-active-surface absolute inset-[5%] rounded-2xl bg-primary-500/10 dark:bg-primary-400/10" />
                   ) : null}
                   <div
                     className={`relative transition-transform duration-200 ${
@@ -161,12 +167,12 @@ const BottomTabBarInner = ({ containerPosition = false, tabOverride, previousPat
                       ) : null}
                     </div>
                     {tab.badge != null ? (
-                      <UnreadBadge count={tab.badge} size="sm" className="absolute -top-2 -right-2" />
+                      <UnreadBadge count={tab.badge} size="sm" className="bottom-tab-badge absolute -top-2 -right-2" />
                     ) : null}
                   </div>
                   <div className="h-[14px] flex items-center justify-center">
                     {!isActive ? (
-                      <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-200">
+                      <span className="bottom-tab-label text-[10px] font-medium text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-200">
                         {tab.label}
                       </span>
                     ) : null}
@@ -180,6 +186,8 @@ const BottomTabBarInner = ({ containerPosition = false, tabOverride, previousPat
                 key={tab.id}
                 ref={(el) => { tabRefs.current[index] = el; }}
                 onClick={() => handleTabClick(tab.id, tab.path)}
+                aria-label={tab.label}
+                aria-current={isActive ? 'page' : undefined}
                 className={tabButtonClass}
                 whileTap={{ scale: 0.85 }}
                 transition={{ type: 'spring', stiffness: 400, damping: 17 }}
@@ -213,7 +221,7 @@ const BottomTabBarInner = ({ containerPosition = false, tabOverride, previousPat
                   </motion.div>
 
                   {tab.badge != null ? (
-                    <UnreadBadge count={tab.badge} size="sm" className="absolute -top-2 -right-2" />
+                    <UnreadBadge count={tab.badge} size="sm" className="bottom-tab-badge absolute -top-2 -right-2" />
                   ) : null}
                 </motion.div>
 
@@ -226,7 +234,7 @@ const BottomTabBarInner = ({ containerPosition = false, tabOverride, previousPat
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -4, scale: 0.8 }}
                         transition={{ type: 'spring', stiffness: 400, damping: 25, duration: 0.2 }}
-                        className="text-[10px] font-medium text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-200"
+                        className="bottom-tab-label text-[10px] font-medium text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-200"
                       >
                         {tab.label}
                       </motion.span>
@@ -236,7 +244,7 @@ const BottomTabBarInner = ({ containerPosition = false, tabOverride, previousPat
 
                 {isActive ? (
                   <motion.div
-                    className="absolute inset-[5%] rounded-2xl bg-primary-500/10 dark:bg-primary-400/10"
+                    className="bottom-tab-active-surface absolute inset-[5%] rounded-2xl bg-primary-500/10 dark:bg-primary-400/10"
                     layoutId="activeTab"
                     layoutScroll={false}
                     initial={false}
@@ -260,9 +268,9 @@ const BottomTabBarInner = ({ containerPosition = false, tabOverride, previousPat
         layoutId={isDesktop && !containerPosition ? 'bottom-tab-bar' : undefined}
         className={`${shellPositionClass} transform-gpu`}
         style={{ paddingBottom: shellPaddingBottom }}
-        initial={animateEntry ? { y: '100%' } : false}
-        animate={animateEntry ? { y: 0 } : undefined}
-        transition={animateEntry ? { duration: 0.4, ease: [0.25, 0.1, 0.25, 1] } : undefined}
+        initial={animateEntry && !reduceMotion ? { y: '100%' } : false}
+        animate={animateEntry && !reduceMotion ? { y: 0 } : undefined}
+        transition={animateEntry && !reduceMotion ? { duration: 0.4, ease: [0.25, 0.1, 0.25, 1] } : undefined}
       >
         {tabBarBody}
       </motion.div>

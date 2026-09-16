@@ -244,6 +244,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   return (
     <div
       data-message-bubble="true"
+      data-bubble-surface={isFloatingMedia || isPreviewOnlyMessage ? undefined : isOwnMessage && !isChannel && !message.poll ? 'own' : 'other'}
       data-floating-media={isFloatingMedia ? 'true' : undefined}
       className={bubbleClass}
     >
@@ -395,7 +396,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
         </div>
       )}
 
-      <div className={timeRowClass}>
+      <div className={timeRowClass} data-message-meta={overlayMeta ? 'overlay' : 'inline'}>
         <span className="text-[10px] whitespace-nowrap inline-flex items-center gap-1" style={timeSpanStyle}>
           {message.editedAt && (
             <span title={t('chat.edited', { defaultValue: 'edited' })}>

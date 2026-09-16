@@ -1,5 +1,6 @@
 {
   "common": {
+    "premiumWelcomeAccept": "我接受",
     "yes": "是",
     "no": "否",
     "showDetails": "显示详情",

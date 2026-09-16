@@ -17,6 +17,7 @@ import {
   resolveTrainingEditDefaults,
 } from '@/utils/profileSports';
 import { parseGameSport } from '@/utils/gameSport';
+import { isGameArchived } from '@shared/gameMutationLock';
 import toast from 'react-hot-toast';
 
 interface TrainingResultsSectionProps {
@@ -52,9 +53,9 @@ export const TrainingResultsSection = ({
     r.updatedAt && new Date(r.updatedAt).getTime() - new Date(r.createdAt).getTime() > 2000;
 
   const isTrainerOrOwner = game.participants?.some(p => p.userId === user?.id && (game.trainerId === p.userId || p.role === 'OWNER'));
-  const canEdit = user && (isTrainerOrOwner || user.isAdmin) && game.status !== 'ARCHIVED';
+  const canEdit = user && (isTrainerOrOwner || user.isAdmin) && !isGameArchived(game);
   const hasChanges = game.outcomes && game.outcomes.length > 0;
-  const canUndo = hasChanges && game.status !== 'ARCHIVED' && game.resultsStatus === 'FINAL';
+  const canUndo = hasChanges && !isGameArchived(game) && game.resultsStatus === 'FINAL';
 
   const canLeaveReview =
     user &&

@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Crown, Shield, User, UserX, ArrowRightLeft, Dumbbell, ChevronDown, ChevronUp } from 'lucide-react';
+import { Crown, Shield, User, UserX, ArrowRightLeft, Dumbbell, ChevronDown, ChevronUp, type LucideIcon } from 'lucide-react';
 import { Button, PlayerAvatar } from '@/components';
 import { Game, GameParticipant } from '@/types';
 import { isPendingGameInvite } from '@/utils/gameInviteParticipant';
 import { useAuthStore } from '@/store/authStore';
+import { canMutateGameRoster } from '@shared/gameMutationLock';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 
 interface ManageUsersModalProps {
@@ -101,7 +102,8 @@ export const ManageUsersModal = ({ game, onClose, onUserAction }: ManageUsersMod
   const hasTrainer = game.entityType === 'TRAINING' && (!!game.trainerId || game.participants.some((p) => p.role === 'ADMIN' && isPendingGameInvite(p)));
 
   const getAvailableActions = (participant: GameParticipant) => {
-    const actions = [];
+    const actions: Array<{ id: string; label: string; icon: LucideIcon }> = [];
+    if (!canMutateGameRoster(game)) return actions;
     const isParticipantRole = participant.role === 'PARTICIPANT' || participant.role === 'GUEST';
 
     if (isOwner) {

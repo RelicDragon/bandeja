@@ -3,7 +3,9 @@ import App from './App';
 import './index.css';
 import { setupCapacitor, setupBrowserKeyboardDetection, setAndroidViewportVars } from './utils/capacitorSetup';
 import { isCapacitor, isAndroid } from './utils/capacitor';
-import { ensureThemeForegroundSync } from './store/themeStore';
+import { ensureThemeForegroundSync, setPremiumAppTheme } from './store/themeStore';
+import { useAuthStore } from './store/authStore';
+import { usesPremiumTheme } from './utils/mainTheme';
 import { initializeSocialLogin } from './services/socialLoginInit.service';
 import { initChatSyncMetricsSession } from './services/chat/chatSyncMetricsSession';
 import { initChatLocalDbLifecycle } from './services/chat/chatLocalDbLifecycle';
@@ -23,6 +25,12 @@ import {
 } from './config/deploymentEnvironment';
 
 const CACHE_VERSION = 'v1';
+
+setPremiumAppTheme(usesPremiumTheme(useAuthStore.getState().user));
+useAuthStore.subscribe((state, previous) => {
+  const premium = usesPremiumTheme(state.user);
+  if (premium !== usesPremiumTheme(previous.user)) setPremiumAppTheme(premium);
+});
 
 if (isCurrentStagingDeployment()) {
   document.title = `[STAGING] ${document.title}`;

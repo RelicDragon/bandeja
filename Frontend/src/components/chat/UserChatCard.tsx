@@ -70,7 +70,8 @@ const UserChatCardInner = ({ chat, listPresenceBatched = false, unreadCount = 0,
     <div
       onClick={handleClick}
       onMouseEnter={onMouseEnter}
-      className={`flex items-center gap-3 p-3 cursor-pointer transition-colors border-b border-gray-200 dark:border-gray-700 ${isSelected
+      data-chat-selected={isSelected ? 'true' : undefined}
+      className={`chat-list-row flex items-center gap-3 p-3 cursor-pointer transition-colors border-b border-gray-200 dark:border-gray-700 ${isSelected
         ? 'bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30'
         : 'hover:bg-gray-100 dark:hover:bg-gray-800'
         }`}

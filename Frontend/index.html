@@ -2,6 +2,16 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <script>
+      // Apply saved appearance before the first paint, including the loading screen.
+      try {
+        const theme = localStorage.getItem('theme') || 'light';
+        const dark = theme === 'dark' || (theme === 'system' && matchMedia('(prefers-color-scheme: dark)').matches);
+        const user = JSON.parse(localStorage.getItem('user') || 'null');
+        document.documentElement.classList.toggle('dark', dark);
+        document.documentElement.classList.toggle('premium-theme', !localStorage.getItem('auth_explicit_logout_at') && user?.isPremium === true && user?.mainTheme === 'premium');
+      } catch { /* Storage may be unavailable; use Classic Light. */ }
+    </script>
     <link rel="icon" type="image/png" href="/favicon/favicon-96x96.png" sizes="96x96" />
     <link rel="icon" type="image/svg+xml" href="/favicon/favicon.svg" />
     <link rel="shortcut icon" href="/favicon/favicon.ico" />
@@ -33,10 +43,14 @@
 
     <link rel="preload" href="/bandeja2-white-tr.png" as="image" />
     <style>
+      :root { --ui-page-background: #f9fafb; }
+      html.dark { --ui-page-background: #111827; }
+      html.premium-theme { --ui-page-background: #faf9f6; }
+      html.premium-theme.dark { --ui-page-background: #141411; }
       html,
       body {
         margin: 0;
-        background-color: #abdee3;
+        background-color: var(--ui-page-background, #f9fafb);
       }
 
       html.app-ready,
@@ -51,7 +65,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        background-color: #abdee3;
+        background-color: var(--ui-page-background, #f9fafb);
       }
 
       #boot-splash img {
@@ -78,8 +92,12 @@
     <div id="boot-splash" aria-hidden="true">
       <img src="/bandeja2-white-tr.png" alt="" width="220" height="220" />
     </div>
+    <script>
+      if (document.documentElement.classList.contains('premium-theme')) {
+        document.querySelector('#boot-splash img').src = '/premium/bandeja-gold-crest.webp';
+      }
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
-

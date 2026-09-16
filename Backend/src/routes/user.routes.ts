@@ -8,6 +8,7 @@ import { getQuestionnaireForSport } from '../sport/questionnaires';
 import { validateAnswers } from '../sport/questionnaires/scoring';
 import { resolveSport } from '../sport/sportRegistry';
 import * as userController from '../controllers/user.controller';
+import { getPremiumOnboarding, completePremiumOnboarding } from '../controllers/user/premiumOnboarding.controller';
 import { MAX_BASIC_USERS_IDS_PER_REQUEST } from '../services/user/basicUsersForMessage.service';
 import { rateLimitKeyFromRequest } from '../utils/rateLimitClientKey';
 
@@ -52,6 +53,8 @@ const achievementEarnersLimiter = rateLimit({
 const router = Router();
 
 router.get('/profile', authenticate, userController.getProfile);
+router.get('/me/premium-onboarding', authenticate, getPremiumOnboarding);
+router.post('/me/premium-onboarding/complete', authenticate, completePremiumOnboarding);
 router.post(
   '/me/achievement-pins',
   authenticate,

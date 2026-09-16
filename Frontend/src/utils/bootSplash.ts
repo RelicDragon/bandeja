@@ -1,6 +1,6 @@
 import { notifyAppShellReadyToNative } from '@/services/authBridge';
 
-export const BOOT_SPLASH_BG = '#abdee3';
+export const BOOT_SPLASH_BG = 'var(--ui-page-background, #f9fafb)';
 
 export function dismissHtmlBootSplash(): void {
   document.getElementById('boot-splash')?.remove();

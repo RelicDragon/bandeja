@@ -7,6 +7,8 @@ import {
   optionalAuth,
   canEditGame,
   canEditGameIncludingArchived,
+  canManageGameRoster,
+  canManageGameRosterAsOwner,
   canAccessGame,
   canAccessGameIncludingArchived,
   requireGamePermission,
@@ -234,7 +236,7 @@ router.put(
 router.post(
   '/:id/add-admin',
   authenticate,
-  requireGamePermission([ParticipantRole.OWNER]),
+  canManageGameRosterAsOwner,
   validate([
     body('userId').notEmpty().withMessage('User ID is required'),
   ]),
@@ -244,7 +246,7 @@ router.post(
 router.post(
   '/:id/revoke-admin',
   authenticate,
-  requireGamePermission([ParticipantRole.OWNER]),
+  canManageGameRosterAsOwner,
   validate([
     body('userId').notEmpty().withMessage('User ID is required'),
   ]),
@@ -254,7 +256,7 @@ router.post(
 router.post(
   '/:id/set-trainer',
   authenticate,
-  requireGamePermission([ParticipantRole.OWNER]),
+  canManageGameRosterAsOwner,
   validate([
     body('userId').notEmpty().withMessage('User ID is required'),
     body('isTrainer').isBoolean().withMessage('isTrainer must be a boolean'),
@@ -265,17 +267,30 @@ router.post(
 router.post(
   '/:id/kick-user',
   authenticate,
-  canEditGame,
+  canManageGameRoster,
   validate([
     body('userId').notEmpty().withMessage('User ID is required'),
   ]),
   gameController.kickUser
 );
 
+// Deliberately `canEditGame`, not `canManageGameRoster`: substitution is the one roster
+// change allowed while results are in progress. Lifecycle rules live in the service.
+router.post(
+  '/:id/substitute-participant',
+  authenticate,
+  canEditGame,
+  validate([
+    body('outUserId').notEmpty().withMessage('outUserId is required'),
+    body('inUserId').notEmpty().withMessage('inUserId is required'),
+  ]),
+  gameController.substituteParticipant
+);
+
 router.post(
   '/:id/transfer-ownership',
   authenticate,
-  requireGamePermission([ParticipantRole.OWNER]),
+  canManageGameRosterAsOwner,
   validate([
     body('userId').notEmpty().withMessage('User ID is required'),
   ]),
@@ -285,7 +300,7 @@ router.post(
 router.post(
   '/:id/accept-join-queue',
   authenticate,
-  canEditGame,
+  canManageGameRoster,
   validate([
     body('userId').notEmpty().withMessage('User ID is required'),
   ]),
@@ -295,7 +310,7 @@ router.post(
 router.post(
   '/:id/decline-join-queue',
   authenticate,
-  canEditGame,
+  canManageGameRoster,
   validate([
     body('userId').notEmpty().withMessage('User ID is required'),
   ]),
@@ -336,7 +351,7 @@ router.post(
 router.post(
   '/:id/enable-participant-chats',
   authenticate,
-  canEditGame,
+  canManageGameRoster,
   gameController.enableParticipantChats
 );
 

@@ -1,7 +1,11 @@
 import assert from 'node:assert/strict';
 import { addDays, subDays } from 'date-fns';
 import { EntityType } from '@prisma/client';
-import { calculateGameStatus } from './gameStatus';
+import {
+  calculateGameStatus,
+  calculatePersistableGameStatus,
+  isUnscoredClockFinished,
+} from './gameStatus';
 
 const TZ = 'Europe/Madrid';
 
@@ -64,9 +68,50 @@ function testStartTimeArchiveRuleSkippedWhenTimeNotSet(): void {
   );
 }
 
+function testUnscoredClockFinishedIsNotPersisted(): void {
+  const startTime = subDays(new Date(), 1);
+  const endTime = subDays(new Date(), 1);
+  const game = baseGame({ startTime, endTime, resultsStatus: 'NONE' });
+
+  assert.equal(calculateGameStatus(game, TZ), 'FINISHED');
+  assert.equal(isUnscoredClockFinished(game.entityType, 'FINISHED', 'NONE'), true);
+  assert.equal(calculatePersistableGameStatus(game, TZ, 'STARTED'), 'STARTED');
+  assert.equal(calculatePersistableGameStatus(game, TZ, 'ANNOUNCED'), 'ANNOUNCED');
+}
+
+function testScoredFinishedIsPersisted(): void {
+  const startTime = subDays(new Date(), 1);
+  const endTime = subDays(new Date(), 1);
+  const game = baseGame({ startTime, endTime, resultsStatus: 'FINAL', finishedDate: new Date() });
+
+  assert.equal(isUnscoredClockFinished(game.entityType, 'FINISHED', 'FINAL'), false);
+  assert.equal(calculatePersistableGameStatus(game, TZ, 'STARTED'), 'FINISHED');
+}
+
+function testArchivedIsAlwaysPersisted(): void {
+  assert.equal(calculatePersistableGameStatus(baseGame(), TZ, 'STARTED'), 'ARCHIVED');
+}
+
+function testNonResultsBasedTypesStillFinish(): void {
+  const startTime = subDays(new Date(), 1);
+  const endTime = subDays(new Date(), 1);
+  assert.equal(
+    calculatePersistableGameStatus(
+      baseGame({ entityType: EntityType.EVENT, startTime, endTime, resultsStatus: 'NONE' }),
+      TZ,
+      'STARTED',
+    ),
+    'FINISHED',
+  );
+}
+
 testGameArchivedAfterSevenDaysFromStart();
 testGameNotArchivedBeforeSevenDaysFromStart();
 testStartTimeArchiveRuleDoesNotApplyToLeague();
 testStartTimeArchiveRuleSkippedWhenTimeNotSet();
+testUnscoredClockFinishedIsNotPersisted();
+testScoredFinishedIsPersisted();
+testArchivedIsAlwaysPersisted();
+testNonResultsBasedTypesStillFinish();
 
 console.log('gameStatus.test.ts: ok');

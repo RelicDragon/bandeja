@@ -857,6 +857,19 @@
           "ja": "Japonština"
         }
       }
-    }
+    },
+    "resultsRosterTitle": "Hráči na kurtu",
+    "resultsRosterHint": "Probíhá zadávání výsledků, soupiska je uzamčena. Zraněného hráče lze stále vystřídat.",
+    "substitutePlayerAction": "Vystřídat",
+    "substitutePlayerTitle": "Střídání hráče",
+    "substitutePlayerReplacing": "Střídá se",
+    "substitutePlayerNoCandidates": "Nejsou k dispozici žádní hráči ke střídání",
+    "substitutePlayerOut": "Střídá ven",
+    "substitutePlayerIn": "Střídá dovnitř",
+    "substitutePlayerInheritsResults": "{{name}} přebírá místo i všechny již zapsané výsledky",
+    "substitutePlayerOutLosesResults": "{{name}} si z tohoto zápasu neponechá rating ani umístění",
+    "substitutePlayerKeepsTeamSlot": "Místo v týmu, kurt i velikost soupisky zůstávají stejné",
+    "substitutePlayerConfirm": "Vystřídat hráče",
+    "substitutePlayerSuccess": "Hráč byl vystřídán"
   }
 }

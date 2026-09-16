@@ -64,10 +64,25 @@ const invited = { status: 'INVITED' as const };
     ),
     false,
   );
+  // Derived FINISHED (slot ended, nobody scored) keeps the invite actionable.
   assert.equal(
     isInviteInboxVisible({
       status: 'INVITED',
-      game: { maxParticipants: 4, participants: playing(2), status: 'FINISHED' },
+      game: { maxParticipants: 4, participants: playing(2), status: 'FINISHED', resultsStatus: 'NONE' },
+    }, now),
+    true,
+  );
+  assert.equal(
+    isInviteInboxVisible({
+      status: 'INVITED',
+      game: { maxParticipants: 4, participants: playing(2), status: 'STARTED', resultsStatus: 'IN_PROGRESS' },
+    }, now),
+    false,
+  );
+  assert.equal(
+    isInviteInboxVisible({
+      status: 'INVITED',
+      game: { maxParticipants: 4, participants: playing(2), status: 'ARCHIVED', resultsStatus: 'NONE' },
     }, now),
     false,
   );

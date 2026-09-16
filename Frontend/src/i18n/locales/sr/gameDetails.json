@@ -863,6 +863,19 @@
           "ja": "Japanski"
         }
       }
-    }
+    },
+    "resultsRosterTitle": "Igrači na terenu",
+    "resultsRosterHint": "Unos rezultata je u toku, sastav je zamrznut. Zamena povređenog igrača je i dalje moguća.",
+    "substitutePlayerAction": "Zameni",
+    "substitutePlayerTitle": "Zamena igrača",
+    "substitutePlayerReplacing": "Zamenjuje se",
+    "substitutePlayerNoCandidates": "Nema dostupnih igrača za zamenu",
+    "substitutePlayerOut": "Izlazi",
+    "substitutePlayerIn": "Ulazi",
+    "substitutePlayerInheritsResults": "{{name}} preuzima mesto i sve već upisane rezultate",
+    "substitutePlayerOutLosesResults": "{{name}} ne zadržava rejting ni poziciju u ovoj igri",
+    "substitutePlayerKeepsTeamSlot": "Mesto u timu, teren i veličina sastava ostaju isti",
+    "substitutePlayerConfirm": "Zameni igrača",
+    "substitutePlayerSuccess": "Igrač je zamenjen"
   }
 }

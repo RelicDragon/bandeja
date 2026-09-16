@@ -61,6 +61,7 @@ import { openEula } from '@/utils/openEula';
 import { AppleIcon } from '@/components/AppleIcon';
 import { getCurrencyOptions, getCurrencySymbol } from '@/utils/currency';
 import { syncNativeAppIconForUser } from '@/services/appIcon.service';
+import { MainThemeSelector } from '@/components/MainThemeSelector';
 import type { AppIconId } from '@/config/appIcons';
 import { openExternalUrl } from '@/utils/openExternalUrl';
 import { buildTelegramBotStartUrl } from '@/utils/telegramBotUrl';
@@ -95,6 +96,7 @@ export const ProfileContent = () => {
   const [timeFormat, setTimeFormat] = useState<'auto' | '12h' | '24h'>(user?.timeFormat || 'auto');
   const [weekStart, setWeekStart] = useState<'auto' | 'monday' | 'sunday' | 'saturday'>(user?.weekStart || 'auto');
   const [defaultCurrency, setDefaultCurrency] = useState<string>(user?.defaultCurrency || 'auto');
+  const [isSavingMainTheme, setIsSavingMainTheme] = useState(false);
   const [appIcon, setAppIcon] = useState<AppIconId>((user?.appIcon as AppIconId) || 'tiger');
   const [verbalStatus, setVerbalStatus] = useState(user?.verbalStatus || '');
   const [bio, setBio] = useState(user?.bio || '');
@@ -151,6 +153,16 @@ export const ProfileContent = () => {
       toast.error(error.response?.data?.message || t('errors.generic'));
     }
   }, [updateUser, t]);
+
+  const handleMainThemeChange = async (value: string) => {
+    if (isSavingMainTheme || (value !== 'classic' && value !== 'premium')) return;
+    setIsSavingMainTheme(true);
+    try {
+      await updateProfile({ mainTheme: value });
+    } finally {
+      setIsSavingMainTheme(false);
+    }
+  };
 
   const debouncedUpdate = useCallback((updates: Partial<User>, skipValidation = false) => {
     if (updateTimeoutRef.current) {
@@ -1273,6 +1285,13 @@ export const ProfileContent = () => {
             {t('profile.appearance')}
           </h2>
           <div className="space-y-4">
+            {user?.isPremium === true && (
+              <MainThemeSelector
+                value={user.mainTheme ?? 'classic'}
+                onChange={handleMainThemeChange}
+                disabled={isSavingMainTheme}
+              />
+            )}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 {t('profile.theme')}

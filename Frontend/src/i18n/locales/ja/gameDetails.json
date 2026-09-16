@@ -865,6 +865,19 @@
           "ja": "日本語"
         }
       }
-    }
+    },
+    "resultsRosterTitle": "コート上の選手",
+    "resultsRosterHint": "結果を入力中のためメンバーは固定されています。負傷した選手の交代は可能です。",
+    "substitutePlayerAction": "交代",
+    "substitutePlayerTitle": "選手の交代",
+    "substitutePlayerReplacing": "交代する選手",
+    "substitutePlayerNoCandidates": "交代できる選手がいません",
+    "substitutePlayerOut": "アウト",
+    "substitutePlayerIn": "イン",
+    "substitutePlayerInheritsResults": "{{name}} がその枠と記録済みの結果をすべて引き継ぎます",
+    "substitutePlayerOutLosesResults": "{{name}} はこの試合のレートも順位も保持しません",
+    "substitutePlayerKeepsTeamSlot": "チームの枠、コート、メンバー数は変わりません",
+    "substitutePlayerConfirm": "選手を交代する",
+    "substitutePlayerSuccess": "選手を交代しました"
   }
 }

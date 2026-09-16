@@ -569,7 +569,7 @@ export const MyTab = () => {
     if (isPastGamesTab) {
       return (
         <>
-          <div className="fixed inset-x-0 bottom-0 overflow-y-auto z-0 bg-gray-50 dark:bg-gray-900" style={{ top: 'calc(4rem + env(safe-area-inset-top, 0px))' }}>
+          <div className="fixed inset-x-0 bottom-0 overflow-y-auto z-0 bg-gray-50 dark:bg-gray-900" style={{ top: 'calc(var(--app-header-height, 4rem) + env(safe-area-inset-top, 0px))' }}>
             <div className="p-4" style={{ paddingBottom: scrollBottomPadding }}>
               {renderPastGamesContent(loading || loadingPastGames)}
             </div>
@@ -580,7 +580,7 @@ export const MyTab = () => {
     }
     return (
       <>
-        <div className="fixed inset-x-0 bottom-0 overflow-hidden z-0" style={{ top: 'calc(4rem + env(safe-area-inset-top, 0px))' }}>
+        <div className="fixed inset-x-0 bottom-0 overflow-hidden z-0" style={{ top: 'calc(var(--app-header-height, 4rem) + env(safe-area-inset-top, 0px))' }}>
           <ResizableSplitter
             showLeft={splitView}
             defaultLeftWidth={35}

@@ -93,7 +93,7 @@ Controllers sit next to routes of the same name (`game.controller.ts` ↔ `game.
 
 ### `pages/` (non-test)
 
-`MainPage`, `MyTab`, `FindTab`, `ChatsTab`, `LeaderboardTab`, `ProfileTab`, `Login`, `Register`, `TelegramAutoLogin`, `SelectCity`, `SessionsPage`, `CreateGame` + `CreateGameWrapper`, `CreateLeague`, `CreateEvent` + `CreateEventWrapper`, `GameDetails` / `GameDetailsPage` / `GameDetailsShell`, `GameChat` / `GameChatRoute`, `GameLiveRoute` / `GameLiveMatchPage` / TV+broadcast redirects, `LeagueDetails`, `LeagueBracketFullscreenPage`, `LeagueFixtureTableFullscreenPage`, `EventDetails`, `MarketplaceList`, `CreateMarketItem`, `Bugs`, `GameSubscriptions`, `UserProfilePage`, `UserTeamPage`, `GroupChannelSettingsPage`, `NextGameRedirect`, `Profile`.
+`MainPage`, `MyTab`, `FindTab`, `ChatsTab`, `LeaderboardTab`, `ProfileTab`, `Login`, `Register`, `TelegramAutoLogin`, `SelectCity`, `SessionsPage`, `CreateGame` + `CreateGameWrapper`, `CreateLeague`, `CreateEvent` + `CreateEventWrapper`, `GameDetailsPage` / `GameDetailsShell`, `GameChat` / `GameChatRoute`, `GameLiveRoute` / `GameLiveMatchPage` / TV+broadcast redirects, `LeagueBracketFullscreenPage`, `LeagueFixtureTableFullscreenPage`, `EventDetails`, `MarketplaceList`, `CreateMarketItem`, `Bugs`, `GameSubscriptions`, `UserProfilePage`, `UserTeamPage`, `GroupChannelSettingsPage`, `NextGameRedirect`, `Profile`.
 
 ### `components/` folders
 
@@ -175,7 +175,7 @@ JS policy: `Frontend/shared/nextGame/policy.ts`. JS picker: `Frontend/src/utils/
 | Find / available games | `services/game/availableGames*.ts` | `pages/FindTab.tsx`, `hooks/useAvailableGames.ts`, `useAvailableUpcomingGames.ts`, `useGameFilters.ts`, `queries/games/useAvailableGamesQuery.ts` |
 | Game CRUD / details | `services/game/`, `controllers/game.controller.ts` | `pages/GameDetails*.tsx`, `CreateGame*.tsx`, `components/GameDetails/`, `hooks/useGameFormat.ts` |
 | Participants / invites | `services/game/participant.service.ts`, `services/invite/` | `components/playerInvite/`, `hooks/useDeclineInvite.tsx`, `api/invites.ts` |
-| League | `services/league/` | `pages/CreateLeague.tsx`, `LeagueDetails.tsx`, `LeagueBracketFullscreenPage.tsx`, `LeagueFixtureTableFullscreenPage.tsx`, `components/GameDetails/` league views |
+| League | `services/league/` | `pages/CreateLeague.tsx`, `GameDetailsShell.tsx` (`variant="league"`), `LeagueBracketFullscreenPage.tsx`, `LeagueFixtureTableFullscreenPage.tsx`, `components/GameDetails/` league views |
 | Results / live scoring | `services/results/`, `controllers/results.controller.ts`, `matchTimer.controller.ts` | `pages/GameLive*.tsx`, `hooks/useLiveMatchController.ts`, `hooks/liveMatchController/`, `liveScoring/registry.ts`, `utils/liveScoring/`, `components/liveScoring/` |
 | Chat | `services/chat/`, `controllers/chat.controller.ts`, `groupChannel.controller.ts` | `pages/ChatsTab.tsx`, `GameChat*.tsx`, `services/chat/`, `hooks/useChat*.ts`, `store/unreadStore.ts`, `api/chat.ts` |
 | Stickers / Giphy | `services/stickers/`, `giphyIngest/`, routes `/stickers` `/giphy` | `api/stickers.ts`, `api/giphy.ts`, `services/stickers/` |

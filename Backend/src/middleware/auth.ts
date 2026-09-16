@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { ApiError } from '../utils/ApiError';
 import { canModifyResults, hasParentGamePermission } from '../utils/parentGamePermissions';
 import { ParticipantRole } from '@prisma/client';
+import { isGameResultsLocked } from '@bandeja/shared/gameMutationLock';
 import { getClientIp, updateUserIpLocation } from '../services/ipLocation.service';
 import prisma from '../config/database';
 import {
@@ -102,6 +103,8 @@ export const requireCanModifyResults = async (req: AuthRequest, res: Response, n
 
 export type RequireGamePermissionOptions = {
   allowArchived?: boolean;
+  /** Reject once results entry has begun (roster/settings are frozen). */
+  requireRosterMutable?: boolean;
 };
 
 /**
@@ -128,7 +131,7 @@ export const requireGamePermission = (
       // Check if game exists first
       const game = await prisma.game.findUnique({
         where: { id: gameId },
-        select: { id: true, status: true },
+        select: { id: true, status: true, resultsStatus: true },
       });
 
       if (!game) {
@@ -137,6 +140,10 @@ export const requireGamePermission = (
 
       if (!options.allowArchived && game.status === 'ARCHIVED') {
         throw new ApiError(400, 'Cannot modify archived games');
+      }
+
+      if (options.requireRosterMutable && isGameResultsLocked(game)) {
+        throw new ApiError(400, 'errors.games.cannotEditResultsStarted');
       }
 
       const hasPermission = await hasParentGamePermission(
@@ -164,6 +171,21 @@ export const requireGamePermission = (
  * Checks for gameId in req.params (gameId, id, or leagueSeasonId) or req.body.gameId
  */
 export const canEditGame = requireGamePermission([ParticipantRole.OWNER, ParticipantRole.ADMIN]);
+
+/**
+ * Owner/admin actions that change the roster (kick, promote, trainer, ownership, join queue).
+ * Frozen once `resultsStatus !== NONE` — never gated on `Game.status`, which is clock-derived.
+ * See `docs/product/constraints.md`.
+ */
+export const canManageGameRoster = requireGamePermission(
+  [ParticipantRole.OWNER, ParticipantRole.ADMIN],
+  { requireRosterMutable: true },
+);
+
+/** Owner-only roster actions (promote/revoke admin, trainer, ownership transfer). */
+export const canManageGameRosterAsOwner = requireGamePermission([ParticipantRole.OWNER], {
+  requireRosterMutable: true,
+});
 
 /** Same as canEditGame but allows owner/admin actions when the game is ARCHIVED (e.g. Telegram results). */
 export const canEditGameIncludingArchived = requireGamePermission(

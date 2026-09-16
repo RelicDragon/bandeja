@@ -42,6 +42,7 @@ import {
 } from '@/utils/gameHasConfirmedClubBooking';
 import { getGameMainPhotoId } from '@/utils/gameMainPhoto';
 import { canViewGamePhotos } from '@shared/gamePhotos/permissions';
+import { canMutateGameRoster } from '@shared/gameMutationLock';
 import { gameCardReactionsEqual } from '@/utils/gameCardReactionsEqual';
 import {
   getPlayingParticipants,
@@ -278,9 +279,7 @@ const GameCardMatch = memo(function GameCardMatch({
   const isJoinButtonVisible =
     showJoinButton &&
     onJoin &&
-    game.status !== 'ARCHIVED' &&
-    game.status !== 'FINISHED' &&
-    game.resultsStatus === 'NONE' &&
+    canMutateGameRoster(game) &&
     game.entityType !== 'LEAGUE' &&
     game.entityType !== 'EVENT' &&
     !isParticipant &&

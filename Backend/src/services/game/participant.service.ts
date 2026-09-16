@@ -16,12 +16,12 @@ import {
   ChatType,
   EntityType,
   GameInviteOutcomeType,
-  GameStatus,
   MatchProposalStatus,
   ParticipantRole,
   UserTeamMemberStatus,
 } from '@prisma/client';
 import { BetService } from '../bets/bet.service';
+import { isGameResultsLocked } from '@bandeja/shared/gameMutationLock';
 import { removeUserFromGameFixedTeams } from './fixedTeamsCleanup';
 import { applyUserTeamToFixedTeamsIfReady } from './userTeamFixedTeams.service';
 import { syncParticipantShowInStoriesSideEffects } from '../story/participantShowInStories.sync';
@@ -207,6 +207,18 @@ export class ParticipantService {
     }
 
     if (participant.status === PLAYING_STATUS) {
+      // A playing seat carries results. Dropping it mid-entry would delete the participant
+      // while their scored `TeamPlayer` rows survive, and outcomes are seeded only from
+      // PLAYING participants — so those matches would lose their rating snapshot. Kicking is
+      // already blocked here; the organiser substitutes instead.
+      const lockCheck = await prisma.game.findUnique({
+        where: { id: gameId },
+        select: { status: true, resultsStatus: true },
+      });
+      if (lockCheck && isGameResultsLocked(lockCheck)) {
+        throw new ApiError(400, 'errors.games.cannotLeaveResultsStarted');
+      }
+
       if (participant.role === 'OWNER') {
         await prisma.$transaction(async (tx) => {
           await tx.gameParticipant.update({
@@ -811,17 +823,21 @@ export class ParticipantService {
   ): Promise<{ participant: any; invite: any; intentLinked: boolean | null }> {
     const game = await prisma.game.findUniqueOrThrow({
       where: { id: gameId },
-      select: { id: true, entityType: true, status: true, genderTeams: true, maxParticipants: true },
+      select: {
+        id: true,
+        entityType: true,
+        status: true,
+        resultsStatus: true,
+        genderTeams: true,
+        maxParticipants: true,
+      },
     });
+    // Gap A: single policy gate for new invites / revives (admin + Telegram use this path).
     validateGameCanAcceptParticipants(game);
     if (game.entityType === EntityType.EVENT) {
       throw new ApiError(400, 'Events cannot be invited to; use going or looking');
     }
     await validateGenderForGame(game, receiverId, { targetIsOtherUser: true });
-    // Gap A: single policy gate for new invites / revives (admin + Telegram use this path).
-    if (game.status === GameStatus.STARTED) {
-      throw new ApiError(400, 'errors.invites.cannotSendAfterGameStarted');
-    }
     if (asTrainer && game.entityType !== 'TRAINING') {
       throw new ApiError(400, 'Only training games can have a trainer');
     }

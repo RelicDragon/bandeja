@@ -11,6 +11,7 @@ public class AuthBridgePlugin: CAPPlugin, CAPBridgedPlugin {
     public let identifier = "AuthBridgePlugin"
     public let jsName = "AuthBridge"
     public let pluginMethods: [CAPPluginMethod] = [
+        CAPPluginMethod(name: "setAppAppearance", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "setToken", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "getToken", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "deleteToken", returnType: CAPPluginReturnPromise),
@@ -25,6 +26,20 @@ public class AuthBridgePlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "syncBrandingLogo", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "notifyAppShellReady", returnType: CAPPluginReturnPromise)
     ]
+
+    @objc func setAppAppearance(_ call: CAPPluginCall) {
+        guard let appearance = call.getString("appearance"),
+              ["light", "dark", "system"].contains(appearance) else {
+            return call.reject("Invalid appearance")
+        }
+        let premium = call.getBool("premium") ?? false
+        DispatchQueue.main.async {
+            UserDefaults.standard.set(appearance, forKey: "appAppearance")
+            UserDefaults.standard.set(premium, forKey: "appPremiumTheme")
+            (self.bridge?.viewController as? MainViewController)?.refreshAppBackground()
+            call.resolve()
+        }
+    }
 
     @objc func setToken(_ call: CAPPluginCall) {
         guard let token = call.getString("token") else {

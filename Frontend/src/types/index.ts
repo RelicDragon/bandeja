@@ -164,6 +164,8 @@ export interface BasicUser {
   trainerRating?: number | null;
   trainerReviewCount?: number;
   isPremium?: boolean;
+  premiumOnboardingCompletedAt?: string | null;
+  mainTheme?: 'classic' | 'premium';
   weeklyAvailability?: WeeklyAvailabilityDoc | null;
   isAdmin?: boolean;
   canCreateTournament?: boolean;

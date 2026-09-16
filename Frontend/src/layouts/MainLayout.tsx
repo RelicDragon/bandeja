@@ -1,3 +1,4 @@
+import { usesPremiumTheme } from '@/utils/mainTheme';
 import { ReactNode, useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useShallow } from 'zustand/react/shallow';
@@ -89,7 +90,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
 
   return (
     <div
-      className={`bg-gray-50 dark:bg-gray-900 ${useFlexContentShell ? 'flex min-h-screen flex-col' : 'min-h-screen'}`}
+      className={`bg-gray-50 dark:bg-gray-900 ${usesPremiumTheme(user) ? 'premium-shell' : ''} ${useFlexContentShell ? 'flex min-h-screen flex-col' : 'min-h-screen'}`}
     >
       {!shouldHideHeader && (
         <div className="relative z-50">
@@ -99,7 +100,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
       <main
         className={useFlexContentShell ? 'flex min-h-0 flex-1 flex-col' : undefined}
         style={{
-          paddingTop: shouldHideHeader ? '0' : anySplitView || gameDetailsWideBleedChrome ? '0' : `calc(4rem + env(safe-area-inset-top))`,
+          paddingTop: shouldHideHeader ? '0' : anySplitView || gameDetailsWideBleedChrome ? '0' : `calc(var(--app-header-height, 4rem) + env(safe-area-inset-top))`,
           paddingBottom: mainBottomPadding,
           paddingLeft: anySplitView || userProfileFullBleed || gameDetailsWideBleedChrome ? '0' : `max(0.5rem, env(safe-area-inset-left))`,
           paddingRight: anySplitView || userProfileFullBleed || gameDetailsWideBleedChrome ? '0' : `max(0.5rem, env(safe-area-inset-right))`,

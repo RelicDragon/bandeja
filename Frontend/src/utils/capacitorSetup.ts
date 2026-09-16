@@ -1,5 +1,5 @@
 import { App } from '@capacitor/app';
-import { SystemBars, SystemBarsStyle } from '@capacitor/core';
+import { SystemBars, SystemBarsStyle, SystemBarType } from '@capacitor/core';
 import { Keyboard, KeyboardResize } from '@capacitor/keyboard';
 import { isCapacitor, isIOS, isAndroid } from './capacitor';
 import { setupCapacitorNetwork } from './capacitorNetwork';
@@ -118,6 +118,9 @@ export const updateStatusBarStyle = async () => {
     console.log('Setting status bar style to:', style, isDarkMode ? '(white text for dark bg)' : '(black text for light bg)');
 
     await SystemBars.setStyle({ style });
+    if (!isDarkMode && document.documentElement.classList.contains('premium-navigation')) {
+      await SystemBars.setStyle({ style: SystemBarsStyle.Dark, bar: SystemBarType.StatusBar });
+    }
 
     console.log('Status bar style updated successfully');
   } catch (error) {

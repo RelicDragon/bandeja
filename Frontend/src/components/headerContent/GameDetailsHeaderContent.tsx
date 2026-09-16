@@ -35,10 +35,11 @@ export const GameDetailsHeaderContent = ({ canAccessChat }: GameDetailsHeaderCon
       {gameDetailsCanShowTableView && (
         <div
           className="absolute left-1/2 -translate-x-1/2 z-10 flex max-w-[min(100vw-8rem,20rem)] flex-wrap items-center justify-center gap-2 px-1 h-16 sm:max-w-none"
-          style={{ top: 'env(safe-area-inset-top)' }}
+          style={{ top: 'var(--app-header-action-top, env(safe-area-inset-top))', height: 'var(--app-header-controls-height, 4rem)' }}
         >
           <Button
             onClick={() => setGameDetailsTableViewOverride(!effectiveTableView)}
+            aria-label={t('gameResults.tableView')}
             variant={effectiveTableView ? 'primary' : 'secondary'}
             size="sm"
             className="flex items-center gap-2"

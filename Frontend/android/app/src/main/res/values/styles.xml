@@ -51,4 +51,13 @@
     <style name="AppTheme.NoActionBarLaunch.Racket" parent="AppTheme.NoActionBarLaunch">
         <item name="android:background">@drawable/splash_racket</item>
     </style>
+    <style name="AppTheme.NoActionBarLaunch.Premium" parent="AppTheme.NoActionBarLaunch">
+        <item name="android:background">@drawable/splash_premium</item>
+        <item name="windowSplashScreenBackground">#141411</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_logo_premium</item>
+    </style>
+    <style name="AppTheme.NoActionBarLaunch.PremiumLight" parent="AppTheme.NoActionBarLaunch.Premium">
+        <item name="android:background">@drawable/splash_premium_light</item>
+        <item name="windowSplashScreenBackground">#faf9f6</item>
+    </style>
 </resources>

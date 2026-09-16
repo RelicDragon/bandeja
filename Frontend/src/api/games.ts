@@ -363,6 +363,14 @@ export const gamesApi = {
     return response.data;
   },
 
+  substituteParticipant: async (id: string, outUserId: string, inUserId: string) => {
+    const response = await api.post<ApiResponse<void>>(`/games/${id}/substitute-participant`, {
+      outUserId,
+      inUserId,
+    });
+    return response.data;
+  },
+
   // Fixed Teams API
   getFixedTeams: async (id: string) => {
     const response = await api.get<ApiResponse<GameTeam[]>>(`/game-teams/game/${id}/teams`);

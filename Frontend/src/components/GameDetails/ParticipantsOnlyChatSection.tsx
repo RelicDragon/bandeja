@@ -6,6 +6,7 @@ import { Card, ConfirmationModal } from '@/components';
 import type { Game } from '@/types';
 import { gamesApi } from '@/api/games';
 import { isUserGameAdminOrOwner } from '@/utils/gameResults';
+import { canMutateGameRoster, isGameArchived } from '@shared/gameMutationLock';
 import { useParticipantChatsEnabled } from '@/hooks/useParticipantChatsEnabled';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import toast from 'react-hot-toast';
@@ -20,7 +21,7 @@ export const ParticipantsOnlyChatSection = ({ game, userId }: ParticipantsOnlyCh
   const reduceMotion = usePrefersReducedMotion();
   const canManage =
     isUserGameAdminOrOwner(game, userId) &&
-    game.status !== 'ARCHIVED' &&
+    !isGameArchived(game) &&
     game.entityType !== 'BAR' &&
     game.entityType !== 'TRAINING';
 
@@ -32,7 +33,7 @@ export const ParticipantsOnlyChatSection = ({ game, userId }: ParticipantsOnlyCh
   const [dismissed, setDismissed] = useState(false);
 
   const visible =
-    canManage && game.resultsStatus === 'NONE' && !isLoading && !bothEnabled && !dismissed;
+    canManage && canMutateGameRoster(game) && !isLoading && !bothEnabled && !dismissed;
 
   const handleConfirm = async () => {
     setIsEnabling(true);

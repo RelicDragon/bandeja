@@ -3,7 +3,12 @@ import { EntityType, ParticipantRole, Prisma, Sport } from '@prisma/client';
 import { BOOKING_ERROR_KEYS } from '@bandeja/shared/booking/errorKeys';
 import { ApiError } from '../../utils/ApiError';
 import { USER_SELECT_WITH_SPORT_PROFILES, SUPPORTED_CURRENCIES } from '../../utils/constants';
-import { calculateGameStatus } from '../../utils/gameStatus';
+import { calculatePersistableGameStatus } from '../../utils/gameStatus';
+import { canMutateGameRoster, isGameArchived } from '@bandeja/shared/gameMutationLock';
+import {
+  GAME_RESULTS_LOCKED_FIELDS_SELECT,
+  findLockedFieldChanges,
+} from './gameResultsLockedFields';
 import { GameReadinessService } from './readiness.service';
 import { GameReadService } from './read.service';
 import { hasParentGamePermission, canModifyResults } from '../../utils/parentGamePermissions';
@@ -167,6 +172,9 @@ export class GameUpdateService {
     const game = await prisma.game.findUnique({
       where: { id },
       select: {
+        ...GAME_RESULTS_LOCKED_FIELDS_SELECT,
+        status: true,
+        resultsStatus: true,
         maxParticipants: true,
         hasFixedTeams: true,
         entityType: true,
@@ -191,6 +199,18 @@ export class GameUpdateService {
 
     if (!game) {
       throw new ApiError(404, 'Game not found');
+    }
+
+    if (!canMutateGameRoster(game)) {
+      const locked = findLockedFieldChanges(game, data);
+      if (locked.length > 0) {
+        throw new ApiError(
+          400,
+          isGameArchived(game) ? 'errors.games.cannotEditArchived' : 'errors.games.cannotEditResultsStarted',
+          true,
+          { fields: locked },
+        );
+      }
     }
 
     if (game.entityType === EntityType.TRAINING || game.entityType === EntityType.EVENT) {
@@ -556,13 +576,13 @@ export class GameUpdateService {
       const cityTimezone = await getUserTimezoneFromCityId(currentGameWithCityId?.cityId ?? null);
       
       const timeIsSet = updateData.timeIsSet !== undefined ? updateData.timeIsSet : currentGame.timeIsSet;
-      updateData.status = calculateGameStatus({
+      updateData.status = calculatePersistableGameStatus({
         startTime: newStartTime,
         endTime: newEndTime,
         resultsStatus: currentGame.resultsStatus,
         timeIsSet,
         entityType: currentGame.entityType,
-      }, cityTimezone);
+      }, cityTimezone, currentGame.status);
       if (data.startTime !== undefined) {
         updateData.startTime = newStartTime;
       }
@@ -588,13 +608,13 @@ export class GameUpdateService {
           throw new ApiError(404, 'Game not found');
         }
         
-        updateData.status = calculateGameStatus({
+        updateData.status = calculatePersistableGameStatus({
           startTime,
           endTime,
           resultsStatus,
           timeIsSet: true,
           entityType: currentGame.entityType,
-        }, cityTimezone);
+        }, cityTimezone, currentGame.status);
       }
     }
 
@@ -610,7 +630,7 @@ export class GameUpdateService {
       const timeIsSet = updateData.timeIsSet !== undefined ? updateData.timeIsSet : currentGame.timeIsSet;
       const finishedDate =
         updateData.finishedDate !== undefined ? updateData.finishedDate : currentGame.finishedDate;
-      updateData.status = calculateGameStatus(
+      updateData.status = calculatePersistableGameStatus(
         {
           startTime,
           endTime,
@@ -619,7 +639,8 @@ export class GameUpdateService {
           entityType: currentGame.entityType,
           finishedDate,
         },
-        cityTimezone
+        cityTimezone,
+        currentGame.status
       );
     }
 

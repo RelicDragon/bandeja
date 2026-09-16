@@ -7,6 +7,7 @@ import { Settings, HelpCircle, Check } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useShowSettingsNotes } from '@/hooks/useShowSettingsNotes';
 import { gamesApi } from '@/api';
+import { canMutateGameRoster } from '@shared/gameMutationLock';
 import toast from 'react-hot-toast';
 
 interface GameSettingsProps {
@@ -127,7 +128,7 @@ export const GameSettings = ({ game, canEdit, onGameUpdate, embedded = false }: 
   const isLeagueSeason = game.entityType === 'LEAGUE_SEASON';
   const isTraining = game.entityType === 'TRAINING';
   const settingsTitle = t(isLeagueSeason ? 'createGame.settingsLeague' : 'createGame.settings');
-  const canChangeSettings = canEdit && game.resultsStatus === 'NONE' && game.status !== 'ARCHIVED';
+  const canChangeSettings = canEdit && canMutateGameRoster(game);
 
   useEffect(() => {
     setOptimistic((prev) => {

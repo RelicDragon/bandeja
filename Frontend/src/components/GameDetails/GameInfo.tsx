@@ -26,6 +26,7 @@ import { GameCardWeatherTag } from '@/components/gameCard/GameCardWeatherTag';
 import { GameWeatherDialog } from '@/components/weather/GameWeatherDialog';
 import { LinkedBookingCoverageBadge } from '@/components/GameDetails/LinkedBookingCoverageBadge';
 import { useGameLinkedBookingViewer } from '@/hooks/useGameLinkedBookingViewer';
+import { canMutateGameRoster } from '@shared/gameMutationLock';
 import { InfoIconChip } from './InfoIconChip';
 import { GameInfoUserNote } from './GameInfoUserNote';
 import { GameLocalizedAuthoredText } from './GameLocalizedAuthoredText';
@@ -349,7 +350,7 @@ export const GameInfo = ({
 
   const playingParticipants = game.participants?.filter(p => p.status === 'PLAYING') ?? [];
   const shouldShowTiming = game.entityType !== 'LEAGUE_SEASON';
-  const canShowEdit = game.resultsStatus === 'NONE' && game.status !== 'ARCHIVED';
+  const canShowEdit = canMutateGameRoster(game);
   const userCityId = user?.currentCity?.id || user?.currentCityId;
   const gameCityId = game.city?.id;
   const isDifferentCity = Boolean(gameCityId && userCityId && gameCityId !== userCityId);

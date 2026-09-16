@@ -870,6 +870,19 @@
           "ja": "Японский"
         }
       }
-    }
+    },
+    "resultsRosterTitle": "Игроки на корте",
+    "resultsRosterHint": "Идёт ввод результатов, состав закрыт. Замена травмированного игрока всё ещё возможна.",
+    "substitutePlayerAction": "Заменить",
+    "substitutePlayerTitle": "Замена игрока",
+    "substitutePlayerReplacing": "Заменяем",
+    "substitutePlayerNoCandidates": "Нет игроков для замены",
+    "substitutePlayerOut": "Уходит",
+    "substitutePlayerIn": "Выходит",
+    "substitutePlayerInheritsResults": "{{name}} занимает место и получает все уже записанные результаты",
+    "substitutePlayerOutLosesResults": "{{name}} не получит рейтинг и место в этой игре",
+    "substitutePlayerKeepsTeamSlot": "Место в команде, корт и размер состава не меняются",
+    "substitutePlayerConfirm": "Заменить игрока",
+    "substitutePlayerSuccess": "Игрок заменён"
   }
 }

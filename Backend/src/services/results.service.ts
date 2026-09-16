@@ -10,7 +10,7 @@ import {
   projectRoundUsersForSportContext,
 } from './game/read.service';
 import { getUserTimezoneFromCityId } from './user-timezone.service';
-import { calculateGameStatus } from '../utils/gameStatus';
+import { calculateGameStatus, calculatePersistableGameStatus } from '../utils/gameStatus';
 import { parseMatchSetRole } from './results/matchSetRole';
 import { assertMatchNormalizedSetsValid, type NormalizedMatchSetRow } from './results/matchSetsValidation';
 import {
@@ -247,7 +247,14 @@ export async function deleteGameResults(gameId: string) {
 
     const updatedGame = await tx.game.findUnique({
       where: { id: gameId },
-      select: { startTime: true, endTime: true, cityId: true, timeIsSet: true, entityType: true },
+      select: {
+        startTime: true,
+        endTime: true,
+        cityId: true,
+        timeIsSet: true,
+        entityType: true,
+        status: true,
+      },
     });
     
     if (updatedGame) {
@@ -261,13 +268,13 @@ export async function deleteGameResults(gameId: string) {
           metadata: {
             ...((game.metadata as any) || {}),
           },
-          status: calculateGameStatus({
+          status: calculatePersistableGameStatus({
             startTime: updatedGame.startTime,
             endTime: updatedGame.endTime,
             resultsStatus: 'NONE',
             timeIsSet: updatedGame.timeIsSet,
             entityType: updatedGame.entityType,
-          }, cityTimezone),
+          }, cityTimezone, updatedGame.status),
         },
       });
     }
@@ -356,7 +363,14 @@ export async function resetGameResults(gameId: string) {
 
     const updatedGame = await tx.game.findUnique({
       where: { id: gameId },
-      select: { startTime: true, endTime: true, cityId: true, timeIsSet: true, entityType: true },
+      select: {
+        startTime: true,
+        endTime: true,
+        cityId: true,
+        timeIsSet: true,
+        entityType: true,
+        status: true,
+      },
     });
     
     if (updatedGame) {
@@ -370,13 +384,13 @@ export async function resetGameResults(gameId: string) {
           metadata: {
             ...((game.metadata as any) || {}),
           },
-          status: calculateGameStatus({
+          status: calculatePersistableGameStatus({
             startTime: updatedGame.startTime,
             endTime: updatedGame.endTime,
             resultsStatus: 'NONE',
             timeIsSet: updatedGame.timeIsSet,
             entityType: updatedGame.entityType,
-          }, cityTimezone),
+          }, cityTimezone, updatedGame.status),
         },
       });
     }

@@ -7,6 +7,7 @@ import { CreateBetModal } from './CreateBetModal';
 import { CircleDollarSign, Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useSocketEventsStore } from '@/store/socketEventsStore';
+import { canMutateGameRoster } from '@shared/gameMutationLock';
 
 interface BetSectionProps {
   game: Game;
@@ -19,7 +20,7 @@ export const BetSection = ({ game }: BetSectionProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
 
-  const canEdit = game.resultsStatus === 'NONE';
+  const canEdit = canMutateGameRoster(game);
 
   useEffect(() => {
     const loadBets = async () => {
@@ -82,8 +83,7 @@ export const BetSection = ({ game }: BetSectionProps) => {
     return null;
   }
 
-  const isFinishedOrArchived = game.status === 'FINISHED' || game.status === 'ARCHIVED';
-  if (bets.length === 0 && isFinishedOrArchived) {
+  if (bets.length === 0 && !canEdit) {
     return null;
   }
 

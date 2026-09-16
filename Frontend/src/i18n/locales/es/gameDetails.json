@@ -855,6 +855,19 @@
           "ja": "Japonés"
         }
       }
-    }
+    },
+    "resultsRosterTitle": "Jugadores en pista",
+    "resultsRosterHint": "El registro de resultados está en curso, así que la alineación está bloqueada. Aún puedes sustituir a un jugador lesionado.",
+    "substitutePlayerAction": "Sustituir",
+    "substitutePlayerTitle": "Sustituir jugador",
+    "substitutePlayerReplacing": "Sustituyendo a",
+    "substitutePlayerNoCandidates": "No hay jugadores disponibles para sustituir",
+    "substitutePlayerOut": "Sale",
+    "substitutePlayerIn": "Entra",
+    "substitutePlayerInheritsResults": "{{name}} toma la plaza y todos los resultados ya registrados",
+    "substitutePlayerOutLosesResults": "{{name}} no conserva puntuación ni clasificación en este partido",
+    "substitutePlayerKeepsTeamSlot": "La plaza del equipo, la pista y el tamaño de la alineación no cambian",
+    "substitutePlayerConfirm": "Sustituir jugador",
+    "substitutePlayerSuccess": "Jugador sustituido"
   }
 }

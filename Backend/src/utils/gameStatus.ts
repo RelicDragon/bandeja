@@ -15,6 +15,20 @@ export const isResultsBasedEntityType = (entityType: EntityType): boolean => {
   return RESULTS_BASED_ENTITY_TYPES.includes(entityType);
 };
 
+/**
+ * A clock-derived `FINISHED` (slot ended, `resultsStatus` still `NONE`) must never be
+ * persisted for results-based entity types. Nobody recorded results, so the game stays
+ * joinable and editable, and storing `FINISHED` would cancel its pending invites via
+ * `cleanupInviteParticipantsForEndedGame`. Both writers — `GameStatusScheduler` and
+ * `GameUpdateService` — apply this. See `docs/product/constraints.md`.
+ */
+export const isUnscoredClockFinished = (
+  entityType: EntityType,
+  computedStatus: GameStatus,
+  resultsStatus: string,
+): boolean =>
+  isResultsBasedEntityType(entityType) && computedStatus === 'FINISHED' && resultsStatus === 'NONE';
+
 function isPastStartTimeArchiveThreshold(startTime: Date): boolean {
   return isAfter(new Date(), addDays(startTime, ARCHIVE_AFTER_START_DAYS));
 }
@@ -84,5 +98,28 @@ export const calculateGameStatus = (
   }
   
   return 'ANNOUNCED';
+};
+
+/**
+ * `calculateGameStatus` clamped to what may be stored, falling back to the current value
+ * for the unscored clock-`FINISHED` case (see `isUnscoredClockFinished`).
+ */
+export const calculatePersistableGameStatus = (
+  game: {
+    startTime: Date;
+    endTime: Date;
+    resultsStatus: string;
+    timeIsSet?: boolean;
+    finishedDate?: Date | null;
+    entityType: EntityType;
+  },
+  clubTimezone: string,
+  currentStatus: GameStatus,
+): GameStatus => {
+  const computed = calculateGameStatus(game, clubTimezone);
+  if (isUnscoredClockFinished(game.entityType, computed, game.resultsStatus)) {
+    return currentStatus;
+  }
+  return computed;
 };
 

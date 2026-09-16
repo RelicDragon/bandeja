@@ -75,7 +75,7 @@ export const GameChatHeader: React.FC<GameChatHeaderProps> = ({
 
   return (
     <header
-      className="z-40 flex-shrink-0 border-b border-gray-200 bg-white shadow-lg dark:border-gray-800 dark:bg-gray-900"
+      className="chat-thread-header z-40 flex-shrink-0 border-b border-gray-200 bg-white shadow-lg dark:border-gray-800 dark:bg-gray-900"
       style={{ paddingTop: isEmbedded ? '0' : 'env(safe-area-inset-top)' }}
     >
       <div

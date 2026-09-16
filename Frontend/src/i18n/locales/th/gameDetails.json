@@ -865,6 +865,19 @@
           "ja": "ญี่ปุ่น"
         }
       }
-    }
+    },
+    "resultsRosterTitle": "ผู้เล่นในสนาม",
+    "resultsRosterHint": "กำลังบันทึกผล รายชื่อจึงถูกล็อก แต่ยังเปลี่ยนตัวผู้เล่นที่บาดเจ็บได้",
+    "substitutePlayerAction": "เปลี่ยนตัว",
+    "substitutePlayerTitle": "เปลี่ยนตัวผู้เล่น",
+    "substitutePlayerReplacing": "กำลังเปลี่ยน",
+    "substitutePlayerNoCandidates": "ไม่มีผู้เล่นสำหรับเปลี่ยนตัว",
+    "substitutePlayerOut": "ออก",
+    "substitutePlayerIn": "เข้า",
+    "substitutePlayerInheritsResults": "{{name}} จะรับตำแหน่งและผลที่บันทึกไว้ทั้งหมด",
+    "substitutePlayerOutLosesResults": "{{name}} จะไม่ได้เรตติ้งหรืออันดับจากเกมนี้",
+    "substitutePlayerKeepsTeamSlot": "ตำแหน่งในทีม สนาม และจำนวนผู้เล่นยังคงเดิม",
+    "substitutePlayerConfirm": "เปลี่ยนตัวผู้เล่น",
+    "substitutePlayerSuccess": "เปลี่ยนตัวผู้เล่นแล้ว"
   }
 }

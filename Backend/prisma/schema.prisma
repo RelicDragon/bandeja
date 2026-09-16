@@ -6,6 +6,11 @@ datasource db {
   provider = "postgresql"
 }
 
+enum MainTheme {
+  classic
+  premium
+}
+
 model User {
   id                            String                           @id @default(cuid())
   phone                         String?                          @unique
@@ -56,6 +61,8 @@ model User {
   maxParticipantsInGame         Int                              @default(12)
   canCreateLeague               Boolean                          @default(false)
   isPremium                     Boolean                          @default(false)
+  premiumOnboardingCompletedAt  DateTime?
+  mainTheme                     MainTheme                        @default(premium)
   gender                        Gender                           @default(PREFER_NOT_TO_SAY)
   genderIsSet                   Boolean                          @default(false)
   nameIsSet                     Boolean                          @default(false)

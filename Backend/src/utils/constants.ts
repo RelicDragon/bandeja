@@ -297,6 +297,8 @@ export const PROFILE_SELECT_FIELDS = {
   shareGameCreationsToFollowers: true,
   shareGameResultsToFollowers: true,
   appIcon: true,
+  mainTheme: true,
+  premiumOnboardingCompletedAt: true,
   wallet: true,
   totalPoints: true,
   currentCityId: true,

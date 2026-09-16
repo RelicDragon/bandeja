@@ -1,3 +1,4 @@
+import { usesPremiumTheme } from '@/utils/mainTheme';
 import { AnimatePresence, motion } from 'framer-motion';
 import { CHAT_LIST_FADE_TRANSITION_S, CHAT_LIST_PULL_TRANSITION_S } from '@/components/chat/chatListMotion';
 import { Package, ShoppingCart, Store } from 'lucide-react';
@@ -128,7 +129,7 @@ export function ChatListView({ model }: { model: ChatListViewModel }) {
         />
       )}
       <div
-        className={`flex h-full min-h-0 flex-col overflow-hidden ${isDesktop ? 'bg-white dark:bg-gray-900' : ''}`}
+        className={`${usesPremiumTheme(user) ? 'premium-chat premium-chat-list' : ''} flex h-full min-h-0 flex-col overflow-hidden ${isDesktop ? 'bg-white dark:bg-gray-900' : ''}`}
         style={{
           transform: isDesktop ? 'none' : `translateY(${pullDistance}px)`,
           transition: pullDistance > 0 && !isRefreshing ? 'none' : `transform ${CHAT_LIST_PULL_TRANSITION_S}s ease-out`,
@@ -165,7 +166,6 @@ export function ChatListView({ model }: { model: ChatListViewModel }) {
             onContactsToggle={handleContactsToggle}
             onAddBug={() => setShowBugModal(true)}
             onCreateListing={chatsFilter === 'market' ? handleCreateListing : undefined}
-            isDesktop={isDesktop}
             hasCity={Boolean(browseCityName)}
             bugsFilterPanelOpen={bugsFilterPanelOpen}
             onBugsFilterToggle={() => setBugsFilterPanelOpen((o) => !o)}

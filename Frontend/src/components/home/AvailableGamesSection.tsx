@@ -816,7 +816,7 @@ export const AvailableGamesSection = ({
   if (splitView && findViewMode === 'calendar') {
     return (
       <SportLevelProvider sport={findLevelSport}>
-      <div className="fixed inset-x-0 bottom-0 overflow-hidden z-0" style={{ top: 'calc(4rem + env(safe-area-inset-top, 0px))' }}>
+      <div className="fixed inset-x-0 bottom-0 overflow-hidden z-0" style={{ top: 'calc(var(--app-header-height, 4rem) + env(safe-area-inset-top, 0px))' }}>
         <ResizableSplitter
           defaultLeftWidth={35}
           minLeftWidth={300}

@@ -26,6 +26,10 @@ Computed by `calculateGameStatus` (`Backend/src/utils/gameStatus.ts`); applied b
 - `GAME`/`TOURNAMENT`: archive 7 days after `startTime` even without FINAL; FINAL path archives 2 club-TZ days after `finishedDate`
 - Trainer is **`Game.trainerId`**, not a participant flag
 
+`status` is derived, so it must never gate mutations: **`resultsStatus !== NONE` locks the roster, settings and format**, with `ARCHIVED` as a separate hard stop. Shared predicates in `Frontend/shared/gameMutationLock.ts` (`canMutateGameRoster`); see `docs/product/constraints.md`. A game past its start or end time with `resultsStatus === NONE` is still fully editable and joinable.
+
+The one exception is **player substitution** while `resultsStatus === IN_PROGRESS`: `POST /games/:id/substitute-participant` hands one seat to a replacement (owner/admin, `participantSubstitution.service.ts`) so an injured player can be swapped out mid-game. The substitute inherits the seat and all results recorded for it; the roster size never changes.
+
 ## Entity types
 
 | `entityType` | Meaning |
@@ -49,10 +53,10 @@ Caps (booking, radar, partner board, unbounded roster, etc.): `getEntityCapabili
 | `entityType` | Content |
 |--------------|---------|
 | `EVENT` | `EventDetailsContent` |
-| `LEAGUE`, `LEAGUE_SEASON` | `GameDetailsShell` `variant="league"` (`LeagueDetailsContent`) |
-| else | `GameDetailsShell` `variant="game"` (`GameDetailsContent`) |
+| `LEAGUE`, `LEAGUE_SEASON` | `GameDetailsShell` `variant="league"` |
+| else | `GameDetailsShell` `variant="game"` |
 
-`GameDetails.tsx` / `LeagueDetails.tsx` are thin wrappers around `GameDetailsShell`.
+`GameDetailsShell` renders nothing but the decline-invite modal when `variant` and `entityType` disagree, so the two variants never overlap while the entity type resolves.
 
 ## Participation
 

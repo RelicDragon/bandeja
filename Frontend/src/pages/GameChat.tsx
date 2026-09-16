@@ -1,5 +1,8 @@
+import { usesPremiumTheme } from '@/utils/mainTheme';
 import React, { useEffect } from 'react';
 import { useShellNavStore } from '@/store/shellNavStore';
+import { useAuthStore } from '@/store/authStore';
+import { usePremiumNavigationAppearance } from '@/hooks/usePremiumNavigationAppearance';
 import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
 import type { GameChatProps } from './GameChat/types';
 import { GameChatHeaderSection } from './GameChat/GameChatHeaderSection';
@@ -20,6 +23,7 @@ export const GameChat: React.FC<GameChatProps> = (props) => (
 );
 
 const GameChatLayout: React.FC = () => {
+  const isPremium = useAuthStore((s) => usesPremiumTheme(s.user));
   const setBottomTabsVisible = useShellNavStore((s) => s.setBottomTabsVisible);
   const {
     id,
@@ -43,23 +47,24 @@ const GameChatLayout: React.FC = () => {
 
   useBackButtonHandler(panels.handleBackButton);
 
-  if (
-    resolveGameChatViewState({
-      isGameChatAccessDenied,
-      canViewPublicChat: derived.canViewPublicChat,
-    }) === 'denied'
-  ) {
+  const containerHidden = panels.showParticipantsPage || panels.showItemPage;
+  const viewState = resolveGameChatViewState({
+    isGameChatAccessDenied,
+    canViewPublicChat: derived.canViewPublicChat,
+  });
+  usePremiumNavigationAppearance(isPremium && !isEmbedded && !containerHidden && viewState === 'thread');
+
+  if (viewState === 'denied') {
     return <GameChatAccessDenied id={id} navigate={navigate} />;
   }
 
   const chatLevelSport = contextType === 'GAME' && game ? parseGameSport(game.sport) : undefined;
-  const containerHidden = panels.showParticipantsPage || panels.showItemPage;
 
   return (
     <SportLevelProvider sport={chatLevelSport}>
       <div
         ref={chatContainerRef}
-        className={`chat-container relative bg-gray-50 dark:bg-gray-900 flex flex-col ${isEmbedded ? 'chat-embedded h-full' : 'h-screen'} ${containerHidden ? 'hidden' : ''}`}
+        className={`chat-container ${isPremium ? 'premium-chat premium-chat-thread' : ''} relative bg-gray-50 dark:bg-gray-900 flex flex-col ${isEmbedded ? 'chat-embedded h-full' : 'h-screen'} ${containerHidden ? 'hidden' : ''}`}
       >
         <GameChatHeaderSection />
         <GameChatThreadBody />
