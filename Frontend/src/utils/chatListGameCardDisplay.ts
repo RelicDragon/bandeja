@@ -4,6 +4,7 @@ import type { TFunction } from 'i18next';
 import type { EntityType, Game } from '@/types';
 import type { ResolvedDisplaySettings } from '@/utils/displayPreferences';
 import { getClubTimezone, getDateLabelInClubTz, getGameTimeDisplay } from '@/utils/gameTimeDisplay';
+import { resolveDisplayedGameText } from '@/utils/gameText/resolveDisplayedGameText';
 
 export type GameChatListEntityVisual = {
   Icon: LucideIcon;
@@ -66,17 +67,24 @@ export function getGameChatListEntityLabel(entityType: EntityType, t: TFunction)
   });
 }
 
-export function getGameChatListTitle(game: Game, t: TFunction): string {
+export function getGameChatListTitle(
+  game: Game,
+  t: TFunction,
+  locale?: string | null,
+): string {
+  const displayName = resolveDisplayedGameText(game, { locale }).name?.trim() || null;
+  const parentSeasonName =
+    resolveDisplayedGameText(game.parent?.leagueSeason?.game, { locale }).name?.trim() || null;
+
   if (game.entityType === 'LEAGUE' && game.leagueRound && game.parent?.leagueSeason?.league?.name) {
     const league = game.parent.leagueSeason.league.name;
-    const seasonName = game.parent.leagueSeason.game?.name;
-    return seasonName ? `${league} · ${seasonName}` : league;
+    return parentSeasonName ? `${league} · ${parentSeasonName}` : league;
   }
   if (game.entityType === 'LEAGUE_SEASON' && game.leagueSeason?.league?.name) {
     const league = game.leagueSeason.league.name;
-    return game.name ? `${league} · ${game.name}` : league;
+    return displayName ? `${league} · ${displayName}` : league;
   }
-  if (game.name?.trim()) return game.name.trim();
+  if (displayName) return displayName;
   if (
     game.entityType !== 'GAME' &&
     game.entityType !== 'TRAINING' &&

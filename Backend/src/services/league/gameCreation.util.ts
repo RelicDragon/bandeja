@@ -26,6 +26,11 @@ import {
   inheritBracketGameSchedule,
   type BracketGameScheduleSource,
 } from './bracketGameScheduleInheritance';
+import { applyGameTextSourceChangeInTransaction } from '../gameText/gameTextSourceChange.service';
+import {
+  GAME_TEXT_NAME_PROVENANCE_GENERATED_FIXTURE,
+  gameTextMetadataWithNameProvenance,
+} from '../gameText/gameTextWriterAudit';
 
 export function resolveLeagueMatchCapacity(
   seasonSport: Sport,
@@ -322,12 +327,14 @@ export async function createLeagueGame(params: CreateLeagueGameParams) {
     inheritedSchedule?.endTime ?? new Date(defaultStartTime.getTime() + 1 * 60 * 60 * 1000);
   const format = resolveLeagueFixtureFormatFields(seasonGame, gameSetup);
 
+  const fixtureName = `Round ${round.orderIndex + 1} - Game`;
+  // Generated fixture label — structured provenance; helper skips AI enqueue.
   const game = await dbClient.game.create({
     data: {
       entityType: EntityType.LEAGUE,
       sport: seasonSport,
       gameType: seasonGame.gameType || 'CLASSIC',
-      name: `Round ${round.orderIndex + 1} - Game`,
+      name: fixtureName,
       clubId: inheritedSchedule ? inheritedSchedule.clubId : seasonGame.clubId,
       courtId: inheritedSchedule?.courtId,
       cityId: inheritedSchedule?.cityId ?? seasonGame.cityId,
@@ -351,6 +358,10 @@ export async function createLeagueGame(params: CreateLeagueGameParams) {
       allowUserInMultipleTeams,
       genderTeams: seasonGame.genderTeams || 'ANY',
       ...format,
+      metadata: gameTextMetadataWithNameProvenance(
+        null,
+        GAME_TEXT_NAME_PROVENANCE_GENERATED_FIXTURE,
+      ),
       parentId: leagueSeasonId,
       leagueRoundId: leagueRoundId,
       leagueGroupId,
@@ -371,6 +382,16 @@ export async function createLeagueGame(params: CreateLeagueGameParams) {
         })),
       },
     },
+  });
+
+  await applyGameTextSourceChangeInTransaction(dbClient, {
+    gameId: game.id,
+    previousName: null,
+    previousDescription: null,
+    nextName: fixtureName,
+    nextDescription: null,
+    nameProvenance: GAME_TEXT_NAME_PROVENANCE_GENERATED_FIXTURE,
+    enqueueJobs: false,
   });
 
   await dbClient.gameTeam.create({
@@ -485,12 +506,14 @@ export async function createLeaguePlayoffGame(
     },
   );
 
+  // Generated playoff label — structured provenance; helper skips AI enqueue.
+  const playoffName = `Playoff - ${gameType === 'WINNER_COURT' ? 'Winners Court' : 'Americano'}`;
   const game = await db.game.create({
     data: {
       entityType: EntityType.LEAGUE,
       sport: seasonSport,
       gameType,
-      name: `Playoff - ${gameType === 'WINNER_COURT' ? 'Winners Court' : 'Americano'}`,
+      name: playoffName,
       clubId: seasonGame.clubId,
       cityId: seasonGame.cityId,
       startTime,
@@ -511,6 +534,10 @@ export async function createLeaguePlayoffGame(
       allowUserInMultipleTeams,
       genderTeams: seasonGame.genderTeams || 'ANY',
       ...format,
+      metadata: gameTextMetadataWithNameProvenance(
+        null,
+        GAME_TEXT_NAME_PROVENANCE_GENERATED_FIXTURE,
+      ),
       parentId: leagueSeasonId,
       leagueRoundId,
       leagueGroupId,
@@ -523,6 +550,16 @@ export async function createLeaguePlayoffGame(
         })),
       },
     },
+  });
+
+  await applyGameTextSourceChangeInTransaction(db, {
+    gameId: game.id,
+    previousName: null,
+    previousDescription: null,
+    nextName: playoffName,
+    nextDescription: null,
+    nameProvenance: GAME_TEXT_NAME_PROVENANCE_GENERATED_FIXTURE,
+    enqueueJobs: false,
   });
 
   if (hasFixedTeams && teams?.length) {

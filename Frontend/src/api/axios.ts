@@ -7,6 +7,7 @@ import { handleAxios401MaybeRefresh } from '@/api/authRefresh';
 import { stampApiAuthCredentialGeneration } from '@/api/apiAuthCredentialGeneration';
 import { api } from '@/api/httpClient';
 import { getAttributionForAuth, isAuthAttributionRequestUrl } from '@/utils/appAttribution';
+import { getAppUiLocaleForGameText } from '@/utils/gameText/appUiLocale';
 
 function clientPlatformHeader(): string {
   if (!isCapacitor()) return 'web';
@@ -26,6 +27,7 @@ api.interceptors.request.use(
     }
     config.headers['X-Client-Version'] = getClientAppSemver();
     config.headers['X-Client-Platform'] = clientPlatformHeader();
+    config.headers['X-App-Locale'] = getAppUiLocaleForGameText();
 
     if (!isCapacitor()) {
       config.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate';

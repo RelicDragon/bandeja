@@ -2,10 +2,13 @@ import { useTranslation } from 'react-i18next';
 import { Pencil, Trash2 } from 'lucide-react';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
 import { SportPublicIcon } from '@/components/sport/SportPublicIcon';
+import { GameLocalizedAuthoredText } from '@/components/GameDetails/GameLocalizedAuthoredText';
+import { GameTextTranslationControl } from '@/components/GameDetails/GameTextTranslationControl';
 import { getSportConfig } from '@/sport/sportRegistry';
 import { parseGameSport } from '@/utils/gameSport';
 import { eventKindI18nKey, formatEventLevelBand } from '@/utils/eventDetails/eventListingFormat';
 import { eventOwnerParticipant } from '@/utils/eventDetails/eventParticipantLists';
+import { useGameDetailsLocalizedDisplay } from '@/hooks/useGameDetailsLocalizedDisplay';
 import type { Game } from '@/types';
 
 type EventPosterHeaderProps = {
@@ -17,12 +20,18 @@ type EventPosterHeaderProps = {
 
 export function EventPosterHeader({ game, canEdit, onEdit, onDelete }: EventPosterHeaderProps) {
   const { t } = useTranslation();
+  const localized = useGameDetailsLocalizedDisplay(game);
   const sport = parseGameSport(game.sport);
   const levelBand = formatEventLevelBand(game);
   const owner = eventOwnerParticipant(game.participants);
   const ownerName = owner?.user
     ? [owner.user.firstName, owner.user.lastName].filter(Boolean).join(' ').trim()
     : '';
+  const title =
+    localized.name?.trim() ||
+    game.name?.trim() ||
+    t(eventKindI18nKey(game.eventKind));
+  const hasDescription = Boolean(game.description?.trim() || localized.description?.trim());
 
   return (
     <div className="space-y-3 px-4 pt-4">
@@ -41,9 +50,23 @@ export function EventPosterHeader({ game, canEdit, onEdit, onDelete }: EventPost
         )}
       </div>
       <div className="flex items-start justify-between gap-3">
-        <h1 className="text-2xl font-semibold tracking-tight text-gray-950 dark:text-white">
-          {game.name?.trim() || t(eventKindI18nKey(game.eventKind))}
-        </h1>
+        <div className="min-w-0 flex-1">
+          <GameLocalizedAuthoredText
+            as="h1"
+            className="text-2xl font-semibold tracking-tight text-gray-950 dark:text-white"
+            text={title}
+            lang={localized.lang}
+          />
+          {!hasDescription && (
+            <GameTextTranslationControl
+              showOriginal={localized.showOriginal}
+              hasToggle={localized.hasToggle}
+              showPendingHint={localized.showPendingHint}
+              onToggle={localized.toggleShowOriginal}
+              a11yAnnouncement={localized.a11yAnnouncement}
+            />
+          )}
+        </div>
         {canEdit && (
           <div className="flex shrink-0 gap-1">
             <button

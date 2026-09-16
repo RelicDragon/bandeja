@@ -17,6 +17,7 @@ import {
   pastGamesInfiniteQueryOptions,
 } from './usePastGamesQuery';
 import { queryKeys } from '../queryKeys';
+import { getAppUiLocaleForGameText } from '@/utils/gameText/appUiLocale';
 
 function sampleGame(id: string, startTime: string, extra?: Partial<Game>): Game {
   return { id, startTime, entityType: 'GAME', resultsStatus: 'FINAL', ...extra } as Game;
@@ -37,7 +38,9 @@ describe('usePastGamesQuery', () => {
 
   it('uses expected query key shape', () => {
     const options = pastGamesInfiniteQueryOptions('user-1');
-    expect(options.queryKey).toEqual(queryKeys.games.past('user-1'));
+    expect(options.queryKey).toEqual(
+      queryKeys.games.past('user-1', getAppUiLocaleForGameText()),
+    );
   });
 
   it('fetches once per key within stale window', async () => {

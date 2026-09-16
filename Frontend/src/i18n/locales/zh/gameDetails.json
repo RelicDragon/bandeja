@@ -816,6 +816,55 @@
       "roundGame": "第 {{round}} 轮",
       "openGame": "打开比赛",
       "mySchedule": "我的日程"
+    },
+    "gameText": {
+      "descriptionHeading": "描述",
+      "translated": "已翻译",
+      "original": "原文",
+      "originalText": "原文",
+      "autoTranslatedHelper": "会自动翻译给使用其他语言的玩家。",
+      "showOriginal": "显示原文",
+      "showTranslation": "显示译文",
+      "translationInProgress": "正在翻译",
+      "a11yTranslationReady": "译文已更新",
+      "editor": {
+        "open": "翻译",
+        "title": "翻译",
+        "subtitle": "查看并修正每种语言的翻译。",
+        "keepOriginalName": "在所有语言中保留原始名称",
+        "keepOriginalNameHint": "适用于品牌赛事或场次名称。描述仍会自动翻译。",
+        "statusReady": "已就绪",
+        "statusEdited": "已编辑",
+        "statusUpdating": "更新中",
+        "statusNeedsReview": "待审核",
+        "statusRetry": "重试",
+        "statusNotNeeded": "无需翻译",
+        "originalName": "原始名称",
+        "translatedName": "翻译名称",
+        "originalDescription": "原始描述",
+        "translatedDescription": "翻译描述",
+        "useAutomatic": "使用自动翻译",
+        "useAutomaticHint": "移除你的修正，并在准备好后显示自动翻译。",
+        "needsReviewHint": "原文已更改。请更新修正或使用自动翻译。",
+        "namePreservedHint": "名称在所有语言中保持原文。",
+        "emptyField": "空",
+        "retry": "重试",
+        "retryQueued": "已排队重新翻译",
+        "conflict": "其他人已更新此翻译。已保留你的草稿 — 请查看最新原文后重试。",
+        "languages": {
+          "en": "英语",
+          "ru": "俄语",
+          "sr": "塞尔维亚语",
+          "es": "西班牙语",
+          "cs": "捷克语",
+          "ar": "阿拉伯语",
+          "zh": "中文",
+          "id": "印尼语",
+          "hi": "印地语",
+          "th": "泰语",
+          "ja": "日语"
+        }
+      }
     }
   }
 }

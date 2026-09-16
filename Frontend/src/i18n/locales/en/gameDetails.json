@@ -720,7 +720,6 @@
     "bracketLoadError": "Could not load the playoff bracket.",
     "bracketLoadErrorHint": "Check your connection and try again.",
     "bracketAllGroupsNote": "Showing the bracket for '{{groupName}}'. Pick a group above to switch.",
-    "bracketRequiresFixedTeams": "Bracket playoffs require fixed teams.",
     "bracketFullscreenTitle": "Playoff bracket",
     "openBracketFullscreen": "Open bracket fullscreen",
     "bracketListAll": "All games",
@@ -817,6 +816,55 @@
       "roundGame": "Round {{round}}",
       "openGame": "Open game",
       "mySchedule": "My schedule"
+    },
+    "gameText": {
+      "descriptionHeading": "Description",
+      "translated": "Translated",
+      "original": "Original",
+      "originalText": "Original text",
+      "autoTranslatedHelper": "Automatically translated for players in other languages.",
+      "showOriginal": "Show original",
+      "showTranslation": "Show translation",
+      "translationInProgress": "Translation in progress",
+      "a11yTranslationReady": "Translation updated",
+      "editor": {
+        "open": "Translations",
+        "title": "Translations",
+        "subtitle": "Review and correct translations for each language.",
+        "keepOriginalName": "Keep original name in every language",
+        "keepOriginalNameHint": "Useful for branded tournament or session names. Description still translates automatically.",
+        "statusReady": "Ready",
+        "statusEdited": "Edited",
+        "statusUpdating": "Updating",
+        "statusNeedsReview": "Needs review",
+        "statusRetry": "Retry",
+        "statusNotNeeded": "No translation needed",
+        "originalName": "Original name",
+        "translatedName": "Translated name",
+        "originalDescription": "Original description",
+        "translatedDescription": "Translated description",
+        "useAutomatic": "Use automatic translation",
+        "useAutomaticHint": "Removes your correction and shows the automatic translation when ready.",
+        "needsReviewHint": "The original changed. Update your correction or use automatic translation.",
+        "namePreservedHint": "Name is kept as the original in every language.",
+        "emptyField": "Empty",
+        "retry": "Retry",
+        "retryQueued": "Translation retry queued",
+        "conflict": "Someone else updated this translation. Your draft was kept — review the latest source and try again.",
+        "languages": {
+          "en": "English",
+          "ru": "Russian",
+          "sr": "Serbian",
+          "es": "Spanish",
+          "cs": "Czech",
+          "ar": "Arabic",
+          "zh": "Chinese",
+          "id": "Indonesian",
+          "hi": "Hindi",
+          "th": "Thai",
+          "ja": "Japanese"
+        }
+      }
     }
   }
 }

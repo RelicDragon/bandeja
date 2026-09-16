@@ -816,6 +816,55 @@
       "roundGame": "Putaran {{round}}",
       "openGame": "Buka permainan",
       "mySchedule": "Jadwal saya"
+    },
+    "gameText": {
+      "descriptionHeading": "Deskripsi",
+      "translated": "Diterjemahkan",
+      "original": "Asli",
+      "originalText": "Teks asli",
+      "autoTranslatedHelper": "Diterjemahkan otomatis untuk pemain dalam bahasa lain.",
+      "showOriginal": "Tampilkan asli",
+      "showTranslation": "Tampilkan terjemahan",
+      "translationInProgress": "Terjemahan sedang diproses",
+      "a11yTranslationReady": "Terjemahan diperbarui",
+      "editor": {
+        "open": "Terjemahan",
+        "title": "Terjemahan",
+        "subtitle": "Tinjau dan perbaiki terjemahan untuk setiap bahasa.",
+        "keepOriginalName": "Pertahankan nama asli di semua bahasa",
+        "keepOriginalNameHint": "Berguna untuk nama turnamen atau sesi bermerek. Deskripsi tetap diterjemahkan otomatis.",
+        "statusReady": "Siap",
+        "statusEdited": "Diedit",
+        "statusUpdating": "Memperbarui",
+        "statusNeedsReview": "Perlu ditinjau",
+        "statusRetry": "Coba lagi",
+        "statusNotNeeded": "Tidak perlu diterjemahkan",
+        "originalName": "Nama asli",
+        "translatedName": "Nama terjemahan",
+        "originalDescription": "Deskripsi asli",
+        "translatedDescription": "Deskripsi terjemahan",
+        "useAutomatic": "Gunakan terjemahan otomatis",
+        "useAutomaticHint": "Menghapus koreksi Anda dan menampilkan terjemahan otomatis saat siap.",
+        "needsReviewHint": "Teks asli berubah. Perbarui koreksi atau gunakan terjemahan otomatis.",
+        "namePreservedHint": "Nama tetap sebagai asli di semua bahasa.",
+        "emptyField": "Kosong",
+        "retry": "Coba lagi",
+        "retryQueued": "Pengulangan terjemahan diantrekan",
+        "conflict": "Orang lain memperbarui terjemahan ini. Draf Anda disimpan — tinjau sumber terbaru dan coba lagi.",
+        "languages": {
+          "en": "Inggris",
+          "ru": "Rusia",
+          "sr": "Serbia",
+          "es": "Spanyol",
+          "cs": "Ceko",
+          "ar": "Arab",
+          "zh": "Tionghoa",
+          "id": "Indonesia",
+          "hi": "Hindi",
+          "th": "Thai",
+          "ja": "Jepang"
+        }
+      }
     }
   }
 }

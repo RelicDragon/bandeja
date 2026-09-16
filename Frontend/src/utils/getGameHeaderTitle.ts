@@ -1,5 +1,6 @@
 import type { TFunction } from 'i18next';
 import type { Game } from '@/types';
+import { resolveDisplayedGameText } from '@/utils/gameText/resolveDisplayedGameText';
 
 export interface LeagueGameHeaderParts {
   kind: 'league';
@@ -18,35 +19,51 @@ export interface LeagueSeasonHeaderParts {
 
 export type StructuredGameHeaderParts = LeagueGameHeaderParts | LeagueSeasonHeaderParts;
 
-export function getLeagueGameHeaderParts(game: Game, t: TFunction): LeagueGameHeaderParts | null {
+export function getLeagueGameHeaderParts(
+  game: Game,
+  t: TFunction,
+  locale?: string | null,
+): LeagueGameHeaderParts | null {
   if (game.entityType !== 'LEAGUE' || !game.leagueRound || !game.parent?.leagueSeason?.league?.name) {
     return null;
   }
 
+  const seasonName =
+    resolveDisplayedGameText(game.parent.leagueSeason.game, { locale }).name?.trim() || undefined;
+
   return {
     kind: 'league',
     leagueName: game.parent.leagueSeason.league.name,
-    seasonName: game.parent.leagueSeason.game?.name,
+    seasonName,
     groupName: game.leagueGroup?.name,
     groupColor: game.leagueGroup?.color ?? undefined,
     roundLabel: `${t('gameDetails.round')} ${game.leagueRound.orderIndex + 1}`,
   };
 }
 
-export function getLeagueSeasonHeaderParts(game: Game): LeagueSeasonHeaderParts | null {
+export function getLeagueSeasonHeaderParts(
+  game: Game,
+  locale?: string | null,
+): LeagueSeasonHeaderParts | null {
   if (game.entityType !== 'LEAGUE_SEASON' || !game.leagueSeason?.league?.name) {
     return null;
   }
 
+  const seasonName = resolveDisplayedGameText(game, { locale }).name?.trim() || undefined;
+
   return {
     kind: 'leagueSeason',
     leagueName: game.leagueSeason.league.name,
-    seasonName: game.name ?? undefined,
+    seasonName,
   };
 }
 
-export function getLeagueGameHeaderTitle(game: Game, t: TFunction): string | null {
-  const parts = getLeagueGameHeaderParts(game, t);
+export function getLeagueGameHeaderTitle(
+  game: Game,
+  t: TFunction,
+  locale?: string | null,
+): string | null {
+  const parts = getLeagueGameHeaderParts(game, t, locale);
   if (!parts) return null;
 
   return [
@@ -59,18 +76,26 @@ export function getLeagueGameHeaderTitle(game: Game, t: TFunction): string | nul
     .join(' · ');
 }
 
-export function getLeagueSeasonHeaderTitle(game: Game): string | null {
-  const parts = getLeagueSeasonHeaderParts(game);
+export function getLeagueSeasonHeaderTitle(
+  game: Game,
+  locale?: string | null,
+): string | null {
+  const parts = getLeagueSeasonHeaderParts(game, locale);
   if (!parts) return null;
 
   return [parts.leagueName, parts.seasonName].filter(Boolean).join(' · ');
 }
 
-export function getGameHeaderTitle(game: Game, t: TFunction): string {
+export function getGameHeaderTitle(
+  game: Game,
+  t: TFunction,
+  locale?: string | null,
+): string {
+  const displayName = resolveDisplayedGameText(game, { locale }).name?.trim() || null;
   return (
-    getLeagueGameHeaderTitle(game, t) ??
-    getLeagueSeasonHeaderTitle(game) ??
-    game.name?.trim() ??
+    getLeagueGameHeaderTitle(game, t, locale) ??
+    getLeagueSeasonHeaderTitle(game, locale) ??
+    displayName ??
     game.club?.name ??
     `${game.gameType} Game`
   );

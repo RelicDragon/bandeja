@@ -11,6 +11,7 @@ import {
   type AvailableGamesPageMeta,
 } from './availableGamesPage';
 import { GAMES_LIST_STALE_TIME } from './constants';
+import { getAppUiLocaleForGameText } from '@/utils/gameText/appUiLocale';
 
 export interface AvailableUpcomingGamesQueryParams {
   userId: string | undefined;
@@ -58,6 +59,7 @@ export function availableUpcomingGamesQueryOptions(
     cityId: params.cityId,
     isAdmin: params.isAdmin,
     structural: params.structural,
+    locale: getAppUiLocaleForGameText(),
   });
   const isEnabled = enabled && !!params.userId;
   const queryKey = queryKeys.games.availableUpcoming(filterHash);

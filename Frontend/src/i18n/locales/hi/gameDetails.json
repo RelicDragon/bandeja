@@ -720,7 +720,6 @@
     "bracketLoadError": "प्लेऑफ़ ब्रैकेट लोड नहीं हो सका।",
     "bracketLoadErrorHint": "अपना कनेक्शन जाँचें और फिर कोशिश करें।",
     "bracketAllGroupsNote": "'{{groupName}}' का ब्रैकेट दिख रहा है। बदलने के लिए ऊपर समूह चुनें।",
-    "bracketRequiresFixedTeams": "ब्रैकेट प्लेऑफ़ के लिए फिक्स्ड टीमें आवश्यक।",
     "bracketFullscreenTitle": "प्लेऑफ़ ब्रैकेट",
     "openBracketFullscreen": "ब्रैकेट फ़ुलस्क्रीन खोलें",
     "bracketListAll": "सभी गेम",
@@ -817,6 +816,55 @@
       "roundGame": "राउंड {{round}}",
       "openGame": "गेम खोलें",
       "mySchedule": "मेरा शेड्यूल"
+    },
+    "gameText": {
+      "descriptionHeading": "विवरण",
+      "translated": "अनुवादित",
+      "original": "मूल",
+      "originalText": "मूल पाठ",
+      "autoTranslatedHelper": "अन्य भाषाओं के खिलाड़ियों के लिए स्वचालित रूप से अनुवादित।",
+      "showOriginal": "मूल दिखाएँ",
+      "showTranslation": "अनुवाद दिखाएँ",
+      "translationInProgress": "अनुवाद जारी है",
+      "a11yTranslationReady": "अनुवाद अपडेट हुआ",
+      "editor": {
+        "open": "अनुवाद",
+        "title": "अनुवाद",
+        "subtitle": "हर भाषा के अनुवाद देखें और सुधारें।",
+        "keepOriginalName": "हर भाषा में मूल नाम रखें",
+        "keepOriginalNameHint": "ब्रांडेड टूर्नामेंट या सेशन नामों के लिए उपयोगी। विवरण अब भी अपने आप अनुवाद होता है।",
+        "statusReady": "तैयार",
+        "statusEdited": "संपादित",
+        "statusUpdating": "अपडेट हो रहा है",
+        "statusNeedsReview": "समीक्षा आवश्यक",
+        "statusRetry": "फिर कोशिश करें",
+        "statusNotNeeded": "अनुवाद की जरूरत नहीं",
+        "originalName": "मूल नाम",
+        "translatedName": "अनुवादित नाम",
+        "originalDescription": "मूल विवरण",
+        "translatedDescription": "अनुवादित विवरण",
+        "useAutomatic": "स्वचालित अनुवाद उपयोग करें",
+        "useAutomaticHint": "आपका सुधार हटाता है और तैयार होने पर स्वचालित अनुवाद दिखाता है।",
+        "needsReviewHint": "मूल बदल गया। अपना सुधार अपडेट करें या स्वचालित अनुवाद उपयोग करें।",
+        "namePreservedHint": "नाम हर भाषा में मूल ही रहता है।",
+        "emptyField": "खाली",
+        "retry": "फिर कोशिश करें",
+        "retryQueued": "अनुवाद पुनः कतार में है",
+        "conflict": "किसी और ने यह अनुवाद अपडेट किया। आपका ड्राफ़्ट सुरक्षित है — नवीनतम मूल देखकर फिर कोशिश करें।",
+        "languages": {
+          "en": "अंग्रेज़ी",
+          "ru": "रूसी",
+          "sr": "सर्बियाई",
+          "es": "स्पेनिश",
+          "cs": "चेक",
+          "ar": "अरबी",
+          "zh": "चीनी",
+          "id": "इंडोनेशियाई",
+          "hi": "हिन्दी",
+          "th": "थाई",
+          "ja": "जापानी"
+        }
+      }
     }
   }
 }

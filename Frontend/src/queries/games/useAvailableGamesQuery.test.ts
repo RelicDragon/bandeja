@@ -67,7 +67,12 @@ describe('useAvailableGamesQuery', () => {
     await client.fetchQuery(clubs);
 
     expect(getAvailableGames).toHaveBeenCalledTimes(3);
-    expect(padel.queryKey[2]).toBe(buildAvailableGamesFilterHash({ sport: 'PADEL' }));
+    expect(padel.queryKey[2]).toBe(
+      buildAvailableGamesFilterHash({
+        sport: 'PADEL',
+        locale: 'en',
+      }),
+    );
     expect(clubs.queryKey[2]).not.toBe(padel.queryKey[2]);
   });
 

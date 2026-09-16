@@ -2,6 +2,12 @@ import { Response } from 'express';
 import { MyTabDataService } from '../services/me/myTabData.service';
 import { ApiError } from '../utils/ApiError';
 import type { AuthRequest } from '../middleware/auth';
+import { attachLocalizedTextToGames } from '../services/gameText/gameTextLocalizedText.batch';
+import { resolveRequestAppUiLocale } from '../services/gameText/gameTextRequestLocale';
+
+function localeScopedEtag(etag: string, locale: string): string {
+  return `${etag}:locale=${locale}`;
+}
 
 export class MeController {
   /**
@@ -14,12 +20,14 @@ export class MeController {
    * - includeStories: boolean - Include stories count
    * - includeBooktime: boolean - Include booktime connection status
    * - pastGamesLimit: number - Number of past games to include
+   * - locale: app UI language for additive localizedText on games
    *
    * Headers:
    * - If-None-Match: ETag for conditional request
+   * - X-App-Locale / Accept-Language: locale fallbacks
    *
    * Response headers:
-   * - ETag: Data hash for caching
+   * - ETag: Data hash for caching (locale-scoped)
    * - Cache-Control: private, no-cache, must-revalidate
    */
   static async getMyTabData(req: AuthRequest, res: Response): Promise<void> {
@@ -30,6 +38,7 @@ export class MeController {
     }
 
     const startTime = Date.now();
+    const locale = resolveRequestAppUiLocale(req);
 
     try {
       const options = {
@@ -43,7 +52,10 @@ export class MeController {
       const ifNoneMatch = req.get('If-None-Match');
       if (ifNoneMatch) {
         try {
-          const versionEtag = await MyTabDataService.computeVersionETag(userId, options);
+          const versionEtag = localeScopedEtag(
+            await MyTabDataService.computeVersionETag(userId, options),
+            locale,
+          );
           if (ifNoneMatch === versionEtag) {
             res.set('ETag', versionEtag);
             res.set('Cache-Control', 'private, no-cache, must-revalidate');
@@ -61,16 +73,20 @@ export class MeController {
         userCityId: req.user?.currentCityId,
         options,
       });
+      data.games = await attachLocalizedTextToGames(data.games, locale);
 
       let etag: string;
       try {
-        etag = await MyTabDataService.computeVersionETag(userId, options, {
-          storiesCount: data.storiesCount ?? null,
-          booktimeConnected: data.booktimeConnected ?? null,
-        });
+        etag = localeScopedEtag(
+          await MyTabDataService.computeVersionETag(userId, options, {
+            storiesCount: data.storiesCount ?? null,
+            booktimeConnected: data.booktimeConnected ?? null,
+          }),
+          locale,
+        );
       } catch (err) {
         console.warn('[MeController] version etag failed after load; using payload hash', err);
-        etag = MyTabDataService.generateETag(data);
+        etag = localeScopedEtag(MyTabDataService.generateETag(data), locale);
       }
 
       data._meta = {

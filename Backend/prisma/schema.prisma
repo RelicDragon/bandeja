@@ -197,6 +197,8 @@ model User {
   achievementStats              UserAchievementStats?
   levelEvaluationsGiven         PlayerLevelEvaluation[]         @relation("LevelEvaluationEvaluator")
   levelEvaluationsReceived      PlayerLevelEvaluation[]         @relation("LevelEvaluationTarget")
+  gameTextTranslationOverrides  GameTextTranslation[]           @relation("GameTextTranslationEditor")
+  gameTextTranslationCorrections GameTextTranslationCorrection[] @relation("GameTextTranslationCorrectionEditor")
 
   @@index([phone])
   @@index([telegramId])
@@ -793,6 +795,10 @@ model Game {
   resultsArtifactJob        GameResultsArtifactJob?
   externalBookings          GameExternalBooking[]
   levelEvaluations          PlayerLevelEvaluation[]
+  textSourceMeta            GameTextSourceMeta?
+  textTranslations          GameTextTranslation[]
+  textTranslationCorrections GameTextTranslationCorrection[]
+  textTranslationJobs       GameTextTranslationJob[]
 
   @@index([clubId])
   @@index([courtId])
@@ -1791,6 +1797,140 @@ model GameResultsArtifactJob {
   game Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
 
   @@index([status, runAfter])
+}
+
+/// Per-game source revisions and policies for authored Game.name / Game.description.
+/// Those columns remain the authored originals; this meta never rewrites their meaning.
+model GameTextSourceMeta {
+  gameId                          String   @id
+  nameSourceRevision              Int      @default(0)
+  descriptionSourceRevision       Int      @default(0)
+  /// Optional app-locale / BCP-47 override; null = detect automatically.
+  nameSourceLocaleOverride        String?  @db.VarChar(16)
+  descriptionSourceLocaleOverride String?  @db.VarChar(16)
+  keepOriginalNameInAllLocales    Boolean  @default(false)
+  createdAt                       DateTime @default(now())
+  updatedAt                       DateTime @updatedAt
+
+  game Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
+}
+
+enum GameTextField {
+  name
+  description
+}
+
+/// Machine generation lifecycle for a translation row (separate from stored text).
+enum GameTextGenerationState {
+  pending
+  ready
+  failed
+  not_needed
+}
+
+enum GameTextProvenance {
+  automatic
+  manual_override
+  same_language
+  preserved_name
+  empty_source
+}
+
+/// Current per-(game, field, locale) translation. Text columns stay null while pending.
+model GameTextTranslation {
+  id                           String                  @id @default(cuid())
+  gameId                       String
+  field                        GameTextField
+  locale                       String                  @db.VarChar(10)
+  sourceRevision               Int
+  automaticText                String?                 @db.Text
+  generationState              GameTextGenerationState @default(pending)
+  detectedSourceLocale         String?                 @db.VarChar(16)
+  provenance                   GameTextProvenance?
+  manualOverrideText           String?                 @db.Text
+  manualOverrideSourceRevision Int?
+  manualOverrideEditedBy       String?
+  manualOverrideEditedAt       DateTime?
+  /// Optimistic concurrency token for organizer correction patches.
+  recordRevision               Int                     @default(1)
+  createdAt                    DateTime                @default(now())
+  updatedAt                    DateTime                @updatedAt
+
+  game                   Game  @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  manualOverrideEditor   User? @relation("GameTextTranslationEditor", fields: [manualOverrideEditedBy], references: [id], onDelete: SetNull)
+
+  @@unique([gameId, field, locale])
+  @@index([gameId, locale])
+  @@index([generationState])
+  @@index([manualOverrideEditedBy])
+}
+
+/// Prior organizer corrections retained for review/recovery after source changes.
+model GameTextTranslationCorrection {
+  id                     String        @id @default(cuid())
+  gameId                 String
+  field                  GameTextField
+  locale                 String        @db.VarChar(10)
+  sourceRevision         Int
+  correctedText          String        @db.Text
+  sourceTextSnapshot     String?       @db.Text
+  previousAutomaticText  String?       @db.Text
+  editedBy               String
+  createdAt              DateTime      @default(now())
+  supersededAt           DateTime?
+
+  game   Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  editor User @relation("GameTextTranslationCorrectionEditor", fields: [editedBy], references: [id], onDelete: Cascade)
+
+  @@index([gameId, field, locale, createdAt])
+  @@index([gameId])
+  @@index([editedBy])
+}
+
+enum GameTextTranslationJobStatus {
+  pending
+  running
+  done
+  failed
+  superseded
+}
+
+enum GameTextTranslationJobErrorCategory {
+  transient
+  validation
+  configuration
+  provider
+  unknown
+}
+
+/// Durable game-text translation work unit. Lease + claimToken fence multi-worker claims.
+model GameTextTranslationJob {
+  id                          String                               @id @default(cuid())
+  gameId                      String
+  targetLocale                String                               @db.VarChar(10)
+  nameSourceRevision          Int
+  descriptionSourceRevision   Int
+  policyVersion               Int
+  includeName                 Boolean                              @default(true)
+  includeDescription          Boolean                              @default(true)
+  status                      GameTextTranslationJobStatus         @default(pending)
+  attempts                    Int                                  @default(0)
+  runAfter                    DateTime                             @default(now())
+  leaseOwner                  String?
+  leaseExpiresAt              DateTime?
+  /// Monotonic fencing token; increment on each successful claim.
+  claimToken                  BigInt                               @default(0)
+  errorCategory               GameTextTranslationJobErrorCategory?
+  lastError                   String?
+  createdAt                   DateTime                             @default(now())
+  updatedAt                   DateTime                             @updatedAt
+
+  game Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  @@unique([gameId, targetLocale, nameSourceRevision, descriptionSourceRevision, policyVersion])
+  @@index([status, runAfter])
+  @@index([leaseExpiresAt])
+  @@index([gameId])
 }
 
 enum TranslationJobPriority {

@@ -8,6 +8,9 @@ import {
   formatEventPrice,
   eventVenueLabel,
 } from '@/utils/eventDetails/eventListingFormat';
+import { GameLocalizedAuthoredText } from '@/components/GameDetails/GameLocalizedAuthoredText';
+import { GameTextTranslationControl } from '@/components/GameDetails/GameTextTranslationControl';
+import { useGameDetailsLocalizedDisplay } from '@/hooks/useGameDetailsLocalizedDisplay';
 import type { Game } from '@/types';
 
 type EventMetaBlockProps = {
@@ -17,11 +20,12 @@ type EventMetaBlockProps = {
 export function EventMetaBlock({ game }: EventMetaBlockProps) {
   const { t, i18n } = useTranslation();
   const user = useAuthStore((s) => s.user);
+  const localized = useGameDetailsLocalizedDisplay(game);
   const settings = resolveDisplaySettings(user);
   const dateRange = formatEventDateRange(game, settings.locale || i18n.language, settings.hour12);
   const venue = eventVenueLabel(game);
   const price = formatEventPrice(game, t, resolveUserCurrency(user?.defaultCurrency));
-  const description = game.description?.trim();
+  const description = localized.description?.trim() || game.description?.trim();
 
   return (
     <div className="space-y-4 px-4">
@@ -44,9 +48,27 @@ export function EventMetaBlock({ game }: EventMetaBlockProps) {
         )}
       </div>
       {description && (
-        <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-700 dark:text-gray-300">
-          {description}
-        </p>
+        <div className="space-y-1.5">
+          <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-0.5">
+            <span className="text-[10px] font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+              {t('gameDetails.gameText.descriptionHeading', { defaultValue: 'Description' })}
+            </span>
+            <GameTextTranslationControl
+              compact
+              showOriginal={localized.showOriginal}
+              hasToggle={localized.hasToggle}
+              showPendingHint={localized.showPendingHint}
+              onToggle={localized.toggleShowOriginal}
+              a11yAnnouncement={localized.a11yAnnouncement}
+            />
+          </div>
+          <GameLocalizedAuthoredText
+            as="p"
+            className="whitespace-pre-wrap text-sm leading-relaxed text-gray-700 dark:text-gray-300"
+            text={description}
+            lang={localized.lang}
+          />
+        </div>
       )}
     </div>
   );

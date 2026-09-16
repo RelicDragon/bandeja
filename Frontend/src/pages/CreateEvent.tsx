@@ -43,6 +43,8 @@ import {
   type EventCreatorIntent,
   type EventHeroPayload,
 } from '@/utils/createEventPayload';
+import { authoredGameTextForEdit } from '@/utils/gameText/authoredGameTextForEdit';
+import { GameTextAuthoredFieldsHint } from '@/components/gameText/GameTextAuthoredFieldsHint';
 
 type CreateEventProps = {
   initialGameData?: Partial<Game>;
@@ -74,8 +76,9 @@ export function CreateEvent({ initialGameData }: CreateEventProps) {
   const [playerLevelRange, setPlayerLevelRange] = useState<[number, number]>(() =>
     getDefaultLevelRange(user ? getDisplayLevelForSport(user, defaultSport) : undefined),
   );
-  const [gameName, setGameName] = useState(initialGameData?.name ?? '');
-  const [description, setDescription] = useState(initialGameData?.description ?? '');
+  const initialAuthored = authoredGameTextForEdit(initialGameData);
+  const [gameName, setGameName] = useState(initialAuthored.name);
+  const [description, setDescription] = useState(initialAuthored.description);
   const [eventHeroes, setEventHeroes] = useState<EventHeroPayload[]>([]);
   const [cities, setCities] = useState<City[]>([]);
   const [clubs, setClubs] = useState<Club[]>([]);
@@ -255,7 +258,9 @@ export function CreateEvent({ initialGameData }: CreateEventProps) {
               onChange={(e) => setGameName(e.target.value)}
               placeholder={t('createEvent.namePlaceholder')}
               className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
+              dir="auto"
             />
+            <GameTextAuthoredFieldsHint className="mt-1.5 space-y-0.5" />
           </div>
           <EventHeroUploader heroes={eventHeroes} onChange={setEventHeroes} disabled={loading} />
           <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
@@ -268,6 +273,7 @@ export function CreateEvent({ initialGameData }: CreateEventProps) {
               rows={4}
               placeholder={t('createEvent.descriptionPlaceholder')}
               className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 outline-none resize-none"
+              dir="auto"
             />
           </div>
           <CityModal

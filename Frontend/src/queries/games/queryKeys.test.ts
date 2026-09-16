@@ -4,6 +4,7 @@ import { buildAvailableGamesFilterHash, queryKeys } from '../queryKeys';
 describe('games query keys', () => {
   it('my games key shape', () => {
     expect(queryKeys.games.my('user-1')).toEqual(['games', 'my', 'user-1']);
+    expect(queryKeys.games.my('user-1', 'ru')).toEqual(['games', 'my', 'user-1', 'ru']);
   });
 
   it('available games key shape', () => {
@@ -16,6 +17,13 @@ describe('games query keys', () => {
 
   it('past games key shape', () => {
     expect(queryKeys.games.past('user-1')).toEqual(['games', 'past', 'user-1']);
+    expect(queryKeys.games.past('user-1', 'ja')).toEqual(['games', 'past', 'user-1', 'ja']);
+  });
+
+  it('filterHash changes when locale changes', () => {
+    const a = buildAvailableGamesFilterHash({ sport: 'PADEL', locale: 'en' });
+    const b = buildAvailableGamesFilterHash({ sport: 'PADEL', locale: 'ru' });
+    expect(a).not.toBe(b);
   });
 
   it('filterHash changes when dates change', () => {

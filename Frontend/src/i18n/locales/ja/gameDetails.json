@@ -816,6 +816,55 @@
       "roundGame": "ラウンド {{round}}",
       "openGame": "試合を開く",
       "mySchedule": "マイスケジュール"
+    },
+    "gameText": {
+      "descriptionHeading": "説明",
+      "translated": "翻訳済み",
+      "original": "原文",
+      "originalText": "原文",
+      "autoTranslatedHelper": "他の言語のプレイヤー向けに自動翻訳されます。",
+      "showOriginal": "原文を表示",
+      "showTranslation": "翻訳を表示",
+      "translationInProgress": "翻訳中",
+      "a11yTranslationReady": "翻訳が更新されました",
+      "editor": {
+        "open": "翻訳",
+        "title": "翻訳",
+        "subtitle": "各言語の翻訳を確認・修正します。",
+        "keepOriginalName": "すべての言語で元の名前を維持",
+        "keepOriginalNameHint": "ブランド大会やセッション名に便利です。説明は引き続き自動翻訳されます。",
+        "statusReady": "準備完了",
+        "statusEdited": "編集済み",
+        "statusUpdating": "更新中",
+        "statusNeedsReview": "要確認",
+        "statusRetry": "再試行",
+        "statusNotNeeded": "翻訳不要",
+        "originalName": "元の名前",
+        "translatedName": "翻訳名",
+        "originalDescription": "元の説明",
+        "translatedDescription": "翻訳された説明",
+        "useAutomatic": "自動翻訳を使う",
+        "useAutomaticHint": "修正を削除し、準備でき次第自動翻訳を表示します。",
+        "needsReviewHint": "原文が変わりました。修正を更新するか、自動翻訳を使ってください。",
+        "namePreservedHint": "名前はすべての言語で原文のままです。",
+        "emptyField": "空",
+        "retry": "再試行",
+        "retryQueued": "翻訳の再試行をキューに追加しました",
+        "conflict": "他の人がこの翻訳を更新しました。下書きは保持されています。最新の原文を確認して再試行してください。",
+        "languages": {
+          "en": "英語",
+          "ru": "ロシア語",
+          "sr": "セルビア語",
+          "es": "スペイン語",
+          "cs": "チェコ語",
+          "ar": "アラビア語",
+          "zh": "中国語",
+          "id": "インドネシア語",
+          "hi": "ヒンディー語",
+          "th": "タイ語",
+          "ja": "日本語"
+        }
+      }
     }
   }
 }

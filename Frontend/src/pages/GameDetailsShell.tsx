@@ -65,6 +65,12 @@ import { useGameDetailsChromeStore } from '@/components/GameDetails/gameDetailsC
 import { useHeaderStore } from '@/store/headerStore';
 import { useSocketEventsStore } from '@/store/socketEventsStore';
 import { Game, Invite, Court, Club } from '@/types';
+import { isGameTextTranslationPending } from '@/utils/gameText/gameTextPending';
+import {
+  GAME_TEXT_PENDING_POLL_INTERVAL_MS,
+  GAME_TEXT_PENDING_POLL_MAX_ATTEMPTS,
+} from '@/utils/gameText/gameTextPendingPoll';
+import { useNetworkStore } from '@/utils/networkStatus';
 import { parseGameSport } from '@/utils/gameSport';
 import {
   isCancelledGame410Payload,
@@ -385,8 +391,11 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
 
   const lastInviteDeleted = useSocketEventsStore((state) => state.lastInviteDeleted);
   const lastGameUpdate = useSocketEventsStore((state) => state.lastGameUpdate);
+  const lastGameTextInvalidate = useSocketEventsStore((state) => state.lastGameTextInvalidate);
   const lastGameCancelled = useSocketEventsStore((state) => state.lastGameCancelled);
   const clearLastGameCancelled = useSocketEventsStore((state) => state.clearLastGameCancelled);
+  const isOnline = useNetworkStore((s) => s.isOnline);
+  const gameTextPending = isGameTextTranslationPending(game?.localizedText);
 
   useEffect(() => {
     if (!id) return;
@@ -466,6 +475,52 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
       return mergeGameResultsArtifactsFields(prevGame, merged);
     });
   }, [lastGameUpdate, id, user?.id]);
+
+  useEffect(() => {
+    if (!lastGameTextInvalidate || lastGameTextInvalidate.gameId !== id) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const response = await gamesApi.getById(id);
+        if (!cancelled) setGame(response.data);
+      } catch {
+        /* reconnect/focus recovery */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [lastGameTextInvalidate, id]);
+
+  useEffect(() => {
+    if (!id || !isOnline || !gameTextPending) return;
+    let attempts = 0;
+    let cancelled = false;
+    const timer = window.setInterval(() => {
+      if (cancelled) return;
+      attempts += 1;
+      if (attempts > GAME_TEXT_PENDING_POLL_MAX_ATTEMPTS) {
+        window.clearInterval(timer);
+        return;
+      }
+      void (async () => {
+        try {
+          const response = await gamesApi.getById(id);
+          if (cancelled) return;
+          setGame(response.data);
+          if (!isGameTextTranslationPending(response.data.localizedText)) {
+            window.clearInterval(timer);
+          }
+        } catch {
+          /* ignore transient poll errors */
+        }
+      })();
+    }, GAME_TEXT_PENDING_POLL_INTERVAL_MS);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, [id, isOnline, gameTextPending]);
 
   useEffect(() => {
     if (!lastGameCancelled || lastGameCancelled.gameId !== id) return;

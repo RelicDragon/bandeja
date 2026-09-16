@@ -806,6 +806,55 @@
     "bracketPreviewUnassignedLabel": "Unassigned teams",
     "playoffWizardStep": "Step {{current}} of {{total}}",
     "fixtureDetailNoGameYet": "No league match exists for this pairing yet. It will appear here once a game is created in a regular round.",
-    "fixtureDetailNoDatetimeFinal": "Date and venue were not recorded for this match."
+    "fixtureDetailNoDatetimeFinal": "Date and venue were not recorded for this match.",
+    "gameText": {
+      "descriptionHeading": "Descripción",
+      "translated": "Traducido",
+      "original": "Original",
+      "originalText": "Texto original",
+      "autoTranslatedHelper": "Se traduce automáticamente para jugadores en otros idiomas.",
+      "showOriginal": "Mostrar original",
+      "showTranslation": "Mostrar traducción",
+      "translationInProgress": "Traducción en curso",
+      "a11yTranslationReady": "Traducción actualizada",
+      "editor": {
+        "open": "Traducciones",
+        "title": "Traducciones",
+        "subtitle": "Revisa y corrige las traducciones de cada idioma.",
+        "keepOriginalName": "Mantener el nombre original en todos los idiomas",
+        "keepOriginalNameHint": "Útil para nombres de torneos o sesiones de marca. La descripción sigue traduciendo automáticamente.",
+        "statusReady": "Lista",
+        "statusEdited": "Editada",
+        "statusUpdating": "Actualizando",
+        "statusNeedsReview": "Revisión necesaria",
+        "statusRetry": "Reintentar",
+        "statusNotNeeded": "No hace falta traducir",
+        "originalName": "Nombre original",
+        "translatedName": "Nombre traducido",
+        "originalDescription": "Descripción original",
+        "translatedDescription": "Descripción traducida",
+        "useAutomatic": "Usar traducción automática",
+        "useAutomaticHint": "Quita tu corrección y muestra la traducción automática cuando esté lista.",
+        "needsReviewHint": "El original cambió. Actualiza tu corrección o usa la traducción automática.",
+        "namePreservedHint": "El nombre se mantiene como original en todos los idiomas.",
+        "emptyField": "Vacío",
+        "retry": "Reintentar",
+        "retryQueued": "Reintento de traducción en cola",
+        "conflict": "Alguien actualizó esta traducción. Se conservó tu borrador: revisa el original actual e inténtalo de nuevo.",
+        "languages": {
+          "en": "Inglés",
+          "ru": "Ruso",
+          "sr": "Serbio",
+          "es": "Español",
+          "cs": "Checo",
+          "ar": "Árabe",
+          "zh": "Chino",
+          "id": "Indonesio",
+          "hi": "Hindi",
+          "th": "Tailandés",
+          "ja": "Japonés"
+        }
+      }
+    }
   }
 }

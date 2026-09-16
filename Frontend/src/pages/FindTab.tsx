@@ -56,6 +56,7 @@ import {
 } from '@/queries/queryKeys';
 import { deriveFindCalendarGamesLoading } from '@/utils/deriveFindCalendarGamesLoading';
 import { isAvailableGamesDayIndexContinuationRunning } from '@/queries/games/availableGamesDayIndexContinuation';
+import { getAppUiLocaleForGameText } from '@/utils/gameText/appUiLocale';
 
 export const FindTab = () => {
   const { t } = useTranslation();
@@ -291,6 +292,7 @@ export const FindTab = () => {
     const calendarHash = buildAvailableGamesFilterHash({
       ...calendarQueryParams,
       indexOnly: true,
+      locale: getAppUiLocaleForGameText(),
     });
     const key = `${calendarHash}:${findSelectedDay ?? ''}`;
     if (neighborPrefetchKeyRef.current === key) return;
@@ -341,8 +343,12 @@ export const FindTab = () => {
     const calendarHash = buildAvailableGamesFilterHash({
       ...calendarQueryParams,
       indexOnly: true,
+      locale: getAppUiLocaleForGameText(),
     });
-    const upcomingHash = buildAvailableUpcomingFilterHash(upcomingQueryParams);
+    const upcomingHash = buildAvailableUpcomingFilterHash({
+      ...upcomingQueryParams,
+      locale: getAppUiLocaleForGameText(),
+    });
     const key = `${findViewMode}:${calendarHash}:${findSelectedDay ?? ''}:${calendarPage ? 'm1' : 'm0'}:${selectedDayReady ? 'd1' : 'd0'}:${upcomingHash}`;
     if (prefetchKeyRef.current === key) return;
 

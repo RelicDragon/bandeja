@@ -14,6 +14,7 @@ vi.mock('@/api/me', () => ({
 
 import { myGamesQueryOptions } from './useMyGamesQuery';
 import { queryKeys } from '../queryKeys';
+import { getAppUiLocaleForGameText } from '@/utils/gameText/appUiLocale';
 
 function sampleGame(id: string, startTime: string): Game {
   return { id, startTime } as Game;
@@ -45,7 +46,9 @@ describe('useMyGamesQuery', () => {
 
   it('uses expected query key shape', () => {
     const options = myGamesQueryOptions('user-1');
-    expect(options.queryKey).toEqual(queryKeys.games.my('user-1'));
+    expect(options.queryKey).toEqual(
+      queryKeys.games.my('user-1', getAppUiLocaleForGameText()),
+    );
   });
 
   it('fetches once per key within stale window', async () => {

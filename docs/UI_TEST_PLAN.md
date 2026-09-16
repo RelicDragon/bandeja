@@ -130,6 +130,14 @@ Frontend/e2e/
 | G-16 | Deep link marketplace item | Open `/marketplace/:id` | Item drawer/detail |
 | G-17 | Player card overlay | URL with player overlay param | Bottom sheet opens |
 | G-18 | i18n switch | Change language in profile | UI strings update |
+| G-49 | Game text locale cache | Change app language while Find/My games are cached | Lists refetch for the new locale; cached titles do not stay on the previous language’s `localizedText` |
+| G-54 | Find/My card localized titles | Game with ready `localizedText.name` for viewer locale appears on Find, My upcoming, and past lists; while viewing, translation arrives for a pending card | Card title shows localized name with existing truncation; no spinner/badge/language picker; pending still shows original until ready; title updates in place without remount; scroll position and list order unchanged |
+| G-55 | Event poster / chat list localized titles | EVENT with ready localized name on Find Events rail/list; game chat inbox row with localizedText | Poster and chat list titles show localized name (pending → original); no translation badges on those surfaces |
+| G-56 | Guest uses app UI language | `@guest` set UI language (e.g. localStorage/`LanguageSelector`) to a non-English locale → open Find with a game that has ready `localizedText` for that locale | Card title uses that app UI language; chat preferred incoming-translation language is ignored |
+| G-57 | Nested season title on LEAGUE card | LEAGUE fixture whose parent season game has ready localized season name | Card shows league name + localized parent season name (not untranslated season `name` when projection is ready) |
+| G-58 | Empty-name card fallback with localization | GAME with empty/null name (classic vs non-classic) and TOURNAMENT/BAR/etc. with empty name; `localizedText` pending/empty_source; open Find/My | Existing entity-type / game-type title fallbacks still show; no invented AI title; pending localization does not blank the card title |
+| G-59 | Stale My scheduled row localized title | My tab stale/amber scheduled game row (`UpcomingGamesList`) for a game with ready `localizedText.name` | Row title shows localized name (pending → original); same resolver as cards; no translation badge |
+| G-60 | Chat-list nested season localized title | LEAGUE fixture chat inbox row whose parent season has ready localized season name | Inbox title is `league · localizedSeason` via `getGameChatListTitle` (pending → authored season name); not untranslated season when projection is ready |)
 | G-19 | Dark/light theme | Toggle theme | Persisted appearance |
 | G-20 | Desktop split chat | `@desktop` open `/chats` + select thread | List + thread side by side |
 | G-21 | Home URL subtab sync | Open `/?tab=past-games`; legacy `/?tab=list`, `/?tab=advanced` | Past subtab selected; legacy list/advanced URLs redirect to calendar |
@@ -671,6 +679,9 @@ Frontend/e2e/
 | C-27 | Fixed pairs segmented switch | Create GAME doubles → pick Rotating or Fixed pairs | Team setup shown when Fixed pairs selected |
 | C-27t | Tournament match format + fixed pairs | Create TOURNAMENT → pick participant count cards → 1v1/2v2 then Rotating/Fixed pairs | Same controls as GAME; roster cards unchanged; Fixed pairs only when 2v2 |
 | C-28 | Game name & miscellaneous | Name input inside Name & photo card at top; description and price in Miscellaneous section | Saved on submit |
+| C-71 | Authored text auto-translate helper | Open `/create-game` Name & photo / miscellaneous name+description; open `/create-event` name+description | Helper “Automatically translated for players in other languages.” under authored fields; no translation language picker or wait step before create |
+| C-72 | Create not blocked by translation | Create GAME/EVENT with name+description while generation is pending or disabled (`GAME_TEXT_LOCALIZATION_GENERATION_ENABLED` off / worker slow) | Create succeeds immediately after DB save; navigates to details; no wait for AI/translations |
+| C-73 | Duplicate seeds authored originals | Game with ready localized display ≠ authored name; Duplicate from details | Create form name/description are authored originals only (`authoredGameTextForEdit`); not the viewer’s localized display |)
 | C-29 | Price fields | Set price type/currency/total under Miscellaneous | Saved correctly |
 | C-30 | Avatar upload | Upload game image via Name & photo card (avatar left of name input) | Preview shown |
 | C-31 | Invite players | Open player list → select | Invites sent on create |
@@ -867,6 +878,7 @@ Frontend/e2e/
 | GD-24 | Edit max participants | Max participants modal | Capacity updated; GAME modal shows 1v1/2v2 only (no current/maximum summary) |
 | GD-24t | Edit tournament match format / fixed pairs | TOURNAMENT → edit participants setup | Modal keeps participant cards; shows 1v1/2v2 + Rotating/Fixed pairs; save updates `playersPerMatch` / `hasFixedTeams` |
 | GD-25 | Edit game format | Format wizard (pre-results) | Format updated |
+| GD-25a | Tournament Round Robin persists | TOURNAMENT → format wizard → Round Robin → Done → leave and reopen game | Still Round Robin (`matchGenerationType` / `gameType`); does not snap back to Americano |
 | GD-95 | Format summary for read-only viewer | Open padel game pre-results as participant without format edit rights, or non-participant who can view the game | “What kind of game?” picker hidden; format card shows title + summary (includes gender label when not Any); tap help icon expands full format details; no pencil; no gender row below card |
 | GD-96 | Format picker for editor | Open same game as owner/admin or `resultsByAnyone` playing participant | “What kind of game?” picker shown; can change template / format |
 | GD-82 | Fixed pairs roster section | Open padel game with fixed pairs enabled, 4+ even roster, no results | Standalone Fixed Pairs card below format; team slots editable; no toggle in format card |
@@ -1030,6 +1042,44 @@ Frontend/e2e/
 | GD-169 | Event pending visibility | Create EVENT as non-admin; open Find as another user; open `/games/:id` as owner and as other user | New listing is `ON_APPROVE`; owner (and `isAdmin`) can open details with pending banner; other users get not-found; Events rail / Events chip do not show it |
 | GD-170 | Event admin approve / decline | `isAdmin` opens pending EVENT | Approve and Decline buttons; each opens a confirmation modal; Approve → `APPROVED` and listing appears in Find for everyone; Decline → `DECLINED`, still only owner/admin can open it |
 
+### 9.9 Game text localization
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| GD-171 | Localized title/description (API ready) | Game with ready translation for viewer locale; open details | Header/description show localized text; pending translation shows authored original with subtle “Translation in progress”; no blocking spinner/toast for players |
+| GD-172 | Show original toggle | Game with ready translation; open details → tap `Translated · Show original` | Title and description switch to authored originals together; control becomes `Original · Show translation` |
+| GD-173 | Show original session memory | After GD-172, leave details and reopen the same game (or remount) | Still showing originals; choice not reset by remount or background `localizedText` refresh |
+| GD-174 | Omit badge when untranslated | Game whose display equals original (same language / not needed) | No Translated/Original toggle; pending hint only while translation work is in progress |
+| GD-175 | Event localized listing + toggle | EVENT with ready translation; open poster details | Title/description localized; quiet toggle switches both; edit listing still uses originals |
+| GD-176 | Edit forms seed originals only | Game with ready `localizedText` differing from authored name/description; open Edit details / Event edit listing | Name and description inputs show authored originals only (never localized display); helper “Automatically translated…”; when details would show a translation, label “Original text”; save uses existing update |
+| GD-177 | Organizer Translations panel | Owner/admin opens Edit details (or Event edit listing) → Translations | Bottom sheet on mobile / dialog on desktop; language list statuses Ready/Edited/Updating/Needs review/Retry/No translation needed; Keep original name control present |
+| GD-178 | Organizer correction save | In Translations → pick a language → edit name or description → Save | Correction applies immediately; status becomes Edited; players see correction for that locale |
+| GD-179 | Use automatic translation | Edited language → Use automatic translation | Correction cleared; automatic text (or original while pending) shown; regular players cannot open Translations / PATCH |
+| GD-180 | Translation conflict toast | Two organizers; A saves a correction; B saves stale expected revision | B gets conflict; draft kept; panel reloads latest source for review |
+| GD-181 | Failed translation player fallback | Game whose `localizedText` field state is `failed` (retries exhausted or hard fail) for viewer locale; open details / Find card | Shows authored original; no player error toast or blocking UI; organizer panel may show Retry for that language |
+| GD-182 | In-place ready update via focus/refetch | Open details while translation pending; leave app backgrounded or blur then refocus (or reconnect) so details refetch returns ready `localizedText` — without relying on the pending poll or `game-text:invalidate` | Localized text replaces original in place (no overlay); expanded description/scroll/focus preserved; polite a11y “Translation updated”; if Show original was on, stays on originals |
+| GD-183 | Offline Show original from cache | With ready `localizedText` cached, open `/games/:id` while offline (`G-07`) → tap Show original | Cached display still usable; toggle switches title+description to originals without requiring network |
+| GD-184 | Keep original name in every language | Organizer enables Keep original name → save; viewers in other locales open details/cards | Name stays authored original in every language; description still uses automatic/pending rules; panel shows name-preserved hint |
+| GD-185 | Organizer Retry failed language | Translations → locale with Retry status → Retry | Retry queues immediately (toast); status moves toward Updating/Ready; no full game re-save required |
+| GD-186 | Needs review after source change | Correct a locale → change authored name/description that invalidates that correction → reopen Translations | Locale shows Needs review + hint; stale correction not served to players; fresh automatic (or original while pending) shown |
+| GD-187 | Details language switch refetch | Open game details → change app UI language | Details refetch `localizedText` for the new locale; title/description follow new language (or original while pending); Show original session choice for that gameId still respected |
+| GD-188 | Chat preferred language isolated | Set chat preferred incoming-translation language ≠ app UI language; open game details / Find with ready game-text translation | Game name/description follow app UI language only; chat preference does not change game-text display |
+| GD-189 | Arabic UI lang + dir=auto + long title | App language العربية; open details for a game whose original is LTR (e.g. English) and a ready Arabic translation; also a very long localized title on `@mobile` card + details | Shell stays `dir=rtl`; game title/description nodes use `dir="auto"` and `lang` when showing translation; original/other-script text does not force wrong bidi; long titles wrap/truncate within existing card/header layout (no horizontal page overflow) |
+| GD-190 | Selection-deferred text update | Open details with pending translation; select/highlight title or description text; allow `localizedText` to become ready while selection is active; then clear selection | Display does not yank/replace text while selected; after selection ends, ready translation (or deferred update) applies in place |
+| GD-191 | Clear field clears localized display | Owner clears description (or name) in Edit details → save; other viewer opens details / Find | Cleared field no longer shows prior translated text (`empty_source` / null); name clear keeps entity/format fallbacks (`G-58`); no stale localized prose |
+| GD-192 | Translations locale layout | Owner → Translations → pick a language; compare `@mobile` vs `@desktop` (wide) | Original and translation stack vertically on mobile; side-by-side (`lg:grid-cols-2`) on desktop |
+| GD-193 | Private + pending Event access unchanged | Private game with ready `localizedText`; pending (`ON_APPROVE`) EVENT with localized projection | Non-invitees still cannot Find/open private game; non-owner/non-admin still cannot open pending EVENT (`GD-169`); localization does not leak listing or details |
+| GD-194 | Open/join not blocked by translation | Open public game and join while `localizedText` pending or generation disabled | Details open and join/RSVP complete normally; no gate, spinner, or error waiting on translation |
+| GD-195 | Calendar/ICS uses displayed text | Game with ready translation and `timeIsSet`; open details → Add to calendar / ICS / Google / native; then tap Show original and add again | Event title and description notes use the same displayed name/description as the details header (localized first; authored originals after Show original); includes game link; does not wait for AI |
+| GD-196 | Share/copy uses displayed text | Same game → Share (native sheet or copy fallback); repeat after Show original | Share title/text (or clipboard payload) uses currently displayed name/description plus game link; EVENT sticky Share matches (`GD-166`) |
+| GD-197 | Pending details capped poll | Stay on game details (`GameDetailsShell`) while `localizedText` is pending and online; do not leave or manually refresh; wait for worker to publish | Shell polls `GET /games/:id` about every 3s (max ~20 attempts); when ready, title/description update in place (same UX as GD-182); poll stops once ready/failed/offline/hidden |
+| GD-198 | Live `game-text:invalidate` on details | Stay on pending game details with socket connected; translation publishes and server emits `game-text:invalidate` for this game/locale | Client invalidates locale caches and refetches details; localized text appears in place without leave/refresh; no translated body in the socket payload |
+| GD-199 | Nested season on LEAGUE details | Open LEAGUE fixture details whose parent season has ready localized season name; also open LEAGUE_SEASON details with ready localized season name | Header shows league name + localized season name (same as cards `G-57`); pending uses authored season name |
+| GD-200 | Organizer panel polls while Updating | Open Translations while a locale is Updating or Retry; stay on panel online until worker finishes | Panel quiet-polls editor status (~3s, capped); status moves to Ready/Edited without closing; no full-page refresh required |
+| GD-201 | Correction while automatic Updating | Locale Updating → Save a name/description correction before AI finishes | Correction applies immediately (Edited); players see override for that locale; later automatic publish does not overwrite the correction |
+| GD-202 | Edit not blocked by translation | Edit details / Event edit listing → change name or description while `localizedText` pending or generation disabled → Save | Save succeeds immediately (existing update path); no wait/spinner for AI; returns to details with authored text; translations catch up in background |
+| GD-203 | Title-only Show original placement | Game (and EVENT) with ready translation but empty description | `Translated · Show original` sits directly below the title (not beside a Description heading); with a description present, control stays by the description heading (`GD-172` / `GD-175`) |
+
 ---
 
 ## 10. Live scoring (`/games/:id/live`)
@@ -1143,6 +1193,7 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 |----|------|-------|----------|
 | CH-12 | User DM | Send text | Message appears |
 | CH-13 | Game chat | Open from game | Game context header |
+| CH-161 | Game chat header localized title | Game with ready `localizedText.name` (and LEAGUE fixture with localized parent season); open `/games/:id/chat` | Thread header title uses `getGameHeaderTitle` / resolved display name (pending → original); nested season name localized when present; not raw authored-only when translation is ready |
 | CH-69 | Game chat type tab switch | Game with multiple channels (PUBLIC/PHOTOS/etc.) → switch tabs | Message pane slides/fades to new channel; thin loading pulse during fetch; each tab restores its scroll; re-tapping active tab does not animate |
 | CH-14 | Group chat | Open group | Member list accessible |
 | CH-15 | Channel chat | Open channel | Read/post per permissions |
@@ -1675,6 +1726,7 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | UT-12 | Add blocked while pending | Incomplete pair (partner not accepted) | Add action unavailable with reason that partner must join first |
 | UT-13 | Invite permission filter | User cannot invite to a game | That game is absent from the picker |
 | UT-14 | Fixed-pairs seating | Add ready pair to a `hasFixedTeams` game; both become PLAYING | They occupy one pair slot, not two unlinked players |
+| UT-15 | Delete team leaves home list | Owner deletes team from team page or home section X → return to Home/My Teams | Deleted team gone immediately and stays gone after tab switch / soft refresh |
 
 ---
 

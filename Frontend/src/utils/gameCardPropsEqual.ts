@@ -1,4 +1,5 @@
 import type { Game, GameParticipant } from '@/types';
+import type { GameLocalizedTextProjection } from '@/utils/gameText/gameLocalizedText.types';
 import type { FindSportFilterValue } from '@/utils/gameFiltersStorage';
 import { participantsRenderKey, playingParticipantsKey } from '@/utils/gameCardParticipants';
 import { gameCardOutcomesKey } from '@/utils/gameCardStandings';
@@ -62,6 +63,25 @@ function trainerRenderKey(game: Game): string {
   ].join(':');
 }
 
+function localizedFieldKey(
+  field: GameLocalizedTextProjection['name'] | null | undefined,
+): string {
+  if (!field) return '';
+  return `${field.text ?? ''}:${field.state}:${field.sourceRevision}:${field.provenance}`;
+}
+
+/** Include localizedText so card titles update when translations arrive without remounting. */
+function localizedTextKey(
+  projection: GameLocalizedTextProjection | null | undefined,
+): string {
+  if (!projection) return '';
+  return [
+    projection.locale,
+    localizedFieldKey(projection.name),
+    localizedFieldKey(projection.description),
+  ].join('|');
+}
+
 function viewerParticipationKey(
   participants: readonly GameParticipant[],
   userId?: string
@@ -112,6 +132,8 @@ function gameRenderSignature(game: Game): string {
     game.leagueRound?.orderIndex ?? '',
     game.parent?.leagueSeason?.league?.name ?? '',
     game.parent?.leagueSeason?.game?.name ?? '',
+    localizedTextKey(game.localizedText),
+    localizedTextKey(game.parent?.leagueSeason?.game?.localizedText),
     game.leagueSeason?.league?.name ?? '',
     participantsRenderKey(game.participants ?? []),
     playingParticipantsKey(game.participants ?? []),

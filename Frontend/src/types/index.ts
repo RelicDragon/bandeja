@@ -1,4 +1,5 @@
 import type { Sport } from '@shared/sport';
+import type { GameLocalizedTextProjection } from '@/utils/gameText/gameLocalizedText.types';
 
 export type { Sport };
 
@@ -584,6 +585,8 @@ export interface Game {
   gameType: GameType;
   name?: string | null;
   description?: string | null;
+  /** Additive localized projection for the request locale; originals stay on name/description. */
+  localizedText?: GameLocalizedTextProjection;
   avatar?: string | null;
   originalAvatar?: string | null;
   clubId?: string;
@@ -674,6 +677,9 @@ export interface Game {
   parentId?: string;
   parent?: {
     id: string;
+    name?: string | null;
+    description?: string | null;
+    localizedText?: GameLocalizedTextProjection;
     status?: GameStatus;
     resultsStatus?: 'NONE' | 'IN_PROGRESS' | 'FINAL';
     entityType?: EntityType;
@@ -689,6 +695,7 @@ export interface Game {
       game?: {
         id: string;
         name?: string;
+        localizedText?: GameLocalizedTextProjection;
         avatar?: string | null;
         originalAvatar?: string | null;
         sport?: Sport;

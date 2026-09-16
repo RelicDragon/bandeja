@@ -25,6 +25,8 @@ import { useSocketEventsStore } from '@/store/socketEventsStore';
 import { SportLevelProvider } from '@/contexts/SportLevelContext';
 import { isCapacitor } from '@/utils/capacitor';
 import { getShareUrl } from '@/utils/shareUrl';
+import { buildDisplayedGameListingSharePayload } from '@/utils/gameText/shareDisplayedGameListing';
+import { useGameDetailsLocalizedDisplay } from '@/hooks/useGameDetailsLocalizedDisplay';
 import { openExternalUrl } from '@/utils/openExternalUrl';
 import { parseGameSport } from '@/utils/gameSport';
 import { getGameParticipationState } from '@/utils/gameParticipationState';
@@ -72,6 +74,7 @@ export function EventDetailsContent({
   const [shareUrl, setShareUrl] = useState('');
 
   const rsvp = useEventRsvp(game, setGame);
+  const localized = useGameDetailsLocalizedDisplay(game);
   const participation = getGameParticipationState(game?.participants ?? [], user?.id, game);
   const canEdit = !!(participation.isOwner || user?.isAdmin);
   const canAccessChat =
@@ -168,9 +171,18 @@ export function EventDetailsContent({
 
   const handleShare = async () => {
     const url = getShareUrl();
+    const payload = buildDisplayedGameListingSharePayload({
+      name: localized.name,
+      description: localized.description,
+      url,
+    });
     if (isCapacitor()) {
       try {
-        await Share.share({ url });
+        await Share.share({
+          title: payload.title,
+          text: payload.text,
+          url: payload.url,
+        });
         return;
       } catch (error) {
         if ((error as Error).name === 'AbortError') return;
@@ -178,7 +190,11 @@ export function EventDetailsContent({
     }
     if (navigator.share && (window.isSecureContext || location.protocol === 'https:')) {
       try {
-        await navigator.share({ url });
+        await navigator.share({
+          title: payload.title,
+          text: payload.text,
+          url: payload.url,
+        });
         return;
       } catch (error) {
         if ((error as Error).name === 'AbortError') return;
@@ -186,7 +202,7 @@ export function EventDetailsContent({
     }
     if (navigator.clipboard && (window.isSecureContext || location.protocol === 'https:')) {
       try {
-        await navigator.clipboard.writeText(url);
+        await navigator.clipboard.writeText(payload.clipboardText);
         toast.success(t('gameDetails.linkCopied'));
         return;
       } catch {

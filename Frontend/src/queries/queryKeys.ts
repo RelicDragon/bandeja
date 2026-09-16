@@ -18,6 +18,8 @@ export interface AvailableGamesFilterParams {
   structural?: FindStructuralApiParams;
   /** Month badge path — separate cache from day card pages. */
   indexOnly?: boolean;
+  /** App UI locale for localizedText projections. */
+  locale?: string;
 }
 
 export function buildAvailableGamesFilterHash(params: AvailableGamesFilterParams): string {
@@ -27,11 +29,12 @@ export function buildAvailableGamesFilterHash(params: AvailableGamesFilterParams
   const includeLeagues = String(!!params.includeLeagues);
   const structural = buildStructuralFilterHashPart(params.structural);
   const indexFlag = params.indexOnly ? 'i1' : 'i0';
+  const locale = params.locale ?? 'en';
 
   if (params.startDate && params.endDate) {
-    return `${cityId}-${format(params.startDate, 'yyyy-MM-dd')}-${format(params.endDate, 'yyyy-MM-dd')}-${includeLeagues}-${sport}-${privateFlag}-${structural}-${indexFlag}`;
+    return `${cityId}-${format(params.startDate, 'yyyy-MM-dd')}-${format(params.endDate, 'yyyy-MM-dd')}-${includeLeagues}-${sport}-${privateFlag}-${structural}-${indexFlag}-${locale}`;
   }
-  return `${cityId}-${includeLeagues}-${sport}-${privateFlag}-${structural}-${indexFlag}`;
+  return `${cityId}-${includeLeagues}-${sport}-${privateFlag}-${structural}-${indexFlag}-${locale}`;
 }
 
 export function buildAvailableUpcomingFilterHash(params: Omit<AvailableGamesFilterParams, 'startDate' | 'endDate'>): string {
@@ -40,7 +43,8 @@ export function buildAvailableUpcomingFilterHash(params: Omit<AvailableGamesFilt
   const cityId = params.cityId ?? 'no-city';
   const includeLeagues = String(!!params.includeLeagues);
   const structural = buildStructuralFilterHashPart(params.structural);
-  return `upcoming-${cityId}-${includeLeagues}-${sport}-${privateFlag}-${structural}`;
+  const locale = params.locale ?? 'en';
+  return `upcoming-${cityId}-${includeLeagues}-${sport}-${privateFlag}-${structural}-${locale}`;
 }
 
 export const queryKeys = {
@@ -65,10 +69,21 @@ export const queryKeys = {
   },
   games: {
     all: ['games'] as const,
-    my: (userId: string) => ['games', 'my', userId] as const,
+    /** Pass locale for fetch keys; omit locale to invalidate all locales for the user. */
+    my: (userId: string, locale?: string) =>
+      locale != null
+        ? (['games', 'my', userId, locale] as const)
+        : (['games', 'my', userId] as const),
     available: (filterHash: string) => ['games', 'available', filterHash] as const,
     availableUpcoming: (filterHash: string) => ['games', 'availableUpcoming', filterHash] as const,
-    past: (userId: string) => ['games', 'past', userId] as const,
+    past: (userId: string, locale?: string) =>
+      locale != null
+        ? (['games', 'past', userId, locale] as const)
+        : (['games', 'past', userId] as const),
+    detail: (gameId: string, locale?: string) =>
+      locale != null
+        ? (['games', 'detail', gameId, locale] as const)
+        : (['games', 'detail', gameId] as const),
   },
   userGameNotes: {
     all: ['userGameNotes'] as const,

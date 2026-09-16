@@ -5,6 +5,7 @@ import { queryKeys } from '../queryKeys';
 import { GAMES_LIST_STALE_TIME, PAST_GAMES_PAGE_SIZE } from './constants';
 import { filterPastGames } from './filterPastGames';
 import { sortGames } from './sortGames';
+import { getAppUiLocaleForGameText } from '@/utils/gameText/appUiLocale';
 
 export interface PastGamesPage {
   games: Game[];
@@ -18,7 +19,7 @@ export function pastGamesInfiniteQueryOptions(
   const isEnabled = enabled && !!userId;
 
   return infiniteQueryOptions({
-    queryKey: queryKeys.games.past(userId ?? ''),
+    queryKey: queryKeys.games.past(userId ?? '', getAppUiLocaleForGameText()),
     queryFn: async ({ pageParam }): Promise<PastGamesPage> => {
       const offset = pageParam as number;
       const response = await gamesApi.getPastGames({

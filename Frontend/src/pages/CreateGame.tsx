@@ -21,6 +21,7 @@ import { addHours, format, startOfDay } from 'date-fns';
 import { useGameFormat } from '@/hooks/useGameFormat';
 import { useClampGameFormatToSport } from '@/hooks/useSportGameFormatLimits';
 import { resolveUserCurrency } from '@/utils/currency';
+import { authoredGameTextForEdit } from '@/utils/gameText/authoredGameTextForEdit';
 import { useGameTimeDuration, formatTimeInClubTimezone, createDateFromClubTime, getClubTimezone } from '@/hooks/useGameTimeDuration';
 import { formatGameDurationLabel } from '@/utils/formatGameDurationLabel';
 import { GameLocationTimePanel } from '@/components/gameLocationTime/GameLocationTimePanel';
@@ -322,8 +323,9 @@ export const CreateGame = ({
     return gameLeagueRosterOptions(user);
   }, [entityType, user]);
 
-  const [gameName, setGameName] = useState<string>(initialGameData?.name || '');
-  const [comments, setComments] = useState<string>(initialGameData?.description || '');
+  const initialAuthored = authoredGameTextForEdit(initialGameData);
+  const [gameName, setGameName] = useState<string>(initialAuthored.name);
+  const [comments, setComments] = useState<string>(initialAuthored.description);
   const [priceTotal, setPriceTotal] = useState<number | undefined>(initialGameData?.priceTotal ?? undefined);
   const [priceType, setPriceType] = useState<PriceType>(initialGameData?.priceType || 'NOT_KNOWN');
   const [priceCurrency, setPriceCurrency] = useState<PriceCurrency | undefined>(initialGameData?.priceCurrency ?? undefined);

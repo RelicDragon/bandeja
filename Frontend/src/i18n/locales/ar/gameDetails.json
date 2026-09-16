@@ -840,6 +840,55 @@
     "fixtureFullRrCreated_zero": "تم إنشاء 0 جولات عادية",
     "fixtureFullRrCreated_two": "تم إنشاء {{count}} جولات عادية",
     "fixtureFullRrCreated_few": "تم إنشاء {{count}} جولات عادية",
-    "fixtureFullRrCreated_many": "تم إنشاء {{count}} جولات عادية"
+    "fixtureFullRrCreated_many": "تم إنشاء {{count}} جولات عادية",
+    "gameText": {
+      "descriptionHeading": "الوصف",
+      "translated": "مترجم",
+      "original": "الأصل",
+      "originalText": "النص الأصلي",
+      "autoTranslatedHelper": "يُترجم تلقائيًا للاعبين بلغات أخرى.",
+      "showOriginal": "عرض الأصل",
+      "showTranslation": "عرض الترجمة",
+      "translationInProgress": "الترجمة قيد التقدم",
+      "a11yTranslationReady": "تم تحديث الترجمة",
+      "editor": {
+        "open": "الترجمات",
+        "title": "الترجمات",
+        "subtitle": "راجع وصحّح الترجمات لكل لغة.",
+        "keepOriginalName": "الإبقاء على الاسم الأصلي في كل اللغات",
+        "keepOriginalNameHint": "مفيد لأسماء البطولات أو الجلسات ذات العلامة. الوصف ما زال يُترجم تلقائيًا.",
+        "statusReady": "جاهز",
+        "statusEdited": "مُعدَّل",
+        "statusUpdating": "جارٍ التحديث",
+        "statusNeedsReview": "يحتاج مراجعة",
+        "statusRetry": "إعادة المحاولة",
+        "statusNotNeeded": "لا حاجة للترجمة",
+        "originalName": "الاسم الأصلي",
+        "translatedName": "الاسم المترجم",
+        "originalDescription": "الوصف الأصلي",
+        "translatedDescription": "الوصف المترجم",
+        "useAutomatic": "استخدام الترجمة التلقائية",
+        "useAutomaticHint": "يزيل تصحيحك ويعرض الترجمة التلقائية عند جاهزيتها.",
+        "needsReviewHint": "تغيّر النص الأصلي. حدّث التصحيح أو استخدم الترجمة التلقائية.",
+        "namePreservedHint": "يُحافظ على الاسم كأصل في كل اللغات.",
+        "emptyField": "فارغ",
+        "retry": "إعادة المحاولة",
+        "retryQueued": "أُضيفت إعادة الترجمة إلى قائمة الانتظار",
+        "conflict": "حدّث شخص آخر هذه الترجمة. تم الاحتفاظ بمسودتك — راجع المصدر الأحدث وحاول مجددًا.",
+        "languages": {
+          "en": "الإنجليزية",
+          "ru": "الروسية",
+          "sr": "الصربية",
+          "es": "الإسبانية",
+          "cs": "التشيكية",
+          "ar": "العربية",
+          "zh": "الصينية",
+          "id": "الإندونيسية",
+          "hi": "الهندية",
+          "th": "التايلاندية",
+          "ja": "اليابانية"
+        }
+      }
+    }
   }
 }

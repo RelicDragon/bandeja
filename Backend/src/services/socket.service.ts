@@ -29,6 +29,10 @@ import {
   PLAY_INTENT_INVALIDATE_EVENT,
   type PlayIntentInvalidation,
 } from './playIntent/playIntentRealtime';
+import {
+  GAME_TEXT_INVALIDATE_EVENT,
+  type GameTextInvalidation,
+} from './gameText/gameTextRealtime';
 
 interface AuthenticatedSocket extends Socket {
   userId?: string;
@@ -1416,6 +1420,21 @@ class SocketService {
       ...[...new Set(userIds)].map((userId) => `notify-user-${userId}`),
     ];
     this.io.to(rooms).emit(PLAY_INTENT_INVALIDATE_EVENT, payload);
+  }
+
+  /**
+   * Game-text localization refresh signal (no translated content).
+   * Always targets `game-{gameId}`; also `notify-user-*` for authorized userIds.
+   */
+  public emitGameTextInvalidation(
+    payload: GameTextInvalidation,
+    userIds: string[],
+  ): void {
+    const rooms = [
+      `game-${payload.gameId}`,
+      ...[...new Set(userIds)].map((userId) => `notify-user-${userId}`),
+    ];
+    this.io.to(rooms).emit(GAME_TEXT_INVALIDATE_EVENT, payload);
   }
 
   public getIO(): SocketIOServer {

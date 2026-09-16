@@ -6,6 +6,12 @@ import type { ReactionEmojiUsageMutationPayload } from '@/store/reactionEmojiUsa
 import { normalizeGameResultsArtifacts } from '@/utils/gameResultsArtifacts.util';
 import { getGameMainPhotoId } from '@/utils/gameMainPhoto';
 import { overlapConfirmBody } from '@/utils/gameSlotOverlapConfirm';
+import { getAppUiLocaleForGameText } from '@/utils/gameText/appUiLocale';
+import type {
+  GameTextEditorFieldPatch,
+  GameTextTranslationRetryResult,
+  GameTextTranslationsEditorDto,
+} from '@/utils/gameText/gameTextEditor.types';
 
 export function normalizeGameFromApi(game: Game): Game {
   const artifacts = normalizeGameResultsArtifacts(game.resultsArtifacts);
@@ -28,6 +34,10 @@ function mapGamesPayload<T extends Game | Game[] | undefined>(data: T): T {
 function mapApiGameResponse<T extends { data?: Game | Game[] }>(payload: T): T {
   if (!payload.data) return payload;
   return { ...payload, data: mapGamesPayload(payload.data) };
+}
+
+function gameTextLocaleParams(extra?: Record<string, unknown>) {
+  return { locale: getAppUiLocaleForGameText(), ...extra };
 }
 
 export type WorkoutSessionSource = 'APPLE_WATCH' | 'ANDROID_HEALTH_CONNECT';
@@ -65,24 +75,30 @@ export const gamesApi = {
     limit?: number;
     offset?: number;
   }) => {
-    const response = await api.get<ApiResponse<Game[]>>('/games', { params });
+    const response = await api.get<ApiResponse<Game[]>>('/games', {
+      params: gameTextLocaleParams(params),
+    });
     return response.data;
   },
 
   getMyGames: async () => {
-    const response = await api.get<ApiResponse<Game[]>>('/games/my-games');
+    const response = await api.get<ApiResponse<Game[]>>('/games/my-games', {
+      params: gameTextLocaleParams(),
+    });
     return response.data;
   },
 
   getMyGamesWithUnread: async () => {
     const response = await api.get<
       ApiResponse<{ games: Game[]; invites: any[]; gamesUnreadCounts: Record<string, number> }>
-    >('/games/my-games-with-unread');
+    >('/games/my-games-with-unread', { params: gameTextLocaleParams() });
     return response.data;
   },
 
   getPastGames: async (params?: { limit?: number; offset?: number; startDate?: string; endDate?: string }) => {
-    const response = await api.get<ApiResponse<Game[]>>('/games/past-games', { params });
+    const response = await api.get<ApiResponse<Game[]>>('/games/past-games', {
+      params: gameTextLocaleParams(params),
+    });
     return response.data;
   },
 
@@ -103,7 +119,9 @@ export const gamesApi = {
     cursor?: string;
     enrich?: boolean;
   }) => {
-    const response = await api.get<ApiResponse<Game[]>>('/games/available/upcoming', { params });
+    const response = await api.get<ApiResponse<Game[]>>('/games/available/upcoming', {
+      params: gameTextLocaleParams(params),
+    });
     return response.data;
   },
 
@@ -132,7 +150,7 @@ export const gamesApi = {
     indexOnly?: boolean;
   }, options?: { timeoutMs?: number; signal?: AbortSignal }) => {
     const response = await api.get<ApiResponse<Game[]>>('/games/available', {
-      params,
+      params: gameTextLocaleParams(params),
       ...(options?.timeoutMs != null ? { timeout: options.timeoutMs } : {}),
       ...(options?.signal ? { signal: options.signal } : {}),
     });
@@ -153,7 +171,9 @@ export const gamesApi = {
   },
 
   getById: async (id: string) => {
-    const response = await api.get<ApiResponse<Game>>(`/games/${id}`);
+    const response = await api.get<ApiResponse<Game>>(`/games/${id}`, {
+      params: gameTextLocaleParams(),
+    });
     return mapApiGameResponse(response.data);
   },
 
@@ -171,8 +191,41 @@ export const gamesApi = {
     return response.data;
   },
 
-  update: async (id: string, data: Partial<Game>) => {
+  update: async (id: string, data: Partial<Game> & {
+    keepOriginalNameInAllLocales?: boolean;
+    nameSourceLocaleOverride?: string | null;
+    descriptionSourceLocaleOverride?: string | null;
+  }) => {
     const response = await api.put<ApiResponse<Game>>(`/games/${id}`, data);
+    return response.data;
+  },
+
+  getTranslations: async (id: string) => {
+    const response = await api.get<ApiResponse<GameTextTranslationsEditorDto>>(
+      `/games/${id}/translations`,
+    );
+    return response.data;
+  },
+
+  patchTranslationLocale: async (
+    id: string,
+    locale: string,
+    body: {
+      name?: GameTextEditorFieldPatch;
+      description?: GameTextEditorFieldPatch;
+    },
+  ) => {
+    const response = await api.patch<ApiResponse<GameTextTranslationsEditorDto>>(
+      `/games/${id}/translations/${locale}`,
+      body,
+    );
+    return response.data;
+  },
+
+  retryTranslationLocale: async (id: string, locale: string) => {
+    const response = await api.post<ApiResponse<GameTextTranslationRetryResult>>(
+      `/games/${id}/translations/${locale}/retry`,
+    );
     return response.data;
   },
 

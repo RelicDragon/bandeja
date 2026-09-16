@@ -43,14 +43,17 @@ interface PlayerCardCommonChatListItemProps {
 }
 
 export const PlayerCardCommonChatListItem = ({ item, onClick }: PlayerCardCommonChatListItemProps) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const user = useAuthStore((state) => state.user);
   const displaySettings = useMemo(() => resolveDisplaySettings(user), [user]);
   const { translateCity } = useTranslatedGeo();
 
   const displayName = useMemo(() => {
     if (item.kind === 'game' && item.game) {
-      return getGameChatListTitle(item.game, t) || t('games.entityTypes.GAME', { defaultValue: 'Game' });
+      return (
+        getGameChatListTitle(item.game, t, i18n.language) ||
+        t('games.entityTypes.GAME', { defaultValue: 'Game' })
+      );
     }
     const group = item.groupChannel;
     if (!group) return '';
@@ -64,7 +67,7 @@ export const PlayerCardCommonChatListItem = ({ item, onClick }: PlayerCardCommon
       return translateCity(group.id, group.name, '');
     }
     return group.name;
-  }, [item, t, translateCity]);
+  }, [item, t, i18n.language, translateCity]);
 
   const gameSubtitle = useMemo(() => {
     if (item.kind !== 'game' || !item.game) return '';

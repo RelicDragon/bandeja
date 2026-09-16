@@ -11,6 +11,7 @@ import {
   getLeagueSeasonHeaderParts,
   getLeagueSeasonHeaderTitle,
 } from '@/utils/getGameHeaderTitle';
+import { resolveDisplayedGameText } from '@/utils/gameText/resolveDisplayedGameText';
 import { GameChatGameTitleMeta, GameChatGameTitlePrimary } from './GameChatGameTitle';
 import { getGameTimeDisplay } from '@/utils/gameTimeDisplay';
 import type { ResolvedDisplaySettings } from '@/utils/displayPreferences';
@@ -53,7 +54,7 @@ export function useGameChatDisplay({
   isGameChatArchived = false,
   archivedGameMeta = null,
 }: UseGameChatDisplayParams) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const viewerLevelSport = useViewerLevelSport();
   const groupOnlineCount = useGroupChannelOnlineCount(
     groupChannel,
@@ -62,8 +63,11 @@ export function useGameChatDisplay({
 
   const structuredHeaderParts = useMemo(() => {
     if (contextType !== 'GAME' || !game) return null;
-    return getLeagueGameHeaderParts(game, t) ?? getLeagueSeasonHeaderParts(game);
-  }, [contextType, game, t]);
+    return (
+      getLeagueGameHeaderParts(game, t, i18n.language) ??
+      getLeagueSeasonHeaderParts(game, i18n.language)
+    );
+  }, [contextType, game, t, i18n.language]);
 
   const titleContent = useMemo(() => {
     if (!structuredHeaderParts) return null;
@@ -77,7 +81,7 @@ export function useGameChatDisplay({
 
   const title = (() => {
     if (contextType === 'GAME' && game) {
-      return getGameHeaderTitle(game, t);
+      return getGameHeaderTitle(game, t, i18n.language);
     }
     if (isBugChat && bug) return bug.text.length > 25 ? `${bug.text.substring(0, 23)}...` : bug.text;
     if (contextType === 'USER' && userChat) {
@@ -121,9 +125,9 @@ export function useGameChatDisplay({
     if (
       contextType === 'GAME' &&
       game &&
-      !game.name &&
-      !getLeagueGameHeaderTitle(game, t) &&
-      !getLeagueSeasonHeaderTitle(game)
+      !resolveDisplayedGameText(game, { locale: i18n.language }).name &&
+      !getLeagueGameHeaderTitle(game, t, i18n.language) &&
+      !getLeagueSeasonHeaderTitle(game, i18n.language)
     ) {
       return <MapPin size={16} className="text-gray-500 dark:text-gray-400" />;
     }
@@ -174,6 +178,7 @@ export function useGameChatDisplay({
     contextType,
     game,
     t,
+    i18n.language,
     userChat,
     userId,
     groupChannel,

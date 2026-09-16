@@ -9,6 +9,7 @@ import { runChatSyncBatchWarmOnConnect } from '@/services/chat/chatSyncBatchWarm
 import { refreshChatOfflineBanner, setChatBannerSocketConnected } from '@/services/chat/chatOfflineBanner';
 import type { InviteDeletedSocketPayload } from '@/utils/gameInviteParticipant';
 import type { PlayIntentInvalidation } from '@shared/playIntentRealtime';
+import type { GameTextInvalidation } from '@shared/gameTextRealtime';
 
 export interface NewUserChatMessage {
   contextId: string;
@@ -24,6 +25,7 @@ export interface UserChatReadReceipt {
 export type SocketConnectionState = 'disconnected' | 'connecting' | 'connected';
 
 export type { PlayIntentInvalidation } from '@shared/playIntentRealtime';
+export type { GameTextInvalidation } from '@shared/gameTextRealtime';
 
 export interface SocketEvents {
   'new-invite': (invite: any) => void;
@@ -187,6 +189,7 @@ export interface SocketEvents {
     segmentOwnerHasLiked: boolean;
   }) => void;
   'play-intent:invalidate': (data: PlayIntentInvalidation) => void;
+  'game-text:invalidate': (data: GameTextInvalidation) => void;
   'subscribed-play-intent-pool': (data: { cityId: string }) => void;
   'unsubscribed-play-intent-pool': (data: { cityId: string }) => void;
 }

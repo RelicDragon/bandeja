@@ -814,6 +814,55 @@
     "bracketPreviewUnassignedLabel": "Unassigned teams",
     "playoffWizardStep": "Step {{current}} of {{total}}",
     "fixtureDetailNoGameYet": "No league match exists for this pairing yet. It will appear here once a game is created in a regular round.",
-    "fixtureDetailNoDatetimeFinal": "Date and venue were not recorded for this match."
+    "fixtureDetailNoDatetimeFinal": "Date and venue were not recorded for this match.",
+    "gameText": {
+      "descriptionHeading": "Opis",
+      "translated": "Prevedeno",
+      "original": "Original",
+      "originalText": "Originalni tekst",
+      "autoTranslatedHelper": "Automatski se prevodi za igrače na drugim jezicima.",
+      "showOriginal": "Prikaži original",
+      "showTranslation": "Prikaži prevod",
+      "translationInProgress": "Prevod u toku",
+      "a11yTranslationReady": "Prevod je ažuriran",
+      "editor": {
+        "open": "Prevodi",
+        "title": "Prevodi",
+        "subtitle": "Pregledaj i ispravi prevode za svaki jezik.",
+        "keepOriginalName": "Zadrži originalni naziv na svim jezicima",
+        "keepOriginalNameHint": "Korisno za brendirane turnire ili sesije. Opis se i dalje prevodi automatski.",
+        "statusReady": "Spremno",
+        "statusEdited": "Izmenjeno",
+        "statusUpdating": "Ažuriranje",
+        "statusNeedsReview": "Potrebna provera",
+        "statusRetry": "Pokušaj ponovo",
+        "statusNotNeeded": "Prevod nije potreban",
+        "originalName": "Originalni naziv",
+        "translatedName": "Prevedeni naziv",
+        "originalDescription": "Originalni opis",
+        "translatedDescription": "Prevedeni opis",
+        "useAutomatic": "Koristi automatski prevod",
+        "useAutomaticHint": "Uklanja tvoju ispravku i prikazuje automatski prevod kada bude spreman.",
+        "needsReviewHint": "Original je promenjen. Ažuriraj ispravku ili koristi automatski prevod.",
+        "namePreservedHint": "Naziv ostaje originalan na svim jezicima.",
+        "emptyField": "Prazno",
+        "retry": "Pokušaj ponovo",
+        "retryQueued": "Ponovni prevod je u redu čekanja",
+        "conflict": "Neko drugi je ažurirao ovaj prevod. Nacrt je sačuvan — proveri najnoviji original i pokušaj ponovo.",
+        "languages": {
+          "en": "Engleski",
+          "ru": "Ruski",
+          "sr": "Srpski",
+          "es": "Španski",
+          "cs": "Češki",
+          "ar": "Arapski",
+          "zh": "Kineski",
+          "id": "Indonežanski",
+          "hi": "Hindi",
+          "th": "Tajlandski",
+          "ja": "Japanski"
+        }
+      }
+    }
   }
 }

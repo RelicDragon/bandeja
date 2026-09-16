@@ -117,9 +117,10 @@ export const useGameFormat = (initial?: Partial<Game>, options?: UseGameFormatOp
   );
 
   useEffect(() => {
+    if (preserveInitialGeneration) return;
     if (skipGenerationParticipantDefaults || maxParticipants == null) return;
     setGenerationTypeState((prev) => defaultMatchGenerationForParticipants(scoringMode, maxParticipants, prev));
-  }, [skipGenerationParticipantDefaults, maxParticipants, scoringMode]);
+  }, [preserveInitialGeneration, skipGenerationParticipantDefaults, maxParticipants, scoringMode]);
 
   useEffect(() => {
     if (scoringMode === 'POINTS' && deucesBeforeGoldenPoint !== null) {

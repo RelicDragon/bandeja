@@ -91,12 +91,20 @@ export const clampGenerationGameTypePair = (
 
 export { gameTypeMatchGenerationMismatch };
 
-/** <= 5 players: automatic matches; otherwise Americano (random rotation). */
+/**
+ * Keep the preferred generation when it is legal for the roster size.
+ * Otherwise: <= 5 players → AUTOMATIC; larger → Americano (RANDOM).
+ */
 export const defaultMatchGenerationForParticipants = (
   mode: ScoringMode,
   maxParticipants: number | undefined,
-  _preferredGen: MatchGenerationType,
+  preferredGen: MatchGenerationType,
 ): MatchGenerationType => {
+  const preferred = effectiveMatchGeneration(mode, preferredGen, maxParticipants);
+  const allowed = allowedGenerationsForMaxParticipants(maxParticipants);
+  if (allowed.includes(preferred)) {
+    return preferred;
+  }
   if (maxParticipants != null && maxParticipants <= 5) {
     return clampMatchGenerationType(
       effectiveMatchGeneration(mode, 'AUTOMATIC', maxParticipants),

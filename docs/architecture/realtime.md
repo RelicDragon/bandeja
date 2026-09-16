@@ -49,6 +49,16 @@ Reasons: `intent-created` `intent-cancelled` `intent-expired` `intent-status-cha
 
 Emit: pool room `play-intent-pool:{cityId}` **and** listed `notify-user-*`. HTTP remains authoritative; this only marks stale. FE: `usePlayIntent.ts`, `useInviteLookingPool.ts`. Constraint: APP_FUNCTIONALITY §2.2 play-intent notifications are queued — do not replace with fire-and-forget.
 
+## game-text:invalidate
+
+Const: `GAME_TEXT_INVALIDATE_EVENT` = `'game-text:invalidate'` (`Frontend/shared/gameTextRealtime.ts`).
+
+Payload: `{ version: 1, gameId, locale, nameSourceRevision, descriptionSourceRevision, reason, occurredAt }` — **no** translated name/description.
+
+Reasons: `published` (worker) `corrected` (organizer PATCH).
+
+Emit after successful publish/correction: room `game-{gameId}` **and** `notify-user-*` for owner/trainer/participants only (same authorized routing as game updates; never broadcast private/pending Event text). Redis adapter optional for multi-node fan-out. HTTP refetch is authoritative. FE: `socketEventsStore` → `queryInvalidationBridge` / `invalidateGameTextCachesForEvent`; details refetch + capped pending poll. Do not piggyback chat translation events.
+
 ## Server → client events
 
 Verified against emit sites vs APP_FUNCTIONALITY §32 (chat, unread, game, timer, scoring, photos, invites, teams, bets, auction, stories, wallet, presence, typing, sync, play-intent).
@@ -104,6 +114,7 @@ Verified against emit sites vs APP_FUNCTIONALITY §32 (chat, unread, game, timer
 | `sync-ready` | after `sync-messages` |
 | `presence-initial` `presence-update` | |
 | `play-intent:invalidate` | |
+| `game-text:invalidate` | `game-*` + authorized `notify-user-*`; metadata only |
 | `error` | `{ message, code? }` |
 | `pong` | |
 

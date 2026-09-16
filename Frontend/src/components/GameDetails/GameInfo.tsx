@@ -15,6 +15,7 @@ import { GameAvatar } from '@/components/GameAvatar';
 import { FullscreenImageViewer } from '@/components/FullscreenImageViewer';
 import { AddToCalendarModal } from '@/components';
 import { getShareUrl } from '@/utils/shareUrl';
+import { buildDisplayedGameListingSharePayload } from '@/utils/gameText/shareDisplayedGameListing';
 import { resolveUserCurrency } from '@/utils/currency';
 import type { EditGameInfoInitialTabId } from './EditGameInfoModal';
 import { isCapacitor } from '@/utils/capacitor';
@@ -27,10 +28,14 @@ import { LinkedBookingCoverageBadge } from '@/components/GameDetails/LinkedBooki
 import { useGameLinkedBookingViewer } from '@/hooks/useGameLinkedBookingViewer';
 import { InfoIconChip } from './InfoIconChip';
 import { GameInfoUserNote } from './GameInfoUserNote';
+import { GameLocalizedAuthoredText } from './GameLocalizedAuthoredText';
+import { GameTextTranslationControl } from './GameTextTranslationControl';
 import { Share } from '@capacitor/share';
 import { gameIsNonRating } from '@/utils/gameRatingSemantics';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
+import { useGameDetailsLocalizedDisplay } from '@/hooks/useGameDetailsLocalizedDisplay';
+import { useGameLocalizedText } from '@/hooks/useGameLocalizedText';
 import { AnimatedChildrenStagger } from '@/components/motion/AnimatedChildrenStagger';
 import {
   Calendar,
@@ -94,6 +99,11 @@ export const GameInfo = ({
   const { translateCity } = useTranslatedGeo();
   const { user } = useAuthStore();
   const displaySettings = user ? resolveDisplaySettings(user) : resolveDisplaySettings(null);
+  const localized = useGameDetailsLocalizedDisplay(game);
+  const parentSeasonLocalized = useGameLocalizedText(game.parent?.leagueSeason?.game);
+  const displayName = localized.name;
+  const displayDescription = localized.description;
+  const hasAuthoredDescription = Boolean(game.description?.trim() || displayDescription?.trim());
   const clubTz = getClubTimezone(game);
   const {
     hasLinkedBookings,
@@ -187,7 +197,7 @@ export const GameInfo = ({
         const ownerName = owner ? [owner.firstName, owner.lastName].filter(Boolean).join(' ').trim() : '';
 
         const titleParts: string[] = [];
-        if (game.name) titleParts.push(game.name);
+        if (displayName) titleParts.push(displayName);
         if (game.entityType !== 'GAME') titleParts.push(entityTypeLabel);
         if (clubName) titleParts.push(clubName);
         const title = titleParts.join(' - ') || entityTypeLabel || t('games.entityTypes.GAME');
@@ -200,10 +210,10 @@ export const GameInfo = ({
         ].filter(Boolean);
 
         const notesParts = [
-          game.name?.trim() ? game.name.trim() : null,
+          displayName?.trim() ? displayName.trim() : null,
           entityTypeLabel,
           ownerName ? `${t('games.organizerFull')}: ${ownerName}` : null,
-          game.description?.trim() ? game.description.trim() : null,
+          displayDescription?.trim() ? displayDescription.trim() : null,
         ].filter(Boolean) as string[];
 
         return {
@@ -227,11 +237,18 @@ export const GameInfo = ({
 
   const handleShare = async () => {
     const shareUrl = getShareUrl();
+    const payload = buildDisplayedGameListingSharePayload({
+      name: displayName,
+      description: displayDescription,
+      url: shareUrl,
+    });
 
     if (isCapacitor()) {
       try {
         await Share.share({
-          url: shareUrl,
+          title: payload.title,
+          text: payload.text,
+          url: payload.url,
         });
         return;
       } catch (error) {
@@ -245,7 +262,9 @@ export const GameInfo = ({
     if (navigator.share && (window.isSecureContext || location.protocol === 'https:')) {
       try {
         await navigator.share({
-          url: shareUrl,
+          title: payload.title,
+          text: payload.text,
+          url: payload.url,
         });
         return;
       } catch (error) {
@@ -258,7 +277,7 @@ export const GameInfo = ({
 
     if (navigator.clipboard && (window.isSecureContext || location.protocol === 'https:')) {
       try {
-        await navigator.clipboard.writeText(shareUrl);
+        await navigator.clipboard.writeText(payload.clipboardText);
         toast.success(t('gameDetails.linkCopied'));
         return;
       } catch (error) {
@@ -354,6 +373,9 @@ export const GameInfo = ({
       : '';
 
     const TitleTag = isCollapsed ? 'h3' : 'h1';
+    const nameLang = localized.lang;
+    const seasonName = parentSeasonLocalized.name ?? game.parent?.leagueSeason?.game?.name;
+    const seasonTitle = displayName;
 
     return (
       <TitleTag
@@ -368,8 +390,13 @@ export const GameInfo = ({
               <span className={leagueNameClass}>
                 {game.parent.leagueSeason.league.name}
               </span>
-              {game.parent.leagueSeason.game?.name && (
-                <span className={leagueSubtitleClass}> {game.parent.leagueSeason.game.name}</span>
+              {seasonName && (
+                <GameLocalizedAuthoredText
+                  as="span"
+                  className={leagueSubtitleClass}
+                  text={` ${seasonName}`}
+                  lang={parentSeasonLocalized.isTranslated ? parentSeasonLocalized.locale : null}
+                />
               )}
               {(game.leagueGroup?.name || game.leagueRound) && (
                 <div className={groupContainerClass}>
@@ -394,18 +421,31 @@ export const GameInfo = ({
             ? (
               <>
                 <span className={leagueNameClass}>{game.leagueSeason.league.name}</span>
-                {game.name && (
-                  <span className={leagueSubtitleClass}> {game.name}</span>
+                {seasonTitle && (
+                  <GameLocalizedAuthoredText
+                    as="span"
+                    className={leagueSubtitleClass}
+                    text={` ${seasonTitle}`}
+                    lang={nameLang}
+                  />
                 )}
               </>
             )
-            : game.name}
-        {game.entityType !== 'LEAGUE' && game.entityType !== 'LEAGUE_SEASON' && game.entityType !== 'TRAINING' && game.name && game.gameType !== 'CLASSIC' && (
+            : seasonTitle
+              ? (
+                <GameLocalizedAuthoredText
+                  as="span"
+                  text={seasonTitle}
+                  lang={nameLang}
+                />
+              )
+              : null}
+        {game.entityType !== 'LEAGUE' && game.entityType !== 'LEAGUE_SEASON' && game.entityType !== 'TRAINING' && seasonTitle && game.gameType !== 'CLASSIC' && (
           <span className={gameTypeClass}>
             ({t(`games.gameTypes.${game.gameType}`)})
           </span>
         )}
-        {game.entityType !== 'LEAGUE' && game.entityType !== 'LEAGUE_SEASON' && game.entityType !== 'TRAINING' && !game.name && game.gameType !== 'CLASSIC' && t(`games.gameTypes.${game.gameType}`)}
+        {game.entityType !== 'LEAGUE' && game.entityType !== 'LEAGUE_SEASON' && game.entityType !== 'TRAINING' && !seasonTitle && game.gameType !== 'CLASSIC' && t(`games.gameTypes.${game.gameType}`)}
       </TitleTag>
     );
   };
@@ -795,7 +835,7 @@ export const GameInfo = ({
                 onClick={() => setShowFullscreenAvatar(true)}
                 className="relative transition-transform duration-300 ease-out hover:scale-[1.03] active:scale-[0.98] cursor-pointer"
               >
-                <GameAvatar avatar={game.avatar} extralarge={true} alt={game.name || t('gameDetails.gameAvatar')} />
+                <GameAvatar avatar={game.avatar} extralarge={true} alt={displayName || game.name || t('gameDetails.gameAvatar')} />
               </button>
             </div>
           </div>
@@ -809,6 +849,15 @@ export const GameInfo = ({
         <div className="flex items-start justify-between mb-4">
           <div className="pe-20 flex-1 min-w-0">
             {renderName()}
+            {!hasAuthoredDescription && (
+              <GameTextTranslationControl
+                showOriginal={localized.showOriginal}
+                hasToggle={localized.hasToggle}
+                showPendingHint={localized.showPendingHint}
+                onToggle={localized.toggleShowOriginal}
+                a11yAnnouncement={localized.a11yAnnouncement}
+              />
+            )}
             {renderTags()}
           </div>
         </div>
@@ -1143,19 +1192,38 @@ export const GameInfo = ({
           )}
           
           {/* Game Description/Comments */}
-          {game.description && game.description.trim() !== '' && (
+          {hasAuthoredDescription && (
             <div className="flex items-start gap-3 text-sm text-gray-700 dark:text-gray-300">
               <InfoIconChip>
                 <MessageCircle size={18} />
               </InfoIconChip>
-              <button
-                onClick={() => canEdit && canShowEdit && onOpenEditGameInfo?.('general')}
-                className={`text-xs text-gray-600 dark:text-gray-400 text-start whitespace-pre-line ${
-                  canEdit && canShowEdit ? 'hover:text-primary-600 dark:hover:text-primary-400 cursor-pointer transition-colors' : ''
-                }`}
-              >
-                {game.description}
-              </button>
+              <div className="min-w-0 flex-1 text-start">
+                <div className="mb-1 flex flex-wrap items-center justify-between gap-x-2 gap-y-0.5">
+                  <span className="text-[10px] font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                    {t('gameDetails.gameText.descriptionHeading', { defaultValue: 'Description' })}
+                  </span>
+                  <GameTextTranslationControl
+                    compact
+                    showOriginal={localized.showOriginal}
+                    hasToggle={localized.hasToggle}
+                    showPendingHint={localized.showPendingHint}
+                    onToggle={localized.toggleShowOriginal}
+                    a11yAnnouncement={localized.a11yAnnouncement}
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => canEdit && canShowEdit && onOpenEditGameInfo?.('general')}
+                  className={`text-xs text-gray-600 dark:text-gray-400 text-start whitespace-pre-line ${
+                    canEdit && canShowEdit ? 'hover:text-primary-600 dark:hover:text-primary-400 cursor-pointer transition-colors' : ''
+                  }`}
+                >
+                  <GameLocalizedAuthoredText
+                    text={displayDescription?.trim() || game.description?.trim() || ''}
+                    lang={localized.lang}
+                  />
+                </button>
+              </div>
             </div>
           )}
 

@@ -48,6 +48,9 @@ import { grantOrganizeAchievementsForFinalizedGame } from '../achievements/organ
 import { grantPartnerAchievementsForFinalizedGame } from '../achievements/partnerGrant.service';
 import { grantTieBreakAchievementsForFinalizedGame } from '../achievements/tieBreakGrant.service';
 import { invalidateAchievementStatsForGame } from '../achievements/achievementStats.service';
+import { applyGameTextSourceChangeInTransaction } from '../gameText/gameTextSourceChange.service';
+import { applyGameTextPolicyUpdateInTransaction } from '../gameText/gameTextEditor.service';
+import { wakeGameTextTranslationWorker } from '../gameText/gameTextTranslationWake';
 import { normalizeGameRatingFields } from './normalizeGameRatingFields';
 import { applyEventUpdateInvariants } from './eventCreateDefaults';
 
@@ -244,6 +247,34 @@ export class GameUpdateService {
           });
 
     const updateData: any = { ...data, ...formatNormalized };
+
+    const gameTextPolicyPatch: {
+      keepOriginalNameInAllLocales?: boolean;
+      nameSourceLocaleOverride?: string | null;
+      descriptionSourceLocaleOverride?: string | null;
+    } = {};
+    if (Object.prototype.hasOwnProperty.call(data, 'keepOriginalNameInAllLocales')) {
+      gameTextPolicyPatch.keepOriginalNameInAllLocales = Boolean(data.keepOriginalNameInAllLocales);
+      delete updateData.keepOriginalNameInAllLocales;
+      delete data.keepOriginalNameInAllLocales;
+    }
+    if (Object.prototype.hasOwnProperty.call(data, 'nameSourceLocaleOverride')) {
+      gameTextPolicyPatch.nameSourceLocaleOverride =
+        data.nameSourceLocaleOverride === undefined
+          ? undefined
+          : (data.nameSourceLocaleOverride as string | null);
+      delete updateData.nameSourceLocaleOverride;
+      delete data.nameSourceLocaleOverride;
+    }
+    if (Object.prototype.hasOwnProperty.call(data, 'descriptionSourceLocaleOverride')) {
+      gameTextPolicyPatch.descriptionSourceLocaleOverride =
+        data.descriptionSourceLocaleOverride === undefined
+          ? undefined
+          : (data.descriptionSourceLocaleOverride as string | null);
+      delete updateData.descriptionSourceLocaleOverride;
+      delete data.descriptionSourceLocaleOverride;
+    }
+    const hasGameTextPolicyPatch = Object.keys(gameTextPolicyPatch).length > 0;
 
     if (game.entityType === 'TOURNAMENT') {
       updateData.resultsByAnyone = false;
@@ -681,6 +712,7 @@ export class GameUpdateService {
       }
     }
 
+    let gameTextWake = false;
     await prisma.$transaction(async (tx) => {
       await tx.$executeRaw(Prisma.sql`SELECT id FROM "Game" WHERE id = ${id} FOR UPDATE`);
 
@@ -690,6 +722,8 @@ export class GameUpdateService {
           maxParticipants: true,
           hasFixedTeams: true,
           allowUserInMultipleTeams: true,
+          name: true,
+          description: true,
         },
       });
       if (!locked) {
@@ -752,6 +786,32 @@ export class GameUpdateService {
           },
         },
       });
+
+      const nameInPatch = Object.prototype.hasOwnProperty.call(data, 'name');
+      const descriptionInPatch = Object.prototype.hasOwnProperty.call(data, 'description');
+      if (nameInPatch || descriptionInPatch) {
+        const gameTextChange = await applyGameTextSourceChangeInTransaction(tx, {
+          gameId: id,
+          previousName: locked.name,
+          previousDescription: locked.description,
+          ...(nameInPatch ? { nextName: data.name ?? null } : {}),
+          ...(descriptionInPatch ? { nextDescription: data.description ?? null } : {}),
+          ...(Object.prototype.hasOwnProperty.call(gameTextPolicyPatch, 'keepOriginalNameInAllLocales')
+            ? { keepOriginalNameInAllLocales: gameTextPolicyPatch.keepOriginalNameInAllLocales }
+            : {}),
+        });
+        gameTextWake = gameTextChange.shouldWakeWorker;
+      }
+
+      if (hasGameTextPolicyPatch) {
+        const policyResult = await applyGameTextPolicyUpdateInTransaction(tx, {
+          gameId: id,
+          ...gameTextPolicyPatch,
+        });
+        if (policyResult.shouldWakeWorker) {
+          gameTextWake = true;
+        }
+      }
 
       const bracketScheduleChanged =
         data.startTime !== undefined ||
@@ -833,6 +893,10 @@ export class GameUpdateService {
         }
       }
     });
+
+    if (gameTextWake) {
+      wakeGameTextTranslationWorker();
+    }
 
     await GameReadinessService.updateGameReadiness(id);
 

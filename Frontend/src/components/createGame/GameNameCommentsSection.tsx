@@ -3,6 +3,7 @@ import { Tag } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { EntityType, PriceCurrency, PriceType } from '@/types';
 import { PriceSection } from './PriceSection';
+import { GameTextAuthoredFieldsHint } from '@/components/gameText/GameTextAuthoredFieldsHint';
 
 interface GameNameCommentsSectionProps {
   comments: string;
@@ -60,7 +61,9 @@ export const GameNameCommentsSection = ({
             placeholder={descriptionPlaceholder}
             className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none resize-none"
             rows={3}
+            dir="auto"
           />
+          <GameTextAuthoredFieldsHint className="mt-1.5 space-y-0.5" />
         </div>
         <div ref={priceSectionRef}>
           <PriceSection

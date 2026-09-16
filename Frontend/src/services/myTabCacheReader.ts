@@ -16,7 +16,13 @@ export function readMyTabCache(
   userId: string | undefined,
 ): MyTabCacheSnapshot | undefined {
   if (!userId) return undefined;
-  return queryClient.getQueryData<MyTabCacheSnapshot>(queryKeys.games.my(userId));
+  const matches = queryClient.getQueriesData<MyTabCacheSnapshot>({
+    queryKey: queryKeys.games.my(userId),
+  });
+  for (const [, data] of matches) {
+    if (data) return data;
+  }
+  return undefined;
 }
 
 export function countPendingInvites(invites: Invite[] | undefined): number {

@@ -1,4 +1,5 @@
 import dotenv from 'dotenv';
+import { GAME_TEXT_LOCALIZATION_GENERATION_ENABLED as PACKAGE_GAME_TEXT_GENERATION_DEFAULT } from '@bandeja/app-locale';
 import { resolveApiRateLimitConfig } from './apiRateLimit';
 import {
   assertProductionJwtAuthConfig,
@@ -9,6 +10,18 @@ import {
 } from './jwtAuthConfig';
 
 dotenv.config();
+
+function parseGameTextLocalizationGenerationEnabled(): boolean {
+  const env = process.env.GAME_TEXT_LOCALIZATION_GENERATION_ENABLED;
+  if (env === 'true' || env === '1') return true;
+  if (env === 'false' || env === '0') return false;
+  return PACKAGE_GAME_TEXT_GENERATION_DEFAULT;
+}
+
+/** Live env read — worker/enqueue and tests that flip the flag mid-process. */
+export function isGameTextLocalizationGenerationEnabled(): boolean {
+  return parseGameTextLocalizationGenerationEnabled();
+}
 
 function parseTrustProxy(): boolean | number | string {
   const v = (process.env.TRUST_PROXY || '').trim();
@@ -165,6 +178,37 @@ export const config = {
     pollIntervalMs: parseInt(process.env.TRANSLATION_QUEUE_POLL_INTERVAL_MS || '500', 10),
     maxAttempts: parseInt(process.env.TRANSLATION_QUEUE_MAX_ATTEMPTS || '3', 10),
     staleRunningMs: parseInt(process.env.TRANSLATION_QUEUE_STALE_RUNNING_MS || '120000', 10),
+  },
+  /**
+   * Game.name / Game.description auto-translation generation.
+   * Env overrides `@bandeja/app-locale` default (true). Prefer
+   * `isGameTextLocalizationGenerationEnabled()` for live reads.
+   */
+  get gameTextLocalizationGenerationEnabled(): boolean {
+    return isGameTextLocalizationGenerationEnabled();
+  },
+  /** Separate capacity from chat translationQueue. */
+  gameTextTranslationQueue: {
+    concurrency: parseInt(
+      process.env.GAME_TEXT_TRANSLATION_QUEUE_CONCURRENCY || '2',
+      10,
+    ),
+    minIntervalMs: parseInt(
+      process.env.GAME_TEXT_TRANSLATION_QUEUE_MIN_INTERVAL_MS || '300',
+      10,
+    ),
+    pollIntervalMs: parseInt(
+      process.env.GAME_TEXT_TRANSLATION_QUEUE_POLL_INTERVAL_MS || '1000',
+      10,
+    ),
+    maxAttempts: parseInt(
+      process.env.GAME_TEXT_TRANSLATION_QUEUE_MAX_ATTEMPTS || '5',
+      10,
+    ),
+    leaseMs: parseInt(
+      process.env.GAME_TEXT_TRANSLATION_QUEUE_LEASE_MS || '180000',
+      10,
+    ),
   },
   resultsArtifacts: {
     enabled: process.env.RESULTS_ARTIFACTS_ENABLED === 'true',

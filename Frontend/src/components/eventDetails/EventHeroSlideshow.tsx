@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { FullscreenImageViewer } from '@/components/FullscreenImageViewer';
 import type { FullscreenMediaItem } from '@/components/fullscreenImageViewer/chatMediaGallery';
 import { eventHeroSlides } from '@/utils/eventDetails/eventHeroSlides';
+import { useGameDetailsLocalizedDisplay } from '@/hooks/useGameDetailsLocalizedDisplay';
 import type { Game } from '@/types';
 
 type EventHeroSlideshowProps = {
@@ -11,12 +12,16 @@ type EventHeroSlideshowProps = {
 
 export function EventHeroSlideshow({ game }: EventHeroSlideshowProps) {
   const { t } = useTranslation();
+  const localized = useGameDetailsLocalizedDisplay(game);
   const slides = eventHeroSlides(game);
   const scrollerRef = useRef<HTMLDivElement>(null);
   const slideRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const [page, setPage] = useState(0);
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
-  const title = game.name || t('games.entityTypes.EVENT', { defaultValue: 'Event/Ad' });
+  const title =
+    localized.name?.trim() ||
+    game.name ||
+    t('games.entityTypes.EVENT', { defaultValue: 'Event/Ad' });
 
   const onScroll = useCallback(() => {
     const el = scrollerRef.current;

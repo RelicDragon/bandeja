@@ -87,7 +87,7 @@ const GameCardMatch = memo(function GameCardMatch({
   findFilterSport,
 }: GameCardProps) {
   const displayUnread = useContextUnread('GAME', game.id, unreadCountProp);
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { translateCity } = useTranslatedGeo();
   const navigate = useNavigate();
   const authUser = useAuthStore((state) => state.user);
@@ -287,7 +287,7 @@ const GameCardMatch = memo(function GameCardMatch({
     !hasMyInvites &&
     !isInJoinQueue;
 
-  const hasVisibleTitle = gameCardHasVisibleTitle(game);
+  const hasVisibleTitle = gameCardHasVisibleTitle(game, i18n.language);
   const showNoteBookmark = !userNoteDisplay && Boolean(effectiveUser);
   const showPlayersCarousel = !isLeagueSeasonGame || Boolean(mainPhotoUrl);
   const carouselAutoHideNames = effectiveUser?.alwaysShowUserNames === false;

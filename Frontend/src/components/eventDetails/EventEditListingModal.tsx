@@ -34,6 +34,13 @@ import {
   toDatetimeLocalValue,
   type EventHeroDraft,
 } from './eventEditTypes';
+import { GameTextAuthoredFieldsHint } from '@/components/gameText/GameTextAuthoredFieldsHint';
+import { GameTextTranslationsOpenButton } from '@/components/gameText/GameTextTranslationsOpenButton';
+import { GameTextTranslationsPanel } from '@/components/gameText/GameTextTranslationsPanel';
+import {
+  authoredGameTextForEdit,
+  shouldLabelAuthoredEditAsOriginal,
+} from '@/utils/gameText/authoredGameTextForEdit';
 
 type EventEditListingModalProps = {
   isOpen: boolean;
@@ -43,17 +50,18 @@ type EventEditListingModalProps = {
 };
 
 export function EventEditListingModal({ isOpen, game, onClose, onSaved }: EventEditListingModalProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const sports = useMemo(() => listCreateFlowSports(user), [user]);
+  const initialAuthored = authoredGameTextForEdit(game);
   const [kind, setKind] = useState<EventKind>(game.eventKind ?? 'CAMP');
   const [sport, setSport] = useState<Sport>(parseGameSport(game.sport));
   const [levelRange, setLevelRange] = useState<[number, number]>([
     game.minLevel ?? 1,
     game.maxLevel ?? 7,
   ]);
-  const [name, setName] = useState(game.name ?? '');
-  const [description, setDescription] = useState(game.description ?? '');
+  const [name, setName] = useState(initialAuthored.name);
+  const [description, setDescription] = useState(initialAuthored.description);
   const [cityId, setCityId] = useState(game.city?.id ?? '');
   const [cityName, setCityName] = useState(game.city?.name ?? '');
   const [clubId, setClubId] = useState(game.clubId ?? '');
@@ -77,16 +85,18 @@ export function EventEditListingModal({ isOpen, game, onClose, onSaved }: EventE
   const [clubModalOpen, setClubModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [translationsOpen, setTranslationsOpen] = useState(false);
 
   useBackButtonModal(isOpen, onClose, 'event-edit-listing');
 
   useEffect(() => {
     if (!isOpen) return;
+    const authored = authoredGameTextForEdit(game);
     setKind(game.eventKind ?? 'CAMP');
     setSport(parseGameSport(game.sport));
     setLevelRange([game.minLevel ?? 1, game.maxLevel ?? 7]);
-    setName(game.name ?? '');
-    setDescription(game.description ?? '');
+    setName(authored.name);
+    setDescription(authored.description);
     setCityId(game.city?.id ?? '');
     setCityName(game.city?.name ?? '');
     setClubId(game.clubId ?? '');
@@ -104,6 +114,8 @@ export function EventEditListingModal({ isOpen, game, onClose, onSaved }: EventE
       })),
     );
   }, [isOpen, game, user?.defaultCurrency]);
+
+  const showOriginalLabel = shouldLabelAuthoredEditAsOriginal(game, i18n.language);
 
   useEffect(() => {
     if (!isOpen || !cityId) return;
@@ -230,6 +242,10 @@ export function EventEditListingModal({ isOpen, game, onClose, onSaved }: EventE
             <RangeSlider min={1} max={7} step={0.1} value={levelRange} onChange={setLevelRange} />
           </div>
           <Input label={t('createEvent.name')} value={name} onChange={(e) => setName(e.target.value)} />
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <GameTextAuthoredFieldsHint showOriginalLabel={showOriginalLabel} />
+            <GameTextTranslationsOpenButton onClick={() => setTranslationsOpen(true)} />
+          </div>
           <EventEditHeroesField
             heroes={heroes}
             uploading={uploading}
@@ -244,6 +260,7 @@ export function EventEditListingModal({ isOpen, game, onClose, onSaved }: EventE
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder={t('createEvent.descriptionPlaceholder')}
+              dir="auto"
             />
           </label>
           <div>
@@ -345,6 +362,11 @@ export function EventEditListingModal({ isOpen, game, onClose, onSaved }: EventE
           cityId={cityId}
           entityType="EVENT"
           preferredSport={sport}
+        />
+        <GameTextTranslationsPanel
+          gameId={game.id}
+          isOpen={translationsOpen}
+          onClose={() => setTranslationsOpen(false)}
         />
       </DrawerContent>
     </Drawer>

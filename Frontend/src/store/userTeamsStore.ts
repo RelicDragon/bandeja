@@ -3,6 +3,7 @@ import type { QueryClient } from '@tanstack/react-query';
 import { userTeamsApi } from '@/api/userTeams';
 import type { UserTeam, UserTeamMembership } from '@/types';
 import { queryClient } from '@/queries/queryClient';
+import { removeUserTeamFromMyGamesCache } from '@/queries/games/removeUserTeamFromMyGamesCache';
 import { useAuthStore } from '@/store/authStore';
 import { ownedTeamsFromMyTab, readMyTabCache, hasMyTabMembershipsSnapshot } from '@/services/myTabCacheReader';
 
@@ -96,6 +97,8 @@ export const useUserTeamsStore = create<UserTeamsState>((set, get) => ({
   },
 
   removeTeamLocal: (teamId) => {
+    const userId = useAuthStore.getState().user?.id;
+    removeUserTeamFromMyGamesCache(queryClient, userId, teamId);
     set({
       teams: get().teams.filter((t) => t.id !== teamId),
       memberships: get().memberships.filter((m) => m.teamId !== teamId),

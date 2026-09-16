@@ -45,7 +45,11 @@ export const GameFormatSection = ({ game, canEdit, onGameUpdate }: GameFormatSec
       ...game,
       maxParticipants: formatMaxParticipants,
     },
-    { skipGenerationParticipantDefaults: showTemplatePicker },
+    {
+      skipGenerationParticipantDefaults: showTemplatePicker,
+      // TOURNAMENT (and other non-picker entities) must keep saved Round Robin / etc.
+      preserveInitialGeneration: true,
+    },
   );
   const gameFormatRef = useRef(gameFormat);
   gameFormatRef.current = gameFormat;

@@ -808,6 +808,55 @@
     "bracketPreviewUnassignedLabel": "Unassigned teams",
     "playoffWizardStep": "Step {{current}} of {{total}}",
     "fixtureDetailNoGameYet": "No league match exists for this pairing yet. It will appear here once a game is created in a regular round.",
-    "fixtureDetailNoDatetimeFinal": "Date and venue were not recorded for this match."
+    "fixtureDetailNoDatetimeFinal": "Date and venue were not recorded for this match.",
+    "gameText": {
+      "descriptionHeading": "Popis",
+      "translated": "Přeloženo",
+      "original": "Originál",
+      "originalText": "Původní text",
+      "autoTranslatedHelper": "Automaticky se překládá pro hráče v jiných jazycích.",
+      "showOriginal": "Zobrazit originál",
+      "showTranslation": "Zobrazit překlad",
+      "translationInProgress": "Probíhá překlad",
+      "a11yTranslationReady": "Překlad byl aktualizován",
+      "editor": {
+        "open": "Překlady",
+        "title": "Překlady",
+        "subtitle": "Zkontrolujte a opravte překlady pro každý jazyk.",
+        "keepOriginalName": "Ponechat původní název ve všech jazycích",
+        "keepOriginalNameHint": "Hodí se pro značkové turnaje nebo sezení. Popis se stále překládá automaticky.",
+        "statusReady": "Hotovo",
+        "statusEdited": "Upraveno",
+        "statusUpdating": "Aktualizace",
+        "statusNeedsReview": "Vyžaduje kontrolu",
+        "statusRetry": "Zkusit znovu",
+        "statusNotNeeded": "Překlad není potřeba",
+        "originalName": "Původní název",
+        "translatedName": "Přeložený název",
+        "originalDescription": "Původní popis",
+        "translatedDescription": "Přeložený popis",
+        "useAutomatic": "Použít automatický překlad",
+        "useAutomaticHint": "Odstraní vaši opravu a zobrazí automatický překlad, až bude připraven.",
+        "needsReviewHint": "Originál se změnil. Aktualizujte opravu nebo použijte automatický překlad.",
+        "namePreservedHint": "Název zůstává originálem ve všech jazycích.",
+        "emptyField": "Prázdné",
+        "retry": "Zkusit znovu",
+        "retryQueued": "Opakování překladu je ve frontě",
+        "conflict": "Někdo jiný aktualizoval tento překlad. Koncept byl zachován — zkontrolujte aktuální originál a zkuste to znovu.",
+        "languages": {
+          "en": "Angličtina",
+          "ru": "Ruština",
+          "sr": "Srbština",
+          "es": "Španělština",
+          "cs": "Čeština",
+          "ar": "Arabština",
+          "zh": "Čínština",
+          "id": "Indonéština",
+          "hi": "Hindština",
+          "th": "Thajština",
+          "ja": "Japonština"
+        }
+      }
+    }
   }
 }

@@ -37,6 +37,11 @@ import { EntityType } from '@prisma/client';
 import { enrichAvailableGamesByIds } from '../services/game/availableGamesEnrichment';
 import { resolveAvailableEnrich } from '../services/game/availableGamesProtocol';
 import { parseStructuralFiltersFromQuery } from '../services/game/availableGamesStructuralWhere';
+import {
+  attachLocalizedTextToGame,
+  attachLocalizedTextToGames,
+} from '../services/gameText/gameTextLocalizedText.batch';
+import { resolveRequestAppUiLocale } from '../services/gameText/gameTextRequestLocale';
 
 export const createGame = asyncHandler(async (req: AuthRequest, res: Response) => {
   const game = await GameService.createGame(req.body, req.userId!, req.user?.isAdmin || false);
@@ -50,10 +55,11 @@ export const createGame = asyncHandler(async (req: AuthRequest, res: Response) =
 export const getGameById = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
   const game = await GameService.getGameById(id, req.userId);
+  const data = await attachLocalizedTextToGame(game, resolveRequestAppUiLocale(req));
 
   res.json({
     success: true,
-    data: game,
+    data,
     serverTime: new Date().toISOString(),
   });
 });
@@ -233,10 +239,11 @@ export const getResultsArtifactsStatus = asyncHandler(async (req: AuthRequest, r
 
 export const getGames = asyncHandler(async (req: AuthRequest, res: Response) => {
   const games = await GameService.getGames(req.query, req.userId, req.user?.currentCityId);
+  const data = await attachLocalizedTextToGames(games, resolveRequestAppUiLocale(req));
 
   res.json({
     success: true,
-    data: games,
+    data,
     serverTime: new Date().toISOString(),
   });
 });
@@ -247,10 +254,12 @@ export const getMyGames = asyncHandler(async (req: AuthRequest, res: Response) =
   }
 
   const games = await GameService.getMyGames(req.userId, req.user?.currentCityId);
+  const locale = resolveRequestAppUiLocale(req);
+  const data = await attachLocalizedTextToGames(games, locale);
 
   res.json({
     success: true,
-    data: games,
+    data,
     serverTime: new Date().toISOString(),
   });
 });
@@ -261,10 +270,12 @@ export const getMyGamesWithUnread = asyncHandler(async (req: AuthRequest, res: R
   }
 
   const result = await GameService.getMyGamesWithUnread(req.userId, req.user?.currentCityId);
+  const locale = resolveRequestAppUiLocale(req);
+  const games = await attachLocalizedTextToGames(result.games, locale);
 
   res.json({
     success: true,
-    data: result,
+    data: { ...result, games },
     serverTime: new Date().toISOString(),
   });
 });
@@ -287,10 +298,11 @@ export const getPastGames = asyncHandler(async (req: AuthRequest, res: Response)
     startDate,
     endDate
   );
+  const data = await attachLocalizedTextToGames(games, resolveRequestAppUiLocale(req));
 
   res.json({
     success: true,
-    data: games,
+    data,
     serverTime: new Date().toISOString(),
   });
 });
@@ -312,6 +324,7 @@ export const getAvailableUpcomingGames = asyncHandler(async (req: AuthRequest, r
   structural.requireTimeSet = false;
   structural.allowUnsetTimeLeagueSeason = true;
 
+  const locale = resolveRequestAppUiLocale(req);
   const { games, meta } = await GameService.getAvailableUpcomingGames(
     req.userId,
     req.user?.currentCityId,
@@ -328,9 +341,13 @@ export const getAvailableUpcomingGames = asyncHandler(async (req: AuthRequest, r
     enrich,
   );
 
+  const data = await attachLocalizedTextToGames(games, locale, {
+    includeDescription: false,
+  });
+
   res.json({
     success: true,
-    data: games,
+    data,
     meta,
     serverTime: new Date().toISOString(),
   });
@@ -355,6 +372,7 @@ export const getAvailableGames = asyncHandler(async (req: AuthRequest, res: Resp
   });
 
   const indexOnly = req.query.indexOnly === 'true';
+  const locale = resolveRequestAppUiLocale(req);
   const { games, meta } = await GameService.getAvailableGames(
     req.userId,
     req.user?.currentCityId,
@@ -375,9 +393,13 @@ export const getAvailableGames = asyncHandler(async (req: AuthRequest, res: Resp
     indexOnly,
   );
 
+  const data = await attachLocalizedTextToGames(games, locale, {
+    includeDescription: false,
+  });
+
   res.json({
     success: true,
-    data: games,
+    data,
     meta,
     serverTime: new Date().toISOString(),
   });

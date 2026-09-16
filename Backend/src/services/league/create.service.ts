@@ -33,6 +33,8 @@ import { TeamForRoundGeneration } from './generation/TeamForRoundGeneration';
 import { roundsInSingleRoundRobinCycle } from './generation/fixedTeamsRoundRobin';
 import { teamPlayerSig } from './generation/fixedTeamsRoundMatching';
 import { assertMaxParticipantsWithinUserCap } from '../../utils/game/userMaxParticipantsCap';
+import { applyGameTextSourceChangeInTransaction } from '../gameText/gameTextSourceChange.service';
+import { wakeGameTextTranslationWorker } from '../gameText/gameTextTranslationWake';
 import {
   ensureTeamLeagueParticipant,
   ensureUserLeagueParticipant,
@@ -346,121 +348,140 @@ export class LeagueCreateService {
       entityType: EntityType.LEAGUE_SEASON,
     });
 
-    const gameSeasonGame = await prisma.game.create({
-      data: {
-        entityType: 'LEAGUE_SEASON' as EntityType,
-        sport: seasonSport,
-        gameType: (seasonFormatNorm.gameType as GameType | undefined) ?? GameType.CLASSIC,
-        name: seasonName,
-        avatar: data.season?.avatar,
-        originalAvatar: data.season?.originalAvatar,
-        fixedNumberOfSets:
-          (seasonFormatNorm.fixedNumberOfSets as number | undefined) ??
-          gameSeasonData.fixedNumberOfSets ??
-          0,
-        maxTotalPointsPerSet:
-          (seasonFormatNorm.maxTotalPointsPerSet as number | undefined) ??
-          gameSeasonData.maxTotalPointsPerSet ??
-          0,
-        maxPointsPerTeam:
-          (seasonFormatNorm.maxPointsPerTeam as number | undefined) ??
-          gameSeasonData.maxPointsPerTeam ??
-          0,
-        matchTimedCapMinutes:
-          (seasonFormatNorm.matchTimedCapMinutes as number | undefined) ??
-          gameSeasonData.matchTimedCapMinutes ??
-          0,
-        matchTimerEnabled: Boolean(
-          seasonFormatNorm.matchTimerEnabled ?? gameSeasonData.matchTimerEnabled,
-        ),
-        winnerOfGame:
-          (seasonFormatNorm.winnerOfGame as WinnerOfGame | undefined) ??
-          (gameSeasonData.winnerOfGame as WinnerOfGame) ??
-          WinnerOfGame.BY_MATCHES_WON,
-        winnerOfMatch:
-          (seasonFormatNorm.winnerOfMatch as WinnerOfMatch | undefined) ??
-          (gameSeasonData.winnerOfMatch as WinnerOfMatch) ??
-          WinnerOfMatch.BY_SCORES,
-        matchGenerationType:
-          (seasonFormatNorm.matchGenerationType as MatchGenerationType | undefined) ??
-          resolveMatchGenerationType({
-            resultsRoundGenV2: data.resultsRoundGenV2,
-            matchGenerationType: gameSeasonData.matchGenerationType,
-            maxParticipants,
-            playersPerMatch: seasonPlayersPerMatch,
-          }),
-        pointsPerWin:
-          (seasonFormatNorm.pointsPerWin as number | undefined) ?? gameSeasonData.pointsPerWin ?? 0,
-        pointsPerLoose:
-          (seasonFormatNorm.pointsPerLoose as number | undefined) ??
-          gameSeasonData.pointsPerLoose ??
-          0,
-        pointsPerTie:
-          (seasonFormatNorm.pointsPerTie as number | undefined) ?? gameSeasonData.pointsPerTie ?? 0,
-        scoringPreset:
-          (seasonFormatNorm.scoringPreset as ScoringPreset | null | undefined) ??
-          (gameSeasonData.scoringPreset as ScoringPreset | null) ??
-          null,
-        scoringMode:
-          (seasonFormatNorm.scoringMode as string | null | undefined) ??
-          (gameSeasonData.scoringMode != null ? String(gameSeasonData.scoringMode) : null),
-        deucesBeforeGoldenPoint:
-          (seasonFormatNorm.deucesBeforeGoldenPoint as number | null | undefined) ??
-          gameSeasonData.deucesBeforeGoldenPoint ??
-          null,
-        ballsInGames: Boolean(seasonFormatNorm.ballsInGames),
-        hasFixedTeams:
-          (seasonFormatNorm.hasFixedTeams as boolean | undefined) ?? data.hasFixedTeams ?? false,
-        allowUserInMultipleTeams:
-          (seasonFormatNorm.allowUserInMultipleTeams as boolean | undefined) ??
-          (seasonPlayersPerMatch === 2 || !data.hasFixedTeams
-            ? false
-            : Boolean(data.allowUserInMultipleTeams)),
-        cityId: data.cityId,
-        clubId: data.clubId || null,
-        startTime: startDate,
-        endTime: startDate,
-        maxParticipants,
-        playersPerMatch: seasonPlayersPerMatch,
-        minParticipants: 0,
-        minLevel,
-        maxLevel,
-        status: 'ANNOUNCED',
-        participants: {
-          create: {
-            userId: userId,
-            role: 'OWNER',
-            status: 'IN_QUEUE',
+    const { league, gameTextWake } = await prisma.$transaction(async (tx) => {
+      const gameSeasonGame = await tx.game.create({
+        data: {
+          entityType: 'LEAGUE_SEASON' as EntityType,
+          sport: seasonSport,
+          gameType: (seasonFormatNorm.gameType as GameType | undefined) ?? GameType.CLASSIC,
+          name: seasonName,
+          avatar: data.season?.avatar,
+          originalAvatar: data.season?.originalAvatar,
+          fixedNumberOfSets:
+            (seasonFormatNorm.fixedNumberOfSets as number | undefined) ??
+            gameSeasonData.fixedNumberOfSets ??
+            0,
+          maxTotalPointsPerSet:
+            (seasonFormatNorm.maxTotalPointsPerSet as number | undefined) ??
+            gameSeasonData.maxTotalPointsPerSet ??
+            0,
+          maxPointsPerTeam:
+            (seasonFormatNorm.maxPointsPerTeam as number | undefined) ??
+            gameSeasonData.maxPointsPerTeam ??
+            0,
+          matchTimedCapMinutes:
+            (seasonFormatNorm.matchTimedCapMinutes as number | undefined) ??
+            gameSeasonData.matchTimedCapMinutes ??
+            0,
+          matchTimerEnabled: Boolean(
+            seasonFormatNorm.matchTimerEnabled ?? gameSeasonData.matchTimerEnabled,
+          ),
+          winnerOfGame:
+            (seasonFormatNorm.winnerOfGame as WinnerOfGame | undefined) ??
+            (gameSeasonData.winnerOfGame as WinnerOfGame) ??
+            WinnerOfGame.BY_MATCHES_WON,
+          winnerOfMatch:
+            (seasonFormatNorm.winnerOfMatch as WinnerOfMatch | undefined) ??
+            (gameSeasonData.winnerOfMatch as WinnerOfMatch) ??
+            WinnerOfMatch.BY_SCORES,
+          matchGenerationType:
+            (seasonFormatNorm.matchGenerationType as MatchGenerationType | undefined) ??
+            resolveMatchGenerationType({
+              resultsRoundGenV2: data.resultsRoundGenV2,
+              matchGenerationType: gameSeasonData.matchGenerationType,
+              maxParticipants,
+              playersPerMatch: seasonPlayersPerMatch,
+            }),
+          pointsPerWin:
+            (seasonFormatNorm.pointsPerWin as number | undefined) ?? gameSeasonData.pointsPerWin ?? 0,
+          pointsPerLoose:
+            (seasonFormatNorm.pointsPerLoose as number | undefined) ??
+            gameSeasonData.pointsPerLoose ??
+            0,
+          pointsPerTie:
+            (seasonFormatNorm.pointsPerTie as number | undefined) ?? gameSeasonData.pointsPerTie ?? 0,
+          scoringPreset:
+            (seasonFormatNorm.scoringPreset as ScoringPreset | null | undefined) ??
+            (gameSeasonData.scoringPreset as ScoringPreset | null) ??
+            null,
+          scoringMode:
+            (seasonFormatNorm.scoringMode as string | null | undefined) ??
+            (gameSeasonData.scoringMode != null ? String(gameSeasonData.scoringMode) : null),
+          deucesBeforeGoldenPoint:
+            (seasonFormatNorm.deucesBeforeGoldenPoint as number | null | undefined) ??
+            gameSeasonData.deucesBeforeGoldenPoint ??
+            null,
+          ballsInGames: Boolean(seasonFormatNorm.ballsInGames),
+          hasFixedTeams:
+            (seasonFormatNorm.hasFixedTeams as boolean | undefined) ?? data.hasFixedTeams ?? false,
+          allowUserInMultipleTeams:
+            (seasonFormatNorm.allowUserInMultipleTeams as boolean | undefined) ??
+            (seasonPlayersPerMatch === 2 || !data.hasFixedTeams
+              ? false
+              : Boolean(data.allowUserInMultipleTeams)),
+          cityId: data.cityId,
+          clubId: data.clubId || null,
+          startTime: startDate,
+          endTime: startDate,
+          maxParticipants,
+          playersPerMatch: seasonPlayersPerMatch,
+          minParticipants: 0,
+          minLevel,
+          maxLevel,
+          status: 'ANNOUNCED',
+          participants: {
+            create: {
+              userId: userId,
+              role: 'OWNER',
+              status: 'IN_QUEUE',
+            },
           },
         },
-      },
+      });
+
+      const seasonTextChange = await applyGameTextSourceChangeInTransaction(tx, {
+        gameId: gameSeasonGame.id,
+        previousName: null,
+        previousDescription: null,
+        nextName: seasonName,
+        nextDescription: null,
+      });
+
+      const createdLeague = await tx.league.create({
+        data: {
+          name: data.name.trim(),
+          description: data.description?.trim() || null,
+          hasFixedTeams: data.hasFixedTeams ?? false,
+          cityId: data.cityId,
+          clubId: data.clubId || null,
+          seasons: {
+            create: {
+              id: gameSeasonGame.id,
+              orderIndex: 0,
+              sport: seasonSport,
+            },
+          },
+        },
+        include: {
+          seasons: {
+            include: {
+              game: true,
+            },
+          },
+          city: true,
+          club: true,
+        },
+      });
+
+      return {
+        league: createdLeague,
+        gameTextWake: seasonTextChange.shouldWakeWorker,
+      };
     });
 
-    const league = await prisma.league.create({
-      data: {
-        name: data.name.trim(),
-        description: data.description?.trim() || null,
-        hasFixedTeams: data.hasFixedTeams ?? false,
-        cityId: data.cityId,
-        clubId: data.clubId || null,
-        seasons: {
-          create: {
-            id: gameSeasonGame.id,
-            orderIndex: 0,
-            sport: seasonSport,
-          },
-        },
-      },
-      include: {
-        seasons: {
-          include: {
-            game: true,
-          },
-        },
-        city: true,
-        club: true,
-      },
-    });
+    if (gameTextWake) {
+      wakeGameTextTranslationWorker();
+    }
 
     return league;
   }

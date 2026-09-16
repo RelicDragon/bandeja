@@ -821,6 +821,55 @@
     },
     "photoPickFailed": "Не удалось выбрать фото",
     "bracketPreviewUnassignedLabel": "Unassigned teams",
-    "playoffWizardStep": "Step {{current}} of {{total}}"
+    "playoffWizardStep": "Step {{current}} of {{total}}",
+    "gameText": {
+      "descriptionHeading": "Описание",
+      "translated": "Перевод",
+      "original": "Оригинал",
+      "originalText": "Оригинальный текст",
+      "autoTranslatedHelper": "Автоматически переводится для игроков на других языках.",
+      "showOriginal": "Показать оригинал",
+      "showTranslation": "Показать перевод",
+      "translationInProgress": "Идёт перевод",
+      "a11yTranslationReady": "Перевод обновлён",
+      "editor": {
+        "open": "Переводы",
+        "title": "Переводы",
+        "subtitle": "Проверьте и исправьте переводы для каждого языка.",
+        "keepOriginalName": "Оставлять оригинальное название на всех языках",
+        "keepOriginalNameHint": "Удобно для брендовых турниров и сессий. Описание по-прежнему переводится автоматически.",
+        "statusReady": "Готово",
+        "statusEdited": "Исправлено",
+        "statusUpdating": "Обновляется",
+        "statusNeedsReview": "Нужна проверка",
+        "statusRetry": "Повторить",
+        "statusNotNeeded": "Перевод не нужен",
+        "originalName": "Оригинальное название",
+        "translatedName": "Переведённое название",
+        "originalDescription": "Оригинальное описание",
+        "translatedDescription": "Переведённое описание",
+        "useAutomatic": "Использовать автоматический перевод",
+        "useAutomaticHint": "Удаляет вашу правку и показывает автоматический перевод, когда он готов.",
+        "needsReviewHint": "Оригинал изменился. Обновите правку или используйте автоматический перевод.",
+        "namePreservedHint": "Название сохраняется как оригинал на всех языках.",
+        "emptyField": "Пусто",
+        "retry": "Повторить",
+        "retryQueued": "Повтор перевода поставлен в очередь",
+        "conflict": "Кто-то уже изменил этот перевод. Черновик сохранён — проверьте актуальный оригинал и попробуйте снова.",
+        "languages": {
+          "en": "Английский",
+          "ru": "Русский",
+          "sr": "Сербский",
+          "es": "Испанский",
+          "cs": "Чешский",
+          "ar": "Арабский",
+          "zh": "Китайский",
+          "id": "Индонезийский",
+          "hi": "Хинди",
+          "th": "Тайский",
+          "ja": "Японский"
+        }
+      }
+    }
   }
 }

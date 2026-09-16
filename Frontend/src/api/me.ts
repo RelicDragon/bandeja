@@ -13,6 +13,7 @@ import {
   type MyTabData,
   type StoredMyTabData,
 } from './myTabLocalCache';
+import { getAppUiLocaleForGameText } from '@/utils/gameText/appUiLocale';
 
 export type { MyTabData, StoredMyTabData };
 
@@ -69,6 +70,7 @@ export async function getMyTabData(options?: {
   const params: Record<string, string | number | undefined> = {
     includeStories: options?.includeStories ? 'true' : undefined,
     includeBooktime: options?.includeBooktime ? 'true' : undefined,
+    locale: getAppUiLocaleForGameText(),
   };
   if (isCapacitor()) {
     params._t = Date.now();

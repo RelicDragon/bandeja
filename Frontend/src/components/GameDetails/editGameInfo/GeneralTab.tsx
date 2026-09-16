@@ -1,6 +1,11 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Game } from '@/types';
 import { AvatarUpload } from '@/components';
+import { GameTextAuthoredFieldsHint } from '@/components/gameText/GameTextAuthoredFieldsHint';
+import { GameTextTranslationsOpenButton } from '@/components/gameText/GameTextTranslationsOpenButton';
+import { GameTextTranslationsPanel } from '@/components/gameText/GameTextTranslationsPanel';
+import { shouldLabelAuthoredEditAsOriginal } from '@/utils/gameText/authoredGameTextForEdit';
 
 export interface GeneralTabState {
   name: string;
@@ -22,7 +27,8 @@ export const GeneralTab = ({
   onChange,
   avatarPreviewUrl,
 }: GeneralTabProps) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const [translationsOpen, setTranslationsOpen] = useState(false);
   const isLeagueSeason = game?.entityType === 'LEAGUE_SEASON';
   const nameLabel = t(isLeagueSeason ? 'createGame.gameNameLeague' : 'createGame.gameName');
   const namePlaceholder = t(isLeagueSeason ? 'createGame.gameNamePlaceholderLeague' : 'createGame.gameNamePlaceholder');
@@ -30,6 +36,7 @@ export const GeneralTab = ({
   const descriptionPlaceholder = t(
     isLeagueSeason ? 'createGame.descriptionPlaceholderLeague' : 'createGame.descriptionPlaceholder',
   );
+  const showOriginalLabel = shouldLabelAuthoredEditAsOriginal(game, i18n.language);
 
   const currentAvatar = state.removeAvatar ? undefined : (avatarPreviewUrl ?? game.avatar ?? undefined);
 
@@ -54,8 +61,14 @@ export const GeneralTab = ({
             onChange={(e) => onChange({ name: e.target.value })}
             placeholder={namePlaceholder}
             className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
+            dir="auto"
           />
         </div>
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <GameTextAuthoredFieldsHint showOriginalLabel={showOriginalLabel} />
+        <GameTextTranslationsOpenButton onClick={() => setTranslationsOpen(true)} />
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col">
@@ -65,8 +78,15 @@ export const GeneralTab = ({
           onChange={(e) => onChange({ description: e.target.value })}
           placeholder={descriptionPlaceholder}
           className="min-h-0 w-full flex-1 resize-none rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+          dir="auto"
         />
       </div>
+
+      <GameTextTranslationsPanel
+        gameId={game.id}
+        isOpen={translationsOpen}
+        onClose={() => setTranslationsOpen(false)}
+      />
     </div>
   );
 };

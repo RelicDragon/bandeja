@@ -15,6 +15,7 @@ import {
 } from '../middleware/auth';
 import { ParticipantRole } from '@prisma/client';
 import * as gameController from '../controllers/game.controller';
+import * as gameTextTranslationController from '../controllers/gameTextTranslation.controller';
 import { getGameWeather } from '../controllers/weather.controller';
 import gamePhotoRoutes from './gamePhoto.routes';
 import { rateLimitKeyFromRequest } from '../utils/rateLimitClientKey';
@@ -26,6 +27,18 @@ const gameReactionLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req) => (req as AuthRequest).userId ?? rateLimitKeyFromRequest(req),
+});
+
+const gameTextTranslationRetryLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  message: { success: false, message: 'Too many translation retries, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => {
+    const userId = (req as AuthRequest).userId ?? rateLimitKeyFromRequest(req);
+    return `${userId}:${req.params.id}:${req.params.locale}`;
+  },
 });
 
 const router = Router();
@@ -126,6 +139,28 @@ router.post(
 );
 
 router.put('/:id', authenticate, gameController.updateGame);
+
+router.get(
+  '/:id/translations',
+  authenticate,
+  canEditGame,
+  gameTextTranslationController.getGameTranslations,
+);
+
+router.patch(
+  '/:id/translations/:locale',
+  authenticate,
+  canEditGame,
+  gameTextTranslationController.patchGameTranslationLocale,
+);
+
+router.post(
+  '/:id/translations/:locale/retry',
+  authenticate,
+  canEditGame,
+  gameTextTranslationRetryLimiter,
+  gameTextTranslationController.retryGameTranslationLocale,
+);
 
 router.patch('/:id/bookings', authenticate, canEditGame, gameController.patchGameBookings);
 

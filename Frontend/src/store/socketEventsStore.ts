@@ -11,6 +11,8 @@ import { Game, Invite } from '@/types';
 import { normalizeGameFromApi } from '@/api/games';
 import { mergeGameResultsArtifactsFields } from '@/utils/gameResultsArtifacts.util';
 import type { InviteDeletedSocketPayload } from '@/utils/gameInviteParticipant';
+import type { GameTextInvalidation } from '@shared/gameTextRealtime';
+import { GAME_TEXT_INVALIDATE_EVENT } from '@shared/gameTextRealtime';
 import { logChatSocketQueueTrim } from '@/services/chat/chatDiagnostics';
 import { teardownWatchBridge } from '@/services/watchBridgeInit';
 import type { ChatMessage } from '@/api/chat';
@@ -286,6 +288,7 @@ interface StoryCommentLikeData {
 interface SocketEventsState {
   gameUpdates: Map<string, GameUpdateData>;
   lastGameUpdate: GameUpdateData | null;
+  lastGameTextInvalidate: GameTextInvalidation | null;
   lastNewInvite: Invite | null;
   lastInviteDeleted: InviteDeletedSocketPayload | null;
   lastChatMessage: ChatMessageData | null;
@@ -343,6 +346,7 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
   return {
     gameUpdates: new Map(),
     lastGameUpdate: null,
+    lastGameTextInvalidate: null,
     lastNewInvite: null,
     lastInviteDeleted: null,
     lastChatMessage: null,
@@ -441,6 +445,11 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
         const payload: GameUpdateData = { ...data, game };
         set({ lastGameUpdate: payload });
         get().gameUpdates.set(data.gameId, payload);
+      };
+
+      const handleGameTextInvalidate = (data: GameTextInvalidation) => {
+        if (!data || data.version !== 1 || !data.gameId) return;
+        set({ lastGameTextInvalidate: data });
       };
 
       const handleChatMessage = (data: ChatMessageData) => {
@@ -786,6 +795,7 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
       socketService.on('new-invite', handleNewInvite);
       socketService.on('invite-deleted', handleInviteDeleted);
       socketService.on('game-updated', handleGameUpdated);
+      socketService.on(GAME_TEXT_INVALIDATE_EVENT, handleGameTextInvalidate);
       socketService.on('chat:message', handleChatMessage);
       socketService.on('chat:reaction', handleChatReaction);
       socketService.on('chat:read-receipt', handleChatReadReceipt);
@@ -830,6 +840,7 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
         () => socketService.off('new-invite', handleNewInvite),
         () => socketService.off('invite-deleted', handleInviteDeleted),
         () => socketService.off('game-updated', handleGameUpdated),
+        () => socketService.off(GAME_TEXT_INVALIDATE_EVENT, handleGameTextInvalidate),
         () => socketService.off('chat:message', handleChatMessage),
         () => socketService.off('chat:reaction', handleChatReaction),
         () => socketService.off('chat:read-receipt', handleChatReadReceipt),
@@ -881,6 +892,7 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
         initialized: false,
         gameUpdates: new Map(),
         lastGameUpdate: null,
+        lastGameTextInvalidate: null,
         lastNewInvite: null,
         lastInviteDeleted: null,
         lastChatMessage: null,

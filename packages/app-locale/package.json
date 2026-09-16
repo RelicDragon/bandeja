@@ -1,0 +1,18 @@
+{
+  "name": "@bandeja/app-locale",
+  "version": "1.0.0",
+  "description": "Shared app UI locale registry for Bandeja Frontend and Backend",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "../../scripts/run-heavy npx -p typescript@6.0.3 tsc",
+    "test": "../../scripts/run-heavy sh -c 'npm run build && node --test test/*.test.mjs'"
+  },
+  "license": "ISC",
+  "devDependencies": {
+    "typescript": "6.0.3"
+  }
+}

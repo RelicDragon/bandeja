@@ -1,14 +1,21 @@
 import { useTranslation } from 'react-i18next';
 import type { Game } from '@/types';
+import { useGameLocalizedText } from '@/hooks/useGameLocalizedText';
 
 /**
  * Unified card title for every entity type:
  * - LEAGUE round games: league name + season name, with group/round chips below
  * - LEAGUE_SEASON: league name + season name
  * - everything else: game name (with game-type hint) or a sensible fallback
+ *
+ * Display names use localizedText when ready; otherwise authored originals / entity fallbacks.
  */
 export function GameCardTitle({ game }: { game: Game }) {
   const { t } = useTranslation();
+  const { name: displayName } = useGameLocalizedText(game);
+  const { name: parentSeasonDisplayName } = useGameLocalizedText(
+    game.parent?.leagueSeason?.game,
+  );
 
   const parentSeason = game.parent?.leagueSeason;
   const isLeagueRound =
@@ -20,8 +27,8 @@ export function GameCardTitle({ game }: { game: Game }) {
     return (
       <span className="min-w-0">
         <span className="text-blue-600 dark:text-blue-400">{parentSeason.league?.name}</span>
-        {parentSeason.game?.name && (
-          <span className="text-purple-600 dark:text-purple-400"> {parentSeason.game.name}</span>
+        {parentSeasonDisplayName && (
+          <span className="text-purple-600 dark:text-purple-400"> {parentSeasonDisplayName}</span>
         )}
         {(game.leagueGroup?.name || game.leagueRound) && (
           <span className="mt-1 flex flex-wrap items-center gap-1.5">
@@ -48,7 +55,9 @@ export function GameCardTitle({ game }: { game: Game }) {
     return (
       <span className="min-w-0">
         <span className="text-blue-600 dark:text-blue-400">{seasonLeagueName}</span>
-        {game.name && <span className="text-purple-600 dark:text-purple-400"> {game.name}</span>}
+        {displayName && (
+          <span className="text-purple-600 dark:text-purple-400"> {displayName}</span>
+        )}
       </span>
     );
   }
@@ -58,10 +67,10 @@ export function GameCardTitle({ game }: { game: Game }) {
       ? t(`games.gameTypes.${game.gameType}`)
       : null;
 
-  if (game.name) {
+  if (displayName) {
     return (
       <span className="min-w-0">
-        {game.name}
+        {displayName}
         {gameTypeLabel && (
           <span className="ms-1.5 text-xs font-normal text-gray-500 dark:text-gray-400">
             ({gameTypeLabel})

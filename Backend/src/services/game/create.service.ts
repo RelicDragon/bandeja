@@ -47,6 +47,8 @@ import {
   eventHeroCreates,
 } from './eventCreateDefaults';
 import { getEntityCapabilities, EVENT_UNBOUNDED_ROSTER } from '@bandeja/shared/entityCapabilities';
+import { applyGameTextSourceChangeInTransaction } from '../gameText/gameTextSourceChange.service';
+import { wakeGameTextTranslationWorker } from '../gameText/gameTextTranslationWake';
 
 async function runSerializableCreate<T>(
   operation: (tx: Prisma.TransactionClient) => Promise<T>,
@@ -699,9 +701,20 @@ export class GameCreateService {
         );
       }
 
-      return { game, playIntentSource };
+      const gameTextChange = await applyGameTextSourceChangeInTransaction(tx, {
+        gameId: game.id,
+        previousName: null,
+        previousDescription: null,
+        nextName: data.name ?? null,
+        nextDescription: data.description ?? null,
+      });
+
+      return { game, playIntentSource, gameTextWake: gameTextChange.shouldWakeWorker };
     });
     const createdGame = createResult.game;
+    if (createResult.gameTextWake) {
+      wakeGameTextTranslationWorker();
+    }
     if (createResult.playIntentSource) {
       const source = createResult.playIntentSource;
       publishPlayIntentInvalidation({

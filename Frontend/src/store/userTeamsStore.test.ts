@@ -88,4 +88,39 @@ describe('userTeamsStore my-tab hydration', () => {
     expect(getMine).toHaveBeenCalledTimes(1);
     expect(getMemberships).toHaveBeenCalledTimes(1);
   });
+
+  it('removeTeamLocal keeps deleted team out of my-tab hydration', async () => {
+    const ownedTeam = { id: 't1', ownerId: 'user-1', members: [] } as UserTeam;
+    const otherTeam = { id: 't2', ownerId: 'user-1', members: [] } as UserTeam;
+    const memberships = [
+      { id: 'm1', teamId: 't1', userId: 'user-1', team: ownedTeam },
+      { id: 'm2', teamId: 't2', userId: 'user-1', team: otherTeam },
+    ] as UserTeamMembership[];
+
+    queryClient.setQueryData(queryKeys.games.my('user-1'), {
+      games: [],
+      invites: [],
+      unreadCounts: {},
+      teams: [ownedTeam, otherTeam],
+      memberships,
+    });
+
+    useUserTeamsStore.setState({
+      teams: [ownedTeam, otherTeam],
+      memberships,
+      isLoading: false,
+      lastFetchedAt: Date.now(),
+    });
+
+    useUserTeamsStore.getState().removeTeamLocal('t1');
+
+    expect(useUserTeamsStore.getState().teams.map((t) => t.id)).toEqual(['t2']);
+    expect(useUserTeamsStore.getState().memberships.map((m) => m.teamId)).toEqual(['t2']);
+
+    const refreshed = await useUserTeamsStore.getState().refreshAll();
+    expect(refreshed).toBe(true);
+    expect(getMine).not.toHaveBeenCalled();
+    expect(useUserTeamsStore.getState().teams.map((t) => t.id)).toEqual(['t2']);
+    expect(useUserTeamsStore.getState().memberships.map((m) => m.teamId)).toEqual(['t2']);
+  });
 });

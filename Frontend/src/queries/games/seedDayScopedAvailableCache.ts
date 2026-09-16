@@ -6,6 +6,7 @@ import { buildAvailableGamesFilterHash, queryKeys } from '../queryKeys';
 import type { AvailableGamesPage } from './availableGamesPage';
 import type { AvailableGamesQueryParams } from './useAvailableGamesQuery';
 import { AVAILABLE_GAMES_DAY_TAKE } from './constants';
+import { getAppUiLocaleForGameText } from '@/utils/gameText/appUiLocale';
 
 function gameDayKey(startTime: string, cityTimezone?: string | null): string {
   if (cityTimezone) return dateKeyInTimezone(new Date(startTime), cityTimezone);
@@ -110,6 +111,7 @@ export function seedDayScopedAvailableCache(
     isAdmin: dayParams.isAdmin,
     structural: dayParams.structural,
     indexOnly: false,
+    locale: getAppUiLocaleForGameText(),
   });
   const queryKey = queryKeys.games.available(filterHash);
   if (queryClient.getQueryData(queryKey) != null) return false;

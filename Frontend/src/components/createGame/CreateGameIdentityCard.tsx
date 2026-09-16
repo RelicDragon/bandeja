@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { AvatarUpload } from '@/components/AvatarUpload';
 import { GameNameInput } from './GameNameInput';
+import { GameTextAuthoredFieldsHint } from '@/components/gameText/GameTextAuthoredFieldsHint';
 import type { EntityType } from '@/types';
 
 interface CreateGameIdentityCardProps {
@@ -45,6 +46,7 @@ export const CreateGameIdentityCard = ({
             </span>
           </div>
           <GameNameInput value={gameName} onChange={onGameNameChange} entityType={entityType} />
+          <GameTextAuthoredFieldsHint className="mt-1.5 space-y-0.5" />
         </div>
       </div>
     </div>

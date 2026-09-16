@@ -13,8 +13,8 @@ export function upsertInviteInMyGamesCache(
 
   clearMyTabCache(userId);
 
-  queryClient.setQueryData<MyGamesData>(
-    queryKeys.games.my(userId),
+  queryClient.setQueriesData<MyGamesData>(
+    { queryKey: queryKeys.games.my(userId) },
     (old: MyGamesData | undefined) => {
       if (!old) return old;
       const nextInvites = [invite, ...old.invites.filter((row) => row.id !== invite.id)];

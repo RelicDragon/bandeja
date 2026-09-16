@@ -18,6 +18,7 @@ import type { TFunction } from 'i18next';
 import { isStalePastScheduledGame } from '@/utils/homeStaleScheduledGame';
 import { getEntityIcon, getEntityTagClasses } from '@/components/home/HomeGameRowEntityTags';
 import { countEventGoingLooking } from '@/utils/eventListingDisplay';
+import { useGameLocalizedText } from '@/hooks/useGameLocalizedText';
 
 interface UpcomingGamesListProps {
   games: Game[];
@@ -273,6 +274,7 @@ const StaleScheduledGameRow = ({
   onClick,
 }: StaleScheduledGameRowProps) => {
   const { t } = useTranslation();
+  const { name: displayName } = useGameLocalizedText(game);
   const displayUnread = useContextUnread('GAME', game.id, unreadProp);
   const gameCityId = game.city?.id;
   const isDifferentCity = Boolean(gameCityId && userCityId && gameCityId !== userCityId);
@@ -333,9 +335,9 @@ const StaleScheduledGameRow = ({
             </>
           )}
         </div>
-        {game.name && (
+        {displayName && (
           <p className="text-xs text-amber-900/85 dark:text-amber-200/80 truncate mt-0.5 font-medium">
-            {game.name}
+            {displayName}
           </p>
         )}
       </div>

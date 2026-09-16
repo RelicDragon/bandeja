@@ -16,6 +16,7 @@ import { formatEventLevelBand, formatEventPrice } from '@/utils/eventDetails/eve
 import { getSportConfig } from '@/sport/sportRegistry';
 import { parseGameSport } from '@/utils/gameSport';
 import { resolveUserCurrency } from '@/utils/currency';
+import { useGameLocalizedText } from '@/hooks/useGameLocalizedText';
 
 type EventPosterCardProps = {
   game: Game;
@@ -27,6 +28,7 @@ export function EventPosterCard({ game, variant = 'strip', onClick }: EventPoste
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
+  const { name: localizedName } = useGameLocalizedText(game);
   const displaySettings = resolveDisplaySettings(user);
   const imageUrl = eventPosterImageUrl(game);
   const venue = eventVenueLabel(game);
@@ -38,7 +40,8 @@ export function EventPosterCard({ game, variant = 'strip', onClick }: EventPoste
     timezone,
     displaySettings.locale || i18n.language,
   );
-  const title = game.name || t('games.entityTypes.EVENT', { defaultValue: 'Event/Ad' });
+  const title =
+    localizedName?.trim() || t('games.entityTypes.EVENT', { defaultValue: 'Event/Ad' });
   const isList = variant === 'list';
   const sportLabel = t(getSportConfig(parseGameSport(game.sport)).labelKey);
   const levelBand = formatEventLevelBand(game);

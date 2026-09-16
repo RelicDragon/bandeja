@@ -1,5 +1,6 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
+import { APP_UI_LANGUAGES } from '@bandeja/app-locale';
 import en from './locales/en';
 import ru from './locales/ru';
 import sr from './locales/sr';
@@ -13,9 +14,9 @@ import th from './locales/th';
 import ja from './locales/ja';
 import { extractLanguageCode } from '@/utils/displayPreferences';
 
-const RTL_LANGUAGES = new Set(['ar', 'he', 'fa', 'ur']);
+export { APP_UI_LANGUAGES };
 
-export const APP_UI_LANGUAGES = ['en', 'ru', 'sr', 'es', 'cs', 'ar', 'zh', 'id', 'hi', 'th', 'ja'] as const;
+const RTL_LANGUAGES = new Set(['ar', 'he', 'fa', 'ur']);
 
 const getSystemLanguage = () => {
   const systemLang = navigator.language.split('-')[0];

@@ -47,14 +47,14 @@ function lastMessageSig(lm: Game['lastMessage']): string {
 }
 
 function ChatListGameCardInner({ chat, isSelected, onClick }: ChatListGameCardProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const displayUnread = useChatListItemUnread(chat);
   const displaySettings = useMemo(() => resolveDisplaySettings(user), [user]);
   const game = chat.data;
   const visual = getGameChatListEntityVisual(game.entityType);
   const { Icon } = visual;
-  const title = getGameChatListTitle(game, t);
+  const title = getGameChatListTitle(game, t, i18n.language);
   const dateTimeBlock = getGameChatListDateTimeBlock(game, displaySettings, t);
   const locationLine = getGameChatListLocationLine(game, t);
   const showLeagueTags = gameChatListShowsLeagueTags(game);
@@ -264,6 +264,14 @@ function gameCardPropsEqual(a: ChatListGameCardProps, b: ChatListGameCardProps) 
   const bo = b.chat.listOutbox?.state;
   if (ao !== bo) return false;
   if ((a.chat.data.name ?? '') !== (b.chat.data.name ?? '')) return false;
+  const aLocalized = a.chat.data.localizedText;
+  const bLocalized = b.chat.data.localizedText;
+  if ((aLocalized?.locale ?? '') !== (bLocalized?.locale ?? '')) return false;
+  if ((aLocalized?.name?.text ?? '') !== (bLocalized?.name?.text ?? '')) return false;
+  if ((aLocalized?.name?.state ?? '') !== (bLocalized?.name?.state ?? '')) return false;
+  if ((aLocalized?.name?.sourceRevision ?? '') !== (bLocalized?.name?.sourceRevision ?? '')) {
+    return false;
+  }
   if (a.chat.data.entityType !== b.chat.data.entityType) return false;
   if (a.chat.data.startTime !== b.chat.data.startTime) return false;
   if (a.chat.data.timeIsSet !== b.chat.data.timeIsSet) return false;

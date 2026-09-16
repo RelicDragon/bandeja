@@ -6,6 +6,7 @@ import { GAMES_LIST_STALE_TIME } from './constants';
 import { sortGamesByStatusAndStartTime } from './sortGames';
 import { excludePendingInviteOnlyMyGames } from '@/utils/excludePendingInviteOnlyMyGames';
 import { excludeUnoptedEventsFromMyGames } from '@/utils/eventMyTabMembership';
+import { getAppUiLocaleForGameText } from '@/utils/gameText/appUiLocale';
 
 export interface MyGamesData {
   games: Game[];
@@ -61,8 +62,9 @@ async function fetchMyGamesData(userId: string): Promise<MyGamesData> {
 
 export function myGamesQueryOptions(userId: string | undefined, enabled = true) {
   const isEnabled = enabled && !!userId;
+  const locale = getAppUiLocaleForGameText();
   return queryOptions({
-    queryKey: queryKeys.games.my(userId ?? ''),
+    queryKey: queryKeys.games.my(userId ?? '', locale),
     queryFn: async (): Promise<MyGamesData> => fetchMyGamesData(userId!),
     staleTime: GAMES_LIST_STALE_TIME,
     enabled: isEnabled,

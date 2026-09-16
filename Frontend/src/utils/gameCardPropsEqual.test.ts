@@ -137,4 +137,83 @@ describe('gameCardPropsEqual', () => {
     };
     expect(gameCardPropsEqual(withPhoto, withOtherPhoto)).toBe(false);
   });
+
+  it('detects localizedText name changes so card titles refresh', () => {
+    const props = {
+      game: baseGame({
+        name: 'Sunday',
+        localizedText: {
+          locale: 'ru',
+          name: {
+            text: 'Sunday',
+            sourceRevision: 1,
+            state: 'pending',
+            provenance: 'original',
+          },
+          description: {
+            text: null,
+            sourceRevision: 0,
+            state: 'not_needed',
+            provenance: 'empty_source',
+          },
+        },
+      }),
+      user: { id: 'u1' },
+      unreadCount: 0,
+      ...stableHandlers,
+    };
+    const ready = {
+      ...props,
+      game: baseGame({
+        name: 'Sunday',
+        localizedText: {
+          locale: 'ru',
+          name: {
+            text: 'Воскресенье',
+            sourceRevision: 1,
+            state: 'ready',
+            provenance: 'automatic',
+          },
+          description: {
+            text: null,
+            sourceRevision: 0,
+            state: 'not_needed',
+            provenance: 'empty_source',
+          },
+        },
+      }),
+    };
+    expect(gameCardPropsEqual(props, ready)).toBe(false);
+  });
+
+  it('treats identical localizedText as equal', () => {
+    const localizedText = {
+      locale: 'ru' as const,
+      name: {
+        text: 'Воскресенье',
+        sourceRevision: 1,
+        state: 'ready' as const,
+        provenance: 'automatic' as const,
+      },
+      description: {
+        text: null,
+        sourceRevision: 0,
+        state: 'not_needed' as const,
+        provenance: 'empty_source' as const,
+      },
+    };
+    const a = {
+      game: baseGame({ name: 'Sunday', localizedText }),
+      user: { id: 'u1' },
+      unreadCount: 0,
+      ...stableHandlers,
+    };
+    const b = {
+      game: baseGame({ name: 'Sunday', localizedText: { ...localizedText } }),
+      user: { id: 'u1' },
+      unreadCount: 0,
+      ...stableHandlers,
+    };
+    expect(gameCardPropsEqual(a, b)).toBe(true);
+  });
 });

@@ -12,6 +12,8 @@ import {
 import { removeInviteFromMyGamesCache } from './games/removeInviteFromMyGamesCache';
 import { upsertInviteInMyGamesCache } from './games/upsertInviteInMyGamesCache';
 import { cancelFindQueryRevalidations } from './games/findQueryRevalidation';
+import { invalidateGameTextCachesForEvent } from '@/utils/gameText/invalidateGameTextCaches';
+import type { GameTextInvalidation } from '@shared/gameTextRealtime';
 
 let initialized = false;
 let unsubscribe: (() => void) | null = null;
@@ -40,6 +42,15 @@ function onGameUpdate(queryClient: QueryClient, payload: {
 
   invalidateMyGamesOnly(queryClient, userId);
   invalidateFindQueriesContainingGame(queryClient, payload.gameId);
+}
+
+function onGameTextInvalidate(
+  queryClient: QueryClient,
+  event: GameTextInvalidation,
+): void {
+  invalidateGameTextCachesForEvent(queryClient, event, {
+    userId: useAuthStore.getState().user?.id,
+  });
 }
 
 function onNewInvite(queryClient: QueryClient, invite: Invite): void {
@@ -76,6 +87,12 @@ export function setupQueryInvalidationBridge(queryClient: QueryClient): void {
 
     if (state.lastGameUpdate !== prevState.lastGameUpdate && state.lastGameUpdate) {
       onGameUpdate(queryClient, state.lastGameUpdate);
+    }
+    if (
+      state.lastGameTextInvalidate !== prevState.lastGameTextInvalidate &&
+      state.lastGameTextInvalidate
+    ) {
+      onGameTextInvalidate(queryClient, state.lastGameTextInvalidate);
     }
     if (state.lastNewInvite !== prevState.lastNewInvite && state.lastNewInvite) {
       onNewInvite(queryClient, state.lastNewInvite);

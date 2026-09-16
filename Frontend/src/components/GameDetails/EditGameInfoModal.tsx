@@ -65,6 +65,7 @@ import { ClubPoliciesBlock } from '@/components/createGame/ClubPoliciesBlock';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { EditMaxParticipantsModal } from '@/components/EditMaxParticipantsModal';
 import { entitySupportsParticipantSetup } from '@/components/gameFormat/gameFormatTeamsVisibility';
+import { authoredGameTextForEdit } from '@/utils/gameText/authoredGameTextForEdit';
 export type EditGameInfoTabId = 'general' | 'locationTime' | 'price' | 'participants' | 'settings';
 export type EditGameInfoInitialTabId = EditGameInfoTabId | 'where' | 'when';
 
@@ -91,9 +92,10 @@ const TABS = [
 ];
 
 function getInitialGeneralState(game: Game): GeneralTabState {
+  const authored = authoredGameTextForEdit(game);
   return {
-    name: game.name || '',
-    description: game.description || '',
+    name: authored.name,
+    description: authored.description,
     pendingAvatar: null,
     removeAvatar: false,
   };

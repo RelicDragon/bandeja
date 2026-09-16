@@ -1,5 +1,6 @@
 import type { Game } from '@/types';
 import { gameRosterFromMatchFormat } from '@/utils/userMaxParticipantsInGame';
+import { authoredGameTextForEdit } from '@/utils/gameText/authoredGameTextForEdit';
 
 /** Fields copied when duplicating a game or “play again” from results. */
 export function buildDuplicateGameInitialData(game: Game): Partial<Game> {
@@ -8,11 +9,13 @@ export function buildDuplicateGameInitialData(game: Game): Partial<Game> {
       ? gameRosterFromMatchFormat(game.playersPerMatch ?? 4)
       : game.maxParticipants;
 
+  const authored = authoredGameTextForEdit(game);
+
   const data: Partial<Game> = {
     entityType: game.entityType,
     gameType: game.gameType,
-    name: game.name,
-    description: game.description,
+    name: authored.name || null,
+    description: authored.description || null,
     clubId: game.clubId,
     courtId: game.courtId,
     startTime: game.startTime,

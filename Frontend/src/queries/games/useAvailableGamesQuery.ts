@@ -20,6 +20,7 @@ import {
   retainAvailableGamesDayIndexContinuation,
   startAvailableGamesDayIndexContinuation,
 } from './availableGamesDayIndexContinuation';
+import { getAppUiLocaleForGameText } from '@/utils/gameText/appUiLocale';
 
 export interface AvailableGamesQueryParams {
   userId: string | undefined;
@@ -127,6 +128,7 @@ export function availableGamesQueryOptions(
     isAdmin: params.isAdmin,
     structural: params.structural,
     indexOnly,
+    locale: getAppUiLocaleForGameText(),
   });
   const isEnabled = enabled && !!params.userId;
   const queryKey = queryKeys.games.available(filterHash);

@@ -816,6 +816,55 @@
       "roundGame": "รอบ {{round}}",
       "openGame": "เปิดเกม",
       "mySchedule": "ตารางเวลาของฉัน"
+    },
+    "gameText": {
+      "descriptionHeading": "คำอธิบาย",
+      "translated": "แปลแล้ว",
+      "original": "ต้นฉบับ",
+      "originalText": "ข้อความต้นฉบับ",
+      "autoTranslatedHelper": "แปลให้อัตโนมัติสำหรับผู้เล่นที่ใช้ภาษาอื่น",
+      "showOriginal": "แสดงต้นฉบับ",
+      "showTranslation": "แสดงคำแปล",
+      "translationInProgress": "กำลังแปล",
+      "a11yTranslationReady": "อัปเดตคำแปลแล้ว",
+      "editor": {
+        "open": "คำแปล",
+        "title": "คำแปล",
+        "subtitle": "ตรวจสอบและแก้ไขคำแปลของแต่ละภาษา",
+        "keepOriginalName": "คงชื่อต้นฉบับในทุกภาษา",
+        "keepOriginalNameHint": "เหมาะกับชื่อทัวร์นาเมนต์หรือเซสชันแบรนด์ คำอธิบายยังแปลอัตโนมัติ",
+        "statusReady": "พร้อม",
+        "statusEdited": "แก้ไขแล้ว",
+        "statusUpdating": "กำลังอัปเดต",
+        "statusNeedsReview": "ต้องตรวจสอบ",
+        "statusRetry": "ลองใหม่",
+        "statusNotNeeded": "ไม่ต้องแปล",
+        "originalName": "ชื่อต้นฉบับ",
+        "translatedName": "ชื่อที่แปลแล้ว",
+        "originalDescription": "คำอธิบายต้นฉบับ",
+        "translatedDescription": "คำอธิบายที่แปลแล้ว",
+        "useAutomatic": "ใช้การแปลอัตโนมัติ",
+        "useAutomaticHint": "ลบการแก้ไขของคุณและแสดงคำแปลอัตโนมัติเมื่อพร้อม",
+        "needsReviewHint": "ต้นฉบับเปลี่ยนแล้ว อัปเดตการแก้ไขหรือใช้การแปลอัตโนมัติ",
+        "namePreservedHint": "ชื่อคงเป็นต้นฉบับในทุกภาษา",
+        "emptyField": "ว่าง",
+        "retry": "ลองใหม่",
+        "retryQueued": "จัดคิวแปลใหม่แล้ว",
+        "conflict": "มีคนอื่นอัปเดตคำแปลนี้แล้ว ร่างของคุณถูกเก็บไว้ — ตรวจต้นฉบับล่าสุดแล้วลองอีกครั้ง",
+        "languages": {
+          "en": "อังกฤษ",
+          "ru": "รัสเซีย",
+          "sr": "เซอร์เบีย",
+          "es": "สเปน",
+          "cs": "เช็ก",
+          "ar": "อาหรับ",
+          "zh": "จีน",
+          "id": "อินโดนีเซีย",
+          "hi": "ฮินดี",
+          "th": "ไทย",
+          "ja": "ญี่ปุ่น"
+        }
+      }
     }
   }
 }
