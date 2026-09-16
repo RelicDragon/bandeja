@@ -48,6 +48,7 @@ vi.mock('@/services/chat/purgeGameChatLocal', () => ({
 
 import {
   clearChatSyncScheduler,
+  cancelChatSyncPull,
   enqueueChatSyncPull,
   SYNC_PRIORITY_GAP,
   SYNC_PRIORITY_VIEWING,
@@ -205,4 +206,46 @@ it('still honors real failure backoff when the server head advances', async () =
   expect(pullMock).toHaveBeenCalledTimes(1);
   await vi.advanceTimersByTimeAsync(23_000);
   expect(pullMock).toHaveBeenCalledTimes(2);
+});
+
+
+it('merges queued jobs without lowering the head or losing forced repair', async () => {
+  let finish = () => {};
+  pullMock.mockImplementationOnce(() => new Promise<void>((resolve) => { finish = resolve; }));
+  enqueueChatSyncPull('GAME', 'g1', SYNC_PRIORITY_GAP);
+  await drain();
+  enqueueChatSyncPull('GAME', 'g1', SYNC_PRIORITY_WARM, { expectedServerMaxSeq: 20, forcePull: true });
+  enqueueChatSyncPull('GAME', 'g1', SYNC_PRIORITY_VIEWING, { expectedServerMaxSeq: 10 });
+  await drain();
+  expect(pullMock).toHaveBeenCalledTimes(1);
+  finish();
+  await drain();
+  expect(pullMock).toHaveBeenLastCalledWith('GAME', 'g1', { expectedServerMaxSeq: 20, forcePull: true });
+});
+
+it('cancels the wake timer when deferred work is cancelled', async () => {
+  threads.set('GAME:g1', { key: 'GAME:g1', nextRetryAt: Date.now() + 30_000 });
+  enqueueChatSyncPull('GAME', 'g1', SYNC_PRIORITY_GAP);
+  await drain();
+  expect(vi.getTimerCount()).toBe(1);
+  cancelChatSyncPull('GAME', 'g1');
+  expect(vi.getTimerCount()).toBe(0);
+  await vi.advanceTimersByTimeAsync(31_000);
+  expect(pullMock).not.toHaveBeenCalled();
+});
+
+it('does not resurrect a job if the scheduler is cleared during its lease read', async () => {
+  const { chatLocalDb } = await import('../chatLocalDb');
+  let finishLease = () => {};
+  vi.mocked(chatLocalDb.chatThreads.get).mockImplementationOnce(async () => {
+    await new Promise<void>((resolve) => { finishLease = resolve; });
+    return { key: 'GAME:g1', nextRetryAt: Date.now() + 30_000 };
+  });
+  enqueueChatSyncPull('GAME', 'g1', SYNC_PRIORITY_GAP);
+  clearChatSyncScheduler();
+  finishLease();
+  await drain();
+  await vi.advanceTimersByTimeAsync(31_000);
+  expect(pullMock).not.toHaveBeenCalled();
+  expect(vi.getTimerCount()).toBe(0);
 });
