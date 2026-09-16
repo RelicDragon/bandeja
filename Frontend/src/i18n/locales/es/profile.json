@@ -80,6 +80,8 @@
     "personalInfo": "Información personal",
     "appearance": "Apariencia",
     "language": "Idioma",
+    "showPremiumStatus": "Mostrar estado Premium",
+    "showPremiumStatusDescription": "Muestra el estilo Premium en tu nombre y tus partidas. Desactívalo para aparecer como un usuario normal. Tus ventajas Premium y tu tema principal no cambian.",
     "mainTheme": "Tema principal",
     "mainThemeClassic": "Clásico",
     "mainThemePremium": "Premium",

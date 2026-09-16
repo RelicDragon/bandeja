@@ -45,6 +45,8 @@ import {
   runIosPendingReviewRemoval,
   runIosStoreVersionFinalize,
   runIosStoreVersionVerification,
+  runIosTestFlightDistribute,
+  runIosTestFlightVerification,
   runStoreReviewCheck,
   runStoreReviewCheckPreflight,
   runStoreVerificationPreflight,
@@ -52,6 +54,16 @@ import {
   storeReviewCheckPlatforms,
 } from './lib/app-release-upload';
 import { validatePlannedAgainstStores } from './lib/app-release-store-version';
+import {
+  iosDistributesExternally,
+  iosDistributionLabel,
+  iosIsTestFlightOnly,
+  iosSubmitsForReview,
+  iosTouchesAppStoreVersion,
+  parseTestFlightGroups,
+  resolveIosDistribution,
+  shouldUpdateShippedBaseline,
+} from './lib/app-release-ios-distribution';
 import {
   cleanReleaseWorkspace,
   clearSession,
@@ -461,19 +473,49 @@ async function promptStoreConfig(session: ReleaseSession): Promise<ReleaseSessio
     androidTrack = resolved;
   }
 
-  let iosSubmitForReview = session.store.iosSubmitForReview;
-  if (includesIos(session.targetPlatform) && iosSubmitForReview === undefined) {
+  let iosDistribution = resolveIosDistribution(session.store.iosDistribution);
+  let iosTestFlightGroups = session.store.iosTestFlightGroups;
+  if (includesIos(session.targetPlatform) && !iosDistribution) {
     const iosMode = handleCancel(
       await clack.select({
         message: 'App Store Connect',
         options: [
-          { value: 'upload', label: 'Prepare App Store version, do not submit' },
-          { value: 'submit', label: 'Upload and submit for review' },
+          {
+            value: 'testflight',
+            label: 'TestFlight Internal',
+            hint: 'Smoke testers only; leaves App Review untouched',
+          },
+          {
+            value: 'beta',
+            label: 'TestFlight Beta',
+            hint: 'External groups; still does not change App Review',
+          },
+          { value: 'prepare', label: 'Prepare App Store version, do not submit' },
+          { value: 'submit', label: 'Upload and submit for App Review' },
         ],
-        initialValue: session.store.iosSubmitForReview ? 'submit' : 'upload',
+        initialValue: 'testflight',
       }),
     );
-    iosSubmitForReview = iosMode === 'submit';
+    iosDistribution = resolveIosDistribution(String(iosMode));
+  }
+
+  if (iosDistribution === 'beta' && (!iosTestFlightGroups || iosTestFlightGroups.length === 0)) {
+    const groupsInput = handleCancel(
+      await clack.text({
+        message: 'TestFlight Beta group names (comma-separated)',
+        initialValue: process.env.TESTFLIGHT_GROUPS ?? '',
+        validate: (value) => {
+          if (parseTestFlightGroups(value ?? '').length === 0) {
+            return 'Enter at least one TestFlight group';
+          }
+          return undefined;
+        },
+      }),
+    );
+    iosTestFlightGroups = parseTestFlightGroups(String(groupsInput));
+  }
+  if (iosDistribution !== 'beta') {
+    iosTestFlightGroups = undefined;
   }
 
   let autoCommit = session.autoCommit;
@@ -492,7 +534,8 @@ async function promptStoreConfig(session: ReleaseSession): Promise<ReleaseSessio
     store: {
       ...session.store,
       androidTrack,
-      iosSubmitForReview,
+      iosDistribution: iosDistribution ?? undefined,
+      iosTestFlightGroups,
     },
   };
 }
@@ -696,19 +739,16 @@ function renderSummary(session: ReleaseSession, dryRun: boolean): string {
   if (includesAndroid(session.targetPlatform) && session.store.androidTrack) {
     storeLines.push(`Play track: ${session.store.androidTrack}`);
   }
-  if (includesIos(session.targetPlatform) && session.store.iosSubmitForReview !== undefined) {
-    storeLines.push(
-      `App Store: ${
-        session.store.iosSubmitForReview
-          ? 'upload + submit for review'
-          : 'prepare App Store version, do not submit'
-      }`,
-    );
+  if (includesIos(session.targetPlatform) && session.store.iosDistribution) {
+    storeLines.push(`App Store: ${iosDistributionLabel(session.store.iosDistribution, session.store.iosTestFlightGroups)}`);
   }
   if (session.autoCommit !== undefined) {
     storeLines.push(`Auto-commit: ${session.autoCommit ? 'yes' : 'no'}`);
   }
-  if (dryRun && (session.store.androidTrack === 'production' || session.store.iosSubmitForReview)) {
+  if (
+    dryRun &&
+    (session.store.androidTrack === 'production' || iosSubmitsForReview(session.store.iosDistribution))
+  ) {
     storeLines.push('Existing-review check: deferred to live release');
   } else {
     if (
@@ -737,6 +777,7 @@ function renderSummary(session: ReleaseSession, dryRun: boolean): string {
     session.uploads?.iosBinary ||
     session.uploads?.iosBuildProcessed ||
     session.uploads?.iosStoreVersion ||
+    session.uploads?.iosTestFlightDistributed ||
     session.uploads?.iosStoreVersionVerified ||
     session.uploads?.ios ||
     session.uploads?.storesVerified
@@ -756,7 +797,9 @@ function renderSummary(session: ReleaseSession, dryRun: boolean): string {
           ? `iOS processed ${session.uploads.iosBuildProcessed ? 'yes' : 'no'}`
           : null,
         includesIos(session.targetPlatform)
-          ? `iOS metadata ${session.uploads.iosStoreVersion ? 'yes' : 'no'}`
+          ? iosIsTestFlightOnly(session.store.iosDistribution)
+            ? `TestFlight ${session.uploads.iosTestFlightDistributed || !iosDistributesExternally(session.store.iosDistribution) ? 'yes' : 'no'}`
+            : `iOS metadata ${session.uploads.iosStoreVersion ? 'yes' : 'no'}`
           : null,
         includesIos(session.targetPlatform)
           ? `iOS verified ${session.uploads.iosStoreVersionVerified ? 'yes' : 'no'}`
@@ -800,7 +843,11 @@ function renderSummary(session: ReleaseSession, dryRun: boolean): string {
             : includesAndroid(session.targetPlatform)
               ? 'AAB'
               : 'IPA'
-        }, upload to ${releasePlatformLabel(session.targetPlatform)}, verify store state, and update the shipped baseline.`,
+        }, upload to ${releasePlatformLabel(session.targetPlatform)}, verify store state${
+          shouldUpdateShippedBaseline(session.targetPlatform, session.store)
+            ? ', and update the shipped baseline'
+            : ' without moving the shipped baseline'
+        }.`,
   ].join('\n');
 }
 
@@ -981,12 +1028,38 @@ async function runUploadPhase(
       if (
         includesIos(current.targetPlatform) &&
         !current.uploads?.ios &&
+        iosDistributesExternally(current.store.iosDistribution) &&
+        !current.uploads?.iosTestFlightDistributed
+      ) {
+        uploadTasks.push(
+          timedListrTask(timer, 'Distribute TestFlight Beta to external groups', async () => {
+            const iosState = await runIosTestFlightDistribute(current);
+            current = withIosAppStoreConnectState(current, iosState);
+            current = {
+              ...current,
+              uploads: {
+                ...current.uploads,
+                iosBinary: true,
+                iosBuildProcessed: true,
+                iosTestFlightDistributed: true,
+                iosTestFlightDistributedAt: new Date().toISOString(),
+              },
+            };
+            persist(current);
+          }),
+        );
+      }
+
+      if (
+        includesIos(current.targetPlatform) &&
+        !current.uploads?.ios &&
+        iosTouchesAppStoreVersion(current.store.iosDistribution) &&
         !current.uploads?.iosStoreVersion
       ) {
         uploadTasks.push(
           timedListrTask(
             timer,
-            current.store.iosSubmitForReview
+            iosSubmitsForReview(current.store.iosDistribution)
               ? 'Update App Store version metadata and submit for review'
               : 'Update App Store version metadata',
             async () => {
@@ -1009,6 +1082,10 @@ async function runUploadPhase(
       }
 
       const tasks = new Listr(uploadTasks, { concurrent: false, exitOnError: true });
+
+      if (uploadTasks.length === 0) {
+        return current;
+      }
 
       await tasks.run();
       return current;
@@ -1051,7 +1128,7 @@ async function runUploadPhase(
       if (
         isIosReviewConflictError(uploadError) &&
         includesIos(current.targetPlatform) &&
-        current.store.iosSubmitForReview === true
+        iosSubmitsForReview(current.store.iosDistribution)
       ) {
         current = await gatherPendingReviewDecisions(current, false);
         current = await removeApprovedIosReview(current);
@@ -1121,9 +1198,13 @@ async function runStoreVerificationPhase(
         verificationTasks.push(
           timedListrTask(
             timer,
-            'Verify App Store version metadata',
+            iosIsTestFlightOnly(current.store.iosDistribution)
+              ? 'Verify TestFlight build did not change App Review'
+              : 'Verify App Store version metadata',
             async () => {
-              const iosState = await runIosStoreVersionVerification(current);
+              const iosState = iosIsTestFlightOnly(current.store.iosDistribution)
+                ? await runIosTestFlightVerification(current)
+                : await runIosStoreVersionVerification(current);
               current = withIosAppStoreConnectState(current, iosState);
               current = {
                 ...current,
@@ -1131,7 +1212,12 @@ async function runStoreVerificationPhase(
                   ...current.uploads,
                   iosBinary: true,
                   iosBuildProcessed: true,
-                  iosStoreVersion: true,
+                  iosStoreVersion: iosTouchesAppStoreVersion(current.store.iosDistribution)
+                    ? true
+                    : current.uploads?.iosStoreVersion,
+                  iosTestFlightDistributed: iosIsTestFlightOnly(current.store.iosDistribution)
+                    ? true
+                    : current.uploads?.iosTestFlightDistributed,
                   iosStoreVersionVerified: true,
                   iosStoreVersionVerifiedAt: new Date().toISOString(),
                   ios: true,
@@ -1201,6 +1287,15 @@ async function finalizeRelease(session: ReleaseSession): Promise<void> {
     process.exit(1);
   }
 
+  if (!shouldUpdateShippedBaseline(session.targetPlatform, session.store)) {
+    clearSession();
+    clack.log.info('Shipped baseline left unchanged — this was a TestFlight-only iOS upload.');
+    clack.outro(
+      `Uploaded ${session.planned.version} (${session.planned.build}) to TestFlight.`,
+    );
+    return;
+  }
+
   const result = markReleaseAsShipped({ commitBaseline: session.autoCommit === true });
   clearSession();
 
@@ -1230,7 +1325,9 @@ async function executeRelease(session: ReleaseSession): Promise<void> {
     await clack.confirm({
       message: dryRun
         ? 'Finish dry-run planner?'
-        : 'Run full release (bump, build, upload, baseline)?',
+        : shouldUpdateShippedBaseline(withStore.targetPlatform, withStore.store)
+          ? 'Run full release (bump, build, upload, baseline)?'
+          : 'Build and upload TestFlight without touching App Review or the shipped baseline?',
       initialValue: true,
     }),
   );
@@ -1400,6 +1497,7 @@ function renderSavedSessionSummary(session: ReleaseSession): string {
     session.uploads?.iosBinary ||
     session.uploads?.iosBuildProcessed ||
     session.uploads?.iosStoreVersion ||
+    session.uploads?.iosTestFlightDistributed ||
     session.uploads?.iosStoreVersionVerified ||
     session.uploads?.ios ||
     session.uploads?.storesVerified
@@ -1417,7 +1515,9 @@ function renderSavedSessionSummary(session: ReleaseSession): string {
             ? `iOS processing ${session.uploads.iosBuildProcessed ? 'done' : 'pending'}`
             : null,
           includesIos(session.targetPlatform)
-            ? `iOS metadata ${session.uploads.iosStoreVersion ? 'done' : 'pending'}`
+            ? iosIsTestFlightOnly(session.store.iosDistribution)
+              ? `TestFlight ${session.uploads.iosTestFlightDistributed || !iosDistributesExternally(session.store.iosDistribution) ? 'done' : 'pending'}`
+              : `iOS metadata ${session.uploads.iosStoreVersion ? 'done' : 'pending'}`
             : null,
           includesIos(session.targetPlatform)
             ? `iOS verification ${session.uploads.iosStoreVersionVerified ? 'done' : 'pending'}`

@@ -1,3 +1,4 @@
+import { PremiumName } from '@/components/PremiumName';
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Crown, Shield, User, UserX, ArrowRightLeft, Dumbbell, ChevronDown, ChevronUp, type LucideIcon } from 'lucide-react';
@@ -186,7 +187,7 @@ export const ManageUsersModal = ({ game, onClose, onUserAction }: ManageUsersMod
                   />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                      {participant.user.firstName} {participant.user.lastName}
+                      <PremiumName user={participant.user}>{participant.user.firstName} {participant.user.lastName}</PremiumName>
                     </p>
                     {participant.user.verbalStatus && (
                       <p className="verbal-status">

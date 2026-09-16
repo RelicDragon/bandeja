@@ -30,7 +30,8 @@ const artifactsSchema = z
 const storeSchema = z
   .object({
     androidTrack: z.string().min(1).optional(),
-    iosSubmitForReview: z.boolean().optional(),
+    iosDistribution: z.string().min(1).optional(),
+    iosTestFlightGroups: z.array(z.string().min(1)).optional(),
   })
   .default({});
 
@@ -42,11 +43,13 @@ const uploadStatusSchema = z
     iosBinary: z.boolean().optional(),
     iosBuildProcessed: z.boolean().optional(),
     iosStoreVersion: z.boolean().optional(),
+    iosTestFlightDistributed: z.boolean().optional(),
     iosStoreVersionVerified: z.boolean().optional(),
     storesVerified: z.boolean().optional(),
     androidStoreVerifiedAt: z.string().min(1).optional(),
     iosBinaryUploadedAt: z.string().min(1).optional(),
     iosBuildProcessedAt: z.string().min(1).optional(),
+    iosTestFlightDistributedAt: z.string().min(1).optional(),
     iosStoreVersionUpdatedAt: z.string().min(1).optional(),
     iosStoreVersionVerifiedAt: z.string().min(1).optional(),
     storesVerifiedAt: z.string().min(1).optional(),

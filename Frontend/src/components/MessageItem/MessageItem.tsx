@@ -1,3 +1,4 @@
+import { PremiumName } from '@/components/PremiumName';
 import React, { useRef, useEffect, useLayoutEffect, useState, useCallback, useMemo, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -560,7 +561,7 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
               className={`flex flex-col ${isChannel ? 'items-start flex-1' : isOwnMessage ? 'items-end' : 'items-start'} ${currentMessage.poll ? 'flex-1 min-w-0' : ''} overflow-visible`}
             >
               {!isChannel && !isOwnMessage && isFirstInGroup && (
-                <span className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-0.5 px-2">{getSenderName()}</span>
+                <span className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-0.5 px-2"><PremiumName user={currentMessage.sender}>{getSenderName()}</PremiumName></span>
               )}
 
               <div className={`relative overflow-visible ${currentMessage.poll ? 'w-full' : ''}`}>

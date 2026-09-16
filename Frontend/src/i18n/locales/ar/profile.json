@@ -9,6 +9,8 @@
     "personalInfo": "المعلومات الشخصية",
     "appearance": "المظهر",
     "language": "اللغة",
+    "showPremiumStatus": "إظهار حالة العضوية المميزة",
+    "showPremiumStatusDescription": "أظهر التنسيق المميز لاسمك وألعابك. أوقفه لتظهر كمستخدم عادي. ستبقى مزايا عضويتك والمظهر الرئيسي كما هي.",
     "mainTheme": "المظهر الرئيسي",
     "mainThemeClassic": "كلاسيكي",
     "mainThemePremium": "مميز",

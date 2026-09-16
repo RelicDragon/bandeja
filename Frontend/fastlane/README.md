@@ -92,6 +92,22 @@ Upload IPA binary to App Store Connect
 
 Wait until App Store Connect has processed the exact uploaded iOS build
 
+### ios distribute_testflight
+
+```sh
+[bundle exec] fastlane ios distribute_testflight
+```
+
+Set TestFlight notes and optionally distribute to external groups
+
+### ios verify_testflight_build
+
+```sh
+[bundle exec] fastlane ios verify_testflight_build
+```
+
+Verify a TestFlight build exists without attaching it to an App Store version
+
 ### ios finalize_store_version
 
 ```sh
@@ -114,7 +130,7 @@ Verify App Store version metadata after finalizing
 [bundle exec] fastlane ios upload_release
 ```
 
-Upload IPA, wait for processing, update metadata, and optionally submit for review
+Upload IPA, wait for processing, then either keep it on TestFlight or attach an App Store version
 
 ----
 

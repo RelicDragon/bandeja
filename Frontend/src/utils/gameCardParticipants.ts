@@ -1,3 +1,4 @@
+import { showsPremiumStatus } from '@/utils/premiumIdentity';
 import type { GameParticipant } from '@/types';
 
 export function getPlayingParticipants(participants: readonly GameParticipant[]): GameParticipant[] {
@@ -17,7 +18,7 @@ export function playingParticipantsKey(participants: readonly GameParticipant[])
         u?.firstName ?? '',
         u?.lastName ?? '',
         u?.gender ?? '',
-        u?.isPremium ? '1' : '0',
+        showsPremiumStatus(u) ? '1' : '0',
         u?.isTrainer ? '1' : '0',
       ].join(':');
     })
@@ -42,6 +43,7 @@ export function participantsRenderKey(participants: readonly GameParticipant[]):
         u?.firstName ?? '',
         u?.lastName ?? '',
         u?.gender ?? '',
+        showsPremiumStatus(u) ? '1' : '0',
       ].join(':');
     })
     .join('|');

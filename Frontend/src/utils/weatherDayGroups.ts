@@ -5,6 +5,22 @@ import { shouldUseFahrenheit } from '@/utils/weather';
 const HOUR_MS = 60 * 60 * 1000;
 const MAX_TIMEZONE_OFFSET_HOURS = 14;
 const dateKeyFormatters = new Map<string, Intl.DateTimeFormat>();
+const hourFormatters = new Map<string, Intl.DateTimeFormat>();
+
+function hourFormatter(timezone: string): Intl.DateTimeFormat {
+  const key = timezone || 'UTC';
+  const cached = hourFormatters.get(key);
+  if (cached) return cached;
+  // A weather month scores hundreds of hourly points during navigation. Reuse
+  // the expensive formatter; it still resolves DST for each point's timestamp.
+  const formatter = new Intl.DateTimeFormat('en-GB', {
+    timeZone: key,
+    hour: 'numeric',
+    hour12: false,
+  });
+  hourFormatters.set(key, formatter);
+  return formatter;
+}
 
 function dateKeyFormatter(timezone: string): Intl.DateTimeFormat {
   const key = timezone || 'UTC';
@@ -115,11 +131,7 @@ function summarizeDayHours(
 export function localHourInTimezone(isoTime: string, timezone: string): number {
   try {
     const hour = Number(
-      new Intl.DateTimeFormat('en-GB', {
-        timeZone: timezone || 'UTC',
-        hour: 'numeric',
-        hour12: false,
-      }).format(new Date(isoTime)),
+      hourFormatter(timezone).format(new Date(isoTime)),
     );
     return Number.isFinite(hour) ? hour : new Date(isoTime).getUTCHours();
   } catch {

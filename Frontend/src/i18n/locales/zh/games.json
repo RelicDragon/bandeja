@@ -118,7 +118,7 @@
     "carouselView": "轮播视图",
     "listView": "列表视图",
     "participantsFull": "名额已满",
-    "participantsSpotsLeft_one": "还剩 1 个空位",
+    "participantsSpotsLeft_one": "还剩 {{count}} 个空位",
     "participantsSpotsLeft_other": "还剩 {{count}} 个空位",
     "setAsTrainer": "设为教练",
     "removeTrainer": "取消教练",

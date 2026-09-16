@@ -1,3 +1,4 @@
+import { showsPremiumStatus } from '@/utils/premiumIdentity';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Award, Ban, Beer, CalendarDays, Camera, Dumbbell, Lock, Swords, Trophy, Users } from 'lucide-react';
@@ -34,7 +35,7 @@ export function ChatListGameCardTags({ game, userId }: Props) {
   const myBadge = getGameCardMyParticipationBadge(participants, userId);
   const owner = participants.find((p) => p.role === 'OWNER');
   const showFireIcon =
-    owner?.user?.isPremium === true &&
+    showsPremiumStatus(owner?.user) &&
     game.status === 'ANNOUNCED' &&
     ((['GAME', 'TOURNAMENT', 'TRAINING', 'LEAGUE_SEASON'].includes(game.entityType) &&
       !participation.isFull) ||

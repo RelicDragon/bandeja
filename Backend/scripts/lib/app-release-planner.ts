@@ -22,6 +22,10 @@ import {
 } from './app-release-store-version';
 import { fetchLatestStoreVersions, ReleaseUploadError } from './app-release-upload';
 import {
+  iosDistributesExternally,
+  resolveIosDistribution,
+} from './app-release-ios-distribution';
+import {
   includesAndroid,
   includesIos,
   releaseArtifactsPresentOnDisk,
@@ -338,9 +342,14 @@ export function storeConfigComplete(
   store: ReleaseSession['store'],
   platform: ReleasePlatform = 'both',
 ): boolean {
+  const iosDistribution = resolveIosDistribution(store.iosDistribution);
+  const iosReady =
+    iosDistribution !== null &&
+    (!iosDistributesExternally(iosDistribution) ||
+      Boolean(store.iosTestFlightGroups && store.iosTestFlightGroups.length > 0));
   return (
     (!includesAndroid(platform) || Boolean(store.androidTrack)) &&
-    (!includesIos(platform) || store.iosSubmitForReview !== undefined)
+    (!includesIos(platform) || iosReady)
   );
 }
 

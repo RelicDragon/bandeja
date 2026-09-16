@@ -61,6 +61,7 @@ model User {
   maxParticipantsInGame         Int                              @default(12)
   canCreateLeague               Boolean                          @default(false)
   isPremium                     Boolean                          @default(false)
+  showPremiumStatus             Boolean                          @default(true)
   premiumOnboardingCompletedAt  DateTime?
   mainTheme                     MainTheme                        @default(premium)
   gender                        Gender                           @default(PREFER_NOT_TO_SAY)

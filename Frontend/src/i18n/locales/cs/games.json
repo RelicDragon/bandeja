@@ -240,7 +240,7 @@
     "listView": "List view",
     "carouselView": "Carousel view",
     "participantsFull": "Všechna místa obsazena",
-    "participantsSpotsLeft_one": "Zbývá 1 místo",
+    "participantsSpotsLeft_one": "Zbývá {{count}} místo",
     "participantsSpotsLeft_few": "Zbývají {{count}} místa",
     "participantsSpotsLeft_many": "Zbývá {{count}} míst",
     "participantsSpotsLeft_other": "Zbývá {{count}} míst",

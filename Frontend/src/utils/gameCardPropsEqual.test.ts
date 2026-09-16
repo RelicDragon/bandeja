@@ -217,3 +217,27 @@ describe('gameCardPropsEqual', () => {
     expect(gameCardPropsEqual(a, b)).toBe(true);
   });
 });
+
+it.each(['PLAYING', 'INVITED', 'NON_PLAYING'] as const)('refreshes %s identity when premium visibility changes', (status) => {
+  const participants = [{
+    userId: 'member', role: 'PARTICIPANT', status,
+    user: { id: 'member', isPremium: true, showPremiumStatus: true },
+  }] as Game['participants'];
+  const before = { game: baseGame({ participants }), user: { id: 'viewer' } };
+  const after = { ...before, game: baseGame({ participants: participants.map((participant) => ({
+    ...participant, user: { ...participant.user!, showPremiumStatus: false },
+  })) }) };
+  expect(gameCardPropsEqual(before, after)).toBe(false);
+});
+
+it('refreshes the owner fire marker when a non-playing owner hides premium status', () => {
+  const participants = [{
+    userId: 'owner', role: 'OWNER', status: 'NON_PLAYING',
+    user: { id: 'owner', isPremium: true, showPremiumStatus: true },
+  }] as Game['participants'];
+  const before = { game: baseGame({ participants }), user: { id: 'viewer' } };
+  const after = { ...before, game: baseGame({ participants: participants.map((participant) => ({
+    ...participant, user: { ...participant.user!, showPremiumStatus: false },
+  })) }) };
+  expect(gameCardPropsEqual(before, after)).toBe(false);
+});

@@ -9,6 +9,8 @@
     "personalInfo": "Личная информация",
     "appearance": "Внешний вид",
     "language": "Язык",
+    "showPremiumStatus": "Показывать статус Премиум",
+    "showPremiumStatusDescription": "Премиум-оформление имени и игр. Выключите, чтобы выглядеть как обычный пользователь. Преимущества Премиум и основная тема не изменятся.",
     "mainTheme": "Основная тема",
     "mainThemeClassic": "Классическая",
     "mainThemePremium": "Премиум",

@@ -80,6 +80,8 @@
     "personalInfo": "Lični podaci",
     "appearance": "Izgled",
     "language": "Jezik",
+    "showPremiumStatus": "Prikaži Premium status",
+    "showPremiumStatusDescription": "Prikaži Premium stil imena i igara. Isključi da izgledaš kao običan korisnik. Premium pogodnosti i glavna tema ostaju iste.",
     "mainTheme": "Glavna tema",
     "mainThemeClassic": "Klasična",
     "mainThemePremium": "Premium",

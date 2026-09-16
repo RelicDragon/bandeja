@@ -294,6 +294,33 @@ module ::AppReleaseStoreReview
   end
 end
 
+module ::AppReleaseTestFlight
+  UNEXPECTED_PLANNED_APP_STORE_STATES = %w[
+    PREPARE_FOR_SUBMISSION
+    DEVELOPER_REJECTED
+    REJECTED
+    METADATA_REJECTED
+    INVALID_BINARY
+    READY_FOR_REVIEW
+    WAITING_FOR_REVIEW
+    IN_REVIEW
+    PENDING_APPLE_RELEASE
+    PENDING_DEVELOPER_RELEASE
+  ].freeze
+
+  def self.in_review_took_planned_build?(selected_build_number, planned_build_number)
+    planned = planned_build_number.to_s
+    !planned.empty? && selected_build_number.to_s == planned
+  end
+
+  def self.unexpected_app_store_version?(planned_version:, reviewed_version:, planned_store_state:)
+    return false if planned_version.to_s.empty? || planned_store_state.to_s.empty?
+    return false if reviewed_version.to_s == planned_version.to_s
+
+    UNEXPECTED_PLANNED_APP_STORE_STATES.include?(planned_store_state.to_s)
+  end
+end
+
 # Supply does not expose Android Publisher's changesInReviewBehavior option yet.
 # Make production commits explicit: fail on an unexpected review, or replace it
 # only after the release CLI has recorded the user's consent.
@@ -426,6 +453,51 @@ def ios_binary_already_uploaded?(error)
     message.match?(/already uploaded a build/i) ||
     message.match?(/build number.*already/i) ||
     message.match?(/uploaded.*build.*already/i)
+end
+
+def assert_testflight_groups_exist!(group_names)
+  asc_api_key
+  app = Spaceship::ConnectAPI::App.find(IOS_APP_IDENTIFIER)
+  UI.user_error!("Could not find App Store Connect app #{IOS_APP_IDENTIFIER}") unless app
+
+  available = Array(app.get_beta_groups).map(&:name)
+  missing = group_names - available
+  return if missing.empty?
+
+  UI.user_error!(
+    "TestFlight groups not found: #{missing.join(', ')}. Available: #{available.empty? ? 'none' : available.join(', ')}"
+  )
+end
+
+def assert_testflight_did_not_touch_app_review!(app_version, build_number)
+  reviewed = ios_blocking_review_submission
+  reviewed_version = reviewed&.app_store_version_for_review
+
+  if reviewed
+    UI.user_error!("In-review App Store version could not be loaded for the TestFlight safety check") unless reviewed_version
+    selected = reviewed_version.get_build
+    UI.user_error!(
+      "Could not read the selected build on in-review App Store version #{reviewed_version.version_string}"
+    ) unless selected
+    if AppReleaseTestFlight.in_review_took_planned_build?(selected.version, build_number)
+      UI.user_error!(
+        "TestFlight build #{build_number} is selected on in-review App Store version " \
+        "#{reviewed_version.version_string}; App Review was changed."
+      )
+    end
+  end
+
+  planned_store_version = find_ios_app_store_version(app_version)
+  if AppReleaseTestFlight.unexpected_app_store_version?(
+    planned_version: app_version,
+    reviewed_version: reviewed_version&.version_string,
+    planned_store_state: planned_store_version&.app_version_state
+  )
+    UI.user_error!(
+      "App Store version #{app_version} is #{planned_store_version.app_version_state} after a TestFlight-only " \
+      "upload; this path must not create or prepare a new App Store version."
+    )
+  end
 end
 
 def find_ios_app_store_build(app_version, build_number)
@@ -740,12 +812,33 @@ platform :ios do
   desc "Upload IPA binary to App Store Connect"
   lane :upload_binary do |options|
     ipa = options[:ipa]
+    destination = options[:destination].to_s
+    destination = "app_store" if destination.empty?
 
     UI.user_error!("ipa path is required") if ipa.nil? || ipa.empty?
     UI.user_error!("IPA not found at #{ipa}") unless File.exist?(ipa)
+    unless ["app_store", "testflight"].include?(destination)
+      UI.user_error!("Unknown iOS upload destination #{destination}")
+    end
 
     if options[:guard_no_review].to_s == "true"
       guard_no_ios_blocking_review!("before binary upload")
+    end
+
+    if destination == "testflight"
+      begin
+        upload_to_testflight(
+          api_key: asc_api_key,
+          ipa: ipa,
+          skip_waiting_for_build_processing: true,
+          skip_submission: true
+        )
+      rescue => error
+        raise error unless ios_binary_already_uploaded?(error)
+
+        UI.important("IPA already appears to be uploaded; continuing with App Store processing wait")
+      end
+      next
     end
 
     base_options = {
@@ -808,7 +901,7 @@ platform :ios do
           "IPA upload completed, but App Store Connect has not made exact build " \
           "#{app_version} (#{build_number}) selectable yet. Current state: #{observed_state}. " \
           "Resume later with APP_RELEASE_RESUME=1 ./scripts/app-release.sh; resume will skip " \
-          "IPA upload and continue with metadata/submission."
+          "IPA upload and continue waiting for processing, then TestFlight or App Store metadata."
         )
       end
 
@@ -818,6 +911,69 @@ platform :ios do
       )
       sleep(interval_seconds)
     end
+  end
+
+  desc "Set TestFlight notes and optionally distribute to external groups"
+  lane :distribute_testflight do |options|
+    release_notes_path = options[:release_notes_path]
+    app_version = options[:app_version].to_s
+    build_number = options[:build_number].to_s
+    distribute_external = options[:distribute_external].to_s == "true"
+    groups = options[:groups].to_s.split(",").map(&:strip).reject(&:empty?)
+
+    UI.user_error!("release_notes_path is required") if release_notes_path.nil? || release_notes_path.empty?
+    UI.user_error!("app_version is required") if app_version.empty?
+    UI.user_error!("build_number is required") if build_number.empty?
+    UI.user_error!("Release notes file not found at #{release_notes_path}") unless File.exist?(release_notes_path)
+    UI.user_error!("TestFlight Beta requires at least one group") if distribute_external && groups.empty?
+
+    if distribute_external
+      assert_testflight_groups_exist!(groups)
+    end
+
+    params = {
+      api_key: asc_api_key,
+      app_platform: "ios",
+      app_version: app_version,
+      build_number: build_number,
+      distribute_only: true,
+      skip_waiting_for_build_processing: true,
+      distribute_external: distribute_external,
+      changelog: File.read(release_notes_path),
+      notify_external_testers: distribute_external,
+      reject_build_waiting_for_review: false,
+      expire_previous_builds: false
+    }
+    params[:groups] = groups if groups.any?
+
+    upload_to_testflight(params)
+    build = find_ios_app_store_build(app_version, build_number)
+    emit_ios_release_state(ios_release_state(build: build))
+  end
+
+  desc "Verify a TestFlight build exists without attaching it to an App Store version"
+  lane :verify_testflight_build do |options|
+    app_version = options[:app_version].to_s
+    build_number = options[:build_number].to_s
+
+    UI.user_error!("app_version is required") if app_version.empty?
+    UI.user_error!("build_number is required") if build_number.empty?
+
+    build = find_ios_app_store_build(app_version, build_number)
+    UI.user_error!("Exact App Store Connect build #{app_version} (#{build_number}) is not visible yet.") unless build
+    unless exact_ios_build_selectable?(build)
+      UI.user_error!(
+        "Exact App Store Connect build #{app_version} (#{build_number}) is #{build.processing_state}; " \
+        "cannot continue until that build is VALID."
+      )
+    end
+
+    assert_testflight_did_not_touch_app_review!(app_version, build_number)
+
+    emit_ios_release_state(ios_release_state(build: build))
+    UI.success(
+      "Verified TestFlight build #{app_version} (#{build_number}) without changing App Review"
+    )
   end
 
   desc "Update App Store version metadata and optionally submit for review"
@@ -888,16 +1044,33 @@ platform :ios do
     )
   end
 
-  desc "Upload IPA, wait for processing, update metadata, and optionally submit for review"
+  desc "Upload IPA, wait for processing, then either keep it on TestFlight or attach an App Store version"
   lane :upload_release do |options|
     ipa = options[:ipa]
     release_notes_path = options[:release_notes_path]
     app_version = options[:app_version]
     build_number = options[:build_number]
     submit_for_review = options[:submit_for_review]
+    destination = options[:destination].to_s
+    destination = "app_store" if destination.empty?
+    distribute_external = options[:distribute_external].to_s == "true"
 
-    upload_binary(ipa: ipa)
+    upload_binary(ipa: ipa, destination: destination)
     wait_for_processed_ios_build(app_version: app_version, build_number: build_number)
+    if destination == "testflight"
+      if distribute_external
+        distribute_testflight(
+          release_notes_path: release_notes_path,
+          app_version: app_version,
+          build_number: build_number,
+          distribute_external: "true",
+          groups: options[:groups]
+        )
+      end
+      verify_testflight_build(app_version: app_version, build_number: build_number)
+      next
+    end
+
     finalize_store_version(
       release_notes_path: release_notes_path,
       app_version: app_version,

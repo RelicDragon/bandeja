@@ -1,3 +1,5 @@
+import { showsPremiumStatus } from '@/utils/premiumIdentity';
+import '@/styles/premium-name.css';
 import { X, User, Crown, Check, Dumbbell } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { BasicUser } from '@/types';
@@ -385,12 +387,12 @@ export const PlayerAvatar = ({ player, subscribePresence = true, isCurrentUser, 
         )}
       </div>
       {!fullHideName && !superTiny && !inlineFace && (
-        <div className={`overflow-visible transition-all duration-300 ease-in-out ${
+        <div className={`max-w-full overflow-visible transition-all duration-300 ease-in-out ${
           showName
             ? `${smallLayout ? 'max-h-32' : extrasmall ? 'max-h-24' : 'max-h-20'} opacity-100 translate-y-0`
             : 'max-h-0 opacity-0 -translate-y-2'
         }`}>
-          <div className={`${sizeClasses.name} text-gray-700 dark:text-gray-300 text-center leading-tight flex flex-col items-center justify-start`}>
+          <div className={`${sizeClasses.name} ${showsPremiumStatus(player) ? 'premium-name-glow' : ''} text-gray-700 dark:text-gray-300 text-center leading-tight flex flex-col items-center justify-start`}>
             {isCurrentUser ? (
               <span className={`w-full ${smallLayout || extrasmall ? 'break-words' : 'truncate'} leading-tight`}>
                 {t('createGame.you')}

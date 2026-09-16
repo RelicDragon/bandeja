@@ -1,3 +1,4 @@
+import { PremiumName } from '@/components/PremiumName';
 import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Search } from 'lucide-react';
@@ -103,7 +104,7 @@ export const TeamPlayerSelector = ({
 
                 <div className="flex-1 min-w-0">
                   <p className="text-base font-medium text-gray-900 dark:text-white truncate">
-                    {participant.user.firstName} {participant.user.lastName}
+                    <PremiumName user={participant.user}>{participant.user.firstName} {participant.user.lastName}</PremiumName>
                   </p>
                   {participant.user.verbalStatus && (
 <p className="verbal-status">

@@ -164,4 +164,37 @@ end
   "APP_RELEASE_GOOGLE_EXPECTED_REVIEW_VERSION"
 ].each { |key| ENV.delete(key) }
 
+assert(
+  !AppReleaseTestFlight.in_review_took_planned_build?("227", "228"),
+  "a new TestFlight build is allowed while a different build is in App Review"
+)
+assert(
+  AppReleaseTestFlight.in_review_took_planned_build?("228", "228"),
+  "selecting the new TestFlight build on the in-review version is interference"
+)
+assert(
+  !AppReleaseTestFlight.unexpected_app_store_version?(
+    planned_version: "0.97.45",
+    reviewed_version: "0.97.45",
+    planned_store_state: "WAITING_FOR_REVIEW"
+  ),
+  "the in-review App Store version itself is expected"
+)
+assert(
+  AppReleaseTestFlight.unexpected_app_store_version?(
+    planned_version: "0.97.46",
+    reviewed_version: "0.97.45",
+    planned_store_state: "PREPARE_FOR_SUBMISSION"
+  ),
+  "a new prepare App Store version after TestFlight-only is interference"
+)
+assert(
+  !AppReleaseTestFlight.unexpected_app_store_version?(
+    planned_version: "0.97.46",
+    reviewed_version: "0.97.45",
+    planned_store_state: nil
+  ),
+  "TestFlight-only is valid when no App Store version exists for the new marketing version"
+)
+
 puts "fastlane app-release review tests: OK"

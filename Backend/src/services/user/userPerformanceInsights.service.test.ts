@@ -128,6 +128,7 @@ const user = (id: string, firstName: string) => ({
   verbalStatus: null,
   bio: null,
   isPremium: false,
+  showPremiumStatus: true,
   trainerRating: null,
   trainerReviewCount: 0,
   weeklyAvailability: null,

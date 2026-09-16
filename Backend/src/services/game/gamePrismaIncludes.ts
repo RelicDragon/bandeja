@@ -254,6 +254,7 @@ const myTabListUserSelect = {
   gender: true,
   approvedLevel: true,
   isPremium: true,
+  showPremiumStatus: true,
   isTrainer: true,
   primarySport: true,
   sportsEnabled: true,

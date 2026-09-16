@@ -1,3 +1,5 @@
+import { showsPremiumStatus } from '@/utils/premiumIdentity';
+import '@/styles/premium-name.css';
 import type { ReactNode } from 'react';
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
@@ -272,11 +274,13 @@ const PlayerCardProfileBodyComponent = ({
                 <GenderIndicator gender={user.gender} layout="big" position="bottom-left" />
               </div>
             )}
-            <h2 className="text-2xl font-bold break-words">
-              {user.firstName}
-              {isBlocked && <span className="ms-2 text-lg font-semibold opacity-90">({t('playerCard.blocked') || 'Blocked'})</span>}
-            </h2>
-            {user.lastName && <h3 className="text-xl font-semibold break-words">{user.lastName}</h3>}
+            <div className={showsPremiumStatus(user) ? 'premium-name-glow' : undefined}>
+              <h2 className="text-2xl font-bold break-words">
+                {user.firstName}
+                {isBlocked && <span className="ms-2 text-lg font-semibold opacity-90">({t('playerCard.blocked') || 'Blocked'})</span>}
+              </h2>
+              {user.lastName && <h3 className="text-xl font-semibold break-words">{user.lastName}</h3>}
+            </div>
             {user.verbalStatus && (
               <div className="mt-0 text-white/90 text-[9px] font-medium">
                 {user.verbalStatus}

@@ -22,6 +22,7 @@ export const FIND_CARD_USER_SELECT = {
   gender: true,
   approvedLevel: true,
   isPremium: true,
+  showPremiumStatus: true,
   isTrainer: true,
   primarySport: true,
   sportsEnabled: true,

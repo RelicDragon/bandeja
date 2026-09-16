@@ -207,8 +207,24 @@ assert(
 );
 
 assert(
-  storeConfigComplete({ androidTrack: 'internal', iosSubmitForReview: false }),
+  storeConfigComplete({ androidTrack: 'internal', iosDistribution: 'prepare' }),
   'storeConfigComplete accepts full store config',
+);
+assert(
+  storeConfigComplete({ androidTrack: 'internal', iosDistribution: 'testflight' }),
+  'storeConfigComplete accepts TestFlight Internal without App Store mode',
+);
+assert(
+  !storeConfigComplete({ androidTrack: 'internal', iosDistribution: 'beta' }),
+  'storeConfigComplete requires TestFlight Beta groups',
+);
+assert(
+  storeConfigComplete({
+    androidTrack: 'internal',
+    iosDistribution: 'beta',
+    iosTestFlightGroups: ['QA'],
+  }),
+  'storeConfigComplete accepts TestFlight Beta with groups',
 );
 clearSession();
 assert(loadSession() === null, 'clearSession removes persisted session');

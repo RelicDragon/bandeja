@@ -1,3 +1,4 @@
+import { PremiumName } from '@/components/PremiumName';
 import { buildEditLocationTimeSaveDraft, saveLocationTime } from '@/components/gameLocationTime/useSaveGameLocationTime';
 import { scheduleSelectionToForm, type ClubScheduleSelection } from '@/components/clubPicker/clubScheduleSelection';
 import { ClubBookingBadge } from '@/components/ClubBookingBadge';
@@ -702,7 +703,7 @@ export const EditLeagueGameTeamsModal = ({
                             fullHideName={true}
                           />
                           <span className="font-medium text-gray-900 dark:text-white">
-                            {player.firstName} {player.lastName}
+                            <PremiumName user={player}>{player.firstName} {player.lastName}</PremiumName>
                           </span>
                         </div>
                         <div className="flex items-center gap-3 text-xs text-gray-600 dark:text-gray-400">

@@ -41,3 +41,14 @@ describe('patchUserStatsPreferenceFlags', () => {
     expect(next.user.preferredCourtSideRight).toBe(false);
   });
 });
+
+it('updates cached profile decoration immediately after saving visibility', () => {
+  const stats = sampleStats();
+  stats.user.isPremium = true;
+  stats.user.showPremiumStatus = true;
+  const hidden = patchUserStatsPreferenceFlags(stats, { showPremiumStatus: false });
+  expect(hidden.user.showPremiumStatus).toBe(false);
+  expect(hidden.user.isPremium).toBe(true);
+  expect(patchUserStatsPreferenceFlags(hidden, {}).user.showPremiumStatus).toBe(false);
+  expect(patchUserStatsPreferenceFlags(hidden, { showPremiumStatus: true }).user.showPremiumStatus).toBe(true);
+});

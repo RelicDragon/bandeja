@@ -1,4 +1,5 @@
 import { randomBytes } from 'crypto';
+import { validateShowPremiumStatusUpdate } from '../../services/user/premiumStatus';
 import { validateMainThemeUpdate } from '../../services/user/mainTheme';
 import { Response } from 'express';
 import { asyncHandler } from '../../utils/asyncHandler';
@@ -115,7 +116,7 @@ export const getIpLocation = asyncHandler(async (req: AuthRequest, res: Response
 });
 
 export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { firstName, lastName, email, avatar, originalAvatar, language, translateToLanguage, timeFormat, weekStart, defaultCurrency, gender, genderIsSet, nameIsSet, cityIsSet, preferredHandLeft, preferredHandRight, preferredCourtSideLeft, preferredCourtSideRight, allowMessagesFromNonContacts, showOnlineStatus, alwaysShowUserNames, shareGamePhotosToFollowers, shareGameCreationsToFollowers, shareGameResultsToFollowers, favoriteTrainerId, appIcon, mainTheme, verbalStatus, bio, weeklyAvailability, availabilityBucketBoundaries } = req.body;
+  const { firstName, lastName, email, avatar, originalAvatar, language, translateToLanguage, timeFormat, weekStart, defaultCurrency, gender, genderIsSet, nameIsSet, cityIsSet, preferredHandLeft, preferredHandRight, preferredCourtSideLeft, preferredCourtSideRight, allowMessagesFromNonContacts, showOnlineStatus, alwaysShowUserNames, shareGamePhotosToFollowers, shareGameCreationsToFollowers, shareGameResultsToFollowers, favoriteTrainerId, appIcon, mainTheme, showPremiumStatus, verbalStatus, bio, weeklyAvailability, availabilityBucketBoundaries } = req.body;
 
   let normalizedWeeklyAvailability =
     weeklyAvailability === undefined ? undefined : validateWeeklyAvailability(weeklyAvailability);
@@ -196,6 +197,7 @@ export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response
   });
 
   const validatedMainTheme = validateMainThemeUpdate(mainTheme, currentUser?.isPremium === true);
+  const validatedShowPremiumStatus = validateShowPremiumStatusUpdate(showPremiumStatus, currentUser?.isPremium === true);
 
   const resolvedNames =
     firstName !== undefined || lastName !== undefined
@@ -282,6 +284,7 @@ export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response
         ...(favoriteTrainerId !== undefined && { favoriteTrainerId: favoriteTrainerId || null }),
         ...(appIcon !== undefined && { appIcon: appIcon ?? null }),
         ...(validatedMainTheme !== undefined && { mainTheme: validatedMainTheme }),
+        ...(validatedShowPremiumStatus !== undefined && { showPremiumStatus: validatedShowPremiumStatus }),
         ...(verbalStatus !== undefined && { verbalStatus }),
         ...(bio !== undefined && { bio }),
         ...(normalizedWeeklyAvailability !== undefined && { weeklyAvailability: normalizedWeeklyAvailability as any }),

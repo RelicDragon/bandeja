@@ -22,6 +22,7 @@
     "test:theme-backgrounds": "../scripts/run-heavy node scripts/verify-theme-backgrounds.mjs",
     "test:theme": "../scripts/run-heavy vitest run src/store/applySystemThemeOnForeground.test.ts src/store/themeForegroundSync.test.ts src/store/themeStore.foreground.test.ts src/store/themeStore.ensure.test.ts",
     "test:premium-navigation": "../scripts/run-heavy vitest run src/utils/mainTheme.test.ts src/components/navigation/BottomTabBar.premium.test.tsx src/hooks/usePremiumNavigationAppearance.test.tsx",
+    "test:premium-visibility": "../scripts/run-heavy vitest run src/components/playerProfile/patchUserStatsPreferenceFlags.test.ts src/utils/premiumIdentity.test.ts src/components/PremiumName.test.tsx src/utils/gameCardPropsEqual.test.ts src/utils/mainTheme.test.ts src/utils/gameResults.tournamentTableView.test.ts",
     "test:premium-onboarding": "../scripts/run-heavy vitest run src/components/premium/PremiumWelcome.test.tsx src/services/appIcon.premium.test.ts",
     "test:deep-link-catalog": "../scripts/run-heavy vitest run src/deepLinks/catalog.parity.test.ts src/deepLinks/catalog.path.test.ts src/deepLinks/assistantRegistry.parity.test.ts src/utils/postLoginRedirect.test.ts src/services/push/normalizePushNotificationData.test.ts src/utils/pushNotificationBracketRouting.util.test.ts",
     "sync:deep-link-catalog": "node --experimental-strip-types scripts/sync-deep-link-catalog.ts",

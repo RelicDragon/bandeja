@@ -118,7 +118,7 @@
     "carouselView": "Tampilan korsel",
     "listView": "Tampilan daftar",
     "participantsFull": "Semua tempat terisi",
-    "participantsSpotsLeft_one": "1 tempat tersisa",
+    "participantsSpotsLeft_one": "{{count}} tempat tersisa",
     "participantsSpotsLeft_other": "{{count}} tempat tersisa",
     "setAsTrainer": "Tetapkan sebagai pelatih",
     "removeTrainer": "Hapus sebagai pelatih",

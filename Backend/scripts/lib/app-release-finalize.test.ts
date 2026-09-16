@@ -37,7 +37,7 @@ assert(getSessionPhase(withNotes) === 'ready-to-apply', 'ready-to-apply after no
 
 assert(!storeConfigComplete({}), 'store config incomplete by default');
 assert(
-  storeConfigComplete({ androidTrack: 'internal', iosSubmitForReview: false }),
+  storeConfigComplete({ androidTrack: 'internal', iosDistribution: 'prepare' }),
   'store config complete with track and ios mode',
 );
 assert(
@@ -49,7 +49,11 @@ assert(
   'Android-only store config complete with Play track',
 );
 assert(
-  storeConfigComplete({ iosSubmitForReview: false }, 'ios'),
+  storeConfigComplete({ iosDistribution: 'testflight' }, 'ios'),
+  'iOS-only store config complete with TestFlight Internal',
+);
+assert(
+  storeConfigComplete({ iosDistribution: 'prepare' }, 'ios'),
   'iOS-only store config complete with App Store mode',
 );
 

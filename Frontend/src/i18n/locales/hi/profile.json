@@ -9,6 +9,8 @@
     "personalInfo": "व्यक्तिगत जानकारी",
     "appearance": "दिखावट",
     "language": "भाषा",
+    "showPremiumStatus": "प्रीमियम स्टेटस दिखाएँ",
+    "showPremiumStatusDescription": "अपने नाम और खेलों पर प्रीमियम शैली दिखाएँ। सामान्य उपयोगकर्ता की तरह दिखने के लिए इसे बंद करें। आपके प्रीमियम लाभ और मुख्य थीम नहीं बदलेंगे।",
     "mainTheme": "मुख्य थीम",
     "mainThemeClassic": "क्लासिक",
     "mainThemePremium": "प्रीमियम",

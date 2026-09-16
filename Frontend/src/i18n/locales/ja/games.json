@@ -118,7 +118,7 @@
     "carouselView": "カルーセル表示",
     "listView": "リスト表示",
     "participantsFull": "定員に達しました",
-    "participantsSpotsLeft_one": "残り1枠",
+    "participantsSpotsLeft_one": "残り{{count}}枠",
     "participantsSpotsLeft_other": "残り {{count}} 枠",
     "setAsTrainer": "トレーナーに設定",
     "removeTrainer": "トレーナーを解除",

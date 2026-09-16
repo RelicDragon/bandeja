@@ -80,6 +80,8 @@
     "personalInfo": "Osobní údaje",
     "appearance": "Vzhled",
     "language": "Jazyk",
+    "showPremiumStatus": "Zobrazovat status Premium",
+    "showPremiumStatusDescription": "Zobrazovat prémiový styl jména a her. Vypnutím budete vypadat jako běžný uživatel. Výhody Premium a hlavní motiv zůstanou stejné.",
     "mainTheme": "Hlavní motiv",
     "mainThemeClassic": "Klasický",
     "mainThemePremium": "Premium",

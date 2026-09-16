@@ -118,7 +118,7 @@
     "carouselView": "कैरॉज़ल दृश्य",
     "listView": "सूची दृश्य",
     "participantsFull": "सभी स्थान भरे",
-    "participantsSpotsLeft_one": "1 स्थान बचा",
+    "participantsSpotsLeft_one": "{{count}} स्थान बचा",
     "participantsSpotsLeft_other": "{{count}} स्थान बचे",
     "setAsTrainer": "ट्रेनर सेट करें",
     "removeTrainer": "ट्रेनर हटाएँ",

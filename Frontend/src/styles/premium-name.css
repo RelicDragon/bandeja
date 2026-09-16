@@ -1,0 +1,13 @@
+/* Public identity only: the shared visibility helper gates every use. */
+.premium-name-glow {
+  color: #edc766;
+  -webkit-text-stroke: 0.4px #624714;
+  paint-order: stroke fill;
+  text-shadow: 0 0 3px #dfae5266, 0 0 8px #dcaa3f55, 0 0 14px #e8b74e33;
+}
+
+.dark .premium-name-glow {
+  color: #ffe2a0;
+  -webkit-text-stroke-color: #4b3510;
+  text-shadow: 0 0 3px #edbf6877, 0 0 8px #e3ad4655, 0 0 14px #edbd5333;
+}

@@ -1,3 +1,4 @@
+import { PremiumName } from '@/components/PremiumName';
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -480,7 +481,7 @@ export const GroupChannelSettings = ({
                           />
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                              {participant.user.firstName} {participant.user.lastName}
+                              <PremiumName user={participant.user}>{participant.user.firstName} {participant.user.lastName}</PremiumName>
                               {isCurrentUser && (
                                 <span className="ms-2 text-xs text-gray-500 dark:text-gray-400">
                                   ({t('chat.you', { defaultValue: 'You' })})

@@ -1,3 +1,4 @@
+import { PremiumName } from '@/components/PremiumName';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { favoritesApi } from '@/api/favorites';
@@ -16,7 +17,7 @@ const UserRow = ({ user, isCurrentUser }: { user: BasicUser; isCurrentUser: bool
     />
     <div className="flex-1 min-w-0">
       <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-        {user.firstName} {user.lastName}
+        <PremiumName user={user}>{user.firstName} {user.lastName}</PremiumName>
       </p>
       {user.verbalStatus && (
         <p className="verbal-status">

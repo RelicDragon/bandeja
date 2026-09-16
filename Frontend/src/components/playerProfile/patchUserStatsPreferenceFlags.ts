@@ -1,6 +1,7 @@
 import type { UserStats } from '@/api/users';
 
 export type PublicPreferenceFlags = {
+  showPremiumStatus?: boolean;
   preferredHandLeft?: boolean;
   preferredHandRight?: boolean;
   preferredCourtSideLeft?: boolean;
@@ -15,6 +16,7 @@ export function patchUserStatsPreferenceFlags(
     ...stats,
     user: {
       ...stats.user,
+      ...(flags.showPremiumStatus !== undefined && { showPremiumStatus: flags.showPremiumStatus }),
       ...(flags.preferredHandLeft !== undefined && { preferredHandLeft: flags.preferredHandLeft === true }),
       ...(flags.preferredHandRight !== undefined && { preferredHandRight: flags.preferredHandRight === true }),
       ...(flags.preferredCourtSideLeft !== undefined && {

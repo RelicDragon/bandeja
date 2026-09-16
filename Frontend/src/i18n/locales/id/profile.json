@@ -9,6 +9,8 @@
     "personalInfo": "Informasi Pribadi",
     "appearance": "Penampilan",
     "language": "Bahasa",
+    "showPremiumStatus": "Tampilkan status Premium",
+    "showPremiumStatusDescription": "Tampilkan gaya Premium pada nama dan permainanmu. Nonaktifkan agar tampil seperti pengguna biasa. Manfaat Premium dan tema utama tetap sama.",
     "mainTheme": "Tema utama",
     "mainThemeClassic": "Klasik",
     "mainThemePremium": "Premium",

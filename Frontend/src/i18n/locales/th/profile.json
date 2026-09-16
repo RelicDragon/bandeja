@@ -9,6 +9,8 @@
     "personalInfo": "ข้อมูลส่วนบุคคล",
     "appearance": "รูปร่าง",
     "language": "ภาษา",
+    "showPremiumStatus": "แสดงสถานะพรีเมียม",
+    "showPremiumStatusDescription": "แสดงสไตล์พรีเมียมบนชื่อและเกมของคุณ ปิดเพื่อแสดงเหมือนผู้ใช้ทั่วไป สิทธิประโยชน์พรีเมียมและธีมหลักจะไม่เปลี่ยนแปลง",
     "mainTheme": "ธีมหลัก",
     "mainThemeClassic": "คลาสสิก",
     "mainThemePremium": "พรีเมียม",

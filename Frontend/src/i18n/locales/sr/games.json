@@ -242,7 +242,7 @@
     "listView": "List view",
     "carouselView": "Karusel prikaz",
     "participantsFull": "Sva mesta su popunjena",
-    "participantsSpotsLeft_one": "Ostalo je 1 mesto",
+    "participantsSpotsLeft_one": "Ostalo je {{count}} mesto",
     "participantsSpotsLeft_few": "Ostala su {{count}} mesta",
     "participantsSpotsLeft_many": "Ostalo je {{count}} mesta",
     "participantsSpotsLeft_other": "Ostalo je {{count}} mesta",

@@ -118,7 +118,7 @@
     "carouselView": "มุมมองแบบหมุน",
     "listView": "มุมมองรายการ",
     "participantsFull": "เต็มทุกจุดแล้ว",
-    "participantsSpotsLeft_one": "เหลืออีก 1 ที่",
+    "participantsSpotsLeft_one": "เหลืออีก {{count}} ที่",
     "participantsSpotsLeft_other": "{{count}} เหลือที่ว่าง",
     "setAsTrainer": "ตั้งเป็นเทรนเนอร์",
     "removeTrainer": "ลบออกจากการเป็นเทรนเนอร์",

@@ -27,6 +27,7 @@
     "build": "../scripts/run-heavy tsc",
     "start": "node dist/server.js",
     "prisma:generate": "../scripts/run-heavy prisma generate",
+    "test:premium-visibility": "../scripts/run-heavy ts-node --transpile-only src/services/user/premiumStatus.test.ts",
     "test:premium-onboarding": "../scripts/run-heavy ts-node --transpile-only src/controllers/user/premiumOnboarding.controller.test.ts",
     "prisma:migrate": "../scripts/run-heavy prisma migrate dev",
     "prisma:studio": "prisma studio",

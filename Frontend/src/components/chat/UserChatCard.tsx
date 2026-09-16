@@ -1,3 +1,4 @@
+import { PremiumName } from '@/components/PremiumName';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
@@ -91,7 +92,7 @@ const UserChatCardInner = ({ chat, listPresenceBatched = false, unreadCount = 0,
         <div className="flex items-center justify-between mb-1">
           <div className="flex-1 min-w-0">
             <h3 className="text-sm font-bold text-gray-900 dark:text-white truncate">
-              {[otherUser.firstName, otherUser.lastName].filter(Boolean).join(' ') || 'Unknown'}
+              <PremiumName user={otherUser}>{[otherUser.firstName, otherUser.lastName].filter(Boolean).join(' ') || 'Unknown'}</PremiumName>
             </h3>
             {otherUser.verbalStatus && (
               <p className="verbal-status">

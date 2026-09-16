@@ -1,3 +1,4 @@
+import { PremiumName } from '@/components/PremiumName';
 import { useTranslation } from 'react-i18next';
 import { Game, GameParticipant, ChatType } from '@/types';
 import { normalizeChatType } from '@/utils/chatType';
@@ -95,7 +96,7 @@ export const ChatParticipantsModal = ({ game: initialGame, onClose, currentChatT
                       <p className={`text-sm font-medium truncate ${
                         isVisibleForChat ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-gray-500'
                       }`}>
-                        {participant.firstName} {participant.lastName}
+                        <PremiumName user={participant}>{participant.firstName} {participant.lastName}</PremiumName>
                       </p>
                     </div>
                     {participant.verbalStatus && (

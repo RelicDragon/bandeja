@@ -1,3 +1,4 @@
+import { PremiumName } from '@/components/PremiumName';
 import { useState, useMemo, useEffect } from 'react';
 import { Card, Button, PlayerAvatar, InvitesList } from '@/components';
 import { Game, Invite, InviteStatus, JoinQueue } from '@/types';
@@ -319,7 +320,7 @@ export const GameParticipants = ({
                             />
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                                {participant.user.firstName} {participant.user.lastName}
+                                <PremiumName user={participant.user}>{participant.user.firstName} {participant.user.lastName}</PremiumName>
                               </p>
                               {participant.user.verbalStatus && (
                                 <p className="verbal-status">
@@ -367,7 +368,7 @@ export const GameParticipants = ({
                             />
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                                {participant.user.firstName} {participant.user.lastName}
+                                <PremiumName user={participant.user}>{participant.user.firstName} {participant.user.lastName}</PremiumName>
                               </p>
                               {participant.user.verbalStatus && (
                                 <p className="verbal-status">
@@ -414,7 +415,7 @@ export const GameParticipants = ({
                         />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                            {participant.user.firstName} {participant.user.lastName}
+                            <PremiumName user={participant.user}>{participant.user.firstName} {participant.user.lastName}</PremiumName>
                           </p>
                           {participant.user.verbalStatus && (
                             <p className="verbal-status">

@@ -240,7 +240,7 @@
     "listView": "List view",
     "carouselView": "Vista carrusel",
     "participantsFull": "Todos los huecos ocupados",
-    "participantsSpotsLeft_one": "Queda 1 hueco",
+    "participantsSpotsLeft_one": "Queda {{count}} hueco",
     "participantsSpotsLeft_other": "Quedan {{count}} huecos",
     "removeTrainer": "Remove as trainer",
     "setAsTrainer": "Set as trainer",

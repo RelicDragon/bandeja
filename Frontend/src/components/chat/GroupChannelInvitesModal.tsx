@@ -1,3 +1,4 @@
+import { PremiumName } from '@/components/PremiumName';
 import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
@@ -298,7 +299,7 @@ export const GroupChannelInvitesModal = ({
                     />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                        {player.firstName} {player.lastName}
+                        <PremiumName user={player}>{player.firstName} {player.lastName}</PremiumName>
                       </p>
                       {player.verbalStatus && (
                         <p className="verbal-status text-xs">

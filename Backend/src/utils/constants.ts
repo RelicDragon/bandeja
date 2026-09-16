@@ -199,6 +199,7 @@ export const USER_SELECT_FIELDS = {
   verbalStatus: true,
   bio: true,
   isPremium: true,
+  showPremiumStatus: true,
   trainerRating: true,
   trainerReviewCount: true,
   weeklyAvailability: true,

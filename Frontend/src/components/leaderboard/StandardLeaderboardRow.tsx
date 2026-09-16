@@ -1,3 +1,4 @@
+import { PremiumName } from '@/components/PremiumName';
 import type { KeyboardEvent, Ref } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { LeaderboardEntry } from '@/api/ranking';
@@ -102,7 +103,7 @@ export function StandardLeaderboardRow({
           </div>
           <div className="min-w-0 w-full flex-1">
             <div className={`line-clamp-2 min-w-0 break-words text-xs ${nameClass}`}>
-              {playerName}
+              <PremiumName user={entry}>{playerName}</PremiumName>
               {isCurrentUser && (
                 <span className={`ms-1.5 text-[10px] ${
                   isGrayed

@@ -1,3 +1,4 @@
+import { PremiumName } from '@/components/PremiumName';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Plus, Trash2, Loader2, UserPlus, ChevronDown, Check, ArrowUp, ArrowDown, RefreshCw, RotateCcw } from 'lucide-react';
@@ -547,7 +548,7 @@ export const LeagueGroupEditorModal = ({
                                         />
                                         <div className="min-w-0 flex-1">
                                           <span className="font-medium truncate block">
-                                            {participant.user.firstName} {participant.user.lastName}
+                                            <PremiumName user={participant.user}>{participant.user.firstName} {participant.user.lastName}</PremiumName>
                                           </span>
                                           {participant.user.verbalStatus && (
                                             <span className="verbal-status block">

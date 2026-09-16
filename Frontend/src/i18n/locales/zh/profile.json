@@ -9,6 +9,8 @@
     "personalInfo": "个人信息",
     "appearance": "外观",
     "language": "语言",
+    "showPremiumStatus": "显示高级会员身份",
+    "showPremiumStatusDescription": "为你的名字和比赛显示高级会员样式。关闭后将显示为普通用户。高级会员权益和主主题保持不变。",
     "mainTheme": "主主题",
     "mainThemeClassic": "经典",
     "mainThemePremium": "高级",

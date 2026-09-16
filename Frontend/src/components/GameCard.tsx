@@ -1,3 +1,4 @@
+import { showsPremiumStatus } from '@/utils/premiumIdentity';
 import { useState, useRef, useEffect, useCallback, useMemo, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -170,9 +171,9 @@ const GameCardMatch = memo(function GameCardMatch({
 
   const hasUnoccupiedSlots = !participation.isFull;
   const owner = participants.find((p) => p.role === 'OWNER');
-  const ownerIsPremium = owner?.user?.isPremium === true;
+  const ownerShowsPremiumStatus = showsPremiumStatus(owner?.user);
   const showFireIcon =
-    ownerIsPremium &&
+    ownerShowsPremiumStatus &&
     game.status === 'ANNOUNCED' &&
     ((['GAME', 'TOURNAMENT', 'TRAINING', 'LEAGUE_SEASON'].includes(game.entityType) && hasUnoccupiedSlots) ||
       game.entityType === 'BAR' ||

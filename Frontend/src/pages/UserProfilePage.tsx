@@ -1,3 +1,4 @@
+import { PremiumName } from '@/components/PremiumName';
 import { useEffect, useState, useLayoutEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, X } from 'lucide-react';
@@ -172,7 +173,7 @@ export const UserProfilePage = () => {
             <button type="button" onClick={() => setShowAvatarView(false)} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
               <ArrowLeft size={20} className="text-gray-700 dark:text-gray-300" />
             </button>
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white truncate">{`${stats.user.firstName || ''} ${stats.user.lastName || ''}`.trim()}</h2>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white truncate"><PremiumName user={stats.user}>{`${stats.user.firstName || ''} ${stats.user.lastName || ''}`.trim()}</PremiumName></h2>
           </div>
           <button type="button" onClick={() => handleBack(navigate)} className="p-2 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
             <X size={20} className="text-gray-600 dark:text-gray-300" />

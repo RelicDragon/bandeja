@@ -1,3 +1,4 @@
+import { PremiumName } from '@/components/PremiumName';
 import { Check, CalendarClock, CalendarX2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { BasicUser } from '@/types';
@@ -68,7 +69,7 @@ export function PlayerListItem({
 
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
-          {player.firstName} {player.lastName}
+          <PremiumName user={player}>{player.firstName} {player.lastName}</PremiumName>
           {player.gender && player.gender !== 'PREFER_NOT_TO_SAY' && (
             <i className={`bi ms-1.5 text-[11px] ${player.gender === 'MALE' ? 'bi-gender-male text-sky-500' : 'bi-gender-female text-rose-400'}`} />
           )}

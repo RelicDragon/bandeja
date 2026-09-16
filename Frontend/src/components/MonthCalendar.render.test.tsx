@@ -1,13 +1,14 @@
 // @vitest-environment jsdom
-import { act, type ReactNode } from 'react';
+import { act, useState, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
-import type { Game } from '@/types';
+import type { Game, WeatherDay } from '@/types';
 import { useUnreadStore } from '@/store/unreadStore';
 import { useResolvedAppAppearance } from '@/store/themeStore';
 import { aggregateFindGamesByDay } from '@/utils/findFilter';
 import { aggregateFindDayIndexByDay, type FindDayIndexRow } from '@/utils/findDayIndexCounts';
+import { weatherDayQueryOptions } from '@/queries/weather';
 import { MonthCalendar } from './MonthCalendar';
 
 vi.mock('@/store/authStore', async () => {
@@ -22,7 +23,7 @@ vi.mock('@/store/unreadStore', async () => {
   return { useUnreadStore: create(() => ({ displayedByContext: {} })) };
 });
 vi.mock('@/store/themeStore', () => ({ useResolvedAppAppearance: vi.fn(() => 'light') }));
-vi.mock('@/api/weather', () => ({ weatherApi: { getDay: vi.fn(), getPreview: vi.fn() } }));
+vi.mock('@/api/weather', () => ({ weatherApi: { getDay: vi.fn(), getPreview: vi.fn(async () => ({ available: false, hours: [] })) } }));
 vi.mock('@/hooks/useAdCalendarTags', () => {
   const getTagsForDay = () => [];
   return { useAdCalendarTags: () => ({ getTagsForDay }) };
@@ -117,4 +118,46 @@ it.each(['cards', 'index'] as const)('reuses %s aggregation and only renders cha
     .find((button) => button.querySelector('span')?.textContent === '16');
   act(() => day16!.click());
   expect(onDateSelect).toHaveBeenLastCalledWith(new Date(2026, 8, 16));
+});
+
+it('changes a cached weather month without constructing a formatter for every hourly point', () => {
+  localStorage.setItem('padelpulse-calendar-weather-mode-find', '1');
+  for (let offset = 0; offset < 100; offset++) {
+    const day = new Date(Date.UTC(2026, 3, 1 + offset));
+    const date = day.toISOString().slice(0, 10);
+    const weather: WeatherDay = {
+      provider: 'open-meteo', cityId: 'city', cityName: 'City', cityTimezone: 'Europe/Belgrade',
+      date, fetchedAt: '2026-09-15T00:00:00Z', stale: false, source: 'archive',
+      available: true, attribution: 'Open-Meteo',
+      hours: Array.from({ length: 24 }, (_, hour) => ({
+        time: new Date(+day + hour * 3_600_000).toISOString(),
+        temperatureC: hour, temperatureF: hour * 1.8 + 32, weatherCode: 0,
+        conditionKey: 'clear', precipitationProbability: 0, precipitationMm: 0,
+        windSpeedKmh: 5, relativeHumidity: 50, isDay: hour > 6 && hour < 20,
+      })),
+    };
+    client.setQueryData(weatherDayQueryOptions('city', date).queryKey, weather);
+  }
+  function CalendarWithSelection() {
+    const [date, setDate] = useState(new Date(2026, 4, 31));
+    return <MonthCalendar selectedDate={date} onDateSelect={setDate}
+      availableGames={emptyGames} weatherModeScope="find" />;
+  }
+  act(() => root.render(
+    <QueryClientProvider client={client}><CalendarWithSelection /></QueryClientProvider>,
+  ));
+  const OriginalFormatter = Intl.DateTimeFormat;
+  const formatter = vi.spyOn(Intl, 'DateTimeFormat').mockImplementation(function (locales, options) {
+    return new OriginalFormatter(locales, options);
+  });
+  try {
+    act(() => container.querySelector('.lucide-chevron-right')!.closest('button')!.click());
+    expect(container.querySelector('h3')?.textContent).toBe('Jun');
+    expect(container.querySelector('[aria-selected="true"] > span')?.textContent).toBe('30');
+    expect(container.querySelectorAll('[data-calendar-day-weather]').length).toBeGreaterThan(28);
+    const hourlyFormatters = formatter.mock.calls.filter(([, options]) => options?.hour === 'numeric');
+    expect(hourlyFormatters.length).toBeLessThanOrEqual(1);
+  } finally {
+    formatter.mockRestore();
+  }
 });

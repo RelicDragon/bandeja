@@ -6,6 +6,12 @@ import { ROOT } from './app-release';
 import { FRONTEND_DIR } from './app-release-build';
 import { androidReviewFingerprint, androidReviewNeedsApproval } from './app-release-review';
 import {
+  iosDistributesExternally,
+  iosIsTestFlightOnly,
+  iosSubmitsForReview,
+  resolveIosDistribution,
+} from './app-release-ios-distribution';
+import {
   includesAndroid,
   includesIos,
   type IosAppStoreConnectState,
@@ -242,7 +248,7 @@ export function storeReviewCheckPlatforms(session: ReleaseSession): StoreReviewP
   }
   if (
     includesIos(session.targetPlatform) &&
-    session.store.iosSubmitForReview === true &&
+    iosSubmitsForReview(session.store.iosDistribution) &&
     session.uploads?.iosStoreVersion !== true &&
     session.uploads?.ios !== true
   ) {
@@ -430,8 +436,14 @@ export function runUploadPreflight(session: ReleaseSession): UploadPreflight {
     issues.push(`Invalid Google Play track: ${session.store.androidTrack}`);
   }
 
-  if (iosPending && session.store.iosSubmitForReview === undefined) {
-    issues.push('iOS App Store mode is not set (prepare-without-submit or submit-for-review).');
+  if (iosPending && !resolveIosDistribution(session.store.iosDistribution)) {
+    issues.push(
+      'iOS destination is not set (TestFlight Internal, TestFlight Beta, prepare-without-submit, or submit-for-review).',
+    );
+  } else if (iosPending && iosDistributesExternally(session.store.iosDistribution)) {
+    if (!session.store.iosTestFlightGroups?.length) {
+      issues.push('TestFlight Beta requires at least one external group name.');
+    }
   }
 
   if (
@@ -447,7 +459,7 @@ export function runUploadPreflight(session: ReleaseSession): UploadPreflight {
 
   if (
     iosPending &&
-    session.store.iosSubmitForReview === true &&
+    iosSubmitsForReview(session.store.iosDistribution) &&
     session.reviewGuard.ios?.inReview === true &&
     session.reviewGuard.iosRemovalApprovedSubmissionId !== session.reviewGuard.ios.submissionId
   ) {
@@ -530,8 +542,19 @@ export function runStoreVerificationPreflight(session: ReleaseSession): UploadPr
     issues.push('Android upload is not complete yet.');
   }
 
-  if (iosPending && session.uploads?.iosStoreVersion !== true && session.uploads?.ios !== true) {
-    issues.push('App Store metadata has not been finalized yet.');
+  if (iosPending && session.uploads?.ios !== true) {
+    if (iosIsTestFlightOnly(session.store.iosDistribution)) {
+      if (session.uploads?.iosBuildProcessed !== true) {
+        issues.push('TestFlight build has not finished processing yet.');
+      } else if (
+        iosDistributesExternally(session.store.iosDistribution) &&
+        session.uploads?.iosTestFlightDistributed !== true
+      ) {
+        issues.push('TestFlight Beta distribution has not been finalized yet.');
+      }
+    } else if (session.uploads?.iosStoreVersion !== true) {
+      issues.push('App Store metadata has not been finalized yet.');
+    }
   }
 
   if (androidPending && !session.store.androidTrack) {
@@ -540,8 +563,10 @@ export function runStoreVerificationPreflight(session: ReleaseSession): UploadPr
     issues.push(`Invalid Google Play track: ${session.store.androidTrack}`);
   }
 
-  if (iosPending && session.store.iosSubmitForReview === undefined) {
-    issues.push('iOS App Store mode is not set (prepare-without-submit or submit-for-review).');
+  if (iosPending && !resolveIosDistribution(session.store.iosDistribution)) {
+    issues.push(
+      'iOS destination is not set (TestFlight Internal, TestFlight Beta, prepare-without-submit, or submit-for-review).',
+    );
   }
 
   const playKey = androidPending ? resolvePlayJsonKeyPath() : undefined;
@@ -623,7 +648,7 @@ function resolveUploadInputs(session: ReleaseSession): {
     aab: session.artifacts?.aab ? path.resolve(session.artifacts.aab) : '',
     ipa: session.artifacts?.ipa ? path.resolve(session.artifacts.ipa) : '',
     track: track ?? '',
-    submitForReview: session.store.iosSubmitForReview === true,
+    submitForReview: iosSubmitsForReview(session.store.iosDistribution),
   };
 }
 
@@ -697,7 +722,8 @@ export async function runIosBinaryUpload(session: ReleaseSession): Promise<void>
   const { ipa } = resolveUploadInputs(session);
   await runFastlaneLane('ios', 'upload_binary', {
     ipa,
-    guard_no_review: String(session.store.iosSubmitForReview === true),
+    guard_no_review: String(iosSubmitsForReview(session.store.iosDistribution)),
+    destination: iosIsTestFlightOnly(session.store.iosDistribution) ? 'testflight' : 'app_store',
   });
 }
 
@@ -705,6 +731,30 @@ export async function runIosProcessedBuildWait(
   session: ReleaseSession,
 ): Promise<IosAppStoreConnectState> {
   const result = await runFastlaneLane('ios', 'wait_for_processed_ios_build', {
+    app_version: session.planned.version,
+    build_number: String(session.planned.build),
+  });
+  return result.iosState;
+}
+
+export async function runIosTestFlightDistribute(
+  session: ReleaseSession,
+): Promise<IosAppStoreConnectState> {
+  const { metadata } = resolveUploadInputs(session);
+  const result = await runFastlaneLane('ios', 'distribute_testflight', {
+    release_notes_path: metadata.iosReleaseNotesPath,
+    app_version: session.planned.version,
+    build_number: String(session.planned.build),
+    distribute_external: String(iosDistributesExternally(session.store.iosDistribution)),
+    groups: (session.store.iosTestFlightGroups ?? []).join(','),
+  });
+  return result.iosState;
+}
+
+export async function runIosTestFlightVerification(
+  session: ReleaseSession,
+): Promise<IosAppStoreConnectState> {
+  const result = await runFastlaneLane('ios', 'verify_testflight_build', {
     app_version: session.planned.version,
     build_number: String(session.planned.build),
   });
@@ -740,6 +790,13 @@ export async function runIosStoreVersionVerification(
 export async function runIosUpload(session: ReleaseSession): Promise<void> {
   await runIosBinaryUpload(session);
   await runIosProcessedBuildWait(session);
+  if (iosIsTestFlightOnly(session.store.iosDistribution)) {
+    if (iosDistributesExternally(session.store.iosDistribution)) {
+      await runIosTestFlightDistribute(session);
+    }
+    await runIosTestFlightVerification(session);
+    return;
+  }
   await runIosStoreVersionFinalize(session);
   await runIosStoreVersionVerification(session);
 }

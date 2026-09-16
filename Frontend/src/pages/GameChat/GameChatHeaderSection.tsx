@@ -1,3 +1,4 @@
+import { showsPremiumStatus } from '@/utils/premiumIdentity';
 import React, { useCallback, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -114,6 +115,7 @@ export const GameChatHeaderSection: React.FC = () => {
           contextType={contextType}
           isBugChat={derived.isBugChat}
           title={title}
+          titleIsPremium={contextType === 'USER' && !!user?.id && showsPremiumStatus(chrome.userChat?.user1Id === user.id ? chrome.userChat.user2 : chrome.userChat?.user1)}
           titleContent={titleContent}
           titleMetaRow={titleMetaRow}
           subtitle={subtitle}

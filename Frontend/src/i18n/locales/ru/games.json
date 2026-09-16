@@ -243,7 +243,7 @@
     "listView": "List view",
     "carouselView": "Карусель",
     "participantsFull": "Все места заняты",
-    "participantsSpotsLeft_one": "Осталось 1 место",
+    "participantsSpotsLeft_one": "Осталось {{count}} место",
     "participantsSpotsLeft_few": "Осталось {{count}} места",
     "participantsSpotsLeft_many": "Осталось {{count}} мест",
     "participantsSpotsLeft_other": "Осталось {{count}} мест",

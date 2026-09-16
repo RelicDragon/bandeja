@@ -132,7 +132,7 @@ const ParticipantCarouselSlot = memo(function ParticipantCarouselSlot({
       variants={slotVariants}
       initial="hidden"
       animate="visible"
-      className={`relative w-16 flex-shrink-0 pb-4 ${alignForPlaces ? 'pt-0' : 'pt-2'} ${
+      className={`relative w-min min-w-16 max-w-32 flex-shrink-0 pb-4 ${alignForPlaces ? 'pt-0' : 'pt-2'} ${
         isDragged ? 'opacity-0' : ''
       }`}
       whileHover={draggable ? { scale: 1.05 } : undefined}
@@ -159,7 +159,7 @@ const ParticipantCarouselSlot = memo(function ParticipantCarouselSlot({
           onTouchEnd={draggable ? onTouchEnd : undefined}
           levelSport={levelSport}
         />
-        <UnreadBadge count={unreadCount} className="absolute -top-1 -right-1 border-2 border-white dark:border-gray-900" />
+        <UnreadBadge count={unreadCount} className="absolute -top-1 right-[calc(50%-2.25rem)] border-2 border-white dark:border-gray-900" />
       </div>
     </motion.div>
   );

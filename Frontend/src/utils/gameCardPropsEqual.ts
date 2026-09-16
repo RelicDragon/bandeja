@@ -1,3 +1,4 @@
+import { showsPremiumStatus } from '@/utils/premiumIdentity';
 import type { Game, GameParticipant } from '@/types';
 import type { GameLocalizedTextProjection } from '@/utils/gameText/gameLocalizedText.types';
 import type { FindSportFilterValue } from '@/utils/gameFiltersStorage';
@@ -46,7 +47,7 @@ function reactionsKey(reactions: Game['reactions']): string {
 function ownerRenderKey(participants: readonly GameParticipant[]): string {
   const owner = participants.find((p) => p.role === 'OWNER');
   if (!owner) return '';
-  return `${owner.userId}:${owner.user?.isPremium ? '1' : '0'}`;
+  return `${owner.userId}:${showsPremiumStatus(owner.user) ? '1' : '0'}`;
 }
 
 function trainerRenderKey(game: Game): string {

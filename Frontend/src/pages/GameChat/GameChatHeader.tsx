@@ -1,3 +1,4 @@
+import { PremiumName } from '@/components/PremiumName';
 import React, { ReactNode } from 'react';
 import { ArrowLeft, Bug as BugIcon } from 'lucide-react';
 import { ChatHeaderActions } from '@/components/chat/ChatHeaderActions';
@@ -23,6 +24,7 @@ export interface GameChatHeaderProps {
   contextType: ChatContextType;
   isBugChat: boolean;
   title: string;
+  titleIsPremium?: boolean;
   titleContent?: React.ReactNode;
   titleMetaRow?: React.ReactNode;
   subtitle: string | null;
@@ -41,6 +43,7 @@ export const GameChatHeader: React.FC<GameChatHeaderProps> = ({
   contextType,
   isBugChat,
   title,
+  titleIsPremium = false,
   titleContent,
   titleMetaRow,
   subtitle,
@@ -210,7 +213,7 @@ export const GameChatHeader: React.FC<GameChatHeaderProps> = ({
                           : ''
                       }`}
                     >
-                      {title}
+                      <PremiumName user={{ isPremium: titleIsPremium }}>{title}</PremiumName>
                     </span>
                   </h1>
                   {subtitle != null && (

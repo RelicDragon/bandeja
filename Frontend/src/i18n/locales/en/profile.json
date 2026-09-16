@@ -9,6 +9,8 @@
     "personalInfo": "Personal Information",
     "appearance": "Appearance",
     "language": "Language",
+    "showPremiumStatus": "Show premium status",
+    "showPremiumStatusDescription": "Show premium styling on your name and games. Turn off to appear as a regular user. Your premium benefits and main theme stay the same.",
     "mainTheme": "Main theme",
     "mainThemeClassic": "Classic",
     "mainThemePremium": "Premium",

@@ -6,6 +6,7 @@ import {
   formatWeatherDayRange,
   formatWeatherDayRangeCompact,
   groupWeatherHoursByDay,
+  localHourInTimezone,
   pickRepresentativeWeatherHour,
   summarizeDayTemperatureRange,
 } from './weatherDayGroups';
@@ -30,6 +31,15 @@ function point(
 }
 
 describe('weatherDayGroups', () => {
+  it('reuses a timezone formatter without freezing its daylight-saving offset', () => {
+    expect(localHourInTimezone('2026-03-29T00:00:00Z', 'Europe/Belgrade')).toBe(1);
+    expect(localHourInTimezone('2026-03-29T01:00:00Z', 'Europe/Belgrade')).toBe(3);
+    expect(localHourInTimezone('2026-10-25T00:00:00Z', 'Europe/Belgrade')).toBe(2);
+    expect(localHourInTimezone('2026-10-25T01:00:00Z', 'Europe/Belgrade')).toBe(2);
+    expect(localHourInTimezone('2026-03-29T01:00:00Z', 'UTC')).toBe(1);
+    expect(localHourInTimezone('2026-03-29T01:00:00Z', 'Invalid/Timezone')).toBe(1);
+  });
+
   it('projects city date keys across DST and degrades invalid zones to UTC', () => {
     expect(dateKeyInTimezone(
       new Date('2026-03-28T22:30:00.000Z'),

@@ -97,6 +97,7 @@ export const ProfileContent = () => {
   const [weekStart, setWeekStart] = useState<'auto' | 'monday' | 'sunday' | 'saturday'>(user?.weekStart || 'auto');
   const [defaultCurrency, setDefaultCurrency] = useState<string>(user?.defaultCurrency || 'auto');
   const [isSavingMainTheme, setIsSavingMainTheme] = useState(false);
+  const [isSavingPremiumStatus, setIsSavingPremiumStatus] = useState(false);
   const [appIcon, setAppIcon] = useState<AppIconId>((user?.appIcon as AppIconId) || 'tiger');
   const [verbalStatus, setVerbalStatus] = useState(user?.verbalStatus || '');
   const [bio, setBio] = useState(user?.bio || '');
@@ -153,6 +154,16 @@ export const ProfileContent = () => {
       toast.error(error.response?.data?.message || t('errors.generic'));
     }
   }, [updateUser, t]);
+
+  const handlePremiumStatusChange = async (value: boolean) => {
+    if (isSavingPremiumStatus) return;
+    setIsSavingPremiumStatus(true);
+    try {
+      await updateProfile({ showPremiumStatus: value });
+    } finally {
+      setIsSavingPremiumStatus(false);
+    }
+  };
 
   const handleMainThemeChange = async (value: string) => {
     if (isSavingMainTheme || (value !== 'classic' && value !== 'premium')) return;
@@ -1285,6 +1296,24 @@ export const ProfileContent = () => {
             {t('profile.appearance')}
           </h2>
           <div className="space-y-4">
+            {user?.isPremium === true && (
+              <div className="flex items-center justify-between gap-4 py-2">
+                <div className="flex-1 min-w-0">
+                  <label htmlFor="show-premium-status" className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
+                    {t('profile.showPremiumStatus')}
+                  </label>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                    {t('profile.showPremiumStatusDescription')}
+                  </p>
+                </div>
+                <ToggleSwitch
+                  id="show-premium-status"
+                  checked={user.showPremiumStatus !== false}
+                  onChange={handlePremiumStatusChange}
+                  disabled={isSavingPremiumStatus}
+                />
+              </div>
+            )}
             {user?.isPremium === true && (
               <MainThemeSelector
                 value={user.mainTheme ?? 'classic'}

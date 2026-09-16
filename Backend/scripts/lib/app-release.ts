@@ -278,7 +278,7 @@ const WORKFLOW_SECTION = `### Unified release CLI (recommended)
 
 Dry-run planner: \`APP_RELEASE_DRY_RUN=1 ./scripts/app-release.sh\`. Resume after failure: \`APP_RELEASE_RESUME=1 ./scripts/app-release.sh\`.
 
-Version/build are proposed from the latest uploaded Google Play and App Store Connect builds (not from git). Override interactively, or set \`APP_RELEASE_VERSION\` + \`APP_RELEASE_BUILD\`. Store lookup overrides: \`APP_RELEASE_ANDROID_STORE_VERSION\`/\`_BUILD\`, \`APP_RELEASE_IOS_STORE_VERSION\`/\`_BUILD\`.
+Version/build are proposed from the latest uploaded Google Play and App Store Connect builds (not from git). Override interactively, or set \`APP_RELEASE_VERSION\` + \`APP_RELEASE_BUILD\`. Store lookup overrides: \`APP_RELEASE_ANDROID_STORE_VERSION\`/\`_BUILD\`, \`APP_RELEASE_IOS_STORE_VERSION\`/\`_BUILD\`. iOS can upload **TestFlight Internal** or **TestFlight Beta** without attaching the build to an App Store version or disturbing an in-progress App Review.
 
 See this file for store API credentials, Android signing, and internal-track smoke test steps.
 

@@ -114,6 +114,21 @@ export const MonthCalendar = ({
   const headerTransition = reduceMotion
     ? { duration: 0 }
     : { duration: 0.28, ease: [0.21, 0.47, 0.32, 0.98] as const };
+  // Finish the outgoing fade before mounting the incoming month. Both grids
+  // contain transparent cells, so simultaneous slides make their dates overlap.
+  const monthVariants = {
+    enter: (direction: number) => ({ x: reduceMotion ? 0 : direction * 24, opacity: 0 }),
+    center: {
+      x: 0,
+      opacity: 1,
+      transition: { duration: reduceMotion ? 0 : 0.28, delay: reduceMotion ? 0 : 0.04, ease: 'easeOut' as const },
+    },
+    exit: (direction: number) => ({
+      x: reduceMotion ? 0 : direction * -16,
+      opacity: 0,
+      transition: { duration: reduceMotion ? 0 : 0.1, ease: 'easeIn' as const },
+    }),
+  };
   const [slideDirection, setSlideDirection] = useState(0);
   const [isSliding, setIsSliding] = useState(false);
   const [weatherMode, setWeatherMode] = useState(() => readCalendarWeatherMode(weatherModeScope));
@@ -408,13 +423,14 @@ export const MonthCalendar = ({
                   <ChevronLeft size={20} className="text-gray-700 dark:text-gray-300" />
                 </button>
                 <div className="relative min-w-0 overflow-hidden">
-                  <AnimatePresence mode="popLayout" initial={false}>
+                  <AnimatePresence mode="wait" initial={false} custom={slideDirection}>
                     <motion.h3
                       key={format(displayedMonth, 'yyyy-MM')}
-                      initial={{ x: slideDirection * 32, opacity: 0 }}
-                      animate={{ x: 0, opacity: 1 }}
-                      exit={{ x: slideDirection * -32, opacity: 0 }}
-                      transition={{ duration: 0.22, ease: 'easeOut' }}
+                      custom={slideDirection}
+                      variants={monthVariants}
+                      initial="enter"
+                      animate="center"
+                      exit="exit"
                       className="truncate text-lg font-semibold capitalize text-gray-900 dark:text-white"
                     >
                       {monthHeaderLabel}
@@ -442,13 +458,14 @@ export const MonthCalendar = ({
               <ChevronLeft size={20} className="text-gray-700 dark:text-gray-300" />
             </button>
             <div className="relative overflow-hidden text-center">
-              <AnimatePresence mode="popLayout" initial={false}>
+              <AnimatePresence mode="wait" initial={false} custom={slideDirection}>
                 <motion.h3
                   key={format(displayedMonth, 'yyyy-MM')}
-                  initial={{ x: slideDirection * 32, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  exit={{ x: slideDirection * -32, opacity: 0 }}
-                  transition={{ duration: 0.22, ease: 'easeOut' }}
+                  custom={slideDirection}
+                  variants={monthVariants}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
                   className="text-lg font-semibold capitalize text-gray-900 dark:text-white"
                 >
                   {monthHeaderLabel}
@@ -561,14 +578,17 @@ export const MonthCalendar = ({
           </div>
 
           <div className={`relative ${isSliding ? 'overflow-hidden' : 'overflow-visible'}`}>
-            <AnimatePresence mode="popLayout" initial={false}>
+            <AnimatePresence mode="wait" initial={false} custom={slideDirection}>
               <motion.div
                 key={format(displayedMonth, 'yyyy-MM')}
-                initial={{ x: slideDirection * 56 }}
-                animate={{ x: 0 }}
-                exit={{ x: slideDirection * -56 }}
-                transition={{ duration: 0.24, ease: 'easeOut' }}
-                onAnimationComplete={() => setIsSliding(false)}
+                custom={slideDirection}
+                variants={monthVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                onAnimationComplete={(definition) => {
+                  if (definition === 'center') setIsSliding(false);
+                }}
                 className="grid grid-cols-7 gap-0.5 pt-0.5 pb-1"
               >
         {dayCells.map(({ dateStr, props }) => (

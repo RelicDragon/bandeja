@@ -1199,6 +1199,14 @@ const suites: Suite[] = [
     ],
   },
   {
+    label: 'app release ios distribution',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'scripts', 'lib', 'app-release-ios-distribution.test.ts'),
+    ],
+  },
+  {
     label: 'app release upload',
     command: process.execPath,
     args: [

@@ -9,6 +9,8 @@
     "personalInfo": "個人情報",
     "appearance": "外観",
     "language": "言語",
+    "showPremiumStatus": "プレミアムステータスを表示",
+    "showPremiumStatusDescription": "名前やゲームにプレミアムの装飾を表示します。オフにすると通常のユーザーと同じ表示になります。プレミアム特典とメインテーマは変わりません。",
     "mainTheme": "メインテーマ",
     "mainThemeClassic": "クラシック",
     "mainThemePremium": "プレミアム",

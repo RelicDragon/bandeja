@@ -73,7 +73,7 @@ const baseSession: ReleaseSession = {
   },
   store: {
     androidTrack: 'internal',
-    iosSubmitForReview: false,
+    iosDistribution: 'prepare',
   },
   uploads: {},
   iosAppStoreConnect: {},
@@ -190,7 +190,7 @@ const sessionWithArtifacts = {
 
 const productionReviewSession: ReleaseSession = {
   ...sessionWithArtifacts,
-  store: { androidTrack: 'production', iosSubmitForReview: true },
+  store: { androidTrack: 'production', iosDistribution: 'submit' },
 };
 assert(
   storeReviewCheckPlatforms(productionReviewSession).join(',') === 'android,ios',
@@ -199,9 +199,27 @@ assert(
 assert(
   storeReviewCheckPlatforms({
     ...productionReviewSession,
-    store: { androidTrack: 'internal', iosSubmitForReview: false },
+    store: { androidTrack: 'internal', iosDistribution: 'prepare' },
   }).length === 0,
   'skips review checks for test track and prepare-without-submit',
+);
+assert(
+  storeReviewCheckPlatforms({
+    ...productionReviewSession,
+    store: { androidTrack: 'internal', iosDistribution: 'testflight' },
+  }).length === 0,
+  'skips review checks for TestFlight Internal',
+);
+assert(
+  storeReviewCheckPlatforms({
+    ...productionReviewSession,
+    store: {
+      androidTrack: 'production',
+      iosDistribution: 'beta',
+      iosTestFlightGroups: ['QA'],
+    },
+  }).join(',') === 'android',
+  'TestFlight Beta does not inspect App Store review',
 );
 
 const preflightMissing = runUploadPreflight({
@@ -218,7 +236,7 @@ const iosOnlyPreflight = runUploadPreflight({
   ...sessionWithArtifacts,
   targetPlatform: 'ios',
   artifacts: { ipa: tempIpa },
-  store: { iosSubmitForReview: false },
+  store: { iosDistribution: 'prepare' },
   uploads: {},
 });
 assert(
@@ -234,7 +252,7 @@ const iosFinalizeOnlyPreflight = runUploadPreflight({
   ...sessionWithArtifacts,
   targetPlatform: 'ios',
   artifacts: {},
-  store: { iosSubmitForReview: false },
+  store: { iosDistribution: 'prepare' },
   uploads: { iosBinary: true },
 });
 assert(
@@ -246,7 +264,7 @@ const iosVerifyOnlyPreflight = runUploadPreflight({
   ...sessionWithArtifacts,
   targetPlatform: 'ios',
   artifacts: {},
-  store: { iosSubmitForReview: false },
+  store: { iosDistribution: 'prepare' },
   uploads: {
     iosBinary: true,
     iosBuildProcessed: true,
@@ -317,7 +335,7 @@ withoutStoreCredentials(() => {
 
 const unapprovedReviewPreflight = runUploadPreflight({
   ...sessionWithArtifacts,
-  store: { androidTrack: 'production', iosSubmitForReview: true },
+  store: { androidTrack: 'production', iosDistribution: 'submit' },
   reviewGuard: {
     android: { inReview: true },
     ios: { inReview: true, submissionId: 'submission-old' },
@@ -330,6 +348,46 @@ assert(
 assert(
   unapprovedReviewPreflight.issues.some((issue) => issue.includes('removal was not approved')),
   'upload preflight blocks unapproved App Store review removal',
+);
+
+const testflightDuringReviewPreflight = runUploadPreflight({
+  ...sessionWithArtifacts,
+  targetPlatform: 'ios',
+  artifacts: { ipa: tempIpa },
+  store: { iosDistribution: 'testflight' },
+  reviewGuard: {
+    ios: { inReview: true, submissionId: 'submission-old' },
+  },
+});
+assert(
+  !testflightDuringReviewPreflight.issues.some((issue) => issue.includes('removal was not approved')),
+  'TestFlight Internal upload is allowed while App Review is in progress',
+);
+
+const betaMissingGroups = runUploadPreflight({
+  ...sessionWithArtifacts,
+  targetPlatform: 'ios',
+  artifacts: { ipa: tempIpa },
+  store: { iosDistribution: 'beta' },
+});
+assert(
+  betaMissingGroups.issues.some((issue) => issue.includes('external group')),
+  'TestFlight Beta upload preflight requires groups',
+);
+
+const testflightVerifyPreflight = runStoreVerificationPreflight({
+  ...sessionWithArtifacts,
+  targetPlatform: 'ios',
+  artifacts: {},
+  store: { iosDistribution: 'testflight' },
+  uploads: {
+    iosBinary: true,
+    iosBuildProcessed: true,
+  },
+});
+assert(
+  !testflightVerifyPreflight.issues.some((issue) => issue.includes('App Store metadata')),
+  'TestFlight verification does not require App Store version metadata',
 );
 
 const storeVerificationComplete = runStoreVerificationPreflight({
