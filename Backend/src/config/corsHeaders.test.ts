@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import type { Request, Response } from 'express';
+import { reflectCorsOrigin } from '../middleware/errorHandler';
 import {
   CLIENT_CUSTOM_REQUEST_HEADERS,
   CORS_ALLOWED_HEADERS,
@@ -42,11 +44,35 @@ function clientRequestHeadersFromSource(): Set<string> {
   return found;
 }
 
+/**
+ * `app.ts` short-circuits OPTIONS before the `cors()` middleware, so `reflectCorsOrigin`
+ * is what a preflight actually returns. Assert against it, not just the constant.
+ */
+function preflightAllowHeaders(): string {
+  const headers = new Map<string, string>();
+  const req = { get: (name: string) => (name === 'Origin' ? 'https://localhost' : undefined) };
+  const res = {
+    setHeader: (name: string, value: string) => headers.set(name.toLowerCase(), value),
+    append: () => {},
+  };
+  reflectCorsOrigin(req as unknown as Request, res as unknown as Response);
+  return headers.get('access-control-allow-headers') ?? '';
+}
+
 function run(): void {
   const allowed = new Set(CORS_ALLOWED_HEADERS.map((h) => h.toLowerCase()));
 
   for (const header of CLIENT_CUSTOM_REQUEST_HEADERS) {
     assert(allowed.has(header.toLowerCase()), `${header} must be in CORS_ALLOWED_HEADERS`);
+  }
+
+  const served = preflightAllowHeaders().toLowerCase();
+  assert(served.length > 0, 'preflight must return Access-Control-Allow-Headers');
+  for (const header of CLIENT_CUSTOM_REQUEST_HEADERS) {
+    assert(
+      served.includes(header.toLowerCase()),
+      `preflight response omits ${header} (duplicate hardcoded list?)`
+    );
   }
 
   // Native builds are cross-origin, so a header the client sends but CORS omits is

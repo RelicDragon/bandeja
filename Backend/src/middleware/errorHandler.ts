@@ -5,10 +5,15 @@ import {
   getCorsAllowedOrigins,
   isCorsOriginAllowed,
 } from '../config/corsOrigins';
+import { CORS_ALLOWED_HEADERS } from '../config/corsHeaders';
 import type { AuthRequest } from './auth';
 
-const CORS_ALLOW_HEADERS =
-  'Content-Type, Authorization, Cache-Control, Pragma, Expires, Accept, If-None-Match, X-Client-Version, X-Client-Platform, X-Refresh-Request-Id, X-E2E-Test, X-Klikteren-Cookie';
+/**
+ * The OPTIONS short-circuit in `app.ts` answers preflights before the `cors()`
+ * middleware runs, so this — not the `cors()` config — is what clients actually
+ * see on a preflight. Both must come from the same list.
+ */
+const CORS_ALLOW_HEADERS = CORS_ALLOWED_HEADERS.join(', ');
 
 const corsAllowedOrigins = getCorsAllowedOrigins({
   nodeEnv: config.nodeEnv,
