@@ -58,6 +58,7 @@ vi.mock('@/api/sharedSessionSettlement', () => ({
   settleSharedSession: vi.fn(async () => ({ type: 'continue' })),
   defaultLoadCurrentUser: vi.fn(async () => null),
   defaultSharedSessionAccountSwitch: vi.fn(async () => {}),
+  defaultApplySharedSessionUser: vi.fn(async () => {}),
 }));
 
 function jwtWithExp(expMs: number): string {
