@@ -8,6 +8,7 @@ import routes from './routes';
 import replicateWebhookRoutes from './routes/replicateWebhook.routes';
 import { rateLimitKeyFromRequest } from './utils/rateLimitClientKey';
 import { markHttpLogStart, shouldSkipHttpLog } from './config/httpLogFilter';
+import { CORS_ALLOWED_HEADERS, CORS_EXPOSED_HEADERS } from './config/corsHeaders';
 import { errorHandler, notFoundHandler, reflectCorsOrigin } from './middleware/errorHandler';
 import { recordPresenceActivity } from './middleware/recordPresenceActivity';
 import { e2eTestContextMiddleware } from './middleware/e2eTestContext';
@@ -51,21 +52,8 @@ app.use(
     origin: createCorsOriginDelegate(corsAllowedOrigins),
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: [
-      'Content-Type',
-      'Authorization',
-      'Cache-Control',
-      'Pragma',
-      'Expires',
-      'Accept',
-      'If-None-Match',
-      'X-Client-Version',
-      'X-Client-Platform',
-      'X-Refresh-Request-Id',
-      'X-E2E-Test',
-      'X-Klikteren-Cookie',
-    ],
-    exposedHeaders: ['ETag', 'X-Response-Size', 'X-Klikteren-Set-Cookie'],
+    allowedHeaders: CORS_ALLOWED_HEADERS,
+    exposedHeaders: CORS_EXPOSED_HEADERS,
     preflightContinue: false,
     optionsSuccessStatus: 200,
   })
