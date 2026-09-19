@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const persistOrder: string[] = [];
 
@@ -50,6 +50,18 @@ vi.mock('@/i18n/config', () => ({
 
 describe('useAuthStore.setAuth credential ordering', () => {
   const storage = new Map<string, string>();
+
+  // authStore pulls in a large module graph, and setAuth additionally reaches
+  // `await import('@/api/me')`. Whichever test imported first used to pay the cold transform of
+  // both inside its own 5s budget — measured at ~3.8s on an idle machine against a 5000ms limit,
+  // while every sibling ran in 22-54ms off the warm cache. That ~20% headroom is what made the
+  // suite fail in proportion to machine load, and the timed-out test's abandoned continuation
+  // then mutated the shared `storage` map, producing misleading assertion failures in the tests
+  // that followed. Paying the transform once here keeps it out of every test's budget.
+  // vi.resetModules() still gives each test a freshly executed graph; only the transform is reused.
+  beforeAll(async () => {
+    await Promise.all([import('@/store/authStore'), import('@/api/me')]);
+  }, 60_000);
 
   beforeEach(() => {
     persistOrder.length = 0;
