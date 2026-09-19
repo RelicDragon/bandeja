@@ -1,8 +1,8 @@
-import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback, memo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Calendar, List } from 'lucide-react';
-import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, isToday, addMonths, subMonths, getMonth, getYear, startOfDay } from 'date-fns';
+import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, addMonths, subMonths, getMonth, getYear, startOfDay } from 'date-fns';
 import { enGB, ru, es, sr, cs } from 'date-fns/locale';
 import { calendarDayKey, selectedDayInMonth } from '@/utils/calendarSelectedDayFilter';
 import { useTranslation } from 'react-i18next';
@@ -83,7 +83,34 @@ const localeMap = {
   cs: cs,
 };
 
-export const MonthCalendar = ({
+// Finish the outgoing fade before mounting the incoming month. Both grids
+// contain transparent cells, so simultaneous slides make their dates overlap.
+// Built once per motion preference — a fresh `variants` object on every render
+// makes framer re-resolve the whole variant tree for each animated node.
+const buildMonthVariants = (reduceMotion: boolean) => ({
+  enter: (direction: number) => ({ x: reduceMotion ? 0 : direction * 24, opacity: 0 }),
+  center: {
+    x: 0,
+    opacity: 1,
+    transition: {
+      duration: reduceMotion ? 0 : 0.28,
+      delay: reduceMotion ? 0 : 0.04,
+      ease: 'easeOut' as const,
+    },
+  },
+  exit: (direction: number) => ({
+    x: reduceMotion ? 0 : direction * -16,
+    opacity: 0,
+    transition: { duration: reduceMotion ? 0 : 0.1, ease: 'easeIn' as const },
+  }),
+});
+
+const MONTH_VARIANTS_MOTION = buildMonthVariants(false);
+const MONTH_VARIANTS_REDUCED = buildMonthVariants(true);
+const HEADER_TRANSITION_MOTION = { duration: 0.28, ease: [0.21, 0.47, 0.32, 0.98] as const };
+const HEADER_TRANSITION_REDUCED = { duration: 0 };
+
+const MonthCalendarView = ({
   selectedDate,
   onDateSelect,
   availableGames,
@@ -111,24 +138,8 @@ export const MonthCalendar = ({
   const user = useAuthStore((state) => state.user);
   const { t, i18n } = useTranslation();
   const reduceMotion = useReducedMotion();
-  const headerTransition = reduceMotion
-    ? { duration: 0 }
-    : { duration: 0.28, ease: [0.21, 0.47, 0.32, 0.98] as const };
-  // Finish the outgoing fade before mounting the incoming month. Both grids
-  // contain transparent cells, so simultaneous slides make their dates overlap.
-  const monthVariants = {
-    enter: (direction: number) => ({ x: reduceMotion ? 0 : direction * 24, opacity: 0 }),
-    center: {
-      x: 0,
-      opacity: 1,
-      transition: { duration: reduceMotion ? 0 : 0.28, delay: reduceMotion ? 0 : 0.04, ease: 'easeOut' as const },
-    },
-    exit: (direction: number) => ({
-      x: reduceMotion ? 0 : direction * -16,
-      opacity: 0,
-      transition: { duration: reduceMotion ? 0 : 0.1, ease: 'easeIn' as const },
-    }),
-  };
+  const headerTransition = reduceMotion ? HEADER_TRANSITION_REDUCED : HEADER_TRANSITION_MOTION;
+  const monthVariants = reduceMotion ? MONTH_VARIANTS_REDUCED : MONTH_VARIANTS_MOTION;
   const [slideDirection, setSlideDirection] = useState(0);
   const [isSliding, setIsSliding] = useState(false);
   const [weatherMode, setWeatherMode] = useState(() => readCalendarWeatherMode(weatherModeScope));
@@ -320,6 +331,21 @@ export const MonthCalendar = ({
   );
   const { getTagsForDay } = useAdCalendarTags();
 
+  // Recomputed only when a game's unread count actually changes, so an incoming
+  // message repaints the one affected cell instead of rebuilding `dayCells`.
+  const unreadByDay = useMemo(() => {
+    const byDay = new Map<string, number>();
+    for (const [dateStr, dayData] of dateCellData) {
+      let total = 0;
+      for (const id of dayData.gameIds) total += gamesUnreadCounts[id] || 0;
+      if (total > 0) byDay.set(dateStr, total);
+    }
+    return byDay;
+  }, [dateCellData, gamesUnreadCounts]);
+
+  // Recomputed per render but only once, versus 42 `isToday()` calls inline.
+  const todayKey = format(startOfDay(new Date()), 'yyyy-MM-dd');
+
   // Selection and unread updates reuse these structural props, including arrays.
   const dayCells = useMemo(() => calendarDays.map((day) => {
     const isCurrentMonth = isSameMonth(day, displayedMonth);
@@ -356,10 +382,11 @@ export const MonthCalendar = ({
       props: {
         day, isCurrentMonth, gameCount, hasGames, showWeatherPill, showTypePill,
         showParticipantPill, typePillTypes, participantTypes, dayWeather, calendarTags,
+        isTodayDate: dateStr === todayKey,
       },
     };
   }), [calendarDays, displayedMonth, dateCellData, weatherModeScope, leaguesFilter,
-    eventsFilter, noEntityFilter, weatherByDay, weatherMode, getTagsForDay]);
+    eventsFilter, noEntityFilter, weatherByDay, weatherMode, getTagsForDay, todayKey]);
 
   useEffect(() => {
     if (weatherToggleDisabled && weatherMode) {
@@ -376,14 +403,18 @@ export const MonthCalendar = ({
     });
   };
 
-  const weekDays = [];
-  for (let i = 0; i < 7; i++) {
-    weekDays.push(formatShortWeekday(addDays(startDate, i), displaySettings.locale));
-  }
+  // Seven Intl-backed formats; they only change with the grid start or locale.
+  const weekDays = useMemo(
+    () => Array.from({ length: 7 }, (_, index) =>
+      formatShortWeekday(addDays(startDate, index), displaySettings.locale)),
+    [startDate, displaySettings.locale],
+  );
 
   return (
+    // No `layout` on the root: the collapse/expand below already animates the
+    // height that changes, and projecting the whole calendar made every height
+    // change in the sections above it (banners, chips, rails) jitter the grid.
     <motion.div
-      layout={Boolean(upcomingsToggle)}
       transition={headerTransition}
       ref={calendarRef}
       data-calendar="true"
@@ -596,10 +627,7 @@ export const MonthCalendar = ({
             key={dateStr}
             {...props}
             isSelected={selectedDayKey === dateStr}
-            isTodayDate={isToday(props.day)}
-            unreadCount={(dateCellData.get(dateStr)?.gameIds ?? []).reduce(
-              (sum, id) => sum + (gamesUnreadCounts[id] || 0), 0,
-            )}
+            unreadCount={unreadByDay.get(dateStr) ?? 0}
             locale={displaySettings.locale}
             onSelect={handleDateClick}
           />
@@ -613,3 +641,10 @@ export const MonthCalendar = ({
     </motion.div>
   );
 };
+
+/**
+ * The grid aggregates games, resolves weather and renders 42 cells, while both
+ * hosts (Find and My) re-render on unrelated stores. Callers pass a memoised
+ * props object, so a plain shallow compare is enough to skip that work.
+ */
+export const MonthCalendar = memo(MonthCalendarView);

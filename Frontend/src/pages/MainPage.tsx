@@ -137,11 +137,17 @@ export const MainPage = () => {
     </div>
   );
 
-  if (isChatPage && shouldShowChatsSplitView) {
+  /**
+   * One branch for every chat route. Returning `<MainLayout>` here and a bare `<ChatsTab/>`
+   * further down used to swap the root element type on each thread open/close, remounting
+   * the header and the whole Chats subtree.
+   */
+  if (isChatPage) {
+    const bareChatChrome = !shouldShowChatsSplitView;
     return (
-      <MainLayout>
+      <MainLayout chrome={bareChatChrome ? 'bare' : 'full'}>
         <ChatsTab />
-        {!isDesktop && bottomTabBarSlot(showBottomTabBar)}
+        {!isDesktop && !bareChatChrome ? bottomTabBarSlot(showBottomTabBar) : null}
       </MainLayout>
     );
   }
@@ -156,10 +162,6 @@ export const MainPage = () => {
         <GameDetailsPage />
       </MainLayout>
     );
-  }
-
-  if (isChatPage && !isDesktop && isOnSpecificChatRoute) {
-    return <ChatsTab />;
   }
 
   if (isCalendarSplitView) {

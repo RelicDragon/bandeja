@@ -107,7 +107,8 @@ export const MessageInput: React.FC<MessageInputProps> = ({ disabled: disabledPr
   const translateToLanguage = translateToLanguageForChat ?? null;
   const userChatResolved = userChat ?? null;
   const { t } = useTranslation();
-  const { user, updateUser } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
+  const updateUser = useAuthStore((s) => s.updateUser);
 
   const finalContextId = gameId || bugId || userChatId || groupChannelId;
   const resolvedChatType = userChatId ? 'PUBLIC' : normalizeChatType(chatType);

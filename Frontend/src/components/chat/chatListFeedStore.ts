@@ -161,6 +161,8 @@ export const useChatListFeedStore = create<ChatListFeedState>((set, get) => ({
       const prev = rowsForFilter(s, filter);
       const next = deduplicateChats(updater(prev));
       const cached = s.filterCache[filter];
+      /** No-op merges are common (socket echoes, dexie replays) — do not notify subscribers. */
+      if (next === prev && cached?.chats === next) return s;
       const entry: FilterCache = cached ? { ...cached, chats: next } : { chats: next };
       return {
         ...(s.activeFilter === filter ? { rows: next } : {}),
@@ -251,6 +253,7 @@ export const useChatListFeedStore = create<ChatListFeedState>((set, get) => ({
       const sourceRows = rowsForFilter(s, filter);
       if (sourceRows.length === 0 && allDrafts.length === 0) return s;
       const next = applyDraftsToChatItems(sourceRows, allDrafts, filter, userId);
+      if (next === sourceRows && s.userId === userId) return s;
       const cached = s.filterCache[filter];
       const entry: FilterCache = cached ? { ...cached, chats: next } : { chats: next };
       return {

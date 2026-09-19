@@ -12,6 +12,8 @@ const DEFAULT_CALENDAR_TAG_COLOR = '#7C3AED';
 
 export type CalendarDayAdTag = Pick<AdCalendarTag, 'campaignId' | 'label' | 'color' | 'message'>;
 
+const EMPTY_CALENDAR_TAGS: CalendarDayAdTag[] = [];
+
 function toDayKey(value: string): string | null {
   const match = /^(\d{4}-\d{2}-\d{2})(?:T|$)/.exec(value);
   return match?.[1] ?? null;
@@ -78,6 +80,10 @@ export function useAdCalendarTags() {
 
   const getTagsForDay = useMemo(() => {
     const active = tags.filter((t) => (t.label ?? '').trim());
+    // No campaigns is the common case; returning the shared empty array keeps
+    // memoised calendar day cells from being invalidated by a fresh `[]` prop
+    // every time the grid recomputes.
+    if (active.length === 0) return () => EMPTY_CALENDAR_TAGS;
     return (dayKey: string): CalendarDayAdTag[] => {
       const dayTags: CalendarDayAdTag[] = [];
       const labels = new Set<string>();
@@ -97,7 +103,7 @@ export function useAdCalendarTags() {
             : null,
         });
       }
-      return dayTags;
+      return dayTags.length > 0 ? dayTags : EMPTY_CALENDAR_TAGS;
     };
   }, [tags]);
 

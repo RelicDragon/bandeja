@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import type { ReactNode } from 'react';
+import { useRef, type ReactNode } from 'react';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import {
   CHAT_MESSAGE_ENTER_X,
@@ -15,6 +15,8 @@ type MessageRowEnterMotionProps = {
   children: ReactNode;
 };
 
+const REST = { opacity: 1, x: 0, y: 0, scale: 1 } as const;
+
 export function MessageRowEnterMotion({
   animate,
   staggerIndex,
@@ -22,8 +24,17 @@ export function MessageRowEnterMotion({
   children,
 }: MessageRowEnterMotionProps) {
   const reduceMotion = usePrefersReducedMotion();
-  const enterX = variant === 'outgoing' ? CHAT_MESSAGE_ENTER_X : -CHAT_MESSAGE_ENTER_X;
   const shouldAnimate = animate && !reduceMotion;
+
+  // Latch the decision at mount. A row that mounts already-settled never needs Framer at all, and
+  // on a full screen that is ~90 of ~90 rows. Latching (rather than branching on the live value)
+  // keeps the element type stable: `animate` flips true → false when the enter animation is marked
+  // seen, and swapping motion.div ↔ div at that moment would remount the row and drop media state.
+  const usesMotionRef = useRef(shouldAnimate);
+
+  if (!usesMotionRef.current) return <div>{children}</div>;
+
+  const enterX = variant === 'outgoing' ? CHAT_MESSAGE_ENTER_X : -CHAT_MESSAGE_ENTER_X;
 
   return (
     <motion.div
@@ -32,7 +43,7 @@ export function MessageRowEnterMotion({
           ? { opacity: 0, x: enterX, y: CHAT_MESSAGE_ENTER_Y, scale: 0.98 }
           : false
       }
-      animate={{ opacity: 1, x: 0, y: 0, scale: 1 }}
+      animate={REST}
       transition={
         shouldAnimate
           ? {

@@ -10,7 +10,7 @@ function partitionNewKeys(
   keys: readonly string[],
   prev: readonly string[],
   seen: Set<string>
-): { immediate: string[]; deferred: string[] } {
+): { immediate: string[]; deferred: Array<{ key: string; index: number }> } {
   const grew = keys.length > prev.length;
   const addedCount = keys.length - prev.length;
   const isPrepend = grew && prev.length > 0 && keys[0] !== prev[0];
@@ -18,7 +18,7 @@ function partitionNewKeys(
     grew && !isPrepend && (addedCount === 1 || (prev.length > 0 && keys[0] === prev[0]));
 
   const immediate: string[] = [];
-  const deferred: string[] = [];
+  const deferred: Array<{ key: string; index: number }> = [];
 
   if (isPrepend) {
     const prependCount = keys.length - prev.length;
@@ -27,16 +27,17 @@ function partitionNewKeys(
     }
   }
 
-  for (const key of keys) {
+  /** Index-based scan; the previous `keys.indexOf` inside this loop was O(n²) per layout pass. */
+  for (let idx = 0; idx < keys.length; idx++) {
+    const key = keys[idx]!;
     if (seen.has(key)) continue;
 
     if (isTailAppend) {
-      const idx = keys.indexOf(key);
       const isNewTail =
         (prev.length === 0 && addedCount === 1 && idx === 0) ||
         (prev.length > 0 && idx >= prev.length);
       if (isNewTail) {
-        deferred.push(key);
+        deferred.push({ key, index: idx });
         continue;
       }
     }
@@ -104,8 +105,8 @@ export function useChatListNewKeys(
 
     if (immediate.length > 0) bumpSeenRevision();
 
-    for (const key of deferred) {
-      const delay = chatTailEnterMarkSeenMs(keys.indexOf(key));
+    for (const { key, index } of deferred) {
+      const delay = chatTailEnterMarkSeenMs(index);
       const timer = setTimeout(() => {
         deferTimersRef.current = deferTimersRef.current.filter((t) => t !== timer);
         if (!seenRef.current.has(key)) {

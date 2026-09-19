@@ -36,15 +36,6 @@ function isUnreadFilterableThread(item: ChatItem): boolean {
   );
 }
 
-export function buildUnreadByThread(threads: ChatItem[]): Map<string, number> {
-  const map = new Map<string, number>();
-  for (const thread of threads) {
-    if (thread.type === 'contact') continue;
-    map.set(getChatKey(thread), thread.unreadCount ?? 0);
-  }
-  return map;
-}
-
 export function deriveMarketBuyerSellerUnreadLegacy(
   threads: ChatItem[],
   marketUnreadCounts: Record<string, number>,
@@ -102,14 +93,18 @@ export function deriveMarketFilteredByRoleAndSearch(opts: DeriveDisplayedChatsOp
     : roleFiltered;
   const sorted = [...searchFiltered];
   sortChatItems(sorted, 'market');
-  return sorted.map((c) =>
-    c.type === 'channel' ? { ...c, unreadCount: marketUnreadCounts?.[c.data.id] ?? c.unreadCount } : c
-  ) as ChatItem[];
+  /** Clone only rows whose count actually moved — identity churn here repaints the whole market list. */
+  return sorted.map((c) => {
+    if (c.type !== 'channel') return c;
+    const next = marketUnreadCounts?.[c.data.id] ?? c.unreadCount;
+    return next === c.unreadCount ? c : { ...c, unreadCount: next };
+  }) as ChatItem[];
 }
 
 function withResolvedUnreadCount(item: ChatItem, unreadOpts: UnreadFilterCountOpts): ChatItem {
   if (item.type === 'contact' || !('unreadCount' in item)) return item;
-  return { ...item, unreadCount: resolveThreadUnreadCountForFilter(item, unreadOpts) };
+  const next = resolveThreadUnreadCountForFilter(item, unreadOpts);
+  return next === item.unreadCount ? item : { ...item, unreadCount: next };
 }
 
 function deriveMarketUnreadChats(opts: DeriveDisplayedChatsOpts): ChatItem[] {
@@ -196,22 +191,11 @@ export function deriveChatInboxReadModel(input: DeriveChatInboxReadModelInput): 
     displayedByContext,
   };
 
-  const marketChannelIds =
-    chatsFilter === 'market'
-      ? threads
-          .filter((c): c is Extract<ChatItem, { type: 'channel' }> => c.type === 'channel')
-          .map((c) => c.data.id)
-      : [];
-  const marketChannelIdsKey =
-    chatsFilter !== 'market' || marketChannelIds.length === 0 ? '' : [...marketChannelIds].sort().join(',');
-
   const marketBuyerSellerUnread = unreadStoreWarm
     ? marketBuyerSellerUnreadFromStore
     : deriveMarketBuyerSellerUnreadLegacy(threads, marketUnreadCounts, userId);
 
   return {
-    threads,
-    unreadByThread: buildUnreadByThread(threads),
     subtabs,
     loading,
     refreshing,
@@ -222,7 +206,6 @@ export function deriveChatInboxReadModel(input: DeriveChatInboxReadModelInput): 
     unreadStoreWarm,
     marketBuyerSellerUnread,
     marketUnreadCounts,
-    marketChannelIdsKey,
     pinnedCountUsers: derivePinnedCountUsers(chatsFilter, threads),
   };
 }

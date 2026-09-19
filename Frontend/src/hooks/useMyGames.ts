@@ -12,6 +12,7 @@ import { excludePendingInviteOnlyMyGames } from '@/utils/excludePendingInviteOnl
 import { excludeUnoptedEventsFromMyGames } from '@/utils/eventMyTabMembership';
 
 const EMPTY_UNREAD_COUNTS: Record<string, number> = {};
+const EMPTY_INVITES: Invite[] = [];
 
 export const useMyGames = (
   user: { id?: string } | null | undefined,
@@ -30,7 +31,12 @@ export const useMyGames = (
     ),
     [data?.games, userId],
   );
-  const invites = filterInboxVisibleInvites<Invite>(data?.invites ?? []);
+  // Memoised so the invites list keeps its identity across the tab's unrelated
+  // re-renders and `InvitesSection` can skip them.
+  const invites = useMemo(
+    () => filterInboxVisibleInvites<Invite>(data?.invites ?? EMPTY_INVITES),
+    [data?.invites],
+  );
   const unreadCounts = data?.unreadCounts ?? EMPTY_UNREAD_COUNTS;
 
   const setInvites = useCallback(

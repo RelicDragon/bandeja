@@ -19,8 +19,10 @@ import {
   useUnreadStoreWarm,
 } from '@/hooks/useUnreadBridge';
 import { useUnreadStore } from '@/store/unreadStore';
+import type { ContextKey } from '@/services/chat/unreadSnapshot';
 import { useChatListFeedStore, type ChatsFilterType } from '@/components/chat/chatListFeedStore';
 
+import { useChatListMarketUnread } from '@/components/chat/useChatListMarketUnread';
 import { useChatListMergedDrafts } from '@/components/chat/useChatListMergedDrafts';
 import { useChatListPrefetch } from '@/components/chat/useChatListPrefetch';
 import type { ChatItem, ChatSelectNavOptions, ChatType } from '@/components/chat/chatListTypes';
@@ -32,7 +34,7 @@ import { getProductionChatInboxAdapter, setProductionChatInboxAdapter } from './
 import type { ChatInboxAdapter, ChatInboxFeedSnapshot } from './types';
 
 function feedSnapshotsEqual(a: ChatInboxFeedSnapshot, b: ChatInboxFeedSnapshot): boolean {
-  if (a.threads !== b.threads || a.loading !== b.loading || a.filterCache !== b.filterCache) {
+  if (a.threads !== b.threads || a.loading !== b.loading) {
     return false;
   }
   const ap = a.pagination;
@@ -57,6 +59,9 @@ import { useChatInboxDexieSyncEffects } from './useChatInboxDexieSyncEffects';
 import { useChatInboxSocketEffects } from './useChatInboxSocketEffects';
 import { chatInboxThreadIndex } from './chatInboxProductionAdapter';
 import { shouldFetchMarketForUnknownGroupUnread } from './marketUnknownGroupUnread';
+
+/** Stable identity so the store subscription below does not re-render when the map is not needed. */
+const NO_DISPLAYED_BY_CONTEXT = Object.freeze({}) as Record<ContextKey, number>;
 
 export type UseChatInboxOptions = {
   chatsFilter: ChatsFilterType;
@@ -393,28 +398,23 @@ export function useChatInbox(opts: UseChatInboxOptions) {
     };
   }, [lastChatUnreadCount, chatsFilter, fetchOps, userId]);
 
-  const marketChannelIds = useMemo(
-    () =>
-      chatsFilter === 'market'
-        ? threads
-            .filter((c): c is Extract<ChatItem, { type: 'channel' }> => c.type === 'channel')
-            .map((c) => c.data.id)
-        : [],
-    [chatsFilter, threads]
-  );
-
   const unreadStoreWarm = useUnreadStoreWarm();
-  const displayedByContext = useUnreadStore((s) => s.displayedByContext);
+  /**
+   * Rows read their own count through `useChatListItemUnread`, so the whole map is
+   * only needed by the unread-only filter. Subscribing to it unconditionally made
+   * every unread event anywhere re-render the entire Chats tab.
+   */
+  const displayedByContext = useUnreadStore((s) =>
+    unreadFilterActive ? s.displayedByContext : NO_DISPLAYED_BY_CONTEXT
+  );
   const usersSubtabUnread = useChatsSubtabUnreadBadge('users');
   const bugsSubtabUnread = useChatsSubtabUnreadBadge('bugs');
   const channelsSubtabUnread = useChatsSubtabUnreadBadge('channels');
   const marketSubtabUnread = useChatsSubtabUnreadBadge('market');
   const marketBuyerSellerUnreadFromStore = useMarketBuyerSellerUnreadBadges();
 
-  const marketUnreadCounts = useMemo(
-    () => (unreadStoreWarm ? adapterRef.current.getMarketUnreadCounts(marketChannelIds) : {}),
-    [unreadStoreWarm, marketChannelIds]
-  );
+  /** Shallow-subscribed to only the visible market channels, so it stays live without a global subscription. */
+  const { marketUnreadCounts } = useChatListMarketUnread(chatsFilter, threads);
 
   const readModel = useMemo(
     () =>

@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { UserChatCard } from './UserChatCard';
 import { GroupChannelCard } from './GroupChannelCard';
@@ -62,7 +62,7 @@ const ChatListItemInner = ({
   onMuteUserChat,
   onMuteGroupChannel,
 }: ChatListItemProps) => {
-  const { user } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
   const listItemUnread = useChatListItemUnread(item);
   const userChatId = item.type === 'user' ? item.data.id : '';
   const { live: liveFromStore } = usePlayersStore(
@@ -71,59 +71,79 @@ const ChatListItemInner = ({
     )
   );
 
-  const clickOpts = isSearchMode && searchQuery ? { searchQuery } : undefined;
   const chat = item;
-  const onRowHover = () => {
+  /** Stable identities below keep the memoized row cards from re-rendering on unrelated list renders. */
+  const clickOpts = useMemo(
+    () => (isSearchMode && searchQuery ? { searchQuery } : undefined),
+    [isSearchMode, searchQuery]
+  );
+  const liveUserChat = chat.type === 'user' ? liveFromStore ?? chat.data : undefined;
+  const rowId = chat.type === 'contact' ? chat.userId : chat.data.id;
+  const rowPinned =
+    chat.type === 'user'
+      ? !!liveUserChat?.isPinned
+      : chat.type === 'group' || chat.type === 'channel'
+        ? !!chat.data.isPinned
+        : false;
+  const storeMuted =
+    chat.type === 'user'
+      ? !!liveUserChat?.isMuted
+      : chat.type === 'group' || chat.type === 'channel'
+        ? !!chat.data.isMuted
+        : false;
+  const rowMuted = mutedChats && rowId in mutedChats ? !!mutedChats[rowId] : storeMuted;
+  const listOutbox = 'listOutbox' in chat ? chat.listOutbox ?? undefined : undefined;
+  const outboxFailed = listOutbox?.state === 'failed';
+
+  const onRowHover = useCallback(() => {
     void prefetchChatThreadFromListHover(chat);
-  };
+  }, [chat]);
 
-  if (chat.type === 'user') {
-    const liveChat = liveFromStore || chat.data;
-    const liveUnreadCount = listItemUnread;
-    const isSelected = selectedChatType === 'user' && selectedChatId === chat.data.id;
-    const isPinned = !!liveChat.isPinned;
-    const isPinning = pinningId === chat.data.id;
-    const isMuted =
-      mutedChats && chat.data.id in mutedChats ? mutedChats[chat.data.id] : !!liveChat.isMuted;
-    const isTogglingMute = togglingMuteId === chat.data.id;
-    return (
-      <UserChatCard
-        key={`user-${chat.data.id}`}
-        chat={liveChat}
-        listPresenceBatched={listPresenceBatched}
-        unreadCount={liveUnreadCount}
-        onClick={() => onChatClick(chat.data.id, 'user', { ...clickOpts, userChat: liveChat })}
-        onMouseEnter={onRowHover}
-        isSelected={isSelected}
-        draft={chat.draft}
-        listOutbox={'listOutbox' in chat ? chat.listOutbox ?? undefined : undefined}
-        onOutboxRetry={
-          'listOutbox' in chat && chat.listOutbox?.state === 'failed'
-            ? () => {
-                void retryFailedOutboxForContext('USER', chat.data.id);
-              }
-            : undefined
-        }
-        onOutboxDismiss={
-          'listOutbox' in chat && chat.listOutbox?.state === 'failed'
-            ? () => {
-                void dismissFailedOutboxForContext('USER', chat.data.id);
-              }
-            : undefined
-        }
-        isPinned={isPinned}
-        onPinToggle={onPinUserChat ? () => onPinUserChat(chat.data.id, isPinned) : undefined}
-        canPin={pinnedCount < MAX_PINNED_CHATS || isPinned}
-        isPinning={isPinning}
-        isMuted={isMuted}
-        onMuteToggle={onMuteUserChat ? () => onMuteUserChat(chat.data.id, isMuted) : undefined}
-        isTogglingMute={isTogglingMute}
-      />
-    );
-  }
+  const handleRowClick = useCallback(() => {
+    if (chat.type === 'contact') {
+      onContactClick(chat.userId);
+      return;
+    }
+    if (chat.type === 'user') {
+      onChatClick(chat.data.id, 'user', { ...clickOpts, userChat: liveUserChat ?? chat.data });
+      return;
+    }
+    if (chat.type === 'game') {
+      onChatClick(chat.data.id, 'game', clickOpts);
+      return;
+    }
+    const chatTypeForNav: ChatType = chat.type === 'channel' ? 'channel' : 'group';
+    onChatClick(chat.data.id, chatTypeForNav, { ...clickOpts, groupChannel: chat.data });
+  }, [chat, clickOpts, liveUserChat, onChatClick, onContactClick]);
 
-  if (chat.type === 'contact') {
-    const mockChat: UserChat = {
+  const handleOutboxRetry = useCallback(() => {
+    if (chat.type === 'user') void retryFailedOutboxForContext('USER', chat.data.id);
+    else if (chat.type === 'group' || chat.type === 'channel')
+      void retryFailedOutboxForContext('GROUP', chat.data.id);
+  }, [chat]);
+
+  const handleOutboxDismiss = useCallback(() => {
+    if (chat.type === 'user') void dismissFailedOutboxForContext('USER', chat.data.id);
+    else if (chat.type === 'group' || chat.type === 'channel')
+      void dismissFailedOutboxForContext('GROUP', chat.data.id);
+  }, [chat]);
+
+  const handlePinToggle = useCallback(() => {
+    if (chat.type === 'user') onPinUserChat?.(chat.data.id, rowPinned);
+    else if (chat.type === 'group' || chat.type === 'channel')
+      onPinGroupChannel?.(chat.data.id, rowPinned);
+  }, [chat, rowPinned, onPinUserChat, onPinGroupChannel]);
+
+  const handleMuteToggle = useCallback(() => {
+    if (chat.type === 'user') onMuteUserChat?.(chat.data.id, rowMuted);
+    else if (chat.type === 'group' || chat.type === 'channel')
+      onMuteGroupChannel?.(chat.data.id, rowMuted);
+  }, [chat, rowMuted, onMuteUserChat, onMuteGroupChannel]);
+
+  const contactMockChat = useMemo((): UserChat | null => {
+    if (chat.type !== 'contact') return null;
+    const now = new Date().toISOString();
+    return {
       id: '',
       user1Id: user?.id || '',
       user2Id: chat.userId,
@@ -131,16 +151,44 @@ const ChatListItemInner = ({
       user2allowed: true,
       user1: user!,
       user2: chat.user,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdAt: now,
+      updatedAt: now,
     };
+  }, [chat, user]);
+
+  if (chat.type === 'user') {
+    const liveChat = liveUserChat ?? chat.data;
+    const isSelected = selectedChatType === 'user' && selectedChatId === chat.data.id;
     return (
       <UserChatCard
-        key={`contact-${chat.userId}`}
-        chat={mockChat}
+        chat={liveChat}
+        listPresenceBatched={listPresenceBatched}
+        unreadCount={listItemUnread}
+        onClick={handleRowClick}
+        onMouseEnter={onRowHover}
+        isSelected={isSelected}
+        draft={chat.draft}
+        listOutbox={listOutbox}
+        onOutboxRetry={outboxFailed ? handleOutboxRetry : undefined}
+        onOutboxDismiss={outboxFailed ? handleOutboxDismiss : undefined}
+        isPinned={rowPinned}
+        onPinToggle={onPinUserChat ? handlePinToggle : undefined}
+        canPin={pinnedCount < MAX_PINNED_CHATS || rowPinned}
+        isPinning={pinningId === chat.data.id}
+        isMuted={rowMuted}
+        onMuteToggle={onMuteUserChat ? handleMuteToggle : undefined}
+        isTogglingMute={togglingMuteId === chat.data.id}
+      />
+    );
+  }
+
+  if (chat.type === 'contact') {
+    return (
+      <UserChatCard
+        chat={contactMockChat!}
         listPresenceBatched={listPresenceBatched}
         unreadCount={0}
-        onClick={() => onContactClick(chat.userId)}
+        onClick={handleRowClick}
         isSelected={false}
       />
     );
@@ -151,27 +199,19 @@ const ChatListItemInner = ({
     return (
       <div onMouseEnter={onRowHover}>
         <ChatListGameCard
-          key={`game-${chat.data.id}`}
           chat={chat}
           currentUserId={user?.id}
           isSelected={isSelected}
-          onClick={() => onChatClick(chat.data.id, 'game', clickOpts)}
+          onClick={handleRowClick}
         />
       </div>
     );
   }
 
   if (chat.type === 'group' || chat.type === 'channel') {
-    const chatTypeForNav: ChatType = chat.type === 'channel' ? 'channel' : 'group';
     const isSelected = (selectedChatType === 'group' || selectedChatType === 'channel') && selectedChatId === chat.data.id;
-    const isPinned = !!chat.data.isPinned;
-    const isPinning = pinningId === chat.data.id;
-    const isMuted =
-      mutedChats && chat.data.id in mutedChats ? mutedChats[chat.data.id] : !!chat.data.isMuted;
-    const isTogglingMute = togglingMuteId === chat.data.id;
     return (
       <div
-        key={`${chat.type}-${chat.data.id}`}
         onMouseEnter={onRowHover}
         className={`border-b border-gray-200 dark:border-gray-700 last:border-b-0 ${isSelected ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}
       >
@@ -179,36 +219,22 @@ const ChatListItemInner = ({
           groupChannel={chat.data}
           listPresenceBatched={listPresenceBatched}
           unreadCount={listItemUnread}
-          onClick={() =>
-          onChatClick(chat.data.id, chatTypeForNav, { ...clickOpts, groupChannel: chat.data })
-        }
+          onClick={handleRowClick}
           isSelected={isSelected}
           draft={chat.draft}
-          listOutbox={'listOutbox' in chat ? chat.listOutbox ?? undefined : undefined}
-          onOutboxRetry={
-            'listOutbox' in chat && chat.listOutbox?.state === 'failed'
-              ? () => {
-                  void retryFailedOutboxForContext('GROUP', chat.data.id);
-                }
-              : undefined
-          }
-          onOutboxDismiss={
-            'listOutbox' in chat && chat.listOutbox?.state === 'failed'
-              ? () => {
-                  void dismissFailedOutboxForContext('GROUP', chat.data.id);
-                }
-              : undefined
-          }
+          listOutbox={listOutbox}
+          onOutboxRetry={outboxFailed ? handleOutboxRetry : undefined}
+          onOutboxDismiss={outboxFailed ? handleOutboxDismiss : undefined}
           displayTitle={displayTitle}
           displaySubtitle={displaySubtitle}
           sellerGroupedByItem={sellerGroupedByItem}
-          isPinned={isPinned}
-          onPinToggle={chat.data.isCityGroup ? undefined : (onPinGroupChannel ? () => onPinGroupChannel(chat.data.id, isPinned) : undefined)}
-          canPin={chat.data.isCityGroup ? true : (pinnedCount < MAX_PINNED_CHATS || isPinned)}
-          isPinning={isPinning}
-          isMuted={isMuted}
-          onMuteToggle={onMuteGroupChannel ? () => onMuteGroupChannel(chat.data.id, isMuted) : undefined}
-          isTogglingMute={isTogglingMute}
+          isPinned={rowPinned}
+          onPinToggle={chat.data.isCityGroup ? undefined : (onPinGroupChannel ? handlePinToggle : undefined)}
+          canPin={chat.data.isCityGroup ? true : (pinnedCount < MAX_PINNED_CHATS || rowPinned)}
+          isPinning={pinningId === chat.data.id}
+          isMuted={rowMuted}
+          onMuteToggle={onMuteGroupChannel ? handleMuteToggle : undefined}
+          isTogglingMute={togglingMuteId === chat.data.id}
         />
       </div>
     );

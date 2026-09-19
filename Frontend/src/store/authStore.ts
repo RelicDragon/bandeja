@@ -52,11 +52,28 @@ interface AuthState {
 
 let logoutInFlight: Promise<void> | null = null;
 
+/**
+ * Serialization of the user currently in the store.
+ *
+ * `updateUser` is called on every navigation (App.tsx refreshes the profile when the route
+ * changes) and on every `wallet-update` socket event. Without this guard each of those replaced
+ * `state.user` with a structurally identical object, re-rendering every subscriber — including
+ * every mounted chat message row — and writing the whole profile to localStorage synchronously.
+ */
+let persistedUserJson: string | null = null;
+
+function writeUserToStorage(user: User): string {
+  const serialized = JSON.stringify(user);
+  localStorage.setItem('user', serialized);
+  persistedUserJson = serialized;
+  return serialized;
+}
+
 export const useAuthStore = create<AuthState>((set, get) => {
   let savedUser = null;
   let savedToken = null;
   let hasSavedUserCandidate = false;
-  
+
   try {
     if (hasExplicitLogoutMarker()) {
       clearLocalAuthStorageForExplicitLogout();
@@ -73,6 +90,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
 
       if (userStr) {
         savedUser = JSON.parse(userStr);
+        persistedUserJson = userStr;
         console.log('User loaded from localStorage');
       }
       hasSavedUserCandidate = !!savedUser;
@@ -116,7 +134,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
       // The durable session credential must exist before any access-only authenticated state is
       // exposed. Otherwise a Keychain/Keystore write failure creates a session that inevitably
       // logs out as soon as the short-lived access token expires.
-      localStorage.setItem('user', JSON.stringify(user));
+      writeUserToStorage(user);
       localStorage.setItem('token', token);
       localStorage.setItem('bandeja_has_signed_in', '1');
       await syncTokenToNative(token);
@@ -169,7 +187,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
 
           if (get().token !== token || !get().isAuthenticated) return;
 
-          localStorage.setItem('user', JSON.stringify(userToSet));
+          writeUserToStorage(userToSet);
           set({ user: userToSet });
 
           if (userToSet.language) {
@@ -278,6 +296,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
           localStorage.removeItem('user');
           localStorage.removeItem('token');
           localStorage.removeItem('auth_backup');
+          persistedUserJson = null;
           sessionStorage.removeItem('app_navigation_tracked');
           useShellNavStore.getState().setMyGamesSelectedDay(null);
           useShellNavStore.getState().setFindSelectedDay(null);
@@ -328,14 +347,25 @@ export const useAuthStore = create<AuthState>((set, get) => {
           return;
         }
         const prev = get().user;
-        localStorage.setItem('user', JSON.stringify(user));
-        set({ user });
-        if (prev?.currentCity?.id !== user.currentCity?.id || prev?.currentCityId !== user.currentCityId) {
-          void import('@/store/browseCityStore').then(({ useBrowseCityStore }) => {
-            useBrowseCityStore.getState().resetToHome();
-          });
+        const serialized = JSON.stringify(user);
+        const prevSerialized = persistedUserJson ?? (prev ? JSON.stringify(prev) : null);
+        // Route-change profile refreshes and wallet pings usually carry an identical profile.
+        // Swapping in an equal-but-new object would re-render every subscriber for nothing and
+        // rewrite the whole profile to localStorage synchronously. Only the redundant persist and
+        // store write are skipped — every side effect below still runs exactly as before.
+        const isUnchanged = !!prev && serialized === prevSerialized;
+
+        if (!isUnchanged) {
+          localStorage.setItem('user', serialized);
+          persistedUserJson = serialized;
+          set({ user });
+          if (prev?.currentCity?.id !== user.currentCity?.id || prev?.currentCityId !== user.currentCityId) {
+            void import('@/store/browseCityStore').then(({ useBrowseCityStore }) => {
+              useBrowseCityStore.getState().resetToHome();
+            });
+          }
         }
-        
+
         if (user.language) {
           const langCode = extractLanguageCode(user.language);
           i18n.changeLanguage(langCode);

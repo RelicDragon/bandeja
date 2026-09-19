@@ -66,11 +66,15 @@ export function useMyTabUnlinkedBookings(
     return merged;
   }, [linkedGamesByBookingId, seedByBookingId]);
 
-  return {
-    bookings: visibleBookings,
-    visible: visibleBookings.length > 0,
-    pending: resolved.pending,
-    linkedGamesByBookingId: displayLinkedGames,
-    reloadLinkedGames: reload,
-  };
+  // Consumed as a single `unlinked` prop; keep the identity content-derived.
+  return useMemo(
+    () => ({
+      bookings: visibleBookings,
+      visible: visibleBookings.length > 0,
+      pending: resolved.pending,
+      linkedGamesByBookingId: displayLinkedGames,
+      reloadLinkedGames: reload,
+    }),
+    [visibleBookings, resolved.pending, displayLinkedGames, reload],
+  );
 }

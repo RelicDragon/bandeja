@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { memo, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { format, startOfDay } from 'date-fns';
@@ -58,7 +58,7 @@ function groupGamesByDate(
   return result;
 }
 
-export const UpcomingGamesList = ({
+const UpcomingGamesListView = ({
   games,
   user: viewerUser,
   gamesUnreadCounts = {},
@@ -357,3 +357,5 @@ const StaleScheduledGameRow = ({
     </div>
   );
 };
+
+export const UpcomingGamesList = memo(UpcomingGamesListView);

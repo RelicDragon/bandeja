@@ -1,4 +1,4 @@
-import { useMemo, type MouseEvent } from 'react';
+import { memo, useMemo, type MouseEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { GameCard } from '@/components';
 import { AnimatedGameList } from '@/components/home/AnimatedGameList';
@@ -17,7 +17,7 @@ interface GamesByDateListProps {
   findFilterSport?: FindSportFilterValue;
 }
 
-export function GamesByDateList({
+function GamesByDateListView({
   games,
   user,
   onJoin,
@@ -63,3 +63,5 @@ export function GamesByDateList({
     </AnimatedMount>
   );
 }
+
+export const GamesByDateList = memo(GamesByDateListView);

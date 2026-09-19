@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { endOfMonth, endOfWeek, format, startOfMonth, startOfWeek } from 'date-fns';
 import {
   computeFindMonthDateRange,
+  findMonthRangeEquals,
   isFindGamesQueryReady,
   resolveFindMonthRangeAnchor,
 } from './findMonthDateRange';
@@ -52,18 +53,38 @@ describe('resolveFindMonthRangeAnchor', () => {
 });
 
 describe('isFindGamesQueryReady', () => {
-  it('is false until filters hydrated, calendar range reported, and user present', () => {
-    expect(
-      isFindGamesQueryReady({ isHydrated: false, calendarRangeReady: false, userId: 'u1' }),
-    ).toBe(false);
-    expect(
-      isFindGamesQueryReady({ isHydrated: true, calendarRangeReady: false, userId: 'u1' }),
-    ).toBe(false);
-    expect(
-      isFindGamesQueryReady({ isHydrated: true, calendarRangeReady: true, userId: undefined }),
-    ).toBe(false);
-    expect(
-      isFindGamesQueryReady({ isHydrated: true, calendarRangeReady: true, userId: 'u1' }),
-    ).toBe(true);
+  it('is false until filters hydrated and user present', () => {
+    expect(isFindGamesQueryReady({ isHydrated: false, userId: 'u1' })).toBe(false);
+    expect(isFindGamesQueryReady({ isHydrated: true, userId: undefined })).toBe(false);
+    expect(isFindGamesQueryReady({ isHydrated: true, userId: 'u1' })).toBe(true);
+  });
+
+  it('does not wait for the calendar to report its grid range', () => {
+    // The seeded range already addresses the right month query key, so the
+    // month/day fetches start on the first render.
+    expect(isFindGamesQueryReady({ isHydrated: true, userId: 'u1' })).toBe(true);
+  });
+});
+
+describe('findMonthRangeEquals', () => {
+  it('treats ranges with equal day keys as the same request', () => {
+    const a = computeFindMonthDateRange(new Date('2026-06-15T00:00:00.000Z'), 1);
+    const b = computeFindMonthDateRange(new Date('2026-06-02T23:30:00.000Z'), 1);
+    expect(findMonthRangeEquals(a, b)).toBe(true);
+  });
+
+  it('separates different months and week starts', () => {
+    const june = computeFindMonthDateRange(new Date('2026-06-15'), 1);
+    const july = computeFindMonthDateRange(new Date('2026-07-15'), 1);
+    const juneSunday = computeFindMonthDateRange(new Date('2026-06-15'), 0);
+    expect(findMonthRangeEquals(june, july)).toBe(false);
+    expect(findMonthRangeEquals(june, juneSunday)).toBe(false);
+  });
+
+  it('handles partially populated ranges', () => {
+    const june = computeFindMonthDateRange(new Date('2026-06-15'), 1);
+    expect(findMonthRangeEquals({}, {})).toBe(true);
+    expect(findMonthRangeEquals({}, june)).toBe(false);
+    expect(findMonthRangeEquals({ startDate: june.startDate }, june)).toBe(false);
   });
 });

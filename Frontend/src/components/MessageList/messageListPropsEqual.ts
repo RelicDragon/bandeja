@@ -72,6 +72,9 @@ export function messageListPropsEqual(prev: MessageListProps, next: MessageListP
   if (prev.loadingScrollTargetId !== next.loadingScrollTargetId) return false;
   if (prev.onScrollTargetReached !== next.onScrollTargetReached) return false;
   if (prev.threadSearchOutlineQuery !== next.threadSearchOutlineQuery) return false;
+  // System-message wording is resolved through `entityType`; it arrives with the game context,
+  // i.e. after the first paint, so skipping it here left LEAGUE rows on the generic copy.
+  if (prev.entityType !== next.entityType) return false;
   if (!chatMediaScopeEqual(prev.chatMediaScope, next.chatMediaScope)) return false;
 
   if (!pinnedIdsEqual(prev.pinnedMessageIds, next.pinnedMessageIds)) return false;

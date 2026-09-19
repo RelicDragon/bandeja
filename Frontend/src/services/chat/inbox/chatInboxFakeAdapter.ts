@@ -50,7 +50,6 @@ export function createFakeChatInboxAdapter(initial?: Partial<FakeChatInboxState>
         threads: state.threads,
         loading: state.loading,
         pagination: { ...state.pagination },
-        filterCache: state.filterCache,
       };
     },
 

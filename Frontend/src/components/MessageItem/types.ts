@@ -7,8 +7,12 @@ export interface ContextMenuState {
   position: { x: number; y: number };
 }
 
-export interface MessageItemProps {
-  message: ChatMessageWithStatus | ChatMessage;
+/**
+ * Row callbacks, bundled into one object so the memoised row components can compare them by
+ * identity. Comparing them individually (or, worse, skipping them) let a row keep the callbacks
+ * it mounted with — e.g. the `undefined` reaction handlers passed before `canWriteChat` resolves.
+ */
+export interface MessageRowHandlers {
   onAddReaction?: (messageId: string, emoji: string) => void;
   onRemoveReaction?: (messageId: string) => void;
   onDeleteMessage?: (messageId: string) => void;
@@ -17,28 +21,37 @@ export interface MessageItemProps {
   onPollUpdated?: (messageId: string, updatedPoll: import('@/api/chat').Poll) => void;
   onResendQueued?: (tempId: string) => void;
   onRemoveFromQueue?: (tempId: string) => void;
-  contextMenuState: ContextMenuState;
-  onOpenContextMenu: (messageId: string, position: { x: number; y: number }) => void;
-  onCloseContextMenu: () => void;
-  replyCount?: number;
   onScrollToFirstReply?: (parentMessageId: string) => void;
   onScrollToMessage?: (messageId: string) => void;
+  onChatRequestRespond?: (messageId: string, accepted: boolean) => void;
+  onPin?: (message: ChatMessage) => void;
+  onUnpin?: (messageId: string) => void;
+  onForwardMessage?: (message: ChatMessage) => void;
+  onOpenChatMedia?: (messageId: string, mediaIndex: number) => void;
+}
+
+/** Non-callback row inputs shared by `AnimatedMessageItem` and `MessageItem`. */
+export interface MessageRowConfig {
+  replyCount?: number;
   isChannel?: boolean;
   userChatUser1Id?: string;
   userChatUser2Id?: string;
-  onChatRequestRespond?: (messageId: string, accepted: boolean) => void;
   isPinned?: boolean;
-  onPin?: (message: ChatMessage) => void;
-  onUnpin?: (messageId: string) => void;
   showReply?: boolean;
-  onForwardMessage?: (message: ChatMessage) => void;
-  suppressOpenReactionMotion?: boolean;
   loadMediaEager?: boolean;
   groupPosition?: MessageGroupPosition;
   entityType?: string | null;
   isThreadSearchOutline?: boolean;
   threadSearchHighlightQuery?: string | null;
-  onOpenChatMedia?: (messageId: string, mediaIndex: number) => void;
+}
+
+export interface MessageItemProps extends MessageRowConfig {
+  message: ChatMessageWithStatus | ChatMessage;
+  handlers: MessageRowHandlers;
+  contextMenuState: ContextMenuState;
+  onOpenContextMenu: (messageId: string, position: { x: number; y: number }) => void;
+  onCloseContextMenu: () => void;
+  suppressOpenReactionMotion?: boolean;
 }
 
 export type ParsedContentPart =

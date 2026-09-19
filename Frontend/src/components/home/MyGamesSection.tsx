@@ -1,3 +1,4 @@
+import { memo, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Check, Search, CalendarX2 } from 'lucide-react';
 import { Button, GameCard, Divider } from '@/components';
@@ -18,7 +19,9 @@ interface MyGamesSectionProps {
   upcomingGames?: Game[];
 }
 
-export const MyGamesSection = ({
+const getGameId = (game: Game) => game.id;
+
+const MyGamesSectionView = ({
   games,
   user,
   loading,
@@ -29,16 +32,40 @@ export const MyGamesSection = ({
 }: MyGamesSectionProps) => {
   const { t } = useTranslation();
 
-  const displayGames = games.filter((game) => game.entityType !== 'LEAGUE_SEASON');
-
-  const renderGame = (game: Game) => (
-    <GameCard
-      game={game}
-      user={user}
-      unreadCount={gamesUnreadCounts[game.id] || 0}
-      onNoteSaved={onNoteSaved}
-    />
+  const displayGames = useMemo(
+    () => games.filter((game) => game.entityType !== 'LEAGUE_SEASON'),
+    [games],
   );
+
+  const renderGame = useCallback(
+    (game: Game) => (
+      <GameCard
+        game={game}
+        user={user}
+        unreadCount={gamesUnreadCounts[game.id] || 0}
+        onNoteSaved={onNoteSaved}
+      />
+    ),
+    [user, gamesUnreadCounts, onNoteSaved],
+  );
+
+  // Announced/started above, finished below; both sorted with undated last.
+  const { announcedOrStartedGames, finishedGames } = useMemo(() => {
+    const byStartTime = (direction: 1 | -1) => (a: Game, b: Game) => {
+      if (a.timeIsSet === false && b.timeIsSet !== false) return 1;
+      if (a.timeIsSet !== false && b.timeIsSet === false) return -1;
+      const delta = new Date(a.startTime).getTime() - new Date(b.startTime).getTime();
+      return direction === 1 ? delta : -delta;
+    };
+    return {
+      announcedOrStartedGames: displayGames
+        .filter((game) => game.status === 'ANNOUNCED' || game.status === 'STARTED')
+        .sort(byStartTime(1)),
+      finishedGames: displayGames
+        .filter((game) => game.status === 'FINISHED' || game.status === 'ARCHIVED')
+        .sort(byStartTime(-1)),
+    };
+  }, [displayGames]);
 
   const content = (() => {
     if (displayGames.length === 0) {
@@ -80,26 +107,11 @@ export const MyGamesSection = ({
       return <div className="pb-2" />;
     }
 
-    const announcedOrStartedGames = displayGames
-      .filter((game) => game.status === 'ANNOUNCED' || game.status === 'STARTED')
-      .sort((a, b) => {
-        if (a.timeIsSet === false && b.timeIsSet !== false) return 1;
-        if (a.timeIsSet !== false && b.timeIsSet === false) return -1;
-        return new Date(a.startTime).getTime() - new Date(b.startTime).getTime();
-      });
-    const finishedGames = displayGames
-      .filter((game) => game.status === 'FINISHED' || game.status === 'ARCHIVED')
-      .sort((a, b) => {
-        if (a.timeIsSet === false && b.timeIsSet !== false) return 1;
-        if (a.timeIsSet !== false && b.timeIsSet === false) return -1;
-        return new Date(b.startTime).getTime() - new Date(a.startTime).getTime();
-      });
-
     return (
       <div className="space-y-4 pb-8">
         <AnimatedGameList
           items={announcedOrStartedGames}
-          getKey={(game) => game.id}
+          getKey={getGameId}
           renderItem={renderGame}
           className="space-y-4"
         />
@@ -118,7 +130,7 @@ export const MyGamesSection = ({
 
         <AnimatedGameList
           items={finishedGames}
-          getKey={(game) => game.id}
+          getKey={getGameId}
           renderItem={renderGame}
           className="space-y-4"
         />
@@ -132,3 +144,5 @@ export const MyGamesSection = ({
     </AnimatedLoadingSwap>
   );
 };
+
+export const MyGamesSection = memo(MyGamesSectionView);

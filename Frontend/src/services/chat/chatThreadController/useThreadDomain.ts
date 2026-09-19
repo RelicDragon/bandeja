@@ -5,7 +5,7 @@ import type { MessageListHandle } from '@/components/MessageList';
 import type { TranslationModalAutoTranslateProps } from '@/components/chat/TranslationLanguageModal';
 import { useThreadChannelActivity } from './useThreadChannelActivity';
 import { gameChatChannelIsActive, chatMessageActivatesGameChannel } from '@/utils/gameChatChannelActivity';
-import { useThreadDerived } from './useThreadDerived';
+import { useLastOwnMessage, useThreadDerived } from './useThreadDerived';
 import { useThreadAutoTranslate } from './useThreadAutoTranslate';
 import { useThreadTranslationLive } from './useThreadTranslationLive';
 import { useThreadPinned } from './useThreadPinned';
@@ -77,10 +77,11 @@ export function useThreadDomain(params: UseThreadDomainParams) {
     user,
     contextType,
     currentChatType,
-    messages,
     channelActivity: contextType === 'GAME' ? channelActivity : undefined,
     isGameChatArchived,
   });
+
+  const lastOwnMessage = useLastOwnMessage(messages, user?.id);
 
   useEffect(() => {
     if (contextType !== 'GAME' || !channelActivityResolved) return;
@@ -202,6 +203,7 @@ export function useThreadDomain(params: UseThreadDomainParams) {
 
   return {
     derived,
+    lastOwnMessage,
     channelActivity,
     channelActivityResolved,
     noteUserMessage,

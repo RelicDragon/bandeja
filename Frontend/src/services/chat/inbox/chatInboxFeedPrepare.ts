@@ -25,17 +25,23 @@ export function chatListVisibleApplySig(chats: ChatItem[]): string {
   return `${threadIndexLiveMergeSig(chats)}\0${unreadSig}`;
 }
 
-/** Skip network settle paint when city group is already visible and row content is unchanged. */
+/**
+ * Skip the network-settle paint when the fetched rows carry no visible change.
+ * On `users` this additionally requires the city group to be settled on both sides;
+ * the other tabs have no such row, so content equality is the whole test.
+ */
 export function shouldSkipRedundantNetworkVisibleApply(
   visible: ChatItem[],
   incoming: ChatItem[],
   filter: ChatsFilterType
 ): boolean {
-  if (filter !== 'users' || visible.length === 0 || incoming.length === 0) return false;
-  const cityId = resolveUserCityId();
-  if (!cityId) return false;
-  if (!usersChatItemsIncludeCityGroup(visible, cityId)) return false;
-  if (!usersChatItemsIncludeCityGroup(incoming, cityId)) return false;
+  if (visible.length === 0 || incoming.length === 0) return false;
+  if (filter === 'users') {
+    const cityId = resolveUserCityId();
+    if (!cityId) return false;
+    if (!usersChatItemsIncludeCityGroup(visible, cityId)) return false;
+    if (!usersChatItemsIncludeCityGroup(incoming, cityId)) return false;
+  }
   return chatListVisibleApplySig(visible) === chatListVisibleApplySig(incoming);
 }
 

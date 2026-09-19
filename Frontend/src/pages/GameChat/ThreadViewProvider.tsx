@@ -6,6 +6,7 @@ import {
   ThreadMessageActionsContext,
   ThreadMessagesContext,
   ThreadMessagesDataContext,
+  ThreadPinnedContext,
   ThreadScrollContext,
   ThreadSearchContext,
 } from './ThreadViewContext';
@@ -142,7 +143,7 @@ export function ThreadViewProvider({ children, ...props }: GameChatProps & { chi
       translateToLanguageForChat: ctrl.translateToLanguageForChat,
       handleTranslateToLanguageChange: ctrl.handleTranslateToLanguageChange,
       autoTranslateForModal: ctrl.autoTranslateForModal,
-      lastOwnMessage: ctrl.derived.lastOwnMessage,
+      lastOwnMessage: ctrl.lastOwnMessage,
       footerVariant: ctrl.footerVariant,
       isJoiningAsGuest: ctrl.isJoiningAsGuest,
       handleJoinAsGuest: ctrl.handleJoinAsGuest,
@@ -167,13 +168,34 @@ export function ThreadViewProvider({ children, ...props }: GameChatProps & { chi
       ctrl.translateToLanguageForChat,
       ctrl.handleTranslateToLanguageChange,
       ctrl.autoTranslateForModal,
-      ctrl.derived.lastOwnMessage,
+      ctrl.lastOwnMessage,
       ctrl.footerVariant,
       ctrl.isJoiningAsGuest,
       ctrl.handleJoinAsGuest,
       ctrl.setUserChat,
       ctrl.messages.length,
       ctrl.derived.isChannel,
+    ]
+  );
+
+  const pinned = useMemo(
+    (): import('./ThreadViewContext').ThreadPinnedValue => ({
+      pinnedMessages: ctrl.pinnedMessages,
+      pinnedMessagesOrdered: ctrl.pinnedMessagesOrdered,
+      pinnedBarTopIndex: ctrl.pinnedBarTopIndex,
+      loadingScrollTargetId: ctrl.loadingScrollTargetId,
+      scrollTargetMessageId: ctrl.scrollTargetMessageId,
+      handleScrollTargetReached: ctrl.handleScrollTargetReached,
+      handlePinnedBarClick: ctrl.handlePinnedBarClick,
+    }),
+    [
+      ctrl.pinnedMessages,
+      ctrl.pinnedMessagesOrdered,
+      ctrl.pinnedBarTopIndex,
+      ctrl.loadingScrollTargetId,
+      ctrl.scrollTargetMessageId,
+      ctrl.handleScrollTargetReached,
+      ctrl.handlePinnedBarClick,
     ]
   );
 
@@ -196,13 +218,6 @@ export function ThreadViewProvider({ children, ...props }: GameChatProps & { chi
       setGroupChannelParticipantsCount: ctrl.setGroupChannelParticipantsCount,
       isLoadingContext: ctrl.isLoadingContext,
       loadContext: ctrl.loadContext,
-      pinnedMessages: ctrl.pinnedMessages,
-      pinnedMessagesOrdered: ctrl.pinnedMessagesOrdered,
-      pinnedBarTopIndex: ctrl.pinnedBarTopIndex,
-      loadingScrollTargetId: ctrl.loadingScrollTargetId,
-      scrollTargetMessageId: ctrl.scrollTargetMessageId,
-      handleScrollTargetReached: ctrl.handleScrollTargetReached,
-      handlePinnedBarClick: ctrl.handlePinnedBarClick,
       derived: ctrl.derived,
       footerVariant: ctrl.footerVariant,
       effectiveFooterVariant:
@@ -268,13 +283,6 @@ export function ThreadViewProvider({ children, ...props }: GameChatProps & { chi
       ctrl.setGroupChannelParticipantsCount,
       ctrl.isLoadingContext,
       ctrl.loadContext,
-      ctrl.pinnedMessages,
-      ctrl.pinnedMessagesOrdered,
-      ctrl.pinnedBarTopIndex,
-      ctrl.loadingScrollTargetId,
-      ctrl.scrollTargetMessageId,
-      ctrl.handleScrollTargetReached,
-      ctrl.handlePinnedBarClick,
       ctrl.derived,
       ctrl.footerVariant,
       ctrl.isLoadingMessages,
@@ -323,7 +331,9 @@ export function ThreadViewProvider({ children, ...props }: GameChatProps & { chi
           <ThreadScrollContext.Provider value={scroll}>
             <ThreadComposerContext.Provider value={composer}>
               <ThreadChromeContext.Provider value={chrome}>
-                <ThreadSearchContext.Provider value={threadSearch}>{children}</ThreadSearchContext.Provider>
+                <ThreadPinnedContext.Provider value={pinned}>
+                  <ThreadSearchContext.Provider value={threadSearch}>{children}</ThreadSearchContext.Provider>
+                </ThreadPinnedContext.Provider>
               </ThreadChromeContext.Provider>
             </ThreadComposerContext.Provider>
           </ThreadScrollContext.Provider>

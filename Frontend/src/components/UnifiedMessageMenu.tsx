@@ -100,7 +100,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
   onForward,
 }) => {
   const { t } = useTranslation();
-  const { user } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
   const isSystemMessage = !message.senderId;
   const displaySettings = user ? resolveDisplaySettings(user) : null;
   const preferredTranslationCode = resolveIncomingTranslationTargetCode(user);

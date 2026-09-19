@@ -52,10 +52,28 @@ import type {
 } from './threadScrollViewportTypes';
 
 const OPEN_TAIL_EAGER_MEDIA = 60;
-const VIRTUAL_OVERSCAN = 40;
+/**
+ * Rows kept mounted beyond the viewport on each side. Every mounted row carries a Framer node,
+ * media elements and reaction chrome, and the per-frame render work below scales linearly with
+ * this number. The row-height cache seeds accurate estimates, so a deep buffer is not needed to
+ * keep fling-scroll from showing blanks.
+ */
+const VIRTUAL_OVERSCAN = 20;
+/** Tail length seeded into the row-height cache before the open paint. */
+const TAIL_HEIGHT_PRELOAD_COUNT = 140;
 const PIN_BOTTOM_SKIP_GAP_PX = 20;
 /** Match pinMessageListContainerToBottomAfterLayout default frame count. */
 const PROGRAMMATIC_SCROLL_HOLD_FRAMES = 3;
+
+function hashNumber(hash: number, value: number): number {
+  return Math.imul(hash ^ value, 16777619);
+}
+
+function hashString(hash: number, value: string): number {
+  let h = hash;
+  for (let i = 0; i < value.length; i++) h = Math.imul(h ^ value.charCodeAt(i), 16777619);
+  return h;
+}
 
 export function useThreadScrollViewport({
   messages,
@@ -206,13 +224,22 @@ export function useThreadScrollViewport({
     };
   }, [containerActive, cancelProgrammaticScroll, releaseBottomIntent]);
 
+  // Rolling 32-bit hash rather than a joined string: this runs on every scroll-driven render
+  // with ~90 rows live, and the string form allocated a template literal per row per frame.
   const virtualItemsSnapshot = virtualizer.getVirtualItems();
-  const virtualMeasureKey = virtualItemsSnapshot
-    .filter((vi) => vi.index < rowCount - 1)
-    .map((vi) => `${vi.index}:${messages[vi.index]?.id ?? ''}:${Math.round(vi.size)}`)
-    .join('|');
+  let measureHash = 2166136261;
+  for (const vi of virtualItemsSnapshot) {
+    if (vi.index >= rowCount - 1) continue;
+    measureHash = hashNumber(measureHash, vi.index);
+    measureHash = hashString(measureHash, messages[vi.index]?.id ?? '');
+    measureHash = hashNumber(measureHash, Math.round(vi.size));
+  }
+  const virtualMeasureKey = measureHash >>> 0;
 
-  const tailIdsForHeightPreload = messages.slice(-140).map((m) => m.id).join('\x1e');
+  const tailIdsForHeightPreload = useMemo(
+    () => messages.slice(-TAIL_HEIGHT_PRELOAD_COUNT).map((m) => m.id).join('\x1e'),
+    [messages]
+  );
 
   const eagerMediaMessageIds = useMemo(() => {
     const tail = messages.slice(-OPEN_TAIL_EAGER_MEDIA);

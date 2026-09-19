@@ -88,15 +88,23 @@ export const useGameFilters = () => {
   findSelectedDayRef.current = findSelectedDay;
   isHydratedRef.current = isHydrated;
 
+  // `updateFilter`/`updateFilters` persist eagerly (so a tap survives an
+  // immediate unmount) and the effect below persists on nav-derived changes.
+  // Without this guard every chip tap wrote the same payload twice: once
+  // imperatively, once from the effect that the resulting state change fires.
+  const lastPersistedRef = useRef<string | null>(null);
+
   const persistFilters = useCallback((next: GameFilters) => {
-    void setGameFilters(
-      buildFiltersToPersist(
-        next,
-        findViewModeRef.current,
-        findListWeekStartDayRef.current,
-        findSelectedDayRef.current,
-      ),
+    const payload = buildFiltersToPersist(
+      next,
+      findViewModeRef.current,
+      findListWeekStartDayRef.current,
+      findSelectedDayRef.current,
     );
+    const signature = JSON.stringify(payload);
+    if (lastPersistedRef.current === signature) return;
+    lastPersistedRef.current = signature;
+    void setGameFilters(payload);
   }, []);
 
   useEffect(() => {
@@ -121,6 +129,13 @@ export const useGameFilters = () => {
     restoredViewPeriodRef.current = true;
     const nav = useShellNavStore.getState();
     const current = filtersRef.current;
+    // An explicit `?view=` wins; otherwise restore the last view mode. Read from
+    // the location rather than the store because `useUrlStoreSync` writes a
+    // default `calendar` when the param is absent, which would otherwise look
+    // identical to the user having chosen the calendar.
+    if (current.activeTab && !new URLSearchParams(window.location.search).get('view')) {
+      nav.setFindViewMode(current.activeTab);
+    }
     if (current.calendarSelectedDate && nav.findSelectedDay == null) {
       const restoredDate = new Date(current.calendarSelectedDate);
       if (!isNaN(restoredDate.getTime())) {
@@ -143,16 +158,9 @@ export const useGameFilters = () => {
   useEffect(() => {
     return () => {
       if (!isHydratedRef.current) return;
-      void setGameFilters(
-        buildFiltersToPersist(
-          filtersRef.current,
-          findViewModeRef.current,
-          findListWeekStartDayRef.current,
-          findSelectedDayRef.current,
-        ),
-      );
+      persistFilters(filtersRef.current);
     };
-  }, []);
+  }, [persistFilters]);
 
   const updateFilter = useCallback(
     <K extends keyof GameFilters>(key: K, value: GameFilters[K]) => {

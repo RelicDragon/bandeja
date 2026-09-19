@@ -118,6 +118,40 @@ From `Frontend/src/services/chat/CONTEXT.md`:
 
 Socket → adapter → projection events, then persist via effects / `applyThreadEvent`. Do not add window events or module queues as bridges. Bootstrap invariants: `threadOpen/types.ts` (paintGeneration 0|1, L1 → Dexie tail → outbox). Constraint: APP_FUNCTIONALITY §2.2 **Open chat thread**.
 
+## Inbox rendering
+
+The inbox repaints on every socket message, unread delta and Dexie replay, so these
+are load-bearing. Undoing any of them brings back list-wide flicker.
+
+- **Row identity is the memo key.** `chatItemWithDraft` / `applyDraftsToChatItems` /
+  `deduplicateChats` return the *same* row object and the *same* array when nothing
+  moved (drafts compare by value, not identity — they are refetched objects). Market
+  rows in `deriveMarketFilteredByRoleAndSearch` clone only when the count changed.
+  `chatListFeedStore.patchRowsForFilter` / `reapplyDrafts` bail out instead of
+  notifying subscribers on a no-op merge.
+- **`ChatInboxFeedSnapshot` holds only what the inbox reads.** It is compared on every
+  feed-store write; an unread field (it used to carry `filterCache`) re-renders the
+  whole tab whenever a *background* filter's cache is committed.
+- **Unread subscriptions are scoped.** Rows read their own count via
+  `useChatListItemUnread`. `useChatInbox` only subscribes to the full
+  `displayedByContext` when the unread-only filter is on, and market counts come from
+  `useChatListMarketUnread` (shallow, visible channels only).
+- **Network settle is skipped when the rows are unchanged** for every filter
+  (`shouldSkipRedundantNetworkVisibleApply`); only `users` adds the city-group
+  precondition.
+- **Motion cost.** Below `CHAT_LIST_VIRTUAL_THRESHOLD` rows render statically with
+  framer `layout`, which re-measures every row on every commit. Keep the threshold low.
+- **Search and pull never enter list state.** `ChatListSearchBar` owns the raw input and
+  lifts only the debounced query (`CHAT_LIST_SEARCH_DEBOUNCE_MS`, which also gates the
+  `?q=` write). Pull-to-refresh publishes to `--chat-pull-distance` /
+  `--chat-pull-progress` through `usePullToRefresh({ onPullDistanceChange })`.
+- **Chat routes keep one shell.** `MainPage` renders every chat place through a single
+  `<MainLayout chrome="full" | "bare">`; `bare` collapses the wrappers to
+  `display: contents` and drops the header. Returning a different root element for the
+  thread route remounts the header and the whole Chats subtree on each navigation.
+  `ChatsTab` derives its selection from the path and keeps only a path-scoped
+  optimistic pick.
+
 ## Message viewport stability
 
 `ThreadScrollViewport` owns thread scrolling. TanStack compensates measured row height changes; do not apply an additional measurement-delta correction. Only DOM measurements are persisted as measured row heights. Disk heights can replace heuristic estimates, but cannot overwrite newer in-memory/L1 measurements, including when a disk read completes after measurement.

@@ -4,7 +4,7 @@ import type { ChatMessage } from '@/api/chat';
 import { AnimatedMessageItem } from '@/components/AnimatedMessageItem';
 import type { MessageGroupPosition } from '@/utils/chatMessageGrouping';
 import { messageMatchesThreadSearchQuery } from '@/services/chat/chatLocalMessageSearchText';
-import type { MessageListProps } from './types';
+import type { MessageRowHandlers } from '@/components/MessageItem/types';
 
 type VirtualRowStyle = { transform: string; transition?: string };
 
@@ -22,29 +22,11 @@ type MessageListRowProps = {
   isNew: boolean;
   staggerIndex: number;
   fadeDateSeparator?: boolean;
-  onScrollToFirstReply: (parentMessageId: string) => void;
-  handlers: Pick<
-    MessageListProps,
-    | 'onAddReaction'
-    | 'onRemoveReaction'
-    | 'onDeleteMessage'
-    | 'onReplyMessage'
-    | 'onEditMessage'
-    | 'onPollUpdated'
-    | 'onResendQueued'
-    | 'onRemoveFromQueue'
-    | 'onScrollToMessage'
-    | 'isChannel'
-    | 'userChatUser1Id'
-    | 'userChatUser2Id'
-    | 'onChatRequestRespond'
-    | 'onPin'
-    | 'onUnpin'
-    | 'showReply'
-    | 'onForwardMessage'
-  > & {
-    onOpenChatMedia?: (messageId: string, mediaIndex: number) => void;
-  };
+  handlers: MessageRowHandlers;
+  isChannel: boolean;
+  userChatUser1Id?: string;
+  userChatUser2Id?: string;
+  showReply: boolean;
   entityType?: string | null;
   threadSearchOutlineQuery?: string | null;
 };
@@ -63,8 +45,11 @@ export const MessageListRow = memo(function MessageListRow({
   isNew,
   staggerIndex,
   fadeDateSeparator = false,
-  onScrollToFirstReply,
   handlers,
+  isChannel,
+  userChatUser1Id,
+  userChatUser2Id,
+  showReply,
   entityType,
   threadSearchOutlineQuery = null,
 }: MessageListRowProps) {
@@ -101,36 +86,22 @@ export const MessageListRow = memo(function MessageListRow({
     >
       <AnimatedMessageItem
         message={message}
+        handlers={handlers}
         isNew={isNew}
         staggerIndex={staggerIndex}
         dateSeparatorLabel={dateSeparatorLabel ?? undefined}
         fadeDateSeparator={fadeDateSeparator}
         loadMediaEager={loadMediaEager}
         groupPosition={groupPosition}
-        onAddReaction={handlers.onAddReaction}
-        onRemoveReaction={handlers.onRemoveReaction}
-        onDeleteMessage={handlers.onDeleteMessage}
-        onReplyMessage={handlers.onReplyMessage}
-        onEditMessage={handlers.onEditMessage}
-        onPollUpdated={handlers.onPollUpdated}
-        onResendQueued={handlers.onResendQueued}
-        onRemoveFromQueue={handlers.onRemoveFromQueue}
         replyCount={replyCount}
-        onScrollToFirstReply={onScrollToFirstReply}
-        onScrollToMessage={handlers.onScrollToMessage}
-        isChannel={handlers.isChannel}
-        userChatUser1Id={handlers.userChatUser1Id}
-        userChatUser2Id={handlers.userChatUser2Id}
-        onChatRequestRespond={handlers.onChatRequestRespond}
+        isChannel={isChannel}
+        userChatUser1Id={userChatUser1Id}
+        userChatUser2Id={userChatUser2Id}
         isPinned={isPinned}
-        onPin={handlers.onPin}
-        onUnpin={handlers.onUnpin}
-        showReply={handlers.showReply}
-        onForwardMessage={handlers.onForwardMessage}
+        showReply={showReply}
         entityType={entityType}
         isThreadSearchOutline={isThreadSearchOutline}
         threadSearchHighlightQuery={threadSearchHighlightQuery}
-        onOpenChatMedia={handlers.onOpenChatMedia}
       />
     </div>
   );
@@ -151,6 +122,11 @@ export const MessageListRow = memo(function MessageListRow({
   if (prev.staggerIndex !== next.staggerIndex) return false;
   if (prev.fadeDateSeparator !== next.fadeDateSeparator) return false;
   if (prev.handlers !== next.handlers) return false;
+  if (prev.isChannel !== next.isChannel) return false;
+  if (prev.userChatUser1Id !== next.userChatUser1Id) return false;
+  if (prev.userChatUser2Id !== next.userChatUser2Id) return false;
+  if (prev.showReply !== next.showReply) return false;
+  if (prev.entityType !== next.entityType) return false;
   if (prev.threadSearchOutlineQuery !== next.threadSearchOutlineQuery) return false;
   return true;
 });

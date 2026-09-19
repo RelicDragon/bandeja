@@ -20,7 +20,8 @@ type UseMessageListScrollTargetParams = {
   openScrollAtBottomRef: RefObject<boolean>;
   wasAtBottomBeforeGrowRef: RefObject<boolean>;
   userReleasedBottomIntentRef: RefObject<boolean>;
-  virtualMeasureKey: string;
+  /** Changes whenever any rendered row's index/id/measured height changes. */
+  virtualMeasureKey: number;
   reduceMotion: boolean;
   onScrollTargetReached?: (messageId: string) => void;
 };

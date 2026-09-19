@@ -175,7 +175,9 @@ export const MyTab = () => {
 
   const [pastGamesInRange, setPastGamesInRange] = useState<any[]>([]);
   const pastRangeRequestIdRef = useRef(0);
-  const calendarVisibleRef = useRef(false);
+  // Seeded from the initial view mode because the calendar reports its range
+  // from a child effect, which runs before this component's own effects.
+  const calendarVisibleRef = useRef(myGamesViewMode === 'calendar');
 
   const gameIdsForUnread = useMemo(() => {
     const ids = new Set<string>();
@@ -225,10 +227,13 @@ export const MyTab = () => {
   }, [isCalendarTab, myGamesSelectedDate, myGamesViewMode, setCreateGameInitialDate]);
   const [loadingPastInRange, setLoadingPastInRange] = useState(false);
   const calendarMergedGames = useMemo(() => {
-    const noSeason = (g: (typeof filteredMyGames)[0]) => g.entityType !== 'LEAGUE_SEASON';
-    const ids = new Set(filteredMyGames.filter(noSeason).map((g) => g.id));
-    const fromPast = pastGamesInRange.filter((g) => !ids.has(g.id) && g.entityType !== 'LEAGUE_SEASON');
-    return [...filteredMyGames.filter(noSeason), ...fromPast];
+    const merged = filteredMyGames.filter((g) => g.entityType !== 'LEAGUE_SEASON');
+    const ids = new Set(merged.map((g) => g.id));
+    for (const g of pastGamesInRange) {
+      if (g.entityType === 'LEAGUE_SEASON' || ids.has(g.id)) continue;
+      merged.push(g);
+    }
+    return merged;
   }, [filteredMyGames, pastGamesInRange]);
   const calendarMergedUnreadCounts = unreadCounts;
   const myGamesForSelectedDate = useMemo(() => {
@@ -364,8 +369,11 @@ export const MyTab = () => {
     [queryClient, user?.id, user?.currentCity?.timezone]
   );
   const calendarVisible = myGamesViewMode === 'calendar';
-  calendarVisibleRef.current = calendarVisible;
   useEffect(() => {
+    // Written in an effect, not during render: the in-flight range fetch reads
+    // this ref to decide whether its result is still wanted, and a discarded
+    // render pass must not tell it the calendar is visible.
+    calendarVisibleRef.current = calendarVisible;
     if (calendarVisible) return;
     pastRangeRequestIdRef.current += 1;
     setPastGamesInRange([]);
@@ -383,19 +391,37 @@ export const MyTab = () => {
     const userId = useAuthStore.getState().user?.id;
     if (userId) writeMyGamesViewMode(mode, userId);
   }, []);
-  const myTabCalendarProps = {
-    selectedDate: myGamesSelectedDate,
-    onDateSelect: setMyGamesSelectedDate,
-    availableGames: calendarMergedGames,
-    onDateRangeChange: handleCalendarDateRangeChange,
-    weatherModeScope: 'my' as const,
-    selectedDateEmptyHint,
-    upcomingsToggle: {
-      active: false,
-      onClick: () => handleCalendarVisibleChange(false),
-      label: t('games.list'),
-    },
-  };
+  const showListView = useCallback(
+    () => handleCalendarVisibleChange(false),
+    [handleCalendarVisibleChange],
+  );
+  const showCalendarView = useCallback(
+    () => handleCalendarVisibleChange(true),
+    [handleCalendarVisibleChange],
+  );
+  const switchToFind = useCallback(() => navigationService.navigateToFind(), []);
+
+  // Memoised so the calendar is skipped by `memo` when MyTab re-renders for one
+  // of its many unrelated sources (bookings poll, teams store, unread, URL).
+  const upcomingsToggle = useMemo(
+    () => ({ active: false, onClick: showListView, label: t('games.list') }),
+    [showListView, t],
+  );
+  const myTabCalendarProps = useMemo(
+    () => ({
+      selectedDate: myGamesSelectedDate,
+      onDateSelect: setMyGamesSelectedDate,
+      availableGames: calendarMergedGames,
+      onDateRangeChange: handleCalendarDateRangeChange,
+      weatherModeScope: 'my' as const,
+      selectedDateEmptyHint,
+      upcomingsToggle,
+    }),
+    [
+      myGamesSelectedDate, setMyGamesSelectedDate, calendarMergedGames,
+      handleCalendarDateRangeChange, selectedDateEmptyHint, upcomingsToggle,
+    ],
+  );
   const filteredPastGames = useMemo(() => {
     const list = pastGames.filter((g) => g.entityType !== 'LEAGUE_SEASON');
     return sortMyGamesByStatusAndDateTime(list, gameUnreadForSort);
@@ -403,14 +429,18 @@ export const MyTab = () => {
 
   const [decliningInviteIds, setDecliningInviteIds] = useState<Set<string>>(new Set());
   const acceptingInviteIdsRef = useRef<Set<string>>(new Set());
-  const handleAcceptInvite = async (inviteId: string) => {
+  // Read through a ref so the handler identity does not change with the invite
+  // list — it is passed down to every invite row.
+  const invitesRef = useRef(invites);
+  invitesRef.current = invites;
+  const handleAcceptInvite = useCallback(async function acceptWithGates(inviteId: string) {
     const authUser = useAuthStore.getState().user;
     if (authUser && authUser.nameIsSet !== true) {
-      runWithProfileName(() => void handleAcceptInvite(inviteId));
+      runWithProfileName(() => void acceptWithGates(inviteId));
       return;
     }
-    const inviteGame = invites.find((inv) => inv.id === inviteId)?.game;
-    if (!runWithGenderForEvent(inviteGame, () => void handleAcceptInvite(inviteId))) return;
+    const inviteGame = invitesRef.current.find((inv) => inv.id === inviteId)?.game;
+    if (!runWithGenderForEvent(inviteGame, () => void acceptWithGates(inviteId))) return;
     // Guard against a rapid double-tap firing two POSTs (the second would 404
     // because the invite is no longer in the INVITED state, surfacing a spurious error toast).
     if (acceptingInviteIdsRef.current.has(inviteId)) return;
@@ -433,13 +463,13 @@ export const MyTab = () => {
       decrementPendingInvite(inviteId);
       void refetchMyGames(false, true);
     } catch (error: any) {
-      if (recoverGenderUnsetJoin(error, () => void handleAcceptInvite(inviteId))) return;
+      if (recoverGenderUnsetJoin(error, () => void acceptWithGates(inviteId))) return;
       const errorMessage = error.response?.data?.message || 'errors.generic';
       toast.error(t(errorMessage, { defaultValue: errorMessage }));
     } finally {
       acceptingInviteIdsRef.current.delete(inviteId);
     }
-  };
+  }, [refetchMyGames, t]);
 
   const { handleDeclineInvite, declineInviteModal } = useDeclineInvite({
     onDeclineStart: (inviteId) => {
@@ -544,7 +574,7 @@ export const MyTab = () => {
           {!calendarVisible ? (
             <HomeTodayHeading
               selectedDate={myGamesSelectedDate}
-              onShowCalendar={() => handleCalendarVisibleChange(true)}
+              onShowCalendar={showCalendarView}
             />
           ) : null}
           <AnimatedMount>
@@ -555,7 +585,7 @@ export const MyTab = () => {
               gamesUnreadCounts={calendarMergedUnreadCounts}
               onNoteSaved={handleNoteSaved}
               upcomingGames={gamesSectionUpcoming}
-              onSwitchToSearch={!hasUpcomingGames ? () => navigationService.navigateToFind() : undefined}
+              onSwitchToSearch={hasUpcomingGames ? undefined : switchToFind}
             />
           </AnimatedMount>
           <UserTeamsHomeSection embedded />
@@ -662,7 +692,7 @@ export const MyTab = () => {
           {!calendarVisible ? (
             <HomeTodayHeading
               selectedDate={myGamesSelectedDate}
-              onShowCalendar={() => handleCalendarVisibleChange(true)}
+              onShowCalendar={showCalendarView}
             />
           ) : null}
           <AnimatedMount>
@@ -673,7 +703,7 @@ export const MyTab = () => {
               gamesUnreadCounts={calendarMergedUnreadCounts}
               onNoteSaved={handleNoteSaved}
               upcomingGames={gamesSectionUpcoming}
-              onSwitchToSearch={!hasUpcomingGames ? () => navigationService.navigateToFind() : undefined}
+              onSwitchToSearch={hasUpcomingGames ? undefined : switchToFind}
             />
           </AnimatedMount>
 

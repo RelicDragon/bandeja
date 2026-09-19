@@ -1,5 +1,5 @@
 import { PremiumName } from '@/components/PremiumName';
-import React, { useRef, useEffect, useLayoutEffect, useState, useCallback, useMemo, memo } from 'react';
+import React, { useRef, useEffect, useState, useCallback, useMemo, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
@@ -39,7 +39,7 @@ import { PlayerAvatar } from '../PlayerAvatar';
 import { useMessageLongPress } from './useMessageLongPress';
 import { useMessageReactions } from './useMessageReactions';
 import { MessageItemReactionStrip, MESSAGE_REACTION_GUTTER_CLASS } from './MessageItemReactionStrip';
-import { messageRowPropsEqual } from './messageRowPropsEqual';
+import { messageRowPropsEqual, toMessageRowMemoProps } from './messageRowPropsEqual';
 import { MessageRowDeleteMotion } from './MessageRowDeleteMotion';
 import { LayoutGroup } from 'framer-motion';
 import { isAppLinkPreviewHost, isEligibleLinkPreviewUrl } from './linkPreview/eligibility';
@@ -54,40 +54,54 @@ import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { copyImageToClipboard } from '@/utils/copyImageToClipboard';
 import { resolveMessageCopyTargetUrl } from '@/utils/copyMessageMedia';
 
+/**
+ * Local, optimistic edits to a row (manual translate, transcribe, dismiss link preview) keyed by
+ * the message object they were applied to. When a new `message` prop arrives the patch is dropped
+ * automatically — no state write, no second render pass.
+ */
+type MessageLocalPatch = {
+  source: ChatMessage;
+  patch: Partial<ChatMessageWithStatus>;
+};
+
 export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem({
   message,
-  onAddReaction,
-  onRemoveReaction,
-  onDeleteMessage,
-  onReplyMessage,
-  onEditMessage,
-  onPollUpdated,
-  onResendQueued,
-  onRemoveFromQueue,
+  handlers,
   contextMenuState,
   onOpenContextMenu,
   onCloseContextMenu,
   replyCount = 0,
-  onScrollToFirstReply,
-  onScrollToMessage,
   isChannel = false,
   userChatUser1Id,
   userChatUser2Id,
-  onChatRequestRespond,
   isPinned = false,
-  onPin,
-  onUnpin,
   showReply = true,
-  onForwardMessage,
   suppressOpenReactionMotion = false,
   loadMediaEager = false,
   groupPosition = 'single',
   entityType,
   isThreadSearchOutline = false,
   threadSearchHighlightQuery = null,
-  onOpenChatMedia,
 }) {
-  const { user } = useAuthStore();
+  const {
+    onAddReaction,
+    onRemoveReaction,
+    onDeleteMessage,
+    onReplyMessage,
+    onEditMessage,
+    onPollUpdated,
+    onResendQueued,
+    onRemoveFromQueue,
+    onScrollToFirstReply,
+    onScrollToMessage,
+    onChatRequestRespond,
+    onPin,
+    onUnpin,
+    onForwardMessage,
+    onOpenChatMedia,
+  } = handlers;
+
+  const user = useAuthStore((s) => s.user);
   const navigate = useNavigate();
   const { t } = useTranslation();
   const reduceMotion = usePrefersReducedMotion();
@@ -102,8 +116,35 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
   const [selectedMentionUserId, setSelectedMentionUserId] = useState<string | null>(null);
   const [showFailedMenu, setShowFailedMenu] = useState(false);
   const [respondingToRequest, setRespondingToRequest] = useState(false);
-  const [currentMessage, setCurrentMessage] = useState(message);
+  const [localPatch, setLocalPatch] = useState<MessageLocalPatch | null>(null);
   const [isTranscribing, setIsTranscribing] = useState(false);
+
+  const activePatch = localPatch && localPatch.source === message ? localPatch.patch : null;
+  const currentMessage = useMemo(
+    () => (activePatch ? ({ ...message, ...activePatch } as ChatMessageWithStatus) : message),
+    [message, activePatch]
+  ) as ChatMessageWithStatus;
+
+  const messagePropRef = useRef(message);
+  messagePropRef.current = message;
+
+  /** Merge an optimistic patch onto whichever message object is current at call time. */
+  const applyLocalPatch = useCallback(
+    (
+      producePatch:
+        | Partial<ChatMessageWithStatus>
+        | ((current: ChatMessageWithStatus) => Partial<ChatMessageWithStatus>)
+    ) => {
+      setLocalPatch((prev) => {
+        const source = messagePropRef.current;
+        const base = prev && prev.source === source ? prev.patch : null;
+        const merged = { ...source, ...base } as ChatMessageWithStatus;
+        const next = typeof producePatch === 'function' ? producePatch(merged) : producePatch;
+        return { source, patch: { ...base, ...next } };
+      });
+    },
+    []
+  );
 
   const isOwnMessage = currentMessage.senderId === user?.id;
   const isSystemMessage = !currentMessage.senderId;
@@ -117,7 +158,9 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
   const forwardedFrom = parseForwardedFrom(currentMessage.forwardedFrom);
   const canReact = !!onAddReaction && !!onRemoveReaction && !isOffline;
 
-  const displaySettings = user ? resolveDisplaySettings(user) : null;
+  // Memoised: a fresh settings object each render invalidated `formatMessageTime`, which is
+  // passed down into MessageBubble and SystemMessageBlock.
+  const displaySettings = useMemo(() => (user ? resolveDisplaySettings(user) : null), [user]);
   const formatMessageTime = useCallback(
     (dateString: string) => formatMessageTimeUtil(dateString, displaySettings),
     [displaySettings]
@@ -131,10 +174,9 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
   });
 
   const {
-    getCurrentUserReaction,
+    currentUserReaction,
     isReactionPending,
-    getReactionCounts,
-    getReplyCount,
+    reactionCounts,
     hasReplies,
     handleScrollToReplies,
   } = useMessageReactions({
@@ -144,10 +186,6 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
     isOffline,
     onScrollToFirstReply,
   });
-
-  useLayoutEffect(() => {
-    setCurrentMessage(message);
-  }, [message]);
 
   useEffect(() => {
     if (!showFailedMenu) return;
@@ -168,13 +206,22 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
   }, [isMenuOpen]);
 
   const voiceTxRaw = currentMessage.audioTranscription?.transcription;
-  const displayContent = isSystemMessage
-    ? formatSystemMessageForDisplay(currentMessage.content, t, entityType)
-    : currentMessage.messageType === 'VOICE' && voiceTxRaw?.trim()
-      ? formatVoiceTranscriptionForDisplay(voiceTxRaw, t)
-      : currentMessage.content;
+  const displayContent = useMemo(
+    () =>
+      isSystemMessage
+        ? formatSystemMessageForDisplay(currentMessage.content, t, entityType)
+        : currentMessage.messageType === 'VOICE' && voiceTxRaw?.trim()
+          ? formatVoiceTranscriptionForDisplay(voiceTxRaw, t)
+          : currentMessage.content,
+    [isSystemMessage, currentMessage.content, currentMessage.messageType, voiceTxRaw, t, entityType]
+  );
 
-  const parsedContent = isSystemMessage ? null : parseContentWithMentionsAndUrls(displayContent);
+  // Mention/URL parsing is regex work; unmemoised it also produced a new array each render, which
+  // defeated the `firstExternalHttpUrl` memo below and re-rendered MessageBubble every time.
+  const parsedContent = useMemo(
+    () => (isSystemMessage ? null : parseContentWithMentionsAndUrls(displayContent)),
+    [isSystemMessage, displayContent]
+  );
   const firstExternalHttpUrl = useMemo(() => {
     if (!parsedContent) return null;
     const eligibleUrls: string[] = [];
@@ -201,7 +248,8 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
     matchingTranslation.languageCode.toLowerCase() === userLanguageCode &&
     !isTranslationPending(matchingTranslation.translation);
   const localeAllowed =
-    autoTranslateSlots.length === 0 || autoTranslateSlots.map((c) => c.toLowerCase()).includes(userLanguageCode);
+    autoTranslateSlots.length === 0 ||
+    autoTranslateSlots.some((c) => c.toLowerCase() === userLanguageCode);
   const sourceTextForTranslationCompare =
     currentMessage.messageType === 'VOICE' && voiceTxRaw?.trim()
       ? voiceTxRaw.trim()
@@ -216,47 +264,47 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
     !!matchingTranslation &&
     matchingTranslation.languageCode.toLowerCase() === userLanguageCode &&
     isTranslationPending(matchingTranslation.translation);
-  const translationContent =
-    hasTranslation && matchingTranslation
-      ? parseContentWithMentionsAndUrls(matchingTranslation.translation)
-      : null;
+  const translationText = hasTranslation ? (matchingTranslation?.translation ?? null) : null;
+  const translationContent = useMemo(
+    () => (translationText ? parseContentWithMentionsAndUrls(translationText) : null),
+    [translationText]
+  );
+  const translationJustArrived = currentMessage._translationJustArrived;
   const translationRevealKey =
-    (currentMessage as ChatMessageWithStatus)._translationJustArrived && hasTranslation
-      ? `${currentMessage.id}-reveal`
-      : undefined;
+    translationJustArrived && hasTranslation ? `${currentMessage.id}-reveal` : undefined;
 
-  const translationJustArrived = (currentMessage as ChatMessageWithStatus)._translationJustArrived;
   useEffect(() => {
     if (!translationJustArrived) return;
     const timer = window.setTimeout(() => {
-      setCurrentMessage((prev) => {
-        if (!translationJustArrived) return prev;
-        const { _translationJustArrived: _, ...rest } = prev as ChatMessageWithStatus;
-        return rest;
-      });
+      applyLocalPatch({ _translationJustArrived: undefined });
     }, 500);
     return () => window.clearTimeout(timer);
-  }, [translationJustArrived]);
+  }, [translationJustArrived, applyLocalPatch]);
 
-  const getSenderName = () => {
+  const senderName = useMemo(() => {
     if (isSystemMessage) return 'System';
-    if (currentMessage.sender?.firstName && currentMessage.sender?.lastName) {
-      return `${currentMessage.sender.firstName || ''} ${currentMessage.sender.lastName || ''}`.trim();
+    const sender = currentMessage.sender;
+    if (sender?.firstName && sender?.lastName) {
+      return `${sender.firstName || ''} ${sender.lastName || ''}`.trim();
     }
-    return currentMessage.sender?.firstName || 'Unknown';
-  };
+    return sender?.firstName || 'Unknown';
+  }, [isSystemMessage, currentMessage.sender]);
 
-  const handleTranslationUpdate = (messageId: string, translation: { languageCode: string; translation: string }) => {
-    if (messageId === currentMessage.id) {
-      setCurrentMessage({
-        ...currentMessage,
+  const handleTranslationUpdate = useCallback(
+    (messageId: string, translation: { languageCode: string; translation: string }) => {
+      if (messageId !== messagePropRef.current.id) return;
+      applyLocalPatch((current) => ({
         translation,
-        translations: currentMessage.translations
-          ? [...currentMessage.translations.filter((tr) => tr.languageCode !== translation.languageCode), translation]
+        translations: current.translations
+          ? [
+              ...current.translations.filter((tr) => tr.languageCode !== translation.languageCode),
+              translation,
+            ]
           : [translation],
-      });
-    }
-  };
+      }));
+    },
+    [applyLocalPatch]
+  );
 
   const runTranscribe = useCallback(async (): Promise<boolean> => {
     const id = currentMessage.id;
@@ -264,7 +312,7 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
     setIsTranscribing(true);
     try {
       const data = await chatApi.transcribeMessage(id);
-      setCurrentMessage((prev) => (prev.id === id ? { ...prev, audioTranscription: data } : prev));
+      if (messagePropRef.current.id === id) applyLocalPatch({ audioTranscription: data });
       return true;
     } catch (error: unknown) {
       const err = error as { response?: { status?: number } };
@@ -279,7 +327,7 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
     } finally {
       setIsTranscribing(false);
     }
-  }, [currentMessage.id, isTranscribing, t]);
+  }, [currentMessage.id, isTranscribing, t, applyLocalPatch]);
 
   const getThumbnailUrl = (index: number): string =>
     resolveChatImageDisplayUrl(
@@ -357,14 +405,17 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
     }
   };
 
-  const handleQuickReaction = (e: React.MouseEvent) => {
-    if (!onAddReaction || !onRemoveReaction) return;
-    e.preventDefault();
-    e.stopPropagation();
-    const currentReaction = getCurrentUserReaction();
-    if (currentReaction === '❤️') onRemoveReaction(currentMessage.id);
-    else onAddReaction(currentMessage.id, '❤️');
-  };
+  const handleQuickReaction = useCallback(
+    (e: React.MouseEvent) => {
+      if (!onAddReaction || !onRemoveReaction) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const id = messagePropRef.current.id;
+      if (currentUserReaction === '❤️') onRemoveReaction(id);
+      else onAddReaction(id, '❤️');
+    },
+    [onAddReaction, onRemoveReaction, currentUserReaction]
+  );
 
   const handleDeleteStart = (messageId: string) => {
     if (messageId === currentMessage.id) setIsDeleting(true);
@@ -388,7 +439,7 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
   );
 
   const handleDismissLinkPreview = useCallback(async () => {
-    setCurrentMessage((current) => ({ ...current, linkPreviewDisabled: true }));
+    applyLocalPatch({ linkPreviewDisabled: true });
     try {
       if (shouldQueueChatMutation()) {
         await OfflineIntent.enqueue({
@@ -401,7 +452,11 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
         return;
       }
       const updated = await chatApi.setMessageLinkPreviewDisabled(currentMessage.id, true);
-      setCurrentMessage(updated);
+      applyLocalPatch({
+        linkPreviewDisabled: updated.linkPreviewDisabled ?? true,
+        linkPreview: updated.linkPreview,
+        linkPreviewUrl: updated.linkPreviewUrl,
+      });
     } catch (error) {
       if (isRetryableMutationError(error)) {
         try {
@@ -417,7 +472,7 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
           // Show the normal failure below.
         }
       }
-      setCurrentMessage((current) => ({ ...current, linkPreviewDisabled: false }));
+      applyLocalPatch({ linkPreviewDisabled: false });
       toast.error(
         t('chat.linkPreview.removeFailed', {
           defaultValue: 'Could not remove the preview. Please try again.',
@@ -429,19 +484,19 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
     currentMessage.contextId,
     currentMessage.id,
     t,
+    applyLocalPatch,
   ]);
 
-  const parsedRequest =
-    isSystemMessage && currentMessage.content
-      ? (() => {
-          try {
-            const p = JSON.parse(currentMessage.content);
-            return p.type === SystemMessageType.USER_CHAT_REQUEST && !p.responded ? p : null;
-          } catch {
-            return null;
-          }
-        })()
-      : null;
+  // JSON.parse per render for every system row; only the content can change it.
+  const parsedRequest = useMemo(() => {
+    if (!isSystemMessage || !currentMessage.content) return null;
+    try {
+      const p = JSON.parse(currentMessage.content);
+      return p.type === SystemMessageType.USER_CHAT_REQUEST && !p.responded ? p : null;
+    } catch {
+      return null;
+    }
+  }, [isSystemMessage, currentMessage.content]);
   const responderId =
     parsedRequest && userChatUser1Id && userChatUser2Id
       ? parsedRequest.requesterId === userChatUser1Id
@@ -452,17 +507,18 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
     !!parsedRequest && !!responderId && user?.id === responderId && !!onChatRequestRespond;
 
   const hasSystemReactions = currentMessage.reactions.length > 0;
-  const systemReactionStrip = (
+  // Built only for system rows — this element used to be allocated for every message row.
+  const systemReactionStrip = isSystemMessage ? (
     <MessageItemReactionStrip
       isOwnMessage={false}
       isChannel={false}
-      activeEmoji={getCurrentUserReaction()}
-      reactionCounts={getReactionCounts()}
-      pending={isReactionPending()}
+      activeEmoji={currentUserReaction}
+      reactionCounts={reactionCounts}
+      pending={isReactionPending}
       onQuickReaction={handleQuickReaction}
       suppressOpenReactionMotion={suppressOpenReactionMotion}
     />
-  );
+  ) : null;
 
   return (
     <>
@@ -523,7 +579,7 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
         <MessageRowDeleteMotion
           isDeleting={isDeleting}
           messageRef={messageRef}
-          className={`group flex select-none ${isChannel ? 'justify-start' : isOwnMessage ? 'justify-end' : 'justify-start'} ${isLastInGroup ? 'mb-3.5' : hasReplies() ? 'mb-3' : 'mb-1'} relative overflow-visible`}
+          className={`group flex select-none ${isChannel ? 'justify-start' : isOwnMessage ? 'justify-end' : 'justify-start'} ${isLastInGroup ? 'mb-3.5' : hasReplies ? 'mb-3' : 'mb-1'} relative overflow-visible`}
         >
           <div
             className={`flex ${isChannel ? 'w-full max-w-full' : currentMessage.poll ? 'w-[85%] min-w-[85%] flex-shrink-0' : 'max-w-[85%]'} ${isChannel ? 'flex-row' : isOwnMessage ? 'flex-row-reverse' : 'flex-row'} overflow-visible`}
@@ -539,7 +595,7 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
                       setShowPlayerCard(true);
                     }}
                     className="rounded-full p-0 flex items-center justify-center hover:opacity-80 transition-opacity cursor-pointer overflow-hidden"
-                    aria-label={getSenderName()}
+                    aria-label={senderName}
                   >
                     <PlayerAvatar
                       player={currentMessage.sender}
@@ -561,7 +617,7 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
               className={`flex flex-col ${isChannel ? 'items-start flex-1' : isOwnMessage ? 'items-end' : 'items-start'} ${currentMessage.poll ? 'flex-1 min-w-0' : ''} overflow-visible`}
             >
               {!isChannel && !isOwnMessage && isFirstInGroup && (
-                <span className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-0.5 px-2"><PremiumName user={currentMessage.sender}>{getSenderName()}</PremiumName></span>
+                <span className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-0.5 px-2"><PremiumName user={currentMessage.sender}>{senderName}</PremiumName></span>
               )}
 
               <div className={`relative overflow-visible ${currentMessage.poll ? 'w-full' : ''}`}>
@@ -647,19 +703,19 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
                       threadSearchHighlightQuery={threadSearchHighlightQuery}
                     />
 
-                    {!isOffline && hasReplies() && (
+                    {!isOffline && hasReplies && (
                       <div
                         className={`absolute top-[calc(100%-2px)] ${isOwnMessage ? 'right-1' : 'left-2'} z-10 overflow-visible`}
                       >
                         <button
                           onClick={handleScrollToReplies}
                           className={`flex items-center gap-1 px-1.5 py-0.5 rounded-lg text-[9px] transition-colors ${isOwnMessage ? 'text-blue-500 bg-blue-50 hover:text-blue-600 hover:bg-blue-100' : 'text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'}`}
-                          title={`${getReplyCount()} ${getReplyCount() === 1 ? 'reply' : 'replies'}`}
+                          title={`${replyCount} ${replyCount === 1 ? 'reply' : 'replies'}`}
                         >
                           <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
                           </svg>
-                          <span>{getReplyCount()}</span>
+                          <span>{replyCount}</span>
                         </button>
                       </div>
                     )}
@@ -674,9 +730,9 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
                           <MessageItemReactionStrip
                             isOwnMessage={isOwnMessage}
                             isChannel={isChannel}
-                            activeEmoji={getCurrentUserReaction()}
-                            reactionCounts={getReactionCounts()}
-                            pending={isReactionPending()}
+                            activeEmoji={currentUserReaction}
+                            reactionCounts={reactionCounts}
+                            pending={isReactionPending}
                             onQuickReaction={handleQuickReaction}
                             suppressOpenReactionMotion={suppressOpenReactionMotion}
                           />
@@ -697,7 +753,7 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
         <UnifiedMessageMenu
           message={currentMessage}
           isOwnMessage={isOwnMessage}
-          currentReaction={getCurrentUserReaction()}
+          currentReaction={currentUserReaction}
           showReply={showReply}
           onReply={onReplyMessage}
           onEdit={onEditMessage}
@@ -751,34 +807,11 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
     </>
   );
 }, (prev, next) => {
-  if (prev.onOpenChatMedia !== next.onOpenChatMedia) return false;
+  if (prev.suppressOpenReactionMotion !== next.suppressOpenReactionMotion) return false;
   const menuEqual =
     (prev.contextMenuState.isOpen && prev.contextMenuState.messageId === prev.message.id) ===
     (next.contextMenuState.isOpen && next.contextMenuState.messageId === next.message.id);
   if (!menuEqual) return false;
-  return messageRowPropsEqual(
-    {
-      message: prev.message,
-      replyCount: prev.replyCount ?? 0,
-      isPinned: prev.isPinned ?? false,
-      loadMediaEager: prev.loadMediaEager ?? false,
-      showReply: prev.showReply ?? true,
-      isChannel: prev.isChannel ?? false,
-      groupPosition: prev.groupPosition ?? 'single',
-      isThreadSearchOutline: prev.isThreadSearchOutline ?? false,
-      threadSearchHighlightQuery: prev.threadSearchHighlightQuery ?? null,
-    },
-    {
-      message: next.message,
-      replyCount: next.replyCount ?? 0,
-      isPinned: next.isPinned ?? false,
-      loadMediaEager: next.loadMediaEager ?? false,
-      showReply: next.showReply ?? true,
-      isChannel: next.isChannel ?? false,
-      groupPosition: next.groupPosition ?? 'single',
-      isThreadSearchOutline: next.isThreadSearchOutline ?? false,
-      threadSearchHighlightQuery: next.threadSearchHighlightQuery ?? null,
-    }
-  );
+  return messageRowPropsEqual(toMessageRowMemoProps(prev), toMessageRowMemoProps(next));
 })
 ;

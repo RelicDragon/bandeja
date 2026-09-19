@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { CHAT_PINNED_BAR_TRANSITION } from '@/components/chat/chatListMotion';
 import { PinnedMessagesBar } from '@/components/chat/PinnedMessagesBar';
-import { useThreadChrome, useThreadScroll } from './useThreadView';
+import { useThreadChrome, useThreadPinned, useThreadScroll } from './useThreadView';
 
 interface GameChatPinnedBarProps {
   gameChatTabsVisible: boolean;
@@ -10,17 +10,14 @@ interface GameChatPinnedBarProps {
 
 /** Pinned messages bar — chrome + scroll key only, not message list data. */
 export const GameChatPinnedBar: React.FC<GameChatPinnedBarProps> = ({ gameChatTabsVisible }) => {
+  const { showLoadingHeader, panels, isThreadOpenSettling, isInitialLoad } = useThreadChrome();
   const {
     pinnedMessages,
     pinnedMessagesOrdered,
     pinnedBarTopIndex,
     loadingScrollTargetId,
     handlePinnedBarClick,
-    showLoadingHeader,
-    panels,
-    isThreadOpenSettling,
-    isInitialLoad,
-  } = useThreadChrome();
+  } = useThreadPinned();
   const { threadScrollKey } = useThreadScroll();
 
   const pinnedBarSkipAnimationRef = useRef(true);

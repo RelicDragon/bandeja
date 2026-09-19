@@ -53,7 +53,7 @@ interface UserChatCardProps {
 const UserChatCardInner = ({ chat, listPresenceBatched = false, unreadCount = 0, onClick, onMouseEnter, isSelected = false, draft, listOutbox, onOutboxRetry, onOutboxDismiss, isPinned = false, onPinToggle, canPin = true, isPinning = false, isMuted = false, onMuteToggle, isTogglingMute = false }: UserChatCardProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { user } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
   const viewerLevelSport = useViewerLevelSport();
   const displaySettings = useMemo(() => resolveDisplaySettings(user), [user]);
 

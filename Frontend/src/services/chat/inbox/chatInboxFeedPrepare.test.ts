@@ -79,9 +79,15 @@ describe('shouldSkipRedundantNetworkVisibleApply', () => {
     expect(shouldSkipRedundantNetworkVisibleApply(visible, incoming, 'users')).toBe(false);
   });
 
-  it('does not skip for non-users filters', () => {
+  it('skips for non-users filters when row content matches (no city group precondition)', () => {
     const list = [cityGroupItem('city-1')];
-    expect(shouldSkipRedundantNetworkVisibleApply(list, list, 'bugs')).toBe(false);
+    expect(shouldSkipRedundantNetworkVisibleApply(list, [...list], 'bugs')).toBe(true);
+  });
+
+  it('does not skip for non-users filters when row content differs', () => {
+    const visible = [gameItem('g1', 0)];
+    const incoming = [gameItem('g1', 2)];
+    expect(shouldSkipRedundantNetworkVisibleApply(visible, incoming, 'channels')).toBe(false);
   });
 });
 

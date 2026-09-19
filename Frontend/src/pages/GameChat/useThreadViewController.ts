@@ -373,7 +373,7 @@ export function useThreadViewController({
     setUserChat,
     handleTranslateToLanguageChange,
     handleGroupChannelUpdate: chrome.handleGroupChannelUpdate,
-    lastOwnMessage: thread.derived.lastOwnMessage,
+    lastOwnMessage: thread.lastOwnMessage,
     hasMessages: thread.messages.length > 0,
     isChannel: thread.derived.isChannel,
     title: chrome.title,

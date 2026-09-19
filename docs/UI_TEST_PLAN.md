@@ -1227,6 +1227,10 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | CH-92 | Archived game chat drops queued sends | Queue or fail a game-chat send → owner deletes game while thread is open, or reopen archived `/games/:id/chat` with pending local outbox row | Pending send disappears instead of retrying; no stale sending/retry UI remains; toast explains game was cancelled and chat is now read-only |
 | CH-93 | Unread stable after logout/login | Read all chats (zero unread) → logout → login same user → open Chats | Tab and row badges stay at zero; no transient all-chats-unread spike from sync replay |
 | CH-94 | Chat connection line | Open game, bug, group, or DM chat → go offline or trigger sync | Animated line at header bottom (amber sync / red offline); header height unchanged; no tint or inline badge |
+| CH-97 | Search typing does not shift the list | Chats → Users → type a query letter by letter | Characters appear instantly; rows below stay still while typing; results and `?q=` update once ~500ms after the last keystroke; clear (X) empties the field and `?q=` immediately |
+| CH-98 | Inbox stable under unread traffic | Keep Chats open while another user sends messages to other threads | Only the affected row's badge changes; unaffected rows do not re-animate, reorder-flash, or lose scroll position |
+| CH-99 | Filter switch single paint | Switch Users ↔ Bugs ↔ Channels ↔ Market on a warm cache | One paint from cache; no second full-list reshuffle or re-run of row enter animation when the network returns identical rows |
+| CH-100 | Pull-to-refresh smoothness | `@mobile` Chats inbox → pull down slowly, release above and below threshold | List follows the finger without stutter; indicator fades/rotates with the pull; release eases back; above threshold refreshes then eases back |
 
 ### 11.2 Thread types
 
@@ -1430,6 +1434,7 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | CH-49 | Mobile full-screen thread | `@mobile` select chat | Full screen, no split |
 | CH-50 | Desktop split persist | Select chat → resize splitter | Layout preserved |
 | CH-51 | Back from thread mobile | Back | Returns to list |
+| CH-51a | Thread open/close keeps the shell mounted | `@mobile` Chats → open a thread → back → open another | App header and inbox are not torn down and rebuilt on each hop; no chrome flash between list and thread; inbox scroll position and filter survive the round trip |
 | CH-52 | Create bug report | Bugs filter → add bug | `BugModal` → bug thread created |
 | CH-52a | Create review with stars | Bugs filter → add → type Review → pick 1–5 stars → submit | Submit disabled until stars picked; thread created as Review; stars shown on list row and context panel |
 | CH-52b | Review stars vs priority | Open a Review thread and a Bug thread | Review shows star rating (not -2…+2 priority); other types show priority selector |

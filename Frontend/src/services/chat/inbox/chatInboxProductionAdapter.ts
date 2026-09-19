@@ -43,7 +43,6 @@ export function createProductionChatInboxAdapter(
         threads: s.rows,
         loading: s.loading,
         pagination: paginationFromStore(),
-        filterCache: s.filterCache,
       };
     },
 

@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { History, ArrowDown } from 'lucide-react';
@@ -18,7 +19,7 @@ interface PastGamesSectionProps {
   onNoteSaved?: (gameId: string) => void;
 }
 
-export const PastGamesSection = ({
+const PastGamesSectionView = ({
   pastGames,
   loadingPastGames,
   hasMorePastGames,
@@ -66,3 +67,5 @@ export const PastGamesSection = ({
     </AnimatedMount>
   );
 };
+
+export const PastGamesSection = memo(PastGamesSectionView);

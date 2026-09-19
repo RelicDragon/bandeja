@@ -14,7 +14,7 @@ interface PollMessageProps {
 
 export const PollMessage: React.FC<PollMessageProps> = ({ poll, messageId, onPollUpdated }) => {
     const { t } = useTranslation();
-    const { user } = useAuthStore();
+    const user = useAuthStore((s) => s.user);
     const [isVoting, setIsVoting] = useState(false);
     const [votingOptionId, setVotingOptionId] = useState<string | null>(null);
     const [votersModalOpen, setVotersModalOpen] = useState(false);

@@ -37,9 +37,14 @@ export function useMyTabPanelCounts(
 
   const leaguesCount = useMemo(() => leagueSeasonHubsFromGames(games).length, [games]);
 
-  return {
-    bookings: bookingsCount,
-    teams: teamsCount,
-    leagues: leaguesCount,
-  };
+  // Memoised because this is handed to `HomeActionGrid` as a single prop; a new
+  // object per render would defeat that component's memo.
+  return useMemo(
+    () => ({
+      bookings: bookingsCount,
+      teams: teamsCount,
+      leagues: leaguesCount,
+    }),
+    [bookingsCount, teamsCount, leaguesCount],
+  );
 }

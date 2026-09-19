@@ -1,3 +1,4 @@
+import { useCallback, useMemo, useRef } from 'react';
 import { keepPreviousData, queryOptions, useQuery, useQueryClient } from '@tanstack/react-query';
 import { gamesApi } from '@/api';
 import { attachAvailableGamesEnrichment } from '@/utils/attachAvailableGamesEnrichment';
@@ -89,20 +90,28 @@ export function useAvailableUpcomingGamesQuery(
   const queryClient = useQueryClient();
   const optionsForQuery = availableUpcomingGamesQueryOptions(params, enabled);
   const query = useQuery(optionsForQuery);
-  const queryKey = optionsForQuery.queryKey;
+  const filterHash = optionsForQuery.queryKey[2];
+  const queryKey = useMemo(
+    () => queryKeys.games.availableUpcoming(filterHash),
+    [filterHash],
+  );
+  const paramsRef = useRef(params);
+  paramsRef.current = params;
 
-  const loadMore = async () => {
-    const current = query.data;
+  // Stable identity: this is threaded down to the Find section as a prop, and a
+  // fresh function each render would invalidate the memoised props object.
+  const loadMore = useCallback(async () => {
+    const current = queryClient.getQueryData<AvailableGamesPage>(queryKey);
     if (!current?.meta.hasMore || !current.meta.nextCursor) return;
     const response = await gamesApi.getAvailableUpcomingGames(
-      buildAvailableUpcomingApiParams(params, { cursor: current.meta.nextCursor }),
+      buildAvailableUpcomingApiParams(paramsRef.current, { cursor: current.meta.nextCursor }),
     );
     const incoming = response.data || [];
     const meta = parseMeta(response.meta);
     const games = mergeAvailableGamesPages(current.games, incoming);
     queryClient.setQueryData(queryKey, { games, meta });
     void attachAvailableGamesEnrichment(queryClient, queryKey, incoming);
-  };
+  }, [queryClient, queryKey]);
 
   return { ...query, loadMore };
 }

@@ -12,11 +12,20 @@ import { isChatShellPlace, parseLocation } from '@/utils/urlSchema';
 
 interface MainLayoutProps {
   children: ReactNode;
+  /**
+   * `bare` keeps the React tree shape but collapses every wrapper to `display: contents`
+   * and drops the header, so a route that wants no app chrome (a mobile chat thread)
+   * can stay under the same layout element instead of swapping the root — swapping it
+   * unmounted and remounted the whole page subtree on each navigation.
+   */
+  chrome?: 'full' | 'bare';
 }
+
+const CONTENTS = 'contents';
 
 const INIT_SHELL_DURATION_MS = 400;
 
-export const MainLayout = ({ children }: MainLayoutProps) => {
+export const MainLayout = ({ children, chrome = 'full' }: MainLayoutProps) => {
   const location = useLocation();
   const user = useAuthStore((state) => state.user);
   const {
@@ -88,35 +97,44 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
   const isUserTeamRoute = /^\/user-team\/[^/]+$/.test(location.pathname);
   const useFlexContentShell = isUserTeamRoute || isMobileChatInboxShell;
 
+  const isBare = chrome === 'bare';
+  const fullBleedContent = anySplitView || gameDetailsWideBleedChrome;
+  /** One element per slot in every mode; only the classes change, so `children` never remounts. */
+  const contentClassName = isBare
+    ? CONTENTS
+    : fullBleedContent
+      ? CONTENTS
+      : useFlexContentShell
+        ? `flex min-h-0 flex-1 flex-col ${isMobileChatInboxShell ? 'px-2' : 'container mx-auto w-full max-w-7xl px-2 py-1'}`
+        : `container mx-auto py-4 ${isUserProfilePage ? 'px-0' : 'px-2'}`;
+
   return (
     <div
-      className={`bg-gray-50 dark:bg-gray-900 ${usesPremiumTheme(user) ? 'premium-shell' : ''} ${useFlexContentShell ? 'flex min-h-screen flex-col' : 'min-h-screen'}`}
+      className={
+        isBare
+          ? CONTENTS
+          : `bg-gray-50 dark:bg-gray-900 ${usesPremiumTheme(user) ? 'premium-shell' : ''} ${useFlexContentShell ? 'flex min-h-screen flex-col' : 'min-h-screen'}`
+      }
     >
-      {!shouldHideHeader && (
+      {!shouldHideHeader && !isBare && (
         <div className="relative z-50">
           <Header animateEntry={isHomeInit} />
         </div>
       )}
       <main
-        className={useFlexContentShell ? 'flex min-h-0 flex-1 flex-col' : undefined}
-        style={{
-          paddingTop: shouldHideHeader ? '0' : anySplitView || gameDetailsWideBleedChrome ? '0' : `calc(var(--app-header-height, 4rem) + env(safe-area-inset-top))`,
-          paddingBottom: mainBottomPadding,
-          paddingLeft: anySplitView || userProfileFullBleed || gameDetailsWideBleedChrome ? '0' : `max(0.5rem, env(safe-area-inset-left))`,
-          paddingRight: anySplitView || userProfileFullBleed || gameDetailsWideBleedChrome ? '0' : `max(0.5rem, env(safe-area-inset-right))`,
-        }}
+        className={isBare ? CONTENTS : useFlexContentShell ? 'flex min-h-0 flex-1 flex-col' : undefined}
+        style={
+          isBare
+            ? undefined
+            : {
+                paddingTop: shouldHideHeader ? '0' : fullBleedContent ? '0' : `calc(var(--app-header-height, 4rem) + env(safe-area-inset-top))`,
+                paddingBottom: mainBottomPadding,
+                paddingLeft: fullBleedContent || userProfileFullBleed ? '0' : `max(0.5rem, env(safe-area-inset-left))`,
+                paddingRight: fullBleedContent || userProfileFullBleed ? '0' : `max(0.5rem, env(safe-area-inset-right))`,
+              }
+        }
       >
-        {anySplitView || gameDetailsWideBleedChrome ? (
-          children
-        ) : useFlexContentShell ? (
-          <div
-            className={`flex min-h-0 flex-1 flex-col ${isMobileChatInboxShell ? 'px-2' : 'container mx-auto w-full max-w-7xl px-2 py-1'}`}
-          >
-            {children}
-          </div>
-        ) : (
-          <div className={`container mx-auto py-4 ${isUserProfilePage ? 'px-0' : 'px-2'}`}>{children}</div>
-        )}
+        <div className={contentClassName}>{children}</div>
       </main>
     </div>
   );

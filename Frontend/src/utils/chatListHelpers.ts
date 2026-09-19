@@ -132,14 +132,16 @@ export function threadIndexLiveMergeSig(chats: ChatItem[]): string {
     .join('\0');
 }
 
+/** Returns the input array untouched when there is nothing to drop, so callers keep list identity. */
 export const deduplicateChats = (chats: ChatItem[]) => {
   const seen = new Set<string>();
-  return chats.filter((c) => {
+  const kept = chats.filter((c) => {
     const key = getChatKey(c);
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
   });
+  return kept.length === chats.length ? chats : kept;
 };
 
 export const calculateLastMessageDate = (
@@ -177,6 +179,29 @@ export const gamesToChatItems = (
   return items;
 };
 
+function sameLastMessageDate(a: Date | null | undefined, b: Date | null | undefined): boolean {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  return a.getTime() === b.getTime();
+}
+
+/** Drafts are refetched as fresh objects, so compare by value, not identity. */
+function sameDraft(a: ChatDraft | null, b: ChatDraft | null): boolean {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  return (
+    a.id === b.id &&
+    a.updatedAt === b.updatedAt &&
+    (a.content ?? '') === (b.content ?? '') &&
+    a.chatType === b.chatType
+  );
+}
+
+/**
+ * Returns `chat` unchanged when nothing moved. This path runs on every filter switch,
+ * network settle and draft reapply — cloning rows there invalidates every row memo and
+ * restarts the list enter/layout animations for rows that did not change.
+ */
 function chatItemWithDraft(
   chat: ChatItem,
   draft: ChatDraft | null,
@@ -189,6 +214,10 @@ function chatItemWithDraft(
       : undefined;
   const lastMessageDate =
     lastMessage || draft ? calculateLastMessageDate(lastMessage, draft, updatedAt) : chat.lastMessageDate;
+  const prevDraft = 'draft' in chat ? chat.draft ?? null : null;
+  if (sameDraft(prevDraft, draft) && sameLastMessageDate(chat.lastMessageDate, lastMessageDate)) {
+    return chat;
+  }
   return { ...chat, draft, lastMessageDate };
 }
 
@@ -216,12 +245,14 @@ export function applyDraftsToChatItems(
     }
     return chat;
   });
-  if (!resort) return updated;
-  if (listFilter === 'users') return sortChatItems(updated, 'users', userId);
-  if (listFilter === 'bugs' || listFilter === 'channels' || listFilter === 'market') {
-    return sortChatItems(updated, listFilter);
-  }
-  return updated;
+  const sameAsInput = (rows: ChatItem[]) => rows.every((c, i) => c === chats[i]);
+  if (!resort) return sameAsInput(updated) ? chats : updated;
+  const sorted =
+    listFilter === 'users'
+      ? sortChatItems(updated, 'users', userId)
+      : sortChatItems(updated, listFilter);
+  /** Keep list identity when no row and no position moved — callers use it to skip a store write. */
+  return sameAsInput(sorted) ? chats : sorted;
 }
 
 export const groupsToChatItems = (

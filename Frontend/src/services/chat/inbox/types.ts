@@ -23,8 +23,6 @@ export type ChatInboxPagination = {
 };
 
 export type ChatInboxReadModel = {
-  threads: ChatItem[];
-  unreadByThread: Map<string, number>;
   subtabs: ChatInboxSubtabBadges;
   loading: boolean;
   refreshing: boolean;
@@ -35,7 +33,6 @@ export type ChatInboxReadModel = {
   unreadStoreWarm: boolean;
   marketBuyerSellerUnread: { buyer: number; seller: number };
   marketUnreadCounts: Record<string, number>;
-  marketChannelIdsKey: string;
   pinnedCountUsers: number;
 };
 
@@ -47,11 +44,14 @@ export type ChatInboxSearchData = {
   followersUsers: BasicUser[];
 };
 
+/**
+ * Kept deliberately small: every field here is compared on each feed-store write,
+ * so anything the inbox does not read would re-render the whole Chats tab.
+ */
 export type ChatInboxFeedSnapshot = {
   threads: ChatItem[];
   loading: boolean;
   pagination: ChatInboxPagination;
-  filterCache: Partial<Record<ChatsFilterType, FilterCache>>;
 };
 
 export type ChatInboxSocketContext = {

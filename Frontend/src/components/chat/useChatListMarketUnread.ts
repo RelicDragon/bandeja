@@ -15,15 +15,11 @@ export function useChatListMarketUnread(chatsFilter: ChatsFilterType, chats: Cha
         : [],
     [chatsFilter, chats]
   );
-  const marketChannelIdsKey = useMemo(() => {
-    if (chatsFilter !== 'market' || marketChannelIds.length === 0) return '';
-    return [...marketChannelIds].sort().join(',');
-  }, [chatsFilter, marketChannelIds]);
   // Subscribe to a shallow-stable record of ONLY the visible market channels,
   // not the whole byContext map, so this re-renders only when one of these
   // channels' counts changes.
   const marketUnreadCounts = useUnreadStore(
     useShallow((s) => (warm ? groupUnreadCountsMap(marketChannelIds, s.displayedByContext) : {}))
   );
-  return { marketChannelIdsKey, marketUnreadCounts };
+  return { marketUnreadCounts };
 }

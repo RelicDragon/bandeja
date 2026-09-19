@@ -101,6 +101,20 @@ export interface ThreadComposerValue {
   isChannel: boolean;
 }
 
+/**
+ * Pinned bar and scroll-target state. Split out of the chrome seam because it changes on pin,
+ * unpin and every jump-to-message, while only the pinned bar and the message pane read it.
+ */
+export interface ThreadPinnedValue {
+  pinnedMessages: ChatMessage[];
+  pinnedMessagesOrdered: ChatMessage[];
+  pinnedBarTopIndex: number;
+  loadingScrollTargetId: string | null;
+  scrollTargetMessageId: string | null;
+  handleScrollTargetReached: (messageId: string) => void;
+  handlePinnedBarClick: (messageId: string) => void;
+}
+
 export interface ThreadChromeValue {
   id: string | undefined;
   contextType: ChatContextType;
@@ -119,13 +133,6 @@ export interface ThreadChromeValue {
   setGroupChannelParticipantsCount: React.Dispatch<React.SetStateAction<number>>;
   isLoadingContext: boolean;
   loadContext: (options?: LoadContextOptions) => Promise<unknown>;
-  pinnedMessages: ChatMessage[];
-  pinnedMessagesOrdered: ChatMessage[];
-  pinnedBarTopIndex: number;
-  loadingScrollTargetId: string | null;
-  scrollTargetMessageId: string | null;
-  handleScrollTargetReached: (messageId: string) => void;
-  handlePinnedBarClick: (messageId: string) => void;
   derived: ReturnType<typeof useThreadDerived>;
   footerVariant: GameChatFooterVariant | null;
   effectiveFooterVariant: GameChatFooterVariant | null;
@@ -171,6 +178,7 @@ export interface ThreadViewValue
   extends ThreadMessagesValue,
     ThreadScrollValue,
     ThreadComposerValue,
+    ThreadPinnedValue,
     ThreadChromeValue {}
 
 export const ThreadMessageActionsContext = createContext<ThreadMessageActionsValue | null>(null);
@@ -178,5 +186,6 @@ export const ThreadMessagesDataContext = createContext<ThreadMessagesDataValue |
 export const ThreadMessagesContext = createContext<ThreadMessagesValue | null>(null);
 export const ThreadScrollContext = createContext<ThreadScrollValue | null>(null);
 export const ThreadComposerContext = createContext<ThreadComposerValue | null>(null);
+export const ThreadPinnedContext = createContext<ThreadPinnedValue | null>(null);
 export const ThreadChromeContext = createContext<ThreadChromeValue | null>(null);
 export const ThreadSearchContext = createContext<ThreadSearchValue | null>(null);

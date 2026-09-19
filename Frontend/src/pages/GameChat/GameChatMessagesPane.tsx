@@ -7,7 +7,7 @@ import {
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { MessageList } from '@/components/MessageList';
 import { ChatAutoTranslateContext } from '@/contexts/ChatAutoTranslateContext';
-import { useThreadChrome, useThreadMessageActions, useThreadMessagesData, useThreadScroll, useThreadSearch } from './useThreadView';
+import { useThreadChrome, useThreadMessageActions, useThreadMessagesData, useThreadPinned, useThreadScroll, useThreadSearch } from './useThreadView';
 import { ThreadScrollTargetOverlay } from './ThreadScrollTargetOverlay';
 
 /** Message list shell — subscribes to message data, actions, and scroll seams. */
@@ -48,7 +48,6 @@ export const GameChatMessagesPane: React.FC = () => {
   const {
     contextType,
     userChat,
-    pinnedMessages,
     derived,
     panels,
     autoTranslateLanguageCodes,
@@ -56,10 +55,13 @@ export const GameChatMessagesPane: React.FC = () => {
     effectiveChatType,
     id,
     game,
+  } = useThreadChrome();
+  const {
+    pinnedMessages,
     scrollTargetMessageId,
     handleScrollTargetReached,
     loadingScrollTargetId,
-  } = useThreadChrome();
+  } = useThreadPinned();
   const { threadSearchOutlineQuery } = useThreadSearch();
 
   const reduceMotion = usePrefersReducedMotion();

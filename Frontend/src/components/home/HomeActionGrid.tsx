@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { Search, Ticket } from 'lucide-react';
@@ -29,7 +30,7 @@ interface HomeActionGridProps {
  * (`?playIntentOpen=1`, `?proposal=`, `?lobby=1`) is preserved for the My tab,
  * and so the hero can read provider state.
  */
-export function HomeActionGrid({
+function HomeActionGridView({
   user,
   games,
   gamesUnreadCounts,
@@ -112,3 +113,5 @@ export function HomeActionGrid({
     </PlayIntentProvider>
   );
 }
+
+export const HomeActionGrid = memo(HomeActionGridView);

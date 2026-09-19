@@ -9,12 +9,12 @@ import { useNearbyPeopleSearch } from '@/hooks/useNearbyPeopleSearch';
 import { useShellNavStore } from '@/store/shellNavStore';
 import { useGameDetailsChromeStore } from '@/components/GameDetails/gameDetailsChromeStore';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
-import { useDebounce } from '@/components/CityMap/useDebounce';
 import { usePresenceSubscription } from '@/hooks/usePresenceSubscription';
 import {
   collectChatListPresenceUserIds,
   collectSearchRowsPresenceUserIds,
 } from '@/utils/chatListPresenceIds';
+import { CHAT_LIST_PULL_TRANSITION_S } from '@/components/chat/chatListMotion';
 import { useChatListFeedStore, type ChatsFilterType } from '@/components/chat/chatListFeedStore';
 import type { ChatListViewModel } from '@/components/chat/chatListViewModel.types';
 import { useChatInbox } from '@/services/chat/inbox/useChatInbox';
@@ -51,8 +51,8 @@ export function useChatListModel({
   const setOpenBugModal = useGameDetailsChromeStore((s) => s.setOpenBugModal);
 
   const urlQuery = searchParams.get('q') ?? '';
-  const [searchInput, setSearchInput] = useState(urlQuery);
-  const debouncedSearchQuery = useDebounce(searchInput, 500);
+  /** Already debounced: `ChatListSearchBar` owns the raw keystrokes and lifts only the settled query. */
+  const [debouncedSearchQuery, setSearchInput] = useState(urlQuery);
   const skipUrlSyncRef = useRef(false);
   useChatListSearchUrlSync(urlQuery, skipUrlSyncRef, setSearchInput);
 
@@ -145,6 +145,36 @@ export function useChatListModel({
     setSearchParams((prev) => toggleChatListUnreadUrlParam(prev));
   }, [setSearchParams]);
 
+  const handleSearchChange = useCallback(
+    (value: string) => {
+      skipUrlSyncRef.current = true;
+      setSearchInput(value);
+      setSearchParams(
+        (p) => {
+          const next = new URLSearchParams(p);
+          if (value.trim()) next.set('q', value);
+          else next.delete('q');
+          return next;
+        },
+        { replace: true }
+      );
+    },
+    [setSearchParams]
+  );
+
+  const handleClearSearch = useCallback(() => {
+    skipUrlSyncRef.current = true;
+    setSearchInput('');
+    setSearchParams(
+      (p) => {
+        const next = new URLSearchParams(p);
+        next.delete('q');
+        return next;
+      },
+      { replace: true }
+    );
+  }, [setSearchParams]);
+
   const handleContactsToggle = useCallback(
     () => toggleContacts(skipUrlSyncRef, setSearchInput, searchData.fetchContactsData),
     [toggleContacts, searchData.fetchContactsData]
@@ -174,9 +204,30 @@ export function useChatListModel({
     }
   }, [chatsFilter, debouncedSearchQuery, searchData]);
 
-  const { isRefreshing, pullDistance, pullProgress } = usePullToRefresh({
+  /**
+   * Pull distance is written to CSS variables on the list shell instead of React state:
+   * a touchmove used to re-render the whole inbox (and re-measure every animated row).
+   */
+  const pullShellRef = useRef<HTMLDivElement>(null);
+  const publishPullDistance = useCallback(
+    (distance: number, progress: number, refreshing: boolean) => {
+      const el = pullShellRef.current;
+      if (!el) return;
+      el.style.setProperty('--chat-pull-distance', `${distance}px`);
+      el.style.setProperty('--chat-pull-progress', `${progress}`);
+      el.style.setProperty('--chat-pull-visibility', distance > 0 ? 'visible' : 'hidden');
+      /** Follow the finger instantly while dragging; ease back once released or refreshing. */
+      el.style.setProperty(
+        '--chat-pull-transition',
+        distance > 0 && !refreshing ? 'none' : `transform ${CHAT_LIST_PULL_TRANSITION_S}s ease-out`
+      );
+    },
+    []
+  );
+  const { isRefreshing } = usePullToRefresh({
     onRefresh: refresh,
     disabled: loading || isDesktop,
+    onPullDistanceChange: publishPullDistance,
   });
 
   const handleBugCreated = useCallback(
@@ -279,10 +330,12 @@ export function useChatListModel({
       getChatKey,
       networkSettled,
     },
-    pullRefresh: { isRefreshing, pullDistance, pullProgress },
+    pullRefresh: { isRefreshing, pullShellRef },
     search: {
-      searchInput,
+      searchInput: debouncedSearchQuery,
       setSearchInput,
+      onSearchChange: handleSearchChange,
+      onClearSearch: handleClearSearch,
       debouncedSearchQuery,
       isSearchMode,
       displayChats,
@@ -292,8 +345,6 @@ export function useChatListModel({
       unreadChatsCount: readModel.unreadChatsCount,
       unreadFilterActive,
       toggleUnreadFilter,
-      skipUrlSyncRef,
-      setSearchParams,
       nearbyGroups: nearbySearch.groups,
       nearbyLoading: nearbySearch.loading,
       browseCityName: browseCity.name,

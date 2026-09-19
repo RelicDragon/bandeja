@@ -17,8 +17,8 @@ import {
   CHAT_PANEL_TRANSITION,
 } from '@/components/chat/chatListMotion';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
-import { getChatDateSeparatorLabel } from '@/utils/chatDateSeparator';
-import { getMessageGroupPosition } from '@/utils/chatMessageGrouping';
+import { buildChatMessageRowMeta } from '@/utils/chatMessageRowMeta';
+import type { MessageRowHandlers } from '@/components/MessageItem/types';
 import { FullscreenImageViewer } from '@/components/FullscreenImageViewer';
 import {
   buildChatMediaGallery,
@@ -71,7 +71,7 @@ const MessageListInner = forwardRef<MessageListHandle, MessageListProps>(functio
   },
   ref
 ) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const reduceMotion = usePrefersReducedMotion();
   const pinnedSet = useMemo(() => new Set(pinnedMessageIds), [pinnedMessageIds]);
   const messagesRef = useRef(messages);
@@ -113,7 +113,7 @@ const MessageListInner = forwardRef<MessageListHandle, MessageListProps>(functio
   }, [onScrollToMessage]);
 
   const rowHandlers = useMemo(
-    () => ({
+    (): MessageRowHandlers => ({
       onAddReaction,
       onRemoveReaction,
       onDeleteMessage,
@@ -123,13 +123,10 @@ const MessageListInner = forwardRef<MessageListHandle, MessageListProps>(functio
       onResendQueued,
       onRemoveFromQueue,
       onScrollToMessage,
-      isChannel,
-      userChatUser1Id,
-      userChatUser2Id,
+      onScrollToFirstReply,
       onChatRequestRespond,
       onPin,
       onUnpin,
-      showReply,
       onForwardMessage,
       onOpenChatMedia: handleOpenChatMedia,
     }),
@@ -143,19 +140,23 @@ const MessageListInner = forwardRef<MessageListHandle, MessageListProps>(functio
       onResendQueued,
       onRemoveFromQueue,
       onScrollToMessage,
-      isChannel,
-      userChatUser1Id,
-      userChatUser2Id,
+      onScrollToFirstReply,
       onChatRequestRespond,
       onPin,
       onUnpin,
-      showReply,
       onForwardMessage,
       handleOpenChatMedia,
     ]
   );
 
   const isMessagesPending = isThreadMessagesPending(isLoadingMessages, isInitialLoad);
+  // Separator labels and sender grouping in one pass per message change, instead of re-parsing
+  // `createdAt` for every visible row (and its neighbours) on every scroll frame.
+  const rowMeta = useMemo(
+    () => buildChatMessageRowMeta(messages),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- labels are locale-formatted
+    [messages, i18n.language]
+  );
   const messageRowKeys = useMemo(
     () => messages.map((m) => getMessageRowKey(m)),
     [messages]
@@ -265,10 +266,10 @@ const MessageListInner = forwardRef<MessageListHandle, MessageListProps>(functio
               const message = row.index < messages.length ? messages[row.index] : undefined;
               const rowKey = message ? getMessageRowKey(message) : String(row.key);
               const dateSeparatorLabel = message
-                ? getChatDateSeparatorLabel(messages, row.index)
+                ? (rowMeta.dateSeparatorLabels[row.index] ?? null)
                 : null;
               const groupPosition = message
-                ? getMessageGroupPosition(messages, row.index)
+                ? (rowMeta.groupPositions[row.index] ?? 'single')
                 : 'single';
               return (
                 <MessageListRow
@@ -288,8 +289,11 @@ const MessageListInner = forwardRef<MessageListHandle, MessageListProps>(functio
                   fadeDateSeparator={
                     dateSeparatorLabel ? consumeDateSeparatorFade(dateSeparatorLabel) : false
                   }
-                  onScrollToFirstReply={onScrollToFirstReply}
                   handlers={rowHandlers}
+                  isChannel={isChannel}
+                  userChatUser1Id={userChatUser1Id}
+                  userChatUser2Id={userChatUser2Id}
+                  showReply={showReply}
                   entityType={entityType}
                   threadSearchOutlineQuery={threadSearchOutlineQuery}
                 />

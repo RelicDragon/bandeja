@@ -5,6 +5,7 @@ import {
   ThreadMessageActionsContext,
   ThreadMessagesContext,
   ThreadMessagesDataContext,
+  ThreadPinnedContext,
   ThreadScrollContext,
   ThreadSearchContext,
   type ThreadChromeValue,
@@ -12,6 +13,7 @@ import {
   type ThreadMessageActionsValue,
   type ThreadMessagesDataValue,
   type ThreadMessagesValue,
+  type ThreadPinnedValue,
   type ThreadScrollValue,
   type ThreadSearchValue,
 } from './ThreadViewContext';
@@ -45,6 +47,10 @@ export function useThreadChrome(): ThreadChromeValue {
   return requireCtx(useContext(ThreadChromeContext), 'useThreadChrome');
 }
 
+export function useThreadPinned(): ThreadPinnedValue {
+  return requireCtx(useContext(ThreadPinnedContext), 'useThreadPinned');
+}
+
 export function useThreadSearch(): ThreadSearchValue {
   return requireCtx(useContext(ThreadSearchContext), 'useThreadSearch');
 }
@@ -56,5 +62,6 @@ export type {
   ThreadScrollValue,
   ThreadComposerValue,
   ThreadChromeValue,
+  ThreadPinnedValue,
   ThreadSearchValue,
 };

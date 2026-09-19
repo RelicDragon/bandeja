@@ -2,7 +2,7 @@ import { usesPremiumTheme } from '@/utils/mainTheme';
 import { AnimatePresence, motion } from 'framer-motion';
 import { CHAT_LIST_FADE_TRANSITION_S, CHAT_LIST_PULL_TRANSITION_S } from '@/components/chat/chatListMotion';
 import { Package, ShoppingCart, Store } from 'lucide-react';
-import { RefreshIndicator } from '@/components/RefreshIndicator';
+import { ChatListPullIndicator } from './ChatListPullIndicator';
 import { ChatListSearchBar } from './ChatListSearchBar';
 import { BugsFilterPanel } from '@/components/bugs/BugsFilterPanel';
 import { ChatMessageSearchResults } from './ChatMessageSearchResults';
@@ -27,10 +27,11 @@ export function ChatListView({ model }: { model: ChatListViewModel }) {
   const { t, isDesktop, user, feed, pullRefresh, search, market, contacts, sections, actions, modals, selection } =
     model;
   const { loading, chatsFilter, displayedChats, showChatsEmpty, pinnedCountUsers, loadMoreSentinelRef, listBodyScrollRef, networkSettled, bugsHasMore, usersHasMore, channelsHasMore, marketHasMore, bugsLoadingMore, usersLoadingMore, channelsLoadingMore, marketLoadingMore } = feed;
-  const { isRefreshing, pullDistance, pullProgress } = pullRefresh;
+  const { isRefreshing, pullShellRef } = pullRefresh;
   const {
     searchInput,
-    setSearchInput,
+    onSearchChange,
+    onClearSearch,
     debouncedSearchQuery,
     isSearchMode,
     displayChats,
@@ -40,8 +41,6 @@ export function ChatListView({ model }: { model: ChatListViewModel }) {
     unreadChatsCount,
     unreadFilterActive,
     toggleUnreadFilter,
-    skipUrlSyncRef,
-    setSearchParams,
     nearbyGroups,
     browseCityName,
     nearbyLoading,
@@ -120,19 +119,14 @@ export function ChatListView({ model }: { model: ChatListViewModel }) {
 
   return (
     <ChatListMotionProvider listLoading={loading} networkSettled={networkSettled}>
-    <>
-      {!isDesktop && (
-        <RefreshIndicator
-          isRefreshing={isRefreshing}
-          pullDistance={pullDistance}
-          pullProgress={pullProgress}
-        />
-      )}
+    {/* `display: contents` keeps layout identical while carrying the pull CSS variables. */}
+    <div ref={pullShellRef} className="contents">
+      {!isDesktop && <ChatListPullIndicator isRefreshing={isRefreshing} />}
       <div
         className={`${usesPremiumTheme(user) ? 'premium-chat premium-chat-list' : ''} flex h-full min-h-0 flex-col overflow-hidden ${isDesktop ? 'bg-white dark:bg-gray-900' : ''}`}
         style={{
-          transform: isDesktop ? 'none' : `translateY(${pullDistance}px)`,
-          transition: pullDistance > 0 && !isRefreshing ? 'none' : `transform ${CHAT_LIST_PULL_TRANSITION_S}s ease-out`,
+          transform: isDesktop ? 'none' : 'translateY(var(--chat-pull-distance, 0px))',
+          transition: `var(--chat-pull-transition, transform ${CHAT_LIST_PULL_TRANSITION_S}s ease-out)`,
         }}
       >
         {(chatsFilter === 'users' || chatsFilter === 'bugs' || chatsFilter === 'channels' || chatsFilter === 'market') && (
@@ -144,25 +138,8 @@ export function ChatListView({ model }: { model: ChatListViewModel }) {
             unreadChatsCount={unreadChatsCount}
             unreadFilterActive={unreadFilterActive}
             onUnreadFilterToggle={toggleUnreadFilter}
-            onSearchChange={(v) => {
-              skipUrlSyncRef.current = true;
-              setSearchInput(v);
-              setSearchParams((p) => {
-                const next = new URLSearchParams(p);
-                if (v.trim()) next.set('q', v);
-                else next.delete('q');
-                return next;
-              }, { replace: true });
-            }}
-            onClearSearch={() => {
-              skipUrlSyncRef.current = true;
-              setSearchInput('');
-              setSearchParams((p) => {
-                const next = new URLSearchParams(p);
-                next.delete('q');
-                return next;
-              }, { replace: true });
-            }}
+            onSearchChange={onSearchChange}
+            onClearSearch={onClearSearch}
             onContactsToggle={handleContactsToggle}
             onAddBug={() => setShowBugModal(true)}
             onCreateListing={chatsFilter === 'market' ? handleCreateListing : undefined}
@@ -469,7 +446,7 @@ export function ChatListView({ model }: { model: ChatListViewModel }) {
           onClose={closeMarketItemDrawer}
         />
       )}
-    </>
+    </div>
     </ChatListMotionProvider>
   );
 }

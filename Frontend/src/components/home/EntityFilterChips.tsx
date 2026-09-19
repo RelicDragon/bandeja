@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { Users, Swords, Dumbbell, Trophy, CalendarDays, type LucideIcon } from 'lucide-react';
@@ -67,7 +68,7 @@ const Chip = ({ icon: Icon, label, active, onClick, entityType, className }: Chi
   </motion.button>
 );
 
-export const EntityFilterChips = ({
+const EntityFilterChipsView = ({
   gameActive,
   tournamentActive,
   trainingActive,
@@ -122,3 +123,5 @@ export const EntityFilterChips = ({
     </div>
   );
 };
+
+export const EntityFilterChips = memo(EntityFilterChipsView);

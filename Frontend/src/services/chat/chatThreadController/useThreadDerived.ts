@@ -25,13 +25,33 @@ function getLastOwnMessageIdentity(
   return null;
 }
 
+/**
+ * Kept out of `useThreadDerived`'s memo on purpose: this changes on every message the viewer
+ * sends, and `derived` is a dependency of the thread chrome context. Folding it in there meant
+ * every send re-rendered the header, tabs, pinned bar and context panels. Only the composer
+ * (edit-last-message shortcut) consumes it.
+ */
+export function useLastOwnMessage(
+  messages: ChatMessageWithStatus[],
+  userId: string | undefined,
+): ChatMessageWithStatus | null {
+  const identity = getLastOwnMessageIdentity(messages, userId);
+  return useMemo(() => {
+    if (!identity || !userId) return null;
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].senderId === userId) return messages[i];
+    }
+    return null;
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- identity key gates refresh; depending on `messages` would recompute on every row patch
+  }, [userId, identity]);
+}
+
 export interface UseThreadDerivedParams {
   game: Game | null;
   groupChannel: GroupChannel | null;
   user: { id: string } | null;
   contextType: ChatContextType;
   currentChatType: ChatType;
-  messages: ChatMessageWithStatus[];
   channelActivity?: GameChatChannelActivity;
   isGameChatArchived?: boolean;
 }
@@ -42,7 +62,6 @@ export function useThreadDerived({
   user,
   contextType,
   currentChatType,
-  messages,
   channelActivity,
   isGameChatArchived = false,
 }: UseThreadDerivedParams) {
@@ -134,17 +153,6 @@ export function useThreadDerived({
     return false;
   }, [isGameChatArchived, contextType, canWriteGameChat, canWriteGroupChat]);
 
-  const lastOwnMessageIdentity = getLastOwnMessageIdentity(messages, user?.id);
-
-  const lastOwnMessage = useMemo(() => {
-    if (!lastOwnMessageIdentity || !user?.id) return null;
-    for (let i = messages.length - 1; i >= 0; i--) {
-      if (messages[i].senderId === user.id) return messages[i];
-    }
-    return null;
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- identity key gates refresh; full messages would bust chrome on every patch
-  }, [user?.id, lastOwnMessageIdentity]);
-
   const canViewPublicChat = contextType === 'USER' || contextType === 'GROUP' || (contextType === 'GAME' && currentChatType === 'PUBLIC') || canAccessChat;
 
   const availableChatTypes = useMemo((): ChatType[] => {
@@ -188,7 +196,6 @@ export function useThreadDerived({
       canWriteChat,
       canAccessChat,
       canViewPublicChat,
-      lastOwnMessage,
       availableChatTypes,
       isGameChatArchived,
     }),
@@ -221,7 +228,6 @@ export function useThreadDerived({
       canWriteChat,
       canAccessChat,
       canViewPublicChat,
-      lastOwnMessage,
       availableChatTypes,
       isGameChatArchived,
     ],

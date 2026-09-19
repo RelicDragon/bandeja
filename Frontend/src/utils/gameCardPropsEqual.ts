@@ -93,7 +93,24 @@ function viewerParticipationKey(
   return `${mine.status}:${mine.role}`;
 }
 
+/**
+ * Signatures are pure functions of an immutable `Game` object: every producer
+ * (query data, `mergeEnrichmentOntoGames`, socket patches) replaces the object
+ * rather than mutating it. Caching by identity means a list re-render costs one
+ * map lookup per card instead of rebuilding a ~45-field string twice per
+ * comparison, which matters most when a parent re-renders without new data.
+ */
+const signatureCache = new WeakMap<Game, string>();
+
 function gameRenderSignature(game: Game): string {
+  const cached = signatureCache.get(game);
+  if (cached !== undefined) return cached;
+  const signature = buildGameRenderSignature(game);
+  signatureCache.set(game, signature);
+  return signature;
+}
+
+function buildGameRenderSignature(game: Game): string {
   const parts = [
     game.entityType,
     game.status,
@@ -157,6 +174,8 @@ export function gameCardPropsEqual(a: GameCardMemoProps, b: GameCardMemoProps): 
   if (viewerPrefsKey(a.user) !== viewerPrefsKey(b.user)) return false;
   const aUserId = (a.user as { id?: string } | null | undefined)?.id;
   const bUserId = (b.user as { id?: string } | null | undefined)?.id;
+  // Same immutable game + same viewer id ⇒ both derived keys match by construction.
+  if (a.game === b.game && aUserId === bUserId) return true;
   if (
     viewerParticipationKey(a.game.participants ?? [], aUserId) !==
     viewerParticipationKey(b.game.participants ?? [], bUserId)

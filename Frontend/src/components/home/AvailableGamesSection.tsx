@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -14,7 +14,7 @@ import { CalendarSection } from './CalendarSection';
 import { TrainersList } from './TrainersList';
 import { GenderPromptBanner } from './GenderPromptBanner';
 import { CityPromptBanner } from './CityPromptBanner';
-import { getGameFilters, setGameFilters, GameFilters } from '@/utils/gameFiltersStorage';
+import { resolveGameFilters, type GameFilters } from '@/utils/gameFiltersStorage';
 import { ResizableSplitter } from '@/components/ResizableSplitter';
 import { FiltersPanel } from './FiltersPanel';
 import { AnimatedGameList } from './AnimatedGameList';
@@ -44,6 +44,8 @@ import { usePlayersStore } from '@/store/playersStore';
 import { formatTrainerDisplayName, resolveFindEmptyMessage } from './findTrainerEmptyMessage';
 import { useUpcomingCityEvents } from '@/hooks/useUpcomingCityEvents';
 
+const getGameId = (game: Game) => game.id;
+
 interface AvailableGamesSectionProps {
   availableGames: Game[];
   /** Calendar selected-day card list (day-scoped fetch). Falls back to availableGames. */
@@ -54,9 +56,9 @@ interface AvailableGamesSectionProps {
   onJoin: (gameId: string, e: React.MouseEvent) => void;
   onMonthChange?: (month: number, year: number) => void;
   onDateRangeChange?: (startDate: Date, endDate: Date) => void;
-  filters?: GameFilters;
-  onFilterChange?: (key: keyof GameFilters, value: any) => void;
-  onFiltersChange?: (updates: Partial<GameFilters>) => void;
+  /** Owned by the host tab's `useGameFilters` — this section never forks it. */
+  filters: GameFilters;
+  onFiltersChange: (updates: Partial<GameFilters>) => void;
   onNoteSaved?: (gameId: string) => void;
   splitView?: boolean;
   hasMoreAvailable?: boolean;
@@ -67,7 +69,7 @@ interface AvailableGamesSectionProps {
   onRetryDay?: () => void | Promise<void>;
 }
 
-export const AvailableGamesSection = ({
+const AvailableGamesSectionView = ({
   availableGames,
   selectedDayGames,
   dayIndex,
@@ -76,8 +78,7 @@ export const AvailableGamesSection = ({
   onJoin,
   onMonthChange,
   onDateRangeChange,
-  filters: externalFilters,
-  onFilterChange,
+  filters,
   onFiltersChange,
   onNoteSaved,
   splitView = false,
@@ -105,42 +106,25 @@ export const AvailableGamesSection = ({
     }
     return startOfDay(new Date());
   }, [findSelectedDay]);
-  const [filterAvailableSlots, setFilterAvailableSlots] = useState(false);
-  const [filterSuitableRating, setFilterSuitableRating] = useState(false);
-  const [hideBarGames, setHideBarGames] = useState(false);
-  const [gameFilter, setGameFilter] = useState(false);
-  const [trainingFilter, setTrainingFilter] = useState(false);
-  const [tournamentFilter, setTournamentFilter] = useState(false);
-  const [leaguesFilter, setLeaguesFilter] = useState(false);
-  const [eventsFilter, setEventsFilter] = useState(false);
-  const [isInitialized, setIsInitialized] = useState(false);
-  const [filtersPanelOpen, setFiltersPanelOpen] = useState(false);
-  const [filterClubIds, setFilterClubIds] = useState<string[]>([]);
-  const [filterTimeStart, setFilterTimeStart] = useState('00:00');
-  const [filterTimeEnd, setFilterTimeEnd] = useState('24:00');
-  const [filterLevelMin, setFilterLevelMin] = useState(1.0);
-  const [filterLevelMax, setFilterLevelMax] = useState(7.0);
-  const [filterSport, setFilterSport] = useState<FindSportFilterValue>('primary');
-  const [filterNoRating, setFilterNoRating] = useState(false);
-  const [showPrivateGames, setShowPrivateGames] = useState(false);
-
-  const filterAvailableSlotsVal = externalFilters?.filterAvailableSlots ?? filterAvailableSlots;
-  const filterSuitableRatingVal = externalFilters?.filterSuitableRating ?? filterSuitableRating;
-  const hideBarGamesVal = externalFilters?.hideBarGames ?? hideBarGames;
-  const gameFilterVal = externalFilters?.gameFilter ?? gameFilter;
-  const trainingFilterVal = externalFilters?.trainingFilter ?? trainingFilter;
-  const tournamentFilterVal = externalFilters?.tournamentFilter ?? tournamentFilter;
-  const leaguesFilterVal = externalFilters?.leaguesFilter ?? leaguesFilter;
-  const eventsFilterVal = externalFilters?.eventsFilter ?? eventsFilter;
-  const filtersPanelOpenVal = externalFilters?.filtersPanelOpen ?? filtersPanelOpen;
-  const filterClubIdsVal = externalFilters?.filterClubIds ?? filterClubIds;
-  const filterTimeStartVal = externalFilters?.filterTimeStart ?? filterTimeStart;
-  const filterTimeEndVal = externalFilters?.filterTimeEnd ?? filterTimeEnd;
-  const filterLevelMinVal = externalFilters?.filterLevelMin ?? filterLevelMin;
-  const filterLevelMaxVal = externalFilters?.filterLevelMax ?? filterLevelMax;
-  const filterSportVal = externalFilters?.filterSport ?? filterSport;
-  const filterNoRatingVal = externalFilters?.filterNoRating ?? filterNoRating;
-  const showPrivateGamesVal = externalFilters?.showPrivateGames ?? showPrivateGames;
+  const {
+    filterAvailableSlots: filterAvailableSlotsVal,
+    filterSuitableRating: filterSuitableRatingVal,
+    hideBarGames: hideBarGamesVal,
+    gameFilter: gameFilterVal,
+    trainingFilter: trainingFilterVal,
+    tournamentFilter: tournamentFilterVal,
+    leaguesFilter: leaguesFilterVal,
+    eventsFilter: eventsFilterVal,
+    filtersPanelOpen: filtersPanelOpenVal,
+    filterClubIds: filterClubIdsVal,
+    filterTimeStart: filterTimeStartVal,
+    filterTimeEnd: filterTimeEndVal,
+    filterLevelMin: filterLevelMinVal,
+    filterLevelMax: filterLevelMaxVal,
+    filterSport: filterSportVal,
+    filterNoRating: filterNoRatingVal,
+    showPrivateGames: showPrivateGamesVal,
+  } = useMemo(() => resolveGameFilters(filters), [filters]);
   const findDiscoveryEnabled = isFindDiscoveryEnabled();
   const isAdmin = Boolean(user?.isAdmin);
   const viewerPrimarySport = useMemo(() => getViewerPrimarySport(user), [user]);
@@ -187,208 +171,86 @@ export const AvailableGamesSection = ({
   const panelFiltersApplied =
     filterAvailableSlotsVal || filterSuitableRatingVal || hideBarGamesVal || panelCriteriaActive;
 
-  const setFilterAvailableSlotsVal = (v: boolean) =>
-    onFilterChange ? onFilterChange('filterAvailableSlots', v) : setFilterAvailableSlots(v);
-  const setFilterSuitableRatingVal = (v: boolean) =>
-    onFilterChange ? onFilterChange('filterSuitableRating', v) : setFilterSuitableRating(v);
-  const setHideBarGamesVal = (v: boolean) =>
-    onFilterChange ? onFilterChange('hideBarGames', v) : setHideBarGames(v);
-  const setShowPrivateGamesVal = (v: boolean) =>
-    onFilterChange ? onFilterChange('showPrivateGames', v) : setShowPrivateGames(v);
+  // Every mutation is a patch on the host's filter state; hydration and
+  // persistence live in `useGameFilters`, so there is nothing to fork here.
+  const setFilterAvailableSlotsVal = useCallback(
+    (v: boolean) => onFiltersChange({ filterAvailableSlots: v }),
+    [onFiltersChange],
+  );
+  const setFilterSuitableRatingVal = useCallback(
+    (v: boolean) => onFiltersChange({ filterSuitableRating: v }),
+    [onFiltersChange],
+  );
+  const setHideBarGamesVal = useCallback(
+    (v: boolean) => onFiltersChange({ hideBarGames: v }),
+    [onFiltersChange],
+  );
+  const setShowPrivateGamesVal = useCallback(
+    (v: boolean) => onFiltersChange({ showPrivateGames: v }),
+    [onFiltersChange],
+  );
+  const setFilterNoRatingVal = useCallback(
+    (v: boolean) => onFiltersChange({ filterNoRating: v }),
+    [onFiltersChange],
+  );
+  const setFilterClubIdsVal = useCallback(
+    (ids: string[]) => onFiltersChange({ filterClubIds: ids }),
+    [onFiltersChange],
+  );
+  const setTimeRangeVal = useCallback(
+    (v: [string, string]) => onFiltersChange({ filterTimeStart: v[0], filterTimeEnd: v[1] }),
+    [onFiltersChange],
+  );
+  const setLevelRangeVal = useCallback(
+    (v: [number, number]) => onFiltersChange({ filterLevelMin: v[0], filterLevelMax: v[1] }),
+    [onFiltersChange],
+  );
+  const setFilterSportVal = useCallback(
+    (id: FindSportFilterValue) => onFiltersChange({ filterSport: id }),
+    [onFiltersChange],
+  );
 
-  const resetPanelFilters = () => {
-    if (onFiltersChange) {
-      onFiltersChange({
-        filterAvailableSlots: false,
-        filterSuitableRating: false,
-        hideBarGames: false,
-        filterClubIds: [],
-        filterTimeStart: '00:00',
-        filterTimeEnd: '24:00',
-        filterLevelMin: 1.0,
-        filterLevelMax: 7.0,
-        filterNoRating: false,
-        showPrivateGames: false,
-      });
-    } else {
-      setFilterAvailableSlots(false);
-      setFilterSuitableRating(false);
-      setHideBarGames(false);
-      setFilterClubIds([]);
-      setFilterTimeStart('00:00');
-      setFilterTimeEnd('24:00');
-      setFilterLevelMin(1.0);
-      setFilterLevelMax(7.0);
-      setFilterNoRating(false);
-      setShowPrivateGames(false);
-    }
-    if (onFilterChange && !onFiltersChange) {
-      onFilterChange('filterAvailableSlots', false);
-      onFilterChange('filterSuitableRating', false);
-      onFilterChange('hideBarGames', false);
-    }
-  };
+  const resetPanelFilters = useCallback(() => {
+    onFiltersChange({
+      filterAvailableSlots: false,
+      filterSuitableRating: false,
+      hideBarGames: false,
+      filterClubIds: [],
+      filterTimeStart: '00:00',
+      filterTimeEnd: '24:00',
+      filterLevelMin: 1.0,
+      filterLevelMax: 7.0,
+      filterNoRating: false,
+      showPrivateGames: false,
+    });
+  }, [onFiltersChange]);
 
-  const patchPanelFields = (updates: Partial<GameFilters>) => {
-    if (onFiltersChange) onFiltersChange(updates);
-    else {
-      if (updates.filterClubIds !== undefined) setFilterClubIds(updates.filterClubIds);
-      if (updates.filterTimeStart !== undefined) setFilterTimeStart(updates.filterTimeStart);
-      if (updates.filterTimeEnd !== undefined) setFilterTimeEnd(updates.filterTimeEnd);
-      if (updates.filterLevelMin !== undefined) setFilterLevelMin(updates.filterLevelMin);
-      if (updates.filterLevelMax !== undefined) setFilterLevelMax(updates.filterLevelMax);
-      if (updates.filterSport !== undefined) setFilterSport(updates.filterSport);
-      if (updates.filterNoRating !== undefined) setFilterNoRating(updates.filterNoRating);
-      if (updates.filterAvailableSlots !== undefined) setFilterAvailableSlots(updates.filterAvailableSlots);
-      if (updates.filterSuitableRating !== undefined) setFilterSuitableRating(updates.filterSuitableRating);
-      if (updates.hideBarGames !== undefined) setHideBarGames(updates.hideBarGames);
-    }
-  };
+  const toggleFiltersPanel = useCallback(() => {
+    onFiltersChange({ filtersPanelOpen: !filtersPanelOpenVal });
+  }, [onFiltersChange, filtersPanelOpenVal]);
 
-  const toggleFiltersPanel = () => {
-    if (filtersPanelOpenVal) {
-      if (onFiltersChange) {
-        onFiltersChange({ filtersPanelOpen: false });
-      } else {
-        setFiltersPanelOpen(false);
-      }
-    } else if (onFiltersChange) {
-      onFiltersChange({ filtersPanelOpen: true });
-    } else {
-      setFiltersPanelOpen(true);
-    }
-  };
+  const entityChipState = useMemo(
+    () => ({
+      gameFilter: gameFilterVal,
+      trainingFilter: trainingFilterVal,
+      tournamentFilter: tournamentFilterVal,
+      leaguesFilter: leaguesFilterVal,
+      eventsFilter: eventsFilterVal,
+    }),
+    [gameFilterVal, trainingFilterVal, tournamentFilterVal, leaguesFilterVal, eventsFilterVal],
+  );
 
-  const setEntityFilters = (next: {
-    gameFilter: boolean;
-    trainingFilter: boolean;
-    tournamentFilter: boolean;
-    leaguesFilter: boolean;
-    eventsFilter: boolean;
-  }) => {
-    if (onFiltersChange) {
-      onFiltersChange(next);
-    } else {
-      setGameFilter(next.gameFilter);
-      setTrainingFilter(next.trainingFilter);
-      setTournamentFilter(next.tournamentFilter);
-      setLeaguesFilter(next.leaguesFilter);
-      setEventsFilter(next.eventsFilter);
-    }
-  };
+  const handleEntityFilterClick = useCallback(
+    (type: EntityFilterType) => {
+      onFiltersChange(toggleFindEntityChip(entityChipState, type));
+    },
+    [onFiltersChange, entityChipState],
+  );
 
-  const handleEntityFilterClick = (type: EntityFilterType) => {
-    const next = toggleFindEntityChip(
-      {
-        gameFilter: gameFilterVal,
-        trainingFilter: trainingFilterVal,
-        tournamentFilter: tournamentFilterVal,
-        leaguesFilter: leaguesFilterVal,
-        eventsFilter: eventsFilterVal,
-      },
-      type,
-    );
-    setEntityFilters(next);
-  };
-  const hydratedViewPeriodFromStorageRef = useRef(false);
-
-  useEffect(() => {
-    if (externalFilters) {
-      setIsInitialized(true);
-      return;
-    }
-
-    const loadFilters = async () => {
-      const filters = await getGameFilters();
-      if (!externalFilters) {
-        setFilterAvailableSlots(filters.filterAvailableSlots ?? filters.userFilter ?? false);
-        setFilterSuitableRating(filters.filterSuitableRating ?? filters.userFilter ?? false);
-        setHideBarGames(filters.hideBarGames ?? false);
-        setGameFilter(filters.gameFilter ?? false);
-        setTrainingFilter(filters.trainingFilter);
-        setTournamentFilter(filters.tournamentFilter ?? false);
-        setLeaguesFilter(filters.leaguesFilter ?? false);
-        setEventsFilter(filters.eventsFilter ?? false);
-        setFiltersPanelOpen(filters.filtersPanelOpen ?? false);
-        setFilterClubIds(filters.filterClubIds ?? []);
-        setFilterTimeStart(filters.filterTimeStart ?? '00:00');
-        setFilterTimeEnd(filters.filterTimeEnd ?? '24:00');
-        setFilterLevelMin(filters.filterLevelMin ?? 1.0);
-        setFilterLevelMax(filters.filterLevelMax ?? 7.0);
-        setFilterSport(filters.filterSport ?? 'primary');
-        setFilterNoRating(filters.filterNoRating ?? false);
-        setShowPrivateGames(filters.showPrivateGames ?? false);
-      }
-      if (!hydratedViewPeriodFromStorageRef.current) {
-        hydratedViewPeriodFromStorageRef.current = true;
-        if (filters.activeTab) {
-          setFindViewMode(filters.activeTab);
-        }
-        const nav = useShellNavStore.getState();
-        if (filters.calendarSelectedDate && nav.findSelectedDay == null) {
-          const restoredDate = new Date(filters.calendarSelectedDate);
-          if (!isNaN(restoredDate.getTime())) {
-            nav.setFindSelectedDay(format(startOfDay(restoredDate), 'yyyy-MM-dd'));
-          }
-        }
-      }
-
-      setIsInitialized(true);
-    };
-    loadFilters();
-  }, [setFindViewMode, externalFilters]);
-
-  useEffect(() => {
-    if (!isInitialized || onFilterChange) return;
-
-    const saveFilters = async () => {
-      await setGameFilters({
-        filterAvailableSlots: filterAvailableSlotsVal,
-        filterSuitableRating: filterSuitableRatingVal,
-        hideBarGames: hideBarGamesVal,
-        gameFilter: gameFilterVal,
-        trainingFilter: trainingFilterVal,
-        tournamentFilter: tournamentFilterVal,
-        leaguesFilter: leaguesFilterVal,
-        eventsFilter: eventsFilterVal,
-        activeTab: findViewMode,
-        listViewStartDate: undefined,
-        calendarSelectedDate: findViewMode === 'calendar' ? selectedDate.toISOString() : undefined,
-        filtersPanelOpen: filtersPanelOpenVal,
-        filterClubIds: filterClubIdsVal,
-        filterTimeStart: filterTimeStartVal,
-        filterTimeEnd: filterTimeEndVal,
-        filterLevelMin: filterLevelMinVal,
-        filterLevelMax: filterLevelMaxVal,
-        filterSport: filterSportVal,
-        filterNoRating: filterNoRatingVal,
-        showPrivateGames: showPrivateGamesVal,
-      });
-    };
-    saveFilters();
-  }, [
-    isInitialized,
-    onFilterChange,
-    filterAvailableSlotsVal,
-    filterSuitableRatingVal,
-    hideBarGamesVal,
-    gameFilterVal,
-    trainingFilterVal,
-    tournamentFilterVal,
-    leaguesFilterVal,
-    eventsFilterVal,
-    findViewMode,
-    selectedDate,
-    filtersPanelOpenVal,
-    filterClubIdsVal,
-    filterTimeStartVal,
-    filterTimeEndVal,
-    filterLevelMinVal,
-    filterLevelMaxVal,
-    filterSportVal,
-    filterNoRatingVal,
-    showPrivateGamesVal,
-  ]);
+  const handleSeeAllEvents = useCallback(
+    () => handleEntityFilterClick('events'),
+    [handleEntityFilterClick],
+  );
 
   useEffect(() => {
     if (findViewMode === 'calendar') {
@@ -431,6 +293,16 @@ export const AvailableGamesSection = ({
       filterLevelMax: filterLevelMaxVal,
     }),
     [filterClubIdsVal, filterTimeStartVal, filterTimeEndVal, filterLevelMinVal, filterLevelMaxVal]
+  );
+
+  // Tuple props for the range inputs; stable so the panel's sliders stay put.
+  const timeRangeValue = useMemo<[string, string]>(
+    () => [filterTimeStartVal, filterTimeEndVal],
+    [filterTimeStartVal, filterTimeEndVal],
+  );
+  const levelRangeValue = useMemo<[number, number]>(
+    () => [filterLevelMinVal, filterLevelMaxVal],
+    [filterLevelMinVal, filterLevelMaxVal],
   );
 
   const findFilterState = useMemo<FindFilterState>(
@@ -528,11 +400,11 @@ export const AvailableGamesSection = ({
     return tabs;
   }, [t, user, viewerPrimarySport]);
 
-  const handleSubscriptionsClick = () => {
+  const handleSubscriptionsClick = useCallback(() => {
     setIsAnimating(true);
     navigate('/game-subscriptions', { replace: true });
     setTimeout(() => setIsAnimating(false), 300);
-  };
+  }, [navigate, setIsAnimating]);
 
   const filterBlock = (
     <>
@@ -547,7 +419,7 @@ export const AvailableGamesSection = ({
           <SegmentedSwitch
             tabs={findSportTabs}
             activeId={filterSportVal}
-            onChange={(id) => patchPanelFields({ filterSport: id as FindSportFilterValue })}
+            onChange={setFilterSportVal as (id: string) => void}
             showOnlyActiveTabText={true}
             layoutId="find-sport-selector"
             ariaLabel={t('sport.sport', { defaultValue: 'Sport' })}
@@ -623,17 +495,17 @@ export const AvailableGamesSection = ({
                 filterSport={filterSportVal}
                 viewerPrimarySport={viewerPrimarySport}
                 clubIds={filterClubIdsVal}
-                onClubIdsChange={(ids) => patchPanelFields({ filterClubIds: ids })}
-                timeRange={[filterTimeStartVal, filterTimeEndVal]}
-                onTimeRangeChange={(v) => patchPanelFields({ filterTimeStart: v[0], filterTimeEnd: v[1] })}
-                playerLevelRange={[filterLevelMinVal, filterLevelMaxVal]}
-                onPlayerLevelRangeChange={(v) => patchPanelFields({ filterLevelMin: v[0], filterLevelMax: v[1] })}
+                onClubIdsChange={setFilterClubIdsVal}
+                timeRange={timeRangeValue}
+                onTimeRangeChange={setTimeRangeVal}
+                playerLevelRange={levelRangeValue}
+                onPlayerLevelRangeChange={setLevelRangeVal}
                 hour12={displaySettings.hour12}
                 onResetFilters={resetPanelFilters}
                 showResetFooter={panelFiltersApplied}
                 showDiscoveryFilters={findDiscoveryEnabled}
                 filterNoRating={filterNoRatingVal}
-                onFilterNoRatingChange={(v) => patchPanelFields({ filterNoRating: v })}
+                onFilterNoRatingChange={setFilterNoRatingVal}
                 isAdmin={isAdmin}
                 showPrivateGames={showPrivateGamesVal}
                 onShowPrivateGamesChange={setShowPrivateGamesVal}
@@ -678,7 +550,10 @@ export const AvailableGamesSection = ({
   const gamesList = (
     <AnimatedGameList
       items={filteredGames}
-      getKey={(game) => game.id}
+      getKey={getGameId}
+      // Tapping another day replaces the whole set, so the presence context is
+      // rebuilt rather than cross-fading two full lists of cards.
+      presenceKey={findSelectedDay ?? undefined}
       renderItem={(game) => (
         <GameCard
           game={game}
@@ -707,35 +582,51 @@ export const AvailableGamesSection = ({
     navigationService.navigateToFind({ view: next });
   }, [findViewMode, setFindViewMode]);
 
-  const calendarSectionProps = {
-    selectedDate,
-    onDateSelect: handleDateSelect,
-    availableGames,
-    dayIndex,
-    filterAvailableSlots: filterAvailableSlotsVal,
-    filterSuitableRating: filterSuitableRatingVal,
-    hideBarGames: hideBarGamesVal,
-    gameFilter: gameFilterVal,
-    trainingFilter: trainingFilterVal,
-    tournamentFilter: tournamentFilterVal,
-    leaguesFilter: leaguesFilterVal,
-    eventsFilter: eventsFilterVal,
-    favoriteTrainerId: user?.favoriteTrainerId,
-    onMonthChange,
-    onDateRangeChange,
-    panelFilters: panelFilterState,
-    showPrivateGames: showPrivateGamesVal,
-    isAdmin,
-    findDiscoveryEnabled,
-    filterNoRating: filterNoRatingVal,
-    collapsed: findListCollapsed,
-    weatherModeScope: 'find' as const,
-    upcomingsToggle: {
+  // Memoised so the calendar — 42 cells plus weather and day aggregation — is
+  // skipped by `memo` when this section re-renders for an unrelated reason.
+  const upcomingsToggle = useMemo(
+    () => ({
       active: findListCollapsed,
       onClick: handleFindListToggle,
       label: t('games.list'),
-    },
-  };
+    }),
+    [findListCollapsed, handleFindListToggle, t],
+  );
+
+  const calendarSectionProps = useMemo(
+    () => ({
+      selectedDate,
+      onDateSelect: handleDateSelect,
+      availableGames,
+      dayIndex,
+      filterAvailableSlots: filterAvailableSlotsVal,
+      filterSuitableRating: filterSuitableRatingVal,
+      hideBarGames: hideBarGamesVal,
+      gameFilter: gameFilterVal,
+      trainingFilter: trainingFilterVal,
+      tournamentFilter: tournamentFilterVal,
+      leaguesFilter: leaguesFilterVal,
+      eventsFilter: eventsFilterVal,
+      favoriteTrainerId: user?.favoriteTrainerId as string | null | undefined,
+      onMonthChange,
+      onDateRangeChange,
+      panelFilters: panelFilterState,
+      showPrivateGames: showPrivateGamesVal,
+      isAdmin,
+      findDiscoveryEnabled,
+      filterNoRating: filterNoRatingVal,
+      collapsed: findListCollapsed,
+      weatherModeScope: 'find' as const,
+      upcomingsToggle,
+    }),
+    [
+      selectedDate, handleDateSelect, availableGames, dayIndex, filterAvailableSlotsVal,
+      filterSuitableRatingVal, hideBarGamesVal, gameFilterVal, trainingFilterVal,
+      tournamentFilterVal, leaguesFilterVal, eventsFilterVal, user?.favoriteTrainerId,
+      onMonthChange, onDateRangeChange, panelFilterState, showPrivateGamesVal, isAdmin,
+      findDiscoveryEnabled, filterNoRatingVal, findListCollapsed, upcomingsToggle,
+    ],
+  );
 
   const handleLoadMore = useCallback(async () => {
     if (!onLoadMoreAvailable || loadingMore) return;
@@ -771,10 +662,7 @@ export const AvailableGamesSection = ({
 
   const cityEventsRail = (
     <AnimatedMount layout show={!eventsFilterVal && upcomingCityEvents.length > 0}>
-      <FindCityEventsRail
-        events={upcomingCityEvents}
-        onSeeAll={() => handleEntityFilterClick('events')}
-      />
+      <FindCityEventsRail events={upcomingCityEvents} onSeeAll={handleSeeAllEvents} />
     </AnimatedMount>
   );
 
@@ -878,3 +766,10 @@ export const AvailableGamesSection = ({
     </SportLevelProvider>
   );
 };
+
+/**
+ * FindTab re-renders whenever any of its queries, stores or prefetch bookkeeping
+ * ticks. This section owns the calendar, filter panel and card list, so it is
+ * memoised and FindTab hands it a memoised props object.
+ */
+export const AvailableGamesSection = memo(AvailableGamesSectionView);

@@ -14,7 +14,7 @@ interface PollVotersModalProps {
 }
 
 export const PollVotersModal: React.FC<PollVotersModalProps> = ({ open, onClose, poll }) => {
-  const { user } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
   const viewerLevelSport = useViewerLevelSport();
   const userVotes = poll.votes.filter(v => v.userId === user?.id).map(v => v.optionId);
   const isQuiz = poll.type === 'QUIZ';

@@ -53,6 +53,45 @@ const DEFAULT_FILTERS: GameFilters = {
   filterLevelMax: 7.0,
 };
 
+/**
+ * Every field the Find UI reads, with no optionals. The stored shape keeps most
+ * fields optional for backward compatibility, which used to force each consumer
+ * to repeat `filters.x ?? someDefault` at the point of use.
+ */
+export type ResolvedGameFilters = Required<
+  Pick<
+    GameFilters,
+    | 'filterAvailableSlots' | 'filterSuitableRating' | 'hideBarGames' | 'gameFilter'
+    | 'trainingFilter' | 'tournamentFilter' | 'leaguesFilter' | 'eventsFilter'
+    | 'filtersPanelOpen' | 'filterClubIds' | 'filterTimeStart' | 'filterTimeEnd'
+    | 'filterLevelMin' | 'filterLevelMax' | 'filterSport' | 'filterNoRating'
+    | 'showPrivateGames'
+  >
+>;
+
+export function resolveGameFilters(filters: GameFilters): ResolvedGameFilters {
+  return {
+    // `userFilter` is the pre-split flag; it still seeds both successors.
+    filterAvailableSlots: filters.filterAvailableSlots ?? filters.userFilter ?? false,
+    filterSuitableRating: filters.filterSuitableRating ?? filters.userFilter ?? false,
+    hideBarGames: filters.hideBarGames ?? false,
+    gameFilter: filters.gameFilter ?? false,
+    trainingFilter: filters.trainingFilter ?? false,
+    tournamentFilter: filters.tournamentFilter ?? false,
+    leaguesFilter: filters.leaguesFilter ?? false,
+    eventsFilter: filters.eventsFilter ?? false,
+    filtersPanelOpen: filters.filtersPanelOpen ?? false,
+    filterClubIds: filters.filterClubIds ?? [],
+    filterTimeStart: filters.filterTimeStart ?? '00:00',
+    filterTimeEnd: filters.filterTimeEnd ?? '24:00',
+    filterLevelMin: filters.filterLevelMin ?? 1.0,
+    filterLevelMax: filters.filterLevelMax ?? 7.0,
+    filterSport: filters.filterSport ?? 'primary',
+    filterNoRating: filters.filterNoRating ?? false,
+    showPrivateGames: filters.showPrivateGames ?? false,
+  };
+}
+
 function normalizeStoredFilters(filters: GameFilters | undefined): GameFilters {
   const merged = { ...DEFAULT_FILTERS, ...filters };
   if (filters?.userFilter && !filters.filterAvailableSlots && !filters.filterSuitableRating) {

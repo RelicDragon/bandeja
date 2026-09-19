@@ -1,6 +1,8 @@
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { CHAT_SEARCH_BAR_TRANSITION } from '@/components/chat/chatListMotion';
+import { CHAT_LIST_SEARCH_DEBOUNCE_MS } from '@/utils/chatListConstants';
 import { Search, X, BookUser, Plus, Mail, SlidersHorizontal } from 'lucide-react';
 import { shouldShowChatListUnreadFilter } from '@/components/chat/chatListUnreadFilter';
 import { UnreadBadge } from '@/components/UnreadBadge';
@@ -12,7 +14,9 @@ type ChatsFilter = 'users' | 'bugs' | 'channels' | 'market';
 interface ChatListSearchBarProps {
   chatsFilter: ChatsFilter;
   contactsMode: boolean;
+  /** Committed (debounced) query. The raw keystrokes stay local to this component. */
   searchInput: string;
+  /** Called with the debounced value only — never on every keystroke. */
   onSearchChange: (value: string) => void;
   onClearSearch: () => void;
   onContactsToggle: () => void;
@@ -45,6 +49,38 @@ export const ChatListSearchBar = ({
   disabled = false,
 }: ChatListSearchBarProps) => {
   const { t } = useTranslation();
+
+  /**
+   * The input is owned here and only the debounced value is lifted. Previously every
+   * keystroke wrote list state plus a URL search param, re-rendering the whole inbox
+   * 500ms before the query could change anything.
+   */
+  const [typedInput, setTypedInput] = useState(searchInput);
+  const committedRef = useRef(searchInput);
+  /** Held in a ref so a caller re-render cannot restart the in-flight debounce. */
+  const onSearchChangeRef = useRef(onSearchChange);
+  onSearchChangeRef.current = onSearchChange;
+
+  useEffect(() => {
+    if (searchInput === committedRef.current) return;
+    committedRef.current = searchInput;
+    setTypedInput(searchInput);
+  }, [searchInput]);
+
+  useEffect(() => {
+    if (typedInput === committedRef.current) return;
+    const timer = setTimeout(() => {
+      committedRef.current = typedInput;
+      onSearchChangeRef.current(typedInput);
+    }, CHAT_LIST_SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [typedInput]);
+
+  const handleClear = useCallback(() => {
+    committedRef.current = '';
+    setTypedInput('');
+    onClearSearch();
+  }, [onClearSearch]);
 
   const placeholder =
     chatsFilter === 'channels'
@@ -140,17 +176,17 @@ export const ChatListSearchBar = ({
           <input
             type="text"
             placeholder={placeholder}
-            value={searchInput}
-            onChange={(e) => onSearchChange(e.target.value)}
+            value={typedInput}
+            onChange={(e) => setTypedInput(e.target.value)}
             disabled={disabled}
             readOnly={disabled}
             tabIndex={disabled ? -1 : undefined}
             aria-disabled={disabled}
-            className={`w-full ps-9 ${chatsFilter === 'users' ? (searchInput ? 'pe-[7.25rem]' : 'pe-[6.5rem]') : 'pe-9'} py-2 rounded-full border border-gray-300 dark:border-gray-600 bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 disabled:cursor-default`}
+            className={`w-full ps-9 ${chatsFilter === 'users' ? (typedInput ? 'pe-[7.25rem]' : 'pe-[6.5rem]') : 'pe-9'} py-2 rounded-full border border-gray-300 dark:border-gray-600 bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 disabled:cursor-default`}
           />
-          {searchInput && (
+          {typedInput && (
             <button
-              onClick={onClearSearch}
+              onClick={handleClear}
               className="absolute right-2.5 top-1/2 transform -translate-y-1/2 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
               aria-label="Clear search"
             >
@@ -158,7 +194,7 @@ export const ChatListSearchBar = ({
             </button>
           )}
           {chatsFilter === 'users' ? (
-            <div className={`absolute top-1/2 -translate-y-1/2 ${searchInput ? 'right-8' : 'right-1.5'}`}>
+            <div className={`absolute top-1/2 -translate-y-1/2 ${typedInput ? 'right-8' : 'right-1.5'}`}>
               <BrowseCityControl size="field" />
             </div>
           ) : null}

@@ -6,8 +6,8 @@ import type { ChatsFilterType } from './chatListFeedStore';
 
 export type ChatListPullRefreshModel = {
   isRefreshing: boolean;
-  pullDistance: number;
-  pullProgress: number;
+  /** Carries `--chat-pull-distance` / `--chat-pull-progress`; the pull never enters React state. */
+  pullShellRef: React.RefObject<HTMLDivElement | null>;
 };
 
 export type ChatListFeedModel = {
@@ -32,8 +32,12 @@ export type ChatListFeedModel = {
 };
 
 export type ChatListSearchModel = {
+  /** Committed query; the raw input lives inside `ChatListSearchBar`. */
   searchInput: string;
   setSearchInput: (v: string) => void;
+  /** Stable identities — the search bar debounces against them. */
+  onSearchChange: (value: string) => void;
+  onClearSearch: () => void;
   debouncedSearchQuery: string;
   isSearchMode: boolean;
   displayChats: ChatListSearchRow[];
@@ -43,8 +47,6 @@ export type ChatListSearchModel = {
   unreadChatsCount: number;
   unreadFilterActive: boolean;
   toggleUnreadFilter: () => void;
-  skipUrlSyncRef: React.MutableRefObject<boolean>;
-  setSearchParams: ReturnType<typeof import('react-router-dom').useSearchParams>[1];
   nearbyGroups: import('@/api/users').NearbyInvitableCity[];
   nearbyLoading: boolean;
   browseCityName: string;

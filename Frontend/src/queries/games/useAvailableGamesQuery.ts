@@ -273,8 +273,12 @@ export function useAvailableGamesQuery(
     visibleContinuation?.status,
   ]);
 
-  const loadMore = async () => {
-    const current = query.data;
+  // Stable identity: Find passes this down as `onLoadMoreAvailable`, and a fresh
+  // function each render would invalidate the memoised section props. Reads the
+  // current page from the cache rather than closing over `query.data`.
+  const loadMore = useCallback(async () => {
+    const params = paramsRef.current;
+    const current = queryClient.getQueryData<AvailableGamesPage>(queryKey);
     if (!current?.meta.hasMore || !current.meta.nextCursor) return;
     if (resolveAvailableIndexOnly(params)) return;
     const dayScoped = isDayScopedAvailableRange(params.startDate, params.endDate);
@@ -299,7 +303,7 @@ export function useAvailableGamesQuery(
       },
     }));
     void attachAvailableGamesEnrichment(queryClient, queryKey, incoming);
-  };
+  }, [queryClient, queryKey]);
 
   return { ...query, loadMore };
 }

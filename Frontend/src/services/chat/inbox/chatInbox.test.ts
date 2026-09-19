@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ChatItem } from '@/components/chat/chatListTypes';
 import {
-  buildUnreadByThread,
   deriveChatInboxReadModel,
   deriveDisplayedChats,
   mergeThreadUnreadCounts,
@@ -140,13 +139,6 @@ describe('deriveDisplayedChats', () => {
 });
 
 describe('deriveChatInboxReadModel', () => {
-  it('builds unread map keyed by chat row key', () => {
-    const threads = [userThread('a', 2, '2026-01-02'), userThread('b', 0, '2026-01-01')];
-    const map = buildUnreadByThread(threads);
-    expect(map.get('user-a')).toBe(2);
-    expect(map.get('user-b')).toBe(0);
-  });
-
   it('sorts threads by activity and merges unread overrides', () => {
     const threads = [userThread('old', 1, '2026-01-01'), userThread('new', 3, '2026-06-01')];
     const sorted = sortThreadsForFilter(threads, 'users', 'me');
@@ -238,6 +230,6 @@ describe('fake adapter socket unread path', () => {
       marketUnreadCounts: {},
       marketBuyerSellerUnreadFromStore: { buyer: 0, seller: 0 },
     });
-    expect(model.unreadByThread.get('user-u1')).toBe(7);
+    expect(model.displayedChats[0]?.unreadCount).toBe(7);
   });
 });

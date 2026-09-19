@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useCallback } from 'react';
+import { memo, useEffect, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { usePlayersStore } from '@/store/playersStore';
 import { useAuthStore } from '@/store/authStore';
@@ -20,7 +20,7 @@ interface TrainersListProps {
   levelSport: Sport;
 }
 
-export const TrainersList = ({ show, availableGames = [], levelSport }: TrainersListProps) => {
+const TrainersListView = ({ show, availableGames = [], levelSport }: TrainersListProps) => {
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
   const updateUser = useAuthStore((state) => state.updateUser);
@@ -233,3 +233,5 @@ export const TrainersList = ({ show, availableGames = [], levelSport }: Trainers
     </AnimatedMount>
   );
 };
+
+export const TrainersList = memo(TrainersListView);

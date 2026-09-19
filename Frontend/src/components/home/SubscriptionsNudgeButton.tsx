@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Bell } from 'lucide-react';
 import { Button } from '@/components';
@@ -7,7 +8,7 @@ interface SubscriptionsNudgeButtonProps {
   onClick: () => void;
 }
 
-export const SubscriptionsNudgeButton = ({ onClick }: SubscriptionsNudgeButtonProps) => {
+const SubscriptionsNudgeButtonView = ({ onClick }: SubscriptionsNudgeButtonProps) => {
   const { t } = useTranslation();
 
   return (
@@ -27,3 +28,5 @@ export const SubscriptionsNudgeButton = ({ onClick }: SubscriptionsNudgeButtonPr
     </AnimatedMount>
   );
 };
+
+export const SubscriptionsNudgeButton = memo(SubscriptionsNudgeButtonView);

@@ -20,13 +20,18 @@ export function useMyTabClubBookings(): MyTabClubBookingsSnapshot {
   const { bookings, loading: bookingsLoading, removeBooking, reload: reloadBookings } =
     useAllUpcomingClubBookings(clubs, true);
 
-  return {
-    myClubs,
-    clubs,
-    bookings,
-    bookingsLoading,
-    reloadMyClubs,
-    reloadBookings,
-    removeBooking,
-  };
+  // Passed down as one `booktime` prop, so the snapshot identity has to track
+  // its contents rather than the render count.
+  return useMemo(
+    () => ({
+      myClubs,
+      clubs,
+      bookings,
+      bookingsLoading,
+      reloadMyClubs,
+      reloadBookings,
+      removeBooking,
+    }),
+    [myClubs, clubs, bookings, bookingsLoading, reloadMyClubs, reloadBookings, removeBooking],
+  );
 }

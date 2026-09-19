@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Calendar } from 'lucide-react';
 import { formatSearchResultDate } from '@/utils/dateFormat';
@@ -14,7 +14,7 @@ interface HomeTodayHeadingProps {
  * Day-list heading when My-tab calendar is collapsed. When the calendar is
  * open, the day is labeled by `SelectedDateWeatherCard` instead.
  */
-export function HomeTodayHeading({ selectedDate, onShowCalendar }: HomeTodayHeadingProps) {
+function HomeTodayHeadingView({ selectedDate, onShowCalendar }: HomeTodayHeadingProps) {
   const { t } = useTranslation();
 
   const title = useMemo(() => {
@@ -40,3 +40,5 @@ export function HomeTodayHeading({ selectedDate, onShowCalendar }: HomeTodayHead
     </div>
   );
 }
+
+export const HomeTodayHeading = memo(HomeTodayHeadingView);

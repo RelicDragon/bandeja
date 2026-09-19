@@ -1,6 +1,8 @@
-import { endOfMonth, endOfWeek, parse, startOfDay, startOfMonth, startOfWeek } from 'date-fns';
+import { endOfMonth, endOfWeek, format, parse, startOfDay, startOfMonth, startOfWeek } from 'date-fns';
 
 export type WeekStartsOn = 0 | 1 | 6;
+
+export type FindMonthDateRange = { startDate?: Date; endDate?: Date };
 
 export function resolveFindMonthRangeAnchor(
   selectedDayKey: string | null | undefined,
@@ -26,10 +28,27 @@ export function computeFindMonthDateRange(
   };
 }
 
+const dayKeyOf = (date?: Date): string =>
+  date && !Number.isNaN(date.getTime()) ? format(date, 'yyyy-MM-dd') : '';
+
+/**
+ * Day-granular comparison — the month query key is built from `yyyy-MM-dd`, so
+ * two ranges with the same day keys address the same request. Lets callers keep
+ * the previous range object instead of publishing an identical one.
+ */
+export function findMonthRangeEquals(a: FindMonthDateRange, b: FindMonthDateRange): boolean {
+  return dayKeyOf(a.startDate) === dayKeyOf(b.startDate)
+    && dayKeyOf(a.endDate) === dayKeyOf(b.endDate);
+}
+
+/**
+ * The month range is seeded synchronously from the same inputs MonthCalendar
+ * derives its grid from, so readiness never waits for the calendar to mount and
+ * report back — only for the filter hydration and the viewer.
+ */
 export function isFindGamesQueryReady(input: {
   isHydrated: boolean;
-  calendarRangeReady: boolean;
   userId: string | undefined;
 }): boolean {
-  return input.isHydrated && input.calendarRangeReady && Boolean(input.userId);
+  return input.isHydrated && Boolean(input.userId);
 }

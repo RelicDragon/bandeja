@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChevronRight } from 'lucide-react';
 import type { Game } from '@/types';
@@ -6,7 +7,7 @@ import { EventPosterCard } from './EventPosterCard';
 
 const RAIL_LIMIT = 3;
 
-export function FindCityEventsRail({
+function FindCityEventsRailView({
   events,
   onSeeAll,
 }: {
@@ -52,3 +53,5 @@ export function FindCityEventsRail({
     </section>
   );
 }
+
+export const FindCityEventsRail = memo(FindCityEventsRailView);

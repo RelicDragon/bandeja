@@ -26,8 +26,10 @@ import {
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import {
   computeFindMonthDateRange,
+  findMonthRangeEquals,
   isFindGamesQueryReady,
   resolveFindMonthRangeAnchor,
+  type FindMonthDateRange,
 } from '@/utils/findMonthDateRange';
 import { buildFindStructuralApiParams } from '@/utils/findStructuralApiParams';
 import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
@@ -71,27 +73,31 @@ export const FindTab = () => {
 
   const displaySettings = useMemo(() => resolveDisplaySettings(user), [user]);
 
-  const [dateRange, setDateRange] = useState<{ startDate?: Date; endDate?: Date }>(() =>
+  // Seeded from the same anchor + week start MonthCalendar derives its grid
+  // from, so the month index and selected-day cards start fetching on the first
+  // render instead of waiting for the calendar to mount and report its range.
+  const [dateRange, setDateRange] = useState<FindMonthDateRange>(() =>
     computeFindMonthDateRange(
       resolveFindMonthRangeAnchor(findSelectedDay, new Date()),
       resolveDisplaySettings(user).weekStart,
     ),
   );
-  const [calendarRangeReady, setCalendarRangeReady] = useState(false);
+  const calendarRangeConfirmedRef = useRef(false);
 
+  // Until the calendar confirms a range, keep the seed in step with a late
+  // arriving viewer (week start) or a restored selected day.
   useEffect(() => {
-    if (calendarRangeReady) return;
-    setDateRange(
-      computeFindMonthDateRange(
-        resolveFindMonthRangeAnchor(findSelectedDay, new Date()),
-        displaySettings.weekStart,
-      ),
+    if (calendarRangeConfirmedRef.current) return;
+    const seeded = computeFindMonthDateRange(
+      resolveFindMonthRangeAnchor(findSelectedDay, new Date()),
+      displaySettings.weekStart,
     );
-  }, [displaySettings.weekStart, calendarRangeReady, findSelectedDay]);
+    setDateRange((prev) => (findMonthRangeEquals(prev, seeded) ? prev : seeded));
+  }, [displaySettings.weekStart, findSelectedDay]);
 
   const queryDateRange = dateRange;
 
-  const { filters, updateFilter, updateFilters, isHydrated } = useGameFilters();
+  const { filters, updateFilters, isHydrated } = useGameFilters();
 
   useEffect(() => {
     if (!isHydrated || findSelectedDay != null) {
@@ -124,11 +130,7 @@ export const FindTab = () => {
     [filters],
   );
 
-  const queryEnabled = isFindGamesQueryReady({
-    isHydrated,
-    calendarRangeReady: findViewMode === 'calendar' ? calendarRangeReady : true,
-    userId: user?.id,
-  });
+  const queryEnabled = isFindGamesQueryReady({ isHydrated, userId: user?.id });
   const calendarQueryEnabled = queryEnabled && findViewMode === 'calendar';
   const listQueryEnabled = queryEnabled && findViewMode === 'list';
 
@@ -468,9 +470,29 @@ export const FindTab = () => {
   }, [refetchCalendarGames, refetchUpcomingGames, refetchSelectedDayGames]);
 
   const handleDateRangeChange = useCallback((startDate: Date, endDate: Date) => {
-    setDateRange({ startDate, endDate });
-    setCalendarRangeReady(true);
+    calendarRangeConfirmedRef.current = true;
+    // The seeded range normally already matches; keeping the previous object
+    // avoids re-deriving the query params for an identical request.
+    setDateRange((prev) =>
+      findMonthRangeEquals(prev, { startDate, endDate }) ? prev : { startDate, endDate },
+    );
   }, []);
+
+  // `gameCardPropsEqual` compares `onJoin` by identity, so a handler that closes
+  // over the game lists re-renders every card on the tab whenever data arrives.
+  // The lists are read through a ref instead, keeping this callback stable.
+  const joinLookupRef = useRef<{
+    selectedDay?: Game[];
+    upcoming: Game[];
+    filtered: Game[];
+    dayIndex?: typeof calendarMeta.dayIndex;
+  }>({ upcoming: [], filtered: [] });
+  joinLookupRef.current = {
+    selectedDay: sortedSelectedDayGames,
+    upcoming: upcomingGames,
+    filtered: filteredAvailableGames,
+    dayIndex: calendarMeta.dayIndex,
+  };
 
   const handleJoinGame = useCallback(async function joinWithGates(gameId: string, e: React.MouseEvent) {
     e.stopPropagation();
@@ -479,11 +501,12 @@ export const FindTab = () => {
       runWithProfileName(() => void joinWithGates(gameId, e));
       return;
     }
+    const lookup = joinLookupRef.current;
     const joinGame =
-      sortedSelectedDayGames?.find((g) => g.id === gameId)
-      ?? upcomingGames.find((g) => g.id === gameId)
-      ?? filteredAvailableGames.find((g) => g.id === gameId)
-      ?? calendarMeta.dayIndex?.find((g) => g.id === gameId);
+      lookup.selectedDay?.find((g) => g.id === gameId)
+      ?? lookup.upcoming.find((g) => g.id === gameId)
+      ?? lookup.filtered.find((g) => g.id === gameId)
+      ?? lookup.dayIndex?.find((g) => g.id === gameId);
     if (!runWithGenderForEvent(joinGame, () => void joinWithGates(gameId, e))) return;
     try {
       const { gamesApi } = await import('@/api');
@@ -503,7 +526,7 @@ export const FindTab = () => {
       const errorMessage = error.response?.data?.message || 'errors.generic';
       toast.error(t(errorMessage, { defaultValue: errorMessage }));
     }
-  }, [sortedSelectedDayGames, upcomingGames, filteredAvailableGames, calendarMeta.dayIndex, refetchAvailableGames, navigate, t]);
+  }, [refetchAvailableGames, navigate, t]);
 
   const handleRefresh = useCallback(async () => {
     await clearCachesExceptUnsyncedResults();
@@ -528,27 +551,45 @@ export const FindTab = () => {
     return () => setFindHeaderActions(null);
   }, [findHeaderActions, setFindHeaderActions]);
 
-  const sectionProps = {
-    availableGames: filteredAvailableGames,
-    selectedDayGames: sortedSelectedDayGames,
-    // Hide previous-month badge counts while the new month index is in flight.
-    dayIndex: calendarIsPlaceholder ? undefined : calendarMeta.dayIndex,
-    user,
-    loading: loadingAvailableGames,
-    onJoin: handleJoinGame,
-    onMonthChange: undefined as undefined,
-    onDateRangeChange: handleDateRangeChange,
-    filters,
-    onFilterChange: (key: Parameters<typeof updateFilter>[0], value: Parameters<typeof updateFilter>[1]) =>
-      updateFilter(key, value),
-    onFiltersChange: (updates: Parameters<typeof updateFilters>[0]) => updateFilters(updates),
-    onNoteSaved: refetchAvailableGames,
-    hasMoreAvailable: pageMeta.hasMore,
-    onLoadMoreAvailable,
-    availableBound: pageMeta.bound,
-    dayLoadError: Boolean(dayScopedEnabled && selectedDayIsError && selectedDayPage == null),
-    onRetryDay: refetchSelectedDayGames,
-  };
+  // Blanking `dayIndex` during a keepPreviousData refetch made every badge and
+  // type pill on the month grid disappear and pop back on each filter toggle or
+  // month step. Hold the last settled index until the new one lands.
+  const settledDayIndexRef = useRef<typeof calendarMeta.dayIndex>(undefined);
+  if (!calendarIsPlaceholder) {
+    settledDayIndexRef.current = calendarMeta.dayIndex;
+  }
+  const displayedDayIndex = calendarIsPlaceholder
+    ? settledDayIndexRef.current
+    : calendarMeta.dayIndex;
+
+  const dayLoadError = Boolean(dayScopedEnabled && selectedDayIsError && selectedDayPage == null);
+
+  const sectionProps = useMemo(
+    () => ({
+      availableGames: filteredAvailableGames,
+      selectedDayGames: sortedSelectedDayGames,
+      dayIndex: displayedDayIndex,
+      user,
+      loading: loadingAvailableGames,
+      onJoin: handleJoinGame,
+      onMonthChange: undefined as undefined,
+      onDateRangeChange: handleDateRangeChange,
+      filters,
+      onFiltersChange: updateFilters,
+      onNoteSaved: refetchAvailableGames,
+      hasMoreAvailable: pageMeta.hasMore,
+      onLoadMoreAvailable,
+      availableBound: pageMeta.bound,
+      dayLoadError,
+      onRetryDay: refetchSelectedDayGames,
+    }),
+    [
+      filteredAvailableGames, sortedSelectedDayGames, displayedDayIndex, user,
+      loadingAvailableGames, handleJoinGame, handleDateRangeChange, filters, updateFilters,
+      refetchAvailableGames, pageMeta.hasMore, onLoadMoreAvailable, pageMeta.bound,
+      dayLoadError, refetchSelectedDayGames,
+    ],
+  );
 
   if (splitView) {
     return (

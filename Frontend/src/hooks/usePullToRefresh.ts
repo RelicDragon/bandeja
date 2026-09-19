@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, RefObject } from 'react';
+import { useCallback, useEffect, useState, useRef, RefObject } from 'react';
 import { getAppScrollElement, getAppScrollTop } from '@/utils/appScroll';
 
 interface UsePullToRefreshOptions {
@@ -6,6 +6,12 @@ interface UsePullToRefreshOptions {
   threshold?: number;
   disabled?: boolean;
   scrollContainerRef?: RefObject<HTMLElement | null>;
+  /**
+   * Opt out of per-touchmove React state. When supplied the hook reports the pull
+   * straight to this callback (write it to the DOM) and keeps `pullDistance` at 0,
+   * so dragging does not re-render the subscribing tree at touch frequency.
+   */
+  onPullDistanceChange?: (distance: number, progress: number, isRefreshing: boolean) => void;
 }
 
 export const usePullToRefresh = ({
@@ -13,9 +19,12 @@ export const usePullToRefresh = ({
   threshold = 60,
   disabled = false,
   scrollContainerRef,
+  onPullDistanceChange,
 }: UsePullToRefreshOptions) => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [pullDistance, setPullDistance] = useState(0);
+  const onPullDistanceChangeRef = useRef(onPullDistanceChange);
+  onPullDistanceChangeRef.current = onPullDistanceChange;
 
   const touchStartY = useRef(0);
   const touchStartX = useRef(0);
@@ -39,11 +48,19 @@ export const usePullToRefresh = ({
     scrollContainerRefRef.current = scrollContainerRef;
   }, [scrollContainerRef]);
 
-  const applyPullDistance = (distance: number) => {
-    if (pullDistanceRef.current === distance) return;
-    pullDistanceRef.current = distance;
-    setPullDistance(distance);
-  };
+  const applyPullDistance = useCallback(
+    (distance: number) => {
+      if (pullDistanceRef.current === distance) return;
+      pullDistanceRef.current = distance;
+      const publish = onPullDistanceChangeRef.current;
+      if (publish) {
+        publish(distance, Math.min(distance / threshold, 1), isRefreshingRef.current);
+        return;
+      }
+      setPullDistance(distance);
+    },
+    [threshold]
+  );
 
   useEffect(() => {
     if (disabled) return;
@@ -145,12 +162,15 @@ export const usePullToRefresh = ({
       }
 
       if (currentDistance >= threshold && !isRefreshingRef.current) {
+        /** Set the ref before publishing so DOM-driven consumers see the refreshing phase. */
+        isRefreshingRef.current = true;
         setIsRefreshing(true);
         applyPullDistance(60);
 
         try {
           await onRefreshRef.current();
         } finally {
+          isRefreshingRef.current = false;
           setIsRefreshing(false);
           applyPullDistance(0);
         }
@@ -170,7 +190,7 @@ export const usePullToRefresh = ({
       window.removeEventListener('touchend', handleTouchEnd);
       window.removeEventListener('touchcancel', handleTouchEnd);
     };
-  }, [disabled, threshold]);
+  }, [disabled, threshold, applyPullDistance]);
 
   return {
     isRefreshing,

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { memo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useShallow } from 'zustand/react/shallow';
@@ -21,7 +21,7 @@ interface InvitesSectionProps {
   decliningInviteIds?: ReadonlySet<string>;
 }
 
-export const InvitesSection = ({
+const InvitesSectionView = ({
   invites,
   onAccept,
   onDecline,
@@ -175,3 +175,4 @@ export const InvitesSection = ({
   );
 };
 
+export const InvitesSection = memo(InvitesSectionView);

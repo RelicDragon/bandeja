@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { ChatMessage } from '@/api/chat';
 
 interface UseMessageReactionsArgs {
@@ -9,6 +9,12 @@ interface UseMessageReactionsArgs {
   onScrollToFirstReply?: (parentMessageId: string) => void;
 }
 
+const NO_REACTION_COUNTS: Record<string, number> = {};
+
+/**
+ * Values, not getters. The previous getter form rebuilt the reaction-count object on every call
+ * (twice per row render), so the reaction strip could never memoise on it.
+ */
 export function useMessageReactions({
   message,
   currentUserId,
@@ -16,29 +22,26 @@ export function useMessageReactions({
   isOffline,
   onScrollToFirstReply,
 }: UseMessageReactionsArgs) {
-  const getCurrentUserReaction = useCallback(() => {
-    return message.reactions.find(r => r.userId === currentUserId)?.emoji;
-  }, [message.reactions, currentUserId]);
+  const reactions = message.reactions;
 
-  const isReactionPending = useCallback(() => {
-    const r = message.reactions.find(r => r.userId === currentUserId);
-    return !!(r && (r as { _pending?: boolean })._pending);
-  }, [message.reactions, currentUserId]);
+  const ownReaction = useMemo(
+    () => reactions.find((r) => r.userId === currentUserId),
+    [reactions, currentUserId]
+  );
 
-  const getReactionCounts = useCallback(() => {
-    const counts: { [emoji: string]: number } = {};
-    message.reactions.forEach(reaction => {
+  const currentUserReaction = ownReaction?.emoji;
+  const isReactionPending = !!(ownReaction && (ownReaction as { _pending?: boolean })._pending);
+
+  const reactionCounts = useMemo(() => {
+    if (reactions.length === 0) return NO_REACTION_COUNTS;
+    const counts: Record<string, number> = {};
+    for (const reaction of reactions) {
       counts[reaction.emoji] = (counts[reaction.emoji] || 0) + 1;
-    });
+    }
     return counts;
-  }, [message.reactions]);
+  }, [reactions]);
 
-  const getReplyCount = useCallback(() => replyCount, [replyCount]);
-
-  const hasReplies = useCallback(() => {
-    if (isOffline) return false;
-    return replyCount > 0;
-  }, [replyCount, isOffline]);
+  const hasReplies = !isOffline && replyCount > 0;
 
   const handleScrollToReplies = useCallback(() => {
     if (onScrollToFirstReply && !isOffline && replyCount > 0) {
@@ -47,10 +50,10 @@ export function useMessageReactions({
   }, [message.id, replyCount, isOffline, onScrollToFirstReply]);
 
   return {
-    getCurrentUserReaction,
+    currentUserReaction,
     isReactionPending,
-    getReactionCounts,
-    getReplyCount,
+    reactionCounts,
+    replyCount,
     hasReplies,
     handleScrollToReplies,
   };

@@ -57,7 +57,7 @@ interface GroupChannelCardProps {
 
 const GroupChannelCardInner = ({ groupChannel, listPresenceBatched = false, unreadCount = 0, onClick, isSelected, draft, listOutbox, onOutboxRetry, onOutboxDismiss, displayTitle, displaySubtitle, sellerGroupedByItem, isPinned = false, onPinToggle, canPin = true, isPinning = false, isMuted = false, onMuteToggle, isTogglingMute = false }: GroupChannelCardProps) => {
   const { t } = useTranslation();
-  const { user } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
   const viewerLevelSport = useViewerLevelSport();
   const { translateCity } = useTranslatedGeo();
   const displaySettings = useMemo(() => resolveDisplaySettings(user), [user]);

@@ -35,18 +35,19 @@ export const ChatsTab = () => {
   const location = useLocation();
   const isDesktop = useDesktop();
   const { filter: chatsFilter, role: marketChatRole, item: marketItemId } = useChatsFromUrl();
-  const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
-  const [selectedChatType, setSelectedChatType] = useState<ChatType | null>(null);
+  /**
+   * The path is the source of truth. `optimisticSelection` only covers the window
+   * between a click and the router committing the new URL, and is scoped to the path
+   * it was made on — mirroring the path into state cost an extra render per navigation.
+   */
+  const [optimisticSelection, setOptimisticSelection] = useState<
+    { id: string; type: ChatType; fromPath: string } | null
+  >(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const setIsAnimating = useShellNavStore((s) => s.setIsAnimating);
   const bottomTabsVisible = useShellNavStore((s) => s.bottomTabsVisible);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const animationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const selectedChatIdRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    selectedChatIdRef.current = selectedChatId;
-  }, [selectedChatId]);
 
   useEffect(() => {
     return () => {
@@ -59,16 +60,17 @@ export const ChatsTab = () => {
     };
   }, []);
 
-  useEffect(() => {
-    const fromPath = parseChatSelectionFromPath(location.pathname);
-    setSelectedChatId(fromPath.id);
-    setSelectedChatType(fromPath.type);
-  }, [location.pathname]);
-
   const pathSelection = useMemo(
     () => parseChatSelectionFromPath(location.pathname),
     [location.pathname]
   );
+  const pendingSelection =
+    optimisticSelection && optimisticSelection.fromPath === location.pathname
+      ? optimisticSelection
+      : null;
+  const selectedChatId = pathSelection.id ?? pendingSelection?.id ?? null;
+  const selectedChatType = pathSelection.type ?? pendingSelection?.type ?? null;
+
   /** Path wins over list selection so push/deep-link opens the correct thread on first paint. */
   const activeChatSelection = useMemo((): { id: string; type: ChatType } | null => {
     if (pathSelection.id && pathSelection.type) {
@@ -112,8 +114,7 @@ export const ChatsTab = () => {
       if (animationTimeoutRef.current) clearTimeout(animationTimeoutRef.current);
       setIsAnimating(true);
       setIsTransitioning(true);
-      setSelectedChatId(chatId);
-      setSelectedChatType(chatType);
+      setOptimisticSelection({ id: chatId, type: chatType, fromPath: location.pathname });
       try {
         if (chatType === 'game') {
           const gameState =
@@ -141,8 +142,7 @@ export const ChatsTab = () => {
       if (selectedChatId === chatId && selectedChatType === chatType) return;
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
       setIsTransitioning(true);
-      setSelectedChatId(chatId);
-      setSelectedChatType(chatType);
+      setOptimisticSelection({ id: chatId, type: chatType, fromPath: location.pathname });
       navigate(path, { replace: true, state: listNavState ?? {} });
       timeoutRef.current = setTimeout(() => setIsTransitioning(false), 150);
     } else {
@@ -159,7 +159,7 @@ export const ChatsTab = () => {
         setIsAnimating(false);
       }
     }
-  }, [isDesktop, selectedChatId, selectedChatType, setIsAnimating, navigate, getChatPath]);
+  }, [isDesktop, selectedChatId, selectedChatType, setIsAnimating, navigate, getChatPath, location.pathname]);
 
   const emptyState = useMemo(() => (
     <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400">
