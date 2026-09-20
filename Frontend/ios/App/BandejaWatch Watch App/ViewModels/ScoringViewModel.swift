@@ -16,8 +16,21 @@ final class ScoringViewModel {
     private let api = APIClient()
     /// Read live: the credential can arrive via WatchConnectivity after init.
     private var currentUserId: String? { KeychainHelper.shared.readUserId() }
+    private var isPlatformAdmin: Bool { KeychainHelper.shared.readIsPlatformAdmin() }
     @ObservationIgnored
     nonisolated(unsafe) private var pollingTask: Task<Void, Never>?
+
+    /// Backend `canModifyResults` for the loaded game (owner/admin, or resultsByAnyone + PLAYING).
+    var canModifyResults: Bool {
+        guard let game else { return false }
+        return WatchResultsPermissions.canModifyResults(game: game, userId: currentUserId, isPlatformAdmin: isPlatformAdmin)
+    }
+
+    /// Owner/admin (or platform admin) may score every court, not only their own match.
+    private var mayScoreAnyMatch: Bool {
+        guard let game else { return false }
+        return isPlatformAdmin || WatchResultsPermissions.isOwnerOrAdmin(game: game, userId: currentUserId)
+    }
 
     init(gameId: String) {
         self.gameId = gameId
@@ -51,15 +64,18 @@ final class ScoringViewModel {
         pollingTask = nil
     }
 
+    /// Matches this user may see in the scoring list: the ones they play in, plus every match
+    /// when they organize the game (web lets owners/admins enter every court).
     var myMatches: [(round: WatchRound, match: WatchMatch)] {
         guard let currentUserId, let rounds = results?.rounds else { return [] }
+        let scoresAny = mayScoreAnyMatch
         return rounds
             .sorted { $0.roundNumber < $1.roundNumber }
             .flatMap { round in
                 round.matches
                     .sorted { $0.matchNumber < $1.matchNumber }
                     .filter { match in
-                        match.teams.contains { team in
+                        scoresAny || match.teams.contains { team in
                             team.players.contains { $0.userId == currentUserId }
                         }
                     }
@@ -76,7 +92,7 @@ final class ScoringViewModel {
     }
 
     var canFinalizeResults: Bool {
-        guard !isFinal else { return false }
+        guard !isFinal, canModifyResults else { return false }
         return myMatches.contains { matchItem in
             matchItem.match.sets.contains { $0.teamAScore > 0 || $0.teamBScore > 0 }
         }
@@ -89,7 +105,8 @@ final class ScoringViewModel {
     }
 
     func canEditMatch(_ match: WatchMatch) -> Bool {
-        guard !isFinal, let uid = currentUserId else { return false }
+        guard !isFinal, let uid = currentUserId, canModifyResults else { return false }
+        if mayScoreAnyMatch { return true }
         return match.teams.contains { team in
             team.players.contains { $0.userId == uid }
         }

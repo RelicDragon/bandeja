@@ -9,6 +9,7 @@ import { validateAnswers } from '../sport/questionnaires/scoring';
 import { resolveSport } from '../sport/sportRegistry';
 import * as userController from '../controllers/user.controller';
 import { getPremiumOnboarding, completePremiumOnboarding } from '../controllers/user/premiumOnboarding.controller';
+import { getUserPartnersHandler } from '../controllers/pairRanking.controller';
 import { MAX_BASIC_USERS_IDS_PER_REQUEST } from '../services/user/basicUsersForMessage.service';
 import { rateLimitKeyFromRequest } from '../utils/rateLimitClientKey';
 
@@ -274,6 +275,9 @@ router.post(
 );
 
 router.get('/:userId/stats', optionalAuth, userController.getUserStats);
+
+// PRD 352 — Profile → Statistics → Your partners.
+router.get('/:userId/partners', authenticate, getUserPartnersHandler);
 
 router.put(
   '/favorite-trainer',

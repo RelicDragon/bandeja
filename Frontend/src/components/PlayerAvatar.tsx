@@ -1,5 +1,7 @@
 import { showsPremiumStatus } from '@/utils/premiumIdentity';
 import '@/styles/premium-name.css';
+import '@/styles/collection.css';
+import { useFrameClass } from '@/features/collection/useEquippedGoods';
 import { X, User, Crown, Check, Dumbbell } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { BasicUser } from '@/types';
@@ -76,6 +78,12 @@ export const PlayerAvatar = ({ player, subscribePresence = true, isCurrentUser, 
   const isFavorite = useFavoritesStore((state) => player ? state.isFavorite(player.id) : false);
   const user = useAuthStore((state) => state.user);
   const isOnline = usePresenceStore((s) => player ? s.isOnline(player.id) : false);
+  // PRD 355 — the cosmetic frame this player has equipped, if any. The lookup is
+  // batched across every avatar on screen, so a full roster costs one request.
+  const equippedFrameClass = useFrameClass(
+    player?.id,
+    inlineFace || superTiny || extrasmall ? 'sm' : 'md',
+  );
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains('dark'));
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -326,7 +334,10 @@ export const PlayerAvatar = ({ player, subscribePresence = true, isCurrentUser, 
             : '';
 
   const faceStackZ = inlineFace && inlineFaceFlatStack ? 'z-0' : 'z-10';
-  const wrapperClassName = `relative ${faceStackZ} ${sizeClasses.avatar} rounded-full flex-shrink-0 p-0 border-0 ${!asDiv ? (draggable ? 'cursor-move' : 'cursor-pointer') + ' hover:opacity-80 transition-opacity ' : ''}${smallLayout && !draggable ? 'touch-manipulation ' : ''}${ringClass}${
+  // PRD 355 — an equipped profile frame rings the avatar everywhere it renders
+  // (profile, player card, roster rows, chat avatars, leaderboard rows).
+  const collectionFrame = equippedFrameClass ? ` ${equippedFrameClass}` : '';
+  const wrapperClassName = `relative ${faceStackZ} ${sizeClasses.avatar} rounded-full flex-shrink-0 p-0 border-0 ${!asDiv ? (draggable ? 'cursor-move' : 'cursor-pointer') + ' hover:opacity-80 transition-opacity ' : ''}${smallLayout && !draggable ? 'touch-manipulation ' : ''}${ringClass}${collectionFrame}${
     !inlineFace && player && isOnline
       ? isFavorite
         ? ' avatar-online-border-favorite'

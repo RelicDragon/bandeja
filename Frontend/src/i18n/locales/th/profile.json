@@ -141,6 +141,8 @@
     "sendDirectMessagesDescription": "รับการแจ้งเตือนเมื่อมีคนส่งข้อความถึงคุณโดยตรง",
     "sendReminders": "การแจ้งเตือน",
     "sendRemindersDescription": "รับการแจ้งเตือน 2 ชั่วโมงก่อนเกม การแข่งขัน หรือบาร์ฝึกซ้อมของคุณจะเริ่ม",
+    "sendWeatherAlerts": "การแจ้งเตือนสภาพอากาศ",
+    "sendWeatherAlertsDescription": "เฉพาะคอร์ตกลางแจ้งเท่านั้น",
     "walletNotifications": "การแจ้งเตือนกระเป๋าเงิน",
     "walletNotificationsDescription": "รับการแจ้งเตือนสำหรับการทำธุรกรรมกระเป๋าเงิน",
     "marketplaceNotifications": "รายการใหม่ในเมืองของฉัน",

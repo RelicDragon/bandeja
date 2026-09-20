@@ -16,6 +16,17 @@ vi.mock('@/hooks/usePlayerCardModal', () => ({
   usePlayerCardModal: () => ({ openPlayerCard: vi.fn() }),
 }));
 
+// PRD 355 — the avatar reads its equipped frame through this hook, whose store
+// pulls in `api/axios` (and through it the real i18n config) at module load.
+// This suite mocks `react-i18next` with `useTranslation` alone, so the real
+// chain cannot be allowed to load. Mocking here keeps the suite about the level
+// badge, like every other mock in this file.
+vi.mock('@/features/collection/useEquippedGoods', () => ({
+  useFrameClass: () => null,
+  useNameColorClass: () => null,
+  usePrefetchEquippedGoods: () => {},
+}));
+
 vi.mock('@/hooks/usePresenceSubscription', () => ({
   usePresenceSubscription: () => {},
 }));

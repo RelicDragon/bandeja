@@ -17,6 +17,7 @@ import {
   writeRegistrationPrimarySport,
 } from '@/utils/registrationPrimarySport';
 import { consumePostLoginPath } from '@/utils/postLoginRedirect';
+import { ReferralCaptureBanner } from '@/components/referral/ReferralCaptureBanner';
 
 export const Register = () => {
   const { t, i18n } = useTranslation();
@@ -197,6 +198,10 @@ export const Register = () => {
           {error}
         </div>
       )}
+
+      {/* PRD 351 — "Invited by X" when a referral was captured, otherwise the
+          collapsed "Have a code?" link. Renders nothing when neither applies. */}
+      <ReferralCaptureBanner className="mb-4" />
 
       <form onSubmit={handleRegister} className="space-y-4">
         <div ref={firstNameRef}>

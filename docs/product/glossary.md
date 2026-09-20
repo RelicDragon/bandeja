@@ -116,7 +116,7 @@ Shared FE/BE: `packages/chat-contract/src/chatSyncEventType.ts` and Prisma `Chat
 
 ## Club booking providers
 
-**ClubIntegrationType**: `BOOKTIME` \| `PADELOO` \| `KLIKTEREN` \| `NSPADELSUPABASE`. Shared type: `Frontend/shared/clubIntegration.ts`. Per-provider auth + busy snapshot models (`UserClub*Auth`, `Club*BusySnapshot`). _Avoid_: calling all of them “Booktime”.
+**ClubIntegrationType**: `BOOKTIME` \| `PADELOO` \| `KLIKTEREN` \| `NSPADELSUPABASE` \| `WELTNER`. Shared type: `Frontend/shared/clubIntegration.ts`. Per-provider auth + busy snapshot models (`UserClub*Auth`, `Club*BusySnapshot`). _Avoid_: calling all of them “Booktime”.
 
 **Nspadel**: product name for `NSPADELSUPABASE`. Club Supabase is same-origin gated; FE talks to `/api/nspadel/*` only. Anon key stays on the backend (`Backend/src/routes/nspadel.routes.ts`).
 
@@ -163,3 +163,7 @@ From root `CONTEXT.md`. Applies to `LeagueParticipant` type `TEAM` only.
 ## Auth refresh
 
 **X-Refresh-Request-Id**: required header on `POST` refresh. Pattern `^[A-Za-z0-9._:-]{16,128}$`. Missing → `auth.refreshRequestIdRequired`. Invalid → `auth.refreshRequestIdInvalid`. `Backend/src/controllers/authRefresh.controller.ts`. Replay-safe one-time rotation. Default access JWT `30m`, refresh `60d`, cap `AUTH_MAX_ACTIVE_SESSIONS_PER_USER` default 20 (`Backend/src/config/jwtAuthConfig.ts`, `Backend/src/config/env.ts`).
+
+**Weltner connection**: a player’s saved booking phone number for one club. It does not verify phone ownership or establish a Weltner account.
+
+**Weltner booking receipt**: Bandeja’s record of a reservation submission and its outcome. It distinguishes confirmed, rejected and uncertain outcomes; it is not a live view of changes made through the club.

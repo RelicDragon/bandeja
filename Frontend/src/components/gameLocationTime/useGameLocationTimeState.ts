@@ -217,7 +217,7 @@ export function useGameLocationTimeState({
         ] as string[];
         return {
           externalBookingIds: selectedBookings.map((b) => b.uuid),
-          externalBookingProvider: 'BOOKTIME',
+          externalBookingProvider: club?.integrationType ?? 'BOOKTIME',
           bookingSnapshots: snapshots,
           courtIds: uniqueCourtIds.length > 0 ? uniqueCourtIds : undefined,
           startTime: slotTimes.startTime ?? createDateFromSelection().startTime,

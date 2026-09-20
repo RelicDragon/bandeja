@@ -6,7 +6,6 @@ enum HealthKitPermissions {
     static let typesToRead: Set<HKObjectType> = [
         HKObjectType.quantityType(forIdentifier: .activeEnergyBurned)!,
         HKObjectType.quantityType(forIdentifier: .heartRate)!,
-        HKObjectType.quantityType(forIdentifier: .basalEnergyBurned)!,
         HKObjectType.workoutType(),
     ]
 
@@ -14,7 +13,13 @@ enum HealthKitPermissions {
         try await store.requestAuthorization(toShare: typesToShare, read: typesToRead)
     }
 
+    /// Sharing status for the workout type: `.notDetermined` (prompt never answered),
+    /// `.sharingDenied` (user refused — only Settings can fix it) or `.sharingAuthorized`.
+    static func authorizationStatus(store: HKHealthStore) -> HKAuthorizationStatus {
+        store.authorizationStatus(for: HKObjectType.workoutType())
+    }
+
     static func isSharingAuthorized(store: HKHealthStore) -> Bool {
-        store.authorizationStatus(for: HKObjectType.workoutType()) == .sharingAuthorized
+        authorizationStatus(store: store) == .sharingAuthorized
     }
 }

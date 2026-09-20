@@ -139,6 +139,23 @@ enum WatchLiveScoringEngine {
                 copy.sets[copy.activeSetIndex] = row
                 return ActionResult(state: autoAdvanceCompletedSets(state: copy, rules: rules), changed: true)
             }
+            // `isLivePointsFrozen` (core.ts): a won rally game / exhausted ball budget takes no more points.
+            if rules.usesRallyPointCap,
+               pointRaceCompleted(
+                   teamA: row.teamA,
+                   teamB: row.teamB,
+                   target: rules.totalPointsPerSet,
+                   winBy: max(rules.winBy, 1)
+               ) {
+                return ActionResult(state: state, changed: false)
+            }
+            if !rules.usesRallyPointCap, rules.totalPointsPerSet > 0, row.teamA + row.teamB >= rules.totalPointsPerSet {
+                return ActionResult(state: state, changed: false)
+            }
+            if rules.maxPointsPerTeam > 0,
+               (side == .teamA ? row.teamA : row.teamB) >= rules.maxPointsPerTeam {
+                return ActionResult(state: state, changed: false)
+            }
             if side == .teamA { row.teamA += 1 } else { row.teamB += 1 }
             copy.sets[copy.activeSetIndex] = row
             var log = copy.pointWinnerLog ?? []
@@ -277,13 +294,13 @@ enum WatchLiveScoringEngine {
             return ActionResult(state: state, changed: false)
         }
 
-        switch classic.pointState {
-        case .advantage:
-            classic.pointState = .regular(teamA: .forty, teamB: .forty)
-            copy.classic = classic
-            applyClassicPointsAfterUnscore(state: &copy)
-            return ActionResult(state: copy, changed: true)
-        case .deuce:
+        // Legacy `.deuce` unscores like regular 40:40 (core.ts: `regular = kind === 'deuce' ? 40:40 : pointState`).
+        let pointState: WatchLivePointState = {
+            if case .deuce = classic.pointState { return .regular(teamA: .forty, teamB: .forty) }
+            return classic.pointState
+        }()
+        switch pointState {
+        case .advantage, .deuce:
             classic.pointState = .regular(teamA: .forty, teamB: .forty)
             copy.classic = classic
             applyClassicPointsAfterUnscore(state: &copy)
@@ -679,11 +696,8 @@ enum WatchLiveScoringEngine {
                 }
             }
         case .deuce:
-            if rules.isGoldenPointActive(deuceCount: deuceCount) {
-                awardGame(state: &state, classic: &classic, side: side, rules: rules)
-            } else {
-                classic.pointState = .advantage(side)
-            }
+            // core.ts: legacy `deuce` always goes to advantage (golden point only checks regular 40:40).
+            classic.pointState = .advantage(side)
         case .advantage(let adv):
             if adv == side {
                 awardGame(state: &state, classic: &classic, side: side, rules: rules)
@@ -701,15 +715,16 @@ enum WatchLiveScoringEngine {
         rules: WatchScoringRules
     ) {
         ensureSetExists(state: &state, rules: rules)
+        guard var row = state.sets[safe: state.activeSetIndex] else { return }
         if side == .teamA {
-            state.sets[state.activeSetIndex].teamA += 1
+            row.teamA += 1
         } else {
-            state.sets[state.activeSetIndex].teamB += 1
+            row.teamB += 1
         }
+        state.sets[state.activeSetIndex] = row
         classic.pointState = .regular(teamA: .zero, teamB: .zero)
         classic.classicPointsPlayedInGame = 0
         classic.deuceCount = 0
-        let row = state.sets[state.activeSetIndex]
         let tbAt = gamesScoreForTieBreak(rules: rules)
         if row.teamA == tbAt && row.teamB == tbAt {
             classic.withinSetTieBreak = true
@@ -725,10 +740,12 @@ enum WatchLiveScoringEngine {
     ) {
         let n = gamesScoreForTieBreak(rules: rules)
         let aWon = classic.tieBreakA > classic.tieBreakB
+        guard let current = state.sets[safe: state.activeSetIndex] else { return }
         state.sets[state.activeSetIndex] = WatchSetWrite(
             teamA: aWon ? n + 1 : n,
             teamB: aWon ? n : n + 1,
-            isTieBreak: false
+            isTieBreak: false,
+            role: current.role
         )
         classic.tieBreakA = 0
         classic.tieBreakB = 0
@@ -929,13 +946,11 @@ enum WatchLiveScoringEngine {
         return input
     }
 
+    /// Parity with `core.ts` `ensureSetExists`: append official rows until the active index exists;
+    /// never truncate (supplemental rows beyond `maxSetsPlayed` are preserved).
     private static func ensureSetExists(state: inout WatchLiveScoringState, rules: WatchScoringRules) {
         while state.activeSetIndex >= state.sets.count {
             state.sets.append(WatchSetWrite(teamA: 0, teamB: 0, isTieBreak: false))
-        }
-        let cap = max(rules.maxSetsPlayed, 1)
-        if state.sets.count > cap {
-            state.sets = Array(state.sets.prefix(cap))
         }
     }
 

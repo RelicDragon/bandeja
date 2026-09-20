@@ -3,7 +3,14 @@ import BandejaWatchShared
 
 struct LiveActiveMatchProvider: TimelineProvider {
     func placeholder(in context: Context) -> LiveActiveMatchEntry {
-        LiveActiveMatchEntry(date: .now, title: "Live", score: "0-0", active: false)
+        let lang = WatchWidgetCopy.widgetLang()
+        return LiveActiveMatchEntry(
+            date: .now,
+            title: WatchWidgetCopy.liveWidgetPlaceholder(lang),
+            score: "0-0",
+            active: false,
+            gameId: nil
+        )
     }
 
     func getSnapshot(in context: Context, completion: @escaping (LiveActiveMatchEntry) -> Void) {
@@ -12,19 +19,30 @@ struct LiveActiveMatchProvider: TimelineProvider {
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<LiveActiveMatchEntry>) -> Void) {
         let entry = makeEntry()
-        let next = Date.now.addingTimeInterval(60)
-        completion(Timeline(entries: [entry], policy: .after(next)))
+        // The app reloads this widget on every score change; with no active match there is
+        // nothing to poll for, so wait for the next explicit reload instead of burning budget.
+        let policy: TimelineReloadPolicy = entry.active
+            ? .after(Date.now.addingTimeInterval(5 * 60))
+            : .never
+        completion(Timeline(entries: [entry], policy: policy))
     }
 
     private func makeEntry() -> LiveActiveMatchEntry {
         guard let payload = LiveActiveSnapshotStore.read() else {
-            return LiveActiveMatchEntry(date: .now, title: "Bandeja", score: "—", active: false)
+            return LiveActiveMatchEntry(
+                date: .now,
+                title: WatchWidgetCopy.brand(),
+                score: "—",
+                active: false,
+                gameId: nil
+            )
         }
         return LiveActiveMatchEntry(
             date: .now,
             title: payload.titleLine,
             score: payload.scoreLine,
-            active: true
+            active: true,
+            gameId: payload.gameId
         )
     }
 }

@@ -7,10 +7,11 @@ type Props = {
   isOwnProfile: boolean;
 };
 
+// Same order and colors as the post-game feedback sheet's answer buttons.
 const ROWS = [
-  { verdict: 'HIGHER' as const, color: '#3b82f6', dot: 'bg-blue-500' },
-  { verdict: 'ABOUT_RIGHT' as const, color: '#8b5cf6', dot: 'bg-violet-500' },
   { verdict: 'LOWER' as const, color: '#f59e0b', dot: 'bg-amber-500' },
+  { verdict: 'ABOUT_RIGHT' as const, color: '#8b5cf6', dot: 'bg-violet-500' },
+  { verdict: 'HIGHER' as const, color: '#3b82f6', dot: 'bg-blue-500' },
 ];
 
 export function PlayerLevelFeedbackAggregateCard({ aggregate, isOwnProfile }: Props) {
@@ -37,12 +38,17 @@ export function PlayerLevelFeedbackAggregateCard({ aggregate, isOwnProfile }: Pr
     );
   }
 
-  const higher = aggregate.percentages.HIGHER;
-  const aboutRight = aggregate.percentages.ABOUT_RIGHT;
   const dominant = ROWS.reduce((best, row) =>
     aggregate.percentages[row.verdict] > aggregate.percentages[best.verdict] ? row : best
   );
-  const donutBackground = `conic-gradient(${ROWS[0].color} 0 ${higher}%, ${ROWS[1].color} ${higher}% ${higher + aboutRight}%, ${ROWS[2].color} ${higher + aboutRight}% 100%)`;
+  let sweptSoFar = 0;
+  const donutStops = ROWS.map((row, rowIndex) => {
+    const start = sweptSoFar;
+    sweptSoFar += aggregate.percentages[row.verdict];
+    const end = rowIndex === ROWS.length - 1 ? 100 : sweptSoFar;
+    return `${row.color} ${start}% ${end}%`;
+  });
+  const donutBackground = `conic-gradient(${donutStops.join(', ')})`;
   const chartLabel = ROWS.map((row) =>
     `${t(`playerCard.levelFeedback.verdict.${row.verdict}`)} ${aggregate.percentages[row.verdict]}%`
   ).join(', ');
@@ -70,8 +76,11 @@ export function PlayerLevelFeedbackAggregateCard({ aggregate, isOwnProfile }: Pr
           role="img"
           aria-label={chartLabel}
         >
-          <div className="absolute inset-[18px] flex items-center justify-center rounded-full bg-white shadow-inner dark:bg-slate-800">
-            <span className="text-center text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+          <div className="absolute inset-[18px] flex flex-col items-center justify-center rounded-full bg-white shadow-inner dark:bg-slate-800">
+            <span className="text-lg font-black leading-none tabular-nums text-slate-900 dark:text-white">
+              {aggregate.distinctEvaluators}
+            </span>
+            <span className="mt-0.5 text-center text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
               {t('playerCard.levelFeedback.players')}
             </span>
           </div>

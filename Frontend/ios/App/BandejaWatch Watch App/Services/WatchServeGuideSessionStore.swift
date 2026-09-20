@@ -78,40 +78,108 @@ struct WatchServeGuideSessionRecord: Codable, Equatable, Sendable {
     }
 }
 
+/// Persisted envelope: the record plus when it was written, so stale per-match keys can be pruned.
+private struct WatchServeGuideSessionEnvelope: Codable {
+    let savedAt: Date
+    let record: WatchServeGuideSessionRecord
+}
+
 /// Offline cache for serve-seed UI flags only. Hot path reads/writes go through `MatchScoringViewModel`.
+///
+/// One key per game/match; entries older than `maxAge` (14 days) are pruned on every write so the
+/// App Group suite does not accumulate a key for every match ever scored.
 @Observable
 @MainActor
 final class WatchServeGuideSessionStore {
     static let shared = WatchServeGuideSessionStore()
 
-    private let ud = UserDefaults(suiteName: KeychainHelper.accessGroup)
+    static let maxAge: TimeInterval = 14 * 24 * 3600
+    private static let keyPrefix = "bandeja.watch.serveGuide."
+
+    private let ud: UserDefaults?
+    private let now: () -> Date
+
+    private init() {
+        self.ud = UserDefaults(suiteName: KeychainHelper.accessGroup)
+        self.now = { Date() }
+    }
+
+    /// Test seam: isolated suite + controllable clock.
+    init(suite: UserDefaults?, now: @escaping () -> Date = { Date() }) {
+        self.ud = suite
+        self.now = now
+    }
+
     private static func key(gameId: String, matchId: String) -> String {
-        "bandeja.watch.serveGuide.\(gameId).\(matchId)"
+        "\(keyPrefix)\(gameId).\(matchId)"
     }
 
     func load(gameId: String, matchId: String) -> WatchServeGuideSessionRecord? {
         guard let data = ud?.data(forKey: Self.key(gameId: gameId, matchId: matchId)) else { return nil }
-        if let r = try? JSONDecoder().decode(WatchServeGuideSessionRecord.self, from: data) {
-            if let raw = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-               raw["hiddenForMatch"] as? Bool == true {
-                var migrated = r
-                migrated.skipped = true
-                save(gameId: gameId, matchId: matchId, record: migrated)
-                return migrated
-            }
-            return r
+        guard let r = Self.decodeRecord(data) else { return nil }
+        if let raw = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+           Self.legacyHiddenFlag(raw) {
+            var migrated = r
+            migrated.skipped = true
+            save(gameId: gameId, matchId: matchId, record: migrated)
+            return migrated
         }
-        return nil
+        return r
     }
 
     func save(gameId: String, matchId: String, record: WatchServeGuideSessionRecord) {
-        if let data = try? JSONEncoder().encode(record) {
+        let envelope = WatchServeGuideSessionEnvelope(savedAt: now(), record: record)
+        if let data = try? JSONEncoder().encode(envelope) {
             ud?.set(data, forKey: Self.key(gameId: gameId, matchId: matchId))
         }
+        pruneExpired()
     }
 
     func clear(gameId: String, matchId: String) {
         ud?.removeObject(forKey: Self.key(gameId: gameId, matchId: matchId))
+    }
+
+    /// Number of serve-guide keys currently stored (test/diagnostic helper).
+    var storedEntryCount: Int {
+        ud?.dictionaryRepresentation().keys.filter { $0.hasPrefix(Self.keyPrefix) }.count ?? 0
+    }
+
+    /// Drops entries older than `maxAge`. Legacy entries without a timestamp are re-wrapped
+    /// with the current time so they age out on the normal schedule.
+    func pruneExpired() {
+        guard let ud else { return }
+        let cutoff = now().addingTimeInterval(-Self.maxAge)
+        for key in ud.dictionaryRepresentation().keys where key.hasPrefix(Self.keyPrefix) {
+            guard let data = ud.data(forKey: key) else { continue }
+            if let envelope = try? JSONDecoder().decode(WatchServeGuideSessionEnvelope.self, from: data) {
+                if envelope.savedAt < cutoff {
+                    ud.removeObject(forKey: key)
+                }
+                continue
+            }
+            guard let legacy = try? JSONDecoder().decode(WatchServeGuideSessionRecord.self, from: data) else {
+                ud.removeObject(forKey: key)
+                continue
+            }
+            let wrapped = WatchServeGuideSessionEnvelope(savedAt: now(), record: legacy)
+            if let rewrapped = try? JSONEncoder().encode(wrapped) {
+                ud.set(rewrapped, forKey: key)
+            }
+        }
+    }
+
+    private static func decodeRecord(_ data: Data) -> WatchServeGuideSessionRecord? {
+        if let envelope = try? JSONDecoder().decode(WatchServeGuideSessionEnvelope.self, from: data) {
+            return envelope.record
+        }
+        return try? JSONDecoder().decode(WatchServeGuideSessionRecord.self, from: data)
+    }
+
+    /// `hiddenForMatch` predates `skipped`; it may sit at the top level (legacy) or under `record`.
+    private static func legacyHiddenFlag(_ raw: [String: Any]) -> Bool {
+        if raw["hiddenForMatch"] as? Bool == true { return true }
+        if let record = raw["record"] as? [String: Any], record["hiddenForMatch"] as? Bool == true { return true }
+        return false
     }
 }
 

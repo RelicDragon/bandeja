@@ -37,6 +37,7 @@ import { isPlayIntentPushType } from '@/services/push/isPlayIntentPushType';
 import { decodeJwtExpMs } from '@/api/authRefresh';
 import { blockAndroidLauncherIconChangesForNativeUi } from '@/services/androidLauncherIconScheduler';
 import { registerAndroidPushSafely } from '@/services/push/safePushRegistrationBridge';
+import { markSeatedFromQueuePending } from '@/features/spot-opened/seatedFromQueueMarker';
 
 interface NotificationData {
   type: string;
@@ -62,6 +63,14 @@ interface NotificationData {
     chatContextType?: string;
     contextId?: string;
     replyToken?: string;
+    /** PRD 347 — `'1'` when auto-fill seated the recipient from the queue. */
+    seatedFromQueue?: string;
+    /** PRD 351 — the wallet transaction a reward push points at. */
+    transactionId?: string;
+    /** PRD 351 — `'1'` when a `TRANSACTION` push is a referral payout. */
+    referralReward?: string;
+    /** PRD 353 — `YYYY-MM` key of the recap the notification opens. */
+    recapMonthKey?: string;
   };
 }
 
@@ -617,6 +626,20 @@ class PushNotificationService {
         }
         break;
 
+      // PRD 347 — the spot-opened push lands on the game with the join flow
+      // primed; the "You're in!" variant only records the one-time header.
+      case 'GAME_SPOT_OPENED':
+      case 'FOLLOWED_GAME_SPOT_OPENED':
+        if (payload?.gameId) {
+          if (payload.seatedFromQueue === '1') {
+            markSeatedFromQueuePending(payload.gameId);
+            navigationService.navigateToGame(payload.gameId);
+          } else {
+            navigationService.navigateToGameForJoin(payload.gameId);
+          }
+        }
+        break;
+
       case 'PLAY_INTENT_MATCH':
         if (payload?.proposalId) {
           navigationService.navigateToFind({ proposal: payload.proposalId });
@@ -628,6 +651,23 @@ class PushNotificationService {
       case 'FOLLOWED_USER_PLAY_INTENT':
         if (payload?.playIntentId) {
           navigationService.navigateToHome({ playIntent: payload.playIntentId });
+        }
+        break;
+
+      // PRD 353 — "Your September recap is ready" opens the reel directly.
+      // `useRecapRail` consumes `?recap=` on Home and cleans it out of the URL.
+      case 'MONTHLY_RECAP_READY':
+        if (payload?.recapMonthKey) {
+          navigationService.navigateToHome({ recap: payload.recapMonthKey });
+        } else {
+          navigationService.navigateToHome();
+        }
+        break;
+
+      // PRD 346 — a no-show note lands in the game chat so the player can reply.
+      case 'GAME_NO_SHOW_NOTED':
+        if (payload?.gameId) {
+          navigationService.navigateToGame(payload.gameId, true, { forceReload: true });
         }
         break;
 
@@ -738,6 +778,20 @@ class PushNotificationService {
 
       case 'TEAM_DELETED':
         navigationService.navigateToHome();
+        break;
+
+      // PRD 351 — both sides of a referral payout land on the Wallet with the
+      // new row highlighted. `TRANSACTION` had no tap handler at all before
+      // this, so every coin push simply opened the app on whatever was last on
+      // screen.
+      case 'TRANSACTION':
+        navigationService.navigateToWallet(payload?.transactionId ?? null);
+        break;
+
+      // PRD 351 — "your invite joined" belongs on the invite card, not the
+      // Wallet: no coins have moved yet.
+      case 'REFERRAL_JOINED':
+        navigationService.navigateToProfile();
         break;
 
       default:

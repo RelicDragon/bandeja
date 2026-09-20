@@ -1,0 +1,100 @@
+{
+  "recap": {
+    "slides": {
+      "cover": {
+        "caption": "数字で振り返る",
+        "alt": "{{month}} を数字で振り返る"
+      },
+      "games": {
+        "eyebrow": "試合数",
+        "caption_other": "{{count}} 試合プレー",
+        "alt_other": "{{month}} は {{count}} 試合プレー"
+      },
+      "wins": {
+        "eyebrow": "勝利数",
+        "caption_other": "{{count}} 勝",
+        "alt_other": "{{count}} 勝、勝率 {{percent}}"
+      },
+      "level": {
+        "eyebrow": "プレーレベル",
+        "caption": "現在のレベルは {{level}} です",
+        "neutral": "レベルが {{level}} になりました",
+        "alt": "プレーレベル: {{level}} になりました"
+      },
+      "partner": {
+        "eyebrow": "ベストパートナー",
+        "caption_other": "{{name}} と {{count}} 勝",
+        "alt_other": "ベストパートナー {{name}}、一緒に {{count}} 勝"
+      },
+      "streak": {
+        "eyebrow": "連続プレー",
+        "caption_other": "{{count}} 週連続でプレー",
+        "best_other": "自己ベスト {{count}} 週",
+        "alt_other": "連続プレー: {{count}} 週"
+      },
+      "club": {
+        "eyebrow": "ホームコート",
+        "caption_other": "ここで {{count}} 試合",
+        "alt_other": "ホームコート {{club}}、{{count}} 試合"
+      },
+      "lowActivity": {
+        "encouragement": "一試合でも立派な一歩。次の試合を見つけましょう。",
+        "caption_other": "{{month}} は {{count}} 試合",
+        "alt_other": "{{month}} は合計 {{count}} 試合"
+      },
+      "outro": {
+        "title": "{{month}} にコートで会いましょう",
+        "caption": "{{games}} · {{wins}}",
+        "gamesPart_other": "{{count, number}} 試合",
+        "winsPart_other": "{{count, number}} 勝",
+        "lowActivityCaption": "コートが待っています。",
+        "alt": "{{month}} にコートで会いましょう"
+      }
+    },
+    "viewer": {
+      "title": "今月の振り返り",
+      "close": "閉じる",
+      "next": "次へ",
+      "shareCta": "フォロワーにシェア",
+      "saveImageCta": "画像を保存",
+      "savingImage": "画像を準備しています…",
+      "playIntentCta": "プレーしたい",
+      "loading": "振り返りを準備しています…",
+      "loadFailed": "この振り返りを読み込めませんでした。",
+      "sportTabs": "スポーツを選ぶ"
+    },
+    "share": {
+      "title": "振り返りをシェア",
+      "subtitle": "{{month}} のスライドを選ぶ",
+      "ttlNote": "フォロワーには24時間表示されます。",
+      "sensitiveHint": "既定ではオフ",
+      "success": "フォロワーにシェアしました",
+      "failed": "振り返りをシェアできませんでした",
+      "exportFailed": "画像を準備できませんでした",
+      "imageText": "Bandeja での {{month}}",
+      "slides": {
+        "cover": "表紙",
+        "games": "試合数",
+        "wins": "勝利数",
+        "level": "プレーレベル",
+        "partner": "ベストパートナー",
+        "streak": "連続プレー",
+        "club": "ホームコート",
+        "lowActivity": "あなたの1か月",
+        "outro": "エンディング"
+      },
+      "cta_other": "{{count}} 枚をシェア",
+      "previewLabel_other": "{{count}} 枚を選択中"
+    },
+    "rail": {
+      "label": "{{month}} の振り返り",
+      "aria": "{{month}} の振り返りを開く"
+    },
+    "profile": {
+      "title": "振り返り",
+      "cardAria": "{{month}} の振り返りを開く",
+      "gamesOnly_other": "{{count}} 試合",
+      "gamesAndWinRate_other": "{{count}} 試合 · {{percent}}"
+    }
+  }
+}

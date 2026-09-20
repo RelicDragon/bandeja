@@ -28,11 +28,15 @@ Generate client: `npm run prisma:generate` (heavy lock).
 
 Account. Auth identifiers: `phone`, `email`, `telegramId`, `appleSub`, `googleId` (all unique, nullable). `isActive` soft-disable. `isAdmin`. `primarySport`, `sportsEnabled[]`. `currentCityId`. Wallet/points. Display prefs (`language`, `timeFormat`, `weekStart`). `attributionId` → first-touch `LinkToAppAttribution`.
 
+Onboarding/referral: `onboardingCompletedAt` (null ⇒ route to `/welcome`; backfilled to `createdAt` for pre-existing accounts), `onboardingStep`, `referralCode` (unique short code, generated lazily), `referredByUserId` (self FK `UserReferredBy`, first-touch, never overwritten).
+
 Trainer identity for a game is **`Game.trainerId`**, not a user flag.
 
 ### UserSportProfile
 
 Per `(userId, sport)`: `level`, `reliability`, `ratingUncertainty`, `gamesPlayed`/`gamesWon`, `inactive` (leaderboard), play streak fields, questionnaire timestamps, `levelSource`, `approvedLevel` (sport-level confirmation). Unique `[userId, sport]`.
+
+`attendedCount` / `noShowCount` are **informational only** (attendance rate display). They never feed `level`, `reliability` or `ratingUncertainty`.
 
 ### UserRefreshSession (`@@map("user_refresh_sessions")`)
 
@@ -43,11 +47,15 @@ Refresh-token rotation: `tokenHash`, `expiresAt`, `revokedAt`, `rotationFamilyId
 One row for match, tournament, league season shell, training, event, bar — discriminated by **`entityType`**. Fields: `sport`, `gameType`, `status` (`GameStatus`), `resultsStatus`, times, club/court/city, `maxParticipants`, `playersPerMatch`, `bookingStatus`, format/scoring columns, `parentId` (hierarchy), **`trainerId`**, `leagueRoundId` / `leagueGroupId`, `eventKind` / `eventApprovalStatus`.
 
 - **`parentId`**: league sub-games (and other hierarchy) point at parent `Game`.
+- **`seriesId`** / **`seriesOccurrenceDate`** (`@db.Date`): recurring-series occurrence link. **Not** `parentId`. Unique `[seriesId, seriesOccurrenceDate]`; `onDelete: SetNull` so ending a series keeps its past occurrences.
+- Other feature columns: `autoFillFromQueue`, `showOnLiveRail`, `lastSeatOpenedAt`, `costPayerId` (named relation `GameCostPayer`), `paymentHint` (`VarChar(120)`), `costFrozenAt`, `weatherAlertState` (`Json`: `{ severity, sentAt[], keepAsPlannedAt?, lastEvaluatedAt }`).
 - Occupancy: count **`GameParticipant.status === PLAYING`** vs `maxParticipants` (`services/game/availableGamesSlotsSql.ts`). INVITED / IN_QUEUE / NON_PLAYING / GUEST do not fill slots.
 
 ### GameParticipant
 
 `(userId, gameId)` unique. `role` (`OWNER`/`ADMIN`/`PARTICIPANT`). `status` (`ParticipantStatus`). Optional `playIntentId`, `inviteUserTeamId`, `lookingForPartner`.
+
+`attendance` (`ParticipantAttendance`, default `UNANSWERED`) + `attendanceUpdatedAt` are the "are you coming?" answer. Attendance **never** changes `status`, frees a slot or touches rating. `noShowNotedById` / `noShowNotedAt` hold an owner/admin no-show note (undoable).
 
 Declined/cancelled invites that are **not** participants: `GameInviteOutcome`.
 
@@ -91,7 +99,56 @@ Context enum is **`ChatContextType`**: `GAME`, `BUG`, `USER`, `GROUP`. Bugs are 
 
 ### LinkToApp\*
 
-`LinkToAppAttribution`: landing attribution id, UTM fields, `convertedUserId`. `LinkToAppEvent`: `kind` hits/choices. User `attributionId` = first touch.
+`LinkToAppAttribution`: landing attribution id, UTM fields, `convertedUserId`, `referrerUserId` (from `?ref=CODE`). `LinkToAppEvent`: `kind` hits/choices. User `attributionId` = first touch.
+
+### PlatformSetting
+
+Generic admin key/value store: `key String @id`, `value String @db.Text`, `createdAt`, `updatedAt`. Keys are SCREAMING_SNAKE constants. **A missing row means "unset"** — a feature that depends on a setting hides itself rather than assuming a default. Seeded: `REFERRAL_REWARD_REFERRER = 50`, `REFERRAL_REWARD_REFERRED = 25`. Deliberately **not** seeded: `COINS_PER_CURRENCY_UNIT` (the "settle in coins" option stays hidden until an admin sets it).
+
+Distinct from `ResultsArtifactSetting`, which is a singleton row with `id = 'default'`.
+
+### GameSeries\*
+
+| Model | Role |
+|-------|------|
+| `GameSeries` | Organizer-owned recurrence: `ownerId`, `name`, `entityType`, `cadence` (`GameSeriesCadence`), `weekday` (1–7 ISO, club-local), `startTimeLocal` (`HH:mm`, local not UTC), `durationMinutes`, `clubId?`, `courtIds String[]`, `template Json`, `horizonDays` (14), `seatDeadlineHours` (48), `endsOn? @db.Date`, `status` (`GameSeriesStatus`), `groupChannelId?`. |
+| `GameSeriesRegular` | Regular-roster membership, unique `[seriesId, userId]`. `removedAt` soft-removes; `addedAt` is the creation timestamp. |
+| `GameSeriesSkip` | One skipped occurrence date, unique `[seriesId, occurrenceDate]` (`@db.Date`). |
+
+Occurrences are ordinary `Game` rows linked by `Game.seriesId`.
+
+### GameCostShare
+
+Per-player share of a game's total cost: `gameId`, `userId`, `amountCents`, `currency` (ISO string copied from `Game.priceCurrency`), `markedPaidAt?`, `confirmedAt?`, `method` (`CostShareMethod`), `transactionId?` (coins settle). Unique `[gameId, userId]`, cascade on game and user. "What I still owe" reads `[userId, confirmedAt]`.
+
+### PairStat
+
+Materialized partner-pair aggregate for the pairs leaderboard: `sport`, `cityId`, `userAId`, `userBId`, `games`, `wins`, `lastPlayedAt?`, `combinedLevel?`. Unique `[sport, cityId, userAId, userBId]`.
+
+**Invariant (application-level, not DB-enforced): `userAId < userBId`.** Always sort the ids before reading or writing.
+
+### MonthlyRecap
+
+`userId`, `monthKey` (`YYYY-MM`, user's city timezone), `payload Json`, `viewedAt?`, `sharedAt?`, `sharedSlideKeys String[]`. Unique `[userId, monthKey]`. Pruned after 12 months. Sharing creates a `UserStory` with `StorySourceType.MONTHLY_RECAP`.
+
+### ReferralReward
+
+One-shot payout: `referredUserId` **unique** (idempotency key), `referrerUserId`, `rewardedAt`, `referrerTxId?` / `referredTxId?` (→ `Transaction`), `revokedAt?`. Revoking does not delete the row, so a pair can never be rewarded twice.
+
+### Goods / UserGoods
+
+`Goods` is the shop catalogue: `name`, `price` (coins), `kind` (`GoodsKind`), `assetKey`, `previewUrl?`, `description?` (`VarChar(400)`), `isActive`, `isFeatured`, `premiumOnly`, `sortOrder`. Unique `[kind, assetKey]`. Pre-shop rows were backfilled to `kind = PROFILE_FRAME`, `assetKey = id`, `isActive = false` — they are **not** real catalogue items.
+
+`UserGoods` is ownership: `userId`, `goodsId`, `purchasedAt`, `giftedByUserId?`, `equipped`. Unique `[userId, goodsId]`. The row always belongs to the recipient; `giftedByUserId` records the payer. One equipped row per `Goods.kind` is enforced in the service layer.
+
+### Notification delivery dedupe tables
+
+| Model | Key | Purpose |
+|-------|-----|---------|
+| `SpotOpenedDelivery` | unique `[userId, gameId, dayKey, kind]` | "a spot opened" (`SpotOpenedKind` = which audience) |
+| `LiveGameNotifyDelivery` | unique `[userId, gameId]` | "someone you follow is live" |
+
+Both are persisted **on purpose**: the older reminder dedupe uses in-memory `Set`s and loses state on restart. Anything that must not double-fire uses a delivery table or a persisted timestamp.
 
 ## Canonical enums (schema values)
 
@@ -175,6 +232,13 @@ Stale names (`MESSAGE_CREATE`, `REACTION_ADD`) are **not** in schema.
 | `EventApprovalStatus` | `ON_APPROVE` `APPROVED` `DECLINED` |
 | `GameBookingStatus` | `NONE` `MANUAL` `EXTERNAL_PARTIAL` `EXTERNAL_FULL` |
 | `GenderTeam` | `ANY` `MEN` `WOMEN` `MIX_PAIRS` |
+| `StorySourceType` | `USER_STORY_ITEM` `GAME_PHOTO` `GAME_CREATED` `GAME_RESULT` `BRACKET_CHAMPION` `MONTHLY_RECAP` |
+| `ParticipantAttendance` | `UNANSWERED` `CONFIRMED` `UNSURE` |
+| `GameSeriesCadence` | `WEEKLY` `BIWEEKLY` |
+| `GameSeriesStatus` | `ACTIVE` `ENDED` |
+| `CostShareMethod` | `MANUAL` `COINS` |
+| `GoodsKind` | `PROFILE_FRAME` `CHAT_ACCENT` `STICKER_PACK` `NAME_COLOR` |
+| `SpotOpenedKind` | `QUEUE` `INTENT` `FOLLOWER` |
 
 ## Patterns
 
@@ -186,3 +250,7 @@ Stale names (`MESSAGE_CREATE`, `REACTION_ADD`) are **not** in schema.
 | Soft `isActive` | `User`, `City`, `Club`, `Court`, … prefer `isActive: false` over delete. Chat messages use `deletedAt`. |
 | League season game | `LeagueSeason.id` is the season `Game.id`. |
 | PADEL level mirror | `UserSportProfile.approvedLevel`; User denormalized PADEL fields exist for badge — see product constraints, do not “simplify” away. |
+| Series ≠ hierarchy | Recurring occurrences use `Game.seriesId`, never `parentId`. Deleting a `GameSeries` sets `Game.seriesId` to NULL; past occurrences survive. |
+| `PairStat.userAId < userBId` | Application-level invariant. Sort the two ids before every read and write, or a pair gets two rows per `(sport, cityId)`. |
+| Setting unset ⇒ hidden | A `PlatformSetting` row that does not exist means the dependent feature hides itself. Never invent a fallback value. |
+| Delivery tables, not Sets | `SpotOpenedDelivery` / `LiveGameNotifyDelivery` / `MonthlyRecap` unique keys / `Game.weatherAlertState.sentAt[]` are restart-safe dedupe. Do not copy the in-memory reminder dedupe. |

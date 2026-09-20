@@ -28,6 +28,16 @@ export enum SystemMessageType {
   USER_CHAT_DECLINED = 'USER_CHAT_DECLINED',
   PARTICIPANTS_ONLY_CHAT_CREATED = 'PARTICIPANTS_ONLY_CHAT_CREATED',
   ADMINS_CHAT_CREATED = 'ADMINS_CHAT_CREATED',
+  /** PRD 346 — organizer asked the unanswered players to confirm attendance. */
+  ATTENDANCE_NUDGED = 'ATTENDANCE_NUDGED',
+  /** PRD 346 — organizer noted a player as a no-show. Informative only. */
+  USER_NOTED_NO_SHOW = 'USER_NOTED_NO_SHOW',
+  /** PRD 357 — organizer moved a rained-off game to an indoor court. */
+  GAME_MOVED_INDOOR = 'GAME_MOVED_INDOOR',
+  /** PRD 347 — a PLAYING seat was freed. */
+  GAME_SPOT_OPENED = 'GAME_SPOT_OPENED',
+  /** PRD 347 — auto-fill seated the first player in the queue. */
+  GAME_SEAT_AUTO_FILLED = 'GAME_SEAT_AUTO_FILLED',
 }
 
 export interface SystemMessageData {
@@ -62,6 +72,11 @@ const FALLBACK_TEMPLATES: Record<SystemMessageType, string> = {
   [SystemMessageType.USER_CHAT_DECLINED]: '{{userName}} declined the chat request',
   [SystemMessageType.PARTICIPANTS_ONLY_CHAT_CREATED]: 'Participants-only chat has been created',
   [SystemMessageType.ADMINS_CHAT_CREATED]: 'Admins chat has been created',
+  [SystemMessageType.ATTENDANCE_NUDGED]: '{{userName}} asked everyone to confirm attendance',
+  [SystemMessageType.USER_NOTED_NO_SHOW]: '{{userName}} was noted as a no-show',
+  [SystemMessageType.GAME_MOVED_INDOOR]: 'Moved to {{courtName}} (indoor)',
+  [SystemMessageType.GAME_SPOT_OPENED]: 'A spot opened ({{userName}} left)',
+  [SystemMessageType.GAME_SEAT_AUTO_FILLED]: '{{userName}} was seated from the queue',
 };
 
 const interpolateTemplate = (template: string, variables: Record<string, string>): string => {

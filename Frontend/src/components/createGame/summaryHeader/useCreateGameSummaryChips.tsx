@@ -11,6 +11,7 @@ import {
   Banknote,
   Ban,
   Trophy,
+  Repeat,
 } from 'lucide-react';
 import type { Club, Court, EntityType, GenderTeam, PriceCurrency, PriceType } from '@/types';
 import type { Sport } from '@shared/sport';
@@ -62,6 +63,8 @@ interface UseCreateGameSummaryChipsArgs {
   willBookOnCreate?: boolean;
   selectedBookingCount?: number;
   derivedBookingWindow?: string | null;
+  /** PRD 345 — `null` when the game does not repeat; otherwise the cadence. */
+  repeatCadence?: 'WEEKLY' | 'BIWEEKLY' | null;
 }
 
 const ICON_SIZE = 12;
@@ -100,6 +103,7 @@ export function useCreateGameSummaryChips({
   willBookOnCreate = false,
   selectedBookingCount = 0,
   derivedBookingWindow = null,
+  repeatCadence = null,
 }: UseCreateGameSummaryChipsArgs): SummaryChipItem[] {
   const { t } = useTranslation();
 
@@ -219,6 +223,21 @@ export function useCreateGameSummaryChips({
           label: parts.join(' · '),
         });
       }
+
+      // PRD 345 — keep the Repeat choice visible while the organizer scrolls.
+      if (repeatCadence) {
+        chips.push({
+          key: 'repeat',
+          icon: <Repeat size={ICON_SIZE} />,
+          label: t('series.repeatChip', {
+            value: t(
+              repeatCadence === 'BIWEEKLY'
+                ? 'series.cadenceBiweekly'
+                : 'series.cadenceWeekly',
+            ),
+          }),
+        });
+      }
     }
 
     if (
@@ -303,6 +322,7 @@ export function useCreateGameSummaryChips({
     willBookOnCreate,
     selectedBookingCount,
     derivedBookingWindow,
+    repeatCadence,
     t,
   ]);
 }

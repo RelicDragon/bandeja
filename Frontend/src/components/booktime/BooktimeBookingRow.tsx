@@ -186,7 +186,7 @@ export function BooktimeBookingRow({
     : formatBooktimeBookingWhen(booking, { timezone: clubTimezone, displaySettings });
 
   const showActionButtons = !expandableActions || actionsExpanded;
-  const hasCancel = !readOnly && !selectable && !cancelDoneBanner;
+  const hasCancel = club.integrationType !== 'WELTNER' && !readOnly && !selectable && !cancelDoneBanner;
   const showCancelHint = hasCancel && !cancellable;
   const actionRevealClass = (visible: boolean) =>
     `grid transition-[grid-template-rows,opacity] duration-300 ease-out motion-reduce:transition-none ${
@@ -219,7 +219,7 @@ export function BooktimeBookingRow({
       {showClubName && !nested ? (
         <p className="text-xs font-medium text-gray-500 dark:text-gray-400 truncate">
           {club.clubName}
-          {club.integrationType === 'PADELOO'
+          {club.integrationType === 'WELTNER' ? ' · Weltner' : club.integrationType === 'PADELOO'
             ? ` · ${t('club.padeloo.providerLabel', { defaultValue: 'Padeloo' })}`
             : club.integrationType === 'KLIKTEREN'
               ? ` · ${t('club.klikteren.providerLabel', { defaultValue: 'Klikteren' })}`
@@ -347,7 +347,7 @@ export function BooktimeBookingRow({
         </>
       ) : null}
       {cancelButton}
-      <VerifyBookingButton bookingId={booking.uuid} club={club} disabled={cancelBusy} onRemoved={onCanceled} />
+      {club.integrationType !== 'WELTNER' && <VerifyBookingButton bookingId={booking.uuid} club={club} disabled={cancelBusy} onRemoved={onCanceled} />}
     </div>
   ) : null;
 

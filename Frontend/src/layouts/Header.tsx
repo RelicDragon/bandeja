@@ -30,6 +30,7 @@ import { FindTabController } from '@/components/headerContent/FindTabController'
 import { PremiumBrand } from '@/components/navigation/PremiumBrand';
 import { usePremiumNavigationAppearance } from '@/hooks/usePremiumNavigationAppearance';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
+import { useShallow } from 'zustand/react/shallow';
 
 interface HeaderProps {
   animateEntry?: boolean;
@@ -43,9 +44,28 @@ export const Header = ({ animateEntry = false }: HeaderProps) => {
   const isPremiumTheme = usesPremiumTheme(user);
   usePremiumNavigationAppearance(isPremiumTheme);
   const reduceMotion = usePrefersReducedMotion();
-  const { pendingInvites, isNewInviteAnimating } = useHeaderStore();
-  const { setBounceNotifications, profileActiveTab, setProfileActiveTab, userProfileHeaderActions, findHeaderActions } = useShellNavStore();
-  const { gameDetailsCanAccessChat, gameDetailsOccludesSideChat, gameDetailsSportTag } = useGameDetailsChromeStore();
+  // Narrow selectors: whole-store subscriptions re-rendered the header on every
+  // write to any of these stores (invite polls, tab animations, chat flags).
+  const { pendingInvites, isNewInviteAnimating } = useHeaderStore(
+    useShallow((s) => ({ pendingInvites: s.pendingInvites, isNewInviteAnimating: s.isNewInviteAnimating })),
+  );
+  const { setBounceNotifications, profileActiveTab, setProfileActiveTab, userProfileHeaderActions, findHeaderActions } =
+    useShellNavStore(
+      useShallow((s) => ({
+        setBounceNotifications: s.setBounceNotifications,
+        profileActiveTab: s.profileActiveTab,
+        setProfileActiveTab: s.setProfileActiveTab,
+        userProfileHeaderActions: s.userProfileHeaderActions,
+        findHeaderActions: s.findHeaderActions,
+      })),
+    );
+  const { gameDetailsCanAccessChat, gameDetailsOccludesSideChat, gameDetailsSportTag } = useGameDetailsChromeStore(
+    useShallow((s) => ({
+      gameDetailsCanAccessChat: s.gameDetailsCanAccessChat,
+      gameDetailsOccludesSideChat: s.gameDetailsOccludesSideChat,
+      gameDetailsSportTag: s.gameDetailsSportTag,
+    })),
+  );
   const isDesktop = useDesktop();
 
   const parsed = useMemo(

@@ -81,7 +81,9 @@
     "pressBackAgainToExit": "Tekan kembali lagi untuk keluar",
     "editFullscreen": "Edit layar penuh",
     "exitFullscreen": "Keluar dari layar penuh",
-    "characters": "karakter"
+    "characters": "karakter",
+    "comingSoon": "Segera hadir",
+    "comingSoonDescription": "Bagian aplikasi ini sedang dalam perjalanan."
   },
   "sport": {
     "sport": "Olahraga",

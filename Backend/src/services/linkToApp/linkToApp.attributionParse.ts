@@ -1,4 +1,5 @@
 import { isLinkToAppAid } from './linkToApp.aid';
+import { normalizeReferralCode } from '../referral/referralCode';
 import { isLinkToAppChoice, parseLinkToAppUtm, sanitizeUtmValue, type LinkToAppChoice, type LinkToAppUtm } from './linkToApp.urls';
 
 export const LINK_TO_APP_AUTH_KINDS = ['register', 'login'] as const;
@@ -8,6 +9,13 @@ export type LinkToAppAttributionInput = {
   aid: string | null;
   utm: LinkToAppUtm;
   choice: LinkToAppChoice | null;
+  /**
+   * PRD 351 — normalized referral code from `?ref=CODE`, carried next to `aid`
+   * through the landing page, localStorage and the auth request body. `null`
+   * when absent or malformed; the attach itself is still first-touch, so a
+   * later `ref` never overwrites one that is already stored.
+   */
+  ref: string | null;
 };
 
 function recordFromUnknown(value: unknown): Record<string, unknown> {
@@ -42,12 +50,14 @@ export function parseLinkToAppAttributionInput(
     aid: pickAid(merged.aid) ?? (cookieAid && isLinkToAppAid(cookieAid) ? cookieAid : null),
     utm: parseLinkToAppUtm(merged),
     choice: isLinkToAppChoice(choiceRaw) ? choiceRaw : null,
+    ref: normalizeReferralCode(merged.ref),
   };
 }
 
 export function attributionHasSignal(input: LinkToAppAttributionInput): boolean {
   return Boolean(
     input.aid ||
+      input.ref ||
       input.utm.source ||
       input.utm.medium ||
       input.utm.campaign ||

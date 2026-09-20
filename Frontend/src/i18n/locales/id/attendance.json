@@ -1,0 +1,69 @@
+{
+  "attendance": {
+    "question": "Kamu datang?",
+    "confirm": "Saya datang",
+    "unsure": "Belum yakin",
+    "change": "Ubah",
+    "confirmedState": "Kehadiranmu dikonfirmasi",
+    "unsureState": "Kamu belum yakin",
+    "caption": "Sekadar supaya penyelenggara tahu. Tempatmu tetap milikmu.",
+    "cantMakeIt": "Sama sekali tidak bisa datang?",
+    "confirmedToast": "Kehadiran dikonfirmasi 👍",
+    "unsureToast": "Dicatat. Kamu bisa konfirmasi nanti.",
+    "saving": "Menyimpan…",
+    "queuedOffline": "Tersimpan. Akan disinkronkan saat kamu online lagi.",
+    "youOrganizer": "Kamu (penyelenggara)",
+    "dots": {
+      "confirmed": "Dikonfirmasi",
+      "unanswered": "Belum ada jawaban",
+      "unsure": "Belum yakin",
+      "noShow": "Dicatat tidak hadir"
+    },
+    "legend": {
+      "title": "Arti titik warna",
+      "hint": "Hijau berarti dikonfirmasi, abu-abu berarti belum menjawab, kuning berarti belum yakin."
+    },
+    "organizer": {
+      "progress": "{{confirmed}} dari {{total}} sudah konfirmasi",
+      "nudge": "Ingatkan",
+      "nudgeCooldown": "Ingatkan lagi dalam {{hours}} jam",
+      "nudgeSent": "Pengingat terkirim",
+      "legendCaption": "Hijau: dikonfirmasi. Abu-abu: belum menjawab. Kuning: belum yakin."
+    },
+    "noShow": {
+      "action": "Catat tidak hadir",
+      "undoAction": "Hapus catatan tidak hadir",
+      "dialogTitle": "Catat {{name}} sebagai tidak hadir?",
+      "dialogBody": "Dia akan mendapat pemberitahuan ramah dan bisa membalas di obrolan. Kamu bisa membatalkannya kapan saja dalam 7 hari.",
+      "confirm": "Catat tidak hadir",
+      "cancel": "Batal",
+      "noted": "Dicatat",
+      "undo": "Batalkan",
+      "undone": "Catatan tidak hadir dihapus",
+      "tag": "Tidak hadir"
+    },
+    "stat": {
+      "label": "Tingkat hadir",
+      "tooltip": "Permainan yang kamu konfirmasi dan hadiri dalam 12 bulan terakhir.",
+      "gaugeLabel": "Hadir di {{rate}} persen permainan",
+      "sparklineTitle": "12 bulan terakhir",
+      "sparklineLegend": "hadir / absen",
+      "sparklineMonthAria": "{{month}} — hadir: {{attended}}, absen: {{noShow}}",
+      "notesTitle": "Catatan tidak hadirmu",
+      "notesEmpty": "Tidak ada catatan tidak hadir.",
+      "notesOpenChat": "Buka obrolan",
+      "notedOn": "Dicatat {{date}}"
+    },
+    "card": {
+      "ariaSummary": "{{confirmed}} dari {{total}} pemain sudah konfirmasi"
+    },
+    "errors": {
+      "generic": "Jawabanmu tidak bisa disimpan",
+      "notParticipant": "Hanya pemain di permainan ini yang bisa menjawab",
+      "answersClosed": "Konfirmasi kehadiran untuk permainan ini sudah ditutup",
+      "noShowWindowClosed": "Batas waktu mencatat ketidakhadiran sudah lewat",
+      "nudgeCooldown": "Kamu baru saja mengingatkan. Coba lagi nanti.",
+      "nothingToNudge": "Semua orang sudah menjawab"
+    }
+  }
+}

@@ -29,6 +29,17 @@ Version/build are proposed from the latest uploaded Google Play and App Store Co
 
 See this file for store API credentials, Android signing, and internal-track smoke test steps.
 
+### Watch / widget / extension target versions
+
+`Frontend/ios/App/App.xcodeproj/project.pbxproj` carries `MARKETING_VERSION` / `CURRENT_PROJECT_VERSION` per target. The release CLI rewrites only the iOS App and NotificationServiceExtension targets (`IOS_VERSION_BUMP_BUNDLE_LINES` in `Backend/scripts/lib/app-release.ts`); the watch app, watch widgets and home widgets must carry the same values or the archive is rejected / TestFlight shows a stale watch version.
+
+`./scripts/app-release.sh` runs a pre-flight that copies the App target's values onto every other target before handing over to the CLI (dry runs only report drift). Run it by hand after any manual bump:
+
+```bash
+./scripts/app-release.sh sync-ios-versions    # write
+./scripts/app-release.sh check-ios-versions   # exit 1 on drift
+```
+
 ### Headless scripts
 
 Generate **What's new** (LLM summarizes commits since baseline):

@@ -21,7 +21,7 @@
       "basedOn": "На основе {{count}} анонимных оценок в {{games}} недавних матчах",
       "players": "Игроки",
       "verdict": { "HIGHER": "Выше показанного", "ABOUT_RIGHT": "Примерно верно", "LOWER": "Ниже показанного" },
-      "disclaimer": "Отзывы игроков — дополнительный сигнал сообщества. Они не устанавливают и не меняют официальный рейтинг."
+      "disclaimer": "Отдельные ответы остаются анонимными. Эта сводка — сигнал сообщества: она не устанавливает и не меняет официальный рейтинг."
     },
     "isTrainer": "Тренер",
     "currentLevel": "Текущий Уровень",
@@ -75,7 +75,7 @@
     "userBlockedCannotChat": "Пользователь заблокирован",
     "userBlockedCannotFavorite": "Пользователь заблокирован",
     "confirmedBy": "Уровень подтвержден",
-    "levelNotConfirmed": "Уровень не подтверждён",
+    "confirmedAtLevel": "на уровне {{level}}",
     "openFullProfile": "На весь экран",
     "shareProfileTitle": "Share profile",
     "inviteAsTrainer": "Invite as trainer",

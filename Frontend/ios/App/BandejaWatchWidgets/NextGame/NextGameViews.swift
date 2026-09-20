@@ -7,17 +7,36 @@ struct NextGameWidgetEntryView: View {
     @Environment(\.widgetFamily) private var family
 
     var body: some View {
-        switch family {
-        case .accessoryRectangular:
-            RectangularNextGameView(entry: entry)
-        case .accessoryCircular:
-            CircularNextGameView(entry: entry)
-        case .accessoryInline:
-            InlineNextGameView(entry: entry)
-        case .accessoryCorner:
-            CornerNextGameView(entry: entry)
-        default:
-            Text(WatchWidgetCopy.brand())
+        Group {
+            switch family {
+            case .accessoryRectangular:
+                RectangularNextGameView(entry: entry)
+            case .accessoryCircular:
+                CircularNextGameView(entry: entry)
+            case .accessoryInline:
+                InlineNextGameView(entry: entry)
+            case .accessoryCorner:
+                CornerNextGameView(entry: entry)
+            default:
+                Text(WatchWidgetCopy.brand())
+            }
+        }
+        // Same locale the app uses for its relative-time strings, so `Text(_, style: .relative)`
+        // and `RelativeDateTimeFormatter` agree with the watch app UI.
+        .environment(\.locale, WatchWidgetCopy.formatterLocale())
+    }
+}
+
+/// Live countdown while the game is in the future; static "Now" / "Ended" afterwards.
+private struct NextGameRelativeText: View {
+    let game: CachedNextGame
+    let reference: Date
+
+    var body: some View {
+        if game.startsAfter(reference) {
+            Text(game.startTime, style: .relative)
+        } else {
+            Text(game.relativeTimeString(reference: reference))
         }
     }
 }
@@ -36,7 +55,7 @@ private struct RectangularNextGameView: View {
                         .font(.headline)
                         .lineLimit(1)
                 }
-                Text(game.relativeTimeString)
+                NextGameRelativeText(game: game, reference: entry.date)
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 if let club = game.clubName, !club.isEmpty {
@@ -70,7 +89,7 @@ private struct CircularNextGameView: View {
 
     var body: some View {
         if let game = entry.game {
-            let hours = game.hoursUntilStart
+            let hours = game.hoursUntilStart(reference: entry.date)
             ZStack {
                 AccessoryWidgetBackground()
                 VStack(spacing: 0) {
@@ -104,7 +123,11 @@ private struct InlineNextGameView: View {
     var body: some View {
         if let game = entry.game {
             Label {
-                Text("\(game.title) · \(game.relativeTimeString)")
+                if game.startsAfter(entry.date) {
+                    Text("\(game.title) · ") + Text(game.startTime, style: .relative)
+                } else {
+                    Text("\(game.title) · \(game.relativeTimeString(reference: entry.date))")
+                }
             } icon: {
                 Image(systemName: "sportscourt.fill")
             }
@@ -120,7 +143,7 @@ private struct CornerNextGameView: View {
 
     var body: some View {
         if let game = entry.game {
-            Text(game.relativeTimeString)
+            NextGameRelativeText(game: game, reference: entry.date)
                 .font(.caption2)
                 .widgetCurvesContent()
                 .widgetLabel {

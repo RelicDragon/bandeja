@@ -10,9 +10,15 @@ export const IOS_PBX = path.join(ROOT, 'Frontend/ios/App/App.xcodeproj/project.p
 const MAIN_IOS_BUNDLE_LINE = 'PRODUCT_BUNDLE_IDENTIFIER = com.funified.bandeja;';
 
 /** Main app + embedded extensions; watch targets stay on their own versioning. */
+// Every bundle embedded in the iOS app must carry the container's version: App Store Connect
+// rejects a watch app / appex whose CFBundleShortVersionString differs from the host.
 const IOS_VERSION_BUMP_BUNDLE_LINES = new Set([
   'PRODUCT_BUNDLE_IDENTIFIER = com.funified.bandeja;',
   'PRODUCT_BUNDLE_IDENTIFIER = com.funified.bandeja.NotificationServiceExtension;',
+  'PRODUCT_BUNDLE_IDENTIFIER = com.funified.bandeja.homewidgets;',
+  'PRODUCT_BUNDLE_IDENTIFIER = com.funified.bandeja.watchkitapp;',
+  'PRODUCT_BUNDLE_IDENTIFIER = com.funified.bandeja.watchkitapp.widgets;',
+  'PRODUCT_BUNDLE_IDENTIFIER = com.funified.bandeja.watchkitapp.tests;',
 ]);
 
 export interface NativeVersion {

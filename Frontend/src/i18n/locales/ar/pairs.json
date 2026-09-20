@@ -1,0 +1,79 @@
+{
+  "pairs": {
+    "mode": {
+      "label": "وضع لوحة الترتيب",
+      "players": "اللاعبون",
+      "pairs": "الأزواج"
+    },
+    "sort": {
+      "label": "ترتيب الأزواج",
+      "winRate": "نسبة الفوز",
+      "games": "المباريات",
+      "level": "المستوى"
+    },
+    "period": {
+      "label": "الفترة",
+      "all": "كل الأوقات",
+      "days30": "آخر 30 يومًا",
+      "days10": "آخر 10 أيام"
+    },
+    "names": {
+      "spoken": "{{first}} و{{second}}"
+    },
+    "gamesCount_zero": "{{count}} مباراة",
+    "gamesCount_one": "{{count}} مباراة",
+    "gamesCount_two": "{{count}} مباراتان",
+    "gamesCount_few": "{{count}} مباريات",
+    "gamesCount_many": "{{count}} مباراة",
+    "gamesCount_other": "{{count}} مباراة",
+    "floorHint_zero": "العب {{count}} مباراة مع الشريك نفسه لتظهر هنا.",
+    "floorHint_one": "العب {{count}} مباراة مع الشريك نفسه لتظهر هنا.",
+    "floorHint_two": "العب {{count}} مباراتين مع الشريك نفسه لتظهر هنا.",
+    "floorHint_few": "العب {{count}} مباريات مع الشريك نفسه لتظهر هنا.",
+    "floorHint_many": "العب {{count}} مباراة مع الشريك نفسه لتظهر هنا.",
+    "floorHint_other": "العب {{count}} مباراة مع الشريك نفسه لتظهر هنا.",
+    "chemistry": {
+      "tooltip": "نسبة الفوز معًا مقارنة باللعب منفردًا",
+      "aria": "الانسجام {{value}}"
+    },
+    "stats": {
+      "games": "المباريات",
+      "winRate": "نسبة الفوز",
+      "chemistry": "الانسجام",
+      "chemistryUnknown": "لا توجد مباريات فردية كافية بعد"
+    },
+    "aria": {
+      "row": "المركز {{rank}}، {{names}}، {{games}}، {{winRate}} بالمئة نسبة فوز، الانسجام {{chemistry}}",
+      "rowNoChemistry": "المركز {{rank}}، {{names}}، {{games}}، {{winRate}} بالمئة نسبة فوز",
+      "podium": "رقم {{rank}}، {{names}}، {{winRate}} بالمئة نسبة فوز، {{games}}",
+      "partner": "{{name}}، {{games}}، {{winRate}} بالمئة نسبة فوز"
+    },
+    "scrollToMyPair": "انتقل إلى زوجي ({{rank}})",
+    "loadMore": "عرض المزيد",
+    "loading": "جارٍ تحميل الأزواج",
+    "error": "تعذّر تحميل الأزواج. حاول مرة أخرى.",
+    "empty": {
+      "title": "لا توجد أزواج في الترتيب بعد",
+      "action": "ابحث عن مباراة"
+    },
+    "sheet": {
+      "title": "زوج",
+      "recent": "مباريات حديثة معًا",
+      "recentEmpty": "لا توجد مباريات مشتركة بعد.",
+      "createTeam": "أنشئ فريقًا",
+      "openTeam": "افتح الفريق",
+      "inviteToGame": "ادعُ إلى مباراة"
+    },
+    "recent": {
+      "untitled": "مباراة"
+    },
+    "result": {
+      "win": "فوز",
+      "loss": "خسارة"
+    },
+    "partners": {
+      "title": "شركاؤك",
+      "seeAll": "عرض الكل"
+    }
+  }
+}

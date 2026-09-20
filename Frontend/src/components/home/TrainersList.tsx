@@ -25,7 +25,8 @@ const TrainersListView = ({ show, availableGames = [], levelSport }: TrainersLis
   const user = useAuthStore((state) => state.user);
   const updateUser = useAuthStore((state) => state.updateUser);
   const { openPlayerCard } = usePlayerCardModal();
-  const { users, fetchPlayers } = usePlayersStore();
+  const users = usePlayersStore((state) => state.users);
+  const fetchPlayers = usePlayersStore((state) => state.fetchPlayers);
   const carouselRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const [showLeftFade, setShowLeftFade] = useState(false);

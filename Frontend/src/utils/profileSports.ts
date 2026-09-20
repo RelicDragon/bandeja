@@ -87,14 +87,25 @@ function usesProjectedLevelFields(user: User | BasicUser): boolean {
   return user.sportProfiles === undefined;
 }
 
-export function gamesPlayedForSport(user: User, sport: Sport): number {
-  return findSportProfile(user, sport)?.gamesPlayed ?? 0;
+export function gamesPlayedForSport(user: User | BasicUser, sport: Sport): number {
+  const profile = findSportProfile(user, sport);
+  if (profile) return normalizeCount(profile.gamesPlayed);
+  // Sport-projected payloads (player card / stats) drop `sportProfiles` and expose the
+  // count for the requested sport at the top level — without this they always read 0.
+  if (usesProjectedLevelFields(user)) {
+    return normalizeCount((user as { gamesPlayed?: unknown }).gamesPlayed);
+  }
+  return 0;
 }
 
 /** Show competitive level for a sport after first rated game or a non-default estimate (> 1.0). */
 export function shouldShowSportLevelBadge(user: User, sport: Sport): boolean {
   if (gamesPlayedForSport(user, sport) > 0) return true;
   return getDisplayLevelForSport(user, sport) > 1.0;
+}
+
+function normalizeCount(value: unknown): number {
+  return typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : 0;
 }
 
 function normalizeLevel(value: unknown, fallback = 1.0): number {
@@ -167,6 +178,29 @@ export function getSportLevelApprovedWhen(
     return (user as User).approvedWhen ?? null;
   }
   return null;
+}
+
+/**
+ * Level snapshot taken when the sport level was confirmed (the current level keeps moving).
+ * Null for confirmations recorded before the snapshot existed, or on payloads that only
+ * carry the PADEL mirror.
+ */
+export function getSportLevelApprovedAtLevel(
+  user: User | BasicUser,
+  sport: Sport,
+): number | null {
+  const profile = findSportProfile(user, sport);
+  if (profile && typeof profile.approvedLevel === 'boolean') {
+    return normalizeApprovedAtLevel(profile.approvedAtLevel);
+  }
+  if (usesProjectedLevelFields(user)) {
+    return normalizeApprovedAtLevel((user as { approvedAtLevel?: unknown }).approvedAtLevel);
+  }
+  return null;
+}
+
+function normalizeApprovedAtLevel(value: unknown): number | null {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
 }
 
 /** Initial reliability in training edit modal when prior value was below this (not a minimum). */

@@ -6,6 +6,7 @@ import {
   formatSportLevelBadgeDisplay,
   getDisplayLevelForSport,
   getReliabilityForSport,
+  getSportLevelApprovedAtLevel,
   hasEnabledSports,
   hasMultipleSportsEnabled,
   isSportEnabled,
@@ -423,5 +424,53 @@ describe('profileSports', () => {
     });
     expect(isLevelConfirmedForSport(user, 'PADEL')).toBe(true);
     expect(isLevelConfirmedForSport(user, 'TENNIS')).toBe(false);
+  });
+
+  it('gamesPlayedForSport reads the projected count when sportProfiles was stripped', () => {
+    // Player card / stats payloads are sport-projected: no sportProfiles, counts at top level.
+    const projected = baseUser({ gamesPlayed: 27, sportProfiles: undefined });
+    expect(gamesPlayedForSport(projected, 'PADEL')).toBe(27);
+    expect(gamesPlayedForSport(baseUser({ gamesPlayed: -3, sportProfiles: undefined }), 'PADEL')).toBe(0);
+  });
+
+  it('getSportLevelApprovedAtLevel prefers the sport profile snapshot', () => {
+    const user = baseUser({
+      approvedLevel: true,
+      approvedAtLevel: 1.5,
+      sportsEnabled: ['PADEL', 'TENNIS'],
+      sportProfiles: [
+        {
+          sport: 'PADEL',
+          level: 3.4,
+          reliability: 0,
+          gamesPlayed: 10,
+          gamesWon: 5,
+          approvedLevel: true,
+          approvedAtLevel: 2.8,
+        },
+        {
+          sport: 'TENNIS',
+          level: 4.1,
+          reliability: 0,
+          gamesPlayed: 12,
+          gamesWon: 6,
+          approvedLevel: true,
+        },
+      ],
+    });
+    expect(getSportLevelApprovedAtLevel(user, 'PADEL')).toBe(2.8);
+    expect(getSportLevelApprovedAtLevel(user, 'TENNIS')).toBeNull();
+  });
+
+  it('getSportLevelApprovedAtLevel falls back to the projected snapshot', () => {
+    const projected = baseUser({
+      approvedLevel: true,
+      approvedAtLevel: 3.25,
+      sportProfiles: undefined,
+    });
+    expect(getSportLevelApprovedAtLevel(projected, 'PADEL')).toBe(3.25);
+    expect(
+      getSportLevelApprovedAtLevel(baseUser({ approvedLevel: true, sportProfiles: undefined }), 'PADEL'),
+    ).toBeNull();
   });
 });

@@ -1,0 +1,100 @@
+{
+  "recap": {
+    "slides": {
+      "cover": {
+        "caption": "数据回顾",
+        "alt": "{{month}} 的数据回顾"
+      },
+      "games": {
+        "eyebrow": "比赛场次",
+        "caption_other": "打了 {{count}} 场比赛",
+        "alt_other": "{{month}} 打了 {{count}} 场比赛"
+      },
+      "wins": {
+        "eyebrow": "胜场",
+        "caption_other": "{{count}} 场胜利",
+        "alt_other": "{{count}} 场胜利，胜率 {{percent}}"
+      },
+      "level": {
+        "eyebrow": "技术等级",
+        "caption": "你现在的等级是 {{level}}",
+        "neutral": "等级变为 {{level}}",
+        "alt": "技术等级：变为 {{level}}"
+      },
+      "partner": {
+        "eyebrow": "最佳搭档",
+        "caption_other": "和 {{name}} 一起拿下 {{count}} 胜",
+        "alt_other": "最佳搭档 {{name}}，一起 {{count}} 胜"
+      },
+      "streak": {
+        "eyebrow": "连续周数",
+        "caption_other": "连续 {{count}} 周上场",
+        "best_other": "个人最佳 {{count}} 周",
+        "alt_other": "连续周数：{{count}} 周"
+      },
+      "club": {
+        "eyebrow": "常去球馆",
+        "caption_other": "在这里打了 {{count}} 场",
+        "alt_other": "常去球馆 {{club}}，{{count}} 场比赛"
+      },
+      "lowActivity": {
+        "encouragement": "打过一场也是开始，一起找下一场吧。",
+        "caption_other": "{{month}} 打了 {{count}} 场",
+        "alt_other": "{{month}} 共打了 {{count}} 场比赛"
+      },
+      "outro": {
+        "title": "{{month}} 球场见",
+        "caption": "{{games}} · {{wins}}",
+        "gamesPart_other": "{{count, number}} 场比赛",
+        "winsPart_other": "{{count, number}} 场胜利",
+        "lowActivityCaption": "球场在等你。",
+        "alt": "{{month}} 球场见"
+      }
+    },
+    "viewer": {
+      "title": "月度回顾",
+      "close": "关闭",
+      "next": "下一张",
+      "shareCta": "分享给关注者",
+      "saveImageCta": "保存图片",
+      "savingImage": "正在生成图片…",
+      "playIntentCta": "我想打球",
+      "loading": "正在准备你的回顾…",
+      "loadFailed": "无法加载这份回顾。",
+      "sportTabs": "选择运动项目"
+    },
+    "share": {
+      "title": "分享你的回顾",
+      "subtitle": "选择 {{month}} 的画面",
+      "ttlNote": "关注者可以看到 24 小时。",
+      "sensitiveHint": "默认不分享",
+      "success": "已分享给关注者",
+      "failed": "回顾分享失败",
+      "exportFailed": "图片生成失败",
+      "imageText": "我在 Bandeja 的 {{month}}",
+      "slides": {
+        "cover": "封面",
+        "games": "比赛场次",
+        "wins": "胜场",
+        "level": "技术等级",
+        "partner": "最佳搭档",
+        "streak": "连续周数",
+        "club": "常去球馆",
+        "lowActivity": "你的这个月",
+        "outro": "结尾"
+      },
+      "cta_other": "分享 {{count}} 张",
+      "previewLabel_other": "已选择 {{count}} 张"
+    },
+    "rail": {
+      "label": "{{month}} 回顾",
+      "aria": "打开 {{month}} 回顾"
+    },
+    "profile": {
+      "title": "月度回顾",
+      "cardAria": "打开 {{month}} 回顾",
+      "gamesOnly_other": "{{count}} 场比赛",
+      "gamesAndWinRate_other": "{{count}} 场 · {{percent}}"
+    }
+  }
+}

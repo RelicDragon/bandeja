@@ -252,12 +252,12 @@ export function GameLocationTimePanel({
 
   const shouldShowReservations = showReservations ?? locationTimeMode === 'bookings';
   const reservationsStrip =
-    shouldShowReservations && reservationsEnabled && club && companyId && selectedDate && bookingSelectionLimits ? (
+    shouldShowReservations && reservationsEnabled && club && selectedDate && bookingSelectionLimits ? (
       <ReservationsStrip
         club={club}
         courts={courts}
         bookingMatchCourts={matchCourts}
-        companyId={companyId}
+        companyId={companyId ?? ''}
         clubTimezone={clubReservations.clubTimezone}
         dateBookings={clubReservations.dateBookings}
         bookings={clubReservations.bookings}

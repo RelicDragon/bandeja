@@ -20,7 +20,7 @@ struct GameOutcomesListView: View {
                 ProgressView(WatchCopy.loadingEllipsis(lang))
             } else if let error = vm.error, vm.results == nil {
                 VStack(spacing: 8) {
-                    Text(error.localizedDescription).font(.caption2).multilineTextAlignment(.center)
+                    Text(WatchErrorText.message(error, lang: lang)).font(.caption2).multilineTextAlignment(.center)
                     Button(WatchCopy.retry(lang)) { Task { await vm.load() } }
                 }
             } else {
@@ -62,10 +62,17 @@ struct GameOutcomesListView: View {
                     .listRowBackground(Color.clear)
             }
             if vm.postFinalizeHint == .refreshFailed {
-                Text(WatchCopy.resultsRefreshFailed(prefs.uiLanguageCode))
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                    .listRowBackground(Color.clear)
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(WatchCopy.resultsRefreshFailed(prefs.uiLanguageCode))
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    Button(WatchCopy.refresh(prefs.uiLanguageCode)) {
+                        Task { await refreshAll() }
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.mini)
+                }
+                .listRowBackground(Color.clear)
             }
             if vm.postFinalizeHint == .serverNotYetFinal {
                 Text(WatchCopy.resultsServerProcessing(prefs.uiLanguageCode))
@@ -109,7 +116,7 @@ struct GameOutcomesListView: View {
                 Section(WatchCopy.outcomes(prefs.uiLanguageCode)) {
                     ForEach(Array(vm.sortedOutcomes.enumerated()), id: \.offset) { _, outcome in
                         HStack(spacing: 6) {
-                            Text("#\(outcome.position ?? 0)")
+                            Text(outcome.position.map { "#\($0)" } ?? "—")
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
                             if let u = outcome.user {
@@ -118,7 +125,7 @@ struct GameOutcomesListView: View {
                                     .font(.caption2)
                                     .lineLimit(1)
                             } else {
-                                Text(outcome.userId)
+                                Text(WatchCopy.unknownPlayer(prefs.uiLanguageCode))
                                     .font(.caption2)
                                     .lineLimit(1)
                             }
@@ -130,10 +137,12 @@ struct GameOutcomesListView: View {
                 }
             }
         }
-        .refreshable {
-            await vm.refresh()
-            await NetworkDeliveryOutbox.shared.flush()
-            await WorkoutSyncOutbox.shared.flush()
-        }
+        .refreshable { await refreshAll() }
+    }
+
+    private func refreshAll() async {
+        await vm.refresh()
+        await NetworkDeliveryOutbox.shared.flush()
+        await WorkoutSyncOutbox.shared.flush()
     }
 }

@@ -67,6 +67,24 @@ export async function sendPlayIntentTelegramNotification(
       buttonText = t('telegram.showGame', lang) || t('telegram.viewGame', lang) || 'View Game';
       buttons = [[{ text: buttonText, callback_data: `sg:${payload.data.gameId}:${userId}` }]];
     } else if (
+      (payload.type === NotificationType.GAME_SPOT_OPENED ||
+        payload.type === NotificationType.FOLLOWED_GAME_SPOT_OPENED) &&
+      payload.data?.gameId
+    ) {
+      // PRD 347 — "Join now" deep-links to the game with `?join=1`, which runs
+      // the normal join flow (gates and the overlap confirm still apply).
+      buttonText = t('spotOpened.joinNow', lang) || 'Join now';
+      const joinUrl = `${config.frontendUrl.replace(/\/$/, '')}/games/${encodeURIComponent(payload.data.gameId)}?join=1`;
+      buttons = [
+        [{ text: buttonText, url: joinUrl }],
+        [
+          {
+            text: t('telegram.showGame', lang) || 'Show Game',
+            callback_data: `sg:${payload.data.gameId}:${userId}`,
+          },
+        ],
+      ];
+    } else if (
       payload.type === NotificationType.FOLLOWED_USER_PLAY_INTENT &&
       payload.data?.playIntentId
     ) {

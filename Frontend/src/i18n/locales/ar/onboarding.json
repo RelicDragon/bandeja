@@ -1,0 +1,102 @@
+{
+  "onboarding": {
+    "frame": {
+      "skip": "تخطٍّ",
+      "back": "رجوع",
+      "working": "جارٍ الحفظ…",
+      "progress": "الخطوة {{current}} من {{total}}"
+    },
+    "welcome": {
+      "title": "لنجد لك مباراة",
+      "subtitle": "دقيقتان ويكتمل إعدادك.",
+      "start": "ابدأ",
+      "socialProof_zero": "{{count}} لاعب في {{city}}",
+      "socialProof_one": "{{count}} لاعب في {{city}}",
+      "socialProof_two": "{{count}} لاعبان في {{city}}",
+      "socialProof_few": "{{count}} لاعبين في {{city}}",
+      "socialProof_many": "{{count}} لاعبًا في {{city}}",
+      "socialProof_other": "{{count}} لاعب في {{city}}"
+    },
+    "sport": {
+      "title": "ما الرياضات التي تمارسها؟",
+      "titleSportOnly": "اختر رياضة للمتابعة",
+      "subtitle": "اختر ما تشاء. الأولى تصبح رياضتك الأساسية.",
+      "continue": "متابعة",
+      "primaryTag": "الأساسية",
+      "makePrimary": "اجعل {{sport}} الأساسية",
+      "primaryHint": "اضغط مطولًا على رياضة لتجعلها الأساسية."
+    },
+    "profile": {
+      "title": "بماذا نناديك؟",
+      "subtitle": "اسمك يظهر في كل مباراة تنضم إليها.",
+      "continue": "متابعة",
+      "photoOptional": "الصورة اختيارية — يمكنك إضافتها لاحقًا.",
+      "firstNameLabel": "الاسم الأول",
+      "lastNameLabel": "اسم العائلة",
+      "nameRequired": "أدخل اسمك الأول.",
+      "nameTooShort": "استخدم حرفين على الأقل.",
+      "nameTooLong": "استخدم 30 حرفًا كحد أقصى."
+    },
+    "level": {
+      "title": "مستواك",
+      "subtitle": "بضعة أسئلة سريعة عن مستواك في {{sport}}.",
+      "continue": "متابعة",
+      "resultTitle": "هذا مستواك المبدئي",
+      "resultSubtitle": "بناءً على إجاباتك عن {{sport}}.",
+      "scale": "على مقياس {{scale}}",
+      "adjustLater": "يمكنك تعديل ذلك في أي وقت من الملف الشخصي.",
+      "unavailable": "لا يوجد اختبار مستوى لرياضة {{sport}} حتى الآن."
+    },
+    "city": {
+      "title": "هل هذه مدينتك؟",
+      "helper": "نعرض المباريات واللاعبين من مدينتك.",
+      "confirm": "نعم، هذا صحيح",
+      "change": "تغيير المدينة",
+      "backToCard": "الإبقاء على مدينتي الحالية",
+      "unknown": "لا توجد مدينة بعد"
+    },
+    "follow": {
+      "title": "أشخاص لمتابعتهم",
+      "subtitle": "لاعبون نشطون في مدينتك. تابعهم لتمتلئ صفحتك الرئيسية.",
+      "continue": "متابعة",
+      "followAll": "متابعة الجميع",
+      "follow": "متابعة",
+      "following": "تتابعه",
+      "followFailed": "تعذّرت متابعة هذا اللاعب. حاول مرة أخرى.",
+      "gamesThisMonth_zero": "{{count}} مباراة هذا الشهر",
+      "gamesThisMonth_one": "{{count}} مباراة هذا الشهر",
+      "gamesThisMonth_two": "{{count}} مباراتان هذا الشهر",
+      "gamesThisMonth_few": "{{count}} مباريات هذا الشهر",
+      "gamesThisMonth_many": "{{count}} مباراة هذا الشهر",
+      "gamesThisMonth_other": "{{count}} مباراة هذا الشهر",
+      "emptyTitle": "لا توجد اقتراحات بعد",
+      "emptyDescription": "مدينتك ما زالت تمتلئ. عد بعد مباراتك الأولى.",
+      "unnamedPlayer": "لاعب"
+    },
+    "notifications": {
+      "title": "ابق على اطلاع",
+      "subtitle": "لا نرسل إلا ما يستحق مقاطعتك.",
+      "turnOn": "تفعيل الإشعارات",
+      "later": "ليس الآن",
+      "reasonInvitesTitle": "الدعوات",
+      "reasonInvitesBody": "عندما يدعوك أحد للعب.",
+      "reasonRemindersTitle": "التذكيرات",
+      "reasonRemindersBody": "قبل مباراة سجّلت فيها.",
+      "reasonSpotsTitle": "الأماكن الشاغرة",
+      "reasonSpotsBody": "عندما يشغر مكان في مباراة أردتها.",
+      "controlHint": "يمكنك تغيير كل ذلك من الإعدادات."
+    },
+    "finish": {
+      "choiceTitle": "بماذا تريد أن تبدأ؟",
+      "choiceSubtitle": "في كل الأحوال، أنت جاهز.",
+      "playSoonTitle": "أريد اللعب قريبًا",
+      "playSoonBody": "أخبر مدينتك بأوقات فراغك ودع اللاعبين يأتون إليك.",
+      "browseTitle": "تصفّح المباريات",
+      "browseBody": "شاهد ما يحدث بالفعل بالقرب منك.",
+      "doneTitle": "أنت جاهز"
+    },
+    "errors": {
+      "saveFailed": "تعذّر الحفظ. تحقق من اتصالك وحاول مرة أخرى."
+    }
+  }
+}

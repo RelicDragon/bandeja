@@ -26,6 +26,16 @@ export enum SystemMessageType {
   USER_CHAT_DECLINED = 'USER_CHAT_DECLINED',
   PARTICIPANTS_ONLY_CHAT_CREATED = 'PARTICIPANTS_ONLY_CHAT_CREATED',
   ADMINS_CHAT_CREATED = 'ADMINS_CHAT_CREATED',
+  /** PRD 346 — organizer asked the unanswered players to confirm attendance. */
+  ATTENDANCE_NUDGED = 'ATTENDANCE_NUDGED',
+  /** PRD 346 — organizer noted a player as a no-show. Informative only. */
+  USER_NOTED_NO_SHOW = 'USER_NOTED_NO_SHOW',
+  /** PRD 357 — organizer moved a rained-off game to an indoor court. */
+  GAME_MOVED_INDOOR = 'GAME_MOVED_INDOOR',
+  /** PRD 347 — a PLAYING seat was freed. */
+  GAME_SPOT_OPENED = 'GAME_SPOT_OPENED',
+  /** PRD 347 — auto-fill seated the first player in the queue. */
+  GAME_SEAT_AUTO_FILLED = 'GAME_SEAT_AUTO_FILLED',
 }
 
 export interface SystemMessageTemplate {
@@ -135,6 +145,11 @@ export const SYSTEM_MESSAGE_TEMPLATES: Record<SystemMessageType, SystemMessageTe
     template: 'Game location changed to {{clubName}}',
     variables: ['clubName']
   },
+  [SystemMessageType.GAME_MOVED_INDOOR]: {
+    type: SystemMessageType.GAME_MOVED_INDOOR,
+    template: 'Moved to {{courtName}} (indoor)',
+    variables: ['courtName']
+  },
   [SystemMessageType.GAME_DATE_TIME_CHANGED]: {
     type: SystemMessageType.GAME_DATE_TIME_CHANGED,
     template: 'Game date/time changed to {{dateTime}}',
@@ -169,6 +184,26 @@ export const SYSTEM_MESSAGE_TEMPLATES: Record<SystemMessageType, SystemMessageTe
     type: SystemMessageType.ADMINS_CHAT_CREATED,
     template: 'Admins chat has been created',
     variables: [],
+  },
+  [SystemMessageType.ATTENDANCE_NUDGED]: {
+    type: SystemMessageType.ATTENDANCE_NUDGED,
+    template: '{{userName}} asked everyone to confirm attendance',
+    variables: ['userName'],
+  },
+  [SystemMessageType.USER_NOTED_NO_SHOW]: {
+    type: SystemMessageType.USER_NOTED_NO_SHOW,
+    template: '{{userName}} was noted as a no-show',
+    variables: ['userName'],
+  },
+  [SystemMessageType.GAME_SPOT_OPENED]: {
+    type: SystemMessageType.GAME_SPOT_OPENED,
+    template: 'A spot opened ({{userName}} left)',
+    variables: ['userName'],
+  },
+  [SystemMessageType.GAME_SEAT_AUTO_FILLED]: {
+    type: SystemMessageType.GAME_SEAT_AUTO_FILLED,
+    template: '{{userName}} was seated from the queue',
+    variables: ['userName'],
   },
 };
 

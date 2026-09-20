@@ -1,0 +1,69 @@
+{
+  "attendance": {
+    "question": "参加しますか？",
+    "confirm": "参加します",
+    "unsure": "まだ分かりません",
+    "change": "変更",
+    "confirmedState": "参加が確定しています",
+    "unsureState": "まだ未定です",
+    "caption": "主催者に伝わるだけです。どちらでも席はそのまま確保されます。",
+    "cantMakeIt": "どうしても行けませんか？",
+    "confirmedToast": "参加を確認しました 👍",
+    "unsureToast": "記録しました。あとから確定できます。",
+    "saving": "保存中…",
+    "queuedOffline": "保存しました。オンラインに戻ったら同期します。",
+    "youOrganizer": "あなた（主催者）",
+    "dots": {
+      "confirmed": "参加確定",
+      "unanswered": "未回答",
+      "unsure": "未定",
+      "noShow": "不参加として記録"
+    },
+    "legend": {
+      "title": "ドットの意味",
+      "hint": "緑は参加確定、グレーは未回答、アンバーは未定です。"
+    },
+    "organizer": {
+      "progress": "{{total}}人中{{confirmed}}人が確定",
+      "nudge": "リマインド",
+      "nudgeCooldown": "あと{{hours}}時間で再リマインド可能",
+      "nudgeSent": "リマインドを送信しました",
+      "legendCaption": "緑：確定。グレー：未回答。アンバー：未定。"
+    },
+    "noShow": {
+      "action": "不参加として記録",
+      "undoAction": "不参加の記録を取り消す",
+      "dialogTitle": "{{name}}さんを不参加として記録しますか？",
+      "dialogBody": "やわらかいお知らせが届き、チャットで返信できます。7日以内ならいつでも取り消せます。",
+      "confirm": "不参加として記録",
+      "cancel": "キャンセル",
+      "noted": "記録しました",
+      "undo": "取り消す",
+      "undone": "不参加の記録を取り消しました",
+      "tag": "不参加"
+    },
+    "stat": {
+      "label": "参加率",
+      "tooltip": "直近12か月で確定して参加した試合です。",
+      "gaugeLabel": "試合の{{rate}}パーセントに参加",
+      "sparklineTitle": "直近12か月",
+      "sparklineLegend": "参加 / 不参加",
+      "sparklineMonthAria": "{{month}} — 参加：{{attended}}、不参加：{{noShow}}",
+      "notesTitle": "あなたの不参加記録",
+      "notesEmpty": "不参加の記録はありません。",
+      "notesOpenChat": "チャットを開く",
+      "notedOn": "{{date}}に記録"
+    },
+    "card": {
+      "ariaSummary": "{{total}}人中{{confirmed}}人が参加確定"
+    },
+    "errors": {
+      "generic": "回答を保存できませんでした",
+      "notParticipant": "この試合の参加者のみ回答できます",
+      "answersClosed": "この試合の参加確認は締め切られました",
+      "noShowWindowClosed": "不参加を記録できる期間は終了しました",
+      "nudgeCooldown": "最近リマインドしました。あとで試してください。",
+      "nothingToNudge": "全員がすでに回答しています"
+    }
+  }
+}

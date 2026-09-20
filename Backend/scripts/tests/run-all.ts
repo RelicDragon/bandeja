@@ -480,6 +480,15 @@ const suites: Suite[] = [
     ],
   },
   {
+    label: 'live scoring transition verify',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      '--transpile-only',
+      path.join(backendRoot, 'src', 'services', 'results', 'liveScoringEngine', 'liveScoringTransitionVerify.test.ts'),
+    ],
+  },
+  {
     label: 'multisport deferred',
     command: process.execPath,
     args: [

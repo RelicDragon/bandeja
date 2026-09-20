@@ -18,7 +18,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { ScoringPreset } from '@/types';
 import type { Sport } from '@shared/sport';
-import { computeMatchWinner, getRules, type ScoringRules } from '@/utils/scoring';
+import { computeMatchWinnerLiveScoring, getRules, type ScoringRules } from '@/utils/scoring';
 import {
   canAdvanceLiveSet,
   createInitialLiveScoringState,
@@ -35,7 +35,7 @@ import type { SetResult } from '@/types/gameResults';
 export const SCORING_GOLDEN_FIXTURE_PATH = join(import.meta.dirname, 'fixtures', 'scoringGolden.json');
 
 /** Bump when adding fixtures — issue #191 minimum scenario coverage. */
-export const SCORING_GOLDEN_MIN_FIXTURES = 9;
+export const SCORING_GOLDEN_MIN_FIXTURES = 18;
 
 export type ScoringGoldenExpected = {
   changed?: boolean;
@@ -126,8 +126,9 @@ export function runScoringFixture(
   return { state, changed, rules };
 }
 
+/** Live winner (`matchWinnerLive.ts`) — Watch mirrors via `computeMatchWinnerLiveScoring`. */
 function matchWinnerLabel(rules: ScoringRules, state: LiveScoringState): 'A' | 'B' | null {
-  const winner = computeMatchWinner(state.sets, rules);
+  const winner = computeMatchWinnerLiveScoring(state.sets, rules);
   if (winner === 'A') return 'A';
   if (winner === 'B') return 'B';
   return null;

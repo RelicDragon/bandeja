@@ -33,8 +33,27 @@ enum ScoringGoldenFixtures {
         var sets: [ExpectedSet]?
         var classic: ExpectedClassic?
         var canAdvanceLiveSet: Bool?
+        /// `"A"` | `"B"`; JSON `null` decodes as nil but still asserts (see `hasMatchWinnerKey`).
         var matchWinner: String?
+        /// True when the fixture spells out `matchWinner` (even as `null`) — TS harness asserts on `!== undefined`.
+        var hasMatchWinnerKey: Bool
         var optionalDeciderChoicePending: Bool?
+
+        private enum CodingKeys: String, CodingKey {
+            case changed, activeSetIndex, sets, classic, canAdvanceLiveSet, matchWinner, optionalDeciderChoicePending
+        }
+
+        nonisolated init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            changed = try c.decodeIfPresent(Bool.self, forKey: .changed)
+            activeSetIndex = try c.decodeIfPresent(Int.self, forKey: .activeSetIndex)
+            sets = try c.decodeIfPresent([ExpectedSet].self, forKey: .sets)
+            classic = try c.decodeIfPresent(ExpectedClassic.self, forKey: .classic)
+            canAdvanceLiveSet = try c.decodeIfPresent(Bool.self, forKey: .canAdvanceLiveSet)
+            hasMatchWinnerKey = c.contains(.matchWinner)
+            matchWinner = try c.decodeIfPresent(String.self, forKey: .matchWinner)
+            optionalDeciderChoicePending = try c.decodeIfPresent(Bool.self, forKey: .optionalDeciderChoicePending)
+        }
     }
 
     struct StateOverlay: Decodable, Sendable {
@@ -82,9 +101,10 @@ enum ScoringGoldenFixtures {
         return entries
     }
 
+    /// Mirrors `rulesFromScoringFixture` (`getRules({ sport, scoringPreset })`) — sport drives strict validation.
     static func rules(for entry: CatalogEntry) -> WatchScoringRules {
         let preset = WatchScoringPreset(rawValue: entry.preset) ?? .classicBo3
-        var rules = WatchScoringRulebook.skeleton(for: preset)
+        var rules = WatchScoringRulebook.skeleton(for: preset, sport: WatchSport(rawValue: entry.sport))
         if let gp = entry.rules?.deucesBeforeGoldenPoint {
             rules.deucesBeforeGoldenPoint = gp
         }
@@ -160,15 +180,19 @@ enum ScoringGoldenFixtures {
             let actual = WatchLiveScoringEngine.optionalDeciderChoicePending(state: state, rules: rules)
             if actual != exp { return "\(entry.name): optionalDeciderChoicePending" }
         }
-        if let exp = expected.matchWinner {
-            let winner = WatchComputeMatchWinner.computeMatchWinner(sets: state.sets, rules: rules)
+        // `matchWinner` key present (incl. explicit `null`) → compare against the live winner
+        // (`computeMatchWinnerLiveScoring`, mirrors `matchWinnerLive.ts` + `isLegalSetScore`).
+        if expected.hasMatchWinnerKey {
+            let winner = WatchComputeMatchWinner.computeMatchWinnerLiveScoring(sets: state.sets, rules: rules)
             let label: String? =
                 switch winner {
                 case .teamA: "A"
                 case .teamB: "B"
                 case nil: nil
                 }
-            if label != exp { return "\(entry.name): matchWinner" }
+            if label != expected.matchWinner {
+                return "\(entry.name): matchWinner expected \(expected.matchWinner ?? "null") got \(label ?? "null")"
+            }
         }
         return nil
     }

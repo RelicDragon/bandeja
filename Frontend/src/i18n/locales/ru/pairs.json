@@ -1,0 +1,75 @@
+{
+  "pairs": {
+    "mode": {
+      "label": "Режим рейтинга",
+      "players": "Игроки",
+      "pairs": "Пары"
+    },
+    "sort": {
+      "label": "Сортировка пар",
+      "winRate": "Процент побед",
+      "games": "Игры",
+      "level": "Уровень"
+    },
+    "period": {
+      "label": "Период",
+      "all": "За всё время",
+      "days30": "Последние 30 дней",
+      "days10": "Последние 10 дней"
+    },
+    "names": {
+      "spoken": "{{first}} и {{second}}"
+    },
+    "gamesCount_one": "{{count}} игра",
+    "gamesCount_few": "{{count}} игры",
+    "gamesCount_many": "{{count}} игр",
+    "gamesCount_other": "{{count}} игры",
+    "floorHint_one": "Сыграйте {{count}} игру с одним партнёром, чтобы попасть сюда.",
+    "floorHint_few": "Сыграйте {{count}} игры с одним партнёром, чтобы попасть сюда.",
+    "floorHint_many": "Сыграйте {{count}} игр с одним партнёром, чтобы попасть сюда.",
+    "floorHint_other": "Сыграйте {{count}} игры с одним партнёром, чтобы попасть сюда.",
+    "chemistry": {
+      "tooltip": "Процент побед вместе и поодиночке",
+      "aria": "Сыгранность {{value}}"
+    },
+    "stats": {
+      "games": "Игры",
+      "winRate": "Процент побед",
+      "chemistry": "Сыгранность",
+      "chemistryUnknown": "Пока мало личных игр"
+    },
+    "aria": {
+      "row": "Место {{rank}}, {{names}}, {{games}}, {{winRate}} процентов побед, сыгранность {{chemistry}}",
+      "rowNoChemistry": "Место {{rank}}, {{names}}, {{games}}, {{winRate}} процентов побед",
+      "podium": "Номер {{rank}}, {{names}}, {{winRate}} процентов побед, {{games}}",
+      "partner": "{{name}}, {{games}}, {{winRate}} процентов побед"
+    },
+    "scrollToMyPair": "К моей паре ({{rank}})",
+    "loadMore": "Показать ещё",
+    "loading": "Загружаем пары",
+    "error": "Не удалось загрузить пары. Попробуйте ещё раз.",
+    "empty": {
+      "title": "Пока нет пар в рейтинге",
+      "action": "Найти игру"
+    },
+    "sheet": {
+      "title": "Пара",
+      "recent": "Недавние вместе",
+      "recentEmpty": "Пока нет совместных игр.",
+      "createTeam": "Создать команду",
+      "openTeam": "Открыть команду",
+      "inviteToGame": "Позвать в игру"
+    },
+    "recent": {
+      "untitled": "Игра"
+    },
+    "result": {
+      "win": "Победа",
+      "loss": "Поражение"
+    },
+    "partners": {
+      "title": "Ваши партнёры",
+      "seeAll": "Все"
+    }
+  }
+}

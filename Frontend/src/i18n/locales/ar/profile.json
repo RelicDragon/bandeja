@@ -141,6 +141,8 @@
     "sendDirectMessagesDescription": "احصل على إشعار عندما يرسل لك أحد رسالة مباشرة",
     "sendReminders": "التذكيرات",
     "sendRemindersDescription": "احصل على إشعار قبل ساعتين من بدء مبارياتك أو البطولات أو حصص التدريب",
+    "sendWeatherAlerts": "تنبيهات الطقس",
+    "sendWeatherAlertsDescription": "للملاعب المكشوفة فقط",
     "walletNotifications": "إشعارات المحفظة",
     "walletNotificationsDescription": "استلم إشعارات لمعاملات المحفظة",
     "marketplaceNotifications": "إعلانات جديدة في مدينتي",

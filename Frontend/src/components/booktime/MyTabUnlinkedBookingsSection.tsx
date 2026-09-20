@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { AnimatedMount } from '@/components/motion/AnimatedMount';
@@ -15,7 +15,7 @@ type Props = {
   unlinked: MyTabUnlinkedBookingsState;
 };
 
-export function MyTabUnlinkedBookingsSection({ booktime, unlinked }: Props) {
+export const MyTabUnlinkedBookingsSection = memo(function MyTabUnlinkedBookingsSection({ booktime, unlinked }: Props) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { myClubs, clubs, removeBooking } = booktime;
@@ -81,4 +81,4 @@ export function MyTabUnlinkedBookingsSection({ booktime, unlinked }: Props) {
       </section>
     </AnimatedMount>
   );
-}
+});

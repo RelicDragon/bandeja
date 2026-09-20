@@ -1,3 +1,4 @@
+import { WeltnerConnectForm } from './WeltnerConnectForm';
 import { useTranslation } from 'react-i18next';
 import { AnimatePresence, motion } from 'framer-motion';
 import { KeyRound } from 'lucide-react';
@@ -7,7 +8,7 @@ import { BooktimeConnectForm } from './BooktimeConnectForm';
 import { PadelooConnectForm } from './PadelooConnectForm';
 import { KlikterenConnectForm } from './KlikterenConnectForm';
 import type { BooktimeIntegrationConfig } from './ConnectClubSheet';
-import { isKlikterenClub, isPadelooClub } from '@shared/clubIntegration';
+import { isWeltnerClub, isKlikterenClub, isPadelooClub } from '@shared/clubIntegration';
 
 type ClubBookingConnectInlineProps = {
   club: Club;
@@ -29,12 +30,12 @@ export function ClubBookingConnectInline({
   const { t } = useTranslation();
   const isKlikteren = isKlikterenClub(club);
   const isPadeloo = isPadelooClub(club);
-  const authTitle = isKlikteren
+  const authTitle = isWeltnerClub(club) ? t('weltner.connectTitle') : isKlikteren
     ? t('createGame.klikteren.authTitle', { defaultValue: 'Connect your Klikteren account' })
     : isPadeloo
     ? t('createGame.padeloo.authTitle', { defaultValue: 'Connect your Padeloo account' })
     : t('createGame.booktime.authTitle');
-  const authHint = isKlikteren
+  const authHint = isWeltnerClub(club) ? t('weltner.contactHint', { club: club.name }) : isKlikteren
     ? t('createGame.klikteren.authHint', {
         club: club.name,
         defaultValue: `Sign in with email and password to book at ${club.name}.`,
@@ -45,7 +46,7 @@ export function ClubBookingConnectInline({
         defaultValue: `Sign in with email to book at ${club.name}.`,
       })
     : t('createGame.booktime.authHint', { club: club.name });
-  const authorizeLabel = isKlikteren
+  const authorizeLabel = isWeltnerClub(club) ? t('weltner.connectTitle') : isKlikteren
     ? t('createGame.klikteren.authorizeInClub', {
         club: club.name,
         defaultValue: `Authorize in ${club.name}`,
@@ -92,7 +93,7 @@ export function ClubBookingConnectInline({
             </div>
           </div>
 
-          {isKlikteren ? (
+          {isWeltnerClub(club) ? (<WeltnerConnectForm club={club} onConnected={onConnected} />) : isKlikteren ? (
             <KlikterenConnectForm club={club} onConnected={onConnected} variant="inline" />
           ) : isPadeloo ? (
             <PadelooConnectForm club={club} onConnected={onConnected} variant="inline" />

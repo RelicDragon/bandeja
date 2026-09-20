@@ -302,7 +302,12 @@
         "EXTERNAL_PARTIAL": "Není plně rezervováno",
         "MANUAL": "Kurt objednán",
         "NONE": "Ještě neobjednáno"
-      }
+      },
+      "ATTENDANCE_NUDGED": "{{userName}} požádal všechny o potvrzení účasti",
+      "USER_NOTED_NO_SHOW": "{{userName}} byl označen jako nedostavivší se",
+      "GAME_SPOT_OPENED": "Uvolnilo se místo ({{userName}} odešel)",
+      "GAME_SEAT_AUTO_FILLED": "{{userName}} byl nasazen z fronty",
+      "GAME_MOVED_INDOOR": "Přesunuto na {{courtName}} (kryté)"
     },
     "openChat": "Otevřít chat",
     "chat": "Konverzace",

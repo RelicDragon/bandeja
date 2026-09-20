@@ -16,6 +16,7 @@ enum BandejaDeepLink {
     static let findTomorrow = URL(string: "https://bandeja.me/find?view=calendar&dayOffset=1")!
     static let nextGameChat = URL(string: "https://bandeja.me/next-game?open=chat")!
     static let nextGameLive = URL(string: "https://bandeja.me/next-game?open=live")!
+    static let shop = URL(string: "https://bandeja.me/shop")!
 
     static func game(_ id: String) -> URL {
         URL(string: "https://bandeja.me/games/\(id)")!
@@ -27,6 +28,14 @@ enum BandejaDeepLink {
 
     static func gameLive(_ id: String) -> URL {
         URL(string: "https://bandeja.me/games/\(id)/live")!
+    }
+
+    static func club(_ id: String) -> URL {
+        URL(string: "https://bandeja.me/clubs/\(id)")!
+    }
+
+    static func series(_ id: String) -> URL {
+        URL(string: "https://bandeja.me/series/\(id)")!
     }
 
     /// Route through Capacitor so Siri intents never bounce to Safari.

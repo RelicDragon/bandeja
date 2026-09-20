@@ -153,6 +153,15 @@ interface GameResultsUpdatedData {
   gameId: string;
 }
 
+/* PRD 345–357 game-room events (CONTRACT §6); payload types own the shape. */
+type GameAttendanceUpdatedData = import('@/services/socketService').GameAttendanceUpdatedPayload;
+type GameSeatOpenedData = import('@/services/socketService').GameSeatOpenedPayload;
+type GameSeatFilledData = import('@/services/socketService').GameSeatFilledPayload;
+type GameCostUpdatedData = import('@/services/socketService').GameCostUpdatedPayload;
+type GameSeriesConfirmationsUpdatedData =
+  import('@/services/socketService').GameSeriesConfirmationsUpdatedPayload;
+type GameWeatherAlertUpdatedData = import('@/services/socketService').GameWeatherAlertUpdatedPayload;
+
 export interface MatchTimerUpdatedData {
   gameId: string;
   matchId: string;
@@ -305,6 +314,12 @@ interface SocketEventsState {
   lastBetDeleted: BetDeletedData | null;
   lastBetResolved: BetResolvedData | null;
   lastGameResultsUpdated: GameResultsUpdatedData | null;
+  lastGameAttendanceUpdated: GameAttendanceUpdatedData | null;
+  lastGameSeatOpened: GameSeatOpenedData | null;
+  lastGameSeatFilled: GameSeatFilledData | null;
+  lastGameCostUpdated: GameCostUpdatedData | null;
+  lastGameSeriesConfirmationsUpdated: GameSeriesConfirmationsUpdatedData | null;
+  lastGameWeatherAlertUpdated: GameWeatherAlertUpdatedData | null;
   lastMatchTimerUpdated: MatchTimerUpdatedData | null;
   lastMatchLiveScoringUpdated: MatchLiveScoringUpdatedData | null;
   lastWatchLiveScoringHint: WatchLiveScoringHintData | null;
@@ -363,6 +378,12 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
     lastBetDeleted: null,
     lastBetResolved: null,
     lastGameResultsUpdated: null,
+    lastGameAttendanceUpdated: null,
+    lastGameSeatOpened: null,
+    lastGameSeatFilled: null,
+    lastGameCostUpdated: null,
+    lastGameSeriesConfirmationsUpdated: null,
+    lastGameWeatherAlertUpdated: null,
     lastMatchTimerUpdated: null,
     lastMatchLiveScoringUpdated: null,
     lastWatchLiveScoringHint: null,
@@ -650,6 +671,30 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
         set({ lastGameResultsUpdated: data });
       };
 
+      const handleGameAttendanceUpdated = (data: GameAttendanceUpdatedData) => {
+        set({ lastGameAttendanceUpdated: data });
+      };
+
+      const handleGameSeatOpened = (data: GameSeatOpenedData) => {
+        set({ lastGameSeatOpened: data });
+      };
+
+      const handleGameSeatFilled = (data: GameSeatFilledData) => {
+        set({ lastGameSeatFilled: data });
+      };
+
+      const handleGameCostUpdated = (data: GameCostUpdatedData) => {
+        set({ lastGameCostUpdated: data });
+      };
+
+      const handleGameSeriesConfirmationsUpdated = (data: GameSeriesConfirmationsUpdatedData) => {
+        set({ lastGameSeriesConfirmationsUpdated: data });
+      };
+
+      const handleGameWeatherAlertUpdated = (data: GameWeatherAlertUpdatedData) => {
+        set({ lastGameWeatherAlertUpdated: data });
+      };
+
       const handleMatchTimerUpdated = (data: {
         gameId: string;
         matchId: string;
@@ -812,6 +857,12 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
       socketService.on('bet:deleted', handleBetDeleted);
       socketService.on('bet:resolved', handleBetResolved);
       socketService.on('game-results-updated', handleGameResultsUpdated);
+      socketService.on('game-attendance-updated', handleGameAttendanceUpdated);
+      socketService.on('game-seat-opened', handleGameSeatOpened);
+      socketService.on('game-seat-filled', handleGameSeatFilled);
+      socketService.on('game-cost-updated', handleGameCostUpdated);
+      socketService.on('game-series-confirmations-updated', handleGameSeriesConfirmationsUpdated);
+      socketService.on('game-weather-alert-updated', handleGameWeatherAlertUpdated);
       socketService.on('match-timer-updated', handleMatchTimerUpdated);
       socketService.on('match-live-scoring-updated', handleMatchLiveScoringUpdated);
       socketService.on('game-cancelled', handleGameCancelled);
@@ -857,6 +908,12 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
         () => socketService.off('bet:deleted', handleBetDeleted),
         () => socketService.off('bet:resolved', handleBetResolved),
         () => socketService.off('game-results-updated', handleGameResultsUpdated),
+        () => socketService.off('game-attendance-updated', handleGameAttendanceUpdated),
+        () => socketService.off('game-seat-opened', handleGameSeatOpened),
+        () => socketService.off('game-seat-filled', handleGameSeatFilled),
+        () => socketService.off('game-cost-updated', handleGameCostUpdated),
+        () => socketService.off('game-series-confirmations-updated', handleGameSeriesConfirmationsUpdated),
+        () => socketService.off('game-weather-alert-updated', handleGameWeatherAlertUpdated),
         () => socketService.off('match-timer-updated', handleMatchTimerUpdated),
         () => socketService.off('match-live-scoring-updated', handleMatchLiveScoringUpdated),
         () => socketService.off('game-cancelled', handleGameCancelled),
@@ -909,6 +966,12 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
         lastBetDeleted: null,
         lastBetResolved: null,
         lastGameResultsUpdated: null,
+        lastGameAttendanceUpdated: null,
+        lastGameSeatOpened: null,
+        lastGameSeatFilled: null,
+        lastGameCostUpdated: null,
+        lastGameSeriesConfirmationsUpdated: null,
+        lastGameWeatherAlertUpdated: null,
         lastMatchTimerUpdated: null,
         lastMatchLiveScoringUpdated: null,
         lastWatchLiveScoringHint: null,

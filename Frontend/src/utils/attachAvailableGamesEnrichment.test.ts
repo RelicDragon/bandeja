@@ -1,5 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { QueryClient } from '@tanstack/react-query';
+import { GAME_CARD_ENRICHMENT_KEYS } from '@/types/gameCardEnrichment';
+import type { GameCardEnrichment } from '@/types/gameCardEnrichment';
 import type { Game } from '@/types';
 
 const { getAvailableGamesEnrichment } = vi.hoisted(() => ({
@@ -41,6 +43,68 @@ describe('attachAvailableGamesEnrichment', () => {
   it('returns same array reference when nothing to merge', () => {
     const games = [{ id: 'g1' } as Game];
     expect(mergeEnrichmentOntoGames(games, {})).toBe(games);
+  });
+
+  /**
+   * Regression for the BLOCKER where the merge copied three of nine fields and
+   * threw the six PRD 345–357 card payloads away. `format: 'card'` list queries
+   * skip inline enrichment, so this endpoint is the only source for them.
+   *
+   * The fixture is keyed by `GameCardEnrichmentKey`: adding a field to the
+   * shared contract without a value here is a type error, and the assertion
+   * walks `GAME_CARD_ENRICHMENT_KEYS` so field ten cannot be dropped silently.
+   */
+  it('carries every field of the shared enrichment contract', () => {
+    const patch: Required<GameCardEnrichment> = {
+      userNote: 'Bring balls',
+      weatherSummary: { temperatureC: 21, conditionKey: 'clear' } as Required<
+        GameCardEnrichment
+      >['weatherSummary'],
+      reactions: [{ userId: 'u1', emoji: '🔥' }],
+      spotOpenedAt: '2026-05-21T16:30:00.000Z',
+      liveSummary: { matchId: 'm1', currentSet: 1, sides: [] } as unknown as Required<
+        GameCardEnrichment
+      >['liveSummary'],
+      weatherRisk: { severity: 'likely', pop: 70, windKph: 12, at: '2026-05-21T17:00:00.000Z' },
+      perHeadPrice: {
+        amountCents: 1000,
+        currency: 'EUR',
+        totalCents: 4000,
+        payerCount: 4,
+        estimated: true,
+      },
+      seriesLabel: {
+        seriesId: 's1',
+        name: 'Tuesday Regulars',
+        cadence: 'WEEKLY',
+        weekday: 2,
+        startTimeLocal: '19:00',
+      },
+      attendanceSummary: {
+        confirmedCount: 2,
+        unsureCount: 0,
+        unansweredCount: 2,
+        playingCount: 4,
+        viewerAttendance: 'CONFIRMED',
+      },
+    };
+
+    const [merged] = mergeEnrichmentOntoGames([{ id: 'g1' } as Game], { g1: patch });
+
+    for (const key of GAME_CARD_ENRICHMENT_KEYS) {
+      expect(merged[key], `enrichment field "${key}" was dropped by the merge`).toEqual(patch[key]);
+    }
+  });
+
+  it('leaves untouched fields alone and skips an empty patch', () => {
+    const games = [{ id: 'g1', userNote: 'kept' } as Game];
+    const merged = mergeEnrichmentOntoGames(games, {
+      g1: { seriesLabel: null, weatherRisk: null },
+    });
+    expect(merged[0].userNote).toBe('kept');
+    expect(merged[0].seriesLabel).toBeNull();
+    expect(merged[0].weatherRisk).toBeNull();
+    expect(mergeEnrichmentOntoGames(games, { g1: {} })).toBe(games);
   });
 
   it('patches cache after successful enrichment', async () => {

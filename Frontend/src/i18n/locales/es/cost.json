@@ -1,0 +1,83 @@
+{
+  "cost": {
+    "title": "Coste",
+    "totalLine": "Total: {{amount}}",
+    "paidBy": "Pagado por {{name}}",
+    "payerTag": "pagó la pista",
+    "frozen": "Partes fijadas al resultado final",
+    "updatedCaption": "Partes actualizadas",
+    "iPaid": "He pagado",
+    "settledButton": "Saldado",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "amountLabel": "Importe",
+    "amountInvalid": "Introduce un importe",
+    "keypadLabel": "Teclado numérico",
+    "keypadBackspace": "Borrar el último dígito",
+    "editShareFor": "Editar la parte de {{name}}",
+    "editShareHint": "El total del partido es {{total}}.",
+    "receivedFor": "Marcar que {{name}} ha pagado",
+    "splitRemainder": "Repartir el resto a partes iguales",
+    "splitRemainderHint": "El resto de jugadores cubre la diferencia para que cuadre el total.",
+    "summaryStrip": "{{settled}} de {{total}} saldados · {{amount}} pendiente",
+    "summaryAllSettled": "{{settled}} de {{total}} saldados",
+    "remindUnpaid": "Recordar a los que faltan",
+    "remindCooldown": "Podrás avisar de nuevo en unas {{hours}} h",
+    "state": {
+      "unpaid": "Sin pagar",
+      "markedPaid": "Marcado como pagado",
+      "settled": "Saldado"
+    },
+    "sheet": {
+      "title": "¿Cómo has pagado?",
+      "subtitle": "{{amount}} para {{name}}",
+      "hintLabel": "Cómo pagar a {{name}}",
+      "copy": "Copiar",
+      "copied": "Copiado",
+      "outside": "Fuera de la app",
+      "outsideHint": "Efectivo, transferencia o una app de pagos",
+      "coins": "Enviar {{coins}} monedas",
+      "coinsHint": "Tu saldo: {{balance}} monedas",
+      "disclaimer": "Bandeja nunca mueve dinero real. Aquí solo se anota quién ha pagado."
+    },
+    "card": {
+      "perPlayer": "{{amount}} por jugador",
+      "perPlayerEstimated": "≈ {{amount}} por jugador",
+      "totalFor": "Total {{amount}} · {{players}} jugadores"
+    },
+    "create": {
+      "preview": "≈ {{amount}} cada uno para {{players}} jugadores",
+      "paymentHintLabel": "Cómo pagarte",
+      "paymentHintPlaceholder": "IBAN, usuario de Bizum, efectivo en el club…",
+      "paymentHintHelp": "Se muestra a los jugadores al saldar. Quedan {{remaining}} caracteres."
+    },
+    "wallet": {
+      "owed": "Debes",
+      "owedToYou": "Te deben",
+      "settle": "Saldar",
+      "view": "Ver",
+      "allSettled": "Todo saldado 🎉",
+      "toName": "Para {{name}}",
+      "fromName": "De {{name}}"
+    },
+    "toast": {
+      "markedPaid": "Marcado como pagado",
+      "settledCoins": "{{coins}} monedas enviadas · saldado",
+      "received": "Marcado como recibido",
+      "receivedUndone": "Marcado como sin pagar",
+      "shareUpdated": "Parte actualizada",
+      "reminded_one": "Recordatorio enviado · {{count}} jugador",
+      "reminded_many": "Recordatorio enviado · {{count}} de jugadores",
+      "reminded_other": "Recordatorio enviado · {{count}} jugadores"
+    },
+    "errors": {
+      "settleFailed": "No se ha podido registrar. Inténtalo otra vez.",
+      "confirmFailed": "No se ha podido actualizar esa fila. Inténtalo otra vez.",
+      "remindFailed": "Ahora mismo no se puede enviar el recordatorio.",
+      "updateFailed": "No se ha podido guardar la parte. Inténtalo otra vez.",
+      "copyFailed": "No se ha podido copiar."
+    },
+    "loading": "Cargando el reparto de gastos…",
+    "loadFailed": "No pudimos cargar el reparto de gastos."
+  }
+}

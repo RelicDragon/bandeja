@@ -1,7 +1,15 @@
 import type { LucideIcon } from 'lucide-react';
-import type { ComponentType } from 'react';
+import type { ComponentType, KeyboardEvent as ReactKeyboardEvent } from 'react';
+import { useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { UnreadBadge } from '@/components/UnreadBadge';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
+import {
+  isDocumentRtl,
+  isRovingNavKey,
+  nextRovingIndex,
+  rovingTabIndex,
+} from '@/utils/rovingFocus';
 
 export type SegmentedSwitchIcon = LucideIcon | ComponentType<{ size?: number; className?: string }>;
 
@@ -74,6 +82,38 @@ export const SegmentedSwitch = ({
   const hasToggles = Boolean(toggleIds?.length);
   const toggleIdSet = hasToggles ? new Set(toggleIds) : null;
   const activeToggleSet = activeToggleIds?.length ? new Set(activeToggleIds) : null;
+  const reducedMotion = usePrefersReducedMotion();
+  const listRef = useRef<HTMLDivElement>(null);
+
+  // Roving tabindex (CONTRACT §7.2). Toggle mode is a `role="group"` of
+  // independent on/off buttons, not a tab list, so it keeps every button in the
+  // tab order and has no arrow-key model to implement.
+  const enabledFlags = tabs.map((tab) => !(disabled || tab.disabled));
+  const selectedIndex = tabs.findIndex((tab) => tab.id === activeId);
+  const rovingIndex = rovingTabIndex(selectedIndex, enabledFlags);
+
+  const handleKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (!isRovingNavKey(event.key)) return;
+    const buttons = listRef.current?.querySelectorAll<HTMLButtonElement>('[role="tab"]');
+    if (!buttons || buttons.length === 0) return;
+    const focusedIndex = Array.from(buttons).indexOf(document.activeElement as HTMLButtonElement);
+    const target = nextRovingIndex({
+      key: event.key,
+      currentIndex: focusedIndex >= 0 ? focusedIndex : rovingIndex,
+      enabled: enabledFlags,
+      rtl: isDocumentRtl(),
+      // A horizontal strip must ignore Up/Down (and a vertical one Left/Right):
+      // otherwise a keyboard user pressing ArrowDown to scroll the page changes
+      // the tab and fires `onChange`, which on several callers refetches a list.
+      orientation: isVertical ? 'vertical' : 'horizontal',
+    });
+    if (target == null) return;
+    const tab = tabs[target];
+    if (!tab) return;
+    event.preventDefault();
+    onChange(tab.id);
+    buttons[target]?.focus();
+  };
 
   const handleTabClick = (tabId: string, tabDisabled?: boolean) => {
     if (disabled || tabDisabled) return;
@@ -90,14 +130,16 @@ export const SegmentedSwitch = ({
   };
   return (
   <div
+    ref={listRef}
     role={hasToggles ? 'group' : 'tablist'}
     aria-label={ariaLabel}
     aria-orientation={hasToggles ? undefined : isVertical ? 'vertical' : 'horizontal'}
+    onKeyDown={hasToggles ? undefined : handleKeyDown}
     className={`relative flex max-w-full items-stretch overflow-x-auto overflow-y-visible bg-gray-100 dark:bg-gray-700 ${
       compact ? 'gap-0.5 rounded-xl p-0.5' : 'gap-1 rounded-lg p-1'
     } ${isVertical ? 'w-full flex-col' : fullWidth ? 'w-full' : 'w-fit'} ${className}`.trim()}
   >
-    {tabs.map((tab) => {
+    {tabs.map((tab, index) => {
       const isToggle = toggleIdSet?.has(tab.id) ?? false;
       const isActive = isToggle
         ? (activeToggleSet?.has(tab.id) ?? false)
@@ -112,6 +154,7 @@ export const SegmentedSwitch = ({
           role={isToggle ? 'button' : 'tab'}
           aria-selected={isToggle ? undefined : isActive}
           aria-pressed={isToggle ? isActive : undefined}
+          tabIndex={hasToggles ? undefined : index === rovingIndex ? 0 : -1}
           disabled={disabled || tab.disabled}
           title={tab.disabled ? tab.title : undefined}
           onClick={() => handleTabClick(tab.id, tab.disabled)}
@@ -126,9 +169,9 @@ export const SegmentedSwitch = ({
                 ? 'text-gray-900 dark:text-white'
                 : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
           }`}
-          whileTap={disabled || tab.disabled ? undefined : { scale: 0.95 }}
+          whileTap={disabled || tab.disabled || reducedMotion ? undefined : { scale: 0.95 }}
           transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-          layout={showOnlyActiveTabText}
+          layout={showOnlyActiveTabText && !reducedMotion}
           aria-label={tab.ariaLabel ?? tab.label}
         >
           {isActive && (
@@ -136,9 +179,11 @@ export const SegmentedSwitch = ({
               className={`absolute inset-0 bg-primary-500/15 dark:bg-primary-400/15 ring-1 ring-primary-500/30 dark:ring-primary-400/30 ${
                 compact ? 'rounded-[10px]' : 'rounded-md'
               }`}
-              layoutId={isToggle ? `${layoutId}-toggle-${tab.id}` : layoutId}
+              layoutId={reducedMotion ? undefined : isToggle ? `${layoutId}-toggle-${tab.id}` : layoutId}
               initial={false}
-              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              transition={
+                reducedMotion ? { duration: 0 } : { type: 'spring', stiffness: 300, damping: 30 }
+              }
             />
           )}
           {isVertical && (
@@ -168,7 +213,11 @@ export const SegmentedSwitch = ({
                     initial={isVertical ? { opacity: 0 } : { maxWidth: 0, opacity: 0 }}
                     animate={isVertical ? { opacity: 1 } : { maxWidth: activeLabelMaxWidth, opacity: 1 }}
                     exit={isVertical ? { opacity: 0 } : { maxWidth: 0, opacity: 0 }}
-                    transition={{ type: 'tween', duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
+                    transition={{
+                      type: 'tween',
+                      duration: reducedMotion ? 0 : 0.2,
+                      ease: [0.25, 0.1, 0.25, 1],
+                    }}
                     className={isVertical ? '' : 'overflow-hidden whitespace-nowrap'}
                   >
                     {tab.label}

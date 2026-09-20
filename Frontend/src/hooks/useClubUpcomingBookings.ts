@@ -1,5 +1,6 @@
+import { useWeltnerUpcomingBookings } from './useWeltnerUpcomingBookings';
 import type { Club, Court } from '@/types';
-import { getBooktimeCompanyId, isKlikterenClub, isPadelooClub } from '@shared/clubIntegration';
+import { getBooktimeCompanyId, isWeltnerClub, isKlikterenClub, isPadelooClub } from '@shared/clubIntegration';
 import { useBooktimeUpcomingBookings } from '@/hooks/useBooktimeUpcomingBookings';
 import { usePadelooUpcomingBookings } from '@/hooks/usePadelooUpcomingBookings';
 import { useKlikterenUpcomingBookings } from '@/hooks/useKlikterenUpcomingBookings';
@@ -26,7 +27,7 @@ export function useClubUpcomingBookings(
     resolvedClub,
     companyId,
     connected,
-    enabled && Boolean(club) && !isPadelooClub(club) && !isKlikterenClub(club),
+    enabled && Boolean(club) && !isPadelooClub(club) && !isKlikterenClub(club) && !isWeltnerClub(club),
     filterCourts,
     refreshKey,
   );
@@ -47,6 +48,8 @@ export function useClubUpcomingBookings(
     refreshKey,
   );
 
+  const weltner = useWeltnerUpcomingBookings(resolvedClub, enabled && isWeltnerClub(club), filterCourts, refreshKey);
+  if (isWeltnerClub(club)) return weltner;
   if (isKlikterenClub(club)) return klikteren;
   if (isPadelooClub(club)) return padeloo;
   return booktime;

@@ -3,6 +3,12 @@ export type CreateGameDeepLinkSearch = {
   courtId?: string;
   startTime?: string;
   endTime?: string;
+  /**
+   * PRD 354 — day-only prefill (`yyyy-MM-dd`) from the club page's court chips.
+   * Independent of `startTime`: the club strip knows the day the player tapped,
+   * not the slot. Ignored when `startTime` is present, which already pins a day.
+   */
+  date?: string;
   hasBookedCourt: boolean;
   bookingIds: string[];
   /** Parsed for backward compatibility; mode is derived from bookingIds in the UI. */
@@ -31,6 +37,32 @@ function getSearchParam(search: string, key: string): string | null {
   return null;
 }
 
+/**
+ * `yyyy-MM-dd` only, and only a real calendar date. A malformed value is
+ * dropped rather than passed through, so the wizard never seeds an Invalid Date.
+ */
+export function parseCreateGameDateParam(raw: string | null): string | undefined {
+  if (!raw) return undefined;
+  const trimmed = raw.trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return undefined;
+  const [y, m, d] = trimmed.split('-').map(Number);
+  const probe = new Date(Date.UTC(y, m - 1, d));
+  if (
+    probe.getUTCFullYear() !== y ||
+    probe.getUTCMonth() !== m - 1 ||
+    probe.getUTCDate() !== d
+  ) {
+    return undefined;
+  }
+  return trimmed;
+}
+
+/** `yyyy-MM-dd` → local noon ISO, matching `headerStore.setCreateGameInitialDate`. */
+export function createGameDateToLocalNoonIso(dateKey: string): string {
+  const [y, m, d] = dateKey.split('-').map(Number);
+  return new Date(y, m - 1, d, 12, 0, 0, 0).toISOString();
+}
+
 export function parseCreateGameDeepLinkSearch(search: string): CreateGameDeepLinkSearch {
   const locationTimeModeRaw = getSearchParam(search, 'locationTimeMode');
   const locationTimeMode =
@@ -45,6 +77,7 @@ export function parseCreateGameDeepLinkSearch(search: string): CreateGameDeepLin
     courtId: getSearchParam(search, 'courtId') ?? undefined,
     startTime: getSearchParam(search, 'startTime') ?? undefined,
     endTime: getSearchParam(search, 'endTime') ?? undefined,
+    date: parseCreateGameDateParam(getSearchParam(search, 'date')),
     hasBookedCourt: getSearchParam(search, 'hasBookedCourt') === '1',
     bookingIds: parseBookingIdsParam(getSearchParam(search, 'bookingIds')),
     locationTimeMode,
@@ -60,6 +93,8 @@ export function createGameDataFromDeepLinkSearch(search: string): {
     hasBookedCourt?: boolean;
   };
   bookingIds: string[];
+  /** Day-only prefill; the wizard seeds its date picker from it. */
+  date?: string;
 } {
   const parsed = parseCreateGameDeepLinkSearch(search);
   const gameData: {
@@ -75,6 +110,12 @@ export function createGameDataFromDeepLinkSearch(search: string): {
   if (parsed.startTime) gameData.startTime = parsed.startTime;
   if (parsed.endTime) gameData.endTime = parsed.endTime;
   if (parsed.hasBookedCourt) gameData.hasBookedCourt = true;
+  // Day-only prefill uses the same convention as `setCreateGameInitialDate`:
+  // local noon on the chosen day, which pins the wizard's date without
+  // pretending a slot was picked. `startTime` always wins if both are present.
+  if (parsed.date && !gameData.startTime) {
+    gameData.startTime = createGameDateToLocalNoonIso(parsed.date);
+  }
 
-  return { gameData, bookingIds: parsed.bookingIds };
+  return { gameData, bookingIds: parsed.bookingIds, date: parsed.date };
 }

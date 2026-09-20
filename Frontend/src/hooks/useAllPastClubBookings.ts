@@ -1,3 +1,5 @@
+import { useAuthStore } from '@/store/authStore';
+import { loadWeltnerBookingsForClubs } from '@/integrations/weltner/receipts';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ConnectedBookingClubRow } from '@/hooks/connectedBookingClubs';
 import { connectedClubRowToBooktimeRow } from '@/hooks/connectedBookingClubs';
@@ -14,7 +16,7 @@ export type AggregatedPastClubBooking = {
   bookingEnd: string;
   clubId: string;
   clubName: string;
-  integrationType: 'BOOKTIME' | 'PADELOO' | 'KLIKTEREN';
+  integrationType: 'BOOKTIME' | 'PADELOO' | 'KLIKTEREN' | 'WELTNER';
   price?: number;
   status?: string;
   bookingResourceId?: string;
@@ -138,6 +140,20 @@ export function useAllPastClubBookings(
     void reloadKlikteren();
   }, [reloadKlikteren, refreshKey]);
 
+  const userId = useAuthStore((state) => state.user?.id);
+  const weltnerRequestKey = `${userId}:${enabled}:${clubs.filter(club => club.integrationType === 'WELTNER').map(club => club.clubId).sort().join(',')}`;
+  const [resolvedWeltnerKey, setResolvedWeltnerKey] = useState<string | null>(null);
+  const [weltnerPast, setWeltnerPast] = useState<AggregatedPastClubBooking[]>([]);
+  const [weltnerLoading, setWeltnerLoading] = useState(false);
+  useEffect(() => {
+    let active = true;
+    setWeltnerPast([]);
+    if (!enabled || !userId) { setWeltnerLoading(false); return; }
+    setWeltnerLoading(true);
+    void loadWeltnerBookingsForClubs(clubs, 'past').then(rows => { if (active) { setWeltnerPast(rows); setResolvedWeltnerKey(weltnerRequestKey); } }).catch(() => {}).finally(() => { if (active) setWeltnerLoading(false); });
+    return () => { active = false; };
+  }, [clubs, enabled, refreshKey, userId, weltnerRequestKey]);
+
   const bookings = useMemo(() => {
     const merged: AggregatedPastClubBooking[] = [
       ...booktimePast.map((row) => ({
@@ -153,13 +169,14 @@ export function useAllPastClubBookings(
       })),
       ...padelooPast,
       ...klikterenPast,
+      ...(enabled && userId && resolvedWeltnerKey === weltnerRequestKey ? weltnerPast : []),
     ];
     merged.sort((a, b) => booktimeBookingStartMs(b.bookingStart) - booktimeBookingStartMs(a.bookingStart));
     return merged;
-  }, [booktimePast, padelooPast, klikterenPast]);
+  }, [booktimePast, padelooPast, klikterenPast, weltnerPast, enabled, userId, resolvedWeltnerKey, weltnerRequestKey]);
 
   return {
     bookings,
-    loading: booktimeLoading || padelooLoading || klikterenLoading,
+    loading: booktimeLoading || padelooLoading || klikterenLoading || weltnerLoading,
   };
 }

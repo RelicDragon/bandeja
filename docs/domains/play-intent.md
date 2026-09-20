@@ -44,6 +44,12 @@ Different surface from Find radar. `PlayerListModal` tabs. Population = Browse c
 
 `docs/plans/player-invite-looking.md`.
 
+## Telegram `/play`
+
+The bot creates intents through `PlayIntentService.createOrReplace`, never by writing `PlayIntent` directly, so it inherits every rule above for free: one OPEN intent per city/sport, date keys resolved in the **city** timezone, the expiry window, and every downstream queue. Group `/play` posts a "looking to play" card whose **I'm in too** mirrors the poster's day and time window into an intent for the tapper, in the *tapper's* own city and sport. Wizard shapes and callback prefixes: [notifications.md](./notifications.md).
+
+Spot-opened notifications also read intents (an OPEN intent matching a game whose seat just freed is one of the audience buckets) but never write them, and `GAME_MATCHES_INTENT` semantics are untouched — [games.md](./games.md).
+
 ## Code
 
 BE: `Backend/src/services/playIntent/*`, routes `/play-intents`. FE: `api/playIntents.ts`, `components/playIntent/*`, `components/playerInvite/*`.

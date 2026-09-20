@@ -1,0 +1,81 @@
+{
+  "cost": {
+    "title": "費用",
+    "totalLine": "合計 {{amount}}",
+    "paidBy": "{{name}} さんが支払い",
+    "payerTag": "コート代を支払い済み",
+    "frozen": "最終スコア時点で割り勘額を確定しました",
+    "updatedCaption": "割り勘額を更新しました",
+    "iPaid": "支払いました",
+    "settledButton": "精算済み",
+    "cancel": "キャンセル",
+    "save": "保存",
+    "amountLabel": "金額",
+    "amountInvalid": "金額を入力してください",
+    "keypadLabel": "数字キーパッド",
+    "keypadBackspace": "最後の数字を削除",
+    "editShareFor": "{{name}} さんの負担額を編集",
+    "editShareHint": "このゲームの合計は {{total}} です。",
+    "receivedFor": "{{name}} さんを支払い済みにする",
+    "splitRemainder": "残りを均等に分ける",
+    "splitRemainderHint": "他のプレーヤーが差額を負担し、合計が合うようにします。",
+    "summaryStrip": "{{total}} 人中 {{settled}} 人が精算済み · 未精算 {{amount}}",
+    "summaryAllSettled": "{{total}} 人中 {{settled}} 人が精算済み",
+    "remindUnpaid": "未払いの人に通知",
+    "remindCooldown": "次に通知できるのは約 {{hours}} 時間後です",
+    "state": {
+      "unpaid": "未払い",
+      "markedPaid": "支払い申告済み",
+      "settled": "精算済み"
+    },
+    "sheet": {
+      "title": "支払い方法は？",
+      "subtitle": "{{name}} さんへ {{amount}}",
+      "hintLabel": "{{name}} さんへの支払い方法",
+      "copy": "コピー",
+      "copied": "コピーしました",
+      "outside": "アプリ外で支払い",
+      "outsideHint": "現金・銀行振込・決済アプリなど",
+      "coins": "{{coins}} コインを送る",
+      "coinsHint": "残高: {{balance}} コイン",
+      "disclaimer": "Bandeja が実際のお金を動かすことはありません。誰が支払ったかを記録するだけです。"
+    },
+    "card": {
+      "perPlayer": "1人あたり {{amount}}",
+      "perPlayerEstimated": "1人あたり約 {{amount}}",
+      "totalFor": "合計 {{amount}} · {{players}} 人"
+    },
+    "create": {
+      "preview": "{{players}} 人で1人あたり約 {{amount}}",
+      "paymentHintLabel": "あなたへの支払い方法",
+      "paymentHintPlaceholder": "口座番号、送金アプリのID、クラブで現金など…",
+      "paymentHintHelp": "精算時にプレーヤーへ表示されます。残り {{remaining}} 文字。"
+    },
+    "wallet": {
+      "owed": "支払う分",
+      "owedToYou": "受け取る分",
+      "settle": "精算する",
+      "view": "表示",
+      "allSettled": "すべて精算済み 🎉",
+      "toName": "{{name}} さんへ",
+      "fromName": "{{name}} さんから"
+    },
+    "toast": {
+      "markedPaid": "支払い済みにしました",
+      "settledCoins": "{{coins}} コインを送信 · 精算済み",
+      "received": "受け取り済みにしました",
+      "receivedUndone": "未払いに戻しました",
+      "shareUpdated": "負担額を更新しました",
+      "reminded_other": "通知を送りました · {{count}} 人"
+    },
+    "errors": {
+      "settleFailed": "記録できませんでした。もう一度お試しください。",
+      "confirmFailed": "この行を更新できませんでした。もう一度お試しください。",
+      "remindFailed": "今は通知を送れません。",
+      "updateFailed": "負担額を保存できませんでした。もう一度お試しください。",
+      "copyFailed": "コピーできませんでした。"
+    },
+    "loading": "費用の分担を読み込んでいます…",
+    "loadFailed": "費用の分担を読み込めませんでした。"
+  }
+}

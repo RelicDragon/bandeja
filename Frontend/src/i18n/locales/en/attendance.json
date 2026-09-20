@@ -1,0 +1,69 @@
+{
+  "attendance": {
+    "question": "Are you coming?",
+    "confirm": "I'm coming",
+    "unsure": "Not sure yet",
+    "change": "Change",
+    "confirmedState": "You're confirmed",
+    "unsureState": "You're not sure yet",
+    "caption": "Just so the organizer knows. Your seat is yours either way.",
+    "cantMakeIt": "Can't make it at all?",
+    "confirmedToast": "Seat confirmed 👍",
+    "unsureToast": "Noted. You can confirm later.",
+    "saving": "Saving…",
+    "queuedOffline": "Saved. It will sync when you are back online.",
+    "youOrganizer": "You (organizer)",
+    "dots": {
+      "confirmed": "Confirmed",
+      "unanswered": "No answer yet",
+      "unsure": "Not sure yet",
+      "noShow": "Noted as a no-show"
+    },
+    "legend": {
+      "title": "What the dots mean",
+      "hint": "Green means confirmed, grey means no answer yet, amber means not sure."
+    },
+    "organizer": {
+      "progress": "{{confirmed}} of {{total}} confirmed",
+      "nudge": "Nudge",
+      "nudgeCooldown": "Nudge again in {{hours}} h",
+      "nudgeSent": "Nudge sent",
+      "legendCaption": "Green: confirmed. Grey: no answer. Amber: not sure."
+    },
+    "noShow": {
+      "action": "Note as no-show",
+      "undoAction": "Remove no-show note",
+      "dialogTitle": "Note {{name}} as a no-show?",
+      "dialogBody": "They'll get a friendly heads-up and can reply in chat. You can undo any time within 7 days.",
+      "confirm": "Note as no-show",
+      "cancel": "Cancel",
+      "noted": "Noted",
+      "undo": "Undo",
+      "undone": "No-show note removed",
+      "tag": "No-show"
+    },
+    "stat": {
+      "label": "Shows up",
+      "tooltip": "Games confirmed and attended in the last 12 months.",
+      "gaugeLabel": "Attended {{rate}} percent of games",
+      "sparklineTitle": "Last 12 months",
+      "sparklineLegend": "attended / missed",
+      "sparklineMonthAria": "{{month}} — attended {{attended}}, missed {{noShow}}",
+      "notesTitle": "Your no-show notes",
+      "notesEmpty": "No no-show notes.",
+      "notesOpenChat": "Open chat",
+      "notedOn": "Noted {{date}}"
+    },
+    "card": {
+      "ariaSummary": "{{confirmed}} of {{total}} players confirmed"
+    },
+    "errors": {
+      "generic": "Could not save your answer",
+      "notParticipant": "Only players in this game can answer",
+      "answersClosed": "Attendance answers are closed for this game",
+      "noShowWindowClosed": "The no-show window has closed",
+      "nudgeCooldown": "You nudged recently. Try again later.",
+      "nothingToNudge": "Everyone has already answered"
+    }
+  }
+}

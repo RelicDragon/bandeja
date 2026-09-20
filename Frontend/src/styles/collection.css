@@ -1,0 +1,263 @@
+/*
+ * PRD 355 — cosmetics bought in the shop.
+ *
+ * Every class here is keyed by a catalogue `assetKey` (see
+ * `features/collection/collectionAssets.ts`). Nothing in this file may depend on
+ * physical direction: frames are radially symmetric and the accents use logical
+ * properties, so `dir="rtl"` needs no overrides.
+ *
+ * All decoration sits on `::after` pseudo-elements and is inert to pointers, so
+ * a frame can never swallow a tap on the avatar underneath it.
+ */
+
+/* ---------------------------------------------------------------- frames -- */
+
+.collection-frame {
+  position: relative;
+}
+
+.collection-frame::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 9999px;
+  padding: 3px;
+  background: var(--collection-frame-gradient, transparent);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Small variants (chat avatars, roster stacks) get a thinner ring. */
+.collection-frame-sm::after {
+  inset: -2px;
+  padding: 2px;
+}
+
+.collection-frame-neon {
+  --collection-frame-gradient: conic-gradient(from 210deg, #22d3ee, #6366f1, #ec4899, #22d3ee);
+}
+
+.collection-frame-gold {
+  --collection-frame-gradient: conic-gradient(from 160deg, #fde68a, #f59e0b, #fbbf24, #b45309, #fde68a);
+}
+
+.collection-frame-aurora {
+  --collection-frame-gradient: conic-gradient(from 90deg, #34d399, #38bdf8, #a78bfa, #34d399);
+}
+
+.collection-frame-court {
+  --collection-frame-gradient: conic-gradient(from 0deg, #0ea5e9, #0f766e, #0ea5e9);
+}
+
+.collection-frame-sunset {
+  --collection-frame-gradient: conic-gradient(from 240deg, #fb7185, #f97316, #facc15, #fb7185);
+}
+
+.collection-frame-mono {
+  --collection-frame-gradient: conic-gradient(from 45deg, #334155, #94a3b8, #334155);
+}
+
+.dark .collection-frame-mono {
+  --collection-frame-gradient: conic-gradient(from 45deg, #cbd5e1, #64748b, #cbd5e1);
+}
+
+/* ----------------------------------------------------------- name colours -- */
+
+.collection-name {
+  color: var(--collection-name-color, inherit);
+  font-weight: 600;
+}
+
+.collection-name-coral {
+  --collection-name-color: #e11d48;
+}
+
+.dark .collection-name-coral {
+  --collection-name-color: #fb7185;
+}
+
+.collection-name-mint {
+  --collection-name-color: #047857;
+}
+
+.dark .collection-name-mint {
+  --collection-name-color: #34d399;
+}
+
+.collection-name-violet {
+  --collection-name-color: #6d28d9;
+}
+
+.dark .collection-name-violet {
+  --collection-name-color: #c4b5fd;
+}
+
+.collection-name-ocean {
+  --collection-name-color: #0369a1;
+}
+
+.dark .collection-name-ocean {
+  --collection-name-color: #7dd3fc;
+}
+
+.collection-name-amber {
+  --collection-name-color: #b45309;
+}
+
+.dark .collection-name-amber {
+  --collection-name-color: #fcd34d;
+}
+
+/* ----------------------------------------------------------- chat accents -- */
+
+/*
+ * The accent paints the *viewer's own* outgoing bubbles. It is applied through
+ * `body.collection-accent-<key>` so the whole chat picks it up at once, and it
+ * only ever reaches elements marked as the viewer's own bubble.
+ */
+.collection-accent {
+  background-image: var(--collection-accent-bg, none);
+  color: #fff;
+}
+
+.collection-accent-neon {
+  --collection-accent-bg: linear-gradient(135deg, #22d3ee, #6366f1);
+}
+
+.collection-accent-sunset {
+  --collection-accent-bg: linear-gradient(135deg, #fb7185, #f97316);
+}
+
+.collection-accent-mint {
+  --collection-accent-bg: linear-gradient(135deg, #34d399, #0ea5e9);
+}
+
+.collection-accent-violet {
+  --collection-accent-bg: linear-gradient(135deg, #a78bfa, #7c3aed);
+}
+
+/*
+ * `data-bubble-surface="own"` is written by `MessageItem/MessageBubble.tsx` for
+ * the viewer's own non-channel bubbles — exactly the surface the PRD scopes the
+ * accent to. No component change is needed to pick the accent up.
+ */
+body.collection-accent-neon [data-bubble-surface='own'],
+body.collection-accent-sunset [data-bubble-surface='own'],
+body.collection-accent-mint [data-bubble-surface='own'],
+body.collection-accent-violet [data-bubble-surface='own'] {
+  background-image: var(--collection-accent-bg, none);
+  color: #fff;
+}
+
+body.collection-accent-neon {
+  --collection-accent-bg: linear-gradient(135deg, #22d3ee, #6366f1);
+}
+
+body.collection-accent-sunset {
+  --collection-accent-bg: linear-gradient(135deg, #fb7185, #f97316);
+}
+
+body.collection-accent-mint {
+  --collection-accent-bg: linear-gradient(135deg, #34d399, #0ea5e9);
+}
+
+body.collection-accent-violet {
+  --collection-accent-bg: linear-gradient(135deg, #a78bfa, #7c3aed);
+}
+
+/* ------------------------------------------------------------ shop chrome -- */
+
+/* Premium-only items carry a thin gold border in every theme. */
+.shop-premium-card {
+  border-color: #d4af37;
+  box-shadow: inset 0 0 0 1px rgba(212, 175, 55, 0.35);
+}
+
+/*
+ * The "Premium" lock badge on a gated item.
+ *
+ * One class instead of an inline `text-[#b8860b] dark:text-[#e5c76b]` pair, so
+ * the two surfaces that show it (`ShopItemCard`, `ShopItemSheet`) cannot drift.
+ * `#b8860b` measured ≈3.3:1 on the card's white surface — under the 4.5:1 floor
+ * (CONTRACT §7.1) at the 10–11 px this renders at. `#8a6508` is the same hue at
+ * ≈5.3:1. The dark-theme gold was already fine (≈9.8:1) and is unchanged.
+ */
+.shop-premium-badge {
+  border-color: #d4af37;
+  color: #8a6508;
+}
+
+.dark .shop-premium-badge {
+  color: #e5c76b;
+}
+
+/* 500 ms shine sweep after a successful purchase. */
+.shop-shine {
+  position: relative;
+  overflow: hidden;
+}
+
+.shop-shine::after {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: -60%;
+  width: 60%;
+  background: linear-gradient(
+    100deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.65) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: skewX(-18deg);
+  animation: shop-shine-sweep 500ms ease-out 1;
+  pointer-events: none;
+}
+
+@keyframes shop-shine-sweep {
+  from {
+    inset-inline-start: -60%;
+  }
+  to {
+    inset-inline-start: 120%;
+  }
+}
+
+/* A gifted item sparkles the first time its owner opens the collection. */
+.shop-sparkle::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.85), transparent 45%);
+  animation: shop-sparkle-pulse 1200ms ease-out 2;
+  pointer-events: none;
+}
+
+@keyframes shop-sparkle-pulse {
+  0% {
+    opacity: 0;
+  }
+  35% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shop-shine::after,
+  .shop-sparkle::before {
+    animation: none;
+    display: none;
+  }
+}

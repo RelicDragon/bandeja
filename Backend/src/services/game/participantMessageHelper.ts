@@ -104,6 +104,21 @@ export class ParticipantMessageHelper {
     return null;
   }
 
+  /**
+   * Broadcast `game-updated` for a roster change.
+   *
+   * `senderId` is the **actor**, and in the common cases (`leaveGame`, an invite
+   * decline, invite cleanup) that actor's roster row has just been deleted — so
+   * the game loaded here is the one a non-member sees. That is fine, and
+   * deliberate: the payload is a broadcast to a room whose members hold mixed
+   * entitlements, and `SocketService.emitGameUpdate` re-projects it for the
+   * least-entitled recipient anyway (`projectGameForBroadcast`). `senderId`
+   * only rides along so a client can tell its own action from someone else's.
+   *
+   * What must never be reintroduced here is projecting for a *more*-entitled
+   * viewer to "fix" a missing field: that would hand `Game.paymentHint` to the
+   * whole room.
+   */
   static async emitGameUpdate(gameId: string, senderId: string) {
     try {
       const socketService = (global as any).socketService;

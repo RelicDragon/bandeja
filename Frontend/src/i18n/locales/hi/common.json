@@ -81,7 +81,9 @@
     "pressBackAgainToExit": "बाहर निकलने के लिए फिर से वापस दबाएँ",
     "editFullscreen": "पूर्ण स्क्रीन में संपादित करें",
     "exitFullscreen": "पूर्ण स्क्रीन से बाहर निकलें",
-    "characters": "वर्ण"
+    "characters": "वर्ण",
+    "comingSoon": "जल्द आ रहा है",
+    "comingSoonDescription": "ऐप का यह हिस्सा जल्द ही आ रहा है।"
   },
   "sport": {
     "sport": "खेल",

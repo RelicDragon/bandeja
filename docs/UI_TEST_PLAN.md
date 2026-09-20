@@ -10,7 +10,8 @@
 - Web app (Vite dev / preview) — primary automation target
 - Responsive layouts: mobile viewport, desktop split views, landscape game details
 - All authenticated main tabs: **My**, **Find**, **Chats**, **Market**, **Leaderboard**, **Profile**
-- Standalone flows: create game/league, game details, live scoring, club admin
+- Standalone flows: create game/league, game details, live scoring, club admin, first-run onboarding (`/welcome`), shop (`/shop`), game series (`/series/:id`)
+- Guest-readable pages: game details, user profile, **club page** (`/clubs/:id`)
 - Auth: login, register, logout, sessions, OAuth (where testable on web)
 
 ### Out of scope / manual-only (initially)
@@ -101,6 +102,7 @@ Frontend/e2e/
 - `@two devices` — iPhone (Capacitor or web) + paired Apple Watch on same account
 - `@watch` — Apple Watch scoring app (BandejaWatch)
 - `@widget` — Capacitor home-screen Next Game widget (iOS and/or Android device)
+- `@shade` — a notification **action button** in the OS shade / lock screen. Only `invite_actions` and `play_intent_actions` are wired natively today; attendance, series and weather actions currently exist on Telegram and in-app only (`docs/product/not-shipped.md`)
 
 ---
 
@@ -256,12 +258,12 @@ translation drafts) render an expand control in the field's top trailing corner 
 
 | ID | Test | Steps | Expected |
 |----|------|-------|----------|
-| A-10 | Full registration | All required fields + EULA | Account created, logged in |
+| A-10 | Full registration | All required fields + EULA | Account created, logged in, and landed on **`/welcome`** (§24) — not Home. `Frontend/e2e/specs/auth/register.spec.ts` asserts this |
 | A-11 | Validation errors | Submit empty form | Field errors, scroll to first |
 | A-12 | Password mismatch | Different confirm | Error on confirm |
 | A-13 | Phone format | Phone without `+` | Validation error |
 | A-14 | Gender prefer-not-to-say | Without acknowledgment | Blocked |
-| A-15 | Primary sport selection | Pick sport at register | Saved on profile |
+| A-15 | Primary sport selection | Pick sport at register | Saved on profile; the onboarding Sport step (§24.3) opens with it already selected |
 | A-16 | Optional email invalid | Bad email format | Validation error |
 | A-40 | Serbia city currency | Register (phone/Google/Apple/Telegram) with auto-assigned city in Serbia | `defaultCurrency` is RSD without opening Profile |
 | A-41 | Local city currency | Register with city in a non-euro country (e.g. UK/US/CZ) | Default currency is local (GBP/USD/CZK), not leftover EUR |
@@ -308,6 +310,9 @@ translation drafts) render an expand control in the field's top trailing corner 
 | A-26i | Android invite after days | Let Android access JWT expire, then accept/decline from a notification | Scoped action succeeds without opening app; notification closes after definitive response |
 | A-26j | Idle several days then open | Leave app closed 2–7 days (access expired, refresh still valid) | Returns to last screen signed in; no login flash |
 | A-26k | Phone + Watch concurrent refresh | Open Watch and iPhone together after access expiry | Both stay signed in; they share the live successor refresh credential |
+| A-26o | Watch rotates twice, phone suspended | Keep iPhone app suspended > 2 access TTLs while `@watch` keeps scoring; then foreground the iPhone | Watch hands each rotated credential back over WatchConnectivity; phone refreshes with the successor and stays signed in (no `auth.refreshReused`) |
+| A-26p | Watch proactive refresh on private game | `@watch` idle past access expiry on a **private** game, phone unreachable | Watch refreshes before the request; game/results stay visible; backend `optionalAuth` answers 401 `auth.accessExpired` for an expired bearer instead of a guest 404 |
+| A-26q | Logout with queued watch transfers | Log out on iPhone while `@watch` is out of range with pending credential transfers | Watch shows sign-in screen when back in range; no stale token re-authenticates it |
 | A-26l | Web refresh cookie missing | Leave a desktop tab open until access JWT expires with no `pp_rt` cookie (`POST /auth/refresh` body `{}` → 400 `auth.refreshTokenRequired`) | Reload sends the user to login; no 401 storm on games / play-intents |
 | A-26m | Refresh requires request id | Call `POST /auth/refresh` with a valid cookie/body credential and no `X-Refresh-Request-Id` | 400 `auth.refreshRequestIdRequired`; session is not rotated onto a stable token |
 | A-26n | Leftover long JWT rejected | Present a non-`typ=access` JWT after login | 401; user must sign in again (force-update still via Admin App Versions) |
@@ -468,6 +473,69 @@ translation drafts) render an expand control in the field's top trailing corner 
 | H-68 | Selected date weather card | My tab calendar with city → pick date | Unified date+weather card shows temp tile, condition, day range, precip and wind; tap opens day forecast modal without game window; past dates show mm precipitation and archived hourly data |
 | H-39 | My tab bookings refresh | Switch away from My tab and back | Upcoming bookings refetched from club booking system |
 
+### 6.6 Attendance glance on my cards
+
+Attendance is a courtesy signal only — a card must never gain urgency chrome because of it (see §9.11).
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| H-AT-01 | Stack on my games | My games card for a game you are PLAYING in | Mini avatar stack with a status dot per player and a `3/4` fraction in the right rail |
+| H-AT-02 | No stack when not playing | Card for a game you are not in | No stack, no fraction |
+| H-AT-03 | No urgency treatment | Compare a 1/4 card with a 4/4 card | Identical border, background and badges; no red, no "only 1 confirmed!" nudge |
+| H-AT-04 | Fraction refreshes in place | Confirm from game details → back to Home | Fraction increased without a reload (card memo includes the prop; a stale value means `rightRailPropsEqual` is missing it) |
+| H-AT-05 | RTL | App language العربية | Stack overlaps in the mirrored direction; fraction sits on the correct side |
+
+### 6.7 Monthly recap (story rail)
+
+Generated on the 1st–3rd for the month that just ended. An unshared recap is private — it creates no story row (see `docs/domains/stories.md`).
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| RC-01 | Recap bubble | 1st–3rd of a month, player with ≥2 finished games last month | Bubble at the very front of the story rail, before **Your story**: sky→violet gradient ring (not the pink/violet conic story ring) + sparkle glyph |
+| RC-02 | Month label locale | Same, app language ru / ja / ar | Label reads "Your Sep recap" with that locale's month name, never an English one. `@manual` |
+| RC-03 | Pulse once | Open Home, scroll the rail away and back | Bubble pulses once on first appearance, then stays still; no re-trigger |
+| RC-04 | Reduced motion | OS Reduce Motion on | No pulse at all. `@manual` |
+| RC-05 | Survives empty social rail | Player with no followers and no follows | Rail hides its social bubbles but the recap bubble is still shown |
+| RC-06 | Viewed state | Open the recap, close it | Bubble gone from the rail; the month is still under Profile → Statistics → Recaps (`PR-RC-01`) |
+| RC-07 | Offline | Go offline, tap the bubble | Bubble is absent or inert; never a half-open black screen. `@manual` |
+| RC-08 | Themes + RTL | Light / Dark / Classic / Premium; then العربية | Ring legible in all four; in `ar` the rail mirrors and the recap bubble sits at the start (right) edge |
+| RC-10 | Viewer chrome | Tap the bubble | Full-screen reel, one progress bar per slide; right half advances, left half goes back; advancing past the last slide closes |
+| RC-11 | Press and hold | Hold anywhere | Playback pauses and the active bar freezes; release resumes from where it stopped |
+| RC-12 | Gestures | Swipe down; swipe left/right | Down closes; left/right move between slides |
+| RC-13 | Web keys | `←` / `→` / space | Previous / next / pause. `@manual` |
+| RC-14 | Close control | Inspect the close button in en and ar | Top **end** corner (right in en, left in ar), ≥44 px, never overlapping the progress bars |
+| RC-15 | Screen reader | VoiceOver / TalkBack through the reel | One-line description per slide as it becomes active ("14 games played in September 2026"). `@manual` `@a11y` |
+| RC-16 | Reduced motion viewer | Reduce Motion on | No auto-advance; a **Next** button appears near the bottom; every chart draws in its final state. `@manual` |
+| RC-20 | Cover slide | Open any recap | Avatar, name, month ("September 2026"), one chip per sport played; a Premium member's cover is gold instead of sky→violet |
+| RC-21 | Games slide | Check a month starting on a Sunday (Feb 2026) and one starting on a Friday | Count counts up from 0 in ≤600 ms; 7 × N dot calendar in whole weeks; played days glow, unplayed dim |
+| RC-22 | Wins slide | Open a month with decided games | Radial ring draws to the win percentage over ~500 ms; win count counts up inside; percentage below in the locale's percent format |
+| RC-23 | Level slide | Month where the level rose; then `ar` | "3.9 → 4.1" plus a mini sparkline; in `ar` the arrow points the other way |
+| RC-24 | Level slide, negative month | Month where the level fell | Caption reads "Level moved to 3.8" — neutral, no red, no down arrow, no "you dropped". Product requirement, not a style preference. `@manual` |
+| RC-25 | Best partner | Month with a repeat partner | Partner avatar, name, "5 wins together with Ana" and the chemistry chip (§14.2). No chemistry baseline → no chip at all, never a confident `0` |
+| RC-26 | Streak / club / outro | Continue through the reel | Streak: flame + consecutive weeks counting up, personal best only when higher than the current streak. Club: avatar (or building glyph), name, games played there. Outro: "See you on court in October" + **Share with followers** and **Save image** |
+| RC-27 | Missing data | Month with no club or no partner | That slide is simply not in the reel — never an empty shell |
+| RC-28 | Legibility | 375 px width, every slide | Full-bleed, one accent colour, captions legible over the gradient. `@a11y` |
+| RC-30 | Multisport | Player who finished games in two sports last month | Sport tab strip under the progress bars; selecting a sport re-scopes the reel, cover/streak/outro stay in both, progress bars re-count and playback restarts at slide 1; each tab ≥44 px and mirrors in `ar` |
+| RC-31 | Low-activity variant | Player with 0–1 finished games last month but activity in the previous 90 days | Exactly three slides: cover, "1 game in September", outro. No games calendar, no win ring, no level slide |
+| RC-32 | Low-activity outro | Same, tap the primary action | Primary is **I want to play**, not Share; it closes the reel and opens the play-intent compose sheet on Home. **Save image** is still offered |
+| RC-40 | Share sheet | Outro → **Share with followers** | Bottom sheet lists the slides as rows: coloured thumbnail, short label, checkbox |
+| RC-41 | Sensitive default | Month where the level fell | Everything ticked except the level row, which carries an "Off by default" hint. `@manual` |
+| RC-42 | Untick all | Clear every checkbox | **Share** disables |
+| RC-43 | Preview strip | Tick / untick boxes in any order | One coloured tile per ticked slide, updating immediately, always in reel order |
+| RC-44 | Share | Tap **Share** | Success toast, sheet closes; a story with exactly the ticked slides (as images, in reel order) appears in the player's own rail and in a follower's rail. `@two-user` |
+| RC-45 | Shared story behaves normally | Open the shared story | Expires after 24 h like any story; likes, comments and replies work. `@manual` |
+| RC-46 | Re-share narrower | Share the same month again with fewer slides | The previous reel disappears from the rail; only the new slides remain. `@two-user` |
+| RC-47 | Selection remembered | Reopen the share sheet after sharing | The previously shared slides are the ticked ones |
+| RC-48 | Back gesture | Android/iOS back with the sheet open | Sheet closes; the reel behind it stays open. `@manual` |
+| RC-49 | Share failure | Network off → **Share** | Error toast; sheet stays open with the selection intact |
+| RC-50 | Save image | Tap **Save image** | Button reads "Preparing image…" while the card renders |
+| RC-51 | Save image mobile | Native share sheet | PNG card with the month, name, headline numbers and the Bandeja wordmark. `@manual` |
+| RC-52 | Save image web | Web | Downloads `bandeja-recap-2026-09.png`. `@manual` |
+| RC-53 | Cancel is not failure | Dismiss the native share sheet | No error toast. `@manual` |
+| RC-54 | Card language | Switch app language, save again | Card text, month name and number formats follow the app language. `@manual` |
+
+Push: `PN-RC-01`–`PN-RC-03` in §18.8. Archive: `PR-RC-01`–`PR-RC-05` in §13.4.
+
 ---
 
 ## 7. Find tab (`/find`)
@@ -526,6 +594,9 @@ translation drafts) render an expand control in the field's top trailing corner 
 | F-42 | Available slots filter | Enable available slots toggle | Full games hidden |
 | F-43 | Suitable rating filter | Enable suitable rating toggle with regular games and BAR events present | Out-of-band regular games hidden; BAR events remain visible |
 | F-44 | Hide bar games | Enable hide bar games toggle | Bars section hidden; bar games excluded |
+| F-CLB-01 | Club chip chevron | Open the club list in the advanced panel | Each club chip has a trailing chevron. Tapping the chip **body** toggles the filter; tapping the chevron opens `/clubs/:id` (§27) |
+| F-CLB-02 | Chevron accessible name | Screen reader over twenty chips | Each chevron's name includes its own club name |
+| F-CLB-03 | Chevron RTL | App language العربية | Chevron sits on the correct side and points the correct way |
 
 ### 7.4 Game discovery actions
 
@@ -589,6 +660,35 @@ translation drafts) render an expand control in the field's top trailing corner 
 | F-57 | Find old app on new BE (enrich) | Store build that omits `format=card` against current API | Notes/weather/reactions still present on Find cards (inline enrich); month still capped ≤300 |
 | F-58 | Find calendar LEAGUE_SEASON day bound | Open calendar; pick a day that is not the season’s startTime day | That day’s list does not show the LEAGUE_SEASON; it only appears on its actual calendar day (list/upcoming may still show shells) |
 | F-63 | Same-day start-time order | Day with ≥2 active games at different times (e.g. 19:00 and 20:00); calendar selected day + list view | Active games list earliest-first (19:00 above 20:00); finished/archived remain after active |
+
+#### 7.4b Card pills from enrichment
+
+`GameCard` is shared by Find, Home and My tab, so run each row on all three. Every pill below arrives through the card enrichment pipeline (`registerAvailableGamesEnricher`) — an enrichment failure must leave the card intact (`F-51`).
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| F-SO-01 | Spot opened pill | A visible game loses a PLAYING participant | Within 2 h its card shows a sky-tinted **Spot opened** pill with a small dot. `@two-user` |
+| F-SO-02 | Dot pulses twice | Watch the pill, then scroll the list | Dot pulses twice (1.2 s per cycle) then holds still; it must not restart on scroll. `@manual` |
+| F-SO-03 | Reduced motion | OS Reduce Motion on | Dot static from the first frame; the join button does not shimmer. `@manual` |
+| F-SO-04 | Screen reader | VoiceOver / TalkBack over the pill | Reads "A spot opened 2 minutes ago" — a localised relative time. The dot itself is never announced. `@manual` |
+| F-SO-05 | Join sweep once | First paint of the pill, then re-render / scroll | Join button sweeps once (~240 ms) and never again |
+| F-SO-06 | Window closes | More than 2 h after the event | Pill gone; card sorts normally again |
+| F-SO-07 | Sorting | Two pilled and several un-pilled cards in one day group | Pilled cards float to the top of their day group on Find, Home and My tab; two pilled cards keep start-time order between themselves; un-pilled keep start-time order below |
+| F-SO-08 | Results lock the pill | Game with `resultsStatus !== NONE` that freed a seat minutes ago | No pill |
+| F-SO-09 | Themes + RTL | Light / Dark / Classic / Premium; then العربية | Legible in all four; pill and dot mirror with the row |
+| F-CS-01 | Per-head price | Game priced `Total 40 €` with 4 seats | Info row reads "≈ 10,00 € per player" |
+| F-CS-02 | Divides by seats, not roster | Same game with only the owner joined | Still divides by the seat count — the card answers "what will this cost me if I join?" |
+| F-CS-03 | Total on long press | Long-press the price on touch; hover on desktop | "Total 40,00 € · 4 players" revealed, and present as the accessible name |
+| F-CS-04 | Exact after final | Finished, priced game | The `≈` is gone; the figure matches the frozen share |
+| F-CS-05 | No price, no row | Game with no price | No price element on the card |
+| F-WX-01 | Rain pill | Outdoor game within 48 h over the rain threshold | Amber pill in the tag row: rain-drop icon + percentage in the locale's format |
+| F-WX-02 | Wind pill | Wind-driven risk | Wind icon + speed, in slate |
+| F-WX-03 | Screen reader | VoiceOver / TalkBack over the pill | "Rain likely, 70 percent at 19:00" (or the wind equivalent) — not a bare number |
+| F-WX-04 | Tooltip | Long-press the pill; then short-tap it | Long press shows "Forecast for 19:00" and fades after a couple of seconds; a short tap does not open it and the card's own tap target still works |
+| F-WX-05 | Kept as planned | Organizer chose **Keep as planned** (`GD-WX-20`) | Pill is neutral grey and reads "Playing rain or shine" |
+| F-WX-06 | Silence | Indoor games; games >48 h out; games under the threshold; games with no forecast | **No** pill in every case — never a "weather unavailable" pill |
+| F-WX-07 | Tag row not collapsed | Card whose only tag would be the weather pill | The tag row still renders |
+| F-WX-08 | Calendar cells unchanged | Month calendar with day weather on | Day cells unchanged; no weather pill was added to them |
 
 ---
 
@@ -753,6 +853,16 @@ translation drafts) render an expand control in the field's top trailing corner 
 | C-62 | Create game Looking | Set date/time, open invite picker, Looking tab, pick a looking player, create | Looking tab only after date/time; create sends invite with their play intent linked |
 | C-63 | No looking chrome | Wallet / team / trainer picker | No Search \| Looking switch |
 
+#### 8.3b Price — per-head preview and payment hint
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| C-CS-01 | Live per-head preview | Price `Total 40 €` → change seats from 4 to 8 | Preview updates live from "≈ 10,00 € each for 4 players" to "≈ 5,00 € each for 8 players" |
+| C-CS-02 | Hidden without a price | Price type `Not known` or `Free` | No preview line and no payment-hint field |
+| C-CS-03 | Hint saved on create | Enter "IBAN RS35 …" and create | The hint appears in the settle sheet for participants (`GD-CS-14`) |
+| C-CS-04 | Hint length | Type more than 120 characters | Input stops at 120; the remaining-characters counter reaches 0; the API rejects a longer forged value |
+| C-CS-05 | Hint edited later | Edit game → Price → change the hint → Save | New hint in the sheet; clearing it removes the copyable field |
+
 ### 8.4 Create league (`/create-league`)
 
 | ID | Test | Steps | Expected |
@@ -780,6 +890,25 @@ translation drafts) render an expand control in the field's top trailing corner 
 | C-68 | Event create success | Fill required fields → Post event | Navigates to `/games/:id`; listing is `ON_APPROVE` (not public); owner sees pending banner; Find/Events strip does not show it to other users |
 | C-69 | Event guest blocked | Logged-out open `/create-event` | Redirect to login |
 | C-70 | Event organizing vs looking | `/create-event` with kind, level, heroes → Post as Organizing vs Need a partner | Organizing: creator is listing owner only (`NON_PLAYING`, not looking) and the listing **is** on My/calendar. Looking: creator on partner board (`NON_PLAYING` + lookingForPartner); also on My; both land on `/games/:id` |
+
+### 8.6 Repeat (recurring series)
+
+Gated on `VITE_GAME_SERIES_ENABLED` (frontend) and `GAME_SERIES_ENABLED` (backend). With either `false` the whole surface must be absent — no row, no pill, no request (`C-SER-10`). The series page itself is §25.
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| C-SER-01 | Repeat row | Create game → Scheduling | A **Repeat** row under Date/Time: `Once · Weekly · Every 2 weeks`, with `Once` selected |
+| C-SER-02 | Weekly summary | Select **Weekly**, then change the date to another weekday | Summary line "Every &lt;weekday&gt; at &lt;time&gt;, from &lt;date&gt;", derived from the game's own date and following it |
+| C-SER-03 | Biweekly summary | Select **Every 2 weeks** | Summary switches to the "every other" wording |
+| C-SER-04 | Until chip | Tap **Until** → pick a date → clear it | Chip opens a date field, then reads "Until 30 Nov" with a clear (×); clearing restores the plain chip |
+| C-SER-05 | Summary-bar chip | With a cadence selected, scroll past Scheduling | `CreateGameSummaryBar` gains a **Repeat** chip showing the cadence; it stays visible |
+| C-SER-06 | Back to Once | Select **Once** | Summary, Until chip and summary-bar chip all disappear |
+| C-SER-07 | Create weekly | Create the game with **Weekly** | The game is created first, then converted (`POST /games/:id/series`). Land on the game; card and details show the `↻ Weekly` pill; `/series/:id` exists with occurrence #1 |
+| C-SER-08 | Entity types | Switch entity chips | Repeat row present for GAME, TRAINING and TOURNAMENT; absent for EVENT, LEAGUE and LEAGUE_SEASON |
+| C-SER-09 | Owner cap | Owner with 10 active series | **Weekly** and **Every 2 weeks** disabled; helper "You have 10 active series. End one to add another." with a link. `@manual` |
+| C-SER-10 | Flag off | `VITE_GAME_SERIES_ENABLED=false` | Repeat row absent; no `/series` request in the network panel |
+| C-SER-11 | Keyboard | Focus the segmented control → arrow keys | Moves between the three cadence options |
+| C-SER-12 | RTL | App language العربية | Repeat row, summary line and Until chip mirror; nothing clipped |
 
 ---
 
@@ -890,6 +1019,50 @@ translation drafts) render an expand control in the field's top trailing corner 
 | GD-152 | Broken player avatar on team slot | Game details participants / fixed-team slot whose avatar CDN URL 404s (tiny and/or full) | Initials (or blank initials circle) shown; no broken-image / iOS "?" glyph |
 | GD-153 | Empty participant slot unchanged | Game with an open/guest slot (no user) | Dashed User placeholder or invite plus; no "?" glyph |
 | GD-154 | Valid player avatars still load | Game details team list with working avatar URLs | Photos shown; not forced to initials |
+
+### 9.2b Cost split
+
+A ledger, not a payment system: no money moves in the app. The only value transfer is the existing in-app coin `TRANSFER`, which is optional and off until an admin sets `COINS_PER_CURRENCY_UNIT`. Gated on `COST_SPLIT_ENABLED` / `VITE_COST_SPLIT_ENABLED`.
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| GD-CS-01 | Hidden without a price | Game with `Price type = Not known` | No Cost card anywhere on the General tab; no `/cost-shares` request in the network log |
+| GD-CS-02 | Hidden for a free game | `Price type = Free` | No Cost card |
+| GD-CS-03 | Hidden for a team price | Game priced `Per team` | No Cost card — a team price yields no game total |
+| GD-CS-04 | Shows for a total price | 4-player game priced `Total 40 €` | Cost card: "Total 40,00 €", four rows of 10,00 €, the payer's avatar in the header |
+| GD-CS-05 | Per-head rounding | 3-player game priced `Total 10 €` | Rows read 3,33 / 3,34 / 3,33 — the extra cent sits on the payer's row and the rows sum to exactly the total |
+| GD-CS-06 | Viewer row pinned | Open as a non-payer participant | Your row is first and highlighted; the wide **I paid** button sits under the list |
+| GD-CS-07 | Payer has no settle button | Open as the payer | No **I paid**; your own row reads **Settled** |
+| GD-CS-08 | Mark paid outside the app | **I paid** → **Outside the app** | Sheet closes; toast "Marked as paid"; chip cross-fades to **Marked paid**; no coins leave your wallet |
+| GD-CS-09 | Coins hidden by default | **I paid** with `COINS_PER_CURRENCY_UNIT` unset in Admin | Only **Outside the app**; no coin button exists |
+| GD-CS-10 | Coins appear with a rate | Admin → Platform Settings → Cost Split → `100` → reopen the sheet | **Send N coins** with the correct coin count and your balance |
+| GD-CS-11 | Coins hidden when unaffordable | Rate set so the share costs more coins than you hold | Coin button absent (not merely disabled) |
+| GD-CS-12 | Settle with coins | Tap **Send N coins** | Coins move to the payer via the normal P2P transfer; toast "N coins sent · settled"; the row turns **Settled** and tints green for ~600 ms; the Wallet shows "Game share · &lt;game&gt;" |
+| GD-CS-13 | Insufficient coins is clean | Spend the balance down in another tab, then settle | Error toast; the share is **not** marked paid; retrying after topping up works and does not double-charge. The share row is claimed before the transfer and handed back untouched on failure |
+| GD-CS-14 | Payment hint copyable | Payer sets "How to pay you"; participant opens the sheet | Hint at the top with a copy button; copying shows "Copied" |
+| GD-CS-15 | Received toggle | Payer ticks **Received** on a player's row | That row turns **Settled** for both users within a second (socket `game-cost-updated`); the summary strip counts up. `@two-user` |
+| GD-CS-16 | Participant cannot self-confirm | Participant inspects their own row | No **Received** checkbox; the API rejects a forged request with 403 |
+| GD-CS-17 | Summary strip | Organizer view with 3 of 4 settled | "3 of 4 settled · 10,00 € outstanding" plus **Remind unpaid** |
+| GD-CS-18 | Remind unpaid | Tap **Remind unpaid** | Toast naming how many were nudged; the button disables and the cooldown caption appears |
+| GD-CS-19 | Cooldown survives a reload | Nudge → reload → reopen the card | Button still disabled; cooldown caption still shows the remaining hours |
+| GD-CS-20 | Edit share override | Organizer → pencil on a guest's row → keypad → 5,00 → Save | That row reads 5,00 €; the other rows absorb the difference; the rows still sum to the total |
+| GD-CS-21 | Split remainder off | Same with `splitRemainderEvenly` off | The other rows keep the plain even split; the sum is deliberately below the total |
+| GD-CS-22 | Keypad vs keyboard | `@mobile` focus the amount field in Edit share | Sheet lifts against the visual viewport; Save stays above the keyboard; nothing clipped. `@manual` |
+| GD-CS-23 | Roster change re-splits | Before any result is entered, a fifth player joins | Amounts drop to a fifth each; a quiet "Shares updated" caption shows for ~5 s |
+| GD-CS-24 | Leaver drops out | A player leaves before the game | Their row disappears; the remaining rows re-split the whole total |
+| GD-CS-25 | Substitution inherits the share | A player marks paid, then the organizer substitutes them out | The substitute holds the row **and** its "Marked paid" state; the outgoing player has no row. `@two-user` |
+| GD-CS-26 | Freeze at final | Enter results to FINAL and reopen the card | Lock chip with the "Shares fixed at final score" tooltip; no pencil; amounts no longer move when the roster is touched |
+| GD-CS-27 | Coins-settled row never moves | Settle with coins, then add a player before FINAL | The coin-settled row keeps its exact amount; only unsettled rows re-split |
+| GD-CS-28 | Deep link to the section | `/games/:id?section=cost` | Card scrolls into view; the query parameter is stripped |
+| GD-CS-29 | Deep link to the sheet | `/games/:id?settle=1` as an unpaid participant | "How did you pay?" opens; the parameter is stripped so a refresh does not reopen it |
+| GD-CS-30 | Reminder push | Set `costFrozenAt` more than 24 h in the past and run the hourly sweep | One push per unpaid player, in their language, with the amount in the game's currency; tapping opens the game. `@manual` |
+| GD-CS-31 | Reminder survives a restart | Run the sweep → restart the backend → run it again | No second push for the same game (the dedupe is persisted, never an in-memory `Set`). `@manual` |
+| GD-CS-32 | Flag off | `VITE_COST_SPLIT_ENABLED=false` | No Cost card, no Wallet Owed sections, no per-head price on cards (§7.4b), no cost requests at all |
+| GD-CS-33 | Reduced motion | Reduce motion on → change a chip state | Chip switches instantly; the green settle flash is skipped; the deep-link scroll jumps rather than smooth-scrolls |
+| GD-CS-34 | Themes | Light / Dark / Classic / Premium | Chips, the green settle tint and the lock chip stay legible |
+| GD-CS-35 | RTL | App language العربية | Rows, chips, the amount column and the sheets mirror; nothing overlaps |
+
+Wallet side: `PR-CS-01`–`PR-CS-05` in §13.3. Cards: `F-CS-01`–`F-CS-05` in §7.4b. Create/edit: `C-CS-01`–`C-CS-05` in §8.3b.
 
 ### 9.3 Edit game (owner/admin)
 
@@ -1143,6 +1316,193 @@ translation drafts) render an expand control in the field's top trailing corner 
 | GD-202 | Edit not blocked by translation | Edit details / Event edit listing → change name or description while `localizedText` pending or generation disabled → Save | Save succeeds immediately (existing update path); no wait/spinner for AI; returns to details with authored text; translations catch up in background |
 | GD-203 | Title-only Show original placement | Game (and EVENT) with ready translation but empty description | `Translated · Show original` sits directly below the title (not beside a Description heading); with a description present, control stays by the description heading (`GD-172` / `GD-175`) |
 
+### 9.10 Series occurrence surfaces
+
+An occurrence is an ordinary game; only these extra surfaces are new. Flag-gated with §8.6 and §25.
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| GD-SER-01 | Part-of line | Open an occurrence | Quiet line "Part of *Tuesday Regulars* · week 12" navigating to `/series/:id`. The week number is 1-based and increments per occurrence |
+| GD-SER-02 | Organizer strip | Owner opens an occurrence while a next occurrence exists | Strip reading "Next: Tue 1 Oct" and "3 of 4 regulars confirmed", with a check badge on each confirmed avatar |
+| GD-SER-03 | Strip is live | With the strip open on user A, user B taps **I'm in** on the next occurrence | A's counter and B's badge update without a reload (socket `game-series-confirmations-updated`), with a 200 ms scale spring. `@two-user` |
+| GD-SER-04 | Skip next | **Skip next** → confirm "Skip Tue 1 Oct?" | The game for that date is removed and a toast says "Next week skipped"; the series keeps running |
+| GD-SER-05 | Edit series | **Edit series** | Repeat sheet prefilled with the cadence, weekday and read-only time |
+| GD-SER-06 | Make weekly entry point | Game settings on a one-off game with `resultsStatus === 'NONE'`, as owner; then on an occurrence | **Make this a weekly game** shows only in the first case and disappears once the game is part of a series |
+| GD-SER-07 | Regulars toggles | Repeat sheet → **Regulars** | The current PLAYING roster with a "Keep as regular" toggle each, defaulting on. Turn one off, save, check `/series/:id` → Regulars |
+| GD-SER-08 | Seat-deadline stepper | Move the stepper to both ends | Steps between 24 / 48 / 72 hours only; − disabled at 24, + at 72; the value is announced (`aria-live`) |
+| GD-SER-09 | Horizon helper | Read under "Save series" | "We create the next game 14 days ahead…" |
+| GD-SER-10 | Keyboard contract | Open the Repeat sheet on a device, focus the Until date field | Header stays pinned, body scrolls, "Save series" stays above the keyboard. `@manual` |
+| GD-SER-11 | Apply-to sheet | Edit an occurrence → Save | **Apply to** offers "This game" / "This and future games"; "This game" just closes |
+| GD-SER-12 | Apply to future | Choose "This and future games" when some future occurrence already has results | Toast with the number of updated games, plus a second note naming how many kept their current details. The lock is `resultsStatus !== 'NONE'`, never `Game.status` |
+| GD-SER-13 | Carry-over card | After an occurrence reaches FINAL, open it as a regular who played | Full-width card at the top: "Same time next week?" with **I'm in** and **Skip** |
+| GD-SER-14 | I'm in | Tap **I'm in**, then reload | Button morphs into a green check "You're in for Tue 1 Oct", toast "Seat kept", card collapses after ~1.2 s; it does not come back |
+| GD-SER-15 | Skip records nothing | Tap **Skip** | Buttons replaced by the footer note "Your seat opens to others on Sun 29 Sep". Nothing is recorded server-side and no seat is ever reserved — the deadline is display copy, not a job |
+| GD-SER-16 | Reduced motion | OS Reduce Motion on | Morph and collapse happen instantly; the check badge does not spring. `@manual` |
+| GD-SER-17 | One card on Home | Home → My games with several unanswered finished occurrences | The card appears once, for the most recent unanswered occurrence — never a stack |
+| GD-SER-18 | Offline | Tap **I'm in** with the network off | Pending state; the mutation completes when connectivity returns. `@manual` |
+
+Push and Telegram: `PN-SER-01`–`PN-SER-02` in §18.8.
+
+### 9.11 Attendance card
+
+**The property every case in §9.11–§9.14 tests is that nothing moves.** Answering, not answering, being nudged and being noted as a no-show must never change a seat, a queue position, a game status, a level, a reliability value or a rating uncertainty. If a case makes something move on the roster it is a bug, not a nuance.
+
+No feature flag. Eligibility is `timeIsSet` + `resultsStatus`/start time — **never** `Game.status`.
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| GD-AT-01 | Card present | Open a game with a time set, starting in the future, where you are PLAYING | Directly under the game info block: "Are you coming?" with **I'm coming** (filled sky) and **Not sure yet** (outline), each ≥44 px |
+| GD-AT-02 | Required caption | Read under the buttons | "Just so the organizer knows. Your seat is yours either way." — required copy; a missing caption fails the case |
+| GD-AT-03 | Confirm | Tap **I'm coming** | Buttons collapse into one row "You're confirmed" with a green check and a **Change** text button; toast "Seat confirmed 👍"; the height change takes ~220 ms |
+| GD-AT-04 | Change | Tap **Change** | The two buttons return with the same 220 ms transition; the previous answer is kept until you pick again |
+| GD-AT-05 | Not sure | Tap **Not sure yet** | Row reads "You're not sure yet" in amber; toast "Noted. You can confirm later." |
+| GD-AT-06 | Roster untouched | Compare the roster before and after every answer | Same players, same order, same `x/y` in the participants header, your seat still yours. `@manual` |
+| GD-AT-07 | Can't make it at all | Tap "Can't make it at all?" → Cancel | Opens the **existing** leave-game confirmation; cancelling leaves the attendance answer untouched |
+| GD-AT-08 | Persisted | Reload | The answered state is restored from the server |
+| GD-AT-09 | No time set | Game with `timeIsSet` false | No attendance card at all; no attendance request in the network tab |
+| GD-AT-10 | Closed after start | Game whose `startTime` has passed, and a game with `resultsStatus` `IN_PROGRESS`/`FINAL`, and an ARCHIVED game | No card in any of them. Note the gate is start time + `resultsStatus`, not `Game.status`: a game created *after* its own start time keeps `status: 'ANNOUNCED'`, and it must still refuse an answer |
+| GD-AT-11 | Offline | Airplane mode → **I'm coming** | Dashed outline with "Saving…", an offline hint under the caption, nothing blocks. Back online → the answer syncs or rolls back with an error toast. `@manual` |
+| GD-AT-12 | Reduced motion | OS Reduce Motion on | States swap instantly with no height animation |
+| GD-AT-13 | RTL | App language العربية | Whole card mirrors: icon on the right, Change on the left, nothing clipped |
+| GD-AT-14 | Themes | Light / Dark / Classic / Premium | Green / amber chips and the sky primary all keep 4.5:1 text contrast |
+
+### 9.12 Roster attendance dots
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| GD-AT-20 | Dots on avatars | Look at the PLAYING avatars in the carousel | Small dot on the lower-trailing corner: green with a check (confirmed), grey empty ring (no answer), amber "?" (not sure) |
+| GD-AT-21 | Dots in list view | Switch the participants view to the list | Same dots on the list rows |
+| GD-AT-22 | Only PLAYING | Inspect the trainer (`NON_PLAYING`), queue and invited rows | No dot on any of them |
+| GD-AT-23 | Never colour-only | Screen reader over each dot | Reads its own label: "Confirmed", "No answer yet", "Not sure yet", "Noted as a no-show". `@manual` |
+| GD-AT-24 | Legend | Long-press a dot (right-click on desktop) | Toast explains the legend |
+| GD-AT-25 | Organizer caption | As organizer, read under the progress pill | Caption spells out what each colour means |
+| GD-AT-26 | Live | Player B taps "I'm coming" on a second device | Within a second player A's dot for B turns green without a reload (socket `game-attendance-updated`). `@two-user` |
+| GD-AT-27 | Substitute starts blank | Add a substitute after the reminder went out | Grey ring, not a green check |
+
+### 9.13 No-show notes
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| GD-AT-30 | Roster list in window | As owner/admin, open a game whose **end time** was less than 7 days ago | The attendance card shows each PLAYING player with their dot and an overflow (⋮) |
+| GD-AT-31 | Cannot note yourself | Look at your own row | Reads "You (organizer)" with no overflow |
+| GD-AT-32 | Confirm dialog is neutral | ⋮ → **Note as no-show** | "Note Ana as a no-show?" with body "They'll get a friendly heads-up and can reply in chat. You can undo any time within 7 days." The confirm button is the **neutral primary** colour. If it is red, the case fails |
+| GD-AT-33 | Note + undo toast | Confirm | Row gains a **grey** "No-show" tag; toast "Noted" with an **Undo** action that stays ~8 s |
+| GD-AT-34 | Undo | Tap **Undo** | Tag disappears; toast "No-show note removed" |
+| GD-AT-35 | Nothing else moves | Check the noted player's card before and after | Seat, roster position and level unchanged. `Shows up` is the only thing allowed to move. `@manual` |
+| GD-AT-36 | Neutral chat message | Open game chat | System message "&lt;name&gt; was noted as a no-show" — grey, not red, no exclamation |
+| GD-AT-37 | Push opens chat | Noted player receives the push | Push "Noted as a no-show …" opens the **game chat**, not the game info tab. `@manual` |
+| GD-AT-38 | Remove note | ⋮ on an already-noted row | Offers **Remove no-show note** |
+| GD-AT-39 | Window closed | Game whose end time was more than 7 days ago | No roster list, no overflow; a hand-made request is rejected with `errors.attendance.noShowWindowClosed` |
+| GD-AT-40 | League fixture | Repeat on a league fixture, as the **season** owner/admin | Identical behaviour — the note gate carries parent-game permission. `@two-user` |
+| GD-AT-41 | Non-organizer | Open as a plain participant | No overflow control anywhere |
+
+### 9.14 Organizer nudge
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| GD-AT-50 | Progress pill | As organizer of a game accepting answers | Pill "2 of 4 confirmed" and a **Nudge** button |
+| GD-AT-51 | Pill animates | Another device confirms | Fill animates over ~300 ms without a page reload. `@two-user` |
+| GD-AT-52 | Reduced motion | OS Reduce Motion on | Pill jumps to its new width with no spring |
+| GD-AT-53 | Nudge | Tap **Nudge** | Toast "Nudge sent"; every player who has not answered gets one push and the game chat gains one system message. Players who already answered get nothing. `@manual` |
+| GD-AT-54 | Cooldown | Immediately after nudging | Button disabled; caption "Nudge again in 6 h" |
+| GD-AT-55 | Cooldown survives a reload | Reload | Still disabled — the cooldown is read back from the `ATTENDANCE_NUDGED` chat system message, not from memory |
+| GD-AT-56 | Everyone answered | Nudge with no unanswered players | "Everyone has already answered"; nothing is sent |
+| GD-AT-57 | No enforcement controls | Open Game settings | **No** attendance deadline control, **no** auto-release toggle, **no** attendance setting of any kind. If one appears, the case fails |
+
+Player card / profile: `PR-AT-01`–`PR-AT-07` in §13.4. Push and Telegram: `PN-AT-01`–`PN-AT-06` in §18.8.
+
+### 9.15 Queue, auto-fill and the open seat
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| GD-SO-01 | Queue panel | As a queued player, open the game | Panel reads "You're #2 of 3 · Organizer accepts manually" |
+| GD-SO-02 | Auto-fill copy is live | Organizer turns **Auto-fill from queue** on | The same panel reads "…Auto-fill is on, you'll be seated automatically" without a manual refresh. `@two-user` |
+| GD-SO-03 | Position drops live | A player ahead of you in the queue leaves | Your position drops to #1 live. `@two-user` |
+| GD-SO-04 | Non-queued sees nothing | Open as a player who is not queued | No panel |
+| GD-SO-05 | Open-spot row | Immediately after a seat frees | A dashed **Open spot** row fades in over 400 ms (instantly under reduced motion); tap height ≥44 px |
+| GD-SO-06 | Results lock the panel | Game with results in progress | Neither the panel nor the open-spot row renders |
+| GD-SO-07 | Queued player self-promotes | Queued on a game with **Allow players to join directly** on; a PLAYING seat frees; tap Join (or the push's **Join now**) | You become PLAYING through the normal join, gates and overlap confirm included. Auto-fill does not have to be on |
+| GD-SO-08 | Queue-only game refuses self-promotion | Same with **Allow players to join directly** off | Join is refused with `spots.queue.waitForOrganizer`; the queue row is untouched and the organizer still has to accept |
+| GD-SO-10 | Settings row placement | Open **Settings** on a game you own | **Auto-fill from queue** sits immediately below "Allow players to join directly" |
+| GD-SO-11 | Helper copy | With hints on | "First in line is seated when a spot opens. Gender and level rules still apply." |
+| GD-SO-12 | Queue count line | With three queued, then with none | Read-only "3 in queue" / "No one waiting yet", matching the queue list exactly |
+| GD-SO-13 | Optimistic toggle | Toggle it; then kill the network and toggle again | Optimistic state then a green save tick; on failure the toggle rolls back with an error toast |
+| GD-SO-14 | Disabled after results | Game with results started | Toggle disabled |
+| GD-SO-20 | Auto-fill seats one | Full game, auto-fill on, two queued; a PLAYING player leaves | Exactly one player is seated (the first in `joinedAt` order); game chat shows "A spot opened (Luka left)" then "Ana was seated from the queue" in the neutral system style; the organizer gets an "Ana joined from the queue" toast; the seated player gets a "You're in!" push. `@two-user` |
+| GD-SO-21 | Level gate still applies | First queued player's level is outside the game's range | They stay queued and the **next** qualifying player is seated — auto-fill pre-checks the level range even though a manual organizer accept skips it. `@two-user` |
+| GD-SO-22 | Nobody qualifies | No queued player passes the gates | Nobody is seated; the queue gets the ordinary spot-opened push instead. `@two-user` |
+| GD-SO-23 | Auto-fill off | Same with the toggle off | Nobody is seated; the queue is only notified |
+| GD-SO-24 | Seated banner once | The auto-filled player opens the game | Green **You were seated from the queue** header once, above the attendance card. No confetti. Leaving and re-entering does not show it again |
+| GD-SO-25 | Banner degrades | Same when the attendance card is not rendered (results locked, viewer not playing) | Header appears alone or not at all — never half-drawn |
+| GD-SO-30 | Trigger coverage | Each of: a PLAYING player leaves; a PLAYING player toggles themselves to not playing; the organizer kicks a PLAYING player; the last held invite on an otherwise-full roster is declined; the organizer raises **max participants** | Exactly one spot-opened event each, and at most one promotion with auto-fill on. `@two-user` |
+| GD-SO-31 | Substitution raises nothing | Substitute a player during results entry | No spot-opened event, no notification, no promotion — the seat never becomes free |
+
+Cards: `F-SO-01`–`F-SO-09` in §7.4b. Notifications: `PN-SO-01`–`PN-SO-09` in §18.8.
+
+### 9.16 Weather risk banner
+
+**The property every case in §9.16–§9.18 tests is silence.** An indoor game, a game whose courts cannot be determined, and a game with no forecast must all produce *nothing* — no banner, no pill, no push, and above all no "weather data unavailable" state. A second alert for the same game is a bug unless the severity **class** genuinely rose.
+
+No feature flag; muted per user from notification preferences.
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| GD-WX-01 | Rain banner | ANNOUNCED game on an outdoor court starting within 48 h, forecast ≥60 % rain in the game window | Amber banner directly above the game info block: rain icon, class ("Rain likely") and the number and hour ("70 % at 19:00") in your locale's percent and time format |
+| GD-WX-02 | Wind banner | Same with a wind-only risk (≥40 km/h, low rain probability) | Slate banner, wind icon, speed in your locale's units. Check Light / Dark / Classic / Premium: amber and slate both keep 4.5:1 text contrast |
+| GD-WX-03 | Hourly strip | Look under the headline; then at the very start and end of the forecast range | Exactly four hourly icons centred on the start time, each with its hour; accessible name "Hourly forecast around the start time"; at the range edges it clamps to four real hours rather than rendering blanks |
+| GD-WX-04 | Organizer chips | Open as the organizer | **Move indoor**, **Change time**, **Keep as planned** and **Ask the group** — every chip a real `<button>`, ≥44 px, keyboard-reachable, announced with its label |
+| GD-WX-05 | Participant chip | Open as a non-organizer participant | The only chip is **Forecast**, opening the existing `GameWeatherDialog` for the game window |
+| GD-WX-06 | Change time | Tap **Change time** | `EditGameInfoModal` opens already on the location/time section, not General |
+| GD-WX-07 | Ask the group | Tap **Ask the group**; tap again while the first is in flight | A poll "Play in light rain?" with Yes / No posts into the game chat using the normal poll message type, votable like any other. The second tap must not post a second poll |
+| GD-WX-08 | Indoor silence | Indoor game with the same forecast | No banner at all. `@manual` |
+| GD-WX-09 | Unknown courts | Game with no `Game.court`, no `GameCourt`, a club with no active courts, or an exact indoor/outdoor tie | No banner. Specifically **not** a neutral or "no data" banner |
+| GD-WX-10 | Cold forecast cache | Outdoor game in a city whose forecast cache is cold or out of range | No banner, no spinner, no error |
+| GD-WX-11 | Reduced motion | Reduce Motion on | Banner appears with no fade, hourly icons with no stagger, collapse is instant; nothing jumps or double-renders |
+| GD-WX-12 | RTL | App language العربية | Banner, chips and hourly strip mirror (logical properties only) |
+| GD-WX-13 | Live refresh | With the page open, let the 30-minute pass fire (or emit `game-weather-alert-updated` for that game) | The banner re-reads state without a reload. `@manual` |
+| GD-WX-14 | Started / finished / no time | Game already started or finished, or with no time set | No banner |
+
+### 9.17 Move indoor sheet
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| GD-WX-15 | Court list | Tap **Move indoor** | Bottom sheet of the club's **indoor** courts, each row showing the name and either "Free" (green) or "Busy"; rows ≥44 px |
+| GD-WX-16 | Not colour-only | Screen reader over the rows | "Court 1, free" / "Court 2, busy" |
+| GD-WX-17 | Busy rows disabled | Tap a busy row | Nothing happens; the row is disabled |
+| GD-WX-18 | Move | Tap a free court | Applied through the normal edit path; toast "Moved to Court 1"; a system message in the game chat; the banner collapses over ~240 ms. Re-open the game: the court really changed. `@manual` |
+| GD-WX-19 | Nothing free | Make every indoor court busy for that window (another game, a club booking, or a blocking hold) | "No indoor courts free at 19:00" with **Change time** as the only action, opening `EditGameInfoModal` on the time section |
+| GD-WX-20 | No indoor courts | Club with no indoor courts | "This club has no indoor courts" plus the same **Change time** fallback |
+| GD-WX-21 | External booking warning | Game with a `GameExternalBooking` linked to one of its courts | Warning that the booking is **not** moved and must be changed with the club directly. Confirm afterwards that the external booking is untouched. `@manual` |
+| GD-WX-22 | Multi-court | Game with one outdoor and one indoor court | "1 of 2 courts is outdoor"; the organizer moves one court at a time |
+| GD-WX-23 | Failure | Kill the network and tap a free court | Toast reports the failure; the sheet stays open; nothing in the game changed |
+| GD-WX-24 | Loading / error | While availability loads; then force it to fail | "Checking indoor courts…" in a live region rather than an empty list; a failure shows a retryable error, never an empty state that reads as "no courts" |
+| GD-WX-25 | Back gesture | Android hardware back | Closes the sheet without leaving the game page |
+
+### 9.18 Keep as planned
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| GD-WX-30 | Collapse | Tap **Keep as planned** | Banner collapses over ~240 ms to a single grey line "Playing rain or shine ✓" with no chips |
+| GD-WX-31 | Persisted | Reload | The grey line is still there — the state lives on the game, not in memory |
+| GD-WX-32 | Card pill follows | Check Home and Find | The pill turns neutral grey and reads "Playing rain or shine" (`F-WX-05`) |
+| GD-WX-33 | Suppresses the second alert | Let the 2 h pass run with a worse forecast | No second push for anyone. `@manual` |
+| GD-WX-34 | Organizer only | Open as a non-organizer participant; then call the endpoint as one | The chip is absent and the request is refused. `@two-user` |
+
+### 9.19 Live block and Show on Live now
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| GD-LN-01 | Live block | Open a **public** in-progress game as a non-participant | A **Live** block (dot, header, score summary, "Started N min ago") sits where the results entry card normally is, with a large **Watch live** button |
+| GD-LN-02 | Watch live | Tap it | The broadcast opens with a spectator token, the same as from the rail (§26.4) |
+| GD-LN-03 | Participant sees the entry card | Open the same game as a participant | The ordinary results entry card is there; the Live block is not |
+| GD-LN-04 | Private is invisible | Open a **private** in-progress game as a non-participant | No Live block, no Watch button; the game never appeared on the rail |
+| GD-LN-05 | Settings row | Game settings on a public game | **Show on Live now** sits immediately below **Public game**, **on** by default — including for games created before the column existed |
+| GD-LN-06 | Hidden for private games | Turn **Public game** off | The **Show on Live now** row disappears — a private game can never be on the rail |
+| GD-LN-07 | Helper copy | With hints on | "Public games in progress can be watched by anyone in your city." when on; the "stays off the rail" note when off |
+| GD-LN-08 | Failure rolls back | Toggle with the network off | Error state on the row, a toast, and the switch rolls back to its previous value |
+| GD-LN-09 | Locked with the roster | Game whose roster is locked | Switch disabled, exactly like its neighbours |
+| GD-LN-10 | Turning it off | Turn **Show on Live now** off on a live public game | It leaves the rail within one refresh, the Live block disappears, and no new spectator token is minted for it. Tokens already issued keep working until they expire (the pre-existing 48 h contract) |
+
 ---
 
 ## 10. Live scoring (`/games/:id/live`)
@@ -1209,6 +1569,18 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | LS-40 | Watch HK fail shows retry | `@watch` mid-match if workout session fails (or Force Quit Health) → open workout page | “Workout not started” + Retry restores tracking |
 | LS-41 | Watch load-fail escape | `@watch` Play → network fail on match load | Retry reloads; Back to matches returns to game match list (not trapped) |
 | LS-42 | Watch dirty local beats remote poll | `@watch` score a point then immediately receive older/newer phone revision before ACK | Local point stays; later push reconciles; board never snaps backward mid-rally |
+| LS-44 | Watch dual-writer merge keeps both | `@two devices` score 1 point on `@watch` (slow network) while phone scores 2 points first | Watch board shows phone's 2 points plus its own; server revision contains all 3; no point erased on either device |
+| LS-45 | Watch rally game to completion | `@watch` pickleball / table tennis / badminton / squash: score to 11 (win by 2, e.g. 10-10 → 12-10) | Game-winning point accepted; best-of formats step onto the next game automatically; single-game formats lock the board only when the race is won |
+| LS-46 | Watch read-only when not allowed | `@watch` plain player (not owner/admin, `resultsByAnyone` off) opens an IN_PROGRESS game | Continue scoring hidden; match list read-only; no 403 errors; owner/admin who is NON_PLAYING can start and score every court |
+| LS-47 | Watch rejected save re-syncs | `@watch` force a 400 on live PATCH (e.g. out-of-graph state) | Board re-syncs to server state; subsequent phone updates still merge |
+| LS-48 | Watch leave match without saving | `@watch` start the wrong match → workout page → Leave match → confirm | Returns to the match list; no result saved; game workout keeps running |
+| LS-49 | Watch widget tap during session | `@watch` scoring session active → tap Next Game complication for another game | Confirmation dialog; Cancel keeps the session; Exit discards it and opens the other game |
+| LS-50 | Watch format dialogs re-openable | `@watch` CLASSIC_AUTOMATIC: dismiss the record-mode / continue-or-end dialog | Orange prompt row stays on the board; tapping it re-opens the dialog; scoring stays gated until chosen |
+| LS-51 | Watch timer error surfaced | `@watch` tap timer Start/Pause offline | Short inline error under the timer bar; button re-enabled; no silent no-op |
+| LS-52 | Watch timer pause from workout page | `@watch` pause/resume the workout on the workout page | Match timer bar reflects PAUSED/RUNNING immediately (no second request, no drift) |
+| LS-53 | Watch small screen boards | `@watch` 40/41 mm: pickleball board with serve row + strict officiating | Undo and More reachable (scrolls if needed); score tap target ≥ 44 pt |
+| LS-54 | Watch HealthKit denied hint | `@watch` deny Health once → workout page | Settings › Health path hint shown next to Retry; workout logged as the game's sport (tennis/pickleball/…), never Paddle Sports |
+| LS-55 | Watch Live complication | `@watch` score a point → look at Live Active complication → tap it | Localized title, ≤1 refresh per 15 s, tap opens that game; cleared on logout |
 
 ---
 
@@ -1734,6 +2106,23 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PR-45 | Send money from card | Player card → send money | `SendMoneyToUserModal` transfer |
 | PR-45a | Open Telegram from player card | Card/profile Telegram with username; then ID-only with Telegram installed (desktop + mobile); then ID-only without Telegram | Username → `t.me`. ID desktop → `tg://user?id=`; ID mobile → `tg://openmessage?user_id=`. If the app does not take focus, Telegram Web |
 | PR-46 | Wallet transaction history | Open wallet modal | Balance + history visible |
+| PR-CS-01 | Wallet Owed section | Open the Wallet while owing a share (§9.2b) | **Owed** row with the game title, date, amount and the payer's avatar, above the transaction list |
+| PR-CS-02 | Settle from the Wallet | Tap **Settle** on an Owed row | Wallet closes; the game opens with the settle sheet already open |
+| PR-CS-03 | Owed to you | Open the Wallet as a payer others still owe | **Owed to you** section listing each debtor |
+| PR-CS-04 | Nothing outstanding | Open the Wallet with nothing owed either way | "All settled 🎉" in muted text; no empty section headers |
+| PR-CS-05 | Settled rows disappear | Settle a share, reopen the Wallet | Row gone from **Owed** and from the payer's **Owed to you** |
+| PR-SH-01 | Shop button | Open the Wallet modal | **Shop** button with a bag icon beside the title, ≥44 px, not overlapping the close (×) |
+| PR-SH-02 | Shop opens | Tap **Shop** | Wallet closes and `/shop` opens inside the tab shell (§28); Back returns to the previous tab, not a blank page |
+| PR-SH-03 | Collection entry | Profile → **Appearance** → Collection block → **Get more styles** | Also opens `/shop` |
+| PR-SH-04 | Flag off | `VITE_SHOP_ENABLED=false` | Neither the Wallet button nor the Collection block renders; no `/api/shop` request. `@manual` |
+| PR-RF-01 | Invite friends card | Profile → General | The Invite friends card sits **above** the avatar/wallet block, with a two-avatar illustration (the viewer plus a dashed placeholder). Any case asserting the avatar is the first thing on General needs this |
+| PR-RF-02 | Card copy from settings | Read the headline; then change `REFERRAL_REWARD_REFERRER` to 60 in Admin | "Bring a friend, both get 50 coins" / "They get 25 when they play their first game."; the headline reads 60 within a minute |
+| PR-RF-03 | Share invite | Tap **Share invite** on iOS/Android, then dismiss the sheet | Native share sheet with the personal link; dismissing does nothing — no toast. `@manual` |
+| PR-RF-04 | Share invite on web | Same on desktop web | Link copied, "Link copied" toast |
+| PR-RF-05 | Copy code | Tap the code pill | Code copied, green check ~1.5 s, "Copied" toast |
+| PR-RF-06 | Code pill a11y | VoiceOver / TalkBack on the pill | Announces "Copy invite code B N D J 7 K 2 Q", spelled out. `@manual` |
+| PR-RF-07 | Card loading / failure | Slow network; then force the summary request to fail | Shimmer skeleton, never an empty box; on failure the card renders **nothing** and the rest of the tab is unaffected |
+| PR-RF-08 | Tap targets | Measure every control on the card | ≥44 px |
 | PR-47 | Level history panel | Statistics → level history | Per-sport history chart |
 | PR-47a | Level feedback privacy threshold | Levels tab with 4 distinct evaluators, then 5 evaluators across 3 games | Own profile shows neutral pending state below threshold; other profile hides card; at threshold both show anonymous donut and percentages total exactly 100% |
 | PR-47b | Level feedback sport/relevance | Switch profile sport; include feedback older than 12 months or >0.5 from current level | Card follows selected sport; stale or level-irrelevant evaluations are excluded; no voter names, games, or timestamps are exposed |
@@ -1770,9 +2159,33 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PR-59e | Club detail reauth banner | Club detail for expired booking connection | Amber renew banner with Reauthorize CTA (not first-time connect copy) |
 | PR-60 | Club booking cancel from settings | Settings page upcoming → cancel booking | Same policy modal + snapshot refresh as club detail |
 
+### 13.4 Statistics — Shows up, partners, recaps
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| PR-AT-01 | Below the sample floor | Player card of somebody with fewer than 5 recorded games | **No** "Shows up" tile at all — not a "0 %", not an empty state |
+| PR-AT-02 | At or above the floor | Player card of somebody with 5 or more | "Shows up" tile with a percentage and a ring gauge |
+| PR-AT-03 | Ring is never a verdict | View the tile at 20 %, 60 % and 95 % | A single sky tone in all three — no red, no amber, no grading. `@manual` |
+| PR-AT-04 | Hint | Read under the tile | "Games confirmed and attended in the last 12 months." |
+| PR-AT-05 | Screen reader | VoiceOver / TalkBack on the gauge | Announces the percentage as text |
+| PR-AT-06 | Own statistics | Own Profile → Statistics | Same tile plus a 12-month sparkline and your own no-show notes, each with a control opening that game's chat |
+| PR-AT-07 | Somebody else's | Another player's Profile → Statistics | The tile, but **no** no-show note list |
+| PR-PT-01 | Your partners rail | Own Profile → Statistics | **Your partners** rail: avatar, name, "12 games · 66 %" and the chemistry chip (§14.2), ordered by win rate |
+| PR-PT-02 | Floor of 3 games | Profile with only 1–2 games with each partner | No section at all — only partners with ≥3 games together appear |
+| PR-PT-03 | See all | Profile with more than six partners | **See all** opens a list sheet with every partner as a row |
+| PR-PT-04 | Tap a partner | Tap a partner card | Opens the pair sheet, or the team page when a `UserTeam` exists |
+| PR-PT-05 | Rail chrome | Scroll the rail at 375 px; then switch to العربية | Scrolls horizontally with no visible scrollbar; mirrors in `ar` |
+| PR-RC-01 | Recaps row | Profile → Statistics, under Your partners | **Recaps** heading and a horizontal row of month cards, newest first |
+| PR-RC-02 | Card content | Look at a month with decided games and one without | Month, games count and win percentage; just the games count when no game was decided |
+| PR-RC-03 | 12-month cap | Player with 13 months of recaps | At most 12 cards; the thirteenth (older) month must not appear |
+| PR-RC-04 | Open from the archive | Tap a card, then close | Opens the same reel (§6.7) for that month; closing returns to Statistics with the scroll position intact |
+| PR-RC-05 | Empty | Player with no recap at all | No Recaps heading — not an empty card |
+
 ---
 
 ## 14. Leaderboard (`/leaderboard`)
+
+### 14.1 Players
 
 | ID | Test | Steps | Expected |
 |----|------|-------|----------|
@@ -1788,6 +2201,64 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | LB-10 | No duplicate activity chips | Open Level ranking | No separate min-games and 90-day filter chips; gender/sport/city filters remain |
 | LB-11 | Achievements ranking unchanged | Open Achievements subtab | Family rankings are unchanged; no rating qualify grayed-at-bottom treatment |
 | LB-12 | Social ranking unchanged | Open Social subtab | Sort/rank by social level as before; rows are not grayed for rating inactivity |
+
+### 14.2 Pairs
+
+A pair is a derived aggregate, never a rating — there is no pair ELO and nothing here feeds a level. Minimum 5 games together inside the period to rank.
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| LB-PR-01 | Mode switch | Open **Top** | Segmented **Players · Pairs** control under the filter header, full width, player icon on Players and pair icon on Pairs; Players selected on a cold start |
+| LB-PR-02 | Switch to Pairs | Tap **Pairs** | List cross-fades (~200 ms) into the pairs view; the Achievements / Level / Social switcher does not move and its pill does not fly across |
+| LB-PR-03 | Filters survive | Switch back to **Players** | Sport picker, gender filter and scope are exactly as they were — mode must not reset another filter |
+| LB-PR-04 | Reduced motion | Reduce Motion on | Both switches happen instantly; no cross-fade, no podium rise. `@manual` |
+| LB-PR-05 | Keyboard | External keyboard on the control | One tab stop; arrow keys move between Players and Pairs. `@manual` |
+| LB-PR-06 | Themes + RTL | Light / Dark / Classic / Premium; then العربية | Legible in all four; the two segments mirror and the active pill still sits under the selected label |
+| LB-PR-10 | Podium | At least three ranked pairs, 375 px | Top three as cards above the list, **tallest first** (1st > 2nd > 3rd), no horizontal scroll |
+| LB-PR-11 | Podium card content | Look at each card | Two overlapping avatars with a thin ring — gold, silver, bronze in that order — two lines of names, a large win rate and a small games count |
+| LB-PR-12 | Podium stagger | First paint; then scroll away and back | Cards rise one after another (~80 ms apart) on first paint only; already-mounted cards do not replay. `@manual` |
+| LB-PR-13 | Podium reduced motion | Reduce Motion on | All three in place on the first frame, no stagger. `@manual` |
+| LB-PR-14 | Podium a11y | VoiceOver / TalkBack on a podium card | "Number 1, Marko and Ana, 72 percent win rate, 18 games"; activating it opens the pair. `@manual` |
+| LB-PR-15 | Podium RTL | App language العربية | Podium mirrors: 1st on the right; each avatar stack overlaps toward the reading direction |
+| LB-PR-20 | Row content | Scroll the list in `en`, then `ar`, `cs`/`ru` | Rank number, two avatars overlapping by 24 px, "Marko & Ana", second line "18 games · 72 %"; percentage and count formatted for the locale (Arabic digits in `ar`, comma group separator in `cs`/`ru`) |
+| LB-PR-21 | Own pairs | Viewer is in one of the listed pairs | Soft sky border on the **inline-start** edge and a faint sky background; in `ar` that border is on the right |
+| LB-PR-22 | Chemistry chip | Look at the right side of each row | Bolt icon and a signed number; green when the pair beats the two members' solo average by ≥5 points, neutral otherwise |
+| LB-PR-23 | No chemistry, no chip | Pair where neither member has any solo games | **No chip at all** — never a grey `0` |
+| LB-PR-24 | Chemistry tooltip | Long-press the chip; hover and keyboard-focus it on desktop | "Win rate together vs. on your own" appears above it and disappears on release. `@manual` |
+| LB-PR-25 | Row a11y | VoiceOver / TalkBack on a row | "Rank 4, Marko and Ana, 18 games, 72 percent win rate, chemistry plus 9". Avatars, the "&" and the bolt icon are not announced. `@manual` |
+| LB-PR-26 | Tap targets | Measure the row and the chip | Both ≥44 px tall. `@manual` |
+| LB-PR-27 | Load more | Scroll to the end of page 1 → **Load more** | Next page appends; rank numbers continue with no gap and no repeat |
+| LB-PR-30 | Sort chips | **Win rate / Games / Level** | Radio group: exactly one active (sky), exactly one in the tab order |
+| LB-PR-31 | Sort keyboard | Arrow Left/Right, Home, End; then in `ar` | Arrows move *and* select; Home/End jump to first/last; selection wraps at both ends; in `ar` Arrow Right moves toward the start of the row. `@manual` |
+| LB-PR-32 | Sort re-orders | Switch sort | List **and** podium re-order; scroll resets to the top; sport and period are kept |
+| LB-PR-33 | Period chips | **All time / Last 30 days / Last 10 days** | Same behaviour; a 10-day window with no qualifying pair shows the empty state, not an empty list |
+| LB-PR-34 | No interleaving | Change period or sort while a later page is loaded | The list is rebuilt from rank 1 — two orderings must never interleave (a stale cursor answers `400 errors.pairs.invalidCursor`) |
+| LB-PR-40 | Scroll to my pair | Viewer with a ranked pair below the fold | Floating pill above the bottom bar: "Scroll to my pair (12)" |
+| LB-PR-41 | Pill scrolls | Tap it | The viewer's row scrolls to the middle of the screen and flashes briefly |
+| LB-PR-42 | Pair on an unloaded page | Viewer's pair is on a page not yet fetched | Tapping pulls the intervening pages first, then scrolls. `@manual` |
+| LB-PR-43 | Android instant scroll | Android | Scroll is instant (no smooth animation), matching the player leaderboard. `@manual` |
+| LB-PR-44 | Pill visibility | Once the row is on screen; then scroll away | Pill disappears, then comes back |
+| LB-PR-45 | No ranked pair | Viewer with none | The pill never appears |
+| LB-PR-50 | Empty state | City and sport with no qualifying pair | "No pairs ranked yet" / "Play 5 games with the same partner to appear here." and a **Find a game** button opening Find |
+| LB-PR-51 | Loading | While the first page loads | Three podium-shaped shimmer blocks and six row skeletons at the real heights, so nothing jumps when data arrives |
+| LB-PR-52 | Offline | Network off, then back | Error line, then recovery. `@manual` |
+| LB-PR-60 | Pair sheet | Tap a pair with no formal team | Bottom sheet at ~70 % height with both avatars and "Marko & Ana" in the header |
+| LB-PR-61 | Stat tiles | Look at the sheet | Games, Win rate, Chemistry. Unknown chemistry shows an em dash and "Not enough solo games yet" |
+| LB-PR-62 | Recent together | Scroll the sheet; then open a pair with no shared games | Up to five compact game cards with the house date tile and a Win / Loss chip, each opening that game; otherwise "No shared games yet." |
+| LB-PR-63 | Footer actions | Open your own pair; then somebody else's | **Create a team** (primary) and **Invite to a game** (secondary) only when the viewer is one of the two; another pair shows stats and history with no footer |
+| LB-PR-64 | Create a team | Tap **Create a team**, then repeat | Creates or reuses the viewer's team, invites the partner and lands on `/user-team/:id` with both members. Doing it twice must not create a second team |
+| LB-PR-65 | Invite to a game | Tap **Invite to a game** | Opens the existing "add team to game" sheet for that pair |
+| LB-PR-66 | Existing team | Tap a pair that already has a `UserTeam` | Goes straight to `/user-team/:id` — no sheet |
+| LB-PR-67 | Deep link | Open `…?pair=a,b` directly, then close the sheet; then the Android back gesture | Sheet opens; closing removes the `pair` parameter and leaves no extra history entry; back closes the sheet rather than the page. `@manual` |
+| LB-PR-68 | Sheet themes + RTL | Light / Dark / Classic / Premium; then العربية | Legible in all four; avatars, header and footer all mirror |
+| LB-PR-70 | Counts follow results | Play and finish a game with a fixed team | The pair's games count rises by exactly one, and by one win if that team won. `@manual` |
+| LB-PR-71 | Reset is symmetric | Reset the results of that game | Count and win return to exactly what they were — not to zero, not one short. `@manual` |
+| LB-PR-72 | Edit follows | Edit a finished result to flip the winner | The pair's wins follow the edit with no drift. `@manual` |
+| LB-PR-73 | Rotating formats | Americano where four players rotate partners every round | Adds **nothing** to any pair. `@manual` |
+| LB-PR-74 | Majority rule | Session where two players stay together for 2 of 3 rounds | Counts as one game for that pair. `@manual` |
+| LB-PR-75 | Excluded entity types | A training, a bar meet-up, an event and a league-season row | None of them change any pair. `@manual` |
+| LB-PR-76 | Walkover | League fixture finalized as a neutral walkover | Changes no pair. `@manual` |
+| LB-PR-77 | Admin rebuild | `POST /rankings/pairs/recalculate` | Every number on the tab is unchanged. `@manual` |
 
 ---
 
@@ -1810,6 +2281,8 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | UT-13 | Invite permission filter | User cannot invite to a game | That game is absent from the picker |
 | UT-14 | Fixed-pairs seating | Add ready pair to a `hasFixedTeams` game; both become PLAYING | They occupy one pair slot, not two unlinked players |
 | UT-15 | Delete team leaves home list | Owner deletes team from team page or home section X → return to Home/My Teams | Deleted team gone immediately and stays gone after tab switch / soft refresh |
+| UT-16 | Pair stat band | `/user-team/:id` for a two-person team that has played together | Games · Win rate · Chemistry tiles at the top, showing the same numbers as the pair sheet (`LB-PR-61`) |
+| UT-17 | No zeros band | Team with only the owner, or a pair that has never played together | No stat band at all — not a row of zeros |
 
 ---
 
@@ -1913,6 +2386,12 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | CA-14 | External booking unassigned lane | Schedule date with `courtId: null` snapshot busy | "Unassigned" column shows external busy slots |
 | CA-15 | External booking on grid | Mapped external booking busy in snapshot | Red external slots on matching court columns |
 | CA-16 | Club booking integration down | Snapshot load failure | "Club system unavailable" banner; app games/blocks still shown |
+| CA-WX-01 | Court cover control | Courts → add a court | Indoor/outdoor is a two-option segmented switch **Indoor · Outdoor** with icons (not a checkbox), with the helper "Outdoor courts get weather alerts before a game." |
+| CA-WX-02 | Default and persistence | New court → save → reopen; switch to Indoor → save → reopen | Defaults to **Outdoor**; Indoor persists |
+| CA-WX-03 | Edit opens on current value | Edit an existing court | Opens on that court's current value |
+| CA-WX-04 | Keyboard | Arrow keys on the control | Moves between the two options; each is announced with its label |
+| CA-WX-05 | Schedule grid roof icon | Open the schedule grid with indoor and outdoor courts, including a long court name | Small roof icon in every indoor column header with an "Indoor court" accessible label; outdoor columns have no icon; long names truncate rather than pushing the icon out of view |
+| CA-WX-06 | Flip stops alerts | Flip a court from outdoor to indoor | Its games stop producing weather alerts on the next pass (§9.16). `@manual` |
 
 ---
 
@@ -1997,6 +2476,7 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | X-26r | QR first-touch register | Scan marked landing → choose Web → register (phone/Google/Apple/Telegram) | User row stores first-touch UTM/`aid`; Admin → App QR shows Registered + attributed user; later campaigns do not overwrite |
 | X-26s | QR scan without register | Scan marked landing, do not sign in | Admin → App QR shows view/choice counts; Attributed users stays empty for that `aid` |
 | X-26u | App QR campaign visual name | Admin → App QR: save UUID code + visual name (before or after a scan) | Funnel/user/recent tables show the visual name; QR URL still uses the UUID; deleting the mapping falls back to the code |
+| X-26v | Referral rides the same row | Repeat X-26o–X-26r with `?ref=<code>` on the landing URL | `ref` is captured, carried and attached under the same first-touch rule as the UTMs. Full cases: §29 |
 
 ### 18.7 Navigation shell
 
@@ -2037,6 +2517,54 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PN-M2 | Image chat push thumbnail (Android) | Send image in game chat with app backgrounded | Collapsed/expanded notification shows thumbnail as large icon; MessagingStyle conversation + inline reply preserved |
 | PN-M3 | Video chat push poster | Send video message push | Poster thumbnail visible; text shows duration label |
 | PN-M4 | Story-reply push thumbnail | Reply to a story with thumbnail in DM | Push shows story thumb on iOS (NSE) / Android large icon; body shows story-reply label |
+
+#### 18.8b Shade and Telegram actions on the newer types
+
+Every action button below is a **signed push action token** (`kind` + `targetId` + `action`, 48 h) posted to `POST /push/invite-action`, not a URL. The generic contract is the same in every row: the action completes without opening the app, a stale or reused token is a quiet no-op (never a 500, never a seat change), and the Telegram mirror edits its own message and drops the buttons it just consumed. Only per-feature specifics are listed.
+
+> **Native shade buttons for `attendance`, `series` and `weather` are not wired yet** — the tokens ship, but Android has no `attendance_actions` branch and iOS registers no matching category (`docs/product/not-shipped.md`). Until they are, run those rows against **Telegram** and the in-app card; the `@shade` rows below are the acceptance criteria for when the native work lands.
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| PN-AT-01 | Attendance reminder | 24 h before a game accepting answers | Every PLAYING player gets a reminder. Its data map carries `attendanceActionToken` / `attendanceUnsureActionToken` and `nativeHandler: 'attendance_actions'`. `@manual` |
+| PN-AT-01b | `@shade` Shade buttons | Once the Android branch and the iOS category exist | The shade offers **I'm coming** and **Not sure yet**. `@manual` |
+| PN-AT-02 | `@shade` Shade answer | Tap a shade action, then open the app | The app did not open; the answer is visible in game details. `@manual` |
+| PN-AT-03 | Second reminder filtered | 2 h before the game | Only players who have **not** answered get a second reminder; those who answered at 24 h get nothing. There is never a third message. `@manual` `@two-user` |
+| PN-AT-04 | Telegram attendance | Tap one of the two inline buttons | The message edits to "✅ You're confirmed" / "🤔 Noted, not sure yet" and the two answer buttons are removed while "View game" stays. `@manual` |
+| PN-AT-05 | Telegram double tap | Tap an attendance button twice, or after leaving the game | The spinner closes with a friendly message; never a throw. `@manual` |
+| PN-AT-06 | Silence is allowed | A player who never answers reaches kick-off | Seat, queue position and level untouched. `@manual` |
+| PN-SO-01 | Spot-opened push | Queued player while a seat frees | "A spot just opened" with a body like "Tue 19:00 Padel Centar · level 3.5–4.5 · You're #1 in the queue". `@two-user` |
+| PN-SO-02 | Join now | Tap **Join now** | Opens the game and runs the normal join flow: gender/level gates apply and the overlap confirm appears when the player already has a game in that slot. `@two-user` |
+| PN-SO-03 | Deep-link param cleaned | After the join flow runs, check the URL and go back/forward | `join=1` is gone; navigation does not re-trigger the join |
+| PN-SO-04 | Intent match | Player with an OPEN play intent matching the game, not queued | Receives the same push |
+| PN-SO-05 | Follower variant | Follower of a seated player, with and without "Friends' play-intent activity" on | "Marko's game has a free spot" when on; **nothing** when off |
+| PN-SO-06 | Owner never notified | Owner of the game | Never receives a spot-opened notification for their own game. `@two-user` |
+| PN-SO-07 | One per day | Two players leave the same game within minutes | Each recipient receives **one** notification that day, not two (the dedupe is a persisted delivery row keyed by user + game + city-local day + audience kind). `@two-user` |
+| PN-SO-08 | Private game | Private game frees a seat | Only queue members are notified; intent matches and followers are not |
+| PN-SO-09 | Telegram mirror | Check the Telegram message | Carries **Join now** (opening the game with the join flow) and the existing **Show Game** button. `@manual` |
+| PN-SER-01 | Carry-over push | An occurrence reaches FINAL | Regulars who played get "Same time next week?", carrying `series` accept/decline tokens. `@manual` |
+| PN-SER-01b | `@shade` Carry-over shade | Once the native branch exists | **I'm in** / **Not this time** seat or do nothing without opening the app. `@manual` |
+| PN-SER-02 | Telegram carry-over | Same in Telegram | Two inline buttons; **I'm in** answers "Seat kept" and seats the user on the next occurrence. `@manual` |
+| PN-WX-01 | Weather alert | 12 h before an at-risk outdoor game | One push per PLAYING participant, with different copy for the organizer. The organizer's payload carries the **Move indoor** deep link and a `weather`/`keep` token; participants get **View forecast**. Telegram shows both as buttons; `@shade` for the native buttons. `@manual` |
+| PN-WX-02 | Organizer deep link | Tap the organizer push (or its Move indoor action) | Lands on the game with the move-indoor sheet open; `?section=weather&action=moveIndoor` is stripped so a refresh does not reopen it. `@manual` |
+| PN-WX-03 | Participant deep link | Tap the participant push | Lands on the game with the banner in view; `?section=weather` is stripped. `@manual` |
+| PN-WX-04 | Telegram weather | Organizer's Telegram message → **Keep as planned** | Answers "Playing rain or shine"; only that button disappears, the links stay. `@manual` |
+| PN-WX-05 | Preference mute | Turn **Weather alerts** off and repeat | No push and no Telegram message, while other reminders still arrive. `@manual` |
+| PN-WX-06 | Second alert needs a class rise | Let the forecast worsen a class (60 % → 90 %, or rain → storm) and run the 2 h pass; then let it stay in the same class | Exactly one more push, titled as "forecast got worse"; no second push at all when the class is unchanged. `@manual` |
+| PN-WX-07 | Dedupe survives a restart | Restart the backend between the 12 h and 2 h passes | No duplicate 12 h alert — the dedupe is persisted on the game, not an in-memory `Set`. `@manual` |
+| PN-WX-08 | Indoor never alerts | Indoor game, any forecast | No push. `@manual` |
+| PN-LN-01 | Follower live push | A follows B; B's public rail-visible game starts live scoring | A receives "B is playing live" once; tapping it opens the game. `@two-user` `@manual` |
+| PN-LN-02 | Once ever | More points are scored | No second notification, ever, for that game. `@two-user` |
+| PN-LN-03 | Social preference | A turns off "Friends' play-intent activity" | No live notification arrives. `@two-user` |
+| PN-LN-04 | Privacy | B's game is private, or has **Show on Live now** off | No notification. `@two-user` |
+| PN-LN-05 | Restart | Restart the backend between two scoring bursts | Still no duplicate — the dedupe is a table, not an in-memory set. `@manual` |
+| PN-RC-01 | Recap push | With **Reminders** enabled, generate the recap | "Your September recap is ready ✨" in the recipient's language. `@manual` |
+| PN-RC-02 | Recap tap | Tap it | Opens Home with the reel already open on that month; `?recap=` is cleaned out of the URL so back does not re-open it. `@manual` |
+| PN-RC-03 | Recap mute and repeat | Disable **Reminders**; then let the generator run on the 1st, 2nd and 3rd | No push when disabled; exactly one push across the three runs. `@manual` |
+| PN-RF-01 | Referral payout push | A invites B; B registers, joins a game, the game is finalized with results | **Both** get a push: A "…played their first game. +50 coins!", B "Welcome bonus: +25 coins". `@two-user` |
+| PN-RF-02 | Referral tap | Tap either push | Opens the **Wallet**; the new row has a soft sky tint for ~1 s, then settles; the balance counts up (≤600 ms) rather than jumping |
+| PN-RF-03 | Referral joined push | Somebody signs up with your code (before any game) | `REFERRAL_JOINED` opens **Profile** (the invite card), not the Wallet — no coins have moved yet |
+| PN-GF-01 | Gift push | Another player gifts you a shop item | "Ana sent you a gift 🎁"; the item is in your Collection (§28.3). `@two-user` |
 
 ### 18.9 Native permissions (manual)
 
@@ -2152,11 +2680,11 @@ All of §5 auth (except OAuth device), §7 Find filters, §8 create game happy p
 
 ### P2 — Extended (~2 hr)
 
-Leagues, live scoring multisport sample, bets, stories, game subscriptions, user teams, sessions, group settings, club admin schedule, onboarding gates (§4.2), past-games subtab, bugs tracker, sync conflict, training reviews
+Leagues, live scoring multisport sample, bets, stories, game subscriptions, user teams, sessions, group settings, club admin schedule, onboarding gates (§4.2), first-run onboarding (§24.1), attendance (§9.11–§9.14), cost split (§9.2b), queue auto-fill (§9.15), weather banner (§9.16–§9.18), Live now rail (§26), club page (§27), pairs (§14.2), shop (§28), past-games subtab, bugs tracker, sync conflict, training reviews
 
 ### P3 — Edge / regression backlog
 
-Offline queues, deep links, OAuth merge, Holland auctions, broadcast/TV modes, delete account, admin-only filters, visual regression, URL overlays, push routing, locale matrix, entity type matrix, home Next Game widgets (`X-56`–`X-67`)
+Offline queues, deep links, OAuth merge, Holland auctions, broadcast/TV modes, delete account, admin-only filters, visual regression, URL overlays, push routing (incl. §18.8b), locale matrix, entity type matrix, home Next Game widgets (`X-56`–`X-67`), game series (§25), referrals (§29), Telegram `/play` and `/live` (§30), monthly recap (§6.7)
 
 ---
 
@@ -2244,7 +2772,513 @@ Playwright project `two-user` runs specs under `Frontend/e2e/specs/two-user/` ta
 
 ---
 
-## 24. References
+## 24. Onboarding (`/welcome`)
+
+No feature flag. The flow is gated purely on `User.onboardingCompletedAt`, which the Wave 1 migration backfilled for every pre-existing account, so only genuinely new users see it. It is a standalone route, not a tab.
+
+### 24.1 Gating
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| ON-01 | Register lands here | Register a brand-new account | The app lands on `/welcome`, not Home; the tab bar is not visible |
+| ON-02 | Completed account skips it | Account that finished the flow, cold start and warm foreground | `/` renders Home directly; `/welcome` is never visited |
+| ON-03 | Completed, no enabled sport | Same account with `sportsEnabled` empty → open any protected route | Redirects to `/welcome?step=sport`; headline "Pick a sport to continue"; progress reads "Step 1 of 1"; no Skip |
+| ON-04 | Sport step exits cleanly | Pick a sport → Continue | Routes back out and never re-enters the flow |
+| ON-05 | No flash on slow cold start | Throttle to Slow 3G and cold-start a *completed* account ten times | `/welcome` never flashes while auth is bootstrapping. `@manual` |
+| ON-06 | Failed status is not evidence | Kill the backend, cold-start a completed account | The onboarding status request fails and the user still lands on Home |
+| ON-07 | Direct navigation | Open `/welcome` as a completed user | The flow renders (it is a real route), starts at Welcome, and finishing routes to the closing choice. Nothing is corrupted |
+
+### 24.2 Frame, progress and motion
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| ON-10 | Frame anatomy | Any step | 4 px sky progress bar at the very top, Back arrow from step 2 on, Skip top-right where allowed, one `h1`, one interaction, one primary button pinned to the bottom |
+| ON-11 | Progress spring | Advance, then go Back | Bar springs between steps (stiffness 260, damping 24) and springs *back* — it never jumps backwards |
+| ON-12 | Reduced motion | `prefers-reduced-motion: reduce` | Bar snaps to the new width; steps appear with no slide and no fade; the Welcome mascot appears fully formed; the closing mascot does not bounce. `@manual` |
+| ON-13 | Step transition | Advance a step | Slides in horizontally, 24 px, 260 ms, with a fade |
+| ON-14 | RTL slide | App language العربية | Slide direction is mirrored — a forward step enters from the left. `@manual` |
+| ON-15 | Screen reader | VoiceOver / TalkBack on any step | Progress bar announces "Step 3 of 6"; the step is a landmark labelled by its headline. `@manual` |
+| ON-16 | Step count is per account | Account with a name and an avatar; account missing either | 6 steps and 7 steps respectively — every total derives from the visible steps, never from the raw seven |
+| ON-17 | Tap targets | Skip, Back, sport tile, Make primary, Follow pill, primary button | All ≥44 px tall |
+| ON-18 | Keyboard order | Web, Tab through a step | Back, Skip, every interactive element in the body, then the primary button, in visual order, each with a visible focus ring |
+| ON-19 | Themes | Light / Dark / Classic / Premium on every step | Text contrast, radial gradients and sport accents all read correctly. `@manual` |
+
+### 24.3 Steps
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| ON-20 | Welcome | Step 1 | Sport mascot on a soft radial gradient, "Let's find you a game" as the `h1`, "Two minutes to set you up." beneath, a single **Start** button, and **no Skip** |
+| ON-21 | Social proof | Detected city with players | "2,400 players in Belgrade", number localised with the locale's thousands separator |
+| ON-22 | Plural forms | City with exactly one player, in `ru`/`sr`/`cs` | "1 player in …" (singular) and correct 1 / 2 / 5 forms. `@manual` |
+| ON-23 | No social proof | No city, a city with zero players, or a failed `/cities/:id/stats` | The line is simply absent — no "0 players", no spinner, no layout jump |
+| ON-24 | Referral banner slot | Arrive from a referral link (§29.2) | The "Invited by …" banner renders here; with no referral the slot renders nothing and leaves no gap |
+| ON-30 | Sport tiles | Step 2 | Six tiles, one per sport, each with the registry PNG and the localised name |
+| ON-31 | Continue gated | Before selecting anything | Continue is disabled; there is no Skip on this step |
+| ON-32 | First tap is primary | Tap one tile, then more | The first tap selects it *and* gives it the "Primary" tag; further taps select without moving the tag |
+| ON-33 | Long-press moves primary | Long-press a selected tile ~0.5 s, then tap it | The tag moves to it; the following tap does **not** deselect it |
+| ON-34 | Make primary action | Look at a selected non-primary tile | A **Make primary** text action — the accessible and keyboard path to the same result |
+| ON-35 | Deselecting the primary | Deselect the primary tile; then the last tile | The tag hands over to another selected sport; clearing the last tile clears the tag and disables Continue |
+| ON-36 | Accent follows primary | Move the Primary tag | Progress bar, selected tile border and primary button accent all change with it |
+| ON-37 | Long-press context menu | Long-press a tile on a device | No browser/OS context menu. `@manual` |
+| ON-38 | Tile a11y | Screen reader on a tile | Toggle button whose pressed state is announced. `@manual` |
+| ON-40 | Name and photo, conditional | Account with a name **and** an avatar; account missing either | Never shown / shown immediately after Sport |
+| ON-41 | Name is required | Look for a frame-level Skip; submit an empty first name | No Skip: the name is required. Empty → inline error "Enter your first name." tied to the field with `aria-describedby`, and the primary button disables until fixed. The photo is skippable by simply not adding one, as the helper line says |
+| ON-42 | Name length | One character; then 31 characters | "Use at least 2 characters."; input stops at 30 |
+| ON-43 | Last name optional | Leave it empty | Passes |
+| ON-44 | Keyboard | Tap the first-name field on a device | Keyboard opens, the field stays visible and the primary button sits directly above the keyboard. `@manual` |
+| ON-45 | Avatar crop | Tap the avatar → crop → confirm | The existing crop modal uploads and shows the new avatar without leaving the step |
+| ON-46 | Avatar failure | Force the upload to fail | Toast; the step stays usable and never blocks Continue |
+| ON-50 | Level questionnaire | Step 3 | The existing per-sport questionnaire renders inside the frame with the same question cards, and the frame shows **no** primary button (the questionnaire has its own Back / Next / Submit row) |
+| ON-51 | Result screen | Answer everything and submit | Onboarding's own result screen — not the questionnaire's congratulations slide |
+| ON-52 | Result content | Read it | Level counts up over ≤600 ms, the display scale is named ("On the Playtomic scale" for padel, NTRP for tennis, …), and it reads "You can adjust this any time in Profile." |
+| ON-53 | Skip keeps the prompt | Skip the level step | Level stays unset and the existing questionnaire prompt on Home is untouched |
+| ON-54 | No questionnaire configured | Sport with no questionnaire | Explanatory variant with a Continue button, never an empty frame |
+| ON-55 | Offline submit | Submit with no network | Failure toasts and the answers stay on screen so the user can retry or skip; the flow is never stuck |
+| ON-60 | City card | Step 4 | Detected city as a card: map thumbnail, city name and country, helper "We show games and players from your city.", **Yes, that is right** primary and a **Change city** text action |
+| ON-61 | No coordinates | City with no coordinates | Gradient pin placeholder at the same height — no layout jump |
+| ON-62 | Change city inline | Tap **Change city** | The existing city picker replaces the card *inline*; no sheet is stacked on top of the flow |
+| ON-63 | Pick a city | Pick a new city; then pick the city that is already set | Saves and returns to the card showing the new city; picking the current city just returns without a request |
+| ON-64 | No city at all | Account with no city | Opens straight into the picker |
+| ON-65 | Skip keeps the prompt | Skip | The existing Home city prompt stays in place |
+| ON-70 | Follow suggestions | Step 5 | Up to 8 rows: avatar, name (premium treatment for premium members), level badge and "12 games this month" |
+| ON-71 | Follow | Tap **Follow** | Pill flips to **Following** immediately with a 200 ms scale and a check icon; under reduced motion it changes with no scale. `@manual` |
+| ON-72 | Follow failure | Force a follow to fail | Pill rolls back to **Follow** and toasts; the rest of the list is untouched |
+| ON-73 | Follow all | Tap **Follow all**, twice quickly | Follows every visible row then disappears; the double tap does not double-post |
+| ON-74 | Exclusions | Check the list | Never includes the viewer, anyone the viewer blocked, anyone who blocked the viewer, or anyone already followed. `@two-user` |
+| ON-75 | Scope | Compare against other cities and sports | Suggestions come from the viewer's city and primary sport only |
+| ON-76 | Nobody to suggest | Young city with no candidates | Empty-state card, not a blank area; Skip and Continue both still work |
+| ON-77 | Loading | While loading | Five shimmer rows |
+| ON-78 | Count plurals | 0, 1, 2 and 5 games, in `ru`, `sr`, `cs` and `ar` | "12 games this month" is grammatically correct in every form. `@manual` |
+| ON-80 | Notifications card | Step 6 on native | A card with exactly three reasons — Invites, Reminders, Free spots — and a **Turn on notifications** primary. `@manual` |
+| ON-81 | OS prompt | Tap it and allow; repeat and deny | Both advance to the closing choice; neither blocks the flow. `@manual` |
+| ON-82 | Not now | Tap **Not now** | Advances without prompting |
+| ON-83 | Web skips the phase | Step 6 on web | The permission phase is skipped entirely; the closing choice shows straight away |
+| ON-84 | Closing choice | Reach the end | Two large cards: **I want to play soon** and **Browse games** |
+| ON-85 | You're set | Choose either | Brief full-screen "You're set" with the mascot bouncing for 600 ms, then routes |
+| ON-86 | Destinations | **I want to play soon**; then **Browse games** | Home with the play-intent compose sheet open (`?playIntentOpen=1`); `/find` |
+| ON-87 | Premium crest | Premium member | Gold crest on the "You're set" screen — and only there; every earlier step uses the normal sport mascot. `@manual` |
+| ON-88 | Reduced motion exit | Reduce Motion on | "You're set" appears and routes immediately, with no bounce and no artificial delay |
+
+### 24.4 Resume, deep links, offline and analytics
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| ON-90 | Resume | Reach step 4, force-quit, reopen | Resumes on step 4 with the progress bar filled to 4 of 6. `@manual` |
+| ON-91 | Resume after Back | Go Back to step 3, quit, reopen | Resumes on step 3 |
+| ON-92 | Pending deep link wins | Open a shared game link while onboarding is unfinished | The gate intercepts it and shows the flow; after the last step the app opens **that game**, not the closing choice's destination |
+| ON-93 | No loop | Same, but the pending link is `/welcome` itself | The closing choice's destination is used instead |
+| ON-94 | Offline banner, not the gate | Go offline mid-flow | The existing offline banner shows and **not** `NoInternetScreen`; steps keep rendering and Skip keeps working |
+| ON-95 | Offline write | Offline, tap Continue on a step that needs the server | Failure toasts; the step stays usable. Nothing is lost except the resume position |
+| ON-96 | Back from step 1 | Hardware back / swipe on step 1 | Nothing happens — it does not exit into a route that would bounce straight back. `@manual` |
+| ON-97 | Step analytics | Walk the flow | `onboarding_step_viewed` fires exactly once per step shown, with the 1-based position and this account's total; Continue fires `onboarding_step_completed`, Skip fires `onboarding_step_skipped`, never both for the same visit |
+
+---
+
+## 25. Game series (`/series/:id`)
+
+Flag-gated with §8.6 (`VITE_GAME_SERIES_ENABLED` / `GAME_SERIES_ENABLED`). The page is **series-private**: the `↻ Weekly` card pill is public, the roster and history are not.
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| SER-01 | Hero | Open `/series/:id` for an active series | Cadence line, series name, weekday + time line and a next-occurrence tile |
+| SER-02 | Regulars stack | Look at the avatar stack | Green check on every regular already PLAYING next week; each avatar carries a visually hidden "{name} confirmed" / "{name} has not confirmed" label |
+| SER-03 | Stats band | First paint | Three tiles — Games, Your win rate, Streak — counting up in ≤600 ms. With no rated occurrence the win rate reads "—", not "0 %" |
+| SER-04 | Reduced motion | Reduce Motion on | Numbers appear at their final value with no count-up. `@manual` |
+| SER-05 | Ended series | Open an ended series | Neutral "Ended on 30 Nov" ribbon, no next-occurrence tile, no confirmation prompts; History is still browsable |
+| SER-10 | Tabs | `SegmentedSwitch` **Upcoming / History / Regulars**; arrow keys | Moves between tabs |
+| SER-11 | Upcoming | Open Upcoming | At most the next 4 occurrences as game cards |
+| SER-12 | Skipped date | Series with a skipped week, as owner then as a regular | Dimmed row "Skipped · 8 Oct" with an **Undo** text button (owner only); Undo restores the date and the scheduler recreates the game |
+| SER-13 | Planned date | Horizon date with no game yet | "Planned · 15 Oct" with the hint "Created closer to the date" |
+| SER-14 | History | Open History | Past occurrences newest first with their result chips |
+| SER-15 | Regulars tab | Open Regulars as owner, then as a non-owner | Each regular with games played, win rate inside the series and attendance; the owner sees a **Remove** control, other viewers do not |
+| SER-16 | Empty history | Series with no past occurrence | `EmptyStateCard` "First week coming up" naming the next date; with no next date, the generic description |
+| SER-20 | Series chat | Tap **Open series chat** twice | First tap creates the group channel and navigates; the second goes straight to the existing channel |
+| SER-21 | End series | **End series** → confirm | Destructive confirm; then the ended ribbon, past occurrences kept, future results-free occurrences gone |
+| SER-22 | Results block deletion | End a series where a future occurrence already has results | That occurrence is kept and a note says how many were kept |
+| SER-23 | Non-owner | Open as a regular who is not the owner | Neither **End series** nor the per-regular **Remove**; a direct `PATCH /series/:id` returns 403 `series.notOwner` |
+| SER-24 | Stranger | Open a series you have no relationship with | `GET /series/:id` answers 403 `series.notAMember` and the page shows the not-found empty state — the roster, the occurrence list and the chat id never reach a non-insider |
+| SER-30 | Loading | Throttle and open | Skeleton hero plus three card skeletons — never a spinner |
+| SER-31 | Missing series | Open a deleted or unknown id | "Series not found" empty state with a **Try again** action |
+| SER-32 | Tap targets | Measure every control | ≥44 px and labelled |
+| SER-33 | Themes | Light / Dark / Classic / Premium | Hero gradient, check badges and dimmed skipped rows all keep 4.5:1 text contrast |
+| SER-34 | RTL | App language العربية | Whole page mirrors; the check badge sits on the inline-end of each avatar |
+| SER-35 | Flag off | `VITE_GAME_SERIES_ENABLED=false` | `/series/:id` renders nothing and makes no request |
+
+---
+
+## 26. Live now
+
+No feature flag: the rail is data-driven and simply absent when the city has nothing live. Everything derives from one predicate — public **and** in progress **and** `showOnLiveRail` — so the rail, the game-details Live block (§9.19), the spectator-token mint and Telegram `/live` (§30.3) must always agree.
+
+### 26.1 Find rail
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| LN-01 | Nothing live | City with no public game in progress | No rail at all on Find: no empty card, no header, no reserved space; the calendar sits where it always did |
+| LN-02 | Rail appears | Start live scoring on a public game in the viewer's city, reload Find | Rail **above the calendar** with a red `● LIVE` dot, the label "Live now" and a count |
+| LN-03 | Reveal motion | Watch the reveal; then with `prefers-reduced-motion: reduce` | 240 ms height/opacity fade; under reduced motion it simply appears, fully formed. `@manual` |
+| LN-04 | Live dot | Watch the dot; then with reduced motion | Breathes over 2 s; completely static under reduced motion. `@manual` |
+| LN-05 | Desktop split | `@desktop` Find in calendar mode | Rail at the **top of the games column** (right panel), above the events rail — not in the calendar column |
+| LN-06 | Carousel | Two or more live games | Horizontal snap carousel of 240 px cards; swiping snaps to card boundaries |
+| LN-07 | Single game | Exactly one live game | Full-width variant with a **Watch** button on the end side instead of a carousel |
+| LN-08 | Cap | Eleven live games in the city | Find shows at most 10 cards |
+| LN-09 | Keyboard | Tab into the carousel → ArrowRight / ArrowLeft | Scrolls one card per press with a visible focus ring |
+| LN-10 | RTL | App language العربية | Carousel scrolls in the mirrored direction and the card internals mirror; nothing clipped off the start edge. `@manual` |
+
+### 26.2 Score card
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| LN-20 | Card content | Look at a card | Club avatar + club · court top-left, score block centred in tabular numerals, both sides as two-avatar stacks with names, "Started 23 min ago" as the footer |
+| LN-21 | Rating icon | Rated game vs unrated | Small rating icon in the header only for the rated one |
+| LN-22 | Score motion | Score a point on the live board in another session | The changed digit slides vertically (200 ms) and the leading side glows for 400 ms; the unchanged digit does not move. `@two-user` |
+| LN-23 | Reduced motion | Repeat LN-22 with reduced motion | Digit changes instantly, no glow, new value correct. `@manual` |
+| LN-24 | Long names | Card with long player names | Truncate with an ellipsis rather than wrapping or pushing the score block off centre |
+| LN-25 | First set in progress | Game with no completed sets | No set pills, only the current game score |
+| LN-26 | Screen reader | VoiceOver / TalkBack on the score block | One sentence, e.g. "Marko and Ana lead 6–4, 3–2". The live dot is not announced. `@manual` |
+
+### 26.3 Loading, socket loss and ordering
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| LN-30 | Skeletons | Throttle the network and open Find | Exactly two score-card skeletons with shimmering digit blocks; the header dot is already live |
+| LN-31 | Socket loss | Kill the socket (airplane mode, or stop the backend) with the rail on screen | Each card keeps its last score and the footer switches to a small grey "Reconnecting". Nothing blanks out, no card disappears. `@manual` |
+| LN-32 | Recovery | Restore the connection | Caption clears and scores catch up — the rail refetches, because frames missed while disconnected are not replayed. `@manual` |
+| LN-33 | Your own game first | Viewer is PLAYING in one of the live games | That card is **first** on Find and carries a "You" tag |
+| LN-34 | Your season next | Viewer plays in a league season that has a live fixture | That fixture sorts ahead of unrelated live games, but after the viewer's own game. `@two-user` |
+| LN-35 | No room leaks | Navigate away from Find and back several times | No duplicate socket rooms retained — membership is ref-counted and released on unmount. `@manual` |
+| LN-36 | Out-of-order frames | Replay an older socket frame after a newer one | It is dropped: only a strictly greater revision is applied, so the score never rolls backwards |
+
+### 26.4 Broadcast
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| LN-40 | Non-participant watch | Tap a card as a non-participant | The broadcast page opens and shows the live board — no "not allowed" error, no login wall |
+| LN-41 | Shared element | Watch the transition; then with reduced motion | Score block scales into the broadcast header; under reduced motion the broadcast simply appears. `@manual` |
+| LN-42 | Signed-out link | Copy the `?matchId=…&spectatorToken=…` URL into a signed-out browser | The board still loads |
+| LN-43 | Spectator strip | Look at the strip | Back, `Live · Padel Centar · court 3`, and an overflow button. Back returns to the game page, not out of the app |
+| LN-44 | Follow from overflow | Open the overflow → tap a player | Every player from both sides is listed; tapping one gives a success toast, turns the row into a checkmark and adds the player to the viewer's following list |
+| LN-45 | Follow failure | Tap a player already followed, or follow with the network off | Error toast; the row does not falsely claim success |
+| LN-46 | Participant has no strip | Participant opens their own game's broadcast from the game page (no token) | No spectator strip |
+| LN-47 | Rail privacy | Private game; game with **Show on Live now** off; game whose results are FINAL | None of them ever appear on the rail, and the spectator endpoint answers a plain 404 so it cannot be used to probe whether a private game exists |
+
+### 26.5 Home rail
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| LN-50 | Suppressed by your own day | Viewer has a game today (their own city day) while the city has live games | Home shows **no** live rail |
+| LN-51 | Shown on an empty day | Viewer has no game today and the city has live games | Rail immediately after the action grid, with the softer header "Live in Belgrade" and at most 3 cards |
+| LN-52 | See all | Tap **See all on Find** | Lands on Find with the rail visible. The Find rail has no such link |
+| LN-53 | City day, not device day | Game at 00:30 local while the device is in another timezone | Suppression is computed in the viewer's *city* day. `@manual` |
+
+---
+
+## 27. Club page (`/clubs/:id`)
+
+No feature flag. The page is **guest-readable**: it is not wrapped in `ProtectedRoute` and it is on the offline-gate exception list, so run every case **signed out** as well as signed in.
+
+### 27.1 Entry points and routing
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| CLB-01 | From game details | Game details → chevron beside the club name in the location row | `/clubs/<id>` opens; the game is still behind it in history and Back returns to it |
+| CLB-02 | From the club picker | Create-game → club picker → select a club | **Open club page** row at the top of the detail panel; tapping it closes the picker and lands on the club page |
+| CLB-03 | From Find filters | Find → advanced filters → a club chip's trailing chevron | Opens the club page; tapping the chip **body** still toggles the filter and does not navigate (`F-CLB-01`) |
+| CLB-04 | Deep link | Paste `https://bandeja.me/clubs/<id>` into Telegram and open it with the app installed | The app opens directly on the club page, not the home tab. `@manual` |
+| CLB-05 | Signed out | Open `/clubs/<id>` in a signed-out browser | Page renders in full — no login wall, no redirect |
+| CLB-06 | Unknown club | Open `/clubs/does-not-exist` | "This club isn't available" with a **Browse clubs** button landing on Find |
+| CLB-07 | Deactivated club | Open a deactivated club's link | Same not-available empty state, never a stale page |
+
+### 27.2 Hero and sticky header
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| CLB-10 | Photo gallery | Club with several photos; swipe | First photo full-bleed edge to edge with page dots; the gallery snaps photo to photo and the active dot widens |
+| CLB-11 | Gallery keyboard | Tab into it → ArrowRight / ArrowLeft, Home, End | Pages one photo at a time and stops at each end; Home/End jump to first and last |
+| CLB-12 | Gallery a11y | VoiceOver / TalkBack | Announced as a labelled region ("Photos of &lt;club&gt;"); page changes announce "Photo 2 of 5". `@manual` |
+| CLB-13 | No photos | Club with none | Gradient hero, no dots, no empty image frame; name and rating still legible |
+| CLB-14 | Avatar ring | Look at the club avatar | Overlaps the bottom edge of the hero with a ring that reads against both a light and a dark photo |
+| CLB-15 | Rating | Club with reviews in `en` then `ru`/`es`/`cs`; then a club with none | Stars **and** text ("4.6 · 38 reviews"), localised (`4,6`); with no reviews, "No reviews yet" and no stars |
+| CLB-16 | Premium stars | Signed in as a premium member, then as a standard user | Gold stars vs amber/white. `@manual` |
+| CLB-17 | Lazy images | Slow 3G | Only the first photo is eager; the rest load as they scroll in. The page paints before the occupancy strip and the games list arrive. `@manual` |
+| CLB-20 | Sticky bar | Scroll down ~200 px, then back to the top | Hero collapses into a compact sticky bar with back, club name and the favourite heart; scrolling back fades it out and it is no longer focusable |
+| CLB-21 | Hidden bar is untabbable | Tab while the bar is hidden | Focus never lands on its buttons |
+| CLB-22 | Parallax | Scroll slowly | Hero image drifts at roughly a third of the page's speed |
+| CLB-23 | Reduced motion | `prefers-reduced-motion: reduce` | No parallax; sections appear fully formed with no 12 px lift; the favourite heart changes state without the bounce. The sticky header still appears and disappears. `@manual` |
+| CLB-24 | Reveal once | Scroll past a section twice | It reveals once, with a 12 px lift, and does not re-animate |
+
+### 27.3 Actions and today at a glance
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| CLB-30 | Actions, no integration | Signed in, club with no booking integration | Three buttons: **Create game here** (primary), **Directions**, and no **Book** |
+| CLB-31 | Actions with booking | Signed in, club with a booking integration | **Book** appears between Create and Directions |
+| CLB-32 | Create here | Tap **Create game here** | The create-game wizard opens with this club preselected |
+| CLB-33 | Directions | Tap **Directions** | The OS maps app opens at the club's coordinates, or its address when it has none. `@manual` |
+| CLB-34 | Manage | Signed in as a club admin of this club; then as a non-admin who favourited it | A fourth **Manage** button opening `/my-clubs`; the non-admin never sees it |
+| CLB-35 | Signed-out actions | Signed out, tap **Create game here** or **Book** | Goes to login; after signing in the app returns to `/clubs/<id>` |
+| CLB-36 | Button sizing | 320 px-wide phone | Every action button ≥44 px tall and its label truncates rather than wrapping to two lines |
+| CLB-40 | Occupancy strip | Club with a booking integration and a fresh snapshot | Horizontal strip of court chips, each with a green/grey hour bar and an "n hours free" caption |
+| CLB-41 | No integration, no strip | Club with no integration | No strip at all, and no request for it in the network log |
+| CLB-42 | Snapshot age | Club with a snapshot timestamp, then one without | "Updated 2 minutes ago" caption (localised relative time) / no caption |
+| CLB-43 | Chip → create | Tap a court chip | Create-game opens with **club, court and date** prefilled for today |
+| CLB-44 | Signed-out chip | Signed out, tap a court chip | Goes to login and returns here afterwards |
+| CLB-45 | Not colour-only | Read a chip and its accessible label | Free/busy is stated in text ("3 hours free"); the label reads "&lt;court&gt;, 3 of 14 hours free today" |
+| CLB-46 | Hard blocks only | A game booked at the club vs a game without a booked court | Only the booked one paints its hour grey |
+| CLB-47 | Endpoint failure | Force the snapshot endpoint to 500 | The strip is simply absent; the rest of the page is unaffected. `@manual` |
+| CLB-48 | NSPadel | NSPadel club | Strip built from games and club holds only — never a request to the club's Supabase URL. Verify in the network log. `@manual` |
+
+### 27.4 Games, courts, info, regulars, reviews
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| CLB-50 | Upcoming games | Club with public games | `GameCard`s grouped under day headings, nearest day first, at most 10 cards |
+| CLB-51 | See all on Find | Club with more than 10 upcoming games → tap **See all on Find** | Opens `/find?clubIds=<id>` with the club filter applied and the filters panel open |
+| CLB-52 | Direct `clubIds` link | Land on `/find?clubIds=<id>`; then navigate to a plain `/find` | The filter is applied; a plain `/find` afterwards does **not** wipe a club filter the player set by hand |
+| CLB-53 | No games | Club with no public games | "No public games yet" with a create action |
+| CLB-54 | Signed-out games | Signed out | The list still renders; join buttons behave like the rest of the signed-out app |
+| CLB-55 | Private game visibility | Private game the viewer is in | Appears for that viewer and for nobody else. `@two-user` |
+| CLB-56 | Other city | Viewer whose current city differs from the club's | Still sees the club's games |
+| CLB-60 | Courts grid | Open Courts | Name, an indoor/outdoor icon **and** the word, the surface and the sport; accessible label "Court 3, Indoor, Artificial grass, Padel" |
+| CLB-61 | Camera glyph | Court with a `webCameraUrl` vs one without | Camera glyph only on the first |
+| CLB-62 | Info rows | Open Info | Mini map, address, phone, website and email as tappable rows, each ≥44 px; a missing field simply omits its row |
+| CLB-63 | Opening hours | Read the hours | One honest "Open 08:00 – 23:00 / same hours every day" line. There is **no** invented per-weekday table |
+| CLB-64 | Amenities | Compare with the club picker's detail panel | Same amenities, as chips |
+| CLB-65 | Cancellation policy | Tap the policy header | Collapsed by default; expands with a rotating chevron; the control reports `aria-expanded` |
+| CLB-66 | Regulars | Open Regulars; tap a face | Up to 8 faces; tapping one opens the normal player card |
+| CLB-67 | Blocks honoured | Block a player who plays at this club, reload | That player is gone from the row and the row is still full. `@two-user` |
+| CLB-68 | No regulars | Club with no recent games | No regulars row at all |
+| CLB-69 | Reviews | Signed in with an eligible game at this club, then without one, then signed out | **Write a review** / reviews only / a sign-in prompt that returns to the club page |
+
+### 27.5 Share, offline, themes and the payload boundary
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| CLB-70 | Share | Tap **Share** | Offers `https://bandeja.me/clubs/<id>` — the public web origin, never `localhost` or a deep-link scheme |
+| CLB-71 | Offline, cached | Open the page, go offline, reopen it | Cached page renders with the offline banner on top; no error screen |
+| CLB-72 | Offline, cold | Go offline before ever opening the page | Not-available empty state, not a spinner that never resolves |
+| CLB-73 | Themes | Light / Dark / Classic / Premium | Hero gradient, sticky header, free/busy bar and court tiles all keep 4.5:1 text contrast. `@manual` |
+| CLB-74 | RTL | App language العربية | Hero, sticky header, court strip and regulars row all mirror; the gallery pages in reading order; nothing clipped on the start edge. `@manual` |
+| CLB-75 | Favourite | Favourite from the club page, then open Find | The favourite-clubs filter includes it |
+| CLB-76 | Favourite offline | Favourite while offline | The heart reverts and an error toast appears |
+| CLB-80 | Projection whitelist | Inspect the `/clubs/:id/public` response in devtools | **No** `integrationConfig`, `ptMeta`, `normalizedName` or `externalCourtId`; `booking` has exactly `available` and `provider` |
+| CLB-81 | Viewer flags | Inspect the same response signed out | `isFavorite` and `isAdmin` are both `false`, never absent |
+| CLB-82 | Tampering buys nothing | Sign in as a non-admin and force `isAdmin` client-side | No Manage button renders, and `/my-clubs` is still protected server-side |
+| CLB-83 | Regulars payload | Inspect `/clubs/:id/regulars` | No play counts and no game ids. `@manual` |
+
+---
+
+## 28. Shop and collection (`/shop`)
+
+Gated on `VITE_SHOP_ENABLED` (frontend) and `SHOP_ENABLED` (backend); with either `false` the whole surface must be absent, including the request (`SH-70`). Cosmetics are bought with **coins only** — there must be no top-up, IAP or price in currency anywhere (`SH-73`).
+
+Seeding: Admin → **Goods** needs at least one active frame, one chat accent, one name colour, one premium-only item and one featured item, with asset keys matching classes in `Frontend/src/styles/collection.css`.
+
+Entry points: `PR-SH-01`–`PR-SH-04` in §13.3.
+
+### 28.1 Shop screen
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| SH-01 | Header | Open `/shop` | Title on the inline-start, balance pill pinned to the inline-end, reading as "Balance: 500 coins" to a screen reader — never a bare number |
+| SH-02 | Featured rail | Catalogue with a featured item, then with none | Rail above the chips, scrolling horizontally with snap points; with no featured item the rail is absent entirely (no empty heading) |
+| SH-03 | Category chips | Look at the chips; arrow-key between them; select one | **All · Frames · Chat · Stickers · Name colours**; arrows move; selecting filters the grid without resetting the page scroll |
+| SH-04 | Grid at 375 px | `@mobile` | Exactly two columns; names do not clip; price pill and state badge stay on one row |
+| SH-05 | Live previews | Look at each card kind | Frame drawn around **the viewer's own** avatar, chat accent on a sample bubble, name colour on the viewer's own name, sticker pack as its preview art (or three placeholder tiles when no art is uploaded) |
+| SH-06 | States read as text | Cards in each state | **Buy**, **Owned**, **Equipped**, and a padlock with **Premium** for premium-only items. Premium-only cards carry a thin gold border in Light, Dark, Classic **and** Premium |
+| SH-07 | Loading | While loading | Shimmer cards, not a spinner or a blank screen |
+| SH-08 | Empty catalogue | Deactivate every item in Admin | "The shop opens soon" with the mascot empty-state card and no grid |
+| SH-09 | Network failure | Kill the network and reload | Error card with a **Retry** button that refetches. `@manual` |
+
+### 28.2 Item sheet and purchase
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| SH-20 | Sheet | Tap a card | Bottom sheet with the item name, the rotating preview, the description, the price and the primary action |
+| SH-21 | Preview rotation | Watch the preview | Rotates **profile → player row → chat bubble** every 2 s with a crossfade; the dots track the current context |
+| SH-22 | Pause | Tap **Pause**, then again | Rotation freezes and the control flips to **Play** with `aria-pressed` following; tapping again resumes |
+| SH-23 | Reduced motion | OS Reduce motion on | No rotation, profile context only, and the pause control is not rendered. `@manual` |
+| SH-24 | Preview alt text | Screen reader on the preview | "Neon Frame, shown on your profile picture" |
+| SH-25 | Affordable | Enough coins | Primary reads **Buy for 120 coins** |
+| SH-26 | Too few coins | Not enough coins | Button disabled, reading **Need 40 more coins**; a **How do I earn coins?** link expands a line naming bets, transfers and referral rewards, and states that coins can never be bought with money |
+| SH-27 | Premium-only | Premium-only item, non-premium viewer | **Premium members only** badge and a disabled button; there is no way to reach the confirm dialog |
+| SH-28 | Owned / equipped | After buying; then after equipping | Primary becomes **Equip**, then **Unequip** |
+| SH-29 | Sheet chrome | Software keyboard up; then Android back | Actions sit above `--overlay-bottom-inset`; back closes the sheet, not the page |
+| SH-30 | Confirm dialog | Tap **Buy for 120 coins** | Compact dialog "Buy Neon Frame for 120 coins?" with **Balance after: 380** and **Confirm** / **Cancel** |
+| SH-31 | Cancel | Tap Cancel | Dialog closes and nothing is spent; the balance pill is unchanged |
+| SH-32 | Confirm | Tap Confirm | A 500 ms shine sweep crosses the preview, the button morphs to **Equip**, a toast reads "Added to your collection", and the balance **counts down** |
+| SH-33 | Reduced motion | Reduce motion on | No shine; the balance jumps straight to the new value. `@manual` |
+| SH-34 | Double buy race | Buy the same item from two devices at once | Exactly one purchase succeeds; the loser sees "You already own this item." inline **inside the still-open dialog**, and the balance shown is the true one (re-fetched). `@two-user` |
+| SH-35 | Mid-tap failure | Stop the backend mid-tap | The dialog stays open with an inline error and the coin balance is re-read. No coins are lost — coins spent and item granted are the same write, and the conditional wallet decrement is what authorises the spend, so a concurrent purchase can never overdraw. `@manual` |
+| SH-36 | Wallet row | Wallet → Transactions | The purchase appears as a **PURCHASE** row carrying the item name |
+
+### 28.3 Collection and where items show
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| SH-40 | Collection block | Profile → Appearance | **Collection** block below Currency, with owned items as small tiles and a **Get more styles** link |
+| SH-41 | Nothing owned | Empty collection | "Nothing yet. Pick up a frame or a colour in the shop." |
+| SH-42 | Equip | Tap a tile | Check appears on the tile, `aria-pressed` becomes `true`, and the profile avatar above gains the frame **immediately** without a reload |
+| SH-43 | One per kind | Equip a second frame | The first unequips — only ever one tile per kind is checked |
+| SH-44 | Unequip | Tap the equipped tile again | Unequips; the avatar returns to plain |
+| SH-45 | Gift sparkle | Receive a gift from another player, open the block twice | Sparkle the first time, none on later opens. `@two-user` |
+| SH-46 | Tile a11y | Measure and read a tile | ≥44 px; accessible name "&lt;item&gt;. Equipped" or "&lt;item&gt;. Tap to equip" |
+| SH-50 | Frame everywhere | Equip a frame | Rings the viewer's avatar on profile, the player card, game roster rows, chat avatars (thinner ring on the small variant) and leaderboard rows |
+| SH-51 | Visible to others | Another player's equipped frame and name colour | Visible to everybody; updates for a viewer after a refresh. `@two-user` |
+| SH-52 | Premium beats a bought colour | Equipped name colour on a member showing premium status | The gold glow wins — a bought colour must not imitate membership |
+| SH-53 | Chat accent is private | Equipped chat accent, both sides of a conversation | Tints **only the owner's own outgoing bubbles, in the owner's own session**; the other side sees standard bubbles. `@two-user` |
+| SH-54 | Sticker pack gating | Sticker picker before and after buying a gated pack | The pack is absent before purchase — not a greyed-out paywall — and present after |
+| SH-55 | RTL | App language العربية | Frame ring, balance pill, price pills, shine sweep and sheet actions all mirror. `@manual` |
+
+### 28.4 Gifting, admin and flags
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| SH-60 | Gift picker | Item sheet → **Gift to a friend**; type to filter | Lists **followers first**, then people the viewer follows; typing filters locally with no request per keystroke |
+| SH-61 | Gift confirm | Pick a friend | "Gift Neon Frame to Ana for 120 coins?"; Confirm charges the **giver** |
+| SH-62 | Gift lands | Recipient checks their Collection | Push "Ana sent you a gift 🎁" and the item is in their Collection; the giver does **not** own a copy. `@two-user` |
+| SH-63 | Already owned | Gift an item the recipient already owns | Clear inline error; nothing is spent |
+| SH-64 | Admin create | Admin → **Goods**: create an item (kind, name, asset key, price, flags), reopen it, upload preview art, edit the price | The item appears in the shop and the price change is reflected. `@manual` |
+| SH-65 | Withdraw refunds once | Admin → **Goods** → **Withdraw** on an item with owners | "Refund 120 coins to 37 owners (4440 coins in total)…"; confirming refunds every owner exactly once, removes the item from their collections and clears it from their profiles. Running Withdraw again refunds nobody. `@manual` |
+| SH-66 | Re-buy after re-activation | Refund an owner via Withdraw, re-activate the item, let that owner buy it again, then Withdraw again | They are refunded a second time — idempotency is per ownership instance, not per `(user, item)` lifetime. `@manual` |
+| SH-70 | Flag off | `VITE_SHOP_ENABLED=false` | No Wallet button, no Collection block, no `/shop` content, and **no request**. `@manual` |
+| SH-72 | Goods API is admin-only | Non-admin account calling any `/api/goods` route | **403** for create, edit, delete, withdraw and list alike. Player-facing reads live on `/api/shop`. `@manual` |
+| SH-73 | Coins stay non-purchasable | Search the whole shop surface | No top-up, no IAP, no price in currency anywhere. `@manual` |
+
+---
+
+## 29. Referrals
+
+No feature flag. Referrals ride the existing link-to-app attribution row (§18.6), so the **first-touch** rule is inherited verbatim: whoever brought the user is decided at first touch and never overwritten. The cap (50 rewarded invites) and the 7-day window are the only other gates. Profile card: `PR-RF-01`–`PR-RF-08` in §13.3. Payout pushes: `PN-RF-01`–`PN-RF-03` in §18.8.
+
+### 29.1 Landing page capture
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| RF-01 | Invited-by chip | Open `https://bandeja.me/link-to-app/?ref=BNDJ-7K2Q` on iOS Safari | "Invited by Marko" chip above the store buttons with the referrer's avatar (or initial). The store buttons are unchanged and are never blocked by the chip request |
+| RF-02 | Unknown code | Same URL with a code that does not exist | **No chip**, no error, store buttons normal. `@manual` |
+| RF-03 | Invalid alphabet | `?ref=BNDJ-7K2O` (an `O`, not in the alphabet) | No chip, and `localStorage['bandeja.attribution'].ref` stays `null`. The code is rejected, never "corrected" — the alphabet excludes `0`, `O`, `1` and `I`, so a code containing one is a typo, not a near-miss |
+| RF-04 | First touch wins | Open with `?ref=BNDJ-7K2Q`, then again with `?ref=AAAA-2222` | Stored `ref` is still `BNDJ7K2Q` |
+| RF-05 | Store redirect carries it | Tap a store button | `/api/public/link-to-app/go/<choice>` carries both `aid=` and `ref=BNDJ-7K2Q`; the clipboard still holds `bandeja-aid:<aid>` |
+| RF-06 | Auto-redirect platforms | Android / desktop | The page auto-redirects after ~500 ms so the chip may only flash; the redirect target must still carry `ref`. `@manual` |
+
+### 29.2 Registration and the 7-day window
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| RF-10 | Captured referral banner | Arrive from a referral link, open Register | A quiet banner with the referrer's avatar and "You'll get 25 coins after your first game". No code field is offered |
+| RF-11 | Referrer sees the join | Complete registration → referrer opens Profile → Invite friends | The new account shows as **Joined** (sky chip), not **Played** |
+| RF-12 | Manual code entry | Arrive with no referral, open Register → tap "Have a code?" | A collapsed text link first, then a monospace, uppercase field |
+| RF-13 | Input masking | Type `bndj7k2q`; then type `0`, `O`, `1`, `I` | Renders `BNDJ-7K2Q` with the dash inserted after the 4th character; the excluded characters produce nothing at all |
+| RF-14 | Debounced lookup | Stop typing a valid code | After ~300 ms a spinner, then a green check and "Invited by Marko". Only one request fires per pause, and a slow earlier response never overwrites a newer one |
+| RF-15 | Non-existent code | Type a complete but unknown code | Red field error "That code isn't valid" |
+| RF-16 | Own code | Type your own code while signed in on the Welcome step | "You can't use your own code", shown instantly with **no** network request |
+| RF-17 | Banner on Welcome | Register with a referral, then open the onboarding Welcome step | The same banner appears there (`ON-24`) |
+| RF-20 | Inside the window | Account created 6 days ago with no referrer | "Have a code?" is offered and a valid code is accepted |
+| RF-21 | Outside the window | Account created 8 days ago with no referrer | The field is **gone**, replaced by "Referral codes can be added within 7 days of joining". The window is enforced on the attach path too, not only on manual entry. `@manual` (needs a back-dated `User.createdAt`) |
+| RF-22 | Already referred | Account that already has a referrer | Neither the field nor the caption; only the "Invited by …" banner |
+
+### 29.3 Your invites and inviting into a game
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| RF-30 | Empty list | No invites | "No invites yet. Your first friend is one tap away." |
+| RF-31 | Pending | A link opened but never signed up | Row reading **Pending** with an **Invited** (grey) chip |
+| RF-32 | Joined | Signed up but has not played | Their name with a **Joined** (sky) chip |
+| RF-33 | Played | After their first finished game | **Played · +50** (green) |
+| RF-34 | Never colour-only | Greyscale screenshot of the list | Every chip carries text |
+| RF-35 | RTL | App language العربية | List, chips and card illustration mirror; nothing overlaps and no element is pinned to the wrong edge |
+| RF-40 | Invite into a game | Game details → share icon | The sheet includes **Invite a friend to this game** |
+| RF-41 | Game invite URL | Tap it | The shared URL is the game URL plus `?ref=<your code>`; the sheet closes after a successful share or copy |
+| RF-42 | Signed-out capture | Open that URL in a signed-out browser and register from there | The game page loads, the referral is captured and the referrer is attached |
+| RF-43 | Signed out has no code | Signed out, open a game share sheet | The invite option is **not** rendered; the plain copy field still works |
+| RF-44 | Empties use the referral link | Home / player-list "Invite a friend to Bandeja" empties | The same share action, with the referral link rather than the bare marketing URL |
+| RF-45 | Telegram `/invite` | `/invite` in a private chat, then in a group | Private: the personal link, the code in a monospace span and the two amounts. Group: no personal link. `@manual` |
+| RF-46 | Telegram menu | `/` command menu | Lists `invite` with a localized description. `@manual` |
+
+### 29.4 The reward moment, abuse and Admin
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| RF-50 | Wallet row copy | Open the Wallet after a payout | The row reads "Referral bonus" in the active language, never the raw `REFERRAL` |
+| RF-51 | No confetti | Watch the payout moment | None anywhere |
+| RF-52 | Reduced motion | Reduce Motion on | The row shows the tint and the balance its final value immediately — no transition, no count-up. `@manual` |
+| RF-53 | Re-finalize pays once | Re-enter the same game's results so it re-finalizes | **No** second payout, no second push, both balances unchanged. `@two-user` |
+| RF-54 | List updates | Check the referrer's invites list | B now shows as **Played · +50** |
+| RF-55 | Wallet themes | Light / Dark / Classic / Premium | The highlighted row is legible in all four and the tint never swallows the amount |
+| RF-60 | Own code refused | Enter your own code | "You can't use your own code" |
+| RF-61 | Shared device | Two accounts on the same device (same push registration) | The code is refused with "That code can't be used from this device"; no `ReferralReward` row is created. The abuse rules are evaluated twice — at attach and again immediately before the coins move. `@two-user` |
+| RF-62 | One message for every overlap | Try a shared phone, a shared Telegram id and a shared push token | All identity overlaps collapse to the same user-facing message — naming the matched signal would confirm a second account exists |
+| RF-63 | Cap reached | Referrer at 50 rewarded invites | Card shows "You've reached 50 rewarded invites. Keep inviting, no more coins" **and the Share invite button is still enabled** |
+| RF-64 | Past the cap | An invite created past the cap | Still appears as Joined/Played in the list, but with no `+50` |
+| RF-65 | Admin table | Admin → Referrals | Referrer, code, invited, joined, played, rewarded, coins and last join. Date filters narrow by **invite** date, not payout date |
+| RF-66 | Admin export | Admin → Referrals → Export CSV | `referrals.csv` downloads with the same rows as on screen, honouring the active filters |
+| RF-67 | Revoke | Admin → Referrals → Payouts → Revoke | The row flips to "Revoked", the referrer's rewarded count drops by one and their cap slot is freed. Coins already granted are **not** clawed back |
+| RF-68 | Public endpoint projection | `GET /api/public/referral/<code>` in a browser | Exactly `found`, `firstName` and `avatar`. No id, no last name, no phone, no city |
+| RF-69 | Rate limit | Hammer that endpoint | 429 rather than answering indefinitely |
+
+---
+
+## 30. Telegram bot commands
+
+Everything in this section is `@manual`: it needs a real bot, a real Telegram client and — for the group cases — a real group wired to a `City.telegramGroupId`. `@two-user` is marked where a second human is also required.
+
+### 30.1 Command menu
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| TG-01 | Menu contents | Private chat → tap `/` | Lists `play`, `live`, `games`, `my`, `login`, `auth`, `start`, each with a description |
+| TG-02 | Localized menu | Switch the Telegram client language to `ru`, then `ar`, then `ja` | Descriptions follow the client language in all three |
+| TG-03 | Survives a restart | Restart the backend and reopen the menu | Re-registered and still complete — `setMyCommands` replaces the whole list per scope, so a missing command means it was dropped from the registration module |
+
+### 30.2 `/play`
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| TG-10 | Day question | Linked user with a home city and a chosen sport sends `/play` | One message: "When do you want to play? 🎾" with a single row **Today · Tomorrow · {Weekday}**, the third being the real weekday name two days out, in the user's language |
+| TG-11 | Time question | Tap **Tomorrow** | The **same message** is edited in place (no new message) to "Tomorrow · what time?" with a 2×2 keyboard **Anytime · Morning / Afternoon · Evening** and a **← Back** row |
+| TG-12 | Back | Tap **← Back** | The same message returns to the day question |
+| TG-13 | Confirmation | Tap **Evening** | The message becomes "✅ You're looking to play", "🎾 Padel · Belgrade", "📅 Tomorrow · Evening", the "we'll message you" line, and **Open in app** / **Stop looking** |
+| TG-14 | Intent really exists | Check the app's Looking surface | An OPEN intent with tomorrow's date key and the EVENING period, in the user's home city and primary sport |
+| TG-15 | No duplicate intent | Send `/play` again | The confirmation block for the **existing** intent; no second intent |
+| TG-16 | Stop looking | Tap **Stop looking** | Message edits to "Stopped looking" with a **Look again** button; the intent is cancelled in the app |
+| TG-17 | Look again | Tap **Look again** | The day question returns in the same message and the flow can be completed again |
+| TG-18 | Idempotent cancel | Tap **Stop looking** twice quickly, or after cancelling in the app | Still edits to "Stopped looking"; no error toast, no stuck spinner |
+| TG-19 | Open in app | Tap **Open in app**, signed in and signed out | Opens the play-intent surface; the login hop still lands there |
+| TG-20 | Callbacks always answered | Tap any button | The button never spins indefinitely |
+| TG-21 | Unlinked account | `/play` from an account not linked to Bandeja | The standard login-link message (the same one `/login` sends), not a play keyboard |
+| TG-22 | No city | Linked user with no home city | "Set your city in the app first." with an **Open profile** button |
+| TG-23 | No chosen sport | Linked user who never chose a primary sport | The same guidance |
+| TG-24 | Stale button | Tap a day/time button from an older message in either of the two cases above | An alert with the same guidance rather than a crash |
+| TG-25 | Rate limit | Send `/play` 15 times in a minute | The first 10 answer, the rest are silently dropped, and the bot recovers a minute later |
+| TG-30 | Group card | `/play` in a group wired to a city | "🎾 Marko is looking to play … in Belgrade" with **I'm in too** and **Open app** |
+| TG-31 | Per-user 6 h limit | `/play` again in the same group within 6 h | "You already posted here recently." and **no** second card |
+| TG-32 | Limit is per user | A different member sends `/play` in the same group | Their card posts. `@two-user` |
+| TG-33 | I'm in too | Another member taps **I'm in too** | Callback answer plus a private confirmation block with **Stop looking**; their intent matches the poster's day and time window. `@two-user` |
+| TG-34 | Never opened a DM | A member who has never opened a chat with the bot taps **I'm in too** | The callback answer still confirms and the intent is still created; the failed DM does not crash. `@two-user` |
+| TG-35 | Tapper with no city | A member without a home city taps **I'm in too** | Alert with the city guidance; no intent created. `@two-user` |
+| TG-36 | Markdown-safe names | A poster whose name contains `*` or `_` | The message renders as plain text, not broken bold/italic |
+| TG-37 | Group with no city | `/play` in a group not wired to a city | Still works for a linked poster, using that poster's own home city |
+
+### 30.3 `/live`
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| TG-40 | Live list | With a public game being scored in the user's city, send `/live` privately | Header "🔴 Live now in Belgrade", then one block per game: club · court / `Marko / Ana  6-4 3-2  Luka / Ivan` / "Started 23 min ago", and a footer "Updated just now · /live to refresh" |
+| TG-41 | Monospace alignment | Compare two blocks | The score is monospace and the columns line up |
+| TG-42 | Watch button | Tap a block's **Watch** button, including from a signed-out browser | The broadcast page opens and the live board renders |
+| TG-43 | Long names | Names longer than 12 characters | Truncated with an ellipsis; the line does not wrap |
+| TG-44 | Nothing live | No live game | "Nothing live right now. /games shows what's coming up." and no buttons |
+| TG-45 | Cap | Six or more live games | At most five blocks |
+| TG-46 | Privacy | A private live game, and a live game with **Show on Live now** off | Neither ever appears — `/live` reads the same predicate as the in-app rail (§26) |
+| TG-47 | Group | `/live` in a group wired to a city | The same reply for that group's city, with no personalisation |
+| TG-48 | No city | `/live` in a group not wired to a city, and privately as a user with no home city | "Set your city in the app first." in both |
+| TG-49 | Localization | Repeat TG-40 with the client language set to `ru`, `ar` and `ja` | Header, "Started …", footer, empty state and the Watch label are all translated, and the message renders (no Markdown parse error) |
+| TG-50 | Rate limit | Send `/live` 15 times in a minute | The first 10 answer, the rest are dropped |
+
+---
+
+## 31. References
 
 - Routes: `Frontend/src/App.tsx`
 - URL schema & overlays: `Frontend/src/utils/urlSchema.ts`
@@ -2261,3 +3295,26 @@ Playwright project `two-user` runs specs under `Frontend/e2e/specs/two-user/` ta
 - In create-game, edit-game location/time, and league fixture editing, open the club selector → information button → choose a free slot. The selector closes; the same form retains its other edits and receives the club, court, calendar date, start time, and duration. Try another club/city and another day, including a device in a different timezone.
 - Expand an existing booking (also one within an adjacent group). Check “Link to this game”, Delete, and Verify. Linking closes the selector and stages that booking and its schedule. Canceling the parent form must not create a link. Saving creates the link; replacing existing links uses the unlink confirmation without canceling the external reservation.
 - Check ordinary club-info browsing still opens create-game for a free slot and retains generic booking actions. Sport-specific game pickers must not offer another sport’s courts.
+
+### Weltner saved-phone booking
+
+| ID | Scenario | Steps | Expected |
+|----|----------|-------|----------|
+| WT-01 | Connect/update phone | Configure a WELTNER club with mapped court slugs; choose Book a court; enter international phone; then change it in Connected clubs | Phone saved for this user and this club; no OTP or provider-account claim; new booking uses updated phone and profile name |
+| WT-02 | Phone isolation | Connect club A as player A; view club B or sign in as player B | No inherited connection or exposed phone; anonymous users cannot save contacts or reserve |
+| WT-03 | Exact availability | Switch date, court, 60/90/120/180 minute durations; choose multiple courts | Only returned tuples offered; multiple courts require matching starts; slow old responses cannot replace the new date; failure never creates free slots |
+| WT-04 | Midnight/timezone | Book a returned 22:00 +120-minute slot from a device in another timezone | Correct club date/time; stored end is next local day 00:00; selected court slug preserved |
+| WT-05 | Create/edit game | Save phone, select a slot, confirm once using a mocked or club-approved test upstream | Backend sends exactly one mapped request; confirmed receipt linked to game; correct provider, court and UTC interval |
+| WT-06 | Failed game save | Weltner succeeds; game save fails; retry or reopen from Settings → Bookings | Confirmation says court remains booked; retry reuses receipt; existing-reservation picker can link it without another upstream POST |
+| WT-07 | Unknown outcome | Drop response after upstream submission; repeat same booking | Uncertain outcome and contact-club guidance; no automatic rebooking; receipt visible in Settings; cannot be linked as confirmed |
+| WT-08 | Partial multi-court booking | First court confirms, second rejects | First remains booked; confirmed count shown; retry reuses first receipt; no cancellation claim |
+| WT-09 | Disconnect/cancel | Remove saved phone after reserving; inspect bookings | Phone connection removed, receipts retained; cancellations/changes directed to club; no unsupported cancel/verify buttons |
+| WT-10 | Receipt ownership | Submit another player's receipt, wrong club, or altered snapshot timestamps | Foreign/wrong-club receipt rejected; valid owned receipt supplies authoritative stored court/times |
+| WT-11 | Horizon/localization | Today, today+30, today+31; English/Serbian/Russian | Inclusive 30-day limit enforced in club timezone; contact, confirmation, recovery and error copy localized |
+| WT-12 | Shared booking lists | Make a mocked confirmed booking and return to My; open club and Settings; move a receipt into the past | Upcoming/past lists include Weltner, retain provider identity, show mapped court; unknown receipts never appear as confirmed |
+| WT-13 | Receipt refresh and user switch | Keep My mounted, complete another reservation; log into a different account connected to the same club | Fresh confirmed receipts appear; no other account’s cached receipts flash or persist |
+| WT-14 | Slow saved phone load | Delay auth GET and try to edit/submit | Form waits for saved phone; no late response can overwrite an edit |
+| WT-15 | Account merge | Merge an account with confirmed/unknown receipts; repeat with same-slot receipts on both accounts | IDs and outcomes preserved with new ownership; conflicting merge fails without deleting either receipt |
+| WT-16 | Linked receipt ownership | Open a game with owned confirmed Weltner receipt, then switch to another account; also test after disconnecting the saved phone | Owner sees receipt without Booktime auth; other player sees public coverage only; no upstream refresh/verify/cancel or false absent-booking cleanup |
+
+Live reservation creation requires a designated test slot or club test environment; routine regression tests mock Weltner and never reserve real inventory.

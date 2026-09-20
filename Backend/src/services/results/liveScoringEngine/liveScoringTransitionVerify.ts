@@ -7,6 +7,7 @@ import {
   applyOptionalDeciderFormat,
   clearTimedClassicSetLock,
   freezeTimedClassicSetAtPartialScore,
+  freezeTimedSetAtPartialScore,
   parseLiveScoringState,
   scoreLivePoint,
   unscoreLivePoint,
@@ -149,6 +150,17 @@ function expandNeighbors(prev: LiveScoringState, rules: ScoringRules): LiveScori
 
   const fr = freezeTimedClassicSetAtPartialScore(prev, rules);
   if (fr.changed) push(fr.state);
+  // Points-row buzzer freeze (open-ended TIMED/CUSTOM, or POINTS_* with the match timer). Clients
+  // PATCH `freezeTimedSetAtPartialScore(state, rules, preset, matchTimerEnabled)`; `rules` carries the
+  // preset, and for POINTS_* presets `allowIncompleteRegularSetGames` is exactly `Boolean(matchTimerEnabled)`.
+  const presetForFreeze = rules.preset === 'DERIVED' ? null : rules.preset;
+  const pointsFreeze = freezeTimedSetAtPartialScore(
+    prev,
+    rules,
+    presetForFreeze,
+    rules.allowIncompleteRegularSetGames
+  );
+  if (pointsFreeze.changed) push(pointsFreeze.state);
   const unfr = clearTimedClassicSetLock(prev);
   if (unfr.changed) push(unfr.state);
   for (const fmt of ['REGULAR_SET', 'SUPER_TIEBREAK'] as const) {

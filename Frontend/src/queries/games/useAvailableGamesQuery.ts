@@ -21,6 +21,7 @@ import {
   startAvailableGamesDayIndexContinuation,
 } from './availableGamesDayIndexContinuation';
 import { getAppUiLocaleForGameText } from '@/utils/gameText/appUiLocale';
+import { withQueryExtras } from '../trackedQueryResult';
 
 export interface AvailableGamesQueryParams {
   userId: string | undefined;
@@ -305,7 +306,9 @@ export function useAvailableGamesQuery(
     void attachAvailableGamesEnrichment(queryClient, queryKey, incoming);
   }, [queryClient, queryKey]);
 
-  return { ...query, loadMore };
+  // Not `{ ...query, loadMore }`: spreading the tracked result reads every
+  // field and makes this hook re-render on every observer tick.
+  return withQueryExtras(query, { loadMore });
 }
 
 export type { AvailableGamesPage, AvailableGamesPageMeta, Game };

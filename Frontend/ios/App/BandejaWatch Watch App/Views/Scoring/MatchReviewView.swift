@@ -23,7 +23,7 @@ struct MatchReviewView: View {
             }
             if !vm.isReadOnly {
                 if let err = vm.error {
-                    Text(err.localizedDescription)
+                    Text(WatchErrorText.message(err, lang: lang))
                         .font(.caption2)
                         .foregroundStyle(.red)
                 }

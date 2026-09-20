@@ -10,6 +10,26 @@ import { acceptUserTeamInviteFromTelegram, declineUserTeamInviteFromTelegram } f
 import { escapeMarkdown, escapeHTML, getUserLanguage } from '../utils';
 import { updateInviteTelegramMessage } from '../inviteMessageUpdate';
 import { buildMessageWithButtons, isLocalhostUrl } from '../shared/message-builder';
+import { parseAttendanceCallbackData } from '../../gameAttendance/attendanceRules';
+import { setAttendanceFromAction } from '../../gameAttendance/gameAttendance.service';
+import { GameSeriesCarryOverService } from '../../gameSeries/gameSeriesCarryOver.service';
+import { seriesT } from '../../gameSeries/gameSeriesCopy';
+import { liveT } from '../../live/liveCopy';
+import { PlayIntentService } from '../../playIntent/playIntent.service';
+import {
+  PLAY_TIME_SLOTS,
+  buildConfirmationKeyboard,
+  buildConfirmationText,
+  buildDayKeyboard,
+  buildStoppedKeyboard,
+  buildTimeKeyboard,
+  dayLabel,
+  loadPlayCommandUser,
+  parsePlayCallback,
+  summaryFromIntent,
+} from '../commands/play.command';
+import { keepAsPlannedFromAction } from '../../weather/weatherAlert.service';
+import { weatherT } from '../../weather/weatherAlertCopy';
 export function createCallbackHandler(
   pendingReplies: Map<string, PendingTelegramInput>
 ): Middleware<BotContext> {
@@ -153,6 +173,34 @@ export function createCallbackHandler(
             }
           }
         }
+      } else if (query.data.startsWith('sr:')) {
+        // PRD 345 — "Same time next week?" The id is the NEXT occurrence's game.
+        const parts = query.data.split(':');
+        if (parts.length !== 3 || (parts[2] !== 'accept' && parts[2] !== 'decline')) {
+          await ctx.answerCallbackQuery({ text: 'Invalid request', show_alert: true });
+          return;
+        }
+        const [, seriesGameId, seriesAction] = parts;
+        const seriesUser = await prisma.user.findUnique({
+          where: { telegramId: ctx.telegramId },
+          select: { id: true, language: true },
+        });
+        if (!seriesUser) {
+          await ctx.answerCallbackQuery({ text: 'Invalid request', show_alert: true });
+          return;
+        }
+        const seriesLang = getUserLanguage(seriesUser.language, ctx.from?.language_code);
+        const seriesResult =
+          seriesAction === 'accept'
+            ? await GameSeriesCarryOverService.acceptSeat(seriesUser.id, seriesGameId)
+            : await GameSeriesCarryOverService.declineSeat(seriesUser.id, seriesGameId);
+        const seriesFeedback = seriesResult.success
+          ? seriesT(
+              seriesAction === 'accept' ? 'series.seatKept' : 'series.seatReleased',
+              seriesLang,
+            )
+          : seriesT('series.promptExpired', seriesLang);
+        await ctx.answerCallbackQuery({ text: seriesFeedback, show_alert: true });
       } else if (query.data.startsWith('uti:')) {
         const parts = query.data.split(':');
         if (parts.length !== 3) {
@@ -245,6 +293,68 @@ export function createCallbackHandler(
             }
           }
         }
+      } else if (query.data.startsWith('at:')) {
+        // PRD 346 — attendance answer from the reminder message.
+        // Informative only: nothing here changes a seat or a queue position.
+        const parsed = parseAttendanceCallbackData(query.data);
+        if (!parsed) {
+          await ctx.answerCallbackQuery({ text: 'Invalid request', show_alert: true });
+          return;
+        }
+
+        const user = await prisma.user.findUnique({
+          where: { telegramId: ctx.telegramId },
+          select: { id: true, language: true },
+        });
+
+        if (!user) {
+          await ctx.answerCallbackQuery({ text: 'Unauthorized', show_alert: true });
+          return;
+        }
+
+        const lang = getUserLanguage(user.language, ctx.from?.language_code);
+        const saved = await setAttendanceFromAction(user.id, parsed.gameId, parsed.answer);
+
+        if (!saved) {
+          await ctx.answerCallbackQuery({
+            text: t('errors.attendance.notParticipant', lang),
+            show_alert: true,
+          });
+          return;
+        }
+
+        const statusText =
+          parsed.answer === 'CONFIRMED'
+            ? t('attendance.telegramConfirmed', lang)
+            : t('attendance.telegramUnsure', lang);
+
+        await ctx.answerCallbackQuery({ text: statusText });
+
+        if (query.message && 'text' in query.message && query.message.text && query.message.chat) {
+          const chat = query.message.chat;
+          if ('id' in chat && typeof chat.id === 'number') {
+            const originalMessage = query.message.text;
+            const isHTML = originalMessage.includes('<') && originalMessage.includes('>');
+            const parseMode = isHTML ? 'HTML' : 'Markdown';
+            const escapeFunction = isHTML ? escapeHTML : escapeMarkdown;
+            const cleanedMessage = originalMessage.replace(/^(✅|🤔)[^\n]*(?:\n\n?)?/s, '');
+            const updatedMessage =
+              escapeFunction(statusText) + '\n\n' + cleanedMessage.trim();
+
+            try {
+              // Keep the "View game" row, drop the two answer buttons.
+              const keptRows = (query.message.reply_markup?.inline_keyboard ?? []).filter(
+                (row) => !row.some((button) => 'callback_data' in button && typeof button.callback_data === 'string' && button.callback_data.startsWith('at:')),
+              );
+              await ctx.api.editMessageText(chat.id, query.message.message_id, updatedMessage, {
+                parse_mode: parseMode,
+                reply_markup: { inline_keyboard: keptRows },
+              });
+            } catch (editError) {
+              console.error('Failed to edit attendance reminder message:', editError);
+            }
+          }
+        }
       } else if (query.data.startsWith('sg:')) {
         const parts = query.data.split(':');
         if (parts.length !== 3) {
@@ -295,6 +405,129 @@ export function createCallbackHandler(
             text: 'Unauthorized',
             show_alert: true
           });
+        }
+      } else if (query.data.startsWith('pi:')) {
+        /*
+         * PRD 356 — the `/play` wizard. Every step edits the same message, and
+         * all the state travels in the callback data, so a bot restart between
+         * two taps cannot strand the user mid-flow.
+         */
+        const parsed = parsePlayCallback(query.data);
+        if (!parsed) {
+          await ctx.answerCallbackQuery({ text: 'Invalid request', show_alert: true });
+          return;
+        }
+
+        const playUser = await loadPlayCommandUser(ctx.telegramId);
+        if (!playUser) {
+          await ctx.answerCallbackQuery({ text: 'Unauthorized', show_alert: true });
+          return;
+        }
+
+        const playLang = getUserLanguage(playUser.language, ctx.from?.language_code);
+
+        if (!playUser.city || !playUser.primarySport) {
+          await ctx.answerCallbackQuery({
+            text: liveT('play.needCity', playLang),
+            show_alert: true,
+          });
+          return;
+        }
+        const playCity = playUser.city;
+        const playSport = playUser.primarySport;
+
+        if (parsed.kind === 'day') {
+          await ctx.answerCallbackQuery();
+          await ctx.editMessageText(
+            liveT('play.askTime', playLang, {
+              day: dayLabel(parsed.dayOffset, playLang, playCity.timezone),
+            }),
+            { reply_markup: buildTimeKeyboard(playLang, parsed.dayOffset) },
+          );
+          return;
+        }
+
+        if (parsed.kind === 'back' || parsed.kind === 'again') {
+          await ctx.answerCallbackQuery();
+          await ctx.editMessageText(liveT('play.askWhen', playLang), {
+            reply_markup: buildDayKeyboard(playLang, playCity.timezone),
+          });
+          return;
+        }
+
+        if (parsed.kind === 'time') {
+          const intent = await PlayIntentService.createOrReplace(playUser.id, {
+            cityId: playCity.id,
+            sport: playSport,
+            dayOffsets: [parsed.dayOffset],
+            timeOfDays: [PLAY_TIME_SLOTS[parsed.slot]],
+          });
+          await ctx.answerCallbackQuery();
+          await ctx.editMessageText(
+            buildConfirmationText(summaryFromIntent(intent, playCity), playLang),
+            {
+              parse_mode: 'Markdown',
+              // Fresh intent → "Cancel"; `/play` on an existing one says
+              // "Stop looking" instead (PRD 356).
+              reply_markup: buildConfirmationKeyboard(playLang, 'play.cancel'),
+            },
+          );
+          return;
+        }
+
+        if (parsed.kind === 'cancel') {
+          try {
+            await PlayIntentService.cancel(playUser.id);
+          } catch {
+            // Already cancelled, expired or consumed — the message still needs
+            // to stop claiming the user is looking.
+          }
+          await ctx.answerCallbackQuery();
+          await ctx.editMessageText(liveT('play.stoppedLooking', playLang), {
+            reply_markup: buildStoppedKeyboard(playLang),
+          });
+          return;
+        }
+
+        // parsed.kind === 'join' — the group card's "I'm in too".
+        const posterIntent = await prisma.playIntent.findUnique({
+          where: { id: parsed.intentId },
+          select: { dateKeys: true, timeOfDays: true, timeOfDay: true },
+        });
+        if (!posterIntent) {
+          await ctx.answerCallbackQuery({
+            text: liveT('play.expired', playLang),
+            show_alert: true,
+          });
+          return;
+        }
+
+        const mirroredPeriods = posterIntent.timeOfDays.length
+          ? posterIntent.timeOfDays
+          : [posterIntent.timeOfDay];
+        const joinedIntent = await PlayIntentService.createOrReplace(playUser.id, {
+          cityId: playCity.id,
+          sport: playSport,
+          // The tapper's own city timezone decides which keys are still
+          // reachable; unreachable ones are dropped by resolveDateKeys.
+          dateKeys: posterIntent.dateKeys,
+          timeOfDays: mirroredPeriods,
+        });
+
+        await ctx.answerCallbackQuery({ text: liveT('play.groupJoined', playLang) });
+        try {
+          await ctx.api.sendMessage(
+            Number(ctx.telegramId),
+            buildConfirmationText(summaryFromIntent(joinedIntent, playCity), playLang),
+            {
+              parse_mode: 'Markdown',
+              reply_markup: buildConfirmationKeyboard(playLang, 'play.cancel'),
+            },
+          );
+        } catch (dmError) {
+          // The tapper has never opened a chat with the bot; the callback
+          // toast above is the only confirmation they get.
+          console.error('Error confirming play intent privately:', dmError);
         }
       } else if (query.data.startsWith('sip:')) {
         const parts = query.data.split(':');
@@ -386,6 +619,55 @@ export function createCallbackHandler(
             });
           } catch {
             /* already answered */
+          }
+        }
+      } else if (query.data.startsWith('wx:')) {
+        // PRD 357 — "Keep as planned" from the weather alert. Suppresses the
+        // 2 h follow-up; never touches the roster, the time or the courts.
+        const parts = query.data.split(':');
+        if (parts.length !== 3 || parts[2] !== 'keep') {
+          await ctx.answerCallbackQuery({ text: 'Invalid request', show_alert: true });
+          return;
+        }
+
+        const [, weatherGameId] = parts;
+        const weatherUser = await prisma.user.findUnique({
+          where: { telegramId: ctx.telegramId },
+          select: { id: true, language: true },
+        });
+        if (!weatherUser) {
+          await ctx.answerCallbackQuery({ text: 'Unauthorized', show_alert: true });
+          return;
+        }
+
+        const weatherLang = getUserLanguage(weatherUser.language, ctx.from?.language_code);
+        const kept = await keepAsPlannedFromAction(weatherUser.id, weatherGameId);
+        await ctx.answerCallbackQuery({
+          text: weatherT(kept ? 'weather.keptAsPlanned' : 'weather.keepFailed', weatherLang),
+          show_alert: true,
+        });
+
+        if (kept && query.message && 'chat' in query.message && query.message.chat) {
+          const chat = query.message.chat;
+          if ('id' in chat && typeof chat.id === 'number') {
+            try {
+              // Drop the now-meaningless "Keep as planned" button, keep the links.
+              const keptRows = (query.message.reply_markup?.inline_keyboard ?? []).map((row) =>
+                row.filter(
+                  (button) =>
+                    !(
+                      'callback_data' in button &&
+                      typeof button.callback_data === 'string' &&
+                      button.callback_data.startsWith('wx:')
+                    ),
+                ),
+              ).filter((row) => row.length > 0);
+              await ctx.api.editMessageReplyMarkup(chat.id, query.message.message_id, {
+                reply_markup: { inline_keyboard: keptRows },
+              });
+            } catch (editError) {
+              console.error('Failed to edit weather alert message:', editError);
+            }
           }
         }
       } else if (query.data.startsWith('rm:')) {
@@ -612,6 +894,11 @@ export function createCallbackHandler(
             );
           }
         }
+      } else {
+        // Registered in bot.service.ts but not implemented here yet (or an
+        // unknown prefix). Close the spinner instead of letting grammy's
+        // catch-all show the generic error alert.
+        await ctx.answerCallbackQuery();
       }
     } catch (error) {
       console.error('Error handling callback query:', error);

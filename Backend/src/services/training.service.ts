@@ -187,6 +187,7 @@ export async function updateParticipantLevel(
             approvedLevel: true,
             approvedById: userId,
             approvedWhen: now,
+            approvedAtLevel: levelAfter,
           }
         : null;
 
@@ -211,10 +212,15 @@ export async function updateParticipantLevel(
     await ensureSportInEnabled(participantUserId, game.sport, tx);
 
   // User.approved* is a PADEL-only denormalized mirror for older clients (see docs/APP_FUNCTIONALITY.md §2.2).
+  // It has no `approvedAtLevel` column — the snapshot lives on the sport profile only.
     if (confirmationPatch && game.sport === Sport.PADEL) {
       await tx.user.update({
         where: { id: participantUserId },
-        data: confirmationPatch,
+        data: {
+          approvedLevel: confirmationPatch.approvedLevel,
+          approvedById: confirmationPatch.approvedById,
+          approvedWhen: confirmationPatch.approvedWhen,
+        },
       });
     }
 

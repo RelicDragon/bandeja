@@ -92,9 +92,15 @@ nonisolated final class KeychainHelper: @unchecked Sendable {
         return decodeUserId(from: token)
     }
 
+    /// Platform admin claim (`isAdmin`) from the access token; the backend lets it bypass results ACLs.
+    func readIsPlatformAdmin() -> Bool {
+        guard let token = readToken(), let json = Self.decodePayload(from: token) else { return false }
+        return json["isAdmin"] as? Bool ?? false
+    }
+
     // MARK: - JWT Payload Decoding
 
-    private func decodeUserId(from token: String) -> String? {
+    static func decodePayload(from token: String) -> [String: Any]? {
         let parts = token.split(separator: ".", omittingEmptySubsequences: false)
         guard parts.count == 3 else { return nil }
 
@@ -106,8 +112,25 @@ nonisolated final class KeychainHelper: @unchecked Sendable {
         if remainder != 0 { base64 += String(repeating: "=", count: 4 - remainder) }
 
         guard let data = Data(base64Encoded: base64),
-              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let userId = json["userId"] as? String else { return nil }
-        return userId
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return nil }
+        return json
+    }
+
+    /// `exp` claim as a Date, or nil when the token has none / cannot be decoded.
+    static func expiry(of token: String) -> Date? {
+        guard let json = decodePayload(from: token) else { return nil }
+        if let exp = json["exp"] as? Double { return Date(timeIntervalSince1970: exp) }
+        if let exp = json["exp"] as? Int { return Date(timeIntervalSince1970: TimeInterval(exp)) }
+        return nil
+    }
+
+    /// True when the token expires within `leeway` (or is already expired).
+    static func isExpiringSoon(_ token: String, leeway: TimeInterval = 30, now: Date = Date()) -> Bool {
+        guard let exp = expiry(of: token) else { return false }
+        return exp.timeIntervalSince(now) <= leeway
+    }
+
+    private func decodeUserId(from token: String) -> String? {
+        Self.decodePayload(from: token)?["userId"] as? String
     }
 }

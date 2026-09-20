@@ -32,6 +32,33 @@ enum WatchWinnerOfMatch: String, Sendable {
     case byScores = "BY_SCORES"
 }
 
+/// Mirror of `StrictValidationId` in `Backend/src/shared/sportPresetMeta.ts`.
+enum WatchStrictValidation: String, Sendable {
+    case none = "NONE"
+    case bwf21 = "BWF_21"
+    case bwf15 = "BWF_15"
+    case pickleballRally11 = "PICKLEBALL_RALLY_11"
+    case classicTimedRelaxed = "CLASSIC_TIMED_RELAXED"
+    case classicAutomaticRelaxed = "CLASSIC_AUTOMATIC_RELAXED"
+
+    /// `isBwfStrictValidation` in `strictValidation.ts`.
+    var isBwf: Bool { self == .bwf21 || self == .bwf15 }
+
+    /// `STRICT_BY_SPORT_PRESET` in `sportPresetMeta.ts` (sport + preset keyed; unknown → NONE).
+    static func resolve(sport: WatchSport?, preset: WatchScoringPreset?) -> WatchStrictValidation {
+        guard let sport, let preset else { return .none }
+        switch (sport, preset) {
+        case (.badminton, .bestOf3_21): return .bwf21
+        case (.badminton, .bestOf3_15): return .bwf15
+        case (.pickleball, .bestOf3_11): return .pickleballRally11
+        case (.tennis, .classicTimed), (.tennis, .classicSingleSet): return .classicTimedRelaxed
+        case (.padel, .classicAutomatic): return .classicAutomaticRelaxed
+        case (.padel, .classicTimed): return .classicTimedRelaxed
+        default: return .none
+        }
+    }
+}
+
 /// Mirror of `ScoringRules` in `Backend/src/services/results/liveScoringEngine/rulebook.ts`.
 /// Keep field semantics aligned with that file — Watch scoring logic reads from here.
 struct WatchScoringRules: Sendable, Equatable {
@@ -58,14 +85,27 @@ struct WatchScoringRules: Sendable, Equatable {
     var deucesBeforeGoldenPoint: Int?
     var allowRemoveSet: Bool
     var allowIncompleteRegularSetGames: Bool
-    /// Mirrors FE `strictValidation === 'CLASSIC_AUTOMATIC_RELAXED'`.
-    var isClassicAutomaticRelaxed: Bool
+    /// Sport + preset strict-validation id (`rulebook.ts` `strictValidation`).
+    var strictValidation: WatchStrictValidation
+
+    /// Mirrors `isClassicAutomaticRelaxedScores` (`strictValidation === 'CLASSIC_AUTOMATIC_RELAXED'`).
+    var isClassicAutomaticRelaxed: Bool { strictValidation == .classicAutomaticRelaxed }
 
     var isClassic: Bool { ballsInGames && winnerOfMatch == .bySets }
 
     func isGoldenPointActive(deuceCount: Int) -> Bool {
         guard let threshold = deucesBeforeGoldenPoint else { return false }
         return deuceCount >= threshold
+    }
+
+    /// `DEUCES_BEFORE_GOLDEN_POINT_MAX` in `Backend/src/shared/gameFormat/goldenPoint.ts`.
+    static let deucesBeforeGoldenPointMax = 4
+
+    /// `clampDeucesBeforeGoldenPoint`: nil = off; out-of-range (`< 0` or `> 4`) → nil.
+    static func clampDeucesBeforeGoldenPoint(_ raw: Int?) -> Int? {
+        guard let raw else { return nil }
+        if raw < 0 || raw > deucesBeforeGoldenPointMax { return nil }
+        return raw
     }
 
     /// Ball-budget Americano (`isPointsRules` in FE `rulebook.ts`).
@@ -161,16 +201,28 @@ enum WatchScoringRulebook {
             deucesBeforeGoldenPoint: nil,
             allowRemoveSet: allowRemoveSet,
             allowIncompleteRegularSetGames: false,
-            isClassicAutomaticRelaxed: false
+            strictValidation: .none
         )
     }
 
+    /// Preset-only skeleton (`PRESETS[preset]` in `rulebook.ts`) with PADEL strict validation
+    /// (Watch default sport). Prefer `skeleton(for:sport:)` when the sport is known.
     static func skeleton(for preset: WatchScoringPreset) -> WatchScoringRules {
+        skeleton(for: preset, sport: .padel)
+    }
+
+    /// `PRESETS[preset]` + `getStrictValidationForPreset(sport, preset)`.
+    static func skeleton(for preset: WatchScoringPreset, sport: WatchSport?) -> WatchScoringRules {
+        var r = presetSkeleton(for: preset)
+        r.strictValidation = WatchStrictValidation.resolve(sport: sport, preset: preset)
+        return r
+    }
+
+    private static func presetSkeleton(for preset: WatchScoringPreset) -> WatchScoringRules {
         switch preset {
         case .classicAutomatic:
             var r = classicBo3
             r.allowRemoveSet = true
-            r.isClassicAutomaticRelaxed = true
             return r
         case .classicBo3:
             return classicBo3
@@ -298,20 +350,23 @@ enum WatchScoringRulebook {
     /// Mirrors `getRules(game)` in `Backend/.../rulebook.ts`.
     static func rules(for game: WatchGame?) -> WatchScoringRules {
         let preset = (game?.scoringPreset).flatMap { WatchScoringPreset(rawValue: $0.uppercased()) }
-        let skeleton: WatchScoringRules = preset.map(self.skeleton(for:)) ?? derive(from: game)
-        var r = skeleton
+        // Backend keys strict validation on the raw `game.sport` (null → NONE), not a padel fallback.
+        let sport = (game?.sport).flatMap { WatchSport(rawValue: $0.uppercased()) }
+        var r: WatchScoringRules = preset.map { presetSkeleton(for: $0) } ?? derive(from: game)
         r.maxPointsPerTeam = game?.maxPointsPerTeam ?? 0
+        // `getStrictValidationForPreset` returns NONE without a preset (derived rules).
+        let strict = WatchStrictValidation.resolve(sport: sport, preset: preset)
+        r.strictValidation = strict
+        // `Boolean(game?.matchTimerEnabled)` — the raw flag, not the UI helper that also needs a cap.
         r.allowIncompleteRegularSetGames =
-            (game?.isMatchTimerEnabled ?? false) || preset == .classicTimed || preset == .classicAutomatic
-        if preset == .classicAutomatic {
-            r.isClassicAutomaticRelaxed = true
-            r.allowRemoveSet = true
-        }
+            game?.matchTimerEnabled == true
+            || preset == .classicTimed
+            || strict == .classicTimedRelaxed
+            || strict == .classicAutomaticRelaxed
         let goldenApplies = r.ballsInGames && r.winnerOfMatch == .bySets
-        if goldenApplies, let raw = game?.deucesBeforeGoldenPoint {
-            r.deucesBeforeGoldenPoint = raw
-        } else if goldenApplies, preset == .classicFast4 {
-            r.deucesBeforeGoldenPoint = 0
+        if goldenApplies {
+            let raw = game?.deucesBeforeGoldenPoint ?? (preset == .classicFast4 ? 0 : nil)
+            r.deucesBeforeGoldenPoint = WatchScoringRules.clampDeucesBeforeGoldenPoint(raw)
         } else {
             r.deucesBeforeGoldenPoint = nil
         }
@@ -333,22 +388,18 @@ enum WatchScoringRulebook {
         let winnerOfMatch = WatchWinnerOfMatch(rawValue: game?.winnerOfMatch ?? "") ?? .byScores
 
         if ballsInGames, winnerOfMatch == .bySets {
-            if fixedNumberOfSets == 5 { return skeleton(for: .classicBo5) }
-            if fixedNumberOfSets == 1 {
-                let gt = (game?.gameType ?? "").uppercased()
-                if gt.contains("SHORT") { return skeleton(for: .classicShortSet) }
-                if gt.contains("PRO") { return skeleton(for: .classicProSet) }
-                return skeleton(for: .classicSingleSet)
-            }
-            return skeleton(for: .classicBo3)
+            if fixedNumberOfSets == 5 { return presetSkeleton(for: .classicBo5) }
+            // `deriveFromGame`: one fixed set → pro set (9 games, TB at 8), no gameType heuristics.
+            if fixedNumberOfSets == 1 { return presetSkeleton(for: .classicProSet) }
+            return presetSkeleton(for: .classicBo3)
         }
         if !ballsInGames, totalPointsPerSet > 0 {
             return pointsRule(total: totalPointsPerSet)
         }
         if !ballsInGames, fixedNumberOfSets <= 1 {
-            return skeleton(for: .timed)
+            return presetSkeleton(for: .timed)
         }
-        var r = skeleton(for: .custom)
+        var r = presetSkeleton(for: .custom)
         r.fixedNumberOfSets = fixedNumberOfSets
         r.maxSetsPlayed = fixedNumberOfSets > 0 ? fixedNumberOfSets : 99
         r.totalPointsPerSet = totalPointsPerSet

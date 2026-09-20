@@ -306,7 +306,12 @@
         "EXTERNAL_PARTIAL": "Nije potpuno rezervisano",
         "MANUAL": "Teren rezervisan",
         "NONE": "Još nije rezervisano"
-      }
+      },
+      "ATTENDANCE_NUDGED": "{{userName}} je zamolio sve da potvrde dolazak",
+      "USER_NOTED_NO_SHOW": "{{userName}} je označen kao nedolazak",
+      "GAME_SPOT_OPENED": "Oslobodilo se mesto ({{userName}} je izašao)",
+      "GAME_SEAT_AUTO_FILLED": "{{userName}} je ušao iz reda čekanja",
+      "GAME_MOVED_INDOOR": "Prebačeno na {{courtName}} (zatvoren)"
     },
     "openChat": "Otvori ćaskanje",
     "chat": "Ćaskanje",

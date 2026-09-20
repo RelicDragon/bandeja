@@ -40,9 +40,16 @@ Shared ids (examples): Padel Americano 10/20/24, Mexicano 24, Challenger Pool, K
 - Date, duration, time grid
 - Level range, max participants, gender
 - Name, description, avatar
-- Price (`priceType`, currency, total)
+- Price (`priceType`, currency, total), plus a live **per-head preview** and an optional 120-char payment hint when the price type yields a game total ([economy.md](./economy.md))
+- **Repeat** row (`Once · Weekly · Every 2 weeks`) with an optional **Until** date — see below
 - Invite from Search \| Looking when time is set; browse-city chip; level filter
-- Floating summary chips when scrolled (`CreateGameSummaryBar`)
+- Floating summary chips when scrolled (`CreateGameSummaryBar`), including a **Repeat** chip while a cadence is selected
+
+#### Repeat (recurring series)
+
+The flow deliberately **creates the game first and converts it afterwards** (`POST /games/:id/series`): the create payload is untouched, every create-game validation runs exactly once, and a failure to create the series can never lose the game the organizer just made — it surfaces as a toast on an otherwise successful create.
+
+Only `GAME`, `TRAINING` and `TOURNAMENT` may recur. Events, leagues and league seasons never show the row. Gated on `VITE_GAME_SERIES_ENABLED` / `GAME_SERIES_ENABLED`; off means the row is absent and no `/series` request is made. The series model, generation and edit scope: [games.md](./games.md).
 
 ### Booking on create
 

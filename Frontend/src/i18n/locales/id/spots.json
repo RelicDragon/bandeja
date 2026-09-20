@@ -1,0 +1,30 @@
+{
+  "spots": {
+    "pill": {
+      "label": "Ada tempat",
+      "ariaLabel": "Tempat kosong {{time}}"
+    },
+    "queue": {
+      "position_other": "Kamu nomor {{position}} dari {{count}}",
+      "autoFillOn": "Isi otomatis aktif, kamu akan dimasukkan sendiri",
+      "autoFillOff": "Penyelenggara menerima manual",
+      "waitForOrganizer": "Kamu ada di antrean. Penyelenggara yang menentukan siapa mengisi tempat kosong.",
+      "tapToJoin": "Ketuk Gabung saat ada tempat kosong"
+    },
+    "settings": {
+      "autoFillTitle": "Isi otomatis dari antrean",
+      "autoFillHelper": "Orang pertama di antrean langsung masuk saat ada tempat kosong. Aturan gender dan level tetap berlaku.",
+      "queueCount_other": "{{count}} di antrean",
+      "queueEmpty": "Belum ada yang menunggu"
+    },
+    "roster": {
+      "openSpot": "Tempat kosong"
+    },
+    "toast": {
+      "joinedFromQueue": "{{name}} masuk dari antrean"
+    },
+    "seated": {
+      "banner": "Kamu masuk dari antrean"
+    }
+  }
+}

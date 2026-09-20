@@ -1,0 +1,94 @@
+{
+  "onboarding": {
+    "frame": {
+      "skip": "Skip",
+      "back": "Back",
+      "working": "Working…",
+      "progress": "Step {{current}} of {{total}}"
+    },
+    "welcome": {
+      "title": "Let's find you a game",
+      "subtitle": "Two minutes to set you up.",
+      "start": "Start",
+      "socialProof_one": "{{count}} player in {{city}}",
+      "socialProof_other": "{{count}} players in {{city}}"
+    },
+    "sport": {
+      "title": "Which sports do you play?",
+      "titleSportOnly": "Pick a sport to continue",
+      "subtitle": "Pick as many as you like. The first one becomes your main sport.",
+      "continue": "Continue",
+      "primaryTag": "Primary",
+      "makePrimary": "Make {{sport}} primary",
+      "primaryHint": "Long-press a sport to make it your main one."
+    },
+    "profile": {
+      "title": "What should we call you?",
+      "subtitle": "Your name shows up on every game you join.",
+      "continue": "Continue",
+      "photoOptional": "A photo is optional — you can add it later.",
+      "firstNameLabel": "First name",
+      "lastNameLabel": "Last name",
+      "nameRequired": "Enter your first name.",
+      "nameTooShort": "Use at least 2 characters.",
+      "nameTooLong": "Use at most 30 characters."
+    },
+    "level": {
+      "title": "Your level",
+      "subtitle": "A few quick questions about your {{sport}}.",
+      "continue": "Continue",
+      "resultTitle": "Here is your starting level",
+      "resultSubtitle": "Based on your answers about {{sport}}.",
+      "scale": "On the {{scale}} scale",
+      "adjustLater": "You can adjust this any time in Profile.",
+      "unavailable": "We do not have a level test for {{sport}} yet."
+    },
+    "city": {
+      "title": "Is this your city?",
+      "helper": "We show games and players from your city.",
+      "confirm": "Yes, that is right",
+      "change": "Change city",
+      "backToCard": "Keep my current city",
+      "unknown": "No city yet"
+    },
+    "follow": {
+      "title": "People to follow",
+      "subtitle": "Active players in your city. Follow them and your home feed fills up.",
+      "continue": "Continue",
+      "followAll": "Follow all",
+      "follow": "Follow",
+      "following": "Following",
+      "followFailed": "Could not follow that player. Try again.",
+      "gamesThisMonth_one": "{{count}} game this month",
+      "gamesThisMonth_other": "{{count}} games this month",
+      "emptyTitle": "No suggestions yet",
+      "emptyDescription": "Your city is still filling up. Come back after your first game.",
+      "unnamedPlayer": "Player"
+    },
+    "notifications": {
+      "title": "Stay in the loop",
+      "subtitle": "We only send what you would want to be interrupted for.",
+      "turnOn": "Turn on notifications",
+      "later": "Not now",
+      "reasonInvitesTitle": "Invites",
+      "reasonInvitesBody": "When somebody asks you to play.",
+      "reasonRemindersTitle": "Reminders",
+      "reasonRemindersBody": "Before a game you signed up for.",
+      "reasonSpotsTitle": "Free spots",
+      "reasonSpotsBody": "When a seat opens in a game you wanted.",
+      "controlHint": "You can change all of this in Settings."
+    },
+    "finish": {
+      "choiceTitle": "What do you want to do first?",
+      "choiceSubtitle": "Either way, you are all set.",
+      "playSoonTitle": "I want to play soon",
+      "playSoonBody": "Tell your city when you are free and let players come to you.",
+      "browseTitle": "Browse games",
+      "browseBody": "See what is already happening near you.",
+      "doneTitle": "You are set"
+    },
+    "errors": {
+      "saveFailed": "Could not save that. Check your connection and try again."
+    }
+  }
+}

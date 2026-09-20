@@ -71,6 +71,7 @@ struct FirstServePickFlow: View {
             .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
             .padding(.horizontal, 4)
         }
+        .accessibilityAddTraits(.isModal)
     }
 
     private var rotationPickSection: some View {

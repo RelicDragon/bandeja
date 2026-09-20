@@ -1,20 +1,24 @@
 import Foundation
 
+/// Watch UI copy. Supported UI languages: en (default), es, ru, sr (Cyrillic), cs.
+/// Spanish: Game (the event) = "partida"; Match (one match inside it) = "partido"; tennis game = "juego".
 enum WatchCopy {
     nonisolated static func sectionToday(_ lang: String) -> String {
         switch lang {
         case "es": return "Hoy"
         case "ru": return "Сегодня"
         case "sr": return "Данас"
+        case "cs": return "Dnes"
         default: return "Today"
         }
     }
 
     nonisolated static func sectionUpcoming(_ lang: String) -> String {
         switch lang {
-        case "es": return "Próximos"
+        case "es": return "Próximas"
         case "ru": return "Предстоящие"
         case "sr": return "Предстојећи"
+        case "cs": return "Nadcházející"
         default: return "Upcoming"
         }
     }
@@ -24,6 +28,7 @@ enum WatchCopy {
         case "es": return "Recientes"
         case "ru": return "Недавние"
         case "sr": return "Недавни"
+        case "cs": return "Nedávné"
         default: return "Recent"
         }
     }
@@ -34,18 +39,20 @@ enum WatchCopy {
 
     nonisolated static func loadingGames(_ lang: String) -> String {
         switch lang {
-        case "es": return "Cargando partidos…"
+        case "es": return "Cargando partidas…"
         case "ru": return "Загрузка игр…"
         case "sr": return "Учитавање игара…"
+        case "cs": return "Načítání her…"
         default: return "Loading games…"
         }
     }
 
     nonisolated static func noUpcomingGames(_ lang: String) -> String {
         switch lang {
-        case "es": return "No hay partidos próximos"
+        case "es": return "No hay partidas próximas"
         case "ru": return "Нет предстоящих игр"
         case "sr": return "Нема предстојећих игара"
+        case "cs": return "Žádné nadcházející hry"
         default: return "No upcoming games"
         }
     }
@@ -55,7 +62,18 @@ enum WatchCopy {
         case "es": return "Reintentar"
         case "ru": return "Повторить"
         case "sr": return "Покушај поново"
+        case "cs": return "Zkusit znovu"
         default: return "Retry"
+        }
+    }
+
+    nonisolated static func refresh(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Actualizar"
+        case "ru": return "Обновить"
+        case "sr": return "Освежи"
+        case "cs": return "Obnovit"
+        default: return "Refresh"
         }
     }
 
@@ -64,6 +82,7 @@ enum WatchCopy {
         case "es": return "Inicia sesión"
         case "ru": return "Вход"
         case "sr": return "Пријава"
+        case "cs": return "Přihlášení"
         default: return "Sign In Required"
         }
     }
@@ -73,6 +92,7 @@ enum WatchCopy {
         case "es": return "Abre Bandeja en el iPhone para iniciar sesión."
         case "ru": return "Откройте Bandeja на iPhone для входа."
         case "sr": return "Отворите Bandeja на iPhone-у за пријаву."
+        case "cs": return "Otevřete Bandeja na iPhonu a přihlaste se."
         default: return "Open Bandeja on your iPhone to sign in."
         }
     }
@@ -82,15 +102,17 @@ enum WatchCopy {
         case "es": return "Cargando…"
         case "ru": return "Загрузка…"
         case "sr": return "Учитавање…"
+        case "cs": return "Načítání…"
         default: return "Loading…"
         }
     }
 
     nonisolated static func gameTitle(_ lang: String) -> String {
         switch lang {
-        case "es": return "Partido"
+        case "es": return "Partida"
         case "ru": return "Игра"
         case "sr": return "Игра"
+        case "cs": return "Hra"
         default: return "Game"
         }
     }
@@ -100,6 +122,7 @@ enum WatchCopy {
         case "es": return "Partidos"
         case "ru": return "Матчи"
         case "sr": return "Мечеви"
+        case "cs": return "Zápasy"
         default: return "Matches"
         }
     }
@@ -109,14 +132,17 @@ enum WatchCopy {
         case "es": return "Marcador"
         case "ru": return "Счёт"
         case "sr": return "Резултат"
+        case "cs": return "Skóre"
         default: return "Scores"
         }
     }
 
     nonisolated static func roundMatch(_ lang: String, round: Int, match: Int) -> String {
         switch lang {
+        case "es": return "R\(round) · P\(match)"
         case "ru": return "Р\(round) · М\(match)"
         case "sr": return "Р\(round) · М\(match)"
+        case "cs": return "K\(round) · Z\(match)"
         default: return "R\(round) · M\(match)"
         }
     }
@@ -126,7 +152,8 @@ enum WatchCopy {
         case "es": return "Esperando a que empiece la ronda…"
         case "ru": return "Ожидание начала раунда…"
         case "sr": return "Чека се почетак рунде…"
-        default: return "Waiting for round start..."
+        case "cs": return "Čeká se na začátek kola…"
+        default: return "Waiting for round start…"
         }
     }
 
@@ -135,6 +162,7 @@ enum WatchCopy {
         case "es": return "Finalizando…"
         case "ru": return "Завершение…"
         case "sr": return "Завршавање…"
+        case "cs": return "Dokončování…"
         default: return "Finalizing…"
         }
     }
@@ -144,6 +172,7 @@ enum WatchCopy {
         case "es": return "Finalizar resultados"
         case "ru": return "Завершить результаты"
         case "sr": return "Заврши резултате"
+        case "cs": return "Dokončit výsledky"
         default: return "Finalize Results"
         }
     }
@@ -153,6 +182,7 @@ enum WatchCopy {
         case "es": return "Entreno en Salud. Sincronizando con Bandeja…"
         case "ru": return "Тренировка в «Здоровье». Синхронизация с Bandeja…"
         case "sr": return "Тренинг у Здрављу. Синхронизација са Bandeja…"
+        case "cs": return "Trénink uložen do Zdraví. Synchronizace s Bandeja…"
         default: return "Workout saved to Health. Syncing to Bandeja…"
         }
     }
@@ -162,6 +192,7 @@ enum WatchCopy {
         case "es": return "Sin conexión"
         case "ru": return "Офлайн"
         case "sr": return "Ван мреже"
+        case "cs": return "Offline"
         default: return "Offline"
         }
     }
@@ -171,16 +202,18 @@ enum WatchCopy {
         case "es": return "Puntuaciones: se enviarán al volver la conexión…"
         case "ru": return "Счёт: отправится при появлении сети…"
         case "sr": return "Резултати: шаљу се када се мрежа врати…"
+        case "cs": return "Skóre se odešle, až budete online…"
         default: return "Scores will sync when you’re back online…"
         }
     }
 
     nonisolated static func resultsRefreshFailed(_ lang: String) -> String {
         switch lang {
-        case "es": return "Resultados guardados. Desliza hacia abajo para actualizar."
-        case "ru": return "Результаты сохранены. Потяните вниз, чтобы обновить."
-        case "sr": return "Резултати сачувани. Повуци надоле за освежавање."
-        default: return "Results saved. Pull down to refresh."
+        case "es": return "Resultados guardados. Pulsa Actualizar."
+        case "ru": return "Результаты сохранены. Нажмите «Обновить»."
+        case "sr": return "Резултати сачувани. Додирните „Освежи“."
+        case "cs": return "Výsledky uloženy. Klepněte na Obnovit."
+        default: return "Results saved. Tap Refresh."
         }
     }
 
@@ -189,6 +222,7 @@ enum WatchCopy {
         case "es": return "Procesando resultados en el servidor…"
         case "ru": return "Сервер обрабатывает результаты…"
         case "sr": return "Сервер обрађује резултате…"
+        case "cs": return "Server stále zpracovává výsledky…"
         default: return "Server is still processing results…"
         }
     }
@@ -198,6 +232,7 @@ enum WatchCopy {
         case "es": return "Resultados"
         case "ru": return "Итоги"
         case "sr": return "Исходи"
+        case "cs": return "Výsledky"
         default: return "Outcomes"
         }
     }
@@ -207,6 +242,7 @@ enum WatchCopy {
         case "es": return "Partido"
         case "ru": return "Матч"
         case "sr": return "Меч"
+        case "cs": return "Zápas"
         default: return "Match"
         }
     }
@@ -216,6 +252,7 @@ enum WatchCopy {
         case "es": return "Revisar"
         case "ru": return "Проверка"
         case "sr": return "Провера"
+        case "cs": return "Kontrola"
         default: return "Review"
         }
     }
@@ -225,7 +262,58 @@ enum WatchCopy {
         case "es": return "Terminar partido"
         case "ru": return "Завершить матч"
         case "sr": return "Заврши меч"
+        case "cs": return "Ukončit zápas"
         default: return "Finish Match"
+        }
+    }
+
+    nonisolated static func leaveMatch(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Salir del partido"
+        case "ru": return "Покинуть матч"
+        case "sr": return "Напусти меч"
+        case "cs": return "Opustit zápas"
+        default: return "Leave match"
+        }
+    }
+
+    nonisolated static func leaveMatchConfirm(_ lang: String) -> String {
+        switch lang {
+        case "es": return "¿Salir sin guardar el marcador de este partido?"
+        case "ru": return "Выйти, не сохранив счёт этого матча?"
+        case "sr": return "Напустити без чувања резултата овог меча?"
+        case "cs": return "Opustit bez uložení skóre tohoto zápasu?"
+        default: return "Leave without saving this match’s score?"
+        }
+    }
+
+    nonisolated static func openGameFromWidgetTitle(_ lang: String) -> String {
+        switch lang {
+        case "es": return "¿Salir de la partida actual?"
+        case "ru": return "Покинуть текущую игру?"
+        case "sr": return "Напустити тренутну игру?"
+        case "cs": return "Opustit aktuální hru?"
+        default: return "Leave current game?"
+        }
+    }
+
+    nonisolated static func openGameFromWidgetMessage(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Se descartarán la sesión activa y el entrenamiento."
+        case "ru": return "Активная сессия и тренировка будут сброшены."
+        case "sr": return "Активна сесија и тренинг биће одбачени."
+        case "cs": return "Aktivní relace a trénink budou zahozeny."
+        default: return "Your active session and workout will be discarded."
+        }
+    }
+
+    nonisolated static func matchTimerError(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Error del temporizador del partido"
+        case "ru": return "Ошибка таймера матча"
+        case "sr": return "Грешка тајмера меча"
+        case "cs": return "Chyba časovače zápasu"
+        default: return "Match timer error"
         }
     }
 
@@ -234,6 +322,7 @@ enum WatchCopy {
         case "es": return "Pulsa Inicio en un partido"
         case "ru": return "Начните матч"
         case "sr": return "Покрени меч"
+        case "cs": return "Spusťte zápas"
         default: return "Start a match"
         }
     }
@@ -243,7 +332,18 @@ enum WatchCopy {
         case "es": return "Activa Salud para medir el entrenamiento"
         case "ru": return "Разрешите Здоровье для тренировки"
         case "sr": return "Дозволи Здравље за тренинг"
+        case "cs": return "Povolte Zdraví pro sledování tréninku"
         default: return "Allow Health to track workout"
+        }
+    }
+
+    nonisolated static func workoutHealthDeniedSettingsHint(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Ajustes › Salud › Apps › Bandeja"
+        case "ru": return "Настройки › Здоровье › Приложения › Bandeja"
+        case "sr": return "Подешавања › Здравље › Апликације › Bandeja"
+        case "cs": return "Nastavení › Zdraví › Aplikace › Bandeja"
+        default: return "Settings › Health › Apps › Bandeja"
         }
     }
 
@@ -252,15 +352,17 @@ enum WatchCopy {
         case "es": return "Entrenamiento no iniciado"
         case "ru": return "Тренировка не запущена"
         case "sr": return "Тренинг није покренут"
+        case "cs": return "Trénink nebyl spuštěn"
         default: return "Workout not started"
         }
     }
 
     nonisolated static func sessionFinishGame(_ lang: String) -> String {
         switch lang {
-        case "es": return "Finalizar"
+        case "es": return "Finalizar partida"
         case "ru": return "Завершить игру"
         case "sr": return "Заврши игру"
+        case "cs": return "Ukončit hru"
         default: return "Finish game"
         }
     }
@@ -270,6 +372,7 @@ enum WatchCopy {
         case "es": return "Salir"
         case "ru": return "Выйти"
         case "sr": return "Изађи"
+        case "cs": return "Odejít"
         default: return "Exit"
         }
     }
@@ -279,6 +382,7 @@ enum WatchCopy {
         case "es": return "Marca al menos un partido para finalizar."
         case "ru": return "Введите счёт хотя бы в одном матче."
         case "sr": return "Унесите резултат бар у једном мечу."
+        case "cs": return "Pro dokončení zadejte skóre alespoň jednoho zápasu."
         default: return "Enter at least one match score to finalize."
         }
     }
@@ -288,6 +392,7 @@ enum WatchCopy {
         case "es": return "No puedes cerrar este partido aquí."
         case "ru": return "Нельзя завершить этот матч здесь."
         case "sr": return "Не можете завршити овај меч овде."
+        case "cs": return "Tento zápas zde nelze ukončit."
         default: return "You can’t finish this match here."
         }
     }
@@ -297,6 +402,7 @@ enum WatchCopy {
         case "es": return "Volver al marcador"
         case "ru": return "Назад к счёту"
         case "sr": return "Назад на бодовање"
+        case "cs": return "Zpět ke skóre"
         default: return "Back to Scoring"
         }
     }
@@ -306,6 +412,7 @@ enum WatchCopy {
         case "es": return "Volver a partidos"
         case "ru": return "К матчам"
         case "sr": return "Назад на мечеве"
+        case "cs": return "Zpět na zápasy"
         default: return "Back to matches"
         }
     }
@@ -315,6 +422,7 @@ enum WatchCopy {
         case "es": return "Cerrar"
         case "ru": return "Закрыть"
         case "sr": return "Затвори"
+        case "cs": return "Zavřít"
         default: return "Close"
         }
     }
@@ -324,15 +432,17 @@ enum WatchCopy {
         case "es": return "Ahora"
         case "ru": return "Сейчас"
         case "sr": return "Сада"
+        case "cs": return "Nyní"
         default: return "Now"
         }
     }
 
     nonisolated static func gameEnded(_ lang: String) -> String {
         switch lang {
-        case "es": return "Terminado"
+        case "es": return "Terminada"
         case "ru": return "Завершено"
         case "sr": return "Завршено"
+        case "cs": return "Ukončeno"
         default: return "Ended"
         }
     }
@@ -342,6 +452,7 @@ enum WatchCopy {
         case "es": return "Abrir"
         case "ru": return "Открыть"
         case "sr": return "Отвори"
+        case "cs": return "Otevřít"
         default: return "Open"
         }
     }
@@ -351,6 +462,7 @@ enum WatchCopy {
         case "es": return "Ver"
         case "ru": return "Смотреть"
         case "sr": return "Погледај"
+        case "cs": return "Zobrazit"
         default: return "View"
         }
     }
@@ -360,6 +472,7 @@ enum WatchCopy {
         case "es": return "Marcar"
         case "ru": return "Внести счёт"
         case "sr": return "Унеси"
+        case "cs": return "Zapsat skóre"
         default: return "Score"
         }
     }
@@ -369,6 +482,7 @@ enum WatchCopy {
         case "es": return "Editar"
         case "ru": return "Изменить"
         case "sr": return "Измени"
+        case "cs": return "Upravit"
         default: return "Edit"
         }
     }
@@ -378,6 +492,7 @@ enum WatchCopy {
         case "es": return "Ronda \(number)"
         case "ru": return "Раунд \(number)"
         case "sr": return "Рунда \(number)"
+        case "cs": return "Kolo \(number)"
         default: return "Round \(number)"
         }
     }
@@ -387,6 +502,7 @@ enum WatchCopy {
         case "es": return "Los resultados están cerrados. Solo lectura."
         case "ru": return "Итоги зафиксированы. Только просмотр."
         case "sr": return "Резултати су коначни. Само преглед."
+        case "cs": return "Výsledky jsou konečné. Pouze pro čtení."
         default: return "Results are final. View only."
         }
     }
@@ -396,6 +512,7 @@ enum WatchCopy {
         case "es": return "No estás en este partido."
         case "ru": return "Вы не участвуете в этом матче."
         case "sr": return "Нисте на овом мечу."
+        case "cs": return "V tomto zápase nehrajete."
         default: return "You're not on this match."
         }
     }
@@ -405,6 +522,7 @@ enum WatchCopy {
         case "es": return "Sets"
         case "ru": return "Сеты"
         case "sr": return "Сетови"
+        case "cs": return "Sety"
         default: return "Sets"
         }
     }
@@ -414,6 +532,7 @@ enum WatchCopy {
         case "es": return "Set \(number)"
         case "ru": return "Сет \(number)"
         case "sr": return "Сет \(number)"
+        case "cs": return "Set \(number)"
         default: return "Set \(number)"
         }
     }
@@ -423,6 +542,7 @@ enum WatchCopy {
         case "es": return "Juegos extra"
         case "ru": return "Доп. геймы"
         case "sr": return "Дод. гемови"
+        case "cs": return "Gemy navíc"
         default: return "Extra games"
         }
     }
@@ -432,6 +552,7 @@ enum WatchCopy {
         case "es": return "Pelotas extra"
         case "ru": return "Доп. очки"
         case "sr": return "Дод. поени"
+        case "cs": return "Body navíc"
         default: return "Extra balls"
         }
     }
@@ -457,6 +578,7 @@ enum WatchCopy {
         case "es": return "Añadir juegos extra"
         case "ru": return "Добавить геймы"
         case "sr": return "Додај гемове"
+        case "cs": return "Přidat gemy navíc"
         default: return "Add extra games"
         }
     }
@@ -466,6 +588,7 @@ enum WatchCopy {
         case "es": return "Añadir pelotas extra"
         case "ru": return "Добавить очки"
         case "sr": return "Додај поене"
+        case "cs": return "Přidat body navíc"
         default: return "Add extra balls"
         }
     }
@@ -475,6 +598,7 @@ enum WatchCopy {
         case "es": return "Equipo A +"
         case "ru": return "Команда A +"
         case "sr": return "Тим A +"
+        case "cs": return "Tým A +"
         default: return "Team A +"
         }
     }
@@ -484,6 +608,7 @@ enum WatchCopy {
         case "es": return "Equipo B +"
         case "ru": return "Команда B +"
         case "sr": return "Тим B +"
+        case "cs": return "Tým B +"
         default: return "Team B +"
         }
     }
@@ -493,6 +618,7 @@ enum WatchCopy {
         case "es": return "Tie-break"
         case "ru": return "Тай-брейк"
         case "sr": return "Тај-брејк"
+        case "cs": return "Tie-break"
         default: return "Tie-break"
         }
     }
@@ -502,6 +628,7 @@ enum WatchCopy {
         case "es": return "Super tie-break"
         case "ru": return "Супер тай-брейк"
         case "sr": return "Супер тај-брејк"
+        case "cs": return "Super tie-break"
         default: return "Super tie-break"
         }
     }
@@ -546,6 +673,17 @@ enum WatchCopy {
         }
     }
 
+    /// Tappable row that re-opens the record-mode dialog after it was dismissed.
+    nonisolated static func automaticRecordModeOpenPrompt(_ lang: String) -> String {
+        switch lang {
+        case "cs": return "Zvolit formát"
+        case "es": return "Elegir formato"
+        case "ru": return "Выбрать формат"
+        case "sr": return "Изабери формат"
+        default: return "Choose format"
+        }
+    }
+
     nonisolated static func automaticContinueTitle(_ lang: String) -> String {
         switch lang {
         case "cs": return "Další set?"
@@ -563,6 +701,17 @@ enum WatchCopy {
         case "ru": return "Сет закончен. Ещё сет или завершить матч."
         case "sr": return "Сет је готов. Још један сет или крај меча."
         default: return "This set is finished. Play another set, or end the match."
+        }
+    }
+
+    /// Tappable row that re-opens the continue/end dialog after it was dismissed.
+    nonisolated static func automaticContinueOpenPrompt(_ lang: String) -> String {
+        switch lang {
+        case "cs": return "Pokračovat, nebo ukončit?"
+        case "es": return "¿Continuar o terminar?"
+        case "ru": return "Продолжить или завершить?"
+        case "sr": return "Наставити или завршити?"
+        default: return "Continue or end?"
         }
     }
 
@@ -651,6 +800,7 @@ enum WatchCopy {
         case "es": return "Guardar set"
         case "ru": return "Сохранить сет"
         case "sr": return "Сачувај сет"
+        case "cs": return "Uložit set"
         default: return "Save Set"
         }
     }
@@ -660,6 +810,7 @@ enum WatchCopy {
         case "es": return "Siguiente set"
         case "ru": return "Следующий сет"
         case "sr": return "Следећи сет"
+        case "cs": return "Další set"
         default: return "Next Set"
         }
     }
@@ -669,6 +820,7 @@ enum WatchCopy {
         case "es": return "Set"
         case "ru": return "Сет"
         case "sr": return "Сет"
+        case "cs": return "Set"
         default: return "Set"
         }
     }
@@ -678,16 +830,18 @@ enum WatchCopy {
         case "es": return "Más"
         case "ru": return "Ещё"
         case "sr": return "Још"
+        case "cs": return "Více"
         default: return "More"
         }
     }
 
     nonisolated static func saving(_ lang: String) -> String {
         switch lang {
-        case "es": return "Guardando..."
-        case "ru": return "Сохранение..."
-        case "sr": return "Чување..."
-        default: return "Saving..."
+        case "es": return "Guardando…"
+        case "ru": return "Сохранение…"
+        case "sr": return "Чување…"
+        case "cs": return "Ukládání…"
+        default: return "Saving…"
         }
     }
 
@@ -696,6 +850,7 @@ enum WatchCopy {
         case "es": return "Iguales"
         case "ru": return "Ровно"
         case "sr": return "Изједначење"
+        case "cs": return "Shoda"
         default: return "Deuce"
         }
     }
@@ -708,6 +863,7 @@ enum WatchCopy {
         case "es": return "¿Contar juego?"
         case "ru": return "Засчитать гейм?"
         case "sr": return "Уписати гем?"
+        case "cs": return "Započítat gem?"
         default: return "Award game?"
         }
     }
@@ -718,7 +874,8 @@ enum WatchCopy {
         case "es": return plural ? "Ganaron" : "Ganó"
         case "ru": return plural ? "Выиграли" : "Победа"
         case "sr": return plural ? "Победили" : "Победа"
-        default: return "Won"
+        case "cs": return plural ? "Vyhráli" : "Vyhrál"
+        default: return plural ? "Team won" : "Player won"
         }
     }
 
@@ -727,6 +884,7 @@ enum WatchCopy {
         case "es": return "El marcador del set será \(teamA):\(teamB)."
         case "ru": return "Счёт в сете будет \(teamA):\(teamB)."
         case "sr": return "Резултат у сету биће \(teamA):\(teamB)."
+        case "cs": return "Stav setu bude \(teamA):\(teamB)."
         default: return "Set score will be \(teamA):\(teamB)."
         }
     }
@@ -736,6 +894,7 @@ enum WatchCopy {
         case "es": return "Este bando"
         case "ru": return "Эта сторона"
         case "sr": return "Ова страна"
+        case "cs": return "Tato strana"
         default: return "This side"
         }
     }
@@ -745,6 +904,7 @@ enum WatchCopy {
         case "es": return "Confirmar"
         case "ru": return "Подтвердить"
         case "sr": return "Потврди"
+        case "cs": return "Potvrdit"
         default: return "Confirm"
         }
     }
@@ -754,6 +914,7 @@ enum WatchCopy {
         case "es": return "Cancelar"
         case "ru": return "Отмена"
         case "sr": return "Откажи"
+        case "cs": return "Zrušit"
         default: return "Cancel"
         }
     }
@@ -763,6 +924,7 @@ enum WatchCopy {
         case "es": return "Ventaja A"
         case "ru": return "Преимущество A"
         case "sr": return "Предност A"
+        case "cs": return "Výhoda A"
         default: return "Advantage A"
         }
     }
@@ -772,6 +934,7 @@ enum WatchCopy {
         case "es": return "Ventaja B"
         case "ru": return "Преимущество B"
         case "sr": return "Предност B"
+        case "cs": return "Výhoda B"
         default: return "Advantage B"
         }
     }
@@ -781,6 +944,7 @@ enum WatchCopy {
         case "es": return "Vent."
         case "ru": return "Пр-во"
         case "sr": return "Пред."
+        case "cs": return "Výh."
         default: return "Adv"
         }
     }
@@ -790,6 +954,7 @@ enum WatchCopy {
         case "es": return "Americano"
         case "ru": return "Американо"
         case "sr": return "Американо"
+        case "cs": return "Americano"
         default: return "Americano"
         }
     }
@@ -798,7 +963,8 @@ enum WatchCopy {
         switch lang {
         case "es": return "Tenis de mesa"
         case "ru": return "Настольный теннис"
-        case "sr": return "Stoni tenis"
+        case "sr": return "Стони тенис"
+        case "cs": return "Stolní tenis"
         default: return "Table tennis"
         }
     }
@@ -807,16 +973,18 @@ enum WatchCopy {
         switch lang {
         case "es": return "Bádminton"
         case "ru": return "Бадминтон"
-        case "sr": return "Badminton"
+        case "sr": return "Бадминтон"
+        case "cs": return "Badminton"
         default: return "Badminton"
         }
     }
 
     nonisolated static func pickleballScoring(_ lang: String) -> String {
         switch lang {
-        case "es": return "Pádel pickleball"
+        case "es": return "Pickleball"
         case "ru": return "Пиклбол"
-        case "sr": return "Piklbol"
+        case "sr": return "Пиклбол"
+        case "cs": return "Pickleball"
         default: return "Pickleball"
         }
     }
@@ -825,7 +993,8 @@ enum WatchCopy {
         switch lang {
         case "es": return "Squash"
         case "ru": return "Сквош"
-        case "sr": return "Skvoš"
+        case "sr": return "Сквош"
+        case "cs": return "Squash"
         default: return "Squash"
         }
     }
@@ -834,7 +1003,8 @@ enum WatchCopy {
         switch lang {
         case "es": return "Saque bajo"
         case "ru": return "Подача снизу"
-        case "sr": return "Servis ispod"
+        case "sr": return "Сервис одоздо"
+        case "cs": return "Podání spodem"
         default: return "Underhand serve"
         }
     }
@@ -843,7 +1013,8 @@ enum WatchCopy {
         switch lang {
         case "es": return "El saque debe ser bajo, contacto bajo la cintura. Diagonal al cuadro contrario. Solo honor — el marcador no cambia."
         case "ru": return "Подача снизу, контакт ниже пояса. По диагонали в квадрат подачи. На доверии — счёт не меняется."
-        case "sr": return "Servis ispod ruke, kontakt ispod struka. Dijagonalno u suprotan boks. Na čast — rezultat se ne menja."
+        case "sr": return "Сервис одоздо, контакт испод струка. Дијагонално у супротно поље. На част — резултат се не мења."
+        case "cs": return "Podání musí být spodem, kontakt pod pasem. Diagonálně do protějšího pole. Na čest — skóre se nemění."
         default: return "Serve must be underhand, contact below the waist. Diagonal into the opposite service court. Honor system — score unchanged."
         }
     }
@@ -853,6 +1024,7 @@ enum WatchCopy {
         case "es": return "Side-out"
         case "ru": return "Side-out"
         case "sr": return "Side-out"
+        case "cs": return "Side-out"
         default: return "Side-out"
         }
     }
@@ -861,7 +1033,8 @@ enum WatchCopy {
         switch lang {
         case "es": return "En side-out solo anota el equipo que saca; tras perder el punto saca el rival. Aquí son puntos rally — toca cualquier equipo."
         case "ru": return "При side-out очко забивает только подающая команда; после проигрыша подаёт соперник. Здесь rally-очки — нажимайте любую команду."
-        case "sr": return "Kod side-out poen daje samo servirajući tim. Tabla koristi rally poene — dodirnite bilo koji tim."
+        case "sr": return "Код side-out поен осваја само тим који сервира; после изгубљеног поена сервира противник. Овде су рели поени — додирните било који тим."
+        case "cs": return "Při side-out boduje jen podávající tým; po prohraném míči podává soupeř. Tato tabule používá rally body — klepněte na kterýkoli tým."
         default: return "On side-out only the serving team can score; after losing the rally the other team serves. This board uses rally points — tap either team."
         }
     }
@@ -870,7 +1043,8 @@ enum WatchCopy {
         switch lang {
         case "es": return "Dos rebotes"
         case "ru": return "Два отскока"
-        case "sr": return "Dva odskoka"
+        case "sr": return "Два одскока"
+        case "cs": return "Dva odskoky"
         default: return "Two-bounce"
         }
     }
@@ -879,7 +1053,8 @@ enum WatchCopy {
         switch lang {
         case "es": return "La pelota debe botar una vez en cada lado antes del voleo (regla de dos rebotes en la cocina). Solo honor."
         case "ru": return "Мяч должен отскочить по разу на каждой стороне до удара в воздухе (правило двух отскоков). На доверии."
-        case "sr": return "Loptica mora jednom odskociti na svakoj strani pre voleja. Samo na čast."
+        case "sr": return "Лоптица мора једном да одскочи на свакој страни пре волеја (правило два одскока). На част — резултат се не мења."
+        case "cs": return "Míček se musí jednou odrazit na každé straně před volejem (pravidlo dvou odskoků). Na čest — skóre se nemění."
         default: return "The ball must bounce once on each side before a volley (two-bounce rule). Honor system — score unchanged."
         }
     }
@@ -889,7 +1064,162 @@ enum WatchCopy {
         case "es": return "Jugadores"
         case "ru": return "Игроки"
         case "sr": return "Играчи"
+        case "cs": return "Hráči"
         default: return "Players"
+        }
+    }
+
+    /// "3 players" with correct plural forms per language.
+    nonisolated static func playersCount(_ lang: String, _ n: Int) -> String {
+        switch lang {
+        case "es":
+            return n == 1 ? "1 jugador" : "\(n) jugadores"
+        case "ru":
+            let mod10 = n % 10, mod100 = n % 100
+            if mod10 == 1, mod100 != 11 { return "\(n) игрок" }
+            if (2...4).contains(mod10), !(12...14).contains(mod100) { return "\(n) игрока" }
+            return "\(n) игроков"
+        case "sr":
+            let mod10 = n % 10, mod100 = n % 100
+            if mod10 == 1, mod100 != 11 { return "\(n) играч" }
+            return "\(n) играча"
+        case "cs":
+            if n == 1 { return "1 hráč" }
+            if (2...4).contains(n) { return "\(n) hráči" }
+            return "\(n) hráčů"
+        default:
+            return n == 1 ? "1 player" : "\(n) players"
+        }
+    }
+
+    /// Row participant label: bar shows a bare count, capped games show "n/max", otherwise "n players".
+    nonisolated static func participantCountLabel(lang: String, count: Int, max: Int?, isBar: Bool) -> String {
+        if isBar { return "\(count)" }
+        if let max { return "\(count)/\(max)" }
+        return playersCount(lang, count)
+    }
+
+    /// Human-readable game type for raw `Game.gameType` values.
+    nonisolated static func gameTypeLabel(_ lang: String, raw: String) -> String {
+        switch raw {
+        case "AMERICANO":
+            switch lang {
+            case "es": return "Americano"
+            case "ru": return "Американо"
+            case "sr": return "Американо"
+            case "cs": return "Americano"
+            default: return "Americano"
+            }
+        case "MEXICANO":
+            switch lang {
+            case "es": return "Mexicano"
+            case "ru": return "Мексикано"
+            case "sr": return "Мексикано"
+            case "cs": return "Mexicano"
+            default: return "Mexicano"
+            }
+        case "ROUND_ROBIN":
+            switch lang {
+            case "es": return "Todos contra todos"
+            case "ru": return "Круговая"
+            case "sr": return "Свако са сваким"
+            case "cs": return "Každý s každým"
+            default: return "Round robin"
+            }
+        case "WINNER_COURT":
+            switch lang {
+            case "es": return "Pista del ganador"
+            case "ru": return "Корт победителей"
+            case "sr": return "Терен победника"
+            case "cs": return "Kurt vítězů"
+            default: return "Winner court"
+            }
+        case "LADDER":
+            switch lang {
+            case "es": return "Escalera"
+            case "ru": return "Лестница"
+            case "sr": return "Лествица"
+            case "cs": return "Žebříček"
+            default: return "Ladder"
+            }
+        case "CLASSIC":
+            switch lang {
+            case "es": return "Clásico"
+            case "ru": return "Классика"
+            case "sr": return "Класично"
+            case "cs": return "Klasika"
+            default: return "Classic"
+            }
+        case "KOTC":
+            switch lang {
+            case "es": return "Rey de la pista"
+            case "ru": return "Король корта"
+            case "sr": return "Краљ терена"
+            case "cs": return "Král kurtu"
+            default: return "King of the court"
+            }
+        case "CUSTOM":
+            switch lang {
+            case "es": return "Personalizado"
+            case "ru": return "Свой формат"
+            case "sr": return "Прилагођено"
+            case "cs": return "Vlastní"
+            default: return "Custom"
+            }
+        default:
+            return raw.replacingOccurrences(of: "_", with: " ").capitalized
+        }
+    }
+
+    /// Status pill fallback for `Game.status` / `resultsStatus` combinations the UI does not name.
+    nonisolated static func statusLabelFallback(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Desconocido"
+        case "ru": return "Неизвестно"
+        case "sr": return "Непознато"
+        case "cs": return "Neznámý"
+        default: return "Unknown"
+        }
+    }
+
+    nonisolated static func unknownPlayer(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Jugador desconocido"
+        case "ru": return "Неизвестный игрок"
+        case "sr": return "Непознат играч"
+        case "cs": return "Neznámý hráč"
+        default: return "Unknown player"
+        }
+    }
+
+    nonisolated static func undoPointA11y(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Deshacer punto"
+        case "ru": return "Отменить очко"
+        case "sr": return "Поништи поен"
+        case "cs": return "Vrátit bod"
+        default: return "Undo point"
+        }
+    }
+
+    nonisolated static func startMatchA11y(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Empezar partido"
+        case "ru": return "Начать матч"
+        case "sr": return "Започни меч"
+        case "cs": return "Spustit zápas"
+        default: return "Start match"
+        }
+    }
+
+    /// Short tie-break serve slot badge ("S1" / "S2").
+    nonisolated static func serveSlotShort(_ lang: String, slot: Int) -> String {
+        switch lang {
+        case "es": return "S\(slot)"
+        case "ru": return "П\(slot)"
+        case "sr": return "С\(slot)"
+        case "cs": return "P\(slot)"
+        default: return "S\(slot)"
         }
     }
 
@@ -898,6 +1228,7 @@ enum WatchCopy {
         case "es": return "Preparación"
         case "ru": return "Готовность"
         case "sr": return "Спремност"
+        case "cs": return "Připravenost"
         default: return "Readiness"
         }
     }
@@ -907,6 +1238,7 @@ enum WatchCopy {
         case "es": return "Jugadores: listos"
         case "ru": return "Игроки: готово"
         case "sr": return "Играчи: спремни"
+        case "cs": return "Hráči: připraveni"
         default: return "Players: ready"
         }
     }
@@ -920,6 +1252,7 @@ enum WatchCopy {
         case "es": return "Jugadores: faltan\(suffix)"
         case "ru": return "Игроки: ждём\(suffix)"
         case "sr": return "Играчи: чека се\(suffix)"
+        case "cs": return "Hráči: čeká se\(suffix)"
         default: return "Players: waiting\(suffix)"
         }
     }
@@ -929,6 +1262,7 @@ enum WatchCopy {
         case "es": return "Equipos: listos"
         case "ru": return "Команды: готово"
         case "sr": return "Тимови: спремни"
+        case "cs": return "Týmy: připraveny"
         default: return "Teams: ready"
         }
     }
@@ -938,6 +1272,7 @@ enum WatchCopy {
         case "es": return "Equipos: incompletos"
         case "ru": return "Команды: не готовы"
         case "sr": return "Тимови: нису спремни"
+        case "cs": return "Týmy: nesestaveny"
         default: return "Teams: not set"
         }
     }
@@ -947,15 +1282,17 @@ enum WatchCopy {
         case "es": return "Pronto"
         case "ru": return "Скоро"
         case "sr": return "Ускоро"
+        case "cs": return "Brzy"
         default: return "Soon"
         }
     }
 
     nonisolated static func startGame(_ lang: String) -> String {
         switch lang {
-        case "es": return "Empezar partido"
+        case "es": return "Empezar partida"
         case "ru": return "Начать игру"
         case "sr": return "Започни игру"
+        case "cs": return "Zahájit hru"
         default: return "Start Game"
         }
     }
@@ -965,6 +1302,7 @@ enum WatchCopy {
         case "es": return "Introducir resultados"
         case "ru": return "Ввести результаты"
         case "sr": return "Унеси резултате"
+        case "cs": return "Zadat výsledky"
         default: return "Enter Results"
         }
     }
@@ -974,6 +1312,7 @@ enum WatchCopy {
         case "es": return "Continuar marcador"
         case "ru": return "Продолжить счёт"
         case "sr": return "Настави бодовање"
+        case "cs": return "Pokračovat ve skórování"
         default: return "Continue Scoring"
         }
     }
@@ -983,15 +1322,17 @@ enum WatchCopy {
         case "es": return "Resultados finales"
         case "ru": return "Итоговый результат"
         case "sr": return "Коначан резултат"
+        case "cs": return "Konečné výsledky"
         default: return "Results Final"
         }
     }
 
     nonisolated static func statusAnnounced(_ lang: String) -> String {
         switch lang {
-        case "es": return "Anunciado"
-        case "ru": return "Анонсирован"
+        case "es": return "Anunciada"
+        case "ru": return "Анонсирована"
         case "sr": return "Најављено"
+        case "cs": return "Oznámeno"
         default: return "Announced"
         }
     }
@@ -1001,6 +1342,7 @@ enum WatchCopy {
         case "es": return "En curso"
         case "ru": return "Идёт"
         case "sr": return "У току"
+        case "cs": return "Probíhá"
         default: return "In Progress"
         }
     }
@@ -1010,24 +1352,27 @@ enum WatchCopy {
         case "es": return "Marcador"
         case "ru": return "Счёт"
         case "sr": return "Бодовање"
+        case "cs": return "Skórování"
         default: return "Scoring"
         }
     }
 
     nonisolated static func statusFinished(_ lang: String) -> String {
         switch lang {
-        case "es": return "Finalizado"
+        case "es": return "Finalizada"
         case "ru": return "Завершено"
         case "sr": return "Завршено"
+        case "cs": return "Ukončeno"
         default: return "Finished"
         }
     }
 
     nonisolated static func statusArchived(_ lang: String) -> String {
         switch lang {
-        case "es": return "Archivado"
+        case "es": return "Archivada"
         case "ru": return "В архиве"
         case "sr": return "Архивирано"
+        case "cs": return "Archivováno"
         default: return "Archived"
         }
     }
@@ -1037,6 +1382,7 @@ enum WatchCopy {
         case "es": return "Inicia sesión en el iPhone."
         case "ru": return "Войдите на iPhone."
         case "sr": return "Пријавите се на iPhone-у."
+        case "cs": return "Přihlaste se na iPhonu."
         default: return "Please sign in on your iPhone."
         }
     }
@@ -1046,6 +1392,7 @@ enum WatchCopy {
         case "es": return "Error del servidor (\(code))."
         case "ru": return "Ошибка сервера (\(code))."
         case "sr": return "Грешка сервера (\(code))."
+        case "cs": return "Chyba serveru (\(code))."
         default: return "Server error (\(code))."
         }
     }
@@ -1055,6 +1402,7 @@ enum WatchCopy {
         case "es": return "Sin sesión. Abre Bandeja en el iPhone."
         case "ru": return "Не выполнен вход. Откройте Bandeja на iPhone."
         case "sr": return "Нисте пријављени. Отворите Bandeja на iPhone-у."
+        case "cs": return "Nejste přihlášeni. Otevřete Bandeja na iPhonu."
         default: return "Not signed in. Open Bandeja on your iPhone."
         }
     }
@@ -1064,6 +1412,7 @@ enum WatchCopy {
         case "es": return "Respuesta inesperada del servidor."
         case "ru": return "Неожиданный ответ сервера."
         case "sr": return "Неочекиван одговор сервера."
+        case "cs": return "Neočekávaná odpověď serveru."
         default: return "Unexpected server response."
         }
     }
@@ -1073,6 +1422,7 @@ enum WatchCopy {
         case "es": return "Puntuación actualizada en otro dispositivo."
         case "ru": return "Счёт обновлён на другом устройстве."
         case "sr": return "Резултат је ажуриран на другом уређају."
+        case "cs": return "Skóre bylo aktualizováno na jiném zařízení."
         default: return "Score was updated on another device."
         }
     }
@@ -1082,6 +1432,7 @@ enum WatchCopy {
         case "es": return "\(value) kcal"
         case "ru": return "\(value) ккал"
         case "sr": return "\(value) kcal"
+        case "cs": return "\(value) kcal"
         default: return "\(value) kcal"
         }
     }
@@ -1091,6 +1442,7 @@ enum WatchCopy {
         case "es": return "\(value) lpm"
         case "ru": return "\(value) уд/мин"
         case "sr": return "\(value) отк/мин"
+        case "cs": return "\(value) tepů/min"
         default: return "\(value) bpm"
         }
     }
@@ -1104,6 +1456,7 @@ enum WatchCopy {
         case "es": return "Pausar entrenamiento"
         case "ru": return "Приостановить тренировку"
         case "sr": return "Пауза тренинга"
+        case "cs": return "Pozastavit trénink"
         default: return "Pause workout"
         }
     }
@@ -1113,6 +1466,7 @@ enum WatchCopy {
         case "es": return "Reanudar entrenamiento"
         case "ru": return "Продолжить тренировку"
         case "sr": return "Настави тренинг"
+        case "cs": return "Pokračovat v tréninku"
         default: return "Resume workout"
         }
     }
@@ -1140,7 +1494,7 @@ enum WatchCopy {
     nonisolated static func matchTimerResume(_ lang: String) -> String {
         switch lang {
         case "es": return "Seguir"
-        case "ru": return "Далее"
+        case "ru": return "Продолжить"
         case "sr": return "Настави"
         case "cs": return "Pokračovat"
         default: return "Resume"
@@ -1171,6 +1525,8 @@ enum WatchCopy {
         switch lang {
         case "es": return "¿Quién saca primero?"
         case "ru": return "Кто подаёт первым?"
+        case "sr": return "Ко први сервира?"
+        case "cs": return "Kdo podává první?"
         default: return "Who serves first?"
         }
     }
@@ -1179,6 +1535,8 @@ enum WatchCopy {
         switch lang {
         case "es": return "Te diremos el lado en cada punto. Opcional."
         case "ru": return "Покажем сторону подачи на каждом очке. По желанию."
+        case "sr": return "Показаћемо страну сервиса за сваки поен. Опционо."
+        case "cs": return "Ukážeme stranu podání u každého bodu. Volitelné."
         default: return "We’ll show serve side each point. Optional."
         }
     }
@@ -1187,6 +1545,7 @@ enum WatchCopy {
         switch lang {
         case "es": return "Rotación de saque"
         case "ru": return "Ротация подачи"
+        case "sr": return "Ротација сервиса"
         case "cs": return "Rotace podání"
         default: return "Serve rotation"
         }
@@ -1196,6 +1555,7 @@ enum WatchCopy {
         switch lang {
         case "es": return "Oficial"
         case "ru": return "Официальная"
+        case "sr": return "Званична"
         case "cs": return "Oficiální"
         default: return "Official"
         }
@@ -1207,6 +1567,8 @@ enum WatchCopy {
             return "STB: 1 punto el primero; luego 2 por equipo (Saque 1 derecha, Saque 2 izquierda). Cambio cada 6."
         case "ru":
             return "STB: 1 очко первым; затем по 2 на команду (подача 1 справа, 2 слева). Смена сторон каждые 6."
+        case "sr":
+            return "STB: 1 поен први; затим по 2 по тиму (сервис 1 десно, 2 лево). Промена страна на сваких 6."
         case "cs":
             return "STB: 1 bod první; pak 2 na tým (Pod. 1 vpravo, 2 vlevo). Výměna stran po 6."
         default:
@@ -1218,6 +1580,7 @@ enum WatchCopy {
         switch lang {
         case "es": return "Simple"
         case "ru": return "Простая"
+        case "sr": return "Једноставна"
         case "cs": return "Jednoduchá"
         default: return "Simple"
         }
@@ -1227,6 +1590,7 @@ enum WatchCopy {
         switch lang {
         case "es": return "Como juego clásico: derecha, izquierda, luego tu compañero."
         case "ru": return "Как в классике: справа, слева, затем партнёр."
+        case "sr": return "Као у гему: десно, лево, затим партнер."
         case "cs": return "Jako game: vpravo, vlevo, pak parťák."
         default: return "Like a game: right, left, then your partner."
         }
@@ -1236,6 +1600,8 @@ enum WatchCopy {
         switch lang {
         case "es": return "Omitir guía de saque"
         case "ru": return "Без подсказок подачи"
+        case "sr": return "Прескочи савете за сервис"
+        case "cs": return "Přeskočit nápovědu podání"
         default: return "Skip serve hints"
         }
     }
@@ -1244,6 +1610,8 @@ enum WatchCopy {
         switch lang {
         case "es": return "Equipo A"
         case "ru": return "Команда A"
+        case "sr": return "Тим A"
+        case "cs": return "Tým A"
         default: return "Team A"
         }
     }
@@ -1252,6 +1620,8 @@ enum WatchCopy {
         switch lang {
         case "es": return "Equipo B"
         case "ru": return "Команда B"
+        case "sr": return "Тим B"
+        case "cs": return "Tým B"
         default: return "Team B"
         }
     }
@@ -1260,6 +1630,7 @@ enum WatchCopy {
         switch lang {
         case "es": return "Ajusta la pista"
         case "ru": return "Совместите с кортом"
+        case "sr": return "Ускладите са тереном"
         case "cs": return "Srovnejte kurt"
         default: return "Match the court"
         }
@@ -1269,6 +1640,7 @@ enum WatchCopy {
         switch lang {
         case "es": return "Equipo A arriba o abajo según estén ahora."
         case "ru": return "Команда A сверху или снизу — как сейчас на корте."
+        case "sr": return "Тим A горе или доле — као што сада стоје."
         case "cs": return "Tým A nahoře nebo dole podle toho, kde stojí."
         default: return "Team A on top or bottom — match where they stand."
         }
@@ -1278,6 +1650,7 @@ enum WatchCopy {
         switch lang {
         case "es": return "Girar fondos"
         case "ru": return "Поменять концы"
+        case "sr": return "Замени стране"
         case "cs": return "Otočit konce"
         default: return "Flip ends"
         }
@@ -1287,6 +1660,7 @@ enum WatchCopy {
         switch lang {
         case "es": return "Eq. A ↔"
         case "ru": return "Команда A ↔"
+        case "sr": return "Тим A ↔"
         case "cs": return "Tým A ↔"
         default: return "Team A ↔"
         }
@@ -1296,6 +1670,7 @@ enum WatchCopy {
         switch lang {
         case "es": return "Eq. B ↔"
         case "ru": return "Команда B ↔"
+        case "sr": return "Тим B ↔"
         case "cs": return "Tým B ↔"
         default: return "Team B ↔"
         }
@@ -1305,6 +1680,8 @@ enum WatchCopy {
         switch lang {
         case "es": return "¿Quién saca este juego?"
         case "ru": return "Кто подаёт в первом гейме?"
+        case "sr": return "Ко сервира у првом гему?"
+        case "cs": return "Kdo podává v prvním gemu?"
         default: return "Who serves this first game?"
         }
     }
@@ -1313,6 +1690,8 @@ enum WatchCopy {
         switch lang {
         case "es": return "Continuar"
         case "ru": return "Далее"
+        case "sr": return "Настави"
+        case "cs": return "Pokračovat"
         default: return "Continue"
         }
     }
@@ -1321,6 +1700,8 @@ enum WatchCopy {
         switch lang {
         case "es": return "Derecha"
         case "ru": return "Справа"
+        case "sr": return "Десно"
+        case "cs": return "Vpravo"
         default: return "Right"
         }
     }
@@ -1329,6 +1710,8 @@ enum WatchCopy {
         switch lang {
         case "es": return "Izquierda"
         case "ru": return "Слева"
+        case "sr": return "Лево"
+        case "cs": return "Vlevo"
         default: return "Left"
         }
     }
@@ -1337,6 +1720,8 @@ enum WatchCopy {
         switch lang {
         case "es": return "Cambiar de lado"
         case "ru": return "Смена сторон"
+        case "sr": return "Промена страна"
+        case "cs": return "Výměna stran"
         default: return "Change sides"
         }
     }
@@ -1345,6 +1730,8 @@ enum WatchCopy {
         switch lang {
         case "es": return "Ocultar en este partido"
         case "ru": return "Скрыть в этом матче"
+        case "sr": return "Сакриј за овај меч"
+        case "cs": return "Skrýt pro tento zápas"
         default: return "Hide for this match"
         }
     }
@@ -1353,6 +1740,8 @@ enum WatchCopy {
         switch lang {
         case "es": return "Guía de saque"
         case "ru": return "Подсказки подачи"
+        case "sr": return "Савети за сервис"
+        case "cs": return "Nápověda podání"
         default: return "Serve hints"
         }
     }
@@ -1361,6 +1750,8 @@ enum WatchCopy {
         switch lang {
         case "es": return "Completa"
         case "ru": return "Полные"
+        case "sr": return "Пуни"
+        case "cs": return "Plná"
         default: return "Full"
         }
     }
@@ -1369,6 +1760,8 @@ enum WatchCopy {
         switch lang {
         case "es": return "Compacta"
         case "ru": return "Компактно"
+        case "sr": return "Компактно"
+        case "cs": return "Kompaktní"
         default: return "Compact"
         }
     }
@@ -1377,6 +1770,8 @@ enum WatchCopy {
         switch lang {
         case "es": return "Apagada"
         case "ru": return "Выкл."
+        case "sr": return "Искључено"
+        case "cs": return "Vypnuto"
         default: return "Off"
         }
     }
@@ -1385,6 +1780,8 @@ enum WatchCopy {
         switch lang {
         case "es": return "Corregir saque inicial…"
         case "ru": return "Исправить первую подачу…"
+        case "sr": return "Исправи први сервис…"
+        case "cs": return "Opravit prvního podávajícího…"
         default: return "Fix starting server…"
         }
     }
@@ -1393,6 +1790,8 @@ enum WatchCopy {
         switch lang {
         case "es": return "Ya hay juegos marcados. ¿Corregir? La guía se recalculará."
         case "ru": return "В сете уже есть геймы. Исправить? Подсказки пересчитаются."
+        case "sr": return "Гемови су већ унети. Исправити? Водич за сервис ће се поново израчунати."
+        case "cs": return "Gemy jsou už zadány. Opravit? Nápověda podání se přepočítá."
         default: return "Games are already entered. Fix? Serve guide will recalculate."
         }
     }
@@ -1401,6 +1800,8 @@ enum WatchCopy {
         switch lang {
         case "es": return "Desliza a la derecha para la guía de saque."
         case "ru": return "Смахните вправо для подсказки подачи."
+        case "sr": return "Превуците удесно за водич за сервис."
+        case "cs": return "Přejeďte doprava pro nápovědu podání."
         default: return "Swipe right for the serve guide."
         }
     }
@@ -1409,6 +1810,8 @@ enum WatchCopy {
         switch lang {
         case "es": return "Guía de saque no disponible."
         case "ru": return "Подсказка подачи недоступна."
+        case "sr": return "Водич за сервис није доступан."
+        case "cs": return "Nápověda podání není k dispozici."
         default: return "Serve guide unavailable."
         }
     }
@@ -1417,6 +1820,8 @@ enum WatchCopy {
         switch lang {
         case "es": return "Desliza a la izquierda para volver a puntuar."
         case "ru": return "Смахните влево, чтобы вернуться к счёту."
+        case "sr": return "Превуците улево за повратак на бодовање."
+        case "cs": return "Přejeďte doleva pro návrat ke skóre."
         default: return "Swipe left to return to scoring."
         }
     }
@@ -1425,6 +1830,8 @@ enum WatchCopy {
         switch lang {
         case "es": return "Mantén pulsado para ocultar la guía."
         case "ru": return "Удерживайте, чтобы скрыть подсказку."
+        case "sr": return "Дуго притисните да сакријете водич."
+        case "cs": return "Dlouhým stiskem skryjete nápovědu."
         default: return "Long press to hide serve guide."
         }
     }
@@ -1443,6 +1850,8 @@ enum WatchCopy {
         switch lang {
         case "es": return "Orientación; no sustituye reglas del club ni árbitro."
         case "ru": return "Подсказка, не заменяет правила площадки и судью."
+        case "sr": return "Помоћ; не замењује правила клуба ни судију."
+        case "cs": return "Pomůcka; nenahrazuje pravidla klubu ani rozhodčího."
         default: return "Assistive guidance, not a substitute for venue rules or an umpire."
         }
     }
@@ -1451,6 +1860,8 @@ enum WatchCopy {
         switch lang {
         case "es": return "Próximo saque: \(team), \(name), \(side)."
         case "ru": return "Следующая подача: \(team), \(name), \(side)."
+        case "sr": return "Следећи сервис: \(team), \(name), \(side)."
+        case "cs": return "Další podání: \(team), \(name), \(side)."
         default: return "Next serve: \(team), \(name), from the \(side)."
         }
     }
@@ -1459,6 +1870,8 @@ enum WatchCopy {
         switch lang {
         case "es": return "Derecha/izquierda mirando hacia la red al sacar."
         case "ru": return "Вправо/влево — как вы смотрите на сетку при подаче."
+        case "sr": return "Десно/лево је како гледате ка мрежи док сервирате."
+        case "cs": return "Vpravo/vlevo je při pohledu na síť během podání."
         default: return "Right/left is as you face the net while serving."
         }
     }
@@ -1467,6 +1880,8 @@ enum WatchCopy {
         switch lang {
         case "es": return "En tie-break, rotación de dos puntos salvo el primero."
         case "ru": return "В тай-брейке — два очка подряд, кроме первого."
+        case "sr": return "У тај-брејку ротација по два поена, осим првог."
+        case "cs": return "V tie-breaku rotace po dvou bodech kromě prvního."
         default: return "In a tie-break, two-point rotations except the first point."
         }
     }
@@ -1475,7 +1890,8 @@ enum WatchCopy {
         switch lang {
         case "es": return "Falta de cocina"
         case "ru": return "Ошибка в кухне"
-        case "sr": return "Greška u kuhinji"
+        case "sr": return "Грешка у кухињи"
+        case "cs": return "Chyba v kuchyni"
         default: return "Kitchen fault"
         }
     }
@@ -1484,25 +1900,28 @@ enum WatchCopy {
         switch lang {
         case "es": return "Falta de cocina — ¿qué equipo?"
         case "ru": return "Ошибка в кухне — какая команда?"
-        case "sr": return "Greška u kuhinji — koji tim?"
+        case "sr": return "Грешка у кухињи — који тим?"
+        case "cs": return "Chyba v kuchyni — který tým?"
         default: return "Kitchen fault — which team?"
         }
     }
 
     nonisolated static func teamAFault(_ lang: String) -> String {
         switch lang {
-        case "es": return "Equipo A"
-        case "ru": return "Команда A"
-        case "sr": return "Tim A"
+        case "es": return "Falta del equipo A"
+        case "ru": return "Ошибка команды A"
+        case "sr": return "Грешка тима A"
+        case "cs": return "Chyba týmu A"
         default: return "Team A fault"
         }
     }
 
     nonisolated static func teamBFault(_ lang: String) -> String {
         switch lang {
-        case "es": return "Equipo B"
-        case "ru": return "Команда B"
-        case "sr": return "Tim B"
+        case "es": return "Falta del equipo B"
+        case "ru": return "Ошибка команды B"
+        case "sr": return "Грешка тима B"
+        case "cs": return "Chyba týmu B"
         default: return "Team B fault"
         }
     }
@@ -1511,7 +1930,8 @@ enum WatchCopy {
         switch lang {
         case "es": return "Let — repetid el punto antes de marcar."
         case "ru": return "Лет — сначала переиграйте розыгрыш."
-        case "sr": return "Let — prvo ponovite poen."
+        case "sr": return "Лет — прво поновите поен."
+        case "cs": return "Let — nejprve zopakujte míč."
         default: return "Let called — replay the point before scoring."
         }
     }
@@ -1520,7 +1940,8 @@ enum WatchCopy {
         switch lang {
         case "es": return "Repetir punto"
         case "ru": return "Переиграть"
-        case "sr": return "Ponovi poen"
+        case "sr": return "Понови поен"
+        case "cs": return "Opakovat míč"
         default: return "Replay point"
         }
     }
@@ -1529,7 +1950,8 @@ enum WatchCopy {
         switch lang {
         case "es": return "Let"
         case "ru": return "Лет"
-        case "sr": return "Let"
+        case "sr": return "Лет"
+        case "cs": return "Let"
         default: return "Let"
         }
     }
@@ -1538,7 +1960,8 @@ enum WatchCopy {
         switch lang {
         case "es": return "Falta de saque"
         case "ru": return "Ошибка подачи"
-        case "sr": return "Greška servisa"
+        case "sr": return "Грешка сервиса"
+        case "cs": return "Chyba podání"
         default: return "Service fault"
         }
     }

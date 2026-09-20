@@ -1,0 +1,82 @@
+{
+  "clubPage": {
+    "share": "Sdílet klub",
+    "shareTitle": "Sdílet tento klub",
+    "signIn": "Přihlásit se",
+    "favoriteFailed": "Oblíbené se nepodařilo aktualizovat. Zkuste to znovu.",
+    "openClubPage": "Otevřít stránku klubu",
+    "openClubPageNamed": "Otevřít stránku klubu {{club}}",
+    "rating": {
+      "none": "Zatím žádné recenze",
+      "summary_one": "{{rating}} · {{countText}} recenze",
+      "summary_few": "{{rating}} · {{countText}} recenze",
+      "summary_many": "{{rating}} · {{countText}} recenze",
+      "summary_other": "{{rating}} · {{countText}} recenzí"
+    },
+    "gallery": {
+      "roleDescription": "Fotogalerie",
+      "label": "Fotky klubu {{club}}",
+      "slideRole": "Fotka",
+      "slide": "Fotka {{current}} z {{total}}"
+    },
+    "notFound": {
+      "title": "Tento klub není dostupný",
+      "description": "Odkaz může být starý nebo klub už není v nabídce.",
+      "browse": "Procházet kluby"
+    },
+    "actions": {
+      "create": "Vytvořit hru tady",
+      "book": "Rezervovat",
+      "directions": "Navigovat",
+      "manage": "Spravovat"
+    },
+    "today": {
+      "title": "Dnešek v kostce",
+      "updated": "Aktualizováno {{relative}}",
+      "updatedJustNow": "Aktualizováno právě teď",
+      "courtLabel": "{{court}}, volno {{free}} z {{total}} hodin dnes",
+      "freeHours_one": "{{count}} hodina volná",
+      "freeHours_few": "{{count}} hodiny volné",
+      "freeHours_many": "{{count}} hodiny volné",
+      "freeHours_other": "{{count}} hodin volných",
+      "windowHint": "Zobrazeno od {{open}} do {{close}}",
+      "legendFree": "Volno",
+      "legendBusy": "Obsazeno"
+    },
+    "games": {
+      "title": "Nadcházející hry",
+      "seeAll": "Zobrazit vše v Hledat",
+      "emptyTitle": "Zatím žádné veřejné hry",
+      "emptyDescription": "Buď první, kdo tu vypíše hru."
+    },
+    "courts": {
+      "title": "Kurty",
+      "indoor": "Krytý",
+      "outdoor": "Venkovní"
+    },
+    "info": {
+      "title": "O klubu",
+      "hoursRange": "Otevřeno {{open}} – {{close}}",
+      "hoursEveryDay": "Stejná otevírací doba každý den",
+      "cancellationPolicy": "Podmínky zrušení",
+      "cancellationNotice_one": "Zrušte alespoň {{count}} hodinu předem.",
+      "cancellationNotice_few": "Zrušte alespoň {{count}} hodiny předem.",
+      "cancellationNotice_many": "Zrušte alespoň {{count}} hodiny předem.",
+      "cancellationNotice_other": "Zrušte alespoň {{count}} hodin předem."
+    },
+    "regulars": {
+      "title": "Kdo tady hraje",
+      "open": "Otevřít kartu hráče {{name}}",
+      "unnamed": "tento hráč"
+    },
+    "reviews": {
+      "title": "Recenze",
+      "guestTitle": "Přihlaste se a napište recenzi",
+      "guestDescription": "Recenze píší hráči, kteří v tomto klubu hráli."
+    },
+    "error": {
+      "title": "Tento klub se nepodařilo načíst",
+      "description": "Zkontroluj připojení a zkus to znovu."
+    }
+  }
+}

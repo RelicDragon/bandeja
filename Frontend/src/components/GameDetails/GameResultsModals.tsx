@@ -9,6 +9,7 @@ import { Game, BasicUser } from '@/types';
 import { Round } from '@/types/gameResults';
 import { isSupplementalMatchSet, type MatchSetRole } from '@/utils/matchSetRole';
 import { getRestartTitle, getFinishTitle, getEditTitle } from '@/utils/gameResultsHelpers';
+import { parseGameSport } from '@/utils/gameSport';
 
 interface GameResultsModalsProps {
   modal: ModalType;
@@ -131,6 +132,7 @@ export const GameResultsModals = ({
         onClose={onClose}
         onConfirm={onPlayerSelect}
         selectedPlayerIds={selectedPlayerIds}
+        sport={currentGame?.sport ? parseGameSport(currentGame.sport) : undefined}
         title={t('games.addPlayer')}
       />
     );

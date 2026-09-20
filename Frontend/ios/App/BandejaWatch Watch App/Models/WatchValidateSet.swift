@@ -144,7 +144,7 @@ enum WatchValidateSet {
         let target = rules.totalPointsPerSet
         let hi = max(a, b)
         let lo = min(a, b)
-        if hi < target { return true }
+        if hi < target { return false }
         if hi == target, lo > target - rules.winBy { return false }
         if hi > target, hi - lo != rules.winBy {
             if hi - lo < rules.winBy { return false }
@@ -153,7 +153,49 @@ enum WatchValidateSet {
         return true
     }
 
+    /// `bwfGameScoreCap` in `Backend/src/shared/strictValidation.ts`.
+    static func bwfGameScoreCap(pointsPerGame: Int) -> Int {
+        if pointsPerGame == 21 { return 30 }
+        if pointsPerGame == 15 { return 21 }
+        return pointsPerGame + 9
+    }
+
+    /// `validateBwfRallyGameScore`: win-by-2 race with the BWF hard cap (21 → 30, 15 → 21).
+    static func validateBwfRallyGameScore(a: Int, b: Int, pointsPerGame: Int, winBy: Int = 2) -> Bool {
+        if a == b { return a == 0 }
+        let target = pointsPerGame
+        let cap = bwfGameScoreCap(pointsPerGame: target)
+        let hi = max(a, b)
+        let lo = min(a, b)
+        if hi > cap { return false }
+        if hi == cap { return lo < hi }
+        if hi < target { return false }
+        if hi == target, lo > target - winBy { return false }
+        if hi > target, hi - lo < winBy { return false }
+        return true
+    }
+
+    /// `validatePickleballRally11Score`: race to 11, win by exactly 2 past 11.
+    static func validatePickleballRally11Score(a: Int, b: Int) -> Bool {
+        let target = 11
+        let winBy = 2
+        if a == b { return a == 0 }
+        let hi = max(a, b)
+        let lo = min(a, b)
+        if hi < target { return false }
+        if hi == target, lo > target - winBy { return false }
+        if hi > target, hi - lo != winBy { return false }
+        return true
+    }
+
+    /// Mirrors `validatePointsSet` in `matchWinnerLive.ts` (strict ids first, then generic rally / budget).
     private static func validatePointsSet(a: Int, b: Int, rules: WatchScoringRules) -> Bool {
+        if rules.strictValidation.isBwf {
+            return validateBwfRallyGameScore(a: a, b: b, pointsPerGame: rules.totalPointsPerSet, winBy: rules.winBy)
+        }
+        if rules.strictValidation == .pickleballRally11 {
+            return validatePickleballRally11Score(a: a, b: b)
+        }
         if rules.usesRallyPointCap {
             return validateRallyPointGame(a: a, b: b, rules: rules)
         }

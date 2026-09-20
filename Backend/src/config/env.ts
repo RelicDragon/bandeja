@@ -252,6 +252,23 @@ export const config = {
   klipy: {
     apiKey: (process.env.KLIPY_API_KEY || '').trim(),
   },
+  /**
+   * PRD 345 — recurring game series (`/api/series`, `GameSeriesScheduler`).
+   * Opt-out: `GAME_SERIES_ENABLED=false`. Off = no series endpoints answer and
+   * no series UI is served; existing occurrences keep working as plain games.
+   */
+  gameSeriesEnabled: process.env.GAME_SERIES_ENABLED !== 'false',
+  /**
+   * PRD 348 — per-player cost split (`/api/games/:id/cost`, cost reminders).
+   * Opt-out: `COST_SPLIT_ENABLED=false`.
+   */
+  costSplitEnabled: process.env.COST_SPLIT_ENABLED !== 'false',
+  /**
+   * PRD 355 — goods shop (`/api/shop`). Opt-out: `SHOP_ENABLED=false`.
+   * Off = catalogue and purchase endpoints are unavailable; already-owned
+   * goods keep rendering.
+   */
+  shopEnabled: process.env.SHOP_ENABLED !== 'false',
   /** Global `/api/` IP rate limit. See `apiRateLimit.ts` / #313. */
   apiRateLimit: resolveApiRateLimitConfig({
     nodeEnv,

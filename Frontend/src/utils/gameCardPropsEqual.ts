@@ -83,6 +83,73 @@ function localizedTextKey(
   ].join('|');
 }
 
+/* ------------------------------------------------------------------ */
+/* PRD 345–357 enrichment (CONTRACT §5.6)                              */
+/*                                                                     */
+/* `mergeEnrichmentOntoGames` hands the card a **new** game object, so  */
+/* the identity fast path below never fires for enrichment: if a field  */
+/* is missing from the signature the memoized card simply never         */
+/* repaints. Every field of `GameCardEnrichment` therefore has a key    */
+/* here, each one a fixed-width scalar join so a long list stays cheap. */
+/* ------------------------------------------------------------------ */
+
+/** PRD 345 — cadence pill text plus the `title` (series name) it carries. */
+function seriesLabelKey(label: Game['seriesLabel']): string {
+  if (!label) return '';
+  return `${label.seriesId}:${label.cadence}:${label.name}:${label.endedAt ?? ''}`;
+}
+
+/** PRD 357 — tone, value and tooltip time of the rain / wind pill. */
+function weatherRiskKey(risk: Game['weatherRisk']): string {
+  if (!risk) return '';
+  return [
+    risk.severity,
+    risk.pop,
+    risk.windKph,
+    risk.at,
+    risk.keptAsPlanned ? '1' : '0',
+  ].join(':');
+}
+
+/** PRD 348 — every number `GameCardPerHeadPrice` renders or announces. */
+function perHeadPriceKey(price: Game['perHeadPrice']): string {
+  if (!price) return '';
+  return [
+    price.amountCents,
+    price.currency,
+    price.totalCents,
+    price.payerCount,
+    price.estimated ? '1' : '0',
+  ].join(':');
+}
+
+/** PRD 346 — the "2 of 4" fraction and the per-player dot states. */
+function attendanceSummaryKey(summary: Game['attendanceSummary']): string {
+  if (!summary) return '';
+  return [
+    summary.confirmedCount,
+    summary.unsureCount,
+    summary.unansweredCount,
+    summary.playingCount,
+    summary.viewerAttendance ?? '',
+    (summary.entries ?? []).map((entry) => `${entry.userId}~${entry.attendance}`).join(','),
+  ].join(':');
+}
+
+/** PRD 349 — bounded at two sides, so the join stays O(1) per card. */
+function liveSummaryKey(summary: Game['liveSummary']): string {
+  if (!summary) return '';
+  return [
+    summary.matchId,
+    summary.revision ?? '',
+    summary.currentSet,
+    summary.startedAt ?? '',
+    summary.sides
+      .map((side) => `${side.teamNumber}~${side.currentGameScore}~${side.setScores.join('-')}~${side.leading ? '1' : '0'}`)
+      .join(','),
+  ].join(':');
+}
+
 function viewerParticipationKey(
   participants: readonly GameParticipant[],
   userId?: string
@@ -113,6 +180,8 @@ function gameRenderSignature(game: Game): string {
 function buildGameRenderSignature(game: Game): string {
   const parts = [
     game.entityType,
+    // Drives the EVENT pill in `GameCardHeaderTags` and the poster card copy.
+    game.eventKind ?? '',
     game.status,
     game.sport,
     game.gameType,
@@ -135,6 +204,9 @@ function buildGameRenderSignature(game: Game): string {
     game.mainPhoto?.thumbnailUrl ?? '',
     game.weatherSummary?.temperatureC ?? '',
     game.weatherSummary?.conditionKey ?? '',
+    // `rightRailPropsEqual` compares `isDay`; the parent must too, or the rail
+    // never gets the chance to see the change.
+    game.weatherSummary?.isDay ? '1' : '0',
     game.weatherSummary?.stale ? '1' : '0',
     game.bookingStatus ?? '',
     game.hasBookedCourt ? '1' : '0',
@@ -158,6 +230,14 @@ function buildGameRenderSignature(game: Game): string {
     ownerRenderKey(game.participants ?? []),
     trainerRenderKey(game),
     reactionsKey(game.reactions),
+    // PRD 345–357 enrichment — see the block comment above.
+    game.spotOpenedAt ?? '',
+    game.lastSeatOpenedAt ?? '',
+    seriesLabelKey(game.seriesLabel),
+    weatherRiskKey(game.weatherRisk),
+    perHeadPriceKey(game.perHeadPrice),
+    attendanceSummaryKey(game.attendanceSummary),
+    liveSummaryKey(game.liveSummary),
   ];
   return parts.join('\u0001');
 }

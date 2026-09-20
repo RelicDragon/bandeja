@@ -25,7 +25,7 @@
         "ABOUT_RIGHT": "مناسب تقريباً",
         "LOWER": "أقل مما يظهر"
       },
-      "disclaimer": "ملاحظات الأقران إشارة مجتمعية خاصة. لا تضبط أو تغيّر التقييم الرسمي."
+      "disclaimer": "تبقى الإجابات الفردية مجهولة المصدر. هذا الملخّص إشارة مجتمعية فقط، ولا يضبط أو يغيّر التقييم الرسمي."
     },
     "isTrainer": "مدرب",
     "currentLevel": "المستوى الحالي",
@@ -75,7 +75,7 @@
     "userBlockedCannotChat": "المستخدم محظور",
     "userBlockedCannotFavorite": "المستخدم محظور",
     "confirmedBy": "تأكد المستوى",
-    "levelNotConfirmed": "المستوى غير مؤكد",
+    "confirmedAtLevel": "عند المستوى {{level}}",
     "shareProfile": "مشاركة",
     "shareProfileTitle": "مشاركة الملف",
     "shareProfileMessage": "تعرّف على {{name}} على Bandeja",

@@ -1,0 +1,71 @@
+{
+  "pairs": {
+    "mode": {
+      "label": "लीडरबोर्ड मोड",
+      "players": "खिलाड़ी",
+      "pairs": "जोड़ियाँ"
+    },
+    "sort": {
+      "label": "जोड़ियाँ क्रमबद्ध करें",
+      "winRate": "जीत दर",
+      "games": "मैच",
+      "level": "स्तर"
+    },
+    "period": {
+      "label": "अवधि",
+      "all": "हर समय",
+      "days30": "पिछले 30 दिन",
+      "days10": "पिछले 10 दिन"
+    },
+    "names": {
+      "spoken": "{{first}} और {{second}}"
+    },
+    "gamesCount_one": "{{count}} मैच",
+    "gamesCount_other": "{{count}} मैच",
+    "floorHint_one": "यहाँ दिखने के लिए एक ही साथी के साथ {{count}} मैच खेलें।",
+    "floorHint_other": "यहाँ दिखने के लिए एक ही साथी के साथ {{count}} मैच खेलें।",
+    "chemistry": {
+      "tooltip": "साथ खेलने की जीत दर बनाम अकेले खेलने की",
+      "aria": "तालमेल {{value}}"
+    },
+    "stats": {
+      "games": "मैच",
+      "winRate": "जीत दर",
+      "chemistry": "तालमेल",
+      "chemistryUnknown": "अकेले के मैच अभी कम हैं"
+    },
+    "aria": {
+      "row": "रैंक {{rank}}, {{names}}, {{games}}, {{winRate}} प्रतिशत जीत दर, तालमेल {{chemistry}}",
+      "rowNoChemistry": "रैंक {{rank}}, {{names}}, {{games}}, {{winRate}} प्रतिशत जीत दर",
+      "podium": "नंबर {{rank}}, {{names}}, {{winRate}} प्रतिशत जीत दर, {{games}}",
+      "partner": "{{name}}, {{games}}, {{winRate}} प्रतिशत जीत दर"
+    },
+    "scrollToMyPair": "मेरी जोड़ी तक जाएँ ({{rank}})",
+    "loadMore": "और दिखाएँ",
+    "loading": "जोड़ियाँ लोड हो रही हैं",
+    "error": "जोड़ियाँ लोड नहीं हो सकीं। थोड़ी देर बाद फिर कोशिश करें।",
+    "empty": {
+      "title": "अभी कोई जोड़ी रैंक में नहीं",
+      "action": "मैच खोजें"
+    },
+    "sheet": {
+      "title": "जोड़ी",
+      "recent": "हाल में साथ खेले",
+      "recentEmpty": "अभी तक साथ कोई मैच नहीं।",
+      "createTeam": "टीम बनाएँ",
+      "openTeam": "टीम खोलें",
+      "inviteToGame": "मैच के लिए बुलाएँ"
+    },
+    "recent": {
+      "untitled": "मैच"
+    },
+    "result": {
+      "win": "जीत",
+      "loss": "हार"
+    },
+    "partners": {
+      "title": "आपके साथी",
+      "seeAll": "सभी देखें"
+    }
+  }
+}

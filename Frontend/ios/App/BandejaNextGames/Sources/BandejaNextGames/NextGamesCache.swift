@@ -23,11 +23,15 @@ public enum NextGamesCache {
         return decoder
     }()
 
+    /// Writes the list and marks the viewer as signed in: only an authenticated fetch can
+    /// produce games, so widgets read `isAuthenticated` instead of touching the Keychain.
+    /// (`NextGamesEnvelopeStore.write` overrides the flag with the envelope's own value.)
     @discardableResult
     public static func write(_ games: [CachedNextGame], suite: UserDefaults? = AppGroupStorage.suite) -> Bool {
         guard let suite,
               let data = try? encoder.encode(games) else { return false }
         suite.set(data, forKey: AppGroupStorage.Keys.nextGames)
+        suite.set(true, forKey: AppGroupStorage.Keys.isAuthenticated)
         return true
     }
 
@@ -37,8 +41,15 @@ public enum NextGamesCache {
         return (try? decoder.decode([CachedNextGame].self, from: data)) ?? []
     }
 
+    /// Logout / lost credentials: drops the list and marks the viewer as signed out.
     public static func clear(suite: UserDefaults? = AppGroupStorage.suite) {
         suite?.removeObject(forKey: AppGroupStorage.Keys.nextGames)
+        suite?.set(false, forKey: AppGroupStorage.Keys.isAuthenticated)
+    }
+
+    /// Whether the last cache write came from a signed-in session. Missing flag = signed out.
+    public static func isAuthenticated(suite: UserDefaults? = AppGroupStorage.suite) -> Bool {
+        suite?.object(forKey: AppGroupStorage.Keys.isAuthenticated) as? Bool ?? false
     }
 }
 

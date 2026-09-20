@@ -126,6 +126,13 @@ enum ServeGuideEngine {
         var motionPrefix = "pts"
         switch i.rallyPointsSport {
         case .tableTennis:
+            // ITTF: two serves each until 10–10, then alternate every point (`tableTennisNextServerTeam`).
+            nextTeam = ServeGuideSportRules.tableTennisNextServerTeam(
+                firstForSet: firstForSet,
+                pointIndex: t,
+                teamA: ta,
+                teamB: tb
+            )
             slot = nil
             side = courtSideForTieBreakPoint(t)
             let won = ServeGuideSportRules.tableTennisGamesWonBeforeActive(
@@ -227,6 +234,11 @@ enum ServeGuideEngine {
             )
             motionPrefix = "pb"
         case .squash:
+            // WSF: winner of the last rally serves; box from the server's own score (`squashServe.ts`).
+            nextTeam = ServeGuideSportRules.squashNextServerTeam(
+                pointWinnerLog: i.pointWinnerLog,
+                firstForSet: firstForSet
+            )
             slot = nil
             let serverScore = nextTeam == .teamA ? ta : tb
             side = ServeGuideSportRules.squashCourtSide(serverScore: serverScore)

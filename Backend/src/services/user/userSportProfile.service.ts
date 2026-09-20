@@ -43,6 +43,7 @@ export function enrichProfileUser<
   approvedLevel: boolean;
   approvedById: string | null;
   approvedWhen: Date | string | null;
+  approvedAtLevel: number | null;
   inactive: boolean;
 } {
   const sport = resolveSport(user.primarySport ?? Sport.PADEL);
@@ -58,6 +59,7 @@ export function enrichProfileUser<
     approvedLevel: confirmation.approvedLevel,
     approvedById: confirmation.approvedById,
     approvedWhen: confirmation.approvedWhen,
+    approvedAtLevel: confirmation.approvedAtLevel,
     sportsPlayed: buildSportsPlayed(user.sportProfiles),
   };
 }
@@ -80,6 +82,7 @@ type SportProfileSnapshot = {
   approvedLevel?: boolean;
   approvedById?: string | null;
   approvedWhen?: Date | string | null;
+  approvedAtLevel?: number | null;
 };
 
 type UserWithSportProfiles = {
@@ -96,6 +99,7 @@ export type SportProjectedUserFields = {
   approvedLevel: boolean;
   approvedById: string | null;
   approvedWhen: Date | string | null;
+  approvedAtLevel: number | null;
 };
 
 type ProjectedUser<T> = T extends null | undefined
@@ -106,6 +110,8 @@ export type SportLevelConfirmationFields = {
   approvedLevel: boolean;
   approvedById: string | null;
   approvedWhen: Date | null;
+  /** Level at confirmation time; null for rows confirmed before the snapshot column existed. */
+  approvedAtLevel: number | null;
 };
 
 export function resolveSportLevelConfirmation(
@@ -123,6 +129,8 @@ export function resolveSportLevelConfirmation(
           ? profile.approvedWhen
           : new Date(profile.approvedWhen)
         : null,
+      approvedAtLevel:
+        typeof profile.approvedAtLevel === 'number' ? profile.approvedAtLevel : null,
     };
   }
 
@@ -138,10 +146,12 @@ export function resolveSportLevelConfirmation(
           ? approvedWhenRaw
           : new Date(approvedWhenRaw as string)
         : null,
+      // The PADEL mirror on User carries no level snapshot — clients omit it.
+      approvedAtLevel: null,
     };
   }
 
-  return { approvedLevel: false, approvedById: null, approvedWhen: null };
+  return { approvedLevel: false, approvedById: null, approvedWhen: null, approvedAtLevel: null };
 }
 
 export function assertSportImplemented(sport: Sport): void {
@@ -430,6 +440,7 @@ export function projectUserForSportContext<T extends UserWithSportProfiles | nul
     approvedLevel: confirmation.approvedLevel,
     approvedById: confirmation.approvedById,
     approvedWhen: confirmation.approvedWhen,
+    approvedAtLevel: confirmation.approvedAtLevel,
   }) as ProjectedUser<T>;
   if (opts?.keepSportProfiles && user) {
     return {

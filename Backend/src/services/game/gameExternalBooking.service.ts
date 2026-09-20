@@ -1,3 +1,4 @@
+import { weltnerBookingLinkData } from '../weltner/weltnerBookingLinks';
 import { ClubIntegrationType, GameBookingStatus, Prisma } from '@prisma/client';
 import prisma from '../../config/database';
 import { BOOKING_ERROR_KEYS } from '@bandeja/shared/booking/errorKeys';
@@ -32,6 +33,7 @@ async function resolveGameClubBookingProvider(gameId: string, tx: Tx): Promise<C
     integrationType === ClubIntegrationType.BOOKTIME ||
     integrationType === ClubIntegrationType.PADELOO ||
     integrationType === ClubIntegrationType.KLIKTEREN ||
+    integrationType === ClubIntegrationType.WELTNER ||
     integrationType === ClubIntegrationType.NSPADELSUPABASE
   ) {
     return integrationType;
@@ -246,16 +248,21 @@ export async function insertJoinRows(
   provider: ClubIntegrationType,
   snapshots: BookingSnapshotInput[],
   timeZone: string,
+  userId?: string,
 ): Promise<void> {
   if (externalBookingIds.length === 0) return;
+  const resolvedProvider = await resolveGameClubBookingProvider(gameId, tx);
+  if (resolvedProvider === ClubIntegrationType.WELTNER) provider = resolvedProvider;
   const snaps = snapshotMap(snapshots);
   await tx.gameExternalBooking.createMany({
-    data: externalBookingIds.map((externalBookingId) => ({
+    data: await Promise.all(externalBookingIds.map(async (externalBookingId) => ({
       gameId,
       externalBookingId,
-      externalBookingProvider: provider,
-      ...snapshotToRowData(snaps.get(externalBookingId), timeZone),
-    })),
+      externalBookingProvider: externalBookingId.startsWith('weltner:') ? ClubIntegrationType.WELTNER : provider,
+      ...(provider === 'WELTNER' || externalBookingId.startsWith('weltner:')
+        ? await weltnerBookingLinkData(tx, { gameId, userId, externalBookingId })
+        : snapshotToRowData(snaps.get(externalBookingId), timeZone)),
+    }))),
   });
 }
 
@@ -443,13 +450,7 @@ export async function patchGameBookings(
         throw new ApiError(400, BOOKING_ERROR_KEYS.alreadyLinked);
       }
 
-      await tx.gameExternalBooking.createMany({
-        data: add.map((externalBookingId) => ({
-          gameId,
-          externalBookingId,
-          externalBookingProvider: provider,
-        })),
-      });
+      await insertJoinRows(tx, gameId, add, provider, [], await resolveBooktimeTimezoneForGame(gameId), userId);
     }
 
     const synced = await syncGameBookingState(tx, gameId, { clearBookedCourtWhenUnlinked: true });
@@ -494,7 +495,9 @@ export async function putGameBookingSnapshots(
     for (const snap of snapshots) {
       const updated = await tx.gameExternalBooking.updateMany({
         where: { gameId, externalBookingId: snap.externalBookingId },
-        data: snapshotToRowData(snap, timeZone),
+        data: snap.externalBookingId.startsWith('weltner:')
+          ? await weltnerBookingLinkData(tx, { gameId, externalBookingId: snap.externalBookingId })
+          : snapshotToRowData(snap, timeZone),
       });
       if (updated.count === 0) {
         throw new ApiError(404, BOOKING_ERROR_KEYS.bookingNotLinked, true, {
@@ -584,8 +587,6 @@ export async function linkBookingToGame(
       throw new ApiError(400, BOOKING_ERROR_KEYS.alreadyLinked);
     }
 
-    const provider = await resolveGameClubBookingProvider(gameId, tx);
-
     if (gamePatch) {
       const patchData = linkGamePatchToUpdateData(gamePatch, timeZone);
       if (Object.keys(patchData).length > 0) {
@@ -593,12 +594,15 @@ export async function linkBookingToGame(
       }
     }
 
+    const provider = await resolveGameClubBookingProvider(gameId, tx);
     await tx.gameExternalBooking.create({
       data: {
         gameId,
         externalBookingId,
-        externalBookingProvider: provider,
-        ...snapshotToRowData(resolvedSnapshot, timeZone),
+        externalBookingProvider: externalBookingId.startsWith('weltner:') ? ClubIntegrationType.WELTNER : provider,
+        ...(provider === 'WELTNER' || externalBookingId.startsWith('weltner:')
+          ? await weltnerBookingLinkData(tx, { gameId, userId, externalBookingId })
+          : snapshotToRowData(resolvedSnapshot, timeZone)),
       },
     });
 

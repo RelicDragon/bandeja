@@ -32,7 +32,7 @@ struct WatchServeGuidePage: View {
             if snapshot.changeEndsBeforeNextPoint {
                 Text(WatchCopy.serveCoachChangeEnds(lang))
                     .font(.caption2.weight(.bold))
-                    .foregroundStyle(Color(red: 0.05, green: 0.23, blue: 0.45))
+                    .foregroundStyle(.yellow)
                     .lineLimit(1)
             }
 
@@ -56,7 +56,7 @@ struct WatchServeGuidePage: View {
             HStack(spacing: 6) {
                 WatchServeSideArrow(courtSide: snapshot.courtSide)
                 if let slot = snapshot.tieBreakServeSlot {
-                    Text(slot == .serveOne ? "S1" : "S2")
+                    Text(WatchCopy.serveSlotShort(lang, slot: slot == .serveOne ? 1 : 2))
                         .font(.caption2.weight(.bold).monospaced())
                         .foregroundStyle(.secondary)
                 }

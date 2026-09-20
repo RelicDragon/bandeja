@@ -35,6 +35,18 @@ export const NOTIFICATION_TYPE_TO_PREF: Record<NotificationType, PreferenceKey> 
     PreferenceKey.SEND_PLAY_INTENT_SOCIAL_NOTIFICATIONS,
   [NotificationType.FOLLOWED_USER_PLAY_INTENT]:
     PreferenceKey.SEND_PLAY_INTENT_SOCIAL_NOTIFICATIONS,
+  [NotificationType.GAME_SERIES_NEXT_PROMPT]: PreferenceKey.SEND_INVITES,
+  [NotificationType.GAME_NO_SHOW_NOTED]: PreferenceKey.SEND_MESSAGES,
+  [NotificationType.GAME_SPOT_OPENED]: PreferenceKey.SEND_INVITES,
+  [NotificationType.FOLLOWED_GAME_SPOT_OPENED]:
+    PreferenceKey.SEND_PLAY_INTENT_SOCIAL_NOTIFICATIONS,
+  [NotificationType.GAME_COST_REMINDER]: PreferenceKey.SEND_WALLET_NOTIFICATIONS,
+  [NotificationType.FOLLOWED_USER_LIVE]:
+    PreferenceKey.SEND_PLAY_INTENT_SOCIAL_NOTIFICATIONS,
+  [NotificationType.REFERRAL_JOINED]: PreferenceKey.SEND_WALLET_NOTIFICATIONS,
+  [NotificationType.MONTHLY_RECAP_READY]: PreferenceKey.SEND_REMINDERS,
+  [NotificationType.GOODS_GIFT_RECEIVED]: PreferenceKey.SEND_WALLET_NOTIFICATIONS,
+  [NotificationType.GAME_WEATHER_ALERT]: PreferenceKey.SEND_WEATHER_ALERTS,
 };
 
 export type NotificationPreferenceData = {
@@ -48,6 +60,7 @@ export type NotificationPreferenceData = {
   sendTeamNotifications: boolean;
   sendPlayIntentNotifications: boolean;
   sendPlayIntentSocialNotifications: boolean;
+  sendWeatherAlerts: boolean;
 };
 
 type PrefFlags = Omit<NotificationPreferenceData, 'channelType'>;
@@ -62,6 +75,7 @@ export const DEFAULT_PREFERENCES: PrefFlags = {
   sendTeamNotifications: true,
   sendPlayIntentNotifications: true,
   sendPlayIntentSocialNotifications: true,
+  sendWeatherAlerts: true,
 };
 
 function toData(
@@ -79,6 +93,7 @@ function toData(
     sendTeamNotifications: p.sendTeamNotifications,
     sendPlayIntentNotifications: p.sendPlayIntentNotifications,
     sendPlayIntentSocialNotifications: p.sendPlayIntentSocialNotifications,
+    sendWeatherAlerts: p.sendWeatherAlerts,
   };
 }
 
@@ -93,20 +108,11 @@ function countTrue(p: PrefFlags): number {
     p.sendTeamNotifications,
     p.sendPlayIntentNotifications,
     p.sendPlayIntentSocialNotifications,
+    p.sendWeatherAlerts,
   ].filter(Boolean).length;
 }
 
-function flagsFromRow(p: {
-  sendMessages: boolean;
-  sendInvites: boolean;
-  sendDirectMessages: boolean;
-  sendReminders: boolean;
-  sendWalletNotifications: boolean;
-  sendMarketplaceNotifications: boolean;
-  sendTeamNotifications: boolean;
-  sendPlayIntentNotifications: boolean;
-  sendPlayIntentSocialNotifications: boolean;
-}): PrefFlags {
+function flagsFromRow(p: PrefFlags): PrefFlags {
   return {
     sendMessages: p.sendMessages,
     sendInvites: p.sendInvites,
@@ -117,6 +123,7 @@ function flagsFromRow(p: {
     sendTeamNotifications: p.sendTeamNotifications,
     sendPlayIntentNotifications: p.sendPlayIntentNotifications,
     sendPlayIntentSocialNotifications: p.sendPlayIntentSocialNotifications,
+    sendWeatherAlerts: p.sendWeatherAlerts,
   };
 }
 

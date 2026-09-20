@@ -5,12 +5,13 @@ struct LiveActiveMatchWidget: Widget {
     private let kind = "com.funified.bandeja.liveActiveMatch"
 
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: kind, provider: LiveActiveMatchProvider()) { entry in
+        let lang = WatchWidgetCopy.widgetLang()
+        return StaticConfiguration(kind: kind, provider: LiveActiveMatchProvider()) { entry in
             LiveActiveMatchEntryView(entry: entry)
                 .containerBackground(.fill.tertiary, for: .widget)
         }
-        .configurationDisplayName("Live scoring")
-        .description("Active match from Bandeja scoring.")
+        .configurationDisplayName(WatchWidgetCopy.liveWidgetTitle(lang))
+        .description(WatchWidgetCopy.liveWidgetDescription(lang))
         .supportedFamilies([
             .accessoryRectangular,
             .accessoryCircular,

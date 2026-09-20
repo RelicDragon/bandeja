@@ -1,7 +1,8 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Home, Sun } from 'lucide-react';
 import { Button } from '@/components';
+import { SegmentedSwitch } from '@/components/SegmentedSwitch';
 import { Court, Sport } from '@/types';
 import { getSportConfig } from '@/sport/sportRegistry';
 import { SportPublicIcon } from '@/components/sport/SportPublicIcon';
@@ -29,6 +30,12 @@ interface ClubAdminCourtFormProps {
     sport?: Sport | null;
   }) => Promise<void>;
 }
+
+/** PRD 357 — indoor/outdoor is what decides whether weather alerts fire. */
+const COURT_COVER_TABS = [
+  { id: 'indoor', labelKey: 'weatherAlerts.indoor', icon: Home },
+  { id: 'outdoor', labelKey: 'weatherAlerts.outdoor', icon: Sun },
+] as const;
 
 const INPUT_CLASS =
   'mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500';
@@ -188,17 +195,35 @@ export function ClubAdminCourtForm({ open, onClose, court, clubSports, onSubmit 
               />
             </Field>
 
-            <div className="overflow-hidden rounded-xl border border-border bg-muted/20 divide-y divide-border">
-              <label className="flex cursor-pointer items-center justify-between gap-3 px-4 py-3">
-                <span className="text-sm font-medium text-foreground">{t('clubAdmin.indoor')}</span>
-                <input
-                  type="checkbox"
-                  className="h-4 w-4 rounded border-border text-primary-600 focus:ring-primary-500"
-                  checked={isIndoor}
-                  onChange={(e) => setIsIndoor(e.target.checked)}
-                />
-              </label>
-              {court && (
+            {/* PRD 357 — this flag decides whether the game gets a weather
+                alert at all, so it is a prominent two-option control rather
+                than a checkbox an admin can skim past. */}
+            <div className="block text-sm">
+              <span className="font-medium text-muted-foreground">
+                {t('weatherAlerts.courtCover')}
+              </span>
+              <div className="mt-1.5">
+              <SegmentedSwitch
+                tabs={COURT_COVER_TABS.map((tab) => ({
+                  ...tab,
+                  label: t(tab.labelKey),
+                  ariaLabel: t(tab.labelKey),
+                }))}
+                activeId={isIndoor ? 'indoor' : 'outdoor'}
+                onChange={(id) => setIsIndoor(id === 'indoor')}
+                showOnlyActiveTabText={false}
+                fullWidth
+                layoutId={`court-cover-${court?.id ?? 'new'}`}
+                ariaLabel={t('weatherAlerts.courtCover')}
+              />
+              </div>
+              <p className="mt-1.5 text-xs text-muted-foreground">
+                {t('weatherAlerts.courtCoverHint')}
+              </p>
+            </div>
+
+            {court && (
+              <div className="overflow-hidden rounded-xl border border-border bg-muted/20 divide-y divide-border">
                 <label className="flex cursor-pointer items-center justify-between gap-3 px-4 py-3">
                   <span className="text-sm font-medium text-foreground">{t('clubAdmin.active')}</span>
                   <input
@@ -208,8 +233,8 @@ export function ClubAdminCourtForm({ open, onClose, court, clubSports, onSubmit 
                     onChange={(e) => setIsActive(e.target.checked)}
                   />
                 </label>
-              )}
-            </div>
+              </div>
+            )}
 
             {court?.externalCourtId && (
               <p className="rounded-lg bg-muted/40 px-3 py-2 text-xs text-muted-foreground">

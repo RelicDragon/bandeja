@@ -13,11 +13,16 @@ import {
   projectUserForSportContext,
 } from '../user/userSportProfile.service';
 import {
-  gameBaseInclude,
   gameMyTabListInclude,
   gameWithRoundsAndOutcomes,
   MAIN_PHOTO_RELATION_SELECT,
 } from './gamePrismaIncludes';
+import {
+  GAME_PAYMENT_HINT_SELECT,
+  getGameDetailSelect,
+  getGameListSelect,
+  isEntitledToGamePaymentHint,
+} from './gameDetail.projection';
 import { fetchAvailableGamesPage } from './availableGamesQuery';
 import { calendarDateBounds, InvalidCalendarDateError } from './calendarDateBounds';
 import type { AvailableStructuralFilters } from './availableGamesStructuralWhere';
@@ -228,59 +233,6 @@ export function projectUserTeamForSportContext<
   };
 }
 
-const getLeagueSeasonInclude = () => ({
-  league: {
-    select: {
-      id: true,
-      name: true,
-    },
-  },
-  game: {
-    select: {
-      id: true,
-      name: true,
-      avatar: true,
-      originalAvatar: true,
-      sport: true,
-    },
-  },
-});
-
-const getBaseGameInclude = () => gameBaseInclude;
-
-const getGamesCourtInclude = () => ({
-  court: {
-    include: {
-      club: {
-        select: {
-          id: true,
-          name: true,
-          avatar: true,
-          address: true,
-          integrationType: true,
-          integrationConfig: true,
-          city: {
-            select: {
-              name: true,
-              timezone: true,
-            },
-          },
-        },
-      },
-    },
-  },
-});
-
-const getGamesParentInclude = () => ({
-  parent: {
-    include: {
-      leagueSeason: {
-        include: getLeagueSeasonInclude(),
-      },
-    },
-  },
-});
-
 export function computeJoinQueuesFromParticipants(game: any): any[] {
   const inQueueParticipants = game.participants?.filter(
     (p: any) => p.status === 'IN_QUEUE'
@@ -318,10 +270,20 @@ export function participantsToInviteShape(participants: any[], game?: any): any[
 }
 
 export class GameReadService {
+  /**
+   * `GET /api/games/:id` and every socket `game-updated` payload.
+   *
+   * Uses an explicit whitelist `select` (`gameDetail.projection.ts`), never a
+   * top-level `include`: this route is `optionalAuth`, and an `include` returns
+   * every `Game` scalar — which is how PRD 348's `Game.paymentHint` (an IBAN, a
+   * Revolut handle) reached callers with no token at all. `paymentHint` is now
+   * fetched in a second, deliberate query that only runs once the server has
+   * authorised the viewer against the roster.
+   */
   static async getGameById(id: string, userId?: string, skipRestrictions: boolean = false) {
     const game = await prisma.game.findUnique({
       where: { id },
-      include: gameWithRoundsAndOutcomes,
+      select: getGameDetailSelect({ viewerIsAuthenticated: Boolean(userId) }),
     });
 
     if (!game) {
@@ -426,13 +388,37 @@ export class GameReadService {
       userNote = note?.content || null;
     }
 
+    /*
+     * PRD 348 — `Game.paymentHint` holds an IBAN / payment handle. It is read
+     * in a second query, and only after the roster answered, so an
+     * unauthenticated or non-roster caller can never receive it. Same
+     * entitlement as `GET /games/:id/cost` (`canViewCostShares`).
+     */
+    let paymentHint: string | null | undefined;
+    if (
+      isEntitledToGamePaymentHint(game.participants, {
+        userId,
+        isPlatformAdmin: viewerIsAdmin,
+      })
+    ) {
+      const hintRow = await prisma.game.findUnique({
+        where: { id },
+        select: GAME_PAYMENT_HINT_SELECT,
+      });
+      paymentHint = hintRow?.paymentHint ?? null;
+    }
+
     const photoViewer = buildPhotoViewer(userId, viewerIsAdmin);
+    // `as never`: the row comes from a `Prisma.GameSelect`-typed projection, so
+    // its inferred shape carries no implicit index signature. Same cast the
+    // Find-card and series-detail readers use for the same reason.
     const gameWithSportLevels = projectGamePhotoPayload(
-      projectGameUsersForSportContext(game),
+      projectGameUsersForSportContext(game as never),
       photoViewer,
     );
     const base = {
       ...gameWithSportLevels,
+      ...(paymentHint !== undefined ? { paymentHint } : {}),
       isClubFavorite,
       userNote,
       joinQueues: computeJoinQueuesFromParticipants(gameWithSportLevels),
@@ -514,13 +500,12 @@ export class GameReadService {
     const limit = filters.limit ? parseInt(filters.limit) : undefined;
     const offset = filters.offset ? parseInt(filters.offset) : undefined;
 
+    // Whitelist `select`, not an `include`: this route is `optionalAuth` too, and
+    // an `include` returns every `Game` scalar — `paymentHint` among them — for
+    // every row the filter matches.
     const gamesRaw = await prisma.game.findMany({
       where,
-      include: {
-        ...getBaseGameInclude(),
-        ...getGamesCourtInclude(),
-        ...getGamesParentInclude(),
-      },
+      select: getGameListSelect({ viewerIsAuthenticated: Boolean(userId) }),
       orderBy: { startTime: 'desc' },
       ...(limit && { take: limit }),
       ...(offset && { skip: offset }),
@@ -528,7 +513,7 @@ export class GameReadService {
 
     const photoViewer = buildPhotoViewer(userId, listViewerIsAdmin);
     const games = gamesRaw.map((g) =>
-      projectGamePhotoPayload(projectGameUsersForSportContext(g), photoViewer)
+      projectGamePhotoPayload(projectGameUsersForSportContext(g as never), photoViewer)
     );
 
     // Batch fetch user notes

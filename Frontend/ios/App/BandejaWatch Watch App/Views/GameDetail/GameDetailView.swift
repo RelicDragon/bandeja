@@ -21,7 +21,8 @@ struct GameDetailView: View {
             } else if let game = vm.game {
                 gameContent(game)
             } else {
-                ProgressView(WatchCopy.loadingEllipsis(prefs.uiLanguageCode))
+                // Load finished with neither a game nor an error: offer a retry instead of spinning forever.
+                errorView(message: WatchCopy.errorUnexpectedResponse(prefs.uiLanguageCode))
             }
         }
         .navigationTitle(vm.game?.displayTitle ?? WatchCopy.gameTitle(prefs.uiLanguageCode))
@@ -36,7 +37,7 @@ struct GameDetailView: View {
                 headerSection(game)
                 statusBanner(game)
                 if let err = vm.error {
-                    Text((err as? APIError).map { $0.localizedMessage(uiLanguageCode: prefs.uiLanguageCode) } ?? err.localizedDescription)
+                    Text(WatchErrorText.message(err, lang: prefs.uiLanguageCode))
                         .font(.caption2)
                         .foregroundStyle(.red)
                         .multilineTextAlignment(.leading)
@@ -59,14 +60,18 @@ struct GameDetailView: View {
                 Image(systemName: game.gameType.gameTypeIconName)
                     .font(.caption2)
                     .foregroundStyle(Color.accentColor)
-                Text(game.gameType.capitalized)
+                Text(WatchCopy.gameTypeLabel(prefs.uiLanguageCode, raw: game.gameType))
                     .font(.caption2)
                     .foregroundStyle(.secondary)
             }
-            Label(
-                game.startTime.formatted(date: .abbreviated, time: game.timeIsSet ? .shortened : .omitted),
-                systemImage: "clock"
-            )
+            Label {
+                Text(
+                    game.startTime,
+                    format: Date.FormatStyle(date: .abbreviated, time: game.timeIsSet ? .shortened : .omitted)
+                )
+            } icon: {
+                Image(systemName: "clock")
+            }
                 .font(.caption2)
                 .foregroundStyle(.secondary)
             if let club = game.club {
@@ -101,12 +106,12 @@ struct GameDetailView: View {
     }
 
     private func statusBanner(_ game: WatchGame) -> some View {
-        let color = statusColor(game.status)
+        let color = WatchGameStatusCopy.color(status: game.status)
         return HStack(spacing: 6) {
             Circle()
                 .fill(color)
                 .frame(width: 8, height: 8)
-            Text(statusLabel(game, lang: prefs.uiLanguageCode))
+            Text(WatchGameStatusCopy.label(status: game.status, resultsStatus: game.resultsStatus, lang: prefs.uiLanguageCode))
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(color)
         }
@@ -267,13 +272,11 @@ struct GameDetailView: View {
     }
 
     private func errorView(_ error: Error) -> some View {
-        let message: String
-        if let api = error as? APIError {
-            message = api.localizedMessage(uiLanguageCode: prefs.uiLanguageCode)
-        } else {
-            message = error.localizedDescription
-        }
-        return VStack(spacing: 8) {
+        errorView(message: WatchErrorText.message(error, lang: prefs.uiLanguageCode))
+    }
+
+    private func errorView(message: String) -> some View {
+        VStack(spacing: 8) {
             Image(systemName: "exclamationmark.triangle")
                 .foregroundStyle(.red)
             Text(message)
@@ -283,24 +286,4 @@ struct GameDetailView: View {
         }
     }
 
-    private func statusColor(_ status: String) -> Color {
-        switch status {
-        case "STARTED":              return .green
-        case "ANNOUNCED":            return .yellow
-        case "FINISHED", "ARCHIVED": return .secondary
-        default:                     return .secondary
-        }
-    }
-
-    private func statusLabel(_ game: WatchGame, lang: String) -> String {
-        switch (game.status, game.resultsStatus) {
-        case ("ANNOUNCED", _):         return WatchCopy.statusAnnounced(lang)
-        case ("STARTED", "NONE"):      return WatchCopy.statusInProgress(lang)
-        case ("STARTED", "IN_PROGRESS"): return WatchCopy.statusScoring(lang)
-        case (_, "FINAL"):             return WatchCopy.resultsFinal(lang)
-        case ("FINISHED", _):          return WatchCopy.statusFinished(lang)
-        case ("ARCHIVED", _):          return WatchCopy.statusArchived(lang)
-        default:                       return game.status.capitalized
-        }
-    }
 }

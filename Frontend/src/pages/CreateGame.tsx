@@ -8,6 +8,8 @@ import { CreateGameStepHeader } from '@/components/createGame/CreateGameStepHead
 import { CreateGameFooterBar } from '@/components/createGame/CreateGameFooterBar';
 import { CreateGameCourtSection } from '@/components/createGame/CreateGameCourtSection';
 import { CreateGameDateSection } from '@/components/createGame/CreateGameDateSection';
+import { SeriesRepeatRow, type RepeatChoice } from '@/features/game-series/SeriesRepeatRow';
+import { seriesApi } from '@/api/series';
 import { useAuthStore } from '@/store/authStore';
 import { runWithProfileName } from '@/utils/runWithProfileName';
 import { overlapConfirmBody, runWithOverlapConfirm } from '@/utils/gameSlotOverlapConfirm';
@@ -64,7 +66,7 @@ import {
   resolveReservationValidationMessage,
   type ReservationValidationResult,
 } from '@shared/gameBooking/reservationIntent';
-import { isKlikterenClub, isPadelooClub } from '@shared/clubIntegration';
+import { isWeltnerClub, isKlikterenClub, isPadelooClub } from '@shared/clubIntegration';
 import type { CreateGameAbortReason } from '@/hooks/createGameBookingFlow/types';
 import { MultiCourtTimeHint } from '@/components/gameLocationTime/MultiCourtTimeHint';
 import { clubSupportsSport, filterClubsBySport } from '@/utils/courtSport';
@@ -327,6 +329,8 @@ export const CreateGame = ({
   const [gameName, setGameName] = useState<string>(initialAuthored.name);
   const [comments, setComments] = useState<string>(initialAuthored.description);
   const [priceTotal, setPriceTotal] = useState<number | undefined>(initialGameData?.priceTotal ?? undefined);
+  // PRD 348 — free-text "How to pay you", shown to players in the settle sheet.
+  const [paymentHint, setPaymentHint] = useState<string>(initialGameData?.paymentHint ?? '');
   const [priceType, setPriceType] = useState<PriceType>(initialGameData?.priceType || 'NOT_KNOWN');
   const [priceCurrency, setPriceCurrency] = useState<PriceCurrency | undefined>(initialGameData?.priceCurrency ?? undefined);
   const [storedInitialDate] = useState<Date>(() => {
@@ -342,6 +346,10 @@ export const CreateGame = ({
   const [isClubModalOpen, setIsClubModalOpen] = useState(false);
   const [pendingClubSchedule, setPendingClubSchedule] = useState<ClubScheduleSelection | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  // PRD 345 — Repeat row. The game is created normally first, then converted
+  // into a series, so every create-game validation runs exactly once.
+  const [repeatCadence, setRepeatCadence] = useState<RepeatChoice>('ONCE');
+  const [repeatEndsOn, setRepeatEndsOn] = useState('');
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [isInvitePlayersModalOpen, setIsInvitePlayersModalOpen] = useState(false);
   const [invitedPlayerIds, setInvitedPlayerIds] = useState<string[]>(() => initialInvitedPlayerIds);
@@ -551,7 +559,7 @@ export const CreateGame = ({
     entityType !== 'BAR' &&
     Boolean(selectedClub) &&
     clubBookingFlowActive &&
-    Boolean(booktimeIntegrationConfig || isPadelooClub(selectedClubData) || isKlikterenClub(selectedClubData)) &&
+    Boolean(booktimeIntegrationConfig || isPadelooClub(selectedClubData) || isKlikterenClub(selectedClubData) || isWeltnerClub(selectedClubData)) &&
     !clubBookingAuth?.connected &&
     (reservationIntent === 'reserveNow' || reservationIntent === 'useExisting');
   const booktimeAuthPromptCollapsed = showBooktimeAuthPrompt && !needsBooktimeAuth;
@@ -1168,6 +1176,7 @@ export const CreateGame = ({
     willBookOnCreate,
     selectedBookingCount: selectedBookingIds.length,
     derivedBookingWindow: derivedBookingWindowLabel,
+    repeatCadence: repeatCadence === 'ONCE' ? null : repeatCadence,
   });
   const confirmSummaryChips = useCreateGameSummaryChips({
     past: scrolledPastSections,
@@ -1256,28 +1265,51 @@ export const CreateGame = ({
     ],
   );
 
+  /** Events, leagues and league seasons never recur (PRD 345, Out of Scope). */
+  const seriesEligibleEntityType =
+    entityType === 'GAME' || entityType === 'TRAINING' || entityType === 'TOURNAMENT';
+
   const dateSection = useMemo(
     () => (
-      <CreateGameDateSection
-        selectedDate={selectedDate}
-        showDatePicker={showDatePicker}
-        onDateSelect={setSelectedDate}
-        onCalendarClick={() => setShowDatePicker(true)}
-        onCloseDatePicker={() => setShowDatePicker(false)}
-        generateTimeOptionsForDate={resolvedGenerateTimeOptionsForDate}
-        dateFixedDates={booktimeScheduleConstrained ? booktimeFixedDates : undefined}
-        hideCalendar={booktimeScheduleConstrained}
-        bookableDaysHint={booktimeScheduleConstrained ? booktimeCompanyMeta.bookableDays : null}
-      />
+      <>
+        <CreateGameDateSection
+          selectedDate={selectedDate}
+          showDatePicker={showDatePicker}
+          onDateSelect={setSelectedDate}
+          onCalendarClick={() => setShowDatePicker(true)}
+          onCloseDatePicker={() => setShowDatePicker(false)}
+          generateTimeOptionsForDate={resolvedGenerateTimeOptionsForDate}
+          dateFixedDates={booktimeScheduleConstrained ? booktimeFixedDates : undefined}
+          hideCalendar={booktimeScheduleConstrained}
+          bookableDaysHint={booktimeScheduleConstrained ? booktimeCompanyMeta.bookableDays : null}
+        />
+        {seriesEligibleEntityType && selectedTime ? (
+          <SeriesRepeatRow
+            className="mt-3"
+            cadence={repeatCadence}
+            onCadenceChange={setRepeatCadence}
+            endsOn={repeatEndsOn}
+            onEndsOnChange={setRepeatEndsOn}
+            startDate={selectedDate}
+            startTimeLocal={selectedTime}
+            onManageSeries={() => navigate('/profile')}
+          />
+        ) : null}
+      </>
     ),
     [
       selectedDate,
+      selectedTime,
       showDatePicker,
       setSelectedDate,
       resolvedGenerateTimeOptionsForDate,
       booktimeScheduleConstrained,
       booktimeFixedDates,
       booktimeCompanyMeta.bookableDays,
+      seriesEligibleEntityType,
+      repeatCadence,
+      repeatEndsOn,
+      navigate,
     ],
   );
 
@@ -1464,6 +1496,7 @@ export const CreateGame = ({
         priceTotal: priceType !== 'NOT_KNOWN' && priceType !== 'FREE' ? priceTotal : undefined,
         priceType: priceType,
         priceCurrency: priceType !== 'NOT_KNOWN' && priceType !== 'FREE' ? (priceCurrency ?? resolveUserCurrency(user?.defaultCurrency)) : undefined,
+        paymentHint: paymentHint.trim() ? paymentHint.trim().slice(0, 120) : undefined,
         parentId: initialGameData?.parentId,
       };
 
@@ -1573,6 +1606,22 @@ export const CreateGame = ({
           await gamesApi.enableParticipantChats(gameResponse.data.id);
         } catch (chatError) {
           console.error('Failed to enable participant chats:', chatError);
+        }
+      }
+
+      // PRD 345 — convert the freshly created game into a series. Done after
+      // creation on purpose: `POST /games/:id/series` seats the current PLAYING
+      // roster as regulars, and a failure here must never lose the game the
+      // organizer just made.
+      if (repeatCadence !== 'ONCE' && seriesEligibleEntityType && gameResponse.data.id) {
+        try {
+          await seriesApi.createFromGame(gameResponse.data.id, {
+            cadence: repeatCadence,
+            endsOn: repeatEndsOn || null,
+          });
+        } catch (seriesError) {
+          console.error('Failed to create game series:', seriesError);
+          toast.error(t('series.saveError'));
         }
       }
 
@@ -2132,6 +2181,9 @@ export const CreateGame = ({
           onPriceTotalChange={setPriceTotal}
           onPriceTypeChange={setPriceType}
           onPriceCurrencyChange={setPriceCurrency}
+          maxParticipants={maxParticipants}
+          paymentHint={paymentHint}
+          onPaymentHintChange={setPaymentHint}
           priceSectionRef={summarySectionRefs.price}
         />
         </div>

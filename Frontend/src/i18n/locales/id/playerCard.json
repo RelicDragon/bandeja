@@ -22,10 +22,10 @@
       "players": "Pemain",
       "verdict": {
         "HIGHER": "Lebih tinggi dari yang ditunjukkan",
-        "ABOUT_RIGHT": "Benar sekali",
+        "ABOUT_RIGHT": "Sesuai dengan yang ditunjukkan",
         "LOWER": "Lebih rendah dari yang ditunjukkan"
       },
-      "disclaimer": "Umpan balik dari rekan kerja adalah sinyal dari komunitas pribadi. Itu tidak menetapkan atau mengubah peringkat resmi."
+      "disclaimer": "Jawaban masing-masing pemain tetap anonim. Ringkasan ini hanyalah sinyal komunitas — tidak menetapkan atau mengubah peringkat resmi."
     },
     "isTrainer": "Pelatih",
     "currentLevel": "Tingkat Saat Ini",
@@ -75,7 +75,7 @@
     "userBlockedCannotChat": "Pengguna diblokir",
     "userBlockedCannotFavorite": "Pengguna diblokir",
     "confirmedBy": "Level telah dikonfirmasi",
-    "levelNotConfirmed": "Levelnya belum dikonfirmasi",
+    "confirmedAtLevel": "di level {{level}}",
     "shareProfile": "Membagikan",
     "shareProfileTitle": "Bagikan profil",
     "shareProfileMessage": "Lihat {{name}} di Bandeja",

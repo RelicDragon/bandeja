@@ -47,8 +47,24 @@ import booktimeRoutes from './booktime.routes';
 import padelooRoutes from './padeloo.routes';
 import klikterenRoutes from './klikteren.routes';
 import nspadelRoutes from './nspadel.routes';
+import weltnerRoutes from './weltner.routes';
 import weatherRoutes from './weather.routes';
 import meRoutes from './me.routes';
+// PRDs 345–357 — routers pre-created by the Wave 2 backend scaffold so the
+// feature agents never have to touch this file. See the mount block below.
+import seriesRoutes from './series.routes';
+import gameSeriesRoutes from './gameSeries.routes';
+import gameAttendanceRoutes from './gameAttendance.routes';
+import gameCostRoutes from './gameCost.routes';
+import gameWeatherRoutes from './gameWeather.routes';
+import liveGamesRoutes from './liveGames.routes';
+import onboardingRoutes from './onboarding.routes';
+import recapRoutes from './recap.routes';
+import referralRoutes from './referral.routes';
+import publicReferralRoutes from './publicReferral.routes';
+import pairRankingRoutes from './pairRanking.routes';
+import clubPublicRoutes from './clubPublic.routes';
+import shopRoutes from './shop.routes';
 import { optionalAuth, type AuthRequest } from '../middleware/auth';
 import { buildDetailedHealthPayload, buildPublicHealthPayload } from '../utils/healthInfo';
 import { isLoopbackIp } from '../utils/isLoopbackIp';
@@ -80,6 +96,29 @@ router.use('/app', appRoutes);
 router.use('/me', meRoutes);
 router.use('/auth', authRoutes);
 router.use('/telegram', telegramAuthRoutes);
+
+/*
+ * PRDs 345–357 sub-routers that share a mount path with an existing domain
+ * router are mounted FIRST. Express runs `router.use` mounts in registration
+ * order and a router that matches nothing calls `next()`, so:
+ *   - nothing declared in these routers can be shadowed by `user.routes.ts` /
+ *     `club.routes.ts` / `game.routes.ts` / `ranking.routes.ts` parameterised
+ *     routes (`/:id`, `/:userId/stats`, `/:clubId/booktime/auth`, …);
+ *   - everything they do not match falls straight through to those routers, so
+ *     no existing endpoint changes behaviour.
+ * The trade is that a path declared in one of these routers WINS over the same
+ * path in the older router — each file's header says so. In particular
+ * `gameWeather.routes.ts` must not re-declare `GET /games/:id/weather`.
+ */
+router.use('/users', onboardingRoutes); // PRD 350 — /users/me/onboarding
+router.use('/users', recapRoutes); // PRD 353 — /users/me/recaps
+router.use('/clubs', clubPublicRoutes); // PRD 354 — /clubs/:id/public
+router.use('/games', gameSeriesRoutes); // PRD 345 — /games/:id/series
+router.use('/games', gameAttendanceRoutes); // PRD 346
+router.use('/games', gameCostRoutes); // PRD 348
+router.use('/games', gameWeatherRoutes); // PRD 357
+router.use('/rankings', pairRankingRoutes); // PRD 352 — /rankings/pairs
+
 router.use('/users', userRoutes);
 router.use('/cities', cityRoutes);
 router.use('/clubs', clubRoutes);
@@ -125,6 +164,14 @@ router.use('/booktime', booktimeRoutes);
 router.use('/padeloo', padelooRoutes);
 router.use('/klikteren', klikterenRoutes);
 router.use('/nspadel', nspadelRoutes);
+router.use('/weltner', weltnerRoutes);
 router.use('/weather', weatherRoutes);
+
+/* PRDs 345–357 routers on their own new mount paths — no shadowing possible. */
+router.use('/series', seriesRoutes); // PRD 345
+router.use('/live', liveGamesRoutes); // PRD 349
+router.use('/referrals', referralRoutes); // PRD 351
+router.use('/public/referral', publicReferralRoutes); // PRD 351
+router.use('/shop', shopRoutes); // PRD 355
 
 export default router;

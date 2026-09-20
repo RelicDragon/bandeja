@@ -23,6 +23,9 @@ import { WeatherForecastScheduler } from './services/weatherForecastScheduler.se
 import { PlayIntentScheduler } from './services/playIntentScheduler.service';
 import { AuthSessionMaintenanceScheduler } from './services/auth/authSessionMaintenanceScheduler.service';
 import { RatingInactiveScheduler } from './services/ratingInactiveScheduler.service';
+import { GameSeriesScheduler } from './services/gameSeries/gameSeriesScheduler.service';
+import { CostShareReminderScheduler } from './services/gameCost/costShareReminderScheduler.service';
+import { MonthlyRecapScheduler } from './services/recap/monthlyRecapScheduler.service';
 import { reportCriticalError, maybeReportFromConsole } from './services/developerAlert.service';
 import { createServer } from 'http';
 import { resumeMatchTimerSchedulesOnStartup } from './services/results/matchTimer.service';
@@ -112,6 +115,15 @@ const startServer = async () => {
     const ratingInactiveScheduler = new RatingInactiveScheduler();
     ratingInactiveScheduler.start();
 
+    const gameSeriesScheduler = new GameSeriesScheduler();
+    gameSeriesScheduler.start();
+
+    const costShareReminderScheduler = new CostShareReminderScheduler();
+    costShareReminderScheduler.start();
+
+    const monthlyRecapScheduler = new MonthlyRecapScheduler();
+    monthlyRecapScheduler.start();
+
     // Create HTTP server
     const httpServer = createServer(app);
     
@@ -168,6 +180,9 @@ const startServer = async () => {
         weatherForecastScheduler.stop();
         playIntentScheduler.stop();
         ratingInactiveScheduler.stop();
+        gameSeriesScheduler.stop();
+        costShareReminderScheduler.stop();
+        monthlyRecapScheduler.stop();
         stopQueueWorkers();
         telegramBotService.stop();
         pushNotificationService.shutdown();

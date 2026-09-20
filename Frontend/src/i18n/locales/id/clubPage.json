@@ -1,0 +1,73 @@
+{
+  "clubPage": {
+    "share": "Bagikan klub",
+    "shareTitle": "Bagikan klub ini",
+    "signIn": "Masuk",
+    "favoriteFailed": "Favorit gagal diperbarui. Coba lagi.",
+    "openClubPage": "Buka halaman klub",
+    "openClubPageNamed": "Buka halaman klub {{club}}",
+    "rating": {
+      "none": "Belum ada ulasan",
+      "summary_other": "{{rating}} · {{countText}} ulasan"
+    },
+    "gallery": {
+      "roleDescription": "Galeri foto",
+      "label": "Foto klub {{club}}",
+      "slideRole": "Foto",
+      "slide": "Foto {{current}} dari {{total}}"
+    },
+    "notFound": {
+      "title": "Klub ini tidak tersedia",
+      "description": "Tautannya mungkin sudah lama, atau klub tidak lagi terdaftar.",
+      "browse": "Telusuri klub"
+    },
+    "actions": {
+      "create": "Buat permainan di sini",
+      "book": "Pesan",
+      "directions": "Rute",
+      "manage": "Kelola"
+    },
+    "today": {
+      "title": "Sekilas hari ini",
+      "updated": "Diperbarui {{relative}}",
+      "updatedJustNow": "Baru saja diperbarui",
+      "courtLabel": "{{court}}, {{free}} dari {{total}} jam kosong hari ini",
+      "freeHours_other": "{{count}} jam kosong",
+      "windowHint": "Ditampilkan dari {{open}} sampai {{close}}",
+      "legendFree": "Kosong",
+      "legendBusy": "Terisi"
+    },
+    "games": {
+      "title": "Permainan mendatang",
+      "seeAll": "Lihat semua di Cari",
+      "emptyTitle": "Belum ada permainan publik",
+      "emptyDescription": "Jadilah yang pertama membuat permainan di sini."
+    },
+    "courts": {
+      "title": "Lapangan",
+      "indoor": "Dalam ruangan",
+      "outdoor": "Luar ruangan"
+    },
+    "info": {
+      "title": "Informasi klub",
+      "hoursRange": "Buka {{open}} – {{close}}",
+      "hoursEveryDay": "Jam buka sama setiap hari",
+      "cancellationPolicy": "Kebijakan pembatalan",
+      "cancellationNotice_other": "Batalkan minimal {{count}} jam sebelumnya."
+    },
+    "regulars": {
+      "title": "Siapa yang main di sini",
+      "open": "Buka kartu pemain {{name}}",
+      "unnamed": "pemain ini"
+    },
+    "reviews": {
+      "title": "Ulasan",
+      "guestTitle": "Masuk untuk menulis ulasan",
+      "guestDescription": "Ulasan ditulis pemain yang pernah bermain di klub ini."
+    },
+    "error": {
+      "title": "Kami tidak bisa memuat klub ini",
+      "description": "Periksa koneksimu lalu coba lagi."
+    }
+  }
+}

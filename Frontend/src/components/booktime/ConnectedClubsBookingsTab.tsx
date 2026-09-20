@@ -23,7 +23,7 @@ export function ConnectedClubsBookingsTab({ clubs, refreshKey }: Props) {
   const displaySettings = useMemo(() => resolveDisplaySettings(user), [user]);
   const [pastRefreshKey, setPastRefreshKey] = useState(0);
   const connectedClubs = useMemo(
-    () => clubs.filter((c) => c.connected && (c.companyId || c.padelooClubId || c.klikterenVenueId)),
+    () => clubs.filter((c) => c.connected && (c.companyId || c.padelooClubId || c.klikterenVenueId || c.integrationType === 'WELTNER')),
     [clubs],
   );
   const { bookings: upcoming, loading: upcomingLoading, removeBooking } = useAllUpcomingClubBookings(

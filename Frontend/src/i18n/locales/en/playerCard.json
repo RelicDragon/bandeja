@@ -21,7 +21,7 @@
       "basedOn": "Based on {{count}} anonymous evaluations across {{games}} recent matches",
       "players": "Players",
       "verdict": { "HIGHER": "Higher than shown", "ABOUT_RIGHT": "About right", "LOWER": "Lower than shown" },
-      "disclaimer": "Peer feedback is a private community signal. It does not set or change the official rating."
+      "disclaimer": "Individual answers stay anonymous. This summary is a community signal — it does not set or change the official rating."
     },
     "isTrainer": "Trainer",
     "currentLevel": "Current Level",
@@ -71,7 +71,7 @@
     "userBlockedCannotChat": "User is blocked",
     "userBlockedCannotFavorite": "User is blocked",
     "confirmedBy": "Level was confirmed",
-    "levelNotConfirmed": "Level is not confirmed",
+    "confirmedAtLevel": "at level {{level}}",
     "shareProfile": "Share",
     "shareProfileTitle": "Share profile",
     "shareProfileMessage": "Check out {{name}} on Bandeja",

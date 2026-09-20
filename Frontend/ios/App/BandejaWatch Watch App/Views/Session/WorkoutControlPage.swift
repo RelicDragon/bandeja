@@ -17,6 +17,7 @@ struct WorkoutControlPage: View {
     @Bindable private var workout = WorkoutManager.shared
     @State private var showFinishGameConfirm = false
     @State private var showExitConfirm = false
+    @State private var showLeaveMatchConfirm = false
 
     var body: some View {
         let lang = prefs.uiLanguageCode
@@ -38,7 +39,7 @@ struct WorkoutControlPage: View {
             }
 
             if mode == .gameActive, let err = session.scoringViewModel?.error {
-                Text(sessionErrorMessage(err, lang: lang))
+                Text(WatchErrorText.message(err, lang: lang))
                     .font(.caption2)
                     .foregroundStyle(.red)
                     .multilineTextAlignment(.center)
@@ -99,6 +100,15 @@ struct WorkoutControlPage: View {
                     }
                     .buttonStyle(.plain)
                 }
+
+                Button {
+                    showLeaveMatchConfirm = true
+                } label: {
+                    Text(WatchCopy.leaveMatch(lang))
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
             }
             Spacer(minLength: 0)
         }
@@ -116,6 +126,14 @@ struct WorkoutControlPage: View {
             }
             Button(WatchCopy.cancelAction(lang), role: .cancel) {}
         }
+        .confirmationDialog(WatchCopy.leaveMatch(lang), isPresented: $showLeaveMatchConfirm, titleVisibility: .visible) {
+            Button(WatchCopy.leaveMatch(lang), role: .destructive) {
+                Task { await session.returnToGameActiveFromMatch() }
+            }
+            Button(WatchCopy.cancelAction(lang), role: .cancel) {}
+        } message: {
+            Text(WatchCopy.leaveMatchConfirm(lang))
+        }
     }
 
     @ViewBuilder
@@ -126,6 +144,14 @@ struct WorkoutControlPage: View {
                     .font(.caption2)
                     .foregroundStyle(.orange)
                     .multilineTextAlignment(.center)
+                if workout.healthAuthorizationDenied {
+                    // watchOS shows the Health sheet only once; afterwards the user must
+                    // flip the switch in Settings › Health, so say so instead of a dead Retry.
+                    Text(WatchCopy.workoutHealthDeniedSettingsHint(lang))
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                }
                 Button(WatchCopy.retry(lang)) {
                     Task { await session.retryWorkoutStart() }
                 }
@@ -185,12 +211,5 @@ struct WorkoutControlPage: View {
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel(label)
-    }
-
-    private func sessionErrorMessage(_ error: Error, lang: String) -> String {
-        if let api = error as? APIError {
-            return api.localizedMessage(uiLanguageCode: lang)
-        }
-        return error.localizedDescription
     }
 }

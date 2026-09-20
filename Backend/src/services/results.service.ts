@@ -3,7 +3,6 @@ import { Sport } from '@prisma/client';
 import { cancelAllMatchTimersForGame } from './results/matchTimer.service';
 import { matchTimerCoordinator } from './results/matchTimerCoordinator';
 import { ApiError } from '../utils/ApiError';
-import { USER_SELECT_WITH_SPORT_PROFILES } from '../utils/constants';
 import {
   projectGameUsersForSportContext,
   projectMatchUsersForSportContext,
@@ -13,6 +12,8 @@ import { getUserTimezoneFromCityId } from './user-timezone.service';
 import { calculateGameStatus, calculatePersistableGameStatus } from '../utils/gameStatus';
 import { parseMatchSetRole } from './results/matchSetRole';
 import { assertMatchNormalizedSetsValid, type NormalizedMatchSetRow } from './results/matchSetsValidation';
+import { getGameResultsSelect, RESULTS_USER_SELECT } from './results/gameResults.projection';
+import { assertCanReadGameResults } from './results/gameResultsAccess';
 import {
   stripLiveScoringFromMatchMetadata,
   readNormalizedSetsFromLiveMetadata,
@@ -24,123 +25,48 @@ import {
 import { appendMatchLiveScoringAudit } from './results/matchLiveScoringAudit.service';
 import { updateMatchWinners } from './results/matchWinner.service';
 import { undoGameOutcomes } from './results/outcomes.service';
+import {
+  collectPairRefreshTargets,
+  refreshPairStatsForGame,
+} from './pairStat/pairStat.service';
 import { revertForGame } from './levelChange';
 import { syncPodiumAfterLeavingFinal } from './achievements/podiumGrant.service';
 import { invalidateAchievementStatsForGame } from './achievements/achievementStats.service';
 
 const SUPPLEMENTAL_SET_SCORE_MAX = 9999;
 
+/**
+ * The results payload.
+ *
+ * Authorization lives in `results/gameResultsAccess.ts` and is applied by the
+ * controller before this runs — a private game must never reach a stranger.
+ * The projection is an explicit whitelist `select` (not `include`, which loads
+ * every `Game` scalar, `Game.paymentHint` included) — see
+ * `results/gameResults.projection.ts`.
+ */
 export async function getGameResults(gameId: string) {
   const game = await prisma.game.findUnique({
     where: { id: gameId },
-    include: {
-      rounds: {
-        include: {
-          matches: {
-            include: {
-              teams: {
-                include: {
-                  players: {
-                    include: {
-                      user: {
-                        select: USER_SELECT_WITH_SPORT_PROFILES,
-                      },
-                    },
-                  },
-                },
-              },
-              sets: {
-                orderBy: { setNumber: 'asc' },
-              },
-            },
-            orderBy: { matchNumber: 'asc' },
-          },
-          outcomes: {
-            include: {
-              user: {
-                select: USER_SELECT_WITH_SPORT_PROFILES,
-              },
-            },
-          },
-        },
-        orderBy: { roundNumber: 'asc' },
-      },
-      outcomes: {
-        include: {
-          user: {
-            select: {
-              ...USER_SELECT_WITH_SPORT_PROFILES,
-            },
-          },
-        },
-        orderBy: { position: 'asc' },
-      },
-      leagueGroup: {
-        select: {
-          id: true,
-          name: true,
-          color: true,
-        },
-      },
-      leagueRound: {
-        select: {
-          id: true,
-          orderIndex: true,
-          roundType: true,
-          playoffFormat: true,
-          bracketScope: true,
-          entrantCount: true,
-          bracketSize: true,
-        },
-      },
-      bracketSlot: {
-        select: {
-          slotKind: true,
-          roundIndex: true,
-        },
-      },
-      parent: {
-        select: {
-          id: true,
-          leagueSeason: {
-            select: {
-              id: true,
-              leagueId: true,
-              sport: true,
-              league: {
-                select: {
-                  id: true,
-                  name: true,
-                },
-              },
-              game: {
-                select: {
-                  id: true,
-                  name: true,
-                  avatar: true,
-                  originalAvatar: true,
-                  sport: true,
-                },
-              },
-            },
-          },
-        },
-      },
-    },
+    select: getGameResultsSelect(),
   });
 
   if (!game) {
     throw new ApiError(404, 'Game not found');
   }
 
-  return projectGameUsersForSportContext(game);
+  return projectGameUsersForSportContext(game as { sport?: Sport } & Record<string, unknown>);
 }
 
-export async function getRoundResults(roundId: string) {
+/**
+ * A round of a game. Same projection rules as {@link getGameResults}: a round id
+ * is handed out inside the results payload, so this endpoint must not be a way
+ * around the player whitelist.
+ */
+export async function getRoundResults(roundId: string, viewerUserId?: string | null) {
   const round = await prisma.round.findUnique({
     where: { id: roundId },
     include: {
-      game: { select: { sport: true } },
+      game: { select: { id: true, sport: true } },
       matches: {
         include: {
           teams: {
@@ -148,7 +74,7 @@ export async function getRoundResults(roundId: string) {
               players: {
                 include: {
                   user: {
-                    select: USER_SELECT_WITH_SPORT_PROFILES,
+                    select: RESULTS_USER_SELECT,
                   },
                 },
               },
@@ -163,7 +89,7 @@ export async function getRoundResults(roundId: string) {
       outcomes: {
         include: {
           user: {
-            select: USER_SELECT_WITH_SPORT_PROFILES,
+            select: RESULTS_USER_SELECT,
           },
         },
       },
@@ -173,6 +99,7 @@ export async function getRoundResults(roundId: string) {
   if (!round) {
     throw new ApiError(404, 'Round not found');
   }
+  await assertCanReadGameResults(round.game.id, viewerUserId ?? null);
 
   const sport = round.game?.sport ?? Sport.PADEL;
   const { game: _game, ...roundData } = round;
@@ -180,13 +107,14 @@ export async function getRoundResults(roundId: string) {
   return projectRoundUsersForSportContext(roundData, sport);
 }
 
-export async function getMatchResults(matchId: string) {
+/** One match. Authorized against the owning game, like {@link getRoundResults}. */
+export async function getMatchResults(matchId: string, viewerUserId?: string | null) {
   const match = await prisma.match.findUnique({
     where: { id: matchId },
     include: {
       round: {
         select: {
-          game: { select: { sport: true } },
+          game: { select: { id: true, sport: true } },
         },
       },
       teams: {
@@ -194,7 +122,7 @@ export async function getMatchResults(matchId: string) {
           players: {
             include: {
               user: {
-                select: USER_SELECT_WITH_SPORT_PROFILES,
+                select: RESULTS_USER_SELECT,
               },
             },
           },
@@ -209,6 +137,7 @@ export async function getMatchResults(matchId: string) {
   if (!match) {
     throw new ApiError(404, 'Match not found');
   }
+  await assertCanReadGameResults(match.round.game.id, viewerUserId ?? null);
 
   const sport = match.round?.game?.sport ?? Sport.PADEL;
   const { round: _round, ...matchData } = match;
@@ -233,6 +162,10 @@ export async function deleteGameResults(gameId: string) {
     './league/leagueTechnicalWithdrawalGuard'
   );
   await assertGameNotLockedTechnicalWithdrawal(gameId, prisma);
+
+  // PRD 352 — capture the pairs *before* the transaction: it deletes
+  // `Team` / `TeamPlayer`, after which the generated-format sides are gone.
+  const pairRefreshTargets = await collectPairRefreshTargets(gameId);
 
   await prisma.$transaction(async (tx) => {
     if (game.outcomes.length > 0) {
@@ -282,6 +215,7 @@ export async function deleteGameResults(gameId: string) {
     await syncPodiumAfterLeavingFinal({ gameId, tx });
     await invalidateAchievementStatsForGame({ gameId, tx });
   });
+  await refreshPairStatsForGame(gameId, pairRefreshTargets);
 }
 
 export async function resetGameResults(gameId: string) {
@@ -301,6 +235,10 @@ export async function resetGameResults(gameId: string) {
   if (!game) {
     throw new ApiError(404, 'Game not found');
   }
+
+  // PRD 352 — capture the pairs *before* the transaction: it deletes
+  // `Team` / `TeamPlayer`, after which the generated-format sides are gone.
+  const pairRefreshTargets = await collectPairRefreshTargets(gameId);
 
   await prisma.$transaction(async (tx) => {
     if (game.outcomes.length > 0) {
@@ -398,6 +336,7 @@ export async function resetGameResults(gameId: string) {
     await syncPodiumAfterLeavingFinal({ gameId, tx });
     await invalidateAchievementStatsForGame({ gameId, tx });
   });
+  await refreshPairStatsForGame(gameId, pairRefreshTargets);
 }
 
 export async function editGameResults(gameId: string) {
@@ -421,6 +360,10 @@ export async function editGameResults(gameId: string) {
   if (game.resultsStatus !== 'FINAL') {
     throw new ApiError(400, 'Can only edit results with FINAL status');
   }
+
+  // PRD 352 — capture the pairs *before* the transaction: it deletes
+  // `Team` / `TeamPlayer`, after which the generated-format sides are gone.
+  const pairRefreshTargets = await collectPairRefreshTargets(gameId);
 
   await prisma.$transaction(async (tx) => {
     if (game.outcomes.length > 0) {
@@ -465,6 +408,7 @@ export async function editGameResults(gameId: string) {
         await invalidateAchievementStatsForGame({ gameId, tx });
       }
   });
+  await refreshPairStatsForGame(gameId, pairRefreshTargets);
 }
 
 export async function syncResults(gameId: string, rounds: any[]) {

@@ -1,0 +1,86 @@
+{
+  "cost": {
+    "title": "التكلفة",
+    "totalLine": "الإجمالي {{amount}}",
+    "paidBy": "دفع {{name}}",
+    "payerTag": "دفع حجز الملعب",
+    "frozen": "تم تثبيت الحصص عند النتيجة النهائية",
+    "updatedCaption": "تم تحديث الحصص",
+    "iPaid": "لقد دفعت",
+    "settledButton": "تمت التسوية",
+    "cancel": "إلغاء",
+    "save": "حفظ",
+    "amountLabel": "المبلغ",
+    "amountInvalid": "أدخل مبلغًا",
+    "keypadLabel": "لوحة الأرقام",
+    "keypadBackspace": "حذف آخر رقم",
+    "editShareFor": "تعديل حصة {{name}}",
+    "editShareHint": "إجمالي المباراة هو {{total}}.",
+    "receivedFor": "تحديد أن {{name}} قد دفع",
+    "splitRemainder": "توزيع الباقي بالتساوي",
+    "splitRemainderHint": "يغطي بقية اللاعبين الفرق حتى يبقى المجموع صحيحًا.",
+    "summaryStrip": "تمت تسوية {{settled}} من {{total}} · المتبقي {{amount}}",
+    "summaryAllSettled": "تمت تسوية {{settled}} من {{total}}",
+    "remindUnpaid": "تذكير من لم يدفع",
+    "remindCooldown": "يمكنك التذكير مرة أخرى بعد نحو {{hours}} ساعة",
+    "state": {
+      "unpaid": "غير مدفوع",
+      "markedPaid": "مُعلَّم كمدفوع",
+      "settled": "تمت التسوية"
+    },
+    "sheet": {
+      "title": "كيف دفعت؟",
+      "subtitle": "{{amount}} إلى {{name}}",
+      "hintLabel": "طريقة الدفع إلى {{name}}",
+      "copy": "نسخ",
+      "copied": "تم النسخ",
+      "outside": "خارج التطبيق",
+      "outsideHint": "نقدًا أو تحويلًا بنكيًا أو عبر تطبيق دفع",
+      "coins": "إرسال {{coins}} عملة",
+      "coinsHint": "رصيدك: {{balance}} عملة",
+      "disclaimer": "لا ينقل تطبيق Bandeja أموالًا حقيقية، بل يسجّل فقط من دفع."
+    },
+    "card": {
+      "perPlayer": "{{amount}} لكل لاعب",
+      "perPlayerEstimated": "≈ {{amount}} لكل لاعب",
+      "totalFor": "الإجمالي {{amount}} · عدد اللاعبين: {{players}}"
+    },
+    "create": {
+      "preview": "≈ {{amount}} لكل شخص، عدد اللاعبين: {{players}}",
+      "paymentHintLabel": "كيف يدفعون لك",
+      "paymentHintPlaceholder": "آيبان أو معرّف تطبيق دفع أو نقدًا في النادي…",
+      "paymentHintHelp": "يظهر للاعبين عند التسوية. المتبقي {{remaining}} حرفًا."
+    },
+    "wallet": {
+      "owed": "عليك",
+      "owedToYou": "لك",
+      "settle": "تسوية",
+      "view": "عرض",
+      "allSettled": "تمت تسوية كل شيء 🎉",
+      "toName": "إلى {{name}}",
+      "fromName": "من {{name}}"
+    },
+    "toast": {
+      "markedPaid": "تم التعليم كمدفوع",
+      "settledCoins": "تم إرسال {{coins}} عملة · تمت التسوية",
+      "received": "تم التعليم كمستلم",
+      "receivedUndone": "تم التعليم كغير مدفوع",
+      "shareUpdated": "تم تحديث الحصة",
+      "reminded_zero": "أُرسل التذكير · {{count}} لاعب",
+      "reminded_one": "أُرسل التذكير · {{count}} لاعب",
+      "reminded_two": "أُرسل التذكير · {{count}} لاعب",
+      "reminded_few": "أُرسل التذكير · {{count}} لاعبين",
+      "reminded_many": "أُرسل التذكير · {{count}} لاعبًا",
+      "reminded_other": "أُرسل التذكير · {{count}} لاعب"
+    },
+    "errors": {
+      "settleFailed": "تعذّر التسجيل. حاول مرة أخرى.",
+      "confirmFailed": "تعذّر تحديث هذا الصف. حاول مرة أخرى.",
+      "remindFailed": "تعذّر إرسال التذكير الآن.",
+      "updateFailed": "تعذّر حفظ الحصة. حاول مرة أخرى.",
+      "copyFailed": "تعذّر النسخ."
+    },
+    "loading": "جارٍ تحميل تقسيم التكلفة…",
+    "loadFailed": "تعذّر تحميل تقسيم التكلفة."
+  }
+}

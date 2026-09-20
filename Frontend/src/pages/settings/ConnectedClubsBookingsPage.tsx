@@ -1,3 +1,5 @@
+import { WeltnerBookings } from '@/components/booktime/WeltnerBookings';
+import { weltnerApi } from '@/api/weltner';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -57,7 +59,9 @@ export function ConnectedClubsBookingsPage() {
   const handleDisconnect = async (club: ConnectedBookingClubRow) => {
     setDisconnectBusyId(club.clubId);
     try {
-      if (club.integrationType === 'PADELOO') {
+      if (club.integrationType === 'WELTNER') {
+        await weltnerApi.deleteAuth(club.clubId);
+      } else if (club.integrationType === 'PADELOO') {
         await disconnectPadelooClub(club.clubId);
       } else if (club.integrationType === 'KLIKTEREN') {
         await disconnectKlikterenClub(club.clubId);
@@ -116,7 +120,10 @@ export function ConnectedClubsBookingsPage() {
             <Loader2 className="animate-spin text-primary-600" size={32} />
           </div>
         ) : activeTab === 'bookings' ? (
-          <ConnectedClubsBookingsTab clubs={clubs} refreshKey={bookingsRefreshKey} />
+          <>
+            {clubs.filter(c => c.integrationType === 'WELTNER').map(club => <WeltnerBookings key={club.clubId} club={club} refreshKey={bookingsRefreshKey} />)}
+            <ConnectedClubsBookingsTab clubs={clubs} refreshKey={bookingsRefreshKey} />
+          </>
         ) : (
           <ConnectedClubsIntegrationsTab
             clubs={clubs}

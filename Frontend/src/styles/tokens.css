@@ -12,6 +12,40 @@
   --animate-fade-in: fade-in 0.2s ease-out;
   --animate-scale-in: scale-in 0.2s ease-out;
 
+  /* PRD 347 — "Spot opened" pill: exactly two 1.2 s cycles, then static. */
+  --animate-spot-pulse: spot-pulse 1.2s ease-out 2;
+  /* PRD 347 — one-shot 240 ms sweep across the join button. */
+  --animate-spot-shimmer: spot-shimmer 240ms ease-out 1;
+
+  @keyframes spot-pulse {
+    0% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.45;
+      transform: scale(1.6);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  /*
+   * The sweep has to run *with* the reading direction, so the travel is scaled
+   * by `--shimmer-sweep-direction` (1 in LTR, -1 under `dir="rtl"`, set on
+   * `:root` below) instead of a hard-coded physical `translateX`.
+   */
+  @keyframes spot-shimmer {
+    from {
+      transform: translateX(calc(-100% * var(--shimmer-sweep-direction, 1)));
+    }
+    to {
+      transform: translateX(calc(100% * var(--shimmer-sweep-direction, 1)));
+    }
+  }
+
   @keyframes shimmer {
     100% {
       transform: translateX(100%);
@@ -127,6 +161,8 @@
 
 :root {
   color-scheme: light;
+  /* Decorative sweeps travel with the reading direction (CONTRACT §8.1). */
+  --shimmer-sweep-direction: 1;
   --ui-background: #f9fafb;
   --ui-foreground: #111827;
   --ui-border: #e5e7eb;
@@ -137,6 +173,10 @@
   --ui-surface: #ffffff;
   --ui-scrollbar-thumb: rgb(156 163 175 / 0.5);
   --ui-scrollbar-thumb-hover: rgb(156 163 175 / 0.7);
+}
+
+[dir='rtl'] {
+  --shimmer-sweep-direction: -1;
 }
 
 html.dark {

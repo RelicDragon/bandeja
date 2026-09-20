@@ -25,6 +25,8 @@ import { XAxis, YAxis, CartesianGrid, ResponsiveContainer, Area, AreaChart } fro
 import { useAuthStore } from '@/store/authStore';
 import { PlayerLevelFeedbackAggregateCard } from './PlayerLevelFeedbackAggregateCard';
 import { resolveDisplayedTrainingAttendance } from '@/components/player/trainingAttendanceDisplay';
+import { AttendanceStatisticsSection } from '@/features/attendance/AttendanceStatisticsSection';
+import { ShowsUpTile } from '@/features/attendance/ShowsUpTile';
 
 interface LevelHistoryViewProps {
   stats: UserStats;
@@ -317,6 +319,19 @@ const LevelHistoryViewComponent = ({
             followersCount={stats.followersCount}
             followingCount={stats.followingCount}
           />
+
+          {/* PRD 346 — "Shows up". Informative only; hidden below 5 recorded games. */}
+          {isOwnProfile ? (
+            <AttendanceStatisticsSection isOwnProfile sport={historySport} />
+          ) : (
+            <div className="rounded-xl border border-gray-200/60 bg-gray-50 p-3 dark:border-gray-600/50 dark:bg-gray-700/50 empty:hidden">
+              <ShowsUpTile
+                summary={
+                  alignedSportStats?.attendance ?? alignedParentStats?.attendance ?? stats.attendance
+                }
+              />
+            </div>
+          )}
 
           {showItemsToSell && (
             <PlayerItemsToSell userId={user.id} onItemClick={onMarketItemClick} />

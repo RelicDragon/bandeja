@@ -37,11 +37,15 @@ const LeagueFixtureTableFullscreenPage = lazy(() =>
 const LeagueBracketFullscreenPage = lazy(() =>
   import('./pages/LeagueBracketFullscreenPage').then((m) => ({ default: m.LeagueBracketFullscreenPage }))
 );
+const OnboardingPage = lazy(() =>
+  import('./pages/OnboardingPage').then((m) => ({ default: m.OnboardingPage }))
+);
 const ClubManagementApp = lazy(() => import('./clubAdmin/ClubManagementApp'));
 import { useAuthStore } from './store/authStore';
 import { useFavoritesStore } from './store/favoritesStore';
 import { usersApi } from './api';
 import { PlayerCardModalManager } from './components/PlayerCardModalManager';
+import { PairSheetManager } from './components/pairs/PairSheetManager';
 import { ToastProvider } from './components/ToastProvider';
 import { PermissionModalProvider } from './components/PermissionModalProvider';
 import { OfflineBanner } from './components/OfflineBanner';
@@ -84,6 +88,7 @@ import { UnreadMyGamesScopeSync } from './components/UnreadMyGamesScopeSync';
 import { usePresenceSubscriptionManager } from './hooks/usePresenceSubscriptionManager';
 import { ReactionEmojiUsageBootstrap } from './components/ReactionEmojiUsageBootstrap';
 import { AdPlacementsBootstrap } from './components/sponsorSlots/AdPlacementsBootstrap';
+import { CollectionAccentEffect } from '@/components/shop/CollectionAccentEffect';
 import { ProfileNameGateHost } from './components/home/ProfileNameGateHost';
 import { GameSlotOverlapConfirmHost } from './components/gameSlotOverlap/GameSlotOverlapConfirmHost';
 import { GenderJoinGateHost } from './components/home/GenderJoinGateHost';
@@ -102,6 +107,7 @@ import {
 import { dismissHtmlBootSplash, markAppReady, notifyShellPainted } from '@/utils/bootSplash';
 import { PremiumWelcome } from '@/components/premium/PremiumWelcome';
 import { recoverFromChunkLoadError } from '@/utils/chunkLoadRecovery';
+import { isGameSeriesEnabled, isShopEnabled } from '@/config/featureFlags';
 
 const ROUTE_LAZY_RECOVERY_MS = 8000;
 
@@ -499,7 +505,13 @@ function AppContent() {
     isGameBroadcastPage && liveViewSearch.get('transparent') === '1';
   const liveBoardShellTheme = parseLiveBoardTheme(liveViewSearch.get('theme'));
   const isUserProfilePage = location.pathname.match(/^\/user-profile\/[^/]+$/);
+  // Club pages are guest-readable and cached like game details, so they stay reachable offline.
+  const isClubPage = /^\/clubs\/[^/]+$/.test(location.pathname);
   const isAuthPage = isAuthRouteForBootstraps;
+  // PRD 350 — first-run onboarding must degrade to the OfflineBanner, not the
+  // no-internet screen: the gate sends new users here, so a dropped connection
+  // would otherwise lock them out of the app entirely.
+  const isOnboardingPage = location.pathname === '/welcome';
   // Chat threads work offline from the local cache (Dexie) with a queued outbox.
   const isChatPage =
     /^\/(user-chat|group-chat|channel-chat)\/[^/]+$/.test(location.pathname) ||
@@ -513,7 +525,9 @@ function AppContent() {
     !isGameLiveMatchPage &&
     !isLeagueFixtureTableFullscreenPage &&
     !isUserProfilePage &&
+    !isClubPage &&
     !isAuthPage &&
+    !isOnboardingPage &&
     !isChatPage
   ) {
     return <NoInternetScreen />;
@@ -561,7 +575,10 @@ function AppContent() {
           {!isAuthPage && <ReactionEmojiUsageBootstrap />}
           {!isAuthPage && isAuthenticated && <AdPlacementsBootstrap />}
           {!isAuthPage && isAuthenticated && <UnreadMyGamesScopeSync />}
+          {/* PRD 355 — applies the viewer's own chat accent (viewer-local). */}
+          {!isAuthPage && isAuthenticated && <CollectionAccentEffect />}
           <PlayerCardModalManager>
+            <PairSheetManager>
             <Routes>
         <Route
           path="/login/:telegramKey"
@@ -612,7 +629,16 @@ function AppContent() {
             </ProtectedRoute>
           }
         />
-        <Route path="/welcome" element={<Navigate to="/" replace />} />
+        <Route
+          path="/welcome"
+          element={
+            <ProtectedRoute>
+              <Suspense fallback={routeLoadingFallback}>
+                <OnboardingPage />
+              </Suspense>
+            </ProtectedRoute>
+          }
+        />
         <Route path="/next-game" element={<NextGameRedirect />} />
         <Route
           path="/"
@@ -774,6 +800,46 @@ function AppContent() {
             <Suspense fallback={routeLoadingFallback}>
               <MainPage />
             </Suspense>
+          }
+        />
+        {/* Club pages are guest-readable: no ProtectedRoute, and exempt from the offline gate. */}
+        <Route
+          path="/clubs/:id"
+          element={
+            <Suspense fallback={routeLoadingFallback}>
+              <MainPage />
+            </Suspense>
+          }
+        />
+        {/* PRD 345 / 355 — a push or deep link must not land on a flagged-off
+            page: the page itself renders `null`, which is the empty shell
+            CONTRACT §7.7 forbids. Send the user home instead. */}
+        <Route
+          path="/series/:id"
+          element={
+            isGameSeriesEnabled() ? (
+              <ProtectedRoute>
+                <Suspense fallback={routeLoadingFallback}>
+                  <MainPage />
+                </Suspense>
+              </ProtectedRoute>
+            ) : (
+              <Navigate to="/" replace />
+            )
+          }
+        />
+        <Route
+          path="/shop"
+          element={
+            isShopEnabled() ? (
+              <ProtectedRoute>
+                <Suspense fallback={routeLoadingFallback}>
+                  <MainPage />
+                </Suspense>
+              </ProtectedRoute>
+            ) : (
+              <Navigate to="/" replace />
+            )
           }
         />
         <Route
@@ -945,6 +1011,7 @@ function AppContent() {
         />
         <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
+            </PairSheetManager>
           </PlayerCardModalManager>
         </ToastProvider>
       </GeoProvider>

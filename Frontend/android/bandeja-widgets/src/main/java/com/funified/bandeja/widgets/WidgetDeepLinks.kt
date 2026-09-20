@@ -16,4 +16,10 @@ object WidgetDeepLinks {
 
     @JvmStatic
     fun gameLive(id: String): String = "https://bandeja.me/games/$id/live"
+
+    @JvmStatic
+    fun club(id: String): String = "https://bandeja.me/clubs/$id"
+
+    @JvmStatic
+    fun series(id: String): String = "https://bandeja.me/series/$id"
 }

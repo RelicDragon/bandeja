@@ -65,7 +65,13 @@ final class GameListViewModel {
             WidgetCenter.shared.reloadAllTimelines()
         } catch {
             self.error = error
+            // 401 here means the refresh credential is gone too (the client already retried
+            // once after refreshing): drop the stale list and show the sign-in screen instead
+            // of a silently outdated game list.
             if let apiErr = error as? APIError, case .httpError(let code) = apiErr, code == 401 {
+                games = []
+                isAuthenticated = false
+                currentUserId = nil
                 NextGamesCache.clear()
                 WidgetCenter.shared.reloadAllTimelines()
             }

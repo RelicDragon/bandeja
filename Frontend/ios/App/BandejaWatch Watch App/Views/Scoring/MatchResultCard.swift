@@ -15,7 +15,7 @@ struct MatchResultCard: View {
         Button(action: onOpen) {
             VStack(alignment: .leading, spacing: 6) {
                 HStack {
-                    Text("R\(roundNumber) · M\(match.matchNumber)")
+                    Text(WatchCopy.roundMatch(lang, round: roundNumber, match: match.matchNumber))
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                     Spacer()

@@ -176,5 +176,162 @@
         "tieBreakB": 0
       }
     }
+  },
+  {
+    "name": "pickleball PAR_11 needs win by two at 10-10",
+    "sport": "PICKLEBALL",
+    "preset": "PAR_11",
+    "initialSets": [{ "teamA": 10, "teamB": 10, "isTieBreak": false }],
+    "actions": ["teamA"],
+    "expected": {
+      "changed": true,
+      "activeSetIndex": 0,
+      "sets": [{ "teamA": 11, "teamB": 10, "isTieBreak": false }],
+      "canAdvanceLiveSet": false,
+      "matchWinner": null
+    }
+  },
+  {
+    "name": "pickleball PAR_11 game won 12-10",
+    "sport": "PICKLEBALL",
+    "preset": "PAR_11",
+    "initialSets": [{ "teamA": 10, "teamB": 10, "isTieBreak": false }],
+    "actions": ["teamA", "teamA"],
+    "expected": {
+      "changed": true,
+      "activeSetIndex": 0,
+      "sets": [{ "teamA": 12, "teamB": 10, "isTieBreak": false }],
+      "canAdvanceLiveSet": false,
+      "matchWinner": "A"
+    }
+  },
+  {
+    "name": "pickleball BEST_OF_3_11 strict second game decides match",
+    "sport": "PICKLEBALL",
+    "preset": "BEST_OF_3_11",
+    "initialSets": [
+      { "teamA": 11, "teamB": 9, "isTieBreak": false },
+      { "teamA": 10, "teamB": 10, "isTieBreak": false }
+    ],
+    "state": { "activeSetIndex": 1, "mode": "points" },
+    "actions": ["teamA", "teamA"],
+    "expected": {
+      "changed": true,
+      "activeSetIndex": 1,
+      "sets": [
+        { "teamA": 11, "teamB": 9, "isTieBreak": false },
+        { "teamA": 12, "teamB": 10, "isTieBreak": false }
+      ],
+      "canAdvanceLiveSet": false,
+      "matchWinner": "A"
+    }
+  },
+  {
+    "name": "table tennis BEST_OF_3_11 game to 11 auto-advances",
+    "sport": "TABLE_TENNIS",
+    "preset": "BEST_OF_3_11",
+    "initialSets": [{ "teamA": 10, "teamB": 9, "isTieBreak": false }],
+    "actions": ["teamA"],
+    "expected": {
+      "changed": true,
+      "activeSetIndex": 1,
+      "sets": [
+        { "teamA": 11, "teamB": 9, "isTieBreak": false },
+        { "teamA": 0, "teamB": 0, "isTieBreak": false }
+      ],
+      "matchWinner": null
+    }
+  },
+  {
+    "name": "table tennis BEST_OF_3_11 deuce game 12-10 decides match",
+    "sport": "TABLE_TENNIS",
+    "preset": "BEST_OF_3_11",
+    "initialSets": [
+      { "teamA": 11, "teamB": 5, "isTieBreak": false },
+      { "teamA": 9, "teamB": 11, "isTieBreak": false },
+      { "teamA": 10, "teamB": 10, "isTieBreak": false }
+    ],
+    "state": { "activeSetIndex": 2, "mode": "points" },
+    "actions": ["teamA", "teamA"],
+    "expected": {
+      "changed": true,
+      "activeSetIndex": 2,
+      "sets": [
+        { "teamA": 11, "teamB": 5, "isTieBreak": false },
+        { "teamA": 9, "teamB": 11, "isTieBreak": false },
+        { "teamA": 12, "teamB": 10, "isTieBreak": false }
+      ],
+      "canAdvanceLiveSet": false,
+      "matchWinner": "A"
+    }
+  },
+  {
+    "name": "badminton SINGLE_GAME_21 30-29 is not a win without BWF cap",
+    "sport": "BADMINTON",
+    "preset": "SINGLE_GAME_21",
+    "initialSets": [{ "teamA": 29, "teamB": 29, "isTieBreak": false }],
+    "actions": ["teamA"],
+    "expected": {
+      "changed": true,
+      "activeSetIndex": 0,
+      "sets": [{ "teamA": 30, "teamB": 29, "isTieBreak": false }],
+      "canAdvanceLiveSet": false,
+      "matchWinner": null
+    }
+  },
+  {
+    "name": "badminton SINGLE_GAME_21 31-29 wins by two",
+    "sport": "BADMINTON",
+    "preset": "SINGLE_GAME_21",
+    "initialSets": [{ "teamA": 29, "teamB": 29, "isTieBreak": false }],
+    "actions": ["teamA", "teamA"],
+    "expected": {
+      "changed": true,
+      "activeSetIndex": 0,
+      "sets": [{ "teamA": 31, "teamB": 29, "isTieBreak": false }],
+      "canAdvanceLiveSet": false,
+      "matchWinner": "A"
+    }
+  },
+  {
+    "name": "badminton BEST_OF_3_21 BWF cap 30-29 wins game",
+    "sport": "BADMINTON",
+    "preset": "BEST_OF_3_21",
+    "initialSets": [
+      { "teamA": 21, "teamB": 15, "isTieBreak": false },
+      { "teamA": 29, "teamB": 29, "isTieBreak": false }
+    ],
+    "state": { "activeSetIndex": 1, "mode": "points" },
+    "actions": ["teamA"],
+    "expected": {
+      "changed": true,
+      "activeSetIndex": 1,
+      "sets": [
+        { "teamA": 21, "teamB": 15, "isTieBreak": false },
+        { "teamA": 30, "teamB": 29, "isTieBreak": false }
+      ],
+      "matchWinner": "A"
+    }
+  },
+  {
+    "name": "badminton BEST_OF_3_21 31-29 exceeds BWF cap",
+    "sport": "BADMINTON",
+    "preset": "BEST_OF_3_21",
+    "initialSets": [
+      { "teamA": 21, "teamB": 15, "isTieBreak": false },
+      { "teamA": 29, "teamB": 29, "isTieBreak": false }
+    ],
+    "state": { "activeSetIndex": 1, "mode": "points" },
+    "actions": ["teamA", "teamA"],
+    "expected": {
+      "changed": true,
+      "activeSetIndex": 2,
+      "sets": [
+        { "teamA": 21, "teamB": 15, "isTieBreak": false },
+        { "teamA": 31, "teamB": 29, "isTieBreak": false },
+        { "teamA": 0, "teamB": 0, "isTieBreak": false }
+      ],
+      "matchWinner": null
+    }
   }
 ]

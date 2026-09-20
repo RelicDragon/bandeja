@@ -241,3 +241,32 @@ public struct WatchAuthSyncPayload: Sendable {
         ["event": WatchConnectivityEvent.logout]
     }
 }
+
+/// Sent by the watch after it rotated the refresh session on its own (`POST /auth/refresh`).
+/// The backend tolerates only one rotation behind (`replayLiveSuccessor`), so the phone must
+/// adopt the successor before it refreshes again or it gets `auth.refreshReused`.
+public struct WatchAuthRotatedPayload: Sendable {
+    public let token: String
+    public let refreshToken: String
+
+    public init(token: String, refreshToken: String) {
+        self.token = token
+        self.refreshToken = refreshToken
+    }
+
+    public init?(decode dictionary: [String: Any]) {
+        guard dictionary["event"] as? String == WatchConnectivityEvent.authRotated,
+              let token = dictionary["token"] as? String, !token.isEmpty,
+              let refreshToken = dictionary["refreshToken"] as? String, !refreshToken.isEmpty else { return nil }
+        self.token = token
+        self.refreshToken = refreshToken
+    }
+
+    public func encode() -> [String: Any] {
+        [
+            "event": WatchConnectivityEvent.authRotated,
+            "token": token,
+            "refreshToken": refreshToken,
+        ]
+    }
+}

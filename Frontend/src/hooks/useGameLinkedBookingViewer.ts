@@ -25,7 +25,8 @@ export function useGameLinkedBookingViewer(game: Game) {
   const { isOwner, loading } = useBooktimeUserBookingIds(
     booktimeClub?.clubId,
     booktimeClub?.companyId,
-    hasLinkedBookings && hasIntegration && Boolean(booktimeClub?.companyId),
+    hasLinkedBookings && hasIntegration && (Boolean(booktimeClub?.companyId) || booktimeClub?.integrationType === 'WELTNER'),
+    booktimeClub?.integrationType,
   );
 
   const ownsAnyLinkedBooking = useMemo(

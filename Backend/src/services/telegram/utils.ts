@@ -30,6 +30,17 @@ export function escapeMarkdown(text: string): string {
     .replace(/\[/g, '\\[');
 }
 
+/**
+ * `[label](url)` for a legacy-Markdown message body.
+ *
+ * `escapeMarkdown` only guards `[`, which is enough for plain text but not for
+ * a link label: an unescaped `]` inside the name would close the label early
+ * and leak the raw URL into the message.
+ */
+export function markdownLink(label: string, url: string): string {
+  return `[${escapeMarkdown(label).replace(/\]/g, '\\]')}](${url})`;
+}
+
 export function escapeHTML(text: string): string {
   return text
     .replace(/&/g, '&amp;')

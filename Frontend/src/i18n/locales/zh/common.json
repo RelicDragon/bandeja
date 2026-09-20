@@ -81,7 +81,9 @@
     "pressBackAgainToExit": "再一次返回退出",
     "editFullscreen": "全屏编辑",
     "exitFullscreen": "退出全屏",
-    "characters": "字符"
+    "characters": "字符",
+    "comingSoon": "敬请期待",
+    "comingSoonDescription": "应用的这一部分即将上线。"
   },
   "sport": {
     "sport": "运动",

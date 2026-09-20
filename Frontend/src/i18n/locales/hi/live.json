@@ -1,0 +1,33 @@
+{
+  "live": {
+    "andJoin": " और ",
+    "carouselLabel": "लाइव गेम कैरोसेल",
+    "cityTitle": "{{city}} में अभी लाइव",
+    "courtLabel": "कोर्ट {{court}}",
+    "detailsBody": "इस गेम का स्कोर अभी दर्ज किया जा रहा है।",
+    "detailsTitle": "अभी लाइव",
+    "followFailed": "{{name}} को फ़ॉलो नहीं कर सके",
+    "followPlayers": "खिलाड़ियों को फ़ॉलो करें",
+    "followed": "{{name}} को फ़ॉलो कर रहे हैं",
+    "gamesCount_one": "{{count}} लाइव गेम",
+    "gamesCount_other": "{{count}} लाइव गेम चल रहे हैं",
+    "loading": "लाइव गेम लोड हो रहे हैं",
+    "nowTitle": "अभी लाइव",
+    "openFailed": "प्रसारण नहीं खोला जा सका",
+    "ratedGame": "रेटिंग वाला गेम",
+    "reconnecting": "फिर से जुड़ रहे हैं",
+    "scoreLead": "{{leaders}} {{score}} से आगे हैं",
+    "scoreLevel": "{{sideA}} और {{sideB}} {{score}} पर बराबर हैं",
+    "seeAllOnFind": "खोज में सभी देखें",
+    "showOnRail": "अभी लाइव में दिखाएं",
+    "showOnRailNoteFalse": "यह गेम अभी लाइव सेक्शन में नहीं दिखेगा।",
+    "showOnRailNoteTrue": "चल रहे सार्वजनिक गेम आपके शहर में कोई भी देख सकता है।",
+    "spectatorTitle": "प्रसारण",
+    "startedJustNow": "अभी-अभी शुरू हुआ",
+    "started_one": "{{count}} मिनट पहले शुरू हुआ",
+    "started_other": "{{count}} मिनट पहले शुरू हुए",
+    "watch": "देखें",
+    "watchLive": "लाइव देखें",
+    "youTag": "आप"
+  }
+}

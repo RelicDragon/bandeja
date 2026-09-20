@@ -1,4 +1,5 @@
 import Foundation
+import HealthKit
 import Observation
 
 private struct MySessionPatchBody: Encodable, Sendable {
@@ -92,7 +93,8 @@ final class ActiveSessionManager {
             workout.autoResume()
             return
         }
-        await workout.startIfNeeded(gameId: gameId, isIndoor: true)
+        let sport = scoringViewModel?.game?.resolvedSport ?? .padel
+        await workout.startIfNeeded(gameId: gameId, sport: sport, locationType: .unknown)
         workoutStartedForGame = workout.isActive && workout.activeGameId == gameId
     }
 
@@ -144,8 +146,9 @@ final class ActiveSessionManager {
         clearLocalPersistence()
     }
 
-    /// Phone logout arrived: drop the in-memory session and its persisted footprint
-    /// without touching HealthKit (no active workout belongs to a logged-out user).
+    /// Phone logout arrived: drop the in-memory session and its persisted footprint.
+    /// Any live HealthKit session is recovered and discarded (no workout belongs to a
+    /// logged-out user), queued workout uploads and the live widget snapshot are cleared.
     /// Network sync is skipped — there is no credential to sync with.
     func handleLogout() {
         scoringViewModel?.stopPolling()
@@ -153,6 +156,9 @@ final class ActiveSessionManager {
         workoutStartedForGame = false
         phase = .idle
         clearLocalPersistence()
+        WorkoutSyncOutbox.shared.clear()
+        WatchLiveActiveSnapshotStore.clear()
+        Task { await WorkoutManager.shared.discardAnyActiveWorkout() }
     }
 
     func requestFinishMatchFromControl() {
@@ -161,6 +167,9 @@ final class ActiveSessionManager {
 
     func recoverIfNeeded() async {
         guard case .idle = phase else { return }
+        // Adopt a live HKWorkoutSession before any network round-trip: the OS terminates a
+        // relaunched app that leaves a running session unowned for too long.
+        await WorkoutManager.shared.recoverIfNeeded()
         guard let gid = ud?.string(forKey: Self.kGame) else {
             await WorkoutManager.shared.reclaimOrDiscardOrphan()
             return

@@ -1,0 +1,31 @@
+{
+  "live": {
+    "andJoin": "、",
+    "carouselLabel": "进行中比赛轮播",
+    "cityTitle": "{{city}} 正在进行的比赛",
+    "courtLabel": "{{court}} 号场地",
+    "detailsBody": "这场比赛的比分正在实时记录。",
+    "detailsTitle": "正在进行",
+    "followFailed": "无法关注 {{name}}",
+    "followPlayers": "关注球员",
+    "followed": "已关注 {{name}}",
+    "gamesCount_other": "{{count}} 场进行中的比赛",
+    "loading": "正在加载进行中的比赛",
+    "nowTitle": "正在进行",
+    "openFailed": "无法打开直播页面",
+    "ratedGame": "计分比赛",
+    "reconnecting": "正在重新连接",
+    "scoreLead": "{{leaders}} 领先 {{score}}",
+    "scoreLevel": "{{sideA}} 与 {{sideB}} 战成 {{score}}",
+    "seeAllOnFind": "在“查找”中查看全部",
+    "showOnRail": "在“正在进行”中展示",
+    "showOnRailNoteFalse": "这场比赛不会出现在“正在进行”中。",
+    "showOnRailNoteTrue": "进行中的公开比赛，同城的任何人都可以观看。",
+    "spectatorTitle": "直播",
+    "startedJustNow": "刚刚开始",
+    "started_other": "{{count}} 分钟前开始",
+    "watch": "观看",
+    "watchLive": "观看直播",
+    "youTag": "你"
+  }
+}

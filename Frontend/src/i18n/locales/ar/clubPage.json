@@ -1,0 +1,88 @@
+{
+  "clubPage": {
+    "share": "مشاركة النادي",
+    "shareTitle": "شارك هذا النادي",
+    "signIn": "تسجيل الدخول",
+    "favoriteFailed": "تعذّر تحديث المفضلة. حاول مرة أخرى.",
+    "openClubPage": "فتح صفحة النادي",
+    "openClubPageNamed": "فتح صفحة نادي {{club}}",
+    "rating": {
+      "none": "لا توجد تقييمات بعد",
+      "summary_zero": "{{rating}} · {{countText}} تقييم",
+      "summary_one": "{{rating}} · {{countText}} تقييم",
+      "summary_two": "{{rating}} · {{countText}} تقييمان",
+      "summary_few": "{{rating}} · {{countText}} تقييمات",
+      "summary_many": "{{rating}} · {{countText}} تقييمًا",
+      "summary_other": "{{rating}} · {{countText}} تقييم"
+    },
+    "gallery": {
+      "roleDescription": "معرض الصور",
+      "label": "صور نادي {{club}}",
+      "slideRole": "صورة",
+      "slide": "الصورة {{current}} من {{total}}"
+    },
+    "notFound": {
+      "title": "هذا النادي غير متاح",
+      "description": "قد يكون الرابط قديمًا أو لم يعد النادي مُدرجًا.",
+      "browse": "تصفّح الأندية"
+    },
+    "actions": {
+      "create": "أنشئ مباراة هنا",
+      "book": "احجز",
+      "directions": "الاتجاهات",
+      "manage": "إدارة"
+    },
+    "today": {
+      "title": "اليوم بنظرة سريعة",
+      "updated": "تم التحديث {{relative}}",
+      "updatedJustNow": "تم التحديث للتو",
+      "courtLabel": "{{court}}، {{free}} من {{total}} ساعة متاحة اليوم",
+      "freeHours_zero": "{{count}} ساعة متاحة",
+      "freeHours_one": "ساعة واحدة متاحة ({{count}})",
+      "freeHours_two": "ساعتان متاحتان ({{count}})",
+      "freeHours_few": "{{count}} ساعات متاحة",
+      "freeHours_many": "{{count}} ساعة متاحة",
+      "freeHours_other": "{{count}} ساعة متاحة",
+      "windowHint": "يُعرض من {{open}} حتى {{close}}",
+      "legendFree": "متاح",
+      "legendBusy": "محجوز"
+    },
+    "games": {
+      "title": "المباريات القادمة",
+      "seeAll": "عرض الكل في بحث",
+      "emptyTitle": "لا توجد مباريات عامة بعد",
+      "emptyDescription": "كن أول من ينشئ مباراة هنا."
+    },
+    "courts": {
+      "title": "الملاعب",
+      "indoor": "مغلق",
+      "outdoor": "مكشوف"
+    },
+    "info": {
+      "title": "معلومات النادي",
+      "hoursRange": "مفتوح {{open}} – {{close}}",
+      "hoursEveryDay": "نفس المواعيد كل يوم",
+      "cancellationPolicy": "سياسة الإلغاء",
+      "cancellationNotice_zero": "ألغِ قبل {{count}} ساعة على الأقل.",
+      "cancellationNotice_one": "ألغِ قبل ساعة واحدة على الأقل ({{count}}).",
+      "cancellationNotice_two": "ألغِ قبل ساعتين على الأقل ({{count}}).",
+      "cancellationNotice_few": "ألغِ قبل {{count}} ساعات على الأقل.",
+      "cancellationNotice_many": "ألغِ قبل {{count}} ساعة على الأقل.",
+      "cancellationNotice_other": "ألغِ قبل {{count}} ساعة على الأقل."
+    },
+    "regulars": {
+      "title": "من يلعب هنا",
+      "open": "فتح بطاقة اللاعب {{name}}",
+      "unnamed": "هذا اللاعب"
+    },
+    "reviews": {
+      "title": "التقييمات",
+      "guestTitle": "سجّل الدخول لكتابة تقييم",
+      "guestDescription": "التقييمات يكتبها لاعبون لعبوا في هذا النادي."
+    },
+    "error": {
+      "title": "تعذّر تحميل هذا النادي",
+      "description": "تحقّق من اتصالك وحاول مرة أخرى."
+    }
+  }
+}

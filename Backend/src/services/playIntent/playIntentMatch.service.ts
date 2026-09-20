@@ -118,7 +118,17 @@ export class PlayIntentMatchService {
     await this.clusterCitySport(intent.cityId, intent.sport, intent.entityType);
   }
 
-  static async onPublicGameCreated(gameId: string, creatorId: string) {
+  /**
+   * PRD 347 — `options.seatOpened` marks the "a player left" trigger. It is
+   * threaded down to `notifyGameMatchesIntent`, which then shares the
+   * `SpotOpenedDelivery` claim with `GameSeatService.seatOpened` so one freed
+   * seat can never produce two pushes for the same user.
+   */
+  static async onPublicGameCreated(
+    gameId: string,
+    creatorId: string,
+    options: { seatOpened?: boolean } = {},
+  ) {
     const game = await prisma.game.findUnique({
       where: { id: gameId },
       include: {
@@ -199,6 +209,7 @@ export class PlayIntentMatchService {
       const notified = await PlayIntentNotifyService.notifyGameMatchesIntent(
         matchingUserIds,
         game.id,
+        { seatOpened: options.seatOpened === true },
       );
       await PlayIntentNotifyService.maybeNotifyOwnerLookingPlayers(
         game.id,
@@ -214,7 +225,7 @@ export class PlayIntentMatchService {
       where: { gameId, role: ParticipantRole.OWNER, status: ParticipantStatus.PLAYING },
       select: { userId: true },
     });
-    await this.onPublicGameCreated(gameId, owner?.userId ?? '');
+    await this.onPublicGameCreated(gameId, owner?.userId ?? '', { seatOpened: true });
   }
 
   static async matchIntentToGames(intent: IntentRow & { city?: { timezone: string } | null }) {

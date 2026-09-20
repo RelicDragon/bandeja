@@ -1,5 +1,6 @@
+import { useWeltnerSnapshotRefresh } from './useWeltnerSnapshotRefresh';
 import type { Club } from '@/types';
-import { isBooktimeClub, isKlikterenClub, isNspadelClub, isPadelooClub } from '@shared/clubIntegration';
+import { isBooktimeClub, isWeltnerClub, isKlikterenClub, isNspadelClub, isPadelooClub } from '@shared/clubIntegration';
 import { useBooktimeSnapshotRefresh, type BooktimeSnapshotBanner } from '@/hooks/useBooktimeSnapshotRefresh';
 import { usePadelooSnapshotRefresh, type PadelooSnapshotBanner } from '@/hooks/usePadelooSnapshotRefresh';
 import { useKlikterenSnapshotRefresh, type KlikterenSnapshotBanner } from '@/hooks/useKlikterenSnapshotRefresh';
@@ -37,6 +38,8 @@ export function useClubSnapshotRefresh(
     options?.durationMinutes,
   );
 
+  const weltner = useWeltnerSnapshotRefresh(club, selectedDate, enabled && isWeltnerClub(club));
+  if (isWeltnerClub(club)) return weltner;
   if (isNspadelClub(club)) return nspadel;
   if (isKlikterenClub(club)) return klikteren;
   if (isPadelooClub(club)) return padeloo;

@@ -39,11 +39,24 @@ import {
   createUserTeamMemberLeftPushNotification,
   createUserTeamDeletedPushNotification,
 } from './push/notifications/team-push.notification';
+import { createGoodsGiftReceivedPushNotification } from './push/notifications/goods-gift-push.notification';
 import { GameSubscriptionService } from './gameSubscription.service';
 import {
   canDispatchBroadcast,
   shouldSuppressAllOutboundNotifications,
 } from '../utils/notificationDispatchGuard';
+
+/** PRD 346 — attendance extras on the shared game reminder. */
+export type GameReminderNotificationOptions = {
+  /** Attach the "I'm coming" / "Not sure yet" shade + Telegram actions. */
+  attendanceActions?: boolean;
+  /**
+   * Restrict the Telegram fan-out to these users. The push fan-out is already
+   * restricted by `recipients`; Telegram resolves its own roster, so it needs
+   * the list explicitly (the 2 h reminder only goes to unanswered players).
+   */
+  onlyUserIds?: string[];
+};
 
 class NotificationService {
   async sendNotification(request: UnifiedNotificationRequest): Promise<NotificationDeliveryResult> {
@@ -88,12 +101,18 @@ class NotificationService {
     };
 
     if (shouldSendTelegram) {
-      const isPlayIntent =
+      // These types share the play-intent Telegram template (one card, one
+      // call-to-action button). PRD 347's spot-opened pair is on the list so it
+      // reuses the existing guarded send, permanent-failure detection and
+      // language resolution rather than growing a second Telegram path.
+      const usesPlayIntentTelegramTemplate =
         type === NotificationType.PLAY_INTENT_MATCH ||
         type === NotificationType.GAME_MATCHES_INTENT ||
         type === NotificationType.INTENT_PLAYERS_FOR_GAME ||
-        type === NotificationType.FOLLOWED_USER_PLAY_INTENT;
-      if (isPlayIntent) {
+        type === NotificationType.FOLLOWED_USER_PLAY_INTENT ||
+        type === NotificationType.GAME_SPOT_OPENED ||
+        type === NotificationType.FOLLOWED_GAME_SPOT_OPENED;
+      if (usesPlayIntentTelegramTemplate) {
         try {
           const user = await prisma.user.findUnique({
             where: { id: userId },
@@ -553,14 +572,21 @@ class NotificationService {
     await telegramNotificationService.sendGameSystemMessageNotification(message, game, excludeUserId);
   }
 
-  async sendGameReminderNotification(gameId: string, recipients: any[], hoursBeforeStart: number) {
+  async sendGameReminderNotification(
+    gameId: string,
+    recipients: any[],
+    hoursBeforeStart: number,
+    options: GameReminderNotificationOptions = {}
+  ) {
     if (shouldSuppressAllOutboundNotifications() || !canDispatchBroadcast('game-reminder')) {
       return;
     }
 
     for (const recipient of recipients) {
-      const payload = await createGameReminderPushNotification(gameId, recipient, hoursBeforeStart);
-      
+      const payload = await createGameReminderPushNotification(gameId, recipient, hoursBeforeStart, {
+        attendanceActions: options.attendanceActions,
+      });
+
       if (payload) {
         await this.sendNotification({
           userId: recipient.id,
@@ -570,7 +596,10 @@ class NotificationService {
       }
     }
 
-    await telegramNotificationService.sendGameReminderNotification(gameId, hoursBeforeStart);
+    await telegramNotificationService.sendGameReminderNotification(gameId, hoursBeforeStart, {
+      attendanceActions: options.attendanceActions,
+      onlyUserIds: options.onlyUserIds ?? recipients.map((recipient) => recipient.id),
+    });
   }
 
   async sendGameResultsNotification(gameId: string, userId: string, isEdited: boolean = false) {
@@ -978,6 +1007,22 @@ class NotificationService {
       await telegramNotificationService.sendUserTeamDeletedNotification(teamName, memberUserId);
     } catch (e) {
       console.error('[NotificationService] Team deleted Telegram failed:', e);
+    }
+  }
+
+  /** PRD 355 — somebody bought a catalogue item for the recipient. */
+  async sendGoodsGiftReceivedNotification(
+    sender: { id: string; firstName?: string | null; lastName?: string | null },
+    recipientUserId: string,
+    goods: { id: string; name: string },
+  ) {
+    const payload = await createGoodsGiftReceivedPushNotification(sender, recipientUserId, goods);
+    if (payload) {
+      await this.sendNotification({
+        userId: recipientUserId,
+        type: NotificationType.GOODS_GIFT_RECEIVED,
+        payload,
+      });
     }
   }
 }

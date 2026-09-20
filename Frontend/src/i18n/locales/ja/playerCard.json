@@ -25,7 +25,7 @@
         "ABOUT_RIGHT": "妥当",
         "LOWER": "表示より低い"
       },
-      "disclaimer": "仲間からのフィードバックはコミュニティの非公開シグナルです。公式レーティングの設定・変更には使いません。"
+      "disclaimer": "個々の回答は匿名のままです。このまとめはコミュニティのシグナルであり、公式レーティングの設定・変更には使いません。"
     },
     "isTrainer": "トレーナー",
     "currentLevel": "現在のレベル",
@@ -75,7 +75,7 @@
     "userBlockedCannotChat": "ユーザーはブロックされています",
     "userBlockedCannotFavorite": "ユーザーはブロックされています",
     "confirmedBy": "レベル確認済み",
-    "levelNotConfirmed": "レベル未確認",
+    "confirmedAtLevel": "レベル {{level}}",
     "shareProfile": "共有",
     "shareProfileTitle": "プロフィールを共有",
     "shareProfileMessage": "Bandejaで {{name}} をチェック",

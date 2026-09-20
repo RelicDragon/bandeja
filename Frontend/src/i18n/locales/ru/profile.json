@@ -141,6 +141,8 @@
     "sendDirectMessagesDescription": "Получайте уведомления когда кто-то отправляет вам прямое сообщение",
     "sendReminders": "Напоминания",
     "sendRemindersDescription": "Получайте уведомления за 2 часа до начала ваших игр, турниров или тренировок",
+    "sendWeatherAlerts": "Оповещения о погоде",
+    "sendWeatherAlertsDescription": "Только для открытых кортов",
     "walletNotifications": "Уведомления кошелька",
     "walletNotificationsDescription": "Получать уведомления о транзакциях кошелька",
     "marketplaceNotifications": "Новые объявления в моём городе",

@@ -1,3 +1,4 @@
+import { attendanceRailDataEqual } from '@/features/attendance/attendanceRailData';
 import { memo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Bookmark, MessageCircle } from 'lucide-react';
@@ -7,6 +8,8 @@ import { GameCardWeatherTag } from '@/components/gameCard/GameCardWeatherTag';
 import { GameCardBookedTag } from '@/components/gameCard/GameCardBookedTag';
 import { getGameCardReactionTheme } from '@/utils/gameCardEntityTheme';
 import { gameCardReactionsEqual } from '@/utils/gameCardReactionsEqual';
+import { AttendanceRailSummary } from '@/features/attendance/AttendanceRailSummary';
+import type { AttendanceRailData } from '@/features/attendance/attendanceRailData';
 import type { EntityType, WeatherSummary } from '@/types';
 
 type ReactionRow = { userId: string; emoji: string };
@@ -27,6 +30,11 @@ interface GameCardRightRailProps {
   showChat: boolean;
   unreadCount: number;
   onChatClick: (event: React.MouseEvent) => void;
+  /**
+   * PRD 346 — attendance glance for the viewer's own games. `null` everywhere
+   * else. Purely visual: no border change, no urgency treatment.
+   */
+  attendanceRail: AttendanceRailData | null;
 }
 
 const stop = (e: React.SyntheticEvent) => e.stopPropagation();
@@ -47,6 +55,7 @@ function GameCardRightRailInner({
   showChat,
   unreadCount,
   onChatClick,
+  attendanceRail,
 }: GameCardRightRailProps) {
   const { t } = useTranslation();
   const theme = getGameCardReactionTheme(entityType);
@@ -63,7 +72,7 @@ function GameCardRightRailInner({
   const showReactions = Boolean(currentUserId) || reactions.length > 0;
   const showNoteChat = showNoteBookmark || showChat;
   const hasContent =
-    showReactions || Boolean(weatherSummary) || showBookedTag || showNoteChat;
+    showReactions || Boolean(weatherSummary) || showBookedTag || showNoteChat || Boolean(attendanceRail);
   if (!hasContent) return null;
 
   return (
@@ -87,6 +96,7 @@ function GameCardRightRailInner({
         />
       ) : null}
       {showBookedTag ? <GameCardBookedTag linkedExternalBooking={linkedExternalBooking} /> : null}
+      {attendanceRail ? <AttendanceRailSummary data={attendanceRail} locale={locale} /> : null}
       {showNoteChat && (
         <div className={`pointer-events-auto flex min-h-[28px] items-center rounded-lg ${theme.panel}`}>
           {showNoteBookmark && (
@@ -136,6 +146,7 @@ function rightRailPropsEqual(a: GameCardRightRailProps, b: GameCardRightRailProp
   if (a.onNoteClick !== b.onNoteClick) return false;
   if (a.onChatClick !== b.onChatClick) return false;
   if (!gameCardReactionsEqual(a.reactions, b.reactions)) return false;
+  if (!attendanceRailDataEqual(a.attendanceRail, b.attendanceRail)) return false;
   const aw = a.weatherSummary;
   const bw = b.weatherSummary;
   if (aw === bw) return true;

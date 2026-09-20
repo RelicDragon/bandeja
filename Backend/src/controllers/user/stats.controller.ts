@@ -33,6 +33,7 @@ import { resolveSport } from '../../sport/sportRegistry';
 import type { Prisma } from '@prisma/client';
 import { getPlayerLevelFeedbackAggregate } from '../../services/player-level-evaluation.service';
 import { countTrainingAttendance } from '../../services/user/trainingAttendanceCount';
+import { getAttendanceRate } from '../../services/gameAttendance/attendanceCounters.service';
 
 const COMPARISON_USER_SELECT = {
   ...USER_SELECT_FIELDS,
@@ -309,6 +310,20 @@ export const getUserStats = asyncHandler(async (req: AuthRequest, res: Response)
     delete (projectedUser as { telegramUsername?: unknown }).telegramUsername;
   }
 
+  // PRD 346 — the "Shows up" tile. Informative only: it never feeds level,
+  // reliability or ratingUncertainty, and it stays hidden (the whole object is
+  // `null`) until the player has at least `minSample` recorded games, so a
+  // single missed game can never read as "0% shows up".
+  const attendanceSummary = await getAttendanceRate(userId, sport).catch(() => null);
+  const attendance =
+    attendanceSummary && attendanceSummary.rate !== null
+      ? {
+          rate: attendanceSummary.rate,
+          sampleSize: attendanceSummary.sampleSize,
+          minSample: attendanceSummary.minSample,
+        }
+      : null;
+
   res.json({
     success: true,
     data: {
@@ -322,6 +337,7 @@ export const getUserStats = asyncHandler(async (req: AuthRequest, res: Response)
       performanceInsights,
       levelFeedback,
       trainingAttendanceCount,
+      attendance,
       ...(allSportsAggregates
         ? {
             gamesStatsAllSports: allSportsAggregates.gamesStats,

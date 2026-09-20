@@ -1,0 +1,79 @@
+{
+  "clubPage": {
+    "share": "Compartir club",
+    "shareTitle": "Compartir este club",
+    "signIn": "Iniciar sesión",
+    "favoriteFailed": "No se pudo actualizar tus favoritos. Inténtalo de nuevo.",
+    "openClubPage": "Abrir página del club",
+    "openClubPageNamed": "Abrir la página de {{club}}",
+    "rating": {
+      "none": "Todavía no hay reseñas",
+      "summary_one": "{{rating}} · {{countText}} reseña",
+      "summary_many": "{{rating}} · {{countText}} de reseñas",
+      "summary_other": "{{rating}} · {{countText}} reseñas"
+    },
+    "gallery": {
+      "roleDescription": "Galería de fotos",
+      "label": "Fotos de {{club}}",
+      "slideRole": "Foto",
+      "slide": "Foto {{current}} de {{total}}"
+    },
+    "notFound": {
+      "title": "Este club no está disponible",
+      "description": "Puede que el enlace sea antiguo o que el club ya no aparezca.",
+      "browse": "Ver clubes"
+    },
+    "actions": {
+      "create": "Crear partido aquí",
+      "book": "Reservar",
+      "directions": "Cómo llegar",
+      "manage": "Gestionar"
+    },
+    "today": {
+      "title": "Hoy de un vistazo",
+      "updated": "Actualizado {{relative}}",
+      "updatedJustNow": "Actualizado ahora mismo",
+      "courtLabel": "{{court}}, {{free}} de {{total}} horas libres hoy",
+      "freeHours_one": "{{count}} hora libre",
+      "freeHours_many": "{{count}} de horas libres",
+      "freeHours_other": "{{count}} horas libres",
+      "windowHint": "Se muestra de {{open}} a {{close}}",
+      "legendFree": "Libre",
+      "legendBusy": "Ocupado"
+    },
+    "games": {
+      "title": "Próximos partidos",
+      "seeAll": "Ver todo en Buscar",
+      "emptyTitle": "Todavía no hay partidos públicos",
+      "emptyDescription": "Sé el primero en publicar un partido aquí."
+    },
+    "courts": {
+      "title": "Pistas",
+      "indoor": "Cubierta",
+      "outdoor": "Descubierta"
+    },
+    "info": {
+      "title": "Información del club",
+      "hoursRange": "Abierto {{open}} – {{close}}",
+      "hoursEveryDay": "El mismo horario todos los días",
+      "cancellationPolicy": "Política de cancelación",
+      "cancellationNotice_one": "Cancela con al menos {{count}} hora de antelación.",
+      "cancellationNotice_many": "Cancela con al menos {{count}} de horas de antelación.",
+      "cancellationNotice_other": "Cancela con al menos {{count}} horas de antelación."
+    },
+    "regulars": {
+      "title": "Quién juega aquí",
+      "open": "Abrir la ficha de {{name}}",
+      "unnamed": "este jugador"
+    },
+    "reviews": {
+      "title": "Reseñas",
+      "guestTitle": "Inicia sesión para escribir una reseña",
+      "guestDescription": "Las reseñas las escriben jugadores que han jugado en este club."
+    },
+    "error": {
+      "title": "No pudimos cargar este club",
+      "description": "Comprueba tu conexión e inténtalo de nuevo."
+    }
+  }
+}

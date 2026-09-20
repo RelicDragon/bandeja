@@ -9,7 +9,10 @@ import { sendGameSystemMessageNotification } from './notifications/game-system-m
 import { sendLeagueRoundStartNotification } from './notifications/league-round-start.notification';
 import { sendBracketRoundSummaryNotification } from './notifications/bracket-round-summary.notification';
 import type { BracketRoundSummaryPayload } from './notifications/bracket-round-summary.notification';
-import { sendGameReminderNotification } from './notifications/game-reminder.notification';
+import {
+  sendGameReminderNotification,
+  type TelegramGameReminderOptions,
+} from './notifications/game-reminder.notification';
 import { sendNewGameNotification } from './notifications/new-game.notification';
 import { sendBetResolvedNotification, sendBetNeedsReviewNotification, sendBetCancelledNotification } from './notifications/bet-resolved.notification';
 import { sendTransactionNotification as sendTransactionNotificationFunc } from './notifications/transaction.notification';
@@ -26,6 +29,11 @@ import {
   sendUserTeamDeletedTelegram,
 } from './notifications/team.notification';
 import { sendPlayIntentTelegramNotification } from './notifications/play-intent.notification';
+import { sendGameSeriesNextPromptTelegram } from './notifications/game-series.notification';
+import {
+  sendGameWeatherAlertTelegram,
+  type WeatherAlertTelegramPayload,
+} from './notifications/game-weather-alert.notification';
 import type { PlayIntentTelegramResult } from './notifications/play-intent.notification';
 import { NotificationType } from '../../types/notifications.types';
 
@@ -93,9 +101,13 @@ class TelegramNotificationService {
     await sendBracketRoundSummaryNotification(this.bot.api, user, payload, imagePng);
   }
 
-  async sendGameReminderNotification(gameId: string, hoursBeforeStart: number) {
+  async sendGameReminderNotification(
+    gameId: string,
+    hoursBeforeStart: number,
+    options: TelegramGameReminderOptions = {}
+  ) {
     if (!this.bot) return;
-    await sendGameReminderNotification(this.bot.api, gameId, hoursBeforeStart);
+    await sendGameReminderNotification(this.bot.api, gameId, hoursBeforeStart, options);
   }
 
   async sendGameCancelledNotification(meta: import('./notifications/game-cancelled.notification').GameCancelledMeta, recipientUserIds: string[]) {
@@ -192,6 +204,26 @@ class TelegramNotificationService {
     // runtime; retries will keep hitting a null bot.
     if (!this.bot) return { delivered: false, permanent: true };
     return sendPlayIntentTelegramNotification(this.bot.api, userId, telegramId, payload);
+  }
+
+  /** PRD 345 — "Same time next week?" with the `sr:` accept/decline buttons. */
+  async sendGameSeriesNextPromptNotification(payload: {
+    telegramId: string;
+    language: string;
+    title: string;
+    body: string;
+    gameId: string;
+  }): Promise<boolean> {
+    if (!this.bot) return false;
+    return sendGameSeriesNextPromptTelegram(this.bot.api, payload);
+  }
+
+  /** PRD 357 — weather alert with the `wx:` keep-as-planned button for organizers. */
+  async sendGameWeatherAlertNotification(
+    payload: WeatherAlertTelegramPayload,
+  ): Promise<boolean> {
+    if (!this.bot) return false;
+    return sendGameWeatherAlertTelegram(this.bot.api, payload);
   }
 }
 

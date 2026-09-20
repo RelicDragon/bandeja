@@ -13,6 +13,10 @@ import { GameCardEntityIcon } from '@/components/gameCard/GameCardEntityIcon';
 import { GameCardTitle } from '@/components/gameCard/GameCardTitle';
 import { gameCardHasVisibleTitle } from '@/utils/gameCardVisibleTitle';
 import { GameCardRightRail } from '@/components/gameCard/GameCardRightRail';
+import { hasOpenSpotHighlight } from '@/features/spot-opened/spotOpenedWindow';
+import type { AttendanceRailData } from '@/features/attendance/attendanceRailData';
+import { resolveDotState } from '@/features/attendance/attendanceVisuals';
+import { userAvatarTinyUrlFromStandard } from '@/utils/userAvatarTinyUrl';
 import { GameCardPlayersPhoto } from '@/components/gameCard/GameCardPlayersPhoto';
 import { gameIsNonRating } from '@/utils/gameRatingSemantics';
 import { GameCardUserNote } from '@/components/gameCard/GameCardUserNote';
@@ -62,6 +66,8 @@ import { useContextUnread } from '@/hooks/useUnreadBridge';
 import { UserGameNoteModal } from '@/components/GameDetails/UserGameNoteModal';
 import { GameWeatherDialog } from '@/components/weather/GameWeatherDialog';
 import { Plane } from 'lucide-react';
+import { isGameSeriesEnabled } from '@/config/featureFlags';
+import { shouldShowWeatherPill } from '@/features/weather-alerts/weatherRiskDisplay';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
 interface GameCardProps {
@@ -148,6 +154,30 @@ const GameCardMatch = memo(function GameCardMatch({
     ? playingCacheRef.current.placeByUserId
     : undefined;
   const standingMedalMode = resolveStandingMedalMode(game.entityType);
+
+  /**
+   * PRD 346 — the attendance glance. `game.attendanceSummary` is enriched only
+   * for the viewer's own games, so a `null` here means "show nothing", never an
+   * error state. Purely informative: it cannot change the card's appearance
+   * beyond the stack and the fraction.
+   */
+  const attendanceRail = useMemo<AttendanceRailData | null>(() => {
+    const summary = game.attendanceSummary;
+    if (!summary || summary.playingCount <= 0) return null;
+    const byUserId = new Map(summary.entries?.map((entry) => [entry.userId, entry.attendance]));
+    const players = playingParticipants.slice(0, 4).map((participant) => ({
+      userId: participant.userId,
+      initial: (participant.user?.firstName ?? '?').slice(0, 1).toUpperCase(),
+      avatarUrl:
+        userAvatarTinyUrlFromStandard(participant.user?.avatar) ?? participant.user?.avatar ?? null,
+      state: resolveDotState(byUserId.get(participant.userId), null),
+    }));
+    return {
+      confirmedCount: summary.confirmedCount,
+      playingCount: summary.playingCount,
+      players,
+    };
+  }, [game.attendanceSummary, playingParticipants]);
 
   const participation = getGameParticipationState(participants, effectiveUser?.id, game);
   const isParticipant = participation.isPlaying;
@@ -288,18 +318,26 @@ const GameCardMatch = memo(function GameCardMatch({
     !isInJoinQueue;
 
   const hasVisibleTitle = gameCardHasVisibleTitle(game, i18n.language);
+  // PRD 347 — drives both the tag row and the join button's one-shot shimmer.
+  const spotJustOpened = hasOpenSpotHighlight(game);
   const showNoteBookmark = !userNoteDisplay && Boolean(effectiveUser);
   const showPlayersCarousel = !isLeagueSeasonGame || Boolean(mainPhotoUrl);
   const carouselAutoHideNames = effectiveUser?.alwaysShowUserNames === false;
 
   const hasTagRow =
     hasGameSportTags ||
+    // PRD 345 — the `↻ Weekly` pill is on its own enough to need the row.
+    (Boolean(game.seriesLabel) && isGameSeriesEnabled()) ||
     game.entityType === 'EVENT' ||
     myParticipationBadge != null ||
+    // PRD 347 — the "Spot opened" pill can be the only tag on the card.
+    spotJustOpened ||
     !game.isPublic ||
     (game.genderTeams != null && game.genderTeams !== 'ANY') ||
     gameIsNonRating(game) ||
     game.hasFixedTeams ||
+    // PRD 357 — the rain / wind pill is on its own enough to need the row.
+    shouldShowWeatherPill(game.weatherRisk) ||
     ((game.status === 'STARTED' || game.status === 'FINISHED' || game.status === 'ARCHIVED') &&
       game.resultsStatus === 'FINAL');
 
@@ -408,6 +446,7 @@ const GameCardMatch = memo(function GameCardMatch({
             showChat={showChatIndicator}
             unreadCount={displayUnread}
             onChatClick={handleChatClick}
+            attendanceRail={attendanceRail}
           />
         </div>
 
@@ -442,7 +481,12 @@ const GameCardMatch = memo(function GameCardMatch({
           )}
 
           {isJoinButtonVisible && (
-            <GameCardJoinButton gameId={game.id} hasFreeSlots={hasUnoccupiedSlots} onJoin={onJoin} />
+            <GameCardJoinButton
+              gameId={game.id}
+              hasFreeSlots={hasUnoccupiedSlots}
+              onJoin={onJoin}
+              spotJustOpened={spotJustOpened}
+            />
           )}
         </div>
       </Card>

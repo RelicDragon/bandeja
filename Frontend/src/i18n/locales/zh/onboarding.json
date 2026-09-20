@@ -1,0 +1,92 @@
+{
+  "onboarding": {
+    "frame": {
+      "skip": "跳过",
+      "back": "返回",
+      "working": "保存中…",
+      "progress": "第 {{current}} 步，共 {{total}} 步"
+    },
+    "welcome": {
+      "title": "帮你找一场球",
+      "subtitle": "两分钟就能设置好。",
+      "start": "开始",
+      "socialProof_other": "{{city}} 有 {{count}} 位球友"
+    },
+    "sport": {
+      "title": "你玩哪些运动？",
+      "titleSportOnly": "选择一项运动以继续",
+      "subtitle": "想选几项都行，第一项会成为你的主项。",
+      "continue": "继续",
+      "primaryTag": "主项",
+      "makePrimary": "将 {{sport}} 设为主项",
+      "primaryHint": "长按某项运动即可把它设为主项。"
+    },
+    "profile": {
+      "title": "怎么称呼你？",
+      "subtitle": "你参加的每一场球都会显示这个名字。",
+      "continue": "继续",
+      "photoOptional": "照片可选，之后再加也行。",
+      "firstNameLabel": "名字",
+      "lastNameLabel": "姓氏",
+      "nameRequired": "请填写你的名字。",
+      "nameTooShort": "至少 2 个字符。",
+      "nameTooLong": "最多 30 个字符。"
+    },
+    "level": {
+      "title": "你的水平",
+      "subtitle": "关于你打 {{sport}} 的几个简单问题。",
+      "continue": "继续",
+      "resultTitle": "这是你的初始水平",
+      "resultSubtitle": "根据你对 {{sport}} 的回答得出。",
+      "scale": "按 {{scale}} 标准",
+      "adjustLater": "随时可以在个人资料里调整。",
+      "unavailable": "{{sport}} 还没有水平测试。"
+    },
+    "city": {
+      "title": "这是你所在的城市吗？",
+      "helper": "我们只显示你所在城市的球局和球友。",
+      "confirm": "没错",
+      "change": "更换城市",
+      "backToCard": "保留当前城市",
+      "unknown": "尚未选择城市"
+    },
+    "follow": {
+      "title": "可以关注的人",
+      "subtitle": "你所在城市的活跃球友。关注他们，首页就热闹起来了。",
+      "continue": "继续",
+      "followAll": "全部关注",
+      "follow": "关注",
+      "following": "已关注",
+      "followFailed": "关注失败，请再试一次。",
+      "gamesThisMonth_other": "本月 {{count}} 场球",
+      "emptyTitle": "暂时没有推荐",
+      "emptyDescription": "你所在的城市还在成长。打完第一场球再来看看。",
+      "unnamedPlayer": "球友"
+    },
+    "notifications": {
+      "title": "别错过消息",
+      "subtitle": "只有值得打扰你的事，我们才会推送。",
+      "turnOn": "开启通知",
+      "later": "暂不开启",
+      "reasonInvitesTitle": "邀请",
+      "reasonInvitesBody": "有人约你打球时。",
+      "reasonRemindersTitle": "提醒",
+      "reasonRemindersBody": "你报名的球局开始之前。",
+      "reasonSpotsTitle": "空位",
+      "reasonSpotsBody": "你想参加的球局空出名额时。",
+      "controlHint": "这些都可以在设置里调整。"
+    },
+    "finish": {
+      "choiceTitle": "先做点什么？",
+      "choiceSubtitle": "无论选哪个，都已经准备好了。",
+      "playSoonTitle": "我想尽快打球",
+      "playSoonBody": "告诉大家你什么时候有空，让球友主动找你。",
+      "browseTitle": "浏览球局",
+      "browseBody": "看看你附近已经有哪些球局。",
+      "doneTitle": "搞定"
+    },
+    "errors": {
+      "saveFailed": "保存失败。请检查网络后重试。"
+    }
+  }
+}

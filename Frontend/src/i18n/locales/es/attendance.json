@@ -1,0 +1,69 @@
+{
+  "attendance": {
+    "question": "¿Vas a venir?",
+    "confirm": "Voy a ir",
+    "unsure": "Aún no lo sé",
+    "change": "Cambiar",
+    "confirmedState": "Tu asistencia está confirmada",
+    "unsureState": "Aún no lo sabes",
+    "caption": "Solo para que el organizador lo sepa. Tu plaza es tuya igualmente.",
+    "cantMakeIt": "¿No puedes venir?",
+    "confirmedToast": "Asistencia confirmada 👍",
+    "unsureToast": "Anotado. Puedes confirmar más tarde.",
+    "saving": "Guardando…",
+    "queuedOffline": "Guardado. Se sincronizará cuando vuelvas a estar en línea.",
+    "youOrganizer": "Tú (organizador)",
+    "dots": {
+      "confirmed": "Confirmado",
+      "unanswered": "Sin respuesta todavía",
+      "unsure": "Aún no lo sabe",
+      "noShow": "Marcado como ausencia"
+    },
+    "legend": {
+      "title": "Qué significan los puntos",
+      "hint": "Verde significa confirmado, gris sin respuesta, ámbar no está seguro."
+    },
+    "organizer": {
+      "progress": "{{confirmed}} de {{total}} confirmados",
+      "nudge": "Avisar",
+      "nudgeCooldown": "Vuelve a avisar en {{hours}} h",
+      "nudgeSent": "Aviso enviado",
+      "legendCaption": "Verde: confirmado. Gris: sin respuesta. Ámbar: no está seguro."
+    },
+    "noShow": {
+      "action": "Marcar ausencia",
+      "undoAction": "Quitar la marca de ausencia",
+      "dialogTitle": "¿Marcar a {{name}} como ausencia?",
+      "dialogBody": "Recibirá un aviso amable y podrá responder en el chat. Puedes deshacerlo en cualquier momento dentro de 7 días.",
+      "confirm": "Marcar ausencia",
+      "cancel": "Cancelar",
+      "noted": "Marcado",
+      "undo": "Deshacer",
+      "undone": "Marca de ausencia eliminada",
+      "tag": "Ausente"
+    },
+    "stat": {
+      "label": "Asistencia",
+      "tooltip": "Partidos confirmados y asistidos en los últimos 12 meses.",
+      "gaugeLabel": "Asistió al {{rate}} por ciento de los partidos",
+      "sparklineTitle": "Últimos 12 meses",
+      "sparklineLegend": "asistió / faltó",
+      "sparklineMonthAria": "{{month}} — asistió: {{attended}}, faltó: {{noShow}}",
+      "notesTitle": "Tus marcas de ausencia",
+      "notesEmpty": "Sin marcas de ausencia.",
+      "notesOpenChat": "Abrir chat",
+      "notedOn": "Marcado el {{date}}"
+    },
+    "card": {
+      "ariaSummary": "{{confirmed}} de {{total}} jugadores confirmados"
+    },
+    "errors": {
+      "generic": "No se pudo guardar tu respuesta",
+      "notParticipant": "Solo los jugadores de este partido pueden responder",
+      "answersClosed": "Las confirmaciones de asistencia están cerradas para este partido",
+      "noShowWindowClosed": "El plazo para marcar una ausencia ha terminado",
+      "nudgeCooldown": "Has avisado hace poco. Inténtalo más tarde.",
+      "nothingToNudge": "Todos ya han respondido"
+    }
+  }
+}

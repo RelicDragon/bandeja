@@ -15,6 +15,10 @@ import { useAuthStore } from '@/store/authStore';
 import { entitySupportsParticipantSetup } from '@/components/gameFormat/gameFormatTeamsVisibility';
 import { canMutateGameRoster } from '@shared/gameMutationLock';
 import { genderI18nContext } from '@/utils/i18nGender';
+import { AttendanceDot } from '@/features/attendance/AttendanceDot';
+import { AttendanceLegendButton } from '@/features/attendance/AttendanceLegendButton';
+import { AttendanceRosterActions } from '@/features/attendance/AttendanceRosterActions';
+import type { AttendanceDotState } from '@/features/attendance/attendanceVisuals';
 
 interface GameParticipantsProps {
   game: Game;
@@ -41,6 +45,13 @@ interface GameParticipantsProps {
   onShowPlayerList: (gender?: 'MALE' | 'FEMALE') => void;
   onShowManageUsers: () => void;
   onEditMaxParticipants?: () => void;
+  /** PRD 346 — attendance dot per PLAYING userId. Informative only. */
+  attendanceByUserId?: Record<string, AttendanceDotState>;
+  /** PRD 346 — owner/admin may note or undo a no-show for these players. */
+  canNoteNoShow?: boolean;
+  onNoteNoShow?: (userId: string) => void;
+  onUndoNoShow?: (userId: string) => void;
+  onShowAttendanceLegend?: () => void;
 }
 
 export const GameParticipants = ({
@@ -68,6 +79,11 @@ export const GameParticipants = ({
   onShowPlayerList,
   onShowManageUsers,
   onEditMaxParticipants,
+  attendanceByUserId,
+  canNoteNoShow = false,
+  onNoteNoShow,
+  onUndoNoShow,
+  onShowAttendanceLegend,
 }: GameParticipantsProps) => {
   const { t } = useTranslation();
   const currentUser = useAuthStore((state) => state.user);
@@ -114,6 +130,15 @@ export const GameParticipants = ({
     canViewSettings && entitySupportsParticipantSetup(game.entityType) && !!onEditMaxParticipants;
   const playingCount = game.participants.filter((p) => p.status === 'PLAYING').length;
 
+  const hasAttendanceDots = Object.keys(attendanceByUserId ?? {}).length > 0;
+
+  /** PRD 346 — only PLAYING rows carry a dot, and only once the data arrived. */
+  const renderAttendanceDot = (participantUserId: string) => {
+    const state = attendanceByUserId?.[participantUserId];
+    if (!state) return null;
+    return <AttendanceDot state={state} size="md" onRequestLegend={onShowAttendanceLegend} />;
+  };
+
   return (
     <Card className="overflow-hidden p-3 sm:p-4">
       <ParticipantsSectionHeader
@@ -125,6 +150,11 @@ export const GameParticipants = ({
         onToggleViewMode={toggleViewMode}
         onEditMaxParticipants={onEditMaxParticipants}
       />
+      {/* PRD 346 — the dots are explained by a real control, not only by a
+          long-press that WebKit never fires on touch. */}
+      {onShowAttendanceLegend && hasAttendanceDots ? (
+        <AttendanceLegendButton onOpen={onShowAttendanceLegend} />
+      ) : null}
       <div className="space-y-2">
         {!isUnauthorized && myInvites.length > 0 && (
           <div className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50/70 dark:from-blue-900/25 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-xl shadow-sm shadow-blue-500/5">
@@ -403,16 +433,19 @@ export const GameParticipants = ({
                         animate={{ opacity: 1, x: 0 }}
                         className="flex items-center gap-3 rounded-xl border border-transparent bg-gray-50/90 p-2.5 transition-colors hover:border-gray-200 hover:bg-gray-100 dark:bg-gray-800/70 dark:hover:border-gray-700 dark:hover:bg-gray-800"
                       >
-                        <PlayerAvatar
-                          player={participant.user}
-                          isCurrentUser={participant.user.id === userId}
-                          removable={participant.user.id === userId}
-                          onRemoveClick={participant.user.id === userId ? onLeave : undefined}
-                          role={shouldShowCrowns ? (participant.role as 'OWNER' | 'ADMIN' | 'PLAYER') : undefined}
-                          extrasmall={true}
-                          showName={false}
-                          fullHideName={true}
-                        />
+                        <div className="relative shrink-0">
+                          <PlayerAvatar
+                            player={participant.user}
+                            isCurrentUser={participant.user.id === userId}
+                            removable={participant.user.id === userId}
+                            onRemoveClick={participant.user.id === userId ? onLeave : undefined}
+                            role={shouldShowCrowns ? (participant.role as 'OWNER' | 'ADMIN' | 'PLAYER') : undefined}
+                            extrasmall={true}
+                            showName={false}
+                            fullHideName={true}
+                          />
+                          {renderAttendanceDot(participant.userId)}
+                        </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                             <PremiumName user={participant.user}>{participant.user.firstName} {participant.user.lastName}</PremiumName>
@@ -423,6 +456,12 @@ export const GameParticipants = ({
                             </p>
                           )}
                         </div>
+                        <AttendanceRosterActions
+                          state={attendanceByUserId?.[participant.userId]}
+                          canNote={canNoteNoShow && participant.userId !== userId}
+                          onNote={onNoteNoShow ? () => onNoteNoShow(participant.userId) : undefined}
+                          onUndo={onUndoNoShow ? () => onUndoNoShow(participant.userId) : undefined}
+                        />
                       </motion.div>
                     ))}
                     {emptySlots > 0 && !isUnauthorized && canInvitePlayers && (
@@ -460,6 +499,8 @@ export const GameParticipants = ({
                 autoHideNames={currentUser?.alwaysShowUserNames === false}
                 onLeave={!isUnauthorized ? onLeave : undefined}
                 onShowPlayerList={!isUnauthorized ? onShowPlayerList : undefined}
+                attendanceByUserId={attendanceByUserId}
+                onAttendanceLegend={onShowAttendanceLegend}
               />
               {isMix && (
                 <PlayersCarousel
@@ -474,6 +515,8 @@ export const GameParticipants = ({
                   autoHideNames={currentUser?.alwaysShowUserNames === false}
                   onLeave={!isUnauthorized ? onLeave : undefined}
                   onShowPlayerList={!isUnauthorized ? onShowPlayerList : undefined}
+                  attendanceByUserId={attendanceByUserId}
+                  onAttendanceLegend={onShowAttendanceLegend}
                 />
               )}
             </motion.div>

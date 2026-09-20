@@ -68,9 +68,21 @@ struct APIClient: Sendable {
         WatchApiConfig.mediaOrigin()
     }
 
+    /// Access tokens are short-lived (≤30 min in production). Refresh ahead of expiry instead of
+    /// waiting for a 401: `optionalAuth` routes (game detail, results, timer) would otherwise
+    /// silently treat an expired bearer as a guest and hide private games.
+    static let accessTokenExpiryLeeway: TimeInterval = 45
+
     /// Ensures a usable access token exists (refreshing from shared Keychain when needed).
     static func ensureAccessToken() async -> String? {
         if let token = KeychainHelper.shared.readToken(), !token.isEmpty {
+            if !KeychainHelper.isExpiringSoon(token, leeway: accessTokenExpiryLeeway) {
+                return token
+            }
+            if let refreshed = try? await WatchAuthRefreshCoordinator.shared.refreshAccessToken() {
+                return refreshed
+            }
+            // Refresh failed (offline?) — keep using the current token; a real 401 retries.
             return token
         }
         do {
@@ -91,6 +103,10 @@ struct APIClient: Sendable {
         if token == nil || token?.isEmpty == true {
             // Access may have been cleared by a stale logout sync; refresh still lives in shared Keychain.
             token = try await WatchAuthRefreshCoordinator.shared.refreshAccessToken()
+        } else if let current = token, KeychainHelper.isExpiringSoon(current, leeway: Self.accessTokenExpiryLeeway) {
+            if let refreshed = try? await WatchAuthRefreshCoordinator.shared.refreshAccessToken() {
+                token = refreshed
+            }
         }
         guard let token, !token.isEmpty else {
             throw APIError.noToken
@@ -288,6 +304,13 @@ actor WatchAuthRefreshCoordinator {
               KeychainHelper.shared.writeRefreshToken(token: refreshed.refreshToken),
               KeychainHelper.shared.write(token: refreshed.token) else {
             throw APIError.noToken
+        }
+        // Phone and watch share one refresh family; hand the successor back so the phone
+        // never presents a credential that is two rotations behind.
+        let token = refreshed.token
+        let refreshTokenValue = refreshed.refreshToken
+        await MainActor.run {
+            WatchSessionManager.shared.notifyCredentialsRotated(token: token, refreshToken: refreshTokenValue)
         }
         return refreshed.token
     }

@@ -1,0 +1,82 @@
+{
+  "clubPage": {
+    "share": "Поделиться клубом",
+    "shareTitle": "Поделиться этим клубом",
+    "signIn": "Войти",
+    "favoriteFailed": "Не удалось обновить избранное. Попробуйте ещё раз.",
+    "openClubPage": "Открыть страницу клуба",
+    "openClubPageNamed": "Открыть страницу клуба {{club}}",
+    "rating": {
+      "none": "Отзывов пока нет",
+      "summary_one": "{{rating}} · {{countText}} отзыв",
+      "summary_few": "{{rating}} · {{countText}} отзыва",
+      "summary_many": "{{rating}} · {{countText}} отзывов",
+      "summary_other": "{{rating}} · {{countText}} отзыва"
+    },
+    "gallery": {
+      "roleDescription": "Галерея фотографий",
+      "label": "Фотографии клуба {{club}}",
+      "slideRole": "Фотография",
+      "slide": "Фотография {{current}} из {{total}}"
+    },
+    "notFound": {
+      "title": "Клуб недоступен",
+      "description": "Возможно, ссылка устарела или клуб больше не размещён.",
+      "browse": "Смотреть клубы"
+    },
+    "actions": {
+      "create": "Создать игру здесь",
+      "book": "Забронировать",
+      "directions": "Маршрут",
+      "manage": "Управление"
+    },
+    "today": {
+      "title": "Сегодня коротко",
+      "updated": "Обновлено {{relative}}",
+      "updatedJustNow": "Обновлено только что",
+      "courtLabel": "{{court}}, свободно {{free}} из {{total}} часов сегодня",
+      "freeHours_one": "{{count}} час свободен",
+      "freeHours_few": "{{count}} часа свободно",
+      "freeHours_many": "{{count}} часов свободно",
+      "freeHours_other": "{{count}} часа свободно",
+      "windowHint": "Показано с {{open}} до {{close}}",
+      "legendFree": "Свободно",
+      "legendBusy": "Занято"
+    },
+    "games": {
+      "title": "Ближайшие игры",
+      "seeAll": "Все игры в Поиске",
+      "emptyTitle": "Открытых игр пока нет",
+      "emptyDescription": "Создайте первую игру в этом клубе."
+    },
+    "courts": {
+      "title": "Корты",
+      "indoor": "Крытый",
+      "outdoor": "Открытый"
+    },
+    "info": {
+      "title": "О клубе",
+      "hoursRange": "Открыто {{open}} – {{close}}",
+      "hoursEveryDay": "Одинаковые часы каждый день",
+      "cancellationPolicy": "Условия отмены",
+      "cancellationNotice_one": "Отменяйте не позднее чем за {{count}} час.",
+      "cancellationNotice_few": "Отменяйте не позднее чем за {{count}} часа.",
+      "cancellationNotice_many": "Отменяйте не позднее чем за {{count}} часов.",
+      "cancellationNotice_other": "Отменяйте не позднее чем за {{count}} часа."
+    },
+    "regulars": {
+      "title": "Кто здесь играет",
+      "open": "Открыть карточку игрока {{name}}",
+      "unnamed": "этот игрок"
+    },
+    "reviews": {
+      "title": "Отзывы",
+      "guestTitle": "Войдите, чтобы оставить отзыв",
+      "guestDescription": "Отзывы оставляют игроки, которые играли в этом клубе."
+    },
+    "error": {
+      "title": "Не удалось загрузить этот клуб",
+      "description": "Проверьте соединение и попробуйте ещё раз."
+    }
+  }
+}

@@ -1,0 +1,100 @@
+{
+  "recap": {
+    "slides": {
+      "cover": {
+        "caption": "สรุปเป็นตัวเลข",
+        "alt": "{{month}} สรุปเป็นตัวเลข"
+      },
+      "games": {
+        "eyebrow": "จำนวนแมตช์",
+        "caption_other": "ลงเล่น {{count}} แมตช์",
+        "alt_other": "ลงเล่น {{count}} แมตช์ใน {{month}}"
+      },
+      "wins": {
+        "eyebrow": "ชนะ",
+        "caption_other": "ชนะ {{count}} ครั้ง",
+        "alt_other": "ชนะ {{count}} ครั้ง อัตราชนะ {{percent}}"
+      },
+      "level": {
+        "eyebrow": "ระดับฝีมือ",
+        "caption": "ตอนนี้ระดับของคุณคือ {{level}}",
+        "neutral": "ระดับเปลี่ยนเป็น {{level}}",
+        "alt": "ระดับฝีมือ: เปลี่ยนเป็น {{level}}"
+      },
+      "partner": {
+        "eyebrow": "คู่หูยอดเยี่ยม",
+        "caption_other": "ชนะร่วมกับ {{name}} {{count}} ครั้ง",
+        "alt_other": "คู่หูยอดเยี่ยม {{name}} ชนะร่วมกัน {{count}} ครั้ง"
+      },
+      "streak": {
+        "eyebrow": "เล่นต่อเนื่อง",
+        "caption_other": "เล่นต่อเนื่อง {{count}} สัปดาห์",
+        "best_other": "สถิติส่วนตัว {{count}} สัปดาห์",
+        "alt_other": "เล่นต่อเนื่อง: {{count}} สัปดาห์"
+      },
+      "club": {
+        "eyebrow": "คลับประจำ",
+        "caption_other": "เล่นที่นี่ {{count}} แมตช์",
+        "alt_other": "คลับประจำ {{club}} {{count}} แมตช์"
+      },
+      "lowActivity": {
+        "encouragement": "แค่หนึ่งแมตช์ก็นับว่าได้ลงสนาม มาหาแมตช์ต่อไปกัน",
+        "caption_other": "{{month}} เล่น {{count}} แมตช์",
+        "alt_other": "{{month}} ลงเล่นทั้งหมด {{count}} แมตช์"
+      },
+      "outro": {
+        "title": "เจอกันที่คอร์ตใน {{month}}",
+        "caption": "{{games}} · {{wins}}",
+        "gamesPart_other": "{{count, number}} แมตช์",
+        "winsPart_other": "ชนะ {{count, number}} ครั้ง",
+        "lowActivityCaption": "คอร์ตรอคุณอยู่",
+        "alt": "เจอกันที่คอร์ตใน {{month}}"
+      }
+    },
+    "viewer": {
+      "title": "สรุปประจำเดือน",
+      "close": "ปิด",
+      "next": "ถัดไป",
+      "shareCta": "แชร์ให้ผู้ติดตาม",
+      "saveImageCta": "บันทึกรูปภาพ",
+      "savingImage": "กำลังเตรียมรูปภาพ…",
+      "playIntentCta": "ฉันอยากเล่น",
+      "loading": "กำลังเตรียมสรุปของคุณ…",
+      "loadFailed": "โหลดสรุปนี้ไม่สำเร็จ",
+      "sportTabs": "เลือกกีฬา"
+    },
+    "share": {
+      "title": "แชร์สรุปของคุณ",
+      "subtitle": "เลือกสไลด์ของ {{month}}",
+      "ttlNote": "ผู้ติดตามจะเห็นได้ 24 ชั่วโมง",
+      "sensitiveHint": "ปิดไว้เป็นค่าเริ่มต้น",
+      "success": "แชร์ให้ผู้ติดตามแล้ว",
+      "failed": "แชร์สรุปไม่สำเร็จ",
+      "exportFailed": "เตรียมรูปภาพไม่สำเร็จ",
+      "imageText": "{{month}} ของฉันบน Bandeja",
+      "slides": {
+        "cover": "หน้าปก",
+        "games": "จำนวนแมตช์",
+        "wins": "ชนะ",
+        "level": "ระดับฝีมือ",
+        "partner": "คู่หูยอดเยี่ยม",
+        "streak": "เล่นต่อเนื่อง",
+        "club": "คลับประจำ",
+        "lowActivity": "เดือนของคุณ",
+        "outro": "ปิดท้าย"
+      },
+      "cta_other": "แชร์ {{count}} สไลด์",
+      "previewLabel_other": "เลือกแล้ว {{count}} สไลด์"
+    },
+    "rail": {
+      "label": "สรุป {{month}}",
+      "aria": "เปิดสรุป {{month}}"
+    },
+    "profile": {
+      "title": "สรุปรายเดือน",
+      "cardAria": "เปิดสรุป {{month}}",
+      "gamesOnly_other": "{{count}} แมตช์",
+      "gamesAndWinRate_other": "{{count}} แมตช์ · {{percent}}"
+    }
+  }
+}

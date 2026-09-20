@@ -72,7 +72,7 @@ Because the rewrite changes results data, the service emits **`game-results-upda
 
 ## Court occupancy
 
-FE owns external snapshot refresh (`useClubSnapshotRefresh`). BE `CourtOccupancyService` merges app games + admin holds + **Booktime/Padeloo/Klikteren** busy snapshots (`queryExternalBlocks` — those three `ClubIntegrationType`s only). **NSPADELSUPABASE is not in that merge**; availability is `/api/nspadel/*`. Snapshot freshness: `BOOKTIME_SNAPSHOT_FRESH_MS` = 60s (`Frontend/shared/gameBooking/booktimeSnapshotFreshness.ts`) for Booktime/Padeloo/Klikteren (and nspadel slot UI staleness where that constant is imported).
+FE owns external snapshot refresh (`useClubSnapshotRefresh`). BE `CourtOccupancyService` merges app games + admin holds + **Booktime/Padeloo/Klikteren** busy snapshots (`queryExternalBlocks` — those three `ClubIntegrationType`s only). **NSPADELSUPABASE and WELTNER are not in that merge**; availability is `/api/nspadel/*` and `/api/weltner/*` respectively. Snapshot freshness: `BOOKTIME_SNAPSHOT_FRESH_MS` = 60s (`Frontend/shared/gameBooking/booktimeSnapshotFreshness.ts`) for Booktime/Padeloo/Klikteren (and nspadel slot UI staleness where that constant is imported).
 
 - FE refresh: `Frontend/src/hooks/useClubSnapshotRefresh.ts`
 - Booktime/Padeloo/Klikteren slot freshness: `Frontend/src/integrations/{booktime,padeloo,klikteren}/slots.ts`
@@ -100,6 +100,7 @@ Provider ports in `Frontend/shared/booking/` with adapters:
 | `PADELOO` | `Frontend/src/integrations/padeloo/` | `UserClubPadelooAuth` |
 | `KLIKTEREN` | `Frontend/src/integrations/klikteren/` | `UserClubKlikterenAuth` |
 | `NSPADELSUPABASE` | `Frontend/src/integrations/nspadel/` | `UserClubNspadelAuth`, `ClubNspadelBusySnapshot` |
+| `WELTNER` | `Frontend/src/api/weltner.ts` + availability/confirmation hooks | `UserClubWeltnerAuth`, `WeltnerBooking` receipts; no busy snapshot |
 
 Hydration: `Frontend/src/integrations/booking/createClubBookingProvider.ts`. Types: `Frontend/shared/clubIntegration.ts`. Coverage helpers: `Frontend/shared/gameBooking`.
 
@@ -145,6 +146,53 @@ Access JWTs stay short-lived (`DEFAULT_JWT_ACCESS_EXPIRES_IN` `30m`). Clients ro
 - Admin: `Admin/app.js` (`adminRefreshRequestId()`)
 - TTL / session cap: `Backend/src/config/jwtAuthConfig.ts`, `config.authMaxActiveSessionsPerUser` default 20
 - Web refresh: HttpOnly cookie (`refreshWebHttpOnlyCookie`); native Keychain/Keystore
+
+---
+
+## PRD 345–357 invariants
+
+Added with the 13-PRD programme (`docs/plans/prd-345-357/`). Each of these was a real defect found in audit before it was closed — they are not theoretical.
+
+### Attendance is a courtesy signal, never a contract
+
+PRD 346 may write **only** `GameParticipant.attendance` / `attendanceUpdatedAt` / `noShowNotedById` / `noShowNotedAt` and the two informational counters `UserSportProfile.attendedCount` / `noShowCount`. It must never touch `level`, `reliability`, `ratingUncertainty`, `LevelChangeEvent`, a seat, or a queue position, and there is no deadline and no auto-release. The eligibility gate is `resultsStatus` plus explicit times — an earlier version gated on `Game.status` and therefore **failed open** for backdated games, inflating the public "Shows up %".
+
+- Rules: `Backend/src/services/gameAttendance/attendanceRules.ts`
+- Enforced three ways: a runtime allow-list, a source scan over `services/gameAttendance/`, and `gameAttendance.invariants.integration.test.ts`, which snapshots the roster, users, sport profiles and game before and after every operation
+
+### Coins: atomic, idempotent, and authorised server-side
+
+Every grant, purchase, gift and refund is atomic with the row it implies and idempotent under retry and concurrent duplicates.
+
+- **Cost split** claims the `GameCostShare` row with a conditional `updateMany` **before** any coins move; the loser of a double-tap is refused and never transfers (`services/gameCost/gameCost.service.ts`).
+- **Shop** debits with `updateMany({ where: { id, wallet: { gte: price } } })` inside the purchase transaction — a plain read-then-decrement let N concurrent buys of N *different* items each pass their balance check and overdraw the wallet (`services/shop/shopPurchase.service.ts`).
+- **Refunds** are idempotent per *ownership instance*: deleting the `UserGoods` row is the claim. Keying on "has this user ever been refunded for this goods id" loses the money on a withdraw → reactivate → re-buy → withdraw cycle.
+- **Referral payout** claims the unique `ReferralReward.referredUserId` row before granting either side.
+- Coins are never purchasable with real money (store compliance).
+
+### Delivery is persisted, revalidated and deduped — never fire-and-forget
+
+Same discipline as play-intent (above). Seat-opened, live-start, weather and series carry-over all claim a durable row **before** dispatch and revalidate on retry. In-process `Set` dedupe is forbidden for anything that must not double-fire: it is lost on restart. `SpotOpenedDelivery` is deliberately shared between the spot-opened and play-intent paths so one seat cannot produce two pushes.
+
+### Card enrichment is a closed contract
+
+`Backend/src/services/game/availableGamesEnrichmentTypes.ts` and `Frontend/src/types/gameCardEnrichment.ts` are hand-mirrored with no compile-time link, and the client merge is the **only** source of these fields for Find/Home (both list queries send `format: 'card'`). A merge that names fields individually silently drops the rest — this is how six PRDs' card surfaces shipped dead with green builds and passing tests. The merge now walks `GAME_CARD_ENRICHMENT_KEYS` with an exhaustiveness guard, and `buildGameRenderSignature` must include every field the card renders or the memoised card never repaints.
+
+- `Frontend/src/utils/attachAvailableGamesEnrichment.ts`, `Frontend/src/utils/gameCardPropsEqual.ts`
+
+### Guest-readable endpoints are whitelist projections
+
+`GET /clubs/:id/public` and `GET /api/results/game/:gameId` (plus its round/match variants **and the three `outcome/:userId/…explanation` siblings**) serve unauthenticated callers. They use explicit `select` whitelists, never a top-level `include`: `integrationConfig`, `ptMeta`, `paymentHint`, `bio`, `weeklyAvailability` and `socialLevel` must never reach a client. A private game answers **404**, not 403, so the endpoint is not an existence oracle.
+
+### A broadcast is projected for the least-entitled recipient, and an absent key means "not transmitted"
+
+The socket `game-updated` payload has one body and many audiences: the `game-${id}` room holds roster members, invited users, watchers of a public game, and — through `MessageService.validateGameAccess` — every player of a league **season** for any of its fixtures. There is no per-socket entitlement check on the broadcast path, so `SocketService.emitGameUpdate` re-projects whatever game its caller handed it through `projectGameForBroadcast` (`services/game/gameDetail.projection.ts`): no `paymentHint`, no viewer-scoped `userNote` / `isClubFavorite`. `senderId` names the actor, never the audience — projecting the payload *for* a more-entitled actor to keep a field puts it on every socket in the room.
+
+The client half is the other belt, and it is the one that cost data: a key a payload omits was **not transmitted**, it was not *cleared*. Screens that replace their game object from a broadcast carry these fields over (`queries/games/preserveUntransmittedGameFields.ts`), and a form never writes back a field the viewer may not have received unless it actually changed (`features/cost/gameEditPricePayload.ts`). Without both, a player leaving a game made the organizer's next unrelated save delete her saved IBAN.
+
+### i18n plural families
+
+The locale parity test compares plural **families**, not raw keys, so each locale carries exactly the CLDR categories its grammar needs. Shipping only `_one`/`_other` in Arabic does not fall back gracefully: i18next misses, falls through to English, and recomputes the suffix *for English*, so an Arabic user sees Latin-script English on an RTL screen. `Frontend/src/i18n/localeParity.test.ts` asserts per-locale category completeness and rejects unreachable categories.
 
 ---
 
@@ -202,3 +250,7 @@ Changing model name is **not** a mitigation: `deepseek-chat` and `deepseek-v4-fl
 - Tests: `npm run test:translation-guard` (Backend)
 
 Chat keeps the permissive path on purpose: short messages are where detection is unreliable and the model's judgement is worth more, and chat discards a redundant translation row instead of persisting it.
+
+### Weltner saved contact and durable booking attempts
+
+WELTNER uses a per-user/per-club saved phone, never a fabricated provider session or phone verification. All upstream requests go through the fixed-origin backend. Availability consists of exact start/duration tuples, never inferred busy snapshots. Persist a unique attempt before POST; reuse confirmed receipts and block resubmission after unknown outcomes. Game links use owned, confirmed receipts and authoritative stored court/times. No automatic cancellation, rollback, upstream listing or verification. Contact the club for changes or uncertain outcomes. See [booking](../domains/booking.md#weltner-saved-phone-and-guest-reservations).

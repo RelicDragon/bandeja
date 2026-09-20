@@ -81,7 +81,9 @@
     "off": "Off",
     "editFullscreen": "Uredi preko celog ekrana",
     "exitFullscreen": "Izađi iz punog ekrana",
-    "characters": "znakova"
+    "characters": "znakova",
+    "comingSoon": "Uskoro",
+    "comingSoonDescription": "Ovaj deo aplikacije je na putu."
   },
   "sport": {
     "sport": "Sport",

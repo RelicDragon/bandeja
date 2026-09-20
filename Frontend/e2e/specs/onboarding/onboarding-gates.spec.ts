@@ -57,7 +57,10 @@ test.describe('onboarding gates', () => {
     const { token, user } = await createNoSportsUser();
     await seedAuthInBrowser(page, token, user);
     await page.goto('/');
-    await expect(page).toHaveURL(/\/profile/, { timeout: 20_000 });
+    // PRD 350: a completed account with no enabled sport now goes to the
+    // onboarding sport step, not to Profile.
+    await expect(page).toHaveURL(/\/welcome\?step=sport/, { timeout: 20_000 });
+    await new OnboardingPage(page).expectFirstRunStep('sport');
   });
 
   test('OG-04 gender prompt banner', async ({ page }) => {

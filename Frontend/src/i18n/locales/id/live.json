@@ -1,0 +1,31 @@
+{
+  "live": {
+    "andJoin": " dan ",
+    "carouselLabel": "Korsel permainan yang berlangsung",
+    "cityTitle": "Berlangsung di {{city}}",
+    "courtLabel": "lapangan {{court}}",
+    "detailsBody": "Skor permainan ini sedang dicatat saat ini.",
+    "detailsTitle": "Sedang berlangsung",
+    "followFailed": "Tidak bisa mengikuti {{name}}",
+    "followPlayers": "Ikuti pemain",
+    "followed": "Mengikuti {{name}}",
+    "gamesCount_other": "{{count}} permainan berlangsung",
+    "loading": "Memuat permainan yang berlangsung",
+    "nowTitle": "Sedang berlangsung",
+    "openFailed": "Siaran tidak bisa dibuka",
+    "ratedGame": "Permainan berperingkat",
+    "reconnecting": "Menyambungkan ulang",
+    "scoreLead": "{{leaders}} unggul {{score}}",
+    "scoreLevel": "{{sideA}} dan {{sideB}} imbang {{score}}",
+    "seeAllOnFind": "Lihat semua di Cari",
+    "showOnRail": "Tampilkan di Sedang berlangsung",
+    "showOnRailNoteFalse": "Permainan ini tidak akan muncul di bagian Sedang berlangsung.",
+    "showOnRailNoteTrue": "Permainan publik yang sedang berjalan bisa ditonton siapa saja di kotamu.",
+    "spectatorTitle": "Siaran",
+    "startedJustNow": "Baru saja dimulai",
+    "started_other": "Dimulai {{count}} menit lalu",
+    "watch": "Tonton",
+    "watchLive": "Tonton siaran",
+    "youTag": "Kamu"
+  }
+}

@@ -8,6 +8,7 @@ import { parseLiveBoardTheme, type LiveTeamSide } from '@/utils/liveScoring';
 import { isLiveMatchCompleteForScoring } from '@/utils/scoring';
 import { playersPerMatchOf } from '@/utils/matchFormat';
 import { liveBroadcastContext } from '@/utils/liveBroadcastContext.util';
+import { SpectatorTopBar } from '@/components/live/SpectatorTopBar';
 
 const noop = () => {};
 const noopSide = (_side: LiveTeamSide) => {};
@@ -81,7 +82,22 @@ export const GameBroadcastMatchPage = () => {
       }}
     >
       <div className="relative flex min-h-[100dvh] w-full max-w-none flex-col">
-        <div className="pointer-events-none absolute left-0 right-0 top-0 z-20 flex w-full max-w-none items-start justify-between gap-3 px-3 pt-3 sm:px-4 sm:pt-4">
+        {/* PRD 349 — spectators (anyone who arrived with a token) get a slim
+            strip: back, "Live · club · court", and a Follow players overflow.
+            Participants already have the full game chrome, so they do not. */}
+        {spectatorToken ? (
+          <div className="pointer-events-none absolute inset-x-0 top-0 z-30 px-3 pt-3 sm:px-4 sm:pt-4">
+            <SpectatorTopBar
+              gameId={gameId}
+              clubName={game?.club?.name ?? game?.court?.club?.name ?? null}
+              courtName={game?.court?.name ?? null}
+              players={[...teamAPlayers, ...teamBPlayers]}
+              boardTheme={boardTheme}
+            />
+          </div>
+        ) : null}
+
+        <div className={`pointer-events-none absolute left-0 right-0 z-20 flex w-full max-w-none items-start justify-between gap-3 px-3 sm:px-4 ${spectatorToken ? 'top-16 pt-0 sm:top-20' : 'top-0 pt-3 sm:pt-4'}`}>
           <LiveBandejaRotatingLogo variant="broadcast" alt="Bandeja" />
           <div className="ms-auto flex shrink-0 flex-col items-end gap-1">
             {showPill ? (

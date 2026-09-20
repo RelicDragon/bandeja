@@ -13,8 +13,12 @@ import * as ratingExplanationLlmTranslateService from '../services/results/ratin
 import * as matchLiveScoringService from '../services/results/matchLiveScoring.service';
 import { LIVE_SCORING_REASON_CODE } from '../services/results/liveScoringEngine/liveScoringRejectReasons';
 import { liveSpectatorQueryTokenMaxBytes, signLiveSpectatorToken, verifyLiveSpectatorToken } from '../utils/jwt';
-import { assertMatchBelongsToGame } from '../services/results/liveSpectator.service';
+import {
+  assertMatchBelongsToGame,
+  assertSpectatorGameStillWatchable,
+} from '../services/results/liveSpectator.service';
 import { assertEventForbidsResults } from '../services/game/assertEventForbidsResults';
+import { assertCanReadGameResults } from '../services/results/gameResultsAccess';
 
 export const recalculateOutcomes = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { gameId } = req.params;
@@ -41,6 +45,9 @@ export const recalculateOutcomes = asyncHandler(async (req: AuthRequest, res: Re
 export const getGameResults = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { gameId } = req.params;
 
+  // `optionalAuth`: guests may read a **public** game's scoreboard. A private
+  // game answers 404 for everyone outside its roster.
+  await assertCanReadGameResults(gameId, req.userId ?? null);
   const results = await resultsService.getGameResults(gameId);
 
   res.json({
@@ -52,7 +59,7 @@ export const getGameResults = asyncHandler(async (req: AuthRequest, res: Respons
 export const getRoundResults = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { roundId } = req.params;
 
-  const results = await resultsService.getRoundResults(roundId);
+  const results = await resultsService.getRoundResults(roundId, req.userId ?? null);
 
   res.json({
     success: true,
@@ -63,7 +70,7 @@ export const getRoundResults = asyncHandler(async (req: AuthRequest, res: Respon
 export const getMatchResults = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { matchId } = req.params;
 
-  const results = await resultsService.getMatchResults(matchId);
+  const results = await resultsService.getMatchResults(matchId, req.userId ?? null);
 
   res.json({
     success: true,
@@ -358,6 +365,8 @@ export const getGameResultsForSpectator = asyncHandler(async (req: Request, res:
     throw new ApiError(400, 'Token game mismatch');
   }
   await assertMatchBelongsToGame(gameId, payload.matchId);
+  // PRD 349 — the mint gates on `LIVE_RAIL_WHERE`; so must redemption.
+  await assertSpectatorGameStillWatchable(gameId);
 
   res.setHeader('Cache-Control', 'private, no-store, no-cache, must-revalidate');
   res.setHeader('Pragma', 'no-cache');
@@ -372,9 +381,19 @@ export const getGameResultsForSpectator = asyncHandler(async (req: Request, res:
   });
 });
 
+/**
+ * The three outcome-explanation reads below sit on the same `optionalAuth`
+ * router as `getGameResults` and expose the same game: a player's
+ * `levelBefore` / `levelAfter` / reliability internals plus a match breakdown
+ * carrying co-player names. They take the same gate — a public game is readable
+ * by anyone, a private one only by its roster (or its parent season's) and
+ * platform staff, and everything else answers **404**, not 403, so the route is
+ * not a game-existence oracle.
+ */
 export const getOutcomeExplanation = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { gameId, userId } = req.params;
 
+  await assertCanReadGameResults(gameId, req.userId ?? null);
   const explanation = await outcomeExplanationService.getOutcomeExplanation(gameId, userId);
 
   if (!explanation) {
@@ -406,6 +425,7 @@ export const getOutcomeExplanation = asyncHandler(async (req: AuthRequest, res: 
 
 export const getOutcomeRatingExplanationLlm = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { gameId, userId } = req.params;
+  await assertCanReadGameResults(gameId, req.userId ?? null);
   const language =
     typeof req.query.lang === 'string'
       ? req.query.lang
@@ -433,6 +453,7 @@ export const getOutcomeRatingExplanationLlm = asyncHandler(async (req: AuthReque
 
 export const getOutcomeRatingExplanationTranslation = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { gameId, userId } = req.params;
+  await assertCanReadGameResults(gameId, req.userId ?? null);
   const language =
     typeof req.query.lang === 'string'
       ? req.query.lang

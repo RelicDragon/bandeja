@@ -1,0 +1,119 @@
+{
+  "recap": {
+    "slides": {
+      "cover": {
+        "caption": "आंकड़ों में",
+        "alt": "{{month}} आंकड़ों में"
+      },
+      "games": {
+        "eyebrow": "मैच",
+        "caption_one": "{{count}} मैच खेला",
+        "caption_other": "{{count}} मैच खेले",
+        "alt_one": "{{month}} में {{count}} मैच खेला",
+        "alt_other": "{{month}} में {{count}} मैच खेले"
+      },
+      "wins": {
+        "eyebrow": "जीत",
+        "caption_one": "{{count}} जीत",
+        "caption_other": "{{count}} जीत",
+        "alt_one": "{{count}} जीत, जीत दर {{percent}}",
+        "alt_other": "{{count}} जीत, जीत दर {{percent}}"
+      },
+      "level": {
+        "eyebrow": "खेल स्तर",
+        "caption": "अब आपका स्तर {{level}} है",
+        "neutral": "स्तर बदलकर {{level}} हुआ",
+        "alt": "खेल स्तर: बदलकर {{level}} हुआ"
+      },
+      "partner": {
+        "eyebrow": "सर्वश्रेष्ठ साथी",
+        "caption_one": "{{name}} के साथ {{count}} जीत",
+        "caption_other": "{{name}} के साथ {{count}} जीत",
+        "alt_one": "सर्वश्रेष्ठ साथी {{name}}, साथ में {{count}} जीत",
+        "alt_other": "सर्वश्रेष्ठ साथी {{name}}, साथ में {{count}} जीत"
+      },
+      "streak": {
+        "eyebrow": "लगातार खेल",
+        "caption_one": "लगातार {{count}} सप्ताह खेला",
+        "caption_other": "लगातार {{count}} सप्ताह खेले",
+        "best_one": "निजी रिकॉर्ड {{count}} सप्ताह",
+        "best_other": "निजी रिकॉर्ड {{count}} सप्ताह",
+        "alt_one": "लगातार खेल: {{count}} सप्ताह",
+        "alt_other": "लगातार खेल: {{count}} सप्ताह"
+      },
+      "club": {
+        "eyebrow": "पसंदीदा क्लब",
+        "caption_one": "यहाँ {{count}} मैच",
+        "caption_other": "यहाँ {{count}} मैच",
+        "alt_one": "पसंदीदा क्लब {{club}}, {{count}} मैच",
+        "alt_other": "पसंदीदा क्लब {{club}}, {{count}} मैच"
+      },
+      "lowActivity": {
+        "encouragement": "एक मैच भी मैच होता है। चलिए अगला ढूँढ़ते हैं।",
+        "caption_one": "{{month}} में {{count}} मैच",
+        "caption_other": "{{month}} में {{count}} मैच",
+        "alt_one": "{{month}} में {{count}} मैच खेला गया",
+        "alt_other": "{{month}} में {{count}} मैच खेले गए"
+      },
+      "outro": {
+        "title": "{{month}} में कोर्ट पर मिलते हैं",
+        "caption": "{{games}} · {{wins}}",
+        "gamesPart_one": "{{count, number}} मैच",
+        "gamesPart_other": "{{count, number}} मैच",
+        "winsPart_one": "{{count, number}} जीत",
+        "winsPart_other": "{{count, number}} जीत",
+        "lowActivityCaption": "कोर्ट आपका इंतज़ार कर रहा है।",
+        "alt": "{{month}} में कोर्ट पर मिलते हैं"
+      }
+    },
+    "viewer": {
+      "title": "मासिक रीकैप",
+      "close": "बंद करें",
+      "next": "आगे",
+      "shareCta": "फ़ॉलोअर्स के साथ साझा करें",
+      "saveImageCta": "इमेज सेव करें",
+      "savingImage": "इमेज तैयार हो रही है…",
+      "playIntentCta": "मुझे खेलना है",
+      "loading": "आपका रीकैप तैयार हो रहा है…",
+      "loadFailed": "यह रीकैप लोड नहीं हो सका।",
+      "sportTabs": "एक खेल चुनें"
+    },
+    "share": {
+      "title": "अपना रीकैप साझा करें",
+      "subtitle": "{{month}} की स्लाइड चुनें",
+      "ttlNote": "आपके फ़ॉलोअर्स इसे 24 घंटे तक देखेंगे।",
+      "sensitiveHint": "डिफ़ॉल्ट रूप से बंद",
+      "success": "आपके फ़ॉलोअर्स के साथ साझा किया गया",
+      "failed": "रीकैप साझा नहीं हो सका",
+      "exportFailed": "इमेज तैयार नहीं हो सकी",
+      "imageText": "Bandeja पर मेरा {{month}}",
+      "slides": {
+        "cover": "कवर",
+        "games": "मैच",
+        "wins": "जीत",
+        "level": "खेल स्तर",
+        "partner": "सर्वश्रेष्ठ साथी",
+        "streak": "लगातार खेल",
+        "club": "पसंदीदा क्लब",
+        "lowActivity": "आपका महीना",
+        "outro": "समापन"
+      },
+      "cta_one": "{{count}} स्लाइड साझा करें",
+      "cta_other": "{{count}} स्लाइड साझा करें",
+      "previewLabel_one": "{{count}} स्लाइड चुनी गई",
+      "previewLabel_other": "{{count}} स्लाइड चुनी गईं"
+    },
+    "rail": {
+      "label": "{{month}} का रीकैप",
+      "aria": "{{month}} का रीकैप खोलें"
+    },
+    "profile": {
+      "title": "रीकैप",
+      "cardAria": "{{month}} का रीकैप खोलें",
+      "gamesOnly_one": "{{count}} मैच",
+      "gamesOnly_other": "{{count}} मैच",
+      "gamesAndWinRate_one": "{{count}} मैच · {{percent}}",
+      "gamesAndWinRate_other": "{{count}} मैच · {{percent}}"
+    }
+  }
+}

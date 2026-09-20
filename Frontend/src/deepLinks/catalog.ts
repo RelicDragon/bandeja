@@ -58,15 +58,18 @@ export const DEEP_LINK_ACTIONS = {
   nextGameLive: { id: 'nextGameLive', path: '/next-game?open=live' },
   chats: { id: 'chats', path: '/chats' },
   invites: { id: 'invites', path: '/?focus=invites' },
+  shop: { id: 'shop', path: '/shop' },
 } as const satisfies Record<string, { id: string; path: string }>;
 
 export type DeepLinkActionId = keyof typeof DEEP_LINK_ACTIONS;
 
-/** Path templates for game-scoped deep links (`{id}` placeholder). */
+/** Path templates for entity-scoped deep links (`{id}` placeholder). */
 export const DEEP_LINK_TEMPLATES = {
   game: { id: 'game', pathTemplate: '/games/{id}' },
   gameChat: { id: 'gameChat', pathTemplate: '/games/{id}/chat' },
   gameLive: { id: 'gameLive', pathTemplate: '/games/{id}/live' },
+  club: { id: 'club', pathTemplate: '/clubs/{id}' },
+  series: { id: 'series', pathTemplate: '/series/{id}' },
 } as const satisfies Record<string, { id: string; pathTemplate: string }>;
 
 export type DeepLinkTemplateId = keyof typeof DEEP_LINK_TEMPLATES;
@@ -81,16 +84,16 @@ export function deepLinkActionUrl(id: DeepLinkActionId): string {
 
 export function deepLinkTemplatePath(
   id: DeepLinkTemplateId,
-  gameId: string,
+  entityId: string,
 ): string {
-  return DEEP_LINK_TEMPLATES[id].pathTemplate.replace(/\{id\}/g, gameId);
+  return DEEP_LINK_TEMPLATES[id].pathTemplate.replace(/\{id\}/g, entityId);
 }
 
 export function deepLinkTemplateUrl(
   id: DeepLinkTemplateId,
-  gameId: string,
+  entityId: string,
 ): string {
-  return absoluteBandejaUrl(deepLinkTemplatePath(id, gameId));
+  return absoluteBandejaUrl(deepLinkTemplatePath(id, entityId));
 }
 
 export function buildGamePath(gameId: string): string {
@@ -103,6 +106,14 @@ export function buildGameChatPath(gameId: string): string {
 
 export function buildGameLivePath(gameId: string): string {
   return deepLinkTemplatePath('gameLive', gameId);
+}
+
+export function buildClubPath(clubId: string): string {
+  return deepLinkTemplatePath('club', clubId);
+}
+
+export function buildSeriesPath(seriesId: string): string {
+  return deepLinkTemplatePath('series', seriesId);
 }
 
 /**

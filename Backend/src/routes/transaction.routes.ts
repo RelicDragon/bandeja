@@ -3,6 +3,7 @@ import { body } from 'express-validator';
 import { validate } from '../middleware/validate';
 import { authenticate } from '../middleware/auth';
 import * as transactionController from '../controllers/transaction.controller';
+import * as gameCostController from '../controllers/gameCost.controller';
 
 const router = Router();
 
@@ -25,6 +26,10 @@ router.post(
 router.get('/', authenticate, transactionController.getUserTransactions);
 
 router.get('/wallet', authenticate, transactionController.getUserWallet);
+
+// PRD 348 — outstanding cost shares in both directions, for the Wallet modal.
+// Must stay above `/:id` or the literal path would be read as a transaction id.
+router.get('/owed', authenticate, gameCostController.getOwed);
 
 router.get('/:id', authenticate, transactionController.getTransactionById);
 

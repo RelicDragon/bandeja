@@ -1,0 +1,92 @@
+{
+  "onboarding": {
+    "frame": {
+      "skip": "スキップ",
+      "back": "戻る",
+      "working": "保存中…",
+      "progress": "ステップ {{current}} / {{total}}"
+    },
+    "welcome": {
+      "title": "あなたに合う試合を探しましょう",
+      "subtitle": "2分で準備完了です。",
+      "start": "はじめる",
+      "socialProof_other": "{{city}} に {{count}} 人のプレーヤー"
+    },
+    "sport": {
+      "title": "どのスポーツをしますか？",
+      "titleSportOnly": "続けるにはスポーツを選んでください",
+      "subtitle": "いくつでも選べます。最初に選んだものがメインになります。",
+      "continue": "次へ",
+      "primaryTag": "メイン",
+      "makePrimary": "{{sport}} をメインにする",
+      "primaryHint": "スポーツを長押しするとメインに設定できます。"
+    },
+    "profile": {
+      "title": "お名前を教えてください",
+      "subtitle": "参加するすべての試合に表示されます。",
+      "continue": "次へ",
+      "photoOptional": "写真は任意です。あとから追加できます。",
+      "firstNameLabel": "名",
+      "lastNameLabel": "姓",
+      "nameRequired": "名を入力してください。",
+      "nameTooShort": "2文字以上で入力してください。",
+      "nameTooLong": "30文字以内で入力してください。"
+    },
+    "level": {
+      "title": "あなたのレベル",
+      "subtitle": "{{sport}} についての簡単な質問です。",
+      "continue": "次へ",
+      "resultTitle": "これがスタート時のレベルです",
+      "resultSubtitle": "{{sport}} についての回答をもとにしています。",
+      "scale": "{{scale}} のスケール",
+      "adjustLater": "プロフィールからいつでも変更できます。",
+      "unavailable": "{{sport}} のレベル診断はまだありません。"
+    },
+    "city": {
+      "title": "この街で合っていますか？",
+      "helper": "あなたの街の試合とプレーヤーを表示します。",
+      "confirm": "はい、合っています",
+      "change": "街を変更",
+      "backToCard": "今の街のままにする",
+      "unknown": "街が未設定です"
+    },
+    "follow": {
+      "title": "フォローしたい人",
+      "subtitle": "あなたの街で活動中のプレーヤーです。フォローするとホームがにぎやかになります。",
+      "continue": "次へ",
+      "followAll": "すべてフォロー",
+      "follow": "フォロー",
+      "following": "フォロー中",
+      "followFailed": "フォローできませんでした。もう一度お試しください。",
+      "gamesThisMonth_other": "今月 {{count}} 試合",
+      "emptyTitle": "まだ候補がありません",
+      "emptyDescription": "あなたの街はまだ広がっているところです。初めての試合のあとにまた見てみてください。",
+      "unnamedPlayer": "プレーヤー"
+    },
+    "notifications": {
+      "title": "大事な知らせを逃さない",
+      "subtitle": "手を止める価値があることだけをお送りします。",
+      "turnOn": "通知をオンにする",
+      "later": "あとで",
+      "reasonInvitesTitle": "お誘い",
+      "reasonInvitesBody": "誰かがあなたを試合に誘ったとき。",
+      "reasonRemindersTitle": "リマインダー",
+      "reasonRemindersBody": "参加予定の試合が始まる前に。",
+      "reasonSpotsTitle": "空き枠",
+      "reasonSpotsBody": "気になっていた試合に空きが出たとき。",
+      "controlHint": "これらはすべて設定から変更できます。"
+    },
+    "finish": {
+      "choiceTitle": "まずは何をしますか？",
+      "choiceSubtitle": "どちらを選んでも準備は整っています。",
+      "playSoonTitle": "近いうちにプレーしたい",
+      "playSoonBody": "空いている時間を街に伝えて、プレーヤーから声をかけてもらいましょう。",
+      "browseTitle": "試合を見る",
+      "browseBody": "近くですでに行われている試合をチェック。",
+      "doneTitle": "準備完了"
+    },
+    "errors": {
+      "saveFailed": "保存できませんでした。接続を確認してもう一度お試しください。"
+    }
+  }
+}

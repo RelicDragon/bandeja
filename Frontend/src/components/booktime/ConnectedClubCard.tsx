@@ -17,7 +17,7 @@ export function ConnectedClubCard({
   onDisconnect,
 }: Props) {
   const { t } = useTranslation();
-  const providerLabel =
+  const providerLabel = club.integrationType === 'WELTNER' ? 'Weltner' :
     club.integrationType === 'PADELOO'
       ? t('club.padeloo.providerLabel', { defaultValue: 'Padeloo' })
       : club.integrationType === 'KLIKTEREN'
@@ -71,6 +71,7 @@ export function ConnectedClubCard({
               {t('club.booktime.connectedAs', { phone: club.phoneNumber })}
             </p>
           ) : null}
+          {isActive && club.integrationType === 'WELTNER' && <button type="button" onClick={onConnect} className="mt-2 text-sm text-primary-600 underline">{t('weltner.changePhone')}</button>}
           {isActive && club.email ? (
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
               {t('club.padeloo.connectedAs', { email: club.email, defaultValue: club.email })}

@@ -1,3 +1,4 @@
+import { WeltnerCreateGameConfirmModal } from './WeltnerCreateGameConfirmModal';
 import type { ComponentProps } from 'react';
 import { isKlikterenClub, isNspadelClub, isPadelooClub } from '@shared/clubIntegration';
 import { BooktimeCreateGameConfirmModal } from './BooktimeCreateGameConfirmModal';
@@ -6,6 +7,7 @@ import { KlikterenCreateGameConfirmModal } from './KlikterenCreateGameConfirmMod
 import { NspadelCreateGameConfirmModal } from './NspadelCreateGameConfirmModal';
 
 export type ClubCreateGameConfirmModalProps =
+  | ({ provider: 'WELTNER' } & ComponentProps<typeof WeltnerCreateGameConfirmModal>)
   | ({ provider: 'BOOKTIME' } & ComponentProps<typeof BooktimeCreateGameConfirmModal>)
   | ({
       provider: 'PADELOO';
@@ -20,6 +22,7 @@ export type ClubCreateGameConfirmModalProps =
   | ({ provider: 'NSPADELSUPABASE' } & ComponentProps<typeof NspadelCreateGameConfirmModal>);
 
 export function ClubCreateGameConfirmModal(props: ClubCreateGameConfirmModalProps) {
+  if (props.provider === 'WELTNER') return <WeltnerCreateGameConfirmModal {...props} />;
   if (props.provider === 'NSPADELSUPABASE' || isNspadelClub(props.club)) {
     const { provider: _provider, ...nspadelProps } = props as Extract<
       ClubCreateGameConfirmModalProps,

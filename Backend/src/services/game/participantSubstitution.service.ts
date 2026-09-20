@@ -10,6 +10,8 @@ import { ParticipantMessageHelper } from './participantMessageHelper';
 import { GameService } from './game.service';
 import { BetService } from '../bets/bet.service';
 import { SystemMessageType } from '../../utils/systemMessages';
+import { transferCostShareOnSubstitution } from '../gameCost/gameCost.service';
+import { GameSeatService } from '../gameSeat/gameSeat.service';
 
 export interface SubstituteGameParticipantParams {
   gameId: string;
@@ -109,6 +111,13 @@ export class GameParticipantSubstitutionService {
       });
     });
 
+    // PRD 348 — the substitute inherits the seat's cost share *and* whether it
+    // was already paid, before the roster sync would otherwise hand them a new
+    // unpaid row.
+    await transferCostShareOnSubstitution(gameId, outUserId, inUserId).catch((error) =>
+      console.error('Failed to move cost share to substitute:', error),
+    );
+
     if (game._count.outcomes > 0) {
       const { recalculateGameOutcomes } = await import('../results/outcomes.service');
       await recalculateGameOutcomes(gameId, { preserveBracketStructure: true });
@@ -135,6 +144,12 @@ export class GameParticipantSubstitutionService {
 
     // Match rosters changed, so results viewers must reload — `emitGameUpdate` alone only
     // refreshes the game, not the rounds held by the results engine.
+    // PRD 347 — the outgoing player's seat is handed straight to the substitute,
+    // so the PLAYING count is unchanged and `seatOpened` no-ops. The call is here
+    // anyway so a future rollback (substitute removed without a replacement)
+    // raises the event through the same path as every other trigger.
+    void GameSeatService.seatOpened(gameId, 1, 'SUBSTITUTION', { freedByUserId: outUserId });
+
     const socketService = (global as any).socketService;
     if (socketService) {
       await socketService.emitGameUpdate(gameId, actorUserId);

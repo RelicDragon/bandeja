@@ -141,6 +141,8 @@
     "sendDirectMessagesDescription": "Get notified when someone sends you a direct message",
     "sendReminders": "Reminders",
     "sendRemindersDescription": "Get notified 2 hours before your games, tournaments, or training bars start",
+    "sendWeatherAlerts": "Weather alerts",
+    "sendWeatherAlertsDescription": "Only for outdoor courts",
     "walletNotifications": "Wallet Notifications",
     "walletNotificationsDescription": "Receive notifications for wallet transactions",
     "marketplaceNotifications": "New listings in my city",

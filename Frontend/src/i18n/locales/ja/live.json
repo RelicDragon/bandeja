@@ -1,0 +1,31 @@
+{
+  "live": {
+    "andJoin": "・",
+    "carouselLabel": "進行中の試合カルーセル",
+    "cityTitle": "{{city}} で進行中",
+    "courtLabel": "コート {{court}}",
+    "detailsBody": "この試合のスコアは今まさに記録されています。",
+    "detailsTitle": "進行中",
+    "followFailed": "{{name}} をフォローできませんでした",
+    "followPlayers": "選手をフォロー",
+    "followed": "{{name}} をフォロー中",
+    "gamesCount_other": "進行中の試合 {{count}} 件",
+    "loading": "進行中の試合を読み込んでいます",
+    "nowTitle": "進行中",
+    "openFailed": "ライブ配信を開けませんでした",
+    "ratedGame": "レート対象の試合",
+    "reconnecting": "再接続しています",
+    "scoreLead": "{{leaders}} が {{score}} でリード",
+    "scoreLevel": "{{sideA}} と {{sideB}} は {{score}} で互角",
+    "seeAllOnFind": "検索ですべて見る",
+    "showOnRail": "「進行中」に表示する",
+    "showOnRailNoteFalse": "この試合は「進行中」には表示されません。",
+    "showOnRailNoteTrue": "進行中の公開試合は、同じ街の誰でも観ることができます。",
+    "spectatorTitle": "ライブ",
+    "startedJustNow": "始まったばかり",
+    "started_other": "{{count}} 分前に開始",
+    "watch": "観る",
+    "watchLive": "ライブを観る",
+    "youTag": "あなた"
+  }
+}

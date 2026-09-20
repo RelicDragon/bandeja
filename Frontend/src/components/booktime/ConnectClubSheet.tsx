@@ -1,10 +1,11 @@
+import { WeltnerConnectForm } from './WeltnerConnectForm';
 import { useTranslation } from 'react-i18next';
 import type { Club } from '@/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 import { BooktimeConnectForm } from './BooktimeConnectForm';
 import { PadelooConnectForm } from './PadelooConnectForm';
 import { KlikterenConnectForm } from './KlikterenConnectForm';
-import { isBooktimeClub, isKlikterenClub, isPadelooClub } from '@shared/clubIntegration';
+import { isBooktimeClub, isWeltnerClub, isKlikterenClub, isPadelooClub } from '@shared/clubIntegration';
 
 export type BooktimeIntegrationConfig = {
   companyId: string;
@@ -28,7 +29,7 @@ export function ConnectClubSheet({
   onConnected,
 }: ConnectClubSheetProps) {
   const { t } = useTranslation();
-  const providerKey = isKlikterenClub(club) ? 'klikteren' : isPadelooClub(club) ? 'padeloo' : 'booktime';
+  const providerKey = isWeltnerClub(club) ? 'weltner' : isKlikterenClub(club) ? 'klikteren' : isPadelooClub(club) ? 'padeloo' : 'booktime';
 
   return (
     <Dialog open={open} onClose={() => onOpenChange(false)} modalId={`${providerKey}-connect-${club.id}`}>
@@ -44,7 +45,9 @@ export function ConnectClubSheet({
         </DialogHeader>
 
         <div className="px-6 pb-6 overflow-y-auto flex-1 min-h-0">
-          {isKlikterenClub(club) ? (
+          {isWeltnerClub(club) ? (
+            <WeltnerConnectForm club={club} onConnected={() => { onConnected?.(); onOpenChange(false); }} />
+          ) : isKlikterenClub(club) ? (
             <KlikterenConnectForm
               club={club}
               onConnected={() => {

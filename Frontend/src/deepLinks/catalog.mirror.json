@@ -48,6 +48,10 @@
     "invites": {
       "path": "/?focus=invites",
       "url": "https://bandeja.me/?focus=invites"
+    },
+    "shop": {
+      "path": "/shop",
+      "url": "https://bandeja.me/shop"
     }
   },
   "templates": {
@@ -62,6 +66,14 @@
     "gameLive": {
       "pathTemplate": "/games/{id}/live",
       "urlTemplate": "https://bandeja.me/games/{id}/live"
+    },
+    "club": {
+      "pathTemplate": "/clubs/{id}",
+      "urlTemplate": "https://bandeja.me/clubs/{id}"
+    },
+    "series": {
+      "pathTemplate": "/series/{id}",
+      "urlTemplate": "https://bandeja.me/series/{id}"
     }
   }
 }

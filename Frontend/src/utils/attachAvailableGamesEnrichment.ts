@@ -1,6 +1,8 @@
 import type { QueryClient } from '@tanstack/react-query';
 import { gamesApi } from '@/api';
 import type { Game } from '@/types';
+import { GAME_CARD_ENRICHMENT_KEYS } from '@/types/gameCardEnrichment';
+import type { GameCardEnrichment } from '@/types/gameCardEnrichment';
 import {
   getGamesFromAvailableCache,
   withPatchedAvailableGames,
@@ -12,11 +14,31 @@ export const AVAILABLE_ENRICH_CHUNK = 100;
 /** Delayed re-fetches so background Open-Meteo warm can land without blocking TTFP. */
 export const AVAILABLE_WEATHER_RETRY_DELAYS_MS = [3000, 9000] as const;
 
-export type AvailableEnrichmentFields = {
-  userNote?: string | null;
-  weatherSummary?: Game['weatherSummary'];
-  reactions?: Game['reactions'];
-};
+/**
+ * The by-ids enrichment payload, **derived** from the shared card contract
+ * (`types/gameCardEnrichment.ts`) rather than restated.
+ *
+ * `format: 'card'` list queries skip inline enrichment, so this endpoint is the
+ * only source for every field the six PRD 345–357 card surfaces render. A
+ * hand-maintained union here once dropped six of nine fields on the floor; the
+ * merge below now walks {@link GAME_CARD_ENRICHMENT_KEYS}, which the type system
+ * keeps exhaustive.
+ */
+export type AvailableEnrichmentFields = GameCardEnrichment;
+
+/** Keys the server actually sent. Absent ⇒ "no change"; `null` ⇒ "nothing". */
+function definedEnrichmentFields(
+  patch: AvailableEnrichmentFields,
+): Partial<GameCardEnrichment> | null {
+  let out: Partial<GameCardEnrichment> | null = null;
+  for (const key of GAME_CARD_ENRICHMENT_KEYS) {
+    const value = patch[key];
+    if (value === undefined) continue;
+    out ??= {};
+    Object.assign(out, { [key]: value });
+  }
+  return out;
+}
 
 export function mergeEnrichmentOntoGames(
   games: Game[],
@@ -26,13 +48,10 @@ export function mergeEnrichmentOntoGames(
   const next = games.map((game) => {
     const patch = byGameId[game.id];
     if (!patch) return game;
+    const fields = definedEnrichmentFields(patch);
+    if (!fields) return game;
     changed = true;
-    return {
-      ...game,
-      ...(patch.userNote !== undefined ? { userNote: patch.userNote } : {}),
-      ...(patch.weatherSummary !== undefined ? { weatherSummary: patch.weatherSummary } : {}),
-      ...(patch.reactions !== undefined ? { reactions: patch.reactions } : {}),
-    };
+    return { ...game, ...fields };
   });
   return changed ? next : games;
 }

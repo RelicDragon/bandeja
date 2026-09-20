@@ -1,0 +1,30 @@
+{
+  "spots": {
+    "pill": {
+      "label": "有空位",
+      "ariaLabel": "{{time}}空出一个名额"
+    },
+    "queue": {
+      "position_other": "你排在第 {{position}} 位，共 {{count}} 人",
+      "autoFillOn": "已开启自动补位，会自动帮你入场",
+      "autoFillOff": "由组织者手动通过",
+      "waitForOrganizer": "你已在候补队列中，由组织者决定谁填补空位。",
+      "tapToJoin": "有空位时点击“加入”"
+    },
+    "settings": {
+      "autoFillTitle": "从队列自动补位",
+      "autoFillHelper": "有空位时，排在最前面的人直接入场。性别与级别规则仍然适用。",
+      "queueCount_other": "队列中 {{count}} 人",
+      "queueEmpty": "还没有人在等"
+    },
+    "roster": {
+      "openSpot": "空位"
+    },
+    "toast": {
+      "joinedFromQueue": "{{name}} 从队列中入场了"
+    },
+    "seated": {
+      "banner": "你已从队列中入场"
+    }
+  }
+}

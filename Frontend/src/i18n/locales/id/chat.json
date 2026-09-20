@@ -304,7 +304,12 @@
         "EXTERNAL_PARTIAL": "Belum sepenuhnya dipesan",
         "MANUAL": "Lapangan dipesan",
         "NONE": "Belum dipesan"
-      }
+      },
+      "ATTENDANCE_NUDGED": "{{userName}} meminta semua orang mengonfirmasi kehadiran",
+      "USER_NOTED_NO_SHOW": "{{userName}} ditandai tidak hadir",
+      "GAME_SPOT_OPENED": "Ada tempat kosong ({{userName}} keluar)",
+      "GAME_SEAT_AUTO_FILLED": "{{userName}} masuk dari antrean",
+      "GAME_MOVED_INDOOR": "Dipindahkan ke {{courtName}} (dalam ruangan)"
     },
     "openChat": "Buka Obrolan",
     "chat": "Mengobrol",

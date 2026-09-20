@@ -5,12 +5,23 @@ struct WatchMatchTimerRelayMessage: Sendable {
     let gameId: String
     let matchId: String
     let snapshot: WatchMatchTimerSnapshot?
+    /// Local wall-clock time the snapshot arrived. Elapsed-time display anchors on this
+    /// (`elapsedMs + (now - receivedAt)`) so a skewed server clock cannot shift the timer.
+    let receivedAt: Date
 
-    init?(dict: [String: Any]) {
+    init(gameId: String, matchId: String, snapshot: WatchMatchTimerSnapshot?, receivedAt: Date = Date()) {
+        self.gameId = gameId
+        self.matchId = matchId
+        self.snapshot = snapshot
+        self.receivedAt = receivedAt
+    }
+
+    init?(dict: [String: Any], receivedAt: Date = Date()) {
         guard let gameId = dict["gameId"] as? String,
               let matchId = dict["matchId"] as? String else { return nil }
         self.gameId = gameId
         self.matchId = matchId
+        self.receivedAt = receivedAt
         guard let raw = dict["snapshot"] else {
             snapshot = nil
             return
@@ -57,7 +68,22 @@ final class WatchMatchTimerRelayStore {
 
     func ingest(_ dict: [String: Any]) {
         guard let message = WatchMatchTimerRelayMessage(dict: dict) else { return }
+        ingest(message)
+    }
+
+    /// Typed entry point for snapshots the watch obtained itself (HTTP transition / fetch).
+    func ingest(gameId: String, matchId: String, snapshot: WatchMatchTimerSnapshot) {
+        ingest(WatchMatchTimerRelayMessage(gameId: gameId, matchId: matchId, snapshot: snapshot))
+    }
+
+    private func ingest(_ message: WatchMatchTimerRelayMessage) {
         lastMessage = message
         tick += 1
+    }
+
+    /// Last known status for a match, or `nil` when the store holds nothing for it.
+    func lastStatus(gameId: String, matchId: String) -> String? {
+        guard let m = lastMessage, m.gameId == gameId, m.matchId == matchId else { return nil }
+        return m.snapshot?.status
     }
 }

@@ -19,6 +19,7 @@ import { isStalePastScheduledGame } from '@/utils/homeStaleScheduledGame';
 import { getEntityIcon, getEntityTagClasses } from '@/components/home/HomeGameRowEntityTags';
 import { countEventGoingLooking } from '@/utils/eventListingDisplay';
 import { useGameLocalizedText } from '@/hooks/useGameLocalizedText';
+import { sortDayGroupGames } from '@/features/spot-opened/spotOpenedWindow';
 
 interface UpcomingGamesListProps {
   games: Game[];
@@ -46,7 +47,11 @@ function groupGamesByDate(
     map.set(key, arr);
   }
   const result: DateGroup[] = [];
-  for (const [dateStr, dateGames] of map) {
+  const now = Date.now();
+  for (const [dateStr, rawGames] of map) {
+    // PRD 347 — must stay identical to `@/utils/groupGamesByDate`, which this
+    // function duplicates; otherwise Home and Find order the same day differently.
+    const dateGames = sortDayGroupGames(rawGames, now);
     const sample = dateGames[0];
     const clubTz = getClubTimezone(sample);
     const label = clubTz

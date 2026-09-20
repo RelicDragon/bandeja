@@ -15,6 +15,10 @@ struct MatchScoringExperience: View {
     @State private var coachToastTaskRunning = false
     @State private var remoteAttributionDismissTask: Task<Void, Never>?
     @State private var showFixServerConfirm = false
+    /// Local presentation state for the automatic-format dialogs. The VM keeps the
+    /// pending flags; these open once automatically and can be re-opened from the prompt rows.
+    @State private var recordModeDialogPresented = false
+    @State private var continueDialogPresented = false
 
     private var lang: String { prefs.uiLanguageCode }
 
@@ -42,6 +46,16 @@ struct MatchScoringExperience: View {
                             vm.lockTimedSetAtPartialScore()
                         }
                     )
+                }
+                if vm.showAutomaticRecordModeChoice {
+                    pendingChoiceRow(WatchCopy.automaticRecordModeOpenPrompt(lang)) {
+                        recordModeDialogPresented = true
+                    }
+                }
+                if vm.showAutomaticContinueChoice {
+                    pendingChoiceRow(WatchCopy.automaticContinueOpenPrompt(lang)) {
+                        continueDialogPresented = true
+                    }
                 }
                 switch vm.liveScoringUiId {
                 case .tableTennisBoard:
@@ -136,6 +150,12 @@ struct MatchScoringExperience: View {
         .onChange(of: vm.serveGuideSkipped) { _, _ in
             if !vm.needsServeSetup { forceServeGate = false }
         }
+        .onChange(of: vm.showAutomaticRecordModeChoice, initial: true) { _, pending in
+            recordModeDialogPresented = pending
+        }
+        .onChange(of: vm.showAutomaticContinueChoice, initial: true) { _, pending in
+            continueDialogPresented = pending
+        }
         .confirmationDialog(WatchCopy.fixStartingServer(lang), isPresented: $showFixServerConfirm, titleVisibility: .visible) {
             Button(WatchCopy.confirmAction(lang)) {
                 forceServeGate = true
@@ -170,10 +190,7 @@ struct MatchScoringExperience: View {
         }
         .confirmationDialog(
             WatchCopy.automaticRecordModeTitle(lang),
-            isPresented: Binding(
-                get: { vm.showAutomaticRecordModeChoice },
-                set: { if !$0 { /* keep until chosen */ } }
-            ),
+            isPresented: $recordModeDialogPresented,
             titleVisibility: .visible
         ) {
             Button(WatchCopy.automaticRecordModeGames(lang)) {
@@ -182,15 +199,14 @@ struct MatchScoringExperience: View {
             Button(WatchCopy.automaticRecordModeAmericano(lang)) {
                 vm.confirmAutomaticRecordMode(.americanoPoints)
             }
+            // Dismissal leaves VM state untouched; the prompt row re-opens this dialog.
+            Button(WatchCopy.cancelAction(lang), role: .cancel) {}
         } message: {
             Text(WatchCopy.automaticRecordModeMessage(lang))
         }
         .confirmationDialog(
             WatchCopy.automaticContinueTitle(lang),
-            isPresented: Binding(
-                get: { vm.showAutomaticContinueChoice },
-                set: { if !$0 { /* keep until chosen */ } }
-            ),
+            isPresented: $continueDialogPresented,
             titleVisibility: .visible
         ) {
             Button(WatchCopy.automaticContinueCta(lang)) {
@@ -199,9 +215,24 @@ struct MatchScoringExperience: View {
             Button(WatchCopy.automaticEndCta(lang), role: .destructive) {
                 vm.confirmAutomaticContinue(.end)
             }
+            Button(WatchCopy.cancelAction(lang), role: .cancel) {}
         } message: {
             Text(WatchCopy.automaticContinueMessage(lang))
         }
+    }
+
+    /// Bordered row shown while a format/continue decision is pending so a dismissed dialog can be re-opened.
+    private func pendingChoiceRow(_ title: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Label(title, systemImage: "questionmark.circle")
+                .font(.caption2.weight(.semibold))
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+                .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.bordered)
+        .controlSize(.mini)
+        .tint(.orange)
     }
 
     private func pushWidgetSnapshot() {

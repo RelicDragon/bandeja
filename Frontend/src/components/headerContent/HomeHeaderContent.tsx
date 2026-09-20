@@ -16,7 +16,8 @@ export const HomeHeaderContent = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const user = useAuthStore((state) => state.user);
-  const { setIsAnimating, setChatsFilter } = useShellNavStore();
+  const setIsAnimating = useShellNavStore((s) => s.setIsAnimating);
+  const setChatsFilter = useShellNavStore((s) => s.setChatsFilter);
   const parsed = useMemo(
     () => parseLocation(location.pathname, location.search),
     [location.pathname, location.search]

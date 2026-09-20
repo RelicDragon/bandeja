@@ -1,0 +1,75 @@
+{
+  "pairs": {
+    "mode": {
+      "label": "Režim žebříčku",
+      "players": "Hráči",
+      "pairs": "Dvojice"
+    },
+    "sort": {
+      "label": "Řazení dvojic",
+      "winRate": "Úspěšnost",
+      "games": "Zápasy",
+      "level": "Úroveň"
+    },
+    "period": {
+      "label": "Období",
+      "all": "Za celou dobu",
+      "days30": "Posledních 30 dní",
+      "days10": "Posledních 10 dní"
+    },
+    "names": {
+      "spoken": "{{first}} a {{second}}"
+    },
+    "gamesCount_one": "{{count}} zápas",
+    "gamesCount_few": "{{count}} zápasy",
+    "gamesCount_many": "{{count}} zápasu",
+    "gamesCount_other": "{{count}} zápasů",
+    "floorHint_one": "Zahrajte si {{count}} zápas se stejným parťákem, abyste se tu objevili.",
+    "floorHint_few": "Zahrajte si {{count}} zápasy se stejným parťákem, abyste se tu objevili.",
+    "floorHint_many": "Zahrajte si {{count}} zápasu se stejným parťákem, abyste se tu objevili.",
+    "floorHint_other": "Zahrajte si {{count}} zápasů se stejným parťákem, abyste se tu objevili.",
+    "chemistry": {
+      "tooltip": "Úspěšnost spolu oproti hře samostatně",
+      "aria": "Souhra {{value}}"
+    },
+    "stats": {
+      "games": "Zápasy",
+      "winRate": "Úspěšnost",
+      "chemistry": "Souhra",
+      "chemistryUnknown": "Zatím málo zápasů bez parťáka"
+    },
+    "aria": {
+      "row": "Pořadí {{rank}}, {{names}}, {{games}}, {{winRate}} procent výher, souhra {{chemistry}}",
+      "rowNoChemistry": "Pořadí {{rank}}, {{names}}, {{games}}, {{winRate}} procent výher",
+      "podium": "Číslo {{rank}}, {{names}}, {{winRate}} procent výher, {{games}}",
+      "partner": "{{name}}, {{games}}, {{winRate}} procent výher"
+    },
+    "scrollToMyPair": "Na moji dvojici ({{rank}})",
+    "loadMore": "Načíst další",
+    "loading": "Načítáme dvojice",
+    "error": "Dvojice se nepodařilo načíst. Zkuste to znovu.",
+    "empty": {
+      "title": "Zatím žádné dvojice v žebříčku",
+      "action": "Najít zápas"
+    },
+    "sheet": {
+      "title": "Dvojice",
+      "recent": "Nedávno spolu",
+      "recentEmpty": "Zatím žádné společné zápasy.",
+      "createTeam": "Vytvořit tým",
+      "openTeam": "Otevřít tým",
+      "inviteToGame": "Pozvat na zápas"
+    },
+    "recent": {
+      "untitled": "Zápas"
+    },
+    "result": {
+      "win": "Výhra",
+      "loss": "Prohra"
+    },
+    "partners": {
+      "title": "Vaši parťáci",
+      "seeAll": "Zobrazit vše"
+    }
+  }
+}

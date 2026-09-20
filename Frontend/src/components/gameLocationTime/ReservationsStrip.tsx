@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { BooktimeMyClubRow } from '@/api/booktime';
+import type { BookingListClubRow } from '@/hooks/connectedBookingClubs';
 import type { Club, Court } from '@/types';
 import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
 import { deriveGameTimeFromBookings } from '@shared/gameBooking/deriveGameTimeFromBookings';
@@ -10,7 +10,6 @@ import { useBooktimeLinkedGames } from '@/hooks/useBooktimeLinkedGames';
 import { BooktimeBookingRow } from '@/components/booktime/BooktimeBookingRow';
 import { BooktimeAdjacentBookingGroup } from '@/components/booktime/BooktimeAdjacentBookingGroup';
 import { groupAdjacentBooktimeBookings } from '@/components/booktime/groupAdjacentBooktimeBookings';
-import { booktimeRowToClub } from '@/components/booktime/booktimeBookingUtils';
 import { buildSelectedBookingRecordsSyncKey } from '@/components/gameLocationTime/locationTimeDraft';
 import { useReservationGridSync } from '@/components/gameLocationTime/useReservationGridSync';
 import { pruneSelectedBookingsToAvailable } from './pruneSelectedBookingsToAvailable';
@@ -50,7 +49,7 @@ function ReservationRowWithLinkedGames({
   cardRef,
 }: {
   booking: BooktimeBookingRecord;
-  club: ReturnType<typeof booktimeRowToClub>;
+  club: Club;
   selected: boolean;
   selectable: boolean;
   dimmed: boolean;
@@ -75,6 +74,7 @@ function ReservationRowWithLinkedGames({
         nested
         booking={booking}
         club={{
+          integrationType: club.integrationType ?? undefined,
           clubId: club.id,
           clubName: club.name,
           avatar: null,
@@ -178,11 +178,14 @@ export function ReservationsStrip({
     [gridSync?.highlightedBookingIds],
   );
 
-  const booktimeMyClubRow: BooktimeMyClubRow = {
+  const booktimeMyClubRow: BookingListClubRow = {
+    integrationType: club.integrationType ?? undefined,
     clubId: club.id,
     clubName: club.name,
     avatar: null,
     companyId,
+    padelooClubId: club.integrationConfig?.clubId,
+    klikterenVenueId: club.integrationConfig?.venueId,
     connected: true,
     phoneNumber: null,
     scoutOptIn: false,
@@ -194,7 +197,7 @@ export function ReservationsStrip({
       integrationCourtName: c.integrationCourtName ?? null,
     })),
   };
-  const clubRow = booktimeRowToClub(booktimeMyClubRow);
+  const clubRow = { ...club, courts: club.courts ?? courts };
 
   const bookingEntries = useMemo(
     () =>

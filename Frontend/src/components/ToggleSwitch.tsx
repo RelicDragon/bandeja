@@ -21,10 +21,12 @@ export const ToggleSwitch = ({ checked, onChange, disabled = false, id }: Toggle
       disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
     } ${checked ? 'bg-primary-500 dark:bg-primary-500' : 'bg-gray-300 dark:bg-gray-600'}`}
   >
+    {/* The thumb travels on `margin-inline-start`, not a physical
+        `translateX`, so under `dir="rtl"` it moves toward the track's leading
+        edge the way the switch actually reads (CONTRACT §8.1). */}
     <span
-      className={`inline-block h-5 w-5 rounded-full bg-white shadow-sm ring-0 transition-transform duration-200 ease-out ${
-        checked ? 'translate-x-6' : 'translate-x-1'
-      }`}
+      className="inline-block h-5 w-5 rounded-full bg-white shadow-sm ring-0 transition-[margin] duration-200 ease-out motion-reduce:transition-none"
+      style={{ marginInlineStart: checked ? '1.5rem' : '0.25rem' }}
     />
   </button>
 );

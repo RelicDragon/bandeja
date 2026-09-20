@@ -141,6 +141,8 @@
     "sendDirectMessagesDescription": "Dapatkan pemberitahuan ketika seseorang mengirimi Anda pesan langsung",
     "sendReminders": "Pengingat",
     "sendRemindersDescription": "Dapatkan pemberitahuan 2 jam sebelum pertandingan, turnamen, atau bar pelatihan Anda dimulai",
+    "sendWeatherAlerts": "Peringatan cuaca",
+    "sendWeatherAlertsDescription": "Hanya untuk lapangan luar ruangan",
     "walletNotifications": "Pemberitahuan Dompet",
     "walletNotificationsDescription": "Terima pemberitahuan untuk transaksi dompet",
     "marketplaceNotifications": "Daftar baru di kota saya",

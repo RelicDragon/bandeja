@@ -81,7 +81,9 @@
     "off": "Off",
     "editFullscreen": "Редактировать во весь экран",
     "exitFullscreen": "Выйти из полноэкранного режима",
-    "characters": "символов"
+    "characters": "символов",
+    "comingSoon": "Скоро",
+    "comingSoonDescription": "Этот раздел приложения уже в пути."
   },
   "sport": {
     "sport": "Вид спорта",

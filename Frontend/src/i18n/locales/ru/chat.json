@@ -308,7 +308,12 @@
         "EXTERNAL_PARTIAL": "Забронировано не полностью",
         "MANUAL": "Корт забронирован",
         "NONE": "Еще не забронировано"
-      }
+      },
+      "ATTENDANCE_NUDGED": "{{userName}} попросил всех подтвердить участие",
+      "USER_NOTED_NO_SHOW": "{{userName}} отмечен как не пришедший",
+      "GAME_SPOT_OPENED": "Освободилось место ({{userName}} вышел)",
+      "GAME_SEAT_AUTO_FILLED": "{{userName}} занял место из очереди",
+      "GAME_MOVED_INDOOR": "Перенесено на {{courtName}} (крытый)"
     },
     "openChat": "Открыть чат",
     "chat": "Чат",

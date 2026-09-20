@@ -5,6 +5,8 @@ import { PriceType, PriceCurrency } from '@/types';
 import { Select } from '@/components';
 import { getCurrencySymbol, resolveUserCurrency } from '@/utils/currency';
 import { CurrencySelectorModal } from '@/components/CurrencySelectorModal';
+import { CostSplitPreview } from '@/components/createGame/CostSplitPreview';
+import { PaymentHintField } from '@/components/createGame/PaymentHintField';
 
 interface PriceFieldsProps {
   priceTotal: number | undefined;
@@ -15,6 +17,11 @@ interface PriceFieldsProps {
   onPriceTypeChange: (value: PriceType) => void;
   onPriceCurrencyChange: (value: PriceCurrency | undefined) => void;
   showLabel?: boolean;
+  /** PRD 348 — seats the total is divided by in the live per-head preview. */
+  maxParticipants?: number;
+  /** PRD 348 — `Game.paymentHint`. Omit the handler to hide the field. */
+  paymentHint?: string;
+  onPaymentHintChange?: (value: string) => void;
 }
 
 interface PriceSectionProps extends PriceFieldsProps {
@@ -33,6 +40,9 @@ export const PriceFields = ({
   onPriceTypeChange,
   onPriceCurrencyChange,
   showLabel = false,
+  maxParticipants,
+  paymentHint,
+  onPaymentHintChange,
 }: PriceFieldsProps) => {
   const { t } = useTranslation();
   const [inputValue, setInputValue] = useState<string>('');
@@ -115,6 +125,15 @@ export const PriceFields = ({
               title={t('createGame.priceCurrency')}
             />
           </div>
+          <CostSplitPreview
+            priceType={priceType}
+            priceTotal={priceTotal}
+            currency={effectiveCurrency}
+            players={maxParticipants ?? 0}
+          />
+          {onPaymentHintChange ? (
+            <PaymentHintField value={paymentHint ?? ''} onChange={onPaymentHintChange} />
+          ) : null}
         </>
       )}
     </div>

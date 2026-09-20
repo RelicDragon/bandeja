@@ -73,6 +73,28 @@ export const FIND_CARD_GAME_SELECT = {
   timeOverride: true,
   /** Legacy FE `hasGoldenPoint` projection. */
   deucesBeforeGoldenPoint: true,
+  /*
+   * PRDs 345–357 card scalars (CONTRACT §5.6). All slim (ids, booleans, a
+   * timestamp, one small Json blob) — none is in FIND_CARD_FORBIDDEN_GAME_KEYS
+   * and none pulls a relation. Adding a field here also needs the matching
+   * `Game` field on `Frontend/src/types/index.ts`.
+   */
+  /** PRD 345 — the series this occurrence belongs to. */
+  seriesId: true,
+  /** PRD 347 — most recent freed PLAYING seat; drives the "Spot opened" pill window. */
+  lastSeatOpenedAt: true,
+  /** PRD 349 — owner opt-out from the Live now rail. */
+  showOnLiveRail: true,
+  /** PRD 347 — seat the first queued player automatically. */
+  autoFillFromQueue: true,
+  /** PRD 348 — price inputs the per-head share is derived from. */
+  priceType: true,
+  priceTotal: true,
+  priceCurrency: true,
+  /** PRD 348 — who collects the money. */
+  costPayerId: true,
+  /** PRD 357 — raw alert bookkeeping; the card renders the derived `weatherRisk`. */
+  weatherAlertState: true,
 } as const;
 
 const leagueSeasonCardSelect = {

@@ -3,6 +3,7 @@ import { buildUrl, type PlaceParams } from '@/utils/urlSchema';
 import { useGameDetailsChromeStore } from '@/components/GameDetails/gameDetailsChromeStore';
 import type { ChatNavigateOptions } from '@/pages/GameChat/types';
 import { bumpChatFreshOpenNonce } from '@/services/chat/chatOpenEntry';
+import { useWalletHighlightStore } from '@/store/walletHighlightStore';
 
 function chatNavigationState(opts?: ChatNavigateOptions) {
   if (!opts?.forceReload && !opts?.anchorMessageId && !opts?.initialChatType) {
@@ -43,6 +44,16 @@ class NavigationService {
     const state = openChat ? chatNavigationState(navOpts) : undefined;
     const replace = navOpts?.replace !== false;
     this.navigate!(buildUrl(place as any, { id: gameId }), { replace, state });
+  }
+
+  /**
+   * PRD 347 — the "Join now" spot-opened action. `?join=1` makes the details
+   * page run its normal join flow after load; gates and the overlap confirm
+   * still apply, and the page strips the param once consumed.
+   */
+  navigateToGameForJoin(gameId: string) {
+    if (!this.ensureInitialized() || !gameId) return;
+    this.navigate!(`${buildUrl('game', { id: gameId })}?join=1`, { replace: true });
   }
 
   navigateToLeagueSeasonSchedule(
@@ -136,6 +147,24 @@ class NavigationService {
   navigateToFind(params?: PlaceParams) {
     if (!this.ensureInitialized()) return;
     this.navigate!(buildUrl('find', params), { replace: true });
+  }
+
+  navigateToProfile() {
+    if (!this.ensureInitialized()) return;
+    this.navigate!(buildUrl('profile'));
+  }
+
+  /**
+   * PRD 351 — open the Wallet, optionally flashing one transaction.
+   *
+   * The Wallet is a modal owned by the Profile page, so this parks the id in
+   * `walletHighlightStore` and navigates; Profile opens the modal when it sees
+   * the request. The id never enters the URL — it is a private identifier.
+   */
+  navigateToWallet(transactionId?: string | null) {
+    if (!this.ensureInitialized()) return;
+    useWalletHighlightStore.getState().requestWallet(transactionId ?? null);
+    this.navigate!(buildUrl('profile'));
   }
 
   navigateToMarketplace(params?: PlaceParams) {

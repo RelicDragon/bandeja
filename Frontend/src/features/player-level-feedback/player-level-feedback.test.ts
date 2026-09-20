@@ -9,7 +9,6 @@ import type {
 import {
   findNextFeedbackIndex,
   findNextUnansweredIndex,
-  isPlayerLevelFeedbackEnabled,
   loadLevelEvaluationsWithRetry,
   runLevelFeedbackRequestWithRetry,
 } from './player-level-feedback';
@@ -96,14 +95,6 @@ describe('player level feedback loading', () => {
 });
 
 describe('player level feedback rollout controls', () => {
-  it('is enabled by default and supports explicit operational kill switches', () => {
-    expect(isPlayerLevelFeedbackEnabled(undefined)).toBe(true);
-    expect(isPlayerLevelFeedbackEnabled('true')).toBe(true);
-    expect(isPlayerLevelFeedbackEnabled('0')).toBe(false);
-    expect(isPlayerLevelFeedbackEnabled('FALSE')).toBe(false);
-    expect(isPlayerLevelFeedbackEnabled(' off ')).toBe(false);
-  });
-
   it('emits anonymous product metrics without game, user, target, or verdict data', () => {
     const received: PlayerLevelFeedbackMetricDetail[] = [];
     const listener = (event: Event) => {

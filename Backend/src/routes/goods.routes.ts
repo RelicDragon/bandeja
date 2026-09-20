@@ -1,36 +1,35 @@
+/**
+ * PRD 355 — the **admin** catalogue surface for shop goods.
+ *
+ * Security: every route here, read and write, is behind `requireAdmin`.
+ * Before PRD 355 the `POST`/`PUT`/`DELETE` routes carried `authenticate` only,
+ * which let any signed-in player create, reprice or delete catalogue items, and
+ * the unfiltered `GET` leaked inactive/unreleased items. Player-facing reads
+ * belong on `/api/shop` (see `shop.routes.ts`); nothing on this router is for
+ * players.
+ */
 import { Router } from 'express';
-import { body } from 'express-validator';
-import { validate } from '../middleware/validate';
-import { authenticate } from '../middleware/auth';
+import { requireAdmin } from '../middleware/auth';
 import * as goodsController from '../controllers/goods.controller';
 
 const router = Router();
 
+router.get('/', requireAdmin, goodsController.getAllGoods);
+router.get('/:id', requireAdmin, goodsController.getGoodsById);
+
+router.post('/', requireAdmin, goodsController.createGoods);
+router.put('/:id', requireAdmin, goodsController.updateGoods);
+router.patch('/:id', requireAdmin, goodsController.updateGoods);
+router.delete('/:id', requireAdmin, goodsController.deleteGoods);
+
+router.get('/:id/withdraw-summary', requireAdmin, goodsController.getWithdrawSummary);
+router.post('/:id/withdraw', requireAdmin, goodsController.withdrawGoods);
+
 router.post(
-  '/',
-  authenticate,
-  validate([
-    body('name').notEmpty().withMessage('Name is required'),
-    body('price').isInt({ min: 0 }).withMessage('Price must be a non-negative integer'),
-  ]),
-  goodsController.createGoods
+  '/:id/preview',
+  requireAdmin,
+  goodsController.goodsPreviewUpload,
+  goodsController.uploadGoodsPreview,
 );
-
-router.get('/', authenticate, goodsController.getAllGoods);
-
-router.get('/:id', authenticate, goodsController.getGoodsById);
-
-router.put(
-  '/:id',
-  authenticate,
-  validate([
-    body('name').optional().notEmpty().withMessage('Name cannot be empty'),
-    body('price').optional().isInt({ min: 0 }).withMessage('Price must be a non-negative integer'),
-  ]),
-  goodsController.updateGoods
-);
-
-router.delete('/:id', authenticate, goodsController.deleteGoods);
 
 export default router;
-

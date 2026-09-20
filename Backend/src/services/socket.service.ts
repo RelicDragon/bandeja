@@ -14,7 +14,13 @@ import {
 } from './chat/gameChatSocketRecipients';
 import { isRosterLifecycleSystemMessagePayload } from './chat/gameChatRosterVisibility';
 import { GameReadService } from './game/read.service';
+import { projectGameForBroadcast } from './game/gameDetail.projection';
 import { ChatContextType, ChatType, Sport } from '@prisma/client';
+import type { ParticipantAttendance } from '@prisma/client';
+import type {
+  SpotOpenedCause,
+  WeatherRiskSeverity,
+} from './game/availableGamesEnrichmentTypes';
 import type { UnreadAuthorityEnvelope } from './chat/unreadAuthority/types';
 import { ApiError } from '../utils/ApiError';
 import { presenceService } from './presence.service';
@@ -1165,11 +1171,23 @@ class SocketService {
     this.io.to('notify-developers').emit('new-bug', { timestamp: new Date().toISOString() });
   }
 
-  // Emit game update to all users who have access to the game
+  /**
+   * Emit game update to all users who have access to the game.
+   *
+   * `senderId` identifies the **actor**, never the audience. Callers hand in a
+   * game they loaded for themselves (or none, in which case one is loaded for
+   * the actor), but the payload goes to a whole room, so it is re-projected for
+   * the least-entitled recipient by {@link projectGameForBroadcast} — no
+   * `paymentHint`, no viewer-scoped field. Entitled clients read those from
+   * `GET /api/games/:id`; an omitted key means "not transmitted", not "cleared".
+   *
+   * This is the single chokepoint: every `game-updated` emit in the codebase
+   * passes through here.
+   */
   public async emitGameUpdate(gameId: string, senderId: string, game?: any, forceUpdate: boolean = false) {
     try {
       console.log(`[SocketService] emitGameUpdate called for gameId: ${gameId}, senderId: ${senderId}`);
-      
+
       let gameToEmit = game;
       if (!gameToEmit) {
         gameToEmit = await GameReadService.getGameById(gameId, senderId);
@@ -1178,6 +1196,7 @@ class SocketService {
           return;
         }
       }
+      const broadcastGame = projectGameForBroadcast(gameToEmit);
 
       const userIds = new Set<string>();
       
@@ -1213,7 +1232,7 @@ class SocketService {
         this.io.to(`notify-user-${userId}`).emit('game-updated', {
           gameId,
           senderId,
-          game: gameToEmit,
+          game: broadcastGame,
           forceUpdate,
         });
         directEmittedCount++;
@@ -1224,11 +1243,11 @@ class SocketService {
       const roomEmitCount = socketsInRoom.length;
       if (roomEmitCount > 0) {
         console.log(`[SocketService] Emitting to game room ${roomName}, sockets in room: ${roomEmitCount}`);
-        this.io.to(roomName).emit('game-updated', { 
-          gameId, 
-          senderId, 
-          game: gameToEmit,
-          forceUpdate 
+        this.io.to(roomName).emit('game-updated', {
+          gameId,
+          senderId,
+          game: broadcastGame,
+          forceUpdate,
         });
       }
       
@@ -1278,6 +1297,67 @@ class SocketService {
   public emitGameCancelled(gameId: string, meta: { entityType: string; name?: string; cancelledAt: string; cancelledByUser?: unknown }) {
     const roomName = `game-${gameId}`;
     this.io.to(roomName).emit('game-cancelled', { gameId, ...meta });
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* PRDs 345–357 game-room events (CONTRACT §6).                        */
+  /* Room is always `game-${gameId}`; event names are kebab-case.        */
+  /* Prefer the typed wrappers in `socketEmitFacade.ts` over reaching    */
+  /* for `(global as any).socketService`.                                */
+  /* ------------------------------------------------------------------ */
+
+  /** PRD 346 — a participant answered the attendance prompt. */
+  public emitGameAttendanceUpdated(
+    gameId: string,
+    payload: {
+      userId: string;
+      attendance: ParticipantAttendance;
+      confirmedCount: number;
+      playingCount: number;
+    }
+  ) {
+    this.io.to(`game-${gameId}`).emit('game-attendance-updated', { gameId, ...payload });
+  }
+
+  /** PRD 347 — one or more PLAYING seats were freed. */
+  public emitGameSeatOpened(
+    gameId: string,
+    payload: {
+      freedCount: number;
+      cause: SpotOpenedCause;
+      /** ISO timestamp; equal to `Game.lastSeatOpenedAt` after the event. */
+      lastSeatOpenedAt: string;
+    }
+  ) {
+    this.io.to(`game-${gameId}`).emit('game-seat-opened', { gameId, ...payload });
+  }
+
+  /** PRD 347 — a freed seat was taken (queue auto-fill or a manual join). */
+  public emitGameSeatFilled(gameId: string, payload: { userId: string }) {
+    this.io.to(`game-${gameId}`).emit('game-seat-filled', { gameId, ...payload });
+  }
+
+  /** PRD 348 — the cost split changed; clients refetch the Cost card. */
+  public emitGameCostUpdated(gameId: string) {
+    this.io.to(`game-${gameId}`).emit('game-cost-updated', { gameId });
+  }
+
+  /** PRD 345 — a regular answered the "same time next week?" prompt. */
+  public emitGameSeriesConfirmationsUpdated(
+    gameId: string,
+    payload: { seriesId: string; confirmedCount: number; regularCount: number }
+  ) {
+    this.io
+      .to(`game-${gameId}`)
+      .emit('game-series-confirmations-updated', { gameId, ...payload });
+  }
+
+  /** PRD 357 — the weather alert severity for this game changed. */
+  public emitGameWeatherAlertUpdated(
+    gameId: string,
+    payload: { severity: WeatherRiskSeverity }
+  ) {
+    this.io.to(`game-${gameId}`).emit('game-weather-alert-updated', { gameId, ...payload });
   }
 
   public async emitWalletUpdate(userId: string, wallet: number, bandejaBankId?: string | null) {

@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
+import { OnboardingPage } from '../../pages/onboarding.page';
 import { RegisterPage } from '../../pages/register.page';
-import { ShellPage } from '../../pages/shell.page';
 import { generateE2ePhone } from '../../fixtures/persona.fixture';
 
 test.describe('auth register', () => {
@@ -11,8 +11,10 @@ test.describe('auth register', () => {
     await register.goto();
     await register.fillRequiredFields({ phone, password });
     await register.submit();
-    await page.waitForURL((url) => url.pathname === '/' || url.pathname === '', { timeout: 30_000 });
-    await new ShellPage(page).waitForShellReady();
+    // PRD 350: a brand-new account has no `onboardingCompletedAt`, so the
+    // onboarding gate now owns the post-registration destination.
+    await page.waitForURL(/\/welcome/, { timeout: 30_000 });
+    await new OnboardingPage(page).expectFirstRunStep('welcome');
   });
 
   test('A-11 validation errors', async ({ page }) => {
@@ -68,8 +70,9 @@ test.describe('auth register', () => {
     await register.fillRequiredFields({ phone, password: 'E2eTest1!' });
     await register.selectPrimarySport(/^tennis$/i);
     await register.submit();
-    await page.waitForURL((url) => url.pathname === '/' || url.pathname === '', { timeout: 30_000 });
-    await new ShellPage(page).waitForShellReady();
+    // PRD 350 — new accounts land in the guided first-run flow, not on Home.
+    await page.waitForURL(/\/welcome/, { timeout: 30_000 });
+    await new OnboardingPage(page).expectFirstRunStep('welcome');
   });
 
   test('A-16 optional email invalid', async ({ page }) => {

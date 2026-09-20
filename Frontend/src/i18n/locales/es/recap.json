@@ -1,0 +1,138 @@
+{
+  "recap": {
+    "slides": {
+      "cover": {
+        "caption": "En números",
+        "alt": "{{month}} en números"
+      },
+      "games": {
+        "eyebrow": "Partidos",
+        "caption_one": "{{count}} partido jugado",
+        "caption_many": "{{count}} de partidos jugados",
+        "caption_other": "{{count}} partidos jugados",
+        "alt_one": "{{count}} partido jugado en {{month}}",
+        "alt_many": "{{count}} de partidos jugados en {{month}}",
+        "alt_other": "{{count}} partidos jugados en {{month}}"
+      },
+      "wins": {
+        "eyebrow": "Victorias",
+        "caption_one": "{{count}} victoria",
+        "caption_many": "{{count}} de victorias",
+        "caption_other": "{{count}} victorias",
+        "alt_one": "{{count}} victoria, {{percent}} de victorias",
+        "alt_many": "{{count}} de victorias, {{percent}} de victorias",
+        "alt_other": "{{count}} victorias, {{percent}} de victorias"
+      },
+      "level": {
+        "eyebrow": "Nivel de juego",
+        "caption": "Tu nivel ahora es {{level}}",
+        "neutral": "El nivel pasó a {{level}}",
+        "alt": "Nivel de juego: pasó a {{level}}"
+      },
+      "partner": {
+        "eyebrow": "Mejor compañero",
+        "caption_one": "{{count}} victoria junto a {{name}}",
+        "caption_many": "{{count}} de victorias junto a {{name}}",
+        "caption_other": "{{count}} victorias junto a {{name}}",
+        "alt_one": "Mejor compañero {{name}}, {{count}} victoria juntos",
+        "alt_many": "Mejor compañero {{name}}, {{count}} de victorias juntos",
+        "alt_other": "Mejor compañero {{name}}, {{count}} victorias juntos"
+      },
+      "streak": {
+        "eyebrow": "Racha de juego",
+        "caption_one": "Jugaste {{count}} semana seguida",
+        "caption_many": "Jugaste {{count}} de semanas seguidas",
+        "caption_other": "Jugaste {{count}} semanas seguidas",
+        "best_one": "Tu récord es {{count}} semana",
+        "best_many": "Tu récord es {{count}} de semanas",
+        "best_other": "Tu récord es {{count}} semanas",
+        "alt_one": "Racha de juego: {{count}} semana seguida",
+        "alt_many": "Racha de juego: {{count}} de semanas seguidas",
+        "alt_other": "Racha de juego: {{count}} semanas seguidas"
+      },
+      "club": {
+        "eyebrow": "Club habitual",
+        "caption_one": "{{count}} partido aquí",
+        "caption_many": "{{count}} de partidos aquí",
+        "caption_other": "{{count}} partidos aquí",
+        "alt_one": "Club habitual {{club}}, {{count}} partido",
+        "alt_many": "Club habitual {{club}}, {{count}} de partidos",
+        "alt_other": "Club habitual {{club}}, {{count}} partidos"
+      },
+      "lowActivity": {
+        "encouragement": "Un partido ya es un partido. Vamos a por el siguiente.",
+        "caption_one": "{{count}} partido en {{month}}",
+        "caption_many": "{{count}} de partidos en {{month}}",
+        "caption_other": "{{count}} partidos en {{month}}",
+        "alt_one": "{{count}} partido jugado en {{month}}",
+        "alt_many": "{{count}} de partidos jugados en {{month}}",
+        "alt_other": "{{count}} partidos jugados en {{month}}"
+      },
+      "outro": {
+        "title": "Nos vemos en la pista en {{month}}",
+        "caption": "{{games}} · {{wins}}",
+        "gamesPart_one": "{{count, number}} partido",
+        "gamesPart_many": "{{count, number}} de partidos",
+        "gamesPart_other": "{{count, number}} partidos",
+        "winsPart_one": "{{count, number}} victoria",
+        "winsPart_many": "{{count, number}} de victorias",
+        "winsPart_other": "{{count, number}} victorias",
+        "lowActivityCaption": "La pista te espera.",
+        "alt": "Nos vemos en la pista en {{month}}"
+      }
+    },
+    "viewer": {
+      "title": "Resumen del mes",
+      "close": "Cerrar",
+      "next": "Siguiente",
+      "shareCta": "Compartir con tus seguidores",
+      "saveImageCta": "Guardar imagen",
+      "savingImage": "Preparando la imagen…",
+      "playIntentCta": "Quiero jugar",
+      "loading": "Preparando tu resumen…",
+      "loadFailed": "No pudimos cargar este resumen.",
+      "sportTabs": "Elige un deporte"
+    },
+    "share": {
+      "title": "Comparte tu resumen",
+      "subtitle": "Elige las tarjetas de {{month}}",
+      "ttlNote": "Tus seguidores lo verán durante 24 horas.",
+      "sensitiveHint": "Desactivado por defecto",
+      "success": "Compartido con tus seguidores",
+      "failed": "No se pudo compartir el resumen",
+      "exportFailed": "No se pudo preparar la imagen",
+      "imageText": "Mi {{month}} en Bandeja",
+      "slides": {
+        "cover": "Portada",
+        "games": "Partidos",
+        "wins": "Victorias",
+        "level": "Nivel de juego",
+        "partner": "Mejor compañero",
+        "streak": "Racha de juego",
+        "club": "Club habitual",
+        "lowActivity": "Tu mes",
+        "outro": "Cierre"
+      },
+      "cta_one": "Compartir {{count}} tarjeta",
+      "cta_many": "Compartir {{count}} de tarjetas",
+      "cta_other": "Compartir {{count}} tarjetas",
+      "previewLabel_one": "{{count}} tarjeta seleccionada",
+      "previewLabel_many": "{{count}} de tarjetas seleccionadas",
+      "previewLabel_other": "{{count}} tarjetas seleccionadas"
+    },
+    "rail": {
+      "label": "Resumen de {{month}}",
+      "aria": "Abrir el resumen de {{month}}"
+    },
+    "profile": {
+      "title": "Resúmenes",
+      "cardAria": "Abrir el resumen de {{month}}",
+      "gamesOnly_one": "{{count}} partido",
+      "gamesOnly_many": "{{count}} de partidos",
+      "gamesOnly_other": "{{count}} partidos",
+      "gamesAndWinRate_one": "{{count}} partido · {{percent}}",
+      "gamesAndWinRate_many": "{{count}} de partidos · {{percent}}",
+      "gamesAndWinRate_other": "{{count}} partidos · {{percent}}"
+    }
+  }
+}

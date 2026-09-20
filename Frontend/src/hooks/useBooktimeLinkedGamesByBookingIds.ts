@@ -2,13 +2,15 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { fetchLinkedGamesByBookingIds } from '@/api/fetchLinkedGamesByBookingIds';
 import type { BooktimeLinkedGame } from '@/api/booktime';
 
+const EMPTY_LINKED_GAMES: ReadonlyMap<string, BooktimeLinkedGame[]> = new Map();
+
 export function useBooktimeLinkedGamesByBookingIds(
   bookingIds: string[],
   enabled = true,
 ) {
   const [linkedGamesByBookingId, setLinkedGamesByBookingId] = useState<
     ReadonlyMap<string, BooktimeLinkedGame[]>
-  >(new Map());
+  >(EMPTY_LINKED_GAMES);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const idsKey = bookingIds.join('|');
@@ -19,7 +21,9 @@ export function useBooktimeLinkedGamesByBookingIds(
     const requestId = ++requestIdRef.current;
     if (!enabled || ids.length === 0) {
       if (requestId !== requestIdRef.current) return;
-      setLinkedGamesByBookingId(new Map());
+      // A fresh `new Map()` here was a state change on every disabled reload,
+      // which re-rendered the tab and rebuilt the derived `unlinked` snapshot.
+      setLinkedGamesByBookingId((prev) => (prev.size === 0 ? prev : EMPTY_LINKED_GAMES));
       setLoading(false);
       setError(false);
       return;

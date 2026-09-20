@@ -10,24 +10,26 @@ struct ClassicScoringView: View {
 
     var body: some View {
         let lang = prefs.uiLanguageCode
-        VStack(spacing: 4) {
-            statusCaption(lang)
-            if showServeIndicator {
-                WatchServeIndicatorRow(vm: vm, lang: lang)
+        WatchScoringBoardScroll {
+            VStack(spacing: 4) {
+                statusCaption(lang)
+                if showServeIndicator {
+                    WatchServeIndicatorRow(vm: vm, lang: lang)
+                }
+                if vm.officiatingIsStrict {
+                    WatchStrictOfficiatingButtons(vm: vm, lang: lang)
+                }
+
+                Spacer(minLength: 0)
+
+                scoreColumns(lang)
+
+                Spacer(minLength: 0)
+
+                footerActions(lang)
             }
-            if vm.officiatingIsStrict {
-                WatchStrictOfficiatingButtons(vm: vm, lang: lang)
-            }
-
-            Spacer(minLength: 0)
-
-            scoreColumns(lang)
-
-            Spacer(minLength: 0)
-
-            footerActions(lang)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     @ViewBuilder

@@ -1,0 +1,40 @@
+{
+  "spots": {
+    "pill": {
+      "label": "مكان شاغر",
+      "ariaLabel": "تحرر مكان {{time}}"
+    },
+    "queue": {
+      "position_zero": "ترتيبك {{position}} من {{count}}",
+      "position_one": "ترتيبك {{position}} من {{count}}",
+      "position_two": "ترتيبك {{position}} من {{count}}",
+      "position_few": "ترتيبك {{position}} من {{count}}",
+      "position_many": "ترتيبك {{position}} من {{count}}",
+      "position_other": "ترتيبك {{position}} من {{count}}",
+      "autoFillOn": "الإضافة التلقائية مفعّلة، وسيتم إدخالك تلقائيًا",
+      "autoFillOff": "المنظّم يقبل يدويًا",
+      "waitForOrganizer": "أنت في قائمة الانتظار. المنظّم هو من يختار من يشغل المكان.",
+      "tapToJoin": "اضغط على «انضمام» عندما يتوفّر مكان"
+    },
+    "settings": {
+      "autoFillTitle": "الإضافة التلقائية من قائمة الانتظار",
+      "autoFillHelper": "يحصل الأول في القائمة على المكان فور شغوره. تظل قواعد الجنس والمستوى سارية.",
+      "queueCount_zero": "{{count}} في قائمة الانتظار",
+      "queueCount_one": "{{count}} في قائمة الانتظار",
+      "queueCount_two": "{{count}} في قائمة الانتظار",
+      "queueCount_few": "{{count}} في قائمة الانتظار",
+      "queueCount_many": "{{count}} في قائمة الانتظار",
+      "queueCount_other": "{{count}} في قائمة الانتظار",
+      "queueEmpty": "لا أحد ينتظر بعد"
+    },
+    "roster": {
+      "openSpot": "مكان شاغر"
+    },
+    "toast": {
+      "joinedFromQueue": "انضم {{name}} من قائمة الانتظار"
+    },
+    "seated": {
+      "banner": "تم إدخالك من قائمة الانتظار"
+    }
+  }
+}

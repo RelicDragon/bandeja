@@ -1,0 +1,96 @@
+{
+  "onboarding": {
+    "frame": {
+      "skip": "Preskoči",
+      "back": "Nazad",
+      "working": "Čuvamo…",
+      "progress": "Korak {{current}} od {{total}}"
+    },
+    "welcome": {
+      "title": "Nađimo vam meč",
+      "subtitle": "Dva minuta i spremni ste.",
+      "start": "Počni",
+      "socialProof_one": "{{count}} igrač u gradu {{city}}",
+      "socialProof_few": "{{count}} igrača u gradu {{city}}",
+      "socialProof_other": "{{count}} igrača u gradu {{city}}"
+    },
+    "sport": {
+      "title": "Koje sportove igraš?",
+      "titleSportOnly": "Izaberite sport da nastavite",
+      "subtitle": "Izaberite koliko želite. Prvi postaje vaš glavni sport.",
+      "continue": "Nastavi",
+      "primaryTag": "Glavni",
+      "makePrimary": "Postavi {{sport}} kao glavni",
+      "primaryHint": "Dugo pritisni sport da postane glavni."
+    },
+    "profile": {
+      "title": "Kako da te zovemo?",
+      "subtitle": "Vaše ime se vidi u svakom meču kojem se pridružite.",
+      "continue": "Nastavi",
+      "photoOptional": "Fotografija nije obavezna — možete je dodati kasnije.",
+      "firstNameLabel": "Ime",
+      "lastNameLabel": "Prezime",
+      "nameRequired": "Unesite svoje ime.",
+      "nameTooShort": "Najmanje 2 znaka.",
+      "nameTooLong": "Najviše 30 znakova."
+    },
+    "level": {
+      "title": "Vaš nivo",
+      "subtitle": "Nekoliko brzih pitanja o tome kako igraš {{sport}}.",
+      "continue": "Nastavi",
+      "resultTitle": "Ovo je vaš početni nivo",
+      "resultSubtitle": "Na osnovu vaših odgovora o sportu {{sport}}.",
+      "scale": "Na skali {{scale}}",
+      "adjustLater": "Ovo možete promeniti bilo kada u profilu.",
+      "unavailable": "Za sport {{sport}} još nemamo test nivoa."
+    },
+    "city": {
+      "title": "Da li je ovo vaš grad?",
+      "helper": "Prikazujemo mečeve i igrače iz vašeg grada.",
+      "confirm": "Da, tako je",
+      "change": "Promeni grad",
+      "backToCard": "Zadrži trenutni grad",
+      "unknown": "Grad još nije izabran"
+    },
+    "follow": {
+      "title": "Koga da zapratite",
+      "subtitle": "Aktivni igrači iz vašeg grada. Zapratite ih i početna strana oživi.",
+      "continue": "Nastavi",
+      "followAll": "Zaprati sve",
+      "follow": "Zaprati",
+      "following": "Pratite",
+      "followFailed": "Praćenje nije uspelo. Pokušaj ponovo.",
+      "gamesThisMonth_one": "{{count}} meč ovog meseca",
+      "gamesThisMonth_few": "{{count}} meča ovog meseca",
+      "gamesThisMonth_other": "{{count}} mečeva ovog meseca",
+      "emptyTitle": "Još nema predloga",
+      "emptyDescription": "Vaš grad se još puni. Svratite posle prvog meča.",
+      "unnamedPlayer": "Igrač"
+    },
+    "notifications": {
+      "title": "Budi u toku",
+      "subtitle": "Šaljemo samo ono zbog čega vredi prekinuti dan.",
+      "turnOn": "Uključi obaveštenja",
+      "later": "Ne sada",
+      "reasonInvitesTitle": "Pozivi",
+      "reasonInvitesBody": "Kada te neko pozove na meč.",
+      "reasonRemindersTitle": "Podsetnici",
+      "reasonRemindersBody": "Pre meča na koji ste se prijavili.",
+      "reasonSpotsTitle": "Slobodna mesta",
+      "reasonSpotsBody": "Kada se oslobodi mesto u meču koji ste želeli.",
+      "controlHint": "Sve ovo možete promeniti u podešavanjima."
+    },
+    "finish": {
+      "choiceTitle": "Šta želite prvo?",
+      "choiceSubtitle": "Kako god, sve je spremno.",
+      "playSoonTitle": "Želim uskoro da igram",
+      "playSoonBody": "Recite gradu kada ste slobodni i pustite igrače da vam se jave.",
+      "browseTitle": "Pregledaj mečeve",
+      "browseBody": "Vidi šta se već dešava u blizini.",
+      "doneTitle": "Sve je spremno"
+    },
+    "errors": {
+      "saveFailed": "Čuvanje nije uspelo. Proveri vezu i pokušaj ponovo."
+    }
+  }
+}

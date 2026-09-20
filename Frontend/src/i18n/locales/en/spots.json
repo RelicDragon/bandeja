@@ -1,0 +1,32 @@
+{
+  "spots": {
+    "pill": {
+      "label": "Spot opened",
+      "ariaLabel": "A spot opened {{time}}"
+    },
+    "queue": {
+      "position_one": "You're #{{position}} of {{count}}",
+      "position_other": "You're #{{position}} of {{count}}",
+      "autoFillOn": "Auto-fill is on, you'll be seated automatically",
+      "autoFillOff": "Organizer accepts manually",
+      "waitForOrganizer": "You're in the queue. The organizer seats players for this game.",
+      "tapToJoin": "Tap Join when a spot opens"
+    },
+    "settings": {
+      "autoFillTitle": "Auto-fill from queue",
+      "autoFillHelper": "First in line is seated when a spot opens. Gender and level rules still apply.",
+      "queueCount_one": "{{count}} in queue",
+      "queueCount_other": "{{count}} in queue",
+      "queueEmpty": "No one waiting yet"
+    },
+    "roster": {
+      "openSpot": "Open spot"
+    },
+    "toast": {
+      "joinedFromQueue": "{{name}} joined from the queue"
+    },
+    "seated": {
+      "banner": "You were seated from the queue"
+    }
+  }
+}

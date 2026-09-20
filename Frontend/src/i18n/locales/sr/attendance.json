@@ -1,0 +1,69 @@
+{
+  "attendance": {
+    "question": "Da li dolaziš?",
+    "confirm": "Dolazim",
+    "unsure": "Još nisam siguran",
+    "change": "Promeni",
+    "confirmedState": "Dolazak je potvrđen",
+    "unsureState": "Još nisi siguran",
+    "caption": "Samo da organizator zna. Vaše mesto ostaje vaše u svakom slučaju.",
+    "cantMakeIt": "Uopšte ne možeš da dođeš?",
+    "confirmedToast": "Dolazak potvrđen 👍",
+    "unsureToast": "Zabeleženo. Možeš potvrditi kasnije.",
+    "saving": "Čuvamo…",
+    "queuedOffline": "Sačuvano. Sinhronizovaćemo kada se vratiš na mrežu.",
+    "youOrganizer": "Vi (organizator)",
+    "dots": {
+      "confirmed": "Potvrdio",
+      "unanswered": "Još nema odgovora",
+      "unsure": "Još nije siguran",
+      "noShow": "Zabeležen nedolazak"
+    },
+    "legend": {
+      "title": "Šta znače tačke",
+      "hint": "Zelena znači potvrđeno, siva znači bez odgovora, žuta znači nesigurno."
+    },
+    "organizer": {
+      "progress": "Potvrdilo {{confirmed}} od {{total}}",
+      "nudge": "Podseti",
+      "nudgeCooldown": "Podseti ponovo za {{hours}} h",
+      "nudgeSent": "Podsetnik poslat",
+      "legendCaption": "Zelena: potvrđeno. Siva: bez odgovora. Žuta: nesigurno."
+    },
+    "noShow": {
+      "action": "Zabeleži nedolazak",
+      "undoAction": "Ukloni belešku o nedolasku",
+      "dialogTitle": "Zabeležiti da {{name}} nije došao?",
+      "dialogBody": "Dobiće prijateljsko obaveštenje i može da odgovori u četu. Možeš poništiti u roku od 7 dana.",
+      "confirm": "Zabeleži nedolazak",
+      "cancel": "Otkaži",
+      "noted": "Zabeleženo",
+      "undo": "Poništi",
+      "undone": "Beleška o nedolasku je uklonjena",
+      "tag": "Nije došao"
+    },
+    "stat": {
+      "label": "Pojavljivanje",
+      "tooltip": "Igre koje ste potvrdili i na koje ste došli u poslednjih 12 meseci.",
+      "gaugeLabel": "Prisustvo na {{rate}} procenata igara",
+      "sparklineTitle": "Poslednjih 12 meseci",
+      "sparklineLegend": "došao / propustio",
+      "sparklineMonthAria": "{{month}} — došao: {{attended}}, propustio: {{noShow}}",
+      "notesTitle": "Vaše beleške o nedolasku",
+      "notesEmpty": "Nema beleški o nedolasku.",
+      "notesOpenChat": "Otvori čet",
+      "notedOn": "Zabeleženo {{date}}"
+    },
+    "card": {
+      "ariaSummary": "Potvrdilo {{confirmed}} od {{total}} igrača"
+    },
+    "errors": {
+      "generic": "Nije moguće sačuvati vaš odgovor",
+      "notParticipant": "Odgovoriti mogu samo igrači ove igre",
+      "answersClosed": "Potvrde dolaska za ovu igru su zatvorene",
+      "noShowWindowClosed": "Rok za beleženje nedolaska je istekao",
+      "nudgeCooldown": "Nedavno ste podsetili. Pokušajte kasnije.",
+      "nothingToNudge": "Svi su već odgovorili"
+    }
+  }
+}

@@ -1,22 +1,43 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { UserPlus, Clock } from 'lucide-react';
 import { Button } from '@/components';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
 import { useAuthStore } from '@/store/authStore';
 import { genderI18nContext } from '@/utils/i18nGender';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
+import { SPOT_OPENED_SHIMMER_MS } from '@/features/spot-opened/spotOpenedWindow';
 
 interface GameCardJoinButtonProps {
   gameId: string;
   hasFreeSlots: boolean;
   onJoin: (gameId: string, e: React.MouseEvent) => void;
+  /** PRD 347 — a seat opened in the last 2 h; sweep the button once. */
+  spotJustOpened?: boolean;
 }
 
 /** Join / queue CTA with a confirmation step. */
-export function GameCardJoinButton({ gameId, hasFreeSlots, onJoin }: GameCardJoinButtonProps) {
+export function GameCardJoinButton({
+  gameId,
+  hasFreeSlots,
+  onJoin,
+  spotJustOpened = false,
+}: GameCardJoinButtonProps) {
   const { t } = useTranslation();
   const genderCtx = genderI18nContext(useAuthStore((s) => s.user?.gender));
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const reduceMotion = usePrefersReducedMotion();
+  const [shimmering, setShimmering] = useState(false);
+
+  useEffect(() => {
+    if (!spotJustOpened || reduceMotion) {
+      setShimmering(false);
+      return;
+    }
+    setShimmering(true);
+    const timer = window.setTimeout(() => setShimmering(false), SPOT_OPENED_SHIMMER_MS);
+    return () => window.clearTimeout(timer);
+  }, [spotJustOpened, reduceMotion]);
 
   const handleConfirm = () => {
     const noopEvent = { stopPropagation: () => {}, preventDefault: () => {} } as React.MouseEvent;
@@ -26,7 +47,7 @@ export function GameCardJoinButton({ gameId, hasFreeSlots, onJoin }: GameCardJoi
 
   return (
     <>
-      <div className="mt-1">
+      <div className="relative mt-1 overflow-hidden rounded-lg">
         <Button
           onClick={(e) => {
             e.stopPropagation();
@@ -42,6 +63,13 @@ export function GameCardJoinButton({ gameId, hasFreeSlots, onJoin }: GameCardJoi
           {hasFreeSlots ? <UserPlus size={15} /> : <Clock size={15} />}
           {hasFreeSlots ? t('createGame.addMeToGame') : t('games.joinTheQueue')}
         </Button>
+        {shimmering ? (
+          <span
+            aria-hidden
+            data-testid="join-button-shimmer"
+            className="pointer-events-none absolute inset-0 animate-spot-shimmer bg-gradient-to-r from-transparent via-white/45 to-transparent"
+          />
+        ) : null}
       </div>
       {confirmOpen && (
         <ConfirmationModal

@@ -10,6 +10,22 @@ import {
   getAvailableGamesCardInclude,
   getAvailableGamesCardSelect,
 } from './availableGamesCard.projection';
+import {
+  GAME_BROADCAST_STRIPPED_KEYS,
+  GAME_DETAIL_ENTITLED_GAME_KEYS,
+  GAME_DETAIL_GAME_SCALAR_SELECT,
+  GAME_DETAIL_VIEWER_SCOPED_KEYS,
+  GAME_PAYMENT_HINT_SELECT,
+  GAME_DETAIL_GUEST_USER_SELECT,
+  assertGameDetailGuestContract,
+  collectGameDetailGuestContractIssues,
+  getGameDetailSelect,
+  getGameListSelect,
+  isEntitledToGamePaymentHint,
+  projectGameForBroadcast,
+} from './gameDetail.projection';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 
 function run() {
   const select = getAvailableGamesCardSelect({ viewerUserId: 'viewer-1' });
@@ -156,4 +172,255 @@ function run() {
   console.log('availableGamesCard.projection.test.ts: ok');
 }
 
+/**
+ * `GET /api/games/:id` — the whitelist projection and the `paymentHint`
+ * entitlement.
+ *
+ * Would have failed before `gameDetail.projection.ts` existed: the endpoint ran
+ * `include: gameWithRoundsAndOutcomes`, a **top-level include**, so every
+ * `Game` scalar — PRD 348's `Game.paymentHint`, an IBAN or a Revolut handle —
+ * was returned to a caller on `optionalAuth` with no token at all.
+ */
+function runGameDetail() {
+  // 1. the scalar whitelist never carries the entitled column.
+  assert.equal(
+    'paymentHint' in GAME_DETAIL_GAME_SCALAR_SELECT,
+    false,
+    'paymentHint is never part of the base scalar whitelist',
+  );
+  assert.equal(GAME_DETAIL_GAME_SCALAR_SELECT.id, true);
+  // Fields the detail screen genuinely reads must survive the switch to select.
+  for (const key of [
+    'description',
+    'metadata',
+    'maxParticipants',
+    'allowDirectJoin',
+    'resultsStatus',
+    'priceType',
+    'priceTotal',
+    'priceCurrency',
+    'costPayerId',
+    'seriesId',
+    'lastSeatOpenedAt',
+    'autoFillFromQueue',
+    'showOnLiveRail',
+    'weatherAlertState',
+    'mainPhotoId',
+    'resultsArtifactsVersion',
+    'deucesBeforeGoldenPoint',
+  ] as const) {
+    assert.equal(
+      (GAME_DETAIL_GAME_SCALAR_SELECT as Record<string, unknown>)[key],
+      true,
+      `game detail must still select ${key}`,
+    );
+  }
+
+  // 2. guest vs entitled select.
+  const guest = getGameDetailSelect({ viewerIsAuthenticated: false });
+  assert.equal('paymentHint' in guest, false, 'a guest select never names paymentHint');
+  const guestClub = (guest.club as unknown as { select: Record<string, unknown> }).select;
+  assert.equal('integrationConfig' in guestClub, false, 'guest club omits integrationConfig');
+  assert.equal('ptMeta' in guestClub, false, 'guest club omits ptMeta');
+  const guestCourtClub = (
+    (guest.court as unknown as { select: Record<string, unknown> }).select.club as {
+      select: Record<string, unknown>;
+    }
+  ).select;
+  assert.equal(
+    'integrationConfig' in guestCourtClub,
+    false,
+    'guest court.club omits integrationConfig',
+  );
+  assert.equal('bio' in GAME_DETAIL_GUEST_USER_SELECT, false, 'guest user omits bio');
+  assert.equal(
+    'weeklyAvailability' in GAME_DETAIL_GUEST_USER_SELECT,
+    false,
+    'guest user omits weeklyAvailability',
+  );
+  assert.equal(
+    'socialLevel' in GAME_DETAIL_GUEST_USER_SELECT,
+    false,
+    'guest user omits socialLevel',
+  );
+
+  const entitled = getGameDetailSelect({ viewerIsAuthenticated: true });
+  assert.equal(
+    'paymentHint' in entitled,
+    false,
+    'even the signed-in select never names paymentHint — it is a separate, authorised read',
+  );
+  assert.equal(GAME_PAYMENT_HINT_SELECT.paymentHint, true);
+  const memberClub = (entitled.club as unknown as { select: Record<string, unknown> }).select;
+  assert.equal(
+    memberClub.integrationConfig,
+    true,
+    'a signed-in viewer keeps the booking integration config the linked-bookings card parses',
+  );
+
+  // The parent is another Game row with its own paymentHint column.
+  const parentSelect = (entitled.parent as unknown as { select: Record<string, unknown> }).select;
+  assert.equal(
+    'paymentHint' in parentSelect,
+    false,
+    'a parent league/tournament row never carries paymentHint',
+  );
+
+  // 2b. `GET /api/games` is the same `optionalAuth` route shape.
+  const list = getGameListSelect({ viewerIsAuthenticated: false });
+  assert.equal('paymentHint' in list, false, 'the list never carries the payment handle');
+  assert.equal('rounds' in list, false, 'the list stays slim — no rounds');
+  assert.equal('outcomes' in list, false, 'the list stays slim — no outcomes');
+  assert.equal('gameCourts' in list, false, 'the list stays slim — no per-game courts');
+  assert.equal(list.participants !== undefined, true, 'the list still carries the roster');
+  assert.equal(list.court !== undefined, true, 'the list still carries the court');
+  assert.equal(list.parent !== undefined, true, 'the list still carries the league parent');
+  assert.equal(
+    'integrationConfig' in
+      ((list.club as unknown as { select: Record<string, unknown> }).select as object),
+    false,
+    'a guest list omits integrationConfig too',
+  );
+
+  // 3. the entitlement itself — roster, organizers, platform staff, nobody else.
+  const roster = [{ userId: 'member-1' }, { userId: 'owner-1' }];
+  assert.equal(isEntitledToGamePaymentHint(roster, { userId: undefined }), false);
+  assert.equal(isEntitledToGamePaymentHint(roster, { userId: null }), false);
+  assert.equal(isEntitledToGamePaymentHint(roster, { userId: 'stranger' }), false);
+  assert.equal(isEntitledToGamePaymentHint(roster, { userId: 'member-1' }), true);
+  assert.equal(
+    isEntitledToGamePaymentHint(roster, { userId: 'stranger', isPlatformAdmin: true }),
+    true,
+  );
+  assert.equal(isEntitledToGamePaymentHint([], { userId: 'stranger' }), false);
+
+  // 4. the contract asserter catches a regression in any of the three places.
+  const cleanPayload = {
+    id: 'g1',
+    club: { id: 'c1', name: 'Club' },
+    court: { id: 'ct1', club: { id: 'c1', name: 'Club' } },
+    participants: [{ userId: 'u1', user: { id: 'u1', firstName: 'A' } }],
+    outcomes: [{ userId: 'u1', user: { id: 'u1', firstName: 'A' } }],
+    parent: { id: 'p1' },
+  };
+  assert.deepEqual(collectGameDetailGuestContractIssues(cleanPayload), []);
+  assertGameDetailGuestContract(cleanPayload);
+
+  assert.deepEqual(
+    collectGameDetailGuestContractIssues({
+      ...cleanPayload,
+      paymentHint: 'IBAN RS35 1234',
+    }).map((i) => i.path),
+    ['paymentHint'],
+    'the leaked column is named exactly',
+  );
+  assert.ok(
+    collectGameDetailGuestContractIssues({
+      ...cleanPayload,
+      club: { ...cleanPayload.club, integrationConfig: { companyId: 'x' } },
+    }).some((i) => i.path === 'club.integrationConfig'),
+  );
+  assert.ok(
+    collectGameDetailGuestContractIssues({
+      ...cleanPayload,
+      participants: [{ userId: 'u1', user: { id: 'u1', bio: 'secret' } }],
+    }).some((i) => i.path.endsWith('.bio')),
+  );
+  assert.ok(
+    collectGameDetailGuestContractIssues({
+      ...cleanPayload,
+      parent: { id: 'p1', paymentHint: 'Revolut @x' },
+    }).some((i) => i.path === 'parent.paymentHint'),
+  );
+  assert.deepEqual([...GAME_DETAIL_ENTITLED_GAME_KEYS], ['paymentHint']);
+
+  console.log('gameDetail.projection contract: ok');
+}
+
+/**
+ * The socket `game-updated` payload.
+ *
+ * Fails on the pre-fix code: `SocketService.emitGameUpdate` broadcast whatever
+ * game object its caller handed it — one projected for the **actor**. An
+ * organizer saving an edit (`update.service.ts`) is entitled to
+ * `Game.paymentHint`, so her IBAN went to every socket in `game-${id}`,
+ * including a league-season player who is not on that fixture's roster and whom
+ * `GET /api/games/:id` correctly refuses.
+ *
+ * The rule: one payload, many entitlements → project for the least-entitled
+ * member of the room.
+ */
+function runBroadcastProjection() {
+  assert.deepEqual(
+    [...GAME_BROADCAST_STRIPPED_KEYS],
+    ['paymentHint', 'userNote', 'isClubFavorite'],
+    'the broadcast strips the entitled column and both viewer-scoped fields',
+  );
+  assert.deepEqual([...GAME_DETAIL_VIEWER_SCOPED_KEYS], ['userNote', 'isClubFavorite']);
+
+  const entitledPayload = {
+    id: 'g1',
+    name: 'Friday doubles',
+    priceType: 'FIXED',
+    priceTotal: 40,
+    priceCurrency: 'EUR',
+    paymentHint: 'IBAN RS35 1234 5678',
+    userNote: 'bring the pink balls',
+    isClubFavorite: true,
+    participants: [{ userId: 'u1' }],
+  };
+
+  const broadcast = projectGameForBroadcast(entitledPayload);
+  assert.equal(
+    'paymentHint' in broadcast,
+    false,
+    'a broadcast never carries the organizer payment handle',
+  );
+  assert.equal('userNote' in broadcast, false, 'a broadcast never carries the actor private note');
+  assert.equal('isClubFavorite' in broadcast, false, 'nor the actor favourite flag');
+
+  // Everything else survives byte for byte — the payload is still a full game.
+  assert.equal(broadcast.id, 'g1');
+  assert.equal(broadcast.name, 'Friday doubles');
+  assert.equal(broadcast.priceType, 'FIXED');
+  assert.equal(broadcast.priceTotal, 40);
+  assert.equal(broadcast.priceCurrency, 'EUR');
+  assert.deepEqual(broadcast.participants, [{ userId: 'u1' }]);
+  assert.notEqual(broadcast, entitledPayload, 'the caller copy is not mutated');
+  assert.equal(entitledPayload.paymentHint, 'IBAN RS35 1234 5678');
+
+  // A payload that never had the keys is unchanged.
+  assert.deepEqual(projectGameForBroadcast({ id: 'g2', name: 'n' }), { id: 'g2', name: 'n' });
+
+  // An explicit null is still a value, and still stripped: `paymentHint: null`
+  // is exactly what wiped the organizer's IBAN once the client wrote it back.
+  assert.equal('paymentHint' in projectGameForBroadcast({ id: 'g3', paymentHint: null }), false);
+
+  // Both `game-updated` emits must use the projected copy, not the caller's.
+  const socketSource = readFileSync(
+    path.join(__dirname, '..', 'socket.service.ts'),
+    'utf8',
+  );
+  const emitCount = socketSource.split("emit('game-updated'").length - 1;
+  assert.equal(emitCount, 2, 'socket.service.ts has exactly the two known game-updated emits');
+  assert.equal(
+    socketSource.split('game: broadcastGame').length - 1,
+    2,
+    'both game-updated emits send the broadcast projection',
+  );
+  assert.equal(
+    socketSource.includes('game: gameToEmit'),
+    false,
+    'the actor-projected object is never emitted directly',
+  );
+  assert.ok(
+    socketSource.includes('const broadcastGame = projectGameForBroadcast(gameToEmit)'),
+    'the projection is applied once, after the game is resolved',
+  );
+
+  console.log('game-updated broadcast projection: ok');
+}
+
 run();
+runGameDetail();
+runBroadcastProjection();

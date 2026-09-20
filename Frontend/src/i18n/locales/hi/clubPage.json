@@ -1,0 +1,76 @@
+{
+  "clubPage": {
+    "share": "क्लब साझा करें",
+    "shareTitle": "यह क्लब साझा करें",
+    "signIn": "साइन इन करें",
+    "favoriteFailed": "पसंदीदा अपडेट नहीं हो सका। फिर कोशिश करें।",
+    "openClubPage": "क्लब पेज खोलें",
+    "openClubPageNamed": "{{club}} का क्लब पेज खोलें",
+    "rating": {
+      "none": "अभी कोई समीक्षा नहीं",
+      "summary_one": "{{rating}} · {{countText}} समीक्षा",
+      "summary_other": "{{rating}} · {{countText}} समीक्षाएँ"
+    },
+    "gallery": {
+      "roleDescription": "फ़ोटो गैलरी",
+      "label": "{{club}} की तस्वीरें",
+      "slideRole": "तस्वीर",
+      "slide": "तस्वीर {{current}} / {{total}}"
+    },
+    "notFound": {
+      "title": "यह क्लब उपलब्ध नहीं है",
+      "description": "लिंक पुराना हो सकता है, या क्लब अब सूचीबद्ध नहीं है।",
+      "browse": "क्लब देखें"
+    },
+    "actions": {
+      "create": "यहाँ गेम बनाएँ",
+      "book": "बुक करें",
+      "directions": "रास्ता",
+      "manage": "प्रबंधित करें"
+    },
+    "today": {
+      "title": "आज एक नज़र में",
+      "updated": "{{relative}} अपडेट हुआ",
+      "updatedJustNow": "अभी-अभी अपडेट हुआ",
+      "courtLabel": "{{court}}, आज {{total}} में से {{free}} घंटे खाली",
+      "freeHours_one": "{{count}} घंटा खाली",
+      "freeHours_other": "{{count}} घंटे खाली",
+      "windowHint": "{{open}} से {{close}} तक दिखाया गया",
+      "legendFree": "खाली",
+      "legendBusy": "व्यस्त"
+    },
+    "games": {
+      "title": "आने वाले गेम",
+      "seeAll": "खोज में सभी देखें",
+      "emptyTitle": "अभी कोई सार्वजनिक गेम नहीं",
+      "emptyDescription": "यहाँ पहला गेम बनाने वाले बनें।"
+    },
+    "courts": {
+      "title": "कोर्ट",
+      "indoor": "इनडोर",
+      "outdoor": "आउटडोर"
+    },
+    "info": {
+      "title": "क्लब जानकारी",
+      "hoursRange": "खुला {{open}} – {{close}}",
+      "hoursEveryDay": "हर दिन एक ही समय",
+      "cancellationPolicy": "रद्द करने की नीति",
+      "cancellationNotice_one": "कम से कम {{count}} घंटा पहले रद्द करें।",
+      "cancellationNotice_other": "कम से कम {{count}} घंटे पहले रद्द करें।"
+    },
+    "regulars": {
+      "title": "यहाँ कौन खेलता है",
+      "open": "{{name}} का प्लेयर कार्ड खोलें",
+      "unnamed": "यह खिलाड़ी"
+    },
+    "reviews": {
+      "title": "समीक्षाएँ",
+      "guestTitle": "समीक्षा लिखने के लिए साइन इन करें",
+      "guestDescription": "समीक्षाएँ उन खिलाड़ियों से आती हैं जो इस क्लब में खेले हैं।"
+    },
+    "error": {
+      "title": "हम यह क्लब लोड नहीं कर सके",
+      "description": "अपना कनेक्शन जाँचें और फिर कोशिश करें।"
+    }
+  }
+}

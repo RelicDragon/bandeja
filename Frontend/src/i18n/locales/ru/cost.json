@@ -1,0 +1,84 @@
+{
+  "cost": {
+    "title": "Стоимость",
+    "totalLine": "Всего {{amount}}",
+    "paidBy": "Оплатил(а) {{name}}",
+    "payerTag": "оплатил(а) корт",
+    "frozen": "Доли зафиксированы по итоговому счёту",
+    "updatedCaption": "Доли пересчитаны",
+    "iPaid": "Я оплатил(а)",
+    "settledButton": "Рассчитано",
+    "cancel": "Отмена",
+    "save": "Сохранить",
+    "amountLabel": "Сумма",
+    "amountInvalid": "Введите сумму",
+    "keypadLabel": "Цифровая клавиатура",
+    "keypadBackspace": "Удалить последнюю цифру",
+    "editShareFor": "Изменить долю: {{name}}",
+    "editShareHint": "Общая сумма игры — {{total}}.",
+    "receivedFor": "Отметить, что {{name}} рассчитался(ась)",
+    "splitRemainder": "Разделить остаток поровну",
+    "splitRemainderHint": "Остальные игроки покроют разницу, чтобы сумма сошлась.",
+    "summaryStrip": "Рассчитались {{settled}} из {{total}} · остаток {{amount}}",
+    "summaryAllSettled": "Рассчитались {{settled}} из {{total}}",
+    "remindUnpaid": "Напомнить должникам",
+    "remindCooldown": "Следующее напоминание примерно через {{hours}} ч",
+    "state": {
+      "unpaid": "Не оплачено",
+      "markedPaid": "Отмечено как оплачено",
+      "settled": "Рассчитано"
+    },
+    "sheet": {
+      "title": "Как вы оплатили?",
+      "subtitle": "{{amount}} для {{name}}",
+      "hintLabel": "Как перевести деньги: {{name}}",
+      "copy": "Копировать",
+      "copied": "Скопировано",
+      "outside": "Вне приложения",
+      "outsideHint": "Наличные, банковский перевод или платёжное приложение",
+      "coins": "Отправить монеты: {{coins}}",
+      "coinsHint": "Ваш баланс: {{balance}} монет",
+      "disclaimer": "Bandeja не переводит настоящие деньги. Здесь только отметка, кто заплатил."
+    },
+    "card": {
+      "perPlayer": "{{amount}} с игрока",
+      "perPlayerEstimated": "≈ {{amount}} с игрока",
+      "totalFor": "Всего {{amount}} · игроков: {{players}}"
+    },
+    "create": {
+      "preview": "≈ {{amount}} с каждого, игроков: {{players}}",
+      "paymentHintLabel": "Как вам перевести",
+      "paymentHintPlaceholder": "IBAN, тег Revolut, наличные в клубе…",
+      "paymentHintHelp": "Показывается игрокам при расчёте. Осталось символов: {{remaining}}."
+    },
+    "wallet": {
+      "owed": "Вы должны",
+      "owedToYou": "Вам должны",
+      "settle": "Рассчитаться",
+      "view": "Открыть",
+      "allSettled": "Все рассчитались 🎉",
+      "toName": "Кому: {{name}}",
+      "fromName": "От кого: {{name}}"
+    },
+    "toast": {
+      "markedPaid": "Отмечено как оплачено",
+      "settledCoins": "Монет отправлено: {{coins}} · рассчитано",
+      "received": "Отмечено как полученное",
+      "receivedUndone": "Отмечено как неоплаченное",
+      "shareUpdated": "Доля обновлена",
+      "reminded_one": "Напоминание отправлено · игроков: {{count}}",
+      "reminded_few": "Напоминание отправлено · игроков: {{count}}",
+      "reminded_many": "Напоминание отправлено · игроков: {{count}}",
+      "reminded_other": "Напоминание отправлено · игроков: {{count}}"
+    },
+    "errors": {
+      "settleFailed": "Не удалось сохранить. Попробуйте ещё раз.",
+      "confirmFailed": "Не удалось обновить строку. Попробуйте ещё раз.",
+      "remindFailed": "Сейчас не получается отправить напоминание.",
+      "updateFailed": "Не удалось сохранить долю. Попробуйте ещё раз.",
+      "copyFailed": "Не удалось скопировать."
+    },
+    "loading": "Загружаем расчёт расходов…",
+    "loadFailed": "Не удалось загрузить расчёт расходов."
+  }
+}

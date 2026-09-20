@@ -56,7 +56,7 @@ struct MatchScoringShell: View {
                 ProgressView(WatchCopy.loadingEllipsis(lang))
             } else if let error = vm.error, vm.match == nil {
                 VStack(spacing: 8) {
-                    Text(error.localizedDescription)
+                    Text(WatchErrorText.message(error, lang: lang))
                         .font(.caption2)
                         .multilineTextAlignment(.center)
                     Button(WatchCopy.retry(lang)) {

@@ -1,0 +1,100 @@
+{
+  "recap": {
+    "slides": {
+      "cover": {
+        "caption": "Dalam angka",
+        "alt": "{{month}} dalam angka"
+      },
+      "games": {
+        "eyebrow": "Pertandingan",
+        "caption_other": "{{count}} pertandingan dimainkan",
+        "alt_other": "{{count}} pertandingan dimainkan pada {{month}}"
+      },
+      "wins": {
+        "eyebrow": "Kemenangan",
+        "caption_other": "{{count}} kemenangan",
+        "alt_other": "{{count}} kemenangan, rasio menang {{percent}}"
+      },
+      "level": {
+        "eyebrow": "Level keahlian",
+        "caption": "Level kamu sekarang {{level}}",
+        "neutral": "Level berubah menjadi {{level}}",
+        "alt": "Level keahlian: berubah menjadi {{level}}"
+      },
+      "partner": {
+        "eyebrow": "Partner terbaik",
+        "caption_other": "{{count}} kemenangan bersama {{name}}",
+        "alt_other": "Partner terbaik {{name}}, {{count}} kemenangan bersama"
+      },
+      "streak": {
+        "eyebrow": "Rentetan main",
+        "caption_other": "Main {{count}} minggu berturut-turut",
+        "best_other": "Rekor pribadi {{count}} minggu",
+        "alt_other": "Rentetan main: {{count}} minggu berturut-turut"
+      },
+      "club": {
+        "eyebrow": "Lapangan favorit",
+        "caption_other": "{{count}} pertandingan di sini",
+        "alt_other": "Lapangan favorit {{club}}, {{count}} pertandingan"
+      },
+      "lowActivity": {
+        "encouragement": "Satu pertandingan tetap berarti. Ayo cari yang berikutnya.",
+        "caption_other": "{{count}} pertandingan pada {{month}}",
+        "alt_other": "{{count}} pertandingan dimainkan pada {{month}}"
+      },
+      "outro": {
+        "title": "Sampai jumpa di lapangan pada {{month}}",
+        "caption": "{{games}} · {{wins}}",
+        "gamesPart_other": "{{count, number}} pertandingan",
+        "winsPart_other": "{{count, number}} kemenangan",
+        "lowActivityCaption": "Lapangan menunggumu.",
+        "alt": "Sampai jumpa di lapangan pada {{month}}"
+      }
+    },
+    "viewer": {
+      "title": "Rekap bulanan",
+      "close": "Tutup",
+      "next": "Berikutnya",
+      "shareCta": "Bagikan ke pengikut",
+      "saveImageCta": "Simpan gambar",
+      "savingImage": "Menyiapkan gambar…",
+      "playIntentCta": "Saya mau main",
+      "loading": "Menyiapkan rekap kamu…",
+      "loadFailed": "Rekap ini gagal dimuat.",
+      "sportTabs": "Pilih olahraga"
+    },
+    "share": {
+      "title": "Bagikan rekap kamu",
+      "subtitle": "Pilih slide untuk {{month}}",
+      "ttlNote": "Pengikut bisa melihatnya selama 24 jam.",
+      "sensitiveHint": "Nonaktif secara bawaan",
+      "success": "Dibagikan ke pengikutmu",
+      "failed": "Rekap gagal dibagikan",
+      "exportFailed": "Gambar gagal disiapkan",
+      "imageText": "{{month}} saya di Bandeja",
+      "slides": {
+        "cover": "Sampul",
+        "games": "Pertandingan",
+        "wins": "Kemenangan",
+        "level": "Level keahlian",
+        "partner": "Partner terbaik",
+        "streak": "Rentetan main",
+        "club": "Lapangan favorit",
+        "lowActivity": "Bulanmu",
+        "outro": "Penutup"
+      },
+      "cta_other": "Bagikan {{count}} slide",
+      "previewLabel_other": "{{count}} slide dipilih"
+    },
+    "rail": {
+      "label": "Rekap {{month}}",
+      "aria": "Buka rekap {{month}}"
+    },
+    "profile": {
+      "title": "Rekap",
+      "cardAria": "Buka rekap {{month}}",
+      "gamesOnly_other": "{{count}} pertandingan",
+      "gamesAndWinRate_other": "{{count}} pertandingan · {{percent}}"
+    }
+  }
+}

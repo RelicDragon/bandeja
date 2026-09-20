@@ -18,6 +18,7 @@ import {
 } from './liveScoringEngine/liveScoringRejectReasons';
 import type { SetResult } from './liveScoringEngine/types';
 import { appendMatchLiveScoringAudit } from './matchLiveScoringAudit.service';
+import { notifyFollowersGameWentLiveInBackground } from '../live/liveGameNotify.service';
 
 export function stripLiveScoringFromMatchMetadata(metadata: unknown): Prisma.InputJsonValue {
   if (metadata == null) return {};
@@ -393,6 +394,11 @@ export async function patchMatchLiveScoring(
           ),
         },
       });
+
+      // PRD 349 — the game just became watchable. Idempotent per recipient
+      // (LiveGameNotifyDelivery), never awaited: a follower push must not slow
+      // down or fail a live-scoring write.
+      notifyFollowersGameWentLiveInBackground(gameId);
     }
   }
 

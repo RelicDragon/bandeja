@@ -17,6 +17,11 @@ interface GameNameCommentsSectionProps {
   onPriceTotalChange: (value: number | undefined) => void;
   onPriceTypeChange: (value: PriceType) => void;
   onPriceCurrencyChange: (value: PriceCurrency | undefined) => void;
+  /** PRD 348 — seats the per-head preview divides the total by. */
+  maxParticipants?: number;
+  /** PRD 348 — `Game.paymentHint`; omit the handler to hide the field. */
+  paymentHint?: string;
+  onPaymentHintChange?: (value: string) => void;
   priceSectionRef?: RefObject<HTMLDivElement | null>;
 }
 
@@ -31,6 +36,9 @@ export const GameNameCommentsSection = ({
   onPriceTotalChange,
   onPriceTypeChange,
   onPriceCurrencyChange,
+  maxParticipants,
+  paymentHint,
+  onPaymentHintChange,
   priceSectionRef,
 }: GameNameCommentsSectionProps) => {
   const { t } = useTranslation();
@@ -77,6 +85,9 @@ export const GameNameCommentsSection = ({
             onPriceTotalChange={onPriceTotalChange}
             onPriceTypeChange={onPriceTypeChange}
             onPriceCurrencyChange={onPriceCurrencyChange}
+            maxParticipants={maxParticipants}
+            paymentHint={paymentHint}
+            onPaymentHintChange={onPaymentHintChange}
           />
         </div>
       </div>

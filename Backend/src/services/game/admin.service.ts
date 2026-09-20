@@ -15,6 +15,7 @@ import { removeUserFromGameFixedTeams } from './fixedTeamsCleanup';
 import { PlayIntentGameLifecycleService } from '../playIntent/playIntentGameLifecycle.service';
 import { publishCommittedPlayIntentStatusChanges } from '../playIntent/playIntentRealtime';
 import { schedulePendingInviteSlotOpenNotify } from '../invite/pendingInviteSlotOpen.service';
+import { GameSeatService } from '../gameSeat/gameSeat.service';
 
 export class AdminService {
   static async addAdmin(gameId: string, ownerId: string, userId: string) {
@@ -220,6 +221,8 @@ export class AdminService {
     await ParticipantMessageHelper.emitGameUpdate(gameId, currentUserId);
     if (targetParticipant.status === 'PLAYING') {
       schedulePendingInviteSlotOpenNotify(gameId, { openedGender: targetParticipant.user?.gender });
+      // PRD 347 — the kicked player's seat is now open.
+      void GameSeatService.seatOpened(gameId, 1, 'KICK', { freedByUserId: targetUserId });
     }
     return 'User kicked successfully';
   }

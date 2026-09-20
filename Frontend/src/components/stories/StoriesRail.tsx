@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
@@ -20,6 +20,9 @@ import { StoryVideoPublishModal } from './create/video/StoryVideoPublishModal';
 import type { StoryMediaFile } from './create/types/storyEditor.types';
 import type { StoryMediaFile as PhotoMediaFile } from './create/photo/types';
 import { runWithProfileName } from '@/utils/runWithProfileName';
+import { useRecapRail } from '@/features/recap/useRecapRail';
+import { RecapRailBubble } from '@/components/recap/RecapRailBubble';
+import { RecapStoryViewer } from '@/components/recap/RecapStoryViewer';
 
 const bubbleVariants = {
   hidden: { opacity: 0, scale: 0.88, x: 10 },
@@ -34,7 +37,12 @@ const bubbleVariants = {
   }),
 };
 
-export function StoriesRail() {
+/**
+ * Memoised: the rail takes no props, yet it hosts four queries/stores and
+ * re-derived every bubble list on each My-tab render (bookings poll, unread,
+ * URL) that had nothing to do with stories.
+ */
+export const StoriesRail = memo(function StoriesRail() {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const { data: socialConnections, isFetched: socialFetched } = useSocialConnectionsQuery(user?.id);
@@ -59,6 +67,9 @@ export function StoriesRail() {
   const [viewerSegmentKey, setViewerSegmentKey] = useState<string | null>(null);
   const [viewerSessionId, setViewerSessionId] = useState(0);
   const offline = typeof navigator !== 'undefined' && !navigator.onLine;
+  // PRD 353 — the monthly recap bubble rides at the front of the same rail, but
+  // it is not a story: it has its own query, its own ring and its own viewer.
+  const recapRail = useRecapRail();
 
   const bubbles = useMemo(() => feed?.bubbles ?? [], [feed?.bubbles]);
   const { showLeftFade, showRightFade } = useHorizontalScrollFade(carouselRef, bubbles.length);
@@ -143,7 +154,10 @@ export function StoriesRail() {
     return idx != null && idx >= 0 ? idx : 0;
   }, [viewerSegmentKey, viewerBubbles, viewerBubbleIndex]);
 
-  if (!enabled || !user || (socialFetched && !hasConnections)) return null;
+  // The recap bubble must survive the rail's own "nothing to show" exit: a user
+  // with no follows still gets their recap.
+  const railHidden = !enabled || !user || (socialFetched && !hasConnections);
+  if (railHidden && !recapRail.bubble) return null;
 
   const onlySelf = feed != null && serverBubbles.length === 0;
   const visibleBubbles = bubbles.filter(
@@ -154,7 +168,7 @@ export function StoriesRail() {
     <>
       <div ref={railRootRef} className="px-4 mb-3 max-w-md mx-auto min-h-[5.75rem]">
         <AnimatePresence initial={false}>
-          {onlySelf ? (
+          {onlySelf && !railHidden ? (
             <motion.p
               key="empty-hint"
               layout
@@ -174,22 +188,36 @@ export function StoriesRail() {
             style={carouselMaskStyle}
             className="flex gap-3 overflow-x-auto overflow-y-hidden scrollbar-hide pb-1 [touch-action:pan-x_pan-y] overscroll-x-contain [-webkit-overflow-scrolling:touch]"
           >
-            <motion.div
-              custom={0}
-              variants={bubbleVariants}
-              initial={reduceMotion ? false : 'hidden'}
-              animate="visible"
-              className="shrink-0"
-            >
-              <StoriesRailBubble
-                user={user}
-                label={t('stories.yourStory')}
-                hasUnseen={false}
-                isSelf
-                isCreate
-                onClick={handleCreateClick}
-              />
-            </motion.div>
+            {recapRail.bubble ? (
+              <motion.div
+                key="recap-bubble"
+                custom={0}
+                variants={bubbleVariants}
+                initial={reduceMotion ? false : 'hidden'}
+                animate="visible"
+                className="shrink-0"
+              >
+                <RecapRailBubble recap={recapRail.bubble} onClick={recapRail.openViewer} />
+              </motion.div>
+            ) : null}
+            {railHidden || !user ? null : (
+              <motion.div
+                custom={recapRail.bubble ? 1 : 0}
+                variants={bubbleVariants}
+                initial={reduceMotion ? false : 'hidden'}
+                animate="visible"
+                className="shrink-0"
+              >
+                <StoriesRailBubble
+                  user={user}
+                  label={t('stories.yourStory')}
+                  hasUnseen={false}
+                  isSelf
+                  isCreate
+                  onClick={handleCreateClick}
+                />
+              </motion.div>
+            )}
             <AnimatePresence mode="popLayout">
               {visibleBubbles.map((bubble, index) => {
                 const label = bubble.isSelf
@@ -264,6 +292,11 @@ export function StoriesRail() {
         }}
         onBubbleChange={setViewerBubbleIndex}
       />
+      <RecapStoryViewer
+        open={recapRail.viewerOpen}
+        monthKey={recapRail.viewerMonthKey}
+        onClose={recapRail.closeViewer}
+      />
     </>
   );
-}
+});

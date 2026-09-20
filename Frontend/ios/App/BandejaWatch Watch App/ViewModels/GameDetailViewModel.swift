@@ -18,6 +18,7 @@ final class GameDetailViewModel {
     /// via WatchConnectivity after this VM was created, and caching it at init
     /// would permanently hide actions the user is entitled to.
     private var currentUserId: String? { KeychainHelper.shared.readUserId() }
+    private var isPlatformAdmin: Bool { KeychainHelper.shared.readIsPlatformAdmin() }
     private let api = APIClient()
     @ObservationIgnored
     nonisolated(unsafe) private var pollingTask: Task<Void, Never>?
@@ -93,37 +94,28 @@ final class GameDetailViewModel {
 
     // MARK: - Contextual action state
 
+    /// Backend `canModifyResults` (owner/admin incl. NON_PLAYING organizers, parent-season
+    /// organizers, or `resultsByAnyone` + PLAYING). Same predicate the web uses for its buttons.
+    private var canModifyResults: Bool {
+        guard let game else { return false }
+        return WatchResultsPermissions.canModifyResults(game: game, userId: currentUserId, isPlatformAdmin: isPlatformAdmin)
+    }
+
     /// ANNOUNCED → same PUT+sync as web “start results”; backend sets STARTED when results go IN_PROGRESS.
     var canStartAnnouncedGame: Bool {
-        guard let game, currentUserId != nil else { return false }
+        guard let game else { return false }
         guard game.status == "ANNOUNCED", game.resultsStatus == "NONE" else { return false }
-        guard !["BAR", "TRAINING", "LEAGUE_SEASON"].contains(game.entityType) else { return false }
-        guard isCurrentUserPlayingOnGame else { return false }
-        let allowed: Bool
-        if isCurrentUserOwnerOrAdmin || isCurrentUserOwnerOrAdminOnParent {
-            allowed = true
-        } else if game.resultsByAnyone == true {
-            allowed = true
-        } else {
-            allowed = false
-        }
-        guard allowed else { return false }
+        guard WatchResultsPermissions.entityTypeSupportsResults(game.entityType) else { return false }
+        guard canModifyResults else { return false }
         return readinessAndRoundGates(for: game)
     }
 
+    /// STARTED (or FINISHED without results, e.g. after a reset — web allows any non-archived status).
     var canEnterResults: Bool {
-        guard let game, let uid = currentUserId else { return false }
-        guard game.status == "STARTED", game.resultsStatus == "NONE" else { return false }
-        guard !["BAR", "TRAINING", "LEAGUE_SEASON"].contains(game.entityType) else { return false }
-        let canEdit: Bool
-        if isCurrentUserOwnerOrAdmin || isCurrentUserOwnerOrAdminOnParent {
-            canEdit = true
-        } else if game.resultsByAnyone == true {
-            canEdit = game.participants.contains { $0.userId == uid && $0.isPlaying }
-        } else {
-            canEdit = false
-        }
-        guard canEdit else { return false }
+        guard let game else { return false }
+        guard game.status == "STARTED" || game.status == "FINISHED", game.resultsStatus == "NONE" else { return false }
+        guard WatchResultsPermissions.entityTypeSupportsResults(game.entityType) else { return false }
+        guard canModifyResults else { return false }
         return readinessAndRoundGates(for: game)
     }
 
@@ -137,8 +129,10 @@ final class GameDetailViewModel {
         return WatchResultsRoundBuilder.canBuildFirstRound(for: game)
     }
 
+    /// Only when the server would accept this user's live PATCH / saves (else the match list is view-only).
     var canContinueScoring: Bool {
-        game?.resultsStatus == "IN_PROGRESS"
+        guard let game, game.resultsStatus == "IN_PROGRESS", game.status != "ARCHIVED" else { return false }
+        return canModifyResults
     }
 
     var resultsAreFinal: Bool {
@@ -150,32 +144,12 @@ final class GameDetailViewModel {
         return rounds.contains { !$0.matches.isEmpty }
     }
 
-    /// Participant can open match list when scoring/results exist or rounds are present.
+    /// Real roster members (backend `canAccessGame`: PLAYING / NON_PLAYING / IN_QUEUE, or parent
+    /// organizers) can open the match list when scoring/results exist. GUEST/INVITED cannot.
     var canOpenMatchList: Bool {
-        guard let game, let uid = currentUserId else { return false }
-        let isParticipant = game.participants.contains { $0.userId == uid }
-        guard isParticipant else { return false }
+        guard let game else { return false }
+        guard WatchResultsPermissions.canAccessGame(game: game, userId: currentUserId) else { return false }
         if game.resultsStatus == "IN_PROGRESS" || game.resultsStatus == "FINAL" { return true }
         return hasResultsPreview
-    }
-
-    /// True only if the currently signed-in user has OWNER or ADMIN role in this game.
-    private var isCurrentUserOwnerOrAdmin: Bool {
-        guard let uid = currentUserId, let game else { return false }
-        return game.participants.contains {
-            $0.userId == uid && ($0.role == "OWNER" || $0.role == "ADMIN")
-        }
-    }
-
-    private var isCurrentUserOwnerOrAdminOnParent: Bool {
-        guard let uid = currentUserId, let parts = game?.parent?.participants else { return false }
-        return parts.contains {
-            $0.userId == uid && ($0.role == "OWNER" || $0.role == "ADMIN")
-        }
-    }
-
-    private var isCurrentUserPlayingOnGame: Bool {
-        guard let uid = currentUserId, let game else { return false }
-        return game.participants.contains { $0.userId == uid && $0.isPlaying }
     }
 }

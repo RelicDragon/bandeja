@@ -22,6 +22,8 @@ export interface UserSportProfile {
   approvedLevel?: boolean;
   approvedById?: string | null;
   approvedWhen?: Date | string | null;
+  /** Level at the moment of confirmation; null for rows confirmed before it was recorded. */
+  approvedAtLevel?: number | null;
   playStreak?: import('./playStreak').PlayStreakView;
 }
 
@@ -132,6 +134,10 @@ export type PriceCurrency =
   | 'AED' | 'SAR' | 'QAR' | 'KWD' | 'OMR';
 
 import type { Round } from './gameResults';
+import type {
+  GameCardEnrichment,
+  ParticipantAttendance,
+} from './gameCardEnrichment';
 
 export interface BasicUser {
   id: string;
@@ -245,6 +251,8 @@ export interface User extends BasicUser {
   trophies?: import('./trophies').TrophiesPayload;
   approvedById?: string | null;
   approvedWhen?: Date | string | null;
+  /** Sport-projected: level at confirmation time for the projected sport. */
+  approvedAtLevel?: number | null;
   favoriteTrainerId?: string | null;
   approvedBy?: BasicUser | null;
   language?: string; // Full locale (e.g., "en-GB", "ru-RU") or "auto"
@@ -344,7 +352,7 @@ export interface Club {
   amenities?: Record<string, any>;
   isBar?: boolean;
   isForPlaying?: boolean;
-  integrationType?: 'BOOKTIME' | 'PADELOO' | 'KLIKTEREN' | 'NSPADELSUPABASE' | null;
+  integrationType?: 'BOOKTIME' | 'PADELOO' | 'KLIKTEREN' | 'NSPADELSUPABASE' | 'WELTNER' | null;
   integrationConfig?: {
     companyId?: string;
     clubId?: number;
@@ -395,6 +403,12 @@ export interface GameParticipant {
   status: ParticipantStatus;
   joinedAt: string;
   user: BasicUser;
+  /** PRD 346 — courtesy signal only; never gates a seat, a queue place or rating. */
+  attendance?: ParticipantAttendance;
+  attendanceUpdatedAt?: string | null;
+  /** PRD 346 — organizer/admin note, undoable within 7 days. */
+  noShowNotedById?: string | null;
+  noShowNotedAt?: string | null;
   invitedByUserId?: string | null;
   inviteMessage?: string | null;
   inviteExpiresAt?: string | null;
@@ -576,7 +590,13 @@ export interface GameEventHero {
   sortOrder: number;
 }
 
-export interface Game {
+/**
+ * Card enrichment (`userNote`, `weatherSummary`, `reactions` and the six PRD
+ * 345–357 payloads) is inherited from {@link GameCardEnrichment} rather than
+ * restated here, so the wire contract, the client merge and the card memo
+ * signature cannot drift apart. Add new enriched fields there, not here.
+ */
+export interface Game extends GameCardEnrichment {
   id: string;
   entityType: EntityType;
   eventKind?: EventKind | null;
@@ -753,6 +773,35 @@ export interface Game {
   };
   lastMessage?: GameLastMessagePreview | import('@/api/chat').ChatMessage | null;
   userNote?: string | null;
+
+  /* PRD 345–357 columns (CONTRACT §4.1) — all optional, all additive. */
+  /** PRD 345 — the `GameSeries` this occurrence belongs to. */
+  seriesId?: string | null;
+  /** PRD 345 — occurrence date, `YYYY-MM-DD`. Unique together with `seriesId`. */
+  seriesOccurrenceDate?: string | null;
+  /** PRD 347 — seat the first queued player automatically when a spot opens. */
+  autoFillFromQueue?: boolean;
+  /** PRD 349 — owner opt-out from the Live now rail. Default true; private games never show. */
+  showOnLiveRail?: boolean;
+  /** PRD 347 — ISO timestamp of the most recent freed PLAYING seat. */
+  lastSeatOpenedAt?: string | null;
+  /** PRD 348 — who collected the money; defaults to the owner. */
+  costPayerId?: string | null;
+  /** PRD 348 — free-text "how to pay you" (IBAN, Revolut tag …), max 120 chars. */
+  paymentHint?: string | null;
+  /** PRD 348 — set at FINAL; shares stop recomputing from this point. */
+  costFrozenAt?: string | null;
+  /**
+   * PRD 357 — raw alert bookkeeping
+   * (`{ severity, sentAt[], keepAsPlannedAt?, lastEvaluatedAt }`). Render from
+   * `weatherRisk` instead; this column exists so the scheduler state survives.
+   */
+  weatherAlertState?: unknown;
+
+  /* PRD 345–357 enrichment (CONTRACT §5.6) — inherited from
+     `GameCardEnrichment`: spotOpenedAt, liveSummary, weatherRisk, perHeadPrice,
+     seriesLabel, attendanceSummary. */
+
   createdAt: string;
   updatedAt: string;
 }
@@ -960,3 +1009,19 @@ export type AuthSessionRow = {
 };
 
 export type { UserTeam, UserTeamMember, UserTeamMembership, UserTeamMemberStatus } from './userTeam';
+export type {
+  AttendanceSummary,
+  AttendanceSummaryEntry,
+  GameCardEnrichment,
+  GameCardEnrichmentKey,
+  GameSeriesCadence,
+  LiveGameSummary,
+  LiveGameSummarySide,
+  ParticipantAttendance,
+  PerHeadPrice,
+  SeriesCardLabel,
+  SpotOpenedCause,
+  SpotOpenedInfo,
+  WeatherRisk,
+  WeatherRiskSeverity,
+} from './gameCardEnrichment';

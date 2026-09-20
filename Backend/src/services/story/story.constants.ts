@@ -7,6 +7,9 @@ export const MAX_VIDEO_DURATION_MS = 60_000;
 export const QUERY_ROW_CAP = 200;
 
 export const SOURCE_PRIORITY: Record<string, number> = {
+  // PRD 353 — a monthly recap is never deduped against a game (it has no
+  // gameId), but it outranks every game-derived segment if it ever is.
+  MONTHLY_RECAP: 4,
   GAME_PHOTO: 3,
   GAME_RESULT: 2,
   BRACKET_CHAMPION: 2,

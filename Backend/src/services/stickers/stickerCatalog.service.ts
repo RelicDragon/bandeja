@@ -9,6 +9,8 @@ import {
 } from './stickerPrefsNormalize';
 import { sortStickerPacksForSport } from './stickerPackSort';
 import { isPersonalStickerSendableBy, isStickerPackVisibleToUser } from './stickerPackAccess';
+// PRD 355 — packs sold in the shop stay hidden until the viewer owns them.
+import { getLockedStickerPackIdsForUser } from '../shop/shopStickerAccess';
 
 export type StickerPackListItem = {
   id: string;
@@ -158,13 +160,18 @@ export async function listStickerPacks(opts?: {
   sport?: Sport | null;
 }): Promise<StickerPackListItem[]> {
   const userId = opts?.userId;
+  // PRD 355 — a pack behind an active shop item is invisible until it is owned.
+  const lockedPackIds = await getLockedStickerPackIdsForUser(userId);
   const packs = await prisma.stickerPack.findMany({
-    where: userId
-      ? {
-          isActive: true,
-          OR: [{ isOfficial: true, ownerUserId: null }, { ownerUserId: userId }],
-        }
-      : { isActive: true, isOfficial: true, ownerUserId: null },
+    where: {
+      ...(userId
+        ? {
+            isActive: true,
+            OR: [{ isOfficial: true, ownerUserId: null }, { ownerUserId: userId }],
+          }
+        : { isActive: true, isOfficial: true, ownerUserId: null }),
+      ...(lockedPackIds.length ? { id: { notIn: lockedPackIds } } : {}),
+    },
     orderBy: [{ sortOrder: 'asc' }, { title: 'asc' }],
     include: packInclude,
   });
@@ -194,6 +201,10 @@ export async function getStickerPackById(
     throw new ApiError(404, 'Sticker pack not found', true, { code: 'sticker.packNotFound' });
   }
   assertPackVisibleToUser(pack, userId);
+  // PRD 355 — an unowned shop pack reads as "not found", never as a paywall.
+  if ((await getLockedStickerPackIdsForUser(userId)).includes(pack.id)) {
+    throw new ApiError(404, 'Sticker pack not found', true, { code: 'sticker.packNotFound' });
+  }
 
   return {
     pack: mapPackListItem(pack),
@@ -240,6 +251,10 @@ export async function assertSendableSticker(
     throw new ApiError(400, 'Sticker not available', true, { code: 'sticker.unavailable' });
   }
   if (!isPersonalStickerSendableBy(sticker.pack, senderUserId)) {
+    throw new ApiError(400, 'Sticker not available', true, { code: 'sticker.unavailable' });
+  }
+  // PRD 355 — owning the shop item is what unlocks sending, not just seeing.
+  if ((await getLockedStickerPackIdsForUser(senderUserId)).includes(sticker.packId)) {
     throw new ApiError(400, 'Sticker not available', true, { code: 'sticker.unavailable' });
   }
   return { id: sticker.id, emoji: sticker.emoji };

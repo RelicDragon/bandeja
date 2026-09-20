@@ -1,0 +1,69 @@
+{
+  "pairs": {
+    "mode": {
+      "label": "โหมดกระดานอันดับ",
+      "players": "ผู้เล่น",
+      "pairs": "คู่"
+    },
+    "sort": {
+      "label": "เรียงลำดับคู่",
+      "winRate": "อัตราชนะ",
+      "games": "แมตช์",
+      "level": "ระดับ"
+    },
+    "period": {
+      "label": "ช่วงเวลา",
+      "all": "ทั้งหมด",
+      "days30": "30 วันล่าสุด",
+      "days10": "10 วันล่าสุด"
+    },
+    "names": {
+      "spoken": "{{first}} และ {{second}}"
+    },
+    "gamesCount_other": "{{count}} แมตช์",
+    "floorHint_other": "เล่นกับคู่เดิมให้ครบ {{count}} แมตช์เพื่อขึ้นกระดานนี้",
+    "chemistry": {
+      "tooltip": "อัตราชนะเมื่อเล่นด้วยกันเทียบกับเล่นแยกกัน",
+      "aria": "ความเข้าขา {{value}}"
+    },
+    "stats": {
+      "games": "แมตช์",
+      "winRate": "อัตราชนะ",
+      "chemistry": "ความเข้าขา",
+      "chemistryUnknown": "แมตช์เดี่ยวยังไม่พอ"
+    },
+    "aria": {
+      "row": "อันดับ {{rank}}, {{names}}, {{games}}, อัตราชนะ {{winRate}} เปอร์เซ็นต์, ความเข้าขา {{chemistry}}",
+      "rowNoChemistry": "อันดับ {{rank}}, {{names}}, {{games}}, อัตราชนะ {{winRate}} เปอร์เซ็นต์",
+      "podium": "อันดับที่ {{rank}}, {{names}}, อัตราชนะ {{winRate}} เปอร์เซ็นต์, {{games}}",
+      "partner": "{{name}}, {{games}}, อัตราชนะ {{winRate}} เปอร์เซ็นต์"
+    },
+    "scrollToMyPair": "ไปที่คู่ของฉัน ({{rank}})",
+    "loadMore": "โหลดเพิ่ม",
+    "loading": "กำลังโหลดคู่",
+    "error": "โหลดรายชื่อคู่ไม่สำเร็จ ลองอีกครั้ง",
+    "empty": {
+      "title": "ยังไม่มีคู่ติดอันดับ",
+      "action": "หาแมตช์"
+    },
+    "sheet": {
+      "title": "คู่",
+      "recent": "เล่นด้วยกันล่าสุด",
+      "recentEmpty": "ยังไม่มีแมตช์ที่เล่นด้วยกัน",
+      "createTeam": "สร้างทีม",
+      "openTeam": "เปิดทีม",
+      "inviteToGame": "ชวนลงแมตช์"
+    },
+    "recent": {
+      "untitled": "แมตช์"
+    },
+    "result": {
+      "win": "ชนะ",
+      "loss": "แพ้"
+    },
+    "partners": {
+      "title": "คู่ของคุณ",
+      "seeAll": "ดูทั้งหมด"
+    }
+  }
+}

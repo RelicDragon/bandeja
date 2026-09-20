@@ -76,8 +76,53 @@ final class MatchScoringViewModel {
     /// Last generation successfully acknowledged / merged from remote.
     private var ackedScoreGeneration = 0
 
+    /// Local point mutations not yet acknowledged by the server. When a newer remote
+    /// revision lands while these are pending, the remote state is applied and the
+    /// ops are replayed on top of it, so neither writer's points are lost.
+    private enum LocalScoreOp {
+        case score(TeamSide)
+        case unscore(TeamSide)
+        case rallyIncrement(TeamSide)
+        case rallyDecrement(TeamSide)
+    }
+    private var pendingLocalOps: [(generation: Int, op: LocalScoreOp)] = []
+    private var isReplayingLocalOps = false
+    /// Serializes PATCHes: a second save while one is in flight waits (explicit) or defers (background).
+    private var liveSaveInFlightTask: Task<Void, Never>?
+
     private var hasUnackedLocalEdits: Bool {
         localScoreGeneration > ackedScoreGeneration
+    }
+
+    private func recordLocalOp(_ op: LocalScoreOp) {
+        guard !isReplayingLocalOps else { return }
+        pendingLocalOps.append((generation: localScoreGeneration + 1, op: op))
+    }
+
+    private func dropLocalOps(through generation: Int) {
+        pendingLocalOps.removeAll { $0.generation <= generation }
+    }
+
+    private func replayPendingLocalOps() {
+        let ops = pendingLocalOps.map(\.op)
+        pendingLocalOps.removeAll()
+        guard !ops.isEmpty else { return }
+        isReplayingLocalOps = true
+        WatchScoreHaptics.suppressed = true
+        defer {
+            isReplayingLocalOps = false
+            WatchScoreHaptics.suppressed = false
+        }
+        for op in ops {
+            switch op {
+            case .score(let side): scorePoint(side)
+            case .unscore(let side): unscorePoint(side)
+            case .rallyIncrement(.teamA): incrementAmericanoTeamA()
+            case .rallyIncrement(.teamB): incrementAmericanoTeamB()
+            case .rallyDecrement(.teamA): decrementAmericanoTeamA()
+            case .rallyDecrement(.teamB): decrementAmericanoTeamB()
+            }
+        }
     }
 
     var rules: WatchScoringRules { WatchScoringRulebook.rules(for: game) }
@@ -410,7 +455,18 @@ final class MatchScoringViewModel {
                     } ?? false
                     let nro = (m.metadata?.nonRallyOutcome).map { $0.uppercased() } ?? ""
                     let nonRally = nro == "WALKOVER" || nro == "DEFAULT" || nro == "RETIRED"
-                    isReadOnly = (game?.resultsStatus == "FINAL") || !onMatch || nonRally
+                    // Server authorization (`canModifyResults`): owner/admin may score any court,
+                    // `resultsByAnyone` players only their own. Otherwise the board is view-only,
+                    // exactly like the web, instead of failing every PATCH with 403.
+                    let isPlatformAdmin = KeychainHelper.shared.readIsPlatformAdmin()
+                    let mayModify = game.map {
+                        WatchResultsPermissions.canModifyResults(game: $0, userId: currentUserId, isPlatformAdmin: isPlatformAdmin)
+                    } ?? false
+                    let organizer = game.map {
+                        isPlatformAdmin || WatchResultsPermissions.isOwnerOrAdmin(game: $0, userId: currentUserId)
+                    } ?? false
+                    let mayScoreThisMatch = mayModify && (onMatch || organizer)
+                    isReadOnly = (game?.resultsStatus == "FINAL") || !mayScoreThisMatch || nonRally
                     sets = m.sets.sorted { $0.setNumber < $1.setNumber }.map { s in
                         let official = s.resolvedRole == .official
                         return WatchSetWrite(
@@ -561,7 +617,7 @@ final class MatchScoringViewModel {
         }
     }
 
-    private func pollLiveScoringEnvelopeFromServer() async {
+    private func pollLiveScoringEnvelopeFromServer(requireNewer: Bool = true) async {
         guard !isReadOnly, allowsRemoteLiveScoringMerge else { return }
         do {
             let results: WatchResultsGame = try await api.fetch(.gameResults(gameId: gameId))
@@ -569,7 +625,7 @@ final class MatchScoringViewModel {
             for r in results.rounds {
                 if let m = r.matches.first(where: { $0.id == matchId }),
                    let live = m.metadata?.liveScoring, live.isSupported {
-                    applyLiveScoringEnvelopeIfNewer(live)
+                    applyLiveScoringEnvelope(live, force: false, requireNewer: requireNewer)
                     return
                 }
             }
@@ -646,6 +702,7 @@ final class MatchScoringViewModel {
             scorePoint(.teamA)
             return
         }
+        recordLocalOp(.rallyIncrement(.teamA))
         if activeSetIsSupplemental {
             ensureSetExists(activeSetIndex)
             let prev = sets[activeSetIndex].teamA
@@ -675,7 +732,6 @@ final class MatchScoringViewModel {
         let prevA = a
         let na = a + 1
         if !rules.usesRallyPointCap, na + b > maxTotal { return }
-        if rules.usesRallyPointCap, rules.pointRaceCompleted(teamA: na, teamB: b) { return }
         if rules.maxPointsPerTeam > 0, na > rules.maxPointsPerTeam { return }
         a = na
         if a != prevA {
@@ -684,6 +740,7 @@ final class MatchScoringViewModel {
             appendRallyPointWinner(.teamA)
             WatchScoreHaptics.point()
             scheduleLiveScoringSave()
+            applyRallyAutoAdvanceAfterMutation()
         }
     }
 
@@ -694,6 +751,7 @@ final class MatchScoringViewModel {
             unscorePoint(.teamA)
             return
         }
+        recordLocalOp(.rallyDecrement(.teamA))
         if timedClassicSetLocked, !activeSetIsSupplemental { return }
         if activeSetIsSupplemental {
             ensureSetExists(activeSetIndex)
@@ -721,6 +779,7 @@ final class MatchScoringViewModel {
             scorePoint(.teamB)
             return
         }
+        recordLocalOp(.rallyIncrement(.teamB))
         if activeSetIsSupplemental {
             ensureSetExists(activeSetIndex)
             let prev = sets[activeSetIndex].teamB
@@ -750,7 +809,6 @@ final class MatchScoringViewModel {
         let prevB = b
         let nb = b + 1
         if !rules.usesRallyPointCap, a + nb > maxTotal { return }
-        if rules.usesRallyPointCap, rules.pointRaceCompleted(teamA: a, teamB: nb) { return }
         if rules.maxPointsPerTeam > 0, nb > rules.maxPointsPerTeam { return }
         b = nb
         if b != prevB {
@@ -759,6 +817,7 @@ final class MatchScoringViewModel {
             appendRallyPointWinner(.teamB)
             WatchScoreHaptics.point()
             scheduleLiveScoringSave()
+            applyRallyAutoAdvanceAfterMutation()
         }
     }
 
@@ -769,6 +828,7 @@ final class MatchScoringViewModel {
             unscorePoint(.teamB)
             return
         }
+        recordLocalOp(.rallyDecrement(.teamB))
         if timedClassicSetLocked, !activeSetIsSupplemental { return }
         if activeSetIsSupplemental {
             ensureSetExists(activeSetIndex)
@@ -800,6 +860,7 @@ final class MatchScoringViewModel {
         if usesBallCapPerSetUI, !usesAutomaticAmericanoPointsUI { return }
         let engineState = liveScoringEngineState()
         guard WatchLiveScoringEngine.canUnscore(state: engineState, side: side, rules: rules) else { return }
+        recordLocalOp(.unscore(side))
         defer { scheduleLiveScoringSave() }
         if activeSetIsSupplemental {
             ensureSetExists(activeSetIndex)
@@ -886,6 +947,7 @@ final class MatchScoringViewModel {
             state: liveScoringEngineState(),
             rules: rules
         ) {
+            advanceToSet(index: next, superTieBreak: false)
             pendingSetFormatChoiceIndex = next
         } else {
             advanceToSet(index: next, superTieBreak: ruleMandatesSuperTieBreak(nextIndex: next))
@@ -940,11 +1002,26 @@ final class MatchScoringViewModel {
         lockTimedClassicSetAtPartialScore()
     }
 
+    /// Mirrors `freezeTimedClassicSetAtPartialScore` in `core.ts`: no-op when nothing was
+    /// played, already locked, or inside a (super) tie-break; resets the point state to 0:0.
     func lockTimedClassicSetAtPartialScore() {
         guard !isReadOnly else { return }
         guard rules.allowIncompleteRegularSetGames else { return }
         guard usesTennisSetRules, !isAmericano, !activeSetIsSupplemental else { return }
+        guard !timedClassicSetLocked, !withinSetTieBreakMode else { return }
+        guard let row = sets[safe: activeSetIndex], !row.isTieBreak else { return }
+        let hasGameProgress = row.teamA > 0 || row.teamB > 0
+        let hasPointProgress: Bool
+        switch classicPointState {
+        case .regular(let a, let b): hasPointProgress = a != .zero || b != .zero
+        default: hasPointProgress = true
+        }
+        guard hasGameProgress || hasPointProgress else { return }
         timedClassicSetLocked = true
+        classicPointState = .regular(a: .zero, b: .zero)
+        classicPointsPlayedInGame = 0
+        tieBreakA = 0
+        tieBreakB = 0
         scheduleLiveScoringSave()
     }
 
@@ -1065,6 +1142,7 @@ final class MatchScoringViewModel {
         guard !isReadOnly, !isSaving else { return }
         if !activeSetIsSupplemental, blocksFurtherOfficialTaps() { return }
         if usesTennisSetRules, !activeSetIsSupplemental, timedClassicSetLocked { return }
+        recordLocalOp(.score(side))
         defer { scheduleLiveScoringSave() }
         if activeSetIsSupplemental {
             ensureSetExists(activeSetIndex)
@@ -1134,7 +1212,31 @@ final class MatchScoringViewModel {
         )
         applyLiveScoringEngineState(outcome.state)
         if let idx = outcome.pendingOptionalDeciderAtSetIndex {
+            // Parity with `core.ts` `autoAdvanceCompletedSets`: the server steps onto the empty
+            // decider row and gates scoring there, so the PATCHed state must already be on it.
+            advanceToSet(index: idx, superTieBreak: false)
             pendingSetFormatChoiceIndex = idx
+        }
+    }
+
+    /// Rally best-of sets (`isRallyGame`): the backend auto-advances a completed game
+    /// (`core.ts` `autoAdvanceCompletedSets`), so mirror it or the PATCH leaves the graph.
+    private func applyRallyAutoAdvanceAfterMutation() {
+        guard rules.isRallyGame, !activeSetIsSupplemental else { return }
+        var guardCount = 0
+        while guardCount < 8, canAdvanceToNextSet() {
+            guardCount += 1
+            let next = activeSetIndex + 1
+            if WatchLiveScoringEngine.shouldPromptOptionalDeciderBeforeAdvancing(
+                to: next,
+                state: liveScoringEngineState(),
+                rules: rules
+            ) {
+                advanceToSet(index: next, superTieBreak: false)
+                pendingSetFormatChoiceIndex = next
+                return
+            }
+            advanceToSet(index: next, superTieBreak: ruleMandatesSuperTieBreak(nextIndex: next))
         }
     }
 
@@ -1238,27 +1340,52 @@ final class MatchScoringViewModel {
     }
 
     func applyLiveScoringEnvelopeIfNewer(_ envelope: WatchLiveScoringEnvelope?, force: Bool) {
-        guard force || allowsRemoteLiveScoringMerge else { return }
-        guard let envelope, envelope.isSupported, envelope.revision > liveScoringRevision else { return }
+        applyLiveScoringEnvelope(envelope, force: force, requireNewer: true)
+    }
 
-        // Unacked local taps win over remote until we push; never wipe the board mid-rally.
+    /// `requireNewer == false` re-syncs to the server even at the same revision (used after
+    /// the server rejected a PATCH so the board never keeps a state the server refused).
+    private func applyLiveScoringEnvelope(_ envelope: WatchLiveScoringEnvelope?, force: Bool, requireNewer: Bool) {
+        guard force || allowsRemoteLiveScoringMerge else { return }
+        guard let envelope, envelope.isSupported else { return }
+        if requireNewer, envelope.revision <= liveScoringRevision { return }
+
+        // Another writer landed first while local taps are unacknowledged: take the server
+        // state and replay the local taps on top, then push the merged result. Adopting the
+        // revision without the state would let the next PATCH silently overwrite their points.
         if !force, hasUnackedLocalEdits {
-            liveScoringRevision = max(liveScoringRevision, envelope.revision)
-            if liveSaveTask == nil {
+            liveSaveTask?.cancel()
+            liveSaveTask = nil
+            if let state = envelope.state {
+                maybeQueueRemoteWriterAttribution(envelope: envelope)
+                liveScoringRevision = envelope.revision
+                let localOps = pendingLocalOps
+                applyRemoteLiveScoringState(state)
+                pendingLocalOps = localOps
+                replayPendingLocalOps()
+            } else {
+                liveScoringRevision = max(liveScoringRevision, envelope.revision)
+            }
+            if hasUnackedLocalEdits, liveSaveTask == nil {
                 scheduleLiveScoringSave()
             }
             return
         }
 
         guard let state = envelope.state else {
-            liveScoringRevision = envelope.revision
+            liveScoringRevision = max(liveScoringRevision, envelope.revision)
             if force {
                 ackedScoreGeneration = localScoreGeneration
+                pendingLocalOps.removeAll()
             }
             return
         }
         maybeQueueRemoteWriterAttribution(envelope: envelope)
         liveScoringRevision = envelope.revision
+        applyRemoteLiveScoringState(state)
+    }
+
+    private func applyRemoteLiveScoringState(_ state: WatchLiveScoringState) {
 
         sets = state.sets.isEmpty ? [WatchSetWrite(teamA: 0, teamB: 0)] : state.sets
         activeSetIndex = max(0, min(sets.count - 1, state.activeSetIndex))
@@ -1333,6 +1460,7 @@ final class MatchScoringViewModel {
         cacheServeSeedToOfflineStore()
         normalizeLiveSetsAfterDecisionIfNeeded()
         ackedScoreGeneration = localScoreGeneration
+        pendingLocalOps.removeAll()
     }
 
     func dismissRemoteWriterAttribution() {
@@ -1457,7 +1585,12 @@ final class MatchScoringViewModel {
         localScoreGeneration += 1
         liveSaveTask?.cancel()
         liveSaveTask = Task { [weak self] in
-            try? await Task.sleep(nanoseconds: 350_000_000)
+            do {
+                try await Task.sleep(nanoseconds: 350_000_000)
+            } catch {
+                return
+            }
+            guard !Task.isCancelled else { return }
             await self?.saveLiveScoringNow(background: true)
         }
     }
@@ -1465,8 +1598,27 @@ final class MatchScoringViewModel {
     private func saveLiveScoringNow(background: Bool = false, applyEnvelope: Bool = true) async {
         guard !isReadOnly else { return }
         guard !openEndedPresetBlocksLivePatch else { return }
+        if let inFlight = liveSaveInFlightTask {
+            // Background saves piggyback on the in-flight PATCH: its completion reschedules
+            // when the generation moved on. Explicit flushes wait for it, then send.
+            if background { return }
+            await inFlight.value
+        }
+        let task = Task { @MainActor [weak self] in
+            guard let self else { return }
+            await self.performLiveScoringSave(background: background, applyEnvelope: applyEnvelope)
+        }
+        liveSaveInFlightTask = task
+        await task.value
+        if liveSaveInFlightTask == task {
+            liveSaveInFlightTask = nil
+        }
+    }
+
+    private func performLiveScoringSave(background: Bool, applyEnvelope: Bool) async {
         liveSaveTask?.cancel()
         liveSaveTask = nil
+        guard !isReadOnly else { return }
         let generationAtSend = localScoreGeneration
         let body = WatchPatchLiveScoringBody(
             state: makeLiveScoringState(),
@@ -1483,16 +1635,21 @@ final class MatchScoringViewModel {
                     if localScoreGeneration == generationAtSend {
                         applyLiveScoringEnvelopeIfNewer(envelope, force: true)
                         ackedScoreGeneration = generationAtSend
+                        dropLocalOps(through: generationAtSend)
                     } else {
+                        // Server holds exactly what we sent; newer local taps are a superset.
                         liveScoringRevision = max(liveScoringRevision, envelope.revision)
+                        dropLocalOps(through: generationAtSend)
                         scheduleLiveScoringSave()
                     }
                 } else {
                     liveScoringRevision = max(liveScoringRevision, envelope.revision)
                     ackedScoreGeneration = generationAtSend
+                    dropLocalOps(through: generationAtSend)
                 }
             } else {
                 liveScoringRevision = max(liveScoringRevision, response.revision)
+                dropLocalOps(through: generationAtSend)
                 if applyEnvelope, localScoreGeneration != generationAtSend {
                     scheduleLiveScoringSave()
                 } else {
@@ -1506,41 +1663,54 @@ final class MatchScoringViewModel {
             )
         } catch let api as APIError {
             if case .liveScoringRevisionMismatch(_, let serverEnvelope) = api {
-                if applyEnvelope {
-                    if localScoreGeneration == generationAtSend {
-                        if let serverEnvelope {
-                            applyLiveScoringEnvelopeIfNewer(serverEnvelope, force: true)
-                            ackedScoreGeneration = generationAtSend
-                        } else {
-                            await pollLiveScoringEnvelopeFromServer()
-                        }
-                    } else if let serverEnvelope {
-                        liveScoringRevision = max(liveScoringRevision, serverEnvelope.revision)
-                        scheduleLiveScoringSave()
-                    }
-                } else if let serverEnvelope {
+                NetworkDeliveryOutbox.shared.removeLivePatch(matchId: matchId)
+                guard let serverEnvelope else {
+                    if applyEnvelope { await pollLiveScoringEnvelopeFromServer() }
+                    return
+                }
+                if !applyEnvelope {
                     liveScoringRevision = max(liveScoringRevision, serverEnvelope.revision)
                     ackedScoreGeneration = generationAtSend
+                    dropLocalOps(through: generationAtSend)
+                    return
                 }
-                NetworkDeliveryOutbox.shared.removeLivePatch(matchId: matchId)
+                // Server wins for everything up to what we sent; taps made after the send
+                // are replayed on top of the server state and pushed on the new base.
+                dropLocalOps(through: generationAtSend)
+                let newerLocalOps = pendingLocalOps
+                applyLiveScoringEnvelope(serverEnvelope, force: true, requireNewer: false)
+                if !newerLocalOps.isEmpty {
+                    pendingLocalOps = newerLocalOps
+                    replayPendingLocalOps()
+                    if hasUnackedLocalEdits { scheduleLiveScoringSave() }
+                }
                 return
             }
             if APIError.warrantsDeliveryRetry(api) {
                 NetworkDeliveryOutbox.shared.enqueueLivePatch(gameId: gameId, matchId: matchId, body: body)
                 return
             }
-            if !background {
-                self.error = api
-            }
+            await recoverFromRejectedLiveSave(error: api, background: background)
         } catch {
             if APIError.warrantsDeliveryRetry(error) {
                 NetworkDeliveryOutbox.shared.enqueueLivePatch(gameId: gameId, matchId: matchId, body: body)
                 return
             }
-            if !background {
-                self.error = error
-            }
+            await recoverFromRejectedLiveSave(error: error, background: background)
         }
+    }
+
+    /// The server refused the state (400 invalid sets / transition out of graph, 403…). Parity
+    /// with the web (`persistLiveScoring.ts` → refresh): drop the rejected local edits and
+    /// re-sync to the server envelope so remote merges are not blocked forever.
+    private func recoverFromRejectedLiveSave(error: Error, background: Bool) async {
+        NetworkDeliveryOutbox.shared.removeLivePatch(matchId: matchId)
+        pendingLocalOps.removeAll()
+        ackedScoreGeneration = localScoreGeneration
+        if !background {
+            self.error = error
+        }
+        await pollLiveScoringEnvelopeFromServer(requireNewer: false)
     }
 
     private func makeLiveScoringState() -> WatchLiveScoringState {

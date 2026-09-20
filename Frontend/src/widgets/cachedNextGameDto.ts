@@ -1,4 +1,5 @@
 import type { Game } from '@/types';
+import type { ParticipantAttendance } from '@/types/gameCardEnrichment';
 
 export type WidgetUiLanguage = 'en' | 'es' | 'ru' | 'sr' | 'cs';
 
@@ -22,6 +23,12 @@ export interface CachedNextGameDTO {
   maxParticipants: number | null;
   sport: string | null;
   playersPerMatch: number | null;
+  /**
+   * PRD 346 — the viewer's own attendance answer, so the Watch Next Game view
+   * can offer Confirm inside 24 h. `null` when the viewer is not a PLAYING
+   * participant or the card carried no attendance summary. Informative only.
+   */
+  attendance: ParticipantAttendance | null;
 }
 
 export interface NextGamesEnvelope {
@@ -65,6 +72,7 @@ export function mapGameToCachedNextGameDTO(game: Game): CachedNextGameDTO {
     maxParticipants: game.maxParticipants ?? null,
     sport: game.sport ?? null,
     playersPerMatch: game.playersPerMatch ?? null,
+    attendance: game.attendanceSummary?.viewerAttendance ?? null,
   };
 }
 

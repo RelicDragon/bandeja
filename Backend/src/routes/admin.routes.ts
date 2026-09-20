@@ -61,8 +61,12 @@ import {
   importKlikterenCourts,
   getReplicatePhotoModel,
   setReplicatePhotoModel,
+  getPlatformSettings,
+  setPlatformSetting,
 } from '../controllers/admin.controller';
+import { PLATFORM_SETTING_KEY_PATTERN, PLATFORM_SETTING_MAX_VALUE_LENGTH } from '../services/platformSetting.service';
 import * as adminAdController from '../controllers/adminAd.controller';
+import * as adminReferralController from '../controllers/adminReferral.controller';
 import {
   deleteAdminLinkToAppCampaignLabel,
   getAdminLinkToAppCampaignLabels,
@@ -87,6 +91,17 @@ router.patch(
   validate([body('modelId').isString().trim().notEmpty()]),
   setReplicatePhotoModel
 );
+router.get('/platform-settings', requireAdmin, getPlatformSettings);
+router.put(
+  '/platform-settings/:key',
+  requireAdmin,
+  validate([
+    param('key').isString().trim().matches(PLATFORM_SETTING_KEY_PATTERN),
+    body('value').isString().isLength({ max: PLATFORM_SETTING_MAX_VALUE_LENGTH }),
+  ]),
+  setPlatformSetting
+);
+
 router.get('/online-users', requireAdmin, getOnlineUsers);
 
 router.get('/users', requireAdmin, getAllUsers);
@@ -234,6 +249,15 @@ router.delete(
   '/link-to-app/campaign-labels/:utmCampaign',
   requireAdmin,
   deleteAdminLinkToAppCampaignLabel
+);
+
+// PRD 351 — referrals, reported next to the link-to-app campaign tables.
+router.get('/referrals', requireAdmin, adminReferralController.getAdminReferrals);
+router.get('/referrals/export', requireAdmin, adminReferralController.exportAdminReferrals);
+router.post(
+  '/referrals/rewards/:rewardId/revoke',
+  requireAdmin,
+  adminReferralController.revokeAdminReferralReward
 );
 
 export default router;

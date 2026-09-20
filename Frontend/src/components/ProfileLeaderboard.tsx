@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useState, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Search, ChevronDown, X } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import transliterate from '@sindresorhus/transliterate';
 import { rankingApi, LeaderboardEntry } from '@/api/ranking';
 import { Loading } from './Loading';
@@ -30,12 +30,41 @@ import { AdSlot } from '@/components/sponsorSlots';
 import { AD_PLACEMENTS } from '@/shared/adPlacements';
 import { useRegisterAdSportContext } from '@/hooks/useAdPlacements';
 import { AchievementLeaderboard } from '@/components/leaderboard/AchievementLeaderboard';
+import { LeaderboardModeSwitch } from '@/components/pairs/LeaderboardModeSwitch';
+import { PairLeaderboard } from '@/components/pairs/PairLeaderboard';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 
 export const ProfileLeaderboard = () => {
   const leaderboardType = useHeaderStore((state) => state.leaderboardType);
-  return leaderboardType === 'achievements'
-    ? <AchievementLeaderboard />
-    : <StandardLeaderboard />;
+  const leaderboardMode = useHeaderStore((state) => state.leaderboardMode);
+  const prefersReducedMotion = usePrefersReducedMotion();
+
+  const content =
+    leaderboardMode === 'pairs' ? (
+      <PairLeaderboard />
+    ) : leaderboardType === 'achievements' ? (
+      <AchievementLeaderboard />
+    ) : (
+      <StandardLeaderboard />
+    );
+
+  return (
+    <div className="min-w-0 space-y-3">
+      <LeaderboardModeSwitch />
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.div
+          key={leaderboardMode}
+          initial={prefersReducedMotion ? false : { opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
+          transition={{ duration: prefersReducedMotion ? 0 : 0.2 }}
+          className="min-w-0"
+        >
+          {content}
+        </motion.div>
+      </AnimatePresence>
+    </div>
+  );
 };
 
 const StandardLeaderboard = () => {

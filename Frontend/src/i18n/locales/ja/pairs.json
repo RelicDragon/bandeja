@@ -1,0 +1,69 @@
+{
+  "pairs": {
+    "mode": {
+      "label": "ランキング表示",
+      "players": "選手",
+      "pairs": "ペア"
+    },
+    "sort": {
+      "label": "ペアの並び替え",
+      "winRate": "勝率",
+      "games": "試合数",
+      "level": "レベル"
+    },
+    "period": {
+      "label": "期間",
+      "all": "全期間",
+      "days30": "直近30日",
+      "days10": "直近10日"
+    },
+    "names": {
+      "spoken": "{{first}} と {{second}}"
+    },
+    "gamesCount_other": "{{count}} 試合",
+    "floorHint_other": "同じ相手と {{count}} 試合プレーするとここに表示されます。",
+    "chemistry": {
+      "tooltip": "ペアでの勝率と、それぞれ単独の勝率の差",
+      "aria": "相性 {{value}}"
+    },
+    "stats": {
+      "games": "試合数",
+      "winRate": "勝率",
+      "chemistry": "相性",
+      "chemistryUnknown": "単独の試合数がまだ足りません"
+    },
+    "aria": {
+      "row": "{{rank}} 位、{{names}}、{{games}}、勝率 {{winRate}} パーセント、相性 {{chemistry}}",
+      "rowNoChemistry": "{{rank}} 位、{{names}}、{{games}}、勝率 {{winRate}} パーセント",
+      "podium": "{{rank}} 位、{{names}}、勝率 {{winRate}} パーセント、{{games}}",
+      "partner": "{{name}}、{{games}}、勝率 {{winRate}} パーセント"
+    },
+    "scrollToMyPair": "自分のペアへ（{{rank}}）",
+    "loadMore": "もっと見る",
+    "loading": "ペアを読み込んでいます",
+    "error": "ペアを読み込めませんでした。少し経ってからお試しください。",
+    "empty": {
+      "title": "ランクインしたペアはまだありません",
+      "action": "試合を探す"
+    },
+    "sheet": {
+      "title": "ペア",
+      "recent": "最近の共闘",
+      "recentEmpty": "一緒に出た試合はまだありません。",
+      "createTeam": "チームを作る",
+      "openTeam": "チームを開く",
+      "inviteToGame": "試合に誘う"
+    },
+    "recent": {
+      "untitled": "試合"
+    },
+    "result": {
+      "win": "勝ち",
+      "loss": "負け"
+    },
+    "partners": {
+      "title": "あなたのパートナー",
+      "seeAll": "すべて見る"
+    }
+  }
+}

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Copy, Check } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/Dialog';
+import { InviteFriendToGameButton } from '@/components/referral/InviteFriendToGameButton';
 
 interface ShareModalProps {
   isOpen: boolean;
@@ -10,6 +11,12 @@ interface ShareModalProps {
   shareUrl: string;
   dialogTitle?: string;
   modalId?: string;
+  /**
+   * PRD 351 — show "Invite a friend to this game", which shares `shareUrl`
+   * with the viewer's `?ref=CODE` appended. Opt-in, because the same modal is
+   * reused for player profiles, where a referral link makes no sense.
+   */
+  showGameInvite?: boolean;
 }
 
 export const ShareModal = ({
@@ -18,6 +25,7 @@ export const ShareModal = ({
   shareUrl,
   dialogTitle,
   modalId = 'share-modal',
+  showGameInvite = false,
 }: ShareModalProps) => {
   const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
@@ -76,6 +84,12 @@ export const ShareModal = ({
             </button>
           </div>
         </div>
+
+        {showGameInvite && (
+          <div className="mb-4">
+            <InviteFriendToGameButton gameUrl={shareUrl} onShared={onClose} />
+          </div>
+        )}
 
         <DialogFooter className="flex gap-3">
           <button

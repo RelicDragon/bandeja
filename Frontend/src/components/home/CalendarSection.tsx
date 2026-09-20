@@ -1,8 +1,11 @@
+import { memo } from 'react';
 import { MonthCalendar, type MonthCalendarProps } from '@/components/MonthCalendar';
 import { SelectedDateWeatherCard } from '@/components/home/SelectedDateWeatherCard';
 import { SelectedDateAdMessages } from '@/components/home/SelectedDateAdMessages';
 
-export function CalendarSection({
+// Both hosts hand this a memoised props object, so `memo` lets the weather
+// card and ad messages skip the host's unrelated renders, not just the grid.
+export const CalendarSection = memo(function CalendarSection({
   selectedDate,
   collapsed,
   upcomingsToggle,
@@ -25,4 +28,4 @@ export function CalendarSection({
       ) : null}
     </>
   );
-}
+});

@@ -510,6 +510,9 @@ async function loadPageData(page) {
         case 'platform-settings':
             loadPlatformSettingsPage();
             break;
+        case 'goods':
+            loadGoodsPage();
+            break;
         case 'market-categories':
             loadMarketCategories();
             break;
@@ -525,6 +528,9 @@ async function loadPageData(page) {
             break;
         case 'link-to-app':
             loadLinkToAppStats();
+            break;
+        case 'referrals':
+            loadReferralsPage();
             break;
         case 'logs':
             if (!isStreamActive) {

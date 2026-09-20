@@ -52,7 +52,16 @@ export const optionalAuth = async (req: AuthRequest, res: Response, next: NextFu
     req.userId = user.id;
     req.user = user;
     next();
-  } catch {
+  } catch (error) {
+    // A presented-but-expired access token must not silently downgrade the caller to a
+    // guest: private games would 404 and the client would treat the session as gone.
+    // Answer 401 `auth.accessExpired` so the client refreshes and retries; any other
+    // invalid token still falls back to anonymous access.
+    const mapped = mapJwtError(error);
+    if (mapped.data?.code === 'auth.accessExpired') {
+      next(mapped);
+      return;
+    }
     next();
   }
 };

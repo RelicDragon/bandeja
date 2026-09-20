@@ -4,6 +4,7 @@ import { motion, useReducedMotion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import type { LinkPreviewData } from '@/api/linkPreview';
 import { SportPublicIcon } from '@/components/sport/SportPublicIcon';
+import { pressScaleGuard } from '@/components/motion/pressScale';
 import { getSportConfig, type Sport } from '@/sport/sportRegistry';
 import type { ContentVariant } from '../MessageContentBody';
 import {
@@ -220,7 +221,7 @@ export const LinkPreviewCard: React.FC<LinkPreviewCardProps> = ({
   const gameDescriptionLines = isGame ? (visibleDescription ?? '').split('\n') : [];
   const gameClub = gameDescriptionLines[0]?.trim() || null;
   const gameDateTime = gameDescriptionLines.slice(1).join(' ').trim() || null;
-  const cardClassName = `${standalone ? '' : 'mt-1.5'} flex min-h-[68px] max-w-full min-w-0 overflow-hidden rounded-xl border text-start transition-[transform,opacity] active:scale-[0.99] motion-reduce:transform-none motion-reduce:transition-none ${linkPreviewSurfaceClass(variant, standalone)}`;
+  const cardClassName = `${standalone ? '' : 'mt-1.5'} flex min-h-[68px] max-w-full min-w-0 overflow-hidden rounded-xl border text-start transition-[transform,opacity] active:scale-[0.99] ${pressScaleGuard} ${linkPreviewSurfaceClass(variant, standalone)}`;
   const cardBody = (
     <>
       <span

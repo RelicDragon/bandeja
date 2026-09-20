@@ -1,4 +1,5 @@
 import Foundation
+import HealthKit
 
 enum WatchSport: String, Sendable, Codable, CaseIterable {
     case padel = "PADEL"
@@ -14,6 +15,23 @@ enum WatchSport: String, Sendable, Codable, CaseIterable {
             return 4
         case .tennis, .pickleball, .badminton, .tableTennis, .squash:
             return 2
+        }
+    }
+
+    /// HealthKit has no padel activity; tennis is the closest racket-sport analogue
+    /// (`.paddleSports` is canoe/kayak paddling, not padel).
+    nonisolated var hkActivityType: HKWorkoutActivityType {
+        switch self {
+        case .padel, .tennis:
+            return .tennis
+        case .pickleball:
+            return .pickleball
+        case .badminton:
+            return .badminton
+        case .tableTennis:
+            return .tableTennis
+        case .squash:
+            return .squash
         }
     }
 

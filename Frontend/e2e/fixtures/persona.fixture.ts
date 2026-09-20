@@ -32,6 +32,12 @@ export async function registerTestUser(options: {
   genderIsSet?: boolean;
   primarySport?: string;
   skipSportConfirm?: boolean;
+  /**
+   * PRD 350 — leave `User.onboardingCompletedAt` null so `ProtectedRoute` sends
+   * this persona into `/welcome`. Only the first-run spec wants that; every
+   * other spec needs a user who lands on the app itself.
+   */
+  skipOnboardingComplete?: boolean;
 } = {}): Promise<{ token: string; user: E2eUser & Record<string, unknown>; phone: string; password: string }> {
   const phone = options.phone ?? generateE2ePhone();
   const password = options.password ?? 'E2eTest1!';
@@ -61,7 +67,24 @@ export async function registerTestUser(options: {
   const confirmed = options.skipSportConfirm
     ? user
     : await confirmPrimarySportForUser(token, user);
+  if (!options.skipOnboardingComplete) {
+    await completeOnboardingForUser(token);
+  }
   return { token, user: confirmed, phone, password };
+}
+
+/**
+ * PRD 350 — mark the first-run flow as finished.
+ *
+ * A freshly registered account has `onboardingCompletedAt = null`, so the
+ * onboarding gate redirects it to `/welcome` on every route. Personas that are
+ * not testing onboarding itself call this so they land where the spec expects.
+ */
+export async function completeOnboardingForUser(token: string): Promise<void> {
+  await e2eApi(token, '/users/me/onboarding/complete', {
+    method: 'POST',
+    body: JSON.stringify({}),
+  });
 }
 
 export async function updateTestProfile(

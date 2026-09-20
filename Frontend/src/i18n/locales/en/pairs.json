@@ -1,0 +1,71 @@
+{
+  "pairs": {
+    "mode": {
+      "label": "Leaderboard mode",
+      "players": "Players",
+      "pairs": "Pairs"
+    },
+    "sort": {
+      "label": "Sort pairs",
+      "winRate": "Win rate",
+      "games": "Games",
+      "level": "Level"
+    },
+    "period": {
+      "label": "Time range",
+      "all": "All time",
+      "days30": "Last 30 days",
+      "days10": "Last 10 days"
+    },
+    "names": {
+      "spoken": "{{first}} and {{second}}"
+    },
+    "gamesCount_one": "{{count}} game",
+    "gamesCount_other": "{{count}} games",
+    "floorHint_one": "Play {{count}} game with the same partner to appear here.",
+    "floorHint_other": "Play {{count}} games with the same partner to appear here.",
+    "chemistry": {
+      "tooltip": "Win rate together vs. on your own",
+      "aria": "Chemistry {{value}}"
+    },
+    "stats": {
+      "games": "Games",
+      "winRate": "Win rate",
+      "chemistry": "Chemistry",
+      "chemistryUnknown": "Not enough solo games yet"
+    },
+    "aria": {
+      "row": "Rank {{rank}}, {{names}}, {{games}}, {{winRate}} percent win rate, chemistry {{chemistry}}",
+      "rowNoChemistry": "Rank {{rank}}, {{names}}, {{games}}, {{winRate}} percent win rate",
+      "podium": "Number {{rank}}, {{names}}, {{winRate}} percent win rate, {{games}}",
+      "partner": "{{name}}, {{games}}, {{winRate}} percent win rate"
+    },
+    "scrollToMyPair": "Scroll to my pair ({{rank}})",
+    "loadMore": "Load more",
+    "loading": "Loading pairs",
+    "error": "Could not load pairs. Try again in a moment.",
+    "empty": {
+      "title": "No pairs ranked yet",
+      "action": "Find a game"
+    },
+    "sheet": {
+      "title": "Pair",
+      "recent": "Recent together",
+      "recentEmpty": "No shared games yet.",
+      "createTeam": "Create a team",
+      "openTeam": "Open team",
+      "inviteToGame": "Invite to a game"
+    },
+    "recent": {
+      "untitled": "Game"
+    },
+    "result": {
+      "win": "Win",
+      "loss": "Loss"
+    },
+    "partners": {
+      "title": "Your partners",
+      "seeAll": "See all"
+    }
+  }
+}

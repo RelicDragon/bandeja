@@ -30,7 +30,15 @@ final class WorkoutManager: NSObject, HKWorkoutSessionDelegate, HKLiveWorkoutBui
     private static let activeGameIdKey = "bandeja.hk.activeGameId"
 
     var isActive = false
+    /// True when the last start attempt could not obtain workout sharing permission
+    /// (either the prompt was dismissed or sharing was explicitly denied).
     var authDenied = false
+    /// Raw sharing status for `HKObjectType.workoutType()` after the last permission check.
+    private(set) var healthAuthorizationStatus: HKAuthorizationStatus = .notDetermined
+    /// User explicitly refused Health sharing — Retry cannot help, only Settings › Health.
+    var healthAuthorizationDenied: Bool { authDenied && healthAuthorizationStatus == .sharingDenied }
+    /// Prompt was never answered (or dismissed) — Retry re-shows the system prompt.
+    var healthAuthorizationNotDetermined: Bool { authDenied && healthAuthorizationStatus == .notDetermined }
     var sessionState: HKWorkoutSessionState = .notStarted
     var activeCalories: Double = 0
     var heartRate: Double = 0
@@ -79,6 +87,7 @@ final class WorkoutManager: NSObject, HKWorkoutSessionDelegate, HKLiveWorkoutBui
             elapsedSeconds = b.elapsedTime
             isActive = true
             authDenied = false
+            healthAuthorizationStatus = HealthKitPermissions.authorizationStatus(store: healthStore)
         } catch {
             Self.log.error("recoverActiveWorkoutSession failed: \(error.localizedDescription, privacy: .public)")
             if !isActive {
@@ -87,9 +96,13 @@ final class WorkoutManager: NSObject, HKWorkoutSessionDelegate, HKLiveWorkoutBui
         }
     }
 
-    func startIfNeeded(gameId: String, isIndoor: Bool) async {
+    func startIfNeeded(gameId: String, sport: WatchSport, locationType: HKWorkoutSessionLocationType = .unknown) async {
         guard HKHealthStore.isHealthDataAvailable() else { return }
         guard !isStartingWorkout else { return }
+        if !isActive {
+            // Adopt a live OS session (app relaunch / crash) instead of starting a second one.
+            await recoverIfNeeded()
+        }
         if isActive, activeGameId == gameId {
             if let s = session { sessionState = s.state }
             if let b = builder { elapsedSeconds = b.elapsedTime }
@@ -104,19 +117,22 @@ final class WorkoutManager: NSObject, HKWorkoutSessionDelegate, HKLiveWorkoutBui
         do {
             try await HealthKitPermissions.requestAuthorization(store: healthStore)
         } catch {
+            healthAuthorizationStatus = HealthKitPermissions.authorizationStatus(store: healthStore)
             authDenied = true
             return
         }
 
-        if !HealthKitPermissions.isSharingAuthorized(store: healthStore) {
+        healthAuthorizationStatus = HealthKitPermissions.authorizationStatus(store: healthStore)
+        if healthAuthorizationStatus != .sharingAuthorized {
             authDenied = true
             return
         }
         authDenied = false
 
         let config = HKWorkoutConfiguration()
-        config.activityType = .paddleSports
-        config.locationType = isIndoor ? .indoor : .outdoor
+        config.activityType = sport.hkActivityType
+        // The watch has no court data, so never claim indoor/outdoor.
+        config.locationType = locationType
 
         var startedSession: HKWorkoutSession?
         var startedBuilder: HKLiveWorkoutBuilder?
@@ -172,6 +188,19 @@ final class WorkoutManager: NSObject, HKWorkoutSessionDelegate, HKLiveWorkoutBui
         await discardWorkout()
     }
 
+    /// Logout: no workout belongs to a signed-out user. Recover any live OS session first so
+    /// it is ended and discarded rather than left running in the background.
+    func discardAnyActiveWorkout() async {
+        if !isActive {
+            await recoverIfNeeded()
+        }
+        guard isActive else {
+            ud?.removeObject(forKey: Self.activeGameIdKey)
+            return
+        }
+        await discardWorkout()
+    }
+
     /// Idle launch / abandon with no scoring session: upload if we still know the game, else discard.
     func reclaimOrDiscardOrphan() async {
         if !isActive {
@@ -221,7 +250,11 @@ final class WorkoutManager: NSObject, HKWorkoutSessionDelegate, HKLiveWorkoutBui
     /// After results are finalized on the server: save HK workout and upload summary.
     func endSessionUploadAndClear(gameId: String) async {
         guard activeGameId == gameId, isActive, let session, let builder else {
-            ud?.removeObject(forKey: Self.activeGameIdKey)
+            // Only forget the persisted game id when it really refers to this game;
+            // otherwise a live workout for another game would lose its binding.
+            if activeGameId == gameId {
+                ud?.removeObject(forKey: Self.activeGameIdKey)
+            }
             return
         }
 
@@ -270,6 +303,7 @@ final class WorkoutManager: NSObject, HKWorkoutSessionDelegate, HKLiveWorkoutBui
     }
 
     private func uploadSummaryWithRetries(gameId: String, body: WorkoutUploadBody) async {
+        let ownerUserId = KeychainHelper.shared.readUserId()
         let maxAttempts = 3
         for attempt in 1...maxAttempts {
             do {
@@ -294,7 +328,8 @@ final class WorkoutManager: NSObject, HKWorkoutSessionDelegate, HKLiveWorkoutBui
                 endedAt: body.endedAt,
                 source: body.source,
                 healthExternalId: body.healthExternalId,
-                enqueuedAt: Date()
+                enqueuedAt: Date(),
+                ownerUserId: ownerUserId
             )
         )
     }

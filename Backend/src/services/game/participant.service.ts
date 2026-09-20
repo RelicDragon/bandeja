@@ -18,6 +18,7 @@ import {
   GameInviteOutcomeType,
   MatchProposalStatus,
   ParticipantRole,
+  Prisma,
   UserTeamMemberStatus,
 } from '@prisma/client';
 import { BetService } from '../bets/bet.service';
@@ -32,6 +33,7 @@ import {
   publishMatchingGamesChangedForGameId,
 } from '../playIntent/playIntentRealtime';
 import { schedulePendingInviteSlotOpenNotify } from '../invite/pendingInviteSlotOpen.service';
+import { GameSeatService } from '../gameSeat/gameSeat.service';
 import { inboxInviteGameSelect, mapInvitedParticipantToInboxInvite } from '../invite/pendingInviteShape';
 import { assertSlotOverlapConfirmed } from './gameSlotOverlap.service';
 import { consumeLookingIntentOnPlayingJoin } from '../playIntent/playIntentPlayingJoin';
@@ -44,6 +46,37 @@ const PLAYING_STATUS = 'PLAYING' as const;
 const IN_QUEUE_STATUS = 'IN_QUEUE' as const;
 const GUEST_STATUS = 'GUEST' as const;
 const INVITED_STATUS = 'INVITED' as const;
+
+/**
+ * Serialise concurrent seat claims on one game.
+ *
+ * Capacity is a check-then-act: `validatePlayerCanJoinGame` counts the PLAYING
+ * roster and `addOrUpdateParticipant` writes the seat. At Postgres's default
+ * READ COMMITTED, with no DB-level capacity constraint on `GameParticipant`
+ * (only `@@unique([userId, gameId])`), two transactions can both read "3 of 4
+ * taken" and both commit — a 5-player roster in a 4-slot game.
+ *
+ * PRD 347 makes that the *designed* path: when a seat frees up and auto-fill is
+ * off, `dispatchSpotOpenedNotifications` pushes "Join now" to the **whole
+ * queue** at once. Taking the game row first makes the losers queue behind the
+ * winner's commit, re-read the full roster and get the ordinary
+ * `errors.invites.gameFull` refusal instead of a seat.
+ *
+ * House pattern: `gameSeries/gameSeriesCarryOver.service.ts` `acceptSeat`,
+ * `gameTeam.service.ts`, `gamePhoto/gamePhoto.create.service.ts`. Always the
+ * first statement in the transaction, so every seating path takes the same lock
+ * in the same order and cannot deadlock against another seating path.
+ *
+ * Only seat-granting transactions take it. Queue moves, refusals and the
+ * already-PLAYING short-circuit all answer before the transaction opens, so an
+ * ordinary read never waits on it.
+ */
+async function lockGameRowForSeating(
+  tx: Prisma.TransactionClient,
+  gameId: string,
+): Promise<void> {
+  await tx.$executeRaw(Prisma.sql`SELECT id FROM "Game" WHERE id = ${gameId} FOR UPDATE`);
+}
 
 export class ParticipantService {
   static async joinGame(gameId: string, userId: string, confirmOverlap = false) {
@@ -67,19 +100,28 @@ export class ParticipantService {
       },
     });
 
-    if (existingParticipant) {
-      if (existingParticipant.status === PLAYING_STATUS) {
-        throw new ApiError(400, 'Already joined this game as a player');
-      }
-      if (existingParticipant.status === IN_QUEUE_STATUS) {
-        throw new ApiError(400, 'games.alreadyInJoinQueue');
-      }
+    if (existingParticipant?.status === PLAYING_STATUS) {
+      throw new ApiError(400, 'Already joined this game as a player');
     }
+
+    // PRD 347 — the "spot opened" push targets the queue, and its only action is
+    // "Join now" (`/games/:id?join=1`), which lands in this method. A queued
+    // player taking a genuinely free seat must therefore succeed, through the
+    // very same gates as anybody else. The only difference is the queue
+    // book-keeping: there is nothing to move, they are already in the queue.
+    const wasInQueue = existingParticipant?.status === IN_QUEUE_STATUS;
 
     await validateGenderForGame(game, userId);
 
     if (existingParticipant) {
       if (!game.allowDirectJoin) {
+        if (wasInQueue) {
+          // Manual accept is the organizer's call; a queued player may not
+          // promote themselves. `acceptNonPlayingParticipant` is that path.
+          // The roster lock still answers first, so its contract is unchanged.
+          validateGameCanAcceptParticipants(game);
+          throw new ApiError(400, 'spots.queue.waitForOrganizer');
+        }
         return await this.moveExistingParticipantToQueue(gameId, userId);
       }
 
@@ -87,6 +129,11 @@ export class ParticipantService {
       const joinResult = await validatePlayerCanJoinGame(currentGame, userId);
 
       if (!joinResult.canJoin && joinResult.shouldQueue) {
+        if (wasInQueue) {
+          // Already queued — keep the slot untouched and say why the seat is
+          // not theirs, rather than re-announcing the queue join in chat.
+          return joinResult.reason || 'games.alreadyInJoinQueue';
+        }
         await this.moveExistingParticipantToQueue(gameId, userId);
         return joinResult.reason || 'games.addedToJoinQueue';
       }
@@ -98,6 +145,7 @@ export class ParticipantService {
       });
 
       const changedIntentId = await prisma.$transaction(async (tx) => {
+        await lockGameRowForSeating(tx, gameId);
         const gameInTx = await fetchGameWithPlayingParticipants(tx, gameId);
         const txJoinResult = await validatePlayerCanJoinGame(gameInTx, userId);
         if (!txJoinResult.canJoin) {
@@ -159,6 +207,7 @@ export class ParticipantService {
     });
 
     const changedIntentId = await prisma.$transaction(async (tx) => {
+      await lockGameRowForSeating(tx, gameId);
       const currentGame = await fetchGameWithPlayingParticipants(tx, gameId);
       const currentJoinResult = await validatePlayerCanJoinGame(currentGame, userId);
 
@@ -250,6 +299,9 @@ export class ParticipantService {
         .then(({ PlayIntentMatchService }) => PlayIntentMatchService.onPublicGameSlotsOpened(gameId))
         .catch((err) => console.error('Play intent slot-open match failed:', err));
       schedulePendingInviteSlotOpenNotify(gameId, { openedGender: participant.user?.gender });
+      // PRD 347 — a freed PLAYING seat is an event. Fire-and-forget on purpose:
+      // `seatOpened` never throws, and leaving must not wait on notifications.
+      void GameSeatService.seatOpened(gameId, 1, 'LEAVE', { freedByUserId: userId });
       void publishMatchingGamesChangedForGameId(gameId);
       return 'games.leftSuccessfully';
     }
@@ -509,6 +561,8 @@ export class ParticipantService {
     await ParticipantMessageHelper.emitGameUpdate(gameId, userId);
     if (participant.status === PLAYING_STATUS && !isPlaying) {
       schedulePendingInviteSlotOpenNotify(gameId, { openedGender: participant.user?.gender });
+      // PRD 347 — "stop playing" frees the same seat `leaveGame` does.
+      void GameSeatService.seatOpened(gameId, 1, 'LEAVE', { freedByUserId: userId });
     }
     return isPlaying ? 'games.joinedSuccessfully' : 'games.leftSuccessfully';
   }
@@ -642,6 +696,11 @@ export class ParticipantService {
     const queueInviteUserTeamId = participant.inviteUserTeamId ?? null;
 
     const changedIntentId = await prisma.$transaction(async (tx: any) => {
+      // Same seat-claim serialisation as `joinGame`: auto-fill lands here too
+      // (`gameSeat.service.ts` → `acceptNonPlayingParticipant`), so an
+      // organizer accept and a self-join racing for the last seat queue behind
+      // one another instead of both passing the capacity check.
+      await lockGameRowForSeating(tx, gameId);
       const currentGame = await fetchGameWithPlayingParticipants(tx, gameId);
 
       const currentParticipant = await tx.gameParticipant.findFirst({

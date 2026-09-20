@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { gameCardPropsEqual } from './gameCardPropsEqual';
+import { GAME_CARD_ENRICHMENT_KEYS } from '@/types/gameCardEnrichment';
+import type { GameCardEnrichmentKey } from '@/types/gameCardEnrichment';
 import type { Game } from '@/types';
 
 function baseGame(overrides: Partial<Game> = {}): Game {
@@ -214,6 +216,145 @@ describe('gameCardPropsEqual', () => {
       unreadCount: 0,
       ...stableHandlers,
     };
+    expect(gameCardPropsEqual(a, b)).toBe(true);
+  });
+});
+
+/**
+ * Regression for the BLOCKER where `buildGameRenderSignature` omitted every
+ * PRD 345–357 enrichment field: enrichment replaces the game object, so the
+ * `a.game === b.game` fast path cannot fire and an omitted field made the
+ * memoized card silently refuse to repaint.
+ *
+ * The table is keyed by `GameCardEnrichmentKey`, so adding a field to the
+ * shared contract without a case here is a type error.
+ */
+describe('gameCardPropsEqual — PRD 345–357 enrichment', () => {
+  const weatherSummary = (isDay: boolean): Game['weatherSummary'] =>
+    ({
+      temperatureC: 20,
+      temperatureF: 68,
+      weatherCode: 0,
+      conditionKey: 'clear',
+      precipitationProbability: 0,
+      precipitationMm: 0,
+      windSpeedKmh: 3,
+      relativeHumidity: 40,
+      isDay,
+      provider: 'open-meteo',
+      fetchedAt: '2026-05-21T12:00:00.000Z',
+      stale: false,
+    }) as Game['weatherSummary'];
+
+  const liveSummary = (score: string): Game['liveSummary'] =>
+    ({
+      matchId: 'm1',
+      currentSet: 1,
+      sides: [
+        { teamNumber: 1, players: [], setScores: [], currentGameScore: score, leading: true },
+        { teamNumber: 2, players: [], setScores: [], currentGameScore: '0', leading: false },
+      ],
+    }) as Game['liveSummary'];
+
+  const CHANGED: Record<GameCardEnrichmentKey, [Partial<Game>, Partial<Game>]> = {
+    userNote: [{ userNote: null }, { userNote: 'Bring balls' }],
+    weatherSummary: [
+      { weatherSummary: weatherSummary(true) },
+      { weatherSummary: weatherSummary(false) },
+    ],
+    reactions: [{ reactions: [] }, { reactions: [{ userId: 'u1', emoji: '🔥' }] }],
+    spotOpenedAt: [{ spotOpenedAt: null }, { spotOpenedAt: '2026-05-21T16:30:00.000Z' }],
+    liveSummary: [{ liveSummary: liveSummary('30') }, { liveSummary: liveSummary('40') }],
+    weatherRisk: [
+      { weatherRisk: null },
+      { weatherRisk: { severity: 'likely', pop: 70, windKph: 12, at: '2026-05-21T17:00:00.000Z' } },
+    ],
+    perHeadPrice: [
+      {
+        perHeadPrice: {
+          amountCents: 1000,
+          currency: 'EUR',
+          totalCents: 4000,
+          payerCount: 4,
+          estimated: true,
+        },
+      },
+      {
+        perHeadPrice: {
+          amountCents: 1000,
+          currency: 'EUR',
+          totalCents: 4000,
+          payerCount: 4,
+          estimated: false,
+        },
+      },
+    ],
+    seriesLabel: [
+      { seriesLabel: null },
+      {
+        seriesLabel: {
+          seriesId: 's1',
+          name: 'Tuesday Regulars',
+          cadence: 'WEEKLY',
+          weekday: 2,
+          startTimeLocal: '19:00',
+        },
+      },
+    ],
+    attendanceSummary: [
+      {
+        attendanceSummary: {
+          confirmedCount: 1,
+          unsureCount: 0,
+          unansweredCount: 3,
+          playingCount: 4,
+          viewerAttendance: 'UNANSWERED',
+        },
+      },
+      {
+        attendanceSummary: {
+          confirmedCount: 2,
+          unsureCount: 0,
+          unansweredCount: 2,
+          playingCount: 4,
+          viewerAttendance: 'CONFIRMED',
+        },
+      },
+    ],
+  };
+
+  it('has a case for every field of the shared enrichment contract', () => {
+    expect(Object.keys(CHANGED).sort()).toEqual([...GAME_CARD_ENRICHMENT_KEYS].sort());
+  });
+
+  it.each(GAME_CARD_ENRICHMENT_KEYS)('repaints the card when %s changes', (key) => {
+    const [before, after] = CHANGED[key];
+    const props = { game: baseGame(before), user: { id: 'u1' }, unreadCount: 0, ...stableHandlers };
+    const next = { ...props, game: baseGame(after) };
+    expect(gameCardPropsEqual(props, next)).toBe(false);
+  });
+
+  it('repaints the poster card when eventKind changes', () => {
+    const props = {
+      game: baseGame({ entityType: 'EVENT', eventKind: 'TOURNAMENT' }),
+      user: { id: 'u1' },
+      unreadCount: 0,
+      ...stableHandlers,
+    };
+    const next = { ...props, game: baseGame({ entityType: 'EVENT', eventKind: 'CAMP' }) };
+    expect(gameCardPropsEqual(props, next)).toBe(false);
+  });
+
+  it('still treats an unchanged enriched game as equal', () => {
+    const enriched: Partial<Game> = {
+      ...CHANGED.seriesLabel[1],
+      ...CHANGED.weatherRisk[1],
+      ...CHANGED.perHeadPrice[1],
+      ...CHANGED.attendanceSummary[1],
+      ...CHANGED.spotOpenedAt[1],
+    };
+    const a = { game: baseGame(enriched), user: { id: 'u1' }, unreadCount: 0, ...stableHandlers };
+    const b = { ...a, game: baseGame(enriched) };
     expect(gameCardPropsEqual(a, b)).toBe(true);
   });
 });

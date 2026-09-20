@@ -84,6 +84,10 @@ import {
   computeIsWinForStreak,
   findLeaderboardLastPlace,
 } from './winLossStreakResult';
+import { onGameFinalizedForAttendance } from '../gameAttendance/gameAttendance.service';
+import { refreshPairStatsForGame } from '../pairStat/pairStat.service';
+import { onGameFinalizedForReferral } from '../referral/referralReward.service';
+import { onGameFinalizedForCost } from '../gameCost/onGameFinalizedForCost';
 
 async function rebuildLeagueSeasonStandingsIfNeeded(
   gameId: string,
@@ -1058,6 +1062,30 @@ export async function recalculateGameOutcomes(
 
   await cancelAllMatchTimersForGame(gameId);
 
+  // PRD 346 — informational attendance counters. Post-commit on purpose: they
+  // are a cache of a derivable query and must never be able to fail, slow down
+  // or roll back finalization. Nothing here touches rating or level.
+  await onGameFinalizedForAttendance(gameId);
+
+  // PRD 352 — materialized pair stats. Post-commit for the same reason: they
+  // are a cache of a derivable query, they recompute (never increment) so a
+  // repeat call is a no-op, and they must never be able to roll back a result.
+  await refreshPairStatsForGame(gameId);
+
+  // PRD 351 — referral payout on the referred player's first finished game.
+  // Post-commit and never inside the transaction: it moves coins through
+  // `TransactionService`, which writes `User.wallet` rows belonging to people
+  // who are not in this game. Idempotency does not depend on being called once
+  // — `ReferralReward.referredUserId` is unique and the row is claimed before
+  // any coin moves — so a recalculation of an already-final result is a no-op.
+  await onGameFinalizedForReferral(gameId);
+
+  // PRD 348 — freeze the cost ledger now that the result is final, so
+  // `Game.costFrozenAt` really is the FINAL timestamp the automatic settle
+  // reminder counts its 24 h from, instead of whenever the hourly sweep
+  // happened to notice. Post-commit and never able to roll back a result.
+  await onGameFinalizedForCost(gameId);
+
   await attemptBetResolutionAfterOutcomesRecalc(gameId, result.shouldResolveBets);
 
   const bracketCreatedGameIds = result.bracketCreatedGameIds ?? [];
@@ -1080,6 +1108,22 @@ export async function recalculateGameOutcomes(
     resultsSenderService.sendGameFinished(gameId, wasEdited).catch((error: unknown) => {
       console.error(`Failed to send game finished notifications for game ${gameId}:`, error);
     });
+  });
+
+  // PRD 345 — "Same time next week?" for a series occurrence. Post-commit and
+  // deferred on purpose: it creates the next occurrence through the normal
+  // create path and sends notifications, neither of which belongs inside the
+  // outcomes transaction. It re-reads `resultsStatus` itself and no-ops unless
+  // the game is FINAL and part of an ACTIVE series, so an edit of an already
+  // final result cannot re-prompt anyone who is seated already.
+  setImmediate(() => {
+    void import('../gameSeries/gameSeriesCarryOver.service')
+      .then(({ GameSeriesCarryOverService }) =>
+        GameSeriesCarryOverService.onOccurrenceFinalized(gameId),
+      )
+      .catch((error: unknown) => {
+        console.error(`[GameSeries] carry-over prompt failed for game ${gameId}:`, error);
+      });
   });
 
   return result.game;

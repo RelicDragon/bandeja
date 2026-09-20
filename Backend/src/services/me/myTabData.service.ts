@@ -240,13 +240,14 @@ export class MyTabDataService {
       userId,
       club: { isActive: true },
     };
-    const [booktimeCount, padelooCount, klikterenCount] = await Promise.all([
+    const [booktimeCount, padelooCount, klikterenCount, weltnerCount] = await Promise.all([
       prisma.userClubBooktimeAuth.count({ where: activeClubFilter }),
       prisma.userClubPadelooAuth.count({ where: activeClubFilter }),
       prisma.userClubKlikterenAuth.count({ where: activeClubFilter }),
+      prisma.userClubWeltnerAuth.count({ where: activeClubFilter }),
     ]);
 
-    return booktimeCount > 0 || padelooCount > 0 || klikterenCount > 0;
+    return booktimeCount > 0 || padelooCount > 0 || klikterenCount > 0 || weltnerCount > 0;
   }
 
   /** Same game visibility window as GameReadService.getMyGames. */

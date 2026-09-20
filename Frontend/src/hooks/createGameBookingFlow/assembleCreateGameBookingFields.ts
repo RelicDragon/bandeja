@@ -71,7 +71,7 @@ export function assembleCreateGameBookingFields(
       input.hasBookedCourt,
     externalBookingIds,
     externalBookingProvider: externalBookingIds?.length
-      ? input.integrationType === 'PADELOO'
+      ? input.integrationType === 'WELTNER' ? 'WELTNER' : input.integrationType === 'PADELOO'
         ? 'PADELOO'
         : input.integrationType === 'KLIKTEREN'
           ? 'KLIKTEREN'

@@ -5,6 +5,7 @@ import { Button } from '@/components';
 import { useIsLandscape } from '@/hooks/useIsLandscape';
 import { useNavigateWithTracking } from '@/hooks/useNavigateWithTracking';
 import { useGameDetailsChromeStore } from '@/components/GameDetails/gameDetailsChromeStore';
+import { useShallow } from 'zustand/react/shallow';
 
 interface GameDetailsHeaderContentProps {
   canAccessChat: boolean;
@@ -21,7 +22,15 @@ export const GameDetailsHeaderContent = ({ canAccessChat }: GameDetailsHeaderCon
     setGameDetailsTableViewOverride,
     gameDetailsTableAddRoundCallback,
     gameDetailsTableIsEditing,
-  } = useGameDetailsChromeStore();
+  } = useGameDetailsChromeStore(
+    useShallow((s) => ({
+      gameDetailsCanShowTableView: s.gameDetailsCanShowTableView,
+      gameDetailsTableViewOverride: s.gameDetailsTableViewOverride,
+      setGameDetailsTableViewOverride: s.setGameDetailsTableViewOverride,
+      gameDetailsTableAddRoundCallback: s.gameDetailsTableAddRoundCallback,
+      gameDetailsTableIsEditing: s.gameDetailsTableIsEditing,
+    })),
+  );
   const effectiveTableView = gameDetailsTableViewOverride ?? isLandscape;
 
   const handleChatClick = () => {

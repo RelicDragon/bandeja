@@ -57,8 +57,11 @@ import {
   CalendarPlus,
   Plane,
   UserPlus,
+  ChevronRight,
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { buildClubPath } from '@/deepLinks/catalog';
 import { useTranslatedGeo } from '@/hooks/useTranslatedGeo';
 import toast from 'react-hot-toast';
 import 'bootstrap-icons/font/bootstrap-icons.css';
@@ -105,6 +108,8 @@ export const GameInfo = ({
   const displayDescription = localized.description;
   const hasAuthoredDescription = Boolean(game.description?.trim() || displayDescription?.trim());
   const clubTz = getClubTimezone(game);
+  // PRD 354 — the club name links out to the public club page.
+  const clubPageId = game.court?.club?.id ?? game.club?.id ?? null;
   const {
     hasLinkedBookings,
     showPublicCoverageBadge,
@@ -977,6 +982,16 @@ export const GameInfo = ({
                   ) : (
                     <p className="font-medium">{game.court?.club?.name || game.club?.name}</p>
                   )}
+                  {clubPageId ? (
+                    <Link
+                      to={buildClubPath(clubPageId)}
+                      aria-label={t('clubPage.openClubPage')}
+                      title={t('clubPage.openClubPage')}
+                      className="flex h-11 w-11 -my-3 items-center justify-center rounded-lg text-gray-400 transition-colors hover:text-primary-600 dark:hover:text-primary-400"
+                    >
+                      <ChevronRight size={18} className="rtl:rotate-180" aria-hidden />
+                    </Link>
+                  ) : null}
                   <button
                     onClick={onToggleFavorite}
                     className="group p-2 pb-0 pt-0 rounded-lg transition-transform duration-200 hover:scale-110 active:scale-90"
@@ -1238,6 +1253,7 @@ export const GameInfo = ({
         isOpen={showShareModal}
         onClose={() => setShowShareModal(false)}
         shareUrl={shareData.url}
+        showGameInvite
       />
       {calendarEvent && (
         <AddToCalendarModal

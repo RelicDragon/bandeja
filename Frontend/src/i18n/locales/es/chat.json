@@ -302,7 +302,12 @@
         "EXTERNAL_PARTIAL": "No completamente reservado",
         "MANUAL": "Pista reservada",
         "NONE": "Aún no reservado"
-      }
+      },
+      "ATTENDANCE_NUDGED": "{{userName}} pidió a todos que confirmen su asistencia",
+      "USER_NOTED_NO_SHOW": "{{userName}} fue marcado como ausente",
+      "GAME_SPOT_OPENED": "Se liberó una plaza ({{userName}} salió)",
+      "GAME_SEAT_AUTO_FILLED": "{{userName}} entró desde la cola",
+      "GAME_MOVED_INDOOR": "Movido a {{courtName}} (cubierta)"
     },
     "openChat": "Abrir Chat",
     "chat": "Chat",

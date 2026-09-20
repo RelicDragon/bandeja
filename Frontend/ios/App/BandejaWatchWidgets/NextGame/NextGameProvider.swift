@@ -12,19 +12,29 @@ struct NextGameProvider: TimelineProvider {
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<NextGameEntry>) -> Void) {
         let now = Date.now
-        let entry = makeEntry(reference: now)
-        let defaultRefresh = now.addingTimeInterval(30 * 60)
-        let refresh: Date
-        if let game = entry.game, game.startTime > now {
-            refresh = min(game.startTime, defaultRefresh)
-        } else {
-            refresh = defaultRefresh
+        let dates = Self.entryDates(now: now, games: WidgetGameCache.read())
+        let entries = dates.map { makeEntry(reference: $0) }
+        completion(Timeline(entries: entries, policy: .after(now.addingTimeInterval(30 * 60))))
+    }
+
+    /// Countdown text is live (`Text(date, style: .relative)`), so entries are only needed
+    /// where the *picked game* or its static state flips: at start ("Now") and one hour later
+    /// ("Ended" / next game). Kept small so WidgetKit's budget is not burned on 5-minute ticks.
+    static func entryDates(now: Date, games: [CachedNextGame]) -> [Date] {
+        var dates: [Date] = [now]
+        guard let game = NextGamePicker.pickNextDisplayable(from: games, reference: now) else { return dates }
+        if game.startTime > now {
+            dates.append(game.startTime)
         }
-        completion(Timeline(entries: [entry], policy: .after(refresh)))
+        let ended = game.startTime.addingTimeInterval(3600)
+        if ended > now {
+            dates.append(ended)
+        }
+        return dates
     }
 
     private func makeEntry(reference: Date) -> NextGameEntry {
-        let isAuth = WidgetKeychain.readToken() != nil
+        let isAuth = NextGamesCache.isAuthenticated()
         let game = WidgetGameCache.nextDisplayableGame(reference: reference)
         return NextGameEntry(date: reference, game: game, isAuthenticated: isAuth)
     }

@@ -21,7 +21,7 @@
       "basedOn": "Basado en {{count}} evaluaciones anónimas de {{games}} partidos recientes",
       "players": "Jugadores",
       "verdict": { "HIGHER": "Más alto que el mostrado", "ABOUT_RIGHT": "Adecuado", "LOWER": "Más bajo que el mostrado" },
-      "disclaimer": "La opinión de otros jugadores es una señal de la comunidad. No establece ni modifica la puntuación oficial."
+      "disclaimer": "Las respuestas individuales son anónimas. Este resumen es una señal de la comunidad: no establece ni modifica la puntuación oficial."
     },
     "isTrainer": "Entrenador",
     "currentLevel": "Nivel Actual",
@@ -71,7 +71,7 @@
     "userBlockedCannotChat": "Usuario bloqueado",
     "userBlockedCannotFavorite": "Usuario bloqueado",
     "confirmedBy": "Nivel confirmado",
-    "levelNotConfirmed": "El nivel no está confirmado",
+    "confirmedAtLevel": "en el nivel {{level}}",
     "openFullProfile": "Pantalla completa",
     "shareProfileTitle": "Share profile",
     "inviteAsTrainer": "Invite as trainer",

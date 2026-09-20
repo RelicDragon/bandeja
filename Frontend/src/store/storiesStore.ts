@@ -58,6 +58,9 @@ function segmentPreviewThumbnailUrl(segment: StorySegment): string | null {
   if ('game' in segment) {
     return segment.game.mainPhoto?.thumbnailUrl ?? segment.game.avatar ?? null;
   }
+  // PRD 353 — a recap slide is drawn, not photographed, so the owner's avatar
+  // is the only preview it has.
+  if (segment.sourceType === 'MONTHLY_RECAP') return segment.recap.owner.avatar;
   return null;
 }
 

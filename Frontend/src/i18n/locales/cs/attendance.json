@@ -1,0 +1,69 @@
+{
+  "attendance": {
+    "question": "Přijdeš?",
+    "confirm": "Přijdu",
+    "unsure": "Zatím nevím",
+    "change": "Změnit",
+    "confirmedState": "Účast máš potvrzenou",
+    "unsureState": "Zatím nevíš",
+    "caption": "Jen aby to organizátor věděl. Místo ti zůstává tak jako tak.",
+    "cantMakeIt": "Nemůžeš přijít vůbec?",
+    "confirmedToast": "Účast potvrzena 👍",
+    "unsureToast": "Poznamenáno. Potvrdit můžeš později.",
+    "saving": "Ukládáme…",
+    "queuedOffline": "Uloženo. Synchronizujeme, až budeš zase online.",
+    "youOrganizer": "Ty (organizátor)",
+    "dots": {
+      "confirmed": "Potvrzeno",
+      "unanswered": "Zatím bez odpovědi",
+      "unsure": "Zatím neví",
+      "noShow": "Označeno jako neúčast"
+    },
+    "legend": {
+      "title": "Co znamenají tečky",
+      "hint": "Zelená znamená potvrzeno, šedá bez odpovědi, oranžová nejisté."
+    },
+    "organizer": {
+      "progress": "Potvrdilo {{confirmed}} z {{total}}",
+      "nudge": "Připomenout",
+      "nudgeCooldown": "Znovu připomenout za {{hours}} h",
+      "nudgeSent": "Připomínka odeslána",
+      "legendCaption": "Zelená: potvrzeno. Šedá: bez odpovědi. Oranžová: nejisté."
+    },
+    "noShow": {
+      "action": "Označit neúčast",
+      "undoAction": "Zrušit označení neúčasti",
+      "dialogTitle": "Označit hráče {{name}} jako neúčast?",
+      "dialogBody": "Dostane přátelské upozornění a může odpovědět v chatu. Do 7 dnů to můžeš kdykoli vrátit.",
+      "confirm": "Označit neúčast",
+      "cancel": "Zrušit",
+      "noted": "Označeno",
+      "undo": "Vrátit",
+      "undone": "Označení neúčasti bylo zrušeno",
+      "tag": "Nedorazil"
+    },
+    "stat": {
+      "label": "Dorazí",
+      "tooltip": "Zápasy potvrzené a odehrané za posledních 12 měsíců.",
+      "gaugeLabel": "Účast na {{rate}} procentech zápasů",
+      "sparklineTitle": "Posledních 12 měsíců",
+      "sparklineLegend": "dorazil / chyběl",
+      "sparklineMonthAria": "{{month}} — dorazil: {{attended}}, chyběl: {{noShow}}",
+      "notesTitle": "Tvá označení neúčasti",
+      "notesEmpty": "Žádná označení neúčasti.",
+      "notesOpenChat": "Otevřít chat",
+      "notedOn": "Označeno {{date}}"
+    },
+    "card": {
+      "ariaSummary": "Potvrdilo {{confirmed}} z {{total}} hráčů"
+    },
+    "errors": {
+      "generic": "Tvou odpověď se nepodařilo uložit",
+      "notParticipant": "Odpovídat mohou jen hráči tohoto zápasu",
+      "answersClosed": "Potvrzování účasti je pro tento zápas uzavřené",
+      "noShowWindowClosed": "Lhůta pro označení neúčasti vypršela",
+      "nudgeCooldown": "Nedávno jsi připomínal. Zkus to později.",
+      "nothingToNudge": "Všichni už odpověděli"
+    }
+  }
+}

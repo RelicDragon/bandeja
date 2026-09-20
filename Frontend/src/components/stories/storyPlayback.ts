@@ -17,6 +17,10 @@ export function storySegmentSlideVersion(segment: StorySegment): string {
       return `${base}|${segment.game.id}`;
     case 'BRACKET_CHAMPION':
       return `${base}|${segment.bracket.leagueSeasonId}|${segment.bracket.leagueRoundId}`;
+    // PRD 353 — month + slide is the whole identity of a recap slide. Nothing
+    // from `engagement`/`viewed` may leak in here.
+    case 'MONTHLY_RECAP':
+      return `${base}|${segment.recap.monthKey}|${segment.recap.slideKey}`;
     default:
       return base;
   }

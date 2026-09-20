@@ -12,6 +12,10 @@ public struct CachedNextGame: Codable, Sendable, Identifiable, Hashable {
     public let maxParticipants: Int?
     public let sport: String?
     public let playersPerMatch: Int?
+    /// PRD 346 — the viewer's own attendance answer (`UNANSWERED` / `CONFIRMED` /
+    /// `UNSURE`), or `nil` when the game carried no attendance summary.
+    /// Informative only: it never affects the seat shown on the watch.
+    public let attendance: String?
 
     public init(
         id: String,
@@ -24,7 +28,8 @@ public struct CachedNextGame: Codable, Sendable, Identifiable, Hashable {
         participantCount: Int,
         maxParticipants: Int?,
         sport: String? = nil,
-        playersPerMatch: Int? = nil
+        playersPerMatch: Int? = nil,
+        attendance: String? = nil
     ) {
         self.id = id
         self.title = title
@@ -37,5 +42,6 @@ public struct CachedNextGame: Codable, Sendable, Identifiable, Hashable {
         self.maxParticipants = maxParticipants
         self.sport = sport
         self.playersPerMatch = playersPerMatch
+        self.attendance = attendance
     }
 }

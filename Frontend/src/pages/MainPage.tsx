@@ -20,6 +20,9 @@ import { MarketplaceItemRedirect } from './MarketplaceItemRedirect';
 import { CreateMarketItem } from './CreateMarketItem';
 import { UserTeamPage } from './UserTeamPage';
 import { UserProfilePage } from './UserProfilePage';
+import { ClubPage } from './ClubPage';
+import { ShopPage } from './ShopPage';
+import { SeriesPage } from './SeriesPage';
 import { useAuthStore } from '@/store/authStore';
 import { hasEnabledSports } from '@/utils/profileSports';
 import { isMainTabRootPath, scrollAppToTop } from '@/utils/appScroll';
@@ -89,7 +92,10 @@ export const MainPage = () => {
     parsed.place === 'home' ||
     parsed.place === 'find' ||
     parsed.place === 'userProfile' ||
-    parsed.place === 'leaderboard';
+    parsed.place === 'leaderboard' ||
+    // PRD 354 — the club page is a long scrolling destination with a sticky
+    // header; the default `overflow-hidden` shell would clip it.
+    parsed.place === 'club';
   const isTeamsPage = parsed.place === 'userTeam';
 
   const renderContent = useMemo(() => {
@@ -110,6 +116,12 @@ export const MainPage = () => {
         return <UserTeamPage />;
       case 'userProfile':
         return <UserProfilePage />;
+      case 'club':
+        return <ClubPage />;
+      case 'shop':
+        return <ShopPage />;
+      case 'series':
+        return <SeriesPage />;
       default:
         if (isChatShellPlace(parsed.place)) {
           return <ChatsTab />;

@@ -1,0 +1,69 @@
+{
+  "attendance": {
+    "question": "你会来吗？",
+    "confirm": "我会来",
+    "unsure": "还不确定",
+    "change": "修改",
+    "confirmedState": "你已确认出席",
+    "unsureState": "你还不确定",
+    "caption": "只是让组织者心里有数。无论如何，你的位置都保留。",
+    "cantMakeIt": "完全来不了？",
+    "confirmedToast": "已确认出席 👍",
+    "unsureToast": "已记录，稍后也可以确认。",
+    "saving": "保存中…",
+    "queuedOffline": "已保存，恢复联网后会同步。",
+    "youOrganizer": "你（组织者）",
+    "dots": {
+      "confirmed": "已确认",
+      "unanswered": "尚未回复",
+      "unsure": "还不确定",
+      "noShow": "被记为未到场"
+    },
+    "legend": {
+      "title": "圆点的含义",
+      "hint": "绿色表示已确认，灰色表示尚未回复，琥珀色表示还不确定。"
+    },
+    "organizer": {
+      "progress": "{{total}} 人中有 {{confirmed}} 人已确认",
+      "nudge": "提醒",
+      "nudgeCooldown": "{{hours}} 小时后可再次提醒",
+      "nudgeSent": "提醒已发送",
+      "legendCaption": "绿色：已确认。灰色：未回复。琥珀色：不确定。"
+    },
+    "noShow": {
+      "action": "记为未到场",
+      "undoAction": "取消未到场记录",
+      "dialogTitle": "把 {{name}} 记为未到场？",
+      "dialogBody": "对方会收到一条友好的提示，并可以在聊天中回复。7 天内随时可以撤销。",
+      "confirm": "记为未到场",
+      "cancel": "取消",
+      "noted": "已记录",
+      "undo": "撤销",
+      "undone": "未到场记录已取消",
+      "tag": "未到场"
+    },
+    "stat": {
+      "label": "出席率",
+      "tooltip": "过去 12 个月中确认并出席的比赛。",
+      "gaugeLabel": "出席了 {{rate}} 百分比的比赛",
+      "sparklineTitle": "最近 12 个月",
+      "sparklineLegend": "出席 / 缺席",
+      "sparklineMonthAria": "{{month}} — 出席：{{attended}}，缺席：{{noShow}}",
+      "notesTitle": "你的未到场记录",
+      "notesEmpty": "没有未到场记录。",
+      "notesOpenChat": "打开聊天",
+      "notedOn": "记录于 {{date}}"
+    },
+    "card": {
+      "ariaSummary": "{{total}} 名球员中有 {{confirmed}} 人已确认"
+    },
+    "errors": {
+      "generic": "无法保存你的回答",
+      "notParticipant": "只有本场比赛的球员可以回答",
+      "answersClosed": "该比赛的出席确认已关闭",
+      "noShowWindowClosed": "未到场标记的期限已过",
+      "nudgeCooldown": "你刚刚提醒过，请稍后再试。",
+      "nothingToNudge": "所有人都已回答"
+    }
+  }
+}

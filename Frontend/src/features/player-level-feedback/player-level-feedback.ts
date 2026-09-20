@@ -3,13 +3,6 @@ import type { GameLevelEvaluationPlayer, GameLevelEvaluations } from '@/api/resu
 
 const LOAD_RETRY_DELAYS_MS = [250, 750] as const;
 
-export function isPlayerLevelFeedbackEnabled(
-  rawValue: unknown = import.meta.env.VITE_PLAYER_LEVEL_FEEDBACK_ENABLED,
-): boolean {
-  if (typeof rawValue !== 'string') return true;
-  return !['0', 'false', 'off'].includes(rawValue.trim().toLowerCase());
-}
-
 export function findNextUnansweredIndex(
   players: GameLevelEvaluationPlayer[],
   currentIndex: number,

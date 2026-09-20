@@ -1,0 +1,73 @@
+{
+  "clubPage": {
+    "share": "分享俱乐部",
+    "shareTitle": "分享这家俱乐部",
+    "signIn": "登录",
+    "favoriteFailed": "收藏更新失败，请重试。",
+    "openClubPage": "打开俱乐部页面",
+    "openClubPageNamed": "打开 {{club}} 的俱乐部页面",
+    "rating": {
+      "none": "暂无评价",
+      "summary_other": "{{rating}} · {{countText}} 条评价"
+    },
+    "gallery": {
+      "roleDescription": "照片库",
+      "label": "{{club}} 的照片",
+      "slideRole": "照片",
+      "slide": "第 {{current}} 张，共 {{total}} 张"
+    },
+    "notFound": {
+      "title": "该俱乐部不可用",
+      "description": "链接可能已过期，或该俱乐部已下架。",
+      "browse": "浏览俱乐部"
+    },
+    "actions": {
+      "create": "在这里创建球局",
+      "book": "预订",
+      "directions": "导航",
+      "manage": "管理"
+    },
+    "today": {
+      "title": "今日概览",
+      "updated": "更新于{{relative}}",
+      "updatedJustNow": "刚刚更新",
+      "courtLabel": "{{court}}，今天 {{total}} 小时中有 {{free}} 小时空闲",
+      "freeHours_other": "空闲 {{count}} 小时",
+      "windowHint": "显示 {{open}} 至 {{close}}",
+      "legendFree": "空闲",
+      "legendBusy": "已占用"
+    },
+    "games": {
+      "title": "即将开始的球局",
+      "seeAll": "在“查找”中查看全部",
+      "emptyTitle": "暂无公开球局",
+      "emptyDescription": "来做第一个在这里发起球局的人吧。"
+    },
+    "courts": {
+      "title": "球场",
+      "indoor": "室内",
+      "outdoor": "室外"
+    },
+    "info": {
+      "title": "俱乐部信息",
+      "hoursRange": "营业时间 {{open}} – {{close}}",
+      "hoursEveryDay": "每天营业时间相同",
+      "cancellationPolicy": "取消政策",
+      "cancellationNotice_other": "请至少提前 {{count}} 小时取消。"
+    },
+    "regulars": {
+      "title": "常来的球友",
+      "open": "打开 {{name}} 的球员卡",
+      "unnamed": "这位球友"
+    },
+    "reviews": {
+      "title": "评价",
+      "guestTitle": "登录后可撰写评价",
+      "guestDescription": "评价来自在这家俱乐部打过球的球友。"
+    },
+    "error": {
+      "title": "无法加载该俱乐部",
+      "description": "请检查网络连接后重试。"
+    }
+  }
+}

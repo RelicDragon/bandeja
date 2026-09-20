@@ -238,6 +238,40 @@ enum ServeGuideSportRules {
         serverScore % 2 == 0 ? .rightDeuce : .leftAd
     }
 
+    /// WSF rally scoring: winner of the last rally serves next (`squashNextServerTeam` in `squashServe.ts`).
+    static func squashNextServerTeam(
+        pointWinnerLog: [TeamSide],
+        firstForSet: TeamSide
+    ) -> TeamSide {
+        pointWinnerLog.last ?? firstForSet
+    }
+
+    /// ITTF deuce band starts at 10–10 (`DEUCE_MIN` in `tableTennisServeGuide.ts`).
+    static let tableTennisDeuceMin = 10
+
+    static func tableTennisInDeuce(teamA: Int, teamB: Int) -> Bool {
+        teamA >= tableTennisDeuceMin && teamB >= tableTennisDeuceMin
+    }
+
+    /// `tableTennisNextServerTeam`: tie-break style two-point rotation until 10–10, then alternate
+    /// every point starting from whoever the rotation put at point 20.
+    static func tableTennisNextServerTeam(
+        firstForSet: TeamSide,
+        pointIndex: Int,
+        teamA: Int,
+        teamB: Int
+    ) -> TeamSide {
+        if !tableTennisInDeuce(teamA: teamA, teamB: teamB) {
+            return ServeGuideEngine.tbNextServerTeam(firstTBTeam: firstForSet, pointIndex: pointIndex)
+        }
+        let deuceStart = ServeGuideEngine.tbNextServerTeam(
+            firstTBTeam: firstForSet,
+            pointIndex: tableTennisDeuceMin * 2
+        )
+        let offset = pointIndex - tableTennisDeuceMin * 2
+        return offset % 2 == 0 ? deuceStart : ServeGuideEngine.otherTeam(deuceStart)
+    }
+
     /// PAR: change ends when a player reaches 11, except at 11–10.
     static func squashChangeEnds(teamA: Int, teamB: Int) -> Bool {
         let maxScore = max(teamA, teamB)

@@ -312,7 +312,12 @@
         "EXTERNAL_PARTIAL": "غير محجوز بالكامل",
         "MANUAL": "الملعب محجوز",
         "NONE": "لم يُحجز بعد"
-      }
+      },
+      "ATTENDANCE_NUDGED": "طلب {{userName}} من الجميع تأكيد الحضور",
+      "USER_NOTED_NO_SHOW": "تم تسجيل {{userName}} كغائب",
+      "GAME_SPOT_OPENED": "تحرر مكان (غادر {{userName}})",
+      "GAME_SEAT_AUTO_FILLED": "تم إدخال {{userName}} من قائمة الانتظار",
+      "GAME_MOVED_INDOOR": "تم النقل إلى {{courtName}} (مغلق)"
     },
     "openChat": "فتح المحادثة",
     "chat": "محادثة",

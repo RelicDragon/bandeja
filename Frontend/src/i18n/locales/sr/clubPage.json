@@ -1,0 +1,79 @@
+{
+  "clubPage": {
+    "share": "Podeli klub",
+    "shareTitle": "Podeli ovaj klub",
+    "signIn": "Prijavi se",
+    "favoriteFailed": "Omiljeno nije ažurirano. Pokušaj ponovo.",
+    "openClubPage": "Otvori stranicu kluba",
+    "openClubPageNamed": "Otvori stranicu kluba {{club}}",
+    "rating": {
+      "none": "Još nema recenzija",
+      "summary_one": "{{rating}} · {{countText}} recenzija",
+      "summary_few": "{{rating}} · {{countText}} recenzije",
+      "summary_other": "{{rating}} · {{countText}} recenzija"
+    },
+    "gallery": {
+      "roleDescription": "Galerija fotografija",
+      "label": "Fotografije kluba {{club}}",
+      "slideRole": "Fotografija",
+      "slide": "Fotografija {{current}} od {{total}}"
+    },
+    "notFound": {
+      "title": "Ovaj klub nije dostupan",
+      "description": "Link je možda star ili klub više nije na listi.",
+      "browse": "Pregledaj klubove"
+    },
+    "actions": {
+      "create": "Napravi igru ovde",
+      "book": "Rezerviši",
+      "directions": "Putanja",
+      "manage": "Upravljaj"
+    },
+    "today": {
+      "title": "Danas ukratko",
+      "updated": "Ažurirano {{relative}}",
+      "updatedJustNow": "Upravo ažurirano",
+      "courtLabel": "{{court}}, slobodno {{free}} od {{total}} sati danas",
+      "freeHours_one": "{{count}} sat slobodan",
+      "freeHours_few": "{{count}} sata slobodna",
+      "freeHours_other": "{{count}} sati slobodno",
+      "windowHint": "Prikazano od {{open}} do {{close}}",
+      "legendFree": "Slobodno",
+      "legendBusy": "Zauzeto"
+    },
+    "games": {
+      "title": "Predstojeće igre",
+      "seeAll": "Vidi sve u Pronađi",
+      "emptyTitle": "Još nema javnih igara",
+      "emptyDescription": "Budi prvi koji zakazuje igru ovde."
+    },
+    "courts": {
+      "title": "Tereni",
+      "indoor": "Zatvoreni",
+      "outdoor": "Otvoreni"
+    },
+    "info": {
+      "title": "O klubu",
+      "hoursRange": "Otvoreno {{open}} – {{close}}",
+      "hoursEveryDay": "Isto radno vreme svakog dana",
+      "cancellationPolicy": "Uslovi otkazivanja",
+      "cancellationNotice_one": "Otkaži najmanje {{count}} sat ranije.",
+      "cancellationNotice_few": "Otkaži najmanje {{count}} sata ranije.",
+      "cancellationNotice_other": "Otkaži najmanje {{count}} sati ranije."
+    },
+    "regulars": {
+      "title": "Ko ovde igra",
+      "open": "Otvori karticu igrača {{name}}",
+      "unnamed": "ovaj igrač"
+    },
+    "reviews": {
+      "title": "Recenzije",
+      "guestTitle": "Prijavi se da napišeš recenziju",
+      "guestDescription": "Recenzije pišu igrači koji su igrali u ovom klubu."
+    },
+    "error": {
+      "title": "Nismo uspeli da učitamo ovaj klub",
+      "description": "Proveri vezu i pokušaj ponovo."
+    }
+  }
+}

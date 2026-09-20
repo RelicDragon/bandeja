@@ -86,8 +86,10 @@ export const useDeepLink = () => {
               navigateWithTracking(navigate, `/games/${gameId}/league-bracket`, { replace: true });
               return;
             }
-            // Default game detail route
-            navigateWithTracking(navigate, `/games/${gameId}`, { replace: true });
+            // Default game detail route. PRD 347 — `?join=1` must survive the
+            // hop; the details page consumes it and strips it from the URL.
+            const joinSuffix = url.searchParams.get('join') === '1' ? '?join=1' : '';
+            navigateWithTracking(navigate, `/games/${gameId}${joinSuffix}`, { replace: true });
             return;
           }
         }
@@ -109,6 +111,22 @@ export const useDeepLink = () => {
               appendLevelSportQuery(`/user-profile/${id}`, sport),
               { replace: true },
             );
+            return;
+          }
+        }
+
+        if (pathname.startsWith('/clubs/')) {
+          const id = pathname.split('/clubs/')[1]?.split('/')[0];
+          if (id) {
+            navigateWithTracking(navigate, `/clubs/${id}${url.search || ''}`, { replace: true });
+            return;
+          }
+        }
+
+        if (pathname.startsWith('/series/')) {
+          const id = pathname.split('/series/')[1]?.split('/')[0];
+          if (id) {
+            navigateWithTracking(navigate, `/series/${id}${url.search || ''}`, { replace: true });
             return;
           }
         }
@@ -201,6 +219,8 @@ export const useDeepLink = () => {
           [deepLinkActionPath('login')]: deepLinkActionPath('login'),
           '/register': '/register',
           '/select-city': '/select-city',
+          '/welcome': '/welcome',
+          [deepLinkActionPath('shop')]: deepLinkActionPath('shop'),
           [deepLinkActionPath('myGames')]: deepLinkActionPath('myGames'),
         };
 
@@ -209,6 +229,7 @@ export const useDeepLink = () => {
           deepLinkActionPath('login'),
           deepLinkActionPath('chats'),
           deepLinkActionPath('myGames'),
+          '/welcome',
         ];
 
         if (simpleRoutes[pathname]) {

@@ -462,5 +462,180 @@
       "serveGuideSkipped": true
     },
     "expectNull": true
+  },
+  {
+    "name": "squash winner of last rally serves from own score",
+    "sport": "SQUASH",
+    "preset": "BEST_OF_5_11",
+    "teamAPlayerNames": ["A1"],
+    "teamBPlayerNames": ["B1"],
+    "matchDoubles": false,
+    "initialSets": [{ "teamA": 0, "teamB": 0, "isTieBreak": false }],
+    "actions": ["teamA", "teamB", "teamA"],
+    "serveSeed": {
+      "firstServerTeam": "teamA",
+      "pointsServeRotation": "official"
+    },
+    "expected": {
+      "serverTeam": "teamA",
+      "serverPlayerIndex": 0,
+      "serverDisplayName": "A1",
+      "courtSide": "rightDeuce",
+      "tieBreakServeSlot": null,
+      "changeEndsBeforeNextPoint": false,
+      "courtEndsSwapped": false,
+      "motionTokenPrefix": "sq-"
+    }
+  },
+  {
+    "name": "squash side-out server serves from own odd score",
+    "sport": "SQUASH",
+    "preset": "BEST_OF_5_11",
+    "teamAPlayerNames": ["A1"],
+    "teamBPlayerNames": ["B1"],
+    "matchDoubles": false,
+    "initialSets": [{ "teamA": 0, "teamB": 0, "isTieBreak": false }],
+    "actions": ["teamA", "teamA", "teamB"],
+    "serveSeed": {
+      "firstServerTeam": "teamA",
+      "pointsServeRotation": "official"
+    },
+    "expected": {
+      "serverTeam": "teamB",
+      "courtSide": "leftAd",
+      "tieBreakServeSlot": null,
+      "changeEndsBeforeNextPoint": false,
+      "courtEndsSwapped": false,
+      "motionTokenPrefix": "sq-"
+    }
+  },
+  {
+    "name": "table tennis pre-deuce two-point rotation",
+    "sport": "TABLE_TENNIS",
+    "preset": "BEST_OF_3_11",
+    "teamAPlayerNames": ["A1"],
+    "teamBPlayerNames": ["B1"],
+    "matchDoubles": false,
+    "state": {
+      "activeSetIndex": 0,
+      "mode": "points",
+      "sets": [{ "teamA": 3, "teamB": 2, "isTieBreak": false }],
+      "firstServerTeam": "teamA",
+      "pointsServeRotation": "official"
+    },
+    "expected": {
+      "serverTeam": "teamB",
+      "courtSide": "leftAd",
+      "tieBreakServeSlot": null,
+      "changeEndsBeforeNextPoint": false,
+      "motionTokenPrefix": "tt-"
+    }
+  },
+  {
+    "name": "table tennis deuce start at 10-10",
+    "sport": "TABLE_TENNIS",
+    "preset": "BEST_OF_3_11",
+    "teamAPlayerNames": ["A1"],
+    "teamBPlayerNames": ["B1"],
+    "matchDoubles": false,
+    "state": {
+      "activeSetIndex": 0,
+      "mode": "points",
+      "sets": [{ "teamA": 10, "teamB": 10, "isTieBreak": false }],
+      "firstServerTeam": "teamA",
+      "pointsServeRotation": "official"
+    },
+    "expected": {
+      "serverTeam": "teamA",
+      "courtSide": "rightDeuce",
+      "tieBreakServeSlot": null,
+      "changeEndsBeforeNextPoint": false,
+      "motionTokenPrefix": "tt-"
+    }
+  },
+  {
+    "name": "table tennis deuce alternates every point at 11-11",
+    "sport": "TABLE_TENNIS",
+    "preset": "BEST_OF_3_11",
+    "teamAPlayerNames": ["A1"],
+    "teamBPlayerNames": ["B1"],
+    "matchDoubles": false,
+    "state": {
+      "activeSetIndex": 0,
+      "mode": "points",
+      "sets": [{ "teamA": 11, "teamB": 11, "isTieBreak": false }],
+      "firstServerTeam": "teamA",
+      "pointsServeRotation": "official"
+    },
+    "expected": {
+      "serverTeam": "teamA",
+      "courtSide": "rightDeuce",
+      "tieBreakServeSlot": null,
+      "changeEndsBeforeNextPoint": false,
+      "motionTokenPrefix": "tt-"
+    }
+  },
+  {
+    "name": "table tennis 10-10 then one point",
+    "sport": "TABLE_TENNIS",
+    "preset": "BEST_OF_3_11",
+    "teamAPlayerNames": ["A1"],
+    "teamBPlayerNames": ["B1"],
+    "matchDoubles": false,
+    "initialSets": [{ "teamA": 10, "teamB": 10, "isTieBreak": false }],
+    "actions": ["teamA"],
+    "serveSeed": {
+      "firstServerTeam": "teamA",
+      "pointsServeRotation": "official"
+    },
+    "expected": {
+      "serverTeam": "teamB",
+      "courtSide": "leftAd",
+      "tieBreakServeSlot": null,
+      "changeEndsBeforeNextPoint": false,
+      "motionTokenPrefix": "tt-"
+    }
+  },
+  {
+    "name": "table tennis 10-10 then three points",
+    "sport": "TABLE_TENNIS",
+    "preset": "BEST_OF_3_11",
+    "teamAPlayerNames": ["A1"],
+    "teamBPlayerNames": ["B1"],
+    "matchDoubles": false,
+    "initialSets": [{ "teamA": 10, "teamB": 10, "isTieBreak": false }],
+    "actions": ["teamA", "teamB", "teamA"],
+    "serveSeed": {
+      "firstServerTeam": "teamA",
+      "pointsServeRotation": "official"
+    },
+    "expected": {
+      "serverTeam": "teamB",
+      "courtSide": "leftAd",
+      "tieBreakServeSlot": null,
+      "changeEndsBeforeNextPoint": false,
+      "motionTokenPrefix": "tt-"
+    }
+  },
+  {
+    "name": "table tennis 10-10 then four points",
+    "sport": "TABLE_TENNIS",
+    "preset": "BEST_OF_3_11",
+    "teamAPlayerNames": ["A1"],
+    "teamBPlayerNames": ["B1"],
+    "matchDoubles": false,
+    "initialSets": [{ "teamA": 10, "teamB": 10, "isTieBreak": false }],
+    "actions": ["teamA", "teamB", "teamB", "teamA"],
+    "serveSeed": {
+      "firstServerTeam": "teamA",
+      "pointsServeRotation": "official"
+    },
+    "expected": {
+      "serverTeam": "teamA",
+      "courtSide": "rightDeuce",
+      "tieBreakServeSlot": null,
+      "changeEndsBeforeNextPoint": false,
+      "motionTokenPrefix": "tt-"
+    }
   }
 ]

@@ -1,0 +1,69 @@
+{
+  "attendance": {
+    "question": "هل ستأتي؟",
+    "confirm": "سآتي",
+    "unsure": "لست متأكدًا بعد",
+    "change": "تغيير",
+    "confirmedState": "تم تأكيد حضورك",
+    "unsureState": "لست متأكدًا بعد",
+    "caption": "فقط ليعرف المنظّم. مقعدك محجوز لك في كل الأحوال.",
+    "cantMakeIt": "لا تستطيع الحضور إطلاقًا؟",
+    "confirmedToast": "تم تأكيد الحضور 👍",
+    "unsureToast": "تم التسجيل. يمكنك التأكيد لاحقًا.",
+    "saving": "جارٍ الحفظ…",
+    "queuedOffline": "تم الحفظ. ستتم المزامنة عند عودة الاتصال.",
+    "youOrganizer": "أنت (المنظّم)",
+    "dots": {
+      "confirmed": "مؤكَّد",
+      "unanswered": "لا يوجد رد بعد",
+      "unsure": "غير متأكد بعد",
+      "noShow": "مسجَّل كغياب"
+    },
+    "legend": {
+      "title": "ماذا تعني النقاط",
+      "hint": "الأخضر يعني مؤكَّد، الرمادي يعني بلا رد، الكهرماني يعني غير متأكد."
+    },
+    "organizer": {
+      "progress": "أكّد {{confirmed}} من {{total}}",
+      "nudge": "تذكير",
+      "nudgeCooldown": "تذكير مرة أخرى بعد {{hours}} ساعة",
+      "nudgeSent": "تم إرسال التذكير",
+      "legendCaption": "أخضر: مؤكَّد. رمادي: بلا رد. كهرماني: غير متأكد."
+    },
+    "noShow": {
+      "action": "تسجيل غياب",
+      "undoAction": "إزالة تسجيل الغياب",
+      "dialogTitle": "تسجيل {{name}} كغائب؟",
+      "dialogBody": "سيصله تنبيه ودّي ويمكنه الرد في الدردشة. يمكنك التراجع في أي وقت خلال 7 أيام.",
+      "confirm": "تسجيل غياب",
+      "cancel": "إلغاء",
+      "noted": "تم التسجيل",
+      "undo": "تراجع",
+      "undone": "تمت إزالة تسجيل الغياب",
+      "tag": "غائب"
+    },
+    "stat": {
+      "label": "نسبة الحضور",
+      "tooltip": "المباريات التي أكدتها وحضرتها خلال آخر 12 شهرًا.",
+      "gaugeLabel": "حضر {{rate}} بالمئة من المباريات",
+      "sparklineTitle": "آخر 12 شهرًا",
+      "sparklineLegend": "حضر / تغيّب",
+      "sparklineMonthAria": "{{month}} — حضر: {{attended}}، تغيّب: {{noShow}}",
+      "notesTitle": "تسجيلات غيابك",
+      "notesEmpty": "لا توجد تسجيلات غياب.",
+      "notesOpenChat": "فتح الدردشة",
+      "notedOn": "سُجِّل في {{date}}"
+    },
+    "card": {
+      "ariaSummary": "أكّد {{confirmed}} من {{total}} لاعبين"
+    },
+    "errors": {
+      "generic": "تعذّر حفظ ردك",
+      "notParticipant": "يمكن للاعبي هذه المباراة فقط الرد",
+      "answersClosed": "تأكيد الحضور مغلق لهذه المباراة",
+      "noShowWindowClosed": "انتهت مهلة تسجيل الغياب",
+      "nudgeCooldown": "لقد ذكّرت مؤخرًا. حاول لاحقًا.",
+      "nothingToNudge": "الجميع أجابوا بالفعل"
+    }
+  }
+}

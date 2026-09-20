@@ -304,7 +304,12 @@
         "EXTERNAL_PARTIAL": "ไม่ได้จองเต็ม",
         "MANUAL": "ศาลจองแล้ว",
         "NONE": "ยังไม่ได้จอง"
-      }
+      },
+      "ATTENDANCE_NUDGED": "{{userName}} ขอให้ทุกคนยืนยันการมาเล่น",
+      "USER_NOTED_NO_SHOW": "{{userName}} ถูกบันทึกว่าไม่มา",
+      "GAME_SPOT_OPENED": "มีที่ว่าง ({{userName}} ออกไป)",
+      "GAME_SEAT_AUTO_FILLED": "{{userName}} ได้ลงเล่นจากคิว",
+      "GAME_MOVED_INDOOR": "ย้ายไปที่ {{courtName}} (ในร่ม)"
     },
     "openChat": "เปิดแชท",
     "chat": "แชท",

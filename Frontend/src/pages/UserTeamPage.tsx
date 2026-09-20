@@ -24,6 +24,7 @@ import { getUserPrimarySport, resolveActivePrimarySport } from '@/utils/profileS
 import { isUserTeamReady } from '@/components/playerInvite/inviteEntries';
 import { UserTeamExplainer } from '@/components/userTeam/UserTeamExplainer';
 import { AddUserTeamToGameSheet } from '@/components/userTeam/AddUserTeamToGameSheet';
+import { UserTeamPairStats } from '@/components/pairs/UserTeamPairStats';
 
 export function UserTeamPage() {
   const { id } = useParams<{ id: string }>();
@@ -325,6 +326,8 @@ export function UserTeamPage() {
 
     body = (
       <div className="mx-auto max-w-2xl space-y-3 pb-2">
+        {/* PRD 352 — the pair's shared record, identical to the pair sheet. */}
+        <UserTeamPairStats userAId={user.id} userBId={secondUser?.id} />
         <div className="py-2 sm:py-3">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:gap-8">
             <div className="mx-auto shrink-0 sm:mx-0">

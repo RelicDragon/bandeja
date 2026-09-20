@@ -12,6 +12,7 @@ import { KLIKTEREN_BOOKING_DURATIONS } from '@/integrations/klikteren/config';
 import { NSPADEL_BOOKING_DURATIONS } from '@/integrations/nspadel/config';
 import {
   getBooktimeCompanyId,
+  isWeltnerClub,
   shouldUseBooktimeCompanyDurations,
   shouldUseKlikterenDurations,
   shouldUseNspadelDurations,
@@ -52,7 +53,9 @@ export function useClubIntegrationDurations(
     [club, selectedCourtId, courts],
   );
 
+  const useWeltnerDurations = isWeltnerClub(club) && selectedCourtId !== 'notBooked';
   const useIntegrationDurations =
+    useWeltnerDurations ||
     useBooktimeCompanyDurations ||
     usePadelooDurations ||
     useKlikterenDurations ||
@@ -90,6 +93,7 @@ export function useClubIntegrationDurations(
   }, [club?.id, companyId, useBooktimeCompanyDurations]);
 
   const integrationDurationsHours = useMemo(() => {
+    if (useWeltnerDurations) return [1, 1.5, 2, 3];
     if (useKlikterenDurations) {
       return KLIKTEREN_BOOKING_DURATIONS.map(minutesToDurationHours);
     }
@@ -105,6 +109,7 @@ export function useClubIntegrationDurations(
     return null;
   }, [
     booktimeDurationsHours,
+    useWeltnerDurations,
     useBooktimeCompanyDurations,
     useKlikterenDurations,
     useNspadelDurations,
@@ -123,7 +128,7 @@ export function useClubIntegrationDurations(
 
   const usesIntegrationDurations =
     useIntegrationDurations &&
-    (useKlikterenDurations ||
+    (useWeltnerDurations || useKlikterenDurations ||
       useNspadelDurations ||
       usePadelooDurations ||
       loading ||

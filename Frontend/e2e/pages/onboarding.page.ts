@@ -74,6 +74,47 @@ export class OnboardingPage {
     await expect(this.genderSetModal()).toHaveCount(0, { timeout: 15_000 });
   }
 
+  // ---------------------------------------------------------------------
+  // PRD 350 — guided first-run flow at /welcome
+  // ---------------------------------------------------------------------
+
+  firstRunStep(step: string) {
+    return this.page.locator(`[data-testid="onboarding-step-${step}"]`);
+  }
+
+  firstRunPrimary() {
+    return this.page.locator('[data-testid="onboarding-primary"]');
+  }
+
+  firstRunSkip() {
+    return this.page.locator('[data-testid="onboarding-skip"]');
+  }
+
+  firstRunProgress() {
+    return this.page.getByRole('progressbar');
+  }
+
+  sportTile(sport: string) {
+    return this.page.locator(`[data-testid="onboarding-sport-${sport}"]`);
+  }
+
+  sportPrimaryTag(sport: string) {
+    return this.page.locator(`[data-testid="onboarding-sport-primary-tag-${sport}"]`);
+  }
+
+  async expectFirstRunStep(step: string) {
+    await expect(this.firstRunStep(step)).toBeVisible({ timeout: 30_000 });
+  }
+
+  /** Advance past the current step with the pinned primary button. */
+  async firstRunContinue() {
+    await this.firstRunPrimary().click();
+  }
+
+  async firstRunSkipStep() {
+    await this.firstRunSkip().click();
+  }
+
   async expectPrimarySportGate() {
     await expect(this.primarySportModal()).toBeVisible({ timeout: 20_000 });
   }

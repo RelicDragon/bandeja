@@ -79,6 +79,8 @@ struct GameListView: View {
                 Text(WatchCopy.noUpcomingGames(prefs.uiLanguageCode))
                     .font(.headline)
                     .multilineTextAlignment(.center)
+                Button(WatchCopy.refresh(prefs.uiLanguageCode)) { Task { await vm.loadGames() } }
+                    .buttonStyle(.bordered)
             }
             .frame(maxWidth: .infinity)
             .listRowBackground(Color.clear)
@@ -87,12 +89,7 @@ struct GameListView: View {
     }
 
     private func errorView(_ error: Error) -> some View {
-        let message: String
-        if let api = error as? APIError {
-            message = api.localizedMessage(uiLanguageCode: prefs.uiLanguageCode)
-        } else {
-            message = error.localizedDescription
-        }
+        let message = WatchErrorText.message(error, lang: prefs.uiLanguageCode)
         return List {
             VStack(spacing: 10) {
                 Image(systemName: "exclamationmark.triangle")

@@ -13,6 +13,7 @@ import {
 } from './availableGamesPage';
 import { GAMES_LIST_STALE_TIME } from './constants';
 import { getAppUiLocaleForGameText } from '@/utils/gameText/appUiLocale';
+import { withQueryExtras } from '../trackedQueryResult';
 
 export interface AvailableUpcomingGamesQueryParams {
   userId: string | undefined;
@@ -113,5 +114,6 @@ export function useAvailableUpcomingGamesQuery(
     void attachAvailableGamesEnrichment(queryClient, queryKey, incoming);
   }, [queryClient, queryKey]);
 
-  return { ...query, loadMore };
+  // See `withQueryExtras`: a spread would disable tracked-props for this hook.
+  return withQueryExtras(query, { loadMore });
 }

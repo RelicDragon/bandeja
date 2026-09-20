@@ -212,6 +212,8 @@
     "sendDirectMessagesDescription": "Recibe notificaciones cuando alguien te envía un mensaje directo",
     "sendReminders": "Recordatorios",
     "sendRemindersDescription": "Recibe notificaciones 2 horas antes de que comiencen tus juegos, torneos o entrenamientos",
+    "sendWeatherAlerts": "Avisos meteorológicos",
+    "sendWeatherAlertsDescription": "Solo para pistas al aire libre",
     "walletNotifications": "Notificaciones de billetera",
     "walletNotificationsDescription": "Recibir notificaciones de transacciones de billetera",
     "marketplaceNotifications": "Nuevos anuncios en mi ciudad",

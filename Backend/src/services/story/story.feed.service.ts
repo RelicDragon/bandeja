@@ -34,6 +34,7 @@ import {
   BracketChampionStoryService,
   type BracketChampionStoryBracket,
 } from './bracketChampionStory.service';
+import type { RecapSegmentPayload } from '../recap/recap.types';
 
 export type SegmentEngagement = {
   likeCount: number;
@@ -142,6 +143,21 @@ export type StorySegment =
       championTeamLabel: string;
       bracket: BracketChampionStoryBracket;
       game: GameStorySummary;
+      engagement?: SegmentEngagement;
+    }
+  /**
+   * PRD 353 — one slide of a monthly recap, rendered client-side from the
+   * stored payload. These never appear in `getFeed`: an *unshared* recap is
+   * private to its owner, and sharing publishes rendered images as ordinary
+   * `USER_STORY_ITEM`s instead. They are produced by
+   * `services/recap/recapSegments.ts` for the owner's own recap viewer.
+   */
+  | {
+      key: string;
+      sourceType: 'MONTHLY_RECAP';
+      viewed: boolean;
+      createdAt: string;
+      recap: RecapSegmentPayload;
       engagement?: SegmentEngagement;
     };
 

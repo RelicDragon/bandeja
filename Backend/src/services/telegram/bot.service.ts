@@ -2,12 +2,16 @@ import { Bot } from 'grammy';
 import type { TelegramOtp } from '@prisma/client';
 import { config } from '../../config/env';
 import { PendingTelegramInput } from './types';
-import { requireUser, requireChat, requirePrivateChat, syncTelegramProfile } from './middleware';
+import { requireUser, requireChat, requirePrivateChat, syncTelegramProfile, rateLimitChat } from './middleware';
 import { handleStartCommand } from './commands/start.command';
 import { generateAuthCode } from './commands/auth.command';
 import { generateLoginLink } from './commands/login.command';
 import { handleMyGamesCommand } from './commands/myGames.command';
 import { handleGamesCommand } from './commands/games.command';
+import { handlePlayCommand } from './commands/play.command';
+import { handleLiveCommand } from './commands/live.command';
+import { handleInviteCommand } from './commands/invite.command';
+import { registerBotCommandMenu } from './botCommandMenu';
 import { createMessageHandler } from './handlers/message.handler';
 import { createCallbackHandler } from './handlers/callback.handler';
 import { startCleanupInterval } from './cleanup.service';
@@ -45,10 +49,21 @@ class TelegramBotService {
     this.bot.command('login', requireUser, syncTelegramProfile, requirePrivateChat, generateLoginLink);
     this.bot.command('my', requireUser, syncTelegramProfile, requirePrivateChat, handleMyGamesCommand);
     this.bot.command('games', requireUser, syncTelegramProfile, requireChat, handleGamesCommand);
+    // PRD 356 — both work in private and group chats, rate limited per chat.
+    this.bot.command('play', requireUser, syncTelegramProfile, requireChat, rateLimitChat(), handlePlayCommand);
+    this.bot.command('live', requireUser, syncTelegramProfile, requireChat, rateLimitChat(), handleLiveCommand);
+    // PRD 351 — personal referral link. Private chat only: the reply contains a
+    // link tied to one account, which must not be posted into a group.
+    this.bot.command('invite', requireUser, syncTelegramProfile, requirePrivateChat, handleInviteCommand);
 
     this.bot.on('message', requireUser, syncTelegramProfile, requirePrivateChat, createMessageHandler(this.pendingReplies, this.bot));
 
-    this.bot.callbackQuery(/^(sg|rm|ia|rum|rg|rbm):/, requireUser, syncTelegramProfile, createCallbackHandler(this.pendingReplies));
+    // Every colon-delimited callback prefix handled by `handlers/callback.handler.ts`
+    // must be listed here or its buttons silently do nothing (CONTRACT §5.3).
+    // uti = user-team invite, sip = play-intent proposal, at = attendance (PRD 346),
+    // sr = series next occurrence (PRD 345), wx = weather alert (PRD 357),
+    // pi = play-intent bot flow (PRD 356).
+    this.bot.callbackQuery(/^(sg|rm|ia|rum|rg|rbm|uti|sip|at|sr|wx|pi):/, requireUser, syncTelegramProfile, createCallbackHandler(this.pendingReplies));
 
     this.bot.catch((err) => {
       const ctx = err.ctx as any;
@@ -64,6 +79,10 @@ class TelegramBotService {
 
     telegramNotificationService.initialize(this.bot);
     telegramResultsSenderService.initialize(this.bot);
+
+    // PRD 356 — the "/" menu. Never blocks startup: a Telegram API hiccup here
+    // must not stop the bot from answering messages.
+    void registerBotCommandMenu(this.bot);
 
     try {
       console.log('Starting bot');

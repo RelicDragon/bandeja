@@ -1,7 +1,8 @@
 import type { ClubSchedulePicker } from '@/components/clubPicker/clubScheduleSelection';
 import { useState, useEffect, useRef, useCallback, useLayoutEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, Search } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { ChevronLeft, ExternalLink, Search } from 'lucide-react';
 import { Club, EntityType, Sport } from '@/types';
 import { clubsApi } from '@/api/clubs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
@@ -12,6 +13,7 @@ import { CityPickerEmbed } from '@/components/browseCity/CityPickerEmbed';
 import { ClubVenueList } from '@/components/clubPicker/ClubVenueList';
 import { useClubVenuePicker } from '@/hooks/useClubVenuePicker';
 import { useBrowseCityStore } from '@/store/browseCityStore';
+import { buildClubPath } from '@/deepLinks/catalog';
 
 interface ClubModalProps {
   schedulePicker?: ClubSchedulePicker;
@@ -41,6 +43,7 @@ export const ClubModal = ({
   preferredSport,
 }: ClubModalProps) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const recents = useBrowseCityStore((s) => s.recents);
   const [search, setSearch] = useState('');
   const [panel, setPanel] = useState<Panel>('list');
@@ -252,6 +255,18 @@ export const ClubModal = ({
                 data-overlay-scrollport=""
                 className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain p-4"
               >
+                {/* PRD 354 — jump from the picker's detail panel to the public club page. */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    navigate(buildClubPath(detailClub.id));
+                  }}
+                  className="mb-3 flex min-h-[44px] w-full items-center justify-between gap-2 rounded-xl border border-gray-200 bg-white px-3 text-sm font-medium text-primary-600 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-primary-400 dark:hover:bg-gray-800"
+                >
+                  {t('clubPage.openClubPage')}
+                  <ExternalLink size={16} aria-hidden />
+                </button>
                 <ClubDetailPanel
                   key={detailClub.id}
                   club={detailClub}

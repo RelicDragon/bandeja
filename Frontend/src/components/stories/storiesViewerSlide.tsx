@@ -3,6 +3,7 @@ import { MediaStorySlide } from './slides/MediaStorySlide';
 import { GamePromoStorySlide } from './slides/GamePromoStorySlide';
 import { GameResultStorySlide } from './slides/GameResultStorySlide';
 import { BracketChampionStorySlide } from './slides/BracketChampionStorySlide';
+import { RecapStorySlide } from './slides/RecapStorySlide';
 
 export type StoryViewerSlideHandlers = {
   open: boolean;
@@ -34,6 +35,11 @@ export function buildStoryViewerSlide(
       );
     case 'BRACKET_CHAMPION':
       return <BracketChampionStorySlide segment={segment} onOpenBracket={handlers.openBracket} />;
+    // PRD 353 — the recap reel. `bubble.user.id` is the recap's owner, which is
+    // also the viewer (a recap is only ever played by the person it is about),
+    // so it doubles as the "me" side of the partner chemistry chip.
+    case 'MONTHLY_RECAP':
+      return <RecapStorySlide segment={segment} viewerId={bubble.user.id} />;
     case 'USER_STORY_ITEM':
     case 'GAME_PHOTO':
       return (

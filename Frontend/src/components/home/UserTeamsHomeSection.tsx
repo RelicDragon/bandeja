@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Plus, Users, X } from 'lucide-react';
 import { ConfirmationModal, TeamAvatar } from '@/components';
+import { useShallow } from 'zustand/react/shallow';
 import { useAuthStore } from '@/store/authStore';
 import { useUserTeamsStore } from '@/store/userTeamsStore';
 import { userTeamsApi } from '@/api';
@@ -27,7 +28,16 @@ export function UserTeamsHomeSection({ className = '', embedded = false }: UserT
   const { t } = useTranslation();
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
-  const { teams, memberships, isLoading, removeTeamLocal } = useUserTeamsStore();
+  // Whole-store subscription re-rendered this section on every store write
+  // (`lastFetchedAt`, loading flips); only these four fields are used.
+  const { teams, memberships, isLoading, removeTeamLocal } = useUserTeamsStore(
+    useShallow((s) => ({
+      teams: s.teams,
+      memberships: s.memberships,
+      isLoading: s.isLoading,
+      removeTeamLocal: s.removeTeamLocal,
+    })),
+  );
   const [showExplainer, setShowExplainer] = useState(false);
   const [deleteTeamId, setDeleteTeamId] = useState<string | null>(null);
   const [deletingTeam, setDeletingTeam] = useState(false);

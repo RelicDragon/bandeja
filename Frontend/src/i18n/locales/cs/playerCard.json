@@ -21,7 +21,7 @@
       "basedOn": "Na základě {{count}} anonymních hodnocení z {{games}} nedávných zápasů",
       "players": "Hráči",
       "verdict": { "HIGHER": "Vyšší než zobrazená", "ABOUT_RIGHT": "Odpovídající", "LOWER": "Nižší než zobrazená" },
-      "disclaimer": "Názory hráčů jsou komunitním signálem. Nenastavují ani nemění oficiální hodnocení."
+      "disclaimer": "Jednotlivé odpovědi zůstávají anonymní. Tento souhrn je komunitní signál — nenastavuje ani nemění oficiální hodnocení."
     },
     "isTrainer": "Trenér",
     "currentLevel": "Aktuální úroveň",
@@ -75,7 +75,7 @@
     "userBlockedCannotChat": "Uživatel je blokován",
     "userBlockedCannotFavorite": "Uživatel je blokován",
     "confirmedBy": "Úroveň byla potvrzena",
-    "levelNotConfirmed": "Úroveň není potvrzena",
+    "confirmedAtLevel": "na úrovni {{level}}",
     "openFullProfile": "Na celou obrazovku",
     "shareProfileTitle": "Share profile",
     "inviteAsTrainer": "Invite as trainer",

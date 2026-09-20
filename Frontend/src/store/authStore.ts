@@ -289,6 +289,10 @@ export const useAuthStore = create<AuthState>((set, get) => {
             queryClient.removeQueries({ queryKey: queryKeys.games.my(userId) });
           }
           queryClient.removeQueries({ queryKey: queryKeys.questionnaire.all });
+          // PRD 350 — the onboarding gate reads this cache. Leaving the previous
+          // account's "completed" answer behind would let the next person to sign
+          // in on this device skip the first-run flow entirely.
+          queryClient.removeQueries({ queryKey: queryKeys.onboarding.all });
         } catch (e) {
           console.warn('[auth:logout] my tab cache clear failed', e);
         }

@@ -304,7 +304,12 @@
         "EXTERNAL_PARTIAL": "未订满",
         "MANUAL": "法院已出庭",
         "NONE": "尚未预订"
-      }
+      },
+      "ATTENDANCE_NUDGED": "{{userName}} 请大家确认出席",
+      "USER_NOTED_NO_SHOW": "{{userName}} 被标记为未到场",
+      "GAME_SPOT_OPENED": "空出一个名额（{{userName}} 已退出）",
+      "GAME_SEAT_AUTO_FILLED": "{{userName}} 已从队列中入场",
+      "GAME_MOVED_INDOOR": "已改到{{courtName}}（室内）"
     },
     "openChat": "打开聊天",
     "chat": "聊天",

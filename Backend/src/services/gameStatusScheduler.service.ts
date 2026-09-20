@@ -7,24 +7,87 @@ import { getUserTimezoneFromCityId } from './user-timezone.service';
 import notificationService from './notification.service';
 import { BarResultsService } from './barResults.service';
 import { LeagueStandingsRecalculateService } from './league/leagueStandingsRecalculate.service';
+import { onGameFinalizedForAttendance } from './gameAttendance/gameAttendance.service';
+import { runWeatherAlertSweep } from './weather/weatherAlert.service';
+
+/**
+ * PRD 346 — reminders at or below this many hours before start only go to
+ * players who have not answered the attendance question yet.
+ */
+const ATTENDANCE_SECOND_REMINDER_HOURS = 2;
 
 export class GameStatusScheduler {
   private cronJob: cron.ScheduledTask | null = null;
   private reminder24hSentGames: Set<string> = new Set();
   private reminder2hSentGames: Set<string> = new Set();
+  /**
+   * Re-entrancy guard — the house pattern (`PlayIntentScheduler`,
+   * `GameSeriesScheduler`, `CostShareReminderScheduler`, `MonthlyRecapScheduler`
+   * all carry one). This tick is unbounded: every non-archived game gets a
+   * timezone lookup, the reminder pass scans every game ever played, and PRD
+   * 357 stacked the weather sweep (up to 600 games across two windows, each
+   * with a serial per-recipient push + preference query + Telegram HTTP call)
+   * on top. Once one tick exceeds 30 minutes node-cron fires the next callback
+   * concurrently, and two sweeps reading the same `weatherAlertState` is how a
+   * duplicate roster-wide alert happens with no crash required.
+   */
+  private running = false;
 
   start() {
     console.log('🔄 Game status scheduler started (runs at :00 and :30 every hour)');
-    
+
     // Run at :00 and :30 minutes every hour
-    this.cronJob = cron.schedule('0,30 * * * *', async () => {
-      await this.updateGameStatuses();
-      await this.sendReminders();
+    this.cronJob = cron.schedule('0,30 * * * *', () => {
+      void this.runTick();
     });
 
     // Run immediately on startup
-    this.updateGameStatuses();
-    this.sendReminders();
+    void this.runTick();
+  }
+
+  /**
+   * One pass. Every step owns its own try/catch, so a failure in one cannot
+   * skip the others; the outer try/finally exists so a throw can never escape
+   * the cron callback and never leaves {@link running} stuck on.
+   */
+  private async runTick(): Promise<void> {
+    if (this.running) {
+      console.warn('⏭️ Game status scheduler tick skipped — previous tick still running');
+      return;
+    }
+    this.running = true;
+    try {
+      await this.updateGameStatuses();
+      await this.sendReminders();
+      await this.sendWeatherAlerts();
+    } catch (error) {
+      console.error('❌ Game status scheduler tick failed:', error);
+    } finally {
+      this.running = false;
+    }
+  }
+
+  /**
+   * PRD 357 — weather alerts for outdoor games. A **step** in this scheduler,
+   * not a scheduler of its own: the `:00/:30` cadence is exactly what the
+   * 11.5–12.5 h and 1.5–2.5 h alert windows are sized against, so every game
+   * passes through each window exactly once.
+   *
+   * `runWeatherAlertSweep` never throws — a provider outage must not take the
+   * status sweep or the reminders down with it. The extra `catch` here is belt
+   * and braces for an import-time failure.
+   */
+  private async sendWeatherAlerts() {
+    try {
+      const result = await runWeatherAlertSweep();
+      if (result.alerted > 0 || result.failed > 0) {
+        console.log(
+          `🌧️ Weather alerts: ${result.alerted} sent, ${result.evaluated} evaluated, ${result.failed} failed`,
+        );
+      }
+    } catch (error) {
+      console.error('❌ Error running weather alert sweep:', error);
+    }
   }
 
   private async updateGameStatuses() {
@@ -101,6 +164,10 @@ export class GameStatusScheduler {
 
           if (newStatus === 'FINISHED' || newStatus === 'ARCHIVED') {
             await cleanupInviteParticipantsForEndedGame(game.id);
+            // PRD 346 — a game that simply ran out the clock also counts for the
+            // informational attendance counters. Idempotent (recomputed, not
+            // incremented) and never allowed to break the status sweep.
+            await onGameFinalizedForAttendance(game.id);
           }
 
           if (
@@ -253,8 +320,23 @@ export class GameStatusScheduler {
       }
     });
 
-    const recipients = participants.map(p => p.user);
-    await notificationService.sendGameReminderNotification(gameId, recipients, hoursBeforeStart);
+    // PRD 346 — the 24 h reminder asks everyone; the 2 h reminder only goes to
+    // players who have not answered yet, so nobody is asked twice. There is no
+    // third message, no deadline and no consequence for never answering.
+    const relevant =
+      hoursBeforeStart <= ATTENDANCE_SECOND_REMINDER_HOURS
+        ? participants.filter((p) => p.status !== 'PLAYING' || p.attendance === 'UNANSWERED')
+        : participants;
+
+    if (relevant.length === 0) {
+      return;
+    }
+
+    const recipients = relevant.map(p => p.user);
+    await notificationService.sendGameReminderNotification(gameId, recipients, hoursBeforeStart, {
+      attendanceActions: true,
+      onlyUserIds: recipients.map((user) => user.id),
+    });
   }
 
   stop() {

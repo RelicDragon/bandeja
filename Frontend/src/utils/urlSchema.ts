@@ -9,6 +9,10 @@ export type Place =
   | 'leaderboard'
   | 'profile'
   | 'gameSubscriptions'
+  | 'welcome'
+  | 'club'
+  | 'shop'
+  | 'series'
   | 'game'
   | 'gameChat'
   | 'userChat'
@@ -33,10 +37,15 @@ export interface PlaceParams {
   [key: string]: string | number | boolean | undefined;
 }
 
+export type OverlayType = 'player' | 'item' | 'pair';
+
 export interface Overlay {
-  type: 'player' | 'item';
+  type: OverlayType;
   id: string;
 }
+
+/** Query keys that carry an overlay; stripped from `PlaceParams` by `parseLocation`. */
+const OVERLAY_TYPES: OverlayType[] = ['player', 'item', 'pair'];
 
 export interface ParsedLocation {
   place: Place;
@@ -54,6 +63,10 @@ const PLACE_DEFS: PlaceDefinition[] = [
   { pattern: /^\/games\/([^/]+)\/chat$/, place: 'gameChat', extractParams: (m) => ({ id: m[1] }) },
   { pattern: /^\/games\/([^/]+)$/, place: 'game', extractParams: (m) => ({ id: m[1] }) },
   { pattern: /^\/user-profile\/([^/]+)$/, place: 'userProfile', extractParams: (m) => ({ id: m[1] }) },
+  { pattern: /^\/clubs\/([^/]+)$/, place: 'club', extractParams: (m) => ({ id: m[1] }) },
+  { pattern: /^\/series\/([^/]+)$/, place: 'series', extractParams: (m) => ({ id: m[1] }) },
+  { pattern: /^\/shop\/?$/, place: 'shop' },
+  { pattern: /^\/welcome\/?$/, place: 'welcome' },
   { pattern: /^\/marketplace\/create$/, place: 'createMarketItem' },
   { pattern: /^\/marketplace\/my$/, place: 'marketplaceMy' },
   { pattern: /^\/marketplace\/([^/]+)\/edit$/, place: 'editMarketItem', extractParams: (m) => ({ id: m[1] }) },
@@ -94,7 +107,7 @@ export function parseLocation(pathname: string, search: string): ParsedLocation 
       const params: PlaceParams = { ...baseParams };
 
       for (const [key, value] of sp.entries()) {
-        if (key !== 'player' && key !== 'item') {
+        if (!(OVERLAY_TYPES as string[]).includes(key)) {
           params[key] = value;
         }
       }
@@ -120,6 +133,10 @@ export function buildUrl(place: Place, params?: PlaceParams, overlay?: Overlay):
     case 'leaderboard': path = '/leaderboard'; break;
     case 'profile': path = '/profile'; break;
     case 'gameSubscriptions': path = '/game-subscriptions'; break;
+    case 'welcome': path = '/welcome'; break;
+    case 'club': path = `/clubs/${params?.id ?? ''}`; break;
+    case 'shop': path = '/shop'; break;
+    case 'series': path = `/series/${params?.id ?? ''}`; break;
     case 'game': path = `/games/${params?.id ?? ''}`; break;
     case 'gameChat': path = `/games/${params?.id ?? ''}/chat`; break;
     case 'userChat': path = `/user-chat/${params?.id ?? ''}`; break;
@@ -163,13 +180,13 @@ export function homeUrl(params?: PlaceParams): string {
   return buildUrl('home', params);
 }
 
-export function addOverlay(pathname: string, search: string, type: 'player' | 'item', id: string): string {
+export function addOverlay(pathname: string, search: string, type: OverlayType, id: string): string {
   const params = new URLSearchParams(search);
   params.set(type, id);
   return `${pathname}?${params.toString()}`;
 }
 
-export function removeOverlay(pathname: string, search: string, type: 'player' | 'item'): string {
+export function removeOverlay(pathname: string, search: string, type: OverlayType): string {
   const params = new URLSearchParams(search);
   params.delete(type);
   const qs = params.toString();
@@ -178,10 +195,10 @@ export function removeOverlay(pathname: string, search: string, type: 'player' |
 
 export function getOverlay(search: string): Overlay | null {
   const params = new URLSearchParams(search);
-  const player = params.get('player');
-  const item = params.get('item');
-  if (player) return { type: 'player', id: player };
-  if (item) return { type: 'item', id: item };
+  for (const type of OVERLAY_TYPES) {
+    const id = params.get(type);
+    if (id) return { type, id };
+  }
   return null;
 }
 
@@ -212,7 +229,7 @@ export function isMarketplaceShellPlace(place: Place): boolean {
 }
 
 const APP_PATH_RE =
-  /^\/(find|chats|profile|leaderboard|games|user-profile|create-game|create-league|create-event|rating|bugs|game-subscriptions|marketplace|user-team|user-chat|group-chat|channel-chat|select-city|login|register)(\/.*)?$/;
+  /^\/(find|chats|profile|leaderboard|games|user-profile|create-game|create-league|create-event|rating|bugs|game-subscriptions|marketplace|user-team|user-chat|group-chat|channel-chat|select-city|login|register|welcome|clubs|shop|series)(\/.*)?$/;
 
 export function isAppPath(pathname: string): boolean {
   return pathname === '/' || APP_PATH_RE.test(pathname);

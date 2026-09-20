@@ -33,6 +33,11 @@ export function getGroupChannelShareUrl(groupChannel: { id: string; isChannel: b
   return `${getPublicWebBaseUrl()}${path}`;
 }
 
+/** PRD 354 — the public club page is a landing page, so always share the web origin. */
+export function getClubShareUrl(clubId: string): string {
+  return `${getPublicWebBaseUrl()}${buildUrl('club', { id: clubId })}`;
+}
+
 export function getMarketItemShareUrl(itemId: string): string {
   const path = buildUrl('marketplaceItem', { id: itemId });
   return `${getPublicWebBaseUrl()}${path}`;

@@ -43,7 +43,7 @@ struct WatchServeIndicatorRow: View {
                 if s.changeEndsBeforeNextPoint {
                     Text(WatchCopy.serveCoachChangeEnds(lang))
                         .font(.caption2.weight(.bold))
-                        .foregroundStyle(Color(red: 0.05, green: 0.23, blue: 0.45))
+                        .foregroundStyle(.yellow)
                         .lineLimit(1)
                 }
                 if !compact {
@@ -60,7 +60,7 @@ struct WatchServeIndicatorRow: View {
             HStack(spacing: 4) {
                 WatchServeSideArrow(courtSide: s.courtSide)
                 if let slot = s.tieBreakServeSlot {
-                    Text(slot == .serveOne ? "S1" : "S2")
+                    Text(WatchCopy.serveSlotShort(lang, slot: slot == .serveOne ? 1 : 2))
                         .font(.caption2.weight(.bold).monospaced())
                         .foregroundStyle(.tertiary)
                 }

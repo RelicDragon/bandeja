@@ -10,7 +10,8 @@
  *    `ServeGuideGoldenFixturesTests` (macOS CI / `watch-serve-guide-parity.ts`).
  *
  * Catalog covers: classic progression, deuce/advantage/GP, in-set + super tie-break, Americano
- * official/simple rotation, TT/badminton/pickleball/squash change-ends (incl. badminton doubles).
+ * official/simple rotation, TT/badminton/pickleball/squash change-ends (incl. badminton doubles),
+ * squash winner-serves rotation + own-score box, table tennis two-point / deuce serve rotation.
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -40,7 +41,7 @@ export const SERVE_GUIDE_GOLDEN_FIXTURE_PATH = join(
 );
 
 /** Bump when adding fixtures — issue #181 minimum scenario coverage. */
-export const SERVE_GUIDE_GOLDEN_MIN_FIXTURES = 19;
+export const SERVE_GUIDE_GOLDEN_MIN_FIXTURES = 27;
 
 export type ServeGuideGoldenExpected = Partial<
   Pick<

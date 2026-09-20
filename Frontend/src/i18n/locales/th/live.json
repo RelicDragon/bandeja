@@ -1,0 +1,31 @@
+{
+  "live": {
+    "andJoin": " และ ",
+    "carouselLabel": "แถบแมตช์ที่กำลังแข่ง",
+    "cityTitle": "กำลังแข่งใน {{city}}",
+    "courtLabel": "คอร์ต {{court}}",
+    "detailsBody": "กำลังบันทึกสกอร์ของแมตช์นี้อยู่ตอนนี้",
+    "detailsTitle": "กำลังแข่งอยู่",
+    "followFailed": "ติดตาม {{name}} ไม่สำเร็จ",
+    "followPlayers": "ติดตามผู้เล่น",
+    "followed": "กำลังติดตาม {{name}}",
+    "gamesCount_other": "{{count}} แมตช์ที่กำลังแข่ง",
+    "loading": "กำลังโหลดแมตช์ที่แข่งอยู่",
+    "nowTitle": "กำลังแข่งอยู่",
+    "openFailed": "เปิดการถ่ายทอดไม่ได้",
+    "ratedGame": "แมตช์คิดอันดับ",
+    "reconnecting": "กำลังเชื่อมต่อใหม่",
+    "scoreLead": "{{leaders}} นำอยู่ {{score}}",
+    "scoreLevel": "{{sideA}} กับ {{sideB}} เสมอกันที่ {{score}}",
+    "seeAllOnFind": "ดูทั้งหมดในหน้าค้นหา",
+    "showOnRail": "แสดงในหมวดกำลังแข่งอยู่",
+    "showOnRailNoteFalse": "แมตช์นี้จะไม่ปรากฏในหมวดกำลังแข่งอยู่",
+    "showOnRailNoteTrue": "แมตช์สาธารณะที่กำลังแข่ง ใครก็ตามในเมืองของคุณสามารถดูได้",
+    "spectatorTitle": "ถ่ายทอด",
+    "startedJustNow": "เพิ่งเริ่ม",
+    "started_other": "เริ่มไปแล้ว {{count}} นาที",
+    "watch": "ดู",
+    "watchLive": "ดูการถ่ายทอด",
+    "youTag": "คุณ"
+  }
+}

@@ -1,3 +1,5 @@
+import { loadWeltnerBookingsForClubs, type AggregatedWeltnerBooking } from '@/integrations/weltner/receipts';
+import { useAuthStore } from '@/store/authStore';
 import { useCallback, useEffect, useMemo, useRef, useSyncExternalStore } from 'react';
 import type { AggregatedBooktimeBooking } from '@/integrations/booktime/booktimeAllUpcomingLoader';
 import {
@@ -23,8 +25,9 @@ export type AggregatedClubBooking = (
   | AggregatedBooktimeBooking
   | AggregatedPadelooBooking
   | AggregatedKlikterenBooking
+  | AggregatedWeltnerBooking
 ) & {
-  integrationType?: 'BOOKTIME' | 'PADELOO' | 'KLIKTEREN';
+  integrationType?: 'BOOKTIME' | 'PADELOO' | 'KLIKTEREN' | 'WELTNER';
 };
 
 type UpcomingSnapshot = {
@@ -34,6 +37,7 @@ type UpcomingSnapshot = {
 
 const EMPTY_SNAPSHOT: UpcomingSnapshot = { bookings: [], loading: false };
 
+let cacheGeneration = 0;
 const sharedByKey = new Map<string, UpcomingSnapshot>();
 const inFlightByKey = new Map<string, Promise<void>>();
 const subscribers = new Set<() => void>();
@@ -105,16 +109,18 @@ async function loadMergedUpcoming(
   const padelooClubs = toPadelooRows(clubs);
   const klikterenClubs = toKlikterenRows(clubs);
 
-  const [booktimeBookings, padelooBookings, klikterenBookings] = await Promise.all([
+  const [booktimeBookings, padelooBookings, klikterenBookings, weltnerBookings] = await Promise.all([
     booktimeClubs.length > 0 ? loadAllBooktimeUpcoming(booktimeClubs, enabled) : Promise.resolve([]),
     padelooClubs.length > 0 ? loadPadelooUpcomingForClubs(padelooClubs) : Promise.resolve([]),
     klikterenClubs.length > 0 ? loadKlikterenUpcomingForClubs(klikterenClubs) : Promise.resolve([]),
+    loadWeltnerBookingsForClubs(clubs, 'upcoming').catch(() => []),
   ]);
 
   const merged: AggregatedClubBooking[] = [
     ...booktimeBookings.map((booking) => ({ ...booking, integrationType: 'BOOKTIME' as const })),
     ...padelooBookings,
     ...klikterenBookings,
+    ...weltnerBookings,
   ];
 
   merged.sort(
@@ -137,6 +143,7 @@ function runSharedLoad(
   const existingLoad = inFlightByKey.get(connectedKey);
   if (existingLoad) return existingLoad;
 
+  const generation = cacheGeneration;
   const current = sharedByKey.get(connectedKey);
   if (!invalidate && current && !current.loading) {
     return Promise.resolve();
@@ -146,7 +153,8 @@ function runSharedLoad(
     if (!invalidate) {
       const booktimeOnly = toBooktimeRows(clubs);
       const cachedBookings = await peekCachedBooktimeUpcoming(booktimeOnly, enabled);
-      if (cachedBookings && toPadelooRows(clubs).length === 0 && toKlikterenRows(clubs).length === 0) {
+      if (generation !== cacheGeneration) return;
+      if (cachedBookings && toPadelooRows(clubs).length === 0 && toKlikterenRows(clubs).length === 0 && !clubs.some(c => c.integrationType === 'WELTNER' && c.connected)) {
         setKeyState(connectedKey, {
           bookings: cachedBookings.map((booking) => ({
             ...booking,
@@ -164,6 +172,7 @@ function runSharedLoad(
     });
 
     const bookings = await loadMergedUpcoming(clubs, enabled);
+    if (generation !== cacheGeneration) return;
     setKeyState(connectedKey, { bookings, loading: false });
 
     const booktimeOnly = toBooktimeRows(clubs);
@@ -174,7 +183,7 @@ function runSharedLoad(
       );
     }
   })().finally(() => {
-    inFlightByKey.delete(connectedKey);
+    if (inFlightByKey.get(connectedKey) === loadPromise) inFlightByKey.delete(connectedKey);
   });
 
   inFlightByKey.set(connectedKey, loadPromise);
@@ -182,6 +191,7 @@ function runSharedLoad(
 }
 
 export function resetAllUpcomingClubBookingsSharedState(): void {
+  cacheGeneration++;
   sharedByKey.clear();
   inFlightByKey.clear();
   notifyShared();
@@ -194,26 +204,28 @@ export function useAllUpcomingClubBookings(
   enabled: boolean,
   refreshKey = 0,
 ) {
+  const userId = useAuthStore(s => s.user?.id);
   const clubsRef = useRef(clubs);
   clubsRef.current = clubs;
 
   const connectedKey = useMemo(
     () =>
       clubs
-        .filter((club) => club.connected && (club.companyId || club.padelooClubId || club.klikterenVenueId))
-        .map((club) => `${club.integrationType}:${club.clubId}`)
+        .filter((club) => club.connected && (club.companyId || club.padelooClubId || club.klikterenVenueId || club.integrationType === 'WELTNER'))
+        .map((club) => `${userId ?? 'guest'}:${club.integrationType}:${club.clubId}`)
         .sort()
         .join('|'),
-    [clubs],
+    [clubs, userId],
   );
 
+  const invalidationVersion = useSyncExternalStore(subscribeShared, () => cacheGeneration, () => cacheGeneration);
   const prevRefreshKeyRef = useRef(refreshKey);
 
   useEffect(() => {
     const invalidate = refreshKey !== prevRefreshKeyRef.current;
     prevRefreshKeyRef.current = refreshKey;
     void runSharedLoad(clubsRef.current, enabled, connectedKey, invalidate);
-  }, [connectedKey, enabled, refreshKey]);
+  }, [connectedKey, enabled, refreshKey, invalidationVersion]);
 
   const snapshot = useSyncExternalStore(
     subscribeShared,
@@ -225,11 +237,11 @@ export function useAllUpcomingClubBookings(
     await runSharedLoad(clubsRef.current, enabled, connectedKey, true);
   }, [connectedKey, enabled]);
 
-  return {
-    bookings: snapshot.bookings,
-    loading: snapshot.loading,
-    reload,
-    removeBooking: (bookingId: string) => {
+  // Stable identity: `useMyTabClubBookings` folds this into the memoised
+  // `booktime` snapshot, and a fresh function per render busted that memo on
+  // every My-tab render.
+  const removeBooking = useCallback(
+    (bookingId: string) => {
       const current = sharedByKey.get(connectedKey);
       if (!current) return;
       const bookings = current.bookings.filter((booking) => booking.uuid !== bookingId);
@@ -238,5 +250,13 @@ export function useAllUpcomingClubBookings(
         bookings,
       });
     },
+    [connectedKey],
+  );
+
+  return {
+    bookings: snapshot.bookings,
+    loading: snapshot.loading,
+    reload,
+    removeBooking,
   };
 }

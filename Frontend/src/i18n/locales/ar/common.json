@@ -81,7 +81,9 @@
     "pressBackAgainToExit": "اضغط رجوع مرة أخرى للخروج",
     "editFullscreen": "التحرير في وضع ملء الشاشة",
     "exitFullscreen": "الخروج من وضع ملء الشاشة",
-    "characters": "حرف"
+    "characters": "حرف",
+    "comingSoon": "قريبًا",
+    "comingSoonDescription": "هذا القسم من التطبيق في الطريق."
   },
   "sport": {
     "sport": "الرياضة",

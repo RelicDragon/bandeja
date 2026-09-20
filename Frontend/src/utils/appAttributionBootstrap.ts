@@ -33,6 +33,7 @@ export async function ingestAttributionClipboard(): Promise<void> {
           utmContent: null,
           utmTerm: null,
           choice: null,
+          ref: null,
         };
     persistAttribution({ ...next, aid: next.aid || aid });
   } catch {

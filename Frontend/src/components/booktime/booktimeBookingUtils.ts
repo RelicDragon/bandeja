@@ -1,4 +1,6 @@
 import type { Club } from '@/types';
+import type { BookingListClubRow } from '@/hooks/connectedBookingClubs';
+import { getKlikterenVenueId, getPadelooClubId } from '@shared/clubIntegration';
 import type { BooktimeMyClubRow } from '@/api/booktime';
 import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
 import { BOOKTIME_DEFAULT_TIMEZONE, storedUtcIsoToInstant } from '@shared/booktime/localTime';
@@ -26,8 +28,11 @@ export function linkedBookingToRecord(link: {
   };
 }
 
-export function clubToBooktimeRow(club: Club): BooktimeMyClubRow {
+export function clubToBooktimeRow(club: Club): BookingListClubRow {
   return {
+    integrationType: club.integrationType ?? undefined,
+    padelooClubId: getPadelooClubId(club),
+    klikterenVenueId: getKlikterenVenueId(club),
     clubId: club.id,
     clubName: club.name,
     avatar: club.avatar ?? null,

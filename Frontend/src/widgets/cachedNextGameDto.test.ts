@@ -76,7 +76,24 @@ describe('cachedNextGameDto', () => {
       maxParticipants: 4,
       sport: 'PADEL',
       playersPerMatch: 4,
+      attendance: null,
     });
+  });
+
+  // PRD 346 — the Watch Next Game view needs the viewer's own answer.
+  it('carries the viewer attendance answer when the card was enriched', () => {
+    const dto = mapGameToCachedNextGameDTO(
+      baseGame({
+        attendanceSummary: {
+          confirmedCount: 1,
+          unsureCount: 0,
+          unansweredCount: 1,
+          playingCount: 2,
+          viewerAttendance: 'UNANSWERED',
+        },
+      }),
+    );
+    expect(dto.attendance).toBe('UNANSWERED');
   });
 
   it('builds authenticated and unauthenticated envelopes', () => {

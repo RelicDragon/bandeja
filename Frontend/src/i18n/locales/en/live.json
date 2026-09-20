@@ -1,0 +1,33 @@
+{
+  "live": {
+    "andJoin": " and ",
+    "carouselLabel": "Live games carousel",
+    "cityTitle": "Live in {{city}}",
+    "courtLabel": "court {{court}}",
+    "detailsBody": "This game is being scored right now.",
+    "detailsTitle": "Live now",
+    "followFailed": "Could not follow {{name}}",
+    "followPlayers": "Follow players",
+    "followed": "Following {{name}}",
+    "gamesCount_one": "{{count}} live game",
+    "gamesCount_other": "{{count}} live games",
+    "loading": "Loading live games",
+    "nowTitle": "Live now",
+    "openFailed": "Could not open the broadcast",
+    "ratedGame": "Rated game",
+    "reconnecting": "Reconnecting",
+    "scoreLead": "{{leaders}} lead {{score}}",
+    "scoreLevel": "{{sideA}} and {{sideB}} are level at {{score}}",
+    "seeAllOnFind": "See all on Find",
+    "showOnRail": "Show on Live now",
+    "showOnRailNoteFalse": "This game stays off the Live now rail.",
+    "showOnRailNoteTrue": "Public games in progress can be watched by anyone in your city.",
+    "spectatorTitle": "Live",
+    "startedJustNow": "Just started",
+    "started_one": "Started {{count}} min ago",
+    "started_other": "Started {{count}} min ago",
+    "watch": "Watch",
+    "watchLive": "Watch live",
+    "youTag": "You"
+  }
+}

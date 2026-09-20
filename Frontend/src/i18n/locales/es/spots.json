@@ -1,0 +1,34 @@
+{
+  "spots": {
+    "pill": {
+      "label": "Plaza libre",
+      "ariaLabel": "Se liberó una plaza {{time}}"
+    },
+    "queue": {
+      "position_one": "Eres el n.º {{position}} de {{count}}",
+      "position_many": "Eres el n.º {{position}} de {{count}}",
+      "position_other": "Eres el n.º {{position}} de {{count}}",
+      "autoFillOn": "El relleno automático está activado: entrarás sin hacer nada",
+      "autoFillOff": "El organizador acepta a mano",
+      "waitForOrganizer": "Estás en la lista de espera. El organizador decide quién ocupa la plaza.",
+      "tapToJoin": "Toca Unirse cuando se libere una plaza"
+    },
+    "settings": {
+      "autoFillTitle": "Relleno automático desde la cola",
+      "autoFillHelper": "El primero de la cola entra en cuanto se libera una plaza. Las reglas de género y nivel siguen aplicándose.",
+      "queueCount_one": "{{count}} en la cola",
+      "queueCount_many": "{{count}} en la cola",
+      "queueCount_other": "{{count}} en la cola",
+      "queueEmpty": "Aún no espera nadie"
+    },
+    "roster": {
+      "openSpot": "Plaza libre"
+    },
+    "toast": {
+      "joinedFromQueue": "{{name}} entró desde la cola"
+    },
+    "seated": {
+      "banner": "Entraste desde la cola"
+    }
+  }
+}

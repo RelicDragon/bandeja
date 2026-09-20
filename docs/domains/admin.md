@@ -25,15 +25,19 @@ Code: `Admin/index.html` nav, `Admin/app.js`, `Admin/link-to-app.js`. API: `Back
 | Clubs | `clubsPage` | Club/court CRUD, club admins, **court import**: Booktime / Padeloo / Klikteren (`POST /admin/clubs/:id/{booktime\|padeloo\|klikteren}/import-courts`). Court webcam URL. No Nspadel import in this UI. |
 | Reports | `reportsPage` | Message reports + story comment reports; status patch |
 | App Versions | `appVersionsPage` | Force-update: `platform` ios/android, `minBuildNumber`, `minVersion`, `isBlocking`, `message` |
-| Platform Settings | `platformSettingsPage` | Results-artifact Replicate photo model (`GET/PATCH /admin/results-artifacts/photo-model`) |
+| Platform Settings | `platformSettingsPage` | Results-artifact Replicate photo model (`GET/PATCH /admin/results-artifacts/photo-model`); **Cost Split** `COINS_PER_CURRENCY_UNIT` (deliberately unset — while null the coins settle option is hidden on both ends); `REFERRAL_REWARD_REFERRER` / `REFERRAL_REWARD_REFERRED` |
 | Market Categories | `marketCategoriesPage` | Marketplace category CRUD |
 | Mass Notifications | `massNotificationsPage` | Broadcast push (`POST /admin/mass-notification`) |
 | Sponsor Ads | `sponsorAdsPage` | Sponsors, campaigns, targeting presets, creatives, stats, export, preview (`/admin/ads/*`) |
+| Goods | `Admin/goods.js` | Cosmetics catalogue CRUD, preview art upload, **Withdraw** (deactivate + refund every owner exactly once). API `/api/goods`, every route `requireAdmin` |
+| Referrals | `Admin/referrals.js` | Referrer, code, invited, joined, played, rewarded, coins, last join. `GET /api/admin/referrals`, `GET /api/admin/referrals/export` (CSV), `POST /api/admin/referrals/rewards/:rewardId/revoke`. Date filters narrow by **invite** date, not payout date |
 | Translation Queue | `translationQueuePage` | Queue stats + recent failures (`GET /admin/translation-queue/stats`). Results-artifact queue stats exist on API (`/admin/game-results-artifacts-queue/stats`). |
 | App QR | `linkToAppPage` | Funnel: views / iOS / Android / Web / register / login; by campaign; attributed users; recent events. `Admin/link-to-app.js` → `GET /admin/link-to-app/stats?days=` |
 | Logs | `logsPage` | Historical + SSE stream (`GET /api/logs/stream?token=`), clear |
 
 Global city filter in the header scopes several lists.
+
+**`/api/goods` is admin-only.** It previously carried `authenticate` alone on `POST`/`PUT`/`DELETE`, so any signed-in player could create, reprice or delete catalogue items, and the unfiltered `GET` leaked unreleased ones. Every route on that router is now `requireAdmin`, and `Backend/src/routes/goodsAdminGuard.integration.test.ts` fails if that regresses. Player-facing reads live on `/api/shop` — nothing on `/api/goods` is for players.
 
 ## Related APIs not in nav
 

@@ -22,6 +22,10 @@ import { KlikterenImportCourtsService } from '../services/admin/klikterenImportC
 import { AdminTranslationQueueStatsService } from '../services/admin/translationQueueStats.service';
 import { AdminGameResultsArtifactQueueStatsService } from '../services/admin/gameResultsArtifactQueueStats.service';
 import { ReplicatePhotoModelSettingService } from '../services/replicate/replicatePhotoModelSetting.service';
+import {
+  PLATFORM_SETTING_KEYS,
+  PlatformSettingService,
+} from '../services/platformSetting.service';
 import { resetSportQuestionnaire } from '../services/user/sportQuestionnaire.service';
 import { parseSportParam } from '../services/user/userSportProfile.service';
 import prisma from '../config/database';
@@ -514,6 +518,37 @@ export const getGameResultsArtifactQueueStats = asyncHandler(
   async (_req: AuthRequest, res: Response) => {
     const stats = await AdminGameResultsArtifactQueueStatsService.getStats();
     res.json({ success: true, data: stats });
+  }
+);
+
+export const getPlatformSettings = asyncHandler(
+  async (_req: AuthRequest, res: Response) => {
+    const settings = await PlatformSettingService.listSettings();
+    res.json({
+      success: true,
+      data: {
+        settings,
+        /**
+         * Keys this build reads. A key absent from `settings` has no row — for
+         * `COINS_PER_CURRENCY_UNIT` that is the documented "coins settlement
+         * unavailable" state, not an error.
+         */
+        knownKeys: Object.values(PLATFORM_SETTING_KEYS),
+      },
+    });
+  }
+);
+
+export const setPlatformSetting = asyncHandler(
+  async (req: AuthRequest, res: Response) => {
+    const key = String(req.params.key ?? '');
+    const { value } = req.body as { value?: unknown };
+    if (typeof value !== 'string') {
+      throw new ApiError(400, 'errors.admin.platformSettingValueRequired');
+    }
+    await PlatformSettingService.setSetting(key, value);
+    const settings = await PlatformSettingService.listSettings();
+    res.json({ success: true, data: { settings } });
   }
 );
 

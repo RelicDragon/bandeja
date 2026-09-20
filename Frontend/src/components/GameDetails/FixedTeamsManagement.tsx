@@ -469,6 +469,18 @@ export const FixedTeamsManagement = ({ game, onGameUpdate, embedded = false }: F
               ? (teams[selectedTeamIndex]?.players.map((p) => p.userId) ?? [])
               : teams.flatMap((team) => team.players.map((p) => p.userId))
           }
+          unavailableLabelById={Object.fromEntries(
+            teams
+              .slice(0, slotCount)
+              .flatMap((team) =>
+                team.players.map((p) => [p.userId, `${t('games.teamNumber')} ${team.teamNumber}`] as const),
+              ),
+          )}
+          contextLabel={`${t('games.teamNumber')} ${teams[selectedTeamIndex]?.teamNumber ?? selectedTeamIndex + 1}`}
+          teammates={(teams[selectedTeamIndex]?.players ?? []).map((p) =>
+            resolveFixedTeamPlayerUser(game, p.userId, p.user),
+          )}
+          sport={game.sport ? parseGameSport(game.sport) : undefined}
           title={t('games.addPlayer')}
         />
       )}

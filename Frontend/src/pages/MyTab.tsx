@@ -17,6 +17,8 @@ import {
 import { SportQuestionnairePrompt } from '@/components/sportQuestionnaire';
 import { StoriesRail } from '@/components/stories/StoriesRail';
 import { HomeActionGrid } from '@/components/home/HomeActionGrid';
+import { LiveNowRailContainer } from '@/components/live/LiveNowRailContainer';
+import { shouldShowHomeLiveRail } from '@/features/live/homeLiveRailGate';
 import { HomeTodayHeading } from '@/components/home/HomeTodayHeading';
 import { AdSlot } from '@/components/sponsorSlots';
 import { MyTabUnlinkedBookingsSection } from '@/components/booktime/MyTabUnlinkedBookingsSection';
@@ -269,6 +271,20 @@ export const MyTab = () => {
       return gameStr !== selectedStr;
     });
   }, [myGamesSelectedDate, upcomingGamesUndated, user?.currentCity?.timezone]);
+  /*
+   * PRD 349 — Home only offers the live rail when the viewer's own day is
+   * empty. `calendarMergedGames` is the viewer's own schedule, so this never
+   * looks at the city at large.
+   */
+  const showHomeLiveRail = useMemo(
+    () =>
+      shouldShowHomeLiveRail(
+        calendarMergedGames,
+        resolveViewerCityTimezone(user?.currentCity?.timezone),
+      ),
+    [calendarMergedGames, user?.currentCity?.timezone],
+  );
+
   const gamesSectionGames = myGamesViewMode === 'list' ? [] : myGamesForSelectedDate;
   const gamesSectionUpcoming =
     myGamesViewMode === 'list' || !myGamesSelectedDate
@@ -560,6 +576,14 @@ export const MyTab = () => {
               hideBookingsCta={unlinkedBookings.visible || unlinkedBookings.pending}
             />
           )}
+          {user && showHomeLiveRail && (
+            <LiveNowRailContainer
+              variant="home"
+              cityId={user.currentCityId ?? undefined}
+              cityName={user.currentCity?.name}
+              onSeeAll={switchToFind}
+            />
+          )}
           {!loading && (
             <div id="home-invites-section">
               <InvitesSection
@@ -670,6 +694,14 @@ export const MyTab = () => {
               primarySport={primarySport}
               panelCounts={panelCounts}
               hideBookingsCta={unlinkedBookings.visible || unlinkedBookings.pending}
+            />
+          )}
+          {user && showHomeLiveRail && (
+            <LiveNowRailContainer
+              variant="home"
+              cityId={user.currentCityId ?? undefined}
+              cityName={user.currentCity?.name}
+              onSeeAll={switchToFind}
             />
           )}
           {!loading && (

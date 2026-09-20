@@ -30,6 +30,7 @@ import {
   type EditLocationTimeDraft,
 } from '@/components/gameLocationTime/locationTimeDraft';
 import { PriceTab, type PriceTabState } from './editGameInfo/PriceTab';
+import { buildGameEditPricePayload, isPaidPriceType } from '@/features/cost/gameEditPricePayload';
 import { GameSettings } from './GameSettings';
 import { createDateFromClubTime, useGameTimeDuration } from '@/hooks/useGameTimeDuration';
 import { useClubTimeOptions } from '@/hooks/useClubTimeOptions';
@@ -40,11 +41,13 @@ import {
   clubHasBookingIntegration,
   getKlikterenVenueId,
   getPadelooClubId,
-  isKlikterenClub,
+  isWeltnerClub, isKlikterenClub,
   isNspadelClub,
   isPadelooClub,
   parseBooktimeIntegrationConfig,
 } from '@shared/clubIntegration';
+import { isGameSeriesEnabled } from '@/config/featureFlags';
+import { SeriesScopeSheet } from '@/features/game-series/SeriesScopeSheet';
 import { useClubBookingAuth } from '@/hooks/useClubBookingAuth';
 import { useBooktimeCompanyMeta } from '@/hooks/useBooktimeCompanyMeta';
 import { useClubSnapshotRefresh } from '@/hooks/useClubSnapshotRefresh';
@@ -115,6 +118,7 @@ function getInitialPriceState(game: Game, userCurrency: PriceCurrency): PriceTab
     priceTotal: game.priceTotal,
     priceCurrency: game.priceCurrency ?? userCurrency,
     inputValue: game.priceTotal != null ? String(game.priceTotal) : '',
+    paymentHint: game.paymentHint ?? '',
   };
 }
 
@@ -140,6 +144,8 @@ export const EditGameInfoModal = ({
   const initialTab: EditGameInfoTabId =
     initialTabProp === 'where' || initialTabProp === 'when' ? 'locationTime' : initialTabProp;
   const [activeTab, setActiveTab] = useState<EditGameInfoTabId>(initialTab);
+  /** PRD 345 — non-null while the "Apply to" sheet is open after a save. */
+  const [seriesScopePatch, setSeriesScopePatch] = useState<Record<string, unknown> | null>(null);
   const [general, setGeneral] = useState<GeneralTabState>(() => getInitialGeneralState(game));
   const [where, setWhere] = useState<WhereTabState>(() => getInitialWhereState(game));
   const [venueCityId, setVenueCityId] = useState(
@@ -602,12 +608,13 @@ export const EditGameInfoModal = ({
     general.description !== initialGeneral.description ||
     general.pendingAvatar != null ||
     general.removeAvatar;
-  const isPaidPriceType = price.priceType !== 'NOT_KNOWN' && price.priceType !== 'FREE';
+  const priceIsPaid = isPaidPriceType(price.priceType);
   const priceDirty =
     price.priceType !== initialPrice.priceType ||
-    (isPaidPriceType &&
+    (priceIsPaid &&
       ((price.priceTotal ?? null) !== (initialPrice.priceTotal ?? null) ||
-        (price.priceCurrency ?? null) !== (initialPrice.priceCurrency ?? null)));
+        (price.priceCurrency ?? null) !== (initialPrice.priceCurrency ?? null) ||
+        price.paymentHint.trim() !== initialPrice.paymentHint.trim()));
   const scheduleDirty =
     where.clubId !== (game.clubId || '') ||
     where.hasBookedCourt !== (game.hasBookedCourt ?? false) ||
@@ -815,20 +822,15 @@ export const EditGameInfoModal = ({
       const updateData: Partial<Game> = {
         name: general.name.trim() || null,
         description: general.description.trim() || null,
-        priceType: price.priceType,
+        // PRD 348 — `paymentHint` is sent only when the organizer changed it:
+        // the seed can be missing from a game object the socket delivered, and
+        // writing it back unconditionally deleted saved IBANs.
+        ...buildGameEditPricePayload(price, initialPrice),
       };
 
       if (general.removeAvatar) {
         updateData.avatar = null;
         updateData.originalAvatar = null;
-      }
-
-      if (price.priceType === 'NOT_KNOWN' || price.priceType === 'FREE') {
-        updateData.priceTotal = null;
-        updateData.priceCurrency = null;
-      } else {
-        if (price.priceTotal != null) updateData.priceTotal = price.priceTotal;
-        if (price.priceCurrency != null) updateData.priceCurrency = price.priceCurrency;
       }
 
       await gamesApi.update(game.id, updateData);
@@ -886,6 +888,13 @@ export const EditGameInfoModal = ({
       onGameUpdate?.(response.data);
       toast.success(t('gameDetails.settingsUpdated'));
       setConfirmModalOpen(false);
+      // PRD 345 — an occurrence of a series asks where the edit applies before
+      // it closes. The edit itself is already saved on THIS game; the sheet only
+      // offers to push the same fields onto future occurrences.
+      if (isGameSeriesEnabled() && game.seriesId) {
+        setSeriesScopePatch({ ...updateData } as Record<string, unknown>);
+        return;
+      }
       onClose();
     } catch (err: unknown) {
       if (isLocationTimePartialSaveError(err)) {
@@ -1074,7 +1083,11 @@ export const EditGameInfoModal = ({
             </div>
           )}
           {activeTab === 'price' && (
-            <PriceTab state={price} onChange={(patch) => setPrice((s) => ({ ...s, ...patch }))} />
+            <PriceTab
+              state={price}
+              onChange={(patch) => setPrice((s) => ({ ...s, ...patch }))}
+              maxParticipants={game.maxParticipants}
+            />
           )}
           {canEditParticipants ? (
             <div
@@ -1340,6 +1353,26 @@ export const EditGameInfoModal = ({
           setConfirmModalOpen(false);
         }}
         flowMode="edit"
+      />
+    ) : null}
+
+    {selectedClubData && confirmModalOpen && isWeltnerClub(selectedClubData) ? (
+      <ClubCreateGameConfirmModal provider="WELTNER" open={confirmModalOpen} onOpenChange={setConfirmModalOpen}
+        club={selectedClubData} bookings={integratedCourtsForConfirm.map(court => ({ court, date: whenSelectedDate, startTime: whenSelectedTime, durationMinutes: Math.round(whenDuration * 60) }))}
+        summaryChips={[]} bookFlowContext={{ refreshSnapshot, lastFetchedAt: snapshotLastFetchedAt }} snapshotBlocked={snapshotBlocked}
+        onExecuteCreateGame={async overrides => { await executeSave({ externalBookingIds: overrides.externalBookingIds, bookingSnapshots: overrides.bookingSnapshots }); }}
+        onSlotTaken={() => { setWhenSelectedTime(''); setHookTime(''); void booktimeTimeOptions.reload(); }}
+        onSuccess={() => setConfirmModalOpen(false)} flowMode="edit" />
+    ) : null}
+    {seriesScopePatch && game.seriesId ? (
+      <SeriesScopeSheet
+        open
+        seriesId={game.seriesId}
+        templatePatch={seriesScopePatch}
+        onDone={() => {
+          setSeriesScopePatch(null);
+          onClose();
+        }}
       />
     ) : null}
     </>

@@ -1,0 +1,96 @@
+{
+  "onboarding": {
+    "frame": {
+      "skip": "Omitir",
+      "back": "Atrás",
+      "working": "Guardando…",
+      "progress": "Paso {{current}} de {{total}}"
+    },
+    "welcome": {
+      "title": "Vamos a buscarte un partido",
+      "subtitle": "Dos minutos y listo.",
+      "start": "Empezar",
+      "socialProof_one": "{{count}} jugador en {{city}}",
+      "socialProof_many": "{{count}} de jugadores en {{city}}",
+      "socialProof_other": "{{count}} jugadores en {{city}}"
+    },
+    "sport": {
+      "title": "¿A qué deportes juegas?",
+      "titleSportOnly": "Elige un deporte para continuar",
+      "subtitle": "Elige los que quieras. El primero será tu deporte principal.",
+      "continue": "Continuar",
+      "primaryTag": "Principal",
+      "makePrimary": "Hacer principal: {{sport}}",
+      "primaryHint": "Mantén pulsado un deporte para hacerlo principal."
+    },
+    "profile": {
+      "title": "¿Cómo te llamamos?",
+      "subtitle": "Tu nombre aparece en cada partido al que te apuntes.",
+      "continue": "Continuar",
+      "photoOptional": "La foto es opcional: puedes añadirla luego.",
+      "firstNameLabel": "Nombre",
+      "lastNameLabel": "Apellido",
+      "nameRequired": "Escribe tu nombre.",
+      "nameTooShort": "Usa al menos 2 caracteres.",
+      "nameTooLong": "Usa como máximo 30 caracteres."
+    },
+    "level": {
+      "title": "Tu nivel",
+      "subtitle": "Unas preguntas rápidas sobre tu {{sport}}.",
+      "continue": "Continuar",
+      "resultTitle": "Este es tu nivel inicial",
+      "resultSubtitle": "Según tus respuestas sobre {{sport}}.",
+      "scale": "En la escala {{scale}}",
+      "adjustLater": "Puedes ajustarlo cuando quieras en tu perfil.",
+      "unavailable": "Todavía no tenemos test de nivel para {{sport}}."
+    },
+    "city": {
+      "title": "¿Es esta tu ciudad?",
+      "helper": "Mostramos partidos y jugadores de tu ciudad.",
+      "confirm": "Sí, es correcta",
+      "change": "Cambiar ciudad",
+      "backToCard": "Mantener mi ciudad actual",
+      "unknown": "Sin ciudad todavía"
+    },
+    "follow": {
+      "title": "Gente a la que seguir",
+      "subtitle": "Jugadores activos de tu ciudad. Síguelos y tu inicio se llena.",
+      "continue": "Continuar",
+      "followAll": "Seguir a todos",
+      "follow": "Seguir",
+      "following": "Siguiendo",
+      "followFailed": "No se pudo seguir a ese jugador. Inténtalo de nuevo.",
+      "gamesThisMonth_one": "{{count}} partido este mes",
+      "gamesThisMonth_many": "{{count}} de partidos este mes",
+      "gamesThisMonth_other": "{{count}} partidos este mes",
+      "emptyTitle": "Aún no hay sugerencias",
+      "emptyDescription": "Tu ciudad todavía se está llenando. Vuelve tras tu primer partido.",
+      "unnamedPlayer": "Jugador"
+    },
+    "notifications": {
+      "title": "Mantente al día",
+      "subtitle": "Solo enviamos lo que de verdad merece interrumpirte.",
+      "turnOn": "Activar notificaciones",
+      "later": "Ahora no",
+      "reasonInvitesTitle": "Invitaciones",
+      "reasonInvitesBody": "Cuando alguien te pide jugar.",
+      "reasonRemindersTitle": "Recordatorios",
+      "reasonRemindersBody": "Antes de un partido al que te apuntaste.",
+      "reasonSpotsTitle": "Plazas libres",
+      "reasonSpotsBody": "Cuando se libera una plaza en un partido que querías.",
+      "controlHint": "Puedes cambiar todo esto en los ajustes."
+    },
+    "finish": {
+      "choiceTitle": "¿Qué quieres hacer primero?",
+      "choiceSubtitle": "De cualquier modo, ya está todo listo.",
+      "playSoonTitle": "Quiero jugar pronto",
+      "playSoonBody": "Di a tu ciudad cuándo estás libre y deja que los jugadores te busquen.",
+      "browseTitle": "Ver partidos",
+      "browseBody": "Mira lo que ya está pasando cerca de ti.",
+      "doneTitle": "Todo listo"
+    },
+    "errors": {
+      "saveFailed": "No se pudo guardar. Revisa tu conexión e inténtalo de nuevo."
+    }
+  }
+}

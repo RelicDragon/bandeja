@@ -1,0 +1,81 @@
+{
+  "cost": {
+    "title": "ค่าใช้จ่าย",
+    "totalLine": "รวม {{amount}}",
+    "paidBy": "{{name}} เป็นคนจ่าย",
+    "payerTag": "จ่ายค่าคอร์ทแล้ว",
+    "frozen": "ล็อกยอดหารตามผลสุดท้ายแล้ว",
+    "updatedCaption": "อัปเดตยอดหารแล้ว",
+    "iPaid": "ฉันจ่ายแล้ว",
+    "settledButton": "เคลียร์แล้ว",
+    "cancel": "ยกเลิก",
+    "save": "บันทึก",
+    "amountLabel": "จำนวนเงิน",
+    "amountInvalid": "กรุณากรอกจำนวนเงิน",
+    "keypadLabel": "แป้นตัวเลข",
+    "keypadBackspace": "ลบตัวเลขสุดท้าย",
+    "editShareFor": "แก้ไขยอดของ {{name}}",
+    "editShareHint": "ยอดรวมของเกมนี้คือ {{total}}",
+    "receivedFor": "ทำเครื่องหมายว่า {{name}} จ่ายแล้ว",
+    "splitRemainder": "หารส่วนที่เหลือเท่า ๆ กัน",
+    "splitRemainderHint": "ผู้เล่นคนอื่นช่วยรับส่วนต่างเพื่อให้ยอดรวมตรงกัน",
+    "summaryStrip": "เคลียร์แล้ว {{settled}} จาก {{total}} · ค้าง {{amount}}",
+    "summaryAllSettled": "เคลียร์แล้ว {{settled}} จาก {{total}}",
+    "remindUnpaid": "เตือนคนที่ยังไม่จ่าย",
+    "remindCooldown": "เตือนได้อีกครั้งในอีกประมาณ {{hours}} ชม.",
+    "state": {
+      "unpaid": "ยังไม่จ่าย",
+      "markedPaid": "แจ้งว่าจ่ายแล้ว",
+      "settled": "เคลียร์แล้ว"
+    },
+    "sheet": {
+      "title": "คุณจ่ายด้วยวิธีไหน?",
+      "subtitle": "{{amount}} ให้ {{name}}",
+      "hintLabel": "วิธีจ่ายให้ {{name}}",
+      "copy": "คัดลอก",
+      "copied": "คัดลอกแล้ว",
+      "outside": "จ่ายนอกแอป",
+      "outsideHint": "เงินสด โอนธนาคาร หรือแอปชำระเงิน",
+      "coins": "ส่ง {{coins}} เหรียญ",
+      "coinsHint": "ยอดของคุณ: {{balance}} เหรียญ",
+      "disclaimer": "Bandeja ไม่โอนเงินจริง ที่นี่แค่บันทึกว่าใครจ่ายแล้ว"
+    },
+    "card": {
+      "perPlayer": "{{amount}} ต่อคน",
+      "perPlayerEstimated": "ประมาณ {{amount}} ต่อคน",
+      "totalFor": "รวม {{amount}} · ผู้เล่น {{players}} คน"
+    },
+    "create": {
+      "preview": "ประมาณ {{amount}} ต่อคน สำหรับผู้เล่น {{players}} คน",
+      "paymentHintLabel": "วิธีจ่ายเงินให้คุณ",
+      "paymentHintPlaceholder": "เลขบัญชี พร้อมเพย์ หรือจ่ายสดที่คลับ…",
+      "paymentHintHelp": "แสดงให้ผู้เล่นเห็นตอนเคลียร์ยอด เหลืออีก {{remaining}} ตัวอักษร"
+    },
+    "wallet": {
+      "owed": "คุณค้างจ่าย",
+      "owedToYou": "คนอื่นค้างคุณ",
+      "settle": "เคลียร์",
+      "view": "ดู",
+      "allSettled": "เคลียร์ครบแล้ว 🎉",
+      "toName": "ให้ {{name}}",
+      "fromName": "จาก {{name}}"
+    },
+    "toast": {
+      "markedPaid": "แจ้งว่าจ่ายแล้ว",
+      "settledCoins": "ส่ง {{coins}} เหรียญแล้ว · เคลียร์",
+      "received": "แจ้งว่าได้รับแล้ว",
+      "receivedUndone": "แจ้งว่ายังไม่จ่าย",
+      "shareUpdated": "อัปเดตยอดแล้ว",
+      "reminded_other": "ส่งการเตือนแล้ว · ผู้เล่น {{count}} คน"
+    },
+    "errors": {
+      "settleFailed": "บันทึกไม่สำเร็จ ลองอีกครั้ง",
+      "confirmFailed": "อัปเดตรายการนี้ไม่สำเร็จ ลองอีกครั้ง",
+      "remindFailed": "ตอนนี้ยังส่งการเตือนไม่ได้",
+      "updateFailed": "บันทึกยอดไม่สำเร็จ ลองอีกครั้ง",
+      "copyFailed": "คัดลอกไม่สำเร็จ"
+    },
+    "loading": "กำลังโหลดการแบ่งค่าใช้จ่าย…",
+    "loadFailed": "เราโหลดการแบ่งค่าใช้จ่ายไม่สำเร็จ"
+  }
+}

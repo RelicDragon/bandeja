@@ -1,0 +1,69 @@
+{
+  "pairs": {
+    "mode": {
+      "label": "Mode papan peringkat",
+      "players": "Pemain",
+      "pairs": "Pasangan"
+    },
+    "sort": {
+      "label": "Urutkan pasangan",
+      "winRate": "Rasio menang",
+      "games": "Pertandingan",
+      "level": "Tingkat"
+    },
+    "period": {
+      "label": "Rentang waktu",
+      "all": "Sepanjang waktu",
+      "days30": "30 hari terakhir",
+      "days10": "10 hari terakhir"
+    },
+    "names": {
+      "spoken": "{{first}} dan {{second}}"
+    },
+    "gamesCount_other": "{{count}} pertandingan",
+    "floorHint_other": "Mainkan {{count}} pertandingan dengan pasangan yang sama agar muncul di sini.",
+    "chemistry": {
+      "tooltip": "Rasio menang bersama dibanding bermain sendiri",
+      "aria": "Kecocokan {{value}}"
+    },
+    "stats": {
+      "games": "Pertandingan",
+      "winRate": "Rasio menang",
+      "chemistry": "Kecocokan",
+      "chemistryUnknown": "Pertandingan sendiri belum cukup"
+    },
+    "aria": {
+      "row": "Peringkat {{rank}}, {{names}}, {{games}}, rasio menang {{winRate}} persen, kecocokan {{chemistry}}",
+      "rowNoChemistry": "Peringkat {{rank}}, {{names}}, {{games}}, rasio menang {{winRate}} persen",
+      "podium": "Nomor {{rank}}, {{names}}, rasio menang {{winRate}} persen, {{games}}",
+      "partner": "{{name}}, {{games}}, rasio menang {{winRate}} persen"
+    },
+    "scrollToMyPair": "Ke pasangan saya ({{rank}})",
+    "loadMore": "Muat lagi",
+    "loading": "Memuat pasangan",
+    "error": "Gagal memuat pasangan. Coba lagi sebentar.",
+    "empty": {
+      "title": "Belum ada pasangan di peringkat",
+      "action": "Cari pertandingan"
+    },
+    "sheet": {
+      "title": "Pasangan",
+      "recent": "Terakhir bermain bersama",
+      "recentEmpty": "Belum ada pertandingan bersama.",
+      "createTeam": "Buat tim",
+      "openTeam": "Buka tim",
+      "inviteToGame": "Undang ke pertandingan"
+    },
+    "recent": {
+      "untitled": "Pertandingan"
+    },
+    "result": {
+      "win": "Menang",
+      "loss": "Kalah"
+    },
+    "partners": {
+      "title": "Pasangan Anda",
+      "seeAll": "Lihat semua"
+    }
+  }
+}

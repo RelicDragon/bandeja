@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -49,7 +49,7 @@ function useDeferredAdReveal(creativeId: string | undefined, reduceMotion: boole
   return revealed;
 }
 
-export function AdSlot({ placement, className }: AdSlotProps) {
+export const AdSlot = memo(function AdSlot({ placement, className }: AdSlotProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const reduceMotion = usePrefersReducedMotion();
@@ -153,4 +153,4 @@ export function AdSlot({ placement, className }: AdSlotProps) {
       )}
     </>
   );
-}
+});

@@ -81,7 +81,9 @@
     "off": "Off",
     "editFullscreen": "Upravit na celou obrazovku",
     "exitFullscreen": "Ukončit celou obrazovku",
-    "characters": "znaků"
+    "characters": "znaků",
+    "comingSoon": "Již brzy",
+    "comingSoonDescription": "Tato část aplikace je na cestě."
   },
   "sport": {
     "sport": "Sport",

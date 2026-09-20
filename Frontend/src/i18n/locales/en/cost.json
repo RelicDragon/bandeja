@@ -1,0 +1,82 @@
+{
+  "cost": {
+    "title": "Cost",
+    "totalLine": "Total {{amount}}",
+    "paidBy": "Paid by {{name}}",
+    "payerTag": "paid the club",
+    "frozen": "Shares fixed at final score",
+    "updatedCaption": "Shares updated",
+    "iPaid": "I paid",
+    "settledButton": "Settled",
+    "cancel": "Cancel",
+    "save": "Save",
+    "amountLabel": "Amount",
+    "amountInvalid": "Enter an amount",
+    "keypadLabel": "Number keypad",
+    "keypadBackspace": "Delete last digit",
+    "editShareFor": "Edit {{name}}'s share",
+    "editShareHint": "The game total is {{total}}.",
+    "receivedFor": "Mark {{name}} as paid",
+    "splitRemainder": "Split remainder evenly",
+    "splitRemainderHint": "The other players cover the difference so the total still adds up.",
+    "summaryStrip": "{{settled}} of {{total}} settled · {{amount}} outstanding",
+    "summaryAllSettled": "{{settled}} of {{total}} settled",
+    "remindUnpaid": "Remind unpaid",
+    "remindCooldown": "You can nudge again in about {{hours}} h",
+    "state": {
+      "unpaid": "Unpaid",
+      "markedPaid": "Marked paid",
+      "settled": "Settled"
+    },
+    "sheet": {
+      "title": "How did you pay?",
+      "subtitle": "{{amount}} to {{name}}",
+      "hintLabel": "How to pay {{name}}",
+      "copy": "Copy",
+      "copied": "Copied",
+      "outside": "Outside the app",
+      "outsideHint": "Cash, bank transfer or a payment app",
+      "coins": "Send {{coins}} coins",
+      "coinsHint": "Your balance: {{balance}} coins",
+      "disclaimer": "Bandeja never moves real money. This only records who paid."
+    },
+    "card": {
+      "perPlayer": "{{amount}} per player",
+      "perPlayerEstimated": "≈ {{amount}} per player",
+      "totalFor": "Total {{amount}} · {{players}} players"
+    },
+    "create": {
+      "preview": "≈ {{amount}} each for {{players}} players",
+      "paymentHintLabel": "How to pay you",
+      "paymentHintPlaceholder": "IBAN, Revolut tag, cash at the club…",
+      "paymentHintHelp": "Shown to players when they settle. {{remaining}} characters left."
+    },
+    "wallet": {
+      "owed": "Owed",
+      "owedToYou": "Owed to you",
+      "settle": "Settle",
+      "view": "View",
+      "allSettled": "All settled 🎉",
+      "toName": "To {{name}}",
+      "fromName": "From {{name}}"
+    },
+    "toast": {
+      "markedPaid": "Marked as paid",
+      "settledCoins": "{{coins}} coins sent · settled",
+      "received": "Marked as received",
+      "receivedUndone": "Marked as unpaid",
+      "shareUpdated": "Share updated",
+      "reminded_one": "Reminder sent · {{count}} player",
+      "reminded_other": "Reminder sent · {{count}} players"
+    },
+    "errors": {
+      "settleFailed": "Could not record that. Try again.",
+      "confirmFailed": "Could not update that row. Try again.",
+      "remindFailed": "Could not send the reminder right now.",
+      "updateFailed": "Could not save the share. Try again.",
+      "copyFailed": "Could not copy that."
+    },
+    "loading": "Loading the cost split…",
+    "loadFailed": "We couldn't load the cost split."
+  }
+}

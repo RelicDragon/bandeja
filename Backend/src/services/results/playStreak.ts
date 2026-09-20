@@ -162,12 +162,20 @@ export function projectPlayStreak(
   const alive = isPlayStreakAlive(fields.lastPlayAt, timezone, now);
   const current = alive ? fields.count : 0;
   const deadline = fields.lastPlayAt ? getPlayStreakDeadline(fields.lastPlayAt, timezone) : null;
-  const hoursLeft =
+  const exactHoursLeft =
     alive && deadline != null
       ? Math.max(0, (deadline.getTime() - now.getTime()) / 3_600_000)
       : null;
   const atRisk =
-    options.includeAtRisk && alive && hoursLeft != null && hoursLeft <= PLAY_STREAK_AT_RISK_HOURS;
+    options.includeAtRisk &&
+    alive &&
+    exactHoursLeft != null &&
+    exactHoursLeft <= PLAY_STREAK_AT_RISK_HOURS;
+  // Whole hours only. The exact fraction changed on every request, which made
+  // each `/users/profile` response differ from the last one; the app compares
+  // the serialised profile to decide whether the stored user changed, so an
+  // active streak was re-rendering every profile subscriber on every navigation.
+  const hoursLeft = exactHoursLeft == null ? null : Math.floor(exactHoursLeft);
 
   return {
     current,

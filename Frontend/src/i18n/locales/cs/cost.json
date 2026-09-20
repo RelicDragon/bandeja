@@ -1,0 +1,84 @@
+{
+  "cost": {
+    "title": "Náklady",
+    "totalLine": "Celkem {{amount}}",
+    "paidBy": "Zaplatil(a) {{name}}",
+    "payerTag": "zaplatil(a) kurt",
+    "frozen": "Podíly jsou uzamčené podle konečného výsledku",
+    "updatedCaption": "Podíly byly přepočítány",
+    "iPaid": "Zaplatil(a) jsem",
+    "settledButton": "Vyrovnáno",
+    "cancel": "Zrušit",
+    "save": "Uložit",
+    "amountLabel": "Částka",
+    "amountInvalid": "Zadejte částku",
+    "keypadLabel": "Číselná klávesnice",
+    "keypadBackspace": "Smazat poslední číslici",
+    "editShareFor": "Upravit podíl hráče {{name}}",
+    "editShareHint": "Celková cena hry je {{total}}.",
+    "receivedFor": "Označit, že {{name}} zaplatil(a)",
+    "splitRemainder": "Rozdělit zbytek rovnoměrně",
+    "splitRemainderHint": "Ostatní hráči doplatí rozdíl, aby součet seděl.",
+    "summaryStrip": "Vyrovnáno {{settled}} z {{total}} · zbývá {{amount}}",
+    "summaryAllSettled": "Vyrovnáno {{settled}} z {{total}}",
+    "remindUnpaid": "Připomenout nezaplaceným",
+    "remindCooldown": "Další připomenutí přibližně za {{hours}} h",
+    "state": {
+      "unpaid": "Nezaplaceno",
+      "markedPaid": "Označeno jako zaplaceno",
+      "settled": "Vyrovnáno"
+    },
+    "sheet": {
+      "title": "Jak jste zaplatili?",
+      "subtitle": "{{amount}} pro {{name}}",
+      "hintLabel": "Jak zaplatit hráči {{name}}",
+      "copy": "Kopírovat",
+      "copied": "Zkopírováno",
+      "outside": "Mimo aplikaci",
+      "outsideHint": "Hotově, převodem nebo platební aplikací",
+      "coins": "Poslat mince: {{coins}}",
+      "coinsHint": "Váš zůstatek: {{balance}} mincí",
+      "disclaimer": "Bandeja nikdy nepřevádí skutečné peníze. Zaznamenává jen, kdo zaplatil."
+    },
+    "card": {
+      "perPlayer": "{{amount}} na hráče",
+      "perPlayerEstimated": "≈ {{amount}} na hráče",
+      "totalFor": "Celkem {{amount}} · hráčů: {{players}}"
+    },
+    "create": {
+      "preview": "≈ {{amount}} na osobu, hráčů: {{players}}",
+      "paymentHintLabel": "Jak vám zaplatit",
+      "paymentHintPlaceholder": "IBAN, přezdívka v platební aplikaci, hotově v klubu…",
+      "paymentHintHelp": "Zobrazí se hráčům při vyrovnání. Zbývá znaků: {{remaining}}."
+    },
+    "wallet": {
+      "owed": "Dlužíte",
+      "owedToYou": "Dluží vám",
+      "settle": "Vyrovnat",
+      "view": "Zobrazit",
+      "allSettled": "Vše vyrovnáno 🎉",
+      "toName": "Komu: {{name}}",
+      "fromName": "Od: {{name}}"
+    },
+    "toast": {
+      "markedPaid": "Označeno jako zaplaceno",
+      "settledCoins": "Odesláno mincí: {{coins}} · vyrovnáno",
+      "received": "Označeno jako přijaté",
+      "receivedUndone": "Označeno jako nezaplacené",
+      "shareUpdated": "Podíl byl upraven",
+      "reminded_one": "Připomenutí odesláno · hráčů: {{count}}",
+      "reminded_few": "Připomenutí odesláno · hráčů: {{count}}",
+      "reminded_many": "Připomenutí odesláno · hráčů: {{count}}",
+      "reminded_other": "Připomenutí odesláno · hráčů: {{count}}"
+    },
+    "errors": {
+      "settleFailed": "Nepodařilo se to uložit. Zkuste to znovu.",
+      "confirmFailed": "Řádek se nepodařilo aktualizovat. Zkuste to znovu.",
+      "remindFailed": "Připomenutí teď nelze odeslat.",
+      "updateFailed": "Podíl se nepodařilo uložit. Zkuste to znovu.",
+      "copyFailed": "Nepodařilo se zkopírovat."
+    },
+    "loading": "Načítáme rozdělení nákladů…",
+    "loadFailed": "Rozdělení nákladů se nepodařilo načíst."
+  }
+}

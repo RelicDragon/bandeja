@@ -4,10 +4,15 @@ import WidgetKit
 struct SessionRootView: View {
     @Environment(Router.self) private var router
     @Environment(ActiveSessionManager.self) private var session
+    @Environment(WatchPreferencesStore.self) private var prefs
     @Environment(\.scenePhase) private var scenePhase
+    /// Widget deep link that would abandon the active session; opened only after the user confirms.
+    @State private var pendingDeepLinkGameId: String?
+    @State private var showDeepLinkConfirm = false
 
     var body: some View {
         @Bindable var router = router
+        let lang = prefs.uiLanguageCode
         Group {
             switch session.phase {
             case .idle:
@@ -60,6 +65,25 @@ struct SessionRootView: View {
                 await session.recoverIfNeeded()
             }
         }
+        .confirmationDialog(
+            WatchCopy.openGameFromWidgetTitle(lang),
+            isPresented: $showDeepLinkConfirm,
+            titleVisibility: .visible,
+            presenting: pendingDeepLinkGameId
+        ) { id in
+            Button(WatchCopy.sessionExitScoring(lang), role: .destructive) {
+                pendingDeepLinkGameId = nil
+                Task {
+                    await session.resetSessionDiscardWorkout()
+                    await openGame(gameId: id)
+                }
+            }
+            Button(WatchCopy.cancelAction(lang), role: .cancel) {
+                pendingDeepLinkGameId = nil
+            }
+        } message: { _ in
+            Text(WatchCopy.openGameFromWidgetMessage(lang))
+        }
     }
 
     private func handleDeepLink(gameId: String) async {
@@ -67,11 +91,17 @@ struct SessionRootView: View {
         case .gameActive(let g) where g == gameId, .matchActive(let g, _) where g == gameId:
             return
         case .gameActive, .matchActive:
-            await session.resetSessionDiscardWorkout()
+            // Ask before discarding the active session and its workout.
+            pendingDeepLinkGameId = gameId
+            showDeepLinkConfirm = true
+            return
         case .idle:
             break
         }
+        await openGame(gameId: gameId)
+    }
 
+    private func openGame(gameId: String) async {
         do {
             let game: WatchGame = try await APIClient().fetch(.gameDetail(id: gameId))
             router.popToRoot()

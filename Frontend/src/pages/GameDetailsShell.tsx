@@ -46,7 +46,12 @@ import { LeagueSeasonPointsSection } from '@/components/GameDetails/LeagueSeason
 import { FaqTab } from '@/components/GameDetails/FaqTab';
 import { FaqEdit } from '@/components/GameDetails/FaqEdit';
 import { EditGameInfoModal, type EditGameInfoInitialTabId } from '@/components/GameDetails/EditGameInfoModal';
+import { WeatherRiskBanner } from '@/components/weather/WeatherRiskBanner';
+import { useWeatherDeepLink } from '@/features/weather-alerts/useWeatherDeepLink';
+import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { GameResultsEntryEmbedded } from '@/components/GameDetails/GameResultsEntryEmbedded';
+import { LiveWatchBlock } from '@/components/GameDetails/LiveWatchBlock';
+import { shouldShowLiveWatchBlock } from '@/components/GameDetails/liveWatchVisibility';
 import { GameResultsShowInStoriesSwitch } from '@/components/GameDetails/GameResultsShowInStoriesSwitch';
 import { ResultsTableView } from '@/components/gameResults/ResultsTableView';
 import { ScoreEntryModal, RoundAddedModal } from '@/components/gameResults';
@@ -56,6 +61,8 @@ import { PublicGamePrompt } from '@/components/GameDetails/PublicGamePrompt';
 import { BetSection } from '@/components/GameDetails/BetSection';
 import { ParticipantsOnlyChatSection } from '@/components/GameDetails/ParticipantsOnlyChatSection';
 import { GameLinkedBookingsSection } from '@/components/GameDetails/GameLinkedBookingsSection';
+import { GameCostCard } from '@/components/GameDetails/cost/GameCostCard';
+import { SeriesGameSection } from '@/features/game-series/SeriesGameSection';
 import { gamesApi, invitesApi, courtsApi, clubsApi, normalizeGameFromApi } from '@/api';
 import { favoritesApi } from '@/api/favorites';
 import { resultsApi } from '@/api/results';
@@ -101,6 +108,12 @@ import { createPortal } from 'react-dom';
 import { canUserViewGameInvites, getGameParticipationState } from '@/utils/gameParticipationState';
 import { mergeGameWithInviteDeletedPayload, isPendingGameInvite } from '@/utils/gameInviteParticipant';
 import { retainGameRoom, releaseGameRoom } from '@/services/gameRoomMembership';
+import { AttendanceCard } from '@/features/attendance/AttendanceCard';
+import { SpotOpenedGameSection } from '@/features/spot-opened/SpotOpenedGameSection';
+import { shouldSwallowJoinDeepLink } from '@/features/spot-opened/joinDeepLink';
+import { joinOutcomeTone } from '@/features/spot-opened/joinOutcomeTone';
+import { useGameAttendance } from '@/features/attendance/useGameAttendance';
+import { resolveDotState, type AttendanceDotState } from '@/features/attendance/attendanceVisuals';
 import { GameResultsEngine, useGameResultsStore } from '@/services/gameResultsEngine';
 import { releaseAnyLeagueResultsEngine } from '@/services/leagueResultsEngineSession';
 import { shouldSyncEngineGameFromShell } from '@/utils/mergeGameFormatForResults';
@@ -109,6 +122,7 @@ import {
   mergeGameResultsArtifactsFields,
   shouldMergeSelfGameSocketUpdate,
 } from '@/utils/gameResultsArtifacts.util';
+import { preserveUntransmittedGameFields } from '@/queries/games/preserveUntransmittedGameFields';
 import { userIsOnLeagueScheduleGame } from '@/utils/leagueScheduleUserGames';
 import { AnimatedPresencePanel } from '@/components/motion/AnimatedPresencePanel';
 import { AnimatedChildrenStagger } from '@/components/motion/AnimatedChildrenStagger';
@@ -429,11 +443,17 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
 
   useEffect(() => {
     if (!lastGameUpdate || lastGameUpdate.gameId !== id) return;
-    const updatedGame = normalizeGameFromApi(lastGameUpdate.game);
+    const broadcastGame = normalizeGameFromApi(lastGameUpdate.game);
     const fromSelf = lastGameUpdate.senderId === user?.id;
 
     setGame((prevGame) => {
-      if (!prevGame) return updatedGame;
+      if (!prevGame) return broadcastGame;
+
+      // A broadcast is projected for the least-entitled member of the room, so
+      // it omits `paymentHint` and the viewer-scoped fields. Absent means "not
+      // transmitted": carry over what this viewer already holds from HTTP,
+      // rather than replacing a saved IBAN with nothing.
+      const updatedGame = preserveUntransmittedGameFields(prevGame, broadcastGame);
 
       const mergeArtifactsOnSelf = () => mergeGamePhotoRefresh(prevGame, updatedGame);
 
@@ -640,15 +660,22 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
       const response = await runWithOverlapConfirm((confirmOverlap) => gamesApi.join(id, confirmOverlap));
       if (!response) return;
       const message = (response as { message?: string }).message || 'Successfully joined the game';
-      
-      if (message === 'games.addedToJoinQueue') {
-        toast.success(t('games.addedToJoinQueue', { defaultValue: 'Added to join queue' }));
-      } else if (message === 'games.addedToQueueLevelOutOfRange') {
-        toast.error(t('games.addedToQueueLevelOutOfRange', { defaultValue: 'Your level is outside the range set by the owner. You have been added to the queue.' }));
-      } else {
-        toast.success(t(message, { defaultValue: message }));
-      }
-      
+
+      // The join endpoint answers 200 for "queued" and for "the seat was gone",
+      // not only for "you are in" — the tone has to follow the outcome, or the
+      // loser of the spot-opened race reads a green "Game is full".
+      const text =
+        message === 'games.addedToJoinQueue'
+          ? t('games.addedToJoinQueue', { defaultValue: 'Added to join queue' })
+          : message === 'games.addedToQueueLevelOutOfRange'
+            ? t('games.addedToQueueLevelOutOfRange', {
+                defaultValue:
+                  'Your level is outside the range set by the owner. You have been added to the queue.',
+              })
+            : t(message, { defaultValue: message });
+      if (joinOutcomeTone(message) === 'error') toast.error(text);
+      else toast.success(text);
+
       const gameResponse = await gamesApi.getById(id);
       setGame(gameResponse.data);
     } catch (error: any) {
@@ -768,9 +795,47 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
   const { isGuest, isParticipantNonGuest: isParticipant, isRealParticipant, isPlaying: isUserPlaying, isOwner: isUserOwner, isInJoinQueue, hasPendingInvite, isAdminOrOwner: isOwner, isFull } = participation;
   const canAccessChat = true;
   const canEdit = isOwner || user?.isAdmin || false;
+  // PRD 357 — weather banner display + `?section=weather&action=moveIndoor`.
+  const weatherDisplaySettings = useMemo(() => resolveDisplaySettings(user), [user]);
+  const weatherDeepLink = useWeatherDeepLink();
   const canEditGameFormat = game ? canUserEditGameFormat(game, user) : false;
   const canMutateRoster = game ? canMutateGameRoster(game) : false;
   const canViewSettings = canMutateRoster && canEdit;
+
+  // PRD 346 — attendance. Only fetched once the game actually has a time and is
+  // still upcoming, or while an organizer can still note a no-show afterwards.
+  const attendanceEnabled = Boolean(
+    game &&
+      user &&
+      game.timeIsSet &&
+      game.entityType !== 'EVENT' &&
+      // `GET /games/:id/attendance` runs under `canAccessGame`, so only ask for
+      // it when the viewer actually has a role in the game.
+      (isUserPlaying || isOwner || user.isAdmin) &&
+      (game.status === 'ANNOUNCED' || isOwner || user.isAdmin),
+  );
+  const attendance = useGameAttendance({
+    gameId: id,
+    viewerUserId: user?.id,
+    enabled: attendanceEnabled,
+  });
+  const attendancePlayers = useMemo(
+    () =>
+      (game?.participants ?? [])
+        .filter((p) => p.status === 'PLAYING')
+        .map((p) => ({ userId: p.userId, user: p.user })),
+    [game?.participants],
+  );
+  /** Roster dots. Only PLAYING rows get one — see PRD 346 "States and edge cases". */
+  const attendanceDotsByUserId = useMemo(() => {
+    const rows = attendance.details?.participants;
+    if (!rows?.length) return undefined;
+    const map: Record<string, AttendanceDotState> = {};
+    for (const row of rows) {
+      map[row.userId] = resolveDotState(row.attendance, row.noShowNotedAt);
+    }
+    return map;
+  }, [attendance.details]);
 
   useEffect(() => {
     setGameDetailsCanAccessChat(canAccessChat);
@@ -1352,6 +1417,37 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
   const isLeague = game.entityType === 'LEAGUE';
   const isLeagueSeason = game.entityType === 'LEAGUE_SEASON';
 
+  /*
+   * PRD 349 — a viewer who is not on the roster and cannot edit results sees
+   * the Live block in place of the results entry area. "Participant" here is
+   * deliberately generous (playing, owner, admin), so nobody who could be
+   * scoring loses their entry UI.
+   */
+  const liveWatchVisible = shouldShowLiveWatchBlock(
+    game,
+    isParticipant || isUserPlaying || isOwner || Boolean(user?.isAdmin),
+  );
+
+  /** Extracted so the Live block can render it as its own fallback. */
+  const resultsEntryNode =
+    !isLeagueSeason &&
+    game.resultsStatus !== 'NONE' &&
+    game.entityType !== 'BAR' &&
+    game.entityType !== 'TRAINING' ? (
+      <div key="results-entry" className="contents">
+        <GameResultsEntryEmbedded
+          game={game}
+          onGameUpdate={setGame}
+          onRoundAdded={(r) => {
+            if (shouldShowRoundAddedModal(r, tablePlayers.length)) {
+              setRoundAddedForModal(r);
+              setRoundAddedModalRoundNumber(undefined);
+            }
+          }}
+        />
+      </div>
+    ) : null;
+
   const handleTableCellClick = (roundId: string, matchId: string) => {
     if (!tableIsEditing) return;
     setTableSetModal({ roundId, matchId });
@@ -1457,6 +1553,24 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
             </div>
           ) : null}
 
+          {/* PRD 357 — weather risk. Renders nothing for indoor games, games
+              with unknown courts, and games with no forecast. */}
+          <div key="weather-risk" className="contents">
+            <WeatherRiskBanner
+              game={game}
+              isOrganizer={canEdit}
+              locale={weatherDisplaySettings.locale}
+              hour12={weatherDisplaySettings.hour12}
+              autoOpenMoveIndoor={weatherDeepLink.autoOpenMoveIndoor}
+              autoScrollIntoView={weatherDeepLink.section}
+              onAutoOpenConsumed={weatherDeepLink.consume}
+              onChangeTime={() => {
+                setEditGameInfoInitialTab('locationTime');
+                setIsEditGameInfoModalOpen(true);
+              }}
+            />
+          </div>
+
           <div key="game-info" className="contents overflow-visible">
             <GameInfo
               game={game}
@@ -1481,13 +1595,50 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
             />
           </div>
 
+          {/* PRD 346 — attendance is a courtesy signal: it never changes a seat. */}
+          <div key="attendance" className="contents">
+            <AttendanceCard
+              attendance={attendance}
+              canAnswer={isUserPlaying && !isGuest}
+              isOrganizer={isOwner}
+              players={attendancePlayers}
+              viewerUserId={user?.id}
+              onRequestLeave={() => setShowLeaveConfirmation(true)}
+            />
+          </div>
+
           <div key="linked-bookings" className="contents">
             <GameLinkedBookingsSection game={game} courts={courts} clubs={clubs} onGameUpdate={setGame} />
           </div>
 
+          {/* PRD 348 — renders nothing when the game has no splittable price. */}
+          {user ? (
+            <div key="cost" className="contents">
+              <GameCostCard
+                gameId={game.id}
+                viewerUserId={user.id}
+                expectCost={(game.priceTotal ?? 0) > 0}
+              />
+            </div>
+          ) : null}
+
           {canViewGamePhotos(game, user ? { id: user.id, isAdmin: user.isAdmin } : null) ? (
             <div key="photos" className="contents">
               <PhotosSection game={game} onGameUpdate={setGame} />
+            </div>
+          ) : null}
+
+          {/* PRD 345 — "Same time next week?", the organizer strip and the
+              "Part of <series> · week N" link. Renders nothing when the game is
+              not part of a series or the flag is off. */}
+          {user ? (
+            <div key="series" className="contents">
+              <SeriesGameSection
+                gameId={game.id}
+                isFinished={game.resultsStatus !== 'NONE' || game.status === 'FINISHED'}
+                clubName={game.club?.name ?? null}
+                clubAvatarUrl={game.club?.avatar ?? null}
+              />
             </div>
           ) : null}
 
@@ -1497,11 +1648,22 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
             </div>
           ) : null}
 
-          {!isLeagueSeason && game.resultsStatus !== 'NONE' && game.entityType !== 'BAR' && game.entityType !== 'TRAINING' ? (
-            <div key="results-entry" className="contents">
-              <GameResultsEntryEmbedded game={game} onGameUpdate={setGame} onRoundAdded={(r) => { if (shouldShowRoundAddedModal(r, tablePlayers.length)) { setRoundAddedForModal(r); setRoundAddedModalRoundNumber(undefined); } }} />
+          {/* PRD 349 — a non-participant watching a public game that is being
+              scored right now gets the Live block instead of the results entry
+              area. The entry area is handed to the block as its fallback, so a
+              slow or refused live fetch degrades to today's behaviour rather
+              than to an empty space. Participants keep their scoring entry. */}
+          {liveWatchVisible ? (
+            <div key="live-watch" className="contents">
+              <LiveWatchBlock
+                game={game}
+                viewerIsParticipant={false}
+                fallback={resultsEntryNode}
+              />
             </div>
-          ) : null}
+          ) : (
+            resultsEntryNode
+          )}
 
           {!isLeagueSeason && game.entityType !== 'BAR' ? (
             <div key="results-roster" className="contents">
@@ -1553,9 +1715,32 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
                   setEditGameInfoInitialTab('participants');
                   setIsEditGameInfoModalOpen(true);
                 }}
+                attendanceByUserId={attendanceDotsByUserId}
+                onShowAttendanceLegend={() =>
+                  toast(`${t('attendance.legend.title')} — ${t('attendance.legend.hint')}`)
+                }
               />
             </div>
           ) : null}
+
+          {/* PRD 347 — queue position, the freed-seat affordance, the one-time
+              "seated from the queue" header, and the `?join=1` deep link. */}
+          <div key="spot-opened" className="contents">
+            <SpotOpenedGameSection
+              game={game}
+              viewerUserId={user?.id}
+              isOrganizer={isOwner}
+              alreadyInvolved={shouldSwallowJoinDeepLink({
+                isParticipantNonGuest: isParticipant,
+                isGuest,
+                hasPendingInvite,
+                isInJoinQueue,
+                allowDirectJoin: game.allowDirectJoin,
+              })}
+              onGameUpdate={setGame}
+              onJoin={() => void handleJoin()}
+            />
+          </div>
 
           {user &&
             canMutateRoster &&

@@ -1,0 +1,73 @@
+{
+  "clubPage": {
+    "share": "クラブを共有",
+    "shareTitle": "このクラブを共有",
+    "signIn": "ログイン",
+    "favoriteFailed": "お気に入りを更新できませんでした。もう一度お試しください。",
+    "openClubPage": "クラブページを開く",
+    "openClubPageNamed": "{{club}} のクラブページを開く",
+    "rating": {
+      "none": "まだレビューはありません",
+      "summary_other": "{{rating}} · レビュー {{countText}} 件"
+    },
+    "gallery": {
+      "roleDescription": "フォトギャラリー",
+      "label": "{{club}} の写真",
+      "slideRole": "写真",
+      "slide": "{{total}} 枚中 {{current}} 枚目"
+    },
+    "notFound": {
+      "title": "このクラブは利用できません",
+      "description": "リンクが古いか、クラブの掲載が終了した可能性があります。",
+      "browse": "クラブを探す"
+    },
+    "actions": {
+      "create": "ここでゲームを作成",
+      "book": "予約する",
+      "directions": "ルート案内",
+      "manage": "管理"
+    },
+    "today": {
+      "title": "今日のひと目",
+      "updated": "{{relative}}に更新",
+      "updatedJustNow": "たった今更新",
+      "courtLabel": "{{court}}、本日 {{total}} 時間中 {{free}} 時間空き",
+      "freeHours_other": "空き {{count}} 時間",
+      "windowHint": "{{open}} から {{close}} まで表示",
+      "legendFree": "空き",
+      "legendBusy": "予約済み"
+    },
+    "games": {
+      "title": "今後のゲーム",
+      "seeAll": "「さがす」ですべて表示",
+      "emptyTitle": "公開ゲームはまだありません",
+      "emptyDescription": "ここで最初のゲームを立ててみましょう。"
+    },
+    "courts": {
+      "title": "コート",
+      "indoor": "屋内",
+      "outdoor": "屋外"
+    },
+    "info": {
+      "title": "クラブ情報",
+      "hoursRange": "営業時間 {{open}} – {{close}}",
+      "hoursEveryDay": "毎日同じ営業時間です",
+      "cancellationPolicy": "キャンセルポリシー",
+      "cancellationNotice_other": "{{count}} 時間前までにキャンセルしてください。"
+    },
+    "regulars": {
+      "title": "ここで遊ぶ人たち",
+      "open": "{{name}} のプレイヤーカードを開く",
+      "unnamed": "このプレイヤー"
+    },
+    "reviews": {
+      "title": "レビュー",
+      "guestTitle": "ログインするとレビューを投稿できます",
+      "guestDescription": "レビューはこのクラブでプレーした人が書いています。"
+    },
+    "error": {
+      "title": "このクラブを読み込めませんでした",
+      "description": "接続を確認してもう一度お試しください。"
+    }
+  }
+}

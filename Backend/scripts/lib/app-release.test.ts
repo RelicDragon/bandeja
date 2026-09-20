@@ -109,11 +109,11 @@ assert(gradleWritten.includes('versionCode 155'), 'gradle write versionCode');
 const pbxWritten = writeIosVersionContent(fixturePbx, next);
 assert(pbxWritten.includes('MARKETING_VERSION = 0.96.41;'), 'pbx write marketing version');
 assert(pbxWritten.includes('CURRENT_PROJECT_VERSION = 155;'), 'pbx write project version');
-assert(pbxWritten.includes('MARKETING_VERSION = 0.51;'), 'pbx watch marketing unchanged');
-assert(pbxWritten.includes('CURRENT_PROJECT_VERSION = 2;'), 'pbx watch build unchanged');
+assert(!pbxWritten.includes('MARKETING_VERSION = 0.51;'), 'pbx watch marketing bumped with host');
+assert(!pbxWritten.includes('CURRENT_PROJECT_VERSION = 2;'), 'pbx watch build bumped with host');
 assert(
-  (pbxWritten.match(/MARKETING_VERSION = 0.96.41;/g) ?? []).length === 2,
-  'pbx updates both main app configurations',
+  (pbxWritten.match(/MARKETING_VERSION = 0.96.41;/g) ?? []).length === 3,
+  'pbx updates both main app configurations and the embedded watch app',
 );
 
 assertThrows(
@@ -137,7 +137,7 @@ assert(afterWrite.version === '0.96.41' && afterWrite.build === 155, 'writeNativ
 
 const pbxAfterWrite = fs.readFileSync(tmpPbx, 'utf-8');
 assert(pbxAfterWrite.includes('com.funified.bandeja.watchkitapp'), 'watch bundle id preserved');
-assert(pbxAfterWrite.includes('MARKETING_VERSION = 0.51;'), 'watch version preserved after write');
+assert(!pbxAfterWrite.includes('MARKETING_VERSION = 0.51;'), 'watch version follows host after write');
 
 fs.writeFileSync(tmpGradle, fixtureGradle, 'utf-8');
 fs.writeFileSync(tmpPbx, 'broken', 'utf-8');

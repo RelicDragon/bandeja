@@ -5,7 +5,8 @@ import { SegmentedSwitch, type SegmentedSwitchTab } from '@/components/Segmented
 
 export const LeaderboardTabController = () => {
   const { t } = useTranslation();
-  const { leaderboardType, setLeaderboardType } = useHeaderStore();
+  const leaderboardType = useHeaderStore((s) => s.leaderboardType);
+  const setLeaderboardType = useHeaderStore((s) => s.setLeaderboardType);
 
   const tabs: SegmentedSwitchTab[] = [
     {

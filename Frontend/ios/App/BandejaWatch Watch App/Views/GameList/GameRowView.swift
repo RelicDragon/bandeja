@@ -2,8 +2,10 @@ import SwiftUI
 
 struct GameRowView: View {
     let game: WatchGame
+    @Environment(WatchPreferencesStore.self) private var prefs
 
     var body: some View {
+        let lang = prefs.uiLanguageCode
         VStack(alignment: .leading, spacing: 3) {
             Text(game.displayTitle)
                 .font(.headline)
@@ -14,7 +16,7 @@ struct GameRowView: View {
                     if game.timeIsSet {
                         Text(game.startTime, format: .relative(presentation: .named))
                     } else {
-                        Text(game.startTime.formatted(date: .abbreviated, time: .omitted))
+                        Text(game.startTime, format: Date.FormatStyle(date: .abbreviated, time: .omitted))
                     }
                 }
                 .font(.caption2)
@@ -31,27 +33,31 @@ struct GameRowView: View {
                 Image(systemName: game.gameType.gameTypeIconName)
                     .font(.caption2)
                     .foregroundStyle(Color.accentColor)
-                statusDot
-                Text(game.participantCountLabel)
+                statusDot(lang: lang)
+                Text(WatchCopy.participantCountLabel(
+                    lang: lang,
+                    count: game.participantCount,
+                    max: game.maxParticipants,
+                    isBar: game.entityType == "BAR"
+                ))
                     .font(.caption2)
                     .foregroundStyle(.secondary)
                 if let summary = game.weatherSummary {
-                    WatchWeatherBadgeView(summary: summary)
+                    WatchWeatherBadgeView(summary: summary, lang: lang)
                 }
             }
         }
         .padding(.vertical, 2)
     }
 
-    private var statusDot: some View {
-        let color: Color
-        switch game.status {
-        case "STARTED":   color = .green
-        case "ANNOUNCED": color = .yellow
-        default:          color = .secondary
-        }
-        return Circle()
-            .fill(color)
+    private func statusDot(lang: String) -> some View {
+        Circle()
+            .fill(WatchGameStatusCopy.color(status: game.status))
             .frame(width: 6, height: 6)
+            .accessibilityLabel(WatchGameStatusCopy.label(
+                status: game.status,
+                resultsStatus: game.resultsStatus,
+                lang: lang
+            ))
     }
 }

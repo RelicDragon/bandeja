@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import type { LeaderboardGenderFilter } from '@/components/leaderboard/leaderboardGender';
 
 export type SyncStatus = 'IDLE' | 'SYNCING' | 'SUCCESS' | 'FAILED';
+/** PRD 352 — Top tab mode: ranked players or ranked pairs. */
+export type LeaderboardMode = 'players' | 'pairs';
 export type { LeaderboardGenderFilter };
 
 interface HeaderState {
@@ -11,6 +13,7 @@ interface HeaderState {
   isNewInviteAnimating: boolean;
   syncStatus: SyncStatus;
   leaderboardType: 'level' | 'social' | 'achievements';
+  leaderboardMode: LeaderboardMode;
   leaderboardScope: 'city' | 'global';
   leaderboardGender: LeaderboardGenderFilter;
   createGameInitialDate: string | null;
@@ -22,6 +25,7 @@ interface HeaderState {
   triggerNewInviteAnimation: () => void;
   setSyncStatus: (status: SyncStatus) => void;
   setLeaderboardType: (type: 'level' | 'social' | 'achievements') => void;
+  setLeaderboardMode: (mode: LeaderboardMode) => void;
   setLeaderboardScope: (scope: 'city' | 'global') => void;
   setLeaderboardGender: (gender: LeaderboardGenderFilter) => void;
   setCreateGameInitialDate: (date: Date | null) => void;
@@ -33,6 +37,7 @@ export const useHeaderStore = create<HeaderState>((set) => ({
   isNewInviteAnimating: false,
   syncStatus: 'IDLE',
   leaderboardType: 'achievements',
+  leaderboardMode: 'players',
   leaderboardScope: 'city',
   leaderboardGender: 'all',
   createGameInitialDate: null,
@@ -55,6 +60,7 @@ export const useHeaderStore = create<HeaderState>((set) => ({
   },
   setSyncStatus: (status) => set({ syncStatus: status }),
   setLeaderboardType: (type) => set({ leaderboardType: type }),
+  setLeaderboardMode: (mode) => set({ leaderboardMode: mode }),
   setLeaderboardScope: (scope) => set({ leaderboardScope: scope }),
   setLeaderboardGender: (gender) => set({ leaderboardGender: gender }),
   setCreateGameInitialDate: (date) =>

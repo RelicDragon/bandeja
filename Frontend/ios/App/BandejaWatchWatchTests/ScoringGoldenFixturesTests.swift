@@ -5,7 +5,7 @@ import XCTest
 final class ScoringGoldenFixturesTests: XCTestCase {
     func testSharedCatalogMatchesWatchLiveScoringEngine() throws {
         let catalog = try ScoringGoldenFixtures.loadCatalog()
-        XCTAssertGreaterThanOrEqual(catalog.count, 9)
+        XCTAssertGreaterThanOrEqual(catalog.count, 18)
         for entry in catalog {
             let result = ScoringGoldenFixtures.runFixture(entry)
             let err = ScoringGoldenFixtures.assertResult(result, matches: entry)

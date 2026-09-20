@@ -1,0 +1,81 @@
+{
+  "cost": {
+    "title": "费用",
+    "totalLine": "合计 {{amount}}",
+    "paidBy": "由 {{name}} 付款",
+    "payerTag": "已付场地费",
+    "frozen": "分摊金额已按最终比分锁定",
+    "updatedCaption": "分摊已更新",
+    "iPaid": "我已付款",
+    "settledButton": "已结清",
+    "cancel": "取消",
+    "save": "保存",
+    "amountLabel": "金额",
+    "amountInvalid": "请输入金额",
+    "keypadLabel": "数字键盘",
+    "keypadBackspace": "删除最后一位",
+    "editShareFor": "修改 {{name}} 的分摊",
+    "editShareHint": "本场总金额为 {{total}}。",
+    "receivedFor": "标记 {{name}} 已付款",
+    "splitRemainder": "余额由其他人平摊",
+    "splitRemainderHint": "其他球员承担差额，使总额保持一致。",
+    "summaryStrip": "已结清 {{settled}}/{{total}} · 未结 {{amount}}",
+    "summaryAllSettled": "已结清 {{settled}}/{{total}}",
+    "remindUnpaid": "提醒未付款的人",
+    "remindCooldown": "约 {{hours}} 小时后可再次提醒",
+    "state": {
+      "unpaid": "未付款",
+      "markedPaid": "已标记付款",
+      "settled": "已结清"
+    },
+    "sheet": {
+      "title": "你是怎么付的？",
+      "subtitle": "{{amount}} 给 {{name}}",
+      "hintLabel": "如何付款给 {{name}}",
+      "copy": "复制",
+      "copied": "已复制",
+      "outside": "在应用之外",
+      "outsideHint": "现金、银行转账或支付应用",
+      "coins": "发送 {{coins}} 金币",
+      "coinsHint": "你的余额：{{balance}} 金币",
+      "disclaimer": "Bandeja 不会转移真实货币，这里只记录谁付了款。"
+    },
+    "card": {
+      "perPlayer": "每人 {{amount}}",
+      "perPlayerEstimated": "约每人 {{amount}}",
+      "totalFor": "合计 {{amount}} · {{players}} 人"
+    },
+    "create": {
+      "preview": "约每人 {{amount}}，共 {{players}} 人",
+      "paymentHintLabel": "如何付款给你",
+      "paymentHintPlaceholder": "银行账号、支付应用账号、到俱乐部现金支付…",
+      "paymentHintHelp": "结算时向球员显示。还可输入 {{remaining}} 个字符。"
+    },
+    "wallet": {
+      "owed": "你应付",
+      "owedToYou": "应收款",
+      "settle": "结清",
+      "view": "查看",
+      "allSettled": "全部结清 🎉",
+      "toName": "付给 {{name}}",
+      "fromName": "来自 {{name}}"
+    },
+    "toast": {
+      "markedPaid": "已标记为付款",
+      "settledCoins": "已发送 {{coins}} 金币 · 结清",
+      "received": "已标记为收到",
+      "receivedUndone": "已标记为未付款",
+      "shareUpdated": "分摊已更新",
+      "reminded_other": "提醒已发送 · {{count}} 人"
+    },
+    "errors": {
+      "settleFailed": "未能记录，请重试。",
+      "confirmFailed": "未能更新该行，请重试。",
+      "remindFailed": "暂时无法发送提醒。",
+      "updateFailed": "未能保存分摊，请重试。",
+      "copyFailed": "复制失败。"
+    },
+    "loading": "正在加载费用分摊…",
+    "loadFailed": "无法加载费用分摊。"
+  }
+}

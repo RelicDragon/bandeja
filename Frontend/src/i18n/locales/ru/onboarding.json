@@ -1,0 +1,98 @@
+{
+  "onboarding": {
+    "frame": {
+      "skip": "Пропустить",
+      "back": "Назад",
+      "working": "Сохраняем…",
+      "progress": "Шаг {{current}} из {{total}}"
+    },
+    "welcome": {
+      "title": "Найдём вам игру",
+      "subtitle": "Две минуты — и всё готово.",
+      "start": "Начать",
+      "socialProof_one": "{{count}} игрок в городе {{city}}",
+      "socialProof_few": "{{count}} игрока в городе {{city}}",
+      "socialProof_many": "{{count}} игроков в городе {{city}}",
+      "socialProof_other": "{{count}} игрока в городе {{city}}"
+    },
+    "sport": {
+      "title": "Во что вы играете?",
+      "titleSportOnly": "Выберите вид спорта, чтобы продолжить",
+      "subtitle": "Выбирайте сколько угодно. Первый станет основным.",
+      "continue": "Продолжить",
+      "primaryTag": "Основной",
+      "makePrimary": "Сделать основным: {{sport}}",
+      "primaryHint": "Удерживайте вид спорта, чтобы сделать его основным."
+    },
+    "profile": {
+      "title": "Как вас зовут?",
+      "subtitle": "Имя видно во всех играх, куда вы придёте.",
+      "continue": "Продолжить",
+      "photoOptional": "Фото необязательно — добавите позже.",
+      "firstNameLabel": "Имя",
+      "lastNameLabel": "Фамилия",
+      "nameRequired": "Введите имя.",
+      "nameTooShort": "Минимум 2 символа.",
+      "nameTooLong": "Не больше 30 символов."
+    },
+    "level": {
+      "title": "Ваш уровень",
+      "subtitle": "Несколько быстрых вопросов про {{sport}}.",
+      "continue": "Продолжить",
+      "resultTitle": "Вот ваш стартовый уровень",
+      "resultSubtitle": "По вашим ответам про {{sport}}.",
+      "scale": "По шкале {{scale}}",
+      "adjustLater": "Это можно изменить в профиле в любой момент.",
+      "unavailable": "Для вида спорта {{sport}} теста уровня пока нет."
+    },
+    "city": {
+      "title": "Это ваш город?",
+      "helper": "Мы показываем игры и игроков из вашего города.",
+      "confirm": "Да, всё верно",
+      "change": "Сменить город",
+      "backToCard": "Оставить текущий город",
+      "unknown": "Город не выбран"
+    },
+    "follow": {
+      "title": "На кого подписаться",
+      "subtitle": "Активные игроки вашего города. Подпишитесь — и лента оживёт.",
+      "continue": "Продолжить",
+      "followAll": "Подписаться на всех",
+      "follow": "Подписаться",
+      "following": "Вы подписаны",
+      "followFailed": "Не удалось подписаться. Попробуйте ещё раз.",
+      "gamesThisMonth_one": "{{count}} игра в этом месяце",
+      "gamesThisMonth_few": "{{count}} игры в этом месяце",
+      "gamesThisMonth_many": "{{count}} игр в этом месяце",
+      "gamesThisMonth_other": "{{count}} игры в этом месяце",
+      "emptyTitle": "Пока никого",
+      "emptyDescription": "Город ещё наполняется. Загляните после первой игры.",
+      "unnamedPlayer": "Игрок"
+    },
+    "notifications": {
+      "title": "Будьте в курсе",
+      "subtitle": "Присылаем только то, ради чего стоит отвлечься.",
+      "turnOn": "Включить уведомления",
+      "later": "Не сейчас",
+      "reasonInvitesTitle": "Приглашения",
+      "reasonInvitesBody": "Когда вас зовут играть.",
+      "reasonRemindersTitle": "Напоминания",
+      "reasonRemindersBody": "Перед игрой, куда вы записались.",
+      "reasonSpotsTitle": "Свободные места",
+      "reasonSpotsBody": "Когда освобождается место в нужной игре.",
+      "controlHint": "Всё это меняется в настройках."
+    },
+    "finish": {
+      "choiceTitle": "С чего начнём?",
+      "choiceSubtitle": "В любом случае всё готово.",
+      "playSoonTitle": "Хочу сыграть в ближайшее время",
+      "playSoonBody": "Скажите городу, когда вы свободны, и игроки придут сами.",
+      "browseTitle": "Смотреть игры",
+      "browseBody": "Посмотрите, что уже происходит рядом.",
+      "doneTitle": "Всё готово"
+    },
+    "errors": {
+      "saveFailed": "Не удалось сохранить. Проверьте соединение и попробуйте снова."
+    }
+  }
+}

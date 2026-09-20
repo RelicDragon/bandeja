@@ -1,0 +1,81 @@
+{
+  "cost": {
+    "title": "Biaya",
+    "totalLine": "Jumlah total {{amount}}",
+    "paidBy": "Dibayar oleh {{name}}",
+    "payerTag": "membayar lapangan",
+    "frozen": "Pembagian dikunci pada skor akhir",
+    "updatedCaption": "Pembagian diperbarui",
+    "iPaid": "Saya sudah bayar",
+    "settledButton": "Lunas",
+    "cancel": "Batal",
+    "save": "Simpan",
+    "amountLabel": "Jumlah",
+    "amountInvalid": "Masukkan jumlah",
+    "keypadLabel": "Papan angka",
+    "keypadBackspace": "Hapus angka terakhir",
+    "editShareFor": "Ubah bagian {{name}}",
+    "editShareHint": "Total permainan ini {{total}}.",
+    "receivedFor": "Tandai {{name}} sudah membayar",
+    "splitRemainder": "Bagi sisanya rata",
+    "splitRemainderHint": "Pemain lain menutup selisihnya agar totalnya tetap pas.",
+    "summaryStrip": "{{settled}} dari {{total}} lunas · sisa {{amount}}",
+    "summaryAllSettled": "{{settled}} dari {{total}} lunas",
+    "remindUnpaid": "Ingatkan yang belum bayar",
+    "remindCooldown": "Bisa mengingatkan lagi sekitar {{hours}} jam lagi",
+    "state": {
+      "unpaid": "Belum dibayar",
+      "markedPaid": "Ditandai sudah bayar",
+      "settled": "Lunas"
+    },
+    "sheet": {
+      "title": "Bagaimana kamu membayar?",
+      "subtitle": "{{amount}} untuk {{name}}",
+      "hintLabel": "Cara membayar {{name}}",
+      "copy": "Salin",
+      "copied": "Tersalin",
+      "outside": "Di luar aplikasi",
+      "outsideHint": "Tunai, transfer bank, atau aplikasi pembayaran",
+      "coins": "Kirim {{coins}} koin",
+      "coinsHint": "Saldomu: {{balance}} koin",
+      "disclaimer": "Bandeja tidak pernah memindahkan uang sungguhan. Ini hanya catatan siapa yang membayar."
+    },
+    "card": {
+      "perPlayer": "{{amount}} per pemain",
+      "perPlayerEstimated": "≈ {{amount}} per pemain",
+      "totalFor": "Total {{amount}} · {{players}} pemain"
+    },
+    "create": {
+      "preview": "≈ {{amount}} per orang untuk {{players}} pemain",
+      "paymentHintLabel": "Cara membayarmu",
+      "paymentHintPlaceholder": "Nomor rekening, nama e-wallet, tunai di klub…",
+      "paymentHintHelp": "Ditampilkan kepada pemain saat melunasi. Sisa {{remaining}} karakter."
+    },
+    "wallet": {
+      "owed": "Utangmu",
+      "owedToYou": "Piutangmu",
+      "settle": "Lunasi",
+      "view": "Lihat",
+      "allSettled": "Semua lunas 🎉",
+      "toName": "Untuk {{name}}",
+      "fromName": "Dari {{name}}"
+    },
+    "toast": {
+      "markedPaid": "Ditandai sudah bayar",
+      "settledCoins": "{{coins}} koin terkirim · lunas",
+      "received": "Ditandai sudah diterima",
+      "receivedUndone": "Ditandai belum dibayar",
+      "shareUpdated": "Bagian diperbarui",
+      "reminded_other": "Pengingat terkirim · {{count}} pemain"
+    },
+    "errors": {
+      "settleFailed": "Gagal mencatat. Coba lagi.",
+      "confirmFailed": "Gagal memperbarui baris itu. Coba lagi.",
+      "remindFailed": "Pengingat tidak bisa dikirim sekarang.",
+      "updateFailed": "Gagal menyimpan bagian. Coba lagi.",
+      "copyFailed": "Gagal menyalin."
+    },
+    "loading": "Memuat pembagian biaya…",
+    "loadFailed": "Kami tidak bisa memuat pembagian biaya."
+  }
+}

@@ -26,7 +26,7 @@ const BottomTabBarInner = ({ containerPosition = false, tabOverride, previousPat
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
-  const { setRequestFindGoToCurrent } = useShellNavStore();
+  const setRequestFindGoToCurrent = useShellNavStore((s) => s.setRequestFindGoToCurrent);
   const user = useAuthStore((s) => s.user);
   const isPremiumTheme = usesPremiumTheme(user);
   const reduceMotion = usePrefersReducedMotion();

@@ -9,6 +9,8 @@ import { participantsLayoutKey, participantsRenderKey } from '@/utils/gameCardPa
 import type { StandingMedalMode } from '@/utils/gameCardStandingPlace';
 import { placeMapsEqual } from '@/utils/gameCardStandings';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { AttendanceDot } from '@/features/attendance/AttendanceDot';
+import type { AttendanceDotState } from '@/features/attendance/attendanceVisuals';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
 const slotVariants: Variants = {
@@ -93,6 +95,8 @@ const ParticipantCarouselSlot = memo(function ParticipantCarouselSlot({
   place,
   medalMode = 'winner',
   reserveStandingPlace = false,
+  attendanceState,
+  onAttendanceLegend,
 }: {
   participant: GameParticipant;
   propUnread?: number;
@@ -114,6 +118,9 @@ const ParticipantCarouselSlot = memo(function ParticipantCarouselSlot({
   place?: number;
   medalMode?: StandingMedalMode;
   reserveStandingPlace?: boolean;
+  /** PRD 346 — attendance dot, only for PLAYING participants. */
+  attendanceState?: AttendanceDotState;
+  onAttendanceLegend?: () => void;
 }) {
   const unreadCount = useUnreadByUserIdBridge(participant.userId, propUnread);
   const isDragged = draggedPlayerId === participant.user.id;
@@ -160,6 +167,13 @@ const ParticipantCarouselSlot = memo(function ParticipantCarouselSlot({
           levelSport={levelSport}
         />
         <UnreadBadge count={unreadCount} className="absolute -top-1 right-[calc(50%-2.25rem)] border-2 border-white dark:border-gray-900" />
+        {attendanceState ? (
+          <span className="absolute inset-x-0 top-0 flex justify-center">
+            <span className="relative h-12 w-12">
+              <AttendanceDot state={attendanceState} onRequestLegend={onAttendanceLegend} />
+            </span>
+          </span>
+        ) : null}
       </div>
     </motion.div>
   );
@@ -194,6 +208,10 @@ interface PlayersCarouselProps {
   placeByUserId?: Record<string, number>;
   /** Tournament → podium medals; otherwise gold for 1st only. */
   standingMedalMode?: StandingMedalMode;
+  /** PRD 346 — attendance dot per PLAYING userId. Purely informative. */
+  attendanceByUserId?: Record<string, AttendanceDotState>;
+  /** Long-press on a dot opens the legend. */
+  onAttendanceLegend?: () => void;
 }
 
 function PlayersCarouselInner({
@@ -221,6 +239,8 @@ function PlayersCarouselInner({
   standingMedalMode = 'winner',
   onRemoveParticipant,
   canRemoveParticipant,
+  attendanceByUserId,
+  onAttendanceLegend,
 }: PlayersCarouselProps) {
   const carouselRef = useRef<HTMLDivElement>(null);
   const [showLeftFade, setShowLeftFade] = useState(false);
@@ -230,6 +250,7 @@ function PlayersCarouselInner({
   const [isPressed, setIsPressed] = useState(false);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const pressTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const pressOriginRef = useRef<{ x: number; y: number } | null>(null);
   const layoutKey = participantsLayoutKey(participants);
   const showStandingPlaces = Boolean(
     placeByUserId && participants.some((p) => placeByUserId[p.userId] != null)
@@ -313,11 +334,13 @@ function PlayersCarouselInner({
     container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
   }, []);
 
-  const handlePressStart = useCallback(() => {
+  const handlePressStart = useCallback((e?: React.TouchEvent | React.MouseEvent) => {
     if (!autoHideNames) return;
     if (pressTimeoutRef.current) {
       clearTimeout(pressTimeoutRef.current);
     }
+    const touch = e && 'touches' in e ? e.touches[0] : undefined;
+    pressOriginRef.current = touch ? { x: touch.clientX, y: touch.clientY } : null;
     pressTimeoutRef.current = setTimeout(() => {
       setIsPressed(true);
     }, 300);
@@ -325,11 +348,28 @@ function PlayersCarouselInner({
 
   const handlePressEnd = useCallback(() => {
     if (!autoHideNames) return;
+    pressOriginRef.current = null;
     if (pressTimeoutRef.current) {
       clearTimeout(pressTimeoutRef.current);
       pressTimeoutRef.current = null;
     }
-    setIsPressed(false);
+    setIsPressed((prev) => (prev ? false : prev));
+  }, [autoHideNames]);
+
+  // A finger that travels is scrolling the page, not long-pressing. Without
+  // this, a slow vertical scroll that started on a card's roster fired the
+  // 300ms timer, re-rendered every slot with names shown, and hid them again
+  // on touch end — visible as cards flickering while scrolling.
+  const handlePressMove = useCallback((e: React.TouchEvent) => {
+    if (!autoHideNames) return;
+    const origin = pressOriginRef.current;
+    const touch = e.touches[0];
+    if (!origin || !touch || !pressTimeoutRef.current) return;
+    const moved = Math.abs(touch.clientX - origin.x) > 10 || Math.abs(touch.clientY - origin.y) > 10;
+    if (!moved) return;
+    clearTimeout(pressTimeoutRef.current);
+    pressTimeoutRef.current = null;
+    pressOriginRef.current = null;
   }, [autoHideNames]);
 
   const renderGenderIndicator = (gender: 'MALE' | 'FEMALE') => (
@@ -364,6 +404,7 @@ function PlayersCarouselInner({
           onMouseUp={autoHideNames ? handlePressEnd : undefined}
           onMouseLeave={autoHideNames ? handlePressEnd : undefined}
           onTouchStart={autoHideNames ? handlePressStart : undefined}
+          onTouchMove={autoHideNames ? handlePressMove : undefined}
           onTouchEnd={autoHideNames ? handlePressEnd : undefined}
           onTouchCancel={autoHideNames ? handlePressEnd : undefined}
         >
@@ -393,6 +434,8 @@ function PlayersCarouselInner({
                 place={placeByUserId?.[participant.userId]}
                 medalMode={standingMedalMode}
                 reserveStandingPlace={showStandingPlaces}
+                attendanceState={attendanceByUserId?.[participant.userId]}
+                onAttendanceLegend={onAttendanceLegend}
               />
             ))}
             {emptySlots > 0 &&
@@ -441,6 +484,18 @@ function PlayersCarouselInner({
   );
 }
 
+/** PRD 346 — the dot map must take part in the memo check or dots go stale. */
+function attendanceMapsEqual(
+  a: Record<string, AttendanceDotState> | undefined,
+  b: Record<string, AttendanceDotState> | undefined,
+): boolean {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  const aKeys = Object.keys(a);
+  if (aKeys.length !== Object.keys(b).length) return false;
+  return aKeys.every((key) => a[key] === b[key]);
+}
+
 function carouselPropsEqual(a: PlayersCarouselProps, b: PlayersCarouselProps): boolean {
   if (a.userId !== b.userId) return false;
   if (a.shouldShowCrowns !== b.shouldShowCrowns) return false;
@@ -455,6 +510,8 @@ function carouselPropsEqual(a: PlayersCarouselProps, b: PlayersCarouselProps): b
   if (a.levelSport !== b.levelSport) return false;
   if (a.standingMedalMode !== b.standingMedalMode) return false;
   if (participantsRenderKey(a.participants) !== participantsRenderKey(b.participants)) return false;
+  if (!attendanceMapsEqual(a.attendanceByUserId, b.attendanceByUserId)) return false;
+  if (a.onAttendanceLegend !== b.onAttendanceLegend) return false;
   return placeMapsEqual(a.placeByUserId, b.placeByUserId);
 }
 

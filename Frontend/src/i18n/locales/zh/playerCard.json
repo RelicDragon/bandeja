@@ -25,7 +25,7 @@
         "ABOUT_RIGHT": "大致相符",
         "LOWER": "低于显示等级"
       },
-      "disclaimer": "同伴反馈是私密的社区参考信号，不会设定或更改官方等级。"
+      "disclaimer": "每个人的回答均匿名。此汇总仅为社区参考信号，不会设定或更改官方等级。"
     },
     "isTrainer": "教练",
     "currentLevel": "当前等级",
@@ -75,7 +75,7 @@
     "userBlockedCannotChat": "该用户已被拉黑",
     "userBlockedCannotFavorite": "该用户已被拉黑",
     "confirmedBy": "等级已确认",
-    "levelNotConfirmed": "等级未确认",
+    "confirmedAtLevel": "等级 {{level}}",
     "shareProfile": "分享",
     "shareProfileTitle": "分享资料",
     "shareProfileMessage": "来看看 {{name}} 在 Bandeja 上的主页",

@@ -40,7 +40,8 @@ export function LinkedBookingsList({
   const { isOwner, reload } = useBooktimeUserBookingIds(
     booktimeClub?.clubId,
     booktimeClub?.companyId,
-    verifyOwnership && Boolean(booktimeClub?.companyId),
+    verifyOwnership && (Boolean(booktimeClub?.companyId) || booktimeClub?.integrationType === 'WELTNER'),
+    booktimeClub?.integrationType,
   );
 
   if (links.length === 0 || !booktimeClub) return null;

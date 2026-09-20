@@ -1,0 +1,34 @@
+{
+  "spots": {
+    "pill": {
+      "label": "Mesto slobodno",
+      "ariaLabel": "Mesto se oslobodilo {{time}}"
+    },
+    "queue": {
+      "position_one": "Vi ste {{position}}. od {{count}}",
+      "position_few": "Vi ste {{position}}. od {{count}}",
+      "position_other": "Vi ste {{position}}. od {{count}}",
+      "autoFillOn": "Automatsko popunjavanje je uključeno — bićete ubačeni automatski",
+      "autoFillOff": "Organizator prihvata ručno",
+      "waitForOrganizer": "Na listi ste čekanja. Organizator sam bira ko dobija mesto.",
+      "tapToJoin": "Dodirnite „Pridruži se“ kada se mesto oslobodi"
+    },
+    "settings": {
+      "autoFillTitle": "Automatsko popunjavanje iz reda",
+      "autoFillHelper": "Prvi u redu dobija mesto čim se oslobodi. Pravila o polu i nivou i dalje važe.",
+      "queueCount_one": "{{count}} u redu",
+      "queueCount_few": "{{count}} u redu",
+      "queueCount_other": "{{count}} u redu",
+      "queueEmpty": "Još niko ne čeka"
+    },
+    "roster": {
+      "openSpot": "Slobodno mesto"
+    },
+    "toast": {
+      "joinedFromQueue": "{{name}} je ušao iz reda čekanja"
+    },
+    "seated": {
+      "banner": "Ušli ste iz reda čekanja"
+    }
+  }
+}

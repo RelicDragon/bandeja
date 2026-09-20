@@ -2,13 +2,15 @@ import api from './axios';
 import type { ApiResponse, BasicUser, EntityType, Sport, WinnerOfGame } from '@/types';
 
 import type { StorySegmentEngagement } from './storyEngagement';
+import type { RecapSegmentPayload } from './recap';
 
 export type StorySourceType =
   | 'USER_STORY_ITEM'
   | 'GAME_PHOTO'
   | 'GAME_CREATED'
   | 'GAME_RESULT'
-  | 'BRACKET_CHAMPION';
+  | 'BRACKET_CHAMPION'
+  | 'MONTHLY_RECAP';
 
 export type BracketChampionStoryBracket = {
   leagueSeasonId: string;
@@ -113,6 +115,17 @@ export type StorySegment =
       championTeamLabel: string;
       bracket: BracketChampionStoryBracket;
       game: GameStorySummary;
+    })
+  /**
+   * PRD 353 — one slide of the viewer's own monthly recap. Rendered from the
+   * payload, never from a server image: the numerals count up and the copy is
+   * in the viewer's language. Only ever produced by `GET /users/me/recaps/:monthKey`,
+   * never by the followers' feed (a shared recap publishes rendered PNGs as
+   * ordinary `USER_STORY_ITEM`s instead).
+   */
+  | (StorySegmentBase & {
+      sourceType: 'MONTHLY_RECAP';
+      recap: RecapSegmentPayload;
     });
 
 export type StoryBubble = {
@@ -168,6 +181,8 @@ export const STORY_IMAGE_DURATION_MS = 5000;
 export const STORY_GAME_PROMO_DURATION_MS = 7000;
 export const STORY_GAME_RESULT_DURATION_MS = 10000;
 export const STORY_BRACKET_CHAMPION_DURATION_MS = 9000;
+/** Long enough for the count-up (≤600 ms) and the chart draw (500 ms) to land. */
+export const STORY_RECAP_DURATION_MS = 6000;
 export const STORY_MAX_VIDEO_DURATION_MS = 60000;
 export const STORY_MARK_VIEWED_MS = 800;
 export const STORY_FEED_TTL_MS = 60_000;
@@ -199,6 +214,7 @@ export function getStorySegmentDurationMs(segment: StorySegment): number {
   if (segment.sourceType === 'GAME_PHOTO') return STORY_IMAGE_DURATION_MS;
   if (segment.sourceType === 'GAME_CREATED') return STORY_GAME_PROMO_DURATION_MS;
   if (segment.sourceType === 'BRACKET_CHAMPION') return STORY_BRACKET_CHAMPION_DURATION_MS;
+  if (segment.sourceType === 'MONTHLY_RECAP') return STORY_RECAP_DURATION_MS;
   return STORY_GAME_RESULT_DURATION_MS;
 }
 

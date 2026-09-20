@@ -1,0 +1,76 @@
+{
+  "clubPage": {
+    "share": "Share club",
+    "shareTitle": "Share this club",
+    "signIn": "Sign in",
+    "favoriteFailed": "Could not update your favourites. Try again.",
+    "openClubPage": "Open club page",
+    "openClubPageNamed": "Open the page for {{club}}",
+    "rating": {
+      "none": "No reviews yet",
+      "summary_one": "{{rating}} · {{countText}} review",
+      "summary_other": "{{rating}} · {{countText}} reviews"
+    },
+    "gallery": {
+      "roleDescription": "Photo gallery",
+      "label": "Photos of {{club}}",
+      "slideRole": "Photo",
+      "slide": "Photo {{current}} of {{total}}"
+    },
+    "notFound": {
+      "title": "This club isn't available",
+      "description": "The link may be old, or the club is no longer listed.",
+      "browse": "Browse clubs"
+    },
+    "actions": {
+      "create": "Create game here",
+      "book": "Book",
+      "directions": "Directions",
+      "manage": "Manage"
+    },
+    "today": {
+      "title": "Today at a glance",
+      "updated": "Updated {{relative}}",
+      "updatedJustNow": "Updated just now",
+      "courtLabel": "{{court}}, {{free}} of {{total}} hours free today",
+      "freeHours_one": "{{count}} hour free",
+      "freeHours_other": "{{count}} hours free",
+      "windowHint": "Shown from {{open}} to {{close}}",
+      "legendFree": "Free",
+      "legendBusy": "Busy"
+    },
+    "games": {
+      "title": "Upcoming games",
+      "seeAll": "See all on Find",
+      "emptyTitle": "No public games yet",
+      "emptyDescription": "Be the first to put a game on the board here."
+    },
+    "courts": {
+      "title": "Courts",
+      "indoor": "Indoor",
+      "outdoor": "Outdoor"
+    },
+    "info": {
+      "title": "Club info",
+      "hoursRange": "Open {{open}} – {{close}}",
+      "hoursEveryDay": "Same hours every day",
+      "cancellationPolicy": "Cancellation policy",
+      "cancellationNotice_one": "Cancel at least {{count}} hour ahead.",
+      "cancellationNotice_other": "Cancel at least {{count}} hours ahead."
+    },
+    "regulars": {
+      "title": "Who plays here",
+      "open": "Open the player card for {{name}}",
+      "unnamed": "this player"
+    },
+    "reviews": {
+      "title": "Reviews",
+      "guestTitle": "Sign in to write a review",
+      "guestDescription": "Reviews come from players who booked a game at this club."
+    },
+    "error": {
+      "title": "We couldn't load this club",
+      "description": "Check your connection and try again."
+    }
+  }
+}

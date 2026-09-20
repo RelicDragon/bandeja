@@ -1,0 +1,94 @@
+{
+  "onboarding": {
+    "frame": {
+      "skip": "छोड़ें",
+      "back": "वापस",
+      "working": "सहेजा जा रहा है…",
+      "progress": "चरण {{current}} / {{total}}"
+    },
+    "welcome": {
+      "title": "चलिए आपके लिए खेल ढूँढते हैं",
+      "subtitle": "दो मिनट में सब तैयार।",
+      "start": "शुरू करें",
+      "socialProof_one": "{{city}} में {{count}} खिलाड़ी",
+      "socialProof_other": "{{city}} में {{count}} खिलाड़ी"
+    },
+    "sport": {
+      "title": "आप कौन-से खेल खेलते हैं?",
+      "titleSportOnly": "जारी रखने के लिए एक खेल चुनें",
+      "subtitle": "जितने चाहें चुनें। पहला आपका मुख्य खेल बन जाएगा।",
+      "continue": "जारी रखें",
+      "primaryTag": "मुख्य",
+      "makePrimary": "{{sport}} को मुख्य बनाएँ",
+      "primaryHint": "किसी खेल को देर तक दबाएँ ताकि वह मुख्य बन जाए।"
+    },
+    "profile": {
+      "title": "हम आपको क्या कहें?",
+      "subtitle": "आपका नाम हर उस खेल में दिखेगा जिसमें आप शामिल होंगे।",
+      "continue": "जारी रखें",
+      "photoOptional": "फ़ोटो वैकल्पिक है — बाद में भी जोड़ सकते हैं।",
+      "firstNameLabel": "पहला नाम",
+      "lastNameLabel": "उपनाम",
+      "nameRequired": "अपना पहला नाम भरें।",
+      "nameTooShort": "कम से कम 2 अक्षर लिखें।",
+      "nameTooLong": "अधिकतम 30 अक्षर लिखें।"
+    },
+    "level": {
+      "title": "आपका स्तर",
+      "subtitle": "{{sport}} को लेकर कुछ छोटे सवाल।",
+      "continue": "जारी रखें",
+      "resultTitle": "यह रहा आपका शुरुआती स्तर",
+      "resultSubtitle": "{{sport}} पर आपके जवाबों के आधार पर।",
+      "scale": "{{scale}} पैमाने पर",
+      "adjustLater": "इसे आप कभी भी प्रोफ़ाइल में बदल सकते हैं।",
+      "unavailable": "{{sport}} के लिए स्तर परीक्षण अभी उपलब्ध नहीं है।"
+    },
+    "city": {
+      "title": "क्या यही आपका शहर है?",
+      "helper": "हम आपके शहर के खेल और खिलाड़ी दिखाते हैं।",
+      "confirm": "हाँ, यही सही है",
+      "change": "शहर बदलें",
+      "backToCard": "मौजूदा शहर ही रखें",
+      "unknown": "अभी कोई शहर नहीं"
+    },
+    "follow": {
+      "title": "जिन्हें फ़ॉलो करें",
+      "subtitle": "आपके शहर के सक्रिय खिलाड़ी। इन्हें फ़ॉलो करें और होम भर जाएगा।",
+      "continue": "जारी रखें",
+      "followAll": "सभी को फ़ॉलो करें",
+      "follow": "फ़ॉलो करें",
+      "following": "फ़ॉलो कर रहे हैं",
+      "followFailed": "उस खिलाड़ी को फ़ॉलो नहीं कर सके। फिर कोशिश करें।",
+      "gamesThisMonth_one": "इस महीने {{count}} खेल",
+      "gamesThisMonth_other": "इस महीने {{count}} खेल",
+      "emptyTitle": "अभी कोई सुझाव नहीं",
+      "emptyDescription": "आपका शहर अभी भर रहा है। पहले खेल के बाद लौटें।",
+      "unnamedPlayer": "खिलाड़ी"
+    },
+    "notifications": {
+      "title": "जुड़े रहें",
+      "subtitle": "हम वही भेजते हैं जिसके लिए टोका जाना बनता है।",
+      "turnOn": "सूचनाएँ चालू करें",
+      "later": "अभी नहीं",
+      "reasonInvitesTitle": "न्योते",
+      "reasonInvitesBody": "जब कोई आपको खेलने बुलाए।",
+      "reasonRemindersTitle": "याद दिलाने वाले",
+      "reasonRemindersBody": "जिस खेल में आपने नाम लिखाया, उससे पहले।",
+      "reasonSpotsTitle": "खाली जगहें",
+      "reasonSpotsBody": "जब आपके मनपसंद खेल में जगह खाली हो।",
+      "controlHint": "यह सब सेटिंग्स में बदला जा सकता है।"
+    },
+    "finish": {
+      "choiceTitle": "पहले क्या करना चाहेंगे?",
+      "choiceSubtitle": "जो भी चुनें, आप तैयार हैं।",
+      "playSoonTitle": "मुझे जल्द खेलना है",
+      "playSoonBody": "शहर को बताएँ कि आप कब खाली हैं और खिलाड़ी खुद आएँगे।",
+      "browseTitle": "खेल देखें",
+      "browseBody": "देखें आपके आसपास पहले से क्या चल रहा है।",
+      "doneTitle": "सब तैयार"
+    },
+    "errors": {
+      "saveFailed": "सहेजा नहीं जा सका। कनेक्शन जाँचें और फिर कोशिश करें।"
+    }
+  }
+}

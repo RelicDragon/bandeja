@@ -30,6 +30,7 @@ import { recoverGenderUnsetJoin, runWithGenderForEvent } from '@/utils/genderJoi
 import { runWithOverlapConfirm } from '@/utils/gameSlotOverlapConfirm';
 import { runWithProfileName } from '@/utils/runWithProfileName';
 import { playIntentCreatePrefillTimes } from '@/utils/playIntentWindow';
+import { joinOutcomeTone } from '@/features/spot-opened/joinOutcomeTone';
 
 type Props = {
   open: boolean;
@@ -571,11 +572,15 @@ export function CourtLobbyPanel({
           onChanged?.();
           return;
         }
-        toast.success(
-          t(message || 'games.joinedSuccessfully', {
-            defaultValue: 'You successfully joined the game',
-          }),
-        );
+        const text = t(message || 'games.joinedSuccessfully', {
+          defaultValue: 'You successfully joined the game',
+        });
+        // A 200 carrying a refusal key (last seat gone) must not read as a win.
+        if (joinOutcomeTone(message || 'games.joinedSuccessfully') === 'error') {
+          toast.error(text);
+        } else {
+          toast.success(text);
+        }
         setPinnedGameId(null);
         onOpenChange(false);
         navigate(`/games/${game.id}`);

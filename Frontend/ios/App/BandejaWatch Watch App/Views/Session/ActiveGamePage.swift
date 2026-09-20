@@ -15,7 +15,7 @@ struct ActiveGamePage: View {
                     ProgressView(WatchCopy.loadingEllipsis(lang))
                 } else if let error = vm.error, vm.results == nil {
                     VStack(spacing: 8) {
-                        Text(error.localizedDescription).font(.caption2).multilineTextAlignment(.center)
+                        Text(WatchErrorText.message(error, lang: lang)).font(.caption2).multilineTextAlignment(.center)
                         Button(WatchCopy.retry(lang)) { Task { await vm.load() } }
                     }
                 } else {
@@ -40,7 +40,7 @@ struct ActiveGamePage: View {
     private func activeContent(vm: ScoringViewModel, lang: String) -> some View {
         List {
             if let err = vm.error, vm.results != nil {
-                Text(listErrorMessage(err, lang: lang))
+                Text(WatchErrorText.message(err, lang: lang))
                     .font(.caption2)
                     .foregroundStyle(.red)
                     .listRowBackground(Color.clear)
@@ -58,10 +58,17 @@ struct ActiveGamePage: View {
                     .listRowBackground(Color.clear)
             }
             if vm.postFinalizeHint == .refreshFailed {
-                Text(WatchCopy.resultsRefreshFailed(lang))
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                    .listRowBackground(Color.clear)
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(WatchCopy.resultsRefreshFailed(lang))
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    Button(WatchCopy.refresh(lang)) {
+                        Task { await refreshAll(vm: vm) }
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.mini)
+                }
+                .listRowBackground(Color.clear)
             }
             if vm.postFinalizeHint == .serverNotYetFinal {
                 Text(WatchCopy.resultsServerProcessing(lang))
@@ -108,7 +115,7 @@ struct ActiveGamePage: View {
                 Section(WatchCopy.outcomes(lang)) {
                     ForEach(Array(vm.sortedOutcomes.enumerated()), id: \.offset) { _, outcome in
                         HStack(spacing: 6) {
-                            Text("#\(outcome.position ?? 0)")
+                            Text(outcome.position.map { "#\($0)" } ?? "—")
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
                             if let u = outcome.user {
@@ -117,7 +124,7 @@ struct ActiveGamePage: View {
                                     .font(.caption2)
                                     .lineLimit(1)
                             } else {
-                                Text(outcome.userId)
+                                Text(WatchCopy.unknownPlayer(lang))
                                     .font(.caption2)
                                     .lineLimit(1)
                             }
@@ -129,11 +136,13 @@ struct ActiveGamePage: View {
                 }
             }
         }
-        .refreshable {
-            await vm.refresh()
-            await NetworkDeliveryOutbox.shared.flush()
-            await WorkoutSyncOutbox.shared.flush()
-        }
+        .refreshable { await refreshAll(vm: vm) }
+    }
+
+    private func refreshAll(vm: ScoringViewModel) async {
+        await vm.refresh()
+        await NetworkDeliveryOutbox.shared.flush()
+        await WorkoutSyncOutbox.shared.flush()
     }
 
     private func gameHeader(game: WatchGame, lang: String) -> some View {
@@ -142,14 +151,18 @@ struct ActiveGamePage: View {
                 Image(systemName: game.gameType.gameTypeIconName)
                     .font(.caption2)
                     .foregroundStyle(Color.accentColor)
-                Text(game.gameType.capitalized)
+                Text(WatchCopy.gameTypeLabel(lang, raw: game.gameType))
                     .font(.caption2)
                     .foregroundStyle(.secondary)
             }
-            Label(
-                game.startTime.formatted(date: .abbreviated, time: game.timeIsSet ? .shortened : .omitted),
-                systemImage: "clock"
-            )
+            Label {
+                Text(
+                    game.startTime,
+                    format: Date.FormatStyle(date: .abbreviated, time: game.timeIsSet ? .shortened : .omitted)
+                )
+            } icon: {
+                Image(systemName: "clock")
+            }
             .font(.caption2)
             .foregroundStyle(.secondary)
             if let club = game.club {
@@ -209,15 +222,9 @@ struct ActiveGamePage: View {
                 }
                 .buttonStyle(.plain)
                 .disabled(session.isStartingMatch)
+                .accessibilityLabel(WatchCopy.startMatchA11y(lang))
             }
         }
         .listRowInsets(EdgeInsets(top: 4, leading: 8, bottom: 4, trailing: 8))
-    }
-
-    private func listErrorMessage(_ error: Error, lang: String) -> String {
-        if let api = error as? APIError {
-            return api.localizedMessage(uiLanguageCode: lang)
-        }
-        return error.localizedDescription
     }
 }

@@ -113,6 +113,13 @@ export interface UserStats {
   performanceInsights?: UserPerformanceInsights;
   levelFeedback?: PlayerLevelFeedbackAggregate;
   trainingAttendanceCount?: number;
+  /**
+   * PRD 346 — the public "Shows up" number. `null` until the player has at
+   * least `minSample` recorded games in the trailing 12 months, so a single
+   * missed game never reads as "0% shows up". Informative only: it never feeds
+   * level, reliability or rating uncertainty.
+   */
+  attendance?: { rate: number; sampleSize: number; minSample: number } | null;
 }
 
 export type PlayerLevelFeedbackAggregate =
@@ -251,6 +258,8 @@ export interface NotificationPreference {
   sendInvites: boolean;
   sendDirectMessages: boolean;
   sendReminders: boolean;
+  /** PRD 357 — weather alerts for outdoor games. Defaults to on. */
+  sendWeatherAlerts: boolean;
   sendWalletNotifications: boolean;
   sendMarketplaceNotifications: boolean;
   sendTeamNotifications: boolean;

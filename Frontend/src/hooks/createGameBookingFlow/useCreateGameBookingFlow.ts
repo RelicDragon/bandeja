@@ -30,7 +30,7 @@ import {
   type ReservationIntent,
 } from '@shared/gameBooking/reservationIntent';
 import { mapCreateAbortReasonToValidationReason } from './resolveCreateGameBookingAction';
-import { clubHasBookingIntegration, isKlikterenClub, isNspadelClub, isPadelooClub, parseBooktimeIntegrationConfig, parseKlikterenIntegrationConfig, parsePadelooIntegrationConfig } from '@shared/clubIntegration';
+import { clubHasBookingIntegration, isWeltnerClub, isKlikterenClub, isNspadelClub, isPadelooClub, parseBooktimeIntegrationConfig, parseKlikterenIntegrationConfig, parsePadelooIntegrationConfig } from '@shared/clubIntegration';
 import { checkBookingOverlap, fetchBookedCourtsForDay } from '@/utils/bookedCourts/overlapCheck';
 import { courtHasActiveBookingIntegration } from '@/utils/clubBookingIntegration';
 import { usePreselectedBookingHydration } from './usePreselectedBookingHydration';
@@ -154,10 +154,10 @@ export function useCreateGameBookingFlow({
     clubBookingFlowActive &&
       !isPadelooClub(selectedClubData) &&
       !isKlikterenClub(selectedClubData) &&
-      !isNspadelClub(selectedClubData),
+      !isNspadelClub(selectedClubData) && !isWeltnerClub(selectedClubData),
   );
   const liveApiEnabled =
-    isPadelooClub(selectedClubData) || isKlikterenClub(selectedClubData)
+    isPadelooClub(selectedClubData) || isKlikterenClub(selectedClubData) || isWeltnerClub(selectedClubData)
       ? true
       : booktimeLiveApiEnabled;
 
@@ -294,7 +294,7 @@ export function useCreateGameBookingFlow({
     Boolean(
       booktimeIntegrationConfig?.companyId ||
         padelooIntegrationConfig?.clubId ||
-        klikterenIntegrationConfig?.venueId,
+        klikterenIntegrationConfig?.venueId || isWeltnerClub(selectedClubData),
     );
 
   const clubDateReservations = useClubDateReservations({
@@ -803,6 +803,8 @@ export function useCreateGameBookingFlow({
           ...sharedTail,
         };
       }
+
+      if (isWeltnerClub(selectedClubData)) return { provider: 'WELTNER' as const, ...sharedTail };
 
       if (isNspadelClub(selectedClubData)) {
         return {

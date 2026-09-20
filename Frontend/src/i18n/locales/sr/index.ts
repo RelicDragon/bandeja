@@ -1,5 +1,7 @@
+import weltner from './weltner.json';
 import ads from './ads.json';
 import app from './app.json';
+import attendance from './attendance.json';
 import auth from './auth.json';
 import bets from './bets.json';
 import bottomTab from './bottomTab.json';
@@ -10,9 +12,11 @@ import browseCity from './browseCity.json';
 import city from './city.json';
 import club from './club.json';
 import clubAdmin from './clubAdmin.json';
+import clubPage from './clubPage.json';
 import common from './common.json';
 import conflicts from './conflicts.json';
 import contacts from './contacts.json';
+import cost from './cost.json';
 import createGame from './createGame.json';
 import createLeague from './createLeague.json';
 import createEvent from './createEvent.json';
@@ -29,10 +33,13 @@ import games from './games.json';
 import healthWorkout from './healthWorkout.json';
 import home from './home.json';
 import invites from './invites.json';
+import live from './live.json';
 import marketplace from './marketplace.json';
 import media from './media.json';
 import nav from './nav.json';
+import onboarding from './onboarding.json';
 import offline from './offline.json';
+import pairs from './pairs.json';
 import permissions from './permissions.json';
 import playerCard from './playerCard.json';
 import playStreak from './playStreak.json';
@@ -42,6 +49,11 @@ import playerProfile from './playerProfile.json';
 import profile from './profile.json';
 import push from './push.json';
 import rating from './rating.json';
+import recap from './recap.json';
+import referral from './referral.json';
+import series from './series.json';
+import shop from './shop.json';
+import spots from './spots.json';
 import sportRating from './sportRating.json';
 import teams from './teams.json';
 import telegram from './telegram.json';
@@ -51,6 +63,7 @@ import userGameNotes from './userGameNotes.json';
 import wallet from './wallet.json';
 import welcome from './welcome.json';
 import weather from './weather.json';
+import weatherAlerts from './weatherAlerts.json';
 import stories from './stories.json';
 import sportQuestionnaireCommon from './sportQuestionnaire/common.json';
 import sportQuestionnairePadel from './sportQuestionnaire/padel.json';
@@ -61,8 +74,10 @@ import sportQuestionnaireTableTennis from './sportQuestionnaire/tableTennis.json
 import sportQuestionnaireSquash from './sportQuestionnaire/squash.json';
 
 export default {
+    weltner,
     ...ads,
     ...app,
+    ...attendance,
     ...auth,
     ...bets,
     ...bottomTab,
@@ -73,9 +88,11 @@ export default {
     ...city,
     ...club,
     ...clubAdmin,
+    ...clubPage,
     ...common,
     ...conflicts,
     ...contacts,
+    ...cost,
     ...createGame,
     ...createLeague,
     ...createEvent,
@@ -92,10 +109,13 @@ export default {
     ...healthWorkout,
     ...home,
     ...invites,
+    ...live,
     ...marketplace,
     ...media,
     ...nav,
+    ...onboarding,
     ...offline,
+    ...pairs,
     ...permissions,
     ...playerCard,
     ...playStreak,
@@ -105,6 +125,11 @@ export default {
     ...profile,
     ...push,
     ...rating,
+    ...recap,
+    ...referral,
+    ...series,
+    ...shop,
+    ...spots,
     ...sportRating,
     ...teams,
     ...telegram,
@@ -114,6 +139,7 @@ export default {
     ...wallet,
     ...welcome,
     ...weather,
+    ...weatherAlerts,
     ...stories,
     sportQuestionnaire: {
         common: sportQuestionnaireCommon,

@@ -251,6 +251,35 @@ export function PlayIntentProvider({
     }
   }, [searchParams, setSearchParams, looking]);
 
+  /**
+   * `?playIntentOpen=1` arriving from *outside* the provider — the onboarding
+   * finale and the recap outro both land on `/?playIntentOpen=1` — opens the
+   * sheet and strips the param, exactly like `?lobby=1` / `?proposal=`.
+   *
+   * Openings this provider pushed itself keep the param: it is their back-stack
+   * entry, and `sheetOpenedViaUrlRef` distinguishes the two. Only the My-tab
+   * provider claims the param (`acceptSharedDeepLinks`), so a second mounted
+   * provider cannot open a duplicate sheet. Waiting for the pool to settle
+   * picks the same mode the strips would (lobby while looking, else compose).
+   */
+  useEffect(() => {
+    if (!acceptSharedDeepLinks || !enabled || isLoading) return;
+    if (searchParams.get('playIntentOpen') !== '1') return;
+    if (sheetOpenedViaUrlRef.current) return;
+    setSheetMode(looking ? 'lobby' : 'compose');
+    setSheetOpen(true);
+    const next = new URLSearchParams(searchParams);
+    next.delete('playIntentOpen');
+    setSearchParams(next, { replace: true });
+  }, [
+    acceptSharedDeepLinks,
+    enabled,
+    isLoading,
+    looking,
+    searchParams,
+    setSearchParams,
+  ]);
+
   useEffect(() => {
     if (!deepProposal) return;
     const liveId = pool?.pendingProposal?.id;

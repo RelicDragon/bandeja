@@ -58,6 +58,7 @@ import { applyGameTextPolicyUpdateInTransaction } from '../gameText/gameTextEdit
 import { wakeGameTextTranslationWorker } from '../gameText/gameTextTranslationWake';
 import { normalizeGameRatingFields } from './normalizeGameRatingFields';
 import { applyEventUpdateInvariants } from './eventCreateDefaults';
+import { GameSeatService } from '../gameSeat/gameSeat.service';
 
 /** Only scalar fields — nested writes / API echo keys force Prisma onto GameUpdateInput where courtId/clubId are invalid. */
 const GAME_UNCHECKED_SCALAR_KEYS = new Set<string>([
@@ -82,6 +83,8 @@ const GAME_UNCHECKED_SCALAR_KEYS = new Set<string>([
   'anyoneCanInvite',
   'resultsByAnyone',
   'allowDirectJoin',
+  // PRD 347 — seat the first queued player automatically when a spot opens.
+  'autoFillFromQueue',
   'hasBookedCourt',
   'afterGameGoToBar',
   'hasFixedTeams',
@@ -120,6 +123,10 @@ const GAME_UNCHECKED_SCALAR_KEYS = new Set<string>([
   'priceTotal',
   'priceType',
   'priceCurrency',
+  // PRD 348 — free-text "How to pay you" on the game.
+  'paymentHint',
+  // PRD 349 — organizer opt-out from the "Live now" rail.
+  'showOnLiveRail',
   'eventKind',
   'venueText',
   'externalUrl',
@@ -145,6 +152,14 @@ export class GameUpdateService {
     // Validate currency if provided
     if (data.priceCurrency && !SUPPORTED_CURRENCIES.includes(data.priceCurrency)) {
       throw new ApiError(400, `Invalid currency. Supported currencies: ${SUPPORTED_CURRENCIES.join(', ')}`);
+    }
+
+    // PRD 348 — `Game.paymentHint` is VarChar(120); reject rather than truncate.
+    if (typeof data.paymentHint === 'string' && data.paymentHint.trim().length > 120) {
+      throw new ApiError(400, 'errors.cost.paymentHintTooLong');
+    }
+    if (typeof data.paymentHint === 'string') {
+      data.paymentHint = data.paymentHint.trim() || null;
     }
 
     const isOnlyResultsStatusUpdate = Object.keys(data).length === 1 && data.resultsStatus !== undefined;
@@ -234,6 +249,12 @@ export class GameUpdateService {
     }
 
     const maxParticipants = data.maxParticipants !== undefined ? data.maxParticipants : game.maxParticipants;
+    // PRD 347 — read before the later `data` mutations so the seat-opened event
+    // at the end of this method sees the real delta.
+    const seatsAddedByCapacityIncrease =
+      data.maxParticipants !== undefined && maxParticipants > game.maxParticipants
+        ? maxParticipants - game.maxParticipants
+        : 0;
     if (data.maxParticipants !== undefined) {
       const actor = await prisma.user.findUnique({
         where: { id: userId },
@@ -1071,6 +1092,10 @@ export class GameUpdateService {
           return null;
         })
       : null;
+    // PRD 347 — raising the cap opens real seats, exactly like a player leaving.
+    if (seatsAddedByCapacityIncrease > 0) {
+      void GameSeatService.seatOpened(id, seatsAddedByCapacityIncrease, 'CAPACITY_INCREASE');
+    }
     publishMatchingGamesChanged(updatedGame);
     return withLegacyGoldenPointField({
       ...updatedGame,

@@ -8,7 +8,13 @@ import { projectTransactionEmbeddedUsers } from './user/projectEmbeddedBasicUser
 
 const BANDEJA_BANK_IDENTIFIER = 'BANDEJA_BANK';
 
-async function getOrCreateBandejaBank() {
+/**
+ * PRD 355 — the shop settles its own PURCHASE/REFUND rows inside one
+ * `prisma.$transaction` together with the `UserGoods` write, so it needs the
+ * bank account without going through `createTransaction` (which opens its own
+ * transaction). Exported for that single reason; nothing else should call it.
+ */
+export async function getOrCreateBandejaBank() {
   let bandejaBank = await prisma.user.findFirst({
     where: {
       phone: BANDEJA_BANK_IDENTIFIER,
@@ -44,6 +50,152 @@ interface CreateTransactionInput {
   transactionRows: TransactionRowInput[];
   fromUserId?: string | null;
   toUserId?: string | null;
+}
+
+export interface GuardedTransferInput {
+  fromUserId: string;
+  toUserId: string;
+  /** Priced from server-side data only — never from a request body. */
+  transactionRows: TransactionRowInput[];
+}
+
+export interface GuardedTransferResult {
+  id: string;
+  total: number;
+  fromWallet: number;
+  toWallet: number;
+}
+
+function sumTransactionRows(transactionRows: TransactionRowInput[]): number {
+  if (!transactionRows || transactionRows.length === 0) {
+    throw new ApiError(400, 'Transaction must have at least one row');
+  }
+  return transactionRows.reduce((sum, row) => {
+    const rowTotal = row.price * row.qty;
+    if (row.total !== undefined && row.total !== rowTotal) {
+      throw new ApiError(400, `Row total mismatch: expected ${rowTotal}, got ${row.total}`);
+    }
+    return sum + rowTotal;
+  }, 0);
+}
+
+/**
+ * PRD 348 — a P2P coin `TRANSFER` whose balance check **is** the debit.
+ *
+ * {@link TransactionService.createTransaction} reads the sender's wallet
+ * *outside* its own `$transaction` and then decrements unconditionally, so two
+ * concurrent spends by the same user can both pass the check and drive the
+ * wallet negative. That path is shared with bets, the marketplace and admin
+ * grants and is deliberately left exactly as it is; this narrowly-scoped
+ * sibling exists for the cost-split settle path, which must not overdraw.
+ *
+ * The authorisation is a conditional `UPDATE … WHERE wallet >= total`: at READ
+ * COMMITTED a concurrent debit of the same row blocks on the row lock and then
+ * re-evaluates the predicate against the committed value, so the loser updates
+ * nothing and its whole transfer rolls back. The two wallet writes are ordered
+ * by user id so two people paying each other at the same instant cannot
+ * deadlock.
+ */
+export async function createGuardedTransfer(
+  input: GuardedTransferInput,
+): Promise<GuardedTransferResult> {
+  const { fromUserId, toUserId, transactionRows } = input;
+  if (!fromUserId || !toUserId) {
+    throw new ApiError(400, 'Transfer requires both fromUserId and toUserId');
+  }
+  if (fromUserId === toUserId) {
+    throw new ApiError(400, 'Cannot transfer to yourself');
+  }
+
+  const total = sumTransactionRows(transactionRows);
+  if (!Number.isInteger(total) || total <= 0) {
+    throw new ApiError(400, 'Transfer amount must be a positive whole number of coins');
+  }
+
+  const settled = await prisma.$transaction(async (tx) => {
+    const debit = async (): Promise<number> => {
+      const debited = await tx.user.updateMany({
+        where: { id: fromUserId, wallet: { gte: total } },
+        data: { wallet: { decrement: total } },
+      });
+      if (debited.count !== 1) {
+        const sender = await tx.user.findUnique({
+          where: { id: fromUserId },
+          select: { id: true },
+        });
+        if (!sender) throw new ApiError(404, 'From user not found');
+        throw new ApiError(400, 'Insufficient funds');
+      }
+      const sender = await tx.user.findUniqueOrThrow({
+        where: { id: fromUserId },
+        select: { wallet: true },
+      });
+      return sender.wallet;
+    };
+
+    const credit = async (): Promise<number> => {
+      const recipient = await tx.user.findUnique({
+        where: { id: toUserId },
+        select: { id: true },
+      });
+      if (!recipient) throw new ApiError(404, 'To user not found');
+      const credited = await tx.user.update({
+        where: { id: toUserId },
+        data: { wallet: { increment: total } },
+        select: { wallet: true },
+      });
+      return credited.wallet;
+    };
+
+    // Deterministic lock order: always touch the lower id first.
+    let fromWallet: number;
+    let toWallet: number;
+    if (fromUserId < toUserId) {
+      fromWallet = await debit();
+      toWallet = await credit();
+    } else {
+      toWallet = await credit();
+      fromWallet = await debit();
+    }
+
+    const created = await tx.transaction.create({
+      data: {
+        type: TransactionType.TRANSFER,
+        // `createTransaction` negates TRANSFER totals; history renders the same way.
+        total: -total,
+        fromUserId,
+        toUserId,
+        transactionRows: {
+          create: transactionRows.map((row) => ({
+            name: row.name,
+            price: row.price,
+            qty: row.qty,
+            total: row.price * row.qty,
+            goodsId: row.goodsId || null,
+          })),
+        },
+      },
+      select: { id: true },
+    });
+
+    return { id: created.id, total, fromWallet, toWallet } satisfies GuardedTransferResult;
+  });
+
+  // Past this line the coins have moved. Nothing below may throw: the caller
+  // treats a throw as "no money moved" and releases whatever it claimed.
+  try {
+    const socketService = (globalThis as unknown as { socketService?: SocketService }).socketService;
+    if (socketService) {
+      await socketService.emitWalletUpdate(fromUserId, settled.fromWallet);
+      await socketService.emitWalletUpdate(toUserId, settled.toWallet);
+    }
+    await notificationService.sendTransactionNotification(settled.id, fromUserId, true);
+    await notificationService.sendTransactionNotification(settled.id, toUserId, false);
+  } catch (error) {
+    console.error('[createGuardedTransfer] Post-commit delivery failed:', error);
+  }
+
+  return settled;
 }
 
 export class TransactionService {

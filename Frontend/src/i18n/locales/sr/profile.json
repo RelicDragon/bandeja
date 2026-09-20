@@ -212,6 +212,8 @@
     "sendDirectMessagesDescription": "Dobijaj obaveštenja kada neko pošalje direktnu poruku",
     "sendReminders": "Podsetnici",
     "sendRemindersDescription": "Dobijaj obaveštenja 2 sata pre početka vaših igara, turnira ili treninga",
+    "sendWeatherAlerts": "Vremenska upozorenja",
+    "sendWeatherAlertsDescription": "Samo za otvorene terene",
     "walletNotifications": "Obaveštenja novčanika",
     "walletNotificationsDescription": "Primaj obaveštenja o transakcijama novčanika",
     "marketplaceNotifications": "Novi oglasi u mom gradu",

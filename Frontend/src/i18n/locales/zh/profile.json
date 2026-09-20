@@ -141,6 +141,8 @@
     "sendDirectMessagesDescription": "有人给你发私信时通知你",
     "sendReminders": "提醒",
     "sendRemindersDescription": "比赛、锦标赛或训练活动开始前 2 小时提醒你",
+    "sendWeatherAlerts": "天气提醒",
+    "sendWeatherAlertsDescription": "仅适用于室外球场",
     "walletNotifications": "钱包通知",
     "walletNotificationsDescription": "接收钱包交易相关通知",
     "marketplaceNotifications": "本市新上架",

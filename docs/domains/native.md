@@ -26,7 +26,7 @@ iOS: up to 10 donated (`BandejaAppShortcuts`, `assistantRegistry.ts`) — Find t
 
 ## Watch / HealthKit
 
-BandejaWatch: live scoring, next-game widgets, workout. HealthKit workout bridge via phone. Watch refreshes JWT after long idle.
+BandejaWatch: live scoring, next-game + live-match widgets, workout. The watch runs the `HKWorkoutSession` itself (`WorkoutManager`, activity type from `WatchSport.hkActivityType`, location `.unknown`) and POSTs the summary to `POST /games/:id/workout` after results are finalized; failed uploads queue in `WorkoutSyncOutbox` (bound to the recording user, cleared on logout, poison 4xx dropped). Credentials arrive from the phone over WatchConnectivity (`WatchSessionManager`) and the watch refreshes its own JWT after long idle. Match-timer pause/resume mirrors workout pause/resume through `MatchTimerWorkoutBridge` and the `WatchMatchTimerRelayStore` (single source for relayed + self-fetched snapshots; elapsed time anchors on local receipt time). Watch and widget-extension targets carry the same `MARKETING_VERSION`/`CURRENT_PROJECT_VERSION` as the iOS app (`./scripts/app-release.sh sync-ios-versions`).
 
 ## Permission modals
 

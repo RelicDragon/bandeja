@@ -21,7 +21,7 @@
       "basedOn": "{{games}} हालिया मैचों में {{count}} गुमनाम मूल्यांकन पर आधारित",
       "players": "खिलाड़ी",
       "verdict": { "HIGHER": "दिखाए गए से ऊँचा", "ABOUT_RIGHT": "लगभग सही", "LOWER": "दिखाए गए से कम" },
-      "disclaimer": "साथियों का फ़ीडबैक एक निजी समुदाय संकेत है। यह आधिकारिक रेटिंग सेट या बदलता नहीं है।"
+      "disclaimer": "अलग-अलग जवाब गुमनाम रहते हैं। यह सारांश एक सामुदायिक संकेत है — यह आधिकारिक रेटिंग सेट या नहीं बदलता।"
     },
     "isTrainer": "ट्रेनर",
     "currentLevel": "वर्तमान लेवल",
@@ -71,7 +71,7 @@
     "userBlockedCannotChat": "उपयोगकर्ता ब्लॉक है",
     "userBlockedCannotFavorite": "उपयोगकर्ता ब्लॉक है",
     "confirmedBy": "लेवल पुष्टि किया गया",
-    "levelNotConfirmed": "लेवल पुष्टि नहीं है",
+    "confirmedAtLevel": "लेवल {{level}} पर",
     "shareProfile": "साझा करें",
     "shareProfileTitle": "प्रोफ़ाइल साझा करें",
     "shareProfileMessage": "Bandeja पर {{name}} देखें",

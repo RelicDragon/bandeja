@@ -1,0 +1,83 @@
+{
+  "cost": {
+    "title": "Troškovi",
+    "totalLine": "Ukupno {{amount}}",
+    "paidBy": "Platio/la {{name}}",
+    "payerTag": "platio/la teren",
+    "frozen": "Udeli su fiksirani na konačnom rezultatu",
+    "updatedCaption": "Udeli su ažurirani",
+    "iPaid": "Platio/la sam",
+    "settledButton": "Izmireno",
+    "cancel": "Otkaži",
+    "save": "Sačuvaj",
+    "amountLabel": "Iznos",
+    "amountInvalid": "Unesite iznos",
+    "keypadLabel": "Numerička tastatura",
+    "keypadBackspace": "Obriši poslednju cifru",
+    "editShareFor": "Izmeni udeo: {{name}}",
+    "editShareHint": "Ukupan iznos termina je {{total}}.",
+    "receivedFor": "Označi da je {{name}} platio/la",
+    "splitRemainder": "Podeli ostatak ravnomerno",
+    "splitRemainderHint": "Ostali igrači pokrivaju razliku da bi se zbir poklopio.",
+    "summaryStrip": "Izmireno {{settled}} od {{total}} · preostalo {{amount}}",
+    "summaryAllSettled": "Izmireno {{settled}} od {{total}}",
+    "remindUnpaid": "Podseti neplatiše",
+    "remindCooldown": "Sledeći podsetnik za oko {{hours}} h",
+    "state": {
+      "unpaid": "Nije plaćeno",
+      "markedPaid": "Označeno kao plaćeno",
+      "settled": "Izmireno"
+    },
+    "sheet": {
+      "title": "Kako ste platili?",
+      "subtitle": "{{amount}} za {{name}}",
+      "hintLabel": "Kako platiti: {{name}}",
+      "copy": "Kopiraj",
+      "copied": "Kopirano",
+      "outside": "Izvan aplikacije",
+      "outsideHint": "Gotovina, bankovni prenos ili aplikacija za plaćanje",
+      "coins": "Pošalji novčiće: {{coins}}",
+      "coinsHint": "Vaše stanje: {{balance}} novčića",
+      "disclaimer": "Bandeja ne prenosi pravi novac. Ovde se beleži samo ko je platio."
+    },
+    "card": {
+      "perPlayer": "{{amount}} po igraču",
+      "perPlayerEstimated": "≈ {{amount}} po igraču",
+      "totalFor": "Ukupno {{amount}} · igrača: {{players}}"
+    },
+    "create": {
+      "preview": "≈ {{amount}} po osobi, igrača: {{players}}",
+      "paymentHintLabel": "Kako da vam plate",
+      "paymentHintPlaceholder": "IBAN, Revolut oznaka, gotovina u klubu…",
+      "paymentHintHelp": "Prikazuje se igračima pri izmirenju. Preostalo znakova: {{remaining}}."
+    },
+    "wallet": {
+      "owed": "Dugujete",
+      "owedToYou": "Duguju vama",
+      "settle": "Izmiri",
+      "view": "Otvori",
+      "allSettled": "Sve izmireno 🎉",
+      "toName": "Za: {{name}}",
+      "fromName": "Od: {{name}}"
+    },
+    "toast": {
+      "markedPaid": "Označeno kao plaćeno",
+      "settledCoins": "Poslato novčića: {{coins}} · izmireno",
+      "received": "Označeno kao primljeno",
+      "receivedUndone": "Označeno kao neplaćeno",
+      "shareUpdated": "Udeo je ažuriran",
+      "reminded_one": "Podsetnik poslat · igrača: {{count}}",
+      "reminded_few": "Podsetnik poslat · igrača: {{count}}",
+      "reminded_other": "Podsetnik poslat · igrača: {{count}}"
+    },
+    "errors": {
+      "settleFailed": "Nije uspelo čuvanje. Pokušajte ponovo.",
+      "confirmFailed": "Nije uspelo ažuriranje reda. Pokušajte ponovo.",
+      "remindFailed": "Trenutno nije moguće poslati podsetnik.",
+      "updateFailed": "Nije uspelo čuvanje udela. Pokušajte ponovo.",
+      "copyFailed": "Kopiranje nije uspelo."
+    },
+    "loading": "Učitavamo podelu troškova…",
+    "loadFailed": "Nismo uspeli da učitamo podelu troškova."
+  }
+}

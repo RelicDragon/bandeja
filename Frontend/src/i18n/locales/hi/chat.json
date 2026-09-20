@@ -304,7 +304,12 @@
         "EXTERNAL_PARTIAL": "पूरी तरह बुक नहीं",
         "MANUAL": "कोर्ट बुक",
         "NONE": "अभी बुक नहीं"
-      }
+      },
+      "ATTENDANCE_NUDGED": "{{userName}} ने सभी से उपस्थिति की पुष्टि करने को कहा",
+      "USER_NOTED_NO_SHOW": "{{userName}} को अनुपस्थित के रूप में चिह्नित किया गया",
+      "GAME_SPOT_OPENED": "एक जगह खाली हुई ({{userName}} बाहर हुए)",
+      "GAME_SEAT_AUTO_FILLED": "{{userName}} को कतार से शामिल किया गया",
+      "GAME_MOVED_INDOOR": "{{courtName}} (इनडोर) पर ले जाया गया"
     },
     "openChat": "चैट खोलें",
     "chat": "चैट",

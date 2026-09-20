@@ -1,3 +1,5 @@
+import { weltnerApi } from '@/api/weltner';
+import type { ClubIntegrationType } from '@shared/clubIntegration';
 import { getBooktimeClient, hydrateBooktimeSession } from '@/integrations/booktime/session';
 
 export type UserBooktimeBookingIdsResult = {
@@ -23,4 +25,21 @@ export async function fetchUserBooktimeBookingIds(
     [...(upcoming.bookings ?? []), ...(previous.bookings ?? [])].map((b) => b.uuid),
   );
   return { authenticated: true, ids };
+}
+
+/** Weltner ownership comes from Bandeja receipts, never a provider verification. */
+export async function fetchUserClubBookingIds(
+  clubId: string,
+  companyId: string | null | undefined,
+  integrationType?: ClubIntegrationType,
+): Promise<UserBooktimeBookingIdsResult> {
+  if (integrationType === 'WELTNER') {
+    const receipts = await weltnerApi.bookings(clubId);
+    return {
+      authenticated: true,
+      ids: new Set(receipts.filter((receipt) => receipt.state === 'CONFIRMED').map((receipt) => receipt.externalBookingId)),
+    };
+  }
+  if (!companyId) return { authenticated: false, ids: new Set() };
+  return fetchUserBooktimeBookingIds(clubId, companyId);
 }

@@ -1,0 +1,30 @@
+{
+  "spots": {
+    "pill": {
+      "label": "空きあり",
+      "ariaLabel": "{{time}}に空きが出ました"
+    },
+    "queue": {
+      "position_other": "{{count}} 人中 {{position}} 番目です",
+      "autoFillOn": "自動繰り上げがオンです。自動で参加になります",
+      "autoFillOff": "主催者が手動で承認します",
+      "waitForOrganizer": "順番待ちリストに入っています。空き枠に誰が入るかは主催者が決めます。",
+      "tapToJoin": "空きが出たら「参加」をタップ"
+    },
+    "settings": {
+      "autoFillTitle": "待機列から自動で繰り上げ",
+      "autoFillHelper": "空きが出たら待機列の先頭が自動で参加します。性別とレベルの条件はそのまま適用されます。",
+      "queueCount_other": "待機列に {{count}} 人",
+      "queueEmpty": "まだ誰も待っていません"
+    },
+    "roster": {
+      "openSpot": "空き枠"
+    },
+    "toast": {
+      "joinedFromQueue": "{{name}} が待機列から参加しました"
+    },
+    "seated": {
+      "banner": "待機列から繰り上がりました"
+    }
+  }
+}

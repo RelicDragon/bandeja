@@ -1,0 +1,92 @@
+{
+  "onboarding": {
+    "frame": {
+      "skip": "Lewati",
+      "back": "Kembali",
+      "working": "Menyimpan…",
+      "progress": "Langkah {{current}} dari {{total}}"
+    },
+    "welcome": {
+      "title": "Ayo cari kamu lawan main",
+      "subtitle": "Dua menit dan kamu siap.",
+      "start": "Mulai",
+      "socialProof_other": "{{count}} pemain di {{city}}"
+    },
+    "sport": {
+      "title": "Olahraga apa yang kamu mainkan?",
+      "titleSportOnly": "Pilih olahraga untuk melanjutkan",
+      "subtitle": "Pilih sebanyak yang kamu mau. Yang pertama jadi olahraga utamamu.",
+      "continue": "Lanjut",
+      "primaryTag": "Utama",
+      "makePrimary": "Jadikan {{sport}} utama",
+      "primaryHint": "Tekan lama sebuah olahraga untuk menjadikannya utama."
+    },
+    "profile": {
+      "title": "Kami panggil kamu apa?",
+      "subtitle": "Namamu muncul di setiap permainan yang kamu ikuti.",
+      "continue": "Lanjut",
+      "photoOptional": "Foto tidak wajib — bisa ditambahkan nanti.",
+      "firstNameLabel": "Nama depan",
+      "lastNameLabel": "Nama belakang",
+      "nameRequired": "Isi nama depanmu.",
+      "nameTooShort": "Gunakan minimal 2 karakter.",
+      "nameTooLong": "Gunakan maksimal 30 karakter."
+    },
+    "level": {
+      "title": "Levelmu",
+      "subtitle": "Beberapa pertanyaan singkat soal {{sport}} kamu.",
+      "continue": "Lanjut",
+      "resultTitle": "Ini level awalmu",
+      "resultSubtitle": "Berdasarkan jawabanmu tentang {{sport}}.",
+      "scale": "Dalam skala {{scale}}",
+      "adjustLater": "Kamu bisa mengubahnya kapan saja di Profil.",
+      "unavailable": "Tes level untuk {{sport}} belum tersedia."
+    },
+    "city": {
+      "title": "Ini kotamu?",
+      "helper": "Kami menampilkan permainan dan pemain dari kotamu.",
+      "confirm": "Ya, benar",
+      "change": "Ganti kota",
+      "backToCard": "Tetap pakai kota ini",
+      "unknown": "Belum ada kota"
+    },
+    "follow": {
+      "title": "Orang untuk diikuti",
+      "subtitle": "Pemain aktif di kotamu. Ikuti mereka dan beranda jadi ramai.",
+      "continue": "Lanjut",
+      "followAll": "Ikuti semua",
+      "follow": "Ikuti",
+      "following": "Diikuti",
+      "followFailed": "Gagal mengikuti pemain itu. Coba lagi.",
+      "gamesThisMonth_other": "{{count}} permainan bulan ini",
+      "emptyTitle": "Belum ada saran",
+      "emptyDescription": "Kotamu masih berkembang. Kembalilah setelah permainan pertamamu.",
+      "unnamedPlayer": "Pemain"
+    },
+    "notifications": {
+      "title": "Jangan sampai ketinggalan",
+      "subtitle": "Kami hanya mengirim hal yang memang layak mengganggumu.",
+      "turnOn": "Aktifkan notifikasi",
+      "later": "Nanti saja",
+      "reasonInvitesTitle": "Undangan",
+      "reasonInvitesBody": "Saat ada yang mengajakmu bermain.",
+      "reasonRemindersTitle": "Pengingat",
+      "reasonRemindersBody": "Sebelum permainan yang kamu ikuti dimulai.",
+      "reasonSpotsTitle": "Slot kosong",
+      "reasonSpotsBody": "Saat ada slot terbuka di permainan yang kamu incar.",
+      "controlHint": "Semua ini bisa diubah di Pengaturan."
+    },
+    "finish": {
+      "choiceTitle": "Mau mulai dari mana?",
+      "choiceSubtitle": "Apa pun pilihannya, kamu sudah siap.",
+      "playSoonTitle": "Saya ingin main segera",
+      "playSoonBody": "Beri tahu kotamu kapan kamu luang dan biarkan pemain menghampirimu.",
+      "browseTitle": "Lihat permainan",
+      "browseBody": "Lihat apa yang sudah berlangsung di dekatmu.",
+      "doneTitle": "Semua siap"
+    },
+    "errors": {
+      "saveFailed": "Gagal menyimpan. Periksa koneksimu lalu coba lagi."
+    }
+  }
+}

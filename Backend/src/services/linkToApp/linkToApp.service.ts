@@ -102,6 +102,27 @@ export async function recordLinkToAppEvent(opts: {
     content: attribution.utmContent,
     term: attribution.utmTerm,
   };
+  // PRD 351 — stamp the referrer on the attribution row at *view* time, not
+  // only at conversion. This is what makes a link that was opened and never
+  // signed up show as a pending "Invited" row in the referrer's list; if it
+  // were only written at conversion, `convertedUserId` would always be set
+  // alongside it and that state could never exist. First-touch guarded, so a
+  // second scan carrying a different code cannot steal the row.
+  if (input.ref && !attribution.referrerUserId) {
+    try {
+      const { resolveReferrerUserId } = await import('../referral/referral.service');
+      const referrerUserId = await resolveReferrerUserId(input.ref);
+      if (referrerUserId) {
+        await prisma.linkToAppAttribution.updateMany({
+          where: { id: attribution.id, referrerUserId: null },
+          data: { referrerUserId },
+        });
+      }
+    } catch (error) {
+      console.error('link-to-app referrer stamp failed', error);
+    }
+  }
+
   const userAgent = clip(opts.userAgent);
   await prisma.linkToAppEvent.create({
     data: {
@@ -140,6 +161,31 @@ export function resolveLinkToAppRedirect(
   };
 }
 
+/**
+ * PRD 351 — attaches the `?ref=CODE` referrer at conversion.
+ *
+ * Rides the attribution pipeline rather than running beside it, and inherits
+ * its first-touch rule: `attachReferrer` writes `User.referredByUserId` and
+ * `LinkToAppAttribution.referrerUserId` only while they are `null`
+ * (`docs/product/constraints.md` → Link-to-app first-touch). Never throws — a
+ * referral problem must not be able to fail a registration.
+ */
+async function attachReferrerFromAttribution(
+  userId: string,
+  ref: string | null,
+  attributionId: string | null,
+): Promise<void> {
+  if (!ref) return;
+  try {
+    const { attachReferrer, resolveReferrerUserId } = await import('../referral/referral.service');
+    const referrerUserId = await resolveReferrerUserId(ref);
+    if (!referrerUserId) return;
+    await attachReferrer(userId, referrerUserId, { attributionId });
+  } catch (error) {
+    console.error('link-to-app referral attach failed', error);
+  }
+}
+
 export async function applyAuthAttribution(
   req: Request,
   userId: string,
@@ -153,7 +199,14 @@ export async function applyAuthAttribution(
     select: { attributionId: true },
   });
   if (!user) return;
-  if (options?.attachOnly && user.attributionId) return;
+  if (options?.attachOnly && user.attributionId) {
+    // The attribution row is already attached and is first-touch, so nothing
+    // about it may change. A referral code can still arrive on this call
+    // (the user opened an invite link after signing up), and `attachReferrer`
+    // applies the same never-overwrite rule to it.
+    await attachReferrerFromAttribution(userId, input.ref, user.attributionId);
+    return;
+  }
   const attribution = await upsertAttribution(input);
 
   if (!user.attributionId) {
@@ -183,6 +236,8 @@ export async function applyAuthAttribution(
       },
     });
   }
+
+  await attachReferrerFromAttribution(userId, input.ref, attribution.id);
 
   const userAgent = clip(req.get('user-agent'));
   await prisma.linkToAppEvent.create({

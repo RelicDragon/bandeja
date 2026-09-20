@@ -26,6 +26,7 @@ import { FindDayLoadErrorEmpty } from './FindDayLoadErrorEmpty';
 import { GamesLoadingSkeleton } from './GameCardSkeleton';
 import { EntityFilterChips, type EntityFilterType } from './EntityFilterChips';
 import { FindCityEventsRail } from './FindCityEventsRail';
+import { LiveNowRailContainer } from '@/components/live/LiveNowRailContainer';
 import { SubscriptionsNudgeButton } from './SubscriptionsNudgeButton';
 import { GamesByDateList } from './GamesByDateList';
 import { navigationService } from '@/services/navigationService';
@@ -660,6 +661,15 @@ const AvailableGamesSectionView = ({
       </div>
     ) : null;
 
+  /*
+   * PRD 349 — the "Live now" rail sits above the calendar on mobile and at the
+   * top of the games column on desktop. It renders nothing when the city has
+   * no public game in progress.
+   */
+  const liveNowRail = (
+    <LiveNowRailContainer variant="find" cityId={user?.currentCityId ?? undefined} />
+  );
+
   const cityEventsRail = (
     <AnimatedMount layout show={!eventsFilterVal && upcomingCityEvents.length > 0}>
       <FindCityEventsRail events={upcomingCityEvents} onSeeAll={handleSeeAllEvents} />
@@ -728,6 +738,7 @@ const AvailableGamesSectionView = ({
             <div className="flex-1 min-h-0 overflow-y-auto bg-gray-50 dark:bg-gray-900">
               <div className="p-4" style={{ paddingBottom: scrollBottomPadding }}>
                 <TabContentStack id="find-split-right">
+                  {liveNowRail}
                   {cityEventsRail}
                   <AnimatedMount>{gamesContent}</AnimatedMount>
                   <AnimatedMount>
@@ -750,6 +761,8 @@ const AvailableGamesSectionView = ({
       <AnimatedMount layout show={trainingFilterVal}>
         <TrainersList show={trainingFilterVal} availableGames={selectedDayGames ?? availableGames} levelSport={findLevelSport} />
       </AnimatedMount>
+
+      {liveNowRail}
 
       <AnimatedMount layout>
         <CalendarSection {...calendarSectionProps} />

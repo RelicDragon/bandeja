@@ -304,7 +304,12 @@
         "EXTERNAL_PARTIAL": "一部未予約",
         "MANUAL": "コート予約済み",
         "NONE": "まだ未予約"
-      }
+      },
+      "ATTENDANCE_NUDGED": "{{userName}}が参加確認をお願いしました",
+      "USER_NOTED_NO_SHOW": "{{userName}}が不参加として記録されました",
+      "GAME_SPOT_OPENED": "空きが出ました（{{userName}} が退出）",
+      "GAME_SEAT_AUTO_FILLED": "{{userName}} が待機列から参加しました",
+      "GAME_MOVED_INDOOR": "{{courtName}}（屋内）に変更しました"
     },
     "openChat": "チャットを開く",
     "chat": "チャット",

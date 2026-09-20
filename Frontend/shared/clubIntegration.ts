@@ -1,6 +1,6 @@
 /** Keep in sync with Backend/src/shared/clubIntegration.ts */
 
-export type ClubIntegrationType = 'BOOKTIME' | 'PADELOO' | 'KLIKTEREN' | 'NSPADELSUPABASE';
+export type ClubIntegrationType = 'BOOKTIME' | 'PADELOO' | 'KLIKTEREN' | 'NSPADELSUPABASE' | 'WELTNER';
 
 export interface BooktimeIntegrationConfig {
   companyId: string;
@@ -139,6 +139,7 @@ export function getExternalVenueId(club: ClubIntegrationRef | undefined): string
 
 export function clubHasBookingIntegration(club: ClubIntegrationRef | undefined): boolean {
   if (!club?.integrationType) return false;
+  if (isWeltnerClub(club)) return true;
   if (isBooktimeClub(club)) return getBooktimeCompanyId(club) !== null;
   if (isPadelooClub(club)) return getPadelooClubId(club) !== null;
   if (isKlikterenClub(club)) return getKlikterenVenueId(club) !== null;
@@ -209,4 +210,8 @@ export function shouldUseNspadelDurations(
     return courtHasActiveBookingIntegration(club, court);
   }
   return true;
+}
+
+export function isWeltnerClub(club: ClubIntegrationRef | undefined): boolean {
+  return club?.integrationType === 'WELTNER';
 }

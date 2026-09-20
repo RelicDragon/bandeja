@@ -4,6 +4,7 @@ import type { Game } from '@/types';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { getClubTimezone, getDateLabelInClubTz } from '@/utils/gameTimeDisplay';
 import { formatDate } from '@/utils/dateFormat';
+import { sortDayGroupGames } from '@/features/spot-opened/spotOpenedWindow';
 
 export interface GamesDateGroup {
   dateStr: string;
@@ -24,10 +25,14 @@ export function groupGamesByDate(
     map.set(key, arr);
   }
   const result: GamesDateGroup[] = [];
-  for (const [dateStr, dateGames] of map) {
-    dateGames.sort(
+  const now = Date.now();
+  for (const [dateStr, rawGames] of map) {
+    rawGames.sort(
       (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime(),
     );
+    // PRD 347 — cards with a live "Spot opened" pill lead their day group.
+    // Stable, so the start-time order above survives inside each band.
+    const dateGames = sortDayGroupGames(rawGames, now);
     const sample = dateGames[0];
     const clubTz = getClubTimezone(sample);
     const label = clubTz

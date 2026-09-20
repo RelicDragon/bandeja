@@ -1,0 +1,73 @@
+{
+  "pairs": {
+    "mode": {
+      "label": "Režim rang-liste",
+      "players": "Igrači",
+      "pairs": "Parovi"
+    },
+    "sort": {
+      "label": "Sortiranje parova",
+      "winRate": "Procenat pobeda",
+      "games": "Mečevi",
+      "level": "Nivo"
+    },
+    "period": {
+      "label": "Period",
+      "all": "Sve vreme",
+      "days30": "Poslednjih 30 dana",
+      "days10": "Poslednjih 10 dana"
+    },
+    "names": {
+      "spoken": "{{first}} i {{second}}"
+    },
+    "gamesCount_one": "{{count}} meč",
+    "gamesCount_few": "{{count}} meča",
+    "gamesCount_other": "{{count}} mečeva",
+    "floorHint_one": "Odigrajte {{count}} meč sa istim partnerom da biste se pojavili ovde.",
+    "floorHint_few": "Odigrajte {{count}} meča sa istim partnerom da biste se pojavili ovde.",
+    "floorHint_other": "Odigrajte {{count}} mečeva sa istim partnerom da biste se pojavili ovde.",
+    "chemistry": {
+      "tooltip": "Procenat pobeda zajedno naspram pojedinačno",
+      "aria": "Hemija {{value}}"
+    },
+    "stats": {
+      "games": "Mečevi",
+      "winRate": "Procenat pobeda",
+      "chemistry": "Hemija",
+      "chemistryUnknown": "Još nema dovoljno pojedinačnih mečeva"
+    },
+    "aria": {
+      "row": "Mesto {{rank}}, {{names}}, {{games}}, {{winRate}} odsto pobeda, hemija {{chemistry}}",
+      "rowNoChemistry": "Mesto {{rank}}, {{names}}, {{games}}, {{winRate}} odsto pobeda",
+      "podium": "Broj {{rank}}, {{names}}, {{winRate}} odsto pobeda, {{games}}",
+      "partner": "{{name}}, {{games}}, {{winRate}} odsto pobeda"
+    },
+    "scrollToMyPair": "Do mog para ({{rank}})",
+    "loadMore": "Prikaži još",
+    "loading": "Učitavamo parove",
+    "error": "Nije moguće učitati parove. Pokušajte ponovo.",
+    "empty": {
+      "title": "Još nema rangiranih parova",
+      "action": "Pronađi meč"
+    },
+    "sheet": {
+      "title": "Par",
+      "recent": "Nedavno zajedno",
+      "recentEmpty": "Još nema zajedničkih mečeva.",
+      "createTeam": "Napravi tim",
+      "openTeam": "Otvori tim",
+      "inviteToGame": "Pozovi na meč"
+    },
+    "recent": {
+      "untitled": "Meč"
+    },
+    "result": {
+      "win": "Pobeda",
+      "loss": "Poraz"
+    },
+    "partners": {
+      "title": "Vaši partneri",
+      "seeAll": "Prikaži sve"
+    }
+  }
+}

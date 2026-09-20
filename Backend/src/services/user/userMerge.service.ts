@@ -19,6 +19,7 @@ import {
 } from './userMergeRemaps';
 import { PlayIntentGameLifecycleService } from '../playIntent/playIntentGameLifecycle.service';
 import { publishCommittedPlayIntentTargetChanges } from '../playIntent/playIntentRealtime';
+import { mergeWeltnerAccounts } from '../weltner/weltnerMerge';
 
 type Tx = Prisma.TransactionClient;
 
@@ -715,52 +716,34 @@ async function mergeUserSportProfiles(tx: Tx, survivorId: string, sourceId: stri
   }
 }
 
-function mergeSportLevelConfirmation(
-  surv: {
-    approvedLevel: boolean;
-    approvedById: string | null;
-    approvedWhen: Date | null;
-  },
-  src: {
-    approvedLevel: boolean;
-    approvedById: string | null;
-    approvedWhen: Date | null;
-  },
-): {
+type SportLevelConfirmationRow = {
   approvedLevel: boolean;
   approvedById: string | null;
   approvedWhen: Date | null;
-} {
-  const approvedLevel = surv.approvedLevel || src.approvedLevel;
-  if (!approvedLevel) {
-    return { approvedLevel: false, approvedById: null, approvedWhen: null };
-  }
-  if (surv.approvedWhen && src.approvedWhen) {
-    if (surv.approvedWhen >= src.approvedWhen) {
-      return {
-        approvedLevel: true,
-        approvedById: surv.approvedById,
-        approvedWhen: surv.approvedWhen,
-      };
-    }
-    return {
-      approvedLevel: true,
-      approvedById: src.approvedById,
-      approvedWhen: src.approvedWhen,
-    };
-  }
-  if (surv.approvedLevel) {
-    return {
-      approvedLevel: true,
-      approvedById: surv.approvedById,
-      approvedWhen: surv.approvedWhen,
-    };
-  }
+  approvedAtLevel?: number | null;
+};
+
+function takeSportLevelConfirmation(row: SportLevelConfirmationRow): SportLevelConfirmationRow {
   return {
     approvedLevel: true,
-    approvedById: src.approvedById,
-    approvedWhen: src.approvedWhen,
+    approvedById: row.approvedById,
+    approvedWhen: row.approvedWhen,
+    approvedAtLevel: row.approvedAtLevel ?? null,
   };
+}
+
+function mergeSportLevelConfirmation(
+  surv: SportLevelConfirmationRow,
+  src: SportLevelConfirmationRow,
+): SportLevelConfirmationRow {
+  const approvedLevel = surv.approvedLevel || src.approvedLevel;
+  if (!approvedLevel) {
+    return { approvedLevel: false, approvedById: null, approvedWhen: null, approvedAtLevel: null };
+  }
+  if (surv.approvedWhen && src.approvedWhen) {
+    return takeSportLevelConfirmation(surv.approvedWhen >= src.approvedWhen ? surv : src);
+  }
+  return takeSportLevelConfirmation(surv.approvedLevel ? surv : src);
 }
 
 /** Keep User.approved* aligned with the PADEL sport profile (see docs/APP_FUNCTIONALITY.md §2.2). */
@@ -838,6 +821,7 @@ export class UserMergeService {
 
     await prisma.$transaction(
       async (tx) => {
+        await mergeWeltnerAccounts(tx, survivorId, sourceId);
         await mergeUserChats(tx, survivorId, sourceId);
         await preDeleteConflicts(tx, survivorId, sourceId);
         await clearSourceUniquesForTransfer(tx, survivor, source);

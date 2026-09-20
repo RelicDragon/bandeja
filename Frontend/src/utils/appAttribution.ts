@@ -1,3 +1,5 @@
+import { normalizeReferralCode, REFERRAL_QUERY_PARAM } from '@/features/referral/referralCode';
+
 export const APP_ATTRIBUTION_STORAGE_KEY = 'bandeja.attribution';
 export const APP_ATTRIBUTION_COOKIE = 'bandeja_aid';
 export const APP_ATTRIBUTION_CLIPBOARD_PREFIX = 'bandeja-aid:';
@@ -13,6 +15,15 @@ export type AppAttributionSnapshot = {
   utmContent: string | null;
   utmTerm: string | null;
   choice: AppAttributionChoice | null;
+  /**
+   * PRD 351 — referral code captured from `?ref=CODE`, stored next to `aid` and
+   * carried into the auth request body by the axios interceptor.
+   *
+   * It obeys the same **first-touch** rule as the UTMs: once a `ref` is stored,
+   * a later link never replaces it (`mergeAttributionFirstTouch`). Canonical
+   * stored form — uppercase, no dash.
+   */
+  ref: string | null;
 };
 
 const UTM_RE = /^[a-zA-Z0-9._-]+$/;
@@ -83,6 +94,7 @@ export function parseAttributionFromSearch(search: string): Partial<AppAttributi
   const choiceRaw = params.get('choice');
   return {
     aid: aidRaw && isAppAttributionAid(aidRaw) ? aidRaw : undefined,
+    ref: normalizeReferralCode(params.get(REFERRAL_QUERY_PARAM)),
     utmSource: sanitizeAppUtmValue(params.get('utm_source')),
     utmMedium: sanitizeAppUtmValue(params.get('utm_medium')),
     utmCampaign: sanitizeAppUtmValue(params.get('utm_campaign')),
@@ -103,6 +115,7 @@ export function readStoredAttribution(): AppAttributionSnapshot | null {
     if (!parsed.aid || !isAppAttributionAid(parsed.aid)) return null;
     return {
       aid: parsed.aid,
+      ref: normalizeReferralCode(parsed.ref),
       utmSource: sanitizeAppUtmValue(parsed.utmSource),
       utmMedium: sanitizeAppUtmValue(parsed.utmMedium),
       utmCampaign: sanitizeAppUtmValue(parsed.utmCampaign),
@@ -129,11 +142,14 @@ export function mergeAttributionFirstTouch(
   const hasUtm = Boolean(
     incoming.utmSource || incoming.utmMedium || incoming.utmCampaign || incoming.utmContent || incoming.utmTerm
   );
-  if (!aid && !hasUtm && !incoming.choice) return current;
+  if (!aid && !hasUtm && !incoming.choice && !incoming.ref) return current;
   const nextAid = aid ?? createAppAttributionAid();
-  const base = current ?? { aid: nextAid, ...emptyUtm(), choice: null };
+  const base = current ?? { aid: nextAid, ...emptyUtm(), choice: null, ref: null };
   return {
     aid: base.aid || nextAid,
+    // First touch wins, exactly like the UTMs: a second invite link never
+    // reassigns a referrer the user already arrived with (PRD 351).
+    ref: base.ref ?? incoming.ref ?? null,
     utmSource: base.utmSource ?? incoming.utmSource ?? null,
     utmMedium: base.utmMedium ?? incoming.utmMedium ?? null,
     utmCampaign: base.utmCampaign ?? incoming.utmCampaign ?? null,
@@ -162,6 +178,27 @@ export function captureAppAttributionFromLocation(location: {
 
 export function getAttributionForAuth(): AppAttributionSnapshot | null {
   return readStoredAttribution();
+}
+
+/** PRD 351 — the referral code this device arrived with, if any. */
+export function getCapturedReferralCode(): string | null {
+  return readStoredAttribution()?.ref ?? null;
+}
+
+/**
+ * PRD 351 — stores a code the user typed on the Register screen, before an
+ * account exists to attach it to.
+ *
+ * Goes through `mergeAttributionFirstTouch`, so it can only ever *fill* an
+ * empty `ref`; a code captured from a link always wins. Returns the code that
+ * is now stored, which may be an earlier one.
+ */
+export function captureManualReferralCode(code: string): string | null {
+  const normalized = normalizeReferralCode(code);
+  if (!normalized) return getCapturedReferralCode();
+  const merged = mergeAttributionFirstTouch(readStoredAttribution(), { ref: normalized });
+  if (merged) persistAttribution(merged);
+  return merged?.ref ?? null;
 }
 
 export function isAuthAttributionRequestUrl(url: string | undefined): boolean {

@@ -5,7 +5,7 @@ import { BooktimeClient } from '@/integrations/booktime/client';
 import { loadBooktimeCompany } from '@/integrations/booktime/bookFlow';
 import { formatClubDateKey } from '@/integrations/booktime/slots';
 import { clubLocalDateString } from '@/utils/clubAdmin/scheduleTime';
-import { getBooktimeCompanyId } from '@shared/clubIntegration';
+import { getBooktimeCompanyId, isWeltnerClub } from '@shared/clubIntegration';
 
 export const DEFAULT_BOOKABLE_DAYS = 14;
 
@@ -16,10 +16,11 @@ export function useBooktimeCompanyMeta(club: Club | undefined, enabled: boolean)
   const [loading, setLoading] = useState(false);
 
   const companyId = getBooktimeCompanyId(club) ?? undefined;
+  const weltner = isWeltnerClub(club);
 
   useEffect(() => {
     if (!enabled || !companyId) {
-      setBookableDays(DEFAULT_BOOKABLE_DAYS);
+      setBookableDays(weltner ? 31 : DEFAULT_BOOKABLE_DAYS);
       return;
     }
 
@@ -50,7 +51,7 @@ export function useBooktimeCompanyMeta(club: Club | undefined, enabled: boolean)
     return () => {
       cancelled = true;
     };
-  }, [club?.id, companyId, enabled]);
+  }, [club?.id, companyId, enabled, weltner]);
 
   const allowedDateKeys = useMemo(() => {
     if (!club || !enabled) return [];

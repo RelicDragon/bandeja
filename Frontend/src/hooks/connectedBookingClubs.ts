@@ -85,6 +85,7 @@ export function mergeConnectedBookingClubs(
   booktime: BooktimeMyClubRow[],
   padeloo: PadelooMyClubRow[],
   klikteren: KlikterenMyClubRow[] = [],
+  weltner: ConnectedBookingClubRow[] = [],
 ): ConnectedBookingClubRow[] {
   const byId = new Map<string, ConnectedBookingClubRow>();
   for (const row of booktime) {
@@ -96,6 +97,7 @@ export function mergeConnectedBookingClubs(
   for (const row of klikteren) {
     byId.set(row.clubId, mapKlikterenClubRow(row));
   }
+  for (const row of weltner) byId.set(row.clubId, row);
   return [...byId.values()].sort((a, b) =>
     a.clubName.localeCompare(b.clubName, undefined, { sensitivity: 'base' }),
   );
@@ -156,6 +158,8 @@ export function bookingListClubRowToClub(row: BookingListClubRow): Club {
     externalCourtId: c.externalCourtId ?? undefined,
     integrationCourtName: c.integrationCourtName ?? undefined,
   }));
+
+  if (row.integrationType === 'WELTNER') return { id: row.clubId, name: row.clubName, address: '', cityId: '', integrationType: 'WELTNER', integrationConfig: null, courts };
 
   if (row.integrationType === 'KLIKTEREN' || row.klikterenVenueId) {
     return {

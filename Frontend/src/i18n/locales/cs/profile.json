@@ -212,6 +212,8 @@
     "sendDirectMessagesDescription": "Dostávejte upozornění při přímé zprávě",
     "sendReminders": "Připomínky",
     "sendRemindersDescription": "Dostávejte upozornění 2 hodiny před začátkem zápasů, turnajů nebo tréninkových barů",
+    "sendWeatherAlerts": "Upozornění na počasí",
+    "sendWeatherAlertsDescription": "Jen pro venkovní kurty",
     "walletNotifications": "Notifikace peněženky",
     "walletNotificationsDescription": "Dostávejte upozornění na transakce v peněžence",
     "marketplaceNotifications": "Nové inzeráty v mém městě",

@@ -56,11 +56,13 @@
                 <li><a href="#" data-page="reports" class="nav-link">🚨 Reports</a></li>
                 <li><a href="#" data-page="app-versions" class="nav-link">📱 App Versions</a></li>
                 <li><a href="#" data-page="platform-settings" class="nav-link">⚙️ Platform Settings</a></li>
+                <li><a href="#" data-page="goods" class="nav-link">🎁 Goods</a></li>
                 <li><a href="#" data-page="market-categories" class="nav-link">🛒 Market Categories</a></li>
                 <li><a href="#" data-page="mass-notifications" class="nav-link">📢 Mass Notifications</a></li>
                 <li><a href="#" data-page="sponsor-ads" class="nav-link">📣 Sponsor Ads</a></li>
                 <li><a href="#" data-page="translation-queue" class="nav-link">🌐 Translation Queue</a></li>
                 <li><a href="#" data-page="link-to-app" class="nav-link">📱 App QR</a></li>
+                <li><a href="#" data-page="referrals" class="nav-link">🎁 Referrals</a></li>
                 <li><a href="#" data-page="logs" class="nav-link">📋 Logs</a></li>
             </ul>
             <button id="logoutBtn" class="btn-logout">Logout</button>
@@ -319,6 +321,110 @@
                             </tr>
                         </thead>
                         <tbody id="linkToAppRecentBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="referralsPage" class="content-page">
+                <div class="page-header">
+                    <h1>Referrals</h1>
+                    <div class="online-users-controls">
+                        <label>
+                            From
+                            <input type="date" id="referralStartDate" />
+                        </label>
+                        <label>
+                            To
+                            <input type="date" id="referralEndDate" />
+                        </label>
+                        <label>
+                            Search
+                            <input type="text" id="referralSearch" placeholder="Name or code" />
+                        </label>
+                        <button type="button" class="btn-secondary" onclick="loadReferralsPage()">Apply</button>
+                        <button type="button" class="btn-secondary" onclick="resetReferralFilters()">Reset</button>
+                        <button type="button" class="btn-secondary" onclick="exportReferralsCsv()">Export CSV</button>
+                    </div>
+                </div>
+                <p class="translation-queue-worker">
+                    Dates filter by when the invite happened (the invited account's signup, or the link opening for a pending invite) &mdash; not by when it paid out. Revoking a reward frees the referrer's cap slot; coins already granted are not clawed back.
+                </p>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">🔗</div>
+                        <div class="stat-info">
+                            <p class="stat-label">Invited</p>
+                            <p class="stat-value" id="referralTotalInvited">-</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🙋</div>
+                        <div class="stat-info">
+                            <p class="stat-label">Joined</p>
+                            <p class="stat-value" id="referralTotalJoined">-</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🎾</div>
+                        <div class="stat-info">
+                            <p class="stat-label">Played</p>
+                            <p class="stat-value" id="referralTotalPlayed">-</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🎁</div>
+                        <div class="stat-info">
+                            <p class="stat-label">Rewarded</p>
+                            <p class="stat-value" id="referralTotalRewarded">-</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🚫</div>
+                        <div class="stat-info">
+                            <p class="stat-label">Revoked</p>
+                            <p class="stat-value" id="referralTotalRevoked">-</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🪙</div>
+                        <div class="stat-info">
+                            <p class="stat-label">Coins to referrers</p>
+                            <p class="stat-value" id="referralTotalCoins">-</p>
+                        </div>
+                    </div>
+                </div>
+                <h2 class="section-subtitle">By referrer</h2>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Referrer</th>
+                                <th>Code</th>
+                                <th>Invited</th>
+                                <th>Joined</th>
+                                <th>Played</th>
+                                <th>Rewarded</th>
+                                <th>Coins</th>
+                                <th>Last join</th>
+                            </tr>
+                        </thead>
+                        <tbody id="referralRowsBody"></tbody>
+                    </table>
+                </div>
+                <h2 class="section-subtitle">Payouts</h2>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>When</th>
+                                <th>Referrer</th>
+                                <th>Invited</th>
+                                <th>Coins (ref / new)</th>
+                                <th>Status</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="referralRewardsBody"></tbody>
                     </table>
                 </div>
             </div>
@@ -618,6 +724,104 @@
                         </div>
                     </div>
                 </section>
+
+                <!-- PRD 348 — cost split. -->
+                <section class="platform-settings-section" aria-labelledby="platformSettingsCostSplitHeading">
+                    <div class="platform-settings-card">
+                        <h2 id="platformSettingsCostSplitHeading">Cost Split</h2>
+                        <p class="text-muted">Coins per one unit of a game's currency (e.g. 100 = 100 coins per €1). Leave blank to keep the "settle with coins" option hidden everywhere.</p>
+
+                        <div class="platform-settings-meta">
+                            <div class="platform-settings-meta-row">
+                                <span class="platform-settings-meta-label">COINS_PER_CURRENCY_UNIT</span>
+                                <code id="coinsPerCurrencyUnitActive" class="platform-settings-meta-value">—</code>
+                            </div>
+                        </div>
+
+                        <div class="form-group platform-settings-field">
+                            <label for="coinsPerCurrencyUnitInput">Coins per currency unit</label>
+                            <input type="number" min="0" step="any" id="coinsPerCurrencyUnitInput" class="platform-settings-select" oninput="updateCoinsPerCurrencyUnitSaveButton()" placeholder="unset — coins option hidden">
+                        </div>
+
+                        <div class="platform-settings-actions">
+                            <button type="button" class="btn-primary" id="coinsPerCurrencyUnitSaveBtn" onclick="saveCoinsPerCurrencyUnit()">Save</button>
+                            <span id="coinsPerCurrencyUnitStatus" class="platform-settings-status" aria-live="polite"></span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- PRD 351 — referral rewards. -->
+                <section class="platform-settings-section" aria-labelledby="platformSettingsReferralRewardsHeading">
+                    <div class="platform-settings-card">
+                        <h2 id="platformSettingsReferralRewardsHeading">Referral Rewards</h2>
+                        <p class="text-muted">Coins paid out when a referral completes. Leave a field blank to fall back to the built-in default. Whole numbers only.</p>
+
+                        <div class="platform-settings-meta">
+                            <div class="platform-settings-meta-row">
+                                <span class="platform-settings-meta-label">REFERRAL_REWARD_REFERRER</span>
+                                <code id="referralRewardReferrerActive" class="platform-settings-meta-value">—</code>
+                            </div>
+                            <div class="platform-settings-meta-row">
+                                <span class="platform-settings-meta-label">REFERRAL_REWARD_REFERRED</span>
+                                <code id="referralRewardReferredActive" class="platform-settings-meta-value">—</code>
+                            </div>
+                        </div>
+
+                        <div class="form-group platform-settings-field">
+                            <label for="referralRewardReferrerInput">Coins for the inviter</label>
+                            <input type="number" min="0" step="1" id="referralRewardReferrerInput" class="platform-settings-select" oninput="updateReferralRewardsSaveButton()" placeholder="unset — uses the built-in default">
+                        </div>
+
+                        <div class="form-group platform-settings-field">
+                            <label for="referralRewardReferredInput">Coins for the invited player</label>
+                            <input type="number" min="0" step="1" id="referralRewardReferredInput" class="platform-settings-select" oninput="updateReferralRewardsSaveButton()" placeholder="unset — uses the built-in default">
+                        </div>
+
+                        <div class="platform-settings-actions">
+                            <button type="button" class="btn-primary" id="referralRewardsSaveBtn" onclick="saveReferralRewards()">Save</button>
+                            <span id="referralRewardsStatus" class="platform-settings-status" aria-live="polite"></span>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <div id="goodsPage" class="content-page">
+                <div class="page-header">
+                    <h1>Goods</h1>
+                    <div class="action-buttons">
+                        <button type="button" class="btn-secondary" onclick="loadGoodsPage()">Refresh</button>
+                        <button type="button" class="btn-primary" onclick="createGoodsModal()">+ Add Item</button>
+                    </div>
+                </div>
+                <p class="text-muted">Cosmetic shop catalogue (PRD 355). Items are bought with coins only &mdash; never with money. Withdrawing an item refunds every owner once and clears it from their profiles.</p>
+                <div class="filters">
+                    <select id="goodsKindFilter" class="filter-select" onchange="loadGoodsPage()">
+                        <option value="">All kinds</option>
+                        <option value="PROFILE_FRAME">Profile frame</option>
+                        <option value="CHAT_ACCENT">Chat accent</option>
+                        <option value="STICKER_PACK">Sticker pack</option>
+                        <option value="NAME_COLOR">Name colour</option>
+                    </select>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Kind</th>
+                                <th>Name</th>
+                                <th>Asset key</th>
+                                <th>Price</th>
+                                <th>Active</th>
+                                <th>Featured</th>
+                                <th>Premium only</th>
+                                <th>Sales</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="goodsTableBody">
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             <div id="appVersionsPage" class="content-page">
@@ -1231,6 +1435,7 @@
                         <option value="BOOKTIME">Online booking (Booktime)</option>
                         <option value="PADELOO">Online booking (Padeloo)</option>
                         <option value="KLIKTEREN">Online booking (Klikteren)</option>
+                        <option value="WELTNER">Online booking (Weltner — saved phone)</option>
                     </select>
                     <div id="centerBooktimeFields" style="display: none; margin-top: 12px;">
                         <label for="centerBooktimeCompanyId">Booking provider company ID *</label>
@@ -1293,7 +1498,7 @@
                 </div>
                 <div class="form-group">
                     <label for="courtExternalCourtId">External court ID</label>
-                    <input type="text" id="courtExternalCourtId" placeholder="External bookingResourceId" autocomplete="off">
+                    <input type="text" id="courtExternalCourtId" placeholder="Provider court ID or Weltner slug (e.g. teren-1-yucatan)" autocomplete="off">
                 </div>
                 <div class="form-group">
                     <label for="courtWebCameraUrl">Web camera URL</label>
@@ -1695,6 +1900,74 @@
         </div>
     </div>
 
+    <div id="goodsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="goodsModalTitle">Add Item</h2>
+                <button class="modal-close" onclick="closeModal('goodsModal')">&times;</button>
+            </div>
+            <form id="goodsForm" onsubmit="handleGoodsSubmit(event)">
+                <div class="form-group">
+                    <label for="goodsName">Name *</label>
+                    <input type="text" id="goodsName" required>
+                </div>
+                <div class="form-group">
+                    <label for="goodsKind">Kind *</label>
+                    <select id="goodsKind" required onchange="updateGoodsStickerPackVisibility()">
+                        <option value="PROFILE_FRAME">Profile frame</option>
+                        <option value="CHAT_ACCENT">Chat accent</option>
+                        <option value="STICKER_PACK">Sticker pack</option>
+                        <option value="NAME_COLOR">Name colour</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="goodsAssetKey">Asset key *</label>
+                    <input type="text" id="goodsAssetKey" required placeholder="frame-neon">
+                    <p class="text-muted">Must match a CSS class in Frontend/src/styles/collection.css. Unique per kind.</p>
+                </div>
+                <div class="form-group" id="goodsStickerPackGroup" style="display: none;">
+                    <label for="goodsStickerPackId">Sticker pack id *</label>
+                    <input type="text" id="goodsStickerPackId" placeholder="StickerPack.id">
+                    <p class="text-muted">Owning this item unlocks that pack in the sticker picker.</p>
+                </div>
+                <div class="form-group">
+                    <label for="goodsPrice">Price (coins) *</label>
+                    <input type="number" id="goodsPrice" min="0" value="0" required>
+                </div>
+                <div class="form-group">
+                    <label for="goodsDescription">Description</label>
+                    <textarea id="goodsDescription" rows="3" maxlength="400"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="goodsSortOrder">Sort order</label>
+                    <input type="number" id="goodsSortOrder" min="0" value="0">
+                </div>
+                <div class="form-group-checkbox">
+                    <input type="checkbox" id="goodsIsActive" checked>
+                    <label for="goodsIsActive">Active</label>
+                </div>
+                <div class="form-group-checkbox">
+                    <input type="checkbox" id="goodsIsFeatured">
+                    <label for="goodsIsFeatured">Featured</label>
+                </div>
+                <div class="form-group-checkbox">
+                    <input type="checkbox" id="goodsPremiumOnly">
+                    <label for="goodsPremiumOnly">Premium members only</label>
+                </div>
+                <div class="form-group" id="goodsPreviewGroup">
+                    <label for="goodsPreviewFile">Preview image</label>
+                    <input type="file" id="goodsPreviewFile" accept="image/png,image/jpeg,image/webp">
+                    <p class="text-muted" id="goodsPreviewHint">Save the item first, then upload preview art.</p>
+                    <img id="goodsPreviewImage" alt="" style="display: none; max-width: 120px; margin-top: 0.5rem;">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeModal('goodsModal')">Cancel</button>
+                    <button type="submit" class="btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div id="appVersionModal" class="modal">
         <div class="modal-content">
             <h2 id="appVersionModalTitle">Add Version Requirement</h2>
@@ -1865,6 +2138,7 @@
           'market-categories.js',
           'mass-notifications.js',
           'platform-settings.js',
+          'goods.js',
           'ads-constants.js',
           'ads-api.js',
           'ads-sponsors.js',
@@ -1873,6 +2147,7 @@
           'ads-analytics.js',
           'ads.js',
           'link-to-app.js',
+          'referrals.js',
           'merge-users.js',
         ];
         for (const src of scripts) {

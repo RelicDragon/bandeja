@@ -2,7 +2,10 @@ import Foundation
 import BandejaNextGames
 
 enum WatchWidgetCopy {
-    nonisolated static func widgetLang() -> String {
+    /// Primary language subtag of the profile language the app stored in the App Group
+    /// (`es-ES` → `es`), unchanged otherwise. Mirrors `WatchWidgetLangBridge` in the app so
+    /// both sides format relative times with the same `Locale`.
+    nonisolated static func rawLang() -> String {
         let fallback = Locale.current.language.languageCode?.identifier ?? "en"
         let raw = AppGroupStorage.suite?.string(forKey: AppGroupStorage.Keys.uiLanguage)
         let id: String
@@ -11,6 +14,19 @@ enum WatchWidgetCopy {
         } else {
             id = fallback
         }
+        let primary = id.split(whereSeparator: { $0 == "-" || $0 == "_" }).first.map(String.init) ?? id
+        let lower = primary.lowercased()
+        return lower.isEmpty ? "en" : lower
+    }
+
+    /// Locale for date / relative-time formatting — same identifier the app uses.
+    nonisolated static func formatterLocale() -> Locale {
+        Locale(identifier: rawLang())
+    }
+
+    /// Language for the copy tables below (clamped to the languages they carry).
+    nonisolated static func widgetLang() -> String {
+        let id = rawLang()
         if id.hasPrefix("es") { return "es" }
         if id.hasPrefix("ru") { return "ru" }
         if id.hasPrefix("sr") { return "sr" }
@@ -135,6 +151,54 @@ enum WatchWidgetCopy {
         case "th": return "ปาเดล"
         case "ja": return "パデル"
         default: return "Padel"
+        }
+    }
+
+    nonisolated static func liveWidgetTitle(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Marcador en vivo"
+        case "ru": return "Живой счёт"
+        case "sr": return "Резултат уживо"
+        case "cs": return "Živé skóre"
+        case "ar": return "النتيجة المباشرة"
+        case "zh": return "实时比分"
+        case "id": return "Skor langsung"
+        case "hi": return "लाइव स्कोर"
+        case "th": return "คะแนนสด"
+        case "ja": return "ライブスコア"
+        default: return "Live scoring"
+        }
+    }
+
+    nonisolated static func liveWidgetDescription(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Partido activo del marcador de Bandeja."
+        case "ru": return "Текущий матч из счёта Bandeja."
+        case "sr": return "Активни меч из Bandeja резултата."
+        case "cs": return "Aktivní zápas ze skórování Bandeja."
+        case "ar": return "المباراة النشطة من تسجيل Bandeja."
+        case "zh": return "来自 Bandeja 计分的进行中比赛。"
+        case "id": return "Pertandingan aktif dari skor Bandeja."
+        case "hi": return "Bandeja स्कोरिंग से सक्रिय मैच।"
+        case "th": return "แมตช์ที่กำลังแข่งจากการนับคะแนน Bandeja"
+        case "ja": return "Bandeja スコアリングの進行中の試合。"
+        default: return "Active match from Bandeja scoring."
+        }
+    }
+
+    nonisolated static func liveWidgetPlaceholder(_ lang: String) -> String {
+        switch lang {
+        case "es": return "En vivo"
+        case "ru": return "В эфире"
+        case "sr": return "Уживо"
+        case "cs": return "Živě"
+        case "ar": return "مباشر"
+        case "zh": return "直播"
+        case "id": return "Langsung"
+        case "hi": return "लाइव"
+        case "th": return "สด"
+        case "ja": return "ライブ"
+        default: return "Live"
         }
     }
 

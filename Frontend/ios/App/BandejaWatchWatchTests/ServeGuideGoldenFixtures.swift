@@ -74,7 +74,7 @@ enum ServeGuideGoldenFixtures {
     static func resolvedState(for entry: CatalogEntry) throws -> WatchLiveScoringState {
         if let actions = entry.actions, !actions.isEmpty {
             let preset = WatchScoringPreset(rawValue: entry.preset) ?? .classicBo3
-            var rules = WatchScoringRulebook.skeleton(for: preset)
+            var rules = WatchScoringRulebook.skeleton(for: preset, sport: WatchSport(rawValue: entry.sport))
             if let gp = entry.rules?.deucesBeforeGoldenPoint { rules.deucesBeforeGoldenPoint = gp }
             var state = WatchLiveScoringEngine.makeInitialState(
                 rules: rules,
@@ -93,7 +93,7 @@ enum ServeGuideGoldenFixtures {
         }
         if let overlay = entry.state {
             let preset = WatchScoringPreset(rawValue: entry.preset) ?? .classicBo3
-            var rules = WatchScoringRulebook.skeleton(for: preset)
+            var rules = WatchScoringRulebook.skeleton(for: preset, sport: WatchSport(rawValue: entry.sport))
             if let gp = entry.rules?.deucesBeforeGoldenPoint { rules.deucesBeforeGoldenPoint = gp }
             var state = WatchLiveScoringEngine.parseState(
                 overlay,
@@ -113,7 +113,7 @@ enum ServeGuideGoldenFixtures {
     static func inputs(for entry: CatalogEntry) throws -> ServeGuideInputs {
         let sport = WatchSport.resolved(from: entry.sport)
         let preset = WatchScoringPreset(rawValue: entry.preset) ?? .classicBo3
-        var rules = WatchScoringRulebook.skeleton(for: preset)
+        var rules = WatchScoringRulebook.skeleton(for: preset, sport: sport)
         if let gp = entry.rules?.deucesBeforeGoldenPoint { rules.deucesBeforeGoldenPoint = gp }
 
         let state = try resolvedState(for: entry)

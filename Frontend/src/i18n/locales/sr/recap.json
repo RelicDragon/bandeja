@@ -1,0 +1,138 @@
+{
+  "recap": {
+    "slides": {
+      "cover": {
+        "caption": "U brojkama",
+        "alt": "{{month}} u brojkama"
+      },
+      "games": {
+        "eyebrow": "Mečevi",
+        "caption_one": "odigran {{count}} meč",
+        "caption_few": "odigrana {{count}} meča",
+        "caption_other": "odigrano {{count}} mečeva",
+        "alt_one": "u {{month}} odigran {{count}} meč",
+        "alt_few": "u {{month}} odigrana {{count}} meča",
+        "alt_other": "u {{month}} odigrano {{count}} mečeva"
+      },
+      "wins": {
+        "eyebrow": "Pobede",
+        "caption_one": "{{count}} pobeda",
+        "caption_few": "{{count}} pobede",
+        "caption_other": "{{count}} pobeda",
+        "alt_one": "{{count}} pobeda, procenat pobeda {{percent}}",
+        "alt_few": "{{count}} pobede, procenat pobeda {{percent}}",
+        "alt_other": "{{count}} pobeda, procenat pobeda {{percent}}"
+      },
+      "level": {
+        "eyebrow": "Nivo igre",
+        "caption": "Vaš nivo je sada {{level}}",
+        "neutral": "Nivo se pomerio na {{level}}",
+        "alt": "Nivo igre: pomeren na {{level}}"
+      },
+      "partner": {
+        "eyebrow": "Najbolji partner",
+        "caption_one": "{{count}} pobeda zajedno sa {{name}}",
+        "caption_few": "{{count}} pobede zajedno sa {{name}}",
+        "caption_other": "{{count}} pobeda zajedno sa {{name}}",
+        "alt_one": "Najbolji partner {{name}}, {{count}} zajednička pobeda",
+        "alt_few": "Najbolji partner {{name}}, {{count}} zajedničke pobede",
+        "alt_other": "Najbolji partner {{name}}, {{count}} zajedničkih pobeda"
+      },
+      "streak": {
+        "eyebrow": "Niz nedelja",
+        "caption_one": "Igrao {{count}} nedelju zaredom",
+        "caption_few": "Igrao {{count}} nedelje zaredom",
+        "caption_other": "Igrao {{count}} nedelja zaredom",
+        "best_one": "Lični rekord {{count}} nedelja",
+        "best_few": "Lični rekord {{count}} nedelje",
+        "best_other": "Lični rekord {{count}} nedelja",
+        "alt_one": "Niz nedelja: {{count}} nedelja zaredom",
+        "alt_few": "Niz nedelja: {{count}} nedelje zaredom",
+        "alt_other": "Niz nedelja: {{count}} nedelja zaredom"
+      },
+      "club": {
+        "eyebrow": "Omiljeni klub",
+        "caption_one": "{{count}} meč ovde",
+        "caption_few": "{{count}} meča ovde",
+        "caption_other": "{{count}} mečeva ovde",
+        "alt_one": "Omiljeni klub {{club}}, {{count}} meč",
+        "alt_few": "Omiljeni klub {{club}}, {{count}} meča",
+        "alt_other": "Omiljeni klub {{club}}, {{count}} mečeva"
+      },
+      "lowActivity": {
+        "encouragement": "Jedan meč je i dalje meč. Hajde da nađemo sledeći.",
+        "caption_one": "{{count}} meč u {{month}}",
+        "caption_few": "{{count}} meča u {{month}}",
+        "caption_other": "{{count}} mečeva u {{month}}",
+        "alt_one": "U {{month}} odigran je {{count}} meč",
+        "alt_few": "U {{month}} odigrana su {{count}} meča",
+        "alt_other": "U {{month}} odigrano je {{count}} mečeva"
+      },
+      "outro": {
+        "title": "Vidimo se na terenu u {{month}}",
+        "caption": "{{games}} · {{wins}}",
+        "gamesPart_one": "{{count, number}} meč",
+        "gamesPart_few": "{{count, number}} meča",
+        "gamesPart_other": "{{count, number}} mečeva",
+        "winsPart_one": "{{count, number}} pobeda",
+        "winsPart_few": "{{count, number}} pobede",
+        "winsPart_other": "{{count, number}} pobeda",
+        "lowActivityCaption": "Teren te čeka.",
+        "alt": "Vidimo se na terenu u {{month}}"
+      }
+    },
+    "viewer": {
+      "title": "Rezime meseca",
+      "close": "Zatvori",
+      "next": "Dalje",
+      "shareCta": "Podeli sa pratiocima",
+      "saveImageCta": "Sačuvaj sliku",
+      "savingImage": "Pripremamo sliku…",
+      "playIntentCta": "Želim da igram",
+      "loading": "Pripremamo vaš rezime…",
+      "loadFailed": "Nismo uspeli da učitamo ovaj rezime.",
+      "sportTabs": "Izaberi sport"
+    },
+    "share": {
+      "title": "Podeli svoj rezime",
+      "subtitle": "Izaberi slajdove za {{month}}",
+      "ttlNote": "Pratioci će to videti 24 sata.",
+      "sensitiveHint": "Podrazumevano isključeno",
+      "success": "Podeljeno sa pratiocima",
+      "failed": "Nije uspelo deljenje rezimea",
+      "exportFailed": "Nije uspelo pripremanje slike",
+      "imageText": "Moj {{month}} na Bandeji",
+      "slides": {
+        "cover": "Naslovna",
+        "games": "Mečevi",
+        "wins": "Pobede",
+        "level": "Nivo igre",
+        "partner": "Najbolji partner",
+        "streak": "Niz nedelja",
+        "club": "Omiljeni klub",
+        "lowActivity": "Vaš mesec",
+        "outro": "Završnica"
+      },
+      "cta_one": "Podeli {{count}} slajd",
+      "cta_few": "Podeli {{count}} slajda",
+      "cta_other": "Podeli {{count}} slajdova",
+      "previewLabel_one": "Izabran {{count}} slajd",
+      "previewLabel_few": "Izabrana {{count}} slajda",
+      "previewLabel_other": "Izabrano {{count}} slajdova"
+    },
+    "rail": {
+      "label": "Rezime za {{month}}",
+      "aria": "Otvori rezime za {{month}}"
+    },
+    "profile": {
+      "title": "Mesečni rezimei",
+      "cardAria": "Otvori rezime za {{month}}",
+      "gamesOnly_one": "{{count}} meč",
+      "gamesOnly_few": "{{count}} meča",
+      "gamesOnly_other": "{{count}} mečeva",
+      "gamesAndWinRate_one": "{{count}} meč · {{percent}}",
+      "gamesAndWinRate_few": "{{count}} meča · {{percent}}",
+      "gamesAndWinRate_other": "{{count}} mečeva · {{percent}}"
+    }
+  }
+}

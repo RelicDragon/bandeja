@@ -3,6 +3,10 @@ import WatchConnectivity
 import BandejaNextGames
 import BandejaWatchShared
 
+extension Notification.Name {
+    static let watchCredentialsRotated = Notification.Name("bandeja.watchCredentialsRotated")
+}
+
 final class WatchSessionManager: NSObject {
     static let shared = WatchSessionManager()
 
@@ -77,10 +81,22 @@ final class WatchSessionManager: NSObject {
         UserDefaults.standard.removeObject(forKey: Self.prefsStorageKey)
         guard session.activationState == .activated else { return }
         guard shouldAttemptWatchSync else { return }
+        // Queued credential transfers from before logout would re-authenticate the watch
+        // once it comes back into range; drop them.
+        cancelOutstandingAuthTransfers()
         // Application context is last-write-wins. Do not queue logout via transferUserInfo —
         // a delayed FIFO message can wipe a newer post-login access token.
         let payload = WatchAuthSyncPayload.logoutPayload()
         try? session.updateApplicationContext(payload)
+    }
+
+    private func cancelOutstandingAuthTransfers() {
+        for transfer in session.outstandingUserInfoTransfers {
+            let info = transfer.userInfo
+            if info["token"] != nil || info["refreshToken"] != nil || info["prefsVersion"] != nil {
+                transfer.cancel()
+            }
+        }
     }
 
     private var shouldAttemptWatchSync: Bool {
@@ -125,6 +141,9 @@ final class WatchSessionManager: NSObject {
                 || payload["defaultCurrency"] != nil || payload["timeFormat"] != nil
             if !hasPrefs { return }
         }
+        // Only the newest credential set matters; a backlog of stale transfers delivered
+        // after a long out-of-range period would each rewrite the watch Keychain.
+        cancelOutstandingAuthTransfers()
         session.transferUserInfo(payload)
         try? session.updateApplicationContext(payload)
     }
@@ -160,12 +179,29 @@ final class WatchSessionManager: NSObject {
     }
 
     private func handleIncomingUserInfo(_ userInfo: [String: Any]) {
+        if let rotated = WatchAuthRotatedPayload(decode: userInfo) {
+            adoptRotatedCredentials(rotated)
+            return
+        }
         guard let score = ScoreUpdatedPayload(decode: userInfo) else { return }
         NotificationCenter.default.post(
             name: .watchScoreUpdated,
             object: nil,
             userInfo: score.notificationUserInfo
         )
+    }
+
+    /// The watch rotated the shared refresh session. Persist the successor in the shared
+    /// Keychain (the web layer reads the native refresh credential before every refresh),
+    /// and remember it so the next phone→watch sync does not push the revoked predecessor back.
+    private func adoptRotatedCredentials(_ rotated: WatchAuthRotatedPayload) {
+        // A logged-out phone must not be re-authenticated by a late watch rotation.
+        guard KeychainHelper.shared.readRefreshToken(accessGroup: AppGroupStorage.suiteName) != nil else { return }
+        KeychainHelper.shared.writeRefreshToken(token: rotated.refreshToken, accessGroup: AppGroupStorage.suiteName)
+        KeychainHelper.shared.write(token: rotated.token, accessGroup: AppGroupStorage.suiteName)
+        lastRefreshToken = rotated.refreshToken
+        lastToken = rotated.token
+        NotificationCenter.default.post(name: .watchCredentialsRotated, object: nil)
     }
 }
 

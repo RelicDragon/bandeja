@@ -243,6 +243,41 @@
       }
     }
 
+    /* PRD 351 — "Invited by Marko" chip. Public name only: the landing page is
+       unauthenticated and the endpoint behind it returns a first name and an
+       avatar and nothing else. */
+    .referrer-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin: 0 auto 1rem;
+      padding: 0.375rem 0.875rem 0.375rem 0.375rem;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      color: #fff;
+      font-size: 0.875rem;
+      font-weight: 600;
+      backdrop-filter: blur(4px);
+    }
+
+    .referrer-chip[hidden] {
+      display: none;
+    }
+
+    .referrer-chip__avatar {
+      width: 1.75rem;
+      height: 1.75rem;
+      border-radius: 999px;
+      object-fit: cover;
+      background: rgba(255, 255, 255, 0.25);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+
     @media (prefers-reduced-motion: reduce) {
       .container {
         animation: none;
@@ -258,7 +293,12 @@
     <h1 id="title">Opening…</h1>
     <p class="subtitle" id="subtitle">If nothing happens, choose your platform:</p>
     <div class="loading" id="loading">Redirecting...</div>
-    
+
+    <div class="referrer-chip" id="referrerChip" hidden>
+      <span class="referrer-chip__avatar" id="referrerAvatar" aria-hidden="true"></span>
+      <span id="referrerText"></span>
+    </div>
+
     <div class="buttons">
       <a id="ios" href="https://apps.apple.com/app/bandeja/id6756632318" class="store-button">
         <img src="https://tools.applemediaservices.com/api/badges/download-on-the-app-store/black/en-us?size=250x83&releaseDate=1704067200" alt="Download on the App Store" />
@@ -281,7 +321,8 @@
           subtitle: 'If nothing happens, choose your platform:',
           webButton: 'Open Web App',
           tip: 'Tip: If you scanned a QR code inside an in-app browser, tap the button above.',
-          loading: 'Redirecting...'
+          loading: 'Redirecting...',
+          invitedBy: 'Invited by {name}'
         },
         ru: {
           title: 'Открытие…',
@@ -289,7 +330,8 @@
           subtitle: 'Если ничего не происходит, выберите вашу платформу:',
           webButton: 'Открыть веб-приложение',
           tip: 'Совет: Если вы отсканировали QR-код во встроенном браузере, нажмите кнопку выше.',
-          loading: 'Перенаправление...'
+          loading: 'Перенаправление...',
+          invitedBy: 'Вас пригласил {name}'
         },
         sr: {
           title: 'Otvaranje…',
@@ -297,7 +339,8 @@
           subtitle: 'Ako se ništa ne dešava, izaberite vašu platformu:',
           webButton: 'Otvori web aplikaciju',
           tip: 'Savet: Ako ste skenirali QR kod u ugrađenom pregledaču, pritisnite dugme iznad.',
-          loading: 'Preusmeravanje...'
+          loading: 'Preusmeravanje...',
+          invitedBy: 'Pozvao te {name}'
         },
         es: {
           title: 'Abriendo…',
@@ -305,7 +348,8 @@
           subtitle: 'Si no pasa nada, elige tu plataforma:',
           webButton: 'Abrir aplicación web',
           tip: 'Consejo: Si escaneaste un código QR dentro de un navegador integrado, toca el botón de arriba.',
-          loading: 'Redirigiendo...'
+          loading: 'Redirigiendo...',
+          invitedBy: 'Te invitó {name}'
         },
         cs: {
           title: 'Otevírání…',
@@ -313,7 +357,8 @@
           subtitle: 'Pokud se nic nestane, zvolte svou platformu:',
           webButton: 'Otevřít webovou aplikaci',
           tip: 'Tip: Pokud jste naskenovali QR kód v prohlížeči v aplikaci, klepněte na tlačítko výše.',
-          loading: 'Přesměrovávání...'
+          loading: 'Přesměrovávání...',
+          invitedBy: 'Pozval tě {name}'
         }
       };
       
@@ -423,8 +468,24 @@
         if (prev) return prev;
         return params.get(paramName);
       }
+      // PRD 351 — `?ref=CODE` is stored next to `aid` and carried onward
+      // exactly like it, and obeys the same first-touch rule: a code already in
+      // storage is never replaced by a newer link. Alphabet has no 0/O/1/I, so
+      // anything else is a typo and is dropped rather than guessed at.
+      function normalizeRef(raw) {
+        if (typeof raw !== 'string') return null;
+        var stripped = raw.trim().toUpperCase().replace(/[\s\-_.]+/g, '');
+        return /^[23456789ABCDEFGHJKLMNPQRSTUVWXYZ]{8}$/.test(stripped) ? stripped : null;
+      }
+      function formatRef(code) {
+        return code.slice(0, 4) + '-' + code.slice(4);
+      }
+      var ref = (stored && normalizeRef(stored.ref)) || normalizeRef(params.get('ref'));
+      if (ref) params.set('ref', formatRef(ref));
+      else params.delete('ref');
       try { localStorage.setItem('bandeja.attribution', JSON.stringify({
         aid: aid,
+        ref: ref,
         utmSource: firstUtm('utmSource', 'utm_source'),
         utmMedium: firstUtm('utmMedium', 'utm_medium'),
         utmCampaign: firstUtm('utmCampaign', 'utm_campaign'),
@@ -445,9 +506,43 @@
           var raw = JSON.parse(localStorage.getItem('bandeja.attribution') || '{}');
           raw.aid = aid;
           raw.choice = choice;
+          if (ref) raw.ref = ref;
           localStorage.setItem('bandeja.attribution', JSON.stringify(raw));
         } catch (_e) {}
       }
+
+      // PRD 351 — resolve the code to a public first name and avatar. Failure
+      // is silent by design: the chip is a nicety and the store buttons above
+      // must never wait on it.
+      (function showReferrerChip() {
+        if (!ref) return;
+        var chip = document.getElementById('referrerChip');
+        var avatarEl = document.getElementById('referrerAvatar');
+        var textEl = document.getElementById('referrerText');
+        if (!chip || !textEl || !avatarEl) return;
+        fetch('/api/public/referral/' + encodeURIComponent(ref), {
+          cache: 'no-store',
+          mode: 'same-origin'
+        })
+          .then(function (response) { return response.ok ? response.json() : null; })
+          .then(function (body) {
+            var data = body && body.data;
+            if (!data || !data.found || !data.firstName) return;
+            var name = String(data.firstName).slice(0, 40);
+            textEl.textContent = (translations[lang].invitedBy || 'Invited by {name}').replace('{name}', name);
+            if (data.avatar) {
+              var img = document.createElement('img');
+              img.src = data.avatar;
+              img.alt = '';
+              img.className = 'referrer-chip__avatar';
+              avatarEl.replaceWith(img);
+            } else {
+              avatarEl.textContent = name.charAt(0).toUpperCase();
+            }
+            chip.hidden = false;
+          })
+          .catch(function () {});
+      })();
       function copyAid() {
         const text = 'bandeja-aid:' + aid;
         if (navigator.clipboard && navigator.clipboard.writeText) {

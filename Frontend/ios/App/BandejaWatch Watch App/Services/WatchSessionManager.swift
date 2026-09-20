@@ -104,6 +104,19 @@ final class WatchSessionManager: NSObject {
         }
     }
 
+    /// The watch rotated the shared refresh session; hand the successor to the phone so both
+    /// devices keep presenting the live credential (the server replays at most one hop).
+    func notifyCredentialsRotated(token: String, refreshToken: String) {
+        guard session.activationState == .activated else { return }
+        let payload = WatchAuthRotatedPayload(token: token, refreshToken: refreshToken).encode()
+        // Coalesce: only the newest rotation matters to the phone.
+        for transfer in session.outstandingUserInfoTransfers
+        where transfer.userInfo["event"] as? String == WatchConnectivityEvent.authRotated {
+            transfer.cancel()
+        }
+        session.transferUserInfo(payload)
+    }
+
     func notifyScoreUpdated(gameId: String, matchId: String, revision: Int? = nil) {
         guard session.activationState == .activated else { return }
         let payload = ScoreUpdatedPayload(

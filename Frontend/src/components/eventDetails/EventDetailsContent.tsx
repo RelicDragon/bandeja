@@ -30,6 +30,7 @@ import { parseGameSport } from '@/utils/gameSport';
 import { getGameParticipationState } from '@/utils/gameParticipationState';
 import { isEventApproved } from '@shared/eventApproval';
 import { retainGameRoom, releaseGameRoom } from '@/services/gameRoomMembership';
+import { preserveUntransmittedGameFields } from '@/queries/games/preserveUntransmittedGameFields';
 import { isCancelledGame410Payload, layoutInfoFrom410 } from '@/utils/cancelledGameChatStub';
 import type { Game } from '@/types';
 import type { CancelledGameParticipantSnapshot } from '@/utils/cancelledGameChatStub';
@@ -132,7 +133,10 @@ export function EventDetailsContent({
   useEffect(() => {
     if (!lastGameUpdate || lastGameUpdate.gameId !== id) return;
     if (lastGameUpdate.senderId === user?.id) return;
-    setGame(normalizeGameFromApi(lastGameUpdate.game));
+    // A broadcast omits the fields the room is not uniformly entitled to; keep
+    // whatever this viewer already fetched over HTTP.
+    const broadcastGame = normalizeGameFromApi(lastGameUpdate.game);
+    setGame((prev) => preserveUntransmittedGameFields(prev, broadcastGame));
   }, [lastGameUpdate, id, user?.id]);
 
   useEffect(() => {

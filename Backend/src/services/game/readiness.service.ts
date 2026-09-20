@@ -87,13 +87,27 @@ export class GameReadinessService {
   static async updateGameReadiness(gameId: string, db: GameReadinessDb = prisma) {
     const readiness = await this.calculateGameReadiness(gameId, db);
 
-    return await db.game.update({
+    const updated = await db.game.update({
       where: { id: gameId },
       data: {
         participantsReady: readiness.participantsReady,
         teamsReady: readiness.teamsReady,
       },
     });
+
+    // PRD 348 — this is the one call every roster mutation already makes, so it
+    // is where the cost split re-materializes. Fire-and-forget: the ledger is
+    // derived state and must never be able to fail a join or a leave. Skipped
+    // inside a transaction, where a second client would deadlock on the row.
+    if (db === prisma) {
+      void import('../gameCost/gameCost.service')
+        .then(({ syncGameCostShares }) => syncGameCostShares(gameId))
+        .catch((error) =>
+          console.error('Failed to resync cost shares after roster change:', error),
+        );
+    }
+
+    return updated;
   }
 }
 

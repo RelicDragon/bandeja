@@ -53,6 +53,8 @@ struct WatchGame: Decodable, Identifiable, Sendable {
     let parent: WatchGameParent?
     let club: WatchClub?
     let weatherSummary: WatchWeatherSummary?
+    /// `Game.metadata` JSON (lenient subset; `GET /games/:id` returns the full column).
+    let metadata: WatchGameMetadata?
 
     var displayTitle: String {
         if let name, !name.isEmpty { return name }
@@ -79,7 +81,7 @@ struct WatchGame: Decodable, Identifiable, Sendable {
         case startTime, endTime, winnerOfMatch, winnerOfGame
         case fixedNumberOfSets, maxTotalPointsPerSet, maxPointsPerTeam, ballsInGames, scoringPreset, matchTimedCapMinutes, matchTimerEnabled, deucesBeforeGoldenPoint, pointsPerTie
         case maxParticipants, sport, playersPerMatch, timeIsSet, affectsRating, hasFixedTeams, allowUserInMultipleTeams, participantsReady, teamsReady, matchGenerationType, fixedTeams, resultsByAnyone
-        case participants, parent, club, weatherSummary
+        case participants, parent, club, weatherSummary, metadata
     }
 
     nonisolated init(from decoder: Decoder) throws {
@@ -123,14 +125,36 @@ struct WatchGame: Decodable, Identifiable, Sendable {
         parent = try c.decodeIfPresent(WatchGameParent.self, forKey: .parent)
         club = try c.decodeIfPresent(WatchClub.self, forKey: .club)
         weatherSummary = (try? c.decodeIfPresent(WatchWeatherSummary.self, forKey: .weatherSummary)) ?? nil
+        metadata = (try? c.decodeIfPresent(WatchGameMetadata.self, forKey: .metadata)) ?? nil
     }
 
+    /// UI helper (timer bar / workout) — mirrors web `isGameMatchTimerEnabled` (needs a cap ≥ 1).
+    /// Scoring rules use the raw `matchTimerEnabled` flag instead (`rulebook.ts` `Boolean(game.matchTimerEnabled)`).
     var isMatchTimerEnabled: Bool {
         let cap = matchTimedCapMinutes ?? 0
         guard cap >= 1 else { return false }
         if matchTimerEnabled == true { return true }
         guard let p = scoringPreset?.uppercased() else { return false }
         return p == "TIMED" || p == "CLASSIC_TIMED"
+    }
+}
+
+/// Lenient `Game.metadata` subset. Unknown shapes (arrays, non-object) decode as nil.
+struct WatchGameMetadata: Decodable, Sendable {
+    /// `metadata.officiatingLevel` (`none` | `hints` | `strict`); parsed by `WatchOfficiatingResolver`.
+    let officiatingLevel: String?
+
+    private enum CodingKeys: String, CodingKey {
+        case officiatingLevel
+    }
+
+    nonisolated init(officiatingLevel: String?) {
+        self.officiatingLevel = officiatingLevel
+    }
+
+    nonisolated init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        officiatingLevel = (try? c.decodeIfPresent(String.self, forKey: .officiatingLevel)) ?? nil
     }
 }
 

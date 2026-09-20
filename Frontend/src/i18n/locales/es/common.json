@@ -81,7 +81,9 @@
     "off": "Off",
     "editFullscreen": "Editar en pantalla completa",
     "exitFullscreen": "Salir de pantalla completa",
-    "characters": "caracteres"
+    "characters": "caracteres",
+    "comingSoon": "Próximamente",
+    "comingSoonDescription": "Esta parte de la app está en camino."
   },
   "sport": {
     "sport": "Deporte",

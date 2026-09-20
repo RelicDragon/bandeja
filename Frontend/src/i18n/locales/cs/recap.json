@@ -1,0 +1,157 @@
+{
+  "recap": {
+    "slides": {
+      "cover": {
+        "caption": "V číslech",
+        "alt": "{{month}} v číslech"
+      },
+      "games": {
+        "eyebrow": "Zápasy",
+        "caption_one": "odehrán {{count}} zápas",
+        "caption_few": "odehrány {{count}} zápasy",
+        "caption_many": "odehráno {{count}} zápasu",
+        "caption_other": "odehráno {{count}} zápasů",
+        "alt_one": "v {{month}} odehrán {{count}} zápas",
+        "alt_few": "v {{month}} odehrány {{count}} zápasy",
+        "alt_many": "v {{month}} odehráno {{count}} zápasu",
+        "alt_other": "v {{month}} odehráno {{count}} zápasů"
+      },
+      "wins": {
+        "eyebrow": "Výhry",
+        "caption_one": "{{count}} výhra",
+        "caption_few": "{{count}} výhry",
+        "caption_many": "{{count}} výhry",
+        "caption_other": "{{count}} výher",
+        "alt_one": "{{count}} výhra, úspěšnost {{percent}}",
+        "alt_few": "{{count}} výhry, úspěšnost {{percent}}",
+        "alt_many": "{{count}} výhry, úspěšnost {{percent}}",
+        "alt_other": "{{count}} výher, úspěšnost {{percent}}"
+      },
+      "level": {
+        "eyebrow": "Herní úroveň",
+        "caption": "Tvoje úroveň je teď {{level}}",
+        "neutral": "Úroveň se posunula na {{level}}",
+        "alt": "Herní úroveň: posunuta na {{level}}"
+      },
+      "partner": {
+        "eyebrow": "Nejlepší parťák",
+        "caption_one": "{{count}} výhra společně s {{name}}",
+        "caption_few": "{{count}} výhry společně s {{name}}",
+        "caption_many": "{{count}} výhry společně s {{name}}",
+        "caption_other": "{{count}} výher společně s {{name}}",
+        "alt_one": "Nejlepší parťák {{name}}, {{count}} společná výhra",
+        "alt_few": "Nejlepší parťák {{name}}, {{count}} společné výhry",
+        "alt_many": "Nejlepší parťák {{name}}, {{count}} společné výhry",
+        "alt_other": "Nejlepší parťák {{name}}, {{count}} společných výher"
+      },
+      "streak": {
+        "eyebrow": "Série týdnů",
+        "caption_one": "Hrál jsi {{count}} týden v řadě",
+        "caption_few": "Hrál jsi {{count}} týdny v řadě",
+        "caption_many": "Hrál jsi {{count}} týdne v řadě",
+        "caption_other": "Hrál jsi {{count}} týdnů v řadě",
+        "best_one": "Osobní rekord {{count}} týden",
+        "best_few": "Osobní rekord {{count}} týdny",
+        "best_many": "Osobní rekord {{count}} týdne",
+        "best_other": "Osobní rekord {{count}} týdnů",
+        "alt_one": "Série týdnů: {{count}} týden v řadě",
+        "alt_few": "Série týdnů: {{count}} týdny v řadě",
+        "alt_many": "Série týdnů: {{count}} týdne v řadě",
+        "alt_other": "Série týdnů: {{count}} týdnů v řadě"
+      },
+      "club": {
+        "eyebrow": "Domácí klub",
+        "caption_one": "{{count}} zápas tady",
+        "caption_few": "{{count}} zápasy tady",
+        "caption_many": "{{count}} zápasu tady",
+        "caption_other": "{{count}} zápasů tady",
+        "alt_one": "Domácí klub {{club}}, {{count}} zápas",
+        "alt_few": "Domácí klub {{club}}, {{count}} zápasy",
+        "alt_many": "Domácí klub {{club}}, {{count}} zápasu",
+        "alt_other": "Domácí klub {{club}}, {{count}} zápasů"
+      },
+      "lowActivity": {
+        "encouragement": "Jeden zápas je pořád zápas. Pojďme najít další.",
+        "caption_one": "{{count}} zápas v {{month}}",
+        "caption_few": "{{count}} zápasy v {{month}}",
+        "caption_many": "{{count}} zápasu v {{month}}",
+        "caption_other": "{{count}} zápasů v {{month}}",
+        "alt_one": "V {{month}} odehrán {{count}} zápas",
+        "alt_few": "V {{month}} odehrány {{count}} zápasy",
+        "alt_many": "V {{month}} odehráno {{count}} zápasu",
+        "alt_other": "V {{month}} odehráno {{count}} zápasů"
+      },
+      "outro": {
+        "title": "Uvidíme se na kurtu v {{month}}",
+        "caption": "{{games}} · {{wins}}",
+        "gamesPart_one": "{{count, number}} zápas",
+        "gamesPart_few": "{{count, number}} zápasy",
+        "gamesPart_many": "{{count, number}} zápasu",
+        "gamesPart_other": "{{count, number}} zápasů",
+        "winsPart_one": "{{count, number}} výhra",
+        "winsPart_few": "{{count, number}} výhry",
+        "winsPart_many": "{{count, number}} výhry",
+        "winsPart_other": "{{count, number}} výher",
+        "lowActivityCaption": "Kurt na tebe čeká.",
+        "alt": "Uvidíme se na kurtu v {{month}}"
+      }
+    },
+    "viewer": {
+      "title": "Měsíční přehled",
+      "close": "Zavřít",
+      "next": "Další",
+      "shareCta": "Sdílet se sledujícími",
+      "saveImageCta": "Uložit obrázek",
+      "savingImage": "Připravujeme obrázek…",
+      "playIntentCta": "Chci hrát",
+      "loading": "Připravujeme tvůj přehled…",
+      "loadFailed": "Tento přehled se nepodařilo načíst.",
+      "sportTabs": "Vyber sport"
+    },
+    "share": {
+      "title": "Sdílej svůj přehled",
+      "subtitle": "Vyber snímky za {{month}}",
+      "ttlNote": "Sledující to uvidí 24 hodin.",
+      "sensitiveHint": "Ve výchozím stavu vypnuto",
+      "success": "Sdíleno se sledujícími",
+      "failed": "Přehled se nepodařilo sdílet",
+      "exportFailed": "Obrázek se nepodařilo připravit",
+      "imageText": "Můj {{month}} na Bandeji",
+      "slides": {
+        "cover": "Úvod",
+        "games": "Zápasy",
+        "wins": "Výhry",
+        "level": "Herní úroveň",
+        "partner": "Nejlepší parťák",
+        "streak": "Série týdnů",
+        "club": "Domácí klub",
+        "lowActivity": "Tvůj měsíc",
+        "outro": "Závěr"
+      },
+      "cta_one": "Sdílet {{count}} snímek",
+      "cta_few": "Sdílet {{count}} snímky",
+      "cta_many": "Sdílet {{count}} snímku",
+      "cta_other": "Sdílet {{count}} snímků",
+      "previewLabel_one": "Vybrán {{count}} snímek",
+      "previewLabel_few": "Vybrány {{count}} snímky",
+      "previewLabel_many": "Vybráno {{count}} snímku",
+      "previewLabel_other": "Vybráno {{count}} snímků"
+    },
+    "rail": {
+      "label": "Přehled za {{month}}",
+      "aria": "Otevřít přehled za {{month}}"
+    },
+    "profile": {
+      "title": "Přehledy",
+      "cardAria": "Otevřít přehled za {{month}}",
+      "gamesOnly_one": "{{count}} zápas",
+      "gamesOnly_few": "{{count}} zápasy",
+      "gamesOnly_many": "{{count}} zápasu",
+      "gamesOnly_other": "{{count}} zápasů",
+      "gamesAndWinRate_one": "{{count}} zápas · {{percent}}",
+      "gamesAndWinRate_few": "{{count}} zápasy · {{percent}}",
+      "gamesAndWinRate_many": "{{count}} zápasu · {{percent}}",
+      "gamesAndWinRate_other": "{{count}} zápasů · {{percent}}"
+    }
+  }
+}

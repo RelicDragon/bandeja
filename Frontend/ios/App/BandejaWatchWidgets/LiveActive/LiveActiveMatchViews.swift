@@ -6,6 +6,12 @@ struct LiveActiveMatchEntryView: View {
     var entry: LiveActiveMatchEntry
 
     var body: some View {
+        content
+            .widgetURL(entry.gameId.map { URL(string: "bandejawatch://games/\($0)")! })
+    }
+
+    @ViewBuilder
+    private var content: some View {
         switch family {
         case .accessoryCircular:
             VStack(spacing: 0) {

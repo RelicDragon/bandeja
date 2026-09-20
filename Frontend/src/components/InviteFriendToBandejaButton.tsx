@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { UserPlus } from 'lucide-react';
 import { shareAppInviteLink } from '@/utils/shareAppInvite';
+import { useReferralSummary, useShareReferral } from '@/features/referral/useReferral';
 
 export const INVITE_FRIEND_CTA_MAX_RESULTS = 5;
 
@@ -12,16 +13,26 @@ interface InviteFriendToBandejaButtonProps {
 export function InviteFriendToBandejaButton({ className = '' }: InviteFriendToBandejaButtonProps) {
   const { t } = useTranslation();
   const [busy, setBusy] = useState(false);
+  // PRD 351 — the existing "invite a friend" empties now route to the referral
+  // share, so an invite sent from here is attributed and pays out. The plain
+  // app-invite link stays as the fallback for the moment before the summary
+  // has loaded (or if it fails) — the button must never be dead.
+  const { data: referral } = useReferralSummary();
+  const { share } = useShareReferral();
 
   const onClick = useCallback(async () => {
     if (busy) return;
     setBusy(true);
     try {
+      if (referral?.link) {
+        await share(referral.link, t('referral.shareMessage', { url: referral.link }));
+        return;
+      }
       await shareAppInviteLink(t);
     } finally {
       setBusy(false);
     }
-  }, [busy, t]);
+  }, [busy, referral?.link, share, t]);
 
   return (
     <button

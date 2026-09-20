@@ -17,6 +17,8 @@ import { useDesktop } from '@/hooks/useDesktop';
 import { useAvailableGames } from '@/hooks/useAvailableGames';
 import { useAvailableUpcomingGames } from '@/hooks/useAvailableUpcomingGames';
 import { useGameFilters } from '@/hooks/useGameFilters';
+import { useFindFromUrl } from '@/hooks/useFindFromUrl';
+import { applyFindClubIdsFromUrl } from '@/utils/applyFindClubIdsFromUrl';
 import {
   findSportFilterToApiParam,
   getViewerPrimarySport,
@@ -59,6 +61,7 @@ import {
 import { deriveFindCalendarGamesLoading } from '@/utils/deriveFindCalendarGamesLoading';
 import { isAvailableGamesDayIndexContinuationRunning } from '@/queries/games/availableGamesDayIndexContinuation';
 import { getAppUiLocaleForGameText } from '@/utils/gameText/appUiLocale';
+import { joinOutcomeTone } from '@/features/spot-opened/joinOutcomeTone';
 
 export const FindTab = () => {
   const { t } = useTranslation();
@@ -98,6 +101,15 @@ export const FindTab = () => {
   const queryDateRange = dateRange;
 
   const { filters, updateFilters, isHydrated } = useGameFilters();
+  const { clubIds: urlClubIds } = useFindFromUrl();
+
+  // PRD 354 — `/find?clubIds=` from the club page's "See all on Find".
+  // Applied after hydration so it wins over the restored filters, never before.
+  useEffect(() => {
+    if (!isHydrated) return;
+    const update = applyFindClubIdsFromUrl(urlClubIds, filters);
+    if (update) updateFilters(update);
+  }, [filters, isHydrated, updateFilters, urlClubIds]);
 
   useEffect(() => {
     if (!isHydrated || findSelectedDay != null) {
@@ -514,11 +526,14 @@ export const FindTab = () => {
       if (!response) return;
       const message = (response as { message?: string }).message || 'Successfully joined the game';
 
-      if (message === 'games.addedToJoinQueue') {
-        toast.success(t('games.addedToJoinQueue', { defaultValue: 'Added to join queue' }));
-      } else {
-        toast.success(t(message, { defaultValue: message }));
-      }
+      // 200 does not mean "seated": losing the spot-opened race answers with a
+      // refusal key on the success path (`joinOutcomeTone`).
+      const text =
+        message === 'games.addedToJoinQueue'
+          ? t('games.addedToJoinQueue', { defaultValue: 'Added to join queue' })
+          : t(message, { defaultValue: message });
+      if (joinOutcomeTone(message) === 'error') toast.error(text);
+      else toast.success(text);
       refetchAvailableGames();
       navigate(`/games/${gameId}`);
     } catch (error: any) {

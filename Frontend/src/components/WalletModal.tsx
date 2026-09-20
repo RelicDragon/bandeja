@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { Send, ArrowUp, ArrowDown } from 'lucide-react';
+import { Send, ArrowUp, ArrowDown, ShoppingBag } from 'lucide-react';
 import { transactionsApi, Transaction, Wallet } from '@/api/transactions';
 import { useAuthStore } from '@/store/authStore';
 import { Button } from './Button';
@@ -11,13 +12,30 @@ import { PlayerCardBottomSheet } from './PlayerCardBottomSheet';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 import { SportLevelProvider } from '@/contexts/SportLevelContext';
 import { getUserPrimarySport, resolveActivePrimarySport } from '@/utils/profileSports';
+import { WalletOwedSections } from '@/components/wallet/WalletOwedSections';
+import { isShopEnabled } from '@/config/featureFlags';
+import { CountUpNumber } from '@/components/ui/CountUpNumber';
+import {
+  REFERRAL_TRANSACTION_REASON,
+  WALLET_HIGHLIGHT_CLASS,
+  WALLET_HIGHLIGHT_DURATION_MS,
+  walletTransactionLabelKey,
+} from '@/features/referral/walletReferralRow';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 
 interface WalletModalProps {
   onClose: () => void;
+  /**
+   * PRD 351 — transaction to flash when the Wallet is opened from a reward
+   * push. The row gets a soft sky tint for one second and the balance counts
+   * up; reduced motion shows both end states immediately.
+   */
+  highlightTransactionId?: string | null;
 }
 
-export const WalletModal = ({ onClose }: WalletModalProps) => {
+export const WalletModal = ({ onClose, highlightTransactionId }: WalletModalProps) => {
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
   const authUser = useAuthStore((state) => state.user);
   const userId = authUser?.id;
   const walletLevelSport = resolveActivePrimarySport(authUser) ?? getUserPrimarySport(authUser);
@@ -27,6 +45,9 @@ export const WalletModal = ({ onClose }: WalletModalProps) => {
   const [showPlayerList, setShowPlayerList] = useState(false);
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [viewPlayerId, setViewPlayerId] = useState<string | null>(null);
+  const prefersReducedMotion = usePrefersReducedMotion();
+  const [highlighted, setHighlighted] = useState<string | null>(null);
+  const highlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -48,6 +69,22 @@ export const WalletModal = ({ onClose }: WalletModalProps) => {
 
     fetchData();
   }, [t]);
+
+  // PRD 351 — flash the row the reward push pointed at, then let it settle.
+  // Reduced motion still gets the tint (it is state, not decoration) but no
+  // transition; the timer is always cleared so a fast close cannot leak it.
+  useEffect(() => {
+    if (!highlightTransactionId) return undefined;
+    setHighlighted(highlightTransactionId);
+    highlightTimerRef.current = setTimeout(
+      () => setHighlighted(null),
+      WALLET_HIGHLIGHT_DURATION_MS,
+    );
+    return () => {
+      if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
+      highlightTimerRef.current = null;
+    };
+  }, [highlightTransactionId]);
 
   const handleSendClick = () => {
     setShowPlayerList(true);
@@ -90,6 +127,11 @@ export const WalletModal = ({ onClose }: WalletModalProps) => {
   };
 
   const getTransactionLabel = (transaction: Transaction) => {
+    // PRD 351 — payout rows are stored with a machine reason (`REFERRAL`)
+    // because `TransactionRow.name` is written once and cannot be localized
+    // later. Map it back to real copy here.
+    const reasonKey = walletTransactionLabelKey(transaction.transactionRows[0]?.name);
+    if (reasonKey) return t(reasonKey);
     if (transaction.type === 'TRANSFER') {
       if (transaction.fromUserId === userId) {
         const name = `${transaction.toUser?.firstName || ''} ${transaction.toUser?.lastName || ''}`.trim() || t('common.unknown');
@@ -104,6 +146,7 @@ export const WalletModal = ({ onClose }: WalletModalProps) => {
 
   const getTransactionMessage = (transaction: Transaction) => {
     const message = transaction.transactionRows[0]?.name;
+    if (message === REFERRAL_TRANSACTION_REASON) return null;
     if (transaction.type === 'TRANSFER' && message && message !== 'Transfer') {
       return message;
     }
@@ -133,7 +176,24 @@ export const WalletModal = ({ onClose }: WalletModalProps) => {
       <Dialog open={walletOpen} onClose={onClose} modalId="wallet-modal">
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t('wallet.title') || 'Wallet'}</DialogTitle>
+            <div className="flex items-center justify-between gap-3">
+              <DialogTitle>{t('wallet.title') || 'Wallet'}</DialogTitle>
+              {/* PRD 355 — the shop entry point, beside the balance. */}
+              {isShopEnabled() && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    navigate('/shop');
+                  }}
+                  aria-label={t('shop.title')}
+                  className="me-8 inline-flex min-h-[44px] items-center gap-1.5 rounded-full bg-gray-100 px-3 text-sm font-semibold text-gray-900 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
+                >
+                  <ShoppingBag size={16} aria-hidden="true" />
+                  {t('shop.title')}
+                </button>
+              )}
+            </div>
           </DialogHeader>
 
           {loading ? (
@@ -149,7 +209,10 @@ export const WalletModal = ({ onClose }: WalletModalProps) => {
                       {t('wallet.balance') || 'Balance'}
                     </p>
                     <p className="text-3xl font-bold text-gray-900 dark:text-white">
-                      {wallet?.wallet || 0}
+                      {/* PRD 351 — one short count-up on the balance, no confetti.
+                          `CountUpNumber` jumps straight to the value under
+                          reduced motion. */}
+                      <CountUpNumber value={wallet?.wallet ?? 0} />
                     </p>
                   </div>
                   <Button
@@ -164,6 +227,9 @@ export const WalletModal = ({ onClose }: WalletModalProps) => {
               </div>
 
               <div className="overflow-y-auto flex-1 min-h-0 p-4">
+                {/* PRD 348 — outstanding game cost shares, both directions. */}
+                <WalletOwedSections onNavigate={onClose} />
+
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                   {t('wallet.transactions') || 'Transactions'}
                 </h3>
@@ -185,8 +251,12 @@ export const WalletModal = ({ onClose }: WalletModalProps) => {
                         <div
                           key={transaction.id}
                           onClick={() => handleTransactionClick(transaction)}
-                          className={`flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg ${
-                            isClickable ? 'cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors' : ''
+                          className={`flex items-center gap-4 p-4 rounded-lg ${
+                            highlighted === transaction.id
+                              ? WALLET_HIGHLIGHT_CLASS
+                              : 'bg-gray-50 dark:bg-gray-800'
+                          } ${prefersReducedMotion ? '' : 'transition-colors duration-200'} ${
+                            isClickable ? 'cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700' : ''
                           }`}
                         >
                           <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${

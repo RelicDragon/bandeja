@@ -23,6 +23,14 @@ Looking **population** = Browse. Looking **fit** = Venue/game.
 - Profile city change snaps Browse to Home (`resetToHome()`, recents kept). Logout: `resetToHome({ clearRecents: true })`.
 - Find header city is Home, not Browse.
 
+### City stats
+
+| Method | Path | Auth | Notes |
+|--------|------|------|-------|
+| `GET` | `/api/cities/:id/stats` | `optionalAuth` | `{ cityId, playerCount }` — active users whose `currentCityId` is this city |
+
+Declared in `city.routes.ts` but handled by `controllers/onboarding.controller.ts`, so the onboarding surface stays in one file. Cached **1 hour** per node in `services/onboarding/cityStats.service.ts`, bounded to 500 entries, and rate-limited because it is reachable unauthenticated. The count is marketing social proof on the `/welcome` step ([social-and-profile.md](./social-and-profile.md)) — **never a permission input**.
+
 ## Browse
 
 `Frontend/src/store/browseCityStore.ts`. `cityId: null` means Home. Recents max 3, exclude Home. Snapshots `{ name, country }`. Picking Home stores `cityId: null`. Same-tab only; not profile-synced.

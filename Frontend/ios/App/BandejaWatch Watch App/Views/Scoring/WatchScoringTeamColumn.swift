@@ -9,16 +9,19 @@ struct WatchScoringTeamColumn: View {
     var decrementDisabled: Bool = false
     var levelSport: WatchSport?
     var compact: Bool = false
+    @Environment(WatchPreferencesStore.self) private var prefs
 
-    private var columnMinHeight: CGFloat { compact ? 96 : 118 }
-    private var scoreFontSize: CGFloat { compact ? 30 : 34 }
+    /// 40/41 mm cases get ~15% shorter columns and score digits so the board fits without clipping.
+    private var compactScreenScale: CGFloat { WatchScreen.isCompact ? 0.85 : 1 }
+    private var columnMinHeight: CGFloat { (compact ? 96 : 118) * compactScreenScale }
+    private var scoreFontSize: CGFloat { (compact ? 30 : 34) * compactScreenScale }
     private var avatarSize: CGFloat { compact ? 20 : 24 }
 
     var body: some View {
         VStack(spacing: compact ? 4 : 8) {
             Button {
                 guard !disabled else { return }
-                WatchScoreHaptics.point()
+                // Haptics are played by the view model on a successful score change.
                 action()
             } label: {
                 VStack(spacing: compact ? 4 : 6) {
@@ -74,7 +77,6 @@ struct WatchScoringTeamColumn: View {
 
             Button {
                 guard !disabled, !decrementDisabled else { return }
-                WatchScoreHaptics.undo()
                 decrementAction()
             } label: {
                 Image(systemName: "minus")
@@ -85,6 +87,7 @@ struct WatchScoringTeamColumn: View {
             .buttonStyle(.bordered)
             .controlSize(.mini)
             .disabled(disabled || decrementDisabled)
+            .accessibilityLabel(WatchCopy.undoPointA11y(prefs.uiLanguageCode))
         }
         .frame(maxWidth: .infinity)
     }

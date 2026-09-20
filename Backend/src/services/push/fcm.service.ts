@@ -83,6 +83,11 @@ function buildDataMap(payload: NotificationPayload): Record<string, string> {
   if (payload.type === NotificationType.FOLLOWED_USER_PLAY_INTENT) {
     data.nativeHandler = 'play_intent_actions';
   }
+  // PRD 346 — the reminder only carries attendance tokens when the scheduler or
+  // an organizer nudge asked for the two shade actions.
+  if (payload.type === NotificationType.GAME_REMINDER && payload.data?.attendanceActionToken) {
+    data.nativeHandler = 'attendance_actions';
+  }
   return data;
 }
 

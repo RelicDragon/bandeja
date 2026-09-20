@@ -10,79 +10,81 @@ struct RallyPointsScoringView: View {
 
     var body: some View {
         let lang = prefs.uiLanguageCode
-        VStack(spacing: 4) {
-            Text(
-                vm.sets[safe: vm.activeSetIndex].map { s in
-                    s.resolvedRole == .official
-                        ? vm.ballCapScoringTitle(lang: lang)
-                        : WatchCopy.supplementalBanner(lang, role: s.resolvedRole)
-                } ?? vm.ballCapScoringTitle(lang: lang)
-            )
-            .font(.caption2)
-            .foregroundStyle(.secondary)
-            .lineLimit(1)
-            .minimumScaleFactor(0.8)
-
-            if vm.rawFixedNumberOfSets > 1, !vm.activeSetIsSupplemental {
-                Text("\(WatchCopy.setWord(lang)) \(vm.activeSetIndex + 1)/\(vm.rawFixedNumberOfSets)")
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
-            }
-
-            if showServeIndicator {
-                WatchServeIndicatorRow(vm: vm, lang: lang)
-            }
-
-            if vm.game?.resolvedSport == .pickleball,
-               vm.liveScoringUiId == .rallyPointsBoard,
-               vm.officiatingHintsEnabled {
-                WatchPickleballCoachButtons(lang: lang)
-            }
-            if vm.officiatingIsStrict {
-                WatchStrictOfficiatingButtons(vm: vm, lang: lang)
-            }
-
-            Spacer(minLength: 0)
-
-            let idx = vm.activeSetIndex
-            let aScore = vm.sets[safe: idx]?.teamA ?? 0
-            let bScore = vm.sets[safe: idx]?.teamB ?? 0
-            HStack(alignment: .top, spacing: 8) {
-                WatchScoringTeamColumn(
-                    users: vm.teamAUsers,
-                    scoreLabel: "\(aScore)",
-                    action: { vm.incrementAmericanoTeamA() },
-                    decrementAction: { vm.decrementAmericanoTeamA() },
-                    disabled: vm.pointsOfficialIncrementDisabled,
-                    decrementDisabled: aScore <= 0 || vm.pointsOfficialDecrementDisabled,
-                    levelSport: vm.game?.resolvedSport,
-                    compact: true
+        WatchScoringBoardScroll {
+            VStack(spacing: 4) {
+                Text(
+                    vm.sets[safe: vm.activeSetIndex].map { s in
+                        s.resolvedRole == .official
+                            ? vm.ballCapScoringTitle(lang: lang)
+                            : WatchCopy.supplementalBanner(lang, role: s.resolvedRole)
+                    } ?? vm.ballCapScoringTitle(lang: lang)
                 )
-                WatchScoringTeamColumn(
-                    users: vm.teamBUsers,
-                    scoreLabel: "\(bScore)",
-                    action: { vm.incrementAmericanoTeamB() },
-                    decrementAction: { vm.decrementAmericanoTeamB() },
-                    disabled: vm.pointsOfficialIncrementDisabled,
-                    decrementDisabled: bScore <= 0 || vm.pointsOfficialDecrementDisabled,
-                    levelSport: vm.game?.resolvedSport,
-                    compact: true
-                )
-            }
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
 
-            Spacer(minLength: 0)
-
-            if vm.canAutomaticFinishSet {
-                Button(WatchCopy.automaticFinishSetCta(lang)) {
-                    vm.confirmAutomaticOpenEndedSet()
+                if vm.rawFixedNumberOfSets > 1, !vm.activeSetIsSupplemental {
+                    Text("\(WatchCopy.setWord(lang)) \(vm.activeSetIndex + 1)/\(vm.rawFixedNumberOfSets)")
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
                 }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.mini)
-            }
 
-            footerActions(lang)
+                if showServeIndicator {
+                    WatchServeIndicatorRow(vm: vm, lang: lang)
+                }
+
+                if vm.game?.resolvedSport == .pickleball,
+                   vm.liveScoringUiId == .rallyPointsBoard,
+                   vm.officiatingHintsEnabled {
+                    WatchPickleballCoachButtons(lang: lang)
+                }
+                if vm.officiatingIsStrict {
+                    WatchStrictOfficiatingButtons(vm: vm, lang: lang)
+                }
+
+                Spacer(minLength: 0)
+
+                let idx = vm.activeSetIndex
+                let aScore = vm.sets[safe: idx]?.teamA ?? 0
+                let bScore = vm.sets[safe: idx]?.teamB ?? 0
+                HStack(alignment: .top, spacing: 8) {
+                    WatchScoringTeamColumn(
+                        users: vm.teamAUsers,
+                        scoreLabel: "\(aScore)",
+                        action: { vm.incrementAmericanoTeamA() },
+                        decrementAction: { vm.decrementAmericanoTeamA() },
+                        disabled: vm.pointsOfficialIncrementDisabled,
+                        decrementDisabled: aScore <= 0 || vm.pointsOfficialDecrementDisabled,
+                        levelSport: vm.game?.resolvedSport,
+                        compact: true
+                    )
+                    WatchScoringTeamColumn(
+                        users: vm.teamBUsers,
+                        scoreLabel: "\(bScore)",
+                        action: { vm.incrementAmericanoTeamB() },
+                        decrementAction: { vm.decrementAmericanoTeamB() },
+                        disabled: vm.pointsOfficialIncrementDisabled,
+                        decrementDisabled: bScore <= 0 || vm.pointsOfficialDecrementDisabled,
+                        levelSport: vm.game?.resolvedSport,
+                        compact: true
+                    )
+                }
+
+                Spacer(minLength: 0)
+
+                if vm.canAutomaticFinishSet {
+                    Button(WatchCopy.automaticFinishSetCta(lang)) {
+                        vm.confirmAutomaticOpenEndedSet()
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.mini)
+                }
+
+                footerActions(lang)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     @ViewBuilder

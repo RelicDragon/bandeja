@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { Loader2, RefreshCw } from 'lucide-react';
 import type { Club, Court, Game } from '@/types';
-import type { BooktimeLinkedGame, BooktimeMyClubRow } from '@/api/booktime';
+import type { BooktimeLinkedGame } from '@/api/booktime';
+import type { BookingListClubRow } from '@/hooks/connectedBookingClubs';
 import type { UserBooktimeBookingIdsResult } from '@/integrations/booktime/userBookingsCheck';
 import { gamesApi } from '@/api';
 import { BooktimeBookingRow } from '@/components/booktime/BooktimeBookingRow';
@@ -16,7 +17,7 @@ type LinkedBookingLink = NonNullable<Game['linkedBookings']>[number];
 type LinkedBookingListItemProps = {
   link: LinkedBookingLink;
   game: Game;
-  booktimeClub: BooktimeMyClubRow;
+  booktimeClub: BookingListClubRow;
   resolvedClub?: Club;
   courts: Court[];
   clubTimezone: string | null;
@@ -109,9 +110,10 @@ export function LinkedBookingListItem({
     }
   };
 
+  const canRefreshUpstream = isOwner && booktimeClub.integrationType !== 'WELTNER';
   const trailing = (
     <div className="flex items-center gap-2 shrink-0">
-      {isOwner ? (
+      {canRefreshUpstream ? (
         <button
           type="button"
           data-testid="linked-booking-refresh"
@@ -151,7 +153,7 @@ export function LinkedBookingListItem({
         clubTimezone={clubTimezone}
         courtOverride={courtOverride}
         linkedGames={linkedGames}
-        trailing={isOwner || (!readOnly && onRemove) ? trailing : undefined}
+        trailing={canRefreshUpstream || (!readOnly && onRemove) ? trailing : undefined}
       />
       <LinkedBookingAbsentModal
         isOpen={absentOpen}

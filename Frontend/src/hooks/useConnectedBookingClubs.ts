@@ -1,4 +1,6 @@
-import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
+import { subscribeBooktimeAllUpcomingCacheInvalidation } from '@/integrations/booktime/booktimeAllUpcomingCacheInvalidation';
+import { weltnerApi } from '@/api/weltner';
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { booktimeApi } from '@/api/booktime';
 import { padelooApi } from '@/api/padeloo';
 import { klikterenApi } from '@/api/klikteren';
@@ -27,6 +29,8 @@ export function useConnectedBookingClubs(enabled = true, options?: UseConnectedB
     enabled: enabled && !!userId,
   });
   const [data, setData] = useState<ConnectedBookingClubsPayload | null>(null);
+  const [dataUserId, setDataUserId] = useState<string | undefined>(undefined);
+  const generation = useRef(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const reauthVersion = useSyncExternalStore(
@@ -36,23 +40,26 @@ export function useConnectedBookingClubs(enabled = true, options?: UseConnectedB
   );
 
   const reload = useCallback(async () => {
-    if (!enabled) {
+    const current = ++generation.current;
+    if (!enabled || !userId) {
       setData(null);
       return null;
     }
     setLoading(true);
     setError(false);
     try {
-      const [booktimeRes, padelooRes, klikterenRes] = await Promise.all([
+      const [booktimeRes, padelooRes, klikterenRes, weltnerRes] = await Promise.all([
         booktimeApi.getMyClubs().catch(() => null),
         padelooApi.getMyClubs().catch(() => null),
         klikterenApi.getMyClubs().catch(() => null),
+        weltnerApi.getMyClubs().catch(() => null),
       ]);
 
+      if (generation.current !== current) return null;
       const booktimeClubs = booktimeRes?.data?.clubs ?? [];
       const padelooClubs = padelooRes?.data?.clubs ?? [];
       const klikterenClubs = klikterenRes?.data?.clubs ?? [];
-      const merged = mergeConnectedBookingClubs(booktimeClubs, padelooClubs, klikterenClubs);
+      const merged = mergeConnectedBookingClubs(booktimeClubs, padelooClubs, klikterenClubs, weltnerRes?.data?.clubs ?? []);
       const reauthMap = getBookingAuthReauthSnapshot();
       for (const club of merged) {
         if (reauthMap.has(club.clubId)) {
@@ -75,23 +82,28 @@ export function useConnectedBookingClubs(enabled = true, options?: UseConnectedB
         cityClubCount:
           (booktimeRes?.data?.cityBooktimeClubCount ?? 0) +
           (padelooRes?.data?.cityPadelooClubCount ?? 0) +
-          (klikterenRes?.data?.cityKlikterenClubCount ?? 0),
+          (klikterenRes?.data?.cityKlikterenClubCount ?? 0) + (weltnerRes?.data?.cityWeltnerClubCount ?? 0),
         connectedCount: activeConnected,
         clubs,
       };
+      setDataUserId(userId);
       setData(payload);
       return payload;
     } catch {
-      setError(true);
-      setData(null);
+      if (generation.current === current) { setError(true); setData(null); }
       return null;
     } finally {
-      setLoading(false);
+      if (generation.current === current) setLoading(false);
     }
-  }, [enabled]);
+  }, [enabled, userId]);
+
+  useEffect(() => {
+    if (!enabled) return;
+    return subscribeBooktimeAllUpcomingCacheInvalidation(() => { void reload(); });
+  }, [enabled, reload]);
 
   const displayData = useMemo(() => {
-    if (!data) return null;
+    if (!data || dataUserId !== userId) return null;
     const reauthIds = reauthVersion ? reauthVersion.split('|') : [];
     const clubs = applyBookingAuthNeedsReauth(data.clubs, reauthIds).slice().sort((a, b) => {
       if (a.needsReauth !== b.needsReauth) return a.needsReauth ? -1 : 1;
@@ -102,7 +114,7 @@ export function useConnectedBookingClubs(enabled = true, options?: UseConnectedB
       clubs,
       connectedCount: clubs.filter((c) => c.connected && !c.needsReauth).length,
     };
-  }, [data, reauthVersion]);
+  }, [data, dataUserId, userId, reauthVersion]);
 
   useEffect(() => {
     if (!enabled) {

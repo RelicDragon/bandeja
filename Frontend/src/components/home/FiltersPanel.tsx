@@ -1,4 +1,5 @@
 import { ClubBookingBadge } from '@/components/ClubBookingBadge';
+import { ClubPageChevron } from '@/components/home/ClubPageChevron';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { RotateCcw, Star } from 'lucide-react';
@@ -272,16 +273,18 @@ export const FiltersPanel = ({
               const selected = clubIds.includes(club.id);
               const fav = favoriteClubIds.includes(club.id);
               return (
-                <button
-                  key={club.id}
-                  type="button"
-                  onClick={() => onVenueChipClick(club.id)}
-                  className={chipClass(selected)}
-                >
-                  {fav && <Star size={12} className="inline me-1 text-amber-500 fill-amber-500" aria-hidden />}
-                  {club.name}
-                  <ClubBookingBadge club={club} />
-                </button>
+                <span key={club.id} className="inline-flex items-center gap-0.5">
+                  <button
+                    type="button"
+                    onClick={() => onVenueChipClick(club.id)}
+                    className={chipClass(selected)}
+                  >
+                    {fav && <Star size={12} className="inline me-1 text-amber-500 fill-amber-500" aria-hidden />}
+                    {club.name}
+                    <ClubBookingBadge club={club} />
+                  </button>
+                  <ClubPageChevron clubId={club.id} clubName={club.name} />
+                </span>
               );
             })}
           </div>
@@ -301,16 +304,18 @@ export const FiltersPanel = ({
               const selected = clubIds.includes(club.id);
               const fav = favoriteClubIds.includes(club.id);
               return (
-                <button
-                  key={club.id}
-                  type="button"
-                  onClick={() => onBarChipClick(club.id)}
-                  className={chipClass(selected)}
-                >
-                  {fav && <Star size={12} className="inline me-1 text-amber-500 fill-amber-500" aria-hidden />}
-                  {club.name}
-                  <ClubBookingBadge club={club} />
-                </button>
+                <span key={club.id} className="inline-flex items-center gap-0.5">
+                  <button
+                    type="button"
+                    onClick={() => onBarChipClick(club.id)}
+                    className={chipClass(selected)}
+                  >
+                    {fav && <Star size={12} className="inline me-1 text-amber-500 fill-amber-500" aria-hidden />}
+                    {club.name}
+                    <ClubBookingBadge club={club} />
+                  </button>
+                  <ClubPageChevron clubId={club.id} clubName={club.name} />
+                </span>
               );
             })}
           </div>

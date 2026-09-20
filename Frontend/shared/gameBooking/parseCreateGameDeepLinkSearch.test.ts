@@ -51,3 +51,42 @@ describe('createGameDataFromDeepLinkSearch', () => {
     expect(bookingIds).toEqual(['b1']);
   });
 });
+
+// PRD 354 — the public club page links court chips to
+// `/create-game?clubId=&courtId=&date=`.
+describe('date prefill (PRD 354)', () => {
+  it('parses a yyyy-MM-dd date param', () => {
+    const parsed = parseCreateGameDeepLinkSearch('?clubId=c1&courtId=court-3&date=2026-09-20');
+    expect(parsed.clubId).toBe('c1');
+    expect(parsed.courtId).toBe('court-3');
+    expect(parsed.date).toBe('2026-09-20');
+  });
+
+  it('drops a malformed or impossible date rather than seeding an Invalid Date', () => {
+    expect(parseCreateGameDeepLinkSearch('?date=20-09-2026').date).toBeUndefined();
+    expect(parseCreateGameDeepLinkSearch('?date=2026-13-01').date).toBeUndefined();
+    expect(parseCreateGameDeepLinkSearch('?date=2026-02-30').date).toBeUndefined();
+    expect(parseCreateGameDeepLinkSearch('?date=').date).toBeUndefined();
+    expect(parseCreateGameDeepLinkSearch('?clubId=c1').date).toBeUndefined();
+  });
+
+  it('seeds startTime at local noon so the wizard pins the tapped day', () => {
+    const { gameData, date } = createGameDataFromDeepLinkSearch(
+      '?clubId=c1&courtId=court-3&date=2026-09-20',
+    );
+    expect(date).toBe('2026-09-20');
+    const seeded = new Date(gameData.startTime as string);
+    expect(seeded.getFullYear()).toBe(2026);
+    expect(seeded.getMonth()).toBe(8);
+    expect(seeded.getDate()).toBe(20);
+    expect(seeded.getHours()).toBe(12);
+  });
+
+  it('never overrides an explicit startTime', () => {
+    const { gameData } = createGameDataFromDeepLinkSearch(
+      '?clubId=c1&date=2026-09-20&startTime=t1&endTime=t2',
+    );
+    expect(gameData.startTime).toBe('t1');
+    expect(gameData.endTime).toBe('t2');
+  });
+});

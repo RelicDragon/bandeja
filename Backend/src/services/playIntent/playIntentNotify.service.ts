@@ -4,6 +4,7 @@ import {
   NotificationChannelType,
   PlayIntentStatus,
   Prisma,
+  SpotOpenedKind,
 } from '@prisma/client';
 import { formatInTimeZone } from 'date-fns-tz';
 import {
@@ -33,6 +34,11 @@ import {
   canSendGameMatchNotification,
   GAME_MATCH_NOTIFICATION_WINDOW_MS,
 } from './playIntentNotificationBudget';
+import {
+  claimSpotOpenedDelivery,
+  releaseSpotOpenedDelivery,
+  spotOpenedDayKey,
+} from '../gameSeat/spotOpenedDelivery.service';
 
 function toCriteria(intent: {
   dateKeys: string[];
@@ -355,7 +361,24 @@ export class PlayIntentNotifyService {
     void PlayIntentNotificationDeliveryQueueService.drain();
   }
 
-  static async notifyGameMatchesIntent(userIds: string[], gameId: string): Promise<number> {
+  /**
+   * PRD 347 — `options.seatOpened` marks the call that came from a **freed
+   * seat** rather than from a new game.
+   *
+   * That same event also reaches `GameSeatService.seatOpened`, whose `INTENT`
+   * audience is produced by the identical `intentMatchesGame` predicate. Both
+   * used to dedupe against their own table and neither knew about the other,
+   * so one seat could produce two pushes seconds apart (the headline PRD 347
+   * scenario: a public game created *full* records no `eventKey`, so nothing
+   * suppresses the later `GAME_MATCHES_INTENT`). With the flag set, this path
+   * claims the very same `SpotOpenedDelivery(userId, gameId, dayKey, INTENT)`
+   * row before enqueueing — one unique index, exactly one winner.
+   */
+  static async notifyGameMatchesIntent(
+    userIds: string[],
+    gameId: string,
+    options: { seatOpened?: boolean } = {},
+  ): Promise<number> {
     if (userIds.length === 0) return 0;
 
     const game = await prisma.game.findUnique({
@@ -381,9 +404,22 @@ export class PlayIntentNotifyService {
       formatInTimeZone(game.startTime, timezone, 'HH:mm'),
     );
 
+    // Anyone already on this game's roster (playing, queued, invited) is told
+    // by the roster surfaces; a "a game fits your wish" push about a game they
+    // are already in is pure noise — and it is the other half of the
+    // spot-opened overlap, where a queued player with a matching intent would
+    // get the queue push *and* this one.
+    const onRoster = await prisma.gameParticipant.findMany({
+      where: { gameId, userId: { in: userIds } },
+      select: { userId: true },
+    });
+    const onRosterIds = new Set(onRoster.map((row) => row.userId));
+    const candidateIds = userIds.filter((id) => !onRosterIds.has(id));
+    if (candidateIds.length === 0) return 0;
+
     const intents = await prisma.playIntent.findMany({
       where: {
-        userId: { in: userIds },
+        userId: { in: candidateIds },
         cityId: game.cityId,
         sport: game.sport,
         entityType: game.entityType,
@@ -428,10 +464,37 @@ export class PlayIntentNotifyService {
       stillMatching.set(intent.userId, intent.user);
     }
 
+    const seatClaimDayKey = options.seatOpened
+      ? spotOpenedDayKey(game.city?.timezone, now)
+      : null;
+
     let notified = 0;
     for (const user of stillMatching.values()) {
       const lang = user.language || 'en';
       if (!gameStartIsFuture(game.startTime)) return notified;
+
+      const seatClaimKey = seatClaimDayKey
+        ? {
+            userId: user.id,
+            gameId: game.id,
+            dayKey: seatClaimDayKey,
+            kind: SpotOpenedKind.INTENT,
+          }
+        : null;
+      if (seatClaimKey) {
+        let claimed = false;
+        try {
+          claimed = await claimSpotOpenedDelivery(seatClaimKey);
+        } catch (error) {
+          console.error('[playIntent] failed to claim seat-opened delivery', {
+            key: seatClaimKey,
+            error,
+          });
+          continue;
+        }
+        // The spot-opened fan-out already owns this user for this seat.
+        if (!claimed) continue;
+      }
 
       const eventKey = `${NotificationType.GAME_MATCHES_INTENT}:${game.id}`;
       const deliveries = await enqueueGameMatchForUser({
@@ -454,7 +517,13 @@ export class PlayIntentNotifyService {
           sound: 'default',
         },
       });
-      if (deliveries > 0) notified += 1;
+      if (deliveries > 0) {
+        notified += 1;
+      } else if (seatClaimKey) {
+        // The per-user budget refused this one; give the claim back so the
+        // spot-opened path can still reach them.
+        await releaseSpotOpenedDelivery(seatClaimKey);
+      }
     }
     if (notified > 0) {
       void PlayIntentNotificationDeliveryQueueService.drain();

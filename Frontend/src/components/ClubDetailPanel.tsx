@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { amenityEntries } from './clubAmenities';
 import { Clock, ExternalLink, Globe, Link2, Loader2, Mail, MapPin, Phone } from 'lucide-react';
 import type { Club } from '@/types';
 import { ClubAvatar } from '@/components/ClubAvatar';
@@ -55,16 +56,6 @@ type ClubDetailPanelProps = {
 
 function parseBooktimeConfig(raw: unknown): BooktimeIntegrationConfig | null {
   return parseBooktimeIntegrationConfig(raw);
-}
-
-function amenityEntries(amenities: Record<string, unknown> | undefined | null): { key: string; label: string }[] {
-  if (!amenities || typeof amenities !== 'object') return [];
-  const out: { key: string; label: string }[] = [];
-  for (const [k, v] of Object.entries(amenities)) {
-    if (v === true) out.push({ key: k, label: k });
-    else if (typeof v === 'string' && v.trim()) out.push({ key: k, label: `${k}: ${v.trim()}` });
-  }
-  return out;
 }
 
 export function ClubDetailPanel({ club, onOpenFullscreenPhoto, onClubRefresh, snapshotDate, schedulePicker, preferredSport }: ClubDetailPanelProps) {

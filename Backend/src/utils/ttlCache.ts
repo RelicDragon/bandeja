@@ -33,6 +33,15 @@ export class TtlCache<K, V> {
     return this.map.delete(key);
   }
 
+  /**
+   * Every key currently held, including entries that have expired but have not
+   * been read since (`get` is what evicts them). Returned as a snapshot array so
+   * a caller may delete while iterating.
+   */
+  keys(): K[] {
+    return Array.from(this.map.keys());
+  }
+
   clear(): void {
     this.map.clear();
   }

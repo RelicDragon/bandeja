@@ -12,7 +12,7 @@ import { BooktimeBookingsLoading } from './BooktimeBookingsLoading';
 import { useBooktimeCancelPolicy } from './useBooktimeCancelPolicy';
 import { PADELOO_DEFAULT_CANCEL_HOURS } from '@/integrations/padeloo/config';
 import { KLIKTEREN_DEFAULT_CANCEL_HOURS } from '@/integrations/klikteren/config';
-import { isBooktimeClub, isKlikterenClub, isPadelooClub, getKlikterenVenueId } from '@shared/clubIntegration';
+import { isBooktimeClub, isWeltnerClub, isKlikterenClub, isPadelooClub, getKlikterenVenueId } from '@shared/clubIntegration';
 
 type Props = {
   onSelectBooking?: (selection: import('@/components/clubPicker/clubScheduleSelection').ClubScheduleSelection) => void;
@@ -43,6 +43,7 @@ function clubToConnectedRow(club: Club, connected: boolean): ConnectedBookingClu
     email: club.email ?? null,
   };
 
+  if (isWeltnerClub(club)) return { ...base, integrationType: 'WELTNER', scoutOptIn: false, phoneNumber: null, email: null };
   if (isPadelooClub(club)) {
     const clubId = (club.integrationConfig as { clubId?: number } | null)?.clubId ?? null;
     return {
@@ -104,12 +105,13 @@ export function ClubUpcomingBookings({
     refreshKey,
   );
 
+
   if (!enabled || !connected || !clubHasBookingIntegration(club)) return null;
 
   return (
     <section className="rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/60 dark:bg-gray-800/40 p-3 space-y-3">
       <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-        {t('club.booktime.myTabUpcomingTitle')}
+        {t(isWeltnerClub(club) ? 'weltner.receiptsHint' : 'club.booktime.myTabUpcomingTitle')}
       </p>
       {loading ? (
         <BooktimeBookingsLoading />

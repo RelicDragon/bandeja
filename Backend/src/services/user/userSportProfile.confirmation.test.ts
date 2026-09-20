@@ -26,6 +26,7 @@ const user = {
       approvedLevel: true,
       approvedById: 'padel-trainer',
       approvedWhen: new Date('2024-01-01'),
+      approvedAtLevel: 2.75,
     },
     {
       sport: Sport.TENNIS,
@@ -76,6 +77,11 @@ assert(
 const projectedPadel = projectUserForSportContext(user, Sport.PADEL);
 assert(projectedPadel.approvedLevel === true, 'padel confirmation projected');
 assert(projectedPadel.approvedById === 'padel-trainer', 'padel approver projected');
+assert(projectedPadel.approvedAtLevel === 2.75, 'padel confirmation level snapshot projected');
+assert(
+  projectedBadminton.approvedAtLevel === null,
+  'confirmation without a level snapshot projects null',
+);
 assert(projectedPadel.inactive === true, 'missing inactive on 5-game profile is inactive');
 
 const storedActive = projectUserForSportContext(
@@ -107,6 +113,7 @@ const mirrorOnly = projectUserForSportContext(
 );
 assert(mirrorOnly.approvedLevel === true, 'padel user mirror used when no profiles');
 assert(mirrorOnly.approvedById === 'legacy-trainer', 'padel mirror approver');
+assert(mirrorOnly.approvedAtLevel === null, 'padel mirror carries no level snapshot');
 
 const mirrorTennis = projectUserForSportContext(
   {

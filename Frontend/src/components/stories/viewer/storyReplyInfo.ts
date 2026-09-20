@@ -19,7 +19,9 @@ export function buildStoryReplyInfo(segment: StorySegment, ownerUserId: string):
     info.thumbnailUrl = segment.media.thumbnailUrl;
     info.mediaUrl = segment.media.url;
     info.mediaType = 'IMAGE';
-  } else {
+  } else if ('game' in segment) {
+    // Every remaining game-backed arm (GAME_CREATED, GAME_RESULT, BRACKET_CHAMPION).
+    // MONTHLY_RECAP (PRD 353) carries no game, so it falls through with no thumbnail.
     const gameThumb = segment.game.mainPhoto?.thumbnailUrl ?? segment.game.avatar ?? undefined;
     if (gameThumb) {
       info.thumbnailUrl = gameThumb;

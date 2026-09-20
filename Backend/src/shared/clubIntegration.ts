@@ -155,6 +155,9 @@ export function buildIntegrationConfigPayload(
   if (!integrationType) {
     return { integrationType: null, integrationConfig: null };
   }
+  if (integrationType === ClubIntegrationType.WELTNER) {
+    return { integrationType, integrationConfig: null };
+  }
   if (integrationType === ClubIntegrationType.BOOKTIME) {
     const config = assertBooktimeIntegrationConfig(integrationType, integrationConfig);
     return { integrationType, integrationConfig: config };

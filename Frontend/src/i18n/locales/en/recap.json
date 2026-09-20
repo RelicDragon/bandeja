@@ -1,0 +1,119 @@
+{
+  "recap": {
+    "slides": {
+      "cover": {
+        "caption": "In numbers",
+        "alt": "{{month}} in numbers"
+      },
+      "games": {
+        "eyebrow": "Games",
+        "caption_one": "{{count}} game played",
+        "caption_other": "{{count}} games played",
+        "alt_one": "{{count}} game played in {{month}}",
+        "alt_other": "{{count}} games played in {{month}}"
+      },
+      "wins": {
+        "eyebrow": "Wins",
+        "caption_one": "{{count}} win",
+        "caption_other": "{{count}} wins",
+        "alt_one": "{{count}} win, {{percent}} win rate",
+        "alt_other": "{{count}} wins, {{percent}} win rate"
+      },
+      "level": {
+        "eyebrow": "Skill level",
+        "caption": "Your level is now {{level}}",
+        "neutral": "Level moved to {{level}}",
+        "alt": "Skill level: moved to {{level}}"
+      },
+      "partner": {
+        "eyebrow": "Best partner",
+        "caption_one": "{{count}} win together with {{name}}",
+        "caption_other": "{{count}} wins together with {{name}}",
+        "alt_one": "Best partner {{name}}, {{count}} win together",
+        "alt_other": "Best partner {{name}}, {{count}} wins together"
+      },
+      "streak": {
+        "eyebrow": "Play streak",
+        "caption_one": "Played {{count}} week in a row",
+        "caption_other": "Played {{count}} weeks in a row",
+        "best_one": "Personal best {{count}} week",
+        "best_other": "Personal best {{count}} weeks",
+        "alt_one": "Play streak: {{count}} week in a row",
+        "alt_other": "Play streak: {{count}} weeks in a row"
+      },
+      "club": {
+        "eyebrow": "Home court",
+        "caption_one": "{{count}} game here",
+        "caption_other": "{{count}} games here",
+        "alt_one": "Home court {{club}}, {{count}} game",
+        "alt_other": "Home court {{club}}, {{count}} games"
+      },
+      "lowActivity": {
+        "encouragement": "One game is still a game. Let us find the next one.",
+        "caption_one": "{{count}} game in {{month}}",
+        "caption_other": "{{count}} games in {{month}}",
+        "alt_one": "{{count}} game played in {{month}}",
+        "alt_other": "{{count}} games played in {{month}}"
+      },
+      "outro": {
+        "title": "See you on court in {{month}}",
+        "caption": "{{games}} · {{wins}}",
+        "gamesPart_one": "{{count, number}} game",
+        "gamesPart_other": "{{count, number}} games",
+        "winsPart_one": "{{count, number}} win",
+        "winsPart_other": "{{count, number}} wins",
+        "lowActivityCaption": "Your court is waiting.",
+        "alt": "See you on court in {{month}}"
+      }
+    },
+    "viewer": {
+      "title": "Monthly recap",
+      "close": "Close",
+      "next": "Next",
+      "shareCta": "Share with followers",
+      "saveImageCta": "Save image",
+      "savingImage": "Preparing image…",
+      "playIntentCta": "I want to play",
+      "loading": "Getting your recap ready…",
+      "loadFailed": "We could not load this recap.",
+      "sportTabs": "Choose a sport"
+    },
+    "share": {
+      "title": "Share your recap",
+      "subtitle": "Pick the slides for {{month}}",
+      "ttlNote": "Your followers see it for 24 hours.",
+      "sensitiveHint": "Off by default",
+      "success": "Shared with your followers",
+      "failed": "Could not share the recap",
+      "exportFailed": "Could not prepare the image",
+      "imageText": "My {{month}} on Bandeja",
+      "slides": {
+        "cover": "Cover",
+        "games": "Games",
+        "wins": "Wins",
+        "level": "Skill level",
+        "partner": "Best partner",
+        "streak": "Play streak",
+        "club": "Home court",
+        "lowActivity": "Your month",
+        "outro": "Outro"
+      },
+      "cta_one": "Share {{count}} slide",
+      "cta_other": "Share {{count}} slides",
+      "previewLabel_one": "{{count}} slide selected",
+      "previewLabel_other": "{{count}} slides selected"
+    },
+    "rail": {
+      "label": "Your {{month}} recap",
+      "aria": "Open your {{month}} recap"
+    },
+    "profile": {
+      "title": "Recaps",
+      "cardAria": "Open the {{month}} recap",
+      "gamesOnly_one": "{{count}} game",
+      "gamesOnly_other": "{{count}} games",
+      "gamesAndWinRate_one": "{{count}} game · {{percent}}",
+      "gamesAndWinRate_other": "{{count}} games · {{percent}}"
+    }
+  }
+}

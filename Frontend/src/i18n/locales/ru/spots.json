@@ -1,0 +1,36 @@
+{
+  "spots": {
+    "pill": {
+      "label": "Место освободилось",
+      "ariaLabel": "Место освободилось {{time}}"
+    },
+    "queue": {
+      "position_one": "Вы №{{position}} из {{count}}",
+      "position_few": "Вы №{{position}} из {{count}}",
+      "position_many": "Вы №{{position}} из {{count}}",
+      "position_other": "Вы №{{position}} из {{count}}",
+      "autoFillOn": "Автодобор включён — вас посадят автоматически",
+      "autoFillOff": "Организатор принимает вручную",
+      "waitForOrganizer": "Вы в списке ожидания. Организатор сам решает, кто займёт место.",
+      "tapToJoin": "Нажмите «Присоединиться», когда место освободится"
+    },
+    "settings": {
+      "autoFillTitle": "Автодобор из очереди",
+      "autoFillHelper": "Первый в очереди занимает место, как только оно освобождается. Правила по полу и уровню сохраняются.",
+      "queueCount_one": "{{count}} в очереди",
+      "queueCount_few": "{{count}} в очереди",
+      "queueCount_many": "{{count}} в очереди",
+      "queueCount_other": "{{count}} в очереди",
+      "queueEmpty": "Пока никто не ждёт"
+    },
+    "roster": {
+      "openSpot": "Свободное место"
+    },
+    "toast": {
+      "joinedFromQueue": "{{name}} перешёл из очереди в игру"
+    },
+    "seated": {
+      "banner": "Вас взяли из очереди"
+    }
+  }
+}

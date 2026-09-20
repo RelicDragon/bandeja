@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { useShowSettingsNotes } from '@/hooks/useShowSettingsNotes';
 import { gamesApi } from '@/api';
 import { canMutateGameRoster } from '@shared/gameMutationLock';
+import { SeriesMakeWeeklyRow } from '@/features/game-series/SeriesMakeWeeklyRow';
 import toast from 'react-hot-toast';
 
 interface GameSettingsProps {
@@ -21,15 +22,23 @@ interface GameSettingsProps {
 type SettingKey =
   | 'affectsRating'
   | 'isPublic'
+  /** PRD 349 — opt out of the "Live now" rail without going private. */
+  | 'showOnLiveRail'
   | 'anyoneCanInvite'
   | 'resultsByAnyone'
   | 'allowDirectJoin'
+  /** PRD 347 — seat the first queued player when a spot opens. */
+  | 'autoFillFromQueue'
   | 'afterGameGoToBar';
 
 const ERROR_CLEAR_MS = 5000;
 const SUCCESS_SHOW_MS = 1000;
 
 function readSetting(game: Game, key: SettingKey): boolean {
+  // PRD 349 — `showOnLiveRail` defaults to **on**; every other toggle here
+  // defaults to off, so `?? false` would silently hide every existing game
+  // from the rail until its owner touched the switch.
+  if (key === 'showOnLiveRail') return game.showOnLiveRail ?? true;
   return game[key] ?? false;
 }
 
@@ -211,6 +220,8 @@ export const GameSettings = ({ game, canEdit, onGameUpdate, embedded = false }: 
   }
 
   const toggleDisabled = !canChangeSettings;
+  // PRD 347 — read-only "3 in queue" line under the auto-fill toggle.
+  const queueCount = game.joinQueues?.length ?? 0;
 
   const hintsButton = (
     <button
@@ -270,6 +281,30 @@ export const GameSettings = ({ game, canEdit, onGameUpdate, embedded = false }: 
             ) : undefined
           }
         />
+
+        {/*
+          PRD 349 — only meaningful while the game is public: a private game
+          never reaches the rail regardless of this switch.
+        */}
+        {!isLeagueSeason && game.entityType !== 'BAR' && getChecked('isPublic') && (
+          <SettingToggleRow
+            title={t('live.showOnRail')}
+            checked={getChecked('showOnLiveRail')}
+            hasError={errorFields.has('showOnLiveRail')}
+            showSuccess={successFields.has('showOnLiveRail')}
+            disabled={toggleDisabled}
+            onChange={(checked) => void persistSetting('showOnLiveRail', checked)}
+            note={
+              showNotes ? (
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {getChecked('showOnLiveRail')
+                    ? t('live.showOnRailNoteTrue')
+                    : t('live.showOnRailNoteFalse')}
+                </p>
+              ) : undefined
+            }
+          />
+        )}
 
         <SettingToggleRow
           title={
@@ -339,6 +374,30 @@ export const GameSettings = ({ game, canEdit, onGameUpdate, embedded = false }: 
           }
         />
 
+        {/* PRD 347 — auto-fill only makes sense while the roster can change. */}
+        <SettingToggleRow
+          title={t('spots.settings.autoFillTitle')}
+          checked={getChecked('autoFillFromQueue')}
+          hasError={errorFields.has('autoFillFromQueue')}
+          showSuccess={successFields.has('autoFillFromQueue')}
+          disabled={toggleDisabled}
+          onChange={(checked) => void persistSetting('autoFillFromQueue', checked)}
+          note={
+            <div className="space-y-0.5">
+              {showNotes ? (
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {t('spots.settings.autoFillHelper')}
+                </p>
+              ) : null}
+              <p className="text-xs font-medium text-gray-600 dark:text-gray-300">
+                {queueCount > 0
+                  ? t('spots.settings.queueCount', { count: queueCount })
+                  : t('spots.settings.queueEmpty')}
+              </p>
+            </div>
+          }
+        />
+
         {game.entityType !== 'BAR' && (
           <SettingToggleRow
             title={
@@ -366,6 +425,9 @@ export const GameSettings = ({ game, canEdit, onGameUpdate, embedded = false }: 
             }
           />
         )}
+
+        {/* PRD 345 — one-off games only; hides itself once a series exists. */}
+        <SeriesMakeWeeklyRow game={game} canEdit={canChangeSettings} />
     </div>
   );
 

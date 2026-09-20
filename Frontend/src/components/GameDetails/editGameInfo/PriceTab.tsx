@@ -6,20 +6,26 @@ import { resolveUserCurrency } from '@/utils/currency';
 import { CurrencySelectorModal } from '@/components/CurrencySelectorModal';
 import { SegmentedSwitch } from '@/components/SegmentedSwitch';
 import { ChevronDown, HelpCircle, Gift, User, Users, Banknote } from 'lucide-react';
+import { CostSplitPreview } from '@/components/createGame/CostSplitPreview';
+import { PaymentHintField } from '@/components/createGame/PaymentHintField';
 
 export interface PriceTabState {
   priceType: PriceType;
   priceTotal: number | null | undefined;
   priceCurrency: PriceCurrency | undefined;
   inputValue: string;
+  /** PRD 348 — `Game.paymentHint`. */
+  paymentHint: string;
 }
 
 interface PriceTabProps {
   state: PriceTabState;
   onChange: (patch: Partial<PriceTabState>) => void;
+  /** PRD 348 — seats the per-head preview divides the total by. */
+  maxParticipants?: number;
 }
 
-export const PriceTab = ({ state, onChange }: PriceTabProps) => {
+export const PriceTab = ({ state, onChange, maxParticipants }: PriceTabProps) => {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const [currencyModalOpen, setCurrencyModalOpen] = useState(false);
@@ -92,6 +98,18 @@ export const PriceTab = ({ state, onChange }: PriceTabProps) => {
             onSelect={(c) => onChange({ priceCurrency: c })}
             title={t('createGame.priceCurrency')}
           />
+          <div className="mt-2 space-y-3">
+            <CostSplitPreview
+              priceType={state.priceType}
+              priceTotal={state.priceTotal ?? undefined}
+              currency={resolvedCurrency}
+              players={maxParticipants ?? 0}
+            />
+            <PaymentHintField
+              value={state.paymentHint}
+              onChange={(paymentHint) => onChange({ paymentHint })}
+            />
+          </div>
         </div>
       )}
     </div>

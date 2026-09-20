@@ -11,11 +11,21 @@ import { formatGameInfoForUser } from '../../shared/notification-base';
 import { appendTelegramGameScheduleExtras, buildGameReminderTitle } from '../../shared/notificationSport';
 import { isBenignTelegramRecipientError } from '../telegramRecipientErrors';
 import { guardedTelegramSendMessage } from '../guardedTelegramSend';
+import { buildAttendanceCallbackData } from '../../gameAttendance/attendanceRules';
+
+/** PRD 346 — attendance extras on the reminder. */
+export type TelegramGameReminderOptions = {
+  /** Append the two inline attendance buttons (`at:<gameId>:confirm|unsure`). */
+  attendanceActions?: boolean;
+  /** Restrict the fan-out (the 2 h reminder only goes to unanswered players). */
+  onlyUserIds?: string[];
+};
 
 export async function sendGameReminderNotification(
   api: Api,
   gameId: string,
-  hoursBeforeStart: number
+  hoursBeforeStart: number,
+  options: TelegramGameReminderOptions = {}
 ) {
   const game = await prisma.game.findUnique({
     where: { id: gameId },
@@ -51,8 +61,11 @@ export async function sendGameReminderNotification(
     }
   });
 
+  const onlyUserIds = options.onlyUserIds ? new Set(options.onlyUserIds) : null;
+
   for (const participant of participants) {
     const user = participant.user;
+    if (onlyUserIds && !onlyUserIds.has(user.id)) continue;
     const allowed = await NotificationPreferenceService.doesUserAllow(user.id, NotificationChannelType.TELEGRAM, PreferenceKey.SEND_REMINDERS);
     if (!allowed || !user.telegramId) continue;
     const telegramId = user.telegramId;
@@ -88,19 +101,40 @@ export async function sendGameReminderNotification(
         message += `\n\n${escapeMarkdown(game.description)}`;
       }
 
-      const buttons = [[
+      if (options.attendanceActions) {
+        message += `\n\n${escapeMarkdown(t('attendance.telegramQuestion', lang))}`;
+      }
+
+      const buttons: { text: string; url?: string; callback_data?: string }[][] = [];
+      if (options.attendanceActions) {
+        buttons.push([
+          {
+            text: t('attendance.confirmAction', lang),
+            callback_data: buildAttendanceCallbackData(game.id, 'CONFIRMED'),
+          },
+          {
+            text: t('attendance.unsureAction', lang),
+            callback_data: buildAttendanceCallbackData(game.id, 'UNSURE'),
+          },
+        ]);
+      }
+      buttons.push([
         {
           text: t('telegram.viewGame', lang),
           url: `${config.frontendUrl}/games/${game.id}`
         }
-      ]];
+      ]);
 
-      const { message: finalMessage, options } = buildMessageWithButtons(message, buttons, lang);
+      const { message: finalMessage, options: sendOptions } = buildMessageWithButtons(
+        message,
+        buttons,
+        lang,
+      );
 
       await guardedTelegramSendMessage(
         api,
         { userId: user.id, telegramId, kind: 'game-reminder' },
-        () => api.sendMessage(telegramId, finalMessage, options),
+        () => api.sendMessage(telegramId, finalMessage, sendOptions),
       );
     } catch (error) {
       if (!isBenignTelegramRecipientError(error)) {

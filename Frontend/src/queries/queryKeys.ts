@@ -89,10 +89,126 @@ export const queryKeys = {
     all: ['userGameNotes'] as const,
     detail: (gameId: string) => ['userGameNotes', gameId] as const,
   },
+  /** PRD 345 — recurring game series. */
+  series: {
+    all: ['series'] as const,
+    mine: ['series', 'mine'] as const,
+    detail: (seriesId: string) => ['series', 'detail', seriesId] as const,
+    /** "Same time next week?" prompt state, keyed by the *finished* occurrence. */
+    nextPrompt: (gameId: string) => ['series', 'nextPrompt', gameId] as const,
+  },
+  /** PRD 346 — attendance confirmation and no-show notes. */
+  attendance: {
+    all: ['attendance'] as const,
+    game: (gameId: string) => ['attendance', 'game', gameId] as const,
+    myNotes: ['attendance', 'myNotes'] as const,
+    myRate: (sport?: Sport) => ['attendance', 'myRate', sport ?? 'default'] as const,
+  },
+  /** PRD 348 — cost split ledger. */
+  gameCost: {
+    all: ['gameCost'] as const,
+    shares: (gameId: string) => ['gameCost', 'shares', gameId] as const,
+    owed: ['gameCost', 'owed'] as const,
+  },
   weather: {
     day: (cityId: string, date: string) => ['weather', 'day', cityId, date] as const,
     game: (gameId: string, scope = 'game') => ['weather', 'game', gameId, scope] as const,
     preview: (cityId: string, startTime: string, endTime: string, scope = 'game') =>
       ['weather', 'preview', cityId, startTime, endTime, scope] as const,
+  },
+  /** PRD 349 — the "Live now" rail. */
+  live: {
+    all: ['live'] as const,
+    /** `limit` is part of the key: Find asks for 10, Home for 3. */
+    games: (cityId: string | undefined, limit: number) =>
+      ['live', 'games', cityId ?? 'my-city', limit] as const,
+    /** One game's live summary, for the game-details Live block. */
+    game: (gameId: string) => ['live', 'game', gameId] as const,
+  },
+  /** PRD 350 — guided first-run onboarding. */
+  onboarding: {
+    all: ['onboarding'] as const,
+    /** Routing state — `completedAt`, resume step, "no enabled sport" flag. */
+    status: ['onboarding', 'status'] as const,
+    /** Follow suggestions for step 5; city + sport are part of the key. */
+    suggestedUsers: (cityId: string | undefined, sport: Sport | undefined, limit: number) =>
+      ['onboarding', 'suggestedUsers', cityId ?? 'my-city', sport ?? 'primary', limit] as const,
+    /** Player count behind the Welcome step's social-proof line. */
+    cityStats: (cityId: string) => ['onboarding', 'cityStats', cityId] as const,
+  },
+  /**
+   * PRD 354 — the public club page. The viewer id is part of the club key: the
+   * payload carries `isFavorite` / `isAdmin`, so a guest's cached page must
+   * never be handed to somebody who has just signed in.
+   */
+  clubPage: {
+    all: ['clubPage'] as const,
+    club: (clubId: string, viewerId: string | undefined) =>
+      ['clubPage', 'club', clubId, viewerId ?? 'guest'] as const,
+    regulars: (clubId: string, viewerId: string | undefined) =>
+      ['clubPage', 'regulars', clubId, viewerId ?? 'guest'] as const,
+    games: (clubId: string, viewerId: string | undefined) =>
+      ['clubPage', 'games', clubId, viewerId ?? 'guest'] as const,
+    today: (clubId: string) => ['clubPage', 'today', clubId] as const,
+  },
+  /**
+   * PRD 352 — the pair leaderboard. City, sport, period and sort are all part
+   * of the key: the cursor offsets only mean anything inside one ordering.
+   */
+  pairs: {
+    all: ['pairs'] as const,
+    leaderboard: (
+      cityId: string | undefined,
+      sport: Sport | undefined,
+      period: string,
+      sort: string,
+    ) => ['pairs', 'leaderboard', cityId ?? 'my-city', sport ?? 'primary', period, sort] as const,
+    detail: (pairId: string, sport: Sport | undefined) =>
+      ['pairs', 'detail', pairId, sport ?? 'primary'] as const,
+    partners: (userId: string, sport: Sport | undefined) =>
+      ['pairs', 'partners', userId, sport ?? 'primary'] as const,
+  },
+  /**
+   * PRD 355 — the cosmetics shop. The catalogue key carries the category chip
+   * so switching chips does not blow away the previous list, and `equipped` is
+   * keyed by the *viewed* user so one player's frame is never shown on another.
+   */
+  shop: {
+    all: ['shop'] as const,
+    catalog: (kind: string) => ['shop', 'catalog', kind] as const,
+    item: (goodsId: string) => ['shop', 'item', goodsId] as const,
+    collection: ['shop', 'collection'] as const,
+    equipped: (userIds: string[]) => ['shop', 'equipped', [...userIds].sort().join(',')] as const,
+    /** Followers + following, for the gift picker. */
+    giftCandidates: ['shop', 'giftCandidates'] as const,
+  },
+  /**
+   * PRD 351 — referrals. The summary is per-viewer by construction (the
+   * endpoint derives everything from the token), so the key needs no argument;
+   * the public resolver is keyed by code because it is shared across viewers
+   * and is safe to cache — it returns a first name and an avatar.
+   */
+  referral: {
+    all: ['referral'] as const,
+    summary: () => ['referral', 'summary'] as const,
+    status: () => ['referral', 'status'] as const,
+    gameLink: (gameId: string) => ['referral', 'gameLink', gameId] as const,
+    publicReferrer: (code: string) => ['referral', 'public', code] as const,
+  },
+  /**
+   * PRD 353 — the monthly recap. `list` backs both the Profile row and the
+   * Home rail bubble, so marking a recap viewed invalidates exactly one key.
+   */
+  recap: {
+    all: ['recap'] as const,
+    list: () => ['recap', 'list'] as const,
+    detail: (monthKey: string) => ['recap', 'detail', monthKey] as const,
+  },
+  /** PRD 357 — weather alerts for outdoor games. */
+  weatherAlerts: {
+    all: ['weatherAlerts'] as const,
+    game: (gameId: string) => ['weatherAlerts', 'game', gameId] as const,
+    indoorAlternatives: (gameId: string) =>
+      ['weatherAlerts', 'indoorAlternatives', gameId] as const,
   },
 };

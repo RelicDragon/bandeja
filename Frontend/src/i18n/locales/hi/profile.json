@@ -141,6 +141,8 @@
     "sendDirectMessagesDescription": "सीधे संदेश आने पर सूचित हों",
     "sendReminders": "रिमाइंडर",
     "sendRemindersDescription": "गेम, टूर्नामेंट या ट्रेनिंग बार शुरू होने से 2 घंटे पहले सूचित हों",
+    "sendWeatherAlerts": "मौसम अलर्ट",
+    "sendWeatherAlertsDescription": "केवल आउटडोर कोर्ट के लिए",
     "walletNotifications": "वॉलेट नोटिफ़िकेशन",
     "walletNotificationsDescription": "वॉलेट लेनदेन के लिए नोटिफ़िकेशन प्राप्त करें",
     "marketplaceNotifications": "मेरे शहर की नई लिस्टिंग",

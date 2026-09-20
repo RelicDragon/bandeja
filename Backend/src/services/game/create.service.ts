@@ -110,8 +110,28 @@ async function resolveCreateCourts(
   return { primaryCourtId, gameCourtIds: courtIds };
 }
 
+/**
+ * Optional knobs for `createGame`.
+ *
+ * `deferDiscoveryAnnouncement` hands the caller the city-wide "new game" push
+ * (plus the play-intent queue drain) as a thunk instead of firing it here. A
+ * caller that still has to *claim* the game after creation — series occurrence
+ * generation, whose `(seriesId, seriesOccurrenceDate)` uniqueness stamp can
+ * lose the race and delete the game again — runs the thunk only once the game
+ * is durably its own. Not calling the thunk simply means nobody is notified,
+ * which is the safe direction.
+ */
+export interface GameCreateOptions {
+  deferDiscoveryAnnouncement?: (announce: () => void) => void;
+}
+
 export class GameCreateService {
-  static async createGame(data: any, userId: string, jwtIsAdmin: boolean = false) {
+  static async createGame(
+    data: any,
+    userId: string,
+    jwtIsAdmin: boolean = false,
+    options: GameCreateOptions = {},
+  ) {
     assertNoLegacyExternalBookingId(data);
 
     const externalBookingIds = parseExternalBookingIds(data);
@@ -122,6 +142,7 @@ export class GameCreateService {
         ClubIntegrationType.BOOKTIME,
         ClubIntegrationType.PADELOO,
         ClubIntegrationType.KLIKTEREN,
+        ClubIntegrationType.WELTNER,
         ClubIntegrationType.NSPADELSUPABASE,
       ];
       if (provider !== undefined && !allowedProviders.includes(provider)) {
@@ -137,13 +158,19 @@ export class GameCreateService {
         ? (data.externalBookingProvider ?? ClubIntegrationType.BOOKTIME)
         : null;
 
-    return GameCreateService.createGameBody(data, userId, jwtIsAdmin, {
-      externalBookingIds,
-      bookingSnapshots,
-      externalBookingProvider,
-      hasBookedCourtCreate,
-      timeOverride,
-    });
+    return GameCreateService.createGameBody(
+      data,
+      userId,
+      jwtIsAdmin,
+      {
+        externalBookingIds,
+        bookingSnapshots,
+        externalBookingProvider,
+        hasBookedCourtCreate,
+        timeOverride,
+      },
+      options,
+    );
   }
 
   private static async createGameBody(
@@ -157,10 +184,16 @@ export class GameCreateService {
       hasBookedCourtCreate: boolean;
       timeOverride: boolean;
     },
+    options: GameCreateOptions,
   ) {
     // Validate currency if provided
     if (data.priceCurrency && !SUPPORTED_CURRENCIES.includes(data.priceCurrency)) {
       throw new ApiError(400, `Invalid currency. Supported currencies: ${SUPPORTED_CURRENCIES.join(', ')}`);
+    }
+
+    // PRD 348 — `Game.paymentHint` is VarChar(120); reject rather than truncate.
+    if (typeof data.paymentHint === 'string' && data.paymentHint.trim().length > 120) {
+      throw new ApiError(400, 'errors.cost.paymentHintTooLong');
     }
 
     if (data.mainPhotoId !== undefined && data.mainPhotoId !== null) {
@@ -576,6 +609,10 @@ export class GameCreateService {
         priceTotal: (priceType === 'NOT_KNOWN' || priceType === 'FREE') ? null : priceTotal,
         priceType: priceType,
         priceCurrency: (priceType === 'NOT_KNOWN' || priceType === 'FREE') ? null : data.priceCurrency,
+        paymentHint:
+          typeof data.paymentHint === 'string' && data.paymentHint.trim().length > 0
+            ? data.paymentHint.trim()
+            : null,
         metadata: data.metadata,
         timeIsSet: isEventEntity ? true : (data.timeIsSet ?? false),
         status: 'ANNOUNCED',
@@ -683,6 +720,7 @@ export class GameCreateService {
           booking.externalBookingProvider,
           bookingSnapshots,
           booktimeTimeZone ?? BOOKTIME_DEFAULT_TIMEZONE,
+          userId,
         );
       }
 
@@ -817,10 +855,17 @@ export class GameCreateService {
       finalGame.entityType !== EntityType.LEAGUE_SEASON &&
       finalGame.entityType !== EntityType.EVENT
     ) {
-      notificationService.sendNewGameNotification(finalGame, cityId, userId).catch((error) => {
-        console.error('Failed to send new game notifications:', error);
-      });
-      void PlayIntentMatchQueueService.drain();
+      const announce = (): void => {
+        notificationService.sendNewGameNotification(finalGame, cityId, userId).catch((error) => {
+          console.error('Failed to send new game notifications:', error);
+        });
+        void PlayIntentMatchQueueService.drain();
+      };
+      if (options.deferDiscoveryAnnouncement) {
+        options.deferDiscoveryAnnouncement(announce);
+      } else {
+        announce();
+      }
     }
 
     if (!finalGame) return finalGame;

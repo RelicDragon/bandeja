@@ -10,6 +10,7 @@ export enum PreferenceKey {
   SEND_TEAM_NOTIFICATIONS = 'sendTeamNotifications',
   SEND_PLAY_INTENT_NOTIFICATIONS = 'sendPlayIntentNotifications',
   SEND_PLAY_INTENT_SOCIAL_NOTIFICATIONS = 'sendPlayIntentSocialNotifications',
+  SEND_WEATHER_ALERTS = 'sendWeatherAlerts',
 }
 
 export enum NotificationType {
@@ -41,6 +42,26 @@ export enum NotificationType {
   GAME_MATCHES_INTENT = 'GAME_MATCHES_INTENT',
   INTENT_PLAYERS_FOR_GAME = 'INTENT_PLAYERS_FOR_GAME',
   FOLLOWED_USER_PLAY_INTENT = 'FOLLOWED_USER_PLAY_INTENT',
+  /** PRD 345 — "same time next week?" prompt for a recurring series occurrence. */
+  GAME_SERIES_NEXT_PROMPT = 'GAME_SERIES_NEXT_PROMPT',
+  /** PRD 346 — the organizer noted the recipient as a no-show. */
+  GAME_NO_SHOW_NOTED = 'GAME_NO_SHOW_NOTED',
+  /** PRD 347 — a PLAYING seat opened on a game the recipient queued for. */
+  GAME_SPOT_OPENED = 'GAME_SPOT_OPENED',
+  /** PRD 347 — a PLAYING seat opened on a game a followed player is in. */
+  FOLLOWED_GAME_SPOT_OPENED = 'FOLLOWED_GAME_SPOT_OPENED',
+  /** PRD 348 — unpaid cost share reminder. */
+  GAME_COST_REMINDER = 'GAME_COST_REMINDER',
+  /** PRD 349 — a followed player's game just went live. */
+  FOLLOWED_USER_LIVE = 'FOLLOWED_USER_LIVE',
+  /** PRD 351 — somebody signed up with the recipient's referral code. */
+  REFERRAL_JOINED = 'REFERRAL_JOINED',
+  /** PRD 353 — the monthly recap is ready to view. */
+  MONTHLY_RECAP_READY = 'MONTHLY_RECAP_READY',
+  /** PRD 355 — another player gifted the recipient a catalogue item. */
+  GOODS_GIFT_RECEIVED = 'GOODS_GIFT_RECEIVED',
+  /** PRD 357 — rain / wind risk on an upcoming outdoor game. */
+  GAME_WEATHER_ALERT = 'GAME_WEATHER_ALERT',
 }
 
 export interface NotificationAction {
@@ -86,6 +107,42 @@ export interface NotificationData {
   deliveryKey?: string;
   /** Authoritative unread total for native app icon badge (chat push). */
   unreadBadgeCount?: number;
+  /** PRD 345 — the `GameSeries` a notification is about. */
+  seriesId?: string;
+  /** PRD 346 — signed `attendance`/`confirm` push action token (see pushInviteActionToken.service). */
+  attendanceActionToken?: string;
+  /** PRD 346 — signed `attendance`/`unsure` push action token. */
+  attendanceUnsureActionToken?: string;
+  /** PRD 346 — localized title of the "I'm in" push action button. */
+  confirmActionTitle?: string;
+  /** PRD 346 — localized title of the "Not sure" push action button. */
+  unsureActionTitle?: string;
+  /** PRD 357 — localized title of the "Keep as planned" push action button. */
+  keepActionTitle?: string;
+  /** PRD 357 — signed `weather`/`keep` push action token (see pushInviteActionToken.service). */
+  weatherKeepActionToken?: string;
+  /** PRD 357 — localized title of the "Move indoor" push action button (organizers only). */
+  moveIndoorActionTitle?: string;
+  /** PRD 357 — in-app path the weather alert opens, including `?section=weather`. */
+  weatherDeepLink?: string;
+  /** PRD 357 — severity class of the alert, so the shade can style it. */
+  weatherSeverity?: string;
+  /** PRD 347 — ISO timestamp the PLAYING seat was freed. */
+  spotOpenedAt?: string;
+  /** PRD 347 — `'1'` when auto-fill seated the recipient from the queue. */
+  seatedFromQueue?: string;
+  /** PRD 353 — `YYYY-MM` key of the recap the notification points at. */
+  recapMonthKey?: string;
+  /**
+   * PRD 351 — `'1'` when a `TRANSACTION` push is a referral payout. The app
+   * uses it to open the Wallet and highlight `transactionId` instead of taking
+   * the generic transaction path.
+   */
+  referralReward?: string;
+  /** PRD 355 — the catalogue item a gift notification is about. */
+  goodsId?: string;
+  /** PRD 355 — who sent the gift, so the shop can thank them. */
+  senderUserId?: string;
 }
 
 export interface NotificationPayload {

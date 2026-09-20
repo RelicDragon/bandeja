@@ -183,6 +183,7 @@ export const USER_SPORT_PROFILE_SELECT = {
   approvedLevel: true,
   approvedById: true,
   approvedWhen: true,
+  approvedAtLevel: true,
 } as const;
 
 export const USER_SELECT_FIELDS = {

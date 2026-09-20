@@ -86,7 +86,7 @@ export function ClubPastBookingsSection({
                       displaySettings={displaySettings}
                       showClubName={showClubName}
                       providerLabel={
-                        booking.integrationType === 'PADELOO'
+                        booking.integrationType === 'WELTNER' ? 'Weltner' : booking.integrationType === 'PADELOO'
                           ? t('club.padeloo.providerLabel', { defaultValue: 'Padeloo' })
                           : booking.integrationType === 'KLIKTEREN'
                             ? t('club.klikteren.providerLabel', { defaultValue: 'Klikteren' })

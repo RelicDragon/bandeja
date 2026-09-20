@@ -7,6 +7,7 @@ export type SportOverlayFields = {
   approvedLevel: boolean;
   approvedById: string | null;
   approvedWhen: Date | string | null;
+  approvedAtLevel: number | null;
 };
 
 export function overlaySportProjection<T extends Record<string, unknown>>(

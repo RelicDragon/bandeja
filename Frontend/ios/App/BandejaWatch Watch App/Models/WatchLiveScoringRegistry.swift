@@ -84,11 +84,12 @@ extension WatchGame {
         WatchLiveScoringRegistry.resolve(game: self, rules: WatchScoringRulebook.rules(for: self))
     }
 
+    /// `rules.officiatingLevel` parity: game `metadata.officiatingLevel` overrides preset tier defaults.
     var resolvedOfficiatingLevel: WatchOfficiatingLevel {
         WatchOfficiatingResolver.resolve(
             sport: resolvedSport,
             preset: scoringPreset,
-            gameMetadata: nil
+            gameOfficiatingLevel: metadata?.officiatingLevel
         )
     }
 }

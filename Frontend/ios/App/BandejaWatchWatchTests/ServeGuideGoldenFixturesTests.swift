@@ -5,7 +5,7 @@ import XCTest
 final class ServeGuideGoldenFixturesTests: XCTestCase {
     func testSharedCatalogMatchesServeGuideEngine() throws {
         let catalog = try ServeGuideGoldenFixtures.loadCatalog()
-        XCTAssertGreaterThanOrEqual(catalog.count, 19)
+        XCTAssertGreaterThanOrEqual(catalog.count, 27)
         for entry in catalog {
             let inputs = try ServeGuideGoldenFixtures.inputs(for: entry)
             let snap = ServeGuideEngine.compute(inputs)

@@ -1,0 +1,73 @@
+{
+  "pairs": {
+    "mode": {
+      "label": "Modo de clasificación",
+      "players": "Jugadores",
+      "pairs": "Parejas"
+    },
+    "sort": {
+      "label": "Ordenar parejas",
+      "winRate": "Victorias",
+      "games": "Partidos",
+      "level": "Nivel"
+    },
+    "period": {
+      "label": "Periodo",
+      "all": "Desde siempre",
+      "days30": "Últimos 30 días",
+      "days10": "Últimos 10 días"
+    },
+    "names": {
+      "spoken": "{{first}} y {{second}}"
+    },
+    "gamesCount_one": "{{count}} partido",
+    "gamesCount_many": "{{count}} de partidos",
+    "gamesCount_other": "{{count}} partidos",
+    "floorHint_one": "Juega {{count}} partido con la misma pareja para aparecer aquí.",
+    "floorHint_many": "Juega {{count}} de partidos con la misma pareja para aparecer aquí.",
+    "floorHint_other": "Juega {{count}} partidos con la misma pareja para aparecer aquí.",
+    "chemistry": {
+      "tooltip": "Victorias juntos frente a por separado",
+      "aria": "Química {{value}}"
+    },
+    "stats": {
+      "games": "Partidos",
+      "winRate": "Victorias",
+      "chemistry": "Química",
+      "chemistryUnknown": "Aún faltan partidos en solitario"
+    },
+    "aria": {
+      "row": "Puesto {{rank}}, {{names}}, {{games}}, {{winRate}} por ciento de victorias, química {{chemistry}}",
+      "rowNoChemistry": "Puesto {{rank}}, {{names}}, {{games}}, {{winRate}} por ciento de victorias",
+      "podium": "Número {{rank}}, {{names}}, {{winRate}} por ciento de victorias, {{games}}",
+      "partner": "{{name}}, {{games}}, {{winRate}} por ciento de victorias"
+    },
+    "scrollToMyPair": "Ir a mi pareja ({{rank}})",
+    "loadMore": "Ver más",
+    "loading": "Cargando parejas",
+    "error": "No se pudieron cargar las parejas. Inténtalo de nuevo.",
+    "empty": {
+      "title": "Todavía no hay parejas clasificadas",
+      "action": "Buscar partido"
+    },
+    "sheet": {
+      "title": "Pareja",
+      "recent": "Juntos recientemente",
+      "recentEmpty": "Todavía no hay partidos juntos.",
+      "createTeam": "Crear un equipo",
+      "openTeam": "Abrir equipo",
+      "inviteToGame": "Invitar a un partido"
+    },
+    "recent": {
+      "untitled": "Partido"
+    },
+    "result": {
+      "win": "Victoria",
+      "loss": "Derrota"
+    },
+    "partners": {
+      "title": "Tus parejas",
+      "seeAll": "Ver todas"
+    }
+  }
+}

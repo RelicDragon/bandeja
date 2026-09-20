@@ -1,0 +1,73 @@
+{
+  "clubPage": {
+    "share": "แชร์คลับ",
+    "shareTitle": "แชร์คลับนี้",
+    "signIn": "เข้าสู่ระบบ",
+    "favoriteFailed": "อัปเดตรายการโปรดไม่สำเร็จ ลองอีกครั้ง",
+    "openClubPage": "เปิดหน้าคลับ",
+    "openClubPageNamed": "เปิดหน้าคลับ {{club}}",
+    "rating": {
+      "none": "ยังไม่มีรีวิว",
+      "summary_other": "{{rating}} · {{countText}} รีวิว"
+    },
+    "gallery": {
+      "roleDescription": "แกลเลอรีรูปภาพ",
+      "label": "รูปภาพของ {{club}}",
+      "slideRole": "รูปภาพ",
+      "slide": "รูปที่ {{current}} จาก {{total}}"
+    },
+    "notFound": {
+      "title": "ไม่พบคลับนี้",
+      "description": "ลิงก์อาจเก่าแล้ว หรือคลับไม่ได้อยู่ในรายการอีกต่อไป",
+      "browse": "ดูคลับทั้งหมด"
+    },
+    "actions": {
+      "create": "สร้างเกมที่นี่",
+      "book": "จอง",
+      "directions": "เส้นทาง",
+      "manage": "จัดการ"
+    },
+    "today": {
+      "title": "วันนี้แบบรวดเร็ว",
+      "updated": "อัปเดต {{relative}}",
+      "updatedJustNow": "เพิ่งอัปเดต",
+      "courtLabel": "{{court}} ว่าง {{free}} จาก {{total}} ชั่วโมงวันนี้",
+      "freeHours_other": "ว่าง {{count}} ชั่วโมง",
+      "windowHint": "แสดงตั้งแต่ {{open}} ถึง {{close}}",
+      "legendFree": "ว่าง",
+      "legendBusy": "ไม่ว่าง"
+    },
+    "games": {
+      "title": "เกมที่กำลังจะถึง",
+      "seeAll": "ดูทั้งหมดในค้นหา",
+      "emptyTitle": "ยังไม่มีเกมสาธารณะ",
+      "emptyDescription": "มาเป็นคนแรกที่สร้างเกมที่นี่"
+    },
+    "courts": {
+      "title": "คอร์ต",
+      "indoor": "ในร่ม",
+      "outdoor": "กลางแจ้ง"
+    },
+    "info": {
+      "title": "ข้อมูลคลับ",
+      "hoursRange": "เปิด {{open}} – {{close}}",
+      "hoursEveryDay": "เวลาเปิดเหมือนกันทุกวัน",
+      "cancellationPolicy": "นโยบายการยกเลิก",
+      "cancellationNotice_other": "ยกเลิกล่วงหน้าอย่างน้อย {{count}} ชั่วโมง"
+    },
+    "regulars": {
+      "title": "ใครเล่นที่นี่บ้าง",
+      "open": "เปิดการ์ดผู้เล่นของ {{name}}",
+      "unnamed": "ผู้เล่นคนนี้"
+    },
+    "reviews": {
+      "title": "รีวิว",
+      "guestTitle": "เข้าสู่ระบบเพื่อเขียนรีวิว",
+      "guestDescription": "รีวิวมาจากผู้เล่นที่เคยเล่นที่คลับนี้"
+    },
+    "error": {
+      "title": "เราโหลดคลับนี้ไม่สำเร็จ",
+      "description": "ตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง"
+    }
+  }
+}

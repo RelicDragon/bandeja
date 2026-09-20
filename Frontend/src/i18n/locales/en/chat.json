@@ -304,7 +304,12 @@
         "EXTERNAL_PARTIAL": "Not fully booked",
         "MANUAL": "Court booked",
         "NONE": "Not booked yet"
-      }
+      },
+      "ATTENDANCE_NUDGED": "{{userName}} asked everyone to confirm attendance",
+      "USER_NOTED_NO_SHOW": "{{userName}} was noted as a no-show",
+      "GAME_SPOT_OPENED": "A spot opened ({{userName}} left)",
+      "GAME_SEAT_AUTO_FILLED": "{{userName}} was seated from the queue",
+      "GAME_MOVED_INDOOR": "Moved to {{courtName}} (indoor)"
     },
     "openChat": "Open Chat",
     "chat": "Chat",

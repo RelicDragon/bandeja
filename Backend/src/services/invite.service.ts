@@ -22,6 +22,7 @@ import { consumeLookingIntentOnPlayingJoin } from './playIntent/playIntentPlayin
 import { isInviteInboxVisible } from '../utils/gameInviteInbox';
 import { inboxInviteGameSelect, mapInvitedParticipantToInboxInvite } from './invite/pendingInviteShape';
 import { assertSlotOverlapConfirmed } from './game/gameSlotOverlap.service';
+import { GameSeatService } from './gameSeat/gameSeat.service';
 
 export interface InviteActionResult {
   success: boolean;
@@ -642,6 +643,9 @@ export class InviteService {
       inviteOutcome,
     });
     void publishMatchingGamesChangedForGameId(participant.gameId);
+    // PRD 347 — only raises the "Spot opened" event when this invite was the
+    // last thing keeping the roster full; see `seatOpenedFromInviteDecline`.
+    void GameSeatService.seatOpenedFromInviteDecline(participant.gameId, participant.userId);
     return { success: true, message: 'invites.declinedSuccessfully' };
   }
 

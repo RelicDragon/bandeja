@@ -2,11 +2,12 @@ import { Check } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { PlayerAvatar } from './PlayerAvatar';
 import { CompetitiveSocialLevelBadge } from '@/components/profile/CompetitiveSocialLevelBadge';
-import { formatSmartRelativeTime } from '@/utils/dateFormat';
+import { formatDate } from '@/utils/dateFormat';
 import {
   findSportProfile,
   gamesPlayedForSport,
   getDisplayLevelForSport,
+  getSportLevelApprovedAtLevel,
   getSportLevelApprovedWhen,
   getUserPrimarySport,
   isLevelConfirmedForSport,
@@ -51,44 +52,38 @@ export const ConfirmedLevelSection = ({
     profile?.externalRatingHint,
   );
   const ratedGamesPlayed = gamesPlayed ?? gamesPlayedForSport(user, levelSport);
+  const approvedAtLevel = confirmed ? getSportLevelApprovedAtLevel(user, levelSport) : null;
+  const confirmationMeta = [
+    approvedWhen ? formatDate(approvedWhen, 'PP') : null,
+    approvedAtLevel !== null
+      ? t('playerCard.confirmedAtLevel', { level: approvedAtLevel.toFixed(2) })
+      : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
 
-  const confirmation =
-    confirmed && approvedBy ? (
-      <div className="flex flex-col items-center gap-2">
-        <div className="flex items-center gap-2 text-green-700 dark:text-green-400">
-          <Check size={16} strokeWidth={3} />
-          <span className="text-sm font-medium">{t('playerCard.confirmedBy')}</span>
-        </div>
+  const confirmationMetaLine = confirmationMeta ? (
+    <div className="text-xs text-gray-600 dark:text-gray-400">{confirmationMeta}</div>
+  ) : null;
+
+  // Nothing is rendered when the level is not confirmed — the absence is the message.
+  const confirmation = confirmed ? (
+    <div className="flex flex-col items-center gap-1.5">
+      <div className="flex items-center gap-2 text-green-700 dark:text-green-400">
+        <Check size={16} strokeWidth={3} />
+        <span className="text-sm font-medium">{t('playerCard.confirmedBy')}</span>
+      </div>
+      {approvedBy && (
         <div className="flex items-center justify-center gap-2 text-gray-700 dark:text-gray-300 text-sm">
           <PlayerAvatar player={approvedBy} showName={false} fullHideName={true} extrasmall={true} />
           <span className="font-medium">
             {approvedBy.firstName} {approvedBy.lastName}
           </span>
-          {approvedWhen && (
-            <>
-              <span className="text-gray-500 dark:text-gray-500">•</span>
-              <span className="text-gray-600 dark:text-gray-400">
-                {formatSmartRelativeTime(approvedWhen, t)}
-              </span>
-            </>
-          )}
         </div>
-      </div>
-    ) : confirmed && !approvedBy ? (
-      <div className="flex items-center justify-center gap-2 text-green-700 dark:text-green-400 text-sm">
-        <Check size={16} strokeWidth={3} />
-        <span className="font-medium">{t('playerCard.confirmedBy')}</span>
-        {approvedWhen && (
-          <span className="text-gray-600 dark:text-gray-400">
-            {formatSmartRelativeTime(approvedWhen, t)}
-          </span>
-        )}
-      </div>
-    ) : showBadge ? (
-      <div className="flex items-center justify-center gap-2 text-gray-500 dark:text-gray-400 text-sm">
-        <span>{t('playerCard.levelNotConfirmed')}</span>
-      </div>
-    ) : null;
+      )}
+      {confirmationMetaLine}
+    </div>
+  ) : null;
 
   if (!ratingHint && !showBadge && !confirmation && !showActivityCounts) return null;
 

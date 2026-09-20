@@ -2,7 +2,7 @@ import { Api } from 'grammy';
 import prisma from '../../../config/database';
 import { config } from '../../../config/env';
 import { t } from '../../../utils/translations';
-import { escapeMarkdown, getUserLanguageFromTelegramId } from '../utils';
+import { escapeMarkdown, getUserLanguageFromTelegramId, markdownLink } from '../utils';
 import { buildMessageWithButtons } from '../shared/message-builder';
 import { formatGameInfoForUser, formatGameScheduleLine, formatGameBookingStatusLabel, resolveGameClubPlace } from '../../shared/notification-base';
 import { collectTelegramGameScheduleExtras } from '../../shared/notificationSport';
@@ -146,7 +146,15 @@ export async function sendGameCard(
     game.entityType === 'EVENT' && game.venueText
       ? game.venueText
       : resolveGameClubPlace(game, userLang);
-  let locationLine = `📍 ${escapeMarkdown(clubName)}`;
+  // PRD 354 — the club name links to the public club page, which is readable
+  // without an account. An EVENT's free-text venue has no club to link to.
+  const clubPageUrl =
+    game.entityType !== 'EVENT' && club?.id
+      ? `${config.frontendUrl.replace(/\/$/, '')}/clubs/${encodeURIComponent(club.id)}`
+      : null;
+  let locationLine = clubPageUrl
+    ? `📍 ${markdownLink(clubName, clubPageUrl)}`
+    : `📍 ${escapeMarkdown(clubName)}`;
   
   if (game.court && game.entityType !== 'BAR' && game.entityType !== 'EVENT') {
     locationLine += `\n   ${escapeMarkdown(game.court.name)}`;

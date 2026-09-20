@@ -8,6 +8,52 @@
 
 Writers: `canModifyResults` — owner/admin, or `resultsByAnyone` + participant; parent season roles inherit. Routes: `Backend/src/routes/results.routes.ts` (`requireCanModifyResults`).
 
+## Reading results
+
+`GET /results/game/:gameId` and its `/round/:roundId` and `/match/:matchId` siblings run under `optionalAuth`, because the results tab is reachable by guests on a **public** game (deep links, Telegram, the Live now rail). Two things keep that safe:
+
+- **Authorization** — `assertCanReadGameResults` (`services/results/gameResultsAccess.ts`). Public game → anyone, signed in or not. Private game → a roster member of the game *or of its parent* (a league season shell, for a fixture), or platform staff. Everything else answers **404, not 403**, so the endpoint is not a game-existence oracle. Invites do not count as a roster row.
+- **Projection** — `services/results/gameResults.projection.ts` is an explicit `select` whitelist with a machine-readable forbidden list asserted by its test, in the same shape as `availableGamesCard.projection.ts`. The endpoint used to run a top-level `include`, which loaded every `Game` scalar: `paymentHint` (an IBAN or a phone number), `description`, `mediaUrls`, `externalUrl`, `priceTotal`, and every player's `bio` / `weeklyAvailability` / `socialLevel`. `RESULTS_USER_SELECT` is deliberately **not** `USER_SELECT_WITH_SPORT_PROFILES` for that reason. Adding a field here is a deliberate act: the payload is served to spectators holding a signed live token, i.e. to people with no account at all.
+
+The format block (`scoringPreset` … `metadata`) is load-bearing in that whitelist: the frontend derives the whole rulebook from it, and the spectator board has no second source because it never calls `GET /api/games/:id`.
+
+## Post-commit hooks on finalisation
+
+`recalculateGameOutcomes` (`results/outcomes.service.ts`) ends with a tail of hooks that run **after** the transaction commits, never inside it. Everything here is a derived cache, a notification or a grant for people who are not in the game — none of it may widen the transaction's lock footprint, slow down finalisation, or be able to roll a finalized result back. Each hook swallows its own errors.
+
+| Hook | What it does |
+|------|--------------|
+| `refreshPairStatsForGame` | rebuilds the affected `PairStat` rows (below) |
+| attendance counters | recomputes `attendedCount` / `noShowCount` ([social-and-profile.md](./social-and-profile.md)) |
+| `onGameFinalizedForReferral` | grants the referral payout on the referred user's first finished game ([economy.md](./economy.md)) |
+| series carry-over | creates the next occurrence and sends "Same time next week?" ([games.md](./games.md)) |
+| cost freeze | the hourly `CostShareReminderScheduler` sets `costFrozenAt` for games that went FINAL ([economy.md](./economy.md)) |
+
+`deleteGameResults` / `resetGameResults` / `editGameResults` in `results.service.ts` call the pair refresh the same way — and there they must **capture the affected pairs before the transaction**, because those transactions delete `Team` / `TeamPlayer` rows and the generated-format sides would otherwise be gone.
+
+## Pair stats
+
+`PairStat` is a **materialized aggregate, not a rating**. It answers one question — "how often did these two win when they played on the same side?" — and is derived entirely from data the results pipeline already owns. Nothing here feeds `level`, `reliability`, `socialLevel` or any leaderboard other than the Pairs tab. **Pair ELO does not exist and is explicitly out of scope.**
+
+**Ordering invariant.** Every row satisfies `userAId < userBId` (plain lexicographic compare on the cuids, never `localeCompare`). No database constraint enforces it and the unique key is `(sport, cityId, userAId, userBId)`, so writing the mirrored row would silently create a second aggregate for the same two people. Every read and write goes through `orderPairIds` / `tryOrderPairIds` (`services/pairStat/pairKey.ts`), and `writePairAggregates` asserts it before writing.
+
+**What counts** (`services/pairStat/partnerDetection.ts`, pure, no Prisma):
+
+1. `Game.resultsStatus === 'FINAL'` only.
+2. `EntityType` is `GAME`, `TOURNAMENT` or `LEAGUE`. `EVENT`, `BAR`, `TRAINING` and `LEAGUE_SEASON` never count.
+3. Neutral technical results never count — recognised by the `Game.metadata.technicalWithdrawal === true` / `nonRallyOutcome === 'WALKOVER'` stamp written by `league/leagueNeutralTechnicalResult.ts`. Those fixtures carry no played score.
+4. **Fixed teams** (`Game.hasFixedTeams`): "same side" comes from `GameTeam` / `GameTeamPlayer`, and two players on the same fixed team are partners for the whole game regardless of how many matches were played.
+5. **Generated formats**: "same side" comes from per-`Match` `Team` / `TeamPlayer` membership, aggregated over the game. A pair counts **at most once per game**, and only when the two were partners in the majority of the matches **they both appeared in**.
+6. A win requires **both** members to carry `GameOutcome.isWinner`. A pair whose partner has no `GameOutcome` row is skipped entirely — it cannot be scored.
+
+> Rule 5's denominator is the subtle one. "The majority of that game's matches" taken literally would delete every pair in a multi-court event: in a 12-match, 8-player Americano a fixed duo plays 4 matches together and would score 4/12. Scoping it to matches in which **both** players appeared keeps that pair while a genuinely rotating format still fails (4 players, 3 rounds, partners once each → 1/3), which is exactly the outcome the rule exists to produce.
+
+The aggregate is **recomputed from scratch, never incremented** (`services/pairStat/pairStat.service.ts`). That is what makes applying and reverting a result symmetric for free: a reset deletes the `GameOutcome` rows, the recompute stops seeing that game, and the pair lands back on exactly the totals it had before — no signed deltas to get wrong and no drift after an edit. `refreshPairStatsForGame` never throws; if it fails the result is still correct and the admin rebuild is the repair path.
+
+**Admin rebuild.** `POST /rankings/pairs/recalculate` (`requireAdmin`), optionally scoped to a sport and/or city. It walks counted games in id order 100 at a time, folds each slice into an accumulator that is flushed and cleared before the next slice is read, then backfills `combinedLevel` in batches. Memory is bounded by one slice, so the table may be larger than RAM.
+
+Chemistry, the Pairs tab and its API: [ratings.md](./ratings.md).
+
 Live board: [live-scoring.md](./live-scoring.md). Match types/presets: schema `GameType` / `ScoringPreset` / `MatchGenerationType`; generation under `Backend/src/services/results/generation/` (RR, random, KOTC, winners court, escalera/swiss-box, swiss re-export, fixed, rating, teammate pairs).
 
 ## Outcome explanation
@@ -54,6 +100,7 @@ Side effects:
 
 ## Code
 
-- BE: `Backend/src/services/results.service.ts`, `Backend/src/services/results/` (`outcomes.service.ts`, `outcomeExplanation.service.ts`, `calculator.service.ts`, `matchLiveScoring.service.ts`, `barResults.service.ts`), `gameStatusScheduler.service.ts`, `utils/gameStatus.ts`
+- BE: `Backend/src/services/results.service.ts`, `Backend/src/services/results/` (`outcomes.service.ts`, `outcomeExplanation.service.ts`, `calculator.service.ts`, `matchLiveScoring.service.ts`, `barResults.service.ts`, `gameResultsAccess.ts`, `gameResults.projection.ts`), `gameStatusScheduler.service.ts`, `utils/gameStatus.ts`
+- Pairs: `Backend/src/services/pairStat/`, `routes/pairRanking.routes.ts`
 - FE: `Frontend/src/components/gameResults/`, `GameDetails/GameResults*.tsx`, `SyncConflictModal.tsx`
 - Artifacts: `Backend/src/services/gameResultsArtifact/`

@@ -56,6 +56,14 @@ Unread-only list: URL unread flag via `chatListUnreadUrl`. Pin/mute from inbox. 
 
 `MessageType`: `TEXT` `IMAGE` `VOICE` `VIDEO` `POLL` `STICKER` `DOCUMENT`.
 
+### Shop-gated sticker packs and chat accents
+
+Pointing an **active** `Goods` row of kind `STICKER_PACK` at a `StickerPack` through the real `Goods.stickerPackId` foreign key makes that pack purchasable ([economy.md](./economy.md)). From that moment the pack is hidden from anybody who does not own the catalogue row — in `listStickerPacks`, in `getStickerPackById` and in `assertSendableSticker`. There is no `assetKey` string matching anywhere: the FK is the link.
+
+An unowned gated pack reads as **not found**, not as a paywall, so the picker never advertises something the player cannot use. `getLockedStickerPackIdsForUser` returns an empty list when nothing is gated, so the common case adds one cheap indexed query and no `notIn` clause.
+
+The viewer's own **chat accent** is applied as a `body.collection-accent-<key>` class and reaches only `[data-bubble-surface='own']` — the attribute `MessageItem/MessageBubble.tsx` already writes for the viewer's own non-channel bubbles. It never leaves the owner's session, which is why `GET /shop/equipped` omits `CHAT_ACCENT` entirely.
+
 ## Group / channel admin
 
 `groupChannel.service.ts`. Roles: `OWNER` `ADMIN` `PARTICIPANT`. Create from + menu. Invite / accept / join / leave. Pin / hide thread. Avatar. Channels (`isChannel`) vs groups vs city groups — different invite/leave rules in the service. Bug channels are public GroupChannels with `bugId`; developers auto-joined.

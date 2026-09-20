@@ -8,6 +8,7 @@ import { EmptyStateCard } from '@/components/home/EmptyStateCard';
 import { GamesLoadingSkeleton } from '@/components/home/GameCardSkeleton';
 import { AnimatedLoadingSwap } from '@/components/motion/AnimatedLoadingSwap';
 import { Game } from '@/types';
+import { SeriesHomePrompt } from '@/features/game-series/SeriesHomePrompt';
 
 interface MyGamesSectionProps {
   games: Game[];
@@ -109,6 +110,9 @@ const MyGamesSectionView = ({
 
     return (
       <div className="space-y-4 pb-8">
+        {/* PRD 345 — one "Same time next week?" card, above everything else. */}
+        <SeriesHomePrompt finishedGames={finishedGames} />
+
         <AnimatedGameList
           items={announcedOrStartedGames}
           getKey={getGameId}

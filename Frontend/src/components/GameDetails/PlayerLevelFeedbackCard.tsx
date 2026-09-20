@@ -187,7 +187,39 @@ export function PlayerLevelFeedbackCard({ gameId }: Props) {
   }, [data?.players.length, index, t]);
 
   if (loading || loadedGameId !== gameId || !data?.players.length) return null;
-  if (!data.canEdit && !allComplete) return null;
+  // Once the edit window closes, keep the card only as a receipt for answers already given.
+  if (!data.canEdit && completedCount === 0) return null;
+
+  const readOnly = !data.canEdit;
+  const summary = (
+    <>
+      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-sky-600 text-white shadow-md shadow-sky-600/20">
+        {allComplete ? <Check size={22} aria-hidden /> : <BarChart3 size={22} aria-hidden />}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-sm font-bold text-slate-900 dark:text-white">
+          {allComplete || readOnly
+            ? t('gameResults.levelFeedback.sentTitle')
+            : t('gameResults.levelFeedback.cardTitle')}
+        </span>
+        <span className="mt-0.5 block text-xs leading-relaxed text-slate-600 dark:text-slate-300">
+          {readOnly
+            ? t('gameResults.levelFeedback.sentDescriptionReadOnly')
+            : allComplete
+              ? t('gameResults.levelFeedback.sentDescription')
+              : t('gameResults.levelFeedback.cardDescription')}
+        </span>
+        {!allComplete && completedCount > 0 ? (
+          <span className="mt-1 block text-[11px] font-semibold text-sky-700 dark:text-sky-300">
+            {t('gameResults.levelFeedback.savedProgress', {
+              completed: completedCount,
+              total: data.players.length,
+            })}
+          </span>
+        ) : null}
+      </span>
+    </>
+  );
 
   return (
     <>
@@ -196,42 +228,22 @@ export function PlayerLevelFeedbackCard({ gameId }: Props) {
         animate={{ opacity: 1, y: 0 }}
         className="mx-0 mt-4 overflow-hidden rounded-2xl border border-sky-200/80 bg-gradient-to-br from-sky-50 via-white to-violet-50 shadow-sm dark:border-sky-400/15 dark:from-sky-950/35 dark:via-slate-900 dark:to-violet-950/25"
       >
-        <button
-          type="button"
-          onClick={openFlow}
-          disabled={!data.canEdit}
-          className="flex w-full items-center gap-3 p-4 text-start transition-colors enabled:hover:bg-white/45 disabled:cursor-default dark:enabled:hover:bg-white/[0.035]"
-          aria-label={t(data.canEdit
-            ? 'gameResults.levelFeedback.open'
-            : 'gameResults.levelFeedback.sentTitle')}
-        >
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-sky-600 text-white shadow-md shadow-sky-600/20">
-            {allComplete ? <Check size={22} aria-hidden /> : <BarChart3 size={22} aria-hidden />}
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block text-sm font-bold text-slate-900 dark:text-white">
-              {allComplete
-                ? t('gameResults.levelFeedback.sentTitle')
-                : t('gameResults.levelFeedback.cardTitle')}
-            </span>
-            <span className="mt-0.5 block text-xs leading-relaxed text-slate-600 dark:text-slate-300">
-              {allComplete
-                ? t(data.canEdit
-                  ? 'gameResults.levelFeedback.sentDescription'
-                  : 'gameResults.levelFeedback.sentDescriptionReadOnly')
-                : t('gameResults.levelFeedback.cardDescription')}
-            </span>
-            {!allComplete && completedCount > 0 ? (
-              <span className="mt-1 block text-[11px] font-semibold text-sky-700 dark:text-sky-300">
-                {t('gameResults.levelFeedback.savedProgress', {
-                  completed: completedCount,
-                  total: data.players.length,
-                })}
-              </span>
-            ) : null}
-          </span>
-          {data.canEdit ? <ChevronRight className="shrink-0 text-slate-400" size={20} aria-hidden /> : null}
-        </button>
+        {readOnly ? (
+          // A disabled button is unreachable for keyboard and screen readers, so the
+          // read-only receipt is plain content instead.
+          <div className="flex w-full items-center gap-3 p-4 text-start">{summary}</div>
+        ) : (
+          // No aria-label here: the title, description and saved-progress line are the
+          // useful announcement, and a label would replace all three.
+          <button
+            type="button"
+            onClick={openFlow}
+            className="flex w-full items-center gap-3 p-4 text-start transition-colors hover:bg-white/45 dark:hover:bg-white/[0.035]"
+          >
+            {summary}
+            <ChevronRight className="shrink-0 text-slate-400" size={20} aria-hidden />
+          </button>
+        )}
       </motion.section>
 
       <Drawer open={open} onOpenChange={setOpen}>
@@ -240,7 +252,7 @@ export function PlayerLevelFeedbackCard({ gameId }: Props) {
           accessibleTitle={t('gameResults.levelFeedback.sheetTitle')}
         >
           <div className="mx-auto mt-2.5 h-1 w-10 rounded-full bg-slate-300 dark:bg-white/20" aria-hidden />
-          <DrawerCloseButton className="absolute right-4 top-3.5 z-10" aria-label={t('common.close')} />
+          <DrawerCloseButton className="absolute end-4 top-3.5 z-10" aria-label={t('common.close')} />
 
           <DrawerHeader className="px-5 pb-2 pt-5 text-start">
             <DrawerTitle className="text-xl font-black tracking-tight text-slate-950 dark:text-white">
@@ -275,7 +287,7 @@ export function PlayerLevelFeedbackCard({ gameId }: Props) {
                     onClick={() => setOpen(false)}
                     className="mt-7 h-12 w-full max-w-xs rounded-2xl bg-slate-900 px-5 text-sm font-bold text-white shadow-lg dark:bg-white dark:text-slate-950"
                   >
-                    {t('common.done', { defaultValue: 'Done' })}
+                    {t('common.done')}
                   </button>
                 </motion.div>
               ) : current ? (
@@ -291,9 +303,10 @@ export function PlayerLevelFeedbackCard({ gameId }: Props) {
                     <span>{t('gameResults.levelFeedback.autoSaved')}</span>
                   </div>
                   <div className="h-1.5 overflow-hidden rounded-full bg-slate-200 dark:bg-white/10">
+                    {/* Fills with answers saved, not with the player you happen to be on. */}
                     <motion.div
                       className="h-full rounded-full bg-gradient-to-r from-sky-500 to-violet-500"
-                      animate={{ width: `${((index + 1) / data.players.length) * 100}%` }}
+                      animate={{ width: `${(completedCount / data.players.length) * 100}%` }}
                     />
                   </div>
 
@@ -335,7 +348,10 @@ export function PlayerLevelFeedbackCard({ gameId }: Props) {
                             className={`flex min-h-20 flex-col items-center justify-center gap-1.5 rounded-2xl border px-1.5 py-3 text-xs font-bold transition-all active:scale-95 disabled:cursor-wait disabled:opacity-70 ${className} ${selected ? activeClassName : ''}`}
                           >
                             {saving ? <Loader2 className="animate-spin" size={20} /> : <Icon size={20} strokeWidth={2.4} />}
-                            <span>{t(`gameResults.levelFeedback.verdict.${value}`)}</span>
+                            {/* Long single-word labels (cs "Odpovídající") overflow a third of a narrow phone. */}
+                            <span className="hyphens-auto break-words text-center">
+                              {t(`gameResults.levelFeedback.verdict.${value}`)}
+                            </span>
                           </button>
                         );
                       })}
@@ -347,7 +363,18 @@ export function PlayerLevelFeedbackCard({ gameId }: Props) {
                     <span>{t('gameResults.levelFeedback.privacy')}</span>
                   </div>
 
-                  <div className="mt-4 flex items-center justify-between">
+                  {/* Back leads at the inline start, forward at the inline end. */}
+                  <div className="mt-4 flex items-center gap-2">
+                    {index > 0 ? (
+                      <button
+                        type="button"
+                        onClick={() => setIndex(index - 1)}
+                        disabled={Boolean(savingTargetId)}
+                        className="rounded-xl px-3 py-2 text-sm font-semibold text-sky-700 hover:bg-sky-100 disabled:opacity-50 dark:text-sky-300 dark:hover:bg-sky-400/10"
+                      >
+                        {t('common.back')}
+                      </button>
+                    ) : null}
                     <button
                       type="button"
                       onClick={() => {
@@ -362,21 +389,13 @@ export function PlayerLevelFeedbackCard({ gameId }: Props) {
                         if (nextIndex !== null) setIndex(nextIndex);
                         else setOpen(false);
                       }}
-                      className="rounded-xl px-3 py-2 text-sm font-semibold text-slate-500 hover:bg-slate-200/60 dark:text-slate-400 dark:hover:bg-white/5"
+                      disabled={Boolean(savingTargetId)}
+                      className="ms-auto rounded-xl px-3 py-2 text-sm font-semibold text-slate-500 hover:bg-slate-200/60 disabled:opacity-50 dark:text-slate-400 dark:hover:bg-white/5"
                     >
                       {editingCompleteSet
-                        ? t('common.next', { defaultValue: 'Next' })
+                        ? t('common.next')
                         : t('gameResults.levelFeedback.skip')}
                     </button>
-                    {index > 0 ? (
-                      <button
-                        type="button"
-                        onClick={() => setIndex(index - 1)}
-                        className="rounded-xl px-3 py-2 text-sm font-semibold text-sky-700 hover:bg-sky-100 dark:text-sky-300 dark:hover:bg-sky-400/10"
-                      >
-                        {t('common.back')}
-                      </button>
-                    ) : null}
                   </div>
                 </motion.div>
               ) : null}

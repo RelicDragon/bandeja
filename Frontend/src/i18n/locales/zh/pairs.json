@@ -1,0 +1,69 @@
+{
+  "pairs": {
+    "mode": {
+      "label": "榜单模式",
+      "players": "球员",
+      "pairs": "组合"
+    },
+    "sort": {
+      "label": "组合排序",
+      "winRate": "胜率",
+      "games": "场次",
+      "level": "等级"
+    },
+    "period": {
+      "label": "时间范围",
+      "all": "全部时间",
+      "days30": "最近 30 天",
+      "days10": "最近 10 天"
+    },
+    "names": {
+      "spoken": "{{first}} 和 {{second}}"
+    },
+    "gamesCount_other": "{{count}} 场",
+    "floorHint_other": "与同一位搭档打满 {{count}} 场即可上榜。",
+    "chemistry": {
+      "tooltip": "搭档时的胜率与各自单打时的对比",
+      "aria": "默契 {{value}}"
+    },
+    "stats": {
+      "games": "场次",
+      "winRate": "胜率",
+      "chemistry": "默契",
+      "chemistryUnknown": "个人场次还不够"
+    },
+    "aria": {
+      "row": "第 {{rank}} 名，{{names}}，{{games}}，胜率 {{winRate}} 个百分点，默契 {{chemistry}}",
+      "rowNoChemistry": "第 {{rank}} 名，{{names}}，{{games}}，胜率 {{winRate}} 个百分点",
+      "podium": "第 {{rank}} 名，{{names}}，胜率 {{winRate}} 个百分点，{{games}}",
+      "partner": "{{name}}，{{games}}，胜率 {{winRate}} 个百分点"
+    },
+    "scrollToMyPair": "跳到我的组合（{{rank}}）",
+    "loadMore": "加载更多",
+    "loading": "正在加载组合",
+    "error": "无法加载组合，请稍后再试。",
+    "empty": {
+      "title": "暂无上榜组合",
+      "action": "找一场比赛"
+    },
+    "sheet": {
+      "title": "组合",
+      "recent": "最近同队",
+      "recentEmpty": "还没有共同参加的比赛。",
+      "createTeam": "创建队伍",
+      "openTeam": "打开队伍",
+      "inviteToGame": "邀请参加比赛"
+    },
+    "recent": {
+      "untitled": "比赛"
+    },
+    "result": {
+      "win": "胜",
+      "loss": "负"
+    },
+    "partners": {
+      "title": "你的搭档",
+      "seeAll": "查看全部"
+    }
+  }
+}

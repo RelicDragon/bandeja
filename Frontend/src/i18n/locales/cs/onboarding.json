@@ -1,0 +1,98 @@
+{
+  "onboarding": {
+    "frame": {
+      "skip": "Přeskočit",
+      "back": "Zpět",
+      "working": "Ukládáme…",
+      "progress": "Krok {{current}} z {{total}}"
+    },
+    "welcome": {
+      "title": "Najdeme vám zápas",
+      "subtitle": "Dvě minuty a je hotovo.",
+      "start": "Začít",
+      "socialProof_one": "{{count}} hráč ve městě {{city}}",
+      "socialProof_few": "{{count}} hráči ve městě {{city}}",
+      "socialProof_many": "{{count}} hráče ve městě {{city}}",
+      "socialProof_other": "{{count}} hráčů ve městě {{city}}"
+    },
+    "sport": {
+      "title": "Jaké sporty hrajete?",
+      "titleSportOnly": "Vyberte sport a pokračujte",
+      "subtitle": "Vyberte kolik chcete. První bude váš hlavní sport.",
+      "continue": "Pokračovat",
+      "primaryTag": "Hlavní",
+      "makePrimary": "Nastavit jako hlavní: {{sport}}",
+      "primaryHint": "Podržte sport, aby se stal hlavním."
+    },
+    "profile": {
+      "title": "Jak vám máme říkat?",
+      "subtitle": "Vaše jméno se ukáže u každého zápasu, kam se přidáte.",
+      "continue": "Pokračovat",
+      "photoOptional": "Fotka je nepovinná — můžete ji přidat později.",
+      "firstNameLabel": "Jméno",
+      "lastNameLabel": "Příjmení",
+      "nameRequired": "Zadejte své jméno.",
+      "nameTooShort": "Použijte alespoň 2 znaky.",
+      "nameTooLong": "Použijte nejvýše 30 znaků."
+    },
+    "level": {
+      "title": "Vaše úroveň",
+      "subtitle": "Pár rychlých otázek na to, jak hrajete {{sport}}.",
+      "continue": "Pokračovat",
+      "resultTitle": "Tohle je vaše startovní úroveň",
+      "resultSubtitle": "Podle vašich odpovědí o sportu {{sport}}.",
+      "scale": "Na škále {{scale}}",
+      "adjustLater": "Kdykoli to můžete upravit v profilu.",
+      "unavailable": "Pro sport {{sport}} zatím test úrovně nemáme."
+    },
+    "city": {
+      "title": "Je tohle vaše město?",
+      "helper": "Ukazujeme zápasy a hráče z vašeho města.",
+      "confirm": "Ano, souhlasí",
+      "change": "Změnit město",
+      "backToCard": "Ponechat současné město",
+      "unknown": "Zatím bez města"
+    },
+    "follow": {
+      "title": "Koho sledovat",
+      "subtitle": "Aktivní hráči ve vašem městě. Sledujte je a domovská stránka ožije.",
+      "continue": "Pokračovat",
+      "followAll": "Sledovat všechny",
+      "follow": "Sledovat",
+      "following": "Sledujete",
+      "followFailed": "Hráče se nepodařilo sledovat. Zkuste to znovu.",
+      "gamesThisMonth_one": "{{count}} zápas tento měsíc",
+      "gamesThisMonth_few": "{{count}} zápasy tento měsíc",
+      "gamesThisMonth_many": "{{count}} zápasu tento měsíc",
+      "gamesThisMonth_other": "{{count}} zápasů tento měsíc",
+      "emptyTitle": "Zatím žádné tipy",
+      "emptyDescription": "Vaše město se teprve plní. Vraťte se po prvním zápase.",
+      "unnamedPlayer": "Hráč"
+    },
+    "notifications": {
+      "title": "Zůstaňte v obraze",
+      "subtitle": "Posíláme jen to, kvůli čemu stojí za to vás vyrušit.",
+      "turnOn": "Zapnout oznámení",
+      "later": "Teď ne",
+      "reasonInvitesTitle": "Pozvánky",
+      "reasonInvitesBody": "Když vás někdo pozve hrát.",
+      "reasonRemindersTitle": "Připomínky",
+      "reasonRemindersBody": "Před zápasem, na který jste se přihlásili.",
+      "reasonSpotsTitle": "Volná místa",
+      "reasonSpotsBody": "Když se uvolní místo v zápase, který jste chtěli.",
+      "controlHint": "Všechno tohle změníte v nastavení."
+    },
+    "finish": {
+      "choiceTitle": "Co chcete udělat nejdřív?",
+      "choiceSubtitle": "Tak či tak máte hotovo.",
+      "playSoonTitle": "Chci si brzy zahrát",
+      "playSoonBody": "Řekněte městu, kdy máte čas, a hráči se ozvou sami.",
+      "browseTitle": "Procházet zápasy",
+      "browseBody": "Podívejte se, co se už děje kolem vás.",
+      "doneTitle": "Hotovo"
+    },
+    "errors": {
+      "saveFailed": "Nepodařilo se uložit. Zkontrolujte připojení a zkuste to znovu."
+    }
+  }
+}

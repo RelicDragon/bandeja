@@ -141,6 +141,8 @@
     "sendDirectMessagesDescription": "ダイレクトメッセージを受け取ったときに通知します",
     "sendReminders": "リマインダー",
     "sendRemindersDescription": "試合・トーナメント・トレーニングBarの2時間前に通知します",
+    "sendWeatherAlerts": "天候アラート",
+    "sendWeatherAlertsDescription": "屋外コートのみ",
     "walletNotifications": "ウォレット通知",
     "walletNotificationsDescription": "ウォレットの取引について通知を受け取ります",
     "marketplaceNotifications": "自分の都市の新着出品",

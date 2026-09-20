@@ -5,6 +5,8 @@ import type { UserStats } from '@/api/users';
 import { Loading } from './Loading';
 import { LevelHistoryView } from './LevelHistoryView';
 import { ProfileWorkoutHealthSection } from './ProfileWorkoutHealthSection';
+import { YourPartnersSection } from '@/components/pairs/YourPartnersSection';
+import { ProfileRecapsRow } from '@/components/recap/ProfileRecapsRow';
 import { TrophyPendingCelebrationHost } from '@/components/trophies/TrophyPendingCelebrationHost';
 import { useAuthStore } from '@/store/authStore';
 import { getUserPrimarySport, resolveActivePrimarySport } from '@/utils/profileSports';
@@ -68,6 +70,10 @@ export const ProfileStatistics = () => {
     >
       <TrophyPendingCelebrationHost trophies={stats.user.trophies} isOwn />
       <LevelHistoryView stats={stats} padding="p-0" onStatsRefresh={setStats} />
+      {/* PRD 352 — partners ranked by win rate, floor of 3 games together. */}
+      {user?.id ? <YourPartnersSection userId={user.id} sport={sport} /> : null}
+      {/* PRD 353 — twelve months of monthly recaps, newest first. */}
+      <ProfileRecapsRow />
       <ProfileWorkoutHealthSection />
     </motion.div>
   );

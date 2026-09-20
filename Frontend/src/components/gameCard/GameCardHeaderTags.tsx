@@ -1,10 +1,15 @@
 import { useTranslation } from 'react-i18next';
-import { Users, Ban, Award, Lock } from 'lucide-react';
+import { Users, Ban, Award, Lock, Repeat } from 'lucide-react';
+import { isGameSeriesEnabled } from '@/config/featureFlags';
+import { cadencePillKey } from '@/features/game-series/seriesFormat';
 import type { Game } from '@/types';
 import type { GameCardMyParticipationBadge } from '@/utils/gameCardMyParticipationBadge';
 import { genderTeamsSummaryLabelKey } from '@/utils/genderTeamsSummaryLabel';
 import { gameIsNonRating } from '@/utils/gameRatingSemantics';
 import { eventKindI18nKey } from '@/utils/eventListingDisplay';
+import { WeatherRiskPill } from './WeatherRiskPill';
+import { SpotOpenedPill } from '@/features/spot-opened/SpotOpenedPill';
+import { resolveSpotOpenedAt } from '@/features/spot-opened/spotOpenedWindow';
 
 interface GameCardHeaderTagsProps {
   game: Game;
@@ -48,7 +53,8 @@ export const GameCardHeaderTags = ({
   sportTags,
   myParticipationBadge,
 }: GameCardHeaderTagsProps) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const spotOpenedAt = resolveSpotOpenedAt(game);
 
   return (
     <>
@@ -60,6 +66,19 @@ export const GameCardHeaderTags = ({
           {t(eventKindI18nKey(game.eventKind), { defaultValue: 'Event' })}
         </span>
       )}
+      {/* PRD 345 — recurring series. Neutral tone on purpose: the date tile
+          stays the thing the eye lands on, this only says "there is a next
+          one". Hidden entirely when the feature flag is off. */}
+      {game.seriesLabel && isGameSeriesEnabled() && (
+        <span
+          className={`${PILL} bg-gray-100 text-gray-700 dark:bg-gray-700/50 dark:text-gray-300`}
+          title={game.seriesLabel.name}
+        >
+          <Repeat size={12} aria-hidden />
+          <span>{t(cadencePillKey(game.seriesLabel.cadence))}</span>
+          <span className="sr-only">{t('series.pillAriaLabel')}</span>
+        </span>
+      )}
       {myParticipationBadge && (
         <span
           className={`${PILL} whitespace-nowrap ${PARTICIPATION_PILL_CLASSES[myParticipationBadge]}`}
@@ -69,6 +88,9 @@ export const GameCardHeaderTags = ({
             : t(participationLabelKey(myParticipationBadge))}
         </span>
       )}
+      {/* PRD 347 — a seat freed in the last 2 h. Never shown once results are
+          locked; `resolveSpotOpenedAt` enforces that. */}
+      {spotOpenedAt && <SpotOpenedPill openedAt={spotOpenedAt} />}
       {!game.isPublic && (
         <span
           className={`${PILL} bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400`}
@@ -121,6 +143,13 @@ export const GameCardHeaderTags = ({
           <span className="hidden sm:inline">{t('games.fixedTeams')}</span>
         </span>
       )}
+      {/* PRD 357 — rain / wind risk. Renders nothing unless the backend decided
+          the game is outdoor, inside 48 h and over the threshold. */}
+      <WeatherRiskPill
+        weatherRisk={game.weatherRisk}
+        locale={i18n.language}
+        timeZone={game.city?.timezone}
+      />
       {(game.status === 'STARTED' || game.status === 'FINISHED' || game.status === 'ARCHIVED') &&
         game.resultsStatus === 'FINAL' && (
           <span

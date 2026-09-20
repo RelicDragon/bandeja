@@ -23,6 +23,13 @@ export type SportQuestionnaireContentProps = {
   onRequestClose: () => void;
   onCompleted?: (user: User) => void;
   showStartOver?: boolean;
+  /**
+   * Skip the built-in congratulations slide and hand the completed user
+   * straight to `onCompleted`. PRD 350's onboarding renders its own result
+   * screen (count-up on the sport's display scale), so showing this one first
+   * would make the user confirm twice.
+   */
+  hideResultSlide?: boolean;
 };
 
 export function SportQuestionnaireContent({
@@ -30,6 +37,7 @@ export function SportQuestionnaireContent({
   onRequestClose,
   onCompleted,
   showStartOver = true,
+  hideResultSlide = false,
 }: SportQuestionnaireContentProps) {
   const { t } = useTranslation();
   const updateUser = useAuthStore((s) => s.updateUser);
@@ -94,7 +102,12 @@ export function SportQuestionnaireContent({
       const user = response.data;
       setAssignedLevel(resolveLevelFromUser(user));
       setCompletedUser(user);
-      setShowFinalSlide(true);
+      if (hideResultSlide) {
+        updateUser(user);
+        onCompleted?.(user);
+      } else {
+        setShowFinalSlide(true);
+      }
     } catch (err: unknown) {
       const message =
         (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??

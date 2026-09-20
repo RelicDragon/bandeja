@@ -70,6 +70,7 @@ const projected = overlaySportProjection(
     approvedLevel: false,
     approvedById: null,
     approvedWhen: null,
+    approvedAtLevel: null,
   },
 );
 

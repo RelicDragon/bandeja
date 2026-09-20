@@ -311,6 +311,7 @@ function readCenterIntegrationPayload() {
             integrationConfig: { clubId },
         };
     }
+    if (type === 'WELTNER') return { integrationType: 'WELTNER', integrationConfig: null };
     if (type === 'KLIKTEREN') {
         const venueId = document.getElementById('centerKlikterenVenueId')?.value?.trim() || '';
         if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(venueId)) {

@@ -1,5 +1,6 @@
 import { Fragment, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Home } from 'lucide-react';
 import { Court } from '@/types';
 import { ScheduleSlot } from '@/api/clubAdmin';
 import { UNASSIGNED_COURT_ID } from '@/utils/clubAdmin/constants';
@@ -80,16 +81,21 @@ export function CourtScheduleGrid({
   );
 
   const columns = useMemo(() => {
-    const cols: Array<{ id: string; name: string; isActive: boolean }> = activeCourts.map((c) => ({
-      id: c.id,
-      name: c.name,
-      isActive: c.isActive !== false,
-    }));
+    // PRD 357 — `isIndoor` drives weather alerts, so the grid surfaces it:
+    // a wrong flag is much easier to spot here than inside the court form.
+    const cols: Array<{ id: string; name: string; isActive: boolean; isIndoor: boolean }> =
+      activeCourts.map((c) => ({
+        id: c.id,
+        name: c.name,
+        isActive: c.isActive !== false,
+        isIndoor: c.isIndoor === true,
+      }));
     if (hasUnassigned) {
       cols.push({
         id: UNASSIGNED_COURT_ID,
         name: t('clubAdmin.unassignedCourt'),
         isActive: true,
+        isIndoor: false,
       });
     }
     return cols;
@@ -143,9 +149,16 @@ export function CourtScheduleGrid({
         {columns.map((c) => (
           <div
             key={c.id}
-            className="sticky top-0 z-10 bg-muted p-1 text-center text-xs font-medium truncate"
+            className="sticky top-0 z-10 flex items-center justify-center gap-1 bg-muted p-1 text-center text-xs font-medium"
           >
-            {c.name}
+            {c.isIndoor && (
+              <Home
+                size={11}
+                className="shrink-0 text-muted-foreground"
+                aria-label={t('weatherAlerts.indoorCourt')}
+              />
+            )}
+            <span className="truncate">{c.name}</span>
           </div>
         ))}
         {times.map((time, rowIndex) => (

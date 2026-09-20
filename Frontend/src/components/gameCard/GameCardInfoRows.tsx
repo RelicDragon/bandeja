@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { MapPin, Users, Plane, Check, CalendarOff } from 'lucide-react';
 import type { Game } from '@/types';
 import { GameCardDateTile } from '@/components/gameCard/GameCardDateTile';
+import { GameCardPerHeadPrice } from '@/components/gameCard/GameCardPerHeadPrice';
 import { gameShowsLevelBand } from '@/utils/gameRatingSemantics';
 import {
   countEventGoingLooking,
@@ -151,6 +152,10 @@ export const GameCardInfoRows = memo(function GameCardInfoRows({
             </span>
           </span>
         )}
+        {/* PRD 348 — per-head share; hidden when the price is unknown or zero. */}
+        {game.perHeadPrice ? (
+          <GameCardPerHeadPrice perHeadPrice={game.perHeadPrice} />
+        ) : null}
       </div>
     </div>
   );

@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { AnimatePresence } from 'framer-motion';
 import { Button, Card, Input, Select, ToggleGroup, ToggleSwitch, AvatarUpload, FullscreenImageViewer, WalletModal, NotificationSettingsModal, ConfirmationModal, CityModal, MainTabFooter, AppIconCarousel } from '@/components';
+import { InviteFriendsCard } from '@/components/referral/InviteFriendsCard';
+import { useWalletHighlightStore } from '@/store/walletHighlightStore';
 import { AvailabilitySection } from '@/components/availability';
 import { ProfileStatistics } from '@/components/ProfileStatistics';
 import { ProfileSportsSection } from '@/components/profile/ProfileSportsSection';
@@ -62,6 +64,7 @@ import { AppleIcon } from '@/components/AppleIcon';
 import { getCurrencyOptions, getCurrencySymbol } from '@/utils/currency';
 import { syncNativeAppIconForUser } from '@/services/appIcon.service';
 import { MainThemeSelector } from '@/components/MainThemeSelector';
+import { CollectionSection } from '@/components/shop/CollectionSection';
 import type { AppIconId } from '@/config/appIcons';
 import { openExternalUrl } from '@/utils/openExternalUrl';
 import { buildTelegramBotStartUrl } from '@/utils/telegramBotUrl';
@@ -106,6 +109,10 @@ export const ProfileContent = () => {
   const [showCityModal, setShowCityModal] = useState(false);
   const [showFullscreenAvatar, setShowFullscreenAvatar] = useState(false);
   const [showWalletModal, setShowWalletModal] = useState(false);
+  // PRD 351 — a referral reward push lands here and asks for the Wallet.
+  const pendingWalletTransactionId = useWalletHighlightStore((state) => state.pendingTransactionId);
+  const consumeWalletRequest = useWalletHighlightStore((state) => state.consumeRequest);
+  const [walletHighlightId, setWalletHighlightId] = useState<string | null>(null);
   const [showNotificationModal, setShowNotificationModal] = useState(false);
   const [showDeleteUserModal, setShowDeleteUserModal] = useState(false);
   const [showSecondDeleteConfirmation, setShowSecondDeleteConfirmation] = useState(false);
@@ -714,6 +721,12 @@ export const ProfileContent = () => {
     return () => document.removeEventListener('visibilitychange', refreshLinkedAccountsOnFocus);
   }, [isLoadingProfile, updateUser]);
 
+  useEffect(() => {
+    if (pendingWalletTransactionId === null) return;
+    setWalletHighlightId(consumeWalletRequest());
+    setShowWalletModal(true);
+  }, [pendingWalletTransactionId, consumeWalletRequest]);
+
   const handleRefresh = useCallback(async () => {
     await clearCachesExceptUnsyncedResults();
     try {
@@ -767,6 +780,9 @@ export const ProfileContent = () => {
       <div className="space-y-6">
         {profileActiveTab === 'general' && (
           <>
+        {/* PRD 351 — "Invite friends", above the wallet/avatar satellite block. */}
+        <InviteFriendsCard />
+
         <div className="flex justify-center">
           <div className="relative pt-2">
             <AvatarUpload
@@ -1426,6 +1442,9 @@ export const ProfileContent = () => {
               />
             </div>
 
+            {/* PRD 355 — owned cosmetics; tapping a tile equips it. */}
+            <CollectionSection />
+
           </div>
         </Card>
 
@@ -1641,7 +1660,11 @@ export const ProfileContent = () => {
       <AnimatePresence>
         {showWalletModal && (
           <WalletModal
-            onClose={() => setShowWalletModal(false)}
+            highlightTransactionId={walletHighlightId}
+            onClose={() => {
+              setShowWalletModal(false);
+              setWalletHighlightId(null);
+            }}
           />
         )}
       </AnimatePresence>

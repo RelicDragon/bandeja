@@ -10,6 +10,61 @@ import { refreshChatOfflineBanner, setChatBannerSocketConnected } from '@/servic
 import type { InviteDeletedSocketPayload } from '@/utils/gameInviteParticipant';
 import type { PlayIntentInvalidation } from '@shared/playIntentRealtime';
 import type { GameTextInvalidation } from '@shared/gameTextRealtime';
+import type {
+  ParticipantAttendance,
+  SpotOpenedCause,
+  WeatherRiskSeverity,
+} from '@/types/gameCardEnrichment';
+
+/* PRD 345–357 game-room event payloads (CONTRACT §6). Room: `game-${gameId}`. */
+
+/** PRD 346 — a PLAYING participant answered the attendance question. */
+export interface GameAttendanceUpdatedPayload {
+  gameId: string;
+  userId: string;
+  attendance: ParticipantAttendance;
+  /** PLAYING participants currently CONFIRMED, after this change. */
+  confirmedCount: number;
+  /** PLAYING participants in the game, i.e. the denominator of "3/4". */
+  playingCount: number;
+}
+
+/** PRD 347 — one or more PLAYING seats were freed. */
+export interface GameSeatOpenedPayload {
+  gameId: string;
+  freedCount: number;
+  cause: SpotOpenedCause;
+  /** ISO timestamp; equal to `Game.lastSeatOpenedAt` after the event. */
+  lastSeatOpenedAt: string;
+}
+
+/** PRD 347 — a freed seat was taken (auto-fill from the queue or a manual join). */
+export interface GameSeatFilledPayload {
+  gameId: string;
+  /** The user now seated PLAYING. */
+  userId: string;
+}
+
+/** PRD 348 — the cost ledger changed; refetch `GET /games/:id/cost-shares`. */
+export interface GameCostUpdatedPayload {
+  gameId: string;
+}
+
+/** PRD 345 — a regular confirmed or declined the next occurrence. */
+export interface GameSeriesConfirmationsUpdatedPayload {
+  seriesId: string;
+  /** The next occurrence the confirmations apply to. */
+  gameId: string;
+  confirmedCount: number;
+  /** Active regulars on the series, i.e. the denominator of "3 of 4". */
+  regularCount: number;
+}
+
+/** PRD 357 — the weather alert state for this game changed. */
+export interface GameWeatherAlertUpdatedPayload {
+  gameId: string;
+  severity: WeatherRiskSeverity;
+}
 
 export interface NewUserChatMessage {
   contextId: string;
@@ -51,6 +106,12 @@ export interface SocketEvents {
     snapshot: import('@/utils/matchTimer').MatchTimerSnapshot;
   }) => void;
   'match-live-scoring-updated': (data: { gameId: string; matchId: string; liveScoring: unknown }) => void;
+  'game-attendance-updated': (data: GameAttendanceUpdatedPayload) => void;
+  'game-seat-opened': (data: GameSeatOpenedPayload) => void;
+  'game-seat-filled': (data: GameSeatFilledPayload) => void;
+  'game-cost-updated': (data: GameCostUpdatedPayload) => void;
+  'game-series-confirmations-updated': (data: GameSeriesConfirmationsUpdatedPayload) => void;
+  'game-weather-alert-updated': (data: GameWeatherAlertUpdatedPayload) => void;
   'wallet-update': (data: { wallet: number }) => void;
   'error': (error: { message: string }) => void;
   // Unified chat events

@@ -45,7 +45,26 @@ export type AvailableStructuralFilters = {
    */
   allowUnsetTimeLeagueSeason?: boolean;
   availableSlots?: boolean;
+  /**
+   * PRD 349 — "Live now" rail. Narrows to games that are being scored right
+   * now **and** are visible to strangers.
+   *
+   * All three conditions are load-bearing and must stay together: a private
+   * game or a game whose organizer switched "Show on Live now" off must never
+   * reach the rail, `/live` in Telegram, or the spectator-token endpoint.
+   */
+  liveOnly?: boolean;
 };
+
+/**
+ * The privacy gate for every Live-now surface. Exported so the rail query, the
+ * spectator-token mint and their tests all assert the *same* object.
+ */
+export const LIVE_RAIL_WHERE = {
+  resultsStatus: 'IN_PROGRESS',
+  isPublic: true,
+  showOnLiveRail: true,
+} as const satisfies Prisma.GameWhereInput;
 
 const DEFAULT_LEVEL_MIN = 1.0;
 const DEFAULT_LEVEL_MAX = 7.0;
@@ -132,6 +151,12 @@ export function appendStructuralFiltersToWhere(
     : where.AND
       ? [where.AND]
       : [];
+
+  // PRD 349 — applied first so the privacy gate is never conditional on any
+  // other filter succeeding.
+  if (filters.liveOnly) {
+    and.push({ ...LIVE_RAIL_WHERE });
+  }
 
   if (filters.clubIds && filters.clubIds.length > 0) {
     and.push({

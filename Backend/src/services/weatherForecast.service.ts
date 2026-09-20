@@ -1113,3 +1113,42 @@ export class WeatherForecastService {
     };
   }
 }
+
+/**
+ * PRD 357 — cache-only batched read of the hourly forecast payload per city.
+ *
+ * Deliberately never fetches: the weather-alert scheduler and the Find-card
+ * enricher both run over many games at once and must not turn into N Open-Meteo
+ * calls. `WeatherForecastScheduler.prewarmUpcomingGameCities` is what keeps
+ * these rows warm; a city with no usable row simply yields no entry, which the
+ * callers read as "no forecast, show nothing".
+ */
+export async function getCachedForecastPayloadsForCities(
+  cityIds: string[],
+  now: Date = new Date(),
+): Promise<Map<string, WeatherForecastPayload>> {
+  const unique = [...new Set(cityIds.filter(Boolean))];
+  const result = new Map<string, WeatherForecastPayload>();
+  if (unique.length === 0) return result;
+
+  const caches = await prisma.weatherForecastCache.findMany({
+    where: { provider: PROVIDER, cityId: { in: unique } },
+    select: {
+      cityId: true,
+      payload: true,
+      fetchedAt: true,
+      expiresAt: true,
+      forecastStart: true,
+      forecastEnd: true,
+    },
+  });
+
+  for (const cache of caches) {
+    if (!isFresh(cache, now) && !isUsablyStale(cache, now)) continue;
+    const payload = getPayload(cache);
+    if (!payload || !Array.isArray(payload.hourly)) continue;
+    result.set(cache.cityId, payload);
+  }
+
+  return result;
+}

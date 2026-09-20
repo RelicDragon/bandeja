@@ -1,0 +1,157 @@
+{
+  "recap": {
+    "slides": {
+      "cover": {
+        "caption": "В цифрах",
+        "alt": "{{month}} в цифрах"
+      },
+      "games": {
+        "eyebrow": "Игры",
+        "caption_one": "сыграна {{count}} игра",
+        "caption_few": "сыграно {{count}} игры",
+        "caption_many": "сыграно {{count}} игр",
+        "caption_other": "сыграно {{count}} игры",
+        "alt_one": "в {{month}} сыграна {{count}} игра",
+        "alt_few": "в {{month}} сыграно {{count}} игры",
+        "alt_many": "в {{month}} сыграно {{count}} игр",
+        "alt_other": "в {{month}} сыграно {{count}} игры"
+      },
+      "wins": {
+        "eyebrow": "Победы",
+        "caption_one": "{{count}} победа",
+        "caption_few": "{{count}} победы",
+        "caption_many": "{{count}} побед",
+        "caption_other": "{{count}} победы",
+        "alt_one": "{{count}} победа, процент побед {{percent}}",
+        "alt_few": "{{count}} победы, процент побед {{percent}}",
+        "alt_many": "{{count}} побед, процент побед {{percent}}",
+        "alt_other": "{{count}} победы, процент побед {{percent}}"
+      },
+      "level": {
+        "eyebrow": "Уровень игры",
+        "caption": "Сейчас ваш уровень — {{level}}",
+        "neutral": "Уровень изменился на {{level}}",
+        "alt": "Уровень игры: изменился на {{level}}"
+      },
+      "partner": {
+        "eyebrow": "Лучший партнёр",
+        "caption_one": "{{count}} победа вместе с {{name}}",
+        "caption_few": "{{count}} победы вместе с {{name}}",
+        "caption_many": "{{count}} побед вместе с {{name}}",
+        "caption_other": "{{count}} победы вместе с {{name}}",
+        "alt_one": "Лучший партнёр {{name}}, {{count}} совместная победа",
+        "alt_few": "Лучший партнёр {{name}}, {{count}} совместные победы",
+        "alt_many": "Лучший партнёр {{name}}, {{count}} совместных побед",
+        "alt_other": "Лучший партнёр {{name}}, {{count}} совместные победы"
+      },
+      "streak": {
+        "eyebrow": "Серия игр",
+        "caption_one": "Играл {{count}} неделю подряд",
+        "caption_few": "Играл {{count}} недели подряд",
+        "caption_many": "Играл {{count}} недель подряд",
+        "caption_other": "Играл {{count}} недели подряд",
+        "best_one": "Личный рекорд — {{count}} неделя",
+        "best_few": "Личный рекорд — {{count}} недели",
+        "best_many": "Личный рекорд — {{count}} недель",
+        "best_other": "Личный рекорд — {{count}} недели",
+        "alt_one": "Серия игр: {{count}} неделя подряд",
+        "alt_few": "Серия игр: {{count}} недели подряд",
+        "alt_many": "Серия игр: {{count}} недель подряд",
+        "alt_other": "Серия игр: {{count}} недели подряд"
+      },
+      "club": {
+        "eyebrow": "Любимый клуб",
+        "caption_one": "{{count}} игра здесь",
+        "caption_few": "{{count}} игры здесь",
+        "caption_many": "{{count}} игр здесь",
+        "caption_other": "{{count}} игры здесь",
+        "alt_one": "Любимый клуб {{club}}, {{count}} игра",
+        "alt_few": "Любимый клуб {{club}}, {{count}} игры",
+        "alt_many": "Любимый клуб {{club}}, {{count}} игр",
+        "alt_other": "Любимый клуб {{club}}, {{count}} игры"
+      },
+      "lowActivity": {
+        "encouragement": "Одна игра — это уже игра. Давай найдём следующую.",
+        "caption_one": "{{count}} игра в {{month}}",
+        "caption_few": "{{count}} игры в {{month}}",
+        "caption_many": "{{count}} игр в {{month}}",
+        "caption_other": "{{count}} игры в {{month}}",
+        "alt_one": "В {{month}} сыграна {{count}} игра",
+        "alt_few": "В {{month}} сыграно {{count}} игры",
+        "alt_many": "В {{month}} сыграно {{count}} игр",
+        "alt_other": "В {{month}} сыграно {{count}} игры"
+      },
+      "outro": {
+        "title": "Увидимся на корте в {{month}}",
+        "caption": "{{games}} · {{wins}}",
+        "gamesPart_one": "{{count, number}} игра",
+        "gamesPart_few": "{{count, number}} игры",
+        "gamesPart_many": "{{count, number}} игр",
+        "gamesPart_other": "{{count, number}} игры",
+        "winsPart_one": "{{count, number}} победа",
+        "winsPart_few": "{{count, number}} победы",
+        "winsPart_many": "{{count, number}} побед",
+        "winsPart_other": "{{count, number}} победы",
+        "lowActivityCaption": "Корт вас ждёт.",
+        "alt": "Увидимся на корте в {{month}}"
+      }
+    },
+    "viewer": {
+      "title": "Итоги месяца",
+      "close": "Закрыть",
+      "next": "Дальше",
+      "shareCta": "Поделиться с подписчиками",
+      "saveImageCta": "Сохранить картинку",
+      "savingImage": "Готовим картинку…",
+      "playIntentCta": "Хочу играть",
+      "loading": "Готовим ваши итоги…",
+      "loadFailed": "Не удалось загрузить эти итоги.",
+      "sportTabs": "Выберите вид спорта"
+    },
+    "share": {
+      "title": "Поделиться итогами",
+      "subtitle": "Выберите слайды за {{month}}",
+      "ttlNote": "Подписчики увидят это 24 часа.",
+      "sensitiveHint": "По умолчанию выключено",
+      "success": "Отправлено подписчикам",
+      "failed": "Не удалось поделиться итогами",
+      "exportFailed": "Не удалось подготовить картинку",
+      "imageText": "Мой {{month}} в Bandeja",
+      "slides": {
+        "cover": "Обложка",
+        "games": "Игры",
+        "wins": "Победы",
+        "level": "Уровень игры",
+        "partner": "Лучший партнёр",
+        "streak": "Серия игр",
+        "club": "Любимый клуб",
+        "lowActivity": "Ваш месяц",
+        "outro": "Финал"
+      },
+      "cta_one": "Поделиться {{count}} слайдом",
+      "cta_few": "Поделиться {{count}} слайдами",
+      "cta_many": "Поделиться {{count}} слайдами",
+      "cta_other": "Поделиться {{count}} слайдами",
+      "previewLabel_one": "Выбран {{count}} слайд",
+      "previewLabel_few": "Выбрано {{count}} слайда",
+      "previewLabel_many": "Выбрано {{count}} слайдов",
+      "previewLabel_other": "Выбрано {{count}} слайда"
+    },
+    "rail": {
+      "label": "Итоги за {{month}}",
+      "aria": "Открыть итоги за {{month}}"
+    },
+    "profile": {
+      "title": "Итоги месяцев",
+      "cardAria": "Открыть итоги за {{month}}",
+      "gamesOnly_one": "{{count}} игра",
+      "gamesOnly_few": "{{count}} игры",
+      "gamesOnly_many": "{{count}} игр",
+      "gamesOnly_other": "{{count}} игры",
+      "gamesAndWinRate_one": "{{count}} игра · {{percent}}",
+      "gamesAndWinRate_few": "{{count}} игры · {{percent}}",
+      "gamesAndWinRate_many": "{{count}} игр · {{percent}}",
+      "gamesAndWinRate_other": "{{count}} игры · {{percent}}"
+    }
+  }
+}

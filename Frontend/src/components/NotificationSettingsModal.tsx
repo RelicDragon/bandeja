@@ -50,6 +50,7 @@ export const NotificationSettingsModal = ({
     'sendInvites',
     'sendDirectMessages',
     'sendReminders',
+    'sendWeatherAlerts',
     'sendWalletNotifications',
     'sendMarketplaceNotifications',
     'sendTeamNotifications',
@@ -72,6 +73,7 @@ export const NotificationSettingsModal = ({
         map[p.channelType] = {
           ...p,
           sendTeamNotifications: p.sendTeamNotifications ?? true,
+          sendWeatherAlerts: p.sendWeatherAlerts ?? true,
           sendPlayIntentNotifications: p.sendPlayIntentNotifications,
           sendPlayIntentSocialNotifications:
             p.sendPlayIntentSocialNotifications,
@@ -89,6 +91,7 @@ export const NotificationSettingsModal = ({
       map[p.channelType] = {
         ...p,
         sendTeamNotifications: p.sendTeamNotifications ?? true,
+        sendWeatherAlerts: p.sendWeatherAlerts ?? true,
         sendPlayIntentNotifications: p.sendPlayIntentNotifications,
         sendPlayIntentSocialNotifications: p.sendPlayIntentSocialNotifications,
       };
@@ -107,6 +110,7 @@ export const NotificationSettingsModal = ({
         sendInvites: p.sendInvites,
         sendDirectMessages: p.sendDirectMessages,
         sendReminders: p.sendReminders,
+        sendWeatherAlerts: p.sendWeatherAlerts,
         sendWalletNotifications: p.sendWalletNotifications,
         sendMarketplaceNotifications: p.sendMarketplaceNotifications,
         sendTeamNotifications: p.sendTeamNotifications,
@@ -281,6 +285,7 @@ export const NotificationSettingsModal = ({
     sendInvites: { label: 'profile.sendInvites', desc: 'profile.sendInvitesDescription' },
     sendDirectMessages: { label: 'profile.sendDirectMessages', desc: 'profile.sendDirectMessagesDescription' },
     sendReminders: { label: 'profile.sendReminders', desc: 'profile.sendRemindersDescription' },
+    sendWeatherAlerts: { label: 'profile.sendWeatherAlerts', desc: 'profile.sendWeatherAlertsDescription' },
     sendWalletNotifications: { label: 'profile.walletNotifications', desc: 'profile.walletNotificationsDescription' },
     sendMarketplaceNotifications: { label: 'profile.marketplaceNotifications', desc: 'profile.marketplaceNotificationsDescription' },
     sendTeamNotifications: { label: 'profile.teamNotifications', desc: 'profile.teamNotificationsDescription' },

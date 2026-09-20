@@ -81,7 +81,9 @@
     "pressBackAgainToExit": "もう一度戻るを押すと終了します",
     "editFullscreen": "全画面で編集",
     "exitFullscreen": "全画面を終了",
-    "characters": "文字"
+    "characters": "文字",
+    "comingSoon": "近日公開",
+    "comingSoonDescription": "このセクションは近日公開予定です。"
   },
   "sport": {
     "sport": "スポーツ",
