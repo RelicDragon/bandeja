@@ -12,7 +12,7 @@ import type {
 import {
   emptyExplanationBlob,
   isPendingFresh,
-  normalizeSourceLanguage,
+  RATING_EXPLANATION_SOURCE_LANG,
   readExplanationBlob,
   toStoredEntry,
   updateExplanationBlob,
@@ -249,17 +249,21 @@ function toOriginalResponse(source: StoredLlmRatingExplanation): RatingExplanati
 }
 
 /**
- * Ensures a single original insight exists (generated once).
+ * Ensures a single original insight exists (generated once), always in English.
  * Translations are handled separately — never regenerate for another locale.
  */
 export async function getOrStartRatingExplanationLlm(
   gameId: string,
   userId: string,
-  languageInput: string | undefined,
+  /** Ignored — the original is always English; the caller's locale is served by translation. */
+  _languageInput: string | undefined,
   initiatedByUserId?: string,
   options?: { retry?: boolean; allowStart?: boolean },
 ): Promise<RatingExplanationLlmResponse> {
-  const preferredLanguage = normalizeSourceLanguage(languageInput);
+  // Generating in the first viewer's locale made the canonical text depend on who
+  // opened it first, and forced translations *out of* Russian for a third of all
+  // rows — the direction most likely to come back untranslated.
+  const preferredLanguage = RATING_EXPLANATION_SOURCE_LANG;
   const retry = Boolean(options?.retry);
   const allowStart = Boolean(options?.allowStart);
 

@@ -194,6 +194,66 @@ export async function translationMatchesTargetFranc(
   return pass;
 }
 
+/**
+ * Shortest sample at which detector disagreement is trustworthy enough to
+ * overrule the model. Below it we stay permissive: short chat messages are
+ * exactly where detection is unreliable and the model's judgement is worth more.
+ */
+const PASSTHROUGH_GUARD_MIN_SAMPLE = 120;
+
+/**
+ * True when returning the source untranslated is a plausible answer for this
+ * target — i.e. the source may already be in the target language.
+ *
+ * Used to sanity-check a [[NO_TRANSLATION_NEEDED]] reply or a near-duplicate
+ * rewrite before it is handed back as a finished translation. Deliberately
+ * biased towards `true`: it only returns false when the sample is long enough
+ * to judge AND the detectors positively disagree with the model.
+ *
+ * tinyld is the authority here rather than franc, which mislabels Latin-script
+ * European languages (it reads a long English text as French).
+ */
+export async function sourcePassthroughIsPlausible(
+  text: string,
+  targetLanguage: string
+): Promise<boolean> {
+  const code = targetLanguage.toLowerCase();
+  const expected = FRANC_EXPECTED_BY_TARGET[code];
+  if (!expected?.length) {
+    return true;
+  }
+
+  const cleaned = normalizeTranslationOutput(text);
+  if (!cleaned) {
+    return true;
+  }
+
+  const sample = sampleForFrancDetection(cleaned);
+  if (sample.length < PASSTHROUGH_GUARD_MIN_SAMPLE) {
+    return true;
+  }
+
+  // Right script for a non-Latin target is decisive on its own.
+  if (scriptFallbackPasses(sample, code)) {
+    return true;
+  }
+
+  const hits = detectAll(sample);
+  if (hits.length === 0) {
+    // No opinion from the detector — do not overrule the model on a guess.
+    return true;
+  }
+
+  const plausible = tinyldTopKPasses(sample, code, hits);
+  console.info('[translation] passthrough_plausible', {
+    target: code,
+    plausible,
+    tinyldTop: hits.slice(0, TINYLD_TOP_K).map((h) => h.lang),
+    sampleLen: sample.length,
+  });
+  return plausible;
+}
+
 export async function sourceAppearsToBeTargetLanguage(
   text: string,
   targetLanguage: string

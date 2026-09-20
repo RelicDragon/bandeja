@@ -2,6 +2,7 @@ import prisma from '../../config/database';
 import { getAiService } from '../ai/ai.service';
 import { LLM_REASON } from '../ai/llmReasons';
 import { TranslationService } from '../chat/translation.service';
+import { translationIsRedundantOfSource } from '../chat/translationRedundant';
 import type {
   RatingExplanationLlmResponse,
   StoredLlmRatingTranslation,
@@ -116,6 +117,19 @@ async function runTranslation(
 
     if (!text) {
       await fail('Empty translation');
+      return;
+    }
+
+    // Defence in depth: a stored translation is cached forever and served as
+    // `kind: 'translation'`, so never persist one that is just the source text.
+    // Chat discards these rows instead; this path has no such fallback.
+    if (translationIsRedundantOfSource(sourceText, text, language)) {
+      console.warn('[ratingExplanationLlm] translation matched source, not storing', {
+        gameId,
+        userId,
+        language,
+      });
+      await fail('Translation returned the source text');
       return;
     }
 

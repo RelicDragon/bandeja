@@ -5,7 +5,11 @@ import { ChatSyncEventService } from './chatSyncEvent.service';
 import { getChatNotifier } from './chatNotifier';
 import { getAiService } from '../ai/ai.service';
 import { LLM_REASON, type LlmReason } from '../ai/llmReasons';
-import { sourceAppearsToBeTargetLanguage, translationMatchesTargetFranc } from './translationFrancCheck';
+import {
+  sourceAppearsToBeTargetLanguage,
+  sourcePassthroughIsPlausible,
+  translationMatchesTargetFranc,
+} from './translationFrancCheck';
 import {
   isNoTranslationNeededMarker,
   NO_TRANSLATION_NEEDED_MARKER,
@@ -23,6 +27,8 @@ export {
 
 const TRANSLATION_POLL_MS = 125;
 const TRANSLATION_FOLLOWER_MAX_WAIT_MS = 15_000;
+const TRANSLATION_UNAVAILABLE =
+  'Translation service is temporarily unavailable. Please try again later.';
 
 export class TranslationService {
   static extractLanguageCode(locale: string | null | undefined): string {
@@ -49,8 +55,20 @@ export class TranslationService {
 
     const ai = getAiService();
     if (!ai.isConfigured()) {
-      throw new ApiError(503, 'Translation service is temporarily unavailable. Please try again later.');
+      throw new ApiError(503, TRANSLATION_UNAVAILABLE);
     }
+
+    // Handing the source back untouched (marker or near-duplicate rewrite) is only
+    // legitimate when the source could already be in the target language. The
+    // pre-check above is deliberately strict, so the model may legitimately
+    // overrule it on short text; this guard only bites on samples long enough to
+    // judge confidently. Without it a wrong marker publishes untranslated text as
+    // a finished translation. Lazy + memoized: no cost unless a passthrough happens.
+    let passthroughCheck: Promise<boolean> | null = null;
+    const sourceCouldBeTargetLanguage = (): Promise<boolean> => {
+      passthroughCheck ??= sourcePassthroughIsPlausible(text, targetLanguage);
+      return passthroughCheck;
+    };
 
     const targetLanguageName = TRANSLATION_LANGUAGE_NAMES[targetLanguage] || targetLanguage;
 
@@ -105,9 +123,25 @@ export class TranslationService {
             console.info('[translation] retry', { reason: 'empty_after_normalize', nextAttempt: 1 });
             continue;
           }
-          throw new ApiError(503, 'Translation service is temporarily unavailable. Please try again later.');
+          throw new ApiError(503, TRANSLATION_UNAVAILABLE);
         }
         if (isNoTranslationNeededMarker(normalized)) {
+          if (!(await sourceCouldBeTargetLanguage())) {
+            console.warn('[translation] marker_rejected_source_not_target', {
+              attempt,
+              targetLanguage,
+              sourceChars: text.length,
+            });
+            if (attempt === 0) {
+              console.info('[translation] retry', {
+                reason: 'marker_source_not_target',
+                nextAttempt: 1,
+                targetLanguage,
+              });
+              continue;
+            }
+            throw new ApiError(503, TRANSLATION_UNAVAILABLE);
+          }
           const original = normalizeTranslationOutput(text);
           console.info('[translation] llm_no_translation_needed', {
             attempt,
@@ -117,6 +151,23 @@ export class TranslationService {
           return original;
         }
         if (translationIsRedundantOfSource(text, normalized, targetLanguage)) {
+          if (!(await sourceCouldBeTargetLanguage())) {
+            console.warn('[translation] redundant_rejected_source_not_target', {
+              attempt,
+              targetLanguage,
+              sourceChars: text.length,
+              outChars: normalized.length,
+            });
+            if (attempt === 0) {
+              console.info('[translation] retry', {
+                reason: 'redundant_source_not_target',
+                nextAttempt: 1,
+                targetLanguage,
+              });
+              continue;
+            }
+            throw new ApiError(503, TRANSLATION_UNAVAILABLE);
+          }
           const original = normalizeTranslationOutput(text);
           console.info('[translation] llm_redundant_rewrite', {
             attempt,
@@ -143,13 +194,13 @@ export class TranslationService {
         }
       }
       console.info('[translation] exhausted_retries', { targetLanguage });
-      throw new ApiError(503, 'Translation service is temporarily unavailable. Please try again later.');
+      throw new ApiError(503, TRANSLATION_UNAVAILABLE);
     } catch (error: unknown) {
       if (error instanceof ApiError) {
         throw error;
       }
       console.error('Translation error:', error);
-      throw new ApiError(503, 'Translation service is temporarily unavailable. Please try again later.');
+      throw new ApiError(503, TRANSLATION_UNAVAILABLE);
     }
   }
 

@@ -5,7 +5,10 @@ import { logLlmUsage } from './llmUsageLog.service';
 
 const OPENAI_DEFAULT_MODEL = 'gpt-5-mini';
 const DEEPSEEK_BASE_URL = 'https://api.deepseek.com';
-const DEEPSEEK_DEFAULT_MODEL = 'deepseek-v4-flash';
+// Canonical current alias (DeepSeek-V4.1-Flash). The old `deepseek-v4-flash` and
+// `deepseek-chat` names still resolve here, so logging them recorded a model that
+// was not the one actually serving the request.
+const DEEPSEEK_DEFAULT_MODEL = 'deepseek-flash';
 
 function getClient(): OpenAI | null {
   const provider = config.ai.provider;

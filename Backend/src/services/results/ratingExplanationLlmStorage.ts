@@ -7,7 +7,14 @@ import type {
 
 export const LLM_RATING_EXPLANATION_KEY = 'llmRatingExplanation';
 
-/** Languages used when generating the original insight (app locales). */
+/**
+ * The original insight is always written in English; every other locale is
+ * served by translating it. Pinning this keeps one canonical text per outcome
+ * instead of letting whoever opened it first decide the source language.
+ */
+export const RATING_EXPLANATION_SOURCE_LANG = 'en';
+
+/** Languages the original insight may already exist in (legacy rows). */
 export const SOURCE_LLM_RATING_LANGS = [
   'en', 'ru', 'sr', 'es', 'cs', 'ar', 'zh', 'id', 'hi', 'th', 'ja',
 ] as const;

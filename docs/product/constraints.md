@@ -185,3 +185,20 @@ QR/store landing records UTM + `aid` **once**. Later UTMs do not overwrite store
 - Event kinds: `view` \| `ios` \| `android` \| `web`
 
 Do not generate a new `aid` on every page view when one already exists. Do not treat SPA `/link-to-app` as the QR UI.
+
+### Rating explanation: English original, translated per locale
+
+The LLM rating insight on `GameOutcome.metadata.llmRatingExplanation` is generated **once, always in English** (`RATING_EXPLANATION_SOURCE_LANG`). Every other locale is served by translating that original — the source is never regenerated per language. Generating in the first viewer's locale made the canonical text depend on who opened the outcome first, and forced translation *out of* Russian for a third of all rows.
+
+A translation is **never** stored when it equals the source. An LLM that answers `[[NO_TRANSLATION_NEEDED]]` (or returns a near-duplicate rewrite) is only believed when `sourcePassthroughIsPlausible` agrees the source could already be in the target language; otherwise the call retries and then fails. DeepSeek Flash emits that marker for plainly cross-language pairs (18% of prod calls), and a stored passthrough is cached forever and served as `kind: 'translation'`.
+
+Changing model name is **not** a mitigation: `deepseek-chat` and `deepseek-v4-flash` are legacy aliases that DeepSeek now serves with `deepseek-flash` (V4.1-Flash). `DEEPSEEK_DEFAULT_MODEL` uses the canonical id so `LlmUsageLog.model` records what actually served the request — the old alias logged a model that was no longer running.
+
+- Source generation: `Backend/src/services/results/ratingExplanationLlm.service.ts`
+- Translation + storage guard: `Backend/src/services/results/ratingExplanationLlmTranslate.service.ts`
+- Blob shape + source-language constant: `Backend/src/services/results/ratingExplanationLlmStorage.ts`
+- Passthrough guard: `Backend/src/services/chat/translationFrancCheck.ts` (`sourcePassthroughIsPlausible`)
+- Marker/redundancy handling: `Backend/src/services/chat/translation.service.ts`
+- Tests: `npm run test:translation-guard` (Backend)
+
+Chat keeps the permissive path on purpose: short messages are where detection is unreliable and the model's judgement is worth more, and chat discards a redundant translation row instead of persisting it.
