@@ -78,7 +78,10 @@
     "select": "เลือก",
     "update": "อัปเดต",
     "updating": "กำลังอัปเดต...",
-    "pressBackAgainToExit": "กดกลับอีกครั้งเพื่อออก"
+    "pressBackAgainToExit": "กดกลับอีกครั้งเพื่อออก",
+    "editFullscreen": "แก้ไขแบบเต็มหน้าจอ",
+    "exitFullscreen": "ออกจากโหมดเต็มหน้าจอ",
+    "characters": "ตัวอักษร"
   },
   "sport": {
     "sport": "กีฬา",

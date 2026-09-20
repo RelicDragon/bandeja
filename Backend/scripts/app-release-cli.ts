@@ -36,6 +36,7 @@ import {
   ReleaseUploadError,
   isAndroidAlreadyUploadedError,
   isGoogleReviewConflictError,
+  isIosAlreadyUploadedError,
   isIosReviewConflictError,
   resolvePlayTrack,
   runAndroidStoreVerification,
@@ -988,7 +989,26 @@ async function runUploadPhase(
       ) {
         uploadTasks.push(
           timedListrTask(timer, 'Upload iOS IPA to App Store Connect', async () => {
-            await runIosBinaryUpload(current);
+            try {
+              await runIosBinaryUpload(current);
+            } catch (error) {
+              const uploadError =
+                error instanceof ReleaseUploadError
+                  ? error
+                  : new ReleaseUploadError(
+                      error instanceof Error ? error.message : String(error),
+                      '',
+                    );
+              if (!isIosAlreadyUploadedError(uploadError)) {
+                throw uploadError;
+              }
+              // App Store Connect already holds this bundle version, so a previous run got the
+              // binary across before it was recorded. The processing wait below matches the exact
+              // version and build, so it verifies this is our binary before anything else runs.
+              clack.log.warn(
+                `App Store Connect already has build ${current.planned.build} — skipping the IPA upload and verifying it while waiting for processing.`,
+              );
+            }
             current = {
               ...current,
               uploads: {
@@ -1314,6 +1334,76 @@ async function finalizeRelease(session: ReleaseSession): Promise<void> {
   );
 }
 
+/**
+ * The steps this run will actually perform, in order. A resumed session has already
+ * bumped, built, or uploaded some of them, so naming the full pipeline would be a lie —
+ * and the confirm prompt is the one place the operator decides whether to proceed.
+ */
+function pendingReleaseSteps(session: ReleaseSession): string[] {
+  const steps: string[] = [];
+  const phase = getSessionPhase(session);
+  if (phase === 'planning' || phase === 'ready-to-apply') {
+    steps.push('bump', 'build');
+  } else if (phase === 'ready-to-build') {
+    steps.push('build');
+  }
+
+  const uploads = session.uploads ?? {};
+  if (includesAndroid(session.targetPlatform) && !uploads.android) {
+    steps.push('Android upload');
+  }
+  if (includesIos(session.targetPlatform) && !uploads.ios) {
+    if (!uploads.iosBinary) {
+      steps.push('iOS upload');
+    }
+    if (!uploads.iosBuildProcessed) {
+      steps.push('processing wait');
+    }
+    if (
+      iosDistributesExternally(session.store.iosDistribution) &&
+      !uploads.iosTestFlightDistributed
+    ) {
+      steps.push('TestFlight distribution');
+    }
+    if (iosTouchesAppStoreVersion(session.store.iosDistribution) && !uploads.iosStoreVersion) {
+      steps.push(
+        iosSubmitsForReview(session.store.iosDistribution)
+          ? 'App Store submit'
+          : 'App Store metadata',
+      );
+    }
+  }
+  if (!uploads.storesVerified) {
+    steps.push('verify');
+  }
+  if (shouldUpdateShippedBaseline(session.targetPlatform, session.store)) {
+    steps.push('baseline');
+  }
+  return steps;
+}
+
+function releaseConfirmMessage(session: ReleaseSession, dryRun: boolean): string {
+  if (dryRun) {
+    return 'Finish dry-run planner?';
+  }
+
+  const steps = pendingReleaseSteps(session);
+  if (steps.length === 0) {
+    return 'Nothing left to do — finish this release and clear the session?';
+  }
+
+  // "Resuming" means work is already recorded as done, not that APP_RELEASE_RESUME was
+  // set — a session that crashed after uploading is a resume however it was re-entered.
+  const resuming =
+    getSessionPhase(session) === 'ready-to-upload' ||
+    Object.values(session.uploads ?? {}).some((done) => done === true);
+  const verb = resuming ? 'Resume release' : 'Run full release';
+  if (!shouldUpdateShippedBaseline(session.targetPlatform, session.store)) {
+    return `${verb} (${steps.join(', ')}) without touching App Review or the shipped baseline?`;
+  }
+  return `${verb} (${steps.join(', ')})?`;
+}
+
 async function executeRelease(session: ReleaseSession): Promise<void> {
   const dryRun = isDryRun();
   let withStore = await promptStoreConfig(session);
@@ -1323,11 +1413,7 @@ async function executeRelease(session: ReleaseSession): Promise<void> {
 
   const confirmed = handleCancel(
     await clack.confirm({
-      message: dryRun
-        ? 'Finish dry-run planner?'
-        : shouldUpdateShippedBaseline(withStore.targetPlatform, withStore.store)
-          ? 'Run full release (bump, build, upload, baseline)?'
-          : 'Build and upload TestFlight without touching App Review or the shipped baseline?',
+      message: releaseConfirmMessage(withStore, dryRun),
       initialValue: true,
     }),
   );

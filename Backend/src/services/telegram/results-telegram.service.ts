@@ -4,8 +4,15 @@ import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import { config } from '../../config/env';
 import { LLM_REASON } from '../ai/llmReasons';
-import { escapeHTML, trimTextForTelegram } from './utils';
+import {
+  markdownToTelegramHtml,
+  telegramHtmlTextLength,
+  trimTelegramHtml,
+} from './shared/telegramMarkdown';
 import { generateResultsSummary } from '../gameResultsArtifact/resultsSummary.service';
+
+const TELEGRAM_CAPTION_LIMIT = 1024;
+const TELEGRAM_MESSAGE_LIMIT = 4096;
 
 export class ResultsTelegramService {
   static checkResultsEntered(game: any): boolean {
@@ -110,9 +117,11 @@ export class ResultsTelegramService {
     try {
       const resultsImageFile = new InputFile(resultsImageBuffer, 'results.jpg');
 
-      const escapedSummary = escapeHTML(summaryText);
+      // The summary is Markdown (LLM-written, optionally edited by the organizer);
+      // Telegram only renders it once converted to its own HTML flavour.
+      const summaryHtml = markdownToTelegramHtml(summaryText);
 
-      if (escapedSummary.length > 1024) {
+      if (telegramHtmlTextLength(summaryHtml) > TELEGRAM_CAPTION_LIMIT) {
         if (mainPhotoUrl) {
           try {
             const mainPhotoBuffer = await this.downloadImageAsBuffer(mainPhotoUrl);
@@ -136,12 +145,12 @@ export class ResultsTelegramService {
           await api.sendPhoto(chatId, resultsImageFile);
         }
 
-        const trimmedText = trimTextForTelegram(escapedSummary, false);
+        const trimmedText = trimTelegramHtml(summaryHtml, TELEGRAM_MESSAGE_LIMIT);
         await api.sendMessage(chatId, trimmedText, {
           parse_mode: 'HTML',
         });
       } else {
-        const finalCaption = escapedSummary;
+        const finalCaption = summaryHtml;
 
         if (mainPhotoUrl) {
           try {

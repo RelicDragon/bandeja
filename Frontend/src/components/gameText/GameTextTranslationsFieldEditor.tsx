@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Loader2 } from 'lucide-react';
 import type { GameTextEditorFieldDto } from '@/utils/gameText/gameTextEditor.types';
 import { initialGameTextEditorFieldDraft } from '@/utils/gameText/gameTextEditorDraft';
+import { ExpandableTextarea } from '@/components/ui/ExpandableTextarea';
 
 type GameTextTranslationsFieldEditorProps = {
   field: GameTextEditorFieldDto;
@@ -75,9 +76,10 @@ export function GameTextTranslationsFieldEditor({
           <p className="mb-1 text-xs font-medium uppercase tracking-wide text-gray-500">
             {translationLabel}
           </p>
-          <textarea
+          <ExpandableTextarea
             value={draft}
-            onChange={(e) => onDraftChange(e.target.value)}
+            onValueChange={onDraftChange}
+            fullscreenTitle={translationLabel}
             disabled={disabled || busy || saving}
             rows={field.field === 'description' ? 5 : 2}
             className="w-full resize-y rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"

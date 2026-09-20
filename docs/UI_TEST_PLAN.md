@@ -185,6 +185,28 @@ Frontend/e2e/
 | G-52 | Player overlay training attendance | Open `?player=` for a user who attended TRAINING as PLAYING (past/finished; not a future RSVP). Switch sport. | Compact `N games · M trainings` next to that sport’s level; rated gamesPlayed unchanged; trainings match the selected sport |
 | G-53 | Player overlay training attendance zero | Open `?player=` for a user with 0 TRAINING attendance, or only upcoming TRAINING RSVPs | Shows 0 trainings (quiet empty); no crash |
 
+### 4.1b Fullscreen memo editor (`ExpandableTextarea`)
+
+Long free-text fields (game/event/league description, marketplace listing, profile bio,
+club description & policy, FAQ answer, review comment, bug description, game-text
+translation drafts) render an expand control in the field's top trailing corner that opens
+`FullscreenTextEditor`. The overlay edits the same value live — closing never discards text.
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| FTE-01 | Expand control present | Open any long text field listed above | Small expand icon pinned top-trailing inside the field; first line of text is not covered |
+| FTE-02 | Open & seed | Tap the expand control | Fullscreen editor slides up; textarea focused with the caret where it was inline; header shows the field label + Done |
+| FTE-03 | Live value | Type in the fullscreen editor, then Done | Inline field already holds the typed text; caret restored inline |
+| FTE-04 | Back / Escape keeps text | Open editor, type, then Android back / Escape / iOS back gesture | Editor closes, text kept (no discard prompt) |
+| FTE-05 | `@mobile` keyboard layout | Cap iOS/Android or mobile Safari: open the editor with the software keyboard up | Panel shrinks to the visual viewport (`--vv-offset-top` / `--overlay-bottom-inset`); header, caret and counter all stay above the keyboard; no double keyboard inset |
+| FTE-06 | `@mobile` keyboard show/hide | Toggle the keyboard while the editor is open | Panel height animates between full screen and the above-keyboard frame; no content jump behind the keyboard |
+| FTE-07 | Scrolled visual viewport | iOS Safari with the page scrolled inside the visual viewport | Panel top follows `--vv-offset-top`; header never hides under the status bar |
+| FTE-08 | Counter | Field with `maxLength` (bio 128, review 1000, bug 1000) | Footer shows `used/max characters`; typing stops at the cap |
+| FTE-09 | Close animation | Tap Done | Editor animates out, then unmounts; underlying form unchanged apart from the new text |
+| FTE-10 | Disabled / read-only | Field disabled (e.g. translation draft while saving) | No expand control |
+| FTE-11 | Desktop shortcut | Focus the fullscreen textarea → `Cmd/Ctrl+Enter` | Editor closes, text kept |
+| FTE-12 | RTL | App language العربية | Expand control sits top-left (inline-end); editor header mirrors |
+
 ### 4.2 Onboarding gates & prompts
 
 | ID | Test | Steps | Expected |
@@ -696,7 +718,7 @@ Frontend/e2e/
 | C-50 | Game fixed roster | Create GAME singles then doubles | Roster slots and `maxParticipants` follow format (2 ↔ 4) |
 | C-27 | Fixed pairs segmented switch | Create GAME doubles → pick Rotating or Fixed pairs | Team setup shown when Fixed pairs selected |
 | C-27t | Tournament match format + fixed pairs | Create TOURNAMENT → pick participant count cards → 1v1/2v2 then Rotating/Fixed pairs | Same controls as GAME; roster cards unchanged; Fixed pairs only when 2v2 |
-| C-28 | Game name & miscellaneous | Name input inside Name & photo card at top; description and price in Miscellaneous section | Saved on submit |
+| C-28 | Game name & miscellaneous | Name input inside Name & photo card at top; description and price in Miscellaneous section | Saved on submit; description has the fullscreen expand control (`FTE-01`…`FTE-12`) |
 | C-71 | Authored text auto-translate helper | Open `/create-game` Name & photo / miscellaneous name+description; open `/create-event` name+description | Helper “Automatically translated for players in other languages.” under authored fields; no translation language picker or wait step before create |
 | C-72 | Create not blocked by translation | Create GAME/EVENT with name+description while generation is pending or disabled (`GAME_TEXT_LOCALIZATION_GENERATION_ENABLED` off / worker slow) | Create succeeds immediately after DB save; navigates to details; no wait for AI/translations |
 | C-73 | Duplicate seeds authored originals | Game with ready localized display ≠ authored name; Duplicate from details | Create form name/description are authored originals only (`authoredGameTextForEdit`); not the viewer’s localized display |)

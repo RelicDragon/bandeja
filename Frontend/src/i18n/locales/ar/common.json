@@ -78,7 +78,10 @@
     "select": "اختيار",
     "update": "تحديث",
     "updating": "جارٍ التحديث...",
-    "pressBackAgainToExit": "اضغط رجوع مرة أخرى للخروج"
+    "pressBackAgainToExit": "اضغط رجوع مرة أخرى للخروج",
+    "editFullscreen": "التحرير في وضع ملء الشاشة",
+    "exitFullscreen": "الخروج من وضع ملء الشاشة",
+    "characters": "حرف"
   },
   "sport": {
     "sport": "الرياضة",

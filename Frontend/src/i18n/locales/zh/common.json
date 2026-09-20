@@ -78,7 +78,10 @@
     "select": "选择",
     "update": "更新",
     "updating": "更新中...",
-    "pressBackAgainToExit": "再一次返回退出"
+    "pressBackAgainToExit": "再一次返回退出",
+    "editFullscreen": "全屏编辑",
+    "exitFullscreen": "退出全屏",
+    "characters": "字符"
   },
   "sport": {
     "sport": "运动",

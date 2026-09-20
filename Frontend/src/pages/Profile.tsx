@@ -65,6 +65,7 @@ import { MainThemeSelector } from '@/components/MainThemeSelector';
 import type { AppIconId } from '@/config/appIcons';
 import { openExternalUrl } from '@/utils/openExternalUrl';
 import { buildTelegramBotStartUrl } from '@/utils/telegramBotUrl';
+import { ExpandableTextarea } from '@/components/ui/ExpandableTextarea';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -898,9 +899,10 @@ export const ProfileContent = () => {
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 {t('profile.bio')}
               </label>
-              <textarea
+              <ExpandableTextarea
                 value={bio}
-                onChange={(e) => handleBioChange(e.target.value)}
+                onValueChange={handleBioChange}
+                fullscreenTitle={t('profile.bio')}
                 placeholder={t('profile.bioPlaceholder')}
                 maxLength={128}
                 rows={3}

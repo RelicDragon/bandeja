@@ -452,7 +452,13 @@ def ios_binary_already_uploaded?(error)
     message.match?(/build.*already exists/i) ||
     message.match?(/already uploaded a build/i) ||
     message.match?(/build number.*already/i) ||
-    message.match?(/uploaded.*build.*already/i)
+    message.match?(/uploaded.*build.*already/i) ||
+    # What App Store Connect actually says when the bundle version is already on file:
+    # "The provided entity includes an attribute with a value that has already been
+    #  used (-19232) The bundle version must be higher than the previously uploaded
+    #  version: '231'." None of the phrasings above match it.
+    message.match?(/\(-19232\)/) ||
+    message.match?(/bundle version must be higher than the previously uploaded version/i)
 end
 
 def assert_testflight_groups_exist!(group_names)

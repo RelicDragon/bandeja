@@ -78,7 +78,10 @@
     "select": "चुनें",
     "update": "अपडेट",
     "updating": "अपडेट हो रहा है...",
-    "pressBackAgainToExit": "बाहर निकलने के लिए फिर से वापस दबाएँ"
+    "pressBackAgainToExit": "बाहर निकलने के लिए फिर से वापस दबाएँ",
+    "editFullscreen": "पूर्ण स्क्रीन में संपादित करें",
+    "exitFullscreen": "पूर्ण स्क्रीन से बाहर निकलें",
+    "characters": "वर्ण"
   },
   "sport": {
     "sport": "खेल",

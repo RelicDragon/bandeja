@@ -85,6 +85,13 @@ export function isAndroidAlreadyUploadedError(error: ReleaseUploadError): boolea
   );
 }
 
+export function isIosAlreadyUploadedError(error: ReleaseUploadError): boolean {
+  const text = `${error.message}\n${error.logTail}\n${error.output}`;
+  return /-19232|bundle version must be higher than the previously uploaded version|the provided entity includes an attribute with a value that has already been used/i.test(
+    text,
+  );
+}
+
 export function isGoogleReviewConflictError(error: ReleaseUploadError): boolean {
   const text = `${error.message}\n${error.logTail}\n${error.output}`;
   return /APP_RELEASE_GOOGLE_REVIEW_CONFLICT|CHANGES_ALREADY_IN_REVIEW|already have changes in review/i.test(

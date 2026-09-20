@@ -78,7 +78,10 @@
     "retry": "Retry",
     "on": "On",
     "pressBackAgainToExit": "Press back again to exit",
-    "off": "Off"
+    "off": "Off",
+    "editFullscreen": "Uredi preko celog ekrana",
+    "exitFullscreen": "Izađi iz punog ekrana",
+    "characters": "znakova"
   },
   "sport": {
     "sport": "Sport",

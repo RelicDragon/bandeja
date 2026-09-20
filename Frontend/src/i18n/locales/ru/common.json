@@ -78,7 +78,10 @@
     "retry": "Retry",
     "on": "On",
     "pressBackAgainToExit": "Press back again to exit",
-    "off": "Off"
+    "off": "Off",
+    "editFullscreen": "Редактировать во весь экран",
+    "exitFullscreen": "Выйти из полноэкранного режима",
+    "characters": "символов"
   },
   "sport": {
     "sport": "Вид спорта",

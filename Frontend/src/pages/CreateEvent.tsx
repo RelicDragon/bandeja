@@ -45,6 +45,7 @@ import {
 } from '@/utils/createEventPayload';
 import { authoredGameTextForEdit } from '@/utils/gameText/authoredGameTextForEdit';
 import { GameTextAuthoredFieldsHint } from '@/components/gameText/GameTextAuthoredFieldsHint';
+import { ExpandableTextarea } from '@/components/ui/ExpandableTextarea';
 
 type CreateEventProps = {
   initialGameData?: Partial<Game>;
@@ -267,9 +268,10 @@ export function CreateEvent({ initialGameData }: CreateEventProps) {
             <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
               {t('createEvent.description')}
             </label>
-            <textarea
+            <ExpandableTextarea
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onValueChange={setDescription}
+              fullscreenTitle={t('createEvent.description')}
               rows={4}
               placeholder={t('createEvent.descriptionPlaceholder')}
               className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 outline-none resize-none"

@@ -15,7 +15,6 @@ import { GameAvatar } from '@/components/GameAvatar';
 import { FullscreenImageViewer } from '@/components/FullscreenImageViewer';
 import { AddToCalendarModal } from '@/components';
 import { getShareUrl } from '@/utils/shareUrl';
-import { buildDisplayedGameListingSharePayload } from '@/utils/gameText/shareDisplayedGameListing';
 import { resolveUserCurrency } from '@/utils/currency';
 import type { EditGameInfoInitialTabId } from './EditGameInfoModal';
 import { isCapacitor } from '@/utils/capacitor';
@@ -237,20 +236,13 @@ export const GameInfo = ({
   };
 
   const handleShare = async () => {
+    // Share/copy the link only — never the game name or description, so pasting
+    // never produces a duplicated or prefixed URL.
     const shareUrl = getShareUrl();
-    const payload = buildDisplayedGameListingSharePayload({
-      name: displayName,
-      description: displayDescription,
-      url: shareUrl,
-    });
 
     if (isCapacitor()) {
       try {
-        await Share.share({
-          title: payload.title,
-          text: payload.text,
-          url: payload.url,
-        });
+        await Share.share({ url: shareUrl });
         return;
       } catch (error) {
         if ((error as Error).name === 'AbortError') {
@@ -262,11 +254,7 @@ export const GameInfo = ({
 
     if (navigator.share && (window.isSecureContext || location.protocol === 'https:')) {
       try {
-        await navigator.share({
-          title: payload.title,
-          text: payload.text,
-          url: payload.url,
-        });
+        await navigator.share({ url: shareUrl });
         return;
       } catch (error) {
         if ((error as Error).name === 'AbortError') {
@@ -278,7 +266,7 @@ export const GameInfo = ({
 
     if (navigator.clipboard && (window.isSecureContext || location.protocol === 'https:')) {
       try {
-        await navigator.clipboard.writeText(payload.clipboardText);
+        await navigator.clipboard.writeText(shareUrl);
         toast.success(t('gameDetails.linkCopied'));
         return;
       } catch (error) {

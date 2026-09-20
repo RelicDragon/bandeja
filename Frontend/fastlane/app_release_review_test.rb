@@ -197,4 +197,21 @@ assert(
   "TestFlight-only is valid when no App Store version exists for the new marketing version"
 )
 
+assert(
+  fastfile.ios_binary_already_uploaded?(
+    "Error uploading ipa file: \n [Application Loader Error Output]: " \
+    "[ContentDelivery.Uploader.10366EF60] The provided entity includes an attribute " \
+    "with a value that has already been used (-19232) The bundle version must be " \
+    "higher than the previously uploaded version: ‘231’. " \
+    "(ID: 2c74614c-845b-45b9-94c5-f63ca20597e5)"
+  ),
+  "App Store Connect's real already-used bundle version error is recognised"
+)
+assert(
+  !fastfile.ios_binary_already_uploaded?(
+    "Error uploading ipa file: Invalid Info.plist: missing CFBundleVersion"
+  ),
+  "an unrelated iOS upload failure is not treated as already uploaded"
+)
+
 puts "fastlane app-release review tests: OK"

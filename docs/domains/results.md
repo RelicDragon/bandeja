@@ -22,7 +22,7 @@ Per player: `GET /results/game/:gameId/outcome/:userId/explanation`. `outcomeExp
 
 ## Artifacts / Replicate
 
-Background queue: `gameResultsArtifactQueue.service.ts`. Summary + photo (`prepareResultsArtifactSummary` / `Photo` on `game.controller.ts`). Admin picks Replicate model (`replicatePhotoModelSetting.service.ts`, Platform Settings). Telegram post block when ready (`sendResultsToTelegram`). Share results card with optional generated photo (`GameResultsShareCard`).
+Background queue: `gameResultsArtifactQueue.service.ts`. Summary + photo (`prepareResultsArtifactSummary` / `Photo` on `game.controller.ts`). Admin picks Replicate model (`replicatePhotoModelSetting.service.ts`, Platform Settings). Telegram post block when ready (`sendResultsToTelegram`). The summary is Markdown (LLM-written, organizer-editable) — `telegramMarkdown.ts` converts it to Telegram HTML (`**bold**`, `_italic_`, `#` headings, `- ` bullets, links, code) before posting, so caption/message length is measured on the rendered text, not the tags. Share results card with optional generated photo (`GameResultsShareCard`).
 
 ## BAR auto-results
 

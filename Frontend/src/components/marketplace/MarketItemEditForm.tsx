@@ -11,6 +11,7 @@ import { SegmentedSwitch } from '@/components/SegmentedSwitch';
 import { MapPin } from 'lucide-react';
 import { useTranslatedGeo } from '@/hooks/useTranslatedGeo';
 import { pickImages } from '@/utils/photoCapture';
+import { ExpandableTextarea } from '@/components/ui/ExpandableTextarea';
 import {
   filterCategoriesForListing,
   getMarketplaceCategorySport,
@@ -231,9 +232,10 @@ export const MarketItemEditForm = ({ item, onSave, onCancel }: MarketItemEditFor
           </FormField>
 
           <FormField>
-            <textarea
+            <ExpandableTextarea
               value={form.description}
-              onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+              onValueChange={(description) => setForm((f) => ({ ...f, description }))}
+              fullscreenTitle={t('marketplace.description', { defaultValue: 'Description' })}
               rows={3}
               className={INPUT_CLASS}
               placeholder={t('marketplace.descriptionPlaceholder', { defaultValue: 'Describe your listing...' })}

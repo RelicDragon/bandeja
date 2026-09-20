@@ -4,6 +4,7 @@ import {
   mergeStoreVersionFloor,
   parseStoreVersionOutput,
   proposeNextFromStoreVersions,
+  storeHoldsPlannedRelease,
   validatePlannedAgainstStores,
 } from './app-release-store-version';
 
@@ -55,6 +56,53 @@ assert(
     'ios',
   ) !== null,
   'validatePlannedAgainstStores rejects lower version',
+);
+
+// A resumed session whose own binaries are already on the stores must not be told to
+// start over — equality with the planned build is the expected state, not a collision.
+assert(
+  validatePlannedAgainstStores(
+    { version: '0.97.49', build: 231 },
+    { android: { version: '0.97.49', build: 231 }, ios: { version: '0.97.49', build: 231 } },
+    'both',
+    { android: true, ios: true },
+  ) === null,
+  'validatePlannedAgainstStores accepts our own already-uploaded build on resume',
+);
+
+assert(
+  validatePlannedAgainstStores(
+    { version: '0.97.49', build: 231 },
+    { android: { version: '0.97.49', build: 231 }, ios: { version: '0.97.49', build: 231 } },
+    'both',
+    { android: true },
+  ) !== null,
+  'validatePlannedAgainstStores still rejects a platform we did not upload',
+);
+
+assert(
+  validatePlannedAgainstStores(
+    { version: '0.97.49', build: 231 },
+    { android: { version: '0.97.50', build: 232 } },
+    'android',
+    { android: true },
+  ) !== null,
+  'validatePlannedAgainstStores still rejects a store build newer than planned',
+);
+
+assert(
+  storeHoldsPlannedRelease({ version: '0.97.49', build: 231 }, { version: '0.97.49', build: 231 }),
+  'storeHoldsPlannedRelease matches an exact version and build',
+);
+
+assert(
+  !storeHoldsPlannedRelease({ version: '0.97.48', build: 231 }, { version: '0.97.49', build: 231 }),
+  'storeHoldsPlannedRelease rejects a build collision under a different version',
+);
+
+assert(
+  !storeHoldsPlannedRelease(undefined, { version: '0.97.49', build: 231 }),
+  'storeHoldsPlannedRelease rejects a missing store version',
 );
 
 const parsed = parseStoreVersionOutput(

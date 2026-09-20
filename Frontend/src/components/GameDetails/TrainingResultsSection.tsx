@@ -19,6 +19,7 @@ import {
 import { parseGameSport } from '@/utils/gameSport';
 import { isGameArchived } from '@shared/gameMutationLock';
 import toast from 'react-hot-toast';
+import { ExpandableTextarea } from '@/components/ui/ExpandableTextarea';
 
 interface TrainingResultsSectionProps {
   game: Game;
@@ -349,11 +350,13 @@ export const TrainingResultsSection = ({
                     </button>
                   ))}
                 </div>
-                <textarea
+                <ExpandableTextarea
                   value={reviewText}
-                  onChange={(e) => setReviewText(e.target.value.slice(0, 1000))}
+                  onValueChange={(text) => setReviewText(text.slice(0, 1000))}
+                  fullscreenTitle={t('training.editReview', { defaultValue: 'Edit review' })}
                   placeholder={t('training.reviewTextPlaceholder', { defaultValue: 'Optional comment (max 1000 characters)' })}
-                  className="w-full px-4 py-3 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-800/80 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 mb-4 min-h-[88px] focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 dark:focus:ring-primary-400/40 transition-shadow resize-none"
+                  wrapperClassName="mb-4"
+                  className="w-full px-4 py-3 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-800/80 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 min-h-[88px] focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 dark:focus:ring-primary-400/40 transition-shadow resize-none"
                   maxLength={1000}
                   rows={3}
                 />

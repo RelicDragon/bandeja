@@ -1,0 +1,105 @@
+/* Fullscreen memo editor (components/ui/FullscreenTextEditor.tsx).
+   Primary target is Capacitor iOS/Android and mobile browsers, where the software
+   keyboard covers the bottom half of the layout viewport. The generic
+   `.fullscreen-dialog-root` only pads its body by --keyboard-height; a text editor
+   needs its header and footer pinned inside the *visual* viewport instead, so the
+   caret, the Done button and the counter all stay reachable while typing.
+
+   Contract: utils/keyboardLayout.ts + utils/overlayKeyboardLayout.ts
+   (--vv-offset-top, --overlay-bottom-inset, --overlay-safe-top-overlap).
+   In `native-resize` mode (browsers that shrink the layout viewport) the body
+   class is absent and `fixed inset-0` is already correct — these rules no-op. */
+
+.fullscreen-dialog-root.fullscreen-text-editor {
+  transition:
+    top 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    bottom 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+html body.keyboard-visible .fullscreen-dialog-root.fullscreen-text-editor {
+  top: var(--vv-offset-top, 0px);
+  bottom: var(--overlay-bottom-inset, var(--keyboard-height, 0px));
+}
+
+/* The panel already shrinks to the visual viewport; the generic body padding
+   would subtract the keyboard inset a second time. */
+html body.keyboard-visible
+  .fullscreen-dialog-root
+  .cap-fullscreen-dialog-body.fullscreen-text-editor-body {
+  padding-bottom: 0;
+}
+
+.fullscreen-text-editor-body {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+.fullscreen-text-editor-header {
+  padding-top: max(0.5rem, env(safe-area-inset-top, 0px));
+}
+
+/* Keyboard up: the status bar is outside the visual-viewport frame already. */
+body.keyboard-visible .fullscreen-text-editor-header {
+  padding-top: max(0.5rem, var(--overlay-safe-top-overlap, 0px));
+}
+
+.fullscreen-text-editor-footer {
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0px));
+}
+
+/* Keyboard up: the home indicator sits behind the keyboard — reclaim the space. */
+body.keyboard-visible .fullscreen-text-editor-footer {
+  padding-bottom: 0.5rem;
+}
+
+.fullscreen-text-editor-input {
+  overscroll-behavior: contain;
+}
+
+/* Enter/exit. Radix keeps the node mounted until the [data-state='closed']
+   animation ends, so the editor slides away instead of vanishing. */
+.fullscreen-text-editor-animate {
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+.fullscreen-text-editor-animate[data-state='open'] {
+  animation: fullscreen-text-editor-in 0.26s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
+.fullscreen-text-editor-animate[data-state='closed'] {
+  animation: fullscreen-text-editor-out 0.18s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+@keyframes fullscreen-text-editor-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 24px, 0) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes fullscreen-text-editor-out {
+  from {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translate3d(0, 16px, 0) scale(0.99);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fullscreen-dialog-root.fullscreen-text-editor {
+    transition: none;
+  }
+
+  .fullscreen-text-editor-animate[data-state='open'],
+  .fullscreen-text-editor-animate[data-state='closed'] {
+    animation-duration: 0.01ms;
+  }
+}

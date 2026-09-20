@@ -22,6 +22,8 @@ export const KEYBOARD_LAYOUT_SHRINK_THRESHOLD_PX = 80;
  * - `.dialog-content-animate` under `keyboard-dialog-shift`
  * - `.chat-container` footer/main lift
  * - `.fullscreen-dialog-root .cap-fullscreen-dialog-body`
+ * - `.fullscreen-text-editor` (memo editor; pins the panel to the visual-viewport
+ *   frame and opts out of the generic body padding — `fullscreen-text-editor.css`)
  * - mention portal z-index bump (`mentions-portal.css`)
  *
  * Managed surfaces (skip scroll-assist): see `isInsideKeyboardManagedSurface`.

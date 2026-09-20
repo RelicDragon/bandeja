@@ -11,6 +11,7 @@ import type { ClubReview, ClubReviewSummary } from '@/types';
 import { formatDate } from '@/utils/dateFormat';
 import { normalizeClubPhotos } from '@/utils/clubPhotos';
 import { useAuthStore } from '@/store/authStore';
+import { ExpandableTextarea } from '@/components/ui/ExpandableTextarea';
 
 const PAGE_SIZE = 15;
 const MAX_PHOTOS = 6;
@@ -392,9 +393,10 @@ export function ClubReviewsSection({ clubId, initialSummary, onClubRefresh, onOp
                     <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">{t('club.reviews.rateLabel')}</p>
                     <StarRow value={reviewStars} interactive onPick={setReviewStars} size={28} />
                   </div>
-                  <textarea
+                  <ExpandableTextarea
                     value={reviewText}
-                    onChange={(e) => setReviewText(e.target.value.slice(0, 1000))}
+                    onValueChange={(text) => setReviewText(text.slice(0, 1000))}
+                    fullscreenTitle={t('club.reviews.title')}
                     placeholder={t('club.reviews.commentPlaceholder')}
                     rows={3}
                     maxLength={1000}

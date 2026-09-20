@@ -78,7 +78,10 @@
     "select": "Select",
     "on": "On",
     "pressBackAgainToExit": "Press back again to exit",
-    "off": "Off"
+    "off": "Off",
+    "editFullscreen": "Upravit na celou obrazovku",
+    "exitFullscreen": "Ukončit celou obrazovku",
+    "characters": "znaků"
   },
   "sport": {
     "sport": "Sport",

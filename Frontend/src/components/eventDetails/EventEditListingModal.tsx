@@ -37,6 +37,7 @@ import {
 import { GameTextAuthoredFieldsHint } from '@/components/gameText/GameTextAuthoredFieldsHint';
 import { GameTextTranslationsOpenButton } from '@/components/gameText/GameTextTranslationsOpenButton';
 import { GameTextTranslationsPanel } from '@/components/gameText/GameTextTranslationsPanel';
+import { ExpandableTextarea } from '@/components/ui/ExpandableTextarea';
 import {
   authoredGameTextForEdit,
   shouldLabelAuthoredEditAsOriginal,
@@ -254,11 +255,13 @@ export function EventEditListingModal({ isOpen, game, onClose, onSaved }: EventE
           />
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
             {t('createEvent.description')}
-            <textarea
-              className="mt-1.5 w-full rounded-lg border border-gray-200 bg-gray-50/70 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800/40 dark:text-gray-200"
+            <ExpandableTextarea
+              wrapperClassName="mt-1.5"
+              className="w-full rounded-lg border border-gray-200 bg-gray-50/70 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800/40 dark:text-gray-200"
               rows={4}
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onValueChange={setDescription}
+              fullscreenTitle={t('createEvent.description')}
               placeholder={t('createEvent.descriptionPlaceholder')}
               dir="auto"
             />

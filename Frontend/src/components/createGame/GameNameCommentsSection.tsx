@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import type { EntityType, PriceCurrency, PriceType } from '@/types';
 import { PriceSection } from './PriceSection';
 import { GameTextAuthoredFieldsHint } from '@/components/gameText/GameTextAuthoredFieldsHint';
+import { ExpandableTextarea } from '@/components/ui/ExpandableTextarea';
 
 interface GameNameCommentsSectionProps {
   comments: string;
@@ -55,9 +56,10 @@ export const GameNameCommentsSection = ({
           <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
             {descriptionLabel}
           </label>
-          <textarea
+          <ExpandableTextarea
             value={comments}
-            onChange={(e) => onCommentsChange(e.target.value)}
+            onValueChange={onCommentsChange}
+            fullscreenTitle={descriptionLabel}
             placeholder={descriptionPlaceholder}
             className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none resize-none"
             rows={3}

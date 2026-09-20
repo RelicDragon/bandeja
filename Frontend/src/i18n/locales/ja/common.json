@@ -78,7 +78,10 @@
     "select": "選択",
     "update": "更新",
     "updating": "更新中...",
-    "pressBackAgainToExit": "もう一度戻るを押すと終了します"
+    "pressBackAgainToExit": "もう一度戻るを押すと終了します",
+    "editFullscreen": "全画面で編集",
+    "exitFullscreen": "全画面を終了",
+    "characters": "文字"
   },
   "sport": {
     "sport": "スポーツ",

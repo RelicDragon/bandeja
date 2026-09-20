@@ -65,22 +65,51 @@ export function storeVersionsForPlatform(
   return versions;
 }
 
+/**
+ * Platforms whose store already holds *this session's own* planned release, so an
+ * exact build match is a resume rather than a collision with someone else's upload.
+ */
+export interface PlannedAlreadyOnStore {
+  android?: boolean;
+  ios?: boolean;
+}
+
+export function storeHoldsPlannedRelease(
+  store: NativeVersion | undefined,
+  planned: NativeVersion,
+): boolean {
+  return store !== undefined && store.build === planned.build && store.version === planned.version;
+}
+
 export function validatePlannedAgainstStores(
   planned: NativeVersion,
   snapshot: StoreVersionSnapshot,
   platform: ReleasePlatform,
+  alreadyOnStore?: PlannedAlreadyOnStore,
 ): string | null {
-  const checks: Array<{ label: string; store: NativeVersion }> = [];
+  const checks: Array<{ label: string; store: NativeVersion; ours: boolean }> = [];
   if (includesAndroid(platform) && snapshot.android) {
-    checks.push({ label: 'Google Play', store: snapshot.android });
+    checks.push({
+      label: 'Google Play',
+      store: snapshot.android,
+      ours: alreadyOnStore?.android === true,
+    });
   }
   if (includesIos(platform) && snapshot.ios) {
-    checks.push({ label: 'App Store Connect', store: snapshot.ios });
+    checks.push({
+      label: 'App Store Connect',
+      store: snapshot.ios,
+      ours: alreadyOnStore?.ios === true,
+    });
   }
 
-  for (const { label, store } of checks) {
-    if (planned.build <= store.build) {
-      return `${label} already has build ${store.build}; planned build must be higher than ${store.build}.`;
+  for (const { label, store, ours } of checks) {
+    // When the store already holds our planned build because we put it there, equality is
+    // the expected resume state — only a *newer* store build means we have gone stale.
+    if (ours ? planned.build < store.build : planned.build <= store.build) {
+      return ours
+        ? `${label} has build ${store.build}, which is newer than the planned build ${planned.build}.`
+        : `${label} already has build ${store.build}; planned build must be higher than ${store.build}.`;
     }
     if (compareVersionStrings(planned.version, store.version) < 0) {
       return `${label} already has version ${store.version}; planned version cannot go backwards.`;

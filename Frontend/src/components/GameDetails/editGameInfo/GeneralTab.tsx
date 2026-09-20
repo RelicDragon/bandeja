@@ -6,6 +6,7 @@ import { GameTextAuthoredFieldsHint } from '@/components/gameText/GameTextAuthor
 import { GameTextTranslationsOpenButton } from '@/components/gameText/GameTextTranslationsOpenButton';
 import { GameTextTranslationsPanel } from '@/components/gameText/GameTextTranslationsPanel';
 import { shouldLabelAuthoredEditAsOriginal } from '@/utils/gameText/authoredGameTextForEdit';
+import { ExpandableTextarea } from '@/components/ui/ExpandableTextarea';
 
 export interface GeneralTabState {
   name: string;
@@ -73,10 +74,12 @@ export const GeneralTab = ({
 
       <div className="flex min-h-0 flex-1 flex-col">
         <label className="mb-1.5 block shrink-0 text-xs font-medium text-gray-600 dark:text-gray-400">{descriptionLabel}</label>
-        <textarea
+        <ExpandableTextarea
           value={state.description}
-          onChange={(e) => onChange({ description: e.target.value })}
+          onValueChange={(description) => onChange({ description })}
+          fullscreenTitle={descriptionLabel}
           placeholder={descriptionPlaceholder}
+          wrapperClassName="flex min-h-0 flex-1 flex-col"
           className="min-h-0 w-full flex-1 resize-none rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
           dir="auto"
         />

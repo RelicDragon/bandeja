@@ -25,6 +25,7 @@ import type { Sport } from '@/sport/sportRegistry';
 import { listCreateFlowSports, resolveCreateGameDefaultSport } from '@/utils/profileSports';
 import { clubSupportsSport, filterClubsBySport } from '@/utils/courtSport';
 import { CreateFlowSportSelector } from '@/components/createGame/CreateFlowSportSelector';
+import { ExpandableTextarea } from '@/components/ui/ExpandableTextarea';
 
 export const CreateLeague = () => {
   const { t } = useTranslation();
@@ -238,9 +239,10 @@ export const CreateLeague = () => {
             <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
               {t('createLeague.description')}
             </label>
-            <textarea
+            <ExpandableTextarea
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onValueChange={setDescription}
+              fullscreenTitle={t('createLeague.description')}
               rows={3}
               className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 outline-none resize-none"
               placeholder={t('createLeague.descriptionPlaceholder')}

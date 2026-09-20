@@ -19,6 +19,9 @@ interface FullScreenDialogProps {
   overlayClassName?: string;
   contentClassName?: string;
   bodyClassName?: string;
+  /** Radix open-focus hook — `preventDefault()` to focus your own element instead.
+      Avoids the extra focus hop that dismisses the iOS software keyboard. */
+  onOpenAutoFocus?: (event: Event) => void;
   children: React.ReactNode;
 }
 
@@ -32,6 +35,7 @@ export const FullScreenDialog = ({
   overlayClassName,
   contentClassName,
   bodyClassName,
+  onOpenAutoFocus,
   children,
 }: FullScreenDialogProps) => {
   const fallbackIdRef = useRef(`fullscreen-${Math.random()}`);
@@ -57,6 +61,7 @@ export const FullScreenDialog = ({
         <DialogPrimitive.Content
           className={contentClassName ? `${FULL_SCREEN_CONTENT_CLASS} ${contentClassName}` : FULL_SCREEN_CONTENT_CLASS}
           aria-describedby={undefined}
+          onOpenAutoFocus={onOpenAutoFocus}
           {...preventOutside}
         >
           <DialogPrimitive.Title className="sr-only">{title}</DialogPrimitive.Title>

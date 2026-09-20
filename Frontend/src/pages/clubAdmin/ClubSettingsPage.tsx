@@ -12,6 +12,7 @@ import { listSelectableSports } from '@/utils/profileSports';
 import { useClubAdminForbidden } from '@/hooks/useClubAdminForbidden';
 import { CLUB_AMENITY_KEYS, ClubAmenityKey } from '@/utils/clubAdmin/constants';
 import { normalizeClubPhotos } from '@/utils/clubPhotos';
+import { ExpandableTextarea } from '@/components/ui/ExpandableTextarea';
 import {
   markClubAdminCoachStep,
   readClubAdminCoachMarks,
@@ -143,10 +144,12 @@ export function ClubSettingsPage() {
     <label className="block text-sm">
       <span className="text-muted-foreground">{label}</span>
       {multiline ? (
-        <textarea
-          className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-foreground"
+        <ExpandableTextarea
+          wrapperClassName="mt-1"
+          className="w-full rounded-lg border border-border bg-background px-3 py-2 text-foreground"
           value={(club[key] as string) ?? ''}
-          onChange={(e) => setClub({ ...club, [key]: e.target.value })}
+          onValueChange={(next) => setClub({ ...club, [key]: next })}
+          fullscreenTitle={label}
           rows={3}
         />
       ) : (
@@ -235,10 +238,12 @@ export function ClubSettingsPage() {
 
           <label className="block text-sm">
             <span className="text-muted-foreground">{t('clubAdmin.policyText')}</span>
-            <textarea
-              className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-foreground"
+            <ExpandableTextarea
+              wrapperClassName="mt-1"
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-foreground"
               value={club.policyText ?? ''}
-              onChange={(e) => setClub({ ...club, policyText: e.target.value })}
+              onValueChange={(policyText) => setClub({ ...club, policyText })}
+              fullscreenTitle={t('clubAdmin.policyText')}
               rows={3}
             />
           </label>

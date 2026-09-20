@@ -78,7 +78,10 @@
     "select": "Select",
     "update": "Update",
     "updating": "Updating...",
-    "pressBackAgainToExit": "Press back again to exit"
+    "pressBackAgainToExit": "Press back again to exit",
+    "editFullscreen": "Edit in full screen",
+    "exitFullscreen": "Exit full screen",
+    "characters": "characters"
   },
   "sport": {
     "sport": "Sport",

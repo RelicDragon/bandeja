@@ -16,8 +16,10 @@ import {
   hydrateVersionsFromStores,
   mergeStoreVersionFloor,
   readLocalNativeVersions,
+  storeHoldsPlannedRelease,
   storeVersionsForPlatform,
   validatePlannedAgainstStores,
+  type PlannedAlreadyOnStore,
   type StoreVersionSnapshot,
 } from './app-release-store-version';
 import { fetchLatestStoreVersions, ReleaseUploadError } from './app-release-upload';
@@ -160,9 +162,34 @@ export async function hydrateReleaseSessionFromStores(
 }
 
 /**
+ * Which platforms already carry this session's planned release on the store.
+ *
+ * Either the session recorded the upload itself, or — when a crash lost that record —
+ * the session is past its build phase and the store holds exactly the planned
+ * version+build, which only this session's artifacts could have produced. A build
+ * collision under a *different* version is still someone else's and stays an error.
+ */
+function plannedAlreadyOnStore(
+  session: ReleaseSession,
+  storeVersions: StoreVersionSnapshot,
+): PlannedAlreadyOnStore {
+  const builtPlanned = getSessionPhase(session) === 'ready-to-upload';
+  return {
+    android:
+      session.uploads?.android === true ||
+      (builtPlanned && storeHoldsPlannedRelease(storeVersions.android, session.planned)),
+    ios:
+      session.uploads?.ios === true ||
+      session.uploads?.iosBinary === true ||
+      (builtPlanned && storeHoldsPlannedRelease(storeVersions.ios, session.planned)),
+  };
+}
+
+/**
  * Re-read live store versions and keep the existing planned release only if it still
  * clears the store floor. Used right before bump/upload so a resumed session cannot
- * reuse a version that landed on the stores while the planner was idle.
+ * reuse a version that landed on the stores while the planner was idle — except where
+ * this session is the one that put it there.
  */
 export async function refreshStoreVersionsKeepingPlanned(
   session: ReleaseSession,
@@ -185,6 +212,7 @@ export async function refreshStoreVersionsKeepingPlanned(
       session.planned,
       storeVersions,
       session.targetPlatform,
+      plannedAlreadyOnStore(session, storeVersions),
     );
     if (validationError) {
       throw new Error(
@@ -224,6 +252,7 @@ export async function refreshStoreVersionsKeepingPlanned(
       session.planned,
       storeVersions,
       session.targetPlatform,
+      plannedAlreadyOnStore(session, storeVersions),
     );
     if (validationError) {
       throw new Error(validationError);

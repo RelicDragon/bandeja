@@ -78,7 +78,10 @@
     "select": "Pilih",
     "update": "Perbarui",
     "updating": "Memperbarui...",
-    "pressBackAgainToExit": "Tekan kembali lagi untuk keluar"
+    "pressBackAgainToExit": "Tekan kembali lagi untuk keluar",
+    "editFullscreen": "Edit layar penuh",
+    "exitFullscreen": "Keluar dari layar penuh",
+    "characters": "karakter"
   },
   "sport": {
     "sport": "Olahraga",

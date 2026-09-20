@@ -7,6 +7,7 @@ import {
   ReleaseUploadError,
   isAndroidAlreadyUploadedError,
   isGoogleReviewConflictError,
+  isIosAlreadyUploadedError,
   isIosReviewConflictError,
   parseIosAppStoreConnectState,
   parsePendingStoreReview,
@@ -103,6 +104,21 @@ assert(
     ),
   ),
   'detects a late Google Play review conflict',
+);
+assert(
+  isIosAlreadyUploadedError(
+    new ReleaseUploadError(
+      'Error uploading ipa file',
+      '[Application Loader Error Output]: [altool.10366EF60] The provided entity includes an attribute with a value that has already been used (-19232) The bundle version must be higher than the previously uploaded version: ‘231’.',
+    ),
+  ),
+  'detects an already-uploaded App Store bundle version',
+);
+assert(
+  !isIosAlreadyUploadedError(
+    new ReleaseUploadError('Error uploading ipa file', 'Invalid Info.plist: missing CFBundleVersion'),
+  ),
+  'does not treat unrelated iOS upload failures as already uploaded',
 );
 assert(
   isIosReviewConflictError(

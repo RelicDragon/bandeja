@@ -6,6 +6,7 @@ import { faqApi, Faq } from '@/api/faq';
 import { Plus, Trash2, Edit3, ChevronUp, ChevronDown, X, Save, HelpCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { buildFixedTeamStandingsFaq } from '@/utils/leagueFixedTeamStandingsFaq';
+import { ExpandableTextarea } from '@/components/ui/ExpandableTextarea';
 
 interface FaqEditProps {
   gameId: string;
@@ -226,9 +227,10 @@ export const FaqEdit = ({
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 {t('faq.answer', { defaultValue: 'Answer' })}
               </label>
-              <textarea
+              <ExpandableTextarea
                 value={formData.answer}
-                onChange={(e) => setFormData({ ...formData, answer: e.target.value })}
+                onValueChange={(answer) => setFormData({ ...formData, answer })}
+                fullscreenTitle={t('faq.answer', { defaultValue: 'Answer' })}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 rows={4}
                 placeholder={t('faq.answerPlaceholder', { defaultValue: 'Enter answer...' })}
@@ -284,9 +286,10 @@ export const FaqEdit = ({
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       {t('faq.answer', { defaultValue: 'Answer' })}
                     </label>
-                    <textarea
+                    <ExpandableTextarea
                       value={formData.answer}
-                      onChange={(e) => setFormData({ ...formData, answer: e.target.value })}
+                      onValueChange={(answer) => setFormData({ ...formData, answer })}
+                      fullscreenTitle={t('faq.answer', { defaultValue: 'Answer' })}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                       rows={4}
                     />
