@@ -134,7 +134,7 @@ describe('countFindDayIndexByDay', () => {
     expect(counts.get('2026-07-02')).toBe(5_000);
   });
 
-  it('keeps the 5,000-row legacy-server fallback inside its CPU budget', () => {
+  it('reuses one timezone formatter across a 5,000-row legacy-server fallback', () => {
     const rows = Array.from({ length: 5_000 }, (_, index) => row({
       id: `legacy-server-${index}`,
       startTime: new Date(Date.UTC(2026, 6, 1, 0, 0, index)).toISOString(),
@@ -142,15 +142,38 @@ describe('countFindDayIndexByDay', () => {
     const run = () => countFindDayIndexByDay(rows, { id: 'u1' }, baseState, 'UTC');
     run(); // Warm the timezone formatter and JIT before measuring.
 
-    const durations = Array.from({ length: 3 }, () => {
+    // The regression this guards is a formatter constructed per row. Counting
+    // constructions tests that directly and deterministically; the wall-clock
+    // budget this replaced was ~10ms against a 100ms limit, so it failed
+    // whenever the machine was busy rather than when the code was wrong.
+    // Rows share a timezone, so a correct run builds at most one formatter
+    // here — and none at all when an earlier test already cached it.
+    const OriginalDateTimeFormat = Intl.DateTimeFormat;
+    let constructions = 0;
+    const CountingDateTimeFormat = function (
+      this: unknown,
+      ...args: ConstructorParameters<typeof Intl.DateTimeFormat>
+    ) {
+      constructions += 1;
+      return new OriginalDateTimeFormat(...args);
+    } as unknown as typeof Intl.DateTimeFormat;
+    Object.setPrototypeOf(CountingDateTimeFormat, OriginalDateTimeFormat);
+    CountingDateTimeFormat.prototype = OriginalDateTimeFormat.prototype;
+
+    let durationMs: number;
+    Intl.DateTimeFormat = CountingDateTimeFormat;
+    try {
       const startedAt = performance.now();
       run();
-      return performance.now() - startedAt;
-    }).sort((left, right) => left - right);
+      durationMs = performance.now() - startedAt;
+    } finally {
+      Intl.DateTimeFormat = OriginalDateTimeFormat;
+    }
 
-    // Cached Intl formatting is normally ~10 ms here; this budget catches the
-    // former formatter-per-row regression while leaving ample CI headroom.
-    expect(durations[1]).toBeLessThan(100);
+    expect(constructions).toBeLessThanOrEqual(1);
+    // Loose upper bound, ~200x the normal ~10ms, purely to catch something
+    // becoming pathologically slow in a way the count above would not show.
+    expect(durationMs).toBeLessThan(2_000);
   });
 
   it('applies discovery no-rating residual for list/badge parity', () => {
