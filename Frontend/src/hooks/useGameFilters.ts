@@ -104,7 +104,11 @@ export const useGameFilters = () => {
     const signature = JSON.stringify(payload);
     if (lastPersistedRef.current === signature) return;
     lastPersistedRef.current = signature;
-    void setGameFilters(payload);
+    void setGameFilters(payload).catch(() => {
+      // A rejected IndexedDB write must not stay recorded as persisted, or the
+      // dedup above would suppress the retry the next call would have made.
+      if (lastPersistedRef.current === signature) lastPersistedRef.current = null;
+    });
   }, []);
 
   useEffect(() => {
