@@ -83,6 +83,15 @@ Coins finally have a sink. The shop sells **cosmetic items only, for coins only*
 
 `GoodsKind` is `PROFILE_FRAME | CHAT_ACCENT | STICKER_PACK | NAME_COLOR`. Legacy `Goods` rows that predate the shop were backfilled as inactive `PROFILE_FRAME`s with a synthetic asset key; they are not catalogue items and never appear in the shop.
 
+**The catalogue has to be seeded, or the shop ships dark.** `/shop` renders "The
+shop opens soon" until an active `Goods` row exists, and every `assetKey` has to
+match a class in `Frontend/src/styles/collection.css` — an unknown key renders a
+plain avatar, which reads as a bug rather than a cosmetic. `npm run seed:shop-goods`
+(`Backend/scripts/seed-shop-goods.ts`) writes the opening fifteen items, upserting
+on `(kind, assetKey)`, so it is safe to re-run and never touches who owns what.
+`-- --dry-run` prints the plan. The keys it uses are exactly the ones
+`Frontend/src/features/collection/collectionAssets.ts` paints.
+
 **Purchase is one transaction.** `purchaseGoods` (`services/shop/shopPurchase.service.ts`) does all of this inside a single `prisma.$transaction`: re-read the `Goods` row (price and flags are read *inside* the transaction, never before it) → run `rejectPurchase` from `shopRules.ts`, the only place the gate lives → `create` the `UserGoods` row (**not** `upsert`: the unique index must be the thing that rejects a double tap, so a lost race surfaces as `P2002` → HTTP 409) → write the `PURCHASE` `Transaction` with a negated total and a row carrying `goodsId` and the item name → debit the buyer with `updateMany({ where: { wallet: { gte: price } } })` and credit the bank. **That conditional predicate, not the `rejectPurchase` read, is what authorises the spend**: a plain read-then-decrement let N concurrent buys of N *different* items each pass their own balance check and overdraw the wallet. `TransactionService.createTransaction` is deliberately not reused — it opens its own transaction, which would put the coin movement and the ownership row in two different atomic units.
 
 **Gift.** A gift is a purchase with a recipient: the `UserGoods` row belongs to the **recipient** (`giftedByUserId` = the payer), the wallet debit belongs to the **buyer**, and a premium-only item follows the **recipient's** membership, because the recipient is the one who ends up wearing it. `GOODS_GIFT_RECEIVED` → `sendWalletNotifications`.

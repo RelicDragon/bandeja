@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import type { ClubRegular } from '@/api/clubPublic';
 import { PlayerAvatarFace } from '@/components/PlayerAvatarFace';
+import { useFrameClass } from '@/features/collection/useEquippedGoods';
 import { pressScaleGuard } from '@/components/motion/pressScale';
 import { usePlayerCardModal } from '@/hooks/usePlayerCardModal';
 import { userAvatarTinyUrlFromStandard } from '@/utils/userAvatarTinyUrl';
@@ -45,15 +46,7 @@ export function ClubRegularsRow({ regulars }: ClubRegularsRowProps) {
               aria-label={t('clubPage.regulars.open', { name: name || t('clubPage.regulars.unnamed') })}
               className={`flex min-h-[44px] w-16 flex-col items-center gap-1 rounded-xl p-1 transition-transform duration-200 hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 ${pressScaleGuard}`}
             >
-              <span className="relative block h-12 w-12">
-                <PlayerAvatarFace
-                  avatar={regular.avatar}
-                  tinyUrl={userAvatarTinyUrlFromStandard(regular.avatar)}
-                  initials={initialsOf(regular)}
-                  alt={name}
-                  textClassName="text-sm"
-                />
-              </span>
+              <RegularFace regular={regular} name={name} />
               <span className="w-full truncate text-center text-[11px] text-gray-600 dark:text-gray-300">
                 {regular.firstName ?? ''}
               </span>
@@ -62,5 +55,26 @@ export function ClubRegularsRow({ regulars }: ClubRegularsRowProps) {
         );
       })}
     </ul>
+  );
+}
+
+/**
+ * PRD 355 — a bought frame follows its owner everywhere a face renders, this row
+ * included. Its own component because the frame lookup is a hook and the row is
+ * a `.map`.
+ */
+function RegularFace({ regular, name }: { regular: ClubRegular; name: string }) {
+  const frame = useFrameClass(regular.id, 'sm');
+
+  return (
+    <span className={`relative block h-12 w-12 rounded-full${frame ? ` ${frame}` : ''}`}>
+      <PlayerAvatarFace
+        avatar={regular.avatar}
+        tinyUrl={userAvatarTinyUrlFromStandard(regular.avatar)}
+        initials={initialsOf(regular)}
+        alt={name}
+        textClassName="text-sm"
+      />
+    </span>
   );
 }

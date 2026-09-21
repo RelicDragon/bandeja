@@ -17,6 +17,7 @@ import {
   loadRecapPayloadForShare,
   markMonthlyRecapViewed,
 } from '../services/recap/recap.service';
+import { runMonthlyRecapPassNow } from '../services/recap/monthlyRecapScheduler.service';
 import {
   exportRecapSummaryCard,
   shareRecapToFollowers,
@@ -94,4 +95,35 @@ export const exportRecap = asyncHandler(async (req: AuthRequest, res: Response) 
 
   const result = await exportRecapSummaryCard({ userId, language: owner.language, payload });
   res.json({ success: true, data: result });
+});
+
+/**
+ * `POST /admin/recaps/backfill` — regenerate a month's recaps by hand.
+ *
+ * PRD 353's scheduler only runs on the 1st–3rd. Without this, a month missed
+ * because the job was down, or a payload that needs re-deriving after a data
+ * fix, had no operator surface at all: `runOnce({ force: true, monthKey })`
+ * existed but could only be reached from a Node REPL on the box.
+ *
+ * Idempotent through `MonthlyRecap`'s `(userId, monthKey)` unique — a rerun
+ * refreshes payloads rather than duplicating them, and never re-publishes a
+ * story (only a user's own share does that).
+ */
+export const adminBackfillRecaps = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const body = (req.body ?? {}) as { monthKey?: unknown };
+  const monthKey = typeof body.monthKey === 'string' ? body.monthKey.trim() : '';
+  if (monthKey && !/^\d{4}-(0[1-9]|1[0-2])$/.test(monthKey)) {
+    throw new ApiError(400, 'errors.recap.invalidMonthKey');
+  }
+
+  const stats = await runMonthlyRecapPassNow({
+    force: true,
+    ...(monthKey ? { monthKey } : {}),
+  });
+  if (!stats) {
+    // `runMonthlyRecapPassNow` returns null only when a pass is already in flight.
+    throw new ApiError(409, 'errors.recap.backfillInProgress');
+  }
+
+  res.json({ success: true, data: { ...stats, requestedMonthKey: monthKey || null } });
 });

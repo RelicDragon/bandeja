@@ -183,6 +183,25 @@ Idempotency is a **database invariant**: `Game.@@unique([seriesId, seriesOccurre
 
 **Nothing is ever reserved.** `seatDeadlineHours` is *display* copy ("your seat opens to others on Sun 29 Sep"), not a job: the seat was open the whole time, so there is no hold to release. Do not add a release scheduler for it.
 
+**Entry points into a series**, all four of them:
+
+- the `↻ Weekly` **card pill** (`gameSeriesCardEnricher`), public;
+- the **"Part of *X* · week N" line** under the game title (`SeriesTitleLine`),
+  which reads the same public label off `game.seriesLabel` — attached to the
+  detail read in `read.service.ts`, so it renders for a signed-out viewer too;
+- the **series links row** on the occurrence (`SeriesGameSection`): *Open series*
+  and *Open series chat*;
+- **Profile → Statistics → "Your regular games"** (`ProfileSeriesRow`), backed by
+  `GET /series`, which lists series the viewer **owns or is a regular of**. The
+  owner cap (`countActiveSeries`) counts only owned, active ones, so the wider
+  list does not move it. This is also where the cap helper's "Manage your series"
+  link lands.
+
+**The series chat is owner-created, insider-openable.** `POST /series/:id/chat`
+creates the `GroupChannel` on the owner's first tap (`assertSeriesOwner`) but
+hands an *existing* channel to any insider, so a regular can open the group from
+the occurrence. A non-insider gets 404, never the channel id.
+
 Creation, the Repeat row and the entity-type restriction: [create.md](./create.md). Card pill: [home-and-find.md](./home-and-find.md).
 
 ## General tab

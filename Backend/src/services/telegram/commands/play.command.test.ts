@@ -15,9 +15,12 @@ import { PlayIntentTimeOfDay, Sport } from '@prisma/client';
 import prisma from '../../../config/database';
 import {
   PLAY_TIME_SLOTS,
+  buildConfirmationKeyboard,
   buildConfirmationText,
   buildDayKeyboard,
+  buildGroupPostKeyboard,
   buildGroupPostText,
+  buildStoppedKeyboard,
   buildTimeKeyboard,
   dayLabel,
   handlePlayCommand,
@@ -315,6 +318,71 @@ void (async () => {
         replies[0].text.includes('is looking to play'),
         false,
         'nothing is posted to the group',
+      );
+    }
+
+    // -----------------------------------------------------------------------
+    // Every button the wizard renders must parse back to the branch that
+    // handles it.
+    //
+    // The `pi:` if-chain in `handlers/callback.handler.ts` dispatches on
+    // `parsePlayCallback(...).kind`, so a keyboard that emits callback data the
+    // parser rejects shows the user "Invalid request" and strands the flow —
+    // a class of bug no amount of testing the two sides separately can catch.
+    // -----------------------------------------------------------------------
+    {
+      /** grammy's button union only carries `callback_data` on the callback variant. */
+      const callbackDataOf = (button: unknown): string | null => {
+        const data = (button as { callback_data?: unknown }).callback_data;
+        return typeof data === 'string' ? data : null;
+      };
+
+      const keyboards: Array<{ name: string; rows: unknown[][] }> = [
+        { name: 'day', rows: buildDayKeyboard('en', TZ, NOW).inline_keyboard },
+        { name: 'time', rows: buildTimeKeyboard('en', 1).inline_keyboard },
+        {
+          name: 'confirm',
+          rows: buildConfirmationKeyboard('en', 'play.cancel').inline_keyboard,
+        },
+        {
+          name: 'confirm-existing',
+          rows: buildConfirmationKeyboard('en', 'play.stopLooking').inline_keyboard,
+        },
+        { name: 'stopped', rows: buildStoppedKeyboard('en').inline_keyboard },
+        { name: 'group', rows: buildGroupPostKeyboard('en', 'intent-42').inline_keyboard },
+      ];
+
+      const seenKinds = new Set<string>();
+      for (const keyboard of keyboards) {
+        for (const row of keyboard.rows) {
+          for (const button of row) {
+            // URL buttons ("Open in app") never reach the callback handler.
+            const data = callbackDataOf(button);
+            if (!data) continue;
+            assert.ok(
+              data.startsWith('pi:'),
+              `${keyboard.name}: every callback button uses the registered prefix`,
+            );
+            const parsed = parsePlayCallback(data);
+            assert.ok(parsed, `${keyboard.name}: "${data}" must parse, or the tap dead-ends`);
+            seenKinds.add(parsed!.kind);
+          }
+        }
+      }
+
+      // The branch handles exactly these five kinds; each must be reachable
+      // from a real button, and none may be orphaned.
+      assert.deepEqual(
+        [...seenKinds].sort(),
+        ['again', 'back', 'cancel', 'day', 'join', 'time'].sort(),
+        'every handled kind is produced by some keyboard',
+      );
+
+      // The registration regex only forwards `pi:`-prefixed data.
+      const firstDayButton = callbackDataOf(buildDayKeyboard('en', TZ, NOW).inline_keyboard[0][0]);
+      assert.ok(
+        firstDayButton && /^(sg|rm|ia|rum|rg|rbm|uti|sip|at|sr|wx|pi):/.test(firstDayButton),
+        'the wizard prefix is one the bot actually subscribes to',
       );
     }
 

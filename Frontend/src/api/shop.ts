@@ -83,11 +83,6 @@ export const shopApi = {
     return response.data.data;
   },
 
-  async getItem(goodsId: string): Promise<ShopItem> {
-    const response = await api.get<{ success: boolean; data: ShopItem }>(`/shop/items/${goodsId}`);
-    return response.data.data;
-  },
-
   async getCollection(): Promise<ShopCollection> {
     const response = await api.get<{ success: boolean; data: ShopCollection }>('/shop/me/goods');
     return response.data.data;

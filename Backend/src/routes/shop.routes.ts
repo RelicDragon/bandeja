@@ -49,7 +49,6 @@ router.use(requireShopEnabled);
 router.get('/catalog', authenticate, shopController.getCatalog);
 router.get('/equipped', authenticate, shopController.getEquippedForUsers);
 router.get('/me/goods', authenticate, shopController.getCollection);
-router.get('/items/:goodsId', authenticate, shopController.getItem);
 
 router.post('/purchase', authenticate, purchaseLimiter, shopController.purchase);
 router.put('/me/goods/:goodsId/equip', authenticate, equipLimiter, shopController.equipGoods);

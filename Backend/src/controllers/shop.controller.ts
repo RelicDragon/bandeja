@@ -38,11 +38,6 @@ export const getCatalog = asyncHandler(async (req: AuthRequest, res: Response) =
   res.json({ success: true, data });
 });
 
-export const getItem = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const data = await ShopService.getItem(requireUserId(req), req.params.goodsId);
-  res.json({ success: true, data });
-});
-
 export const getCollection = asyncHandler(async (req: AuthRequest, res: Response) => {
   const data = await ShopService.getCollection(requireUserId(req));
   res.json({ success: true, data });

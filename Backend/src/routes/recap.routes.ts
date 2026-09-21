@@ -14,7 +14,7 @@
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import { param } from 'express-validator';
-import { authenticate } from '../middleware/auth';
+import { authenticate, requireAdmin } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { rateLimitKeyFromRequest } from '../utils/rateLimitClientKey';
 import * as recapController from '../controllers/recap.controller';
@@ -75,6 +75,32 @@ router.post(
   recapRenderLimiter,
   validate(monthKeyParam),
   recapController.exportRecap,
+);
+
+/**
+ * PRD 353 — operator backfill for a month the scheduler missed. Admin-only and
+ * deliberately not under `/me`; mounted here so the recap surface stays in one
+ * file. A pass walks every eligible user, so once an hour is plenty.
+ */
+const recapBackfillLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 4,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => rateLimitKeyFromRequest(req),
+  message: {
+    success: false,
+    message: 'Too many backfills, please try again later.',
+    code: 'recap.backfillRateLimit',
+  },
+});
+
+router.post(
+  '/recaps/backfill',
+  authenticate,
+  requireAdmin,
+  recapBackfillLimiter,
+  recapController.adminBackfillRecaps,
 );
 
 export default router;

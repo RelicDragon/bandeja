@@ -16,6 +16,7 @@ import {
 import telegramNotificationService from '../telegram/notification.service';
 import { emitGameSeriesConfirmationsUpdated } from '../socketEmitFacade';
 import { getUserTimezoneFromCityId } from '../user-timezone.service';
+import { resolveIntlLocale } from '../../utils/intlLocale';
 import { GameSeriesGenerationService } from './gameSeriesGeneration.service';
 import { invalidateSeriesDetailCache } from './gameSeries.service';
 import { seriesT } from './gameSeriesCopy';
@@ -305,7 +306,10 @@ export class GameSeriesCarryOverService {
 
     const lang = user.language || 'en';
     const timezone = await getUserTimezoneFromCityId(context.cityId);
-    const when = new Intl.DateTimeFormat(lang === 'sr' ? 'sr-Latn' : lang, {
+    // `User.language` defaults to `"auto"`, which `Intl` rejects — and the throw
+    // would be swallowed by the caller's `.catch()`, silently dropping the prompt
+    // for every account that never picked a language. See `utils/intlLocale.ts`.
+    const when = new Intl.DateTimeFormat(resolveIntlLocale(lang), {
       timeZone: timezone || 'UTC',
       weekday: 'short',
       day: 'numeric',

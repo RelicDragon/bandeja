@@ -100,12 +100,6 @@ export function buildReferralLink(code: string): string {
   return `${base}/link-to-app/?${REFERRAL_QUERY_PARAM}=${formatReferralCode(code)}`;
 }
 
-/** A specific game, carrying the referral ("come play Tuesday"). */
-export function buildGameReferralLink(gameId: string, code: string): string {
-  const base = config.frontendUrl.replace(/\/+$/, '');
-  return `${base}/games/${gameId}?${REFERRAL_QUERY_PARAM}=${formatReferralCode(code)}`;
-}
-
 /**
  * Returns the user's referral code, generating it on first use.
  *

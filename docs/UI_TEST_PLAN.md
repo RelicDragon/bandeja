@@ -1322,7 +1322,8 @@ An occurrence is an ordinary game; only these extra surfaces are new. Flag-gated
 
 | ID | Test | Steps | Expected |
 |----|------|-------|----------|
-| GD-SER-01 | Part-of line | Open an occurrence | Quiet line "Part of *Tuesday Regulars* · week 12" navigating to `/series/:id`. The week number is 1-based and increments per occurrence |
+| GD-SER-01 | Part-of line | Open an occurrence, signed in and signed out | Quiet line "Part of *Tuesday Regulars* · week 12" **directly under the game title**, navigating to `/series/:id`. Visible to guests too — it carries only the public card label. The week number is 1-based and increments per occurrence |
+| GD-SER-01b | Series links row | Open an occurrence as a member | Below the organizer strip: **Open series** and **Open series chat**. The chat link creates the channel on the owner's first tap and opens the existing one for a regular |
 | GD-SER-02 | Organizer strip | Owner opens an occurrence while a next occurrence exists | Strip reading "Next: Tue 1 Oct" and "3 of 4 regulars confirmed", with a check badge on each confirmed avatar |
 | GD-SER-03 | Strip is live | With the strip open on user A, user B taps **I'm in** on the next occurrence | A's counter and B's badge update without a reload (socket `game-series-confirmations-updated`), with a 200 ms scale spring. `@two-user` |
 | GD-SER-04 | Skip next | **Skip next** → confirm "Skip Tue 1 Oct?" | The game for that date is removed and a toast says "Next week skipped"; the series keeps running |
@@ -1333,13 +1334,16 @@ An occurrence is an ordinary game; only these extra surfaces are new. Flag-gated
 | GD-SER-09 | Horizon helper | Read under "Save series" | "We create the next game 14 days ahead…" |
 | GD-SER-10 | Keyboard contract | Open the Repeat sheet on a device, focus the Until date field | Header stays pinned, body scrolls, "Save series" stays above the keyboard. `@manual` |
 | GD-SER-11 | Apply-to sheet | Edit an occurrence → Save | **Apply to** offers "This game" / "This and future games"; "This game" just closes |
-| GD-SER-12 | Apply to future | Choose "This and future games" when some future occurrence already has results | Toast with the number of updated games, plus a second note naming how many kept their current details. The lock is `resultsStatus !== 'NONE'`, never `Game.status` |
+| GD-SER-12 | Apply to future | Choose "This and future games" when some future occurrence already has results | An **inline** amber note inside the sheet names how many occurrences will keep their current details, visible before Apply; after Apply, one toast with the number updated. The lock is `resultsStatus !== 'NONE'`, never `Game.status` |
 | GD-SER-13 | Carry-over card | After an occurrence reaches FINAL, open it as a regular who played | Full-width card at the top: "Same time next week?" with **I'm in** and **Skip** |
 | GD-SER-14 | I'm in | Tap **I'm in**, then reload | Button morphs into a green check "You're in for Tue 1 Oct", toast "Seat kept", card collapses after ~1.2 s; it does not come back |
 | GD-SER-15 | Skip records nothing | Tap **Skip** | Buttons replaced by the footer note "Your seat opens to others on Sun 29 Sep". Nothing is recorded server-side and no seat is ever reserved — the deadline is display copy, not a job |
 | GD-SER-16 | Reduced motion | OS Reduce Motion on | Morph and collapse happen instantly; the check badge does not spring. `@manual` |
 | GD-SER-17 | One card on Home | Home → My games with several unanswered finished occurrences | The card appears once, for the most recent unanswered occurrence — never a stack |
 | GD-SER-18 | Offline | Tap **I'm in** with the network off | Pending state; the mutation completes when connectivity returns. `@manual` |
+
+| GD-SER-19 | Push shade answer | Receive the "Same time next week?" push on a real device (iOS and Android) | Two buttons, **I'm in** and **Skip**. Tapping either answers without opening the app and replaces the card with "Seat kept" / "your seat opens to others". `@manual` |
+| GD-SER-20 | Push body tap | Tap the push body instead | Opens the **finished** occurrence, where the in-app card is. `@manual` |
 
 Push and Telegram: `PN-SER-01`–`PN-SER-02` in §18.8.
 
@@ -1481,6 +1485,7 @@ No feature flag; muted per user from notification preferences.
 | GD-WX-12 | RTL | App language العربية | Banner, chips and hourly strip mirror (logical properties only) |
 | GD-WX-13 | Live refresh | With the page open, let the 30-minute pass fire (or emit `game-weather-alert-updated` for that game) | The banner re-reads state without a reload. `@manual` |
 | GD-WX-14 | Started / finished / no time | Game already started or finished, or with no time set | No banner |
+| GD-WX-14b | Card pill hour format | Set the profile to 12 h, then 24 h; look at an at-risk game on Home and Find | The pill's hour follows the account preference, matching the banner — not the locale default |
 
 ### 9.17 Move indoor sheet
 
@@ -1490,6 +1495,9 @@ No feature flag; muted per user from notification preferences.
 | GD-WX-16 | Not colour-only | Screen reader over the rows | "Court 1, free" / "Court 2, busy" |
 | GD-WX-17 | Busy rows disabled | Tap a busy row | Nothing happens; the row is disabled |
 | GD-WX-18 | Move | Tap a free court | Applied through the normal edit path; toast "Moved to Court 1"; a system message in the game chat; the banner collapses over ~240 ms. Re-open the game: the court really changed. `@manual` |
+| GD-WX-19 | Organizer push shade | Receive a weather alert as the organizer on a real device (iOS and Android) | Two buttons: **Move indoor** (opens the app on the move-indoor sheet) and **Keep as planned** (posts silently, the card is replaced by "Playing rain or shine", the app never opens). `@manual` |
+| GD-WX-20 | Participant push shade | Receive the same alert as a participant | One button, **Forecast**, which opens the game's weather section. No keep/move buttons. `@manual` |
+| GD-WX-21 | Push body tap | Tap the alert body rather than a button | Opens `/games/:id?section=weather` (organizer: `&action=moveIndoor`), and the params are cleaned out of the URL. `@manual` |
 | GD-WX-19 | Nothing free | Make every indoor court busy for that window (another game, a club booking, or a blocking hold) | "No indoor courts free at 19:00" with **Change time** as the only action, opening `EditGameInfoModal` on the time section |
 | GD-WX-20 | No indoor courts | Club with no indoor courts | "This club has no indoor courts" plus the same **Change time** fallback |
 | GD-WX-21 | External booking warning | Game with a `GameExternalBooking` linked to one of its courts | Warning that the booking is **not** moved and must be changed with the club directly. Confirm afterwards that the external booking is untouched. `@manual` |
@@ -2929,6 +2937,11 @@ Flag-gated with §8.6 (`VITE_GAME_SERIES_ENABLED` / `GAME_SERIES_ENABLED`). The 
 | SER-33 | Themes | Light / Dark / Classic / Premium | Hero gradient, check badges and dimmed skipped rows all keep 4.5:1 text contrast |
 | SER-34 | RTL | App language العربية | Whole page mirrors; the check badge sits on the inline-end of each avatar |
 | SER-35 | Flag off | `VITE_GAME_SERIES_ENABLED=false` | `/series/:id` renders nothing and makes no request |
+| SER-40 | Profile entry point | Profile → Statistics, as a series **owner** and as a plain **regular** | A "Your regular games" row lists every series you belong to, ended ones last; tapping a card opens `/series/:id`. A user in no series sees no row at all |
+| SER-41 | Cap link lands somewhere | Own 10 active series → Create game → Repeat → **Manage your series** | Lands on Profile → Statistics with the "Your regular games" row on screen — never a page with nothing about series on it |
+| SER-42 | Series line under the title | Open an occurrence, signed in and then **signed out** | "Part of *X* · week N" sits directly under the game title in both cases and links to the series page |
+| SER-43 | Series chat from the occurrence | Open an occurrence as the owner, tap **Open series chat**; repeat as a regular | The owner's first tap creates the channel; a regular opens the existing one, and gets a plain "not open yet" toast when the owner never created it |
+| SER-44 | Scope note before the tap | Edit an occurrence, choose **This and future games** while a future occurrence already has results | An inline amber note names how many occurrences will be left alone — visible *before* Apply, not as a toast afterwards |
 
 ---
 

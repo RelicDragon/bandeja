@@ -40,6 +40,5 @@ const referralCodeLimiter = rateLimit({
 router.get('/me', authenticate, referralController.getMyReferralSummary);
 router.get('/me/status', authenticate, referralController.getMyReferralStatus);
 router.post('/me/code', authenticate, referralCodeLimiter, referralController.postManualReferralCode);
-router.get('/game-link/:gameId', authenticate, referralController.getGameInviteLink);
 
 export default router;

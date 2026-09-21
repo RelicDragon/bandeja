@@ -16,6 +16,16 @@ vi.mock('@/hooks/usePrefersReducedMotion', () => ({
   usePrefersReducedMotion: () => false,
 }));
 
+// PRD 355 — `PairAvatars` renders equipped frames, and the store behind them
+// reaches `api/axios` at module load. Isolated here for the same reason every
+// other store this tree touches is, and because the partial `react-i18next`
+// mock above cannot satisfy `i18n/config`.
+vi.mock('@/features/collection/useEquippedGoods', () => ({
+  useFrameClass: () => null,
+  useNameColorClass: () => null,
+  usePrefetchEquippedGoods: () => {},
+}));
+
 import type { PairEntry, PairMember } from '@/api/pairs';
 import { PairPodium } from './PairPodium';
 

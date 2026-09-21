@@ -195,7 +195,6 @@ export const queryKeys = {
     all: ['referral'] as const,
     summary: () => ['referral', 'summary'] as const,
     status: () => ['referral', 'status'] as const,
-    gameLink: (gameId: string) => ['referral', 'gameLink', gameId] as const,
     publicReferrer: (code: string) => ['referral', 'public', code] as const,
   },
   /**

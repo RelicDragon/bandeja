@@ -220,6 +220,56 @@ export async function refreshPairStatsForPairs(pairs: readonly PairIds[]): Promi
 }
 
 /**
+ * PRD 352 — refresh `combinedLevel` on every pair a player belongs to.
+ *
+ * `combinedLevel` is the one `PairStat` column that does **not** come from
+ * games: it is read from `UserSportProfile`, so an admin adjustment or an
+ * external-rating import moves it with no outcome to hang a refresh on. Games
+ * and wins are untouched here — only the display level is rewritten.
+ *
+ * Never throws: pair stats are a derived cache and must not be able to break a
+ * level write.
+ */
+export async function refreshPairCombinedLevelsForUser(
+  userId: string,
+  sport?: Sport,
+): Promise<void> {
+  try {
+    const rows = await prisma.pairStat.findMany({
+      where: {
+        ...(sport ? { sport } : {}),
+        OR: [{ userAId: userId }, { userBId: userId }],
+      },
+      select: { id: true, sport: true, userAId: true, userBId: true },
+    });
+    if (rows.length === 0) return;
+
+    for (const slice of chunk(rows, PAIR_STAT_WRITE_BATCH)) {
+      const levels = await loadLevels(
+        uniqueUserIds(slice),
+        [...new Set(slice.map((row) => row.sport))],
+      );
+      for (const row of slice) {
+        await prisma.pairStat.update({
+          where: { id: row.id },
+          data: {
+            combinedLevel: combinedLevelOf(
+              levels.get(levelKey(row.userAId, row.sport)) ?? null,
+              levels.get(levelKey(row.userBId, row.sport)) ?? null,
+            ),
+          },
+        });
+      }
+    }
+  } catch (error) {
+    console.error('[pairStat] combinedLevel refresh failed', {
+      userId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+}
+
+/**
  * Post-commit hook for one game. Never throws — pair stats are a derived cache
  * and must not be able to break finalization or a reset.
  *

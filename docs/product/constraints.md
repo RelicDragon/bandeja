@@ -256,3 +256,31 @@ Chat keeps the permissive path on purpose: short messages are where detection is
 ### Weltner saved contact and durable booking attempts
 
 WELTNER uses a per-user/per-club saved phone, never a fabricated provider session or phone verification. All upstream requests go through the fixed-origin backend. Availability consists of exact start/duration tuples, never inferred busy snapshots. Persist a unique attempt before POST; reuse confirmed receipts and block resubmission after unknown outcomes. Game links use owned, confirmed receipts and authoritative stored court/times. No automatic cancellation, rollback, upstream listing or verification. Contact the club for changes or uncertain outcomes. See [booking](../domains/booking.md#weltner-saved-phone-and-guest-reservations).
+
+### `User.language` is not a locale tag
+
+`User.language` defaults to **`"auto"`** — "follow the device" — and can also hold
+`system` or an empty string. None of those is a BCP-47 tag, so
+`new Intl.DateTimeFormat(user.language, …)` throws
+`RangeError: Incorrect locale information provided`.
+
+That throw is dangerous rather than noisy: notification builders run inside a
+`.catch()` on the fan-out path, so the exception is swallowed and the push is
+simply **never sent** — for the majority of accounts, which have never picked a
+language. PRD 345's "Same time next week?" prompt shipped with exactly this bug
+and delivered nothing to default-language users until it was found by an
+integration test.
+
+Always resolve the value first:
+
+```ts
+import { resolveIntlLocale } from '../../utils/intlLocale';
+new Intl.DateTimeFormat(resolveIntlLocale(user.language), { … });
+```
+
+`sr` is Serbian **Latin** in this product; `resolveIntlLocale` maps it, because
+the bare `sr` tag resolves to Cyrillic. Copy bundles that already allow-list
+their own languages (`weatherAlertCopy.safeLocale`, `resolveRecapImageLanguage`)
+are equivalent and need no change.
+
+- Helper + tests: `Backend/src/utils/intlLocale.ts`, `intlLocale.test.ts` (`npm run test:series`)

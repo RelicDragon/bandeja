@@ -47,14 +47,14 @@ A token carries `{ userId, kind, targetId, action }` and expires after 48 h. `ki
 
 `game` and `team` stay as explicit branches in the controller (their responses predate the registry and carry a `data` payload). Every newer kind registers itself with `registerPushActionHandler(kind, handler)` at **import time of its own service module**, which its route file imports — so no feature has to edit the controller. An unregistered kind answers `400 push.inviteActionUnsupported`, never a 500; a stale or replayed token is a quiet no-op and never moves a seat.
 
-**Where each kind is actually tappable today.** The token, the endpoint and the handler exist for all five kinds; the *native shade buttons* exist for three.
+**Where each kind is actually tappable today.** Every kind is wired on every surface.
 
 | Surface | Wired for |
 |---------|-----------|
 | Telegram inline buttons | all five kinds (`sg`/`ia`, `at:`, `sr:`, `wx:` — see the prefix table below) |
 | In-app card / sheet | all five kinds |
-| Android shade | `invite_actions`, `play_intent_actions` and `attendance_actions`. `series` / `weather` set no `nativeHandler` at all |
-| iOS shade | `INVITE`, `TEAM_INVITE`, `CHAT_REPLY`, `FOLLOWED_USER_PLAY_INTENT` and `GAME_REMINDER` categories are registered by `registerPushNotificationActionTypes.ts`. `resolveApnsNotificationCategory` derives the category from the notification type, so a reminder carrying attendance actions arrives as `GAME_REMINDER`. No category exists for `series` / `weather` |
+| Android shade | `invite_actions`, `play_intent_actions`, `attendance_actions`, `series_actions`, `weather_actions` / `weather_organizer_actions` |
+| iOS shade | `INVITE`, `TEAM_INVITE`, `CHAT_REPLY`, `FOLLOWED_USER_PLAY_INTENT`, `GAME_REMINDER`, `GAME_SERIES_NEXT_PROMPT`, `GAME_WEATHER_ALERT` and `GAME_WEATHER_ALERT_ORGANIZER`, all registered by `registerPushNotificationActionTypes.ts`. `resolveApnsNotificationCategory` derives the category from the notification type unless the builder sets `payload.category` — the two weather variants do, because iOS categories are static and the organizer's shade carries one more button |
 
 #### Attendance in the shade (PRD 346)
 
@@ -65,7 +65,29 @@ Both answers are **background** actions — they post and never open the app.
 - **Both platforms** need the acknowledgement text to travel with the push (`attendanceConfirmedAck` / `attendanceUnsureAck`, localized per recipient in `game-reminder-push.notification.ts`): the shade handler has no i18n of its own, and the `/push/invite-action` response returns a translation *key*, not a string.
 - Failure is silent by design. Offline or a 5xx leaves the reminder answerable — there is no deadline — and a 4xx (stale token, player already left) quietly dismisses it.
 
-`series` and `weather` shade buttons remain unwired; see `docs/product/not-shipped.md`. Nothing on the backend has to change for them either.
+#### Series and weather in the shade (PRD 345 / 357)
+
+Everything added after the attendance pair shares one generic path rather than a
+third pair of classes.
+
+- **Android.** `TokenActionPushData` describes a family as a list of buttons —
+  each either a **token** button (posts and replaces the card) or a
+  **foreground** button (opens the app on the ordinary tap payload).
+  `TokenActionNotificationHelper` renders them and `TokenActionReceiver` posts.
+  Adding a third family is a row in `specsFor`, not three files.
+- **iOS.** `TokenActionPushData` / `TokenActionHandler` mirror
+  `AttendancePushData` / `AttendanceActionHandler` for the cold-start path, and
+  claim **only** token actions — "Move indoor" and "View forecast" need a screen,
+  so they fall through to the router.
+- **Localized labels and acknowledgements travel with the push**
+  (`acceptActionTitle` / `declineActionTitle` / `seriesAcceptAck` /
+  `seriesDeclineAck`, `keepActionTitle` / `moveIndoorActionTitle` /
+  `forecastActionTitle` / `weatherKeptAck`), for the same reason attendance
+  needs them: the shade handler has no i18n.
+- **Tapping the body** is routed too — `GAME_SERIES_NEXT_PROMPT` opens the
+  *finished* occurrence (`sourceGameId`), where the in-app card lives, and
+  `GAME_WEATHER_ALERT` follows the server-authored `weatherDeepLink` through
+  `navigationService.navigateToPath`, which accepts same-origin paths only.
 
 ### Persisted delivery and dedupe
 

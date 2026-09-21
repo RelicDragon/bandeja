@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import prisma from '../../config/database';
 import {
   attachReferrer,
+  checkReferralEligibility,
   countRewardedReferrals,
   ensureReferralCode,
   getReferralSummary,
@@ -13,7 +14,7 @@ import {
   onGameFinalizedForReferral,
   revokeReferralReward,
 } from './referralReward.service';
-import { formatReferralCode, isReferralCode } from './referralCode';
+import { formatReferralCode, isReferralCode, REFERRAL_REWARDED_CAP } from './referralCode';
 
 /**
  * PRD 351 — referral payout, end to end against `padelpulse_dev`.
@@ -106,6 +107,62 @@ void (async () => {
     const deviceAttach = await attachReferrer(deviceReferredId, deviceReferrerId);
     assert.equal(deviceAttach.attached, false, 'two accounts on one device cannot refer each other');
     assert.equal(deviceAttach.reason, 'SHARED_DEVICE');
+
+    // -----------------------------------------------------------------------
+    // abuse: the rewarded cap, against real rows
+    //
+    // The rule itself is unit-tested; what needs a database is the count query
+    // behind it — that it sees only this referrer's rows, and that a revoked
+    // row gives its slot back.
+    // -----------------------------------------------------------------------
+    const capReferrerId = await makeUser('CapReferrer');
+    const capReferredIds: string[] = [];
+    for (let i = 0; i < REFERRAL_REWARDED_CAP; i += 1) {
+      capReferredIds.push(await makeUser(`CapReferred${i}`));
+    }
+    await prisma.referralReward.createMany({
+      data: capReferredIds.map((referredUserId) => ({
+        referrerUserId: capReferrerId,
+        referredUserId,
+        rewardedAt: new Date(),
+      })),
+    });
+
+    assert.equal(
+      await countRewardedReferrals(capReferrerId),
+      REFERRAL_REWARDED_CAP,
+      'the count sees exactly this referrer\'s rewarded rows',
+    );
+
+    const overCapReferredId = await makeUser('OverCap');
+    assert.equal(
+      await checkReferralEligibility(capReferrerId, overCapReferredId),
+      'CAP_REACHED',
+      `a referrer stops earning after ${REFERRAL_REWARDED_CAP} rewarded referrals`,
+    );
+
+    // A referrer who is nowhere near the cap is unaffected by somebody else's.
+    assert.equal(
+      await checkReferralEligibility(referrerId, overCapReferredId),
+      null,
+      'the cap is per referrer, not global',
+    );
+
+    // Revoking one frees exactly one slot.
+    await prisma.referralReward.updateMany({
+      where: { referrerUserId: capReferrerId, referredUserId: capReferredIds[0] },
+      data: { revokedAt: new Date() },
+    });
+    assert.equal(
+      await countRewardedReferrals(capReferrerId),
+      REFERRAL_REWARDED_CAP - 1,
+      'a revoked reward no longer counts toward the cap',
+    );
+    assert.equal(
+      await checkReferralEligibility(capReferrerId, overCapReferredId),
+      null,
+      'and the referrer can earn again',
+    );
 
     // -----------------------------------------------------------------------
     // abuse: the same push token registered for both accounts

@@ -38,9 +38,33 @@ const productionDeps: MonthlyRecapPassDeps = {
   prune: pruneExpiredMonthlyRecaps,
 };
 
+/**
+ * One shared in-flight guard for the whole process, so the cron pass and an
+ * admin backfill cannot run the same month twice at once.
+ */
+let passInFlight = false;
+
+/**
+ * A recap pass with the production dependencies, outside the scheduler
+ * instance. The admin backfill endpoint needs this: the scheduler object lives
+ * in `server.ts` and nothing else holds a reference to it.
+ *
+ * Returns `null` when a pass is already running.
+ */
+export async function runMonthlyRecapPassNow(
+  options: MonthlyRecapRunOptions = {},
+): Promise<MonthlyRecapRunStats | null> {
+  if (passInFlight) return null;
+  passInFlight = true;
+  try {
+    return await runMonthlyRecapPass(productionDeps, options);
+  } finally {
+    passInFlight = false;
+  }
+}
+
 export class MonthlyRecapScheduler {
   private recapCron: cron.ScheduledTask | null = null;
-  private running = false;
 
   start() {
     this.recapCron = cron.schedule('0 4 1-3 * *', async () => {
@@ -52,15 +76,11 @@ export class MonthlyRecapScheduler {
 
   /** One full pass. Safe to call directly; concurrent calls are a no-op. */
   async runOnce(options: MonthlyRecapRunOptions = {}): Promise<MonthlyRecapRunStats | null> {
-    if (this.running) return null;
-    this.running = true;
     try {
-      return await runMonthlyRecapPass(productionDeps, options);
+      return await runMonthlyRecapPassNow(options);
     } catch (err) {
       console.error('[MonthlyRecapScheduler] recap error:', err);
       return null;
-    } finally {
-      this.running = false;
     }
   }
 

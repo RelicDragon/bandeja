@@ -13,8 +13,6 @@ import { ApiError } from '../utils/ApiError';
 import { AuthRequest } from '../middleware/auth';
 import {
   applyManualReferralCode,
-  buildGameReferralLink,
-  ensureReferralCode,
   getMyReferrer,
   getReferralSummary,
   resolvePublicReferrer,
@@ -30,17 +28,6 @@ export const getMyReferralStatus = asyncHandler(async (req: AuthRequest, res: Re
   if (!req.userId) throw new ApiError(401, 'errors.unauthorized');
   const data = await getMyReferrer(req.userId);
   res.json({ success: true, data });
-});
-
-/** `GET /referrals/game-link/:gameId` — a game link carrying the viewer's `?ref=`. */
-export const getGameInviteLink = asyncHandler(async (req: AuthRequest, res: Response) => {
-  if (!req.userId) throw new ApiError(401, 'errors.unauthorized');
-  const gameId = String(req.params.gameId ?? '').trim();
-  if (!/^[A-Za-z0-9_-]{1,40}$/.test(gameId)) {
-    throw new ApiError(400, 'referral.errors.invalidGame');
-  }
-  const code = await ensureReferralCode(req.userId);
-  res.json({ success: true, data: { link: buildGameReferralLink(gameId, code), code } });
 });
 
 /** `POST /users/me/referral-code` — manual entry inside the 7-day window. */

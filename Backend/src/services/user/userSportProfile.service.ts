@@ -8,6 +8,7 @@ import { clampSportProfileGameStats } from '../results/outcomeStatsSnapshot';
 import { attachPlayStreaksToUser } from '../results/playStreak.service';
 import { overlaySportProjection } from './overlaySportProjection';
 import { refreshSportProfilesInactive } from '../ranking/sportProfileInactive.service';
+import { refreshPairCombinedLevelsForUser } from '../pairStat/pairStat.service';
 
 export const MIN_SPORT_LEVEL = 1.0;
 export const MAX_SPORT_LEVEL = 7.0;
@@ -663,6 +664,15 @@ export async function updateUserSportLevel(userId: string, sport: Sport, level: 
     where: { userId_sport: { userId, sport } },
     data: { level: clampedLevel, levelSource: SportLevelSource.MANUAL },
   });
+
+  /*
+   * PRD 352 — `PairStat.combinedLevel` is the one column fed by the profile
+   * rather than by games, so a manual level has to push it. Reachable despite
+   * the `gamesPlayed > 0` guard above: `gamesPlayed` counts *rated* games while
+   * a pair is recorded for any FINAL game, so a player whose games were all
+   * non-rated passes the guard and still has pairs. Never throws.
+   */
+  await refreshPairCombinedLevelsForUser(userId, sport);
 
   return loadProfileUser(userId);
 }

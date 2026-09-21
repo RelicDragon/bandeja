@@ -14,7 +14,9 @@
  * can never be read as a pair id; they also differ in method.
  */
 import { Router } from 'express';
+import rateLimit from 'express-rate-limit';
 import { authenticate, requireAdmin } from '../middleware/auth';
+import { rateLimitKeyFromRequest } from '../utils/rateLimitClientKey';
 import {
   getPairDetailHandler,
   getPairLeaderboardHandler,
@@ -23,8 +25,46 @@ import {
 
 const router = Router();
 
-router.post('/pairs/recalculate', authenticate, requireAdmin, recalculatePairStatsHandler);
-router.get('/pairs', authenticate, getPairLeaderboardHandler);
-router.get('/pairs/:pairId', authenticate, getPairDetailHandler);
+/**
+ * The windowed path (`period` other than `all`) aggregates a city's outcomes on
+ * the fly, so it is the expensive one. Generous enough that switching sorts and
+ * paging never trips it, tight enough that a loop cannot spin the aggregation.
+ */
+const pairReadLimiter = rateLimit({
+  windowMs: 60_000,
+  max: 90,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => rateLimitKeyFromRequest(req),
+  message: {
+    success: false,
+    message: 'Too many requests, please try again later.',
+    code: 'pairs.rateLimit',
+  },
+});
+
+/** A full rebuild walks every FINAL game in the city — one at a time is plenty. */
+const pairRebuildLimiter = rateLimit({
+  windowMs: 60 * 60_000,
+  max: 6,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => rateLimitKeyFromRequest(req),
+  message: {
+    success: false,
+    message: 'Too many rebuilds, please try again later.',
+    code: 'pairs.rebuildRateLimit',
+  },
+});
+
+router.post(
+  '/pairs/recalculate',
+  authenticate,
+  requireAdmin,
+  pairRebuildLimiter,
+  recalculatePairStatsHandler,
+);
+router.get('/pairs', authenticate, pairReadLimiter, getPairLeaderboardHandler);
+router.get('/pairs/:pairId', authenticate, pairReadLimiter, getPairDetailHandler);
 
 export default router;

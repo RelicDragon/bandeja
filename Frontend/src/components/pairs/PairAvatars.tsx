@@ -1,5 +1,6 @@
 import { memo } from 'react';
 import { PlayerAvatarFace } from '@/components/PlayerAvatarFace';
+import { useFrameClass } from '@/features/collection/useEquippedGoods';
 import { userAvatarTinyUrlFromStandard } from '@/utils/userAvatarTinyUrl';
 import type { PairMember } from '@/api/pairs';
 import { memberDisplayName } from './pairFormat';
@@ -43,6 +44,15 @@ export const PairAvatars = memo(
     const faceStyle = { width: size, height: size };
     const ringClass = RING_CLASS[ring];
 
+    /*
+     * PRD 355 — equipped frames reach avatars through `PlayerAvatar`, and this
+     * stack draws the faces itself. Both ids are requested in one batch, so a
+     * 40-row leaderboard is still a single fetch.
+     */
+    const frameA = useFrameClass(userA.id, 'sm');
+    const frameB = useFrameClass(userB.id, 'sm');
+    const frames = [frameA, frameB];
+
     return (
       <span
         className={`inline-flex shrink-0 items-center ${className}`.trim()}
@@ -52,7 +62,9 @@ export const PairAvatars = memo(
         {[userA, userB].map((member, index) => (
           <span
             key={member.id}
-            className={`relative block shrink-0 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700 ${ringClass}`}
+            className={`relative block shrink-0 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700 ${ringClass}${
+              frames[index] ? ` ${frames[index]}` : ''
+            }`}
             style={{
               ...faceStyle,
               marginInlineStart: index === 0 ? 0 : -overlap,

@@ -72,13 +72,6 @@ export const referralApi = {
     return response.data.data;
   },
 
-  getGameInviteLink: async (gameId: string): Promise<{ link: string; code: string }> => {
-    const response = await api.get<ApiResponse<{ link: string; code: string }>>(
-      `/referrals/game-link/${gameId}`,
-    );
-    return response.data.data;
-  },
-
   /** Unauthenticated — used by the Register screen before an account exists. */
   resolvePublic: async (code: string): Promise<ReferralPublicReferrer> => {
     const response = await api.get<ApiResponse<ReferralPublicReferrer>>(

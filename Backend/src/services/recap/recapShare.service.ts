@@ -40,9 +40,23 @@ export type RecapShareResult = {
   expiresAt: string;
 };
 
-function slideFileBase(monthKey: string, slideKey: string): string {
+/**
+ * Deterministic per (user, month, slide).
+ *
+ * A random suffix would make every attempt write fresh objects: a share that
+ * dies between the upload loop and its transaction would abandon them with no
+ * row referencing them, and even a *successful* re-share would orphan the
+ * previous month's images. Overwriting the same key instead makes the upload
+ * idempotent — a retry costs a PUT and leaks nothing, and a re-share replaces
+ * exactly the images whose story items it is about to soft-delete.
+ *
+ * The user id is hashed rather than embedded: these URLs are handed to
+ * followers, and an object path is not a place to publish account ids.
+ */
+function slideFileBase(userId: string, monthKey: string, slideKey: string): string {
   const safeSlide = slideKey.replace(/[^a-zA-Z0-9]/g, '-');
-  return `recap-${monthKey}-${safeSlide}-${crypto.randomUUID()}`;
+  const owner = crypto.createHash('sha256').update(userId).digest('hex').slice(0, 16);
+  return `recap-${owner}-${monthKey}-${safeSlide}`;
 }
 
 /**
@@ -71,13 +85,14 @@ export function resolveSharedSlides(
 }
 
 async function uploadSlideImage(
+  userId: string,
   payload: MonthlyRecapPayload,
   slide: RecapSlide,
   language: RecapImageLanguage,
 ): Promise<{ mediaUrl: string; thumbnailUrl: string }> {
   const png = await renderRecapSlideImage(payload, slide, language);
   const thumbnail = await renderRecapSlideThumbnail(png);
-  const base = slideFileBase(payload.monthKey, slide.key);
+  const base = slideFileBase(userId, payload.monthKey, slide.key);
   const [mediaUrl, thumbnailUrl] = await Promise.all([
     S3Service.uploadFile(png, `uploads/stories/originals/${base}.png`, 'image/png'),
     S3Service.uploadFile(thumbnail, `uploads/stories/thumbnails/${base}_thumb.jpg`, 'image/jpeg'),
@@ -110,7 +125,7 @@ export async function shareRecapToFollowers(options: {
     caption: string | null;
   }> = [];
   for (const slide of slides) {
-    const urls = await uploadSlideImage(options.payload, slide, language);
+    const urls = await uploadSlideImage(options.userId, options.payload, slide, language);
     const text = recapSlideText(options.payload, slide, language);
     rendered.push({
       slide,
