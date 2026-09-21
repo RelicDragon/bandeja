@@ -62,6 +62,7 @@ import { BetSection } from '@/components/GameDetails/BetSection';
 import { ParticipantsOnlyChatSection } from '@/components/GameDetails/ParticipantsOnlyChatSection';
 import { GameLinkedBookingsSection } from '@/components/GameDetails/GameLinkedBookingsSection';
 import { GameCostCard } from '@/components/GameDetails/cost/GameCostCard';
+import { canViewGameCost } from '@/features/cost/costViewModel';
 import { SeriesGameSection } from '@/features/game-series/SeriesGameSection';
 import { SeriesTitleLine } from '@/features/game-series/SeriesTitleLine';
 import { gamesApi, invitesApi, courtsApi, clubsApi, normalizeGameFromApi } from '@/api';
@@ -1626,7 +1627,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
           </div>
 
           {/* PRD 348 — renders nothing when the game has no splittable price. */}
-          {user ? (
+          {user && canViewGameCost(game, user) ? (
             <div key="cost" className="contents">
               <GameCostCard
                 gameId={game.id}

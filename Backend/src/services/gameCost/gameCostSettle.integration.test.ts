@@ -35,7 +35,8 @@ import {
   TransactionType,
 } from '@prisma/client';
 import prisma from '../../config/database';
-import { getGameCostSummary, markOwnShareAsPaid, setShareConfirmed } from './gameCost.service';
+import { getGameCostSummary, getOwedSummary, markOwnShareAsPaid, setShareConfirmed, syncGameCostShares } from './gameCost.service';
+import { remindUnpaidShares } from './costShareReminder.service';
 import { GameReadService } from '../game/read.service';
 import { GameUpdateService } from '../game/update.service';
 import {
@@ -151,6 +152,58 @@ void (async () => {
     assert.equal(summary.available, true, 'the cost card is live for a priced game');
     assert.equal(summary.viewerShare?.amountMinor, 200, '€4 split two ways');
     assert.equal(summary.viewerCoinCost, 200, '€2 at 100 coins per € is 200 coins');
+
+    // Access follows the current game roster, even when old shares exist.
+    const accessGame = await makeGame(payer.id, player.id);
+    await prisma.game.update({ where: { id: accessGame.id }, data: { entityType: EntityType.LEAGUE } });
+    assert.equal((await getGameCostSummary(accessGame.id, player.id)).available, true);
+    const staff = await makeUser('staff', 0);
+    await prisma.user.update({ where: { id: staff.id }, data: { isAdmin: true } });
+    assert.equal((await getGameCostSummary(accessGame.id, staff.id)).available, true);
+    const denied = (error: unknown) => error instanceof ApiError && error.statusCode === 403;
+    const missing = (error: unknown) => error instanceof ApiError && error.statusCode === 404;
+    for (const status of [ParticipantStatus.IN_QUEUE, ParticipantStatus.INVITED, ParticipantStatus.GUEST, ParticipantStatus.NON_PLAYING]) {
+      await prisma.gameParticipant.update({
+        where: { userId_gameId: { gameId: accessGame.id, userId: player.id } },
+        data: { status },
+      });
+      await assert.rejects(() => getGameCostSummary(accessGame.id, player.id), denied);
+      assert.ok(await prisma.gameCostShare.findUnique({
+        where: { gameId_userId: { gameId: accessGame.id, userId: player.id } },
+      }), 'a rejected read must not sync or delete the old share');
+      assert.equal((await getOwedSummary(player.id)).owed.some((row) => row.gameId === accessGame.id), false);
+    }
+    await assert.rejects(() => markOwnShareAsPaid(accessGame.id, player.id, 'MANUAL'), denied);
+    await prisma.gameParticipant.update({
+      where: { userId_gameId: { gameId: accessGame.id, userId: player.id } },
+      data: { role: ParticipantRole.ADMIN },
+    });
+    assert.equal((await getGameCostSummary(accessGame.id, player.id)).available, true, 'non-playing game admin');
+    await prisma.gameParticipant.update({
+      where: { userId_gameId: { gameId: accessGame.id, userId: payer.id } },
+      data: { status: ParticipantStatus.NON_PLAYING },
+    });
+    assert.equal((await getGameCostSummary(accessGame.id, payer.id)).available, true, 'non-playing owner');
+
+    await prisma.gameParticipant.update({
+      where: { userId_gameId: { gameId: accessGame.id, userId: player.id } },
+      data: { status: ParticipantStatus.PLAYING },
+    });
+    await getGameCostSummary(accessGame.id, player.id);
+    assert.equal((await getOwedSummary(payer.id)).owedToMe.some((row) => row.gameId === accessGame.id), true);
+
+    // Even existing season shares cannot be read, settled, reminded or surfaced in Wallet.
+    await prisma.game.update({ where: { id: accessGame.id }, data: { entityType: EntityType.LEAGUE_SEASON } });
+    for (const actorId of [payer.id, player.id, staff.id]) {
+      await assert.rejects(() => getGameCostSummary(accessGame.id, actorId), missing);
+      await assert.rejects(() => remindUnpaidShares(accessGame.id, actorId), missing);
+    }
+    assert.equal(await syncGameCostShares(accessGame.id), null);
+    assert.equal((await getOwedSummary(payer.id)).owedToMe.some((row) => row.gameId === accessGame.id), false);
+    const emptySeason = await makeGame(payer.id, player.id);
+    await prisma.game.update({ where: { id: emptySeason.id }, data: { entityType: EntityType.LEAGUE_SEASON } });
+    assert.equal(await syncGameCostShares(emptySeason.id), null);
+    assert.equal(await prisma.gameCostShare.count({ where: { gameId: emptySeason.id } }), 0);
 
     // --- 1. a double tap pays once -----------------------------------------
     const taps = await Promise.allSettled([

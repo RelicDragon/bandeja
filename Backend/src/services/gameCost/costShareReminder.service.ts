@@ -144,6 +144,7 @@ export async function remindUnpaidShares(
   if (!actor) throw new ApiError(404, 'errors.users.notFound');
 
   const allowed = canRemindCostShares({
+    entityType: synced.game.entityType,
     userId: actor.id,
     isPlatformAdmin: actor.isAdmin,
     gameOwnerUserId:
@@ -152,7 +153,7 @@ export async function remindUnpaidShares(
       .filter((p) => p.role === 'ADMIN')
       .map((p) => p.userId),
     payerUserId: effectivePayerId(synced.game),
-    rosterUserIds: synced.game.participants.map((p) => p.userId),
+    playingUserIds: synced.game.participants.filter((p) => p.status === 'PLAYING').map((p) => p.userId),
     shareUserIds: synced.shares.map((s) => s.userId),
   });
   if (!allowed) throw new ApiError(403, 'errors.games.accessDenied');
@@ -205,6 +206,7 @@ export async function runCostShareReminderSweep(now: Date = new Date()): Promise
   const freezeCutoff = new Date(now.getTime() - AUTO_REMIND_MAX_AGE_MS);
   const toFreeze = await prisma.game.findMany({
     where: {
+      entityType: { not: 'LEAGUE_SEASON' },
       resultsStatus: 'FINAL',
       costFrozenAt: null,
       priceType: { in: ['TOTAL', 'PER_PERSON'] },
@@ -245,6 +247,7 @@ export async function runCostShareReminderSweep(now: Date = new Date()): Promise
     // the overload circularly through `due`.
     const dueArgs: Prisma.GameFindManyArgs = {
       where: {
+        entityType: { not: 'LEAGUE_SEASON' },
         costFrozenAt: { lte: dueBefore, gte: dueAfter },
         costShares: { some: { confirmedAt: null } },
       },

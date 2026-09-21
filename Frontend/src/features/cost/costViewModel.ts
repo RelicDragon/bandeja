@@ -135,3 +135,21 @@ export function previewEvenSplit(
   for (const id of free) out[id] = base + (id === holder ? remainder : 0);
   return out;
 }
+
+/** Gate mounting as well as fetching, so unauthorized viewers see no error card. */
+export function canViewGameCost(
+  game: {
+    entityType: string;
+    participants: readonly { userId: string; status: string; role: string }[];
+  },
+  viewer: { id: string; isAdmin?: boolean } | null | undefined,
+): boolean {
+  if (!viewer || game.entityType === 'LEAGUE_SEASON') return false;
+  return Boolean(viewer.isAdmin) || game.participants.some(
+    (participant) => participant.userId === viewer.id && (
+      participant.status === 'PLAYING' ||
+      participant.role === 'OWNER' ||
+      participant.role === 'ADMIN'
+    ),
+  );
+}

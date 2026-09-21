@@ -1062,6 +1062,9 @@ A ledger, not a payment system: no money moves in the app. The only value transf
 | GD-CS-34 | Themes | Light / Dark / Classic / Premium | Chips, the green settle tint and the lock chip stay legible |
 | GD-CS-35 | RTL | App language العربية | Rows, chips, the amount column and the sheets mirror; nothing overlaps |
 | GD-CS-36 | Profile payment defaults draft | Profile → payment defaults: add a method, wait, type a handle, then Save; repeat with Cancel or a failed save | Blank input stays visible while typing; only Save sends the validated list; Cancel restores saved defaults; failed saves and profile refreshes preserve the draft |
+| GD-CS-37 | Tracker viewer access | Open a priced game as PLAYING, non-playing OWNER/ADMIN, and platform admin; repeat as queue member, invitee, GUEST, ordinary NON_PLAYING, stranger and signed-out user | Only the first three groups see the tracker. Excluded viewers make no cost request and see no loading/error card. Authenticated excluded users receive 403 from direct cost endpoints, even with an old share |
+| GD-CS-38 | League season excluded | Open a priced LEAGUE_SEASON as owner and platform admin, including via `?section=cost&settle=1`; then open its priced LEAGUE fixture as a playing participant | Season has no tracker or cost request; direct season cost endpoints return 404, sync creates no shares, and existing season records do not appear in Wallet or reminders. Fixture tracker works normally |
+| GD-CS-39 | Access after leaving | Open a priced game as PLAYING, then move to a non-playing status without an organizer role, including after shares freeze | Tracker disappears; old share does not grant access through the API or Wallet cost entries |
 
 Wallet side: `PR-CS-01`–`PR-CS-05` in §13.3. Cards: `F-CS-01`–`F-CS-05` in §7.4b. Create/edit: `C-CS-01`–`C-CS-05` in §8.3b.
 

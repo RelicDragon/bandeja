@@ -72,6 +72,7 @@ export const COST_REMIND_COOLDOWN_MS = 24 * 60 * 60 * 1000;
 
 type GameCostRow = {
   id: string;
+  entityType: string;
   name: string | null;
   startTime: Date | null;
   priceType: PriceType;
@@ -103,6 +104,7 @@ type ShareRow = {
 
 const GAME_COST_SELECT = {
   id: true,
+  entityType: true,
   name: true,
   startTime: true,
   priceType: true,
@@ -163,7 +165,7 @@ export async function syncGameCostShares(
   if (!config.costSplitEnabled) return null;
 
   const game = await loadGame(gameId);
-  if (!game) return null;
+  if (!game || game.entityType === 'LEAGUE_SEASON') return null;
 
   const existing = (await prisma.gameCostShare.findMany({
     where: { gameId },
@@ -340,12 +342,13 @@ function buildActorContext(
   actor: ActorRow,
 ): CostShareActorContext {
   return {
+    entityType: game.entityType,
     userId: actor.id,
     isPlatformAdmin: actor.isAdmin,
     gameOwnerUserId: ownerUserId(game),
     gameAdminUserIds: game.participants.filter((p) => p.role === 'ADMIN').map((p) => p.userId),
     payerUserId: effectivePayerId(game),
-    rosterUserIds: game.participants.map((p) => p.userId),
+    playingUserIds: game.participants.filter((p) => p.status === 'PLAYING').map((p) => p.userId),
     shareUserIds: shares.map((row) => row.userId),
   };
 }
@@ -489,16 +492,9 @@ async function requireLedger(gameId: string, actorId: string) {
   // `Game.costPayerId` and emits into the game room, and a stranger must not be
   // able to trigger any of that on a game they have no relationship to.
   const game = await loadGame(gameId);
-  if (!game) throw new ApiError(404, 'errors.games.notFound');
+  if (!game || game.entityType === 'LEAGUE_SEASON') throw new ApiError(404, 'errors.games.notFound');
   const actor = await loadActor(actorId);
-  const existingShareUserIds = await prisma.gameCostShare.findMany({
-    where: { gameId },
-    select: { userId: true },
-  });
-  const preCtx: CostShareActorContext = {
-    ...buildActorContext(game, [], actor),
-    shareUserIds: existingShareUserIds.map((row) => row.userId),
-  };
+  const preCtx = buildActorContext(game, [], actor);
   if (!canViewCostShares(preCtx)) throw new ApiError(403, 'errors.games.accessDenied');
 
   const synced = await syncGameCostShares(gameId);
@@ -787,9 +783,20 @@ export async function setShareConfirmed(
 export async function getOwedSummary(userId: string): Promise<OwedSummaryDto> {
   if (!config.costSplitEnabled) return { owed: [], owedToMe: [] };
 
+  const actor = await loadActor(userId);
+  const visibleGame: Prisma.GameWhereInput = {
+    entityType: { not: 'LEAGUE_SEASON' },
+    ...(actor.isAdmin ? {} : {
+      participants: { some: {
+        userId,
+        OR: [{ status: 'PLAYING' }, { role: { in: ['OWNER', 'ADMIN'] } }],
+      } },
+    }),
+  };
+
   const [mine, asPayer] = await Promise.all([
     prisma.gameCostShare.findMany({
-      where: { userId, confirmedAt: null, game: { costPayerId: { not: userId } } },
+      where: { userId, confirmedAt: null, game: { ...visibleGame, costPayerId: { not: userId } } },
       select: {
         amountCents: true,
         currency: true,
@@ -804,7 +811,7 @@ export async function getOwedSummary(userId: string): Promise<OwedSummaryDto> {
       where: {
         confirmedAt: null,
         userId: { not: userId },
-        game: { costPayerId: userId },
+        game: { ...visibleGame, costPayerId: userId },
       },
       select: {
         userId: true,

@@ -7,6 +7,8 @@
  */
 
 export type CostShareActorContext = {
+  /** League seasons never have a ledger; their LEAGUE fixtures may. */
+  entityType: string;
   /** The caller. */
   userId: string;
   /** `User.isAdmin` — platform staff, allowed everywhere. */
@@ -17,8 +19,8 @@ export type CostShareActorContext = {
   gameAdminUserIds: readonly string[];
   /** `Game.costPayerId`. */
   payerUserId: string | null;
-  /** Every user on the roster, in any `ParticipantStatus`. */
-  rosterUserIds: readonly string[];
+  /** Only participants with status PLAYING. */
+  playingUserIds: readonly string[];
   /** Users that currently hold a `GameCostShare` row. */
   shareUserIds: readonly string[];
 };
@@ -31,22 +33,22 @@ function isGameOrganizer(ctx: CostShareActorContext): boolean {
 
 /** Organizers and platform staff configure the ledger. */
 export function canManageCostShares(ctx: CostShareActorContext): boolean {
-  return ctx.isPlatformAdmin || isGameOrganizer(ctx);
+  return canViewCostShares(ctx) && (ctx.isPlatformAdmin || isGameOrganizer(ctx));
 }
 
-/** Anyone who can see the game sees the ledger; strangers do not. */
+/** Playing participants, game organizers and platform staff can see the ledger. */
 export function canViewCostShares(ctx: CostShareActorContext): boolean {
+  if (ctx.entityType === 'LEAGUE_SEASON') return false;
   return (
     ctx.isPlatformAdmin ||
     isGameOrganizer(ctx) ||
-    ctx.rosterUserIds.includes(ctx.userId) ||
-    ctx.shareUserIds.includes(ctx.userId)
+    ctx.playingUserIds.includes(ctx.userId)
   );
 }
 
 /** You may only ever mark **your own** share as paid, and only if you have one. */
 export function canMarkOwnCostSharePaid(ctx: CostShareActorContext): boolean {
-  return ctx.shareUserIds.includes(ctx.userId);
+  return canViewCostShares(ctx) && ctx.shareUserIds.includes(ctx.userId);
 }
 
 /**
@@ -58,7 +60,7 @@ export function canConfirmCostShare(
   ctx: CostShareActorContext,
   targetUserId: string,
 ): boolean {
-  if (!ctx.shareUserIds.includes(targetUserId)) return false;
+  if (!canViewCostShares(ctx) || !ctx.shareUserIds.includes(targetUserId)) return false;
   return (
     ctx.isPlatformAdmin || isGameOrganizer(ctx) || ctx.payerUserId === ctx.userId
   );
@@ -66,6 +68,7 @@ export function canConfirmCostShare(
 
 /** Nudging costs other people a push notification, so it is organizer/payer only. */
 export function canRemindCostShares(ctx: CostShareActorContext): boolean {
+  if (!canViewCostShares(ctx)) return false;
   return (
     ctx.isPlatformAdmin || isGameOrganizer(ctx) || ctx.payerUserId === ctx.userId
   );

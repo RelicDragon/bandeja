@@ -17,10 +17,11 @@ import {
  */
 
 const base: Omit<CostShareActorContext, 'userId' | 'isPlatformAdmin'> = {
+  entityType: 'GAME',
   gameOwnerUserId: 'owner',
   gameAdminUserIds: ['admin'],
   payerUserId: 'payer',
-  rosterUserIds: ['owner', 'admin', 'payer', 'player', 'bench'],
+  playingUserIds: ['payer', 'player'],
   shareUserIds: ['owner', 'admin', 'payer', 'player'],
 };
 
@@ -43,7 +44,7 @@ const matrix: Row[] = [
   { actor: 'admin', view: true, manage: true, markOwn: true, confirmPlayer: true, remind: true },
   { actor: 'payer', view: true, manage: false, markOwn: true, confirmPlayer: true, remind: true },
   { actor: 'player', view: true, manage: false, markOwn: true, confirmPlayer: false, remind: false },
-  { actor: 'bench', view: true, manage: false, markOwn: false, confirmPlayer: false, remind: false },
+  { actor: 'bench', view: false, manage: false, markOwn: false, confirmPlayer: false, remind: false },
   { actor: 'stranger', view: false, manage: false, markOwn: false, confirmPlayer: false, remind: false },
   { actor: 'staff', staff: true, view: true, manage: true, markOwn: false, confirmPlayer: true, remind: true },
 ];
@@ -75,16 +76,31 @@ assert.equal(canConfirmCostShare(ctx('owner'), 'bench'), false);
   assert.equal(canConfirmCostShare({ ...ctx('payer'), payerUserId: null }, 'player'), false);
 }
 
-// Someone holding a share after leaving the roster can still see the ledger.
+// A historical share never grants access after leaving the playing roster.
 {
   const leaver: CostShareActorContext = {
     ...ctx('ghost'),
-    rosterUserIds: ['owner'],
+    playingUserIds: ['owner'],
     shareUserIds: ['ghost'],
   };
-  assert.equal(canViewCostShares(leaver), true);
-  assert.equal(canMarkOwnCostSharePaid(leaver), true);
+  assert.equal(canViewCostShares(leaver), false);
+  assert.equal(canMarkOwnCostSharePaid(leaver), false);
   assert.equal(canManageCostShares(leaver), false);
 }
+
+
+for (const row of matrix) {
+  const actor = ctx(row.actor, row.staff ?? false);
+  assert.equal(canViewCostShares({ ...actor, entityType: 'LEAGUE' }), row.view);
+  const season = { ...actor, entityType: 'LEAGUE_SEASON' };
+  assert.equal(canViewCostShares(season), false);
+  assert.equal(canManageCostShares(season), false);
+  assert.equal(canMarkOwnCostSharePaid(season), false);
+  assert.equal(canConfirmCostShare(season, 'player'), false);
+  assert.equal(canRemindCostShares(season), false);
+}
+const nonPlayingPayer = { ...ctx('payer'), playingUserIds: [] };
+assert.equal(canViewCostShares(nonPlayingPayer), false);
+assert.equal(canRemindCostShares(nonPlayingPayer), false);
 
 console.log('costSharePermissions.test.ts: ok');

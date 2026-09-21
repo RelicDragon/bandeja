@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { CostShare, GameCostSummary } from '@/api/gameCost';
 import {
   canOfferCoinSettlement,
+  canViewGameCost,
   isCostLedgerHidden,
   orderCostShares,
   previewEvenSplit,
@@ -373,4 +374,26 @@ describe('buildGameEditPricePayload', () => {
 
     expect(buildGameEditPricePayload(noAmount, noAmount)).toEqual({ priceType: 'PER_PERSON' });
   });
+});
+
+describe('cost tracker access', () => {
+  const viewer = { id: 'viewer', isAdmin: false };
+  for (const entityType of ['GAME', 'LEAGUE', 'LEAGUE_SEASON']) {
+    for (const role of ['PARTICIPANT', 'OWNER', 'ADMIN']) {
+      for (const status of ['PLAYING', 'IN_QUEUE', 'INVITED', 'GUEST', 'NON_PLAYING']) {
+        it(`${entityType}: ${role} ${status}`, () => {
+          const game = { entityType, participants: [{ userId: viewer.id, role, status }] };
+          expect(canViewGameCost(game, viewer)).toBe(
+            entityType !== 'LEAGUE_SEASON' && (status === 'PLAYING' || role !== 'PARTICIPANT'),
+          );
+        });
+      }
+    }
+    it(`${entityType}: staff, stranger and anonymous`, () => {
+      const game = { entityType, participants: [] };
+      expect(canViewGameCost(game, { ...viewer, isAdmin: true })).toBe(entityType !== 'LEAGUE_SEASON');
+      expect(canViewGameCost(game, viewer)).toBe(false);
+      expect(canViewGameCost(game, null)).toBe(false);
+    });
+  }
 });

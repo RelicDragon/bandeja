@@ -55,20 +55,24 @@ Load-bearing rules:
 
 **Who is in the split:** every `PLAYING` participant, plus the payer when they are on the roster in another status (a non-playing organizer who fronted the money still appears). A player who leaves stops being `PLAYING` and drops out on the next sync. A substitution moves the row, including its paid state, to the substitute (`transferCostShareOnSubstitution`). Games priced `PER_TEAM` have **no** cost card: a team price yields a game total only when the team count is known, and nothing on `Game` states it.
 
-**Permissions** live in one file, `gameCost/costSharePermissions.ts`; every endpoint routes through exactly one predicate.
+**Visibility:** only current `PLAYING` participants, the game's own `OWNER`/`ADMIN`, and platform `isAdmin` users may view the tracker. Queue members, invitees, chat guests, ordinary non-playing participants and former participants are excluded, even if a share remains. The frontend checks before mounting/fetching; the backend enforces the same access rule, including Wallet cost entries. Being the payer alone does not grant access.
+
+`LEAGUE_SEASON` never has a tracker, including for owners and platform admins. Its individual `LEAGUE` games remain eligible under the same viewer and price rules. Season cost endpoints return 404; sync creates no season shares, and season records are excluded from Wallet cost entries and reminders.
+
+**Permissions** live in `gameCost/costSharePermissions.ts`; actions require tracker access first.
 
 | Actor | View | Configure payer / payment methods / overrides | Mark own paid | Confirm "Received" | Remind |
 |-------|------|------------------------------------|---------------|--------------------|--------|
-| Game owner / admin | yes | yes | yes | yes | yes |
-| Payer (not an organizer) | yes | no | yes | yes | yes |
-| Participant with a share | yes | no | own row only | no | no |
-| On the roster, no share | yes | no | no | no | no |
+| Game owner / admin | yes | yes | own row only | yes | yes |
+| Playing payer (not an organizer) | yes | no | own row only | yes | yes |
+| Playing participant with a share | yes | no | own row only | no | no |
+| Playing participant, no share | yes | no | no | no | no |
 | Everyone else | no | no | no | no | no |
 | Platform admin | yes | yes | no share of their own | yes | yes |
 
 Endpoints (all authenticated and rate-limited): `GET`/`PUT /api/games/:id/cost-shares`, `POST …/cost-shares/me/paid` `{ method }`, `POST …/cost-shares/:userId/confirm` `{ confirmed }`, `POST …/cost-shares/remind`, and `GET /api/transactions/owed` for the Wallet's outstanding rows in both directions.
 
-**Reminders.** `GAME_COST_REMINDER` → `sendWalletNotifications`. `CostShareReminderScheduler` runs hourly: it first freezes the ledger of games that have gone FINAL since the last pass (that is what sets `costFrozenAt`), then nudges every game frozen between 24 h and 7 days ago that still has an unconfirmed share. An organizer or the payer may also nudge by hand, once per 24 h per game. Dedupe is persisted, never an in-memory `Set` — [notifications.md](./notifications.md).
+**Reminders.** `GAME_COST_REMINDER` → `sendWalletNotifications`. `CostShareReminderScheduler` runs hourly: it first freezes the ledger of games that have gone FINAL since the last pass (that is what sets `costFrozenAt`), then nudges every game frozen between 24 h and 7 days ago that still has an unconfirmed share. An organizer or a payer with tracker access may also nudge by hand, once per 24 h per game. Dedupe is persisted, never an in-memory `Set` — [notifications.md](./notifications.md).
 
 Card price row (`perHeadPrice`): [home-and-find.md](./home-and-find.md). While shares are still estimated it divides by the **seat count**, so a card answers "what will this cost me if I join?" before anybody has joined; once `costFrozenAt` is set it divides by the real share count and `estimated` flips to `false`.
 
