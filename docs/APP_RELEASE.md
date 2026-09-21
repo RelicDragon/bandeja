@@ -6,12 +6,12 @@ Marks the last commit that was shipped to **Google Play** and **App Store**. Use
 
 | | |
 |---|---|
-| **Version** | 0.97.49 |
-| **Build** | 231 |
-| **Commit** | `556c3b4bd2d12ff615253c672dc9b79818c529a8` |
-| **Short** | `556c3b4bd` |
-| **Date** | 2026-09-20 |
-| **Message** | Bump app release to 0.97.49 (build 231) |
+| **Version** | 0.97.50 |
+| **Build** | 232 |
+| **Commit** | `67b9c5d425cde02948cfe4193284596e5c27c720` |
+| **Short** | `67b9c5d42` |
+| **Date** | 2026-09-21 |
+| **Message** | Bump app release to 0.97.50 (build 232) |
 
 Canonical commit hash: `docs/app-release-baseline.txt` (one line, full SHA).
 
@@ -28,17 +28,6 @@ Dry-run planner: `APP_RELEASE_DRY_RUN=1 ./scripts/app-release.sh`. Resume after 
 Version/build are proposed from the latest uploaded Google Play and App Store Connect builds (not from git). Override interactively, or set `APP_RELEASE_VERSION` + `APP_RELEASE_BUILD`. Store lookup overrides: `APP_RELEASE_ANDROID_STORE_VERSION`/`_BUILD`, `APP_RELEASE_IOS_STORE_VERSION`/`_BUILD`. iOS can upload **TestFlight Internal** or **TestFlight Beta** without attaching the build to an App Store version or disturbing an in-progress App Review.
 
 See this file for store API credentials, Android signing, and internal-track smoke test steps.
-
-### Watch / widget / extension target versions
-
-`Frontend/ios/App/App.xcodeproj/project.pbxproj` carries `MARKETING_VERSION` / `CURRENT_PROJECT_VERSION` per target. The release CLI rewrites only the iOS App and NotificationServiceExtension targets (`IOS_VERSION_BUMP_BUNDLE_LINES` in `Backend/scripts/lib/app-release.ts`); the watch app, watch widgets and home widgets must carry the same values or the archive is rejected / TestFlight shows a stale watch version.
-
-`./scripts/app-release.sh` runs a pre-flight that copies the App target's values onto every other target before handing over to the CLI (dry runs only report drift). Run it by hand after any manual bump:
-
-```bash
-./scripts/app-release.sh sync-ios-versions    # write
-./scripts/app-release.sh check-ios-versions   # exit 1 on drift
-```
 
 ### Headless scripts
 
@@ -81,6 +70,7 @@ Generate **What's new** (LLM summarizes commits since baseline):
 
 | Version | Build | Commit | Date |
 |---------|-------|--------|------|
+| 0.97.50 | 232 | `67b9c5d42` | 2026-09-21 |
 | 0.97.49 | 231 | `556c3b4bd` | 2026-09-20 |
 | 0.97.48 | 230 | `c96edb9ef` | 2026-09-16 |
 | 0.97.47 | 229 | `46053a9bf` | 2026-09-16 |
