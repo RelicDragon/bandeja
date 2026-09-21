@@ -50,6 +50,10 @@ public final class PushIntentSanitizer {
         if (keys.contains("replyToken")
             || keys.contains("acceptActionToken")
             || keys.contains("declineActionToken")
+            || keys.contains("attendanceActionToken")
+            || keys.contains("attendanceUnsureActionToken")
+            // PRD 357 — the weather alert's signed "keep as planned" token.
+            || keys.contains("weatherKeepActionToken")
             || keys.contains("actionToken")
             || keys.contains("nativeHandler")) {
             return true;

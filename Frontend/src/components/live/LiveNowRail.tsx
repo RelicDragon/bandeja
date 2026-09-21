@@ -24,7 +24,13 @@ export interface LiveNowRailProps {
   games: LiveRailGame[];
   onOpen: (game: LiveRailGame) => void;
   isLoading?: boolean;
+  /** Socket down: every card is frozen. */
   isReconnecting?: boolean;
+  /**
+   * PRD 349 — cards whose own room is not joined even though the socket is up.
+   * Without this a single failed join shows a frozen score that looks live.
+   */
+  reconnectingGameIds?: ReadonlySet<string>;
   /** Home uses the softer "Live in {city}" header and a See all link. */
   variant?: 'find' | 'home';
   cityName?: string;
@@ -37,6 +43,7 @@ function LiveNowRailView({
   onOpen,
   isLoading = false,
   isReconnecting = false,
+  reconnectingGameIds,
   variant = 'find',
   cityName,
   maxCards = LIVE_RAIL_LIMIT,
@@ -46,6 +53,11 @@ function LiveNowRailView({
   const scrollerRef = useRef<HTMLDivElement | null>(null);
 
   const visible = games.slice(0, Math.min(maxCards, LIVE_RAIL_LIMIT));
+
+  const isCardReconnecting = useCallback(
+    (game: LiveRailGame) => isReconnecting || Boolean(reconnectingGameIds?.has(game.id)),
+    [isReconnecting, reconnectingGameIds],
+  );
 
   /** Arrow-key scrolling; `start`/`end` are logical, so `ar` mirrors correctly. */
   const handleKeyDown = useCallback((event: KeyboardEvent<HTMLDivElement>) => {
@@ -126,7 +138,7 @@ function LiveNowRailView({
         <LiveScoreCard
           game={visible[0]}
           variant="full"
-          isReconnecting={isReconnecting}
+          isReconnecting={isCardReconnecting(visible[0])}
           onOpen={onOpen}
         />
       ) : (
@@ -143,7 +155,7 @@ function LiveNowRailView({
             <LiveScoreCard
               key={game.id}
               game={game}
-              isReconnecting={isReconnecting}
+              isReconnecting={isCardReconnecting(game)}
               onOpen={onOpen}
             />
           ))}

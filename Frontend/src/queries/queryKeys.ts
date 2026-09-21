@@ -110,6 +110,9 @@ export const queryKeys = {
     shares: (gameId: string) => ['gameCost', 'shares', gameId] as const,
     owed: ['gameCost', 'owed'] as const,
   },
+  cities: {
+    all: ['cities'] as const,
+  },
   weather: {
     day: (cityId: string, date: string) => ['weather', 'day', cityId, date] as const,
     game: (gameId: string, scope = 'game') => ['weather', 'game', gameId, scope] as const,

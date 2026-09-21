@@ -17,7 +17,9 @@ import {
   ATTENDANCE_NUDGE_COOLDOWN_MS,
   ATTENDANCE_PARTICIPANT_WRITABLE_FIELDS,
   ATTENDANCE_RATE_MIN_SAMPLE,
+  ATTENDANCE_SECOND_REMINDER_HOURS,
   assertAttendanceUpdateIsSafe,
+  attendanceReminderRecipients,
   attendanceRateWindowStart,
   buildAnswerUpdate,
   buildAttendanceCallbackData,
@@ -28,9 +30,13 @@ import {
   evaluateNudgeCooldown,
   gameAcceptsAttendanceAnswers,
   isAttendanceAnswer,
+  isImplicitlyConfirmedOwner,
   isWithinNoShowWindow,
   NO_SHOW_NOTE_WINDOW_MS,
+  OWNER_IMPLICIT_ANSWER,
   parseAttendanceCallbackData,
+  partitionAttendanceAsk,
+  withOwnerImplicitAnswer,
 } from './attendanceRules';
 
 const NOW = new Date('2026-06-15T12:00:00.000Z');
@@ -165,6 +171,64 @@ assert.deepEqual(countAttendance([]), {
   playingCount: 0,
   noShowCount: 0,
 });
+
+/* ------------------------------------------------------------------ */
+/* The organizer's implicit yes                                        */
+/* ------------------------------------------------------------------ */
+
+assert.equal(OWNER_IMPLICIT_ANSWER, 'CONFIRMED');
+assert.equal(isImplicitlyConfirmedOwner({ role: 'OWNER', status: 'PLAYING' }), true);
+assert.equal(
+  isImplicitlyConfirmedOwner({ role: 'OWNER', status: 'NON_PLAYING' }),
+  false,
+  'an owner who is not playing has nothing to confirm',
+);
+assert.equal(
+  isImplicitlyConfirmedOwner({ role: 'ADMIN', status: 'PLAYING' }),
+  false,
+  'admins are asked like everyone else — only the owner made the game',
+);
+assert.equal(isImplicitlyConfirmedOwner({ role: 'PARTICIPANT', status: 'PLAYING' }), false);
+assert.equal(isImplicitlyConfirmedOwner({ status: 'PLAYING' }), false);
+
+const OWNER_ROSTER = [
+  { userId: 'owner', role: 'OWNER', status: 'PLAYING', attendance: 'UNANSWERED' as const },
+  { userId: 'a', role: 'PARTICIPANT', status: 'PLAYING', attendance: 'UNANSWERED' as const },
+  { userId: 'host', role: 'OWNER', status: 'NON_PLAYING', attendance: 'UNANSWERED' as const },
+];
+
+assert.deepEqual(
+  withOwnerImplicitAnswer(OWNER_ROSTER).map((row) => row.attendance),
+  ['CONFIRMED', 'UNANSWERED', 'UNANSWERED'],
+  'only the owner\'s own seat reads as confirmed',
+);
+assert.deepEqual(
+  withOwnerImplicitAnswer(OWNER_ROSTER),
+  withOwnerImplicitAnswer(withOwnerImplicitAnswer(OWNER_ROSTER)),
+  'the coercion is idempotent',
+);
+assert.deepEqual(
+  OWNER_ROSTER.map((row) => row.attendance),
+  ['UNANSWERED', 'UNANSWERED', 'UNANSWERED'],
+  'the implicit yes is derived, never written back onto the row',
+);
+assert.equal(
+  withOwnerImplicitAnswer(OWNER_ROSTER)[1],
+  OWNER_ROSTER[1],
+  'rows that need no coercion are passed through, not copied',
+);
+assert.equal(
+  countAttendance(withOwnerImplicitAnswer(OWNER_ROSTER)).confirmedCount,
+  1,
+  'the organizer counts toward "x of y confirmed"',
+);
+// An owner who answered "not sure" on an older client is still the organizer.
+assert.equal(
+  withOwnerImplicitAnswer([
+    { userId: 'owner', role: 'OWNER', status: 'PLAYING', attendance: 'UNSURE' as const },
+  ])[0].attendance,
+  'CONFIRMED',
+);
 
 /* ------------------------------------------------------------------ */
 /* Rate and the >= 5 sample floor                                      */
@@ -378,5 +442,100 @@ for (const banned of ['level:', 'reliability:', 'ratingUncertainty:', 'gamesPlay
     `attendanceCounters.service.ts must not write "${banned}"`,
   );
 }
+
+/* ------------------------------------------------------------------ */
+/* Who gets which reminder (PRD 346)                                   */
+/* ------------------------------------------------------------------ */
+
+const REMINDER_ROSTER = [
+  { id: 'unanswered', status: 'PLAYING', attendance: 'UNANSWERED' },
+  { id: 'confirmed', status: 'PLAYING', attendance: 'CONFIRMED' },
+  { id: 'unsure', status: 'PLAYING', attendance: 'UNSURE' },
+  { id: 'looking', status: 'IN_QUEUE', attendance: 'UNANSWERED' },
+  { id: 'trainer', status: 'NON_PLAYING', attendance: null },
+];
+
+// The 24 h reminder asks everybody — it is the first time the question is put.
+assert.deepEqual(
+  attendanceReminderRecipients(REMINDER_ROSTER, 24).map((row) => row.id),
+  ['unanswered', 'confirmed', 'unsure', 'looking', 'trainer'],
+  'the 24 h reminder reaches every recipient',
+);
+
+// The 2 h reminder only goes to PLAYING players who have not answered, so
+// nobody who already answered is asked a second time.
+assert.deepEqual(
+  attendanceReminderRecipients(REMINDER_ROSTER, ATTENDANCE_SECOND_REMINDER_HOURS).map((row) => row.id),
+  ['unanswered', 'looking', 'trainer'],
+  'the 2 h reminder skips PLAYING players who already answered',
+);
+
+// Non-PLAYING recipients were never asked the question, so they are never
+// filtered out by their (absent) answer.
+assert.deepEqual(
+  attendanceReminderRecipients(
+    [{ id: 'looking', status: 'IN_QUEUE', attendance: 'CONFIRMED' }],
+    1,
+  ).map((row) => row.id),
+  ['looking'],
+  'a non-PLAYING recipient is never filtered on attendance',
+);
+
+// Everyone answered: there is simply nobody left to ask — never a third message
+// to the players who did answer.
+assert.deepEqual(
+  attendanceReminderRecipients(
+    [
+      { id: 'a', status: 'PLAYING', attendance: 'CONFIRMED' },
+      { id: 'b', status: 'PLAYING', attendance: 'UNSURE' },
+    ],
+    2,
+  ),
+  [],
+  'a fully answered roster gets no second reminder',
+);
+
+// The owner never answers, so a filter that only looked at the column would ask
+// them again at 2 h. The implicit yes has to reach here too.
+const OWNER_REMINDER_ROSTER = [
+  { id: 'owner', role: 'OWNER', status: 'PLAYING', attendance: 'UNANSWERED' },
+  { id: 'player', role: 'PARTICIPANT', status: 'PLAYING', attendance: 'UNANSWERED' },
+];
+assert.deepEqual(
+  attendanceReminderRecipients(OWNER_REMINDER_ROSTER, 2).map((row) => row.id),
+  ['player'],
+  'the 2 h reminder skips the owner — organizing is the answer',
+);
+
+// At 24 h the owner is still reminded, but the message must not carry the
+// question: they are already confirmed.
+const partitioned = partitionAttendanceAsk(
+  attendanceReminderRecipients(OWNER_REMINDER_ROSTER, 24),
+);
+assert.deepEqual(partitioned.ask.map((row) => row.id), ['player']);
+assert.deepEqual(partitioned.remindOnly.map((row) => row.id), ['owner']);
+assert.deepEqual(
+  partitionAttendanceAsk(REMINDER_ROSTER).remindOnly,
+  [],
+  'a roster with no playing owner puts the question to everyone',
+);
+
+// The boundary is inclusive, and anything above it is still "the first ask".
+assert.equal(
+  attendanceReminderRecipients(REMINDER_ROSTER, ATTENDANCE_SECOND_REMINDER_HOURS + 0.5).length,
+  REMINDER_ROSTER.length,
+  'just above the cut-off is still the everybody reminder',
+);
+assert.equal(
+  attendanceReminderRecipients(REMINDER_ROSTER, 0.5).length,
+  3,
+  'below the cut-off keeps filtering',
+);
+
+// The filter decides who is *asked*. It never drops a row from the roster it
+// was handed — the input array is untouched.
+const rosterBefore = REMINDER_ROSTER.map((row) => row.id);
+attendanceReminderRecipients(REMINDER_ROSTER, 2);
+assert.deepEqual(REMINDER_ROSTER.map((row) => row.id), rosterBefore, 'the roster is not mutated');
 
 console.log('attendanceRules.test.ts: ok');

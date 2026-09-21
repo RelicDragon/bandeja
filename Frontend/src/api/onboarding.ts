@@ -33,9 +33,15 @@ export const onboardingApi = {
     return response.data.data;
   },
 
-  setStep: async (step: OnboardingStep): Promise<OnboardingStatus> => {
+  /**
+   * `event` is the PRD 350 funnel name (`onboarding_step_viewed` /
+   * `_completed` / `_skipped`). Optional, and ignored by the server unless it
+   * is one of those three.
+   */
+  setStep: async (step: OnboardingStep, event?: string): Promise<OnboardingStatus> => {
     const response = await api.patch<ApiResponse<OnboardingStatus>>('/users/me/onboarding', {
       step,
+      ...(event ? { event } : {}),
     });
     return response.data.data;
   },

@@ -46,10 +46,7 @@
       "totalFor": "الإجمالي {{amount}} · عدد اللاعبين: {{players}}"
     },
     "create": {
-      "preview": "≈ {{amount}} لكل شخص، عدد اللاعبين: {{players}}",
-      "paymentHintLabel": "كيف يدفعون لك",
-      "paymentHintPlaceholder": "آيبان أو معرّف تطبيق دفع أو نقدًا في النادي…",
-      "paymentHintHelp": "يظهر للاعبين عند التسوية. المتبقي {{remaining}} حرفًا."
+      "preview": "≈ {{amount}} لكل شخص، عدد اللاعبين: {{players}}"
     },
     "wallet": {
       "owed": "عليك",
@@ -81,6 +78,70 @@
       "copyFailed": "تعذّر النسخ."
     },
     "loading": "جارٍ تحميل تقسيم التكلفة…",
-    "loadFailed": "تعذّر تحميل تقسيم التكلفة."
+    "loadFailed": "تعذّر تحميل تقسيم التكلفة.",
+    "payment": {
+      "title": "كيف يدفعون لك",
+      "help": "يراه اللاعبون عند تسوية حصتهم.",
+      "add": "أضف طريقة أخرى",
+      "addFirst": "أضف طريقة للدفع",
+      "remove": "إزالة {{method}}",
+      "maxReached": "يمكنك إضافة حتى {{max}} طرق للدفع.",
+      "noHandleNeeded": "لا شيء لإدخاله.",
+      "open": "فتح",
+      "everywhere": "تعمل في كل مكان",
+      "pickerTitle": "كيف تريد أن يدفع لك اللاعبون؟",
+      "pickerSubtitle": "الطرق المستخدمة في البلد الذي تُقام فيه المباراة.",
+      "pickerSearch": "بحث",
+      "pickerEmpty": "لا توجد نتائج.",
+      "pickerCustomHint": "غير موجودة؟ اختر «شيء آخر» واكتبها بنفسك.",
+      "profileTitle": "بيانات الدفع المحفوظة",
+      "profileHelp": "تُضاف تلقائيًا إلى المباريات التي تنشئها.",
+      "method": {
+        "custom": "شيء آخر",
+        "cash": "نقدًا",
+        "bankTransfer": "تحويل بنكي",
+        "iban": "IBAN",
+        "cardTransfer": "تحويل على البطاقة",
+        "ukBank": "تحويل بنكي",
+        "rsAccount": "حساب بنكي",
+        "huInstant": "تحويل فوري",
+        "clabe": "CLABE",
+        "cbuAlias": "الاسم المستعار أو CBU"
+      },
+      "handle": {
+        "NONE": {
+          "label": "لا حاجة إلى بيانات"
+        },
+        "TEXT": {
+          "label": "التفاصيل",
+          "placeholder": "نقدًا في النادي، IBAN، أي شيء"
+        },
+        "PHONE": {
+          "label": "رقم الهاتف"
+        },
+        "EMAIL": {
+          "label": "البريد الإلكتروني"
+        },
+        "PHONE_OR_EMAIL": {
+          "label": "الهاتف أو البريد الإلكتروني"
+        },
+        "TAG": {
+          "label": "اسم المستخدم"
+        },
+        "IBAN": {
+          "label": "IBAN"
+        },
+        "ACCOUNT": {
+          "label": "رقم الحساب"
+        },
+        "CARD": {
+          "label": "رقم البطاقة"
+        },
+        "ALIAS": {
+          "label": "المفتاح أو المعرّف",
+          "placeholder": "هاتف أو بريد أو معرّف"
+        }
+      }
+    }
   }
 }

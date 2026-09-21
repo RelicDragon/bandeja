@@ -7,15 +7,16 @@ import { CurrencySelectorModal } from '@/components/CurrencySelectorModal';
 import { SegmentedSwitch } from '@/components/SegmentedSwitch';
 import { ChevronDown, HelpCircle, Gift, User, Users, Banknote } from 'lucide-react';
 import { CostSplitPreview } from '@/components/createGame/CostSplitPreview';
-import { PaymentHintField } from '@/components/createGame/PaymentHintField';
+import { PaymentMethodsField } from '@/components/payments/PaymentMethodsField';
+import type { PaymentMethodEntry } from '@shared/payments/paymentMethodSelection';
 
 export interface PriceTabState {
   priceType: PriceType;
   priceTotal: number | null | undefined;
   priceCurrency: PriceCurrency | undefined;
   inputValue: string;
-  /** PRD 348 — `Game.paymentHint`. */
-  paymentHint: string;
+  /** PRD 348 — `Game.paymentMethods`, up to 3 country-scoped entries. */
+  paymentMethods: PaymentMethodEntry[];
 }
 
 interface PriceTabProps {
@@ -23,9 +24,11 @@ interface PriceTabProps {
   onChange: (patch: Partial<PriceTabState>) => void;
   /** PRD 348 — seats the per-head preview divides the total by. */
   maxParticipants?: number;
+  /** PRD 348 — ISO-2 of the game's city, for the payment-method picker. */
+  countryIso2?: string | null;
 }
 
-export const PriceTab = ({ state, onChange, maxParticipants }: PriceTabProps) => {
+export const PriceTab = ({ state, onChange, maxParticipants, countryIso2 }: PriceTabProps) => {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const [currencyModalOpen, setCurrencyModalOpen] = useState(false);
@@ -105,9 +108,10 @@ export const PriceTab = ({ state, onChange, maxParticipants }: PriceTabProps) =>
               currency={resolvedCurrency}
               players={maxParticipants ?? 0}
             />
-            <PaymentHintField
-              value={state.paymentHint}
-              onChange={(paymentHint) => onChange({ paymentHint })}
+            <PaymentMethodsField
+              value={state.paymentMethods}
+              onChange={(paymentMethods) => onChange({ paymentMethods })}
+              countryIso2={countryIso2}
             />
           </div>
         </div>

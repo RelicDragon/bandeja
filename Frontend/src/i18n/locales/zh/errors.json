@@ -137,6 +137,16 @@
       "companyIdRequired": "俱乐部预订集成需要公司 ID。",
       "integrationTypeMustBeOnlineBooking": "俱乐部集成必须为在线预订。",
       "rollbackFailed": "无法确认预订已取消。"
+    },
+    "cost": {
+      "paymentMethod": {
+        "tooMany": "最多只能填写 3 种付款方式。",
+        "unknownMethod": "该付款方式不可用。",
+        "duplicateMethod": "该付款方式已在列表中。",
+        "handleRequired": "请填写收款信息。",
+        "handleTooLong": "太长了。",
+        "handleInvalid": "看起来不太对，请检查一下。"
+      }
     }
   },
   "leagues": {

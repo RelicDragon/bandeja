@@ -86,6 +86,16 @@ assert.deepEqual(
   'a leaked payment handle is reported',
 );
 
+// PRD 348 — the structured list carries the same handle, so it is forbidden too.
+assert.deepEqual(
+  collectGameResultsContractIssues({
+    ...clean,
+    paymentMethods: [{ method: 'IPS_PRENESI', handle: '+381601112233' }],
+  }).map((i) => i.path),
+  ['paymentMethods'],
+  'a leaked payment method list is reported',
+);
+
 const leakedBio = JSON.parse(JSON.stringify(clean)) as typeof clean & {
   rounds: { matches: { teams: { players: { user: Record<string, unknown> }[] }[] }[] }[];
 };

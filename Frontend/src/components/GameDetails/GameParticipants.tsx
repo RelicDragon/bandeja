@@ -19,6 +19,8 @@ import { AttendanceDot } from '@/features/attendance/AttendanceDot';
 import { AttendanceLegendButton } from '@/features/attendance/AttendanceLegendButton';
 import { AttendanceRosterActions } from '@/features/attendance/AttendanceRosterActions';
 import type { AttendanceDotState } from '@/features/attendance/attendanceVisuals';
+import { OpenSpotRow } from '@/features/spot-opened/OpenSpotRow';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 
 interface GameParticipantsProps {
   game: Game;
@@ -87,6 +89,8 @@ export const GameParticipants = ({
 }: GameParticipantsProps) => {
   const { t } = useTranslation();
   const currentUser = useAuthStore((state) => state.user);
+  // PRD 347 — the roster's per-row slide-in had no reduced-motion path.
+  const reduceMotion = usePrefersReducedMotion();
   const genderCtx = genderI18nContext(currentUser?.gender);
   const [viewMode, setViewMode] = useState<'carousel' | 'list'>('carousel');
   const isUnauthorized = !userId;
@@ -334,8 +338,9 @@ export const GameParticipants = ({
                           <motion.div
                             key={participant.userId}
                             layout
-                            initial={{ opacity: 0, x: -8 }}
+                            initial={reduceMotion ? false : { opacity: 0, x: -8 }}
                             animate={{ opacity: 1, x: 0 }}
+                            transition={reduceMotion ? { duration: 0 } : undefined}
                             className="flex items-center gap-3 rounded-xl border border-transparent bg-gray-50/90 p-2.5 transition-colors hover:border-gray-200 hover:bg-gray-100 dark:bg-gray-800/70 dark:hover:border-gray-700 dark:hover:bg-gray-800"
                           >
                             <PlayerAvatar
@@ -382,8 +387,9 @@ export const GameParticipants = ({
                           <motion.div
                             key={participant.userId}
                             layout
-                            initial={{ opacity: 0, x: -8 }}
+                            initial={reduceMotion ? false : { opacity: 0, x: -8 }}
                             animate={{ opacity: 1, x: 0 }}
+                            transition={reduceMotion ? { duration: 0 } : undefined}
                             className="flex items-center gap-3 rounded-xl border border-transparent bg-gray-50/90 p-2.5 transition-colors hover:border-gray-200 hover:bg-gray-100 dark:bg-gray-800/70 dark:hover:border-gray-700 dark:hover:bg-gray-800"
                           >
                             <PlayerAvatar
@@ -429,8 +435,9 @@ export const GameParticipants = ({
                       <motion.div
                         key={participant.userId}
                         layout
-                        initial={{ opacity: 0, x: -8 }}
+                        initial={reduceMotion ? false : { opacity: 0, x: -8 }}
                         animate={{ opacity: 1, x: 0 }}
+                        transition={reduceMotion ? { duration: 0 } : undefined}
                         className="flex items-center gap-3 rounded-xl border border-transparent bg-gray-50/90 p-2.5 transition-colors hover:border-gray-200 hover:bg-gray-100 dark:bg-gray-800/70 dark:hover:border-gray-700 dark:hover:bg-gray-800"
                       >
                         <div className="relative shrink-0">
@@ -463,6 +470,11 @@ export const GameParticipants = ({
                           onUndo={onUndoNoShow ? () => onUndoNoShow(participant.userId) : undefined}
                         />
                       </motion.div>
+                    ))}
+                    {/* PRD 347 — a freed PLAYING seat is a visible hole in the
+                        roster, for every viewer, not only the ones who can invite. */}
+                    {Array.from({ length: Math.max(0, Math.min(emptySlots, 8)) }, (_, slot) => (
+                      <OpenSpotRow key={`open-spot-${slot}`} index={slot} />
                     ))}
                     {emptySlots > 0 && !isUnauthorized && canInvitePlayers && (
                       <button

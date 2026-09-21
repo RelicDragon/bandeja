@@ -113,6 +113,8 @@ Card pill and sorting: [home-and-find.md](./home-and-find.md).
 
 `GameParticipant` carries `attendance` (`ParticipantAttendance`: `UNANSWERED` / `CONFIRMED` / `UNSURE`), `attendanceUpdatedAt`, `noShowNotedById` and `noShowNotedAt`. Only `status === 'PLAYING'` rows take part: trainers (`NON_PLAYING`), the queue and invitees are never counted and never get a dot.
 
+**The organizer's implicit yes.** The owner is never asked — no card, no push question, no nudge, no watch prompt — and their PLAYING row reads `CONFIRMED` everywhere attendance is read, so a four-player game the owner plays in can reach 4/4. This is a **derivation, not a write**: `isImplicitlyConfirmedOwner` / `withOwnerImplicitAnswer` in `attendanceRules.ts` coerce at every DB boundary (`loadRoster`, the card enricher, the counter queries, the reminder filter) while the column keeps whatever the person actually answered, usually `UNANSWERED`. Deriving rather than storing is what makes the rule follow ownership instead of freezing at creation, and what makes it true for games that already exist. `role === 'ADMIN'` earns nothing here: only the owner made the game. An owner who is `NON_PLAYING` has no seat and no dot. A `POST /games/:id/attendance` from an owner (a stale client, a push tapped after a hand-over) writes nothing and answers `CONFIRMED`.
+
 Eligibility is `timeIsSet` + `canMutateGameRoster` + `startTime > now` (`gameAcceptsAttendanceAnswers`). **Never `Game.status`**: a game created after its own `startTime` keeps `status: 'ANNOUNCED'` until it archives, so a status gate fails open and lets a player "confirm" a game that already happened.
 
 | Route | Auth | Notes |
@@ -129,6 +131,21 @@ Eligibility is `timeIsSet` + `canMutateGameRoster` + `startTime > now` (`gameAcc
 Code: `Backend/src/services/gameAttendance/` — `attendanceRules.ts` (pure: the write allow-list, the 7-day window, the 6 h cooldown, the counting rules, the ≥5 sample floor, the Telegram `at:` parser), `attendanceCounters.service.ts` (recompute, never increment), `gameAttendance.service.ts` (endpoints, the `attendance` push-action handler and the `attendanceSummary` card enricher, both registered at import time). Socket: `game-attendance-updated` on `game-${gameId}` → `{ gameId, userId, attendance, confirmedCount, playingCount }`, where `userId` is the player the change is *about*, never the actor.
 
 The nudge cooldown has **no table**: the nudge writes an `ATTENDANCE_NUDGED` system message into the game chat *before* it fans out and reads the cooldown back from the newest such message. That makes it restart-safe and doubles as the visible record in chat.
+
+**Where a player can answer.** Game details, the push shade on both platforms
+(`attendance_actions` / the `GAME_REMINDER` category — see
+[notifications.md](./notifications.md)), the Telegram reminder's inline buttons,
+and the Apple Watch. The watch fetches `GET /games/:id/attendance` with the game
+and posts the same `POST /games/:id/attendance`; the prompt rule it shares with
+the widget envelope (unanswered, ANNOUNCED, starting within 24 h) lives in
+`WatchAttendance.needsAnswer`, and `CachedNextGame.attendance` carries the
+viewer's answer into the envelope. Every surface writes through the same
+endpoint and the same allow-list — none of them can move a seat.
+
+**The card stack** (`attendanceSummary`) is projected **only** for games the
+viewer is PLAYING in; every other game gets `null`. So the right-rail avatar
+stack follows the viewer, not the list: it appears on a Find card once the
+viewer has joined that game, and never on a stranger's.
 
 Public rate and counters: [social-and-profile.md](./social-and-profile.md).
 

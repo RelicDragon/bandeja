@@ -134,6 +134,16 @@
       "companyIdRequired": "Для интеграции бронирования клуба нужен company ID.",
       "integrationTypeMustBeOnlineBooking": "Интеграция клуба должна быть онлайн-бронированием.",
       "rollbackFailed": "Не удалось подтвердить отмену бронирования."
+    },
+    "cost": {
+      "paymentMethod": {
+        "tooMany": "Можно указать не больше 3 способов оплаты.",
+        "unknownMethod": "Такой способ оплаты недоступен.",
+        "duplicateMethod": "Этот способ уже в списке.",
+        "handleRequired": "Укажи, куда отправлять деньги.",
+        "handleTooLong": "Слишком длинно.",
+        "handleInvalid": "Похоже, тут ошибка — проверь."
+      }
     }
   },
   "leagues": {

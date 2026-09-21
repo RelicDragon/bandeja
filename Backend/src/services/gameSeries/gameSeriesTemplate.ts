@@ -116,6 +116,20 @@ const STRING_KEYS = [
   'priceCurrency',
 ] as const;
 
+/**
+ * Keys `GameCreateService` reads to link — or claim — a real court booking.
+ * None of them is allow-listed above, so they never reach a stored template;
+ * `buildOccurrenceCreatePayload` strips them again on the way out so a
+ * hand-built template cannot make the scheduler book anything either.
+ */
+const BOOKING_KEYS = [
+  'hasBookedCourt',
+  'externalBookingId',
+  'externalBookingIds',
+  'externalBookingProvider',
+  'bookingSnapshots',
+] as const;
+
 type TemplateSourceRecord = Record<string, unknown>;
 
 function readNumber(source: TemplateSourceRecord, key: string): number | null | undefined {
@@ -268,7 +282,13 @@ export function buildOccurrenceCreatePayload({
   payload.cityId = cityId ?? undefined;
   payload.courtIds = courtIds.length > 0 ? [...courtIds] : undefined;
   payload.courtId = courtIds.length > 0 ? courtIds[0] : undefined;
-  // Generated occurrences are never auto-booked (PRD 345, Out of Scope).
+  // Generated occurrences are never auto-booked (PRD 345, Out of Scope). The
+  // allow-list above already drops every booking key, so the deletes are belt
+  // and braces for a hand-built template — but they are what guarantees the
+  // generator can never hand `GameCreateService` a payload that links (or, via
+  // a future provider integration, buys) a real court reservation. An organizer
+  // books each occurrence themselves.
+  for (const key of BOOKING_KEYS) delete payload[key];
   payload.hasBookedCourt = false;
   // A scheduler pass must never be blocked by the organizer's own calendar.
   payload.confirmOverlap = true;

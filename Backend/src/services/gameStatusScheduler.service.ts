@@ -8,13 +8,11 @@ import notificationService from './notification.service';
 import { BarResultsService } from './barResults.service';
 import { LeagueStandingsRecalculateService } from './league/leagueStandingsRecalculate.service';
 import { onGameFinalizedForAttendance } from './gameAttendance/gameAttendance.service';
+import {
+  attendanceReminderRecipients,
+  partitionAttendanceAsk,
+} from './gameAttendance/attendanceRules';
 import { runWeatherAlertSweep } from './weather/weatherAlert.service';
-
-/**
- * PRD 346 — reminders at or below this many hours before start only go to
- * players who have not answered the attendance question yet.
- */
-const ATTENDANCE_SECOND_REMINDER_HOURS = 2;
 
 export class GameStatusScheduler {
   private cronJob: cron.ScheduledTask | null = null;
@@ -320,23 +318,30 @@ export class GameStatusScheduler {
       }
     });
 
-    // PRD 346 — the 24 h reminder asks everyone; the 2 h reminder only goes to
-    // players who have not answered yet, so nobody is asked twice. There is no
-    // third message, no deadline and no consequence for never answering.
-    const relevant =
-      hoursBeforeStart <= ATTENDANCE_SECOND_REMINDER_HOURS
-        ? participants.filter((p) => p.status !== 'PLAYING' || p.attendance === 'UNANSWERED')
-        : participants;
+    // PRD 346 — the 24 h reminder reaches everyone; the 2 h reminder only goes
+    // to players who have not answered yet, so nobody is asked twice. There is
+    // no third message, no deadline and no consequence for never answering.
+    const relevant = attendanceReminderRecipients(participants, hoursBeforeStart);
 
     if (relevant.length === 0) {
       return;
     }
 
-    const recipients = relevant.map(p => p.user);
-    await notificationService.sendGameReminderNotification(gameId, recipients, hoursBeforeStart, {
-      attendanceActions: true,
-      onlyUserIds: recipients.map((user) => user.id),
-    });
+    // The owner is confirmed by organizing, so their reminder is a reminder and
+    // nothing more: same message, without "Are you coming?" and its buttons.
+    const { ask, remindOnly } = partitionAttendanceAsk(relevant);
+
+    for (const [group, attendanceActions] of [
+      [ask, true],
+      [remindOnly, false],
+    ] as const) {
+      if (group.length === 0) continue;
+      const recipients = group.map(p => p.user);
+      await notificationService.sendGameReminderNotification(gameId, recipients, hoursBeforeStart, {
+        attendanceActions,
+        onlyUserIds: recipients.map((user) => user.id),
+      });
+    }
   }
 
   stop() {

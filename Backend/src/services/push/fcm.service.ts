@@ -88,6 +88,24 @@ function buildDataMap(payload: NotificationPayload): Record<string, string> {
   if (payload.type === NotificationType.GAME_REMINDER && payload.data?.attendanceActionToken) {
     data.nativeHandler = 'attendance_actions';
   }
+  // PRD 345 — "I'm in" / "Not this time" on the same-time-next-week prompt. Both
+  // tokens must be present: a half-signed prompt falls back to a plain push
+  // whose tap still opens the in-app card.
+  if (
+    payload.type === NotificationType.GAME_SERIES_NEXT_PROMPT &&
+    payload.data?.acceptActionToken &&
+    payload.data?.declineActionToken
+  ) {
+    data.nativeHandler = 'series_actions';
+  }
+  // PRD 357 — "Keep as planned" posts a token from the shade; "Move indoor" and
+  // "View forecast" are foreground taps that ride `weatherDeepLink`. The
+  // organizer variant is the only one that signs a token.
+  if (payload.type === NotificationType.GAME_WEATHER_ALERT) {
+    data.nativeHandler = payload.data?.weatherKeepActionToken
+      ? 'weather_organizer_actions'
+      : 'weather_actions';
+  }
   return data;
 }
 

@@ -1,7 +1,12 @@
 import type { Prisma, PriceCurrency, PriceType } from '@prisma/client';
+import {
+  resolvePaymentMethods,
+  type PaymentMethodEntry,
+} from '@bandeja/shared/payments/paymentMethodSelection';
 import prisma from '../../config/database';
 import { config } from '../../config/env';
 import { ApiError } from '../../utils/ApiError';
+import { iso2FromCityCountry } from '../../utils/currencyFromCountry';
 import { USER_SELECT_WITH_SPORT_PROFILES } from '../../utils/constants';
 import { projectEmbeddedUserByPrimarySport } from '../user/projectEmbeddedBasicUsers';
 import { emitGameCostUpdated } from '../socketEmitFacade';
@@ -18,6 +23,7 @@ import {
   selectSplitParticipantIds,
   type CoinSettleRefusal,
 } from './costShareMath';
+import { resolvePaymentMethodWrite } from './paymentMethodsWrite';
 import {
   canConfirmCostShare,
   canManageCostShares,
@@ -51,8 +57,6 @@ import type {
  * All amounts are **integer minor units** of the game's own currency.
  */
 
-export const PAYMENT_HINT_MAX_LENGTH = 120;
-
 /**
  * Upper bound for an organizer's per-player override, in minor units
  * (1,000,000 major units — far past any real court fee).
@@ -75,6 +79,8 @@ type GameCostRow = {
   priceCurrency: PriceCurrency | null;
   costPayerId: string | null;
   paymentHint: string | null;
+  paymentMethods: Prisma.JsonValue | null;
+  city: { country: string | null } | null;
   costFrozenAt: Date | null;
   resultsStatus: 'NONE' | 'IN_PROGRESS' | 'FINAL';
   participants: {
@@ -104,12 +110,27 @@ const GAME_COST_SELECT = {
   priceCurrency: true,
   costPayerId: true,
   paymentHint: true,
+  paymentMethods: true,
+  // PRD 348 — the picker offers the rails that exist where the game is played.
+  city: { select: { country: true } },
   costFrozenAt: true,
   resultsStatus: true,
   participants: {
     select: { userId: true, status: true, role: true, joinedAt: true },
   },
 } as const;
+
+/**
+ * PRD 348 — the structured list, falling back to the pre-catalogue free-text
+ * hint read as a single `CUSTOM` entry.
+ */
+function gamePaymentMethods(game: GameCostRow): PaymentMethodEntry[] {
+  return resolvePaymentMethods(game.paymentMethods, game.paymentHint);
+}
+
+function gameCountryIso2(game: GameCostRow): string | null {
+  return iso2FromCityCountry(game.city?.country) ?? null;
+}
 
 function ownerUserId(game: GameCostRow): string | null {
   return game.participants.find((p) => p.role === 'OWNER')?.userId ?? null;
@@ -338,6 +359,8 @@ function unavailableSummary(gameId: string): GameCostSummaryDto {
     payerUserId: null,
     payer: null,
     paymentHint: null,
+    paymentMethods: [],
+    countryIso2: null,
     frozenAt: null,
     estimated: true,
     shares: [],
@@ -387,6 +410,8 @@ async function buildSummary(
       ...empty,
       available: false,
       paymentHint: game.paymentHint,
+      paymentMethods: gamePaymentMethods(game),
+      countryIso2: gameCountryIso2(game),
     };
   }
 
@@ -438,6 +463,8 @@ async function buildSummary(
     payerUserId: payerId,
     payer: payerId ? userMap.get(payerId) ?? null : null,
     paymentHint: game.paymentHint,
+    paymentMethods: gamePaymentMethods(game),
+    countryIso2: gameCountryIso2(game),
     frozenAt: game.costFrozenAt ? game.costFrozenAt.toISOString() : null,
     estimated: game.costFrozenAt == null,
     shares: dtos,
@@ -515,12 +542,10 @@ export async function updateGameCostShares(
     }
   }
 
-  if (input.paymentHint !== undefined) {
-    const hint = input.paymentHint == null ? null : input.paymentHint.trim();
-    if (hint != null && hint.length > PAYMENT_HINT_MAX_LENGTH) {
-      throw new ApiError(400, 'errors.cost.paymentHintTooLong');
-    }
-    gameUpdate.paymentHint = hint && hint.length > 0 ? hint : null;
+  const paymentWrite = resolvePaymentMethodWrite(input);
+  if (paymentWrite) {
+    gameUpdate.paymentMethods = paymentWrite.paymentMethods;
+    gameUpdate.paymentHint = paymentWrite.paymentHint;
   }
 
   if (Object.keys(gameUpdate).length > 0) {

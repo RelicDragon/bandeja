@@ -19,6 +19,9 @@ enum Endpoint: Sendable {
     case getMyGameWorkout(gameId: String)
     case matchTimerGet(gameId: String, matchId: String)
     case matchTimerAction(gameId: String, matchId: String, action: String)
+    /// PRD 346 — the viewer's own attendance answer. Informative only.
+    case gameAttendance(gameId: String)
+    case setGameAttendance(gameId: String)
 
     var path: String {
         switch self {
@@ -58,15 +61,17 @@ enum Endpoint: Sendable {
             return "/results/game/\(gameId)/matches/\(matchId)/timer"
         case .matchTimerAction(let gameId, let matchId, let action):
             return "/results/game/\(gameId)/matches/\(matchId)/timer/\(action)"
+        case .gameAttendance(let gameId), .setGameAttendance(let gameId):
+            return "/games/\(gameId)/attendance"
         }
     }
 
     var method: String {
         switch self {
-        case .myGames, .gameDetail, .userProfile, .gameResults, .getMyGameWorkout, .matchTimerGet:
+        case .myGames, .gameDetail, .userProfile, .gameResults, .getMyGameWorkout, .matchTimerGet, .gameAttendance:
             return "GET"
         case .createRound, .createMatch, .recalculateOutcomes, .postGameWorkout, .syncGameResults, .generateRound,
-             .startResultsEntryWithRound, .matchTimerAction:
+             .startResultsEntryWithRound, .matchTimerAction, .setGameAttendance:
             return "POST"
         case .updateMatch, .updateGame:
             return "PUT"

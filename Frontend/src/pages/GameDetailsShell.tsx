@@ -63,6 +63,7 @@ import { ParticipantsOnlyChatSection } from '@/components/GameDetails/Participan
 import { GameLinkedBookingsSection } from '@/components/GameDetails/GameLinkedBookingsSection';
 import { GameCostCard } from '@/components/GameDetails/cost/GameCostCard';
 import { SeriesGameSection } from '@/features/game-series/SeriesGameSection';
+import { SeriesTitleLine } from '@/features/game-series/SeriesTitleLine';
 import { gamesApi, invitesApi, courtsApi, clubsApi, normalizeGameFromApi } from '@/api';
 import { favoritesApi } from '@/api/favorites';
 import { resultsApi } from '@/api/results';
@@ -111,9 +112,11 @@ import { retainGameRoom, releaseGameRoom } from '@/services/gameRoomMembership';
 import { AttendanceCard } from '@/features/attendance/AttendanceCard';
 import { SpotOpenedGameSection } from '@/features/spot-opened/SpotOpenedGameSection';
 import { shouldSwallowJoinDeepLink } from '@/features/spot-opened/joinDeepLink';
+import { JoinFromDeepLink } from '@/features/spot-opened/JoinFromDeepLink';
 import { joinOutcomeTone } from '@/features/spot-opened/joinOutcomeTone';
 import { useGameAttendance } from '@/features/attendance/useGameAttendance';
 import { resolveDotState, type AttendanceDotState } from '@/features/attendance/attendanceVisuals';
+import { AttendanceLegendSheet } from '@/features/attendance/AttendanceLegendSheet';
 import { GameResultsEngine, useGameResultsStore } from '@/services/gameResultsEngine';
 import { releaseAnyLeagueResultsEngine } from '@/services/leagueResultsEngineSession';
 import { shouldSyncEngineGameFromShell } from '@/utils/mergeGameFormatForResults';
@@ -181,6 +184,8 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
   const [playerListMode, setPlayerListMode] = useState<'players' | 'trainer'>('players');
   const [playerListGender, setPlayerListGender] = useState<'MALE' | 'FEMALE' | undefined>(undefined);
   const [showManageUsers, setShowManageUsers] = useState(false);
+  /** PRD 346 — "What the dots mean", opened from a dot or the legend button. */
+  const [showAttendanceLegend, setShowAttendanceLegend] = useState(false);
   const [courts, setCourts] = useState<Court[]>([]);
   const [isCourtModalOpen, setIsCourtModalOpen] = useState(false);
   const [clubs, setClubs] = useState<Club[]>([]);
@@ -1529,6 +1534,12 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
     if (!isLeagueSeason || activeTab === 'general') {
       return (
         <>
+          {/* PRD 345 — "Part of <series> · week N", directly under the title and
+              above everything else. Public label, so guests see it too. */}
+          <div key="series-title-line" className="contents">
+            <SeriesTitleLine game={game} />
+          </div>
+
           {user && isLeague && game.hasFixedTeams ? (
             <div key="league-fixed-teams" className="contents">
               <LeagueFixedTeamsSection game={game} />
@@ -1595,11 +1606,14 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
             />
           </div>
 
-          {/* PRD 346 — attendance is a courtesy signal: it never changes a seat. */}
+          {/* PRD 346 — attendance is a courtesy signal: it never changes a seat.
+              The owner is never asked: organizing is the answer, and the backend
+              reads their PLAYING row as CONFIRMED (`isImplicitlyConfirmedOwner`),
+              so they still count in "3 of 4 confirmed". */}
           <div key="attendance" className="contents">
             <AttendanceCard
               attendance={attendance}
-              canAnswer={isUserPlaying && !isGuest}
+              canAnswer={isUserPlaying && !isGuest && !isUserOwner}
               isOrganizer={isOwner}
               players={attendancePlayers}
               viewerUserId={user?.id}
@@ -1716,9 +1730,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
                   setIsEditGameInfoModalOpen(true);
                 }}
                 attendanceByUserId={attendanceDotsByUserId}
-                onShowAttendanceLegend={() =>
-                  toast(`${t('attendance.legend.title')} — ${t('attendance.legend.hint')}`)
-                }
+                onShowAttendanceLegend={() => setShowAttendanceLegend(true)}
               />
             </div>
           ) : null}
@@ -1730,15 +1742,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
               game={game}
               viewerUserId={user?.id}
               isOrganizer={isOwner}
-              alreadyInvolved={shouldSwallowJoinDeepLink({
-                isParticipantNonGuest: isParticipant,
-                isGuest,
-                hasPendingInvite,
-                isInJoinQueue,
-                allowDirectJoin: game.allowDirectJoin,
-              })}
               onGameUpdate={setGame}
-              onJoin={() => void handleJoin()}
             />
           </div>
 
@@ -2059,6 +2063,22 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
           </GameDetailsSection>
         )}
 
+      {/* PRD 347 — the "Join now" deep link. Mounted outside the tab switch on
+          purpose: inside `renderTabContent()` it would be unmounted whenever a
+          non-default tab is active, and `/games/:id?tab=…&join=1` would land
+          without ever running the join. Renders nothing. */}
+      <JoinFromDeepLink
+        ready={Boolean(user)}
+        alreadyInvolved={shouldSwallowJoinDeepLink({
+          isParticipantNonGuest: isParticipant,
+          isGuest,
+          hasPendingInvite,
+          isInJoinQueue,
+          allowDirectJoin: game.allowDirectJoin,
+        })}
+        onJoin={() => void handleJoin()}
+      />
+
       <AnimatedPresencePanel panelKey={shellViewKey} className="space-y-4">
         <AnimatedChildrenStagger contentKey={staggerContentKey} className="space-y-4">
           {renderTabContent()}
@@ -2099,6 +2119,13 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
           onUserAction={handleUserAction}
         />
       )}
+
+      {/* PRD 346 — the dot legend. Rendered unconditionally with `open`, like
+          every other sheet here, so vaul gets its enter animation. */}
+      <AttendanceLegendSheet
+        open={showAttendanceLegend}
+        onClose={() => setShowAttendanceLegend(false)}
+      />
 
       {isCourtModalOpen && game && courts.length >= 1 && (
         <CourtModal

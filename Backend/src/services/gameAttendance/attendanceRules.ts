@@ -174,9 +174,50 @@ export function evaluateNudgeCooldown(
   };
 }
 
+/**
+ * The organizer's implicit yes.
+ *
+ * The owner is the one player whose attendance was never a question: they made
+ * the game. So they are never *asked* — no card, no push question, no nudge —
+ * and their PLAYING row reads `CONFIRMED` everywhere attendance is read, which
+ * is what lets a four-player game reach 4/4.
+ *
+ * This is a **derivation, not a write**. Nothing stores `CONFIRMED` on the
+ * owner's row: the column keeps the answer they actually gave (usually
+ * `UNANSWERED`), and every reader coerces. That way the rule follows ownership
+ * instead of freezing at creation time, it applies to games that already exist,
+ * and it stays inside the PRD 346 allow-list — an implicit yes still writes
+ * nothing.
+ */
+export const OWNER_IMPLICIT_ANSWER = 'CONFIRMED' satisfies AttendanceAnswer;
+
+/** The two columns the implicit yes is derived from. */
+export type AttendanceOwnershipRow = { role?: string | null; status: string };
+
+/** `true` for the owner's own seat — the only row with an implicit answer. */
+export function isImplicitlyConfirmedOwner(row: AttendanceOwnershipRow): boolean {
+  return row.role === 'OWNER' && row.status === 'PLAYING';
+}
+
+/**
+ * Applies {@link isImplicitlyConfirmedOwner} to a roster. Call this at every DB
+ * boundary that loads attendance, so no projection downstream has to remember.
+ * Idempotent, and it never allocates for a roster that needs no coercion.
+ */
+export function withOwnerImplicitAnswer<
+  T extends AttendanceOwnershipRow & { attendance: ParticipantAttendance },
+>(rows: readonly T[]): T[] {
+  return rows.map((row) =>
+    isImplicitlyConfirmedOwner(row) && row.attendance !== OWNER_IMPLICIT_ANSWER
+      ? { ...row, attendance: OWNER_IMPLICIT_ANSWER as ParticipantAttendance }
+      : row,
+  );
+}
+
 export type AttendanceRosterEntry = {
   userId: string;
   status: string;
+  role?: string | null;
   attendance: ParticipantAttendance;
   noShowNotedAt?: Date | string | null;
 };
@@ -296,4 +337,65 @@ export function gameAcceptsAttendanceAnswers(
   const startsAtMs = startsAt.getTime();
   if (!Number.isFinite(startsAtMs)) return false;
   return startsAtMs > now.getTime();
+}
+
+/**
+ * The second reminder's cut-off, in hours before start. Anything at or under it
+ * is "the 2 h reminder" as far as the attendance filter is concerned.
+ */
+export const ATTENDANCE_SECOND_REMINDER_HOURS = 2;
+
+/** The shape the reminder filter needs — a participant row, nothing more. */
+export interface ReminderCandidate {
+  status: string;
+  role?: string | null;
+  attendance?: string | null;
+}
+
+/**
+ * Who gets a given game reminder.
+ *
+ * The 24 h reminder reaches everyone. The 2 h reminder only reaches PLAYING
+ * players who have not answered yet, so nobody is asked twice — and there is
+ * never a third message. Non-PLAYING recipients (the `lookingForPartner` rows)
+ * are never filtered: the question was never put to them. The owner counts as
+ * answered from the start ({@link isImplicitlyConfirmedOwner}), so the 2 h
+ * message skips them.
+ *
+ * This is a filter over who is *reminded*, and that is all it is. It removes
+ * nobody from the game, and a player who never answers is treated exactly like
+ * one who did.
+ */
+export function attendanceReminderRecipients<T extends ReminderCandidate>(
+  participants: T[],
+  hoursBeforeStart: number,
+): T[] {
+  if (hoursBeforeStart > ATTENDANCE_SECOND_REMINDER_HOURS) {
+    return participants;
+  }
+  return participants.filter(
+    (participant) =>
+      participant.status !== 'PLAYING' ||
+      (participant.attendance === 'UNANSWERED' && !isImplicitlyConfirmedOwner(participant)),
+  );
+}
+
+/**
+ * Splits reminder recipients into the ones the reminder may put the question
+ * to and the ones who get the plain reminder.
+ *
+ * Only the owner lands in `remindOnly`: they are already confirmed, so shipping
+ * them "Are you coming?" with two buttons would ask a question the app has
+ * decided on their behalf.
+ */
+export function partitionAttendanceAsk<T extends ReminderCandidate>(
+  recipients: readonly T[],
+): { ask: T[]; remindOnly: T[] } {
+  const ask: T[] = [];
+  const remindOnly: T[] = [];
+  for (const recipient of recipients) {
+    if (isImplicitlyConfirmedOwner(recipient)) remindOnly.push(recipient);
+    else ask.push(recipient);
+  }
+  return { ask, remindOnly };
 }

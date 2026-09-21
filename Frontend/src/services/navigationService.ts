@@ -56,6 +56,23 @@ class NavigationService {
     this.navigate!(`${buildUrl('game', { id: gameId })}?join=1`, { replace: true });
   }
 
+  /**
+   * PRD 357 — follow a server-authored in-app destination such as
+   * `/games/:id?section=weather&action=moveIndoor`.
+   *
+   * Only same-origin **paths** are accepted: a push payload is attacker-shaped
+   * input in the same way a deep link is, and `navigate()` would happily take an
+   * absolute URL. Anything that is not a single leading slash is refused.
+   */
+  navigateToPath(path: string) {
+    if (!this.ensureInitialized()) return;
+    if (typeof path !== 'string' || !path.startsWith('/') || path.startsWith('//')) {
+      console.warn('[navigation] refused a non-relative push destination:', path);
+      return;
+    }
+    this.navigate!(path, { replace: true });
+  }
+
   navigateToLeagueSeasonSchedule(
     leagueSeasonId: string,
     options?: { subtab?: string; group?: string; roundId?: string }

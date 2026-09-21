@@ -123,6 +123,36 @@ export async function preparePushPayloadForRecipient(
     };
   }
 
+  /*
+   * PRD 345 / 357 — the two shade-action families that came after the invite
+   * pair. `data` is the only channel the native helpers read (FCM notification
+   * payloads carry no action list), so the localized button labels have to ride
+   * there next to the signed tokens the builders already put in.
+   */
+  if (next.type === NotificationType.GAME_SERIES_NEXT_PROMPT && next.actions?.length) {
+    const accept = next.actions.find((action) => action.id === 'accept');
+    const decline = next.actions.find((action) => action.id === 'decline');
+    next = {
+      ...next,
+      data: {
+        ...next.data,
+        acceptActionTitle: accept?.title,
+        declineActionTitle: decline?.title,
+      },
+    };
+  }
+
+  if (next.type === NotificationType.GAME_WEATHER_ALERT && next.actions?.length) {
+    const forecast = next.actions.find((action) => action.id === 'forecast');
+    next = {
+      ...next,
+      data: {
+        ...next.data,
+        ...(forecast?.title ? { forecastActionTitle: forecast.title } : {}),
+      },
+    };
+  }
+
   if (shouldAttachPushUnreadBadge(next)) {
     const { total } = await UnreadCheapTotalsService.getTotalsWithRevision(userId);
     next = withPushUnreadBadge(next, total);

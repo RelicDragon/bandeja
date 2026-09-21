@@ -31,10 +31,18 @@ export interface UseLiveGamesOptions {
 export interface UseLiveGamesResult {
   games: LiveRailGame[];
   isLoading: boolean;
-  /** Socket is down: freeze the scores and show the "Reconnecting" caption. */
+  /** Socket is down: freeze every score and show the "Reconnecting" caption. */
   isReconnecting: boolean;
+  /**
+   * Cards whose own score is stale — the union of "socket is down" (all of them)
+   * and "this one room failed to join" (just that card). A card outside this set
+   * is genuinely live.
+   */
+  reconnectingGameIds: ReadonlySet<string>;
   refetch: () => void;
 }
+
+const EMPTY_ID_SET: ReadonlySet<string> = new Set<string>();
 
 /**
  * PRD 349 — live rail data plus its socket lifecycle.
@@ -70,6 +78,8 @@ export function useLiveGames(options: UseLiveGamesOptions = {}): UseLiveGamesRes
    * socket frame — the merge below always keeps the higher revision.
    */
   const [liveOverlay, setLiveOverlay] = useState<Record<string, LiveGameSummary>>({});
+  /** Cards whose room join failed while the socket itself was up (PRD 349). */
+  const [unjoinedIds, setUnjoinedIds] = useState<ReadonlySet<string>>(EMPTY_ID_SET);
 
   const games = useMemo(
     () =>
@@ -110,8 +120,26 @@ export function useLiveGames(options: UseLiveGamesOptions = {}): UseLiveGamesRes
             return;
           }
           retained.push(id);
+          // Joined: this card's frames are live again.
+          setUnjoinedIds((prev) => {
+            if (!prev.has(id)) return prev;
+            const next = new Set(prev);
+            next.delete(id);
+            return next;
+          });
         } catch {
-          /* offline join failures are non-fatal; the retain rolled itself back */
+          /*
+           * The retain rolled itself back, so this one card is not in its room
+           * while the socket is otherwise up. Without this the card would show
+           * a frozen score that looks live — the whole reason the caption
+           * exists. Tracked per id rather than globally.
+           */
+          setUnjoinedIds((prev) => {
+            if (prev.has(id)) return prev;
+            const next = new Set(prev);
+            next.add(id);
+            return next;
+          });
         }
       }
     })();
@@ -183,12 +211,26 @@ export function useLiveGames(options: UseLiveGamesOptions = {}): UseLiveGamesRes
     return socketService.onConnectionStateChange(setConnectionState);
   }, []);
 
+  const socketDown = enabled && connectionState !== 'connected';
+
+  /*
+   * Per card, because the two ways a score can go stale are different: the
+   * socket being down freezes every card, but a single room that failed to join
+   * freezes exactly one while the rail around it keeps updating.
+   */
+  const reconnectingGameIds = useMemo(() => {
+    if (socketDown) return new Set(games.map((game) => game.id));
+    if (unjoinedIds.size === 0) return EMPTY_ID_SET;
+    return new Set(games.map((game) => game.id).filter((id) => unjoinedIds.has(id)));
+  }, [games, socketDown, unjoinedIds]);
+
   return {
     games,
     isLoading: query.isLoading,
     // Only a card that is actually showing a score can "freeze"; an empty rail
     // has nothing to caption.
-    isReconnecting: enabled && games.length > 0 && connectionState !== 'connected',
+    isReconnecting: socketDown && games.length > 0,
+    reconnectingGameIds,
     refetch,
   };
 }

@@ -15,6 +15,7 @@ import {
   ATTENDANCE_RATE_MIN_SAMPLE,
   attendanceRateWindowStart,
   computeAttendanceRate,
+  isImplicitlyConfirmedOwner,
 } from './attendanceRules';
 
 /** A game counts once it is genuinely over — either scored, or clock-finished. */
@@ -28,6 +29,17 @@ export type AttendanceCounterTotals = { attendedCount: number; noShowCount: numb
 
 type CounterDb = Pick<typeof prisma, 'gameParticipant' | 'userSportProfile'>;
 
+/**
+ * Confirmed as the rest of the feature sees it: an explicit `CONFIRMED`, or the
+ * owner's implicit yes (`isImplicitlyConfirmedOwner` — the owner is never asked,
+ * so their column stays `UNANSWERED`). Kept in sync with
+ * `withOwnerImplicitAnswer`, which does the same coercion in memory.
+ */
+const CONFIRMED_OR_OWNER: Prisma.GameParticipantWhereInput[] = [
+  { attendance: 'CONFIRMED' },
+  { role: 'OWNER' },
+];
+
 function attendedWhere(
   userId: string,
   sport: Sport,
@@ -36,7 +48,7 @@ function attendedWhere(
   return {
     userId,
     status: 'PLAYING',
-    attendance: 'CONFIRMED',
+    OR: CONFIRMED_OR_OWNER,
     noShowNotedAt: null,
     game: {
       sport,
@@ -200,11 +212,13 @@ export async function getAttendanceMonthlySeries(
     where: {
       userId,
       status: 'PLAYING',
-      OR: [{ attendance: 'CONFIRMED' }, { noShowNotedAt: { not: null } }],
+      OR: [...CONFIRMED_OR_OWNER, { noShowNotedAt: { not: null } }],
       game: { sport, ...FINISHED_GAME_FILTER, startTime: { gte: since } },
     },
     select: {
       attendance: true,
+      role: true,
+      status: true,
       noShowNotedAt: true,
       game: { select: { startTime: true } },
     },
@@ -224,7 +238,9 @@ export async function getAttendanceMonthlySeries(
     const bucket = buckets.get(key);
     if (!bucket) continue;
     if (row.noShowNotedAt) bucket.noShow += 1;
-    else if (row.attendance === 'CONFIRMED') bucket.attended += 1;
+    else if (row.attendance === 'CONFIRMED' || isImplicitlyConfirmedOwner(row)) {
+      bucket.attended += 1;
+    }
   }
 
   return [...buckets.values()];

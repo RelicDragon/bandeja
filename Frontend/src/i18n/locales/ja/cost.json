@@ -46,10 +46,7 @@
       "totalFor": "合計 {{amount}} · {{players}} 人"
     },
     "create": {
-      "preview": "{{players}} 人で1人あたり約 {{amount}}",
-      "paymentHintLabel": "あなたへの支払い方法",
-      "paymentHintPlaceholder": "口座番号、送金アプリのID、クラブで現金など…",
-      "paymentHintHelp": "精算時にプレーヤーへ表示されます。残り {{remaining}} 文字。"
+      "preview": "{{players}} 人で1人あたり約 {{amount}}"
     },
     "wallet": {
       "owed": "支払う分",
@@ -76,6 +73,70 @@
       "copyFailed": "コピーできませんでした。"
     },
     "loading": "費用の分担を読み込んでいます…",
-    "loadFailed": "費用の分担を読み込めませんでした。"
+    "loadFailed": "費用の分担を読み込めませんでした。",
+    "payment": {
+      "title": "支払い方法",
+      "help": "精算するときにプレーヤーに表示されます。",
+      "add": "別の方法を追加",
+      "addFirst": "支払い方法を追加",
+      "remove": "{{method}} を削除",
+      "maxReached": "支払い方法は最大 {{max}} 件まで登録できます。",
+      "noHandleNeeded": "入力は不要です。",
+      "open": "開く",
+      "everywhere": "どこでも使えます",
+      "pickerTitle": "どの方法で支払ってもらいますか？",
+      "pickerSubtitle": "この試合が行われる国でよく使われる方法です。",
+      "pickerSearch": "検索",
+      "pickerEmpty": "該当するものがありません。",
+      "pickerCustomHint": "見つかりませんか？「その他」を選んで自分で入力できます。",
+      "profileTitle": "保存した支払い情報",
+      "profileHelp": "作成する試合に自動で入力されます。",
+      "method": {
+        "custom": "その他",
+        "cash": "現金",
+        "bankTransfer": "銀行振込",
+        "iban": "IBAN",
+        "cardTransfer": "カード送金",
+        "ukBank": "銀行振込",
+        "rsAccount": "銀行口座",
+        "huInstant": "即時送金",
+        "clabe": "CLABE",
+        "cbuAlias": "エイリアス / CBU"
+      },
+      "handle": {
+        "NONE": {
+          "label": "入力は不要です"
+        },
+        "TEXT": {
+          "label": "詳細",
+          "placeholder": "クラブで現金、IBAN など"
+        },
+        "PHONE": {
+          "label": "電話番号"
+        },
+        "EMAIL": {
+          "label": "メール"
+        },
+        "PHONE_OR_EMAIL": {
+          "label": "電話番号またはメール"
+        },
+        "TAG": {
+          "label": "ユーザー名"
+        },
+        "IBAN": {
+          "label": "IBAN"
+        },
+        "ACCOUNT": {
+          "label": "口座番号"
+        },
+        "CARD": {
+          "label": "カード番号"
+        },
+        "ALIAS": {
+          "label": "キーまたは ID",
+          "placeholder": "電話番号、メール、ID"
+        }
+      }
+    }
   }
 }

@@ -137,6 +137,16 @@
       "companyIdRequired": "تكامل حجز النادي يتطلب معرّف شركة.",
       "integrationTypeMustBeOnlineBooking": "يجب أن يكون تكامل النادي حجزاً عبر الإنترنت.",
       "rollbackFailed": "تعذّر تأكيد إلغاء الحجز."
+    },
+    "cost": {
+      "paymentMethod": {
+        "tooMany": "يمكنك إضافة 3 طرق للدفع كحد أقصى.",
+        "unknownMethod": "طريقة الدفع هذه غير متاحة.",
+        "duplicateMethod": "طريقة الدفع هذه موجودة في القائمة بالفعل.",
+        "handleRequired": "أضف البيانات التي يُرسل إليها المال.",
+        "handleTooLong": "هذا طويل جدًا.",
+        "handleInvalid": "لا يبدو صحيحًا — تحقق منه."
+      }
     }
   },
   "leagues": {

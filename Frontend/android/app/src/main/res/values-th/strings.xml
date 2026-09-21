@@ -28,4 +28,6 @@
     <string name="shortcut_chats_long">เปิดกล่องข้อความแชท</string>
     <string name="shortcut_invites_short">คำเชิญ</string>
     <string name="shortcut_invites_long">ดูคำเชิญแมตช์</string>
+    <string name="attendance_confirm">ฉันจะไป</string>
+    <string name="attendance_unsure">ยังไม่แน่ใจ</string>
 </resources>

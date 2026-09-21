@@ -44,6 +44,10 @@
 		E5F60718293A4B5C6D7E912 /* BandejaNextGames in Frameworks */ = {isa = PBXBuildFile; productRef = E5F60718293A4B5C6D7E902 /* BandejaNextGames */; };
 		E5F60718293A4B5C6D7E913 /* BandejaNextGames in Frameworks */ = {isa = PBXBuildFile; productRef = E5F60718293A4B5C6D7E902 /* BandejaNextGames */; };
 		F14800012F7443E0002D7100 /* NativeApiConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = F14800102F7443E0002D7100 /* NativeApiConfig.swift */; };
+		F1480A012F7443E0002D7100 /* AttendancePushData.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1480A112F7443E0002D7100 /* AttendancePushData.swift */; };
+		F1480A022F7443E0002D7100 /* AttendanceActionHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1480A122F7443E0002D7100 /* AttendanceActionHandler.swift */; };
+		F1480A032F7443E0002D7100 /* TokenActionPushData.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1480A132F7443E0002D7100 /* TokenActionPushData.swift */; };
+		F1480A042F7443E0002D7100 /* TokenActionHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1480A142F7443E0002D7100 /* TokenActionHandler.swift */; };
 		F14800022F7443E0002D7100 /* ChatPushData.swift in Sources */ = {isa = PBXBuildFile; fileRef = F14800112F7443E0002D7100 /* ChatPushData.swift */; };
 		F14800032F7443E0002D7100 /* ChatReplyApiClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = F14800122F7443E0002D7100 /* ChatReplyApiClient.swift */; };
 		F14800042F7443E0002D7100 /* ChatReplyHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = F14800132F7443E0002D7100 /* ChatReplyHandler.swift */; };
@@ -166,6 +170,10 @@
 		E14000012F7443E0002D7100 /* NotificationServiceExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = NotificationServiceExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		E140000F2F7443E0002D7100 /* ChatCommunicationIntentBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ChatCommunicationIntentBuilder.swift; path = NotificationServiceExtension/ChatCommunicationIntentBuilder.swift; sourceTree = "<group>"; };
 		F14800102F7443E0002D7100 /* NativeApiConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeApiConfig.swift; sourceTree = "<group>"; };
+		F1480A112F7443E0002D7100 /* AttendancePushData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttendancePushData.swift; sourceTree = "<group>"; };
+		F1480A122F7443E0002D7100 /* AttendanceActionHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttendanceActionHandler.swift; sourceTree = "<group>"; };
+		F1480A132F7443E0002D7100 /* TokenActionPushData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenActionPushData.swift; sourceTree = "<group>"; };
+		F1480A142F7443E0002D7100 /* TokenActionHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenActionHandler.swift; sourceTree = "<group>"; };
 		F14800112F7443E0002D7100 /* ChatPushData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatPushData.swift; sourceTree = "<group>"; };
 		F14800122F7443E0002D7100 /* ChatReplyApiClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatReplyApiClient.swift; sourceTree = "<group>"; };
 		F14800132F7443E0002D7100 /* ChatReplyHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatReplyHandler.swift; sourceTree = "<group>"; };
@@ -348,6 +356,10 @@
 				F14800132F7443E0002D7100 /* ChatReplyHandler.swift */,
 				F14800122F7443E0002D7100 /* ChatReplyApiClient.swift */,
 				F14800112F7443E0002D7100 /* ChatPushData.swift */,
+				F1480A122F7443E0002D7100 /* AttendanceActionHandler.swift */,
+				F1480A112F7443E0002D7100 /* AttendancePushData.swift */,
+				F1480A132F7443E0002D7100 /* TokenActionPushData.swift */,
+				F1480A142F7443E0002D7100 /* TokenActionHandler.swift */,
 				F14800102F7443E0002D7100 /* NativeApiConfig.swift */,
 				A1B400112F7A1000000D7100 /* BandejaDeepLink.swift */,
 				A1B400132F7A1000000D7100 /* FindGamesIntent.swift */,
@@ -714,6 +726,10 @@
 				F14800042F7443E0002D7100 /* ChatReplyHandler.swift in Sources */,
 				F14800032F7443E0002D7100 /* ChatReplyApiClient.swift in Sources */,
 				F14800022F7443E0002D7100 /* ChatPushData.swift in Sources */,
+				F1480A022F7443E0002D7100 /* AttendanceActionHandler.swift in Sources */,
+				F1480A012F7443E0002D7100 /* AttendancePushData.swift in Sources */,
+				F1480A032F7443E0002D7100 /* TokenActionPushData.swift in Sources */,
+				F1480A042F7443E0002D7100 /* TokenActionHandler.swift in Sources */,
 				F14800012F7443E0002D7100 /* NativeApiConfig.swift in Sources */,
 				A1B400102F7A1000000D7100 /* BandejaDeepLink.swift in Sources */,
 				A1B400122F7A1000000D7100 /* FindGamesIntent.swift in Sources */,

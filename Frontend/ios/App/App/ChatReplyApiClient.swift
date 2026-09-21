@@ -30,6 +30,15 @@ enum ChatReplyApiClient {
         return postJson(path: "/chat/push-reply", token: nil, body: body)
     }
 
+    /// PRD 346 — posts a signed push action token. The endpoint is
+    /// unauthenticated: the token itself names the user, the target and the action.
+    static func performPushAction(actionToken: String) -> ApiResult {
+        guard !actionToken.isEmpty else {
+            return ApiResult(statusCode: 401, success: false)
+        }
+        return postJson(path: "/push/invite-action", token: nil, body: ["actionToken": actionToken])
+    }
+
     private static func postJson(path: String, token: String?, body: [String: Any]) -> ApiResult {
         let apiBase = NativeApiConfig.getApiBaseUrl()
         guard let url = URL(string: apiBase + path) else {

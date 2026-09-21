@@ -1,3 +1,4 @@
+import { resolveCountryIso2 } from '@bandeja/shared/geo/countryIso2';
 import { DEFAULT_CURRENCY, SUPPORTED_CURRENCIES } from './constants';
 
 const EUR_ZONE_ISO2 = new Set(
@@ -44,87 +45,6 @@ const ISO2_TO_CURRENCY: Record<string, string> = {
   OM: 'OMR',
 };
 
-const COUNTRY_NAME_TO_ISO2: Record<string, string> = {
-  andorra: 'AD',
-  austria: 'AT',
-  belgium: 'BE',
-  cyprus: 'CY',
-  germany: 'DE',
-  estonia: 'EE',
-  spain: 'ES',
-  finland: 'FI',
-  france: 'FR',
-  greece: 'GR',
-  croatia: 'HR',
-  ireland: 'IE',
-  italy: 'IT',
-  lithuania: 'LT',
-  luxembourg: 'LU',
-  latvia: 'LV',
-  malta: 'MT',
-  netherlands: 'NL',
-  portugal: 'PT',
-  slovenia: 'SI',
-  slovakia: 'SK',
-  monaco: 'MC',
-  'san marino': 'SM',
-  'vatican city': 'VA',
-  'united states': 'US',
-  usa: 'US',
-  'united kingdom': 'GB',
-  uk: 'GB',
-  'great britain': 'GB',
-  england: 'GB',
-  canada: 'CA',
-  australia: 'AU',
-  'new zealand': 'NZ',
-  japan: 'JP',
-  china: 'CN',
-  switzerland: 'CH',
-  sweden: 'SE',
-  norway: 'NO',
-  denmark: 'DK',
-  poland: 'PL',
-  'czech republic': 'CZ',
-  czechia: 'CZ',
-  hungary: 'HU',
-  romania: 'RO',
-  bulgaria: 'BG',
-  india: 'IN',
-  brazil: 'BR',
-  mexico: 'MX',
-  russia: 'RU',
-  serbia: 'RS',
-  srbija: 'RS',
-  србија: 'RS',
-  сербия: 'RS',
-  serbien: 'RS',
-  'republic of serbia': 'RS',
-  'republika srbija': 'RS',
-  montenegro: 'ME',
-  ecuador: 'EC',
-  liechtenstein: 'LI',
-  guernsey: 'GG',
-  turkey: 'TR',
-  singapore: 'SG',
-  'hong kong': 'HK',
-  'south korea': 'KR',
-  korea: 'KR',
-  thailand: 'TH',
-  malaysia: 'MY',
-  indonesia: 'ID',
-  philippines: 'PH',
-  'united arab emirates': 'AE',
-  uae: 'AE',
-  emirates: 'AE',
-  'saudi arabia': 'SA',
-  saudi: 'SA',
-  ksa: 'SA',
-  qatar: 'QA',
-  kuwait: 'KW',
-  oman: 'OM',
-  bahrain: 'BH',
-};
 
 export function normalizeCurrencyCode(raw: string | undefined): string {
   const code = (raw && typeof raw === 'string' ? raw : DEFAULT_CURRENCY).toUpperCase();
@@ -143,22 +63,18 @@ export function currencyFromCountryIso2OrUndefined(country: string | undefined):
   return mapped ? normalizeCurrencyCode(mapped) : undefined;
 }
 
-function isKnownIso2(code: string): boolean {
-  return EUR_ZONE_ISO2.has(code) || Object.prototype.hasOwnProperty.call(ISO2_TO_CURRENCY, code);
-}
-
+/**
+ * `City.country` (a display name in production) → ISO-3166 alpha-2.
+ *
+ * The name map is shared with the frontend (`@bandeja/shared/geo/countryIso2`)
+ * so the two sides can never disagree about which country a game is in —
+ * PRD 348's payment-method catalogue is scoped by exactly this value.
+ *
+ * A 2-letter value is passed through as a code unless it is a known alias
+ * ("UK" means GB), so this keeps working if the column is ever migrated.
+ */
 export function iso2FromCityCountry(country: string | null | undefined): string | undefined {
-  if (!country) return undefined;
-  const trimmed = country.trim();
-  if (!trimmed) return undefined;
-  if (trimmed.length === 2) {
-    const iso = trimmed.toUpperCase();
-    if (isKnownIso2(iso)) return iso;
-    const fromName = COUNTRY_NAME_TO_ISO2[trimmed.toLowerCase()];
-    if (fromName) return fromName;
-    return iso;
-  }
-  return COUNTRY_NAME_TO_ISO2[trimmed.toLowerCase()];
+  return resolveCountryIso2(country);
 }
 
 export function currencyFromCityCountry(country: string | null | undefined): string | undefined {

@@ -157,6 +157,8 @@ Added with the 13-PRD programme (`docs/plans/prd-345-357/`). Each of these was a
 
 PRD 346 may write **only** `GameParticipant.attendance` / `attendanceUpdatedAt` / `noShowNotedById` / `noShowNotedAt` and the two informational counters `UserSportProfile.attendedCount` / `noShowCount`. It must never touch `level`, `reliability`, `ratingUncertainty`, `LevelChangeEvent`, a seat, or a queue position, and there is no deadline and no auto-release. The eligibility gate is `resultsStatus` plus explicit times — an earlier version gated on `Game.status` and therefore **failed open** for backdated games, inflating the public "Shows up %".
 
+The **owner's yes is implicit and derived, never stored**: the owner is not asked, and every reader coerces their PLAYING row to `CONFIRMED` (`isImplicitlyConfirmedOwner`). Storing it instead would freeze the rule at creation time, miss existing games and drift the moment a game changes hands — see [games.md](../domains/games.md#attendance).
+
 - Rules: `Backend/src/services/gameAttendance/attendanceRules.ts`
 - Enforced three ways: a runtime allow-list, a source scan over `services/gameAttendance/`, and `gameAttendance.invariants.integration.test.ts`, which snapshots the roster, users, sport profiles and game before and after every operation
 

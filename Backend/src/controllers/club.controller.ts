@@ -9,6 +9,7 @@ import { normalizeClubName } from '../utils/normalizeClubName';
 import { refreshCityFromClubs } from '../utils/updateCityCenter';
 import { parseClubPhotosJson } from '../utils/clubPhotosJson';
 import * as clubReviewService from '../services/clubReview.service';
+import type { AuthRequest } from '../middleware/auth';
 
 const PUBLIC_CLUB_UPDATE_FORBIDDEN = new Set([
   'avatar',
@@ -131,7 +132,7 @@ export const getClubsByCity = asyncHandler(async (req: Request, res: Response) =
   });
 });
 
-export const getClubById = asyncHandler(async (req: Request<{ id: string }>, res: Response) => {
+export const getClubById = asyncHandler(async (req: AuthRequest & Request<{ id: string }>, res: Response) => {
   const { id } = req.params;
 
   const club = await prisma.club.findUnique({
@@ -160,10 +161,26 @@ export const getClubById = asyncHandler(async (req: Request<{ id: string }>, res
   const systemUrls = new Set(system.map((p) => p.originalUrl));
   const carouselPhotos = [...system, ...userReviewPhotos.filter((p) => !systemUrls.has(p.originalUrl))];
 
-  res.json({
-    success: true,
-    data: { ...club, carouselPhotos },
-  });
+  /*
+   * This route runs under `optionalAuth` and used to return the raw `Club` row —
+   * `integrationConfig` (booking-provider tenant ids) and `ptMeta` (scraper
+   * state) included — to anyone who could name a club. Those are the same two
+   * operator fields `clubPublic.projection.ts` refuses to a guest, and the
+   * public club page has its own projected route for exactly this reason.
+   *
+   * Signed-in callers keep both: `integrationConfig` is what the in-app booking
+   * flow resolves a court against (`ReservationsStrip`, the Booktime confirm
+   * modal, `ClubDetailPanel`), so stripping it for everyone would break booking
+   * rather than close a hole.
+   */
+  const { integrationConfig, ptMeta, ...guestClub } = club;
+  const data = req.userId
+    ? { ...club, carouselPhotos }
+    : { ...guestClub, carouselPhotos };
+  void integrationConfig;
+  void ptMeta;
+
+  res.json({ success: true, data });
 });
 
 export const createClub = asyncHandler(async (req: Request, res: Response) => {

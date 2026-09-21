@@ -1,4 +1,5 @@
 import type { Sport } from '@shared/sport';
+import type { PaymentMethodEntry } from '@shared/payments/paymentMethodSelection';
 import type { GameLocalizedTextProjection } from '@/utils/gameText/gameLocalizedText.types';
 
 export type { Sport };
@@ -260,6 +261,11 @@ export interface User extends BasicUser {
   timeFormat?: 'auto' | '12h' | '24h';
   weekStart?: 'auto' | 'monday' | 'sunday' | 'saturday';
   defaultCurrency?: string;
+  /**
+   * PRD 348 — the user's own saved "how to pay me" list, copied onto every game
+   * they create. Own-profile payload only; never present on another user.
+   */
+  payoutMethods?: PaymentMethodEntry[] | null;
   nameIsSet?: boolean;
   primarySportIsSet?: boolean;
   cityIsSet?: boolean;
@@ -787,8 +793,20 @@ export interface Game extends GameCardEnrichment {
   lastSeatOpenedAt?: string | null;
   /** PRD 348 — who collected the money; defaults to the owner. */
   costPayerId?: string | null;
-  /** PRD 348 — free-text "how to pay you" (IBAN, Revolut tag …), max 120 chars. */
+  /**
+   * PRD 348 — legacy one-line mirror of {@link paymentMethods}, still sent for
+   * app builds shipped before the catalogue. Render `paymentMethods` instead.
+   */
   paymentHint?: string | null;
+  /**
+   * PRD 348 — how to pay the organizer back: up to 3 `{ method, handle }`
+   * entries from the country-scoped catalogue (`@shared/payments`).
+   *
+   * Entitled field: only a participant, an organizer or platform staff
+   * receives it, and a socket `game-updated` payload never carries it — see
+   * `preserveUntransmittedGameFields`.
+   */
+  paymentMethods?: PaymentMethodEntry[] | null;
   /** PRD 348 — set at FINAL; shares stop recomputing from this point. */
   costFrozenAt?: string | null;
   /**

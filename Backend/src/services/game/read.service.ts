@@ -18,6 +18,10 @@ import {
   MAIN_PHOTO_RELATION_SELECT,
 } from './gamePrismaIncludes';
 import {
+  resolvePaymentMethods,
+  type PaymentMethodEntry,
+} from '@bandeja/shared/payments/paymentMethodSelection';
+import {
   GAME_PAYMENT_HINT_SELECT,
   getGameDetailSelect,
   getGameListSelect,
@@ -33,6 +37,7 @@ import {
   type GamePhotosViewer,
 } from '../../shared/gamePhotos/permissions';
 import { WeatherForecastService } from '../weatherForecast.service';
+import { buildSeriesCardLabels } from '../gameSeries/gameSeriesCardEnricher';
 import { myGamesMembershipWhere } from './myGamesParticipantWhere';
 import { getUserTimezoneFromCityId } from '../user-timezone.service';
 import { formatInTimeZone } from 'date-fns-tz';
@@ -395,6 +400,7 @@ export class GameReadService {
      * entitlement as `GET /games/:id/cost` (`canViewCostShares`).
      */
     let paymentHint: string | null | undefined;
+    let paymentMethods: PaymentMethodEntry[] | undefined;
     if (
       isEntitledToGamePaymentHint(game.participants, {
         userId,
@@ -406,6 +412,7 @@ export class GameReadService {
         select: GAME_PAYMENT_HINT_SELECT,
       });
       paymentHint = hintRow?.paymentHint ?? null;
+      paymentMethods = resolvePaymentMethods(hintRow?.paymentMethods ?? null, paymentHint);
     }
 
     const photoViewer = buildPhotoViewer(userId, viewerIsAdmin);
@@ -419,6 +426,7 @@ export class GameReadService {
     const base = {
       ...gameWithSportLevels,
       ...(paymentHint !== undefined ? { paymentHint } : {}),
+      ...(paymentMethods !== undefined ? { paymentMethods } : {}),
       isClubFavorite,
       userNote,
       joinQueues: computeJoinQueuesFromParticipants(gameWithSportLevels),
@@ -428,7 +436,19 @@ export class GameReadService {
       softWaitMs: 3000,
     });
     const reactionsMap = await fetchReactionsByGameIds([id]);
-    return attachReactionsToGames([baseWithWeather], reactionsMap)[0];
+    const withReactions = attachReactionsToGames([baseWithWeather], reactionsMap)[0];
+
+    /*
+     * PRD 345 — the "Part of *Tuesday Regulars* · week 12" line under the game
+     * title. Same public label the Find card pill uses, so it is safe for a
+     * signed-out viewer: name, cadence and week number only, never the roster.
+     * Attached here rather than read from `GET /games/:id/series-next`, which is
+     * `authenticate`-gated and would hide the line from guests.
+     */
+    if (!withReactions?.seriesId) return withReactions;
+    const labels = await buildSeriesCardLabels([id]).catch(() => ({}) as Record<string, never>);
+    const seriesLabel = labels[id] ?? null;
+    return seriesLabel ? { ...withReactions, seriesLabel } : withReactions;
   }
 
   static async getGames(filters: any, userId?: string, userCityId?: string) {

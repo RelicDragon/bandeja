@@ -140,6 +140,16 @@
       "companyIdRequired": "Club booking integration requires a company ID.",
       "integrationTypeMustBeOnlineBooking": "Club integration must be online booking.",
       "rollbackFailed": "Could not confirm the reservation was cancelled."
+    },
+    "cost": {
+      "paymentMethod": {
+        "tooMany": "You can list up to 3 ways to pay.",
+        "unknownMethod": "That payment method is not available.",
+        "duplicateMethod": "That payment method is already on the list.",
+        "handleRequired": "Add the details players should send the money to.",
+        "handleTooLong": "That is too long.",
+        "handleInvalid": "That doesn’t look right — check it."
+      }
     }
   },
   "leagues": {

@@ -1,7 +1,10 @@
 import type { ReactNode } from 'react';
 import { motion } from 'framer-motion';
 import type { LucideIcon } from 'lucide-react';
-import { Card } from '@/components';
+// Direct module import, not the `@/components` barrel: the barrel re-exports the
+// whole chat tree, and `audioPlaybackStore` reads IndexedDB at module load — which
+// throws in jsdom and fails any test that renders an empty state.
+import { Card } from '@/components/Card';
 
 interface EmptyStateCardProps {
   icon: LucideIcon;

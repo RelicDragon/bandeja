@@ -15,6 +15,12 @@ interface GameCardHeaderTagsProps {
   game: Game;
   sportTags: React.ReactNode;
   myParticipationBadge: GameCardMyParticipationBadge | null;
+  /**
+   * PRD 357 — the viewer's 12 h/24 h preference for the weather pill's hour.
+   * Threaded from `GameCard`'s `displaySettings` so the pill and the risk banner
+   * agree; `undefined` falls back to the locale's own convention.
+   */
+  hour12?: boolean;
 }
 
 const PILL = 'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium';
@@ -52,6 +58,7 @@ export const GameCardHeaderTags = ({
   game,
   sportTags,
   myParticipationBadge,
+  hour12,
 }: GameCardHeaderTagsProps) => {
   const { t, i18n } = useTranslation();
   const spotOpenedAt = resolveSpotOpenedAt(game);
@@ -149,6 +156,7 @@ export const GameCardHeaderTags = ({
         weatherRisk={game.weatherRisk}
         locale={i18n.language}
         timeZone={game.city?.timezone}
+        hour12={hour12}
       />
       {(game.status === 'STARTED' || game.status === 'FINISHED' || game.status === 'ARCHIVED') &&
         game.resultsStatus === 'FINAL' && (

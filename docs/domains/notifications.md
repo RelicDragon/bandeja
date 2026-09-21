@@ -47,16 +47,25 @@ A token carries `{ userId, kind, targetId, action }` and expires after 48 h. `ki
 
 `game` and `team` stay as explicit branches in the controller (their responses predate the registry and carry a `data` payload). Every newer kind registers itself with `registerPushActionHandler(kind, handler)` at **import time of its own service module**, which its route file imports — so no feature has to edit the controller. An unregistered kind answers `400 push.inviteActionUnsupported`, never a 500; a stale or replayed token is a quiet no-op and never moves a seat.
 
-**Where each kind is actually tappable today.** The token, the endpoint and the handler exist for all five kinds; the *native shade buttons* do not.
+**Where each kind is actually tappable today.** The token, the endpoint and the handler exist for all five kinds; the *native shade buttons* exist for three.
 
 | Surface | Wired for |
 |---------|-----------|
 | Telegram inline buttons | all five kinds (`sg`/`ia`, `at:`, `sr:`, `wx:` — see the prefix table below) |
 | In-app card / sheet | all five kinds |
-| Android shade | `invite_actions` and `play_intent_actions` only. `fcm.service.ts` does set `nativeHandler = 'attendance_actions'` (with `attendanceActionToken` / `attendanceUnsureActionToken` and the two button titles), but `ChatReplyMessagingService.java` has no branch for it, and `series` / `weather` set no `nativeHandler` at all |
-| iOS shade | `resolveApnsNotificationCategory` derives the category from the notification type, so a `GAME_REMINDER` carrying attendance actions uses the `GAME_REMINDER` category — but no matching `UNNotificationCategory` with those actions is registered on the client |
+| Android shade | `invite_actions`, `play_intent_actions` and `attendance_actions`. `series` / `weather` set no `nativeHandler` at all |
+| iOS shade | `INVITE`, `TEAM_INVITE`, `CHAT_REPLY`, `FOLLOWED_USER_PLAY_INTENT` and `GAME_REMINDER` categories are registered by `registerPushNotificationActionTypes.ts`. `resolveApnsNotificationCategory` derives the category from the notification type, so a reminder carrying attendance actions arrives as `GAME_REMINDER`. No category exists for `series` / `weather` |
 
-So "I'm coming" from the lock screen is **Telegram-only** right now. See `docs/product/not-shipped.md`. Adding the Android branch and the iOS category registration is the remaining work; nothing on the backend has to change.
+#### Attendance in the shade (PRD 346)
+
+Both answers are **background** actions — they post and never open the app.
+
+- **Android.** `fcm.service.ts` sets `nativeHandler = 'attendance_actions'` whenever the reminder carries `attendanceActionToken`. `ChatReplyMessagingService` routes it to `AttendanceNotificationHelper`, which builds the two buttons from the payload's localized titles (`R.string.attendance_confirm` / `attendance_unsure` are only the fallback) and points them at `AttendanceActionReceiver`. The receiver posts the token to `/push/invite-action` off the main thread and then replaces the reminder with the localized acknowledgement. It reuses the reminder's own notification id, so the 2 h message replaces the 24 h one.
+- **iOS.** The `GAME_REMINDER` category registers `confirm` / `unsure` with no `foreground` option. With the webview alive, `pushNotificationService.handleNotificationAction` posts the token and invalidates the game's attendance query. On a cold start the webview is not ready, so `BandejaPushNotificationDelegate` hands the response to `AttendanceActionHandler` — the same layering `ChatReplyHandler` uses for the inline chat reply.
+- **Both platforms** need the acknowledgement text to travel with the push (`attendanceConfirmedAck` / `attendanceUnsureAck`, localized per recipient in `game-reminder-push.notification.ts`): the shade handler has no i18n of its own, and the `/push/invite-action` response returns a translation *key*, not a string.
+- Failure is silent by design. Offline or a 5xx leaves the reminder answerable — there is no deadline — and a 4xx (stale token, player already left) quietly dismisses it.
+
+`series` and `weather` shade buttons remain unwired; see `docs/product/not-shipped.md`. Nothing on the backend has to change for them either.
 
 ### Persisted delivery and dedupe
 

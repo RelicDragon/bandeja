@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
-import { Check, Coins, Copy, HandCoins } from 'lucide-react';
+import { Check, Coins, Copy, ExternalLink, HandCoins } from 'lucide-react';
 import {
   Drawer,
   DrawerContent,
@@ -12,6 +12,9 @@ import {
 import { OverlayKeyboardBody } from '@/components/ui/OverlayKeyboardBody';
 import { useBackButtonModal } from '@/hooks/useBackButtonModal';
 import type { CostShareMethod, GameCostSummary } from '@/api/gameCost';
+import { paymentMethodLink } from '@shared/payments/paymentMethods';
+import { resolvePaymentMethods } from '@shared/payments/paymentMethodSelection';
+import { usePaymentMethodLabels } from '@/features/cost/paymentMethodLabels';
 import { formatCostMinor } from '@/features/cost/costMoney';
 import { canOfferCoinSettlement } from '@/features/cost/costViewModel';
 
@@ -40,7 +43,8 @@ export function CostSettleSheet({
   onSettle: (method: CostShareMethod) => void;
 }) {
   const { t, i18n } = useTranslation();
-  const [copied, setCopied] = useState(false);
+  const { labelForId } = usePaymentMethodLabels();
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   useBackButtonModal(open, () => onOpenChange(false), 'cost-settle-sheet');
 
@@ -51,13 +55,18 @@ export function CostSettleSheet({
     ? `${summary.payer.firstName ?? ''} ${summary.payer.lastName ?? ''}`.trim()
     : '';
 
-  const handleCopy = async () => {
-    if (!summary.paymentHint) return;
+  /**
+   * PRD 348 — the payer's methods, falling back to the legacy free-text hint
+   * for a game written before the catalogue.
+   */
+  const payerMethods = resolvePaymentMethods(summary.paymentMethods, summary.paymentHint);
+
+  const handleCopy = async (methodId: string, handle: string) => {
     try {
-      await navigator.clipboard.writeText(summary.paymentHint);
-      setCopied(true);
+      await navigator.clipboard.writeText(handle);
+      setCopiedId(methodId);
       toast.success(t('cost.sheet.copied'));
-      window.setTimeout(() => setCopied(false), 2000);
+      window.setTimeout(() => setCopiedId((id) => (id === methodId ? null : id)), 2000);
     } catch {
       toast.error(t('cost.errors.copyFailed'));
     }
@@ -78,24 +87,54 @@ export function CostSettleSheet({
         </DrawerHeader>
 
         <OverlayKeyboardBody className="min-h-0 flex-1 overflow-y-auto px-4">
-          {summary.paymentHint ? (
-            <div className="mb-4 rounded-xl border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800/60">
-              <p className="mb-1 text-xs font-medium text-gray-500 dark:text-gray-400">
+          {payerMethods.length > 0 ? (
+            <div className="mb-4 space-y-2">
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
                 {t('cost.sheet.hintLabel', { name: payerName })}
               </p>
-              <div className="flex items-center gap-2">
-                <p className="min-w-0 flex-1 break-words text-sm text-gray-900 dark:text-gray-100">
-                  {summary.paymentHint}
-                </p>
-                <button
-                  type="button"
-                  onClick={handleCopy}
-                  aria-label={t('cost.sheet.copy')}
-                  className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-700"
-                >
-                  {copied ? <Check size={18} aria-hidden /> : <Copy size={18} aria-hidden />}
-                </button>
-              </div>
+              {payerMethods.map((entry) => {
+                const link = paymentMethodLink(entry.method, entry.handle);
+                return (
+                  <div
+                    key={entry.method}
+                    className="rounded-xl border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800/60"
+                  >
+                    <p className="mb-0.5 text-xs font-medium text-gray-500 dark:text-gray-400">
+                      {labelForId(entry.method)}
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <p className="min-w-0 flex-1 break-words text-sm text-gray-900 dark:text-gray-100">
+                        {entry.handle ?? t('cost.payment.noHandleNeeded')}
+                      </p>
+                      {link ? (
+                        <a
+                          href={link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label={t('cost.payment.open')}
+                          className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-700"
+                        >
+                          <ExternalLink size={18} aria-hidden />
+                        </a>
+                      ) : null}
+                      {entry.handle ? (
+                        <button
+                          type="button"
+                          onClick={() => handleCopy(entry.method, entry.handle as string)}
+                          aria-label={t('cost.sheet.copy')}
+                          className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-700"
+                        >
+                          {copiedId === entry.method ? (
+                            <Check size={18} aria-hidden />
+                          ) : (
+                            <Copy size={18} aria-hidden />
+                          )}
+                        </button>
+                      ) : null}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           ) : null}
 

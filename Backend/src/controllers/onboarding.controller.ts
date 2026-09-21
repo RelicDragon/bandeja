@@ -33,12 +33,37 @@ export const getOnboarding = asyncHandler(async (req: AuthRequest, res: Response
   res.json({ success: true, data: state });
 });
 
+/**
+ * PRD 350 — the onboarding funnel.
+ *
+ * `event` is optional and carries `onboarding_step_viewed` / `_completed` /
+ * `_skipped`. There is no analytics product in this codebase, so the sink is the
+ * server's own structured log, which the Admin log stream already tails — a
+ * skipped step is otherwise invisible, because `onboardingStep` records only how
+ * far somebody got, never *how* they got past a step.
+ */
+const ONBOARDING_EVENTS = new Set([
+  'onboarding_step_viewed',
+  'onboarding_step_completed',
+  'onboarding_step_skipped',
+]);
+
 export const patchOnboardingStep = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const step = parseOnboardingStep((req.body as { step?: unknown } | undefined)?.step);
+  const body = req.body as { step?: unknown; event?: unknown } | undefined;
+  const step = parseOnboardingStep(body?.step);
   if (!step) {
     throw new ApiError(400, 'errors.onboarding.invalidStep');
   }
-  const state = await setOnboardingStep(requireUserId(req), step);
+  const userId = requireUserId(req);
+
+  const event = typeof body?.event === 'string' ? body.event.trim() : '';
+  if (ONBOARDING_EVENTS.has(event)) {
+    console.log(
+      `[onboarding] ${event} step=${step} userId=${userId}`,
+    );
+  }
+
+  const state = await setOnboardingStep(userId, step);
   res.json({ success: true, data: state });
 });
 

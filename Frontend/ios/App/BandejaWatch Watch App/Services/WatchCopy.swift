@@ -2106,4 +2106,89 @@ enum WatchCopy {
             }
         }
     }
+
+    // MARK: - Attendance (PRD 346)
+
+    /// The question itself. Deliberately light: answering is a courtesy.
+    nonisolated static func attendanceQuestion(_ lang: String) -> String {
+        switch lang {
+        case "es": return "¿Vas a ir?"
+        case "ru": return "Вы придёте?"
+        case "sr": return "Долазиш?"
+        case "cs": return "Přijdeš?"
+        default: return "Are you coming?"
+        }
+    }
+
+    nonisolated static func attendanceConfirm(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Voy a ir"
+        case "ru": return "Я приду"
+        case "sr": return "Долазим"
+        case "cs": return "Přijdu"
+        default: return "I'm coming"
+        }
+    }
+
+    nonisolated static func attendanceUnsure(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Aún no lo sé"
+        case "ru": return "Пока не уверен"
+        case "sr": return "Још нисам сигуран"
+        case "cs": return "Zatím nevím"
+        default: return "Not sure yet"
+        }
+    }
+
+    nonisolated static func attendanceConfirmed(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Confirmado"
+        case "ru": return "Участие подтверждено"
+        case "sr": return "Потврђено"
+        case "cs": return "Potvrzeno"
+        default: return "You're confirmed"
+        }
+    }
+
+    nonisolated static func attendanceUnsureState(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Aún no lo sabes"
+        case "ru": return "Вы пока не уверены"
+        case "sr": return "Још ниси сигуран"
+        case "cs": return "Zatím nevíš"
+        default: return "You're not sure yet"
+        }
+    }
+
+    nonisolated static func attendanceChange(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Cambiar"
+        case "ru": return "Изменить"
+        case "sr": return "Промени"
+        case "cs": return "Změnit"
+        default: return "Change"
+        }
+    }
+
+    /// The product principle, said out loud on the smallest screen too.
+    nonisolated static func attendanceCaption(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Tu plaza es tuya igualmente."
+        case "ru": return "Место остаётся за вами в любом случае."
+        case "sr": return "Место је твоје у сваком случају."
+        case "cs": return "Místo ti zůstane tak jako tak."
+        default: return "Your seat is yours either way."
+        }
+    }
+
+    /// "2 of 4 confirmed" — the organizer's glance, shown to everyone.
+    nonisolated static func attendanceConfirmedCount(_ lang: String, confirmed: Int, total: Int) -> String {
+        switch lang {
+        case "es": return "\(confirmed) de \(total) confirmados"
+        case "ru": return "\(confirmed) из \(total) подтвердили"
+        case "sr": return "\(confirmed) од \(total) потврдило"
+        case "cs": return "\(confirmed) ze \(total) potvrdilo"
+        default: return "\(confirmed) of \(total) confirmed"
+        }
+    }
 }

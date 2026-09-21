@@ -223,6 +223,7 @@ void (async () => {
       where: { id: watchable.id },
       data: {
         paymentHint: `Revolut @qa-${suffix}`,
+        paymentMethods: [{ method: 'IPS_PRENESI', handle: `+381-${suffix}` }],
         description: 'internal notes',
         priceTotal: 4000,
       },
@@ -242,6 +243,11 @@ void (async () => {
       'no forbidden Game scalar or user field may reach a results response',
     );
     assert.equal('paymentHint' in publicResults, false, 'paymentHint never ships with results');
+    assert.equal(
+      'paymentMethods' in publicResults,
+      false,
+      'the structured payment list never ships with results either',
+    );
     assert.equal('description' in publicResults, false);
     assert.equal('priceTotal' in publicResults, false);
     const serialized = JSON.stringify(publicResults);
@@ -251,6 +257,7 @@ void (async () => {
       'a player bio must not appear anywhere in the payload',
     );
     assert.equal(serialized.includes(`Revolut @qa-${suffix}`), false);
+    assert.equal(serialized.includes(`+381-${suffix}`), false);
     assert.ok(Array.isArray(publicResults.rounds), 'the scoreboard itself still ships');
 
     /* ---- 6. authorization: public yes, private only for the roster ---- */

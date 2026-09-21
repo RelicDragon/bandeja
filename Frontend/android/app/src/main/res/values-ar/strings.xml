@@ -28,4 +28,6 @@
     <string name="shortcut_chats_long">افتح صندوق المحادثات</string>
     <string name="shortcut_invites_short">الدعوات</string>
     <string name="shortcut_invites_long">عرض دعوات المباريات</string>
+    <string name="attendance_confirm">سآتي</string>
+    <string name="attendance_unsure">لست متأكدًا بعد</string>
 </resources>

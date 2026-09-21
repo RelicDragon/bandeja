@@ -46,10 +46,7 @@
       "totalFor": "Total {{amount}} · {{players}} pemain"
     },
     "create": {
-      "preview": "≈ {{amount}} per orang untuk {{players}} pemain",
-      "paymentHintLabel": "Cara membayarmu",
-      "paymentHintPlaceholder": "Nomor rekening, nama e-wallet, tunai di klub…",
-      "paymentHintHelp": "Ditampilkan kepada pemain saat melunasi. Sisa {{remaining}} karakter."
+      "preview": "≈ {{amount}} per orang untuk {{players}} pemain"
     },
     "wallet": {
       "owed": "Utangmu",
@@ -76,6 +73,70 @@
       "copyFailed": "Gagal menyalin."
     },
     "loading": "Memuat pembagian biaya…",
-    "loadFailed": "Kami tidak bisa memuat pembagian biaya."
+    "loadFailed": "Kami tidak bisa memuat pembagian biaya.",
+    "payment": {
+      "title": "Cara membayar kamu",
+      "help": "Pemain melihat ini saat melunasi bagiannya.",
+      "add": "Tambah cara lain",
+      "addFirst": "Tambah cara pembayaran",
+      "remove": "Hapus {{method}}",
+      "maxReached": "Kamu bisa mencantumkan hingga {{max}} cara pembayaran.",
+      "noHandleNeeded": "Tidak ada yang perlu diisi.",
+      "open": "Buka",
+      "everywhere": "Berlaku di mana saja",
+      "pickerTitle": "Bagaimana pemain membayarmu?",
+      "pickerSubtitle": "Cara yang dipakai di tempat permainan berlangsung.",
+      "pickerSearch": "Cari",
+      "pickerEmpty": "Tidak ada yang cocok.",
+      "pickerCustomHint": "Tidak ada di daftar? Pilih “Lainnya” dan tulis sendiri.",
+      "profileTitle": "Detail pembayaran tersimpan",
+      "profileHelp": "Terisi otomatis di permainan yang kamu buat.",
+      "method": {
+        "custom": "Lainnya",
+        "cash": "Tunai",
+        "bankTransfer": "Transfer bank",
+        "iban": "IBAN",
+        "cardTransfer": "Transfer kartu",
+        "ukBank": "Transfer bank",
+        "rsAccount": "Rekening bank",
+        "huInstant": "Transfer instan",
+        "clabe": "CLABE",
+        "cbuAlias": "Alias / CBU"
+      },
+      "handle": {
+        "NONE": {
+          "label": "Tidak perlu detail"
+        },
+        "TEXT": {
+          "label": "Detail",
+          "placeholder": "Tunai di klub, IBAN, apa saja"
+        },
+        "PHONE": {
+          "label": "Nomor telepon"
+        },
+        "EMAIL": {
+          "label": "Email"
+        },
+        "PHONE_OR_EMAIL": {
+          "label": "Telepon atau email"
+        },
+        "TAG": {
+          "label": "Nama pengguna"
+        },
+        "IBAN": {
+          "label": "IBAN"
+        },
+        "ACCOUNT": {
+          "label": "Nomor rekening"
+        },
+        "CARD": {
+          "label": "Nomor kartu"
+        },
+        "ALIAS": {
+          "label": "Kunci atau ID",
+          "placeholder": "Telepon, email, atau ID"
+        }
+      }
+    }
   }
 }

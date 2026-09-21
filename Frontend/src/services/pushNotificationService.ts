@@ -19,9 +19,14 @@ import { normalizePushNotificationData } from '@/services/push/normalizePushNoti
 import { useUnreadStore } from '@/store/unreadStore';
 import {
   PUSH_ACTION_ACCEPT,
+  PUSH_ACTION_ATTENDANCE_CONFIRM,
+  PUSH_ACTION_ATTENDANCE_UNSURE,
   PUSH_ACTION_DECLINE,
   PUSH_ACTION_PLAY_TOO,
   PUSH_ACTION_REPLY,
+  PUSH_ACTION_WEATHER_FORECAST,
+  PUSH_ACTION_WEATHER_KEEP,
+  PUSH_ACTION_WEATHER_MOVE_INDOOR,
   PUSH_REPLY_MAX_CONTENT_LENGTH,
 } from '@/services/push/pushNotificationConstants';
 import { chatApi } from '@/api/chat';
@@ -32,6 +37,12 @@ import { consumePendingPushTapNative, addPendingPushTapListener } from '@/servic
 import { registerPushNotificationActionTypes } from '@/services/push/registerPushNotificationActionTypes';
 import { hasExplicitLogoutMarker } from '@/utils/authExplicitLogout';
 import { queryClient } from '@/queries/queryClient';
+import { answerAttendanceFromPush } from '@/services/push/answerAttendanceFromPush';
+import { answerSeriesFromPush, SERIES_PUSH_TYPE } from '@/services/push/answerSeriesFromPush';
+import {
+  keepWeatherPlanFromPush,
+  WEATHER_PUSH_TYPE,
+} from '@/services/push/keepWeatherPlanFromPush';
 import { playIntentKeys } from '@/hooks/usePlayIntent';
 import { isPlayIntentPushType } from '@/services/push/isPlayIntentPushType';
 import { decodeJwtExpMs } from '@/api/authRefresh';
@@ -71,6 +82,21 @@ interface NotificationData {
     referralReward?: string;
     /** PRD 353 — `YYYY-MM` key of the recap the notification opens. */
     recapMonthKey?: string;
+    /** PRD 346 — signed token for the reminder's "I'm coming" shade action. */
+    attendanceActionToken?: string;
+    /** PRD 346 — signed token for the reminder's "Not sure yet" shade action. */
+    attendanceUnsureActionToken?: string;
+    /** PRD 345 — the finished occurrence that raised the "same time next week?" prompt. */
+    sourceGameId?: string;
+    /** PRD 345 — the series the prompt belongs to. */
+    seriesId?: string;
+    /** PRD 345 — signed tokens for the prompt's "I'm in" / "Skip" shade actions. */
+    acceptActionToken?: string;
+    declineActionToken?: string;
+    /** PRD 357 — in-app destination of the weather alert, e.g. `?section=weather`. */
+    weatherDeepLink?: string;
+    /** PRD 357 — signed token for the alert's "Keep as planned" shade action. */
+    weatherKeepActionToken?: string;
   };
 }
 
@@ -516,17 +542,35 @@ class PushNotificationService {
       await this.dispatchNotificationTap();
       this.refreshUnreadIfAuthenticated();
     } else if (actionId === PUSH_ACTION_ACCEPT) {
-      if (normalizedData.type === 'TEAM_INVITE') {
+      // PRD 345 shares the accept/decline ids with the invite pair; the payload
+      // type is what tells them apart.
+      if (normalizedData.type === SERIES_PUSH_TYPE) {
+        await answerSeriesFromPush(actionId, normalizedData);
+      } else if (normalizedData.type === 'TEAM_INVITE') {
         await this.handleAcceptTeamInvite(normalizedData);
       } else {
         await this.handleAcceptInvite(normalizedData);
       }
     } else if (actionId === PUSH_ACTION_DECLINE) {
-      if (normalizedData.type === 'TEAM_INVITE') {
+      if (normalizedData.type === SERIES_PUSH_TYPE) {
+        await answerSeriesFromPush(actionId, normalizedData);
+      } else if (normalizedData.type === 'TEAM_INVITE') {
         await this.handleDeclineTeamInvite(normalizedData);
       } else {
         await this.handleDeclineInvite(normalizedData);
       }
+    } else if (actionId === PUSH_ACTION_WEATHER_KEEP && normalizedData.type === WEATHER_PUSH_TYPE) {
+      // PRD 357 — silent: keeping the plan never opens the app.
+      await keepWeatherPlanFromPush(actionId, normalizedData);
+    } else if (
+      (actionId === PUSH_ACTION_WEATHER_MOVE_INDOOR ||
+        actionId === PUSH_ACTION_WEATHER_FORECAST) &&
+      normalizedData.type === WEATHER_PUSH_TYPE
+    ) {
+      // Both need a screen, and both land on the deep link the payload carries
+      // (`?section=weather[&action=moveIndoor]`), so they reuse the tap path.
+      this.pendingNotificationTap = { data: normalizedData, rawData: notification.data };
+      await this.dispatchNotificationTap();
     } else if (actionId === PUSH_ACTION_REPLY && action.inputValue?.trim()) {
       const ctx = parsePushChatContext(notification.data);
       if (!ctx?.chatContextType || !ctx?.contextId || !ctx?.messageId) {
@@ -534,6 +578,11 @@ class PushNotificationService {
       }
       const content = action.inputValue.trim().slice(0, PUSH_REPLY_MAX_CONTENT_LENGTH);
       await this.handleChatReply(ctx, content);
+    } else if (
+      actionId === PUSH_ACTION_ATTENDANCE_CONFIRM ||
+      actionId === PUSH_ACTION_ATTENDANCE_UNSURE
+    ) {
+      await answerAttendanceFromPush(actionId, normalizedData);
     } else if (
       actionId === PUSH_ACTION_PLAY_TOO &&
       normalizedData.type === 'FOLLOWED_USER_PLAY_INTENT'
@@ -661,6 +710,30 @@ class PushNotificationService {
           navigationService.navigateToHome({ recap: payload.recapMonthKey });
         } else {
           navigationService.navigateToHome();
+        }
+        break;
+
+      // PRD 345 — "Same time next week?" opens the occurrence that raised it, so
+      // the in-app card is right there for anyone who taps the body instead of a
+      // shade button. `sourceGameId` is the finished occurrence; `gameId` is next
+      // week's, which is the one with nothing on it yet.
+      case 'GAME_SERIES_NEXT_PROMPT':
+        if (payload?.sourceGameId) {
+          navigationService.navigateToGame(payload.sourceGameId);
+        } else if (payload?.gameId) {
+          navigationService.navigateToGame(payload.gameId);
+        }
+        break;
+
+      // PRD 357 — the alert carries its own destination
+      // (`/games/:id?section=weather[&action=moveIndoor]`), which is what makes
+      // the organizer's "Move indoor" one tap. `useWeatherDeepLink` consumes the
+      // params on the game page and cleans them out of the URL.
+      case 'GAME_WEATHER_ALERT':
+        if (typeof payload?.weatherDeepLink === 'string' && payload.weatherDeepLink) {
+          navigationService.navigateToPath(payload.weatherDeepLink);
+        } else if (payload?.gameId) {
+          navigationService.navigateToGame(payload.gameId);
         }
         break;
 

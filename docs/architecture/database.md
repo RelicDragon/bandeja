@@ -26,7 +26,7 @@ Generate client: `npm run prisma:generate` (heavy lock).
 
 ### User
 
-Account. Auth identifiers: `phone`, `email`, `telegramId`, `appleSub`, `googleId` (all unique, nullable). `isActive` soft-disable. `isAdmin`. `primarySport`, `sportsEnabled[]`. `currentCityId`. Wallet/points. Display prefs (`language`, `timeFormat`, `weekStart`). `attributionId` → first-touch `LinkToAppAttribution`.
+Account. Auth identifiers: `phone`, `email`, `telegramId`, `appleSub`, `googleId` (all unique, nullable). `isActive` soft-disable. `isAdmin`. `primarySport`, `sportsEnabled[]`. `currentCityId`. Wallet/points. Display prefs (`language`, `timeFormat`, `weekStart`). `payoutMethods` (`Json`: the organiser's saved "how to pay me" list, prefilled onto games they create; own-profile payloads only). `attributionId` → first-touch `LinkToAppAttribution`.
 
 Onboarding/referral: `onboardingCompletedAt` (null ⇒ route to `/welcome`; backfilled to `createdAt` for pre-existing accounts), `onboardingStep`, `referralCode` (unique short code, generated lazily), `referredByUserId` (self FK `UserReferredBy`, first-touch, never overwritten).
 
@@ -48,7 +48,7 @@ One row for match, tournament, league season shell, training, event, bar — dis
 
 - **`parentId`**: league sub-games (and other hierarchy) point at parent `Game`.
 - **`seriesId`** / **`seriesOccurrenceDate`** (`@db.Date`): recurring-series occurrence link. **Not** `parentId`. Unique `[seriesId, seriesOccurrenceDate]`; `onDelete: SetNull` so ending a series keeps its past occurrences.
-- Other feature columns: `autoFillFromQueue`, `showOnLiveRail`, `lastSeatOpenedAt`, `costPayerId` (named relation `GameCostPayer`), `paymentHint` (`VarChar(120)`), `costFrozenAt`, `weatherAlertState` (`Json`: `{ severity, sentAt[], keepAsPlannedAt?, lastEvaluatedAt }`).
+- Other feature columns: `autoFillFromQueue`, `showOnLiveRail`, `lastSeatOpenedAt`, `costPayerId` (named relation `GameCostPayer`), `paymentMethods` (`Json`: up to 3 `{ method, handle }` from the country-scoped catalogue in `@bandeja/shared/payments`), `paymentHint` (`VarChar(120)`, the legacy one-line mirror of that list, written through for pre-catalogue app builds), `costFrozenAt`, `weatherAlertState` (`Json`: `{ severity, sentAt[], keepAsPlannedAt?, lastEvaluatedAt }`).
 - Occupancy: count **`GameParticipant.status === PLAYING`** vs `maxParticipants` (`services/game/availableGamesSlotsSql.ts`). INVITED / IN_QUEUE / NON_PLAYING / GUEST do not fill slots.
 
 ### GameParticipant

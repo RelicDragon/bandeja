@@ -1,5 +1,8 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { motion } from 'framer-motion';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
+import { liveScoreLayoutId } from '@/components/live/liveScoreLayout';
 import type { BasicUser } from '@/types';
 import type { LiveMatchCourtOrientation, LivePointsServeRotation, LiveScoringState, LiveTeamSide } from '@/utils/liveScoring';
 import {
@@ -111,6 +114,7 @@ export const LiveScoreShell = ({
   onServiceFault,
 }: LiveScoreShellProps) => {
   const { t } = useTranslation();
+  const reduceMotion = usePrefersReducedMotion();
   const set = activeSetScore(state);
   const points = getClassicPointLabels(state.classic, rules);
   const liveScoringPlugin = useMemo(
@@ -184,19 +188,32 @@ export const LiveScoreShell = ({
   }, [serveGuideSnapshot]);
 
   if (broadcast) {
+    /*
+     * PRD 349 — the rail card's score block and the details Live block both
+     * carry `liveScoreLayoutId(gameId)`, so tapping either scales into this
+     * scoreboard instead of cutting to it. Only the broadcast board is a
+     * destination; inside the scoring screen the board *is* the page.
+     */
     return (
-      <LiveBroadcastBoard
-        state={state}
-        rules={rules}
-        teamAPlayers={teamAPlayers}
-        teamBPlayers={teamBPlayers}
-        revision={revision}
-        boardTheme={boardTheme}
-        serveIndicator={serveIndicator}
-        sport={sport}
-        broadcastContext={broadcastContext}
-        broadcastTimer={broadcastTimer}
-      />
+      <motion.div
+        layoutId={gameId && !reduceMotion ? liveScoreLayoutId(gameId) : undefined}
+        // `w-full` keeps the board the same width it had as the direct flex
+        // child; a `display: contents` wrapper has no box and cannot animate.
+        className="w-full"
+      >
+        <LiveBroadcastBoard
+          state={state}
+          rules={rules}
+          teamAPlayers={teamAPlayers}
+          teamBPlayers={teamBPlayers}
+          revision={revision}
+          boardTheme={boardTheme}
+          serveIndicator={serveIndicator}
+          sport={sport}
+          broadcastContext={broadcastContext}
+          broadcastTimer={broadcastTimer}
+        />
+      </motion.div>
     );
   }
 

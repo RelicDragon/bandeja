@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { CalendarDays, CalendarRange, Loader2 } from 'lucide-react';
@@ -11,6 +11,7 @@ import {
 import { useBackButtonModal } from '@/hooks/useBackButtonModal';
 import { isDocumentRtl, isRovingNavKey, nextRovingIndex } from '@/utils/rovingFocus';
 import { seriesApi, type SeriesEditScope } from '@/api/series';
+import { useSeriesDetail } from './useSeries';
 
 /**
  * PRD 345 — "Apply to · This game · This and future games".
@@ -45,6 +46,20 @@ export const SeriesScopeSheet = ({
   const groupRef = useRef<HTMLDivElement>(null);
   useBackButtonModal(open, onDone, MODAL_ID);
 
+  /*
+   * PRD 345 — "a one-line note listing occurrences that will be skipped because
+   * results already started". It has to be readable *before* the tap, so the
+   * count comes from the series detail (already cached by the series page and
+   * the organizer strip) rather than from the apply response. The server is
+   * still the authority: `scope: 'future'` re-checks every occurrence and
+   * returns what it actually left alone.
+   */
+  const { data: detail } = useSeriesDetail(open ? seriesId : null);
+  const lockedCount = useMemo(
+    () => (detail?.upcoming ?? []).filter((game) => game.resultsStatus !== 'NONE').length,
+    [detail?.upcoming],
+  );
+
   const handleApply = useCallback(async () => {
     if (scope === 'occurrence') {
       onDone();
@@ -56,12 +71,8 @@ export const SeriesScopeSheet = ({
         template: templatePatch,
         scope: 'future',
       });
-      const { updatedGameIds, lockedGameIds, startedGameIds } = response.data.data;
+      const { updatedGameIds } = response.data.data;
       toast.success(t('series.scopeAppliedNote', { count: updatedGameIds.length }));
-      const untouched = lockedGameIds.length + startedGameIds.length;
-      if (untouched > 0) {
-        toast(t('series.scopeLockedNote', { count: untouched }));
-      }
       onDone();
     } catch {
       toast.error(t('series.saveError'));
@@ -155,6 +166,12 @@ export const SeriesScopeSheet = ({
             );
           })}
         </div>
+
+        {scope === 'future' && lockedCount > 0 && (
+          <p className="mx-4 mt-2 rounded-xl bg-amber-50 p-3 text-xs text-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+            {t('series.scopeLockedNote', { count: lockedCount })}
+          </p>
+        )}
 
         <p className="px-4 pt-2 text-xs text-gray-500 dark:text-gray-400">
           {t('series.regularsHint')}

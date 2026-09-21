@@ -23,6 +23,15 @@ import type { WeatherRiskSeverity } from '../../weather/weatherRisk';
 
 export type WeatherAlertRecipientRole = 'organizer' | 'participant';
 
+/**
+ * APNs notification categories. The ids are mirrored by
+ * `Frontend/src/services/push/pushNotificationConstants.ts`, which registers the
+ * matching `UNNotificationCategory` on iOS — a category the app has not
+ * registered simply shows no buttons, so the two must stay in step.
+ */
+export const WEATHER_PARTICIPANT_PUSH_CATEGORY = 'GAME_WEATHER_ALERT';
+export const WEATHER_ORGANIZER_PUSH_CATEGORY = 'GAME_WEATHER_ALERT_ORGANIZER';
+
 export interface WeatherAlertPushInput {
   gameId: string;
   entityType: string;
@@ -99,6 +108,9 @@ export function createGameWeatherAlertPushNotification(
       type: NotificationType.GAME_WEATHER_ALERT,
       title,
       body: `${detail}\n${hint}`,
+      // iOS categories are static, so the two variants cannot share one id: the
+      // participant shade shows one button, the organizer's shows two.
+      category: WEATHER_PARTICIPANT_PUSH_CATEGORY,
       data: {
         gameId: input.gameId,
         entityType: input.entityType,
@@ -117,6 +129,7 @@ export function createGameWeatherAlertPushNotification(
     type: NotificationType.GAME_WEATHER_ALERT,
     title,
     body: `${detail}\n${hint}`,
+    category: WEATHER_ORGANIZER_PUSH_CATEGORY,
     data: {
       gameId: input.gameId,
       entityType: input.entityType,
@@ -124,6 +137,7 @@ export function createGameWeatherAlertPushNotification(
       weatherSeverity: input.severity,
       moveIndoorActionTitle: moveIndoorTitle,
       keepActionTitle: keepTitle,
+      weatherKeptAck: weatherT('weather.keptAsPlanned', lang),
       weatherKeepActionToken: signPushInviteActionToken({
         userId: recipient.id,
         kind: 'weather',

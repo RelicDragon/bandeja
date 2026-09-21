@@ -134,6 +134,16 @@
       "companyIdRequired": "La integración de reservas del club requiere un company ID.",
       "integrationTypeMustBeOnlineBooking": "La integración del club debe ser reserva online.",
       "rollbackFailed": "No pudimos confirmar que la reserva se canceló."
+    },
+    "cost": {
+      "paymentMethod": {
+        "tooMany": "Puedes indicar hasta 3 formas de pago.",
+        "unknownMethod": "Esa forma de pago no está disponible.",
+        "duplicateMethod": "Esa forma de pago ya está en la lista.",
+        "handleRequired": "Añade los datos a los que deben enviarte el dinero.",
+        "handleTooLong": "Es demasiado largo.",
+        "handleInvalid": "No parece correcto, revísalo."
+      }
     }
   },
   "leagues": {

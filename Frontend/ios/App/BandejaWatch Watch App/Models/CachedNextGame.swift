@@ -14,7 +14,8 @@ extension CachedNextGame {
             participantCount: game.participantCount,
             maxParticipants: game.maxParticipants,
             sport: game.sport,
-            playersPerMatch: game.playersPerMatch
+            playersPerMatch: game.playersPerMatch,
+            attendance: game.attendanceSummary?.viewerAttendance
         )
     }
 
@@ -33,16 +34,14 @@ extension CachedNextGame {
         max(0, startTime.timeIntervalSince(.now) / 3600)
     }
 
-    /// PRD 346 — the Next Game view offers Confirm when the viewer has not
-    /// answered and the game starts within 24 h. Answering is a courtesy signal:
-    /// not answering never costs the player their seat.
-    ///
-    /// TODO(PRD-346): `init(from: WatchGame)` never passes `attendance`, so this is
-    /// always `false` on the watch. `GET /games/my-games` already exposes the viewer's
-    /// answer as `attendanceSummary.viewerAttendance` (`UNANSWERED` / `CONFIRMED` /
-    /// `UNSURE`, `null` when not PLAYING) — `WatchGame` needs to decode that field and
-    /// the initializer above must forward it.
+    /// PRD 346 — the Next Game surfaces offer Confirm when the viewer has not
+    /// answered and the game starts within 24 h. Answering is a courtesy
+    /// signal: not answering never costs the player their seat.
     var needsAttendanceAnswer: Bool {
-        attendance == "UNANSWERED" && hoursUntilStart <= 24 && status == "ANNOUNCED"
+        WatchAttendance.needsAnswer(
+            attendance: attendance,
+            status: status,
+            startTime: startTime
+        )
     }
 }

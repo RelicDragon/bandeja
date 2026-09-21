@@ -38,8 +38,11 @@ import {
   evaluateNudgeCooldown,
   gameAcceptsAttendanceAnswers,
   isAttendanceAnswer,
+  isImplicitlyConfirmedOwner,
   isWithinNoShowWindow,
   type NudgeCooldown,
+  OWNER_IMPLICIT_ANSWER,
+  withOwnerImplicitAnswer,
 } from './attendanceRules';
 
 export { ATTENDANCE_NUDGE_COOLDOWN_HOURS };
@@ -104,12 +107,19 @@ async function loadGameForAttendance(gameId: string): Promise<AttendanceGame> {
   return game;
 }
 
+/**
+ * The roster as attendance reads it: the owner's PLAYING row always reads
+ * `CONFIRMED` ({@link withOwnerImplicitAnswer}). Coercing here rather than in
+ * each projection means the dots, the counts, the socket payload and the
+ * viewer's own state can never disagree about the organizer.
+ */
 async function loadRoster(gameId: string) {
-  return prisma.gameParticipant.findMany({
+  const rows = await prisma.gameParticipant.findMany({
     where: { gameId },
     select: {
       userId: true,
       status: true,
+      role: true,
       attendance: true,
       attendanceUpdatedAt: true,
       noShowNotedAt: true,
@@ -118,6 +128,7 @@ async function loadRoster(gameId: string) {
     },
     orderBy: { joinedAt: 'asc' },
   });
+  return withOwnerImplicitAnswer(rows);
 }
 
 /**
@@ -128,6 +139,7 @@ async function loadRoster(gameId: string) {
 type SummaryRosterRow = {
   userId: string;
   status: string;
+  role?: string | null;
   attendance: ParticipantAttendance;
 };
 
@@ -243,10 +255,22 @@ export async function setAttendance(
 
   const participant = await prisma.gameParticipant.findFirst({
     where: { gameId, userId },
-    select: { id: true, status: true, attendance: true },
+    select: { id: true, status: true, role: true, attendance: true },
   });
   if (!participant || participant.status !== 'PLAYING') {
     throw new ApiError(403, 'errors.attendance.notParticipant');
+  }
+
+  // The owner is confirmed by virtue of organizing. No surface asks them, so
+  // anything that gets here is stale — an old client, or a push tapped after
+  // ownership changed hands. Answer with the implicit yes instead of erroring:
+  // a stale shade tap should be a quiet no-op, never a red toast.
+  if (isImplicitlyConfirmedOwner(participant)) {
+    const ownerRoster = await loadRoster(gameId);
+    return {
+      attendance: OWNER_IMPLICIT_ANSWER as ParticipantAttendance,
+      summary: projectSummary(ownerRoster, userId),
+    };
   }
 
   if (participant.attendance !== answer) {
@@ -438,8 +462,10 @@ export async function nudgeUnanswered(
     });
   }
 
+  // `role` excludes the owner: their row reads CONFIRMED everywhere, so an
+  // admin nudging must not poke the organizer about a question they never got.
   const unanswered = await prisma.gameParticipant.findMany({
-    where: { gameId, status: 'PLAYING', attendance: 'UNANSWERED' },
+    where: { gameId, status: 'PLAYING', attendance: 'UNANSWERED', role: { not: 'OWNER' } },
     select: {
       user: {
         select: { id: true, language: true, currentCityId: true, primarySport: true },
@@ -552,18 +578,21 @@ registerAvailableGamesEnricher('attendanceSummary', async (userId, games) => {
   const ids = games.map((game) => game.id);
   if (ids.length === 0) return {};
 
-  const rows = await prisma.gameParticipant.findMany({
-    where: { gameId: { in: ids } },
-    select: {
-      gameId: true,
-      userId: true,
-      status: true,
-      attendance: true,
-      noShowNotedAt: true,
-      joinedAt: true,
-    },
-    orderBy: { joinedAt: 'asc' },
-  });
+  const rows = withOwnerImplicitAnswer(
+    await prisma.gameParticipant.findMany({
+      where: { gameId: { in: ids } },
+      select: {
+        gameId: true,
+        userId: true,
+        status: true,
+        role: true,
+        attendance: true,
+        noShowNotedAt: true,
+        joinedAt: true,
+      },
+      orderBy: { joinedAt: 'asc' },
+    }),
+  );
 
   const byGame = new Map<string, typeof rows>();
   for (const row of rows) {

@@ -5,6 +5,7 @@ import type { EntityType, PriceCurrency, PriceType } from '@/types';
 import { PriceSection } from './PriceSection';
 import { GameTextAuthoredFieldsHint } from '@/components/gameText/GameTextAuthoredFieldsHint';
 import { ExpandableTextarea } from '@/components/ui/ExpandableTextarea';
+import type { PaymentMethodEntry } from '@shared/payments/paymentMethodSelection';
 
 interface GameNameCommentsSectionProps {
   comments: string;
@@ -19,9 +20,11 @@ interface GameNameCommentsSectionProps {
   onPriceCurrencyChange: (value: PriceCurrency | undefined) => void;
   /** PRD 348 — seats the per-head preview divides the total by. */
   maxParticipants?: number;
-  /** PRD 348 — `Game.paymentHint`; omit the handler to hide the field. */
-  paymentHint?: string;
-  onPaymentHintChange?: (value: string) => void;
+  /** PRD 348 — `Game.paymentMethods`; omit the handler to hide the field. */
+  paymentMethods?: readonly PaymentMethodEntry[];
+  onPaymentMethodsChange?: (value: PaymentMethodEntry[]) => void;
+  /** PRD 348 — ISO-2 of the game's city, for the payment-method picker. */
+  paymentCountryIso2?: string | null;
   priceSectionRef?: RefObject<HTMLDivElement | null>;
 }
 
@@ -37,8 +40,9 @@ export const GameNameCommentsSection = ({
   onPriceTypeChange,
   onPriceCurrencyChange,
   maxParticipants,
-  paymentHint,
-  onPaymentHintChange,
+  paymentMethods,
+  onPaymentMethodsChange,
+  paymentCountryIso2,
   priceSectionRef,
 }: GameNameCommentsSectionProps) => {
   const { t } = useTranslation();
@@ -86,8 +90,9 @@ export const GameNameCommentsSection = ({
             onPriceTypeChange={onPriceTypeChange}
             onPriceCurrencyChange={onPriceCurrencyChange}
             maxParticipants={maxParticipants}
-            paymentHint={paymentHint}
-            onPaymentHintChange={onPaymentHintChange}
+            paymentMethods={paymentMethods}
+            onPaymentMethodsChange={onPaymentMethodsChange}
+            paymentCountryIso2={paymentCountryIso2}
           />
         </div>
       </div>

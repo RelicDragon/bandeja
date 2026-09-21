@@ -12,6 +12,8 @@
     <string name="invite_accept">Accept</string>
     <string name="invite_decline">Decline</string>
     <string name="play_intent_play_too">I want to play too</string>
+    <string name="attendance_confirm">I\'m coming</string>
+    <string name="attendance_unsure">Not sure yet</string>
     <string name="api_base_url_default" translatable="false">https://bandeja.me/api</string>
     <string name="shortcut_find_games_short">Find games</string>
     <string name="shortcut_find_games_long">Browse available games</string>

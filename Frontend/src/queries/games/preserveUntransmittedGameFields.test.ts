@@ -15,12 +15,17 @@ describe('preserveUntransmittedGameFields', () => {
     // projected for the least-entitled recipient (no `paymentHint`), and the
     // organizer's screen replaces its game wholesale. Before this helper her
     // IBAN vanished from state and the next save wrote `null` to the database.
-    const previous = game({ paymentHint: 'IBAN RS35 1234 5678', name: 'Friday doubles' });
+    const previous = game({
+      paymentHint: 'IBAN RS35 1234 5678',
+      paymentMethods: [{ method: 'IBAN', handle: 'RS35 1234 5678' }],
+      name: 'Friday doubles',
+    });
     const incoming = game({ name: 'Friday doubles (moved)' });
 
     const merged = preserveUntransmittedGameFields(previous, incoming);
 
     expect(merged.paymentHint).toBe('IBAN RS35 1234 5678');
+    expect(merged.paymentMethods).toEqual([{ method: 'IBAN', handle: 'RS35 1234 5678' }]);
     expect(merged.name).toBe('Friday doubles (moved)');
   });
 
@@ -38,12 +43,17 @@ describe('preserveUntransmittedGameFields', () => {
   });
 
   it('lets a transmitted value win, including an explicit null', () => {
-    const previous = game({ paymentHint: 'IBAN RS35 1234 5678', isClubFavorite: true });
-    const incoming = game({ paymentHint: null, isClubFavorite: false });
+    const previous = game({
+      paymentHint: 'IBAN RS35 1234 5678',
+      paymentMethods: [{ method: 'IBAN', handle: 'RS35 1234 5678' }],
+      isClubFavorite: true,
+    });
+    const incoming = game({ paymentHint: null, paymentMethods: null, isClubFavorite: false });
 
     const merged = preserveUntransmittedGameFields(previous, incoming);
 
     expect(merged.paymentHint).toBeNull();
+    expect(merged.paymentMethods).toBeNull();
     expect(merged.isClubFavorite).toBe(false);
   });
 

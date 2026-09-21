@@ -28,4 +28,6 @@
     <string name="shortcut_chats_long">चैट इनबॉक्स खोलें</string>
     <string name="shortcut_invites_short">निमंत्रण</string>
     <string name="shortcut_invites_long">गेम निमंत्रण देखें</string>
+    <string name="attendance_confirm">मैं आ रहा हूँ</string>
+    <string name="attendance_unsure">अभी पक्का नहीं</string>
 </resources>

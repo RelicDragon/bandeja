@@ -137,6 +137,16 @@
       "companyIdRequired": "クラブ予約連携には会社IDが必要です。",
       "integrationTypeMustBeOnlineBooking": "クラブ連携はオンライン予約である必要があります。",
       "rollbackFailed": "予約キャンセルの確認ができませんでした。"
+    },
+    "cost": {
+      "paymentMethod": {
+        "tooMany": "支払い方法は 3 件までです。",
+        "unknownMethod": "その支払い方法は利用できません。",
+        "duplicateMethod": "その支払い方法はすでに追加されています。",
+        "handleRequired": "送金先の情報を入力してください。",
+        "handleTooLong": "長すぎます。",
+        "handleInvalid": "内容が正しくないようです。確認してください。"
+      }
     }
   },
   "leagues": {

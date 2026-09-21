@@ -1,10 +1,13 @@
 import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Repeat } from 'lucide-react';
+import { MessagesSquare, Repeat } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/queries/queryKeys';
 import { isGameSeriesEnabled } from '@/config/featureFlags';
+import { buildSeriesPath } from '@/deepLinks/catalog';
+import { seriesApi } from '@/api/series';
 import { useAuthStore } from '@/store/authStore';
 import { SeriesNextWeekCard } from './SeriesNextWeekCard';
 import { SeriesOrganizerStrip } from './SeriesOrganizerStrip';
@@ -44,12 +47,27 @@ export const SeriesGameSection = ({
   const queryClient = useQueryClient();
   const viewerIsPlatformAdmin = useAuthStore((state) => state.user?.isAdmin ?? false);
   const [editOpen, setEditOpen] = useState(false);
+  const [openingChat, setOpeningChat] = useState(false);
 
   const { data: context } = useSeriesGameContext(gameId, isGameSeriesEnabled());
+  const seriesId = context?.label?.seriesId ?? null;
 
   const refresh = useCallback(() => {
     void queryClient.invalidateQueries({ queryKey: queryKeys.series.nextPrompt(gameId) });
   }, [gameId, queryClient]);
+
+  const handleOpenChat = useCallback(async () => {
+    if (!seriesId || openingChat) return;
+    setOpeningChat(true);
+    try {
+      const response = await seriesApi.openChat(seriesId);
+      navigate(`/group-chat/${response.data.data.groupChannelId}`);
+    } catch {
+      toast.error(t('series.chatUnavailable'));
+    } finally {
+      setOpeningChat(false);
+    }
+  }, [navigate, openingChat, seriesId, t]);
 
   if (!isGameSeriesEnabled() || !context) return null;
 
@@ -83,19 +101,35 @@ export const SeriesGameSection = ({
         />
       )}
 
+      {/* The "Part of <series> · week N" line lives in `SeriesTitleLine`, under
+          the game title, where the PRD puts it — and where a guest sees it too. */}
+
       {label && (
-        <button
-          type="button"
-          onClick={() => navigate(`/series/${label.seriesId}`)}
-          className="inline-flex min-h-[44px] items-center gap-1.5 self-start rounded-lg px-1 text-start text-xs text-gray-500 underline-offset-2 hover:underline dark:text-gray-400"
-        >
-          <Repeat className="h-3.5 w-3.5 shrink-0" aria-hidden />
-          <span className="truncate">
-            {label.occurrenceNumber
-              ? t('series.partOfWeek', { name: label.name, count: label.occurrenceNumber })
-              : t('series.partOf', { name: label.name })}
-          </span>
-        </button>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <button
+            type="button"
+            onClick={() => navigate(buildSeriesPath(label.seriesId))}
+            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-lg px-1 text-start text-xs text-gray-500 underline-offset-2 hover:underline dark:text-gray-400"
+          >
+            <Repeat className="h-3.5 w-3.5 shrink-0" aria-hidden />
+            <span className="truncate">{t('series.openSeries')}</span>
+          </button>
+
+          {/* PRD 345 story 12 — the series group chat, reachable from the
+              occurrence and not only from the series page. The owner's tap
+              creates the channel on first use; a regular's tap opens the one
+              that already exists, and gets a plain error if it does not. */}
+          <button
+            type="button"
+            onClick={handleOpenChat}
+            disabled={openingChat}
+            aria-busy={openingChat}
+            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-lg px-1 text-start text-xs text-gray-500 underline-offset-2 hover:underline disabled:opacity-60 dark:text-gray-400"
+          >
+            <MessagesSquare className="h-3.5 w-3.5 shrink-0" aria-hidden />
+            <span className="truncate">{t('series.openChat')}</span>
+          </button>
+        </div>
       )}
 
       {label && (

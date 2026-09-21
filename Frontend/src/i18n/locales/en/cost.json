@@ -46,10 +46,7 @@
       "totalFor": "Total {{amount}} · {{players}} players"
     },
     "create": {
-      "preview": "≈ {{amount}} each for {{players}} players",
-      "paymentHintLabel": "How to pay you",
-      "paymentHintPlaceholder": "IBAN, Revolut tag, cash at the club…",
-      "paymentHintHelp": "Shown to players when they settle. {{remaining}} characters left."
+      "preview": "≈ {{amount}} each for {{players}} players"
     },
     "wallet": {
       "owed": "Owed",
@@ -77,6 +74,70 @@
       "copyFailed": "Could not copy that."
     },
     "loading": "Loading the cost split…",
-    "loadFailed": "We couldn't load the cost split."
+    "loadFailed": "We couldn't load the cost split.",
+    "payment": {
+      "title": "How to pay you",
+      "help": "Players see this when they settle up.",
+      "add": "Add another way",
+      "addFirst": "Add a way to pay",
+      "remove": "Remove {{method}}",
+      "maxReached": "You can list up to {{max}} ways to pay.",
+      "noHandleNeeded": "Nothing to enter.",
+      "open": "Open",
+      "everywhere": "Works anywhere",
+      "pickerTitle": "How should players pay you?",
+      "pickerSubtitle": "The ways people pay each other where this game is played.",
+      "pickerSearch": "Search",
+      "pickerEmpty": "Nothing matches that.",
+      "pickerCustomHint": "Not listed? Pick “Something else” and write it yourself.",
+      "profileTitle": "Saved payment details",
+      "profileHelp": "Prefilled into the games you create.",
+      "method": {
+        "custom": "Something else",
+        "cash": "Cash",
+        "bankTransfer": "Bank transfer",
+        "iban": "IBAN",
+        "cardTransfer": "Card to card",
+        "ukBank": "Bank transfer",
+        "rsAccount": "Bank account",
+        "huInstant": "Instant transfer",
+        "clabe": "CLABE",
+        "cbuAlias": "Alias or CBU"
+      },
+      "handle": {
+        "NONE": {
+          "label": "No details needed"
+        },
+        "TEXT": {
+          "label": "Details",
+          "placeholder": "Cash at the club, an IBAN, anything"
+        },
+        "PHONE": {
+          "label": "Phone number"
+        },
+        "EMAIL": {
+          "label": "Email address"
+        },
+        "PHONE_OR_EMAIL": {
+          "label": "Phone or email"
+        },
+        "TAG": {
+          "label": "Username"
+        },
+        "IBAN": {
+          "label": "IBAN"
+        },
+        "ACCOUNT": {
+          "label": "Account number"
+        },
+        "CARD": {
+          "label": "Card number"
+        },
+        "ALIAS": {
+          "label": "Key or ID",
+          "placeholder": "Phone, email or ID"
+        }
+      }
+    }
   }
 }

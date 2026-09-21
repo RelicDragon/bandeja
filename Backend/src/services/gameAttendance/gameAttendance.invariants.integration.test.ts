@@ -219,9 +219,24 @@ void (async () => {
     assertOnlyAttendanceMoved(before, after, 'confirm');
     assert.equal(after.participants[player.id].attendance, 'CONFIRMED');
     assert.equal(after.participants[player.id].status, ParticipantStatus.PLAYING);
-    assert.equal(confirmed.summary.confirmedCount, 1);
+    // The organizer is confirmed by organizing, so the count is the player plus
+    // the owner — whose column is still UNANSWERED, because the yes is derived.
+    assert.equal(confirmed.summary.confirmedCount, 2);
+    assert.equal(after.participants[owner.id].attendance, 'UNANSWERED');
     assert.equal(confirmed.summary.playingCount, 3, 'the queued player is not a denominator');
     assert.equal(confirmed.summary.viewerAttendance, 'CONFIRMED');
+
+    // The owner is never asked, so nothing they could send changes anything.
+    before = await snapshot();
+    const ownerAnswer = await setAttendance(game.id, owner.id, 'UNSURE');
+    after = await snapshot();
+    assert.deepEqual(
+      after.participants[owner.id],
+      before.participants[owner.id],
+      'a stale answer from the owner must write nothing',
+    );
+    assert.equal(ownerAnswer.attendance, 'CONFIRMED', 'the owner always reads as confirmed');
+    assert.equal(ownerAnswer.summary.viewerAttendance, 'CONFIRMED');
 
     before = after;
     await setAttendance(game.id, player.id, 'UNSURE');
@@ -442,21 +457,47 @@ void (async () => {
 
     console.log('gameAttendance.invariants.integration.test.ts: ok');
   } finally {
+    // Teardown never throws over the test result, but it must not hide a leak
+    // either: a swallowed failure leaves rows behind in `padelpulse_dev` that
+    // nobody ever hears about.
+    const cleanup = async (what: string, run: () => Promise<unknown>) => {
+      try {
+        await run();
+      } catch (error) {
+        console.warn(
+          `[attendance-invariants] teardown could not remove ${what}:`,
+          error instanceof Error ? error.message : error,
+        );
+      }
+    };
+
     for (const gameId of createdGameIds) {
-      await prisma.chatMessage.deleteMany({ where: { contextId: gameId } }).catch(() => undefined);
-      await prisma.gameParticipant.deleteMany({ where: { gameId } }).catch(() => undefined);
-      await prisma.game.delete({ where: { id: gameId } }).catch(() => undefined);
+      // `ChatSyncEvent` has no foreign key to `Game` (`contextId` is a plain
+      // string), so nothing deletes it for us — the no-show note's system
+      // message writes one and it would outlive the whole fixture.
+      await cleanup(`chat sync events for ${gameId}`, () =>
+        prisma.chatSyncEvent.deleteMany({
+          where: { contextType: 'GAME', contextId: gameId },
+        }),
+      );
+      await cleanup(`chat messages for ${gameId}`, () =>
+        prisma.chatMessage.deleteMany({ where: { contextId: gameId } }),
+      );
+      await cleanup(`participants of ${gameId}`, () =>
+        prisma.gameParticipant.deleteMany({ where: { gameId } }),
+      );
+      await cleanup(`game ${gameId}`, () => prisma.game.delete({ where: { id: gameId } }));
     }
     if (createdUserIds.length) {
-      await prisma.userSportProfile
-        .deleteMany({ where: { userId: { in: createdUserIds } } })
-        .catch(() => undefined);
-      await prisma.user
-        .deleteMany({ where: { id: { in: createdUserIds } } })
-        .catch(() => undefined);
+      await cleanup('sport profiles', () =>
+        prisma.userSportProfile.deleteMany({ where: { userId: { in: createdUserIds } } }),
+      );
+      await cleanup('users', () =>
+        prisma.user.deleteMany({ where: { id: { in: createdUserIds } } }),
+      );
     }
     if (cityId) {
-      await prisma.city.delete({ where: { id: cityId } }).catch(() => undefined);
+      await cleanup('city', () => prisma.city.delete({ where: { id: cityId } }));
     }
     await prisma.$disconnect();
   }

@@ -91,6 +91,53 @@ function testFcmSendsNewGameDataOnly(): void {
   assert.equal(message.data?.title, 'New game created');
 }
 
+/**
+ * PRD 346 — this data map is the whole contract the Android shade handler
+ * (`AttendancePushData.java`) reads. It has no i18n of its own, so both button
+ * titles and both acknowledgements must travel with the reminder.
+ */
+function testFcmCarriesAttendanceShadeContract(): void {
+  const message = buildFcmMessage('token-6', {
+    type: NotificationType.GAME_REMINDER,
+    title: 'Tomorrow 19:00',
+    body: 'Padel Centar, court 3',
+    data: {
+      gameId: 'game-1',
+      shortDayOfWeek: 'Tue',
+      attendanceActionToken: 'confirm-token',
+      attendanceUnsureActionToken: 'unsure-token',
+      confirmActionTitle: "I'm coming",
+      unsureActionTitle: 'Not sure yet',
+      attendanceConfirmedAck: 'Seat confirmed 👍',
+      attendanceUnsureAck: 'Noted. You can confirm later.',
+    },
+  });
+
+  assert.equal(message.data?.nativeHandler, 'attendance_actions');
+  assert.equal(message.data?.attendanceActionToken, 'confirm-token');
+  assert.equal(message.data?.attendanceUnsureActionToken, 'unsure-token');
+  assert.equal(message.data?.confirmActionTitle, "I'm coming");
+  assert.equal(message.data?.unsureActionTitle, 'Not sure yet');
+  assert.equal(message.data?.attendanceConfirmedAck, 'Seat confirmed 👍');
+  assert.equal(message.data?.attendanceUnsureAck, 'Noted. You can confirm later.');
+  assert.equal(message.notification, undefined);
+}
+
+/** A reminder without the tokens must not reach the attendance shade handler. */
+function testFcmLeavesAPlainReminderAlone(): void {
+  const message = buildFcmMessage('token-7', {
+    type: NotificationType.GAME_REMINDER,
+    title: 'Tomorrow 19:00',
+    body: 'Padel Centar, court 3',
+    data: {
+      gameId: 'game-1',
+      shortDayOfWeek: 'Tue',
+    },
+  });
+
+  assert.equal(message.data?.nativeHandler, undefined);
+}
+
 function testFcmBuildsOneMulticastMessage(): void {
   const message = buildFcmMulticastMessage(['token-1', 'token-2'], {
     type: NotificationType.FOLLOWED_USER_PLAY_INTENT,
@@ -113,6 +160,8 @@ void (async () => {
   testFcmIncludesUnreadBadgeInData();
   testFcmCollapsesOutboxRetries();
   testFcmSendsNewGameDataOnly();
+  testFcmCarriesAttendanceShadeContract();
+  testFcmLeavesAPlainReminderAlone();
   testFcmBuildsOneMulticastMessage();
   console.log('fcm.service.test.ts: ok');
 })();

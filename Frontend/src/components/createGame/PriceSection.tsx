@@ -6,7 +6,8 @@ import { Select } from '@/components';
 import { getCurrencySymbol, resolveUserCurrency } from '@/utils/currency';
 import { CurrencySelectorModal } from '@/components/CurrencySelectorModal';
 import { CostSplitPreview } from '@/components/createGame/CostSplitPreview';
-import { PaymentHintField } from '@/components/createGame/PaymentHintField';
+import { PaymentMethodsField } from '@/components/payments/PaymentMethodsField';
+import type { PaymentMethodEntry } from '@shared/payments/paymentMethodSelection';
 
 interface PriceFieldsProps {
   priceTotal: number | undefined;
@@ -19,9 +20,11 @@ interface PriceFieldsProps {
   showLabel?: boolean;
   /** PRD 348 — seats the total is divided by in the live per-head preview. */
   maxParticipants?: number;
-  /** PRD 348 — `Game.paymentHint`. Omit the handler to hide the field. */
-  paymentHint?: string;
-  onPaymentHintChange?: (value: string) => void;
+  /** PRD 348 — `Game.paymentMethods`. Omit the handler to hide the field. */
+  paymentMethods?: readonly PaymentMethodEntry[];
+  onPaymentMethodsChange?: (value: PaymentMethodEntry[]) => void;
+  /** ISO-2 of the game's city — decides which methods the picker offers. */
+  paymentCountryIso2?: string | null;
 }
 
 interface PriceSectionProps extends PriceFieldsProps {
@@ -41,8 +44,9 @@ export const PriceFields = ({
   onPriceCurrencyChange,
   showLabel = false,
   maxParticipants,
-  paymentHint,
-  onPaymentHintChange,
+  paymentMethods,
+  onPaymentMethodsChange,
+  paymentCountryIso2,
 }: PriceFieldsProps) => {
   const { t } = useTranslation();
   const [inputValue, setInputValue] = useState<string>('');
@@ -131,8 +135,12 @@ export const PriceFields = ({
             currency={effectiveCurrency}
             players={maxParticipants ?? 0}
           />
-          {onPaymentHintChange ? (
-            <PaymentHintField value={paymentHint ?? ''} onChange={onPaymentHintChange} />
+          {onPaymentMethodsChange ? (
+            <PaymentMethodsField
+              value={paymentMethods ?? []}
+              onChange={onPaymentMethodsChange}
+              countryIso2={paymentCountryIso2}
+            />
           ) : null}
         </>
       )}

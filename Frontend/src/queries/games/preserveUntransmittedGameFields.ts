@@ -4,8 +4,9 @@
  * The backend broadcasts one payload to a room whose members hold mixed
  * entitlements (roster members, invited users, watchers of a public game, and
  * every player of a league **season** for any of its fixtures), so it projects
- * that payload for the least-entitled recipient: `Game.paymentHint` — an IBAN
- * or a payment handle — is stripped, and so are the two fields the HTTP read
+ * that payload for the least-entitled recipient: `Game.paymentMethods` and its
+ * legacy `Game.paymentHint` mirror — an IBAN, a Bizum or IPS Prenesi phone
+ * number — are stripped, and so are the two fields the HTTP read
  * computes for the asking viewer rather than for the game
  * (`Backend/src/services/game/gameDetail.projection.ts`,
  * `projectGameForBroadcast`).
@@ -22,6 +23,7 @@ import type { Game } from '@/types';
 /** Keys a `game-updated` payload never carries. Mirrors `GAME_BROADCAST_STRIPPED_KEYS`. */
 export const GAME_SOCKET_UNTRANSMITTED_KEYS = [
   'paymentHint',
+  'paymentMethods',
   'userNote',
   'isClubFavorite',
 ] as const;
@@ -45,6 +47,10 @@ export function preserveUntransmittedGameFields(
 
   if (!('paymentHint' in incoming) && previous.paymentHint !== undefined) {
     merged.paymentHint = previous.paymentHint;
+    changed = true;
+  }
+  if (!('paymentMethods' in incoming) && previous.paymentMethods !== undefined) {
+    merged.paymentMethods = previous.paymentMethods;
     changed = true;
   }
   if (!('userNote' in incoming) && previous.userNote !== undefined) {

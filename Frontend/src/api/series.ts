@@ -106,6 +106,8 @@ export interface SeriesListItem {
   endsOn: string | null;
   regularCount: number;
   nextOccurrenceAt: string | null;
+  /** `owner` when the viewer created the series, `regular` when they only play in it. */
+  role: 'owner' | 'regular';
 }
 
 export interface MySeriesResponse {

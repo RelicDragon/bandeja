@@ -44,4 +44,40 @@ enum WatchTestFixtures {
         }
         """
     }
+
+    /// PRD 346 — a `GET /games/my-games` row carrying the viewer's own answer.
+    static func gameWithAttendance(
+        viewerAttendance: String?,
+        status: String = "ANNOUNCED",
+        startTime: String = "2026-05-29T12:00:00.000Z",
+        confirmedCount: Int = 1,
+        playingCount: Int = 4
+    ) -> String {
+        let viewer = viewerAttendance.map { "\"\($0)\"" } ?? "null"
+        let participants = ["a", "b", "c", "d"].map { participant(id: $0) }.joined(separator: ",")
+        return """
+        {
+          "id":"game-1",
+          "gameType":"AMERICANO",
+          "entityType":"GAME",
+          "status":"\(status)",
+          "resultsStatus":"NONE",
+          "startTime":"\(startTime)",
+          "maxParticipants":4,
+          "sport":"PADEL",
+          "participantsReady":true,
+          "teamsReady":true,
+          "hasFixedTeams":false,
+          "fixedTeams":null,
+          "participants":[\(participants)],
+          "attendanceSummary":{
+            "viewerAttendance":\(viewer),
+            "confirmedCount":\(confirmedCount),
+            "unsureCount":0,
+            "unansweredCount":\(max(0, playingCount - confirmedCount)),
+            "playingCount":\(playingCount)
+          }
+        }
+        """
+    }
 }

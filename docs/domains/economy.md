@@ -33,7 +33,9 @@ A per-game record of **who owes what and who has paid**. It is a ledger, not a p
 |-------|-------|---------|
 | `GameCostShare` | one row per payer per game, unique `(gameId, userId)` | `amountCents` (integer minor units), `currency` (ISO, copied from the game), `markedPaidAt`, `confirmedAt`, `method MANUAL\|COINS`, `transactionId` |
 | `Game.costPayerId` | game | who fronted the money; materialized to the owner on first sync |
-| `Game.paymentHint` | game, `VarChar(120)` | free text ("IBAN …", "cash at the club"). Never parsed, never sent anywhere but the game's own participants — and never included in a guest-readable projection |
+| `Game.paymentMethods` | game, `Json` | up to 3 `{ method, handle }` entries — how to pay the organiser back. `method` is an id from the country-scoped catalogue (`@bandeja/shared/payments`); `handle` is a phone number, tag, IBAN or free text. Never parsed as a bank detail, never sent anywhere but the game's own participants, and never in a guest-readable projection |
+| `Game.paymentHint` | game, `VarChar(120)` | **legacy one-line mirror** of `paymentMethods`, written through on every save for app builds shipped before the catalogue. Never the source of truth — read both through `resolvePaymentMethods`. Same entitlement gate |
+| `User.payoutMethods` | user, `Json` | the organiser's saved defaults, prefilled onto games they create. Own-profile payload only |
 | `Game.costFrozenAt` | game | set the first time the ledger is observed with `resultsStatus = FINAL`; amounts stop moving from then on |
 | `PlatformSetting.COINS_PER_CURRENCY_UNIT` | platform | coins per one major unit of a game's currency. **Deliberately unset.** While it is null the coins option is hidden on both the frontend and the backend |
 
@@ -45,13 +47,15 @@ Load-bearing rules:
 4. **Frozen means frozen.** Once `costFrozenAt` is set, `syncGameCostShares` returns the stored rows untouched and `PUT /cost-shares` is rejected.
 5. **A coin-settled share never moves.** Rows with `method = COINS` and a `transactionId` are pinned out of every later re-split: that money has already changed hands.
 6. **The payer's own row is settled by definition** and is excluded from "outstanding". It is derived, not stored, so changing the payer is a clean operation.
-7. **The share row is claimed before any coin moves.** `POST …/me/paid` with `method: 'COINS'` runs the guards (rate set, payer exists, balance sufficient), then claims the row with a conditional `updateMany` that only matches while it is still unsettled, and only then calls `createGuardedTransfer`. A failure hands the claim back scoped to that exact claim, so it can never clear somebody else's settlement; an insufficient balance surfaces as a clean error and can never leave a share half-settled or double-charged.
+7. **`City.country` is a display name, and one resolver turns it into a country.** The column stores "Spain", "Bosnia and Herzegovina", "United Kingdom" — never an ISO code. `resolveCountryIso2` (`@bandeja/shared/geo/countryIso2`) is the single map, used by the payment catalogue on both sides and by the currency guess (`Backend/src/utils/currencyFromCountry.ts`). A second map, or a length check that assumes ISO-2, silently answers "unknown country" for every city in the database and reduces the picker to its three universal methods everywhere. `shared/geo/countryIso2.test.ts` pins every value the database actually holds.
+8. **The payment-method catalogue is scoped by country, and only offers.** `paymentMethodsForCountry(iso2)` is what the picker shows: `CUSTOM` first everywhere, then the rails that actually exist there (Bizum in Spain, IPS Prenesi in Serbia, Pix in Brazil, PromptPay in Thailand), then `BANK_TRANSFER` and `CASH`, which are universal. IBAN and Revolut are deliberately absent in the western Balkans, across Asia and across Latin America — nobody splits a court that way there. The API does **not** enforce the country list: a visiting organiser may legitimately want their own country's rail, so country is a relevance filter, never a permission.
+9. **The share row is claimed before any coin moves.** `POST …/me/paid` with `method: 'COINS'` runs the guards (rate set, payer exists, balance sufficient), then claims the row with a conditional `updateMany` that only matches while it is still unsettled, and only then calls `createGuardedTransfer`. A failure hands the claim back scoped to that exact claim, so it can never clear somebody else's settlement; an insufficient balance surfaces as a clean error and can never leave a share half-settled or double-charged.
 
 **Who is in the split:** every `PLAYING` participant, plus the payer when they are on the roster in another status (a non-playing organizer who fronted the money still appears). A player who leaves stops being `PLAYING` and drops out on the next sync. A substitution moves the row, including its paid state, to the substitute (`transferCostShareOnSubstitution`). Games priced `PER_TEAM` have **no** cost card: a team price yields a game total only when the team count is known, and nothing on `Game` states it.
 
 **Permissions** live in one file, `gameCost/costSharePermissions.ts`; every endpoint routes through exactly one predicate.
 
-| Actor | View | Configure payer / hint / overrides | Mark own paid | Confirm "Received" | Remind |
+| Actor | View | Configure payer / payment methods / overrides | Mark own paid | Confirm "Received" | Remind |
 |-------|------|------------------------------------|---------------|--------------------|--------|
 | Game owner / admin | yes | yes | yes | yes | yes |
 | Payer (not an organizer) | yes | no | yes | yes | yes |

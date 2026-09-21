@@ -42,8 +42,13 @@ import { MAIN_PHOTO_RELATION_SELECT } from './gamePrismaIncludes';
  * Forbidden lists — the machine-readable half of the contract.
  * ------------------------------------------------------------------ */
 
-/** `Game` scalars that must never reach a caller without cost-ledger entitlement. */
-export const GAME_DETAIL_ENTITLED_GAME_KEYS = ['paymentHint'] as const;
+/**
+ * `Game` scalars that must never reach a caller without cost-ledger entitlement.
+ *
+ * `paymentMethods` is the structured form of the same secret — a phone number
+ * for Bizum or IPS Prenesi, an IBAN, a Pix key — so it is gated identically.
+ */
+export const GAME_DETAIL_ENTITLED_GAME_KEYS = ['paymentHint', 'paymentMethods'] as const;
 
 /**
  * Fields `getGameById` computes **for the viewer who asked**, not for the game.
@@ -332,7 +337,10 @@ export type GameDetailSelectOptions = {
  * so the value never enters the process for a caller who may not have it. One
  * extra primary-key lookup of a `VarChar(120)`, and only for entitled viewers.
  */
-export const GAME_PAYMENT_HINT_SELECT = { paymentHint: true } as const satisfies Prisma.GameSelect;
+export const GAME_PAYMENT_HINT_SELECT = {
+  paymentHint: true,
+  paymentMethods: true,
+} as const satisfies Prisma.GameSelect;
 
 function detailRelationSelect(viewerIsAuthenticated: boolean): Prisma.GameSelect {
   const userSelect: Prisma.UserSelect = viewerIsAuthenticated

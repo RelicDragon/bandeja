@@ -40,6 +40,11 @@ model User {
   latitudeByIP                  Float?
   longitudeByIP                 Float?
   defaultCurrency               String                           @default("EUR")
+  /// PRD 348 — the organiser's own "how to pay me" list, prefilled into every game they
+  /// create: `[{ method, handle }]`, at most 3, ids from `@bandeja/shared/payments`.
+  /// Private: only ever leaves the API on the owner's settings payload, or via the game
+  /// the owner attached it to (and there only to that game's participants).
+  payoutMethods                 Json?
   language                      String?                          @default("auto")
   translateToLanguage           String?                          @db.VarChar(10)
   timeFormat                    String                           @default("auto")
@@ -828,8 +833,15 @@ model Game {
   lastSeatOpenedAt           DateTime?
   /// Who collects the money for this game; also receives the rounding remainder (PRD 348).
   costPayerId                String?
-  /// Free-text payment instruction shown next to the cost card (e.g. "Revolut @name").
+  /// Legacy one-line mirror of {@link paymentMethods}, kept written-through for app
+  /// builds shipped before the catalogue. Never the source of truth once
+  /// `paymentMethods` is set; read both through `resolvePaymentMethods`.
   paymentHint                String?                         @db.VarChar(120)
+  /// PRD 348 — how to pay the organiser back: `[{ method, handle }]`, at most 3, with
+  /// `method` an id from `@bandeja/shared/payments` (BIZUM, IPS_PRENESI, IBAN, CUSTOM …).
+  /// Carries a phone number or an IBAN, so it rides the same entitlement gate as
+  /// `paymentHint` and never reaches a non-participant.
+  paymentMethods             Json?
   /// Set when cost shares stop re-materializing (results FINAL).
   costFrozenAt               DateTime?
   /// `{ severity, sentAt[], keepAsPlannedAt?, lastEvaluatedAt }` — persisted so the weather

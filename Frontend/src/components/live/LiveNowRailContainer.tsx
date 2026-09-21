@@ -41,7 +41,11 @@ function LiveNowRailContainerView({
   const navigate = useNavigate();
 
   const limit = variant === 'home' ? LIVE_RAIL_HOME_LIMIT : LIVE_RAIL_FIND_LIMIT;
-  const { games, isLoading, isReconnecting } = useLiveGames({ cityId, limit, enabled });
+  const { games, isLoading, isReconnecting, reconnectingGameIds } = useLiveGames({
+    cityId,
+    limit,
+    enabled,
+  });
 
   const handleOpen = useCallback(
     async (game: LiveRailGame) => {
@@ -78,6 +82,7 @@ function LiveNowRailContainerView({
         onOpen={onOpen}
         isLoading={isLoading && games.length === 0}
         isReconnecting={isReconnecting}
+        reconnectingGameIds={reconnectingGameIds}
         variant={variant}
         cityName={cityName}
         maxCards={limit}

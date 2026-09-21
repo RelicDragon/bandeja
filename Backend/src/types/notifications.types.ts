@@ -109,6 +109,19 @@ export interface NotificationData {
   unreadBadgeCount?: number;
   /** PRD 345 — the `GameSeries` a notification is about. */
   seriesId?: string;
+  /**
+   * PRD 345 — the **finished** occurrence that raised the "same time next week?"
+   * prompt. `gameId` is next week's game; this is where the in-app card lives,
+   * so it is what a tap on the push body opens.
+   */
+  sourceGameId?: string;
+  /**
+   * PRD 345 — localized shade acknowledgements for the prompt's two answers. The
+   * native handler never sees the response body, so both strings travel with the
+   * push (same contract as the PRD 346 attendance pair).
+   */
+  seriesAcceptAck?: string;
+  seriesDeclineAck?: string;
   /** PRD 346 — signed `attendance`/`confirm` push action token (see pushInviteActionToken.service). */
   attendanceActionToken?: string;
   /** PRD 346 — signed `attendance`/`unsure` push action token. */
@@ -117,10 +130,24 @@ export interface NotificationData {
   confirmActionTitle?: string;
   /** PRD 346 — localized title of the "Not sure" push action button. */
   unsureActionTitle?: string;
+  /**
+   * PRD 346 — localized shade acknowledgement shown by the native handler after
+   * the answer is posted. The native side never sees the response body, so both
+   * strings travel with the reminder.
+   */
+  attendanceConfirmedAck?: string;
+  /** PRD 346 — localized shade acknowledgement for the "Not sure yet" action. */
+  attendanceUnsureAck?: string;
   /** PRD 357 — localized title of the "Keep as planned" push action button. */
   keepActionTitle?: string;
   /** PRD 357 — signed `weather`/`keep` push action token (see pushInviteActionToken.service). */
   weatherKeepActionToken?: string;
+  /**
+   * PRD 357 — localized shade acknowledgement after "Keep as planned" lands. The
+   * native handler never sees the response body, so the string travels with the
+   * alert, exactly like the attendance pair.
+   */
+  weatherKeptAck?: string;
   /** PRD 357 — localized title of the "Move indoor" push action button (organizers only). */
   moveIndoorActionTitle?: string;
   /** PRD 357 — in-app path the weather alert opens, including `?section=weather`. */

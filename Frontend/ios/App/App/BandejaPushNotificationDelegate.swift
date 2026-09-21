@@ -54,6 +54,22 @@ final class BandejaPushNotificationDelegate: NSObject, UNUserNotificationCenterD
             return
         }
 
+        // PRD 346 — answer the reminder from the shade on a cold start, when no
+        // webview exists to take the action. With JS up, the router handles it.
+        if AttendanceActionHandler.shouldHandleNatively(response: response, jsReady: pushReplyJsReady) {
+            AttendanceActionHandler.handle(response: response, completion: completionHandler)
+            return
+        }
+
+        // PRD 345 / 357 — the same cold-start path for "I'm in" / "Not this time"
+        // and "Keep as planned". The foreground weather actions are deliberately
+        // not claimed here: they need a screen, so they fall through to the
+        // router below.
+        if TokenActionHandler.shouldHandleNatively(response: response, jsReady: pushReplyJsReady) {
+            TokenActionHandler.handle(response: response, completion: completionHandler)
+            return
+        }
+
         forwardDidReceive(center: center, response: response, completionHandler: completionHandler)
     }
 

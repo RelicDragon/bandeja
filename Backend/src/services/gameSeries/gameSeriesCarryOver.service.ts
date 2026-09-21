@@ -263,6 +263,7 @@ export class GameSeriesCarryOverService {
       const sent = await GameSeriesCarryOverService.sendPromptTo(userId, {
         seriesId: series.id,
         seriesName: series.name,
+        sourceGameId: game.id,
         nextGameId: next.id,
         nextStartTime: next.startTime,
         clubName: next.club?.name ?? null,
@@ -287,6 +288,8 @@ export class GameSeriesCarryOverService {
     context: {
       seriesId: string;
       seriesName: string;
+      /** The finished occurrence that raised the prompt — where the in-app card lives. */
+      sourceGameId: string;
       nextGameId: string;
       nextStartTime: Date;
       clubName: string | null;
@@ -344,9 +347,14 @@ export class GameSeriesCarryOverService {
         body,
         data: {
           gameId: context.nextGameId,
+          sourceGameId: context.sourceGameId,
           seriesId: context.seriesId,
           acceptActionToken: acceptToken,
           declineActionToken: declineToken,
+          // The native shade handlers never see a response body, so both
+          // acknowledgements travel with the prompt (same contract as PRD 346).
+          seriesAcceptAck: seriesT('series.seatKept', lang),
+          seriesDeclineAck: seriesT('series.seatReleased', lang),
         },
         actions: [
           { id: 'accept', title: seriesT('series.actionImIn', lang), action: 'accept' },

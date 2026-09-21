@@ -48,6 +48,36 @@ function testInviteCategoryUnchanged(): void {
   );
 }
 
+/**
+ * PRD 346 — the iOS client registers a `GAME_REMINDER` category with exactly
+ * these two action ids (`registerPushNotificationActionTypes.ts`). If the
+ * resolved category or the ids drift, the shade silently shows no buttons.
+ */
+function testAttendanceReminderUsesGameReminderCategory(): void {
+  assert.equal(
+    resolveApnsNotificationCategory({
+      type: NotificationType.GAME_REMINDER,
+      title: 't',
+      body: 'b',
+      actions: [
+        { id: 'confirm', title: "I'm coming", action: 'confirm' },
+        { id: 'unsure', title: 'Not sure yet', action: 'unsure' },
+      ],
+    }),
+    NotificationType.GAME_REMINDER
+  );
+
+  // A reminder without the attendance actions must not claim the category.
+  assert.equal(
+    resolveApnsNotificationCategory({
+      type: NotificationType.GAME_REMINDER,
+      title: 't',
+      body: 'b',
+    }),
+    undefined
+  );
+}
+
 function testNoCategoryWithoutActions(): void {
   assert.equal(
     resolveApnsNotificationCategory({
@@ -92,6 +122,7 @@ function testFullChatReplyContext(): void {
 
 testChatTypesUseChatReplyCategory();
 testInviteCategoryUnchanged();
+testAttendanceReminderUsesGameReminderCategory();
 testNoCategoryWithoutActions();
 testStoryStylePayloadHasNoReplyActions();
 testFullChatReplyContext();

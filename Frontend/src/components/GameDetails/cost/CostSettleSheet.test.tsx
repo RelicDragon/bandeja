@@ -66,6 +66,8 @@ function summary(overrides: Partial<GameCostSummary> = {}): GameCostSummary {
     payerUserId: 'marko',
     payer: { id: 'marko', firstName: 'Marko', lastName: 'P', avatar: null, level: 3, socialLevel: 3, gender: 'MALE', approvedLevel: true, isTrainer: false },
     paymentHint: null,
+    paymentMethods: [],
+    countryIso2: null,
     frozenAt: null,
     estimated: true,
     shares: [viewerShare],
@@ -154,7 +156,28 @@ describe('CostSettleSheet', () => {
     expect(onSettle).toHaveBeenCalledWith('COINS');
   });
 
-  it('shows the payer’s payment hint in a copyable field', () => {
+  it('shows each of the payer’s methods in a copyable field', () => {
+    render(
+      summary({
+        paymentMethods: [
+          { method: 'IPS_PRENESI', handle: '+381 60 111 2233' },
+          { method: 'CASH', handle: null },
+        ],
+      }),
+    );
+    expect(container.textContent).toContain('IPS Prenesi');
+    expect(container.textContent).toContain('+381 60 111 2233');
+    // Cash has nothing to copy, so only the one handle gets a copy button.
+    expect(container.querySelectorAll('button[aria-label="cost.sheet.copy"]')).toHaveLength(1);
+  });
+
+  it('offers a provider link only where the method has one', () => {
+    render(summary({ paymentMethods: [{ method: 'REVOLUT', handle: '@marko' }] }));
+    const link = container.querySelector('a[aria-label="cost.payment.open"]');
+    expect(link?.getAttribute('href')).toBe('https://revolut.me/marko');
+  });
+
+  it('falls back to a pre-catalogue free-text hint', () => {
     render(summary({ paymentHint: 'IBAN RS35 1234' }));
     expect(container.textContent).toContain('IBAN RS35 1234');
     expect(container.querySelector('button[aria-label="cost.sheet.copy"]')).not.toBeNull();

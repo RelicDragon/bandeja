@@ -45,9 +45,21 @@ struct GameRowView: View {
                 if let summary = game.weatherSummary {
                     WatchWeatherBadgeView(summary: summary, lang: lang)
                 }
+                if game.needsAttendanceAnswer {
+                    attendanceMarker(lang: lang)
+                }
             }
         }
         .padding(.vertical, 2)
+    }
+
+    /// PRD 346 — a quiet "you have not answered yet" marker, so opening the
+    /// game is an obvious next step. It is never a warning: silence is allowed.
+    private func attendanceMarker(lang: String) -> some View {
+        Image(systemName: "hand.raised")
+            .font(.caption2)
+            .foregroundStyle(.orange)
+            .accessibilityLabel(WatchCopy.attendanceQuestion(lang))
     }
 
     private func statusDot(lang: String) -> some View {

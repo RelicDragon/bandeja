@@ -183,11 +183,13 @@ function run() {
  */
 function runGameDetail() {
   // 1. the scalar whitelist never carries the entitled column.
-  assert.equal(
-    'paymentHint' in GAME_DETAIL_GAME_SCALAR_SELECT,
-    false,
-    'paymentHint is never part of the base scalar whitelist',
-  );
+  for (const key of GAME_DETAIL_ENTITLED_GAME_KEYS) {
+    assert.equal(
+      key in GAME_DETAIL_GAME_SCALAR_SELECT,
+      false,
+      `${key} is never part of the base scalar whitelist`,
+    );
+  }
   assert.equal(GAME_DETAIL_GAME_SCALAR_SELECT.id, true);
   // Fields the detail screen genuinely reads must survive the switch to select.
   for (const key of [
@@ -245,12 +247,15 @@ function runGameDetail() {
   );
 
   const entitled = getGameDetailSelect({ viewerIsAuthenticated: true });
-  assert.equal(
-    'paymentHint' in entitled,
-    false,
-    'even the signed-in select never names paymentHint — it is a separate, authorised read',
-  );
+  for (const key of GAME_DETAIL_ENTITLED_GAME_KEYS) {
+    assert.equal(
+      key in entitled,
+      false,
+      `even the signed-in select never names ${key} — it is a separate, authorised read`,
+    );
+  }
   assert.equal(GAME_PAYMENT_HINT_SELECT.paymentHint, true);
+  assert.equal(GAME_PAYMENT_HINT_SELECT.paymentMethods, true);
   const memberClub = (entitled.club as unknown as { select: Record<string, unknown> }).select;
   assert.equal(
     memberClub.integrationConfig,
@@ -260,15 +265,19 @@ function runGameDetail() {
 
   // The parent is another Game row with its own paymentHint column.
   const parentSelect = (entitled.parent as unknown as { select: Record<string, unknown> }).select;
-  assert.equal(
-    'paymentHint' in parentSelect,
-    false,
-    'a parent league/tournament row never carries paymentHint',
-  );
+  for (const key of GAME_DETAIL_ENTITLED_GAME_KEYS) {
+    assert.equal(
+      key in parentSelect,
+      false,
+      `a parent league/tournament row never carries ${key}`,
+    );
+  }
 
   // 2b. `GET /api/games` is the same `optionalAuth` route shape.
   const list = getGameListSelect({ viewerIsAuthenticated: false });
-  assert.equal('paymentHint' in list, false, 'the list never carries the payment handle');
+  for (const key of GAME_DETAIL_ENTITLED_GAME_KEYS) {
+    assert.equal(key in list, false, `the list never carries ${key}`);
+  }
   assert.equal('rounds' in list, false, 'the list stays slim — no rounds');
   assert.equal('outcomes' in list, false, 'the list stays slim — no outcomes');
   assert.equal('gameCourts' in list, false, 'the list stays slim — no per-game courts');
@@ -332,7 +341,15 @@ function runGameDetail() {
       parent: { id: 'p1', paymentHint: 'Revolut @x' },
     }).some((i) => i.path === 'parent.paymentHint'),
   );
-  assert.deepEqual([...GAME_DETAIL_ENTITLED_GAME_KEYS], ['paymentHint']);
+  assert.ok(
+    collectGameDetailGuestContractIssues({
+      ...cleanPayload,
+      parent: { id: 'p1', paymentMethods: [{ method: 'BIZUM', handle: '+34600112233' }] },
+    }).some((i) => i.path === 'parent.paymentMethods'),
+  );
+  // PRD 348 — the structured list is the same secret as the free-text hint
+  // (a Bizum phone number, an IBAN, a Pix key) and is gated identically.
+  assert.deepEqual([...GAME_DETAIL_ENTITLED_GAME_KEYS], ['paymentHint', 'paymentMethods']);
 
   console.log('gameDetail.projection contract: ok');
 }
@@ -353,8 +370,8 @@ function runGameDetail() {
 function runBroadcastProjection() {
   assert.deepEqual(
     [...GAME_BROADCAST_STRIPPED_KEYS],
-    ['paymentHint', 'userNote', 'isClubFavorite'],
-    'the broadcast strips the entitled column and both viewer-scoped fields',
+    ['paymentHint', 'paymentMethods', 'userNote', 'isClubFavorite'],
+    'the broadcast strips both entitled columns and both viewer-scoped fields',
   );
   assert.deepEqual([...GAME_DETAIL_VIEWER_SCOPED_KEYS], ['userNote', 'isClubFavorite']);
 
@@ -364,7 +381,8 @@ function runBroadcastProjection() {
     priceType: 'FIXED',
     priceTotal: 40,
     priceCurrency: 'EUR',
-    paymentHint: 'IBAN RS35 1234 5678',
+    paymentHint: 'IPS Prenesi +381601112233',
+    paymentMethods: [{ method: 'IPS_PRENESI', handle: '+381601112233' }],
     userNote: 'bring the pink balls',
     isClubFavorite: true,
     participants: [{ userId: 'u1' }],
@@ -375,6 +393,11 @@ function runBroadcastProjection() {
     'paymentHint' in broadcast,
     false,
     'a broadcast never carries the organizer payment handle',
+  );
+  assert.equal(
+    'paymentMethods' in broadcast,
+    false,
+    'nor the structured list the handle now lives in',
   );
   assert.equal('userNote' in broadcast, false, 'a broadcast never carries the actor private note');
   assert.equal('isClubFavorite' in broadcast, false, 'nor the actor favourite flag');
@@ -387,7 +410,8 @@ function runBroadcastProjection() {
   assert.equal(broadcast.priceCurrency, 'EUR');
   assert.deepEqual(broadcast.participants, [{ userId: 'u1' }]);
   assert.notEqual(broadcast, entitledPayload, 'the caller copy is not mutated');
-  assert.equal(entitledPayload.paymentHint, 'IBAN RS35 1234 5678');
+  assert.equal(entitledPayload.paymentHint, 'IPS Prenesi +381601112233');
+  assert.equal(entitledPayload.paymentMethods.length, 1);
 
   // A payload that never had the keys is unchanged.
   assert.deepEqual(projectGameForBroadcast({ id: 'g2', name: 'n' }), { id: 'g2', name: 'n' });

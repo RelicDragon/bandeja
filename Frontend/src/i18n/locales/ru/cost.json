@@ -46,10 +46,7 @@
       "totalFor": "Всего {{amount}} · игроков: {{players}}"
     },
     "create": {
-      "preview": "≈ {{amount}} с каждого, игроков: {{players}}",
-      "paymentHintLabel": "Как вам перевести",
-      "paymentHintPlaceholder": "IBAN, тег Revolut, наличные в клубе…",
-      "paymentHintHelp": "Показывается игрокам при расчёте. Осталось символов: {{remaining}}."
+      "preview": "≈ {{amount}} с каждого, игроков: {{players}}"
     },
     "wallet": {
       "owed": "Вы должны",
@@ -79,6 +76,70 @@
       "copyFailed": "Не удалось скопировать."
     },
     "loading": "Загружаем расчёт расходов…",
-    "loadFailed": "Не удалось загрузить расчёт расходов."
+    "loadFailed": "Не удалось загрузить расчёт расходов.",
+    "payment": {
+      "title": "Как тебе платить",
+      "help": "Игроки увидят это, когда будут рассчитываться.",
+      "add": "Добавить ещё способ",
+      "addFirst": "Добавить способ оплаты",
+      "remove": "Убрать {{method}}",
+      "maxReached": "Можно указать до {{max}} способов оплаты.",
+      "noHandleNeeded": "Ничего вводить не нужно.",
+      "open": "Открыть",
+      "everywhere": "Работает везде",
+      "pickerTitle": "Как игрокам тебе платить?",
+      "pickerSubtitle": "Способы, которыми платят там, где проходит игра.",
+      "pickerSearch": "Поиск",
+      "pickerEmpty": "Ничего не найдено.",
+      "pickerCustomHint": "Нет нужного? Выбери «Другое» и напиши сам.",
+      "profileTitle": "Сохранённые реквизиты",
+      "profileHelp": "Подставляются в игры, которые ты создаёшь.",
+      "method": {
+        "custom": "Другое",
+        "cash": "Наличные",
+        "bankTransfer": "Банковский перевод",
+        "iban": "IBAN",
+        "cardTransfer": "Перевод на карту",
+        "ukBank": "Банковский перевод",
+        "rsAccount": "Банковский счёт",
+        "huInstant": "Мгновенный перевод",
+        "clabe": "CLABE",
+        "cbuAlias": "Алиас или CBU"
+      },
+      "handle": {
+        "NONE": {
+          "label": "Реквизиты не нужны"
+        },
+        "TEXT": {
+          "label": "Реквизиты",
+          "placeholder": "Наличные в клубе, IBAN, что угодно"
+        },
+        "PHONE": {
+          "label": "Номер телефона"
+        },
+        "EMAIL": {
+          "label": "Почта"
+        },
+        "PHONE_OR_EMAIL": {
+          "label": "Телефон или почта"
+        },
+        "TAG": {
+          "label": "Имя пользователя"
+        },
+        "IBAN": {
+          "label": "IBAN"
+        },
+        "ACCOUNT": {
+          "label": "Номер счёта"
+        },
+        "CARD": {
+          "label": "Номер карты"
+        },
+        "ALIAS": {
+          "label": "Ключ или ID",
+          "placeholder": "Телефон, почта или ID"
+        }
+      }
+    }
   }
 }

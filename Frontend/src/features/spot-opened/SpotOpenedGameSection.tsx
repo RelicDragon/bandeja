@@ -2,7 +2,6 @@ import { useCallback } from 'react';
 import { gamesApi } from '@/api';
 import type { Game } from '@/types';
 import { GameQueuePanel } from './GameQueuePanel';
-import { JoinFromDeepLink } from './JoinFromDeepLink';
 import { SeatedFromQueueBanner } from './SeatedFromQueueBanner';
 import { useSpotOpenedRealtime } from './useSpotOpenedRealtime';
 
@@ -11,27 +10,24 @@ export interface SpotOpenedGameSectionProps {
   viewerUserId: string | undefined;
   /** Owner or admin — gets the "Ana joined from the queue" toast. */
   isOrganizer: boolean;
-  /** `shouldSwallowJoinDeepLink(...)` — when `?join=1` must not run the join. */
-  alreadyInvolved: boolean;
   onGameUpdate: (game: Game) => void;
-  /** The details page's own join handler (gates + overlap confirm included). */
-  onJoin: () => void;
 }
 
 /**
- * PRD 347 — everything the game-details page owes a freed seat, in one mount.
+ * PRD 347 — everything the game-details page owes a freed seat, in one mount:
+ * the queue panel, the one-time seated header and the live socket wiring.
  *
- * Kept as a single component so the details shell needs exactly one insertion
- * point: the queue panel, the one-time seated header, the live socket wiring
- * and the `?join=1` deep-link consumer.
+ * The `?join=1` consumer deliberately does **not** live here. This section is
+ * rendered inside the tab content, so on a surface where another tab is active
+ * it is unmounted — and a deep link that lands with a non-default tab would
+ * silently never join. `JoinFromDeepLink` is mounted by the shell instead, once,
+ * outside the tab switch.
  */
 export function SpotOpenedGameSection({
   game,
   viewerUserId,
   isOrganizer,
-  alreadyInvolved,
   onGameUpdate,
-  onJoin,
 }: SpotOpenedGameSectionProps) {
   const refresh = useCallback(() => {
     void (async () => {
@@ -56,7 +52,6 @@ export function SpotOpenedGameSection({
     <>
       <SeatedFromQueueBanner gameId={game.id} seatedLive={seatedLive} />
       <GameQueuePanel game={game} viewerUserId={viewerUserId} />
-      <JoinFromDeepLink ready alreadyInvolved={alreadyInvolved} onJoin={onJoin} />
     </>
   );
 }

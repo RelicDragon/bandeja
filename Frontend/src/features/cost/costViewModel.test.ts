@@ -54,6 +54,8 @@ function summary(overrides: Partial<GameCostSummary> = {}): GameCostSummary {
     payerUserId: 'marko',
     payer: null,
     paymentHint: null,
+    paymentMethods: [],
+    countryIso2: null,
     frozenAt: null,
     estimated: true,
     shares,
@@ -265,61 +267,92 @@ describe('override preview matches the backend split', () => {
 /**
  * PRD 348 — the edit-modal price payload.
  *
- * `paymentHint` is the one game field a viewer can legitimately not have
+ * `paymentMethods` is the one game field a viewer can legitimately not have
  * received: the socket `game-updated` broadcast is projected for the
  * least-entitled member of the room and strips it. The modal seeded its field
  * from that possibly-absent key and then wrote it back on **every** save of a
  * paid game, so an organizer who edited her description after a player left the
- * game sent `paymentHint: null` and lost her saved IBAN.
+ * game sent a blank and lost her saved IBAN.
  */
 describe('buildGameEditPricePayload', () => {
+  const iban = { method: 'IBAN', handle: 'RS35 1234 5678' };
   const paid: GameEditPriceState = {
     priceType: 'TOTAL',
     priceTotal: 40,
     priceCurrency: 'EUR',
-    paymentHint: 'IBAN RS35 1234 5678',
+    paymentMethods: [iban],
   };
 
-  it('omits paymentHint when the organizer did not touch it', () => {
+  it('omits paymentMethods when the organizer did not touch them', () => {
     const payload = buildGameEditPricePayload(paid, paid);
 
-    expect('paymentHint' in payload).toBe(false);
+    expect('paymentMethods' in payload).toBe(false);
     expect(payload).toEqual({ priceType: 'TOTAL', priceTotal: 40, priceCurrency: 'EUR' });
   });
 
-  it('omits it even when the seed is empty because the payload never carried it', () => {
-    // The exact post-broadcast state: `game.paymentHint` was absent, so the
+  it('omits them even when the seed is empty because the payload never carried them', () => {
+    // The exact post-broadcast state: `game.paymentMethods` was absent, so the
     // field seeded blank. Saving an unrelated change must not clear the column.
-    const seededBlank: GameEditPriceState = { ...paid, paymentHint: '' };
+    const seededBlank: GameEditPriceState = { ...paid, paymentMethods: [] };
     const payload = buildGameEditPricePayload(seededBlank, seededBlank);
 
-    expect('paymentHint' in payload).toBe(false);
+    expect('paymentMethods' in payload).toBe(false);
   });
 
-  it('sends the new value when the organizer edits the field', () => {
-    const edited: GameEditPriceState = { ...paid, paymentHint: '  Revolut @marko  ' };
+  it('sends the new list when the organizer edits it', () => {
+    const edited: GameEditPriceState = {
+      ...paid,
+      paymentMethods: [iban, { method: 'BIZUM', handle: '  +34 600 11 22 33  ' }],
+    };
 
-    expect(buildGameEditPricePayload(edited, paid).paymentHint).toBe('Revolut @marko');
+    expect(buildGameEditPricePayload(edited, paid).paymentMethods).toEqual([
+      iban,
+      { method: 'BIZUM', handle: '+34 600 11 22 33' },
+    ]);
   });
 
-  it('sends null when the organizer deliberately clears a hint she can see', () => {
-    const cleared: GameEditPriceState = { ...paid, paymentHint: '   ' };
+  it('sends null when the organizer deliberately clears a list she can see', () => {
+    const cleared: GameEditPriceState = { ...paid, paymentMethods: [] };
 
-    expect(buildGameEditPricePayload(cleared, paid).paymentHint).toBeNull();
+    expect(buildGameEditPricePayload(cleared, paid).paymentMethods).toBeNull();
   });
 
   it('treats whitespace-only edits as no change', () => {
-    const padded: GameEditPriceState = { ...paid, paymentHint: '  IBAN RS35 1234 5678 ' };
+    const padded: GameEditPriceState = {
+      ...paid,
+      paymentMethods: [{ method: 'IBAN', handle: '  RS35 1234  5678 ' }],
+    };
 
-    expect('paymentHint' in buildGameEditPricePayload(padded, paid)).toBe(false);
+    expect('paymentMethods' in buildGameEditPricePayload(padded, paid)).toBe(false);
   });
 
-  it('drops the amount and the hint when the game turns free', () => {
+  it('never saves a method the organizer picked and then left blank', () => {
+    const halfFilled: GameEditPriceState = {
+      ...paid,
+      paymentMethods: [iban, { method: 'BIZUM', handle: '' }],
+    };
+
+    expect('paymentMethods' in buildGameEditPricePayload(halfFilled, paid)).toBe(false);
+  });
+
+  it('keeps cash, which has no handle to fill in', () => {
+    const withCash: GameEditPriceState = {
+      ...paid,
+      paymentMethods: [iban, { method: 'CASH', handle: null }],
+    };
+
+    expect(buildGameEditPricePayload(withCash, paid).paymentMethods).toEqual([
+      iban,
+      { method: 'CASH', handle: null },
+    ]);
+  });
+
+  it('drops the amount and the methods when the game turns free', () => {
     const free: GameEditPriceState = { ...paid, priceType: 'FREE' };
     const payload = buildGameEditPricePayload(free, paid);
 
     expect(payload).toEqual({ priceType: 'FREE', priceTotal: null, priceCurrency: null });
-    expect('paymentHint' in payload).toBe(false);
+    expect('paymentMethods' in payload).toBe(false);
   });
 
   it('agrees with isPaidPriceType about which types carry money', () => {
@@ -335,7 +368,7 @@ describe('buildGameEditPricePayload', () => {
       priceType: 'PER_PERSON',
       priceTotal: null,
       priceCurrency: undefined,
-      paymentHint: '',
+      paymentMethods: [],
     };
 
     expect(buildGameEditPricePayload(noAmount, noAmount)).toEqual({ priceType: 'PER_PERSON' });

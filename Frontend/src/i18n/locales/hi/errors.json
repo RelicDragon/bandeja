@@ -137,6 +137,16 @@
       "companyIdRequired": "क्लब बुकिंग एकीकरण के लिए कंपनी ID आवश्यक है।",
       "integrationTypeMustBeOnlineBooking": "क्लब एकीकरण ऑनलाइन बुकिंग होना चाहिए।",
       "rollbackFailed": "आरक्षण रद्द होने की पुष्टि नहीं हो सकी।"
+    },
+    "cost": {
+      "paymentMethod": {
+        "tooMany": "आप ज़्यादा से ज़्यादा 3 तरीके जोड़ सकते हैं।",
+        "unknownMethod": "यह भुगतान तरीका उपलब्ध नहीं है।",
+        "duplicateMethod": "यह तरीका पहले से सूची में है।",
+        "handleRequired": "बताइए कि पैसे कहाँ भेजने हैं।",
+        "handleTooLong": "यह बहुत लंबा है।",
+        "handleInvalid": "यह सही नहीं लग रहा — जाँच लें।"
+      }
     }
   },
   "leagues": {

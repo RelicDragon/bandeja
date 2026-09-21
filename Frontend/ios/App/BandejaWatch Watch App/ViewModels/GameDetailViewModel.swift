@@ -12,6 +12,10 @@ final class GameDetailViewModel {
     var results: WatchResultsGame?
     /// Start game (ANNOUNCED) or enter results both run the same API flow.
     var isStartingResultsEntry = false
+    /// PRD 346 — the viewer's own attendance answer. Loaded with the game and
+    /// absent (`nil`) for anyone the game does not ask, e.g. a non-participant.
+    var attendance: WatchGameAttendance?
+    var isAnsweringAttendance = false
 
     private let gameId: String
     /// Read live from the Keychain on every access: the token can arrive (or rotate)
@@ -46,6 +50,14 @@ final class GameDetailViewModel {
         do {
             game = try await api.fetch(.gameDetail(id: gameId))
             results = try? await api.fetch(.gameResults(gameId: gameId))
+            // Attendance is a courtesy signal: a failure here must never hide
+            // the game. It is fetched optionally, and a failed refresh keeps
+            // whatever was already on screen rather than blanking the section.
+            if let refreshed: WatchGameAttendance = try? await api.fetch(
+                .gameAttendance(gameId: gameId)
+            ) {
+                attendance = refreshed
+            }
             error = nil
             schedulePollingIfNeeded()
         } catch {
@@ -88,6 +100,32 @@ final class GameDetailViewModel {
             return true
         } catch {
             self.error = error
+            return false
+        }
+    }
+
+    // MARK: - Attendance (PRD 346)
+
+    /// Posts one answer. Informative only — the seat, the queue and the level
+    /// are untouched either way, so a failure just leaves the question open.
+    ///
+    /// Deliberately does **not** set `error`: that slot is the game's, and a
+    /// missed courtesy signal is not something the player has to act on. There
+    /// is no deadline, so the unchanged buttons are the whole message — the
+    /// same silence the push shade handlers keep.
+    @discardableResult
+    func answerAttendance(_ state: String) async -> Bool {
+        guard let current = attendance, current.canAnswer, !isAnsweringAttendance else { return false }
+        isAnsweringAttendance = true
+        defer { isAnsweringAttendance = false }
+        do {
+            let response: WatchAttendanceAnswerResponse = try await api.send(
+                .setGameAttendance(gameId: gameId),
+                body: WatchAttendanceAnswerBody(state: state)
+            )
+            attendance = current.merging(response)
+            return true
+        } catch {
             return false
         }
     }

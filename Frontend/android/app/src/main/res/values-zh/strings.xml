@@ -28,4 +28,6 @@
     <string name="shortcut_chats_long">打开聊天收件箱</string>
     <string name="shortcut_invites_short">邀请</string>
     <string name="shortcut_invites_long">查看比赛邀请</string>
+    <string name="attendance_confirm">我会来</string>
+    <string name="attendance_unsure">还不确定</string>
 </resources>

@@ -14,6 +14,7 @@ import {
   DrawerContent,
 } from '@/components/ui/Drawer';
 import { useBackButtonModal } from '@/hooks/useBackButtonModal';
+import { identityKey, useStableIdentity } from '@/hooks/useStableIdentity';
 import { SegmentedSwitch } from '@/components/SegmentedSwitch';
 import { GeneralTab, type GeneralTabState } from './editGameInfo/GeneralTab';
 import { LocationTimeTab } from './editGameInfo/LocationTimeTab';
@@ -30,7 +31,13 @@ import {
   type EditLocationTimeDraft,
 } from '@/components/gameLocationTime/locationTimeDraft';
 import { PriceTab, type PriceTabState } from './editGameInfo/PriceTab';
-import { buildGameEditPricePayload, isPaidPriceType } from '@/features/cost/gameEditPricePayload';
+import { resolvePaymentMethods } from '@shared/payments/paymentMethodSelection';
+import {
+  buildGameEditPricePayload,
+  cleanPaymentMethods,
+  isPaidPriceType,
+} from '@/features/cost/gameEditPricePayload';
+import { useCityCountryQuery } from '@/queries/useCityCountryQuery';
 import { GameSettings } from './GameSettings';
 import { createDateFromClubTime, useGameTimeDuration } from '@/hooks/useGameTimeDuration';
 import { useClubTimeOptions } from '@/hooks/useClubTimeOptions';
@@ -118,7 +125,9 @@ function getInitialPriceState(game: Game, userCurrency: PriceCurrency): PriceTab
     priceTotal: game.priceTotal,
     priceCurrency: game.priceCurrency ?? userCurrency,
     inputValue: game.priceTotal != null ? String(game.priceTotal) : '',
-    paymentHint: game.paymentHint ?? '',
+    // PRD 348 — falls back to the legacy free-text hint for a game written
+    // before the catalogue, so opening Edit never silently clears it.
+    paymentMethods: resolvePaymentMethods(game.paymentMethods, game.paymentHint),
   };
 }
 
@@ -126,7 +135,7 @@ export const EditGameInfoModal = ({
   isOpen,
   onClose,
   game,
-  clubs,
+  clubs: clubsProp,
   courts,
   initialTab: initialTabProp = 'general',
   canEditSettings = true,
@@ -135,6 +144,11 @@ export const EditGameInfoModal = ({
   onClubsChange,
 }: EditGameInfoModalProps) => {
   const { t } = useTranslation();
+  // The shell refetches clubs/courts while the drawer is open and hands back
+  // equal-but-fresh arrays. Everything keyed on a club object (booking auth,
+  // company meta, snapshots, time options) resets on that identity change, so
+  // the drawer re-renders and blinks. Pin the reference while data is equal.
+  const clubs = useStableIdentity(clubsProp);
   const user = useAuthStore((s) => s.user);
   const userCurrency = resolveUserCurrency(user?.defaultCurrency);
   const displaySettings = useMemo(() => resolveDisplaySettings(user), [user]);
@@ -152,6 +166,9 @@ export const EditGameInfoModal = ({
     () => game.city?.id || game.club?.cityId || '',
   );
 
+  const clubsRef = useRef(clubs);
+  clubsRef.current = clubs;
+
   useEffect(() => {
     if (!isOpen || !venueCityId) return;
     let cancelled = false;
@@ -159,7 +176,11 @@ export const EditGameInfoModal = ({
       .getByCityId(venueCityId, game.entityType)
       .then((res) => {
         if (cancelled || !res.success) return;
-        onClubsChange?.(res.data ?? []);
+        const next = res.data ?? [];
+        // The shell already loaded this city; re-publishing an equal list only
+        // re-renders the page under the drawer and churns club identities.
+        if (identityKey(next) === identityKey(clubsRef.current)) return;
+        onClubsChange?.(next);
       })
       .catch(() => {
         /* keep current clubs */
@@ -169,6 +190,8 @@ export const EditGameInfoModal = ({
     };
   }, [game.entityType, isOpen, onClubsChange, venueCityId]);
   const [price, setPrice] = useState<PriceTabState>(() => getInitialPriceState(game, userCurrency));
+  // PRD 348 — the picker offers the rails that exist where the game is played.
+  const paymentCountryIso2 = useCityCountryQuery(venueCityId);
   const [whenSelectedDate, setWhenSelectedDate] = useState<Date>(() =>
     game.startTime ? new Date(game.startTime) : new Date()
   );
@@ -183,6 +206,8 @@ export const EditGameInfoModal = ({
   const [whenShowDatePicker, setWhenShowDatePicker] = useState(false);
   const [disableWhenAutoAdjust, setDisableWhenAutoAdjust] = useState(true);
   const [modalCourts, setModalCourts] = useState<Court[]>(courts);
+  const courtsRef = useRef(courts);
+  courtsRef.current = courts;
   const [_isLoadingCourts, setIsLoadingCourts] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [softOverlapOpen, setSoftOverlapOpen] = useState(false);
@@ -383,8 +408,9 @@ export const EditGameInfoModal = ({
       .getByClubId(where.clubId, { sport: game.sport })
       .then((res) => {
         if (ac.signal.aborted) return;
-        setModalCourts(res.data);
-        onCourtsChange?.(res.data);
+        const nextKey = identityKey(res.data);
+        setModalCourts((prev) => (identityKey(prev) === nextKey ? prev : res.data));
+        if (nextKey !== identityKey(courtsRef.current)) onCourtsChange?.(res.data);
       })
       .catch((err) => {
         if (err?.name === 'AbortError' || ac.signal.aborted) return;
@@ -614,7 +640,8 @@ export const EditGameInfoModal = ({
     (priceIsPaid &&
       ((price.priceTotal ?? null) !== (initialPrice.priceTotal ?? null) ||
         (price.priceCurrency ?? null) !== (initialPrice.priceCurrency ?? null) ||
-        price.paymentHint.trim() !== initialPrice.paymentHint.trim()));
+        JSON.stringify(cleanPaymentMethods(price.paymentMethods)) !==
+          JSON.stringify(cleanPaymentMethods(initialPrice.paymentMethods))));
   const scheduleDirty =
     where.clubId !== (game.clubId || '') ||
     where.hasBookedCourt !== (game.hasBookedCourt ?? false) ||
@@ -822,7 +849,7 @@ export const EditGameInfoModal = ({
       const updateData: Partial<Game> = {
         name: general.name.trim() || null,
         description: general.description.trim() || null,
-        // PRD 348 — `paymentHint` is sent only when the organizer changed it:
+        // PRD 348 — `paymentMethods` is sent only when the organizer changed it:
         // the seed can be missing from a game object the socket delivered, and
         // writing it back unconditionally deleted saved IBANs.
         ...buildGameEditPricePayload(price, initialPrice),
@@ -1087,6 +1114,7 @@ export const EditGameInfoModal = ({
               state={price}
               onChange={(patch) => setPrice((s) => ({ ...s, ...patch }))}
               maxParticipants={game.maxParticipants}
+              countryIso2={paymentCountryIso2}
             />
           )}
           {canEditParticipants ? (

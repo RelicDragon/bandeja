@@ -5,4 +5,6 @@
     <string name="push_reply_hint">Odgovori</string>
     <string name="push_reply_failed">Slanje nije uspelo</string>
     <string name="push_reply_self">Vi</string>
+    <string name="attendance_confirm">Dolazim</string>
+    <string name="attendance_unsure">Još nisam siguran</string>
 </resources>

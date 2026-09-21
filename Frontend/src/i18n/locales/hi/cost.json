@@ -46,10 +46,7 @@
       "totalFor": "कुल {{amount}} · {{players}} खिलाड़ी"
     },
     "create": {
-      "preview": "लगभग {{amount}} प्रति व्यक्ति, {{players}} खिलाड़ी",
-      "paymentHintLabel": "आपको भुगतान कैसे करें",
-      "paymentHintPlaceholder": "UPI आईडी, बैंक खाता, क्लब में नकद…",
-      "paymentHintHelp": "निपटान के समय खिलाड़ियों को दिखेगा। {{remaining}} अक्षर बचे हैं।"
+      "preview": "लगभग {{amount}} प्रति व्यक्ति, {{players}} खिलाड़ी"
     },
     "wallet": {
       "owed": "आपको देना है",
@@ -77,6 +74,70 @@
       "copyFailed": "कॉपी नहीं हो सका।"
     },
     "loading": "खर्च का बँटवारा लोड हो रहा है…",
-    "loadFailed": "हम खर्च का बँटवारा लोड नहीं कर सके।"
+    "loadFailed": "हम खर्च का बँटवारा लोड नहीं कर सके।",
+    "payment": {
+      "title": "आपको पैसे कैसे भेजें",
+      "help": "हिसाब चुकाते समय खिलाड़ियों को यह दिखेगा।",
+      "add": "एक और तरीका जोड़ें",
+      "addFirst": "भुगतान का तरीका जोड़ें",
+      "remove": "{{method}} हटाएँ",
+      "maxReached": "आप ज़्यादा से ज़्यादा {{max}} तरीके जोड़ सकते हैं।",
+      "noHandleNeeded": "कुछ भरने की ज़रूरत नहीं।",
+      "open": "खोलें",
+      "everywhere": "हर जगह काम करता है",
+      "pickerTitle": "खिलाड़ी आपको कैसे भुगतान करें?",
+      "pickerSubtitle": "जहाँ खेल हो रहा है, वहाँ इस्तेमाल होने वाले तरीके।",
+      "pickerSearch": "खोजें",
+      "pickerEmpty": "कुछ नहीं मिला।",
+      "pickerCustomHint": "सूची में नहीं है? “कुछ और” चुनकर खुद लिखें।",
+      "profileTitle": "सहेजी गई भुगतान जानकारी",
+      "profileHelp": "आपके बनाए गेम में अपने आप भर जाती है।",
+      "method": {
+        "custom": "कुछ और",
+        "cash": "नकद",
+        "bankTransfer": "बैंक ट्रांसफ़र",
+        "iban": "IBAN",
+        "cardTransfer": "कार्ड ट्रांसफ़र",
+        "ukBank": "बैंक ट्रांसफ़र",
+        "rsAccount": "बैंक खाता",
+        "huInstant": "तुरंत ट्रांसफ़र",
+        "clabe": "CLABE",
+        "cbuAlias": "उपनाम / CBU"
+      },
+      "handle": {
+        "NONE": {
+          "label": "कोई जानकारी नहीं चाहिए"
+        },
+        "TEXT": {
+          "label": "जानकारी",
+          "placeholder": "क्लब में नकद, IBAN, कुछ भी"
+        },
+        "PHONE": {
+          "label": "फ़ोन नंबर"
+        },
+        "EMAIL": {
+          "label": "ईमेल"
+        },
+        "PHONE_OR_EMAIL": {
+          "label": "फ़ोन या ईमेल"
+        },
+        "TAG": {
+          "label": "यूज़रनेम"
+        },
+        "IBAN": {
+          "label": "IBAN"
+        },
+        "ACCOUNT": {
+          "label": "खाता संख्या"
+        },
+        "CARD": {
+          "label": "कार्ड नंबर"
+        },
+        "ALIAS": {
+          "label": "UPI ID या कुंजी",
+          "placeholder": "फ़ोन, ईमेल या UPI ID"
+        }
+      }
+    }
   }
 }

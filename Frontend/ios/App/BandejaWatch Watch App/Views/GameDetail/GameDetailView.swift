@@ -42,6 +42,7 @@ struct GameDetailView: View {
                         .foregroundStyle(.red)
                         .multilineTextAlignment(.leading)
                 }
+                attendanceSection
                 participantsSection(game)
                 readinessSection(game)
                 if vm.hasResultsPreview {
@@ -118,6 +119,96 @@ struct GameDetailView: View {
         .padding(.horizontal, 10)
         .padding(.vertical, 5)
         .background(color.opacity(0.15), in: Capsule())
+    }
+
+    /// PRD 346 — one Confirm button, and the answer once it is given.
+    /// Informative only: this section can never change the roster below it.
+    @ViewBuilder
+    private var attendanceSection: some View {
+        if let attendance = vm.attendance, attendance.canAnswer {
+            let lang = prefs.uiLanguageCode
+            VStack(alignment: .leading, spacing: 6) {
+                if attendance.hasAnswered {
+                    answeredRow(attendance, lang: lang)
+                } else {
+                    Text(WatchCopy.attendanceQuestion(lang))
+                        .font(.caption.weight(.semibold))
+                    attendanceButton(
+                        title: WatchCopy.attendanceConfirm(lang),
+                        systemImage: "hand.raised.fill",
+                        tint: .green,
+                        state: WatchAttendance.confirmed
+                    )
+                    attendanceButton(
+                        title: WatchCopy.attendanceUnsure(lang),
+                        systemImage: "questionmark",
+                        tint: .orange,
+                        state: WatchAttendance.unsure
+                    )
+                }
+                if attendance.playingCount > 0 {
+                    Text(WatchCopy.attendanceConfirmedCount(
+                        lang,
+                        confirmed: attendance.confirmedCount,
+                        total: attendance.playingCount
+                    ))
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+                Text(WatchCopy.attendanceCaption(lang))
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func answeredRow(_ attendance: WatchGameAttendance, lang: String) -> some View {
+        let isConfirmed = attendance.viewerAttendance == WatchAttendance.confirmed
+        HStack(spacing: 6) {
+            Image(systemName: isConfirmed ? "checkmark.circle.fill" : "questionmark.circle.fill")
+                .font(.caption2)
+                .foregroundStyle(isConfirmed ? .green : .orange)
+            Text(isConfirmed ? WatchCopy.attendanceConfirmed(lang) : WatchCopy.attendanceUnsureState(lang))
+                .font(.caption2)
+            Spacer(minLength: 4)
+            Button(WatchCopy.attendanceChange(lang)) {
+                Task {
+                    await vm.answerAttendance(
+                        isConfirmed ? WatchAttendance.unsure : WatchAttendance.confirmed
+                    )
+                }
+            }
+            .buttonStyle(.plain)
+            .font(.caption2.weight(.semibold))
+            .foregroundStyle(Color.accentColor)
+            .disabled(vm.isAnsweringAttendance)
+        }
+    }
+
+    private func attendanceButton(
+        title: String,
+        systemImage: String,
+        tint: Color,
+        state: String
+    ) -> some View {
+        Button {
+            Task { await vm.answerAttendance(state) }
+        } label: {
+            Group {
+                if vm.isAnsweringAttendance {
+                    ProgressView()
+                        .frame(maxWidth: .infinity)
+                } else {
+                    Label(title, systemImage: systemImage)
+                        .font(.caption.weight(.semibold))
+                        .frame(maxWidth: .infinity)
+                }
+            }
+        }
+        .buttonStyle(.borderedProminent)
+        .tint(tint)
+        .disabled(vm.isAnsweringAttendance)
     }
 
     private func participantsSection(_ game: WatchGame) -> some View {

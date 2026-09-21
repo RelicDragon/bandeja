@@ -82,6 +82,14 @@ export const attendanceApi = {
     return data.data;
   },
 
+  /**
+   * Answers from a push shade action. The signed token names the player, the
+   * game and the answer, so this works even when the webview has no session.
+   */
+  async answerFromPushToken(actionToken: string): Promise<void> {
+    await api.post('/push/invite-action', { actionToken });
+  },
+
   async nudge(gameId: string): Promise<{ nudgedUserIds: string[]; cooldown: AttendanceNudgeState }> {
     const { data } = await api.post<
       ApiResponse<{ nudgedUserIds: string[]; cooldown: AttendanceNudgeState }>

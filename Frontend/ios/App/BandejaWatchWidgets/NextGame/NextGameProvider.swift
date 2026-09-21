@@ -43,7 +43,10 @@ struct NextGameProvider: TimelineProvider {
 #if canImport(RelevanceKit)
 import RelevanceKit
 
-@available(watchOS 11.0, *)
+// `RelevanceKit` also imports on iOS 18+, so the availability has to name
+// both platforms — an iOS-SDK compile of this target otherwise fails on
+// `WidgetRelevance` before anything else in the workspace gets built.
+@available(iOS 18.0, watchOS 11.0, *)
 extension NextGameProvider {
     func relevance() async -> WidgetRelevance<Void> {
         let games = WidgetGameCache.read()

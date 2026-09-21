@@ -102,7 +102,7 @@ Frontend/e2e/
 - `@two devices` — iPhone (Capacitor or web) + paired Apple Watch on same account
 - `@watch` — Apple Watch scoring app (BandejaWatch)
 - `@widget` — Capacitor home-screen Next Game widget (iOS and/or Android device)
-- `@shade` — a notification **action button** in the OS shade / lock screen. Only `invite_actions` and `play_intent_actions` are wired natively today; attendance, series and weather actions currently exist on Telegram and in-app only (`docs/product/not-shipped.md`)
+- `@shade` — a notification **action button** in the OS shade / lock screen. `invite_actions`, `play_intent_actions` and `attendance_actions` are wired natively; series and weather actions currently exist on Telegram and in-app only (`docs/product/not-shipped.md`)
 
 ---
 
@@ -1351,7 +1351,8 @@ No feature flag. Eligibility is `timeIsSet` + `resultsStatus`/start time — **n
 
 | ID | Test | Steps | Expected |
 |----|------|-------|----------|
-| GD-AT-01 | Card present | Open a game with a time set, starting in the future, where you are PLAYING | Directly under the game info block: "Are you coming?" with **I'm coming** (filled sky) and **Not sure yet** (outline), each ≥44 px |
+| GD-AT-01 | Card present | Open a game with a time set, starting in the future, where you are PLAYING **and are not the owner** | Directly under the game info block: "Are you coming?" with **I'm coming** (filled sky) and **Not sure yet** (outline), each ≥44 px |
+| GD-AT-01b | Owner is never asked | Open a game **you created** and are PLAYING in | No "Are you coming?", no buttons and no "Can't make it at all?" — only the organizer strip. Your own avatar still carries a green confirmed dot and you are inside the "x of y confirmed" numerator: a 4-player game you organize can read 4/4 |
 | GD-AT-02 | Required caption | Read under the buttons | "Just so the organizer knows. Your seat is yours either way." — required copy; a missing caption fails the case |
 | GD-AT-03 | Confirm | Tap **I'm coming** | Buttons collapse into one row "You're confirmed" with a green check and a **Change** text button; toast "Seat confirmed 👍"; the height change takes ~220 ms |
 | GD-AT-04 | Change | Tap **Change** | The two buttons return with the same 220 ms transition; the previous answer is kept until you pick again |
@@ -1374,10 +1375,12 @@ No feature flag. Eligibility is `timeIsSet` + `resultsStatus`/start time — **n
 | GD-AT-21 | Dots in list view | Switch the participants view to the list | Same dots on the list rows |
 | GD-AT-22 | Only PLAYING | Inspect the trainer (`NON_PLAYING`), queue and invited rows | No dot on any of them |
 | GD-AT-23 | Never colour-only | Screen reader over each dot | Reads its own label: "Confirmed", "No answer yet", "Not sure yet", "Noted as a no-show". `@manual` |
-| GD-AT-24 | Legend | Long-press a dot (right-click on desktop) | Toast explains the legend |
+| GD-AT-24 | Legend | Press a dot, or the **What the dots mean** button under the roster | A bottom sheet lists all four states, each next to its own dot, and repeats "Your seat is yours either way." Works by tap, right-click, keyboard and screen reader — iOS Safari included |
 | GD-AT-25 | Organizer caption | As organizer, read under the progress pill | Caption spells out what each colour means |
 | GD-AT-26 | Live | Player B taps "I'm coming" on a second device | Within a second player A's dot for B turns green without a reload (socket `game-attendance-updated`). `@two-user` |
 | GD-AT-27 | Substitute starts blank | Add a substitute after the reminder went out | Grey ring, not a green check |
+| GD-AT-29 | Organizer dot | Look at the owner's PLAYING avatar, in your own game and in someone else's | Always the green confirmed dot, even though they never tapped anything. An owner who is `NON_PLAYING` gets no dot at all |
+| GD-AT-28 | Rail on a Find card | Join a game, then find it again on the Find tab | The right rail shows the avatar stack and the fraction there too — it is now one of the viewer's own games. A game the viewer has **not** joined never shows one |
 
 ### 9.13 No-show notes
 
@@ -1403,13 +1406,30 @@ No feature flag. Eligibility is `timeIsSet` + `resultsStatus`/start time — **n
 | GD-AT-50 | Progress pill | As organizer of a game accepting answers | Pill "2 of 4 confirmed" and a **Nudge** button |
 | GD-AT-51 | Pill animates | Another device confirms | Fill animates over ~300 ms without a page reload. `@two-user` |
 | GD-AT-52 | Reduced motion | OS Reduce Motion on | Pill jumps to its new width with no spring |
-| GD-AT-53 | Nudge | Tap **Nudge** | Toast "Nudge sent"; every player who has not answered gets one push and the game chat gains one system message. Players who already answered get nothing. `@manual` |
+| GD-AT-53 | Nudge | Tap **Nudge** | Toast "Nudge sent"; every player who has not answered gets one push and the game chat gains one system message. Players who already answered get nothing, and neither does the owner. `@manual` |
 | GD-AT-54 | Cooldown | Immediately after nudging | Button disabled; caption "Nudge again in 6 h" |
 | GD-AT-55 | Cooldown survives a reload | Reload | Still disabled — the cooldown is read back from the `ATTENDANCE_NUDGED` chat system message, not from memory |
 | GD-AT-56 | Everyone answered | Nudge with no unanswered players | "Everyone has already answered"; nothing is sent |
 | GD-AT-57 | No enforcement controls | Open Game settings | **No** attendance deadline control, **no** auto-release toggle, **no** attendance setting of any kind. If one appears, the case fails |
 
 Player card / profile: `PR-AT-01`–`PR-AT-07` in §13.4. Push and Telegram: `PN-AT-01`–`PN-AT-06` in §18.8.
+
+### 9.14b Attendance on the Apple Watch
+
+The watch asks the same question and posts the same answer through
+`POST /games/:id/attendance`. It never shows a deadline, a countdown or a
+consequence.
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| GD-AT-60 | `@watch` Marker in the list | On the watch, look at a game starting within 24 h that you have not answered | A quiet amber hand icon on the row. No red, no badge count, no urgency |
+| GD-AT-61 | `@watch` No marker otherwise | Look at a game you already answered, one you created, one more than 24 h out, and one you are not PLAYING in | No marker on any of them |
+| GD-AT-62 | `@watch` Confirm | Open the game on the watch and tap **I'm coming** | The section collapses to "You're confirmed" with a **Change** button; the phone's game details shows the same answer after a refresh |
+| GD-AT-63 | `@watch` Not sure | Tap **Not sure yet** instead | "You're not sure yet", same Change button |
+| GD-AT-64 | `@watch` Change your mind | Tap **Change** | The answer flips and the count next to it moves. Answering repeatedly is allowed |
+| GD-AT-65 | `@watch` Caption | Read under the buttons | "Your seat is yours either way." in the watch UI language (en/es/ru/sr/cs) |
+| GD-AT-66 | `@watch` Nothing to ask | Open a game that already started, one without a time, or one you are not PLAYING in | No attendance section at all — and the rest of the screen is unaffected |
+| GD-AT-67 | `@watch` `@offline` Answer fails | Turn the watch offline and tap **I'm coming** | The answer does not land and the question stays; no seat, roster or readiness change. Answering again online works |
 
 ### 9.15 Queue, auto-fill and the open seat
 
@@ -2522,14 +2542,20 @@ A pair is a derived aggregate, never a rating — there is no pair ELO and nothi
 
 Every action button below is a **signed push action token** (`kind` + `targetId` + `action`, 48 h) posted to `POST /push/invite-action`, not a URL. The generic contract is the same in every row: the action completes without opening the app, a stale or reused token is a quiet no-op (never a 500, never a seat change), and the Telegram mirror edits its own message and drops the buttons it just consumed. Only per-feature specifics are listed.
 
-> **Native shade buttons for `attendance`, `series` and `weather` are not wired yet** — the tokens ship, but Android has no `attendance_actions` branch and iOS registers no matching category (`docs/product/not-shipped.md`). Until they are, run those rows against **Telegram** and the in-app card; the `@shade` rows below are the acceptance criteria for when the native work lands.
+> **Attendance shade buttons are wired on both platforms.** Android handles `nativeHandler: 'attendance_actions'` in `ChatReplyMessagingService` → `AttendanceNotificationHelper` → `AttendanceActionReceiver`; iOS registers the `GAME_REMINDER` category (`registerPushNotificationActionTypes.ts`) and answers either through the JS action handler or, on a cold start, through `AttendanceActionHandler`.
+> **`series` and `weather` shade buttons are still not wired** — the tokens ship, but no native branch consumes them (`docs/product/not-shipped.md`). Run those rows against **Telegram** and the in-app card; their `@shade` rows are the acceptance criteria for when that work lands.
 
 | ID | Test | Steps | Expected |
 |----|------|-------|----------|
 | PN-AT-01 | Attendance reminder | 24 h before a game accepting answers | Every PLAYING player gets a reminder. Its data map carries `attendanceActionToken` / `attendanceUnsureActionToken` and `nativeHandler: 'attendance_actions'`. `@manual` |
-| PN-AT-01b | `@shade` Shade buttons | Once the Android branch and the iOS category exist | The shade offers **I'm coming** and **Not sure yet**. `@manual` |
-| PN-AT-02 | `@shade` Shade answer | Tap a shade action, then open the app | The app did not open; the answer is visible in game details. `@manual` |
-| PN-AT-03 | Second reminder filtered | 2 h before the game | Only players who have **not** answered get a second reminder; those who answered at 24 h get nothing. There is never a third message. `@manual` `@two-user` |
+| PN-AT-01b | `@shade` Shade buttons | Receive the reminder on Android and on iOS | Both shades offer **I'm coming** and **Not sure yet**, in the recipient's app language (the backend sends the titles; the Android resource and the iOS category registration are the fallbacks). `@manual` |
+| PN-AT-02 | `@shade` Shade answer | Tap a shade action, then open the app | The app did **not** open; the reminder is replaced by a quiet "Seat confirmed 👍" / "Noted. You can confirm later." card, and the answer is visible in game details. `@manual` |
+| PN-AT-02b | `@shade` Cold start | Force-quit the app first, then tap a shade action | Same result — the answer lands (Android's broadcast receiver; iOS's `AttendanceActionHandler` on the not-yet-ready webview). The app still does not come to the foreground. `@manual` |
+| PN-AT-02c | `@shade` `@offline` Offline answer | Turn networking off, tap a shade action | Nothing is claimed: no acknowledgement card and the reminder stays answerable. Answering again online works. There is no deadline, so nothing is lost. `@manual` |
+| PN-AT-02d | `@shade` Stale token | Leave the game, then tap a shade action on the old reminder | Quiet no-op: the notification goes away, no error card, no seat or queue change. `@manual` |
+| PN-AT-02e | `@shade` Tap, not action | Tap the reminder body instead of a button | Opens the game exactly like a reminder without actions; no answer is recorded. `@manual` |
+| PN-AT-01c | Organizer is reminded, not asked | Receive the 24 h reminder for a game you created and play in | Same reminder body, but **no** "Are you coming?" line and no shade buttons — the owner is confirmed by organizing. `@manual` |
+| PN-AT-03 | Second reminder filtered | 2 h before the game | Only players who have **not** answered get a second reminder; those who answered at 24 h get nothing, and the owner never does. There is never a third message. `@manual` `@two-user` |
 | PN-AT-04 | Telegram attendance | Tap one of the two inline buttons | The message edits to "✅ You're confirmed" / "🤔 Noted, not sure yet" and the two answer buttons are removed while "View game" stays. `@manual` |
 | PN-AT-05 | Telegram double tap | Tap an attendance button twice, or after leaving the game | The spinner closes with a friendly message; never a throw. `@manual` |
 | PN-AT-06 | Silence is allowed | A player who never answers reaches kick-off | Seat, queue position and level untouched. `@manual` |

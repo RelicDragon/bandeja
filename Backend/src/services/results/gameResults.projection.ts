@@ -268,6 +268,7 @@ export function getGameResultsSelect(): Prisma.GameSelect {
 /** `Game` scalars that must never reach a results response. */
 export const RESULTS_FORBIDDEN_GAME_KEYS = [
   'paymentHint',
+  'paymentMethods',
   'costPayerId',
   'priceTotal',
   'priceType',

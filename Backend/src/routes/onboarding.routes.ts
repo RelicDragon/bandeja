@@ -75,6 +75,9 @@ router.patch(
       .bail()
       .isIn([...ONBOARDING_STEPS])
       .withMessage('errors.onboarding.invalidStep'),
+    // PRD 350 — optional funnel event. Bounded so the log line cannot be used
+    // as a write-anything sink.
+    body('event').optional().isString().isLength({ max: 64 }),
   ]),
   onboardingController.patchOnboardingStep,
 );

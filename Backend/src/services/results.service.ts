@@ -32,6 +32,7 @@ import {
 import { revertForGame } from './levelChange';
 import { syncPodiumAfterLeavingFinal } from './achievements/podiumGrant.service';
 import { invalidateAchievementStatsForGame } from './achievements/achievementStats.service';
+import { notifyFollowersGameWentLiveInBackground } from './live/liveGameNotify.service';
 
 const SUPPLEMENTAL_SET_SCORE_MAX = 9999;
 
@@ -448,8 +449,9 @@ export async function syncResults(gameId: string, rounds: any[]) {
 
   await cancelAllMatchTimersForGame(gameId);
 
+  const wasFinal = game.resultsStatus === 'FINAL';
+
   await prisma.$transaction(async (tx) => {
-    const wasFinal = game.resultsStatus === 'FINAL';
     if (wasFinal) {
       if (game.outcomes.length > 0) {
         await undoGameOutcomes(gameId, tx);
@@ -603,6 +605,17 @@ export async function syncResults(gameId: string, rounds: any[]) {
       await invalidateAchievementStatsForGame({ gameId, tx });
     }
   });
+
+  /*
+   * PRD 349 — "X is playing live". Rounds arriving on a game that was not FINAL
+   * is a scoring session, the same event `matchLiveScoring` fires on; an *undo*
+   * of a FINAL result is not, and must stay silent. Post-commit and
+   * fire-and-forget; `LiveGameNotifyDelivery` is unique on (userId, gameId), so
+   * a follower already told is never told twice.
+   */
+  if (!wasFinal) {
+    notifyFollowersGameWentLiveInBackground(gameId);
+  }
 }
 
 export async function createRound(gameId: string, roundId: string) {
@@ -669,6 +682,11 @@ export async function createRound(gameId: string, roundId: string) {
       await invalidateAchievementStatsForGame({ gameId, tx });
     }
   });
+
+  // PRD 349 — a fresh round on a non-FINAL game means someone started scoring.
+  if (!wasFinal) {
+    notifyFollowersGameWentLiveInBackground(gameId);
+  }
 }
 
 export async function deleteRound(gameId: string, roundId: string) {

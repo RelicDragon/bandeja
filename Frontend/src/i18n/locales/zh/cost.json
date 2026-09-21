@@ -46,10 +46,7 @@
       "totalFor": "合计 {{amount}} · {{players}} 人"
     },
     "create": {
-      "preview": "约每人 {{amount}}，共 {{players}} 人",
-      "paymentHintLabel": "如何付款给你",
-      "paymentHintPlaceholder": "银行账号、支付应用账号、到俱乐部现金支付…",
-      "paymentHintHelp": "结算时向球员显示。还可输入 {{remaining}} 个字符。"
+      "preview": "约每人 {{amount}}，共 {{players}} 人"
     },
     "wallet": {
       "owed": "你应付",
@@ -76,6 +73,70 @@
       "copyFailed": "复制失败。"
     },
     "loading": "正在加载费用分摊…",
-    "loadFailed": "无法加载费用分摊。"
+    "loadFailed": "无法加载费用分摊。",
+    "payment": {
+      "title": "怎么付款给你",
+      "help": "队友结算时会看到这些信息。",
+      "add": "再加一种方式",
+      "addFirst": "添加付款方式",
+      "remove": "移除 {{method}}",
+      "maxReached": "最多可以填写 {{max}} 种付款方式。",
+      "noHandleNeeded": "无需填写。",
+      "open": "打开",
+      "everywhere": "任何地方都可用",
+      "pickerTitle": "希望队友怎么付给你？",
+      "pickerSubtitle": "这场比赛所在国家常用的方式。",
+      "pickerSearch": "搜索",
+      "pickerEmpty": "没有匹配的结果。",
+      "pickerCustomHint": "没有找到？选择“其他”自己填写。",
+      "profileTitle": "已保存的收款方式",
+      "profileHelp": "会自动填入你创建的比赛。",
+      "method": {
+        "custom": "其他",
+        "cash": "现金",
+        "bankTransfer": "银行转账",
+        "iban": "IBAN",
+        "cardTransfer": "银行卡转账",
+        "ukBank": "银行转账",
+        "rsAccount": "银行账户",
+        "huInstant": "实时转账",
+        "clabe": "CLABE",
+        "cbuAlias": "别名 / CBU"
+      },
+      "handle": {
+        "NONE": {
+          "label": "无需填写信息"
+        },
+        "TEXT": {
+          "label": "详情",
+          "placeholder": "球馆现金、IBAN，随你写"
+        },
+        "PHONE": {
+          "label": "手机号"
+        },
+        "EMAIL": {
+          "label": "邮箱"
+        },
+        "PHONE_OR_EMAIL": {
+          "label": "手机号或邮箱"
+        },
+        "TAG": {
+          "label": "用户名"
+        },
+        "IBAN": {
+          "label": "IBAN"
+        },
+        "ACCOUNT": {
+          "label": "账号"
+        },
+        "CARD": {
+          "label": "卡号"
+        },
+        "ALIAS": {
+          "label": "账号或 ID",
+          "placeholder": "手机号、邮箱或 ID"
+        }
+      }
+    }
   }
 }

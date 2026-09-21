@@ -13,6 +13,14 @@ export const PARITY_IDENTICAL_ALLOWLIST: string[] = [
   // caption is a pure joiner: both halves are separately counted keys
   // (`outro.gamesPart`, `outro.winsPart`) and this value holds no words at all.
   'recap.slides.outro.caption',
+  // PRD 348 — banking acronyms, not words. "IBAN" is IBAN in every one of the
+  // eleven locales, and "CLABE" is a Mexican term Spanish itself does not
+  // expand. Everything else in `cost.payment.*` is prose and is translated;
+  // the sample handles ("ES91 2100 …", "@yourname") are not here because they
+  // are not i18n strings at all — see `PAYMENT_HANDLE_RULES.example`.
+  'cost.payment.method.iban',
+  'cost.payment.method.clabe',
+  'cost.payment.handle.IBAN.label',
 ];
 
 /** `Frontend/src/i18n/config.ts` builds exactly these 11 bundles. */

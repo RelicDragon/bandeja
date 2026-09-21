@@ -35,6 +35,13 @@ import {
 } from '@/utils/oauthAccountLink';
 import { canUnlinkAuthMethod } from '@/utils/accountAuthMethods';
 import { Gender, User } from '@/types';
+import {
+  parsePaymentMethods,
+  type PaymentMethodEntry,
+} from '@shared/payments/paymentMethodSelection';
+import { PaymentMethodsField } from '@/components/payments/PaymentMethodsField';
+import { cleanPaymentMethods } from '@/features/cost/gameEditPricePayload';
+import { useCityCountryQuery } from '@/queries/useCityCountryQuery';
 import type { OAuthLinkResponseData } from '@/utils/oauthAccountLink';
 import {
   Moon,
@@ -100,6 +107,12 @@ export const ProfileContent = () => {
   const [timeFormat, setTimeFormat] = useState<'auto' | '12h' | '24h'>(user?.timeFormat || 'auto');
   const [weekStart, setWeekStart] = useState<'auto' | 'monday' | 'sunday' | 'saturday'>(user?.weekStart || 'auto');
   const [defaultCurrency, setDefaultCurrency] = useState<string>(user?.defaultCurrency || 'auto');
+  // PRD 348 — read through the catalogue, so a method retired from it later is
+  // dropped rather than rendered as a row with no name the user cannot fix.
+  const [payoutMethods, setPayoutMethods] = useState<PaymentMethodEntry[]>(() =>
+    parsePaymentMethods(user?.payoutMethods),
+  );
+  const payoutCountryIso2 = useCityCountryQuery(user?.currentCityId);
   const [isSavingMainTheme, setIsSavingMainTheme] = useState(false);
   const [isSavingPremiumStatus, setIsSavingPremiumStatus] = useState(false);
   const [appIcon, setAppIcon] = useState<AppIconId>((user?.appIcon as AppIconId) || 'tiger');
@@ -409,6 +422,16 @@ export const ProfileContent = () => {
     updateProfile({ defaultCurrency: currency });
   };
 
+  /**
+   * PRD 348 — the saved "how to pay me" list. Blank rows are dropped before the
+   * save, so a method picked and then abandoned is never persisted as an empty
+   * instruction.
+   */
+  const handleChangePayoutMethods = (next: PaymentMethodEntry[]) => {
+    setPayoutMethods(next);
+    updateProfile({ payoutMethods: cleanPaymentMethods(next) });
+  };
+
   const handleAppIconChange = (id: AppIconId) => {
     setAppIcon(id);
     if (user) syncNativeAppIconForUser({ ...user, appIcon: id });
@@ -695,6 +718,7 @@ export const ProfileContent = () => {
       setTimeFormat(user.timeFormat || 'auto');
       setWeekStart(user.weekStart || 'auto');
       setDefaultCurrency(user.defaultCurrency || 'auto');
+      setPayoutMethods(parsePaymentMethods(user.payoutMethods));
     }
   }, [user]);
 
@@ -1441,6 +1465,15 @@ export const ProfileContent = () => {
                 onChange={handleChangeCurrency}
               />
             </div>
+
+            {/* PRD 348 — prefilled into every game this user creates. */}
+            <PaymentMethodsField
+              value={payoutMethods}
+              onChange={handleChangePayoutMethods}
+              countryIso2={payoutCountryIso2}
+              label={t('cost.payment.profileTitle')}
+              help={t('cost.payment.profileHelp')}
+            />
 
             {/* PRD 355 — owned cosmetics; tapping a tile equips it. */}
             <CollectionSection />

@@ -19,6 +19,7 @@ import notificationService from '../notification.service';
 import { formatDateInTimezone, getDateLabelInTimezone, getUserTimezoneFromCityId } from '../user-timezone.service';
 import { notifyGameBookingStatusChangeIfNeeded } from './notifyGameBookingStatusChange';
 import { publishMatchingGamesChanged } from '../playIntent/playIntentRealtime';
+import { resolvePaymentMethodWrite } from '../gameCost/paymentMethodsWrite';
 import { BarResultsService } from '../barResults.service';
 import { ImageProcessor } from '../../utils/imageProcessor';
 import { validateGameForSport } from '../../utils/validators/validateGameForSport';
@@ -123,8 +124,9 @@ const GAME_UNCHECKED_SCALAR_KEYS = new Set<string>([
   'priceTotal',
   'priceType',
   'priceCurrency',
-  // PRD 348 — free-text "How to pay you" on the game.
+  // PRD 348 — how to pay the organiser back, plus its legacy one-line mirror.
   'paymentHint',
+  'paymentMethods',
   // PRD 349 — organizer opt-out from the "Live now" rail.
   'showOnLiveRail',
   'eventKind',
@@ -154,12 +156,12 @@ export class GameUpdateService {
       throw new ApiError(400, `Invalid currency. Supported currencies: ${SUPPORTED_CURRENCIES.join(', ')}`);
     }
 
-    // PRD 348 — `Game.paymentHint` is VarChar(120); reject rather than truncate.
-    if (typeof data.paymentHint === 'string' && data.paymentHint.trim().length > 120) {
-      throw new ApiError(400, 'errors.cost.paymentHintTooLong');
-    }
-    if (typeof data.paymentHint === 'string') {
-      data.paymentHint = data.paymentHint.trim() || null;
+    // PRD 348 — the structured list and the legacy one-line mirror move
+    // together, whichever of the two the client sent.
+    const paymentWrite = resolvePaymentMethodWrite(data);
+    if (paymentWrite) {
+      data.paymentHint = paymentWrite.paymentHint;
+      data.paymentMethods = paymentWrite.paymentMethods;
     }
 
     const isOnlyResultsStatusUpdate = Object.keys(data).length === 1 && data.resultsStatus !== undefined;

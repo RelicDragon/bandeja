@@ -86,7 +86,7 @@ export function useOnboardingFlow(): OnboardingFlow {
   useEffect(() => {
     if (lastViewedRef.current === step) return;
     lastViewedRef.current = step;
-    emitOnboardingEvent({ name: 'onboarding_step_viewed', step, position, total });
+    emitOnboardingEvent({ name: 'onboarding_step_viewed', step, position, total, persist: !sportOnly });
     if (sportOnly) return;
     void onboardingApi.setStep(step).then(setStatusCache).catch(() => {
       // Offline or a flaky link only costs the resume position.
@@ -131,19 +131,19 @@ export function useOnboardingFlow(): OnboardingFlow {
   }, [navigate, pendingAuthPath, setPendingAuthPath]);
 
   const advance = useCallback(() => {
-    emitOnboardingEvent({ name: 'onboarding_step_completed', step, position, total });
+    emitOnboardingEvent({ name: 'onboarding_step_completed', step, position, total, persist: !sportOnly });
     const target = nextStep(step, visibleSteps);
     if (target) {
       goTo(target, 1);
       return;
     }
     finish('/');
-  }, [finish, goTo, position, step, total, visibleSteps]);
+  }, [finish, goTo, position, sportOnly, step, total, visibleSteps]);
 
   const skip = useMemo(() => {
     if (!isSkippableStep(step) || sportOnly) return undefined;
     return () => {
-      emitOnboardingEvent({ name: 'onboarding_step_skipped', step, position, total });
+      emitOnboardingEvent({ name: 'onboarding_step_skipped', step, position, total, persist: !sportOnly });
       const target = nextStep(step, visibleSteps);
       if (target) {
         goTo(target, 1);

@@ -137,6 +137,16 @@
       "companyIdRequired": "การรวมการจอง Club ต้องใช้รหัสบริษัท",
       "integrationTypeMustBeOnlineBooking": "การรวมคลับจะต้องเป็นการจองออนไลน์",
       "rollbackFailed": "ไม่สามารถยืนยันได้ว่าการจองถูกยกเลิก"
+    },
+    "cost": {
+      "paymentMethod": {
+        "tooMany": "ใส่วิธีชำระเงินได้สูงสุด 3 วิธี",
+        "unknownMethod": "ไม่รองรับวิธีชำระเงินนี้",
+        "duplicateMethod": "วิธีชำระเงินนี้อยู่ในรายการแล้ว",
+        "handleRequired": "ใส่ข้อมูลปลายทางที่จะให้โอนเงินมา",
+        "handleTooLong": "ยาวเกินไป",
+        "handleInvalid": "ดูไม่ถูกต้อง ลองตรวจสอบอีกครั้ง"
+      }
     }
   },
   "leagues": {

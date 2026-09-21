@@ -46,10 +46,7 @@
       "totalFor": "Total {{amount}} · {{players}} jugadores"
     },
     "create": {
-      "preview": "≈ {{amount}} cada uno para {{players}} jugadores",
-      "paymentHintLabel": "Cómo pagarte",
-      "paymentHintPlaceholder": "IBAN, usuario de Bizum, efectivo en el club…",
-      "paymentHintHelp": "Se muestra a los jugadores al saldar. Quedan {{remaining}} caracteres."
+      "preview": "≈ {{amount}} cada uno para {{players}} jugadores"
     },
     "wallet": {
       "owed": "Debes",
@@ -78,6 +75,70 @@
       "copyFailed": "No se ha podido copiar."
     },
     "loading": "Cargando el reparto de gastos…",
-    "loadFailed": "No pudimos cargar el reparto de gastos."
+    "loadFailed": "No pudimos cargar el reparto de gastos.",
+    "payment": {
+      "title": "Cómo pagarte",
+      "help": "Los jugadores lo ven al saldar su parte.",
+      "add": "Añadir otra forma",
+      "addFirst": "Añadir una forma de pago",
+      "remove": "Quitar {{method}}",
+      "maxReached": "Puedes indicar hasta {{max}} formas de pago.",
+      "noHandleNeeded": "No hace falta nada.",
+      "open": "Abrir",
+      "everywhere": "Funciona en cualquier sitio",
+      "pickerTitle": "¿Cómo quieres que te paguen?",
+      "pickerSubtitle": "Las formas que se usan donde se juega el partido.",
+      "pickerSearch": "Buscar",
+      "pickerEmpty": "No hay coincidencias.",
+      "pickerCustomHint": "¿No está? Elige «Otra cosa» y escríbelo tú.",
+      "profileTitle": "Datos de pago guardados",
+      "profileHelp": "Se rellenan en los partidos que crees.",
+      "method": {
+        "custom": "Otra cosa",
+        "cash": "Efectivo",
+        "bankTransfer": "Transferencia",
+        "iban": "IBAN",
+        "cardTransfer": "Tarjeta a tarjeta",
+        "ukBank": "Transferencia",
+        "rsAccount": "Cuenta bancaria",
+        "huInstant": "Transferencia instantánea",
+        "clabe": "CLABE",
+        "cbuAlias": "Alias o CBU"
+      },
+      "handle": {
+        "NONE": {
+          "label": "No hacen falta datos"
+        },
+        "TEXT": {
+          "label": "Datos",
+          "placeholder": "Efectivo en el club, un IBAN, lo que sea"
+        },
+        "PHONE": {
+          "label": "Teléfono"
+        },
+        "EMAIL": {
+          "label": "Correo"
+        },
+        "PHONE_OR_EMAIL": {
+          "label": "Teléfono o correo"
+        },
+        "TAG": {
+          "label": "Usuario"
+        },
+        "IBAN": {
+          "label": "IBAN"
+        },
+        "ACCOUNT": {
+          "label": "Número de cuenta"
+        },
+        "CARD": {
+          "label": "Número de tarjeta"
+        },
+        "ALIAS": {
+          "label": "Clave o ID",
+          "placeholder": "Teléfono, correo o ID"
+        }
+      }
+    }
   }
 }

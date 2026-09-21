@@ -91,6 +91,10 @@ export async function createGameReminderPushNotification(
       }),
       confirmActionTitle: confirmTitle,
       unsureActionTitle: unsureTitle,
+      // The shade handler answers without opening the app, so it cannot
+      // localize the acknowledgement itself — both strings travel with it.
+      attendanceConfirmedAck: t('attendance.confirmedToast', lang),
+      attendanceUnsureAck: t('attendance.unsureToast', lang),
     },
     actions: [
       { id: 'confirm', title: confirmTitle, action: 'confirm' },

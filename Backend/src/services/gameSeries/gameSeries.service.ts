@@ -574,6 +574,15 @@ export class GameSeriesService {
     return { seriesId: created.id };
   }
 
+  /**
+   * PRD 345 — "Your regular games" on Profile, and the owner-cap read on create.
+   *
+   * Returns every series the viewer belongs to, **owned or joined**: a regular
+   * who never created a series still has weekly games and must be able to reach
+   * the series page from Profile. `role` tells the two apart so the UI can show
+   * owner-only affordances. The owner cap is a separate count
+   * ({@link countActiveSeries}) and is unaffected by the joined rows.
+   */
   static async listMySeries(userId: string): Promise<
     {
       id: string;
@@ -585,13 +594,20 @@ export class GameSeriesService {
       endsOn: DayKey | null;
       regularCount: number;
       nextOccurrenceAt: string | null;
+      role: 'owner' | 'regular';
     }[]
   > {
     const rows = await prisma.gameSeries.findMany({
-      where: { ownerId: userId },
+      where: {
+        OR: [
+          { ownerId: userId },
+          { regulars: { some: { userId, removedAt: null } } },
+        ],
+      },
       select: {
         id: true,
         name: true,
+        ownerId: true,
         cadence: true,
         weekday: true,
         startTimeLocal: true,
@@ -618,6 +634,7 @@ export class GameSeriesService {
       endsOn: row.endsOn ? prismaDateToDayKey(row.endsOn) : null,
       regularCount: row._count.regulars,
       nextOccurrenceAt: row.occurrences[0]?.startTime.toISOString() ?? null,
+      role: row.ownerId === userId ? ('owner' as const) : ('regular' as const),
     }));
   }
 
@@ -1258,13 +1275,16 @@ export class GameSeriesService {
   }
 
   /**
-   * Lazily create the optional series group chat (owner only, first tap).
+   * Lazily create the optional series group chat, then hand back its id.
    *
-   * The ownership check runs **before every side effect and before any id
-   * leaves this method** — including the already-created branch. An early
-   * return that syncs members and hands back `groupChannelId` ahead of the
-   * check turns the check into a first-call-only formality and leaks a private
-   * channel id to anyone who can name a series.
+   * **Creating** it is the owner's call (PRD 345: "created on first *Open series
+   * chat* tap by the owner"). **Opening** an existing one is every insider's —
+   * a regular who never owned anything still belongs in the group.
+   *
+   * Authorization runs **before every side effect and before any id leaves this
+   * method**, in both branches. An early return that syncs members and hands
+   * back `groupChannelId` ahead of the check would leak a private channel id to
+   * anyone who can name a series.
    */
   static async ensureSeriesChat(
     seriesId: string,
@@ -1272,12 +1292,17 @@ export class GameSeriesService {
     isAdmin = false,
   ): Promise<{ groupChannelId: string }> {
     const series = await loadSeriesOrThrow(seriesId);
-    await assertSeriesOwner(series, userId, isAdmin);
 
     if (series.groupChannelId) {
+      const insider = await viewerIsSeriesInsider(seriesId, series.ownerId, userId, isAdmin);
+      if (!insider) {
+        throw new ApiError(404, 'errors.series.notFound', true, { code: 'series.notFound' });
+      }
       await GameSeriesService.syncSeriesChatMembers(seriesId, series.groupChannelId);
       return { groupChannelId: series.groupChannelId };
     }
+
+    await assertSeriesOwner(series, userId, isAdmin);
 
     const regulars = await prisma.gameSeriesRegular.findMany({
       where: { seriesId, removedAt: null },

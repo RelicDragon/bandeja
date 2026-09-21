@@ -155,6 +155,12 @@ const SOURCE_GAME = {
   clubId: 'club-1',
   resultsStatus: 'NONE',
   participants: [{ userId: 'u1' }],
+  // The seeding game was booked for real at the club. A series must never
+  // replay that: the organizer books each occurrence by hand.
+  hasBookedCourt: true,
+  externalBookingIds: ['booktime:123'],
+  externalBookingProvider: 'BOOKTIME',
+  bookingSnapshots: [{ externalBookingId: 'booktime:123', courtId: 'court-a' }],
 };
 
 check('buildGameSeriesTemplate keeps the allow-list and drops everything else', () => {
@@ -172,6 +178,60 @@ check('buildGameSeriesTemplate keeps the allow-list and drops everything else', 
   assert.strictEqual('participants' in asRecord, false);
   assert.strictEqual('resultsStatus' in asRecord, false);
   assert.strictEqual('id' in asRecord, false);
+});
+
+const BOOKING_KEYS = [
+  'hasBookedCourt',
+  'externalBookingId',
+  'externalBookingIds',
+  'externalBookingProvider',
+  'bookingSnapshots',
+] as const;
+
+check('a booked seeding game never puts its booking into the template', () => {
+  const asRecord = buildGameSeriesTemplate(SOURCE_GAME, '2026-09-22') as unknown as Record<
+    string,
+    unknown
+  >;
+  for (const key of BOOKING_KEYS) {
+    assert.strictEqual(key in asRecord, false, `${key} must not survive into the template`);
+  }
+});
+
+check('a hand-built template cannot make the generator book a court', () => {
+  // A template row edited straight in the database, or built before the
+  // allow-list existed. Neither may reach `GameCreateService` with booking keys.
+  const tampered = {
+    ...(buildGameSeriesTemplate(SOURCE_GAME, '2026-09-22') as unknown as Record<string, unknown>),
+    hasBookedCourt: true,
+    externalBookingId: 'booktime:legacy',
+    externalBookingIds: ['booktime:123'],
+    externalBookingProvider: 'BOOKTIME',
+    bookingSnapshots: [{ externalBookingId: 'booktime:123' }],
+  };
+
+  const parsed = parseGameSeriesTemplate(tampered);
+  assert.ok(parsed);
+  const parsedRecord = parsed as unknown as Record<string, unknown>;
+  for (const key of BOOKING_KEYS) {
+    assert.strictEqual(key in parsedRecord, false, `${key} must not survive a re-read`);
+  }
+
+  const payload = buildOccurrenceCreatePayload({
+    template: tampered as never,
+    startTime: new Date('2026-09-29T17:00:00.000Z'),
+    endTime: new Date('2026-09-29T18:30:00.000Z'),
+    clubId: 'club-1',
+    courtIds: ['court-a'],
+    cityId: 'city-1',
+    ownerParticipates: true,
+    ownerUserId: 'owner-1',
+  });
+  assert.strictEqual(payload.hasBookedCourt, false, 'an occurrence is never pre-booked');
+  for (const key of BOOKING_KEYS) {
+    if (key === 'hasBookedCourt') continue;
+    assert.strictEqual(key in payload, false, `${key} must not reach createGame`);
+  }
 });
 
 check('buildGameSeriesTemplate refuses an invalid anchor or a missing identity', () => {

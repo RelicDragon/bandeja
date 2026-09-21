@@ -46,10 +46,7 @@
       "totalFor": "รวม {{amount}} · ผู้เล่น {{players}} คน"
     },
     "create": {
-      "preview": "ประมาณ {{amount}} ต่อคน สำหรับผู้เล่น {{players}} คน",
-      "paymentHintLabel": "วิธีจ่ายเงินให้คุณ",
-      "paymentHintPlaceholder": "เลขบัญชี พร้อมเพย์ หรือจ่ายสดที่คลับ…",
-      "paymentHintHelp": "แสดงให้ผู้เล่นเห็นตอนเคลียร์ยอด เหลืออีก {{remaining}} ตัวอักษร"
+      "preview": "ประมาณ {{amount}} ต่อคน สำหรับผู้เล่น {{players}} คน"
     },
     "wallet": {
       "owed": "คุณค้างจ่าย",
@@ -76,6 +73,70 @@
       "copyFailed": "คัดลอกไม่สำเร็จ"
     },
     "loading": "กำลังโหลดการแบ่งค่าใช้จ่าย…",
-    "loadFailed": "เราโหลดการแบ่งค่าใช้จ่ายไม่สำเร็จ"
+    "loadFailed": "เราโหลดการแบ่งค่าใช้จ่ายไม่สำเร็จ",
+    "payment": {
+      "title": "วิธีจ่ายเงินให้คุณ",
+      "help": "ผู้เล่นจะเห็นตอนเคลียร์ค่าใช้จ่าย",
+      "add": "เพิ่มอีกวิธี",
+      "addFirst": "เพิ่มวิธีชำระเงิน",
+      "remove": "ลบ {{method}}",
+      "maxReached": "ใส่ได้สูงสุด {{max}} วิธี",
+      "noHandleNeeded": "ไม่ต้องกรอกอะไร",
+      "open": "เปิด",
+      "everywhere": "ใช้ได้ทุกที่",
+      "pickerTitle": "อยากให้ผู้เล่นจ่ายยังไง?",
+      "pickerSubtitle": "วิธีที่ใช้กันในประเทศที่จัดเกมนี้",
+      "pickerSearch": "ค้นหา",
+      "pickerEmpty": "ไม่พบรายการ",
+      "pickerCustomHint": "ไม่มีในรายการ? เลือก “อื่น ๆ” แล้วพิมพ์เอง",
+      "profileTitle": "ข้อมูลการรับเงินที่บันทึกไว้",
+      "profileHelp": "จะถูกเติมให้อัตโนมัติในเกมที่คุณสร้าง",
+      "method": {
+        "custom": "อื่น ๆ",
+        "cash": "เงินสด",
+        "bankTransfer": "โอนผ่านธนาคาร",
+        "iban": "IBAN",
+        "cardTransfer": "โอนเข้าบัตร",
+        "ukBank": "โอนผ่านธนาคาร",
+        "rsAccount": "บัญชีธนาคาร",
+        "huInstant": "โอนทันที",
+        "clabe": "CLABE",
+        "cbuAlias": "Alias / CBU"
+      },
+      "handle": {
+        "NONE": {
+          "label": "ไม่ต้องใส่ข้อมูล"
+        },
+        "TEXT": {
+          "label": "รายละเอียด",
+          "placeholder": "เงินสดที่คลับ, IBAN, อะไรก็ได้"
+        },
+        "PHONE": {
+          "label": "เบอร์โทร"
+        },
+        "EMAIL": {
+          "label": "อีเมล"
+        },
+        "PHONE_OR_EMAIL": {
+          "label": "เบอร์โทรหรืออีเมล"
+        },
+        "TAG": {
+          "label": "ชื่อผู้ใช้"
+        },
+        "IBAN": {
+          "label": "IBAN"
+        },
+        "ACCOUNT": {
+          "label": "เลขที่บัญชี"
+        },
+        "CARD": {
+          "label": "หมายเลขบัตร"
+        },
+        "ALIAS": {
+          "label": "พร้อมเพย์หรือ ID",
+          "placeholder": "เบอร์โทร อีเมล หรือ ID"
+        }
+      }
+    }
   }
 }

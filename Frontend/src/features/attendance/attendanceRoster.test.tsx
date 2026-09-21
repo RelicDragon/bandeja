@@ -21,7 +21,8 @@ vi.mock('react-i18next', () => ({
 const { AttendanceDot } = await import('./AttendanceDot');
 const { AttendanceRosterActions } = await import('./AttendanceRosterActions');
 const { AttendanceRailSummary } = await import('./AttendanceRailSummary');
-const { attendanceRailDataEqual } = await import('./attendanceRailData');
+const { ATTENDANCE_RAIL_MAX_PLAYERS, attendanceRailDataEqual, buildAttendanceRailData } =
+  await import('./attendanceRailData');
 const { patchViewerAnswer } = await import('./attendancePatch');
 
 describe('AttendanceDot', () => {
@@ -128,6 +129,67 @@ describe('AttendanceRailSummary', () => {
     ).toBe(false);
     expect(attendanceRailDataEqual(null, data)).toBe(false);
     expect(attendanceRailDataEqual(null, null)).toBe(true);
+  });
+});
+
+describe('buildAttendanceRailData — which cards get a stack', () => {
+  const participants = [
+    { userId: 'a', user: { firstName: 'Ana', avatar: null } },
+    { userId: 'b', user: { firstName: 'Bo', avatar: null } },
+    { userId: 'c', user: { firstName: 'Cy', avatar: null } },
+    { userId: 'd', user: { firstName: 'Dee', avatar: null } },
+    { userId: 'e', user: { firstName: 'Eli', avatar: null } },
+  ];
+  const summary = {
+    confirmedCount: 2,
+    unsureCount: 1,
+    unansweredCount: 2,
+    playingCount: 5,
+    viewerAttendance: 'CONFIRMED' as const,
+    entries: [
+      { userId: 'a', attendance: 'CONFIRMED' as const, noShowNotedAt: null },
+      { userId: 'b', attendance: 'UNSURE' as const, noShowNotedAt: null },
+    ],
+  };
+
+  it("shows nothing for a game the viewer is not in — the enricher sends null", () => {
+    // The backend refuses to project a summary unless the viewer is PLAYING,
+    // so a stranger's Find card can never grow a stack.
+    expect(buildAttendanceRailData(null, participants)).toBeNull();
+    expect(buildAttendanceRailData(undefined, participants)).toBeNull();
+  });
+
+  it('shows the stack on any card of a game the viewer plays, Find included', () => {
+    const rail = buildAttendanceRailData(summary, participants);
+    expect(rail).not.toBeNull();
+    expect(rail?.confirmedCount).toBe(2);
+    expect(rail?.playingCount).toBe(5);
+  });
+
+  it('caps the faces but keeps the real fraction', () => {
+    const rail = buildAttendanceRailData(summary, participants);
+    expect(participants.length).toBeGreaterThan(ATTENDANCE_RAIL_MAX_PLAYERS);
+    expect(rail?.players).toHaveLength(ATTENDANCE_RAIL_MAX_PLAYERS);
+    expect(rail?.playingCount).toBe(5);
+  });
+
+  it('maps each face to its own answer and defaults the rest to unanswered', () => {
+    const rail = buildAttendanceRailData(summary, participants);
+    expect(rail?.players.map((player) => player.state)).toEqual([
+      'CONFIRMED',
+      'UNSURE',
+      'UNANSWERED',
+      'UNANSWERED',
+    ]);
+  });
+
+  it('renders nothing when nobody is playing', () => {
+    expect(buildAttendanceRailData({ ...summary, playingCount: 0 }, participants)).toBeNull();
+  });
+
+  it('falls back to a placeholder initial rather than crashing on a nameless user', () => {
+    const rail = buildAttendanceRailData(summary, [{ userId: 'x', user: null }]);
+    expect(rail?.players[0].initial).toBe('?');
   });
 });
 

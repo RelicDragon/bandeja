@@ -14,9 +14,10 @@ import { GameCardTitle } from '@/components/gameCard/GameCardTitle';
 import { gameCardHasVisibleTitle } from '@/utils/gameCardVisibleTitle';
 import { GameCardRightRail } from '@/components/gameCard/GameCardRightRail';
 import { hasOpenSpotHighlight } from '@/features/spot-opened/spotOpenedWindow';
-import type { AttendanceRailData } from '@/features/attendance/attendanceRailData';
-import { resolveDotState } from '@/features/attendance/attendanceVisuals';
-import { userAvatarTinyUrlFromStandard } from '@/utils/userAvatarTinyUrl';
+import {
+  buildAttendanceRailData,
+  type AttendanceRailData,
+} from '@/features/attendance/attendanceRailData';
 import { GameCardPlayersPhoto } from '@/components/gameCard/GameCardPlayersPhoto';
 import { gameIsNonRating } from '@/utils/gameRatingSemantics';
 import { GameCardUserNote } from '@/components/gameCard/GameCardUserNote';
@@ -161,23 +162,10 @@ const GameCardMatch = memo(function GameCardMatch({
    * error state. Purely informative: it cannot change the card's appearance
    * beyond the stack and the fraction.
    */
-  const attendanceRail = useMemo<AttendanceRailData | null>(() => {
-    const summary = game.attendanceSummary;
-    if (!summary || summary.playingCount <= 0) return null;
-    const byUserId = new Map(summary.entries?.map((entry) => [entry.userId, entry.attendance]));
-    const players = playingParticipants.slice(0, 4).map((participant) => ({
-      userId: participant.userId,
-      initial: (participant.user?.firstName ?? '?').slice(0, 1).toUpperCase(),
-      avatarUrl:
-        userAvatarTinyUrlFromStandard(participant.user?.avatar) ?? participant.user?.avatar ?? null,
-      state: resolveDotState(byUserId.get(participant.userId), null),
-    }));
-    return {
-      confirmedCount: summary.confirmedCount,
-      playingCount: summary.playingCount,
-      players,
-    };
-  }, [game.attendanceSummary, playingParticipants]);
+  const attendanceRail = useMemo<AttendanceRailData | null>(
+    () => buildAttendanceRailData(game.attendanceSummary, playingParticipants),
+    [game.attendanceSummary, playingParticipants],
+  );
 
   const participation = getGameParticipationState(participants, effectiveUser?.id, game);
   const isParticipant = participation.isPlaying;
@@ -403,6 +391,7 @@ const GameCardMatch = memo(function GameCardMatch({
                   game={game}
                   sportTags={gameSportTags}
                   myParticipationBadge={myParticipationBadge}
+                  hour12={displaySettings.hour12}
                 />
               </div>
             )}

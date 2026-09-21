@@ -55,6 +55,9 @@ struct WatchGame: Decodable, Identifiable, Sendable {
     let weatherSummary: WatchWeatherSummary?
     /// `Game.metadata` JSON (lenient subset; `GET /games/:id` returns the full column).
     let metadata: WatchGameMetadata?
+    /// PRD 346 — present on list payloads (`GET /games/my-games`), absent on
+    /// `GET /games/:id`. Informative only: it never affects the roster below.
+    let attendanceSummary: WatchAttendanceSummary?
 
     var displayTitle: String {
         if let name, !name.isEmpty { return name }
@@ -64,6 +67,15 @@ struct WatchGame: Decodable, Identifiable, Sendable {
     nonisolated var playingParticipants: [WatchParticipant] { participants.filter(\.isPlaying) }
 
     nonisolated var participantCount: Int { playingParticipants.count }
+
+    /// PRD 346 — the Next Game prompt rule, from the list payload's summary.
+    nonisolated var needsAttendanceAnswer: Bool {
+        WatchAttendance.needsAnswer(
+            attendance: attendanceSummary?.viewerAttendance,
+            status: status,
+            startTime: startTime
+        )
+    }
 
     var participantCountLabel: String {
         let n = participantCount
@@ -81,7 +93,7 @@ struct WatchGame: Decodable, Identifiable, Sendable {
         case startTime, endTime, winnerOfMatch, winnerOfGame
         case fixedNumberOfSets, maxTotalPointsPerSet, maxPointsPerTeam, ballsInGames, scoringPreset, matchTimedCapMinutes, matchTimerEnabled, deucesBeforeGoldenPoint, pointsPerTie
         case maxParticipants, sport, playersPerMatch, timeIsSet, affectsRating, hasFixedTeams, allowUserInMultipleTeams, participantsReady, teamsReady, matchGenerationType, fixedTeams, resultsByAnyone
-        case participants, parent, club, weatherSummary, metadata
+        case participants, parent, club, weatherSummary, metadata, attendanceSummary
     }
 
     nonisolated init(from decoder: Decoder) throws {
@@ -126,6 +138,7 @@ struct WatchGame: Decodable, Identifiable, Sendable {
         club = try c.decodeIfPresent(WatchClub.self, forKey: .club)
         weatherSummary = (try? c.decodeIfPresent(WatchWeatherSummary.self, forKey: .weatherSummary)) ?? nil
         metadata = (try? c.decodeIfPresent(WatchGameMetadata.self, forKey: .metadata)) ?? nil
+        attendanceSummary = (try? c.decodeIfPresent(WatchAttendanceSummary.self, forKey: .attendanceSummary)) ?? nil
     }
 
     /// UI helper (timer bar / workout) — mirrors web `isGameMatchTimerEnabled` (needs a cap ≥ 1).

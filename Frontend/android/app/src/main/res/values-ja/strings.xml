@@ -28,4 +28,6 @@
     <string name="shortcut_chats_long">チャット受信箱を開く</string>
     <string name="shortcut_invites_short">招待</string>
     <string name="shortcut_invites_long">試合の招待を表示</string>
+    <string name="attendance_confirm">参加します</string>
+    <string name="attendance_unsure">まだ分かりません</string>
 </resources>

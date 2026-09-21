@@ -187,6 +187,16 @@
             android:exported="false" />
 
         <receiver
+            android:name=".push.AttendanceActionReceiver"
+            android:exported="false" />
+
+        <!-- PRD 345 / 357 — signed shade actions on the series prompt and the
+             weather alert. -->
+        <receiver
+            android:name=".push.TokenActionReceiver"
+            android:exported="false" />
+
+        <receiver
             android:name=".branding.LauncherComponentRepairReceiver"
             android:exported="false">
             <intent-filter>

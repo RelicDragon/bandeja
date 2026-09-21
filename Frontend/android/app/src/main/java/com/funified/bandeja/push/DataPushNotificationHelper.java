@@ -17,6 +17,10 @@ public final class DataPushNotificationHelper {
         "replyToken",
         "acceptActionToken",
         "declineActionToken",
+        "attendanceActionToken",
+        "attendanceUnsureActionToken",
+        // PRD 357 — never carry the signed keep token into a tap payload.
+        "weatherKeepActionToken",
         "actionToken",
         "nativeHandler",
         PushTapIntentFactory.EXTRA_GOOGLE_MESSAGE_ID,

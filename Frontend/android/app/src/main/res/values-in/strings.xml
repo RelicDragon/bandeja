@@ -28,4 +28,6 @@
     <string name="shortcut_chats_long">Buka kotak masuk chat</string>
     <string name="shortcut_invites_short">Undangan</string>
     <string name="shortcut_invites_long">Lihat undangan game</string>
+    <string name="attendance_confirm">Saya datang</string>
+    <string name="attendance_unsure">Belum yakin</string>
 </resources>

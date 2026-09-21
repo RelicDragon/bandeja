@@ -1,4 +1,5 @@
 import api from './axios';
+import type { PaymentMethodEntry } from '@shared/payments/paymentMethodSelection';
 import type { BasicUser, PriceCurrency } from '@/types';
 
 /**
@@ -37,7 +38,12 @@ export interface GameCostSummary {
   currency: PriceCurrency | null;
   payerUserId: string | null;
   payer: BasicUser | null;
+  /** Legacy one-line mirror of {@link paymentMethods}; prefer the list. */
   paymentHint: string | null;
+  /** PRD 348 — up to 3 country-scoped ways to pay the payer back. */
+  paymentMethods: PaymentMethodEntry[];
+  /** ISO-2 of where the game is played; drives which methods the picker offers. */
+  countryIso2: string | null;
   /** Set once the shares are frozen (the game reached a final result). */
   frozenAt: string | null;
   estimated: boolean;
@@ -74,6 +80,9 @@ export interface OwedSummary {
 
 export interface UpdateCostSharesInput {
   payerUserId?: string | null;
+  /** `null` clears the list; omit to leave it alone. At most 3 entries. */
+  paymentMethods?: PaymentMethodEntry[] | null;
+  /** @deprecated Pre-catalogue free text; send `paymentMethods` instead. */
   paymentHint?: string | null;
   overrides?: { userId: string; amountMinor: number }[];
   splitRemainderEvenly?: boolean;

@@ -317,10 +317,14 @@ void (async () => {
     const hintPlayer = await makeUser('hintplayer', 0);
     const outsider = await makeUser('hintoutsider', 0);
     const hintGame = await makeGame(hintPayer.id, hintPlayer.id);
-    const hintValue = `IBAN RS35 ${suffix}`;
+    const prenesiHandle = `+381-${suffix}`;
+    const hintValue = `IPS Prenesi ${prenesiHandle}`;
     await prisma.game.update({
       where: { id: hintGame.id },
-      data: { paymentHint: hintValue },
+      data: {
+        paymentHint: hintValue,
+        paymentMethods: [{ method: 'IPS_PRENESI', handle: prenesiHandle }],
+      },
     });
 
     const guestView = (await GameReadService.getGameById(hintGame.id)) as Record<string, unknown>;
@@ -328,6 +332,11 @@ void (async () => {
       'paymentHint' in guestView,
       false,
       'an unauthenticated caller never receives the payment handle',
+    );
+    assert.equal(
+      'paymentMethods' in guestView,
+      false,
+      'nor the structured list the handle now lives in',
     );
     assert.deepEqual(
       collectGameDetailGuestContractIssues(guestView),
@@ -344,6 +353,7 @@ void (async () => {
       false,
       'a signed-in stranger is not entitled to the cost ledger either',
     );
+    assert.equal('paymentMethods' in outsiderView, false);
 
     const memberView = (await GameReadService.getGameById(
       hintGame.id,
@@ -353,6 +363,11 @@ void (async () => {
       memberView.paymentHint,
       hintValue,
       'a roster member still gets the handle they have to pay to',
+    );
+    assert.deepEqual(
+      memberView.paymentMethods,
+      [{ method: 'IPS_PRENESI', handle: prenesiHandle }],
+      'and the structured list the settle sheet renders',
     );
 
     const payerView = (await GameReadService.getGameById(
@@ -397,6 +412,7 @@ void (async () => {
       false,
       'no socket recipient ever receives the payment handle, however entitled the actor',
     );
+    assert.equal('paymentMethods' in organizerBroadcast, false, 'nor the structured list');
     assert.equal(
       'userNote' in organizerBroadcast || 'isClubFavorite' in organizerBroadcast,
       false,
@@ -421,27 +437,46 @@ void (async () => {
         })
       ).paymentHint,
       hintValue,
-      'an edit that does not touch the field preserves the saved IBAN',
+      'an edit that does not touch the field preserves the saved details',
     );
 
     // 4. …and the write path is still live, so (3) is not vacuous: an explicit
     //    clear from the organizer does clear it.
+    // 4a. A structured write replaces both columns at once — the legacy mirror
+    //     can never be left describing details the organizer already changed.
+    const bizumHandle = `+34600${String(Date.now()).slice(-6)}`;
     await GameUpdateService.updateGame(
       hintGame.id,
-      { paymentHint: '   ' },
+      { paymentMethods: [{ method: 'BIZUM', handle: bizumHandle }] },
       hintPayer.id,
       false,
     );
+    const afterStructured = await prisma.game.findUniqueOrThrow({
+      where: { id: hintGame.id },
+      select: { paymentHint: true, paymentMethods: true },
+    });
+    assert.deepEqual(afterStructured.paymentMethods, [
+      { method: 'BIZUM', handle: bizumHandle },
+    ]);
     assert.equal(
-      (
-        await prisma.game.findUniqueOrThrow({
-          where: { id: hintGame.id },
-          select: { paymentHint: true },
-        })
-      ).paymentHint,
-      null,
-      'an explicit blank still clears the handle',
+      afterStructured.paymentHint,
+      `Bizum ${bizumHandle}`,
+      'the legacy one-line mirror is rewritten with the list, never left stale',
     );
+
+    // 4b. …and the clear path is still live, so (3) is not vacuous.
+    await GameUpdateService.updateGame(
+      hintGame.id,
+      { paymentMethods: null },
+      hintPayer.id,
+      false,
+    );
+    const afterClear = await prisma.game.findUniqueOrThrow({
+      where: { id: hintGame.id },
+      select: { paymentHint: true, paymentMethods: true },
+    });
+    assert.equal(afterClear.paymentHint, null, 'an explicit clear empties the mirror');
+    assert.equal(afterClear.paymentMethods, null, 'and the list');
 
     console.log('gameCostSettle.integration.test.ts: ok');
   } finally {

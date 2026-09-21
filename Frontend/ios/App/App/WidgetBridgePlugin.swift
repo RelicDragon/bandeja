@@ -150,6 +150,8 @@ private struct WidgetCachedNextGamePayload: Decodable {
     let maxParticipants: Int?
     let sport: String?
     let playersPerMatch: Int?
+    /// PRD 346 — the viewer's own attendance answer, when the envelope carries one.
+    let attendance: String?
 
     func toCachedNextGame() -> CachedNextGame {
         CachedNextGame(
@@ -163,7 +165,8 @@ private struct WidgetCachedNextGamePayload: Decodable {
             participantCount: participantCount,
             maxParticipants: maxParticipants,
             sport: sport,
-            playersPerMatch: playersPerMatch
+            playersPerMatch: playersPerMatch,
+            attendance: attendance
         )
     }
 }
