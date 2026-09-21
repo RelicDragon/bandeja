@@ -38,6 +38,7 @@ jobs:
           cache: npm
           cache-dependency-path: Backend/package-lock.json
       - run: npm ci
+      - run: ../scripts/run-heavy node --test ../scripts/deploy-backend.contract.test.mjs
       - run: npm run build:contract
       - run: npm run build:unread-contract
       - run: npm run build:shared

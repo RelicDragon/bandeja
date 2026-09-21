@@ -140,6 +140,8 @@ pm2 restart backend
 
 Migrations run as part of every backend deploy. Sticker seed upserts catalog rows and uploads/reuses assets under `uploads/stickers/packs/…` when AWS/S3 is configured. Safe to re-run.
 
+Backend compilation receives a 4096 MiB Node heap through a command-scoped `NODE_OPTIONS`; `BACKEND_BUILD_HEAP_MB` overrides that budget. Existing Node options are preserved, and the build budget does not change the PM2 runtime environment. The full TypeScript build currently needs about 2.4 GiB: Node's approximately 2 GiB default on the production host caused deployment to abort with `JavaScript heap out of memory` even after the CI build passed. Prisma operations and builds use `scripts/run-heavy` to serialize backend work. CI exercises the deployment script with stubbed external commands and verifies the compiler's effective heap and the unchanged restart environment.
+
 ### Auth refresh rollout
 
 The refresh flow uses one-time rotation with idempotent lost-response replay. Every client must send `X-Refresh-Request-Id`. User-facing force-update is a blocking `AppVersionRequirement` per platform in Admin (`minBuildNumber`).
