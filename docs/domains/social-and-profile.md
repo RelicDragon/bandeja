@@ -86,7 +86,7 @@ What it does add is bookkeeping and two reads, all in `Backend/src/routes/onboar
 | Method | Path | Notes |
 |--------|------|-------|
 | `GET` | `/api/users/me/onboarding` | routing state: `completedAt`, `step`, `resumeStep`, `needsOnboarding`, `needsSportStep`. One request per session on the client |
-| `PATCH` | `/api/users/me/onboarding` | `{ step }`, validated against the seven ids. Never clears `onboardingCompletedAt` |
+| `PATCH` | `/api/users/me/onboarding` | `{ step, event? }`, validated against the seven ids. Viewed events save the resume position and log the funnel event; completed/skipped events only log, so delayed analytics cannot overwrite a newer position. Never clears `onboardingCompletedAt` |
 | `POST` | `/api/users/me/onboarding/complete` | **idempotent** — a second call keeps the original timestamp, so a retried offline mutation cannot move the completion date |
 | `GET` | `/api/users/suggested?cityId&sport&limit` | follow suggestions, ≤20, default 8 |
 

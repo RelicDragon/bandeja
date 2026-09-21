@@ -39,6 +39,8 @@ A per-game record of **who owes what and who has paid**. It is a ledger, not a p
 | `Game.costFrozenAt` | game | set the first time the ledger is observed with `resultsStatus = FINAL`; amounts stop moving from then on |
 | `PlatformSetting.COINS_PER_CURRENCY_UNIT` | platform | coins per one major unit of a game's currency. **Deliberately unset.** While it is null the coins option is hidden on both the frontend and the backend |
 
+Profile payment defaults use a local draft with **Save** and **Cancel**. Adding a method or typing its handle never writes to the server. Save validates the complete list; failed saves and unrelated profile refreshes preserve the draft.
+
 Load-bearing rules:
 
 1. **Money is integer minor units end to end.** `Game.priceTotal` (a `Float`) is converted exactly once, at the boundary, by `resolveGameTotalMinor`. Everything downstream is integer cents; display is the only place a value becomes a float again (`gameCost/costShareMath.ts`, `Frontend/src/features/cost/costMoney.ts`).

@@ -63,7 +63,11 @@ export const patchOnboardingStep = asyncHandler(async (req: AuthRequest, res: Re
     );
   }
 
-  const state = await setOnboardingStep(userId, step);
+  // Completion/skip events can arrive after the next step's resume write.
+  // Record the event without moving that newer position backwards.
+  const state = event === 'onboarding_step_completed' || event === 'onboarding_step_skipped'
+    ? await getOnboardingState(userId)
+    : await setOnboardingStep(userId, step);
   res.json({ success: true, data: state });
 });
 

@@ -1061,6 +1061,7 @@ A ledger, not a payment system: no money moves in the app. The only value transf
 | GD-CS-33 | Reduced motion | Reduce motion on → change a chip state | Chip switches instantly; the green settle flash is skipped; the deep-link scroll jumps rather than smooth-scrolls |
 | GD-CS-34 | Themes | Light / Dark / Classic / Premium | Chips, the green settle tint and the lock chip stay legible |
 | GD-CS-35 | RTL | App language العربية | Rows, chips, the amount column and the sheets mirror; nothing overlaps |
+| GD-CS-36 | Profile payment defaults draft | Profile → payment defaults: add a method, wait, type a handle, then Save; repeat with Cancel or a failed save | Blank input stays visible while typing; only Save sends the validated list; Cancel restores saved defaults; failed saves and profile refreshes preserve the draft |
 
 Wallet side: `PR-CS-01`–`PR-CS-05` in §13.3. Cards: `F-CS-01`–`F-CS-05` in §7.4b. Create/edit: `C-CS-01`–`C-CS-05` in §8.3b.
 
@@ -2905,6 +2906,7 @@ No feature flag. The flow is gated purely on `User.onboardingCompletedAt`, which
 | ON-95 | Offline write | Offline, tap Continue on a step that needs the server | Failure toasts; the step stays usable. Nothing is lost except the resume position |
 | ON-96 | Back from step 1 | Hardware back / swipe on step 1 | Nothing happens — it does not exit into a route that would bounce straight back. `@manual` |
 | ON-97 | Step analytics | Walk the flow | `onboarding_step_viewed` fires exactly once per step shown, with the 1-based position and this account's total; Continue fires `onboarding_step_completed`, Skip fires `onboarding_step_skipped`, never both for the same visit |
+| ON-98 | Delayed step analytics | Delay a completed/skipped request until after the next step's viewed request, then repeat after completing onboarding | All three event types appear in server logs; delayed completed/skipped events never move the saved resume position backwards or restore a completed flow's cleared step |
 
 ---
 

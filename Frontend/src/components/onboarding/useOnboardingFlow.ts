@@ -88,7 +88,7 @@ export function useOnboardingFlow(): OnboardingFlow {
     lastViewedRef.current = step;
     emitOnboardingEvent({ name: 'onboarding_step_viewed', step, position, total, persist: !sportOnly });
     if (sportOnly) return;
-    void onboardingApi.setStep(step).then(setStatusCache).catch(() => {
+    void onboardingApi.setStep(step, 'onboarding_step_viewed').then(setStatusCache).catch(() => {
       // Offline or a flaky link only costs the resume position.
     });
   }, [position, setStatusCache, sportOnly, step, total]);

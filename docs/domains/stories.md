@@ -30,6 +30,8 @@ The reason is the privacy rule: **an unshared recap never creates a story row.**
 
 **Provenance of a published reel.** `UserStoryItem` has no source column, so a shared recap slide is tagged through `clientUploadId = recap:<monthKey>:<slideKey>`. `(storyId, clientUploadId)` is already unique, so one month can never publish the same slide twice, and re-sharing a month finds and soft-deletes the superseded reel with a `startsWith` scan instead of a second table.
 
+Each publication uses its own media keys. A superseded story retains its soft-deleted items until expiry, and the expiry sweep deletes their objects; sharing those keys with a newer publication would erase images from an active reel. Summary-card exports likewise have independent keys.
+
 **Retention.** `pruneExpiredMonthlyRecaps` lives in `story.prune.service.ts` next to the story-media sweep, uses the same ascending-id cursor batching, runs from `MonthlyRecapScheduler` on every pass, and drops `MonthlyRecap` rows older than 12 months.
 
 Payload shape, eligibility, the UTC month boundary and the neutral-level rule: [social-and-profile.md](./social-and-profile.md).

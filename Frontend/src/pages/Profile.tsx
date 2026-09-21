@@ -35,12 +35,7 @@ import {
 } from '@/utils/oauthAccountLink';
 import { canUnlinkAuthMethod } from '@/utils/accountAuthMethods';
 import { Gender, User } from '@/types';
-import {
-  parsePaymentMethods,
-  type PaymentMethodEntry,
-} from '@shared/payments/paymentMethodSelection';
-import { PaymentMethodsField } from '@/components/payments/PaymentMethodsField';
-import { cleanPaymentMethods } from '@/features/cost/gameEditPricePayload';
+import { PayoutMethodsSettings } from '@/components/payments/PayoutMethodsSettings';
 import { useCityCountryQuery } from '@/queries/useCityCountryQuery';
 import type { OAuthLinkResponseData } from '@/utils/oauthAccountLink';
 import {
@@ -107,11 +102,6 @@ export const ProfileContent = () => {
   const [timeFormat, setTimeFormat] = useState<'auto' | '12h' | '24h'>(user?.timeFormat || 'auto');
   const [weekStart, setWeekStart] = useState<'auto' | 'monday' | 'sunday' | 'saturday'>(user?.weekStart || 'auto');
   const [defaultCurrency, setDefaultCurrency] = useState<string>(user?.defaultCurrency || 'auto');
-  // PRD 348 — read through the catalogue, so a method retired from it later is
-  // dropped rather than rendered as a row with no name the user cannot fix.
-  const [payoutMethods, setPayoutMethods] = useState<PaymentMethodEntry[]>(() =>
-    parsePaymentMethods(user?.payoutMethods),
-  );
   const payoutCountryIso2 = useCityCountryQuery(user?.currentCityId);
   const [isSavingMainTheme, setIsSavingMainTheme] = useState(false);
   const [isSavingPremiumStatus, setIsSavingPremiumStatus] = useState(false);
@@ -171,8 +161,10 @@ export const ProfileContent = () => {
         { queryKey: queryKeys.userStatsAll(response.data.id) },
         (prev) => (prev ? patchUserStatsPreferenceFlags(prev, response.data) : prev),
       );
+      return true;
     } catch (error: any) {
       toast.error(error.response?.data?.message || t('errors.generic'));
+      return false;
     }
   }, [updateUser, t]);
 
@@ -420,16 +412,6 @@ export const ProfileContent = () => {
   const handleChangeCurrency = (currency: string) => {
     setDefaultCurrency(currency);
     updateProfile({ defaultCurrency: currency });
-  };
-
-  /**
-   * PRD 348 — the saved "how to pay me" list. Blank rows are dropped before the
-   * save, so a method picked and then abandoned is never persisted as an empty
-   * instruction.
-   */
-  const handleChangePayoutMethods = (next: PaymentMethodEntry[]) => {
-    setPayoutMethods(next);
-    updateProfile({ payoutMethods: cleanPaymentMethods(next) });
   };
 
   const handleAppIconChange = (id: AppIconId) => {
@@ -718,7 +700,6 @@ export const ProfileContent = () => {
       setTimeFormat(user.timeFormat || 'auto');
       setWeekStart(user.weekStart || 'auto');
       setDefaultCurrency(user.defaultCurrency || 'auto');
-      setPayoutMethods(parsePaymentMethods(user.payoutMethods));
     }
   }, [user]);
 
@@ -858,9 +839,9 @@ export const ProfileContent = () => {
 
         <AvailabilitySection
           value={user?.weeklyAvailability ?? null}
-          onChange={(wa) => updateProfile({ weeklyAvailability: wa })}
+          onChange={async (wa) => { await updateProfile({ weeklyAvailability: wa }); }}
           savedBucketBoundaries={user?.availabilityBucketBoundaries}
-          onPersistBucketBoundaries={(b) => updateProfile({ availabilityBucketBoundaries: b })}
+          onPersistBucketBoundaries={async (b) => { await updateProfile({ availabilityBucketBoundaries: b }); }}
           showScheduleVisibilitySelector
         />
 
@@ -1467,12 +1448,10 @@ export const ProfileContent = () => {
             </div>
 
             {/* PRD 348 — prefilled into every game this user creates. */}
-            <PaymentMethodsField
-              value={payoutMethods}
-              onChange={handleChangePayoutMethods}
+            <PayoutMethodsSettings
+              savedMethods={user?.payoutMethods}
+              onSave={(payoutMethods) => updateProfile({ payoutMethods })}
               countryIso2={payoutCountryIso2}
-              label={t('cost.payment.profileTitle')}
-              help={t('cost.payment.profileHelp')}
             />
 
             {/* PRD 355 — owned cosmetics; tapping a tile equips it. */}

@@ -1,8 +1,11 @@
 import assert from 'node:assert/strict';
+import { mock } from 'node:test';
 import { Prisma } from '@prisma/client';
 import prisma from '../../config/database';
+import { ImageProcessor } from '../../utils/imageProcessor';
 import { S3Service } from '../s3.service';
 import { STORY_TTL_MS } from '../story/story.constants';
+import { expireStories } from '../story/story.expire.service';
 import { MONTHLY_RECAP_PAYLOAD_VERSION, type MonthlyRecapPayload } from './recap.types';
 import { resolveSharedSlides, shareRecapToFollowers } from './recapShare.service';
 
@@ -91,9 +94,12 @@ function payload(): MonthlyRecapPayload {
 async function main(): Promise<void> {
   const uploadOriginal = S3Service.uploadFile;
   const uploads: string[] = [];
+  const storedMedia = new Set<string>();
   S3Service.uploadFile = async (_buffer: Buffer, key: string) => {
     uploads.push(key);
-    return `https://cdn.example.test/${key}`;
+    const url = `https://cdn.example.test/${key}`;
+    storedMedia.add(url);
+    return url;
   };
 
   const user = await prisma.user.create({
@@ -182,6 +188,50 @@ async function main(): Promise<void> {
       where: { deletedAt: null, story: { userId: user.id } },
     });
     assert.equal(liveItems, 2, 'the superseded reel is soft-deleted');
+
+    // Run the real expiry sweep, scoped to this fixture so the integration test
+    // cannot expire another user's stories in a shared development database.
+    const replacementItems = await prisma.userStoryItem.findMany({
+      where: { storyId: reshared.storyId },
+    });
+    await prisma.userStory.update({
+      where: { id: stories[0].id },
+      data: { expiresAt: new Date(Date.now() - 1_000) },
+    });
+    const findStories = prisma.userStory.findMany;
+    // Prisma delegates expose methods through a Proxy without own method
+    // descriptors, so node:test's mock.method cannot replace them.
+    prisma.userStory.findMany = ((args: Prisma.UserStoryFindManyArgs) => findStories({
+        ...args,
+        where: { AND: [args.where ?? {}, { userId: user.id }] },
+      })) as typeof prisma.userStory.findMany;
+    const deleteMedia = mock.method(
+      ImageProcessor,
+      'deleteFilePair',
+      async (originalUrl: string, thumbnailUrl?: string) => {
+        storedMedia.delete(originalUrl);
+        if (thumbnailUrl) storedMedia.delete(thumbnailUrl);
+        return true;
+      },
+    );
+    try {
+      assert.equal(await expireStories(), 1, 'only the superseded story expires');
+      for (const item of stories[0].items) {
+        assert.ok(!storedMedia.has(item.mediaUrl), 'expired publication media is deleted');
+      }
+      for (const item of replacementItems) {
+        assert.ok(storedMedia.has(item.mediaUrl), 'the new reel keeps its full-size image');
+        assert.ok(storedMedia.has(item.thumbnailUrl), 'the new reel keeps its thumbnail');
+      }
+      assert.equal(
+        await prisma.userStoryItem.count({ where: { storyId: reshared.storyId, deletedAt: null } }),
+        2,
+        'replacement slides stay live after the old reel expires',
+      );
+    } finally {
+      prisma.userStory.findMany = findStories;
+      deleteMedia.mock.restore();
+    }
   } finally {
     S3Service.uploadFile = uploadOriginal;
     await prisma.user.delete({ where: { id: user.id } });
