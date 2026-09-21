@@ -1,11 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
-  clipboardTextForAid,
   createAppAttributionAid,
   isAppAttributionAid,
   isAuthAttributionRequestUrl,
   mergeAttributionFirstTouch,
-  parseAidFromClipboard,
   parseAttributionFromSearch,
   sanitizeAppUtmValue,
 } from './appAttribution';
@@ -18,15 +16,13 @@ describe('appAttribution', () => {
     expect(isAppAttributionAid('short')).toBe(false);
   });
 
-  it('parses search and clipboard', () => {
+  it('parses search attribution', () => {
     const parsed = parseAttributionFromSearch(
       '?utm_source=qr&utm_campaign=club-ns&aid=AbCdEfGhIjKlMn12'
     );
     expect(parsed.utmSource).toBe('qr');
     expect(parsed.utmCampaign).toBe('club-ns');
     expect(parsed.aid).toBe('AbCdEfGhIjKlMn12');
-    expect(parseAidFromClipboard(clipboardTextForAid('AbCdEfGhIjKlMn12'))).toBe('AbCdEfGhIjKlMn12');
-    expect(parseAidFromClipboard('https://bandeja.me')).toBeNull();
   });
 
   it('keeps first-touch utm', () => {
@@ -53,10 +49,10 @@ describe('appAttribution', () => {
     expect(isAuthAttributionRequestUrl('/auth/link/google')).toBe(false);
   });
 
-  it('fills utm onto an existing clipboard aid', () => {
-    const fromClip = mergeAttributionFirstTouch(null, { aid: 'CLIPBOARD12ab' });
-    const withUtm = mergeAttributionFirstTouch(fromClip, { utmCampaign: 'club-a' });
-    expect(withUtm?.aid).toBe('CLIPBOARD12ab');
+  it('fills utm onto an existing aid', () => {
+    const existing = mergeAttributionFirstTouch(null, { aid: 'Existing12ab' });
+    const withUtm = mergeAttributionFirstTouch(existing, { utmCampaign: 'club-a' });
+    expect(withUtm?.aid).toBe('Existing12ab');
     expect(withUtm?.utmCampaign).toBe('club-a');
   });
 });

@@ -8,6 +8,8 @@
 
 Writers: `canModifyResults` — owner/admin, or `resultsByAnyone` + participant; parent season roles inherit. Routes: `Backend/src/routes/results.routes.ts` (`requireCanModifyResults`).
 
+Manual set entry (`ScoreEntryModal`, including league fixture cards) owns a draft for the lifetime of the open dialog. Background game/results refreshes must not replace entered scores or selected scoring modes. Save submits the draft; Cancel discards it. Reopening, or opening a different match/set, initializes from the latest saved results.
+
 ## Reading results
 
 `GET /results/game/:gameId` and its `/round/:roundId` and `/match/:matchId` siblings run under `optionalAuth`, because the results tab is reachable by guests on a **public** game (deep links, Telegram, the Live now rail). Two things keep that safe:

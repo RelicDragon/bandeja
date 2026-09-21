@@ -30,9 +30,11 @@ First-touch UTM: `utm_source|medium|campaign|content|term` (sanitized). Existing
 Client carry (`Frontend/src/utils/appAttribution.ts`, `appAttributionBootstrap.ts`):
 
 - Cookie `bandeja_aid`, localStorage `bandeja.attribution`
-- Native clipboard prefix `bandeja-aid:`
+- URL/deep-link query parameters; attribution never reads or writes the clipboard
 - Auth requests attach `attribution` JSON (aid + UTM + choice)
 - `POST /api/auth/attribution` attach-only if User already marked
+
+Native startup and deep links capture URL/stored attribution without a paste prompt. The landing page does not overwrite the clipboard on store choice or automatic redirect. A new store install has no automatic clipboard attribution handoff; a subsequent attributed deep link can still supply `aid`/UTM/`ref`.
 
 User mark (first time only): `attributionId`, `utmSource`…`utmTerm`, `attributedAt`, `attributionChoice`, `attributionAuthKind` (`register`|`login`). Models: `LinkToAppAttribution`, `LinkToAppEvent` in `schema.prisma`.
 

@@ -1,45 +1,15 @@
-import { Clipboard } from '@capacitor/clipboard';
 import { isCapacitor } from '@/utils/capacitor';
 import { getApiAxiosBaseURL } from '@/api/apiBaseUrl';
 import {
   captureAppAttributionFromLocation,
   getAttributionForAuth,
-  parseAidFromClipboard,
-  persistAttribution,
   readStoredAttribution,
   type AppAttributionSnapshot,
 } from '@/utils/appAttribution';
 import { api } from '@/api/httpClient';
 
-let clipboardIngested = false;
 let reportedAid: string | null = null;
 let viewHitSent = false;
-
-export async function ingestAttributionClipboard(): Promise<void> {
-  if (clipboardIngested || !isCapacitor()) return;
-  clipboardIngested = true;
-  try {
-    const { value } = await Clipboard.read();
-    const aid = parseAidFromClipboard(value);
-    if (!aid) return;
-    const current = readStoredAttribution();
-    const next: AppAttributionSnapshot = current
-      ? { ...current, aid: current.aid || aid }
-      : {
-          aid,
-          utmSource: null,
-          utmMedium: null,
-          utmCampaign: null,
-          utmContent: null,
-          utmTerm: null,
-          choice: null,
-          ref: null,
-        };
-    persistAttribution({ ...next, aid: next.aid || aid });
-  } catch {
-    /* paste permission denied */
-  }
-}
 
 export function reportLinkToAppLandingView(pathname: string | undefined, search: string): void {
   const path = (pathname ?? '').replace(/\/+$/, '') || '/';
@@ -65,7 +35,7 @@ export async function bootstrapAppAttribution(location?: {
   search: string;
   pathname?: string;
 }): Promise<AppAttributionSnapshot | null> {
-  await ingestAttributionClipboard();
+  // Attribution must never read the clipboard implicitly: iOS prompts on launch.
   const loc =
     location ??
     (typeof window !== 'undefined'

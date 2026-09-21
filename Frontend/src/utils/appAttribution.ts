@@ -2,7 +2,6 @@ import { normalizeReferralCode, REFERRAL_QUERY_PARAM } from '@/features/referral
 
 export const APP_ATTRIBUTION_STORAGE_KEY = 'bandeja.attribution';
 export const APP_ATTRIBUTION_COOKIE = 'bandeja_aid';
-export const APP_ATTRIBUTION_CLIPBOARD_PREFIX = 'bandeja-aid:';
 export const APP_ATTRIBUTION_AID_RE = /^[a-zA-Z0-9]{8,32}$/;
 
 export type AppAttributionChoice = 'ios' | 'android' | 'web';
@@ -45,17 +44,6 @@ export function sanitizeAppUtmValue(raw: string | null | undefined): string | nu
   const value = raw?.trim() ?? '';
   if (!value || value.length > UTM_MAX || !UTM_RE.test(value)) return null;
   return value;
-}
-
-export function parseAidFromClipboard(text: string | null | undefined): string | null {
-  const trimmed = text?.trim() ?? '';
-  if (!trimmed.startsWith(APP_ATTRIBUTION_CLIPBOARD_PREFIX)) return null;
-  const aid = trimmed.slice(APP_ATTRIBUTION_CLIPBOARD_PREFIX.length).trim();
-  return isAppAttributionAid(aid) ? aid : null;
-}
-
-export function clipboardTextForAid(aid: string): string {
-  return `${APP_ATTRIBUTION_CLIPBOARD_PREFIX}${aid}`;
 }
 
 function readCookie(name: string): string | null {

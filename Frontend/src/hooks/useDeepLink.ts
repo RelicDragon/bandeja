@@ -11,7 +11,7 @@ import { appendLevelSportQuery, parseLevelSportQuery } from '@/utils/levelSportQ
 import { bumpChatFreshOpenNonce } from '@/services/chat/chatOpenEntry';
 import { resolveFindDeepLinkTarget, deepLinkActionPath } from '@/deepLinks';
 import { captureAppAttributionFromLocation } from '@/utils/appAttribution';
-import { ingestAttributionClipboard, reportLinkToAppLandingView } from '@/utils/appAttributionBootstrap';
+import { reportLinkToAppLandingView } from '@/utils/appAttributionBootstrap';
 
 function navigateFreshChat(
   navigate: ReturnType<typeof useNavigate>,
@@ -34,10 +34,8 @@ export const useDeepLink = () => {
         if (!isBandejaDeepLinkHost(url.hostname)) return;
 
         const pathname = url.pathname.replace(/\/+$/, '') || '/';
-        void ingestAttributionClipboard().finally(() => {
-          captureAppAttributionFromLocation({ search: url.search, pathname: url.pathname });
-          reportLinkToAppLandingView(url.pathname, url.search);
-        });
+        captureAppAttributionFromLocation({ search: url.search, pathname: url.pathname });
+        reportLinkToAppLandingView(url.pathname, url.search);
         if (pathname === '/link-to-app') {
           navigateWithTracking(navigate, `/login${url.search}`, { replace: true });
           return;
@@ -276,4 +274,3 @@ export const useDeepLink = () => {
     };
   }, [navigate]);
 };
-

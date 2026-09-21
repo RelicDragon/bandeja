@@ -1129,6 +1129,8 @@ Wallet side: `PR-CS-01`–`PR-CS-05` in §13.3. Cards: `F-CS-01`–`F-CS-05` in 
 | ID | Test | Steps | Expected |
 |----|------|-------|----------|
 | GD-28 | Enter set results | Results tab → enter scores | Saved locally + server |
+| GD-28a | Manual score draft survives refresh | In regular results and a league fixture card, open a set, enter 6:4 slowly using keypad/steppers; trigger a game/results refresh (e.g. another editor saves a different match), then Save | Neither score resets; Save persists 6:4. Repeat with Automatic Americano points, super tiebreak and extra Balls: selected mode/units and scores survive. Applies to manual entry, not live scoring |
+| GD-28b | Manual score draft lifecycle | Edit an open set while saved results refresh; Cancel and reopen; then open a different match/set | Open draft stays intact; Cancel does not save; reopened and different match/set dialogs initialize from their latest saved values |
 | GD-84 | Rally match set score (TT Bo3×11) | Table tennis game with Bo3×11 template → enter set score 11:4 | Accepted and saved (first-to-11 per set, not americano total-11 budget) |
 | GD-109 | Score entry modal layouts | Open set score modal in portrait and landscape | Portrait: 3-column grid — team avatars top row, aligned `− score +` row below with `:` center; landscape: two stacked team rows (avatars left, horizontal stepper right); no overlapping elements; leading score green |
 | GD-110 | Score entry number picker | Tap the big score value in score modal | Keypad expands below scoreboard; modal scrolls so keypad bottom is fully visible; header shows stacked avatars + player names for active team; Set/games 0–10; picking a number highlights the cell briefly before auto-advance; first pick on team A slides to team B, first pick on team B slides to team A; second pick closes keypad; closing scrolls back to scoreboard |
@@ -2506,6 +2508,9 @@ A pair is a derived aggregate, never a rating — there is no pair ELO and nothi
 | X-26s | QR scan without register | Scan marked landing, do not sign in | Admin → App QR shows view/choice counts; Attributed users stays empty for that `aid` |
 | X-26u | App QR campaign visual name | Admin → App QR: save UUID code + visual name (before or after a scan) | Funnel/user/recent tables show the visual name; QR URL still uses the UUID; deleting the mapping falls back to the code |
 | X-26v | Referral rides the same row | Repeat X-26o–X-26r with `?ref=<code>` on the landing URL | `ref` is captured, carried and attached under the same first-touch rule as the UTMs. Full cases: §29 |
+| X-26w | Native startup has no clipboard access | Copy text in Safari; cold-launch iOS app, background/resume, force-quit and relaunch; repeat signed in and signed out | No paste permission prompt; clipboard unchanged; no clipboard attribution is imported |
+| X-26x | Native deep-link attribution without paste | With unrelated clipboard text, open `/link-to-app?aid=FirstTouch123&utm_source=qr&ref=BNDJ-7K2Q` as a native deep link on cold launch and while running | No paste permission prompt; navigates to login; URL attribution/referral persists under first-touch rules and attaches on auth |
+| X-26y | QR landing preserves clipboard | Copy text, then open the QR landing and use each store/web choice or automatic redirect | Clipboard unchanged; choice tracking and redirect query parameters still work; a new store install does not import attribution from the clipboard |
 
 ### 18.7 Navigation shell
 
@@ -3200,7 +3205,7 @@ No feature flag. Referrals ride the existing link-to-app attribution row (§18.6
 | RF-02 | Unknown code | Same URL with a code that does not exist | **No chip**, no error, store buttons normal. `@manual` |
 | RF-03 | Invalid alphabet | `?ref=BNDJ-7K2O` (an `O`, not in the alphabet) | No chip, and `localStorage['bandeja.attribution'].ref` stays `null`. The code is rejected, never "corrected" — the alphabet excludes `0`, `O`, `1` and `I`, so a code containing one is a typo, not a near-miss |
 | RF-04 | First touch wins | Open with `?ref=BNDJ-7K2Q`, then again with `?ref=AAAA-2222` | Stored `ref` is still `BNDJ7K2Q` |
-| RF-05 | Store redirect carries it | Tap a store button | `/api/public/link-to-app/go/<choice>` carries both `aid=` and `ref=BNDJ-7K2Q`; the clipboard still holds `bandeja-aid:<aid>` |
+| RF-05 | Store redirect carries it | Tap a store button | `/api/public/link-to-app/go/<choice>` carries both `aid=` and `ref=BNDJ-7K2Q`; clipboard unchanged |
 | RF-06 | Auto-redirect platforms | Android / desktop | The page auto-redirects after ~500 ms so the chip may only flash; the redirect target must still carry `ref`. `@manual` |
 
 ### 29.2 Registration and the 7-day window

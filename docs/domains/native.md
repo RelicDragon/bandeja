@@ -16,6 +16,8 @@ Camera, photos, geolocation, filesystem, keyboard, network, app lifecycle, share
 
 Same paths as web unless noted: games (+ chat/live/tv/broadcast/league-table/league-bracket), chats, bugs, marketplace (+ query), profiles (`?sport=`), teams, Telegram `/login/:key` (deduped), tabs, create game/league/event, `/next-game`, `/my-clubs/*`, sessions/connected-clubs. Chat routes bump fresh-open nonce. Find: `resolveFindDeepLinkTarget`. Catalog: `Frontend/src/deepLinks/catalog.ts`.
 
+Startup and deep-link attribution never read the clipboard. They use URL parameters and persisted attribution, so opening the app does not request paste permission.
+
 ## Widgets / next game
 
 Policy `@shared/nextGame/policy.ts`: soonest non-FINISHED/ARCHIVED with `startTime` strictly after reference−1h. Runtime `Frontend/src/utils/pickNextGame.ts` + golden JSON. Envelope via `widgetNextGamesSync` / `WidgetBridgePlugin` (iOS App Group `BandejaNextGames`, Android `:bandeja-widgets`). Tap `/next-game` or `?open=chat|live` (`NextGameRedirect`). Cleared on logout.

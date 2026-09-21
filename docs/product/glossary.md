@@ -158,7 +158,7 @@ From root `CONTEXT.md`. Applies to `LeagueParticipant` type `TEAM` only.
 
 ## Link-to-app attribution
 
-**aid**: 8–32 alphanumeric id (`LINK_TO_APP_AID_RE`). Cookie `bandeja_aid`, localStorage `bandeja.attribution`, clipboard `bandeja-aid:{aid}`. First-touch: existing stored UTM/choice wins (`mergeAttributionFirstTouch` in `Frontend/src/utils/appAttribution.ts`). User columns: `attributionId`, `utmSource`/`utmMedium`/`utmCampaign`/`utmContent`/`utmTerm`, `attributedAt`, `attributionChoice`, `attributionAuthKind`. Event kinds: `view` \| `ios` \| `android` \| `web` (`Backend/src/services/linkToApp/linkToApp.urls.ts`).
+**aid**: 8–32 alphanumeric id (`LINK_TO_APP_AID_RE`). Carried in URLs, cookie `bandeja_aid` and localStorage `bandeja.attribution`; attribution never accesses the clipboard. First-touch: existing stored UTM/choice wins (`mergeAttributionFirstTouch` in `Frontend/src/utils/appAttribution.ts`). User columns: `attributionId`, `utmSource`/`utmMedium`/`utmCampaign`/`utmContent`/`utmTerm`, `attributedAt`, `attributionChoice`, `attributionAuthKind`. Event kinds: `view` \| `ios` \| `android` \| `web` (`Backend/src/services/linkToApp/linkToApp.urls.ts`).
 
 ## Auth refresh
 

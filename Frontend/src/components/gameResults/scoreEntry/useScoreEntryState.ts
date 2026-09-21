@@ -107,6 +107,9 @@ export function useScoreEntryState({
   const isSupplementalRow = isSupplementalMatchSet(currentSet);
   const isAutomaticRelaxed = isClassicAutomaticRelaxedScores(rules);
 
+  // The dialog owns a draft for its lifetime. Both callers key it by match/set
+  // and unmount on close, so reopening starts from the latest saved values.
+  // Background game/results refreshes must not overwrite an in-progress edit.
   const [extraRole, setExtraRole] = useState<'EXTRA_GAMES' | 'EXTRA_BALLS'>(
     currentSet.role === 'EXTRA_BALLS' ? 'EXTRA_BALLS' : 'EXTRA_GAMES',
   );
@@ -138,21 +141,6 @@ export function useScoreEntryState({
   }, [pickerTeam, clearKeypadAdvance]);
 
   useEffect(() => () => clearKeypadAdvance(), [clearKeypadAdvance]);
-
-  useEffect(() => {
-    setTeamAScore(currentSet.teamA);
-    setTeamBScore(currentSet.teamB);
-    setIsTieBreak(currentSet.isTieBreak || false);
-    if (isSupplementalMatchSet(currentSet)) {
-      setExtraRole(currentSet.role === 'EXTRA_BALLS' ? 'EXTRA_BALLS' : 'EXTRA_GAMES');
-    }
-    if (isAutomaticRelaxed) {
-      setMatchRecordMode(parseAutomaticMatchRecordMode(match.metadata));
-      setUseSuperTiebreak(
-        Boolean(currentSet.isTieBreak) && canUseSuperTiebreakEntry(setIndex, match.sets, rules),
-      );
-    }
-  }, [currentSet, isAutomaticRelaxed, match.metadata, match.sets, rules, setIndex]);
 
   const handleSuperTiebreakChange = useCallback((use: boolean) => {
     setUseSuperTiebreak(use);

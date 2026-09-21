@@ -223,7 +223,7 @@ Do not teach the browser to call the club Supabase URL. Do not omit nspadel from
 
 ### Link-to-app first-touch
 
-QR/store landing records UTM + `aid` **once**. Later UTMs do not overwrite stored first-touch (`mergeAttributionFirstTouch`). Carry `aid` through cookie, localStorage, clipboard (`bandeja-aid:`), then attach on register/login (`POST /auth/attribution`, auth payloads). User row is the converted mark; `LinkToAppAttribution.firstTouchUsers` is the relation.
+QR/store landing records UTM + `aid` **once**. Later UTMs do not overwrite stored first-touch (`mergeAttributionFirstTouch`). Carry `aid` through URLs, cookie and localStorage, then attach on register/login (`POST /auth/attribution`, auth payloads). Attribution must not read or write the clipboard: native startup and deep links must not trigger paste permission prompts. There is no clipboard handoff across a new store install. User row is the converted mark; `LinkToAppAttribution.firstTouchUsers` is the relation.
 
 - Static page: `Frontend/public/link-to-app/index.html` (Vite `/link-to-app/`)
 - SPA `/link-to-app` **redirects** to `/` or `/login` (`App.tsx`) — do not expect React to render the landing
