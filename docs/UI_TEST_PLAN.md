@@ -1288,10 +1288,10 @@ Wallet side: `PR-CS-01`–`PR-CS-05` in §13.3. Cards: `F-CS-01`–`F-CS-05` in 
 
 | ID | Test | Steps | Expected |
 |----|------|-------|----------|
-| GD-171 | Localized title/description (API ready) | Game with ready translation for viewer locale; open details | Header/description show localized text; pending translation shows authored original with subtle “Translation in progress”; no blocking spinner/toast for players |
+| GD-171 | Localized title/description (API ready) | Game with ready translation for viewer locale; open details | Header/description show localized text; pending translation shows authored original without a progress hint, then updates in place when ready; no blocking spinner/toast for players |
 | GD-172 | Show original toggle | Game with ready translation; open details → tap `Translated · Show original` | Title and description switch to authored originals together; control becomes `Original · Show translation` |
 | GD-173 | Show original session memory | After GD-172, leave details and reopen the same game (or remount) | Still showing originals; choice not reset by remount or background `localizedText` refresh |
-| GD-174 | Omit badge when untranslated | Game whose display equals original (same language / not needed) | No Translated/Original toggle; pending hint only while translation work is in progress |
+| GD-174 | Omit badge when untranslated | Game whose display equals original (same language / not needed) | No Translated/Original toggle; no pending hint while translation work is in progress |
 | GD-175 | Event localized listing + toggle | EVENT with ready translation; open poster details | Title/description localized; quiet toggle switches both; edit listing still uses originals |
 | GD-176 | Edit forms seed originals only | Game with ready `localizedText` differing from authored name/description; open Edit details / Event edit listing | Name and description inputs show authored originals only (never localized display); helper “Automatically translated…”; when details would show a translation, label “Original text”; save uses existing update |
 | GD-177 | Organizer Translations panel | Owner/admin opens Edit details (or Event edit listing) → Translations | Bottom sheet on mobile / dialog on desktop; language list statuses Ready/Edited/Updating/Needs review/Retry/No translation needed; Keep original name control present |

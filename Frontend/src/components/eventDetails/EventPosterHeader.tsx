@@ -61,7 +61,6 @@ export function EventPosterHeader({ game, canEdit, onEdit, onDelete }: EventPost
             <GameTextTranslationControl
               showOriginal={localized.showOriginal}
               hasToggle={localized.hasToggle}
-              showPendingHint={localized.showPendingHint}
               onToggle={localized.toggleShowOriginal}
               a11yAnnouncement={localized.a11yAnnouncement}
             />

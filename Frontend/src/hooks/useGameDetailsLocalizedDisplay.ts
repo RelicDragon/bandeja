@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { useGameLocalizedText } from '@/hooks/useGameLocalizedText';
 import { useGameTextShowOriginal } from '@/hooks/useGameTextShowOriginal';
 import { useSelectionDeferredValue } from '@/hooks/useSelectionDeferredValue';
-import { isGameTextTranslationPending } from '@/utils/gameText/gameTextPending';
 import type { GameTextDisplaySource } from '@/utils/gameText/gameLocalizedText.types';
 
 export type GameDetailsLocalizedDisplay = {
@@ -13,7 +12,6 @@ export type GameDetailsLocalizedDisplay = {
   lang: string | null;
   showOriginal: boolean;
   hasToggle: boolean;
-  showPendingHint: boolean;
   toggleShowOriginal: () => void;
   a11yAnnouncement: string;
 };
@@ -36,8 +34,6 @@ export function useGameDetailsLocalizedDisplay(
   const description = useSelectionDeferredValue(displayed.description);
 
   const hasToggle = available.isTranslated;
-  const showPendingHint =
-    isGameTextTranslationPending(game?.localizedText) && !available.isTranslated;
 
   const [a11yAnnouncement, setA11yAnnouncement] = useState('');
   const prevTranslatedRef = useRef(available.isTranslated);
@@ -60,7 +56,6 @@ export function useGameDetailsLocalizedDisplay(
     lang: showOriginal || !available.isTranslated ? null : displayed.locale,
     showOriginal,
     hasToggle,
-    showPendingHint,
     toggleShowOriginal,
     a11yAnnouncement,
   };

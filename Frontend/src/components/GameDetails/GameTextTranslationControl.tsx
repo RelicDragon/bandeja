@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next';
 type GameTextTranslationControlProps = {
   showOriginal: boolean;
   hasToggle: boolean;
-  showPendingHint: boolean;
   onToggle: () => void;
   /** Place control inline beside a heading row when true. */
   compact?: boolean;
@@ -19,7 +18,6 @@ type GameTextTranslationControlProps = {
 export function GameTextTranslationControl({
   showOriginal,
   hasToggle,
-  showPendingHint,
   onToggle,
   compact = false,
   className = '',
@@ -27,7 +25,7 @@ export function GameTextTranslationControl({
 }: GameTextTranslationControlProps) {
   const { t } = useTranslation();
 
-  if (!hasToggle && !showPendingHint && !a11yAnnouncement) return null;
+  if (!hasToggle && !a11yAnnouncement) return null;
 
   const statusLabel = showOriginal
     ? t('gameDetails.gameText.original', { defaultValue: 'Original' })
@@ -43,13 +41,6 @@ export function GameTextTranslationControl({
       <span className="sr-only" aria-live="polite">
         {a11yAnnouncement}
       </span>
-      {showPendingHint && (
-        <span className="text-[10px] text-gray-400 dark:text-gray-500">
-          {t('gameDetails.gameText.translationInProgress', {
-            defaultValue: 'Translation in progress',
-          })}
-        </span>
-      )}
       {hasToggle && (
         <button
           type="button"

@@ -847,7 +847,6 @@ export const GameInfo = ({
               <GameTextTranslationControl
                 showOriginal={localized.showOriginal}
                 hasToggle={localized.hasToggle}
-                showPendingHint={localized.showPendingHint}
                 onToggle={localized.toggleShowOriginal}
                 a11yAnnouncement={localized.a11yAnnouncement}
               />
@@ -1210,7 +1209,6 @@ export const GameInfo = ({
                     compact
                     showOriginal={localized.showOriginal}
                     hasToggle={localized.hasToggle}
-                    showPendingHint={localized.showPendingHint}
                     onToggle={localized.toggleShowOriginal}
                     a11yAnnouncement={localized.a11yAnnouncement}
                   />
