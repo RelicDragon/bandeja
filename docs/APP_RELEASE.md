@@ -8,10 +8,10 @@ Marks the last commit that was shipped to **Google Play** and **App Store**. Use
 |---|---|
 | **Version** | 0.97.51 |
 | **Build** | 233 |
-| **Commit** | `3ef69c0e936141b9f74791a132d45fb86f578ba2` |
-| **Short** | `3ef69c0e9` |
+| **Commit** | `2f2748cc0137d2261bcb86b99a9357d7879822e6` |
+| **Short** | `2f2748cc0` |
 | **Date** | 2026-09-22 |
-| **Message** | refactor: remove showPendingHint from GameTextTranslationControl and related components; update documentation |
+| **Message** | Bump app release to 0.97.51 (build 233) |
 
 Canonical commit hash: `docs/app-release-baseline.txt` (one line, full SHA).
 
@@ -70,7 +70,7 @@ Generate **What's new** (LLM summarizes commits since baseline):
 
 | Version | Build | Commit | Date |
 |---------|-------|--------|------|
-| 0.97.51 | 233 | `3ef69c0e9` | 2026-09-22 |
+| 0.97.51 | 233 | `2f2748cc0` | 2026-09-22 |
 | 0.97.50 | 232 | `67b9c5d42` | 2026-09-21 |
 | 0.97.49 | 231 | `556c3b4bd` | 2026-09-20 |
 | 0.97.48 | 230 | `c96edb9ef` | 2026-09-16 |
