@@ -1,0 +1,24 @@
+{
+  "organizerNextActions": {
+    "title": "ขั้นตอนถัดไป",
+    "more_other": "อีก {{count}} รายการ",
+    "less": "แสดงน้อยลง",
+    "seats": {
+      "needed_other": "ต้องการผู้เล่นอีก {{count}} คน",
+      "waiting_other": "รออยู่ {{count}} คน",
+      "reviewQueue": "ดูคิว",
+      "invite": "เชิญ"
+    },
+    "booking": {
+      "notBooked": "ยังไม่ได้จองคอร์ต",
+      "partlyBooked": "จองคอร์ตได้เพียงบางส่วน",
+      "seeBookings": "ดูการจอง",
+      "editCourt": "แก้ไขคอร์ต"
+    },
+    "cost": {
+      "unpaid_other": "{{count}} คนยังไม่จ่าย",
+      "settle": "จ่ายเงิน",
+      "review": "ดูรายละเอียด"
+    }
+  }
+}

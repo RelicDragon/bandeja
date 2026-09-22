@@ -138,6 +138,10 @@
     "matchingGameAskCta": "ขอเข้าร่วม",
     "matchingGameTimeClub": "{{time}} · {{club}}",
     "matchingGameTimeOnly": "{{time}}",
-    "matchingGameNoClub": "สถานที่ที่จะกำหนด"
+    "matchingGameNoClub": "สถานที่ที่จะกำหนด",
+    "lookingCountToday_one": "{{count}} คนกำลังหาเกมวันนี้",
+    "lookingCountToday_other": "{{count}} คนกำลังหาเกมวันนี้",
+    "lookingCountTodayAndTomorrow_one": "{{count}} คนกำลังหาเกมวันนี้และพรุ่งนี้",
+    "lookingCountTodayAndTomorrow_other": "{{count}} คนกำลังหาเกมวันนี้และพรุ่งนี้"
   }
 }

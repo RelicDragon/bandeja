@@ -310,7 +310,8 @@
     "shareCardDone": "Sdíleno",
     "shareCardFailed": "Sdílení se nepodařilo",
     "shareCardNoSummary": "Skvělá session!",
-    "playAgainCta": "Hrát znovu",
+    "playWithGroupAgainCta": "Hrát znovu s touto partou",
+    "playWithGroupAgainCaption": "Vyberte nový čas. Pozveme stejné hráče.",
     "showInStories": {
       "GAME": "Zobrazit tento zápas v mých stories",
       "BAR": "Zobrazit tuto barovou akci v mých stories",

@@ -15,6 +15,22 @@ import { CommonChatsService } from '../../services/user/commonChats.service';
 import { expandNameSearchTerms, matchesPersonSearch } from '../../utils/nameSearchTerms';
 import { findUserIdsBusyInSlot } from '../../services/game/gameSlotOverlap.service';
 import { rankNearbyCities } from '../../services/user/nearbyCities';
+import {
+  CO_PLAY_TOP_LIMIT,
+  loadBlockedUserIds,
+  loadCoPlayers,
+  pickTopCoPlayerIds,
+  rankInvitablePlayers,
+} from '../../services/user/coPlay.service';
+
+/** One invite-picker row: a projected user plus the ranking metadata the client reads. */
+type InvitablePlayerRow = BasicUser & {
+  interactionCount: number;
+  gamesTogetherCount: number;
+  /** ISO time of the most recent shared FINAL game inside the co-play window; null when none. */
+  lastPlayedTogetherAt: string | null;
+  sportsEnabled: Sport[];
+};
 
 const INVITE_PICKER_BLOCKING_PARTICIPANT_STATUSES = new Set<ParticipantStatus>([
   ParticipantStatus.PLAYING,
@@ -156,24 +172,33 @@ export const getInvitablePlayers = asyncHandler(async (req: AuthRequest, res: Re
 
   const interactionMap = new Map(interactions.map((i: { toUserId: string; count: number }) => [i.toUserId, i.count]));
 
-  const coplayRows = await prisma.$queryRaw<Array<{ userId: string; count: number }>>(
-    Prisma.sql`
-      SELECT gp2."userId" AS "userId", COUNT(DISTINCT g.id)::int AS count
-      FROM "GameParticipant" gp1
-      INNER JOIN "GameParticipant" gp2 ON gp1."gameId" = gp2."gameId"
-      INNER JOIN "Game" g ON g.id = gp1."gameId"
-      WHERE gp1."userId" = ${req.userId}
-        AND gp1.status = 'PLAYING'::"ParticipantStatus"
-        AND gp2.status = 'PLAYING'::"ParticipantStatus"
-        AND gp2."userId" <> gp1."userId"
-        AND g."resultsStatus" = 'FINAL'::"ResultsStatus"
-        AND g."entityType" NOT IN ('BAR'::"EntityType", 'LEAGUE_SEASON'::"EntityType", 'EVENT'::"EntityType")
-      GROUP BY gp2."userId"
-    `
-  );
+  // Co-play (PRD 361): one predicate in coPlay.service.ts, never re-derived here.
+  const [coplayRows, blockedUserIds] = await Promise.all([
+    loadCoPlayers(req.userId!),
+    loadBlockedUserIds(req.userId!),
+  ]);
 
-  const gamesTogetherMap = new Map(coplayRows.map((r) => [r.userId, r.count]));
-  const excludedIds = [...new Set([...participantIds, ...busyUserIds, req.userId!])];
+  const coPlayByUserId = new Map(coplayRows.map((r) => [r.userId, r]));
+  const excludedIds = [...new Set([...participantIds, ...busyUserIds, ...blockedUserIds, req.userId!])];
+
+  const decorateUser = (user: Prisma.UserGetPayload<{ select: typeof USER_SELECT_WITH_SPORT_PROFILES }>) => {
+    const coPlay = coPlayByUserId.get(user.id);
+    const withMeta = {
+      ...user,
+      interactionCount: interactionMap.get(user.id) || 0,
+      gamesTogetherCount: coPlay?.gamesTogetherCount ?? 0,
+    };
+    const projected = gameSport
+      ? projectUserForSportContext(withMeta, gameSport, { keepSportProfiles: true })
+      : projectEmbeddedUserByPrimarySport(withMeta, { keepSportProfiles: true });
+    return {
+      ...projected,
+      sportsEnabled: user.sportsEnabled ?? [Sport.PADEL],
+      interactionCount: withMeta.interactionCount,
+      gamesTogetherCount: withMeta.gamesTogetherCount,
+      lastPlayedTogetherAt: coPlay ? coPlay.lastPlayedTogetherAt.toISOString() : null,
+    } as InvitablePlayerRow;
+  };
 
   const loadCityUsers = async (targetCityId: string, take: number, applySqlNameSearch: boolean) => {
     const users = await prisma.user.findMany({
@@ -187,24 +212,26 @@ export const getInvitablePlayers = asyncHandler(async (req: AuthRequest, res: Re
       orderBy: applySqlNameSearch ? [{ firstName: 'asc' }, { lastName: 'asc' }] : undefined,
       take,
     });
-    const mapped = users.map((user) => {
-      const withMeta = {
-        ...user,
-        interactionCount: interactionMap.get(user.id) || 0,
-        gamesTogetherCount: gamesTogetherMap.get(user.id) || 0,
-      };
-      const projected = gameSport
-        ? projectUserForSportContext(withMeta, gameSport, { keepSportProfiles: true })
-        : projectEmbeddedUserByPrimarySport(withMeta, { keepSportProfiles: true });
-      return {
-        ...projected,
-        sportsEnabled: user.sportsEnabled ?? [Sport.PADEL],
-        interactionCount: withMeta.interactionCount,
-        gamesTogetherCount: withMeta.gamesTogetherCount,
-      } as BasicUser & { interactionCount: number; gamesTogetherCount: number; sportsEnabled: Sport[] };
-    });
+    const mapped = users.map(decorateUser);
     mapped.sort((a, b) => b.interactionCount - a.interactionCount);
     return mapped;
+  };
+
+  /**
+   * The ten most recent co-players are part of the answer even when they live
+   * outside the Browse city or fall past the city page size: a regular who
+   * moved is still someone you played with.
+   */
+  const loadTopCoPlayers = async (alreadyLoaded: ReadonlySet<string>) => {
+    const missingIds = pickTopCoPlayerIds(coplayRows, new Set(excludedIds), CO_PLAY_TOP_LIMIT).filter(
+      (id) => !alreadyLoaded.has(id),
+    );
+    if (missingIds.length === 0) return [];
+    const users = await prisma.user.findMany({
+      where: { id: { in: missingIds }, isActive: true },
+      select: USER_SELECT_WITH_SPORT_PROFILES,
+    });
+    return users.map(decorateUser);
   };
 
   const filterByName = <
@@ -223,8 +250,11 @@ export const getInvitablePlayers = asyncHandler(async (req: AuthRequest, res: Re
   ]);
   const mergedById = new Map(loadedCityUsers.map((user) => [user.id, user]));
   for (const user of sqlNameHits) mergedById.set(user.id, user);
-  const usersWithInteractions = filterByName([...mergedById.values()]);
-  usersWithInteractions.sort((a, b) => b.interactionCount - a.interactionCount);
+  for (const user of await loadTopCoPlayers(new Set(mergedById.keys()))) mergedById.set(user.id, user);
+  const usersWithInteractions =
+    searchTerms.length === 0
+      ? rankInvitablePlayers(filterByName([...mergedById.values()]))
+      : filterByName([...mergedById.values()]).sort((a, b) => b.interactionCount - a.interactionCount);
 
   const maxSocialLevel = Math.max(socialAgg._max.socialLevel ?? 1, 1);
 

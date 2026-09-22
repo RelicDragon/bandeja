@@ -40,6 +40,8 @@ export interface UserMetadata {
   chatId?: string;
   interactionCount: number;
   gamesTogetherCount: number;
+  /** ISO time of the most recent finished game played together (PRD 361); null when never. */
+  lastPlayedTogetherAt?: string | null;
   lastInteractionAt?: number;
   isFavorite?: boolean;
   isBlocked?: boolean;
@@ -450,6 +452,7 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
             ...currentState.metadata[player.id],
             interactionCount: player.interactionCount,
             gamesTogetherCount: player.gamesTogetherCount,
+            lastPlayedTogetherAt: player.lastPlayedTogetherAt ?? null,
             lastFetchedAt: now,
           });
         });

@@ -72,6 +72,21 @@ describe('GameQueuePanel', () => {
     expect(render(makeGame(), undefined)).toBe('');
   });
 
+  it('PRD 364: suppresses the open-spot slot when the Next steps block carries it', () => {
+    const html = renderToStaticMarkup(
+      <GameQueuePanel game={makeGame({ spotOpenedAt: FRESH })} viewerUserId="p1" hideOpenSpotRow />,
+    );
+    expect(html).toBe('');
+  });
+
+  it('PRD 364: a queued participant keeps both the position line and the open spot', () => {
+    const html = renderToStaticMarkup(
+      <GameQueuePanel game={makeGame({ spotOpenedAt: FRESH })} viewerUserId="a" hideOpenSpotRow={false} />,
+    );
+    expect(html).toContain('spots.roster.openSpot');
+    expect(html).toContain('queue-position-line');
+  });
+
   it('shows the dashed open-spot slot while a seat is newly free', () => {
     const html = render(makeGame({ spotOpenedAt: FRESH }), 'p1');
     expect(html).toContain('spots.roster.openSpot');

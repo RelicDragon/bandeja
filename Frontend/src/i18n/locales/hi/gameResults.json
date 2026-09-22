@@ -166,7 +166,8 @@
     "shareCardDone": "शेयर हो गया",
     "shareCardFailed": "शेयर नहीं हो सका",
     "shareCardNoSummary": "शानदार सेशन!",
-    "playAgainCta": "फिर से खेलें",
+    "playWithGroupAgainCta": "इसी ग्रुप के साथ फिर खेलें",
+    "playWithGroupAgainCaption": "नया समय चुनें। हम उन्हीं खिलाड़ियों को आमंत्रित करेंगे।",
     "showInStories": {
       "GAME": "इस गेम को मेरी स्टोरीज़ में दिखाएँ",
       "BAR": "इस बार इवेंट को मेरी स्टोरीज़ में दिखाएँ",

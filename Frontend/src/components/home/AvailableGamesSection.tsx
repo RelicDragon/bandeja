@@ -4,7 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { GameCard } from '@/components';
 import { Game } from '@/types';
-import { Filter, ChevronRight, RotateCcw, Grid3X3, Star, SearchX } from 'lucide-react';
+import { Filter, ChevronRight, RotateCcw, Grid3X3, Star } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { useShellNavStore } from '@/store/shellNavStore';
 import { useHeaderStore } from '@/store/headerStore';
 import { format, parse, startOfDay } from 'date-fns';
@@ -31,7 +32,14 @@ import { AnimatedGameList } from './AnimatedGameList';
 import { AnimatedLoadingSwap } from '@/components/motion/AnimatedLoadingSwap';
 import { AnimatedMount } from '@/components/motion/AnimatedMount';
 import { TabContentStack } from '@/components/motion/TabContentStack';
-import { EmptyStateCard } from './EmptyStateCard';
+import { FindRecoveryEmptyState } from './FindRecoveryEmptyState';
+import {
+  FIND_RECOVERY_CLEARED_FILTERS,
+  createGameStartTimeForDay,
+  resolveFindRecoveryActions,
+} from './findRecoveryActions';
+import { useLookingCount } from '@/hooks/useLookingCount';
+import { runWithProfileName } from '@/utils/runWithProfileName';
 import { FindDayLoadErrorEmpty } from './FindDayLoadErrorEmpty';
 import { GamesLoadingSkeleton } from './GameCardSkeleton';
 import { EntityFilterChips, type EntityFilterType } from './EntityFilterChips';
@@ -714,6 +722,66 @@ const AvailableGamesSectionView = ({
     ],
   );
 
+  /*
+   * PRD 363 — Find recovery. The empty state offers a next step instead of a
+   * dead end: create a game on the day the screen is about, clear the filters
+   * that could be hiding games, and (behind the admin flag, from three people
+   * on) how many are looking to play right now, which opens the lobby.
+   */
+  const recoveryActions = useMemo(
+    () =>
+      resolveFindRecoveryActions({
+        view: findViewMode,
+        selectedDay: findSelectedDay,
+        todayKey,
+        filters: {
+          gameFilter: gameFilterVal,
+          trainingFilter: trainingFilterVal,
+          tournamentFilter: tournamentFilterVal,
+          leaguesFilter: leaguesFilterVal,
+          eventsFilter: eventsFilterVal,
+          filterClubIds: filterClubIdsVal,
+          filterTimeStart: filterTimeStartVal,
+          filterTimeEnd: filterTimeEndVal,
+          filterLevelMin: filterLevelMinVal,
+          filterLevelMax: filterLevelMaxVal,
+          filterAvailableSlots: filterAvailableSlotsVal,
+          filterSuitableRating: filterSuitableRatingVal,
+          filterNoRating: filterNoRatingVal,
+          hideBarGames: hideBarGamesVal,
+          filterNoviceFriendly: filterNoviceFriendlyVal,
+          filterSport: filterSportVal,
+        },
+      }),
+    [
+      findViewMode, findSelectedDay, todayKey, gameFilterVal, trainingFilterVal,
+      tournamentFilterVal, leaguesFilterVal, eventsFilterVal, filterClubIdsVal,
+      filterTimeStartVal, filterTimeEndVal, filterLevelMinVal, filterLevelMaxVal,
+      filterAvailableSlotsVal, filterSuitableRatingVal, filterNoRatingVal,
+      hideBarGamesVal, filterNoviceFriendlyVal, filterSportVal,
+    ],
+  );
+  const lookingCount = useLookingCount(user?.currentCity?.id, findLevelSport);
+  const cityName: string | null = user?.currentCity?.name ?? null;
+  const recoveryLooking = useMemo(
+    () => (lookingCount.display && cityName ? { ...lookingCount.display, cityName } : null),
+    [lookingCount.display, cityName],
+  );
+  const handleRecoveryCreate = useCallback(() => {
+    const startTime = createGameStartTimeForDay(recoveryActions.createDay);
+    // Same gate and payload as the header's "+" for a calendar day: only the
+    // date (and the sport Find is scoped to) are set; the wizard does the rest.
+    runWithProfileName(() => {
+      navigate('/create-game', {
+        state: { entityType: 'GAME', initialGameData: { startTime, sport: findLevelSport } },
+      });
+    });
+  }, [recoveryActions.createDay, navigate, findLevelSport]);
+  const handleRecoveryClear = useCallback(() => {
+    onFiltersChange(FIND_RECOVERY_CLEARED_FILTERS);
+    toast.success(t('games.recovery.filtersCleared', { defaultValue: 'Filters cleared' }));
+  }, [onFiltersChange, t]);
+
   const gamesList = (
     <AnimatedGameList
       items={filteredGames}
@@ -856,7 +924,15 @@ const AvailableGamesSectionView = ({
           <FindDayLoadErrorEmpty onRetry={onRetryDay} />
         ) : (
           <>
-            <EmptyStateCard icon={SearchX} title={emptyMessage} />
+            <FindRecoveryEmptyState
+              title={emptyMessage}
+              createDay={recoveryActions.createDay}
+              todayKey={todayKey}
+              canClearFilters={recoveryActions.canClearFilters}
+              onCreate={handleRecoveryCreate}
+              onClearFilters={handleRecoveryClear}
+              looking={recoveryLooking}
+            />
             {loadMoreFooter}
           </>
         )

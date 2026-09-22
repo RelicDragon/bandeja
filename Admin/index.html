@@ -783,6 +783,62 @@
                         </div>
                     </div>
                 </section>
+
+                <!-- PRD 363 — Find looking-to-play count. -->
+                <section class="platform-settings-section" aria-labelledby="platformSettingsLookingCountHeading">
+                    <div class="platform-settings-card">
+                        <h2 id="platformSettingsLookingCountHeading">Find: Looking-to-play Count</h2>
+                        <p class="text-muted">Shows "{n} people are looking to play today" in the Find empty state and on the play-intent strip. The number is hidden below three people, per city and sport, and counts only players with a live intent who are not already seated in a game. Read by the app through <code>GET /api/public/platform-flags</code>; clients pick the change up within five minutes.</p>
+
+                        <div class="platform-settings-meta">
+                            <div class="platform-settings-meta-row">
+                                <span class="platform-settings-meta-label">FIND_LOOKING_COUNT_ENABLED</span>
+                                <code id="lookingCountActive" class="platform-settings-meta-value">—</code>
+                            </div>
+                        </div>
+
+                        <div class="form-group platform-settings-field">
+                            <label for="lookingCountSelect">Looking-to-play count</label>
+                            <select id="lookingCountSelect" class="filter-select platform-settings-select" onchange="updateLookingCountSaveButton()">
+                                <option value="false">Off — no count anywhere on Find</option>
+                                <option value="true">On — count in the Find empty state and strip</option>
+                            </select>
+                        </div>
+
+                        <div class="platform-settings-actions">
+                            <button type="button" class="btn-primary" id="lookingCountSaveBtn" onclick="saveLookingCount()">Save</button>
+                            <span id="lookingCountStatus" class="platform-settings-status" aria-live="polite"></span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- PRD 364 — organizer next actions. -->
+                <section class="platform-settings-section" aria-labelledby="platformSettingsOrganizerNextActionsHeading">
+                    <div class="platform-settings-card">
+                        <h2 id="platformSettingsOrganizerNextActionsHeading">Organizer Next Steps</h2>
+                        <p class="text-muted">Shows the "Next steps" block under the game header for owners and admins, and folds the attendance strip and open-spot row into it. Off keeps those surfaces exactly as before. Read by the app through <code>GET /api/public/platform-flags</code>; clients pick the change up within five minutes.</p>
+
+                        <div class="platform-settings-meta">
+                            <div class="platform-settings-meta-row">
+                                <span class="platform-settings-meta-label">GAME_ORGANIZER_NEXT_ACTIONS_ENABLED</span>
+                                <code id="organizerNextActionsActive" class="platform-settings-meta-value">—</code>
+                            </div>
+                        </div>
+
+                        <div class="form-group platform-settings-field">
+                            <label for="organizerNextActionsSelect">Next steps block</label>
+                            <select id="organizerNextActionsSelect" class="filter-select platform-settings-select" onchange="updateOrganizerNextActionsSaveButton()">
+                                <option value="false">Off — legacy attendance strip and open-spot row</option>
+                                <option value="true">On — Next steps block</option>
+                            </select>
+                        </div>
+
+                        <div class="platform-settings-actions">
+                            <button type="button" class="btn-primary" id="organizerNextActionsSaveBtn" onclick="saveOrganizerNextActions()">Save</button>
+                            <span id="organizerNextActionsStatus" class="platform-settings-status" aria-live="polite"></span>
+                        </div>
+                    </div>
+                </section>
             </div>
 
             <div id="goodsPage" class="content-page">

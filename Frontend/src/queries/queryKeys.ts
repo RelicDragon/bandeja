@@ -207,6 +207,38 @@ export const queryKeys = {
     detail: (monthKey: string) => ['recap', 'detail', monthKey] as const,
   },
   /** PRD 357 — weather alerts for outdoor games. */
+  invitePicker: {
+    all: ['invitePicker'] as const,
+    /** One invite-modal load: players, teams, roster and invite state (PRD 361). `nonce` is per modal open. */
+    bundle: (p: {
+      nonce: number;
+      gameId?: string;
+      cityId?: string;
+      sport?: string;
+      search?: string;
+      slotStart?: string | null;
+      slotEnd?: string | null;
+      trainerOnly: boolean;
+      filterIdsKey: string;
+    }) =>
+      [
+        'invitePicker',
+        'bundle',
+        p.nonce,
+        p.gameId ?? '',
+        p.cityId ?? '',
+        p.sport ?? '',
+        p.search ?? '',
+        p.slotStart ?? '',
+        p.slotEnd ?? '',
+        p.trainerOnly ? '1' : '0',
+        p.filterIdsKey,
+      ] as const,
+  },
+  /** PRD 363 / 364 — `GET /public/platform-flags`, one entry per session. */
+  platformFlags: {
+    all: ['platformFlags'] as const,
+  },
   weatherAlerts: {
     all: ['weatherAlerts'] as const,
     game: (gameId: string) => ['weatherAlerts', 'game', gameId] as const,

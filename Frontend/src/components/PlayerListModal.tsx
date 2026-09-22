@@ -1,20 +1,19 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
-import { ChevronDown, ChevronUp, RotateCcw, UserPlus } from 'lucide-react';
+import { ChevronDown, ChevronUp, History, MapPin, RotateCcw, UserPlus } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useDebounce } from '@/components/CityMap/useDebounce';
-import { BasicUser, UserTeam, GameParticipant } from '@/types';
+import { BasicUser, UserTeam } from '@/types';
 import { invitesApi } from '@/api';
-import { userTeamsApi } from '@/api/userTeams';
-import { gamesApi } from '@/api/games';
 import { usersApi } from '@/api/users';
+import { queryKeys } from '@/queries/queryKeys';
 import { useAuthStore } from '@/store/authStore';
 import { runWithProfileName } from '@/utils/runWithProfileName';
 import { genderAddBlockReason } from '@/utils/genderJoinGate';
 import { Button } from './Button';
 import { useFavoritesStore } from '@/store/favoritesStore';
 import { usePlayersStore } from '@/store/playersStore';
-import { useUserTeamsStore } from '@/store/userTeamsStore';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 import { PlayerListFilterBar } from '@/components/PlayerListFilterBar';
 import {
@@ -26,13 +25,14 @@ import {
 import {
   expandSelectionToPlayerIds,
   filterAndSortInviteEntries,
+  groupInviteEntries,
   invitePreFilterCount,
-  mergeUserTeamsForInviteList,
   teamGamesTogetherScore,
-  teamIsFullyInvitable,
-  isUserTeamReady,
   type InviteListEntry,
 } from '@/components/playerInvite/inviteEntries';
+import { buildInviteListRows, isInviteListHeaderRow, type InviteListRow } from '@/components/playerInvite/inviteListRows';
+import { loadInviteBundle } from '@/components/playerInvite/loadInviteBundle';
+import { PlayerInviteGroupHeader } from '@/components/playerInvite/PlayerInviteGroupHeader';
 import { PlayerListItem } from '@/components/PlayerListItem';
 import { TeamListItem } from '@/components/playerInvite/TeamListItem';
 import { PlayerInviteVirtualList } from '@/components/playerInvite/PlayerInviteVirtualList';
@@ -48,7 +48,6 @@ import {
   matchTeamToSlots,
   type GameAvailabilityMatch,
 } from '@/utils/availability/gameMatch';
-import { participantBlocksInvitePlayerPicker } from '@/utils/gameInviteParticipant';
 import type { GameInviteOutcome, GenderTeam, Sport } from '@/types';
 import { PlayerInviteSportFilterChips } from '@/components/playerInvite/PlayerInviteSportFilterChips';
 import {
@@ -70,6 +69,10 @@ import {
   lookingSelectionAfterPoolChange,
   type PlayerInviteLookingDraft,
 } from '@/components/playerInvite/lookingTypes';
+
+/** A bundle is fresh for the life of one modal open; the per-open nonce keeps a later open honest. */
+const INVITE_BUNDLE_STALE_MS = 5 * 60 * 1000;
+const INVITE_BUNDLE_GC_MS = 5 * 60 * 1000;
 
 export interface PlayerListModalConfirmMeta {
   userTeamIdByReceiverId?: Record<string, string>;
@@ -122,6 +125,8 @@ export const PlayerListModal = ({
   entityType,
 }: PlayerListModalProps) => {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
+  const [inviteSessionNonce] = useState(() => Date.now());
   const authUser = useAuthStore((s) => s.user);
   const browseCity = useResolvedBrowseCity();
   const browseRecents = useBrowseCityStore((s) => s.recents);
@@ -303,112 +308,56 @@ export const PlayerListModal = ({
 
   useEffect(() => {
     let cancelled = false;
+    // Keep list mounted for search refinements and clear — only first open shows spinner.
+    const backgroundReload = hasLoadedPlayersRef.current;
+    if (!backgroundReload) setLoading(true);
+    if (!backgroundReload && !inviteAsTrainerOnly) setCanInviteAsTrainer(false);
+    const filterIds = filterPlayerIdsRef.current;
+    const slot =
+      !gameId && gameTiming?.timeIsSet && gameTiming.startTime && gameTiming.endTime
+        ? { startTime: gameTiming.startTime, endTime: gameTiming.endTime }
+        : undefined;
 
-    const loadPlayers = async () => {
-      // Keep list mounted for search refinements and clear — only first open shows spinner.
-      const backgroundReload = hasLoadedPlayersRef.current;
-      if (!backgroundReload) setLoading(true);
-      if (!backgroundReload && !inviteAsTrainerOnly) setCanInviteAsTrainer(false);
-      const filterIds = filterPlayerIdsRef.current;
-      try {
-        const fetchedPlayers = await usePlayersStore.getState().fetchPlayers(
+    // Cached per (open, game, Browse city, sport, query): clearing the search restores
+    // the grouped zero-query state from cache, without a refetch (PRD 361).
+    queryClient
+      .fetchQuery({
+        queryKey: queryKeys.invitePicker.bundle({
+          nonce: inviteSessionNonce,
           gameId,
-          gameSport,
-          serverSearchQuery,
-          !gameId && gameTiming?.timeIsSet && gameTiming.startTime && gameTiming.endTime
-            ? { startTime: gameTiming.startTime, endTime: gameTiming.endTime }
-            : undefined,
-          {
+          cityId: browseCity.cityId,
+          sport: gameSport,
+          search: serverSearchQuery,
+          slotStart: slot?.startTime ?? null,
+          slotEnd: slot?.endTime ?? null,
+          trainerOnly: inviteAsTrainerOnly,
+          filterIdsKey: filterPlayerIdsKey,
+        }),
+        queryFn: () =>
+          loadInviteBundle({
+            gameId,
+            gameSport,
+            serverSearchQuery,
+            slot,
             cityId: browseCity.cityId,
-            expandNearby: Boolean(serverSearchQuery),
-          },
-        );
-        const [inviteTeams] = await Promise.all([
-          userTeamsApi.getForPlayerInvite({ gameId, sport: gameSport }).catch(() => [] as UserTeam[]),
-          useUserTeamsStore.getState().refreshAll(),
-        ]);
-        const { teams, memberships } = useUserTeamsStore.getState();
-        const storeTeams = mergeUserTeamsForInviteList(teams, memberships);
-        const mergedTeamMap = new Map<string, UserTeam>();
-        for (const t of inviteTeams) mergedTeamMap.set(t.id, t);
-        for (const t of storeTeams) if (!mergedTeamMap.has(t.id)) mergedTeamMap.set(t.id, t);
-        const merged = [...mergedTeamMap.values()];
-
-        const [gameResponse, invitesResponse] = await Promise.allSettled([
-          gameId ? gamesApi.getById(gameId) : Promise.resolve(null),
-          gameId ? invitesApi.getGameInvites(gameId).catch(() => ({ data: [] })) : Promise.resolve({ data: [] }),
-        ]);
-
+            filterPlayerIds: filterIds,
+            inviteAsTrainerOnly,
+          }),
+        staleTime: INVITE_BUNDLE_STALE_MS,
+        gcTime: INVITE_BUNDLE_GC_MS,
+        retry: false,
+      })
+      .then((bundle) => {
         if (cancelled) return;
-
-        const participantIds = new Set<string>();
-        const invitedUserIds = new Set<string>();
-
-        if (gameId && gameResponse.status === 'fulfilled' && gameResponse.value?.data) {
-          const gameData = gameResponse.value.data;
-          const participants = gameData.participants;
-          if (Array.isArray(participants)) {
-            (participants as GameParticipant[]).forEach((p) => {
-              if (participantBlocksInvitePlayerPicker(p)) participantIds.add(p.userId);
-            });
-            setInvitePickerOutcomes(
-              Array.isArray(gameData.inviteOutcomes) ? (gameData.inviteOutcomes as GameInviteOutcome[]) : [],
-            );
-          } else {
-            setInvitePickerOutcomes([]);
-          }
-          if (!inviteAsTrainerOnly && gameData.entityType === 'TRAINING' && !gameData.trainerId) {
-            setCanInviteAsTrainer(true);
-          }
-          setFetchedGameContext({
-            timeIsSet: gameData.timeIsSet === true,
-            startTime: gameData.startTime,
-            endTime: gameData.endTime,
-            timeZone: gameData.club?.city?.timezone ?? gameData.city?.timezone ?? null,
-          });
-        } else {
-          setInvitePickerOutcomes([]);
-          setFetchedGameContext(null);
-        }
-
-        if (gameId && invitesResponse.status === 'fulfilled' && invitesResponse.value?.data) {
-          const invites = invitesResponse.value.data;
-          if (Array.isArray(invites)) {
-            invites.forEach((invite: { status?: string; receiverId?: string }) => {
-              if (invite.status === 'PENDING' && invite.receiverId) {
-                invitedUserIds.add(invite.receiverId);
-              }
-            });
-          }
-        }
-
-        const busyUserIds =
-          'busyUserIds' in fetchedPlayers && Array.isArray(fetchedPlayers.busyUserIds)
-            ? fetchedPlayers.busyUserIds
-            : [];
-        const busySet = new Set(busyUserIds);
-        const blockedIds = new Set([...participantIds, ...invitedUserIds, ...busySet]);
-        const filtered = fetchedPlayers.filter((player) => !blockedIds.has(player.id));
         hasLoadedPlayersRef.current = true;
-        setPlayers(filtered);
-        setNearbyGroups(
-          serverSearchQuery && filtered.length === 0
-            ? (fetchedPlayers.nearby ?? [])
-                .map((group) => ({
-                  ...group,
-                  players: group.players.filter((player) => !blockedIds.has(player.id)),
-                }))
-                .filter((group) => group.players.length > 0)
-            : [],
-        );
-
-        const invitableTeams = merged.filter(
-          (team) =>
-            isUserTeamReady(team) &&
-            teamIsFullyInvitable(team, participantIds, invitedUserIds, [...filterIds, ...busyUserIds]),
-        );
-        setReadyTeams(invitableTeams);
-      } catch {
+        setPlayers(bundle.players);
+        setNearbyGroups(bundle.nearbyGroups);
+        setReadyTeams(bundle.readyTeams);
+        setInvitePickerOutcomes(bundle.inviteOutcomes);
+        setFetchedGameContext(bundle.gameContext);
+        if (bundle.trainerSeatOpen) setCanInviteAsTrainer(true);
+      })
+      .catch(() => {
         if (cancelled) return;
         hasLoadedPlayersRef.current = true;
         setPlayers([]);
@@ -417,16 +366,27 @@ export const PlayerListModal = ({
         setInvitePickerOutcomes([]);
         setFetchedGameContext(null);
         toast.error(tRef.current('errors.generic'));
-      } finally {
+      })
+      .finally(() => {
         if (!cancelled && !backgroundReload) setLoading(false);
-      }
-    };
+      });
 
-    loadPlayers();
     return () => {
       cancelled = true;
     };
-  }, [browseCity.cityId, gameId, gameSport, inviteAsTrainerOnly, filterPlayerIdsKey, serverSearchQuery, gameTiming?.timeIsSet, gameTiming?.startTime, gameTiming?.endTime]);
+  }, [
+    queryClient,
+    inviteSessionNonce,
+    browseCity.cityId,
+    gameId,
+    gameSport,
+    inviteAsTrainerOnly,
+    filterPlayerIdsKey,
+    serverSearchQuery,
+    gameTiming?.timeIsSet,
+    gameTiming?.startTime,
+    gameTiming?.endTime,
+  ]);
 
   const effectiveGameContext: GameAvailabilityContext | null = gameTiming ?? fetchedGameContext;
   const ctxTimeIsSet = effectiveGameContext?.timeIsSet ?? false;
@@ -523,6 +483,33 @@ export const PlayerListModal = ({
     if (!listSegmentTeams) e = e.filter((x) => x.kind !== 'team');
     return e;
   }, [baseFilteredEntries, showTeams, listSegmentUsers, listSegmentTeams]);
+
+  const groupedEntries = useMemo(
+    () =>
+      groupInviteEntries(segmentFilteredEntries, {
+        query: searchQuery,
+        gameSport,
+        getUserMetadata,
+      }),
+    [segmentFilteredEntries, searchQuery, gameSport, getUserMetadata],
+  );
+
+  const playedWithIds = useMemo(
+    () => new Set(groupedEntries.playedWith.map((entry) => entry.id)),
+    [groupedEntries.playedWith],
+  );
+
+  const listRows = useMemo<InviteListRow[]>(
+    () =>
+      buildInviteListRows(groupedEntries, {
+        playedWith: t('playerInvite.groupPlayedWith'),
+        everyone:
+          browseCity.hasCity && browseCity.name
+            ? t('playerInvite.groupEveryoneIn', { city: browseCity.name })
+            : t('playerInvite.groupEveryone'),
+      }),
+    [groupedEntries, t, browseCity.hasCity, browseCity.name],
+  );
 
   const filteredNearbyGroups = useMemo(() => {
     return nearbyGroups
@@ -774,6 +761,9 @@ export const PlayerListModal = ({
           inviteTerminalMain={term?.main}
           inviteTerminalSub={term?.sub}
           levelSport={gameSport}
+          lastPlayedTogetherAt={
+            playedWithIds.has(entry.id) ? getUserMetadata(entry.user.id)?.lastPlayedTogetherAt ?? null : null
+          }
         />
       );
     }
@@ -788,6 +778,19 @@ export const PlayerListModal = ({
         projectedPlayers={players}
       />
     );
+  };
+
+  const renderRow = (row: InviteListRow) => {
+    if (isInviteListHeaderRow(row)) {
+      return (
+        <PlayerInviteGroupHeader
+          label={row.label}
+          count={row.count}
+          icon={row.id === 'played-with' ? History : MapPin}
+        />
+      );
+    }
+    return renderEntry(row);
   };
 
   return (
@@ -939,8 +942,8 @@ export const PlayerListModal = ({
                 )
               ) : (
                 <PlayerInviteVirtualList
-                  entries={segmentFilteredEntries}
-                  renderEntry={renderEntry}
+                  rows={listRows}
+                  renderRow={renderRow}
                   className={`min-h-0 flex-1 overflow-y-auto scrollbar-auto px-2.5 ${
                     showCountHint ? 'pb-28' : 'pb-20'
                   }`}

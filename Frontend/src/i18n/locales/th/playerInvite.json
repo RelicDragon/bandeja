@@ -37,6 +37,12 @@
     "alreadyInMatch": "พวกเขาอยู่ในการแข่งขันแล้ว",
     "lookingLoadError": "ไม่สามารถโหลดได้ว่าใครกำลังค้นหาอยู่",
     "lookingLoadErrorHint": "ใช้การค้นหาหรือลองอีกครั้ง",
-    "lookingRetry": "ลองอีกครั้ง"
+    "lookingRetry": "ลองอีกครั้ง",
+    "groupPlayedWith": "เคยเล่นด้วยกัน",
+    "groupEveryoneIn": "ทุกคนใน {{city}}",
+    "groupEveryone": "ทุกคน",
+    "playedTogetherCaption": "เล่นด้วยกัน{{when}} · {{games}}",
+    "gamesCount_one": "{{count}} เกม",
+    "gamesCount_other": "{{count}} เกม"
   }
 }

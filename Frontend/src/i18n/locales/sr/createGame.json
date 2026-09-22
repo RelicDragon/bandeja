@@ -1,5 +1,12 @@
 {
   "createGame": {
+    "rematch": {
+      "title_one": "Ponovo igramo sa {{count}} igračem",
+      "title_few": "Ponovo igramo sa {{count}} igrača",
+      "title_other": "Ponovo igramo sa {{count}} igrača",
+      "titleNoInvitees": "Igramo ponovo",
+      "hint": "Format i podešavanja su preuzeti iz {{name}}. Izaberi novi datum, vreme i teren. Pozivnice se šalju kada napraviš igru."
+    },
     "title": "Kreiraj igru",
     "identity": {
       "label": "Naziv i fotografija",

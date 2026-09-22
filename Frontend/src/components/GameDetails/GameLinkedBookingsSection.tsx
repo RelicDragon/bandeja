@@ -33,7 +33,7 @@ export function GameLinkedBookingsSection({ game, courts, clubs, onGameUpdate }:
   if (linkCount === 0 || !showOwnerSection) return null;
 
   return (
-    <Card className="!p-0 overflow-hidden">
+    <Card className="!p-0 overflow-hidden" id="game-linked-bookings">
       <button
         type="button"
         onClick={() => setIsExpanded((prev) => !prev)}

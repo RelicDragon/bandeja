@@ -55,4 +55,16 @@ describe('entityCapabilities', () => {
       expect(getEntityCapabilities(entityType).hasNoviceTag).toBe(false);
     }
   });
+
+  // PRD 362 — "Play with this group again" copies a format and invites the old
+  // roster. That only makes sense where one participant sets up the next
+  // session; a league schedules its own fixtures and an EVENT is a listing.
+  it('offers a rematch exactly to GAME, TOURNAMENT, TRAINING and BAR', () => {
+    for (const entityType of ['GAME', 'TOURNAMENT', 'TRAINING', 'BAR'] as const) {
+      expect(getEntityCapabilities(entityType).canRematch).toBe(true);
+    }
+    for (const entityType of ['LEAGUE', 'LEAGUE_SEASON', 'EVENT'] as const) {
+      expect(getEntityCapabilities(entityType).canRematch).toBe(false);
+    }
+  });
 });

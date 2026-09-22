@@ -12,6 +12,11 @@ import { hasOpenSpotHighlight } from './spotOpenedWindow';
 export interface GameQueuePanelProps {
   game: Game;
   viewerUserId: string | undefined;
+  /**
+   * PRD 364 — the organizer's "Next steps" block already states the open seat,
+   * so the dashed row is suppressed for them. Participants keep it. Default `false`.
+   */
+  hideOpenSpotRow?: boolean;
 }
 
 /**
@@ -25,13 +30,14 @@ export interface GameQueuePanelProps {
  * shows a dashed "Open spot" row that fades in over 400 ms (instantly under
  * reduced motion).
  */
-export function GameQueuePanel({ game, viewerUserId }: GameQueuePanelProps) {
+export function GameQueuePanel({ game, viewerUserId, hideOpenSpotRow = false }: GameQueuePanelProps) {
   const { t } = useTranslation();
   const reduceMotion = usePrefersReducedMotion();
 
   const queue = readQueueState(game, viewerUserId);
   const rosterMutable = canMutateGameRoster(game);
-  const showOpenSpot = rosterMutable && queue.openSeats > 0 && hasOpenSpotHighlight(game);
+  const showOpenSpot =
+    !hideOpenSpotRow && rosterMutable && queue.openSeats > 0 && hasOpenSpotHighlight(game);
   const showQueueLine = rosterMutable && queue.viewerPosition !== null;
 
   if (!showQueueLine && !showOpenSpot) return null;

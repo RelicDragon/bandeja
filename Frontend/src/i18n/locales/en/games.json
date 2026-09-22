@@ -283,6 +283,17 @@
     "alreadyInJoinQueue_female": "Already in join queue",
     "noviceFriendly": "Novices welcome",
     "filterNoviceOnly": "Novices welcome only",
-    "filterNoviceOnlyHint": "Show only games that welcome newer players"
+    "filterNoviceOnlyHint": "Show only games that welcome newer players",
+    "recovery": {
+      "createToday": "Create a game today",
+      "createTomorrow": "Create a game tomorrow",
+      "createOn": "Create a game on {{day}}",
+      "clearFilters": "Clear filters",
+      "filtersCleared": "Filters cleared",
+      "lookingToday_one": "{{count}} person is looking to play today in {{city}}",
+      "lookingToday_other": "{{count}} people are looking to play today in {{city}}",
+      "lookingTodayAndTomorrow_one": "{{count}} person is looking to play today and tomorrow in {{city}}",
+      "lookingTodayAndTomorrow_other": "{{count}} people are looking to play today and tomorrow in {{city}}"
+    }
   }
 }

@@ -41,6 +41,16 @@
     "gamesTogetherBadge_zero": "0 معاً",
     "gamesTogetherBadge_two": "{{count}} معاً",
     "gamesTogetherBadge_few": "{{count}} معاً",
-    "gamesTogetherBadge_many": "{{count}} معاً"
+    "gamesTogetherBadge_many": "{{count}} معاً",
+    "groupPlayedWith": "لعبت معهم",
+    "groupEveryoneIn": "الجميع في {{city}}",
+    "groupEveryone": "الجميع",
+    "playedTogetherCaption": "لعبتما معاً {{when}} · {{games}}",
+    "gamesCount_zero": "0 مباريات",
+    "gamesCount_one": "مباراة واحدة",
+    "gamesCount_two": "مباراتان",
+    "gamesCount_few": "{{count}} مباريات",
+    "gamesCount_many": "{{count}} مباراة",
+    "gamesCount_other": "{{count}} مباراة"
   }
 }

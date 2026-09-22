@@ -278,6 +278,17 @@
     "alreadyInJoinQueue_female": "すでに参加キューにいます",
     "noviceFriendly": "新人歓迎",
     "filterNoviceOnly": "新人歓迎のみ",
-    "filterNoviceOnlyHint": "新しいプレイヤーを歓迎する試合だけを表示"
+    "filterNoviceOnlyHint": "新しいプレイヤーを歓迎する試合だけを表示",
+    "recovery": {
+      "createToday": "今日の試合を作成",
+      "createTomorrow": "明日の試合を作成",
+      "createOn": "{{day}}の試合を作成",
+      "clearFilters": "フィルターを解除",
+      "filtersCleared": "フィルターを解除しました",
+      "lookingToday_one": "{{city}}で今日 {{count}} 人がプレー相手を探しています",
+      "lookingToday_other": "{{city}}で今日 {{count}} 人がプレー相手を探しています",
+      "lookingTodayAndTomorrow_one": "{{city}}で今日と明日 {{count}} 人がプレー相手を探しています",
+      "lookingTodayAndTomorrow_other": "{{city}}で今日と明日 {{count}} 人がプレー相手を探しています"
+    }
   }
 }

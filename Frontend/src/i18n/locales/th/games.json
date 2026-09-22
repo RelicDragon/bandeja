@@ -278,6 +278,17 @@
     "alreadyInJoinQueue_female": "อยู่ในคิวเข้าร่วมแล้ว",
     "noviceFriendly": "ต้อนรับผู้เล่นใหม่",
     "filterNoviceOnly": "เฉพาะที่ต้อนรับผู้เล่นใหม่",
-    "filterNoviceOnlyHint": "แสดงเฉพาะเกมที่ต้อนรับผู้เล่นใหม่"
+    "filterNoviceOnlyHint": "แสดงเฉพาะเกมที่ต้อนรับผู้เล่นใหม่",
+    "recovery": {
+      "createToday": "สร้างเกมวันนี้",
+      "createTomorrow": "สร้างเกมพรุ่งนี้",
+      "createOn": "สร้างเกมวันที่ {{day}}",
+      "clearFilters": "ล้างตัวกรอง",
+      "filtersCleared": "ล้างตัวกรองแล้ว",
+      "lookingToday_one": "มี {{count}} คนอยากเล่นวันนี้ใน{{city}}",
+      "lookingToday_other": "มี {{count}} คนอยากเล่นวันนี้ใน{{city}}",
+      "lookingTodayAndTomorrow_one": "มี {{count}} คนอยากเล่นวันนี้และพรุ่งนี้ใน{{city}}",
+      "lookingTodayAndTomorrow_other": "มี {{count}} คนอยากเล่นวันนี้และพรุ่งนี้ใน{{city}}"
+    }
   }
 }

@@ -138,6 +138,10 @@
     "matchingGameAskCta": "Minta untuk bergabung",
     "matchingGameTimeClub": "{{time}} · {{club}}",
     "matchingGameTimeOnly": "{{time}}",
-    "matchingGameNoClub": "Tempat yang akan ditetapkan"
+    "matchingGameNoClub": "Tempat yang akan ditetapkan",
+    "lookingCountToday_one": "{{count}} mencari permainan hari ini",
+    "lookingCountToday_other": "{{count}} mencari permainan hari ini",
+    "lookingCountTodayAndTomorrow_one": "{{count}} mencari permainan hari ini dan besok",
+    "lookingCountTodayAndTomorrow_other": "{{count}} mencari permainan hari ini dan besok"
   }
 }

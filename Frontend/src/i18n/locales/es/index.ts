@@ -63,6 +63,7 @@ import wallet from './wallet.json';
 import welcome from './welcome.json';
 import weather from './weather.json';
 import weatherAlerts from './weatherAlerts.json';
+import organizerNextActions from './organizerNextActions.json';
 import stories from './stories.json';
 import sportQuestionnaireCommon from './sportQuestionnaire/common.json';
 import sportQuestionnairePadel from './sportQuestionnaire/padel.json';
@@ -138,6 +139,7 @@ export default {
     ...welcome,
     ...weather,
     ...weatherAlerts,
+    ...organizerNextActions,
     ...stories,
     sportQuestionnaire: {
         common: sportQuestionnaireCommon,

@@ -40,3 +40,12 @@ export function usePlayIntentContext(): PlayIntentCtx {
   if (!ctx) throw new Error('PlayIntent UI must be inside PlayIntentProvider');
   return ctx;
 }
+
+/**
+ * Same context, but `null` outside a provider. For surfaces that are useful
+ * on their own and only gain a play-intent action when one is available —
+ * the Find recovery empty state (PRD 363) is one.
+ */
+export function useOptionalPlayIntentContext(): PlayIntentCtx | null {
+  return useContext(PlayIntentUiContext);
+}

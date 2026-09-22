@@ -553,7 +553,7 @@ export const GameParticipants = ({
           </div>
         )}
         {!isUnauthorized && computedJoinQueues.length > 0 && (
-          <div className="mt-4">
+          <div className="mt-4" id="game-join-queue">
             <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               {t('games.joinQueue', { defaultValue: 'Join Queue' })}
             </h3>

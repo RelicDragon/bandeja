@@ -146,6 +146,14 @@
     "matchingGameAskCta": "Požádat o vstup",
     "matchingGameTimeClub": "{{time}} · {{club}}",
     "matchingGameTimeOnly": "{{time}}",
-    "matchingGameNoClub": "Místo zatím není"
+    "matchingGameNoClub": "Místo zatím není",
+    "lookingCountToday_one": "{{count}} hledá hru dnes",
+    "lookingCountToday_few": "{{count}} hledají hru dnes",
+    "lookingCountToday_many": "{{count}} hledá hru dnes",
+    "lookingCountToday_other": "{{count}} hledá hru dnes",
+    "lookingCountTodayAndTomorrow_one": "{{count}} hledá hru dnes a zítra",
+    "lookingCountTodayAndTomorrow_few": "{{count}} hledají hru dnes a zítra",
+    "lookingCountTodayAndTomorrow_many": "{{count}} hledá hru dnes a zítra",
+    "lookingCountTodayAndTomorrow_other": "{{count}} hledá hru dnes a zítra"
   }
 }

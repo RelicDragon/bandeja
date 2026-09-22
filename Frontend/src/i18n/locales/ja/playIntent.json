@@ -138,6 +138,10 @@
     "matchingGameAskCta": "参加を依頼",
     "matchingGameTimeClub": "{{time}} · {{club}}",
     "matchingGameTimeOnly": "{{time}}",
-    "matchingGameNoClub": "場所は未定"
+    "matchingGameNoClub": "場所は未定",
+    "lookingCountToday_one": "{{count}} 人が今日探しています",
+    "lookingCountToday_other": "{{count}} 人が今日探しています",
+    "lookingCountTodayAndTomorrow_one": "{{count}} 人が今日と明日探しています",
+    "lookingCountTodayAndTomorrow_other": "{{count}} 人が今日と明日探しています"
   }
 }

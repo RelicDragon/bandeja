@@ -1,0 +1,36 @@
+{
+  "organizerNextActions": {
+    "title": "Další kroky",
+    "more_one": "+{{count}} další",
+    "more_few": "+{{count}} další",
+    "more_many": "+{{count}} dalších",
+    "more_other": "+{{count}} dalších",
+    "less": "Zobrazit méně",
+    "seats": {
+      "needed_one": "Chybí {{count}} hráč",
+      "needed_few": "Chybí {{count}} hráči",
+      "needed_many": "Chybí {{count}} hráče",
+      "needed_other": "Chybí {{count}} hráčů",
+      "waiting_one": "{{count}} čeká",
+      "waiting_few": "{{count}} čekají",
+      "waiting_many": "{{count}} čeká",
+      "waiting_other": "{{count}} čeká",
+      "reviewQueue": "Zkontrolovat frontu",
+      "invite": "Pozvat"
+    },
+    "booking": {
+      "notBooked": "Kurt ještě není rezervovaný",
+      "partlyBooked": "Kurt je rezervovaný jen částečně",
+      "seeBookings": "Zobrazit rezervace",
+      "editCourt": "Upravit kurt"
+    },
+    "cost": {
+      "unpaid_one": "{{count}} ještě nezaplatil",
+      "unpaid_few": "{{count}} ještě nezaplatili",
+      "unpaid_many": "{{count}} ještě nezaplatilo",
+      "unpaid_other": "{{count}} ještě nezaplatilo",
+      "settle": "Zaplatit",
+      "review": "Zkontrolovat"
+    }
+  }
+}

@@ -212,6 +212,8 @@ export interface PlayerComparison {
 export interface InvitablePlayer extends BasicUser {
   interactionCount: number;
   gamesTogetherCount: number;
+  /** ISO time of the most recent finished game played together (PRD 361); null when never. */
+  lastPlayedTogetherAt?: string | null;
 }
 
 export interface NearbyInvitableCity {

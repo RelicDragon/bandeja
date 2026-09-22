@@ -62,6 +62,7 @@ import onboardingRoutes from './onboarding.routes';
 import recapRoutes from './recap.routes';
 import referralRoutes from './referral.routes';
 import publicReferralRoutes from './publicReferral.routes';
+import publicPlatformFlagsRoutes from './publicPlatformFlags.routes';
 import pairRankingRoutes from './pairRanking.routes';
 import clubPublicRoutes from './clubPublic.routes';
 import shopRoutes from './shop.routes';
@@ -172,6 +173,7 @@ router.use('/series', seriesRoutes); // PRD 345
 router.use('/live', liveGamesRoutes); // PRD 349
 router.use('/referrals', referralRoutes); // PRD 351
 router.use('/public/referral', publicReferralRoutes); // PRD 351
+router.use('/public/platform-flags', publicPlatformFlagsRoutes); // PRD 363 / 364
 router.use('/shop', shopRoutes); // PRD 355
 
 export default router;

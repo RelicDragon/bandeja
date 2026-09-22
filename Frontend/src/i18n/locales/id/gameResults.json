@@ -166,7 +166,8 @@
     "shareCardDone": "Dibagikan",
     "shareCardFailed": "Tidak dapat berbagi",
     "shareCardNoSummary": "Sesi yang bagus!",
-    "playAgainCta": "Mainkan lagi",
+    "playWithGroupAgainCta": "Main lagi dengan grup ini",
+    "playWithGroupAgainCaption": "Pilih waktu baru. Kami akan mengundang pemain yang sama.",
     "showInStories": {
       "GAME": "Tunjukkan game ini di cerita saya",
       "BAR": "Tampilkan acara bar ini di cerita saya",

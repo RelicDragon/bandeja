@@ -166,7 +166,8 @@
     "shareCardDone": "シェアしました",
     "shareCardFailed": "シェアできませんでした",
     "shareCardNoSummary": "いい試合でした！",
-    "playAgainCta": "もう一度プレイ",
+    "playWithGroupAgainCta": "このメンバーでもう一度プレイ",
+    "playWithGroupAgainCaption": "新しい時間を選んでください。同じプレイヤーを招待します。",
     "showInStories": {
       "GAME": "この試合をストーリーに表示",
       "BAR": "このBarイベントをストーリーに表示",

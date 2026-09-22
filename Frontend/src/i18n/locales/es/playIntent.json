@@ -138,6 +138,10 @@
     "matchingGameAskCta": "Pedir unirme",
     "matchingGameTimeClub": "{{time}} · {{club}}",
     "matchingGameTimeOnly": "{{time}}",
-    "matchingGameNoClub": "Lugar por definir"
+    "matchingGameNoClub": "Lugar por definir",
+    "lookingCountToday_one": "{{count}} buscando jugar hoy",
+    "lookingCountToday_other": "{{count}} buscando jugar hoy",
+    "lookingCountTodayAndTomorrow_one": "{{count}} buscando jugar hoy y mañana",
+    "lookingCountTodayAndTomorrow_other": "{{count}} buscando jugar hoy y mañana"
   }
 }

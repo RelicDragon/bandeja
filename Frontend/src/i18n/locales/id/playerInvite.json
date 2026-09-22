@@ -37,6 +37,12 @@
     "alreadyInMatch": "Mereka sudah dalam pertandingan",
     "lookingLoadError": "Tidak dapat memuat siapa yang sedang mencari",
     "lookingLoadErrorHint": "Gunakan Cari, atau coba lagi",
-    "lookingRetry": "Coba lagi"
+    "lookingRetry": "Coba lagi",
+    "groupPlayedWith": "Pernah bermain bersama",
+    "groupEveryoneIn": "Semua orang di {{city}}",
+    "groupEveryone": "Semua orang",
+    "playedTogetherCaption": "Bermain bersama {{when}} · {{games}}",
+    "gamesCount_one": "{{count}} permainan",
+    "gamesCount_other": "{{count}} permainan"
   }
 }

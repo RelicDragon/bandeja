@@ -278,6 +278,17 @@
     "alreadyInJoinQueue_female": "Sudah dalam antrian bergabung",
     "noviceFriendly": "Pemain baru disambut",
     "filterNoviceOnly": "Hanya yang menyambut pemain baru",
-    "filterNoviceOnlyHint": "Tampilkan hanya permainan yang menyambut pemain baru"
+    "filterNoviceOnlyHint": "Tampilkan hanya permainan yang menyambut pemain baru",
+    "recovery": {
+      "createToday": "Buat permainan hari ini",
+      "createTomorrow": "Buat permainan besok",
+      "createOn": "Buat permainan pada {{day}}",
+      "clearFilters": "Hapus filter",
+      "filtersCleared": "Filter dihapus",
+      "lookingToday_one": "{{count}} orang ingin bermain hari ini di {{city}}",
+      "lookingToday_other": "{{count}} orang ingin bermain hari ini di {{city}}",
+      "lookingTodayAndTomorrow_one": "{{count}} orang ingin bermain hari ini dan besok di {{city}}",
+      "lookingTodayAndTomorrow_other": "{{count}} orang ingin bermain hari ini dan besok di {{city}}"
+    }
   }
 }

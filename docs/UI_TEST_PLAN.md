@@ -569,6 +569,12 @@ Push: `PN-RC-01`–`PN-RC-03` in §18.8. Archive: `PR-RC-01`–`PR-RC-05` in §1
 | F-102 | Empty title under a shortcut | Shortcut active with no matching games | Empty state reads "No games tomorrow" / "No games this weekend"; entity-specific titles (Training, Tournaments, Leagues, Events chips alone) are unchanged |
 | F-103 | `?quick=` deep link | Open `/find?quick=tomorrow` (also `weekend`) | Find opens already scoped, the shortcut highlighted, and the URL is rewritten without `quick`; an unknown value is ignored |
 | F-104 | Shortcuts RTL and locales | App language العربية, then each of the 11 locales | Row reads right-to-left with Arrow keys mirrored; no label wraps to a second line (the row scrolls sideways if a label is long) |
+| F-105 | Empty day → create (PRD 363) | Find calendar on a day with no games (375 pt phone) | Empty card shows the title plus a full-width primary **Create a game today / tomorrow / on {Thu 24 Sep}** naming the selected day; tapping it opens the create flow with only that date (and Find's sport) prefilled; a past empty day offers today, never a past date; list view offers tomorrow |
+| F-106 | Filtered-empty → clear | Set any narrowing filter (entity chip, club, time window, level range, slots, suitable rating, no-rating, hide bars, novices only, or a non-primary sport) so the day is empty | A secondary outline **Clear filters** appears under Create; tapping it resets exactly those filters, keeps the day and view (and any highlighted shortcut), and toasts "Filters cleared"; with no narrowing filter the button is absent and only Create shows — the card is never without an action |
+| F-107 | Looking count line | Admin: Platform Settings → "Find: Looking-to-play Count" **On**; seed ≥ 3 users with a live intent for today in the viewer's city and sport (none of them seated in a game today) | Under the empty title: "{n} people are looking to play today in {city}" (viewer not counted; "today and tomorrow" after 18:00 city time). Tapping opens the intent editor (the lobby if already looking). With 0–2 people, or the flag **Off**, the line is absent — no "nobody looking yet" copy |
+| F-108 | Strip carries the same count | Flag **On** with ≥ 3 looking, then with 2, then flag **Off** | Idle "I want to play" card hint reads "{n} looking today" → generic hint → the pre-existing "{n} players want to play today"; the number never appears twice on the screen; the Looking strip (while looking) is unchanged |
+| F-109 | Count freshness | Flag **On**; add a new looking user | Count updates within about a minute (60 s server cache + 60 s client stale time); admin flag changes land within five minutes without a reload |
+| F-110 | Recovery RTL and locales | App language العربية, then each of the 11 locales, large text | Actions stack full width and wrap rather than clip; the looking line wraps; chevron mirrors in RTL; day in the create label is localized |
 
 ### 7.2 Category filters (chips)
 
@@ -766,7 +772,7 @@ One boolean the organizer sets; everything here is read-only display. The tag is
 | C-NV-02 | Hidden where it does not apply | League fixture / league season / EVENT create flows | No row, and the created entity is never tagged |
 | C-04 | Create TRAINING | Pick TRAINING | Trainer fields |
 | C-05 | Create TOURNAMENT | Pick TOURNAMENT (any logged-in user) | Roster/tournament defaults; cap 8–12 for normal users, up to 32 for `canCreateTournament` |
-| C-06 | Duplicate game | From game details duplicate | Pre-filled form |
+| C-06 | Duplicate game | From game details Duplicate on an **unplayed** game (`resultsStatus === NONE`) | Pre-filled form incl. the old time/court/booked flag; once results are FINAL the Duplicate card is gone and **Play with this group again** (§9.21) is the way to the next game |
 | C-07 | Bottom tabs hidden | On create page | Tab bar hidden |
 | C-08 | Back navigation | Back button | Returns home |
 
@@ -1060,6 +1066,14 @@ Gated on `VITE_GAME_SERIES_ENABLED` (frontend) and `GAME_SERIES_ENABLED` (backen
 | GD-15a | Invite search Cyrillic→Latin | Open invite list; type Cyrillic prefix of a Latin-named player (e.g. `ив` for Ivan) | Player stays in results after debounce (does not flash then vanish) |
 | GD-15f | Invite search Serbian Latin via Russian Cyrillic | Open invite list; type `Анджела` or `Дьерманович` for Andjela Djermanovic (or `Спринцхунас` for Polina Sprinzhunas) | Player remains in results after debounce; same person is still visible in the unfiltered city player list |
 | GD-15b | Invite search clear | Open invite list; type 2+ chars so results update; clear the search field | List stays mounted (no full-modal spinner); default invitable list restores after debounce |
+| GD-15g | Played with group (PRD 361) | Organizer with finished games opens the invite picker, Search tab, empty query | "Played with" heading with up to ten co-players, most recent shared finished game first; "Everyone in {Browse city}" heading below; no co-player repeats in Everyone |
+| GD-15h | Played with caption | Same as GD-15g | Each Played-with row shows a muted caption "Played together {relative time} · {N games}" instead of the green "together" badge; wraps in long locales; VoiceOver reads it with the row |
+| GD-15i | Played with hides on typing | GD-15g, then type one character | Both headings and captions disappear; the pane is the plain search; clear the field → headings return instantly with no spinner and no new list request |
+| GD-15j | Played with respects roster and blocks @two-user | Co-player already PLAYING / invited / queued in this game; another co-player blocked either way | Seated, invited and queued co-players are not listed; blocked pairs are absent from both users' pickers |
+| GD-15k | Played with predicate | Viewer shares only a queued, invited, EVENT, unfinished, or 13-month-old game with a player | That player has no caption and sits in Everyone; a tap-heavy non-co-player never enters Played with |
+| GD-15l | Played with sport rule | Tennis game; a padel-only co-player exists | Padel-only co-player is not in Played with; switching sport chips does not put them there |
+| GD-15m | Played with away city | Co-player moved to another city, among the ten most recent | Still listed under Played with with the Home city selected; selection survives typing and clearing |
+| GD-15n | No history | New account opens the picker | No headings, no captions: the pane looks exactly as before |
 | GD-15c | Invite picker omits busy | Open Search invite list for a timed game; city user is PLAYING in another overlapping Bandeja game | Busy user is absent from the list; INVITED-only or non-overlapping PLAYING users still appear |
 | GD-15e | Invite inactive at bottom | Open invite picker; one player is rating-inactive | Inactive player sorts below active players by default (same `inactive` flag as Level leaderboard) |
 | GD-15d | Invite search keeps focus | Open invite picker → type in Search | Caret stays in the field after each character; search field is not replaced by the list spinner |
@@ -1218,9 +1232,9 @@ Wallet side: `PR-CS-01`–`PR-CS-05` in §13.3. Cards: `F-CS-01`–`F-CS-05` in 
 | GD-114 | Available players footer header | Edit a match with unassigned players in roster | Bottom sheet shows "Available Players" label with count badge above the draggable carousel |
 | GD-115 | Round added summary modal | Add round in results entry with ≤4 playing participants vs 5+ | ≤4: round added inline with no summary modal; 5+: modal lists generated match pairings |
 | GD-116 | Round added match layout | Open round-added modal at viewport <490px vs ≥490px | <490: each match stacks team A above swords above team B; ≥490: teams sit side by side; each team is a distinct neutral bordered card with vertical localized Team A/B label on the left and swords between |
-| GD-36 | Results card hidden without photo | Final results, no game photo yet | No results photo card; Play again shown only if viewer is PLAYING; stories switch shown only if viewer is PLAYING |
-| GD-36b | Results card above tabs | Final results with photo | Results card + Play again (and stories switch if PLAYING) sit above Results/Stats/Scores switch, not inside Results tab |
-| GD-36c | Play again only for players | Results as PLAYING participant vs guest/spectator/owner-only | Play again visible only when current user has PLAYING status on this game |
+| GD-36 | Results card hidden without photo | Final results, no game photo yet | No results photo card; **Play with this group again** shown only if viewer is PLAYING (or the TRAINING trainer); stories switch shown only if viewer is PLAYING |
+| GD-36b | Results card above tabs | Final results with photo | **Play with this group again** (primary, first) + results card (and stories switch if PLAYING) sit above Results/Stats/Scores switch, not inside Results tab |
+| GD-36c | Rematch only for players | Results as PLAYING participant vs guest/spectator/owner-only | **Play with this group again** visible only when current user has PLAYING status on this game (TRAINING: or is `trainerId`); see §9.21 |
 | GD-36d | Show in stories toggle | PLAYING (or outcome) user on FINAL toggles off then on | Switch above tabs; entity label; default on; off removes GAME_RESULT (and bracket champion on league season) from followers live+feed; on restores when eligible; profile shareGameResultsToFollowers still required |
 | GD-36e | Stories switch hidden for non-players | View FINAL results as guest/spectator | No "Show this … in my stories" switch |
 | GD-36f | Toggle survives tab switch | Toggle off, switch to Scores then back | Switch stays off; card+switch remain above Results/Stats/Scores control |
@@ -1612,7 +1626,59 @@ No feature flag; muted per user from notification preferences.
 | GD-NV-06 | Not offered where it cannot be kept | League fixture, league season, EVENT listing | No row at all, and the API ignores the field for those entity types |
 | GD-NV-07 | Participant view | Open the same game as a non-organizer | No settings block (unchanged); the header tag is still visible |
 | GD-NV-08 | Series occurrences | Set it on a series' template, then let the next occurrence generate | The new occurrence carries the tag; turning it off pushes off to the future occurrences too |
-| GD-NV-09 | Play again / Duplicate | "Play again" or Duplicate from a tagged game | The create draft opens with the switch already on, and the organizer can still turn it off before confirming |
+| GD-NV-09 | Rematch / Duplicate | "Play with this group again" (FINAL) or Duplicate (unplayed) from a tagged game | The create draft opens with the switch already on, and the organizer can still turn it off before confirming |
+
+### 9.21 Play with this group again (PRD 362)
+
+One action after FINAL replaces both the old results "Play again" and, for FINAL games, the shell's Duplicate card. It opens the normal create flow with the format copied, the schedule and court cleared, and the previous PLAYING roster preselected as **invitees**. Nothing is sent by opening the draft.
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| GD-RM-01 | Button in results area | FINAL GAME as a PLAYING participant | Primary **Play with this group again** (lucide `Users`) with caption *Pick a new time. We'll invite the same players.* as its accessible description; share visual (if any) and stories switch sit below it |
+| GD-RM-02 | Entity types | FINAL GAME / TOURNAMENT / TRAINING / BAR vs LEAGUE fixture / LEAGUE_SEASON / EVENT | Button on the first four (TRAINING and BAR render it at the top of their results block, there is no share card there); never on the last three |
+| GD-RM-03 | Who sees it | Same FINAL game as spectator, guest, queued, invited-only, or signed out | No button. TRAINING: the `trainerId` user sees it even though they are NON_PLAYING |
+| GD-RM-04 | Duplicate gone after FINAL | Owner opens a FINAL game | No Duplicate action card; on an unplayed game (`resultsStatus === NONE`) Duplicate is unchanged (C-06); during `IN_PROGRESS` neither is shown |
+| GD-RM-05 | Fresh schedule required | Tap the button | `/create-game` opens with the club, sport, format, level band, gender rule, price, settings and format numbers prefilled; **no** date/time, court, booked-court flag or booking; submitting before picking a time is blocked |
+| GD-RM-06 | Rematch banner | Same draft | One context line at the top: *Playing again with N players* + *Format and settings copied from {name}. Pick a new date, time and court. Invites are sent when you create the game.* Absent on Duplicate and ordinary create |
+| GD-RM-07 | Invitees preselected | Same draft, Players step | Each previous PLAYING player appears as a removable row under *N players will be invited after game creation*; the viewer is not listed; queued / invited / guest / NON_PLAYING rows of the old game are not listed |
+| GD-RM-08 | Co-player outside Browse city | Old roster includes a player from another city | Their row still renders (users travel with the draft, not looked up from the city list) and they are invited on create |
+| GD-RM-09 | Remove before sending | Remove one row, pick a time, create | Only the remaining rows receive invites; removed player gets nothing |
+| GD-RM-10 | Invited, never seated | Create the rematch | New game has the creator PLAYING and every invitee as INVITED; no PLAYING seat for any invitee; no results, attendance, cost or booking state carried over |
+| GD-RM-11 | Abandon the draft | Open the draft, go back without creating | No game, no invites, no notification |
+| GD-RM-12 | TRAINING as trainee | FINAL TRAINING opened by a PLAYING trainee where `trainerId` is another user | Trainer listed as an invitee after the players with a **Trainer** pill on their row; on create they receive a trainer invite (`asTrainer`), the players normal invites |
+| GD-RM-13 | TRAINING as trainer | FINAL TRAINING opened by the trainer | Draft opens with "I'm not playing" on (creator is the trainer); invitees are the players only |
+| GD-RM-14 | Make it weekly | In the rematch draft, pick a time | The existing **Repeat** row (Once · Weekly · Every 2 weeks, §8.6) is available; no extra post-create link |
+| GD-RM-15 | Profile-name gate | Viewer without a set name taps the button | Name sheet first, then the draft opens (`runWithProfileName`) |
+| GD-RM-16 | Novices promise travels | FINAL game tagged Novices welcome | Draft has the switch on (GD-NV-09) |
+| GD-RM-18 | Blocked co-player | Viewer blocked one of the previous PLAYING players after the game | That player is not in the draft's invitee rows and gets no invite; the banner count excludes them |
+| GD-RM-17 | Locales / RTL / large text | All 11 locales, `ar`, 200 % text | Label and caption wrap, never clip; button ≥ 44 px; banner text uses `dir=auto` for the game name |
+
+### 9.22 Organizer next steps (PRD 364)
+
+Behind the Admin platform setting `GAME_ORGANIZER_NEXT_ACTIONS_ENABLED` (Platform Settings → Organizer Next Steps; read by the app through `GET /api/public/platform-flags`, five-minute cache). Every row is a fact with one button; "nothing to do" renders **no block**, never a green state. The block is a pure view over the same data as the sections below it, so it can never disagree with them.
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| GD-NA-01 | Placement | Flag on, open a 3/4 game you organize | **Next steps** card directly under the header (below the series line, above the weather banner and game info), lucide list icon, rows ≥44 px |
+| GD-NA-02 | Seats with a queue | Same game with two people in the join queue | Row "1 player needed · 2 waiting" with a filled **Review queue** button; tapping scrolls to the Join Queue list in Participants |
+| GD-NA-03 | Seats without a queue | Empty queue | Same fact with **Invite**; tapping opens the existing invite picker in players mode |
+| GD-NA-04 | Not booked | Club game, time set, "Court booked" off, no linked booking | Amber row "Court not booked yet" with **Edit court**; tapping opens the edit modal on the **Location & time** tab. No provider request in the network tab |
+| GD-NA-05 | Partly booked | Game whose linked bookings do not cover every court/time | "Court partly booked" with **See bookings**; tapping scrolls to the linked-bookings card. Games without a club never show a booking row |
+| GD-NA-06 | Attendance moved | Flag on, answers open, 2 of 4 confirmed | Row "2 of 4 confirmed" with **Nudge** in the block; the attendance card shows **no** progress pill and no Nudge. Only one Nudge exists on the page |
+| GD-NA-07 | Nudge cooldown | Nudge, then look again | Button disabled with caption "Nudge again in 6 h" under the sentence; toast "Nudge sent" on the first tap |
+| GD-NA-08 | Cap of two | Game with seats, booking gap, unconfirmed players and unpaid shares | Two rows visible, **+2 more** at the top right; tapping expands in place (~200 ms; instant under Reduce Motion) and reads **Show less** with `aria-expanded` |
+| GD-NA-09 | After FINAL | Finished game with two unpaid shares, as the payer | Only "2 haven't paid" with **Review** (scrolls to the Cost card). No seats, booking or attendance row |
+| GD-NA-10 | Settle | Same game as a debtor who is also a game admin | Button reads **Settle** and opens the existing settle sheet via `?section=cost&settle=1` |
+| GD-NA-11 | Everything done | Full roster, court booked, all confirmed, everyone paid | No block at all — no heading, no empty card |
+| GD-NA-12 | Game admin | Open as a participant with `role = ADMIN` | Same block as the owner |
+| GD-NA-13 | Participant with invite rights | `anyoneCanInvite` game as a PLAYING non-admin | Only the seats row with **Invite**; no booking, attendance or cost row. Their attendance card is unchanged |
+| GD-NA-14 | Plain participant / guest | Open as a player without invite rights, and logged out | No block, and every existing surface exactly as before |
+| GD-NA-15 | Flag off | Turn the setting off in Admin (takes effect within 5 min, or reload after clearing site data) | No block; the attendance strip and the dashed open-spot row render exactly as before the PRD |
+| GD-NA-16 | Open-spot row | Flag on, a seat freed in the last window | Organizer: no dashed "Open spot" row (the block carries the seat fact). A queued participant still sees it |
+| GD-NA-17 | Excluded entities | League fixture, league season, EVENT, archived game | Never a block, whatever the flag |
+| GD-NA-18 | Locales and RTL | Switch to ru / cs / ar | Plurals read naturally ("Нужно ещё 2 игрока"); ar mirrors with the icon on the right and the button on the left; long sentences wrap, nothing clips |
+| GD-NA-19 | Accessibility | Screen reader | Card is a `region` labelled "Next steps"; each button is described by its row's sentence (`aria-describedby`) |
+| GD-NA-20 | Live update | Another device joins from the queue | "1 player needed" disappears without reload; the block leaves the page when it was the last row. `@two-user` |
 
 ---
 

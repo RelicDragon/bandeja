@@ -17,6 +17,7 @@ import { runWithGenderForEvent } from '@/utils/genderJoinGate';
 import { usePlayersStore } from '@/store/playersStore';
 import { useShellNavStore } from '@/store/shellNavStore';
 import { clubsApi, courtsApi, gamesApi, invitesApi } from '@/api';
+import { blockedUsersApi } from '@/api/blockedUsers';
 import { mediaApi } from '@/api/media';
 import { Club, Court, EntityType, GenderTeam, PriceType, PriceCurrency, Game, BasicUser } from '@/types';
 import { addHours, format, startOfDay } from 'date-fns';
@@ -79,6 +80,8 @@ import { MultiCourtTimeHint } from '@/components/gameLocationTime/MultiCourtTime
 import { clubSupportsSport, filterClubsBySport } from '@/utils/courtSport';
 import { invalidateBooktimeAllUpcomingCache } from '@/integrations/booktime/booktimeAllUpcomingLoader';
 import { CreateGameQuestionnaireBanner } from '@/components/sportQuestionnaire';
+import { RematchDraftBanner } from '@/components/createGame/RematchDraftBanner';
+import type { RematchSource } from '@/components/GameDetails/playWithGroupAgain';
 import { GameFormatGenderFields } from '@/components/gameFormat/GameFormatTeamsFields';
 import {
   entitySupportsPlayersPerMatchControls,
@@ -116,11 +119,22 @@ interface CreateGameProps {
   initialTemplateId?: CreateTemplateId;
   initialBookingIds?: string[];
   initialInvitedPlayerIds?: string[];
+  /** PRD 362 — the invitees as users, so chips render before the players store resolves. */
+  initialInvitedPlayers?: BasicUser[];
+  /** PRD 362 — TRAINING rematch: this invitee is sent an `asTrainer` invite. */
+  initialTrainerInviteId?: string | null;
+  /** PRD 362 — TRAINING rematch opened by the previous trainer. */
+  initialCreatorNonPlaying?: boolean;
+  /** PRD 362 — set only when the draft was opened from a finished game. */
+  rematchOf?: RematchSource;
   matchProposalId?: string;
   playIntentSource?: PlayIntentCreateSource;
   playIntentRosterLevels?: number[];
   onMatchProposalConverted?: () => void;
 }
+
+/** Stable default so the invitee effect below does not re-run on every render. */
+const EMPTY_INVITED_PLAYERS: BasicUser[] = [];
 
 const getDefaultLevelRange = (level?: number): [number, number] => {
   if (typeof level !== 'number' || Number.isNaN(level)) {
@@ -141,6 +155,10 @@ export const CreateGame = ({
   initialTemplateId,
   initialBookingIds = [],
   initialInvitedPlayerIds = [],
+  initialInvitedPlayers = EMPTY_INVITED_PLAYERS,
+  initialTrainerInviteId = null,
+  initialCreatorNonPlaying = false,
+  rematchOf,
   matchProposalId,
   playIntentSource,
   playIntentRosterLevels,
@@ -378,25 +396,41 @@ export const CreateGame = ({
   const [invitedPlayerIds, setInvitedPlayerIds] = useState<string[]>(() => initialInvitedPlayerIds);
   const [inviteUserTeamByReceiverId, setInviteUserTeamByReceiverId] = useState<Record<string, string>>({});
   const [invitePlayIntentByReceiverId, setInvitePlayIntentByReceiverId] = useState<Record<string, string>>({});
-  const [invitedPlayers, setInvitedPlayers] = useState<BasicUser[]>([]);
-  const [creatorNonPlaying, setCreatorNonPlaying] = useState<boolean>(false);
+  const [invitedPlayers, setInvitedPlayers] = useState<BasicUser[]>(() => initialInvitedPlayers);
+  const [creatorNonPlaying, setCreatorNonPlaying] = useState<boolean>(
+    () => entityType === 'TRAINING' && initialCreatorNonPlaying,
+  );
 
   useEffect(() => {
     if (!initialInvitedPlayerIds.length) return;
     let cancelled = false;
     void (async () => {
-      await usePlayersStore.getState().fetchPlayers(undefined, selectedSport);
+      // PRD 362 — a preselected roster must never carry someone the viewer has
+      // blocked: they are dropped before the rows render, not rejected at send.
+      const [, blockedIds] = await Promise.all([
+        usePlayersStore.getState().fetchPlayers(undefined, selectedSport),
+        blockedUsersApi.getBlockedUserIds().catch(() => [] as string[]),
+      ]);
       if (cancelled) return;
+      const blocked = new Set(blockedIds);
       const users = usePlayersStore.getState().users;
-      const selected = initialInvitedPlayerIds
-        .map((id) => users[id])
+      // PRD 362 — a rematch invitee may live outside the Browse city and be
+      // absent from the store; the caller's copy keeps their chip visible so
+      // nobody is invited without being shown.
+      const fallbackById = new Map(initialInvitedPlayers.map((player) => [player.id, player]));
+      const allowedIds = initialInvitedPlayerIds.filter((id) => !blocked.has(id));
+      const selected = allowedIds
+        .map((id) => users[id] ?? fallbackById.get(id))
         .filter(Boolean) as BasicUser[];
       setInvitedPlayers(selected);
+      if (allowedIds.length !== initialInvitedPlayerIds.length) {
+        setInvitedPlayerIds((prev) => prev.filter((id) => !blocked.has(id)));
+      }
     })();
     return () => {
       cancelled = true;
     };
-  }, [initialInvitedPlayerIds, selectedSport]);
+  }, [initialInvitedPlayerIds, initialInvitedPlayers, selectedSport]);
 
   useEffect(() => {
     if (!playIntentSource) return;
@@ -1610,6 +1644,12 @@ export const CreateGame = ({
             const sent = await invitesApi.send({
               receiverId,
               gameId: gid,
+              // PRD 362 — a TRAINING rematch re-invites the previous trainer as
+              // trainer, unless the creator has taken that role themselves.
+              asTrainer:
+                entityType === 'TRAINING' &&
+                receiverId === initialTrainerInviteId &&
+                !creatorNonPlaying,
               userTeamId: inviteUserTeamByReceiverId[receiverId],
               playIntentId: invitePlayIntentByReceiverId[receiverId],
             });
@@ -1791,6 +1831,9 @@ export const CreateGame = ({
         <CreateGameSummaryBar chips={summaryChips} onChipClick={handleSummaryChipClick} />
         <div ref={scrollContainerRef} className="h-full overflow-y-auto">
         <div className="max-w-2xl mx-auto px-4 py-6 space-y-4 pb-8">
+        {rematchOf ? (
+          <RematchDraftBanner source={rematchOf} inviteeCount={invitedPlayerIds.length} />
+        ) : null}
         <div ref={summarySectionRefs.name}>
           <CreateGameIdentityCard
             entityType={entityType}
@@ -2131,6 +2174,9 @@ export const CreateGame = ({
           maxParticipants={maxParticipants}
           invitedPlayerIds={invitedPlayerIds}
           invitedPlayers={invitedPlayers}
+          trainerInviteId={
+            entityType === 'TRAINING' && !creatorNonPlaying ? initialTrainerInviteId : null
+          }
           user={user}
           entityType={entityType}
           canInvitePlayers={true}

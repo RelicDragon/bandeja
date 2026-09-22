@@ -286,6 +286,21 @@
     "ownershipTransferred": "Ownership transferred successfully",
     "noviceFriendly": "Nováčci vítáni",
     "filterNoviceOnly": "Jen kde jsou nováčci vítáni",
-    "filterNoviceOnlyHint": "Zobrazit jen hry, které vítají nové hráče"
+    "filterNoviceOnlyHint": "Zobrazit jen hry, které vítají nové hráče",
+    "recovery": {
+      "createToday": "Vytvořit hru dnes",
+      "createTomorrow": "Vytvořit hru zítra",
+      "createOn": "Vytvořit hru na {{day}}",
+      "clearFilters": "Vymazat filtry",
+      "filtersCleared": "Filtry vymazány",
+      "lookingToday_one": "{{count}} člověk hledá hru dnes ve městě {{city}}",
+      "lookingToday_few": "{{count}} lidé hledají hru dnes ve městě {{city}}",
+      "lookingToday_many": "{{count}} člověka hledá hru dnes ve městě {{city}}",
+      "lookingToday_other": "{{count}} lidí hledá hru dnes ve městě {{city}}",
+      "lookingTodayAndTomorrow_one": "{{count}} člověk hledá hru dnes a zítra ve městě {{city}}",
+      "lookingTodayAndTomorrow_few": "{{count}} lidé hledají hru dnes a zítra ve městě {{city}}",
+      "lookingTodayAndTomorrow_many": "{{count}} člověka hledá hru dnes a zítra ve městě {{city}}",
+      "lookingTodayAndTomorrow_other": "{{count}} lidí hledá hru dnes a zítra ve městě {{city}}"
+    }
   }
 }

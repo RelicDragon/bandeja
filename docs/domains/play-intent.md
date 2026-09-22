@@ -50,6 +50,10 @@ The bot creates intents through `PlayIntentService.createOrReplace`, never by wr
 
 Spot-opened notifications also read intents (an OPEN intent matching a game whose seat just freed is one of the audience buckets) but never write them, and `GAME_MATCHES_INTENT` semantics are untouched — [games.md](./games.md).
 
+## Looking count (PRD 363)
+
+`GET /play-intents/count?cityId&sport` → `{ count, dayKeys }` (`authenticate`; scope defaults like `/pool`). `PlayIntentLookingCountService`: distinct users with a GAME intent in `OPEN | MATCHED`, not expired, not consumed by a seat, a date key inside `playIntentDiscoveryDateKeys(city.timezone)` (today, or today + tomorrow after 18:00), whose window is still reachable (`intentWindowIsReachable`) and who are not already PLAYING in a game on those days (`usersBusyPlaying`, the pool's `inGame`). Reads intents only — no proposal, no physics, no per-viewer block filtering. The user-id list is cached **60 s** per `(city, sport, window)` (Redis when configured, else in process; `play-intent:invalidate` does not bust it) and the viewer is subtracted after the cache. `count: null` while `PlatformSetting.FIND_LOOKING_COUNT_ENABLED` is off (read through `getBooleanSetting`, 60 s in-process cache). The client hides it below three (`Frontend/src/components/home/lookingCount.ts`); surfaces in [home-and-find.md](./home-and-find.md).
+
 ## Code
 
 BE: `Backend/src/services/playIntent/*`, routes `/play-intents`. FE: `api/playIntents.ts`, `components/playIntent/*`, `components/playerInvite/*`.

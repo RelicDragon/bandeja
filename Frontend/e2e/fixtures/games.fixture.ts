@@ -301,6 +301,46 @@ export async function createResultsEntryFixture(
   return { gameId, matchId };
 }
 
+/**
+ * PRD 362 — drive a game to `resultsStatus === 'FINAL'` through the public
+ * results API: start entry, score one set for A vs B, recalculate outcomes
+ * (which finalises). Both users should already be PLAYING on the game.
+ */
+export async function finalizeGameResultsViaApi(
+  token: string,
+  gameId: string,
+  userAId: string,
+  userBId: string,
+): Promise<void> {
+  const matchId = await ensureMatchWithTeams(token, gameId, userAId, userBId);
+  await e2eApi(token, `/results/game/${gameId}/matches/${matchId}`, {
+    method: 'PUT',
+    body: JSON.stringify({
+      teamA: [userAId],
+      teamB: [userBId],
+      sets: [{ teamA: 6, teamB: 4 }],
+    }),
+  });
+  await e2eApi(token, `/results/game/${gameId}/recalculate`, { method: 'POST', body: '{}' });
+  const game = await e2eApi<{ resultsStatus?: string }>(token, `/games/${gameId}`);
+  if (game.resultsStatus !== 'FINAL') {
+    throw new Error(`[e2e] game ${gameId} is ${game.resultsStatus ?? 'unknown'}, expected FINAL`);
+  }
+}
+
+export type GameSnapshot = {
+  id: string;
+  courtId?: string | null;
+  startTime?: string | null;
+  hasBookedCourt?: boolean;
+  resultsStatus?: string;
+  participants?: Array<{ userId: string; status: string }>;
+};
+
+export async function getGameViaApi(token: string, gameId: string): Promise<GameSnapshot> {
+  return e2eApi<GameSnapshot>(token, `/games/${gameId}`);
+}
+
 export async function createGameWithOwnerPlaying(
   token: string,
   ownerId: string,

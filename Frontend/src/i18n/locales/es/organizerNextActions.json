@@ -1,0 +1,32 @@
+{
+  "organizerNextActions": {
+    "title": "Próximos pasos",
+    "more_one": "+{{count}} más",
+    "more_many": "+{{count}} más",
+    "more_other": "+{{count}} más",
+    "less": "Mostrar menos",
+    "seats": {
+      "needed_one": "Falta {{count}} jugador",
+      "needed_many": "Faltan {{count}} jugadores",
+      "needed_other": "Faltan {{count}} jugadores",
+      "waiting_one": "{{count}} en espera",
+      "waiting_many": "{{count}} en espera",
+      "waiting_other": "{{count}} en espera",
+      "reviewQueue": "Revisar la cola",
+      "invite": "Invitar"
+    },
+    "booking": {
+      "notBooked": "Pista aún sin reservar",
+      "partlyBooked": "Pista reservada solo en parte",
+      "seeBookings": "Ver reservas",
+      "editCourt": "Editar pista"
+    },
+    "cost": {
+      "unpaid_one": "{{count}} aún no ha pagado",
+      "unpaid_many": "{{count}} aún no han pagado",
+      "unpaid_other": "{{count}} aún no han pagado",
+      "settle": "Pagar",
+      "review": "Revisar"
+    }
+  }
+}

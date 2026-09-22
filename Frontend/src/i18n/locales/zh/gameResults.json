@@ -166,7 +166,8 @@
     "shareCardDone": "已分享",
     "shareCardFailed": "无法分享",
     "shareCardNoSummary": "打得不错！",
-    "playAgainCta": "再打一局",
+    "playWithGroupAgainCta": "再和这群人打一场",
+    "playWithGroupAgainCaption": "选一个新时间，我们会邀请同一批球员。",
     "showInStories": {
       "GAME": "在动态中展示本场比赛",
       "BAR": "在动态中展示本次活动",

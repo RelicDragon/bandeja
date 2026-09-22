@@ -1,5 +1,11 @@
 {
   "createGame": {
+    "rematch": {
+      "title_one": "再次和 {{count}} 位球员一起打",
+      "title_other": "再次和 {{count}} 位球员一起打",
+      "titleNoInvitees": "再打一场",
+      "hint": "赛制和设置已从「{{name}}」复制。请选择新的日期、时间和场地。创建比赛后会发送邀请。"
+    },
     "title": "创建比赛",
     "identity": {
       "label": "名称与照片",

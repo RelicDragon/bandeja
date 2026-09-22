@@ -283,6 +283,17 @@
     "alreadyInJoinQueue_female": "पहले से जॉइन कतार में",
     "noviceFriendly": "नए खिलाड़ी स्वागत",
     "filterNoviceOnly": "केवल नए खिलाड़ियों का स्वागत करने वाले",
-    "filterNoviceOnlyHint": "सिर्फ़ वे गेम दिखाएँ जो नए खिलाड़ियों का स्वागत करते हैं"
+    "filterNoviceOnlyHint": "सिर्फ़ वे गेम दिखाएँ जो नए खिलाड़ियों का स्वागत करते हैं",
+    "recovery": {
+      "createToday": "आज एक गेम बनाएँ",
+      "createTomorrow": "कल एक गेम बनाएँ",
+      "createOn": "{{day}} को एक गेम बनाएँ",
+      "clearFilters": "फ़िल्टर हटाएँ",
+      "filtersCleared": "फ़िल्टर हटा दिए गए",
+      "lookingToday_one": "{{city}} में आज {{count}} व्यक्ति खेलना चाहता है",
+      "lookingToday_other": "{{city}} में आज {{count}} लोग खेलना चाहते हैं",
+      "lookingTodayAndTomorrow_one": "{{city}} में आज और कल {{count}} व्यक्ति खेलना चाहता है",
+      "lookingTodayAndTomorrow_other": "{{city}} में आज और कल {{count}} लोग खेलना चाहते हैं"
+    }
   }
 }

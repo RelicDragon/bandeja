@@ -37,6 +37,12 @@
     "alreadyInMatch": "对方已在比赛中",
     "lookingLoadError": "无法加载在找搭档的人",
     "lookingLoadErrorHint": "请使用搜索，或稍后重试",
-    "lookingRetry": "重试"
+    "lookingRetry": "重试",
+    "groupPlayedWith": "一起打过",
+    "groupEveryoneIn": "{{city}}的所有人",
+    "groupEveryone": "所有人",
+    "playedTogetherCaption": "{{when}}一起打过 · {{games}}",
+    "gamesCount_one": "{{count}} 场",
+    "gamesCount_other": "{{count}} 场"
   }
 }

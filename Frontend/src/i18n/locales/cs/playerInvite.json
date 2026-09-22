@@ -39,6 +39,14 @@
     "alreadyInMatch": "Už je v zápase",
     "lookingLoadError": "Seznam se nepodařilo načíst",
     "lookingLoadErrorHint": "Použij Hledat, nebo to zkus znovu",
-    "lookingRetry": "Zkusit znovu"
+    "lookingRetry": "Zkusit znovu",
+    "groupPlayedWith": "Hráli jste spolu",
+    "groupEveryoneIn": "Všichni ve městě {{city}}",
+    "groupEveryone": "Všichni",
+    "playedTogetherCaption": "Hráli jste spolu {{when}} · {{games}}",
+    "gamesCount_one": "{{count}} zápas",
+    "gamesCount_few": "{{count}} zápasy",
+    "gamesCount_many": "{{count}} zápasu",
+    "gamesCount_other": "{{count}} zápasů"
   }
 }

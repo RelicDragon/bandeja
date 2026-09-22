@@ -290,6 +290,21 @@
     "gamesCount_other": "{{count}} games",
     "noviceFriendly": "Новичкам рады",
     "filterNoviceOnly": "Только «новичкам рады»",
-    "filterNoviceOnlyHint": "Показывать только игры, где рады новым игрокам"
+    "filterNoviceOnlyHint": "Показывать только игры, где рады новым игрокам",
+    "recovery": {
+      "createToday": "Создать игру сегодня",
+      "createTomorrow": "Создать игру завтра",
+      "createOn": "Создать игру на {{day}}",
+      "clearFilters": "Сбросить фильтры",
+      "filtersCleared": "Фильтры сброшены",
+      "lookingToday_one": "{{count}} человек ищет игру сегодня в городе {{city}}",
+      "lookingToday_few": "{{count}} человека ищут игру сегодня в городе {{city}}",
+      "lookingToday_many": "{{count}} человек ищут игру сегодня в городе {{city}}",
+      "lookingToday_other": "{{count}} человека ищут игру сегодня в городе {{city}}",
+      "lookingTodayAndTomorrow_one": "{{count}} человек ищет игру сегодня и завтра в городе {{city}}",
+      "lookingTodayAndTomorrow_few": "{{count}} человека ищут игру сегодня и завтра в городе {{city}}",
+      "lookingTodayAndTomorrow_many": "{{count}} человек ищут игру сегодня и завтра в городе {{city}}",
+      "lookingTodayAndTomorrow_other": "{{count}} человека ищут игру сегодня и завтра в городе {{city}}"
+    }
   }
 }

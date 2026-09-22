@@ -88,13 +88,20 @@ export class CreateGamePage {
     if (await toggle.isVisible({ timeout: 2_000 }).catch(() => false)) {
       await toggle.click();
     }
-    const timeGrid = this.page
+    const legacyGrid = this.page
       .locator('label')
       .filter({ hasText: /select time/i })
       .locator('..')
       .locator('button:not([disabled])');
-    await timeGrid.first().waitFor({ state: 'visible', timeout: 15_000 });
-    await timeGrid.first().click();
+    // Clubs with a booking integration render the location/time panel, whose
+    // slot grid sits under a "Start time" heading and has no label element:
+    // fall back to the HH:MM slot buttons themselves.
+    const panelGrid = this.page
+      .locator('button:not([disabled])')
+      .filter({ hasText: /^\s*\d{1,2}:\d{2}/ });
+    const slot = legacyGrid.or(panelGrid).first();
+    await slot.waitFor({ state: 'visible', timeout: 15_000 });
+    await slot.click();
   }
 
   async selectCourtNotBooked() {
@@ -191,6 +198,22 @@ export class CreateGamePage {
     await this.submitButton(entityType).click();
     await this.page.waitForTimeout(500);
     await expect(this.page).toHaveURL(before);
+  }
+
+  // PRD 362 — rematch draft.
+  async expectRematchBannerVisible() {
+    await expect(this.page.getByTestId('rematch-draft-banner')).toBeVisible({ timeout: 15_000 });
+  }
+
+  async expectRematchBannerHidden() {
+    await expect(this.page.getByTestId('rematch-draft-banner')).toHaveCount(0);
+  }
+
+  /** The blue "players will be invited" block lists each preselected invitee by name. */
+  async expectInviteeChipVisible(name: string) {
+    await expect(
+      this.page.getByRole('button', { name: /manage invites/i }).locator('..').getByText(name, { exact: false }),
+    ).toBeVisible({ timeout: 15_000 });
   }
 
   async expectReservationIntentSection() {

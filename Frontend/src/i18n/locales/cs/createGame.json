@@ -1,5 +1,13 @@
 {
   "createGame": {
+    "rematch": {
+      "title_one": "Hrajeme znovu s {{count}} hráčem",
+      "title_few": "Hrajeme znovu s {{count}} hráči",
+      "title_many": "Hrajeme znovu s {{count}} hráči",
+      "title_other": "Hrajeme znovu s {{count}} hráči",
+      "titleNoInvitees": "Hrajeme znovu",
+      "hint": "Formát a nastavení převzaty z {{name}}. Vyberte nové datum, čas a kurt. Pozvánky se odešlou při vytvoření hry."
+    },
     "title": "Vytvořit zápas",
     "identity": {
       "label": "Název a fotka",

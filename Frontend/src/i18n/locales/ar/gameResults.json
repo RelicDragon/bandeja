@@ -166,7 +166,8 @@
     "shareCardDone": "تمت المشاركة",
     "shareCardFailed": "تعذّرت المشاركة",
     "shareCardNoSummary": "جلسة رائعة!",
-    "playAgainCta": "العب مجدداً",
+    "playWithGroupAgainCta": "العب مع هذه المجموعة مجدداً",
+    "playWithGroupAgainCaption": "اختر وقتاً جديداً. سندعو اللاعبين نفسهم.",
     "showInStories": {
       "GAME": "إظهار هذه المباراة في قصصي",
       "BAR": "إظهار فعالية البار هذه في قصصي",

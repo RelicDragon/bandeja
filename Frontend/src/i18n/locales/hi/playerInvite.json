@@ -37,6 +37,12 @@
     "alreadyInMatch": "वे पहले से मैच में हैं",
     "lookingLoadError": "कौन खोज रहा है लोड नहीं हो सका",
     "lookingLoadErrorHint": "खोज उपयोग करें, या फिर कोशिश करें",
-    "lookingRetry": "फिर कोशिश करें"
+    "lookingRetry": "फिर कोशिश करें",
+    "groupPlayedWith": "साथ खेले",
+    "groupEveryoneIn": "{{city}} में सभी",
+    "groupEveryone": "सभी",
+    "playedTogetherCaption": "{{when}} साथ खेले · {{games}}",
+    "gamesCount_one": "{{count}} गेम",
+    "gamesCount_other": "{{count}} गेम"
   }
 }

@@ -37,6 +37,12 @@
     "alreadyInMatch": "すでに試合に入っています",
     "lookingLoadError": "募集中の人を読み込めませんでした",
     "lookingLoadErrorHint": "検索を使うか、もう一度お試しください",
-    "lookingRetry": "再試行"
+    "lookingRetry": "再試行",
+    "groupPlayedWith": "一緒にプレーした人",
+    "groupEveryoneIn": "{{city}}のみんな",
+    "groupEveryone": "みんな",
+    "playedTogetherCaption": "{{when}}に一緒にプレー · {{games}}",
+    "gamesCount_one": "{{count}}試合",
+    "gamesCount_other": "{{count}}試合"
   }
 }

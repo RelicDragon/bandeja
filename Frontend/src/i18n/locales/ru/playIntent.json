@@ -146,6 +146,14 @@
     "matchingGameAskCta": "Попросить войти",
     "matchingGameTimeClub": "{{time}} · {{club}}",
     "matchingGameTimeOnly": "{{time}}",
-    "matchingGameNoClub": "Место ещё не выбрано"
+    "matchingGameNoClub": "Место ещё не выбрано",
+    "lookingCountToday_one": "{{count}} ищет игру сегодня",
+    "lookingCountToday_few": "{{count}} ищут игру сегодня",
+    "lookingCountToday_many": "{{count}} ищут игру сегодня",
+    "lookingCountToday_other": "{{count}} ищут игру сегодня",
+    "lookingCountTodayAndTomorrow_one": "{{count}} ищет игру сегодня и завтра",
+    "lookingCountTodayAndTomorrow_few": "{{count}} ищут игру сегодня и завтра",
+    "lookingCountTodayAndTomorrow_many": "{{count}} ищут игру сегодня и завтра",
+    "lookingCountTodayAndTomorrow_other": "{{count}} ищут игру сегодня и завтра"
   }
 }

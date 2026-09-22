@@ -278,6 +278,17 @@
     "alreadyInJoinQueue_female": "已在候补队列中",
     "noviceFriendly": "欢迎新手",
     "filterNoviceOnly": "仅欢迎新手的比赛",
-    "filterNoviceOnlyHint": "只显示欢迎新球员的比赛"
+    "filterNoviceOnlyHint": "只显示欢迎新球员的比赛",
+    "recovery": {
+      "createToday": "今天创建比赛",
+      "createTomorrow": "明天创建比赛",
+      "createOn": "在{{day}}创建比赛",
+      "clearFilters": "清除筛选",
+      "filtersCleared": "筛选已清除",
+      "lookingToday_one": "{{city}} 今天有 {{count}} 人想打球",
+      "lookingToday_other": "{{city}} 今天有 {{count}} 人想打球",
+      "lookingTodayAndTomorrow_one": "{{city}} 今天和明天有 {{count}} 人想打球",
+      "lookingTodayAndTomorrow_other": "{{city}} 今天和明天有 {{count}} 人想打球"
+    }
   }
 }

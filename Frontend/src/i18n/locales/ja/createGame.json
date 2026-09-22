@@ -1,5 +1,11 @@
 {
   "createGame": {
+    "rematch": {
+      "title_one": "{{count}}人のプレイヤーともう一度プレイ",
+      "title_other": "{{count}}人のプレイヤーともう一度プレイ",
+      "titleNoInvitees": "もう一度プレイ",
+      "hint": "「{{name}}」から形式と設定をコピーしました。新しい日付・時間・コートを選んでください。招待はゲーム作成時に送信されます。"
+    },
     "title": "ゲームの作成",
     "identity": {
       "label": "名前と写真",

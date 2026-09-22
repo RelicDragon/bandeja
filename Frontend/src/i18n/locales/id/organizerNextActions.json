@@ -1,0 +1,24 @@
+{
+  "organizerNextActions": {
+    "title": "Langkah berikutnya",
+    "more_other": "+{{count}} lagi",
+    "less": "Tampilkan lebih sedikit",
+    "seats": {
+      "needed_other": "Butuh {{count}} pemain lagi",
+      "waiting_other": "{{count}} menunggu",
+      "reviewQueue": "Tinjau antrean",
+      "invite": "Undang"
+    },
+    "booking": {
+      "notBooked": "Lapangan belum dipesan",
+      "partlyBooked": "Lapangan baru dipesan sebagian",
+      "seeBookings": "Lihat pemesanan",
+      "editCourt": "Ubah lapangan"
+    },
+    "cost": {
+      "unpaid_other": "{{count}} belum membayar",
+      "settle": "Bayar",
+      "review": "Tinjau"
+    }
+  }
+}

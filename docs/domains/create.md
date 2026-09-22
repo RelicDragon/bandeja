@@ -66,7 +66,7 @@ When club integration is BOOKTIME / PADELOO / KLIKTEREN: `GameLocationTimePanel`
 
 ### Submit
 
-Inline validation. Overlap confirm (`runWithOverlapConfirm`). Gender-for-event gate. Questionnaire banner (`CreateGameQuestionnaireBanner`) when level band vs estimated level. Progress overlay. Success → details or calendar. Duplicate from details pre-fills `initialGameData`.
+Inline validation. Overlap confirm (`runWithOverlapConfirm`). Gender-for-event gate. Questionnaire banner (`CreateGameQuestionnaireBanner`) when level band vs estimated level. Progress overlay. Success → details or calendar. Duplicate from details pre-fills `initialGameData`. **Rematch** (PRD 362) pre-fills the format only (`buildRematchGameInitialData`), passes `invitedPlayerIds` / `invitedPlayers` / `invitedTrainerId` / `creatorNonPlaying` / `rematchOf` through `CreateGameWrapper`, shows `RematchDraftBanner` at the top of the form, and the existing post-create invite loop sends the invites (`asTrainer` for the previous TRAINING trainer). Invitee chips are seeded from the passed users so a co-player outside the Browse city still shows.
 
 BE: `POST /games` → `GameCreateService.createGame`. `validateGameForSport`, `normalizeGameFormatPatch`, `assertMaxParticipantsWithinUserCap`, `assertSlotOverlapConfirmed`, `assertClubSupportsSport`.
 

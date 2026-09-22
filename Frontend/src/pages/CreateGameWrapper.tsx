@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { useLocation, Navigate, useNavigate } from 'react-router-dom';
 import { CreateGame } from './CreateGame';
-import { EntityType, Game } from '@/types';
+import { BasicUser, EntityType, Game } from '@/types';
 import type { CreateFlowIntent, CreateTemplateId } from '@/sport/createFlow';
+import type { RematchSource } from '@/components/GameDetails/playWithGroupAgain';
 import { createGameDataFromDeepLinkSearch } from '@shared/gameBooking/parseCreateGameDeepLinkSearch';
 import { useShellNavStore } from '@/store/shellNavStore';
 import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
@@ -18,6 +19,14 @@ export const CreateGameWrapper = () => {
     createIntent?: CreateFlowIntent;
     selectedTemplateId?: CreateTemplateId;
     invitedPlayerIds?: string[];
+    /** PRD 362 — the invitees as users, so chips render without a store round-trip. */
+    invitedPlayers?: BasicUser[];
+    /** PRD 362 — TRAINING rematch: the previous trainer, invited with `asTrainer`. */
+    invitedTrainerId?: string | null;
+    /** PRD 362 — TRAINING rematch started by the trainer: they coach, they do not play. */
+    creatorNonPlaying?: boolean;
+    /** PRD 362 — present only when the draft was opened from a finished game. */
+    rematchOf?: RematchSource;
     matchProposalId?: string;
     playIntentSource?: PlayIntentCreateSource;
     playIntentRosterLevels?: number[];
@@ -67,6 +76,10 @@ export const CreateGameWrapper = () => {
       initialTemplateId={initialTemplateId}
       initialBookingIds={queryInitial.bookingIds}
       initialInvitedPlayerIds={state?.invitedPlayerIds}
+      initialInvitedPlayers={state?.invitedPlayers}
+      initialTrainerInviteId={state?.invitedTrainerId}
+      initialCreatorNonPlaying={state?.creatorNonPlaying}
+      rematchOf={state?.rematchOf}
       matchProposalId={matchProposalId}
       playIntentSource={state?.playIntentSource}
       playIntentRosterLevels={state?.playIntentRosterLevels}

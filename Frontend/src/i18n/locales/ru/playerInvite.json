@@ -39,6 +39,14 @@
     "alreadyInMatch": "Этот игрок уже в матче",
     "lookingLoadError": "Не удалось загрузить список",
     "lookingLoadErrorHint": "Используйте Поиск или попробуйте снова",
-    "lookingRetry": "Повторить"
+    "lookingRetry": "Повторить",
+    "groupPlayedWith": "Играли вместе",
+    "groupEveryoneIn": "Все в городе {{city}}",
+    "groupEveryone": "Все",
+    "playedTogetherCaption": "Играли вместе {{when}} · {{games}}",
+    "gamesCount_one": "{{count}} игра",
+    "gamesCount_few": "{{count}} игры",
+    "gamesCount_many": "{{count}} игр",
+    "gamesCount_other": "{{count}} игр"
   }
 }

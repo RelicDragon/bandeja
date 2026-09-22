@@ -154,6 +154,18 @@
     "matchNotReadyHint_zero": "اختر 0 لاعبين أكثر لإكمال التطابق.",
     "matchNotReadyHint_two": "اختر {{count}} لاعبين أكثر لإكمال التطابق.",
     "matchNotReadyHint_few": "اختر {{count}} لاعبين أكثر لإكمال التطابق.",
-    "matchNotReadyHint_many": "اختر {{count}} لاعبين أكثر لإكمال التطابق."
+    "matchNotReadyHint_many": "اختر {{count}} لاعبين أكثر لإكمال التطابق.",
+    "lookingCountToday_zero": "لا أحد يبحث اليوم",
+    "lookingCountToday_one": "شخص واحد يبحث اليوم",
+    "lookingCountToday_two": "شخصان يبحثان اليوم",
+    "lookingCountToday_few": "{{count}} يبحثون اليوم",
+    "lookingCountToday_many": "{{count}} يبحثون اليوم",
+    "lookingCountToday_other": "{{count}} يبحثون اليوم",
+    "lookingCountTodayAndTomorrow_zero": "لا أحد يبحث اليوم وغدًا",
+    "lookingCountTodayAndTomorrow_one": "شخص واحد يبحث اليوم وغدًا",
+    "lookingCountTodayAndTomorrow_two": "شخصان يبحثان اليوم وغدًا",
+    "lookingCountTodayAndTomorrow_few": "{{count}} يبحثون اليوم وغدًا",
+    "lookingCountTodayAndTomorrow_many": "{{count}} يبحثون اليوم وغدًا",
+    "lookingCountTodayAndTomorrow_other": "{{count}} يبحثون اليوم وغدًا"
   }
 }

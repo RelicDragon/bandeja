@@ -20,6 +20,18 @@ export const PLATFORM_SETTING_KEYS = {
   REFERRAL_REWARD_REFERRER: 'REFERRAL_REWARD_REFERRER',
   /** Coins granted to the referred user when a referral completes (PRD 351). */
   REFERRAL_REWARD_REFERRED: 'REFERRAL_REWARD_REFERRED',
+  /**
+   * PRD 364 — organizer "Next steps" block on game details. `'true'` shows the
+   * block and folds the attendance strip and open-spot row into it; anything
+   * else (including no row) keeps those surfaces exactly as they were.
+   * Exposed read-only through `GET /public/platform-flags`.
+   */
+  GAME_ORGANIZER_NEXT_ACTIONS_ENABLED: 'GAME_ORGANIZER_NEXT_ACTIONS_ENABLED',
+  /**
+   * PRD 363 — "{n} people looking to play" count on Find. Same on/off contract
+   * as above; the key is reserved here so both PRDs share one flags endpoint.
+   */
+  FIND_LOOKING_COUNT_ENABLED: 'FIND_LOOKING_COUNT_ENABLED',
 } as const;
 
 export type PlatformSettingKey =
@@ -101,6 +113,17 @@ export function parsePlatformSettingNumber(
   return parsed;
 }
 
+/**
+ * Parses a stored on/off setting. Only an explicit `true` / `1` / `on` / `yes`
+ * (case-insensitive, trimmed) is on; a missing row, an empty value or anything
+ * else is off. A kill switch must fail closed, never open.
+ */
+export function parsePlatformSettingBoolean(raw: string | null): boolean {
+  if (raw === null) return false;
+  const trimmed = raw.trim().toLowerCase();
+  return trimmed === 'true' || trimmed === '1' || trimmed === 'on' || trimmed === 'yes';
+}
+
 const cache = new PlatformSettingCache();
 
 export async function getSetting(key: string): Promise<string | null> {
@@ -122,6 +145,10 @@ export async function getNumericSetting(
 ): Promise<number | null> {
   const raw = await getSetting(key);
   return parsePlatformSettingNumber(raw, fallback ?? null);
+}
+
+export async function getBooleanSetting(key: string): Promise<boolean> {
+  return parsePlatformSettingBoolean(await getSetting(key));
 }
 
 export async function setSetting(key: string, value: string): Promise<void> {
@@ -147,6 +174,7 @@ export function invalidateSettingsCache(): void {
 export const PlatformSettingService = {
   getSetting,
   getNumericSetting,
+  getBooleanSetting,
   setSetting,
   listSettings,
   invalidateSettingsCache,

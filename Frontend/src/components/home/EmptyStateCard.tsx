@@ -9,7 +9,8 @@ import { Card } from '@/components/Card';
 interface EmptyStateCardProps {
   icon: LucideIcon;
   title: string;
-  description?: string;
+  /** One muted line under the title; may carry a single inline action (PRD 363). */
+  description?: ReactNode;
   action?: ReactNode;
   className?: string;
 }

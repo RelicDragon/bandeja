@@ -138,6 +138,10 @@
     "matchingGameAskCta": "जॉइन का अनुरोध",
     "matchingGameTimeClub": "{{time}} · {{club}}",
     "matchingGameTimeOnly": "{{time}}",
-    "matchingGameNoClub": "स्थान तय होना बाकी"
+    "matchingGameNoClub": "स्थान तय होना बाकी",
+    "lookingCountToday_one": "{{count}} आज खेलना चाहता है",
+    "lookingCountToday_other": "{{count}} आज खेलना चाहते हैं",
+    "lookingCountTodayAndTomorrow_one": "{{count}} आज और कल खेलना चाहता है",
+    "lookingCountTodayAndTomorrow_other": "{{count}} आज और कल खेलना चाहते हैं"
   }
 }

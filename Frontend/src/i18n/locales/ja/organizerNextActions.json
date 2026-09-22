@@ -1,0 +1,24 @@
+{
+  "organizerNextActions": {
+    "title": "次のステップ",
+    "more_other": "他 {{count}} 件",
+    "less": "閉じる",
+    "seats": {
+      "needed_other": "あと {{count}} 人必要",
+      "waiting_other": "{{count}} 人が待機中",
+      "reviewQueue": "待機リストを確認",
+      "invite": "招待"
+    },
+    "booking": {
+      "notBooked": "コートはまだ予約されていません",
+      "partlyBooked": "コートは一部のみ予約済み",
+      "seeBookings": "予約を見る",
+      "editCourt": "コートを編集"
+    },
+    "cost": {
+      "unpaid_other": "{{count}} 人が未払い",
+      "settle": "支払う",
+      "review": "確認"
+    }
+  }
+}

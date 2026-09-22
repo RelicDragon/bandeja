@@ -196,6 +196,38 @@ describe('AttendanceCard', () => {
     expect(html).not.toContain('attendance.confirm"');
   });
 
+  it('PRD 364: hides the strip when the Next steps block hosts it, and the card then renders nothing for a non-answering organizer', () => {
+    const html = render(
+      <AttendanceCard
+        attendance={makeAttendance(makeDetails())}
+        canAnswer={false}
+        isOrganizer
+        showOrganizerStrip={false}
+        players={[]}
+        viewerUserId="u1"
+        onRequestLeave={vi.fn()}
+      />,
+    );
+
+    expect(html).not.toContain('attendance.organizer.progress');
+    expect(html).not.toContain('attendance.organizer.nudge');
+    expect(html).toBe('');
+  });
+
+  it('PRD 364: keeps the strip by default (flag off renders today\'s card)', () => {
+    const html = render(
+      <AttendanceCard
+        attendance={makeAttendance(makeDetails())}
+        canAnswer={false}
+        isOrganizer
+        players={[]}
+        viewerUserId="u1"
+        onRequestLeave={vi.fn()}
+      />,
+    );
+    expect(html).toContain('attendance.organizer.progress');
+  });
+
   it('disables Nudge and shows the cooldown caption while it is on cooldown', () => {
     const html = render(
       <AttendanceCard

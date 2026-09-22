@@ -38,6 +38,8 @@ async function loadPlatformSettingsPage() {
     await loadReplicatePhotoModelSetting();
     await loadCoinsPerCurrencyUnitSetting();
     await loadReferralRewardSettings();
+    await loadOrganizerNextActionsSetting();
+    await loadLookingCountSetting();
 }
 
 async function loadReplicatePhotoModelSetting() {
@@ -326,7 +328,181 @@ async function saveReferralRewards() {
     }
 }
 
+// --- PRD 364: organizer next actions --------------------------------------
+// `GAME_ORGANIZER_NEXT_ACTIONS_ENABLED` is the rollback switch for the
+// "Next steps" block. Only the literal `true` turns it on; no row, an empty
+// value or anything else is off, so the legacy organizer surfaces come back
+// the moment the row is cleared (`parsePlatformSettingBoolean`).
+const ORGANIZER_NEXT_ACTIONS_KEY = 'GAME_ORGANIZER_NEXT_ACTIONS_ENABLED';
+let organizerNextActionsActive = 'false';
+
+function normalizeOrganizerNextActionsValue(raw) {
+    const value = String(raw ?? '').trim().toLowerCase();
+    return value === 'true' || value === '1' || value === 'on' || value === 'yes' ? 'true' : 'false';
+}
+
+function setOrganizerNextActionsStatus(message, type) {
+    const el = document.getElementById('organizerNextActionsStatus');
+    if (!el) return;
+    el.textContent = message || '';
+    el.className = 'platform-settings-status' + (type ? ` ${type}` : '');
+}
+
+function updateOrganizerNextActionsSaveButton() {
+    const btn = document.getElementById('organizerNextActionsSaveBtn');
+    const select = document.getElementById('organizerNextActionsSelect');
+    if (!btn || !select) return;
+    btn.disabled = select.disabled || select.value === organizerNextActionsActive;
+}
+
+async function loadOrganizerNextActionsSetting() {
+    const select = document.getElementById('organizerNextActionsSelect');
+    const activeEl = document.getElementById('organizerNextActionsActive');
+    if (!select || !activeEl) return;
+
+    select.disabled = true;
+    setOrganizerNextActionsStatus('Loading…', 'loading');
+
+    try {
+        const response = await apiRequest('/admin/platform-settings');
+        if (!response.success) throw new Error('Failed to load settings');
+
+        const row = platformSettingRows(response).find(
+            (entry) => entry.key === ORGANIZER_NEXT_ACTIONS_KEY
+        );
+        organizerNextActionsActive = normalizeOrganizerNextActionsValue(row ? row.value : '');
+        activeEl.textContent = row ? String(row.value).trim() || 'empty — off' : 'unset — off';
+        select.value = organizerNextActionsActive;
+        select.disabled = false;
+        setOrganizerNextActionsStatus('');
+        updateOrganizerNextActionsSaveButton();
+    } catch (error) {
+        console.error('Failed to load GAME_ORGANIZER_NEXT_ACTIONS_ENABLED:', error);
+        select.disabled = false;
+        setOrganizerNextActionsStatus(formatPlatformSettingsApiError(error) || 'Failed to load', 'error');
+    }
+}
+
+async function saveOrganizerNextActions() {
+    const select = document.getElementById('organizerNextActionsSelect');
+    const activeEl = document.getElementById('organizerNextActionsActive');
+    if (!select || !activeEl) return;
+
+    const value = select.value === 'true' ? 'true' : 'false';
+    if (value === organizerNextActionsActive) return;
+
+    select.disabled = true;
+    setOrganizerNextActionsStatus('Saving…', 'loading');
+
+    try {
+        await apiRequest(`/admin/platform-settings/${ORGANIZER_NEXT_ACTIONS_KEY}`, {
+            method: 'PUT',
+            body: JSON.stringify({ value }),
+        });
+        organizerNextActionsActive = value;
+        activeEl.textContent = value;
+        setOrganizerNextActionsStatus('Saved', 'success');
+        toast(value === 'true' ? 'Next steps block enabled' : 'Next steps block disabled', 'success');
+    } catch (error) {
+        console.error('Failed to save GAME_ORGANIZER_NEXT_ACTIONS_ENABLED:', error);
+        const msg = formatPlatformSettingsApiError(error) || 'Failed to save';
+        setOrganizerNextActionsStatus(msg, 'error');
+        toast(msg, 'error');
+    } finally {
+        select.disabled = false;
+        updateOrganizerNextActionsSaveButton();
+    }
+}
+
+// --- PRD 363: Find looking-to-play count -----------------------------------
+// `FIND_LOOKING_COUNT_ENABLED` gates the "{n} people are looking to play" line
+// in the Find empty state and on the play-intent strip. Only the literal
+// `true` turns it on (`parsePlatformSettingBoolean`); the count endpoint
+// answers `count: null` while it is off, so the app renders nothing.
+const LOOKING_COUNT_KEY = 'FIND_LOOKING_COUNT_ENABLED';
+let lookingCountActive = 'false';
+
+function normalizeLookingCountValue(raw) {
+    const value = String(raw ?? '').trim().toLowerCase();
+    return value === 'true' || value === '1' || value === 'on' || value === 'yes' ? 'true' : 'false';
+}
+
+function setLookingCountStatus(message, type) {
+    const el = document.getElementById('lookingCountStatus');
+    if (!el) return;
+    el.textContent = message || '';
+    el.className = 'platform-settings-status' + (type ? ` ${type}` : '');
+}
+
+function updateLookingCountSaveButton() {
+    const btn = document.getElementById('lookingCountSaveBtn');
+    const select = document.getElementById('lookingCountSelect');
+    if (!btn || !select) return;
+    btn.disabled = select.disabled || select.value === lookingCountActive;
+}
+
+async function loadLookingCountSetting() {
+    const select = document.getElementById('lookingCountSelect');
+    const activeEl = document.getElementById('lookingCountActive');
+    if (!select || !activeEl) return;
+
+    select.disabled = true;
+    setLookingCountStatus('Loading…', 'loading');
+
+    try {
+        const response = await apiRequest('/admin/platform-settings');
+        if (!response.success) throw new Error('Failed to load settings');
+
+        const row = platformSettingRows(response).find((entry) => entry.key === LOOKING_COUNT_KEY);
+        lookingCountActive = normalizeLookingCountValue(row ? row.value : '');
+        activeEl.textContent = row ? String(row.value).trim() || 'empty — off' : 'unset — off';
+        select.value = lookingCountActive;
+        select.disabled = false;
+        setLookingCountStatus('');
+        updateLookingCountSaveButton();
+    } catch (error) {
+        console.error('Failed to load FIND_LOOKING_COUNT_ENABLED:', error);
+        select.disabled = false;
+        setLookingCountStatus(formatPlatformSettingsApiError(error) || 'Failed to load', 'error');
+    }
+}
+
+async function saveLookingCount() {
+    const select = document.getElementById('lookingCountSelect');
+    const activeEl = document.getElementById('lookingCountActive');
+    if (!select || !activeEl) return;
+
+    const value = select.value === 'true' ? 'true' : 'false';
+    if (value === lookingCountActive) return;
+
+    select.disabled = true;
+    setLookingCountStatus('Saving…', 'loading');
+
+    try {
+        await apiRequest(`/admin/platform-settings/${LOOKING_COUNT_KEY}`, {
+            method: 'PUT',
+            body: JSON.stringify({ value }),
+        });
+        lookingCountActive = value;
+        activeEl.textContent = value;
+        setLookingCountStatus('Saved', 'success');
+        toast(value === 'true' ? 'Looking-to-play count enabled' : 'Looking-to-play count disabled', 'success');
+    } catch (error) {
+        console.error('Failed to save FIND_LOOKING_COUNT_ENABLED:', error);
+        const msg = formatPlatformSettingsApiError(error) || 'Failed to save';
+        setLookingCountStatus(msg, 'error');
+        toast(msg, 'error');
+    } finally {
+        select.disabled = false;
+        updateLookingCountSaveButton();
+    }
+}
+
 window.loadPlatformSettingsPage = loadPlatformSettingsPage;
+window.saveLookingCount = saveLookingCount;
+window.updateLookingCountSaveButton = updateLookingCountSaveButton;
+window.saveOrganizerNextActions = saveOrganizerNextActions;
+window.updateOrganizerNextActionsSaveButton = updateOrganizerNextActionsSaveButton;
 window.saveReplicatePhotoModel = saveReplicatePhotoModel;
 window.updateReplicateModelSaveButton = updateReplicateModelSaveButton;
 window.saveCoinsPerCurrencyUnit = saveCoinsPerCurrencyUnit;

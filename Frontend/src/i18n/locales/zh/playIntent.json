@@ -138,6 +138,10 @@
     "matchingGameAskCta": "申请加入",
     "matchingGameTimeClub": "{{time}} · {{club}}",
     "matchingGameTimeOnly": "{{time}}",
-    "matchingGameNoClub": "地点待定"
+    "matchingGameNoClub": "地点待定",
+    "lookingCountToday_one": "{{count}} 人今天想打球",
+    "lookingCountToday_other": "{{count}} 人今天想打球",
+    "lookingCountTodayAndTomorrow_one": "{{count}} 人今天和明天想打球",
+    "lookingCountTodayAndTomorrow_other": "{{count}} 人今天和明天想打球"
   }
 }

@@ -1,0 +1,44 @@
+{
+  "organizerNextActions": {
+    "title": "الخطوات التالية",
+    "more_zero": "+{{count}} أخرى",
+    "more_one": "+{{count}} أخرى",
+    "more_two": "+{{count}} أخرى",
+    "more_few": "+{{count}} أخرى",
+    "more_many": "+{{count}} أخرى",
+    "more_other": "+{{count}} أخرى",
+    "less": "عرض أقل",
+    "seats": {
+      "needed_zero": "يلزم {{count}} لاعب إضافي",
+      "needed_one": "يلزم {{count}} لاعب إضافي",
+      "needed_two": "يلزم {{count}} لاعبان إضافيان",
+      "needed_few": "يلزم {{count}} لاعبين إضافيين",
+      "needed_many": "يلزم {{count}} لاعبًا إضافيًا",
+      "needed_other": "يلزم {{count}} لاعب إضافي",
+      "waiting_zero": "{{count}} في الانتظار",
+      "waiting_one": "{{count}} في الانتظار",
+      "waiting_two": "{{count}} في الانتظار",
+      "waiting_few": "{{count}} في الانتظار",
+      "waiting_many": "{{count}} في الانتظار",
+      "waiting_other": "{{count}} في الانتظار",
+      "reviewQueue": "مراجعة قائمة الانتظار",
+      "invite": "دعوة"
+    },
+    "booking": {
+      "notBooked": "الملعب غير محجوز بعد",
+      "partlyBooked": "الملعب محجوز جزئيًا",
+      "seeBookings": "عرض الحجوزات",
+      "editCourt": "تعديل الملعب"
+    },
+    "cost": {
+      "unpaid_zero": "{{count}} لم يدفعوا بعد",
+      "unpaid_one": "{{count}} لم يدفع بعد",
+      "unpaid_two": "{{count}} لم يدفعا بعد",
+      "unpaid_few": "{{count}} لم يدفعوا بعد",
+      "unpaid_many": "{{count}} لم يدفعوا بعد",
+      "unpaid_other": "{{count}} لم يدفعوا بعد",
+      "settle": "تسوية",
+      "review": "مراجعة"
+    }
+  }
+}

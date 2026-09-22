@@ -1,7 +1,7 @@
 import { PremiumName } from '@/components/PremiumName';
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { UserPlus, Users2, Plus, Trophy, ChevronDown, Trash2 } from 'lucide-react';
+import { UserPlus, Users2, Plus, Trophy, ChevronDown, Trash2, GraduationCap } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button, PlayerAvatar, RangeSlider } from '@/components';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
@@ -20,6 +20,8 @@ interface ParticipantsSectionProps {
   maxParticipants: number;
   invitedPlayerIds: string[];
   invitedPlayers?: BasicUser[];
+  /** PRD 362 — this invitee will be invited as the trainer (TRAINING rematch); their row says so. */
+  trainerInviteId?: string | null;
   user: BasicUser | null;
   entityType: EntityType;
   canInvitePlayers: boolean;
@@ -44,6 +46,7 @@ export const ParticipantsSection = ({
   maxParticipants,
   invitedPlayerIds,
   invitedPlayers = [],
+  trainerInviteId = null,
   user,
   entityType,
   canInvitePlayers,
@@ -331,8 +334,19 @@ export const ParticipantsSection = ({
                     extrasmall={true}
                   />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                      <PremiumName user={player}>{player.firstName} {player.lastName}</PremiumName>
+                    <p className="flex min-w-0 items-center gap-1.5 text-sm font-medium text-gray-900 dark:text-white">
+                      <span className="truncate">
+                        <PremiumName user={player}>{player.firstName} {player.lastName}</PremiumName>
+                      </span>
+                      {trainerInviteId && player.id === trainerInviteId ? (
+                        <span
+                          data-testid="invitee-trainer-badge"
+                          className="inline-flex flex-shrink-0 items-center gap-1 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-800 dark:bg-amber-900/40 dark:text-amber-300"
+                        >
+                          <GraduationCap size={10} aria-hidden />
+                          {t('playerCard.isTrainer')}
+                        </span>
+                      ) : null}
                     </p>
                     {player.verbalStatus ? (
                       <p className="verbal-status">{player.verbalStatus}</p>

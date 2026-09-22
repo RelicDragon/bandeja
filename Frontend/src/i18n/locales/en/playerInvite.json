@@ -37,6 +37,12 @@
     "alreadyInMatch": "They’re already in a match",
     "lookingLoadError": "Couldn’t load who’s looking",
     "lookingLoadErrorHint": "Use Search, or try again",
-    "lookingRetry": "Try again"
+    "lookingRetry": "Try again",
+    "groupPlayedWith": "Played with",
+    "groupEveryoneIn": "Everyone in {{city}}",
+    "groupEveryone": "Everyone",
+    "playedTogetherCaption": "Played together {{when}} · {{games}}",
+    "gamesCount_one": "{{count}} game",
+    "gamesCount_other": "{{count}} games"
   }
 }

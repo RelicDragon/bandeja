@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import type { InviteListEntry } from '@/components/playerInvite/inviteEntries';
+import type { InviteListRow } from '@/components/playerInvite/inviteListRows';
 import { virtualRowOffset } from '@/components/playerInvite/virtualRowOffset';
 
 const INLINE_THRESHOLD = 30;
@@ -9,8 +9,9 @@ const ROW_GAP = 6;
 const OVERSCAN = 6;
 
 interface Props {
-  entries: InviteListEntry[];
-  renderEntry: (entry: InviteListEntry) => ReactNode;
+  /** Player, team and group-heading rows in display order. */
+  rows: InviteListRow[];
+  renderRow: (row: InviteListRow) => ReactNode;
   header?: ReactNode;
   empty?: ReactNode;
   footer?: ReactNode;
@@ -18,8 +19,8 @@ interface Props {
 }
 
 export function PlayerInviteVirtualList({
-  entries,
-  renderEntry,
+  rows,
+  renderRow,
   header,
   empty,
   footer,
@@ -28,7 +29,7 @@ export function PlayerInviteVirtualList({
   const parentRef = useRef<HTMLDivElement>(null);
   const headerWrapRef = useRef<HTMLDivElement>(null);
   const hasHeader = Boolean(header);
-  const useVirtual = entries.length >= INLINE_THRESHOLD;
+  const useVirtual = rows.length >= INLINE_THRESHOLD;
   const [scrollMargin, setScrollMargin] = useState(0);
 
   useLayoutEffect(() => {
@@ -49,19 +50,19 @@ export function PlayerInviteVirtualList({
   }, [useVirtual, hasHeader]);
 
   const virtualizer = useVirtualizer({
-    count: useVirtual ? entries.length : 0,
+    count: useVirtual ? rows.length : 0,
     getScrollElement: () => parentRef.current,
     estimateSize: () => ROW_ESTIMATE,
     overscan: OVERSCAN,
     gap: ROW_GAP,
     scrollMargin,
-    getItemKey: (index) => `${entries[index].kind}-${entries[index].id}`,
+    getItemKey: (index) => `${rows[index].kind}-${rows[index].id}`,
     enabled: useVirtual,
   });
 
   const headerNode = hasHeader ? <div ref={headerWrapRef}>{header}</div> : null;
 
-  if (entries.length === 0) {
+  if (rows.length === 0) {
     return (
       <div ref={parentRef} className={className}>
         {headerNode}
@@ -76,8 +77,8 @@ export function PlayerInviteVirtualList({
       <div ref={parentRef} className={className}>
         {headerNode}
         <div className="space-y-1.5 pb-2">
-          {entries.map((e) => (
-            <div key={`${e.kind}-${e.id}`}>{renderEntry(e)}</div>
+          {rows.map((row) => (
+            <div key={`${row.kind}-${row.id}`}>{renderRow(row)}</div>
           ))}
         </div>
         {footer}
@@ -99,7 +100,7 @@ export function PlayerInviteVirtualList({
         }}
       >
         {virtualItems.map((row) => {
-          const entry = entries[row.index];
+          const listRow = rows[row.index];
           return (
             <div
               key={row.key}
@@ -113,7 +114,7 @@ export function PlayerInviteVirtualList({
                 transform: `translateY(${virtualRowOffset(row.start, scrollMargin)}px)`,
               }}
             >
-              {renderEntry(entry)}
+              {renderRow(listRow)}
             </div>
           );
         })}

@@ -23,6 +23,15 @@ export type EntityCapabilities = {
    * listings, where they do not.
    */
   hasNoviceTag: boolean;
+  /**
+   * PRD 362 — a finished game of this type can seed "Play with this group
+   * again": the format is copied into a fresh create draft and the previous
+   * PLAYING roster is invited. True where a participant organizes the next
+   * session themselves (GAME, TOURNAMENT, TRAINING, BAR); false for league
+   * fixtures, season shells and EVENT listings, whose next occurrence is not
+   * something one player sets up.
+   */
+  canRematch: boolean;
   archiveByTime: boolean;
   unboundedRoster: boolean;
   alwaysPublic: boolean;
@@ -41,6 +50,7 @@ const GAME_CAPS: EntityCapabilities = {
   hasPlayIntentRadar: true,
   hasPartnerBoard: false,
   hasNoviceTag: true,
+  canRematch: true,
   archiveByTime: false,
   unboundedRoster: false,
   alwaysPublic: false,
@@ -60,6 +70,8 @@ const LEAGUE_CAPS: EntityCapabilities = {
   hasPlayIntentRadar: false,
   // A fixture's roster comes from the league, not from an organizer's invitation.
   hasNoviceTag: false,
+  // The next fixture is scheduled by the league, not rematched by a player.
+  canRematch: false,
   skipPlayIntentNotify: true,
 };
 
@@ -73,6 +85,7 @@ const LEAGUE_SEASON_CAPS: EntityCapabilities = {
   hasPlayIntentRadar: false,
   hasPartnerBoard: false,
   hasNoviceTag: false,
+  canRematch: false,
   archiveByTime: true,
   unboundedRoster: false,
   alwaysPublic: false,
@@ -91,6 +104,7 @@ const BAR_CAPS: EntityCapabilities = {
   hasPlayIntentRadar: true,
   hasPartnerBoard: false,
   hasNoviceTag: true,
+  canRematch: true,
   archiveByTime: true,
   unboundedRoster: true,
   alwaysPublic: false,
@@ -109,6 +123,7 @@ const TRAINING_CAPS: EntityCapabilities = {
   hasPlayIntentRadar: false,
   hasPartnerBoard: false,
   hasNoviceTag: true,
+  canRematch: true,
   archiveByTime: false,
   unboundedRoster: false,
   alwaysPublic: false,
@@ -127,6 +142,7 @@ const EVENT_CAPS: EntityCapabilities = {
   hasPlayIntentRadar: false,
   hasPartnerBoard: true,
   hasNoviceTag: false,
+  canRematch: false,
   archiveByTime: true,
   unboundedRoster: true,
   alwaysPublic: true,

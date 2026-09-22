@@ -315,6 +315,25 @@
     "alreadyInJoinQueue_female": "أنتِ بالفعل في طابور الانضمام",
     "noviceFriendly": "ترحيب بالجدد",
     "filterNoviceOnly": "التي ترحّب بالجدد فقط",
-    "filterNoviceOnlyHint": "أظهر فقط المباريات التي ترحّب باللاعبين الجدد"
+    "filterNoviceOnlyHint": "أظهر فقط المباريات التي ترحّب باللاعبين الجدد",
+    "recovery": {
+      "createToday": "أنشئ مباراة اليوم",
+      "createTomorrow": "أنشئ مباراة غدًا",
+      "createOn": "أنشئ مباراة يوم {{day}}",
+      "clearFilters": "مسح الفلاتر",
+      "filtersCleared": "تم مسح الفلاتر",
+      "lookingToday_zero": "لا أحد يبحث عن لعب اليوم في {{city}}",
+      "lookingToday_one": "شخص واحد يبحث عن لعب اليوم في {{city}}",
+      "lookingToday_two": "شخصان يبحثان عن لعب اليوم في {{city}}",
+      "lookingToday_few": "{{count}} أشخاص يبحثون عن لعب اليوم في {{city}}",
+      "lookingToday_many": "{{count}} شخصًا يبحثون عن لعب اليوم في {{city}}",
+      "lookingToday_other": "{{count}} شخص يبحثون عن لعب اليوم في {{city}}",
+      "lookingTodayAndTomorrow_zero": "لا أحد يبحث عن لعب اليوم وغدًا في {{city}}",
+      "lookingTodayAndTomorrow_one": "شخص واحد يبحث عن لعب اليوم وغدًا في {{city}}",
+      "lookingTodayAndTomorrow_two": "شخصان يبحثان عن لعب اليوم وغدًا في {{city}}",
+      "lookingTodayAndTomorrow_few": "{{count}} أشخاص يبحثون عن لعب اليوم وغدًا في {{city}}",
+      "lookingTodayAndTomorrow_many": "{{count}} شخصًا يبحثون عن لعب اليوم وغدًا في {{city}}",
+      "lookingTodayAndTomorrow_other": "{{count}} شخص يبحثون عن لعب اليوم وغدًا في {{city}}"
+    }
   }
 }

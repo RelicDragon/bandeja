@@ -311,7 +311,8 @@
     "shareCardDone": "Podeljeno",
     "shareCardFailed": "Deljenje nije uspelo",
     "shareCardNoSummary": "Odlična sesija!",
-    "playAgainCta": "Igraj ponovo",
+    "playWithGroupAgainCta": "Igraj ponovo sa ovom ekipom",
+    "playWithGroupAgainCaption": "Izaberi novo vreme. Pozvaćemo iste igrače.",
     "showInStories": {
       "GAME": "Prikaži ovu igru u mojim stories",
       "BAR": "Prikaži ovaj bar događaj u mojim stories",

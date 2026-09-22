@@ -37,10 +37,6 @@ test.describe('create game entry @auth', () => {
     await createGame.expectTournamentSpecificFields();
   });
 
-  test('C-06 duplicate game from details', async () => {
-    test.skip(true, 'requires navigate from game details duplicate action');
-  });
-
   test('C-07 bottom tabs hidden on create page', async ({ page }) => {
     const createGame = new CreateGamePage(page);
     await createGame.gotoWithEntityType('GAME');

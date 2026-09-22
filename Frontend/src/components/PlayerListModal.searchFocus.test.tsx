@@ -124,7 +124,17 @@ vi.mock('@/contexts/SportLevelContext', () => ({
   SportLevelProvider: ({ children }: { children: React.ReactNode }) => children,
 }));
 
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { PlayerListModal } from './PlayerListModal';
+
+function renderModal() {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return (
+    <QueryClientProvider client={client}>
+      <PlayerListModal onClose={() => {}} />
+    </QueryClientProvider>
+  );
+}
 
 function emptyFetchResult() {
   return Object.assign([], { nearby: [], busyUserIds: [] });
@@ -159,7 +169,7 @@ describe('PlayerListModal search focus', () => {
     );
 
     await act(async () => {
-      root!.render(<PlayerListModal onClose={() => {}} />);
+      root!.render(renderModal());
     });
 
     const input = container.querySelector('[data-testid="player-invite-search"]');
@@ -188,7 +198,7 @@ describe('PlayerListModal search focus', () => {
     fetchPlayers.mockResolvedValue(emptyFetchResult());
 
     await act(async () => {
-      root!.render(<PlayerListModal onClose={() => {}} />);
+      root!.render(renderModal());
     });
     await act(async () => {
       await Promise.resolve();

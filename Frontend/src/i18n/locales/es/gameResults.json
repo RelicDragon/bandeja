@@ -307,7 +307,8 @@
     "shareCardDone": "Compartido",
     "shareCardFailed": "No se pudo compartir",
     "shareCardNoSummary": "¡Gran sesión!",
-    "playAgainCta": "Jugar de nuevo",
+    "playWithGroupAgainCta": "Jugar otra vez con este grupo",
+    "playWithGroupAgainCaption": "Elige una nueva hora. Invitaremos a los mismos jugadores.",
     "showInStories": {
       "GAME": "Mostrar este partido en mis stories",
       "BAR": "Mostrar este evento de bar en mis stories",

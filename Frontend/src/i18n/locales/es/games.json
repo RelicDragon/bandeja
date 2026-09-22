@@ -279,6 +279,17 @@
     "ownershipTransferred": "Ownership transferred successfully",
     "noviceFriendly": "Novatos bienvenidos",
     "filterNoviceOnly": "Solo con novatos bienvenidos",
-    "filterNoviceOnlyHint": "Mostrar solo partidos que acogen a jugadores nuevos"
+    "filterNoviceOnlyHint": "Mostrar solo partidos que acogen a jugadores nuevos",
+    "recovery": {
+      "createToday": "Crear un partido hoy",
+      "createTomorrow": "Crear un partido mañana",
+      "createOn": "Crear un partido el {{day}}",
+      "clearFilters": "Borrar filtros",
+      "filtersCleared": "Filtros borrados",
+      "lookingToday_one": "{{count}} persona busca jugar hoy en {{city}}",
+      "lookingToday_other": "{{count}} personas buscan jugar hoy en {{city}}",
+      "lookingTodayAndTomorrow_one": "{{count}} persona busca jugar hoy y mañana en {{city}}",
+      "lookingTodayAndTomorrow_other": "{{count}} personas buscan jugar hoy y mañana en {{city}}"
+    }
   }
 }

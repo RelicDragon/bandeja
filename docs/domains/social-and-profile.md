@@ -130,6 +130,14 @@ Guest-readable. Avatar, stats, levels, favorite/follow, share, DM, block, review
 - User teams `/user-team/:id`: pair, invite, add pair to a game the member can invite to, delete.
 - Invite friend: share link (Home empties / invite modal).
 
+### Co-play (PRD 361)
+
+"Played with" means both users had `GameParticipant.status = PLAYING` in the same game with `resultsStatus = FINAL`, started inside the last 12 months, and the entity type is not `BAR`, `LEAGUE_SEASON` or `EVENT`. Queue, invited, guest, trainer (`NON_PLAYING`) seats never count; `UserInteraction` tap counts are a tiebreaker only, never evidence of having played. The predicate lives once in `Backend/src/services/user/coPlay.service.ts` (`loadCoPlayers`, `rankInvitablePlayers`); the profile "last played together" line reuses it later.
+
+`GET /users/invitable-players` returns `gamesTogetherCount` and `lastPlayedTogetherAt` per row, excludes blocked pairs in both directions, always includes the ten most recent still-invitable co-players even when they live outside the Browse city, and with an empty query orders by `lastPlayedTogetherAt DESC NULLS LAST, gamesTogetherCount DESC, interactionCount DESC`.
+
+Invite modal, Search tab, empty query: a "Played with" group (≤10, most recent first, co-players without the game sport enabled omitted) above "Everyone in {Browse city}"; a Played-with row shows "Played together {when} · {N games}" instead of the together badge. Any query text collapses the groups; clearing restores them from the per-open react-query cache (`queryKeys.invitePicker.bundle`) without a refetch. No history → no headings. Not a third tab; the Looking tab, sport chips, filters and the send path are unchanged.
+
 ## Player overlay `?player=`
 
 `PlayerCardModalManager` + `urlSchema.getOverlay`. Bottom sheet: avatar/stats, follow, block, DM, invite, send coins (`SendMoneyToUserModal`), common groups `GET /users/:id/common-groups`. `?sport=` preserved.

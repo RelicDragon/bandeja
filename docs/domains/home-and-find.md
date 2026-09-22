@@ -69,6 +69,23 @@ Every shortcut runs in calendar view (tapping one from list view switches back).
 
 Deep link: `/find?quick=tomorrow|weekend` is read once by `useUrlStoreSync` into `requestFindQuickShortcut`; `AvailableGamesSection` applies it and rewrites the URL without the param. Copy: `games.quickShortcuts.*` (labels, `empty.*`).
 
+### Find recovery and the looking count (PRD 363)
+
+An empty Find is never a dead end. `AvailableGamesSection` renders `FindRecoveryEmptyState` instead of a bare `EmptyStateCard`:
+
+- **Title** — unchanged, from `resolveFindEmptyMessage` (entity-specific titles and the PRD 358 shortcut titles still apply).
+- **Create a game today / tomorrow / on {day}** — primary, full width. Calendar view: the selected day (a Weekend shortcut is its Saturday), clamped to today so a past day never offers a past game; list view: tomorrow. Opens `/create-game` with `initialGameData.startTime` at local noon of that day and the sport Find is scoped to — the same payload the header "+" sends for a calendar day — behind the same profile-name gate (`runWithProfileName`). Nothing else is prefilled.
+- **Clear filters** — outline, only when a narrowing filter is active: any entity chip, clubs, time window, level range, available slots, suitable rating, no-rating, hide bars, novices only, or a non-primary sport. Applies `FIND_RECOVERY_CLEARED_FILTERS` (exactly those keys back to defaults) and toasts "Filters cleared". Day, view, the panel's open state and the admin "show private games" toggle are untouched; a PRD 358 shortcut is the selected day, so it stays too.
+- **"{n} people are looking to play today in {city}"** — one muted line under the title, only while the admin flag `FIND_LOOKING_COUNT_ENABLED` is on and the number is **three or more**; below that the line is absent (no "nobody looking yet" copy anywhere). "today and tomorrow" after 18:00 city time. Tapping it opens the court lobby: the intent editor when the viewer is not looking, the lobby when they are — through the play-intent provider, which `PlayIntentHomeStrip` now wraps around the whole Find body (`children`).
+
+- **Play-intent strip** (`PlayIntentIdleCta` on Find) — the idle card's hint line shows the same flagged count ("{n} looking today / today and tomorrow", `playIntent.lookingCount*`) from three people up; below three, or with the flag off, it keeps its pre-existing pool-based hint ("{n} players want to play …" / the generic CTA hint), so turning the flag on never makes the strip say less. Tap opens the intent editor as before.
+
+Pure resolver: `components/home/findRecoveryActions.ts` (`resolveFindRecoveryActions`, `hasClearableFindFilters`, `relateDayToToday`, `createGameStartTimeForDay`). Threshold and window: `components/home/lookingCount.ts`. Data: `useLookingCount(cityId, sport)` → `GET /play-intents/count` (60 s stale, no request while the flag is off) with the flag from `usePlatformFlags()` → `GET /public/platform-flags`. Copy: `games.recovery.*`, `playIntent.lookingCount*`.
+
+**Play-intent strip on Find** (`PlayIntentHomeStrip showLookingCount`): while the flag is on, the idle card's hint line is the same count ("5 looking today", from three up, otherwise the generic hint) so one number appears once per screen; with the flag off the pre-existing pool-based hint ("5 players want to play today") is unchanged. The Looking strip (while looking) is untouched. Not on My, not on the header chip.
+
+Not in v1: the probe-query "which filter blocked you" explanation, saved alerts, nearby-city suggestions, any booking action.
+
 ### URL + persist
 
 | Source | What |

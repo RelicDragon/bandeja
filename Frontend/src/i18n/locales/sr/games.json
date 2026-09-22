@@ -284,6 +284,19 @@
     "gamesCount_other": "{{count}} games",
     "noviceFriendly": "Novajlije dobrodošle",
     "filterNoviceOnly": "Samo gde su novajlije dobrodošle",
-    "filterNoviceOnlyHint": "Prikaži samo igre koje primaju nove igrače"
+    "filterNoviceOnlyHint": "Prikaži samo igre koje primaju nove igrače",
+    "recovery": {
+      "createToday": "Napravi igru danas",
+      "createTomorrow": "Napravi igru sutra",
+      "createOn": "Napravi igru za {{day}}",
+      "clearFilters": "Obriši filtere",
+      "filtersCleared": "Filteri su obrisani",
+      "lookingToday_one": "{{count}} osoba traži igru danas u gradu {{city}}",
+      "lookingToday_few": "{{count}} osobe traže igru danas u gradu {{city}}",
+      "lookingToday_other": "{{count}} osoba traži igru danas u gradu {{city}}",
+      "lookingTodayAndTomorrow_one": "{{count}} osoba traži igru danas i sutra u gradu {{city}}",
+      "lookingTodayAndTomorrow_few": "{{count}} osobe traže igru danas i sutra u gradu {{city}}",
+      "lookingTodayAndTomorrow_other": "{{count}} osoba traži igru danas i sutra u gradu {{city}}"
+    }
   }
 }

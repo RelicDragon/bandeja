@@ -138,6 +138,10 @@
     "matchingGameAskCta": "Ask to join",
     "matchingGameTimeClub": "{{time}} · {{club}}",
     "matchingGameTimeOnly": "{{time}}",
-    "matchingGameNoClub": "Place to be set"
+    "matchingGameNoClub": "Place to be set",
+    "lookingCountToday_one": "{{count}} looking today",
+    "lookingCountToday_other": "{{count}} looking today",
+    "lookingCountTodayAndTomorrow_one": "{{count}} looking today and tomorrow",
+    "lookingCountTodayAndTomorrow_other": "{{count}} looking today and tomorrow"
   }
 }

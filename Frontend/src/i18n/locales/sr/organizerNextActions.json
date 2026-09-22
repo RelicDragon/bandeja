@@ -1,0 +1,32 @@
+{
+  "organizerNextActions": {
+    "title": "Sledeći koraci",
+    "more_one": "+{{count}} još",
+    "more_few": "+{{count}} još",
+    "more_other": "+{{count}} još",
+    "less": "Prikaži manje",
+    "seats": {
+      "needed_one": "Potreban je još {{count}} igrač",
+      "needed_few": "Potrebna su još {{count}} igrača",
+      "needed_other": "Potrebno je još {{count}} igrača",
+      "waiting_one": "{{count}} čeka",
+      "waiting_few": "{{count}} čekaju",
+      "waiting_other": "{{count}} čeka",
+      "reviewQueue": "Pregledaj red",
+      "invite": "Pozovi"
+    },
+    "booking": {
+      "notBooked": "Teren još nije rezervisan",
+      "partlyBooked": "Teren je delimično rezervisan",
+      "seeBookings": "Vidi rezervacije",
+      "editCourt": "Izmeni teren"
+    },
+    "cost": {
+      "unpaid_one": "{{count}} još nije platio",
+      "unpaid_few": "{{count}} još nisu platili",
+      "unpaid_other": "{{count}} još nije platilo",
+      "settle": "Plati",
+      "review": "Pregledaj"
+    }
+  }
+}

@@ -37,6 +37,12 @@
     "alreadyInMatch": "Ya está en un partido",
     "lookingLoadError": "No se pudo cargar quién busca",
     "lookingLoadErrorHint": "Usa Buscar, o inténtalo de nuevo",
-    "lookingRetry": "Reintentar"
+    "lookingRetry": "Reintentar",
+    "groupPlayedWith": "Jugaste con",
+    "groupEveryoneIn": "Todos en {{city}}",
+    "groupEveryone": "Todos",
+    "playedTogetherCaption": "Jugaron juntos {{when}} · {{games}}",
+    "gamesCount_one": "{{count}} partido",
+    "gamesCount_other": "{{count}} partidos"
   }
 }

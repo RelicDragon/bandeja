@@ -314,7 +314,8 @@
     "shareCardDone": "Отправлено",
     "shareCardFailed": "Не удалось поделиться",
     "shareCardNoSummary": "Отличная игра!",
-    "playAgainCta": "Сыграть снова",
+    "playWithGroupAgainCta": "Сыграть с этой компанией ещё раз",
+    "playWithGroupAgainCaption": "Выберите новое время. Мы пригласим тех же игроков.",
     "showInStories": {
       "GAME": "Показывать эту игру в моих stories",
       "BAR": "Показывать это бар-событие в моих stories",

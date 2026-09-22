@@ -9,6 +9,7 @@ import {
   getMatchProposal,
   getMyPlayIntent,
   getPlayIntentInvitePool,
+  getPlayIntentLookingCount,
   getPlayIntentPool,
   getSharedPlayIntent,
   joinSharedPlayIntent,
@@ -48,6 +49,13 @@ router.get(
   authenticate,
   validateZod({ query: playIntentOptionalScopeQuerySchema }),
   getPlayIntentPool,
+);
+// PRD 363 — cheap, cached city/sport count for the Find empty state and strip.
+router.get(
+  '/count',
+  authenticate,
+  validateZod({ query: playIntentOptionalScopeQuerySchema }),
+  getPlayIntentLookingCount,
 );
 router.post(
   '/invite-pool',

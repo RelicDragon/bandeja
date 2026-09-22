@@ -1,0 +1,28 @@
+{
+  "organizerNextActions": {
+    "title": "अगले कदम",
+    "more_one": "+{{count}} और",
+    "more_other": "+{{count}} और",
+    "less": "कम दिखाएँ",
+    "seats": {
+      "needed_one": "{{count}} खिलाड़ी और चाहिए",
+      "needed_other": "{{count}} खिलाड़ी और चाहिए",
+      "waiting_one": "{{count}} प्रतीक्षा में",
+      "waiting_other": "{{count}} प्रतीक्षा में",
+      "reviewQueue": "कतार देखें",
+      "invite": "आमंत्रित करें"
+    },
+    "booking": {
+      "notBooked": "कोर्ट अभी बुक नहीं हुआ",
+      "partlyBooked": "कोर्ट आंशिक रूप से बुक है",
+      "seeBookings": "बुकिंग देखें",
+      "editCourt": "कोर्ट बदलें"
+    },
+    "cost": {
+      "unpaid_one": "{{count}} ने अभी भुगतान नहीं किया",
+      "unpaid_other": "{{count}} ने अभी भुगतान नहीं किया",
+      "settle": "भुगतान करें",
+      "review": "देखें"
+    }
+  }
+}

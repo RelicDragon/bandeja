@@ -73,7 +73,10 @@ const LEGACY_CLEAN_NAMESPACES = [
   'welcome',
 ] as const;
 
-const NAMESPACES = [...PROGRAM_NAMESPACES, ...LEGACY_CLEAN_NAMESPACES];
+/** Namespaces owned by the PRD 358–364 program (engagement weeks 1–5). */
+const ENGAGEMENT_NAMESPACES = ['organizerNextActions'] as const;
+
+const NAMESPACES = [...PROGRAM_NAMESPACES, ...ENGAGEMENT_NAMESPACES, ...LEGACY_CLEAN_NAMESPACES];
 
 /** Values longer than this must differ from English in every other locale. */
 const MIN_TRANSLATED_LENGTH = 3;

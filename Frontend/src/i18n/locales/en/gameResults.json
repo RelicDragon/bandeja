@@ -166,7 +166,8 @@
     "shareCardDone": "Shared",
     "shareCardFailed": "Could not share",
     "shareCardNoSummary": "Great session!",
-    "playAgainCta": "Play again",
+    "playWithGroupAgainCta": "Play with this group again",
+    "playWithGroupAgainCaption": "Pick a new time. We'll invite the same players.",
     "showInStories": {
       "GAME": "Show this game in my stories",
       "BAR": "Show this bar event in my stories",

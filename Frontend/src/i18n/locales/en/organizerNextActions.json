@@ -1,0 +1,28 @@
+{
+  "organizerNextActions": {
+    "title": "Next steps",
+    "more_one": "+{{count}} more",
+    "more_other": "+{{count}} more",
+    "less": "Show less",
+    "seats": {
+      "needed_one": "{{count}} player needed",
+      "needed_other": "{{count}} players needed",
+      "waiting_one": "{{count}} waiting",
+      "waiting_other": "{{count}} waiting",
+      "reviewQueue": "Review queue",
+      "invite": "Invite"
+    },
+    "booking": {
+      "notBooked": "Court not booked yet",
+      "partlyBooked": "Court partly booked",
+      "seeBookings": "See bookings",
+      "editCourt": "Edit court"
+    },
+    "cost": {
+      "unpaid_one": "{{count}} hasn't paid",
+      "unpaid_other": "{{count}} haven't paid",
+      "settle": "Settle",
+      "review": "Review"
+    }
+  }
+}

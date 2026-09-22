@@ -1,5 +1,11 @@
 {
   "createGame": {
+    "rematch": {
+      "title_one": "Jugando otra vez con {{count}} jugador",
+      "title_other": "Jugando otra vez con {{count}} jugadores",
+      "titleNoInvitees": "Jugando otra vez",
+      "hint": "Formato y ajustes copiados de {{name}}. Elige nueva fecha, hora y pista. Las invitaciones se envían al crear el partido."
+    },
     "title": "Crear juego",
     "identity": {
       "label": "Nombre y foto",

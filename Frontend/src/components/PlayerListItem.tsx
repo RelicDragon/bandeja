@@ -1,5 +1,5 @@
 import { PremiumName } from '@/components/PremiumName';
-import { Check, CalendarClock, CalendarX2 } from 'lucide-react';
+import { Check, CalendarClock, CalendarX2, History } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { BasicUser } from '@/types';
 import type { Sport } from '@shared/sport';
@@ -7,6 +7,7 @@ import { PlayerAvatar } from './PlayerAvatar';
 import { formatSportLevelBadgeDisplay, getReliabilityForSport, getUserPrimarySport } from '@/utils/profileSports';
 import { formatInviteStatsRows } from '@/components/playerInvite/formatInviteStatsLine';
 import type { GameAvailabilityMatch } from '@/utils/availability/gameMatch';
+import { formatRelativeTimeSafe } from '@/utils/dateFormat';
 
 interface PlayerListItemProps {
   player: BasicUser;
@@ -17,6 +18,8 @@ interface PlayerListItemProps {
   inviteTerminalMain?: string;
   inviteTerminalSub?: string;
   levelSport?: Sport;
+  /** When set, the row is a "Played with" row and shows the recency caption instead of the together badge (PRD 361). */
+  lastPlayedTogetherAt?: string | null;
 }
 
 export function PlayerListItem({
@@ -28,6 +31,7 @@ export function PlayerListItem({
   inviteTerminalMain,
   inviteTerminalSub,
   levelSport,
+  lastPlayedTogetherAt,
 }: PlayerListItemProps) {
   const { t } = useTranslation();
   const sport = levelSport ?? getUserPrimarySport(player);
@@ -50,6 +54,13 @@ export function PlayerListItem({
       ? 'text-rose-500/90 dark:text-rose-400/90'
       : 'text-amber-500 dark:text-amber-400';
   const AvailabilityIcon = availability === 'none' ? CalendarX2 : CalendarClock;
+  const playedTogetherWhen = lastPlayedTogetherAt ? formatRelativeTimeSafe(lastPlayedTogetherAt) : '';
+  const playedTogetherCaption = playedTogetherWhen
+    ? t('playerInvite.playedTogetherCaption', {
+        when: playedTogetherWhen,
+        games: t('playerInvite.gamesCount', { count: gamesTogetherCount }),
+      })
+    : null;
 
   return (
     <div
@@ -85,7 +96,7 @@ export function PlayerListItem({
           <p>{levelRow}</p>
           <p>
             {socialRow}
-            {gamesTogetherCount > 0 && (
+            {gamesTogetherCount > 0 && !playedTogetherCaption && (
               <>
                 <span className="mx-1">·</span>
                 <span className="text-emerald-500 dark:text-emerald-400">
@@ -94,6 +105,15 @@ export function PlayerListItem({
               </>
             )}
           </p>
+          {playedTogetherCaption && (
+            <p
+              data-testid="played-together-caption"
+              className="flex items-start gap-1 text-emerald-600/90 dark:text-emerald-400/90"
+            >
+              <History size={11} className="mt-[1px] flex-shrink-0" aria-hidden />
+              <span className="min-w-0 break-words">{playedTogetherCaption}</span>
+            </p>
+          )}
           {availabilityLabel && (
             <p className={`flex items-center gap-1 ${availabilityTone}`}>
               <AvailabilityIcon size={11} />

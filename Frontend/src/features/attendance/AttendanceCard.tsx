@@ -28,6 +28,12 @@ export interface AttendanceCardProps {
   canAnswer: boolean;
   /** The viewer is the owner or an admin and sees the strip. */
   isOrganizer: boolean;
+  /**
+   * PRD 364 — `false` when the "Next steps" block hosts the progress pill and
+   * Nudge instead. The card keeps the participant controls and the no-show
+   * panel; the strip must never be on screen twice. Default `true`.
+   */
+  showOrganizerStrip?: boolean;
   /** PLAYING participants, for the organizer's after-the-game no-show list. */
   players: { userId: string; user: BasicUser }[];
   viewerUserId: string | undefined;
@@ -46,6 +52,7 @@ export function AttendanceCard({
   attendance,
   canAnswer,
   isOrganizer,
+  showOrganizerStrip = true,
   players,
   viewerUserId,
   onRequestLeave,
@@ -86,7 +93,7 @@ export function AttendanceCard({
 
   if (!details) return null;
   const showAsk = details.answersOpen && canAnswer;
-  const showStrip = details.answersOpen && isOrganizer;
+  const showStrip = details.answersOpen && isOrganizer && showOrganizerStrip;
   const showNoShowPanel = details.noShowWindowOpen && isOrganizer;
   if (!showAsk && !showStrip && !showNoShowPanel) return null;
 

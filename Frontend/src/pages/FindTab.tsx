@@ -628,9 +628,10 @@ export const FindTab = () => {
   if (splitView) {
     return (
       <>
-        <PlayIntentHomeStrip cityId={user?.currentCity?.id} sport={findLevelSport} />
-        <AdSlot placement={AD_PLACEMENTS.FIND_TOP} className="mb-4 w-full min-w-0 px-4" />
-        <AvailableGamesSection {...sectionProps} splitView={true} />
+        <PlayIntentHomeStrip cityId={user?.currentCity?.id} sport={findLevelSport} showLookingCount>
+          <AdSlot placement={AD_PLACEMENTS.FIND_TOP} className="mb-4 w-full min-w-0 px-4" />
+          <AvailableGamesSection {...sectionProps} splitView={true} />
+        </PlayIntentHomeStrip>
       </>
     );
   }
@@ -639,9 +640,10 @@ export const FindTab = () => {
     <PullToRefreshShell onRefresh={handleRefresh}>
       {({ isRefreshing }) => (
         <>
-          <PlayIntentHomeStrip cityId={user?.currentCity?.id} sport={findLevelSport} />
-          <AdSlot placement={AD_PLACEMENTS.FIND_TOP} className="mb-4 w-full min-w-0" />
-          <AvailableGamesSection {...sectionProps} />
+          <PlayIntentHomeStrip cityId={user?.currentCity?.id} sport={findLevelSport} showLookingCount>
+            <AdSlot placement={AD_PLACEMENTS.FIND_TOP} className="mb-4 w-full min-w-0" />
+            <AvailableGamesSection {...sectionProps} />
+          </PlayIntentHomeStrip>
           <MainTabFooter isLoading={loadingAvailableGames || isRefreshing} />
         </>
       )}

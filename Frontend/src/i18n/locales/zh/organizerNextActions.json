@@ -1,0 +1,24 @@
+{
+  "organizerNextActions": {
+    "title": "下一步",
+    "more_other": "还有 {{count}} 项",
+    "less": "收起",
+    "seats": {
+      "needed_other": "还差 {{count}} 名球员",
+      "waiting_other": "{{count}} 人排队中",
+      "reviewQueue": "查看排队",
+      "invite": "邀请"
+    },
+    "booking": {
+      "notBooked": "球场尚未预订",
+      "partlyBooked": "球场仅部分预订",
+      "seeBookings": "查看预订",
+      "editCourt": "修改球场"
+    },
+    "cost": {
+      "unpaid_other": "{{count}} 人尚未付款",
+      "settle": "结算",
+      "review": "查看"
+    }
+  }
+}

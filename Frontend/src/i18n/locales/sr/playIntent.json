@@ -146,6 +146,12 @@
     "matchingGameAskCta": "Zatraži ulazak",
     "matchingGameTimeClub": "{{time}} · {{club}}",
     "matchingGameTimeOnly": "{{time}}",
-    "matchingGameNoClub": "Mesto još nije izabrano"
+    "matchingGameNoClub": "Mesto još nije izabrano",
+    "lookingCountToday_one": "{{count}} traži igru danas",
+    "lookingCountToday_few": "{{count}} traže igru danas",
+    "lookingCountToday_other": "{{count}} traži igru danas",
+    "lookingCountTodayAndTomorrow_one": "{{count}} traži igru danas i sutra",
+    "lookingCountTodayAndTomorrow_few": "{{count}} traže igru danas i sutra",
+    "lookingCountTodayAndTomorrow_other": "{{count}} traži igru danas i sutra"
   }
 }

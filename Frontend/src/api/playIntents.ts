@@ -155,6 +155,16 @@ export type MatchingLobbyGame = {
   } | null;
 };
 
+/**
+ * PRD 363 — `GET /play-intents/count`. `count` is `null` while the admin flag
+ * is off; `dayKeys` is the discovery window (today, or today + tomorrow after
+ * 18:00 city time) the number covers.
+ */
+export type LookingCount = {
+  count: number | null;
+  dayKeys: string[];
+};
+
 export type PlayIntentPool = {
   todayKey: string;
   cityTimezone: string;
@@ -222,6 +232,14 @@ export const playIntentsApi = {
   cancel: async (intentId?: string) => {
     const path = intentId ? `/play-intents/${intentId}` : '/play-intents/me';
     const { data } = await api.delete<{ success: boolean; data: { cancelled: number } }>(path);
+    return data.data;
+  },
+
+  getLookingCount: async (params?: { cityId?: string; sport?: string }) => {
+    const { data } = await api.get<{ success: boolean; data: LookingCount }>(
+      '/play-intents/count',
+      { params },
+    );
     return data.data;
   },
 

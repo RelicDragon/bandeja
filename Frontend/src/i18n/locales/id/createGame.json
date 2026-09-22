@@ -1,5 +1,11 @@
 {
   "createGame": {
+    "rematch": {
+      "title_one": "Main lagi dengan {{count}} pemain",
+      "title_other": "Main lagi dengan {{count}} pemain",
+      "titleNoInvitees": "Main lagi",
+      "hint": "Format dan pengaturan disalin dari {{name}}. Pilih tanggal, waktu, dan lapangan baru. Undangan dikirim saat kamu membuat permainan."
+    },
     "title": "Buat Permainan",
     "identity": {
       "label": "Nama & foto",

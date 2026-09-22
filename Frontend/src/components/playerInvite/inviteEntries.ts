@@ -382,3 +382,69 @@ export function invitePreFilterCount(
   }
   return c;
 }
+
+/** How many recent co-players the "Played with" group shows (PRD 361). */
+export const PLAYED_WITH_CAP = 10;
+
+export interface GroupedInviteEntries {
+  /** Up to `PLAYED_WITH_CAP` co-players, most recent shared finished game first. Empty while typing. */
+  playedWith: InviteListEntry[];
+  /** Everything else, in the existing list order. Never repeats a Played-with row. */
+  everyone: InviteListEntry[];
+}
+
+function playedTogetherMs(value: string | null | undefined): number | null {
+  if (!value) return null;
+  const ms = new Date(value).getTime();
+  return Number.isFinite(ms) ? ms : null;
+}
+
+/**
+ * Zero-query grouping for the invite Search pane (PRD 361).
+ *
+ * A row is "played with" only when the backend recorded a finished game
+ * played together (`lastPlayedTogetherAt`). Tap counts never qualify. With a
+ * game sport, co-players who do not have that sport enabled are left out.
+ * Any query text collapses the groups: the pane becomes today's plain search.
+ */
+export function groupInviteEntries(
+  entries: InviteListEntry[],
+  opts: {
+    query: string;
+    gameSport?: Sport;
+    getUserMetadata: (id: string) => UserMetadata | undefined;
+    cap?: number;
+  },
+): GroupedInviteEntries {
+  if (opts.query.trim()) return { playedWith: [], everyone: entries };
+  const cap = opts.cap ?? PLAYED_WITH_CAP;
+
+  const candidates: Array<{ entry: InviteListEntry; ms: number; games: number; taps: number }> = [];
+  for (const entry of entries) {
+    if (entry.kind !== 'user') continue;
+    const meta = opts.getUserMetadata(entry.user.id);
+    const ms = playedTogetherMs(meta?.lastPlayedTogetherAt);
+    if (ms == null) continue;
+    if (
+      opts.gameSport &&
+      Array.isArray(entry.user.sportsEnabled) &&
+      !entry.user.sportsEnabled.includes(opts.gameSport)
+    ) {
+      continue;
+    }
+    candidates.push({
+      entry,
+      ms,
+      games: meta?.gamesTogetherCount ?? 0,
+      taps: meta?.interactionCount ?? 0,
+    });
+  }
+
+  candidates.sort((a, b) => b.ms - a.ms || b.games - a.games || b.taps - a.taps);
+  const playedWith = candidates.slice(0, cap).map((c) => c.entry);
+  if (playedWith.length === 0) return { playedWith, everyone: entries };
+
+  const playedWithIds = new Set(playedWith.map((e) => e.id));
+  const everyone = entries.filter((e) => !(e.kind === 'user' && playedWithIds.has(e.id)));
+  return { playedWith, everyone };
+}

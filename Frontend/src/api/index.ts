@@ -37,4 +37,5 @@ export * from './pairs';
 export * from './recap';
 export * from './referral';
 export * from './shop';
+export * from './platformFlags';
 export { default as api } from './axios';

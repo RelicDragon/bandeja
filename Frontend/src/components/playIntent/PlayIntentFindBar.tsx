@@ -19,6 +19,7 @@ import { resolvePlayIntentProposal } from './playIntentProposal';
 import { playIntentsApi, type MatchProposalSummary, type PlayIntent, type PoolMember } from '@/api/playIntents';
 import { formatPlayIntentHourRange } from '@/utils/playIntentWindow';
 import { getViewerPrimarySport } from '@/utils/profileSports';
+import { useLookingCount, type LookingCountState } from '@/hooks/useLookingCount';
 import { parseSport } from '@/sport/sportRegistry';
 import type { Sport } from '@/types';
 import toast from 'react-hot-toast';
@@ -488,8 +489,18 @@ export function PlayIntentActiveStrip() {
   );
 }
 
-/** Idle entry above the game list — same slot as Looking strip. */
-export function PlayIntentIdleCta() {
+/**
+ * Idle entry above the game list — same slot as Looking strip.
+ *
+ * PRD 363: on Find the hint line carries the flagged looking-to-play count
+ * ("5 looking today") from three people up. Below that, or with the flag off,
+ * the pre-existing pool-based hint is untouched.
+ */
+export function PlayIntentIdleCta({
+  lookingCount,
+}: {
+  lookingCount?: LookingCountState | null;
+}) {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const {
@@ -504,19 +515,29 @@ export function PlayIntentIdleCta() {
 
   if (!enabled || looking) return null;
 
+  // Flag on and three or more looking: the flagged count. Otherwise the card
+  // keeps the hint it always had, so switching the flag on never makes the
+  // strip say less than before.
+  const hint = lookingCount?.display
+    ? t(
+        lookingCount.display.window === 'todayAndTomorrow'
+          ? 'playIntent.lookingCountTodayAndTomorrow'
+          : 'playIntent.lookingCountToday',
+        { count: lookingCount.display.count },
+      )
+    : othersCount > 0
+      ? t('playIntent.idleOthersLooking', {
+          count: othersCount,
+          days: idleWhenLabel,
+        })
+      : t('playIntent.ctaHint');
+
   return (
     <AnimatedMount className="mb-3">
       <PlayIntentIdleCtaCard
         sport={primarySport}
         title={t('playIntent.wantToPlay')}
-        hint={
-          othersCount > 0
-            ? t('playIntent.idleOthersLooking', {
-                count: othersCount,
-                days: idleWhenLabel,
-              })
-            : t('playIntent.ctaHint')
-        }
+        hint={hint}
         members={stripMembers}
         onClick={openCompose}
       />
@@ -524,15 +545,37 @@ export function PlayIntentIdleCta() {
   );
 }
 
-/** Idle + Looking strips for Find / My — same slot, swaps on start/stop. */
+/** PRD 363 — the idle card with the flagged count; a separate component so the query only runs on Find. */
+function PlayIntentIdleCtaWithLookingCount({
+  cityId,
+  sport,
+}: {
+  cityId?: string | null;
+  sport?: Sport | string | null;
+}) {
+  const lookingCount = useLookingCount(cityId, sport);
+  return <PlayIntentIdleCta lookingCount={lookingCount} />;
+}
+
+/**
+ * Idle + Looking strips for Find / My — same slot, swaps on start/stop.
+ *
+ * `children` render inside the provider, after the strips, so surfaces below
+ * the strip (the Find empty state, PRD 363) can open the same lobby sheet.
+ */
 export function PlayIntentHomeStrip({
   cityId,
   sport,
   acceptSharedDeepLinks = false,
+  showLookingCount = false,
+  children,
 }: {
   cityId?: string | null;
   sport?: Sport | string | null;
   acceptSharedDeepLinks?: boolean;
+  /** PRD 363 — Find only: the idle hint carries the flagged looking-to-play count. */
+  showLookingCount?: boolean;
+  children?: ReactNode;
 }) {
   return (
     <PlayIntentProvider
@@ -540,8 +583,13 @@ export function PlayIntentHomeStrip({
       sport={sport}
       acceptSharedDeepLinks={acceptSharedDeepLinks}
     >
-      <PlayIntentIdleCta />
+      {showLookingCount ? (
+        <PlayIntentIdleCtaWithLookingCount cityId={cityId} sport={sport} />
+      ) : (
+        <PlayIntentIdleCta />
+      )}
       <PlayIntentActiveStrip />
+      {children}
     </PlayIntentProvider>
   );
 }

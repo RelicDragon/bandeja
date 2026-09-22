@@ -1,0 +1,36 @@
+{
+  "organizerNextActions": {
+    "title": "Что дальше",
+    "more_one": "+{{count}} ещё",
+    "more_few": "+{{count}} ещё",
+    "more_many": "+{{count}} ещё",
+    "more_other": "+{{count}} ещё",
+    "less": "Свернуть",
+    "seats": {
+      "needed_one": "Нужен ещё {{count}} игрок",
+      "needed_few": "Нужно ещё {{count}} игрока",
+      "needed_many": "Нужно ещё {{count}} игроков",
+      "needed_other": "Нужно ещё {{count}} игрока",
+      "waiting_one": "{{count}} в очереди",
+      "waiting_few": "{{count}} в очереди",
+      "waiting_many": "{{count}} в очереди",
+      "waiting_other": "{{count}} в очереди",
+      "reviewQueue": "Открыть очередь",
+      "invite": "Пригласить"
+    },
+    "booking": {
+      "notBooked": "Корт ещё не забронирован",
+      "partlyBooked": "Корт забронирован частично",
+      "seeBookings": "К бронированиям",
+      "editCourt": "Изменить корт"
+    },
+    "cost": {
+      "unpaid_one": "{{count}} ещё не заплатил",
+      "unpaid_few": "{{count}} ещё не заплатили",
+      "unpaid_many": "{{count}} ещё не заплатили",
+      "unpaid_other": "{{count}} ещё не заплатили",
+      "settle": "Оплатить",
+      "review": "Открыть"
+    }
+  }
+}

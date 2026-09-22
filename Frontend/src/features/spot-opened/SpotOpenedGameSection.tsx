@@ -10,6 +10,8 @@ export interface SpotOpenedGameSectionProps {
   viewerUserId: string | undefined;
   /** Owner or admin — gets the "Ana joined from the queue" toast. */
   isOrganizer: boolean;
+  /** PRD 364 — the "Next steps" block carries the open-seat fact for this viewer. */
+  hideOpenSpotRow?: boolean;
   onGameUpdate: (game: Game) => void;
 }
 
@@ -27,6 +29,7 @@ export function SpotOpenedGameSection({
   game,
   viewerUserId,
   isOrganizer,
+  hideOpenSpotRow = false,
   onGameUpdate,
 }: SpotOpenedGameSectionProps) {
   const refresh = useCallback(() => {
@@ -51,7 +54,7 @@ export function SpotOpenedGameSection({
   return (
     <>
       <SeatedFromQueueBanner gameId={game.id} seatedLive={seatedLive} />
-      <GameQueuePanel game={game} viewerUserId={viewerUserId} />
+      <GameQueuePanel game={game} viewerUserId={viewerUserId} hideOpenSpotRow={hideOpenSpotRow} />
     </>
   );
 }

@@ -32,6 +32,7 @@ import { DeleteGameBookingsWarningModal } from '@/components/GameDetails/DeleteG
 import { GameCancelled } from '@/components/GameDetails/GameCancelled';
 import { GameDetailsSkeleton } from '@/components/GameDetails/GameDetailsSkeleton';
 import { GameActionCard } from '@/components/GameDetails/GameActionCard';
+import { PlayWithGroupAgainButton } from '@/components/GameDetails/PlayWithGroupAgainButton';
 import { PhotosSection } from '@/components/GameDetails/PhotosSection';
 import { GameWebCamerasSection } from '@/components/GameDetails/GameWebCamerasSection';
 import { canViewGamePhotos } from '@shared/gamePhotos/permissions';
@@ -112,6 +113,10 @@ import { mergeGameWithInviteDeletedPayload, isPendingGameInvite } from '@/utils/
 import { retainGameRoom, releaseGameRoom } from '@/services/gameRoomMembership';
 import { AttendanceCard } from '@/features/attendance/AttendanceCard';
 import { SpotOpenedGameSection } from '@/features/spot-opened/SpotOpenedGameSection';
+import { OrganizerNextActionsSection } from '@/features/organizer-next-actions/OrganizerNextActionsSection';
+import { resolveOrganizerSurfacePlacement } from '@/features/organizer-next-actions/organizerNextActionsPlacement';
+import type { OrganizerViewerRole } from '@/features/organizer-next-actions/organizerNextActionsTypes';
+import { usePlatformFlags } from '@/hooks/usePlatformFlags';
 import { shouldSwallowJoinDeepLink } from '@/features/spot-opened/joinDeepLink';
 import { JoinFromDeepLink } from '@/features/spot-opened/JoinFromDeepLink';
 import { joinOutcomeTone } from '@/features/spot-opened/joinOutcomeTone';
@@ -877,6 +882,24 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
     (game?.anyoneCanInvite && participation.isPlaying)
   );
 
+  // PRD 364 — organizer "Next steps". The platform flag decides which surface
+  // hosts the attendance strip and the open-spot row; the placement helper
+  // guarantees it is exactly one of them, and flag-off is today's page.
+  const platformFlags = usePlatformFlags(Boolean(game && user));
+  const organizerViewerRole: OrganizerViewerRole = canEdit
+    ? 'organizer'
+    : canInvitePlayers
+      ? 'inviter'
+      : isParticipant
+        ? 'participant'
+        : 'none';
+  const organizerPlacement = resolveOrganizerSurfacePlacement({
+    flagEnabled: platformFlags.isEnabled('GAME_ORGANIZER_NEXT_ACTIONS_ENABLED'),
+    viewerRole: organizerViewerRole,
+    entityType: game?.entityType ?? '',
+    status: game?.status ?? '',
+  });
+
   const handleAcceptJoinQueue = async (queueUserId: string) => {
     if (!id) return;
 
@@ -1541,6 +1564,32 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
             <SeriesTitleLine game={game} />
           </div>
 
+          {/* PRD 364 — "Next steps": at most two facts with a button each, for
+              the organizer (and the seats line for a participant with invite
+              rights). Renders nothing with zero hints or with the flag off. */}
+          {user && organizerPlacement.blockEligible ? (
+            <div key="organizer-next-actions" className="contents">
+              <OrganizerNextActionsSection
+                game={game}
+                viewerRole={organizerViewerRole}
+                canInvite={canInvitePlayers}
+                canManageQueue={canManageJoinQueue}
+                attendance={attendance}
+                attendanceEnabled={attendanceEnabled}
+                costVisible={canViewGameCost(game, user)}
+                onInvite={() => {
+                  setPlayerListMode('players');
+                  setPlayerListGender(undefined);
+                  setShowPlayerList(true);
+                }}
+                onEditCourt={() => {
+                  setEditGameInfoInitialTab('locationTime');
+                  setIsEditGameInfoModalOpen(true);
+                }}
+              />
+            </div>
+          ) : null}
+
           {user && isLeague && game.hasFixedTeams ? (
             <div key="league-fixed-teams" className="contents">
               <LeagueFixedTeamsSection game={game} />
@@ -1616,6 +1665,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
               attendance={attendance}
               canAnswer={isUserPlaying && !isGuest && !isUserOwner}
               isOrganizer={isOwner}
+              showOrganizerStrip={!organizerPlacement.hideAttendanceStrip}
               players={attendancePlayers}
               viewerUserId={user?.id}
               onRequestLeave={() => setShowLeaveConfirmation(true)}
@@ -1743,6 +1793,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
               game={game}
               viewerUserId={user?.id}
               isOrganizer={isOwner}
+              hideOpenSpotRow={organizerPlacement.hideOpenSpotRow}
               onGameUpdate={setGame}
             />
           </div>
@@ -1775,6 +1826,11 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
 
           {user && game.entityType === 'TRAINING' && game.resultsStatus === 'FINAL' ? (
             <div key="training-results" className="contents">
+              {/* PRD 362 — the results share card is not mounted for TRAINING, so the
+                  rematch action is placed here, at the top of the results area. */}
+              <div className="flex justify-center px-1 empty:hidden">
+                <PlayWithGroupAgainButton game={game} />
+              </div>
               <TrainingResultsSection
               game={game}
               user={user}
@@ -1790,6 +1846,10 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
 
           {user && game.entityType === 'BAR' && game.resultsStatus === 'FINAL' ? (
             <div key="bar-participants" className="contents">
+              {/* PRD 362 — same as TRAINING: no share card for BAR, so the action sits here. */}
+              <div className="flex justify-center px-1 empty:hidden">
+                <PlayWithGroupAgainButton game={game} />
+              </div>
               <BarParticipantsList gameId={game.id} participants={game.participants} />
             </div>
           ) : null}
@@ -1887,7 +1947,9 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
             );
           })() : null}
 
-          {user && canEdit && !isLeague && game.resultsStatus !== 'IN_PROGRESS' ? (
+          {/* PRD 362 — Duplicate is for unplayed games only; once results are FINAL,
+              "Play with this group again" in the results area replaces it. */}
+          {user && canEdit && !isLeague && game.resultsStatus === 'NONE' ? (
             <div key="duplicate-game" className="contents">
             <GameActionCard
               icon={Copy}

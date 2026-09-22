@@ -230,6 +230,41 @@ export class GameDetailsPage {
     await dialog.locator('button, [role="option"]').filter({ hasText: /^free$/i }).first().click();
   }
 
+  // PRD 362 — "Play with this group again" (FINAL) vs Duplicate (unplayed).
+  rematchButton() {
+    return this.page.getByTestId('play-with-group-again');
+  }
+
+  duplicateButton() {
+    return this.page.getByRole('button', { name: /^duplicate$/i });
+  }
+
+  async expectRematchVisible() {
+    await expect(this.rematchButton()).toBeVisible({ timeout: 15_000 });
+  }
+
+  async expectRematchHidden() {
+    await expect(this.rematchButton()).toHaveCount(0);
+  }
+
+  async expectDuplicateVisible() {
+    await expect(this.duplicateButton()).toBeVisible({ timeout: 15_000 });
+  }
+
+  async expectDuplicateHidden() {
+    await expect(this.duplicateButton()).toHaveCount(0);
+  }
+
+  async clickRematch() {
+    await this.rematchButton().click();
+    await this.page.waitForURL(/\/create-game/, { timeout: 15_000 });
+  }
+
+  async clickDuplicate() {
+    await this.duplicateButton().click();
+    await this.page.waitForURL(/\/create-game/, { timeout: 15_000 });
+  }
+
   async clickStartResultsEntry() {
     const startResponse = this.page.waitForResponse(
       (res) => res.url().includes('/start-results-entry') && res.request().method() === 'POST',
