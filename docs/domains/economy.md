@@ -61,6 +61,8 @@ Load-bearing rules:
 
 `LEAGUE_SEASON` never has a tracker, including for owners and platform admins. Its individual `LEAGUE` games remain eligible under the same viewer and price rules. Season cost endpoints return 404; sync creates no season shares, and season records are excluded from Wallet cost entries and reminders.
 
+The tracker starts expanded. Its full-width bottom chevron uses the same height/fade animation and rotating arrow as GameInfo; reduced-motion preferences make the transition instant. Collapsing keeps the title, permitted total or settlement count, and frozen badge visible while hiding share rows and actions. Cost/settlement deep links expand the card.
+
 **Permissions** live in `gameCost/costSharePermissions.ts`; actions require tracker access first.
 
 | Actor | View | Configure payer / payment methods / overrides | Mark own paid | Confirm "Received" | Remind |

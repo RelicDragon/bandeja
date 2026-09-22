@@ -49,7 +49,7 @@ export type ScoreEntrySaveHandler = (
   teamBScore: number,
   isTieBreak?: boolean,
   supplementalRole?: Extract<MatchSetRole, 'EXTRA_GAMES' | 'EXTRA_BALLS'>,
-  options?: { automaticRecordMode?: AutomaticMatchRecordMode },
+  options?: { automaticRecordMode?: AutomaticMatchRecordMode; baseVersion?: string | null },
 ) => void;
 
 interface UseScoreEntryStateParams {
@@ -64,7 +64,7 @@ interface UseScoreEntryStateParams {
   roundNumber?: number;
   onSave: ScoreEntrySaveHandler;
   onClose: () => void;
-  onRemove?: (matchId: string, setIndex: number) => void;
+  onRemove?: (matchId: string, setIndex: number, baseVersion: string | null) => void;
 }
 
 export function useScoreEntryState({
@@ -110,6 +110,7 @@ export function useScoreEntryState({
   // The dialog owns a draft for its lifetime. Both callers key it by match/set
   // and unmount on close, so reopening starts from the latest saved values.
   // Background game/results refreshes must not overwrite an in-progress edit.
+  const [baseVersion] = useState(() => match.resultsVersion ?? null);
   const [extraRole, setExtraRole] = useState<'EXTRA_GAMES' | 'EXTRA_BALLS'>(
     currentSet.role === 'EXTRA_BALLS' ? 'EXTRA_BALLS' : 'EXTRA_GAMES',
   );
@@ -248,7 +249,7 @@ export function useScoreEntryState({
 
   const handleSave = () => {
     if (isSupplementalRow) {
-      onSave(match.id, setIndex, teamAScore, teamBScore, false, extraRole);
+      onSave(match.id, setIndex, teamAScore, teamBScore, false, extraRole, { baseVersion });
       onClose();
       return;
     }
@@ -256,15 +257,17 @@ export function useScoreEntryState({
     const finalIsTieBreak = isAutomaticRelaxed
       ? automaticSetEntryUsesTieBreak(setIndex, match.sets, rules, useSuperTiebreak)
       : kind === 'TIEBREAK_GAME' || kind === 'SUPER_TIEBREAK';
-    const saveOptions =
-      isAutomaticRelaxed && setIndex === 0 ? { automaticRecordMode: matchRecordMode } : undefined;
+    const saveOptions = {
+      baseVersion,
+      ...(isAutomaticRelaxed && setIndex === 0 ? { automaticRecordMode: matchRecordMode } : {}),
+    };
     onSave(match.id, setIndex, teamAScore, teamBScore, finalIsTieBreak, undefined, saveOptions);
     onClose();
   };
 
   const handleRemove = () => {
     if (!onRemove) return;
-    onRemove(match.id, setIndex);
+    onRemove(match.id, setIndex, baseVersion);
     onClose();
   };
 

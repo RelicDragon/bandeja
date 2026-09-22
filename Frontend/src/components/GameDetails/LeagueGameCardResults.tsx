@@ -494,8 +494,8 @@ export function LeagueGameCardResults({
                   options,
                 );
               }) satisfies ScoreEntrySaveHandler}
-              onRemove={(matchId: string, setIndex: number) => {
-                void setOps.removeSet(setModal.roundId, matchId, setIndex);
+              onRemove={(matchId, setIndex, baseVersion) => {
+                void setOps.removeSet(setModal.roundId, matchId, setIndex, baseVersion);
               }}
               onClose={closeModal}
               canRemove={canRemoveSet}

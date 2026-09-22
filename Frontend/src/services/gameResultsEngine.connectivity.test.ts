@@ -129,6 +129,25 @@ describe('results connectivity after a rejected edit', () => {
     expect(resultsApi.getGameResults).toHaveBeenCalled();
   });
 
+  it('keeps a queued dialog draft on its original version after another save is acknowledged', async () => {
+    let resolveFirst!: () => void;
+    vi.mocked(resultsApi.updateMatch)
+      .mockReturnValueOnce(new Promise(resolve => {
+        resolveFirst = () => resolve({ success: true, data: { liveScoringCleared: false, resultsVersion: 'v1' } });
+      }))
+      .mockRejectedValueOnce({ response: { status: 409, data: { message: 'Scores changed' } } });
+    const first = GameResultsEngine.setMatchCourt('round', 'match', 'court-a');
+    await vi.waitFor(() => expect(resultsApi.updateMatch).toHaveBeenCalledTimes(1));
+    const draft = GameResultsEngine.updateMatch('round', 'match', {
+      teamA: ['a'], teamB: ['b'], sets: [{ teamA: 12, teamB: 9 }], baseVersion: 'v0',
+    });
+    resolveFirst();
+    await Promise.all([first, draft]);
+    expect(resultsApi.updateMatch).toHaveBeenNthCalledWith(2, 'game', 'match', expect.objectContaining({ baseVersion: 'v0' }));
+    expect(toast.error).toHaveBeenCalledWith('Scores changed');
+    expect(GameResultsEngine.getState().rounds[0].matches[0].sets).toEqual([{ teamA: 10, teamB: 11 }]);
+  });
+
   it('keeps newer local edits when a sync response arrives late', async () => {
     useGameResultsStore.setState({ serverProblem: true });
     let resolveSync!: () => void;

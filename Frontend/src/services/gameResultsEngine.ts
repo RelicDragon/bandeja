@@ -399,7 +399,11 @@ class GameResultsEngineClass {
   private async persistMatch(gameId: string, matchId: string, input: Parameters<typeof resultsApi.updateMatch>[2]) {
     const session = this.sessionEpoch;
     const match = this.getState().rounds.flatMap(r => r.matches).find(m => m.id === matchId);
-    const response = await resultsApi.updateMatch(gameId, matchId, { ...input, baseVersion: match?.resultsVersion });
+    const response = await resultsApi.updateMatch(gameId, matchId, {
+      ...input,
+      // Dialog drafts keep the version they opened with, even behind another save.
+      baseVersion: input.baseVersion !== undefined ? input.baseVersion : match?.resultsVersion,
+    });
     if (session === this.sessionEpoch && response.data?.resultsVersion) {
       useGameResultsStore.setState(state => ({ rounds: state.rounds.map(r => ({ ...r,
         matches: r.matches.map(m => m.id === matchId ? { ...m, resultsVersion: response.data.resultsVersion } : m),
@@ -780,6 +784,7 @@ class GameResultsEngineClass {
     sets: Array<{ teamA: number; teamB: number; isTieBreak?: boolean; role?: import('@/utils/matchSetRole').MatchSetRole }>;
     courtId?: string;
     metadata?: Record<string, unknown>;
+    baseVersion?: string | null;
   }): Promise<void> {
     const state = this.getState();
     if (!state.gameId || !state.userId) {
@@ -798,6 +803,12 @@ class GameResultsEngineClass {
     const existingMatch = round.matches.find(m => m.id === matchId);
     if (!existingMatch) {
       throw new Error(`Match not found: ${matchId} in round: ${roundId}`);
+    }
+
+    // Reject known stale drafts before optimistic updates or offline snapshot storage.
+    if (match.baseVersion !== undefined &&
+        (match.baseVersion === null || match.baseVersion !== existingMatch.resultsVersion)) {
+      throw new Error(i18n.t('gameDetails.liveScoring.syncConflictRetry'));
     }
 
     if (!Array.isArray(match.sets) || !Array.isArray(match.teamA) || !Array.isArray(match.teamB)) {

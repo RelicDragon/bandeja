@@ -206,7 +206,7 @@ export const GameDetailsPage = () => {
     const leftPanel = (
       <SplitViewLeftPanel bottomTabsVisible={false}>
         <div className="relative flex h-full min-h-0 flex-col">
-          <div ref={scrollContainerRef} className={`min-h-0 flex-1 overflow-y-auto overflow-x-hidden scrollbar-auto ${isEventLayout ? '' : 'p-3'}`}>
+          <div ref={scrollContainerRef} className={`min-h-0 flex-1 overflow-y-auto overflow-x-hidden scrollbar-auto ${isEventLayout || useTableViewLayout ? '' : 'p-3'}`}>
             {renderEntityDetails()}
           </div>
           <ScrollEdgeHints scrollRef={scrollContainerRef} enabled={showScrollMoreHint} />
@@ -214,20 +214,8 @@ export const GameDetailsPage = () => {
       </SplitViewLeftPanel>
     );
 
-    if (useTableViewLayout) {
-      return (
-        <div className="fixed inset-0 top-[calc(var(--app-header-height,4rem)+env(safe-area-inset-top))] overflow-hidden">
-          <div className="relative flex h-full min-h-0 flex-col">
-            <div ref={scrollContainerRef} className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden scrollbar-auto">
-              {renderEntityDetails()}
-            </div>
-            <ScrollEdgeHints scrollRef={scrollContainerRef} enabled={showScrollMoreHint} />
-          </div>
-        </div>
-      );
-    }
-
     const hideSideChat =
+      useTableViewLayout ||
       entityRoute.status === 'loading' ||
       entityRoute.status === 'error' ||
       (isEventLayout && !gameDetailsCanAccessChat);
@@ -241,14 +229,6 @@ export const GameDetailsPage = () => {
       </SplitViewRightPanel>
     );
 
-    if (hideSideChat) {
-      return (
-        <div className="fixed inset-0 top-[calc(var(--app-header-height,4rem)+env(safe-area-inset-top))] overflow-hidden">
-          {leftPanel}
-        </div>
-      );
-    }
-
     return (
       <div className="fixed inset-0 top-[calc(var(--app-header-height,4rem)+env(safe-area-inset-top))] overflow-hidden">
         <ResizableSplitter
@@ -257,6 +237,7 @@ export const GameDetailsPage = () => {
           maxLeftWidth={700}
           leftPanel={leftPanel}
           rightPanel={rightPanel}
+          showRight={!hideSideChat}
         />
       </div>
     );

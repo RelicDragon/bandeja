@@ -8,6 +8,8 @@ interface ResizableSplitterProps {
   maxLeftWidth?: number;
   /** When false, only the right panel is shown (right stays mounted). Default true. */
   showLeft?: boolean;
+  /** When false, the left panel fills the container without being remounted. */
+  showRight?: boolean;
 }
 
 export const ResizableSplitter = ({
@@ -17,6 +19,7 @@ export const ResizableSplitter = ({
   minLeftWidth = 300,
   maxLeftWidth = 600,
   showLeft = true,
+  showRight = true,
 }: ResizableSplitterProps) => {
   const [leftWidth, setLeftWidth] = useState(defaultLeftWidth);
   const [isDragging, setIsDragging] = useState(false);
@@ -59,11 +62,11 @@ export const ResizableSplitter = ({
   }, [isDragging, minLeftWidth, maxLeftWidth]);
 
   useEffect(() => {
-    if (!showLeft) setIsDragging(false);
-  }, [showLeft]);
+    if (!showLeft || !showRight) setIsDragging(false);
+  }, [showLeft, showRight]);
 
   const handleMouseDown = () => {
-    if (!showLeft) return;
+    if (!showLeft || !showRight) return;
     setIsDragging(true);
   };
 
@@ -73,16 +76,16 @@ export const ResizableSplitter = ({
         <>
           <div
             className="flex h-full min-h-0 flex-shrink-0 flex-col overflow-hidden"
-            style={{
+            style={showRight ? {
               width: `${leftWidth}%`,
               minWidth: `${minLeftWidth}px`,
               maxWidth: `${maxLeftWidth}px`,
-            }}
+            } : { width: '100%' }}
           >
             {leftPanel}
           </div>
 
-          <div
+          {showRight && <div
             ref={splitterRef}
             onMouseDown={handleMouseDown}
             className={`w-0.5 bg-gray-200 dark:bg-gray-700 hover:bg-blue-400 dark:hover:bg-blue-500 cursor-col-resize flex-shrink-0 transition-colors relative group ${
@@ -91,16 +94,16 @@ export const ResizableSplitter = ({
             style={{ userSelect: 'none' }}
           >
             <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-1 group-hover:w-2 transition-all" />
-          </div>
+          </div>}
         </>
       ) : null}
 
-      <div
+      {showRight && <div
         key="resizable-splitter-right"
         className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
       >
         {rightPanel}
-      </div>
+      </div>}
     </div>
   );
 };

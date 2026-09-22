@@ -4,6 +4,8 @@
 
 Shell: `/games/:id` (`GameDetailsPage`). Overlay on MainPage. Chat: `/games/:id/chat`.
 
+The page fetches the initial game once and seeds `GameDetailsShell` immediately. Desktop table/chat visibility changes keep the details subtree and scroll container mounted. The shell subscribes to relevant navigation/chrome fields and game-scoped socket events; ordinary game updates retain unchanged header sport/format tags.
+
 ## Status
 
 `Game.status` (`GameStatus` in `Backend/prisma/schema.prisma`): **`ANNOUNCED` | `STARTED` | `FINISHED` | `ARCHIVED`**. There is no `READY` or `PLAYING` game status.

@@ -159,7 +159,7 @@ export const resultsApi = {
     sets: Array<{ teamA: number; teamB: number; isTieBreak?: boolean; role?: string }>;
     courtId?: string;
     metadata?: Record<string, unknown>;
-    baseVersion?: string;
+    baseVersion?: string | null;
   }) => {
     const response = await api.put<ApiResponse<{ liveScoringCleared: boolean; resultsVersion: string }>>(
       `/results/game/${gameId}/matches/${matchId}`,

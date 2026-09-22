@@ -335,7 +335,7 @@ export const GameResultsEntryEmbedded = ({
   const isLandscape = useIsLandscape();
   const effectiveHorizontalLayout = !isLandscape;
 
-  const { setGameDetailsCanShowTableView } = useGameDetailsChromeStore();
+  const setGameDetailsCanShowTableView = useGameDetailsChromeStore((s) => s.setGameDetailsCanShowTableView);
   const canShowTableView = canShowTournamentTableView(currentGame);
 
   useEffect(() => {

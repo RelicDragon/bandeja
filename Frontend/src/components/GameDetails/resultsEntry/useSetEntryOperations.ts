@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import type { Round } from '@/types/gameResults';
 import { GameResultsEngine } from '@/services/gameResultsEngine';
 import { validateSetIndex } from '@/utils/gameResults';
+import { extractApiErrorMessage } from '@/utils/extractApiErrorMessage';
 import {
   getRules,
   isLegalSetScore,
@@ -32,6 +33,7 @@ interface UseSetEntryOperationsParams {
       sets: Array<{ teamA: number; teamB: number; isTieBreak?: boolean; role?: MatchSetRole }>;
       courtId?: string;
       metadata?: Record<string, unknown>;
+      baseVersion?: string | null;
     }
   ) => Promise<unknown>;
   onSupplementalSetAdded: (roundId: string, matchId: string, setIndex: number) => void;
@@ -53,7 +55,7 @@ export function useSetEntryOperations({
       teamBScore: number,
       isTieBreak?: boolean,
       supplementalRole?: SupplementalRole,
-      options?: { automaticRecordMode?: AutomaticMatchRecordMode }
+      options?: { automaticRecordMode?: AutomaticMatchRecordMode; baseVersion?: string | null }
     ) => {
       const setIndexError = validateSetIndex(setIndex);
       if (setIndexError) {
@@ -93,6 +95,7 @@ export function useSetEntryOperations({
             teamB: match.teamB,
             sets: workingSets,
             courtId: match.courtId,
+            baseVersion: options?.baseVersion,
           });
           return;
         }
@@ -165,13 +168,11 @@ export function useSetEntryOperations({
           sets: nextSets,
           courtId: match.courtId,
           metadata,
+          baseVersion: options?.baseVersion,
         });
       } catch (error: unknown) {
         console.error('Failed to update set result:', error);
-        const err = error as { response?: { data?: { message?: string } } };
-        toast.error(
-          err?.response?.data?.message || t('errors.generic') || 'Failed to update set result'
-        );
+        toast.error(extractApiErrorMessage(error, t));
       }
     },
     [rounds, updateMatch, t]
@@ -203,7 +204,7 @@ export function useSetEntryOperations({
   );
 
   const removeSet = useCallback(
-    async (roundId: string, matchId: string, setIndex: number) => {
+    async (roundId: string, matchId: string, setIndex: number, baseVersion?: string | null) => {
       const setIndexError = validateSetIndex(setIndex);
       if (setIndexError) {
         console.error(setIndexError, setIndex);
@@ -251,13 +252,11 @@ export function useSetEntryOperations({
           teamB: match.teamB,
           sets: newSets,
           courtId: match.courtId,
+          baseVersion,
         });
       } catch (error: unknown) {
         console.error('Failed to remove set:', error);
-        const err = error as { response?: { data?: { message?: string } } };
-        toast.error(
-          err?.response?.data?.message || t('errors.generic') || 'Failed to remove set'
-        );
+        toast.error(extractApiErrorMessage(error, t));
       }
     },
     [rounds, updateMatch, t]

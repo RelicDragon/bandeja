@@ -36,7 +36,7 @@ describe('regular score entry draft', () => {
     vi.clearAllMocks();
     container = document.createElement('div');
     root = createRoot(container);
-    match = { id: 'match-1', teamA: [], teamB: [], sets: [{ teamA: 0, teamB: 0 }] };
+    match = { id: 'match-1', resultsVersion: 'v0', teamA: [], teamB: [], sets: [{ teamA: 0, teamB: 0 }] };
   });
 
   afterEach(() => {
@@ -52,7 +52,7 @@ describe('regular score entry draft', () => {
     render(match, { ...game });
     expect(container.textContent).toBe('6:4');
     act(() => entry.handleSave());
-    expect(onSave).toHaveBeenCalledWith('match-1', 0, 6, 4, false, undefined, { automaticRecordMode: 'GAMES' });
+    expect(onSave).toHaveBeenCalledWith('match-1', 0, 6, 4, false, undefined, { automaticRecordMode: 'GAMES', baseVersion: 'v0' });
     expect(onClose).toHaveBeenCalledOnce();
   });
 
@@ -87,7 +87,7 @@ describe('regular score entry draft', () => {
     expect(entry.useSuperTiebreak).toBe(true);
     expect(container.textContent).toBe('10:8');
     act(() => entry.handleSave());
-    expect(onSave).toHaveBeenCalledWith('match-1', 2, 10, 8, true, undefined, undefined);
+    expect(onSave).toHaveBeenCalledWith('match-1', 2, 10, 8, true, undefined, { baseVersion: 'v0' });
   });
 
   it('keeps supplemental units and scores across refreshes', () => {
@@ -99,7 +99,7 @@ describe('regular score entry draft', () => {
     expect(entry.extraRole).toBe('EXTRA_BALLS');
     expect(container.textContent).toBe('3:0');
     act(() => entry.handleSave());
-    expect(onSave).toHaveBeenCalledWith('match-1', 0, 3, 0, false, 'EXTRA_BALLS');
+    expect(onSave).toHaveBeenCalledWith('match-1', 0, 3, 0, false, 'EXTRA_BALLS', { baseVersion: 'v0' });
   });
 
   it('keeps keypad picks through a refresh between picking the two teams', () => {
@@ -139,6 +139,17 @@ describe('regular score entry draft', () => {
     expect(container.textContent).toBe('3:4');
   });
 
+  it('keeps the opening version with an Automatic draft after a remote score refresh', () => {
+    render();
+    act(() => entry.setTeamScore('teamA', 6));
+    act(() => entry.setTeamScore('teamB', 4));
+    render({ ...match, resultsVersion: 'v1', sets: [{ teamA: 7, teamB: 5 }] });
+    act(() => entry.handleSave());
+    expect(onSave).toHaveBeenCalledWith('match-1', 0, 6, 4, false, undefined, {
+      automaticRecordMode: 'GAMES', baseVersion: 'v0',
+    });
+  });
+
   it('preserves classic scores through refresh without bypassing score validation', () => {
     const classicGame: ScoreEntryGame = { ...game, scoringPreset: 'CLASSIC_BEST_OF_3' };
     render(match, classicGame);
@@ -151,7 +162,7 @@ describe('regular score entry draft', () => {
     expect(onSave).not.toHaveBeenCalled();
     act(() => entry.setTeamScore('teamB', 4));
     act(() => entry.handleSave());
-    expect(onSave).toHaveBeenCalledWith('match-1', 0, 6, 4, false, undefined, undefined);
+    expect(onSave).toHaveBeenCalledWith('match-1', 0, 6, 4, false, undefined, { baseVersion: 'v0' });
   });
 
   it('preserves paired point totals through refresh', () => {
@@ -165,6 +176,6 @@ describe('regular score entry draft', () => {
     render({ ...match, sets: [...match.sets] }, { ...pairedGame });
     expect(container.textContent).toBe('20:12');
     act(() => entry.handleSave());
-    expect(onSave).toHaveBeenCalledWith('match-1', 0, 20, 12, false, undefined, undefined);
+    expect(onSave).toHaveBeenCalledWith('match-1', 0, 20, 12, false, undefined, { baseVersion: 'v0' });
   });
 });

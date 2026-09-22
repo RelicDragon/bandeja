@@ -8,7 +8,7 @@
 
 Writers: `canModifyResults` — owner/admin, or `resultsByAnyone` + participant; parent season roles inherit. Routes: `Backend/src/routes/results.routes.ts` (`requireCanModifyResults`).
 
-Manual set entry (`ScoreEntryModal`, including league fixture cards) owns a draft for the lifetime of the open dialog. Background game/results refreshes must not replace entered scores or selected scoring modes. Save submits the draft; Cancel discards it. Reopening, or opening a different match/set, initializes from the latest saved results.
+Manual set entry (`ScoreEntryModal`, including league fixture cards) owns a draft for the lifetime of the open dialog, including the match version captured when it opens. Background game/results refreshes must not replace entered scores, selected scoring modes, or that original version. Save and Remove set carry it through the write queue. If the match has already changed locally, or the draft opened without a version, reject before changing local scores or storing an offline snapshot; otherwise the server checks the original version atomically. Changes to another court do not invalidate this match's draft. Cancel discards the draft. Reopening, or opening a different match/set, initializes from the latest saved results and version.
 
 ## Reading results
 

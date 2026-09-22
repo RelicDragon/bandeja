@@ -114,6 +114,7 @@ export function useGameResultsEngine({
     sets: Array<{ teamA: number; teamB: number; isTieBreak?: boolean; role?: import('@/utils/matchSetRole').MatchSetRole }>;
     courtId?: string;
     metadata?: Record<string, unknown>;
+    baseVersion?: string | null;
   }) =>
     GameResultsEngine.updateMatch(roundId, matchId, match), []);
   const setMatchCourt = useCallback((roundId: string, matchId: string, courtId: string) =>

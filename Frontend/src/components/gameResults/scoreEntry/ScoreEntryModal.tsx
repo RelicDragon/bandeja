@@ -32,7 +32,7 @@ interface ScoreEntryModalProps {
   ballsInGames?: boolean;
   game?: ScoreEntryGame | null;
   onSave: ScoreEntrySaveHandler;
-  onRemove?: (matchId: string, setIndex: number) => void;
+  onRemove?: (matchId: string, setIndex: number, baseVersion: string | null) => void;
   onClose: () => void;
   canRemove?: boolean;
   isOpen: boolean;

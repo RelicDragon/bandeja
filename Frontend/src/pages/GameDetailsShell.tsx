@@ -170,22 +170,20 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
   const location = useLocation();
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
-  const { setBottomTabsVisible } = useShellNavStore();
-  const {
-    setGameDetailsCanAccessChat,
-    setGameDetailsSportTag,
-    gameDetailsTableViewOverride,
-    setGameDetailsTableViewOverride,
-    setGameDetailsTableAddRound,
-  } = useGameDetailsChromeStore();
+  const setBottomTabsVisible = useShellNavStore((s) => s.setBottomTabsVisible);
+  const setGameDetailsCanAccessChat = useGameDetailsChromeStore((s) => s.setGameDetailsCanAccessChat);
+  const setGameDetailsSportTag = useGameDetailsChromeStore((s) => s.setGameDetailsSportTag);
+  const gameDetailsTableViewOverride = useGameDetailsChromeStore((s) => s.gameDetailsTableViewOverride);
+  const setGameDetailsTableViewOverride = useGameDetailsChromeStore((s) => s.setGameDetailsTableViewOverride);
+  const setGameDetailsTableAddRound = useGameDetailsChromeStore((s) => s.setGameDetailsTableAddRound);
 
-  const [game, setGame] = useState<Game | null>(null);
+  const [game, setGame] = useState<Game | null>(() => initialGame && initialGame.id === id ? initialGame : null);
   const gameRef = useRef<Game | null>(null);
   gameRef.current = game;
   const [myInvites, setMyInvites] = useState<Invite[]>([]);
   const acceptingInviteIdsRef = useRef<Set<string>>(new Set());
   const [gameInvites, setGameInvites] = useState<Invite[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !initialGame || initialGame.id !== id);
   const [showPlayerList, setShowPlayerList] = useState(false);
   const [playerListMode, setPlayerListMode] = useState<'players' | 'trainer'>('players');
   const [playerListGender, setPlayerListGender] = useState<'MALE' | 'FEMALE' | undefined>(undefined);
@@ -330,9 +328,12 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
     if (seed) {
       setGame(seed);
       setLoading(false);
-    } else {
-      setLoading(true);
+      // GameDetailsPage has just fetched this game. A duplicate request can
+      // overwrite a newer socket update with an older response.
+      return;
     }
+    setGame(null);
+    setLoading(true);
 
     const fetchGame = async () => {
       try {
@@ -416,11 +417,16 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
     }
   }, [game?.entityType, id, isLeagueSeasonParticipant, location.pathname, location.search, navigate]);
 
-  const lastInviteDeleted = useSocketEventsStore((state) => state.lastInviteDeleted);
-  const lastGameUpdate = useSocketEventsStore((state) => state.lastGameUpdate);
-  const lastGameTextInvalidate = useSocketEventsStore((state) => state.lastGameTextInvalidate);
-  const lastGameCancelled = useSocketEventsStore((state) => state.lastGameCancelled);
+  const lastInviteDeleted = useSocketEventsStore((state) =>
+    !state.lastInviteDeleted?.gameId || state.lastInviteDeleted.gameId === id ? state.lastInviteDeleted : null
+  );
+  const lastGameUpdate = useSocketEventsStore((state) => state.lastGameUpdate?.gameId === id ? state.lastGameUpdate : null);
+  const lastGameTextInvalidate = useSocketEventsStore((state) => state.lastGameTextInvalidate?.gameId === id ? state.lastGameTextInvalidate : null);
+  const lastGameCancelled = useSocketEventsStore((state) => state.lastGameCancelled?.gameId === id ? state.lastGameCancelled : null);
   const clearLastGameCancelled = useSocketEventsStore((state) => state.clearLastGameCancelled);
+  // The store retains events from before this page opened. HTTP bootstrap is
+  // authoritative for those; only apply socket updates received after mounting.
+  const lastHandledGameUpdateRef = useRef(lastGameUpdate);
   const isOnline = useNetworkStore((s) => s.isOnline);
   const gameTextPending = isGameTextTranslationPending(game?.localizedText);
 
@@ -453,6 +459,8 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
   }, [lastInviteDeleted, id]);
 
   useEffect(() => {
+    if (lastGameUpdate === lastHandledGameUpdateRef.current) return;
+    lastHandledGameUpdateRef.current = lastGameUpdate;
     if (!lastGameUpdate || lastGameUpdate.gameId !== id) return;
     const broadcastGame = normalizeGameFromApi(lastGameUpdate.game);
     const fromSelf = lastGameUpdate.senderId === user?.id;
@@ -852,20 +860,25 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
     setGameDetailsCanAccessChat(canAccessChat);
   }, [canAccessChat, setGameDetailsCanAccessChat]);
 
+  const headerSport = game ? parseGameSport(game.sport) : null;
+  const headerShowSport = game ? shouldShowGameCardSportGlyph(game.sport, getViewerPrimarySport(user), undefined) : false;
+  const headerPlayersPerMatch = playersPerMatchOf(game ?? {});
+  const headerShowMatchFormat = game?.entityType !== 'TRAINING';
+
   useEffect(() => {
-    if (!game) {
+    if (!headerSport) {
       setGameDetailsSportTag(null);
       return;
     }
-    const viewerPrimarySport = getViewerPrimarySport(user);
     setGameDetailsSportTag({
-      sport: parseGameSport(game.sport),
-      showSport: shouldShowGameCardSportGlyph(game.sport, viewerPrimarySport, undefined),
-      playersPerMatch: playersPerMatchOf(game),
-      showMatchFormat: game.entityType !== 'TRAINING',
+      sport: headerSport,
+      showSport: headerShowSport,
+      playersPerMatch: headerPlayersPerMatch,
+      showMatchFormat: headerShowMatchFormat,
     });
-    return () => setGameDetailsSportTag(null);
-  }, [game, user, setGameDetailsSportTag]);
+  }, [headerSport, headerShowSport, headerPlayersPerMatch, headerShowMatchFormat, setGameDetailsSportTag]);
+
+  useEffect(() => () => setGameDetailsSportTag(null), [setGameDetailsSportTag]);
 
 
   const pendingTrainerParticipant = game?.entityType === 'TRAINING' && !game.trainerId

@@ -27,9 +27,9 @@ interface GameResultsModalsProps {
     teamBScore: number,
     isTieBreak?: boolean,
     supplementalRole?: Extract<MatchSetRole, 'EXTRA_GAMES' | 'EXTRA_BALLS'>,
-    options?: { automaticRecordMode?: import('@/utils/scoring').AutomaticMatchRecordMode },
+    options?: { automaticRecordMode?: import('@/utils/scoring').AutomaticMatchRecordMode; baseVersion?: string | null },
   ) => Promise<void>;
-  onRemoveSet: (roundId: string, matchId: string, setIndex: number) => Promise<void>;
+  onRemoveSet: (roundId: string, matchId: string, setIndex: number, baseVersion?: string | null) => Promise<void>;
   onPlayerSelect: (playerId: string) => Promise<void>;
   onCourtSelect: (courtId: string) => Promise<void>;
   onRestart: () => Promise<void>;
@@ -102,8 +102,8 @@ export const GameResultsModals = ({
         onSave={(matchId, setIndex, teamAScore, teamBScore, isTieBreak, supplementalRole, options) => {
           onUpdateSetResult(modal.roundId, matchId, setIndex, teamAScore, teamBScore, isTieBreak, supplementalRole, options);
         }}
-        onRemove={(matchId, setIndex) => {
-          onRemoveSet(modal.roundId, matchId, setIndex);
+        onRemove={(matchId, setIndex, baseVersion) => {
+          onRemoveSet(modal.roundId, matchId, setIndex, baseVersion);
         }}
         onClose={onClose}
         canRemove={canRemove}
