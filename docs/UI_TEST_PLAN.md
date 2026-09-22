@@ -1326,6 +1326,8 @@ Wallet side: `PR-CS-01`–`PR-CS-05` in §13.3. Cards: `F-CS-01`–`F-CS-05` in 
 | GD-64 | Announced game results gate | Enter results on ANNOUNCED game | Confirm modal before entry |
 | GD-65 | Reset results | Owner reset all results | Confirm → cleared |
 | GD-66 | Sync conflict modal | Local + server results diverge | Choose sync-to-server or load-from-server |
+| GD-66a | Rejected results edit while online | Make a score save return 400/403/409/422, then save a valid edit | Server error is shown; rejected edit rolls back when no concurrent edit exists; no offline banner; next edit still reaches the server |
+| GD-66b | Unsynced results recovery | Fail a score save with a network error or 503; restore connectivity; trigger a background results notification; tap Sync to Server | Local scores survive the notification; online banner says unsynced changes, offline banner says no internet only when the device is offline; successful explicit sync clears the warning |
 | GD-67 | Outcome explanation | Tap level change explanation | `OutcomeExplanationModal` shows delta |
 | GD-67a | Automatic match explanation sets | Open explanation after Automatic-format match (games vs americano vs super TB) | Set chips show raw scores with `pts` for americano rows and `STB` for super tiebreak decider |
 | GD-67b | Admin rating uncertainty on explanation | `@admin` open outcome explanation after idle/rated game | Shows Uncertainty value + scale; reliability line unchanged; Reliability Factor includes uncertainty scale |

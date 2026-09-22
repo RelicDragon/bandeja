@@ -36,6 +36,12 @@ import {
 import { maxPlayersPerTeamForGame } from '@/utils/matchFormat';
 import { isPresetResultsRoster } from '@/utils/gameResultsHelpers';
 import { convertServerResultsToRounds } from '@/utils/serverResultsToRounds';
+import { extractApiErrorMessage } from '@/utils/extractApiErrorMessage';
+
+function isRejectedResultsRequest(error: unknown): boolean {
+  const status = (error as { response?: { status?: number } } | null)?.response?.status;
+  return status !== undefined && status >= 400 && status < 500 && status !== 408 && status !== 429;
+}
 
 export type SyncStatus = 'IDLE' | 'SYNCING' | 'SUCCESS' | 'FAILED';
 
@@ -266,6 +272,8 @@ class GameResultsEngineClass {
   async reloadFromRemote(): Promise<void> {
     const startState = this.getState();
     if (!startState.gameId || !startState.userId || !startState.initialized) return;
+    // A successful read does not acknowledge local scores that failed to save.
+    if (startState.serverProblem) return;
     if (this.pendingLocalMutations > 0) return;
 
     const gameId = startState.gameId;
@@ -375,26 +383,34 @@ class GameResultsEngineClass {
     updateFn: () => Promise<void>,
     serverCall: () => Promise<void>
   ): Promise<void> {
-        const state = this.getState();
+    const state = this.getState();
     if (!state.gameId || !state.userId || !state.canEdit) return;
 
-    this.beginLocalMutation();
-    await updateFn();
-    await this.saveLocal();
-
-    if (state.serverProblem) {
-      this.endLocalMutation();
-      return;
-    }
-
+    const mutation = this.beginLocalMutation();
     try {
-      await serverCall();
-      await ResultsStorage.setServerProblem(state.gameId, false);
-      useGameResultsStore.setState({ serverProblem: false });
-    } catch (error) {
-      console.error('Server call failed:', error);
-      await ResultsStorage.setServerProblem(state.gameId, true);
-      useGameResultsStore.setState({ serverProblem: true });
+      await updateFn();
+      await this.saveLocal();
+      if (this.getState().serverProblem) return;
+
+      try {
+        await serverCall();
+      } catch (error) {
+        console.error('Server call failed:', error);
+        const current = this.getState();
+        if (current.gameId !== state.gameId || current.userId !== state.userId) return;
+
+        if (isRejectedResultsRequest(error)) {
+          toast.error(extractApiErrorMessage(error, i18n.t));
+          // Only roll back our own edit; overlapping edits must remain recoverable.
+          if (this.localMutationEpoch === mutation && this.pendingLocalMutations === 1) {
+            useGameResultsStore.setState({ rounds: state.rounds });
+            await this.saveLocal();
+            return;
+          }
+        }
+        useGameResultsStore.setState({ serverProblem: true });
+        await ResultsStorage.setServerProblem(state.gameId, true);
+      }
     } finally {
       this.endLocalMutation();
     }
@@ -515,8 +531,10 @@ class GameResultsEngineClass {
       await this.saveLocal();
     } catch (error) {
       console.error('Failed to generate round:', error);
-      await ResultsStorage.setServerProblem(state.gameId, true);
-      useGameResultsStore.setState({ serverProblem: true });
+      if (!isRejectedResultsRequest(error)) {
+        await ResultsStorage.setServerProblem(state.gameId, true);
+        useGameResultsStore.setState({ serverProblem: true });
+      }
       throw error;
     }
   }
@@ -982,8 +1000,12 @@ class GameResultsEngineClass {
       }
     } catch (e) {
       console.error('Match timer transition failed:', e);
-      useGameResultsStore.setState({ rounds: prevRounds, serverProblem: true });
-      await ResultsStorage.setServerProblem(state.gameId, true);
+      const serverProblem = this.getState().serverProblem || !isRejectedResultsRequest(e);
+      if (isRejectedResultsRequest(e)) {
+        toast.error(extractApiErrorMessage(e, i18n.t));
+      }
+      useGameResultsStore.setState({ rounds: prevRounds, serverProblem });
+      await ResultsStorage.setServerProblem(state.gameId, serverProblem);
       await this.saveLocal();
     }
   }

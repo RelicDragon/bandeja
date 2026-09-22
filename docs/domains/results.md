@@ -68,6 +68,8 @@ Per player: `GET /results/game/:gameId/outcome/:userId/explanation`. `outcomeExp
 
 `SyncConflictModal` (`GameResultsModals.tsx`): local vs server results diverge — load-from-server vs push-local. Separate from live-scoring **409 revision** ([live-scoring.md](./live-scoring.md)).
 
+Results entry distinguishes rejected edits from unavailable requests. Definitive HTTP 4xx rejections (except timeout/rate-limit responses) show the server error and roll back the edit when no other mutation overlaps; they do not disable subsequent saves. Uncertain failures preserve local edits for explicit **Sync to Server**. Background results refreshes must not replace those unsynced edits. The banner says **Unsynced Changes Detected** while the device is online, and **No internet connection** only when the network status reports offline.
+
 ## Artifacts / Replicate
 
 Background queue: `gameResultsArtifactQueue.service.ts`. Summary + photo (`prepareResultsArtifactSummary` / `Photo` on `game.controller.ts`). Admin picks Replicate model (`replicatePhotoModelSetting.service.ts`, Platform Settings). Telegram post block when ready (`sendResultsToTelegram`). The summary is Markdown (LLM-written, organizer-editable) — `telegramMarkdown.ts` converts it to Telegram HTML (`**bold**`, `_italic_`, `#` headings, `- ` bullets, links, code) before posting, so caption/message length is measured on the rendered text, not the tags. Share results card with optional generated photo (`GameResultsShareCard`); its primary action after FINAL is **Play with this group again** (PRD 362, see [games.md](./games.md) → Settings).

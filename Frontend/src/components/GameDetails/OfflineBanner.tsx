@@ -1,6 +1,7 @@
 import { WifiOff, RefreshCw, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
+import { useNetworkStore } from '@/utils/networkStatus';
 
 interface OfflineBannerProps {
   serverProblem: boolean;
@@ -18,6 +19,8 @@ export const OfflineBanner = ({
   isSyncing,
 }: OfflineBannerProps) => {
   const { t } = useTranslation();
+  const isOnline = useNetworkStore((state) => state.isOnline);
+  const StatusIcon = isOnline ? RefreshCw : WifiOff;
 
   if (!serverProblem) return null;
 
@@ -35,10 +38,10 @@ export const OfflineBanner = ({
       >
         <span className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-200/80 dark:bg-amber-800/50">
           <span className="absolute inset-0 animate-ping rounded-full bg-amber-400/30" />
-          <WifiOff size={16} className="relative text-amber-800 dark:text-amber-200" />
+          <StatusIcon size={16} className="relative text-amber-800 dark:text-amber-200" />
         </span>
         <span className="text-sm font-semibold text-amber-900 dark:text-amber-100">
-          {t('offline.noInternetConnection')}
+          {t(isOnline ? 'gameResults.unsyncedChangesTitle' : 'offline.noInternetConnection')}
         </span>
         <motion.span
           animate={{ rotate: showMessage ? 180 : 0 }}
@@ -58,7 +61,7 @@ export const OfflineBanner = ({
             className="overflow-hidden"
           >
             <p className="px-5 pb-2 text-center text-xs leading-relaxed text-amber-800/90 dark:text-amber-200/90">
-              {t('offline.offlineEditingMessage')}
+              {t(isOnline ? 'errors.syncRequired' : 'offline.offlineEditingMessage')}
             </p>
           </motion.div>
         )}
