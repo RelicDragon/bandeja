@@ -63,6 +63,16 @@
     "noTournamentFound": "Турнир не найден",
     "noLeaguesFound": "Лиги не найдены",
     "noEventsFound": "События не найдены",
+    "quickShortcuts": {
+      "ariaLabel": "Быстрый выбор дня",
+      "today": "Сегодня",
+      "tomorrow": "Завтра",
+      "weekend": "Выходные",
+      "empty": {
+        "tomorrow": "Завтра игр нет",
+        "weekend": "В выходные игр нет"
+      }
+    },
     "suitableGamesForMe": "Подходящие игры для меня",
     "haveAvailableSlots": "С доступными местами",
     "haveAvailableSlotsHint": "Скрыть заполненные игры, к которым нельзя присоединиться",

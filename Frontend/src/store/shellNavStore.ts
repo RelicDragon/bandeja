@@ -1,5 +1,16 @@
 import { create } from 'zustand';
 import type { ReactNode } from 'react';
+import type {
+  QuickShortcutKind,
+  ResolvedQuickShortcut,
+} from '@/components/home/findQuickShortcuts';
+
+/**
+ * PRD 358 — the Find shortcut currently applied. Session-only: it lives here
+ * and never in `useGameFilters` persistence, because a persisted "Tomorrow"
+ * is wrong tomorrow.
+ */
+export type ActiveFindQuickShortcut = ResolvedQuickShortcut;
 
 interface ShellNavState {
   bottomTabsVisible: boolean;
@@ -18,6 +29,9 @@ interface ShellNavState {
   myGamesSelectedDay: string | null;
   findSelectedDay: string | null;
   findListWeekStartDay: string | null;
+  activeFindQuickShortcut: ActiveFindQuickShortcut | null;
+  /** `?quick=` deep link waiting for the Find section to apply it. */
+  requestFindQuickShortcut: QuickShortcutKind | null;
   userProfileHeaderActions: ReactNode | null;
   findHeaderActions: ReactNode | null;
   setBottomTabsVisible: (visible: boolean) => void;
@@ -36,6 +50,8 @@ interface ShellNavState {
   setMyGamesSelectedDay: (day: string | null) => void;
   setFindSelectedDay: (day: string | null) => void;
   setFindListWeekStartDay: (day: string | null) => void;
+  setActiveFindQuickShortcut: (shortcut: ActiveFindQuickShortcut | null) => void;
+  setRequestFindQuickShortcut: (kind: QuickShortcutKind | null) => void;
   setUserProfileHeaderActions: (actions: ReactNode | null) => void;
   setFindHeaderActions: (actions: ReactNode | null) => void;
 }
@@ -57,6 +73,8 @@ export const useShellNavStore = create<ShellNavState>((set) => ({
   myGamesSelectedDay: null,
   findSelectedDay: null,
   findListWeekStartDay: null,
+  activeFindQuickShortcut: null,
+  requestFindQuickShortcut: null,
   userProfileHeaderActions: null,
   findHeaderActions: null,
   setBottomTabsVisible: (visible) => set({ bottomTabsVisible: visible }),
@@ -76,6 +94,8 @@ export const useShellNavStore = create<ShellNavState>((set) => ({
   setMyGamesSelectedDay: (day) => set({ myGamesSelectedDay: day }),
   setFindSelectedDay: (day) => set({ findSelectedDay: day }),
   setFindListWeekStartDay: (day) => set({ findListWeekStartDay: day }),
+  setActiveFindQuickShortcut: (shortcut) => set({ activeFindQuickShortcut: shortcut }),
+  setRequestFindQuickShortcut: (kind) => set({ requestFindQuickShortcut: kind }),
   setUserProfileHeaderActions: (actions) => set({ userProfileHeaderActions: actions }),
   setFindHeaderActions: (actions) => set({ findHeaderActions: actions }),
 }));

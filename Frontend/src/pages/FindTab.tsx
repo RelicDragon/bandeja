@@ -26,6 +26,8 @@ import {
   resolveFindLevelFilterSport,
 } from '@/utils/findSportFilter';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
+import { resolveViewerCityTimezone } from '@/utils/cityTimezone';
+import { resolveActiveQuickShortcut } from '@/components/home/findQuickShortcuts';
 import {
   computeFindMonthDateRange,
   findMonthRangeEquals,
@@ -73,6 +75,17 @@ export const FindTab = () => {
   const findSelectedDay = useShellNavStore((s) => s.findSelectedDay);
   const setFindSelectedDay = useShellNavStore((s) => s.setFindSelectedDay);
   const setFindHeaderActions = useShellNavStore((s) => s.setFindHeaderActions);
+  // PRD 358 — Weekend keeps the calendar and lists Sat + Sun from the upcoming
+  // river, so that query also runs in calendar view while it is active. Active
+  // is read off the calendar (a weekend day selected), the pin only decides a
+  // weekend day that is also today — same rule as the section's row.
+  const weekendPinned = useShellNavStore((s) => s.activeFindQuickShortcut != null);
+  const weekendShortcutActive =
+    resolveActiveQuickShortcut(
+      { view: findViewMode, selectedDay: findSelectedDay },
+      weekendPinned,
+      { now: new Date(), timezone: resolveViewerCityTimezone(user?.currentCity?.timezone) },
+    ) === 'weekend';
 
   const displaySettings = useMemo(() => resolveDisplaySettings(user), [user]);
 
@@ -144,7 +157,7 @@ export const FindTab = () => {
 
   const queryEnabled = isFindGamesQueryReady({ isHydrated, userId: user?.id });
   const calendarQueryEnabled = queryEnabled && findViewMode === 'calendar';
-  const listQueryEnabled = queryEnabled && findViewMode === 'list';
+  const listQueryEnabled = queryEnabled && (findViewMode === 'list' || weekendShortcutActive);
 
   const cityId = user?.currentCity?.id || user?.currentCityId;
   const cityTimezone = user?.currentCity?.timezone;
@@ -449,8 +462,13 @@ export const FindTab = () => {
     selectedDayMeta.hasMore,
   ]);
 
+  const weekendGames = useMemo((): Game[] | undefined => {
+    if (!weekendShortcutActive || loadingUpcomingGames) return undefined;
+    return sortGamesByStatusAndStartTime<Game>(upcomingGames);
+  }, [weekendShortcutActive, loadingUpcomingGames, upcomingGames]);
+
   const loadingAvailableGames =
-    findViewMode === 'list'
+    findViewMode === 'list' || weekendShortcutActive
       ? loadingUpcomingGames
       : deriveFindCalendarGamesLoading({
           dayScopedEnabled,
@@ -461,13 +479,13 @@ export const FindTab = () => {
   const useDayScopedList = dayScopedEnabled;
 
   const pageMeta =
-    findViewMode === 'list'
+    findViewMode === 'list' || weekendShortcutActive
       ? upcomingMeta
       : useDayScopedList
         ? selectedDayMeta
         : calendarMeta;
   const onLoadMoreAvailable =
-    findViewMode === 'list'
+    findViewMode === 'list' || weekendShortcutActive
       ? loadMoreUpcomingGames
       : useDayScopedList
         ? loadMoreSelectedDayGames
@@ -597,12 +615,13 @@ export const FindTab = () => {
       availableBound: pageMeta.bound,
       dayLoadError,
       onRetryDay: refetchSelectedDayGames,
+      weekendGames,
     }),
     [
       filteredAvailableGames, sortedSelectedDayGames, displayedDayIndex, user,
       loadingAvailableGames, handleJoinGame, handleDateRangeChange, filters, updateFilters,
       refetchAvailableGames, pageMeta.hasMore, onLoadMoreAvailable, pageMeta.bound,
-      dayLoadError, refetchSelectedDayGames,
+      dayLoadError, refetchSelectedDayGames, weekendGames,
     ],
   );
 

@@ -63,6 +63,16 @@
     "seeAllEvents": "सभी देखें",
     "goingNeedPartner": "{{going}} जा रहे हैं · {{looking}} को पार्टनर चाहिए",
     "noEventsFound": "कोई इवेंट नहीं मिला",
+    "quickShortcuts": {
+      "ariaLabel": "दिन शॉर्टकट",
+      "today": "आज",
+      "tomorrow": "कल",
+      "weekend": "वीकेंड",
+      "empty": {
+        "tomorrow": "कल कोई गेम नहीं",
+        "weekend": "इस वीकेंड कोई गेम नहीं"
+      }
+    },
     "suitableGamesForMe": "मेरे लिए उपयुक्त गेम्स",
     "haveAvailableSlots": "उपलब्ध स्लॉट हैं",
     "haveAvailableSlotsHint": "भरे गेम्स छिपाएँ जिनमें आप जॉइन नहीं कर सकते",

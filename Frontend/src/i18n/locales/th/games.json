@@ -63,6 +63,16 @@
     "seeAllEvents": "ดูทั้งหมด",
     "goingNeedPartner": "{{going}} จะไป · {{looking}} หาคู่",
     "noEventsFound": "ไม่พบอีเวนต์",
+    "quickShortcuts": {
+      "ariaLabel": "ทางลัดวัน",
+      "today": "วันนี้",
+      "tomorrow": "พรุ่งนี้",
+      "weekend": "สุดสัปดาห์",
+      "empty": {
+        "tomorrow": "พรุ่งนี้ไม่มีเกม",
+        "weekend": "สุดสัปดาห์นี้ไม่มีเกม"
+      }
+    },
     "suitableGamesForMe": "เกมที่เหมาะกับฉัน",
     "haveAvailableSlots": "มีช่องว่าง",
     "haveAvailableSlotsHint": "ซ่อนเกมเต็มรูปแบบที่คุณไม่สามารถเข้าร่วมได้",

@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef, useCallback, memo } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback, memo, type ReactNode } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Calendar, List } from 'lucide-react';
@@ -73,6 +73,11 @@ export interface MonthCalendarProps {
     onClick: () => void;
     label: string;
   };
+  /**
+   * PRD 358 — Find's day-and-time shortcut row. Rendered under the heading row
+   * in both the expanded and the collapsed (list) state so it never moves.
+   */
+  quickShortcuts?: ReactNode;
 }
 
 const localeMap = {
@@ -134,6 +139,7 @@ const MonthCalendarView = ({
   collapsed = false,
   weatherModeScope,
   upcomingsToggle,
+  quickShortcuts,
 }: MonthCalendarProps) => {
   const user = useAuthStore((state) => state.user);
   const { t, i18n } = useTranslation();
@@ -585,6 +591,16 @@ const MonthCalendarView = ({
           </>
         ) : null}
       </motion.div>
+
+      {quickShortcuts ? (
+        <motion.div
+          layout
+          transition={headerTransition}
+          className={isCompactUpcomings ? 'px-0.5 pb-1.5' : '-mt-1 mb-3 px-0.5'}
+        >
+          {quickShortcuts}
+        </motion.div>
+      ) : null}
 
       <AnimatePresence initial={false}>
         {(!upcomingsToggle || !isCompactUpcomings) ? (

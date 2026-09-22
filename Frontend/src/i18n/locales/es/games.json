@@ -63,6 +63,16 @@
     "seeAllEvents": "Ver todos",
     "goingNeedPartner": "{{going}} van · {{looking}} buscan pareja",
     "noEventsFound": "No se encontraron eventos",
+    "quickShortcuts": {
+      "ariaLabel": "Atajos de día",
+      "today": "Hoy",
+      "tomorrow": "Mañana",
+      "weekend": "Fin de semana",
+      "empty": {
+        "tomorrow": "No hay partidos mañana",
+        "weekend": "No hay partidos este fin de semana"
+      }
+    },
     "suitableGamesForMe": "Juegos adecuados para mí",
     "haveAvailableSlots": "Con plazas disponibles",
     "haveAvailableSlotsHint": "Ocultar partidos llenos a los que no puedes unirte",

@@ -48,10 +48,26 @@ Tap → `/games/:id`. Unread chat badge. Create from calendar date pre-fills `cr
 
 ### Views
 
-- Calendar (default). Month picker, go-to-today. Selected-day list. Desktop split: calendar + list.
+- Calendar (default). Month picker, weather toggle, List toggle. Selected-day list. Desktop split: calendar + list.
 - List (`?view=list`) — from today, grouped by date.
 
 `findViewMode` is URL-backed (`useUrlStoreSync`). Toggle writes `navigationService.navigateToFind({ view })`.
+
+### Quick shortcuts (PRD 358)
+
+Today · Tomorrow · Weekend as one `SegmentedSwitch` row (`FindQuickShortcutsRow`) under the calendar heading, in both the expanded and the collapsed (list) state; on My the calendar has no row. A shortcut is a **preset over existing state**, not a filter: `resolveQuickShortcut` (`components/home/findQuickShortcuts.ts`, pure) turns a kind into `{ selectedDay, dayKeys? }` in the **Home-city timezone**. Tonight was dropped after review: padel days are mostly evenings, so an 18:00 cut looked identical to Today.
+
+The row **reflects the calendar** (`resolveActiveQuickShortcut`): Today is highlighted whenever today is the selected day, Tomorrow whenever tomorrow is, Weekend whenever Saturday or Sunday of the coming weekend is (and both days are listed), however the day was picked; nothing is highlighted in list view or on other days. On Friday, tomorrow is Saturday and reads as Weekend. The only stored bit is the Weekend **pin** (`shellNavStore.activeFindQuickShortcut`), which decides a weekend day that is also today: the Weekend option sets it, Today clears it.
+
+| Shortcut | Day | Under the calendar | Notes |
+|---|---|---|---|
+| Today | today | selected-day list | Go to today (`requestFindGoToCurrent`); re-tap scrolls the calendar into view |
+| Tomorrow | tomorrow | selected-day list | Plain day selection; no stored state |
+| Weekend | coming Sat (today if Sat/Sun) | Sat + Sun as date-grouped sections | Calendar stays open. `FindTab` also runs the upcoming query while Weekend is active (same derived rule) and hands the section `weekendGames`; `filterFindGames({ dayKeys })` cuts it to `resolveWeekendDayKeys(today)` |
+
+Every shortcut runs in calendar view (tapping one from list view switches back). The pin is **session-only** — never in `useGameFilters` / IndexedDB — and is dropped once the calendar shows a non-weekend day, the view is List, or the city day has rolled over (`isQuickShortcutCurrent`). Re-tapping a highlighted option changes nothing, except Today, which scrolls the calendar into view. Empty title under a shortcut: `resolveFindEmptyMessage({ quickShortcut })` replaces only the generic "No games found".
+
+Deep link: `/find?quick=tomorrow|weekend` is read once by `useUrlStoreSync` into `requestFindQuickShortcut`; `AvailableGamesSection` applies it and rewrites the URL without the param. Copy: `games.quickShortcuts.*` (labels, `empty.*`).
 
 ### URL + persist
 
@@ -59,6 +75,7 @@ Tap → `/games/:id`. Unread chat badge. Create from calendar date pre-fills `cr
 |--------|------|
 | `?view=calendar\|list` | View |
 | `?date=` / `?dayOffset=` | Selected day; forces calendar |
+| `?quick=tomorrow\|weekend` | Applies a quick shortcut once, then stripped |
 | `?player=` / `?item=` | Overlays |
 | `?playIntentOpen=1` / `?proposal=` / `?lobby=1` | Court lobby |
 | IndexedDB `padelpulse-game-filters` | Chips + advanced panel (`useGameFilters`) |

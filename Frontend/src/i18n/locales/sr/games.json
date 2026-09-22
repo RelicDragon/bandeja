@@ -63,6 +63,16 @@
     "seeAllEvents": "Prikaži sve",
     "goingNeedPartner": "{{going}} ide · {{looking}} traži partnera",
     "noEventsFound": "Događaji nisu pronađeni",
+    "quickShortcuts": {
+      "ariaLabel": "Prečice za dan",
+      "today": "Danas",
+      "tomorrow": "Sutra",
+      "weekend": "Vikend",
+      "empty": {
+        "tomorrow": "Nema igara sutra",
+        "weekend": "Nema igara ovog vikenda"
+      }
+    },
     "suitableGamesForMe": "Pogodne igre za mene",
     "haveAvailableSlots": "Sa slobodnim mestom",
     "haveAvailableSlotsHint": "Sakrij popunjene igre kojima se ne možete pridružiti",

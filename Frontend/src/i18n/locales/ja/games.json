@@ -63,6 +63,16 @@
     "seeAllEvents": "すべて",
     "goingNeedPartner": "{{going}}人参加 · {{looking}}人がパートナー募集",
     "noEventsFound": "イベントが見つかりません",
+    "quickShortcuts": {
+      "ariaLabel": "日付のショートカット",
+      "today": "今日",
+      "tomorrow": "明日",
+      "weekend": "週末",
+      "empty": {
+        "tomorrow": "明日の試合はありません",
+        "weekend": "今週末の試合はありません"
+      }
+    },
     "suitableGamesForMe": "自分に合う試合",
     "haveAvailableSlots": "空き枠あり",
     "haveAvailableSlotsHint": "参加できない満員の試合を隠す",

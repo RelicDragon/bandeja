@@ -367,4 +367,37 @@ describe('useGameFilters persistence', () => {
       leaguesFilter: false,
     });
   });
+
+  it('PRD 358 — an active quick shortcut is never written to storage', async () => {
+    await mountHook();
+    expect(latest?.isHydrated).toBe(true);
+
+    // Weekend applied: session-only state on the shell store. Nothing about
+    // it may reach IndexedDB; only the selected day persists, as it already did.
+    act(() => {
+      useShellNavStore.setState({
+        activeFindQuickShortcut: {
+          kind: 'weekend',
+          selectedDay: '2026-09-26',
+          dayKeys: ['2026-09-26', '2026-09-27'],
+        },
+        findSelectedDay: '2026-09-26',
+      });
+    });
+    act(() => {
+      latest!.updateFilters({ gameFilter: true });
+    });
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 10));
+    });
+
+    const stored = (await getGameFilters()) as GameFilters & Record<string, unknown>;
+    expect(stored.gameFilter).toBe(true);
+    expect(stored.filterTimeStart).toBe('00:00');
+    expect(stored.filterTimeEnd).toBe('24:00');
+    expect('activeFindQuickShortcut' in stored).toBe(false);
+    expect('activeQuickShortcut' in stored).toBe(false);
+    expect(JSON.stringify(stored)).not.toContain('weekend');
+    expect(JSON.stringify(stored)).not.toContain('dayKeys');
+  });
 });

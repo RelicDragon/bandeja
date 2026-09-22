@@ -44,6 +44,12 @@ interface SegmentedSwitchBaseProps {
   fullWidth?: boolean;
   /** `md` default. `sm` is a compact equal-height segmented control. */
   size?: 'md' | 'sm';
+  /**
+   * `truncate` (default): equal-width tabs clip a long label. `scroll`: tabs
+   * never shrink below their label; the row scrolls sideways instead. Use with
+   * `fullWidth` for a row that must fit one line in every locale.
+   */
+  labelOverflow?: 'truncate' | 'scroll';
 }
 
 type SegmentedSwitchProps = SegmentedSwitchBaseProps &
@@ -73,12 +79,14 @@ export const SegmentedSwitch = ({
   badgeStyle = 'notification',
   fullWidth = false,
   size = 'md',
+  labelOverflow = 'truncate',
   toggleIds,
   activeToggleIds,
   onToggle,
 }: SegmentedSwitchProps) => {
   const isVertical = orientation === 'vertical';
   const compact = size === 'sm';
+  const scrollLabels = labelOverflow === 'scroll';
   const hasToggles = Boolean(toggleIds?.length);
   const toggleIdSet = hasToggles ? new Set(toggleIds) : null;
   const activeToggleSet = activeToggleIds?.length ? new Set(activeToggleIds) : null;
@@ -158,10 +166,12 @@ export const SegmentedSwitch = ({
           disabled={disabled || tab.disabled}
           title={tab.disabled ? tab.title : undefined}
           onClick={() => handleTabClick(tab.id, tab.disabled)}
-          className={`relative flex min-w-0 items-center font-medium transition-colors duration-200 ${
+          className={`relative flex items-center font-medium transition-colors duration-200 ${
+            scrollLabels ? 'shrink-0' : 'min-w-0'
+          } ${
             compact ? 'rounded-[10px] py-1.5 text-[13px] leading-4' : 'rounded-md py-2.5 text-sm'
           } ${isVertical ? 'w-full justify-start gap-2.5 text-start' : 'justify-center gap-1.5'} ${
-            !isVertical && fullWidth ? 'flex-1' : ''
+            !isVertical && fullWidth ? (scrollLabels ? 'flex-auto' : 'flex-1') : ''
           } ${pad} ${
             disabled || tab.disabled
               ? 'cursor-not-allowed opacity-50'
@@ -225,7 +235,9 @@ export const SegmentedSwitch = ({
                 )}
               </AnimatePresence>
             ) : (
-              <span className={isVertical ? '' : 'truncate whitespace-nowrap'}>{tab.label}</span>
+              <span className={isVertical ? '' : scrollLabels ? 'whitespace-nowrap' : 'truncate whitespace-nowrap'}>
+                {tab.label}
+              </span>
             )}
             {badgeStyle === 'inline' && tab.badge != null && (tab.badge > 0 || tab.showZeroBadge) ? (
               <span

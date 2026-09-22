@@ -218,6 +218,11 @@ export interface FilterFindGamesOptions extends FindFilterOptions {
   selectedDay?: Date;
   /** List mode: drop ARCHIVED and past calendar days. Default true when mode is list. */
   listFromToday?: boolean;
+  /**
+   * PRD 358 — client residual: keep only games on these `yyyy-MM-dd` day keys
+   * (city timezone). Games with no set time have no day and are dropped.
+   */
+  dayKeys?: readonly string[];
 }
 
 export function filterFindGames(
@@ -244,6 +249,14 @@ export function filterFindGames(
       }
       return true;
     });
+  }
+
+  const dayKeys = options?.dayKeys;
+  if (dayKeys && dayKeys.length > 0) {
+    const daySet = new Set(dayKeys);
+    source = source.filter(
+      (game) => game.timeIsSet !== false && daySet.has(gameCalendarDayKey(game, cityTimezone)),
+    );
   }
 
   return source.filter((game) =>

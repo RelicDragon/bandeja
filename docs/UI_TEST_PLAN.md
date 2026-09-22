@@ -555,6 +555,20 @@ Push: `PN-RC-01`–`PN-RC-03` in §18.8. Archive: `PR-RC-01`–`PR-RC-05` in §1
 | F-06 | Desktop calendar split | `@desktop` | Split layout |
 | F-37 | Overflow month day select | Navigate month → tap gray adjacent-month cell with game count badge | Games for that day appear in list |
 | F-38 | Selected date weather card | Select date on Find calendar (mobile + `@desktop` split) | Unified date+weather card with Today/Tomorrow/Yesterday + weather; updates when another date selected |
+| F-92 | Quick shortcuts row | Open Find (calendar and list view, 375 pt phone) | A Today · Tomorrow · Weekend segmented row sits under the calendar heading in both views, on one line; 44 px targets; arrow keys move between options. With today selected (the default) **Today** is highlighted; in list view nothing is |
+| F-92b | Row reflects the calendar | Tap tomorrow's cell, then a cell two days out, then today's cell, then this Saturday's cell | Tomorrow highlighted → nothing highlighted → Today highlighted → Weekend highlighted with Saturday and Sunday listed; the row always says which day the calendar shows. Next weekend's cells highlight nothing |
+| F-92c | Weekend day that is today | On a Saturday: tap **Weekend**, then **Today**, then Sunday's cell | Weekend highlighted with Sat + Sun listed → Today highlighted with Saturday only → Weekend highlighted with Sat + Sun again |
+| F-95 | Tomorrow | Tap **Tomorrow** | Calendar view, tomorrow (Home-city day) selected and highlighted; crossing a month end moves the month |
+| F-96 | Weekend from a weekday | Calendar view on a weekday → tap **Weekend**, or tap the coming Saturday's or Sunday's cell | Calendar stays open with that day selected; under it, Saturday and Sunday of the coming weekend as two date-grouped sections; on Saturday/Sunday the current weekend from today on; day cells, weather card and filters unchanged |
+| F-96b | Weekend from list view | List view → tap **Weekend** | Switches back to calendar view with the same result as F-96 |
+| F-97 | Re-tap the highlighted option | Weekend highlighted → tap it; Tomorrow highlighted → tap it; Today highlighted → tap it | Nothing changes for Weekend and Tomorrow (they already show what they say); Today scrolls the calendar into view. A highlight never clears while the calendar still shows that day |
+| F-98 | Silent release | Weekend highlighted → tap a weekday cell, or switch to List | Highlight clears with no toast; the user's change wins |
+| F-99 | Today | Tap **Today** from another day or from list view | Calendar view scrolled to today with **Today** highlighted; Weekend, if active, clears |
+| F-100 | Re-tap Find tab | Shortcut active → tap the Find tab again | Goes to today and clears the shortcut |
+| F-101 | Shortcut is not persisted | Weekend active → reload the app | No shortcut highlighted; the selected day is restored as before (existing 1 h rule) |
+| F-102 | Empty title under a shortcut | Shortcut active with no matching games | Empty state reads "No games tomorrow" / "No games this weekend"; entity-specific titles (Training, Tournaments, Leagues, Events chips alone) are unchanged |
+| F-103 | `?quick=` deep link | Open `/find?quick=tomorrow` (also `weekend`) | Find opens already scoped, the shortcut highlighted, and the URL is rewritten without `quick`; an unknown value is ignored |
+| F-104 | Shortcuts RTL and locales | App language العربية, then each of the 11 locales | Row reads right-to-left with Arrow keys mirrored; no label wraps to a second line (the row scrolls sideways if a label is long) |
 
 ### 7.2 Category filters (chips)
 

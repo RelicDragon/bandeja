@@ -460,4 +460,37 @@ describe('findFilter', () => {
     expect(aggregates.get(dayKey)?.gameCount).toBe(0);
     expect(aggregates.get(dayKey)?.participantEntityTypes.has('GAME')).toBe(true);
   });
+
+  it('PRD 358 — dayKeys residual cuts the list to those city days and drops timeless rows', () => {
+    const inDays = (offset: number, hour: number) => {
+      const d = startOfDay(new Date());
+      d.setDate(d.getDate() + offset);
+      d.setHours(hour, 0, 0, 0);
+      return d;
+    };
+    const keyOf = (d: Date) => format(d, 'yyyy-MM-dd');
+    const sat = inDays(3, 10);
+    const sun = inDays(4, 19);
+    const mon = inDays(5, 10);
+    const games = [
+      baseGame({ id: 'sat', startTime: sat.toISOString() }),
+      baseGame({ id: 'sun', startTime: sun.toISOString() }),
+      baseGame({ id: 'mon', startTime: mon.toISOString() }),
+      baseGame({ id: 'season', entityType: 'LEAGUE_SEASON', timeIsSet: false }),
+    ];
+    const viewer = baseViewer();
+    const state = baseState({ leaguesFilter: true, gameFilter: true });
+
+    const all = filterFindGames(games, viewer, state, { mode: 'list' });
+    expect(all.map((g) => g.id)).toEqual(['sat', 'sun', 'mon', 'season']);
+
+    const weekend = filterFindGames(games, viewer, state, {
+      mode: 'list',
+      dayKeys: [keyOf(sat), keyOf(sun)],
+    });
+    expect(weekend.map((g) => g.id)).toEqual(['sat', 'sun']);
+
+    // An empty list of keys is "no residual", not "nothing".
+    expect(filterFindGames(games, viewer, state, { mode: 'list', dayKeys: [] })).toHaveLength(4);
+  });
 });

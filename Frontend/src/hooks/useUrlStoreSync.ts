@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useShellNavStore } from '@/store/shellNavStore';
 import { resolveFindDayKey } from '@/utils/findDayFromSearchParams';
+import { parseQuickShortcutParam } from '@/components/home/findQuickShortcuts';
 import { parseLocation } from '@/utils/urlSchema';
 
 export type HomeSubTab = 'calendar' | 'past-games';
@@ -44,6 +45,12 @@ export function useUrlStoreSync() {
         if (dayKey) {
           state.setFindSelectedDay(dayKey);
           state.setFindViewMode('calendar');
+        }
+        // PRD 358 — `?quick=tomorrow|weekend` is read once on the way
+        // in; the Find section applies it and rewrites the URL without it.
+        const quick = parseQuickShortcutParam(parsed.params.quick);
+        if (quick) {
+          state.setRequestFindQuickShortcut(quick);
         }
         break;
       }

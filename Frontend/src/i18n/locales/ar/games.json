@@ -63,6 +63,16 @@
     "seeAllEvents": "عرض الكل",
     "goingNeedPartner": "{{going}} ذاهبون · {{looking}} يبحثون عن شريك",
     "noEventsFound": "لا توجد فعاليات",
+    "quickShortcuts": {
+      "ariaLabel": "اختصارات اليوم",
+      "today": "اليوم",
+      "tomorrow": "غدًا",
+      "weekend": "عطلة الأسبوع",
+      "empty": {
+        "tomorrow": "لا توجد مباريات غدًا",
+        "weekend": "لا توجد مباريات في عطلة هذا الأسبوع"
+      }
+    },
     "suitableGamesForMe": "مباريات مناسبة لي",
     "haveAvailableSlots": "فيها أماكن متاحة",
     "haveAvailableSlotsHint": "إخفاء المباريات الممتلئة التي لا يمكنك الانضمام إليها",

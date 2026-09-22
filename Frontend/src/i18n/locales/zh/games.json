@@ -63,6 +63,16 @@
     "seeAllEvents": "全部",
     "goingNeedPartner": "{{going}} 人参加 · {{looking}} 人找搭档",
     "noEventsFound": "未找到活动",
+    "quickShortcuts": {
+      "ariaLabel": "日期快捷选项",
+      "today": "今天",
+      "tomorrow": "明天",
+      "weekend": "周末",
+      "empty": {
+        "tomorrow": "明天没有比赛",
+        "weekend": "本周末没有比赛"
+      }
+    },
     "suitableGamesForMe": "适合我的比赛",
     "haveAvailableSlots": "有空位",
     "haveAvailableSlotsHint": "隐藏你无法加入的已满比赛",

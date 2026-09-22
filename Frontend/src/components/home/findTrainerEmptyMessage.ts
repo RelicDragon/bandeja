@@ -1,6 +1,17 @@
 import { countActiveFindEntityChips } from '@/utils/findEntityTypeChips';
+import type { QuickShortcutKind } from './findQuickShortcuts';
 
 type TranslateFn = (key: string, options?: { defaultValue?: string; name?: string }) => string;
+
+const QUICK_SHORTCUT_EMPTY_DEFAULTS: Record<QuickShortcutKind, string> = {
+  tomorrow: 'No games tomorrow',
+  weekend: 'No games this weekend',
+};
+
+/** PRD 358 — the generic empty title under an active shortcut names the day instead. */
+export function resolveQuickShortcutEmptyTitle(kind: QuickShortcutKind, t: TranslateFn): string {
+  return t(`games.quickShortcuts.empty.${kind}`, { defaultValue: QUICK_SHORTCUT_EMPTY_DEFAULTS[kind] });
+}
 
 export function resolveFindEmptyMessage({
   gameFilterVal,
@@ -9,6 +20,7 @@ export function resolveFindEmptyMessage({
   leaguesFilterVal,
   eventsFilterVal,
   favoriteTrainerName,
+  quickShortcut,
   t,
 }: {
   gameFilterVal: boolean;
@@ -17,8 +29,15 @@ export function resolveFindEmptyMessage({
   leaguesFilterVal: boolean;
   eventsFilterVal: boolean;
   favoriteTrainerName?: string | null;
+  /** Active Find shortcut; replaces only the generic "No games found" title. */
+  quickShortcut?: QuickShortcutKind | null;
   t: TranslateFn;
 }): string {
+  const genericTitle = () =>
+    quickShortcut
+      ? resolveQuickShortcutEmptyTitle(quickShortcut, t)
+      : t('games.noGamesFound', { defaultValue: 'No games found' });
+
   const activeChips = countActiveFindEntityChips({
     gameFilter: gameFilterVal,
     trainingFilter: trainingFilterVal,
@@ -28,11 +47,11 @@ export function resolveFindEmptyMessage({
   });
 
   if (activeChips !== 1) {
-    return t('games.noGamesFound', { defaultValue: 'No games found' });
+    return genericTitle();
   }
 
   if (gameFilterVal) {
-    return t('games.noGamesFound', { defaultValue: 'No games found' });
+    return genericTitle();
   }
 
   if (trainingFilterVal) {
@@ -57,7 +76,7 @@ export function resolveFindEmptyMessage({
     return t('games.noEventsFound', { defaultValue: 'No events found' });
   }
 
-  return t('games.noGamesFound', { defaultValue: 'No games found' });
+  return genericTitle();
 }
 
 export function formatTrainerDisplayName(

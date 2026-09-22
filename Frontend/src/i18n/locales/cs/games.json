@@ -63,6 +63,16 @@
     "seeAllEvents": "Zobrazit vše",
     "goingNeedPartner": "{{going}} jde · {{looking}} hledá partnera",
     "noEventsFound": "Žádné události nenalezeny",
+    "quickShortcuts": {
+      "ariaLabel": "Zkratky pro den",
+      "today": "Dnes",
+      "tomorrow": "Zítra",
+      "weekend": "Víkend",
+      "empty": {
+        "tomorrow": "Zítra žádné hry",
+        "weekend": "O víkendu žádné hry"
+      }
+    },
     "suitableGamesForMe": "Vhodné zápasy pro mě",
     "haveAvailableSlots": "S volnými místy",
     "haveAvailableSlotsHint": "Skrýt plné hry, ke kterým se nemůžete připojit",

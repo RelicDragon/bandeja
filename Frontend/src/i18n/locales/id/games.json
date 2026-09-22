@@ -63,6 +63,16 @@
     "seeAllEvents": "Lihat semua",
     "goingNeedPartner": "{{going}} pergi · {{looking}} cari partner",
     "noEventsFound": "Tidak ada acara yang ditemukan",
+    "quickShortcuts": {
+      "ariaLabel": "Pintasan hari",
+      "today": "Hari ini",
+      "tomorrow": "Besok",
+      "weekend": "Akhir pekan",
+      "empty": {
+        "tomorrow": "Tidak ada permainan besok",
+        "weekend": "Tidak ada permainan akhir pekan ini"
+      }
+    },
     "suitableGamesForMe": "Game yang cocok untuk saya",
     "haveAvailableSlots": "Memiliki slot yang tersedia",
     "haveAvailableSlotsHint": "Sembunyikan game lengkap yang tidak dapat Anda ikuti",

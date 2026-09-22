@@ -63,6 +63,16 @@
     "noTournamentFound": "No tournament found",
     "noLeaguesFound": "No leagues found",
     "noEventsFound": "No events found",
+    "quickShortcuts": {
+      "ariaLabel": "Day shortcuts",
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "weekend": "Weekend",
+      "empty": {
+        "tomorrow": "No games tomorrow",
+        "weekend": "No games this weekend"
+      }
+    },
     "suitableGamesForMe": "Suitable games for me",
     "haveAvailableSlots": "Have available slots",
     "haveAvailableSlotsHint": "Hide full games you cannot join",

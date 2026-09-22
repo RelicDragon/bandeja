@@ -10,6 +10,16 @@ import { useHeaderStore } from '@/store/headerStore';
 import { format, parse, startOfDay } from 'date-fns';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { resolveViewerCityTimezone } from '@/utils/cityTimezone';
+import { dateKeyInTimezone } from '@/utils/weatherDayGroups';
+import { FindQuickShortcutsRow } from './FindQuickShortcutsRow';
+import {
+  isQuickShortcutCurrent,
+  resolveActiveQuickShortcut,
+  resolveQuickShortcut,
+  resolveWeekendDayKeys,
+  type QuickShortcutAction,
+  type QuickShortcutKind,
+} from './findQuickShortcuts';
 import { CalendarSection } from './CalendarSection';
 import { TrainersList } from './TrainersList';
 import { GenderPromptBanner } from './GenderPromptBanner';
@@ -68,6 +78,12 @@ interface AvailableGamesSectionProps {
   /** Day-scoped fetch failed after retries — show retry empty, not “no games”. */
   dayLoadError?: boolean;
   onRetryDay?: () => void | Promise<void>;
+  /**
+   * PRD 358 — upcoming games while the Weekend shortcut is active in calendar
+   * view; `undefined` until that query has settled. The section cuts them to
+   * Saturday and Sunday and lists both days under the calendar.
+   */
+  weekendGames?: Game[];
 }
 
 const AvailableGamesSectionView = ({
@@ -88,6 +104,7 @@ const AvailableGamesSectionView = ({
   availableBound = 300,
   dayLoadError = false,
   onRetryDay,
+  weekendGames,
 }: AvailableGamesSectionProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -99,7 +116,12 @@ const AvailableGamesSectionView = ({
   const setRequestFindGoToCurrent = useShellNavStore((s) => s.setRequestFindGoToCurrent);
   const findSelectedDay = useShellNavStore((s) => s.findSelectedDay);
   const setFindSelectedDay = useShellNavStore((s) => s.setFindSelectedDay);
+  const activeQuickShortcut = useShellNavStore((s) => s.activeFindQuickShortcut);
+  const setActiveQuickShortcut = useShellNavStore((s) => s.setActiveFindQuickShortcut);
+  const requestFindQuickShortcut = useShellNavStore((s) => s.requestFindQuickShortcut);
+  const setRequestFindQuickShortcut = useShellNavStore((s) => s.setRequestFindQuickShortcut);
   const setCreateGameInitialDate = useHeaderStore((s) => s.setCreateGameInitialDate);
+  const cityTimezone = resolveViewerCityTimezone(user?.currentCity?.timezone);
   const selectedDate = useMemo(() => {
     if (findSelectedDay) {
       const d = parse(findSelectedDay, 'yyyy-MM-dd', new Date());
@@ -272,18 +294,115 @@ const AvailableGamesSectionView = ({
     if (!requestFindGoToCurrent) return;
     const mode = requestFindGoToCurrent;
     setRequestFindGoToCurrent(null);
+    // Going to today (re-tap Find, or the Today shortcut) drops any preset.
+    setActiveQuickShortcut(null);
+    const todayKey = dateKeyInTimezone(new Date(), cityTimezone);
     if (mode === 'calendar') {
-      setFindSelectedDay(format(startOfDay(new Date()), 'yyyy-MM-dd'));
+      setFindSelectedDay(todayKey);
       requestAnimationFrame(() => {
         const el = document.querySelector('[data-calendar="true"]');
         el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       });
     } else {
       setFindViewMode('calendar');
-      setFindSelectedDay(format(startOfDay(new Date()), 'yyyy-MM-dd'));
+      setFindSelectedDay(todayKey);
       navigationService.navigateToFind({ view: 'calendar' });
     }
-  }, [requestFindGoToCurrent, setRequestFindGoToCurrent, setFindSelectedDay, setFindViewMode]);
+  }, [
+    requestFindGoToCurrent,
+    setRequestFindGoToCurrent,
+    setFindSelectedDay,
+    setFindViewMode,
+    setActiveQuickShortcut,
+    cityTimezone,
+  ]);
+
+  /*
+   * PRD 358 — apply / clear / release.
+   *
+   * The row reflects the calendar: whichever day is selected, however it was
+   * selected, the row says so — today, tomorrow, or Saturday / Sunday of the
+   * coming weekend, which lists both days under the open calendar. Apply
+   * just selects the day in calendar view with the setters Find already has.
+   * The only stored bit is the Weekend pin, needed when today is itself a
+   * weekend day: Weekend sets it, Today clears it, and the effect below drops
+   * it once the calendar has moved away or the city day has rolled over.
+   */
+  const applyQuickShortcut = useCallback(
+    (kind: QuickShortcutKind, options?: { fromUrl?: boolean }) => {
+      const nav = useShellNavStore.getState();
+      const resolved = resolveQuickShortcut(kind, { now: new Date(), timezone: cityTimezone });
+      nav.setFindSelectedDay(resolved.selectedDay);
+      if (nav.findViewMode !== 'calendar') {
+        nav.setFindViewMode('calendar');
+        navigationService.navigateToFind({ view: 'calendar' });
+      } else if (options?.fromUrl) {
+        // Rewriting the URL is what strips a consumed `?quick=`.
+        navigationService.navigateToFind({ view: 'calendar' });
+      }
+      nav.setActiveFindQuickShortcut(kind === 'weekend' ? resolved : null);
+    },
+    [cityTimezone],
+  );
+
+  // Re-tap of the highlighted option: it already shows what it says, so the
+  // only useful response is Today's, which scrolls the calendar into view.
+  const clearQuickShortcut = useCallback(() => {
+    const nav = useShellNavStore.getState();
+    const todayKey = dateKeyInTimezone(new Date(), cityTimezone);
+    if (!nav.activeFindQuickShortcut && nav.findSelectedDay === todayKey) {
+      nav.setRequestFindGoToCurrent(nav.findViewMode);
+    }
+  }, [cityTimezone]);
+
+  const handleQuickShortcutSelect = useCallback(
+    (action: QuickShortcutAction) => {
+      if (action === 'today') {
+        setRequestFindGoToCurrent(useShellNavStore.getState().findViewMode);
+        return;
+      }
+      applyQuickShortcut(action);
+    },
+    [applyQuickShortcut, setRequestFindGoToCurrent],
+  );
+
+
+  // `?quick=` deep link, read once by `useUrlStoreSync`.
+  useEffect(() => {
+    if (!requestFindQuickShortcut) return;
+    const kind = requestFindQuickShortcut;
+    setRequestFindQuickShortcut(null);
+    applyQuickShortcut(kind, { fromUrl: true });
+  }, [requestFindQuickShortcut, setRequestFindQuickShortcut, applyQuickShortcut]);
+
+  const activeShortcutKind = resolveActiveQuickShortcut(
+    { view: findViewMode, selectedDay: findSelectedDay },
+    activeQuickShortcut != null,
+    { now: new Date(), timezone: cityTimezone },
+  );
+  const weekendActive = activeShortcutKind === 'weekend';
+
+  // Drop the Weekend pin once the calendar shows something else or the city
+  // day rolled over (the section re-renders on every store tick, so a stale
+  // pin after midnight is caught on the next one).
+  useEffect(() => {
+    if (!activeQuickShortcut) return;
+    if (!weekendActive || !isQuickShortcutCurrent(activeQuickShortcut, { now: new Date(), timezone: cityTimezone })) {
+      setActiveQuickShortcut(null);
+    }
+  }, [activeQuickShortcut, weekendActive, cityTimezone, setActiveQuickShortcut]);
+  const emptyTitleShortcut: QuickShortcutKind | null =
+    activeShortcutKind === 'tomorrow' || activeShortcutKind === 'weekend' ? activeShortcutKind : null;
+  const quickShortcutsNode = useMemo(
+    () => (
+      <FindQuickShortcutsRow
+        activeKind={activeShortcutKind}
+        onSelect={handleQuickShortcutSelect}
+        onClear={clearQuickShortcut}
+      />
+    ),
+    [activeShortcutKind, handleQuickShortcutSelect, clearQuickShortcut],
+  );
 
   const panelFilterState = useMemo(
     () => ({
@@ -337,8 +456,24 @@ const AvailableGamesSectionView = ({
     ],
   );
 
+  // The weekend's day keys are derived from the clock, not the pin, so a
+  // Saturday tapped on the calendar lists Saturday and Sunday just the same.
+  const todayKey = dateKeyInTimezone(new Date(), cityTimezone);
+  const weekendDayKeys = useMemo(
+    () => (weekendActive ? resolveWeekendDayKeys(todayKey) : undefined),
+    [weekendActive, todayKey],
+  );
   const filteredGames = useMemo(() => {
-    const cityTimezone = resolveViewerCityTimezone(user?.currentCity?.timezone);
+    if (weekendDayKeys) {
+      // Weekend: the upcoming river cut to Saturday and Sunday, under the
+      // calendar, so the month grid and the weather card stay in place.
+      return filterFindGames(
+        weekendGames ?? [],
+        resolveFindFilterViewer(user, isAdmin),
+        findFilterState,
+        { mode: 'list', listFromToday: true, cityTimezone, dayKeys: weekendDayKeys },
+      );
+    }
     if (findViewMode === 'calendar') {
       const dayScoped = selectedDayGames != null;
       return filterFindGames(
@@ -364,7 +499,18 @@ const AvailableGamesSectionView = ({
         cityTimezone,
       },
     );
-  }, [availableGames, selectedDayGames, user, isAdmin, findFilterState, findViewMode, selectedDate]);
+  }, [
+    availableGames,
+    selectedDayGames,
+    weekendGames,
+    user,
+    isAdmin,
+    findFilterState,
+    findViewMode,
+    selectedDate,
+    cityTimezone,
+    weekendDayKeys,
+  ]);
   const findFilterSport = filterSportVal;
   const findSportTabs = useMemo<SegmentedSwitchTab[]>(() => {
     const enabledSports = listEnabledSports(user);
@@ -543,9 +689,19 @@ const AvailableGamesSectionView = ({
         leaguesFilterVal,
         eventsFilterVal,
         favoriteTrainerName,
+        quickShortcut: emptyTitleShortcut,
         t,
       }),
-    [gameFilterVal, trainingFilterVal, tournamentFilterVal, leaguesFilterVal, eventsFilterVal, favoriteTrainerName, t],
+    [
+      gameFilterVal,
+      trainingFilterVal,
+      tournamentFilterVal,
+      leaguesFilterVal,
+      eventsFilterVal,
+      favoriteTrainerName,
+      emptyTitleShortcut,
+      t,
+    ],
   );
 
   const gamesList = (
@@ -571,9 +727,11 @@ const AvailableGamesSectionView = ({
   // Calendar: `selectedDayGames == null` means day authority not ready yet.
   // A settled empty array must not stay on the skeleton (e.g. month index still in flight).
   const initialGamesLoading = Boolean(
-    findViewMode === 'calendar'
-      ? loading && selectedDayGames == null
-      : loading && availableGames.length === 0,
+    weekendActive
+      ? loading && weekendGames == null
+      : findViewMode === 'calendar'
+        ? loading && selectedDayGames == null
+        : loading && availableGames.length === 0,
   );
 
   const findListCollapsed = findViewMode === 'list';
@@ -619,6 +777,7 @@ const AvailableGamesSectionView = ({
       collapsed: findListCollapsed,
       weatherModeScope: 'find' as const,
       upcomingsToggle,
+      quickShortcuts: quickShortcutsNode,
     }),
     [
       selectedDate, handleDateSelect, availableGames, dayIndex, filterAvailableSlotsVal,
@@ -626,6 +785,7 @@ const AvailableGamesSectionView = ({
       tournamentFilterVal, leaguesFilterVal, eventsFilterVal, user?.favoriteTrainerId,
       onMonthChange, onDateRangeChange, panelFilterState, showPrivateGamesVal, isAdmin,
       findDiscoveryEnabled, filterNoRatingVal, findListCollapsed, upcomingsToggle,
+      quickShortcutsNode,
     ],
   );
 
@@ -682,7 +842,7 @@ const AvailableGamesSectionView = ({
       loading={<GamesLoadingSkeleton />}
     >
       {filteredGames.length === 0 ? (
-        dayLoadError && onRetryDay && findViewMode === 'calendar' ? (
+        dayLoadError && onRetryDay && findViewMode === 'calendar' && !weekendActive ? (
           <FindDayLoadErrorEmpty onRetry={onRetryDay} />
         ) : (
           <>
@@ -690,7 +850,7 @@ const AvailableGamesSectionView = ({
             {loadMoreFooter}
           </>
         )
-      ) : findViewMode === 'list' ? (
+      ) : findViewMode === 'list' || weekendActive ? (
         <>
           <GamesByDateList
             games={filteredGames}
