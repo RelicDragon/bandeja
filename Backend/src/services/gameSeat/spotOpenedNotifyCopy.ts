@@ -8,8 +8,12 @@ export function formatLevelRange(
   minLevel: number | null,
   maxLevel: number | null,
 ): string | null {
-  if (minLevel != null && maxLevel != null) return `${minLevel}–${maxLevel}`;
-  if (minLevel != null) return `${minLevel}+`;
-  if (maxLevel != null) return `≤${maxLevel}`;
+  // Legacy games carry an off-grid band seeded from the host's raw rating, so
+  // round at render rather than trusting the stored value.
+  const lo = minLevel != null ? minLevel.toFixed(1) : null;
+  const hi = maxLevel != null ? maxLevel.toFixed(1) : null;
+  if (lo != null && hi != null) return `${lo}–${hi}`;
+  if (lo != null) return `${lo}+`;
+  if (hi != null) return `≤${hi}`;
   return null;
 }

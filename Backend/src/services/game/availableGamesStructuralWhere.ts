@@ -16,6 +16,7 @@ import type { EntityType, Prisma } from '@prisma/client';
  * | requireTimeSet   | calendar: timeIsSet must be true             | —               |
  * | (upcoming always)| timeIsSet OR LEAGUE_SEASON                   | —               |
  * | availableSlots   | PLAYING count < maxParticipants (SQL on ids) | MIX gender slots|
+ * | noviceOnly       | suitableForNovices = true (PRD 360)          | —               |
  *
  * Viewer-only heuristics stay on the client FindFilter Module:
  * suitable rating, blocked organizer, no-rating discovery, gender MIX precision,
@@ -45,6 +46,11 @@ export type AvailableStructuralFilters = {
    */
   allowUnsetTimeLeagueSeason?: boolean;
   availableSlots?: boolean;
+  /**
+   * PRD 360 — only games whose organizer turned "Novices welcome" on. ANDed
+   * with every other filter, exactly like the rest of the advanced panel.
+   */
+  noviceOnly?: boolean;
   /**
    * PRD 349 — "Live now" rail. Narrows to games that are being scored right
    * now **and** are visible to strangers.
@@ -120,6 +126,7 @@ export function parseStructuralFiltersFromQuery(query: {
   levelMax?: unknown;
   requireTimeSet?: unknown;
   availableSlots?: unknown;
+  noviceOnly?: unknown;
   mode?: unknown;
 }): AvailableStructuralFilters {
   const mode = String(query.mode ?? '').toLowerCase();
@@ -139,6 +146,7 @@ export function parseStructuralFiltersFromQuery(query: {
       parseBoolParam(query.requireTimeSet) || mode === 'calendar',
     allowUnsetTimeLeagueSeason: mode !== 'calendar',
     availableSlots: parseBoolParam(query.availableSlots),
+    noviceOnly: parseBoolParam(query.noviceOnly),
   };
 }
 
@@ -194,6 +202,12 @@ export function appendStructuralFiltersToWhere(
         },
       ],
     });
+  }
+
+  // PRD 360 — a plain column test, so it narrows the day index and the
+  // pagination bounds the same way every other structural filter does.
+  if (filters.noviceOnly) {
+    and.push({ suitableForNovices: true });
   }
 
   if (filters.requireTimeSet) {

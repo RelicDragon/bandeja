@@ -107,6 +107,7 @@ import {
 import { resolveCreateGameRatingFields } from '@/utils/createGameRatingFields';
 import { toastCreateGameFailure } from '@/utils/createGameFailureToast';
 import { resolvePlayIntentCreateLevelRange } from '@/utils/createGamePlayIntentLevelRange';
+import { roundLevelBand } from '@/utils/levelBand';
 
 interface CreateGameProps {
   entityType: EntityType;
@@ -128,7 +129,9 @@ const getDefaultLevelRange = (level?: number): [number, number] => {
 
   const minLevel = Math.max(1.0, Math.min(7.0, level - 0.7));
   const maxLevel = Math.max(1.0, Math.min(7.0, level + 0.7));
-  return [minLevel, maxLevel];
+  // `level` is the host's raw rating, so the band must be snapped back to the
+  // slider grid before it can be submitted untouched.
+  return roundLevelBand([minLevel, maxLevel]);
 };
 
 export const CreateGame = ({
@@ -233,6 +236,10 @@ export const CreateGame = ({
   const [resultsByAnyone, setResultsByAnyone] = useState<boolean>(initialGameData?.resultsByAnyone ?? false);
   const [allowDirectJoin, setAllowDirectJoin] = useState<boolean>(initialGameData?.allowDirectJoin ?? false);
   const [afterGameGoToBar, setAfterGameGoToBar] = useState<boolean>(initialGameData?.afterGameGoToBar ?? false);
+  // PRD 360 — carried into a duplicate / "play again" draft, never defaulted on.
+  const [suitableForNovices, setSuitableForNovices] = useState<boolean>(
+    initialGameData?.suitableForNovices ?? false,
+  );
   const [participantsOnlyChat, setParticipantsOnlyChat] = useState(false);
   const enabledSports = useMemo(() => listCreateFlowSports(user), [user]);
   const showTemplatePicker = showGameFormatTemplatePicker(entityType, selectedSport);
@@ -1506,6 +1513,7 @@ export const CreateGame = ({
         externalBookingProvider: bookingFields.externalBookingProvider,
         bookingSnapshots: bookingFields.bookingSnapshots,
         afterGameGoToBar: afterGameGoToBar,
+        suitableForNovices,
         name: gameName || undefined,
         description: comments,
         participants: participants.filter((id): id is string => id !== null),
@@ -2173,6 +2181,7 @@ export const CreateGame = ({
           resultsByAnyone={resultsByAnyone}
           allowDirectJoin={allowDirectJoin}
           afterGameGoToBar={afterGameGoToBar}
+          suitableForNovices={suitableForNovices}
           participantsOnlyChat={participantsOnlyChat}
           entityType={entityType}
           onPublicChange={setIsPublic}
@@ -2181,6 +2190,7 @@ export const CreateGame = ({
           onResultsByAnyoneChange={setResultsByAnyone}
           onAllowDirectJoinChange={setAllowDirectJoin}
           onAfterGameGoToBarChange={setAfterGameGoToBar}
+          onSuitableForNovicesChange={setSuitableForNovices}
           onParticipantsOnlyChatChange={setParticipantsOnlyChat}
           hideRatingGame={showTemplatePicker}
         />

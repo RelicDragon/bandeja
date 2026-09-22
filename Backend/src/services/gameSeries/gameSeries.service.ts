@@ -423,6 +423,7 @@ export class GameSeriesService {
         resultsByAnyone: true,
         allowDirectJoin: true,
         afterGameGoToBar: true,
+        suitableForNovices: true,
         hasFixedTeams: true,
         allowUserInMultipleTeams: true,
         genderTeams: true,
@@ -1403,6 +1404,7 @@ function buildOccurrencePatch(template: GameSeriesTemplate): Record<string, unkn
   copy('resultsByAnyone');
   copy('allowDirectJoin');
   copy('afterGameGoToBar');
+  copy('suitableForNovices');
   copy('genderTeams');
   copy('priceType');
   copy('priceTotal');

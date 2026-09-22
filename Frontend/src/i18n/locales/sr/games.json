@@ -281,6 +281,9 @@
     "trainerSet": "Trainer set successfully",
     "trainerRemoved": "Trainer removed successfully",
     "ownershipTransferred": "Ownership transferred successfully",
-    "gamesCount_other": "{{count}} games"
+    "gamesCount_other": "{{count}} games",
+    "noviceFriendly": "Novajlije dobrodošle",
+    "filterNoviceOnly": "Samo gde su novajlije dobrodošle",
+    "filterNoviceOnlyHint": "Prikaži samo igre koje primaju nove igrače"
   }
 }

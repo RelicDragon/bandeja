@@ -49,6 +49,7 @@ import {
   Users,
   ExternalLink,
   Lock,
+  Sprout,
   Swords,
   Trophy,
   Dumbbell,
@@ -482,6 +483,13 @@ export const GameInfo = ({
               </div>
             )}
           </div>
+        )}
+        {/* PRD 360 — full label here: the details header has the room the card does not. */}
+        {game.suitableForNovices && (
+          <span className={`${tagPadding} ${tagText} font-medium rounded-full bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300 flex items-center gap-1`}>
+            <Sprout size={iconSize} aria-hidden />
+            {t('games.noviceFriendly')}
+          </span>
         )}
         {isOwner && (
           <span className={`${tagPadding} ${tagText} font-medium rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 flex items-center gap-1`}>

@@ -29,6 +29,8 @@ export const GAME_RESULTS_LOCKED_FIELDS = [
   'allowDirectJoin',
   'hasBookedCourt',
   'afterGameGoToBar',
+  /** PRD 360 — the "Novices welcome" promise cannot be rewritten after the fact. */
+  'suitableForNovices',
   'trainerId',
   'priceTotal',
   'priceType',

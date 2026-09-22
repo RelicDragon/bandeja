@@ -583,6 +583,10 @@
     "markCourtBookedTitle": "Označiti teren kao rezervisan?",
     "markCourtBookedMessage": "Izabrali ste teren, ali niste ga označili kao rezervisan. Potvrdite kada ga rezervišete u klubu.",
     "markCourtBookedYes": "Da, rezervisao sam ga",
-    "markCourtBookedSkip": "Još ne"
+    "markCourtBookedSkip": "Još ne",
+    "suitableForNovices": {
+      "title": "Novajlije dobrodošle",
+      "hint": "Pomoći ćete novim igračima da se snađu. Raspon nivoa i dalje važi."
+    }
   }
 }

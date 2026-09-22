@@ -596,6 +596,10 @@
       "POINTS_15": "15-ball budget",
       "TIMED": "Timed",
       "CUSTOM": "Custom"
+    },
+    "suitableForNovices": {
+      "title": "Novices welcome",
+      "hint": "You'll help newer players settle in. The level range still applies."
     }
   }
 }

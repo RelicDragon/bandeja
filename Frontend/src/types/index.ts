@@ -647,6 +647,8 @@ export interface Game extends GameCardEnrichment {
     bookingEnd?: string;
   }>;
   afterGameGoToBar?: boolean;
+  /** PRD 360 — organizer promise: newer players are welcome. Never a gate. */
+  suitableForNovices?: boolean;
   hasFixedTeams?: boolean;
   allowUserInMultipleTeams?: boolean;
   genderTeams?: GenderTeam;

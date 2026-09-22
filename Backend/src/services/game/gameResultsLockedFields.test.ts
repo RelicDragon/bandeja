@@ -60,4 +60,15 @@ assert.deepEqual(findLockedFieldChanges({ priceTotal: new Prisma.Decimal('40') }
 assert.deepEqual(findLockedFieldChanges({ courtId: null }, { courtId: null }), []);
 assert.deepEqual(findLockedFieldChanges({ courtId: null }, { courtId: 'c1' }), ['courtId']);
 
+// PRD 360 — "Novices welcome" is a promise made before the game, so it freezes
+// with the other settings the moment results entry starts.
+assert.deepEqual(
+  findLockedFieldChanges({ suitableForNovices: false }, { suitableForNovices: true }),
+  ['suitableForNovices'],
+);
+assert.deepEqual(
+  findLockedFieldChanges({ suitableForNovices: true }, { suitableForNovices: true }),
+  [],
+);
+
 console.log('gameResultsLockedFields.test.ts ok');

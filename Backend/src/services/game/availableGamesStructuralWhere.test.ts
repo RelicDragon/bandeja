@@ -111,4 +111,43 @@ import {
   );
 }
 
+/* PRD 360 — "Novices welcome" filter. */
+{
+  const parsed = parseStructuralFiltersFromQuery({ noviceOnly: '1', mode: 'upcoming' });
+  assert.equal(parsed.noviceOnly, true);
+
+  const off = parseStructuralFiltersFromQuery({ mode: 'upcoming' });
+  assert.equal(off.noviceOnly, false);
+}
+
+{
+  const where = appendStructuralFiltersToWhere({}, { noviceOnly: true });
+  assert.ok(Array.isArray(where.AND));
+  assert.ok(
+    (where.AND as Array<Record<string, unknown>>).some(
+      (clause) => clause.suitableForNovices === true,
+    ),
+  );
+}
+
+{
+  // Off means "do not narrow", never `suitableForNovices: false` — an untagged
+  // game is not a game that excludes novices.
+  const where = appendStructuralFiltersToWhere({}, { noviceOnly: false });
+  const clauses = Array.isArray(where.AND) ? (where.AND as Array<Record<string, unknown>>) : [];
+  assert.ok(!clauses.some((clause) => 'suitableForNovices' in clause));
+}
+
+{
+  // ANDed with the rest of the panel, exactly like every other structural filter.
+  const where = appendStructuralFiltersToWhere(
+    {},
+    { noviceOnly: true, hideBar: true, requireTimeSet: true },
+  );
+  const clauses = where.AND as Array<Record<string, unknown>>;
+  assert.ok(clauses.some((clause) => clause.suitableForNovices === true));
+  assert.ok(clauses.some((clause) => (clause.entityType as { not?: string })?.not === 'BAR'));
+  assert.ok(clauses.some((clause) => clause.timeIsSet === true));
+}
+
 console.log('availableGamesStructuralWhere.test.ts: ok');

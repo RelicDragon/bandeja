@@ -146,6 +146,7 @@ const AvailableGamesSectionView = ({
     filterLevelMax: filterLevelMaxVal,
     filterSport: filterSportVal,
     filterNoRating: filterNoRatingVal,
+    filterNoviceFriendly: filterNoviceFriendlyVal,
     showPrivateGames: showPrivateGamesVal,
   } = useMemo(() => resolveGameFilters(filters), [filters]);
   const findDiscoveryEnabled = isFindDiscoveryEnabled();
@@ -176,6 +177,7 @@ const AvailableGamesSectionView = ({
       filterLevelMaxVal < 7.0 - 1e-6 ||
       hideBarGamesVal ||
       (findDiscoveryEnabled && filterNoRatingVal) ||
+      filterNoviceFriendlyVal ||
       (isAdmin && showPrivateGamesVal)
     );
   }, [
@@ -187,6 +189,7 @@ const AvailableGamesSectionView = ({
     hideBarGamesVal,
     findDiscoveryEnabled,
     filterNoRatingVal,
+    filterNoviceFriendlyVal,
     isAdmin,
     showPrivateGamesVal,
   ]);
@@ -214,6 +217,10 @@ const AvailableGamesSectionView = ({
   );
   const setFilterNoRatingVal = useCallback(
     (v: boolean) => onFiltersChange({ filterNoRating: v }),
+    [onFiltersChange],
+  );
+  const setFilterNoviceFriendlyVal = useCallback(
+    (v: boolean) => onFiltersChange({ filterNoviceFriendly: v }),
     [onFiltersChange],
   );
   const setFilterClubIdsVal = useCallback(
@@ -244,6 +251,7 @@ const AvailableGamesSectionView = ({
       filterLevelMin: 1.0,
       filterLevelMax: 7.0,
       filterNoRating: false,
+      filterNoviceFriendly: false,
       showPrivateGames: false,
     });
   }, [onFiltersChange]);
@@ -637,6 +645,8 @@ const AvailableGamesSectionView = ({
                 onFilterAvailableSlotsChange={setFilterAvailableSlotsVal}
                 filterSuitableRating={filterSuitableRatingVal}
                 onFilterSuitableRatingChange={setFilterSuitableRatingVal}
+                filterNoviceFriendly={filterNoviceFriendlyVal}
+                onFilterNoviceFriendlyChange={setFilterNoviceFriendlyVal}
                 hideBarGames={hideBarGamesVal}
                 onHideBarGamesChange={setHideBarGamesVal}
                 filterSport={filterSportVal}

@@ -127,6 +127,18 @@ Two numbers the card can prove from the roster it already holds — no enricher,
 
 Backend: the only change is `joinedAt` on the Find card participant select (`availableGamesCard.projection.ts`). It was previously on the *forbidden* list for that payload; the card contract check now requires it, because dropping it again would silently degrade every queued viewer's badge. My tab (`gameMyTabListInclude`) and the chat game payload already carried it.
 
+## Novices welcome (PRD 360)
+
+One boolean on `Game`, `suitableForNovices`, set by the organizer and shown wherever the game is listed. It is a promise about atmosphere: `minLevel`/`maxLevel`, `genderTeams`, `allowDirectJoin` and the queue rules behave exactly as before, and the create-game level-mismatch banner still fires. It is never inferred from the level range, never auto-set, and never applied to a player.
+
+- **Capability gate:** `entityCapabilities.hasNoviceTag` — true for GAME, TOURNAMENT, TRAINING and BAR; false for LEAGUE fixtures, `LEAGUE_SEASON` shells and EVENT listings, whose rosters an organizer does not shape the same way. Both `create.service.ts` and `update.service.ts` enforce the gate server-side, so a hand-built request cannot tag a league fixture.
+- **Lock:** in `GAME_RESULTS_LOCKED_FIELDS`, so it freezes with the other settings once `resultsStatus` leaves `NONE`.
+- **Toggle:** the same row in the create-flow settings block and in `GameDetails/GameSettings`, immediately after "Anyone can invite". Its hint ("the level range still applies") stays on screen while the switch is on even when hints are hidden.
+- **Tag:** `GameCardHeaderTags` (Find / Home / My / invites), `GameInfo`'s details header, and an icon-only variant in `ChatListGameCardTags`. Renders only when true, in the existing tag row — never a second row. The label collapses to the icon below `sm` and stays available to screen readers and as a tooltip.
+- **Filter:** `filterNoviceFriendly` in the advanced Filters panel, persisted with the other filters, mapped to `noviceOnly=1` and applied in SQL by `availableGamesStructuralWhere.ts`. It is **not** a top-level chip: the entity chip row stays five-up. Off means "do not narrow", never `suitableForNovices: false`.
+- **Propagation:** the series template carries it, so generated occurrences inherit it and editing a series pushes it onto existing occurrences; `buildDuplicateGameInitialData` copies it into a duplicate / "play again" draft.
+- **Guardrail:** the Admin games table has a column and a filter for it. If the tagged share in a city passes roughly half, the tag has stopped discriminating and the copy needs revisiting before more surfaces are added.
+
 ## Card enrichment
 
 Find and My cards are rendered from a lean projection plus a bag of derived fields attached per batch. Enrichers register themselves by name:

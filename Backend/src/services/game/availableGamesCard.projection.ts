@@ -95,6 +95,8 @@ export const FIND_CARD_GAME_SELECT = {
   costPayerId: true,
   /** PRD 357 — raw alert bookkeeping; the card renders the derived `weatherRisk`. */
   weatherAlertState: true,
+  /** PRD 360 — "Novices welcome" header tag; also the `noviceOnly` filter's column. */
+  suitableForNovices: true,
 } as const;
 
 const leagueSeasonCardSelect = {

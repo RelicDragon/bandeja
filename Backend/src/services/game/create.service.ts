@@ -601,6 +601,11 @@ export class GameCreateService {
         hasBookedCourt: booking.hasBookedCourtCreate,
         timeOverride: booking.timeOverride,
         afterGameGoToBar: data.afterGameGoToBar || false,
+        // PRD 360 — an organizer promise about atmosphere, so it only exists on
+        // entity types whose roster an organizer actually shapes.
+        suitableForNovices: getEntityCapabilities(entityType).hasNoviceTag
+          ? data.suitableForNovices || false
+          : false,
         hasFixedTeams: (formatNorm.hasFixedTeams as boolean | undefined) ?? hasFixedTeams,
         allowUserInMultipleTeams:
           (formatNorm.allowUserInMultipleTeams as boolean | undefined) ?? allowUserInMultipleTeams,

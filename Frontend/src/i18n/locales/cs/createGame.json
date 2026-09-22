@@ -582,6 +582,10 @@
     "markCourtBookedTitle": "Označit kurt jako rezervovaný?",
     "markCourtBookedMessage": "Vybrali jste kurt, ale neoznačili jste ho jako rezervovaný. Potvrďte, až si ho rezervujete u klubu.",
     "markCourtBookedYes": "Ano, mám ho rezervovaný",
-    "markCourtBookedSkip": "Ještě ne"
+    "markCourtBookedSkip": "Ještě ne",
+    "suitableForNovices": {
+      "title": "Nováčci vítáni",
+      "hint": "Pomůžete novým hráčům se zorientovat. Rozsah úrovně platí i nadále."
+    }
   }
 }

@@ -35,6 +35,9 @@ export function buildDuplicateGameInitialData(game: Game): Partial<Game> {
     allowDirectJoin: game.allowDirectJoin,
     hasBookedCourt: game.hasBookedCourt,
     afterGameGoToBar: game.afterGameGoToBar,
+    // PRD 360 — the promise is about how this organizer runs a game, so it
+    // travels with the format into the next one (plan §5.4 allow-list).
+    suitableForNovices: game.suitableForNovices,
     hasFixedTeams: game.hasFixedTeams,
     genderTeams: game.genderTeams,
     priceTotal: game.priceTotal,

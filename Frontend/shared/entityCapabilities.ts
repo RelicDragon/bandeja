@@ -16,6 +16,13 @@ export type EntityCapabilities = {
   hasOccupancy: boolean;
   hasPlayIntentRadar: boolean;
   hasPartnerBoard: boolean;
+  /**
+   * PRD 360 — the organizer can promise "Novices welcome" on this entity type.
+   * True where the organizer actually shapes the roster (GAME, TOURNAMENT,
+   * TRAINING, BAR); false for league fixtures, season shells and EVENT
+   * listings, where they do not.
+   */
+  hasNoviceTag: boolean;
   archiveByTime: boolean;
   unboundedRoster: boolean;
   alwaysPublic: boolean;
@@ -33,6 +40,7 @@ const GAME_CAPS: EntityCapabilities = {
   hasOccupancy: true,
   hasPlayIntentRadar: true,
   hasPartnerBoard: false,
+  hasNoviceTag: true,
   archiveByTime: false,
   unboundedRoster: false,
   alwaysPublic: false,
@@ -50,6 +58,8 @@ const TOURNAMENT_CAPS: EntityCapabilities = {
 const LEAGUE_CAPS: EntityCapabilities = {
   ...GAME_CAPS,
   hasPlayIntentRadar: false,
+  // A fixture's roster comes from the league, not from an organizer's invitation.
+  hasNoviceTag: false,
   skipPlayIntentNotify: true,
 };
 
@@ -62,6 +72,7 @@ const LEAGUE_SEASON_CAPS: EntityCapabilities = {
   hasOccupancy: true,
   hasPlayIntentRadar: false,
   hasPartnerBoard: false,
+  hasNoviceTag: false,
   archiveByTime: true,
   unboundedRoster: false,
   alwaysPublic: false,
@@ -79,6 +90,7 @@ const BAR_CAPS: EntityCapabilities = {
   hasOccupancy: false,
   hasPlayIntentRadar: true,
   hasPartnerBoard: false,
+  hasNoviceTag: true,
   archiveByTime: true,
   unboundedRoster: true,
   alwaysPublic: false,
@@ -96,6 +108,7 @@ const TRAINING_CAPS: EntityCapabilities = {
   hasOccupancy: true,
   hasPlayIntentRadar: false,
   hasPartnerBoard: false,
+  hasNoviceTag: true,
   archiveByTime: false,
   unboundedRoster: false,
   alwaysPublic: false,
@@ -113,6 +126,7 @@ const EVENT_CAPS: EntityCapabilities = {
   hasOccupancy: false,
   hasPlayIntentRadar: false,
   hasPartnerBoard: true,
+  hasNoviceTag: false,
   archiveByTime: true,
   unboundedRoster: true,
   alwaysPublic: true,

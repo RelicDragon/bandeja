@@ -11,6 +11,8 @@ export type FindStructuralApiParams = {
   levelMin?: number;
   levelMax?: number;
   availableSlots?: boolean;
+  /** PRD 360 — `suitableForNovices = true`, applied in SQL like the rest of the panel. */
+  noviceOnly?: boolean;
   mode?: 'calendar' | 'upcoming';
 };
 
@@ -28,6 +30,7 @@ export function buildFindStructuralApiParams(
     | 'filterLevelMax'
     | 'hideBarGames'
     | 'filterAvailableSlots'
+    | 'filterNoviceFriendly'
     | 'gameFilter'
     | 'trainingFilter'
     | 'tournamentFilter'
@@ -44,6 +47,7 @@ export function buildFindStructuralApiParams(
   if (entityTypes) params.entityTypes = entityTypes;
   if (filters.hideBarGames) params.hideBar = true;
   if (filters.filterAvailableSlots) params.availableSlots = true;
+  if (filters.filterNoviceFriendly) params.noviceOnly = true;
 
   const levelMin = filters.filterLevelMin ?? 1;
   const levelMax = filters.filterLevelMax ?? 7;
@@ -62,10 +66,11 @@ export function buildStructuralFilterHashPart(p: FindStructuralApiParams | undef
   const entities = p.entityTypes ?? '';
   const hideBar = p.hideBar ? '1' : '0';
   const slots = p.availableSlots ? '1' : '0';
+  const novice = p.noviceOnly ? '1' : '0';
   const level =
     p.levelMin != null || p.levelMax != null
       ? `${p.levelMin ?? 1}-${p.levelMax ?? 7}`
       : 'full';
   const mode = p.mode ?? '';
-  return `s:${mode}:${clubs}:${entities}:${hideBar}:${slots}:${level}`;
+  return `s:${mode}:${clubs}:${entities}:${hideBar}:${slots}:${level}:n${novice}`;
 }

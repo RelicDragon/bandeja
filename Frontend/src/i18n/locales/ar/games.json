@@ -312,6 +312,9 @@
     "inQueueOwnerHint_female": "أنتِ المالكة. للعب في مباراتكِ، اقبلي نفسكِ من قائمة طابور الانضمام أدناه.",
     "chatParticipantHintJoinGame_female": "أنتِ مشاركة في الدردشة. انضمي للمباراة أدناه.",
     "chatParticipantHintJoinQueue_female": "أنتِ مشاركة في الدردشة. انضمي للطابور أدناه.",
-    "alreadyInJoinQueue_female": "أنتِ بالفعل في طابور الانضمام"
+    "alreadyInJoinQueue_female": "أنتِ بالفعل في طابور الانضمام",
+    "noviceFriendly": "ترحيب بالجدد",
+    "filterNoviceOnly": "التي ترحّب بالجدد فقط",
+    "filterNoviceOnlyHint": "أظهر فقط المباريات التي ترحّب باللاعبين الجدد"
   }
 }

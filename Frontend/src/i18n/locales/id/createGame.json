@@ -596,6 +596,10 @@
       "POINTS_15": "anggaran 15 bola",
       "TIMED": "waktunya",
       "CUSTOM": "Kebiasaan"
+    },
+    "suitableForNovices": {
+      "title": "Pemain baru disambut",
+      "hint": "Kamu akan membantu pemain baru menyesuaikan diri. Rentang level tetap berlaku."
     }
   }
 }

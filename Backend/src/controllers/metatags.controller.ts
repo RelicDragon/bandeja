@@ -17,7 +17,9 @@ function formatPreviewLevel(value: unknown): string | null {
     n = Number(value);
   }
   if (!Number.isFinite(n)) return null;
-  return parseFloat(n.toFixed(2)).toString();
+  // One decimal matches how the band is shown everywhere else (game card,
+  // link preview, push); 2dp surfaced a stored off-grid band as "2.05".
+  return n.toFixed(1);
 }
 
 const generateGameMetaTags = (game: any): string => {
@@ -70,7 +72,7 @@ const generateGameMetaTags = (game: any): string => {
   const levelInfo: string[] = [];
   if (minLv) levelInfo.push(`Level ${minLv}`);
   if (maxLv) {
-    if (minLv && game.minLevel !== game.maxLevel) {
+    if (minLv && minLv !== maxLv) {
       levelInfo[0] = `Level ${minLv}-${maxLv}`;
     } else if (!minLv) {
       levelInfo.push(`Level up to ${maxLv}`);

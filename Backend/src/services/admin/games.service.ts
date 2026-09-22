@@ -54,6 +54,7 @@ export class AdminGamesService {
     endDate?: string;
     sport?: string;
     affectsRating?: boolean;
+    suitableForNovices?: boolean;
     scoringPreset?: string;
     gameType?: string;
     page?: number;
@@ -68,6 +69,7 @@ export class AdminGamesService {
       endDate,
       sport,
       affectsRating,
+      suitableForNovices,
       scoringPreset,
       gameType,
       page = 1,
@@ -83,6 +85,8 @@ export class AdminGamesService {
     }
     if (affectsRating === true) where.affectsRating = true;
     if (affectsRating === false) where.affectsRating = false;
+    if (suitableForNovices === true) where.suitableForNovices = true;
+    if (suitableForNovices === false) where.suitableForNovices = false;
     if (scoringPreset) where.scoringPreset = scoringPreset as any;
     if (gameType) where.gameType = gameType as any;
     if (hasResults === true) where.resultsStatus = { not: 'NONE' };

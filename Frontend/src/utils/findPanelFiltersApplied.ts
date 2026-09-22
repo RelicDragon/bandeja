@@ -14,6 +14,7 @@ export function hasFindPanelFiltersApplied(
     | 'filterLevelMin'
     | 'filterLevelMax'
     | 'filterNoRating'
+    | 'filterNoviceFriendly'
     | 'showPrivateGames'
   >,
 ): boolean {
@@ -28,6 +29,7 @@ export function hasFindPanelFiltersApplied(
     (filters.filterLevelMin ?? 1.0) > 1.0 + 1e-6 ||
     (filters.filterLevelMax ?? 7.0) < 7.0 - 1e-6 ||
     Boolean(filters.filterNoRating) ||
+    Boolean(filters.filterNoviceFriendly) ||
     Boolean(filters.showPrivateGames)
   );
 }

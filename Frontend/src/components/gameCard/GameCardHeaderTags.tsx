@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { Users, Ban, Award, Lock, Repeat } from 'lucide-react';
+import { Users, Ban, Award, Lock, Repeat, Sprout } from 'lucide-react';
 import { isGameSeriesEnabled } from '@/config/featureFlags';
 import { cadencePillKey } from '@/features/game-series/seriesFormat';
 import type { Game } from '@/types';
@@ -146,6 +146,21 @@ export const GameCardHeaderTags = ({
               ></i>
             </span>
           )}
+        </span>
+      )}
+      {/* PRD 360 — the organizer's "Novices welcome" promise. Text collapses to
+          the icon on a narrow card; the label stays available to screen readers
+          and as a tooltip at every width. Never a second tag row. */}
+      {game.suitableForNovices && (
+        <span
+          className={`${PILL} bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300`}
+          title={t('games.noviceFriendly')}
+        >
+          <Sprout size={12} aria-hidden />
+          <span className="hidden sm:inline" aria-hidden>
+            {t('games.noviceFriendly')}
+          </span>
+          <span className="sr-only">{t('games.noviceFriendly')}</span>
         </span>
       )}
       {gameIsNonRating(game) && game.entityType !== 'EVENT' && (

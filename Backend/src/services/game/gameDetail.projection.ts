@@ -174,6 +174,8 @@ export const GAME_DETAIL_GAME_SCALAR_SELECT = {
   costPayerId: true,
   costFrozenAt: true,
   weatherAlertState: true,
+  /** PRD 360 — "Novices welcome" toggle and details-header tag. */
+  suitableForNovices: true,
   createdAt: true,
   updatedAt: true,
 } as const satisfies Prisma.GameSelect;

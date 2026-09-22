@@ -280,6 +280,9 @@
     "inQueueOwnerHint_female": "You are the owner. To play in your game, accept yourself from the join queue list below.",
     "chatParticipantHintJoinGame_female": "You are a chat participant. Join the game below.",
     "chatParticipantHintJoinQueue_female": "You are a chat participant. Join the queue below.",
-    "alreadyInJoinQueue_female": "Already in join queue"
+    "alreadyInJoinQueue_female": "Already in join queue",
+    "noviceFriendly": "Novices welcome",
+    "filterNoviceOnly": "Novices welcome only",
+    "filterNoviceOnlyHint": "Show only games that welcome newer players"
   }
 }

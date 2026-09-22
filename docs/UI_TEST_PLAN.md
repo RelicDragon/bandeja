@@ -611,6 +611,10 @@ Push: `PN-RC-01`–`PN-RC-03` in §18.8. Archive: `PR-RC-01`–`PR-RC-05` in §1
 | F-CLB-01 | Club chip chevron | Open the club list in the advanced panel | Each club chip has a trailing chevron. Tapping the chip **body** toggles the filter; tapping the chevron opens `/clubs/:id` (§27) |
 | F-CLB-02 | Chevron accessible name | Screen reader over twenty chips | Each chevron's name includes its own club name |
 | F-CLB-03 | Chevron RTL | App language العربية | Chevron sits on the correct side and points the correct way |
+| F-NV-01 | Novices-welcome filter | Enable **Novices welcome only** in the panel | Only games the organizer tagged remain, on the list **and** on the calendar day badges — the filter is applied in SQL, so a truncated page never leaks an untagged game |
+| F-NV-02 | Untagged is not excluded-by-choice | With the filter **off** | Untagged games are still listed; "not tagged" never means "novices unwelcome" |
+| F-NV-03 | ANDed with the rest | Filter on together with a club, a level band and hide-bar | The result is the intersection, exactly like the other panel switches |
+| F-NV-04 | Reset and persistence | Turn it on → Reset filters; then turn it on → leave Find → return / reload | Reset clears it; otherwise it is restored with the rest of the panel state and the panel re-opens with it (`F-64`) |
 
 ### 7.4 Game discovery actions
 
@@ -732,6 +736,21 @@ Both numbers are computed on the client from the roster already in the card payl
 | F-QP-06 | Only the queue badge | Viewer is PLAYING / INVITED / owner | Those badges are untouched — no ordinal on any of them |
 | F-QP-07 | Themes | Light / Dark / Classic / Premium | Badge and button suffix legible in all four |
 
+#### 7.4d Novices welcome tag (PRD 360)
+
+One boolean the organizer sets; everything here is read-only display. The tag is a promise about atmosphere — it never changes who may join.
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| F-NV-05 | Tag on the card | Find / Home / My card for a tagged game | A teal pill with the sprout icon and **Novices welcome**, in the existing header tag row after the gender tag — never a second row |
+| F-NV-06 | Narrow card | 375 pt phone, below the `sm` breakpoint | The pill collapses to the icon; long-press still shows the label as a tooltip |
+| F-NV-07 | Screen reader | VoiceOver / TalkBack over the collapsed pill | Reads "Novices welcome" at every width. `@manual` |
+| F-NV-08 | Untagged games | Any game without the flag | No pill, and the tag row is otherwise unchanged |
+| F-NV-09 | Chats row | Tagged game in the Chats list | Icon-only tag in the row's tag strip, with the label available to a screen reader |
+| F-NV-10 | Details header | Open a tagged game | The full **Novices welcome** pill in the details header tag row |
+| F-NV-11 | Themes and RTL | Light / Dark / Classic / Premium, then العربية | Legible in all four; in RTL the pill mirrors with the row and the icon sits on the correct side |
+| F-NV-12 | Not a gate | Tagged game with a 3.0–5.0 level range, viewer at 2.0 | The level gate and its create/join banners behave exactly as before — the tag changes nothing about eligibility |
+
 ---
 
 ## 8. Create game (`/create-game`)
@@ -743,6 +762,8 @@ Both numbers are computed on the client from the roster already in the card payl
 | C-01 | Invalid create route | `/create-game` without state | Redirect home |
 | C-02 | Create GAME | Pick GAME intent | Wizard loads |
 | C-03 | Create BAR | Pick BAR and create the event | Bar-specific fields; created BAR has no level band and never affects rating |
+| C-NV-01 | Novices welcome in create | GAME / TOURNAMENT / TRAINING / BAR wizard, settings step | A **Novices welcome** row after **Anyone can invite…**, off by default; the created game carries the flag |
+| C-NV-02 | Hidden where it does not apply | League fixture / league season / EVENT create flows | No row, and the created entity is never tagged |
 | C-04 | Create TRAINING | Pick TRAINING | Trainer fields |
 | C-05 | Create TOURNAMENT | Pick TOURNAMENT (any logged-in user) | Roster/tournament defaults; cap 8–12 for normal users, up to 32 for `canCreateTournament` |
 | C-06 | Duplicate game | From game details duplicate | Pre-filled form |
@@ -1578,6 +1599,20 @@ No feature flag; muted per user from notification preferences.
 | GD-LN-08 | Failure rolls back | Toggle with the network off | Error state on the row, a toast, and the switch rolls back to its previous value |
 | GD-LN-09 | Locked with the roster | Game whose roster is locked | Switch disabled, exactly like its neighbours |
 | GD-LN-10 | Turning it off | Turn **Show on Live now** off on a live public game | It leaves the rail within one refresh, the Live block disappears, and no new spectator token is minted for it. Tokens already issued keep working until they expire (the pre-existing 48 h contract) |
+
+### 9.20 Novices welcome toggle (PRD 360)
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| GD-NV-01 | Settings row | Game settings as owner/admin | **Novices welcome** sits immediately below **Anyone can invite…**, off by default |
+| GD-NV-02 | Hint | Turn it on with hints **off** | The hint "You'll help newer players settle in. The level range still applies." is on screen anyway — it is the one line that must never be missed |
+| GD-NV-03 | Optimistic save | Toggle it | Same tick / error treatment as its neighbours; the card tag appears on the next Find refresh |
+| GD-NV-04 | Failure rolls back | Toggle with the network off | Error state on the row, a toast, switch returns to its previous value |
+| GD-NV-05 | Locked after results | Game with `resultsStatus` past NONE (or archived) | Switch disabled with its neighbours; a forced API call is rejected as a locked field |
+| GD-NV-06 | Not offered where it cannot be kept | League fixture, league season, EVENT listing | No row at all, and the API ignores the field for those entity types |
+| GD-NV-07 | Participant view | Open the same game as a non-organizer | No settings block (unchanged); the header tag is still visible |
+| GD-NV-08 | Series occurrences | Set it on a series' template, then let the next occurrence generate | The new occurrence carries the tag; turning it off pushes off to the future occurrences too |
+| GD-NV-09 | Play again / Duplicate | "Play again" or Duplicate from a tagged game | The create draft opens with the switch already on, and the organizer can still turn it off before confirming |
 
 ---
 

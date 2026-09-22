@@ -283,6 +283,9 @@
     "setAsTrainer": "Set as trainer",
     "trainerSet": "Trainer set successfully",
     "trainerRemoved": "Trainer removed successfully",
-    "ownershipTransferred": "Ownership transferred successfully"
+    "ownershipTransferred": "Ownership transferred successfully",
+    "noviceFriendly": "Nováčci vítáni",
+    "filterNoviceOnly": "Jen kde jsou nováčci vítáni",
+    "filterNoviceOnlyHint": "Zobrazit jen hry, které vítají nové hráče"
   }
 }

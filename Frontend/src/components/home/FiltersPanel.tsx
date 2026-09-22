@@ -19,6 +19,9 @@ interface FiltersPanelProps {
   onFilterAvailableSlotsChange: (v: boolean) => void;
   filterSuitableRating: boolean;
   onFilterSuitableRatingChange: (v: boolean) => void;
+  /** PRD 360 — grouped with "Have available slots"; applied in SQL, not as a residual. */
+  filterNoviceFriendly: boolean;
+  onFilterNoviceFriendlyChange: (v: boolean) => void;
   hideBarGames: boolean;
   onHideBarGamesChange: (v: boolean) => void;
   filterSport: FindSportFilterValue;
@@ -65,6 +68,8 @@ export const FiltersPanel = ({
   onFilterAvailableSlotsChange,
   filterSuitableRating,
   onFilterSuitableRatingChange,
+  filterNoviceFriendly,
+  onFilterNoviceFriendlyChange,
   hideBarGames,
   onHideBarGamesChange,
   filterSport,
@@ -229,6 +234,14 @@ export const FiltersPanel = ({
         hint={t('games.suitableRatingHint')}
         checked={filterSuitableRating}
         onChange={onFilterSuitableRatingChange}
+      />
+
+      {/* PRD 360 — next to the other "can I actually join this" switches. */}
+      <FilterSwitchRow
+        label={t('games.filterNoviceOnly')}
+        hint={t('games.filterNoviceOnlyHint')}
+        checked={filterNoviceFriendly}
+        onChange={onFilterNoviceFriendlyChange}
       />
 
       <FilterSwitchRow

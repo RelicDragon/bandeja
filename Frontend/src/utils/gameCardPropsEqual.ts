@@ -193,6 +193,8 @@ function buildGameRenderSignature(game: Game): string {
     game.isPublic ? '1' : '0',
     game.affectsRating ? '1' : '0',
     game.hasFixedTeams ? '1' : '0',
+    // PRD 360 — the "Novices welcome" header tag appears and disappears with it.
+    game.suitableForNovices ? '1' : '0',
     game.genderTeams ?? '',
     game.resultsStatus ?? '',
     gameCardOutcomesKey(game.outcomes),

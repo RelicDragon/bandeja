@@ -275,6 +275,9 @@
     "inQueueOwnerHint_female": "你是所有者。若要上场，请在下方加入队列中接受自己。",
     "chatParticipantHintJoinGame_female": "你是聊天参与者。请在下方加入比赛。",
     "chatParticipantHintJoinQueue_female": "你是聊天参与者。请在下方加入候补。",
-    "alreadyInJoinQueue_female": "已在候补队列中"
+    "alreadyInJoinQueue_female": "已在候补队列中",
+    "noviceFriendly": "欢迎新手",
+    "filterNoviceOnly": "仅欢迎新手的比赛",
+    "filterNoviceOnlyHint": "只显示欢迎新球员的比赛"
   }
 }

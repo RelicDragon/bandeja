@@ -275,6 +275,9 @@
     "inQueueOwnerHint_female": "คุณเป็นเจ้าของ หากต้องการเล่นเกมของคุณ ให้ยอมรับตัวเองจากรายการคิวเข้าร่วมด้านล่าง",
     "chatParticipantHintJoinGame_female": "คุณเป็นผู้เข้าร่วมการสนทนา เข้าร่วมเกมด้านล่าง",
     "chatParticipantHintJoinQueue_female": "คุณเป็นผู้เข้าร่วมการสนทนา เข้าร่วมคิวด้านล่าง",
-    "alreadyInJoinQueue_female": "อยู่ในคิวเข้าร่วมแล้ว"
+    "alreadyInJoinQueue_female": "อยู่ในคิวเข้าร่วมแล้ว",
+    "noviceFriendly": "ต้อนรับผู้เล่นใหม่",
+    "filterNoviceOnly": "เฉพาะที่ต้อนรับผู้เล่นใหม่",
+    "filterNoviceOnlyHint": "แสดงเฉพาะเกมที่ต้อนรับผู้เล่นใหม่"
   }
 }

@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { useShowSettingsNotes } from '@/hooks/useShowSettingsNotes';
 import { gamesApi } from '@/api';
 import { canMutateGameRoster } from '@shared/gameMutationLock';
+import { getEntityCapabilities } from '@shared/entityCapabilities';
 import { SeriesMakeWeeklyRow } from '@/features/game-series/SeriesMakeWeeklyRow';
 import toast from 'react-hot-toast';
 
@@ -29,7 +30,9 @@ type SettingKey =
   | 'allowDirectJoin'
   /** PRD 347 — seat the first queued player when a spot opens. */
   | 'autoFillFromQueue'
-  | 'afterGameGoToBar';
+  | 'afterGameGoToBar'
+  /** PRD 360 — "Novices welcome"; an atmosphere promise, not a level gate. */
+  | 'suitableForNovices';
 
 const ERROR_CLEAR_MS = 5000;
 const SUCCESS_SHOW_MS = 1000;
@@ -222,6 +225,8 @@ export const GameSettings = ({ game, canEdit, onGameUpdate, embedded = false }: 
   const toggleDisabled = !canChangeSettings;
   // PRD 347 — read-only "3 in queue" line under the auto-fill toggle.
   const queueCount = game.joinQueues?.length ?? 0;
+  // PRD 360 — hidden for LEAGUE fixtures, LEAGUE_SEASON shells and EVENT listings.
+  const showNoviceToggle = getEntityCapabilities(game.entityType).hasNoviceTag;
 
   const hintsButton = (
     <button
@@ -329,6 +334,25 @@ export const GameSettings = ({ game, canEdit, onGameUpdate, embedded = false }: 
             ) : undefined
           }
         />
+
+        {/* PRD 360 — same slot as in create: right after "Anyone can invite". */}
+        {showNoviceToggle && (
+          <SettingToggleRow
+            title={t('createGame.suitableForNovices.title')}
+            checked={getChecked('suitableForNovices')}
+            hasError={errorFields.has('suitableForNovices')}
+            showSuccess={successFields.has('suitableForNovices')}
+            disabled={toggleDisabled}
+            onChange={(checked) => void persistSetting('suitableForNovices', checked)}
+            note={
+              showNotes || getChecked('suitableForNovices') ? (
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {t('createGame.suitableForNovices.hint')}
+                </p>
+              ) : undefined
+            }
+          />
+        )}
 
         {!isLeagueSeason && game.entityType !== 'TOURNAMENT' && !isTraining && (
           <SettingToggleRow

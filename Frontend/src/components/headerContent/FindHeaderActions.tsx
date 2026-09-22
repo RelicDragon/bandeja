@@ -29,6 +29,7 @@ export const FindHeaderActions = ({ user, filters, onFiltersChange }: FindHeader
       (filters.filterLevelMin ?? 1.0) > 1.0 + 1e-6 ||
       (filters.filterLevelMax ?? 7.0) < 7.0 - 1e-6 ||
       Boolean(filters.filterNoRating) ||
+      Boolean(filters.filterNoviceFriendly) ||
       (Boolean(user?.isAdmin) && Boolean(filters.showPrivateGames))
     );
   }, [filters, user?.isAdmin]);

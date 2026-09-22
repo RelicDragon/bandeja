@@ -275,6 +275,9 @@
     "inQueueOwnerHint_female": "あなたはオーナーです。自分の試合でプレーするには、下の参加キューから自分を承認してください。",
     "chatParticipantHintJoinGame_female": "チャット参加者です。下から試合に参加してください。",
     "chatParticipantHintJoinQueue_female": "チャット参加者です。下からキューに入ってください。",
-    "alreadyInJoinQueue_female": "すでに参加キューにいます"
+    "alreadyInJoinQueue_female": "すでに参加キューにいます",
+    "noviceFriendly": "新人歓迎",
+    "filterNoviceOnly": "新人歓迎のみ",
+    "filterNoviceOnlyHint": "新しいプレイヤーを歓迎する試合だけを表示"
   }
 }

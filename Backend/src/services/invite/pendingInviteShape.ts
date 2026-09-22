@@ -16,6 +16,8 @@ export const inboxInviteGameSelect = {
   affectsRating: true,
   hasBookedCourt: true,
   afterGameGoToBar: true,
+  /** PRD 360 — the invite card is a GameCard, so it carries the same header tags. */
+  suitableForNovices: true,
   hasFixedTeams: true,
   teamsReady: true,
   participantsReady: true,

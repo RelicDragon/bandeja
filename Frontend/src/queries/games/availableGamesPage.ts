@@ -60,6 +60,7 @@ export function structuralToApiParams(structural?: FindStructuralApiParams) {
   if (structural.levelMin != null) params.levelMin = structural.levelMin;
   if (structural.levelMax != null) params.levelMax = structural.levelMax;
   if (structural.availableSlots) params.availableSlots = true;
+  if (structural.noviceOnly) params.noviceOnly = true;
   if (structural.mode) params.mode = structural.mode;
   return params;
 }

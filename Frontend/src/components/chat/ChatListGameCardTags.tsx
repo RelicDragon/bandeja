@@ -1,7 +1,7 @@
 import { showsPremiumStatus } from '@/utils/premiumIdentity';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Award, Ban, Beer, CalendarDays, Camera, Dumbbell, Lock, Swords, Trophy, Users } from 'lucide-react';
+import { Award, Ban, Beer, CalendarDays, Camera, Dumbbell, Lock, Sprout, Swords, Trophy, Users } from 'lucide-react';
 import { AnnouncedFireIcon } from '@/components/AnnouncedFireIcon';
 import { GameStatusIcon } from '@/components/GameStatusIcon';
 import type { Game } from '@/types';
@@ -88,6 +88,17 @@ export function ChatListGameCardTags({ game, userId }: Props) {
             {sportConfig.icon}
           </span>
           <span>{t(sportConfig.labelKey)}</span>
+        </span>
+      )}
+      {/* PRD 360 — icon only; the Chats row is the tightest of the three
+          surfaces, and the label rides along for screen readers. */}
+      {game.suitableForNovices && (
+        <span
+          className={`${tagClass} bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300`}
+          title={t('games.noviceFriendly')}
+        >
+          <Sprout size={10} aria-hidden />
+          <span className="sr-only">{t('games.noviceFriendly')}</span>
         </span>
       )}
       {game.genderTeams && game.genderTeams !== 'ANY' && (

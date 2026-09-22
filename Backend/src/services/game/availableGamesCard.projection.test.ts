@@ -32,6 +32,16 @@ function run() {
   const include = getAvailableGamesCardInclude();
 
   assert.equal(FIND_CARD_GAME_SELECT.id, true);
+  /*
+   * PRD 360 — without this column every Find card silently loses the
+   * "Novices welcome" tag, and the `noviceOnly` filter would return rows the
+   * card cannot explain. A `select`-only omission has no other symptom.
+   */
+  assert.equal(
+    FIND_CARD_GAME_SELECT.suitableForNovices,
+    true,
+    'Find cards must carry suitableForNovices',
+  );
   assert.equal('description' in FIND_CARD_GAME_SELECT, false);
   assert.equal('mediaUrls' in FIND_CARD_GAME_SELECT, false);
   assert.equal('metadata' in FIND_CARD_GAME_SELECT, false);
@@ -240,6 +250,8 @@ function runGameDetail() {
     'autoFillFromQueue',
     'showOnLiveRail',
     'weatherAlertState',
+    // PRD 360 — the details header tag and the settings toggle both read it.
+    'suitableForNovices',
     'mainPhotoId',
     'resultsArtifactsVersion',
     'deucesBeforeGoldenPoint',

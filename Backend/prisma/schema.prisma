@@ -847,6 +847,11 @@ model Game {
   /// `{ severity, sentAt[], keepAsPlannedAt?, lastEvaluatedAt }` — persisted so the weather
   /// scheduler cannot double-fire across restarts (PRD 357).
   weatherAlertState          Json?
+  /// PRD 360 — the organizer promises newer players are welcome here. A statement about
+  /// atmosphere only: `minLevel`/`maxLevel`, `genderTeams`, `allowDirectJoin` and the queue
+  /// rules are unchanged by it. Never inferred from the level range, never auto-set, and
+  /// only ever true for entity types with `entityCapabilities.hasNoviceTag`.
+  suitableForNovices         Boolean                         @default(false)
   createdAt                  DateTime                        @default(now())
   updatedAt                  DateTime                        @updatedAt
   club                       Club?                           @relation(fields: [clubId], references: [id])

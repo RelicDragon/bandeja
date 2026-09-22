@@ -195,5 +195,15 @@ void (async () => {
   assert.equal(formatLevelRange(null, 4.5), '≤4.5');
   assert.equal(formatLevelRange(null, null), null);
 
+  // Games created before the band was snapped store the host's raw rating
+  // ± 0.7, which must not reach the push body.
+  assert.equal(
+    formatLevelRange(2.045097134590984, 3.445097134590984),
+    '2.0–3.4',
+  );
+  assert.equal(formatLevelRange(2.045097134590984, null), '2.0+');
+  assert.equal(formatLevelRange(null, 3.445097134590984), '≤3.4');
+  assert.equal(formatLevelRange(3, 4), '3.0–4.0');
+
   console.log('gameSeat.unit.test.ts: ok');
 })();

@@ -43,12 +43,12 @@ export function SharedPlayIntentDialog({
       ? null
       : intent.minLevel != null && intent.maxLevel != null
       ? t('playIntent.levelRange', {
-          min: intent.minLevel,
-          max: intent.maxLevel,
+          min: intent.minLevel.toFixed(1),
+          max: intent.maxLevel.toFixed(1),
         })
       : intent.minLevel != null
-        ? t('playIntent.levelMin', { min: intent.minLevel })
-        : t('playIntent.levelMax', { max: intent.maxLevel });
+        ? t('playIntent.levelMin', { min: intent.minLevel.toFixed(1) })
+        : t('playIntent.levelMax', { max: intent.maxLevel!.toFixed(1) });
   const initials = creatorName
     .split(/\s+/)
     .slice(0, 2)

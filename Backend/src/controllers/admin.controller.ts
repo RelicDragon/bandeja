@@ -65,6 +65,7 @@ export const getAllGames = asyncHandler(async (req: AuthRequest, res: Response) 
     endDate,
     sport,
     affectsRating,
+    suitableForNovices,
     scoringPreset,
     gameType,
     page,
@@ -81,6 +82,13 @@ export const getAllGames = asyncHandler(async (req: AuthRequest, res: Response) 
     sport: sport as string,
     affectsRating:
       affectsRating === 'true' ? true : affectsRating === 'false' ? false : undefined,
+    // PRD 360 — guardrail metric: how much of a city is tagged "Novices welcome".
+    suitableForNovices:
+      suitableForNovices === 'true'
+        ? true
+        : suitableForNovices === 'false'
+          ? false
+          : undefined,
     scoringPreset: scoringPreset as string,
     gameType: gameType as string,
     page: page ? parseInt(String(page), 10) : undefined,

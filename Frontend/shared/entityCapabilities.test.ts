@@ -43,4 +43,16 @@ describe('entityCapabilities', () => {
     expect(training.hasPlayIntentRadar).toBe(false);
     expect(training.skipPlayIntentNotify).toBe(true);
   });
+
+  // PRD 360 — the "Novices welcome" promise only exists where an organizer
+  // decides who joins. A league fixture's roster comes from the league, and an
+  // EVENT listing has no roster to welcome anyone into.
+  it('offers the novice tag exactly to GAME, TOURNAMENT, TRAINING and BAR', () => {
+    for (const entityType of ['GAME', 'TOURNAMENT', 'TRAINING', 'BAR'] as const) {
+      expect(getEntityCapabilities(entityType).hasNoviceTag).toBe(true);
+    }
+    for (const entityType of ['LEAGUE', 'LEAGUE_SEASON', 'EVENT'] as const) {
+      expect(getEntityCapabilities(entityType).hasNoviceTag).toBe(false);
+    }
+  });
 });

@@ -59,6 +59,7 @@ import { applyGameTextPolicyUpdateInTransaction } from '../gameText/gameTextEdit
 import { wakeGameTextTranslationWorker } from '../gameText/gameTextTranslationWake';
 import { normalizeGameRatingFields } from './normalizeGameRatingFields';
 import { applyEventUpdateInvariants } from './eventCreateDefaults';
+import { getEntityCapabilities } from '@bandeja/shared/entityCapabilities';
 import { GameSeatService } from '../gameSeat/gameSeat.service';
 
 /** Only scalar fields — nested writes / API echo keys force Prisma onto GameUpdateInput where courtId/clubId are invalid. */
@@ -88,6 +89,8 @@ const GAME_UNCHECKED_SCALAR_KEYS = new Set<string>([
   'autoFillFromQueue',
   'hasBookedCourt',
   'afterGameGoToBar',
+  // PRD 360 — "Novices welcome"; locked with the other settings once results start.
+  'suitableForNovices',
   'hasFixedTeams',
   'allowUserInMultipleTeams',
   'genderTeams',
@@ -248,6 +251,12 @@ export class GameUpdateService {
       delete data.courtId;
       delete data.courtIds;
       delete data.hasBookedCourt;
+    }
+
+    // PRD 360 — same rule the create path applies: entity types without
+    // `hasNoviceTag` never carry the promise, whatever the client sends.
+    if (!getEntityCapabilities(game.entityType).hasNoviceTag) {
+      delete data.suitableForNovices;
     }
 
     const maxParticipants = data.maxParticipants !== undefined ? data.maxParticipants : game.maxParticipants;

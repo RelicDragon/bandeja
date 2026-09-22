@@ -45,6 +45,8 @@ export interface GameSeriesTemplate {
   resultsByAnyone?: boolean | null;
   allowDirectJoin?: boolean | null;
   afterGameGoToBar?: boolean | null;
+  /** PRD 360 — every occurrence inherits the series' "Novices welcome" promise. */
+  suitableForNovices?: boolean | null;
   hasFixedTeams?: boolean | null;
   allowUserInMultipleTeams?: boolean | null;
   genderTeams?: string | null;
@@ -93,6 +95,7 @@ const BOOLEAN_KEYS = [
   'resultsByAnyone',
   'allowDirectJoin',
   'afterGameGoToBar',
+  'suitableForNovices',
   'hasFixedTeams',
   'allowUserInMultipleTeams',
   'matchTimerEnabled',

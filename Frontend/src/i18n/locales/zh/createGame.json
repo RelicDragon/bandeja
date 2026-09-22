@@ -596,6 +596,10 @@
     "presetTier": {
       "social": "社交",
       "match": "正式赛"
+    },
+    "suitableForNovices": {
+      "title": "欢迎新手",
+      "hint": "你会帮助新球员融入。等级范围仍然适用。"
     }
   }
 }

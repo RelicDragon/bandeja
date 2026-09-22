@@ -5,6 +5,7 @@ import { EntityType } from '@/types';
 import { HelpCircle, Settings } from 'lucide-react';
 import { useShowSettingsNotes } from '@/hooks/useShowSettingsNotes';
 import { CollapsibleSettingsShell } from '@/components/gameSettings';
+import { getEntityCapabilities } from '@shared/entityCapabilities';
 
 interface GameSettingsSectionProps {
   isPublic: boolean;
@@ -13,6 +14,8 @@ interface GameSettingsSectionProps {
   resultsByAnyone: boolean;
   allowDirectJoin: boolean;
   afterGameGoToBar: boolean;
+  /** PRD 360 — "Novices welcome". Off by default, never inferred from the level range. */
+  suitableForNovices: boolean;
   participantsOnlyChat: boolean;
   entityType: EntityType;
   onPublicChange: (checked: boolean) => void;
@@ -21,6 +24,7 @@ interface GameSettingsSectionProps {
   onResultsByAnyoneChange: (checked: boolean) => void;
   onAllowDirectJoinChange: (checked: boolean) => void;
   onAfterGameGoToBarChange: (checked: boolean) => void;
+  onSuitableForNovicesChange: (checked: boolean) => void;
   onParticipantsOnlyChatChange: (checked: boolean) => void;
   hideRatingGame?: boolean;
 }
@@ -32,6 +36,7 @@ export const GameSettingsSection = ({
   resultsByAnyone,
   allowDirectJoin,
   afterGameGoToBar,
+  suitableForNovices,
   participantsOnlyChat,
   entityType,
   onPublicChange,
@@ -40,11 +45,13 @@ export const GameSettingsSection = ({
   onResultsByAnyoneChange,
   onAllowDirectJoinChange,
   onAfterGameGoToBarChange,
+  onSuitableForNovicesChange,
   onParticipantsOnlyChatChange,
   hideRatingGame = false,
 }: GameSettingsSectionProps) => {
   const { t } = useTranslation();
   const { showNotes, toggleShowNotes } = useShowSettingsNotes();
+  const showNoviceToggle = getEntityCapabilities(entityType).hasNoviceTag;
 
   const settingsTitle =
     entityType === 'TOURNAMENT'
@@ -144,6 +151,26 @@ export const GameSettingsSection = ({
             </p>
           )}
         </div>
+        {/* PRD 360 — the organizer's own promise, right after "Anyone can invite".
+            The hint stays visible while the switch is on even with notes hidden:
+            the one thing it must never read as is a change to the level gate. */}
+        {showNoviceToggle && (
+          <div data-settings-row className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pe-2">
+                {t('createGame.suitableForNovices.title')}
+              </span>
+              <div className="flex-shrink-0">
+                <ToggleSwitch checked={suitableForNovices} onChange={onSuitableForNovicesChange} />
+              </div>
+            </div>
+            {(showNotes || suitableForNovices) && (
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {t('createGame.suitableForNovices.hint')}
+              </p>
+            )}
+          </div>
+        )}
         {entityType !== 'TOURNAMENT' && entityType !== 'TRAINING' && (
           <div data-settings-row className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
             <div className="flex items-center justify-between mb-1">

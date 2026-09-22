@@ -48,7 +48,7 @@ One row for match, tournament, league season shell, training, event, bar — dis
 
 - **`parentId`**: league sub-games (and other hierarchy) point at parent `Game`.
 - **`seriesId`** / **`seriesOccurrenceDate`** (`@db.Date`): recurring-series occurrence link. **Not** `parentId`. Unique `[seriesId, seriesOccurrenceDate]`; `onDelete: SetNull` so ending a series keeps its past occurrences.
-- Other feature columns: `autoFillFromQueue`, `showOnLiveRail`, `lastSeatOpenedAt`, `costPayerId` (named relation `GameCostPayer`), `paymentMethods` (`Json`: up to 3 `{ method, handle }` from the country-scoped catalogue in `@bandeja/shared/payments`), `paymentHint` (`VarChar(120)`, the legacy one-line mirror of that list, written through for pre-catalogue app builds), `costFrozenAt`, `weatherAlertState` (`Json`: `{ severity, sentAt[], keepAsPlannedAt?, lastEvaluatedAt }`).
+- Other feature columns: `autoFillFromQueue`, `showOnLiveRail`, `lastSeatOpenedAt`, `costPayerId` (named relation `GameCostPayer`), `paymentMethods` (`Json`: up to 3 `{ method, handle }` from the country-scoped catalogue in `@bandeja/shared/payments`), `paymentHint` (`VarChar(120)`, the legacy one-line mirror of that list, written through for pre-catalogue app builds), `costFrozenAt`, `weatherAlertState` (`Json`: `{ severity, sentAt[], keepAsPlannedAt?, lastEvaluatedAt }`), `suitableForNovices` (PRD 360 — the organizer's "Novices welcome" promise; atmosphere only, never a gate, and only ever true for entity types with `entityCapabilities.hasNoviceTag`).
 - Occupancy: count **`GameParticipant.status === PLAYING`** vs `maxParticipants` (`services/game/availableGamesSlotsSql.ts`). INVITED / IN_QUEUE / NON_PLAYING / GUEST do not fill slots.
 
 ### GameParticipant

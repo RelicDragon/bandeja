@@ -112,6 +112,8 @@ export const gamesApi = {
     levelMin?: number;
     levelMax?: number;
     availableSlots?: boolean;
+    /** PRD 360 — only games tagged "Novices welcome". */
+    noviceOnly?: boolean;
     mode?: string;
     /** New Find protocol — slim card + deferred enrichment. */
     format?: 'card';
@@ -140,6 +142,8 @@ export const gamesApi = {
     levelMin?: number;
     levelMax?: number;
     availableSlots?: boolean;
+    /** PRD 360 — only games tagged "Novices welcome". */
+    noviceOnly?: boolean;
     mode?: string;
     /** New Find protocol — slim card + deferred enrichment. */
     format?: 'card';

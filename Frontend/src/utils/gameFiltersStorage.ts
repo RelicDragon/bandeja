@@ -31,6 +31,8 @@ export interface GameFilters {
   filterSport?: FindSportFilterValue;
   /** When true, only games with affectsRating === false. */
   filterNoRating?: boolean;
+  /** PRD 360 — when true, only games the organizer tagged "Novices welcome". SQL, not residual. */
+  filterNoviceFriendly?: boolean;
   /** Admin Find: include non-public games the viewer is not in. */
   showPrivateGames?: boolean;
 }
@@ -51,6 +53,7 @@ const DEFAULT_FILTERS: GameFilters = {
   filterTimeEnd: '24:00',
   filterLevelMin: 1.0,
   filterLevelMax: 7.0,
+  filterNoviceFriendly: false,
 };
 
 /**
@@ -65,7 +68,7 @@ export type ResolvedGameFilters = Required<
     | 'trainingFilter' | 'tournamentFilter' | 'leaguesFilter' | 'eventsFilter'
     | 'filtersPanelOpen' | 'filterClubIds' | 'filterTimeStart' | 'filterTimeEnd'
     | 'filterLevelMin' | 'filterLevelMax' | 'filterSport' | 'filterNoRating'
-    | 'showPrivateGames'
+    | 'filterNoviceFriendly' | 'showPrivateGames'
   >
 >;
 
@@ -88,6 +91,7 @@ export function resolveGameFilters(filters: GameFilters): ResolvedGameFilters {
     filterLevelMax: filters.filterLevelMax ?? 7.0,
     filterSport: filters.filterSport ?? 'primary',
     filterNoRating: filters.filterNoRating ?? false,
+    filterNoviceFriendly: filters.filterNoviceFriendly ?? false,
     showPrivateGames: filters.showPrivateGames ?? false,
   };
 }

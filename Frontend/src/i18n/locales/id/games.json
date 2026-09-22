@@ -275,6 +275,9 @@
     "inQueueOwnerHint_female": "Anda adalah pemiliknya. Untuk bermain di game Anda, terima diri Anda dari daftar antrian bergabung di bawah.",
     "chatParticipantHintJoinGame_female": "Anda adalah peserta obrolan. Bergabunglah dengan permainan di bawah ini.",
     "chatParticipantHintJoinQueue_female": "Anda adalah peserta obrolan. Bergabunglah dengan antrian di bawah ini.",
-    "alreadyInJoinQueue_female": "Sudah dalam antrian bergabung"
+    "alreadyInJoinQueue_female": "Sudah dalam antrian bergabung",
+    "noviceFriendly": "Pemain baru disambut",
+    "filterNoviceOnly": "Hanya yang menyambut pemain baru",
+    "filterNoviceOnlyHint": "Tampilkan hanya permainan yang menyambut pemain baru"
   }
 }

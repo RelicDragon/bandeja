@@ -1,4 +1,5 @@
 import Slider from 'rc-slider';
+import { snapToStep } from '@/utils/levelBand';
 interface RangeSliderProps {
   min: number;
   max: number;
@@ -65,7 +66,10 @@ export const RangeSlider = ({
           ariaLabelForHandle={ariaLabels}
           onChange={(val) => {
             if (Array.isArray(val) && val.length === 2) {
-              onChange([val[0], val[1]]);
+              // Both handles are emitted on every drag, so snapping here also
+              // cleans an off-grid value the slider was seeded with — the
+              // labels already show `toFixed(1)`, which otherwise hides it.
+              onChange([snapToStep(val[0], step), snapToStep(val[1], step)]);
             }
           }}
           styles={{

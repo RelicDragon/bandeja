@@ -773,6 +773,8 @@ function initGamesDataTable() {
             { key: 'format', label: 'Format', accessor: (g) => formatGameSummary(g) },
             { key: 'type', label: 'Type' },
             { key: 'rated', label: 'Rated', accessor: (g) => (g.affectsRating ? 1 : 0) },
+            // PRD 360 — watch the tagged share per city: past roughly half, the tag stops discriminating.
+            { key: 'novices', label: 'Novices', accessor: (g) => (g.suitableForNovices ? 1 : 0) },
             { key: 'location', label: 'Location' },
             { key: 'startTime', label: 'Start Time', accessor: (g) => new Date(g.startTime).getTime() },
             { key: 'participants', label: 'Participants' },
@@ -787,6 +789,10 @@ function initGamesDataTable() {
             { id: 'gamesRatedFilter', type: 'select', param: 'affectsRating', placeholder: 'Rated', options: [
                 { value: 'true', label: 'Rated yes' },
                 { value: 'false', label: 'Rated no' },
+            ]},
+            { id: 'gamesNovicesFilter', type: 'select', param: 'suitableForNovices', placeholder: 'Novices', options: [
+                { value: 'true', label: 'Novices welcome' },
+                { value: 'false', label: 'Not tagged' },
             ]},
             { id: 'gamesStatusFilter', type: 'select', param: 'status', placeholder: 'All Status', options: [
                 { value: 'ANNOUNCED', label: 'Announced' },
@@ -836,6 +842,7 @@ function initGamesDataTable() {
                 <td title="${escapeHtmlAttr(formatGameSummary(game))}">${presetTierBadgeHtml(gamePresetTier(game))} ${escapeHtml(formatGameFormatDisplay(game))}</td>
                 <td><span class="badge ${game.entityType === 'BAR' ? 'badge-warning' : 'badge-info'}">${escapeHtml(typeLabel)}</span></td>
                 <td><span class="badge ${game.affectsRating ? 'badge-success' : 'badge-secondary'}">${game.affectsRating ? 'Yes' : 'No'}</span></td>
+                <td><span class="badge ${game.suitableForNovices ? 'badge-success' : 'badge-secondary'}">${game.suitableForNovices ? 'Yes' : 'No'}</span></td>
                 <td>${escapeHtml(location)}</td>
                 <td>${formatDate(game.startTime)}</td>
                 <td title="${invited || inQueue ? 'playing/invited/queue' : 'participants'}">${partsStr}</td>

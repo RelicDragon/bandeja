@@ -280,6 +280,9 @@
     "inQueueOwnerHint_female": "आप मालिक हैं। अपने गेम में खेलने के लिए नीचे जॉइन कतार सूची से खुद को स्वीकार करें।",
     "chatParticipantHintJoinGame_female": "आप चैट प्रतिभागी हैं। नीचे गेम जॉइन करें।",
     "chatParticipantHintJoinQueue_female": "आप चैट प्रतिभागी हैं। नीचे कतार जॉइन करें।",
-    "alreadyInJoinQueue_female": "पहले से जॉइन कतार में"
+    "alreadyInJoinQueue_female": "पहले से जॉइन कतार में",
+    "noviceFriendly": "नए खिलाड़ी स्वागत",
+    "filterNoviceOnly": "केवल नए खिलाड़ियों का स्वागत करने वाले",
+    "filterNoviceOnlyHint": "सिर्फ़ वे गेम दिखाएँ जो नए खिलाड़ियों का स्वागत करते हैं"
   }
 }

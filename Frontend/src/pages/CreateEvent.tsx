@@ -44,6 +44,7 @@ import {
   type EventHeroPayload,
 } from '@/utils/createEventPayload';
 import { authoredGameTextForEdit } from '@/utils/gameText/authoredGameTextForEdit';
+import { roundLevelBand } from '@/utils/levelBand';
 import { GameTextAuthoredFieldsHint } from '@/components/gameText/GameTextAuthoredFieldsHint';
 import { ExpandableTextarea } from '@/components/ui/ExpandableTextarea';
 
@@ -57,7 +58,9 @@ const getDefaultLevelRange = (level?: number): [number, number] => {
   }
   const minLevel = Math.max(1.0, Math.min(7.0, level - 0.7));
   const maxLevel = Math.max(1.0, Math.min(7.0, level + 0.7));
-  return [minLevel, maxLevel];
+  // `level` is the host's raw rating, so the band must be snapped back to the
+  // slider grid before it can be submitted untouched.
+  return roundLevelBand([minLevel, maxLevel]);
 };
 
 export function CreateEvent({ initialGameData }: CreateEventProps) {

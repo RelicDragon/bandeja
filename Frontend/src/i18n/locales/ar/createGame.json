@@ -604,6 +604,10 @@
     "invitesWillBeSent_zero": "ستُرسل دعوات لـ 0 لاعبين بعد إنشاء المباراة",
     "invitesWillBeSent_two": "ستُرسل دعوات لـ {{count}} لاعبين بعد إنشاء المباراة",
     "invitesWillBeSent_few": "ستُرسل دعوات لـ {{count}} لاعبين بعد إنشاء المباراة",
-    "invitesWillBeSent_many": "ستُرسل دعوات لـ {{count}} لاعبين بعد إنشاء المباراة"
+    "invitesWillBeSent_many": "ستُرسل دعوات لـ {{count}} لاعبين بعد إنشاء المباراة",
+    "suitableForNovices": {
+      "title": "نرحّب باللاعبين الجدد",
+      "hint": "ستساعد اللاعبين الجدد على الاندماج. ونطاق المستوى يبقى ساريًا."
+    }
   }
 }

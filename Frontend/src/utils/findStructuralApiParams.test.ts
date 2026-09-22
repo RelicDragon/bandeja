@@ -12,6 +12,7 @@ const base = {
   filterLevelMax: 7,
   hideBarGames: false,
   filterAvailableSlots: false,
+  filterNoviceFriendly: false,
   gameFilter: false,
   trainingFilter: false,
   tournamentFilter: false,
@@ -24,6 +25,7 @@ const base = {
   | 'filterLevelMax'
   | 'hideBarGames'
   | 'filterAvailableSlots'
+  | 'filterNoviceFriendly'
   | 'gameFilter'
   | 'trainingFilter'
   | 'tournamentFilter'
@@ -74,5 +76,20 @@ describe('findStructuralApiParams', () => {
     expect(idle.clubIds).toBeUndefined();
     expect(idle.entityTypes).toBeUndefined();
     expect(idle.hideBar).toBeUndefined();
+    expect(idle.noviceOnly).toBeUndefined();
+  });
+
+  // PRD 360 — the filter is SQL, so it must reach the request *and* change the
+  // cache key. A param that travels without a hash change serves the previous,
+  // unfiltered page from cache and looks like the filter simply does nothing.
+  it('sends noviceOnly and changes the filter hash', () => {
+    const on = buildFindStructuralApiParams(
+      { ...base, filterNoviceFriendly: true },
+      'upcoming',
+    );
+    expect(on.noviceOnly).toBe(true);
+
+    const off = buildFindStructuralApiParams(base, 'upcoming');
+    expect(buildStructuralFilterHashPart(on)).not.toBe(buildStructuralFilterHashPart(off));
   });
 });
