@@ -90,7 +90,8 @@ export function useLiveMatchController(
     liveState,
     setLiveState,
     revision,
-    setRevision,
+    acceptServerState,
+    setLiveWritePending,
     loading,
     error,
     setError,
@@ -114,6 +115,8 @@ export function useLiveMatchController(
   const liveStateRef = useRef<LiveScoringState | null>(null);
   const revisionRef = useRef(revision);
   const savingRef = useRef(saving);
+  const activeMatchRef = useRef(`${gameId}:${matchId}`);
+  activeMatchRef.current = `${gameId}:${matchId}`;
   const rulesRef = useRef(rules);
   const rawMatchSetsRef = useRef(rawMatch?.sets);
 
@@ -280,6 +283,7 @@ export function useLiveMatchController(
     async (nextState: LiveScoringState, baseRevision: number) => {
       if (!gameId || !matchId || !isAuthenticated) return;
       savingRef.current = true;
+      setLiveWritePending(true);
       setSaving(true);
       setError(null);
       const opId =
@@ -294,18 +298,17 @@ export function useLiveMatchController(
         rules: rulesRef.current,
         rawMatchSets: rawMatchSetsRef.current,
       });
+      if (activeMatchRef.current !== `${gameId}:${matchId}`) return;
+      setLiveWritePending(false);
       if (result.ok) {
-        setLiveState(result.state);
-        setRevision(result.revision);
+        acceptServerState(result.state, result.revision);
         gestureOpIdRef.current = null;
       } else if (result.conflict) {
         if (result.state && result.revision != null) {
-          setLiveState(result.state);
-          setRevision(result.revision);
-          setError(null);
+          acceptServerState(result.state, result.revision);
+          setError(t('gameDetails.liveScoring.syncConflictRetry'));
           gestureOpIdRef.current = null;
         } else {
-          if (result.revision != null) setRevision(result.revision);
           await refreshMatchLiveFromServer();
           setError(t('gameDetails.liveScoring.syncConflictRetry'));
         }
@@ -317,7 +320,7 @@ export function useLiveMatchController(
       savingRef.current = false;
       setSaving(false);
     },
-    [gameId, matchId, isAuthenticated, setLiveState, setRevision, setError, refreshMatchLiveFromServer, t]
+    [gameId, matchId, isAuthenticated, acceptServerState, setLiveWritePending, setError, refreshMatchLiveFromServer, t]
   );
 
   const applyLiveAction = useCallback(

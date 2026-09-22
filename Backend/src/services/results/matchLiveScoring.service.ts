@@ -19,14 +19,20 @@ import {
 import type { SetResult } from './liveScoringEngine/types';
 import { appendMatchLiveScoringAudit } from './matchLiveScoringAudit.service';
 import { notifyFollowersGameWentLiveInBackground } from '../live/liveGameNotify.service';
+import { lockGameResults, matchResultsVersion } from './resultsConcurrency';
 
 export function stripLiveScoringFromMatchMetadata(metadata: unknown): Prisma.InputJsonValue {
-  if (metadata == null) return {};
+  if (metadata == null) metadata = {};
   if (typeof metadata !== 'object' || Array.isArray(metadata)) {
     return metadata as Prisma.InputJsonValue;
   }
   const o = { ...(metadata as Record<string, unknown>) };
-  delete o.liveScoring;
+  const previous = readMatchLiveScoringEnvelope(metadata);
+  // Retain a tombstone so an old device can never reuse revision zero after a correction.
+  o.liveScoring = {
+    v: MATCH_LIVE_SCORING_V, revision: (previous?.revision ?? 0) + 1,
+    updatedAt: new Date().toISOString(), state: null,
+  };
   return o as Prisma.InputJsonValue;
 }
 
@@ -42,7 +48,9 @@ export function shallowMergeMatchMetadata(
   if (patch == null || typeof patch !== 'object' || Array.isArray(patch)) {
     return base as Prisma.InputJsonValue;
   }
-  return { ...base, ...patch } as Prisma.InputJsonValue;
+  const { liveScoring: _reserved, ...editablePatch } = patch;
+  void _reserved;
+  return { ...base, ...editablePatch } as Prisma.InputJsonValue;
 }
 
 export function isNonRallyOutcomeClosingLiveScoring(metadata: unknown): boolean {
@@ -165,14 +173,20 @@ export async function patchMatchLiveScoring(
   userId: string,
   isAdmin: boolean,
   body: PatchMatchLiveScoringBody
-): Promise<{ liveScoring: MatchLiveScoringEnvelopeV1 | null; revision: number }> {
+): Promise<{ liveScoring: MatchLiveScoringEnvelopeV1 | null; revision: number; resultsVersion?: string }> {
   await canModifyResults(gameId, userId, isAdmin);
   const clientMessageId = sanitizeOptionalIdempotencyKey(body.clientMessageId);
   const opId = sanitizeOptionalIdempotencyKey(body.opId);
 
-  const match = await prisma.match.findUnique({
+  let started = false;
+  let applied = false;
+  const result = await prisma.$transaction(async (tx) => {
+    await lockGameResults(tx, gameId);
+    const status = await tx.game.findUnique({ where: { id: gameId }, select: { resultsStatus: true } });
+    if (status?.resultsStatus === 'FINAL') throw new ApiError(409, 'Results are finalized. Reopen results before scoring.');
+  const match = await tx.match.findUnique({
     where: { id: matchId },
-    select: { id: true, metadata: true, round: { select: { gameId: true } } },
+    select: { id: true, metadata: true, updatedAt: true, courtId: true, sets: true, teams: { include: { players: true } }, round: { select: { gameId: true } } },
   });
 
   if (!match) {
@@ -187,7 +201,7 @@ export async function patchMatchLiveScoring(
   const { assertGameNotLockedTechnicalWithdrawal } = await import(
     '../league/leagueTechnicalWithdrawalGuard'
   );
-  await assertGameNotLockedTechnicalWithdrawal(gameId, prisma);
+  await assertGameNotLockedTechnicalWithdrawal(gameId, tx);
 
   const current = readMatchLiveScoringEnvelope(match.metadata);
   const currentRevision = current?.revision ?? 0;
@@ -214,7 +228,7 @@ export async function patchMatchLiveScoring(
   }
 
   if (clientMessageId && current?.lastClientMessageId === clientMessageId) {
-    return { liveScoring: current, revision: currentRevision };
+    return { liveScoring: current, revision: currentRevision, resultsVersion: matchResultsVersion(match) };
   }
 
   const prevOpIds = Array.isArray(current?.recentOpIds)
@@ -224,7 +238,7 @@ export async function patchMatchLiveScoring(
     if (!current) {
       throw new ApiError(409, 'Live scoring revision mismatch', true, { revision: 0 });
     }
-    return { liveScoring: current, revision: currentRevision };
+    return { liveScoring: current, revision: currentRevision, resultsVersion: matchResultsVersion(match) };
   }
 
   const conflictPayload = (): Record<string, unknown> => ({
@@ -246,7 +260,7 @@ export async function patchMatchLiveScoring(
 
   const liveSets = readSetsFromState(body.state);
 
-  const gameForRules = await prisma.game.findUnique({
+  const gameForRules = await tx.game.findUnique({
     where: { id: gameId },
     select: {
       scoringPreset: true,
@@ -338,7 +352,7 @@ export async function patchMatchLiveScoring(
     prevMeta.automaticRecordMode = liveMode;
   }
 
-  await prisma.$transaction(async (tx) => {
+  {
     if (liveSets) {
       await tx.set.deleteMany({ where: { matchId } });
       for (let i = 0; i < liveSets.length; i += 1) {
@@ -360,10 +374,10 @@ export async function patchMatchLiveScoring(
       where: { id: matchId },
       data: { metadata: prevMeta as Prisma.InputJsonValue },
     });
-  });
+  }
 
   if (liveSets && body.state) {
-    const gameRow = await prisma.game.findUnique({
+    const gameRow = await tx.game.findUnique({
       where: { id: gameId },
       select: {
         resultsStatus: true,
@@ -376,7 +390,7 @@ export async function patchMatchLiveScoring(
     });
     if (gameRow && gameRow.resultsStatus !== ResultsStatus.FINAL && gameRow.resultsStatus !== ResultsStatus.IN_PROGRESS) {
       const cityTimezone = await getUserTimezoneFromCityId(gameRow.cityId);
-      await prisma.game.update({
+      await tx.game.update({
         where: { id: gameId },
         data: {
           resultsStatus: ResultsStatus.IN_PROGRESS,
@@ -398,22 +412,21 @@ export async function patchMatchLiveScoring(
       // PRD 349 — the game just became watchable. Idempotent per recipient
       // (LiveGameNotifyDelivery), never awaited: a follower push must not slow
       // down or fail a live-scoring write.
-      notifyFollowersGameWentLiveInBackground(gameId);
+      started = true;
     }
   }
 
-  emitSocket(gameId, matchId, envelope);
+    applied = true;
+    const saved = await tx.match.findUniqueOrThrow({ where: { id: matchId }, include: { sets: true, teams: { include: { players: true } } } });
+    return { liveScoring: envelope, revision: nextRevision, resultsVersion: matchResultsVersion(saved) };
+  }, { timeout: 25000 });
 
-  void appendMatchLiveScoringAudit({
-    matchId,
-    gameId,
-    source: 'LIVE_PATCH',
-    userId,
-    revisionBefore: currentRevision,
-    revisionAfter: nextRevision,
-    clientMessageId: clientMessageId ?? null,
-    opId: opId ?? null,
-  });
-
-  return { liveScoring: envelope, revision: nextRevision };
+  if (started) notifyFollowersGameWentLiveInBackground(gameId);
+  if (applied) {
+    void appendMatchLiveScoringAudit({ matchId, gameId, source: 'LIVE_PATCH', userId,
+      revisionBefore: result.revision - 1, revisionAfter: result.revision,
+      clientMessageId: clientMessageId ?? null, opId: opId ?? null });
+  }
+  emitSocket(gameId, matchId, result.liveScoring);
+  return result;
 }

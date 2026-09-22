@@ -21,6 +21,8 @@ type ServerSet = {
 
 type ServerMatch = {
   id?: string;
+  resultsVersion?: string;
+  metadata?: Record<string, unknown>;
   winnerId?: string;
   courtId?: string;
   teams?: ServerTeam[];
@@ -99,6 +101,8 @@ function convertServerMatch(match: ServerMatch): Match {
   const timer = buildSnapshotFromServerMatch(match);
   return {
     id: match.id || createId(),
+    resultsVersion: match.resultsVersion,
+    metadata: match.metadata,
     teamA,
     teamB,
     sets,

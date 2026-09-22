@@ -24,6 +24,7 @@ struct WatchRound: Decodable, Identifiable, Sendable {
 
 struct WatchMatch: Decodable, Identifiable, Sendable {
     let id: String
+    let resultsVersion: String?
     let matchNumber: Int
     let winnerId: String?
     let metadata: WatchMatchMetadata?
@@ -40,13 +41,14 @@ struct WatchMatch: Decodable, Identifiable, Sendable {
     }
 
     enum CodingKeys: String, CodingKey {
-        case id, matchNumber, winnerId, metadata, teams, sets, timerStatus, timerStartedAt, timerPausedAt,
+        case id, resultsVersion, matchNumber, winnerId, metadata, teams, sets, timerStatus, timerStartedAt, timerPausedAt,
              timerElapsedMs, timerCapMinutes
     }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         id = try c.decode(String.self, forKey: .id)
+        resultsVersion = try c.decodeIfPresent(String.self, forKey: .resultsVersion)
         matchNumber = try c.decode(Int.self, forKey: .matchNumber)
         winnerId = try c.decodeIfPresent(String.self, forKey: .winnerId)
         metadata = try? c.decodeIfPresent(WatchMatchMetadata.self, forKey: .metadata)
@@ -99,6 +101,7 @@ struct WatchUpdateMatchBody: Encodable, Sendable {
     let teamA: [String]
     let teamB: [String]
     let sets: [WatchSetWrite]
+    var baseVersion: String? = nil
 }
 
 struct WatchSetWrite: Codable, Sendable, Equatable {

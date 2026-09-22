@@ -26,6 +26,7 @@ export async function updateMatchWinners(
   for (const round of game.rounds) {
     for (const match of round.matches) {
       const winnerId = resolvePrismaMatchWinnerTeamId(match, game);
+      if (match.winnerId === winnerId) continue;
       await tx.match.update({
         where: { id: match.id },
         data: { winnerId },

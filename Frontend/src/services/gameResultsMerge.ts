@@ -46,6 +46,8 @@ function timersEqual(a?: MatchTimerSnapshot, b?: MatchTimerSnapshot): boolean {
 function matchesEqual(a: Match, b: Match): boolean {
   if (a === b) return true;
   if (a.id !== b.id) return false;
+  if (a.resultsVersion !== b.resultsVersion) return false;
+  if (JSON.stringify(a.metadata) !== JSON.stringify(b.metadata)) return false;
   if ((a.courtId ?? null) !== (b.courtId ?? null)) return false;
   if ((a.winnerId ?? null) !== (b.winnerId ?? null)) return false;
   if ((a.fixedTeamIdA ?? null) !== (b.fixedTeamIdA ?? null)) return false;

@@ -54,6 +54,9 @@ export async function persistLiveScoringPatch(
     const bodyEnv = ax.response?.data?.liveScoring;
     if (ax.response?.status === 409 && typeof rev409 === 'number') {
       const parsed = parseMatchLiveEnvelope(bodyEnv);
+      if (parsed?.state == null) {
+        return { ok: false, conflict: true, state: null, revision: rev409, refresh: true };
+      }
       if (parsed) {
         if (!rules) {
           return { ok: false, conflict: true, state: null, revision: rev409, refresh: true };

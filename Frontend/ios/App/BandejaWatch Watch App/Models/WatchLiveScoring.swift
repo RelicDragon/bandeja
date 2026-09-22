@@ -173,4 +173,5 @@ struct WatchPatchLiveScoringBody: Codable, Sendable {
 struct WatchPatchLiveScoringResponse: Decodable, Sendable {
     let liveScoring: WatchLiveScoringEnvelope?
     let revision: Int
+    let resultsVersion: String?
 }

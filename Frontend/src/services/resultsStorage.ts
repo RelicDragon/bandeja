@@ -9,6 +9,7 @@ export interface LocalResults {
   gameId: string;
   rounds: Round[];
   lastSyncedAt?: number;
+  resultsVersion?: string | null;
 }
 
 export class ResultsStorage {

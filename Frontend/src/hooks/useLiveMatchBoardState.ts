@@ -69,6 +69,13 @@ export type RawMatch = {
   }>;
 };
 
+function normalizeLiveMatch(match: RawMatch): RawMatch {
+  return { ...match, sets: match.sets?.map(set => {
+    const raw = set as SetResult & { teamAScore?: number; teamBScore?: number };
+    return { ...set, teamA: raw.teamAScore ?? raw.teamA, teamB: raw.teamBScore ?? raw.teamB };
+  }) };
+}
+
 export function labelForTeam(match: RawMatch, side: 1 | 2): string {
   const team = match.teams?.find((t) => t.teamNumber === side);
   const names =
@@ -130,9 +137,29 @@ export function useLiveMatchBoardState(gameId: string, matchId: string, options?
   const lastTimer = useSocketEventsStore((s) => s.lastMatchTimerUpdated);
   const rules = useMemo(() => getRules(game), [game]);
   const revisionRef = useRef(0);
+  const liveWritePendingRef = useRef(false);
+  const processedLiveRef = useRef<typeof lastLive>(null);
+  const setLiveWritePending = useCallback((pending: boolean) => { liveWritePendingRef.current = pending; }, []);
   const refreshInFlightRef = useRef(false);
+  const refreshQueuedRef = useRef(false);
+  const scope = `${gameId}:${matchId}:${spectatorToken ?? ''}`;
+  const scopeRef = useRef(scope);
+  if (scopeRef.current !== scope) {
+    scopeRef.current = scope;
+    revisionRef.current = 0;
+    liveWritePendingRef.current = false;
+    processedLiveRef.current = null;
+    refreshInFlightRef.current = false;
+  }
+  const acceptServerState = useCallback((next: LiveScoringState, nextRevision: number) => {
+    if (nextRevision < revisionRef.current || (liveWritePendingRef.current && nextRevision === revisionRef.current)) return false;
+    revisionRef.current = nextRevision;
+    setLiveState(next);
+    setRevision(nextRevision);
+    return true;
+  }, []);
   useEffect(() => {
-    revisionRef.current = revision;
+    revisionRef.current = Math.max(revisionRef.current, revision);
   }, [revision]);
 
   useEffect(() => {
@@ -171,6 +198,7 @@ export function useLiveMatchBoardState(gameId: string, matchId: string, options?
           : resultsApi.getGameResults(gameId),
         spectatorToken ? Promise.resolve(null) : gamesApi.getById(gameId).catch(() => null),
       ]);
+      if (scopeRef.current !== scope) return;
       const gamePayload = gameRes?.data as { name?: string } | undefined;
       const spectatorGame = gr.data as Game | undefined;
       setGame(spectatorToken ? spectatorGame ?? null : ((gameRes?.data as Game | undefined) ?? null));
@@ -198,6 +226,9 @@ export function useLiveMatchBoardState(gameId: string, matchId: string, options?
         setRevision(0);
         return;
       }
+      const incomingRevision = parseMatchLiveEnvelope((found.metadata as Record<string, unknown> | undefined)?.liveScoring)?.revision ?? 0;
+      if (incomingRevision < revisionRef.current) return;
+      found = normalizeLiveMatch(found);
       setRawMatch(found);
       setMatchRoundNumber(foundRoundNumber);
       const matchMeta = found.metadata as Record<string, unknown> | undefined;
@@ -207,29 +238,33 @@ export function useLiveMatchBoardState(gameId: string, matchId: string, options?
       const base = env
         ? parseLiveScoringState(env.state, nextRules, found.sets)
         : createInitialLiveScoringState(nextRules, found.sets);
-      setLiveState(hydrateAutomaticLiveState(base, nextRules, matchMeta));
-      setRevision(env?.revision ?? 0);
+      acceptServerState(hydrateAutomaticLiveState(base, nextRules, matchMeta), env?.revision ?? 0);
     } catch {
+      if (scopeRef.current !== scope) return;
       setError('Failed to load');
       setRawMatch(null);
       setMatchRoundNumber(null);
     } finally {
-      setLoading(false);
+      if (scopeRef.current === scope) setLoading(false);
     }
-  }, [gameId, matchId, spectatorToken]);
+  }, [gameId, matchId, spectatorToken, scope, acceptServerState]);
 
-  const refreshMatchLiveFromServer = useCallback(async () => {
+  const refreshMatchLiveFromServer = useCallback(async function refresh(): Promise<void> {
     if (!gameId || !matchId) return;
-    if (refreshInFlightRef.current) return;
+    if (refreshInFlightRef.current) { refreshQueuedRef.current = true; return; }
     refreshInFlightRef.current = true;
     try {
       const gr = spectatorToken
         ? await resultsApi.getGameResultsForSpectator(gameId, spectatorToken)
         : await resultsApi.getGameResults(gameId);
+      if (scopeRef.current !== scope) return;
       const rounds = gr.data?.rounds as Array<{ roundNumber?: number; matches?: RawMatch[] }> | undefined;
       for (const [roundIndex, r] of (rounds || []).entries()) {
-        const m = r.matches?.find((x) => x.id === matchId);
+        const candidate = r.matches?.find((x) => x.id === matchId);
+        const m = candidate ? normalizeLiveMatch(candidate) : undefined;
         if (m) {
+          const incomingRevision = parseMatchLiveEnvelope((m.metadata as Record<string, unknown> | undefined)?.liveScoring)?.revision ?? 0;
+          if (incomingRevision < revisionRef.current) return;
           setRawMatch(m);
           setMatchRoundNumber(
             typeof r.roundNumber === 'number' && Number.isFinite(r.roundNumber)
@@ -238,16 +273,16 @@ export function useLiveMatchBoardState(gameId: string, matchId: string, options?
           );
           const matchMeta = m.metadata as Record<string, unknown> | undefined;
           const env = parseMatchLiveEnvelope(matchMeta?.liveScoring);
-          if (env) {
+          {
             const nextRules = getRules(game);
-            setLiveState(
+            acceptServerState(
               hydrateAutomaticLiveState(
-                parseLiveScoringState(env.state, nextRules, m.sets),
+                env?.state ? parseLiveScoringState(env.state, nextRules, m.sets) : createInitialLiveScoringState(nextRules, m.sets),
                 nextRules,
                 matchMeta,
               ),
+              env?.revision ?? 0,
             );
-            setRevision(env.revision);
           }
           return;
         }
@@ -255,9 +290,12 @@ export function useLiveMatchBoardState(gameId: string, matchId: string, options?
     } catch {
       /* ignore */
     } finally {
-      refreshInFlightRef.current = false;
+      if (scopeRef.current === scope) {
+        refreshInFlightRef.current = false;
+        if (refreshQueuedRef.current) { refreshQueuedRef.current = false; void refresh(); }
+      }
     }
-  }, [gameId, matchId, game, spectatorToken]);
+  }, [gameId, matchId, game, spectatorToken, scope, acceptServerState]);
 
   useEffect(() => {
     void load();
@@ -288,34 +326,28 @@ export function useLiveMatchBoardState(gameId: string, matchId: string, options?
 
   useEffect(() => {
     if (!lastLive || lastLive.gameId !== gameId || lastLive.matchId !== matchId || spectatorToken) return;
+    if (processedLiveRef.current === lastLive) return;
+    processedLiveRef.current = lastLive;
     if (lastLive.liveScoring === null) {
-      const matchMeta = rawMatch?.metadata as Record<string, unknown> | undefined;
-      setLiveState(
-        rawMatch
-          ? hydrateAutomaticLiveState(
-              createInitialLiveScoringState(rules, rawMatch.sets),
-              rules,
-              matchMeta,
-            )
-          : null,
-      );
-      setRevision(0);
+      // Clear notifications carry no revision or scores. Fetch the committed correction.
+      void refreshMatchLiveFromServer();
       return;
     }
     const env = parseMatchLiveEnvelope(lastLive.liveScoring);
+    if (env?.state === null) { void refreshMatchLiveFromServer(); return; }
     if (env) {
       if (env.revision <= revisionRef.current) return;
       const matchMeta = rawMatch?.metadata as Record<string, unknown> | undefined;
-      setLiveState(
+      acceptServerState(
         hydrateAutomaticLiveState(
           parseLiveScoringState(env.state, rules, rawMatch?.sets),
           rules,
           matchMeta,
         ),
+        env.revision,
       );
-      setRevision(env.revision);
     }
-  }, [lastLive, gameId, matchId, rawMatch, rules, spectatorToken]);
+  }, [lastLive, gameId, matchId, rawMatch, rules, spectatorToken, refreshMatchLiveFromServer, acceptServerState]);
 
   useEffect(() => {
     if (!lastWatchHint || lastWatchHint.gameId !== gameId || lastWatchHint.matchId !== matchId || spectatorToken) {
@@ -337,6 +369,8 @@ export function useLiveMatchBoardState(gameId: string, matchId: string, options?
     matchRoundNumber,
     liveState,
     setLiveState,
+    acceptServerState,
+    setLiveWritePending,
     revision,
     setRevision,
     loading,

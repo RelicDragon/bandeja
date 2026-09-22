@@ -189,7 +189,7 @@ const resultsOutcomeSelect = {
 } as const;
 
 /** Full `select` for {@link getGameResults} — never an `include`. */
-export function getGameResultsSelect(): Prisma.GameSelect {
+export function getGameResultsSelect() {
   return {
     ...RESULTS_GAME_SCALAR_SELECT,
     rounds: {
@@ -262,7 +262,7 @@ export function getGameResultsSelect(): Prisma.GameSelect {
         },
       },
     },
-  };
+  } as const satisfies Prisma.GameSelect;
 }
 
 /** `Game` scalars that must never reach a results response. */

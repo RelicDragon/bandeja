@@ -110,9 +110,9 @@ export const resultsApi = {
     return response.data;
   },
 
-  syncResults: async (gameId: string, rounds: Round[]) => {
-    const response = await api.post<ApiResponse<void>>(`/results/game/${gameId}/sync`, {
-      rounds,
+  syncResults: async (gameId: string, rounds: Round[], baseVersion?: string | null) => {
+    const response = await api.post<ApiResponse<any>>(`/results/game/${gameId}/sync`, {
+      rounds, baseVersion,
     });
     return response.data;
   },
@@ -159,8 +159,9 @@ export const resultsApi = {
     sets: Array<{ teamA: number; teamB: number; isTieBreak?: boolean; role?: string }>;
     courtId?: string;
     metadata?: Record<string, unknown>;
+    baseVersion?: string;
   }) => {
-    const response = await api.put<ApiResponse<{ liveScoringCleared: boolean }>>(
+    const response = await api.put<ApiResponse<{ liveScoringCleared: boolean; resultsVersion: string }>>(
       `/results/game/${gameId}/matches/${matchId}`,
       match
     );

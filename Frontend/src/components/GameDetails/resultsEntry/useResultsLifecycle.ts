@@ -24,6 +24,7 @@ interface UseResultsLifecycleParams {
   onGameUpdate: (game: Game) => void;
   setActiveTab: (tab: TabType) => void;
   setCanInitialize: (value: boolean) => void;
+  onSyncConflict: () => void;
 }
 
 export function useResultsLifecycle({
@@ -35,6 +36,7 @@ export function useResultsLifecycle({
   onGameUpdate,
   setActiveTab,
   setCanInitialize,
+  onSyncConflict,
 }: UseResultsLifecycleParams) {
   const { t } = useTranslation();
 
@@ -149,10 +151,11 @@ export function useResultsLifecycle({
       toast.error(
         err?.response?.data?.message || t('errors.generic') || 'Failed to sync to server'
       );
+      if ((error as { response?: { status?: number } }).response?.status === 409) onSyncConflict();
     } finally {
       setLoadingState({ syncing: false });
     }
-  }, [engine, game.id, onGameUpdate, setLoadingState, t]);
+  }, [engine, game.id, onGameUpdate, setLoadingState, t, onSyncConflict]);
 
   const handleSyncToServerFirst = useCallback(async () => {
     if (!user?.id) return;
@@ -187,6 +190,8 @@ export function useResultsLifecycle({
           userId: user.id,
           game: updatedGame,
           rounds: localResults.rounds,
+          resultsVersion: localResults.resultsVersion ?? null,
+          serverProblem: true,
           canEdit: canEditValue,
           gameState,
           initialized: true,
@@ -223,6 +228,7 @@ export function useResultsLifecycle({
     try {
       await ResultsStorage.deleteResults(game.id);
       await ResultsStorage.setServerProblem(game.id, false);
+      await GameResultsEngine.initialize(game.id, user.id, t, { force: true, isAdmin: user.isAdmin });
       closeModal();
       setCanInitialize(true);
     } catch (error: unknown) {
@@ -231,7 +237,7 @@ export function useResultsLifecycle({
     } finally {
       setLoadingState({ resolvingConflict: false });
     }
-  }, [user?.id, game.id, setLoadingState, closeModal, setCanInitialize, t]);
+  }, [user, game.id, setLoadingState, closeModal, setCanInitialize, t]);
 
   return {
     handleFinish,

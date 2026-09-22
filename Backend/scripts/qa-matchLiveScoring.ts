@@ -7,13 +7,20 @@ import * as dotenv from 'dotenv';
 import { EntityType, ParticipantRole, Sport } from '@prisma/client';
 import { ApiError } from '../src/utils/ApiError';
 import { patchMatchLiveScoring, notifyMatchLiveScoringCleared } from '../src/services/results/matchLiveScoring.service';
-import { updateMatch, createRound, createMatch, patchMatchMetadata } from '../src/services/results.service';
+import { updateMatch as updateMatchService, createRound, createMatch, patchMatchMetadata } from '../src/services/results.service';
 import {
   applyAutomaticRecordMode,
   createInitialLiveScoringState,
   scoreLivePoint,
 } from '../src/services/results/liveScoringEngine/core';
 import { getRules } from '../src/services/results/liveScoringEngine/rulebook';
+
+async function updateMatch(gameId: string, matchId: string, input: Parameters<typeof updateMatchService>[2]) {
+  const { default: prisma } = await import('../src/config/database');
+  const { matchResultsVersion } = await import('../src/services/results/resultsConcurrency');
+  const match = await prisma.match.findUniqueOrThrow({ where: { id: matchId }, include: { sets: true, teams: { include: { players: true } } } });
+  return updateMatchService(gameId, matchId, { ...input, baseVersion: matchResultsVersion(match) });
+}
 
 function ensureDbUrl() {
   let url = process.env.DB_URL;
@@ -154,18 +161,18 @@ async function main() {
 
     const r1 = await patchMatchLiveScoring(gameId, matchId, u1, false, {
       state: { note: 'first' },
-      baseRevision: null,
+      baseRevision: 1,
       clientMessageId: 'c1',
     });
-    assert(r1.liveScoring?.revision === 1, `expected revision 1, got ${r1.revision}`);
+    assert(r1.liveScoring?.revision === 2, `expected revision 1, got ${r1.revision}`);
     assert((r1.liveScoring?.state as { note?: string })?.note === 'first', 'state.note first');
     console.log('ok: first PATCH -> revision 1');
 
     const lastEmit = emitted[emitted.length - 1];
     assert(lastEmit.gameId === gameId && lastEmit.matchId === matchId, 'socket emit game/match');
     assert(
-      (lastEmit.liveScoring as { revision?: number })?.revision === 1,
-      'socket payload revision 1',
+      (lastEmit.liveScoring as { revision?: number })?.revision === 2,
+      'socket payload revision 2',
     );
     console.log('ok: socket emit after PATCH');
 
@@ -181,27 +188,27 @@ async function main() {
 
     const r2 = await patchMatchLiveScoring(gameId, matchId, u1, false, {
       state: { note: 'second' },
-      baseRevision: 1,
+      baseRevision: 2,
       clientMessageId: 'c2',
     });
-    assert(r2.revision === 2, `expected revision 2, got ${r2.revision}`);
+    assert(r2.revision === 3, `expected revision 2, got ${r2.revision}`);
     console.log('ok: second PATCH -> revision 2');
 
     const idem = await patchMatchLiveScoring(gameId, matchId, u1, false, {
       state: { note: 'should-not-apply' },
-      baseRevision: 1,
+      baseRevision: 2,
       clientMessageId: 'c2',
     });
-    assert(idem.revision === 2, 'idempotent replay keeps revision 2');
+    assert(idem.revision === 3, 'idempotent replay keeps revision 2');
     assert((idem.liveScoring?.state as { note?: string })?.note === 'second', 'idempotent keeps prior state');
     console.log('ok: same clientMessageId -> idempotent');
 
     const syncLive = await patchMatchLiveScoring(gameId, matchId, u1, false, {
       state: { sets: [{ teamA: 0, teamB: 0, isTieBreak: false }] },
-      baseRevision: 2,
+      baseRevision: 3,
       clientMessageId: 'sync-sets',
     });
-    assert(syncLive.revision === 3, `sync sets expect revision 3, got ${syncLive.revision}`);
+    assert(syncLive.revision === 4, `sync sets expect revision 3, got ${syncLive.revision}`);
     console.log('ok: PATCH with sets grid aligned to table');
 
     const reconcilePreserve = await updateMatch(gameId, matchId, {
@@ -216,7 +223,7 @@ async function main() {
     });
     assert(
       ((rowPreserved?.metadata as Record<string, unknown> | null)?.liveScoring as { revision?: number })
-        ?.revision === 3,
+        ?.revision === 4,
       'liveScoring metadata still present after compatible updateMatch',
     );
     console.log('ok: updateMatch preserves live when sets+rosters match live grid');
@@ -242,7 +249,7 @@ async function main() {
       select: { metadata: true },
     });
     const meta = rowAfter?.metadata as Record<string, unknown> | null | undefined;
-    assert(!meta?.liveScoring, 'liveScoring cleared after incompatible updateMatch');
+    assert((meta?.liveScoring as { state?: unknown })?.state === null, 'liveScoring correction retains a revision tombstone');
     console.log('ok: updateMatch clears liveScoring when table grid diverges');
 
     const emitCountBeforeClear = emitted.length;
@@ -263,16 +270,16 @@ async function main() {
 
     const r3 = await patchMatchLiveScoring(gameId, matchId, u1, false, {
       state: { note: 'fresh' },
-      baseRevision: null,
+      baseRevision: 5,
       clientMessageId: 'fresh',
     });
-    assert(r3.revision === 1, `after clear expect revision 1, got ${r3.revision}`);
-    console.log('ok: PATCH after clear with baseRevision null -> revision 1');
+    assert(r3.revision === 6, `after clear expect revision 1, got ${r3.revision}`);
+    console.log('ok: PATCH after clear advances the retained revision');
 
     const woClear = await patchMatchMetadata(gameId, matchId, { nonRallyOutcome: 'WALKOVER' }, { userId: u1 });
     assert(woClear.liveScoringCleared === true, 'patchMatchMetadata WO clears live');
     const rowWo = await prisma.match.findUnique({ where: { id: matchId }, select: { metadata: true } });
-    assert(!((rowWo?.metadata as Record<string, unknown> | null)?.liveScoring), 'no liveScoring after WO');
+    assert(((rowWo?.metadata as Record<string, unknown> | null)?.liveScoring as { state?: unknown })?.state === null, 'tombstone after WO');
     console.log('ok: patchMatchMetadata walkover strips liveScoring');
 
     await expectApiErrorReason(
@@ -289,10 +296,10 @@ async function main() {
     await patchMatchMetadata(gameId, matchId, { nonRallyOutcome: '' }, { userId: u1 });
     const r4 = await patchMatchLiveScoring(gameId, matchId, u1, false, {
       state: { sets: [{ teamA: 0, teamB: 0, isTieBreak: false }] },
-      baseRevision: null,
+      baseRevision: 7,
       clientMessageId: 'r4-live',
     });
-    assert(r4.revision === 1, 'live again after clearing non-rally outcome');
+    assert(r4.revision === 8, 'live again after clearing non-rally outcome');
 
     const umRet = await updateMatch(gameId, matchId, {
       teamA: [u1, u2],
@@ -302,7 +309,7 @@ async function main() {
     });
     assert(umRet.liveScoringCleared === true, 'updateMatch RETIRED metadata clears live with same grid');
     const rowRet = await prisma.match.findUnique({ where: { id: matchId }, select: { metadata: true } });
-    assert(!((rowRet?.metadata as Record<string, unknown> | null)?.liveScoring), 'no live after updateMatch RETIRED');
+    assert(((rowRet?.metadata as Record<string, unknown> | null)?.liveScoring as { state?: unknown })?.state === null, 'tombstone after RETIRED');
     console.log('ok: updateMatch optional metadata RETIRED clears live when grid matches');
 
     const tennisSuffix = `${Date.now()}`;
@@ -370,10 +377,10 @@ async function main() {
         firstServerTeam: 'teamA',
         firstServerDoublesPlayerIndex: 0,
       },
-      baseRevision: null,
+      baseRevision: 1,
       clientMessageId: 'tennis-live-1',
     });
-    assert(tennisLive.revision === 1, 'tennis live scoring first patch revision 1');
+    assert(tennisLive.revision === 2, 'tennis live scoring first patch revision 1');
     assert((tennisLive.liveScoring?.state as { mode?: unknown })?.mode === 'classic', 'tennis live scoring state persisted');
     console.log('ok: tennis live scoring PATCH works');
 
@@ -432,10 +439,10 @@ async function main() {
     assert(automaticMode.changed, 'automatic initial record-mode choice changes state');
     const automaticLive = await patchMatchLiveScoring(automaticGameId, automaticMatchId, u1, false, {
       state: automaticMode.state as unknown as Record<string, unknown>,
-      baseRevision: 0,
+      baseRevision: 1,
       clientMessageId: 'automatic-mode',
     });
-    assert(automaticLive.revision === 1, 'fresh Automatic PATCH accepts revision-zero baseline');
+    assert(automaticLive.revision === 2, 'fresh Automatic PATCH accepts revision-zero baseline');
     const automaticRow = await prisma.match.findUnique({
       where: { id: automaticMatchId },
       select: { metadata: true },
@@ -449,10 +456,10 @@ async function main() {
     assert(automaticPoint.changed, 'Automatic scoring changes state after mode choice');
     const automaticScored = await patchMatchLiveScoring(automaticGameId, automaticMatchId, u1, false, {
       state: automaticPoint.state as unknown as Record<string, unknown>,
-      baseRevision: 1,
+      baseRevision: 2,
       clientMessageId: 'automatic-first-point',
     });
-    assert(automaticScored.revision === 2, 'Automatic first point passes structured transition verification');
+    assert(automaticScored.revision === 3, 'Automatic first point passes structured transition verification');
     console.log('ok: fresh Automatic revision, mode metadata, and first point');
 
     console.log('\nqa-matchLiveScoring: all checks passed (padel + tennis + Automatic).');

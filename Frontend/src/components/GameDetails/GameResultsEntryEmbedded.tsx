@@ -142,6 +142,7 @@ export const GameResultsEntryEmbedded = ({
     onGameUpdate,
     setActiveTab,
     setCanInitialize,
+    onSyncConflict: () => openModal({ type: 'syncConflict' }),
   });
 
   const onSupplementalSetAdded = useCallback(

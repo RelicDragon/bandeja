@@ -62,8 +62,11 @@ final class MatchScoringViewModel {
 
     private let api = APIClient()
     private var liveScoringRevision = 0
+    private var matchResultsVersion: String?
+    private var liveSaveHadConflict = false
     private var lastAttributedRemoteRevision = 0
     private var lastAcknowledgedOwnClientMessageId: String?
+    private var inFlightClientMessageId: String?
     private var suppressRemoteWriterAttribution = false
     /// When false, in-flight poll/relay/outbox merges must not overwrite local score (finish/review/save).
     private var allowsRemoteLiveScoringMerge = false
@@ -446,8 +449,10 @@ final class MatchScoringViewModel {
             let currentUserId = KeychainHelper.shared.readUserId()
             for r in results.rounds {
                 if let m = r.matches.first(where: { $0.id == matchId }) {
+                    if (m.metadata?.liveScoring?.revision ?? 0) < liveScoringRevision { return }
                     round = r
                     match = m
+                    matchResultsVersion = m.resultsVersion
                     let onMatch = currentUserId.map { uid in
                         m.teams.contains { team in
                             team.players.contains { $0.userId == uid }
@@ -638,12 +643,16 @@ final class MatchScoringViewModel {
         guard !isReadOnly else { return }
         guard let match else { return }
         error = nil
+        isSaving = true
+        defer { isSaving = false }
         let persistedSets = sets
         allowsRemoteLiveScoringMerge = false
         liveSaveTask?.cancel()
         liveSaveTask = nil
         await NetworkDeliveryOutbox.shared.flush(matchId: matchId)
+        liveSaveHadConflict = false
         await saveLiveScoringNow(applyEnvelope: false)
+        if liveSaveHadConflict { self.error = APIError.httpError(409); return }
         let sortedTeams = match.sortedTeams
         let maxPerTeam = WatchMatchFormat.maxPlayersPerTeam(for: game)
         let teamAIds = WatchMatchFormat.capUserIds(
@@ -654,13 +663,12 @@ final class MatchScoringViewModel {
             sortedTeams.first(where: { $0.teamNumber == 2 })?.players.map(\.userId) ?? [],
             max: maxPerTeam
         )
-        isSaving = true
-        defer { isSaving = false }
         do {
             let body = WatchUpdateMatchBody(
                 teamA: teamAIds,
                 teamB: teamBIds,
-                sets: persistedSets
+                sets: persistedSets,
+                baseVersion: matchResultsVersion
             )
             try await api.sendVoid(.updateMatch(gameId: gameId, matchId: match.id), body: body)
             sets = persistedSets
@@ -677,7 +685,8 @@ final class MatchScoringViewModel {
                     matchId: match.id,
                     teamA: teamAIds,
                     teamB: teamBIds,
-                    sets: persistedSets
+                    sets: persistedSets,
+                    baseVersion: matchResultsVersion
                 )
                 self.error = nil
             } else {
@@ -1348,28 +1357,32 @@ final class MatchScoringViewModel {
     private func applyLiveScoringEnvelope(_ envelope: WatchLiveScoringEnvelope?, force: Bool, requireNewer: Bool) {
         guard force || allowsRemoteLiveScoringMerge else { return }
         guard let envelope, envelope.isSupported else { return }
-        if requireNewer, envelope.revision <= liveScoringRevision { return }
-
-        // Another writer landed first while local taps are unacknowledged: take the server
-        // state and replay the local taps on top, then push the merged result. Adopting the
-        // revision without the state would let the next PATCH silently overwrite their points.
-        if !force, hasUnackedLocalEdits {
+        if envelope.revision < liveScoringRevision { return }
+        if requireNewer, envelope.revision == liveScoringRevision { return }
+        if envelope.state == nil {
             liveSaveTask?.cancel()
             liveSaveTask = nil
-            if let state = envelope.state {
-                maybeQueueRemoteWriterAttribution(envelope: envelope)
+            pendingLocalOps.removeAll()
+            ackedScoreGeneration = localScoreGeneration
+            NetworkDeliveryOutbox.shared.removeLivePatch(matchId: matchId)
+            if match?.metadata?.liveScoring?.revision == envelope.revision {
                 liveScoringRevision = envelope.revision
-                let localOps = pendingLocalOps
-                applyRemoteLiveScoringState(state)
-                pendingLocalOps = localOps
-                replayPendingLocalOps()
             } else {
-                liveScoringRevision = max(liveScoringRevision, envelope.revision)
-            }
-            if hasUnackedLocalEdits, liveSaveTask == nil {
-                scheduleLiveScoringSave()
+                Task { await load() }
             }
             return
+        }
+
+        // A foreign write wins over queued edits. Never silently rebase an old score
+        // onto a newer revision; the scorer must make a fresh correction.
+        if !force, hasUnackedLocalEdits {
+            if let inFlightClientMessageId, envelope.lastClientMessageId == inFlightClientMessageId { return }
+            liveSaveTask?.cancel()
+            liveSaveTask = nil
+            pendingLocalOps.removeAll()
+            ackedScoreGeneration = localScoreGeneration
+            NetworkDeliveryOutbox.shared.removeLivePatch(matchId: matchId)
+            error = APIError.liveScoringRevisionMismatch(revision: envelope.revision, serverEnvelope: envelope)
         }
 
         guard let state = envelope.state else {
@@ -1484,7 +1497,7 @@ final class MatchScoringViewModel {
         guard let remoteClientMessageId = envelope.lastClientMessageId, !remoteClientMessageId.isEmpty else {
             return false
         }
-        if remoteClientMessageId == lastAcknowledgedOwnClientMessageId { return false }
+        if remoteClientMessageId == lastAcknowledgedOwnClientMessageId || remoteClientMessageId == inFlightClientMessageId { return false }
         if remoteClientMessageId == NetworkDeliveryOutbox.shared.pendingClientMessageId(forMatchId: matchId) {
             return false
         }
@@ -1626,9 +1639,13 @@ final class MatchScoringViewModel {
             clientMessageId: UUID().uuidString,
             opId: UUID().uuidString
         )
+        inFlightClientMessageId = body.clientMessageId
+        defer { if inFlightClientMessageId == body.clientMessageId { inFlightClientMessageId = nil } }
         do {
             let response = try await api.patchMatchLiveScoring(gameId: gameId, matchId: matchId, body: body)
             NetworkDeliveryOutbox.shared.removeLivePatch(matchId: matchId)
+            if response.revision < liveScoringRevision { return }
+            if response.revision >= liveScoringRevision { matchResultsVersion = response.resultsVersion }
             if let envelope = response.liveScoring {
                 noteAcknowledgedOwnClientMessageId(envelope)
                 if applyEnvelope {
@@ -1663,9 +1680,16 @@ final class MatchScoringViewModel {
             )
         } catch let api as APIError {
             if case .liveScoringRevisionMismatch(_, let serverEnvelope) = api {
+                liveSaveHadConflict = true
                 NetworkDeliveryOutbox.shared.removeLivePatch(matchId: matchId)
                 guard let serverEnvelope else {
                     if applyEnvelope { await pollLiveScoringEnvelopeFromServer() }
+                    return
+                }
+                if serverEnvelope.state == nil {
+                    pendingLocalOps.removeAll()
+                    ackedScoreGeneration = localScoreGeneration
+                    await load()
                     return
                 }
                 if !applyEnvelope {
@@ -1674,16 +1698,12 @@ final class MatchScoringViewModel {
                     dropLocalOps(through: generationAtSend)
                     return
                 }
-                // Server wins for everything up to what we sent; taps made after the send
-                // are replayed on top of the server state and pushed on the new base.
-                dropLocalOps(through: generationAtSend)
-                let newerLocalOps = pendingLocalOps
+                liveSaveTask?.cancel()
+                liveSaveTask = nil
+                pendingLocalOps.removeAll()
+                ackedScoreGeneration = localScoreGeneration
                 applyLiveScoringEnvelope(serverEnvelope, force: true, requireNewer: false)
-                if !newerLocalOps.isEmpty {
-                    pendingLocalOps = newerLocalOps
-                    replayPendingLocalOps()
-                    if hasUnackedLocalEdits { scheduleLiveScoringSave() }
-                }
+                self.error = api
                 return
             }
             if APIError.warrantsDeliveryRetry(api) {

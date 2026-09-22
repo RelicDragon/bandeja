@@ -59,6 +59,7 @@ interface GameResultsState {
   editingMatchId: string | null;
   syncStatus: SyncStatus;
   serverProblem: boolean;
+  resultsVersion: string | null;
 }
 
 interface GameResultsStore extends GameResultsState {
@@ -79,6 +80,7 @@ const useGameResultsStore = create<GameResultsStore>((set) => ({
   editingMatchId: null,
   syncStatus: 'IDLE',
   serverProblem: false,
+  resultsVersion: null,
   setState: (state) => set(state),
 }));
 
@@ -118,7 +120,9 @@ class GameResultsEngineClass {
       return;
     }
 
-    useGameResultsStore.setState({ loading: true, gameId, userId, isGlobalAdmin });
+    const session = ++this.sessionEpoch;
+    useGameResultsStore.setState({ loading: true, gameId, userId, isGlobalAdmin, resultsVersion: null,
+      rounds: state.gameId === gameId && state.userId === userId ? state.rounds : [] });
 
     try {
       const [gameResponse, localResults, serverProblem] = await Promise.all([
@@ -133,6 +137,7 @@ class GameResultsEngineClass {
         ResultsStorage.getServerProblem(gameId),
       ]);
 
+      if (session !== this.sessionEpoch) return;
       if (!gameResponse) {
         // If no game response (e.g., 401), set initialized to false and return
         useGameResultsStore.setState({ 
@@ -151,18 +156,28 @@ class GameResultsEngineClass {
 
       useGameResultsStore.setState({ game, canEdit, gameState, serverProblem });
 
+      if (serverProblem && localResults?.rounds) {
+        useGameResultsStore.setState({ rounds: localResults.rounds, resultsVersion: localResults.resultsVersion ?? null,
+          initialized: true, loading: false, expandedRoundIds: localResults.rounds.slice(-1).map(r => r.id) });
+        return;
+      }
       const resultsStatus = game.resultsStatus || 'NONE';
       
       if (resultsStatus === 'NONE' && canEdit) {
+        const emptyResults = await resultsApi.getGameResults(gameId);
+        if (session !== this.sessionEpoch) return;
+        const resultsVersion = emptyResults?.data?.resultsVersion ?? null;
         const emptyData: LocalResults = {
           gameId,
           rounds: [],
+          resultsVersion,
         };
         await ResultsStorage.saveResults(emptyData);
         useGameResultsStore.setState({ 
           gameId,
           userId,
           rounds: [], 
+          resultsVersion,
           initialized: true, 
           loading: false,
         });
@@ -179,6 +194,8 @@ class GameResultsEngineClass {
       if (resultsStatus !== 'NONE') {
         try {
           const resultsResponse = await resultsApi.getGameResults(gameId);
+          if (session !== this.sessionEpoch) return;
+          useGameResultsStore.setState({ resultsVersion: resultsResponse?.data?.resultsVersion ?? null });
           if (resultsResponse?.data) {
             const serverRounds = this.convertServerResultsToState(resultsResponse.data, t).rounds;
             // If we have existing rounds in store for this game, prefer them over server
@@ -191,7 +208,7 @@ class GameResultsEngineClass {
                 rounds,
                 lastSyncedAt: Date.now(),
               };
-              await ResultsStorage.saveResults(localData);
+              await ResultsStorage.saveResults({ ...localData, resultsVersion: resultsResponse.data.resultsVersion });
             } else {
               rounds = serverRounds;
               const localData: LocalResults = {
@@ -199,7 +216,7 @@ class GameResultsEngineClass {
                 rounds,
                 lastSyncedAt: Date.now(),
               };
-              await ResultsStorage.saveResults(localData);
+              await ResultsStorage.saveResults({ ...localData, resultsVersion: resultsResponse.data.resultsVersion });
             }
             await ResultsStorage.setServerProblem(gameId, false);
             useGameResultsStore.setState({ serverProblem: false });
@@ -240,6 +257,7 @@ class GameResultsEngineClass {
       const lastRoundId = finalRounds.length > 0 ? finalRounds[finalRounds.length - 1].id : null;
       const finalExpandedRoundIds = lastRoundId ? [lastRoundId] : [];
 
+      if (session !== this.sessionEpoch) return;
       useGameResultsStore.setState({
         gameId,
         userId,
@@ -255,6 +273,8 @@ class GameResultsEngineClass {
           }
   }
 
+  private serverWrites: Promise<unknown> = Promise.resolve();
+  private sessionEpoch = 0;
   private localMutationEpoch = 0;
   private pendingLocalMutations = 0;
   private remoteReloadEpoch = 0;
@@ -312,6 +332,7 @@ class GameResultsEngineClass {
       }
 
       if (resultsResponse?.data) {
+        patch.resultsVersion = resultsResponse.data.resultsVersion ?? null;
         const serverRounds = this.convertServerResultsToState(resultsResponse.data, (k) => k).rounds;
         const merged = mergeRoundsPreservingIdentity(liveState.rounds, serverRounds);
 
@@ -322,6 +343,7 @@ class GameResultsEngineClass {
         const localData: LocalResults = {
           gameId,
           rounds: merged,
+          resultsVersion: patch.resultsVersion,
           lastSyncedAt: Date.now(),
         };
         await ResultsStorage.saveResults(localData);
@@ -330,6 +352,7 @@ class GameResultsEngineClass {
       }
 
       if (Object.keys(patch).length > 0) {
+        if (this.getState().gameId !== gameId || this.getState().userId !== userId) return;
         if (this.pendingLocalMutations > 0) return;
         if (this.localMutationEpoch !== mutationAtStart) return;
         if (this.remoteReloadEpoch !== reloadToken) return;
@@ -341,42 +364,48 @@ class GameResultsEngineClass {
   }
 
   async syncToServer(): Promise<void> {
+    await this.serverWrites;
+    if (this.pendingLocalMutations > 0) throw new Error(i18n.t('errors.syncPending'));
     const state = this.getState();
     if (!state.gameId || !state.userId || !state.canEdit) return;
-
+    if (!state.serverProblem) {
+      await this.reloadFromRemote();
+      return;
+    }
+    if (state.syncStatus === 'SYNCING') throw new Error(i18n.t('errors.syncPending'));
+    const session = this.sessionEpoch;
+    const mutation = this.localMutationEpoch;
     useGameResultsStore.setState({ syncStatus: 'SYNCING' });
-
     try {
-      await resultsApi.syncResults(state.gameId, state.rounds);
-      const expectedCount = state.rounds.length;
-      const result = await resultsApi.getGameResults(state.gameId);
-      const serverRoundCount = result?.data?.rounds?.length ?? -1;
-      if (serverRoundCount !== expectedCount) {
-        throw new Error(
-          `Sync verification failed: server has ${serverRoundCount} rounds, expected ${expectedCount}`
-        );
-      }
+      const result = await resultsApi.syncResults(state.gameId, state.rounds, state.resultsVersion);
+      if (session !== this.sessionEpoch) return;
+      if (!result?.data?.rounds || !result.data.resultsVersion) throw new Error('Missing sync acknowledgement');
+      useGameResultsStore.setState({ resultsVersion: result.data.resultsVersion });
+      if (mutation !== this.localMutationEpoch) throw new Error(i18n.t('errors.syncPending'));
+      const rounds = this.convertServerResultsToState(result.data, k => k).rounds;
+      await ResultsStorage.saveResults({ gameId: state.gameId, rounds, resultsVersion: result.data.resultsVersion, lastSyncedAt: Date.now() });
       await ResultsStorage.setServerProblem(state.gameId, false);
-          useGameResultsStore.setState({
-        syncStatus: 'SUCCESS',
-        serverProblem: false,
-          });
-
-      const localData: LocalResults = {
-        gameId: state.gameId,
-        rounds: state.rounds,
-            lastSyncedAt: Date.now(),
-          };
-      await ResultsStorage.saveResults(localData);
+      if (session !== this.sessionEpoch) return;
+      useGameResultsStore.setState({ rounds, serverProblem: false, syncStatus: 'SUCCESS' });
     } catch (error) {
-      console.error('Failed to sync to server:', error);
-      await ResultsStorage.setServerProblem(state.gameId, true);
-          useGameResultsStore.setState({ 
-        syncStatus: 'FAILED',
-        serverProblem: true,
-          });
+      if (session === this.sessionEpoch) {
+        useGameResultsStore.setState({ syncStatus: 'FAILED', serverProblem: true });
+        await ResultsStorage.setServerProblem(state.gameId!, true);
+      }
       throw error;
     }
+  }
+
+  private async persistMatch(gameId: string, matchId: string, input: Parameters<typeof resultsApi.updateMatch>[2]) {
+    const session = this.sessionEpoch;
+    const match = this.getState().rounds.flatMap(r => r.matches).find(m => m.id === matchId);
+    const response = await resultsApi.updateMatch(gameId, matchId, { ...input, baseVersion: match?.resultsVersion });
+    if (session === this.sessionEpoch && response.data?.resultsVersion) {
+      useGameResultsStore.setState(state => ({ rounds: state.rounds.map(r => ({ ...r,
+        matches: r.matches.map(m => m.id === matchId ? { ...m, resultsVersion: response.data.resultsVersion } : m),
+      })) }));
+    }
+    return response;
   }
 
   private async updateLocalAndServer(
@@ -387,8 +416,11 @@ class GameResultsEngineClass {
     if (!state.gameId || !state.userId || !state.canEdit) return;
 
     const mutation = this.beginLocalMutation();
-    try {
-      await updateFn();
+    const session = this.sessionEpoch;
+    const localUpdate = updateFn();
+    const write = this.serverWrites.then(async () => {
+      await localUpdate;
+      if (session !== this.sessionEpoch) return;
       await this.saveLocal();
       if (this.getState().serverProblem) return;
 
@@ -397,7 +429,7 @@ class GameResultsEngineClass {
       } catch (error) {
         console.error('Server call failed:', error);
         const current = this.getState();
-        if (current.gameId !== state.gameId || current.userId !== state.userId) return;
+        if (session !== this.sessionEpoch || current.gameId !== state.gameId || current.userId !== state.userId) return;
 
         if (isRejectedResultsRequest(error)) {
           toast.error(extractApiErrorMessage(error, i18n.t));
@@ -409,10 +441,17 @@ class GameResultsEngineClass {
           }
         }
         useGameResultsStore.setState({ serverProblem: true });
-        await ResultsStorage.setServerProblem(state.gameId, true);
+        await ResultsStorage.setServerProblem(state.gameId!, true);
       }
+    });
+    this.serverWrites = write.catch(() => undefined);
+    try {
+      await write;
     } finally {
       this.endLocalMutation();
+      if (session === this.sessionEpoch && this.pendingLocalMutations === 0 && !this.getState().serverProblem) {
+        await this.reloadFromRemote();
+      }
     }
   }
 
@@ -423,6 +462,7 @@ class GameResultsEngineClass {
     const localData: LocalResults = {
             gameId: state.gameId,
       rounds: state.rounds,
+      resultsVersion: state.resultsVersion,
     };
     await ResultsStorage.saveResults(localData);
   }
@@ -480,11 +520,15 @@ class GameResultsEngineClass {
       editingMatchId: null,
     });
 
+    useGameResultsStore.setState({ serverProblem: true });
+    await ResultsStorage.setServerProblem(state.gameId!, true);
     await this.saveLocal();
     await this.syncToServer();
   }
 
   async cleanup() {
+    this.sessionEpoch += 1;
+    this.remoteReloadEpoch += 1;
     useGameResultsStore.setState({
       gameId: null,
       userId: null,
@@ -499,6 +543,7 @@ class GameResultsEngineClass {
       editingMatchId: null,
       syncStatus: 'IDLE',
       serverProblem: false,
+      resultsVersion: null,
     });
   }
 
@@ -508,11 +553,16 @@ class GameResultsEngineClass {
   }
 
   async addRound(): Promise<void> {
+    await this.serverWrites;
     const state = this.getState();
     if (!state.gameId || !state.userId || !state.canEdit || !state.game) return;
+    if (state.serverProblem) throw new Error(i18n.t('errors.syncRequired'));
+    const session = this.sessionEpoch;
+    this.beginLocalMutation();
 
     try {
       const res = await resultsApi.generateRound(state.gameId);
+      if (session !== this.sessionEpoch) return;
       const roundPayload = res.data?.round;
       if (!roundPayload) {
         throw new Error('No round in generate response');
@@ -522,20 +572,21 @@ class GameResultsEngineClass {
         throw new Error('Failed to parse generated round');
       }
 
-      useGameResultsStore.setState({
-        rounds: [...state.rounds, converted],
+      useGameResultsStore.setState(current => ({
+        rounds: [...current.rounds.filter(r => r.id !== converted.id), converted],
         expandedRoundIds: [converted.id],
-      });
-      await ResultsStorage.setServerProblem(state.gameId, false);
-      useGameResultsStore.setState({ serverProblem: false });
+      }));
       await this.saveLocal();
     } catch (error) {
       console.error('Failed to generate round:', error);
-      if (!isRejectedResultsRequest(error)) {
-        await ResultsStorage.setServerProblem(state.gameId, true);
+      if (session === this.sessionEpoch && !isRejectedResultsRequest(error)) {
+        await ResultsStorage.setServerProblem(state.gameId!, true);
         useGameResultsStore.setState({ serverProblem: true });
       }
       throw error;
+    } finally {
+      this.endLocalMutation();
+      if (session === this.sessionEpoch && !this.getState().serverProblem) await this.reloadFromRemote();
     }
   }
 
@@ -591,7 +642,10 @@ class GameResultsEngineClass {
       },
       async () => {
         await resultsApi.createMatch(state.gameId!, roundId, { id: newMatchId });
-        const putRes = await resultsApi.updateMatch(state.gameId!, newMatchId, {
+        const created = await resultsApi.getGameResults(state.gameId!);
+        const fresh = convertServerResultsToRounds(created.data).flatMap(r => r.matches).find(m => m.id === newMatchId);
+        useGameResultsStore.setState(current => ({ rounds: current.rounds.map(r => ({ ...r, matches: r.matches.map(m => m.id === newMatchId ? { ...m, resultsVersion: fresh?.resultsVersion } : m) })) }));
+        const putRes = await this.persistMatch(state.gameId!, newMatchId, {
           teamA: newMatch.teamA,
           teamB: newMatch.teamB,
           sets: newMatch.sets,
@@ -664,7 +718,7 @@ class GameResultsEngineClass {
         useGameResultsStore.setState({ rounds: newRounds });
       },
       async () => {
-        const putRes = await resultsApi.updateMatch(state.gameId!, matchId, {
+        const putRes = await this.persistMatch(state.gameId!, matchId, {
           teamA: team === 'teamA' ? [...match.teamA, playerId] : match.teamA,
           teamB: team === 'teamB' ? [...match.teamB, playerId] : match.teamB,
           sets: match.sets,
@@ -705,7 +759,7 @@ class GameResultsEngineClass {
         useGameResultsStore.setState({ rounds: newRounds });
       },
       async () => {
-        const putRes = await resultsApi.updateMatch(state.gameId!, matchId, {
+        const putRes = await this.persistMatch(state.gameId!, matchId, {
           teamA: team === 'teamA' ? match.teamA.filter(id => id !== playerId) : match.teamA,
           teamB: team === 'teamB' ? match.teamB.filter(id => id !== playerId) : match.teamB,
           sets: match.sets,
@@ -826,7 +880,7 @@ class GameResultsEngineClass {
         useGameResultsStore.setState({ rounds: newRounds });
       },
       async () => {
-        const putRes = await resultsApi.updateMatch(state.gameId!, matchId, match);
+        const putRes = await this.persistMatch(state.gameId!, matchId, match);
         this.toastIfLiveScoringCleared(putRes);
       }
     );
@@ -857,7 +911,7 @@ class GameResultsEngineClass {
         useGameResultsStore.setState({ rounds: newRounds });
       },
       async () => {
-        const putRes = await resultsApi.updateMatch(state.gameId!, matchId, {
+        const putRes = await this.persistMatch(state.gameId!, matchId, {
           teamA: match.teamA,
           teamB: match.teamB,
           sets: match.sets,

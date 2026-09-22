@@ -11,6 +11,7 @@ export interface SetResult {
 
 export interface Match {
   id: string;
+  resultsVersion?: string;
   teamA: string[];
   teamB: string[];
   sets: SetResult[];
@@ -42,4 +43,3 @@ export interface GameState {
   showInputs: boolean;
   showClock: boolean;
 }
-

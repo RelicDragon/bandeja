@@ -24,9 +24,9 @@ describe('results connectivity after a rejected edit', () => {
     vi.resetAllMocks();
     await GameResultsEngine.cleanup();
     useGameResultsStore.setState({
-      gameId: 'game', userId: 'owner', initialized: true, canEdit: true,
+      gameId: 'game', userId: 'owner', initialized: true, canEdit: true, resultsVersion: 'board-v0',
       rounds: [{ id: 'round', matches: [{
-        id: 'match', teamA: ['a'], teamB: ['b'], sets: [{ teamA: 10, teamB: 11 }],
+        id: 'match', resultsVersion: 'v0', teamA: ['a'], teamB: ['b'], sets: [{ teamA: 10, teamB: 11 }],
       }] }],
     });
   });
@@ -87,9 +87,9 @@ describe('results connectivity after a rejected edit', () => {
 
   it('clears the warning after an explicit successful sync', async () => {
     useGameResultsStore.setState({ serverProblem: true });
-    vi.mocked(resultsApi.getGameResults).mockResolvedValueOnce({ success: true, data: { rounds: [{}] } });
+    vi.mocked(resultsApi.syncResults).mockResolvedValueOnce({ success: true, data: { rounds: [], resultsVersion: 'board-v1' } });
     await GameResultsEngine.syncToServer();
-    expect(resultsApi.syncResults).toHaveBeenCalledWith('game', GameResultsEngine.getState().rounds);
+    expect(resultsApi.syncResults).toHaveBeenCalledWith('game', expect.any(Array), 'board-v0');
     expect(GameResultsEngine.getState().serverProblem).toBe(false);
     expect(GameResultsEngine.getState().syncStatus).toBe('SUCCESS');
   });
@@ -99,26 +99,43 @@ describe('results connectivity after a rejected edit', () => {
     await expect(GameResultsEngine.setMatchCourt('round', 'match', 'court')).rejects.toThrow('Storage unavailable');
     expect(GameResultsEngine.getState().serverProblem).toBe(false);
     await GameResultsEngine.reloadFromRemote();
-    expect(resultsApi.getGameResults).toHaveBeenCalledOnce();
+    expect(resultsApi.getGameResults).toHaveBeenCalled();
   });
 
-  it('does not let a later successful request clear another unsynced edit', async () => {
-    let resolveRequest!: () => void;
-    const successfulRequest = new Promise<{ success: boolean; data: object }>((resolve) => {
-      resolveRequest = () => resolve({ success: true, data: {} });
-    });
-    let rejectRequest!: (error: Error) => void;
+  it('serializes rapid local edits and uses the preceding acknowledgement', async () => {
+    let resolveFirst!: () => void;
     vi.mocked(resultsApi.updateMatch)
-      .mockReturnValueOnce(new Promise((_resolve, reject) => { rejectRequest = reject; }))
-      .mockReturnValueOnce(successfulRequest);
+      .mockReturnValueOnce(new Promise(resolve => { resolveFirst = () => resolve({ success: true, data: { liveScoringCleared: false, resultsVersion: 'v1' } }); }))
+      .mockResolvedValueOnce({ success: true, data: { liveScoringCleared: false, resultsVersion: 'v2' } });
     const first = GameResultsEngine.setMatchCourt('round', 'match', 'court-a');
     await vi.waitFor(() => expect(resultsApi.updateMatch).toHaveBeenCalledTimes(1));
     const second = GameResultsEngine.setMatchCourt('round', 'match', 'court-b');
-    await vi.waitFor(() => expect(resultsApi.updateMatch).toHaveBeenCalledTimes(2));
-    rejectRequest(new Error('Network request failed'));
-    await first;
-    resolveRequest();
-    await second;
+    expect(resultsApi.updateMatch).toHaveBeenCalledTimes(1);
+    resolveFirst();
+    await Promise.all([first, second]);
+    expect(resultsApi.updateMatch).toHaveBeenNthCalledWith(1, 'game', 'match', expect.objectContaining({ courtId: 'court-a', baseVersion: 'v0' }));
+    expect(resultsApi.updateMatch).toHaveBeenNthCalledWith(2, 'game', 'match', expect.objectContaining({ courtId: 'court-b', baseVersion: 'v1' }));
+    expect(GameResultsEngine.getState().rounds[0].matches[0].courtId).toBe('court-b');
+  });
+
+  it('never uploads a cached board when finishing a healthy online session', async () => {
+    await GameResultsEngine.syncToServer();
+    expect(resultsApi.syncResults).not.toHaveBeenCalled();
+    expect(resultsApi.getGameResults).toHaveBeenCalled();
+  });
+
+  it('keeps newer local edits when a sync response arrives late', async () => {
+    useGameResultsStore.setState({ serverProblem: true });
+    let resolveSync!: () => void;
+    vi.mocked(resultsApi.syncResults).mockReturnValueOnce(new Promise(resolve => {
+      resolveSync = () => resolve({ success: true, data: { rounds: [], resultsVersion: 'board-v1' } });
+    }));
+    const sync = GameResultsEngine.syncToServer();
+    await vi.waitFor(() => expect(resultsApi.syncResults).toHaveBeenCalled());
+    await GameResultsEngine.setMatchCourt('round', 'match', 'new-court');
+    resolveSync();
+    await expect(sync).rejects.toThrow();
+    expect(GameResultsEngine.getState().rounds[0].matches[0].courtId).toBe('new-court');
     expect(GameResultsEngine.getState().serverProblem).toBe(true);
   });
 });

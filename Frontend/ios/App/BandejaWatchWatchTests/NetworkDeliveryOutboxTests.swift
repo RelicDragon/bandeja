@@ -3,6 +3,16 @@ import XCTest
 
 @MainActor
 final class NetworkDeliveryOutboxTests: XCTestCase {
+    func testQueuedManualScoreRetainsItsOriginalVersion() throws {
+        var entry = matchPutEntry(matchId: "m1")
+        entry.baseVersion = "score-version-at-entry"
+        let decoded = try JSONDecoder().decode(NetworkDeliveryEntry.self, from: JSONEncoder().encode(entry))
+        XCTAssertEqual(decoded.baseVersion, "score-version-at-entry")
+        let payload = WatchUpdateMatchBody(teamA: ["a"], teamB: ["b"], sets: [], baseVersion: decoded.baseVersion)
+        let json = try XCTUnwrap(JSONSerialization.jsonObject(with: JSONEncoder().encode(payload)) as? [String: Any])
+        XCTAssertEqual(json["baseVersion"] as? String, "score-version-at-entry")
+    }
+
     private func sampleLiveState() -> WatchLiveScoringState {
         WatchLiveScoringState(
             activeSetIndex: 0,

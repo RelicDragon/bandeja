@@ -1,5 +1,6 @@
 import prisma from '../config/database';
-import { Sport } from '@prisma/client';
+import { Sport, Prisma } from '@prisma/client';
+import { lockGameResults, matchResultsVersion, withResultsVersions, assertResultsVersion } from './results/resultsConcurrency';
 import { cancelAllMatchTimersForGame } from './results/matchTimer.service';
 import { matchTimerCoordinator } from './results/matchTimerCoordinator';
 import { ApiError } from '../utils/ApiError';
@@ -46,16 +47,15 @@ const SUPPLEMENTAL_SET_SCORE_MAX = 9999;
  * `results/gameResults.projection.ts`.
  */
 export async function getGameResults(gameId: string) {
-  const game = await prisma.game.findUnique({
-    where: { id: gameId },
-    select: getGameResultsSelect(),
-  });
+  const game = await prisma.$transaction(tx => tx.game.findUnique({
+    where: { id: gameId }, select: getGameResultsSelect(),
+  }), { isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead });
 
   if (!game) {
     throw new ApiError(404, 'Game not found');
   }
 
-  return projectGameUsersForSportContext(game as { sport?: Sport } & Record<string, unknown>);
+  return projectGameUsersForSportContext(withResultsVersions(game) as { sport?: Sport } & Record<string, unknown>);
 }
 
 /**
@@ -105,7 +105,7 @@ export async function getRoundResults(roundId: string, viewerUserId?: string | n
   const sport = round.game?.sport ?? Sport.PADEL;
   const { game: _game, ...roundData } = round;
   void _game;
-  return projectRoundUsersForSportContext(roundData, sport);
+  return projectRoundUsersForSportContext({ ...roundData, matches: roundData.matches.map(m => ({ ...m, resultsVersion: matchResultsVersion(m) })) }, sport);
 }
 
 /** One match. Authorized against the owning game, like {@link getRoundResults}. */
@@ -143,7 +143,7 @@ export async function getMatchResults(matchId: string, viewerUserId?: string | n
   const sport = match.round?.game?.sport ?? Sport.PADEL;
   const { round: _round, ...matchData } = match;
   void _round;
-  return projectMatchUsersForSportContext(matchData, sport);
+  return projectMatchUsersForSportContext({ ...matchData, resultsVersion: matchResultsVersion(matchData) }, sport);
 }
 
 export async function deleteGameResults(gameId: string) {
@@ -169,6 +169,7 @@ export async function deleteGameResults(gameId: string) {
   const pairRefreshTargets = await collectPairRefreshTargets(gameId);
 
   await prisma.$transaction(async (tx) => {
+    await lockGameResults(tx, gameId);
     if (game.outcomes.length > 0) {
       await undoGameOutcomes(gameId, tx);
     } else {
@@ -242,6 +243,7 @@ export async function resetGameResults(gameId: string) {
   const pairRefreshTargets = await collectPairRefreshTargets(gameId);
 
   await prisma.$transaction(async (tx) => {
+    await lockGameResults(tx, gameId);
     if (game.outcomes.length > 0) {
       await undoGameOutcomes(gameId, tx);
     } else {
@@ -367,6 +369,7 @@ export async function editGameResults(gameId: string) {
   const pairRefreshTargets = await collectPairRefreshTargets(gameId);
 
   await prisma.$transaction(async (tx) => {
+    await lockGameResults(tx, gameId);
     if (game.outcomes.length > 0) {
       await undoGameOutcomes(gameId, tx);
     } else {
@@ -412,221 +415,73 @@ export async function editGameResults(gameId: string) {
   await refreshPairStatsForGame(gameId, pairRefreshTargets);
 }
 
-export async function syncResults(gameId: string, rounds: any[]) {
-  const normalizedRounds = Array.isArray(rounds) ? rounds : [];
-  console.log(`[SYNC RESULTS] gameId=${gameId} roundsCount=${normalizedRounds.length}`);
-
-  const { assertGameNotLockedTechnicalWithdrawal } = await import(
-    './league/leagueTechnicalWithdrawalGuard'
-  );
-  await assertGameNotLockedTechnicalWithdrawal(gameId, prisma);
-
-  const game = await prisma.game.findUnique({
-    where: { id: gameId },
-    include: {
-      participants: true,
-      outcomes: { select: { id: true } },
-    },
-  });
-
-  if (!game) {
-    throw new ApiError(404, 'Game not found');
-  }
-
-  for (let i = 0; i < normalizedRounds.length; i++) {
-    const r = normalizedRounds[i];
-    if (!r || typeof r?.id !== 'string') {
-      throw new ApiError(400, `Round at index ${i} must have a string id`);
-    }
-    const matches = r.matches ?? [];
-    for (let j = 0; j < matches.length; j++) {
-      const m = matches[j];
-      if (!m || typeof m?.id !== 'string') {
-        throw new ApiError(400, `Match at round ${i} index ${j} must have a string id`);
+export async function syncResults(gameId: string, rounds: any[], baseVersion?: string) {
+  if (!Array.isArray(rounds)) throw new ApiError(400, 'rounds must be an array');
+  return prisma.$transaction(async tx => {
+    await lockGameResults(tx, gameId);
+    const { assertGameNotLockedTechnicalWithdrawal } = await import('./league/leagueTechnicalWithdrawalGuard');
+    await assertGameNotLockedTechnicalWithdrawal(gameId, tx);
+    const game = await tx.game.findUnique({ where: { id: gameId }, select: getGameResultsSelect() });
+    if (!game) throw new ApiError(404, 'Game not found');
+    assertResultsVersion(baseVersion, withResultsVersions(game).resultsVersion);
+    if (game.resultsStatus === 'FINAL') throw new ApiError(409, 'Results are finalized. Reopen results before scoring.');
+    const roundIds = new Set<string>();
+    const matchIds = new Set<string>();
+    for (const round of rounds) {
+      if (!round || typeof round.id !== 'string' || roundIds.has(round.id) || !Array.isArray(round.matches)) {
+        throw new ApiError(400, 'Invalid or duplicate round');
+      }
+      roundIds.add(round.id);
+      for (const match of round.matches) {
+        if (!match || typeof match.id !== 'string' || matchIds.has(match.id) || !Array.isArray(match.sets)
+          || !Array.isArray(match.teamA) || !Array.isArray(match.teamB)) throw new ApiError(400, 'Invalid or duplicate match');
+        matchIds.add(match.id);
       }
     }
-  }
-
-  await cancelAllMatchTimersForGame(gameId);
-
-  const wasFinal = game.resultsStatus === 'FINAL';
-
-  await prisma.$transaction(async (tx) => {
-    if (wasFinal) {
-      if (game.outcomes.length > 0) {
-        await undoGameOutcomes(gameId, tx);
-      } else {
-        await revertForGame(gameId, 'all', tx);
+    // Apply the accepted snapshot in place. Recreating every row used to erase live
+    // revisions, timers, fixed-team metadata, active-match pointers and audit history.
+    await tx.match.deleteMany({ where: { round: { gameId }, id: { notIn: [...matchIds] } } });
+    await tx.round.deleteMany({ where: { gameId, id: { notIn: [...roundIds] } } });
+    for (const [roundIndex, round] of rounds.entries()) {
+      const existingRound = await tx.round.findUnique({ where: { id: round.id } });
+      if (existingRound && existingRound.gameId !== gameId) throw new ApiError(400, 'Round belongs to another game');
+      await tx.round.upsert({ where: { id: round.id }, create: { id: round.id, gameId, roundNumber: roundIndex + 1 }, update: { roundNumber: roundIndex + 1 } });
+      for (const [matchIndex, input] of round.matches.entries()) {
+        let match = await tx.match.findUnique({ where: { id: input.id }, include: { sets: { orderBy: { setNumber: 'asc' } }, teams: { orderBy: { teamNumber: 'asc' }, include: { players: { orderBy: { createdAt: 'asc' } } } } } });
+        if (match && match.roundId !== round.id) throw new ApiError(400, 'Match belongs to another round');
+        if (!match) {
+          match = await tx.match.create({ data: { id: input.id, roundId: round.id, matchNumber: matchIndex + 1, teams: { create: [{ teamNumber: 1 }, { teamNumber: 2 }] } }, include: { sets: true, teams: { include: { players: true } } } });
+        }
+        const unchanged = JSON.stringify(match.teams.find(t => t.teamNumber === 1)?.players.map(p => p.userId) ?? []) === JSON.stringify(input.teamA)
+          && JSON.stringify(match.teams.find(t => t.teamNumber === 2)?.players.map(p => p.userId) ?? []) === JSON.stringify(input.teamB)
+          && (match.courtId ?? null) === (input.courtId || null)
+          && JSON.stringify(match.sets.map(s => [s.teamAScore, s.teamBScore, s.isTieBreak, s.role])) === JSON.stringify(input.sets.map((s: any) => [s.teamA, s.teamB, !!s.isTieBreak, parseMatchSetRole(s.role)]));
+        const storedMetadata = (match.metadata ?? {}) as Record<string, unknown>;
+        const metadataChanged = Object.entries(input.metadata ?? {}).some(([key, value]) => key !== 'liveScoring' && JSON.stringify(storedMetadata[key]) !== JSON.stringify(value));
+        if (!unchanged || metadataChanged) {
+          await updateMatch(gameId, match.id, { ...input, baseVersion: matchResultsVersion(match) }, undefined, tx);
+        }
+        if (match.matchNumber !== matchIndex + 1) await tx.match.update({ where: { id: match.id }, data: { matchNumber: matchIndex + 1 } });
       }
     }
-
-    await tx.roundOutcome.deleteMany({
-      where: {
-        round: {
-          gameId,
-        },
-      },
-    });
-
-    await tx.set.deleteMany({
-      where: {
-        match: {
-          round: {
-            gameId,
-          },
-        },
-      },
-    });
-
-    await tx.teamPlayer.deleteMany({
-      where: {
-        team: {
-          match: {
-            round: {
-              gameId,
-            },
-          },
-        },
-      },
-    });
-
-    await tx.team.deleteMany({
-      where: {
-        match: {
-          round: {
-            gameId,
-          },
-        },
-      },
-    });
-
-    await tx.match.deleteMany({
-      where: {
-        round: {
-          gameId,
-        },
-      },
-    });
-
-    await tx.round.deleteMany({
-      where: { gameId },
-    });
-
-    for (let roundIndex = 0; roundIndex < normalizedRounds.length; roundIndex++) {
-      const roundData = normalizedRounds[roundIndex];
-      const round = await tx.round.create({
-        data: {
-          id: roundData.id,
-          gameId,
-          roundNumber: roundIndex + 1,
-        },
-      });
-
-      for (let matchIndex = 0; matchIndex < (roundData.matches || []).length; matchIndex++) {
-        const matchData = roundData.matches[matchIndex];
-        const match = await tx.match.create({
-          data: {
-            id: matchData.id,
-            roundId: round.id,
-            matchNumber: matchIndex + 1,
-            courtId: matchData.courtId || null,
-          },
-        });
-
-        const teamA = await tx.team.create({
-          data: {
-            matchId: match.id,
-            teamNumber: 1,
-          },
-        });
-
-        const teamB = await tx.team.create({
-          data: {
-            matchId: match.id,
-            teamNumber: 2,
-          },
-        });
-
-        for (const playerId of matchData.teamA || []) {
-          await tx.teamPlayer.create({
-            data: {
-              teamId: teamA.id,
-              userId: playerId,
-            },
-          });
-        }
-
-        for (const playerId of matchData.teamB || []) {
-          await tx.teamPlayer.create({
-            data: {
-              teamId: teamB.id,
-              userId: playerId,
-            },
-          });
-        }
-
-        for (let setIndex = 0; setIndex < (matchData.sets || []).length; setIndex++) {
-          const setData = matchData.sets[setIndex];
-          await tx.set.create({
-            data: {
-              matchId: match.id,
-              setNumber: setIndex + 1,
-              teamAScore: setData.teamA || 0,
-              teamBScore: setData.teamB || 0,
-              isTieBreak: setData.isTieBreak || false,
-              role: parseMatchSetRole((setData as { role?: unknown }).role),
-            },
-          });
-        }
-      }
-    }
-
-    const cityTimezone = await getUserTimezoneFromCityId(game.cityId);
-    await tx.game.update({
-      where: { id: gameId },
-      data: {
-        resultsStatus: 'IN_PROGRESS',
-        finishedDate: null,
-        status: calculateGameStatus(
-          {
-            startTime: game.startTime,
-            endTime: game.endTime,
-            resultsStatus: 'IN_PROGRESS',
-            timeIsSet: game.timeIsSet,
-            entityType: game.entityType,
-            finishedDate: null,
-          },
-          cityTimezone
-        ),
-      },
-    });
-    if (wasFinal) {
-      await syncPodiumAfterLeavingFinal({ gameId, tx, rebuildSeasonStandings: true });
-      await invalidateAchievementStatsForGame({ gameId, tx });
-    }
-  });
-
-  /*
-   * PRD 349 — "X is playing live". Rounds arriving on a game that was not FINAL
-   * is a scoring session, the same event `matchLiveScoring` fires on; an *undo*
-   * of a FINAL result is not, and must stay silent. Post-commit and
-   * fire-and-forget; `LiveGameNotifyDelivery` is unique on (userId, gameId), so
-   * a follower already told is never told twice.
-   */
-  if (!wasFinal) {
-    notifyFollowersGameWentLiveInBackground(gameId);
-  }
+    const saved = await tx.game.findUniqueOrThrow({ where: { id: gameId }, select: getGameResultsSelect() });
+    return withResultsVersions(saved);
+  }, { timeout: 25000 });
 }
 
 export async function createRound(gameId: string, roundId: string) {
+  await prisma.$transaction(async tx => {
+    await lockGameResults(tx, gameId);
+    const lifecycle = await tx.game.findUnique({ where: { id: gameId }, select: { resultsStatus: true } });
+    if (lifecycle?.resultsStatus === 'FINAL') throw new ApiError(409, 'Results are finalized. Reopen results before editing.');
   const { assertGameNotLockedTechnicalWithdrawal } = await import(
     './league/leagueTechnicalWithdrawalGuard'
   );
-  await assertGameNotLockedTechnicalWithdrawal(gameId, prisma);
+  await assertGameNotLockedTechnicalWithdrawal(gameId, tx);
 
-  const roundCount = await prisma.round.count({ where: { gameId } });
+  const roundCount = await tx.round.count({ where: { gameId } });
 
-  await prisma.round.create({
+  await tx.round.create({
     data: {
       id: roundId,
       gameId,
@@ -634,7 +489,7 @@ export async function createRound(gameId: string, roundId: string) {
     },
   });
 
-  const gameRow = await prisma.game.findUnique({
+  const gameRow = await tx.game.findUnique({
     where: { id: gameId },
     select: {
       startTime: true,
@@ -650,15 +505,7 @@ export async function createRound(gameId: string, roundId: string) {
     throw new ApiError(404, 'Game not found');
   }
   const cityTimezone = await getUserTimezoneFromCityId(gameRow.cityId);
-  const wasFinal = gameRow.resultsStatus === 'FINAL';
-  await prisma.$transaction(async (tx) => {
-    if (wasFinal) {
-      if (gameRow.outcomes.length > 0) {
-        await undoGameOutcomes(gameId, tx);
-      } else {
-        await revertForGame(gameId, 'all', tx);
-      }
-    }
+  {
     await tx.game.update({
       where: { id: gameId },
       data: {
@@ -677,25 +524,23 @@ export async function createRound(gameId: string, roundId: string) {
         ),
       },
     });
-    if (wasFinal) {
-      await syncPodiumAfterLeavingFinal({ gameId, tx, rebuildSeasonStandings: true });
-      await invalidateAchievementStatsForGame({ gameId, tx });
-    }
-  });
-
-  // PRD 349 — a fresh round on a non-FINAL game means someone started scoring.
-  if (!wasFinal) {
-    notifyFollowersGameWentLiveInBackground(gameId);
   }
+
+  }, { timeout: 25000 });
+  notifyFollowersGameWentLiveInBackground(gameId);
 }
 
 export async function deleteRound(gameId: string, roundId: string) {
+  await prisma.$transaction(async tx => {
+    await lockGameResults(tx, gameId);
+    const lifecycle = await tx.game.findUnique({ where: { id: gameId }, select: { resultsStatus: true } });
+    if (lifecycle?.resultsStatus === 'FINAL') throw new ApiError(409, 'Results are finalized. Reopen results before editing.');
   const { assertGameNotLockedTechnicalWithdrawal } = await import(
     './league/leagueTechnicalWithdrawalGuard'
   );
-  await assertGameNotLockedTechnicalWithdrawal(gameId, prisma);
+  await assertGameNotLockedTechnicalWithdrawal(gameId, tx);
 
-  const round = await prisma.round.findUnique({
+  const round = await tx.round.findUnique({
     where: { id: roundId },
   });
 
@@ -707,7 +552,7 @@ export async function deleteRound(gameId: string, roundId: string) {
     throw new ApiError(403, 'Round does not belong to this game');
   }
 
-  await prisma.$transaction(async (tx) => {
+  {
     const deletedRoundNumber = round.roundNumber;
     await tx.round.delete({ where: { id: roundId } });
 
@@ -727,16 +572,21 @@ export async function deleteRound(gameId: string, roundId: string) {
         },
       });
     }
-  });
+  }
+  }, { timeout: 25000 });
 }
 
 export async function createMatch(gameId: string, roundId: string, matchId: string) {
+  await prisma.$transaction(async tx => {
+    await lockGameResults(tx, gameId);
+    const lifecycle = await tx.game.findUnique({ where: { id: gameId }, select: { resultsStatus: true } });
+    if (lifecycle?.resultsStatus === 'FINAL') throw new ApiError(409, 'Results are finalized. Reopen results before editing.');
   const { assertGameNotLockedTechnicalWithdrawal } = await import(
     './league/leagueTechnicalWithdrawalGuard'
   );
-  await assertGameNotLockedTechnicalWithdrawal(gameId, prisma);
+  await assertGameNotLockedTechnicalWithdrawal(gameId, tx);
 
-  const round = await prisma.round.findUnique({
+  const round = await tx.round.findUnique({
     where: { id: roundId },
   });
 
@@ -748,9 +598,9 @@ export async function createMatch(gameId: string, roundId: string, matchId: stri
     throw new ApiError(403, 'Round does not belong to this game');
   }
 
-  const matchCount = await prisma.match.count({ where: { roundId } });
+  const matchCount = await tx.match.count({ where: { roundId } });
 
-  await prisma.$transaction(async (tx) => {
+  {
     const match = await tx.match.create({
       data: {
         id: matchId,
@@ -772,16 +622,21 @@ export async function createMatch(gameId: string, roundId: string, matchId: stri
         teamNumber: 2,
       },
     });
-  });
+  }
+  }, { timeout: 25000 });
 }
 
 export async function deleteMatch(gameId: string, matchId: string) {
+  await prisma.$transaction(async tx => {
+    await lockGameResults(tx, gameId);
+    const lifecycle = await tx.game.findUnique({ where: { id: gameId }, select: { resultsStatus: true } });
+    if (lifecycle?.resultsStatus === 'FINAL') throw new ApiError(409, 'Results are finalized. Reopen results before editing.');
   const { assertGameNotLockedTechnicalWithdrawal } = await import(
     './league/leagueTechnicalWithdrawalGuard'
   );
-  await assertGameNotLockedTechnicalWithdrawal(gameId, prisma);
+  await assertGameNotLockedTechnicalWithdrawal(gameId, tx);
 
-  const match = await prisma.match.findUnique({
+  const match = await tx.match.findUnique({
     where: { id: matchId },
     include: { round: { select: { gameId: true } } },
   });
@@ -796,7 +651,7 @@ export async function deleteMatch(gameId: string, matchId: string) {
 
   matchTimerCoordinator.cancel(matchId);
 
-  await prisma.$transaction(async (tx) => {
+  {
     const deletedMatchNumber = match.matchNumber;
     await tx.match.delete({ where: { id: matchId } });
 
@@ -816,7 +671,8 @@ export async function deleteMatch(gameId: string, matchId: string) {
         },
       });
     }
-  });
+  }
+  }, { timeout: 25000 });
 }
 
 function orderedTeamUserIds(team: { players: { userId: string }[] } | undefined): string[] {
@@ -834,11 +690,18 @@ export async function updateMatch(
     courtId?: string;
     /** Shallow-merged into `match.metadata`. Setting `nonRallyOutcome` to WO/default/retired strips `liveScoring`. */
     metadata?: Record<string, unknown>;
+    baseVersion?: string;
   },
-  options?: { userId?: string | null }
-): Promise<{ liveScoringCleared: boolean }> {
+  options?: { userId?: string | null },
+  transaction?: Prisma.TransactionClient
+): Promise<{ liveScoringCleared: boolean; resultsVersion: string }> {
 
-  const match = await prisma.match.findUnique({
+  if (!transaction) {
+    return prisma.$transaction(tx => updateMatch(gameId, matchId, matchData, options, tx), { timeout: 25000 });
+  }
+  const tx = transaction;
+  await lockGameResults(tx, gameId);
+  const match = await tx.match.findUnique({
     where: { id: matchId },
     include: {
       teams: {
@@ -870,9 +733,9 @@ export async function updateMatch(
   const { assertGameNotLockedTechnicalWithdrawal } = await import(
     './league/leagueTechnicalWithdrawalGuard'
   );
-  await assertGameNotLockedTechnicalWithdrawal(gameId, prisma);
+  await assertGameNotLockedTechnicalWithdrawal(gameId, tx);
 
-  const game = await prisma.game.findUnique({
+  const game = await tx.game.findUnique({
     where: { id: gameId },
     select: {
       fixedNumberOfSets: true,
@@ -893,6 +756,9 @@ export async function updateMatch(
   if (!game) {
     throw new ApiError(404, 'Game not found');
   }
+
+  if (game.resultsStatus === 'FINAL') throw new ApiError(409, 'Results are finalized. Reopen results before scoring.');
+  assertResultsVersion(matchData.baseVersion, matchResultsVersion(match));
 
   const normalizedSets: NormalizedMatchSetRow[] = (matchData.sets || []).map((s) => ({
     teamA: Math.min(SUPPLEMENTAL_SET_SCORE_MAX, Math.max(0, Number(s.teamA) || 0)),
@@ -916,7 +782,7 @@ export async function updateMatch(
     prevTeamBIds.every((id, i) => id === incomingTeamB[i]);
 
   const liveEnvBefore = readMatchLiveScoringEnvelope(match.metadata);
-  const hadLiveEnvelope = liveEnvBefore != null;
+  const hadLiveEnvelope = liveEnvBefore?.state != null;
   const revBefore = liveEnvBefore?.revision ?? null;
   const liveGrid = readNormalizedSetsFromLiveMetadata(match.metadata);
   const mergedMetadataPreview = shallowMergeMatchMetadata(match.metadata, matchData.metadata);
@@ -931,10 +797,10 @@ export async function updateMatch(
   if (!preserveLiveScoring || isNonRallyOutcomeClosingLiveScoring(outMatchMetadata)) {
     outMatchMetadata = stripLiveScoringFromMatchMetadata(outMatchMetadata);
   }
-  const hasLiveAfter = readMatchLiveScoringEnvelope(outMatchMetadata) != null;
+  const hasLiveAfter = readMatchLiveScoringEnvelope(outMatchMetadata)?.state != null;
   const liveScoringCleared = hadLiveEnvelope && !hasLiveAfter;
 
-  await prisma.$transaction(async (tx) => {
+  {
     if (matchData.courtId !== undefined) {
       await tx.match.update({
         where: { id: match.id },
@@ -994,18 +860,10 @@ export async function updateMatch(
     });
 
     await updateMatchWinners(gameId, tx);
-  });
+  }
 
   const cityTimezone = await getUserTimezoneFromCityId(game.cityId);
-  const wasFinal = game.resultsStatus === 'FINAL';
-  await prisma.$transaction(async (tx) => {
-    if (wasFinal) {
-      if (game.outcomes.length > 0) {
-        await undoGameOutcomes(gameId, tx);
-      } else {
-        await revertForGame(gameId, 'all', tx);
-      }
-    }
+  {
     await tx.game.update({
       where: { id: gameId },
       data: {
@@ -1024,11 +882,7 @@ export async function updateMatch(
         ),
       },
     });
-    if (wasFinal) {
-      await syncPodiumAfterLeavingFinal({ gameId, tx, rebuildSeasonStandings: true });
-      await invalidateAchievementStatsForGame({ gameId, tx });
-    }
-  });
+  }
 
   if (hadLiveEnvelope) {
     void appendMatchLiveScoringAudit({
@@ -1041,7 +895,8 @@ export async function updateMatch(
     });
   }
 
-  return { liveScoringCleared };
+  const saved = await tx.match.findUniqueOrThrow({ where: { id: matchId }, include: { sets: true, teams: { include: { players: true } } } });
+  return { liveScoringCleared, resultsVersion: matchResultsVersion(saved) };
 }
 
 /** Shallow-merge `patch` into match `metadata`. Walkover/default/retired strips `liveScoring`. */
@@ -1051,12 +906,14 @@ export async function patchMatchMetadata(
   patch: Record<string, unknown>,
   options?: { userId?: string | null }
 ): Promise<{ liveScoringCleared: boolean }> {
+  return prisma.$transaction(async tx => {
+  await lockGameResults(tx, gameId);
   const { assertGameNotLockedTechnicalWithdrawal } = await import(
     './league/leagueTechnicalWithdrawalGuard'
   );
-  await assertGameNotLockedTechnicalWithdrawal(gameId, prisma);
+  await assertGameNotLockedTechnicalWithdrawal(gameId, tx);
 
-  const match = await prisma.match.findUnique({
+  const match = await tx.match.findUnique({
     where: { id: matchId },
     select: {
       id: true,
@@ -1073,7 +930,7 @@ export async function patchMatchMetadata(
   }
 
   const liveBefore = readMatchLiveScoringEnvelope(match.metadata);
-  const hadLiveEnvelope = liveBefore != null;
+  const hadLiveEnvelope = liveBefore?.state != null;
   const revBefore = liveBefore?.revision ?? null;
 
   let outMeta = shallowMergeMatchMetadata(match.metadata, patch);
@@ -1081,12 +938,12 @@ export async function patchMatchMetadata(
     outMeta = stripLiveScoringFromMatchMetadata(outMeta);
   }
 
-  await prisma.match.update({
+  await tx.match.update({
     where: { id: matchId },
     data: { metadata: outMeta },
   });
 
-  const hasLiveAfter = readMatchLiveScoringEnvelope(outMeta) != null;
+  const hasLiveAfter = readMatchLiveScoringEnvelope(outMeta)?.state != null;
   const liveScoringCleared = hadLiveEnvelope && !hasLiveAfter;
 
   if (hadLiveEnvelope) {
@@ -1101,4 +958,5 @@ export async function patchMatchMetadata(
   }
 
   return { liveScoringCleared };
+  }, { timeout: 25000 });
 }

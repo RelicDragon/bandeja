@@ -12,6 +12,7 @@ struct NetworkDeliveryEntry: Codable, Identifiable {
     let matchId: String
     let operation: NetworkDeliveryOperation
     let enqueuedAt: Date
+    var baseVersion: String? = nil
 
     var id: String {
         switch operation {
@@ -141,7 +142,8 @@ final class NetworkDeliveryOutbox {
         matchId: String,
         teamA: [String],
         teamB: [String],
-        sets: [WatchSetWrite]
+        sets: [WatchSetWrite],
+        baseVersion: String? = nil
     ) {
         pendingEntries.removeAll { $0.matchId == matchId && !$0.isLivePatch }
         pendingEntries.append(
@@ -149,7 +151,8 @@ final class NetworkDeliveryOutbox {
                 gameId: gameId,
                 matchId: matchId,
                 operation: .matchPut(teamA: teamA, teamB: teamB, sets: sets),
-                enqueuedAt: Date()
+                enqueuedAt: Date(),
+                baseVersion: baseVersion
             )
         )
         save()
@@ -263,7 +266,7 @@ final class NetworkDeliveryOutbox {
         sets: [WatchSetWrite],
         api: APIClient
     ) async {
-        let body = WatchUpdateMatchBody(teamA: teamA, teamB: teamB, sets: sets)
+        let body = WatchUpdateMatchBody(teamA: teamA, teamB: teamB, sets: sets, baseVersion: entry.baseVersion)
         do {
             try await api.sendVoid(.updateMatch(gameId: entry.gameId, matchId: entry.matchId), body: body)
             removeMatchPut(matchId: entry.matchId)

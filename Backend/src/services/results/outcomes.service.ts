@@ -1,3 +1,4 @@
+import { lockGameResults } from './resultsConcurrency';
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import { WinnerOfGame, Prisma, EntityType } from '@prisma/client';
@@ -979,6 +980,7 @@ export async function recalculateGameOutcomes(
     // transaction always observes the first committed winner and materializes
     // the final/bronze exactly once.
     await BracketAdvancementService.lockRoundForBracketGame(gameId, tx);
+    await lockGameResults(tx, gameId);
     await tx.gameParticipant.updateMany({
       where: { gameId },
       data: { activeMatchId: null },

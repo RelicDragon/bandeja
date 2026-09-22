@@ -136,9 +136,9 @@ export const editGameResults = asyncHandler(async (req: AuthRequest, res: Respon
 export const syncResults = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { gameId } = req.params;
   await assertEventForbidsResults(gameId);
-  const { rounds } = req.body;
+  const { rounds, baseVersion } = req.body;
 
-  await resultsService.syncResults(gameId, rounds || []);
+  const data = await resultsService.syncResults(gameId, rounds, baseVersion);
 
   const socketService = (global as any).socketService;
   if (socketService) {
@@ -148,6 +148,7 @@ export const syncResults = asyncHandler(async (req: AuthRequest, res: Response) 
   res.json({
     success: true,
     message: 'Results synced successfully',
+    data,
   });
 });
 
@@ -245,7 +246,7 @@ export const updateMatch = asyncHandler(async (req: AuthRequest, res: Response) 
   await assertEventForbidsResults(gameId);
   const matchData = req.body;
 
-  const { liveScoringCleared } = await resultsService.updateMatch(gameId, matchId, matchData, {
+  const { liveScoringCleared, resultsVersion } = await resultsService.updateMatch(gameId, matchId, matchData, {
     userId: req.userId ?? null,
   });
   if (liveScoringCleared) {
@@ -260,7 +261,7 @@ export const updateMatch = asyncHandler(async (req: AuthRequest, res: Response) 
   res.json({
     success: true,
     message: 'Match updated successfully',
-    data: { liveScoringCleared },
+    data: { liveScoringCleared, resultsVersion },
   });
 });
 
@@ -478,4 +479,3 @@ export const getOutcomeRatingExplanationTranslation = asyncHandler(async (req: A
     data,
   });
 });
-
