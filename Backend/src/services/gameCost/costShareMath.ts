@@ -386,25 +386,21 @@ export function deriveShareState(
 /**
  * Who the total is split between.
  *
- * Every `PLAYING` participant, plus the payer when they are on the roster in any
- * other status — a non-playing organizer who fronted the money still appears in
- * the ledger (PRD 348: "Owner NON_PLAYING is excluded unless payer"). Ordered by
- * join time so the rounding remainder lands deterministically even when there is
- * no payer at all.
+ * Only `PLAYING` participants owe a share. Paying the club does not add a seat.
+ * Ordered by join time so the rounding remainder lands deterministically even
+ * when the payer is not playing.
  */
 export function selectSplitParticipantIds(
   participants: readonly { userId: string; status: string; joinedAt: Date }[],
-  payerUserId: string | null,
 ): string[] {
   const ordered = [...participants].sort(
     (a, b) => a.joinedAt.getTime() - b.joinedAt.getTime(),
   );
   const ids: string[] = [];
   for (const participant of ordered) {
-    const include =
-      participant.status === 'PLAYING' ||
-      (payerUserId != null && participant.userId === payerUserId);
-    if (include && !ids.includes(participant.userId)) ids.push(participant.userId);
+    if (participant.status === 'PLAYING' && !ids.includes(participant.userId)) {
+      ids.push(participant.userId);
+    }
   }
   return ids;
 }

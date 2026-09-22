@@ -24,6 +24,7 @@ import {
   type CoinSettleRefusal,
 } from './costShareMath';
 import { resolvePaymentMethodWrite } from './paymentMethodsWrite';
+import { projectCostSummary } from './costSummaryProjection';
 import {
   canConfirmCostShare,
   canManageCostShares,
@@ -181,7 +182,7 @@ export async function syncGameCostShares(
   })) as unknown as ShareRow[];
 
   const payerId = effectivePayerId(game);
-  const participantIds = selectSplitParticipantIds(game.participants, payerId);
+  const participantIds = selectSplitParticipantIds(game.participants);
   const totalMinor = resolveGameTotalMinor({
     priceType: game.priceType,
     priceTotal: game.priceTotal,
@@ -458,7 +459,7 @@ async function buildSummary(
 
   const outstanding = dtos.filter((dto) => dto.state !== 'SETTLED');
 
-  return {
+  return projectCostSummary({
     gameId: game.id,
     available: true,
     totalMinor,
@@ -482,7 +483,7 @@ async function buildSummary(
     viewerCoinCost,
     viewerCoinBalance: actor.wallet,
     remindAvailableAt: remindAvailableAt ? remindAvailableAt.toISOString() : null,
-  };
+  }, ctx);
 }
 
 async function requireLedger(gameId: string, actorId: string) {
@@ -570,7 +571,7 @@ export async function updateGameCostShares(
       throw new ApiError(400, 'errors.cost.notAvailable');
     }
     const payerId = effectivePayerId(refreshed);
-    const participantIds = selectSplitParticipantIds(refreshed.participants, payerId);
+    const participantIds = selectSplitParticipantIds(refreshed.participants);
     const totalMinor = resolveGameTotalMinor({
       priceType: refreshed.priceType,
       priceTotal: refreshed.priceTotal,

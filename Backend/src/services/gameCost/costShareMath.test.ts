@@ -495,20 +495,33 @@ const at = (minutes: number) => new Date(Date.UTC(2026, 0, 1, 0, minutes));
     { userId: 'invited', status: 'INVITED', joinedAt: at(3) },
   ];
   assert.deepEqual(
-    selectSplitParticipantIds(roster, 'owner'),
+    selectSplitParticipantIds(roster),
     ['owner', 'b'],
     'only PLAYING seats pay',
   );
 }
 
 {
-  // A non-playing organizer is excluded — unless they are the payer.
+  // Paying the club does not add a seat to the split.
   const roster = [
     { userId: 'organizer', status: 'NON_PLAYING', joinedAt: at(0) },
     { userId: 'b', status: 'PLAYING', joinedAt: at(1) },
   ];
-  assert.deepEqual(selectSplitParticipantIds(roster, 'b'), ['b']);
-  assert.deepEqual(selectSplitParticipantIds(roster, 'organizer'), ['organizer', 'b']);
+  assert.deepEqual(selectSplitParticipantIds(roster), ['b']);
+}
+
+{
+  const players = ['a', 'b', 'c', 'd'];
+  const roster = [
+    { userId: 'organizer', status: 'NON_PLAYING', joinedAt: at(0) },
+    ...players.map((userId, index) => ({ userId, status: 'PLAYING', joinedAt: at(index + 1) })),
+  ];
+  const participantIds = selectSplitParticipantIds(roster);
+  assert.deepEqual(participantIds, players, 'four players have four shares, never an extra payer share');
+  assert.deepEqual(
+    splitCostShares({ totalMinor: 4000, participantIds, payerId: 'organizer' }).map((row) => row.amountMinor),
+    [1000, 1000, 1000, 1000],
+  );
 }
 
 {
@@ -517,7 +530,7 @@ const at = (minutes: number) => new Date(Date.UTC(2026, 0, 1, 0, minutes));
     { userId: 'late', status: 'PLAYING', joinedAt: at(9) },
     { userId: 'early', status: 'PLAYING', joinedAt: at(1) },
   ];
-  assert.deepEqual(selectSplitParticipantIds(roster, null), ['early', 'late']);
+  assert.deepEqual(selectSplitParticipantIds(roster), ['early', 'late']);
 }
 
 // ---------------------------------------------------------------------------

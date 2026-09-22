@@ -44,15 +44,15 @@ export function isCostLedgerHidden(summary: GameCostSummary | undefined): boolea
   if (!summary) return true;
   if (!summary.available) return true;
   if (summary.currency == null) return true;
-  if (summary.totalMinor <= 0) return true;
-  return summary.shares.length === 0;
+  if (summary.totalMinor != null && summary.totalMinor <= 0) return true;
+  return summary.shareCount === 0;
 }
 
 /** The payer / organizer strip: "3 of 4 settled · 10 € outstanding". */
 export function summariseSettlement(summary: GameCostSummary): {
   settled: number;
   total: number;
-  outstandingMinor: number;
+  outstandingMinor: number | null;
   allSettled: boolean;
 } {
   return {

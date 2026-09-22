@@ -1107,9 +1107,9 @@ A ledger, not a payment system: no money moves in the app. The only value transf
 | GD-CS-01 | Hidden without a price | Game with `Price type = Not known` | No Cost card anywhere on the General tab; no `/cost-shares` request in the network log |
 | GD-CS-02 | Hidden for a free game | `Price type = Free` | No Cost card |
 | GD-CS-03 | Hidden for a team price | Game priced `Per team` | No Cost card — a team price yields no game total |
-| GD-CS-04 | Shows for a total price | 4-player game priced `Total 40 €` | Cost card: "Total 40,00 €", four rows of 10,00 €, the payer's avatar in the header |
+| GD-CS-04 | Shows for a total price | Open a 4-player game priced `Total 40 €` as owner/admin | Cost card: "Total 40,00 €", exactly four rows of 10,00 € and “X of 4 settled”; no extra payer row, header payer avatar or “paid the club” label |
 | GD-CS-05 | Per-head rounding | 3-player game priced `Total 10 €` | Rows read 3,33 / 3,34 / 3,33 — the extra cent sits on the payer's row and the rows sum to exactly the total |
-| GD-CS-06 | Viewer row pinned | Open as a non-payer participant | Your row is first and highlighted; the wide **I paid** button sits under the list |
+| GD-CS-06 | Ordinary player view | Open as a non-payer participant with 2 of 4 settled | Only your row (amount and status) is visible and highlighted, plus “2 of 4 settled” and **I paid**. No other player rows, total price or outstanding amount. GET and mutation responses contain only your share, null monetary totals, and full settlement counts |
 | GD-CS-07 | Payer has no settle button | Open as the payer | No **I paid**; your own row reads **Settled** |
 | GD-CS-08 | Mark paid outside the app | **I paid** → **Outside the app** | Sheet closes; toast "Marked as paid"; chip cross-fades to **Marked paid**; no coins leave your wallet |
 | GD-CS-09 | Coins hidden by default | **I paid** with `COINS_PER_CURRENCY_UNIT` unset in Admin | Only **Outside the app**; no coin button exists |
@@ -1143,6 +1143,9 @@ A ledger, not a payment system: no money moves in the app. The only value transf
 | GD-CS-37 | Tracker viewer access | Open a priced game as PLAYING, non-playing OWNER/ADMIN, and platform admin; repeat as queue member, invitee, GUEST, ordinary NON_PLAYING, stranger and signed-out user | Only the first three groups see the tracker. Excluded viewers make no cost request and see no loading/error card. Authenticated excluded users receive 403 from direct cost endpoints, even with an old share |
 | GD-CS-38 | League season excluded | Open a priced LEAGUE_SEASON as owner and platform admin, including via `?section=cost&settle=1`; then open its priced LEAGUE fixture as a playing participant | Season has no tracker or cost request; direct season cost endpoints return 404, sync creates no shares, and existing season records do not appear in Wallet or reminders. Fixture tracker works normally |
 | GD-CS-39 | Access after leaving | Open a priced game as PLAYING, then move to a non-playing status without an organizer role, including after shares freeze | Tracker disappears; old share does not grant access through the API or Wallet cost entries |
+| GD-CS-40 | Non-playing payer is not a fifth share | Four PLAYING users plus a NON_PLAYING owner who paid the club; set total to 40 € | Owner sees four shares of 10 € and “X of 4 settled”; no owner share. Each ordinary player sees their own 10 € row and the same count. Per-person pricing also counts only the four players |
+| GD-CS-41 | Legacy frozen payer row | Open a frozen ledger containing four player shares plus a non-playing payer share | Extra payer row is absent and counts use four shares. Stored finalized amounts and completed transfers remain unchanged |
+| GD-CS-42 | Count without a personal share | An eligible PLAYING viewer has no share in a frozen ledger | Tracker still shows “X of 4 settled”; no row, price total or **I paid** button |
 
 Wallet side: `PR-CS-01`–`PR-CS-05` in §13.3. Cards: `F-CS-01`–`F-CS-05` in §7.4b. Create/edit: `C-CS-01`–`C-CS-05` in §8.3b.
 

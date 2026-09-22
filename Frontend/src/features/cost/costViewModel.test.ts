@@ -95,7 +95,7 @@ describe('cost card visibility', () => {
   });
 
   it('renders nothing when nobody holds a share', () => {
-    expect(isCostLedgerHidden(summary({ shares: [] }))).toBe(true);
+    expect(isCostLedgerHidden(summary({ shares: [], shareCount: 0 }))).toBe(true);
   });
 
   it('renders for a priced game with shares', () => {
@@ -212,7 +212,7 @@ describe('organizer summary strip', () => {
   });
 
   it('is not "all settled" with no rows at all', () => {
-    expect(summariseSettlement(summary({ shares: [] })).allSettled).toBe(false);
+    expect(summariseSettlement(summary({ shares: [], shareCount: 0 })).allSettled).toBe(false);
   });
 });
 

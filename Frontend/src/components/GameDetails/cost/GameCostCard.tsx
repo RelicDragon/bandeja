@@ -114,7 +114,12 @@ export function GameCostCard({
   }, [gameId, lastGameCostUpdated, queryClient]);
 
   const shares = useMemo(
-    () => orderCostShares(summary?.shares ?? [], viewerUserId),
+    () => orderCostShares(
+      summary?.canManage || summary?.canConfirm
+        ? summary.shares
+        : (summary?.shares ?? []).filter((share) => share.userId === viewerUserId),
+      viewerUserId,
+    ),
     [summary, viewerUserId],
   );
 
@@ -215,7 +220,6 @@ export function GameCostCard({
   const settlement = summariseSettlement(summary);
   const cooldownMs = remindCooldownMs(summary.remindAvailableAt);
   const frozen = summary.frozenAt != null;
-  const payerName = displayName(summary.payer);
   const primaryAction = viewerPrimaryAction(summary, viewerUserId);
 
   const money = (minor: number) => formatCostMinor(minor, currency, i18n.language);
@@ -270,9 +274,15 @@ export function GameCostCard({
               <h3 className="truncate text-base font-semibold text-gray-900 dark:text-white">
                 {t('cost.title')}
               </h3>
-              <p className="truncate text-sm text-gray-600 dark:text-gray-400">
-                {t('cost.totalLine', { amount: money(summary.totalMinor) })}
-              </p>
+              {(summary.canManage || summary.canConfirm) && summary.totalMinor != null ? (
+                <p className="truncate text-sm text-gray-600 dark:text-gray-400">
+                  {t('cost.totalLine', { amount: money(summary.totalMinor) })}
+                </p>
+              ) : (
+                <p className="truncate text-sm text-gray-600 dark:text-gray-400">
+                  {t('cost.summaryAllSettled', { settled: settlement.settled, total: settlement.total })}
+                </p>
+              )}
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-2">
@@ -283,12 +293,6 @@ export function GameCostCard({
               >
                 <Lock size={12} aria-hidden />
                 <span className="sr-only sm:not-sr-only">{t('cost.frozen')}</span>
-              </span>
-            ) : null}
-            {summary.payer ? (
-              <span className="flex items-center gap-2" title={t('cost.paidBy', { name: payerName })}>
-                <PlayerAvatar player={summary.payer} superTiny fullHideName />
-                <span className="sr-only">{t('cost.paidBy', { name: payerName })}</span>
               </span>
             ) : null}
           </div>
@@ -339,11 +343,6 @@ export function GameCostCard({
                 >
                   <span className="min-w-0 max-w-full truncate text-sm text-gray-900 dark:text-white">
                     {name}
-                    {share.isPayer ? (
-                      <span className="ms-1 text-xs text-gray-500 dark:text-gray-400">
-                        {t('cost.payerTag')}
-                      </span>
-                    ) : null}
                   </span>
                   <span className="flex shrink-0 items-center gap-1.5">
                     <span className="text-sm font-medium tabular-nums text-gray-900 dark:text-white">
@@ -395,7 +394,7 @@ export function GameCostCard({
         {summary.canConfirm ? (
           <div className="mt-3 border-t border-gray-100 pt-3 dark:border-gray-800">
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              {settlement.allSettled
+              {settlement.allSettled || settlement.outstandingMinor == null
                 ? t('cost.summaryAllSettled', {
                     settled: settlement.settled,
                     total: settlement.total,
@@ -439,31 +438,33 @@ export function GameCostCard({
         onSettle={handleSettle}
       />
 
-      <CostShareEditSheet
-        open={editShare != null}
-        onOpenChange={(next) => {
-          if (!next) setEditShare(null);
-        }}
-        share={editShare}
-        currency={currency}
-        totalMinor={summary.totalMinor}
-        pending={update.isPending}
-        onSave={(input) => {
-          update.mutate(
-            {
-              overrides: [{ userId: input.userId, amountMinor: input.amountMinor }],
-              splitRemainderEvenly: input.splitRemainderEvenly,
-            },
-            {
-              onSuccess: () => {
-                setEditShare(null);
-                toast.success(t('cost.toast.shareUpdated'));
+      {summary.canManage && summary.totalMinor != null ? (
+        <CostShareEditSheet
+          open={editShare != null}
+          onOpenChange={(next) => {
+            if (!next) setEditShare(null);
+          }}
+          share={editShare}
+          currency={currency}
+          totalMinor={summary.totalMinor}
+          pending={update.isPending}
+          onSave={(input) => {
+            update.mutate(
+              {
+                overrides: [{ userId: input.userId, amountMinor: input.amountMinor }],
+                splitRemainderEvenly: input.splitRemainderEvenly,
               },
-              onError: () => toast.error(t('cost.errors.updateFailed')),
-            },
-          );
-        }}
-      />
+              {
+                onSuccess: () => {
+                  setEditShare(null);
+                  toast.success(t('cost.toast.shareUpdated'));
+                },
+                onError: () => toast.error(t('cost.errors.updateFailed')),
+              },
+            );
+          }}
+        />
+      ) : null}
     </div>
   );
 }

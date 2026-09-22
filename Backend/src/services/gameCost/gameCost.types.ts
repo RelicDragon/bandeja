@@ -36,7 +36,8 @@ export interface GameCostSummaryDto {
   gameId: string;
   /** `false` when the game has no splittable price — render nothing at all. */
   available: boolean;
-  totalMinor: number;
+  /** Hidden for ordinary players; they receive only their own amount and counts. */
+  totalMinor: number | null;
   currency: PriceCurrency | null;
   payerUserId: string | null;
   payer: BasicUser | null;
@@ -59,8 +60,8 @@ export interface GameCostSummaryDto {
   shares: CostShareDto[];
   settledCount: number;
   shareCount: number;
-  /** Sum of every share that is not yet confirmed by the payer. */
-  outstandingMinor: number;
+  /** Sum of unconfirmed shares; hidden for ordinary players. */
+  outstandingMinor: number | null;
   viewerShare: CostShareDto | null;
   canManage: boolean;
   canConfirm: boolean;

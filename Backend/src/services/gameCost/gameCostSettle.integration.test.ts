@@ -152,6 +152,44 @@ void (async () => {
     assert.equal(summary.available, true, 'the cost card is live for a priced game');
     assert.equal(summary.viewerShare?.amountMinor, 200, '€4 split two ways');
     assert.equal(summary.viewerCoinCost, 200, '€2 at 100 coins per € is 200 coins');
+    assert.deepEqual(summary.shares.map((share) => share.userId), [player.id]);
+    assert.equal(summary.totalMinor, null, 'ordinary player cannot read the total price');
+    assert.equal(summary.outstandingMinor, null);
+    assert.equal(summary.shareCount, 2);
+    assert.equal(summary.settledCount, 1);
+
+    const fourPlayerGame = await makeGame(payer.id, player.id);
+    const extraPlayers = await Promise.all(['third', 'fourth', 'fifth'].map((name) => makeUser(name, 0)));
+    await prisma.game.update({
+      where: { id: fourPlayerGame.id },
+      data: { priceTotal: 40, maxParticipants: 4, playersPerMatch: 4 },
+    });
+    await prisma.gameParticipant.update({
+      where: { userId_gameId: { gameId: fourPlayerGame.id, userId: payer.id } },
+      data: { status: ParticipantStatus.NON_PLAYING },
+    });
+    await prisma.gameParticipant.createMany({
+      data: extraPlayers.map((extra) => ({
+        gameId: fourPlayerGame.id, userId: extra.id,
+        status: ParticipantStatus.PLAYING, role: ParticipantRole.PARTICIPANT,
+      })),
+    });
+    const ownerSummary = await getGameCostSummary(fourPlayerGame.id, payer.id);
+    assert.equal(ownerSummary.shares.length, 4, 'four players, no extra non-playing payer row');
+    assert.equal(ownerSummary.shareCount, 4);
+    assert.equal(ownerSummary.settledCount, 0, 'paying the club is not an extra settled share');
+    assert.equal(ownerSummary.totalMinor, 4000);
+    assert.equal(ownerSummary.viewerShare, null);
+    assert.ok(ownerSummary.shares.every((share) => share.amountMinor === 1000));
+    const paidSummary = await markOwnShareAsPaid(fourPlayerGame.id, player.id, 'MANUAL');
+    assert.deepEqual(paidSummary.shares.map((share) => share.userId), [player.id], 'mutation responses are private too');
+    assert.equal(paidSummary.totalMinor, null);
+    assert.equal(paidSummary.shareCount, 4);
+    await setShareConfirmed(fourPlayerGame.id, payer.id, player.id, true);
+    const confirmedSummary = await getGameCostSummary(fourPlayerGame.id, player.id);
+    assert.equal(confirmedSummary.settledCount, 1);
+    assert.equal(confirmedSummary.shareCount, 4);
+    assert.equal(confirmedSummary.viewerShare?.state, 'SETTLED');
 
     // Access follows the current game roster, even when old shares exist.
     const accessGame = await makeGame(payer.id, player.id);
@@ -183,7 +221,7 @@ void (async () => {
       where: { userId_gameId: { gameId: accessGame.id, userId: payer.id } },
       data: { status: ParticipantStatus.NON_PLAYING },
     });
-    assert.equal((await getGameCostSummary(accessGame.id, payer.id)).available, true, 'non-playing owner');
+    assert.equal((await getGameCostSummary(accessGame.id, payer.id)).available, false, 'no shares when every participant is non-playing');
 
     await prisma.gameParticipant.update({
       where: { userId_gameId: { gameId: accessGame.id, userId: player.id } },
