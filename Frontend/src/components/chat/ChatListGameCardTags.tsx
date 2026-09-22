@@ -12,6 +12,8 @@ import { getGameCardMyParticipationBadge } from '@/utils/gameCardMyParticipation
 import { getViewerPrimarySport, shouldShowGameCardSportGlyph } from '@/utils/findSportFilter';
 import { parseGameSport } from '@/utils/gameSport';
 import { gameIsNonRating } from '@/utils/gameRatingSemantics';
+import { computeSeatInfo } from '@/components/gameCard/gameCardSeatInfo';
+import { ordinalLabel } from '@/utils/formatOrdinal';
 
 type Props = {
   game: Game;
@@ -22,7 +24,7 @@ const tagClass =
   'inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-medium rounded shrink-0';
 
 export function ChatListGameCardTags({ game, userId }: Props) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const gameSport = useMemo(() => parseGameSport(game.sport), [game.sport]);
   const showSportTag = useMemo(
@@ -33,6 +35,25 @@ export function ChatListGameCardTags({ game, userId }: Props) {
   const participants = game.participants ?? [];
   const participation = getGameParticipationState(participants, userId, game);
   const myBadge = getGameCardMyParticipationBadge(participants, userId);
+  /**
+   * PRD 359 — the same queue place the Find and My cards show. The chat list
+   * is where a queued player checks in most often, so the badge must not be
+   * the one surface that still makes them open the game.
+   */
+  const queuePosition = useMemo(
+    () =>
+      myBadge === 'in_queue'
+        ? computeSeatInfo(game, game.participants, userId ? { id: userId } : null)
+            .viewerQueuePosition
+        : null,
+    [myBadge, game, userId],
+  );
+  const queuePositionLabel =
+    queuePosition != null
+      ? ordinalLabel(queuePosition, i18n.language, (position) =>
+          t('games.queuePositionOrdinal', { position }),
+        )
+      : null;
   const owner = participants.find((p) => p.role === 'OWNER');
   const showFireIcon =
     showsPremiumStatus(owner?.user) &&
@@ -110,8 +131,12 @@ export function ChatListGameCardTags({ game, userId }: Props) {
         </span>
       )}
       {myBadge === 'in_queue' && (
-        <span className={`${tagClass} bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-400`}>
-          {t('games.statusInQueue')}
+        <span
+          className={`${tagClass} whitespace-nowrap bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-400`}
+        >
+          {queuePositionLabel
+            ? t('games.statusInQueueWithPosition', { position: queuePositionLabel })
+            : t('games.statusInQueue')}
         </span>
       )}
       {myBadge === 'playing' && (

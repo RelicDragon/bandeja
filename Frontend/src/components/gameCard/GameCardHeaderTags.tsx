@@ -7,6 +7,7 @@ import type { GameCardMyParticipationBadge } from '@/utils/gameCardMyParticipati
 import { genderTeamsSummaryLabelKey } from '@/utils/genderTeamsSummaryLabel';
 import { gameIsNonRating } from '@/utils/gameRatingSemantics';
 import { eventKindI18nKey } from '@/utils/eventListingDisplay';
+import { ordinalLabel } from '@/utils/formatOrdinal';
 import { WeatherRiskPill } from './WeatherRiskPill';
 import { SpotOpenedPill } from '@/features/spot-opened/SpotOpenedPill';
 import { resolveSpotOpenedAt } from '@/features/spot-opened/spotOpenedWindow';
@@ -21,6 +22,12 @@ interface GameCardHeaderTagsProps {
    * agree; `undefined` falls back to the locale's own convention.
    */
   hour12?: boolean;
+  /**
+   * PRD 359 — the viewer's 1-based place in the join queue. `null` (the
+   * default) keeps the badge at plain "In queue", which is what an
+   * unorderable roster must fall back to.
+   */
+  queuePosition?: number | null;
 }
 
 const PILL = 'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium';
@@ -59,9 +66,17 @@ export const GameCardHeaderTags = ({
   sportTags,
   myParticipationBadge,
   hour12,
+  queuePosition = null,
 }: GameCardHeaderTagsProps) => {
   const { t, i18n } = useTranslation();
   const spotOpenedAt = resolveSpotOpenedAt(game);
+  // PRD 359 — "In queue · 2nd". Same pill, same size, one more fact.
+  const queuePositionLabel =
+    myParticipationBadge === 'in_queue' && queuePosition != null
+      ? ordinalLabel(queuePosition, i18n.language, (position) =>
+          t('games.queuePositionOrdinal', { position }),
+        )
+      : null;
 
   return (
     <>
@@ -92,7 +107,9 @@ export const GameCardHeaderTags = ({
         >
           {myParticipationBadge === 'playing'
             ? t('games.badgePlaying', { defaultValue: 'Playing' })
-            : t(participationLabelKey(myParticipationBadge))}
+            : queuePositionLabel
+              ? t('games.statusInQueueWithPosition', { position: queuePositionLabel })
+              : t(participationLabelKey(myParticipationBadge))}
         </span>
       )}
       {/* PRD 347 — a seat freed in the last 2 h. Never shown once results are

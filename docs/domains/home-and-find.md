@@ -113,6 +113,20 @@ Above the calendar on Find (desktop: top of the games column, above the events r
 
 `useFindFromUrl` parses `?clubIds=a,b` and `FindTab` applies it through `applyFindClubIdsFromUrl` once the stored filters have hydrated. Deliberately conservative: a URL with **no** `clubIds` leaves the player's saved filter alone, and a URL matching the saved filter produces no update, so the effect cannot loop. When it does apply, the filters panel opens so the player can see (and clear) the filter that arrived with the link. Produced by the public club page's "See all on Find" ([club-admin.md](./club-admin.md)).
 
+## Seats left and queue position on cards (PRD 359)
+
+Two numbers the card can prove from the roster it already holds — no enricher, no extra request, no schema.
+
+`Frontend/src/components/gameCard/gameCardSeatInfo.ts` → `computeSeatInfo(game, participants, viewer)` returns `{ openSeats, queueLength, viewerQueuePosition }`. `GameCard` calls it once per card and threads the result into the existing join button and the existing participation pill; `ChatListGameCardTags` calls it for the badge only. Nothing renders when a value is `null`.
+
+- **Open seats** = `maxParticipants − PLAYING`, floored at 0. Queue, invites, guests and `NON_PLAYING` trainers never consume a seat. `null` when the entity has `unboundedRoster` (EVENT, BAR) or no cap.
+- **`MIX_PAIRS`** is per gender: `min(seats left overall, maxParticipants / 2 − PLAYING of the viewer's gender)`, via the existing `gameInviteInbox` helpers. With no gender on the viewer's profile there is **no** count — the gate is still the existing one, the label just says nothing it cannot prove.
+- **Join label** (`gameCardJoinLabel.ts`): the count appears only for 1–2 open seats, never for 0, and "N waiting" only when the game is full and somebody is queued. Long form is dropped below `sm`; `aria-label` always carries the whole sentence. PRD 347's `spotJustOpened` sweep is untouched and takes precedence for its window.
+- **Queue position** is `IN_QUEUE` rows ordered by `joinedAt` ascending — the same rule as `readQueueState` / `computeJoinQueuesFromParticipants`, so the card and `GameQueuePanel` cannot disagree (pinned by a test). A row with no parsable `joinedAt` makes the order unknowable and the badge falls back to plain "In queue" rather than guessing. The pill reads `In queue · {ordinal}`.
+- **Ordinals** come from `Frontend/src/utils/formatOrdinal.ts`. `en`, `es` and `cs` derive a suffix from `Intl.PluralRules(locale, { type: 'ordinal' })`; every other locale supplies its own written form through `games.queuePositionOrdinal`. There is deliberately no "-th for everyone" fallback.
+
+Backend: the only change is `joinedAt` on the Find card participant select (`availableGamesCard.projection.ts`). It was previously on the *forbidden* list for that payload; the card contract check now requires it, because dropping it again would silently degrade every queued viewer's badge. My tab (`gameMyTabListInclude`) and the chat game payload already carried it.
+
 ## Card enrichment
 
 Find and My cards are rendered from a lean projection plus a bag of derived fields attached per batch. Enrichers register themselves by name:

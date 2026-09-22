@@ -105,7 +105,7 @@ Side effects, in order: `Game.lastSeatOpenedAt = now` → socket `game-seat-open
 
 > **The level gate is deliberately asymmetric.** `acceptNonPlayingParticipant` passes `skipLevelCheck: true` because an organizer accepting by hand is a conscious override. Auto-fill has no human in the loop, so it pre-checks the level range itself before delegating. Removing that pre-check would silently seat out-of-range players.
 
-Card pill and sorting: [home-and-find.md](./home-and-find.md).
+Card pill and sorting: [home-and-find.md](./home-and-find.md). The same `joinedAt`-ascending order is what a card's "In queue · 2nd" badge counts (PRD 359, same doc) — the card re-derives it from the participant rows rather than from `joinQueues`, which only the detail payload carries, so a change to this ordering has to be made in both places.
 
 ### Attendance
 

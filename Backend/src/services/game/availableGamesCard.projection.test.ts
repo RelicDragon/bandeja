@@ -67,6 +67,15 @@ function run() {
     false,
     'Find card participants omit inviteMessage',
   );
+  // PRD 359 — seats-left and "2nd in line" are computed on the client from the
+  // card roster, so both columns must survive the slim select.
+  const participantSelect = (select.participants as { select: Record<string, unknown> }).select;
+  assert.equal(participantSelect.status, true, 'Find card participants carry status');
+  assert.equal(
+    participantSelect.joinedAt,
+    true,
+    'Find card participants carry joinedAt — the queue has no other ordering',
+  );
   assert.equal(
     'bio' in FIND_CARD_USER_SELECT,
     false,
@@ -97,6 +106,7 @@ function run() {
         userId: 'u1',
         role: 'OWNER',
         status: 'PLAYING',
+        joinedAt: '2026-09-20T10:00:00.000Z',
         user: {
           id: 'u1',
           firstName: 'A',
@@ -113,6 +123,29 @@ function run() {
 
   assert.deepEqual(collectAvailableGamesCardContractIssues([validCard]), []);
   assertAvailableGamesCardContract([validCard]);
+
+  // PRD 359 — dropping either column from the select is a silent card
+  // regression, so the contract check fails loudly instead.
+  const noJoinedAt = {
+    ...validCard,
+    participants: [
+      Object.fromEntries(
+        Object.entries(validCard.participants[0]).filter(([key]) => key !== 'joinedAt'),
+      ),
+    ],
+  };
+  assert.ok(
+    collectAvailableGamesCardContractIssues([noJoinedAt]).some((i) => i.path.endsWith('.joinedAt')),
+    'a participant without joinedAt cannot be ordered in the queue',
+  );
+  const noStatus = {
+    ...validCard,
+    participants: [{ ...validCard.participants[0], status: undefined }],
+  };
+  assert.ok(
+    collectAvailableGamesCardContractIssues([noStatus]).some((i) => i.path.endsWith('.status')),
+    'a participant without status cannot be counted against the seats',
+  );
 
   const fatUser = {
     ...validCard,

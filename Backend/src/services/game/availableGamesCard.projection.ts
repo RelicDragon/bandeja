@@ -137,6 +137,15 @@ const findCardParticipantSelect = {
   gameId: true,
   role: true,
   status: true,
+  /**
+   * PRD 359 — queue order on the card. `IN_QUEUE` rows come back unordered
+   * (there is no `orderBy` on this relation), so "2nd in line" is only
+   * derivable when every queued row carries the timestamp the game page
+   * already sorts by (`computeJoinQueuesFromParticipants` → `createdAt`).
+   * One `TIMESTAMP(3)` per participant; it is not private data the roster
+   * does not already expose.
+   */
+  joinedAt: true,
   lookingForPartner: true,
   user: {
     select: FIND_CARD_USER_SELECT,
@@ -371,13 +380,32 @@ export function collectAvailableGamesCardContractIssues(
     participants.forEach((participant, pIndex) => {
       if (!participant || typeof participant !== 'object') return;
       const row = participant as Record<string, unknown>;
-      for (const key of ['inviteMessage', 'inviteExpiresAt', 'showInStories', 'joinedAt'] as const) {
+      for (const key of ['inviteMessage', 'inviteExpiresAt', 'showInStories'] as const) {
         if (key in row && row[key] != null) {
           issues.push({
             path: `[${gameIndex}].participants[${pIndex}].${key}`,
             reason: `${key} not part of Find card participant`,
           });
         }
+      }
+      /*
+       * PRD 359 — the card derives "1 seat left" from `status` and the queue
+       * place from `joinedAt`. Both are required, not merely permitted: a
+       * payload missing `joinedAt` silently degrades every queued viewer's
+       * badge to the position-less form, which is the kind of regression a
+       * select-only edit makes easy and invisible.
+       */
+      if (typeof row.status !== 'string') {
+        issues.push({
+          path: `[${gameIndex}].participants[${pIndex}].status`,
+          reason: 'status is required for seat and queue counts',
+        });
+      }
+      if (row.joinedAt == null) {
+        issues.push({
+          path: `[${gameIndex}].participants[${pIndex}].joinedAt`,
+          reason: 'joinedAt is required to order the join queue',
+        });
       }
       const user = row.user as Record<string, unknown> | null | undefined;
       if (!user) {

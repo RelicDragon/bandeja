@@ -704,6 +704,34 @@ Push: `PN-RC-01`–`PN-RC-03` in §18.8. Archive: `PR-RC-01`–`PR-RC-05` in §1
 | F-WX-07 | Tag row not collapsed | Card whose only tag would be the weather pill | The tag row still renders |
 | F-WX-08 | Calendar cells unchanged | Month calendar with day weather on | Day cells unchanged; no weather pill was added to them |
 
+#### 7.4c Seats left and queue position (PRD 359)
+
+Both numbers are computed on the client from the roster already in the card payload — no new request, no new row, no new pill. Run every row on Find, Home and My tab; the badge rows also apply to the Chats game row.
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| F-SL-01 | Seats left on the button | 4-max game with 3 PLAYING | Join button reads **Join the game · 1 seat left** (below the `sm` breakpoint: **· 1 left**) |
+| F-SL-02 | Two seats | Same game with 2 PLAYING | **· 2 seats left** / **· 2 left** |
+| F-SL-03 | Not scarce, not shown | Same game with 1 PLAYING (3 open) | Label unchanged — no suffix |
+| F-SL-04 | Never zero | Game that is full | No **0 seats left** anywhere; the button is the queue label instead |
+| F-SL-05 | Queue only counts PLAYING | 4-max game with 2 PLAYING, 1 IN_QUEUE, 1 INVITED, 1 NON_PLAYING | **· 2 seats left** — the queue, the invite and the trainer do not consume seats |
+| F-SL-06 | Waiting count | Full game with 2 queued | Button reads **Join the queue · 2 waiting** at every width |
+| F-SL-07 | Empty queue | Full game with nobody queued | Plain **Join the queue** |
+| F-SL-08 | MIX_PAIRS by gender | 4-max MIX game with 2 men seated; view as a man, then as a woman | Man: no count (his half is full and the plain label shows). Woman: **· 2 seats left** |
+| F-SL-09 | MIX_PAIRS never over-promises | 4-max MIX game with 3 men seated; view as a woman | **· 1 seat left**, not 2 — one seat exists in total |
+| F-SL-10 | Gender unset | `genderIsSet` false user on a MIX_PAIRS card | No count at all; the existing gender sheet still gates the join (`F-76`) |
+| F-SL-11 | Entities without seats | EVENT and BAR cards | No seat count and no waiting count in any state |
+| F-SL-12 | Spot-opened still wins | Card with PRD 347's **Spot opened** pill and 1 seat left | Pill and one-shot sweep unchanged; the count rides in the label with no extra colour or pulse (`F-SO-05`) |
+| F-SL-13 | Screen reader | VoiceOver / TalkBack on the button, at both widths | Announces the whole sentence — "Join the game, 1 seat left" / "Join the queue, 2 players waiting" — never the collapsed "· 1 left". `@manual` |
+| F-SL-14 | One line, no clipping | 375 pt phone in `cs`, `ru`, `ar`; then OS largest text size | Label fits one line at normal size in every locale; at the largest text size it wraps rather than ellipsing the count |
+| F-QP-01 | Queue position badge | Viewer is 2nd of 3 in a game's queue; open Find / My / Chats | Participation pill reads **In queue · 2nd** (localised ordinal), same size, same sky tint, same place in the tag row |
+| F-QP-02 | Matches the game page | Same game, open it | `GameQueuePanel` says the same place ("You're #2 of 3") — the card and the page never disagree |
+| F-QP-03 | Order is by join time | Three players queue out of payload order | 1st / 2nd / 3rd follow `joinedAt`, not the order the API returned |
+| F-QP-04 | Unknown position degrades | Payload without `joinedAt` on a queued row (old client cache, truncated roster) | Badge stays plain **In queue** — never a wrong ordinal |
+| F-QP-05 | Ordinals per locale | Switch through all 11 locales with position 2, then 11 and 21 in `en` | `en` 2nd / 11th / 21st; `es` 2.º; `cs` 2.; `ru` 2-й; `sr` 2.; `ar` رقم ٢ (RTL, mirrored); `zh` 第 2 位; `ja` 2番目; `th` ลำดับที่ 2; `hi` 2वाँ; `id` ke-2 |
+| F-QP-06 | Only the queue badge | Viewer is PLAYING / INVITED / owner | Those badges are untouched — no ordinal on any of them |
+| F-QP-07 | Themes | Light / Dark / Classic / Premium | Badge and button suffix legible in all four |
+
 ---
 
 ## 8. Create game (`/create-game`)

@@ -28,6 +28,7 @@ function viewerPrefsKey(user: unknown): string {
     alwaysShowUserNames?: boolean;
     currentCityId?: string;
     currentCity?: { id?: string };
+    gender?: string | null;
   };
   return [
     u.id ?? '',
@@ -37,6 +38,9 @@ function viewerPrefsKey(user: unknown): string {
     u.weekStart ?? '',
     u.alwaysShowUserNames === false ? '0' : '1',
     u.currentCityId ?? u.currentCity?.id ?? '',
+    // PRD 359 — the viewer's gender decides how many MIX_PAIRS seats are open
+    // to them, so the join label changes when it does.
+    u.gender ?? '',
   ].join(':');
 }
 

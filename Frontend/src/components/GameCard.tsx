@@ -22,6 +22,7 @@ import { GameCardPlayersPhoto } from '@/components/gameCard/GameCardPlayersPhoto
 import { gameIsNonRating } from '@/utils/gameRatingSemantics';
 import { GameCardUserNote } from '@/components/gameCard/GameCardUserNote';
 import { GameCardJoinButton } from '@/components/gameCard/GameCardJoinButton';
+import { computeSeatInfo } from '@/components/gameCard/gameCardSeatInfo';
 import { EventPosterCard } from '@/components/home/EventPosterCard';
 import { Game } from '@/types';
 import { getGameParticipationState } from '@/utils/gameParticipationState';
@@ -199,6 +200,24 @@ const GameCardMatch = memo(function GameCardMatch({
   const showStatusIcon = game.status !== 'ANNOUNCED';
   const hasMyInvites = participation.hasPendingInvite;
   const isInJoinQueue = participation.isInJoinQueue;
+
+  /**
+   * PRD 359 — seats left and the viewer's queue place, both read off the
+   * roster the card already has. `null` values render nothing, so an entity
+   * without seats (EVENT, BAR) and a payload that cannot be ordered both fall
+   * back to today's labels.
+   */
+  const viewerId = effectiveUser?.id as string | undefined;
+  const viewerGender = effectiveUser?.gender as string | null | undefined;
+  const seatInfo = useMemo(
+    () =>
+      computeSeatInfo(
+        game,
+        game.participants,
+        viewerId ? { id: viewerId, gender: viewerGender ?? null } : null,
+      ),
+    [game, viewerId, viewerGender],
+  );
 
   const userNoteDisplay = game.userNote ?? null;
   const joinQueueCount = participants.filter((p) => p.status === 'IN_QUEUE').length;
@@ -392,6 +411,7 @@ const GameCardMatch = memo(function GameCardMatch({
                   sportTags={gameSportTags}
                   myParticipationBadge={myParticipationBadge}
                   hour12={displaySettings.hour12}
+                  queuePosition={seatInfo.viewerQueuePosition}
                 />
               </div>
             )}
@@ -475,6 +495,8 @@ const GameCardMatch = memo(function GameCardMatch({
               hasFreeSlots={hasUnoccupiedSlots}
               onJoin={onJoin}
               spotJustOpened={spotJustOpened}
+              openSeats={seatInfo.openSeats}
+              queueLength={seatInfo.queueLength}
             />
           )}
         </div>
