@@ -44,6 +44,7 @@ Do not “simplify” without intent. Table kept inline because code cites this 
 
 | Constraint | Why it stays |
 |------------|--------------|
+| **Scores use saved revisions** | Manual edits/snapshots carry their original version; live edits carry a base revision. Check and write under the same game transaction lock (bracket-round lock first). Reject stale queued edits, retain incrementing live tombstones after manual correction, and never silently rebase rejected scores or apply an older reply. See `resultsConcurrency.ts` and `docs/domains/results.md`. |
 | **Create templates ≠ league/playoff formats** | Casual create uses the template registry (`Frontend/src/sport/createFlow.ts` / `Frontend/shared/createTemplates.ts`). League seasons and playoffs use separate wizards/seeds (`Frontend/src/components/GameDetails/playoffTemplates.ts`, `PLAYOFF_GAME_TYPE_TEMPLATES` in `Backend/src/services/league/gameCreation.util.ts`). Do not add `league`/`playoff` template tiers. |
 | **Template matrix source of truth** | FE + `@shared/createTemplates` define templates; FE/BE parity via `Frontend/src/sport/createTemplates.parity.test.ts`. Do not maintain a separate matrix markdown. |
 | **Sport level confirmation** | Per-sport on `UserSportProfile.approved*`. Legacy `User.approved*` is a **PADEL-only** denormalized mirror for older clients — not a primary-sport projection. Non-padel confirmation lives only on the sport profile. |

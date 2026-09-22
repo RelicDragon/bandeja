@@ -40,6 +40,7 @@ export function useGameResultsEngine({
   const serverProblem = useGameResultsStore((state) => state.serverProblem);
 
   const lastGameResultsUpdated = useSocketEventsStore((state) => state.lastGameResultsUpdated);
+  const lastLiveUpdated = useSocketEventsStore((state) => state.lastMatchLiveScoringUpdated);
   const lastMatchTimerUpdated = useSocketEventsStore((state) => state.lastMatchTimerUpdated);
 
   useEffect(() => {
@@ -83,6 +84,12 @@ export function useGameResultsEngine({
       console.error('Failed to reload results:', err);
     });
   }, [lastGameResultsUpdated, activeGameId]);
+
+  useEffect(() => {
+    if (!activeGameId || lastLiveUpdated?.gameId !== activeGameId) return;
+    const timer = setTimeout(() => { void GameResultsEngine.reloadFromRemote(); }, 150);
+    return () => clearTimeout(timer);
+  }, [activeGameId, lastLiveUpdated]);
 
   useEffect(() => {
     if (!activeGameId || !lastMatchTimerUpdated || lastMatchTimerUpdated.gameId !== activeGameId) return;
@@ -191,4 +198,3 @@ export function useGameResultsEngine({
     transitionMatchTimer,
   ]);
 }
-

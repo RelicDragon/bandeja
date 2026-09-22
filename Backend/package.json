@@ -136,6 +136,7 @@
     "test:user-team": "../scripts/run-heavy sh -c 'ts-node --transpile-only src/services/userTeam/userTeamReady.test.ts && ts-node --transpile-only src/services/userTeam/userTeamAddToGame.contract.test.ts && ts-node --transpile-only src/services/game/canInviteToGame.test.ts && ts-node --transpile-only src/services/game/gameResultsLockedFields.test.ts && ts-node --transpile-only src/services/game/participantSubstitution.contract.test.ts && ts-node --transpile-only src/services/game/myGamesParticipantWhere.test.ts'",
     "test:weather-alerts": "ts-node --transpile-only src/services/weather/indoorAlternativesRules.test.ts && ts-node --transpile-only src/services/weather/weatherNotification.test.ts && ts-node --transpile-only src/services/weather/weatherRisk.test.ts",
     "test:weltner": "../scripts/run-heavy sh -c 'ts-node --transpile-only src/services/weltner/weltnerContract.test.ts && ts-node --transpile-only src/services/weltner/weltnerClient.test.ts && ts-node --transpile-only src/services/weltner/weltner.service.test.ts && ts-node --transpile-only src/services/weltner/weltnerMerge.test.ts'",
+    "test:scoring-concurrency": "../scripts/run-heavy ts-node --transpile-only scripts/tests/scoring-concurrency.ts",
     "worker": "ts-node -r dotenv/config src/worker.ts"
   },
   "keywords": [

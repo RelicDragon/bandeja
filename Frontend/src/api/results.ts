@@ -168,10 +168,10 @@ export const resultsApi = {
     return response.data;
   },
 
-  patchMatchMetadata: async (gameId: string, matchId: string, patch: Record<string, unknown>) => {
+  patchMatchMetadata: async (gameId: string, matchId: string, patch: Record<string, unknown>, baseVersion: string) => {
     const response = await api.patch<ApiResponse<{ liveScoringCleared: boolean }>>(
       `/results/game/${gameId}/matches/${matchId}/metadata`,
-      { patch }
+      { patch, baseVersion }
     );
     return response.data;
   },

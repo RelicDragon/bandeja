@@ -4,6 +4,10 @@ Do not “simplify” these without explicit product intent. Code comments point
 
 Each block: what, why, exact paths.
 
+## Scores use saved revisions, not device clocks or arrival order
+
+Manual edits and offline snapshots carry their original `baseVersion`; live patches carry `baseRevision`. Validate under the same game transaction lock that writes scores, acquiring any bracket-round lock first. An old queued payload cannot overwrite a newer saved score. Manual corrections retain an incremented live tombstone (`state: null`) so stale live sessions cannot reuse revision zero. Clients must not silently rebase rejected edits or let older HTTP/socket replies roll back a newer revision. See `Backend/src/services/results/resultsConcurrency.ts`, `results.service.ts`, `matchLiveScoring.service.ts`, and `docs/domains/results.md`.
+
 ## Create templates ≠ league/playoff formats
 
 Casual create uses the template registry. League seasons and playoffs use separate wizards/seeds. Do not add `league` / `playoff` template tiers to the create matrix.

@@ -69,6 +69,7 @@ jobs:
       - run: npm run test:onboarding
       - run: npm run test:club-page
       - run: npm run test:live-rail
+      - run: npm run test:scoring-concurrency
       - run: npm run test:security
         env:
           # Suite imports route modules that construct PrismaClient; no DB queries.
@@ -106,6 +107,7 @@ jobs:
       - run: npm run test:invites
       - run: npm run test:bugs
       - run: npm run test:live-scoring
+      - run: npm run test:game-results-sync
       - run: npm run test:avatar-crop
       - run: npm run test:keyboard-layout
       # PRD 345-357 — one suite per PRD (see docs/plans/prd-345-357/).

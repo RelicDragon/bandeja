@@ -121,6 +121,13 @@ export function useLiveMatchController(
   const rawMatchSetsRef = useRef(rawMatch?.sets);
 
   useEffect(() => {
+    savingRef.current = false;
+    setSaving(false);
+    setLiveWritePending(false);
+    gestureOpIdRef.current = null;
+  }, [gameId, matchId, setLiveWritePending]);
+
+  useEffect(() => {
     liveStateRef.current = liveState;
   }, [liveState]);
   useEffect(() => {
@@ -317,6 +324,7 @@ export function useLiveMatchController(
         gestureOpIdRef.current = null;
         if (result.refresh) await refreshMatchLiveFromServer();
       }
+      if (activeMatchRef.current !== `${gameId}:${matchId}`) return;
       savingRef.current = false;
       setSaving(false);
     },

@@ -277,7 +277,7 @@ export const patchMatchMetadata = asyncHandler(async (req: AuthRequest, res: Res
     gameId,
     matchId,
     patch as Record<string, unknown>,
-    { userId: req.userId ?? null }
+    { userId: req.userId ?? null, baseVersion: req.body?.baseVersion }
   );
   if (liveScoringCleared) {
     matchLiveScoringService.notifyMatchLiveScoringCleared(gameId, matchId);

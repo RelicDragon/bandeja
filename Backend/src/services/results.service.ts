@@ -1,7 +1,6 @@
 import prisma from '../config/database';
 import { Sport, Prisma } from '@prisma/client';
 import { lockGameResults, matchResultsVersion, withResultsVersions, assertResultsVersion } from './results/resultsConcurrency';
-import { cancelAllMatchTimersForGame } from './results/matchTimer.service';
 import { matchTimerCoordinator } from './results/matchTimerCoordinator';
 import { ApiError } from '../utils/ApiError';
 import {
@@ -23,7 +22,6 @@ import {
   shallowMergeMatchMetadata,
   isNonRallyOutcomeClosingLiveScoring,
 } from './results/matchLiveScoring.service';
-import { appendMatchLiveScoringAudit } from './results/matchLiveScoringAudit.service';
 import { updateMatchWinners } from './results/matchWinner.service';
 import { undoGameOutcomes } from './results/outcomes.service';
 import {
@@ -885,14 +883,14 @@ export async function updateMatch(
   }
 
   if (hadLiveEnvelope) {
-    void appendMatchLiveScoringAudit({
+    await tx.matchLiveScoringAudit.create({ data: {
       matchId,
       gameId,
       source: liveScoringCleared ? 'SYSTEM_CLEAR' : 'TABLE_PUT',
       userId: options?.userId ?? null,
       revisionBefore: revBefore,
-      revisionAfter: preserveLiveScoring ? revBefore : null,
-    });
+      revisionAfter: readMatchLiveScoringEnvelope(outMatchMetadata)?.revision ?? null,
+    } });
   }
 
   const saved = await tx.match.findUniqueOrThrow({ where: { id: matchId }, include: { sets: true, teams: { include: { players: true } } } });
@@ -904,7 +902,7 @@ export async function patchMatchMetadata(
   gameId: string,
   matchId: string,
   patch: Record<string, unknown>,
-  options?: { userId?: string | null }
+  options?: { userId?: string | null; baseVersion?: string }
 ): Promise<{ liveScoringCleared: boolean }> {
   return prisma.$transaction(async tx => {
   await lockGameResults(tx, gameId);
@@ -913,11 +911,18 @@ export async function patchMatchMetadata(
   );
   await assertGameNotLockedTechnicalWithdrawal(gameId, tx);
 
+  const game = await tx.game.findUnique({ where: { id: gameId }, select: { resultsStatus: true } });
+  if (game?.resultsStatus === 'FINAL') throw new ApiError(409, 'Results are finalized. Reopen results before editing.');
+
   const match = await tx.match.findUnique({
     where: { id: matchId },
     select: {
       id: true,
+      updatedAt: true,
+      courtId: true,
       metadata: true,
+      sets: true,
+      teams: { include: { players: true } },
       round: { select: { gameId: true } },
     },
   });
@@ -928,6 +933,8 @@ export async function patchMatchMetadata(
   if (match.round.gameId !== gameId) {
     throw new ApiError(400, 'Match does not belong to the specified game');
   }
+
+  assertResultsVersion(options?.baseVersion, matchResultsVersion(match));
 
   const liveBefore = readMatchLiveScoringEnvelope(match.metadata);
   const hadLiveEnvelope = liveBefore?.state != null;
@@ -947,14 +954,14 @@ export async function patchMatchMetadata(
   const liveScoringCleared = hadLiveEnvelope && !hasLiveAfter;
 
   if (hadLiveEnvelope) {
-    void appendMatchLiveScoringAudit({
+    await tx.matchLiveScoringAudit.create({ data: {
       matchId,
       gameId,
       source: liveScoringCleared ? 'SYSTEM_CLEAR' : 'TABLE_PUT',
       userId: options?.userId ?? null,
       revisionBefore: revBefore,
-      revisionAfter: hasLiveAfter ? revBefore : null,
-    });
+      revisionAfter: readMatchLiveScoringEnvelope(outMeta)?.revision ?? null,
+    } });
   }
 
   return { liveScoringCleared };

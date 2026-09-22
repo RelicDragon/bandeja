@@ -70,6 +70,16 @@ Per player: `GET /results/game/:gameId/outcome/:userId/explanation`. `outcomeExp
 
 Results entry distinguishes rejected edits from unavailable requests. Definitive HTTP 4xx rejections (except timeout/rate-limit responses) show the server error and roll back the edit when no other mutation overlaps; they do not disable subsequent saves. Uncertain failures preserve local edits for explicit **Sync to Server**. Background results refreshes must not replace those unsynced edits. The banner says **Unsynced Changes Detected** while the device is online, and **No internet connection** only when the network status reports offline.
 
+### Concurrent scorers and offline edits
+
+The latest **saved** score is authoritative. An older queued edit may not replace it just because its request arrives later. A conflicting scorer loads the latest score and makes a fresh explicit correction; device clocks do not decide ordering.
+
+`GET /results/game/:id` carries an opaque `resultsVersion` on the board and each match. Manual PUT and match-metadata PATCH send the match's original version as `baseVersion`; offline snapshot sync sends the board's original version. Checks and writes share a database transaction and game lock (`resultsConcurrency.ts`), with bracket-round locks acquired first. Missing/stale versions return 409 without altering scores. Versions remain with offline drafts, including Watch queued PUTs. Do not fetch a new version merely to retry an old payload.
+
+Local manual saves are sent in entry order. Pending edits are stored durably with an unacknowledged marker before the network request, so an app restart preserves them even before a network timeout is reported. A healthy Finish flow reads the latest server board instead of uploading a cached whole board. Accepted offline sync reconciles rows in place, retaining unchanged live state, timers, team identities and history. Finalized games reject late score/structure writes until explicitly reopened.
+
+Compatibility: versionless manual PUT, match-metadata PATCH, and full-board sync requests are rejected. Ship the corresponding web/native/Watch client changes with the server protection; older installed clients need an update before manual saves. Existing offline drafts without a baseline version require loading the latest results and re-entering the correction.
+
 ## Artifacts / Replicate
 
 Background queue: `gameResultsArtifactQueue.service.ts`. Summary + photo (`prepareResultsArtifactSummary` / `Photo` on `game.controller.ts`). Admin picks Replicate model (`replicatePhotoModelSetting.service.ts`, Platform Settings). Telegram post block when ready (`sendResultsToTelegram`). The summary is Markdown (LLM-written, organizer-editable) — `telegramMarkdown.ts` converts it to Telegram HTML (`**bold**`, `_italic_`, `#` headings, `- ` bullets, links, code) before posting, so caption/message length is measured on the rendered text, not the tags. Share results card with optional generated photo (`GameResultsShareCard`); its primary action after FINAL is **Play with this group again** (PRD 362, see [games.md](./games.md) → Settings).

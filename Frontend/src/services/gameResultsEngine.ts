@@ -417,11 +417,14 @@ class GameResultsEngineClass {
 
     const mutation = this.beginLocalMutation();
     const session = this.sessionEpoch;
-    const localUpdate = updateFn();
+    const localUpdate = updateFn().then(async () => {
+      if (session === this.sessionEpoch) await this.saveLocal();
+    });
+    // Local durability must not wait behind another device request's timeout.
+    void localUpdate.catch(() => undefined);
     const write = this.serverWrites.then(async () => {
       await localUpdate;
       if (session !== this.sessionEpoch) return;
-      await this.saveLocal();
       if (this.getState().serverProblem) return;
 
       try {
@@ -460,9 +463,10 @@ class GameResultsEngineClass {
     if (!state.gameId) return;
 
     const localData: LocalResults = {
-            gameId: state.gameId,
+      gameId: state.gameId,
       rounds: state.rounds,
       resultsVersion: state.resultsVersion,
+      hasUnsyncedChanges: state.serverProblem || this.pendingLocalMutations > 0,
     };
     await ResultsStorage.saveResults(localData);
   }

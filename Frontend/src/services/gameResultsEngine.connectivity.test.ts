@@ -111,6 +111,11 @@ describe('results connectivity after a rejected edit', () => {
     await vi.waitFor(() => expect(resultsApi.updateMatch).toHaveBeenCalledTimes(1));
     const second = GameResultsEngine.setMatchCourt('round', 'match', 'court-b');
     expect(resultsApi.updateMatch).toHaveBeenCalledTimes(1);
+    await vi.waitFor(() => {
+      const saved = vi.mocked(ResultsStorage.saveResults).mock.calls.at(-1);
+      expect(saved?.[0].rounds[0].matches[0].courtId).toBe('court-b');
+      expect(saved?.[0].hasUnsyncedChanges).toBe(true);
+    });
     resolveFirst();
     await Promise.all([first, second]);
     expect(resultsApi.updateMatch).toHaveBeenNthCalledWith(1, 'game', 'match', expect.objectContaining({ courtId: 'court-a', baseVersion: 'v0' }));

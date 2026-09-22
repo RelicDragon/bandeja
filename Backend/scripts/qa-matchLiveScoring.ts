@@ -7,7 +7,7 @@ import * as dotenv from 'dotenv';
 import { EntityType, ParticipantRole, Sport } from '@prisma/client';
 import { ApiError } from '../src/utils/ApiError';
 import { patchMatchLiveScoring, notifyMatchLiveScoringCleared } from '../src/services/results/matchLiveScoring.service';
-import { updateMatch as updateMatchService, createRound, createMatch, patchMatchMetadata } from '../src/services/results.service';
+import { updateMatch as updateMatchService, createRound, createMatch, patchMatchMetadata as patchMatchMetadataService } from '../src/services/results.service';
 import {
   applyAutomaticRecordMode,
   createInitialLiveScoringState,
@@ -20,6 +20,13 @@ async function updateMatch(gameId: string, matchId: string, input: Parameters<ty
   const { matchResultsVersion } = await import('../src/services/results/resultsConcurrency');
   const match = await prisma.match.findUniqueOrThrow({ where: { id: matchId }, include: { sets: true, teams: { include: { players: true } } } });
   return updateMatchService(gameId, matchId, { ...input, baseVersion: matchResultsVersion(match) });
+}
+
+async function patchMatchMetadata(gameId: string, matchId: string, patch: Record<string, unknown>, options: { userId: string }) {
+  const { default: prisma } = await import('../src/config/database');
+  const { matchResultsVersion } = await import('../src/services/results/resultsConcurrency');
+  const match = await prisma.match.findUniqueOrThrow({ where: { id: matchId }, include: { sets: true, teams: { include: { players: true } } } });
+  return patchMatchMetadataService(gameId, matchId, patch, { ...options, baseVersion: matchResultsVersion(match) });
 }
 
 function ensureDbUrl() {

@@ -10,6 +10,8 @@ export interface LocalResults {
   rounds: Round[];
   lastSyncedAt?: number;
   resultsVersion?: string | null;
+  /** Stored with the score itself so closing the app during a save cannot lose the draft. */
+  hasUnsyncedChanges?: boolean;
 }
 
 export class ResultsStorage {
@@ -41,8 +43,8 @@ export class ResultsStorage {
 
   static async getServerProblem(gameId: string): Promise<boolean> {
     const key = `${SERVER_PROBLEM_KEY}:${gameId}`;
-    const value = await get<boolean>(key);
-    return value || false;
+    const [value, results] = await Promise.all([get<boolean>(key), this.getResults(gameId)]);
+    return Boolean(value || results?.hasUnsyncedChanges);
   }
 
   static async setServerProblem(gameId: string, hasProblem: boolean): Promise<void> {

@@ -79,9 +79,8 @@ final class MatchScoringViewModel {
     /// Last generation successfully acknowledged / merged from remote.
     private var ackedScoreGeneration = 0
 
-    /// Local point mutations not yet acknowledged by the server. When a newer remote
-    /// revision lands while these are pending, the remote state is applied and the
-    /// ops are replayed on top of it, so neither writer's points are lost.
+    /// Local point mutations not yet acknowledged by the server. A newer foreign
+    /// score cancels these; only a fresh user action may correct that score.
     private enum LocalScoreOp {
         case score(TeamSide)
         case unscore(TeamSide)
