@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { PlayerCardBottomSheet } from '@/components/PlayerCardBottomSheet';
 import { PlayerCardModalProvider } from '@/components/PlayerCardModalProvider';
+import { PlayerAuthPromptDialog } from '@/components/auth/PlayerAuthPromptDialog';
 import { useShellNavStore } from '@/store/shellNavStore';
 import { useSportContextStore } from '@/store/sportContextStore';
 import { getOverlay } from '@/utils/urlSchema';
@@ -15,6 +16,7 @@ interface PlayerCardModalManagerProps {
 
 export const PlayerCardModalManager = ({ children }: PlayerCardModalManagerProps) => {
   const [playerId, setPlayerId] = useState<string | null>(null);
+  const [authPromptTrigger, setAuthPromptTrigger] = useState<HTMLElement | null>(null);
   const [cardLevelSport, setCardLevelSport] = useState<Sport | undefined>();
   const location = useLocation();
   const pendingReopen = useShellNavStore((s) => s.pendingPlayerCardReopen);
@@ -61,17 +63,27 @@ export const PlayerCardModalManager = ({ children }: PlayerCardModalManagerProps
 
   const sheetLevelSport = playerId ? (cardLevelSport ?? sportFromUrl) : undefined;
 
+  const openPlayerAuthPrompt = useCallback((trigger: HTMLElement) => setAuthPromptTrigger(trigger), []);
+  const closePlayerAuthPrompt = useCallback(() => setAuthPromptTrigger(null), []);
+
   const sheet = (
     <PlayerCardBottomSheet playerId={playerId} onClose={closePlayerCard} />
   );
 
   return (
-    <PlayerCardModalProvider openPlayerCard={openPlayerCard} closePlayerCard={closePlayerCard}>
+    <PlayerCardModalProvider
+      openPlayerCard={openPlayerCard}
+      closePlayerCard={closePlayerCard}
+      openPlayerAuthPrompt={openPlayerAuthPrompt}
+    >
       {children}
       {sheetLevelSport ? (
         <SportLevelProvider sport={sheetLevelSport}>{sheet}</SportLevelProvider>
       ) : (
         sheet
+      )}
+      {authPromptTrigger && (
+        <PlayerAuthPromptDialog onClose={closePlayerAuthPrompt} returnFocusTo={authPromptTrigger} />
       )}
     </PlayerCardModalProvider>
   );

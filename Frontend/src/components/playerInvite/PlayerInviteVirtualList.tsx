@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { memo, useCallback, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import type { InviteListRow } from '@/components/playerInvite/inviteListRows';
 import { virtualRowOffset } from '@/components/playerInvite/virtualRowOffset';
@@ -17,6 +17,14 @@ interface Props {
   footer?: ReactNode;
   className?: string;
 }
+
+// Scroll updates reposition wrappers; unchanged player/team content stays put.
+const InviteRowContent = memo(function InviteRowContent({
+  row,
+  renderRow,
+}: { row: InviteListRow; renderRow: Props['renderRow'] }) {
+  return renderRow(row);
+});
 
 export function PlayerInviteVirtualList({
   rows,
@@ -49,6 +57,7 @@ export function PlayerInviteVirtualList({
     return () => ro.disconnect();
   }, [useVirtual, hasHeader]);
 
+  const getItemKey = useCallback((index: number) => `${rows[index].kind}-${rows[index].id}`, [rows]);
   const virtualizer = useVirtualizer({
     count: useVirtual ? rows.length : 0,
     getScrollElement: () => parentRef.current,
@@ -56,7 +65,7 @@ export function PlayerInviteVirtualList({
     overscan: OVERSCAN,
     gap: ROW_GAP,
     scrollMargin,
-    getItemKey: (index) => `${rows[index].kind}-${rows[index].id}`,
+    getItemKey,
     enabled: useVirtual,
   });
 
@@ -78,7 +87,9 @@ export function PlayerInviteVirtualList({
         {headerNode}
         <div className="space-y-1.5 pb-2">
           {rows.map((row) => (
-            <div key={`${row.kind}-${row.id}`}>{renderRow(row)}</div>
+            <div key={`${row.kind}-${row.id}`}>
+              <InviteRowContent row={row} renderRow={renderRow} />
+            </div>
           ))}
         </div>
         {footer}
@@ -114,7 +125,7 @@ export function PlayerInviteVirtualList({
                 transform: `translateY(${virtualRowOffset(row.start, scrollMargin)}px)`,
               }}
             >
-              {renderRow(listRow)}
+              <InviteRowContent row={listRow} renderRow={renderRow} />
             </div>
           );
         })}

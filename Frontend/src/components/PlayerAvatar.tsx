@@ -12,8 +12,6 @@ import { useFavoritesStore } from '@/store/favoritesStore';
 import { useAuthStore } from '@/store/authStore';
 import { usePresenceStore } from '@/store/presenceStore';
 import { usePresenceSubscription } from '@/hooks/usePresenceSubscription';
-import { Dialog, DialogContent } from '@/components/ui/Dialog';
-import { PublicGamePrompt } from './GameDetails/PublicGamePrompt';
 import { getLevelColor } from '@/utils/levelColor';
 import { userAvatarTinyUrlFromStandard } from '@/utils/userAvatarTinyUrl';
 import { PlayerAvatarFace } from './PlayerAvatarFace';
@@ -73,7 +71,7 @@ export const PlayerAvatar = ({ player, subscribePresence = true, isCurrentUser, 
     subscribePresence && player && !isCurrentUser ? [player.id] : []
   );
   const { t } = useTranslation();
-  const { openPlayerCard } = usePlayerCardModal();
+  const { openPlayerCard, openPlayerAuthPrompt } = usePlayerCardModal();
   const contextLevelSport = useSportLevelContext();
   const isFavorite = useFavoritesStore((state) => player ? state.isFavorite(player.id) : false);
   const user = useAuthStore((state) => state.user);
@@ -86,7 +84,6 @@ export const PlayerAvatar = ({ player, subscribePresence = true, isCurrentUser, 
   );
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains('dark'));
-  const [showAuthModal, setShowAuthModal] = useState(false);
   const useTinyWhenAvailable = superTiny || extrasmall || smallLayout || inlineFace;
   const tinyAvatarUrl =
     useTinyWhenAvailable ? userAvatarTinyUrlFromStandard(player?.avatar) : null;
@@ -379,7 +376,7 @@ export const PlayerAvatar = ({ player, subscribePresence = true, isCurrentUser, 
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              if (!user) setShowAuthModal(true);
+              if (!user) openPlayerAuthPrompt(e.currentTarget);
               else openPlayerCard(player.id, levelSport ?? contextLevelSport);
             }}
             aria-label={superTiny ? (`${player.firstName || ''} ${player.lastName || ''}`.trim() || 'Player') : undefined}
@@ -425,17 +422,9 @@ export const PlayerAvatar = ({ player, subscribePresence = true, isCurrentUser, 
           </div>
         </div>
       )}
-      {!inlineFace && (
-        <Dialog open={showAuthModal} onClose={() => setShowAuthModal(false)} modalId="player-avatar-auth-modal">
-          <DialogContent>
-            <PublicGamePrompt />
-          </DialogContent>
-        </Dialog>
-      )}
     </div>
   );
 };
-
 
 
 

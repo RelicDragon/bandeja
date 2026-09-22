@@ -41,7 +41,7 @@
     "groupPlayedWith": "Played with",
     "groupEveryoneIn": "Everyone in {{city}}",
     "groupEveryone": "Everyone",
-    "playedTogetherCaption": "Played together {{when}} · {{games}}",
+    "playedTogetherCaption": "Played together {{when}}",
     "gamesCount_one": "{{count}} game",
     "gamesCount_other": "{{count}} games"
   }

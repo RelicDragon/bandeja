@@ -26,8 +26,10 @@ import { getRedisClient, isRedisConfigured } from '../redis/redisClient';
 import { TtlCache } from '../../utils/ttlCache';
 import {
   PLATFORM_SETTING_KEYS,
-  getBooleanSetting,
+  getSetting,
+  parsePlatformSettingBoolean,
 } from '../platformSetting.service';
+import { PUBLIC_PLATFORM_FLAG_DEFAULTS } from '../platformFlags.service';
 import { playIntentDiscoveryDateKeys } from './playIntentDiscoveryWindow';
 import { intentWindowIsReachable } from './playIntentFreshness';
 import { PlayIntentMatchService } from './playIntentMatch.service';
@@ -81,7 +83,13 @@ export class PlayIntentLookingCountService {
     const timezone = city?.timezone || 'UTC';
     const dayKeys = playIntentDiscoveryDateKeys(timezone, now);
 
-    const enabled = await getBooleanSetting(PLATFORM_SETTING_KEYS.FIND_LOOKING_COUNT_ENABLED);
+    // On by default: no row reads as on, exactly as `resolvePublicPlatformFlags`
+    // publishes it; a written row (an explicit `false`) is the kill switch.
+    const raw = await getSetting(PLATFORM_SETTING_KEYS.FIND_LOOKING_COUNT_ENABLED);
+    const enabled =
+      raw === null
+        ? PUBLIC_PLATFORM_FLAG_DEFAULTS.FIND_LOOKING_COUNT_ENABLED
+        : parsePlatformSettingBoolean(raw);
     if (!enabled) return { count: null, dayKeys };
 
     const userIds = await this.lookingUserIds(cityId, sport, dayKeys, timezone, now);

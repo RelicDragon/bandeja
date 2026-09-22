@@ -41,7 +41,7 @@
     "groupPlayedWith": "Pernah bermain bersama",
     "groupEveryoneIn": "Semua orang di {{city}}",
     "groupEveryone": "Semua orang",
-    "playedTogetherCaption": "Bermain bersama {{when}} · {{games}}",
+    "playedTogetherCaption": "Bermain bersama {{when}}",
     "gamesCount_one": "{{count}} permainan",
     "gamesCount_other": "{{count}} permainan"
   }

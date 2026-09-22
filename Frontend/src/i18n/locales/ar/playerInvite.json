@@ -45,7 +45,7 @@
     "groupPlayedWith": "لعبت معهم",
     "groupEveryoneIn": "الجميع في {{city}}",
     "groupEveryone": "الجميع",
-    "playedTogetherCaption": "لعبتما معاً {{when}} · {{games}}",
+    "playedTogetherCaption": "لعبتما معاً {{when}}",
     "gamesCount_zero": "0 مباريات",
     "gamesCount_one": "مباراة واحدة",
     "gamesCount_two": "مباراتان",

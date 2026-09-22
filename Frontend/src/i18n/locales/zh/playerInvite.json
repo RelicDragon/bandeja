@@ -41,7 +41,7 @@
     "groupPlayedWith": "一起打过",
     "groupEveryoneIn": "{{city}}的所有人",
     "groupEveryone": "所有人",
-    "playedTogetherCaption": "{{when}}一起打过 · {{games}}",
+    "playedTogetherCaption": "{{when}}一起打过",
     "gamesCount_one": "{{count}} 场",
     "gamesCount_other": "{{count}} 场"
   }

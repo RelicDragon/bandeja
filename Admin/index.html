@@ -788,7 +788,7 @@
                 <section class="platform-settings-section" aria-labelledby="platformSettingsLookingCountHeading">
                     <div class="platform-settings-card">
                         <h2 id="platformSettingsLookingCountHeading">Find: Looking-to-play Count</h2>
-                        <p class="text-muted">Shows "{n} people are looking to play today" in the Find empty state and on the play-intent strip. The number is hidden below three people, per city and sport, and counts only players with a live intent who are not already seated in a game. Read by the app through <code>GET /api/public/platform-flags</code>; clients pick the change up within five minutes.</p>
+                        <p class="text-muted">Shows "{n} people are looking to play today" in the Find empty state and on the play-intent strip. The number is hidden below three people, per city and sport, and counts only players with a live intent who are not already seated in a game. <strong>On by default</strong> — only an explicit Off row hides it. Read by the app through <code>GET /api/public/platform-flags</code>; clients pick the change up within five minutes.</p>
 
                         <div class="platform-settings-meta">
                             <div class="platform-settings-meta-row">
@@ -800,8 +800,8 @@
                         <div class="form-group platform-settings-field">
                             <label for="lookingCountSelect">Looking-to-play count</label>
                             <select id="lookingCountSelect" class="filter-select platform-settings-select" onchange="updateLookingCountSaveButton()">
+                                <option value="true">On (default) — count in the Find empty state and strip</option>
                                 <option value="false">Off — no count anywhere on Find</option>
-                                <option value="true">On — count in the Find empty state and strip</option>
                             </select>
                         </div>
 
@@ -816,7 +816,7 @@
                 <section class="platform-settings-section" aria-labelledby="platformSettingsOrganizerNextActionsHeading">
                     <div class="platform-settings-card">
                         <h2 id="platformSettingsOrganizerNextActionsHeading">Organizer Next Steps</h2>
-                        <p class="text-muted">Shows the "Next steps" block under the game header for owners and admins, and folds the attendance strip and open-spot row into it. Off keeps those surfaces exactly as before. Read by the app through <code>GET /api/public/platform-flags</code>; clients pick the change up within five minutes.</p>
+                        <p class="text-muted">Shows the "Next steps" block under the game header for owners and admins, and folds the attendance strip and open-spot row into it. <strong>On by default</strong> (no row = on). Off restores those surfaces exactly as before — this is the rollback switch. Read by the app through <code>GET /api/public/platform-flags</code>; clients pick the change up within five minutes.</p>
 
                         <div class="platform-settings-meta">
                             <div class="platform-settings-meta-row">

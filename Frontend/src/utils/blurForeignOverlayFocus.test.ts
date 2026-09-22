@@ -44,6 +44,15 @@ describe('blurForeignOverlayFocus', () => {
     expect(document.activeElement).toBe(close);
   });
 
+  it('keeps focus when a closed overlay has no mounted content', () => {
+    const search = mount('button');
+    search.focus();
+
+    blurForeignOverlayFocus(null);
+
+    expect(document.activeElement).toBe(search);
+  });
+
   it('does nothing when nothing is focused', () => {
     const current = mount('div', 'cap-keyboard-aware-sheet');
     if (document.activeElement instanceof HTMLElement) {

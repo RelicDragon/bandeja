@@ -571,7 +571,7 @@ Push: `PN-RC-01`–`PN-RC-03` in §18.8. Archive: `PR-RC-01`–`PR-RC-05` in §1
 | F-104 | Shortcuts RTL and locales | App language العربية, then each of the 11 locales | Row reads right-to-left with Arrow keys mirrored; no label wraps to a second line (the row scrolls sideways if a label is long) |
 | F-105 | Empty day → create (PRD 363) | Find calendar on a day with no games (375 pt phone) | Empty card shows the title plus a full-width primary **Create a game today / tomorrow / on {Thu 24 Sep}** naming the selected day; tapping it opens the create flow with only that date (and Find's sport) prefilled; a past empty day offers today, never a past date; list view offers tomorrow |
 | F-106 | Filtered-empty → clear | Set any narrowing filter (entity chip, club, time window, level range, slots, suitable rating, no-rating, hide bars, novices only, or a non-primary sport) so the day is empty | A secondary outline **Clear filters** appears under Create; tapping it resets exactly those filters, keeps the day and view (and any highlighted shortcut), and toasts "Filters cleared"; with no narrowing filter the button is absent and only Create shows — the card is never without an action |
-| F-107 | Looking count line | Admin: Platform Settings → "Find: Looking-to-play Count" **On**; seed ≥ 3 users with a live intent for today in the viewer's city and sport (none of them seated in a game today) | Under the empty title: "{n} people are looking to play today in {city}" (viewer not counted; "today and tomorrow" after 18:00 city time). Tapping opens the intent editor (the lobby if already looking). With 0–2 people, or the flag **Off**, the line is absent — no "nobody looking yet" copy |
+| F-107 | Looking count line | Flag on (the default; Admin: Platform Settings → "Find: Looking-to-play Count"); seed ≥ 3 users with a live intent for today in the viewer's city and sport (none of them seated in a game today) | Under the empty title: "{n} people are looking to play today in {city}" (viewer not counted; "today and tomorrow" after 18:00 city time). Tapping opens the intent editor (the lobby if already looking). With 0–2 people, or the flag **Off**, the line is absent — no "nobody looking yet" copy |
 | F-108 | Strip carries the same count | Flag **On** with ≥ 3 looking, then with 2, then flag **Off** | Idle "I want to play" card hint reads "{n} looking today" → generic hint → the pre-existing "{n} players want to play today"; the number never appears twice on the screen; the Looking strip (while looking) is unchanged |
 | F-109 | Count freshness | Flag **On**; add a new looking user | Count updates within about a minute (60 s server cache + 60 s client stale time); admin flag changes land within five minutes without a reload |
 | F-110 | Recovery RTL and locales | App language العربية, then each of the 11 locales, large text | Actions stack full width and wrap rather than clip; the looking line wraps; chevron mirrors in RTL; day in the create label is localized |
@@ -902,6 +902,7 @@ One boolean the organizer sets; everything here is read-only display. The tag is
 | C-34b | Create overlapping PLAYING cancel | Same as C-34a → Cancel | Modal closes; no game created; still PLAYING only in A |
 | C-35 | Validation errors | Submit incomplete | Errors shown, no create |
 | C-36 | Floating summary bar | Fill club/time/etc., scroll down past those sections | Animated chip bar appears under header summarizing scrolled-out values (sport, roster, format, club, date·time·duration·court, participants/level, name, price) |
+| C-36a | Floating summary scroll stability | Scroll repeatedly after chips appear; move slowly back and forth at a section boundary; edit a summarized value | Unchanged chips do not flicker or rerender on each scroll frame; boundary movement does not rapidly toggle chips; edits update labels in place and chip taps still scroll to their sections |
 | C-37 | Summary chip scroll-back | Tap a chip in the summary bar | Page smooth-scrolls back to that section; chip disappears once section is visible |
 | C-38 | Summary bar empty values | Scroll past sections with nothing entered (no name, price not known) | No chip shown for empty sections; bar hidden when no chips |
 | C-52 | Settings collapse | Create game → Settings section | Collapsed by default (title + chevron only); tap header, padding, or chevron to expand/collapse; toggle rows only flip their switch (do not collapse); expand animates toggles and hints button in |
@@ -1076,7 +1077,7 @@ Gated on `VITE_GAME_SERIES_ENABLED` (frontend) and `GAME_SERIES_ENABLED` (backen
 | GD-15n | No history | New account opens the picker | No headings, no captions: the pane looks exactly as before |
 | GD-15c | Invite picker omits busy | Open Search invite list for a timed game; city user is PLAYING in another overlapping Bandeja game | Busy user is absent from the list; INVITED-only or non-overlapping PLAYING users still appear |
 | GD-15e | Invite inactive at bottom | Open invite picker; one player is rating-inactive | Inactive player sorts below active players by default (same `inactive` flag as Level leaderboard) |
-| GD-15d | Invite search keeps focus | Open invite picker → type in Search | Caret stays in the field after each character; search field is not replaced by the list spinner |
+| GD-15d | Invite search keeps focus | Open invite picker with 30+ players → type and clear Search; wait for delayed results; scroll down and back while search is focused; Tab or tap another control | Caret and keyboard stay in the field through filtering, delayed avatar mounts and scrolling; unchanged visible rows do not rerender on scroll; search field is not replaced by the list spinner; intentionally moving focus still works |
 | GD-16 | Cancel invite | Owner cancels pending | Invite removed |
 | GD-16a | Expired invite outcome | Let a pending invite expire → open player list | Player appears under invite responses with “Invite expired”, not “Invite cancelled” |
 | GD-17 | Guest join chat only | Join as guest | Chat access without full join |
@@ -1655,11 +1656,11 @@ One action after FINAL replaces both the old results "Play again" and, for FINAL
 
 ### 9.22 Organizer next steps (PRD 364)
 
-Behind the Admin platform setting `GAME_ORGANIZER_NEXT_ACTIONS_ENABLED` (Platform Settings → Organizer Next Steps; read by the app through `GET /api/public/platform-flags`, five-minute cache). Every row is a fact with one button; "nothing to do" renders **no block**, never a green state. The block is a pure view over the same data as the sections below it, so it can never disagree with them.
+**On by default.** The Admin platform setting `GAME_ORGANIZER_NEXT_ACTIONS_ENABLED` (Platform Settings → Organizer Next Steps; read by the app through `GET /api/public/platform-flags`, five-minute cache) is the rollback switch: no row means on, `false` turns it off. Every row is a fact with one button; "nothing to do" renders **no block**, never a green state. The block is a pure view over the same data as the sections below it, so it can never disagree with them.
 
 | ID | Test | Steps | Expected |
 |----|------|-------|----------|
-| GD-NA-01 | Placement | Flag on, open a 3/4 game you organize | **Next steps** card directly under the header (below the series line, above the weather banner and game info), lucide list icon, rows ≥44 px |
+| GD-NA-01 | Placement | Default setup, open a 3/4 game you organize | **Next steps** card directly under the header (below the series line, above the weather banner and game info), lucide list icon, rows ≥44 px |
 | GD-NA-02 | Seats with a queue | Same game with two people in the join queue | Row "1 player needed · 2 waiting" with a filled **Review queue** button; tapping scrolls to the Join Queue list in Participants |
 | GD-NA-03 | Seats without a queue | Empty queue | Same fact with **Invite**; tapping opens the existing invite picker in players mode |
 | GD-NA-04 | Not booked | Club game, time set, "Court booked" off, no linked booking | Amber row "Court not booked yet" with **Edit court**; tapping opens the edit modal on the **Location & time** tab. No provider request in the network tab |
@@ -1673,7 +1674,7 @@ Behind the Admin platform setting `GAME_ORGANIZER_NEXT_ACTIONS_ENABLED` (Platfor
 | GD-NA-12 | Game admin | Open as a participant with `role = ADMIN` | Same block as the owner |
 | GD-NA-13 | Participant with invite rights | `anyoneCanInvite` game as a PLAYING non-admin | Only the seats row with **Invite**; no booking, attendance or cost row. Their attendance card is unchanged |
 | GD-NA-14 | Plain participant / guest | Open as a player without invite rights, and logged out | No block, and every existing surface exactly as before |
-| GD-NA-15 | Flag off | Turn the setting off in Admin (takes effect within 5 min, or reload after clearing site data) | No block; the attendance strip and the dashed open-spot row render exactly as before the PRD |
+| GD-NA-15 | Rollback switch | Set Organizer Next Steps to Off in Admin (takes effect within 5 min, or reload after clearing site data) | No block; the attendance strip and the dashed open-spot row render exactly as before the PRD. Setting it back to On restores the block |
 | GD-NA-16 | Open-spot row | Flag on, a seat freed in the last window | Organizer: no dashed "Open spot" row (the block carries the seat fact). A queued participant still sees it |
 | GD-NA-17 | Excluded entities | League fixture, league season, EVENT, archived game | Never a block, whatever the flag |
 | GD-NA-18 | Locales and RTL | Switch to ru / cs / ar | Plurals read naturally ("Нужно ещё 2 игрока"); ar mirrors with the icon on the right and the button on the left; long sentences wrap, nothing clips |
@@ -2272,6 +2273,7 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PR-35 | User profile sport query | `?sport=` param | Correct level sport |
 | PR-36 | Follow/unfollow | From profile | State toggles |
 | PR-37 | Open player card | Tap avatar in list | Bottom sheet |
+| PR-37a | Shared guest avatar prompt | As a guest, tap avatars in a long list; dismiss with X, Escape, overlay or native Back; reopen from another avatar; tap Login | No closed dialogs mount per avatar; one shared sign-in dialog mounts on demand; dismiss restores focus when the avatar remains mounted; prompt survives its originating row unmounting, closes on navigation/sign-in, and does not cover Login; signed-in avatar clicks still open the player card |
 | PR-38 | Player card common groups | View shared groups | Listed |
 | PR-39 | Invite player from card | Invite action | Invite sent |
 | PR-40 | Follow user | Star/follow on profile/card | Added to favorites |

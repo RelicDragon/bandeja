@@ -43,7 +43,7 @@
     "groupPlayedWith": "Играли вместе",
     "groupEveryoneIn": "Все в городе {{city}}",
     "groupEveryone": "Все",
-    "playedTogetherCaption": "Играли вместе {{when}} · {{games}}",
+    "playedTogetherCaption": "Играли вместе {{when}}",
     "gamesCount_one": "{{count}} игра",
     "gamesCount_few": "{{count}} игры",
     "gamesCount_many": "{{count}} игр",

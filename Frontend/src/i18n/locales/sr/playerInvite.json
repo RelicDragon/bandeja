@@ -42,7 +42,7 @@
     "groupPlayedWith": "Igrali zajedno",
     "groupEveryoneIn": "Svi u gradu {{city}}",
     "groupEveryone": "Svi",
-    "playedTogetherCaption": "Igrali zajedno {{when}} · {{games}}",
+    "playedTogetherCaption": "Igrali zajedno {{when}}",
     "gamesCount_one": "{{count}} igra",
     "gamesCount_few": "{{count}} igre",
     "gamesCount_other": "{{count}} igara"

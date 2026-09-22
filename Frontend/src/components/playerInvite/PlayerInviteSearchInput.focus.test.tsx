@@ -51,6 +51,27 @@ describe('PlayerInviteSearchInput inside a Radix dialog', () => {
     container.remove();
   });
 
+  it('keeps search focused when newly visible rows mount closed avatar dialogs', async () => {
+    const render = (showRow: boolean) => (
+      <Dialog open onClose={() => {}}>
+        <DialogContent>
+          <DialogTitle>Invite players</DialogTitle>
+          <PlayerInviteSearchInput value="a" onChange={() => {}} placeholder="Search" />
+          {showRow && (
+            <Dialog open={false}>
+              <DialogContent><DialogTitle>Avatar sign in</DialogTitle></DialogContent>
+            </Dialog>
+          )}
+        </DialogContent>
+      </Dialog>
+    );
+    await act(async () => { root!.render(render(false)); });
+    const search = document.querySelector<HTMLInputElement>('[data-testid="player-invite-search"]')!;
+    await act(async () => { search.focus(); });
+    await act(async () => { root!.render(render(true)); });
+    expect(document.activeElement).toBe(search);
+  });
+
   it('keeps focus after a keystroke that removes sibling list nodes', async () => {
     const steal = new MutationObserver(() => {
       const active = document.activeElement;

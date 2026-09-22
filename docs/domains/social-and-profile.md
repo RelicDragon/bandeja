@@ -140,6 +140,8 @@ Invite modal, Search tab, empty query: a "Played with" group (≤10, most recent
 
 ## Player overlay `?player=`
 
+`PlayerAvatar` requests the guest sign-in prompt through the player-card context. `PlayerCardModalManager` owns one `PlayerAuthPromptDialog`, mounted only on demand, alongside the shared player card. Avatars have no local dialog subtree; scrolling rows cannot mount closed auth dialogs. The prompt dismisses on navigation or sign-in and uses the standard dialog close, focus-return and native Back handling.
+
 `PlayerCardModalManager` + `urlSchema.getOverlay`. Bottom sheet: avatar/stats, follow, block, DM, invite, send coins (`SendMoneyToUserModal`), common groups `GET /users/:id/common-groups`. `?sport=` preserved.
 
 ## Sessions `/profile/sessions`

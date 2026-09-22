@@ -21,10 +21,11 @@ export const PLATFORM_SETTING_KEYS = {
   /** Coins granted to the referred user when a referral completes (PRD 351). */
   REFERRAL_REWARD_REFERRED: 'REFERRAL_REWARD_REFERRED',
   /**
-   * PRD 364 — organizer "Next steps" block on game details. `'true'` shows the
-   * block and folds the attendance strip and open-spot row into it; anything
-   * else (including no row) keeps those surfaces exactly as they were.
-   * Exposed read-only through `GET /public/platform-flags`.
+   * PRD 364 — organizer "Next steps" block on game details. **On by default**
+   * (no row = on, see `PUBLIC_PLATFORM_FLAG_DEFAULTS`); a row that is not an
+   * explicit yes switches it off and restores the attendance strip and the
+   * open-spot row exactly as they were. Exposed read-only through
+   * `GET /public/platform-flags`.
    */
   GAME_ORGANIZER_NEXT_ACTIONS_ENABLED: 'GAME_ORGANIZER_NEXT_ACTIONS_ENABLED',
   /**
@@ -114,14 +115,19 @@ export function parsePlatformSettingNumber(
 }
 
 /**
- * Parses a stored on/off setting. Only an explicit `true` / `1` / `on` / `yes`
- * (case-insensitive, trimmed) is on; a missing row, an empty value or anything
- * else is off. A kill switch must fail closed, never open.
+ * Parses a stored on/off setting. An explicit `true` / `1` / `on` / `yes`
+ * (case-insensitive, trimmed) is on, an explicit `false` / `0` / `off` / `no`
+ * is off, and a missing row, an empty value or anything else is `fallback`.
+ * `fallback` defaults to off so a kill switch fails closed; a surface that is
+ * on by default (PRD 363's count) passes `true` and is switched off only by an
+ * explicit `false` row.
  */
-export function parsePlatformSettingBoolean(raw: string | null): boolean {
-  if (raw === null) return false;
+export function parsePlatformSettingBoolean(raw: string | null, fallback = false): boolean {
+  if (raw === null) return fallback;
   const trimmed = raw.trim().toLowerCase();
-  return trimmed === 'true' || trimmed === '1' || trimmed === 'on' || trimmed === 'yes';
+  if (trimmed === 'true' || trimmed === '1' || trimmed === 'on' || trimmed === 'yes') return true;
+  if (trimmed === 'false' || trimmed === '0' || trimmed === 'off' || trimmed === 'no') return false;
+  return fallback;
 }
 
 const cache = new PlatformSettingCache();
@@ -147,8 +153,8 @@ export async function getNumericSetting(
   return parsePlatformSettingNumber(raw, fallback ?? null);
 }
 
-export async function getBooleanSetting(key: string): Promise<boolean> {
-  return parsePlatformSettingBoolean(await getSetting(key));
+export async function getBooleanSetting(key: string, fallback = false): Promise<boolean> {
+  return parsePlatformSettingBoolean(await getSetting(key), fallback);
 }
 
 export async function setSetting(key: string, value: string): Promise<void> {

@@ -212,6 +212,18 @@ void (async () => {
     );
     assert.equal(off.count, null, 'flag off hides the number');
     assert.deepEqual(off.dayKeys, [today]);
+
+    // No row at all → on by default.
+    await prisma.platformSetting.deleteMany({ where: { key: FLAG_KEY } });
+    PlatformSettingService.invalidateSettingsCache();
+    PlayIntentLookingCountService.clearLocalCacheForTests();
+    const unset = await PlayIntentLookingCountService.getForViewer(
+      viewer.id,
+      city.id,
+      Sport.PADEL,
+      morning,
+    );
+    assert.equal(unset.count, 3, 'unset flag counts: the feature is on by default');
   } finally {
     if (previousFlag) {
       await PlatformSettingService.setSetting(FLAG_KEY, previousFlag.value);

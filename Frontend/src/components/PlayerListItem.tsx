@@ -56,10 +56,7 @@ export function PlayerListItem({
   const AvailabilityIcon = availability === 'none' ? CalendarX2 : CalendarClock;
   const playedTogetherWhen = lastPlayedTogetherAt ? formatRelativeTimeSafe(lastPlayedTogetherAt) : '';
   const playedTogetherCaption = playedTogetherWhen
-    ? t('playerInvite.playedTogetherCaption', {
-        when: playedTogetherWhen,
-        games: t('playerInvite.gamesCount', { count: gamesTogetherCount }),
-      })
+    ? t('playerInvite.playedTogetherCaption', { when: playedTogetherWhen })
     : null;
 
   return (
@@ -111,7 +108,14 @@ export function PlayerListItem({
               className="flex items-start gap-1 text-emerald-600/90 dark:text-emerald-400/90"
             >
               <History size={11} className="mt-[1px] flex-shrink-0" aria-hidden />
-              <span className="min-w-0 break-words">{playedTogetherCaption}</span>
+              <span className="min-w-0">
+                {playedTogetherCaption}
+                {/* The count and its separator never split across lines. */}
+                <span className="whitespace-nowrap">
+                  {' · '}
+                  {t('playerInvite.gamesCount', { count: gamesTogetherCount })}
+                </span>
+              </span>
             </p>
           )}
           {availabilityLabel && (

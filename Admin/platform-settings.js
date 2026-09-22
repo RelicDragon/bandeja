@@ -330,14 +330,15 @@ async function saveReferralRewards() {
 
 // --- PRD 364: organizer next actions --------------------------------------
 // `GAME_ORGANIZER_NEXT_ACTIONS_ENABLED` is the rollback switch for the
-// "Next steps" block. Only the literal `true` turns it on; no row, an empty
-// value or anything else is off, so the legacy organizer surfaces come back
-// the moment the row is cleared (`parsePlatformSettingBoolean`).
+// "Next steps" block. The block is ON by default: no row means on
+// (`PUBLIC_PLATFORM_FLAG_DEFAULTS`). Saving `false` turns it off and brings the
+// legacy attendance strip and open-spot row back; saving `true` again restores it.
 const ORGANIZER_NEXT_ACTIONS_KEY = 'GAME_ORGANIZER_NEXT_ACTIONS_ENABLED';
-let organizerNextActionsActive = 'false';
+let organizerNextActionsActive = 'true';
 
 function normalizeOrganizerNextActionsValue(raw) {
-    const value = String(raw ?? '').trim().toLowerCase();
+    if (raw === null || raw === undefined) return 'true';
+    const value = String(raw).trim().toLowerCase();
     return value === 'true' || value === '1' || value === 'on' || value === 'yes' ? 'true' : 'false';
 }
 
@@ -370,8 +371,8 @@ async function loadOrganizerNextActionsSetting() {
         const row = platformSettingRows(response).find(
             (entry) => entry.key === ORGANIZER_NEXT_ACTIONS_KEY
         );
-        organizerNextActionsActive = normalizeOrganizerNextActionsValue(row ? row.value : '');
-        activeEl.textContent = row ? String(row.value).trim() || 'empty — off' : 'unset — off';
+        organizerNextActionsActive = normalizeOrganizerNextActionsValue(row ? row.value : null);
+        activeEl.textContent = row ? String(row.value).trim() || 'empty — off' : 'unset — on (default)';
         select.value = organizerNextActionsActive;
         select.disabled = false;
         setOrganizerNextActionsStatus('');
@@ -416,15 +417,17 @@ async function saveOrganizerNextActions() {
 
 // --- PRD 363: Find looking-to-play count -----------------------------------
 // `FIND_LOOKING_COUNT_ENABLED` gates the "{n} people are looking to play" line
-// in the Find empty state and on the play-intent strip. Only the literal
-// `true` turns it on (`parsePlatformSettingBoolean`); the count endpoint
-// answers `count: null` while it is off, so the app renders nothing.
+// in the Find empty state and on the play-intent strip. **On by default**: no
+// row, an empty value or anything unrecognised reads as on; only an explicit
+// `false` / `0` / `off` / `no` switches it off (`parsePlatformSettingBoolean`
+// with a `true` fallback). The count endpoint answers `count: null` while it
+// is off, so the app renders nothing.
 const LOOKING_COUNT_KEY = 'FIND_LOOKING_COUNT_ENABLED';
-let lookingCountActive = 'false';
+let lookingCountActive = 'true';
 
 function normalizeLookingCountValue(raw) {
     const value = String(raw ?? '').trim().toLowerCase();
-    return value === 'true' || value === '1' || value === 'on' || value === 'yes' ? 'true' : 'false';
+    return value === 'false' || value === '0' || value === 'off' || value === 'no' ? 'false' : 'true';
 }
 
 function setLookingCountStatus(message, type) {
@@ -455,7 +458,7 @@ async function loadLookingCountSetting() {
 
         const row = platformSettingRows(response).find((entry) => entry.key === LOOKING_COUNT_KEY);
         lookingCountActive = normalizeLookingCountValue(row ? row.value : '');
-        activeEl.textContent = row ? String(row.value).trim() || 'empty — off' : 'unset — off';
+        activeEl.textContent = row ? String(row.value).trim() || 'empty — on (default)' : 'unset — on (default)';
         select.value = lookingCountActive;
         select.disabled = false;
         setLookingCountStatus('');

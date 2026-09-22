@@ -41,19 +41,21 @@ vi.mock('@/utils/audioPlaybackRateStorage', () => ({
   setStoredAudioPlaybackRate: () => Promise.resolve(),
 }));
 
+vi.mock('@/hooks/usePlayerCardModal', () => ({
+  usePlayerCardModal: () => ({ openPlayerCard: vi.fn(), closePlayerCard: vi.fn() }),
+}));
+
+vi.mock('@/features/collection/useEquippedGoods', () => ({
+  useFrameClass: () => null,
+  useNameColorClass: () => null,
+}));
+
 vi.mock('react-hot-toast', () => ({
   default: { error: vi.fn(), success: vi.fn() },
 }));
 
 vi.mock('@/components/CityMap/useDebounce', () => ({
   useDebounce: <T,>(value: T) => value,
-}));
-
-vi.mock('@/components/ui/Dialog', () => ({
-  Dialog: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  DialogContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  DialogHeader: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  DialogTitle: ({ children }: { children: React.ReactNode }) => <h2>{children}</h2>,
 }));
 
 vi.mock('@/store/playersStore', () => {
@@ -125,6 +127,7 @@ vi.mock('@/contexts/SportLevelContext', () => ({
 }));
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import type { BasicUser } from '@/types';
 import { PlayerListModal } from './PlayerListModal';
 
 function renderModal() {
@@ -172,10 +175,10 @@ describe('PlayerListModal search focus', () => {
       root!.render(renderModal());
     });
 
-    const input = container.querySelector('[data-testid="player-invite-search"]');
+    const input = document.querySelector('[data-testid="player-invite-search"]');
     expect(input).toBeInstanceOf(HTMLInputElement);
     const search = input as HTMLInputElement;
-    expect(container.querySelector('.animate-spin')).not.toBeNull();
+    expect(document.querySelector('.animate-spin')).not.toBeNull();
 
     await act(async () => {
       search.focus();
@@ -188,7 +191,7 @@ describe('PlayerListModal search focus', () => {
       resolveFetch(emptyFetchResult());
     });
 
-    const after = container.querySelector('[data-testid="player-invite-search"]');
+    const after = document.querySelector('[data-testid="player-invite-search"]');
     expect(after).toBe(search);
     expect(document.activeElement).toBe(search);
     expect(search.value).toBe('ab');
@@ -204,7 +207,7 @@ describe('PlayerListModal search focus', () => {
       await Promise.resolve();
     });
 
-    const input = container.querySelector('[data-testid="player-invite-search"]');
+    const input = document.querySelector('[data-testid="player-invite-search"]');
     expect(input).toBeInstanceOf(HTMLInputElement);
     const search = input as HTMLInputElement;
 
@@ -218,8 +221,33 @@ describe('PlayerListModal search focus', () => {
       await Promise.resolve();
     });
 
-    const after = container.querySelector('[data-testid="player-invite-search"]');
+    const after = document.querySelector('[data-testid="player-invite-search"]');
     expect(after).toBe(search);
+    expect(document.activeElement).toBe(search);
+    expect(search.value).toBe('ab');
+  });
+
+  it('keeps focus when a delayed search response mounts real player avatars', async () => {
+    fetchPlayers.mockResolvedValueOnce(emptyFetchResult());
+    await act(async () => { root!.render(renderModal()); });
+    const search = document.querySelector<HTMLInputElement>('[data-testid="player-invite-search"]')!;
+    let resolveSearch!: (players: BasicUser[]) => void;
+    fetchPlayers.mockImplementation(() => new Promise<BasicUser[]>((resolve) => { resolveSearch = resolve; }));
+    await act(async () => {
+      search.focus();
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set?.call(search, 'ab');
+      search.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    // Let the input's keystroke focus-restoration frame finish before the response.
+    await act(async () => { await new Promise((resolve) => requestAnimationFrame(resolve)); });
+    await act(async () => {
+      resolveSearch([{
+        id: 'abby', firstName: 'Abby', level: 3, socialLevel: 1,
+        gender: 'FEMALE', approvedLevel: false, isTrainer: false,
+      }]);
+    });
+
+    expect(document.querySelector('[role="dialog"]')?.textContent).toContain('Abby');
     expect(document.activeElement).toBe(search);
     expect(search.value).toBe('ab');
   });

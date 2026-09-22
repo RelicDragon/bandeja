@@ -41,7 +41,7 @@
     "groupPlayedWith": "साथ खेले",
     "groupEveryoneIn": "{{city}} में सभी",
     "groupEveryone": "सभी",
-    "playedTogetherCaption": "{{when}} साथ खेले · {{games}}",
+    "playedTogetherCaption": "{{when}} साथ खेले",
     "gamesCount_one": "{{count}} गेम",
     "gamesCount_other": "{{count}} गेम"
   }

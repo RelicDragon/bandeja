@@ -68,6 +68,7 @@ interface UseCreateGameSummaryChipsArgs {
 }
 
 const ICON_SIZE = 12;
+const EMPTY_KEYS: string[] = [];
 
 export function useCreateGameSummaryChips({
   past,
@@ -85,7 +86,7 @@ export function useCreateGameSummaryChips({
   selectedClub,
   courts,
   selectedCourt,
-  selectedCourtIds = [],
+  selectedCourtIds = EMPTY_KEYS,
   selectedDate,
   selectedTime,
   duration,
@@ -98,7 +99,7 @@ export function useCreateGameSummaryChips({
   priceTotal,
   priceCurrency,
   defaultCurrency,
-  excludeKeys = [],
+  excludeKeys = EMPTY_KEYS,
   locationTimeMode = 'timeSlots',
   willBookOnCreate = false,
   selectedBookingCount = 0,

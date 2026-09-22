@@ -1,4 +1,4 @@
-import { useEffect, useState, type RefObject } from 'react';
+import { useEffect, useRef, useState, type RefObject } from 'react';
 
 export type SectionRefMap = Record<string, RefObject<HTMLDivElement | null>>;
 
@@ -26,6 +26,7 @@ export function useScrolledPastSections(
   hysteresis = 40,
 ): Record<string, boolean> {
   const [past, setPast] = useState<Record<string, boolean>>({});
+  const pastRef = useRef(past);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -38,21 +39,25 @@ export function useScrolledPastSections(
       const showLine = containerTop + topOffset;
       const hideLine = containerTop + topOffset + hysteresis;
 
-      setPast((prev) => {
-        const next: Record<string, boolean> = {};
-        for (const [key, ref] of Object.entries(sectionRefs)) {
-          const el = ref.current;
-          if (!el || !el.isConnected) {
-            next[key] = prev[key] ?? false;
-            continue;
-          }
-          const rect = el.getBoundingClientRect();
-          const revealY = rect.top + rect.height * revealFraction;
-          const wasPast = prev[key] ?? false;
-          next[key] = wasPast ? revealY < hideLine : revealY < showLine;
+      const prev = pastRef.current;
+      const next: Record<string, boolean> = {};
+      for (const [key, ref] of Object.entries(sectionRefs)) {
+        const el = ref.current;
+        if (!el || !el.isConnected) {
+          next[key] = prev[key] ?? false;
+          continue;
         }
-        return sectionsEqual(prev, next) ? prev : next;
-      });
+        const rect = el.getBoundingClientRect();
+        const revealY = rect.top + rect.height * revealFraction;
+        const wasPast = prev[key] ?? false;
+        next[key] = wasPast ? revealY < hideLine : revealY < showLine;
+      }
+      // Compare before scheduling React work. A same-value state update can
+      // still rerun the entire create form after the previous state changed.
+      if (!sectionsEqual(prev, next)) {
+        pastRef.current = next;
+        setPast(next);
+      }
     };
 
     const schedule = () => {

@@ -5,16 +5,18 @@ interface PlayerCardModalProviderProps {
   children: ReactNode;
   openPlayerCard: (playerId: string, levelSport?: import('@shared/sport').Sport) => void;
   closePlayerCard: () => void;
+  openPlayerAuthPrompt: (trigger: HTMLElement) => void;
 }
 
 export const PlayerCardModalProvider = ({
   children,
   openPlayerCard,
   closePlayerCard,
+  openPlayerAuthPrompt,
 }: PlayerCardModalProviderProps) => {
   const value = useMemo(
-    () => ({ openPlayerCard, closePlayerCard }),
-    [openPlayerCard, closePlayerCard],
+    () => ({ openPlayerCard, closePlayerCard, openPlayerAuthPrompt }),
+    [openPlayerCard, closePlayerCard, openPlayerAuthPrompt],
   );
 
   return (
@@ -23,4 +25,3 @@ export const PlayerCardModalProvider = ({
     </PlayerCardModalContext.Provider>
   );
 };
-

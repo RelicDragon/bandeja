@@ -26,6 +26,5 @@ export const usePlayerCardModal = () => {
     [contextClosePlayerCard],
   );
 
-  return { openPlayerCard, closePlayerCard };
+  return { openPlayerCard, closePlayerCard, openPlayerAuthPrompt: context.openPlayerAuthPrompt };
 };
-

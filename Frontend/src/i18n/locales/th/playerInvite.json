@@ -41,7 +41,7 @@
     "groupPlayedWith": "เคยเล่นด้วยกัน",
     "groupEveryoneIn": "ทุกคนใน {{city}}",
     "groupEveryone": "ทุกคน",
-    "playedTogetherCaption": "เล่นด้วยกัน{{when}} · {{games}}",
+    "playedTogetherCaption": "เล่นด้วยกัน{{when}}",
     "gamesCount_one": "{{count}} เกม",
     "gamesCount_other": "{{count}} เกม"
   }

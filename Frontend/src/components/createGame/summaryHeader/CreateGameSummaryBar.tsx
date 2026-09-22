@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { memo, type ReactNode } from 'react';
 
 export interface SummaryChipItem {
   key: string;
@@ -12,7 +12,7 @@ interface CreateGameSummaryBarProps {
   onChipClick: (key: string) => void;
 }
 
-export const CreateGameSummaryBar = ({ chips, onChipClick }: CreateGameSummaryBarProps) => {
+export const CreateGameSummaryBar = memo(function CreateGameSummaryBar({ chips, onChipClick }: CreateGameSummaryBarProps) {
   if (chips.length === 0) return null;
 
   return (
@@ -41,4 +41,4 @@ export const CreateGameSummaryBar = ({ chips, onChipClick }: CreateGameSummaryBa
       </div>
     </div>
   );
-};
+});
