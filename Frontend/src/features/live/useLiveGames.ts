@@ -12,7 +12,7 @@ import { useSocketEventsStore } from '@/store/socketEventsStore';
 import type { LiveGameSummary } from '@/types';
 import { applyLiveScoringFrame } from './liveSummaryUpdate';
 
-/** Find shows up to 10 cards, Home up to 3 (PRD 349) — live first, then today's finals. */
+/** Find shows up to 10 cards, Home up to 3 (PRD 349) — live, in progress, then today's finals. */
 export const LIVE_RAIL_FIND_LIMIT = 10;
 export const LIVE_RAIL_HOME_LIMIT = 3;
 
@@ -95,11 +95,11 @@ export function useLiveGames(options: UseLiveGamesOptions = {}): UseLiveGamesRes
   );
 
   const visibleIdsKey = useMemo(() => fetched.map((g) => g.id).join(','), [fetched]);
-  /** Only live cards take score frames; a finished card has no room to join. */
+  /** Only live cards take score frames; finished and in-progress cards have no board. */
   const liveIdsKey = useMemo(
     () =>
       fetched
-        .filter((g) => g.phase !== 'finished')
+        .filter((g) => g.phase === 'live')
         .map((g) => g.id)
         .join(','),
     [fetched],
@@ -228,7 +228,7 @@ export function useLiveGames(options: UseLiveGamesOptions = {}): UseLiveGamesRes
    * freezes exactly one while the rail around it keeps updating.
    */
   const reconnectingGameIds = useMemo(() => {
-    const liveIds = games.filter((game) => game.phase !== 'finished').map((game) => game.id);
+    const liveIds = games.filter((game) => game.phase === 'live').map((game) => game.id);
     if (socketDown) return new Set(liveIds);
     if (unjoinedIds.size === 0) return EMPTY_ID_SET;
     return new Set(liveIds.filter((id) => unjoinedIds.has(id)));
@@ -238,8 +238,8 @@ export function useLiveGames(options: UseLiveGamesOptions = {}): UseLiveGamesRes
     games,
     isLoading: query.isLoading,
     // Only a card that is actually showing a live score can "freeze"; a rail
-    // of final results has nothing to caption.
-    isReconnecting: socketDown && games.some((game) => game.phase !== 'finished'),
+    // of results typed in by hand has nothing to caption.
+    isReconnecting: socketDown && games.some((game) => game.phase === 'live'),
     reconnectingGameIds,
     refetch,
   };

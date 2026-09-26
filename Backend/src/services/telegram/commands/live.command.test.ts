@@ -48,8 +48,10 @@ function fakeGame(overrides: Partial<LiveRailGame> = {}): LiveRailGame {
     courtName: 'court 3',
     viewerIsPlaying: false,
     followedSeason: false,
+    followingPlaying: false,
     phase: 'live',
     finishedAt: null,
+    matchPosition: null,
     isPublic: true,
     league: null,
     liveSummary: {

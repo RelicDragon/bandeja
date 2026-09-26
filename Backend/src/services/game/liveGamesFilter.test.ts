@@ -13,6 +13,7 @@ import {
 } from './availableGamesStructuralWhere';
 import {
   clampLiveRailLimit,
+  selectLiveRailGames,
   sortLiveRailGames,
   LIVE_RAIL_FIND_LIMIT,
   LIVE_RAIL_HOME_LIMIT,
@@ -192,6 +193,58 @@ import {
   ];
   sortLiveRailGames(input);
   assert.equal(input[0].id, 'a');
+}
+
+{
+  // In progress without a live score sits between live and finished; inside a
+  // phase, followed players' games come after league fixtures, before casual.
+  const base = { viewerIsPlaying: false, followedSeason: false };
+  const sorted = sortLiveRailGames([
+    { ...base, id: 'done', phase: 'finished' as const, finishedAt: '2026-09-20T12:00:00.000Z', startTime: '2026-09-20T10:00:00.000Z' },
+    { ...base, id: 'prog-casual', phase: 'inProgress' as const, startTime: '2026-09-20T09:00:00.000Z' },
+    { ...base, id: 'prog-following', phase: 'inProgress' as const, startTime: '2026-09-20T11:00:00.000Z', followingPlaying: true },
+    { ...base, id: 'prog-league', phase: 'inProgress' as const, startTime: '2026-09-20T12:00:00.000Z', league: { name: 'L' } },
+    { ...base, id: 'live', phase: 'live' as const, startTime: '2026-09-20T13:00:00.000Z' },
+  ]);
+  assert.deepEqual(
+    sorted.map((c) => c.id),
+    ['live', 'prog-league', 'prog-following', 'prog-casual', 'done'],
+  );
+}
+
+/* ---------------- the cap keeps league fixtures ---------------- */
+{
+  const base = { viewerIsPlaying: false, followedSeason: false };
+  const live = (id: string, hour: number) => ({
+    ...base,
+    id,
+    phase: 'live' as const,
+    startTime: `2026-09-20T${String(hour).padStart(2, '0')}:00:00.000Z`,
+  });
+  const cards = [
+    live('l1', 8),
+    live('l2', 9),
+    live('l3', 10),
+    live('l4', 11),
+    { ...base, id: 'league-done', phase: 'finished' as const, finishedAt: '2026-09-20T07:00:00.000Z', startTime: '2026-09-20T05:00:00.000Z', league: { name: 'L' } },
+    { ...base, id: 'mine-done', phase: 'finished' as const, finishedAt: '2026-09-20T06:00:00.000Z', startTime: '2026-09-20T04:00:00.000Z', viewerIsPlaying: true },
+  ];
+
+  // Home's three slots: casual live games give way, rail order is kept.
+  assert.deepEqual(
+    selectLiveRailGames(cards, 3).map((c) => c.id),
+    ['l1', 'mine-done', 'league-done'],
+  );
+  // Room for everyone: plain sort order.
+  assert.deepEqual(
+    selectLiveRailGames(cards, 10).map((c) => c.id),
+    ['l1', 'l2', 'l3', 'l4', 'mine-done', 'league-done'],
+  );
+  // More must-haves than slots: the best-ranked of them.
+  assert.deepEqual(
+    selectLiveRailGames(cards, 1).map((c) => c.id),
+    ['mine-done'],
+  );
 }
 
 console.log('liveGamesFilter.test.ts: ok');

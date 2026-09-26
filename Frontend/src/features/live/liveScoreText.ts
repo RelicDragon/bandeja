@@ -1,4 +1,5 @@
 import type { TFunction } from 'i18next';
+import type { LiveRailMatchPosition } from '@/api/live';
 import type { LiveGameSummary } from '@/types';
 import { formatSetScores, sidePlayerNames } from './liveSummaryUpdate';
 
@@ -22,6 +23,16 @@ export function liveFinishedLabel(t: TFunction, minutes: number | null): string 
   return t('live.finishedHours', { count: Math.floor(minutes / 60) });
 }
 
+/** "Match 3/3" for a game with a scoreline, "Round 4" for a standings format. */
+export function matchPositionLabel(
+  t: TFunction,
+  position: LiveRailMatchPosition | null | undefined,
+): string | null {
+  if (!position) return null;
+  if (position.kind === 'round') return t('live.tournamentRound', { round: position.round });
+  return t('live.matchOf', { index: position.index, count: position.count });
+}
+
 /**
  * "Marko and Ana lead 6–4, 3–2" — the whole score as one sentence for screen
  * readers. The conjunction is localized (Chinese and Japanese use their own
@@ -36,6 +47,8 @@ export function liveScoreLabel(
   const namesA = sidePlayerNames(sideA).join(t('live.andJoin'));
   const namesB = sidePlayerNames(sideB).join(t('live.andJoin'));
   const score = formatSetScores(summary);
+  // In progress with nothing entered yet: who is on court, no score.
+  if (!score) return t('live.scorePending', { sideA: namesA, sideB: namesB });
   const key = finished ? 'live.scoreWon' : 'live.scoreLead';
   if (sideA.leading) return t(key, { leaders: namesA, score });
   if (sideB.leading) return t(key, { leaders: namesB, score });

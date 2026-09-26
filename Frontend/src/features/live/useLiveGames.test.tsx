@@ -68,7 +68,9 @@ const queryState = vi.hoisted(() => ({
   refetchCount: 0,
 }));
 
-vi.mock('@tanstack/react-query', () => ({
+// Keep the real exports: the app's query client module imports `QueryClient`.
+vi.mock('@tanstack/react-query', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@tanstack/react-query')>()),
   useQuery: () => ({
     data: queryState.data,
     isLoading: queryState.isLoading,
@@ -81,7 +83,11 @@ vi.mock('@tanstack/react-query', () => ({
 
 import { useLiveGames } from './useLiveGames';
 
-function makeGame(id: string, revision: number): LiveRailGame {
+function makeGame(
+  id: string,
+  revision: number,
+  phase: LiveRailGame['phase'] = 'live',
+): LiveRailGame {
   return {
     id,
     name: null,
@@ -97,6 +103,12 @@ function makeGame(id: string, revision: number): LiveRailGame {
     courtName: null,
     viewerIsPlaying: false,
     followedSeason: false,
+    followingPlaying: false,
+    phase,
+    finishedAt: null,
+    matchPosition: null,
+    isPublic: true,
+    league: null,
     liveSummary: {
       matchId: `match-${id}`,
       courtName: null,
@@ -204,6 +216,24 @@ describe('useLiveGames socket lifecycle', () => {
     });
     expect(rooms.retained).toEqual(['g1', 'g4', 'g2']);
     expect(rooms.released).toEqual(['g1', 'g2']);
+  });
+
+  it('retains only live cards — finished and in-progress ones have no board', async () => {
+    queryState.data = [
+      makeGame('live', 1),
+      makeGame('typed', 1, 'inProgress'),
+      makeGame('done', 1, 'finished'),
+    ];
+    mount();
+    await act(async () => {});
+    expect(rooms.retained).toEqual(['live']);
+
+    // Socket down: only the live card can freeze.
+    act(() => {
+      socket.state = 'disconnected';
+      for (const listener of socket.listeners) listener('disconnected');
+    });
+    expect([...latest!.reconnectingGameIds]).toEqual(['live']);
   });
 
   it('retains nothing when the rail is empty', async () => {

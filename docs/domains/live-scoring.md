@@ -37,7 +37,7 @@ Both live in `Backend/src/services/game/availableGamesStructuralWhere.ts`; the l
 
 | Surface | Entry point |
 |---------|-------------|
-| Find / Home rail | `GET /api/live/games` → `listCityRailGames()` (live + finished today) |
+| Find / Home rail | `GET /api/live/games` → `listCityRailGames()` (live + in progress + finished today) |
 | Game-details **Live** block | `GET /api/live/games/:id` → `findLiveRailGame()` |
 | Spectator token mint + redemption | `POST /api/live/games/:id/spectator-token`; `assertSpectatorGameStillWatchable()` |
 | Telegram `/live` | `listLiveGames()` (live only) called **in process**, never over HTTP |
@@ -49,7 +49,19 @@ Both live in `Backend/src/services/game/availableGamesStructuralWhere.ts`; the l
 
 The rail keeps a game after it ends: `listCityRailGames()` appends games whose results went `FINAL` **today in the city's timezone** (`finishedDate >= startOfCalendarDate(today, cityTz)`), under the same visibility gate. A score entered the normal way (not live) therefore shows up in the city too, until midnight. `finishedDate` is stamped by `applyGameOutcomes` (re-stamped on re-finalise, cleared on reopen); walkovers, technical results and season finalisation never set it, so an unplayed "result" never reaches the rail. `LEAGUE_SEASON`, `BAR` and `EVENT` rows are excluded.
 
-A finished card is built by `buildFinalGameSummary()` from the OFFICIAL `Set` rows (the source of truth for manual entry and live scoring alike): every set, no point chip, `leading` = the winner (`Match.winnerId`, else sets won, else games won), no `revision`. Only a game with **exactly one match** gets a card — Americano, round robin and other multi-match formats end in standings, not a scoreline. Finished cards join no socket room and never show "Reconnecting". Tapping one opens `/games/:id`; a stranger tapping a private league fixture goes to the season (`/games/:seasonId`) instead, because that fixture's results endpoint 404s for non-members.
+A finished card is built by `buildFinalGameSummary()` from the OFFICIAL `Set` rows (the source of truth for manual entry and live scoring alike): every set, no point chip, `leading` = the winner (`Match.winnerId`, else sets won, else games won), no `revision`. It shows the game's **last scored match** (round, then match number), and `matchPosition` tells the card which one — "Match 2/3" in the footer; `null` for a single-match game. That covers the common 4-player game of 2–6 rotating-partner matches, which is most casual games (a one-match-only rule used to hide ~85% of them). Finished cards join no socket room and never show "Reconnecting". Tapping one opens `/games/:id`; a stranger tapping a private league fixture goes to the season (`/games/:seasonId`) instead, because that fixture's results endpoint 404s for non-members.
+
+**Who earns a card without a live score** — `Backend/src/services/game/liveRailMatchPick.ts` (pure, tested without a DB):
+
+- **League fixtures** (of a public season): always. They matter to the whole community, and the cap never drops one (below).
+- **Standings formats** — `TOURNAMENT`, or `gameType` Americano / Mexicano / round robin / winner court / ladder / KOTC: only when the viewer or someone they follow (`UserFavoriteUser`) is PLAYING. The card then shows *that* player's match, labelled "Round N" in a tournament ribbon (rounds are generated as the event goes, so there is no honest total). A live-scored standings game is still watchable by everyone, as before.
+- **Everything else** (casual games): when finished today.
+
+### In progress without a live score
+
+League fixtures are never live-scored and most tournaments are scored by typing results in as they go, so "being played now" is invisible to the live phase. `listProgressRailGames()` adds `phase: 'inProgress'` cards for rail-visible `IN_PROGRESS` games that **started today (city day)** — a forgotten `IN_PROGRESS` from last month is not "now" — with no live envelope, limited to league fixtures and standings games the viewer or a followed player is in. The card (`buildProgressGameSummary()`) shows the latest entered match's sets, or — before anything is entered — the focus player's next match with no set columns; an amber **In progress** tag, "Started … ago", and **Results**, never **Watch**: there is no board, no socket room, no spectator token.
+
+**Opt-in.** `inProgress` cards are only returned for `GET /api/live/games?include=inProgress`. App builds up to 0.97.54 treat every non-finished card as watchable and would 404 on the mint, so they simply never receive one. The current client always sends the flag.
 
 ### The live summary
 
@@ -70,7 +82,7 @@ A finished card is built by `buildFinalGameSummary()` from the OFFICIAL `Set` ro
 
 ### Ordering, caps and gating
 
-`Backend/src/services/game/liveRailOrder.ts`: live before finished. Inside each phase: the viewer's own game (it carries a "You" tag), then fixtures of league seasons the viewer takes part in, then any other league fixture, then casual games; live ties by start time ascending, finished ties by `finishedDate` descending. Find shows at most 10 cards, Home at most 3, any requested limit clamped to 20. League fixtures are also accented on the card (amber outline, ribbon with league name and round / Playoff). There is no "follow a season" model in the schema — "followed season" is read as *the viewer is a non-withdrawn `LeagueParticipant` in that season*.
+`Backend/src/services/game/liveRailOrder.ts`: live, then in progress, then finished. Inside each phase: the viewer's own game (it carries a "You" tag), then fixtures of league seasons the viewer takes part in, then any other league fixture, then games someone the viewer follows is playing, then casual games; live / in-progress ties by start time ascending, finished ties by `finishedDate` descending. Find shows at most 10 cards, Home at most 3, any requested limit clamped to 20. The cap (`selectLiveRailGames`) never drops a league fixture or the viewer's own game in favour of a casual one — on Home's three slots a finished fixture beats a casual live game — and keeps rail order among what it keeps. League fixtures are also accented on the card (amber outline, ribbon with league name and round / Playoff). There is no "follow a season" model in the schema — "followed season" is read as *the viewer is a non-withdrawn `LeagueParticipant` in that season*.
 
 Home shows the rail only when the viewer has **no game of their own today**, computed in the viewer's *city* day ([home-and-find.md](./home-and-find.md)).
 

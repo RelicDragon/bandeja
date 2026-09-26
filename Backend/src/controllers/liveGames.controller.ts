@@ -15,11 +15,16 @@ import { findLiveRailGame, listCityRailGames } from '../services/game/liveGames.
 import { clampLiveRailLimit } from '../services/game/liveRailOrder';
 
 /**
- * `GET /api/live/games?cityId=&limit=`
+ * `GET /api/live/games?cityId=&limit=&include=inProgress`
  *
  * Live games, then games that went final today in the city. Defaults to the
  * viewer's current city. Returns `[]` rather than 404 when the city has
  * nothing to show — the rail hides itself on an empty list.
+ *
+ * `include=inProgress` opts into `phase: 'inProgress'` cards (league fixtures
+ * and followed players' tournaments scored without the live board). Opt-in
+ * because an app build that predates the phase treats every non-finished card
+ * as watchable, and the watch mint 404s for these.
  */
 export const getLiveGames = asyncHandler(async (req: AuthRequest, res: Response) => {
   const requestedCityId = typeof req.query.cityId === 'string' ? req.query.cityId : '';
@@ -38,10 +43,13 @@ export const getLiveGames = asyncHandler(async (req: AuthRequest, res: Response)
     return;
   }
 
+  const include = typeof req.query.include === 'string' ? req.query.include.split(',') : [];
+
   const games = await listCityRailGames({
     cityId,
     viewerUserId: req.userId ?? null,
     limit: clampLiveRailLimit(req.query.limit),
+    includeInProgress: include.includes('inProgress'),
   });
 
   res.json({ success: true, data: { games } });

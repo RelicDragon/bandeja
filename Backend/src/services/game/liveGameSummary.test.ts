@@ -8,6 +8,7 @@ import type { BasicUser } from '../../types/user.types';
 import {
   buildFinalGameSummary,
   buildLiveGameSummary,
+  buildProgressGameSummary,
   formatSetScoreLine,
   leadingTeamNumber,
   liveEnvelopeUpdatedAtMs,
@@ -274,6 +275,40 @@ const classicState = {
   );
   assert.equal(
     buildFinalGameSummary({ matchId: 'm5', teams: [teams[0]], sets: [{ teamAScore: 6, teamBScore: 2 }] }),
+    null,
+    'one side missing',
+  );
+}
+
+/* ---------------- in progress without a live score ---------------- */
+{
+  const teams = [
+    { teamNumber: 1, players: [player('a', 'Marko'), player('b', 'Ana')] },
+    { teamNumber: 2, players: [player('c', 'Luka'), player('d', 'Ivan')] },
+  ];
+
+  // Nothing typed in yet: still a card — who is on court, no set columns.
+  const blank = buildProgressGameSummary({ matchId: 'p1', teams, sets: [] });
+  assert.ok(blank);
+  assert.deepEqual(blank.sides[0].setScores, []);
+  assert.deepEqual(blank.sides[1].setScores, []);
+  assert.equal(blank.sides[0].leading, false);
+  assert.equal(blank.sides[1].leading, false);
+  assert.equal(blank.currentSet, 1);
+  assert.equal(blank.revision, undefined, 'never takes socket frames');
+
+  // Sets so far: ahead on sets, never a stored winner.
+  const partial = buildProgressGameSummary({
+    matchId: 'p2',
+    teams,
+    sets: [{ teamAScore: 2, teamBScore: 6 }],
+  });
+  assert.deepEqual(partial?.sides[0].setScores, [2]);
+  assert.equal(partial?.sides[1].leading, true);
+  assert.equal(partial?.sides[0].currentGameScore, '');
+
+  assert.equal(
+    buildProgressGameSummary({ matchId: 'p3', teams: [teams[1]], sets: [] }),
     null,
     'one side missing',
   );

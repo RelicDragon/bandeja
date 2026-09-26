@@ -22,7 +22,8 @@ import { LiveNowRail } from './LiveNowRail';
  *
  * Tapping a live card opens the read-only watch board (`mintLiveWatchPath`),
  * which works for a non-participant — that mint is what makes "spectating is
- * one tap" true. A finished card opens results ({@link finishedRailGamePath}).
+ * one tap" true. A finished or in-progress card opens the game
+ * ({@link finishedRailGamePath}).
  */
 export interface LiveNowRailContainerProps {
   variant: 'find' | 'home';
@@ -52,7 +53,8 @@ function LiveNowRailContainerView({
 
   const handleOpen = useCallback(
     async (game: LiveRailGame) => {
-      if (game.phase === 'finished') {
+      // Only a live-scored game has a board to watch; the rest open the game.
+      if (game.phase !== 'live') {
         navigate(finishedRailGamePath(game));
         return;
       }

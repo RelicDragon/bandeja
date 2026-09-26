@@ -89,8 +89,10 @@ function game(id: string, overrides: Partial<LiveRailGame> = {}): LiveRailGame {
     courtName: 'court 3',
     viewerIsPlaying: false,
     followedSeason: false,
+    followingPlaying: false,
     phase: 'live',
     finishedAt: null,
+    matchPosition: null,
     isPublic: true,
     league: null,
     liveSummary: {
@@ -340,6 +342,73 @@ describe('LiveNowRail', () => {
     expect(ribbon?.textContent).toContain('live.leagueRound');
     expect(cards[0].getAttribute('aria-label')).toContain('Novi Sad Winter League');
     expect(cards[1].querySelector('[data-testid="live-league-ribbon"]')).toBeNull();
+  });
+
+  it('says which match of a multi-match game the card shows', () => {
+    const done = finished('f1', { matchPosition: { kind: 'match', index: 3, count: 3 } });
+    const container = render(<LiveNowRail games={[done]} onOpen={() => {}} />);
+    const card = container.querySelector('[data-testid="live-score-card"]');
+    expect(card?.textContent).toContain('live.matchOf');
+    expect(card?.getAttribute('aria-label')).toContain('live.matchOf');
+  });
+
+  it('draws a hand-scored game in progress: entered sets, no board, opens the game', () => {
+    reducedMotion.value = true;
+    const base = game('p1');
+    const typed = game('p1', {
+      phase: 'inProgress',
+      entityType: 'TOURNAMENT',
+      name: 'Autumn Americano',
+      followingPlaying: true,
+      matchPosition: { kind: 'round', round: 4 },
+      liveSummary: {
+        ...base.liveSummary,
+        revision: undefined,
+        sides: [
+          { ...base.liveSummary.sides[0], setScores: [6, 2], currentGameScore: '', leading: true },
+          { ...base.liveSummary.sides[1], setScores: [3, 1], currentGameScore: '', leading: false },
+        ],
+      },
+    });
+    const onOpen = vi.fn();
+    const container = render(<LiveNowRail games={[typed]} onOpen={onOpen} isReconnecting />);
+    const card = container.querySelector('[data-testid="live-score-card"]') as HTMLButtonElement;
+    expect(card.getAttribute('data-phase')).toBe('inProgress');
+    expect(card.querySelector('[data-testid="live-in-progress-chip"]')).not.toBeNull();
+    expect(card.querySelector('[data-testid="live-results-cta"]')).not.toBeNull();
+    expect(card.querySelector('[data-testid="live-watch-cta"]')).toBeNull();
+    expect(card.querySelector('[data-testid="live-winner-mark"]')).toBeNull();
+    // Entered sets, no point chip, never "Reconnecting" — there is no board.
+    const rows = container.querySelectorAll('[data-testid="live-score-row"]');
+    expect(rows[0].textContent).toBe('p1-ap1-bMarko / Ana62');
+    expect(card.textContent).not.toContain('live.reconnecting');
+    // The tournament's name and round ride in a ribbon, not the footer.
+    const ribbon = card.querySelector('[data-testid="live-tournament-ribbon"]');
+    expect(ribbon?.textContent).toContain('Autumn Americano');
+    expect(ribbon?.textContent).toContain('live.tournamentRound');
+    act(() => card.click());
+    expect(onOpen).toHaveBeenCalledWith(typed);
+  });
+
+  it('shows who is on court before anything is entered', () => {
+    reducedMotion.value = true;
+    const base = game('p2');
+    const blank = game('p2', {
+      phase: 'inProgress',
+      liveSummary: {
+        ...base.liveSummary,
+        sides: [
+          { ...base.liveSummary.sides[0], setScores: [], currentGameScore: '', leading: false },
+          { ...base.liveSummary.sides[1], setScores: [], currentGameScore: '', leading: false },
+        ],
+      },
+    });
+    const container = render(<LiveNowRail games={[blank]} onOpen={() => {}} />);
+    const rows = container.querySelectorAll('[data-testid="live-score-row"]');
+    expect(rows[0].textContent).toBe('p2-ap2-bMarko / Ana');
+    expect(
+      container.querySelector('[data-testid="live-score-block"]')?.getAttribute('aria-label'),
+    ).toBe('live.scorePending');
   });
 
   it('sends a stranger tapping a private league result to the season, not a 404', () => {

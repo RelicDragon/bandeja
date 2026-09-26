@@ -225,6 +225,48 @@ export type FinalSummaryMatchInput = {
   winnerTeamNumber?: number | null;
 };
 
+function normaliseOfficialSets(rows: FinalSummaryMatchInput['sets']): LiveSummarySetRow[] {
+  return rows
+    .map((row) => ({
+      teamA: clampScore(row.teamAScore),
+      teamB: clampScore(row.teamBScore),
+      isTieBreak: false,
+    }))
+    .filter((row) => row.teamA > 0 || row.teamB > 0);
+}
+
+function hasBothSides(teams: LiveSummaryTeamInput[]): boolean {
+  return teams.some((x) => x.teamNumber === 1) && teams.some((x) => x.teamNumber === 2);
+}
+
+/** Sets won, otherwise games won; `0` when even on both. */
+function aheadOnSets(sets: LiveSummarySetRow[]): 0 | 1 | 2 {
+  const bySets = leadingTeamNumber(sets, sets.length, ['', '']);
+  if (bySets !== 0) return bySets;
+  const gamesA = sets.reduce((sum, row) => sum + row.teamA, 0);
+  const gamesB = sets.reduce((sum, row) => sum + row.teamB, 0);
+  if (gamesA === gamesB) return 0;
+  return gamesA > gamesB ? 1 : 2;
+}
+
+function summaryFromSets(
+  input: FinalSummaryMatchInput,
+  sets: LiveSummarySetRow[],
+  leading: 0 | 1 | 2,
+): LiveGameSummary {
+  const lastIndex = sets.length - 1;
+  return {
+    matchId: input.matchId,
+    courtName: input.courtName ?? null,
+    currentSet: Math.max(1, sets.length),
+    sides: [
+      sideFor(1, input.teams, sets, lastIndex, ['', ''], leading),
+      sideFor(2, input.teams, sets, lastIndex, ['', ''], leading),
+    ],
+    startedAt: toIsoOrNull(input.startedAt),
+  };
+}
+
 /**
  * Rail payload for a match whose results went **final** — the same shape as a
  * live summary so one card renders both. Built from the `Set` rows, which are
@@ -236,39 +278,25 @@ export type FinalSummaryMatchInput = {
  * frame. `null` when there is no scored set or not exactly two sides.
  */
 export function buildFinalGameSummary(input: FinalSummaryMatchInput): LiveGameSummary | null {
-  const sets = input.sets
-    .map((row) => ({
-      teamA: clampScore(row.teamAScore),
-      teamB: clampScore(row.teamBScore),
-      isTieBreak: false,
-    }))
-    .filter((row) => row.teamA > 0 || row.teamB > 0);
-  if (sets.length === 0) return null;
-  if (!input.teams.some((x) => x.teamNumber === 1) || !input.teams.some((x) => x.teamNumber === 2)) {
-    return null;
-  }
+  const sets = normaliseOfficialSets(input.sets);
+  if (sets.length === 0 || !hasBothSides(input.teams)) return null;
+  const winner =
+    input.winnerTeamNumber === 1 || input.winnerTeamNumber === 2
+      ? input.winnerTeamNumber
+      : aheadOnSets(sets);
+  return summaryFromSets(input, sets, winner);
+}
 
-  let winner: 0 | 1 | 2 =
-    input.winnerTeamNumber === 1 || input.winnerTeamNumber === 2 ? input.winnerTeamNumber : 0;
-  if (winner === 0) {
-    const lastIndex = sets.length;
-    winner = leadingTeamNumber(sets, lastIndex, ['', '']);
-    if (winner === 0) {
-      const gamesA = sets.reduce((sum, row) => sum + row.teamA, 0);
-      const gamesB = sets.reduce((sum, row) => sum + row.teamB, 0);
-      if (gamesA !== gamesB) winner = gamesA > gamesB ? 1 : 2;
-    }
-  }
-
-  const lastIndex = sets.length - 1;
-  return {
-    matchId: input.matchId,
-    courtName: input.courtName ?? null,
-    currentSet: sets.length,
-    sides: [
-      sideFor(1, input.teams, sets, lastIndex, ['', ''], winner),
-      sideFor(2, input.teams, sets, lastIndex, ['', ''], winner),
-    ],
-    startedAt: toIsoOrNull(input.startedAt),
-  };
+/**
+ * Rail payload for a match of a game in progress **without** a live score —
+ * results typed in as the event goes. Same shape again; the sets so far (none
+ * yet is fine: the card then shows who is on court), `leading` = ahead on the
+ * sets entered, never a stored winner. `null` without two sides.
+ */
+export function buildProgressGameSummary(
+  input: Omit<FinalSummaryMatchInput, 'winnerTeamNumber'>,
+): LiveGameSummary | null {
+  if (!hasBothSides(input.teams)) return null;
+  const sets = normaliseOfficialSets(input.sets);
+  return summaryFromSets(input, sets, sets.length > 0 ? aheadOnSets(sets) : 0);
 }

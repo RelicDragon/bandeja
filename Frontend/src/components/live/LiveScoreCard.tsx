@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Award, Check, ChevronRight, Play, Trophy, WifiOff } from 'lucide-react';
+import { Award, Check, ChevronRight, Medal, Play, Trophy, WifiOff } from 'lucide-react';
 import type { LiveRailGame } from '@/api/live';
 import { ClubAvatar } from '@/components/ClubAvatar';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
@@ -10,6 +10,7 @@ import {
   liveFinishedLabel,
   liveScoreLabel,
   liveStartedLabel,
+  matchPositionLabel,
 } from '@/features/live/liveScoreText';
 import { LiveScoreDigits } from './LiveScoreDigits';
 
@@ -20,10 +21,14 @@ import { LiveScoreDigits } from './LiveScoreDigits';
  * per side — faces, names, a column per set, the point score highlighted on
  * the end — so the card previews exactly what a tap leads to.
  *
- * Two phases share the layout. `live` highlights the running set and point and
- * offers **Watch**; `finished` (results went final today) shows every set as
- * completed, ticks the winner and offers **Results**. League fixtures carry an
- * amber outline and a ribbon naming the league and round.
+ * Three phases share the layout. `live` highlights the running set and point
+ * and offers **Watch**; `finished` (results went final today) shows every set
+ * as completed, ticks the winner and offers **Results**; `inProgress` (a league
+ * fixture or a followed player's tournament scored by hand) shows the sets
+ * entered so far — none yet is fine — and also offers **Results**. League
+ * fixtures carry an amber outline and a ribbon naming the league and round;
+ * tournaments a ribbon with their name and round. A multi-match game says which
+ * match the card shows ("Match 3/3").
  *
  * The whole card is the tap target. Avatars are plain faces (`asDiv`), never
  * buttons, so nothing interactive nests inside it. `carousel` is the fixed
@@ -48,12 +53,14 @@ interface SideRowProps {
   setCount: number;
   showPoints: boolean;
   finished: boolean;
+  /** Only a live board has a set being played right now. */
+  live: boolean;
 }
 
-function SideRow({ side, other, setCount, showPoints, finished }: SideRowProps) {
+function SideRow({ side, other, setCount, showPoints, finished, live }: SideRowProps) {
   const names = sidePlayerNames(side).join(' / ');
-  // A finished game has no running set: every column is a completed set.
-  const runningSet = finished ? -1 : setCount - 1;
+  // Without a live board every column is a completed (or entered) set.
+  const runningSet = live ? setCount - 1 : -1;
 
   return (
     <div className="flex min-w-0 items-center gap-2" data-testid="live-score-row">
@@ -139,6 +146,24 @@ function LeagueRibbon({ league }: { league: NonNullable<LiveRailGame['league']> 
   );
 }
 
+function TournamentRibbon({ name, position }: { name: string | null; position: string | null }) {
+  return (
+    <div
+      className="flex w-full min-w-0 items-center gap-1.5 text-[11px] font-semibold text-primary-700 dark:text-primary-300"
+      data-testid="live-tournament-ribbon"
+    >
+      <Medal size={13} className="shrink-0" aria-hidden />
+      {name ? <span className="min-w-0 truncate">{name}</span> : null}
+      {position ? (
+        <span className="shrink-0 text-primary-600/80 dark:text-primary-300/70">
+          {name ? '· ' : ''}
+          {position}
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
 function LiveScoreCardView({
   game,
   variant = 'carousel',
@@ -150,20 +175,32 @@ function LiveScoreCardView({
   const summary = game.liveSummary;
   const [sideA, sideB] = summary.sides;
   const finished = game.phase === 'finished';
-  // A finished card is not in a socket room; there is nothing to freeze.
-  const frozen = isReconnecting && !finished;
+  const live = game.phase === 'live';
+  // Only a live card is in a socket room; nothing else can freeze.
+  const frozen = isReconnecting && live;
 
-  const setCount = Math.max(1, sideA.setScores.length, sideB.setScores.length);
+  // In progress with nothing entered yet draws no set columns at all.
+  const setCount = Math.max(live || finished ? 1 : 0, sideA.setScores.length, sideB.setScores.length);
   // `points`-mode sports have no sub-game score; their running set is the live number.
-  const showPoints = Boolean(sideA.currentGameScore || sideB.currentGameScore);
+  const showPoints = live && Boolean(sideA.currentGameScore || sideB.currentGameScore);
 
   const scoreLabel = liveScoreLabel(t, summary, finished);
   const timeText = finished
     ? liveFinishedLabel(t, minutesSince(game.finishedAt, now))
     : liveStartedLabel(t, minutesSince(summary.startedAt, now));
-  const statusText = frozen ? t('live.reconnecting') : timeText;
+  const position = matchPositionLabel(t, game.matchPosition);
+  const tournament = !game.league && game.entityType === 'TOURNAMENT';
+  // A tournament names its round in the ribbon; everything else in the footer.
+  const footerPosition = tournament ? null : position;
+  const statusText = frozen
+    ? t('live.reconnecting')
+    : [timeText, footerPosition].filter(Boolean).join(' · ');
   const venue = [game.clubName, game.courtName].filter(Boolean).join(' · ') || game.name || game.cityName;
-  const leagueName = game.league ? `${game.league.name}. ` : '';
+  const leagueName = game.league
+    ? `${game.league.name}. `
+    : tournament && game.name
+      ? `${game.name}. `
+      : '';
 
   return (
     <button
@@ -180,6 +217,7 @@ function LiveScoreCardView({
       } ${game.league ? 'ring-1 ring-inset ring-amber-400/70 dark:ring-amber-400/40' : ''}`}
     >
       {game.league ? <LeagueRibbon league={game.league} /> : null}
+      {tournament ? <TournamentRibbon name={game.name} position={position} /> : null}
       <div className="flex w-full min-w-0 items-center gap-2">
         {/* The tile variant fills its positioned parent. */}
         <span className="relative h-5 w-5 shrink-0 overflow-hidden rounded-md">
@@ -213,8 +251,8 @@ function LiveScoreCardView({
         aria-label={scoreLabel}
         data-testid="live-score-block"
       >
-        <SideRow side={sideA} other={sideB} setCount={setCount} showPoints={showPoints} finished={finished} />
-        <SideRow side={sideB} other={sideA} setCount={setCount} showPoints={showPoints} finished={finished} />
+        <SideRow side={sideA} other={sideB} setCount={setCount} showPoints={showPoints} finished={finished} live={live} />
+        <SideRow side={sideB} other={sideA} setCount={setCount} showPoints={showPoints} finished={finished} live={live} />
       </div>
 
       {/* `mt-auto` pins the footer to the bottom when a league ribbon makes a neighbour taller. */}
@@ -226,12 +264,19 @@ function LiveScoreCardView({
             <span className="shrink-0 rounded bg-gray-200/80 px-1 py-px text-[10px] font-bold uppercase tracking-wide text-gray-600 dark:bg-white/10 dark:text-gray-300">
               {t('live.final')}
             </span>
+          ) : !live ? (
+            <span
+              className="shrink-0 rounded bg-amber-100 px-1 py-px text-[10px] font-bold uppercase tracking-wide text-amber-700 dark:bg-amber-400/15 dark:text-amber-300"
+              data-testid="live-in-progress-chip"
+            >
+              {t('live.inProgress')}
+            </span>
           ) : (
             <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-red-500" aria-hidden />
           )}
           <span className="truncate">{statusText}</span>
         </span>
-        {finished ? (
+        {!live ? (
           <span
             className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-gray-200/70 py-1 pe-1.5 ps-2.5 text-xs font-semibold text-gray-700 dark:bg-white/10 dark:text-gray-200"
             data-testid="live-results-cta"
