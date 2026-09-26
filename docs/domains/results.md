@@ -4,7 +4,9 @@
 
 ## Entry
 
-`GameResultsEntryEmbedded` when `resultsStatus !== NONE` (not BAR/TRAINING/season hub). Start on ANNOUNCED requires confirm. Reset all / finish / edit FINAL = danger confirms.
+`GameResultsEntryEmbedded` when `resultsStatus !== NONE` (not BAR/TRAINING/season hub). Start on ANNOUNCED requires confirm. Reset all / finish / edit FINAL = danger confirms. Finish sits in a sticky bar with match progress; its confirmation summarizes unscored / incomplete matches and ties. Edit FINAL and restart live in the ⋯ beside the results tabs.
+
+Board interaction (`ResultsRoundsBoard`, helpers in `utils/resultsBoardNavigation.ts`): lineups are edited by tapping seats — an empty seat focuses the match and the player tray places into the highlighted side; a placed player opens move / swap / remove. Move, swap (also across matches of one round) and auto-fill are one `GameResultsEngine.setMatchLineups` edit, persisted as one match PUT per changed match. A full match shows **Enter score**; **Save and next** in the score dialog advances to the next set/match. When the next row is in the *same* match it waits for this save to land and opens a fresh draft on the resulting version — it never carries the old draft's `baseVersion` forward.
 
 Writers: `canModifyResults` — owner/admin, or `resultsByAnyone` + participant; parent season roles inherit. Routes: `Backend/src/routes/results.routes.ts` (`requireCanModifyResults`).
 

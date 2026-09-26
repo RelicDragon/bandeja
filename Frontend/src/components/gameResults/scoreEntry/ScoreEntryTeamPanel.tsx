@@ -6,7 +6,6 @@ export type TeamSideState = 'leading' | 'trailing' | 'neutral';
 interface ScoreEntryTeamPanelProps {
   players: BasicUser[];
   sideState: TeamSideState;
-  showNames?: boolean;
 }
 
 const teamLabel = (players: BasicUser[]) =>
@@ -17,7 +16,6 @@ const teamLabel = (players: BasicUser[]) =>
 export const ScoreEntryTeamPanel = ({
   players,
   sideState,
-  showNames = true,
 }: ScoreEntryTeamPanelProps) => (
   <div
     className={`flex h-full min-h-[3.75rem] flex-col items-center justify-center gap-1.5 rounded-xl px-2 py-2 ${
@@ -39,10 +37,8 @@ export const ScoreEntryTeamPanel = ({
         />
       ))}
     </div>
-    {showNames ? (
-      <p className="line-clamp-2 max-w-full text-center text-[11px] font-medium leading-tight text-gray-600 dark:text-gray-400">
-        {teamLabel(players)}
-      </p>
-    ) : null}
+    <p className="line-clamp-2 max-w-full text-center text-[11px] font-medium leading-tight text-gray-600 dark:text-gray-400">
+      {teamLabel(players)}
+    </p>
   </div>
 );

@@ -179,3 +179,70 @@ describe('regular score entry draft', () => {
     expect(onSave).toHaveBeenCalledWith('match-1', 0, 20, 12, false, undefined, { baseVersion: 'v0' });
   });
 });
+
+describe('quick score entry', () => {
+  let root: Root;
+  let entry: ReturnType<typeof useScoreEntryState>;
+  const onSave = vi.fn();
+  const onSaveAndNext = vi.fn();
+  const onClose = vi.fn();
+  const classicGame: ScoreEntryGame = { ...game, scoringPreset: 'CLASSIC_BEST_OF_3' };
+
+  function Probe({ currentMatch, autoOpenKeypad, setIndex = 0 }: { currentMatch: Match; autoOpenKeypad: boolean; setIndex?: number }) {
+    entry = useScoreEntryState({
+      match: currentMatch,
+      game: classicGame,
+      setIndex,
+      players: [],
+      roundNumber: 2,
+      matchNumber: 3,
+      autoOpenKeypad,
+      onSave,
+      onSaveAndNext,
+      onClose,
+    });
+    return null;
+  }
+
+  beforeEach(() => {
+    Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
+    vi.clearAllMocks();
+    root = createRoot(document.createElement('div'));
+  });
+
+  afterEach(() => {
+    act(() => root.unmount());
+  });
+
+  const bo3Match: Match = { id: 'match-9', resultsVersion: 'v3', teamA: [], teamB: [], sets: [{ teamA: 0, teamB: 0 }] };
+
+  it('opens the keypad on team A only when asked', () => {
+    act(() => root.render(<Probe currentMatch={bo3Match} autoOpenKeypad />));
+    expect(entry.pickerTeam).toBe('teamA');
+    act(() => root.render(<Probe key="other" currentMatch={bo3Match} autoOpenKeypad={false} />));
+    expect(entry.pickerTeam).toBeNull();
+  });
+
+  it('never opens the keypad by itself on an extra set', () => {
+    const extra: Match = { ...bo3Match, sets: [{ teamA: 6, teamB: 4 }, { teamA: 0, teamB: 0, role: 'EXTRA_GAMES' }] };
+    act(() => root.render(<Probe currentMatch={extra} autoOpenKeypad setIndex={1} />));
+    expect(entry.pickerTeam).toBeNull();
+  });
+
+  it('names round, match and set for a multi-set match', () => {
+    act(() => root.render(<Probe currentMatch={bo3Match} autoOpenKeypad />));
+    expect(entry.contextLine).toBe('gameResults.roundNumber · gameResults.match · gameResults.setNumber');
+  });
+
+  it('hands save-and-next the opening version and leaves closing to the caller', () => {
+    act(() => root.render(<Probe currentMatch={bo3Match} autoOpenKeypad />));
+    expect(entry.saveAndNextDisabled).toBe(true);
+    act(() => entry.setTeamScore('teamA', 6));
+    act(() => entry.setTeamScore('teamB', 3));
+    expect(entry.saveAndNextDisabled).toBe(false);
+    act(() => entry.handleSave(true));
+    expect(onSaveAndNext).toHaveBeenCalledWith('match-9', 0, 6, 3, false, undefined, { baseVersion: 'v3' });
+    expect(onSave).not.toHaveBeenCalled();
+    expect(onClose).not.toHaveBeenCalled();
+  });
+});

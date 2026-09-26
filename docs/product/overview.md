@@ -70,7 +70,8 @@ Unread badge is wired on **Chats only**. Users with no enabled sport lose My + F
 | `/games/:id/live` | GameLiveRoute | Public (spectator token on query) |
 | `/games/:id/live/tv` | GameLiveTvRedirect | Protected shortcut → live + `?tv=1` |
 | `/games/:id/live/broadcast` | GameLiveBroadcastRedirect | Protected shortcut → broadcast URL |
-| `/games/:id/broadcast` | GameBroadcastRoute | Public (spectator token) |
+| `/games/:id/broadcast` | GameBroadcastRoute | Public (spectator token); OBS overlay. Token without `transparent=1` → `/watch` |
+| `/games/:id/watch` | GameWatchRoute | Public (spectator token); read-only TV board for viewers |
 | `/games/:id/league-table` | LeagueFixtureTableFullscreenPage | Protected |
 | `/games/:id/league-bracket` | LeagueBracketFullscreenPage | Protected |
 | `/my-clubs/*` | ClubManagementApp | Protected |
@@ -93,7 +94,7 @@ Static QR landing is **not** the SPA route: `Frontend/public/link-to-app/index.h
 | `/login`, `/register`, `/login/:telegramKey` | Auth |
 | `/games/:id` | Public game details; join prompts login |
 | `/user-profile/:userId` | Public profile |
-| `/games/:id/live`, `/games/:id/broadcast` | Guest with `?spectatorToken=` |
+| `/games/:id/live`, `/games/:id/broadcast`, `/games/:id/watch` | Guest with `?spectatorToken=` |
 | `/next-game` | Redirect helper (then typically hits a protected game path) |
 | `/link-to-app` | SPA bounce to `/login` |
 | `/link-to-app/` (static HTML) | Store / web chooser; no app session required |

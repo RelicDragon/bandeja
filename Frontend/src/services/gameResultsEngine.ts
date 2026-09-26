@@ -36,6 +36,7 @@ import {
 import { maxPlayersPerTeamForGame } from '@/utils/matchFormat';
 import { isPresetResultsRoster } from '@/utils/gameResultsHelpers';
 import { convertServerResultsToRounds } from '@/utils/serverResultsToRounds';
+import { pickInitialExpandedRoundIds, type MatchLineupUpdate } from '@/utils/resultsBoardNavigation';
 import { extractApiErrorMessage } from '@/utils/extractApiErrorMessage';
 
 function isRejectedResultsRequest(error: unknown): boolean {
@@ -158,7 +159,7 @@ class GameResultsEngineClass {
 
       if (serverProblem && localResults?.rounds) {
         useGameResultsStore.setState({ rounds: localResults.rounds, resultsVersion: localResults.resultsVersion ?? null,
-          initialized: true, loading: false, expandedRoundIds: localResults.rounds.slice(-1).map(r => r.id) });
+          initialized: true, loading: false, expandedRoundIds: pickInitialExpandedRoundIds(localResults.rounds, getRules(game)) });
         return;
       }
       const resultsStatus = game.resultsStatus || 'NONE';
@@ -254,8 +255,7 @@ class GameResultsEngineClass {
         !force && latestStoreState.gameId === gameId && latestStoreState.rounds.length > 0;
 
       const finalRounds = shouldKeepLatestRounds ? latestStoreState.rounds : rounds;
-      const lastRoundId = finalRounds.length > 0 ? finalRounds[finalRounds.length - 1].id : null;
-      const finalExpandedRoundIds = lastRoundId ? [lastRoundId] : [];
+      const finalExpandedRoundIds = pickInitialExpandedRoundIds(finalRounds, getRules(game));
 
       if (session !== this.sessionEpoch) return;
       useGameResultsStore.setState({
@@ -897,6 +897,57 @@ class GameResultsEngineClass {
       async () => {
         const putRes = await this.persistMatch(state.gameId!, matchId, match);
         this.toastIfLiveScoringCleared(putRes);
+      }
+    );
+  }
+
+  /** Rewrites the lineups of one or more matches in a round (move, swap, auto-fill, undo) as one local edit. */
+  async setMatchLineups(roundId: string, updates: MatchLineupUpdate[]): Promise<void> {
+    const state = this.getState();
+    if (!state.gameId || !state.userId || !state.canEdit || !state.game || updates.length === 0) return;
+
+    const round = state.rounds.find(r => r.id === roundId);
+    if (!round) return;
+
+    const byId = new Map(updates.map(update => [update.matchId, update]));
+    const targets = round.matches.filter(m => byId.has(m.id));
+    if (targets.length !== byId.size) return;
+
+    const participantCount = state.game.participants.filter(p => p.status === 'PLAYING').length;
+    const maxPerTeam = maxPlayersPerTeamForGame(state.game, participantCount);
+    const invalid = updates.some(update =>
+      update.teamA.length > maxPerTeam ||
+      update.teamB.length > maxPerTeam ||
+      update.teamA.some(id => update.teamB.includes(id))
+    );
+    if (invalid) return;
+
+    await this.updateLocalAndServer(
+      async () => {
+        const newRounds = state.rounds.map(r =>
+          r.id === roundId
+            ? {
+                ...r,
+                matches: r.matches.map(m => {
+                  const update = byId.get(m.id);
+                  return update ? { ...m, teamA: update.teamA, teamB: update.teamB } : m;
+                }),
+              }
+            : r
+        );
+        useGameResultsStore.setState({ rounds: newRounds });
+      },
+      async () => {
+        for (const match of targets) {
+          const update = byId.get(match.id)!;
+          const putRes = await this.persistMatch(state.gameId!, match.id, {
+            teamA: update.teamA,
+            teamB: update.teamB,
+            sets: match.sets,
+            courtId: match.courtId,
+          });
+          this.toastIfLiveScoringCleared(putRes);
+        }
       }
     );
   }

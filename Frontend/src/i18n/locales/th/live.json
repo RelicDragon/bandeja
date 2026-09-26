@@ -1,6 +1,14 @@
 {
   "live": {
     "andJoin": " และ ",
+    "board": {
+      "advantage": "ได้เปรียบ",
+      "deuce": "ดิวส์",
+      "goldenPoint": "โกลเด้นพอยต์",
+      "players": "ผู้เล่น",
+      "serving": "เสิร์ฟ",
+      "tieBreak": "ไทเบรก"
+    },
     "carouselLabel": "แถบแมตช์ที่กำลังแข่ง",
     "cityTitle": "กำลังแข่งใน {{city}}",
     "courtLabel": "คอร์ต {{court}}",

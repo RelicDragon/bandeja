@@ -1,8 +1,13 @@
 import { useEffect, useRef } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { matchQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/authStore';
 import { useMyGamesQuery } from '@/queries/games/useMyGamesQuery';
-import { hasMyTabMembershipsSnapshot, readMyTabCache } from '@/services/myTabCacheReader';
+import { queryKeys } from '@/queries/queryKeys';
+import {
+  hasMyTabMembershipsSnapshot,
+  readMyTabCache,
+  type MyTabCacheSnapshot,
+} from '@/services/myTabCacheReader';
 import { useUserTeamsStore } from '@/store/userTeamsStore';
 
 /**
@@ -31,4 +36,19 @@ export function useUserTeamsBootstrap() {
     }
     void refreshAll();
   }, [userId, myTabPending, queryClient, hydrateFromMyTabCache, refreshAll]);
+
+  // Team socket events are missed while the app is backgrounded, so follow every
+  // server fetch of My tab (resume, pull-to-refresh). Manual `setQueryData` patches
+  // are skipped: they can carry teams older than store-only writes.
+  useEffect(() => {
+    if (!userId) return;
+    const myTabFilter = { queryKey: queryKeys.games.my(userId) };
+    return queryClient.getQueryCache().subscribe((event) => {
+      if (event.type !== 'updated' || event.action.type !== 'success' || event.action.manual) return;
+      if (!matchQuery(myTabFilter, event.query)) return;
+      useUserTeamsStore
+        .getState()
+        .syncFromMyTabData(event.query.state.data as MyTabCacheSnapshot | undefined, userId);
+    });
+  }, [userId, queryClient]);
 }

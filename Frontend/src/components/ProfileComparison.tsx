@@ -204,7 +204,7 @@ export const ProfileComparison = () => {
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600 dark:text-gray-400">
-                      {t('playerCard.tiesShort')}
+                      {t('playerCard.gamesTied')}
                     </span>
                     <span className="text-xl font-semibold text-yellow-600 dark:text-yellow-400">
                       {comparison.gamesTogether.ties}
@@ -255,7 +255,7 @@ export const ProfileComparison = () => {
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600 dark:text-gray-400">
-                      {t('playerCard.tiesShort')}
+                      {t('playerCard.gamesTied')}
                     </span>
                     <span className="text-xl font-semibold text-yellow-600 dark:text-yellow-400">
                       {comparison.gamesAgainst.ties}

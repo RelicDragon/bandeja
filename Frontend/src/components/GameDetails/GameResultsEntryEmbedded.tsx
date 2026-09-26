@@ -13,7 +13,7 @@ import { useLoadingState } from '@/hooks/useLoadingState';
 import { useOfflineMessage } from '@/hooks/useOfflineMessage';
 import { useGameResultsTabs } from '@/hooks/useGameResultsTabs';
 import { useIsLandscape } from '@/hooks/useIsLandscape';
-import { GameResultsEngine } from '@/services/gameResultsEngine';
+import { GameResultsEngine, useGameResultsStore } from '@/services/gameResultsEngine';
 import { ResultsStorage } from '@/services/resultsStorage';
 import { canShowTournamentTableView } from '@/utils/gameResults';
 import {
@@ -23,6 +23,13 @@ import {
   matchSetsHaveAnyNonZeroScore,
 } from '@/utils/scoring';
 import { isParticipantPlaying } from '@/utils/participantStatus';
+import { maxPlayersPerTeamForGame } from '@/utils/matchFormat';
+import {
+  findNextScoreTarget,
+  summarizeResultsProgress,
+  type ResultsMatchRef,
+} from '@/utils/resultsBoardNavigation';
+import { hapticSuccess } from '@/utils/haptics';
 import { userIsPlayingInGameOrParent } from '@/utils/gameParticipationState';
 import {
   resolveCurrentGameForResults,
@@ -45,6 +52,8 @@ import { ResultsLoadingState } from './resultsEntry/ResultsLoadingState';
 import { BracketReturnBar } from './resultsEntry/BracketReturnBar';
 import { ResultsTelegramSection } from './resultsEntry/ResultsTelegramSection';
 import { ResultsFooterActions } from './resultsEntry/ResultsFooterActions';
+import { ResultsActionsMenu } from './resultsEntry/ResultsActionsMenu';
+import { scrollToResultsMatch } from './resultsEntry/scrollToResults';
 import { ResultsRoundsBoard } from './resultsEntry/ResultsRoundsBoard';
 import { useResultsArtifactsTelegram } from './resultsEntry/useResultsArtifactsTelegram';
 import { useSetEntryOperations } from './resultsEntry/useSetEntryOperations';
@@ -157,6 +166,60 @@ export const GameResultsEntryEmbedded = ({
     updateMatch: engine.updateMatch,
     onSupplementalSetAdded,
   });
+
+  const maxPlayersPerTeam = maxPlayersPerTeamForGame(currentGame, players.length);
+
+  const resultsProgress = useMemo(() => {
+    if (!currentGame) return { finished: 0, total: 0 };
+    const summary = summarizeResultsProgress(rounds, getRules(currentGame), maxPlayersPerTeam);
+    return { finished: summary.finished, total: summary.total };
+  }, [currentGame, rounds, maxPlayersPerTeam]);
+
+  // "Save and next": any change of dialog (close, cancel, another tap) abandons a pending advance.
+  const [isAdvancingToNext, setIsAdvancingToNext] = useState(false);
+  const advanceTokenRef = useRef(0);
+  useEffect(() => {
+    advanceTokenRef.current += 1;
+    setIsAdvancingToNext(false);
+  }, [modal]);
+
+  const saveSetResult: typeof setOps.updateSetResult = useCallback(
+    (...args) => {
+      hapticSuccess();
+      return setOps.updateSetResult(...args);
+    },
+    [setOps],
+  );
+
+  const handleSaveAndNext: typeof setOps.updateSetResult = useCallback(
+    async (roundId, matchId, setIndex, teamAScore, teamBScore, isTieBreak, supplementalRole, options) => {
+      const token = advanceTokenRef.current;
+      const saving = saveSetResult(roundId, matchId, setIndex, teamAScore, teamBScore, isTieBreak, supplementalRole, options);
+      const game = GameResultsEngine.getState().game ?? currentGame;
+      const rules = getRules(game);
+      // The optimistic update has landed synchronously; the server write may still be in flight.
+      const locate = () =>
+        findNextScoreTarget(useGameResultsStore.getState().rounds, rules, maxPlayersPerTeam, { matchId });
+      let target = locate();
+      if (target?.matchId === matchId) {
+        // Same match: the next draft must open on the version this save produces.
+        setIsAdvancingToNext(true);
+        await saving;
+        if (token !== advanceTokenRef.current) return;
+        target = locate();
+      }
+      if (token !== advanceTokenRef.current) return;
+      if (!target) {
+        closeModal();
+        toast(t('gameResults.noMoreMatchesToScore'));
+        return;
+      }
+      const expanded = useGameResultsStore.getState().expandedRoundIds;
+      if (!expanded.includes(target.roundId)) engine.setExpandedRoundIds([...expanded, target.roundId]);
+      openModal({ type: 'set', ...target });
+    },
+    [saveSetResult, currentGame, maxPlayersPerTeam, closeModal, openModal, engine, t],
+  );
 
   const showCreateAllCombinationsButton = useMemo(
     () =>
@@ -342,6 +405,17 @@ export const GameResultsEntryEmbedded = ({
     setGameDetailsCanShowTableView(!!canShowTableView);
   }, [canShowTableView, setGameDetailsCanShowTableView]);
 
+  const handleGoToMatch = useCallback(
+    (ref: ResultsMatchRef) => {
+      closeModal();
+      setActiveTab('scores');
+      const expanded = useGameResultsStore.getState().expandedRoundIds;
+      if (!expanded.includes(ref.roundId)) engine.setExpandedRoundIds([...expanded, ref.roundId]);
+      scrollToResultsMatch(ref.matchId);
+    },
+    [closeModal, setActiveTab, engine],
+  );
+
   const primaryRoundId = editingMatchId
     ? rounds.find((r) => r.matches.some((m) => m.id === editingMatchId))?.id ??
       expandedRoundIds[0] ??
@@ -357,7 +431,10 @@ export const GameResultsEntryEmbedded = ({
       primaryRoundId={primaryRoundId}
       effectiveHorizontalLayout={effectiveHorizontalLayout}
       onClose={closeModal}
-      onUpdateSetResult={setOps.updateSetResult}
+      onUpdateSetResult={saveSetResult}
+      onSaveAndNext={handleSaveAndNext}
+      isAdvancingToNext={isAdvancingToNext}
+      onGoToMatch={handleGoToMatch}
       onRemoveSet={setOps.removeSet}
       onPlayerSelect={handlePlayerSelect}
       onCourtSelect={handleCourtSelect}
@@ -419,105 +496,115 @@ export const GameResultsEntryEmbedded = ({
         </div>
       ) : null}
 
-      {isResultsEntryMode && (
-        <GameResultsTabs
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-          resultsStatus={currentGame?.resultsStatus}
-        />
-      )}
-
-      <div>
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.div
-            key={
-              currentGame?.resultsStatus === 'FINAL' && activeTab === 'results'
-                ? 'results'
-                : currentGame && currentGame.resultsStatus !== 'NONE' && activeTab === 'stats'
-                  ? 'stats'
-                  : 'scores'
-            }
-            {...TAB_CONTENT_MOTION}
-          >
-            {currentGame?.resultsStatus === 'FINAL' && activeTab === 'results' ? (
-              <div className="w-full">
-                <PlayStreakResultsBanner
-                  gameId={currentGame.id}
-                  outcomes={currentGame.outcomes || []}
-                />
-                <TrophyUnlockBanner
-                  gameId={currentGame.id}
-                  outcomes={currentGame.outcomes || []}
-                />
-                <TrophyCelebrationSheet
-                  gameId={currentGame.id}
-                  outcomes={currentGame.outcomes || []}
-                />
-                <div className="[&>div]:mx-0 [&>div]:max-w-none [&>div]:px-0">
-                  <OutcomesDisplay
-                    outcomes={currentGame.outcomes || []}
-                    affectsRating={currentGame.affectsRating}
-                    gameId={currentGame.id}
-                    hasFixedTeams={currentGame.hasFixedTeams || false}
-                    genderTeams={(currentGame.genderTeams || 'ANY') as 'ANY' | 'MEN' | 'WOMEN' | 'MIX_PAIRS'}
-                    winnerOfGame={currentGame.winnerOfGame}
-                    onExplanationClick={(explanation, playerName, levelBefore) => {
-                      openModal({
-                        type: 'explanation',
-                        explanation,
-                        playerName,
-                        levelBefore,
-                        gameId: currentGame.id,
-                        affectsRating: currentGame.affectsRating,
-                      });
-                    }}
-                  />
-                </div>
-                <PlayerLevelFeedbackCard gameId={currentGame.id} />
-                {showWorkoutSummaryCard ? (
-                  <GameWorkoutSummaryCard gameId={currentGame.id} />
-                ) : null}
-              </div>
-            ) : currentGame && currentGame.resultsStatus !== 'NONE' && activeTab === 'stats' ? (
-              <PlayerStatsPanel game={currentGame as NonNullable<typeof currentGame>} rounds={rounds} />
-            ) : (
-              <ResultsRoundsBoard
+      {/* A real box (not a fragment) so the sticky finish bar stops at the end of the board. */}
+      <div className="relative">
+        {isResultsEntryMode && (
+          <GameResultsTabs
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            resultsStatus={currentGame?.resultsStatus}
+            trailing={
+              <ResultsActionsMenu
                 currentGame={currentGame}
-                players={players}
-                rounds={rounds}
-                displayRounds={displayRounds}
-                engine={engine}
-                dragAndDrop={dragAndDrop}
-                canEdit={canEdit}
-                isEditingResults={isEditingResults}
-                isSendingToTelegram={isSendingToTelegram}
-                canEditResultsForRounds={canEditResultsForRounds}
-                showCreateAllCombinationsButton={showCreateAllCombinationsButton}
-                isCreatingAllCombinations={isCreatingAllCombinations}
-                effectiveShowCourts={effectiveShowCourts}
-                onCreateAllCombinations={() => void handleCreateAllCombinations()}
-                openModal={openModal}
-                onAddSupplementalSet={(roundId, matchId) => void setOps.addSupplementalSet(roundId, matchId)}
-                onRoundAdded={onRoundAdded}
+                showEdit={Boolean(showEditButton)}
+                showRestart={Boolean(canEdit && isResultsEntryMode && isEditingResults)}
+                disabled={isSendingToTelegram || loading.editing || loading.restarting}
+                onEdit={() => openModal({ type: 'edit' })}
+                onRestart={() => openModal({ type: 'restart' })}
               />
-            )}
-          </motion.div>
-        </AnimatePresence>
+            }
+          />
+        )}
 
-        {sharedModals}
+        <div>
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={
+                currentGame?.resultsStatus === 'FINAL' && activeTab === 'results'
+                  ? 'results'
+                  : currentGame && currentGame.resultsStatus !== 'NONE' && activeTab === 'stats'
+                    ? 'stats'
+                    : 'scores'
+              }
+              {...TAB_CONTENT_MOTION}
+            >
+              {currentGame?.resultsStatus === 'FINAL' && activeTab === 'results' ? (
+                <div className="w-full">
+                  <PlayStreakResultsBanner
+                    gameId={currentGame.id}
+                    outcomes={currentGame.outcomes || []}
+                  />
+                  <TrophyUnlockBanner
+                    gameId={currentGame.id}
+                    outcomes={currentGame.outcomes || []}
+                  />
+                  <TrophyCelebrationSheet
+                    gameId={currentGame.id}
+                    outcomes={currentGame.outcomes || []}
+                  />
+                  <div className="[&>div]:mx-0 [&>div]:max-w-none [&>div]:px-0">
+                    <OutcomesDisplay
+                      outcomes={currentGame.outcomes || []}
+                      affectsRating={currentGame.affectsRating}
+                      gameId={currentGame.id}
+                      hasFixedTeams={currentGame.hasFixedTeams || false}
+                      genderTeams={(currentGame.genderTeams || 'ANY') as 'ANY' | 'MEN' | 'WOMEN' | 'MIX_PAIRS'}
+                      winnerOfGame={currentGame.winnerOfGame}
+                      onExplanationClick={(explanation, playerName, levelBefore) => {
+                        openModal({
+                          type: 'explanation',
+                          explanation,
+                          playerName,
+                          levelBefore,
+                          gameId: currentGame.id,
+                          affectsRating: currentGame.affectsRating,
+                        });
+                      }}
+                    />
+                  </div>
+                  <PlayerLevelFeedbackCard gameId={currentGame.id} />
+                  {showWorkoutSummaryCard ? (
+                    <GameWorkoutSummaryCard gameId={currentGame.id} />
+                  ) : null}
+                </div>
+              ) : currentGame && currentGame.resultsStatus !== 'NONE' && activeTab === 'stats' ? (
+                <PlayerStatsPanel game={currentGame as NonNullable<typeof currentGame>} rounds={rounds} />
+              ) : (
+                <ResultsRoundsBoard
+                  currentGame={currentGame}
+                  players={players}
+                  rounds={rounds}
+                  displayRounds={displayRounds}
+                  engine={engine}
+                  dragAndDrop={dragAndDrop}
+                  canEdit={canEdit}
+                  isEditingResults={isEditingResults}
+                  isSendingToTelegram={isSendingToTelegram}
+                  canEditResultsForRounds={canEditResultsForRounds}
+                  showCreateAllCombinationsButton={showCreateAllCombinationsButton}
+                  isCreatingAllCombinations={isCreatingAllCombinations}
+                  effectiveShowCourts={effectiveShowCourts}
+                  onCreateAllCombinations={() => void handleCreateAllCombinations()}
+                  openModal={openModal}
+                  onAddSupplementalSet={(roundId, matchId) => void setOps.addSupplementalSet(roundId, matchId)}
+                  onRoundAdded={onRoundAdded}
+                />
+              )}
+            </motion.div>
+          </AnimatePresence>
+
+          {sharedModals}
+        </div>
+
+        <ResultsFooterActions
+          currentGame={currentGame}
+          loading={loading}
+          disabled={isSendingToTelegram}
+          showFinishButton={Boolean(showFinishButton && !serverProblem)}
+          progress={resultsProgress}
+          onFinishClick={() => openModal({ type: 'finish' })}
+        />
       </div>
-
-      <ResultsFooterActions
-        currentGame={currentGame}
-        loading={loading}
-        disabled={isSendingToTelegram}
-        showFinishButton={Boolean(showFinishButton && !serverProblem)}
-        showEditButton={Boolean(showEditButton)}
-        showRestartButton={Boolean(canEdit && isResultsEntryMode && isEditingResults)}
-        onFinishClick={() => openModal({ type: 'finish' })}
-        onEditClick={() => openModal({ type: 'edit' })}
-        onRestartClick={() => openModal({ type: 'restart' })}
-      />
     </>
   );
 };

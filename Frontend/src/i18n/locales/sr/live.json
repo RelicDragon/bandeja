@@ -1,6 +1,14 @@
 {
   "live": {
     "andJoin": " i ",
+    "board": {
+      "advantage": "Prednost",
+      "deuce": "Izjednačeno",
+      "goldenPoint": "Zlatni poen",
+      "players": "Igrači",
+      "serving": "Servira",
+      "tieBreak": "Taj-brejk"
+    },
     "carouselLabel": "Vrteška igara uživo",
     "cityTitle": "Uživo u gradu {{city}}",
     "courtLabel": "teren {{court}}",

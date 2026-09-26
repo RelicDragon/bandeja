@@ -67,3 +67,22 @@ it.each(['cold', 'warm'])('captures %s launch URL attribution and navigates with
   }
   expect(mocks.remove).toHaveBeenCalledOnce();
 });
+
+it.each([
+  ['/games/g1/watch?matchId=m1&spectatorToken=tok', '/games/g1/watch?matchId=m1&spectatorToken=tok'],
+  ['/games/g1/broadcast?matchId=m1&transparent=1', '/games/g1/broadcast?matchId=m1&transparent=1'],
+  ['/games/g1/live?matchId=m1', '/games/g1/live?matchId=m1'],
+  ['/games/g1/live/tv?matchId=m1', '/games/g1/live/tv?matchId=m1'],
+  ['/games/g1/league-table', '/games/g1/league-table'],
+  ['/games/g1?join=1&utm_source=tg', '/games/g1?join=1'],
+])('opens game link %s on its own route', async (path, expected) => {
+  mocks.launch.mockResolvedValue({ url: `https://bandeja.me${path}` });
+  const container = document.createElement('div');
+  const root = createRoot(container);
+  try {
+    await act(async () => { root.render(<Probe />); });
+    expect(mocks.navigateWithTracking).toHaveBeenCalledWith(mocks.navigate, expected, { replace: true });
+  } finally {
+    await act(async () => { root.unmount(); });
+  }
+});

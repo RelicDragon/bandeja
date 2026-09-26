@@ -1,6 +1,14 @@
 {
   "live": {
     "andJoin": " और ",
+    "board": {
+      "advantage": "एडवांटेज",
+      "deuce": "ड्यूस",
+      "goldenPoint": "गोल्डन पॉइंट",
+      "players": "खिलाड़ी",
+      "serving": "सर्व कर रहे हैं",
+      "tieBreak": "टाई-ब्रेक"
+    },
     "carouselLabel": "लाइव गेम कैरोसेल",
     "cityTitle": "{{city}} में अभी लाइव",
     "courtLabel": "कोर्ट {{court}}",

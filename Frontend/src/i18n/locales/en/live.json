@@ -1,6 +1,14 @@
 {
   "live": {
     "andJoin": " and ",
+    "board": {
+      "advantage": "Advantage",
+      "deuce": "Deuce",
+      "goldenPoint": "Golden point",
+      "players": "Players",
+      "serving": "Serving",
+      "tieBreak": "Tie-break"
+    },
     "carouselLabel": "Live games carousel",
     "cityTitle": "Live in {{city}}",
     "courtLabel": "court {{court}}",

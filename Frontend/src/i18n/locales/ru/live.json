@@ -1,6 +1,14 @@
 {
   "live": {
     "andJoin": " и ",
+    "board": {
+      "advantage": "Больше",
+      "deuce": "Ровно",
+      "goldenPoint": "Золотой мяч",
+      "players": "Игроки",
+      "serving": "Подаёт",
+      "tieBreak": "Тай-брейк"
+    },
     "carouselLabel": "Карусель текущих игр",
     "cityTitle": "Сейчас играют: {{city}}",
     "courtLabel": "корт {{court}}",

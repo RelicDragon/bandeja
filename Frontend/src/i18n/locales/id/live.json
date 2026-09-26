@@ -1,6 +1,14 @@
 {
   "live": {
     "andJoin": " dan ",
+    "board": {
+      "advantage": "Keunggulan",
+      "deuce": "Deuce",
+      "goldenPoint": "Poin emas",
+      "players": "Pemain",
+      "serving": "Servis",
+      "tieBreak": "Tie-break"
+    },
     "carouselLabel": "Korsel permainan yang berlangsung",
     "cityTitle": "Berlangsung di {{city}}",
     "courtLabel": "lapangan {{court}}",

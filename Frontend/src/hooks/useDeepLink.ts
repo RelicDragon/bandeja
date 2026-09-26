@@ -54,34 +54,21 @@ export const useDeepLink = () => {
               navigateFreshChat(navigate, `/games/${gameId}/chat`);
               return;
             }
-            // Handle live/tv routes
-            if (parts.length >= 5 && parts[2] === 'live' && parts[3] === 'tv') {
-              navigateWithTracking(navigate, `/games/${gameId}/live/tv`, { replace: true });
+            // `parts` is ['games', id, ...rest], so the sub-route starts at index 2.
+            const subRoute = parts.slice(2).join('/');
+            // Live boards: the query carries `matchId` / `spectatorToken` and must survive the hop.
+            if (
+              subRoute === 'watch' ||
+              subRoute === 'broadcast' ||
+              subRoute === 'live' ||
+              subRoute === 'live/tv' ||
+              subRoute === 'live/broadcast'
+            ) {
+              navigateWithTracking(navigate, `/games/${gameId}/${subRoute}${url.search}`, { replace: true });
               return;
             }
-            // Handle live/broadcast routes
-            if (parts.length >= 5 && parts[2] === 'live' && parts[3] === 'broadcast') {
-              navigateWithTracking(navigate, `/games/${gameId}/live/broadcast`, { replace: true });
-              return;
-            }
-            // Handle broadcast routes
-            if (parts.length >= 4 && parts[2] === 'broadcast') {
-              navigateWithTracking(navigate, `/games/${gameId}/broadcast`, { replace: true });
-              return;
-            }
-            // Handle live routes
-            if (parts.length >= 4 && parts[2] === 'live') {
-              navigateWithTracking(navigate, `/games/${gameId}/live`, { replace: true });
-              return;
-            }
-            // Handle league-table routes
-            if (parts.length >= 4 && parts[2] === 'league-table') {
-              navigateWithTracking(navigate, `/games/${gameId}/league-table`, { replace: true });
-              return;
-            }
-            // Handle league-bracket routes
-            if (parts.length >= 4 && parts[2] === 'league-bracket') {
-              navigateWithTracking(navigate, `/games/${gameId}/league-bracket`, { replace: true });
+            if (subRoute === 'league-table' || subRoute === 'league-bracket') {
+              navigateWithTracking(navigate, `/games/${gameId}/${subRoute}`, { replace: true });
               return;
             }
             // Default game detail route. PRD 347 — `?join=1` must survive the

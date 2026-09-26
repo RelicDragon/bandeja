@@ -1222,8 +1222,8 @@ Wallet side: `PR-CS-01`–`PR-CS-05` in §13.3. Cards: `F-CS-01`–`F-CS-05` in 
 | GD-28c | Open draft versus newer saved score | In regular results and a league fixture card, open a set; another scorer updates that same match and the board refreshes; Save the old draft. Repeat with Automatic modes, extra sets, Remove set, and an offline save | Out-of-date error; the newer score and set rows remain unchanged, including local/offline storage. Closing and reopening allows a fresh correction. An update to another court does not block saving this draft |
 | GD-28d | Draft version across queued saves | Open a score draft while another local save is pending; let the earlier save advance the match version, then submit the queued draft | Draft retains its opening version and conflicts instead of silently adopting the preceding acknowledgement. A dialog opened without a match version requires reopening after results load |
 | GD-84 | Rally match set score (TT Bo3×11) | Table tennis game with Bo3×11 template → enter set score 11:4 | Accepted and saved (first-to-11 per set, not americano total-11 budget) |
-| GD-109 | Score entry modal layouts | Open set score modal in portrait and landscape | Portrait: 3-column grid — team avatars top row, aligned `− score +` row below with `:` center; landscape: two stacked team rows (avatars left, horizontal stepper right); no overlapping elements; leading score green |
-| GD-110 | Score entry number picker | Tap the big score value in score modal | Keypad expands below scoreboard; modal scrolls so keypad bottom is fully visible; header shows stacked avatars + player names for active team; Set/games 0–10; picking a number highlights the cell briefly before auto-advance; first pick on team A slides to team B, first pick on team B slides to team A; second pick closes keypad; closing scrolls back to scoreboard |
+| GD-109 | Score entry modal layouts | Open set score modal in portrait and landscape | Portrait: 3-column grid — team avatars + first names top row, aligned `− score +` row below with `:` center; landscape: two stacked team rows (avatars + names left, horizontal stepper right); no overlapping elements; leading score green. Header shows a context line "Round N · Match M" (+ "Set K" for multi-set matches) above the title |
+| GD-110 | Score entry number picker | Open a regular (non-extra) set score modal | Keypad is already open on team A and scrolled into view; tapping the big score value toggles it; header shows stacked avatars + player names for active team; Set/games 0–10; picking a number highlights the cell briefly (light haptic on native) before auto-advance; first pick on team A slides to team B, first pick on team B slides to team A; second pick closes keypad; closing scrolls back to scoreboard. Extra-set modals open with the keypad closed |
 | GD-111 | Score entry invalid score hint | Enter illegal set score (e.g. 6:5 classic) | Hint replaces header slot (title/mode switch hidden); scoreboard and keypad stay fixed; suggestion chips apply both scores; Save disabled while invalid |
 | GD-112 | Extra set entry switch | Add extra set → open its score modal | Games/Balls segmented switch in header; Balls caps score values |
 | GD-29 | Conflict resolution | Conflicting entries | Conflict modal |
@@ -1236,12 +1236,19 @@ Wallet side: `PR-CS-01`–`PR-CS-05` in §13.3. Cards: `F-CS-01`–`F-CS-05` in 
 | GD-31 | Recalculate results | Owner recalc | Standings update |
 | GD-32 | Training level edit | Training game → level modal | Levels updated |
 | GD-33 | Live scoring link | Open live board | `/games/:id/live` |
-| GD-34 | TV mode | `?tv=1` on live | TV layout/theme |
+| GD-34 | TV mode | `?tv=1` on live | TV layout/theme. Padel/tennis: the tennis scoreboard (see LN-40); rally sports keep team panels + court |
 | GD-35 | Broadcast view | `/games/:id/broadcast` | Broadcast layout |
 | GD-113 | Round header match progress | Multi-round game with 2+ matches per round → finish some matches | Round header shows animated progress bar + `finished/total` counter; bar turns green when all matches complete |
-| GD-114 | Available players footer header | Edit a match with unassigned players in roster | Bottom sheet shows "Available Players" label with count badge above the draggable carousel |
+| GD-114 | Player tray | Tap an empty "Add player" seat (or ⋯ → Edit lineup) on a match with unassigned players | Tray slides up with "Tap a player to place them", available count, Team A / Team B target switch, Search and Auto-fill. The card highlights the "Next pick" seat. Tapping a player fills that seat (team switches automatically when full); a vertical drag onto any seat still works, a sideways swipe scrolls the tray. When the last seat fills, editing ends and the tray slides away. Auto-fill fills remaining seats in roster order; Search opens the player picker |
 | GD-115 | Round added summary modal | Add round in results entry with ≤4 playing participants vs 5+ | ≤4: round added inline with no summary modal; 5+: modal lists generated match pairings |
 | GD-116 | Round added match layout | Open round-added modal at viewport <490px vs ≥490px | <490: each match stacks team A above swords above team B; ≥490: teams sit side by side; each team is a distinct neutral bordered card with vertical localized Team A/B label on the left and swords between |
+| GD-226 | Save and next | Multi-match round (or Bo3 match) → open a set → enter score → Save and next | Score saves; the same dialog moves to the next row that needs a score (next set of this match after its save lands, else next unscored match with full teams, wrapping to earlier rounds) with a fresh draft; that round expands behind the dialog. With nothing left it closes with "No more matches to score". Disabled while 0:0; not offered on extra sets or when nothing can follow. Cancel/close during the wait abandons the advance |
+| GD-227 | Enter score button | Match with full teams and no score | Card shows **Enter score** (+ live ▶ button) instead of empty 0 tiles; tapping it or the card body opens the first set. Tapping the body of a match with open seats starts lineup editing |
+| GD-228 | Match ⋯ menu | Tap ⋯ on a match card while editing results | Sheet lists Edit lineup, Change court (courts only), Live score (full teams, unfinished), + Extra (finished), Delete match (2+ matches). Delete asks for confirmation first. While editing a lineup the ⋯ becomes **Done** |
+| GD-229 | Player action sheet | Tap a placed player while editing results | Sheet: Move to other team (only if it has room), Swap with… (this match / other matches of the round / resting), View profile, Remove from match. Swap across matches updates both matches. Remove shows an Undo toast that restores the seat unless the player was placed again |
+| GD-230 | Resting players | Round where some roster players are not placed | "Resting: …" line under the round header (hidden until someone is placed) |
+| GD-231 | Round chips | 2+ rounds on the board | Sticky chip row under the app header (top of panel in split view): ✓ for complete rounds, `R3 · 1/2` for rounds in progress, ring on the active round; tapping expands and scrolls to that round; + adds a round (editors). Rounds with open matches open by default instead of the last round |
+| GD-232 | Sticky finish bar | Results in progress, teams ready | Finish sits in a bar pinned to the bottom while the board is on screen, with "X of Y matches scored" and a progress bar. Finish confirmation lists matches without a score / missing players (Go to jumps and pulses the card) and ties. Edit results / Restart moved to the ⋯ next to the Results/Stats/Scores switch; round delete moved to the round header ⋯ |
 | GD-36 | Results card hidden without photo | Final results, no game photo yet | No results photo card; **Play with this group again** shown only if viewer is PLAYING (or the TRAINING trainer); stories switch shown only if viewer is PLAYING |
 | GD-36b | Results card above tabs | Final results with photo | **Play with this group again** (primary, first) + results card (and stories switch if PLAYING) sit above Results/Stats/Scores switch, not inside Results tab |
 | GD-36c | Rematch only for players | Results as PLAYING participant vs guest/spectator/owner-only | **Play with this group again** visible only when current user has PLAYING status on this game (TRAINING: or is `trainerId`); see §9.21 |
@@ -1623,7 +1630,7 @@ No feature flag; muted per user from notification preferences.
 | ID | Test | Steps | Expected |
 |----|------|-------|----------|
 | GD-LN-01 | Live block | Open a **public** in-progress game as a non-participant | A **Live** block (dot, header, score summary, "Started N min ago") sits where the results entry card normally is, with a large **Watch live** button |
-| GD-LN-02 | Watch live | Tap it | The broadcast opens with a spectator token, the same as from the rail (§26.4) |
+| GD-LN-02 | Watch live | Tap it | The watch board (`/games/:id/watch`) opens with a spectator token, the same as from the rail (§26.4) |
 | GD-LN-03 | Participant sees the entry card | Open the same game as a participant | The ordinary results entry card is there; the Live block is not |
 | GD-LN-04 | Private is invisible | Open a **private** in-progress game as a non-participant | No Live block, no Watch button; the game never appeared on the rail |
 | GD-LN-05 | Settings row | Game settings on a public game | **Show on Live now** sits immediately below **Public game**, **on** by default — including for games created before the column existed |
@@ -2480,6 +2487,10 @@ A pair is a derived aggregate, never a rating — there is no pair ELO and nothi
 | UT-15 | Delete team leaves home list | Owner deletes team from team page or home section X → return to Home/My Teams | Deleted team gone immediately and stays gone after tab switch / soft refresh |
 | UT-16 | Pair stat band | `/user-team/:id` for a two-person team that has played together | Games · Win rate · Chemistry tiles at the top, showing the same numbers as the pair sheet (`LB-PR-61`) |
 | UT-17 | No zeros band | Team with only the owner, or a pair that has never played together | No stat band at all — not a row of zeros |
+| UT-18 | Teammate's open team page on delete | Teammate has `/user-team/:id` open; owner deletes the team on another device | Teammate's page toasts "Team deleted" and returns Home; the tile is gone |
+| UT-19 | Teammate offline during delete | Teammate backgrounds the app (socket drops); owner deletes; teammate resumes on Home (or on the team page) | Tile and Teams count drop after the My-tab refetch without pull-to-refresh; an open team page toasts "no longer available" and returns Home |
+| UT-20 | Stale team link | Open `/user-team/:id` for a deleted team, or one you were removed from (old push, pair row) | Toast "This team is no longer available" and return Home — no generic error page |
+| UT-21 | Pair rows after delete | Delete a pair's team, then open Profile → Your partners / pair leaderboard / pair sheet within 5 min | Tapping the pair opens the pair sheet with **Create a team**, not the deleted team |
 
 ---
 
@@ -3161,14 +3172,20 @@ No feature flag: the rail is data-driven and simply absent when the city has not
 | LN-35 | No room leaks | Navigate away from Find and back several times | No duplicate socket rooms retained — membership is ref-counted and released on unmount. `@manual` |
 | LN-36 | Out-of-order frames | Replay an older socket frame after a newer one | It is dropped: only a strictly greater revision is applied, so the score never rolls backwards |
 
-### 26.4 Broadcast
+### 26.4 Watch board
 
 | ID | Test | Steps | Expected |
 |----|------|-------|----------|
-| LN-40 | Non-participant watch | Tap a card as a non-participant | The broadcast page opens and shows the live board — no "not allowed" error, no login wall |
-| LN-41 | Shared element | Watch the transition; then with reduced motion | Score block scales into the broadcast header; under reduced motion the broadcast simply appears. `@manual` |
+| LN-40 | Non-participant watch | Tap a card as a non-participant | `/games/:id/watch` opens a tennis-style scoreboard: one row per side (names, lime serve ball on the server), a column per set (completed sets: loser's games dimmed; current set tinted) and the game points highlighted on the end. No "not allowed" error, no login wall, no scoring buttons, no scorer toolbar or QR on tap |
+| LN-41 | Entry motion | Open the board; then with reduced motion | The board fades up (~240 ms); under reduced motion it simply appears. `@manual` |
+| LN-41b | Sizes | `@mobile` portrait phone; landscape phone; 1080p TV (`?tv=1`) | The same scoreboard scales with the screen (fills most of a TV's width), long names truncate instead of pushing the numbers; follows the app's light/dark appearance (TV: `?theme=`) |
+| LN-41c | Point states | Deuce; advantage; golden point (40–40 with golden point on); tie-break at 6–6 | A chip under the board: **Deuce** / **Advantage** / **Golden point** / **Tie-break**; in a tie-break the points column header reads **TB** and shows tie-break points. Match decided: points column and serve ball gone, loser's row dimmed, **Match complete** pill |
+| LN-41d | Legacy link | Open `/games/:id/broadcast?matchId=…&spectatorToken=…` **without** `transparent=1` | Redirects to `/games/:id/watch` with the same match and token |
+| LN-41e | Overlay stays clean | Open the scorer's broadcast share URL (`transparent=1`) | Lower-third overlay only — no back button, no Follow players strip |
 | LN-42 | Signed-out link | Copy the `?matchId=…&spectatorToken=…` URL into a signed-out browser | The board still loads |
 | LN-43 | Spectator strip | Look at the strip | Back, `Live · Padel Centar · court 3`, and an overflow button. Back returns to the game page, not out of the app |
+| LN-43b | No back loop | Game details → **Watch live** → strip Back → details **Back** | Back pops history: you return to details, and details' Back leaves to wherever you came from — never back into the watch board. Cold-opened link (no history): Back **replaces** with the game page |
+| LN-43c | App link | `@native` Tap a Telegram `/live` **Watch** link with the app installed | The app opens the watch board for that match — not game details, not "Missing matchId" |
 | LN-44 | Follow from overflow | Open the overflow → tap a player | Every player from both sides is listed; tapping one gives a success toast, turns the row into a checkmark and adds the player to the viewer's following list |
 | LN-45 | Follow failure | Tap a player already followed, or follow with the network off | Error toast; the row does not falsely claim success |
 | LN-46 | Participant has no strip | Participant opens their own game's broadcast from the game page (no token) | No spectator strip |
@@ -3478,7 +3495,7 @@ Everything in this section is `@manual`: it needs a real bot, a real Telegram cl
 |----|------|-------|----------|
 | TG-40 | Live list | With a public game being scored in the user's city, send `/live` privately | Header "🔴 Live now in Belgrade", then one block per game: club · court / `Marko / Ana  6-4 3-2  Luka / Ivan` / "Started 23 min ago", and a footer "Updated just now · /live to refresh" |
 | TG-41 | Monospace alignment | Compare two blocks | The score is monospace and the columns line up |
-| TG-42 | Watch button | Tap a block's **Watch** button, including from a signed-out browser | The broadcast page opens and the live board renders |
+| TG-42 | Watch button | Tap a block's **Watch** button, including from a signed-out browser | The watch board (`/games/:id/watch`) opens and the live board renders |
 | TG-43 | Long names | Names longer than 12 characters | Truncated with an ellipsis; the line does not wrap |
 | TG-44 | Nothing live | No live game | "Nothing live right now. /games shows what's coming up." and no buttons |
 | TG-45 | Cap | Six or more live games | At most five blocks |

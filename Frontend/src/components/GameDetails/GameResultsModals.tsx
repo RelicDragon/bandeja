@@ -10,6 +10,25 @@ import { Round } from '@/types/gameResults';
 import { isSupplementalMatchSet, type MatchSetRole } from '@/utils/matchSetRole';
 import { getRestartTitle, getFinishTitle, getEditTitle } from '@/utils/gameResultsHelpers';
 import { parseGameSport } from '@/utils/gameSport';
+import { getRules } from '@/utils/scoring';
+import { maxPlayersPerTeamForGame } from '@/utils/matchFormat';
+import {
+  canAdvanceAfterSave,
+  summarizeResultsProgress,
+  type ResultsMatchRef,
+} from '@/utils/resultsBoardNavigation';
+import { FinishSummary } from './resultsEntry/FinishSummary';
+
+type SetResultHandler = (
+  roundId: string,
+  matchId: string,
+  setIndex: number,
+  teamAScore: number,
+  teamBScore: number,
+  isTieBreak?: boolean,
+  supplementalRole?: Extract<MatchSetRole, 'EXTRA_GAMES' | 'EXTRA_BALLS'>,
+  options?: { automaticRecordMode?: import('@/utils/scoring').AutomaticMatchRecordMode; baseVersion?: string | null },
+) => Promise<void>;
 
 interface GameResultsModalsProps {
   modal: ModalType;
@@ -19,16 +38,12 @@ interface GameResultsModalsProps {
   primaryRoundId: string | null;
   effectiveHorizontalLayout: boolean;
   onClose: () => void;
-  onUpdateSetResult: (
-    roundId: string,
-    matchId: string,
-    setIndex: number,
-    teamAScore: number,
-    teamBScore: number,
-    isTieBreak?: boolean,
-    supplementalRole?: Extract<MatchSetRole, 'EXTRA_GAMES' | 'EXTRA_BALLS'>,
-    options?: { automaticRecordMode?: import('@/utils/scoring').AutomaticMatchRecordMode; baseVersion?: string | null },
-  ) => Promise<void>;
+  onUpdateSetResult: SetResultHandler;
+  /** Save, then move the open score dialog to the next score (or close it). */
+  onSaveAndNext?: SetResultHandler;
+  isAdvancingToNext?: boolean;
+  /** Jump from the finish summary to a match on the board. */
+  onGoToMatch?: (ref: ResultsMatchRef) => void;
   onRemoveSet: (roundId: string, matchId: string, setIndex: number, baseVersion?: string | null) => Promise<void>;
   onPlayerSelect: (playerId: string) => Promise<void>;
   onCourtSelect: (courtId: string) => Promise<void>;
@@ -49,6 +64,9 @@ export const GameResultsModals = ({
   effectiveHorizontalLayout,
   onClose,
   onUpdateSetResult,
+  onSaveAndNext,
+  isAdvancingToNext = false,
+  onGoToMatch,
   onRemoveSet,
   onPlayerSelect,
   onCourtSelect,
@@ -72,6 +90,12 @@ export const GameResultsModals = ({
     const court = courts.find((c: { id: string }) => c.id === match.courtId);
     const courtSideLabel = court?.name;
     const roundNumber = rounds.findIndex((r) => r.id === modal.roundId) + 1;
+    const matchNumber = round.matches.findIndex((m) => m.id === match.id) + 1;
+    const maxPerTeam = maxPlayersPerTeamForGame(currentGame, players.length);
+    const canAdvance =
+      Boolean(onSaveAndNext) &&
+      Boolean(currentGame) &&
+      canAdvanceAfterSave(rounds, getRules(currentGame), maxPerTeam, match.id);
 
     const canRemove = (() => {
       const currentSet = match.sets[modal.setIndex];
@@ -86,7 +110,6 @@ export const GameResultsModals = ({
 
     const modalContent = (
       <ScoreEntryModal
-        key={`set-entry-${modal.matchId}-${modal.setIndex}`}
         isOpen={true}
         layout={effectiveHorizontalLayout ? 'columns' : 'stacked'}
         match={match}
@@ -94,6 +117,7 @@ export const GameResultsModals = ({
         players={players}
         courtLabel={courtSideLabel}
         roundNumber={roundNumber}
+        matchNumber={matchNumber}
         maxTotalPointsPerSet={currentGame?.maxTotalPointsPerSet}
         maxPointsPerTeam={currentGame?.maxPointsPerTeam}
         fixedNumberOfSets={currentGame?.fixedNumberOfSets}
@@ -102,6 +126,13 @@ export const GameResultsModals = ({
         onSave={(matchId, setIndex, teamAScore, teamBScore, isTieBreak, supplementalRole, options) => {
           onUpdateSetResult(modal.roundId, matchId, setIndex, teamAScore, teamBScore, isTieBreak, supplementalRole, options);
         }}
+        onSaveAndNext={
+          canAdvance && onSaveAndNext
+            ? (matchId, setIndex, teamAScore, teamBScore, isTieBreak, supplementalRole, options) =>
+                onSaveAndNext(modal.roundId, matchId, setIndex, teamAScore, teamBScore, isTieBreak, supplementalRole, options)
+            : undefined
+        }
+        isAdvancing={isAdvancingToNext}
         onRemove={(matchId, setIndex, baseVersion) => {
           onRemoveSet(modal.roundId, matchId, setIndex, baseVersion);
         }}
@@ -172,6 +203,13 @@ export const GameResultsModals = ({
   }
 
   if (modal.type === 'finish') {
+    const summary = currentGame
+      ? summarizeResultsProgress(
+          rounds,
+          getRules(currentGame),
+          maxPlayersPerTeamForGame(currentGame, players.length),
+        )
+      : null;
     return (
       <ConfirmationModal
         isOpen={true}
@@ -182,7 +220,11 @@ export const GameResultsModals = ({
         confirmVariant="primary"
         onConfirm={onFinish}
         onClose={onClose}
-      />
+      >
+        {summary && summary.total > 0 ? (
+          <FinishSummary summary={summary} onGoTo={(ref) => onGoToMatch?.(ref)} />
+        ) : null}
+      </ConfirmationModal>
     );
   }
 

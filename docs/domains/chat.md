@@ -209,7 +209,7 @@ Epic: GitHub #248.
 | Live | `READ_CURSOR_UPDATE` sync + hydrate `maxPeerCursor` | `MESSAGE_READ_RECEIPT` / `MESSAGES_READ_BATCH` still in contract |
 | FE ticks | `messageTickState.resolveOwnMessageTicks` — **cursor only** | Receipts ignored for ✓✓; `readReceiptsFromOthers` leftover for lists |
 
-Mark-read merges the actor cursor forward (`ChatReadCursorService.mergeFromMessage`). Product tick = at least one **peer** cursor covers the message, not “read by everyone”. Do not put `MessageReadReceipt` back on the mark-read path.
+Mark-read merges the actor cursor forward (`ChatReadCursorService.mergeFromMessage`). A user's first cursor for a thread is inserted with `ON CONFLICT DO NOTHING` (`createManyAndReturn` + `skipDuplicates`), then re-locked if a concurrent writer won. A plain `create` that catches `P2002` cannot work: the failed INSERT aborts the interactive transaction (`25P02`). Sender auto-read after send races an explicit mark-read here, for example a Telegram or push reply into a thread the replier has never read. Product tick = at least one **peer** cursor covers the message, not “read by everyone”. Do not put `MessageReadReceipt` back on the mark-read path.
 
 ## Key paths
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components';
 import { AlertTriangle, ImageOff } from 'lucide-react';
@@ -19,6 +19,8 @@ interface ConfirmationModalProps {
   onConfirm: () => void;
   onClose: () => void;
   isOpen: boolean;
+  /** Extra content under the message, e.g. a summary of what is about to happen. */
+  children?: ReactNode;
 }
 
 export const ConfirmationModal = ({
@@ -34,7 +36,8 @@ export const ConfirmationModal = ({
   closeOnConfirm = true,
   onConfirm,
   onClose,
-  isOpen
+  isOpen,
+  children,
 }: ConfirmationModalProps) => {
   const { t } = useTranslation();
   const [internalIsOpen, setInternalIsOpen] = useState(isOpen);
@@ -89,6 +92,7 @@ export const ConfirmationModal = ({
         <DialogDescription className="p-4">
           {message}
         </DialogDescription>
+        {children}
         {highlightedText && (
           <div className="mb-6 flex justify-center">
             <span className="inline-block px-3 py-1 bg-red-100 dark:bg-red-900/30 rounded-full text-red-800 dark:text-red-200 font-medium text-sm">

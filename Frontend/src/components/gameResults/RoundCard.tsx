@@ -1,11 +1,12 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, Trash2, Plus } from 'lucide-react';
+import { ChevronDown, Coffee, MoreHorizontal, Plus, Trash2 } from 'lucide-react';
 import { Round } from '@/types/gameResults';
 import { BasicUser, Court, Game } from '@/types';
 import { MatchCard } from './MatchCard';
 import { HorizontalMatchCard } from './HorizontalMatchCard';
+import { ActionSheet } from './ActionSheet';
 import { ConfirmationModal } from '@/components';
 import {
   getRules,
@@ -14,6 +15,7 @@ import {
   type RoundResultsHeaderTone,
 } from '@/utils/scoring';
 import { isSupplementalMatchSet } from '@/utils/matchSetRole';
+import { getRestingPlayerIds } from '@/utils/resultsBoardNavigation';
 
 interface RoundCardProps {
   round: Round;
@@ -45,6 +47,12 @@ interface RoundCardProps {
   game?: Pick<Game, 'scoringPreset' | 'matchTimedCapMinutes' | 'matchTimerEnabled' | 'fixedNumberOfSets' | 'maxTotalPointsPerSet' | 'maxPointsPerTeam' | 'winnerOfMatch' | 'ballsInGames' | 'deucesBeforeGoldenPoint' | 'pointsPerTie' | 'resultsStatus' | 'playersPerMatch' | 'sport'> | null;
   gameId?: string;
   onMatchTimerTransition?: (roundId: string, matchId: string, action: import('@/utils/matchTimer').MatchTimerAction) => void | Promise<void>;
+  onEditLineup?: (matchId: string) => void;
+  onPlayerTap?: (matchId: string, team: 'teamA' | 'teamB', playerId: string) => void;
+  /** Side the next tapped tray player goes to, for the match being edited. */
+  lineupTargetTeam?: 'teamA' | 'teamB' | null;
+  /** Offset used when the round navigator scrolls this round into view. */
+  scrollMarginTop?: string;
 }
 
 const ROUND_HEADER_TONE: Record<
@@ -104,9 +112,14 @@ export const RoundCard = ({
   game,
   gameId,
   onMatchTimerTransition,
+  onEditLineup,
+  onPlayerTap,
+  lineupTargetTeam = null,
+  scrollMarginTop,
 }: RoundCardProps) => {
   const { t } = useTranslation();
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1024);
   const roundName = `${t('gameResults.round')} ${roundIndex + 1}`;
 
@@ -136,6 +149,13 @@ export const RoundCard = ({
     return { total, finished };
   }, [round.matches, rules]);
 
+  const restingPlayers = useMemo(() => {
+    const ids = getRestingPlayerIds(round, players.map((p) => p.id));
+    return ids
+      .map((id) => players.find((p) => p.id === id))
+      .filter((p): p is BasicUser => Boolean(p));
+  }, [round, players]);
+
   useEffect(() => {
     const handleResize = () => {
       setWindowWidth(window.innerWidth);
@@ -145,13 +165,27 @@ export const RoundCard = ({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  const restingLine =
+    restingPlayers.length > 0 ? (
+      <div className="flex items-center gap-1.5 px-1 text-[11px] font-medium text-gray-500 dark:text-gray-400">
+        <Coffee size={12} className="shrink-0" aria-hidden />
+        <span className="truncate">
+          {t('gameResults.resting', {
+            names: restingPlayers.map((p) => p.firstName || p.lastName || '?').join(', '),
+          })}
+        </span>
+      </div>
+    ) : null;
+
   const matchesContent = (
     <div className={hideFrame ? 'space-y-2' : 'space-y-2 px-2 py-2.5'}>
+              {restingLine}
               {round.matches.map((match, matchIndex) => {
                 const useHorizontalMatchCard =
                   fixedNumberOfSets === 1 &&
                   windowWidth >= 490 &&
                   !match.sets.some(isSupplementalMatchSet);
+                const isEditing = editingMatchId === match.id;
 
                 return useHorizontalMatchCard ? (
                   <HorizontalMatchCard
@@ -159,7 +193,7 @@ export const RoundCard = ({
                     match={match}
                     matchIndex={matchIndex}
                     players={players}
-                    isEditing={editingMatchId === match.id}
+                    isEditing={isEditing}
                     canEditResults={canEditResults}
                     draggedPlayer={draggedPlayer}
                     showHeaderEditButton={canEditResults}
@@ -183,6 +217,9 @@ export const RoundCard = ({
                     gameId={gameId}
                     onMatchTimerTransition={onMatchTimerTransition}
                     onAddSupplementalSet={onAddSupplementalSet ? () => onAddSupplementalSet(match.id) : undefined}
+                    onEditLineup={onEditLineup ? () => onEditLineup(match.id) : undefined}
+                    onPlayerTap={onPlayerTap ? (team, playerId) => onPlayerTap(match.id, team, playerId) : undefined}
+                    lineupTargetTeam={isEditing ? lineupTargetTeam : null}
                   />
                 ) : (
                   <MatchCard
@@ -190,7 +227,7 @@ export const RoundCard = ({
                     match={match}
                     matchIndex={matchIndex}
                     players={players}
-                    isEditing={editingMatchId === match.id}
+                    isEditing={isEditing}
                     canEditResults={canEditResults}
                     draggedPlayer={draggedPlayer}
                     showHeaderEditButton={canEditResults}
@@ -214,56 +251,62 @@ export const RoundCard = ({
                     roundId={round.id}
                     gameId={gameId}
                     onMatchTimerTransition={onMatchTimerTransition}
+                    onEditLineup={onEditLineup ? () => onEditLineup(match.id) : undefined}
+                    onPlayerTap={onPlayerTap ? (team, playerId) => onPlayerTap(match.id, team, playerId) : undefined}
+                    lineupTargetTeam={isEditing ? lineupTargetTeam : null}
                   />
                 );
               })}
 
-      {editingMatchId && canEditResults && (
-        <div className="flex justify-center mt-4">
-          <motion.button
-            onClick={(e) => {
-              e.stopPropagation();
-              onAddMatch();
-            }}
-            whileHover={{ scale: 1.08 }}
-            whileTap={{ scale: 0.92 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-            className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-400 to-green-600 text-white flex items-center justify-center shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:shadow-emerald-500/40"
-          >
-            <Plus size={20} />
-          </motion.button>
-        </div>
+      {canEditResults && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onAddMatch();
+          }}
+          className="flex h-11 w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-gray-300 text-sm font-medium text-gray-600 transition-colors hover:border-primary-400 hover:bg-primary-50/60 hover:text-primary-700 active:scale-[0.99] dark:border-gray-600 dark:text-gray-300 dark:hover:border-primary-600 dark:hover:bg-primary-950/30 dark:hover:text-primary-200"
+        >
+          <Plus size={16} aria-hidden />
+          {hideFrame ? t('gameResults.addMatch') : t('gameResults.addMatchToRound', { number: roundIndex + 1 })}
+        </button>
       )}
     </div>
   );
 
+  const deleteConfirmation = showDeleteConfirmation ? (
+    <ConfirmationModal
+      isOpen={showDeleteConfirmation}
+      title={t('gameResults.deleteRound')}
+      message={t('gameResults.deleteRoundConfirmation')}
+      highlightedText={roundName}
+      confirmText={t('common.delete')}
+      cancelText={t('common.cancel')}
+      confirmVariant="danger"
+      onConfirm={onRemoveRound}
+      onClose={() => setShowDeleteConfirmation(false)}
+    />
+  ) : null;
+
   if (hideFrame) {
     return (
-      <>
+      <div data-results-round-id={round.id} style={{ scrollMarginTop }}>
         {matchesContent}
-        {showDeleteConfirmation && (
-          <ConfirmationModal
-            isOpen={showDeleteConfirmation}
-            title={t('gameResults.deleteRound')}
-            message={t('gameResults.deleteRoundConfirmation')}
-            highlightedText={roundName}
-            confirmText={t('common.delete')}
-            cancelText={t('common.cancel')}
-            confirmVariant="danger"
-            onConfirm={onRemoveRound}
-            onClose={() => setShowDeleteConfirmation(false)}
-          />
-        )}
-      </>
+        {deleteConfirmation}
+      </div>
     );
   }
 
   const toneStyle = ROUND_HEADER_TONE[headerTone];
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-gray-200/80 bg-gray-50/80 shadow-sm transition-shadow hover:shadow-md dark:border-gray-700/80 dark:bg-gray-900/40">
+    <div
+      data-results-round-id={round.id}
+      style={{ scrollMarginTop }}
+      className="overflow-hidden rounded-2xl border border-gray-200/80 bg-gray-50/80 shadow-sm transition-shadow hover:shadow-md dark:border-gray-700/80 dark:bg-gray-900/40"
+    >
       <div
-        className={`flex cursor-pointer items-center justify-between px-2.5 py-2 transition-colors ${toneStyle.bg} ${
+        className={`flex cursor-pointer items-center justify-between px-2.5 py-1.5 transition-colors ${toneStyle.bg} ${
           isExpanded ? 'border-b border-gray-200/80 dark:border-gray-700' : toneStyle.borderIdle
         } ${toneStyle.hover}`}
         onClick={onToggleExpand}
@@ -309,18 +352,20 @@ export const RoundCard = ({
           )}
         </div>
 
-        {showDeleteButton && (
-          <motion.button
+        {showDeleteButton ? (
+          <button
+            type="button"
+            aria-label={t('gameResults.roundActions')}
+            title={t('gameResults.roundActions')}
             onClick={(e) => {
               e.stopPropagation();
-              setShowDeleteConfirmation(true);
+              setMenuOpen(true);
             }}
-            whileTap={{ scale: 0.9 }}
-            className="flex h-8 w-8 items-center justify-center rounded-full text-red-500 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40"
+            className="-me-1 flex h-10 w-10 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-black/5 hover:text-gray-700 active:scale-95 dark:text-gray-400 dark:hover:bg-white/10 dark:hover:text-gray-200"
           >
-            <Trash2 size={16} />
-          </motion.button>
-        )}
+            <MoreHorizontal size={18} aria-hidden />
+          </button>
+        ) : null}
       </div>
 
       <AnimatePresence initial={false}>
@@ -337,20 +382,25 @@ export const RoundCard = ({
         )}
       </AnimatePresence>
 
-      {showDeleteConfirmation && (
-        <ConfirmationModal
-          isOpen={showDeleteConfirmation}
-          title={t('gameResults.deleteRound')}
-          message={t('gameResults.deleteRoundConfirmation')}
-          highlightedText={roundName}
-          confirmText={t('common.delete')}
-          cancelText={t('common.cancel')}
-          confirmVariant="danger"
-          onConfirm={onRemoveRound}
-          onClose={() => setShowDeleteConfirmation(false)}
-        />
-      )}
+      <ActionSheet
+        open={menuOpen}
+        onOpenChange={setMenuOpen}
+        modalId={`round-actions-${round.id}`}
+        title={roundName}
+        items={[
+          {
+            id: 'delete',
+            label: t('gameResults.deleteRound'),
+            icon: Trash2,
+            tone: 'danger',
+            afterClose: true,
+            onSelect: () => setShowDeleteConfirmation(true),
+          },
+        ]}
+      />
+      <span className="contents" onClick={(e) => e.stopPropagation()}>
+        {deleteConfirmation}
+      </span>
     </div>
   );
 };
-

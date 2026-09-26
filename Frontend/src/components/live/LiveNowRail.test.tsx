@@ -215,8 +215,8 @@ describe('LiveNowRail', () => {
   it('drops every layout animation under reduced motion', () => {
     reducedMotion.value = true;
     const container = render(<LiveNowRail games={[game('g1'), game('g2')]} onOpen={() => {}} />);
-    // The shared-element transition is opt-out under reduced motion, so the
-    // score block must not carry a layoutId-driven transform.
+    // Under reduced motion the leading-side glow is off, so the score block
+    // must not carry any animation-driven transform.
     const block = container.querySelector('[data-testid="live-score-block"]');
     expect(block).not.toBeNull();
     expect(block?.getAttribute('style') ?? '').not.toContain('transform');

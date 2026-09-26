@@ -84,7 +84,7 @@
     "test:training-attendance": "../scripts/run-heavy vitest run src/components/player/PlayerActivityCounts.test.tsx src/components/player/trainingAttendanceDisplay.test.ts",
     "test:ui-kit": "../scripts/run-heavy vitest run src/components/SegmentedSwitch.keyboard.test.tsx src/components/ui/CountUpNumber.test.tsx src/components/ui/StatTile.test.tsx src/components/ui/StatTileRow.test.tsx src/config/featureFlags.test.ts src/utils/intlLocale.test.ts",
     "test:unread": "../scripts/run-heavy vitest run src/hooks/unreadAuthBootstrapRefresh.test.ts src/services/chat/unreadCoordinator.test.ts src/services/chat/unreadCoordinator.enterMarkRead.test.ts src/services/chat/unreadProjection.test.ts src/store/unreadStore.test.ts src/api/chatUnreadCache.test.ts src/services/chat/unreadSnapshot.test.ts src/services/push/syncAppBadgeAfterPushReply.test.ts src/services/chat/__tests__/chatSyncService.test.ts",
-    "test:user-team": "../scripts/run-heavy vitest run src/components/userTeam/addToGameResult.test.ts src/store/userTeamsStore.test.ts src/queries/games/removeUserTeamFromMyGamesCache.test.ts src/components/GameDetails/TeamPlayerSelector.test.tsx",
+    "test:user-team": "../scripts/run-heavy vitest run src/components/userTeam/addToGameResult.test.ts src/store/userTeamsStore.test.ts src/queries/games/removeUserTeamFromMyGamesCache.test.ts src/hooks/useUserTeamsBootstrap.test.tsx src/components/GameDetails/TeamPlayerSelector.test.tsx",
     "test:weather-alerts": "../scripts/run-heavy vitest run src/components/NotificationSettingsModal.weatherRow.test.ts src/components/clubAdmin/ClubAdminCourtForm.weatherCover.test.tsx src/components/gameCard/WeatherRiskPill.test.tsx src/components/weather/MoveIndoorSheet.test.tsx src/components/weather/WeatherRiskBanner.test.tsx src/features/weather-alerts/planIndoorCourtSwap.test.ts src/features/weather-alerts/weatherRiskDisplay.test.ts src/services/push/seriesAndWeatherPushActions.test.ts",
     "test:weltner": "../scripts/run-heavy vitest run src/components/createGame/WeltnerCreateGameConfirmModal.test.tsx src/hooks/useWeltnerTimeOptions.test.tsx src/components/booktime/WeltnerConnectForm.test.tsx src/hooks/useAllUpcomingClubBookings.weltner.test.tsx src/hooks/useGameLinkedBookingViewer.weltner.test.tsx src/hooks/weltnerAccountPrivacy.test.tsx",
     "verify:next-game": "../scripts/run-heavy bash scripts/verify-next-game-parity.sh"
@@ -105,6 +105,7 @@
     "@capacitor/core": "^8.4.0",
     "@capacitor/filesystem": "^8.0.0",
     "@capacitor/geolocation": "^8.0.0",
+    "@capacitor/haptics": "^8.0.2",
     "@capacitor/ios": "^8.4.0",
     "@capacitor/keyboard": "^8.0.0",
     "@capacitor/local-notifications": "^8.0.0",

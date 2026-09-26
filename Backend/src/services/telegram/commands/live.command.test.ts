@@ -123,7 +123,7 @@ const signToken = (gameId: string, matchId: string) => `tok-${gameId}-${matchId}
   assert.equal(message.links.length, 1);
   assert.equal(message.links[0].label, '1. Watch');
   assert.equal(
-    message.links[0].url.includes('/games/game-1/broadcast?matchId=match-1&spectatorToken=tok-game-1-match-1'),
+    message.links[0].url.includes('/games/game-1/watch?matchId=match-1&spectatorToken=tok-game-1-match-1'),
     true,
     'the Watch button carries a freshly minted spectator token',
   );

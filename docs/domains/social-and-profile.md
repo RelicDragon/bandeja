@@ -128,6 +128,9 @@ Guest-readable. Avatar, stats, levels, favorite/follow, share, DM, block, review
 - Favorite clubs: separate API; Find filter shortcut.
 - Block/unblock: chat + follow.
 - User teams `/user-team/:id`: pair, invite, add pair to a game the member can invite to, delete.
+  - Delete (owner only) cascades memberships and emits `user-team:deleted` to every member. `removeTeamLocal` drops the team from `userTeamsStore`, the My-tab query/local cache and invalidates `queryKeys.pairs.*` (pair rows cache `teamId`).
+  - `useUserTeamsBootstrap` re-syncs `userTeamsStore` from every server fetch of My tab (not manual `setQueryData` patches), so a member who missed the socket event while backgrounded loses the tile on the next refetch.
+  - `UserTeamPage` leaves for Home on `user-team:deleted` for its id, and on socket reconnect or load treats 403/404 as gone (`teams.unavailable` toast).
 - Invite friend: share link (Home empties / invite modal).
 
 ### Co-play (PRD 361)

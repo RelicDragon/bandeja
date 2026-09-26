@@ -146,13 +146,18 @@ export function createMessageHandler(
           chatType: pendingReply.chatType
         });
 
-        await markReplyContextAsRead({
-          userId: pendingReply.userId,
-          chatContextType: pendingReply.chatContextType,
-          contextId,
-          chatType: pendingReply.chatType,
-        });
-        
+        // The reply is already sent: a read-marking failure must not report it as failed.
+        try {
+          await markReplyContextAsRead({
+            userId: pendingReply.userId,
+            chatContextType: pendingReply.chatContextType,
+            contextId,
+            chatType: pendingReply.chatType,
+          });
+        } catch (markReadError) {
+          console.error('Error marking Telegram reply context as read:', markReadError);
+        }
+
         pendingReplies.delete(telegramId);
         const successMessage = await ctx.reply(t('telegram.replySent', pendingReply.lang));
         if (successMessage.message_id) {

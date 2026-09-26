@@ -1,6 +1,6 @@
 # Live scoring
 
-Phone/web board: `/games/:id/live?matchId=`. TV: `/games/:id/live/tv` or `?tv=1`. Broadcast: `/games/:id/live/broadcast` and `/games/:id/broadcast`. Pages: `GameLiveRoute`, `GameLiveMatchPage`, `GameBroadcastRoute`, TV/broadcast redirects.
+Phone/web board: `/games/:id/live?matchId=`. TV: `/games/:id/live/tv` or `?tv=1`. Broadcast (OBS overlay): `/games/:id/live/broadcast` and `/games/:id/broadcast`. Spectator watch board: `/games/:id/watch?matchId=&spectatorToken=`. Pages: `GameLiveRoute`, `GameLiveMatchPage`, `GameBroadcastRoute`, `GameWatchRoute` → `GameWatchPage`, TV/broadcast redirects.
 
 Requires `resultsStatus === IN_PROGRESS` for writers. EVENT has no live (`assertEventForbidsResults`).
 
@@ -10,9 +10,11 @@ Full-screen per match: score / undo; serve setup + serve guide; strict officiati
 
 **Match timer:** `matchTimer.service.ts` — start/pause/resume/stop/reset. Only while results IN_PROGRESS. Cap minutes from `Game.matchTimedCapMinutes`. Socket `match-timer-updated`. Cap push. Watch HealthKit workout via `gameWorkout.service` / watch outbox.
 
-**TV** (`?tv=1`): minimal chrome, light/dark (`parseLiveBoardTheme`). **Broadcast:** shareable spectator URLs.
+**TV** (`?tv=1`): the scorer's big-screen mirror — minimal chrome, light/dark (`parseLiveBoardTheme`); tapping reveals `LiveTvToolbar`, which hands out the scoring QR/link, so it is never a spectator destination. For padel/tennis (non-rally plugins) the TV board is `LiveTvScoreboard`: a tennis-style table — a row per side, a column per set, the game points highlighted on the end, a Deuce / Advantage / Golden point / Tie-break chip — sized in `em` off one viewport font size so it fills a phone or a TV. Rally sports keep team panels + `RallyScoreBoard`. **Broadcast:** the OBS overlay — a lower-third on a transparent (`?transparent=1`) or solid background, no viewer chrome.
 
-**Spectator:** `spectatorToken` query. Guests load `GET /results/game/:gameId/spectator?st=`. Authenticated scorers mint via `resultsApi.mintLiveSpectatorToken`. Share URLs stamp the token (`useLiveMatchShareUrls`). Token length cap 4096.
+**Watch** (`/games/:id/watch`): what a viewer gets from **Watch live**, the rail, and Telegram `/live`. The TV board, read only (`useLiveMatchBoardState`, not the scorer controller), under `SpectatorTopBar` (back, "Live · club · court", Follow players). Follows the app's light/dark appearance; keeps the screen awake. Build links with `liveWatchPath` / `mintLiveWatchPath` (`features/live/liveWatchPath.ts`). `/broadcast` with a `spectatorToken` but without `transparent=1` redirects here — overlay share URLs always carry `transparent=1`, so such a link is a viewer link minted before `/watch` existed.
+
+**Spectator:** `spectatorToken` query. Guests load `GET /results/game/:gameId/spectator?st=` (the results payload plus `club` / `court` names for the spectator strip). Authenticated scorers mint via `resultsApi.mintLiveSpectatorToken`. Share URLs stamp the token (`useLiveMatchShareUrls`). Token length cap 4096.
 
 Wake: `useWakeScreenForLiveScoring` (`KeepAwake`). Offline: local apply then `persistLiveScoringPatch`; failed/non-409 save sets refresh; board keeps last local state until server wins.
 
@@ -61,9 +63,11 @@ Home shows the rail only when the viewer has **no game of their own today**, com
 
 ### Spectator access from the rail
 
-The organizer-only mint (`POST /results/game/:gameId/matches/:matchId/live-spectator-token`, `requireCanModifyResults`) was **not** widened. A second, narrower endpoint signs the *same* token type and only for a game that passes `LIVE_RAIL_WHERE`. It runs under `optionalAuth` — a shared broadcast link has to work for a signed-out viewer, and the gate is what protects the data, not the session — and is rate limited to 60 mints per 15 minutes per client. Existing tokens keep working until they expire (the pre-existing 48 h contract), so turning `showOnLiveRail` off stops new mints rather than revoking issued links.
+The organizer-only mint (`POST /results/game/:gameId/matches/:matchId/live-spectator-token`, `requireCanModifyResults`) was **not** widened. A second, narrower endpoint signs the *same* token type and only for a game that passes `LIVE_RAIL_WHERE`; its token opens the watch board. It runs under `optionalAuth` — a shared watch link has to work for a signed-out viewer, and the gate is what protects the data, not the session — and is rate limited to 60 mints per 15 minutes per client. Existing tokens keep working until they expire (the pre-existing 48 h contract), so turning `showOnLiveRail` off stops new mints rather than revoking issued links.
 
 Follower push (`FOLLOWED_USER_LIVE`, once per recipient per game, ever): [notifications.md](./notifications.md).
+
+Dev demo: `cd Backend && npx ts-node --transpile-only scripts/seed-live-watch-demo.ts` creates one public in-progress padel game in `VIEWER_EMAIL`'s city (default `relic.serbia@gmail.com`, never a participant) with a real live envelope; `--clean` removes it.
 
 ## Dual writer (phone + watch)
 

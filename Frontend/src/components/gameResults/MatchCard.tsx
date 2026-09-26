@@ -1,9 +1,8 @@
 import type { MouseEvent, ReactElement } from 'react';
 import { useMemo, useRef } from 'react';
-import { Link } from 'react-router-dom';
-import { Trash2, MapPin, Play } from 'lucide-react';
+import { MapPin, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { AnimatePresence, motion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { PlayerAvatar } from '@/components';
 import { Match } from '@/types/gameResults';
 import { BasicUser, Court, Game } from '@/types';
@@ -19,7 +18,13 @@ import {
 } from '@/utils/scoring';
 import { isSupplementalMatchSet } from '@/utils/matchSetRole';
 import { maxPlayersPerTeamForGame } from '@/utils/matchFormat';
-import { MatchHeaderEditToggleButton } from '@/components/gameResults/MatchHeaderEditToggleButton';
+import { nextEntrySetIndex } from '@/utils/resultsBoardNavigation';
+import {
+  EnterScoreRow,
+  LivePlayLink,
+  MatchEditDoneButton,
+} from '@/components/gameResults/MatchCardControls';
+import { useMatchCardActions } from '@/components/gameResults/useMatchCardActions';
 import { SetScoreTile } from '@/components/gameResults/SetScoreTile';
 import { getSetScoreTileState } from '@/components/gameResults/setScoreTileState';
 import { MatchResultsHeaderBadges } from '@/components/gameResults/MatchResultsHeaderBadges';
@@ -66,6 +71,12 @@ interface MatchCardProps {
   forceShow?: boolean;
   /** Hide the "Match N" index chip. */
   hideMatchIndex?: boolean;
+  /** "Edit lineup" in the ⋯ menu (shown when `showHeaderEditButton`). */
+  onEditLineup?: () => void;
+  /** Placed players become buttons (move / swap / remove sheet); empty seats become "Add player". */
+  onPlayerTap?: (team: 'teamA' | 'teamB', playerId: string) => void;
+  /** While editing the lineup, the side the next tapped player goes to. */
+  lineupTargetTeam?: 'teamA' | 'teamB' | null;
 }
 
 export const MatchCard = ({
@@ -98,6 +109,9 @@ export const MatchCard = ({
   embedded = false,
   forceShow = false,
   hideMatchIndex = false,
+  onEditLineup,
+  onPlayerTap,
+  lineupTargetTeam = null,
 }: MatchCardProps) => {
   const { t } = useTranslation();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -113,10 +127,20 @@ export const MatchCard = ({
   const teamSlotsFull = (team: 'teamA' | 'teamB') =>
     Array.from({ length: maxPlayersPerTeam }, (_, i) => Boolean(match[team][i])).every(Boolean);
   const teamsFull = teamSlotsFull('teamA') && teamSlotsFull('teamB');
-  const canShowLivePlay = Boolean(gameId) && !matchFinished && canEditResults && !isEditing;
-  const showMatchActionsColumn = canShowLivePlay;
+  const liveGameId =
+    gameId && !matchFinished && canEditResults && !isEditing && teamsFull ? gameId : null;
+  const showEnterScore =
+    canEditResults &&
+    canEnterResults &&
+    teamsFull &&
+    !isEditing &&
+    !matchFinished &&
+    !matchInProgressHeader &&
+    !matchSetsHaveAnyNonZeroScore(match.sets);
+  const showMatchActionsColumn = Boolean(liveGameId) && !showEnterScore;
+  const lineupEditable = canEditResults && Boolean(onPlayerTap);
   const layoutSetIndices =
-    isEditing || !teamsFull
+    isEditing || !teamsFull || showEnterScore
       ? []
       : layoutSetIndicesForMatchGrid(displaySets, canEnterResults, game?.resultsStatus ?? null);
   const setCount = layoutSetIndices.length;
@@ -125,6 +149,28 @@ export const MatchCard = ({
     () => matchCardDensityLayout(density, { preferSmallFaces: embedded }),
     [density, embedded],
   );
+
+  const { menuButton, overlays } = useMatchCardActions({
+    matchId: match.id,
+    matchIndex,
+    isEditing: isEditing && canEditResults,
+    courtName: showCourtLabel ? selectedCourt?.name ?? null : null,
+    canEditLineup: showHeaderEditButton && canEditResults,
+    onEditLineup,
+    canChangeCourt: showCourtLabel && canEditResults && Boolean(onCourtClick),
+    onChangeCourt: onCourtClick,
+    liveGameId,
+    canAddExtraSet:
+      !isEditing &&
+      canEditResults &&
+      Boolean(onAddSupplementalSet) &&
+      canEnterResults &&
+      teamsFull &&
+      matchFinished,
+    onAddExtraSet: onAddSupplementalSet,
+    canDelete: showDeleteButton,
+    onDelete: onRemoveMatch,
+  });
 
   if (
     !forceShow &&
@@ -136,46 +182,14 @@ export const MatchCard = ({
     return null;
   }
 
-  const livePlayEnabled = canShowLivePlay && teamsFull;
-
-  const matchActionRoundClass =
-    'inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary-600 text-white shadow-sm transition-all hover:bg-primary-700 hover:shadow-md active:scale-95';
-
-  const livePlayLink = canShowLivePlay && gameId ? (
-    livePlayEnabled ? (
-      <Link
-        to={`/games/${gameId}/live?matchId=${encodeURIComponent(match.id)}`}
-        aria-label={t('gameDetails.liveScorePlay')}
-        title={t('gameDetails.liveScorePlay')}
-        className={matchActionRoundClass}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <Play className="h-5 w-5" strokeWidth={2} />
-      </Link>
-    ) : (
-      <span
-        aria-disabled
-        aria-label={t('gameDetails.liveScorePlay')}
-        title={t('gameDetails.liveScorePlay')}
-        className={`${matchActionRoundClass} cursor-not-allowed opacity-40 grayscale pointer-events-none`}
-      >
-        <Play className="h-5 w-5" strokeWidth={2} />
-      </span>
-    )
-  ) : null;
-
-  const headerEditButton = showHeaderEditButton ? (
-    <MatchHeaderEditToggleButton
-      isEditing={isEditing}
-      editLabel={t('gameResults.edit')}
-      cancelLabel={t('common:cancel')}
-      onEditClick={onMatchClick}
-      onCancelClick={onCancelMatchEdit}
-    />
-  ) : null;
-
   const resultsFinal = game?.resultsStatus === 'FINAL';
   const actionsColStart = setCount + 2;
+  const headerTrailing =
+    isEditing && canEditResults ? (
+      <MatchEditDoneButton label={t('common.done')} onClick={onCancelMatchEdit} />
+    ) : (
+      menuButton
+    );
 
   const showPlayerRemoveButton = isEditing && canEditResults;
   const {
@@ -191,8 +205,8 @@ export const MatchCard = ({
     setCol,
   } = densityLayout;
 
-  const teamDropClass = (team: 'teamA' | 'teamB') =>
-    `${teamMinHeightClass} ${(isEditing || draggedPlayer) && canEditResults ? 'border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg transition-colors' : ''} ${
+  const teamDropClass = (team: 'teamA' | 'teamB', isTarget = false) =>
+    `${teamMinHeightClass} ${(isEditing || draggedPlayer) && canEditResults && !isTarget ? 'border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg transition-colors' : ''} ${
       canEditResults && draggedPlayer ? 'border-primary-400 bg-primary-50 dark:bg-primary-900/20' : ''
     } ${
       resolvedWinnerTeam === team
@@ -200,11 +214,37 @@ export const MatchCard = ({
         : ''
     }`;
 
+  const playerName = (player: BasicUser) =>
+    [player.firstName, player.lastName].filter(Boolean).join(' ') || '—';
+
+  const renderRemoveButton = (team: 'teamA' | 'teamB', playerId: string) => (
+    <button
+      type="button"
+      aria-label={t('gameResults.removeFromMatch')}
+      onClick={(e) => {
+        e.stopPropagation();
+        onRemovePlayer(team, playerId);
+      }}
+      className="absolute right-0.5 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 active:scale-95 dark:text-gray-500 dark:hover:bg-red-950/40 dark:hover:text-red-400"
+    >
+      <X size={16} strokeWidth={2.25} />
+    </button>
+  );
+
   const renderPlayerSlot = (team: 'teamA' | 'teamB', slotIndex: number) => {
     const teamPlayers = match[team];
     const playerId = teamPlayers[slotIndex];
     const player = playerId ? players.find(p => p.id === playerId) : null;
     const showPlaceholder = !player && slotIndex < maxPlayersPerTeam;
+    const isTarget =
+      isEditing && canEditResults && lineupTargetTeam === team && slotIndex === teamPlayers.length;
+    const emptySlotClass = showPlaceholder && lineupEditable
+      ? isTarget
+        ? 'rounded-lg border-2 border-primary-400 bg-primary-50/80 dark:border-primary-500 dark:bg-primary-900/30'
+        : !isEditing && !draggedPlayer
+          ? 'rounded-lg border border-dashed border-gray-300 dark:border-gray-600'
+          : ''
+      : '';
 
     return (
       <div
@@ -212,11 +252,37 @@ export const MatchCard = ({
         data-drop-zone
         data-match-id={match.id}
         data-team={team}
-        className={`${playerRowClass} ${teamDropClass(team)}`}
+        className={`${playerRowClass} ${teamDropClass(team, isTarget)} ${emptySlotClass}`}
         onDragOver={canEditResults ? onDragOver : undefined}
         onDrop={canEditResults ? (e) => onDrop(e, team) : undefined}
       >
-        {player ? (
+        {player && lineupEditable ? (
+          <>
+            <button
+              type="button"
+              aria-label={playerName(player)}
+              className={`flex min-w-0 flex-1 items-center ${placeholderGapClass} rounded-md text-start transition-opacity active:opacity-60`}
+              onClick={(e) => {
+                e.stopPropagation();
+                onPlayerTap?.(team, player.id);
+              }}
+            >
+              <PlayerAvatar
+                player={player}
+                asDiv
+                draggable={false}
+                showName={false}
+                inlineFace
+                inlineFaceSize={faceSize}
+                removable={false}
+              />
+              <span className={`${playerNameClass} ${showPlayerRemoveButton ? 'pe-9' : ''}`}>
+                {playerName(player)}
+              </span>
+            </button>
+            {showPlayerRemoveButton ? renderRemoveButton(team, player.id) : null}
+          </>
+        ) : player ? (
           <>
             <PlayerAvatar
               player={player}
@@ -227,23 +293,32 @@ export const MatchCard = ({
               removable={false}
             />
             <span
-              className={`${playerNameClass} ${showPlayerRemoveButton ? 'pe-10' : ''}`}
+              className={`${playerNameClass} ${showPlayerRemoveButton ? 'pe-9' : ''}`}
             >
-              {[player.firstName, player.lastName].filter(Boolean).join(' ') || '—'}
+              {playerName(player)}
             </span>
-            {showPlayerRemoveButton ? (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onRemovePlayer(team, playerId);
-                }}
-                className="absolute right-2 top-1/2 z-10 -translate-y-1/2 shrink-0 rounded-full bg-red-500 p-1.5 text-white hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700"
-              >
-                <Trash2 size={14} />
-              </button>
-            ) : null}
+            {showPlayerRemoveButton ? renderRemoveButton(team, player.id) : null}
           </>
+        ) : showPlaceholder && lineupEditable ? (
+          <button
+            type="button"
+            className={`flex min-h-[32px] min-w-0 flex-1 items-center ${placeholderGapClass} rounded-md text-start transition-opacity active:opacity-60`}
+            onClick={(e) => {
+              e.stopPropagation();
+              onPlayerPlaceholderClick(team);
+            }}
+          >
+            <PlayerAvatar player={null} showName={false} inlineFace inlineFaceSize={faceSize} removable={false} />
+            <span
+              className={
+                isTarget
+                  ? 'truncate text-xs font-semibold text-primary-700 dark:text-primary-300'
+                  : `truncate ${placeholderTextClass}`
+              }
+            >
+              {isTarget ? t('gameResults.nextPick') : t('gameResults.addPlayer')}
+            </span>
+          </button>
         ) : showPlaceholder ? (
           <button
             type="button"
@@ -394,7 +469,7 @@ export const MatchCard = ({
         style={{ gridColumn: actionsColStart, gridRow: `${teamAStart} / span ${actionsBodyRowSpan}` }}
         onClick={(e: MouseEvent) => e.stopPropagation()}
       >
-        {livePlayLink}
+        {liveGameId ? <LivePlayLink gameId={liveGameId} matchId={match.id} /> : null}
       </motion.div>
     );
   }
@@ -442,40 +517,24 @@ export const MatchCard = ({
             }`
       }
       data-match-container
+      data-results-match-id={match.id}
       data-match-density={density}
     >
-      {(!hideMatchIndex || matchInProgressHeader || matchFinished || resultsFinal) && (
-        <div
-          className={`mb-1 flex min-h-[1rem] flex-wrap items-center gap-x-1.5 gap-y-0.5 ${showHeaderEditButton || showDeleteButton ? 'pe-14' : ''}`}
-        >
-          {!hideMatchIndex ? (
-            <span className="inline-flex items-center rounded-md bg-gray-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide tabular-nums leading-none text-gray-500 dark:bg-gray-700/70 dark:text-gray-300">
-              {t('gameResults.match', { number: matchIndex + 1 })}
-            </span>
-          ) : null}
-          <MatchResultsHeaderBadges
-            showLivePulse={matchInProgressHeader}
-            showCompletedCheck={matchFinished}
-            gameResultsFinal={resultsFinal}
-          />
-        </div>
-      )}
-
-      {(headerEditButton || showDeleteButton) && (
-        <div className="absolute right-2 top-1.5 z-10 flex flex-row items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-          {headerEditButton}
-          {showDeleteButton ? (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onRemoveMatch();
-              }}
-              className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-red-200 bg-red-50 text-red-500 shadow-sm transition-all hover:scale-105 hover:border-red-300 hover:bg-red-100 hover:text-red-600 active:scale-95 dark:border-red-900/60 dark:bg-red-950/40 dark:hover:bg-red-950/70"
-            >
-              <Trash2 size={12} strokeWidth={2} />
-            </button>
-          ) : null}
+      {(headerTrailing || !hideMatchIndex || matchInProgressHeader || matchFinished || resultsFinal) && (
+        <div className="mb-1 flex min-h-[1.5rem] items-center gap-1.5">
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-1.5 gap-y-0.5">
+            {!hideMatchIndex ? (
+              <span className="inline-flex items-center rounded-md bg-gray-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide tabular-nums leading-none text-gray-500 dark:bg-gray-700/70 dark:text-gray-300">
+                {t('gameResults.match', { number: matchIndex + 1 })}
+              </span>
+            ) : null}
+            <MatchResultsHeaderBadges
+              showLivePulse={matchInProgressHeader}
+              showCompletedCheck={matchFinished}
+              gameResultsFinal={resultsFinal}
+            />
+          </div>
+          {headerTrailing}
         </div>
       )}
 
@@ -525,38 +584,16 @@ export const MatchCard = ({
           >
             {gridNodes}
           </motion.div>
-          <AnimatePresence initial={false} mode="popLayout">
-            {!isEditing &&
-            canEditResults &&
-            onAddSupplementalSet &&
-            canEnterResults &&
-            teamsFull &&
-            matchFinished ? (
-              <motion.div
-                key="add-supp"
-                layout
-                initial={{ opacity: 0, y: -6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -6 }}
-                transition={{ type: 'spring', stiffness: 420, damping: 30 }}
-                className="mt-2 flex w-full justify-center"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onAddSupplementalSet();
-                  }}
-                  className="rounded-lg border border-dashed border-violet-400/70 px-2.5 py-1 text-[11px] font-semibold text-violet-700 hover:bg-violet-50 dark:text-violet-300 dark:hover:bg-violet-950/40"
-                >
-                  {t('gameResults.addExtraSet')}
-                </button>
-              </motion.div>
-            ) : null}
-          </AnimatePresence>
         </motion.div>
+        {showEnterScore ? (
+          <EnterScoreRow
+            matchId={match.id}
+            liveGameId={liveGameId}
+            onEnterScore={() => onSetClick(nextEntrySetIndex(match, rules) ?? 0)}
+          />
+        ) : null}
       </motion.div>
+      {overlays}
     </motion.div>
   );
 };

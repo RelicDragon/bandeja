@@ -1,6 +1,14 @@
 {
   "live": {
     "andJoin": "・",
+    "board": {
+      "advantage": "アドバンテージ",
+      "deuce": "デュース",
+      "goldenPoint": "ゴールデンポイント",
+      "players": "選手",
+      "serving": "サーブ",
+      "tieBreak": "タイブレーク"
+    },
     "carouselLabel": "進行中の試合カルーセル",
     "cityTitle": "{{city}} で進行中",
     "courtLabel": "コート {{court}}",

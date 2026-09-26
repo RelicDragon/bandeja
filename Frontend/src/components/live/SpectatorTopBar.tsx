@@ -6,19 +6,16 @@ import { ArrowLeft, Check, MoreVertical, UserPlus } from 'lucide-react';
 import { favoritesApi } from '@/api/favorites';
 import { usePopoverDismiss, type PopoverDismissReason } from '@/hooks/usePopoverDismiss';
 import { isDocumentRtl, isRovingNavKey, nextRovingIndex } from '@/utils/rovingFocus';
+import { getBackAction } from '@/utils/backNavigation';
 import { LiveDot } from './LiveDot';
 import type { BasicUser } from '@/types';
 
 /**
- * PRD 349 — the spectator strip on the broadcast page.
+ * PRD 349 — the spectator strip on the watch board (`GameWatchPage`). Never on
+ * `/broadcast`: that page is an OBS overlay and must stay clean.
  *
- * Shown only to a spectator (a viewer who arrived with a `spectatorToken`),
- * because a participant already has the full game chrome. Three things: back,
- * "Live · Padel Centar · court 3", and a **Follow players** overflow that uses
- * the existing follow API.
- *
- * It sits above the board and is `pointer-events-auto` inside the board's
- * otherwise click-through header layer.
+ * Three things: back, "Live · Padel Centar · court 3", and a **Follow players**
+ * overflow that uses the existing follow API.
  */
 export interface SpectatorTopBarProps {
   gameId: string;
@@ -96,13 +93,21 @@ export function SpectatorTopBar({
     [followed, pending, t],
   );
 
+  // Pushing `/games/:id` here would stack details → broadcast → details, and
+  // the details back button would pop straight back into the broadcast. Go
+  // back through history; only a cold open (shared link) lands on details.
+  const goBack = useCallback(() => {
+    if (getBackAction().type === 'history') navigate(-1);
+    else navigate(`/games/${gameId}`, { replace: true });
+  }, [gameId, navigate]);
+
   const venue = [clubName, courtName].filter(Boolean).join(' · ');
 
   return (
     <div className="pointer-events-auto flex w-full items-center gap-2" data-testid="spectator-top-bar">
       <button
         type="button"
-        onClick={() => navigate(`/games/${gameId}`)}
+        onClick={goBack}
         aria-label={t('common.back')}
         className={`inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${chipClass} ${textClass}`}
       >

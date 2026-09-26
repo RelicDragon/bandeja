@@ -3,9 +3,15 @@ import type { QueryClient } from '@tanstack/react-query';
 import { userTeamsApi } from '@/api/userTeams';
 import type { UserTeam, UserTeamMembership } from '@/types';
 import { queryClient } from '@/queries/queryClient';
+import { queryKeys } from '@/queries/queryKeys';
 import { removeUserTeamFromMyGamesCache } from '@/queries/games/removeUserTeamFromMyGamesCache';
 import { useAuthStore } from '@/store/authStore';
-import { ownedTeamsFromMyTab, readMyTabCache, hasMyTabMembershipsSnapshot } from '@/services/myTabCacheReader';
+import {
+  ownedTeamsFromMyTab,
+  readMyTabCache,
+  hasMyTabMembershipsSnapshot,
+  type MyTabCacheSnapshot,
+} from '@/services/myTabCacheReader';
 
 interface UserTeamsState {
   teams: UserTeam[];
@@ -14,6 +20,8 @@ interface UserTeamsState {
   lastFetchedAt: number | null;
   refreshAll: (options?: { force?: boolean }) => Promise<boolean>;
   hydrateFromMyTabCache: (queryClient: QueryClient, userId: string) => boolean;
+  /** Replace teams/memberships with a My-tab payload; false when it carries no team snapshot. */
+  syncFromMyTabData: (data: MyTabCacheSnapshot | undefined, userId: string) => boolean;
   setTeam: (team: UserTeam) => void;
   removeTeamLocal: (teamId: string) => void;
 }
@@ -47,7 +55,12 @@ export const useUserTeamsStore = create<UserTeamsState>((set, get) => ({
 
   hydrateFromMyTabCache: (queryClient, userId) => {
     const cached = readMyTabCache(queryClient, userId);
-    const snapshot = applyMyTabTeamsSnapshot(cached?.teams, cached?.memberships, userId);
+    if (!get().syncFromMyTabData(cached, userId)) return false;
+    return hasMyTabMembershipsSnapshot(cached);
+  },
+
+  syncFromMyTabData: (data, userId) => {
+    const snapshot = applyMyTabTeamsSnapshot(data?.teams, data?.memberships, userId);
     if (!snapshot) return false;
     set({
       teams: snapshot.teams,
@@ -55,7 +68,7 @@ export const useUserTeamsStore = create<UserTeamsState>((set, get) => ({
       isLoading: false,
       lastFetchedAt: Date.now(),
     });
-    return hasMyTabMembershipsSnapshot(cached);
+    return true;
   },
 
   refreshAll: async (options) => {
@@ -99,6 +112,8 @@ export const useUserTeamsStore = create<UserTeamsState>((set, get) => ({
   removeTeamLocal: (teamId) => {
     const userId = useAuthStore.getState().user?.id;
     removeUserTeamFromMyGamesCache(queryClient, userId, teamId);
+    // Pair rows cache the pair's `teamId`; stale ones route to the deleted team.
+    void queryClient.invalidateQueries({ queryKey: queryKeys.pairs.all });
     set({
       teams: get().teams.filter((t) => t.id !== teamId),
       memberships: get().memberships.filter((m) => m.teamId !== teamId),

@@ -34,6 +34,7 @@
     "deleteTeam": "Eliminar equipo",
     "deleteTeamConfirm": "¿Eliminar este equipo para siempre?",
     "deleted": "Equipo eliminado",
+    "unavailable": "Este equipo ya no está disponible",
     "cutAngleDial": "Ajustar cómo se dividen las fotos de los jugadores",
     "addTeamPhotoTitle": "Añadir foto del equipo",
     "addTeamPhotoHint": "Elige una imagen y recórtala",

@@ -34,6 +34,7 @@
     "deleteTeam": "チームを削除",
     "deleteTeamConfirm": "このチームを完全に削除しますか？",
     "deleted": "チームを削除しました",
+    "unavailable": "このチームは利用できなくなりました",
     "cutAngleDial": "2人の写真の境界を調整",
     "addTeamPhotoTitle": "チーム写真を追加",
     "addTeamPhotoHint": "画像を選んで、枠に合わせて切り抜いてください",

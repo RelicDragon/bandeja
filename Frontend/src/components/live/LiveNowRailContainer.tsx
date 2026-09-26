@@ -2,13 +2,14 @@ import { memo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
-import { liveApi, type LiveRailGame } from '@/api/live';
+import type { LiveRailGame } from '@/api/live';
 import { AnimatedMount } from '@/components/motion/AnimatedMount';
 import {
   useLiveGames,
   LIVE_RAIL_FIND_LIMIT,
   LIVE_RAIL_HOME_LIMIT,
 } from '@/features/live/useLiveGames';
+import { mintLiveWatchPath } from '@/features/live/liveWatchPath';
 import { LiveNowRail } from './LiveNowRail';
 
 /**
@@ -18,8 +19,8 @@ import { LiveNowRail } from './LiveNowRail';
  * and only when the viewer has no game of their own today, which is the caller's
  * decision (`enabled`), not this component's.
  *
- * Tapping a card mints a spectator token first, so the broadcast opens for a
- * non-participant — that mint is what makes "spectating is one tap" true.
+ * Tapping a card opens the read-only watch board (`mintLiveWatchPath`), which
+ * works for a non-participant — that mint is what makes "spectating is one tap" true.
  */
 export interface LiveNowRailContainerProps {
   variant: 'find' | 'home';
@@ -49,14 +50,8 @@ function LiveNowRailContainerView({
 
   const handleOpen = useCallback(
     async (game: LiveRailGame) => {
-      const matchId = game.liveSummary.matchId;
       try {
-        const response = await liveApi.spectatorToken(game.id);
-        const params = new URLSearchParams({
-          matchId: response.data.data.matchId || matchId,
-          spectatorToken: response.data.data.token,
-        });
-        navigate(`/games/${game.id}/broadcast?${params.toString()}`);
+        navigate(await mintLiveWatchPath(game.id, game.liveSummary.matchId));
       } catch {
         toast.error(t('live.openFailed'));
       }

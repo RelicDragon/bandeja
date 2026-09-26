@@ -37,7 +37,7 @@ Watch app: `Frontend/ios/App/BandejaWatch Watch App/`. Watch widgets: `Frontend/
 
 | Path pattern | Destination |
 |--------------|-------------|
-| `/games/:id`, `/games/:id/chat`, `/games/:id/live`, `/games/:id/live/tv`, `/games/:id/live/broadcast`, `/games/:id/broadcast`, `/games/:id/league-table`, `/games/:id/league-bracket` | Matching game routes |
+| `/games/:id`, `/games/:id/chat`, `/games/:id/live`, `/games/:id/live/tv`, `/games/:id/live/broadcast`, `/games/:id/broadcast`, `/games/:id/watch`, `/games/:id/league-table`, `/games/:id/league-bracket` | Matching game routes (live boards keep their query: `matchId`, `spectatorToken`) |
 | `/user-chat/:id`, `/group-chat/:id`, `/channel-chat/:id`, `/bugs/:id` | Chat threads (fresh open nonce) |
 | `/user-profile/:id` | Profile (`?sport=` preserved) |
 | `/user-team/:id` | Team page |

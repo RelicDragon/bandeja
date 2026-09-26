@@ -34,6 +34,7 @@
     "deleteTeam": "删除搭档",
     "deleteTeamConfirm": "确定永久删除此搭档？",
     "deleted": "搭档已删除",
+    "unavailable": "该搭档已不可用",
     "cutAngleDial": "调整两位球员照片的拼接角度",
     "addTeamPhotoTitle": "添加搭档照片",
     "addTeamPhotoHint": "选择图片后裁剪适配",

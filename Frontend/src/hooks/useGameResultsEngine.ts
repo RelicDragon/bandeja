@@ -4,6 +4,7 @@ import { GameResultsEngine, useGameResultsStore } from '@/services/gameResultsEn
 import { releaseAnyLeagueResultsEngine } from '@/services/leagueResultsEngineSession';
 import { useSocketEventsStore } from '@/store/socketEventsStore';
 import { useAuthStore } from '@/store/authStore';
+import type { MatchLineupUpdate } from '@/utils/resultsBoardNavigation';
 
 interface UseGameResultsEngineProps {
   gameId: string | undefined;
@@ -120,6 +121,11 @@ export function useGameResultsEngine({
   const setMatchCourt = useCallback((roundId: string, matchId: string, courtId: string) =>
     GameResultsEngine.setMatchCourt(roundId, matchId, courtId), []);
   const toggleRoundExpanded = useCallback((roundId: string) => GameResultsEngine.toggleRoundExpanded(roundId), []);
+  const setExpandedRoundIds = useCallback((ids: string[]) => GameResultsEngine.setExpandedRoundIds(ids), []);
+  const setMatchLineups = useCallback(
+    (roundId: string, updates: MatchLineupUpdate[]) => GameResultsEngine.setMatchLineups(roundId, updates),
+    [],
+  );
   const setEditingMatchId = useCallback((matchId: string | null) => GameResultsEngine.setEditingMatchId(matchId), []);
   const syncToServer = useCallback(() => GameResultsEngine.syncToServer(), []);
   const getGameResults = useCallback(() => GameResultsEngine.getGameResults(), []);
@@ -158,6 +164,8 @@ export function useGameResultsEngine({
     updateMatch,
     setMatchCourt,
     toggleRoundExpanded,
+    setExpandedRoundIds,
+    setMatchLineups,
     setEditingMatchId,
     syncToServer,
     getGameResults,
@@ -188,6 +196,8 @@ export function useGameResultsEngine({
     updateMatch,
     setMatchCourt,
     toggleRoundExpanded,
+    setExpandedRoundIds,
+    setMatchLineups,
     setEditingMatchId,
     syncToServer,
     getGameResults,

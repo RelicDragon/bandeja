@@ -1,6 +1,14 @@
 {
   "live": {
     "andJoin": " y ",
+    "board": {
+      "advantage": "Ventaja",
+      "deuce": "Iguales",
+      "goldenPoint": "Punto de oro",
+      "players": "Jugadores",
+      "serving": "Saca",
+      "tieBreak": "Tie-break"
+    },
     "carouselLabel": "Carrusel de partidos en directo",
     "cityTitle": "En directo en {{city}}",
     "courtLabel": "pista {{court}}",

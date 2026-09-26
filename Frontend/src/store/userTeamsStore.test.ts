@@ -123,4 +123,33 @@ describe('userTeamsStore my-tab hydration', () => {
     expect(useUserTeamsStore.getState().teams.map((t) => t.id)).toEqual(['t2']);
     expect(useUserTeamsStore.getState().memberships.map((m) => m.teamId)).toEqual(['t2']);
   });
+
+  it('removeTeamLocal invalidates cached pair rows that still carry the team id', () => {
+    const partnersKey = queryKeys.pairs.partners('user-1', undefined);
+    queryClient.setQueryData(partnersKey, [{ pairId: 'p1', teamId: 't1' }]);
+
+    useUserTeamsStore.getState().removeTeamLocal('t1');
+
+    expect(queryClient.getQueryState(partnersKey)?.isInvalidated).toBe(true);
+  });
+
+  it('syncFromMyTabData replaces teams and skips payloads without a membership snapshot', () => {
+    const ownedTeam = { id: 't1', ownerId: 'user-1', members: [] } as UserTeam;
+    const staleTeam = { id: 't9', ownerId: 'user-1', members: [] } as UserTeam;
+    useUserTeamsStore.setState({ teams: [staleTeam], memberships: [] });
+
+    const skipped = useUserTeamsStore.getState().syncFromMyTabData(
+      { games: [], invites: [], unreadCounts: {}, teams: [ownedTeam], memberships: null },
+      'user-1',
+    );
+    expect(skipped).toBe(false);
+    expect(useUserTeamsStore.getState().teams.map((t) => t.id)).toEqual(['t9']);
+
+    const applied = useUserTeamsStore.getState().syncFromMyTabData(
+      { games: [], invites: [], unreadCounts: {}, teams: [ownedTeam], memberships: [] },
+      'user-1',
+    );
+    expect(applied).toBe(true);
+    expect(useUserTeamsStore.getState().teams.map((t) => t.id)).toEqual(['t1']);
+  });
 });

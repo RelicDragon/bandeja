@@ -120,7 +120,10 @@ export function buildLiveMessage(
   return { text: [header, ...blocks, footer].join('\n\n'), links };
 }
 
-/** Public broadcast URL carrying a freshly minted spectator token. */
+/**
+ * Public watch URL (the read-only TV board) carrying a freshly minted spectator
+ * token. Not `/broadcast` — that page is the OBS overlay, not something to watch.
+ */
 export function buildWatchUrl(
   gameId: string,
   matchId: string,
@@ -128,7 +131,7 @@ export function buildWatchUrl(
 ): string {
   const token = signToken(gameId, matchId);
   const params = new URLSearchParams({ matchId, spectatorToken: token });
-  return `${config.frontendUrl}/games/${gameId}/broadcast?${params.toString()}`;
+  return `${config.frontendUrl}/games/${gameId}/watch?${params.toString()}`;
 }
 
 function watchKeyboard(links: LiveMessageWatchLink[]): InlineKeyboard | undefined {

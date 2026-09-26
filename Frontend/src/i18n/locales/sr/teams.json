@@ -34,6 +34,7 @@
     "deleteTeam": "Obriši tim",
     "deleteTeamConfirm": "Trajno obrisati ovaj tim?",
     "deleted": "Tim je obrisan",
+    "unavailable": "Ovaj tim više nije dostupan",
     "cutAngleDial": "Podesite kako se dele fotografije igrača",
     "addTeamPhotoTitle": "Dodaj fotografiju tima",
     "addTeamPhotoHint": "Izaberite sliku, pa je isecite",

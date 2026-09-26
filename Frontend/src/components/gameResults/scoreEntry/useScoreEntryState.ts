@@ -18,6 +18,7 @@ import {
   automaticSetEntryUsesTieBreak,
   recommendAutomaticSetScore,
   getAutomaticRelaxedKeypadOptions,
+  expandSetsForDisplay,
   AUTOMATIC_GAMES_ENTRY_MAX,
   type AutomaticMatchRecordMode,
   type ValidationResult,
@@ -25,6 +26,7 @@ import {
 } from '@/utils/scoring';
 import { capPlayerIds, maxPlayersPerTeamForGame } from '@/utils/matchFormat';
 import { isSupplementalMatchSet, EXTRA_BALLS_SCORE_MAX, type MatchSetRole } from '@/utils/matchSetRole';
+import { hapticSelection } from '@/utils/haptics';
 import { KEYPAD_SELECTION_CONFIRM_MS, resolveKeypadTeamAfterPick } from './scoreKeypadSlide';
 
 export type ScoreEntryGame = Pick<
@@ -50,7 +52,7 @@ export type ScoreEntrySaveHandler = (
   isTieBreak?: boolean,
   supplementalRole?: Extract<MatchSetRole, 'EXTRA_GAMES' | 'EXTRA_BALLS'>,
   options?: { automaticRecordMode?: AutomaticMatchRecordMode; baseVersion?: string | null },
-) => void;
+) => void | Promise<void>;
 
 interface UseScoreEntryStateParams {
   match: Match;
@@ -62,7 +64,12 @@ interface UseScoreEntryStateParams {
   fixedNumberOfSets?: number;
   ballsInGames?: boolean;
   roundNumber?: number;
+  matchNumber?: number;
+  /** Open the number keypad for team A as soon as the dialog appears (not for extra sets). */
+  autoOpenKeypad?: boolean;
   onSave: ScoreEntrySaveHandler;
+  /** Saves, then the caller moves the dialog to the next score instead of closing it. */
+  onSaveAndNext?: ScoreEntrySaveHandler;
   onClose: () => void;
   onRemove?: (matchId: string, setIndex: number, baseVersion: string | null) => void;
 }
@@ -77,7 +84,10 @@ export function useScoreEntryState({
   fixedNumberOfSets,
   ballsInGames = false,
   roundNumber,
+  matchNumber,
+  autoOpenKeypad = false,
   onSave,
+  onSaveAndNext,
   onClose,
   onRemove,
 }: UseScoreEntryStateParams) {
@@ -123,7 +133,9 @@ export function useScoreEntryState({
   const [useSuperTiebreak, setUseSuperTiebreak] = useState(
     () => Boolean(currentSet.isTieBreak) && canUseSuperTiebreakEntry(setIndex, match.sets, rules),
   );
-  const [pickerTeam, setPickerTeam] = useState<'teamA' | 'teamB' | null>(null);
+  const [pickerTeam, setPickerTeam] = useState<'teamA' | 'teamB' | null>(() =>
+    autoOpenKeypad && !isSupplementalRow ? 'teamA' : null,
+  );
   const keypadAdvanceTimerRef = useRef<ReturnType<typeof globalThis.setTimeout> | null>(null);
   const keypadFirstPickDoneRef = useRef(false);
 
@@ -247,7 +259,7 @@ export function useScoreEntryState({
         })
       : [];
 
-  const handleSave = () => {
+  const handleSave = (advance = false) => {
     if (isSupplementalRow) {
       onSave(match.id, setIndex, teamAScore, teamBScore, false, extraRole, { baseVersion });
       onClose();
@@ -261,6 +273,10 @@ export function useScoreEntryState({
       baseVersion,
       ...(isAutomaticRelaxed && setIndex === 0 ? { automaticRecordMode: matchRecordMode } : {}),
     };
+    if (advance && onSaveAndNext) {
+      void onSaveAndNext(match.id, setIndex, teamAScore, teamBScore, finalIsTieBreak, undefined, saveOptions);
+      return;
+    }
     onSave(match.id, setIndex, teamAScore, teamBScore, finalIsTieBreak, undefined, saveOptions);
     onClose();
   };
@@ -309,6 +325,7 @@ export function useScoreEntryState({
   const handleNumberSelect = (number: number) => {
     if (!pickerTeam) return;
     const team = pickerTeam;
+    hapticSelection();
     setTeamScore(team, number);
     clearKeypadAdvance();
     keypadAdvanceTimerRef.current = globalThis.setTimeout(() => {
@@ -341,11 +358,31 @@ export function useScoreEntryState({
     [rules, hintKind, isAutomaticRelaxed, entryMode],
   );
 
-  const descriptionLine = useMemo(() => {
+  const isMultiSetMatch = useMemo(
+    () =>
+      setIndex > 0 ||
+      expandSetsForDisplay(match.sets, rules, { canEditResults: true }).filter(
+        (set) => !isSupplementalMatchSet(set),
+      ).length > 1,
+    [match.sets, rules, setIndex],
+  );
+
+  const contextLine = useMemo(() => {
     const parts: string[] = [];
     if (roundNumber != null && roundNumber > 0) {
       parts.push(t('gameResults.roundNumber', { number: roundNumber }));
     }
+    if (matchNumber != null && matchNumber > 0) {
+      parts.push(t('gameResults.match', { number: matchNumber }));
+    }
+    if (!isSupplementalRow && isMultiSetMatch) {
+      parts.push(t('gameResults.setNumber', { number: setIndex + 1 }));
+    }
+    return parts.length > 0 ? parts.join(' · ') : null;
+  }, [roundNumber, matchNumber, isSupplementalRow, isMultiSetMatch, setIndex, t]);
+
+  const descriptionLine = useMemo(() => {
+    const parts: string[] = [];
     if (entryMode === 'SUPER_TIEBREAK') {
       parts.push(t('gameResults.scoreEntryTiebreakPointsShort'));
       if (exampleList) {
@@ -391,7 +428,6 @@ export function useScoreEntryState({
     }
     return parts.length > 0 ? parts.join(' · ') : null;
   }, [
-    roundNumber,
     exampleList,
     t,
     rules,
@@ -404,6 +440,8 @@ export function useScoreEntryState({
   const showScoreValidation =
     !recommendation.ok && Boolean(recommendation.reason) && (teamAScore > 0 || teamBScore > 0);
   const saveDisabled = !isAutomaticRelaxed && !validation.ok && (teamAScore > 0 || teamBScore > 0);
+  // An empty 0:0 row would only reopen itself as the next score.
+  const saveAndNextDisabled = saveDisabled || (teamAScore === 0 && teamBScore === 0);
 
   return {
     rules,
@@ -437,8 +475,10 @@ export function useScoreEntryState({
     teamAPlayers,
     teamBPlayers,
     mainTitle,
+    contextLine,
     descriptionLine,
     showScoreValidation,
     saveDisabled,
+    saveAndNextDisabled,
   };
 }

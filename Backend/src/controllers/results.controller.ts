@@ -374,10 +374,20 @@ export const getGameResultsForSpectator = asyncHandler(async (req: Request, res:
   res.setHeader('Expires', '0');
   res.setHeader('X-Content-Type-Options', 'nosniff');
 
-  const results = await resultsService.getGameResults(gameId);
+  const [results, venue] = await Promise.all([
+    resultsService.getGameResults(gameId),
+    // The spectator strip reads "Live · club · court"; the rail card already shows both names.
+    prisma.game.findUnique({
+      where: { id: gameId },
+      select: {
+        club: { select: { id: true, name: true } },
+        court: { select: { id: true, name: true, club: { select: { id: true, name: true } } } },
+      },
+    }),
+  ]);
   res.json({
     success: true,
-    data: results,
+    data: { ...results, club: venue?.club ?? null, court: venue?.court ?? null },
     spectator: { matchId: payload.matchId },
   });
 });

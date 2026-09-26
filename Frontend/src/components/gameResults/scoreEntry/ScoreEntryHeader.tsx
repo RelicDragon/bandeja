@@ -12,6 +12,8 @@ import { ScoreValidationHint } from './ScoreValidationHint';
 
 interface ScoreEntryHeaderProps {
   mainTitle: string;
+  /** Where this score belongs, e.g. "Round 3 · Match 2 · Set 2". */
+  contextLine?: string | null;
   descriptionLine: string | null;
   courtLabel?: string | null;
   isSupplementalRow: boolean;
@@ -39,6 +41,7 @@ const headerSlotClass =
 
 export const ScoreEntryHeader = ({
   mainTitle,
+  contextLine,
   descriptionLine,
   courtLabel,
   isSupplementalRow,
@@ -86,6 +89,11 @@ export const ScoreEntryHeader = ({
           exit={{ opacity: 0 }}
           transition={{ duration: 0.15 }}
         >
+          {contextLine ? (
+            <p className="mb-1 pe-8 text-[11px] font-semibold uppercase tracking-wide text-primary-600 dark:text-primary-400">
+              {contextLine}
+            </p>
+          ) : null}
           <div className="flex items-start justify-between gap-2 pe-8">
             <DialogTitle className="mb-0 text-base font-semibold text-gray-900 dark:text-white">
               {mainTitle}

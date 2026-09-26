@@ -1,6 +1,14 @@
 {
   "live": {
     "andJoin": " و",
+    "board": {
+      "advantage": "أفضلية",
+      "deuce": "تعادل",
+      "goldenPoint": "النقطة الذهبية",
+      "players": "اللاعبون",
+      "serving": "يرسل",
+      "tieBreak": "كسر التعادل"
+    },
     "carouselLabel": "شريط المباريات الجارية",
     "cityTitle": "مباشر في {{city}}",
     "courtLabel": "ملعب {{court}}",

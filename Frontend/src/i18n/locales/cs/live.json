@@ -1,6 +1,14 @@
 {
   "live": {
     "andJoin": " a ",
+    "board": {
+      "advantage": "Výhoda",
+      "deuce": "Shoda",
+      "goldenPoint": "Zlatý bod",
+      "players": "Hráči",
+      "serving": "Podává",
+      "tieBreak": "Tie-break"
+    },
     "carouselLabel": "Karusel her, které právě běží",
     "cityTitle": "Právě se hraje: {{city}}",
     "courtLabel": "kurt {{court}}",

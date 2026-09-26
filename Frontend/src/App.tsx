@@ -31,6 +31,9 @@ const GameLiveBroadcastRedirect = lazy(() =>
 const GameBroadcastRoute = lazy(() =>
   import('./pages/GameBroadcastRoute').then((m) => ({ default: m.GameBroadcastRoute }))
 );
+const GameWatchRoute = lazy(() =>
+  import('./pages/GameWatchRoute').then((m) => ({ default: m.GameWatchRoute }))
+);
 const LeagueFixtureTableFullscreenPage = lazy(() =>
   import('./pages/LeagueFixtureTableFullscreenPage').then((m) => ({ default: m.LeagueFixtureTableFullscreenPage }))
 );
@@ -492,12 +495,14 @@ function AppContent() {
   const isGameDetailsPage = location.pathname.match(/^\/games\/[^/]+$/);
   const isGameBroadcastPage = /^\/games\/[^/]+\/broadcast$/.test(location.pathname);
   const isGameLiveBroadcastShortcut = /^\/games\/[^/]+\/live\/broadcast$/.test(location.pathname);
+  const isGameWatchPage = /^\/games\/[^/]+\/watch$/.test(location.pathname);
   const isLeagueFixtureTableFullscreenPage = /^\/games\/[^/]+\/league-table$/.test(location.pathname);
   const isGameLiveMatchPage =
     /^\/games\/[^/]+\/live$/.test(location.pathname) ||
     /^\/games\/[^/]+\/live\/tv$/.test(location.pathname) ||
     isGameBroadcastPage ||
-    isGameLiveBroadcastShortcut;
+    isGameLiveBroadcastShortcut ||
+    isGameWatchPage;
   const liveViewSearch = new URLSearchParams(location.search);
   const isGameLiveTv =
     /^\/games\/[^/]+\/live$/.test(location.pathname) && liveViewSearch.get('tv') === '1';
@@ -545,12 +550,14 @@ function AppContent() {
         : liveBoardShellTheme === 'light'
           ? 'min-h-[100dvh] bg-white text-gray-900'
           : 'min-h-[100dvh] bg-black text-white'
-      : 'min-h-screen bg-gray-50 dark:bg-gray-900';
+      : isGameWatchPage
+        ? 'min-h-[100dvh] bg-white text-gray-900 dark:bg-black dark:text-white'
+        : 'min-h-screen bg-gray-50 dark:bg-gray-900';
   const routeLoadingFallback = <RouteLoadingFallback />;
 
   return (
     <div className={appShellClass}>
-      {!isGameLiveTv && !isGameBroadcastPage ? <OfflineBanner /> : null}
+      {!isGameLiveTv && !isGameBroadcastPage && !isGameWatchPage ? <OfflineBanner /> : null}
       {showOptionalUpdateModal && versionCheck && versionCheck.status === 'optional_update' && (
         <AppVersionModal
           isBlocking={false}
@@ -755,6 +762,14 @@ function AppContent() {
           element={
             <Suspense fallback={routeLoadingFallback}>
               <GameBroadcastRoute />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/games/:id/watch"
+          element={
+            <Suspense fallback={routeLoadingFallback}>
+              <GameWatchRoute />
             </Suspense>
           }
         />

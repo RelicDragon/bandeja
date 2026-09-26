@@ -34,6 +34,7 @@
     "deleteTeam": "Smazat tým",
     "deleteTeamConfirm": "Trvale smazat tento tým?",
     "deleted": "Tým byl smazán",
+    "unavailable": "Tento tým už není dostupný",
     "cutAngleDial": "Upravit rozdělení fotek dvou hráčů",
     "addTeamPhotoTitle": "Přidat fotku týmu",
     "addTeamPhotoHint": "Vyberte obrázek a ořízněte ho",

@@ -17,6 +17,7 @@ import {
 import { useAuthStore } from '@/store/authStore';
 import { userTeamsApi, mediaApi } from '@/api';
 import { useUserTeamsStore } from '@/store/userTeamsStore';
+import { socketService } from '@/services/socketService';
 import type { UserTeam } from '@/types';
 import { toastApiError } from '@/utils/toastApiError';
 import { runWithProfileName } from '@/utils/runWithProfileName';
@@ -25,6 +26,12 @@ import { isUserTeamReady } from '@/components/playerInvite/inviteEntries';
 import { UserTeamExplainer } from '@/components/userTeam/UserTeamExplainer';
 import { AddUserTeamToGameSheet } from '@/components/userTeam/AddUserTeamToGameSheet';
 import { UserTeamPairStats } from '@/components/pairs/UserTeamPairStats';
+
+/** 404: deleted. 403: no longer a member. Either way the team is gone for this viewer. */
+function isTeamGoneError(e: unknown): boolean {
+  const status = (e as { response?: { status?: number } })?.response?.status;
+  return status === 403 || status === 404;
+}
 
 export function UserTeamPage() {
   const { id } = useParams<{ id: string }>();
@@ -59,6 +66,18 @@ export function UserTeamPage() {
   const [cutAngleLive, setCutAngleLive] = useState<number | null>(null);
   const teamAvatarUploadRef = useRef<AvatarUploadHandle>(null);
 
+  const leaveGoneTeam = useCallback(
+    (teamId: string, reason: 'deleted' | 'unavailable') => {
+      removeTeamLocal(teamId);
+      // Shared id: the owner's own delete toast and its socket echo collapse into one.
+      const toastId = `user-team-gone-${teamId}`;
+      if (reason === 'deleted') toast.success(t('teams.deleted'), { id: toastId });
+      else toast(t('teams.unavailable'), { id: toastId });
+      navigate('/', { replace: true });
+    },
+    [navigate, removeTeamLocal, t],
+  );
+
   const load = useCallback(async () => {
     if (!id) return;
     setLoading(true);
@@ -73,16 +92,41 @@ export function UserTeamPage() {
       verbalStatusSaveRequestId.current += 1;
       setVerbalStatusValidationStatus('idle');
     } catch (e: unknown) {
+      if (isTeamGoneError(e)) {
+        leaveGoneTeam(id, 'unavailable');
+        return;
+      }
       toastApiError(t, e);
       setTeamLocal(null);
     } finally {
       setLoading(false);
     }
-  }, [id, setTeam, t]);
+  }, [id, leaveGoneTeam, setTeam, t]);
 
   useEffect(() => {
     void load();
   }, [load]);
+
+  // The owner can delete the team while a teammate has this page open. The socket
+  // event covers a live session; the reconnect check covers a backgrounded app.
+  useEffect(() => {
+    if (!id) return;
+    const handleDeleted = (data: unknown) => {
+      if ((data as { teamId?: string } | null)?.teamId !== id) return;
+      leaveGoneTeam(id, 'deleted');
+    };
+    const recheckOnReconnect = () => {
+      userTeamsApi.getById(id).catch((e: unknown) => {
+        if (isTeamGoneError(e)) leaveGoneTeam(id, 'unavailable');
+      });
+    };
+    socketService.on('user-team:deleted', handleDeleted);
+    const unsubscribeConnect = socketService.onConnect(recheckOnReconnect);
+    return () => {
+      socketService.off('user-team:deleted', handleDeleted);
+      unsubscribeConnect();
+    };
+  }, [id, leaveGoneTeam]);
 
   useEffect(() => {
     setCutAngleLive(null);
@@ -199,9 +243,7 @@ export function UserTeamPage() {
     setBusy(true);
     try {
       await userTeamsApi.delete(team.id);
-      removeTeamLocal(team.id);
-      toast.success(t('teams.deleted'));
-      leaveTeam();
+      leaveGoneTeam(team.id, 'deleted');
     } catch (e: unknown) {
       toastApiError(t, e);
     } finally {

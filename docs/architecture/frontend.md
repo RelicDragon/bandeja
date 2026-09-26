@@ -29,7 +29,7 @@ Most signed-in UX is **one** `MainPage` shell keyed by pathname (`utils/urlSchem
 | `/profile/sessions` | SessionsPage |
 | `/profile/connected-clubs` | ConnectedClubsBookingsPage |
 | `/create-game`, `/create-league`, `/create-event` | create wrappers |
-| `/games/:id/live`, `/live/tv`, `/live/broadcast`, `/broadcast` | live/TV/broadcast |
+| `/games/:id/live`, `/live/tv`, `/live/broadcast`, `/broadcast`, `/watch` | live/TV/broadcast (OBS overlay)/spectator watch board |
 | `/games/:id/league-table`, `/league-bracket` | fullscreen league |
 | `/my-clubs/*` | ClubManagementApp |
 | `/link-to-app` | redirect to `/` or `/login`, keep query |
@@ -84,7 +84,7 @@ Deep links: `hooks/useDeepLink.ts`, catalog under `Frontend/src/deepLinks/`.
 - auth routes (login, register, telegram auto-login, `/link-to-app`)
 - chat: `/chats`, `/user-chat|group-chat|channel-chat/:id`, `/games/:id/chat`, `/bugs/:id`
 
-Chat is usable offline from Dexie + outbox. `OfflineBanner` still shows on the shell (not on TV/broadcast). Network: `utils/networkStatus.ts`.
+Chat is usable offline from Dexie + outbox. `OfflineBanner` still shows on the shell (not on TV/broadcast/watch — those show their own pill). Network: `utils/networkStatus.ts`.
 
 ## i18n
 

@@ -97,7 +97,7 @@ export const ScoreEntryBoard = ({
       <div className="flex flex-col gap-3">
         <div className="flex items-center gap-3">
           <div className="min-w-0 flex-1">
-            <ScoreEntryTeamPanel players={teamAPlayers} sideState={stateA} showNames={false} />
+            <ScoreEntryTeamPanel players={teamAPlayers} sideState={stateA} />
           </div>
           <ScoreStepper
             value={teamAScore}
@@ -117,7 +117,7 @@ export const ScoreEntryBoard = ({
 
         <div className="flex items-center gap-3">
           <div className="min-w-0 flex-1">
-            <ScoreEntryTeamPanel players={teamBPlayers} sideState={stateB} showNames={false} />
+            <ScoreEntryTeamPanel players={teamBPlayers} sideState={stateB} />
           </div>
           <ScoreStepper
             value={teamBScore}

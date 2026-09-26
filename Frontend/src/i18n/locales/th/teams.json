@@ -34,6 +34,7 @@
     "deleteTeam": "ลบทีม",
     "deleteTeamConfirm": "ลบทีมนี้อย่างถาวรใช่ไหม",
     "deleted": "ลบทีมแล้ว",
+    "unavailable": "ทีมนี้ไม่พร้อมใช้งานแล้ว",
     "cutAngleDial": "ปรับวิธีที่รูปถ่ายของผู้เล่นสองคนมาบรรจบกัน",
     "addTeamPhotoTitle": "เพิ่มรูปทีม.",
     "addTeamPhotoHint": "เลือกรูปภาพ จากนั้นครอบตัดให้พอดี",

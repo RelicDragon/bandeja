@@ -34,6 +34,7 @@
     "deleteTeam": "Delete team",
     "deleteTeamConfirm": "Delete this team permanently?",
     "deleted": "Team deleted",
+    "unavailable": "This team is no longer available",
     "cutAngleDial": "Adjust how the two player photos meet",
     "addTeamPhotoTitle": "Add team photo",
     "addTeamPhotoHint": "Choose an image, then crop to fit",

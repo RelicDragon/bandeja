@@ -1,6 +1,14 @@
 {
   "live": {
     "andJoin": "、",
+    "board": {
+      "advantage": "占先",
+      "deuce": "平分",
+      "goldenPoint": "金球",
+      "players": "球员",
+      "serving": "发球",
+      "tieBreak": "抢七"
+    },
     "carouselLabel": "进行中比赛轮播",
     "cityTitle": "{{city}} 正在进行的比赛",
     "courtLabel": "{{court}} 号场地",

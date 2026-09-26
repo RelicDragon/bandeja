@@ -1,21 +1,42 @@
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { motion } from 'framer-motion';
+import toast from 'react-hot-toast';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Plus, Sparkles } from 'lucide-react';
 import { Game, BasicUser } from '@/types';
 import type { Round } from '@/types/gameResults';
 import type { useGameResultsEngine } from '@/hooks/useGameResultsEngine';
 import type { useDragAndDrop } from '@/hooks/useDragAndDrop';
 import type { ModalType } from '@/hooks/useModalManager';
+import { useDesktop } from '@/hooks/useDesktop';
+import { useIsLandscape } from '@/hooks/useIsLandscape';
+import { usePlayerCardModal } from '@/hooks/usePlayerCardModal';
 import { useGameResultsStore } from '@/services/gameResultsEngine';
 import { shouldShowRoundAddedModal } from '@/utils/fivePlayerMatchCombinations';
 import { getAvailablePlayers, canEnterResults, isPresetResultsRoster } from '@/utils/gameResultsHelpers';
+import { maxPlayersPerTeamForGame } from '@/utils/matchFormat';
+import { getRules, isResultsMatchFinished } from '@/utils/scoring';
+import {
+  autoFillLineup,
+  isMatchLineupFull,
+  moveToOtherTeam,
+  nextEntrySetIndex,
+  playerIdsInRound,
+  resolveLineupTargetTeam,
+  restoreRemovedPlayer,
+  swapPlayersInRound,
+  type ResultsTeam,
+} from '@/utils/resultsBoardNavigation';
+import { hapticSelection, hapticSuccess } from '@/utils/haptics';
 import { ScoringRulebookBanner } from '@/components/gameResults/scoring';
 import {
   RoundCard,
   AvailablePlayersFooter,
   FloatingDraggedPlayer,
 } from '@/components/gameResults';
+import { RoundNavigator } from '@/components/gameResults/RoundNavigator';
+import { LineupPlayerSheet, type SwapCandidate } from '@/components/gameResults/LineupPlayerSheet';
+import { scrollToResultsRound } from './scrollToResults';
 
 type Engine = ReturnType<typeof useGameResultsEngine>;
 type DragAndDrop = ReturnType<typeof useDragAndDrop>;
@@ -40,6 +61,15 @@ interface ResultsRoundsBoardProps {
   onRoundAdded?: (round: Round) => void;
 }
 
+interface PlayerSheetTarget {
+  roundId: string;
+  matchId: string;
+  team: ResultsTeam;
+  playerId: string;
+}
+
+const TRAY_CLEARANCE_PX = 240;
+
 export const ResultsRoundsBoard = ({
   currentGame,
   players,
@@ -60,9 +90,49 @@ export const ResultsRoundsBoard = ({
   onRoundAdded,
 }: ResultsRoundsBoardProps) => {
   const { t } = useTranslation();
+  const { openPlayerCard } = usePlayerCardModal();
+  const isDesktop = useDesktop();
+  const isLandscape = useIsLandscape();
   const resultsContainerRef = useRef<HTMLDivElement>(null);
   const { expandedRoundIds, editingMatchId } = engine;
   const isPresetGame = isPresetResultsRoster(players.length);
+  const [lineupTarget, setLineupTarget] = useState<{ matchId: string; team: ResultsTeam } | null>(null);
+  const [playerSheet, setPlayerSheet] = useState<PlayerSheetTarget | null>(null);
+  // Separate from the target so the sheet keeps its content while it slides away.
+  const [playerSheetOpen, setPlayerSheetOpen] = useState(false);
+  const [navRoundId, setNavRoundId] = useState<string | null>(null);
+
+  const rules = useMemo(() => getRules(currentGame), [currentGame]);
+  const maxPerTeam = maxPlayersPerTeamForGame(currentGame, players.length);
+
+  // Split view scrolls a panel below the app header; the phone layout scrolls the page under it.
+  const stickyTop = isDesktop || isLandscape ? '0px' : 'calc(var(--app-header-height, 4rem) + env(safe-area-inset-top))';
+  const showNavigator = displayRounds.length > 1;
+  const roundScrollMargin = showNavigator ? `calc(${stickyTop} + 3.5rem)` : `calc(${stickyTop} + 0.5rem)`;
+
+  const editingRound = editingMatchId
+    ? rounds.find((r) => r.matches.some((m) => m.id === editingMatchId)) ?? null
+    : null;
+  const editingMatch = editingRound?.matches.find((m) => m.id === editingMatchId) ?? null;
+  const targetTeam = editingMatch
+    ? resolveLineupTargetTeam(
+        editingMatch,
+        lineupTarget?.matchId === editingMatch.id ? lineupTarget.team : null,
+        maxPerTeam,
+      )
+    : null;
+  const trayPlayers = useMemo(() => {
+    if (!editingRound) return [];
+    const placed = playerIdsInRound(editingRound);
+    return players.filter((p) => !placed.has(p.id));
+  }, [editingRound, players]);
+  const showTray =
+    canEditResultsForRounds && Boolean(editingMatch) && targetTeam !== null && trayPlayers.length > 0;
+
+  const activeRoundId =
+    navRoundId && displayRounds.some((r) => r.id === navRoundId)
+      ? navRoundId
+      : expandedRoundIds.find((id) => displayRounds.some((r) => r.id === id)) ?? null;
 
   useEffect(() => {
     const isDragging = dragAndDrop.draggedPlayer !== null || dragAndDrop.isDragging;
@@ -87,17 +157,52 @@ export const ResultsRoundsBoard = ({
     }
   }, [dragAndDrop.draggedPlayer, dragAndDrop.isDragging]);
 
+  // Leave lineup editing once every seat is filled (tray tap, search, drag or auto-fill),
+  // but not when "Edit lineup" was opened on a match that was already full.
+  const sawOpenSeatRef = useRef(false);
+  useEffect(() => {
+    sawOpenSeatRef.current = false;
+  }, [editingMatchId]);
+  useEffect(() => {
+    if (!editingMatch) return;
+    const full = isMatchLineupFull(editingMatch, maxPerTeam);
+    if (!full) {
+      sawOpenSeatRef.current = true;
+      return;
+    }
+    if (sawOpenSeatRef.current) {
+      sawOpenSeatRef.current = false;
+      hapticSuccess();
+      engine.setEditingMatchId(null);
+    }
+  }, [editingMatch, maxPerTeam, engine]);
+
+  // Keep the match being edited above the player tray.
+  useEffect(() => {
+    if (!editingMatchId || !showTray) return;
+    const frame = requestAnimationFrame(() => {
+      const card = document.querySelector<HTMLElement>(`[data-results-match-id="${editingMatchId}"]`);
+      if (!card) return;
+      if (card.getBoundingClientRect().bottom > window.innerHeight - TRAY_CLEARANCE_PX) {
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [editingMatchId, showTray]);
+
+  const roundIdOfMatch = useCallback(
+    (matchId: string) => rounds.find((r) => r.matches.some((m) => m.id === matchId))?.id ?? null,
+    [rounds],
+  );
+
   const handleMatchDrop = async (matchId: string, team: 'teamA' | 'teamB', draggedPlayer: string) => {
-    const roundId =
-      rounds.find((r) => r.matches.some((m) => m.id === matchId))?.id ??
-      (rounds.length > 0 ? rounds[0].id : null);
+    const roundId = roundIdOfMatch(matchId) ?? (rounds.length > 0 ? rounds[0].id : null);
     if (!roundId) return;
+    hapticSelection();
     await engine.addPlayerToTeam(roundId, matchId, team, draggedPlayer);
   };
 
-  const handleTouchEndWrapper = (e: TouchEvent) => {
-    dragAndDrop.handleTouchEnd(e, handleMatchDrop);
-  };
+  const handleTouchEndWrapper = (e: TouchEvent) => dragAndDrop.handleTouchEnd(e, handleMatchDrop);
 
   const handleContainerClick = (e: React.MouseEvent) => {
     if (editingMatchId && canEdit && isEditingResults) {
@@ -131,15 +236,192 @@ export const ResultsRoundsBoard = ({
     await engine.addRound();
     const nextRounds = useGameResultsStore.getState().rounds;
     const newRound = nextRounds.length > 0 ? nextRounds[nextRounds.length - 1] : undefined;
+    if (newRound) {
+      setNavRoundId(newRound.id);
+      scrollToResultsRound(newRound.id);
+    }
     if (newRound && shouldShowRoundAddedModal(newRound, players.length)) onRoundAdded?.(newRound);
+  };
+
+  const selectRound = (roundId: string) => {
+    setNavRoundId(roundId);
+    if (!expandedRoundIds.includes(roundId)) {
+      engine.setExpandedRoundIds([...expandedRoundIds, roundId]);
+    }
+    scrollToResultsRound(roundId);
+  };
+
+  const focusLineup = (matchId: string, team: ResultsTeam | null) => {
+    engine.setEditingMatchId(matchId);
+    setLineupTarget(team ? { matchId, team } : null);
+  };
+
+  const handlePlaceholderClick = async (roundId: string, matchId: string, team: ResultsTeam) => {
+    if (!(canEdit && isEditingResults)) return;
+
+    const availablePlayers = getAvailablePlayers(roundId, matchId, rounds, players);
+
+    if (availablePlayers.length === 1) {
+      hapticSelection();
+      await engine.addPlayerToTeam(roundId, matchId, team, availablePlayers[0].id);
+    } else if (availablePlayers.length === 0) {
+      openModal({ type: 'player', matchTeam: { roundId, matchId, team } });
+    } else {
+      focusLineup(matchId, team);
+    }
+  };
+
+  const handleMatchClick = (roundId: string, matchId: string) => {
+    if (!canEditResultsForRounds || editingMatchId === matchId) return;
+    const match = rounds.find((r) => r.id === roundId)?.matches.find((m) => m.id === matchId);
+    if (!match) return;
+    if (!isMatchLineupFull(match, maxPerTeam)) {
+      focusLineup(matchId, null);
+      return;
+    }
+    if (isResultsMatchFinished(match, rules)) return;
+    const setIndex = nextEntrySetIndex(match, rules);
+    if (setIndex !== null) openModal({ type: 'set', roundId, matchId, setIndex });
+  };
+
+  const placeFromTray = (playerId: string) => {
+    if (!editingRound || !editingMatch) return;
+    // Quick successive taps can outrun a re-render; resolve the side from the store.
+    const latest = useGameResultsStore
+      .getState()
+      .rounds.find((r) => r.id === editingRound.id)
+      ?.matches.find((m) => m.id === editingMatch.id);
+    if (!latest) return;
+    const team = resolveLineupTargetTeam(
+      latest,
+      lineupTarget?.matchId === latest.id ? lineupTarget.team : null,
+      maxPerTeam,
+    );
+    if (!team) return;
+    hapticSelection();
+    void engine.addPlayerToTeam(editingRound.id, latest.id, team, playerId);
+  };
+
+  const autoFillEditingMatch = () => {
+    if (!editingRound || !editingMatch) return;
+    const update = autoFillLineup(
+      editingMatch,
+      trayPlayers.map((p) => p.id),
+      maxPerTeam,
+      targetTeam ?? 'teamA',
+    );
+    if (update) void engine.setMatchLineups(editingRound.id, [update]);
+  };
+
+  const sheetRound = playerSheet ? rounds.find((r) => r.id === playerSheet.roundId) ?? null : null;
+  const sheetMatch = playerSheet ? sheetRound?.matches.find((m) => m.id === playerSheet.matchId) ?? null : null;
+  const sheetPlayer = playerSheet ? players.find((p) => p.id === playerSheet.playerId) ?? null : null;
+  const sheetValid = Boolean(sheetMatch && playerSheet && sheetMatch[playerSheet.team].includes(playerSheet.playerId));
+
+  const teamLabel = useCallback(
+    (team: ResultsTeam) => (team === 'teamA' ? t('gameResults.teamA') : t('gameResults.teamB')),
+    [t],
+  );
+
+  const swapCandidates = useMemo<SwapCandidate[]>(() => {
+    if (!playerSheet || !sheetRound || !sheetMatch) return [];
+    const list: SwapCandidate[] = [];
+    const byId = (id: string) => players.find((p) => p.id === id);
+    const otherSide: ResultsTeam = playerSheet.team === 'teamA' ? 'teamB' : 'teamA';
+    for (const id of sheetMatch[otherSide]) {
+      const player = byId(id);
+      if (player) list.push({ player, group: 'match', hint: teamLabel(otherSide) });
+    }
+    sheetRound.matches.forEach((match, index) => {
+      if (match.id === sheetMatch.id) return;
+      for (const team of ['teamA', 'teamB'] as const) {
+        for (const id of match[team]) {
+          const player = byId(id);
+          if (player) {
+            list.push({
+              player,
+              group: 'round',
+              hint: `${t('gameResults.match', { number: index + 1 })} · ${teamLabel(team)}`,
+            });
+          }
+        }
+      }
+    });
+    const placed = playerIdsInRound(sheetRound);
+    for (const player of players) {
+      if (!placed.has(player.id)) {
+        list.push({ player, group: 'resting', hint: t('gameResults.swapGroupResting') });
+      }
+    }
+    return list;
+  }, [playerSheet, sheetRound, sheetMatch, players, teamLabel, t]);
+
+  const sheetDescription = useMemo(() => {
+    if (!playerSheet || !sheetRound || !sheetMatch) return null;
+    const roundNumber = rounds.findIndex((r) => r.id === sheetRound.id) + 1;
+    const matchNumber = sheetRound.matches.findIndex((m) => m.id === sheetMatch.id) + 1;
+    return [
+      t('gameResults.roundNumber', { number: roundNumber }),
+      t('gameResults.match', { number: matchNumber }),
+      teamLabel(playerSheet.team),
+    ].join(' · ');
+  }, [playerSheet, sheetRound, sheetMatch, rounds, teamLabel, t]);
+
+  const movePlayer = () => {
+    if (!playerSheet || !sheetMatch) return;
+    const update = moveToOtherTeam(sheetMatch, playerSheet.team, playerSheet.playerId, maxPerTeam);
+    if (!update) return;
+    hapticSelection();
+    void engine.setMatchLineups(playerSheet.roundId, [update]);
+  };
+
+  const swapPlayer = (otherPlayerId: string) => {
+    if (!playerSheet || !sheetRound) return;
+    const updates = swapPlayersInRound(sheetRound, playerSheet, otherPlayerId);
+    if (updates.length === 0) return;
+    hapticSelection();
+    void engine.setMatchLineups(playerSheet.roundId, updates);
+  };
+
+  const removePlayer = () => {
+    if (!playerSheet || !sheetMatch) return;
+    const seat = {
+      matchId: playerSheet.matchId,
+      team: playerSheet.team,
+      index: sheetMatch[playerSheet.team].indexOf(playerSheet.playerId),
+      playerId: playerSheet.playerId,
+    };
+    const roundId = playerSheet.roundId;
+    const name = sheetPlayer?.firstName || sheetPlayer?.lastName || '';
+    void engine.removePlayerFromTeam(roundId, seat.matchId, seat.team, seat.playerId);
+    toast.custom(
+      (toastApi) => (
+        <div className="pointer-events-auto flex items-center gap-3 rounded-2xl bg-gray-900 py-2 pe-2 ps-4 text-sm text-white shadow-lg dark:bg-gray-700">
+          <span className="min-w-0 truncate">{t('gameResults.playerRemoved', { name })}</span>
+          <button
+            type="button"
+            onClick={() => {
+              toast.dismiss(toastApi.id);
+              const round = useGameResultsStore.getState().rounds.find((r) => r.id === roundId);
+              const restore = round ? restoreRemovedPlayer(round, seat, maxPerTeam) : null;
+              if (restore) void engine.setMatchLineups(roundId, [restore]);
+            }}
+            className="h-9 shrink-0 rounded-xl px-3 font-semibold text-primary-300 transition-colors hover:bg-white/10"
+          >
+            {t('gameResults.undo')}
+          </button>
+        </div>
+      ),
+      { duration: 5000 },
+    );
   };
 
   return (
     <div
       ref={resultsContainerRef}
-      className={`scrollbar-hide w-full space-y-2 hover:scrollbar-thin hover:scrollbar-thumb-gray-300 dark:hover:scrollbar-thumb-gray-600 ${
+      className={`w-full ${
         dragAndDrop.isDragging ? 'overflow-hidden' : ''
-      } ${isSendingToTelegram ? 'pointer-events-none opacity-60' : ''} pb-4 transition-opacity duration-300`}
+      } ${isSendingToTelegram ? 'pointer-events-none opacity-60' : ''} ${showTray ? 'pb-56' : 'pb-4'} transition-opacity duration-300`}
       onDragOver={dragAndDrop.handleDragOver}
       onClick={handleContainerClick}
     >
@@ -147,6 +429,17 @@ export const ResultsRoundsBoard = ({
         {canEdit && isEditingResults && !isSendingToTelegram && currentGame?.scoringPreset && (
           <ScoringRulebookBanner game={currentGame} />
         )}
+        {showNavigator ? (
+          <RoundNavigator
+            rounds={displayRounds}
+            allRounds={rounds}
+            rules={rules}
+            activeRoundId={activeRoundId}
+            onSelect={selectRound}
+            onAddRound={canEditResultsForRounds ? () => void handleAddRound() : undefined}
+            stickyTop={stickyTop}
+          />
+        ) : null}
         {showCreateAllCombinationsButton && (
           <div className="flex justify-center pb-2">
             <motion.button
@@ -175,19 +468,20 @@ export const ResultsRoundsBoard = ({
             draggedPlayer={dragAndDrop.draggedPlayer}
             showDeleteButton={rounds.length > 1 && canEdit && isEditingResults && !isSendingToTelegram}
             hideFrame={displayRounds.length === 1}
+            scrollMarginTop={roundScrollMargin}
             onRemoveRound={() => engine.removeRound(round.id)}
             onToggleExpand={() => {
               if (expandedRoundIds.includes(round.id)) {
                 const roundHasEditingMatch = round.matches.some((m) => m.id === editingMatchId);
                 if (roundHasEditingMatch) engine.setEditingMatchId(null);
+              } else {
+                setNavRoundId(round.id);
               }
               engine.toggleRoundExpanded(round.id);
             }}
             onAddMatch={() => engine.addMatch(round.id)}
             onRemoveMatch={(matchId) => engine.removeMatch(round.id, matchId)}
-            onMatchClick={(matchId) => {
-              engine.setEditingMatchId(matchId);
-            }}
+            onMatchClick={(matchId) => handleMatchClick(round.id, matchId)}
             onCancelMatchEdit={() => {
               engine.setEditingMatchId(null);
             }}
@@ -202,20 +496,11 @@ export const ResultsRoundsBoard = ({
             onDrop={(e, matchId, team) => {
               if (e) e.preventDefault();
               if (!dragAndDrop.draggedPlayer) return;
+              hapticSelection();
               engine.addPlayerToTeam(round.id, matchId, team, dragAndDrop.draggedPlayer);
               dragAndDrop.handleDragEnd();
             }}
-            onPlayerPlaceholderClick={async (matchId, team) => {
-              if (!(canEdit && isEditingResults)) return;
-
-              const availablePlayers = getAvailablePlayers(round.id, matchId, rounds, players);
-
-              if (availablePlayers.length === 1) {
-                await engine.addPlayerToTeam(round.id, matchId, team, availablePlayers[0].id);
-              } else {
-                openModal({ type: 'player', matchTeam: { roundId: round.id, matchId, team } });
-              }
-            }}
+            onPlayerPlaceholderClick={(matchId, team) => void handlePlaceholderClick(round.id, matchId, team)}
             canEnterResults={(matchId) => {
               const match = round.matches.find((m) => m.id === matchId);
               return match ? canEnterResults(match) : false;
@@ -227,6 +512,16 @@ export const ResultsRoundsBoard = ({
             game={currentGame}
             gameId={currentGame?.id}
             onMatchTimerTransition={(rId, mId, action) => engine.transitionMatchTimer(rId, mId, action)}
+            onEditLineup={canEditResultsForRounds ? (matchId) => focusLineup(matchId, null) : undefined}
+            onPlayerTap={
+              canEditResultsForRounds
+                ? (matchId, team, playerId) => {
+                    setPlayerSheet({ roundId: round.id, matchId, team, playerId });
+                    setPlayerSheetOpen(true);
+                  }
+                : undefined
+            }
+            lineupTargetTeam={targetTeam}
           />
         ))}
 
@@ -248,33 +543,55 @@ export const ResultsRoundsBoard = ({
             </motion.button>
           </div>
         )}
-
-        {editingMatchId &&
-          canEdit &&
-          isEditingResults &&
-          !isSendingToTelegram &&
-          (() => {
-            const expandedRound = rounds.find((r) => r.matches.some((m) => m.id === editingMatchId));
-            const editingMatch = expandedRound?.matches.find((m) => m.id === editingMatchId);
-            if (!expandedRound || !editingMatch) return null;
-
-            return (
-              <AvailablePlayersFooter
-                players={players}
-                editingMatch={editingMatch}
-                roundMatches={expandedRound.matches}
-                draggedPlayer={dragAndDrop.draggedPlayer}
-                playersPerMatch={currentGame?.playersPerMatch}
-                sport={currentGame?.sport}
-                onDragStart={dragAndDrop.handleDragStart}
-                onDragEnd={dragAndDrop.handleDragEnd}
-                onTouchStart={dragAndDrop.handleTouchStart}
-                onTouchMove={dragAndDrop.handleTouchMove}
-                onTouchEnd={handleTouchEndWrapper}
-              />
-            );
-          })()}
       </div>
+
+      <AnimatePresence>
+        {showTray && editingMatch && targetTeam ? (
+          <AvailablePlayersFooter
+            key="player-tray"
+            availablePlayers={trayPlayers}
+            editingMatch={editingMatch}
+            maxPlayersPerTeam={maxPerTeam}
+            draggedPlayer={dragAndDrop.draggedPlayer}
+            targetTeam={targetTeam}
+            onTargetTeamChange={(team) => setLineupTarget({ matchId: editingMatch.id, team })}
+            onPlace={placeFromTray}
+            onAutoFill={autoFillEditingMatch}
+            onSearch={() => {
+              if (!editingRound) return;
+              openModal({
+                type: 'player',
+                matchTeam: { roundId: editingRound.id, matchId: editingMatch.id, team: targetTeam },
+              });
+            }}
+            onDragStart={dragAndDrop.handleDragStart}
+            onDragEnd={dragAndDrop.handleDragEnd}
+            onTouchStart={dragAndDrop.handleTouchStart}
+            onTouchMove={dragAndDrop.handleTouchMove}
+            onTouchEnd={handleTouchEndWrapper}
+          />
+        ) : null}
+      </AnimatePresence>
+
+      <span className="contents" onClick={(e) => e.stopPropagation()}>
+        <LineupPlayerSheet
+          open={playerSheetOpen && sheetValid}
+          onOpenChange={setPlayerSheetOpen}
+          player={sheetPlayer}
+          description={sheetDescription}
+          team={playerSheet?.team ?? null}
+          canMove={Boolean(
+            playerSheet && sheetMatch && moveToOtherTeam(sheetMatch, playerSheet.team, playerSheet.playerId, maxPerTeam),
+          )}
+          swapCandidates={swapCandidates}
+          onMove={movePlayer}
+          onSwap={swapPlayer}
+          onRemove={removePlayer}
+          onViewProfile={() => {
+            if (playerSheet) openPlayerCard(playerSheet.playerId);
+          }}
+        />
+      </span>
 
       {dragAndDrop.draggedPlayer && dragAndDrop.dragPosition && (
         <FloatingDraggedPlayer

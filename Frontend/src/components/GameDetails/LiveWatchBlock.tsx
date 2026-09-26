@@ -2,16 +2,14 @@ import { useCallback, useMemo, useState, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { Play } from 'lucide-react';
 import { liveApi } from '@/api/live';
 import { queryKeys } from '@/queries/queryKeys';
-import { liveScoreLayoutId } from '@/components/live/liveScoreLayout';
 import { shouldShowLiveWatchBlock } from './liveWatchVisibility';
 import { LiveDot } from '@/components/live/LiveDot';
-import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { minutesSince, sidePlayerNames } from '@/features/live/liveSummaryUpdate';
+import { mintLiveWatchPath } from '@/features/live/liveWatchPath';
 import type { Game } from '@/types';
 
 export interface LiveWatchBlockProps {
@@ -29,7 +27,6 @@ export interface LiveWatchBlockProps {
 export function LiveWatchBlock({ game, viewerIsParticipant, fallback = null }: LiveWatchBlockProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const reduceMotion = usePrefersReducedMotion();
   const [opening, setOpening] = useState(false);
 
   const eligible = shouldShowLiveWatchBlock(game, viewerIsParticipant);
@@ -62,12 +59,7 @@ export function LiveWatchBlock({ game, viewerIsParticipant, fallback = null }: L
     if (!summary || opening) return;
     setOpening(true);
     try {
-      const response = await liveApi.spectatorToken(game.id);
-      const params = new URLSearchParams({
-        matchId: response.data.data.matchId || summary.matchId,
-        spectatorToken: response.data.data.token,
-      });
-      navigate(`/games/${game.id}/broadcast?${params.toString()}`);
+      navigate(await mintLiveWatchPath(game.id, summary.matchId));
     } catch {
       toast.error(t('live.openFailed'));
     } finally {
@@ -103,8 +95,7 @@ export function LiveWatchBlock({ game, viewerIsParticipant, fallback = null }: L
         {t('live.detailsTitle')}
       </h3>
 
-      <motion.div
-        layoutId={reduceMotion ? undefined : liveScoreLayoutId(game.id)}
+      <div
         role="img"
         aria-label={scoreLabel}
         className="mb-3 flex items-center justify-between gap-3 rounded-xl bg-gray-50 px-3 py-2 dark:bg-gray-800/60"
@@ -118,7 +109,7 @@ export function LiveWatchBlock({ game, viewerIsParticipant, fallback = null }: L
         <span className="min-w-0 flex-1 truncate text-end text-sm font-medium text-gray-700 dark:text-gray-200">
           {namesB}
         </span>
-      </motion.div>
+      </div>
 
       <p className="mb-3 text-xs text-gray-500 dark:text-gray-400">
         {startedMinutes === null || startedMinutes < 1

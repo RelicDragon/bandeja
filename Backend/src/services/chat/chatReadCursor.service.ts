@@ -1,5 +1,5 @@
 import type { Prisma } from '@prisma/client';
-import { ChatContextType, ChatType, Prisma as PrismaNS } from '@prisma/client';
+import { ChatContextType, ChatType } from '@prisma/client';
 import prisma from '../../config/database';
 
 export type ReadCursorMessageSlice = {
@@ -129,28 +129,24 @@ export class ChatReadCursorService {
 
     const existing = locked[0];
     if (!existing) {
-      try {
-        const created = await tx.chatReadCursor.create({
-          data: {
-            userId,
-            chatContextType: m.chatContextType,
-            contextId: m.contextId,
-            chatType: m.chatType,
-            readMaxServerSyncSeq: seq,
-            readMaxCreatedAt: m.createdAt,
-            readMaxMessageId: m.id,
-          },
-        });
-        return toMergeAdvanced(created);
-      } catch (e) {
-        if (
-          e instanceof PrismaNS.PrismaClientKnownRequestError &&
-          e.code === 'P2002'
-        ) {
-          return this.mergeFromMessage(tx, userId, m);
-        }
-        throw e;
-      }
+      // ON CONFLICT DO NOTHING, not create + catch P2002: a failed INSERT aborts this
+      // interactive transaction (25P02), so no retry inside it can succeed. Sender
+      // auto-read after send and an explicit mark-read race here on a first cursor.
+      const [created] = await tx.chatReadCursor.createManyAndReturn({
+        data: {
+          userId,
+          chatContextType: m.chatContextType,
+          contextId: m.contextId,
+          chatType: m.chatType,
+          readMaxServerSyncSeq: seq,
+          readMaxCreatedAt: m.createdAt,
+          readMaxMessageId: m.id,
+        },
+        skipDuplicates: true,
+      });
+      if (created) return toMergeAdvanced(created);
+      // The concurrent insert has committed; lock that row and merge against it.
+      return this.mergeFromMessage(tx, userId, m);
     }
 
     const cur = {

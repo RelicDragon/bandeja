@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Match } from '@/types/gameResults';
 import { BasicUser } from '@/types';
 import { Dialog, DialogContent } from '@/components/ui/Dialog';
@@ -37,6 +37,15 @@ interface ScoreEntryModalProps {
   canRemove?: boolean;
   isOpen: boolean;
   roundNumber?: number;
+  matchNumber?: number;
+  /** Open the number keypad for team A right away. Defaults to on. */
+  autoOpenKeypad?: boolean;
+  /**
+   * Save, then let the caller move this dialog to the next score. The dialog
+   * stays open; its body is keyed by match/set so the next draft starts fresh.
+   */
+  onSaveAndNext?: ScoreEntrySaveHandler;
+  isAdvancing?: boolean;
 }
 
 function scrollWithinContainer(
@@ -57,7 +66,32 @@ function scrollWithinContainer(
   }
 }
 
-export const ScoreEntryModal = ({
+const BODY_MOTION = {
+  initial: { opacity: 0, x: 24 },
+  animate: { opacity: 1, x: 0 },
+  exit: { opacity: 0, x: -24 },
+  transition: { duration: 0.2, ease: [0.32, 0.72, 0, 1] as const },
+};
+
+export const ScoreEntryModal = ({ isOpen, onClose, ...bodyProps }: ScoreEntryModalProps) => (
+  <Dialog open={isOpen} onClose={onClose} modalId="score-entry-modal">
+    <DialogContent className="gap-0 overflow-hidden p-0">
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.div
+          key={`${bodyProps.match.id}-${bodyProps.setIndex}`}
+          {...BODY_MOTION}
+          className="flex min-h-0 flex-1 flex-col"
+        >
+          <ScoreEntryBody {...bodyProps} onClose={onClose} />
+        </motion.div>
+      </AnimatePresence>
+    </DialogContent>
+  </Dialog>
+);
+
+type ScoreEntryBodyProps = Omit<ScoreEntryModalProps, 'isOpen'>;
+
+const ScoreEntryBody = ({
   match,
   setIndex,
   players,
@@ -72,9 +106,12 @@ export const ScoreEntryModal = ({
   onRemove,
   onClose,
   canRemove = false,
-  isOpen,
   roundNumber,
-}: ScoreEntryModalProps) => {
+  matchNumber,
+  autoOpenKeypad = true,
+  onSaveAndNext,
+  isAdvancing = false,
+}: ScoreEntryBodyProps) => {
   const { t } = useTranslation();
   const entry = useScoreEntryState({
     match,
@@ -86,7 +123,10 @@ export const ScoreEntryModal = ({
     fixedNumberOfSets,
     ballsInGames,
     roundNumber,
+    matchNumber,
+    autoOpenKeypad,
     onSave,
+    onSaveAndNext,
     onClose,
     onRemove,
   });
@@ -121,9 +161,11 @@ export const ScoreEntryModal = ({
     teamAPlayers,
     teamBPlayers,
     mainTitle,
+    contextLine,
     descriptionLine,
     showScoreValidation,
     saveDisabled,
+    saveAndNextDisabled,
   } = entry;
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -160,6 +202,12 @@ export const ScoreEntryModal = ({
     prevPickerTeamRef.current = pickerTeam;
   }, [pickerTeam]);
 
+  // A keypad that is open from the start skips its enter animation, so reveal it here.
+  const initialPickerTeamRef = useRef(pickerTeam);
+  useEffect(() => {
+    if (initialPickerTeamRef.current) revealKeypad();
+  }, [revealKeypad]);
+
   useEffect(() => {
     return () => {
       cancelKeypadScrollRef.current?.();
@@ -190,90 +238,95 @@ export const ScoreEntryModal = ({
   const togglePicker = (team: 'teamA' | 'teamB') =>
     setPickerTeam(pickerTeam === team ? null : team);
 
+  const showSaveAndNext = Boolean(onSaveAndNext) && !isSupplementalRow;
+
   return (
-    <Dialog open={isOpen} onClose={onClose} modalId="score-entry-modal">
-      <DialogContent className="gap-0 p-0">
-        <ScoreEntryHeader
-          mainTitle={mainTitle}
-          descriptionLine={descriptionLine}
-          courtLabel={courtLabel}
-          isSupplementalRow={isSupplementalRow}
-          isAutomaticRelaxed={isAutomaticRelaxed}
-          setIndex={setIndex}
-          canUseSuperTiebreak={canUseSuperTiebreak}
-          matchRecordMode={matchRecordMode}
-          persistedRecordMode={persistedRecordMode}
-          useSuperTiebreak={useSuperTiebreak}
-          extraRole={extraRole}
-          extraRoleTabs={extraRoleTabs}
-          extraSetHint={t('gameResults.extraSetHint')}
-          onMatchRecordModeChange={setMatchRecordMode}
-          onSuperTiebreakChange={setUseSuperTiebreak}
-          onExtraRoleChange={setExtraRole}
-          showScoreValidation={showScoreValidation}
-          validationReason={recommendation.reason}
-          validationDetail={recommendation.detail}
-          validationSuggestions={suggestions}
-          onApplySuggestion={applySuggestion}
-        />
+    <>
+      <ScoreEntryHeader
+        mainTitle={mainTitle}
+        contextLine={contextLine}
+        descriptionLine={descriptionLine}
+        courtLabel={courtLabel}
+        isSupplementalRow={isSupplementalRow}
+        isAutomaticRelaxed={isAutomaticRelaxed}
+        setIndex={setIndex}
+        canUseSuperTiebreak={canUseSuperTiebreak}
+        matchRecordMode={matchRecordMode}
+        persistedRecordMode={persistedRecordMode}
+        useSuperTiebreak={useSuperTiebreak}
+        extraRole={extraRole}
+        extraRoleTabs={extraRoleTabs}
+        extraSetHint={t('gameResults.extraSetHint')}
+        onMatchRecordModeChange={setMatchRecordMode}
+        onSuperTiebreakChange={setUseSuperTiebreak}
+        onExtraRoleChange={setExtraRole}
+        showScoreValidation={showScoreValidation}
+        validationReason={recommendation.reason}
+        validationDetail={recommendation.detail}
+        validationSuggestions={suggestions}
+        onApplySuggestion={applySuggestion}
+      />
 
-        <div
-          ref={scrollContainerRef}
-          className="min-h-0 flex-1 scroll-smooth overflow-y-auto overscroll-contain px-4 pb-4"
-        >
-          <div ref={scoreboardRef}>
-            <ScoreEntryBoard
-              layout={layout}
-              teamAPlayers={teamAPlayers}
-              teamBPlayers={teamBPlayers}
-              teamAScore={teamAScore}
-              teamBScore={teamBScore}
-              scoreMax={scoreMax}
-              pickerTeam={pickerTeam}
-              vsAriaLabel={t('gameResults.vs')}
-              valueAriaLabel={t('gameResults.scorePickerOtherScore')}
-              onTeamScoreChange={setTeamScore}
-              onTogglePicker={togglePicker}
-            />
-          </div>
-
-          <div>
-            <AnimatePresence initial={false} onExitComplete={handleKeypadExitComplete}>
-              {pickerTeam ? (
-                <ScoreKeypadPanel
-                  ref={keypadPanelRef}
-                  key="score-keypad"
-                  activeTeam={pickerTeam}
-                  teamAPlayers={teamAPlayers}
-                  teamBPlayers={teamBPlayers}
-                  teamANumberOptions={teamANumberOptions}
-                  teamBNumberOptions={teamBNumberOptions}
-                  teamAScore={teamAScore}
-                  teamBScore={teamBScore}
-                  keypadMax={scorePickerKeypadMax}
-                  onSelect={handleNumberSelect}
-                  clampToAllowed={clampToAllowed}
-                  density={layout === 'columns' ? 'comfortable' : 'compact'}
-                  onClose={() => setPickerTeam(null)}
-                  onOpenComplete={handleKeypadOpenComplete}
-                  onTeamSlideComplete={handleTeamSlideComplete}
-                />
-              ) : null}
-            </AnimatePresence>
-          </div>
+      <div
+        ref={scrollContainerRef}
+        className="min-h-0 flex-1 scroll-smooth overflow-y-auto overscroll-contain px-4 pb-4"
+      >
+        <div ref={scoreboardRef}>
+          <ScoreEntryBoard
+            layout={layout}
+            teamAPlayers={teamAPlayers}
+            teamBPlayers={teamBPlayers}
+            teamAScore={teamAScore}
+            teamBScore={teamBScore}
+            scoreMax={scoreMax}
+            pickerTeam={pickerTeam}
+            vsAriaLabel={t('gameResults.vs')}
+            valueAriaLabel={t('gameResults.scorePickerOtherScore')}
+            onTeamScoreChange={setTeamScore}
+            onTogglePicker={togglePicker}
+          />
         </div>
 
-        <ScoreEntryFooter
-          cancelLabel={t('common.cancel')}
-          saveLabel={t('common.save')}
-          deleteLabel={t('common.delete')}
-          saveDisabled={saveDisabled}
-          canRemove={canRemove && Boolean(onRemove)}
-          onCancel={onClose}
-          onSave={handleSave}
-          onRemove={onRemove ? handleRemove : undefined}
-        />
-      </DialogContent>
-    </Dialog>
+        <div>
+          <AnimatePresence initial={false} onExitComplete={handleKeypadExitComplete}>
+            {pickerTeam ? (
+              <ScoreKeypadPanel
+                ref={keypadPanelRef}
+                key="score-keypad"
+                activeTeam={pickerTeam}
+                teamAPlayers={teamAPlayers}
+                teamBPlayers={teamBPlayers}
+                teamANumberOptions={teamANumberOptions}
+                teamBNumberOptions={teamBNumberOptions}
+                teamAScore={teamAScore}
+                teamBScore={teamBScore}
+                keypadMax={scorePickerKeypadMax}
+                onSelect={handleNumberSelect}
+                clampToAllowed={clampToAllowed}
+                density={layout === 'columns' ? 'comfortable' : 'compact'}
+                onClose={() => setPickerTeam(null)}
+                onOpenComplete={handleKeypadOpenComplete}
+                onTeamSlideComplete={handleTeamSlideComplete}
+              />
+            ) : null}
+          </AnimatePresence>
+        </div>
+      </div>
+
+      <ScoreEntryFooter
+        cancelLabel={t('common.cancel')}
+        saveLabel={t('common.save')}
+        deleteLabel={t('common.delete')}
+        saveDisabled={saveDisabled}
+        canRemove={canRemove && Boolean(onRemove)}
+        onCancel={onClose}
+        onSave={() => handleSave()}
+        onRemove={onRemove ? handleRemove : undefined}
+        saveAndNextLabel={showSaveAndNext ? t('gameResults.saveAndNext') : undefined}
+        saveAndNextDisabled={saveAndNextDisabled}
+        onSaveAndNext={showSaveAndNext ? () => handleSave(true) : undefined}
+        isAdvancing={isAdvancing}
+      />
+    </>
   );
 };

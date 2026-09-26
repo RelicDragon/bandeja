@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Trophy, BarChart3, ClipboardList } from 'lucide-react';
 import { SegmentedSwitch, type SegmentedSwitchTab } from '@/components/SegmentedSwitch';
@@ -8,9 +8,11 @@ interface GameResultsTabsProps {
   activeTab: TabType;
   onTabChange: (tab: TabType) => void;
   resultsStatus?: string;
+  /** Rendered at the right edge, e.g. the results ⋯ menu. */
+  trailing?: ReactNode;
 }
 
-export const GameResultsTabs = ({ activeTab, onTabChange, resultsStatus }: GameResultsTabsProps) => {
+export const GameResultsTabs = ({ activeTab, onTabChange, resultsStatus, trailing }: GameResultsTabsProps) => {
   const { t } = useTranslation();
   const isFinal = resultsStatus === 'FINAL';
 
@@ -34,7 +36,7 @@ export const GameResultsTabs = ({ activeTab, onTabChange, resultsStatus }: GameR
   }, [isFinal, t]);
 
   return (
-    <div className="flex justify-center py-2">
+    <div className="relative flex justify-center py-2">
       <SegmentedSwitch
         tabs={tabs}
         activeId={activeTab}
@@ -43,6 +45,7 @@ export const GameResultsTabs = ({ activeTab, onTabChange, resultsStatus }: GameR
         layoutId="game-results-tabs"
         ariaLabel={t('gameResults.results')}
       />
+      {trailing ? <div className="absolute right-0 top-1/2 -translate-y-1/2">{trailing}</div> : null}
     </div>
   );
 };

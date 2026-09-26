@@ -1,4 +1,3 @@
-import { liveScoreLayoutId } from './liveScoreLayout';
 import { memo, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
@@ -125,8 +124,7 @@ function LiveScoreCardView({
       : undefined;
 
   const currentScoreBlock = (
-    <motion.div
-      layoutId={reduceMotion ? undefined : liveScoreLayoutId(game.id)}
+    <div
       className="flex items-center justify-center gap-2 rounded-xl bg-gray-50 px-2 py-1.5 dark:bg-gray-800/60"
       role="img"
       aria-label={scoreLabel}
@@ -157,7 +155,7 @@ function LiveScoreCardView({
           className="text-xl font-bold leading-none text-gray-900 dark:text-gray-50"
         />
       </motion.span>
-    </motion.div>
+    </div>
   );
 
   const header = (

@@ -34,6 +34,7 @@
     "deleteTeam": "حذف الفريق",
     "deleteTeamConfirm": "حذف هذا الفريق نهائياً؟",
     "deleted": "حُذف الفريق",
+    "unavailable": "هذا الفريق لم يعد متاحًا",
     "cutAngleDial": "اضبط كيفية التقاء صورتي اللاعبين",
     "addTeamPhotoTitle": "إضافة صورة الفريق",
     "addTeamPhotoHint": "اختر صورة ثم قصّها لتناسب",
