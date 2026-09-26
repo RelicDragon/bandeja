@@ -125,6 +125,7 @@ import { resolveDotState, type AttendanceDotState } from '@/features/attendance/
 import { AttendanceLegendSheet } from '@/features/attendance/AttendanceLegendSheet';
 import { GameResultsEngine, useGameResultsStore } from '@/services/gameResultsEngine';
 import { releaseAnyLeagueResultsEngine } from '@/services/leagueResultsEngineSession';
+import { BlockingLoadingOverlay } from '@/components/ui/BlockingLoadingOverlay';
 import { shouldSyncEngineGameFromShell } from '@/utils/mergeGameFormatForResults';
 import {
   mergeGamePhotoRefresh,
@@ -233,6 +234,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const [showAnnouncedConfirm, setShowAnnouncedConfirm] = useState(false);
+  const [isStartingResults, setIsStartingResults] = useState(false);
   const [tableSetModal, setTableSetModal] = useState<{ roundId: string; matchId: string } | null>(null);
   const [roundAddedForModal, setRoundAddedForModal] = useState<Round | null>(null);
   const [roundAddedModalRoundNumber, setRoundAddedModalRoundNumber] = useState<number | undefined>(undefined);
@@ -1021,9 +1023,10 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
   };
 
   const proceedWithResultsEntry = async () => {
-    if (!id || !user?.id || !game) return;
+    if (!id || !user?.id || !game || isStartingResults) return;
     
     setShowAnnouncedConfirm(false);
+    setIsStartingResults(true);
 
     try {
       const startRes = await resultsApi.startResultsEntryWithGeneratedRound(id);
@@ -1039,11 +1042,13 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'errors.generic';
       toast.error(t(errorMessage, { defaultValue: errorMessage }));
+    } finally {
+      setIsStartingResults(false);
     }
   };
 
   const handleStartResultsEntry = async () => {
-    if (!id || !user?.id || !game) return;
+    if (!id || !user?.id || !game || isStartingResults) return;
     
     const canEditResults = canUserEditResults(game, user);
     if (!canEditResults) return;
@@ -1921,6 +1926,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
             <Card className="overflow-hidden">
               <button
                 onClick={game.entityType === 'TRAINING' ? handleFinishTraining : handleStartResultsEntry}
+                disabled={isStartingResults}
                 className="w-full px-8 py-4 text-base font-semibold rounded-xl transition-all duration-300 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 active:from-green-700 active:to-emerald-800 text-white shadow-lg hover:shadow-2xl hover:shadow-green-500/50 transform hover:scale-[1.01] active:scale-[0.99] relative overflow-hidden group"
               >
                 <span className="relative z-10">
@@ -2297,6 +2303,11 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
           onClose={() => setShowAnnouncedConfirm(false)}
         />
       )}
+
+      <BlockingLoadingOverlay
+        open={isStartingResults}
+        label={t('gameResults.startingResultsEntry', { defaultValue: 'Starting results entry…' })}
+      />
 
       <RoundAddedModal
         isOpen={!!roundAddedForModal}

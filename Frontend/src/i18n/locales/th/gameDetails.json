@@ -866,10 +866,9 @@
         }
       }
     },
-    "resultsRosterTitle": "ผู้เล่นในสนาม",
-    "resultsRosterHint": "กำลังบันทึกผล รายชื่อจึงถูกล็อก แต่ยังเปลี่ยนตัวผู้เล่นที่บาดเจ็บได้",
-    "substitutePlayerAction": "เปลี่ยนตัว",
     "substitutePlayerTitle": "เปลี่ยนตัวผู้เล่น",
+    "substitutePlayerCardHint": "เปลี่ยนตัวผู้เล่นที่บาดเจ็บระหว่างเกม",
+    "substitutePlayerPickOut": "ใครจะออกจากสนาม?",
     "substitutePlayerReplacing": "กำลังเปลี่ยน",
     "substitutePlayerNoCandidates": "ไม่มีผู้เล่นสำหรับเปลี่ยนตัว",
     "substitutePlayerOut": "ออก",

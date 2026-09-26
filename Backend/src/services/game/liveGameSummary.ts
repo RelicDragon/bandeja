@@ -213,3 +213,62 @@ export function formatSetScoreLine(summary: LiveGameSummary, separator = ' '): s
   }
   return parts.join(separator);
 }
+
+export type FinalSummaryMatchInput = {
+  matchId: string;
+  courtName?: string | null;
+  startedAt?: Date | string | null;
+  teams: LiveSummaryTeamInput[];
+  /** OFFICIAL `Set` rows, oldest first. `teamAScore` is team 1. */
+  sets: Array<{ teamAScore: number; teamBScore: number }>;
+  /** `Match.winnerId` resolved to its team number, when stored. */
+  winnerTeamNumber?: number | null;
+};
+
+/**
+ * Rail payload for a match whose results went **final** — the same shape as a
+ * live summary so one card renders both. Built from the `Set` rows, which are
+ * the source of truth for manual entry and live scoring alike.
+ *
+ * `currentGameScore` is empty (nothing is being played) and `leading` marks
+ * the winner: `Match.winnerId` when stored, otherwise sets won, otherwise
+ * games won. `revision` stays unset — a finished card never takes a socket
+ * frame. `null` when there is no scored set or not exactly two sides.
+ */
+export function buildFinalGameSummary(input: FinalSummaryMatchInput): LiveGameSummary | null {
+  const sets = input.sets
+    .map((row) => ({
+      teamA: clampScore(row.teamAScore),
+      teamB: clampScore(row.teamBScore),
+      isTieBreak: false,
+    }))
+    .filter((row) => row.teamA > 0 || row.teamB > 0);
+  if (sets.length === 0) return null;
+  if (!input.teams.some((x) => x.teamNumber === 1) || !input.teams.some((x) => x.teamNumber === 2)) {
+    return null;
+  }
+
+  let winner: 0 | 1 | 2 =
+    input.winnerTeamNumber === 1 || input.winnerTeamNumber === 2 ? input.winnerTeamNumber : 0;
+  if (winner === 0) {
+    const lastIndex = sets.length;
+    winner = leadingTeamNumber(sets, lastIndex, ['', '']);
+    if (winner === 0) {
+      const gamesA = sets.reduce((sum, row) => sum + row.teamA, 0);
+      const gamesB = sets.reduce((sum, row) => sum + row.teamB, 0);
+      if (gamesA !== gamesB) winner = gamesA > gamesB ? 1 : 2;
+    }
+  }
+
+  const lastIndex = sets.length - 1;
+  return {
+    matchId: input.matchId,
+    courtName: input.courtName ?? null,
+    currentSet: sets.length,
+    sides: [
+      sideFor(1, input.teams, sets, lastIndex, ['', ''], winner),
+      sideFor(2, input.teams, sets, lastIndex, ['', ''], winner),
+    ],
+    startedAt: toIsoOrNull(input.startedAt),
+  };
+}

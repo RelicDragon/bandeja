@@ -10,6 +10,7 @@ import { gamesApi } from '@/api';
 import { canMutateGameRoster } from '@shared/gameMutationLock';
 import { getEntityCapabilities } from '@shared/entityCapabilities';
 import { SeriesMakeWeeklyRow } from '@/features/game-series/SeriesMakeWeeklyRow';
+import { isRailVisibleGame } from './liveWatchVisibility';
 import toast from 'react-hot-toast';
 
 interface GameSettingsProps {
@@ -288,10 +289,12 @@ export const GameSettings = ({ game, canEdit, onGameUpdate, embedded = false }: 
         />
 
         {/*
-          PRD 349 — only meaningful while the game is public: a private game
-          never reaches the rail regardless of this switch.
+          PRD 349 — only meaningful while the game could reach the rail: public,
+          or a fixture of a public league season (fixtures are always private).
         */}
-        {!isLeagueSeason && game.entityType !== 'BAR' && getChecked('isPublic') && (
+        {!isLeagueSeason &&
+          game.entityType !== 'BAR' &&
+          isRailVisibleGame({ ...game, isPublic: getChecked('isPublic') }) && (
           <SettingToggleRow
             title={t('live.showOnRail')}
             checked={getChecked('showOnLiveRail')}

@@ -866,10 +866,9 @@
         }
       }
     },
-    "resultsRosterTitle": "Pemain di lapangan",
-    "resultsRosterHint": "Pencatatan hasil sedang berlangsung, jadi daftar pemain dibekukan. Anda masih bisa mengganti pemain yang cedera.",
-    "substitutePlayerAction": "Ganti",
     "substitutePlayerTitle": "Ganti pemain",
+    "substitutePlayerCardHint": "Ganti pemain yang cedera di tengah permainan",
+    "substitutePlayerPickOut": "Siapa yang keluar dari lapangan?",
     "substitutePlayerReplacing": "Menggantikan",
     "substitutePlayerNoCandidates": "Tidak ada pemain yang tersedia untuk menggantikan",
     "substitutePlayerOut": "Keluar",

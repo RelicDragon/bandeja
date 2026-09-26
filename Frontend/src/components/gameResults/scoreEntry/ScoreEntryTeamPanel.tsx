@@ -1,44 +1,63 @@
 import { PlayerAvatar } from '@/components';
 import { BasicUser } from '@/types';
+import { EASE_CLASS, FACE_CUTOUT_CLASS } from './scoreEntryStyles';
+import { teamLabel } from './teamLabel';
 
 export type TeamSideState = 'leading' | 'trailing' | 'neutral';
 
 interface ScoreEntryTeamPanelProps {
   players: BasicUser[];
   sideState: TeamSideState;
+  /** `column`: faces over names (portrait board). `row`: faces beside names (landscape board). */
+  orientation?: 'column' | 'row';
 }
 
-const teamLabel = (players: BasicUser[]) =>
-  players
-    .map((p) => p.firstName || p.lastName || '?')
-    .join(' · ');
+const NAME_TONE: Record<TeamSideState, string> = {
+  leading: 'text-gray-900 dark:text-white',
+  neutral: 'text-gray-700 dark:text-gray-200',
+  trailing: 'text-gray-500 dark:text-gray-400',
+};
 
 export const ScoreEntryTeamPanel = ({
   players,
   sideState,
-}: ScoreEntryTeamPanelProps) => (
-  <div
-    className={`flex h-full min-h-[3.75rem] flex-col items-center justify-center gap-1.5 rounded-xl px-2 py-2 ${
-      sideState === 'leading'
-        ? 'bg-emerald-50/80 dark:bg-emerald-950/25'
-        : 'bg-gray-50/80 dark:bg-gray-800/40'
-    }`}
-  >
-    <div className="flex items-center justify-center -space-x-2">
-      {players.map((player) => (
-        <PlayerAvatar
-          key={player.id}
-          player={player}
-          inlineFace
-          inlineFacePlain
-          inlineFaceFlatStack
-          showName={false}
-          draggable={false}
-        />
-      ))}
+  orientation = 'column',
+}: ScoreEntryTeamPanelProps) => {
+  const isRow = orientation === 'row';
+
+  return (
+    <div
+      className={
+        isRow
+          ? 'flex min-w-0 items-center gap-2.5'
+          : 'flex min-w-0 flex-col items-center justify-end gap-2 px-1'
+      }
+    >
+      <div className="flex shrink-0 items-center -space-x-2.5">
+        {players.map((player) => (
+          <span
+            key={player.id}
+            className={`${FACE_CUTOUT_CLASS} ring-white dark:ring-gray-800`}
+          >
+            <PlayerAvatar
+              player={player}
+              inlineFace
+              inlineFaceSize="md"
+              inlineFacePlain
+              inlineFaceFlatStack
+              showName={false}
+              draggable={false}
+            />
+          </span>
+        ))}
+      </div>
+      <p
+        className={`line-clamp-2 min-w-0 text-[12px] font-medium leading-tight transition-colors duration-500 ${EASE_CLASS} ${
+          isRow ? 'text-start' : 'max-w-full text-center'
+        } ${NAME_TONE[sideState]}`}
+      >
+        {teamLabel(players)}
+      </p>
     </div>
-    <p className="line-clamp-2 max-w-full text-center text-[11px] font-medium leading-tight text-gray-600 dark:text-gray-400">
-      {teamLabel(players)}
-    </p>
-  </div>
-);
+  );
+};

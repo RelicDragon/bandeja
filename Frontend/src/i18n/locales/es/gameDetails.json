@@ -856,10 +856,9 @@
         }
       }
     },
-    "resultsRosterTitle": "Jugadores en pista",
-    "resultsRosterHint": "El registro de resultados está en curso, así que la alineación está bloqueada. Aún puedes sustituir a un jugador lesionado.",
-    "substitutePlayerAction": "Sustituir",
     "substitutePlayerTitle": "Sustituir jugador",
+    "substitutePlayerCardHint": "Sustituye a un jugador lesionado durante el partido",
+    "substitutePlayerPickOut": "¿Quién sale de la pista?",
     "substitutePlayerReplacing": "Sustituyendo a",
     "substitutePlayerNoCandidates": "No hay jugadores disponibles para sustituir",
     "substitutePlayerOut": "Sale",

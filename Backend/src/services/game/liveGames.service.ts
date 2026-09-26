@@ -1,27 +1,37 @@
 /**
  * PRD 349 — "Live now" rail data source.
  *
- * One query, three consumers:
- *   • `GET /api/live/games` (the Find / Home rail)
+ * Consumers:
+ *   • `GET /api/live/games` (the Find / Home rail) — {@link listCityRailGames}:
+ *     live games first, then games whose results went final **today** (city
+ *     day), so a score entered the normal way still shows up in the city
  *   • the Telegram `/live` command (PRD 356) — it calls {@link listLiveGames}
- *     **directly**; the bot must never HTTP round-trip to its own API
+ *     **directly** (live only); the bot must never HTTP round-trip to its own API
  *   • the spectator-token mint, which reuses {@link findLiveRailGame} so the
- *     token can only ever be issued for a game the rail would have shown.
+ *     token can only ever be issued for a game the rail would have shown live.
  *
- * The privacy gate (`LIVE_RAIL_WHERE`: IN_PROGRESS + isPublic + showOnLiveRail)
- * lives in `availableGamesStructuralWhere.ts` and is applied through
- * `appendStructuralFiltersToWhere({ liveOnly: true })` so there is exactly one
- * definition of "may a stranger watch this".
+ * The privacy gate (`LIVE_RAIL_VISIBLE_WHERE`: public or a public season's
+ * league fixture, + showOnLiveRail; `LIVE_RAIL_WHERE` adds IN_PROGRESS) lives
+ * in `availableGamesStructuralWhere.ts`, so there is exactly one definition of
+ * "may a stranger see this".
  */
 import type { Prisma, Sport } from '@prisma/client';
 import prisma from '../../config/database';
 import type { BasicUser } from '../../types/user.types';
 import type { LiveGameSummary } from './availableGamesEnrichmentTypes';
+import { getUserTimezoneFromCityId } from '../user-timezone.service';
 import {
   appendStructuralFiltersToWhere,
+  LIVE_RAIL_VISIBLE_WHERE,
   LIVE_RAIL_WHERE,
 } from './availableGamesStructuralWhere';
-import { buildLiveGameSummary, liveEnvelopeUpdatedAtMs } from './liveGameSummary';
+import { startOfCalendarDate } from './calendarDateBounds';
+import { formatCalendarDayKey } from './calendarDayKey';
+import {
+  buildFinalGameSummary,
+  buildLiveGameSummary,
+  liveEnvelopeUpdatedAtMs,
+} from './liveGameSummary';
 import {
   clampLiveRailLimit,
   sortLiveRailGames,
@@ -43,9 +53,17 @@ const liveMatchSelect = {
   metadata: true,
   timerStartedAt: true,
   updatedAt: true,
+  winnerId: true,
   court: { select: { id: true, name: true } },
+  /** Final cards read the stored sets; live cards read the envelope. */
+  sets: {
+    where: { role: 'OFFICIAL' as const },
+    orderBy: { setNumber: 'asc' as const },
+    select: { teamAScore: true, teamBScore: true },
+  },
   teams: {
     select: {
+      id: true,
       teamNumber: true,
       players: {
         select: {
@@ -78,6 +96,8 @@ const liveGameSelect = {
   resultsStatus: true,
   startTime: true,
   endTime: true,
+  finishedDate: true,
+  parentId: true,
   cityId: true,
   clubId: true,
   courtId: true,
@@ -91,7 +111,14 @@ const liveGameSelect = {
     },
   },
   city: { select: { id: true, name: true, timezone: true } },
-  parent: { select: { id: true, leagueSeason: { select: { id: true } } } },
+  parent: {
+    select: {
+      id: true,
+      isPublic: true,
+      leagueSeason: { select: { id: true, league: { select: { name: true } } } },
+    },
+  },
+  leagueRound: { select: { orderIndex: true, roundType: true } },
   participants: {
     where: { status: 'PLAYING' as const },
     select: { userId: true },
@@ -125,7 +152,27 @@ export type LiveRailGame = {
   viewerIsPlaying: boolean;
   /** Fixture of a league season the viewer takes part in — sorted first. */
   followedSeason: boolean;
+  /** `live` is being scored now; `finished` went final today (city day). */
+  phase: 'live' | 'finished';
+  /** ISO time results went final; `null` while live. */
+  finishedAt: string | null;
+  /**
+   * League fixtures are private by construction: the client sends a stranger
+   * to the season page instead of a results page that would 404.
+   */
+  isPublic: boolean;
+  /** Present only on league fixtures; the card is accented. */
+  league: LiveRailLeague | null;
   liveSummary: LiveGameSummary;
+};
+
+export type LiveRailLeague = {
+  /** The LEAGUE_SEASON game id (also the `LeagueSeason` id). */
+  seasonGameId: string;
+  name: string;
+  /** 1-based regular-season round; `null` for playoff fixtures. */
+  roundNumber: number | null;
+  isPlayoff: boolean;
 };
 
 function toBasicUser(
@@ -167,10 +214,7 @@ function pickLiveMatch(game: LiveGameRow): {
       metadata: match.metadata,
       courtName: match.court?.name ?? game.court?.name ?? null,
       startedAt: match.timerStartedAt ?? game.startTime,
-      teams: match.teams.map((team) => ({
-        teamNumber: team.teamNumber,
-        players: team.players.map((p) => toBasicUser(p.user, game.sport)),
-      })),
+      teams: sportTeams(match, game.sport),
     });
     if (!summary) continue;
 
@@ -187,6 +231,49 @@ function pickLiveMatch(game: LiveGameRow): {
   return best ? { summary: best.summary } : null;
 }
 
+function sportTeams(
+  match: LiveGameRow['rounds'][number]['matches'][number],
+  sport: Sport,
+) {
+  return match.teams.map((team) => ({
+    teamNumber: team.teamNumber,
+    players: team.players.map((p) => toBasicUser(p.user, sport)),
+  }));
+}
+
+/**
+ * The final scoreboard of a finished game, or `null` when the game is not one
+ * head-to-head match. Formats with many matches (Americano, round robin, …)
+ * end in standings, not a scoreline, so they have no card here.
+ */
+function pickFinalMatch(game: LiveGameRow): { summary: LiveGameSummary } | null {
+  const matches = game.rounds.flatMap((round) => round.matches);
+  if (matches.length !== 1) return null;
+  const [match] = matches;
+  const summary = buildFinalGameSummary({
+    matchId: match.id,
+    courtName: match.court?.name ?? game.court?.name ?? null,
+    startedAt: match.timerStartedAt ?? game.startTime,
+    teams: sportTeams(match, game.sport),
+    sets: match.sets,
+    winnerTeamNumber: match.teams.find((team) => team.id === match.winnerId)?.teamNumber ?? null,
+  });
+  return summary ? { summary } : null;
+}
+
+function leagueOf(game: LiveGameRow): LiveRailLeague | null {
+  if (game.entityType !== 'LEAGUE' || !game.parentId) return null;
+  const season = game.parent?.leagueSeason;
+  if (!season) return null;
+  const isPlayoff = game.leagueRound?.roundType === 'PLAYOFF';
+  return {
+    seasonGameId: season.id,
+    name: season.league.name,
+    roundNumber: !isPlayoff && game.leagueRound ? game.leagueRound.orderIndex + 1 : null,
+    isPlayoff,
+  };
+}
+
 async function followedSeasonIds(viewerUserId: string | null | undefined): Promise<Set<string>> {
   if (!viewerUserId) return new Set();
   const rows = await prisma.leagueParticipant.findMany({
@@ -201,6 +288,7 @@ function toRailGame(
   summary: LiveGameSummary,
   viewerUserId: string | null | undefined,
   seasonIds: Set<string>,
+  phase: LiveRailGame['phase'] = 'live',
 ): LiveRailGame {
   const club = game.club ?? game.court?.club ?? null;
   const seasonId = game.parent?.leagueSeason?.id ?? null;
@@ -221,6 +309,10 @@ function toRailGame(
       viewerUserId && game.participants.some((p) => p.userId === viewerUserId),
     ),
     followedSeason: Boolean(seasonId && seasonIds.has(seasonId)),
+    phase,
+    finishedAt: phase === 'finished' ? (game.finishedDate?.toISOString() ?? null) : null,
+    isPublic: game.isPublic,
+    league: leagueOf(game),
     liveSummary: summary,
   };
 }
@@ -262,6 +354,53 @@ export async function listLiveGames(params: ListLiveGamesParams): Promise<LiveRa
   }
 
   return sortLiveRailGames(cards).slice(0, limit);
+}
+
+/** Scoreboards only: a season shell or a bar night has no match to show. */
+const FINISHED_RAIL_EXCLUDED_TYPES = ['LEAGUE_SEASON', 'BAR', 'EVENT'] as const;
+
+/**
+ * The Find / Home rail: {@link listLiveGames} plus the city's games whose
+ * results went final **today** in the city's own timezone, so a score entered
+ * after the match — not live — is still seen around town until midnight.
+ *
+ * `finishedDate` is the finalisation time (re-stamped on re-finalise, cleared
+ * on reopen). Walkovers and technical results never set it, so an unplayed
+ * "result" never reaches the rail. Same privacy gate as live.
+ */
+export async function listCityRailGames(
+  params: ListLiveGamesParams & { now?: Date },
+): Promise<LiveRailGame[]> {
+  const limit = clampLiveRailLimit(params.limit ?? LIVE_RAIL_FIND_LIMIT);
+  const now = params.now ?? new Date();
+  const timezone = await getUserTimezoneFromCityId(params.cityId);
+  const dayStart = startOfCalendarDate(formatCalendarDayKey(now, timezone), timezone);
+
+  const [live, finishedRows, seasonIds] = await Promise.all([
+    listLiveGames({ ...params, limit: LIVE_RAIL_MAX_LIMIT }),
+    prisma.game.findMany({
+      where: {
+        cityId: params.cityId,
+        resultsStatus: 'FINAL',
+        finishedDate: { gte: dayStart, lte: now },
+        entityType: { notIn: [...FINISHED_RAIL_EXCLUDED_TYPES] },
+        AND: [LIVE_RAIL_VISIBLE_WHERE],
+      },
+      select: liveGameSelect,
+      orderBy: { finishedDate: 'desc' },
+      take: LIVE_RAIL_MAX_LIMIT * 2,
+    }),
+    followedSeasonIds(params.viewerUserId),
+  ]);
+
+  const finished: LiveRailGame[] = [];
+  for (const row of finishedRows) {
+    const picked = pickFinalMatch(row);
+    if (!picked) continue;
+    finished.push(toRailGame(row, picked.summary, params.viewerUserId, seasonIds, 'finished'));
+  }
+
+  return sortLiveRailGames([...live, ...finished]).slice(0, limit);
 }
 
 /**

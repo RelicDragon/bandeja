@@ -53,24 +53,58 @@ export type AvailableStructuralFilters = {
   noviceOnly?: boolean;
   /**
    * PRD 349 — "Live now" rail. Narrows to games that are being scored right
-   * now **and** are visible to strangers.
+   * now **and** are visible to strangers ({@link LIVE_RAIL_WHERE}).
    *
-   * All three conditions are load-bearing and must stay together: a private
-   * game or a game whose organizer switched "Show on Live now" off must never
-   * reach the rail, `/live` in Telegram, or the spectator-token endpoint.
+   * Every condition is load-bearing and must stay together: a private game or
+   * a game whose organizer switched "Show on Live now" off must never reach
+   * the rail, `/live` in Telegram, or the spectator-token endpoint.
    */
   liveOnly?: boolean;
 };
 
 /**
- * The privacy gate for every Live-now surface. Exported so the rail query, the
- * spectator-token mint and their tests all assert the *same* object.
+ * Who may appear on a Live-now surface at all, whatever the phase: a public
+ * game, or a league fixture of a public season — and never one whose organizer
+ * opted out.
+ *
+ * League fixtures are *always* created private (`league/gameCreation.util.ts`)
+ * so a stranger cannot join them from Find; the season's own `isPublic` is the
+ * real privacy flag, and its rounds and standings are already readable by any
+ * signed-in user. A fixture of a private season stays off every surface.
+ *
+ * The `OR` sits at the top level: spread this only into a where that has no
+ * `OR` of its own (or nest it inside an `AND`, as `appendStructuralFiltersToWhere` does).
  */
-export const LIVE_RAIL_WHERE = {
-  resultsStatus: 'IN_PROGRESS',
-  isPublic: true,
+export const LIVE_RAIL_VISIBLE_WHERE: Prisma.GameWhereInput = {
   showOnLiveRail: true,
-} as const satisfies Prisma.GameWhereInput;
+  OR: [
+    { isPublic: true },
+    { entityType: 'LEAGUE', parentId: { not: null }, parent: { is: { isPublic: true } } },
+  ],
+};
+
+/**
+ * The privacy gate for every *live* surface: rail-visible and being scored now.
+ * Exported so the rail query, the spectator-token mint and redemption, and
+ * their tests all use the *same* object.
+ */
+export const LIVE_RAIL_WHERE: Prisma.GameWhereInput = {
+  resultsStatus: 'IN_PROGRESS',
+  ...LIVE_RAIL_VISIBLE_WHERE,
+};
+
+/** In-memory twin of {@link LIVE_RAIL_VISIBLE_WHERE}, for a row already loaded. */
+export function isLiveRailVisible(game: {
+  isPublic: boolean;
+  showOnLiveRail: boolean;
+  entityType: string;
+  parentId: string | null;
+  parent: { isPublic: boolean } | null;
+}): boolean {
+  if (!game.showOnLiveRail) return false;
+  if (game.isPublic) return true;
+  return game.entityType === 'LEAGUE' && game.parentId !== null && game.parent?.isPublic === true;
+}
 
 const DEFAULT_LEVEL_MIN = 1.0;
 const DEFAULT_LEVEL_MAX = 7.0;

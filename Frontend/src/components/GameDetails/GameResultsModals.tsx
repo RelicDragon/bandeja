@@ -14,6 +14,7 @@ import { getRules } from '@/utils/scoring';
 import { maxPlayersPerTeamForGame } from '@/utils/matchFormat';
 import {
   canAdvanceAfterSave,
+  hasOtherMatchToScore,
   summarizeResultsProgress,
   type ResultsMatchRef,
 } from '@/utils/resultsBoardNavigation';
@@ -92,10 +93,10 @@ export const GameResultsModals = ({
     const roundNumber = rounds.findIndex((r) => r.id === modal.roundId) + 1;
     const matchNumber = round.matches.findIndex((m) => m.id === match.id) + 1;
     const maxPerTeam = maxPlayersPerTeamForGame(currentGame, players.length);
+    const rules = currentGame ? getRules(currentGame) : null;
     const canAdvance =
-      Boolean(onSaveAndNext) &&
-      Boolean(currentGame) &&
-      canAdvanceAfterSave(rounds, getRules(currentGame), maxPerTeam, match.id);
+      Boolean(onSaveAndNext) && rules !== null && canAdvanceAfterSave(rounds, rules, maxPerTeam, match.id);
+    const otherMatchToScore = canAdvance && rules !== null && hasOtherMatchToScore(rounds, rules, maxPerTeam, match.id);
 
     const canRemove = (() => {
       const currentSet = match.sets[modal.setIndex];
@@ -133,6 +134,7 @@ export const GameResultsModals = ({
             : undefined
         }
         isAdvancing={isAdvancingToNext}
+        hasOtherMatchToScore={otherMatchToScore}
         onRemove={(matchId, setIndex, baseVersion) => {
           onRemoveSet(modal.roundId, matchId, setIndex, baseVersion);
         }}

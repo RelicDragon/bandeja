@@ -1,8 +1,9 @@
 /**
  * PRD 349 — "Live now" rail endpoints.
  *
- * Both handlers go through `liveGames.service.ts`, which owns the privacy gate
- * (public + IN_PROGRESS + `showOnLiveRail`). Nothing here re-implements it.
+ * Every handler goes through `liveGames.service.ts`, which owns the privacy
+ * gate (public or a public season's fixture, + `showOnLiveRail`; IN_PROGRESS
+ * for anything watchable). Nothing here re-implements it.
  */
 import { Response } from 'express';
 import prisma from '../config/database';
@@ -10,14 +11,15 @@ import { AuthRequest } from '../middleware/auth';
 import { ApiError } from '../utils/ApiError';
 import { asyncHandler } from '../utils/asyncHandler';
 import { signLiveSpectatorToken } from '../utils/jwt';
-import { findLiveRailGame, listLiveGames } from '../services/game/liveGames.service';
+import { findLiveRailGame, listCityRailGames } from '../services/game/liveGames.service';
 import { clampLiveRailLimit } from '../services/game/liveRailOrder';
 
 /**
  * `GET /api/live/games?cityId=&limit=`
  *
- * Defaults to the viewer's current city. Returns `[]` rather than 404 when the
- * city has nothing live — the rail hides itself on an empty list.
+ * Live games, then games that went final today in the city. Defaults to the
+ * viewer's current city. Returns `[]` rather than 404 when the city has
+ * nothing to show — the rail hides itself on an empty list.
  */
 export const getLiveGames = asyncHandler(async (req: AuthRequest, res: Response) => {
   const requestedCityId = typeof req.query.cityId === 'string' ? req.query.cityId : '';
@@ -36,7 +38,7 @@ export const getLiveGames = asyncHandler(async (req: AuthRequest, res: Response)
     return;
   }
 
-  const games = await listLiveGames({
+  const games = await listCityRailGames({
     cityId,
     viewerUserId: req.userId ?? null,
     limit: clampLiveRailLimit(req.query.limit),

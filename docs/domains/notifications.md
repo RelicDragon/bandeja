@@ -17,7 +17,7 @@ Unified dispatch: `Backend/src/services/notification.service.ts`. Types: `Backen
 | `GAME_SPOT_OPENED` | `sendInvites` | A PLAYING seat freed — queue members, then matching OPEN play intents |
 | `FOLLOWED_GAME_SPOT_OPENED` | `sendPlayIntentSocialNotifications` | Same event, followers-of-a-seated-player bucket |
 | `GAME_COST_REMINDER` | `sendWalletNotifications` | Unsettled cost share, 24 h–7 days after the ledger froze ([economy.md](./economy.md)) |
-| `FOLLOWED_USER_LIVE` | `sendPlayIntentSocialNotifications` | A followed player's public, rail-visible game went `IN_PROGRESS`. Once per (recipient, game), ever |
+| `FOLLOWED_USER_LIVE` | `sendPlayIntentSocialNotifications` | A followed player's rail-visible game (public, or a public season's league fixture) went `IN_PROGRESS`. Once per (recipient, game), ever |
 | `REFERRAL_JOINED` | `sendWalletNotifications` | Somebody signed up with the referrer's code (no coins yet) |
 | `MONTHLY_RECAP_READY` | `sendReminders` | The monthly recap generator produced a recap ([stories.md](./stories.md)) |
 | `GOODS_GIFT_RECEIVED` | `sendWalletNotifications` | Another player gifted a shop item |

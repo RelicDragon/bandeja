@@ -866,10 +866,9 @@
         }
       }
     },
-    "resultsRosterTitle": "コート上の選手",
-    "resultsRosterHint": "結果を入力中のためメンバーは固定されています。負傷した選手の交代は可能です。",
-    "substitutePlayerAction": "交代",
     "substitutePlayerTitle": "選手の交代",
+    "substitutePlayerCardHint": "試合中にケガをした選手を交代",
+    "substitutePlayerPickOut": "コートを離れるのは誰ですか？",
     "substitutePlayerReplacing": "交代する選手",
     "substitutePlayerNoCandidates": "交代できる選手がいません",
     "substitutePlayerOut": "アウト",

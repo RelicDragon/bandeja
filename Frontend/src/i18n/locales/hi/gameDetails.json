@@ -866,10 +866,9 @@
         }
       }
     },
-    "resultsRosterTitle": "कोर्ट पर खिलाड़ी",
-    "resultsRosterHint": "परिणाम दर्ज किए जा रहे हैं, इसलिए सूची लॉक है। घायल खिलाड़ी को अब भी बदला जा सकता है।",
-    "substitutePlayerAction": "बदलें",
     "substitutePlayerTitle": "खिलाड़ी बदलें",
+    "substitutePlayerCardHint": "खेल के दौरान घायल खिलाड़ी को बदलें",
+    "substitutePlayerPickOut": "कोर्ट से कौन बाहर जा रहा है?",
     "substitutePlayerReplacing": "बदला जा रहा है",
     "substitutePlayerNoCandidates": "बदलने के लिए कोई खिलाड़ी उपलब्ध नहीं",
     "substitutePlayerOut": "बाहर",

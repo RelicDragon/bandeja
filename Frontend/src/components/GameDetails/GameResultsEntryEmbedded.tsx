@@ -15,7 +15,7 @@ import { useGameResultsTabs } from '@/hooks/useGameResultsTabs';
 import { useIsLandscape } from '@/hooks/useIsLandscape';
 import { GameResultsEngine, useGameResultsStore } from '@/services/gameResultsEngine';
 import { ResultsStorage } from '@/services/resultsStorage';
-import { canShowTournamentTableView } from '@/utils/gameResults';
+import { canShowTournamentTableView, canUserEditGameFormat } from '@/utils/gameResults';
 import {
   getRules,
   isResultsMatchFinished,
@@ -133,6 +133,22 @@ export const GameResultsEntryEmbedded = ({
     const hasResults = currentGame?.resultsStatus !== 'NONE';
     return hasResults && !isFinalStatus && canEdit;
   }, [engine.initialized, currentGame?.resultsStatus, isFinalStatus, canEdit]);
+
+  /*
+   * Restart is gated on permission only (mirrors the server's reset guard), not
+   * on `canEdit`: a roster that stops being ready mid-entry (a player left,
+   * fixed teams broke) turns the board read-only, and Restart is then the only
+   * way back to game setup to fix it.
+   */
+  const showRestartButton = useMemo(
+    () =>
+      Boolean(
+        engine.initialized &&
+          currentGame?.resultsStatus === 'IN_PROGRESS' &&
+          canUserEditGameFormat(currentGame, user),
+      ),
+    [engine.initialized, currentGame, user],
+  );
 
   const telegram = useResultsArtifactsTelegram({
     currentGame,
@@ -505,12 +521,9 @@ export const GameResultsEntryEmbedded = ({
             resultsStatus={currentGame?.resultsStatus}
             trailing={
               <ResultsActionsMenu
-                currentGame={currentGame}
                 showEdit={Boolean(showEditButton)}
-                showRestart={Boolean(canEdit && isResultsEntryMode && isEditingResults)}
                 disabled={isSendingToTelegram || loading.editing || loading.restarting}
                 onEdit={() => openModal({ type: 'edit' })}
-                onRestart={() => openModal({ type: 'restart' })}
               />
             }
           />
@@ -601,8 +614,10 @@ export const GameResultsEntryEmbedded = ({
           loading={loading}
           disabled={isSendingToTelegram}
           showFinishButton={Boolean(showFinishButton && !serverProblem)}
+          showRestartButton={showRestartButton}
           progress={resultsProgress}
           onFinishClick={() => openModal({ type: 'finish' })}
+          onRestartClick={() => openModal({ type: 'restart' })}
         />
       </div>
     </>

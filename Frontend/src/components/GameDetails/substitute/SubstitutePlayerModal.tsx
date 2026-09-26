@@ -4,32 +4,40 @@ import { ArrowLeftRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 import { gamesApi } from '@/api';
-import type { BasicUser, Game } from '@/types';
+import type { BasicUser, Game, GameParticipant } from '@/types';
 import { isParticipantPlaying } from '@/utils/participantStatus';
 import { SubstituteCandidateList } from './SubstituteCandidateList';
 import { SubstituteConfirmStep } from './SubstituteConfirmStep';
+import { SubstituteOutList } from './SubstituteOutList';
 
 interface SubstitutePlayerModalProps {
+  open: boolean;
   game: Game;
-  outUser: BasicUser;
+  /** Seats that can be vacated; the roster card already dropped the trainer. */
+  players: readonly GameParticipant[];
   onClose: () => void;
   onSubstituted: () => void;
 }
 
-/** Two steps only — the outgoing player is already chosen on the roster card. */
+/** Three steps: who leaves the court, who takes the seat, then an explicit confirm. */
 export const SubstitutePlayerModal = ({
+  open,
   game,
-  outUser,
+  players,
   onClose,
   onSubstituted,
 }: SubstitutePlayerModalProps) => {
   const { t } = useTranslation();
+  const [outUser, setOutUser] = useState<BasicUser | null>(null);
   const [inUser, setInUser] = useState<BasicUser | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
+  // Reset on open rather than on close so the exit animation keeps showing the last step.
   useEffect(() => {
+    if (!open) return;
+    setOutUser(null);
     setInUser(null);
-  }, [outUser.id]);
+  }, [open]);
 
   const excludeUserIds = useMemo(
     () => game.participants.filter(isParticipantPlaying).map((p) => p.userId),
@@ -37,7 +45,7 @@ export const SubstitutePlayerModal = ({
   );
 
   const handleConfirm = async () => {
-    if (!inUser || submitting) return;
+    if (!outUser || !inUser || submitting) return;
     setSubmitting(true);
     try {
       await gamesApi.substituteParticipant(game.id, outUser.id, inUser.id);
@@ -53,10 +61,13 @@ export const SubstitutePlayerModal = ({
     }
   };
 
-  const outName = [outUser.firstName, outUser.lastName].filter(Boolean).join(' ').trim();
+  const outName = outUser
+    ? [outUser.firstName, outUser.lastName].filter(Boolean).join(' ').trim()
+    : '';
+  const step = !outUser ? 'out' : !inUser ? 'in' : 'confirm';
 
   return (
-    <Dialog open onClose={onClose} modalId="substitute-player">
+    <Dialog open={open} onClose={onClose} modalId="substitute-player">
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -65,20 +76,21 @@ export const SubstitutePlayerModal = ({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 p-4">
-          {inUser ? (
-            <SubstituteConfirmStep
-              outUser={outUser}
-              inUser={inUser}
-              submitting={submitting}
-              onBack={() => setInUser(null)}
-              onConfirm={() => void handleConfirm()}
-            />
-          ) : (
+        <div key={step} className="space-y-4 p-4 motion-safe:animate-fade-in">
+          {step === 'out' ? (
+            <SubstituteOutList players={players} onSelect={setOutUser} />
+          ) : step === 'in' ? (
             <>
               <div className="flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:bg-amber-900/30 dark:text-amber-200">
                 <span className="font-medium">{t('gameDetails.substitutePlayerReplacing')}:</span>
-                <span>{outName || '—'}</span>
+                <span className="min-w-0 flex-1 truncate">{outName || '—'}</span>
+                <button
+                  type="button"
+                  onClick={() => setOutUser(null)}
+                  className="shrink-0 font-medium text-primary-600 hover:underline dark:text-primary-400"
+                >
+                  {t('common.change')}
+                </button>
               </div>
               <SubstituteCandidateList
                 gameId={game.id}
@@ -87,7 +99,15 @@ export const SubstitutePlayerModal = ({
                 onSelect={setInUser}
               />
             </>
-          )}
+          ) : outUser && inUser ? (
+            <SubstituteConfirmStep
+              outUser={outUser}
+              inUser={inUser}
+              submitting={submitting}
+              onBack={() => setInUser(null)}
+              onConfirm={() => void handleConfirm()}
+            />
+          ) : null}
         </div>
       </DialogContent>
     </Dialog>

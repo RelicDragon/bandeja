@@ -8,7 +8,8 @@ import { liveApi } from '@/api/live';
 import { queryKeys } from '@/queries/queryKeys';
 import { shouldShowLiveWatchBlock } from './liveWatchVisibility';
 import { LiveDot } from '@/components/live/LiveDot';
-import { minutesSince, sidePlayerNames } from '@/features/live/liveSummaryUpdate';
+import { formatSetScores, minutesSince, sidePlayerNames } from '@/features/live/liveSummaryUpdate';
+import { liveScoreLabel, liveStartedLabel } from '@/features/live/liveScoreText';
 import { mintLiveWatchPath } from '@/features/live/liveWatchPath';
 import type { Game } from '@/types';
 
@@ -73,17 +74,8 @@ export function LiveWatchBlock({ game, viewerIsParticipant, fallback = null }: L
   const [sideA, sideB] = summary.sides;
   const namesA = sidePlayerNames(sideA).join(t('live.andJoin'));
   const namesB = sidePlayerNames(sideB).join(t('live.andJoin'));
-  const setCount = Math.min(sideA.setScores.length, sideB.setScores.length);
-  const setScoreText = Array.from(
-    { length: setCount },
-    (_, i) => `${sideA.setScores[i]}–${sideB.setScores[i]}`,
-  ).join(', ');
-
-  const scoreLabel = sideA.leading
-    ? t('live.scoreLead', { leaders: namesA, score: setScoreText })
-    : sideB.leading
-      ? t('live.scoreLead', { leaders: namesB, score: setScoreText })
-      : t('live.scoreLevel', { sideA: namesA, sideB: namesB, score: setScoreText });
+  const setScoreText = formatSetScores(summary);
+  const scoreLabel = liveScoreLabel(t, summary);
 
   return (
     <div
@@ -112,9 +104,7 @@ export function LiveWatchBlock({ game, viewerIsParticipant, fallback = null }: L
       </div>
 
       <p className="mb-3 text-xs text-gray-500 dark:text-gray-400">
-        {startedMinutes === null || startedMinutes < 1
-          ? t('live.startedJustNow')
-          : t('live.started', { count: startedMinutes })}
+        {liveStartedLabel(t, startedMinutes)}
         {' · '}
         {t('live.detailsBody')}
       </p>

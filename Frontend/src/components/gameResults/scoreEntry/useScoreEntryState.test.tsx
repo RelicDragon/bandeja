@@ -44,6 +44,14 @@ describe('regular score entry draft', () => {
     vi.useRealTimers();
   });
 
+  it('never ends an Automatic match, since more sets may follow a win', () => {
+    match.sets = [{ teamA: 6, teamB: 4 }];
+    render(match, game, 1);
+    act(() => entry.setTeamScore('teamA', 6));
+    act(() => entry.setTeamScore('teamB', 4));
+    expect(entry.matchOutcome).toBeNull();
+  });
+
   it('keeps typed scores across a parent game refresh and saves them', () => {
     render();
     act(() => entry.setTeamScore('teamA', 6));
@@ -244,5 +252,17 @@ describe('quick score entry', () => {
     expect(onSaveAndNext).toHaveBeenCalledWith('match-9', 0, 6, 3, false, undefined, { baseVersion: 'v3' });
     expect(onSave).not.toHaveBeenCalled();
     expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it('reports the winner once the score ends a best-of-three match', () => {
+    const afterFirstSet: Match = { ...bo3Match, sets: [{ teamA: 6, teamB: 4 }] };
+    act(() => root.render(<Probe currentMatch={afterFirstSet} autoOpenKeypad={false} setIndex={1} />));
+    expect(entry.matchOutcome).toBeNull();
+    act(() => entry.setTeamScore('teamA', 6));
+    act(() => entry.setTeamScore('teamB', 4));
+    expect(entry.matchOutcome).toBe('A');
+    act(() => entry.setTeamScore('teamA', 4));
+    act(() => entry.setTeamScore('teamB', 6));
+    expect(entry.matchOutcome).toBeNull();
   });
 });

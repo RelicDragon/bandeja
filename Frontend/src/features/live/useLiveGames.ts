@@ -12,7 +12,7 @@ import { useSocketEventsStore } from '@/store/socketEventsStore';
 import type { LiveGameSummary } from '@/types';
 import { applyLiveScoringFrame } from './liveSummaryUpdate';
 
-/** Find shows up to 10 cards, Home up to 3 (PRD 349). */
+/** Find shows up to 10 cards, Home up to 3 (PRD 349) — live first, then today's finals. */
 export const LIVE_RAIL_FIND_LIMIT = 10;
 export const LIVE_RAIL_HOME_LIMIT = 3;
 
@@ -95,11 +95,20 @@ export function useLiveGames(options: UseLiveGamesOptions = {}): UseLiveGamesRes
   );
 
   const visibleIdsKey = useMemo(() => fetched.map((g) => g.id).join(','), [fetched]);
+  /** Only live cards take score frames; a finished card has no room to join. */
+  const liveIdsKey = useMemo(
+    () =>
+      fetched
+        .filter((g) => g.phase !== 'finished')
+        .map((g) => g.id)
+        .join(','),
+    [fetched],
+  );
 
-  // Retain exactly the visible rooms; release every one of them on unmount.
+  // Retain exactly the visible live rooms; release every one of them on unmount.
   useEffect(() => {
-    if (!enabled || !visibleIdsKey) return;
-    const ids = visibleIdsKey.split(',');
+    if (!enabled || !liveIdsKey) return;
+    const ids = liveIdsKey.split(',');
     /**
      * Only the rooms this effect actually took, so cleanup stays balanced. The
      * retain loop is asynchronous and can be interrupted mid-list by a refetch;
@@ -148,7 +157,7 @@ export function useLiveGames(options: UseLiveGamesOptions = {}): UseLiveGamesRes
       released = true;
       for (const id of retained.splice(0)) releaseGameRoom(id);
     };
-  }, [visibleIdsKey, enabled]);
+  }, [liveIdsKey, enabled]);
 
   // Drop overlay entries for cards that are no longer on the rail.
   useEffect(() => {
@@ -219,17 +228,18 @@ export function useLiveGames(options: UseLiveGamesOptions = {}): UseLiveGamesRes
    * freezes exactly one while the rail around it keeps updating.
    */
   const reconnectingGameIds = useMemo(() => {
-    if (socketDown) return new Set(games.map((game) => game.id));
+    const liveIds = games.filter((game) => game.phase !== 'finished').map((game) => game.id);
+    if (socketDown) return new Set(liveIds);
     if (unjoinedIds.size === 0) return EMPTY_ID_SET;
-    return new Set(games.map((game) => game.id).filter((id) => unjoinedIds.has(id)));
+    return new Set(liveIds.filter((id) => unjoinedIds.has(id)));
   }, [games, socketDown, unjoinedIds]);
 
   return {
     games,
     isLoading: query.isLoading,
-    // Only a card that is actually showing a score can "freeze"; an empty rail
-    // has nothing to caption.
-    isReconnecting: socketDown && games.length > 0,
+    // Only a card that is actually showing a live score can "freeze"; a rail
+    // of final results has nothing to caption.
+    isReconnecting: socketDown && games.some((game) => game.phase !== 'finished'),
     reconnectingGameIds,
     refetch,
   };

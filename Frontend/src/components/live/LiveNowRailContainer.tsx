@@ -9,6 +9,7 @@ import {
   LIVE_RAIL_FIND_LIMIT,
   LIVE_RAIL_HOME_LIMIT,
 } from '@/features/live/useLiveGames';
+import { finishedRailGamePath } from '@/features/live/finishedRailGamePath';
 import { mintLiveWatchPath } from '@/features/live/liveWatchPath';
 import { LiveNowRail } from './LiveNowRail';
 
@@ -19,8 +20,9 @@ import { LiveNowRail } from './LiveNowRail';
  * and only when the viewer has no game of their own today, which is the caller's
  * decision (`enabled`), not this component's.
  *
- * Tapping a card opens the read-only watch board (`mintLiveWatchPath`), which
- * works for a non-participant — that mint is what makes "spectating is one tap" true.
+ * Tapping a live card opens the read-only watch board (`mintLiveWatchPath`),
+ * which works for a non-participant — that mint is what makes "spectating is
+ * one tap" true. A finished card opens results ({@link finishedRailGamePath}).
  */
 export interface LiveNowRailContainerProps {
   variant: 'find' | 'home';
@@ -50,6 +52,10 @@ function LiveNowRailContainerView({
 
   const handleOpen = useCallback(
     async (game: LiveRailGame) => {
+      if (game.phase === 'finished') {
+        navigate(finishedRailGamePath(game));
+        return;
+      }
       try {
         navigate(await mintLiveWatchPath(game.id, game.liveSummary.matchId));
       } catch {

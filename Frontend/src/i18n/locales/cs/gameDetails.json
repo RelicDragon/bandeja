@@ -858,10 +858,9 @@
         }
       }
     },
-    "resultsRosterTitle": "Hráči na kurtu",
-    "resultsRosterHint": "Probíhá zadávání výsledků, soupiska je uzamčena. Zraněného hráče lze stále vystřídat.",
-    "substitutePlayerAction": "Vystřídat",
     "substitutePlayerTitle": "Střídání hráče",
+    "substitutePlayerCardHint": "Vystřídejte zraněného hráče během hry",
+    "substitutePlayerPickOut": "Kdo odchází z kurtu?",
     "substitutePlayerReplacing": "Střídá se",
     "substitutePlayerNoCandidates": "Nejsou k dispozici žádní hráči ke střídání",
     "substitutePlayerOut": "Střídá ven",

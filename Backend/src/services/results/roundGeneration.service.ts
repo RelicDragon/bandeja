@@ -261,6 +261,6 @@ export async function startResultsEntryWithGeneratedRound(gameId: string): Promi
   return { roundId, alreadyHadRounds };
 }
 
-export async function fetchRoundApiPayload(roundId: string) {
-  return getRoundResults(roundId);
+export async function fetchRoundApiPayload(roundId: string, viewerUserId: string | null | undefined) {
+  return getRoundResults(roundId, viewerUserId ?? null);
 }

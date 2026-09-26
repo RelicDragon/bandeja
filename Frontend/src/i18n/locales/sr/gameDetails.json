@@ -864,10 +864,9 @@
         }
       }
     },
-    "resultsRosterTitle": "Igrači na terenu",
-    "resultsRosterHint": "Unos rezultata je u toku, sastav je zamrznut. Zamena povređenog igrača je i dalje moguća.",
-    "substitutePlayerAction": "Zameni",
     "substitutePlayerTitle": "Zamena igrača",
+    "substitutePlayerCardHint": "Zamenite povređenog igrača tokom igre",
+    "substitutePlayerPickOut": "Ko napušta teren?",
     "substitutePlayerReplacing": "Zamenjuje se",
     "substitutePlayerNoCandidates": "Nema dostupnih igrača za zamenu",
     "substitutePlayerOut": "Izlazi",

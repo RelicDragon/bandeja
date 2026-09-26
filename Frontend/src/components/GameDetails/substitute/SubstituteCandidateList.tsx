@@ -84,7 +84,7 @@ export const SubstituteCandidateList = ({
               onClick={() => onSelect(player)}
               className="flex w-full items-center gap-3 rounded-xl border border-transparent px-2.5 py-2 text-start transition hover:border-gray-200 hover:bg-gray-50 dark:hover:border-gray-700 dark:hover:bg-gray-800/60"
             >
-              <PlayerAvatar player={player} showName={false} fullHideName extrasmall />
+              <PlayerAvatar player={player} showName={false} fullHideName extrasmall asDiv />
               <span className="min-w-0 flex-1 text-sm font-medium text-gray-900 dark:text-white">
                 {[player.firstName, player.lastName].filter(Boolean).join(' ').trim()}
               </span>

@@ -1,7 +1,8 @@
-import type { Match, Round } from '@/types/gameResults';
+import type { Match, Round, SetResult } from '@/types/gameResults';
 import {
   expandSetsForDisplay,
   getStandingsMatchOutcome,
+  isClassicAutomaticRelaxedScores,
   isClassicRules,
   isResultsMatchFinished,
   type ScoringRules,
@@ -94,8 +95,8 @@ export function findNextScoreTarget(
   return null;
 }
 
-/** Whether "Save and next" can lead anywhere once the current row is saved. */
-export function canAdvanceAfterSave(
+/** Whether a match other than `currentMatchId` is ready to score. */
+export function hasOtherMatchToScore(
   rounds: Round[],
   rules: ScoringRules,
   maxPerTeam: number,
@@ -105,8 +106,37 @@ export function canAdvanceAfterSave(
     ...round,
     matches: round.matches.filter((match) => match.id !== currentMatchId),
   }));
-  if (findNextScoreTarget(others, rules, maxPerTeam, null)) return true;
+  return findNextScoreTarget(others, rules, maxPerTeam, null) !== null;
+}
+
+/** Whether "Save and next" can lead anywhere once the current row is saved. */
+export function canAdvanceAfterSave(
+  rounds: Round[],
+  rules: ScoringRules,
+  maxPerTeam: number,
+  currentMatchId: string,
+): boolean {
+  if (hasOtherMatchToScore(rounds, rules, maxPerTeam, currentMatchId)) return true;
   return isClassicRules(rules) && rules.fixedNumberOfSets !== 1;
+}
+
+/**
+ * Result of the match once `draft` is saved at `setIndex`, or null while a set
+ * is still left to fill. Flexible (Automatic) entry never ends here: more sets
+ * may follow a win.
+ */
+export function matchOutcomeAfterSet(
+  sets: SetResult[],
+  setIndex: number,
+  draft: SetResult,
+  rules: ScoringRules,
+): 'A' | 'B' | 'tie' | null {
+  if (isClassicAutomaticRelaxedScores(rules)) return null;
+  const next = [...sets];
+  while (next.length < setIndex) next.push({ teamA: 0, teamB: 0, isTieBreak: false, role: 'OFFICIAL' });
+  next[setIndex] = { ...next[setIndex], ...draft };
+  if (nextEntrySetIndex({ sets: next }, rules) !== null) return null;
+  return getStandingsMatchOutcome(next, rules);
 }
 
 /** Open the round that still needs work, else the last one. */

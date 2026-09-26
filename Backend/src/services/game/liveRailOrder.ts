@@ -5,26 +5,44 @@
  * can be unit-tested without a database.
  */
 
-/** Find shows at most 10 live cards, Home at most 3 (PRD 349). */
+/** Find shows at most 10 cards, Home at most 3 (PRD 349). */
 export const LIVE_RAIL_FIND_LIMIT = 10;
 export const LIVE_RAIL_HOME_LIMIT = 3;
 /** Hard ceiling so a bad `limit` cannot turn the rail into a full city scan. */
 export const LIVE_RAIL_MAX_LIMIT = 20;
 
 export type LiveRailOrderable = {
+  /** `live` cards always precede today's `finished` ones. */
+  phase?: 'live' | 'finished';
   /** The viewer is PLAYING in this one — Find pins it first with a "You" tag. */
   viewerIsPlaying: boolean;
   /** Fixture of a league season the viewer takes part in. */
   followedSeason: boolean;
-  /** ISO start time; ascending, so the longest-running match leads. */
+  /** Any league fixture — accented on the card, and ahead of casual games. */
+  league?: unknown;
+  /** ISO start time; ascending for live, so the longest-running match leads. */
   startTime: string;
+  /** ISO time results went final; descending, so the freshest result leads. */
+  finishedAt?: string | null;
 };
 
-/** Rail order: the viewer's own game, then followed-season fixtures, then start time. */
+/**
+ * Rail order. Live before finished; inside each phase the viewer's own game,
+ * then fixtures of seasons they play in, then any other league fixture, then
+ * casual games. Live ties break on start time (longest-running first),
+ * finished ties on finish time (most recent first).
+ */
 export function sortLiveRailGames<T extends LiveRailOrderable>(cards: T[]): T[] {
   return [...cards].sort((a, b) => {
+    const aFinished = a.phase === 'finished';
+    const bFinished = b.phase === 'finished';
+    if (aFinished !== bFinished) return aFinished ? 1 : -1;
     if (a.viewerIsPlaying !== b.viewerIsPlaying) return a.viewerIsPlaying ? -1 : 1;
     if (a.followedSeason !== b.followedSeason) return a.followedSeason ? -1 : 1;
+    const aLeague = Boolean(a.league);
+    const bLeague = Boolean(b.league);
+    if (aLeague !== bLeague) return aLeague ? -1 : 1;
+    if (aFinished) return (b.finishedAt ?? '').localeCompare(a.finishedAt ?? '');
     return a.startTime.localeCompare(b.startTime);
   });
 }

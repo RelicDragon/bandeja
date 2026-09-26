@@ -8,6 +8,8 @@ import { ScoreEntryHeader } from './ScoreEntryHeader';
 import { ScoreEntryFooter } from './ScoreEntryFooter';
 import { ScoreEntryBoard } from './ScoreEntryBoard';
 import { ScoreKeypadPanel } from './ScoreKeypadPanel';
+import { ScoreEntryMatchOutcomeHint } from './ScoreEntryMatchOutcomeHint';
+import { SCORE_ENTRY_EASE } from './scoreEntryStyles';
 import {
   useScoreEntryState,
   type ScoreEntryGame,
@@ -46,6 +48,8 @@ interface ScoreEntryModalProps {
    */
   onSaveAndNext?: ScoreEntrySaveHandler;
   isAdvancing?: boolean;
+  /** Another match is ready to score, so "Save and next" still leads somewhere when this score ends its match. */
+  hasOtherMatchToScore?: boolean;
 }
 
 function scrollWithinContainer(
@@ -75,7 +79,10 @@ const BODY_MOTION = {
 
 export const ScoreEntryModal = ({ isOpen, onClose, ...bodyProps }: ScoreEntryModalProps) => (
   <Dialog open={isOpen} onClose={onClose} modalId="score-entry-modal">
-    <DialogContent className="gap-0 overflow-hidden p-0">
+    <DialogContent
+      showCloseButton={false}
+      className="gap-0 overflow-hidden rounded-[2rem]! border-gray-900/[0.06]! p-0 dark:border-white/[0.07]!"
+    >
       <AnimatePresence mode="wait" initial={false}>
         <motion.div
           key={`${bodyProps.match.id}-${bodyProps.setIndex}`}
@@ -111,6 +118,7 @@ const ScoreEntryBody = ({
   autoOpenKeypad = true,
   onSaveAndNext,
   isAdvancing = false,
+  hasOtherMatchToScore = false,
 }: ScoreEntryBodyProps) => {
   const { t } = useTranslation();
   const entry = useScoreEntryState({
@@ -166,6 +174,8 @@ const ScoreEntryBody = ({
     showScoreValidation,
     saveDisabled,
     saveAndNextDisabled,
+    isMultiSetMatch,
+    matchOutcome,
   } = entry;
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -238,7 +248,10 @@ const ScoreEntryBody = ({
   const togglePicker = (team: 'teamA' | 'teamB') =>
     setPickerTeam(pickerTeam === team ? null : team);
 
-  const showSaveAndNext = Boolean(onSaveAndNext) && !isSupplementalRow;
+  // A score that ends the match leaves no later set of it to open next.
+  const showSaveAndNext =
+    Boolean(onSaveAndNext) && !isSupplementalRow && (hasOtherMatchToScore || matchOutcome === null);
+  const showMatchOutcome = isMultiSetMatch && matchOutcome !== null;
 
   return (
     <>
@@ -269,7 +282,7 @@ const ScoreEntryBody = ({
 
       <div
         ref={scrollContainerRef}
-        className="min-h-0 flex-1 scroll-smooth overflow-y-auto overscroll-contain px-4 pb-4"
+        className="min-h-0 flex-1 scroll-smooth overflow-y-auto overscroll-contain px-4 pb-3 pt-0.5"
       >
         <div ref={scoreboardRef}>
           <ScoreEntryBoard
@@ -312,6 +325,25 @@ const ScoreEntryBody = ({
           </AnimatePresence>
         </div>
       </div>
+
+      <AnimatePresence initial={false}>
+        {showMatchOutcome && matchOutcome ? (
+          <motion.div
+            key="match-outcome"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.25, ease: SCORE_ENTRY_EASE }}
+            className="shrink-0 overflow-hidden"
+          >
+            <ScoreEntryMatchOutcomeHint
+              outcome={matchOutcome}
+              teamAPlayers={teamAPlayers}
+              teamBPlayers={teamBPlayers}
+            />
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
 
       <ScoreEntryFooter
         cancelLabel={t('common.cancel')}

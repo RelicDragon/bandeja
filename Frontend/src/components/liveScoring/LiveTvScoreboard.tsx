@@ -16,10 +16,10 @@ import { AnimatedLiveBoardValue } from './AnimatedLiveBoardValue';
 import type { LiveServeIndicator } from './LiveTeamPanel';
 
 /**
- * The big-screen padel / tennis scoreboard for TV mode and the spectator
- * watch board: one row per side, a column per set, and the current game's
- * points in a highlighted column on the end — the layout every tennis
- * broadcast uses. Everything is sized in `em` off one viewport-driven font
+ * The big-screen padel / tennis scoreboard for TV mode (the spectator watch
+ * board has its own `WatchStage`): one row per side, a column per set, and
+ * the current game's points in a highlighted column on the end — the layout
+ * every tennis broadcast uses. Everything is sized in `em` off one viewport-driven font
  * size, so the same board fills a portrait phone and a 1080p TV.
  */
 export type LiveTvScoreboardProps = {

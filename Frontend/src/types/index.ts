@@ -709,6 +709,8 @@ export interface Game extends GameCardEnrichment {
   parent?: {
     id: string;
     name?: string | null;
+    /** A league fixture is created private; its season's flag decides rail visibility. */
+    isPublic?: boolean;
     description?: string | null;
     localizedText?: GameLocalizedTextProjection;
     status?: GameStatus;

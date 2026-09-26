@@ -6,6 +6,7 @@
 import assert from 'node:assert/strict';
 import type { BasicUser } from '../../types/user.types';
 import {
+  buildFinalGameSummary,
   buildLiveGameSummary,
   formatSetScoreLine,
   leadingTeamNumber,
@@ -217,6 +218,65 @@ const classicState = {
   );
   assert.equal(liveEnvelopeUpdatedAtMs(null), 0);
   assert.equal(liveEnvelopeUpdatedAtMs({ liveScoring: { v: 1, revision: 1, updatedAt: 'nope' } }), 0);
+}
+
+/* ---------------- final (normal results entry) ---------------- */
+{
+  const teams = [
+    { teamNumber: 1, players: [player('a', 'Marko'), player('b', 'Ana')] },
+    { teamNumber: 2, players: [player('c', 'Luka'), player('d', 'Ivan')] },
+  ];
+
+  // Stored winner wins, every set is shown, nothing is "in play".
+  const final = buildFinalGameSummary({
+    matchId: 'm1',
+    teams,
+    sets: [
+      { teamAScore: 4, teamBScore: 6 },
+      { teamAScore: 6, teamBScore: 3 },
+      { teamAScore: 10, teamBScore: 8 },
+      { teamAScore: 0, teamBScore: 0 },
+    ],
+    winnerTeamNumber: 1,
+  });
+  assert.ok(final);
+  assert.deepEqual(final.sides[0].setScores, [4, 6, 10], 'empty trailing sets dropped');
+  assert.deepEqual(final.sides[1].setScores, [6, 3, 8]);
+  assert.equal(final.sides[0].leading, true);
+  assert.equal(final.sides[1].leading, false);
+  assert.equal(final.sides[0].currentGameScore, '');
+  assert.equal(final.currentSet, 3);
+  assert.equal(final.revision, undefined, 'a finished card never takes socket frames');
+
+  // No stored winner: sets won decide.
+  const bySets = buildFinalGameSummary({
+    matchId: 'm2',
+    teams,
+    sets: [
+      { teamAScore: 3, teamBScore: 6 },
+      { teamAScore: 4, teamBScore: 6 },
+    ],
+  });
+  assert.equal(bySets?.sides[1].leading, true);
+
+  // Level on sets (single-set formats, points modes): games decide.
+  const byGames = buildFinalGameSummary({
+    matchId: 'm3',
+    teams,
+    sets: [{ teamAScore: 21, teamBScore: 17 }],
+  });
+  assert.equal(byGames?.sides[0].leading, true);
+
+  assert.equal(
+    buildFinalGameSummary({ matchId: 'm4', teams, sets: [{ teamAScore: 0, teamBScore: 0 }] }),
+    null,
+    'nothing scored',
+  );
+  assert.equal(
+    buildFinalGameSummary({ matchId: 'm5', teams: [teams[0]], sets: [{ teamAScore: 6, teamBScore: 2 }] }),
+    null,
+    'one side missing',
+  );
 }
 
 console.log('liveGameSummary.test.ts: ok');

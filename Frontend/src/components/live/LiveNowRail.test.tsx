@@ -35,6 +35,7 @@ vi.mock('@/hooks/usePrefersReducedMotion', () => ({
 }));
 
 import { LiveNowRail } from './LiveNowRail';
+import { finishedRailGamePath } from '@/features/live/finishedRailGamePath';
 
 const roots: Root[] = [];
 const containers: HTMLDivElement[] = [];
@@ -88,6 +89,10 @@ function game(id: string, overrides: Partial<LiveRailGame> = {}): LiveRailGame {
     courtName: 'court 3',
     viewerIsPlaying: false,
     followedSeason: false,
+    phase: 'live',
+    finishedAt: null,
+    isPublic: true,
+    league: null,
     liveSummary: {
       matchId: `match-${id}`,
       courtName: 'court 3',
@@ -122,15 +127,52 @@ describe('LiveNowRail', () => {
     expect(container.textContent).toBe('');
   });
 
-  it('renders the full-width Watch variant for a single live game', () => {
+  it('renders one full-width card for a single live game', () => {
     const container = render(<LiveNowRail games={[game('g1')]} onOpen={() => {}} />);
     const rail = container.querySelector('[data-testid="live-now-rail"]');
     expect(rail?.getAttribute('data-layout')).toBe('single');
     expect(container.querySelector('[data-testid="live-now-rail-carousel"]')).toBeNull();
-    expect(container.querySelector('[data-testid="live-watch-button"]')).not.toBeNull();
-    expect(
-      container.querySelector('[data-testid="live-score-card"]')?.getAttribute('data-variant'),
-    ).toBe('full');
+    const card = container.querySelector('[data-testid="live-score-card"]');
+    expect(card?.getAttribute('data-variant')).toBe('full');
+    expect(card?.querySelector('[data-testid="live-watch-cta"]')).not.toBeNull();
+  });
+
+  it('draws a scoreboard: one row per side, a column per set, then the points', () => {
+    // Reduced motion renders each digit once (no slide copy), so textContent is exact.
+    reducedMotion.value = true;
+    const container = render(<LiveNowRail games={[game('g1')]} onOpen={() => {}} />);
+    const rows = container.querySelectorAll('[data-testid="live-score-row"]');
+    expect(rows).toHaveLength(2);
+    // The running set's games (3 and 2) sit next to the completed set, not hidden
+    // behind the point score.
+    expect(rows[0].textContent).toBe('g1-ag1-bMarko / Ana6340');
+    expect(rows[1].textContent).toBe('g1-cg1-dLuka / Ivan4215');
+  });
+
+  it('omits the points column for sports without a sub-game score', () => {
+    reducedMotion.value = true;
+    const points = game('g1');
+    points.liveSummary.sides[0].currentGameScore = '';
+    points.liveSummary.sides[1].currentGameScore = '';
+    const container = render(<LiveNowRail games={[points]} onOpen={() => {}} />);
+    const rows = container.querySelectorAll('[data-testid="live-score-row"]');
+    expect(rows[0].textContent).toBe('g1-ag1-bMarko / Ana63');
+  });
+
+  it('never nests an interactive element inside a card', () => {
+    const container = render(<LiveNowRail games={[game('g1'), game('g2')]} onOpen={() => {}} />);
+    for (const card of container.querySelectorAll('[data-testid="live-score-card"]')) {
+      expect(card.tagName).toBe('BUTTON');
+      expect(card.querySelector('button, a, [role="button"]')).toBeNull();
+    }
+  });
+
+  it('switches the started line to hours after the first hour', () => {
+    const long = game('g1');
+    long.liveSummary.startedAt = new Date(Date.now() - 663 * 60_000).toISOString();
+    const container = render(<LiveNowRail games={[long]} onOpen={() => {}} />);
+    expect(container.textContent).toContain('live.startedHours:11');
+    expect(container.textContent).not.toContain('live.started:663');
   });
 
   it('renders a snap carousel for two or more games', () => {
@@ -146,8 +188,9 @@ describe('LiveNowRail', () => {
     // Keyboard scrollable, per the accessibility note.
     expect(carousel?.getAttribute('tabindex')).toBe('0');
 
-    expect(container.querySelectorAll('[data-testid="live-score-card"]')).toHaveLength(3);
-    expect(container.querySelector('[data-testid="live-watch-button"]')).toBeNull();
+    const cards = container.querySelectorAll('[data-testid="live-score-card"]');
+    expect(cards).toHaveLength(3);
+    for (const card of cards) expect(card.getAttribute('data-variant')).toBe('carousel');
   });
 
   it('caps the card count', () => {
@@ -222,6 +265,91 @@ describe('LiveNowRail', () => {
     expect(block?.getAttribute('style') ?? '').not.toContain('transform');
     // The score is still fully readable.
     expect(container.textContent).toContain('40');
+  });
+
+  function finished(id: string, overrides: Partial<LiveRailGame> = {}): LiveRailGame {
+    const base = game(id);
+    return {
+      ...base,
+      phase: 'finished',
+      finishedAt: new Date(Date.now() - 40 * 60_000).toISOString(),
+      liveSummary: {
+        ...base.liveSummary,
+        revision: undefined,
+        sides: [
+          { ...base.liveSummary.sides[0], setScores: [6, 4], currentGameScore: '', leading: false },
+          { ...base.liveSummary.sides[1], setScores: [3, 6], currentGameScore: '', leading: false },
+        ],
+      },
+      ...overrides,
+    };
+  }
+
+  it('draws a finished game as a final scoreboard that opens results', () => {
+    reducedMotion.value = true;
+    const done = finished('f1');
+    done.liveSummary.sides[1].leading = true;
+    const container = render(<LiveNowRail games={[done]} onOpen={() => {}} />);
+    const card = container.querySelector('[data-testid="live-score-card"]');
+    expect(card?.getAttribute('data-phase')).toBe('finished');
+    // Every set is final; no point chip, a tick on the winner only.
+    const rows = container.querySelectorAll('[data-testid="live-score-row"]');
+    expect(rows[0].textContent).toBe('f1-af1-bMarko / Ana64');
+    expect(rows[1].querySelector('[data-testid="live-winner-mark"]')).not.toBeNull();
+    expect(rows[0].querySelector('[data-testid="live-winner-mark"]')).toBeNull();
+    expect(card?.querySelector('[data-testid="live-results-cta"]')).not.toBeNull();
+    expect(card?.querySelector('[data-testid="live-watch-cta"]')).toBeNull();
+    expect(container.textContent).toContain('live.final');
+    expect(container.textContent).toContain('live.finished:40');
+  });
+
+  it('titles the rail "Live" while anything is live, "Today" once only results remain', () => {
+    const mixed = render(
+      <LiveNowRail games={[game('g1'), finished('f1')]} onOpen={() => {}} variant="home" cityName="Novi Sad" />,
+    );
+    expect(mixed.querySelector('[data-testid="live-now-rail"]')?.getAttribute('data-live')).toBe('true');
+    expect(mixed.textContent).toContain('live.cityTitle');
+
+    const resultsOnly = render(
+      <LiveNowRail games={[finished('f1'), finished('f2')]} onOpen={() => {}} variant="home" cityName="Novi Sad" />,
+    );
+    expect(resultsOnly.querySelector('[data-testid="live-now-rail"]')?.getAttribute('data-live')).toBe('false');
+    expect(resultsOnly.textContent).toContain('live.cityTodayTitle');
+    // Results are not "live": no live count, no reconnecting caption.
+    expect(resultsOnly.textContent).not.toContain('live.reconnecting');
+  });
+
+  it('never freezes a finished card when the socket drops', () => {
+    const container = render(
+      <LiveNowRail games={[game('g1'), finished('f1')]} onOpen={() => {}} isReconnecting />,
+    );
+    const cards = container.querySelectorAll('[data-testid="live-score-card"]');
+    expect(cards[0].textContent).toContain('live.reconnecting');
+    expect(cards[1].textContent).not.toContain('live.reconnecting');
+  });
+
+  it('accents league fixtures with a ribbon naming the league and round', () => {
+    const league = game('l1', {
+      league: { seasonGameId: 'season-1', name: 'Novi Sad Winter League', roundNumber: 3, isPlayoff: false },
+    });
+    const container = render(<LiveNowRail games={[league, game('g2')]} onOpen={() => {}} />);
+    const cards = container.querySelectorAll('[data-testid="live-score-card"]');
+    expect(cards[0].getAttribute('data-league')).toBe('true');
+    const ribbon = cards[0].querySelector('[data-testid="live-league-ribbon"]');
+    expect(ribbon?.textContent).toContain('Novi Sad Winter League');
+    expect(ribbon?.textContent).toContain('live.leagueRound');
+    expect(cards[0].getAttribute('aria-label')).toContain('Novi Sad Winter League');
+    expect(cards[1].querySelector('[data-testid="live-league-ribbon"]')).toBeNull();
+  });
+
+  it('sends a stranger tapping a private league result to the season, not a 404', () => {
+    const league = { seasonGameId: 'season-1', name: 'L', roundNumber: 1, isPlayoff: false };
+    expect(finishedRailGamePath({ id: 'g', isPublic: true, viewerIsPlaying: false, league: null })).toBe('/games/g');
+    expect(finishedRailGamePath({ id: 'g', isPublic: false, viewerIsPlaying: false, league })).toBe(
+      '/games/season-1',
+    );
+    // Players can read their own fixture.
+    expect(finishedRailGamePath({ id: 'g', isPublic: false, viewerIsPlaying: true, league })).toBe('/games/g');
   });
 
   it('uses only logical spacing so the carousel mirrors in RTL', () => {

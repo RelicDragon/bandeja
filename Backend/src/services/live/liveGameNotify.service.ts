@@ -2,8 +2,8 @@
  * PRD 349 — "X is playing live" push to followers.
  *
  * Fired **once per game**, at the moment `resultsStatus` becomes
- * `IN_PROGRESS`, and only for a game that is actually watchable (public +
- * `showOnLiveRail`). Dedupe is a real table, `LiveGameNotifyDelivery`, keyed
+ * `IN_PROGRESS`, and only for a game that is actually watchable
+ * (`isLiveRailVisible`: public or a public season's fixture, + `showOnLiveRail`). Dedupe is a real table, `LiveGameNotifyDelivery`, keyed
  * `(userId, gameId)` — CONTRACT §5.4 explicitly forbids copying the in-memory
  * `Set` the legacy reminder path uses, because that is lost on restart and this
  * push must never double-fire.
@@ -19,16 +19,20 @@ import { NotificationType } from '../../types/notifications.types';
 import { getSportConfig } from '../../sport/sportRegistry';
 import { t } from '../../utils/translations';
 import { liveT } from './liveCopy';
+import { isLiveRailVisible } from '../game/availableGamesStructuralWhere';
 
 const PRISMA_UNIQUE_VIOLATION = 'P2002';
 
-/** Watchable now: the same three conditions the rail and `/live` apply. */
+/** Watchable now: the same conditions the rail and `/live` apply. */
 const liveNotifiableGameSelect = {
   id: true,
   name: true,
   sport: true,
   isPublic: true,
   showOnLiveRail: true,
+  entityType: true,
+  parentId: true,
+  parent: { select: { isPublic: true } },
   resultsStatus: true,
   cityId: true,
   city: { select: { name: true } },
@@ -100,8 +104,8 @@ export async function notifyFollowersGameWentLive(
   });
   if (!game) return { sent: 0, skipped: 'not-live' };
   if (game.resultsStatus !== 'IN_PROGRESS') return { sent: 0, skipped: 'not-live' };
-  if (!game.isPublic) return { sent: 0, skipped: 'not-public' };
   if (!game.showOnLiveRail) return { sent: 0, skipped: 'rail-hidden' };
+  if (!isLiveRailVisible(game)) return { sent: 0, skipped: 'not-public' };
 
   const playerIds = game.participants.map((p) => p.userId);
   if (playerIds.length === 0) return { sent: 0, skipped: 'no-players' };

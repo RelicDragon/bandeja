@@ -12,7 +12,7 @@ Full-screen per match: score / undo; serve setup + serve guide; strict officiati
 
 **TV** (`?tv=1`): the scorer's big-screen mirror — minimal chrome, light/dark (`parseLiveBoardTheme`); tapping reveals `LiveTvToolbar`, which hands out the scoring QR/link, so it is never a spectator destination. For padel/tennis (non-rally plugins) the TV board is `LiveTvScoreboard`: a tennis-style table — a row per side, a column per set, the game points highlighted on the end, a Deuce / Advantage / Golden point / Tie-break chip — sized in `em` off one viewport font size so it fills a phone or a TV. Rally sports keep team panels + `RallyScoreBoard`. **Broadcast:** the OBS overlay — a lower-third on a transparent (`?transparent=1`) or solid background, no viewer chrome.
 
-**Watch** (`/games/:id/watch`): what a viewer gets from **Watch live**, the rail, and Telegram `/live`. The TV board, read only (`useLiveMatchBoardState`, not the scorer controller), under `SpectatorTopBar` (back, "Live · club · court", Follow players). Follows the app's light/dark appearance; keeps the screen awake. Build links with `liveWatchPath` / `mintLiveWatchPath` (`features/live/liveWatchPath.ts`). `/broadcast` with a `spectatorToken` but without `transparent=1` redirects here — overlay share URLs always carry `transparent=1`, so such a link is a viewer link minted before `/watch` existed.
+**Watch** (`/games/:id/watch`): what a viewer gets from **Watch live**, the rail, and Telegram `/live`. Read only (`useLiveMatchBoardState`, not the scorer controller), under `SpectatorTopBar` (back, "Live · club · court", Follow players). Padel / tennis get the spectator stage `WatchStage` (`components/live/watch/`): the court from above — one side's roster at each end, their numbers facing across the net, status chip on the net; `watchBoardModel.ts` derives it with the same reading as the TV board (`LiveTvScoreboard`), which is left to the scorer's `?tv=1` mirror. Rally sports keep the shared TV rally board (`useWatchBoardPlugin` decides, and derives the serve ball the way `LiveScoreShell` does). Follows the app's light/dark appearance; keeps the screen awake. Build links with `liveWatchPath` / `mintLiveWatchPath` (`features/live/liveWatchPath.ts`). `/broadcast` with a `spectatorToken` but without `transparent=1` redirects here — overlay share URLs always carry `transparent=1`, so such a link is a viewer link minted before `/watch` existed.
 
 **Spectator:** `spectatorToken` query. Guests load `GET /results/game/:gameId/spectator?st=` (the results payload plus `club` / `court` names for the spectator strip). Authenticated scorers mint via `resultsApi.mintLiveSpectatorToken`. Share URLs stamp the token (`useLiveMatchShareUrls`). Token length cap 4096.
 
@@ -20,23 +20,36 @@ Wake: `useWakeScreenForLiveScoring` (`KeepAwake`). Offline: local apply then `pe
 
 ## Watching a live game (the "Live now" rail)
 
-Live scoring already produced a broadcast page; the rail makes it discoverable. The whole feature hangs off **one** predicate:
+Live scoring already produced a broadcast page; the rail makes it discoverable. The whole feature hangs off **one** visibility predicate, plus a phase:
 
 ```
-LIVE_RAIL_WHERE = { resultsStatus: 'IN_PROGRESS', isPublic: true, showOnLiveRail: true }
+LIVE_RAIL_VISIBLE_WHERE = {
+  showOnLiveRail: true,
+  OR: [ { isPublic: true },
+        { entityType: 'LEAGUE', parentId: not null, parent: { isPublic: true } } ],
+}
+LIVE_RAIL_WHERE = { resultsStatus: 'IN_PROGRESS', ...LIVE_RAIL_VISIBLE_WHERE }
 ```
 
-It lives in `Backend/src/services/game/availableGamesStructuralWhere.ts` and is applied through `appendStructuralFiltersToWhere(where, { liveOnly: true })`. **Do not inline these three conditions anywhere else** — five surfaces read it and they must agree exactly:
+League fixtures are **always created private** (`league/gameCreation.util.ts`) so strangers cannot join them from Find. Their season's `isPublic` is the real privacy flag, and a public season's rounds and standings are already readable by any signed-in user. A fixture of a private season never reaches any surface. `isLiveRailVisible()` is the in-memory twin for a loaded row (follower push); the FE twin is `isRailVisibleGame()` (`GameDetails/liveWatchVisibility.ts`), used by the Live block and the **Show on Live now** settings row.
+
+Both live in `Backend/src/services/game/availableGamesStructuralWhere.ts`; the live gate is applied through `appendStructuralFiltersToWhere(where, { liveOnly: true })`. **Do not inline these conditions anywhere else** — every surface reads them and they must agree exactly:
 
 | Surface | Entry point |
 |---------|-------------|
-| Find / Home rail | `GET /api/live/games` → `listLiveGames()` |
+| Find / Home rail | `GET /api/live/games` → `listCityRailGames()` (live + finished today) |
 | Game-details **Live** block | `GET /api/live/games/:id` → `findLiveRailGame()` |
-| Spectator token mint | `POST /api/live/games/:id/spectator-token` |
-| Telegram `/live` | `listLiveGames()` called **in process**, never over HTTP |
-| Follower live push | `notifyFollowersGameWentLive()` re-checks all three |
+| Spectator token mint + redemption | `POST /api/live/games/:id/spectator-token`; `assertSpectatorGameStillWatchable()` |
+| Telegram `/live` | `listLiveGames()` (live only) called **in process**, never over HTTP |
+| Follower live push | `notifyFollowersGameWentLive()` re-checks via `isLiveRailVisible()` |
 
-**Load-bearing.** A private game, a finished game, or a game whose organizer switched `Game.showOnLiveRail` off must never produce a rail card, a live summary or a spectator token. The spectator endpoint answers a plain `404` for all three so it cannot be used to probe whether a private game exists. The toggle itself is in [games.md](./games.md).
+**Load-bearing.** A private game (other than a public season's fixture), or a game whose organizer switched `Game.showOnLiveRail` off, must never produce a rail card, a live summary or a spectator token; a finished game never produces a live summary or a token. The spectator endpoint answers a plain `404` for all of these so it cannot be used to probe whether a private game exists. The toggle itself is in [games.md](./games.md).
+
+### Today's results on the rail
+
+The rail keeps a game after it ends: `listCityRailGames()` appends games whose results went `FINAL` **today in the city's timezone** (`finishedDate >= startOfCalendarDate(today, cityTz)`), under the same visibility gate. A score entered the normal way (not live) therefore shows up in the city too, until midnight. `finishedDate` is stamped by `applyGameOutcomes` (re-stamped on re-finalise, cleared on reopen); walkovers, technical results and season finalisation never set it, so an unplayed "result" never reaches the rail. `LEAGUE_SEASON`, `BAR` and `EVENT` rows are excluded.
+
+A finished card is built by `buildFinalGameSummary()` from the OFFICIAL `Set` rows (the source of truth for manual entry and live scoring alike): every set, no point chip, `leading` = the winner (`Match.winnerId`, else sets won, else games won), no `revision`. Only a game with **exactly one match** gets a card — Americano, round robin and other multi-match formats end in standings, not a scoreline. Finished cards join no socket room and never show "Reconnecting". Tapping one opens `/games/:id`; a stranger tapping a private league fixture goes to the season (`/games/:seasonId`) instead, because that fixture's results endpoint 404s for non-members.
 
 ### The live summary
 
@@ -57,7 +70,7 @@ It lives in `Backend/src/services/game/availableGamesStructuralWhere.ts` and is 
 
 ### Ordering, caps and gating
 
-`Backend/src/services/game/liveRailOrder.ts`: the viewer's own live game first (it carries a "You" tag), then fixtures of league seasons the viewer takes part in, then start time ascending. Find shows at most 10 cards, Home at most 3, any requested limit clamped to 20. There is no "follow a season" model in the schema — "followed season" is read as *the viewer is a non-withdrawn `LeagueParticipant` in that season*.
+`Backend/src/services/game/liveRailOrder.ts`: live before finished. Inside each phase: the viewer's own game (it carries a "You" tag), then fixtures of league seasons the viewer takes part in, then any other league fixture, then casual games; live ties by start time ascending, finished ties by `finishedDate` descending. Find shows at most 10 cards, Home at most 3, any requested limit clamped to 20. League fixtures are also accented on the card (amber outline, ribbon with league name and round / Playoff). There is no "follow a season" model in the schema — "followed season" is read as *the viewer is a non-withdrawn `LeagueParticipant` in that season*.
 
 Home shows the rail only when the viewer has **no game of their own today**, computed in the viewer's *city* day ([home-and-find.md](./home-and-find.md)).
 

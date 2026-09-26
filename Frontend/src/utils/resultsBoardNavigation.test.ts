@@ -7,6 +7,8 @@ import {
   canAdvanceAfterSave,
   findNextScoreTarget,
   getRestingPlayerIds,
+  hasOtherMatchToScore,
+  matchOutcomeAfterSet,
   moveToOtherTeam,
   nextEntrySetIndex,
   pickInitialExpandedRoundIds,
@@ -18,6 +20,7 @@ import {
 
 const americano = getRules({ sport: Sports.PADEL, scoringPreset: 'POINTS_21' } as never);
 const bestOf3 = getRules({ sport: Sports.PADEL, scoringPreset: 'CLASSIC_BEST_OF_3' } as never);
+const automatic = getRules({ sport: Sports.PADEL, scoringPreset: 'CLASSIC_AUTOMATIC' } as never);
 
 const match = (id: string, teamA: string[], teamB: string[], sets: Match['sets'] = [{ teamA: 0, teamB: 0 }]): Match => ({
   id,
@@ -67,6 +70,19 @@ describe('score entry navigation', () => {
     const single: Round[] = [{ id: 'r1', matches: [match('m1', ['a', 'b'], ['c', 'd'])] }];
     expect(canAdvanceAfterSave(single, americano, 2, 'm1')).toBe(false);
     expect(canAdvanceAfterSave(single, bestOf3, 2, 'm1')).toBe(true);
+    expect(hasOtherMatchToScore(single, bestOf3, 2, 'm1')).toBe(false);
+  });
+
+  it('knows when the score being entered ends the match', () => {
+    const won = [{ teamA: 6, teamB: 4 }];
+    expect(matchOutcomeAfterSet([{ teamA: 0, teamB: 0 }], 0, { teamA: 6, teamB: 4 }, bestOf3)).toBeNull();
+    expect(matchOutcomeAfterSet(won, 1, { teamA: 6, teamB: 4 }, bestOf3)).toBe('A');
+    expect(matchOutcomeAfterSet(won, 1, { teamA: 4, teamB: 6 }, bestOf3)).toBeNull();
+    expect(
+      matchOutcomeAfterSet([{ teamA: 6, teamB: 4 }, { teamA: 4, teamB: 6 }], 2, { teamA: 3, teamB: 6 }, bestOf3),
+    ).toBe('B');
+    expect(matchOutcomeAfterSet([{ teamA: 0, teamB: 0 }], 0, { teamA: 12, teamB: 9 }, americano)).toBe('A');
+    expect(matchOutcomeAfterSet(won, 1, { teamA: 6, teamB: 4 }, automatic)).toBeNull();
   });
 
   it('opens the first round that still has open matches', () => {

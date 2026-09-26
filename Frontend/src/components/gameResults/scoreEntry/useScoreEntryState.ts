@@ -27,6 +27,7 @@ import {
 import { capPlayerIds, maxPlayersPerTeamForGame } from '@/utils/matchFormat';
 import { isSupplementalMatchSet, EXTRA_BALLS_SCORE_MAX, type MatchSetRole } from '@/utils/matchSetRole';
 import { hapticSelection } from '@/utils/haptics';
+import { matchOutcomeAfterSet } from '@/utils/resultsBoardNavigation';
 import { KEYPAD_SELECTION_CONFIRM_MS, resolveKeypadTeamAfterPick } from './scoreKeypadSlide';
 
 export type ScoreEntryGame = Pick<
@@ -259,6 +260,8 @@ export function useScoreEntryState({
         })
       : [];
 
+  const kindIsTieBreak = kind === 'TIEBREAK_GAME' || kind === 'SUPER_TIEBREAK';
+
   const handleSave = (advance = false) => {
     if (isSupplementalRow) {
       onSave(match.id, setIndex, teamAScore, teamBScore, false, extraRole, { baseVersion });
@@ -268,7 +271,7 @@ export function useScoreEntryState({
     if (!validation.ok && !isAutomaticRelaxed) return;
     const finalIsTieBreak = isAutomaticRelaxed
       ? automaticSetEntryUsesTieBreak(setIndex, match.sets, rules, useSuperTiebreak)
-      : kind === 'TIEBREAK_GAME' || kind === 'SUPER_TIEBREAK';
+      : kindIsTieBreak;
     const saveOptions = {
       baseVersion,
       ...(isAutomaticRelaxed && setIndex === 0 ? { automaticRecordMode: matchRecordMode } : {}),
@@ -442,6 +445,11 @@ export function useScoreEntryState({
   const saveDisabled = !isAutomaticRelaxed && !validation.ok && (teamAScore > 0 || teamBScore > 0);
   // An empty 0:0 row would only reopen itself as the next score.
   const saveAndNextDisabled = saveDisabled || (teamAScore === 0 && teamBScore === 0);
+  // This score ends the match: no later set of it can be "next" (e.g. 6–4 6–4 in best of 3).
+  const matchOutcome =
+    isSupplementalRow || !validation.ok || (teamAScore === 0 && teamBScore === 0)
+      ? null
+      : matchOutcomeAfterSet(match.sets, setIndex, { teamA: teamAScore, teamB: teamBScore, isTieBreak: kindIsTieBreak }, rules);
 
   return {
     rules,
@@ -480,5 +488,7 @@ export function useScoreEntryState({
     showScoreValidation,
     saveDisabled,
     saveAndNextDisabled,
+    isMultiSetMatch,
+    matchOutcome,
   };
 }

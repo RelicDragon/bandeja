@@ -1,6 +1,7 @@
 import { BasicUser } from '@/types';
 import { PlayerAvatar } from '@/components';
 import { ScorePickerNumberGrid } from '@/components/gameResults/ScorePickerNumberGrid';
+import { FACE_CUTOUT_CLASS } from './scoreEntryStyles';
 
 interface ScoreKeypadTeamContentProps {
   players: BasicUser[];
@@ -37,21 +38,22 @@ export function ScoreKeypadTeamContent({
 }: ScoreKeypadTeamContentProps) {
   return (
     <>
-      <div className="mb-2 flex min-w-0 items-center gap-2 pe-9">
+      <div className="mb-2 flex min-h-8 min-w-0 items-center gap-2.5 ps-1.5 pe-10">
         <div className="flex shrink-0 -space-x-2">
           {players.map((player) => (
-            <PlayerAvatar
-              key={player.id}
-              player={player}
-              inlineFace
-              inlineFacePlain
-              inlineFaceFlatStack
-              showName={false}
-              draggable={false}
-            />
+            <span key={player.id} className={`${FACE_CUTOUT_CLASS} ring-gray-50 dark:ring-gray-900`}>
+              <PlayerAvatar
+                player={player}
+                inlineFace
+                inlineFacePlain
+                inlineFaceFlatStack
+                showName={false}
+                draggable={false}
+              />
+            </span>
           ))}
         </div>
-        <span className="truncate text-sm font-semibold text-gray-800 dark:text-gray-100">
+        <span className="truncate text-[13px] font-semibold tracking-[-0.005em] text-gray-800 dark:text-gray-100">
           {teamHeaderLabel(players)}
         </span>
       </div>

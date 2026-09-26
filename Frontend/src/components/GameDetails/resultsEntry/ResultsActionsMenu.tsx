@@ -1,28 +1,19 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Edit, MoreHorizontal, RotateCcw } from 'lucide-react';
-import { Game } from '@/types';
-import { getRestartText } from '@/utils/gameResultsHelpers';
+import { Edit, MoreHorizontal } from 'lucide-react';
 import { ActionSheet, type ActionSheetItem } from '@/components/gameResults/ActionSheet';
 
 interface ResultsActionsMenuProps {
-  currentGame: Game | null;
   showEdit: boolean;
-  showRestart: boolean;
   disabled: boolean;
   onEdit: () => void;
-  onRestart: () => void;
 }
 
-/** "Edit results" (after finishing) and "Restart" — rare, weighty actions kept off the main path. */
-export const ResultsActionsMenu = ({
-  currentGame,
-  showEdit,
-  showRestart,
-  disabled,
-  onEdit,
-  onRestart,
-}: ResultsActionsMenuProps) => {
+/**
+ * "Edit results" (after finishing) — a rare, weighty action kept off the main
+ * path. Restart is not here: while scoring it sits in the sticky footer bar.
+ */
+export const ResultsActionsMenu = ({ showEdit, disabled, onEdit }: ResultsActionsMenuProps) => {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
 
@@ -38,19 +29,8 @@ export const ResultsActionsMenu = ({
         onSelect: onEdit,
       });
     }
-    if (showRestart) {
-      list.push({
-        id: 'restart',
-        label: getRestartText(currentGame, t),
-        icon: RotateCcw,
-        tone: 'danger',
-        afterClose: true,
-        disabled,
-        onSelect: onRestart,
-      });
-    }
     return list;
-  }, [showEdit, showRestart, disabled, onEdit, onRestart, currentGame, t]);
+  }, [showEdit, disabled, onEdit, t]);
 
   if (items.length === 0) return null;
 

@@ -871,10 +871,9 @@
         }
       }
     },
-    "resultsRosterTitle": "Игроки на корте",
-    "resultsRosterHint": "Идёт ввод результатов, состав закрыт. Замена травмированного игрока всё ещё возможна.",
-    "substitutePlayerAction": "Заменить",
     "substitutePlayerTitle": "Замена игрока",
+    "substitutePlayerCardHint": "Замените травмированного игрока по ходу игры",
+    "substitutePlayerPickOut": "Кто уходит с корта?",
     "substitutePlayerReplacing": "Заменяем",
     "substitutePlayerNoCandidates": "Нет игроков для замены",
     "substitutePlayerOut": "Уходит",

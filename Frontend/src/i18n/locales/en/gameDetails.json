@@ -866,10 +866,9 @@
         }
       }
     },
-    "resultsRosterTitle": "Players on court",
-    "resultsRosterHint": "Results are in progress, so the roster is frozen. You can still substitute an injured player.",
-    "substitutePlayerAction": "Substitute",
     "substitutePlayerTitle": "Substitute player",
+    "substitutePlayerCardHint": "Replace an injured player mid-game",
+    "substitutePlayerPickOut": "Who is leaving the court?",
     "substitutePlayerReplacing": "Replacing",
     "substitutePlayerNoCandidates": "No players available to substitute in",
     "substitutePlayerOut": "Out",

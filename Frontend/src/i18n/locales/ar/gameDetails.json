@@ -890,10 +890,9 @@
         }
       }
     },
-    "resultsRosterTitle": "اللاعبون في الملعب",
-    "resultsRosterHint": "إدخال النتائج جارٍ، لذا القائمة مغلقة. لا يزال بإمكانك تبديل لاعب مصاب.",
-    "substitutePlayerAction": "تبديل",
     "substitutePlayerTitle": "تبديل لاعب",
+    "substitutePlayerCardHint": "استبدل لاعبًا مصابًا أثناء المباراة",
+    "substitutePlayerPickOut": "من سيغادر الملعب؟",
     "substitutePlayerReplacing": "يتم استبدال",
     "substitutePlayerNoCandidates": "لا يوجد لاعبون متاحون للتبديل",
     "substitutePlayerOut": "خارج",

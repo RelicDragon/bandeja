@@ -157,7 +157,7 @@ export const generateRound = asyncHandler(async (req: AuthRequest, res: Response
   await assertEventForbidsResults(gameId);
 
   const { roundId } = await roundGenerationService.generateAndCreateRound(gameId);
-  const round = await roundGenerationService.fetchRoundApiPayload(roundId);
+  const round = await roundGenerationService.fetchRoundApiPayload(roundId, req.userId);
 
   const socketService = (global as any).socketService;
   if (socketService) {
@@ -183,7 +183,7 @@ export const startResultsEntryWithGeneratedRound = asyncHandler(async (req: Auth
   }
 
   const game = await GameService.getGameById(gameId, req.userId);
-  const round = roundId ? await roundGenerationService.fetchRoundApiPayload(roundId) : null;
+  const round = roundId ? await roundGenerationService.fetchRoundApiPayload(roundId, req.userId) : null;
 
   res.json({
     success: true,
