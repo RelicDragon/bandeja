@@ -123,7 +123,7 @@ Newer tap targets (`Frontend/src/services/pushNotificationService.ts`):
 | `FOLLOWED_USER_LIVE` | the game (`data.gameId`). There is no action button: "Watch" is the notification's own tap target, because push actions are identifiers dispatched by `pushInviteAction.controller.ts`, not URLs |
 | `MONTHLY_RECAP_READY` | Home with `?recap=<monthKey>`, cleaned out of the URL once read |
 | `GAME_WEATHER_ALERT` | `/games/:id?section=weather`, plus `&action=moveIndoor` for organizers; both stripped once read |
-| `GAME_SPOT_OPENED` | `/games/:id?join=1` — runs the details page's normal join handler after load, then strips the param. Gates and the overlap confirm still apply; the deep link is a shortcut to the button, never a bypass |
+| `GAME_SPOT_OPENED` / `FOLLOWED_GAME_SPOT_OPENED` | The game (`data.gameId`), **without** `?join=1`. The body tap is how people look at a notification, and most recipients are followers rather than queued players, so it must never join. Wiring it to `?join=1` stood in for the deferred shade button and auto-joined followers in production (2026-09-26). `?join=1` is reserved for the explicit **Join now** button (Telegram). |
 
 The Wallet is a modal owned by the Profile page, so `navigateToWallet` parks the id in `Frontend/src/store/walletHighlightStore.ts` and navigates; Profile consumes the request and opens the modal. The id never enters the URL — it is a private identifier.
 

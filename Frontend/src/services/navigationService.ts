@@ -47,16 +47,6 @@ class NavigationService {
   }
 
   /**
-   * PRD 347 — the "Join now" spot-opened action. `?join=1` makes the details
-   * page run its normal join flow after load; gates and the overlap confirm
-   * still apply, and the page strips the param once consumed.
-   */
-  navigateToGameForJoin(gameId: string) {
-    if (!this.ensureInitialized() || !gameId) return;
-    this.navigate!(`${buildUrl('game', { id: gameId })}?join=1`, { replace: true });
-  }
-
-  /**
    * PRD 357 — follow a server-authored in-app destination such as
    * `/games/:id?section=weather&action=moveIndoor`.
    *

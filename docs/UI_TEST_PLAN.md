@@ -2751,7 +2751,8 @@ Every action button below is a **signed push action token** (`kind` + `targetId`
 | PN-AT-05 | Telegram double tap | Tap an attendance button twice, or after leaving the game | The spinner closes with a friendly message; never a throw. `@manual` |
 | PN-AT-06 | Silence is allowed | A player who never answers reaches kick-off | Seat, queue position and level untouched. `@manual` |
 | PN-SO-01 | Spot-opened push | Queued player while a seat frees | "A spot just opened" with a body like "Tue 19:00 Padel Centar · level 3.5–4.5 · You're #1 in the queue". `@two-user` |
-| PN-SO-02 | Join now | Tap **Join now** | Opens the game and runs the normal join flow: gender/level gates apply and the overlap confirm appears when the player already has a game in that slot. `@two-user` |
+| PN-SO-02 | Join now | Tap **Join now** on the Telegram message | Opens the game and runs the normal join flow: gender/level gates apply and the overlap confirm appears when the player already has a game in that slot. `@two-user` |
+| PN-SO-02b | Push tap only opens | Tap the spot-opened push itself (queued player and follower variants) | Opens the game with the free seat visible; the player is **not** joined and no join request is sent. `@two-user` |
 | PN-SO-03 | Deep-link param cleaned | After the join flow runs, check the URL and go back/forward | `join=1` is gone; navigation does not re-trigger the join |
 | PN-SO-04 | Intent match | Player with an OPEN play intent matching the game, not queued | Receives the same push |
 | PN-SO-05 | Follower variant | Follower of a seated player, with and without "Friends' play-intent activity" on | "Marko's game has a free spot" when on; **nothing** when off |

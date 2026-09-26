@@ -675,17 +675,18 @@ class PushNotificationService {
         }
         break;
 
-      // PRD 347 — the spot-opened push lands on the game with the join flow
-      // primed; the "You're in!" variant only records the one-time header.
+      // PRD 347 — tapping the spot-opened push only opens the game; the page's
+      // free-seat affordance and Join button take it from there. The body tap
+      // must never join: it is how people *look* at a notification, and most
+      // recipients are followers, not queued players. The "You're in!" variant
+      // also records the one-time header.
       case 'GAME_SPOT_OPENED':
       case 'FOLLOWED_GAME_SPOT_OPENED':
         if (payload?.gameId) {
           if (payload.seatedFromQueue === '1') {
             markSeatedFromQueuePending(payload.gameId);
-            navigationService.navigateToGame(payload.gameId);
-          } else {
-            navigationService.navigateToGameForJoin(payload.gameId);
           }
+          navigationService.navigateToGame(payload.gameId);
         }
         break;
 
