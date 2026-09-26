@@ -24,7 +24,7 @@ import { LiveScoreDigits } from './LiveScoreDigits';
  * Three phases share the layout. `live` highlights the running set and point
  * and offers **Watch**; `finished` (results went final today) shows every set
  * as completed, ticks the winner and offers **Results**; `inProgress` (a league
- * fixture or a followed player's tournament scored by hand) shows the sets
+ * fixture or a premium member's tournament scored by hand) shows the sets
  * entered so far — none yet is fine — and also offers **Results**. League
  * fixtures carry an amber outline and a ribbon naming the league and round;
  * tournaments a ribbon with their name and round. A multi-match game says which

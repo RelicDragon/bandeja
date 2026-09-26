@@ -3182,10 +3182,10 @@ No feature flag: the rail is data-driven and simply absent when the city has not
 | LN-37 | Today's results stay | Finish a public single-match game — once live-scored, once by normal results entry | Both stay on the rail after the live games until midnight in the **city's** timezone: every set shown, a green tick on the winner, a **FINAL** tag with "Finished 25 min ago" and a **Results** pill. Finished cards sort freshest first and never show "Reconnecting" |
 | LN-37b | Rotating-partner games | Finish a public 4-player game with 3 matches (third left blank) by normal results entry | It gets a finished card showing its **last scored** match; the footer reads "Finished 25 min ago · Match 2/3". A single-match game has no match label |
 | LN-38 | Results only | City has no live game but finished games today | Header reads "Today's results" (Home: "Today in Belgrade") with a calendar icon instead of the red dot, and no count |
-| LN-39 | Not on the rail | A stranger's Americano / round-robin / tournament finished today; walkover or technical result; results reopened for editing | No finished card: standings formats only show for the viewer or someone they follow, walkovers never stamp a finish time, reopening clears it |
-| LN-39c | Followed player's tournament | Follow a player, then that player's public tournament (Americano, round robin, …) finishes today — or is in progress with results typed in by hand | A card with a blue ribbon "🏅 Tournament name · Round N" showing the followed player's match (their latest entered one; before anything is entered, their next match with no set columns). Sorts after league fixtures, before casual games. Someone who follows nobody in it does not see it (unless it is live-scored, which any viewer can watch) |
+| LN-39 | Not on the rail | A standard (non-premium) member's public tournament — finished today, in progress, or live-scored; walkover or technical result; results reopened for editing | No card: tournaments are a premium perk on the rail (even for its own players), walkovers never stamp a finish time, reopening clears it. Public games and league fixtures are unaffected |
+| LN-39c | Premium member's tournament | A premium member creates a public tournament (Americano, round robin, …); it runs with results typed in by hand (or live-scored), then finishes today | Every viewer in the city gets a card with a blue ribbon "🏅 Tournament name · Round N": while running an **IN PROGRESS** card (latest entered match; before anything is entered, the first match with no set columns), afterwards a finished card. A viewer who follows a player in it sees that player's match instead, and the card sorts ahead of casual games |
 | LN-39d | League fixture in progress | A public-season fixture whose result is being typed in (no live board) | A card with the amber league ribbon, an amber **IN PROGRESS** tag, "Started 20 min ago", the sets entered so far and a **Results** pill. Tapping opens the game (a stranger: the season). Never "Reconnecting", never **Watch** |
-| LN-39e | League fixtures are never capped away | Home (3 slots) with 3+ casual live games and a league fixture finished today | The league fixture still shows; a casual card gives way. Same for the viewer's own game |
+| LN-39e | League fixtures are never capped away | 10+ casual live games and a league fixture finished today | The league fixture still shows; a casual card gives way. Same for the viewer's own game |
 | LN-39f | Old app build | App build without the in-progress card (≤ 0.97.54) | Gets no **IN PROGRESS** cards at all (they are opt-in via `include=inProgress`), so it never offers **Watch** on a game without a board; multi-match finished cards render as plain finished cards |
 | LN-39b | Tapping a result | Tap a finished public game; then, as a stranger, a finished fixture of a public league | The game's results open; the league fixture opens the **season** page instead (its own results are members-only) |
 
@@ -3213,10 +3213,8 @@ No feature flag: the rail is data-driven and simply absent when the city has not
 
 | ID | Test | Steps | Expected |
 |----|------|-------|----------|
-| LN-50 | Suppressed by your own day | Viewer has a game today (their own city day) while the city has live games | Home shows **no** live rail |
-| LN-51 | Shown on an empty day | Viewer has no game today and the city has live games (or results from today) | Rail immediately after the action grid, with the softer header "Live in Belgrade" ("Today in Belgrade" when only results remain) and at most 3 cards |
-| LN-52 | See all | Tap **See all on Find** | Lands on Find with the rail visible. The Find rail has no such link |
-| LN-53 | City day, not device day | Game at 00:30 local while the device is in another timezone | Suppression is computed in the viewer's *city* day. `@manual` |
+| LN-50 | Same cards as Find | City with 8 results today; open Home, then Find | Home's rail (immediately after the action grid) shows exactly Find's cards in the same order — no 3-card cap, no See-all link. Header reads "Live in Belgrade" ("Today in Belgrade" when only results remain) |
+| LN-51 | Your own game day | Viewer has a game today while the city has live games or results | Home still shows the rail |
 
 ---
 

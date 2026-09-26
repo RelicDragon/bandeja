@@ -22,7 +22,7 @@ Home city (`user.currentCity`) drives both tabs. Browse city does not. Users wit
 1. **Stories** — `StoriesRail` (see `stories.md`).
 2. **CityPromptBanner** — city unset / auto-city confirm.
 3. **SportQuestionnairePrompt** — per primary sport.
-3b. **Live now rail** — only when the viewer has **no game of their own today**, computed in the viewer's *city* day (`Frontend/src/features/live/homeLiveRailGate.ts`). Softer header ("Live in Belgrade"), at most 3 cards, plus a **See all on Find** link. Home stays about the viewer; the rail is what fills an empty day. See [live-scoring.md](./live-scoring.md).
+3b. **Live now rail** — the **same cards as Find's rail** (same query and cache, up to 10), shown whenever the city has something on it, including days the viewer plays. Only the header is softer ("Live in Belgrade" / "Today in Belgrade"); no See-all link, since Find has nothing more. See [live-scoring.md](./live-scoring.md).
 3c. **Monthly recap bubble** — front of the story rail on the 1st–3rd. See [stories.md](./stories.md).
 4. **Unlinked bookings** — `MyTabUnlinkedBookingsSection`. Upcoming Booktime/Padeloo/Klikteren/Nspadel reservations not fully linked to a game. Confirmed via one batch linked-games lookup; a failed lookup does not pretend unlinked. Per-slot: link, create game, cancel. Adjacent same-court grouping. “See all” → `/profile/connected-clubs`. Fully linked upcoming bookings stay behind the compact Bookings CTA.
 5. Home hero ad (`AD_PLACEMENTS.HOME_HERO`) when `cityIsSet`.

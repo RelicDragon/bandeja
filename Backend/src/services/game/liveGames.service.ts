@@ -3,7 +3,7 @@
  *
  * Consumers:
  *   • `GET /api/live/games` (the Find / Home rail) — {@link listCityRailGames}:
- *     live games first, then league fixtures and followed players' tournaments
+ *     live games first, then league fixtures and premium members' tournaments
  *     in progress without a live score, then games whose results went final
  *     **today** (city day), so a score entered the normal way still shows up
  *   • the Telegram `/live` command (PRD 356) — it calls {@link listLiveGames}
@@ -21,6 +21,7 @@ import prisma from '../../config/database';
 import type { BasicUser } from '../../types/user.types';
 import type { LiveGameSummary } from './availableGamesEnrichmentTypes';
 import { getUserTimezoneFromCityId } from '../user-timezone.service';
+import { getOwnerIsPremiumFromGame } from '../gameResultsArtifact/gameResultsArtifact.ownerPremium';
 import {
   appendStructuralFiltersToWhere,
   LIVE_RAIL_VISIBLE_WHERE,
@@ -98,6 +99,11 @@ const liveMatchSelect = {
   },
 } as const;
 
+/** PLAYING rows (viewer / followed tags) plus the OWNER (premium tournaments). */
+const railParticipantsWhere: Prisma.GameParticipantWhereInput = {
+  OR: [{ status: 'PLAYING' }, { role: 'OWNER' }],
+};
+
 const liveGameSelect = {
   id: true,
   name: true,
@@ -134,8 +140,8 @@ const liveGameSelect = {
   },
   leagueRound: { select: { orderIndex: true, roundType: true } },
   participants: {
-    where: { status: 'PLAYING' as const },
-    select: { userId: true },
+    where: railParticipantsWhere,
+    select: { userId: true, status: true, role: true, user: { select: { isPremium: true } } },
   },
   rounds: {
     orderBy: { roundNumber: 'asc' as const },
@@ -173,7 +179,7 @@ export type LiveRailGame = {
   followingPlaying: boolean;
   /**
    * `live` is being scored now (watchable); `inProgress` is a league fixture or
-   * a followed player's tournament whose results are typed in as it goes (not
+   * a premium member's tournament whose results are typed in as it goes (not
    * watchable — opens the game); `finished` went final today (city day).
    * `inProgress` is only sent to clients that ask for it.
    */
@@ -387,15 +393,15 @@ function focusUserIdsOf(viewer: RailViewer): Set<string> {
 }
 
 function railAudience(game: LiveGameRow, viewer: RailViewer) {
-  const playing = game.participants.map((p) => p.userId);
+  const playing = game.participants.filter((p) => p.status === 'PLAYING').map((p) => p.userId);
   const viewerIsPlaying = Boolean(viewer.userId && playing.includes(viewer.userId));
   const followingPlaying = playing.some((id) => viewer.followedUserIds.has(id));
   return {
     viewerIsPlaying,
     followingPlaying,
     isLeagueFixture: leagueOf(game) !== null,
-    standingsFormat: isStandingsFormat(game),
-    focusPlaying: viewerIsPlaying || followingPlaying,
+    isTournament: game.entityType === 'TOURNAMENT',
+    ownerIsPremium: getOwnerIsPremiumFromGame(game),
   };
 }
 
@@ -467,6 +473,7 @@ export async function listLiveGames(
 
   const cards: LiveRailGame[] = [];
   for (const row of rows) {
+    if (!earnsRailCard(railAudience(row, viewer))) continue;
     const picked = pickLiveMatch(row);
     if (!picked) continue;
     cards.push(toRailGame(row, picked, viewer));
@@ -479,11 +486,11 @@ export async function listLiveGames(
 const FINISHED_RAIL_EXCLUDED_TYPES = ['LEAGUE_SEASON', 'BAR', 'EVENT'] as const;
 
 /**
- * League fixtures, and standings games (tournaments, Americano, …) the viewer
- * or someone they follow is playing, that are in progress **without** a live
- * score — results typed in as they go, which is how every league fixture and
- * most tournaments are scored. Only games that started today (city day): a
- * forgotten `IN_PROGRESS` from last month is not "now".
+ * League fixtures, and tournaments created by a premium member, that are in
+ * progress **without** a live score — results
+ * typed in as they go, which is how every league fixture and most tournaments
+ * are scored. Only games that started today (city day): a forgotten
+ * `IN_PROGRESS` from last month is not "now".
  */
 async function listProgressRailGames(
   cityId: string,
@@ -503,15 +510,10 @@ async function listProgressRailGames(
         {
           OR: [
             { entityType: 'LEAGUE' },
-            ...(focusUserIds.size > 0
-              ? [
-                  {
-                    participants: {
-                      some: { status: 'PLAYING' as const, userId: { in: [...focusUserIds] } },
-                    },
-                  },
-                ]
-              : []),
+            {
+              entityType: 'TOURNAMENT',
+              participants: { some: { role: 'OWNER', user: { isPremium: true } } },
+            },
           ],
         },
       ],
@@ -527,7 +529,7 @@ async function listProgressRailGames(
     if (skipIds.has(row.id) || pickLiveMatch(row)) continue;
     const audience = railAudience(row, viewer);
     // A casual game in progress waits for its final result.
-    if (!audience.isLeagueFixture && !(audience.standingsFormat && audience.focusPlaying)) continue;
+    if (!audience.isLeagueFixture && !(audience.isTournament && audience.ownerIsPremium)) continue;
     const picked = pickProgressMatch(row, focusUserIds);
     if (!picked) continue;
     cards.push(toRailGame(row, picked, viewer, 'inProgress'));
@@ -541,10 +543,11 @@ async function listProgressRailGames(
  * went final **today** in the city's own timezone, so a score entered after
  * the match — not live — is still seen around town until midnight.
  *
- * A finished game shows its last scored match (`matchPosition` says which).
- * Standings formats — tournaments, Americano and the like — only earn a
- * finished card when the viewer or someone they follow played; league
- * fixtures always do, and the cap never drops them ({@link selectLiveRailGames}).
+ * A finished game shows its last scored match (`matchPosition` says which) —
+ * for a tournament, preferably one the viewer or someone they follow played.
+ * Tournaments only earn a card (in any phase) when a premium member created
+ * them ({@link earnsRailCard}); games and league fixtures always do, and the
+ * cap never drops a league fixture ({@link selectLiveRailGames}).
  *
  * `finishedDate` is the finalisation time (re-stamped on re-finalise, cleared
  * on reopen). Walkovers and technical results never set it, so an unplayed

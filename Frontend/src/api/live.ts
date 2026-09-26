@@ -5,7 +5,7 @@ import type { EntityType, LiveGameSummary, Sport } from '@/types';
  * PRD 349 — the "Live now" rail.
  *
  * `GET /live/games` is a narrow read: games being scored right now, league
- * fixtures and followed players' tournaments in progress without a live score,
+ * fixtures and premium members' tournaments in progress without a live score,
  * and games whose results went final today (city day), limited to rail-visible
  * games — public, or a fixture of a public league season — and not opted out.
  * The backend applies that gate, so a private game can never appear here no

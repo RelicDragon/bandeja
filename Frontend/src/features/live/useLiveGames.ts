@@ -12,9 +12,8 @@ import { useSocketEventsStore } from '@/store/socketEventsStore';
 import type { LiveGameSummary } from '@/types';
 import { applyLiveScoringFrame } from './liveSummaryUpdate';
 
-/** Find shows up to 10 cards, Home up to 3 (PRD 349) — live, in progress, then today's finals. */
+/** Find and Home show the same cards, up to 10 — live, in progress, then today's finals. */
 export const LIVE_RAIL_FIND_LIMIT = 10;
-export const LIVE_RAIL_HOME_LIMIT = 3;
 
 /** The rail is cheap but chatty — the socket keeps it fresh between refetches. */
 const LIVE_RAIL_STALE_MS = 30_000;

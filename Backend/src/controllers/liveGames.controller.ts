@@ -22,7 +22,7 @@ import { clampLiveRailLimit } from '../services/game/liveRailOrder';
  * nothing to show — the rail hides itself on an empty list.
  *
  * `include=inProgress` opts into `phase: 'inProgress'` cards (league fixtures
- * and followed players' tournaments scored without the live board). Opt-in
+ * and premium members' tournaments scored without the live board). Opt-in
  * because an app build that predates the phase treats every non-finished card
  * as watchable, and the watch mint 404s for these.
  */

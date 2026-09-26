@@ -8,40 +8,37 @@
 import type { EntityType, GameType } from '@prisma/client';
 
 /**
- * Formats that end in standings, not a scoreline: one match out of many says
- * little to a stranger. Such a game still shows while it is live-scored, but
- * otherwise only for the viewer or someone they follow who is playing in it.
+ * Formats that end in standings, not a scoreline. Only changes how a card
+ * labels its match ("Round N" rather than "Match 2/3").
  */
-const STANDINGS_GAME_TYPES: ReadonlySet<GameType> = new Set<GameType>([
+const STANDINGS_GAME_TYPES: readonly GameType[] = [
   'AMERICANO',
   'MEXICANO',
   'ROUND_ROBIN',
   'WINNER_COURT',
   'LADDER',
   'KOTC',
-]);
+];
 
 export function isStandingsFormat(game: { entityType: EntityType; gameType: GameType }): boolean {
-  return game.entityType === 'TOURNAMENT' || STANDINGS_GAME_TYPES.has(game.gameType);
+  return game.entityType === 'TOURNAMENT' || STANDINGS_GAME_TYPES.includes(game.gameType);
 }
 
 export type RailCardAudience = {
-  /** League fixture of a public season: every viewer in the city sees it. */
-  isLeagueFixture: boolean;
-  standingsFormat: boolean;
-  /** The viewer, or a player the viewer follows, is PLAYING in the game. */
-  focusPlaying: boolean;
+  /** `entityType === 'TOURNAMENT'`. */
+  isTournament: boolean;
+  /** The game's OWNER participant is a premium member (`getOwnerIsPremiumFromGame`). */
+  ownerIsPremium: boolean;
 };
 
 /**
- * A finished game (or one in progress without a live score) earns a card when
- * it is a league fixture, a game with a scoreline, or a standings game someone
- * the viewer cares about is playing.
+ * Whether a rail-visible game gets a card at all, in any phase — live-scored
+ * or not. Games and league fixtures: always (the visibility gate already made
+ * them public). A tournament: only when a premium member created it — then for
+ * every viewer, whoever is playing.
  */
 export function earnsRailCard(audience: RailCardAudience): boolean {
-  if (audience.isLeagueFixture) return true;
-  if (!audience.standingsFormat) return true;
-  return audience.focusPlaying;
+  return !audience.isTournament || audience.ownerIsPremium;
 }
 
 /** One match, flattened out of its round, in play order. */

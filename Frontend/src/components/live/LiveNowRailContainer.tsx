@@ -4,11 +4,7 @@ import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import type { LiveRailGame } from '@/api/live';
 import { AnimatedMount } from '@/components/motion/AnimatedMount';
-import {
-  useLiveGames,
-  LIVE_RAIL_FIND_LIMIT,
-  LIVE_RAIL_HOME_LIMIT,
-} from '@/features/live/useLiveGames';
+import { useLiveGames, LIVE_RAIL_FIND_LIMIT } from '@/features/live/useLiveGames';
 import { finishedRailGamePath } from '@/features/live/finishedRailGamePath';
 import { mintLiveWatchPath } from '@/features/live/liveWatchPath';
 import { LiveNowRail } from './LiveNowRail';
@@ -16,9 +12,9 @@ import { LiveNowRail } from './LiveNowRail';
 /**
  * PRD 349 — the rail plus its data and navigation.
  *
- * Find renders it above the calendar; Home renders it after `HomeActionGrid`
- * and only when the viewer has no game of their own today, which is the caller's
- * decision (`enabled`), not this component's.
+ * Find renders it above the calendar; Home renders it after `HomeActionGrid`.
+ * Both ask for the same city and limit, so they share one query and always show
+ * the same cards; `variant` only changes the header wording.
  *
  * Tapping a live card opens the read-only watch board (`mintLiveWatchPath`),
  * which works for a non-participant — that mint is what makes "spectating is
@@ -31,7 +27,6 @@ export interface LiveNowRailContainerProps {
   cityName?: string;
   /** False → no request is made and nothing renders. */
   enabled?: boolean;
-  onSeeAll?: () => void;
 }
 
 function LiveNowRailContainerView({
@@ -39,12 +34,11 @@ function LiveNowRailContainerView({
   cityId,
   cityName,
   enabled = true,
-  onSeeAll,
 }: LiveNowRailContainerProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
-  const limit = variant === 'home' ? LIVE_RAIL_HOME_LIMIT : LIVE_RAIL_FIND_LIMIT;
+  const limit = LIVE_RAIL_FIND_LIMIT;
   const { games, isLoading, isReconnecting, reconnectingGameIds } = useLiveGames({
     cityId,
     limit,
@@ -89,7 +83,6 @@ function LiveNowRailContainerView({
         variant={variant}
         cityName={cityName}
         maxCards={limit}
-        onSeeAll={variant === 'home' ? onSeeAll : undefined}
       />
     </AnimatedMount>
   );

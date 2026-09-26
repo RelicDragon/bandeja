@@ -36,15 +36,13 @@ function match(
 
 /* ---------------- who earns a card ---------------- */
 {
-  const base = { isLeagueFixture: false, standingsFormat: false, focusPlaying: false };
-  assert.equal(earnsRailCard(base), true, 'a game with a scoreline, any match count');
-  assert.equal(earnsRailCard({ ...base, standingsFormat: true }), false, 'a stranger\'s tournament');
+  assert.equal(earnsRailCard({ isTournament: false, ownerIsPremium: false }), true, 'games and leagues: always');
+  assert.equal(earnsRailCard({ isTournament: true, ownerIsPremium: false }), false, 'a standard member\'s tournament');
   assert.equal(
-    earnsRailCard({ ...base, standingsFormat: true, focusPlaying: true }),
+    earnsRailCard({ isTournament: true, ownerIsPremium: true }),
     true,
-    'a tournament someone the viewer follows is playing',
+    'a tournament a premium member created — for every viewer',
   );
-  assert.equal(earnsRailCard({ ...base, isLeagueFixture: true, standingsFormat: true }), true, 'league: always');
 }
 
 /* ---------------- finished: the last scored match ---------------- */
