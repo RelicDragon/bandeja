@@ -138,6 +138,7 @@ Frontend/e2e/
 | G-29 | Chats badge clears after read | Seed unread DM; open thread from inbox; return | Row unread badge on that DM is gone |
 | G-20 | Tab badges stable on navigation | Seed unread; switch My → Find → Chats → Market without reconnect | Chats tab badge count unchanged (no full unread snapshot refetch flicker) |
 | G-12 | Pull to refresh | Pull on My / Find / Profile | Spinner sits in blank gap below header (not over stories/content); list refreshes, no crash |
+| G-12a | My/Find idle and scroll painting | Show multiple game cards with online players; leave idle, scroll vertically, swipe a roster horizontally, and switch My ↔ Find in mobile Chrome and native apps; repeat in light/dark and reduced motion | No blank flashes in cards, avatars or navigation. Online rings/dots retain their colors and pulse without repainting card contents continuously (`npm run test:avatar-paint`); reduced motion keeps a static online indicator. Player taps, trainer/favorite rings, equipped frames, names, calendar/day switching, joins and pull-to-refresh still work. Confirm on the device exhibiting the flicker; the automated paint check covers the avatar effect, not every browser compositor issue. |
 | G-13 | Deep link game | Open `/games/:id` | Game details loads |
 | G-14 | Deep link game chat | Open `/games/:id/chat` | Game chat thread opens |
 | G-15 | Deep link user chat | Open `/user-chat/:id` | DM thread opens |
