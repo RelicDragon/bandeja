@@ -285,6 +285,8 @@ API: authenticated `GET /faqs/game/:gameId` and `GET /faqs/game/:gameId/translat
 
 `GameFaqTranslationJob` is durable, deduplicated per source revision/language/policy/override, with bounded concurrency/retries and fenced leases. Publication checks the current source and preference again, and publishes question/answer together. Closing the modal does not cancel jobs. Polling is bounded; focus/reconnect and manual refresh recover status. `FAQ_TRANSLATION_GENERATION_ENABLED=false` disables new generation while existing localized reads remain usable. Usage is attributed as `faq_translation`.
 
+Language validation can use the answer as context for a changed, short Latin heading (at most 24 characters and 3 words), such as “Group B” or “Grupa MIX”. The answer must supply at least 80 characters of non-URL/non-numeric context and independently match the target language; the combined pair must also match. Unchanged fields and no-change claims retain their separate language checks. Script, numeric facts, URLs, line breaks, and answer validation still apply.
+
 Code: `Backend/src/services/faq/faqTranslation.service.ts`, `faqTranslationQueue.service.ts`, `faqTranslator.service.ts`, `faqReadAccess.ts`; `Frontend/src/components/GameDetails/FaqTranslationsModal.tsx`, `FaqEdit.tsx`, `FaqTab.tsx`, `Frontend/src/api/faq.ts`. Schema changes ship in a named migration; no automatic translation backfill.
 
 ## Code

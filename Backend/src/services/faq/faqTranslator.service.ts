@@ -140,6 +140,31 @@ async function matchesIndonesian(text: string): Promise<boolean> {
   return francAll(sample, { minLength: 8 }).slice(0, 3).some(([lang]) => lang === 'ind');
 }
 
+async function shortHeadingMatchesWithAnswer(
+  question: string,
+  answer: string,
+  target: AppUiLanguage,
+): Promise<boolean> {
+  // "Group B", "MIX Group" and "Grupa MIX" are too short for reliable
+  // detection alone. Only a changed Latin heading may borrow answer context;
+  // unchanged fields and noChange claims keep their independent checks.
+  if (!['en', 'sr', 'es', 'cs', 'id'].includes(target)) return false;
+  const heading = question.replace(URL_RE, ' ').trim();
+  const words = heading.match(/\p{L}+/gu) ?? [];
+  if (heading.length > 24 || words.length === 0 || words.length > 3 ||
+      words.some(word => !/^\p{Script=Latin}+$/u.test(word))) return false;
+  const context = answer.replace(URL_RE, ' ').replace(NUMBER_RE, ' ').trim();
+  if (context.length < 80) return false;
+  const answerMatches = target === 'id'
+    ? await matchesIndonesian(context)
+    : await sourceAppearsToBeTargetLanguage(context, target);
+  if (!answerMatches) return false;
+  const pair = `${heading}\n${context}`;
+  return target === 'id'
+    ? matchesIndonesian(pair)
+    : translationMatchesTargetFranc(pair, target);
+}
+
 function parsePair(raw: string): FaqTranslateResult {
   let value: unknown;
   try {
@@ -223,12 +248,15 @@ export async function translateFaqPair(
     if (result.question === input.question && result.answer === input.answer) {
       throw new FaqTranslationError('FAQ translation left both fields unchanged', 'validation');
     }
-    for (const [source, output] of [[input.question, result.question], [input.answer, result.answer]]) {
+    for (const field of ['question', 'answer'] as const) {
+      const source = input[field];
+      const output = result[field];
       if (source === output) {
         if (!await unchangedFieldIsPlausible(source, target)) {
           throw new FaqTranslationError('Untranslated FAQ field failed language check', 'validation');
         }
-      } else if (!(target === 'id' ? await matchesIndonesian(output) : await translationMatchesTargetFranc(output, target))) {
+      } else if (!(target === 'id' ? await matchesIndonesian(output) : await translationMatchesTargetFranc(output, target)) &&
+          !(field === 'question' && await shortHeadingMatchesWithAnswer(output, result.answer, target))) {
         throw new FaqTranslationError('FAQ translation failed target-language check', 'validation');
       }
     }

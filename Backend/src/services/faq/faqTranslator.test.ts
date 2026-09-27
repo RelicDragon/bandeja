@@ -43,6 +43,48 @@ async function main(): Promise<void> {
   assert.match(faqTranslatorTestUtils.systemPrompt('sr', null), /Serbian Latin/);
   assert.match(faqTranslatorTestUtils.systemPrompt('zh', null), /Chinese Simplified/);
 
+  // Captured production replies: isolated short headings confuse both detectors.
+  const headingCases = [
+    {
+      question: 'Группа В',
+      answer: 'Поделена на 2 категории В1 и В2 для более равномерных игр и между собой не пересекаются. ',
+      targetLocale: 'en',
+      translatedQuestion: 'Group B',
+      translatedAnswer: 'Divided into 2 categories B1 and B2 for more even games and they do not intersect with each other. ',
+    },
+    {
+      question: 'Группа MIX',
+      answer: 'Играют без плей-ин, в плей-офф выходят 8 команд, финалы играются одним днем 19 или 20 декабря. ',
+      targetLocale: 'en',
+      translatedQuestion: 'MIX Group',
+      translatedAnswer: 'They play without play-in, 8 teams advance to the playoffs, the finals are played in one day on December 19 or 20. ',
+    },
+    {
+      question: 'Группа MIX',
+      answer: 'Играют без плей-ин, в плей-офф выходят 8 команд, финалы играются одним днем 19 или 20 декабря. ',
+      targetLocale: 'sr',
+      translatedQuestion: 'Grupa MIX',
+      translatedAnswer: 'Igraju bez plej-ina, u plej-of ulaze 8 timova, finala se igraju jednog dana 19. ili 20. decembra.',
+    },
+  ];
+  for (const { translatedQuestion, translatedAnswer, ...input } of headingCases) {
+    const pair = { question: translatedQuestion, answer: translatedAnswer, noChange: false };
+    const request = { ...input, sourceLocaleOverride: null };
+    assert.deepEqual(await translateFaqPair(request, fakeAi(pair).ai), pair);
+    // Context must never excuse untranslated fields, wrong script, changed facts,
+    // or an answer that itself fails validation.
+    await rejectsValidation(() => translateFaqPair(request, fakeAi({ ...pair, question: input.question }).ai));
+    await rejectsValidation(() => translateFaqPair(request, fakeAi({ ...pair, question: 'Группы MIX' }).ai));
+    await rejectsValidation(() => translateFaqPair(request, fakeAi({ ...pair, answer: input.answer }).ai));
+    await rejectsValidation(() => translateFaqPair(request, fakeAi({ ...pair, answer: translatedAnswer.replace(/\d/, '9') }).ai));
+  }
+  await rejectsValidation(() => translateFaqPair({
+    question: 'Группа MIX', answer: 'Да.', targetLocale: 'en', sourceLocaleOverride: null,
+  }, fakeAi({ question: 'MIX Group', answer: 'Yes.', noChange: false }).ai));
+  await rejectsValidation(() => translateFaqPair({
+    question: 'Группа MIX', answer: headingCases[1].answer, targetLocale: 'en', sourceLocaleOverride: null,
+  }, fakeAi({ question: 'Участники смешанной группы играют в финале', answer: headingCases[1].translatedAnswer, noChange: false }).ai));
+
   await rejectsValidation(() => translateFaqPair(source, fakeAi('not json').ai));
   await rejectsValidation(() => translateFaqPair(source, fakeAi({ question: 'Hola', noChange: false }).ai));
   await rejectsValidation(() => translateFaqPair(source, fakeAi({ ...translated, question: '¿Puedo unirme a 3 sesiones? https://example.com/2' }).ai));
