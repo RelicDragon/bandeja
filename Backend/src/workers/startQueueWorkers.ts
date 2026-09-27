@@ -1,6 +1,7 @@
 import prisma from '../config/database';
 import { TranslationQueueService } from '../services/chat/translationQueue.service';
 import { GameTextTranslationQueueService } from '../services/gameText/gameTextTranslationQueue.service';
+import { FaqTranslationQueueService } from '../services/faq/faqTranslationQueue.service';
 import { GameResultsArtifactQueueService } from '../services/gameResultsArtifact/gameResultsArtifactQueue.service';
 import { PlayIntentFollowerNotificationQueueService } from '../services/playIntent/playIntentFollowerNotificationQueue.service';
 import { PlayIntentMatchQueueService } from '../services/playIntent/playIntentMatchQueue.service';
@@ -14,6 +15,7 @@ export async function connectWorkersDatabase(): Promise<void> {
 export function startQueueWorkers(): void {
   TranslationQueueService.startWorker();
   GameTextTranslationQueueService.startWorker();
+  FaqTranslationQueueService.startWorker();
   GameResultsArtifactQueueService.startWorker();
   PlayIntentFollowerNotificationQueueService.startWorker();
   PlayIntentMatchQueueService.startWorker();
@@ -24,6 +26,7 @@ export function startQueueWorkers(): void {
 export function stopQueueWorkers(): void {
   TranslationQueueService.stopWorker();
   GameTextTranslationQueueService.stopWorker();
+  FaqTranslationQueueService.stopWorker();
   GameResultsArtifactQueueService.stopWorker();
   PlayIntentFollowerNotificationQueueService.stopWorker();
   PlayIntentMatchQueueService.stopWorker();

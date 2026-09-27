@@ -210,6 +210,13 @@ export const config = {
       10,
     ),
   },
+  faqTranslation: {
+    enabled: process.env.FAQ_TRANSLATION_GENERATION_ENABLED !== 'false',
+    concurrency: Math.max(1, parseInt(process.env.FAQ_TRANSLATION_QUEUE_CONCURRENCY || '2', 10) || 2),
+    pollIntervalMs: Math.max(250, parseInt(process.env.FAQ_TRANSLATION_QUEUE_POLL_INTERVAL_MS || '1000', 10) || 1000),
+    maxAttempts: Math.max(1, parseInt(process.env.FAQ_TRANSLATION_QUEUE_MAX_ATTEMPTS || '5', 10) || 5),
+    leaseMs: Math.max(30000, parseInt(process.env.FAQ_TRANSLATION_QUEUE_LEASE_MS || '180000', 10) || 180000),
+  },
   resultsArtifacts: {
     enabled: process.env.RESULTS_ARTIFACTS_ENABLED === 'true',
     replicateApiToken: process.env.REPLICATE_API_TOKEN || '',

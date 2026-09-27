@@ -3,10 +3,11 @@ import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, ConfirmationModal } from '@/components';
 import { faqApi, Faq } from '@/api/faq';
-import { Plus, Trash2, Edit3, ChevronUp, ChevronDown, X, Save, HelpCircle } from 'lucide-react';
+import { Plus, Trash2, Edit3, ChevronUp, ChevronDown, X, Save, HelpCircle, Languages } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { buildFixedTeamStandingsFaq } from '@/utils/leagueFixedTeamStandingsFaq';
 import { ExpandableTextarea } from '@/components/ui/ExpandableTextarea';
+import { FaqTranslationsModal } from './FaqTranslationsModal';
 
 interface FaqEditProps {
   gameId: string;
@@ -27,7 +28,11 @@ export const FaqEdit = ({
   const [formData, setFormData] = useState({ question: '', answer: '' });
   const [faqToDelete, setFaqToDelete] = useState<Faq | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [translationOpen, setTranslationOpen] = useState(false);
   const isInitialLoad = useRef(true);
+  const requestSequence = useRef(0);
+  const activeGameId = useRef(gameId);
+  activeGameId.current = gameId;
 
   const onFaqsChangeRef = useRef(onFaqsChange);
   
@@ -41,9 +46,11 @@ export const FaqEdit = ({
   const hasListContent = faqs.length > 0 || Boolean(autoFaq);
 
   const fetchFaqs = useCallback(async () => {
+    const request = ++requestSequence.current;
     try {
       setLoading(true);
       const response = await faqApi.getGameFaqs(gameId);
+      if (request !== requestSequence.current || activeGameId.current !== gameId) return;
       setFaqs(response.data);
       onFaqsChangeRef.current?.(response.data.length > 0);
       if (isInitialLoad.current) {
@@ -51,6 +58,7 @@ export const FaqEdit = ({
         isInitialLoad.current = false;
       }
     } catch (error) {
+      if (request !== requestSequence.current || activeGameId.current !== gameId) return;
       console.error('Failed to fetch FAQs:', error);
       toast.error(t('faq.fetchError', { defaultValue: 'Failed to fetch questions' }));
       setFaqs([]);
@@ -60,13 +68,26 @@ export const FaqEdit = ({
         isInitialLoad.current = false;
       }
     } finally {
-      setLoading(false);
+      if (request === requestSequence.current && activeGameId.current === gameId) setLoading(false);
     }
   }, [gameId, t, includeFixedTeamStandingsFaq]);
 
   useEffect(() => {
+    requestSequence.current += 1;
+    setFaqs([]);
+    setLoading(true);
+    setEditingId(null);
+    setIsCreating(false);
+    setFormData({ question: '', answer: '' });
+    setFaqToDelete(null);
+    setTranslationOpen(false);
+    setIsExpanded(false);
     isInitialLoad.current = true;
-    fetchFaqs();
+  }, [gameId]);
+
+  useEffect(() => {
+    void fetchFaqs();
+    return () => { requestSequence.current += 1; };
   }, [fetchFaqs]);
 
   const handleCreate = () => {
@@ -96,12 +117,15 @@ export const FaqEdit = ({
     try {
       if (isCreating) {
         await faqApi.createFaq({ gameId, ...formData });
+        if (activeGameId.current !== gameId) return;
         toast.success(t('faq.created', { defaultValue: 'Question created successfully' }));
       } else if (editingId) {
         await faqApi.updateFaq(editingId, formData);
+        if (activeGameId.current !== gameId) return;
         toast.success(t('faq.updated', { defaultValue: 'Question updated successfully' }));
       }
       await fetchFaqs();
+      if (activeGameId.current !== gameId) return;
       handleCancel();
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || t('faq.saveError', { defaultValue: 'Failed to save question' });
@@ -118,6 +142,7 @@ export const FaqEdit = ({
 
     try {
       await faqApi.deleteFaq(faqToDelete.id);
+      if (activeGameId.current !== gameId) return;
       toast.success(t('faq.deleted', { defaultValue: 'Question deleted successfully' }));
       await fetchFaqs();
       setFaqToDelete(null);
@@ -165,6 +190,16 @@ export const FaqEdit = ({
   if (loading) {
     return (
       <Card>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-2">
+            <HelpCircle size={18} className="text-gray-500 dark:text-gray-400" />
+            <h2 className="section-title">FAQ</h2>
+          </div>
+          <button type="button" disabled aria-describedby="faq-translation-disabled-reason" className="flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-primary-600 px-3 py-2 text-primary-700 opacity-50 dark:text-primary-300 sm:w-auto">
+            <Languages size={18} />{t('faq.translation.title')}
+          </button>
+        </div>
+        <p id="faq-translation-disabled-reason" className="mt-1 text-xs text-gray-500 dark:text-gray-400 sm:text-end">{t('app.loading')}</p>
         <div className="flex items-center justify-center py-8">
           <div className="text-gray-500 dark:text-gray-400">
             {t('app.loading', { defaultValue: 'Loading...' })}
@@ -177,36 +212,57 @@ export const FaqEdit = ({
   return (
     <Card>
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+        <div className="relative flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex min-h-11 items-center gap-2 pe-12 sm:min-h-0 sm:pe-0">
             <HelpCircle size={18} className="text-gray-500 dark:text-gray-400" />
             <h2 className="section-title">
               FAQ
             </h2>
           </div>
-          {!isCreating && !editingId && (
-            <div className="flex items-center gap-2">
-              {hasListContent && (
-                <button
-                  onClick={() => setIsExpanded(!isExpanded)}
-                  className="flex items-center justify-center px-3 py-2 rounded-lg transition-all duration-300 ease-in-out shadow-sm hover:shadow-md bg-primary-600 hover:bg-primary-700 dark:bg-primary-600 dark:hover:bg-primary-700 border border-primary-600 dark:border-primary-600 shadow-primary-100 dark:shadow-primary-900/20 text-white font-medium"
-                >
-                  {isExpanded ? (
-                    <ChevronUp size={24} />
-                  ) : (
-                    <ChevronDown size={24} />
-                  )}
-                </button>
-              )}
+          <div className="flex min-w-0 items-start gap-2 sm:w-auto">
+            <div className="min-w-0 flex-1 sm:flex-none">
               <button
-                onClick={handleCreate}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-300 ease-in-out shadow-sm hover:shadow-md bg-primary-600 hover:bg-primary-700 dark:bg-primary-600 dark:hover:bg-primary-700 border border-primary-600 dark:border-primary-600 shadow-primary-100 dark:shadow-primary-900/20 text-white font-medium"
+                type="button"
+                onClick={() => setTranslationOpen(true)}
+                disabled={faqs.length === 0 || isCreating || Boolean(editingId)}
+                aria-describedby={faqs.length === 0 || isCreating || editingId ? 'faq-translation-disabled-reason' : undefined}
+                title={isCreating || editingId ? t('faq.translation.saveFirst') : faqs.length === 0 ? t('faq.translation.addFirst') : undefined}
+                className="flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-primary-600 px-3 py-2 text-center text-sm font-medium text-primary-700 transition-colors hover:bg-primary-50 disabled:cursor-not-allowed disabled:opacity-50 dark:text-primary-300 dark:hover:bg-gray-800 sm:w-auto sm:text-base"
               >
-                <Plus size={18} />
-                {t('common.create')}
+                <Languages size={18} className="shrink-0" />
+                <span className="min-w-0 break-words">{t('faq.translation.title')}</span>
               </button>
+              {(faqs.length === 0 || isCreating || editingId) && (
+                <p id="faq-translation-disabled-reason" className="mt-1 text-xs text-gray-500 dark:text-gray-400 sm:max-w-48">
+                  {isCreating || editingId ? t('faq.translation.saveFirst') : t('faq.translation.addFirst')}
+                </p>
+              )}
             </div>
-          )}
+            {!isCreating && !editingId && (
+              <>
+                {hasListContent && (
+                  <button
+                    onClick={() => setIsExpanded(!isExpanded)}
+                    aria-label={isExpanded ? t('faq.collapse', { defaultValue: 'Collapse questions' }) : t('faq.expand', { defaultValue: 'Expand questions' })}
+                    className="absolute end-0 top-0 flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-primary-600 bg-primary-600 px-3 py-2 font-medium text-white shadow-sm shadow-primary-100 transition-all duration-300 ease-in-out hover:bg-primary-700 hover:shadow-md dark:border-primary-600 dark:bg-primary-600 dark:shadow-primary-900/20 dark:hover:bg-primary-700 sm:static"
+                  >
+                    {isExpanded ? (
+                      <ChevronUp size={24} />
+                    ) : (
+                      <ChevronDown size={24} />
+                    )}
+                  </button>
+                )}
+                <button
+                  onClick={handleCreate}
+                  className="flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-lg border border-primary-600 bg-primary-600 px-3 py-2 text-sm font-medium text-white shadow-sm shadow-primary-100 transition-all duration-300 ease-in-out hover:bg-primary-700 hover:shadow-md dark:border-primary-600 dark:bg-primary-600 dark:shadow-primary-900/20 dark:hover:bg-primary-700 sm:px-4 sm:text-base"
+                >
+                  <Plus size={18} />
+                  {t('common.create')}
+                </button>
+              </>
+            )}
+          </div>
         </div>
 
         {isCreating && !editingId && (
@@ -392,7 +448,7 @@ export const FaqEdit = ({
           onClose={() => setFaqToDelete(null)}
         />
       )}
+      <FaqTranslationsModal gameId={gameId} open={translationOpen} onClose={() => setTranslationOpen(false)} />
     </Card>
   );
 };
-

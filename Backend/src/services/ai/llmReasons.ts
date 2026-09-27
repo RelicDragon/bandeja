@@ -1,6 +1,7 @@
 export const LLM_REASON = {
   MESSAGE_TRANSLATION: 'message_translation',
   GAME_TEXT_TRANSLATION: 'game_text_translation',
+  FAQ_TRANSLATION: 'faq_translation',
   TELEGRAM_RESULTS: 'telegram_results',
   RESULTS_ARTIFACTS: 'results_artifacts',
   VOICE_TRANSCRIPTION: 'voice_transcription',

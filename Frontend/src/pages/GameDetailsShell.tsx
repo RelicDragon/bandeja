@@ -100,7 +100,6 @@ import { SportLevelProvider } from '@/contexts/SportLevelContext';
 import { Round } from '@/types/gameResults';
 import { shouldShowRoundAddedModal } from '@/utils/fivePlayerMatchCombinations';
 import {
-  isUserGameAdminOrOwner,
   canUserEditResults,
   canUserEditGameFormat,
   canViewTournamentTableByAccess,
@@ -257,7 +256,9 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
     [game?.participants]
   );
 
+  const faqPresenceRevision = useRef(0);
   const handleFaqsChange = useCallback((hasFaqs: boolean) => {
+    faqPresenceRevision.current += 1;
     setHasCustomFaqs(hasFaqs);
     setCustomFaqsReady(true);
   }, []);
@@ -636,28 +637,30 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
     void fetchClubs();
   }, [game?.city?.id, game?.club?.cityId, game?.entityType, user?.currentCity?.id]);
 
+  const faqGameId = game?.id;
+  const faqEntityType = game?.entityType;
+  const faqViewerId = user?.id;
   useEffect(() => {
     let cancelled = false;
+    const revision = faqPresenceRevision.current;
+    const isCurrent = () => !cancelled && revision === faqPresenceRevision.current;
 
     const checkFaqs = async () => {
-      if (!game || game.entityType !== 'LEAGUE_SEASON') return;
+      if (!faqGameId || !faqViewerId || faqEntityType !== 'LEAGUE_SEASON') return;
 
-      const isOwner = game && user ? isUserGameAdminOrOwner(game, user.id) : false;
-      const canEdit = isOwner || user?.isAdmin || false;
-
-      // Owners/admins: FaqEdit reports via onFaqsChange.
-      if (canEdit) return;
+      // The editor only mounts on General. Deep-linked FAQ readers, including
+      // organizers, still need the initial count so their active tab is visible.
 
       try {
-        const response = await faqApi.getGameFaqs(game.id);
-        if (cancelled) return;
+        const response = await faqApi.getGameFaqs(faqGameId);
+        if (!isCurrent()) return;
         setHasCustomFaqs(response.data.length > 0);
       } catch (error) {
         console.error('Failed to fetch FAQs:', error);
-        if (cancelled) return;
+        if (!isCurrent()) return;
         setHasCustomFaqs(false);
       } finally {
-        if (!cancelled) setCustomFaqsReady(true);
+        if (isCurrent()) setCustomFaqsReady(true);
       }
     };
 
@@ -665,7 +668,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
     return () => {
       cancelled = true;
     };
-  }, [game, user]);
+  }, [faqGameId, faqEntityType, faqViewerId]);
 
   const handleJoin = async () => {
     if (!id) return;

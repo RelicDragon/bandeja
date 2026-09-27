@@ -3,16 +3,41 @@ import { asyncHandler } from '../utils/asyncHandler';
 import { AuthRequest } from '../middleware/auth';
 import { FaqService } from '../services/faq/faq.service';
 import { ApiError } from '../utils/ApiError';
+import { resolveRequestAppUiLocale } from '../services/gameText/gameTextRequestLocale';
+import { FaqTranslationService } from '../services/faq/faqTranslation.service';
+import { FaqTranslationQueueService } from '../services/faq/faqTranslationQueue.service';
 
 export const getGameFaqs = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { gameId } = req.params;
 
-  const faqs = await FaqService.getFaqsByGameId(gameId);
+  const faqs = await FaqService.getFaqsByGameId(gameId, resolveRequestAppUiLocale(req));
 
   res.json({
     success: true,
     data: faqs,
   });
+});
+
+export const getFaqTranslationStatus = asyncHandler(async (req: AuthRequest, res: Response) => {
+  res.json({ success: true, data: await FaqTranslationService.status(req.params.gameId) });
+});
+
+export const submitFaqTranslations = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const data = await FaqTranslationService.submit(req.params.gameId, req.userId!, req.user?.isAdmin || false, req.body, false);
+  FaqTranslationQueueService.wake();
+  res.status(202).json({ success: true, data });
+});
+
+export const retryFaqTranslations = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const data = await FaqTranslationService.submit(req.params.gameId, req.userId!, req.user?.isAdmin || false, req.body, true);
+  FaqTranslationQueueService.wake();
+  res.status(202).json({ success: true, data });
+});
+
+export const requestReaderFaqTranslation = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const data = await FaqTranslationService.requestReaderLocale(req.params.gameId, req.userId!, req.user?.isAdmin || false, req.body);
+  if (data.queued > 0) FaqTranslationQueueService.wake();
+  res.status(202).json({ success: true, data });
 });
 
 export const createFaq = asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -72,4 +97,3 @@ export const reorderFaqs = asyncHandler(async (req: AuthRequest, res: Response) 
     data: faqs,
   });
 });
-

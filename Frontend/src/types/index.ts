@@ -502,6 +502,8 @@ export interface Faq {
   order: number;
   createdAt: string;
   updatedAt: string;
+  sourceRevision?: number;
+  localizedText?: { locale: string; question: string; answer: string; state: 'original' | 'translated' };
 }
 
 export type GameLastMessagePreview = {

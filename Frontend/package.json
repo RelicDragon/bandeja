@@ -19,6 +19,7 @@
     "postbuild": "node scripts/force-sw-update.js",
     "prebuild": "npm run build:contracts",
     "preview": "vite preview",
+    "test:faq-translations": "../scripts/run-heavy vitest run src/components/GameDetails/FaqEdit.stale.test.tsx src/components/GameDetails/FaqTranslationsModal.test.tsx src/components/GameDetails/FaqTab.translation.test.tsx",
     "sync:deep-link-catalog": "node --experimental-strip-types scripts/sync-deep-link-catalog.ts",
     "test:achievements": "../scripts/run-heavy vitest run src/shared/achievements.test.ts src/shared/partnerAchievements.test.ts src/shared/tieBreakAchievements.test.ts src/shared/bugShippedAchievements.test.ts src/utils/trophyPinOptimistic.test.ts src/components/trophies/cabinetGrouping.test.ts src/components/trophies/trophyStackGeometry.test.ts src/components/trophies/trophyStackExpansion.test.ts src/components/trophies/TrophyCabinetCard.test.tsx src/components/trophies/TrophyCabinetStack.test.tsx src/components/trophies/TrophyDetailSheet.test.tsx src/components/trophies/FollowingAchievementEarners.test.tsx src/components/trophies/AchievementFamilyLeaders.test.tsx src/components/trophies/TrophyStackIcon.test.tsx",
     "test:attendance": "../scripts/run-heavy vitest run src/features/attendance/AttendanceCard.test.tsx src/features/attendance/attendanceRoster.test.tsx src/features/attendance/attendanceVisuals.test.ts src/features/attendance/AttendanceLegendSheet.test.tsx src/services/push/registerPushNotificationActionTypes.test.ts src/services/push/answerAttendanceFromPush.test.ts",

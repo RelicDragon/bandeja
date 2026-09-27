@@ -874,6 +874,7 @@ model Game {
   levelChangeEvents          LevelChangeEvent[]
   leagueSeason               LeagueSeason?                   @relation("GameLeagueSeason")
   faqs                       GameFaq[]
+  faqTranslationPreference   GameFaqTranslationPreference?
   bets                       Bet[]
   trainerReviews             TrainerReview[]
   clubReviews                ClubReview[]
@@ -1171,13 +1172,79 @@ model GameFaq {
   gameId    String
   question  String
   answer    String
+  sourceRevision Int @default(1)
   order     Int
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  translations GameFaqTranslation[]
+  translationJobs GameFaqTranslationJob[]
 
   @@index([gameId])
   @@index([order])
+}
+
+model GameFaqTranslationPreference {
+  gameId String @id
+  selectedLocales String[]
+  sourceLocaleOverride String? @db.VarChar(10)
+  updatedAt DateTime @updatedAt
+  game Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
+}
+
+model GameFaqTranslation {
+  id String @id @default(cuid())
+  faqId String
+  locale String @db.VarChar(10)
+  sourceRevision Int
+  policyVersion Int
+  sourceLocaleOverride String? @db.VarChar(10)
+  question String @db.Text
+  answer String @db.Text
+  noChange Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  faq GameFaq @relation(fields: [faqId], references: [id], onDelete: Cascade)
+
+  @@unique([faqId, locale])
+  @@index([faqId])
+}
+
+enum GameFaqTranslationJobStatus {
+  pending
+  running
+  done
+  failed
+  superseded
+}
+
+model GameFaqTranslationJob {
+  id String @id @default(cuid())
+  faqId String
+  targetLocale String @db.VarChar(10)
+  sourceRevision Int
+  policyVersion Int
+  /// Empty string denotes automatic source detection for deterministic identity.
+  sourceLocaleOverride String @default("") @db.VarChar(10)
+  questionSnapshot String @db.Text
+  answerSnapshot String @db.Text
+  requestedBy String
+  status GameFaqTranslationJobStatus @default(pending)
+  attempts Int @default(0)
+  runAfter DateTime @default(now())
+  leaseOwner String?
+  leaseExpiresAt DateTime?
+  claimToken BigInt @default(0)
+  errorCategory String? @db.VarChar(32)
+  lastError String? @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  faq GameFaq @relation(fields: [faqId], references: [id], onDelete: Cascade)
+
+  @@unique([faqId, targetLocale, sourceRevision, policyVersion, sourceLocaleOverride], map: "GameFaqTranslationJob_identity_key")
+  @@index([status, runAfter])
+  @@index([leaseExpiresAt])
+  @@index([faqId])
 }
 
 model TrainerReview {

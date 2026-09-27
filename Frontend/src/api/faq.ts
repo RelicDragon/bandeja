@@ -9,6 +9,23 @@ export interface Faq {
   order: number;
   createdAt: string;
   updatedAt: string;
+  sourceRevision?: number;
+  localizedText?: { locale: string; question: string; answer: string; state: 'original' | 'translated' };
+}
+
+export interface FaqTranslationStatus {
+  generationEnabled: boolean;
+  selectedLocales: string[];
+  sourceLocaleOverride: string | null;
+  snapshot: string;
+  faqCount: number;
+  locales: Array<{ locale: string; ready: number; pending: number; failed: number; stale: number; missing: number }>;
+}
+
+export interface FaqTranslationRequest {
+  targetLocales: string[];
+  sourceLocaleOverride: string | null;
+  expectedSnapshot: string;
 }
 
 export interface CreateFaqData {
@@ -25,8 +42,30 @@ export interface UpdateFaqData {
 }
 
 export const faqApi = {
-  getGameFaqs: async (gameId: string) => {
-    const response = await api.get<ApiResponse<Faq[]>>(`/faqs/game/${gameId}`);
+  getGameFaqs: async (gameId: string, locale?: string) => {
+    const response = await api.get<ApiResponse<Faq[]>>(`/faqs/game/${gameId}`, {
+      params: locale ? { locale } : undefined,
+    });
+    return response.data;
+  },
+
+  getTranslations: async (gameId: string) => {
+    const response = await api.get<ApiResponse<FaqTranslationStatus>>(`/faqs/game/${gameId}/translations`);
+    return response.data;
+  },
+
+  submitTranslations: async (gameId: string, data: FaqTranslationRequest) => {
+    const response = await api.post<ApiResponse<FaqTranslationStatus>>(`/faqs/game/${gameId}/translations`, data);
+    return response.data;
+  },
+
+  retryTranslations: async (gameId: string, data: FaqTranslationRequest) => {
+    const response = await api.post<ApiResponse<FaqTranslationStatus>>(`/faqs/game/${gameId}/translations/retry`, data);
+    return response.data;
+  },
+
+  requestReaderTranslation: async (gameId: string, locale: string, retry = false) => {
+    const response = await api.post<ApiResponse<FaqTranslationStatus>>(`/faqs/game/${gameId}/translations/request`, { locale, retry });
     return response.data;
   },
 
@@ -50,4 +89,3 @@ export const faqApi = {
     return response.data;
   },
 };
-
