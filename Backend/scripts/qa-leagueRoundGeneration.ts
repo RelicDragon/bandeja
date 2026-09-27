@@ -664,24 +664,24 @@ async function main() {
       console.log('ok: createFullRegularRoundRobin — 4 teams, 3 rounds, 6 games');
     }
 
-    // --- 9) createFullRegularRoundRobin: two groups (4 + 3 teams) → max cycle 3 rounds, 9 games ---
+    // --- 9) Mixed cycle lengths: 4 + 5 teams → 5 rounds, with no repeat in the 4-team group ---
     {
-      const teams = buildDisjointTeams(users, 7);
+      const teams = buildDisjointTeams(users, 9);
       const { leagueId, seasonId } = await createFixedTeamLeague(prisma, city.id, teams, false, start, end);
       branches.push({ leagueId, seasonId });
       const groupA = await prisma.leagueGroup.create({
-        data: { leagueSeasonId: seasonId, name: `QA fullRR m4x3 A ${Date.now()}` },
+        data: { leagueSeasonId: seasonId, name: `QA fullRR m4x5 A ${Date.now()}` },
       });
       const groupB = await prisma.leagueGroup.create({
-        data: { leagueSeasonId: seasonId, name: `QA fullRR m4x3 B ${Date.now()}` },
+        data: { leagueSeasonId: seasonId, name: `QA fullRR m4x5 B ${Date.now()}` },
       });
       await LeagueSyncService.syncLeagueParticipants(seasonId);
       const teamParts = await prisma.leagueParticipant.findMany({
         where: { leagueSeasonId: seasonId, participantType: LeagueParticipantType.TEAM },
         include: { leagueTeam: { include: { players: { select: { userId: true } } } } },
       });
-      if (teamParts.length !== 7) {
-        throw new Error(`full RR mixed 4+3: expected 7 team participants, got ${teamParts.length}`);
+      if (teamParts.length !== 9) {
+        throw new Error(`full RR mixed 4+5: expected 9 team participants, got ${teamParts.length}`);
       }
       const orderedIds = teams.map((pair) => {
         const want = new Set(pair);
@@ -689,7 +689,7 @@ async function main() {
           const ids = (lp.leagueTeam?.players ?? []).map((x) => x.userId).filter(Boolean) as string[];
           return ids.length === 2 && ids.every((u) => want.has(u));
         });
-        if (!p) throw new Error('full RR mixed 4+3: roster participant not found');
+        if (!p) throw new Error('full RR mixed 4+5: roster participant not found');
         return p.id;
       });
       const idsA = orderedIds.slice(0, 4);
@@ -708,21 +708,30 @@ async function main() {
       const rc = await prisma.leagueRound.count({ where: { leagueSeasonId: seasonId } });
       const expectedRounds = Math.max(
         roundsInSingleRoundRobinCycle(4),
-        roundsInSingleRoundRobinCycle(3),
+        roundsInSingleRoundRobinCycle(5),
       );
       if (rc !== expectedRounds) {
-        throw new Error(`full RR mixed 4+3: expected ${expectedRounds} rounds, got ${rc}`);
+        throw new Error(`full RR mixed 4+5: expected ${expectedRounds} rounds, got ${rc}`);
       }
       const gc = await prisma.game.count({
         where: { parentId: seasonId, entityType: EntityType.LEAGUE },
       });
-      if (gc !== 9) {
-        throw new Error(`full RR mixed 4+3: expected 9 games, got ${gc}`);
+      if (gc !== 16) {
+        throw new Error(`full RR mixed 4+5: expected 16 games, got ${gc}`);
       }
-      const rrRounds = Math.max(roundsInSingleRoundRobinCycle(4), roundsInSingleRoundRobinCycle(3));
-      await assertFixedTeamRoundRobinScheduleBalance(prisma, 'full RR mixed group A', seasonId, 4, rrRounds, groupA.id);
-      await assertFixedTeamRoundRobinScheduleBalance(prisma, 'full RR mixed group B', seasonId, 3, rrRounds, groupB.id);
-      console.log('ok: createFullRegularRoundRobin — mixed 4+3 teams, two groups');
+      await assertFixedTeamRoundRobinScheduleBalance(prisma, 'full RR mixed group A', seasonId, 4, 3, groupA.id);
+      await assertFixedTeamRoundRobinScheduleBalance(prisma, 'full RR mixed group B', seasonId, 5, 5, groupB.id);
+
+      await LeagueRecreateRegularSeasonService.recreateFullRegularRoundRobin(seasonId, ownerId);
+      const recreatedCount = await prisma.game.count({
+        where: { parentId: seasonId, entityType: EntityType.LEAGUE },
+      });
+      if (recreatedCount !== 16) {
+        throw new Error(`recreate mixed 4+5: expected 16 games, got ${recreatedCount}`);
+      }
+      await assertFixedTeamRoundRobinScheduleBalance(prisma, 'recreate mixed group A', seasonId, 4, 3, groupA.id);
+      await assertFixedTeamRoundRobinScheduleBalance(prisma, 'recreate mixed group B', seasonId, 5, 5, groupB.id);
+      console.log('ok: create and recreate full RR — mixed 4+5 teams, no repeated pairings');
     }
 
     // --- 10) recreate: trims extra REGULAR round and refills to single RR (4 teams) ---

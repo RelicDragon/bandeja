@@ -110,6 +110,9 @@ export async function ensureFixedTeamPairingsForRegularRound(
   const cycle = roundsInSingleRoundRobinCycle(sortedTeams.length);
   if (cycle < 1) return 0;
 
+  // The shared season round count follows the largest group. Do not refill extra rounds for smaller groups.
+  if (priorRegularRounds >= cycle) return 0;
+
   const slot = priorRegularRounds % cycle;
   const pairIndices = pairIndicesForRoundRobinSlot(sortedTeams.length, slot);
 

@@ -1285,6 +1285,7 @@ Wallet side: `PR-CS-01`–`PR-CS-05` in §13.3. Cards: `F-CS-01`–`F-CS-05` in 
 |----|------|-------|----------|
 | GD-43 | League tabs | general/schedule/planner/standings/faq | Tab content |
 | GD-44 | Schedule tab | View/fixtures | Round list |
+| GD-44f | Full round robin with uneven groups | Fixed-team season with 8-team and 11-team groups → Create full round robin → Schedule/List/Table; then recreate | Season has 11 REGULAR rounds. Eight-team group has exactly 28 fixtures in rounds 1–7 and none in 8–11; 11-team group has 55 fixtures, one bye per team. Each team pair appears once before and after recreate |
 | GD-44a | My schedule multi-group bookmark | User plays in 2+ groups of same season → Schedule → My | Each card shows flush bottom-left colored group bookmark with group name |
 | GD-44b | My schedule single-group no bookmark | User plays in only one group → Schedule → My | No group bookmark on cards |
 | GD-44c | My schedule group filter | User plays in 2+ groups → Schedule → My → group selector | Options: All + only groups user plays in; selecting a group shows only that group's fixtures |
