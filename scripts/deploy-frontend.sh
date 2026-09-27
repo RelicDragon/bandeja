@@ -58,6 +58,7 @@ mkdir -p "$WORKDIR/Frontend" "$WORKDIR/packages" "$WORKDIR/scripts"
 rsync -a \
   --exclude 'dist' \
   --exclude 'releases' \
+  --exclude 'node_modules' \
   "$FRONTEND/" "$WORKDIR/Frontend/"
 
 rsync -a "$CONTRACT/" "$WORKDIR/packages/chat-contract/"
