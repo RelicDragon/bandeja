@@ -41,6 +41,14 @@ fi
 
 mkdir -p "$RELEASES"
 
+# The production site serves Frontend/dist. A checkout-level node_modules is a
+# leftover from older builds; the isolated build runs npm ci in WORKDIR below.
+# Remove it before allocating a second dependency tree on disk.
+if [[ -d "$FRONTEND/node_modules" ]]; then
+  echo "deploy: removing unused checkout dependencies to free build space"
+  rm -rf "$FRONTEND/node_modules"
+fi
+
 if [[ -e "$FRONTEND/dist" && ! -L "$FRONTEND/dist" ]]; then
   legacy="legacy-$(date +%Y%m%d-%H%M%S)"
   mv "$FRONTEND/dist" "$RELEASES/$legacy"

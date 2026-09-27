@@ -16,6 +16,12 @@ assert.match(
 
 assert.match(
   deployScript,
+  /rm -rf "\$FRONTEND\/node_modules"/,
+  'deploy-frontend.sh must free the unused checkout dependency tree before npm ci'
+);
+
+assert.match(
+  deployScript,
   /rsync -a "\$UNREAD_CONTRACT\/" "\$WORKDIR\/packages\/unread-contract\/"/,
   'deploy-frontend.sh must copy packages/unread-contract into the isolated build workdir'
 );
