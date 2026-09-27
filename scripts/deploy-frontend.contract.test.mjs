@@ -10,6 +10,12 @@ const updScript = readFileSync(join(root, 'upd.sh'), 'utf8');
 
 assert.match(
   deployScript,
+  /--exclude 'node_modules'/,
+  'deploy-frontend.sh must not copy installed dependencies into the temporary build before npm ci'
+);
+
+assert.match(
+  deployScript,
   /rsync -a "\$UNREAD_CONTRACT\/" "\$WORKDIR\/packages\/unread-contract\/"/,
   'deploy-frontend.sh must copy packages/unread-contract into the isolated build workdir'
 );
