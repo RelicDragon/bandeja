@@ -433,10 +433,6 @@ export class LeagueRecreateRegularSeasonService {
       teamCounts.push(sortedTeams.length);
     }
 
-    if (new Set(teamCounts).size > 1) {
-      throw new ApiError(400, 'leagues.fullRoundRobin.groupsMustHaveSameTeamCount');
-    }
-
     const targetRegularRounds = Math.max(
       0,
       ...teamCounts.map((c) => roundsInSingleRoundRobinCycle(c))

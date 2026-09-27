@@ -46,6 +46,8 @@ LEAGUE fixture details: link to parent season; no season tabs. Parent owner/admi
 
 Fixture create uses `gameCreation.util.ts` (`createLeagueGame` / `createLeaguePlayoffGame`). Match pairing engines for **games** (americano etc.) live under `Backend/src/services/results/generation/`; league RR uses `generation/fixedTeamsRoundRobin.ts`.
 
+For a full fixed-team round robin, the season creates enough REGULAR rounds for its largest group. Each group generates fixtures only for its own single cycle: even `n` teams play `n−1` rounds, odd `n` teams play `n` rounds with one bye per round. Smaller groups have no fixtures in later shared rounds. Manual **Create round** can intentionally start another cycle. Recreate applies the same per-group limit while preserving protected fixtures.
+
 ## Team withdrawal
 
 Vocabulary from root `CONTEXT.md`. Applies to **TEAM** franchises in **fixed-team** seasons only (`LeagueTeamWithdrawalService`). Authority: same as player swap (`canEditGame`). UI: `LeagueTeamWithdrawModal` next to swap in Manage groups.

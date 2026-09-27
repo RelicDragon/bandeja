@@ -24,7 +24,11 @@ interface FixedLeagueTeamEntry {
 }
 
 export class TeamForRoundGeneration {
-  static async generateGamesForRound(leagueRoundId: string, db: GameReadinessDb = prisma) {
+  static async generateGamesForRound(
+    leagueRoundId: string,
+    db: GameReadinessDb = prisma,
+    options: { singleCycle?: boolean } = {}
+  ) {
     const round = await db.leagueRound.findUnique({
       where: { id: leagueRoundId },
       include: {
@@ -62,7 +66,8 @@ export class TeamForRoundGeneration {
         leagueRoundId,
         seasonGame,
         round.orderIndex,
-        db
+        db,
+        options
       );
     }
 
@@ -102,7 +107,8 @@ export class TeamForRoundGeneration {
     leagueRoundId: string,
     seasonGame: any,
     leagueRoundOrderIndex: number,
-    db: GameReadinessDb
+    db: GameReadinessDb,
+    options: { singleCycle?: boolean }
   ) {
     const participants = await db.leagueParticipant.findMany({
       where: {
@@ -138,7 +144,8 @@ export class TeamForRoundGeneration {
         leagueRoundId,
         seasonGame,
         leagueRoundOrderIndex,
-        db
+        db,
+        options
       );
       return;
     }
@@ -212,7 +219,8 @@ export class TeamForRoundGeneration {
     leagueRoundId: string,
     seasonGame: any,
     leagueRoundOrderIndex: number,
-    db: GameReadinessDb
+    db: GameReadinessDb,
+    options: { singleCycle?: boolean }
   ) {
     const fixedTeams: FixedLeagueTeamEntry[] = participants
       .filter((p) => p.participantType === 'TEAM' && p.leagueTeam?.players?.length)
@@ -258,7 +266,12 @@ export class TeamForRoundGeneration {
       return;
     }
 
-    // Pure circle RR every round; min-cost branch ran from round 1+ and broke bye balance (odd n).
+    // A full RR has one cycle per group. The season may have more rounds because another group is larger.
+    if (options.singleCycle && priorRegularRounds >= cycle) {
+      return;
+    }
+
+    // Manual rounds may deliberately start another cycle after the first one.
     const slot = priorRegularRounds % cycle;
     const pairIndices = pairIndicesForRoundRobinSlot(sortedTeams.length, slot);
     console.log(
@@ -553,5 +566,4 @@ export class TeamForRoundGeneration {
     });
   }
 }
-
 

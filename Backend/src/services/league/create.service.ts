@@ -669,7 +669,7 @@ export class LeagueCreateService {
               roundType: RoundType.REGULAR,
             },
           });
-          await TeamForRoundGeneration.generateGamesForRound(round.id, tx);
+          await TeamForRoundGeneration.generateGamesForRound(round.id, tx, { singleCycle: true });
         }
       },
       { maxWait: 20000, timeout: 120000 }
