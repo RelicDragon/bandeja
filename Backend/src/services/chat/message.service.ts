@@ -21,7 +21,8 @@ import {
   withInviteOnlyRosterMessageFilter,
 } from './gameChatRosterVisibility';
 import { USER_SELECT_FIELDS, USER_SELECT_WITH_SPORT_PROFILES } from '../../utils/constants';
-import { resolveChatMessageSport } from '../user/userSportProfile.service';
+import { ChatReadCursorService } from './chatReadCursor.service';
+import { resolveChatMessageSport, projectUserForSportContext } from '../user/userSportProfile.service';
 import { projectMessageEmbeddedUsers, projectMessagesEmbeddedUsers } from '../user/projectEmbeddedBasicUsers';
 import notificationService from '../notification.service';
 import { UserChatService } from './userChat.service';
@@ -1636,6 +1637,17 @@ export class MessageService {
       userId,
     );
     return messagesWithTranslation.reverse();
+  }
+
+  static async getMessageDetails(messageId: string, userId: string) {
+    // getMessageById checks both thread membership and game chat-slice access.
+    const message = await this.getMessageById(messageId, userId);
+    const readers = await ChatReadCursorService.listMessageReaders(message);
+    const sport = await resolveChatMessageSport(message, userId);
+    return {
+      message,
+      readers: readers.map(({ user }) => projectUserForSportContext(user, sport)),
+    };
   }
 
   static async getMessageById(messageId: string, userId: string) {

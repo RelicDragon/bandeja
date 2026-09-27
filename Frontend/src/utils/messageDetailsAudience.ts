@@ -1,3 +1,4 @@
+import type { BasicUser } from '@/types';
 import type { MessageReaction, MessageReadReceipt } from '@/api/chat';
 import { readReceiptsFromOthers } from '@/services/chat/messageTickState';
 
@@ -6,6 +7,7 @@ export type MessageDetailsAudienceRow = {
   userId: string;
   user?: MessageReadReceipt['user'];
   readAt?: string;
+  isRead?: boolean;
   reaction?: MessageReaction;
 };
 
@@ -19,9 +21,15 @@ export function buildMessageDetailsAudienceRows(
   readReceipts: readonly MessageReadReceipt[] | undefined,
   reactions: readonly MessageReaction[] | undefined,
   senderId: string | null | undefined,
-  viewerUserId?: string | null
+  viewerUserId?: string | null,
+  readers?: readonly BasicUser[]
 ): MessageDetailsAudienceRow[] {
-  const otherReadReceipts = readReceiptsFromOthers(readReceipts, senderId, viewerUserId);
+  const otherReadReceipts = readers
+    ? readers.map(user => ({
+        id: `reader-${user.id}`, userId: user.id, user,
+        readAt: readReceipts?.find(receipt => receipt.userId === user.id)?.readAt,
+      })).filter(reader => reader.userId !== senderId && reader.userId !== viewerUserId)
+    : readReceiptsFromOthers(readReceipts, senderId, viewerUserId);
   const receiptUserIds = new Set(otherReadReceipts.map((receipt) => receipt.userId));
 
   const rows: MessageDetailsAudienceRow[] = otherReadReceipts.map((receipt, index) => ({
@@ -29,6 +37,7 @@ export function buildMessageDetailsAudienceRows(
     userId: receipt.userId,
     user: receipt.user,
     readAt: receipt.readAt,
+    isRead: true,
     reaction: reactions?.find((reaction) => reaction.userId === receipt.userId),
   }));
 

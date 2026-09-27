@@ -37,6 +37,7 @@ import { fetchBasicUsersBatched } from '@/services/users/fetchBasicUsersBatched'
 import type { BasicUser } from '@/types';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { useIsStickerFavorite } from '@/hooks/useIsStickerFavorite';
+import { useMessageDetails } from './chat/useMessageDetails';
 import { buildMessageDetailsAudienceRows } from '@/utils/messageDetailsAudience';
 import {
   isEligibleSaveAsStickerMessage,
@@ -110,6 +111,8 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
   const mainMenuRef = useRef<HTMLDivElement>(null);
   const detailsRef = useRef<HTMLDivElement>(null);
   const [showDetails, setShowDetails] = useState(false);
+  const details = useMessageDetails(message.id, showDetails);
+  const detailsMessage = details.data?.message ?? message;
   const [menuHeight, setMenuHeight] = useState(0);
   const [detailsHeight, setDetailsHeight] = useState(0);
   const [isTranslating, setIsTranslating] = useState(false);
@@ -129,12 +132,13 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
   const detailsAudienceRows = useMemo(
     () =>
       buildMessageDetailsAudienceRows(
-        message.readReceipts,
-        message.reactions,
-        message.senderId,
-        user?.id
+        detailsMessage.readReceipts,
+        detailsMessage.reactions,
+        detailsMessage.senderId,
+        user?.id,
+        details.data?.readers
       ),
-    [message.readReceipts, message.reactions, message.senderId, user?.id]
+    [detailsMessage.readReceipts, detailsMessage.reactions, detailsMessage.senderId, user?.id, details.data?.readers]
   );
 
   const receiptAndSenderIds = useMemo(() => {
@@ -232,7 +236,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
     if (nextDetailsHeight > 10) {
       setDetailsHeight((prev) => (prev === nextDetailsHeight ? prev : nextDetailsHeight));
     }
-  }, [showDetails, detailsAudienceRows, message.reactions, usersById]);
+  }, [showDetails, detailsAudienceRows, details.status, message.reactions, usersById]);
 
   const handleReply = () => {
     if (!onReply) return;
@@ -383,15 +387,15 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
     (userId: string, embedded?: BasicUser): BasicUser | undefined => {
       const fromStore = usersById[userId];
       if (userId === message.senderId) {
-        return mergeBasicUsers(message.sender ?? embedded, fromStore);
+        return mergeBasicUsers(detailsMessage.sender ?? embedded, fromStore);
       }
       return mergeBasicUsers(embedded, fromStore);
     },
-    [message.sender, message.senderId, usersById]
+    [detailsMessage.sender, message.senderId, usersById]
   );
 
   useEffect(() => {
-    if (!showDetails) return;
+    if (!showDetails || details.status !== 'ready') return;
     let cancelled = false;
 
     const run = async () => {
@@ -406,7 +410,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
         }
       };
 
-      queueIfUnresolved(message.senderId, message.sender ?? undefined);
+      queueIfUnresolved(detailsMessage.senderId, detailsMessage.sender ?? undefined);
       for (const row of detailsAudienceRows) {
         queueIfUnresolved(row.userId, row.user);
       }
@@ -433,6 +437,9 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
     };
   }, [
     showDetails,
+    details.status,
+    detailsMessage.senderId,
+    detailsMessage.sender,
     message.id,
     message.senderId,
     message.sender,
@@ -451,8 +458,8 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
 
   const displaySenderUser = useMemo((): BasicUser | undefined => {
     if (!message.senderId) return undefined;
-    return resolveDetailsUser(message.senderId, message.sender ?? undefined);
-  }, [message.sender, message.senderId, resolveDetailsUser]);
+    return resolveDetailsUser(message.senderId, detailsMessage.sender ?? undefined);
+  }, [detailsMessage.sender, message.senderId, resolveDetailsUser]);
 
   const formatAudienceTime = (iso: string) => {
     const readDate = new Date(iso);
@@ -770,9 +777,9 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
           {/* Message Details */}
           <div className="px-3 py-2 border-b border-gray-200 dark:border-gray-600">
             <div className="text-xs text-gray-500 dark:text-gray-400">
-              <div>{message.editedAt ? `${t('chat.created', { defaultValue: 'Created' })}: ` : ''}{formatFullDateTime(message.createdAt, user)}</div>
-              {message.editedAt && (
-                <div>{t('chat.editedAt', { defaultValue: 'Edited' })}: {formatFullDateTime(message.editedAt, user)}</div>
+              <div>{detailsMessage.editedAt ? `${t('chat.created', { defaultValue: 'Created' })}: ` : ''}{formatFullDateTime(detailsMessage.createdAt, user)}</div>
+              {detailsMessage.editedAt && (
+                <div>{t('chat.editedAt', { defaultValue: 'Edited' })}: {formatFullDateTime(detailsMessage.editedAt, user)}</div>
               )}
               <div className={`flex items-center min-h-[1.5rem] ${message.senderId ? 'gap-2' : ''}`}>
                 {message.senderId ? (
@@ -798,12 +805,19 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
 
           {/* Read Receipts */}
           <div className="px-3 py-2">
-            {detailsAudienceRows.length > 0 && (
+            {details.status === 'ready' && detailsAudienceRows.length > 0 && (
               <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">
                 <div className="font-medium">{t('chat.contextMenu.readBy')} ({detailsAudienceRows.length})</div>
               </div>
             )}
-            {detailsAudienceRows.length > 0 ? (
+            {details.status === 'loading' ? (
+              <div role="status" className="text-xs text-gray-500 dark:text-gray-400">{t('common.loading')}</div>
+            ) : details.status === 'error' ? (
+              <div role="alert" className="text-xs text-gray-500 dark:text-gray-400">
+                <div>{t('common.error')}</div>
+                <button className="mt-2 underline" onClick={details.retry}>{t('common.retry')}</button>
+              </div>
+            ) : detailsAudienceRows.length > 0 ? (
               <div className="space-y-2 max-h-48 overflow-y-auto">
                 {detailsAudienceRows.map((row) => {
                   const du = audienceDisplayUser(row);
@@ -823,18 +837,18 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
                         <div className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">
                           {du && hasUserDisplayName(du) ? getUserDisplayName(du) : 'Unknown User'}
                         </div>
-                        {statusTime ? (
+                        {row.isRead || statusTime ? (
                           <div className="flex items-center space-x-1">
-                            {row.readAt ? (
+                            {row.isRead ? (
                               <DoubleTickIcon size={14} variant="double" className="text-gray-500" />
                             ) : null}
                             <span className="text-xs text-gray-500 dark:text-gray-400">
                               {row.readAt
                                 ? formatAudienceTime(row.readAt)
-                                : t('chat.contextMenu.reactedAt', {
+                                : statusTime ? t('chat.contextMenu.reactedAt', {
                                     defaultValue: 'Reacted {{time}}',
                                     time: formatAudienceTime(statusTime),
-                                  })}
+                                  }) : null}
                             </span>
                           </div>
                         ) : null}
@@ -847,7 +861,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
               </div>
             ) : (
               <div className="text-xs text-gray-500 dark:text-gray-400">
-                {message.state === 'DELIVERED'
+                {detailsMessage.state === 'DELIVERED'
                   ? t('chat.contextMenu.deliveredNotReadYet', {
                       defaultValue: 'Delivered — not read yet',
                     })

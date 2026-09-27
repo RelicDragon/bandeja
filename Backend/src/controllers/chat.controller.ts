@@ -396,6 +396,14 @@ export const getBugMessages = asyncHandler(async (req: AuthRequest, res: Respons
   });
 });
 
+export const getMessageDetails = asyncHandler(async (req: AuthRequest, res: Response) => {
+  if (!req.userId) {
+    throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
+  }
+  const details = await MessageService.getMessageDetails(req.params.messageId, req.userId);
+  res.json({ success: true, data: details });
+});
+
 export const getChatMessageById = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { messageId } = req.params;
   const userId = req.userId;

@@ -1,6 +1,7 @@
 import type { Prisma } from '@prisma/client';
 import { ChatContextType, ChatType } from '@prisma/client';
 import prisma from '../../config/database';
+import { USER_SELECT_WITH_SPORT_PROFILES } from '../../utils/constants';
 
 export type ReadCursorMessageSlice = {
   id: string;
@@ -195,6 +196,26 @@ export class ChatReadCursorService {
       results.push(await this.mergeFromMessage(tx, userId, m));
     }
     return results;
+  }
+
+  /** Call only after validating access to the message and its chat slice. */
+  static async listMessageReaders(message: ReadCursorMessageSlice & { senderId: string | null }) {
+    const seq = message.serverSyncSeq ?? -1;
+    return prisma.chatReadCursor.findMany({
+      where: {
+        chatContextType: message.chatContextType,
+        contextId: message.contextId,
+        chatType: message.chatType,
+        ...(message.senderId ? { userId: { not: message.senderId } } : {}),
+        OR: [
+          { readMaxServerSyncSeq: { gt: seq } },
+          { readMaxServerSyncSeq: seq, readMaxCreatedAt: { gt: message.createdAt } },
+          { readMaxServerSyncSeq: seq, readMaxCreatedAt: message.createdAt, readMaxMessageId: { gte: message.id } },
+        ],
+      },
+      select: { user: { select: USER_SELECT_WITH_SPORT_PROFILES } },
+      orderBy: { userId: 'asc' },
+    });
   }
 
   static async listPeerCursors(

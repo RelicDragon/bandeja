@@ -32,7 +32,6 @@ export const FaqTab = ({ gameId, includeFixedTeamStandingsFaq = false }: FaqTabP
   const [requestError, setRequestError] = useState(false);
   const [requesting, setRequesting] = useState(false);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
-  const [showOriginalIds, setShowOriginalIds] = useState<Set<string>>(new Set());
   const [pollTick, setPollTick] = useState(0);
   const epoch = useRef(0);
   const faqRequest = useRef(0);
@@ -125,7 +124,6 @@ export const FaqTab = ({ gameId, includeFixedTeamStandingsFaq = false }: FaqTabP
     setFaqs([]);
     setFaqLoaded(false);
     setExpandedIds(new Set());
-    setShowOriginalIds(new Set());
   }, [gameId]); // The app-locale effect below owns later language changes.
 
   useEffect(() => {
@@ -146,7 +144,6 @@ export const FaqTab = ({ gameId, includeFixedTeamStandingsFaq = false }: FaqTabP
     setRequestError(false);
     setRequesting(false);
     setFaqError(false);
-    setShowOriginalIds(new Set());
     void loadFaqs(gameId, selection, token);
     if (selection !== 'original') void checkStatus(gameId, selection, token);
     return () => { epoch.current += 1; };
@@ -233,7 +230,7 @@ export const FaqTab = ({ gameId, includeFixedTeamStandingsFaq = false }: FaqTabP
           </select>
         </div>
       </Card>
-      {!faqError && selection !== 'original' && (pending || statusError || requestError || !online || (status && !status.generationEnabled && Boolean(row?.missing || row?.stale)) || Boolean(row?.failed) || (row && row.ready > 0 && row.pending === 0 && row.failed === 0 && row.missing === 0 && row.stale === 0)) && (
+      {!faqError && selection !== 'original' && (pending || statusError || requestError || !online || (status && !status.generationEnabled && Boolean(row?.missing || row?.stale)) || Boolean(row?.failed)) && (
         <Card>
           <div role="status" aria-live="polite" className="flex items-start gap-3 p-3 text-sm text-gray-700 dark:text-gray-200 sm:p-4">
             {pending && online && pollAttempts.current < MAX_POLL_ATTEMPTS && <Loader2 className="mt-0.5 h-4 w-4 shrink-0 animate-spin text-primary-600" aria-hidden="true" />}
@@ -245,7 +242,7 @@ export const FaqTab = ({ gameId, includeFixedTeamStandingsFaq = false }: FaqTabP
                 : pending ? <><p>{t('faq.translation.readerTranslating', { language: languageName })}</p><p className="mt-1 text-gray-500 dark:text-gray-400">{t('faq.translation.readerWait')}</p></>
                 : row?.failed ? <p>{t('faq.translation.readerFailed')}</p>
                 : status && !status.generationEnabled && Boolean(row?.missing || row?.stale) ? <p>{t('faq.translation.readerUnavailable')}</p>
-                : row?.ready ? <p>{t('faq.translation.readerReady')}</p> : null}
+                : null}
               {(requestError || statusError || (pending && pollAttempts.current >= MAX_POLL_ATTEMPTS) || Boolean(row?.failed)) && <button type="button" onClick={requestError || row?.failed ? retry : refresh} disabled={!online || requesting} className="mt-2 font-medium text-primary-700 underline disabled:opacity-50 dark:text-primary-300">{requestError || row?.failed ? t('faq.translation.readerRetry') : t('faq.translation.readerRefresh')}</button>}
             </div>
           </div>
@@ -256,8 +253,7 @@ export const FaqTab = ({ gameId, includeFixedTeamStandingsFaq = false }: FaqTabP
       {contentLoaded && !faqError && displayFaqs.length === 0 && <Card><div className="py-12 text-center text-gray-500 dark:text-gray-400">{t('faq.noFaqs')}</div></Card>}
       {displayFaqs.map((faq) => {
         const expanded = expandedIds.has(faq.id);
-        const translated = selection !== 'original' && faq.localizedText?.state === 'translated' && faq.localizedText.locale === selection;
-        const showingTranslation = translated && !showOriginalIds.has(faq.id);
+        const showingTranslation = selection !== 'original' && faq.localizedText?.state === 'translated' && faq.localizedText.locale === selection;
         const question = showingTranslation ? faq.localizedText!.question : faq.question;
         const answer = showingTranslation ? faq.localizedText!.answer : faq.answer;
         const answerId = `faq-answer-${gameId}-${faq.id}`;
@@ -273,11 +269,6 @@ export const FaqTab = ({ gameId, includeFixedTeamStandingsFaq = false }: FaqTabP
           <div id={answerId} hidden={!expanded} className="mx-4 mb-4 border-t border-gray-200 pt-3 dark:border-gray-700">
             <p lang={showingTranslation ? selection : faq.id === FIXED_TEAM_STANDINGS_FAQ_ID ? fixedLocale : undefined} dir="auto" className="whitespace-pre-line text-gray-700 dark:text-gray-300">{answer}</p>
           </div>
-          {translated && <div className="px-4 pb-3 text-end"><button type="button" onClick={() => setShowOriginalIds((currentIds) => {
-            const next = new Set(currentIds);
-            if (next.has(faq.id)) next.delete(faq.id); else next.add(faq.id);
-            return next;
-          })} className="text-xs text-primary-700 underline dark:text-primary-300">{showingTranslation ? t('faq.translation.showOriginal') : t('faq.translation.showTranslation')}</button></div>}
         </Card>;
       })}
     </div>

@@ -56,6 +56,12 @@ Unread-only list: URL unread flag via `chatListUnreadUrl`. Pin/mute from inbox. 
 
 `MessageType`: `TEXT` `IMAGE` `VOICE` `VIDEO` `POLL` `STICKER` `DOCUMENT`.
 
+### Message Details
+
+Opening Details from a message's long-press menu fetches `GET /chat/messages/:messageId/details` on every opening. The response contains the fresh message (sender and reactions with embedded profiles) and a separate `readers` list from `ChatReadCursor` coverage in that message's exact context and game chat slice. Message access is checked before readers are queried. Legacy `MessageReadReceipt` rows do not determine who appears in the list.
+
+The panel shows loading until the request completes and an error with Retry if it fails. Responses from closed or replaced panels are ignored. Readers and reactors are merged by user, excluding the sender and viewer as before. Cursor coverage proves readership but does not preserve the original read time; a historical per-message read time is shown only when available, otherwise the reader has a read checkmark without an invented timestamp. Reaction-only entries show their reaction time.
+
 ### Shop-gated sticker packs and chat accents
 
 Pointing an **active** `Goods` row of kind `STICKER_PACK` at a `StickerPack` through the real `Goods.stickerPackId` foreign key makes that pack purchasable ([economy.md](./economy.md)). From that moment the pack is hidden from anybody who does not own the catalogue row — in `listStickerPacks`, in `getStickerPackById` and in `assertSendableSticker`. There is no `assetKey` string matching anywhere: the FK is the link.

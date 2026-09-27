@@ -151,6 +151,12 @@ export interface ForwardedFromInfo {
   messageId: string;
 }
 
+export interface MessageDetails {
+  message: ChatMessage;
+  // Cursor coverage proves readership, but does not retain the first read time.
+  readers: BasicUser[];
+}
+
 export interface ChatMessage {
   id: string;
   chatContextType: ChatContextType;
@@ -575,6 +581,11 @@ export const chatApi = {
       params: clientMutationId ? { clientMutationId } : undefined,
     });
     return response.data;
+  },
+
+  getMessageDetails: async (messageId: string): Promise<MessageDetails> => {
+    const response = await api.get<ApiResponse<MessageDetails>>(`/chat/messages/${messageId}/details`);
+    return response.data.data;
   },
 
   getChatMessageById: async (messageId: string): Promise<ChatMessage> => {

@@ -60,18 +60,24 @@ describe('FaqTab reader languages', () => {
     host.remove();
   });
 
-  it('defaults to the app language, renders a complete translated pair, and offers per-pair and global originals', async () => {
+  it('defaults to the app language and switches complete pairs through the top language selector', async () => {
     await act(async () => root.render(<FaqTab gameId="game-1" />));
     expect((host.querySelector('select') as HTMLSelectElement).value).toBe('es');
     expect(mock.getGameFaqs).toHaveBeenCalledWith('game-1', 'es');
     expect(host.textContent).toContain('Pregunta traducida');
+    expect(host.querySelector('[role="status"]')).toBeNull();
     await act(async () => (host.querySelector('[aria-expanded]') as HTMLButtonElement).click());
     expect(host.textContent).toContain('Respuesta traducida');
-    await act(async () => buttonWithText(host, 'faq.translation.showOriginal').click());
+    expect(host.textContent).not.toContain('faq.translation.showOriginal');
+    expect(host.textContent).not.toContain('faq.translation.showTranslation');
+    await selectLanguage(host, 'original');
+    expect(mock.getGameFaqs).toHaveBeenCalledWith('game-1', undefined);
     expect(host.textContent).toContain('Original question');
     expect(host.textContent).toContain('Original answer');
-    await selectLanguage(host, 'original');
-    expect(host.textContent).toContain('Original question');
+    expect(host.textContent).not.toContain('Pregunta traducida');
+    await selectLanguage(host, 'es');
+    expect(host.textContent).toContain('Pregunta traducida');
+    expect(host.textContent).toContain('Respuesta traducida');
     expect(mock.requestReaderTranslation).not.toHaveBeenCalled();
   });
 
@@ -93,6 +99,7 @@ describe('FaqTab reader languages', () => {
     expect(host.textContent).toContain('سؤال مترجم');
     expect(host.textContent).toContain('إجابة مترجمة');
     expect(host.textContent).not.toContain('faq.translation.readerTranslating');
+    expect(host.querySelector('[role="status"]')).toBeNull();
   });
 
   it('shows failed work and retries only after the reader asks', async () => {

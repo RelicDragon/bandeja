@@ -60,6 +60,7 @@ import {
   pinMessage,
   unpinMessage,
   getChatMessageById,
+  getMessageDetails,
   postChatListRowPreviews,
 } from '../controllers/chat.controller';
 import { pushReply } from '../controllers/pushReply.controller';
@@ -324,6 +325,12 @@ router.post(
   markContextRead
 );
 router.get('/user-games', getUserChatGames);
+
+router.get(
+  '/messages/:messageId/details',
+  validate([param('messageId').notEmpty().withMessage('Message ID is required')]),
+  getMessageDetails
+);
 
 router.get(
   '/messages/:messageId',

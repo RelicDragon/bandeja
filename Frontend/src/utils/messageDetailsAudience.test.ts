@@ -40,3 +40,15 @@ describe('buildMessageDetailsAudienceRows', () => {
     expect(rows).toHaveLength(0);
   });
 });
+
+it('uses authoritative readers even when old receipts disagree, without inventing read times', () => {
+  const rows = buildMessageDetailsAudienceRows(
+    [{ id: 'old', messageId: 'm1', userId: 'stale', readAt: '2026-07-02T10:00:00Z' }],
+    [{ id: 'rx1', messageId: 'm1', userId: 'reader', emoji: '👍', createdAt: '2026-07-02T10:01:00Z' }],
+    'sender', 'viewer', [{ id: 'reader', firstName: 'Alice' }]
+  );
+  expect(rows).toHaveLength(1);
+  expect(rows[0]).toMatchObject({ userId: 'reader', user: { firstName: 'Alice' }, isRead: true });
+  expect(rows[0]?.readAt).toBeUndefined();
+  expect(rows[0]?.reaction?.emoji).toBe('👍');
+});
