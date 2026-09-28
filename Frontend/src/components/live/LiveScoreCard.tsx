@@ -256,8 +256,8 @@ function LiveScoreCardView({
       </div>
 
       {/* `mt-auto` pins the footer to the bottom when a league ribbon makes a neighbour taller. */}
-      <div className="mt-auto flex w-full min-w-0 items-center justify-between gap-2">
-        <span className="flex min-w-0 items-center gap-1.5 truncate text-[11px] text-gray-500 dark:text-gray-400">
+      <div className="mt-auto flex w-full min-w-0 items-end justify-between gap-2">
+        <span className="flex min-w-0 flex-1 items-start gap-1.5 text-[11px] text-gray-500 dark:text-gray-400">
           {frozen ? (
             <WifiOff size={12} className="shrink-0" aria-hidden />
           ) : finished ? (
@@ -274,16 +274,18 @@ function LiveScoreCardView({
           ) : (
             <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-red-500" aria-hidden />
           )}
-          <span className="truncate">{statusText}</span>
+          <span className="flex min-w-0 flex-col">
+            <span className="truncate">{frozen ? statusText : timeText}</span>
+            {!frozen && footerPosition ? <span className="truncate">{footerPosition}</span> : null}
+          </span>
         </span>
         {!live ? (
           <span
-            className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-gray-200/70 py-1 pe-1.5 ps-2.5 text-xs font-semibold text-gray-700 dark:bg-white/10 dark:text-gray-200"
+            className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gray-200/70 text-gray-700 dark:bg-white/10 dark:text-gray-200"
             data-testid="live-results-cta"
             aria-hidden
           >
-            {t('live.results')}
-            <ChevronRight size={14} className="rtl:rotate-180" />
+            <ChevronRight size={16} className="rtl:rotate-180" />
           </span>
         ) : (
           <span

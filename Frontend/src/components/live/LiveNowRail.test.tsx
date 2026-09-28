@@ -300,6 +300,7 @@ describe('LiveNowRail', () => {
     expect(rows[1].querySelector('[data-testid="live-winner-mark"]')).not.toBeNull();
     expect(rows[0].querySelector('[data-testid="live-winner-mark"]')).toBeNull();
     expect(card?.querySelector('[data-testid="live-results-cta"]')).not.toBeNull();
+    expect(card?.querySelector('[data-testid="live-results-cta"]')?.textContent).toBe('');
     expect(card?.querySelector('[data-testid="live-watch-cta"]')).toBeNull();
     expect(container.textContent).toContain('live.final');
     expect(container.textContent).toContain('live.finished:40');
@@ -350,6 +351,7 @@ describe('LiveNowRail', () => {
     const card = container.querySelector('[data-testid="live-score-card"]');
     expect(card?.textContent).toContain('live.matchOf');
     expect(card?.getAttribute('aria-label')).toContain('live.matchOf');
+    expect(card?.querySelector('[data-testid="live-results-cta"]')?.textContent).toBe('');
   });
 
   it('draws a hand-scored game in progress: entered sets, no board, opens the game', () => {
