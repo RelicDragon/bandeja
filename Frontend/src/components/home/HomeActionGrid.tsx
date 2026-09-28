@@ -8,6 +8,7 @@ import { navigationService } from '@/services/navigationService';
 import { PlayIntentProvider } from '@/components/playIntent/PlayIntentFindBar';
 import { PlayHeroButton } from './PlayHeroButton';
 import { LeagueActionCTA } from './LeagueActionCTA';
+import { YourLeaguesHomeSection } from './YourLeaguesHomeSection';
 import type { MyTabPanelCounts } from '@/hooks/useMyTabPanelCounts';
 
 interface HomeActionGridProps {
@@ -23,8 +24,8 @@ interface HomeActionGridProps {
 /**
  * The My-tab action grid. Anchored by the Play hero, which is the primary tool
  * to create/find simple games and the onboarding entry point. Below it: a
- * secondary "Browse games" outline button, then earned surfaces (Leagues CTA
- * when on a league, Bookings when there are bookings).
+ * secondary "Browse games" outline button, then earned surfaces (a direct
+ * league card for one season, a Leagues CTA for multiple, and Bookings).
  *
  * The {@link PlayIntentProvider} is mounted here so the deep-link handling
  * (`?playIntentOpen=1`, `?proposal=`, `?lobby=1`) is preserved for the My tab,
@@ -41,7 +42,6 @@ function HomeActionGridView({
   const { t } = useTranslation();
   const navigate = useNavigate();
   const cityId = user?.currentCity?.id;
-  const hasLeagues = panelCounts.leagues > 0;
   const hasBookings = panelCounts.bookings > 0;
 
   return (
@@ -75,8 +75,16 @@ function HomeActionGridView({
         </button>
       </AnimatedMount>
 
-      {/* EARNED — Leagues CTA, only when the user is on a league. Animated. */}
-      {hasLeagues && (
+      {/* EARNED — show the sole league directly; group multiple leagues behind the CTA. */}
+      {panelCounts.leagues === 1 && (
+        <YourLeaguesHomeSection
+          games={games}
+          gamesUnreadCounts={gamesUnreadCounts}
+          className="mb-3"
+          embedded
+        />
+      )}
+      {panelCounts.leagues > 1 && (
         <LeagueActionCTA
           games={games}
           gamesUnreadCounts={gamesUnreadCounts}

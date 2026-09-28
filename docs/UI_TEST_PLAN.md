@@ -344,9 +344,9 @@ translation drafts) render an expand control in the field's top trailing corner 
 | H-06 | City prompt banner | User missing city prefs | Banner shown |
 | H-07 | Gender prompt banner | When applicable | Banner + action |
 | H-08 | User teams section | User in teams | My tab → Teams switch shows teams row |
-| H-09 | Your leagues section | User in leagues | My tab → Leagues switch shows league cards |
-| H-10 | League game sections collapse | My tab → Leagues → league hub with scheduled/unscheduled and FINAL games → tap section header | Section collapses/expands with chevron; both sections expanded by default; FINAL games appear in neither section |
-| H-72 | Playoff game metadata | My tab → Leagues → league hub with playoff and regular-round games | Playoff cards omit the redundant round number (for example, `R12`) while regular league cards keep it; group names remain visible |
+| H-09 | Your leagues section | User in one active league season, then multiple active seasons | With one season, its league card and game sections appear directly below Browse games with no "Your leagues" CTA; with multiple, the CTA shows the count and expands to all league cards |
+| H-10 | League game sections collapse | My tab → single league card (or expand the CTA for multiple leagues) → tap a scheduled/unscheduled section header; include FINAL games | Section collapses/expands with chevron; both sections expanded by default; FINAL games appear in neither section |
+| H-72 | Playoff game metadata | My tab → league card with playoff and regular-round games | Playoff cards omit the redundant round number (for example, `R12`) while regular league cards keep it; group names remain visible |
 | H-11 | Mark all read banner | Unread games exist | Banner + action clears counts |
 
 ### 6.2 Invites
