@@ -1642,7 +1642,12 @@ export class MessageService {
   static async getMessageDetails(messageId: string, userId: string) {
     // getMessageById checks both thread membership and game chat-slice access.
     const message = await this.getMessageById(messageId, userId);
-    const readers = await ChatReadCursorService.listMessageReaders(message);
+    // finalizeMessageForClient strips serverSyncSeq, so read the cursor position from the row itself.
+    const position = await prisma.chatMessage.findUniqueOrThrow({
+      where: { id: message.id },
+      select: { id: true, chatContextType: true, contextId: true, chatType: true, serverSyncSeq: true, createdAt: true },
+    });
+    const readers = await ChatReadCursorService.listMessageReaders({ ...position, senderId: message.senderId });
     const sport = await resolveChatMessageSport(message, userId);
     return {
       message,

@@ -7,6 +7,7 @@ async function run() {
   const originalMessage = prisma.chatMessage.findFirst;
   const originalAccess = MessageService.validateMessageAccess;
   const originalUser = prisma.user.findUnique;
+  const originalUnique = prisma.chatMessage.findUniqueOrThrow;
   const originalGame = prisma.game.findUnique;
   const originalFinalize = MessageService.finalizeMessageForClient;
   const message = {
@@ -20,7 +21,12 @@ async function run() {
   MessageService.validateMessageAccess = async () => { if (!permitted) throw new Error('Denied'); };
   prisma.game.findUnique = (async () => ({ sport: 'PADEL' })) as unknown as typeof prisma.game.findUnique;
   prisma.user.findUnique = (async () => ({ language: 'en' })) as unknown as typeof prisma.user.findUnique;
-  MessageService.finalizeMessageForClient = async (value) => value;
+  prisma.chatMessage.findUniqueOrThrow = (async () => message) as unknown as typeof prisma.chatMessage.findUniqueOrThrow;
+  // Real finalize strips serverSyncSeq from the client payload; details must not depend on it.
+  MessageService.finalizeMessageForClient = async (value) => {
+    const { serverSyncSeq: _omit, ...rest } = value as typeof message;
+    return rest as unknown as typeof value;
+  };
   prisma.chatReadCursor.findMany = (async (args: { where: unknown }) => {
     cursorQueries++;
     const seq = message.serverSyncSeq ?? -1;
@@ -50,6 +56,7 @@ async function run() {
   } finally {
     prisma.chatReadCursor.findMany = originalFind;
     prisma.chatMessage.findFirst = originalMessage;
+    prisma.chatMessage.findUniqueOrThrow = originalUnique;
     MessageService.validateMessageAccess = originalAccess;
     prisma.user.findUnique = originalUser;
     prisma.game.findUnique = originalGame;
