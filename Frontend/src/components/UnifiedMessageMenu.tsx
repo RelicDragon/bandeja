@@ -389,6 +389,10 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
     }
   }, [showDetails, detailsAudienceRows, detailsStatus, message.reactions, usersById, viewport]);
 
+  useLayoutEffect(() => {
+    if (menuRef.current) menuRef.current.scrollTop = 0;
+  }, [showDetails]);
+
   const menuReady = menuHeight > 0;
   useEffect(() => {
     if (menuReady) setMenuPlaced(true);
@@ -733,6 +737,8 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
               transformOrigin: MENU_ORIGIN[layout.menuOriginX],
               maxHeight: layout.menuMaxHeight,
               height: menuReady ? effectiveMenuHeight : undefined,
+              // Details is in flow while shown; keep the shell at the main menu's width.
+              width: showDetails && menuWidth ? menuWidth : undefined,
               paddingTop: '2px',
               paddingBottom: '5px',
               zIndex: 9999,
@@ -741,7 +747,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
             <div className="relative flex">
               <div
                 ref={mainMenuRef}
-                className={`w-full transition-transform duration-150 ease-in-out ${showDetails ? '-translate-x-full' : 'translate-x-0'}`}
+                className={`w-full transition-transform duration-150 ease-in-out ${showDetails ? 'absolute top-0 left-0 -translate-x-full' : 'translate-x-0'}`}
               >
                 <motion.div
                   variants={CHAT_MESSAGE_MENU_INNER}
@@ -934,7 +940,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
 
               <div
                 ref={detailsRef}
-                className={`absolute top-0 left-0 w-full transition-transform duration-150 ease-in-out ${showDetails ? 'translate-x-0' : 'translate-x-full'}`}
+                className={`w-full transition-transform duration-150 ease-in-out ${showDetails ? 'translate-x-0' : 'absolute top-0 left-0 translate-x-full'}`}
               >
           {/* Back Button */}
           <div className="px-3 py-2 border-b border-gray-200 dark:border-gray-600">
