@@ -9,7 +9,6 @@ import { ChatMessage, chatApi } from '@/api/chat';
 import { DoubleTickIcon } from './DoubleTickIcon';
 import { formatDate } from '@/utils/dateFormat';
 import {
-  computeMessageMenuTop,
   formatFullDateTime,
   getUserDisplayName,
   hasUserDisplayName,
@@ -46,12 +45,80 @@ import {
 import {
   CHAT_MESSAGE_MENU_BACKDROP,
   CHAT_MESSAGE_MENU_INNER,
-  CHAT_MESSAGE_MENU_PREVIEW,
   CHAT_MESSAGE_MENU_ROOT,
   CHAT_MESSAGE_MENU_SECTION,
-  CHAT_MESSAGE_MENU_SHELL,
+  CHAT_MESSAGE_MENU_SHELL_ENTER,
+  CHAT_MESSAGE_MENU_SHELL_ENTER_SCALE,
+  CHAT_MESSAGE_MENU_SHELL_EXIT,
+  CHAT_MESSAGE_MENU_SHELL_EXIT_SCALE,
   CHAT_MESSAGE_ROW_EXIT_MS,
+  MESSAGE_MENU_PREVIEW_SPRING,
 } from '@/components/chat/chatListMotion';
+import {
+  MessageMenuPreview,
+  type MessageMenuPreviewExit,
+} from '@/components/chat/MessageMenuPreview';
+import {
+  computeMessageMenuLayout,
+  readSafeAreaInsets,
+  resolveMessageMenuAnchorAlign,
+  type MessageMenuAnchorAlign,
+  type MessageMenuRect,
+} from '@/utils/messageMenuLayout';
+
+/** Gap between the lifted preview and the menu (also used to centre the fallback menu). */
+const MENU_GAP_PX = 8;
+/** Shell padding (2 + 5) + border (1 + 1) around the measured main-menu content. */
+const MENU_SHELL_CHROME_PX = 9;
+const MENU_FALLBACK_WIDTH_PX = 220;
+
+const MENU_ORIGIN: Record<'left' | 'right' | 'center', string> = {
+  left: 'top left',
+  right: 'top right',
+  center: 'top center',
+};
+
+interface MenuSource {
+  element: HTMLElement;
+  rect: MessageMenuRect;
+  anchorRect: MessageMenuRect;
+  anchorAlign: MessageMenuAnchorAlign;
+}
+
+interface MenuViewport {
+  width: number;
+  height: number;
+  safeTop: number;
+  safeBottom: number;
+}
+
+const toRect = (r: DOMRect): MessageMenuRect => ({
+  top: r.top,
+  left: r.left,
+  width: r.width,
+  height: r.height,
+});
+
+function captureMenuSource(element: HTMLElement | null): MenuSource | null {
+  if (!element || !element.isConnected) return null;
+  const rect = toRect(element.getBoundingClientRect());
+  const bubble = element.querySelector<HTMLElement>('[data-message-bubble="true"]');
+  const anchorRect = bubble ? toRect(bubble.getBoundingClientRect()) : rect;
+  return { element, rect, anchorRect, anchorAlign: resolveMessageMenuAnchorAlign(rect, anchorRect) };
+}
+
+function readMenuViewport(): MenuViewport {
+  const insets = readSafeAreaInsets();
+  return {
+    width: window.innerWidth,
+    height: window.innerHeight,
+    safeTop: insets.top,
+    safeBottom: insets.bottom,
+  };
+}
+
+const sameViewport = (a: MenuViewport, b: MenuViewport) =>
+  a.width === b.width && a.height === b.height && a.safeTop === b.safeTop && a.safeBottom === b.safeBottom;
 
 interface UnifiedMessageMenuProps {
   message: ChatMessage;
@@ -118,18 +185,95 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
   const detailsMessage = details.data?.message ?? message;
   const [menuHeight, setMenuHeight] = useState(0);
   const [detailsHeight, setDetailsHeight] = useState(0);
+  const [menuWidth, setMenuWidth] = useState(0);
+  const [menuPlaced, setMenuPlaced] = useState(false);
+  const [source] = useState(() => captureMenuSource(messageElementRef.current));
+  const [viewport, setViewport] = useState(readMenuViewport);
+  const [previewNaturalHeight, setPreviewNaturalHeight] = useState(0);
+  const [exit, setExit] = useState<MessageMenuPreviewExit | null>(null);
+  const sourceVisibilityRef = useRef<string | null>(null);
+  const closingRef = useRef(false);
+  const deletingRef = useRef(false);
   const [isTranslating, setIsTranslating] = useState(false);
   const [isSavingSticker, setIsSavingSticker] = useState(false);
-  const duplicateRef = useRef<HTMLDivElement>(null);
   const openTimeRef = useRef(0);
   const [visible, setVisible] = useState(true);
   const reduceMotion = usePrefersReducedMotion();
   const instantTransition = reduceMotion ? { duration: 0 } : undefined;
   const canReact = !!onReactionSelect && !!onReactionRemove;
 
-  const closeMenu = useCallback(() => {
-    setShowDetails(false);
-    setVisible(false);
+  const restoreSourceVisibility = useCallback(() => {
+    if (!source || sourceVisibilityRef.current === null) return;
+    const { element } = source;
+    const visibility = sourceVisibilityRef.current;
+    sourceVisibilityRef.current = null;
+    // A deleted row keeps playing its exit animation; revealing it early would flash it back.
+    if (deletingRef.current) {
+      window.setTimeout(() => {
+        element.style.visibility = visibility;
+      }, CHAT_MESSAGE_ROW_EXIT_MS);
+      return;
+    }
+    element.style.visibility = visibility;
+  }, [source]);
+
+  // Runs after MessageMenuPreview's layout effects (children first), so the clone already exists.
+  useLayoutEffect(() => {
+    if (!source) return;
+    sourceVisibilityRef.current = source.element.style.visibility;
+    source.element.style.visibility = 'hidden';
+    return restoreSourceVisibility;
+  }, [source, restoreSourceVisibility]);
+
+  /**
+   * Phase 1 of closing: fix the preview's exit target (the original row's current position,
+   * or fade in place), then `exit` flips `visible` next render so AnimatePresence exits with it.
+   */
+  const closeMenu = useCallback(
+    (mode: 'return' | 'fade' = 'return') => {
+      if (closingRef.current) return;
+      closingRef.current = true;
+      let top: number | null = null;
+      if (mode === 'return' && source?.element.isConnected) {
+        const rect = source.element.getBoundingClientRect();
+        if (rect.bottom > 0 && rect.top < window.innerHeight) top = rect.top;
+      }
+      setShowDetails(false);
+      setExit({ top });
+    },
+    [source]
+  );
+
+  useEffect(() => {
+    if (exit) setVisible(false);
+  }, [exit]);
+
+  const handleExitComplete = useCallback(() => {
+    restoreSourceVisibility();
+    onClose();
+  }, [onClose, restoreSourceVisibility]);
+
+  const handlePreviewNaturalHeight = useCallback((height: number) => {
+    setPreviewNaturalHeight((prev) => (Math.abs(prev - height) < 0.5 ? prev : height));
+  }, []);
+
+  useEffect(() => {
+    let frame = 0;
+    const update = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const next = readMenuViewport();
+        setViewport((prev) => (sameViewport(prev, next) ? prev : next));
+      });
+    };
+    const visualViewport = window.visualViewport;
+    window.addEventListener('resize', update);
+    visualViewport?.addEventListener('resize', update);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener('resize', update);
+      visualViewport?.removeEventListener('resize', update);
+    };
   }, []);
 
   const detailsAudienceRows = useMemo(
@@ -226,8 +370,8 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
     let nextMenuHeight = 0;
     let nextDetailsHeight = 0;
 
-    if (mainMenuRef.current) {
-      nextMenuHeight = mainMenuRef.current.scrollHeight;
+    if (mainMenuRef.current && mainMenuRef.current.scrollHeight > 0) {
+      nextMenuHeight = mainMenuRef.current.scrollHeight + MENU_SHELL_CHROME_PX;
     }
     if (detailsRef.current) {
       nextDetailsHeight = detailsRef.current.scrollHeight + 10;
@@ -239,7 +383,16 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
     if (nextDetailsHeight > 10) {
       setDetailsHeight((prev) => (prev === nextDetailsHeight ? prev : nextDetailsHeight));
     }
-  }, [showDetails, detailsAudienceRows, detailsStatus, message.reactions, usersById]);
+    const nextMenuWidth = menuRef.current?.offsetWidth ?? 0;
+    if (nextMenuWidth > 0) {
+      setMenuWidth((prev) => (prev === nextMenuWidth ? prev : nextMenuWidth));
+    }
+  }, [showDetails, detailsAudienceRows, detailsStatus, message.reactions, usersById, viewport]);
+
+  const menuReady = menuHeight > 0;
+  useEffect(() => {
+    if (menuReady) setMenuPlaced(true);
+  }, [menuReady]);
 
   const handleReply = () => {
     if (!onReply) return;
@@ -350,8 +503,9 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
       onDeleteStart(message.id);
     }
     
-    // Close menu first
-    closeMenu();
+    // Close menu first; the row is animating out, so the preview fades in place.
+    deletingRef.current = true;
+    closeMenu('fade');
     
     // Delay the actual deletion to allow animation to play
     setTimeout(() => {
@@ -490,44 +644,34 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
   };
 
   const effectiveMenuHeight = showDetails ? (detailsHeight || menuHeight || 200) : (menuHeight || 200);
-  const messageGap = 5;
-  const menuTop = computeMessageMenuTop(window.innerHeight, effectiveMenuHeight);
-  const messageBottomPosition = menuTop - messageGap;
 
-  useLayoutEffect(() => {
-    const originalElement = messageElementRef.current;
-    const duplicateHost = duplicateRef.current;
-    if (!originalElement || !duplicateHost) return;
+  const fallbackRect: MessageMenuRect = {
+    top: (viewport.height - effectiveMenuHeight) / 2 - MENU_GAP_PX,
+    left: viewport.width / 2,
+    width: 0,
+    height: 0,
+  };
+  const layout = computeMessageMenuLayout({
+    viewportWidth: viewport.width,
+    viewportHeight: viewport.height,
+    safeTop: viewport.safeTop,
+    safeBottom: viewport.safeBottom,
+    sourceRect: source?.rect ?? fallbackRect,
+    anchorRect: source?.anchorRect ?? fallbackRect,
+    anchorAlign: source?.anchorAlign ?? 'center',
+    previewNaturalHeight: source ? previewNaturalHeight || source.rect.height : 0,
+    menuHeight: effectiveMenuHeight,
+    menuWidth: menuWidth || MENU_FALLBACK_WIDTH_PX,
+    gap: MENU_GAP_PX,
+  });
 
-    const duplicate = originalElement.cloneNode(true) as HTMLElement;
-    const originalWidth = originalElement.offsetWidth || originalElement.getBoundingClientRect().width;
-
-    duplicate.style.width = `${originalWidth}px`;
-    duplicate.style.maxWidth = 'none';
-    duplicate.style.overflow = 'hidden';
-    duplicate.style.pointerEvents = 'none';
-    duplicate.style.userSelect = 'none';
-    duplicate.style.webkitUserSelect = 'none';
-
-    const messageContent = duplicate.querySelector('p');
-    if (messageContent) {
-      messageContent.style.display = '-webkit-box';
-      messageContent.style.webkitLineClamp = '8';
-      messageContent.style.webkitBoxOrient = 'vertical';
-      messageContent.style.overflow = 'hidden';
-      messageContent.style.textOverflow = 'ellipsis';
-    }
-
-    duplicateHost.innerHTML = '';
-    duplicateHost.appendChild(duplicate);
-
-    return () => {
-      duplicateHost.innerHTML = '';
-    };
-  }, [messageElementRef]);
+  // Snap into place on the first measured frame (menu still invisible); spring afterwards.
+  const menuPositionTransition =
+    reduceMotion || !menuPlaced ? { duration: 0 } : MESSAGE_MENU_PREVIEW_SPRING;
+  const menuFadeTransition = reduceMotion ? { duration: 0 } : CHAT_MESSAGE_MENU_SHELL_ENTER;
 
   const content = (
-    <AnimatePresence onExitComplete={onClose}>
+    <AnimatePresence onExitComplete={handleExitComplete}>
       {visible ? (
         <motion.div
           key="unified-message-menu"
@@ -545,34 +689,53 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
             onClick={handleBackdropClick}
           />
 
-          <motion.div
-            className="pointer-events-none fixed left-1/2 z-[9999] select-none"
-            variants={CHAT_MESSAGE_MENU_PREVIEW}
-            transition={instantTransition}
-            style={{
-              x: '-50%',
-              bottom: window.innerHeight - messageBottomPosition,
-              maxHeight: messageBottomPosition,
-            }}
-          >
-            <div ref={duplicateRef} />
-          </motion.div>
+          {source ? (
+            <MessageMenuPreview
+              sourceElement={source.element}
+              sourceRect={source.rect}
+              top={layout.previewTop}
+              height={layout.previewHeight}
+              clipped={layout.previewClipped}
+              exit={exit}
+              reduceMotion={reduceMotion}
+              onNaturalHeight={handlePreviewNaturalHeight}
+              onExitComplete={restoreSourceVisibility}
+            />
+          ) : null}
 
           <motion.div
             ref={menuRef}
-            className="fixed bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-2xl shadow-lg min-w-[200px] max-w-[90vw] overflow-hidden pointer-events-auto select-none"
-            variants={CHAT_MESSAGE_MENU_SHELL}
-            transition={instantTransition}
+            className={`fixed top-0 left-0 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-2xl shadow-lg min-w-[200px] max-w-[90vw] overflow-x-hidden overflow-y-auto overscroll-contain pointer-events-auto select-none${reduceMotion ? '' : ' transition-[height] duration-300 ease-in-out'}`}
+            initial={{
+              opacity: 0,
+              scale: CHAT_MESSAGE_MENU_SHELL_ENTER_SCALE,
+              x: layout.menuLeft,
+              y: layout.menuTop,
+            }}
+            animate={{
+              opacity: menuReady ? 1 : 0,
+              scale: menuReady ? 1 : CHAT_MESSAGE_MENU_SHELL_ENTER_SCALE,
+              x: layout.menuLeft,
+              y: layout.menuTop,
+              transition: {
+                x: menuPositionTransition,
+                y: menuPositionTransition,
+                opacity: menuFadeTransition,
+                scale: menuFadeTransition,
+              },
+            }}
+            exit={{
+              opacity: 0,
+              scale: CHAT_MESSAGE_MENU_SHELL_EXIT_SCALE,
+              transition: reduceMotion ? { duration: 0 } : CHAT_MESSAGE_MENU_SHELL_EXIT,
+            }}
             style={{
-              left: '50%',
-              x: '-50%',
-              top: `${menuTop}px`,
-              maxHeight: `${window.innerHeight - 40}px`,
-              height: menuHeight > 0 ? effectiveMenuHeight : undefined,
+              transformOrigin: MENU_ORIGIN[layout.menuOriginX],
+              maxHeight: layout.menuMaxHeight,
+              height: menuReady ? effectiveMenuHeight : undefined,
               paddingTop: '2px',
               paddingBottom: '5px',
               zIndex: 9999,
-              transition: showDetails && !reduceMotion ? 'height 0.15s ease-in-out' : undefined,
             }}
           >
             <div className="relative flex">

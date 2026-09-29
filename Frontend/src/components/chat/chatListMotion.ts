@@ -124,35 +124,27 @@ export const CHAT_MESSAGE_MENU_BACKDROP = {
   },
 };
 
-export const CHAT_MESSAGE_MENU_SHELL = {
-  hidden: {
-    opacity: 0,
-    scale: 0.92,
-    y: 12,
-    transition: { duration: 0.36, ease: CHAT_ATTACH_FLYOUT_EASE },
-  },
-  visible: {
-    opacity: 1,
-    scale: 1,
-    y: 0,
-    transition: { duration: 0.48, ease: CHAT_ATTACH_FLYOUT_EASE },
-  },
+/** Context-menu shell scales in from the bubble-side corner, slightly after the lifted preview. */
+export const CHAT_MESSAGE_MENU_SHELL_ENTER_SCALE = 0.9;
+export const CHAT_MESSAGE_MENU_SHELL_EXIT_SCALE = 0.92;
+
+export const CHAT_MESSAGE_MENU_SHELL_ENTER: Transition = {
+  duration: 0.32,
+  ease: CHAT_ATTACH_FLYOUT_EASE,
+  delay: 0.04,
 };
 
-/** Floating message clone above the context menu — exits with shell/backdrop. */
-export const CHAT_MESSAGE_MENU_PREVIEW = {
-  hidden: {
-    opacity: 0,
-    scale: 0.96,
-    y: -8,
-    transition: { duration: 0.32, ease: CHAT_ATTACH_FLYOUT_EASE },
-  },
-  visible: {
-    opacity: 1,
-    scale: 1,
-    y: 0,
-    transition: { duration: 0.4, ease: CHAT_ATTACH_FLYOUT_EASE },
-  },
+export const CHAT_MESSAGE_MENU_SHELL_EXIT: Transition = {
+  duration: 0.2,
+  ease: CHAT_ATTACH_FLYOUT_EASE,
+};
+
+/** Lifted message preview + menu shell position spring (they move in lockstep). */
+export const MESSAGE_MENU_PREVIEW_SPRING: Transition = {
+  type: 'spring',
+  stiffness: 420,
+  damping: 38,
+  mass: 0.9,
 };
 
 export const CHAT_MESSAGE_MENU_INNER = {
