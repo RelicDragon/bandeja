@@ -112,6 +112,9 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
   const detailsRef = useRef<HTMLDivElement>(null);
   const [showDetails, setShowDetails] = useState(false);
   const details = useMessageDetails(message.id, showDetails);
+  // Hold the loading state until audience names are resolved, so rows don't pop in as "Unknown User".
+  const [usersSettled, setUsersSettled] = useState(false);
+  const detailsStatus = details.status === 'ready' && !usersSettled ? 'loading' : details.status;
   const detailsMessage = details.data?.message ?? message;
   const [menuHeight, setMenuHeight] = useState(0);
   const [detailsHeight, setDetailsHeight] = useState(0);
@@ -236,7 +239,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
     if (nextDetailsHeight > 10) {
       setDetailsHeight((prev) => (prev === nextDetailsHeight ? prev : nextDetailsHeight));
     }
-  }, [showDetails, detailsAudienceRows, details.status, message.reactions, usersById]);
+  }, [showDetails, detailsAudienceRows, detailsStatus, message.reactions, usersById]);
 
   const handleReply = () => {
     if (!onReply) return;
@@ -395,7 +398,11 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
   );
 
   useEffect(() => {
-    if (!showDetails || details.status !== 'ready') return;
+    if (!showDetails) {
+      setUsersSettled(false);
+      return;
+    }
+    if (details.status !== 'ready') return;
     let cancelled = false;
 
     const run = async () => {
@@ -415,10 +422,14 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
         queueIfUnresolved(row.userId, row.user);
       }
 
-      if (missing.length === 0 || cancelled) return;
+      if (missing.length === 0 || cancelled) {
+        if (!cancelled) setUsersSettled(true);
+        return;
+      }
 
       try {
         await fetchBasicUsersBatched(message.id, missing);
+        if (!cancelled) setUsersSettled(true);
       } catch (e: unknown) {
         const err = e as { response?: { status?: number; data?: unknown } };
         console.error('[UnifiedMessageMenu] basic users fetch failed', {
@@ -428,6 +439,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
           error: e,
         });
         toast.error(t('common.error', { defaultValue: 'Something went wrong' }));
+        if (!cancelled) setUsersSettled(true);
       }
     };
 
@@ -805,12 +817,12 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
 
           {/* Read Receipts */}
           <div className="px-3 py-2">
-            {details.status === 'ready' && detailsAudienceRows.length > 0 && (
+            {detailsStatus === 'ready' && detailsAudienceRows.length > 0 && (
               <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">
                 <div className="font-medium">{t('chat.contextMenu.readBy')} ({detailsAudienceRows.length})</div>
               </div>
             )}
-            {details.status === 'loading' ? (
+            {detailsStatus === 'loading' ? (
               <div role="status" className="text-xs text-gray-500 dark:text-gray-400">{t('common.loading')}</div>
             ) : details.status === 'error' ? (
               <div role="alert" className="text-xs text-gray-500 dark:text-gray-400">
