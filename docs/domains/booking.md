@@ -19,7 +19,7 @@ Two surfaces read occupancy without booking anything, and both inherit those con
 
 Persistence: `UserClub*Auth` + `Club*BusySnapshot` per provider.
 
-Auth: Booktime phone OTP; Padeloo email OTP; Klikteren email+password; Nspadel club-config + backend booking (no per-user listing/cancel — cancel via club).
+Auth: Booktime phone OTP; Padeloo email OTP; Klikteren email+password; Nspadel club-config + backend booking (no per-user upstream listing/cancel — cancel via club). Every backend Nspadel booking writes a local receipt (`NspadelBooking`, idempotent per user slot; like `WeltnerBooking`), so the agent can list it (`nspadel:` bookingRef) and a retry never books twice.
 
 ## HTTP
 
@@ -33,7 +33,17 @@ Bookings tab: upcoming/past for connected clubs; TZ = club city; link/cancel. In
 
 ## Game ↔ booking
 
-`GameExternalBooking` + `@shared/gameBooking` (`evaluateLinkedBookingCoverage`, `computeGameBookingStatus`, `linkBookingToGame`, `parseCreateGameDeepLinkSearch`). Coverage: court count + time window vs game start/end. Badges: fully booked vs partial. Shared reservation across games is informational. Delete game does not cancel club bookings. Rollback where the provider supports cancellation; Weltner preserves the receipt and retries game saving.
+`GameExternalBooking` + `@shared/gameBooking` (`evaluateLinkedBookingCoverage`, `computeGameBookingStatus`, `linkBookingToGame`, `parseCreateGameDeepLinkSearch`). Coverage: court count + time window vs game start/end. Badges: fully booked vs partial. Shared reservation across games is informational.
+
+### Linked-games lookup is viewer-scoped
+
+`GET /{booktime,padeloo,klikteren,nspadel}/linked-games/:externalBookingId` and `POST /booktime/linked-games/batch` (`booktimeGameLink.service.ts`) answer "which games use this provider booking?". Provider booking ids are guessable, so the answer only ever contains games the **caller** may see:
+
+- games where the caller is on the roster (`PLAYING` / `NON_PLAYING` / `IN_QUEUE`, any role — the same statuses `hasParentGamePermission` uses); `INVITED` does not count;
+- games whose **parent** the caller runs as OWNER/ADMIN (league fixtures, matching `canEditGame`);
+- everything for global admins.
+
+Anyone else gets `[]` (batch: every requested id present with `[]`). The response shape is unchanged, so shipped apps keep working — they just see a subset. Consequences: the "N other games share this reservation" hint and the cancel-booking auto-unlink (`unlinkBookingFromLinkedGames`) only cover games the caller is on; another organizer's game sharing the booking keeps its link until they remove it. Tests: `npm --prefix Backend run test:booktime-linked-games`. Delete game does not cancel club bookings. Rollback where the provider supports cancellation; Weltner preserves the receipt and retries game saving.
 
 Create/edit booking flow: `supportsClubBookingFlow` — create GAME/TRAINING/TOURNAMENT; edit those + LEAGUE. EVENT cannot book/link (`eventCreateDefaults.applyEventUpdateInvariants`).
 

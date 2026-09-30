@@ -143,8 +143,11 @@ Bot: `telegram/bot.service.ts` (grammy, long poll). Mirror: `telegram/notificati
 | `/play` | Start (or show) a play intent — private **and** group |
 | `/live` | Games being scored right now in the chat's city |
 | `/invite` | The sender's personal referral link (private only) |
+| `/ai` | AI assistant: intro + assistant mode (private only; always listed). See [agent.md § Telegram channel](./agent.md#telegram-channel-phase-6) |
 
 `/play`, `/live` and `/games` share the middleware chain `requireUser, syncTelegramProfile, requireChat, rateLimitChat()`. `rateLimitChat(max = 10)` is a fixed one-minute window keyed by chat id, held in process: it stops one chat hammering a command, it is not a global quota. Overflow is dropped silently rather than answered, so a spammer gets no feedback loop.
+
+**Free text** (`handlers/message.handler.ts`): a pending input (reply-to-chat bridging, invite-decline reason) first, then AI assistant mode (`/ai`), then the "use the commands" reminder (which carries a **🤖 AI assistant** button for users the agent flag allows).
 
 **Command menu.** `services/telegram/botCommandMenu.ts` calls `setMyCommands` once at startup: a default English list, then one localized list per bot language. **`setMyCommands` replaces the whole list for a scope**, so the module registers *every* command the bot handles — adding a command to the bot means adding it to `BOT_MENU_COMMANDS` or it vanishes from the menu. Failures are logged and swallowed; the bot must still serve messages.
 
@@ -187,6 +190,7 @@ Registered in the `bot.service.ts` callback regex, handled in `handlers/callback
 | `at:<gameId>:<confirm\|unsure>` | attendance answer; edits the message and drops the two answer buttons while keeping "View game" |
 | `sr:<gameId>:<accept\|decline>` | series carry-over seat |
 | `wx:<gameId>:keep` | weather "Keep as planned"; answers "Playing rain or shine" and removes only the `wx:` button |
+| `agent:open` · `agent:ex:<1-3>` · `agent:new` · `agent:list` · `agent:chats:<page>` · `agent:sw:<chatId>` · `agent:stop:<runId>` · `agent:exit` · `agent:confirm:<actionId>` · `agent:reject:<actionId>` | AI assistant; own `bot.callbackQuery(/^agent:/)` registration → `telegram/agent/agentBot.ts` `handleCallback`. Identity from `ctx.from`, ids owner-scoped ([agent.md](./agent.md#telegram-channel-phase-6)) |
 
 `parsePlayCallback` returns `null` for anything malformed so the handler answers the query instead of throwing at the user.
 
@@ -203,6 +207,7 @@ Backend user-facing copy normally lives in `Backend/src/utils/translations.ts`, 
 | `services/weather/weatherAlertCopy.ts` | weather alerts | same shape |
 | `services/referral/referralCopy.ts` | referral pushes | `referralT(key, lang, params)` |
 | `services/recap/recapCopy.ts` | baked recap share images | same shape |
+| `services/telegram/agent/agentBotCopy.ts` | Telegram AI assistant | `agentBotT(key, lang, params)` |
 
 All cover the 11 bot languages, fall back to English for an unknown language and return the key for an unknown key, so call sites read identically to `t()`. Placeholders are `{name}`-style, not `{{name}}`. The reason is practical: `translations.ts` is one ~3,900-line file that many agents edit at once, and eleven insertions per feature is a guaranteed merge conflict for no behavioural gain. Do not duplicate keys that already exist there — `playIntent.today` / `.tomorrow` / `.morning` / `.afternoon` / `.evening` and `date.shortDay.*` are reused as-is.
 

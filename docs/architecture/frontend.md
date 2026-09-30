@@ -8,7 +8,7 @@ Entry: `Frontend/src/main.tsx` (theme sync, chat Dexie lifecycle, background syn
 
 | Layer | Use | Do not use for |
 |-------|-----|----------------|
-| **Zustand** `Frontend/src/store/` | Auth session, theme, shell nav, unread badges, players cache, socket events, presence, stories, favorites, deep links, gates (name/gender/sport/slot overlap). | Server lists that Query already owns. |
+| **Zustand** `Frontend/src/store/` | Auth session, theme, shell nav, unread badges, players cache, socket events, presence, stories, favorites, deep links, gates (name/gender/sport/slot overlap). AI agent live run state (`features/agent/agentRunStore.ts`, keyed by runId). | Server lists that Query already owns. |
 | **TanStack Query** `Frontend/src/queries/` | My/available/past games, weather, user stats, social connections, questionnaire, my-tab payload, user game notes, achievement leaderboards. | Chat messages, chat inbox, outbox. |
 | **Dexie** `Frontend/src/services/chat/chatLocalDb.ts` | Chat threads, messages, sync seq, outbox, drafts. Offline-first. Socket + HTTP sync apply into Dexie. | |
 
@@ -25,7 +25,7 @@ Most signed-in UX is **one** `MainPage` shell keyed by pathname (`utils/urlSchem
 | `/login`, `/login/:telegramKey`, `/register` | Login / TelegramAutoLogin / Register |
 | `/select-city` | SelectCity (only if `currentCity` missing) |
 | `/next-game` | NextGameRedirect (`pickNextGame`) |
-| `/`, `/find`, `/chats`, `/chats/marketplace`, `/profile`, `/leaderboard`, `/games/:id`, `/games/:id/chat`, `/user-chat/:id`, `/group-chat/:id`, `/channel-chat/:id`, `/bugs`, `/bugs/:id`, `/marketplace/*`, `/game-subscriptions`, `/user-team/:id`, `/user-profile/:userId` | **MainPage** |
+| `/`, `/find`, `/chats`, `/chats/marketplace`, `/profile`, `/leaderboard`, `/games/:id`, `/games/:id/chat`, `/user-chat/:id`, `/group-chat/:id`, `/channel-chat/:id`, `/bugs`, `/bugs/:id`, `/marketplace/*`, `/game-subscriptions`, `/user-team/:id`, `/user-profile/:userId`, `/ai/:chatId` | **MainPage** |
 | `/profile/sessions` | SessionsPage |
 | `/profile/connected-clubs` | ConnectedClubsBookingsPage |
 | `/create-game`, `/create-league`, `/create-event` | create wrappers |
@@ -62,7 +62,7 @@ Canonical parser/builder: `Frontend/src/utils/urlSchema.ts`. Store mirror: `hook
 | `?player=` | any | Player card overlay (`PlayerCardModalManager`) |
 | `?item=` | any | Marketplace item overlay |
 | `?sport=` | profile, player overlay, deep links | Level-sport context (`parseLevelSportQuery`) |
-| `?tab=` | `/` | `past-games` vs default calendar. Legacy `list`/`advanced` stripped. |
+| `?tab=` | `/` | `past-games` \| `ai` vs default calendar (`resolveHomeSubTab` in `hooks/useHomeFromUrl.ts`). `ai` is always available. Legacy `list`/`advanced` stripped. |
 | `?tab=` | `/find` | `my-games` \| `search` |
 | `?view=` | `/find` | `calendar` \| `list` |
 | `?date=` / `?dayOffset=` | `/find` | selected calendar day |
@@ -115,6 +115,7 @@ Signed-in users with `user.isPremium === true` and `user.mainTheme === 'premium'
 | Home calendar | `MyTab` split: month calendar \| games (`splitView`) |
 | Find calendar | `FindTab` + `AvailableGamesSection splitView` |
 | Chats | list \| thread (`SplitViewPanels`, `ResizableSplitter`) |
+| My → AI | chat list \| thread (`components/agent/AgentTab.tsx`, `ResizableSplitter`); mobile thread `/ai/:chatId` is `chrome='bare'` full-screen |
 | Game details | desktop or landscape: info \| chat/results (`GameDetailsPage`) |
 
 Components: `SplitViewPanels.tsx`, `ResizableSplitter.tsx`.

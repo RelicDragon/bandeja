@@ -239,6 +239,15 @@ export const queryKeys = {
   platformFlags: {
     all: ['platformFlags'] as const,
   },
+  /** AI agent chats (docs/plans/ai-agent.md). Streaming state is not Query — see `features/agent`. */
+  agent: {
+    all: ['agent'] as const,
+    chats: (userId?: string) =>
+      userId != null ? (['agent', 'chats', userId] as const) : (['agent', 'chats'] as const),
+    chat: (chatId: string) => ['agent', 'chat', chatId] as const,
+    permissions: (userId?: string) =>
+      userId != null ? (['agent', 'permissions', userId] as const) : (['agent', 'permissions'] as const),
+  },
   weatherAlerts: {
     all: ['weatherAlerts'] as const,
     game: (gameId: string) => ['weatherAlerts', 'game', gameId] as const,

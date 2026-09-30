@@ -1,8 +1,9 @@
 import type { PadelooMyClubRow } from '@/api/padeloo';
 import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
-import { bookingMatchesClubCourts } from '@/components/booktime/booktimeBookingUtils';
+import { bookingMatchesClubCourts, resolveBooktimeMyClubTimezone } from '@/components/booktime/booktimeBookingUtils';
 import { booktimeBookingStartMs } from '@/integrations/booktime/localTime';
 import { getPadelooClient, hydratePadelooSession } from '@/integrations/padeloo/session';
+import { reportBookingMirror } from '@/features/agent/bookingMirrorSync';
 import {
   isUpcomingPadelooBooking,
   reservationToBookingRecord,
@@ -50,12 +51,22 @@ async function fetchUpcomingForPadelooClub(club: PadelooMyClubRow): Promise<Book
     await hydratePadelooSession(club.clubId, padelooClubId);
     const client = getPadelooClient(club.clubId, padelooClubId);
     if (!client.isAuthenticated) return [];
+    const fetchedFrom = new Date();
     const reservations = await client.getMyReservations();
     const bookings = reservations
       .filter((row) => row.clubId === padelooClubId)
       .map((row) => reservationToClubBookingRecord(row, club))
       .filter((row) => isUpcomingPadelooBooking(row));
     clubUpcomingCache.set(cacheKey, { at: Date.now(), bookings });
+    reportBookingMirror({
+      provider: 'PADELOO',
+      clubId: club.clubId,
+      timeZone: resolveBooktimeMyClubTimezone(club),
+      courts: club.courts,
+      bookings,
+      fetchedFrom,
+      complete: true,
+    });
     return bookings;
   })().finally(() => {
     clubUpcomingInFlight.delete(cacheKey);

@@ -20,6 +20,7 @@ import {
 } from './config/corsOrigins';
 import { buildPublicHealthPayload } from './utils/healthInfo';
 import { getResponseBodySize } from './utils/responseSize';
+import { isAgentEventStreamPath } from './services/agent/agentEvents';
 
 const app: Application = express();
 
@@ -79,6 +80,11 @@ app.use(
   compression({
     filter: (req, res) => {
       if (req.headers['x-no-compression']) {
+        return false;
+      }
+
+      // SSE must flush every frame; gzip would buffer it (agent run events).
+      if (isAgentEventStreamPath(req.path)) {
         return false;
       }
 

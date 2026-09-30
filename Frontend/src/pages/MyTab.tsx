@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { lazy, Suspense, useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import type { InfiniteData } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -60,6 +60,10 @@ import { navigationService } from '@/services/navigationService';
 import { useUserTeamsStore } from '@/store/userTeamsStore';
 import { scrollAppToTop } from '@/utils/appScroll';
 import { readMyGamesViewMode, writeMyGamesViewMode, type MyGamesViewMode } from '@/utils/myGamesViewStorage';
+
+const AgentTab = lazy(() =>
+  import('@/components/agent/AgentTab').then((m) => ({ default: m.AgentTab })),
+);
 
 const sortMyGamesByStatusAndDateTime = <T extends { status?: string; startTime: string; parentId?: string; id: string; entityType?: string }>(
   list: T[] = [],
@@ -602,6 +606,14 @@ export const MyTab = () => {
       </div>
     </div>
   );
+  // My → AI (`?tab=ai`): its own list/thread UI, no pull-to-refresh or calendar chrome.
+  if (homeTab === 'ai') {
+    return (
+      <Suspense fallback={null}>
+        <AgentTab />
+      </Suspense>
+    );
+  }
   const splitView = isDesktop && calendarVisible && !isPastGamesTab;
   if (isDesktop) {
     if (isPastGamesTab) {

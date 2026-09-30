@@ -31,6 +31,7 @@ Code: `Admin/index.html` nav, `Admin/app.js`, `Admin/link-to-app.js`. API: `Back
 | Sponsor Ads | `sponsorAdsPage` | Sponsors, campaigns, targeting presets, creatives, stats, export, preview (`/admin/ads/*`) |
 | Goods | `Admin/goods.js` | Cosmetics catalogue CRUD, preview art upload, **Withdraw** (deactivate + refund every owner exactly once). API `/api/goods`, every route `requireAdmin` |
 | Referrals | `Admin/referrals.js` | Referrer, code, invited, joined, played, rewarded, coins, last join. `GET /api/admin/referrals`, `GET /api/admin/referrals/export` (CSV), `POST /api/admin/referrals/rewards/:rewardId/revoke`. Date filters narrow by **invite** date, not payout date |
+| AI Agent | `aiAgentPage` | Read-only audit: agent pending actions (time, user, tool, status, preview; expandable preview lines / args / result), filters by status + user id; daily token usage per user. `Admin/ai-agent.js` → `GET /admin/agent/actions`, `GET /admin/agent/usage` |
 | Translation Queue | `translationQueuePage` | Queue stats + recent failures (`GET /admin/translation-queue/stats`). Results-artifact queue stats exist on API (`/admin/game-results-artifacts-queue/stats`). |
 | App QR | `linkToAppPage` | Funnel: views / iOS / Android / Web / register / login; by campaign; attributed users; recent events. `Admin/link-to-app.js` → `GET /admin/link-to-app/stats?days=` |
 | Logs | `logsPage` | Historical + SSE stream (`GET /api/logs/stream?token=`), clear |
@@ -38,6 +39,8 @@ Code: `Admin/index.html` nav, `Admin/app.js`, `Admin/link-to-app.js`. API: `Back
 Global city filter in the header scopes several lists.
 
 **`/api/goods` is admin-only.** It previously carried `authenticate` alone on `POST`/`PUT`/`DELETE`, so any signed-in player could create, reprice or delete catalogue items, and the unfiltered `GET` leaked unreleased ones. Every route on that router is now `requireAdmin`, and `Backend/src/routes/goodsAdminGuard.integration.test.ts` fails if that regresses. Player-facing reads live on `/api/shop` — nothing on `/api/goods` is for players.
+
+The in-app AI agent has admin-only tools over the same services (find/get users, user flags, any game incl. city move, EVENT approval): [domains/agent.md § Admin tools](agent.md#admin-tools-phase-5a-toolsadmintoolsts-scopeadmin).
 
 ## Related APIs not in nav
 

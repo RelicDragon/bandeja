@@ -9,6 +9,7 @@ import {
 } from '@/integrations/booktime/booktimeAllUpcomingCacheStorage';
 import { notifyBooktimeAllUpcomingCacheInvalidation } from '@/integrations/booktime/booktimeAllUpcomingCacheInvalidation';
 import { getBooktimeClient, hydrateBooktimeSession } from '@/integrations/booktime/session';
+import { reportBookingMirror } from '@/features/agent/bookingMirrorSync';
 
 export type AggregatedBooktimeBooking = BooktimeBookingRecord & {
   clubId: string;
@@ -97,9 +98,12 @@ function groupConnectedClubsByCompany(
   return byCompany;
 }
 
+const UPCOMING_PAGE_SIZE = 20;
+
 async function fetchUpcomingForCompany(
-  representativeClub: BooktimeMyClubRow,
+  companyClubs: BooktimeMyClubRow[],
 ): Promise<BooktimeBookingRecord[]> {
+  const representativeClub = companyClubs[0]!;
   const companyId = representativeClub.companyId!;
   const now = Date.now();
   const cachedCompany = companyUpcomingCache.get(companyId);
@@ -123,10 +127,25 @@ async function fetchUpcomingForCompany(
       clubTimeZone,
     );
     if (!client.isAuthenticated) return [];
-    const res = await client.getUpcomingBookings(0, 20);
+    const fetchedFrom = new Date();
+    const res = await client.getUpcomingBookings(0, UPCOMING_PAGE_SIZE);
     const bookings = res.bookings ?? [];
     companyUpcomingCache.set(companyId, { at: Date.now(), bookings });
     persistCache();
+    // Agent mirror (slice 7k): one sync per club of the company; a full page may be truncated.
+    const complete =
+      bookings.length < UPCOMING_PAGE_SIZE && (res.totalCount === undefined || res.totalCount <= bookings.length);
+    for (const club of companyClubs) {
+      reportBookingMirror({
+        provider: 'BOOKTIME',
+        clubId: club.clubId,
+        timeZone: resolveBooktimeMyClubTimezone(club),
+        courts: club.courts,
+        bookings,
+        fetchedFrom,
+        complete,
+      });
+    }
     return bookings;
   })().finally(() => {
     companyUpcomingInFlight.delete(companyId);
@@ -144,7 +163,7 @@ async function fetchAllBooktimeUpcoming(
 
   for (const [companyId, companyClubs] of byCompany) {
     try {
-      const rawBookings = await fetchUpcomingForCompany(companyClubs[0]!);
+      const rawBookings = await fetchUpcomingForCompany(companyClubs);
       for (const club of companyClubs) {
         for (const booking of rawBookings) {
           if (!bookingMatchesClubCourts(booking, club.courts)) continue;

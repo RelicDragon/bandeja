@@ -1,0 +1,348 @@
+/**
+ * AI agent chat wire contract (docs/plans/ai-agent.md).
+ *
+ * Shared by Backend (`@bandeja/shared/agentContract`) and Frontend (`@shared/agentContract`).
+ * REST responses use the usual `{ success: true, data }` envelope; `data` types are below.
+ */
+import type { ClubIntegrationType } from './clubIntegration';
+
+export type AgentMessageRole = 'USER' | 'ASSISTANT' | 'TOOL';
+
+/** QUEUED: accepted, waiting for a worker slot (global + per-user concurrency caps). */
+export type AgentRunStatus = 'QUEUED' | 'RUNNING' | 'AWAITING_CONFIRMATION' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+
+/** UNKNOWN: a client-executed action's lease expired with no report (booking plan §14.5); a late report can still upgrade it. */
+export type AgentActionStatus = 'PENDING' | 'CONFIRMED' | 'REJECTED' | 'EXPIRED' | 'EXECUTED' | 'FAILED' | 'UNKNOWN';
+
+export type AgentErrorCode =
+  | 'RATE_LIMITED'
+  | 'BUDGET_EXCEEDED'
+  | 'CHAT_BUSY'
+  | 'LLM_ERROR'
+  | 'TIMEOUT'
+  | 'INTERNAL'
+  /** `/confirm` on a client-executed action (booking plan §14.5): only the app can run it (claim → report). */
+  | 'CLIENT_EXECUTION_REQUIRED';
+
+/** Typed references the UI renders as cards/links. Built from tool data, never from model text. */
+export type AgentEntityRef =
+  | {
+      type: 'game';
+      id: string;
+      title: string;
+      entityType: string;
+      status: string;
+      startTime: string | null;
+      clubName: string | null;
+    }
+  | { type: 'league_season'; id: string; title: string }
+  | { type: 'club'; id: string; name: string; cityName: string | null }
+  | { type: 'user'; id: string; name: string; avatar: string | null }
+  | {
+      /** A provider court booking (docs/plans/ai-agent-booking.md §14.7). `ref` is the server-minted `bookingRef`. */
+      type: 'booking';
+      ref: string;
+      clubId: string;
+      clubName: string;
+      courtNames: string[];
+      /** ISO instants; render in `timeZone` (the club's city tz). */
+      start: string;
+      end: string;
+      timeZone: string;
+      provider: ClubIntegrationType;
+      state: AgentBookingState;
+      linkedGameIds: string[];
+      canCancel: boolean;
+    }
+  | {
+      /** A bookable slot. `slotRef` is signed (15 min TTL); tapping it proposes `book_court`. */
+      type: 'slot';
+      slotRef: string;
+      clubId: string;
+      clubName: string;
+      courtNames: string[];
+      start: string;
+      end: string;
+      timeZone: string;
+      confidence: AgentSlotConfidence;
+      /** When the availability was observed (snapshot); null for `live` / `app_only`. */
+      asOf: string | null;
+    }
+  /** Deep link the user finishes in the app. `url` is an in-app path (`/create-game?…`) or an absolute URL. */
+  | { type: 'handoff'; url: string; label: string };
+
+/** Booking as the agent reports it. PAST: ended; UNKNOWN: provider state could not be read. */
+export type AgentBookingState = 'CONFIRMED' | 'CANCELLED' | 'PAST' | 'UNKNOWN';
+
+/** live: provider re-checked now; snapshot: cached busy data (never "free" for sure); app_only: only the app can check. */
+export type AgentSlotConfidence = 'live' | 'snapshot' | 'app_only';
+
+/** Who runs the provider write after Confirm (§14.5): the server, or the app (claim → adapter → report). */
+export type AgentActionExecution = 'server' | 'client';
+
+/** Client capabilities the app sends as `X-Agent-Client-Caps` (comma-separated) on `POST .../messages`. */
+export const AGENT_CLIENT_CAPS_HEADER = 'X-Agent-Client-Caps';
+export type AgentClientCap = 'booking-v1';
+
+export interface AgentClientPlanCourt {
+  /** Our `Court.id`. */
+  courtId: string;
+  /** Provider court id the adapter books. */
+  externalCourtId: string | null;
+}
+
+/** Cancel target: the server-minted `bookingRef` and the provider booking id the adapter cancels. */
+export interface AgentClientPlanBooking {
+  bookingRef: string;
+  externalBookingId: string;
+  courtId: string | null;
+}
+
+/** What the server does after the app reports (shown on the card; the server holds the details). */
+export type AgentClientPostStepKind = 'none' | 'create_game' | 'link_game' | 'unlink_game' | 'delete_game';
+
+export interface AgentClientPostStep {
+  kind: AgentClientPostStepKind;
+  gameId: string | null;
+}
+
+/**
+ * What the app runs on Confirm for a client-executed action (`execution: 'client'`,
+ * booking plan §14.5): `createHydratedClubBookingProvider(...).bookSlot` per court, or
+ * `cancelBooking` per booking. Times are club-local wall clock.
+ */
+export interface AgentClientPlan {
+  provider: ClubIntegrationType;
+  clubId: string;
+  courts: AgentClientPlanCourt[];
+  /** `YYYY-MM-DD`, club timezone. */
+  date: string;
+  /** `HH:mm`, club timezone. */
+  start: string;
+  durationMinutes: number;
+  operation: 'book' | 'cancel';
+  /** `cancel` only. */
+  bookings: AgentClientPlanBooking[];
+  postStep: AgentClientPostStep;
+  /**
+   * `book` only (booking plan §14.6): when a later court fails, the app cancels the courts it
+   * already booked in this attempt and reports each with `rolledBack`.
+   */
+  rollbackOnPartial?: boolean;
+}
+
+/** One provider call's outcome. `book`: one per court; `cancel`: one per booking. */
+export interface AgentClientReportResult {
+  provider: ClubIntegrationType;
+  courtId: string | null;
+  date: string;
+  start: string;
+  durationMinutes: number;
+  ok: boolean;
+  /** `book`: the new provider booking id (required when ok); `cancel`: the cancelled one. */
+  externalBookingId: string | null;
+  /** `cancel`: which planned booking this is. */
+  bookingRef: string | null;
+  price?: number | null;
+  currency?: string | null;
+  /** Short provider error (stored for the audit, never shown to the model). */
+  error?: string | null;
+  /**
+   * `book` + `rollbackOnPartial`, on an `ok` court only: `true` = cancelled again after a later
+   * court failed (nothing stays booked); `false` = the undo failed or its outcome is unknown
+   * (the court may still be booked). Absent = no rollback was attempted for it.
+   */
+  rolledBack?: boolean | null;
+}
+
+export interface AgentClientClaimRequest {
+  /** Per-device random key; a repeated claim with the same key within the lease gets the same attempt. */
+  clientKey: string;
+}
+
+export interface AgentClientClaimResponse {
+  action: AgentPendingActionDto;
+  /** null when the claim re-authorization failed (the action is FAILED; `runId` reports it). */
+  attemptId: string | null;
+  clientPlan: AgentClientPlan | null;
+  leaseExpiresAt: string | null;
+  runId: string | null;
+}
+
+export interface AgentClientReportRequest {
+  attemptId: string;
+  results: AgentClientReportResult[];
+}
+
+/** Stable dedupe key for an entity ref (booking/slot/handoff carry no `id`). */
+export function agentEntityKey(entity: AgentEntityRef): string {
+  switch (entity.type) {
+    case 'booking':
+      return `booking:${entity.ref}`;
+    case 'slot':
+      return `slot:${entity.slotRef}`;
+    case 'handoff':
+      return `handoff:${entity.url}`;
+    default:
+      return `${entity.type}:${entity.id}`;
+  }
+}
+
+export interface AgentActionPreviewLine {
+  label: string;
+  from: string | null;
+  to: string | null;
+}
+
+/** Server-rendered (never model-written) description of what a write will do. */
+export interface AgentActionPreview {
+  title: string;
+  lines: AgentActionPreviewLine[];
+  warnings: string[];
+}
+
+export interface AgentActionResult {
+  ok: boolean;
+  message: string | null;
+  entities?: AgentEntityRef[];
+  /** Only part of the change happened (e.g. "2 of 3 courts booked"); `message` says what. */
+  partial?: boolean;
+}
+
+/** Per user and write tool (plan §15). No stored row = ASK. */
+export type AgentToolPermissionMode = 'ASK' | 'ALWAYS_ALLOW';
+
+/** `critical` write tools always ask; only `standard` ones can be ALWAYS_ALLOW. */
+export type AgentToolRiskTier = 'standard' | 'critical';
+
+export interface AgentToolPermissionDto {
+  toolName: string;
+  /** Localized (`X-App-Locale`). */
+  name: string;
+  description: string;
+  riskTier: AgentToolRiskTier;
+  mode: AgentToolPermissionMode;
+  /** false for critical tools: the Ask ↔ Always allow toggle is disabled. */
+  canAlwaysAllow: boolean;
+}
+
+export interface AgentPendingActionDto {
+  id: string;
+  chatId: string;
+  runId: string;
+  toolName: string;
+  status: AgentActionStatus;
+  preview: AgentActionPreview;
+  expiresAt: string;
+  result: AgentActionResult | null;
+  createdAt: string;
+  /** Executed without a tap because the user always allows this tool ("executed automatically" card). */
+  autoApproved: boolean;
+  /** Effective tier of THIS call (a standard tool can be escalated per call, e.g. `update_game` making a game private). */
+  riskTier: AgentToolRiskTier;
+  /** Whether the card may offer "Always allow" (confirm with `{ remember: 'always' }`). */
+  canAlwaysAllow: boolean;
+  /** `server` unless the action is client-executed (booking plan §14.5). */
+  execution: AgentActionExecution;
+}
+
+export type AgentContentBlock =
+  | { type: 'text'; text: string }
+  | { type: 'tool_call'; callId: string; name: string; label: string }
+  | { type: 'tool_result'; callId: string; ok: boolean; summary: string; entities?: AgentEntityRef[] }
+  | { type: 'action'; actionId: string };
+
+export interface AgentMessageDto {
+  id: string;
+  chatId: string;
+  seq: number;
+  role: AgentMessageRole;
+  blocks: AgentContentBlock[];
+  runId: string | null;
+  createdAt: string;
+}
+
+export interface AgentRunSummaryDto {
+  id: string;
+  status: AgentRunStatus;
+}
+
+export interface AgentChatDto {
+  id: string;
+  title: string | null;
+  lastMessagePreview: string | null;
+  activeRun: AgentRunSummaryDto | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AgentChatDetailDto extends AgentChatDto {
+  messages: AgentMessageDto[];
+  actions: AgentPendingActionDto[];
+}
+
+export interface AgentUsage {
+  inputTokens: number;
+  outputTokens: number;
+}
+
+/**
+ * SSE frames on `GET /api/agent/runs/:runId/events`:
+ *   id: <monotonic event id>   (client resends as `Last-Event-ID` or `?after=` to replay)
+ *   event: <AgentStreamEvent['type']>
+ *   data: <JSON AgentStreamEvent>
+ * Keep-alive comment lines (`: keepalive`) every ≤15s. The stream closes after a terminal event
+ * (`run.completed` | `run.failed` | `run.cancelled`).
+ */
+export type AgentStreamEvent =
+  | { type: 'run.queued'; runId: string; chatId: string; position: number }
+  | { type: 'run.started'; runId: string; chatId: string }
+  | { type: 'text.delta'; text: string }
+  | { type: 'tool.started'; callId: string; name: string; label: string }
+  | { type: 'tool.finished'; callId: string; ok: boolean; summary: string; entities?: AgentEntityRef[] }
+  /** A proposed write (PENDING), or one already settled when `action.autoApproved` (EXECUTED / FAILED, no tap). */
+  | { type: 'action.pending'; action: AgentPendingActionDto }
+  | { type: 'message.saved'; message: AgentMessageDto }
+  | { type: 'run.completed'; status: 'COMPLETED' | 'AWAITING_CONFIRMATION'; usage: AgentUsage }
+  | { type: 'run.failed'; code: AgentErrorCode; message: string | null }
+  | { type: 'run.cancelled' };
+
+export type AgentStreamEventType = AgentStreamEvent['type'];
+
+export const AGENT_TERMINAL_EVENT_TYPES: readonly AgentStreamEventType[] = [
+  'run.completed',
+  'run.failed',
+  'run.cancelled',
+];
+
+/**
+ * REST surface (all behind `authenticate`):
+ *   GET    /api/agent/chats                   -> { chats: AgentChatDto[] }        (non-archived, updatedAt desc; activeRun set while QUEUED/RUNNING/AWAITING_CONFIRMATION)
+ *   POST   /api/agent/chats                   -> AgentChatDto
+ *   GET    /api/agent/chats/:chatId           -> AgentChatDetailDto
+ *   PATCH  /api/agent/chats/:chatId {title}   -> AgentChatDto
+ *   DELETE /api/agent/chats/:chatId           -> { ok: true }                    (archives)
+ *   POST   /api/agent/chats/:chatId/messages {text} -> { message: AgentMessageDto; runId: string }
+ *                                                (run starts QUEUED; 409 code CHAT_BUSY if the chat has a QUEUED/RUNNING run)
+ *   GET    /api/agent/runs/:runId/events      -> SSE (see above)
+ *   POST   /api/agent/runs/:runId/cancel      -> { ok: true }
+ *   POST   /api/agent/actions/:actionId/confirm {remember?: 'always'}
+ *                                           -> { action: AgentPendingActionDto; runId: string | null; remembered: boolean }
+ *                                              (`remember` on a critical tool / escalated call → 400 code PERMISSION_NOT_ALLOWED, nothing runs;
+ *                                               `remembered` = ALWAYS_ALLOW stored, only after EXECUTED)
+ *   POST   /api/agent/actions/:actionId/reject  -> { action: AgentPendingActionDto }
+ *   POST   /api/agent/actions/:actionId/claim {clientKey} -> AgentClientClaimResponse
+ *                                              (client-executed only: PENDING → CONFIRMED with a 3 min lease; same clientKey within
+ *                                               the lease → same attemptId; `/confirm` on such an action → 409 CLIENT_EXECUTION_REQUIRED)
+ *   POST   /api/agent/actions/:actionId/report AgentClientReportRequest
+ *                                           -> { action: AgentPendingActionDto; runId: string | null }
+ *                                              (wrong attemptId → 409 ACTION_HANDLED; results outside the plan → 400; a repeat
+ *                                               after EXECUTED/FAILED → current state; a late report upgrades UNKNOWN)
+ *   GET    /api/agent/permissions             -> { tools: AgentToolPermissionDto[] }   (write tools this user has)
+ *   PUT    /api/agent/permissions/:toolName {mode: AgentToolPermissionMode} -> AgentToolPermissionDto
+ *                                              (ALWAYS_ALLOW on a critical tool → 400 code PERMISSION_NOT_ALLOWED; unknown/unavailable tool → 404)
+ *   DELETE /api/agent/permissions             -> { tools: AgentToolPermissionDto[] }   (reset all to ASK)
+ *   DELETE /api/agent/permissions/:toolName   -> AgentToolPermissionDto                (reset one to ASK)
+ * Errors: `ApiError` JSON with `code: AgentErrorCode` where applicable.
+ */
+export const AGENT_MESSAGE_MAX_LENGTH = 4000;

@@ -1,0 +1,154 @@
+{
+  "agent": {
+    "tab": "AI",
+    "listTitle": "AI assistant",
+    "newChat": "New chat",
+    "noMessagesYet": "No messages yet",
+    "archived": "Chat archived",
+    "selectChat": "Pick a chat or start a new one",
+    "backToChats": "Back to chats",
+    "disclaimer": "The assistant can make mistakes. Nothing changes until you confirm it.",
+    "status": {
+      "working": "Working…",
+      "thinking": "Thinking…",
+      "stopped": "Stopped",
+      "needsConfirmation": "Needs your OK",
+      "queued": "Queued",
+      "waitingInQueue": "Waiting in queue…",
+      "waitingInQueuePosition": "Waiting in queue… (#{{position}})"
+    },
+    "menu": {
+      "open": "Chat options",
+      "rename": "Rename",
+      "renameTitle": "Rename chat",
+      "archive": "Archive chat"
+    },
+    "composer": {
+      "placeholder": "Ask about your games, leagues, clubs…",
+      "send": "Send",
+      "stop": "Stop"
+    },
+    "empty": {
+      "listTitle": "Your padel assistant",
+      "listHint": "Ask about your games, find a match or change a game. Try one of these:",
+      "chatTitle": "How can I help?",
+      "chatHint": "Ask anything about your games, leagues and clubs."
+    },
+    "examples": {
+      "nextGames": "What games do I have this week?",
+      "findGame": "Find me a game tomorrow evening",
+      "moveGame": "Move my Thursday game to 19:00",
+      "league": "Who is leading my league?"
+    },
+    "tool": {
+      "working": "Working on it…",
+      "done": "Done",
+      "failed": "Step failed"
+    },
+    "action": {
+      "heading": "Confirm change",
+      "loading": "Loading the change…",
+      "confirm": "Confirm",
+      "cancel": "Cancel",
+      "confirmed": "Confirmed",
+      "done": "Done",
+      "failed": "Could not apply the change",
+      "expired": "Expired — ask again to retry",
+      "rejected": "Cancelled",
+      "reject": "Reject",
+      "allowOnce": "Allow once",
+      "alwaysAllow": "Always allow",
+      "alwaysAsks": "This action always asks",
+      "autoHeading": "Done automatically",
+      "autoApproved": "Done automatically, you allowed this."
+    },
+    "entity": {
+      "untitledGame": "Game",
+      "club": "Club",
+      "leagueSeason": "League season"
+    },
+    "gameStatus": {
+      "ANNOUNCED": "Upcoming",
+      "STARTED": "In progress",
+      "FINISHED": "Finished",
+      "ARCHIVED": "Archived"
+    },
+    "slot": {
+      "clubTime": "Club time ({{tz}})",
+      "minutes": "{{minutes}} min",
+      "pick": "Book {{time}}",
+      "bookMessage": "Book this slot: {{club}}, {{date}} {{time}}, {{courts}}",
+      "confidence": {
+        "live": "Available",
+        "snapshot": "No known conflicts · as of {{time}}",
+        "snapshotNoTime": "No known conflicts",
+        "appOnly": "Not checked with the club"
+      }
+    },
+    "booking": {
+      "state": {
+        "CONFIRMED": "Booked",
+        "CANCELLED": "Cancelled",
+        "PAST": "Past",
+        "UNKNOWN": "Status unknown"
+      },
+      "linkedGame": "Game",
+      "linkedGameN": "Game {{n}}",
+      "cancel": "Cancel booking",
+      "cancelViaClub": "Cancel via the club",
+      "openClub": "Club page",
+      "cancelMessage": "Cancel booking {{club}}, {{date}} {{time}}"
+    },
+    "errors": {
+      "RATE_LIMITED": "Too many messages. Please wait a moment.",
+      "BUDGET_EXCEEDED": "You have reached today's assistant limit. Try again tomorrow.",
+      "CHAT_BUSY": "The assistant is still answering. Wait or tap Stop.",
+      "LLM_ERROR": "The assistant could not answer. Please try again.",
+      "TIMEOUT": "The assistant took too long. Please try again.",
+      "INTERNAL": "Something went wrong. Please try again.",
+      "chatNotFound": "This chat is not available.",
+      "listFailed": "Could not load your chats."
+    },
+    "permissions": {
+      "title": "Assistant permissions",
+      "manage": "Manage",
+      "safetyNote": "Always allow skips only the tap, not the permission checks. Critical actions always ask.",
+      "loadFailed": "Could not load permissions",
+      "empty": "The assistant has no actions that change anything for you yet.",
+      "resetAll": "Reset all",
+      "resetTitle": "Reset all permissions?",
+      "resetMessage": "Every action will ask for your confirmation again.",
+      "resetConfirm": "Reset",
+      "resetDone": "All actions ask again",
+      "modeAsk": "Asks every time",
+      "modeAlways": "Always allowed",
+      "alwaysAsks": "Always asks"
+    },
+    "clientExec": {
+      "bookInApp": "Book in app",
+      "cancelInApp": "Cancel in app",
+      "bookAndCreateGameInApp": "Book and create game in app",
+      "cancelBookingsAndGameInApp": "Cancel bookings and game in app",
+      "retry": "Try again",
+      "hint": "Runs on this device with your club account",
+      "claiming": "Starting…",
+      "rechecking": "Re-checking price and availability…",
+      "booking": "Booking court {{current}} of {{total}}…",
+      "cancelling": "Cancelling booking {{current}} of {{total}}…",
+      "saving": "Saving…",
+      "savingCreateGame": "Creating the game…",
+      "savingCancelGame": "Cancelling the game…",
+      "priceQuote": "The club charges {{price}}. Continue?",
+      "priceStop": "Stop",
+      "priceContinue": "Book for {{price}}",
+      "handledElsewhere": "Handled on another device",
+      "unknown": "Outcome unknown — check Club bookings",
+      "openClubBookings": "Club bookings",
+      "connectClub": "Connect your club account",
+      "partial": "Only part of it was done",
+      "failed": "Nothing was changed",
+      "reportPending": "Done at the club, but not saved yet. We'll retry when you come back.",
+      "inProgress": "Running in the app…"
+    }
+  }
+}

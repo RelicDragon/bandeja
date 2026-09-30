@@ -4,7 +4,7 @@ window.EULAContent = window.EULAContent || {};
 window.EULAContent['en'] = `<h1>Privacy Policy & User Agreement</h1>
 <p><strong>Application:</strong> Padel Bandeja<br>
 <strong>Effective date:</strong> 12/01/2025<br>
-<strong>Last updated:</strong> 22/02/2025<br>
+<strong>Last updated:</strong> 30/09/2026<br>
 Applies worldwide</p>
 
 <h2>1. Privacy Policy</h2>
@@ -36,7 +36,7 @@ Applies worldwide</p>
 <p>We do not sell your personal data. We may share information only in the following circumstances:</p>
 <ul>
 <li><strong>With Your Consent:</strong> When you explicitly authorize sharing</li>
-<li><strong>Service Providers:</strong> With trusted third-party services that help us operate the app (hosting, analytics, SMS providers)</li>
+<li><strong>Service Providers:</strong> With trusted third-party services that help us operate the app (hosting, analytics, SMS providers, AI providers)</li>
 <li><strong>Legal Requirements:</strong> When required by law, court order, or government regulation</li>
 <li><strong>Safety and Security:</strong> To protect rights, property, or safety of users and the public</li>
 <li><strong>Business Transfers:</strong> In connection with a merger, acquisition, or sale of assets</li>
@@ -74,6 +74,24 @@ Applies worldwide</p>
 <li><strong>Who can see it:</strong> This information is visible to other signed-in users of the application.</li>
 <li><strong>Your control:</strong> In line with privacy-by-design principles, you have full control. In the app settings you can turn off visibility of your status using the option &quot;Show my online status&quot; (opt-out). By default, your status is visible to others; you can disable it at any time.</li>
 <li><strong>Legal basis:</strong> We rely on Legitimate Interest: displaying presence is a core feature of the service that users expect. The feature is on by default, with a mandatory option to disable it in settings.</li>
+</ul>
+
+<h3>1.10 AI Features and AI Assistant</h3>
+<p>Bandeja offers an optional AI assistant, available in the app (My → AI) and in our Telegram bot. Using it is voluntary.</p>
+<ul>
+<li><strong>What we send:</strong> When you use the assistant, your messages and related data are sent to a third-party AI provider (currently DeepSeek) to generate answers. Related data includes:
+<ul>
+<li>your first name, language, home city and time zone;</li>
+<li>your upcoming games;</li>
+<li>the leagues you manage;</li>
+<li>messages in the chats of games you take part in, when you ask the assistant to read or summarize them (only chats you can already see in the app);</li>
+<li>the results of lookups you request: games, clubs, and public profile information of other players.</li>
+</ul>
+</li>
+<li><strong>Other AI processing:</strong> Other AI features, such as automatic translation of messages and texts and voice transcription, are processed by AI providers (OpenAI or DeepSeek) in the same way.</li>
+<li><strong>Actions:</strong> The assistant can prepare changes on your behalf (for example, editing a game or inviting players), but nothing is changed until you confirm each action.</li>
+<li><strong>Storage:</strong> Conversations are stored on our servers and linked to your account so you can continue them later. You can archive chats. We log usage metadata (such as token counts) to prevent abuse and control costs. If you connect club booking accounts (Booktime, Padeloo, Klikteren), the app also copies your upcoming bookings at those clubs (club, court, time and status) to our servers, so the assistant and the Telegram bot can list them and link them to games.</li>
+<li><strong>Limits:</strong> The assistant has no access to games or data that you cannot see in the app. Please do not enter sensitive personal data in AI chats.</li>
 </ul>
 
 <h2>2. User Agreement</h2>
@@ -160,6 +178,6 @@ Applies worldwide</p>
 <p><strong>Email:</strong> <a href="mailto:relic.ilya@gmail.com">relic.ilya@gmail.com</a></p>
 
 <div class="footer">
-<p>This document was last updated on 22/02/2025. We reserve the right to update this policy and agreement at any time.</p>
+<p>This document was last updated on 30/09/2026. We reserve the right to update this policy and agreement at any time.</p>
 <p>Contact: <a href="mailto:relic.ilya@gmail.com">relic.ilya@gmail.com</a></p>
 </div>`;

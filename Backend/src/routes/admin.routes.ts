@@ -67,6 +67,10 @@ import {
 import { PLATFORM_SETTING_KEY_PATTERN, PLATFORM_SETTING_MAX_VALUE_LENGTH } from '../services/platformSetting.service';
 import * as adminAdController from '../controllers/adminAd.controller';
 import * as adminReferralController from '../controllers/adminReferral.controller';
+import * as agentAdminController from '../controllers/agentAdmin.controller';
+import { AGENT_AUDIT_ACTIONS_MAX, AGENT_AUDIT_USAGE_MAX_DAYS } from '../services/agent/agentAudit.service';
+import { validateZod } from '../middleware/validateZod';
+import { z } from 'zod';
 import {
   deleteAdminLinkToAppCampaignLabel,
   getAdminLinkToAppCampaignLabels,
@@ -258,6 +262,31 @@ router.post(
   '/referrals/rewards/:rewardId/revoke',
   requireAdmin,
   adminReferralController.revokeAdminReferralReward
+);
+
+// AI agent audit (read-only): proposed/confirmed writes and daily token usage.
+router.get(
+  '/agent/actions',
+  requireAdmin,
+  validateZod({
+    query: z.object({
+      userId: z.string().trim().min(1).max(64).optional(),
+      status: z.enum(['PENDING', 'CONFIRMED', 'REJECTED', 'EXPIRED', 'EXECUTED', 'FAILED']).optional(),
+      limit: z.coerce.number().int().min(1).max(AGENT_AUDIT_ACTIONS_MAX).default(50),
+    }),
+  }),
+  agentAdminController.getAdminAgentActions,
+);
+router.get(
+  '/agent/usage',
+  requireAdmin,
+  validateZod({
+    query: z.object({
+      userId: z.string().trim().min(1).max(64).optional(),
+      days: z.coerce.number().int().min(1).max(AGENT_AUDIT_USAGE_MAX_DAYS).default(14),
+    }),
+  }),
+  agentAdminController.getAdminAgentUsage,
 );
 
 export default router;

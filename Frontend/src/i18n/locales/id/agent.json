@@ -1,0 +1,154 @@
+{
+  "agent": {
+    "tab": "AI",
+    "listTitle": "Asisten AI",
+    "newChat": "Obrolan baru",
+    "noMessagesYet": "Belum ada pesan",
+    "archived": "Obrolan diarsipkan",
+    "selectChat": "Pilih obrolan atau mulai yang baru",
+    "backToChats": "Kembali ke obrolan",
+    "disclaimer": "Asisten bisa keliru. Tidak ada yang berubah sampai kamu mengonfirmasi.",
+    "status": {
+      "working": "Sedang bekerja…",
+      "thinking": "Sedang berpikir…",
+      "stopped": "Dihentikan",
+      "needsConfirmation": "Perlu persetujuanmu",
+      "queued": "Dalam antrean",
+      "waitingInQueue": "Menunggu antrean…",
+      "waitingInQueuePosition": "Menunggu antrean… (#{{position}})"
+    },
+    "menu": {
+      "open": "Opsi obrolan",
+      "rename": "Ganti nama",
+      "renameTitle": "Ganti nama obrolan",
+      "archive": "Arsipkan obrolan"
+    },
+    "composer": {
+      "placeholder": "Tanya soal permainan, liga, klub…",
+      "send": "Kirim",
+      "stop": "Hentikan"
+    },
+    "empty": {
+      "listTitle": "Asisten padel kamu",
+      "listHint": "Tanya soal permainanmu, cari pertandingan, atau ubah permainan. Coba:",
+      "chatTitle": "Ada yang bisa dibantu?",
+      "chatHint": "Tanyakan apa saja tentang permainan, liga, dan klub."
+    },
+    "examples": {
+      "nextGames": "Permainan apa saja yang saya punya minggu ini?",
+      "findGame": "Carikan saya permainan besok malam",
+      "moveGame": "Pindahkan permainan Kamis saya ke 19:00",
+      "league": "Siapa yang memimpin liga saya?"
+    },
+    "tool": {
+      "working": "Sedang dikerjakan…",
+      "done": "Selesai",
+      "failed": "Langkah gagal"
+    },
+    "action": {
+      "heading": "Konfirmasi perubahan",
+      "loading": "Memuat perubahan…",
+      "confirm": "Konfirmasi",
+      "cancel": "Batal",
+      "confirmed": "Dikonfirmasi",
+      "done": "Selesai",
+      "failed": "Perubahan tidak dapat diterapkan",
+      "expired": "Kedaluwarsa — minta lagi",
+      "rejected": "Dibatalkan",
+      "reject": "Tolak",
+      "allowOnce": "Izinkan sekali",
+      "alwaysAllow": "Selalu izinkan",
+      "alwaysAsks": "Tindakan ini selalu meminta konfirmasi",
+      "autoHeading": "Dilakukan otomatis",
+      "autoApproved": "Dilakukan otomatis, Anda mengizinkan ini."
+    },
+    "entity": {
+      "untitledGame": "Permainan",
+      "club": "Klub",
+      "leagueSeason": "Musim liga"
+    },
+    "gameStatus": {
+      "ANNOUNCED": "Akan datang",
+      "STARTED": "Berlangsung",
+      "FINISHED": "Selesai main",
+      "ARCHIVED": "Diarsipkan"
+    },
+    "slot": {
+      "clubTime": "Waktu klub ({{tz}})",
+      "minutes": "{{minutes}} mnt",
+      "pick": "Pesan {{time}}",
+      "bookMessage": "Pesan slot ini: {{club}}, {{date}} {{time}}, {{courts}}",
+      "confidence": {
+        "live": "Tersedia",
+        "snapshot": "Tidak ada bentrok yang diketahui · per {{time}}",
+        "snapshotNoTime": "Tidak ada bentrok yang diketahui",
+        "appOnly": "Belum dicek dengan klub"
+      }
+    },
+    "booking": {
+      "state": {
+        "CONFIRMED": "Dipesan",
+        "CANCELLED": "Dibatalkan",
+        "PAST": "Lewat",
+        "UNKNOWN": "Status tidak diketahui"
+      },
+      "linkedGame": "Permainan",
+      "linkedGameN": "Permainan {{n}}",
+      "cancel": "Batalkan pesanan",
+      "cancelViaClub": "Batalkan melalui klub",
+      "openClub": "Halaman klub",
+      "cancelMessage": "Batalkan pesanan {{club}}, {{date}} {{time}}"
+    },
+    "errors": {
+      "RATE_LIMITED": "Terlalu banyak pesan. Tunggu sebentar.",
+      "BUDGET_EXCEEDED": "Batas harian asisten sudah tercapai. Coba lagi besok.",
+      "CHAT_BUSY": "Asisten masih menjawab. Tunggu atau ketuk Hentikan.",
+      "LLM_ERROR": "Asisten tidak bisa menjawab. Coba lagi.",
+      "TIMEOUT": "Asisten terlalu lama. Coba lagi.",
+      "INTERNAL": "Terjadi kesalahan. Coba lagi.",
+      "chatNotFound": "Obrolan ini tidak tersedia.",
+      "listFailed": "Gagal memuat obrolanmu."
+    },
+    "permissions": {
+      "title": "Izin asisten",
+      "manage": "Kelola",
+      "safetyNote": "“Selalu izinkan” hanya melewati ketukan, bukan pemeriksaan izin. Tindakan penting selalu bertanya.",
+      "loadFailed": "Gagal memuat izin",
+      "empty": "Asisten belum punya tindakan yang mengubah sesuatu untuk Anda.",
+      "resetAll": "Setel ulang semua",
+      "resetTitle": "Setel ulang semua izin?",
+      "resetMessage": "Setiap tindakan akan kembali meminta konfirmasi Anda.",
+      "resetConfirm": "Setel ulang",
+      "resetDone": "Semua tindakan kembali bertanya",
+      "modeAsk": "Tanya setiap kali",
+      "modeAlways": "Selalu diizinkan",
+      "alwaysAsks": "Selalu bertanya"
+    },
+    "clientExec": {
+      "bookInApp": "Pesan di aplikasi",
+      "cancelInApp": "Batalkan di aplikasi",
+      "bookAndCreateGameInApp": "Pesan dan buat game di aplikasi",
+      "cancelBookingsAndGameInApp": "Batalkan pemesanan dan game di aplikasi",
+      "retry": "Coba lagi",
+      "hint": "Berjalan di perangkat ini dengan akun klub Anda",
+      "claiming": "Memulai…",
+      "rechecking": "Memeriksa ulang harga dan ketersediaan…",
+      "booking": "Memesan lapangan {{current}} dari {{total}}…",
+      "cancelling": "Membatalkan pemesanan {{current}} dari {{total}}…",
+      "saving": "Menyimpan…",
+      "savingCreateGame": "Membuat game…",
+      "savingCancelGame": "Membatalkan game…",
+      "priceQuote": "Klub mengenakan {{price}}. Lanjutkan?",
+      "priceStop": "Berhenti",
+      "priceContinue": "Pesan seharga {{price}}",
+      "handledElsewhere": "Ditangani di perangkat lain",
+      "unknown": "Hasil tidak diketahui — periksa pemesanan klub",
+      "openClubBookings": "Pemesanan klub",
+      "connectClub": "Hubungkan akun klub Anda",
+      "partial": "Hanya sebagian yang selesai",
+      "failed": "Tidak ada yang berubah",
+      "reportPending": "Selesai di klub, tetapi belum tersimpan. Kami akan mencoba lagi saat Anda kembali.",
+      "inProgress": "Berjalan di aplikasi…"
+    }
+  }
+}

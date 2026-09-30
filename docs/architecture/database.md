@@ -80,6 +80,20 @@ Declined/cancelled invites that are **not** participants: `GameInviteOutcome`.
 
 Context enum is **`ChatContextType`**: `GAME`, `BUG`, `USER`, `GROUP`. Bugs are **not** `EntityType`.
 
+### Agent\* (AI agent chats)
+
+Own tables, **not** `ChatContextType` (no unread state, no other members). See [agent.md](../domains/agent.md).
+
+| Model | Role |
+|-------|------|
+| `AgentChat` | Per user: `title` (auto from first message), `archivedAt` (DELETE archives). Index `(userId, archivedAt, updatedAt)`. |
+| `AgentMessage` | `seq` unique per chat, `role` (`AgentMessageRole` USER/ASSISTANT/TOOL), `content` = client blocks (`AgentContentBlock[]`), `llmMessages` = **private** raw model messages (assistant `tool_calls`, tool results) replayed to the model, never sent to clients. `runId`. |
+| `AgentRun` | Also the **durable run queue**. `status` (`AgentRunStatus` QUEUED/RUNNING/AWAITING_CONFIRMATION/COMPLETED/FAILED/CANCELLED), `createdAt` (queued at; queue order + daily budget window), `startedAt` (claimed), `endedAt`, `heartbeatAt` (executor liveness), `workerId`, `locale` (reply language captured at enqueue), `clientCaps` (`X-Agent-Client-Caps`, e.g. `booking-v1`; empty for Telegram / old builds), `errorCode`/`error`, `model`, `inputTokens`/`outputTokens`, `steps`, denormalised `userId`. Indexes `(chatId, status)`, `(status, createdAt)`, `(userId, createdAt)`. |
+| `AgentPendingAction` | Phase-3 write confirmation + audit: `toolName`, `callId`, `args` (incl. the call's effective `riskTier`), server-rendered `preview`, `status` (`AgentActionStatus`), `expiresAt`, `result`, `error`, `executedAt`, `autoApproved` (executed without a tap because of ALWAYS_ALLOW, phase 8); client-executed actions (booking plan §14.5): `attemptId`, `claimKey`, `leaseExpiresAt`, `reportedAt`, status `UNKNOWN` after an unreported lease. Indexes `(userId, status)`, `(status, leaseExpiresAt)`. |
+| `AgentToolPermission` | Phase 8 (plan §15): per user and write tool, `mode` `AgentToolPermissionMode` `ASK` \| `ALWAYS_ALLOW` (no row = ASK). Unique `(userId, toolName)`; cascade with `User`. Critical-tier tools are never stored as ALWAYS_ALLOW (service rejects). Migration `20260930160000_agent_tool_permissions`. |
+
+Migration `20260930120000_agent_chats`.
+
 ### PlayIntent\*
 
 `PlayIntent`: looking-to-play row (`status` OPEN/MATCHED/CONSUMED/EXPIRED/CANCELLED, city/sport, dateKeys, time windows, clubIds, level range). Jobs: `PlayIntentFollowerNotificationJob`, `PlayIntentMatchJob`, `PlayIntentNotificationDelivery`, `PlayIntentGameOwnerPing`. Linked from `GameParticipant.playIntentId`.
@@ -88,7 +102,10 @@ Context enum is **`ChatContextType`**: `GAME`, `BUG`, `USER`, `GROUP`. Bugs are 
 
 | Model | Provider |
 |-------|----------|
-| `GameExternalBooking` | Linked reservation on a game (`externalBookingId`, `externalBookingProvider` = `ClubIntegrationType`, `bookingStart`/`End`, optional `courtId`) |
+| `GameExternalBooking` | Linked reservation on a game (`externalBookingId`, `externalBookingProvider` = `ClubIntegrationType`, `bookingStart`/`End`, optional `courtId`, optional `bookedByUserId` → User (SetNull): set on create/link for a booking new to the app, inherited from an existing row of the same booking otherwise, never overwritten; null = legacy. Only the booker may cancel at the provider via the agent) |
+| `ExternalBookingMirror` | App-synced copy of the user's own Booktime / Padeloo / Klikteren upcoming bookings (agent slice 7k, [agent.md](../domains/agent.md#booking-list-mirror-slice-7k)): `userId`, `provider`, `clubId`, `externalBookingId`, `courts` JSON `[{courtId, name}]`, `bookingStart`/`End`, `state` (`ExternalBookingMirrorState` CONFIRMED/CANCELLED), `syncedAt`. Unique `(userId, provider, externalBookingId)`, index `(userId, bookingStart)`; cascade with User and Club. Written only by `PUT /api/bookings/mirror` (the backend never calls these providers) |
+| `ExternalBookingMirrorSync` | Last list sync per `(userId, provider, clubId)` (unique): `rangeFrom`/`rangeTo`, `complete` (false = truncated page), `syncedAt`. A complete sync < 24 h makes the agent's upcoming list complete for that club. Migration `20260930211000_external_booking_mirror` |
+| `NspadelBooking` | Local receipt of an Nspadel reservation (agent slice 7d; the club's rows are RLS-blocked, so no provider id is readable): `userId`, `clubId`, optional app `courtId` (SetNull), `externalCourtId`, club-local `date` / `startTime` / `durationMinutes`, `bookingStart`/`End`, `state` (`NspadelBookingState` SUBMITTING/CONFIRMED/REJECTED/UNKNOWN), unique `idempotencyKey` (`userId:clubId:externalCourtId:date:startTime:duration`), `externalBookingId` = the synthetic `nspadel:<court>:<date>:<start>` games link. Written by `createNspadelBooking` (HTTP `POST /api/nspadel/bookings` and `book_court`): a CONFIRMED receipt whose slot is still occupied is returned without a second insert; a free slot re-claims the receipt. Migration `20260930210000_nspadel_booking_receipts` |
 | `ClubBooktimeBusySnapshot` | Booktime court-day busy JSON |
 | `ClubPadelooBusySnapshot` | Padeloo |
 | `ClubKlikterenBusySnapshot` | Klikteren |

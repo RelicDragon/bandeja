@@ -23,7 +23,7 @@ Pattern: **route → controller → service → Prisma**. Controllers call `next
 4. `cors` — credentials, methods GET/POST/PUT/DELETE/PATCH/OPTIONS. Extra headers: `X-Client-Version`, `X-Client-Platform`, `X-Refresh-Request-Id`, `X-E2E-Test`, `X-Klikteren-Cookie`. Exposed: `ETag`, `X-Response-Size`, `X-Klikteren-Set-Cookie`.
 5. `express.json({ limit: '5mb' })` — stores `rawBody` for `/webhooks/replicate`.
 6. `express.urlencoded({ extended: true, limit: '5mb' })`.
-7. `compression` — JSON always; skip if `x-no-compression`; threshold 1024.
+7. `compression` — JSON always; skip if `x-no-compression` or the agent SSE path `/api/agent/runs/:runId/events` (`isAgentEventStreamPath`); threshold 1024.
 8. Wrap `res.send` → `X-Response-Size`.
 9. `e2eTestContextMiddleware`.
 10. `morgan` (`dev` locally, combined + response-time otherwise).
@@ -101,6 +101,7 @@ Mounted under `/api`:
 | `/klikteren` | `klikteren.routes` |
 | `/nspadel` | `nspadel.routes` |
 | `/weather` | `weather.routes` |
+| `/agent` | `agent.routes` (AI agent chats + run SSE; [agent.md](../domains/agent.md)) |
 
 Also: `gamePhoto.routes` is mounted from `game.routes` (not the aggregator). `replicateWebhook.routes` is **not** under `/api`.
 
@@ -137,7 +138,7 @@ All `start()` on boot, `stop()` on SIGTERM/SIGINT:
 | `PlayIntentScheduler` | `services/playIntentScheduler.service.ts` |
 | `RatingInactiveScheduler` | `services/ratingInactiveScheduler.service.ts` |
 
-Also on API boot: `resumeMatchTimerSchedulesOnStartup()`, Telegram bot, APNs/FCM push, Socket.IO.
+Also on API boot: `resumeMatchTimerSchedulesOnStartup()`, Telegram bot (incl. the AI assistant, which re-attaches to agent runs its messages were tracking: `services/telegram/agent/`, [agent.md](../domains/agent.md#telegram-channel-phase-6)), APNs/FCM push, Socket.IO.
 
 ## Queue workers (`startQueueWorkers.ts`)
 
@@ -149,6 +150,7 @@ Started from **both** `server.ts` and `worker.ts`:
 - `PlayIntentMatchQueueService`
 - `PlayIntentNotificationDeliveryQueueService`
 - `PlayIntentQueueMaintenanceService`
+- `AgentRunQueueService` — AI agent runs (`AgentRun` QUEUED rows; always on; in `worker.ts` only with Redis). See [agent.md](../domains/agent.md).
 
 ## Socket.IO
 

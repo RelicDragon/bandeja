@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import agentRoutes from './agent.routes';
 import authRoutes from './auth.routes';
 import telegramAuthRoutes from './telegramAuth.routes';
 import userRoutes from './user.routes';
@@ -48,6 +49,7 @@ import padelooRoutes from './padeloo.routes';
 import klikterenRoutes from './klikteren.routes';
 import nspadelRoutes from './nspadel.routes';
 import weltnerRoutes from './weltner.routes';
+import bookingMirrorRoutes from './bookingMirror.routes';
 import weatherRoutes from './weather.routes';
 import meRoutes from './me.routes';
 // PRDs 345–357 — routers pre-created by the Wave 2 backend scaffold so the
@@ -166,6 +168,7 @@ router.use('/padeloo', padelooRoutes);
 router.use('/klikteren', klikterenRoutes);
 router.use('/nspadel', nspadelRoutes);
 router.use('/weltner', weltnerRoutes);
+router.use('/bookings', bookingMirrorRoutes); // agent booking slice 7k
 router.use('/weather', weatherRoutes);
 
 /* PRDs 345–357 routers on their own new mount paths — no shadowing possible. */
@@ -175,5 +178,6 @@ router.use('/referrals', referralRoutes); // PRD 351
 router.use('/public/referral', publicReferralRoutes); // PRD 351
 router.use('/public/platform-flags', publicPlatformFlagsRoutes); // PRD 363 / 364
 router.use('/shop', shopRoutes); // PRD 355
+router.use('/agent', agentRoutes); // AI agent chats (docs/domains/agent.md)
 
 export default router;

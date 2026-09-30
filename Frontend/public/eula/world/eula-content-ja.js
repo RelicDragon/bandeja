@@ -3,7 +3,7 @@ window.EULAContent = window.EULAContent || {};
 window.EULAContent['ja'] = `<h1>プライバシーポリシーと利用規約</h1>
 <p><strong>Application:</strong> Padel Bandeja<br>
 <strong>Effective date:</strong> 12/01/2025<br>
-<strong>Last updated:</strong> 22/02/2025<br>
+<strong>Last updated:</strong> 30/09/2026<br>
 Applies worldwide</p>
 
 <h2>1. プライバシーポリシー</h2>
@@ -35,7 +35,7 @@ Applies worldwide</p>
 <p>当社はあなたの個人データを販売しません。当社は、次の場合にのみ情報を共有する場合があります。</p>
 <ul>
 <li><strong>With Your Consent:</strong> When you explicitly authorize sharing</li>
-<li><strong>Service Providers:</strong> With trusted third-party services that help us operate the app (hosting, analytics, SMS providers)</li>
+<li><strong>サービスプロバイダー:</strong> アプリの運営を支援する信頼できる第三者サービス（ホスティング、分析、SMSプロバイダー、AIプロバイダー）</li>
 <li><strong>Legal Requirements:</strong> When required by law, court order, or government regulation</li>
 <li><strong>Safety and Security:</strong> To protect rights, property, or safety of users and the public</li>
 <li><strong>Business Transfers:</strong> In connection with a merger, acquisition, or sale of assets</li>
@@ -73,6 +73,24 @@ Applies worldwide</p>
 <li><strong>Who can see it:</strong> This information is visible to other signed-in users of the application.</li>
 <li><strong>Your control:</strong> In line with privacy-by-design principles, you have full control. In the app settings you can turn off visibility of your status using the option &quot;Show my online status&quot; (opt-out). By default, your status is visible to others; you can disable it at any time.</li>
 <li><strong>Legal basis:</strong> We rely on Legitimate Interest: displaying presence is a core feature of the service that users expect. The feature is on by default, with a mandatory option to disable it in settings.</li>
+</ul>
+
+<h3>1.10 AI機能とAIアシスタント</h3>
+<p>Bandejaは、アプリ内（マイ → AI）および当社のTelegramボットで、任意でご利用いただけるAIアシスタントを提供しています。</p>
+<ul>
+<li><strong>送信する情報:</strong> お客様がアシスタントを利用すると、回答を生成するために、お客様のメッセージおよび関連データが第三者のAIプロバイダー（現在はDeepSeek）に送信されます。関連データには以下が含まれます。
+<ul>
+<li>お客様の名（ファーストネーム）、言語、ホームシティ、タイムゾーン</li>
+<li>お客様の今後のゲーム</li>
+<li>お客様が管理しているリーグ</li>
+<li>お客様が参加しているゲームのチャットのメッセージ（アシスタントに読み取りや要約を依頼した場合のみ。アプリですでに閲覧できるチャットに限ります）</li>
+<li>お客様がリクエストした検索の結果（ゲーム、クラブ、他のプレイヤーの公開プロフィール情報）</li>
+</ul>
+</li>
+<li><strong>その他のAI処理:</strong> メッセージやテキストの自動翻訳、音声の文字起こしなど、その他のAI機能も同様にAIプロバイダー（OpenAIまたはDeepSeek）によって処理されます。</li>
+<li><strong>操作:</strong> アシスタントはお客様に代わって変更を準備できます（例：ゲームの編集、プレイヤーの招待）が、お客様が各操作を確認するまで何も変更されません。</li>
+<li><strong>保存:</strong> 会話は当社のサーバーに保存され、続きから利用できるようお客様のアカウントに紐付けられます。チャットはアーカイブできます。不正利用の防止とコスト管理のため、利用メタデータ（トークン数など）を記録します。クラブの予約アカウント（Booktime、Padeloo、Klikteren）を連携している場合、アシスタントと Telegram ボットが予約を一覧表示し試合に紐付けられるよう、アプリはそれらのクラブでの今後の予約（クラブ、コート、時間、状態）を当社のサーバーにもコピーします。</li>
+<li><strong>制限:</strong> アシスタントは、お客様がアプリ内で閲覧できないゲームやデータにはアクセスできません。AIチャットには機微な個人情報を入力しないでください。</li>
 </ul>
 
 <h2>2. ユーザー同意書</h2>
@@ -159,6 +177,6 @@ Applies worldwide</p>
 <p><strong>Email:</strong> <a href="mailto:relic.ilya@gmail.com">relic.ilya@gmail.com</a></p>
 
 <div class="footer">
-<p>このドキュメントの最終更新日は 2025 年 2 月 22 日です。当社は、このポリシーおよび契約をいつでも更新する権利を留保します。</p>
+<p>このドキュメントの最終更新日は 2026 年 9 月 30 日です。当社は、このポリシーおよび契約をいつでも更新する権利を留保します。</p>
 <p>Contact: <a href="mailto:relic.ilya@gmail.com">relic.ilya@gmail.com</a></p>
 </div>`;

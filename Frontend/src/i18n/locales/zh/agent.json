@@ -1,0 +1,154 @@
+{
+  "agent": {
+    "tab": "AI",
+    "listTitle": "AI 助手",
+    "newChat": "新对话",
+    "noMessagesYet": "暂无消息",
+    "archived": "对话已归档",
+    "selectChat": "选择一个对话或开始新对话",
+    "backToChats": "返回对话列表",
+    "disclaimer": "助手可能会出错。在你确认之前不会做任何更改。",
+    "status": {
+      "working": "处理中…",
+      "thinking": "思考中…",
+      "stopped": "已停止",
+      "needsConfirmation": "等待你确认",
+      "queued": "排队中",
+      "waitingInQueue": "正在排队…",
+      "waitingInQueuePosition": "正在排队…（第 {{position}} 位）"
+    },
+    "menu": {
+      "open": "对话选项",
+      "rename": "重命名",
+      "renameTitle": "重命名对话",
+      "archive": "归档对话"
+    },
+    "composer": {
+      "placeholder": "询问你的比赛、联赛、球场…",
+      "send": "发送",
+      "stop": "停止"
+    },
+    "empty": {
+      "listTitle": "你的板式网球助手",
+      "listHint": "询问你的比赛、寻找比赛或修改比赛。试试：",
+      "chatTitle": "需要什么帮助？",
+      "chatHint": "关于比赛、联赛和球场，随便问。"
+    },
+    "examples": {
+      "nextGames": "我这周有哪些比赛？",
+      "findGame": "帮我找一场明天晚上的比赛",
+      "moveGame": "把我周四的比赛改到 19:00",
+      "league": "我的联赛谁排第一？"
+    },
+    "tool": {
+      "working": "正在处理…",
+      "done": "已完成",
+      "failed": "步骤失败"
+    },
+    "action": {
+      "heading": "确认更改",
+      "loading": "正在加载更改…",
+      "confirm": "确认",
+      "cancel": "取消",
+      "confirmed": "已确认",
+      "done": "已完成",
+      "failed": "无法应用该更改",
+      "expired": "已过期，请重新提出",
+      "rejected": "已取消",
+      "reject": "拒绝",
+      "allowOnce": "允许一次",
+      "alwaysAllow": "始终允许",
+      "alwaysAsks": "此操作每次都需要确认",
+      "autoHeading": "已自动完成",
+      "autoApproved": "已自动完成，这是你允许的。"
+    },
+    "entity": {
+      "untitledGame": "比赛",
+      "club": "球场",
+      "leagueSeason": "联赛赛季"
+    },
+    "gameStatus": {
+      "ANNOUNCED": "即将开始",
+      "STARTED": "进行中",
+      "FINISHED": "已结束",
+      "ARCHIVED": "已归档"
+    },
+    "slot": {
+      "clubTime": "俱乐部时间（{{tz}}）",
+      "minutes": "{{minutes}} 分钟",
+      "pick": "预订 {{time}}",
+      "bookMessage": "预订这个时段：{{club}}，{{date}} {{time}}，{{courts}}",
+      "confidence": {
+        "live": "可预订",
+        "snapshot": "暂无已知冲突 · 截至 {{time}}",
+        "snapshotNoTime": "暂无已知冲突",
+        "appOnly": "未与俱乐部核实"
+      }
+    },
+    "booking": {
+      "state": {
+        "CONFIRMED": "已预订",
+        "CANCELLED": "已取消",
+        "PAST": "已结束",
+        "UNKNOWN": "状态未知"
+      },
+      "linkedGame": "比赛",
+      "linkedGameN": "比赛 {{n}}",
+      "cancel": "取消预订",
+      "cancelViaClub": "请通过俱乐部取消",
+      "openClub": "俱乐部页面",
+      "cancelMessage": "取消预订 {{club}}，{{date}} {{time}}"
+    },
+    "errors": {
+      "RATE_LIMITED": "消息太多，请稍等片刻。",
+      "BUDGET_EXCEEDED": "你已达到今日助手使用上限，请明天再试。",
+      "CHAT_BUSY": "助手仍在回复。请等待或点击停止。",
+      "LLM_ERROR": "助手无法回复，请重试。",
+      "TIMEOUT": "助手响应超时，请重试。",
+      "INTERNAL": "出了点问题，请重试。",
+      "chatNotFound": "此对话不可用。",
+      "listFailed": "无法加载你的对话。"
+    },
+    "permissions": {
+      "title": "助手权限",
+      "manage": "管理",
+      "safetyNote": "「始终允许」只省去点按，不会跳过权限检查。关键操作始终会询问。",
+      "loadFailed": "无法加载权限",
+      "empty": "助手目前还没有会替你做出更改的操作。",
+      "resetAll": "全部重置",
+      "resetTitle": "重置所有权限？",
+      "resetMessage": "每个操作都将再次请求你的确认。",
+      "resetConfirm": "重置",
+      "resetDone": "所有操作将再次询问",
+      "modeAsk": "每次询问",
+      "modeAlways": "已设为始终允许",
+      "alwaysAsks": "始终询问"
+    },
+    "clientExec": {
+      "bookInApp": "在应用中预订",
+      "cancelInApp": "在应用中取消",
+      "bookAndCreateGameInApp": "在应用中预订并创建比赛",
+      "cancelBookingsAndGameInApp": "在应用中取消预订和比赛",
+      "retry": "重试",
+      "hint": "使用你的俱乐部账户在此设备上执行",
+      "claiming": "正在开始…",
+      "rechecking": "正在重新核对价格和空位…",
+      "booking": "正在预订场地 {{current}}/{{total}}…",
+      "cancelling": "正在取消预订 {{current}}/{{total}}…",
+      "saving": "正在保存…",
+      "savingCreateGame": "正在创建比赛…",
+      "savingCancelGame": "正在取消比赛…",
+      "priceQuote": "俱乐部收费 {{price}}。继续吗？",
+      "priceStop": "停止",
+      "priceContinue": "以 {{price}} 预订",
+      "handledElsewhere": "已在另一台设备上处理",
+      "unknown": "结果未知 — 请查看俱乐部预订",
+      "openClubBookings": "俱乐部预订",
+      "connectClub": "连接你的俱乐部账户",
+      "partial": "仅完成了一部分",
+      "failed": "没有任何更改",
+      "reportPending": "俱乐部已完成，但尚未保存。你回来时我们会重试。",
+      "inProgress": "正在应用中执行…"
+    }
+  }
+}

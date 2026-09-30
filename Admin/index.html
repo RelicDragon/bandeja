@@ -63,6 +63,7 @@
                 <li><a href="#" data-page="translation-queue" class="nav-link">🌐 Translation Queue</a></li>
                 <li><a href="#" data-page="link-to-app" class="nav-link">📱 App QR</a></li>
                 <li><a href="#" data-page="referrals" class="nav-link">🎁 Referrals</a></li>
+                <li><a href="#" data-page="ai-agent" class="nav-link">🤖 AI Agent</a></li>
                 <li><a href="#" data-page="logs" class="nav-link">📋 Logs</a></li>
             </ul>
             <button id="logoutBtn" class="btn-logout">Logout</button>
@@ -321,6 +322,67 @@
                             </tr>
                         </thead>
                         <tbody id="linkToAppRecentBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="aiAgentPage" class="content-page">
+                <div class="page-header">
+                    <h1>AI Agent</h1>
+                    <div class="online-users-controls">
+                        <label>
+                            Status
+                            <select id="agentActionStatus">
+                                <option value="">All</option>
+                                <option value="PENDING">PENDING</option>
+                                <option value="CONFIRMED">CONFIRMED</option>
+                                <option value="REJECTED">REJECTED</option>
+                                <option value="EXPIRED">EXPIRED</option>
+                                <option value="EXECUTED">EXECUTED</option>
+                                <option value="FAILED">FAILED</option>
+                            </select>
+                        </label>
+                        <label>
+                            User id
+                            <input type="text" id="agentUserId" placeholder="User id" />
+                        </label>
+                        <button type="button" class="btn-secondary" onclick="loadAiAgentPage()">Apply</button>
+                        <button type="button" class="btn-secondary" onclick="resetAiAgentFilters()">Reset</button>
+                    </div>
+                </div>
+                <p class="translation-queue-worker">
+                    Read-only audit. Every write the agent proposed and what happened to it (newest 50), plus daily token usage (last 14 days, UTC). The user id filter applies to both tables.
+                </p>
+                <h2 class="section-subtitle">Actions</h2>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>User</th>
+                                <th>Tool</th>
+                                <th>Status</th>
+                                <th>Preview</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="agentActionsBody"></tbody>
+                    </table>
+                </div>
+                <h2 class="section-subtitle">Usage</h2>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Day (UTC)</th>
+                                <th>User</th>
+                                <th>Runs</th>
+                                <th>Input tokens</th>
+                                <th>Output tokens</th>
+                                <th>Total tokens</th>
+                            </tr>
+                        </thead>
+                        <tbody id="agentUsageBody"></tbody>
                     </table>
                 </div>
             </div>
@@ -2204,6 +2266,7 @@
           'ads.js',
           'link-to-app.js',
           'referrals.js',
+          'ai-agent.js',
           'merge-users.js',
         ];
         for (const src of scripts) {

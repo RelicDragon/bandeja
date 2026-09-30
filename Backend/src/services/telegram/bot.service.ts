@@ -56,7 +56,16 @@ class TelegramBotService {
     // link tied to one account, which must not be posted into a group.
     this.bot.command('invite', requireUser, syncTelegramProfile, requirePrivateChat, handleInviteCommand);
 
-    this.bot.on('message', requireUser, syncTelegramProfile, requirePrivateChat, createMessageHandler(this.pendingReplies, this.bot));
+    // AI assistant (docs/domains/agent.md § Telegram channel). `/ai` + `agent:*` buttons;
+    // plain text reaches it through the message handler while assistant mode is on.
+    // Loaded lazily: the runtime pulls in the whole agent tool graph (results → bets →
+    // notifications), and this module is imported by notification code at load time
+    // (developerAlert → bot.service); a static import makes that a cycle.
+    const { createTelegramAgentBot } = await import('./agent/agentBotRuntime');
+    const agentBot = createTelegramAgentBot(this.bot);
+    this.bot.command('ai', requireUser, syncTelegramProfile, requirePrivateChat, (ctx) => agentBot.handleAiCommand(ctx));
+
+    this.bot.on('message', requireUser, syncTelegramProfile, requirePrivateChat, createMessageHandler(this.pendingReplies, this.bot, agentBot));
 
     // Every colon-delimited callback prefix handled by `handlers/callback.handler.ts`
     // must be listed here or its buttons silently do nothing (CONTRACT §5.3).
@@ -64,6 +73,8 @@ class TelegramBotService {
     // sr = series next occurrence (PRD 345), wx = weather alert (PRD 357),
     // pi = play-intent bot flow (PRD 356).
     this.bot.callbackQuery(/^(sg|rm|ia|rum|rg|rbm|uti|sip|at|sr|wx|pi):/, requireUser, syncTelegramProfile, createCallbackHandler(this.pendingReplies));
+    // agent = AI assistant (agent/agentBot.ts); private chats only, checked in the handler.
+    this.bot.callbackQuery(/^agent:/, requireUser, syncTelegramProfile, (ctx) => agentBot.handleCallback(ctx));
 
     this.bot.catch((err) => {
       const ctx = err.ctx as any;
@@ -90,6 +101,13 @@ class TelegramBotService {
       console.log('✅ Bot started (long polling)');
       console.log('Starting cleaning interval');
       this.cleanupInterval = startCleanupInterval(this.bot);
+      // Re-attach to agent runs whose Telegram status messages were live before a restart.
+      void agentBot
+        .resumeWatchers()
+        .then((count) => {
+          if (count > 0) console.log(`🤖 Telegram assistant: re-attached to ${count} run(s)`);
+        })
+        .catch((error) => console.error('Telegram assistant resume failed:', error));
       console.log('🤖 Telegram bot initialized');
     } catch (error) {
       console.error('❌ Failed to start Telegram bot:', error);

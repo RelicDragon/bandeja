@@ -4,12 +4,12 @@ import { useShellNavStore } from '@/store/shellNavStore';
 import { resolveFindDayKey } from '@/utils/findDayFromSearchParams';
 import { parseQuickShortcutParam } from '@/components/home/findQuickShortcuts';
 import { parseLocation } from '@/utils/urlSchema';
+import { resolveHomeSubTab, type HomeSubTab } from '@/hooks/useHomeFromUrl';
 
-export type HomeSubTab = 'calendar' | 'past-games';
+export type { HomeSubTab };
 
 export function homeSubTabFromParams(tab: string | undefined): HomeSubTab {
-  if (tab === 'past-games') return 'past-games';
-  return 'calendar';
+  return resolveHomeSubTab(tab);
 }
 
 /**

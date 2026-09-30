@@ -86,6 +86,7 @@ import { settleStoredAuthBeforeBootstrap, canStartAuthenticatedNetwork } from '@
 import { ensureBooktimeProactiveRefresh } from '@/integrations/booktime/session';
 import { useUrlStoreSync } from './hooks/useUrlStoreSync';
 import { useMyTabPrefetch } from './hooks/useMyTabPrefetch';
+import { resolveHomeSubTab } from './hooks/useHomeFromUrl';
 import { useHeaderInvitesHydration } from './hooks/useHeaderInvitesHydration';
 import { UnreadMyGamesScopeSync } from './components/UnreadMyGamesScopeSync';
 import { usePresenceSubscriptionManager } from './hooks/usePresenceSubscriptionManager';
@@ -168,8 +169,11 @@ function AppContent() {
     location.pathname === '/register' ||
     location.pathname === '/link-to-app' ||
     isTelegramAutoLoginPath(location.pathname);
+  // Only the Past sub-tab prefetches its list; Schedule and AI (`?tab=ai`) never do.
+  const homeSearch = new URLSearchParams(location.search);
   const isPastGamesHomeTab =
-    location.pathname === '/' && new URLSearchParams(location.search).get('tab') === 'past-games';
+    location.pathname === '/' &&
+    resolveHomeSubTab(homeSearch.get('tab'), homeSearch.get('focus') === 'invites') === 'past-games';
 
   const { versionCheck, isChecking: isCheckingVersion } = useAppVersionCheck();
   
@@ -970,6 +974,16 @@ function AppContent() {
         />
         <Route
           path="/game-subscriptions"
+          element={
+            <ProtectedRoute>
+              <Suspense fallback={routeLoadingFallback}>
+                <MainPage />
+              </Suspense>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/ai/:chatId"
           element={
             <ProtectedRoute>
               <Suspense fallback={routeLoadingFallback}>

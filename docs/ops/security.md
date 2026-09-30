@@ -19,7 +19,7 @@ Allowlist only — never reflect arbitrary Origin or `null`.
 
 Global `/api/`: 15m window; max **3000** prod / **10000** dev (`API_RATE_LIMIT_*`). Skip prefixes (path only, no query poison): `/logs/stream`, `/auth/refresh`, `/chat/sync/`, `/chat/unread-objects`.
 
-Dedicated: phone login 20/15m, register 20/1h, OAuth 40/15m, refresh 800/15m, Telegram verify 60/5m, link-to-app 120/15m. E2E header skips phone limiters when `NODE_ENV !== production`.
+Dedicated: phone login 20/15m, register 20/1h, OAuth 40/15m, refresh 800/15m, Telegram verify 60/5m, link-to-app 120/15m. AI agent messages: per **user** `AGENT_RATE_LIMIT_MAX` / `AGENT_RATE_LIMIT_WINDOW_MS` (default 30/10m, code `RATE_LIMITED`) plus a daily token budget (`BUDGET_EXCEEDED`); see `docs/domains/agent.md`. E2E header skips phone limiters when `NODE_ENV !== production`.
 
 ## JWT fail-closed (production)
 

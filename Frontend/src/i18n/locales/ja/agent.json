@@ -1,0 +1,154 @@
+{
+  "agent": {
+    "tab": "AI",
+    "listTitle": "AIアシスタント",
+    "newChat": "新しいチャット",
+    "noMessagesYet": "まだメッセージはありません",
+    "archived": "チャットをアーカイブしました",
+    "selectChat": "チャットを選ぶか新しく始めてください",
+    "backToChats": "チャット一覧に戻る",
+    "disclaimer": "アシスタントは間違えることがあります。確認するまで何も変更されません。",
+    "status": {
+      "working": "作業中…",
+      "thinking": "考え中…",
+      "stopped": "停止しました",
+      "needsConfirmation": "確認待ち",
+      "queued": "順番待ち",
+      "waitingInQueue": "順番を待っています…",
+      "waitingInQueuePosition": "順番を待っています…（{{position}} 番目）"
+    },
+    "menu": {
+      "open": "チャットのオプション",
+      "rename": "名前を変更",
+      "renameTitle": "チャット名を変更",
+      "archive": "チャットをアーカイブ"
+    },
+    "composer": {
+      "placeholder": "試合・リーグ・クラブについて質問…",
+      "send": "送信",
+      "stop": "停止"
+    },
+    "empty": {
+      "listTitle": "あなたのパデルアシスタント",
+      "listHint": "試合について質問したり、試合を探したり、変更したりできます。例えば：",
+      "chatTitle": "何をお手伝いしましょう？",
+      "chatHint": "試合・リーグ・クラブについて何でも聞いてください。"
+    },
+    "examples": {
+      "nextGames": "今週の試合は？",
+      "findGame": "明日の夜の試合を探して",
+      "moveGame": "木曜の試合を19:00に変更して",
+      "league": "私のリーグの首位は誰？"
+    },
+    "tool": {
+      "working": "処理中…",
+      "done": "完了",
+      "failed": "ステップに失敗しました"
+    },
+    "action": {
+      "heading": "変更の確認",
+      "loading": "変更内容を読み込み中…",
+      "confirm": "確定",
+      "cancel": "キャンセル",
+      "confirmed": "確定しました",
+      "done": "完了",
+      "failed": "変更を適用できませんでした",
+      "expired": "期限切れ — もう一度依頼してください",
+      "rejected": "キャンセルしました",
+      "reject": "拒否",
+      "allowOnce": "今回のみ許可",
+      "alwaysAllow": "常に許可",
+      "alwaysAsks": "この操作は毎回確認が必要です",
+      "autoHeading": "自動で実行しました",
+      "autoApproved": "自動で実行しました（許可済み）。"
+    },
+    "entity": {
+      "untitledGame": "試合",
+      "club": "クラブ",
+      "leagueSeason": "リーグシーズン"
+    },
+    "gameStatus": {
+      "ANNOUNCED": "予定",
+      "STARTED": "進行中",
+      "FINISHED": "終了",
+      "ARCHIVED": "アーカイブ済み"
+    },
+    "slot": {
+      "clubTime": "クラブの時刻（{{tz}}）",
+      "minutes": "{{minutes}}分",
+      "pick": "{{time}}を予約",
+      "bookMessage": "この枠を予約して：{{club}}、{{date}} {{time}}、{{courts}}",
+      "confidence": {
+        "live": "空きあり",
+        "snapshot": "既知の重複なし · {{time}}時点",
+        "snapshotNoTime": "既知の重複なし",
+        "appOnly": "クラブに未確認"
+      }
+    },
+    "booking": {
+      "state": {
+        "CONFIRMED": "予約済み",
+        "CANCELLED": "キャンセル済み",
+        "PAST": "終了",
+        "UNKNOWN": "状態不明"
+      },
+      "linkedGame": "ゲーム",
+      "linkedGameN": "ゲーム {{n}}",
+      "cancel": "予約をキャンセル",
+      "cancelViaClub": "クラブ経由でキャンセル",
+      "openClub": "クラブページ",
+      "cancelMessage": "予約をキャンセルして：{{club}}、{{date}} {{time}}"
+    },
+    "errors": {
+      "RATE_LIMITED": "メッセージが多すぎます。少し待ってください。",
+      "BUDGET_EXCEEDED": "本日のアシスタント利用上限に達しました。明日もう一度お試しください。",
+      "CHAT_BUSY": "アシスタントが回答中です。待つか停止をタップしてください。",
+      "LLM_ERROR": "アシスタントが回答できませんでした。もう一度お試しください。",
+      "TIMEOUT": "アシスタントの応答に時間がかかりすぎました。もう一度お試しください。",
+      "INTERNAL": "問題が発生しました。もう一度お試しください。",
+      "chatNotFound": "このチャットは利用できません。",
+      "listFailed": "チャットを読み込めませんでした。"
+    },
+    "permissions": {
+      "title": "アシスタントの権限",
+      "manage": "管理",
+      "safetyNote": "「常に許可」で省略されるのはタップだけで、権限チェックは省略されません。重要な操作は常に確認します。",
+      "loadFailed": "権限を読み込めませんでした",
+      "empty": "アシスタントには、まだあなたの代わりに変更を行う操作がありません。",
+      "resetAll": "すべてリセット",
+      "resetTitle": "すべての権限をリセットしますか？",
+      "resetMessage": "すべての操作で再び確認が求められます。",
+      "resetConfirm": "リセット",
+      "resetDone": "すべての操作で再び確認します",
+      "modeAsk": "毎回確認",
+      "modeAlways": "常に許可済み",
+      "alwaysAsks": "常に確認"
+    },
+    "clientExec": {
+      "bookInApp": "アプリで予約",
+      "cancelInApp": "アプリでキャンセル",
+      "bookAndCreateGameInApp": "アプリで予約してゲームを作成",
+      "cancelBookingsAndGameInApp": "アプリで予約とゲームをキャンセル",
+      "retry": "再試行",
+      "hint": "クラブのアカウントでこの端末から実行します",
+      "claiming": "開始中…",
+      "rechecking": "料金と空き状況を再確認中…",
+      "booking": "コート {{current}}/{{total}} を予約中…",
+      "cancelling": "予約 {{current}}/{{total}} をキャンセル中…",
+      "saving": "保存中…",
+      "savingCreateGame": "ゲームを作成中…",
+      "savingCancelGame": "ゲームをキャンセル中…",
+      "priceQuote": "クラブの料金は {{price}} です。続けますか？",
+      "priceStop": "中止",
+      "priceContinue": "{{price}} で予約",
+      "handledElsewhere": "別の端末で処理されました",
+      "unknown": "結果不明 — クラブの予約を確認してください",
+      "openClubBookings": "クラブの予約",
+      "connectClub": "クラブのアカウントを接続",
+      "partial": "一部のみ完了しました",
+      "failed": "何も変更されていません",
+      "reportPending": "クラブ側では完了しましたが、まだ保存されていません。次に戻ったときに再試行します。",
+      "inProgress": "アプリで実行中…"
+    }
+  }
+}

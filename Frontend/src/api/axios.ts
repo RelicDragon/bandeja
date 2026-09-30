@@ -9,7 +9,7 @@ import { api } from '@/api/httpClient';
 import { getAttributionForAuth, isAuthAttributionRequestUrl } from '@/utils/appAttribution';
 import { getAppUiLocaleForGameText } from '@/utils/gameText/appUiLocale';
 
-function clientPlatformHeader(): string {
+export function clientPlatformHeader(): string {
   if (!isCapacitor()) return 'web';
   const p = Capacitor.getPlatform();
   if (p === 'ios') return 'ios';

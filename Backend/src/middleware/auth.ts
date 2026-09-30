@@ -1,10 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
 import { ApiError } from '../utils/ApiError';
-import { canModifyResults, hasParentGamePermission } from '../utils/parentGamePermissions';
+import { canModifyResults } from '../utils/parentGamePermissions';
 import { ParticipantRole } from '@prisma/client';
-import { isGameResultsLocked } from '@bandeja/shared/gameMutationLock';
 import { getClientIp, updateUserIpLocation } from '../services/ipLocation.service';
-import prisma from '../config/database';
+import { assertGamePermission, type GamePermissionOptions } from '../services/game/gamePermission';
 import {
   extractBearerToken,
   extractBearerTokenFromHeader,
@@ -110,16 +109,15 @@ export const requireCanModifyResults = async (req: AuthRequest, res: Response, n
   }
 };
 
-export type RequireGamePermissionOptions = {
-  allowArchived?: boolean;
-  /** Reject once results entry has begun (roster/settings are frozen). */
-  requireRosterMutable?: boolean;
-};
+export type RequireGamePermissionOptions = GamePermissionOptions;
 
 /**
  * Middleware factory to check if user has permission on a game with specified roles
  * Requires authenticate middleware to be called first
  * Checks for gameId in req.params (gameId, id, or leagueSeasonId) or req.body.gameId
+ *
+ * The check itself lives in `services/game/gamePermission.ts` (`assertGamePermission`)
+ * so non-HTTP callers (the AI agent) run exactly the same rules.
  */
 export const requireGamePermission = (
   allowedRoles: ParticipantRole[] = [ParticipantRole.OWNER, ParticipantRole.ADMIN],
@@ -137,35 +135,12 @@ export const requireGamePermission = (
         throw new ApiError(400, 'Game ID is required');
       }
 
-      // Check if game exists first
-      const game = await prisma.game.findUnique({
-        where: { id: gameId },
-        select: { id: true, status: true, resultsStatus: true },
-      });
-
-      if (!game) {
-        throw new ApiError(404, 'Game not found');
-      }
-
-      if (!options.allowArchived && game.status === 'ARCHIVED') {
-        throw new ApiError(400, 'Cannot modify archived games');
-      }
-
-      if (options.requireRosterMutable && isGameResultsLocked(game)) {
-        throw new ApiError(400, 'errors.games.cannotEditResultsStarted');
-      }
-
-      const hasPermission = await hasParentGamePermission(
+      await assertGamePermission(
+        { userId: req.userId, isAdmin: req.user?.isAdmin || false },
         gameId,
-        req.userId,
         allowedRoles,
-        req.user?.isAdmin || false
+        options,
       );
-
-      if (!hasPermission) {
-        const roleNames = allowedRoles.join(' or ');
-        throw new ApiError(403, `Only game ${roleNames.toLowerCase()}s can perform this action`);
-      }
 
       next();
     } catch (error) {

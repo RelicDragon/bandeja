@@ -20,7 +20,7 @@ const run = async () => {
     });
     await connectWorkersDatabase();
     console.log('✅ Database connected (worker process)');
-    startQueueWorkers();
+    startQueueWorkers({ role: 'worker' });
     console.log('🌐 Translation queue worker started');
     console.log('🎨 Results artifacts queue worker started');
   } catch (error) {

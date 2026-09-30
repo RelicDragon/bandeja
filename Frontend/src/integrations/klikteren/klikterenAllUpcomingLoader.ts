@@ -1,8 +1,9 @@
 import type { KlikterenMyClubRow } from '@/api/klikteren';
 import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
-import { bookingMatchesClubCourts } from '@/components/booktime/booktimeBookingUtils';
+import { bookingMatchesClubCourts, resolveBooktimeMyClubTimezone } from '@/components/booktime/booktimeBookingUtils';
 import { booktimeBookingStartMs } from '@/integrations/booktime/localTime';
 import { getKlikterenClient, hydrateKlikterenSession } from '@/integrations/klikteren/session';
+import { reportBookingMirror } from '@/features/agent/bookingMirrorSync';
 import {
   isUpcomingKlikterenBooking,
   bookingToBookingRecord,
@@ -43,12 +44,22 @@ async function fetchUpcomingForKlikterenClub(club: KlikterenMyClubRow): Promise<
     await hydrateKlikterenSession(club.clubId, klikterenVenueId);
     const client = getKlikterenClient(club.clubId, klikterenVenueId);
     if (!client.isAuthenticated) return [];
+    const fetchedFrom = new Date();
     const bookings = await client.getMyBookings();
     const mapped = bookings
       .filter((row) => !row.venueId || row.venueId === klikterenVenueId)
       .map((row) => bookingToBookingRecord(row, club, klikterenVenueId))
       .filter((row) => isUpcomingKlikterenBooking(row));
     clubUpcomingCache.set(cacheKey, { at: Date.now(), bookings: mapped });
+    reportBookingMirror({
+      provider: 'KLIKTEREN',
+      clubId: club.clubId,
+      timeZone: resolveBooktimeMyClubTimezone(club),
+      courts: club.courts,
+      bookings: mapped,
+      fetchedFrom,
+      complete: true,
+    });
     return mapped;
   })().finally(() => {
     clubUpcomingInFlight.delete(cacheKey);

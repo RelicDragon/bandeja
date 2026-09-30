@@ -241,6 +241,35 @@ export const gameExternalBookingInclude = {
   select: gameExternalBookingSelect,
 };
 
+/**
+ * `bookedByUserId` for rows about to be attached by `userId`. A booking already known on another
+ * game keeps that row's booker (null stays null), so a co-admin re-linking a booking never becomes
+ * its booker. Only a booking new to the app is attributed to the acting user.
+ */
+export async function resolveBookedByUserIds(
+  tx: Tx,
+  externalBookingIds: string[],
+  userId: string | undefined,
+): Promise<Map<string, string | null>> {
+  const out = new Map<string, string | null>();
+  if (externalBookingIds.length === 0) return out;
+  const known = await tx.gameExternalBooking.findMany({
+    where: { externalBookingId: { in: externalBookingIds } },
+    orderBy: { createdAt: 'asc' },
+    select: { externalBookingId: true, bookedByUserId: true },
+  });
+  for (const row of known) {
+    const prev = out.get(row.externalBookingId);
+    if (prev === undefined || (prev === null && row.bookedByUserId)) {
+      out.set(row.externalBookingId, row.bookedByUserId);
+    }
+  }
+  for (const id of externalBookingIds) {
+    if (!out.has(id)) out.set(id, userId ?? null);
+  }
+  return out;
+}
+
 export async function insertJoinRows(
   tx: Tx,
   gameId: string,
@@ -254,10 +283,12 @@ export async function insertJoinRows(
   const resolvedProvider = await resolveGameClubBookingProvider(gameId, tx);
   if (resolvedProvider === ClubIntegrationType.WELTNER) provider = resolvedProvider;
   const snaps = snapshotMap(snapshots);
+  const bookedBy = await resolveBookedByUserIds(tx, externalBookingIds, userId);
   await tx.gameExternalBooking.createMany({
     data: await Promise.all(externalBookingIds.map(async (externalBookingId) => ({
       gameId,
       externalBookingId,
+      bookedByUserId: bookedBy.get(externalBookingId) ?? null,
       externalBookingProvider: externalBookingId.startsWith('weltner:') ? ClubIntegrationType.WELTNER : provider,
       ...(provider === 'WELTNER' || externalBookingId.startsWith('weltner:')
         ? await weltnerBookingLinkData(tx, { gameId, userId, externalBookingId })
@@ -595,10 +626,12 @@ export async function linkBookingToGame(
     }
 
     const provider = await resolveGameClubBookingProvider(gameId, tx);
+    const bookedBy = await resolveBookedByUserIds(tx, [externalBookingId], userId);
     await tx.gameExternalBooking.create({
       data: {
         gameId,
         externalBookingId,
+        bookedByUserId: bookedBy.get(externalBookingId) ?? null,
         externalBookingProvider: externalBookingId.startsWith('weltner:') ? ClubIntegrationType.WELTNER : provider,
         ...(provider === 'WELTNER' || externalBookingId.startsWith('weltner:')
           ? await weltnerBookingLinkData(tx, { gameId, userId, externalBookingId })

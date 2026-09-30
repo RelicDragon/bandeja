@@ -73,7 +73,8 @@ export const Header = ({ animateEntry = false }: HeaderProps) => {
     [location.pathname, location.search]
   );
   const { place } = parsed;
-  const isHomeShell = place === 'home';
+  // Desktop `/ai/:chatId` is the My → AI split view and keeps the My header.
+  const isHomeShell = place === 'home' || place === 'agentChat';
   const isFindShell = place === 'find';
   const isChatsShell = isChatShellPlace(place);
   const isProfileShell = place === 'profile';

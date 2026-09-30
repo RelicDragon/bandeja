@@ -1,4 +1,5 @@
 import prisma from '../config/database';
+import { AgentRunQueueService } from '../services/agent/agentRunQueue.service';
 import { TranslationQueueService } from '../services/chat/translationQueue.service';
 import { GameTextTranslationQueueService } from '../services/gameText/gameTextTranslationQueue.service';
 import { FaqTranslationQueueService } from '../services/faq/faqTranslationQueue.service';
@@ -12,7 +13,8 @@ export async function connectWorkersDatabase(): Promise<void> {
   await prisma.$connect();
 }
 
-export function startQueueWorkers(): void {
+/** `role`: `server.ts` is `api` (default), `worker.ts` is `worker` (agent runs need Redis there). */
+export function startQueueWorkers(options: { role: 'api' | 'worker' } = { role: 'api' }): void {
   TranslationQueueService.startWorker();
   GameTextTranslationQueueService.startWorker();
   FaqTranslationQueueService.startWorker();
@@ -21,6 +23,7 @@ export function startQueueWorkers(): void {
   PlayIntentMatchQueueService.startWorker();
   PlayIntentNotificationDeliveryQueueService.startWorker();
   PlayIntentQueueMaintenanceService.start();
+  AgentRunQueueService.startWorker({ role: options.role });
 }
 
 export function stopQueueWorkers(): void {
@@ -32,6 +35,7 @@ export function stopQueueWorkers(): void {
   PlayIntentMatchQueueService.stopWorker();
   PlayIntentNotificationDeliveryQueueService.stopWorker();
   PlayIntentQueueMaintenanceService.stop();
+  AgentRunQueueService.stopWorker();
 }
 
 export async function disconnectWorkersDatabase(): Promise<void> {

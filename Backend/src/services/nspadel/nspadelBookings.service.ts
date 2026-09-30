@@ -1,4 +1,5 @@
-import { ClubIntegrationType } from '@prisma/client';
+import { ClubIntegrationType, NspadelBookingState, Prisma, type NspadelBooking } from '@prisma/client';
+import { fromZonedTime } from 'date-fns-tz';
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import { BOOKING_ERROR_KEYS } from '@bandeja/shared/booking/errorKeys';
@@ -100,9 +101,19 @@ async function upstreamFetch(
       (body as { message?: unknown } | null)?.message ??
       (body as { error?: unknown } | null)?.error ??
       `Upstream error ${res.status}`;
-    throw new ApiError(502, typeof message === 'string' ? message : `Upstream error ${res.status}`);
+    throw new NspadelUpstreamError(res.status, typeof message === 'string' ? message : `Upstream error ${res.status}`);
   }
   return body;
+}
+
+/** Upstream answered with a non-2xx status (a 4xx on insert means the club refused the row). */
+export class NspadelUpstreamError extends ApiError {
+  constructor(
+    readonly upstreamStatus: number,
+    message: string,
+  ) {
+    super(502, message);
+  }
 }
 
 export function parseTimeToMinutes(value: string): number | null {
@@ -257,6 +268,12 @@ export type NspadelBookingResult = {
   startTime: string;
   endTime: string;
   status: string;
+  /** Local receipt (`NspadelBooking.id`); `id` stays the synthetic id games link against. */
+  receiptId: string;
+  /** App court (`Court.id`) mapped from the upstream court; null when the club has no such court row. */
+  appCourtId: string | null;
+  bookingStart: string;
+  bookingEnd: string;
 };
 
 /**
@@ -296,6 +313,50 @@ export function buildNspadelExternalBookingId(courtId: string, date: string, sta
   return `nspadel:${courtId}:${date}:${startTime}`;
 }
 
+/** One receipt per user slot: user, club, upstream court, date, start, duration. */
+export function nspadelIdempotencyKey(input: {
+  userId: string;
+  clubId: string;
+  externalCourtId: string;
+  date: string;
+  startTime: string;
+  durationMinutes: number;
+}): string {
+  return [input.userId, input.clubId, input.externalCourtId, input.date, input.startTime, input.durationMinutes].join(':');
+}
+
+/** A SUBMITTING receipt younger than this is an attempt in flight; older ones are treated as UNKNOWN. */
+const NSPADEL_SUBMITTING_STALE_MS = 2 * 60 * 1000;
+
+function receiptResult(row: NspadelBooking, endTime: string): NspadelBookingResult {
+  return {
+    id: row.externalBookingId,
+    courtId: row.externalCourtId,
+    date: row.date,
+    startTime: row.startTime,
+    endTime,
+    status: 'confirmed',
+    receiptId: row.id,
+    appCourtId: row.courtId,
+    bookingStart: row.bookingStart.toISOString(),
+    bookingEnd: row.bookingEnd.toISOString(),
+  };
+}
+
+function bookingUnknown(): ApiError {
+  return new ApiError(409, BOOKING_ERROR_KEYS.slotNoLongerAvailable, true, { code: 'NSPADEL_BOOKING_UNKNOWN' });
+}
+
+/**
+ * Books one court slot at the club and keeps a local receipt (`NspadelBooking`, owner
+ * decision #5 of docs/plans/ai-agent-booking.md). The receipt's `idempotencyKey` makes a
+ * repeat of the same user slot safe:
+ *   - CONFIRMED and the slot is still occupied upstream → the same receipt, no second insert;
+ *   - CONFIRMED / REJECTED / UNKNOWN and the slot is free again → re-claimed and booked;
+ *   - SUBMITTING (in flight) or UNKNOWN while occupied → 409 (can't tell whose row it is).
+ * Insert outcome: 2xx → CONFIRMED; upstream 4xx → REJECTED (409 slot no longer available);
+ * anything else (5xx, network) → UNKNOWN and the upstream error.
+ */
 export async function createNspadelBooking(input: NspadelBookingInput): Promise<NspadelBookingResult> {
   assertBookingDate(input.date);
   const start = parseTimeToMinutes(input.startTime);
@@ -326,36 +387,105 @@ export async function createNspadelBooking(input: NspadelBookingInput): Promise<
     throw new ApiError(400, BOOKING_ERROR_KEYS.nspadelProfileContactRequired);
   }
 
+  const startLabel = minutesToLabel(start);
+  const endLabel = minutesToLabel(end);
+  const [club, appCourt] = await Promise.all([
+    prisma.club.findUnique({ where: { id: input.clubId }, select: { city: { select: { timezone: true } } } }),
+    prisma.court.findFirst({ where: { clubId: input.clubId, externalCourtId: court.id }, select: { id: true } }),
+  ]);
+  const timeZone = club?.city?.timezone || 'Europe/Belgrade';
+  const bookingStart = fromZonedTime(`${input.date}T${startLabel}:00`, timeZone);
+  const bookingEnd = new Date(bookingStart.getTime() + durationMinutes * 60_000);
+  const idempotencyKey = nspadelIdempotencyKey({
+    userId: input.userId,
+    clubId: input.clubId,
+    externalCourtId: court.id,
+    date: input.date,
+    startTime: startLabel,
+    durationMinutes,
+  });
+  const existing = await prisma.nspadelBooking.findUnique({ where: { idempotencyKey } });
+
   const occupied = await fetchOccupied(supabaseUrl, court.id, input.date);
   const overlaps = occupied.some((row) => {
     const s = parseTimeToMinutes(String(row.start_time ?? '').slice(0, 5));
     const e = parseTimeToMinutes(String(row.end_time ?? '').slice(0, 5));
     return s != null && e != null && start < e && end > s;
   });
-  if (overlaps) {
-    throw new ApiError(409, BOOKING_ERROR_KEYS.slotNoLongerAvailable);
+
+  let attempt: NspadelBooking;
+  if (existing) {
+    const inFlight =
+      existing.state === NspadelBookingState.SUBMITTING &&
+      Date.now() - existing.updatedAt.getTime() < NSPADEL_SUBMITTING_STALE_MS;
+    if (inFlight) throw bookingUnknown();
+    if (overlaps) {
+      // Our own confirmed row still holds the slot: same answer, no second reservation.
+      if (existing.state === NspadelBookingState.CONFIRMED) return receiptResult(existing, endLabel);
+      if (existing.state === NspadelBookingState.REJECTED) throw new ApiError(409, BOOKING_ERROR_KEYS.slotNoLongerAvailable);
+      throw bookingUnknown();
+    }
+    // Free again (never went through, or the club removed it): re-claim the receipt.
+    const claimed = await prisma.nspadelBooking.updateMany({
+      where: { id: existing.id, state: existing.state, updatedAt: existing.updatedAt },
+      data: { state: NspadelBookingState.SUBMITTING, courtId: appCourt?.id ?? null, bookingStart, bookingEnd },
+    });
+    if (!claimed.count) throw bookingUnknown();
+    attempt = existing;
+  } else {
+    if (overlaps) {
+      throw new ApiError(409, BOOKING_ERROR_KEYS.slotNoLongerAvailable);
+    }
+    try {
+      attempt = await prisma.nspadelBooking.create({
+        data: {
+          userId: input.userId,
+          clubId: input.clubId,
+          courtId: appCourt?.id ?? null,
+          externalCourtId: court.id,
+          date: input.date,
+          startTime: startLabel,
+          durationMinutes,
+          bookingStart,
+          bookingEnd,
+          idempotencyKey,
+          externalBookingId: buildNspadelExternalBookingId(court.id, input.date, startLabel),
+        },
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') throw bookingUnknown();
+      throw error;
+    }
   }
 
-  await upstreamFetch(supabaseUrl, '/rest/v1/reservations', {
-    method: 'POST',
-    body: buildReservationInsertBody({
-      courtId: court.id,
-      courtType: court.type,
-      date: input.date,
-      startMinutes: start,
-      endMinutes: end,
-      customerName,
-      phone,
-      email: user?.email,
-    }),
-  });
+  try {
+    await upstreamFetch(supabaseUrl, '/rest/v1/reservations', {
+      method: 'POST',
+      body: buildReservationInsertBody({
+        courtId: court.id,
+        courtType: court.type,
+        date: input.date,
+        startMinutes: start,
+        endMinutes: end,
+        customerName,
+        phone,
+        email: user?.email,
+      }),
+    });
+  } catch (error) {
+    const rejected =
+      error instanceof NspadelUpstreamError && error.upstreamStatus >= 400 && error.upstreamStatus < 500;
+    await prisma.nspadelBooking.update({
+      where: { id: attempt.id },
+      data: { state: rejected ? NspadelBookingState.REJECTED : NspadelBookingState.UNKNOWN },
+    });
+    if (rejected) throw new ApiError(409, BOOKING_ERROR_KEYS.slotNoLongerAvailable);
+    throw error;
+  }
 
-  return {
-    id: buildNspadelExternalBookingId(court.id, input.date, minutesToLabel(start)),
-    courtId: court.id,
-    date: input.date,
-    startTime: minutesToLabel(start),
-    endTime: minutesToLabel(end),
-    status: 'confirmed',
-  };
+  const confirmed = await prisma.nspadelBooking.update({
+    where: { id: attempt.id },
+    data: { state: NspadelBookingState.CONFIRMED },
+  });
+  return receiptResult(confirmed, endLabel);
 }

@@ -233,6 +233,16 @@ router.put(
   gameController.setMyShowInStories
 );
 
+/*
+ * Roster routes: the middleware below is the authorization. Non-HTTP callers (the AI
+ * agent, docs/plans/ai-agent.md §3) must run `assertGamePermission` from
+ * `services/game/gamePermission.ts` with the same roles/options before the service call.
+ *   - Service re-checks nothing (middleware-only): add-admin, revoke-admin,
+ *     substitute-participant, enable-participant-chats.
+ *   - Service re-checks role but not archived / results-locked: set-trainer (owner on
+ *     this game only), transfer-ownership (owner on this game only), kick-user,
+ *     accept-join-queue, decline-join-queue, assign-league-participants.
+ */
 router.post(
   '/:id/add-admin',
   authenticate,

@@ -81,11 +81,21 @@ export async function loadActiveUser(
           select: options?.select ?? AUTH_USER_SELECT,
         });
 
+  assertUserActive(user);
+  return user;
+}
+
+/**
+ * Same rejection as bearer auth for a missing or deactivated account. Shared with
+ * non-HTTP principals (the AI agent) so both paths answer with identical codes.
+ */
+export function assertUserActive<T extends { isActive: boolean }>(
+  user: T | null | undefined,
+): asserts user is T {
   if (!user) {
     throw new ApiError(401, 'User not found or inactive', true, { code: 'auth.userNotFound' });
   }
   if (!user.isActive) {
     throw new ApiError(401, 'User not found or inactive', true, { code: 'auth.userInactive' });
   }
-  return user;
 }

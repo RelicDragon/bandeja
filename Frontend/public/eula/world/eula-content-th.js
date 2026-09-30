@@ -3,7 +3,7 @@ window.EULAContent = window.EULAContent || {};
 window.EULAContent['th'] = `<h1>นโยบายความเป็นส่วนตัวและข้อตกลงผู้ใช้</h1>
 <p><strong>Application:</strong> Padel Bandeja<br>
 <strong>Effective date:</strong> 12/01/2025<br>
-<strong>Last updated:</strong> 22/02/2025<br>
+<strong>Last updated:</strong> 30/09/2026<br>
 Applies worldwide</p>
 
 <h2>1. นโยบายความเป็นส่วนตัว</h2>
@@ -35,7 +35,7 @@ Applies worldwide</p>
 <p>เราไม่ขายข้อมูลส่วนบุคคลของคุณ เราอาจแบ่งปันข้อมูลเฉพาะในกรณีต่อไปนี้:</p>
 <ul>
 <li><strong>With Your Consent:</strong> When you explicitly authorize sharing</li>
-<li><strong>Service Providers:</strong> With trusted third-party services that help us operate the app (hosting, analytics, SMS providers)</li>
+<li><strong>ผู้ให้บริการ:</strong> กับบริการของบุคคลที่สามที่เชื่อถือได้ซึ่งช่วยเราดำเนินงานแอป (โฮสติ้ง การวิเคราะห์ ผู้ให้บริการ SMS ผู้ให้บริการ AI)</li>
 <li><strong>Legal Requirements:</strong> When required by law, court order, or government regulation</li>
 <li><strong>Safety and Security:</strong> To protect rights, property, or safety of users and the public</li>
 <li><strong>Business Transfers:</strong> In connection with a merger, acquisition, or sale of assets</li>
@@ -73,6 +73,24 @@ Applies worldwide</p>
 <li><strong>Who can see it:</strong> This information is visible to other signed-in users of the application.</li>
 <li><strong>Your control:</strong> In line with privacy-by-design principles, you have full control. In the app settings you can turn off visibility of your status using the option &quot;Show my online status&quot; (opt-out). By default, your status is visible to others; you can disable it at any time.</li>
 <li><strong>Legal basis:</strong> We rely on Legitimate Interest: displaying presence is a core feature of the service that users expect. The feature is on by default, with a mandatory option to disable it in settings.</li>
+</ul>
+
+<h3>1.10 ฟีเจอร์ AI และผู้ช่วย AI</h3>
+<p>Bandeja มีผู้ช่วย AI ที่คุณเลือกใช้หรือไม่ก็ได้ ทั้งในแอป (ของฉัน → เอไอ) และในบอท Telegram ของเรา</p>
+<ul>
+<li><strong>ข้อมูลที่เราส่ง:</strong> เมื่อคุณใช้ผู้ช่วย ข้อความของคุณและข้อมูลที่เกี่ยวข้องจะถูกส่งไปยังผู้ให้บริการ AI ภายนอก (ปัจจุบันคือ DeepSeek) เพื่อสร้างคำตอบ ข้อมูลที่เกี่ยวข้องประกอบด้วย:
+<ul>
+<li>ชื่อจริง ภาษา เมืองหลัก และเขตเวลาของคุณ</li>
+<li>เกมที่กำลังจะมาถึงของคุณ</li>
+<li>ลีกที่คุณจัดการ</li>
+<li>ข้อความในแชทของเกมที่คุณเข้าร่วม เมื่อคุณขอให้ผู้ช่วยอ่านหรือสรุป (เฉพาะแชทที่คุณเห็นได้อยู่แล้วในแอป)</li>
+<li>ผลการค้นหาที่คุณร้องขอ ได้แก่ เกม คลับ และข้อมูลโปรไฟล์สาธารณะของผู้เล่นคนอื่น</li>
+</ul>
+</li>
+<li><strong>การประมวลผล AI อื่น ๆ:</strong> ฟีเจอร์ AI อื่น ๆ เช่น การแปลข้อความอัตโนมัติและการถอดเสียงเป็นข้อความ จะได้รับการประมวลผลโดยผู้ให้บริการ AI (OpenAI หรือ DeepSeek) ในลักษณะเดียวกัน</li>
+<li><strong>การดำเนินการ:</strong> ผู้ช่วยสามารถเตรียมการเปลี่ยนแปลงแทนคุณได้ (เช่น แก้ไขเกมหรือเชิญผู้เล่น) แต่จะไม่มีการเปลี่ยนแปลงใด ๆ จนกว่าคุณจะยืนยันแต่ละรายการ</li>
+<li><strong>การจัดเก็บ:</strong> บทสนทนาจะถูกจัดเก็บบนเซิร์ฟเวอร์ของเราและเชื่อมโยงกับบัญชีของคุณเพื่อให้คุณสนทนาต่อได้ คุณสามารถเก็บถาวรแชทได้ เราบันทึกข้อมูลเมตาการใช้งาน (เช่น จำนวนโทเค็น) เพื่อป้องกันการใช้งานในทางที่ผิดและควบคุมค่าใช้จ่าย หากคุณเชื่อมต่อบัญชีการจองของคลับ (Booktime, Padeloo, Klikteren) แอปจะคัดลอกการจองที่กำลังจะมาถึงของคุณที่คลับเหล่านั้น (คลับ คอร์ท เวลา และสถานะ) ไปยังเซิร์ฟเวอร์ของเราด้วย เพื่อให้ผู้ช่วยและบอท Telegram แสดงรายการและเชื่อมโยงกับเกมได้</li>
+<li><strong>ข้อจำกัด:</strong> ผู้ช่วยไม่สามารถเข้าถึงเกมหรือข้อมูลที่คุณมองไม่เห็นในแอป โปรดอย่าป้อนข้อมูลส่วนบุคคลที่ละเอียดอ่อนในแชท AI</li>
 </ul>
 
 <h2>2. ข้อตกลงผู้ใช้</h2>
@@ -159,6 +177,6 @@ Applies worldwide</p>
 <p><strong>Email:</strong> <a href="mailto:relic.ilya@gmail.com">relic.ilya@gmail.com</a></p>
 
 <div class="footer">
-<p>เอกสารนี้ได้รับการปรับปรุงล่าสุดเมื่อวันที่ 22/02/2025 เราขอสงวนสิทธิ์ในการปรับปรุงนโยบายและข้อตกลงนี้ได้ตลอดเวลา</p>
+<p>เอกสารนี้ได้รับการปรับปรุงล่าสุดเมื่อวันที่ 30/09/2026 เราขอสงวนสิทธิ์ในการปรับปรุงนโยบายและข้อตกลงนี้ได้ตลอดเวลา</p>
 <p>Contact: <a href="mailto:relic.ilya@gmail.com">relic.ilya@gmail.com</a></p>
 </div>`;

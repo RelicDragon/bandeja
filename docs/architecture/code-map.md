@@ -51,6 +51,7 @@ Related: [overview.md](./overview.md), [backend.md](./backend.md), [frontend.md]
 | `bug/` | bug tracker chats |
 | `clubAdmin/` | club operator |
 | `me/` | My-tab aggregate |
+| `agent/` | AI agent: run loop, SSE event log, context, tool registry + read tools, DTOs, access guards ([agent.md](../domains/agent.md)) |
 | `achievements/` | trophies |
 | `bets/` | social bets |
 | `media` / `s3.service.ts` | uploads |
@@ -97,7 +98,7 @@ Controllers sit next to routes of the same name (`game.controller.ts` ↔ `game.
 
 ### `components/` folders
 
-`chat/`, `GameDetails/`, `createGame/`, `createLeague/`, `createEvent/`, `home/`, `liveScoring/`, `playIntent/`, `playerInvite/`, `playerProfile/`, `marketplace/`, `stories/`, `bugs/`, `booktime/`, `clubAdmin/`, `clubPicker/`, `sponsorSlots/`, `navigation/`, `leaderboard/`, `trophies/`, `sport/`, `sportQuestionnaire/`, `gameFormat/`, `gameLocationTime/`, `gameResults/`, `gameSettings/`, `availability/`, `browseCity/`, `userTeam/`, `weather/`, `auth/`, `ui/`.
+`agent/`, `chat/`, `GameDetails/`, `createGame/`, `createLeague/`, `createEvent/`, `home/`, `liveScoring/`, `playIntent/`, `playerInvite/`, `playerProfile/`, `marketplace/`, `stories/`, `bugs/`, `booktime/`, `clubAdmin/`, `clubPicker/`, `sponsorSlots/`, `navigation/`, `leaderboard/`, `trophies/`, `sport/`, `sportQuestionnaire/`, `gameFormat/`, `gameLocationTime/`, `gameResults/`, `gameSettings/`, `availability/`, `browseCity/`, `userTeam/`, `weather/`, `auth/`, `ui/`.
 
 ### `store/`
 
@@ -144,7 +145,7 @@ See [shared-packages.md](./shared-packages.md).
 | `packages/app-locale` | `@bandeja/app-locale` |
 | `Frontend/shared` | `@bandeja/shared` (BE npm), `@shared/*` (FE Vite) |
 
-`Frontend/shared` modules: `createTemplates.ts`, `sport.ts`, `booking/`, `gameBooking/`, `booktime/`, `clubIntegration.ts`, `gameFormat/`, `nextGame/policy.ts`, `achievements/`, `entityCapabilities.ts`, `eventApproval.ts`, `officiatingLevel.ts`, `officiatingEnforcement.ts`, `rotationFormats.ts`, `strictValidation.ts`, `timedCustomPresets.ts`, `playIntentRealtime.ts`, `playIntentCreateSource.ts`, `systemMessages/`, `gamePhotos/`, `gameSlotOverlap.ts`, `nameSearch.ts`, `matchFormat.ts`, `isPresetLegal.ts`.
+`Frontend/shared` modules: `agentContract.ts`, `createTemplates.ts`, `sport.ts`, `booking/`, `gameBooking/`, `booktime/`, `clubIntegration.ts`, `gameFormat/`, `nextGame/policy.ts`, `achievements/`, `entityCapabilities.ts`, `eventApproval.ts`, `officiatingLevel.ts`, `officiatingEnforcement.ts`, `rotationFormats.ts`, `strictValidation.ts`, `timedCustomPresets.ts`, `playIntentRealtime.ts`, `playIntentCreateSource.ts`, `systemMessages/`, `gamePhotos/`, `gameSlotOverlap.ts`, `nameSearch.ts`, `matchFormat.ts`, `isPresetLegal.ts`.
 
 ---
 
@@ -191,6 +192,7 @@ JS policy: `Frontend/shared/nextGame/policy.ts`. JS picker: `Frontend/src/utils/
 | Push | `services/push/` | `services/pushNotificationService.ts`, `api/push.ts` |
 | Telegram | `services/telegram/`, `controllers/telegramAuth.controller.ts` | `pages/TelegramAutoLogin.tsx`, `utils/telegramAutoLoginPath.ts` |
 | Weather | `weatherForecast.service.ts` | `hooks/useMonthCalendarWeather.ts`, `queries/weather/` |
+| AI agent (`docs/domains/agent.md`) | `services/agent/` (`agentRun.service.ts` queue + loop, `agentRunQueue.service.ts` worker, `agentEvents.ts` SSE log, `agentContext.service.ts`, `agentChat.service.ts`, `agentGuards.ts`, `agentSendMessage.service.ts` + `agentMessageRateLimit.ts` (shared HTTP/Telegram entry), `agentRunFeed.ts` (replay/subscribe consumer), `llm/deepseekStream.ts`, `tools/` registry + `*.tools.ts`, `dto/`, `access/`), `controllers/agent.controller.ts`, `routes/agent.routes.ts`, `config/agentEnv.ts`, Telegram channel `services/telegram/agent/` | `components/agent/` (`AgentTab` list/split + `AgentChatRoute`, `AgentChatView`, `AgentComposer`, `AgentMarkdown`, `AgentToolChip`, `AgentEntityCard`, `AgentActionCard`), `features/agent/` (`useAgentStream` SSE client, `sseParser`, `agentRunReducer` + `agentRunStore`, `agentTimeline`, `agentCache`, `agentLinks`), `api/agent.ts`, `queries/agent/useAgentQueries.ts`, contract `Frontend/shared/agentContract.ts`, i18n `agent.json` |
 | Link-to-app | `services/linkToApp/`, `controllers/linkToApp.controller.ts` | `utils/appAttribution.ts`, `public/link-to-app/`, Admin `link-to-app.js` |
 | Club admin | `services/clubAdmin/` | `clubAdmin/ClubManagementApp`, `pages/clubAdmin/` |
 | User teams | `services/userTeam/` | `pages/UserTeamPage.tsx`, `components/userTeam/`, `store/userTeamsStore.ts` |

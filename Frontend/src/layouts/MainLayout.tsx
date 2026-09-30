@@ -67,7 +67,7 @@ export const MainLayout = ({ children, chrome = 'full' }: MainLayoutProps) => {
     (isDesktop || isLandscape) && parsed.place === 'game' && isGameDetailsPath;
   const isDesktopGameDetailsSplitView = isGameDetailsWidePath && !gameDetailsOccludesSideChat;
   const isGameDetailsTableFullBleed = isGameDetailsWidePath && gameDetailsOccludesSideChat;
-  const isDesktopHomeShell = isDesktop && parsed.place === 'home';
+  const isDesktopHomeShell = isDesktop && (parsed.place === 'home' || parsed.place === 'agentChat');
   const isDesktopCalendarSplitView =
     isDesktopHomeShell || (isDesktop && parsed.place === 'find' && findViewMode === 'calendar');
   const isOnSpecificChatRoute = location.pathname.includes('/user-chat/') ||

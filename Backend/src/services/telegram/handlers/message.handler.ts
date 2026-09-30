@@ -11,6 +11,7 @@ import {
   isDeclineInvitePendingExpired,
   parseLeadingBotCommand,
 } from '../inviteDeclinePending';
+import type { TelegramAgentBot } from '../agent/agentBot';
 
 function claimPending(
   pendingReplies: Map<string, PendingTelegramInput>,
@@ -24,7 +25,8 @@ function claimPending(
 
 export function createMessageHandler(
   pendingReplies: Map<string, PendingTelegramInput>,
-  bot: Bot | null
+  bot: Bot | null,
+  agentBot: TelegramAgentBot | null = null
 ): Middleware<BotContext> {
   return async (ctx) => {
     if (!ctx.from || !ctx.chat || !ctx.telegramId) return;
@@ -189,9 +191,22 @@ export function createMessageHandler(
       return;
     }
     
+    // AI assistant mode comes after pending inputs (reply bridging, decline reason) and
+    // before the reminder; it never swallows commands (docs/domains/agent.md § Telegram).
+    if (agentBot) {
+      const handled = await agentBot.handleText(ctx, { text: msg.text });
+      if (handled) return;
+    }
+
     if (msg.text && !msg.text.startsWith('/') && msg.text.trim().length > 0) {
       const lang = ctx.lang || await getUserLanguageFromTelegramId(telegramId, ctx.from?.language_code);
-      const reminderMessage = await ctx.reply(t('telegram.commandsReminder', lang));
+      const aiButton = agentBot
+        ? await agentBot.openButtonFor(telegramId, ctx.from?.language_code)
+        : undefined;
+      const reminderMessage = await ctx.reply(
+        t('telegram.commandsReminder', lang),
+        aiButton ? { reply_markup: aiButton } : undefined
+      );
       if (reminderMessage.message_id) {
         scheduleMessageDeletion(ctx.chat.id, reminderMessage.message_id, bot);
       }

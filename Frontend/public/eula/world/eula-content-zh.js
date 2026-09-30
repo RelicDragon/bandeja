@@ -3,7 +3,7 @@ window.EULAContent = window.EULAContent || {};
 window.EULAContent['zh'] = `<h1>隐私政策与用户协议</h1>
 <p><strong>Application:</strong> Padel Bandeja<br>
 <strong>Effective date:</strong> 12/01/2025<br>
-<strong>Last updated:</strong> 22/02/2025<br>
+<strong>Last updated:</strong> 30/09/2026<br>
 Applies worldwide</p>
 
 <h2>1. 隐私政策</h2>
@@ -35,7 +35,7 @@ Applies worldwide</p>
 <p>我们不会出售您的个人数据。我们仅可在以下情况下共享信息：</p>
 <ul>
 <li><strong>With Your Consent:</strong> When you explicitly authorize sharing</li>
-<li><strong>Service Providers:</strong> With trusted third-party services that help us operate the app (hosting, analytics, SMS providers)</li>
+<li><strong>服务提供商：</strong>帮助我们运营应用的可信第三方服务（托管、分析、短信服务商、AI 服务商）</li>
 <li><strong>Legal Requirements:</strong> When required by law, court order, or government regulation</li>
 <li><strong>Safety and Security:</strong> To protect rights, property, or safety of users and the public</li>
 <li><strong>Business Transfers:</strong> In connection with a merger, acquisition, or sale of assets</li>
@@ -73,6 +73,24 @@ Applies worldwide</p>
 <li><strong>Who can see it:</strong> This information is visible to other signed-in users of the application.</li>
 <li><strong>Your control:</strong> In line with privacy-by-design principles, you have full control. In the app settings you can turn off visibility of your status using the option &quot;Show my online status&quot; (opt-out). By default, your status is visible to others; you can disable it at any time.</li>
 <li><strong>Legal basis:</strong> We rely on Legitimate Interest: displaying presence is a core feature of the service that users expect. The feature is on by default, with a mandatory option to disable it in settings.</li>
+</ul>
+
+<h3>1.10 AI 功能与 AI 助手</h3>
+<p>Bandeja 提供可选的 AI 助手，可在应用内（我的 → AI）及我们的 Telegram 机器人中使用。</p>
+<ul>
+<li><strong>我们发送的内容：</strong> 当您使用助手时，您的消息及相关数据会被发送给第三方 AI 服务商（目前为 DeepSeek）以生成回答。相关数据包括：
+<ul>
+<li>您的名字、语言、常驻城市和时区；</li>
+<li>您即将参加的比赛；</li>
+<li>您管理的联赛；</li>
+<li>您参与的比赛聊天中的消息，仅在您要求助手阅读或总结时发送（仅限您在应用中本就可以看到的聊天）；</li>
+<li>您所请求查询的结果：比赛、俱乐部以及其他球员的公开资料信息。</li>
+</ul>
+</li>
+<li><strong>其他 AI 处理：</strong> 其他 AI 功能（如消息和文本的自动翻译、语音转写）同样由 AI 服务商（OpenAI 或 DeepSeek）以相同方式处理。</li>
+<li><strong>操作：</strong> 助手可以代您准备更改（例如编辑比赛或邀请球员），但在您逐一确认之前，不会进行任何更改。</li>
+<li><strong>存储：</strong> 对话存储在我们的服务器上，并与您的账户关联，以便您继续对话。您可以归档聊天。我们会记录使用元数据（如 token 数量），用于防止滥用和控制成本。如果您连接了球场预订账户（Booktime、Padeloo、Klikteren），应用还会将您在这些球场即将进行的预订（球场、场地、时间和状态）复制到我们的服务器，以便助手和 Telegram 机器人列出这些预订并将其关联到比赛。</li>
+<li><strong>限制：</strong> 助手无法访问您在应用中看不到的比赛或数据。请勿在 AI 聊天中输入敏感个人信息。</li>
 </ul>
 
 <h2>2、用户协议</h2>
@@ -159,6 +177,6 @@ Applies worldwide</p>
 <p><strong>Email:</strong> <a href="mailto:relic.ilya@gmail.com">relic.ilya@gmail.com</a></p>
 
 <div class="footer">
-<p>本文档的最新更新日期为 2025 年 2 月 22 日。我们保留随时更新本政策和协议的权利。</p>
+<p>本文档的最新更新日期为 2026 年 9 月 30 日。我们保留随时更新本政策和协议的权利。</p>
 <p>Contact: <a href="mailto:relic.ilya@gmail.com">relic.ilya@gmail.com</a></p>
 </div>`;

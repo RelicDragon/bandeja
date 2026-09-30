@@ -16,6 +16,21 @@ import { PlayIntentGameLifecycleService } from '../playIntent/playIntentGameLife
 import { publishCommittedPlayIntentStatusChanges, publishMatchingGamesChanged } from '../playIntent/playIntentRealtime';
 
 export class GameDeleteService {
+  /**
+   * Delete preconditions (no results, no child games). Shared by `deleteGame` (HTTP
+   * `DELETE /games/:id`) and the AI agent's `cancel_game` preview, so the two can't drift.
+   */
+  static async assertDeletable(game: { id: string; resultsStatus: string }): Promise<void> {
+    if (game.resultsStatus !== 'NONE') {
+      throw new ApiError(400, 'Cannot delete a game that has results');
+    }
+
+    const childCount = await prisma.game.count({ where: { parentId: game.id } });
+    if (childCount > 0) {
+      throw new ApiError(400, 'errors.games.cannotDeleteHasChildren');
+    }
+  }
+
   static async deleteGame(id: string, cancelledByUserId: string) {
     const game = await prisma.game.findUnique({
       where: { id },
@@ -48,14 +63,7 @@ export class GameDeleteService {
       throw new ApiError(404, 'Game not found');
     }
 
-    if (game.resultsStatus !== 'NONE') {
-      throw new ApiError(400, 'Cannot delete a game that has results');
-    }
-
-    const childCount = await prisma.game.count({ where: { parentId: id } });
-    if (childCount > 0) {
-      throw new ApiError(400, 'errors.games.cannotDeleteHasChildren');
-    }
+    await GameDeleteService.assertDeletable(game);
 
     const participantUserIds = game.participants
       .filter((p) => p.role !== ParticipantRole.OWNER)

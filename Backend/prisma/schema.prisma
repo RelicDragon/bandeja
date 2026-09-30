@@ -12,234 +12,241 @@ enum MainTheme {
 }
 
 model User {
-  id                            String                           @id @default(cuid())
-  phone                         String?                          @unique
-  email                         String?                          @unique
-  telegramId                    String?                          @unique
-  telegramUsername              String?
-  appleSub                      String?                          @unique
-  appleEmail                    String?
-  appleEmailVerified            Boolean                          @default(false)
-  googleId                      String?                          @unique
-  googleEmail                   String?
-  googleEmailVerified           Boolean                          @default(false)
-  firstName                     String?
-  lastName                      String?
-  avatar                        String?
-  originalAvatar                String?
-  passwordHash                  String?
-  isActive                      Boolean                          @default(true)
-  primarySport                  Sport                            @default(PADEL)
-  sportsEnabled                 Sport[]                          @default([PADEL])
-  lastCreatedSport              Sport?
-  socialLevel                   Float                            @default(1.0)
-  totalPoints                   Int                              @default(0)
-  wallet                        Int                              @default(0)
-  currentCityId                 String?
-  lastUserIP                    String?
-  latitudeByIP                  Float?
-  longitudeByIP                 Float?
-  defaultCurrency               String                           @default("EUR")
+  id                             String                           @id @default(cuid())
+  phone                          String?                          @unique
+  email                          String?                          @unique
+  telegramId                     String?                          @unique
+  telegramUsername               String?
+  appleSub                       String?                          @unique
+  appleEmail                     String?
+  appleEmailVerified             Boolean                          @default(false)
+  googleId                       String?                          @unique
+  googleEmail                    String?
+  googleEmailVerified            Boolean                          @default(false)
+  firstName                      String?
+  lastName                       String?
+  avatar                         String?
+  originalAvatar                 String?
+  passwordHash                   String?
+  isActive                       Boolean                          @default(true)
+  primarySport                   Sport                            @default(PADEL)
+  sportsEnabled                  Sport[]                          @default([PADEL])
+  lastCreatedSport               Sport?
+  socialLevel                    Float                            @default(1.0)
+  totalPoints                    Int                              @default(0)
+  wallet                         Int                              @default(0)
+  currentCityId                  String?
+  lastUserIP                     String?
+  latitudeByIP                   Float?
+  longitudeByIP                  Float?
+  defaultCurrency                String                           @default("EUR")
   /// PRD 348 — the organiser's own "how to pay me" list, prefilled into every game they
   /// create: `[{ method, handle }]`, at most 3, ids from `@bandeja/shared/payments`.
   /// Private: only ever leaves the API on the owner's settings payload, or via the game
   /// the owner attached it to (and there only to that game's participants).
-  payoutMethods                 Json?
-  language                      String?                          @default("auto")
-  translateToLanguage           String?                          @db.VarChar(10)
-  timeFormat                    String                           @default("auto")
-  weekStart                     String                           @default("auto")
-  preferredHandLeft             Boolean                          @default(false)
-  preferredHandRight            Boolean                          @default(false)
-  preferredCourtSideLeft        Boolean                          @default(false)
-  preferredCourtSideRight       Boolean                          @default(false)
-  verbalStatus                  String?                          @db.VarChar(32)
-  bio                           String?                          @db.VarChar(128)
-  weeklyAvailability            Json?
-  availabilityBucketBoundaries  Json?
-  createdAt                     DateTime                         @default(now())
-  updatedAt                     DateTime                         @updatedAt
-  isAdmin                       Boolean                          @default(false)
-  isDeveloper                   Boolean                          @default(false)
-  isTrainer                     Boolean                          @default(false)
-  canCreateTournament           Boolean                          @default(false)
-  maxParticipantsInGame         Int                              @default(12)
-  canCreateLeague               Boolean                          @default(false)
-  isPremium                     Boolean                          @default(false)
-  showPremiumStatus             Boolean                          @default(true)
-  premiumOnboardingCompletedAt  DateTime?
-  mainTheme                     MainTheme                        @default(premium)
-  gender                        Gender                           @default(PREFER_NOT_TO_SAY)
-  genderIsSet                   Boolean                          @default(false)
-  nameIsSet                     Boolean                          @default(false)
-  primarySportIsSet             Boolean                          @default(false)
-  cityIsSet                     Boolean                          @default(false)
-  welcomeScreenPassed           Boolean                          @default(false)
-  booktimeConnectHintDismissed  Boolean                          @default(false)
-  approvedLevel                 Boolean                          @default(false)
-  approvedById                  String?
-  approvedWhen                  DateTime?
-  favoriteTrainerId             String?
+  payoutMethods                  Json?
+  language                       String?                          @default("auto")
+  translateToLanguage            String?                          @db.VarChar(10)
+  timeFormat                     String                           @default("auto")
+  weekStart                      String                           @default("auto")
+  preferredHandLeft              Boolean                          @default(false)
+  preferredHandRight             Boolean                          @default(false)
+  preferredCourtSideLeft         Boolean                          @default(false)
+  preferredCourtSideRight        Boolean                          @default(false)
+  verbalStatus                   String?                          @db.VarChar(32)
+  bio                            String?                          @db.VarChar(128)
+  weeklyAvailability             Json?
+  availabilityBucketBoundaries   Json?
+  createdAt                      DateTime                         @default(now())
+  updatedAt                      DateTime                         @updatedAt
+  isAdmin                        Boolean                          @default(false)
+  isDeveloper                    Boolean                          @default(false)
+  isTrainer                      Boolean                          @default(false)
+  canCreateTournament            Boolean                          @default(false)
+  maxParticipantsInGame          Int                              @default(12)
+  canCreateLeague                Boolean                          @default(false)
+  isPremium                      Boolean                          @default(false)
+  showPremiumStatus              Boolean                          @default(true)
+  premiumOnboardingCompletedAt   DateTime?
+  mainTheme                      MainTheme                        @default(premium)
+  gender                         Gender                           @default(PREFER_NOT_TO_SAY)
+  genderIsSet                    Boolean                          @default(false)
+  nameIsSet                      Boolean                          @default(false)
+  primarySportIsSet              Boolean                          @default(false)
+  cityIsSet                      Boolean                          @default(false)
+  welcomeScreenPassed            Boolean                          @default(false)
+  booktimeConnectHintDismissed   Boolean                          @default(false)
+  approvedLevel                  Boolean                          @default(false)
+  approvedById                   String?
+  approvedWhen                   DateTime?
+  favoriteTrainerId              String?
   /// Set when the user finishes (or skips through) the /welcome flow. Null => route to onboarding.
   /// Accounts that existed before PRD 350 were backfilled to their `createdAt`.
-  onboardingCompletedAt         DateTime?
+  onboardingCompletedAt          DateTime?
   /// Last onboarding step id the user reached, so /welcome can resume where they left off.
-  onboardingStep                String?
+  onboardingStep                 String?
   /// Short shareable referral code (8 chars, unambiguous alphabet), generated lazily on first use.
-  referralCode                  String?                          @unique
+  referralCode                   String?                          @unique
   /// First-touch referrer. Never overwritten once set (PRD 351).
-  referredByUserId              String?
-  chatMessages                  ChatMessage[]
-  stickerPrefs                  UserStickerPrefs?
-  ownedStickerPacks             StickerPack[]
-  participateInGames            GameParticipant[]                @relation("ParticipantUser")
-  cancelledGameParticipants     CancelledGameParticipant[]
-  participantsInvitedByMe       GameParticipant[]                @relation("ParticipantInvitedBy")
-  gameInviteOutcomes            GameInviteOutcome[]              @relation("GameInviteOutcomeUser")
-  gameInviteOutcomesSent        GameInviteOutcome[]              @relation("GameInviteOutcomeInvitedBy")
-  gameLogsAsActor               GameLog[]                        @relation("GameLogActor")
-  gameLogsAsTarget              GameLog[]                        @relation("GameLogTarget")
-  userChats1                    UserChat[]                       @relation("UserChat1")
-  userChats2                    UserChat[]                       @relation("UserChat2")
-  pinnedUserChats               PinnedUserChat[]
-  pinnedGroupChannels           PinnedGroupChannel[]
-  pinnedMessages                PinnedMessage[]
-  messageReactions              MessageReaction[]
-  gameReactions                 GameReaction[]
-  messageReadReceipts           MessageReadReceipt[]
-  currentCity                   City?                            @relation("UserCurrentCity", fields: [currentCityId], references: [id])
-  approvedBy                    User?                            @relation("UserApprovedBy", fields: [approvedById], references: [id])
-  approvedUsers                 User[]                           @relation("UserApprovedBy")
-  sportProfilesApproved         UserSportProfile[]               @relation("SportProfileApprovedBy")
-  favoriteTrainer               User?                            @relation("UserFavoriteTrainer", fields: [favoriteTrainerId], references: [id], onDelete: SetNull)
-  usersWithFavoriteTrainer      User[]                           @relation("UserFavoriteTrainer")
-  favoriteClubs                 UserFavoriteClub[]
-  adClickTokens                 AdClickToken[]
-  adLandingWishes               AdLandingWish[]
-  adLandingRegistrations        AdLandingRegistration[]
-  attribution                   LinkToAppAttribution?            @relation("UserFirstTouchAttribution", fields: [attributionId], references: [id], onDelete: SetNull)
-  convertedAttributions         LinkToAppAttribution[]           @relation("AttributionConvertedUser")
-  linkToAppEvents               LinkToAppEvent[]
-  favoriteUsers                 UserFavoriteUser[]               @relation("UserFavorites")
-  favoritedBy                   UserFavoriteUser[]               @relation("UserFavoritedBy")
-  interactionsFrom              UserInteraction[]                @relation("InteractionFromUser")
-  interactionsTo                UserInteraction[]                @relation("InteractionToUser")
-  teamPlayers                   TeamPlayer[]
-  roundOutcomes                 RoundOutcome[]
-  gameOutcomes                  GameOutcome[]
-  gameTeamPlayers               GameTeamPlayer[]
-  bugs                          Bug[]
-  bugParticipants               BugParticipant[]
-  lundaProfile                  LundaProfile?
-  transactionsFrom              Transaction[]                    @relation("TransactionFromUser")
-  transactionsTo                Transaction[]                    @relation("TransactionToUser")
-  levelChangeEvents             LevelChangeEvent[]
-  leagueParticipants            LeagueParticipant[]
-  leagueTeamPlayers             LeagueTeamPlayer[]
-  allowMessagesFromNonContacts  Boolean                          @default(true)
-  showOnlineStatus              Boolean                          @default(true)
-  alwaysShowUserNames           Boolean                          @default(true)
-  shareGamePhotosToFollowers    Boolean                          @default(true)
-  shareGameCreationsToFollowers Boolean                          @default(true)
-  shareGameResultsToFollowers   Boolean                          @default(true)
-  appIcon                       String?                          @default("tiger")
-  attributionId                 String?
-  utmSource                     String?
-  utmMedium                     String?
-  utmCampaign                   String?
-  utmContent                    String?
-  utmTerm                       String?
-  attributedAt                  DateTime?
-  attributionChoice             String?
-  attributionAuthKind           String?
-  trainerRating                 Float?
-  trainerReviewCount            Int                              @default(0)
-  pushTokens                    PushToken[]
-  pushReplyTokens               PushReplyToken[]
-  messageReports                MessageReport[]                  @relation("MessageReportReporter")
-  blockedUsers                  BlockedUser[]                    @relation("UserBlocked")
-  blockedBy                     BlockedUser[]                    @relation("UserBlockedBy")
-  chatMutes                     ChatMute[]
-  chatTranslationPreferences    ChatTranslationPreference[]
-  gameSubscriptions             GameSubscription[]
-  playIntents                   PlayIntent[]
-  matchProposalMembers          MatchProposalMember[]
-  groupChannelParticipants      GroupChannelParticipant[]
-  groupInvitesSent              GroupChannelInvite[]             @relation("GroupInviteSender")
-  groupInvitesReceived          GroupChannelInvite[]             @relation("GroupInviteReceiver")
-  betsCreated                   Bet[]                            @relation("BetCreator")
-  betsAccepted                  Bet[]                            @relation("BetAcceptor")
-  betsWon                       Bet[]                            @relation("BetWinner")
-  betParticipants               BetParticipant[]
-  messageTranslations           MessageTranslation[]
-  messageTranscriptions         MessageTranscription[]
-  chatDrafts                    ChatDraft[]
-  chatMutationIdempotencies     ChatMutationIdempotency[]
-  chatReadCursors               ChatReadCursor[]
-  reactionEmojiUsageVersion     Int                              @default(0)
-  reactionEmojiStats            UserReactionEmojiStat[]
-  notificationPreferences       NotificationPreference[]
-  playIntentDeliveries          PlayIntentNotificationDelivery[]
-  pollVotes                     PollVote[]
-  marketItems                   MarketItem[]                     @relation("MarketItemSeller")
-  marketItemsWon                MarketItem[]                     @relation("MarketItemWinner")
-  marketItemBids                MarketItemBid[]
-  trainedGames                  Game[]                           @relation("GameTrainer")
-  buyerGroupChannels            GroupChannel[]                   @relation("GroupChannelBuyer")
-  groupChannelsLastMessageFrom  GroupChannel[]                   @relation("GroupChannelLastMessageSender")
-  reviewsReceivedAsTrainer      TrainerReview[]                  @relation("TrainerReviewsReceived")
-  reviewsGiven                  TrainerReview[]                  @relation("TrainerReviewsGiven")
-  clubReviewsGiven              ClubReview[]                     @relation("ClubReviewsGiven")
-  gameWorkoutSummaries          GameWorkoutSummary[]
-  telegramLinkIntents           TelegramAccountLinkIntent[]
-  ownedUserTeams                UserTeam[]                       @relation("UserTeamOwner")
-  userTeamMemberships           UserTeamMember[]
-  refreshSessions               UserRefreshSession[]
-  clubAdmins                    ClubAdmin[]
-  courtSlotHoldsCreated         CourtSlotHold[]
-  booktimeClubAuths             UserClubBooktimeAuth[]
-  padelooClubAuths              UserClubPadelooAuth[]
-  klikterenClubAuths            UserClubKlikterenAuth[]
-  nspadelClubAuths              UserClubNspadelAuth[]
-  weltnerClubAuths              UserClubWeltnerAuth[]
-  weltnerBookings               WeltnerBooking[]
-  sportProfiles                 UserSportProfile[]
-  gamePhotosUploaded            GamePhoto[]                      @relation("GamePhotoUploader")
-  stories                       UserStory[]                      @relation("UserStoryOwner")
-  storyViewsAsViewer            StoryView[]                      @relation("StoryViewViewer")
-  storyViewsAsOwner             StoryView[]                      @relation("StoryViewOwner")
-  storySegmentLikes             StorySegmentLike[]               @relation("StorySegmentLikeUser")
-  storySegmentCommentsAuthored  StorySegmentComment[]            @relation("StorySegmentCommentAuthor")
-  storySegmentCommentsOwned     StorySegmentComment[]            @relation("StorySegmentCommentOwner")
-  storyCommentLikes             StoryCommentLike[]               @relation("StoryCommentLikeUser")
-  storyCommentReports           StoryCommentReport[]             @relation("StoryCommentReportReporter")
-  storySegmentDismissals        StorySegmentDismissal[]
-  unreadState                   UserUnreadState?
-  contextUnreadStates           UserContextUnreadState[]
-  achievements                  UserAchievement[]
-  achievementPins               UserAchievementPin[]
-  achievementStats              UserAchievementStats?
-  levelEvaluationsGiven         PlayerLevelEvaluation[]         @relation("LevelEvaluationEvaluator")
-  levelEvaluationsReceived      PlayerLevelEvaluation[]         @relation("LevelEvaluationTarget")
-  gameTextTranslationOverrides  GameTextTranslation[]           @relation("GameTextTranslationEditor")
-  gameTextTranslationCorrections GameTextTranslationCorrection[] @relation("GameTextTranslationCorrectionEditor")
-  referredByUser                User?                            @relation("UserReferredBy", fields: [referredByUserId], references: [id], onDelete: SetNull)
-  referredUsers                 User[]                           @relation("UserReferredBy")
-  ownedGameSeries               GameSeries[]                     @relation("GameSeriesOwner")
-  gameSeriesRegulars            GameSeriesRegular[]
-  gamesAsCostPayer              Game[]                           @relation("GameCostPayer")
-  gameCostShares                GameCostShare[]
-  noShowNotesAuthored           GameParticipant[]                @relation("ParticipantNoShowNotedBy")
-  pairStatsAsUserA              PairStat[]                       @relation("PairStatUserA")
-  pairStatsAsUserB              PairStat[]                       @relation("PairStatUserB")
-  monthlyRecaps                 MonthlyRecap[]
-  referralRewardReceived        ReferralReward?                  @relation("ReferralRewardReferred")
-  referralRewardsGiven          ReferralReward[]                 @relation("ReferralRewardReferrer")
-  ownedGoods                    UserGoods[]                      @relation("UserGoodsOwner")
-  giftedGoods                   UserGoods[]                      @relation("UserGoodsGiftedBy")
-  spotOpenedDeliveries          SpotOpenedDelivery[]
-  liveGameNotifyDeliveries      LiveGameNotifyDelivery[]
-  referrerAttributions          LinkToAppAttribution[]           @relation("AttributionReferrerUser")
+  referredByUserId               String?
+  chatMessages                   ChatMessage[]
+  stickerPrefs                   UserStickerPrefs?
+  ownedStickerPacks              StickerPack[]
+  participateInGames             GameParticipant[]                @relation("ParticipantUser")
+  cancelledGameParticipants      CancelledGameParticipant[]
+  participantsInvitedByMe        GameParticipant[]                @relation("ParticipantInvitedBy")
+  gameInviteOutcomes             GameInviteOutcome[]              @relation("GameInviteOutcomeUser")
+  gameInviteOutcomesSent         GameInviteOutcome[]              @relation("GameInviteOutcomeInvitedBy")
+  gameLogsAsActor                GameLog[]                        @relation("GameLogActor")
+  gameLogsAsTarget               GameLog[]                        @relation("GameLogTarget")
+  userChats1                     UserChat[]                       @relation("UserChat1")
+  userChats2                     UserChat[]                       @relation("UserChat2")
+  pinnedUserChats                PinnedUserChat[]
+  pinnedGroupChannels            PinnedGroupChannel[]
+  pinnedMessages                 PinnedMessage[]
+  messageReactions               MessageReaction[]
+  gameReactions                  GameReaction[]
+  messageReadReceipts            MessageReadReceipt[]
+  currentCity                    City?                            @relation("UserCurrentCity", fields: [currentCityId], references: [id])
+  approvedBy                     User?                            @relation("UserApprovedBy", fields: [approvedById], references: [id])
+  approvedUsers                  User[]                           @relation("UserApprovedBy")
+  sportProfilesApproved          UserSportProfile[]               @relation("SportProfileApprovedBy")
+  favoriteTrainer                User?                            @relation("UserFavoriteTrainer", fields: [favoriteTrainerId], references: [id], onDelete: SetNull)
+  usersWithFavoriteTrainer       User[]                           @relation("UserFavoriteTrainer")
+  favoriteClubs                  UserFavoriteClub[]
+  adClickTokens                  AdClickToken[]
+  adLandingWishes                AdLandingWish[]
+  adLandingRegistrations         AdLandingRegistration[]
+  attribution                    LinkToAppAttribution?            @relation("UserFirstTouchAttribution", fields: [attributionId], references: [id], onDelete: SetNull)
+  convertedAttributions          LinkToAppAttribution[]           @relation("AttributionConvertedUser")
+  linkToAppEvents                LinkToAppEvent[]
+  favoriteUsers                  UserFavoriteUser[]               @relation("UserFavorites")
+  favoritedBy                    UserFavoriteUser[]               @relation("UserFavoritedBy")
+  interactionsFrom               UserInteraction[]                @relation("InteractionFromUser")
+  interactionsTo                 UserInteraction[]                @relation("InteractionToUser")
+  teamPlayers                    TeamPlayer[]
+  roundOutcomes                  RoundOutcome[]
+  gameOutcomes                   GameOutcome[]
+  gameTeamPlayers                GameTeamPlayer[]
+  bugs                           Bug[]
+  bugParticipants                BugParticipant[]
+  lundaProfile                   LundaProfile?
+  transactionsFrom               Transaction[]                    @relation("TransactionFromUser")
+  transactionsTo                 Transaction[]                    @relation("TransactionToUser")
+  levelChangeEvents              LevelChangeEvent[]
+  leagueParticipants             LeagueParticipant[]
+  leagueTeamPlayers              LeagueTeamPlayer[]
+  allowMessagesFromNonContacts   Boolean                          @default(true)
+  showOnlineStatus               Boolean                          @default(true)
+  alwaysShowUserNames            Boolean                          @default(true)
+  shareGamePhotosToFollowers     Boolean                          @default(true)
+  shareGameCreationsToFollowers  Boolean                          @default(true)
+  shareGameResultsToFollowers    Boolean                          @default(true)
+  appIcon                        String?                          @default("tiger")
+  attributionId                  String?
+  utmSource                      String?
+  utmMedium                      String?
+  utmCampaign                    String?
+  utmContent                     String?
+  utmTerm                        String?
+  attributedAt                   DateTime?
+  attributionChoice              String?
+  attributionAuthKind            String?
+  trainerRating                  Float?
+  trainerReviewCount             Int                              @default(0)
+  pushTokens                     PushToken[]
+  pushReplyTokens                PushReplyToken[]
+  messageReports                 MessageReport[]                  @relation("MessageReportReporter")
+  blockedUsers                   BlockedUser[]                    @relation("UserBlocked")
+  blockedBy                      BlockedUser[]                    @relation("UserBlockedBy")
+  chatMutes                      ChatMute[]
+  chatTranslationPreferences     ChatTranslationPreference[]
+  gameSubscriptions              GameSubscription[]
+  playIntents                    PlayIntent[]
+  matchProposalMembers           MatchProposalMember[]
+  groupChannelParticipants       GroupChannelParticipant[]
+  groupInvitesSent               GroupChannelInvite[]             @relation("GroupInviteSender")
+  groupInvitesReceived           GroupChannelInvite[]             @relation("GroupInviteReceiver")
+  betsCreated                    Bet[]                            @relation("BetCreator")
+  betsAccepted                   Bet[]                            @relation("BetAcceptor")
+  betsWon                        Bet[]                            @relation("BetWinner")
+  betParticipants                BetParticipant[]
+  messageTranslations            MessageTranslation[]
+  messageTranscriptions          MessageTranscription[]
+  chatDrafts                     ChatDraft[]
+  chatMutationIdempotencies      ChatMutationIdempotency[]
+  chatReadCursors                ChatReadCursor[]
+  reactionEmojiUsageVersion      Int                              @default(0)
+  reactionEmojiStats             UserReactionEmojiStat[]
+  notificationPreferences        NotificationPreference[]
+  playIntentDeliveries           PlayIntentNotificationDelivery[]
+  pollVotes                      PollVote[]
+  marketItems                    MarketItem[]                     @relation("MarketItemSeller")
+  marketItemsWon                 MarketItem[]                     @relation("MarketItemWinner")
+  marketItemBids                 MarketItemBid[]
+  trainedGames                   Game[]                           @relation("GameTrainer")
+  buyerGroupChannels             GroupChannel[]                   @relation("GroupChannelBuyer")
+  groupChannelsLastMessageFrom   GroupChannel[]                   @relation("GroupChannelLastMessageSender")
+  reviewsReceivedAsTrainer       TrainerReview[]                  @relation("TrainerReviewsReceived")
+  reviewsGiven                   TrainerReview[]                  @relation("TrainerReviewsGiven")
+  clubReviewsGiven               ClubReview[]                     @relation("ClubReviewsGiven")
+  gameWorkoutSummaries           GameWorkoutSummary[]
+  telegramLinkIntents            TelegramAccountLinkIntent[]
+  ownedUserTeams                 UserTeam[]                       @relation("UserTeamOwner")
+  userTeamMemberships            UserTeamMember[]
+  refreshSessions                UserRefreshSession[]
+  clubAdmins                     ClubAdmin[]
+  courtSlotHoldsCreated          CourtSlotHold[]
+  booktimeClubAuths              UserClubBooktimeAuth[]
+  padelooClubAuths               UserClubPadelooAuth[]
+  klikterenClubAuths             UserClubKlikterenAuth[]
+  nspadelClubAuths               UserClubNspadelAuth[]
+  weltnerClubAuths               UserClubWeltnerAuth[]
+  weltnerBookings                WeltnerBooking[]
+  nspadelBookings                NspadelBooking[]
+  externalBookingMirrors         ExternalBookingMirror[]
+  externalBookingMirrorSyncs     ExternalBookingMirrorSync[]
+  sportProfiles                  UserSportProfile[]
+  gamePhotosUploaded             GamePhoto[]                      @relation("GamePhotoUploader")
+  stories                        UserStory[]                      @relation("UserStoryOwner")
+  storyViewsAsViewer             StoryView[]                      @relation("StoryViewViewer")
+  storyViewsAsOwner              StoryView[]                      @relation("StoryViewOwner")
+  storySegmentLikes              StorySegmentLike[]               @relation("StorySegmentLikeUser")
+  storySegmentCommentsAuthored   StorySegmentComment[]            @relation("StorySegmentCommentAuthor")
+  storySegmentCommentsOwned      StorySegmentComment[]            @relation("StorySegmentCommentOwner")
+  storyCommentLikes              StoryCommentLike[]               @relation("StoryCommentLikeUser")
+  storyCommentReports            StoryCommentReport[]             @relation("StoryCommentReportReporter")
+  storySegmentDismissals         StorySegmentDismissal[]
+  unreadState                    UserUnreadState?
+  contextUnreadStates            UserContextUnreadState[]
+  achievements                   UserAchievement[]
+  achievementPins                UserAchievementPin[]
+  achievementStats               UserAchievementStats?
+  levelEvaluationsGiven          PlayerLevelEvaluation[]          @relation("LevelEvaluationEvaluator")
+  levelEvaluationsReceived       PlayerLevelEvaluation[]          @relation("LevelEvaluationTarget")
+  gameTextTranslationOverrides   GameTextTranslation[]            @relation("GameTextTranslationEditor")
+  gameTextTranslationCorrections GameTextTranslationCorrection[]  @relation("GameTextTranslationCorrectionEditor")
+  referredByUser                 User?                            @relation("UserReferredBy", fields: [referredByUserId], references: [id], onDelete: SetNull)
+  referredUsers                  User[]                           @relation("UserReferredBy")
+  ownedGameSeries                GameSeries[]                     @relation("GameSeriesOwner")
+  gameSeriesRegulars             GameSeriesRegular[]
+  gamesAsCostPayer               Game[]                           @relation("GameCostPayer")
+  gameCostShares                 GameCostShare[]
+  noShowNotesAuthored            GameParticipant[]                @relation("ParticipantNoShowNotedBy")
+  pairStatsAsUserA               PairStat[]                       @relation("PairStatUserA")
+  pairStatsAsUserB               PairStat[]                       @relation("PairStatUserB")
+  monthlyRecaps                  MonthlyRecap[]
+  referralRewardReceived         ReferralReward?                  @relation("ReferralRewardReferred")
+  referralRewardsGiven           ReferralReward[]                 @relation("ReferralRewardReferrer")
+  ownedGoods                     UserGoods[]                      @relation("UserGoodsOwner")
+  giftedGoods                    UserGoods[]                      @relation("UserGoodsGiftedBy")
+  spotOpenedDeliveries           SpotOpenedDelivery[]
+  liveGameNotifyDeliveries       LiveGameNotifyDelivery[]
+  referrerAttributions           LinkToAppAttribution[]           @relation("AttributionReferrerUser")
+  agentChats                     AgentChat[]
+  agentPendingActions            AgentPendingAction[]
+  agentToolPermissions           AgentToolPermission[]
+  bookedExternalBookings         GameExternalBooking[]            @relation("GameExternalBookingBookedBy")
 
   @@index([phone])
   @@index([telegramId])
@@ -252,22 +259,22 @@ model User {
 }
 
 model UserRefreshSession {
-  id                  String    @id @default(cuid())
-  userId              String
-  tokenHash           String    @unique
-  expiresAt           DateTime
-  createdAt           DateTime  @default(now())
-  lastUsedAt          DateTime  @default(now())
-  deviceLabel         String?
-  platform            String    @default("unknown")
-  userAgent           String?
-  deviceId            String?
-  ip                  String?   @db.VarChar(64)
-  revokedAt           DateTime?
-  replacedBySessionId String?
-  rotationFamilyId    String
-  rotationRequestId   String?
-  replacementTokenCiphertext String? @db.Text
+  id                         String    @id @default(cuid())
+  userId                     String
+  tokenHash                  String    @unique
+  expiresAt                  DateTime
+  createdAt                  DateTime  @default(now())
+  lastUsedAt                 DateTime  @default(now())
+  deviceLabel                String?
+  platform                   String    @default("unknown")
+  userAgent                  String?
+  deviceId                   String?
+  ip                         String?   @db.VarChar(64)
+  revokedAt                  DateTime?
+  replacedBySessionId        String?
+  rotationFamilyId           String
+  rotationRequestId          String?
+  replacementTokenCiphertext String?   @db.Text
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -434,6 +441,9 @@ model Club {
   nspadelAuths            UserClubNspadelAuth[]
   weltnerAuths            UserClubWeltnerAuth[]
   weltnerBookings         WeltnerBooking[]
+  nspadelBookings         NspadelBooking[]
+  externalBookingMirrors  ExternalBookingMirror[]
+  externalBookingMirrorSyncs ExternalBookingMirrorSync[]
   nspadelBusySnapshots    ClubNspadelBusySnapshot[]
   gameSeries              GameSeries[]
 
@@ -687,6 +697,7 @@ model Court {
   klikterenBusySnapshots ClubKlikterenBusySnapshot[]
   nspadelBusySnapshots   ClubNspadelBusySnapshot[]
   weltnerBookings        WeltnerBooking[]
+  nspadelBookings        NspadelBooking[]
   gameExternalBookings   GameExternalBooking[]
   scheduledBracketSlots  LeagueBracketSlot[]         @relation("BracketScheduledCourt")
 
@@ -931,15 +942,19 @@ model GameExternalBooking {
   courtId                 String?
   bookingStart            DateTime?
   bookingEnd              DateTime?
+  /// Who attached this booking to the app (create/link). Null for legacy rows. Never overwritten.
+  bookedByUserId          String?
   createdAt               DateTime            @default(now())
   updatedAt               DateTime            @updatedAt
 
-  game  Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
-  court Court? @relation(fields: [courtId], references: [id], onDelete: SetNull)
+  game     Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  court    Court? @relation(fields: [courtId], references: [id], onDelete: SetNull)
+  bookedBy User?  @relation("GameExternalBookingBookedBy", fields: [bookedByUserId], references: [id], onDelete: SetNull)
 
   @@unique([gameId, externalBookingId])
   @@index([externalBookingId])
   @@index([gameId])
+  @@index([bookedByUserId])
 }
 
 model GamePhoto {
@@ -970,13 +985,13 @@ model GamePhoto {
 }
 
 model GameEventHero {
-  id            String   @id @default(cuid())
-  gameId        String
-  originalUrl   String
-  thumbnailUrl  String
-  sortOrder     Int      @default(0)
-  createdAt     DateTime @default(now())
-  game          Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  id           String   @id @default(cuid())
+  gameId       String
+  originalUrl  String
+  thumbnailUrl String
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+  game         Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
 
   @@index([gameId, sortOrder])
 }
@@ -1168,16 +1183,16 @@ model CancelledGameParticipant {
 }
 
 model GameFaq {
-  id        String   @id @default(cuid())
-  gameId    String
-  question  String
-  answer    String
-  sourceRevision Int @default(1)
-  order     Int
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
-  translations GameFaqTranslation[]
+  id              String                  @id @default(cuid())
+  gameId          String
+  question        String
+  answer          String
+  sourceRevision  Int                     @default(1)
+  order           Int
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+  game            Game                    @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  translations    GameFaqTranslation[]
   translationJobs GameFaqTranslationJob[]
 
   @@index([gameId])
@@ -1185,26 +1200,26 @@ model GameFaq {
 }
 
 model GameFaqTranslationPreference {
-  gameId String @id
-  selectedLocales String[]
-  sourceLocaleOverride String? @db.VarChar(10)
-  updatedAt DateTime @updatedAt
-  game Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  gameId               String   @id
+  selectedLocales      String[]
+  sourceLocaleOverride String?  @db.VarChar(10)
+  updatedAt            DateTime @updatedAt
+  game                 Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
 }
 
 model GameFaqTranslation {
-  id String @id @default(cuid())
-  faqId String
-  locale String @db.VarChar(10)
-  sourceRevision Int
-  policyVersion Int
-  sourceLocaleOverride String? @db.VarChar(10)
-  question String @db.Text
-  answer String @db.Text
-  noChange Boolean @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  faq GameFaq @relation(fields: [faqId], references: [id], onDelete: Cascade)
+  id                   String   @id @default(cuid())
+  faqId                String
+  locale               String   @db.VarChar(10)
+  sourceRevision       Int
+  policyVersion        Int
+  sourceLocaleOverride String?  @db.VarChar(10)
+  question             String   @db.Text
+  answer               String   @db.Text
+  noChange             Boolean  @default(false)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  faq                  GameFaq  @relation(fields: [faqId], references: [id], onDelete: Cascade)
 
   @@unique([faqId, locale])
   @@index([faqId])
@@ -1219,27 +1234,27 @@ enum GameFaqTranslationJobStatus {
 }
 
 model GameFaqTranslationJob {
-  id String @id @default(cuid())
-  faqId String
-  targetLocale String @db.VarChar(10)
-  sourceRevision Int
-  policyVersion Int
+  id                   String                      @id @default(cuid())
+  faqId                String
+  targetLocale         String                      @db.VarChar(10)
+  sourceRevision       Int
+  policyVersion        Int
   /// Empty string denotes automatic source detection for deterministic identity.
-  sourceLocaleOverride String @default("") @db.VarChar(10)
-  questionSnapshot String @db.Text
-  answerSnapshot String @db.Text
-  requestedBy String
-  status GameFaqTranslationJobStatus @default(pending)
-  attempts Int @default(0)
-  runAfter DateTime @default(now())
-  leaseOwner String?
-  leaseExpiresAt DateTime?
-  claimToken BigInt @default(0)
-  errorCategory String? @db.VarChar(32)
-  lastError String? @db.Text
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  faq GameFaq @relation(fields: [faqId], references: [id], onDelete: Cascade)
+  sourceLocaleOverride String                      @default("") @db.VarChar(10)
+  questionSnapshot     String                      @db.Text
+  answerSnapshot       String                      @db.Text
+  requestedBy          String
+  status               GameFaqTranslationJobStatus @default(pending)
+  attempts             Int                         @default(0)
+  runAfter             DateTime                    @default(now())
+  leaseOwner           String?
+  leaseExpiresAt       DateTime?
+  claimToken           BigInt                      @default(0)
+  errorCategory        String?                     @db.VarChar(32)
+  lastError            String?                     @db.Text
+  createdAt            DateTime                    @default(now())
+  updatedAt            DateTime                    @updatedAt
+  faq                  GameFaq                     @relation(fields: [faqId], references: [id], onDelete: Cascade)
 
   @@unique([faqId, targetLocale, sourceRevision, policyVersion, sourceLocaleOverride], map: "GameFaqTranslationJob_identity_key")
   @@index([status, runAfter])
@@ -1574,18 +1589,18 @@ model GameOutcome {
 /// Anonymous, sport-scoped peer feedback captured after finalized results.
 /// It is a profile insight only and never changes the official rating.
 model PlayerLevelEvaluation {
-  id              String                 @id @default(cuid())
+  id              String             @id @default(cuid())
   gameId          String
   sport           Sport
   evaluatorUserId String
   targetUserId    String
   verdict         PlayerLevelVerdict
   levelSnapshot   Float
-  createdAt       DateTime               @default(now())
-  updatedAt       DateTime               @updatedAt
-  game            Game                   @relation(fields: [gameId], references: [id], onDelete: Cascade)
-  evaluator       User                   @relation("LevelEvaluationEvaluator", fields: [evaluatorUserId], references: [id], onDelete: Cascade)
-  target          User                   @relation("LevelEvaluationTarget", fields: [targetUserId], references: [id], onDelete: Cascade)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  game            Game               @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  evaluator       User               @relation("LevelEvaluationEvaluator", fields: [evaluatorUserId], references: [id], onDelete: Cascade)
+  target          User               @relation("LevelEvaluationTarget", fields: [targetUserId], references: [id], onDelete: Cascade)
 
   @@unique([gameId, evaluatorUserId, targetUserId])
   @@index([targetUserId, sport, createdAt])
@@ -2034,8 +2049,8 @@ model GameTextTranslation {
   createdAt                    DateTime                @default(now())
   updatedAt                    DateTime                @updatedAt
 
-  game                   Game  @relation(fields: [gameId], references: [id], onDelete: Cascade)
-  manualOverrideEditor   User? @relation("GameTextTranslationEditor", fields: [manualOverrideEditedBy], references: [id], onDelete: SetNull)
+  game                 Game  @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  manualOverrideEditor User? @relation("GameTextTranslationEditor", fields: [manualOverrideEditedBy], references: [id], onDelete: SetNull)
 
   @@unique([gameId, field, locale])
   @@index([gameId, locale])
@@ -2045,17 +2060,17 @@ model GameTextTranslation {
 
 /// Prior organizer corrections retained for review/recovery after source changes.
 model GameTextTranslationCorrection {
-  id                     String        @id @default(cuid())
-  gameId                 String
-  field                  GameTextField
-  locale                 String        @db.VarChar(10)
-  sourceRevision         Int
-  correctedText          String        @db.Text
-  sourceTextSnapshot     String?       @db.Text
-  previousAutomaticText  String?       @db.Text
-  editedBy               String
-  createdAt              DateTime      @default(now())
-  supersededAt           DateTime?
+  id                    String        @id @default(cuid())
+  gameId                String
+  field                 GameTextField
+  locale                String        @db.VarChar(10)
+  sourceRevision        Int
+  correctedText         String        @db.Text
+  sourceTextSnapshot    String?       @db.Text
+  previousAutomaticText String?       @db.Text
+  editedBy              String
+  createdAt             DateTime      @default(now())
+  supersededAt          DateTime?
 
   game   Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
   editor User @relation("GameTextTranslationCorrectionEditor", fields: [editedBy], references: [id], onDelete: Cascade)
@@ -2083,25 +2098,25 @@ enum GameTextTranslationJobErrorCategory {
 
 /// Durable game-text translation work unit. Lease + claimToken fence multi-worker claims.
 model GameTextTranslationJob {
-  id                          String                               @id @default(cuid())
-  gameId                      String
-  targetLocale                String                               @db.VarChar(10)
-  nameSourceRevision          Int
-  descriptionSourceRevision   Int
-  policyVersion               Int
-  includeName                 Boolean                              @default(true)
-  includeDescription          Boolean                              @default(true)
-  status                      GameTextTranslationJobStatus         @default(pending)
-  attempts                    Int                                  @default(0)
-  runAfter                    DateTime                             @default(now())
-  leaseOwner                  String?
-  leaseExpiresAt              DateTime?
+  id                        String                               @id @default(cuid())
+  gameId                    String
+  targetLocale              String                               @db.VarChar(10)
+  nameSourceRevision        Int
+  descriptionSourceRevision Int
+  policyVersion             Int
+  includeName               Boolean                              @default(true)
+  includeDescription        Boolean                              @default(true)
+  status                    GameTextTranslationJobStatus         @default(pending)
+  attempts                  Int                                  @default(0)
+  runAfter                  DateTime                             @default(now())
+  leaseOwner                String?
+  leaseExpiresAt            DateTime?
   /// Monotonic fencing token; increment on each successful claim.
-  claimToken                  BigInt                               @default(0)
-  errorCategory               GameTextTranslationJobErrorCategory?
-  lastError                   String?
-  createdAt                   DateTime                             @default(now())
-  updatedAt                   DateTime                             @updatedAt
+  claimToken                BigInt                               @default(0)
+  errorCategory             GameTextTranslationJobErrorCategory?
+  lastError                 String?
+  createdAt                 DateTime                             @default(now())
+  updatedAt                 DateTime                             @updatedAt
 
   game Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
 
@@ -2348,30 +2363,30 @@ model UserAchievementPin {
 
 /// Cached counters for organize / partner habit cabinets (refreshed on FINAL grants + backfill).
 model UserAchievementStats {
-  userId                    String    @id
+  userId                 String    @id
   /// Monotonic optimistic-lock token advanced by every cache invalidation.
-  revision                  Int       @default(0)
-  organizedGames            Int       @default(0)
-  organizedTournaments      Int       @default(0)
-  organizedBars             Int       @default(0)
-  giantKillerWins           Int       @default(0)
-  dynamicDuoMaxWins         Int       @default(0)
-  openCourtPartners         Int       @default(0)
-  tieBreakSetWins           Int       @default(0)
+  revision               Int       @default(0)
+  organizedGames         Int       @default(0)
+  organizedTournaments   Int       @default(0)
+  organizedBars          Int       @default(0)
+  giantKillerWins        Int       @default(0)
+  dynamicDuoMaxWins      Int       @default(0)
+  openCourtPartners      Int       @default(0)
+  tieBreakSetWins        Int       @default(0)
   /// Null until organize counters have been computed at least once.
-  organizeRefreshedAt       DateTime?
+  organizeRefreshedAt    DateTime?
   /// Null until partner counters have been computed at least once.
-  partnerRefreshedAt        DateTime?
+  partnerRefreshedAt     DateTime?
   /// Null until tie-break set-win counters have been computed at least once.
-  tiebreakRefreshedAt       DateTime?
-  organizeRepairFailures    Int       @default(0)
-  partnerRepairFailures     Int       @default(0)
-  tiebreakRepairFailures    Int       @default(0)
-  organizeRepairFailedAt    DateTime?
-  partnerRepairFailedAt     DateTime?
-  tiebreakRepairFailedAt    DateTime?
-  updatedAt                 DateTime  @updatedAt
-  user                      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tiebreakRefreshedAt    DateTime?
+  organizeRepairFailures Int       @default(0)
+  partnerRepairFailures  Int       @default(0)
+  tiebreakRepairFailures Int       @default(0)
+  organizeRepairFailedAt DateTime?
+  partnerRepairFailedAt  DateTime?
+  tiebreakRepairFailedAt DateTime?
+  updatedAt              DateTime  @updatedAt
+  user                   User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model BlockedUser {
@@ -2654,21 +2669,21 @@ model TelegramAccountLinkIntent {
 }
 
 model Bug {
-  id                 String           @id @default(cuid())
-  text               String
-  senderId           String
-  status             BugStatus        @default(CREATED)
-  bugType            BugType          @default(BUG)
-  priority           Int              @default(0)
-  lastMessagePreview String?          @db.VarChar(500)
-  finishedAt           DateTime?
-  testingStartedAt     DateTime?
-  inProgressReachedAt  DateTime?
-  createdAt            DateTime         @default(now())
-  updatedAt          DateTime         @updatedAt
-  sender             User             @relation(fields: [senderId], references: [id], onDelete: Cascade)
-  participants       BugParticipant[]
-  groupChannel       GroupChannel?
+  id                  String           @id @default(cuid())
+  text                String
+  senderId            String
+  status              BugStatus        @default(CREATED)
+  bugType             BugType          @default(BUG)
+  priority            Int              @default(0)
+  lastMessagePreview  String?          @db.VarChar(500)
+  finishedAt          DateTime?
+  testingStartedAt    DateTime?
+  inProgressReachedAt DateTime?
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+  sender              User             @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  participants        BugParticipant[]
+  groupChannel        GroupChannel?
 
   @@index([senderId])
   @@index([status])
@@ -2767,10 +2782,10 @@ model GroupChannel {
   bugId               String?                   @unique
   marketItemId        String?
   buyerId             String?
-  isChannel           Boolean                   @default(false)
-  isPublic            Boolean                   @default(true)
   /// Set iff this is the auto-managed chat of a league group (membership synced by leagueGroupChat.service).
   leagueGroupId       String?                   @unique
+  isChannel           Boolean                   @default(false)
+  isPublic            Boolean                   @default(true)
   isCityGroup         Boolean                   @default(false)
   participantsCount   Int                       @default(0)
   lastMessagePreview  String?                   @db.VarChar(500)
@@ -2781,9 +2796,9 @@ model GroupChannel {
   bug                 Bug?                      @relation(fields: [bugId], references: [id], onDelete: Cascade)
   marketItem          MarketItem?               @relation(fields: [marketItemId], references: [id], onDelete: Cascade)
   buyer               User?                     @relation("GroupChannelBuyer", fields: [buyerId], references: [id], onDelete: Cascade)
+  leagueGroup         LeagueGroup?              @relation(fields: [leagueGroupId], references: [id], onDelete: Cascade)
   lastMessageSender   User?                     @relation("GroupChannelLastMessageSender", fields: [lastMessageSenderId], references: [id], onDelete: SetNull)
   participants        GroupChannelParticipant[]
-  leagueGroup         LeagueGroup?              @relation(fields: [leagueGroupId], references: [id], onDelete: Cascade)
   invites             GroupChannelInvite[]
   pinnedByUsers       PinnedGroupChannel[]
   gameSeries          GameSeries[]
@@ -3143,9 +3158,9 @@ model LeagueGroup {
   participants   LeagueParticipant[]
   games          Game[]
   bracketSlots   LeagueBracketSlot[]
+  groupChannel   GroupChannel?
 
   @@index([leagueSeasonId])
-  groupChannel   GroupChannel?
 }
 
 model LeagueTeam {
@@ -3566,7 +3581,7 @@ model PlayIntent {
   timeOfDay               PlayIntentTimeOfDay                @default(ANYTIME)
   /// Ordered availability periods. `timeOfDay` remains as a legacy projection
   /// for older clients while matching uses this list when it is populated.
-  timeOfDays              PlayIntentTimeOfDay[]               @default([])
+  timeOfDays              PlayIntentTimeOfDay[]              @default([])
   startTime               String?
   endTime                 String?
   clubIds                 String[]
@@ -3854,36 +3869,36 @@ model AdSponsor {
 }
 
 model AdCampaign {
-  id                       String                 @id @default(cuid())
+  id                       String                  @id @default(cuid())
   sponsorId                String
   name                     String
-  status                   AdCampaignStatus       @default(DRAFT)
-  priority                 Int                    @default(0)
-  weight                   Int                    @default(100)
+  status                   AdCampaignStatus        @default(DRAFT)
+  priority                 Int                     @default(0)
+  weight                   Int                     @default(100)
   startsAt                 DateTime?
   endsAt                   DateTime?
-  defaultLocale            String                 @default("en")
+  defaultLocale            String                  @default("en")
   frequencyCap             Json?
-  dismissible              Boolean                @default(true)
+  dismissible              Boolean                 @default(true)
   dismissSnoozeDays        Int?
-  clickUrlTrusted          Boolean                @default(true)
-  appendUserNameToClickUrl Boolean                @default(false)
-  appendLocaleToClickUrl   Boolean                @default(false)
-  appendThemeToClickUrl    Boolean                @default(false)
-  appendAdTokenToClickUrl  Boolean                @default(false)
+  clickUrlTrusted          Boolean                 @default(true)
+  appendUserNameToClickUrl Boolean                 @default(false)
+  appendLocaleToClickUrl   Boolean                 @default(false)
+  appendThemeToClickUrl    Boolean                 @default(false)
+  appendAdTokenToClickUrl  Boolean                 @default(false)
   disclosureLabel          String?
-  hideDisclosure           Boolean                @default(false)
-  calendarTagEnabled       Boolean                @default(false)
+  hideDisclosure           Boolean                 @default(false)
+  calendarTagEnabled       Boolean                 @default(false)
   calendarTagLabel         String?
-  calendarTagColor         String?                @db.VarChar(7)
+  calendarTagColor         String?                 @db.VarChar(7)
   calendarTagMessages      Json?
   calendarTagStartsAt      DateTime?
   calendarTagEndsAt        DateTime?
   targeting                Json
-  testUserIds              String[]               @default([])
-  createdAt                DateTime               @default(now())
-  updatedAt                DateTime               @updatedAt
-  sponsor                  AdSponsor              @relation(fields: [sponsorId], references: [id], onDelete: Cascade)
+  testUserIds              String[]                @default([])
+  createdAt                DateTime                @default(now())
+  updatedAt                DateTime                @updatedAt
+  sponsor                  AdSponsor               @relation(fields: [sponsorId], references: [id], onDelete: Cascade)
   creatives                AdCreative[]
   placements               AdCampaignPlacement[]
   events                   AdEvent[]
@@ -3944,7 +3959,7 @@ model AdLandingWish {
 }
 
 model AdLandingRegistration {
-  id           String     @id @default(cuid())
+  id           String      @id @default(cuid())
   landingKey   String
   /// SHA-256 of the ad token used for this registration. The bearer token itself is never stored here.
   tokenHash    String?
@@ -3952,11 +3967,11 @@ model AdLandingRegistration {
   campaignId   String?
   guestName    String?
   guestContact String?
-  note         String     @default("")
+  note         String      @default("")
   locale       String?
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-  user         User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  user         User?       @relation(fields: [userId], references: [id], onDelete: Cascade)
   campaign     AdCampaign? @relation(fields: [campaignId], references: [id], onDelete: Cascade)
 
   @@unique([landingKey, userId])
@@ -3973,7 +3988,7 @@ model AdCreative {
   imageUrl      String
   imageUrlDark  String?
   imageUrls     String[]        @default([])
-  imageUrlsDark String[]       @default([])
+  imageUrlsDark String[]        @default([])
   title         String?
   subtitle      String?
   ctaLabel      String?
@@ -4106,21 +4121,21 @@ model LinkToAppAttribution {
 }
 
 model LinkToAppEvent {
-  id             String               @id @default(cuid())
-  kind           String
-  attributionId  String?
-  userId         String?
-  utmSource      String?
-  utmMedium      String?
-  utmCampaign    String?
-  utmContent     String?
-  utmTerm        String?
-  userAgent      String?
-  referer        String?
-  platform       String?
-  createdAt      DateTime             @default(now())
-  attribution    LinkToAppAttribution? @relation(fields: [attributionId], references: [id], onDelete: SetNull)
-  user           User?                @relation(fields: [userId], references: [id], onDelete: SetNull)
+  id            String                @id @default(cuid())
+  kind          String
+  attributionId String?
+  userId        String?
+  utmSource     String?
+  utmMedium     String?
+  utmCampaign   String?
+  utmContent    String?
+  utmTerm       String?
+  userAgent     String?
+  referer       String?
+  platform      String?
+  createdAt     DateTime              @default(now())
+  attribution   LinkToAppAttribution? @relation(fields: [attributionId], references: [id], onDelete: SetNull)
+  user          User?                 @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([createdAt])
   @@index([kind, createdAt])
@@ -4401,7 +4416,6 @@ model LiveGameNotifyDelivery {
   @@index([createdAt])
 }
 
-
 // A user-entered booking phone, not a verified provider account or access token.
 model UserClubWeltnerAuth {
   id          String   @id @default(cuid())
@@ -4409,8 +4423,9 @@ model UserClubWeltnerAuth {
   clubId      String
   phoneNumber String
   updatedAt   DateTime @updatedAt
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  club Club @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  club        Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
+
   @@unique([userId, clubId])
 }
 
@@ -4423,7 +4438,7 @@ enum WeltnerBookingState {
 
 // Durable local receipt: id is NOT a provider-issued cancellation handle.
 model WeltnerBooking {
-  id                String @id @default(cuid())
+  id                String              @id @default(cuid())
   userId            String
   clubId            String
   courtId           String
@@ -4434,11 +4449,244 @@ model WeltnerBooking {
   bookingEnd        DateTime
   state             WeltnerBookingState @default(SUBMITTING)
   upstreamBookingId String?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  club Club @relation(fields: [clubId], references: [id], onDelete: Cascade)
-  court Court @relation(fields: [courtId], references: [id], onDelete: Cascade)
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  user              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  club              Club                @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  court             Court               @relation(fields: [courtId], references: [id], onDelete: Cascade)
+
   @@unique([userId, clubId, courtId, date, startTime, durationMinutes])
   @@index([userId, clubId, bookingStart])
+}
+
+enum NspadelBookingState {
+  SUBMITTING
+  CONFIRMED
+  REJECTED
+  UNKNOWN
+}
+
+// Durable local receipt of an Nspadel reservation (the club's reservation rows are
+// RLS-blocked, so there is no provider id to read back). `externalBookingId` is the
+// synthetic `nspadel:<externalCourtId>:<date>:<start>` key games link against.
+model NspadelBooking {
+  id                String              @id @default(cuid())
+  userId            String
+  clubId            String
+  courtId           String?
+  externalCourtId   String
+  date              String
+  startTime         String
+  durationMinutes   Int
+  bookingStart      DateTime
+  bookingEnd        DateTime
+  state             NspadelBookingState @default(SUBMITTING)
+  /// `userId:clubId:externalCourtId:date:startTime:durationMinutes`; one receipt per user slot.
+  idempotencyKey    String              @unique
+  externalBookingId String
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  user              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  club              Club                @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  court             Court?              @relation(fields: [courtId], references: [id], onDelete: SetNull)
+
+  @@index([userId, clubId, bookingStart])
+  @@index([externalBookingId])
+}
+
+// App-synced copy of a user's own Booktime / Padeloo / Klikteren booking list (agent slice 7k,
+// docs/domains/agent.md). The backend never calls these providers: the app PUTs the list it
+// just loaded (`PUT /api/bookings/mirror`), trusted like the app's own booking-link data.
+enum ExternalBookingMirrorState {
+  CONFIRMED
+  CANCELLED
+}
+
+model ExternalBookingMirror {
+  id                String                     @id @default(cuid())
+  userId            String
+  provider          ClubIntegrationType
+  clubId            String
+  externalBookingId String
+  /// `[{ courtId: string | null, name: string | null }]` (courtId = our Court.id at this club).
+  courts            Json                       @default("[]")
+  bookingStart      DateTime
+  bookingEnd        DateTime
+  state             ExternalBookingMirrorState @default(CONFIRMED)
+  syncedAt          DateTime
+  user              User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  club              Club                       @relation(fields: [clubId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, provider, externalBookingId])
+  @@index([userId, bookingStart])
+}
+
+/// One row per (user, provider, club): the last successful list sync. `complete = false` when the
+/// app only saw a truncated page; such a sync never makes the agent's list "complete".
+model ExternalBookingMirrorSync {
+  id        String              @id @default(cuid())
+  userId    String
+  provider  ClubIntegrationType
+  clubId    String
+  rangeFrom DateTime
+  rangeTo   DateTime
+  complete  Boolean             @default(true)
+  syncedAt  DateTime
+  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  club      Club                @relation(fields: [clubId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, provider, clubId])
+}
+
+// ---------------------------------------------------------------------------
+// AI agent chats (docs/domains/agent.md, docs/plans/ai-agent.md §2).
+// Separate from ChatContextType on purpose: no unread state, no other members.
+// ---------------------------------------------------------------------------
+
+enum AgentMessageRole {
+  USER
+  ASSISTANT
+  TOOL
+}
+
+enum AgentRunStatus {
+  QUEUED
+  RUNNING
+  AWAITING_CONFIRMATION
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum AgentActionStatus {
+  PENDING
+  CONFIRMED
+  REJECTED
+  EXPIRED
+  EXECUTED
+  FAILED
+  UNKNOWN
+}
+
+model AgentChat {
+  id         String               @id @default(cuid())
+  userId     String
+  title      String?              @db.VarChar(120)
+  createdAt  DateTime             @default(now())
+  updatedAt  DateTime             @updatedAt
+  archivedAt DateTime?
+  user       User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages   AgentMessage[]
+  runs       AgentRun[]
+  actions    AgentPendingAction[]
+
+  @@index([userId, archivedAt, updatedAt])
+}
+
+model AgentMessage {
+  id          String           @id @default(cuid())
+  chatId      String
+  /// Monotonic per chat, starting at 1.
+  seq         Int
+  role        AgentMessageRole
+  /// Client-visible blocks (`AgentContentBlock[]` in Frontend/shared/agentContract.ts).
+  content     Json
+  /// Private: raw OpenAI-format messages (assistant tool_calls / tool results) replayed to the model. Never sent to clients.
+  llmMessages Json?
+  runId       String?
+  createdAt   DateTime         @default(now())
+  chat        AgentChat        @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  run         AgentRun?        @relation(fields: [runId], references: [id], onDelete: SetNull)
+
+  @@unique([chatId, seq])
+  @@index([runId])
+}
+
+model AgentRun {
+  id           String               @id @default(cuid())
+  chatId       String
+  /// Denormalised owner for per-user caps and budgets.
+  userId       String
+  status       AgentRunStatus       @default(QUEUED)
+  error        String?              @db.Text
+  errorCode    String?              @db.VarChar(32)
+  model        String?              @db.VarChar(128)
+  /// Reply locale captured from `X-App-Locale` at enqueue (the worker has no request).
+  locale       String?              @db.VarChar(16)
+  inputTokens  Int                  @default(0)
+  outputTokens Int                  @default(0)
+  steps        Int                  @default(0)
+  /// Queued at. Queue order and the daily budget window use this.
+  createdAt    DateTime             @default(now())
+  /// Claimed by a worker (QUEUED -> RUNNING).
+  startedAt    DateTime?
+  endedAt      DateTime?
+  /// Executor liveness; RUNNING rows with a stale heartbeat are failed by the sweep.
+  heartbeatAt  DateTime?
+  /// Process that claimed the run (host:pid:random), for ops/debugging.
+  workerId     String?              @db.VarChar(96)
+  /// Client capabilities from `X-Agent-Client-Caps` at enqueue (e.g. `booking-v1`); empty for Telegram / old builds.
+  clientCaps   String[]             @default([])
+  chat         AgentChat            @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  messages     AgentMessage[]
+  actions      AgentPendingAction[]
+
+  @@index([chatId, status])
+  @@index([status, createdAt])
+  @@index([userId, createdAt])
+}
+
+/// Every agent write goes through one of these (phase 3). Doubles as the audit log.
+model AgentPendingAction {
+  id             String            @id @default(cuid())
+  runId          String
+  chatId         String
+  userId         String
+  toolName       String            @db.VarChar(64)
+  /// Tool call id the model used; the confirm result is reported back under it.
+  callId         String?           @db.VarChar(128)
+  args           Json
+  preview        Json
+  status         AgentActionStatus @default(PENDING)
+  expiresAt      DateTime
+  result         Json?
+  error          String?           @db.Text
+  executedAt     DateTime?
+  /// Executed without a tap because the user stored ALWAYS_ALLOW for this standard-tier tool.
+  autoApproved   Boolean           @default(false)
+  /// Client-executed actions (booking plan §14.5): the claim's attempt id, the device key
+  /// that claimed it, the lease end, and when a report started the post-step.
+  attemptId      String?           @db.VarChar(64)
+  claimKey       String?           @db.VarChar(128)
+  leaseExpiresAt DateTime?
+  reportedAt     DateTime?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  run            AgentRun          @relation(fields: [runId], references: [id], onDelete: Cascade)
+  chat           AgentChat         @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  user           User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+  @@index([chatId])
+  @@index([runId])
+  @@index([status, leaseExpiresAt])
+}
+
+/// User-controlled agent tool permissions (plan §15). No row = ASK. Critical-tier tools
+/// can never be ALWAYS_ALLOW (the service rejects it).
+enum AgentToolPermissionMode {
+  ASK
+  ALWAYS_ALLOW
+}
+
+model AgentToolPermission {
+  id        String                  @id @default(cuid())
+  userId    String
+  toolName  String                  @db.VarChar(64)
+  mode      AgentToolPermissionMode @default(ASK)
+  createdAt DateTime                @default(now())
+  updatedAt DateTime                @updatedAt
+  user      User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, toolName])
 }

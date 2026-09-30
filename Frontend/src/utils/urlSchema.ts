@@ -31,7 +31,8 @@ export type Place =
   | 'telegramAutoLogin'
   | 'register'
   | 'userTeam'
-  | 'userProfile';
+  | 'userProfile'
+  | 'agentChat';
 
 export interface PlaceParams {
   [key: string]: string | number | boolean | undefined;
@@ -62,6 +63,7 @@ interface PlaceDefinition {
 const PLACE_DEFS: PlaceDefinition[] = [
   { pattern: /^\/games\/([^/]+)\/chat$/, place: 'gameChat', extractParams: (m) => ({ id: m[1] }) },
   { pattern: /^\/games\/([^/]+)$/, place: 'game', extractParams: (m) => ({ id: m[1] }) },
+  { pattern: /^\/ai\/([^/]+)$/, place: 'agentChat', extractParams: (m) => ({ id: m[1] }) },
   { pattern: /^\/user-profile\/([^/]+)$/, place: 'userProfile', extractParams: (m) => ({ id: m[1] }) },
   { pattern: /^\/clubs\/([^/]+)$/, place: 'club', extractParams: (m) => ({ id: m[1] }) },
   { pattern: /^\/series\/([^/]+)$/, place: 'series', extractParams: (m) => ({ id: m[1] }) },
@@ -156,6 +158,7 @@ export function buildUrl(place: Place, params?: PlaceParams, overlay?: Overlay):
     case 'register': path = '/register'; break;
     case 'userTeam': path = `/user-team/${params?.id ?? ''}`; break;
     case 'userProfile': path = `/user-profile/${params?.id ?? ''}`; break;
+    case 'agentChat': path = `/ai/${params?.id ?? ''}`; break;
     default: path = '/'; break;
   }
 
@@ -229,7 +232,7 @@ export function isMarketplaceShellPlace(place: Place): boolean {
 }
 
 const APP_PATH_RE =
-  /^\/(find|chats|profile|leaderboard|games|user-profile|create-game|create-league|create-event|rating|bugs|game-subscriptions|marketplace|user-team|user-chat|group-chat|channel-chat|select-city|login|register|welcome|clubs|shop|series)(\/.*)?$/;
+  /^\/(find|chats|profile|leaderboard|games|user-profile|create-game|create-league|create-event|rating|bugs|game-subscriptions|marketplace|user-team|user-chat|group-chat|channel-chat|select-city|login|register|welcome|clubs|shop|series|ai)(\/.*)?$/;
 
 export function isAppPath(pathname: string): boolean {
   return pathname === '/' || APP_PATH_RE.test(pathname);

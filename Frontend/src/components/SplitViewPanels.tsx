@@ -12,7 +12,7 @@ export const SplitViewLeftPanel = ({ children, bottomTabsVisible }: SplitViewLef
       {children}
     </div>
     {bottomTabsVisible ? (
-      <div className="absolute inset-x-0 bottom-0 z-50 flex justify-center">
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-50 flex justify-center">
         <BottomTabBar containerPosition={true} />
       </div>
     ) : null}

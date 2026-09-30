@@ -46,12 +46,13 @@ docs/
     ratings.md training.md chat.md notifications.md bugs.md
     cities.md play-intent.md booking.md club-admin.md marketplace.md
     social-and-profile.md stories.md economy.md subscriptions.md
-    ads-and-attribution.md admin.md native.md weather.md presence.md
+    ads-and-attribution.md admin.md native.md weather.md presence.md agent.md
   plans/
     browse-city.md          Home / Browse / Venue
     lobby-radar-matching-games.md
     player-invite-looking.md
     event-entity.md         EntityType.EVENT
+    ai-agent.md             AI agent plan (phases; phase 0–1 backend built)
   ops/
     development.md          local run, env, Prisma, heavy lock
     testing.md              Playwright / Vitest / backend / CI

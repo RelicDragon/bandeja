@@ -3,9 +3,11 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const inviteControllerSrc = readFileSync(join(__dirname, '../../controllers/invite.controller.ts'), 'utf8');
+const sendInviteServiceSrc = readFileSync(join(__dirname, '../invite/sendInviteAsUser.service.ts'), 'utf8');
 const addToGameSrc = readFileSync(join(__dirname, './userTeamAddToGame.service.ts'), 'utf8');
 
-assert.match(inviteControllerSrc, /stampInviteUserTeamId/);
+assert.match(sendInviteServiceSrc, /stampInviteUserTeamId/);
+assert.match(sendInviteServiceSrc, /resolvedInviteUserTeamId/);
 assert.match(inviteControllerSrc, /resolvedInviteUserTeamId/);
 assert.match(addToGameSrc, /toPromoteFromQueue/);
 assert.match(addToGameSrc, /isInviteInboxVisible/);

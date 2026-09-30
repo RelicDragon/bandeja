@@ -288,3 +288,18 @@ their own languages (`weatherAlertCopy.safeLocale`, `resolveRecapImageLanguage`)
 are equivalent and need no change.
 
 - Helper + tests: `Backend/src/utils/intlLocale.ts`, `intlLocale.test.ts` (`npm run test:series`)
+
+---
+
+## AI agent authorizes per tool call against the DB principal
+
+The in-app AI agent (`/api/agent`, [agent domain](../domains/agent.md)) is a user-facing surface driven by an untrusted model.
+
+- **Principal from the DB, never from the model.** `loadAgentPrincipal(userId)` runs at run start; every tool handler authorizes against it. No tool takes a user id / actor argument for "who am I".
+- **Agent game visibility is stricter than `GET /games/:id`, except for leagues.** Visible = public (and the parent is public) ∪ roster row on the game or its parent (`PLAYING | NON_PLAYING | IN_QUEUE | GUEST | INVITED`) ∪ platform admin ∪ **all league content** (`LEAGUE_SEASON` games and their fixtures; system games stay hidden); unapproved EVENTs only for their owner. Anything else answers the same not-found as a missing id (`assertAgentCanViewGame`, `agentVisibleGamesWhere` in `services/agent/access/agentGameAccess.ts`). Leagues are for everyone (product decision): league reads use `assertAgentCanViewLeagueSeason` (missing / non-season id = 404, nothing else hidden), like `GET /leagues/:id/*`; league writes still need season OWNER/ADMIN (403 otherwise).
+- **Tool output is an agent DTO** (`services/agent/dto/`): users are public card fields only; never email, phone, Telegram ids/usernames, `paymentHint` / `paymentMethods`, operator club fields or tokens.
+- **Writes only via a confirmed `AgentPendingAction`.** Writes need confirmation unless the user stored ALWAYS_ALLOW for a standard-tier tool; critical tools always confirm (every write tool declares `riskTier`; `update_game` escalates to critical per call when it changes `isPublic` or moves the start by > 24 h). A run tainted by untrusted content (a read tool declaring `untrustedContent`, e.g. `summarize_game_chat`, returned content earlier in that run) never auto-approves: ALWAYS_ALLOW is ignored and the card is shown. An ALWAYS_ALLOW write still creates the pending action and runs the same confirm path (fresh principal → re-authorize → execute), audited with `autoApproved=true`; it only skips the tap. A `kind: 'write'` tool validates, checks permission and saves a pending action with a server-rendered preview; the run stops `AWAITING_CONFIRMATION`. Only the user's confirm (app card or Telegram ✅) re-checks permission against a freshly loaded principal and runs the same service the HTTP route uses; reject, 15-minute expiry or a new user message closes it without writing. Admins confirm too. One pending action per chat. Shipped writes: `update_game`, `invite_players`, `join_game`, `leave_game`, `create_game` (casual create templates only, never league/playoff/EVENT); `update_game_booking` is not offered.
+- **Adding a tool needs an authorization test**: `tools/__tests__/agentToolCoverage.ts` + the matrix test (`npm run test:agent`); the registry invariant test fails otherwise.
+
+- Code: `Backend/src/services/agent/` (`tools/registry.ts`, `access/`, `agentRun.service.ts`)
+- Tests: `npm run test:agent`, `npm run test:agent-access`

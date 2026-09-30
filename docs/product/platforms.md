@@ -27,6 +27,7 @@ Former `docs/APP_FUNCTIONALITY.md` §39. Routes: `Frontend/src/App.tsx`. Native 
 | Keyboard-aware dialogs | mobile web | yes | yes | — | — | — |
 | App icon badge count | — | yes | yes | — | — | — |
 | HealthKit workout bridge | — | via phone | — | yes | — | — |
+| AI assistant (agent chats, shared) | My → AI | My → AI | My → AI | — | `/ai` (streamed answers, ✅/✖ confirm buttons) | — |
 | Link-to-app QR landing | static `/link-to-app/` | store via `/go/ios` | store via `/go/android` | — | — | App QR stats |
 
 Watch app: `Frontend/ios/App/BandejaWatch Watch App/`. Watch widgets: `Frontend/ios/App/BandejaWatchWidgets/`. Telegram commands: `Backend/src/services/telegram/bot.service.ts`. Admin: `Admin/`.

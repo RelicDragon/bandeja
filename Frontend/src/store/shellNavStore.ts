@@ -16,7 +16,7 @@ interface ShellNavState {
   bottomTabsVisible: boolean;
   initShellAnimationPlayed: boolean;
   isAnimating: boolean;
-  activeTab: 'calendar' | 'past-games' | 'my-games' | 'search';
+  activeTab: 'calendar' | 'past-games' | 'ai' | 'my-games' | 'search';
   profileActiveTab: 'general' | 'statistics' | 'comparison' | 'followers' | 'reviews';
   chatsFilter: 'users' | 'bugs' | 'channels' | 'market';
   marketplaceTab: 'market' | 'my';
@@ -37,7 +37,7 @@ interface ShellNavState {
   setBottomTabsVisible: (visible: boolean) => void;
   setInitShellAnimationPlayed: (played: boolean) => void;
   setIsAnimating: (animating: boolean) => void;
-  setActiveTab: (tab: 'calendar' | 'past-games' | 'my-games' | 'search') => void;
+  setActiveTab: (tab: 'calendar' | 'past-games' | 'ai' | 'my-games' | 'search') => void;
   setProfileActiveTab: (tab: 'general' | 'statistics' | 'comparison' | 'followers' | 'reviews') => void;
   setChatsFilter: (filter: 'users' | 'bugs' | 'channels' | 'market') => void;
   setMarketplaceTab: (tab: 'market' | 'my') => void;

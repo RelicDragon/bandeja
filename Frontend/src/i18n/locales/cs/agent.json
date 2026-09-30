@@ -1,0 +1,154 @@
+{
+  "agent": {
+    "tab": "AI",
+    "listTitle": "AI asistent",
+    "newChat": "Nový chat",
+    "noMessagesYet": "Zatím žádné zprávy",
+    "archived": "Chat archivován",
+    "selectChat": "Vyberte chat nebo začněte nový",
+    "backToChats": "Zpět na chaty",
+    "disclaimer": "Asistent se může mýlit. Nic se nezmění, dokud to nepotvrdíte.",
+    "status": {
+      "working": "Pracuji…",
+      "thinking": "Přemýšlím…",
+      "stopped": "Zastaveno",
+      "needsConfirmation": "Čeká na potvrzení",
+      "queued": "Ve frontě",
+      "waitingInQueue": "Čeká ve frontě…",
+      "waitingInQueuePosition": "Čeká ve frontě… (#{{position}})"
+    },
+    "menu": {
+      "open": "Možnosti chatu",
+      "rename": "Přejmenovat",
+      "renameTitle": "Přejmenovat chat",
+      "archive": "Archivovat chat"
+    },
+    "composer": {
+      "placeholder": "Zeptejte se na hry, ligy, kluby…",
+      "send": "Odeslat",
+      "stop": "Zastavit"
+    },
+    "empty": {
+      "listTitle": "Váš padelový asistent",
+      "listHint": "Zeptejte se na své hry, najděte zápas nebo upravte hru. Zkuste:",
+      "chatTitle": "Jak mohu pomoci?",
+      "chatHint": "Ptejte se na cokoli o hrách, ligách a klubech."
+    },
+    "examples": {
+      "nextGames": "Jaké hry mám tento týden?",
+      "findGame": "Najdi mi hru na zítřek večer",
+      "moveGame": "Přesuň mou čtvrteční hru na 19:00",
+      "league": "Kdo vede moji ligu?"
+    },
+    "tool": {
+      "working": "Pracuji na tom…",
+      "done": "Hotovo",
+      "failed": "Krok selhal"
+    },
+    "action": {
+      "heading": "Potvrďte změnu",
+      "loading": "Načítám změnu…",
+      "confirm": "Potvrdit",
+      "cancel": "Zrušit",
+      "confirmed": "Potvrzeno",
+      "done": "Hotovo",
+      "failed": "Změnu se nepodařilo provést",
+      "expired": "Vypršelo — požádejte znovu",
+      "rejected": "Zrušeno",
+      "reject": "Odmítnout",
+      "allowOnce": "Povolit jednou",
+      "alwaysAllow": "Vždy povolit",
+      "alwaysAsks": "Tato akce se vždy ptá",
+      "autoHeading": "Provedeno automaticky",
+      "autoApproved": "Provedeno automaticky, povolili jste to."
+    },
+    "entity": {
+      "untitledGame": "Hra",
+      "club": "Klub",
+      "leagueSeason": "Sezóna ligy"
+    },
+    "gameStatus": {
+      "ANNOUNCED": "Nadcházející",
+      "STARTED": "Probíhá",
+      "FINISHED": "Dokončená",
+      "ARCHIVED": "Archivovaná"
+    },
+    "slot": {
+      "clubTime": "Čas klubu ({{tz}})",
+      "minutes": "{{minutes}} min.",
+      "pick": "Rezervovat {{time}}",
+      "bookMessage": "Zarezervuj tento termín: {{club}}, {{date}} {{time}}, {{courts}}",
+      "confidence": {
+        "live": "Volné",
+        "snapshot": "Žádné známé kolize · k {{time}}",
+        "snapshotNoTime": "Žádné známé kolize",
+        "appOnly": "Neověřeno u klubu"
+      }
+    },
+    "booking": {
+      "state": {
+        "CONFIRMED": "Rezervováno",
+        "CANCELLED": "Zrušeno",
+        "PAST": "Proběhlo",
+        "UNKNOWN": "Stav neznámý"
+      },
+      "linkedGame": "Hra",
+      "linkedGameN": "Hra {{n}}",
+      "cancel": "Zrušit rezervaci",
+      "cancelViaClub": "Zrušení přes klub",
+      "openClub": "Stránka klubu",
+      "cancelMessage": "Zruš rezervaci {{club}}, {{date}} {{time}}"
+    },
+    "errors": {
+      "RATE_LIMITED": "Příliš mnoho zpráv. Chvíli počkejte.",
+      "BUDGET_EXCEEDED": "Dosáhli jste denního limitu asistenta. Zkuste to zítra.",
+      "CHAT_BUSY": "Asistent ještě odpovídá. Počkejte nebo klepněte na Zastavit.",
+      "LLM_ERROR": "Asistent nedokázal odpovědět. Zkuste to znovu.",
+      "TIMEOUT": "Asistentovi to trvalo příliš dlouho. Zkuste to znovu.",
+      "INTERNAL": "Něco se pokazilo. Zkuste to znovu.",
+      "chatNotFound": "Tento chat není dostupný.",
+      "listFailed": "Chaty se nepodařilo načíst."
+    },
+    "permissions": {
+      "title": "Oprávnění asistenta",
+      "manage": "Spravovat",
+      "safetyNote": "„Vždy povolit“ přeskočí jen klepnutí, ne kontrolu oprávnění. Kritické akce se vždy ptají.",
+      "loadFailed": "Oprávnění se nepodařilo načíst",
+      "empty": "Asistent zatím nemá žádné akce, které by za vás něco měnily.",
+      "resetAll": "Obnovit vše",
+      "resetTitle": "Obnovit všechna oprávnění?",
+      "resetMessage": "Každá akce bude znovu vyžadovat vaše potvrzení.",
+      "resetConfirm": "Obnovit",
+      "resetDone": "Všechny akce se znovu ptají",
+      "modeAsk": "Ptát se pokaždé",
+      "modeAlways": "Vždy povoleno",
+      "alwaysAsks": "Vždy se ptá"
+    },
+    "clientExec": {
+      "bookInApp": "Rezervovat v aplikaci",
+      "cancelInApp": "Zrušit v aplikaci",
+      "bookAndCreateGameInApp": "Rezervovat a vytvořit hru v aplikaci",
+      "cancelBookingsAndGameInApp": "Zrušit rezervace a hru v aplikaci",
+      "retry": "Zkusit znovu",
+      "hint": "Proběhne na tomto zařízení s vaším účtem klubu",
+      "claiming": "Spouštím…",
+      "rechecking": "Ověřuji cenu a dostupnost…",
+      "booking": "Rezervuji kurt {{current}} z {{total}}…",
+      "cancelling": "Ruším rezervaci {{current}} z {{total}}…",
+      "saving": "Ukládám…",
+      "savingCreateGame": "Vytvářím hru…",
+      "savingCancelGame": "Ruším hru…",
+      "priceQuote": "Klub účtuje {{price}}. Pokračovat?",
+      "priceStop": "Zastavit",
+      "priceContinue": "Rezervovat za {{price}}",
+      "handledElsewhere": "Vyřízeno na jiném zařízení",
+      "unknown": "Výsledek neznámý — zkontrolujte rezervace v klubu",
+      "openClubBookings": "Rezervace v klubech",
+      "connectClub": "Připojit účet klubu",
+      "partial": "Provedeno jen částečně",
+      "failed": "Nic se nezměnilo",
+      "reportPending": "V klubu hotovo, ale zatím neuloženo. Zkusíme to znovu, až se vrátíte.",
+      "inProgress": "Probíhá v aplikaci…"
+    }
+  }
+}

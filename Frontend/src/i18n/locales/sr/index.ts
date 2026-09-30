@@ -66,6 +66,7 @@ import weather from './weather.json';
 import weatherAlerts from './weatherAlerts.json';
 import organizerNextActions from './organizerNextActions.json';
 import stories from './stories.json';
+import agent from './agent.json';
 import sportQuestionnaireCommon from './sportQuestionnaire/common.json';
 import sportQuestionnairePadel from './sportQuestionnaire/padel.json';
 import sportQuestionnaireTennis from './sportQuestionnaire/tennis.json';
@@ -77,6 +78,7 @@ import sportQuestionnaireSquash from './sportQuestionnaire/squash.json';
 export default {
     weltner,
     ...ads,
+    ...agent,
     ...app,
     ...attendance,
     ...auth,

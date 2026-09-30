@@ -12,11 +12,17 @@
 import type { LanguageCode } from 'grammy/types';
 import type { Bot } from 'grammy';
 import { LIVE_COPY_LANGUAGES, liveT, type LiveCopyKey } from '../live/liveCopy';
+import { agentBotT } from './agent/agentBotCopy';
 
-export type BotMenuCommand = { command: string; descriptionKey: LiveCopyKey };
+export type BotMenuCommand =
+  | { command: string; descriptionKey: LiveCopyKey }
+  /** Copy that lives outside `liveCopy.ts` (e.g. the AI assistant's `agentBotCopy.ts`). */
+  | { command: string; describe: (lang: string) => string };
 
 /** Order is what Telegram shows in the "/" popup. */
 export const BOT_MENU_COMMANDS: BotMenuCommand[] = [
+  // AI assistant (docs/domains/agent.md § Telegram channel).
+  { command: 'ai', describe: (lang) => agentBotT('menu.ai', lang) },
   { command: 'play', descriptionKey: 'play.menuDescription' },
   { command: 'live', descriptionKey: 'live.menuDescription' },
   { command: 'games', descriptionKey: 'menu.games' },
@@ -32,9 +38,12 @@ export const BOT_MENU_COMMANDS: BotMenuCommand[] = [
 const MAX_DESCRIPTION = 256;
 
 export function buildBotCommandList(lang: string): { command: string; description: string }[] {
-  return BOT_MENU_COMMANDS.map(({ command, descriptionKey }) => ({
-    command,
-    description: liveT(descriptionKey, lang).slice(0, MAX_DESCRIPTION),
+  return BOT_MENU_COMMANDS.map((entry) => ({
+    command: entry.command,
+    description: ('describe' in entry ? entry.describe(lang) : liveT(entry.descriptionKey, lang)).slice(
+      0,
+      MAX_DESCRIPTION,
+    ),
   }));
 }
 

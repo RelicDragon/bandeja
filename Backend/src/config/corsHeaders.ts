@@ -11,6 +11,10 @@ export const CLIENT_CUSTOM_REQUEST_HEADERS = [
   'X-Refresh-Request-Id',
   'X-E2E-Test',
   'X-Klikteren-Cookie',
+  /** SSE replay cursor for `GET /api/agent/runs/:runId/events` (native is cross-origin). */
+  'Last-Event-ID',
+  /** Agent client capabilities (`booking-v1`) on `POST /api/agent/chats/:id/messages` (booking plan §14.5). */
+  'X-Agent-Client-Caps',
 ] as const;
 
 const STANDARD_ALLOWED_HEADERS = [

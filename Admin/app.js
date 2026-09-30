@@ -532,6 +532,9 @@ async function loadPageData(page) {
         case 'referrals':
             loadReferralsPage();
             break;
+        case 'ai-agent':
+            loadAiAgentPage();
+            break;
         case 'logs':
             if (!isStreamActive) {
                 if (logsData.length === 0) {

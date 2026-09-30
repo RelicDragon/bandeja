@@ -12,7 +12,8 @@ Home city (`user.currentCity`) drives both tabs. Browse city does not. Users wit
 |-------|--------|
 | (none) / `?tab=calendar` | Calendar (default) |
 | `?tab=past-games` | FINISHED/ARCHIVED list (`usePastGames`) |
-| `?focus=invites` | Calendar + scroll to `#home-invites-section` |
+| `?tab=ai` | AI assistant chat list (`components/agent/AgentTab.tsx`). Segment always shown (the agent is on for every user). Threads open at `/ai/:chatId`. See `docs/plans/ai-agent.md` |
+| `?focus=invites` | Calendar + scroll to `#home-invites-section` (wins over `?tab=past-games` / `?tab=ai`) |
 | `?tab=list` or `?tab=advanced` | Replaced with `/` |
 
 `?player=` / `?item=` overlays still apply. Play-intent deep links (`?playIntentOpen=1`, `?proposal=`, `?lobby=1`) are handled by `PlayIntentProvider` on the action grid.

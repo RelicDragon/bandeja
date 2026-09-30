@@ -3,7 +3,7 @@ window.EULAContent = window.EULAContent || {};
 window.EULAContent['hi'] = `<h1>गोपनीयता नीति और उपयोगकर्ता समझौता</h1>
 <p><strong>Application:</strong> Padel Bandeja<br>
 <strong>Effective date:</strong> 12/01/2025<br>
-<strong>Last updated:</strong> 22/02/2025<br>
+<strong>Last updated:</strong> 30/09/2026<br>
 Applies worldwide</p>
 
 <h2>1. गोपनीयता नीति</h2>
@@ -35,7 +35,7 @@ Applies worldwide</p>
 <p>हम आपका व्यक्तिगत डेटा नहीं बेचते हैं. हम केवल निम्नलिखित परिस्थितियों में जानकारी साझा कर सकते हैं:</p>
 <ul>
 <li><strong>With Your Consent:</strong> When you explicitly authorize sharing</li>
-<li><strong>Service Providers:</strong> With trusted third-party services that help us operate the app (hosting, analytics, SMS providers)</li>
+<li><strong>सेवा प्रदाता:</strong> विश्वसनीय तृतीय-पक्ष सेवाओं के साथ जो ऐप चलाने में हमारी मदद करती हैं (होस्टिंग, एनालिटिक्स, SMS प्रदाता, AI प्रदाता)</li>
 <li><strong>Legal Requirements:</strong> When required by law, court order, or government regulation</li>
 <li><strong>Safety and Security:</strong> To protect rights, property, or safety of users and the public</li>
 <li><strong>Business Transfers:</strong> In connection with a merger, acquisition, or sale of assets</li>
@@ -73,6 +73,24 @@ Applies worldwide</p>
 <li><strong>Who can see it:</strong> This information is visible to other signed-in users of the application.</li>
 <li><strong>Your control:</strong> In line with privacy-by-design principles, you have full control. In the app settings you can turn off visibility of your status using the option &quot;Show my online status&quot; (opt-out). By default, your status is visible to others; you can disable it at any time.</li>
 <li><strong>Legal basis:</strong> We rely on Legitimate Interest: displaying presence is a core feature of the service that users expect. The feature is on by default, with a mandatory option to disable it in settings.</li>
+</ul>
+
+<h3>1.10 AI सुविधाएँ और AI सहायक</h3>
+<p>Bandeja एक वैकल्पिक AI सहायक प्रदान करता है, जो ऐप में (मेरे → एआई) और हमारे Telegram बॉट में उपलब्ध है। इसका उपयोग स्वैच्छिक है।</p>
+<ul>
+<li><strong>हम क्या भेजते हैं:</strong> जब आप सहायक का उपयोग करते हैं, तो उत्तर तैयार करने के लिए आपके संदेश और उनसे संबंधित डेटा एक तृतीय-पक्ष AI प्रदाता (वर्तमान में DeepSeek) को भेजे जाते हैं। संबंधित डेटा में शामिल हैं:
+<ul>
+<li>आपका पहला नाम, भाषा, गृह शहर और समय क्षेत्र;</li>
+<li>आपके आगामी गेम;</li>
+<li>वे लीग जिनका आप प्रबंधन करते हैं;</li>
+<li>उन गेम की चैट के संदेश जिनमें आप भाग लेते हैं, जब आप सहायक से उन्हें पढ़ने या सारांशित करने को कहते हैं (केवल वे चैट जो आप ऐप में पहले से देख सकते हैं);</li>
+<li>आपके द्वारा अनुरोधित खोजों के परिणाम: गेम, क्लब और अन्य खिलाड़ियों की सार्वजनिक प्रोफ़ाइल जानकारी।</li>
+</ul>
+</li>
+<li><strong>अन्य AI प्रसंस्करण:</strong> अन्य AI सुविधाएँ, जैसे संदेशों और टेक्स्ट का स्वचालित अनुवाद और वॉइस ट्रांसक्रिप्शन, भी इसी तरह AI प्रदाताओं (OpenAI या DeepSeek) द्वारा संसाधित की जाती हैं।</li>
+<li><strong>कार्रवाइयाँ:</strong> सहायक आपकी ओर से बदलाव तैयार कर सकता है (जैसे किसी गेम को संपादित करना या खिलाड़ियों को आमंत्रित करना), लेकिन जब तक आप हर बदलाव की पुष्टि नहीं करते, तब तक कुछ भी नहीं बदलता।</li>
+<li><strong>संग्रहण:</strong> बातचीत हमारे सर्वर पर संग्रहीत होती है और आपके खाते से जुड़ी रहती है ताकि आप उसे जारी रख सकें। आप चैट को आर्काइव कर सकते हैं। दुरुपयोग रोकने और लागत नियंत्रित करने के लिए हम उपयोग मेटाडेटा (जैसे टोकन की संख्या) लॉग करते हैं। यदि आप क्लब बुकिंग खाते (Booktime, Padeloo, Klikteren) कनेक्ट करते हैं, तो ऐप उन क्लबों में आपकी आगामी बुकिंग (क्लब, कोर्ट, समय और स्थिति) की प्रति भी हमारे सर्वर पर भेजता है, ताकि सहायक और Telegram बॉट उन्हें दिखा सकें और खेलों से जोड़ सकें।</li>
+<li><strong>सीमाएँ:</strong> सहायक के पास उन गेम या डेटा तक पहुँच नहीं है जिन्हें आप ऐप में नहीं देख सकते। कृपया AI चैट में संवेदनशील व्यक्तिगत डेटा दर्ज न करें।</li>
 </ul>
 
 <h2>2. उपयोगकर्ता अनुबंध</h2>
@@ -159,6 +177,6 @@ Applies worldwide</p>
 <p><strong>Email:</strong> <a href="mailto:relic.ilya@gmail.com">relic.ilya@gmail.com</a></p>
 
 <div class="footer">
-<p>यह दस्तावेज़ अंतिम बार 22/02/2025 को अद्यतन किया गया था। हम किसी भी समय इस नीति और समझौते को अद्यतन करने का अधिकार सुरक्षित रखते हैं।</p>
+<p>यह दस्तावेज़ अंतिम बार 30/09/2026 को अद्यतन किया गया था। हम किसी भी समय इस नीति और समझौते को अद्यतन करने का अधिकार सुरक्षित रखते हैं।</p>
 <p>Contact: <a href="mailto:relic.ilya@gmail.com">relic.ilya@gmail.com</a></p>
 </div>`;

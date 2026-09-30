@@ -79,6 +79,53 @@ async function lockGameRowForSeating(
 }
 
 export class ParticipantService {
+  /**
+   * Read-only forecast of `joinGame` for previews (agent `join_game`): the same branches and
+   * predicates, no writes. `refused` carries the error `joinGame` would throw (or the "no
+   * change" message it would return). Slot overlap is the caller's concern.
+   */
+  static async predictJoinOutcome(
+    gameId: string,
+    userId: string,
+  ): Promise<{ outcome: 'player' | 'queue' | 'refused'; reason?: string }> {
+    const game = await prisma.game.findUnique({
+      where: { id: gameId },
+      include: { participants: { where: { status: PLAYING_STATUS } } },
+    });
+    if (!game) throw new ApiError(404, 'Game not found');
+    const existing = await prisma.gameParticipant.findFirst({ where: { gameId, userId } });
+    if (existing?.status === PLAYING_STATUS) {
+      return { outcome: 'refused', reason: 'Already joined this game as a player' };
+    }
+    const wasInQueue = existing?.status === IN_QUEUE_STATUS;
+    try {
+      await validateGenderForGame(game, userId);
+      if (!game.allowDirectJoin) {
+        if (existing && wasInQueue) {
+          validateGameCanAcceptParticipants(game);
+          return { outcome: 'refused', reason: 'spots.queue.waitForOrganizer' };
+        }
+        // Existing non-queue rows move to the queue; newcomers are added to it.
+        return { outcome: 'queue', reason: 'games.addedToJoinQueue' };
+      }
+      const current = await fetchGameWithPlayingParticipants(prisma, gameId);
+      const joinResult = await validatePlayerCanJoinGame(current, userId);
+      if (!joinResult.canJoin && joinResult.shouldQueue) {
+        if (wasInQueue) return { outcome: 'refused', reason: joinResult.reason || 'games.alreadyInJoinQueue' };
+        return { outcome: 'queue', reason: joinResult.reason || 'games.addedToJoinQueue' };
+      }
+      if (!joinResult.canJoin) {
+        return { outcome: 'refused', reason: joinResult.reason || 'errors.games.cannotAddPlayer' };
+      }
+      return { outcome: 'player' };
+    } catch (error) {
+      if (error instanceof ApiError && error.statusCode === 400) {
+        return { outcome: 'refused', reason: error.message };
+      }
+      throw error;
+    }
+  }
+
   static async joinGame(gameId: string, userId: string, confirmOverlap = false) {
     const game = await prisma.game.findUnique({
       where: { id: gameId },

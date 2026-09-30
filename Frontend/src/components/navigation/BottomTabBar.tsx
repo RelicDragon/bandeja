@@ -8,7 +8,7 @@ import { useBottomTabUnreadBadges } from '@/hooks/useUnreadBridge';
 import { useDesktop } from '@/hooks/useDesktop';
 import { memo, useMemo, useRef } from 'react';
 import { useAuthStore } from '@/store/authStore';
-import { isChatShellPlace, parseLocation } from '@/utils/urlSchema';
+import { parseLocation } from '@/utils/urlSchema';
 import { resolveBottomTabActiveId, type BottomTabId } from '@/utils/bottomTabActiveId';
 import { hasEnabledSports } from '@/utils/profileSports';
 import { ClubAdminFab } from '@/components/clubAdmin/ClubAdminFab';
@@ -43,7 +43,8 @@ const BottomTabBarInner = ({ containerPosition = false, tabOverride, previousPat
   const effectivePage = tabOverride ?? activeTabId;
   const findViewMode = (parsed.place === 'find' && parsed.params.view as string) || 'calendar';
   
-  const shouldAnimateToLeft = isDesktop && isChatShellPlace(parsed.place);
+  // Desktop split views (Chats, AI) dock the bar inside their left panel.
+  const dockInPanel = containerPosition && isDesktop;
 
   const tabs = useMemo(() => {
     const all = [
@@ -101,10 +102,11 @@ const BottomTabBarInner = ({ containerPosition = false, tabOverride, previousPat
     navigate(path, { replace: true });
   };
 
-  const shellPositionClass =
-    containerPosition && shouldAnimateToLeft
-      ? 'relative w-full pointer-events-auto'
-      : 'fixed bottom-0 left-0 right-0 z-50';
+  // The shell spans the full width but only the pill (and the club FAB) take clicks, so
+  // content beside the bar (e.g. a chat composer in a split view) stays clickable.
+  const shellPositionClass = dockInPanel
+    ? 'relative w-full pointer-events-none'
+    : 'fixed bottom-0 left-0 right-0 z-50 pointer-events-none';
   const shellPaddingBottom = `max(${isDesktop ? '1rem' : '0.5rem'}, env(safe-area-inset-bottom))`;
   const useMotionShell = animateEntry || isDesktop;
   const useRichTabMotion = useMotionShell;
@@ -122,7 +124,7 @@ const BottomTabBarInner = ({ containerPosition = false, tabOverride, previousPat
     <>
       <ClubAdminFab />
       <div className="flex justify-center">
-        <div className={`${pillShellClass} ${isPremiumTheme ? 'premium-tab-bar' : ''}`} role="navigation" aria-label={t('common.navigation', { defaultValue: 'Main navigation' })}>
+        <div className={`${pillShellClass} pointer-events-auto ${isPremiumTheme ? 'premium-tab-bar' : ''}`} role="navigation" aria-label={t('common.navigation', { defaultValue: 'Main navigation' })}>
           <div
             aria-hidden
             className={`pointer-events-none absolute inset-0 rounded-2xl bg-white/95 dark:bg-gray-900/95 ${isPremiumTheme ? 'premium-tab-backplate' : ''}`}

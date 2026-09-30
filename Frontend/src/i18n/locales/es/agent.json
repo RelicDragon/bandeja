@@ -1,0 +1,154 @@
+{
+  "agent": {
+    "tab": "IA",
+    "listTitle": "Asistente IA",
+    "newChat": "Nuevo chat",
+    "noMessagesYet": "Aún no hay mensajes",
+    "archived": "Chat archivado",
+    "selectChat": "Elige un chat o empieza uno nuevo",
+    "backToChats": "Volver a los chats",
+    "disclaimer": "El asistente puede equivocarse. Nada cambia hasta que lo confirmes.",
+    "status": {
+      "working": "Trabajando…",
+      "thinking": "Pensando…",
+      "stopped": "Detenido",
+      "needsConfirmation": "Requiere tu OK",
+      "queued": "En cola",
+      "waitingInQueue": "Esperando en la cola…",
+      "waitingInQueuePosition": "Esperando en la cola… (#{{position}})"
+    },
+    "menu": {
+      "open": "Opciones del chat",
+      "rename": "Renombrar",
+      "renameTitle": "Renombrar chat",
+      "archive": "Archivar chat"
+    },
+    "composer": {
+      "placeholder": "Pregunta por tus partidos, ligas, clubes…",
+      "send": "Enviar",
+      "stop": "Detener"
+    },
+    "empty": {
+      "listTitle": "Tu asistente de pádel",
+      "listHint": "Pregunta por tus partidos, busca uno o modifica un partido. Prueba:",
+      "chatTitle": "¿En qué te ayudo?",
+      "chatHint": "Pregunta lo que quieras sobre partidos, ligas y clubes."
+    },
+    "examples": {
+      "nextGames": "¿Qué partidos tengo esta semana?",
+      "findGame": "Búscame un partido mañana por la tarde",
+      "moveGame": "Mueve mi partido del jueves a las 19:00",
+      "league": "¿Quién va primero en mi liga?"
+    },
+    "tool": {
+      "working": "En ello…",
+      "done": "Hecho",
+      "failed": "El paso falló"
+    },
+    "action": {
+      "heading": "Confirma el cambio",
+      "loading": "Cargando el cambio…",
+      "confirm": "Confirmar",
+      "cancel": "Cancelar",
+      "confirmed": "Confirmado",
+      "done": "Hecho",
+      "failed": "No se pudo aplicar el cambio",
+      "expired": "Caducado: vuelve a pedirlo",
+      "rejected": "Cancelado",
+      "reject": "Rechazar",
+      "allowOnce": "Permitir una vez",
+      "alwaysAllow": "Permitir siempre",
+      "alwaysAsks": "Esta acción siempre pide confirmación",
+      "autoHeading": "Hecho automáticamente",
+      "autoApproved": "Hecho automáticamente, tú lo permitiste."
+    },
+    "entity": {
+      "untitledGame": "Partido",
+      "club": "Club de pádel",
+      "leagueSeason": "Temporada de liga"
+    },
+    "gameStatus": {
+      "ANNOUNCED": "Próximo",
+      "STARTED": "En curso",
+      "FINISHED": "Terminado",
+      "ARCHIVED": "Archivado"
+    },
+    "slot": {
+      "clubTime": "Hora del club ({{tz}})",
+      "minutes": "{{minutes}} min.",
+      "pick": "Reservar {{time}}",
+      "bookMessage": "Reserva este horario: {{club}}, {{date}} {{time}}, {{courts}}",
+      "confidence": {
+        "live": "Disponible",
+        "snapshot": "Sin conflictos conocidos · a las {{time}}",
+        "snapshotNoTime": "Sin conflictos conocidos",
+        "appOnly": "No verificado con el club"
+      }
+    },
+    "booking": {
+      "state": {
+        "CONFIRMED": "Reservado",
+        "CANCELLED": "Cancelado",
+        "PAST": "Pasado",
+        "UNKNOWN": "Estado desconocido"
+      },
+      "linkedGame": "Partido",
+      "linkedGameN": "Partido {{n}}",
+      "cancel": "Cancelar reserva",
+      "cancelViaClub": "Cancela a través del club",
+      "openClub": "Página del club",
+      "cancelMessage": "Cancela la reserva {{club}}, {{date}} {{time}}"
+    },
+    "errors": {
+      "RATE_LIMITED": "Demasiados mensajes. Espera un momento.",
+      "BUDGET_EXCEEDED": "Has alcanzado el límite diario del asistente. Vuelve mañana.",
+      "CHAT_BUSY": "El asistente sigue respondiendo. Espera o pulsa Detener.",
+      "LLM_ERROR": "El asistente no pudo responder. Inténtalo de nuevo.",
+      "TIMEOUT": "El asistente tardó demasiado. Inténtalo de nuevo.",
+      "INTERNAL": "Algo salió mal. Inténtalo de nuevo.",
+      "chatNotFound": "Este chat no está disponible.",
+      "listFailed": "No se pudieron cargar tus chats."
+    },
+    "permissions": {
+      "title": "Permisos del asistente",
+      "manage": "Gestionar",
+      "safetyNote": "«Permitir siempre» solo omite el toque, no las comprobaciones de permisos. Las acciones críticas siempre preguntan.",
+      "loadFailed": "No se pudieron cargar los permisos",
+      "empty": "El asistente aún no tiene acciones que cambien algo por ti.",
+      "resetAll": "Restablecer todo",
+      "resetTitle": "¿Restablecer todos los permisos?",
+      "resetMessage": "Cada acción volverá a pedir tu confirmación.",
+      "resetConfirm": "Restablecer",
+      "resetDone": "Todas las acciones vuelven a preguntar",
+      "modeAsk": "Preguntar siempre",
+      "modeAlways": "Permitido siempre",
+      "alwaysAsks": "Siempre pregunta"
+    },
+    "clientExec": {
+      "bookInApp": "Reservar en la app",
+      "cancelInApp": "Cancelar en la app",
+      "bookAndCreateGameInApp": "Reservar y crear partido en la app",
+      "cancelBookingsAndGameInApp": "Cancelar reservas y partido en la app",
+      "retry": "Reintentar",
+      "hint": "Se ejecuta en este dispositivo con tu cuenta del club",
+      "claiming": "Iniciando…",
+      "rechecking": "Comprobando precio y disponibilidad…",
+      "booking": "Reservando pista {{current}} de {{total}}…",
+      "cancelling": "Cancelando reserva {{current}} de {{total}}…",
+      "saving": "Guardando…",
+      "savingCreateGame": "Creando el partido…",
+      "savingCancelGame": "Cancelando el partido…",
+      "priceQuote": "El club cobra {{price}}. ¿Continuar?",
+      "priceStop": "Detener",
+      "priceContinue": "Reservar por {{price}}",
+      "handledElsewhere": "Gestionado en otro dispositivo",
+      "unknown": "Resultado desconocido: revisa las reservas del club",
+      "openClubBookings": "Reservas del club",
+      "connectClub": "Conecta tu cuenta del club",
+      "partial": "Solo se hizo una parte",
+      "failed": "No se cambió nada",
+      "reportPending": "Hecho en el club, pero aún no guardado. Lo reintentaremos cuando vuelvas.",
+      "inProgress": "Ejecutándose en la app…"
+    }
+  }
+}

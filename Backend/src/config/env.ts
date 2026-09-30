@@ -1,5 +1,6 @@
 import dotenv from 'dotenv';
 import { GAME_TEXT_LOCALIZATION_GENERATION_ENABLED as PACKAGE_GAME_TEXT_GENERATION_DEFAULT } from '@bandeja/app-locale';
+import { resolveAgentEnvConfig, type AgentEnvConfig } from './agentEnv';
 import { resolveApiRateLimitConfig } from './apiRateLimit';
 import {
   assertProductionJwtAuthConfig,
@@ -276,6 +277,13 @@ export const config = {
    * goods keep rendering.
    */
   shopEnabled: process.env.SHOP_ENABLED !== 'false',
+  /**
+   * AI agent chats (`/api/agent`, docs/domains/agent.md). Always on for every user.
+   * Read live (getter) so tests see current env.
+   */
+  get agent(): AgentEnvConfig {
+    return resolveAgentEnvConfig(process.env);
+  },
   /** Global `/api/` IP rate limit. See `apiRateLimit.ts` / #313. */
   apiRateLimit: resolveApiRateLimitConfig({
     nodeEnv,

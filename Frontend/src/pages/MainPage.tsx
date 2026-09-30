@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo } from 'react';
+import { lazy, Suspense, useEffect, useLayoutEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useShallow } from 'zustand/react/shallow';
 import { MainLayout } from '@/layouts/MainLayout';
@@ -6,6 +6,7 @@ import { useShellNavStore } from '@/store/shellNavStore';
 import { BottomTabBar } from '@/components/navigation/BottomTabBar';
 import { useDesktop } from '@/hooks/useDesktop';
 import { useIsLandscape } from '@/hooks/useIsLandscape';
+import { resolveHomeSubTab } from '@/hooks/useHomeFromUrl';
 import { isChatShellPlace, isMarketplaceShellPlace, parseLocation } from '@/utils/urlSchema';
 import { warmChatSyncHeadsOnChatsTabIntent } from '@/services/chat/chatSyncBatchWarm';
 import { MyTab } from './MyTab';
@@ -26,6 +27,10 @@ import { SeriesPage } from './SeriesPage';
 import { useAuthStore } from '@/store/authStore';
 import { hasEnabledSports } from '@/utils/profileSports';
 import { isMainTabRootPath, scrollAppToTop } from '@/utils/appScroll';
+
+const AgentChatRoute = lazy(() =>
+  import('@/components/agent/AgentTab').then((m) => ({ default: m.AgentChatRoute })),
+);
 
 function MarketplaceContent() {
   const location = useLocation();
@@ -84,9 +89,17 @@ export const MainPage = () => {
     warmChatSyncHeadsOnChatsTabIntent();
   }, [parsed.place]);
 
-  const isHomeDesktopShell = isDesktop && parsed.place === 'home';
+  // `/ai/:chatId` on desktop is the My → AI split view (same shell as Home).
+  const isHomeDesktopShell = isDesktop && (parsed.place === 'home' || parsed.place === 'agentChat');
   const isCalendarSplitView =
     isHomeDesktopShell || (isDesktop && parsed.place === 'find' && findViewMode === 'calendar');
+  // Desktop AI split view (My → AI, `/ai/:id`) docks its own bar in the list panel, like Chats,
+  // so the full-width shell bar never sits over the thread composer.
+  const homeSearch = new URLSearchParams(location.search);
+  const isAgentSplitView =
+    isHomeDesktopShell &&
+    (parsed.place === 'agentChat' ||
+      resolveHomeSubTab(homeSearch.get('tab'), homeSearch.get('focus') === 'invites') === 'ai');
 
   const scrollablePage =
     parsed.place === 'home' ||
@@ -122,6 +135,12 @@ export const MainPage = () => {
         return <ShopPage />;
       case 'series':
         return <SeriesPage />;
+      case 'agentChat':
+        return (
+          <Suspense fallback={null}>
+            <AgentChatRoute />
+          </Suspense>
+        );
       default:
         if (isChatShellPlace(parsed.place)) {
           return <ChatsTab />;
@@ -142,7 +161,9 @@ export const MainPage = () => {
   const shouldShowChatsSplitView = isChatPage && (isDesktop || !isOnSpecificChatRoute);
   const showBottomTabBar = bottomTabsVisible && (!isDesktop || isChatPage);
   const bottomTabBarSlotClass = (visible: boolean) =>
-    visible ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none';
+    // `invisible` too: the bar's pill opts back into pointer events, which would beat
+    // an inherited `pointer-events-none` on a hidden slot.
+    visible ? 'opacity-100' : 'invisible opacity-0 pointer-events-none';
   const bottomTabBarSlot = (visible: boolean) => (
     <div className={bottomTabBarSlotClass(visible)} aria-hidden={!visible}>
       <BottomTabBar animateEntry={animateShellEntry} />
@@ -164,6 +185,11 @@ export const MainPage = () => {
     );
   }
 
+  // Mobile AI thread: full-screen, no header or bottom tabs (like a chat thread).
+  if (parsed.place === 'agentChat' && !isDesktop) {
+    return <MainLayout chrome="bare">{renderContent}</MainLayout>;
+  }
+
   const isGameDetailsPage = location.pathname.match(/^\/games\/[^/]+$/) && !location.pathname.includes('/chat');
   const isGameDetailsSplitView = parsed.place === 'game' && isGameDetailsPage && (isDesktop || isLandscape);
   const isGameDetailsMobileScroll =
@@ -180,7 +206,7 @@ export const MainPage = () => {
     return (
       <MainLayout>
         {renderContent}
-        {bottomTabBarSlot(bottomTabsVisible)}
+        {isAgentSplitView ? null : bottomTabBarSlot(bottomTabsVisible)}
       </MainLayout>
     );
   }

@@ -3,7 +3,7 @@ window.EULAContent = window.EULAContent || {};
 window.EULAContent['id'] = `<h1>Kebijakan Privasi & Perjanjian Pengguna</h1>
 <p><strong>Application:</strong> Padel Bandeja<br>
 <strong>Effective date:</strong> 12/01/2025<br>
-<strong>Last updated:</strong> 22/02/2025<br>
+<strong>Last updated:</strong> 30/09/2026<br>
 Applies worldwide</p>
 
 <h2>1. Kebijakan Privasi</h2>
@@ -35,7 +35,7 @@ Applies worldwide</p>
 <p>Kami tidak menjual data pribadi Anda. Kami hanya dapat membagikan informasi dalam keadaan berikut:</p>
 <ul>
 <li><strong>With Your Consent:</strong> When you explicitly authorize sharing</li>
-<li><strong>Service Providers:</strong> With trusted third-party services that help us operate the app (hosting, analytics, SMS providers)</li>
+<li><strong>Penyedia Layanan:</strong> Dengan layanan pihak ketiga tepercaya yang membantu kami mengoperasikan aplikasi (hosting, analitik, penyedia SMS, penyedia AI)</li>
 <li><strong>Legal Requirements:</strong> When required by law, court order, or government regulation</li>
 <li><strong>Safety and Security:</strong> To protect rights, property, or safety of users and the public</li>
 <li><strong>Business Transfers:</strong> In connection with a merger, acquisition, or sale of assets</li>
@@ -73,6 +73,24 @@ Applies worldwide</p>
 <li><strong>Who can see it:</strong> This information is visible to other signed-in users of the application.</li>
 <li><strong>Your control:</strong> In line with privacy-by-design principles, you have full control. In the app settings you can turn off visibility of your status using the option &quot;Show my online status&quot; (opt-out). By default, your status is visible to others; you can disable it at any time.</li>
 <li><strong>Legal basis:</strong> We rely on Legitimate Interest: displaying presence is a core feature of the service that users expect. The feature is on by default, with a mandatory option to disable it in settings.</li>
+</ul>
+
+<h3>1.10 Fitur AI dan Asisten AI</h3>
+<p>Bandeja menyediakan asisten AI opsional di aplikasi (Saya → AI) dan di bot Telegram kami. Penggunaannya bersifat sukarela.</p>
+<ul>
+<li><strong>Apa yang kami kirim:</strong> Saat Anda menggunakan asisten, pesan Anda beserta data terkait dikirim ke penyedia AI pihak ketiga (saat ini DeepSeek) untuk menghasilkan jawaban. Data terkait meliputi:
+<ul>
+<li>nama depan, bahasa, kota asal, dan zona waktu Anda;</li>
+<li>permainan Anda yang akan datang;</li>
+<li>liga yang Anda kelola;</li>
+<li>pesan di obrolan permainan yang Anda ikuti, saat Anda meminta asisten untuk membaca atau merangkumnya (hanya obrolan yang sudah dapat Anda lihat di aplikasi);</li>
+<li>hasil pencarian yang Anda minta: permainan, klub, dan informasi profil publik pemain lain.</li>
+</ul>
+</li>
+<li><strong>Pemrosesan AI lainnya:</strong> Fitur AI lainnya, seperti terjemahan otomatis pesan dan teks serta transkripsi suara, juga diproses oleh penyedia AI (OpenAI atau DeepSeek) dengan cara yang sama.</li>
+<li><strong>Tindakan:</strong> Asisten dapat menyiapkan perubahan atas nama Anda (misalnya mengedit permainan atau mengundang pemain), tetapi tidak ada yang berubah sampai Anda mengonfirmasi setiap tindakan.</li>
+<li><strong>Penyimpanan:</strong> Percakapan disimpan di server kami dan ditautkan ke akun Anda agar Anda dapat melanjutkannya. Anda dapat mengarsipkan obrolan. Kami mencatat metadata penggunaan (seperti jumlah token) untuk mencegah penyalahgunaan dan mengendalikan biaya. Jika Anda menghubungkan akun pemesanan klub (Booktime, Padeloo, Klikteren), aplikasi juga menyalin pemesanan Anda yang akan datang di klub tersebut (klub, lapangan, waktu, dan status) ke server kami, agar asisten dan bot Telegram dapat menampilkannya dan menautkannya ke permainan.</li>
+<li><strong>Batasan:</strong> Asisten tidak memiliki akses ke permainan atau data yang tidak dapat Anda lihat di aplikasi. Jangan memasukkan data pribadi yang sensitif ke dalam obrolan AI.</li>
 </ul>
 
 <h2>2. Perjanjian Pengguna</h2>
@@ -159,6 +177,6 @@ Applies worldwide</p>
 <p><strong>Email:</strong> <a href="mailto:relic.ilya@gmail.com">relic.ilya@gmail.com</a></p>
 
 <div class="footer">
-<p>Dokumen ini terakhir diperbarui pada 22/02/2025. Kami berhak memperbarui kebijakan dan perjanjian ini kapan saja.</p>
+<p>Dokumen ini terakhir diperbarui pada 30/09/2026. Kami berhak memperbarui kebijakan dan perjanjian ini kapan saja.</p>
 <p>Contact: <a href="mailto:relic.ilya@gmail.com">relic.ilya@gmail.com</a></p>
 </div>`;

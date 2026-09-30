@@ -1,0 +1,154 @@
+{
+  "agent": {
+    "tab": "VI",
+    "listTitle": "VI asistent",
+    "newChat": "Novi čet",
+    "noMessagesYet": "Još nema poruka",
+    "archived": "Čet je arhiviran",
+    "selectChat": "Izaberite čet ili započnite novi",
+    "backToChats": "Nazad na četove",
+    "disclaimer": "Asistent može da pogreši. Ništa se ne menja dok ne potvrdite.",
+    "status": {
+      "working": "Radim…",
+      "thinking": "Razmišljam…",
+      "stopped": "Zaustavljeno",
+      "needsConfirmation": "Potrebna potvrda",
+      "queued": "U redu čekanja",
+      "waitingInQueue": "Čeka u redu…",
+      "waitingInQueuePosition": "Čeka u redu… (#{{position}})"
+    },
+    "menu": {
+      "open": "Opcije četa",
+      "rename": "Preimenuj",
+      "renameTitle": "Preimenuj čet",
+      "archive": "Arhiviraj čet"
+    },
+    "composer": {
+      "placeholder": "Pitajte o igrama, ligama, klubovima…",
+      "send": "Pošalji",
+      "stop": "Zaustavi"
+    },
+    "empty": {
+      "listTitle": "Vaš padel asistent",
+      "listHint": "Pitajte o svojim igrama, pronađite meč ili izmenite igru. Probajte:",
+      "chatTitle": "Kako mogu da pomognem?",
+      "chatHint": "Pitajte bilo šta o igrama, ligama i klubovima."
+    },
+    "examples": {
+      "nextGames": "Koje igre imam ove nedelje?",
+      "findGame": "Nađi mi igru sutra uveče",
+      "moveGame": "Pomeri moju igru u četvrtak na 19:00",
+      "league": "Ko vodi u mojoj ligi?"
+    },
+    "tool": {
+      "working": "Radim na tome…",
+      "done": "Gotovo",
+      "failed": "Korak nije uspeo"
+    },
+    "action": {
+      "heading": "Potvrdite izmenu",
+      "loading": "Učitavam izmenu…",
+      "confirm": "Potvrdi",
+      "cancel": "Otkaži",
+      "confirmed": "Potvrđeno",
+      "done": "Gotovo",
+      "failed": "Izmena nije primenjena",
+      "expired": "Isteklo — zatražite ponovo",
+      "rejected": "Otkazano",
+      "reject": "Odbij",
+      "allowOnce": "Dozvoli jednom",
+      "alwaysAllow": "Uvek dozvoli",
+      "alwaysAsks": "Ova radnja uvek traži potvrdu",
+      "autoHeading": "Urađeno automatski",
+      "autoApproved": "Urađeno automatski, vi ste ovo dozvolili."
+    },
+    "entity": {
+      "untitledGame": "Igra",
+      "club": "Klub",
+      "leagueSeason": "Sezona lige"
+    },
+    "gameStatus": {
+      "ANNOUNCED": "Predstoji",
+      "STARTED": "U toku",
+      "FINISHED": "Završena",
+      "ARCHIVED": "Arhivirana"
+    },
+    "slot": {
+      "clubTime": "Vreme kluba ({{tz}})",
+      "minutes": "{{minutes}} min.",
+      "pick": "Rezerviši {{time}}",
+      "bookMessage": "Rezerviši ovaj termin: {{club}}, {{date}} {{time}}, {{courts}}",
+      "confidence": {
+        "live": "Slobodno",
+        "snapshot": "Nema poznatih preklapanja · u {{time}}",
+        "snapshotNoTime": "Nema poznatih preklapanja",
+        "appOnly": "Nije provereno sa klubom"
+      }
+    },
+    "booking": {
+      "state": {
+        "CONFIRMED": "Rezervisano",
+        "CANCELLED": "Otkazano",
+        "PAST": "Prošlo",
+        "UNKNOWN": "Status nepoznat"
+      },
+      "linkedGame": "Igra",
+      "linkedGameN": "Igra {{n}}",
+      "cancel": "Otkaži rezervaciju",
+      "cancelViaClub": "Otkazivanje preko kluba",
+      "openClub": "Stranica kluba",
+      "cancelMessage": "Otkaži rezervaciju {{club}}, {{date}} {{time}}"
+    },
+    "errors": {
+      "RATE_LIMITED": "Previše poruka. Sačekajte malo.",
+      "BUDGET_EXCEEDED": "Dostigli ste dnevni limit asistenta. Pokušajte sutra.",
+      "CHAT_BUSY": "Asistent još odgovara. Sačekajte ili dodirnite Zaustavi.",
+      "LLM_ERROR": "Asistent nije mogao da odgovori. Pokušajte ponovo.",
+      "TIMEOUT": "Asistentu je trebalo predugo. Pokušajte ponovo.",
+      "INTERNAL": "Nešto nije u redu. Pokušajte ponovo.",
+      "chatNotFound": "Ovaj čet nije dostupan.",
+      "listFailed": "Četovi nisu učitani."
+    },
+    "permissions": {
+      "title": "Dozvole asistenta",
+      "manage": "Upravljaj",
+      "safetyNote": "„Uvek dozvoli“ preskače samo dodir, ne i proveru dozvola. Kritične radnje uvek traže potvrdu.",
+      "loadFailed": "Učitavanje dozvola nije uspelo",
+      "empty": "Asistent još nema radnji koje nešto menjaju za vas.",
+      "resetAll": "Resetuj sve",
+      "resetTitle": "Resetovati sve dozvole?",
+      "resetMessage": "Svaka radnja će ponovo tražiti vašu potvrdu.",
+      "resetConfirm": "Resetuj",
+      "resetDone": "Sve radnje ponovo traže potvrdu",
+      "modeAsk": "Pitaj svaki put",
+      "modeAlways": "Uvek dozvoljeno",
+      "alwaysAsks": "Uvek pita"
+    },
+    "clientExec": {
+      "bookInApp": "Rezerviši u aplikaciji",
+      "cancelInApp": "Otkaži u aplikaciji",
+      "bookAndCreateGameInApp": "Rezerviši i napravi igru u aplikaciji",
+      "cancelBookingsAndGameInApp": "Otkaži rezervacije i igru u aplikaciji",
+      "retry": "Pokušaj ponovo",
+      "hint": "Izvršava se na ovom uređaju sa vašim nalogom kluba",
+      "claiming": "Pokrećem…",
+      "rechecking": "Proveravam cenu i dostupnost…",
+      "booking": "Rezervišem teren {{current}} od {{total}}…",
+      "cancelling": "Otkazujem rezervaciju {{current}} od {{total}}…",
+      "saving": "Čuvam…",
+      "savingCreateGame": "Pravim igru…",
+      "savingCancelGame": "Otkazujem igru…",
+      "priceQuote": "Klub naplaćuje {{price}}. Nastaviti?",
+      "priceStop": "Zaustavi",
+      "priceContinue": "Rezerviši za {{price}}",
+      "handledElsewhere": "Obrađeno na drugom uređaju",
+      "unknown": "Ishod nepoznat — proverite rezervacije u klubu",
+      "openClubBookings": "Rezervacije u klubovima",
+      "connectClub": "Poveži nalog kluba",
+      "partial": "Urađeno je samo delimično",
+      "failed": "Ništa nije promenjeno",
+      "reportPending": "Urađeno u klubu, ali još nije sačuvano. Pokušaćemo ponovo kad se vratite.",
+      "inProgress": "Izvršava se u aplikaciji…"
+    }
+  }
+}

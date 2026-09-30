@@ -4,7 +4,7 @@ window.EULAContent = window.EULAContent || {};
 window.EULAContent['es'] = `<h1>Política de Privacidad y Acuerdo de Usuario</h1>
 <p><strong>Aplicación:</strong> Padel Bandeja<br>
 <strong>Fecha de vigencia:</strong> 12/01/2025<br>
-<strong>Última actualización:</strong> 22/02/2025<br>
+<strong>Última actualización:</strong> 30/09/2026<br>
 Aplica en todo el mundo</p>
 
 <h2>1. Política de Privacidad</h2>
@@ -36,7 +36,7 @@ Aplica en todo el mundo</p>
 <p>No vendemos tus datos personales. Podemos compartir información solo en las siguientes circunstancias:</p>
 <ul>
 <li><strong>Con tu Consentimiento:</strong> Cuando autorizas explícitamente el intercambio</li>
-<li><strong>Proveedores de Servicios:</strong> Con servicios de terceros confiables que nos ayudan a operar la aplicación (hosting, análisis, proveedores de SMS)</li>
+<li><strong>Proveedores de Servicios:</strong> Con servicios de terceros confiables que nos ayudan a operar la aplicación (hosting, análisis, proveedores de SMS, proveedores de IA)</li>
 <li><strong>Requisitos Legales:</strong> Cuando es requerido por ley, orden judicial o regulación gubernamental</li>
 <li><strong>Seguridad:</strong> Para proteger derechos, propiedad o seguridad de usuarios y el público</li>
 <li><strong>Transferencias Comerciales:</strong> En relación con una fusión, adquisición o venta de activos</li>
@@ -74,6 +74,24 @@ Aplica en todo el mundo</p>
 <li><strong>Quién puede verlo:</strong> Esta información es visible para otros usuarios registrados de la aplicación.</li>
 <li><strong>Tu control:</strong> De acuerdo con el enfoque de privacidad por diseño, tienes control total. En la configuración de la aplicación puedes desactivar la visibilidad de tu estado con la opción «Mostrar mi estado en línea» (exclusión voluntaria). Por defecto tu estado es visible; puedes desactivarlo en cualquier momento.</li>
 <li><strong>Base legal:</strong> Nos apoyamos en el Interés legítimo: mostrar la presencia es una función básica del servicio que los usuarios esperan. La función está activada por defecto, con opción obligatoria de desactivarla en la configuración.</li>
+</ul>
+
+<h3>1.10 Funciones de IA y Asistente de IA</h3>
+<p>Bandeja ofrece un asistente de IA opcional, disponible en la aplicación (Mis → IA) y en nuestro bot de Telegram. Su uso es voluntario.</p>
+<ul>
+<li><strong>Qué enviamos:</strong> Cuando usas el asistente, tus mensajes y los datos relacionados se envían a un proveedor de IA externo (actualmente DeepSeek) para generar las respuestas. Los datos relacionados incluyen:
+<ul>
+<li>tu nombre, idioma, ciudad de residencia y zona horaria;</li>
+<li>tus próximos partidos;</li>
+<li>las ligas que administras;</li>
+<li>los mensajes de los chats de los partidos en los que participas, cuando pides al asistente que los lea o resuma (solo chats que ya puedes ver en la app);</li>
+<li>los resultados de las búsquedas que solicitas: partidos, clubes e información pública del perfil de otros jugadores.</li>
+</ul>
+</li>
+<li><strong>Otros procesamientos con IA:</strong> Otras funciones de IA, como la traducción automática de mensajes y textos y la transcripción de voz, son procesadas de la misma manera por proveedores de IA (OpenAI o DeepSeek).</li>
+<li><strong>Acciones:</strong> El asistente puede preparar cambios en tu nombre (por ejemplo, editar un partido o invitar a jugadores), pero no se modifica nada hasta que confirmas cada acción.</li>
+<li><strong>Almacenamiento:</strong> Las conversaciones se guardan en nuestros servidores y se vinculan a tu cuenta para que puedas continuarlas. Puedes archivar los chats. Registramos metadatos de uso (como el número de tokens) para prevenir abusos y controlar costes. Si conectas cuentas de reservas de clubes (Booktime, Padeloo, Klikteren), la app también copia tus próximas reservas en esos clubes (club, pista, hora y estado) a nuestros servidores, para que el asistente y el bot de Telegram puedan mostrarlas y vincularlas a partidos.</li>
+<li><strong>Límites:</strong> El asistente no tiene acceso a partidos ni a datos que no puedas ver en la aplicación. No introduzcas datos personales sensibles en los chats de IA.</li>
 </ul>
 
 <h2>2. Acuerdo de Usuario</h2>
@@ -160,6 +178,6 @@ Aplica en todo el mundo</p>
 <p><strong>Correo Electrónico:</strong> <a href="mailto:relic.ilya@gmail.com">relic.ilya@gmail.com</a></p>
 
 <div class="footer">
-<p>Este documento fue actualizado por última vez el 22/02/2025. Nos reservamos el derecho de actualizar esta política y acuerdo en cualquier momento.</p>
+<p>Este documento fue actualizado por última vez el 30/09/2026. Nos reservamos el derecho de actualizar esta política y acuerdo en cualquier momento.</p>
 <p>Contacto: <a href="mailto:relic.ilya@gmail.com">relic.ilya@gmail.com</a></p>
 </div>`;

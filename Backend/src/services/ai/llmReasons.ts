@@ -8,6 +8,7 @@ export const LLM_REASON = {
   APP_RELEASE_NOTES: 'app_release_notes',
   RATING_EXPLANATION: 'rating_explanation',
   RATING_EXPLANATION_TRANSLATION: 'rating_explanation_translation',
+  AGENT_CHAT: 'agent_chat',
 } as const;
 
 export type LlmReason = (typeof LLM_REASON)[keyof typeof LLM_REASON];
