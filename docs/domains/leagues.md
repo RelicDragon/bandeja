@@ -4,6 +4,8 @@ A **league season** is a `Game` with `entityType=LEAGUE_SEASON` (hub). Its id is
 
 `Game.status` is still ANNOUNCED/STARTED/FINISHED/ARCHIVED. Fixture UI labels `SCHEDULED`/`NOT_SCHEDULED` come from `timeIsSet` / `resultsStatus`, not a `READY`/`PLAYING` game status.
 
+League data (season, standings, rounds/schedule, groups, bracket) is intentionally public to every authenticated user (`GET /leagues/:id/*`, and the AI agent's league reads).
+
 `RoundType`: `REGULAR` | `PLAYOFF`. `PlayoffFormat`: `SESSION` | `BRACKET`. `LeagueParticipantType`: `USER` | `TEAM`.
 
 ## Shell
@@ -22,6 +24,16 @@ Fullscreen:
 
 - `/games/:id/league-table` — fixture matrix (`LeagueFixtureTableFullscreenPage`). Also `?tab=schedule&subtab=table` on details
 - `/games/:id/league-bracket` — playoff bracket (`LeagueBracketFullscreenPage`)
+
+### Read access
+
+Season reads follow the **direct-link model** of `GET /games/:id` (`GameReadService.getGameById`): a signed-in viewer holding the season id may read it, **private or not**. `GET /leagues/:id/rounds`, `/standings`, `/groups` and `/playoff/bracket` are therefore `authenticate` only, with no roster check. This is intentional:
+
+- The season page already serves the same roster, fixtures and fixture outcomes to that viewer. Its schedule and standings tabs are shown to any signed-in user (table above). A roster guard here would hide nothing that `/games/:id` does not already return.
+- Invited players and people sent a shared link open schedule/standings before they join. Shipped store builds call these endpoints on that path.
+- Parity with `getGameById` holds: an unknown id answers 404 (`loadLeagueSeasonSportOrThrow` / `getGroupsReadOnly`). The system-game refusal is moot because `Game.cityId` is non-null.
+
+The planner is the participants-only read (`canAccessGame`). Detailed fixture results (`GET /api/results/game/:id`) are stricter by design, because they are guest-readable: for a private fixture, only the roster of the fixture or of its season sees them ([results.md](./results.md)). The AI agent treats league seasons and their fixtures as public to every signed-in principal (`isAgentLeagueContent`, `assertAgentCanViewLeagueSeason`), matching these reads; see [agent.md](./agent.md). If private seasons ever need to be hidden from id holders, change `getGameById` and these reads together. Do not gate only the tabs.
 
 LEAGUE fixture details: link to parent season; no season tabs. Parent owner/admin permissions inherit (`parentGamePermissions.ts`).
 
@@ -47,6 +59,8 @@ LEAGUE fixture details: link to parent season; no season tabs. Parent owner/admi
 Fixture create uses `gameCreation.util.ts` (`createLeagueGame` / `createLeaguePlayoffGame`). Match pairing engines for **games** (americano etc.) live under `Backend/src/services/results/generation/`; league RR uses `generation/fixedTeamsRoundRobin.ts`.
 
 For a full fixed-team round robin, the season creates enough REGULAR rounds for its largest group. Each group generates fixtures only for its own single cycle: even `n` teams play `n−1` rounds, odd `n` teams play `n` rounds with one bye per round. Smaller groups have no fixtures in later shared rounds. Manual **Create round** can intentionally start another cycle. Recreate applies the same per-group limit while preserving protected fixtures.
+
+AI agent (season owner/admin, with a confirmation card): `get_league_schedule`, `reschedule_league_fixture` (time / club / court), `send_league_round_start_message` — [agent.md § League-owner tools](./agent.md#league-owner-tools-phase-4a-toolsleagueswritetoolsts-toolsleaguescheduletoolsts).
 
 ## Team withdrawal
 
