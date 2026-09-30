@@ -24,8 +24,9 @@ async function run() {
   prisma.chatMessage.findUniqueOrThrow = (async () => message) as unknown as typeof prisma.chatMessage.findUniqueOrThrow;
   // Real finalize strips serverSyncSeq from the client payload; details must not depend on it.
   MessageService.finalizeMessageForClient = async (value) => {
-    const { serverSyncSeq: _omit, ...rest } = value as typeof message;
-    return rest as unknown as typeof value;
+    return Object.fromEntries(
+      Object.entries(value as object).filter(([key]) => key !== 'serverSyncSeq'),
+    ) as unknown as typeof value;
   };
   prisma.chatReadCursor.findMany = (async (args: { where: unknown }) => {
     cursorQueries++;
