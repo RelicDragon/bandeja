@@ -1,6 +1,6 @@
 import prisma from '../config/database';
 import { ApiError } from '../utils/ApiError';
-import { TransactionType } from '@prisma/client';
+import { Prisma, TransactionType } from '@prisma/client';
 import SocketService from './socket.service';
 import notificationService from './notification.service';
 import { USER_SELECT_FIELDS, USER_SELECT_WITH_SPORT_PROFILES } from '../utils/constants';
@@ -57,6 +57,16 @@ export interface GuardedTransferInput {
   toUserId: string;
   /** Priced from server-side data only — never from a request body. */
   transactionRows: TransactionRowInput[];
+  /**
+   * Runs inside the transfer's transaction. `beforeMove` goes first, so a
+   * caller can lock (and re-check) the row the coins are for *before* any
+   * wallet row lock is taken; `afterMove` can stamp that row with the new
+   * transaction id. A throw from either rolls the whole transfer back.
+   */
+  guard?: {
+    beforeMove?: (tx: Prisma.TransactionClient) => Promise<void>;
+    afterMove?: (tx: Prisma.TransactionClient, transactionId: string) => Promise<void>;
+  };
 }
 
 export interface GuardedTransferResult {
@@ -99,7 +109,7 @@ function sumTransactionRows(transactionRows: TransactionRowInput[]): number {
 export async function createGuardedTransfer(
   input: GuardedTransferInput,
 ): Promise<GuardedTransferResult> {
-  const { fromUserId, toUserId, transactionRows } = input;
+  const { fromUserId, toUserId, transactionRows, guard } = input;
   if (!fromUserId || !toUserId) {
     throw new ApiError(400, 'Transfer requires both fromUserId and toUserId');
   }
@@ -113,6 +123,8 @@ export async function createGuardedTransfer(
   }
 
   const settled = await prisma.$transaction(async (tx) => {
+    await guard?.beforeMove?.(tx);
+
     const debit = async (): Promise<number> => {
       const debited = await tx.user.updateMany({
         where: { id: fromUserId, wallet: { gte: total } },
@@ -177,6 +189,7 @@ export async function createGuardedTransfer(
       },
       select: { id: true },
     });
+    await guard?.afterMove?.(tx, created.id);
 
     return { id: created.id, total, fromWallet, toWallet } satisfies GuardedTransferResult;
   });

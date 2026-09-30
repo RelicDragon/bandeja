@@ -34,6 +34,7 @@ import {
   type CostShareActorContext,
 } from './costSharePermissions';
 import type { BasicUser } from '../../types/user.types';
+import { reverseOrphanedCoinShares } from './coinShareReversal';
 import type {
   CostShareDto,
   GameCostSummaryDto,
@@ -176,6 +177,10 @@ async function loadGame(gameId: string): Promise<GameCostRow | null> {
   return game as unknown as GameCostRow | null;
 }
 
+function isCoinSettled(row: Pick<ShareRow, 'method' | 'transactionId'>): boolean {
+  return row.method === 'COINS' && row.transactionId != null;
+}
+
 /**
  * Rebuild `GameCostShare` for a game from its current roster.
  *
@@ -214,10 +219,15 @@ export async function syncGameCostShares(
     payerCount: participantIds.length,
   });
 
-  // Nothing to split: drop any stale rows left behind by a price edit.
+  const coinLabel = game.name?.trim() || gameId;
+
+  // Nothing to split: drop any stale rows left behind by a price edit. Coins
+  // already paid go back to the player rather than vanishing with the row.
   if (totalMinor == null || game.priceCurrency == null) {
     if (existing.length > 0) {
-      await prisma.gameCostShare.deleteMany({ where: { gameId } });
+      await prisma.gameCostShare.deleteMany({ where: { gameId, transactionId: null } });
+      const paidInCoins = existing.filter(isCoinSettled).map((row) => row.userId);
+      await reverseOrphanedCoinShares(gameId, paidInCoins, coinLabel);
       if (options.emit !== false) await emitGameCostUpdated(gameId);
     }
     return { game, shares: [] };
@@ -243,15 +253,18 @@ export async function syncGameCostShares(
     payerId,
     existing: existing.map((row) => ({ userId: row.userId, amountMinor: row.amountCents })),
     // A share already settled in coins must never move: that money is gone.
-    pinnedUserIds: existing
-      .filter((row) => row.method === 'COINS' && row.transactionId != null)
-      .map((row) => row.userId),
+    pinnedUserIds: existing.filter(isCoinSettled).map((row) => row.userId),
   });
 
   const nextById = new Map(next.map((row) => [row.userId, row.amountMinor]));
   const existingById = new Map(existing.map((row) => [row.userId, row]));
 
-  const toDelete = existing.filter((row) => !nextById.has(row.userId)).map((r) => r.userId);
+  const dropped = existing.filter((row) => !nextById.has(row.userId));
+  const toDelete = dropped.filter((row) => !isCoinSettled(row)).map((r) => r.userId);
+  // A player who paid in coins and then left the split (leave, kick, back to
+  // the queue) is refunded payer → player. Until that succeeds the row stays,
+  // outside the split and hidden below, so the payment is never lost.
+  const toRefund = dropped.filter(isCoinSettled).map((r) => r.userId);
   const toCreate = next.filter((row) => !existingById.has(row.userId));
   const toUpdate = next.filter((row) => {
     const previous = existingById.get(row.userId);
@@ -262,12 +275,20 @@ export async function syncGameCostShares(
   });
 
   const changed =
-    toDelete.length > 0 || toCreate.length > 0 || toUpdate.length > 0 || shouldFreezeNow;
+    toDelete.length > 0 ||
+    toRefund.length > 0 ||
+    toCreate.length > 0 ||
+    toUpdate.length > 0 ||
+    shouldFreezeNow;
 
   if (changed) {
     await prisma.$transaction(async (tx) => {
       if (toDelete.length > 0) {
-        await tx.gameCostShare.deleteMany({ where: { gameId, userId: { in: toDelete } } });
+        // `transactionId: null`: a settle that stamped the row since our read
+        // turned it into a coin payment, which only the reversal may remove.
+        await tx.gameCostShare.deleteMany({
+          where: { gameId, userId: { in: toDelete }, transactionId: null },
+        });
       }
       for (const row of toCreate) {
         await tx.gameCostShare.create({
@@ -290,6 +311,8 @@ export async function syncGameCostShares(
       }
     });
 
+    if (toRefund.length > 0) await reverseOrphanedCoinShares(gameId, toRefund, coinLabel);
+
     if (shouldFreezeNow) game.costFrozenAt = new Date();
     if (options.emit !== false) await emitGameCostUpdated(gameId);
   }
@@ -307,7 +330,10 @@ export async function syncGameCostShares(
     },
   });
 
-  return { game, shares: shares as unknown as ShareRow[] };
+  // Rows outside the split are coin payments still waiting for their refund;
+  // they are not anybody's share of this game.
+  const current = shares.filter((row) => nextById.has(row.userId));
+  return { game, shares: current as unknown as ShareRow[] };
 }
 
 /**
@@ -315,6 +341,11 @@ export async function syncGameCostShares(
  *
  * Called from `participantSubstitution.service.ts`. Runs before the roster sync
  * so {@link syncGameCostShares} sees the substitute already holding the row.
+ *
+ * A share paid **in coins** does not move: those are the outgoing player's
+ * coins, and handing the row over would seat the substitute on them. The sync
+ * refunds the outgoing player like any leave (or keeps the refund claim until
+ * the payer can cover it) and gives the substitute an ordinary unpaid share.
  */
 export async function transferCostShareOnSubstitution(
   gameId: string,
@@ -328,6 +359,10 @@ export async function transferCostShareOnSubstitution(
     where: { gameId_userId: { gameId, userId: outUserId } },
   });
   if (!outgoing) return;
+  if (isCoinSettled(outgoing)) {
+    await syncGameCostShares(gameId);
+    return;
+  }
 
   const incoming = await prisma.gameCostShare.findUnique({
     where: { gameId_userId: { gameId, userId: inUserId } },
@@ -617,9 +652,7 @@ export async function updateGameCostShares(
       participantIds,
       payerId,
       existing: shares.map((row) => ({ userId: row.userId, amountMinor: row.amountCents })),
-      pinnedUserIds: shares
-        .filter((row) => row.method === 'COINS' && row.transactionId != null)
-        .map((row) => row.userId),
+      pinnedUserIds: shares.filter(isCoinSettled).map((row) => row.userId),
       overrides,
       splitRemainderEvenly: input.splitRemainderEvenly !== false,
     });
@@ -728,33 +761,47 @@ export async function markOwnShareAsPaid(
   });
   if (claim.count !== 1) throw new ApiError(400, COIN_SETTLE_ERROR_KEYS.ALREADY_SETTLED);
 
-  let transactionId: string;
+  // Our claim, and only while it is still unstamped.
+  const ownClaim = { gameId, userId: actorId, confirmedAt: claimedAt, transactionId: null };
   try {
     // `createGuardedTransfer`, not `createTransaction`: the debit must be its
     // own balance check, inside the transfer's transaction.
-    const transfer = await createGuardedTransfer({
+    //
+    // The share is locked and stamped **inside** that transaction. If a roster
+    // sync or a game delete removed the claimed row meanwhile, the coins must
+    // not move: nothing would be left to refund them from. Locking the share
+    // before the wallets keeps the lock order (share → users) the same as the
+    // sync and delete paths.
+    await createGuardedTransfer({
       fromUserId: actorId,
       toUserId: plan.payerId,
       transactionRows: [
         { name: buildCoinTransferLabel(game.name), price: plan.coins, qty: 1 },
       ],
+      guard: {
+        beforeMove: async (tx) => {
+          const locked = await tx.gameCostShare.updateMany({
+            where: ownClaim,
+            data: { confirmedAt: claimedAt },
+          });
+          if (locked.count !== 1) throw new ApiError(404, 'errors.cost.shareNotFound');
+        },
+        afterMove: async (tx, transactionId) => {
+          await tx.gameCostShare.updateMany({ where: ownClaim, data: { transactionId } });
+        },
+      },
     });
-    transactionId = transfer.id;
   } catch (error) {
     // No money moved, so hand the claim back exactly as it was found. Scoped to
     // our own claim (`confirmedAt: claimedAt`) so it can never clear somebody
     // else's settlement.
     await prisma.gameCostShare.updateMany({
-      where: { gameId, userId: actorId, confirmedAt: claimedAt, transactionId: null },
+      where: ownClaim,
       data: { markedPaidAt: share.markedPaidAt, confirmedAt: null, method: share.method },
     });
     throw error;
   }
 
-  await prisma.gameCostShare.updateMany({
-    where: { gameId, userId: actorId, confirmedAt: claimedAt, transactionId: null },
-    data: { transactionId },
-  });
   await emitGameCostUpdated(gameId);
 
   const refreshed = await syncGameCostShares(gameId, { emit: false });

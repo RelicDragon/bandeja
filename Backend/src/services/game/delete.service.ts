@@ -13,6 +13,8 @@ import notificationService from '../notification.service';
 import { USER_SELECT_FIELDS, USER_SPORT_PROFILE_SELECT } from '../../utils/constants';
 import { projectUserForSportContext } from '../user/userSportProfile.service';
 import { PlayIntentGameLifecycleService } from '../playIntent/playIntentGameLifecycle.service';
+import { refundCoinsHeldByGame } from './gameDeleteCoinRefunds';
+import { deliverCoinWalletEffects } from '../gameCost/coinShareReversal';
 import { publishCommittedPlayIntentStatusChanges, publishMatchingGamesChanged } from '../playIntent/playIntentRealtime';
 
 export class GameDeleteService {
@@ -70,21 +72,13 @@ export class GameDeleteService {
       .map((p) => p.userId);
     const uniqueRecipientIds = [...new Set(participantUserIds)];
 
-    if (game.mediaUrls && game.mediaUrls.length > 0) {
-      for (const mediaUrl of game.mediaUrls) {
-        try {
-          await ImageProcessor.deleteFile(mediaUrl);
-          const thumbnailUrl = mediaUrl.replace('/originals/', '/thumbnails/').replace(/(\.[^.]+)$/, '_thumb$1');
-          await ImageProcessor.deleteFile(thumbnailUrl);
-        } catch (error) {
-          console.error(`Error deleting media file ${mediaUrl}:`, error);
-        }
-      }
-    }
-
     const archivedAt = new Date().toISOString();
 
-    await prisma.$transaction(async (tx) => {
+    const walletEffects = await prisma.$transaction(async (tx) => {
+      // First, so a refusal (payer can't cover a coin share, payout pending)
+      // rolls back before anything else is written.
+      const effects = await refundCoinsHeldByGame(tx, id, game.name);
+
       await tx.cancelledGame.create({
         data: {
           id: game.id,
@@ -147,7 +141,23 @@ export class GameDeleteService {
         );
       }
       await tx.game.delete({ where: { id } });
+      return effects;
     });
+
+    // Media only after commit: a refused delete must not have wiped the photos.
+    if (game.mediaUrls && game.mediaUrls.length > 0) {
+      for (const mediaUrl of game.mediaUrls) {
+        try {
+          await ImageProcessor.deleteFile(mediaUrl);
+          const thumbnailUrl = mediaUrl.replace('/originals/', '/thumbnails/').replace(/(\.[^.]+)$/, '_thumb$1');
+          await ImageProcessor.deleteFile(thumbnailUrl);
+        } catch (error) {
+          console.error(`Error deleting media file ${mediaUrl}:`, error);
+        }
+      }
+    }
+
+    await deliverCoinWalletEffects(walletEffects);
     await publishCommittedPlayIntentStatusChanges(
       game.participants
         .filter(

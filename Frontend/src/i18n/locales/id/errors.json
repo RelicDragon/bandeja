@@ -66,6 +66,8 @@
       "cannotLeaveResultsStarted": "Pencatatan hasil sudah dimulai — minta penyelenggara menggantikan Anda",
       "directJoinNotAllowed": "Bergabung langsung tidak diizinkan untuk pertandingan ini",
       "cannotDeleteHasChildren": "Tidak dapat menghapus pertandingan yang memiliki pertandingan anak (mis. turnamen dengan babak). Hapus pertandingan anak terlebih dahulu.",
+      "cannotDeleteCoinShareUnrefundable": "Seorang pemain membayar bagiannya dengan koin dan penerimanya tidak lagi punya cukup koin untuk mengembalikannya, jadi permainan ini belum bisa dihapus.",
+      "cannotDeletePendingBetPayout": "Pembayaran taruhan pada permainan ini masih diproses. Coba lagi dalam beberapa menit.",
       "genderUnset": "Atur gender Anda untuk bergabung ke pertandingan ini",
       "genderUnsetOther": "Pemain ini belum mengatur gendernya",
       "genderIncompatibleMen": "Hanya pria yang dapat bergabung ke pertandingan ini",

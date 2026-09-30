@@ -173,6 +173,8 @@ Every grant, purchase, gift and refund is atomic with the row it implies and ide
 - **Cost split** claims the `GameCostShare` row with a conditional `updateMany` **before** any coins move; the loser of a double-tap is refused and never transfers (`services/gameCost/gameCost.service.ts`).
 - **Shop** debits with `updateMany({ where: { id, wallet: { gte: price } } })` inside the purchase transaction — a plain read-then-decrement let N concurrent buys of N *different* items each pass their balance check and overdraw the wallet (`services/shop/shopPurchase.service.ts`).
 - **Refunds** are idempotent per *ownership instance*: deleting the `UserGoods` row is the claim. Keying on "has this user ever been refunded for this goods id" loses the money on a withdraw → reactivate → re-buy → withdraw cycle.
+- **Game delete** returns every coin the game holds — held bet stakes and coin-settled cost shares — inside the delete transaction, because `Bet` and `GameCostShare` cascade with the game and nothing is left to reconcile. What cannot be returned (payer already spent a coin share, bet payout still pending) refuses the delete (`services/game/gameDeleteCoinRefunds.ts`).
+- **Coin-settled cost shares** are reversed payer → player whenever the row would leave the ledger (leave, kick, price removed, delete); a payer who cannot cover it yet keeps a hidden refund claim that is retried, never dropped. The settle transfer stamps its share row in the same transaction and rolls back if the row is gone (`services/gameCost/coinShareReversal.ts`).
 - **Referral payout** claims the unique `ReferralReward.referredUserId` row before granting either side.
 - Coins are never purchasable with real money (store compliance).
 

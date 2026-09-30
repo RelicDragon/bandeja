@@ -66,6 +66,8 @@
       "cannotLeaveResultsStarted": "成绩录入已开始，请让组织者替换你",
       "directJoinNotAllowed": "此比赛不允许直接加入",
       "cannotDeleteHasChildren": "无法删除含有子比赛的比赛（例如含轮次的锦标赛）。请先删除或移除子比赛。",
+      "cannotDeleteCoinShareUnrefundable": "有玩家用金币支付了分摊费用，但收款人的金币已不足以退还，因此暂时无法删除这场比赛。",
+      "cannotDeletePendingBetPayout": "本场比赛的一笔投注仍在派彩中，请几分钟后重试。",
       "genderUnset": "请设置性别后再加入此比赛",
       "genderUnsetOther": "该球员尚未设置性别",
       "genderIncompatibleMen": "仅限男士加入此比赛",

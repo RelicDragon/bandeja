@@ -66,6 +66,8 @@
       "cannotLeaveResultsStarted": "Results entry has started — ask the organiser to substitute you out",
       "directJoinNotAllowed": "Direct join is not allowed for this game",
       "cannotDeleteHasChildren": "Cannot delete a game that has child games (e.g. tournament with rounds). Delete or remove child games first.",
+      "cannotDeleteCoinShareUnrefundable": "A player paid their share in coins and the payer no longer has enough coins to return it, so this game can't be deleted yet.",
+      "cannotDeletePendingBetPayout": "A bet on this game is still being paid out. Try again in a few minutes.",
       "genderUnset": "Set your gender to join this game",
       "genderUnsetOther": "This player hasn't set their gender yet",
       "genderIncompatibleMen": "Only men can join this game",

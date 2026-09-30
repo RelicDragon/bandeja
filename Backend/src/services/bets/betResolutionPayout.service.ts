@@ -3,6 +3,15 @@ import { Bet, TransactionType } from '@prisma/client';
 import { TransactionService } from '../transaction.service';
 import notificationService from '../notification.service';
 import { emitBetResolvedPool, emitBetResolvedSocial } from '../socketEmitFacade';
+import {
+  getResolution,
+  poolBetNeedsPayout,
+  socialBetNeedsPayout,
+  type BetMetadata,
+  type BetResolutionMeta,
+} from './betPayoutState';
+
+export { poolBetNeedsPayout, socialBetNeedsPayout };
 
 export interface ResolvedBetPostTx {
   betId: string;
@@ -25,26 +34,6 @@ export interface ResolvedPoolBetPostTx {
   winnerShares: Record<string, number>;
 }
 
-type BetResolutionMeta = {
-  won?: boolean;
-  reason?: string;
-  resolvedAt?: string;
-  stakeTransferred?: boolean;
-  rewardTransferred?: boolean;
-  winningSide?: string;
-  winnerIds?: string[];
-  poolTotalCoins?: number;
-  sharePerWinner?: number;
-  winnerShares?: Record<string, number>;
-  payoutsByUser?: Record<string, boolean>;
-  lastPayoutError?: string;
-  lastPayoutAttemptAt?: string;
-};
-
-type BetMetadata = {
-  resolution?: BetResolutionMeta;
-};
-
 type PayoutDeps = {
   createTransaction: typeof TransactionService.createTransaction;
   sendBetResolvedNotification: typeof notificationService.sendBetResolvedNotification;
@@ -65,9 +54,6 @@ export function resetBetPayoutTestDeps(): void {
   payoutDeps = { ...defaultDeps };
 }
 
-function getResolution(metadata: unknown): BetResolutionMeta {
-  return ((metadata as BetMetadata | null)?.resolution) ?? {};
-}
 
 async function patchResolution(betId: string, patch: Partial<BetResolutionMeta>): Promise<BetResolutionMeta> {
   const existingMeta = (await prisma.bet.findUnique({ where: { id: betId }, select: { metadata: true } }))?.metadata as BetMetadata | null;
@@ -86,39 +72,6 @@ async function markPayoutFailure(betId: string, err: unknown): Promise<void> {
     lastPayoutAttemptAt: new Date().toISOString(),
   });
   console.error(`[BET PAYOUT] Failed payout for bet ${betId}:`, err);
-}
-
-function winnerShareAmount(resolution: BetResolutionMeta, winnerId: string): number {
-  return resolution.winnerShares?.[winnerId] ?? resolution.sharePerWinner ?? 0;
-}
-
-export function socialBetNeedsPayout(bet: Pick<Bet, 'stakeType' | 'stakeCoins' | 'rewardType' | 'rewardCoins' | 'metadata'>): boolean {
-  const resolution = getResolution(bet.metadata);
-  const stakeDue = bet.stakeType === 'COINS' && (bet.stakeCoins ?? 0) > 0;
-  const rewardDue = bet.rewardType === 'COINS' && (bet.rewardCoins ?? 0) > 0;
-  if (stakeDue && resolution.stakeTransferred !== true) return true;
-  if (rewardDue && resolution.rewardTransferred !== true) return true;
-  return false;
-}
-
-export function poolBetNeedsPayout(
-  bet: Pick<Bet, 'stakeCoins' | 'metadata'>,
-  participantUserIds: string[],
-): boolean {
-  const resolution = getResolution(bet.metadata);
-  const payoutsByUser = resolution.payoutsByUser ?? {};
-  const winnerIds = resolution.winnerIds ?? [];
-  const stakeCoins = bet.stakeCoins ?? 0;
-
-  if (winnerIds.length === 0) {
-    if (stakeCoins <= 0) return false;
-    return participantUserIds.some((userId) => payoutsByUser[userId] !== true);
-  }
-
-  return winnerIds.some((userId) => {
-    if (payoutsByUser[userId] === true) return false;
-    return winnerShareAmount(resolution, userId) > 0;
-  });
 }
 
 export function buildSocialPayoutPayload(
